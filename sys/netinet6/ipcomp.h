@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp.h,v 1.12 2007/11/01 20:33:58 dyoung Exp $	*/
+/*	$NetBSD: ipcomp.h,v 1.12.16.1 2008/06/02 13:24:27 mjf Exp $	*/
 /*	$KAME: ipcomp.h,v 1.11 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -64,9 +64,11 @@ struct ipcomp_algorithm {
 
 struct ipsecrequest;
 extern const struct ipcomp_algorithm *ipcomp_algorithm_lookup(int);
+extern void ipcomp4_init(void);
 extern void ipcomp4_input(struct mbuf *, ...);
 extern int ipcomp4_output(struct mbuf *, struct ipsecrequest *);
 #ifdef INET6
+extern void ipcomp6_init(void);
 extern int ipcomp6_input(struct mbuf **, int *, int);
 extern int ipcomp6_output(struct mbuf *, u_char *, struct mbuf *,
 	struct ipsecrequest *);

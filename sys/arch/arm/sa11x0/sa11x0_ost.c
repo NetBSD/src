@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.22 2008/01/20 18:09:05 joerg Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.22.6.1 2008/06/02 13:21:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.22 2008/01/20 18:09:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.22.6.1 2008/06/02 13:21:56 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,7 +79,13 @@ struct saost_softc {
 
 static struct saost_softc *saost_sc = NULL;
 
+#if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
+#error ost needs to dynamically configure the frequency
+#elif defined(CPU_XSCALE_PXA270)
+#define TIMER_FREQUENCY         3250000         /* PXA270 uses 3.25MHz */
+#else
 #define TIMER_FREQUENCY         3686400         /* 3.6864MHz */
+#endif
 
 #ifndef STATHZ
 #define STATHZ	64
@@ -278,7 +284,7 @@ void
 delay(u_int usecs)
 {
 	uint32_t xtick, otick, delta;
-	int j, csec, usec;
+	int csec, usec;
 
 	csec = usecs / 10000;
 	usec = usecs % 10000;
@@ -287,9 +293,11 @@ delay(u_int usecs)
 	    + (TIMER_FREQUENCY / 100) * usec / 10000;
 
 	if (saost_sc == NULL) {
+		volatile int k;
+		int j;
 		/* clock isn't initialized yet */
 		for (; usecs > 0; usecs--)
-			for (j = 100; j > 0; j--)
+			for (j = 100; j > 0; j--, k--)
 				continue;
 		return;
 	}
@@ -297,8 +305,6 @@ delay(u_int usecs)
 	otick = gettick();
 
 	while (1) {
-		for (j = 100; j > 0; j--)
-			continue;
 		xtick = gettick();
 		delta = xtick - otick;
 		if (delta > usecs)

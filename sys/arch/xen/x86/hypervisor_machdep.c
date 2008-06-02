@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.6 2008/02/19 19:50:53 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.6.6.1 2008/06/02 13:22:54 mjf Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6 2008/02/19 19:50:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6.6.1 2008/06/02 13:22:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,17 +75,19 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6 2008/02/19 19:50:53 bouye
 
 int stipending(void);
 int
-stipending()
+stipending(void)
 {
 	unsigned long l1;
 	unsigned long l2;
 	unsigned int l1i, l2i, port;
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
+	volatile struct vcpu_info *vci;
 	int ret;
 
 	ret = 0;
 	ci = curcpu();
+	vci = ci->ci_vcpu;
 
 #if 0
 	if (HYPERVISOR_shared_info->events)
@@ -105,13 +107,13 @@ stipending()
 	 * we're only called after STIC, so we know that we'll have to
 	 * STI at the end
 	 */
-	while (s->vcpu_info[0].evtchn_upcall_pending) {
+	while (vci->evtchn_upcall_pending) {
 		cli();
-		s->vcpu_info[0].evtchn_upcall_pending = 0;
+		vci->evtchn_upcall_pending = 0;
 		/* NB. No need for a barrier here -- XCHG is a barrier
 		 * on x86. */
 #ifdef XEN3
-		l1 = xen_atomic_xchg(&s->vcpu_info[0].evtchn_pending_sel, 0);
+		l1 = xen_atomic_xchg(&vci->evtchn_pending_sel, 0);
 #else
 		l1 = xen_atomic_xchg(&s->evtchn_pending_sel, 0);
 #endif
@@ -170,9 +172,11 @@ do_hypervisor_callback(struct intrframe *regs)
 	unsigned int l1i, l2i, port;
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
+	volatile struct vcpu_info *vci;
 	int level;
 
 	ci = curcpu();
+	vci = ci->ci_vcpu;
 	level = ci->ci_ilevel;
 
 	// DDD printf("do_hypervisor_callback\n");
@@ -184,12 +188,12 @@ do_hypervisor_callback(struct intrframe *regs)
 	}
 #endif
 
-	while (s->vcpu_info[0].evtchn_upcall_pending) {
-		s->vcpu_info[0].evtchn_upcall_pending = 0;
+	while (vci->evtchn_upcall_pending) {
+		vci->evtchn_upcall_pending = 0;
 		/* NB. No need for a barrier here -- XCHG is a barrier
 		 * on x86. */
 #ifdef XEN3
-		l1 = xen_atomic_xchg(&s->vcpu_info[0].evtchn_pending_sel, 0);
+		l1 = xen_atomic_xchg(&vci->evtchn_pending_sel, 0);
 #else
 		l1 = xen_atomic_xchg(&s->evtchn_pending_sel, 0);
 #endif
@@ -202,8 +206,8 @@ do_hypervisor_callback(struct intrframe *regs)
 			 * mask and clear the pending events.
 			 * Doing it here for all event that will be processed
 			 * avoids a race with stipending (which can be called
-			 * though evtchn_do_event->splx) that could cause an event to
-			 * be both processed and marked pending.
+			 * though evtchn_do_event->splx) that could cause an
+			 * event to be both processed and marked pending.
 			 */
 			xen_atomic_setbits_l(&s->evtchn_mask[l1i], l2);
 			xen_atomic_clearbits_l(&s->evtchn_pending[l1i], l2);
@@ -241,7 +245,7 @@ do_hypervisor_callback(struct intrframe *regs)
 	if (level != ci->ci_ilevel)
 		printf("hypervisor done %08x level %d/%d ipending %08x\n",
 #ifdef XEN3
-		    (uint)HYPERVISOR_shared_info->vcpu_info[0].evtchn_pending_sel,
+		    (uint)vci->evtchn_pending_sel,
 #else
 		    (uint)HYPERVISOR_shared_info->evtchn_pending_sel,
 #endif
@@ -253,6 +257,8 @@ void
 hypervisor_unmask_event(unsigned int ev)
 {
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
+	volatile struct vcpu_info *vci = curcpu()->ci_vcpu;
+
 #ifdef PORT_DEBUG
 	if (ev == PORT_DEBUG)
 		printf("hypervisor_unmask_event %d\n", ev);
@@ -266,12 +272,12 @@ hypervisor_unmask_event(unsigned int ev)
 	 */
 	if (xen_atomic_test_bit(&s->evtchn_pending[0], ev) && 
 #ifdef XEN3
-	    !xen_atomic_test_and_set_bit(&s->vcpu_info[0].evtchn_pending_sel, ev>>LONG_SHIFT)) {
+	    !xen_atomic_test_and_set_bit(&vci->evtchn_pending_sel, ev>>LONG_SHIFT)) {
 #else
 	    !xen_atomic_test_and_set_bit(&s->evtchn_pending_sel, ev>>LONG_SHIFT)) {
 #endif
-		xen_atomic_set_bit(&s->vcpu_info[0].evtchn_upcall_pending, 0);
-		if (!s->vcpu_info[0].evtchn_upcall_mask)
+		xen_atomic_set_bit(&vci->evtchn_upcall_pending, 0);
+		if (!vci->evtchn_upcall_mask)
 			hypervisor_force_callback();
 	}
 }
@@ -333,7 +339,7 @@ hypervisor_enable_ipl(unsigned int ipl)
 }
 
 void
-hypervisor_set_ipending(u_int32_t iplmask, int l1, int l2)
+hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 {
 	int ipl;
 	struct cpu_info *ci = curcpu();

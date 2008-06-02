@@ -13,13 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -35,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.33 2007/10/19 12:01:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.33.16.1 2008/06/02 13:23:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -210,11 +203,10 @@ isic_pcmcia_attach(struct device *parent,
 	/* Which card is it? */
 	cde = find_matching_card(pa);
 	if (cde == NULL) {
-		printf("%s: attach failed, couldn't find matching card\n",
-		    psc->sc_isic.sc_dev.dv_xname);
+		aprint_error_dev(&psc->sc_isic.sc_dev, "attach failed, couldn't find matching card\n");
 		return;
 	}
-	printf("%s: %s\n", cde->name, self->dv_xname);
+	printf("%s: %s\n", cde->name, device_xname(self));
 
 	/* Enable the card */
 	pcmcia_function_init(pa->pf, cfe);
@@ -222,16 +214,14 @@ isic_pcmcia_attach(struct device *parent,
 	pcmcia_function_enable(pa->pf);
 
 	if (!cde->attach(psc, cfe, pa)) {
-		printf("%s: attach failed, card-specific attach unsuccesful\n",
-		    psc->sc_isic.sc_dev.dv_xname);
+		aprint_error_dev(&psc->sc_isic.sc_dev, "attach failed, card-specific attach unsuccesful\n");
 		goto fail;
 	}
 
 	/* MI initilization */
 	sc->sc_cardtyp = cde->card_type;
 	if (isic_pcmcia_isdn_attach(sc, cde->name)) {
-		printf("%s: attach failed, generic attach unsuccesful\n",
-		    psc->sc_isic.sc_dev.dv_xname);
+		aprint_error_dev(&psc->sc_isic.sc_dev, "attach failed, generic attach unsuccesful\n");
 		goto fail;
 	}
 
@@ -290,7 +280,7 @@ isic_pcmcia_activate(struct device *self, enum devact act)
 #define	TERMFMT	" "
 #else
 #define	ISIC_FMT	"%s: "
-#define	ISIC_PARM	sc->sc_dev.dv_xname
+#define	ISIC_PARM	device_xname(&sc->sc_dev)
 #define	TERMFMT	"\n"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.174 2008/01/05 22:50:12 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.174.6.1 2008/06/02 13:22:42 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.174 2008/01/05 22:50:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.174.6.1 2008/06/02 13:22:42 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -495,7 +495,7 @@ badtrap:
 
 	case T_WINOF:
 		if (rwindow_save(l)) {
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			sigexit(l, SIGILL);
 		}
 		break;
@@ -521,7 +521,7 @@ badtrap:
 				tf->tf_out[6]);
 #endif
 		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0])) {
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			sigexit(l, SIGILL);
 		}
 		if (pcb->pcb_nsaved)
@@ -547,7 +547,7 @@ badtrap:
 #endif
 		write_user_windows();
 		if (rwindow_save(l) || read_rw(tf->tf_out[6], &pcb->pcb_rw[0])) {
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			sigexit(l, SIGILL);
 		}
 #ifdef DEBUG
@@ -557,7 +557,7 @@ badtrap:
 				pcb->pcb_rw[0].rw_in[6]);
 #endif
 		if (read_rw(pcb->pcb_rw[0].rw_in[6], &pcb->pcb_rw[1])) {
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			sigexit(l, SIGILL);
 		}
 		if (pcb->pcb_nsaved)
@@ -648,7 +648,7 @@ badtrap:
 		write_user_windows();
 #ifdef probably_slower_since_this_is_usually_false
 		if (pcb->pcb_nsaved && rwindow_save(p)) {
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			sigexit(l, SIGILL);
 		}
 #endif

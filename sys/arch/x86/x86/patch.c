@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.11 2007/12/20 23:46:11 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.11.6.1 2008/06/02 13:22:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.11 2007/12/20 23:46:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.11.6.1 2008/06/02 13:22:52 mjf Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -153,16 +146,6 @@ x86_patch(void)
 			patchbytes(x86_lockpatch[i], X86_NOP, -1);	
 		for (i = 0; atomic_lockpatch[i] != 0; i++)
 			patchbytes(atomic_lockpatch[i], X86_NOP, -1);
-		/*
-		 * Uniprocessor: kill kernel_lock.  Fill another
-		 * 14 bytes of NOPs so not to confuse the decoder.
-		 */
-		patchbytes(_kernel_lock, X86_NOP, X86_RET);
-		patchbytes(_kernel_unlock, X86_NOP, X86_RET);
-		for (i = 2; i < 16; i++) {
-			patchbytes((char *)_kernel_lock + i, X86_NOP, -1);
-			patchbytes((char *)_kernel_unlock + i, X86_NOP, -1);
-		}
 #endif
 	} else if ((cpu_feature & CPUID_SSE2) != 0) {
 		/* Faster memory barriers. */

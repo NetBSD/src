@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.24 2007/12/09 20:28:08 jmcneill Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.24.10.1 2008/06/02 13:23:38 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.24 2007/12/09 20:28:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.24.10.1 2008/06/02 13:23:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +136,7 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
         /* Map I/O registers */
         if (pci_mapreg_map(pa, AN_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize) != 0) {
-                aprint_error("%s: unable to map registers\n", self->dv_xname);
+                aprint_error_dev(self, "unable to map registers\n");
                 return;
         }
 
@@ -154,25 +147,23 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-        	aprint_error("%s: unable to map interrupt\n", self->dv_xname);
+        	aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, an_intr, sc);
 	if (psc->sc_ih == NULL) {
-		aprint_error("%s: unable to establish interrupt",
-		    self->dv_xname);
+		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", self->dv_xname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	sc->sc_enabled = 1;
 
 	if (an_attach(sc) != 0) {
-		aprint_error("%s: failed to attach controller\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "failed to attach controller\n");
 		pci_intr_disestablish(pa->pa_pc, psc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 	}

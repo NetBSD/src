@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.28 2007/03/13 17:17:28 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.28.36.1 2008/06/02 13:22:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -258,23 +258,23 @@ void	sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 
 #if defined(__mc68010__)
 /*
- * Restartable atomic sequence-cased compare-and-swap for locking
- * primitives.  We defined this here because it manipulates a
+ * Restartable atomic sequence-cased compare-and-swap for atomic_cas ops
+ * and locking primitives.  We defined this here because it manipulates a
  * "clockframe" as prepared by interrupt handlers.
  */
-extern char	_lock_cas_ras_start;
-extern char	_lock_cas_ras_end;
+extern char	_atomic_cas_ras_start;
+extern char	_atomic_cas_ras_end;
 
-#define LOCK_CAS_CHECK(cfp)						\
+#define ATOMIC_CAS_CHECK(cfp)						\
 do {									\
 	if (! CLKF_USERMODE(cfp) &&					\
-	    (CLKF_PC(cfp) < (u_long)&_lock_cas_ras_end &&		\
-	     CLKF_PC(cfp) > (u_long)&_lock_cas_ras_start)) {		\
-	    	(cfp)->cf_pc = (u_long)&_lock_cas_ras_start;		\
+	    (CLKF_PC(cfp) < (u_long)&_atomic_cas_ras_end &&		\
+	     CLKF_PC(cfp) > (u_long)&_atomic_cas_ras_start)) {		\
+	    	(cfp)->cf_pc = (u_long)&_atomic_cas_ras_start;		\
 	}								\
 } while (/*CONSTCOND*/0)
 #else
-#define	LOCK_CAS_CHECK(cfp)	/* nothing */
+#define	ATOMIC_CAS_CHECK(cfp)	/* nothing */
 #endif /* __mc68010__ */
 
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.16 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.16.50.1 2008/06/02 13:23:55 mjf Exp $	*/
 
 /*
  * TODO:
@@ -22,13 +22,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -44,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.16 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.16.50.1 2008/06/02 13:23:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +213,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	adev.adev_drv_data = &scbus->sc_drv_data;
 	scbus->sc_drv_data.drive_flags = DRIVE_ATA;
 	scbus->sc_drv_data.chnl_softc = sc;
-	scbus->base.sc_child = config_found(&sc->sc_dev, &adev, uwdprint);
+	scbus->base.sc_child = config_found(sc->sc_dev, &adev, uwdprint);
 
 	return (0);
 }

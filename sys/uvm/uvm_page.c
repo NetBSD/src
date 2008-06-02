@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.128.6.1 2008/04/03 12:43:15 mjf Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.128.6.2 2008/06/02 13:24:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.128.6.1 2008/04/03 12:43:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.128.6.2 2008/06/02 13:24:37 mjf Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1444,7 +1444,7 @@ uvm_pagefree(struct vm_page *pg)
 	if (iszero)
 		uvmexp.zeropages++;
 
-	if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
+	if (uvmexp.zeropages < UVM_PAGEZERO_LOWAT)
 		uvm.page_idle_zero = vm_page_zero_enable;
 
 	mutex_spin_exit(&uvm_fpageqlock);
@@ -1562,7 +1562,10 @@ uvm_page_own(struct vm_page *pg, const char *tag)
  *
  * => try to complete one color bucket at a time, to reduce our impact
  *	on the CPU cache.
- * => we loop until we either reach the target or there is a lwp ready to run.
+ * => we loop until we either reach the target or there is a lwp ready
+ *      to run, or MD code detects a reason to break early.
+ * => we only allow one CPU at a time to zero in the idle loop, to try
+ *      and avoid swamping the system bus.
  */
 void
 uvm_pageidlezero(void)
@@ -1571,14 +1574,21 @@ uvm_pageidlezero(void)
 	struct pgfreelist *pgfl;
 	int free_list, firstbucket;
 	static int nextbucket;
+	static __cpu_simple_lock_t idlezero_lock = __SIMPLELOCK_UNLOCKED;
 
-	mutex_spin_enter(&uvm_fpageqlock);
+	if (!__cpu_simple_lock_try(&idlezero_lock)) {
+		return;
+	}
+	if (!mutex_tryenter(&uvm_fpageqlock)) {
+		__cpu_simple_unlock(&idlezero_lock);
+		return;
+	}
 	firstbucket = nextbucket;
 	do {
 		if (sched_curcpu_runnable_p()) {
 			goto quit;
 		}
-		if (uvmexp.zeropages >= UVM_PAGEZERO_TARGET) {
+		if (uvmexp.zeropages >= UVM_PAGEZERO_HIWAT) {
 			uvm.page_idle_zero = false;
 			goto quit;
 		}
@@ -1586,9 +1596,9 @@ uvm_pageidlezero(void)
 			pgfl = &uvm.page_free[free_list];
 			while ((pg = TAILQ_FIRST(&pgfl->pgfl_buckets[
 			    nextbucket].pgfl_queues[PGFL_UNKNOWN])) != NULL) {
-				if (sched_curcpu_runnable_p())
+				if (sched_curcpu_runnable_p()) {
 					goto quit;
-
+				}
 				TAILQ_REMOVE(&pgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_UNKNOWN],
 				    pg, pageq);
@@ -1629,6 +1639,7 @@ uvm_pageidlezero(void)
 	} while (nextbucket != firstbucket);
 quit:
 	mutex_spin_exit(&uvm_fpageqlock);
+	__cpu_simple_unlock(&idlezero_lock);
 }
 
 /*

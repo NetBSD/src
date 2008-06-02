@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.21.6.2 2008/04/14 16:23:56 mjf Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.21.6.3 2008/06/02 13:24:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -64,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.21.6.2 2008/04/14 16:23:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.21.6.3 2008/06/02 13:24:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.21.6.2 2008/04/14 16:23:56 mjf Exp $"
 #include <sys/pool.h>
 #include <sys/kmem.h>
 #include <sys/select.h>
+#include <sys/namei.h>
+#include <sys/callout.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -102,20 +97,21 @@ kmutex_t cpu_lock;
 int	ncpu;
 int	ncpuonline;
 bool	mp_online;
+struct	cpuqueue cpu_queue = CIRCLEQ_HEAD_INITIALIZER(cpu_queue);
 
 static struct cpu_info *cpu_infos[MAXCPUS];
 
 int
 mi_cpu_attach(struct cpu_info *ci)
 {
-	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	int error;
 
 	ci->ci_index = ncpu;
+	cpu_infos[cpu_index(ci)] = ci;
+	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
+	TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
+	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
 
-	KASSERT(sizeof(kmutex_t) <= CACHE_LINE_SIZE);
-	spc->spc_lwplock = kmem_alloc(CACHE_LINE_SIZE, KM_SLEEP);
-	mutex_init(spc->spc_lwplock, MUTEX_DEFAULT, IPL_SCHED);
 	sched_cpuattach(ci);
 	uvm_cpu_attach(ci);
 
@@ -132,13 +128,14 @@ mi_cpu_attach(struct cpu_info *ci)
 
 	percpu_init_cpu(ci);
 	softint_init(ci);
+	callout_init_cpu(ci);
 	xc_init_cpu(ci);
 	pool_cache_cpu_init(ci);
 	selsysinit(ci);
+	cache_cpu_init(ci);
 	TAILQ_INIT(&ci->ci_data.cpu_biodone);
 	ncpu++;
 	ncpuonline++;
-	cpu_infos[cpu_index(ci)] = ci;
 
 	return 0;
 }
@@ -272,44 +269,31 @@ cpu_xc_offline(struct cpu_info *ci)
 
 	/*
 	 * Migrate all non-bound threads to the other CPU.
+	 *
 	 * Please note, that this runs from the xcall thread, thus handling
-	 * of LSONPROC is not needed.
+	 * of LSONPROC is not needed.  Threads which change the state will
+	 * be handled by sched_takecpu().
 	 */
-	mutex_enter(&proclist_lock);
-
-	/*
-	 * Note that threads on the runqueue might sleep after this, but
-	 * sched_takecpu() would migrate such threads to the appropriate CPU.
-	 */
+	mutex_enter(proc_lock);
+	spc_dlock(ci, mci);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		lwp_lock(l);
-		if (l->l_cpu == ci && (l->l_stat == LSSLEEP ||
-		    l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED)) {
-			KASSERT((l->l_flag & LW_RUNNING) == 0);
-			l->l_cpu = mci;
-		}
-		lwp_unlock(l);
-	}
-
-	/* Double-lock the run-queues */
-	spc_dlock(ci, mci);
-
-	/* Handle LSRUN and LSIDL cases */
-	LIST_FOREACH(l, &alllwp, l_list) {
-		if (l->l_cpu != ci || (l->l_flag & LW_BOUND))
+		if (l->l_cpu != ci || (l->l_pflag & LP_BOUND) != 0) {
+			lwp_unlock(l);
 			continue;
+		}
 		if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
 			sched_dequeue(l);
 			l->l_cpu = mci;
 			lwp_setlock(l, mspc->spc_mutex);
 			sched_enqueue(l, false);
-		} else if (l->l_stat == LSRUN || l->l_stat == LSIDL) {
-			l->l_cpu = mci;
-			lwp_setlock(l, mspc->spc_mutex);
+			lwp_unlock(l);
+		} else {
+			lwp_migrate(l, mci);
 		}
 	}
 	spc_dunlock(ci, mci);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 #ifdef __HAVE_MD_CPU_OFFLINE
 	cpu_offline_md();

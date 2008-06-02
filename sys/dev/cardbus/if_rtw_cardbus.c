@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.22.6.1 2008/04/03 12:42:39 mjf Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.22.6.2 2008/06/02 13:23:14 mjf Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -46,13 +46,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -74,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.22.6.1 2008/04/03 12:42:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.22.6.2 2008/06/02 13:23:14 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -267,7 +260,7 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 	    &regs->r_bt, &regs->r_bh, &adr, &regs->r_sz) == 0) {
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %" PRIuMAX " bytes mem space\n",
-		     device_xname(self), __func__, regs->r_sz));
+		     device_xname(self), __func__, (uintmax_t)regs->r_sz));
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -279,7 +272,7 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 	    0, &regs->r_bt, &regs->r_bh, &adr, &regs->r_sz) == 0) {
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %" PRIuMAX " bytes I/O space\n",
-		     device_xname(self), __func__, regs->r_sz));
+		     device_xname(self), __func__, (uintmax_t)regs->r_sz));
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);

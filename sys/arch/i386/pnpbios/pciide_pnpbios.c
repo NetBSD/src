@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.24.52.1 2008/04/03 12:42:19 mjf Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.24.52.2 2008/06/02 13:22:18 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.24.52.1 2008/04/03 12:42:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.24.52.2 2008/06/02 13:22:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ pciide_pnpbios_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t compat_iot;
 	bus_space_handle_t cmd_baseioh, ctl_ioh;
 	int i, drive, size;
-	u_int8_t idedma_ctl;
+	uint8_t idedma_ctl;
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 

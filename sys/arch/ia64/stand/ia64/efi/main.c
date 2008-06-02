@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2006/09/22 13:38:32 kochi Exp $	*/
+/*	$NetBSD: main.c,v 1.3.52.1 2008/06/02 13:22:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -50,6 +50,9 @@ extern char bootprog_maker[];
 
 struct efi_devdesc	currdev;	/* our current device */
 struct arch_switch	archsw;		/* MI/MD interface boundary */
+
+vaddr_t ia64_unwindtab;
+vsize_t ia64_unwindtablen;
 
 extern u_int64_t	ia64_pal_entry;
 
@@ -116,7 +119,7 @@ main(int argc, CHAR16 *argv[])
 	/*
 	 * Initialise the block cache
 	 */
-	bcache_init(32, 512);		/* 16k XXX tune this */
+	/* bcache_init(32, 512); */		/* 16k XXX tune this */
 
 	find_pal_proc();
 
@@ -555,3 +558,15 @@ command_hcdp(int argc, char *argv[])
 	printf("<EOT>\n");
 	return (CMD_OK);
 }
+
+struct bootblk_command commands[] = {
+        COMMON_COMMANDS,
+        { "quit",       "exit the loader",      command_quit },
+        { "memmap",	"print memory map",	command_memmap },
+        { "configuration", "print configuration tables", command_configuration },
+        { "sal",	"print SAL System Table", command_sal },
+        { "itr",	"print instruction TRs", command_itr },
+        { "dtr",	"print data TRs",	command_dtr },
+        { "hcdp",	"Dump HCDP info",	command_hcdp },
+        { NULL,         NULL,                   NULL         },
+};

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.13.16.1 2008/04/03 12:42:25 mjf Exp $
+#	$NetBSD: genassym.cf,v 1.13.16.2 2008/06/02 13:22:39 mjf Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#        This product includes software developed by the NetBSD
-#        Foundation, Inc. and its contributors.
-# 4. Neither the name of The NetBSD Foundation nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 # ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -49,6 +42,7 @@ define	TF_EXPEVT		offsetof(struct trapframe, tf_expevt)
 define	TF_UBC			offsetof(struct trapframe, tf_ubc)
 define	TF_SPC			offsetof(struct trapframe, tf_spc)
 define	TF_SSR			offsetof(struct trapframe, tf_ssr)
+define	TF_GBR			offsetof(struct trapframe, tf_gbr)
 define	TF_MACL			offsetof(struct trapframe, tf_macl)
 define	TF_MACH			offsetof(struct trapframe, tf_mach)
 define	TF_PR			offsetof(struct trapframe, tf_pr)
@@ -70,6 +64,7 @@ define	TF_R0			offsetof(struct trapframe, tf_r0)
 define	TF_R15			offsetof(struct trapframe, tf_r15)
 
 define	SF_SIZE			sizeof(struct switchframe)
+define	SF_GBR			offsetof(struct switchframe, sf_gbr)
 define	SF_SR			offsetof(struct switchframe, sf_sr)
 define	SF_R15			offsetof(struct switchframe, sf_r15)
 define	SF_R14			offsetof(struct switchframe, sf_r14)

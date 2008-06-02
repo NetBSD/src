@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.333.6.1 2008/04/03 12:42:18 mjf Exp $
+#	$NetBSD: files.i386,v 1.333.6.2 2008/06/02 13:22:14 mjf Exp $
 #
 # new style config file for i386 architecture
 #
@@ -81,7 +81,6 @@ file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
-file	arch/i386/i386/identcpu.c
 file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
@@ -166,8 +165,6 @@ file	arch/i386/pci/via82c586.c	pcibios & pci_intr_fixup
 file	arch/i386/pci/via8231.c		pcibios & pci_intr_fixup
 file	arch/i386/pci/amd756.c		pcibios & pci_intr_fixup
 file	arch/i386/pci/ali1543.c		pcibios & pci_intr_fixup
-file	arch/i386/pci/pci_bus_fixup.c	pci_bus_fixup
-file	arch/i386/pci/pci_addr_fixup.c	pci_addr_fixup
 defparam		PCI_CONF_MODE
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
@@ -177,8 +174,9 @@ include "arch/x86/pci/files.pci"
 # AMD Elan SC520 System Controller (PCI-Host bridge)
 define elanparbus { }
 define elanpexbus { }
-device	elansc: sysmon_wdog, gpiobus, elanparbus, elanpexbus
-attach	elansc at pci
+device	elansc: sysmon_wdog, gpiobus, elanparbus, elanpexbus, pcibus
+attach	elansc at pcibus
+
 file	arch/i386/pci/elan520.c		elansc
 
 device elanpar

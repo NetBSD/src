@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.55 2008/01/07 16:12:54 ad Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.55.6.1 2008/06/02 13:24:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -57,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.55 2008/01/07 16:12:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.55.6.1 2008/06/02 13:24:12 mjf Exp $");
 
 #define SYSVMSG
 
@@ -858,6 +851,7 @@ restart:
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
 		cv_broadcast(&msq->msq_cv);
 		MSG_PRINTF(("mtype (%ld) < 1\n", msghdr->msg_type));
+		error = EINVAL;
 		goto unlock;
 	}
 

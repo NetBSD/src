@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.10 2007/12/09 09:55:58 nisimura Exp $ */
+/* $NetBSD: vge.c,v 1.10.10.1 2008/06/02 13:22:37 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -64,37 +57,21 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int vge_match(unsigned, void *);
 void *vge_init(unsigned, void *);
 int vge_send(void *, char *, unsigned);
 int vge_recv(void *, char *, unsigned, unsigned);
 
-#define R0_OWN		(1U << 31)	/* 1: empty for HW to load anew */
-#define R0_FLMASK	0x3fff0000	/* frame length */
-#define R0_RXOK		(1U << 15)
-#define R0_MAR		(1U << 13)	/* multicast frame */
-#define R0_BAR		(1U << 12)	/* broadcast frame */
-#define R0_PHY		(1U << 11)	/* unicast frame */	
-#define R0_VTAG		(1U << 10)	/* VTAG indicator */	
-#define R0_STP		(1U << 9)	/* first frame segment */	
-#define R0_EDP		(1U << 8)	/* last frame segment */
-#define R0_DETAG	(1U << 7)	/* VTAG has removed */
-#define R0_SNTAG	(1U << 6)	/* tagged SNAP frame */
-#define R0_SYME		(1U << 5)	/* symbol error */
-#define R0_LENE		(1U << 4)	/* frame length error */	
-#define R0_CSUME	(1U << 3)	/* TCP/IP bad csum */
-#define R0_FAE		(1U << 2)	/* frame alignment error */
-#define R0_CRCE		(1U << 1)	/* CRC error */ 
-#define R0_VIDM		(1U << 0)	/* VTAG filter miss */		
-#define R1_IPOK		(1U << 22)	/* IP csum was fine */
-#define R1_TUPOK	(1U << 21)	/* TCP/UDP csum was fine */	
-#define R1_FRAG		(1U << 20)	/* fragmented IP */
-#define R1_CKSMZO	(1U << 19)	/* UDP csum field was zero */
-#define R1_IPKT		(1U << 18)	/* frame was IPv4 */
-#define R1_TPKT		(1U << 17)	/* frame was TCPv4 */
-#define R1_UPKT		(1U << 16)	/* frame was UDPv4 */		
-#define R3_IC		(1U << 31)	/* post Rx interrupt */
-#define R_FLMASK	0x00003ffd	/* Rx segment buffer length */	
-
+struct tdesc {
+	uint32_t t0, t1;
+	struct {
+		uint32_t lo;
+		uint32_t hi;
+	} tf[7];
+};
+struct rdesc {
+	uint32_t r0, r1, r2, r3;
+};
 #define T0_OWN		(1U << 31)	/* 1: loaded for HW to send */	
 #define T0_TERR		(1U << 15)	/* Tx error summary */		
 #define T0_UDF		(1U << 12)	/* found link down when Tx */	
@@ -122,17 +99,32 @@ int vge_recv(void *, char *, unsigned, unsigned);
 #define T_FLMASK	0x00003fff	/* Tx frame/segment length */
 #define TF0_Q		(1U << 31)	/* "Q" bit of tf[0].hi */
 
-struct tdesc {
-	uint32_t t0, t1;
-	struct {
-		uint32_t lo;
-		uint32_t hi;
-	} tf[7];
-};
-
-struct rdesc {
-	uint32_t r0, r1, r2, r3;
-};
+#define R0_OWN		(1U << 31)	/* 1: empty for HW to load anew */
+#define R0_FLMASK	0x3fff0000	/* frame length */
+#define R0_RXOK		(1U << 15)
+#define R0_MAR		(1U << 13)	/* multicast frame */
+#define R0_BAR		(1U << 12)	/* broadcast frame */
+#define R0_PHY		(1U << 11)	/* unicast frame */	
+#define R0_VTAG		(1U << 10)	/* VTAG indicator */	
+#define R0_STP		(1U << 9)	/* first frame segment */	
+#define R0_EDP		(1U << 8)	/* last frame segment */
+#define R0_DETAG	(1U << 7)	/* VTAG has removed */
+#define R0_SNTAG	(1U << 6)	/* tagged SNAP frame */
+#define R0_SYME		(1U << 5)	/* symbol error */
+#define R0_LENE		(1U << 4)	/* frame length error */	
+#define R0_CSUME	(1U << 3)	/* TCP/IP bad csum */
+#define R0_FAE		(1U << 2)	/* frame alignment error */
+#define R0_CRCE		(1U << 1)	/* CRC error */ 
+#define R0_VIDM		(1U << 0)	/* VTAG filter miss */		
+#define R1_IPOK		(1U << 22)	/* IP csum was fine */
+#define R1_TUPOK	(1U << 21)	/* TCP/UDP csum was fine */	
+#define R1_FRAG		(1U << 20)	/* fragmented IP */
+#define R1_CKSMZO	(1U << 19)	/* UDP csum field was zero */
+#define R1_IPKT		(1U << 18)	/* frame was IPv4 */
+#define R1_TPKT		(1U << 17)	/* frame was TCPv4 */
+#define R1_UPKT		(1U << 16)	/* frame was UDPv4 */		
+#define R3_IC		(1U << 31)	/* post Rx interrupt */
+#define R_FLMASK	0x00003ffd	/* Rx segment buffer length */	
 
 #define VR_PAR0		0x00		/* SA [0] */
 #define VR_PAR1		0x01		/* SA [1] */
@@ -212,6 +204,19 @@ static int mii_read(struct local *, int, int);
 static void mii_write(struct local *, int, int, int);
 static void mii_dealan(struct local *, unsigned);
 
+int
+vge_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x1106, 0x3119):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 vge_init(unsigned tag, void *data)
 {
@@ -221,9 +226,6 @@ vge_init(unsigned tag, void *data)
 	struct rdesc *rxd;
 	uint8_t *en;
 
-	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x1106 && PCI_PRODUCT(val) != 0x3119)
-		return NULL;
 
 	l = ALLOC(struct local, 64);   /* desc alignment */
 	memset(l, 0, sizeof(struct local));
@@ -317,13 +319,13 @@ int
 vge_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct tdesc *txd;
+	volatile struct tdesc *txd;
 	unsigned loop;
 	
-	wbinv(buf, len);
 	len = (len & T_FLMASK);
 	if (len < 60)
 		len = 60; /* needs to stretch to ETHER_MIN_LEN - 4 */
+	wbinv(buf, len);
 	txd = &l->txd;
 	txd->tf[0].lo = htole32(VTOPHYS(buf));
 	txd->tf[0].hi = htole32(len << 16);
@@ -348,7 +350,7 @@ int
 vge_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct rdesc *rxd;
+	volatile struct rdesc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

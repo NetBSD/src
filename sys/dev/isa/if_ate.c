@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.48 2007/10/19 12:00:17 ad Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.48.16.1 2008/06/02 13:23:31 mjf Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.48 2007/10/19 12:00:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.48.16.1 2008/06/02 13:23:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.48 2007/10/19 12:00:17 ad Exp $");
 
 #include <dev/isa/isavar.h>
 
-int	ate_match(struct device *, struct cfdata *, void *);
-void	ate_attach(struct device *, struct device *, void *);
+int	ate_match(device_t, cfdata_t, void *);
+void	ate_attach(device_t, device_t, void *);
 
 struct ate_softc {
 	struct	mb86960_softc sc_mb86960;	/* real "mb86960" softc */
@@ -62,7 +62,7 @@ struct ate_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-CFATTACH_DECL(ate_isa, sizeof(struct ate_softc),
+CFATTACH_DECL_NEW(ate_isa, sizeof(struct ate_softc),
     ate_match, ate_attach, NULL, NULL);
 
 struct fe_simple_probe_struct {
@@ -97,8 +97,7 @@ static int const ate_iomap[8] = {
  * Determine if the device is present.
  */
 int
-ate_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ate_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -125,8 +124,8 @@ ate_match(struct device *parent, struct cfdata *match,
 		if (ate_iomap[i] == ia->ia_io[0].ir_addr)
 			break;
 	if (i == NATE_IOMAP) {
-		DPRINTF("ate_match: unknown iobase 0x%x\n",
-		    ia->ia_io[0].ir_addr);
+		DPRINTF("%s: unknown iobase 0x%x\n",
+		    __func__, ia->ia_io[0].ir_addr);
 		return 0;
 	}
 
@@ -138,26 +137,26 @@ ate_match(struct device *parent, struct cfdata *match,
 	}
 
 	if (ate_find(iot, ioh, &iobase, &irq) == 0) {
-		DPRINTF("ate_match: ate_find failed\n");
+		DPRINTF("%s: ate_find failed\n", __func__);
 		goto out;
 	}
 
 	if (iobase != ia->ia_io[0].ir_addr) {
-		DPRINTF("ate_match: unexpected iobase in board: 0x%x\n",
-		    iobase);
+		DPRINTF("%s: unexpected iobase in board: 0x%x\n",
+		    __func__, iobase);
 		goto out;
 	}
 
 	if (ate_detect(iot, ioh, myea) == 0) { /* XXX necessary? */
-		DPRINTF("ate_match: ate_detect failed\n");
+		DPRINTF("%s: ate_detect failed\n", __func__);
 		goto out;
 	}
 
 	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ) {
 		if (ia->ia_irq[0].ir_irq != irq) {
-			printf("ate_match: irq mismatch; "
+			aprint_error("%s: irq mismatch; "
 			    "kernel configured %d != board configured %d\n",
-			    ia->ia_irq[0].ir_irq, irq);
+			    __func__, ia->ia_irq[0].ir_irq, irq);
 			goto out;
 		}
 	} else
@@ -191,8 +190,8 @@ fe_simple_probe(bus_space_tag_t iot, bus_space_handle_t ioh,
 	for (p = sp; p->mask != 0; p++) {
 		val = bus_space_read_1(iot, ioh, p->port);
 		if ((val & p->mask) != p->bits) {
-			DPRINTF("fe_simple_probe: %x & %x != %x\n",
-			    val, p->mask, p->bits);
+			DPRINTF("%s: %x & %x != %x\n",
+			    __func__, val, p->mask, p->bits);
 			return 0;
 		}
 	}
@@ -213,13 +212,13 @@ ate_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 	uint8_t eeprom[FE_EEPROM_SIZE];
 	int n;
 
-	static int const irqmap[4][4] = {
+	static const int irqmap[4][4] = {
 		{  3,  4,  5,  9 },
 		{ 10, 11, 12, 15 },
 		{  3, 11,  5, 15 },
 		{ 10, 11, 14, 15 },
 	};
-	static struct fe_simple_probe_struct const probe_table[] = {
+	static const struct fe_simple_probe_struct probe_table[] = {
 		{ FE_DLCR2,  0x70, 0x00 },
 		{ FE_DLCR4,  0x08, 0x00 },
 		{ FE_DLCR5,  0x80, 0x00 },
@@ -231,7 +230,7 @@ ate_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 	};
 
 #if ATE_DEBUG >= 4
-	log(LOG_INFO, "ate_find: probe (0x%x) for ATE\n", iobase);
+	log(LOG_INFO, "%s: probe (0x%x) for ATE\n", __func__, iobase);
 #if 0
 	fe_dump(LOG_INFO, sc);
 #endif
@@ -245,7 +244,7 @@ ate_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 	 * described in the Fujitsu document.  On warm boot, however,
 	 * we can predict almost nothing about register values.
 	 */
-	if (!fe_simple_probe(iot, ioh, probe_table))
+	if (fe_simple_probe(iot, ioh, probe_table) == 0)
 		return 0;
 
 	/* Check if our I/O address matches config info on 86965. */
@@ -265,8 +264,8 @@ ate_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 	/* Make sure that config info in EEPROM and 86965 agree. */
 	if (eeprom[FE_EEPROM_CONF] != bus_space_read_1(iot, ioh, FE_BMPR19)) {
 #ifdef DIAGNOSTIC
-		printf("ate_find: "
-		    "incorrect configuration in eeprom and chip\n");
+		printf("%s: incorrect configuration in eeprom and chip\n",
+		    __func__);
 #endif
 		return 0;
 	}
@@ -316,7 +315,7 @@ ate_detect(bus_space_tag_t iot, bus_space_handle_t ioh,
 	/* Make sure we got a valid station address. */
 	if ((enaddr[0] & 0x03) != 0x00 ||
 	    (enaddr[0] == 0x00 && enaddr[1] == 0x00 && enaddr[2] == 0x00)) {
-		DPRINTF("ate_detect: invalid ethernet address\n");
+		DPRINTF("%s: invalid ethernet address\n", __func__);
 		return 0;
 	}
 
@@ -345,9 +344,9 @@ ate_detect(bus_space_tag_t iot, bus_space_handle_t ioh,
 }
 
 void
-ate_attach(struct device *parent, struct device *self, void *aux)
+ate_attach(device_t parent, device_t self, void *aux)
 {
-	struct ate_softc *isc = (struct ate_softc *)self;
+	struct ate_softc *isc = device_private(self);
 	struct mb86960_softc *sc = &isc->sc_mb86960;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -356,9 +355,11 @@ ate_attach(struct device *parent, struct device *self, void *aux)
 	const char *typestr;
 	int type;
 
+	sc->sc_dev = self;
+
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ATE_NPORTS, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -386,11 +387,11 @@ ate_attach(struct device *parent, struct device *self, void *aux)
 
 	default:
 	  	/* Unknown card type: maybe a new model, but... */
-		printf(": where did the card go?!\n");
+		aprint_error(": where did the card go?!\n");
 		panic("unknown card");
 	}
 
-	printf(": %s Ethernet\n", typestr);
+	aprint_normal(": %s Ethernet\n", typestr);
 
 	/* This interface is always enabled. */
 	sc->sc_stat |= FE_STAT_ENABLED;
@@ -406,6 +407,6 @@ ate_attach(struct device *parent, struct device *self, void *aux)
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, mb86960_intr, sc);
 	if (isc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish interrupt handler\n");
 }

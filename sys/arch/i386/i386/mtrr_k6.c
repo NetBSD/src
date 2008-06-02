@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_k6.c,v 1.12 2007/10/17 19:54:46 garbled Exp $	*/
+/*	$NetBSD: mtrr_k6.c,v 1.12.16.1 2008/06/02 13:22:16 mjf Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.12 2007/10/17 19:54:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.12.16.1 2008/06/02 13:22:16 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ k6_mtrr_init_cpu(struct cpu_info *ci)
 
 	k6_mtrr_reload();
 #if 0
-	mtrr_dump(ci->ci_dev->dv_xname);
+	mtrr_dump(device_xname(ci->ci_dev));
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.14 2008/01/15 14:50:09 joerg Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.14.6.1 2008/06/02 13:21:48 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -60,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2008/01/15 14:50:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14.6.1 2008/06/02 13:21:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +112,8 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 	if (l->l_md.md_flags & MDP_USEDFPU) {
 		fpusave_lwp(l, true);
 	} else {
-		u_int16_t cw;
-		u_int32_t mxcsr, mxcsr_mask;
+		uint16_t cw;
+		uint32_t mxcsr, mxcsr_mask;
 
 		/*
 		 * Fake a FNINIT.
@@ -199,9 +192,9 @@ process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *tf = process_frame(l);
 
-	if ((u_int64_t)addr > VM_MAXUSER_ADDRESS)
+	if ((uint64_t)addr > VM_MAXUSER_ADDRESS)
 		return EINVAL;
-	tf->tf_rip = (u_int64_t)addr;
+	tf->tf_rip = (uint64_t)addr;
 
 	return (0);
 }

@@ -1,9 +1,7 @@
-/*	$NetBSD: psloop.c,v 1.3 2007/12/11 13:16:14 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: psloop - Main AML parse loop
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,6 +114,7 @@
  *
  *****************************************************************************/
 
+
 /*
  * Parse the AML and build an operation tree as most interpreters, (such as
  * Perl) do. Parsing is done by hand rather than with a YACC generated parser
@@ -124,13 +123,10 @@
  * opcode templates in AmlOpInfo[].
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psloop.c,v 1.3 2007/12/11 13:16:14 lukem Exp $");
-
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acparser.h>
-#include <dist/acpica/acdispat.h>
-#include <dist/acpica/amlcode.h>
+#include "acpi.h"
+#include "acparser.h"
+#include "acdispat.h"
+#include "amlcode.h"
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psloop")
@@ -342,7 +338,8 @@ AcpiPsBuildNamedOp (
     AcpiPsAppendArg (*Op, UnnamedOp->Common.Value.Arg);
     AcpiGbl_Depth++;
 
-    if ((*Op)->Common.AmlOpcode == AML_REGION_OP)
+    if ((*Op)->Common.AmlOpcode == AML_REGION_OP ||
+        (*Op)->Common.AmlOpcode == AML_DATA_REGION_OP)
     {
         /*
          * Defer final parsing of an OperationRegion body, because we don't
@@ -427,6 +424,16 @@ AcpiPsCreateOp (
     {
         /*
          * Backup to beginning of CreateXXXfield declaration
+         * BodyLength is unknown until we parse the body
+         */
+        Op->Named.Data = AmlOpStart;
+        Op->Named.Length = 0;
+    }
+
+    if (WalkState->Opcode == AML_BANK_FIELD_OP)
+    {
+        /*
+         * Backup to beginning of BankField declaration
          * BodyLength is unknown until we parse the body
          */
         Op->Named.Data = AmlOpStart;
@@ -1136,7 +1143,8 @@ AcpiPsParseLoop (
                 AcpiGbl_Depth--;
             }
 
-            if (Op->Common.AmlOpcode == AML_REGION_OP)
+            if (Op->Common.AmlOpcode == AML_REGION_OP ||
+                Op->Common.AmlOpcode == AML_DATA_REGION_OP)
             {
                 /*
                  * Skip parsing of control method or opregion body,
@@ -1155,6 +1163,16 @@ AcpiPsParseLoop (
             /*
              * Backup to beginning of CreateXXXfield declaration (1 for
              * Opcode)
+             *
+             * BodyLength is unknown until we parse the body
+             */
+            Op->Named.Length = (UINT32) (ParserState->Aml - Op->Named.Data);
+        }
+
+        if (Op->Common.AmlOpcode == AML_BANK_FIELD_OP)
+        {
+            /*
+             * Backup to beginning of BankField declaration
              *
              * BodyLength is unknown until we parse the body
              */

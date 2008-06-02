@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.29 2007/10/19 12:00:50 ad Exp $ */
+/* $NetBSD: isic_pci.c,v 1.29.16.1 2008/06/02 13:23:41 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.29 2007/10/19 12:00:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.29.16.1 2008/06/02 13:23:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -201,16 +194,16 @@ isic_pci_isdn_attach(psc, pa, cardname)
 		switch(ret)
 		{
 			case 0x01:
-				printf("%s: IPAC PSB2115 Version 1.1\n", sc->sc_dev.dv_xname);
+				printf("%s: IPAC PSB2115 Version 1.1\n", device_xname(&sc->sc_dev));
 				break;
 
 			case 0x02:
-				printf("%s: IPAC PSB2115 Version 1.2\n", sc->sc_dev.dv_xname);
+				printf("%s: IPAC PSB2115 Version 1.2\n", device_xname(&sc->sc_dev));
 				break;
 
 			default:
 				printf("%s: Error, IPAC version %d unknown!\n",
-					sc->sc_dev.dv_xname, ret);
+					device_xname(&sc->sc_dev), ret);
 				return;
 		}
 	}
@@ -225,14 +218,14 @@ isic_pci_isdn_attach(psc, pa, cardname)
 	                case ISAC_VB2:
 			case ISAC_VB3:
 				printf("%s: ISAC %s (IOM-%c)\n",
-					sc->sc_dev.dv_xname,
+					device_xname(&sc->sc_dev),
 					ISACversion[sc->sc_isac_version],
 					sc->sc_bustyp == BUS_TYPE_IOM1 ? '1' : '2');
 				break;
 
 			default:
 				printf("%s: Error, ISAC version %d unknown!\n",
-					sc->sc_dev.dv_xname, sc->sc_isac_version);
+					device_xname(&sc->sc_dev), sc->sc_isac_version);
 				return;
 		}
 
@@ -245,34 +238,33 @@ isic_pci_isdn_attach(psc, pa, cardname)
 			case HSCX_VA3:
 			case HSCX_V21:
 				printf("%s: HSCX %s\n",
-					sc->sc_dev.dv_xname,
+					device_xname(&sc->sc_dev),
 					HSCXversion[sc->sc_hscx_version]);
 				break;
 
 			default:
 				printf("%s: Error, HSCX version %d unknown!\n",
-					sc->sc_dev.dv_xname, sc->sc_hscx_version);
+					device_xname(&sc->sc_dev), sc->sc_hscx_version);
 				return;
 		}
 	}
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, isic_intr_qs1p, psc);
 	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 	psc->sc_pc = pc;
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	sc->sc_intr_valid = ISIC_INTR_DISABLED;
 

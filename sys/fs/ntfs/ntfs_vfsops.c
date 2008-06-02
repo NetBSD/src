@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.65 2008/01/30 11:47:00 ad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.65.6.1 2008/06/02 13:24:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.65 2008/01/30 11:47:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.65.6.1 2008/06/02 13:24:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.65 2008/01/30 11:47:00 ad Exp $");
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -57,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.65 2008/01/30 11:47:00 ad Exp $");
 #include <fs/ntfs/ntfs_vfsops.h>
 #include <fs/ntfs/ntfs_ihash.h>
 #include <fs/ntfs/ntfsmount.h>
+
+MODULE(MODULE_CLASS_VFS, ntfs, NULL);
 
 MALLOC_JUSTDEFINE(M_NTFSMNT, "NTFS mount", "NTFS mount structure");
 MALLOC_JUSTDEFINE(M_NTFSNTNODE,"NTFS ntnode",  "NTFS ntnode information");
@@ -129,7 +132,7 @@ ntfs_mountroot()
 	args.mode = 0777;
 
 	if ((error = ntfs_mountfs(rootvp, mp, &args, l)) != 0) {
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -138,7 +141,7 @@ ntfs_mountroot()
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
 	(void)ntfs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return (0);
 }
 
@@ -150,7 +153,6 @@ ntfs_init()
 	malloc_type_attach(M_NTFSNTNODE);
 	malloc_type_attach(M_NTFSFNODE);
 	malloc_type_attach(M_NTFSDIR);
-	malloc_type_attach(M_NTFSNTHASH);
 	malloc_type_attach(M_NTFSNTVATTR);
 	malloc_type_attach(M_NTFSRDATA);
 	malloc_type_attach(M_NTFSDECOMP);
@@ -173,7 +175,6 @@ ntfs_done()
 	malloc_type_detach(M_NTFSNTNODE);
 	malloc_type_detach(M_NTFSFNODE);
 	malloc_type_detach(M_NTFSDIR);
-	malloc_type_detach(M_NTFSNTHASH);
 	malloc_type_detach(M_NTFSNTVATTR);
 	malloc_type_detach(M_NTFSRDATA);
 	malloc_type_detach(M_NTFSDECOMP);
@@ -349,7 +350,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 
 	bp = NULL;
 
-	error = bread(devvp, BBLOCK, BBSIZE, NOCRED, &bp);
+	error = bread(devvp, BBLOCK, BBSIZE, NOCRED, 0, &bp);
 	if (error)
 		goto out;
 	ntmp = malloc( sizeof *ntmp, M_NTFSMNT, M_WAITOK );
@@ -887,8 +888,22 @@ struct vfsops ntfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	ntfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(ntfs_vfsops);
+
+static int
+ntfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&ntfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&ntfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

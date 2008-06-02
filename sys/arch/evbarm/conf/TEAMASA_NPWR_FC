@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.20 2008/01/19 13:11:14 chris Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.20.6.1 2008/06/02 13:22:01 mjf Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -80,6 +80,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

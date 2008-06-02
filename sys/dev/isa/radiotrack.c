@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.15 2007/10/19 12:00:22 ad Exp $ */
+/* $NetBSD: radiotrack.c,v 1.15.16.1 2008/06/02 13:23:32 mjf Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.15 2007/10/19 12:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radiotrack.c,v 1.15.16.1 2008/06/02 13:23:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ rt_attach(struct device *parent, struct device *self, void *aux)
 	/* remap I/O */
 	if (bus_space_map(sc->lm.iot, ia->ia_io[0].ir_addr,
 	    ia->ia_io[0].ir_size, 0, &sc->lm.ioh))
-		panic(": bus_space_map() of %s failed", sc->sc_dev.dv_xname);
+		panic(": bus_space_map() of %s failed", device_xname(&sc->sc_dev));
 
 	switch (ia->ia_io[0].ir_addr) {
 	case 0x20C:

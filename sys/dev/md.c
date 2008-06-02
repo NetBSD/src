@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.51.18.1 2008/04/05 23:33:20 mjf Exp $	*/
+/*	$NetBSD: md.c,v 1.51.18.2 2008/06/02 13:23:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.51.18.1 2008/04/05 23:33:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.51.18.2 2008/06/02 13:23:11 mjf Exp $");
 
 #include "opt_md.h"
 
@@ -180,7 +180,7 @@ md_attach(struct device *parent, struct device *self,
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&sc->sc_dkdev, sc->sc_dev.dv_xname, &mddkdriver);
+	disk_init(&sc->sc_dkdev, device_xname(&sc->sc_dev), &mddkdriver);
 	disk_attach(&sc->sc_dkdev);
 
 	cmaj = cdevsw_lookup_major(&md_cdevsw);

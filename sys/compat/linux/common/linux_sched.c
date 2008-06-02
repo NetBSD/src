@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.48.6.1 2008/04/03 12:42:33 mjf Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.48.6.2 2008/06/02 13:23:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.48.6.1 2008/04/03 12:42:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.48.6.2 2008/06/02 13:23:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -242,6 +235,11 @@ sched_native2linux(int native_policy, struct sched_param *native_params,
 		KASSERT(prio <= SCHED_PRI_MAX);
 		KASSERT(linux_params != NULL);
 
+#ifdef DEBUG_LINUX
+		printf("native2linux: native: policy %d, priority %d\n",
+		    native_policy, prio);
+#endif
+
 		if (native_policy == SCHED_OTHER) {
 			linux_params->sched_priority = 0;
 		} else {
@@ -251,6 +249,10 @@ sched_native2linux(int native_policy, struct sched_param *native_params,
 			    / (SCHED_PRI_MAX - SCHED_PRI_MIN)
 			    + LINUX_SCHED_RTPRIO_MIN;
 		}
+#ifdef DEBUG_LINUX
+		printf("native2linux: linux: policy %d, priority %d\n",
+		    -1, linux_params->sched_priority);
+#endif
 	}
 
 	return 0;
@@ -315,10 +317,18 @@ linux_sys_sched_getparam(struct lwp *l, const struct linux_sys_sched_getparam_ar
 	error = do_sched_getparam(SCARG(uap, pid), 0, &policy, &sp);
 	if (error)
 		goto out;
+#ifdef DEBUG_LINUX
+	printf("getparam: native: policy %d, priority %d\n",
+	    policy, sp.sched_priority);
+#endif
 
 	error = sched_native2linux(policy, &sp, NULL, &lp);
 	if (error)
 		goto out;
+#ifdef DEBUG_LINUX
+	printf("getparam: linux: policy %d, priority %d\n",
+	    policy, lp.sched_priority);
+#endif
 
 	error = copyout(&lp, SCARG(uap, sp), sizeof(lp));
 	if (error)
@@ -348,10 +358,18 @@ linux_sys_sched_setscheduler(struct lwp *l, const struct linux_sys_sched_setsche
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
 		goto out;
+#ifdef DEBUG_LINUX
+	printf("setscheduler: linux: policy %d, priority %d\n",
+	    SCARG(uap, policy), lp.sched_priority);
+#endif
 
 	error = sched_linux2native(SCARG(uap, policy), &lp, &policy, &sp);
 	if (error)
 		goto out;
+#ifdef DEBUG_LINUX
+	printf("setscheduler: native: policy %d, priority %d\n",
+	    policy, sp.sched_priority);
+#endif
 
 	error = do_sched_setparam(SCARG(uap, pid), 0, policy, &sp);
 	if (error)
@@ -400,15 +418,18 @@ linux_sys_sched_get_priority_max(struct lwp *l, const struct linux_sys_sched_get
 		syscallarg(int) policy;
 	} */
 
-/*
- * We can't emulate anything put the default scheduling policy.
- */
-	if (SCARG(uap, policy) != LINUX_SCHED_OTHER) {
-		*retval = -1;
+	switch (SCARG(uap, policy)) {
+	case LINUX_SCHED_OTHER:
+		*retval = 0;
+		break;
+	case LINUX_SCHED_FIFO:
+	case LINUX_SCHED_RR:
+		*retval = LINUX_SCHED_RTPRIO_MAX;
+		break;
+	default:
 		return EINVAL;
 	}
 
-	*retval = 0;
 	return 0;
 }
 
@@ -419,15 +440,18 @@ linux_sys_sched_get_priority_min(struct lwp *l, const struct linux_sys_sched_get
 		syscallarg(int) policy;
 	} */
 
-/*
- * We can't emulate anything put the default scheduling policy.
- */
-	if (SCARG(uap, policy) != LINUX_SCHED_OTHER) {
-		*retval = -1;
+	switch (SCARG(uap, policy)) {
+	case LINUX_SCHED_OTHER:
+		*retval = 0;
+		break;
+	case LINUX_SCHED_FIFO:
+	case LINUX_SCHED_RR:
+		*retval = LINUX_SCHED_RTPRIO_MIN;
+		break;
+	default:
 		return EINVAL;
 	}
 
-	*retval = 0;
 	return 0;
 }
 
@@ -465,6 +489,7 @@ linux_sys_exit_group(struct lwp *l, const struct linux_sys_exit_group_args *uap,
 		printf("%s:%d\n", __func__, __LINE__);
 #endif
 
+		mutex_enter(proc_lock);
 		led->s->flags |= LINUX_LES_INEXITGROUP;
 		led->s->xstat = W_EXITCODE(SCARG(uap, error_code), 0);
 
@@ -473,7 +498,6 @@ linux_sys_exit_group(struct lwp *l, const struct linux_sys_exit_group_args *uap,
 		 * care of hiding the zombies and reporting the exit code
 		 * properly.
 		 */
-		mutex_enter(&proclist_mutex);
       		LIST_FOREACH(e, &led->s->threads, threads) {
 			if (e->proc == p)
 				continue;
@@ -486,7 +510,7 @@ linux_sys_exit_group(struct lwp *l, const struct linux_sys_exit_group_args *uap,
 
 		/* Now, kill ourselves */
 		psignal(p, SIGKILL);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 
 		return 0;
 
@@ -551,13 +575,15 @@ linux_sys_getppid(struct lwp *l, const void *v, register_t *retval)
 	struct proc *glp;
 	struct proc *pp;
 
+	mutex_enter(proc_lock);
 	if (led->s->flags & LINUX_LES_USE_NPTL) {
 
 		/* Find the thread group leader's parent */
-		if ((glp = pfind(led->s->group_pid)) == NULL) {
+		if ((glp = p_find(led->s->group_pid, PFIND_LOCKED)) == NULL) {
 			/* Maybe panic... */
 			printf("linux_sys_getppid: missing group leader PID"
 			    " %d\n", led->s->group_pid); 
+			mutex_exit(proc_lock);
 			return -1;
 		}
 		pp = glp->p_pptr;
@@ -575,6 +601,7 @@ linux_sys_getppid(struct lwp *l, const void *v, register_t *retval)
 	} else {
 		*retval = p->p_pptr->p_pid;
 	}
+	mutex_exit(proc_lock);
 
 	return 0;
 }

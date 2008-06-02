@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.23 2008/02/07 01:21:58 dyoung Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.23.6.1 2008/06/02 13:23:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.23 2008/02/07 01:21:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.23.6.1 2008/06/02 13:23:53 mjf Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -272,7 +272,7 @@ axe_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	axe_unlock_mii(sc);
 
 	if (err) {
-		printf("%s: read PHY failed\n", USBDEVNAME(sc->axe_dev));
+		aprint_error_dev(sc->axe_dev, "read PHY failed\n");
 		return(-1);
 	}
 
@@ -300,7 +300,7 @@ axe_miibus_writereg(device_ptr_t dev, int phy, int reg, int aval)
 	axe_unlock_mii(sc);
 
 	if (err) {
-		printf("%s: write PHY failed\n", USBDEVNAME(sc->axe_dev));
+		aprint_error_dev(sc->axe_dev, "write PHY failed\n");
 		return;
 	}
 }
@@ -321,7 +321,7 @@ axe_miibus_statchg(device_ptr_t dev)
 	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
 	axe_unlock_mii(sc);
 	if (err) {
-		printf("%s: media change failed\n", USBDEVNAME(sc->axe_dev));
+		aprint_error_dev(sc->axe_dev, "media change failed\n");
 		return;
 	}
 }
@@ -413,17 +413,17 @@ USB_ATTACH(axe)
 	struct mii_data	*mii;
 	u_char eaddr[ETHER_ADDR_LEN];
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->axe_dev);
+	const char *devname = device_xname(self);
 	struct ifnet *ifp;
 	int i, s;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
+	sc->axe_dev = self;
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);
 	if (err) {
-		printf("%s: getting interface handle failed\n",
-		    USBDEVNAME(sc->axe_dev));
+		aprint_error_dev(self, "getting interface handle failed\n");
                 usbd_devinfo_free(devinfop);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -434,8 +434,7 @@ USB_ATTACH(axe)
 
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
 	if (err) {
-		printf("%s: getting interface handle failed\n",
-		    USBDEVNAME(sc->axe_dev));
+		aprint_error_dev(self, "getting interface handle failed\n");
                 usbd_devinfo_free(devinfop);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -446,15 +445,14 @@ USB_ATTACH(axe)
 
 	id = usbd_get_interface_descriptor(sc->axe_iface);
 
-	printf("%s: %s\n", USBDEVNAME(sc->axe_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->axe_iface, i);
 		if (!ed) {
-			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->axe_dev), i);
+			aprint_error_dev(self, "couldn't get ep %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -493,7 +491,7 @@ USB_ATTACH(axe)
 	/*
 	 * An ASIX chip was detected. Inform the world.
 	 */
-	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->axe_dev),
+	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(eaddr));
 
 	/* Initialize interface info.*/
@@ -604,8 +602,7 @@ USB_DETACH(axe)
 	if (sc->axe_ep[AXE_ENDPT_TX] != NULL ||
 	    sc->axe_ep[AXE_ENDPT_RX] != NULL ||
 	    sc->axe_ep[AXE_ENDPT_INTR] != NULL)
-		printf("%s: detach has active endpoints\n",
-		       USBDEVNAME(sc->axe_dev));
+		aprint_debug_dev(self, "detach has active endpoints\n");
 #endif
 
 	sc->axe_attached = 0;
@@ -625,7 +622,7 @@ USB_DETACH(axe)
 int
 axe_activate(device_ptr_t self, enum devact act)
 {
-	struct axe_softc *sc = (struct axe_softc *)self;
+	struct axe_softc *sc = device_private(self);
 
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
 
@@ -655,15 +652,15 @@ axe_newbuf(struct axe_softc *sc, struct axe_chain *c, struct mbuf *m)
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", USBDEVNAME(sc->axe_dev));
+			aprint_error_dev(sc->axe_dev, "no memory for rx list "
+			    "-- packet dropped!\n");
 			return (ENOBUFS);
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", USBDEVNAME(sc->axe_dev));
+			aprint_error_dev(sc->axe_dev, "no memory for rx list "
+			    "-- packet dropped!\n");
 			m_freem(m_new);
 			return (ENOBUFS);
 		}

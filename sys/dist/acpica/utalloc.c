@@ -1,9 +1,7 @@
-/*	$NetBSD: utalloc.c,v 1.6 2007/12/11 13:16:17 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: utalloc - local memory allocation routines
- *              $Revision: 1.6 $
+ *              $Revision: 1.6.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,13 +114,10 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.6 2007/12/11 13:16:17 lukem Exp $");
-
 #define __UTALLOC_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acdebug.h>
+#include "acpi.h"
+#include "acdebug.h"
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utalloc")
@@ -230,7 +225,7 @@ AcpiUtDeleteCaches (
     if (AcpiGbl_DisplayFinalMemStats)
     {
         ACPI_STRCPY (Buffer, "MEMORY");
-        AcpiDbDisplayStatistics (Buffer);
+        (void) AcpiDbDisplayStatistics (Buffer);
     }
 #endif
 

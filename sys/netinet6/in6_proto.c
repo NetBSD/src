@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.79 2007/09/19 04:33:44 dyoung Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.79.20.1 2008/06/02 13:24:26 mjf Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.79 2007/09/19 04:33:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.79.20.1 2008/06/02 13:24:26 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -145,6 +145,44 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.79 2007/09/19 04:33:44 dyoung Exp $"
  */
 
 DOMAIN_DEFINE(inet6domain);	/* forward declare and add to link set */
+
+/* Wrappers to acquire kernel_lock. */
+
+PR_WRAP_USRREQ(rip6_usrreq)
+PR_WRAP_USRREQ(udp6_usrreq)
+PR_WRAP_USRREQ(tcp_usrreq)
+
+#define	rip6_usrreq 	rip6_usrreq_wrapper
+#define	udp6_usrreq 	udp6_usrreq_wrapper
+#define	tcp_usrreq 	tcp_usrreq_wrapper
+
+PR_WRAP_CTLINPUT(rip6_ctlinput)
+PR_WRAP_CTLINPUT(encap6_ctlinput)
+PR_WRAP_CTLINPUT(udp6_ctlinput)
+PR_WRAP_CTLINPUT(tcp6_ctlinput)
+
+#define	rip6_ctlinput	rip6_ctlinput_wrapper
+#define	encap6_ctlinput	encap6_ctlinput_wrapper
+#define	udp6_ctlinput	udp6_ctlinput_wrapper
+#define	tcp6_ctlinput	tcp6_ctlinput_wrapper
+
+PR_WRAP_CTLOUTPUT(rip6_ctloutput)
+PR_WRAP_CTLOUTPUT(ip6_ctloutput)
+PR_WRAP_CTLOUTPUT(tcp_ctloutput)
+PR_WRAP_CTLOUTPUT(icmp6_ctloutput)
+
+#define	rip6_ctloutput	rip6_ctloutput_wrapper
+#define	ip6_ctloutput	ip6_ctloutput_wrapper
+#define	tcp_ctloutput	tcp_ctloutput_wrapper
+#define	icmp6_ctloutput	icmp6_ctloutput_wrapper
+
+#if defined(IPSEC) || defined(FAST_IPSEC)
+PR_WRAP_CTLINPUT(ah6_ctlinput)
+PR_WRAP_CTLINPUT(esp6_ctlinput)
+
+#define	ah6_ctlinput	ah6_ctlinput_wrapper
+#define	esp6_ctlinput	esp6_ctlinput_wrapper
+#endif
 
 const struct ip6protosw inet6sw[] = {
 {	.pr_domain = &inet6domain,
@@ -229,6 +267,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ah6_input,
 	.pr_ctlinput = ah6_ctlinput,
+	.pr_init = ah6_init,
 },
 #ifdef IPSEC_ESP
 {	.pr_type = SOCK_RAW,
@@ -237,6 +276,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = esp6_input,
 	.pr_ctlinput = esp6_ctlinput,
+	.pr_init = esp6_init,
 },
 #endif
 {	.pr_type = SOCK_RAW,
@@ -244,6 +284,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_protocol = IPPROTO_IPCOMP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ipcomp6_input,
+	.pr_init = ipcomp6_init,
 },
 #endif /* IPSEC */
 #ifdef FAST_IPSEC
@@ -337,6 +378,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
 	.pr_usrreq = rip6_usrreq,
+	.pr_init = pim6_init,
 },
 /* raw wildcard */
 {	.pr_type = SOCK_RAW,

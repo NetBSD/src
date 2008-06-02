@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.14 2008/01/04 15:55:31 yamt Exp $ */
+/* $NetBSD: kvm86.c,v 1.14.6.1 2008/06/02 13:22:15 mjf Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.14 2008/01/04 15:55:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.14.6.1 2008/06/02 13:22:15 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -257,9 +257,9 @@ kvm86_bioscall(intno, tf)
 	tf->tf_ds = tf->tf_es = tf->tf_fs = tf->tf_gs = 0;
 
 	kvm86_prepare(bioscallvmd); /* XXX */
-	crit_enter();
+	kpreempt_disable();
 	ret = kvm86_call(tf);
-	crit_exit();
+	kpreempt_enable();
 	mutex_exit(&kvm86_mp_lock);
 	return ret;
 }

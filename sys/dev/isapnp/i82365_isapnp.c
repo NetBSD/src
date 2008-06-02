@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.24 2007/10/19 12:00:31 ad Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.24.16.1 2008/06/02 13:23:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.24 2007/10/19 12:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.24.16.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,17 +122,16 @@ pcic_isapnp_attach(struct device *parent, struct device *self,
 	printf("\n");
 
 	if (isapnp_config(iot, memt, ipa)) {
-		printf("%s: error in region allocation\n", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "error in region allocation\n");
 		return;
 	}
 
-	printf("%s: %s %s", sc->dev.dv_xname, ipa->ipa_devident,
+	printf("%s: %s %s", device_xname(&sc->dev), ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
 	/* sanity check that we get at least one hunk of IO space.. */
 	if (ipa->ipa_nio < 1) {
-		printf("%s: failed to get one chunk of i/o space\n",
-		       sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "failed to get one chunk of i/o space\n");
 		return;
 	}
 

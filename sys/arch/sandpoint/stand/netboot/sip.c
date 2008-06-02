@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.10 2007/12/09 09:55:59 nisimura Exp $ */
+/* $NetBSD: sip.c,v 1.10.10.1 2008/06/02 13:22:37 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -60,17 +53,17 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int sip_match(unsigned, void *);
 void *sip_init(unsigned, void *);
 int sip_send(void *, char *, unsigned);
 int sip_recv(void *, char *, unsigned, unsigned);
-
-#define XD1_OWN		(1U << 31)
-#define XD1_OK		(1U << 27)
 
 struct desc {
 	uint32_t xd0, xd1, xd2;
 	uint32_t hole;
 };
+#define XD1_OWN		(1U << 31)
+#define XD1_OK		(1U << 27)
 
 #define SIP_CR		0x00
 #define  CR_RST		(1U << 8)	/* software reset */
@@ -128,6 +121,19 @@ static void mii_dealan(struct local *, unsigned);
 static const uint8_t bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 #define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
 
+int
+sip_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x100b, 0x0020):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 sip_init(unsigned tag, void *data)
 {
@@ -138,10 +144,10 @@ sip_init(unsigned tag, void *data)
 	uint8_t *en;
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x100b && PCI_PRODUCT(val) != 0x0020)
+	if (PCI_DEVICE(0x100b, 0x0020) != val)
 		return NULL;
 
-	l = ALLOC(struct local, sizeof(struct desc));
+	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
@@ -230,7 +236,7 @@ int
 sip_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *txd;
+	volatile struct desc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
@@ -256,7 +262,7 @@ int
 sip_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *rxd;
+	volatile struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

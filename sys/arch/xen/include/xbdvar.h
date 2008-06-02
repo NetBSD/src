@@ -1,4 +1,4 @@
-/* $NetBSD: xbdvar.h,v 1.10 2008/01/11 20:00:41 bouyer Exp $ */
+/* $NetBSD: xbdvar.h,v 1.10.6.1 2008/06/02 13:22:53 mjf Exp $ */
 
 /*
  *
@@ -38,7 +38,7 @@
 #include <sys/simplelock.h>
 
 struct xbd_softc {
-	struct device		sc_dev;		/* base device glue */
+	device_t		sc_dev;		/* base device glue */
 	struct dk_softc		sc_dksc;	/* generic disk interface */
 	unsigned long		sc_xd_device;	/* cookie identifying device */
 	struct dk_intf		*sc_di;		/* pseudo-disk interface */
@@ -56,7 +56,7 @@ struct xbd_attach_args {
 	struct sysctlnode	*xa_diskcookies;
 };
 
-int xbd_scan(struct device *, struct xbd_attach_args *, cfprint_t);
+int xbd_scan(device_t, struct xbd_attach_args *, cfprint_t);
 void xbd_suspend(void);
 void xbd_resume(void);
 

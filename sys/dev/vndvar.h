@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.21.28.1 2008/04/03 12:42:37 mjf Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.21.28.2 2008/06/02 13:23:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -211,7 +204,8 @@ struct vnd_user {
 };
 
 /*
- * Before you can use a unit, it must be configured with VNDIOCSET.
+ * Before you can use a unit, its name must be registered with VNDIOCREG
+ * and it must be configured with VNDIOCSET.
  * The configuration persists across opens and closes of the device;
  * an VNDIOCCLR must be used to reset a configuration.  An attempt to
  * VNDIOCSET an already active unit will return EBUSY.
@@ -219,3 +213,4 @@ struct vnd_user {
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
 #define VNDIOCGET	_IOWR('F', 3, struct vnd_user)	/* get list */
+#define	VNDIOCREG	_IOW('F', 4, struct vnd_ioctl)	/* register disk name */

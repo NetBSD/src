@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.61 2008/01/30 11:47:00 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.61.6.1 2008/06/02 13:24:05 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.61 2008/01/30 11:47:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.61.6.1 2008/06/02 13:24:05 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.61 2008/01/30 11:47:00 ad Exp $
 #include <sys/stat.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/bootsect.h>
@@ -83,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.61 2008/01/30 11:47:00 ad Exp $
 #include <fs/msdosfs/denode.h>
 #include <fs/msdosfs/msdosfsmount.h>
 #include <fs/msdosfs/fat.h>
+
+MODULE(MODULE_CLASS_VFS, msdosfs, NULL);
 
 #ifdef MSDOSFS_DEBUG
 #define DPRINTF(a) uprintf a
@@ -135,11 +138,25 @@ struct vfsops msdosfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	msdosfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(msdosfs_vfsops);
+
+static int
+msdosfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&msdosfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&msdosfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 static int
 update_mp(mp, argp)
@@ -212,14 +229,14 @@ msdosfs_mountroot()
 	args.dirmask = 0777;
 
 	if ((error = msdosfs_mountfs(rootvp, mp, l, &args)) != 0) {
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		vfs_destroy(mp);
 		return (error);
 	}
 
 	if ((error = update_mp(mp, &args)) != 0) {
 		(void)msdosfs_unmount(mp, 0);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		vfs_destroy(mp);
 		vrele(rootvp);
 		return (error);
@@ -229,7 +246,7 @@ msdosfs_mountroot()
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
 	(void)msdosfs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return (0);
 }
 
@@ -497,7 +514,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 * Read the boot sector of the filesystem, and then check the
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
-	if ((error = bread(devvp, 0, secsize, NOCRED, &bp)) != 0)
+	if ((error = bread(devvp, 0, secsize, NOCRED, 0, &bp)) != 0)
 		goto error_exit;
 	bsp = (union bootsector *)bp->b_data;
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
@@ -728,7 +745,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 		 *	padded at the end or in the middle?
 		 */
 		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    pmp->pm_BytesPerSec, NOCRED, &bp)) != 0)
+		    pmp->pm_BytesPerSec, NOCRED, 0, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!memcmp(fp->fsisig1, "RRaA", 4)
@@ -857,7 +874,7 @@ msdosfs_unmount(mp, mntflags)
 		struct vnode *vp = pmp->pm_devvp;
 
 		printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
-		printf("flag %08x, usecount %d, writecount %ld, holdcnt %ld\n",
+		printf("flag %08x, usecount %d, writecount %d, holdcnt %d\n",
 		    vp->v_vflag | vp->v_iflag | vp->v_uflag, vp->v_usecount,
 		    vp->v_writecount, vp->v_holdcnt);
 		printf("mount %p, op %p\n",

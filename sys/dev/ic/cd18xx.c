@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.22 2007/11/19 18:51:46 ad Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.22.14.1 2008/06/02 13:23:19 mjf Exp $	*/
 
 /* XXXad does this even compile? */
 
@@ -14,8 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -45,13 +43,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -103,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.22 2007/11/19 18:51:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.22.14.1 2008/06/02 13:23:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -236,7 +227,7 @@ cd18xx_attach(sc)
 		}
 
 	if (cd18xx_revs[i].name == NULL) {
-		printf("%s: unknown revision, bailing.\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unknown revision, bailing.\n");
 		return;
 	}
 
@@ -259,7 +250,8 @@ cd18xx_attach(sc)
 	while (--i && cd18xx_read(sc, CD18xx_GSVR) == CD18xx_GSVR_READY)
 		;
 	if (i == 0) {
-		printf("\n%s: did not reset!\n", sc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->sc_dev, "did not reset!\n");
 		return;
 	}
 
@@ -349,8 +341,7 @@ cdtty_attach(sc, port)
 	p->p_rbput = p->p_rbget = p->p_rbuf;
 	p->p_rbavail = cdtty_rbuf_size;
 	if (p->p_rbuf == NULL) {
-		printf("%s: unable to allocate ring buffer for tty %d\n",
-		    sc->sc_dev.dv_xname, port);
+		aprint_error_dev(&sc->sc_dev, "unable to allocate ring buffer for tty %d\n", port);
 		return;
 	}
 	p->p_ebuf = p->p_rbuf + (cdtty_rbuf_size << 1);
@@ -778,7 +769,7 @@ cdtty_loadchannelregs(sc, p)
 	if (cd18xx_wait_ccr(sc)) {
 		DPRINTF(CDD_INFO,
 		    ("%s: cdtty_loadchannelregs ccr wait timed out\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(&sc->sc_dev)));
 	}
 	cd18xx_write(sc, CD18xx_CCR, p->p_chanctl);
 }
@@ -1130,7 +1121,7 @@ cd18xx_rint(sc, ns)
 	/* work out the channel and softc */
 	channel = cd18xx_get_gscr1_channel(sc);
 	p = &sc->sc_ports[channel];
-	DPRINTF(CDD_INTR, ("%s: rint: channel %d", sc->sc_dev.dv_xname, channel));
+	DPRINTF(CDD_INTR, ("%s: rint: channel %d", device_xname(&sc->sc_dev), channel));
 	GOTINTR(sc, p);
 
 	end = p->p_ebuf;
@@ -1206,7 +1197,7 @@ cd18xx_tint(sc, ns)
 	/* work out the channel and softc */
 	channel = cd18xx_get_gscr1_channel(sc);
 	p = &sc->sc_ports[channel];
-	DPRINTF(CDD_INTR, ("%s: tint: channel %d", sc->sc_dev.dv_xname,
+	DPRINTF(CDD_INTR, ("%s: tint: channel %d", device_xname(&sc->sc_dev),
 	    channel));
 	GOTINTR(sc, p);
 
@@ -1287,7 +1278,7 @@ cd18xx_mint(sc, ns)
 	/* work out the channel and softc */
 	channel = cd18xx_get_gscr1_channel(sc);
 	p = &sc->sc_ports[channel];
-	DPRINTF(CDD_INTR, ("%s: mint: channel %d", sc->sc_dev.dv_xname, channel));
+	DPRINTF(CDD_INTR, ("%s: mint: channel %d", device_xname(&sc->sc_dev), channel));
 	GOTINTR(sc, p);
 
 	/*
@@ -1353,7 +1344,7 @@ cd18xx_hardintr(v)
 		if (sc == NULL)
 			continue;
 
-		DPRINTF(CDD_INTR, ("%s:", sc->sc_dev.dv_xname));
+		DPRINTF(CDD_INTR, ("%s:", device_xname(&sc->sc_dev)));
 		while (count-- &&
 		    (status = (cd18xx_read(sc, CD18xx_SRSR) &
 		     CD18xx_SRSR_PENDING))) {

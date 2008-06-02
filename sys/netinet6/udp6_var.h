@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.21 2007/02/17 22:34:15 dyoung Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.21.38.1 2008/06/02 13:24:28 mjf Exp $	*/
 /*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*
@@ -67,20 +67,19 @@
 /*
  * UDP Kernel structures and variables.
  */
-struct	udp6stat {
-				/* input statistics: */
-	u_quad_t udp6s_ipackets;	/* total input packets */
-	u_quad_t udp6s_hdrops;		/* packet shorter than header */
-	u_quad_t udp6s_badsum;		/* checksum error */
-	u_quad_t udp6s_nosum;		/* no checksum */
-	u_quad_t udp6s_badlen;		/* data length larger than packet */
-	u_quad_t udp6s_noport;		/* no socket on port */
-	u_quad_t udp6s_noportmcast;	/* of above, arrived as broadcast */
-	u_quad_t udp6s_fullsock;	/* not delivered, input socket full */
-	u_quad_t udp6ps_pcbcachemiss;	/* input packets missing pcb cache */
-				/* output statistics: */
-	u_quad_t udp6s_opackets;	/* total output packets */
-};
+
+#define	UDP6_STAT_IPACKETS	0	/* total input packets */
+#define	UDP6_STAT_HDROPS	1	/* packet shorter than header */
+#define	UDP6_STAT_BADSUM	2	/* checksum error */
+#define	UDP6_STAT_NOSUM		3	/* no checksum */
+#define	UDP6_STAT_BADLEN	4	/* data length larger than packet */
+#define	UDP6_STAT_NOPORT	5	/* no socket on port */
+#define	UDP6_STAT_NOPORTMCAST	6	/* of above, arrived as multicast */
+#define	UDP6_STAT_FULLSOCK	7	/* not delivered, input socket full */
+#define	UDP6_STAT_PCBCACHEMISS	8	/* input packets missing pcb cache */
+#define	UDP6_STAT_OPACKETS	9	/* total output packets */
+
+#define	UDP6_NSTATS		10
 
 /*
  * Names for UDP6 sysctl objects
@@ -100,9 +99,7 @@ struct	udp6stat {
 }
 
 #ifdef _KERNEL
-extern	struct	udp6stat udp6stat;
-
-void	udp6_ctlinput(int, const struct sockaddr *, void *);
+void	*udp6_ctlinput(int, const struct sockaddr *, void *);
 void	udp6_init(void);
 int	udp6_input(struct mbuf **, int *, int);
 int	udp6_output(struct in6pcb *, struct mbuf *, struct mbuf *,
@@ -111,6 +108,8 @@ int	udp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	udp6_usrreq(struct socket *,
 			 int, struct mbuf *, struct mbuf *, struct mbuf *,
 			 struct lwp *);
+
+void	udp6_statinc(u_int);
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_UDP6_VAR_H_ */

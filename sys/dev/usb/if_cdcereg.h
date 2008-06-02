@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdcereg.h,v 1.2 2005/12/11 12:24:00 christos Exp $ */
+/*	$NetBSD: if_cdcereg.h,v 1.2.72.1 2008/06/02 13:23:53 mjf Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -67,22 +67,11 @@ struct cdce_cdata {
 
 struct cdce_softc {
 	USBBASEDEVICE		 cdce_dev;
-#if defined(__FreeBSD__)
-	struct arpcom		 arpcom;
-#define GET_IFP(sc) (&(sc)->arpcom.ac_if)
-#elif defined(__NetBSD__)
 	struct ethercom		 cdce_ec;
 #if NRND > 0
 	rndsource_element_t	 rnd_source;
 #endif
 #define GET_IFP(sc) (&(sc)->cdce_ec.ec_if)
-#elif defined(__OpenBSD__)
-	struct arpcom		 arpcom;
-#if NRND > 0
-	rndsource_element_t	 rnd_source;
-#endif
-#define GET_IFP(sc) (&(sc)->arpcom.ac_if)
-#endif
 	usbd_device_handle	 cdce_udev;
 	usbd_interface_handle	 cdce_ctl_iface;
 	usbd_interface_handle	 cdce_data_iface;

@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppcvar.h,v 1.2 2007/03/04 06:00:40 christos Exp $ */
+/* $NetBSD: pi1ppcvar.h,v 1.2.40.1 2008/06/02 13:22:37 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -103,7 +103,7 @@ struct pi1ppc_handler_node {
 /* Generic structure to hold parallel port chipset info. */
 struct pi1ppc_softc {
 	/* Generic device attributes */
-	struct device sc_dev;
+        device_t sc_dev;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Simple lock */
@@ -118,7 +118,7 @@ struct pi1ppc_softc {
 	bus_size_t sc_dma_maxsize;
 
 	/* Child device */
-	struct device * child;
+	device_t child;
 
         /* Opaque handle used for interrupt handler establishment */
 	void *sc_ieh;
@@ -142,9 +142,9 @@ struct pi1ppc_softc {
 	int (*sc_dma_start)(struct pi1ppc_softc *, void *, u_int, u_int8_t);
 	int (*sc_dma_finish)(struct pi1ppc_softc *);
 	int (*sc_dma_abort)(struct pi1ppc_softc *);
-	int (*sc_dma_malloc)(struct device *, void **, bus_addr_t *,
+	int (*sc_dma_malloc)(device_t, void **, bus_addr_t *,
 		bus_size_t);
-	void (*sc_dma_free)(struct device *, void **, bus_addr_t *,
+	void (*sc_dma_free)(device_t, void **, bus_addr_t *,
 		bus_size_t);
 
 	/* Microsequence related members */

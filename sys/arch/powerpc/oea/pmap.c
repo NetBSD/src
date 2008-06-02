@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56.6.1 2008/04/03 12:42:23 mjf Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56.6.2 2008/06/02 13:22:33 mjf Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -70,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56.6.1 2008/04/03 12:42:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56.6.2 2008/06/02 13:22:33 mjf Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3468,7 +3461,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 
 	pool_init(&pmap_upvo_pool, sizeof(struct pvo_entry),
 	    sizeof(struct pvo_entry), 0, 0, "pmap_upvopl",
-	    &pmap_pool_uallocator, IPL_NONE);
+	    &pmap_pool_uallocator, IPL_VM);
 
 	pool_setlowat(&pmap_upvo_pool, 252);
 
@@ -3479,7 +3472,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 #if defined(PMAP_NEED_MAPKERNEL) || 1
 	{
 		struct pmap *pm = pmap_kernel();
-#if 0
+#if defined(PMAP_NEED_FULL_MAPKERNEL)
 		extern int etext[], kernel_text[];
 		vaddr_t va, va_etext = (paddr_t) etext;
 #endif
@@ -3502,7 +3495,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			}
 		}
 
-#if 0
+#if defined(PMAP_NEED_FULL_MAPKERNEL)
 		va = (vaddr_t) kernel_text;
 
 		for (pa = kernelstart; va < va_etext;
@@ -3519,8 +3512,17 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			pmap_pte_insert(ptegidx, &pt);
 		}
 
-		for (va = 0, pa = 0; va < 0x3000; 
+		for (va = 0, pa = 0; va < kernelstart;
 		     pa += PAGE_SIZE, va += PAGE_SIZE) {
+			ptegidx = va_to_pteg(pm, va);
+			if (va < 0x3000)
+				pmap_pte_create(&pt, pm, va, pa | PTE_M|PTE_BR);
+			else
+				pmap_pte_create(&pt, pm, va, pa | PTE_M|PTE_BW);
+			pmap_pte_insert(ptegidx, &pt);
+		}
+		for (va = kernelend, pa = kernelend; va < SEGMENT_LENGTH;
+		    pa += PAGE_SIZE, va += PAGE_SIZE) {
 			ptegidx = va_to_pteg(pm, va);
 			pmap_pte_create(&pt, pm, va, pa | PTE_M|PTE_BW);
 			pmap_pte_insert(ptegidx, &pt);

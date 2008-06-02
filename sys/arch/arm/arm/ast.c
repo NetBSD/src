@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.13 2007/11/05 20:43:01 ad Exp $	*/
+/*	$NetBSD: ast.c,v 1.13.16.1 2008/06/02 13:21:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.13 2007/11/05 20:43:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.13.16.1 2008/06/02 13:21:52 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -69,16 +69,28 @@ __KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.13 2007/11/05 20:43:01 ad Exp $");
 /*
  * Prototypes
  */
-void ast __P((struct trapframe *));
+void ast(struct trapframe *);
  
-int astpending;
-
 void
 userret(struct lwp *l)
 {
+#ifdef CPU_ARM11
+	struct cpu_info * const ci = curcpu();
+#endif
 
 	/* Invoke MI userret code */
 	mi_userret(l);
+
+#ifdef CPU_ARM11
+	/*
+	 * This is a hack to work around an unknown cache bug on the ARM11
+	 * Before returning we clean the data cache.
+	 */
+	if (ci->ci_arm_cputype == CPU_ID_ARM1136JS
+	    || ci->ci_arm_cputype == CPU_ID_ARM1136JSR1) {
+                __asm("mcr\tp15, 0, %0, c7, c10, 0" :: "r"(0));
+	}
+#endif
 }
 
 
@@ -120,10 +132,8 @@ ast(struct trapframe *tf)
 	}
 
 	/* Allow a forced task switch. */
-	if (curcpu()->ci_want_resched)
+	if (l->l_cpu->ci_want_resched)
 		preempt();
 
 	userret(l);
 }
-
-/* End of ast.c */

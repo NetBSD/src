@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.4 2005/12/11 12:24:47 christos Exp $
+#	$NetBSD: Makefile,v 1.4.70.1 2008/06/02 13:24:17 mjf Exp $
 
 SUBDIR=		vnd
 
-.if ${MACHINE} == "i386" || ${MACHINE} == "alpha"
-SUBDIR+=	pci
+.if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
+SUBDIR+=	isa
 .endif
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "alpha"
-SUBDIR+=	pcmcia
+SUBDIR+=	pci pcmcia
 .endif
 
 .include <bsd.subdir.mk>

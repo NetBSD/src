@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.134.6.1 2008/04/03 12:43:01 mjf Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.134.6.2 2008/06/02 13:24:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,9 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.134.6.1 2008/04/03 12:43:01 mjf Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.134.6.2 2008/06/02 13:24:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -126,7 +117,7 @@ void	_kernel_lock_dump(volatile void *);
 
 lockops_t _kernel_lock_ops = {
 	"Kernel lock",
-	0,
+	LOCKOPS_SPIN,
 	_kernel_lock_dump
 };
 
@@ -164,7 +155,7 @@ _kernel_lock_dump(volatile void *junk)
 void
 _kernel_lock(int nlocks)
 {
-	struct cpu_info *ci = curcpu();
+	struct cpu_info *ci;
 	LOCKSTAT_TIMER(spintime);
 	LOCKSTAT_FLAG(lsflag);
 	struct lwp *owant;
@@ -174,22 +165,24 @@ _kernel_lock(int nlocks)
 
 	_KERNEL_LOCK_ASSERT(nlocks > 0);
 
+	s = splvm();
+	ci = curcpu();
 	if (ci->ci_biglock_count != 0) {
 		_KERNEL_LOCK_ASSERT(__SIMPLELOCK_LOCKED_P(kernel_lock));
 		ci->ci_biglock_count += nlocks;
 		l->l_blcnt += nlocks;
+		splx(s);
 		return;
 	}
 
 	_KERNEL_LOCK_ASSERT(l->l_blcnt == 0);
 	LOCKDEBUG_WANTLOCK(kernel_lock_dodebug, kernel_lock, RETURN_ADDRESS,
-	    0);
+	    false, false);
 
-	s = splvm();
 	if (__cpu_simple_lock_try(kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
-		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock,
+		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
 		    RETURN_ADDRESS, 0);
 		splx(s);
 		return;
@@ -219,7 +212,7 @@ _kernel_lock(int nlocks)
 		splx(s);
 		while (__SIMPLELOCK_LOCKED_P(kernel_lock)) {
 			if (SPINLOCK_SPINOUT(spins)) {
-				extern volatile int start_init_exec;
+				extern int start_init_exec;
 				if (!start_init_exec)
 					_KERNEL_LOCK_ABORT("spinout");
 			}
@@ -232,7 +225,8 @@ _kernel_lock(int nlocks)
 	ci->ci_biglock_count = nlocks;
 	l->l_blcnt = nlocks;
 	LOCKSTAT_STOP_TIMER(lsflag, spintime);
-	LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, RETURN_ADDRESS, 0);
+	LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
+	    RETURN_ADDRESS, 0);
 	if (owant == NULL) {
 		LOCKSTAT_EVENT_RA(lsflag, kernel_lock,
 		    LB_KERNEL_LOCK | LB_SPIN, 1, spintime, RETURN_ADDRESS);
@@ -268,7 +262,7 @@ _kernel_lock(int nlocks)
 void
 _kernel_unlock(int nlocks, int *countp)
 {
-	struct cpu_info *ci = curcpu();
+	struct cpu_info *ci;
 	u_int olocks;
 	int s;
 	struct lwp *l = curlwp;
@@ -292,19 +286,23 @@ _kernel_unlock(int nlocks, int *countp)
 		nlocks = 1;
 		_KERNEL_LOCK_ASSERT(olocks == 1);
 	}
-
+	s = splvm();
+	ci = curcpu();
 	_KERNEL_LOCK_ASSERT(ci->ci_biglock_count >= l->l_blcnt);
-
-	l->l_blcnt -= nlocks;
 	if (ci->ci_biglock_count == nlocks) {
-		s = splvm();
 		LOCKDEBUG_UNLOCKED(kernel_lock_dodebug, kernel_lock,
 		    RETURN_ADDRESS, 0);
 		ci->ci_biglock_count = 0;
 		__cpu_simple_unlock(kernel_lock);
+		l->l_blcnt -= nlocks;
 		splx(s);
-	} else
+		if (l->l_dopreempt)
+			kpreempt(0);
+	} else {
 		ci->ci_biglock_count -= nlocks;
+		l->l_blcnt -= nlocks;
+		splx(s);
+	}
 
 	if (countp != NULL)
 		*countp = olocks;

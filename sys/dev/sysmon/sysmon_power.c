@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.35.6.1 2008/04/03 12:42:57 mjf Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.35.6.2 2008/06/02 13:23:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.35.6.1 2008/04/03 12:42:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.35.6.2 2008/06/02 13:23:52 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -1011,14 +1011,16 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 			/*
 			 * Come out of power-save state.
 			 */
-			printf("%s: AC adapter online.\n", smpsw->smpsw_name);
+			aprint_normal("%s: AC adapter online.\n",
+			    smpsw->smpsw_name);
 			break;
 
 		case PSWITCH_EVENT_RELEASED:
 			/*
 			 * Try to enter a power-save state.
 			 */
-			printf("%s: AC adapter offline.\n", smpsw->smpsw_name);
+			aprint_normal("%s: AC adapter offline.\n",
+			    smpsw->smpsw_name);
 			break;
 		}
 		break;

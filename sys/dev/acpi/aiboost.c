@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.22 2008/02/01 23:12:30 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.22.6.1 2008/06/02 13:23:12 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.22 2008/02/01 23:12:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.22.6.1 2008/06/02 13:23:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ aiboost_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 		/* Temperatures */
 		val = aiboost_get_value(h, "RTMP", sc->sc_aitemp->elem[i].id);
 		AIBOOST_INVALIDATE_SENSOR();
-		/* envsys(4) wants mK... convert from Celsius. */
+		/* envsys(4) wants uK... convert from Celsius. */
 		edata->value_cur = val * 100000 + 273150000;
 		DPRINTF(("%s: temp[%d] value_cur=%d val=%d j=%d\n", __func__,
 		    i, edata->value_cur, val, j));
@@ -309,12 +309,19 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 	ACPI_BUFFER buf, buf2;
 	ACPI_OBJECT *o, *elem, *subobj, *myobj;
 	ACPI_STATUS status;
+	ACPI_HANDLE h1;
 	struct aiboost_comp *c = NULL;
-	int i;
+	int i, num;
 	const char *str = NULL;
 	size_t length, clen = 0;
 
-	status = acpi_eval_struct(h, name, &buf);
+	status = AcpiGetHandle(h, name, &h1);
+	if (ACPI_FAILURE(status)) {
+		DPRINTF(("%s: AcpiGetHandle\n", __func__));
+		return status;
+	}
+
+	status = acpi_eval_struct(h1, NULL, &buf);
 	if (ACPI_FAILURE(status)) {
 		DPRINTF(("%s: acpi_eval_struct\n", __func__));
 		return status;
@@ -331,40 +338,69 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 		DPRINTF(("%s: elem->Type != ACPI_TYPE_INTEGER\n", __func__));
 		goto error;
 	}
+	num = (int)elem[0].Integer.Value;
+	if (num != o->Package.Count - 1) {
+		DPRINTF(("%s: bad Package.Count/element[0].value\n", __func__));
+	}
 
-	clen = sizeof(struct aiboost_comp) + sizeof(struct aiboost_elem) *
-	    (o->Package.Count - 1);
+	clen = sizeof(struct aiboost_comp) + sizeof(struct aiboost_elem) * num;
 	c = kmem_zalloc(clen, KM_NOSLEEP);
 	if (!c)
 		goto error;
 
 	*comp = c;
-	c->num = o->Package.Count - 1;
+	c->num = num;
 
-	for (i = 1; i < o->Package.Count; i++) {
-		elem = &o->Package.Elements[i];
-		if (elem->Type != ACPI_TYPE_ANY) {
-			DPRINTF(("%s: elem->Type != ACPI_TYPE_ANY\n",
+	DPRINTF(("%s, %d subitems\n", acpi_name(h1), num));
+#ifdef AIBOOST_DEBUG
+	for (i = 0; i < num; i++) {
+		elem = &o->Package.Elements[i+1];
+		DPRINTF(("elem[%d]->Type = %x\n", i+1, elem->Type));
+		if (elem->Type == ACPI_TYPE_PACKAGE &&
+			elem->Package.Elements[0].Type == ACPI_TYPE_INTEGER) {
+			DPRINTF((" subelem->Type = %x, %d\n",
+			    elem->Package.Elements[0].Type,
+			    (int)elem->Package.Elements[0].Integer.Value));
+		}
+	}
+#endif
+	for (i = 0; i < num; i++) {
+		elem = &o->Package.Elements[i+1];
+		if (elem->Type == ACPI_TYPE_PACKAGE) {
+			/* information provided directly in package */
+			subobj = elem;
+			buf2.Pointer = NULL;
+		} else if (elem->Type == ACPI_TYPE_LOCAL_REFERENCE) {
+			/* information provided indirectly.  request package */
+			c->elem[i].h = elem->Reference.Handle;
+			status = acpi_eval_struct(c->elem[i].h, NULL, &buf2);
+			if (ACPI_FAILURE(status)) {
+				DPRINTF(("%s: fetching object in buf2\n",
+				    __func__));
+				goto error;
+			}
+			subobj = buf2.Pointer;
+			if (subobj->Type != ACPI_TYPE_PACKAGE) {
+				DPRINTF(("%s: fetched type cannot processed\n",
+				    __func__));
+				goto error;
+			}
+		} else {
+			DPRINTF(("%s: elem->Type cannot be processed\n",
 			    __func__));
 			goto error;
 		}
 
-		c->elem[i - 1].h = elem->Reference.Handle;
-		status = acpi_eval_struct(c->elem[i - 1].h, NULL, &buf2);
-		if (ACPI_FAILURE(status)) {
-			DPRINTF(("%s; fetching object in buf2\n",
-			    __func__));
-			goto error;
-		}
-
-		subobj = buf2.Pointer;
 		myobj = &subobj->Package.Elements[0];
 
 		/* Get UID */
-		if (myobj == NULL || myobj->Type != ACPI_TYPE_INTEGER)
+		if (myobj == NULL || myobj->Type != ACPI_TYPE_INTEGER) {
+			DPRINTF(("%s: wrong type for element %d\n", __func__,
+			    i + 1));
 			goto error;
+		}
 
-		c->elem[i - 1].id = myobj->Integer.Value;
+		c->elem[i].id = myobj->Integer.Value;
 
 		/* Get string */
 		myobj = &subobj->Package.Elements[1];
@@ -387,9 +423,9 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 		}
 
 		DPRINTF(("%s: id=%d str=%s\n", __func__,
-		    c->elem[i - 1].id, str));
+		    c->elem[i].id, str));
 
-		(void)memcpy(c->elem[i - 1].desc, str, length);
+		(void)memcpy(c->elem[i].desc, str, length);
 
 		if (buf2.Pointer)
 			AcpiOsFree(buf2.Pointer);

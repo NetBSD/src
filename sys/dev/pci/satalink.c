@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.35.6.1 2008/04/03 12:42:53 mjf Exp $	*/
+/*	$NetBSD: satalink.c,v 1.35.6.2 2008/06/02 13:23:43 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.35.6.1 2008/04/03 12:42:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.35.6.2 2008/06/02 13:23:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -824,8 +817,9 @@ sii3112_drv_probe(struct ata_channel *chp)
 
 	sstatus = BA5_READ_4(sc, chp->ch_channel, ba5_SStatus);
 #if 0
-	aprint_normal("%s: port %d: SStatus=0x%08x, SControl=0x%08x\n",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel, sstatus,
+	aprint_normal_dev(&sc->sc_wdcdev.sc_atac.atac_dev,
+	    "port %d: SStatus=0x%08x, SControl=0x%08x\n",
+	    chp->ch_channel, sstatus,
 	    BA5_READ_4(sc, chp->ch_channel, ba5_SControl));
 #endif
 	switch (sstatus & SStatus_DET_mask) {
@@ -865,7 +859,7 @@ sii3112_drv_probe(struct ata_channel *chp)
 				      wdr->cmd_iohs[wd_cyl_hi], 0);
 #if 0
 		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, chp->ch_channel,
+		    device_xname(&sc->sc_wdcdev.sc_atac.atac_dev), chp->ch_channel,
 		    scnt, sn, cl, ch);
 #endif
 		/*

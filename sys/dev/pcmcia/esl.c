@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.22 2007/10/19 12:01:04 ad Exp $	*/
+/*	$NetBSD: esl.c,v 1.22.16.1 2008/06/02 13:23:45 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Jared D. McNeill.
- * 4. Neither the name of the author nor the names of any contributors may
- *    be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -34,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.22 2007/10/19 12:01:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.22.16.1 2008/06/02 13:23:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +149,7 @@ esl_open(void *hdl, int flags)
 		return ENXIO;
 
 	if (esl_reset(sc) != 0) {
-		printf("%s: esl_open: esl_reset failed\n",
-		    sc->sc_esl.sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_esl.sc_dev, "esl_open: esl_reset failed\n");
 		return ENXIO;
 	}
 
@@ -485,8 +478,7 @@ esl_trigger_output(void *hdl, void *start, void *end, int blksize,
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	if (sc->sc_esl.active) {
-		printf("%s: esl_trigger_output: already running\n",
-		    sc->sc_esl.sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_esl.sc_dev, "esl_trigger_output: already running\n");
 		return 1;
 	}
 
@@ -535,7 +527,7 @@ esl_trigger_output(void *hdl, void *start, void *end, int blksize,
 	esl_write_x_reg(sc, ESS_XCMD_AUDIO1_CTRL2, reg);
 	cnt = (char *)end - (char *)start;
 	if (cnt == 0)
-		printf("%s: no count left\n", sc->sc_esl.sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_esl.sc_dev, "no count left\n");
 
 	sc->sc_esl.sc_dmaaddr = sc->sc_esl.sc_dmastart = start;
 	sc->sc_esl.sc_dmaend = end;
@@ -572,14 +564,12 @@ esl_init(struct esl_pcmcia_softc *sc)
 	for (i = 0; ENABLE_ORDER[i] != -1; i++)
 		bus_space_read_1(iot, ioh, ENABLE[i]);
 	if (esl_reset(sc)) {
-		printf("%s: esl_init: esl_reset failed\n",
-		    sc->sc_esl.sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_esl.sc_dev, "esl_init: esl_reset failed\n");
 		return 1;
 	}
 
 	if (esl_identify(sc)) {
-		printf("%s: esl_init: esl_identify failed\n",
-		    sc->sc_esl.sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_esl.sc_dev, "esl_init: esl_identify failed\n");
 		return 1;
 	}
 
@@ -600,12 +590,12 @@ esl_init(struct esl_pcmcia_softc *sc)
 
 	if (model == ESS_UNSUPPORTED) {
 		printf("%s: unknown model 0x%04x\n",
-		    sc->sc_esl.sc_dev.dv_xname, sc->sc_esl.sc_version);
+		    device_xname(&sc->sc_esl.sc_dev), sc->sc_esl.sc_version);
 		return 1;
 	}
 
 	printf("%s: ESS AudioDrive %s [version 0x%04x]\n",
-	    sc->sc_esl.sc_dev.dv_xname, eslmodel[model],
+	    device_xname(&sc->sc_esl.sc_dev), eslmodel[model],
 	    sc->sc_esl.sc_version);
 
 	/* Set volumes to 50% */

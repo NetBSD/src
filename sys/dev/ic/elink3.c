@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.124 2007/10/19 11:59:51 ad Exp $	*/
+/*	$NetBSD: elink3.c,v 1.124.16.1 2008/06/02 13:23:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -69,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.124 2007/10/19 11:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.124.16.1 2008/06/02 13:23:21 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -400,10 +393,10 @@ epconfig(sc, chipset, enaddr)
 		break;
 
 	default:
-		aprint_error(
-		    "%s: wrote 0x%x to TX_AVAIL_THRESH, read back 0x%x. "
+		aprint_error_dev(&sc->sc_dev,
+		    "wrote 0x%x to TX_AVAIL_THRESH, read back 0x%x. "
 		    "Interface disabled\n",
-		    sc->sc_dev.dv_xname, ELINK_LARGEWIN_PROBE, (int) i);
+		    ELINK_LARGEWIN_PROBE, (int) i);
 		return (1);
 	}
 
@@ -415,7 +408,7 @@ epconfig(sc, chipset, enaddr)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
 	    SET_TX_AVAIL_THRESH | (1600 >> sc->ep_pktlenshift));
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = epstart;
 	ifp->if_ioctl = epioctl;
@@ -447,8 +440,7 @@ epconfig(sc, chipset, enaddr)
 	 * Display some additional information, if pertinent.
 	 */
 	if (sc->ep_flags & ELINK_FLAGS_USEFIFOBUFFER)
-		aprint_normal("%s: RoadRunner FIFO buffer enabled\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "RoadRunner FIFO buffer enabled\n");
 
 	/*
 	 * Initialize our media structures and MII info.  We'll
@@ -513,7 +505,7 @@ epconfig(sc, chipset, enaddr)
 	GO_WINDOW(1);		/* Window 1 is operating window */
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 	    RND_TYPE_NET, 0);
 #endif
 
@@ -564,8 +556,7 @@ ep_internalconfig(sc)
 
 	ram_split  = (config1 & CONFIG_RAMSPLIT) >> CONFIG_RAMSPLIT_SHIFT;
 
-	aprint_normal("%s: address %s, %dKB %s-wide FIFO, %s Rx:Tx split\n",
-	       sc->sc_dev.dv_xname,
+	aprint_normal_dev(&sc->sc_dev, "address %s, %dKB %s-wide FIFO, %s Rx:Tx split\n",
 	       ether_sprintf(CLLADDR(sc->sc_ethercom.ec_if.if_sadl)),
 	       8 << ram_size,
 	       (ram_width) ? "word" : "byte",
@@ -596,7 +587,7 @@ ep_509_probemedia(sc)
 	GO_WINDOW(0);
 	ep_w0_config = bus_space_read_2(iot, ioh, ELINK_W0_CONFIG_CTRL);
 
-	aprint_normal("%s: ", sc->sc_dev.dv_xname);
+	aprint_normal_dev(&sc->sc_dev, "");
 
 	/* Sanity check that there are any media! */
 	if ((ep_w0_config & ELINK_W0_CC_MEDIAMASK) == 0) {
@@ -668,7 +659,7 @@ ep_vortex_probemedia(sc)
 
 	default_media = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
 
-	aprint_normal("%s: ", sc->sc_dev.dv_xname);
+	aprint_normal_dev(&sc->sc_dev, "");
 
 	/* Sanity check that there are any media! */
 	if ((reset_options & ELINK_PCI_MEDIAMASK) == 0) {
@@ -1014,7 +1005,7 @@ epsetmedia(sc)
 		break;
 
 	case IFM_NONE:
-		printf("%s: interface disabled\n", sc->sc_dev.dv_xname);
+		printf("%s: interface disabled\n", device_xname(&sc->sc_dev));
 		return;
 
 	default:
@@ -1295,7 +1286,7 @@ readcheck:
 		if (epstatus(sc)) {
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: adapter reset\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 			epreset(sc);
 		}
 	}
@@ -1328,26 +1319,26 @@ epstatus(sc)
 
 	if (fifost & FIFOS_RX_UNDERRUN) {
 		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-			printf("%s: RX underrun\n", sc->sc_dev.dv_xname);
+			printf("%s: RX underrun\n", device_xname(&sc->sc_dev));
 		epreset(sc);
 		return 0;
 	}
 
 	if (fifost & FIFOS_RX_STATUS_OVERRUN) {
 		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-			printf("%s: RX Status overrun\n", sc->sc_dev.dv_xname);
+			printf("%s: RX Status overrun\n", device_xname(&sc->sc_dev));
 		return 1;
 	}
 
 	if (fifost & FIFOS_RX_OVERRUN) {
 		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-			printf("%s: RX overrun\n", sc->sc_dev.dv_xname);
+			printf("%s: RX overrun\n", device_xname(&sc->sc_dev));
 		return 1;
 	}
 
 	if (fifost & FIFOS_TX_OVERRUN) {
 		if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
-			printf("%s: TX overrun\n", sc->sc_dev.dv_xname);
+			printf("%s: TX overrun\n", device_xname(&sc->sc_dev));
 		epreset(sc);
 		return 0;
 	}
@@ -1377,13 +1368,13 @@ eptxstat(sc)
 			++sc->sc_ethercom.ec_if.if_oerrors;
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
-				       sc->sc_dev.dv_xname, i);
+				       device_xname(&sc->sc_dev), i);
 			epreset(sc);
 		} else if (i & TXS_UNDERRUN) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: fifo underrun (%x) @%d\n",
-				       sc->sc_dev.dv_xname, i,
+				       device_xname(&sc->sc_dev), i,
 				       sc->tx_start_thresh);
 			if (sc->tx_succ_ok < 100)
 				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
@@ -1421,7 +1412,7 @@ epintr(arg)
 			if ((status & INTR_LATCH) == 0) {
 #if 0
 				printf("%s: intr latch cleared\n",
-				       sc->sc_dev.dv_xname);
+				       device_xname(&sc->sc_dev));
 #endif
 				break;
 			}
@@ -1441,7 +1432,7 @@ epintr(arg)
 #if 0
 		status = bus_space_read_2(iot, ioh, ELINK_STATUS);
 
-		printf("%s: intr%s%s%s%s\n", sc->sc_dev.dv_xname,
+		printf("%s: intr%s%s%s%s\n", device_xname(&sc->sc_dev),
 		       (status & RX_COMPLETE)?" RX_COMPLETE":"",
 		       (status & TX_COMPLETE)?" TX_COMPLETE":"",
 		       (status & TX_AVAIL)?" TX_AVAIL":"",
@@ -1457,7 +1448,7 @@ epintr(arg)
 		}
 		if (status & CARD_FAILURE) {
 			printf("%s: adapter failure (%x)\n",
-			    sc->sc_dev.dv_xname, status);
+			    device_xname(&sc->sc_dev), status);
 #if 1
 			epinit(ifp);
 #else
@@ -1513,7 +1504,7 @@ again:
 			s = "dribble bits";
 
 		if (s)
-			printf("%s: %s\n", sc->sc_dev.dv_xname, s);
+			printf("%s: %s\n", device_xname(&sc->sc_dev), s);
 	}
 
 	if (len & ERR_INCOMPLETE)
@@ -1569,7 +1560,7 @@ again:
 		if (len & ERR_INCOMPLETE) {
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: adapter reset\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 			epreset(sc);
 			return;
 		}
@@ -1784,7 +1775,7 @@ epwatchdog(ifp)
 {
 	struct ep_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 	++sc->sc_ethercom.ec_if.if_oerrors;
 
 	epreset(sc);
@@ -1923,14 +1914,14 @@ epbusyeeprom(sc)
 			break;
 	}
 	if (i == 0) {
-		printf("\n%s: eeprom failed to come ready\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->sc_dev, "eeprom failed to come ready\n");
 		return (1);
 	}
 	if (sc->ep_chipset != ELINK_CHIPSET_CORKSCREW &&
 	    (j & EEPROM_TST_MODE) != 0) {
 		/* XXX PnP mode? */
-		printf("\n%s: erase pencil mark!\n", sc->sc_dev.dv_xname);
+		printf("\n%s: erase pencil mark!\n", device_xname(&sc->sc_dev));
 		return (1);
 	}
 	return (0);
@@ -2023,8 +2014,7 @@ epenable(sc)
 
 	if (sc->enabled == 0 && sc->enable != NULL) {
 		if ((*sc->enable)(sc) != 0) {
-			printf("%s: device enable failed\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "device enable failed\n");
 			return (EIO);
 		}
 	}

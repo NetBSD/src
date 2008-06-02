@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.12 2008/01/31 19:30:23 plunky Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.12.6.1 2008/06/02 13:24:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.12 2008/01/31 19:30:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.12.6.1 2008/06/02 13:24:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -292,11 +292,10 @@ rfcomm_session_timeout(void *arg)
 {
 	struct rfcomm_session *rs = arg;
 	struct rfcomm_dlc *dlc;
-	int s;
 
 	KASSERT(rs != NULL);
 
-	s = splsoftnet();
+	mutex_enter(bt_lock);
 	callout_ack(&rs->rs_timeout);
 
 	if (rs->rs_state != RFCOMM_SESSION_OPEN) {
@@ -314,7 +313,7 @@ rfcomm_session_timeout(void *arg)
 		DPRINTF("expiring\n");
 		rfcomm_session_free(rs);
 	}
-	splx(s);
+	mutex_exit(bt_lock);
 }
 
 /***********************************************************************

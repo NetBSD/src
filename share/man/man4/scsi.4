@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsi.4,v 1.28 2006/07/26 10:59:52 cube Exp $
+.\"	$NetBSD: scsi.4,v 1.28.18.1 2008/06/02 13:21:36 mjf Exp $
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
 .\"
@@ -109,8 +109,9 @@ driver so that user level
 .Xr ioctl 2
 calls may still be performed against the device. Currently, only
 .Xr sd 4 ,
-.Xr cd 4
-or
+.Xr cd 4 ,
+.Xr st 4
+and
 .Xr uk 4
 can attach to an atapi bus.
 .Pp

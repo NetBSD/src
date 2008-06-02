@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.26 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.26.48.1 2008/06/02 13:23:38 mjf Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.26 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.26.48.1 2008/06/02 13:23:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,19 +216,19 @@ en_pci_attach(struct device *parent, struct device *self, void *aux)
    */
 
   if (pci_intr_map(pa, &ih)) {
-    aprint_error("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+    aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
     return;
   }
   intrstr = pci_intr_string(scp->en_pc, ih);
   scp->sc_ih = pci_intr_establish(scp->en_pc, ih, IPL_NET, en_intr, sc);
   if (scp->sc_ih == NULL) {
-    aprint_error("%s: couldn't establish interrupt\n", sc->sc_dev.dv_xname);
+    aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
     if (intrstr != NULL)
       aprint_normal(" at %s", intrstr);
     aprint_normal("\n");
     return;
   }
-  aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+  aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
   sc->ipl = 1; /* XXX */
 
   /*
@@ -239,7 +239,7 @@ en_pci_attach(struct device *parent, struct device *self, void *aux)
 			  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 			  &sc->en_memt, &sc->en_base, NULL, &sc->en_obmemsz);
   if (retval) {
-    aprint_error("%s: couldn't map memory\n", sc->sc_dev.dv_xname);
+    aprint_error_dev(&sc->sc_dev, "couldn't map memory\n");
     return;
   }
 

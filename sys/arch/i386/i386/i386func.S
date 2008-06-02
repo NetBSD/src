@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.3.6.1 2008/04/03 12:42:18 mjf Exp $	*/
+/*	$NetBSD: i386func.S,v 1.3.6.2 2008/06/02 13:22:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.3.6.1 2008/04/03 12:42:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.3.6.2 2008/06/02 13:22:15 mjf Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -54,30 +47,41 @@ ENTRY(invlpg)
 	movl	4(%esp), %eax
 	invlpg	(%eax)
 	ret
+END(invlpg)
 
 ENTRY(lldt)
 	movl	4(%esp), %eax
+	cmpl	%eax, CPUVAR(CURLDT)
+	jne	1f
+	ret
+1:
+	movl	%eax, CPUVAR(CURLDT)
 	lldt	%ax
 	ret
+END(lldt)
 
 ENTRY(ltr)
 	movl	4(%esp), %eax
 	ltr	%ax
 	ret
+END(ltr)
 
 ENTRY(lcr0)
 	movl	4(%esp), %eax
 	movl	%eax, %cr0
 	ret
+END(lcr0)
 
 ENTRY(rcr0)
 	movl	%cr0, %eax
 	ret
+END(rcr0)
 
 ENTRY(lcr3)
 	movl	4(%esp), %eax
 	movl	%eax, %cr3
 	ret
+END(lcr3)
 
 /*
  * Big hammer: flush all TLB entries, including ones from PTE's
@@ -107,37 +111,51 @@ ENTRY(tlbflushg)
 	movl	%edx, %cr4
 	movl	%eax, %cr4
 	ret
+END(tlbflushg)
 
 ENTRY(tlbflush)
 1:
 	movl	%cr3, %eax
 	movl	%eax, %cr3
 	ret
+END(tlbflush)
 
 ENTRY(ldr6)
 	movl	4(%esp), %eax
 	movl	%eax, %dr6
 	ret
+END(ldr6)
 
 ENTRY(rdr6)
 	movl	%dr6, %eax
 	ret
+END(rdr6)
 
 ENTRY(rcr2)
 	movl	%cr2, %eax
 	ret
+END(rcr2)
+
+ENTRY(lcr2)
+	movl	4(%esp), %eax
+	movl	%eax, %cr2
+	ret
+END(lcr2)
 
 ENTRY(wbinvd)
 	wbinvd
 	ret
+END(wbinvd)
 
-NENTRY(x86_disable_intr)
+ENTRY(x86_disable_intr)
 	cli
 	ret
+END(x86_disable_intr)
 
-NENTRY(x86_enable_intr)
+ENTRY(x86_enable_intr)
 	sti
 	ret
+END(x86_enable_intr)
 
 /*
  * void lgdt(struct region_descriptor *rdp);
@@ -164,36 +182,18 @@ ENTRY(lgdt)
 	movl	$GSEL(GCPU_SEL, SEL_KPL), %eax
 	movl	%eax, %fs
 	jmp	_C_LABEL(x86_flush)
+END(lgdt)
 
 ENTRY(tsc_get_timecount)
-	jmp	_C_LABEL(tsc_slow_timecount)
-	pushl	%edi
-	pushl	%esi
-	movl	CPUVAR(CURLWP), %esi
+	movl	CPUVAR(CURLWP), %ecx
 1:
-	movl	L_NCSW(%esi), %ecx	/* gen = l_ncsw */
-	movl	L_CPU(%esi), %edi
-	addl	$CPU_INFO_CC, %edi
-	cmpl	$0, CC_DENOM(%edi)	/* if (first time) */
-	jz	2f			/*    return tsc_slow_timecount() */
-	addl	CC_GEN(%edi), %ecx	/* gen += cc_gen */
-	movl	CC_DELTA+4(%edi), %eax	/* if (cc_delta > 0xffffffff || */
-	orl	CC_DENOM+4(%edi), %eax	/*     cc_denom > 0xffffffff) */
-	jnz	2f			/*    return tsc_slow_timecount() */
-	rdtsc				/* cc = cpu_counter32(); */
-	subl	CC_CC(%edi), %eax	/* cc -= cc_cc; (can wrap) */
-	mull	CC_DELTA(%edi)		/* rcc = (cc * cc_delta) */
-	divl	CC_DENOM(%edi)		/*     / cc_denom */
-	addl	CC_VAL(%edi), %eax	/*     + cc_val; */
-	subl	CC_GEN(%edi), %ecx	/* if (gen != cc_gen + */
-	cmpl	L_NCSW(%esi), %ecx	/*     l_ncsw) */
-	jne	3f			/*    continue; */
-	popl	%esi			/* return rcc; */
-	popl	%edi
+	pushl	L_NCSW(%ecx)
+	rdtsc
+	addl	CPUVAR(CC_SKEW), %eax
+	popl	%edx
+	cmpl	%edx, L_NCSW(%ecx)
+	jne	2f
 	ret
 2:
-	popl	%esi
-	popl	%edi
-	jmp	_C_LABEL(tsc_slow_timecount)
-3:
 	jmp	1b
+END(tsc_get_timecount)

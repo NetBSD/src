@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.60 2007/02/04 01:38:34 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.60.44.1 2008/06/02 13:22:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -77,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.60 2007/02/04 01:38:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.60.44.1 2008/06/02 13:22:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +122,7 @@ static void	si_minphys(struct buf *);
 void 
 si_attach(struct si_softc *sc)
 {
-	struct ncr5380_softc *ncr_sc = (void *)sc;
+	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	volatile struct si_regs *regs = sc->sc_regs;
 	int i;
 
@@ -139,9 +132,9 @@ si_attach(struct si_softc *sc)
 	 * Interrupts and DMA are per-controller.
 	 */
 	ncr_sc->sc_no_disconnect =
-		(sc->sc_options & SI_NO_DISCONNECT);
+	    (sc->sc_options & SI_NO_DISCONNECT);
 	ncr_sc->sc_parity_disable = 
-		(sc->sc_options & SI_NO_PARITY_CHK) >> 8;
+	    (sc->sc_options & SI_NO_PARITY_CHK) >> 8;
 	if (sc->sc_options & SI_FORCE_POLLING)
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
 
@@ -186,16 +179,16 @@ si_attach(struct si_softc *sc)
 	 *  Initialize si board itself.
 	 */
 	ncr5380_attach(ncr_sc);
-
 }
 
 static void
 si_minphys(struct buf *bp)
 {
+
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef	DEBUG
 		if (si_debug) {
-			printf("si_minphys len = 0x%x.\n", bp->b_bcount);
+			printf("%s len = 0x%x.\n", __func__, bp->b_bcount);
 			Debugger();
 		}
 #endif
@@ -225,11 +218,11 @@ si_intr(void *arg)
 
 	if (csr & SI_CSR_DMA_CONFLICT) {
 		dma_error |= SI_CSR_DMA_CONFLICT;
-		printf("si_intr: DMA conflict\n");
+		printf("%s: DMA conflict\n", __func__);
 	}
 	if (csr & SI_CSR_DMA_BUS_ERR) {
 		dma_error |= SI_CSR_DMA_BUS_ERR;
-		printf("si_intr: DMA bus error\n");
+		printf("%s: DMA bus error\n", __func__);
 	}
 	if (dma_error) {
 		if (sc->ncr_sc.sc_state & NCR_DOINGDMA)
@@ -242,7 +235,7 @@ si_intr(void *arg)
 		claimed = ncr5380_intr(&sc->ncr_sc);
 #ifdef	DEBUG
 		if (!claimed) {
-			printf("si_intr: spurious from SBC\n");
+			printf("%s: spurious from SBC\n", __func__);
 			if (si_debug & 4)
 				Debugger();	/* XXX */
 		}
@@ -251,7 +244,7 @@ si_intr(void *arg)
 		claimed = 1;
 	}
 
-	return (claimed);
+	return claimed;
 }
 
 
@@ -276,7 +269,7 @@ si_dma_alloc(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DIAGNOSTIC
 	if (sr->sr_dma_hand != NULL)
-		panic("si_dma_alloc: already have DMA handle");
+		panic("%s: already have DMA handle", __func__);
 #endif
 
 	addr = ncr_sc->sc_dataptr;
@@ -284,13 +277,13 @@ si_dma_alloc(struct ncr5380_softc *ncr_sc)
 
 	/* If the DMA start addr is misaligned then do PIO */
 	if (((vaddr_t)addr & 1) || (xlen & 1)) {
-		printf("si_dma_alloc: misaligned.\n");
+		printf("%s: misaligned.\n", __func__);
 		return;
 	}
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("si_dma_alloc: xlen=0x%x", xlen);
+		panic("%s: xlen=0x%x", __func__, xlen);
 
 	/*
 	 * Never attempt single transfers of more than 63k, because
@@ -299,7 +292,7 @@ si_dma_alloc(struct ncr5380_softc *ncr_sc)
 	 * XXX - Should just segment these...
 	 */
 	if (xlen > MAX_DMA_LEN) {
-		printf("si_dma_alloc: excessive xlen=0x%x\n", xlen);
+		printf("%s: excessive xlen=0x%x\n", __func__, xlen);
 		Debugger();
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
@@ -318,7 +311,7 @@ found:
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, addr, xlen, NULL,
 	    BUS_DMA_NOWAIT) != 0)
-		panic("%s: can't load dmamap", ncr_sc->sc_dev.dv_xname);
+		panic("%s: can't load dmamap", device_xname(ncr_sc->sc_dev));
 	dh->dh_dmaaddr = sc->sc_dmap->dm_segs[0].ds_addr;
 	dh->dh_dmalen  = xlen;
 
@@ -358,11 +351,11 @@ si_dma_free(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DIAGNOSTIC
 	if (dh == NULL)
-		panic("si_dma_free: no DMA handle");
+		panic("%s: no DMA handle", __func__);
 #endif
 
 	if (ncr_sc->sc_state & NCR_DOINGDMA)
-		panic("si_dma_free: free while in progress");
+		panic("%s: free while in progress", __func__);
 
 	if (dh->dh_flags & SIDH_BUSY) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, dh->dh_dmalen,
@@ -422,7 +415,7 @@ si_dma_poll(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_poll: done, csr=0x%x\n", si->si_csr);
+		printf("%s: done, csr=0x%x\n", __func__, si->si_csr);
 	}
 #endif
 }

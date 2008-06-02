@@ -1,9 +1,7 @@
-/*	$NetBSD: tbinstal.c,v 1.4 2007/12/11 13:16:16 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: tbinstal - ACPI table installation and removal
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,14 +114,12 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.4 2007/12/11 13:16:16 lukem Exp $");
 
 #define __TBINSTAL_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/actables.h>
+#include "acpi.h"
+#include "acnamesp.h"
+#include "actables.h"
 
 
 #define _COMPONENT          ACPI_TABLES
@@ -218,12 +214,23 @@ AcpiTbAddTable (
 
     /* The table must be either an SSDT or a PSDT */
 
-    if ((ACPI_STRNCMP (TableDesc->Pointer->Signature, ACPI_SIG_PSDT, 4)) &&
+    if ((ACPI_STRNCMP (TableDesc->Pointer->Signature, ACPI_SIG_PSDT, 4)) && 
         (ACPI_STRNCMP (TableDesc->Pointer->Signature, ACPI_SIG_SSDT, 4)))
     {
-        ACPI_ERROR ((AE_INFO,
-            "Table has invalid signature [%4.4s], must be SSDT or PSDT",
-            TableDesc->Pointer->Signature));
+        /* Check for a printable name */
+
+        if (AcpiUtValidAcpiName (*(UINT32 *) TableDesc->Pointer->Signature))
+        {
+            ACPI_ERROR ((AE_INFO,
+                "Table has invalid signature [%4.4s], must be SSDT or PSDT",
+                TableDesc->Pointer->Signature));
+        }
+        else
+        {
+            ACPI_ERROR ((AE_INFO,
+                "Table has invalid signature (0x%8.8X), must be SSDT or PSDT",
+                *(UINT32 *) TableDesc->Pointer->Signature));
+        }
         return_ACPI_STATUS (AE_BAD_SIGNATURE);
     }
 
@@ -254,6 +261,7 @@ AcpiTbAddTable (
 
         AcpiTbDeleteTable (TableDesc);
         *TableIndex = i;
+        Status = AE_ALREADY_EXISTS;
         goto Release;
     }
 

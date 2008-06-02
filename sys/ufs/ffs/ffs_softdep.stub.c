@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.22 2008/01/02 11:49:09 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.22.6.1 2008/06/02 13:24:35 mjf Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.22 2008/01/02 11:49:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.22.6.1 2008/06/02 13:24:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -220,4 +220,11 @@ softdep_unmount(struct mount *mp)
 {
 
 	return;
+}
+
+void
+softdep_pace_dirrem(void)
+{
+
+	panic("softdep_pace_dirrem called");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.23.6.1 2008/04/03 12:42:18 mjf Exp $	*/
+/*	$NetBSD: elan520.c,v 1.23.6.2 2008/06/02 13:22:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -47,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.23.6.1 2008/04/03 12:42:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.23.6.2 2008/06/02 13:22:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.23.6.1 2008/04/03 12:42:18 mjf Exp $")
 #include <sys/gpio.h>
 #include <sys/mutex.h>
 #include <sys/wdog.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -78,9 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.23.6.1 2008/04/03 12:42:18 mjf Exp $")
 #define	PG0_PROT_SIZE	PAGE_SIZE
 
 struct elansc_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	device_t sc_par;
 	device_t sc_pex;
+	device_t sc_pci;
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
@@ -105,6 +100,7 @@ struct elansc_softc {
 #endif
 };
 
+static bool elansc_attached = false;
 int elansc_wpvnmi = 1;
 int elansc_pcinmi = 1;
 int elansc_do_protect_pg0 = 1;
@@ -116,11 +112,13 @@ static void	elansc_gpio_pin_ctl(void *, int, int);
 #endif
 
 static void elansc_print_par(device_t, int, uint32_t);
-static void elanpex_intr_establish(device_t, struct elansc_softc *);
+
 static void elanpar_intr_establish(device_t, struct elansc_softc *);
-static void elanpex_intr_disestablish(struct elansc_softc *);
 static void elanpar_intr_disestablish(struct elansc_softc *);
 static bool elanpar_shutdown(device_t, int);
+
+static void elanpex_intr_establish(device_t, struct elansc_softc *);
+static void elanpex_intr_disestablish(struct elansc_softc *);
 static bool elanpex_shutdown(device_t, int);
 
 static void elansc_protect(struct elansc_softc *, int, paddr_t, uint32_t);
@@ -136,9 +134,112 @@ elansc_childdetached(device_t self, device_t child)
 		sc->sc_par = NULL;
 	if (child == sc->sc_pex)
 		sc->sc_pex = NULL;
+	if (child == sc->sc_pci)
+		sc->sc_pci = NULL;
+
 	/* elansc does not presently keep a pointer to 
 	 * the gpio, so there is nothing to do if it is detached.
 	 */
+}
+
+static int
+elansc_match(device_t parent, cfdata_t match, void *aux)
+{
+	struct pcibus_attach_args *pba = aux;
+	pcitag_t tag;
+	pcireg_t id;
+
+	if (elansc_attached)
+		return 0;
+
+	if (pcimatch(parent, match, aux) == 0)
+		return 0;
+
+	if (pba->pba_bus != 0)
+		return 0;
+
+	tag = pci_make_tag(pba->pba_pc, 0, 0, 0);
+	id = pci_conf_read(pba->pba_pc, tag, PCI_ID_REG);
+
+	if (PCI_VENDOR(id) == PCI_VENDOR_AMD &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_AMD_SC520_SC)
+		return 10;
+
+	return 0;
+}
+
+/*
+ * Performance tuning for Soekris net4501:
+ *   - enable SDRAM write buffer and read prefetching
+ */
+#if 0
+	uint8_t dbctl;
+
+	dbctl = bus_space_read_1(memt, memh, MMCR_DBCTL);
+ 	dbctl &= ~MMCR_DBCTL_WB_WM_MASK;
+	dbctl |= MMCR_DBCTL_WB_WM_16DW;
+	dbctl |= MMCR_DBCTL_WB_ENB | MMCR_DBCTL_RAB_ENB;
+	bus_space_write_1(memt, memh, MMCR_DBCTL, dbctl);
+#endif
+
+/*
+ * Performance tuning for PCI bus on the AMD Elan SC520:
+ *   - enable concurrent arbitration of PCI and CPU busses
+ *     (and PCI buffer)
+ *   - enable PCI automatic delayed read transactions and
+ *     write posting
+ *   - enable PCI read buffer snooping (coherency)
+ */
+static void
+elansc_perf_tune(device_t self, bus_space_tag_t memt, bus_space_handle_t memh)
+{
+	uint8_t sysarbctl;
+	uint16_t hbctl;
+	const bool concurrency = true;	/* concurrent bus arbitration */
+
+	sysarbctl = bus_space_read_1(memt, memh, MMCR_SYSARBCTL);
+	if ((sysarbctl & MMCR_SYSARBCTL_CNCR_MODE_ENB) != 0) {
+		aprint_debug_dev(self,
+		    "concurrent arbitration mode is active\n");
+	} else if (concurrency) {
+		aprint_verbose_dev(self, "activating concurrent "
+		    "arbitration mode\n");
+		/* activate concurrent bus arbitration */
+		sysarbctl |= MMCR_SYSARBCTL_CNCR_MODE_ENB;
+		bus_space_write_1(memt, memh, MMCR_SYSARBCTL, sysarbctl);
+	}
+
+	hbctl = bus_space_read_2(memt, memh, MMCR_HBCTL);
+
+	/* target read FIFO snoop */
+	if ((hbctl & MMCR_HBCTL_T_PURGE_RD_ENB) != 0)
+		aprint_debug_dev(self, "read-FIFO snooping is active\n");
+	else {
+		aprint_verbose_dev(self, "activating read-FIFO snooping\n");
+		hbctl |= MMCR_HBCTL_T_PURGE_RD_ENB;
+	}
+
+	if ((hbctl & MMCR_HBCTL_M_WPOST_ENB) != 0)
+		aprint_debug_dev(self, "CPU->PCI write-posting is active\n");
+	else if (concurrency) {
+		aprint_verbose_dev(self, "activating CPU->PCI write-posting\n");
+		hbctl |= MMCR_HBCTL_M_WPOST_ENB;
+	}
+
+	/* auto delay read txn: looks safe, but seems to cause
+	 * net4526 w/ minipci ath fits
+	 */
+#if 0
+	if ((hbctl & MMCR_HBCTL_T_DLYTR_ENB_AUTORETRY) != 0)
+		aprint_debug_dev(self,
+		    "automatic read transaction delay is active\n");
+	else {
+		aprint_verbose_dev(self,
+		    "activating automatic read transaction delay\n");
+		hbctl |= MMCR_HBCTL_T_DLYTR_ENB_AUTORETRY;
+	}
+#endif
+	bus_space_write_2(memt, memh, MMCR_HBCTL, hbctl);
 }
 
 static void
@@ -248,7 +349,7 @@ elansc_wdog_setmode(struct sysmon_wdog *smw)
 
 	mutex_enter(&sc->sc_mtx);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		rc = EBUSY;
 	else if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		elansc_wdogctl_write(sc,
@@ -269,18 +370,6 @@ elansc_wdog_tickle(struct sysmon_wdog *smw)
 	elansc_wdogctl_reset(sc);
 	mutex_exit(&sc->sc_mtx);
 	return 0;
-}
-
-static int
-elansc_match(device_t parent, struct cfdata *match, void *aux)
-{
-	struct pci_attach_args *pa = aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_SC520_SC)
-		return (10);	/* beat pchb */
-
-	return (0);
 }
 
 static const char *elansc_speeds[] = {
@@ -325,8 +414,8 @@ elanpar_intr(void *arg)
 		wpvstr = "unknown";
 		break;
 	}
-	aprint_error_dev(sc->sc_par,
-	    "%s violated write-protect window %u\n", wpvstr, win);
+	printf_tolog("%s: %s violated write-protect window %u\n",
+	    device_xname(sc->sc_par), wpvstr, win);
 	elansc_print_par(sc->sc_par, win, par);
 	return 0;
 }
@@ -384,8 +473,9 @@ elanpex_intr(void *arg)
 	tgtirq = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_HBTGTIRQSTA);
 
 	if ((pciarbsta & MMCR_PCIARBSTA_GNT_TO_STA) != 0) {
-		aprint_error_dev(sc->sc_pex,
-		    "grant time-out, GNT%" __PRIuBITS "# asserted\n",
+		printf_tolog(
+		    "%s: grant time-out, GNT%" __PRIuBITS "# asserted\n",
+		    device_xname(sc->sc_pex),
 		    __SHIFTOUT(pciarbsta, MMCR_PCIARBSTA_GNT_TO_ID));
 		bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_PCIARBSTA,
 		    MMCR_PCIARBSTA_GNT_TO_STA);
@@ -397,9 +487,9 @@ elanpex_intr(void *arg)
 	for (i = 0; i < __arraycount(mmsg); i++) {
 		if ((mstirq & mmsg[i].bit) == 0)
 			continue;
-		aprint_error_dev(sc->sc_pex,
-		    "%s %08" PRIx32 " master %s\n",
-		    cmd[mstcmd].string, mstaddr, mmsg[i].msg);
+		printf_tolog("%s: %s %08" PRIx32 " master %s\n",
+		    device_xname(sc->sc_pex), cmd[mstcmd].string, mstaddr,
+		    mmsg[i].msg);
 
 		mstack |= mmsg[i].bit;
 		if (!cmd[mstcmd].nonfatal)
@@ -411,8 +501,8 @@ elanpex_intr(void *arg)
 	for (i = 0; i < __arraycount(tmsg); i++) {
 		if ((tgtirq & tmsg[i].bit) == 0)
 			continue;
-		aprint_error_dev(sc->sc_pex, "%1x target %s\n", tgtid,
-		    tmsg[i].msg);
+		printf_tolog("%s: %1x target %s\n", device_xname(sc->sc_pex),
+		    tgtid, tmsg[i].msg);
 		tgtack |= tmsg[i].bit;
 	}
 
@@ -442,6 +532,9 @@ elansc_print_par(device_t dev, int i, uint32_t par)
 {
 	uint32_t addr, sz, unit;
 	const char *tgtstr;
+
+	if ((boothowto & AB_DEBUG) == 0)
+		return;
 
 	switch (par & MMCR_PAR_TARGET) {
 	default:
@@ -484,9 +577,9 @@ elansc_print_par(device_t dev, int i, uint32_t par)
 		addr = __SHIFTOUT(par, MMCR_PAR_4KB_ST_ADR);
 	}
 
-	aprint_debug_dev(dev,
-	    "PAR[%d] %08" PRIx32 " tgt %s attr %1" __PRIxBITS
-	    " start %08" PRIx32 " size %" PRIu32 "\n",
+	printf_tolog(
+	    "%s: PAR[%d] %08" PRIx32 " tgt %s attr %1" __PRIxBITS
+	    " start %08" PRIx32 " size %" PRIu32 "\n", device_xname(dev),
 	    i, par, tgtstr, __SHIFTOUT(par, MMCR_PAR_ATTR),
 	    addr * unit, (sz + 1) * unit);
 }
@@ -774,6 +867,8 @@ elansc_resume(device_t dev PMF_FN_ARGS)
 	elansc_wdogctl_reset(sc);
 	mutex_exit(&sc->sc_mtx);
 
+	elansc_perf_tune(dev, sc->sc_memt, sc->sc_memh);
+
 	return true;
 }
 
@@ -802,10 +897,11 @@ elansc_detach(device_t self, int flags)
 	/* ...and clear it. */
 	elansc_wdogctl_reset(sc);
 
-	bus_space_unmap(sc->sc_memt, sc->sc_memh, PAGE_SIZE);
-
 	mutex_exit(&sc->sc_mtx);
 	mutex_destroy(&sc->sc_mtx);
+
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, PAGE_SIZE);
+	elansc_attached = false;
 	return 0;
 }
 
@@ -820,7 +916,7 @@ elansc_intr_establish(device_t dev, int (*handler)(void *), void *arg)
 		    ELAN_IRQ);
 		return NULL;
 	} else if ((ih = intr_establish(ELAN_IRQ, pic, ELAN_IRQ,
-	    IST_LEVEL, IPL_HIGH, handler, arg)) == NULL) {
+	    IST_LEVEL, IPL_HIGH, handler, arg, false)) == NULL) {
 		aprint_error_dev(dev,
 		    "could not establish interrupt\n");
 		return NULL;
@@ -905,6 +1001,9 @@ elanpex_intr_establish(device_t self, struct elansc_softc *sc)
 	if (elansc_pcinmi) {
 		sc->sc_eih = nmi_establish(elanpex_intr, sc);
 
+		/* Activate NMI instead of maskable interrupts for
+		 * all PCI exceptions:
+		 */
 		mstirq |= MMCR_HBMSTIRQCTL_M_RTRTO_IRQ_SEL;
 		mstirq |= MMCR_HBMSTIRQCTL_M_TABRT_IRQ_SEL;
 		mstirq |= MMCR_HBMSTIRQCTL_M_MABRT_IRQ_SEL;
@@ -1059,6 +1158,14 @@ elanpar_shutdown(device_t self, int flags)
 }
 
 static void
+elanpar_deferred_attach(device_t self)
+{
+	struct elansc_softc *sc = device_private(device_parent(self));
+
+	elansc_protect_text(self, sc);
+}
+
+static void
 elanpar_attach(device_t parent, device_t self, void *aux)
 {
 	struct elansc_softc *sc = device_private(parent);
@@ -1070,7 +1177,10 @@ elanpar_attach(device_t parent, device_t self, void *aux)
 	elansc_print_all_par(self, sc->sc_memt, sc->sc_memh);
 
 	sc->sc_pg0par = elansc_protect_pg0(self, sc);
-	elansc_protect_text(self, sc);
+	/* XXX grotty hack to avoid trapping writes by x86_patch()
+	 * to the kernel text on a MULTIPROCESSOR kernel.
+	 */
+	config_interrupts(self, elanpar_deferred_attach);
 
 	elansc_print_all_par(self, sc->sc_memt, sc->sc_memh);
 
@@ -1127,7 +1237,7 @@ static void
 elansc_attach(device_t parent, device_t self, void *aux)
 {
 	struct elansc_softc *sc = device_private(self);
-	struct pci_attach_args *pa = aux;
+	struct pcibus_attach_args *pba = aux;
 	uint16_t rev;
 	uint8_t cpuctl, picicr, ressta;
 #if NGPIO > 0
@@ -1135,16 +1245,19 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	int pin, reg, shift;
 	uint16_t data;
 #endif
-	sc->sc_pc = pa->pa_pc;
-	sc->sc_tag = pa->pa_tag;
+
+	sc->sc_dev = self;
+
+	sc->sc_pc = pba->pba_pc;
+	sc->sc_tag = pci_make_tag(sc->sc_pc, 0, 0, 0);
 
 	aprint_naive(": System Controller\n");
 	aprint_normal(": AMD Elan SC520 System Controller\n");
 
-	sc->sc_memt = pa->pa_memt;
+	sc->sc_memt = pba->pba_memt;
 	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, PAGE_SIZE, 0,
 	    &sc->sc_memh) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map registers\n");
+		aprint_error_dev(sc->sc_dev, "unable to map registers\n");
 		return;
 	}
 
@@ -1153,7 +1266,7 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	rev = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_REVID);
 	cpuctl = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_CPUCTL);
 
-	aprint_normal_dev(&sc->sc_dev,
+	aprint_normal_dev(sc->sc_dev,
 	    "product %d stepping %d.%d, CPU clock %s\n",
 	    (rev & REVID_PRODID) >> REVID_PRODID_SHIFT,
 	    (rev & REVID_MAJSTEP) >> REVID_MAJSTEP_SHIFT,
@@ -1183,7 +1296,7 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	 */
 	ressta = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_RESSTA);
 	if (ressta & RESSTA_WDT_RST_DET)
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n");
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_RESSTA, ressta);
 
@@ -1252,24 +1365,26 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = ELANSC_PIO_NPINS;
 
-	sc->sc_par = config_found_ia(&sc->sc_dev, "elanparbus", NULL, NULL);
-	sc->sc_pex = config_found_ia(&sc->sc_dev, "elanpexbus", NULL, NULL);
+	sc->sc_par = config_found_ia(sc->sc_dev, "elanparbus", NULL, NULL);
+	sc->sc_pex = config_found_ia(sc->sc_dev, "elanpexbus", NULL, NULL);
 	/* Attach GPIO framework */
-	config_found_ia(&sc->sc_dev, "gpiobus", &gba, gpiobus_print);
+	config_found_ia(sc->sc_dev, "gpiobus", &gba, gpiobus_print);
 #endif /* NGPIO */
 
 	/*
 	 * Hook up the watchdog timer.
 	 */
-	sc->sc_smw.smw_name = device_xname(&sc->sc_dev);
+	sc->sc_smw.smw_name = device_xname(sc->sc_dev);
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = elansc_wdog_setmode;
 	sc->sc_smw.smw_tickle = elansc_wdog_tickle;
 	sc->sc_smw.smw_period = 32;	/* actually 32.54 */
 	if (sysmon_wdog_register(&sc->sc_smw) != 0) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "unable to register watchdog with sysmon\n");
 	}
+	elansc_attached = true;
+	sc->sc_pci = config_found_ia(self, "pcibus", pba, pcibusprint);
 }
 
 static int
@@ -1288,13 +1403,13 @@ elanpar_match(device_t parent, struct cfdata *match, void *aux)
 	return sc->sc_par == NULL;
 }
 
-CFATTACH_DECL_NEW(elanpar, sizeof(struct device),
+CFATTACH_DECL_NEW(elanpar, 0,
     elanpar_match, elanpar_attach, elanpar_detach, NULL);
 
-CFATTACH_DECL_NEW(elanpex, sizeof(struct device),
+CFATTACH_DECL_NEW(elanpex, 0,
     elanpex_match, elanpex_attach, elanpex_detach, NULL);
 
-CFATTACH_DECL2(elansc, sizeof(struct elansc_softc),
+CFATTACH_DECL2_NEW(elansc, sizeof(struct elansc_softc),
     elansc_match, elansc_attach, elansc_detach, NULL, NULL,
     elansc_childdetached);
 

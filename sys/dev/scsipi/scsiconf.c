@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.245.6.2 2008/04/06 09:58:51 mjf Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.245.6.3 2008/06/02 13:23:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -55,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.245.6.2 2008/04/06 09:58:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.245.6.3 2008/06/02 13:23:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +164,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->sc_channel = chan;
-	chan->chan_name = sc->sc_dev.dv_xname;
+	chan->chan_name = device_xname(&sc->sc_dev);
 
 	aprint_naive(": SCSI bus\n");
 	aprint_normal(": %d target%s, %d lun%s per target\n",
@@ -192,8 +185,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INSERT_TAIL(&scsi_initq_head, scsi_initq, scsi_initq);
         config_pending_incr();
 	if (scsipi_channel_init(chan)) {
-		aprint_error("%s: failed to init channel\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to init channel\n");
 		return;
 	}
 
@@ -212,9 +204,9 @@ scsibus_config(struct scsipi_channel *chan, void *arg)
 #endif
 	if ((chan->chan_flags & SCSIPI_CHAN_NOSETTLE) == 0 &&
 	    SCSI_DELAY > 0) {
-		aprint_normal(
-		    "%s: waiting %d seconds for devices to settle...\n",
-		    sc->sc_dev.dv_xname, SCSI_DELAY);
+		aprint_normal_dev(&sc->sc_dev,
+		    "waiting %d seconds for devices to settle...\n",
+		    SCSI_DELAY);
 		/* ...an identifier we know no one will use... */
 		(void) tsleep(scsibus_config, PRIBIO,
 		    "scsidly", SCSI_DELAY * hz);
@@ -756,9 +748,9 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	periph = scsipi_alloc_periph(M_NOWAIT);
 	if (periph == NULL) {
 #ifdef	DIAGNOSTIC
-		aprint_error(
-		    "%s: cannot allocate periph for target %d lun %d\n",
-		    sc->sc_dev.dv_xname, target, lun);
+		aprint_error_dev(&sc->sc_dev,
+		    "cannot allocate periph for target %d lun %d\n",
+		    target, lun);
 #endif
 		return (ENOMEM);
 	}
@@ -966,7 +958,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 		chld = config_attach_loc(&sc->sc_dev, cf, locs, &sa,
 					 scsibusprint);
 	} else {
-		scsibusprint(&sa, sc->sc_dev.dv_xname);
+		scsibusprint(&sa, device_xname(&sc->sc_dev));
 		aprint_normal(" not configured\n");
 		goto bad;
 	}

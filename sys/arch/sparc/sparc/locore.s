@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.243 2008/01/08 21:32:11 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.243.6.1 2008/06/02 13:22:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6194,7 +6194,7 @@ ENTRY(delay)			! %o0 = n
 /*
  * void __cpu_simple_lock(__cpu_simple_lock_t *alp)
  */
-_ENTRY(_C_LABEL(__cpu_simple_lock))
+ENTRY_NOPROFILE(__cpu_simple_lock)
 0:
 	ldstub	[%o0], %o1
 	tst	%o1

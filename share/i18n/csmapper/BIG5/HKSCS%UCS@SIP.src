@@ -1,8 +1,8 @@
-# $NetBSD: HKSCS%UCS@SIP.src,v 1.1 2007/03/05 16:57:10 tnozaki Exp $
+# $NetBSD: HKSCS%UCS@SIP.src,v 1.1.10.1 2008/06/02 13:21:24 mjf Exp $
 
 TYPE		ROWCOL
 NAME		"HKSCS/UCS:SIP"
-SRC_ZONE	0x88-0xFE / 0x40-0xFE / 8
+SRC_ZONE	0x87-0xFE / 0x40-0xFE / 8
 OOB_MODE	INVALID
 DST_INVALID	0xFFFE
 DST_UNIT_BITS	16
@@ -10,40 +10,34 @@ DST_UNIT_BITS	16
 BEGIN_MAP
 #
 #	Name: Unihan database
-#	Unicode version: 5.0.0
+#	Unicode version: 5.1.0
 #	Table version: 1.1
-#	Date: 7 July 2006
+#	Date: 3 March 2008
 #
-#	Copyright (c) 1996-2006 Unicode, Inc. All Rights reserved.
+#	Copyright (c) 1996-2008 Unicode, Inc. All Rights reserved.
 #
 #	For terms of use, see <http://www.unicode.org/terms_of_use.html>
 #
-#	Format information:
-#
-#	Each line of this file consists of three tab-separated fields.
-#	The first is the Unicode scalar value as U+[x]xxxx (that is, there are
-#		either four or five hex digits)
-#	The second is a tag indicating the type of information in the third field
-#	The third is the line's value (in UTF-8)
-#
-#	We give below a list of the tags in alphabetical order.  For each tag,
-#	we give additional information, such as its formal status in the standard, 
-#	a general category to which its data belongs, the separator (if any) 
-#	between individual subvalues, a regular expression indicating the 
-#	format of each subvalue, the version of Unicode in which the data were 
-#	originally introduced, and a description of the data associated with the 
-#	tag.
-#
-#	Regular expressions are based on standard Perl 5.8.6 syntax and may
-#	require modification for use with other regular expression engines.  
-#
-#	Unless otherwise noted, the order of subvalues within a single
-#	value field is not significant.
-#
-#	Note that only the description is present for every tag value.  
-#
-#	See also <http://www.unicode.org/Public/UNIDATA/Unihan.html>
-#	
+0x8745 = 0x7267
+0x8748 = 0x7CB1
+0x874A = 0x7CC5
+0x8750 = 0x42BF
+0x8751 = 0x3617
+0x8752 = 0x7352
+0x8753 = 0x6E8B
+0x8754 = 0x70D2
+0x8756 = 0xA351
+0x875A = 0x7C6C
+0x875E = 0x6B23
+0x8760 = 0x5A54
+0x8761 = 0x1A63
+0x8762 = 0x3E06
+0x8763 = 0x3F61
+0x8769 = 0x8BB9
+0x876C = 0x7BEF
+0x876E = 0x1D5E
+0x8771 = 0x9EB0
+0x8777 = 0x9945
 0x8845 = 0x010C
 0x8847 = 0x00D1
 0x8848 = 0x00CD
@@ -238,6 +232,7 @@ BEGIN_MAP
 0x8C57 = 0x1980
 0x8C5C = 0x870F
 0x8C5F = 0xA2BA
+0x8C62 = 0x0A6F
 0x8C64 = 0x9947
 0x8C65 = 0x8AEA
 0x8C69 = 0x207E
@@ -257,6 +252,26 @@ BEGIN_MAP
 0x8CD3 = 0x6D74
 0x8CD5 = 0x6B15
 0x8CD6 = 0x6FBE
+0x8CE1 = 0x3256
+0x8CE2 = 0x2796
+0x8CE7 = 0x3B1A
+0x8CEB = 0x3551
+0x8CF0 = 0x40EC
+0x8CF1 = 0x1E23
+0x8CF5 = 0x01A4
+0x8CF6 = 0x6C41
+0x8CF9 = 0x0239
+0x8CFD = 0x98FA
+0x8D40 = 0x0B9F
+0x8D42 = 0x21C1
+0x8D43 = 0x896D
+0x8D46 = 0x9079
+0x8D49 = 0xA1B5
+0x8D4D = 0x6C46
+0x8D4F = 0x86B2
+0x8D50 = 0x73FF
+0x8D53 = 0x549A
+0x8D5B = 0x4B0F
 0x8DE2 = 0x89C0
 0x8DEC = 0x3F41
 0x8DFB = 0x0325
@@ -1338,6 +1353,7 @@ BEGIN_MAP
 0x9ED9 = 0x3E2C
 0x9EE0 = 0x048E
 0x9EE3 = 0x0EB6
+0x9EE5 = 0x7F2E
 0x9EEC = 0xA434
 0x9EF2 = 0x30DA
 0x9EF3 = 0x43F2
@@ -1404,6 +1420,9 @@ BEGIN_MAP
 0xA0F8 = 0x4F0E
 0xA0FB = 0x634C
 0xA0FE = 0x626B
+0xC87A = 0x00CC
+0xC87C = 0x008A
+0xC8A4 = 0x7607
 0xFA40 = 0x0547
 0xFA42 = 0x05DF
 0xFA43 = 0x3FC5

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.73.6.1 2008/04/03 12:42:18 mjf Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.73.6.2 2008/06/02 13:22:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.73.6.1 2008/04/03 12:42:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.73.6.2 2008/06/02 13:22:16 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <machine/bus.h>
+#include <sys/reboot.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
@@ -92,9 +92,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.73.6.1 2008/04/03 12:42:18 mjf Exp $")
 
 #if NPCI > 0
 #if defined(PCI_BUS_FIXUP)
-#include <arch/i386/pci/pci_bus_fixup.h>
+#include <arch/x86/pci/pci_bus_fixup.h>
 #if defined(PCI_ADDR_FIXUP)
-#include <arch/i386/pci/pci_addr_fixup.h>
+#include <arch/x86/pci/pci_addr_fixup.h>
 #endif
 #endif
 #endif
@@ -229,7 +229,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #if NACPI > 0
-	if (acpi_check(self, "acpibus"))
+	if ((boothowto & RB_MD2) == 0 && acpi_check(self, "acpibus"))
 		acpi_present = acpi_probe();
 	/*
 	 * First, see if the MADT contains CPUs, and possibly I/O APICs.

@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.52.10.1 2008/04/03 12:42:49 mjf Exp $	*/
+/*	$NetBSD: azalia.c,v 1.52.10.2 2008/06/02 13:23:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -48,13 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.52.10.1 2008/04/03 12:42:49 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.52.10.2 2008/06/02 13:23:37 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
 #include <dev/pci/pcidevs.h>
@@ -146,7 +140,7 @@ typedef struct azalia_t {
 
 	int mode_cap;
 } azalia_t;
-#define XNAME(sc)		((sc)->dev.dv_xname)
+#define XNAME(sc)		device_xname(&((sc)->dev))
 #define AZ_READ_1(z, r)		bus_space_read_1((z)->iot, (z)->ioh, HDA_##r)
 #define AZ_READ_2(z, r)		bus_space_read_2((z)->iot, (z)->ioh, HDA_##r)
 #define AZ_READ_4(z, r)		bus_space_read_4((z)->iot, (z)->ioh, HDA_##r)
@@ -351,10 +345,10 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	vendor = pci_findvendor(pa->pa_id);
 	name = pci_findproduct(pa->pa_id);
 	if (vendor != NULL && name != NULL) {
-		aprint_normal("%s: host: %s %s (rev. %d)\n",
+		aprint_normal("%s: host: %s %s (rev. %d)",
 		    XNAME(sc), vendor, name, PCI_REVISION(pa->pa_class));
 	} else {
-		aprint_normal("%s: host: 0x%4.4x/0x%4.4x (rev. %d)\n",
+		aprint_normal("%s: host: 0x%4.4x/0x%4.4x (rev. %d)",
 		    XNAME(sc), PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
 		    PCI_REVISION(pa->pa_class));
 	}
@@ -498,8 +492,8 @@ azalia_attach(azalia_t *az)
 	uint16_t statests;
 
 	if (az->audiodev == NULL)
-		aprint_normal("%s: host: High Definition Audio rev. %d.%d\n",
-		    XNAME(az), AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN));
+		aprint_normal(", HDA rev. %d.%d\n",
+		    AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN));
 
 	gcap = AZ_READ_2(az, GCAP);
 	az->nistreams = HDA_GCAP_ISS(gcap);
@@ -856,7 +850,7 @@ azalia_set_command(const azalia_t *az, int caddr, nid_t nid, uint32_t control,
 
 #ifdef DIAGNOSTIC
 	if ((AZ_READ_1(az, CORBCTL) & HDA_CORBCTL_CORBRUN) == 0) {
-		aprint_error("%s: CORB is not running.\n", XNAME(az));
+		aprint_error("%s: CORB is not running.\n", az->dev.dv_xname);
 		return -1;
 	}
 #endif
@@ -1063,15 +1057,15 @@ azalia_codec_init(codec_t *this, int reinit)
 	if (!reinit) {
 		aprint_normal("%s: codec[%d]: ", XNAME(this->az), addr);
 		if (this->name == NULL) {
-			aprint_normal("0x%4.4x/0x%4.4x (rev. %u.%u)\n",
+			aprint_normal("0x%4.4x/0x%4.4x (rev. %u.%u)",
 			    id >> 16, id & 0xffff,
 			    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
 		} else {
-			aprint_normal("%s (rev. %u.%u)\n", this->name,
+			aprint_normal("%s (rev. %u.%u)", this->name,
 			    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
 		}
-		aprint_normal("%s: codec[%d]: High Definition Audio rev. %u.%u\n",
-		    XNAME(this->az), addr, COP_RID_MAJ(rev), COP_RID_MIN(rev));
+		aprint_normal(", HDA rev. %u.%u\n",
+		    COP_RID_MAJ(rev), COP_RID_MIN(rev));
 	}
 
 	/* identify function nodes */
@@ -1104,7 +1098,7 @@ azalia_codec_init(codec_t *this, int reinit)
 		}
 	}
 	if (this->audiofunc < 0 && !reinit) {
-		aprint_error("%s: codec[%d] has no audio function groups\n",
+		aprint_verbose("%s: codec[%d] has no audio function groups\n",
 		    XNAME(this->az), addr);
 		return -1;
 	}
@@ -2081,7 +2075,9 @@ azalia_stream_intr(stream_t *this, uint32_t intsts)
 		return 0;
 	STR_WRITE_1(this, STS, HDA_SD_STS_DESE
 	    | HDA_SD_STS_FIFOE | HDA_SD_STS_BCIS);
-	this->intr(this->intr_arg);
+
+	if (this->intr != NULL)
+		this->intr(this->intr_arg);
 	return 1;
 }
 
@@ -2413,3 +2409,68 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 	*fmt = ret;
 	return 0;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, azalia, NULL);
+
+static const struct cfiattrdata audiobuscf_iattrdata = {
+	"audiobus", 0, { { NULL, NULL, 0 }, }
+};
+static const struct cfiattrdata * const azalia_attrs[] = {
+	&audiobuscf_iattrdata, NULL
+};
+CFDRIVER_DECL(azalia, DV_DULL, azalia_attrs);
+extern struct cfattach azalia_ca;
+static int azalialoc[] = { -1, -1 };
+static struct cfparent pciparent = {
+	"pci", "pci", DVUNIT_ANY
+};
+static struct cfdata azalia_cfdata[] = {
+	{
+		.cf_name = "azalia",
+		.cf_atname = "azalia",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = azalialoc,
+		.cf_flags = 0,
+		.cf_pspec = &pciparent,
+	},
+	{ NULL }
+};
+
+static int
+azalia_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&azalia_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("azalia", &azalia_ca);
+		if (err) {
+			config_cfdriver_detach(&azalia_cd);
+			return err;
+		}
+		err = config_cfdata_attach(azalia_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("azalia", &azalia_ca);
+			config_cfdriver_detach(&azalia_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdriver_detach(&azalia_cd);
+		if (err)
+			return err;
+		config_cfattach_detach("azalia", &azalia_ca);
+		config_cfdriver_detach(&azalia_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif

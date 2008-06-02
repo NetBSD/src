@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acenv.h - Generation environment specific items
- *       $Revision: 1.2 $
+ *       $Revision: 1.2.10.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -211,7 +211,7 @@
 
 /*! [Begin] no source code translation */
 
-#if defined(__linux__)
+#if defined(_LINUX) || defined(__linux__)
 #include "aclinux.h"
 
 #elif defined(_AED_EFI)
@@ -227,7 +227,7 @@
 #include "acdos16.h"
 
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-#include <dist/acpica/acfreebsd.h>
+#include "acfreebsd.h"
 
 #elif defined(__NetBSD__)
 #include "acnetbsd.h"

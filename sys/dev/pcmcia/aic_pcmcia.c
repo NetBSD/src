@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.36 2007/10/19 12:01:03 ad Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.36.16.1 2008/06/02 13:23:45 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.36 2007/10/19 12:01:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.36.16.1 2008/06/02 13:23:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ aic_pcmcia_attach(struct device *parent, struct device *self,
 
 	error = pcmcia_function_configure(pf, aic_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -136,7 +136,7 @@ aic_pcmcia_attach(struct device *parent, struct device *self,
 		goto fail;
 
 	if (!aic_find(sc->sc_iot, sc->sc_ioh)) {
-		aprint_error("%s: unable to detect chip!\n", self->dv_xname);
+		aprint_error_dev(self, "unable to detect chip!\n");
 		goto fail2;
 	}
 

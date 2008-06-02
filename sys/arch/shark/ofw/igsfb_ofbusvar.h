@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbusvar.h,v 1.3 2007/10/17 19:57:10 garbled Exp $ */
+/*	$NetBSD: igsfb_ofbusvar.h,v 1.3.16.1 2008/06/02 13:22:39 mjf Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

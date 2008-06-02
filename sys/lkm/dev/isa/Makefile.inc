@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 2007/09/11 07:41:26 xtraeme Exp $
+# $NetBSD: Makefile.inc,v 1.6.26.1 2008/06/02 13:24:17 mjf Exp $
 
 .include "../Makefile.inc"
 
@@ -14,7 +14,9 @@ LKM_ISA_DRQ?=		-1
 LKM_ISA_DRQ2?=		-1
 LKM_ISA_DRVNAME_CA?=	${LKM_ISA_DRVNAME}
 
-CLEANFILES+=	${.CURDIR}/${TEMPL_FILE:S/.tmpl//}
+NOMAN=		# defined
+WARNS=		4
+CLEANFILES+=	${.CURDIR}/${TEMPL_FILE:S/.tmpl//} *~ ${KMOD}
 
 DPSRCS+=	${TEMPL_FILE:S/.tmpl//}
 
@@ -28,4 +30,4 @@ ${TEMPL_FILE:S/.tmpl//}:
 		-e "s|@LKM_ISA_DRQ2@|${LKM_ISA_DRQ2}|g" \
 		-e "s|@LKM_ISA_DRVNAME@|${LKM_ISA_DRVNAME}|g" \
 		-e "s|@LKM_ISA_DRVNAME_CA@|${LKM_ISA_DRVNAME_CA}|g" \
-		${TEMPL_DIR}/${TEMPL_FILE} > ${.CURDIR}/${TEMPL_FILE:S/.tmpl//}
+		${TEMPL_DIR}/${TEMPL_FILE} > ${.OBJDIR}/${TEMPL_FILE:S/.tmpl//}

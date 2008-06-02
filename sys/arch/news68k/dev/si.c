@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.20 2007/03/04 06:00:24 christos Exp $	*/
+/*	$NetBSD: si.c,v 1.20.40.1 2008/06/02 13:22:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -45,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.20 2007/03/04 06:00:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.20.40.1 2008/06/02 13:22:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,12 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.20 2007/03/04 06:00:24 christos Exp $");
 struct si_softc {
 	struct	ncr5380_softc	ncr_sc;
 	int	sc_options;
-	volatile struct dma_regs *sc_regs;
+	struct dma_regs *sc_regs;
 	int	sc_xlen;
 };
 
-static void si_attach(struct device *, struct device *, void *);
-static int  si_match(struct device *, struct cfdata *, void *);
+static int  si_match(device_t, cfdata_t, void *);
+static void si_attach(device_t, device_t, void *);
 int  si_intr(int);
 
 static void si_dma_alloc(struct ncr5380_softc *);
@@ -88,7 +81,7 @@ static void si_dma_poll(struct ncr5380_softc *);
 static void si_dma_eop(struct ncr5380_softc *);
 static void si_dma_stop(struct ncr5380_softc *);
 
-CFATTACH_DECL(si, sizeof(struct si_softc),
+CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
     si_match, si_attach, NULL, NULL);
 
 /*
@@ -106,7 +99,7 @@ int si_options = 0x00;
 
 
 static int
-si_match(struct device *parent, struct cfdata *cf, void *aux)
+si_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	int addr;
@@ -129,17 +122,18 @@ si_match(struct device *parent, struct cfdata *cf, void *aux)
  */
 
 static void
-si_attach(struct device *parent, struct device *self, void *aux)
+si_attach(device_t parent, device_t self, void *aux)
 {
-	struct si_softc *sc = (struct si_softc *)self;
+	struct si_softc *sc = device_private(self);
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	struct cfdata *cf = device_cfdata(self);
 	struct hb_attach_args *ha = aux;
 
+	ncr_sc->sc_dev = self;
 	ncr_sc->sc_regt = ha->ha_bust;
 	if (bus_space_map(ncr_sc->sc_regt, (bus_addr_t)ha->ha_address,
 	    ha->ha_size, 0, &ncr_sc->sc_regh) != 0) {
-		printf("can't map device space\n");
+		aprint_error(": can't map device space\n");
 		return;
 	}
 
@@ -149,7 +143,9 @@ si_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_options = si_options;
 
-	printf(": options=0x%x\n", sc->sc_options);
+	if (sc->sc_options != 0)
+		aprint_normal(": options=0x%x", sc->sc_options);
+	aprint_normal("\n");
 
 	ncr_sc->sc_no_disconnect = (sc->sc_options & SI_NO_DISCONNECT);
 	ncr_sc->sc_parity_disable = (sc->sc_options & SI_NO_PARITY_CHK) >> 8;
@@ -200,7 +196,7 @@ si_intr(int unit)
 	if (unit >= si_cd.cd_ndevs)
 		return 0;
 
-	sc = si_cd.cd_devs[unit];
+	sc = device_lookup_private(&si_cd, unit);	/* XXX */
 	(void)ncr5380_intr(&sc->ncr_sc);
 
 	return 0;
@@ -244,7 +240,7 @@ static void
 si_dma_start(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct dma_regs *dmac = sc->sc_regs;
+	struct dma_regs *dmac = sc->sc_regs;
 	struct sci_req *sr = ncr_sc->sc_current;
 	u_int addr, offset, rest;
 	long len;
@@ -333,21 +329,21 @@ static void
 si_dma_stop(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct dma_regs *dmac = sc->sc_regs;
+	struct dma_regs *dmac = sc->sc_regs;
 	struct sci_req *sr = ncr_sc->sc_current;
 	int resid, ntrans;
 
 	/* check DMAC interrupt status */
 	if ((dmac->stat & DC_ST_INT) == 0) {
 #ifdef DEBUG
-		printf("si_dma_stop: no DMA interrupt");
+		printf("%s: no DMA interrupt\n", __func__);
 #endif
 		return; /* XXX */
 	}
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef DEBUG
-		printf("si_dma_stop: dma not running\n");
+		printf("%s: dma not running\n", __func__);
 #endif
 		return;
 	}
@@ -367,8 +363,8 @@ si_dma_stop(struct ncr5380_softc *ncr_sc)
 
 #ifdef DEBUG
 	if (resid)
-		printf("si_dma_stop: datalen = 0x%x, resid = 0x%x\n",
-		    sc->sc_xlen, resid);
+		printf("%s: datalen = 0x%x, resid = 0x%x\n",
+		    __func__, sc->sc_xlen, resid);
 #endif
 
 	ntrans = sc->sc_xlen - resid;

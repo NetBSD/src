@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.892.6.4 2008/04/04 21:21:10 mjf Exp $
+#	$NetBSD: files,v 1.892.6.5 2008/06/02 13:23:10 mjf Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1243,7 +1243,7 @@ defpseudo fwiso:	ieee1394
 
 # driver attach / detach user interface
 defpseudo drvctl
-file	kern/kern_drvctl.c		drvctl
+file	kern/kern_drvctl.c		drvctl		needs-flag
 
 # cpu control
 defpseudo cpuctl
@@ -1384,6 +1384,7 @@ file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_resource.c
+file	kern/kern_runq.c
 file	kern/kern_rwlock.c
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
@@ -1526,6 +1527,7 @@ file	net/if_pppoe.c			pppoe			needs-flag
 file	net/pfil.c			pfil_hooks | ipfilter | pf
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp
+file	net/net_stats.c
 file	net/radix.c
 file	net/raw_cb.c
 file	net/raw_usrreq.c

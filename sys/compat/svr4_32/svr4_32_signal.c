@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.24 2007/12/20 23:03:06 dsl Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.24.6.1 2008/06/02 13:23:09 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.24 2007/12/20 23:03:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.24.6.1 2008/06/02 13:23:09 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -392,17 +385,17 @@ svr4_32_sys_signal(struct lwp *l, const struct svr4_32_sys_signal_args *uap, reg
 	sighold:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		error = sigprocmask1(l, SIG_BLOCK, &ss, 0);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return error;
 
 	case SVR4_SIGRELSE_MASK:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		error = sigprocmask1(l, SIG_UNBLOCK, &ss, 0);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return error;
 
 	case SVR4_SIGIGNORE_MASK:
@@ -412,9 +405,9 @@ svr4_32_sys_signal(struct lwp *l, const struct svr4_32_sys_signal_args *uap, reg
 		return (sigaction1(l, signum, &nbsa, 0, NULL, 0));
 
 	case SVR4_SIGPAUSE_MASK:
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		ss = l->l_sigmask;
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		sigdelset(&ss, signum);
 		return (sigsuspend1(l, &ss));
 
@@ -466,10 +459,10 @@ svr4_32_sys_sigprocmask(struct lwp *l, const struct svr4_32_sys_sigprocmask_args
 			return error;
 		svr4_32_to_native_sigset(&nsss, &nbss);
 	}
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = sigprocmask1(l, how,
 	    SCARG_P32(uap, set) ? &nbss : NULL, SCARG_P32(uap, oset) ? &obss : NULL);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	if (error)
 		return error;
 	if (SCARG_P32(uap, oset)) {
@@ -572,9 +565,9 @@ svr4_32_getcontext(struct lwp *l, struct svr4_32_ucontext *uc, const sigset_t *m
 	ss->ss_flags = 0;
 #endif
 	/* get signal mask */
-	mutex_enter(&l->l_proc->p_smutex);
+	mutex_enter(l->l_proc->p_lock);
 	native_to_svr4_32_sigset(mask, &uc->uc_sigmask);
-	mutex_exit(&l->l_proc->p_smutex);
+	mutex_exit(l->l_proc->p_lock);
 
 	uc->uc_flags |= SVR4_UC_STACK|SVR4_UC_SIGMASK;
 }
@@ -593,7 +586,7 @@ svr4_32_setcontext(struct lwp *l, struct svr4_32_ucontext *uc)
 	/* set link */
 	l->l_ctxlink = NETBSD32PTR64(uc->uc_link);
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* set signal stack */
 	if (uc->uc_flags & SVR4_UC_STACK) {
@@ -612,7 +605,7 @@ svr4_32_setcontext(struct lwp *l, struct svr4_32_ucontext *uc)
 		(void)sigprocmask1(l, SIG_SETMASK, &mask, 0);
 	}
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return EJUSTRETURN;
 }

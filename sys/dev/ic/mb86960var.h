@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.35 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.35.70.1 2008/06/02 13:23:24 mjf Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -125,7 +125,7 @@ enum fe_type {
  * fe_softc: per line info and status
  */
 struct mb86960_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct ethercom sc_ec;		/* ethernet common */
 	struct ifmedia sc_media;	/* supported media information */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: le_elb.c,v 1.6 2007/03/07 11:49:00 he Exp $	*/
+/*	$NetBSD: le_elb.c,v 1.6.40.1 2008/06/02 13:22:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.6 2007/03/07 11:49:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.6.40.1 2008/06/02 13:22:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -73,21 +66,21 @@ struct le_elb_softc {
 	void *sc_ih;
 };
 
-static int	le_elb_probe(struct device *, struct cfdata *, void *);
-static void	le_elb_attach(struct device *, struct device *, void *);
-static u_int16_t le_rdcsr(struct lance_softc *, u_int16_t);
-static void	le_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
+static int	le_elb_probe(device_t, cfdata_t, void *);
+static void	le_elb_attach(device_t, device_t, void *);
+static uint16_t le_rdcsr(struct lance_softc *, uint16_t);
+static void	le_wrcsr(struct lance_softc *, uint16_t, uint16_t);
 static void	le_copytodesc(struct lance_softc *, void *, int, int);
 static void	le_copyfromdesc(struct lance_softc *, void *, int, int);
 static void	le_copytobuf(struct lance_softc *, void *, int, int);
 static void	le_copyfrombuf(struct lance_softc *, void *, int, int);
 static void	le_zerobuf(struct lance_softc *, int, int);
 
-CFATTACH_DECL(le_elb, sizeof(struct le_elb_softc),
+CFATTACH_DECL_NEW(le_elb, sizeof(struct le_elb_softc),
     le_elb_probe, le_elb_attach, NULL, NULL);
 
 int
-le_elb_probe(struct device *parent, struct cfdata *cf, void *aux)
+le_elb_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct elb_attach_args *oaa = aux;
 
@@ -98,15 +91,16 @@ le_elb_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-le_elb_attach(struct device *parent, struct device *self, void *aux)
+le_elb_attach(device_t parent, device_t self, void *aux)
 {
-	struct le_elb_softc *msc = (void *)self;
+	struct le_elb_softc *msc = device_private(self);
 	struct lance_softc *sc = &msc->sc_am79900.lsc;
 	struct elb_attach_args *eaa = aux;
 	bus_dma_segment_t seg;
 	int i, rseg;
 
-	printf("\n");
+	sc->sc_dev = self;
+	aprint_normal("\n");
 
 	if (booted_device == NULL)	/*XXX*/
 		booted_device = self;
@@ -121,15 +115,13 @@ le_elb_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamem_alloc(msc->sc_dmat, LE_MEMSIZE, PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: couldn't allocate memory for card\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't allocate memory for card\n");
 		return;
 	}
 	if (bus_dmamem_map(msc->sc_dmat, &seg, rseg, LE_MEMSIZE,
 	    (void **)&sc->sc_mem,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		printf("%s: couldn't map memory for card\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't map memory for card\n");
 		return;
 	}
 
@@ -138,15 +130,13 @@ le_elb_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamap_create(msc->sc_dmat, LE_MEMSIZE, 1,
 	    LE_MEMSIZE, 0, BUS_DMA_NOWAIT, &msc->sc_dmam)) {
-		printf("%s: couldn't create DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't create DMA map\n");
 		bus_dmamem_free(msc->sc_dmat, &seg, rseg);
 		return;
 	}
 	if (bus_dmamap_load(msc->sc_dmat, msc->sc_dmam,
 	    sc->sc_mem, LE_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: coundn't load DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "coundn't load DMA map\n");
 		bus_dmamem_free(msc->sc_dmat, &seg, rseg);
 		return;
 	}
@@ -167,12 +157,12 @@ le_elb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rdcsr = le_rdcsr;
 	sc->sc_wrcsr = le_wrcsr;
 
-	printf("%s", sc->sc_dev.dv_xname);
+	aprint_normal("%s", device_xname(self));
 
 	/* Save the MAC address. */
 	for (i = 0; i < 3; i++) {
-		sc->sc_enaddr[i*2] = le_rdcsr(sc, 12+i);
-		sc->sc_enaddr[i*2+1] = le_rdcsr(sc, 12+i) >> 8;
+		sc->sc_enaddr[i * 2] = le_rdcsr(sc, 12 + i);
+		sc->sc_enaddr[i * 2 + 1] = le_rdcsr(sc, 12 + i) >> 8;
 	}
 
 	am79900_config(&msc->sc_am79900);
@@ -186,25 +176,25 @@ le_elb_attach(struct device *parent, struct device *self, void *aux)
 /*
  * Read from an indirect CSR.
  */
-static u_int16_t
-le_rdcsr(struct lance_softc *sc, u_int16_t reg)
+static uint16_t
+le_rdcsr(struct lance_softc *sc, uint16_t reg)
 {
 	struct le_elb_softc *lesc = (struct le_elb_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
-	u_int16_t val;
+	uint16_t val;
 
 	bus_space_write_4(iot, ioh, LE_RAP, reg);
 	val = bus_space_read_4(iot, ioh, LE_RDP);
 
-	return(val);
+	return val;
 }
 
 /*
  * Write to an indirect CSR.
  */
 static void
-le_wrcsr(struct lance_softc *sc, u_int16_t reg, u_int16_t val)
+le_wrcsr(struct lance_softc *sc, uint16_t reg, uint16_t val)
 {
 	struct le_elb_softc *lesc = (struct le_elb_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
@@ -221,8 +211,8 @@ static void
 le_copytodesc(struct lance_softc *sc, void *from, int boff, int len)
 {
 	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
-	volatile u_int32_t *src = from;
-	volatile u_int32_t *dst = (u_int32_t *)((u_char *)sc->sc_mem+boff);
+	volatile uint32_t *src = from;
+	volatile uint32_t *dst = (uint32_t *)((uint8_t *)sc->sc_mem + boff);
 	int todo = len;
 
 	/* XXX lance_setladrf should be modified to use u_int32_t instead.
@@ -234,7 +224,7 @@ le_copytodesc(struct lance_softc *sc, void *from, int boff, int len)
 		src[4] = (src[4] >> 16) | (src[4] << 16);
 	}
 
-	todo /= sizeof(u_int32_t);
+	todo /= sizeof(uint32_t);
 	while (todo-- > 0)
 		*dst++ = bswap32(*src++);
 
@@ -249,13 +239,13 @@ static void
 le_copyfromdesc(struct lance_softc *sc, void *to, int boff, int len)
 {
 	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
-	volatile u_int32_t *src = (u_int32_t *)((u_char *)sc->sc_mem+boff);
-	volatile u_int32_t *dst = to;
+	volatile uint32_t *src = (uint32_t *)((uint8_t *)sc->sc_mem + boff);
+	volatile uint32_t *dst = to;
 
 	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-	len /= sizeof(u_int32_t);
+	len /= sizeof(uint32_t);
 	while (len-- > 0)
 		*dst++ = bswap32(*src++);
 }
@@ -267,7 +257,7 @@ static void
 le_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 {
 	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
-	volatile void *buf = (void *)((u_char *)sc->sc_mem+boff);
+	volatile void *buf = (void *)((uint8_t *)sc->sc_mem + boff);
 
 	memcpy(__UNVOLATILE(buf), from, len);
 
@@ -282,7 +272,7 @@ static void
 le_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 {
 	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
-	volatile void *buf = (void *)((u_char *)sc->sc_mem+boff);
+	volatile void *buf = (void *)((uint8_t *)sc->sc_mem + boff);
 
 	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -297,7 +287,7 @@ static void
 le_zerobuf(struct lance_softc *sc, int boff, int len)  
 {
 	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
-	volatile void *buf = (void *)((u_char *)sc->sc_mem+boff);
+	volatile void *buf = (void *)((uint8_t *)sc->sc_mem + boff);
 
 	memset(__UNVOLATILE(buf), 0, len);
 

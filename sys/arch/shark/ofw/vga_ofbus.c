@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.12.16.1 2008/04/03 12:42:25 mjf Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.12.16.2 2008/06/02 13:22:39 mjf Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,13 +28,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.12.16.1 2008/04/03 12:42:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.12.16.2 2008/06/02 13:22:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <dev/isa/isavar.h>
 
@@ -68,6 +70,16 @@ CFATTACH_DECL_NEW(vga_ofbus, sizeof(struct vga_ofbus_softc),
 
 static const char *compat_strings[] = { "pnpPNP,900", 0 };
 
+static	int vga_ofbus_ioctl(void *, u_long, void *, int, struct lwp *);
+static	paddr_t vga_ofbus_mmap(void *, off_t, int);
+
+static const struct vga_funcs vga_ofbus_funcs = {
+	vga_ofbus_ioctl,
+	vga_ofbus_mmap
+};
+static uint32_t vga_reg[12];
+extern paddr_t isa_io_physaddr, isa_mem_physaddr;
+
 int
 vga_ofbus_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -89,13 +101,27 @@ vga_ofbus_attach(device_t parent, device_t self, void *aux)
 	struct vga_ofbus_softc *osc = device_private(self);
 	struct vga_softc *sc = &osc->sc_vga;
 	struct ofbus_attach_args *oba = aux;
+	int vga_handle, i;
 
 	sc->sc_dev = self;
 	aprint_normal("\n");
 	osc->sc_phandle = oba->oba_phandle;
 
+	vga_handle = OF_finddevice("/vlbus/display");
+	OF_getprop(vga_handle, "reg", vga_reg, sizeof(vga_reg));
+
+	/* for some idiotic reason we get this in the wrong byte order */
+	for (i = 0; i < 12; i++) {
+		vga_reg[i] = be32toh(vga_reg[i]);
+		printf("%08x\n", vga_reg[i]);
+	}
+
 	vga_common_attach(sc, &isa_io_bs_tag, &isa_mem_bs_tag,
-	    WSDISPLAY_TYPE_ISAVGA, 0, NULL);
+	    WSDISPLAY_TYPE_ISAVGA, 0, &vga_ofbus_funcs);
+	if (vga_reg[10] > 0) {
+		aprint_normal("%s: aperture at 0x%08x\n", device_xname(self), 
+		    vga_reg[10]);
+	}
 }
 
 int
@@ -140,4 +166,57 @@ vga_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 #endif
 
 	return ret;
+}
+
+static int
+vga_ofbus_ioctl(void *cookie, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	/* we should catch WSDISPLAYIO_SMODE here */
+	return 0;
+}
+
+static paddr_t
+vga_ofbus_mmap(void *cookie, off_t offset, int prot)
+{
+
+	/* only the superuser may mmap IO and aperture */
+	if (curlwp != NULL) {
+		if (kauth_authorize_generic(kauth_cred_get(),
+		    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+			return -1;
+		}
+	}
+
+	/*
+	 * XXX
+	 * we should really use bus_space_mmap here but for some reason
+	 * the ISA tags contain kernel virtual addresses and translating them
+	 * back to physical addresses doesn't really work
+	 */
+	/* access to IO ports */
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < (PCI_MAGIC_IO_RANGE + 0x10000))) {
+		paddr_t pa;
+
+		pa = isa_io_physaddr + offset - PCI_MAGIC_IO_RANGE;
+		return arm_btop(pa);
+	}
+
+	/* legacy VGA aperture */
+	if ((offset >= 0xa0000) && (offset < 0xc0000)) {
+
+		return arm_btop(isa_mem_physaddr + offset);
+	}
+
+	/* SVGA aperture, we get the address from OpenFirmware */
+	if (vga_reg[10] == 0)
+		return -1;
+
+	if ((offset >= vga_reg[10]) &&
+	    (offset < (vga_reg[10] + vga_reg[11]))) {
+
+		return arm_btop(isa_mem_physaddr + offset);
+	}
+
+	return -1;
 }

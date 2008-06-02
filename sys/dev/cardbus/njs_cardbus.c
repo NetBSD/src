@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.6 2007/10/19 11:59:39 ad Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.6.16.1 2008/06/02 13:23:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.6 2007/10/19 11:59:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.6.16.1 2008/06/02 13:23:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +165,7 @@ njs_cardbus_attach(struct device *parent, struct device *self,
 			goto try_io;
 		}
 #ifdef NJSC32_DEBUG
-		printf("%s: memory space mapped\n", sc->sc_dev.dv_xname);
+		printf("%s: memory space mapped\n", device_xname(&sc->sc_dev));
 #endif
 		csr |= PCI_COMMAND_MEM_ENABLE;
 		sc->sc_flags = NJSC32_MEM_MAPPED;
@@ -183,14 +176,13 @@ njs_cardbus_attach(struct device *parent, struct device *self,
 		    PCI_MAPREG_TYPE_IO, 0, &sc->sc_regt, &sc->sc_regh,
 		    NULL, &csc->sc_regmap_size) == 0) {
 #ifdef NJSC32_DEBUG
-			printf("%s: io space mapped\n", sc->sc_dev.dv_xname);
+			printf("%s: io space mapped\n", device_xname(&sc->sc_dev));
 #endif
 			csr |= PCI_COMMAND_IO_ENABLE;
 			sc->sc_flags = NJSC32_IO_MAPPED;
 			(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 		} else {
-			printf("%s: unable to map device registers\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 			return;
 		}
 	}
@@ -223,12 +215,12 @@ njs_cardbus_attach(struct device *parent, struct device *self,
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
 	    njsc32_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt at %d\n",
-		    sc->sc_dev.dv_xname, ca->ca_intrline);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt at %d\n",
+		    ca->ca_intrline);
 		return;
 	}
 	printf("%s: interrupting at %d\n",
-	    sc->sc_dev.dv_xname, ca->ca_intrline);
+	    device_xname(&sc->sc_dev), ca->ca_intrline);
 
 	/* CardBus device cannot supply termination power. */
 	sc->sc_flags |= NJSC32_CANNOT_SUPPLY_TERMPWR;

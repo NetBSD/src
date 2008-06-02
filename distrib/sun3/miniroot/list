@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.15 2007/05/16 13:07:16 tsutsui Exp $
+# $NetBSD: list,v 1.15.12.1 2008/06/02 13:21:18 mjf Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -150,4 +150,4 @@ SPECIAL	route		srcdir	distrib/utils/x_route
 ARGVLN	sh -sh
 
 LIBS	libhack.o
-LIBS	-lrmt -ledit -lutil -lcurses -ltermcap -lcrypt -ll -lm -lkvm -lbz2 -lz
+LIBS	-lrmt -ledit -lutil -lcurses -ltermcap -lcrypt -ll -lm -lkvm -lbz2 -lz -lprop

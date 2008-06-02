@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.c,v 1.14 2008/01/04 21:17:57 ad Exp $ */
+/*	$NetBSD: athrate-sample.c,v 1.14.6.1 2008/06/02 13:23:18 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.14 2008/01/04 21:17:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.14.6.1 2008/06/02 13:23:18 mjf Exp $");
 #endif
 
 
@@ -773,7 +773,7 @@ ath_rate_sysctlattach(struct ath_softc *sc, struct sample_softc *osc)
 	struct sysctllog **log = &sc->sc_sysctllog;
 	const struct sysctlnode *cnode, *rnode;
 
-	if ((rnode = ath_sysctl_instance(sc->sc_dev.dv_xname, log)) == NULL)
+	if ((rnode = ath_sysctl_instance(device_xname(&sc->sc_dev), log)) == NULL)
 		return;
 
 	/* XXX bounds check [0..100] */

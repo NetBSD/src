@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.67 2007/10/19 12:00:24 ad Exp $	*/
+/*	$NetBSD: wds.c,v 1.67.16.1 2008/06/02 13:23:32 mjf Exp $	*/
 
 /*
  * XXX
@@ -22,13 +22,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -86,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.67 2007/10/19 12:00:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.67.16.1 2008/06/02 13:23:32 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -337,7 +330,7 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, WDS_ISA_IOSIZE, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -345,7 +338,7 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
 	if (!wds_find(iot, ioh, &wpd)) {
-		printf("%s: wds_find failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "wds_find failed\n");
 		return;
 	}
 
@@ -353,8 +346,7 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 #ifdef notyet
 	if (wpd.sc_drq != -1) {
 		if ((error = isa_dmacascade(ic, wpd.sc_drq)) != 0) {
-			printf("%s: unable to cascade DRQ, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to cascade DRQ, error = %d\n", error);
 			return;
 		}
 	}
@@ -363,8 +355,7 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 	    wdsintr, sc);
 #else
 	if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
-		printf("%s: unable to cascade DRQ, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to cascade DRQ, error = %d\n", error);
 		return;
 	}
 
@@ -372,8 +363,7 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 	    IPL_BIO, wdsintr, sc);
 #endif
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 
@@ -439,14 +429,14 @@ wds_finish_scbs(sc)
 		for (i = 0; i < WDS_MBX_SIZE; i++) {
 			if (wmbi->stat != WDS_MBI_FREE) {
 				printf("%s: mbi not in round-robin order\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 				goto AGAIN;
 			}
 			wds_nextmbx(wmbi, wmbx, mbi);
 		}
 #ifdef WDSDIAGnot
 		printf("%s: mbi interrupt with no full mailboxes\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 #endif
 		return;
 	}
@@ -456,7 +446,7 @@ AGAIN:
 		scb = wds_scb_phys_kv(sc, phystol(wmbi->scb_addr));
 		if (!scb) {
 			printf("%s: bad mbi scb pointer; skipping\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			goto next;
 		}
 
@@ -514,8 +504,7 @@ wdsintr(arg)
 		break;
 
 	default:
-		printf("%s: unrecognized interrupt type %02x",
-		    sc->sc_dev.dv_xname, c);
+		aprint_error_dev(&sc->sc_dev, "unrecognized interrupt type %02x", c);
 		break;
 	}
 
@@ -566,16 +555,14 @@ wds_init_scb(sc, scb)
 	error = bus_dmamap_create(dmat, sizeof(struct wds_scb), 1,
 	    sizeof(struct wds_scb), 0, BUS_DMA_NOWAIT, &scb->dmamap_self);
 	if (error) {
-		printf("%s: can't create scb dmamap_self\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't create scb dmamap_self\n");
 		return (error);
 	}
 
 	error = bus_dmamap_create(dmat, WDS_MAXXFER, WDS_NSEG, WDS_MAXXFER,
 	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &scb->dmamap_xfer);
 	if (error) {
-		printf("%s: can't create scb dmamap_xfer\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't create scb dmamap_xfer\n");
 		bus_dmamap_destroy(dmat, scb->dmamap_self);
 		return (error);
 	}
@@ -586,8 +573,7 @@ wds_init_scb(sc, scb)
 	error = bus_dmamap_load(dmat, scb->dmamap_self, scb,
 	    sizeof(struct wds_scb), NULL, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't load scb dmamap_self\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't load scb dmamap_self\n");
 		bus_dmamap_destroy(dmat, scb->dmamap_self);
 		bus_dmamap_destroy(dmat, scb->dmamap_xfer);
 		return (error);
@@ -628,16 +614,14 @@ wds_create_scbs(sc, mem, size)
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg,
 	    1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't allocate memory for scbs\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't allocate memory for scbs\n");
 		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    (void *)&scb, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
-		printf("%s: can't map memory for scbs\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map memory for scbs\n");
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		return (error);
 	}
@@ -647,8 +631,7 @@ wds_create_scbs(sc, mem, size)
 	while (size > sizeof(struct wds_scb) && sc->sc_numscbs < WDS_SCB_MAX) {
 		error = wds_init_scb(sc, scb);
 		if (error) {
-			printf("%s: can't initialize scb\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "can't initialize scb\n");
 			return (error);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_scb, scb, chain);
@@ -843,17 +826,15 @@ wds_done(sc, scb, stat)
 				 */
 				switch (scb->cmd.venderr) {
 				case 0x00:
-					printf("%s: Is this "
-					    "an error?\n",
-					    sc->sc_dev.dv_xname);
+					aprint_error_dev(&sc->sc_dev, "Is this "
+					    "an error?\n");
 					/* Experiment. */
 					xs->error = XS_DRIVER_STUFFUP;
 					break;
 				case 0x01:
 #if 0
-					printf("%s: OK, see SCSI "
-					    "error field.\n",
-					    sc->sc_dev.dv_xname);
+					aprint_error_dev(&sc->sc_dev, "OK, see SCSI "
+					    "error field.\n");
 #endif
 					if (scb->cmd.stat == SCSI_CHECK ||
 					    scb->cmd.stat == SCSI_BUSY) {
@@ -864,7 +845,7 @@ wds_done(sc, scb, stat)
 				case 0x40:
 #if 0
 					printf("%s: DMA underrun!\n",
-					    sc->sc_dev.dv_xname);
+					    device_xname(&sc->sc_dev));
 #endif
 					/*
 					 * Hits this if the target
@@ -879,7 +860,7 @@ wds_done(sc, scb, stat)
 				default:
 					printf("%s: VENDOR ERROR "
 					    "%02x, scsi %02x\n",
-					    sc->sc_dev.dv_xname,
+					    device_xname(&sc->sc_dev),
 					    scb->cmd.venderr,
 					    scb->cmd.stat);
 					/* Experiment. */
@@ -1077,7 +1058,7 @@ wds_inquire_setup_information(sc)
 		goto out;
 
 	/* Print the version number. */
-	printf("%s: version %x.%02x ", sc->sc_dev.dv_xname,
+	printf("%s: version %x.%02x ", device_xname(&sc->sc_dev),
 	    scb->cmd.targ, scb->cmd.scb[0]);
 	sc->sc_revision = (scb->cmd.targ << 8) | scb->cmd.scb[0];
 	/* Print out the version string. */
@@ -1135,7 +1116,7 @@ wds_scsipi_request(chan, req, arg)
 
 		if (xs->xs_control & XS_CTL_RESET) {
 			/* XXX Fix me! */
-			printf("%s: reset!\n", sc->sc_dev.dv_xname);
+			printf("%s: reset!\n", device_xname(&sc->sc_dev));
 			wds_init(sc, 1);
 			scsipi_done(xs);
 			return;
@@ -1147,8 +1128,7 @@ wds_scsipi_request(chan, req, arg)
 			 * Let's not worry about UIO. There isn't any code
 			 * for the non-SG boards anyway!
 			 */
-			printf("%s: UIO is untested and disabled!\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "UIO is untested and disabled!\n");
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			return;
@@ -1175,8 +1155,8 @@ wds_scsipi_request(chan, req, arg)
 
 		/* Zero out the command structure. */
 		if (xs->cmdlen > sizeof(scb->cmd.scb)) {
-			printf("%s: cmdlen %d too large for SCB\n",
-			    sc->sc_dev.dv_xname, xs->cmdlen);
+			aprint_error_dev(&sc->sc_dev, "cmdlen %d too large for SCB\n",
+			    xs->cmdlen);
 			xs->error = XS_DRIVER_STUFFUP;
 			goto out_bad;
 		}
@@ -1225,8 +1205,7 @@ wds_scsipi_request(chan, req, arg)
 
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				printf("%s: error %d loading DMA map\n",
-				    sc->sc_dev.dv_xname, error);
+				aprint_error_dev(&sc->sc_dev, "error %d loading DMA map\n", error);
  out_bad:
 				wds_free_scb(sc, scb);
 				scsipi_done(xs);
@@ -1398,7 +1377,7 @@ wds_timeout(arg)
 	 */
 	wds_collect_mbo(sc);
 	if (scb->flags & SCB_SENDING) {
-		printf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "not taking commands!\n");
 		Debugger();
 	}
 #endif

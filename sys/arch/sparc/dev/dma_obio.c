@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_obio.c,v 1.9 2005/11/16 00:49:03 uwe Exp $ */
+/*	$NetBSD: dma_obio.c,v 1.9.74.1 2008/06/02 13:22:40 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.9 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.9.74.1 2008/06/02 13:22:40 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,44 +49,45 @@ __KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.9 2005/11/16 00:49:03 uwe Exp $");
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
 
-int	dmamatch_obio(struct device *, struct cfdata *, void *);
-void	dmaattach_obio(struct device *, struct device *, void *);
+int	dmamatch_obio(device_t, cfdata_t, void *);
+void	dmaattach_obio(device_t, device_t, void *);
 
-CFATTACH_DECL(dma_obio, sizeof(struct lsi64854_softc),
+CFATTACH_DECL_NEW(dma_obio, sizeof(struct lsi64854_softc),
     dmamatch_obio, dmaattach_obio, NULL, NULL);
 
 int
-dmamatch_obio(struct device *parent, struct cfdata *cf, void *aux)
+dmamatch_obio(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
 
 	if (uoba->uoba_isobio4 == 0)
-		return (0);
+		return 0;
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
+	return bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				4,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
-				NULL, NULL));
+				NULL, NULL);
 }
 
 
 void
-dmaattach_obio(struct device *parent, struct device *self, void *aux)
+dmaattach_obio(device_t parent, device_t self, void *aux)
 {
+	struct lsi64854_softc *sc = device_private(self);
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
-	struct lsi64854_softc *sc = (void *)self;
 
+	sc->sc_dev = self;
 	sc->sc_bustag = oba->oba_bustag;
 	sc->sc_dmatag = oba->oba_dmatag;
 
 	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
 			  4 * sizeof(uint32_t),
 			  0, &sc->sc_regs) != 0) {
-		printf("dmaattach_obio: cannot map registers\n");
+		aprint_error(": cannot map registers\n");
 		return;
 	}
 

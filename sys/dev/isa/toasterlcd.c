@@ -1,4 +1,4 @@
-/* $NetBSD: toasterlcd.c,v 1.4 2007/10/19 12:00:23 ad Exp $ */
+/* $NetBSD: toasterlcd.c,v 1.4.16.1 2008/06/02 13:23:32 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.4 2007/10/19 12:00:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toasterlcd.c,v 1.4.16.1 2008/06/02 13:23:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +139,8 @@ toasterlcd_attach(parent, self, aux)
 	TSDIO_CLEARBITS(PBDR, 0xd);	/* De-assert EN, De-assert RS */
 
 	aprint_normal(": 4x40 text-mode hd44780 LCD\n");
-	aprint_normal("%s: using port C, bits 0-7 as DB0-DB7\n", sc->sc_dev.dv_xname);
-	aprint_normal("%s: using port B, bits 0-3 as RS, WR, EN1, EN2\n", sc->sc_dev.dv_xname);
+	aprint_normal_dev(&sc->sc_dev, "using port C, bits 0-7 as DB0-DB7\n");
+	aprint_normal_dev(&sc->sc_dev, "using port B, bits 0-3 as RS, WR, EN1, EN2\n");
 
 	hd44780_attach_subr(&sc->sc_hlcd);
 

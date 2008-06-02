@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.60.14.1 2008/04/03 12:42:20 mjf Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.60.14.2 2008/06/02 13:22:22 mjf Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.60.14.1 2008/04/03 12:42:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.60.14.2 2008/06/02 13:22:22 mjf Exp $");
 
 #include "opt_adb.h"
 
@@ -2718,7 +2718,7 @@ int
 adb_read_date_time(unsigned long *curtime)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
-	int result, tmout;
+	int result;
 	volatile int flag = 0;
 
 	switch (adbHardware) {

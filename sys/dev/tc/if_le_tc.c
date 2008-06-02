@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.20 2006/03/31 17:39:33 thorpej Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.20.58.1 2008/06/02 13:23:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.20 2006/03/31 17:39:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.20.58.1 2008/06/02 13:23:52 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -60,10 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.20 2006/03/31 17:39:33 thorpej Exp $"
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
 
-static int	le_tc_match(struct device *, struct cfdata *, void *);
-static void	le_tc_attach(struct device *, struct device *, void *);
+static int	le_tc_match(device_t, cfdata_t, void *);
+static void	le_tc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(le_tc, sizeof(struct le_softc),
+CFATTACH_DECL_NEW(le_tc, sizeof(struct le_softc),
     le_tc_match, le_tc_attach, NULL, NULL);
 
 #define	LE_OFFSET_RAM		0x0
@@ -71,7 +71,7 @@ CFATTACH_DECL(le_tc, sizeof(struct le_softc),
 #define	LE_OFFSET_ROM		0x1c0000
 
 static int
-le_tc_match(struct device *parent, struct cfdata *match, void *aux)
+le_tc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct tc_attach_args *d = aux;
 
@@ -82,11 +82,13 @@ le_tc_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-le_tc_attach(struct device *parent, struct device *self, void *aux)
+le_tc_attach(device_t parent, device_t self, void *aux)
 {
 	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct tc_attach_args *d = aux;
+
+	sc->sc_dev = self;
 
 	/*
 	 * It's on the turbochannel proper, or a kn02
@@ -109,7 +111,7 @@ le_tc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	dec_le_common_attach(&lesc->sc_am7990,
-			     (u_char *)(d->ta_addr + LE_OFFSET_ROM + 2));
+			     (uint8_t *)(d->ta_addr + LE_OFFSET_ROM + 2));
 
 	tc_intr_establish(parent, d->ta_cookie, TC_IPL_NET, am7990_intr, sc);
 }

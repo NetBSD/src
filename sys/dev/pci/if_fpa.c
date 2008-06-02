@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.48 2007/03/04 06:02:20 christos Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.48.36.1 2008/06/02 13:23:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.48 2007/03/04 06:02:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.48.36.1 2008/06/02 13:23:39 mjf Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -430,7 +430,7 @@ pdq_pci_attach(
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_CFLT, data);
     }
 
-    strcpy(sc->sc_if.if_xname, sc->sc_dev.dv_xname);
+    strlcpy(sc->sc_if.if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
@@ -474,20 +474,20 @@ pdq_pci_attach(
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL) {
-	aprint_error("%s: initialization failed\n", sc->sc_dev.dv_xname);
+	aprint_error_dev(&sc->sc_dev, "initialization failed\n");
 	return;
     }
 
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
 
     if (pci_intr_map(pa, &intrhandle)) {
-	aprint_error("%s: couldn't map interrupt\n", self->dv_xname);
+	aprint_error_dev(self, "couldn't map interrupt\n");
 	return;
     }
     intrstr = pci_intr_string(pa->pa_pc, intrhandle);
     sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET, pdq_pci_ifintr, sc);
     if (sc->sc_ih == NULL) {
-	aprint_error("%s: couldn't establish interrupt", self->dv_xname);
+	aprint_error_dev(self, "couldn't establish interrupt");
 	if (intrstr != NULL)
 	    aprint_normal(" at %s", intrstr);
 	aprint_normal("\n");
@@ -496,9 +496,9 @@ pdq_pci_attach(
 
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
     if (sc->sc_ats == NULL)
-	aprint_error("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
+	aprint_error_dev(self, "warning: couldn't establish shutdown hook\n");
     if (intrstr != NULL)
-	aprint_normal("%s: interrupting at %s\n", self->dv_xname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 }
 
 CFATTACH_DECL(fpa, sizeof(pdq_softc_t),

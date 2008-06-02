@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.17 2008/01/19 13:11:16 chris Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.17.6.1 2008/06/02 13:22:02 mjf Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.17 2008/01/19 13:11:16 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.17.6.1 2008/06/02 13:22:02 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -213,7 +213,6 @@ int max_processes = 64;		/* Default number */
 #endif				/* !PMAP_STATIC_L1S */
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
 pv_addr_t irqstack;
 pv_addr_t undstack;
 pv_addr_t abtstack;
@@ -441,7 +440,6 @@ initarm(void *arg)
 	u_int l1pagetable;
 	extern int etext __asm("_etext");
 	extern int end __asm("_end");
-	pv_addr_t kernel_l1pt;
 	int progress_counter = 0;
 
 #ifdef DO_MEMORY_DISK
@@ -627,8 +625,6 @@ initarm(void *arg)
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
-	kernel_l1pt.pv_pa = 0;
-	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0
@@ -883,8 +879,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	LEDSTEP();
 

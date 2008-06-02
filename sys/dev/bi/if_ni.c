@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.33.16.1 2008/04/03 12:42:38 mjf Exp $ */
+/*	$NetBSD: if_ni.c,v 1.33.16.2 2008/06/02 13:23:13 mjf Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.33.16.1 2008/04/03 12:42:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.33.16.2 2008/06/02 13:23:13 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -220,7 +220,7 @@ failtest(struct ni_softc *sc, int reg, int mask, int test, const char *str)
 	} while (((NI_RREG(reg) & mask) != test) && --i);
 
 	if (i == 0) {
-		printf("%s: %s\n", sc->sc_dev.dv_xname, str);
+		printf("%s: %s\n", device_xname(&sc->sc_dev), str);
 		return 1;
 	}
 	return 0;
@@ -256,7 +256,7 @@ niattach(parent, self, aux)
 	bi_intr_establish(ba->ba_icookie, ba->ba_ivec,
 		niintr, sc, &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		sc->sc_dev.dv_xname, "intr");
+		device_xname(&sc->sc_dev), "intr");
 
 	ni_getpgs(sc, sizeof(struct ni_gvppqb), (void **)&sc->sc_gvppqb,
 	    (paddr_t *)&sc->sc_pgvppqb);
@@ -287,7 +287,7 @@ niattach(parent, self, aux)
 	fqb->nf_dlen = PKTHDR+TXADD;
 	fqb->nf_rlen = PKTHDR+RXADD;
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = nistart;
@@ -306,7 +306,7 @@ niattach(parent, self, aux)
 	while ((NI_RREG(BIREG_VAXBICSR) & BICSR_BROKE) && --i)
 		DELAY(500000);
 	if (i == 0) {
-		printf("%s: BROKE bit set after reset\n", sc->sc_dev.dv_xname);
+		printf("%s: BROKE bit set after reset\n", device_xname(&sc->sc_dev));
 		return;
 	}
 
@@ -429,7 +429,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	if (endwait == 0) {
 		if (++retry < 3)
 			goto retry;
-		printf("%s: no response to set params\n", sc->sc_dev.dv_xname);
+		printf("%s: no response to set params\n", device_xname(&sc->sc_dev));
 		return;
 	}
 
@@ -467,7 +467,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	/* Wait for everything to finish */
 	WAITREG(NI_PSR, PSR_OWN);
 
-	printf("%s: hardware address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: hardware address %s\n", device_xname(&sc->sc_dev),
 	    ether_sprintf(sc->sc_enaddr));
 
 	/*
@@ -476,8 +476,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	if (shutdownhook_establish(ni_shutdown, sc) == 0)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish shutdown hook\n");
 }
 
 /*
@@ -519,7 +518,7 @@ nistart(ifp)
 		return;
 #ifdef DEBUG
 	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: nistart\n", sc->sc_dev.dv_xname);
+		printf("%s: nistart\n", device_xname(&sc->sc_dev));
 #endif
 
 	while (fqb->nf_dforw) {
@@ -574,7 +573,7 @@ nistart(ifp)
 #ifdef DEBUG
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: sending %d bytes (%d segments)\n",
-			    sc->sc_dev.dv_xname, mlen, i);
+			    device_xname(&sc->sc_dev), mlen, i);
 #endif
 
 		res = INSQTI(data, &gvp->nc_forw0);
@@ -600,7 +599,7 @@ niintr(void *arg)
 		return;
 
 	if ((NI_RREG(NI_PSR) & PSR_ERR))
-		printf("%s: PSR %x\n", sc->sc_dev.dv_xname, NI_RREG(NI_PSR));
+		printf("%s: PSR %x\n", device_xname(&sc->sc_dev), NI_RREG(NI_PSR));
 
 	KERNEL_LOCK(1, NULL);
 	/* Got any response packets?  */
@@ -873,7 +872,7 @@ nitimeout(ifp)
 	if (sc->sc_inq == 0)
 		return;
 
-	printf("%s: xmit logic died, resetting...\n", sc->sc_dev.dv_xname);
+	printf("%s: xmit logic died, resetting...\n", device_xname(&sc->sc_dev));
 	/*
 	 * Do a reset of interface, to get it going again.
 	 * Will it work by just restart the transmit logic?

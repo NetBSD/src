@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.9 2007/12/09 09:55:58 nisimura Exp $ */
+/* $NetBSD: nvt.c,v 1.9.10.1 2008/06/02 13:22:36 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -64,9 +57,29 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int nvt_match(unsigned, void *);
 void *nvt_init(unsigned, void *);
 int nvt_send(void *, char *, unsigned);
 int nvt_recv(void *, char *, unsigned, unsigned);
+
+struct desc {
+	uint32_t xd0, xd1, xd2, xd3;
+};
+#define T0_OWN		(1U << 31)	/* 1: loaded for HW to send */
+#define T0_TERR		(1U << 15)	/* Tx error; ABT|CBH */
+#define T0_UDF		(1U << 11)	/* FIFO underflow */
+#define T0_CRS		(1U << 10)	/* found carrier sense lost */
+#define T0_OWC		(1U << 9)	/* found out of window collision */
+#define T0_ABT		(1U << 8)	/* excess collision Tx abort */
+#define T0_CBH		(1U << 7)	/* heartbeat check failure */
+#define T0_COLS		(1U << 4)	/* collision detected */
+#define T0_NCRMASK	0x3		/* number of collision retries */
+#define T1_IC		(1U << 23)	/* post Tx done interrupt */
+#define T1_STP		(1U << 22)	/* first frame segment */
+#define T1_EDP		(1U << 21)	/* last frame segment */
+#define T1_CRC		(1U << 16)	/* _disable_ CRC generation */
+#define T1_CHN		(1U << 15)	/* "more bit," not the last seg. */
+#define T_FLMASK	0x00007fff	/* Tx frame/segment length */
 
 #define R0_OWN		(1U << 31)	/* 1: empty for HW to load anew */
 #define R0_FLMASK	0x7fff0000	/* frame length */
@@ -85,26 +98,6 @@ int nvt_recv(void *, char *, unsigned, unsigned);
 #define R0_CRCE		(1U << 1)	/* CRC error */
 #define R0_RERR		(1U << 0)	/* Rx error summary */
 #define R1_FLMASK	0x00007ffc	/* Rx segment buffer length */
-
-#define T0_OWN		(1U << 31)	/* 1: loaded for HW to send */
-#define T0_TERR		(1U << 15)	/* Tx error; ABT|CBH */
-#define T0_UDF		(1U << 11)	/* FIFO underflow */
-#define T0_CRS		(1U << 10)	/* found carrier sense lost */
-#define T0_OWC		(1U << 9)	/* found out of window collision */
-#define T0_ABT		(1U << 8)	/* excess collision Tx abort */
-#define T0_CBH		(1U << 7)	/* heartbeat check failure */
-#define T0_COLS		(1U << 4)	/* collision detected */
-#define T0_NCRMASK	0x3		/* number of collision retries */
-#define T1_IC		(1U << 23)	/* post Tx done interrupt */
-#define T1_STP		(1U << 22)	/* first frame segment */
-#define T1_EDP		(1U << 21)	/* last frame segment */
-#define T1_CRC		(1U << 16)	/* _disable_ CRC generation */
-#define T1_CHN		(1U << 15)	/* "more bit," not the last seg. */
-#define T_FLMASK	0x00007fff	/* Tx frame/segment length */
-
-struct desc {
-	uint32_t xd0, xd1, xd2, xd3;
-};
 
 #define VR_PAR0		0x00		/* SA [0] */
 #define VR_PAR1		0x01		/* SA [1] */
@@ -165,6 +158,20 @@ static int mii_read(struct local *, int, int);
 static void mii_write(struct local *, int, int, int);
 static void mii_dealan(struct local *, unsigned);
 
+int
+nvt_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x1106, 0x3053):
+	case PCI_DEVICE(0x1106, 0x3065):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 nvt_init(unsigned tag, void *data)
 {
@@ -174,11 +181,11 @@ nvt_init(unsigned tag, void *data)
 	uint8_t *en;
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x1106 ||
-	    (PCI_PRODUCT(val) != 0x3053 && PCI_PRODUCT(val) != 0x3065))
+	if (PCI_DEVICE(0x1106, 0x3053) != val
+	    && PCI_DEVICE(0x1106, 0x3065) != val)
 		return NULL;
 
-	l = ALLOC(struct local, sizeof(struct desc));
+	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
@@ -218,11 +225,11 @@ nvt_init(unsigned tag, void *data)
 	rxd[0].xd0 = htole32(R0_OWN);
 	rxd[0].xd1 = htole32(FRAMESIZE << 16);
 	rxd[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
-	rxd[0].xd3 = htole32(&rxd[1]);
+	rxd[0].xd3 = htole32(VTOPHYS(&rxd[1]));
 	rxd[1].xd0 = htole32(R0_OWN);
 	rxd[1].xd1 = htole32(VTOPHYS(l->rxstore[1]));
 	rxd[1].xd2 = htole32(FRAMESIZE << 16);
-	rxd[1].xd3 = htole32(&rxd[0]);
+	rxd[1].xd3 = htole32(VTOPHYS(&rxd[0]));
 	wbinv(l, sizeof(struct local));
 	l->rx = 0;
 
@@ -246,9 +253,12 @@ int
 nvt_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *txd;
+	volatile struct desc *txd;
 	unsigned loop;
 	
+	len = (len & T_FLMASK);
+	if (len < 60)
+		len = 60; /* needs to stretch to ETHER_MIN_LEN - 4 */
 	wbinv(buf, len);
 	txd = &l->txd;
 	txd->xd3 = htole32(txd);
@@ -274,7 +284,7 @@ int
 nvt_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *rxd;
+	volatile struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

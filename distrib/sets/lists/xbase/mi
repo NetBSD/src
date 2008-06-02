@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.56 2008/01/03 20:48:03 jdc Exp $
+# $NetBSD: mi,v 1.56.6.1 2008/06/02 13:21:18 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -583,6 +583,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/by
 ./usr/X11R6/lib/X11/xkb/symbols/ca
 ./usr/X11R6/lib/X11/xkb/symbols/ca_enhanced
+./usr/X11R6/lib/X11/xkb/symbols/colemak
 ./usr/X11R6/lib/X11/xkb/symbols/compose
 ./usr/X11R6/lib/X11/xkb/symbols/ctrl
 ./usr/X11R6/lib/X11/xkb/symbols/cz
@@ -672,6 +673,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pc/bg
 ./usr/X11R6/lib/X11/xkb/symbols/pc/br
 ./usr/X11R6/lib/X11/xkb/symbols/pc/by
+./usr/X11R6/lib/X11/xkb/symbols/pc/colemak
 ./usr/X11R6/lib/X11/xkb/symbols/pc/cz
 ./usr/X11R6/lib/X11/xkb/symbols/pc/cz_qwerty
 ./usr/X11R6/lib/X11/xkb/symbols/pc/de

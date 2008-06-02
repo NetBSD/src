@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.117.6.1 2008/04/03 12:43:14 mjf Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.117.6.2 2008/06/02 13:24:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.117.6.1 2008/04/03 12:43:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.117.6.2 2008/06/02 13:24:37 mjf Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.117.6.1 2008/04/03 12:43:14 mjf Exp $
  */
 
 static void uvm_swapout(struct lwp *);
+static int uarea_swapin(vaddr_t);
 
 #define UVM_NUAREA_HIWAT	20
 #define	UVM_NUAREA_LOWAT	16
@@ -154,7 +155,7 @@ uvm_chgkprot(void *addr, size_t len, int rw)
 		 * Extract physical address for the page.
 		 */
 		if (pmap_extract(pmap_kernel(), sva, &pa) == false)
-			panic("chgkprot: invalid page");
+			panic("%s: invalid page", __func__);
 		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
 	pmap_update(pmap_kernel());
@@ -249,10 +250,8 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if ((l2->l_flag & LW_INMEM) == 0) {
 		vaddr_t uarea = USER_TO_UAREA(l2->l_addr);
 
-		error = uvm_fault_wire(kernel_map, uarea,
-		    uarea + USPACE, VM_PROT_READ | VM_PROT_WRITE, 0);
-		if (error)
-			panic("uvm_lwp_fork: uvm_fault_wire failed: %d", error);
+		if ((error = uarea_swapin(uarea)) != 0)
+			panic("%s: uvm_fault_wire failed: %d", __func__, error);
 #ifdef PMAP_UAREA
 		/* Tell the pmap this is a u-area mapping */
 		PMAP_UAREA(uarea);
@@ -402,9 +401,11 @@ uvm_proc_exit(struct proc *p)
 	/*
 	 * borrow proc0's address space.
 	 */
+	kpreempt_disable();
 	pmap_deactivate(l);
 	p->p_vmspace = proc0.p_vmspace;
 	pmap_activate(l);
+	kpreempt_enable();
 
 	uvmspace_free(ovm);
 }
@@ -468,7 +469,7 @@ uvm_swapin(struct lwp *l)
 
 	error = uarea_swapin(USER_TO_UAREA(l->l_addr));
 	if (error) {
-		panic("uvm_swapin: rewiring stack failed: %d", error);
+		panic("%s: rewiring stack failed: %d", __func__, error);
 	}
 
 	/*
@@ -535,7 +536,7 @@ uvm_scheduler(void)
 		ll = NULL;		/* process to choose */
 		ppri = INT_MIN;		/* its priority */
 
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		LIST_FOREACH(l, &alllwp, l_list) {
 			/* is it a runnable swapped out process? */
 			if (l->l_stat == LSRUN && !(l->l_flag & LW_INMEM)) {
@@ -549,14 +550,14 @@ uvm_scheduler(void)
 		}
 #ifdef DEBUG
 		if (swapdebug & SDB_FOLLOW)
-			printf("scheduler: running, procp %p pri %d\n", ll,
+			printf("%s: running, procp %p pri %d\n", __func__, ll,
 			    ppri);
 #endif
 		/*
 		 * Nothing to do, back to sleep
 		 */
 		if ((l = ll) == NULL) {
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			mutex_enter(&uvm_scheduler_mutex);
 			if (uvm.scheduler_kicked == false)
 				cv_wait(&uvm.scheduler_cv,
@@ -582,7 +583,7 @@ uvm_scheduler(void)
 				    uvmexp.free);
 #endif
 			mutex_enter(&l->l_swaplock);
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			uvm_swapin(l);
 			mutex_exit(&l->l_swaplock);
 			continue;
@@ -591,17 +592,17 @@ uvm_scheduler(void)
 			 * not enough memory, jab the pageout daemon and
 			 * wait til the coast is clear
 			 */
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 #ifdef DEBUG
 			if (swapdebug & SDB_FOLLOW)
-				printf("scheduler: no room for pid %d(%s),"
-				    " free %d\n", l->l_proc->p_pid,
+				printf("%s: no room for pid %d(%s),"
+				    " free %d\n", __func__, l->l_proc->p_pid,
 				    l->l_proc->p_comm, uvmexp.free);
 #endif
 			uvm_wait("schedpwait");
 #ifdef DEBUG
 			if (swapdebug & SDB_FOLLOW)
-				printf("scheduler: room again, free %d\n",
+				printf("%s: room again, free %d\n", __func__,
 				    uvmexp.free);
 #endif
 		}
@@ -616,7 +617,9 @@ static bool
 swappable(struct lwp *l)
 {
 
-	if ((l->l_flag & (LW_INMEM|LW_RUNNING|LW_SYSTEM|LW_WEXIT)) != LW_INMEM)
+	if ((l->l_flag & (LW_INMEM|LW_SYSTEM|LW_WEXIT)) != LW_INMEM)
+		return false;
+	if ((l->l_pflag & LP_RUNNING) != 0)
 		return false;
 	if (l->l_holdcnt != 0)
 		return false;
@@ -661,7 +664,7 @@ uvm_swapout_threads(void)
 	outpri = outpri2 = 0;
 
  restart:
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		KASSERT(l->l_proc != NULL);
 		if (!mutex_tryenter(&l->l_swaplock))
@@ -684,13 +687,13 @@ uvm_swapout_threads(void)
 		case LSSLEEP:
 		case LSSTOP:
 			if (l->l_slptime >= maxslp) {
-				mutex_exit(&proclist_lock);
+				mutex_exit(proc_lock);
 				uvm_swapout(l);
 				/*
 				 * Locking in the wrong direction -
 				 * try to prevent the LWP from exiting.
 				 */
-				gotit = mutex_tryenter(&proclist_lock);
+				gotit = mutex_tryenter(proc_lock);
 				mutex_exit(&l->l_swaplock);
 				didswap++;
 				if (!gotit)
@@ -716,11 +719,11 @@ uvm_swapout_threads(void)
 			l = outl2;
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPOUT)
-			printf("swapout_threads: no duds, try procp %p\n", l);
+			printf("%s: no duds, try procp %p\n", __func__, l);
 #endif
 		if (l) {
 			mutex_enter(&l->l_swaplock);
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			if (swappable(l))
 				uvm_swapout(l);
 			mutex_exit(&l->l_swaplock);
@@ -728,7 +731,7 @@ uvm_swapout_threads(void)
 		}
 	}
 
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 }
 
 /*
@@ -747,9 +750,9 @@ uvm_swapout(struct lwp *l)
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
-		printf("swapout: lid %d.%d(%s)@%p, stat %x pri %d free %d\n",
-		   l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, l->l_addr,
-		   l->l_stat, l->l_slptime, uvmexp.free);
+		printf("%s: lid %d.%d(%s)@%p, stat %x pri %d free %d\n",
+		   __func__, l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm,
+		   l->l_addr, l->l_stat, l->l_slptime, uvmexp.free);
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.11.14.1 2008/04/03 12:42:41 mjf Exp $ */
+/* $NetBSD: mfi.c,v 1.11.14.2 2008/06/02 13:23:24 mjf Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.11.14.1 2008/04/03 12:42:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.11.14.2 2008/06/02 13:23:24 mjf Exp $");
 
 #include "bio.h"
 
@@ -232,9 +232,9 @@ mfi_init_ccb(struct mfi_softc *sc)
 destroy:
 	/* free dma maps and ccb memory */
 	while (i) {
+		i--;
 		ccb = &sc->sc_ccb[i];
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
-		i--;
 	}
 
 	free(sc->sc_ccb, M_DEVBUF);
@@ -859,7 +859,7 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsipi_xfer *xs, uint32_t blockno,
 	struct mfi_io_frame   *io;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_io: %d\n",
-	    periph->periph_channel->chan_adapter->adapt_dev->dv_xname,
+	    device_xname(periph->periph_channel->chan_adapter->adapt_dev),
 	    periph->periph_target);
 
 	if (!xs->data)
@@ -953,7 +953,7 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsipi_xfer *xs)
 	struct scsipi_periph *periph = xs->xs_periph;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_ld: %d\n",
-	    periph->periph_channel->chan_adapter->adapt_dev->dv_xname,
+	    device_xname(periph->periph_channel->chan_adapter->adapt_dev),
 	    periph->periph_target);
 
 	pf = &ccb->ccb_frame->mfr_pass;
@@ -1091,7 +1091,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	case SCSI_TEST_UNIT_READY:
 		/* save off sd? after autoconf */
 		if (!cold)	/* XXX bogus */
-			strlcpy(sc->sc_ld[target].ld_dev, sc->sc_dev.dv_xname,
+			strlcpy(sc->sc_ld[target].ld_dev, device_xname(&sc->sc_dev),
 			    sizeof(sc->sc_ld[target].ld_dev));
 		/* FALLTHROUGH */
 

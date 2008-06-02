@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.15 2007/10/08 18:04:04 ad Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.15.18.1 2008/06/02 13:24:05 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.15 2007/10/08 18:04:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.15.18.1 2008/06/02 13:24:05 mjf Exp $");
 
 /*
  * kernel include files.
@@ -261,7 +261,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 			if (bp)
 				brelse(bp, 0);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    NOCRED, &bp);
+			    NOCRED, 0, &bp);
 			if (error) {
 				brelse(bp, 0);
 				return (error);
@@ -401,7 +401,7 @@ updatefats(pmp, bp, fatbn)
 		 *      padded at the end or in the middle?
 		 */
 		if (bread(pmp->pm_devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    pmp->pm_BytesPerSec, NOCRED, &bpn) != 0) {
+		    pmp->pm_BytesPerSec, NOCRED, B_MODIFY, &bpn) != 0) {
 			/*
 			 * Ignore the error, but turn off FSInfo update for the future.
 			 */
@@ -584,7 +584,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
-	    &bp)) != 0) {
+	    0, &bp)) != 0) {
 		brelse(bp, 0);
 		return (error);
 	}
@@ -668,7 +668,7 @@ fatchain(pmp, start, count, fillwith)
 		byteoffset = FATOFS(pmp, start);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize, NOCRED,
-		    &bp);
+		    B_MODIFY, &bp);
 		if (error) {
 			brelse(bp, 0);
 			return (error);
@@ -910,7 +910,7 @@ freeclusterchain(pmp, cluster)
 			if (bp)
 				updatefats(pmp, bp, lbn);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    NOCRED, &bp);
+			    NOCRED, B_MODIFY, &bp);
 			if (error) {
 				brelse(bp, 0);
 				return (error);
@@ -985,7 +985,7 @@ fillinusemap(pmp)
 				brelse(bp, 0);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), bsize,
-			    NOCRED, &bp);
+			    NOCRED, 0, &bp);
 			if (error) {
 				brelse(bp, 0);
 				return (error);

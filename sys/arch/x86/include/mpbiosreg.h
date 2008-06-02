@@ -1,4 +1,4 @@
-/* 	$NetBSD: mpbiosreg.h,v 1.3 2003/03/04 23:27:32 fvdl Exp $ */
+/* 	$NetBSD: mpbiosreg.h,v 1.3.104.1 2008/06/02 13:22:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -59,78 +52,78 @@
 
 /* MP Floating Pointer Structure */
 struct mpbios_fps {
-	u_int32_t	signature;
+	uint32_t	signature;
 /* string defined by the Intel MP Spec as identifying the MP table */
 #define MP_FP_SIG		0x5f504d5f	/* _MP_ */
 	
-	u_int32_t 	pap;
-	u_int8_t  	length;
-	u_int8_t  	spec_rev;
-	u_int8_t  	checksum;
-	u_int8_t  	mpfb1;	/* system configuration */
-	u_int8_t  	mpfb2;	/* flags */
+	uint32_t 	pap;
+	uint8_t  	length;
+	uint8_t  	spec_rev;
+	uint8_t  	checksum;
+	uint8_t  	mpfb1;	/* system configuration */
+	uint8_t  	mpfb2;	/* flags */
 #define MPFPS_FLAG_IMCR		0x80	/* IMCR present */
-	u_int8_t  	mpfb3;	/* unused */
-	u_int8_t  	mpfb4;	/* unused */
-	u_int8_t  	mpfb5;	/* unused */
+	uint8_t  	mpfb3;	/* unused */
+	uint8_t  	mpfb4;	/* unused */
+	uint8_t  	mpfb5;	/* unused */
 };
 
 /* MP Configuration Table Header */
 struct mpbios_cth {
-	u_int32_t	signature;
+	uint32_t	signature;
 #define MP_CT_SIG		0x504d4350 	/* PCMP */
 	
-	u_int16_t 	base_len;
-	u_int8_t  	spec_rev;
-	u_int8_t  	checksum;
-	u_int8_t  	oem_id[8];
-	u_int8_t  	product_id[12];
-	u_int32_t	oem_table_pointer;
-	u_int16_t 	oem_table_size;
-	u_int16_t 	entry_count;
-	u_int32_t	apic_address;
-	u_int16_t	ext_len;
-	u_int8_t  	ext_cksum;
-	u_int8_t  	reserved;
+	uint16_t 	base_len;
+	uint8_t  	spec_rev;
+	uint8_t  	checksum;
+	uint8_t  	oem_id[8];
+	uint8_t  	product_id[12];
+	uint32_t	oem_table_pointer;
+	uint16_t 	oem_table_size;
+	uint16_t 	entry_count;
+	uint32_t	apic_address;
+	uint16_t	ext_len;
+	uint8_t  	ext_cksum;
+	uint8_t  	reserved;
 };
 
 struct mpbios_proc {
-	u_int8_t  type;
-	u_int8_t  apic_id;
-	u_int8_t  apic_version;
-	u_int8_t  cpu_flags;
+	uint8_t  type;
+	uint8_t  apic_id;
+	uint8_t  apic_version;
+	uint8_t  cpu_flags;
 #define PROCENTRY_FLAG_EN	0x01
 #define PROCENTRY_FLAG_BP	0x02
-	u_int32_t  cpu_signature;
-	u_int32_t  feature_flags;
-	u_int32_t  reserved1;
-	u_int32_t  reserved2;
+	uint32_t  cpu_signature;
+	uint32_t  feature_flags;
+	uint32_t  reserved1;
+	uint32_t  reserved2;
 };
 
 struct mpbios_bus {
-	u_int8_t  type;
-	u_int8_t  bus_id;
+	uint8_t  type;
+	uint8_t  bus_id;
 	char    bus_type[6];
 };
 
 struct mpbios_ioapic {
-	u_int8_t  type;
-	u_int8_t  apic_id;
-	u_int8_t  apic_version;
-	u_int8_t  apic_flags;
+	uint8_t  type;
+	uint8_t  apic_id;
+	uint8_t  apic_version;
+	uint8_t  apic_flags;
 #define IOAPICENTRY_FLAG_EN	0x01
-	u_int32_t   apic_address;
+	uint32_t   apic_address;
 };
 
 struct mpbios_int {
-	u_int8_t  type;
-	u_int8_t  int_type;
-	u_int16_t int_flags;
-	u_int8_t  src_bus_id;
-	u_int8_t  src_bus_irq;
-	u_int8_t  dst_apic_id;
+	uint8_t  type;
+	uint8_t  int_type;
+	uint16_t int_flags;
+	uint8_t  src_bus_id;
+	uint8_t  src_bus_irq;
+	uint8_t  dst_apic_id;
 #define MPS_ALL_APICS	0xff
-	u_int8_t  dst_apic_int;
+	uint8_t  dst_apic_int;
 };
 
 

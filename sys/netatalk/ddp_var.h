@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_var.h,v 1.3 2005/12/10 23:29:05 elad Exp $	 */
+/*	$NetBSD: ddp_var.h,v 1.3.70.1 2008/06/02 13:24:23 mjf Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -39,23 +39,22 @@ struct ddpcb {
 
 #define sotoddpcb(so)	((struct ddpcb *)(so)->so_pcb)
 
-struct ddpstat {
-	long ddps_short;	/* short header packets received */
-	long ddps_long;		/* long header packets received */
-	long ddps_nosum;	/* no checksum */
-	long ddps_badsum;	/* bad checksum */
-	long ddps_tooshort;	/* packet too short */
-	long ddps_toosmall;	/* not enough data */
-	long ddps_forward;	/* packets forwarded */
-	long ddps_encap;	/* packets encapsulated */
-	long ddps_cantforward;	/* packets rcvd for unreachable dest */
-	long ddps_nosockspace;	/* no space in sockbuf for packet */
-};
+#define	DDP_STAT_SHORT		0	/* short header packets received */
+#define	DDP_STAT_LONG		1	/* long header packets received */
+#define	DDP_STAT_NOSUM		2	/* no checksum */
+#define	DDP_STAT_BADSUM		3	/* bad checksum */
+#define	DDP_STAT_TOOSHORT	4	/* packet too short */
+#define	DDP_STAT_TOOSMALL	5	/* not enough data */
+#define	DDP_STAT_FORWARD	6	/* packets forwarded */
+#define	DDP_STAT_ENCAP		7	/* packets encapsulated */
+#define	DDP_STAT_CANTFORWARD	8	/* packets rcvd for unreachable net */
+#define	DDP_STAT_NOSOCKSPACE	9	/* no space in sockbuf for packet */
+
+#define	DDP_NSTATS		10
 
 #ifdef _KERNEL
 extern struct ddpcb *ddp_ports[];
 extern struct ddpcb *ddpcb;
-extern struct ddpstat ddpstat;
 #endif
 
 #endif /* !_NETATALK_DDP_VAR_H_ */

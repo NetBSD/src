@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.6 2008/01/15 22:38:35 njoly Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.6.6.1 2008/06/02 13:23:04 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -61,6 +61,7 @@ typedef netbsd32_pointer_t linux32_gid16p_t;
 typedef netbsd32_pointer_t linux32_oldselectp_t;
 typedef netbsd32_pointer_t linux32_sysinfop_t;
 typedef netbsd32_pointer_t linux32_oldutsnamep_t;
+typedef netbsd32_pointer_t linux32_timespecp_t;
 
 struct linux32_sysctl {
 	netbsd32_intp name;
@@ -101,6 +102,11 @@ struct linux32_sysinfo {
         netbsd32_u_long freebig;
         unsigned int mem_unit;
         char _f[20-2*sizeof(netbsd32_long)-sizeof(int)];	
+};
+
+struct linux32_timespec {
+	linux32_time_t	tv_sec;
+	netbsd32_long	tv_nsec;
 };
 
 #endif /* !_LINUX32_TYPES_H */

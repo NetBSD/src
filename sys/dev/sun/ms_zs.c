@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.16.58.1 2008/04/03 12:42:56 mjf Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.16.58.2 2008/06/02 13:23:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.16.58.1 2008/04/03 12:42:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.16.58.2 2008/06/02 13:23:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ CFATTACH_DECL_NEW(ms_zs, sizeof(struct ms_softc),
  * ms_match: how is this zs channel configured?
  */
 int
-ms_zs_match(struct device *parent, struct cfdata *cf, void *aux)
+ms_zs_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -150,12 +150,12 @@ ms_zs_attach(device_t parent, device_t self, void *aux)
 	s = splzs();
 	/* May need reset... */
 	reset = (channel == 0) ?
-		ZSWR9_A_RESET : ZSWR9_B_RESET;
+	    ZSWR9_A_RESET : ZSWR9_B_RESET;
 	zs_write_reg(cs, 9, reset);
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
 	/* We don't care about status or tx interrupts. */
 	cs->cs_preg[1] = ZSWR1_RIE;
-	(void) zs_set_speed(cs, bps);
+	(void)zs_set_speed(cs, bps);
 	zs_loadchannelregs(cs);
 	splx(s);
 
@@ -172,7 +172,7 @@ ms_zs_rxint(struct zs_chanstate *cs)
 {
 	struct ms_softc *ms;
 	int put, put_next;
-	u_char c, rr1;
+	uint8_t c, rr1;
 
 	ms = cs->cs_private;
 	put = ms->ms_rbput;
@@ -223,7 +223,7 @@ static void
 ms_zs_stint(struct zs_chanstate *cs, int force)
 {
 	struct ms_softc *ms;
-	int rr0;
+	uint8_t rr0;
 
 	ms = cs->cs_private;
 
@@ -251,7 +251,7 @@ ms_zs_softint(struct zs_chanstate *cs)
 	struct ms_softc *ms;
 	int get, c, s;
 	int intr_flags;
-	u_short ring_data;
+	uint16_t ring_data;
 
 	ms = cs->cs_private;
 
@@ -261,7 +261,7 @@ ms_zs_softint(struct zs_chanstate *cs)
 	ms->ms_intr_flags = 0;
 
 	/* Now lower to spltty for the rest. */
-	(void) spltty();
+	(void)spltty();
 
 	/*
 	 * Copy data from the receive ring to the event layer.

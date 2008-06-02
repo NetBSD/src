@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.11 2008/01/05 21:47:19 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11.6.1 2008/06/02 13:21:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -95,14 +88,14 @@ struct pcb {
 #define	PCB_USER_LDT	0x01		/* has user-set LDT */
 #define PCB_GS64	0x02
 #define PCB_FS64	0x04
-	int	  pcb_cr0;		/* saved image of CR0 */
-	u_int64_t pcb_rsp0;
-	u_int64_t pcb_cr2;		/* page fault address (CR2) */
-	u_int64_t pcb_cr3;
-	u_int64_t pcb_rsp;
-	u_int64_t pcb_rbp;
-	u_int64_t pcb_usersp;
-	u_int64_t pcb_ldt_sel;
+	u_int	  pcb_cr0;		/* saved image of CR0 */
+	uint64_t pcb_rsp0;
+	uint64_t pcb_cr2;		/* page fault address (CR2) */
+	uint64_t pcb_cr3;
+	uint64_t pcb_rsp;
+	uint64_t pcb_rbp;
+	uint64_t pcb_usersp;
+	uint64_t pcb_ldt_sel;
 	struct	savefpu pcb_savefpu __aligned(16); /* floating point state */
 	void     *pcb_onfault;		/* copyin/out fault recovery */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */

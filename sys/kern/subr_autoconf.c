@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.131.6.1 2008/04/03 12:43:03 mjf Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.131.6.2 2008/06/02 13:24:10 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,10 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.131.6.1 2008/04/03 12:43:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.131.6.2 2008/06/02 13:24:10 mjf Exp $");
 
-#include "opt_multiprocessor.h"
 #include "opt_ddb.h"
+#include "drvctl.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.131.6.1 2008/04/03 12:43:03 mjf 
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/devmon.h>
 
 #include <sys/disk.h>
 
@@ -220,7 +221,9 @@ static int alldevs_nread = 0;
 static int alldevs_nwrite = 0;
 static lwp_t *alldevs_writer = NULL;
 
-volatile int config_pending;		/* semaphore for mountroot */
+static int config_pending;		/* semaphore for mountroot */
+static kmutex_t config_misc_lock;
+static kcondvar_t config_misc_cv;
 
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
@@ -354,6 +357,9 @@ config_init(void)
 	mutex_init(&alldevs_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&alldevs_cv, "alldevs");
 
+	mutex_init(&config_misc_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&config_misc_cv, "cfgmisc");
+
 	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
 		if (config_cfdriver_attach(cfdriver_list_initial[i]) != 0)
@@ -405,11 +411,15 @@ config_interrupts_thread(void *cookie)
 void
 configure(void)
 {
-	int i;
+	extern void ssp_init(void);
+	int i, s;
 
 	/* Initialize data structures. */
 	config_init();
 	pmf_init();
+#if NDRVCTL > 0
+	drvctl_init();
+#endif
 
 #ifdef USERCONF
 	if (boothowto & RB_USERCONF)
@@ -429,8 +439,8 @@ configure(void)
 	 */
 	cpu_configure();
 
-	/* Initialize callouts, part 2. */
-	callout_startup2();
+	/* Initialize SSP. */
+	ssp_init();
 
 	/*
 	 * Now that we've found all the hardware, start the real time
@@ -439,6 +449,9 @@ configure(void)
 	initclocks();
 
 	cold = 0;	/* clocks are running, we're warm now! */
+	s = splsched();
+	curcpu()->ci_schedstate.spc_flags |= SPCF_RUNNING;
+	splx(s);
 
 	/* Boot the secondary processors. */
 	mp_online = true;
@@ -446,7 +459,8 @@ configure(void)
 	cpu_boot_secondary_processors();
 #endif
 
-	/* Setup the scheduler. */
+	/* Setup the runqueues and scheduler. */
+	runq_init();
 	sched_init();
 
 	/*
@@ -463,6 +477,34 @@ configure(void)
 
 	/* Lock the kernel on behalf of lwp0. */
 	KERNEL_LOCK(1, NULL);
+}
+
+/*
+ * Announce device attach/detach to userland listeners.
+ */
+static void
+devmon_report_device(device_t dev, bool isattach)
+{
+#if NDRVCTL > 0
+	prop_dictionary_t ev;
+	const char *parent;
+	const char *what;
+	device_t pdev = device_parent(dev);
+
+	ev = prop_dictionary_create();
+	if (ev == NULL)
+		return;
+
+	what = (isattach ? "device-attach" : "device-detach");
+	parent = (pdev == NULL ? "root" : device_xname(pdev));
+	if (!prop_dictionary_set_cstring(ev, "device", device_xname(dev)) ||
+	    !prop_dictionary_set_cstring(ev, "parent", parent)) {
+		prop_object_release(ev);
+		return;
+	}
+
+	devmon_insert(what, ev);
+#endif
 }
 
 /*
@@ -991,7 +1033,7 @@ config_found_sm_loc(device_t parent,
 	if (print) {
 		if (config_do_twiddle)
 			twiddle();
-		aprint_normal("%s", msgs[(*print)(aux, parent->dv_xname)]);
+		aprint_normal("%s", msgs[(*print)(aux, device_xname(parent))]);
 	}
 
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
@@ -1089,7 +1131,7 @@ config_devlink(device_t dev)
 	/* put this device in the devices array */
 	config_makeroom(dev->dv_unit, cd);
 	if (cd->cd_devs[dev->dv_unit])
-		panic("config_attach: duplicate %s", dev->dv_xname);
+		panic("config_attach: duplicate %s", device_xname(dev));
 	cd->cd_devs[dev->dv_unit] = dev;
 
 	/* It is safe to add a device to the tail of the list while
@@ -1228,6 +1270,11 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	dev->dv_properties = prop_dictionary_create();
 	KASSERT(dev->dv_properties != NULL);
 
+	prop_dictionary_set_cstring_nocopy(dev->dv_properties,
+	    "device-driver", dev->dv_cfdriver->cd_name);
+	prop_dictionary_set_uint16(dev->dv_properties,
+	    "device-unit", dev->dv_unit);
+
 	return (dev);
 }
 
@@ -1291,11 +1338,11 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	 * but not silent (in which case, we're twiddling, instead).
 	 */
 	if (parent == ROOT) {
-		aprint_naive("%s (root)", dev->dv_xname);
-		aprint_normal("%s (root)", dev->dv_xname);
+		aprint_naive("%s (root)", device_xname(dev));
+		aprint_normal("%s (root)", device_xname(dev));
 	} else {
-		aprint_naive("%s at %s", dev->dv_xname, parent->dv_xname);
-		aprint_normal("%s at %s", dev->dv_xname, parent->dv_xname);
+		aprint_naive("%s at %s", device_xname(dev), device_xname(parent));
+		aprint_normal("%s at %s", device_xname(dev), device_xname(parent));
 		if (print)
 			(void) (*print)(aux, NULL);
 	}
@@ -1326,6 +1373,9 @@ config_attach_loc(device_t parent, cfdata_t cf,
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
+
+	/* Let userland know */
+	devmon_report_device(dev, true);
 
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
 	if (splash_progress_state)
@@ -1452,12 +1502,15 @@ config_detach(device_t dev, int flags)
 			goto out;
 		else
 			panic("config_detach: forced detach of %s failed (%d)",
-			    dev->dv_xname, rv);
+			    device_xname(dev), rv);
 	}
 
 	/*
 	 * The device has now been successfully detached.
 	 */
+
+	/* Let userland know */
+	devmon_report_device(dev, false);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1470,7 +1523,7 @@ config_detach(device_t dev, int flags)
 	    d = TAILQ_NEXT(d, dv_list)) {
 		if (d->dv_parent == dev) {
 			printf("config_detach: detached device %s"
-			    " has children %s\n", dev->dv_xname, d->dv_xname);
+			    " has children %s\n", device_xname(dev), device_xname(d));
 			panic("config_detach");
 		}
 	}
@@ -1668,7 +1721,9 @@ void
 config_pending_incr(void)
 {
 
+	mutex_enter(&config_misc_lock);
 	config_pending++;
+	mutex_exit(&config_misc_lock);
 }
 
 void
@@ -1679,9 +1734,11 @@ config_pending_decr(void)
 	if (config_pending == 0)
 		panic("config_pending_decr: config_pending == 0");
 #endif
+	mutex_enter(&config_misc_lock);
 	config_pending--;
 	if (config_pending == 0)
-		wakeup(&config_pending);
+		cv_broadcast(&config_misc_cv);
+	mutex_exit(&config_misc_lock);
 }
 
 /*
@@ -1730,8 +1787,10 @@ config_finalize(void)
 	 * Now that device driver threads have been created, wait for
 	 * them to finish any deferred autoconfiguration.
 	 */
-	while (config_pending)
-		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
+	mutex_enter(&config_misc_lock);
+	while (config_pending != 0)
+		cv_wait(&config_misc_cv, &config_misc_lock);
+	mutex_exit(&config_misc_lock);
 
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)

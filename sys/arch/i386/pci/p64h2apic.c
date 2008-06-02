@@ -1,4 +1,4 @@
-/* $NetBSD: p64h2apic.c,v 1.11 2006/11/16 01:32:39 christos Exp $ */
+/* $NetBSD: p64h2apic.c,v 1.11.52.1 2008/06/02 13:22:18 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -45,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.11 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.11.52.1 2008/06/02 13:22:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +87,7 @@ p64h2attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("%s: %s (rev. 0x%02x)\n", sc->sc_dev.dv_xname, devinfo,
+	aprint_normal_dev(&sc->sc_dev, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_tag = pa->pa_tag;

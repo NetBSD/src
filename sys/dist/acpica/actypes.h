@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: actypes.h - Common data types for the entire ACPI subsystem
- *       $Revision: 1.3 $
+ *       $Revision: 1.3.10.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -496,14 +496,20 @@ typedef UINT64                          ACPI_INTEGER;
 /*
  * Standard notify values
  */
-#define ACPI_NOTIFY_BUS_CHECK           (UINT8) 0
-#define ACPI_NOTIFY_DEVICE_CHECK        (UINT8) 1
-#define ACPI_NOTIFY_DEVICE_WAKE         (UINT8) 2
-#define ACPI_NOTIFY_EJECT_REQUEST       (UINT8) 3
-#define ACPI_NOTIFY_DEVICE_CHECK_LIGHT  (UINT8) 4
-#define ACPI_NOTIFY_FREQUENCY_MISMATCH  (UINT8) 5
-#define ACPI_NOTIFY_BUS_MODE_MISMATCH   (UINT8) 6
-#define ACPI_NOTIFY_POWER_FAULT         (UINT8) 7
+#define ACPI_NOTIFY_BUS_CHECK           (UINT8) 0x00
+#define ACPI_NOTIFY_DEVICE_CHECK        (UINT8) 0x01
+#define ACPI_NOTIFY_DEVICE_WAKE         (UINT8) 0x02
+#define ACPI_NOTIFY_EJECT_REQUEST       (UINT8) 0x03
+#define ACPI_NOTIFY_DEVICE_CHECK_LIGHT  (UINT8) 0x04
+#define ACPI_NOTIFY_FREQUENCY_MISMATCH  (UINT8) 0x05
+#define ACPI_NOTIFY_BUS_MODE_MISMATCH   (UINT8) 0x06
+#define ACPI_NOTIFY_POWER_FAULT         (UINT8) 0x07
+#define ACPI_NOTIFY_CAPABILITIES_CHECK  (UINT8) 0x08
+#define ACPI_NOTIFY_DEVICE_PLD_CHECK    (UINT8) 0x09
+#define ACPI_NOTIFY_RESERVED            (UINT8) 0x0A
+#define ACPI_NOTIFY_LOCALITY_UPDATE     (UINT8) 0x0B
+
+#define ACPI_NOTIFY_MAX                 0x0B
 
 /*
  * Types associated with ACPI names and objects.  The first group of
@@ -570,6 +576,9 @@ typedef UINT32                          ACPI_OBJECT_TYPE;
 
 #define ACPI_TYPE_INVALID               0x1E
 #define ACPI_TYPE_NOT_FOUND             0xFF
+
+#define ACPI_NUM_NS_TYPES               (ACPI_TYPE_INVALID + 1)
+
 
 /*
  * All I/O
@@ -678,7 +687,7 @@ typedef UINT32                          ACPI_EVENT_STATUS;
 
 #define ACPI_SYSTEM_NOTIFY              0x1
 #define ACPI_DEVICE_NOTIFY              0x2
-#define ACPI_ALL_NOTIFY                 0x3
+#define ACPI_ALL_NOTIFY                 (ACPI_SYSTEM_NOTIFY | ACPI_DEVICE_NOTIFY)
 #define ACPI_MAX_NOTIFY_HANDLER_TYPE    0x3
 
 #define ACPI_MAX_SYS_NOTIFY             0x7f
@@ -736,46 +745,51 @@ typedef UINT8                           ACPI_ADR_SPACE_TYPE;
 /*
  * External ACPI object definition
  */
+
+/*
+ * Note: Type == ACPI_TYPE_ANY (0) is used to indicate a NULL package element
+ * or an unresolved named reference.
+ */
 typedef union acpi_object
 {
     ACPI_OBJECT_TYPE                Type;   /* See definition of AcpiNsType for values */
     struct
     {
-        ACPI_OBJECT_TYPE                Type;
+        ACPI_OBJECT_TYPE                Type;       /* ACPI_TYPE_INTEGER */
         ACPI_INTEGER                    Value;      /* The actual number */
     } Integer;
 
     struct
     {
-        ACPI_OBJECT_TYPE                Type;
+        ACPI_OBJECT_TYPE                Type;       /* ACPI_TYPE_STRING */
         UINT32                          Length;     /* # of bytes in string, excluding trailing null */
         char                            *Pointer;   /* points to the string value */
     } String;
 
     struct
     {
-        ACPI_OBJECT_TYPE                Type;
+        ACPI_OBJECT_TYPE                Type;       /* ACPI_TYPE_BUFFER */
         UINT32                          Length;     /* # of bytes in buffer */
         UINT8                           *Pointer;   /* points to the buffer */
     } Buffer;
 
     struct
     {
-        ACPI_OBJECT_TYPE                Type;
-        UINT32                          Fill1;
-        ACPI_HANDLE                     Handle;     /* object reference */
-    } Reference;
-
-    struct
-    {
-        ACPI_OBJECT_TYPE                Type;
+        ACPI_OBJECT_TYPE                Type;       /* ACPI_TYPE_PACKAGE */
         UINT32                          Count;      /* # of elements in package */
         union acpi_object               *Elements;  /* Pointer to an array of ACPI_OBJECTs */
     } Package;
 
     struct
     {
-        ACPI_OBJECT_TYPE                Type;
+        ACPI_OBJECT_TYPE                Type;       /* ACPI_TYPE_LOCAL_REFERENCE */
+        ACPI_OBJECT_TYPE                ActualType; /* Type associated with the Handle */
+        ACPI_HANDLE                     Handle;     /* object reference */
+    } Reference;
+
+    struct
+    {
+        ACPI_OBJECT_TYPE                Type;       /* ACPI_TYPE_PROCESSOR */
         UINT32                          ProcId;
         ACPI_IO_ADDRESS                 PblkAddress;
         UINT32                          PblkLength;
@@ -783,7 +797,7 @@ typedef union acpi_object
 
     struct
     {
-        ACPI_OBJECT_TYPE                Type;
+        ACPI_OBJECT_TYPE                Type;       /* ACPI_TYPE_POWER */
         UINT32                          SystemLevel;
         UINT32                          ResourceOrder;
     } PowerResource;
@@ -851,6 +865,26 @@ typedef struct acpi_system_info
 
 
 /*
+ * System statistecs returned by AcpiGetStatistics()
+ */
+typedef struct acpi_statistics
+{
+    UINT32                          SciCount;
+    UINT32                          GpeCount;
+    UINT32                          FixedEventCount[ACPI_NUM_FIXED_EVENTS];
+    UINT32                          MethodCount;
+
+} ACPI_STATISTICS;
+
+
+/* Table Event Types */
+
+#define ACPI_TABLE_EVENT_LOAD           0x0
+#define ACPI_TABLE_EVENT_UNLOAD         0x1
+#define ACPI_NUM_TABLE_EVENTS           2
+
+
+/*
  * Types specific to the OS service interfaces
  */
 typedef UINT32
@@ -894,6 +928,18 @@ ACPI_STATUS (*ACPI_EXCEPTION_HANDLER) (
     UINT16                          Opcode,
     UINT32                          AmlOffset,
     void                            *Context);
+
+/* Table Event handler (Load, LoadTable etc) and types */
+
+typedef
+ACPI_STATUS (*ACPI_TABLE_HANDLER) (
+    UINT32                          Event,
+    void                            *Table,
+    void                            *Context);
+
+#define ACPI_TABLE_LOAD             0x0
+#define ACPI_TABLE_UNLOAD           0x1
+#define ACPI_NUM_TABLE_EVENTS       2
 
 
 /* Address Spaces (For Operation Regions) */
@@ -1143,6 +1189,7 @@ typedef struct acpi_vendor_uuid
  */
 typedef struct acpi_resource_irq
 {
+    UINT8                           DescriptorLength;
     UINT8                           Triggering;
     UINT8                           Polarity;
     UINT8                           Sharable;
@@ -1150,7 +1197,6 @@ typedef struct acpi_resource_irq
     UINT8                           Interrupts[1];
 
 } ACPI_RESOURCE_IRQ;
-
 
 typedef struct ACPI_RESOURCE_DMA
 {
@@ -1162,9 +1208,9 @@ typedef struct ACPI_RESOURCE_DMA
 
 } ACPI_RESOURCE_DMA;
 
-
 typedef struct acpi_resource_start_dependent
 {
+    UINT8                           DescriptorLength;
     UINT8                           CompatibilityPriority;
     UINT8                           PerformanceRobustness;
 

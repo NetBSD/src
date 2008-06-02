@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.41.6.1 2008/04/03 12:43:08 mjf Exp $	*/
+/*	$NetBSD: frag6.c,v 1.41.6.2 2008/06/02 13:24:26 mjf Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.41.6.1 2008/04/03 12:43:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.41.6.2 2008/06/02 13:24:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.41.6.1 2008/04/03 12:43:08 mjf Exp $");
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -52,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.41.6.1 2008/04/03 12:43:08 mjf Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #include <netinet/icmp6.h>
 
 #include <net/net_osdep.h>
@@ -218,7 +220,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	ip6stat.ip6s_fragments++;
+	IP6_STATINC(IP6_STAT_FRAGMENTS);
 	in6_ifstat_inc(dstifp, ifs6_reass_reqd);
 
 	/* offset now points to data portion */
@@ -552,7 +554,7 @@ insert:
 		m->m_pkthdr.len = plen;
 	}
 
-	ip6stat.ip6s_reassembled++;
+	IP6_STATINC(IP6_STAT_REASSEMBLED);
 	in6_ifstat_inc(dstifp, ifs6_reass_ok);
 
 	/*
@@ -567,7 +569,7 @@ insert:
 
  dropfrag:
 	in6_ifstat_inc(dstifp, ifs6_reass_fail);
-	ip6stat.ip6s_fragdropped++;
+	IP6_STATINC(IP6_STAT_FRAGDROPPED);
 	m_freem(m);
 	IP6Q_UNLOCK();
 	return IPPROTO_DONE;
@@ -677,7 +679,9 @@ void
 frag6_slowtimo(void)
 {
 	struct ip6q *q6;
-	int s = splsoftnet();
+
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	IP6Q_LOCK();
 	q6 = ip6q.ip6q_next;
@@ -686,7 +690,7 @@ frag6_slowtimo(void)
 			--q6->ip6q_ttl;
 			q6 = q6->ip6q_next;
 			if (q6->ip6q_prev->ip6q_ttl == 0) {
-				ip6stat.ip6s_fragtimeout++;
+				IP6_STATINC(IP6_STAT_FRAGTIMEOUT);
 				/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 				frag6_freef(q6->ip6q_prev);
 			}
@@ -698,7 +702,7 @@ frag6_slowtimo(void)
 	 */
 	while (frag6_nfragpackets > (u_int)ip6_maxfragpackets &&
 	    ip6q.ip6q_prev) {
-		ip6stat.ip6s_fragoverflow++;
+		IP6_STATINC(IP6_STAT_FRAGOVERFLOW);
 		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(ip6q.ip6q_prev);
 	}
@@ -714,7 +718,8 @@ frag6_slowtimo(void)
 	rtcache_free(&ipsrcchk_rt);
 #endif
 
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -724,12 +729,14 @@ void
 frag6_drain(void)
 {
 
-	if (ip6q_lock_try() == 0)
-		return;
-	while (ip6q.ip6q_next != &ip6q) {
-		ip6stat.ip6s_fragdropped++;
-		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
-		frag6_freef(ip6q.ip6q_next);
+	KERNEL_LOCK(1, NULL);
+	if (ip6q_lock_try() != 0) {
+		while (ip6q.ip6q_next != &ip6q) {
+			IP6_STATINC(IP6_STAT_FRAGDROPPED);
+			/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
+			frag6_freef(ip6q.ip6q_next);
+		}
+		IP6Q_UNLOCK();
 	}
-	IP6Q_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }

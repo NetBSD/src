@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2007/06/24 05:41:52 isaki Exp $
+#	$NetBSD: Makefile,v 1.25.12.1 2008/06/02 13:21:18 mjf Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,7 +15,7 @@ WARNS=		1
 DBG=		-Os
 
 CRUNCHBIN=	instbin
-CRUNCHBIN_FLAGS= -d "${DBG}
+CRUNCHGEN_FLAGS= -d "${DBG}"
 
 LISTS=		${.CURDIR}/list
 MTREECONF=	${.CURDIR}/mtree.conf

@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.9 2008/01/30 09:50:20 ad Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.9.6.1 2008/06/02 13:24:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9 2008/01/30 09:50:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9.6.1 2008/06/02 13:24:04 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -219,7 +219,7 @@ const struct vnodeopv_entry_desc hfs_specop_entries[] = {
 	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
-	{ &vop_fsync_desc, genfs_nullop },		/* fsync */
+	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
 	{ &vop_remove_desc, spec_remove },		/* remove */
 	{ &vop_link_desc, spec_link },			/* link */

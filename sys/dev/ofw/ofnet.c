@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.40 2007/07/09 21:00:52 ad Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.40.28.1 2008/06/02 13:23:36 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.40 2007/07/09 21:00:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.40.28.1 2008/06/02 13:23:36 mjf Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -154,7 +154,7 @@ ofnet_attach(struct device *parent, struct device *self, void *aux)
 
 	callout_init(&of->sc_callout, 0);
 
-	bcopy(of->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(&of->sc_dev), IFNAMSIZ);
 	ifp->if_softc = of;
 	ifp->if_start = ofnet_start;
 	ifp->if_ioctl = ofnet_ioctl;
@@ -413,7 +413,7 @@ ofnet_watchdog(struct ifnet *ifp)
 {
 	struct ofnet_softc *of = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", of->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&of->sc_dev));
 	ifp->if_oerrors++;
 	ofnet_stop(of);
 	ofnet_init(of);

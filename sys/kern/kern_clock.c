@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.117.6.1 2008/04/03 12:43:00 mjf Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.117.6.2 2008/06/02 13:24:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -18,13 +18,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -76,10 +69,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.117.6.1 2008/04/03 12:43:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.117.6.2 2008/06/02 13:24:07 mjf Exp $");
 
 #include "opt_ntp.h"
-#include "opt_multiprocessor.h"
 #include "opt_perfctrs.h"
 
 #include <sys/param.h>
@@ -201,25 +193,12 @@ void
 hardclock(struct clockframe *frame)
 {
 	struct lwp *l;
-	struct proc *p;
-	struct cpu_info *ci = curcpu();
-	struct ptimer *pt;
+	struct cpu_info *ci;
 
+	ci = curcpu();
 	l = ci->ci_data.cpu_onproc;
-	if (!CURCPU_IDLE_P()) {
-		p = l->l_proc;
-		/*
-		 * Run current process's virtual and profile time, as needed.
-		 */
-		if (CLKF_USERMODE(frame) && p->p_timers &&
-		    (pt = LIST_FIRST(&p->p_timers->pts_virtual)) != NULL)
-			if (itimerdecr(pt, tick) == 0)
-				itimerfire(pt);
-		if (p->p_timers &&
-		    (pt = LIST_FIRST(&p->p_timers->pts_prof)) != NULL)
-			if (itimerdecr(pt, tick) == 0)
-				itimerfire(pt);
-	}
+
+	timer_tick(l, CLKF_USERMODE(frame));
 
 	/*
 	 * If no separate statistics clock is available, run it from here.
@@ -239,18 +218,10 @@ hardclock(struct clockframe *frame)
 	if ((--ci->ci_schedstate.spc_ticks) <= 0)
 		sched_tick(ci);
 
-#if defined(MULTIPROCESSOR)
-	/*
-	 * If we are not the primary CPU, we're not allowed to do
-	 * any more work.
-	 */
-	if (CPU_IS_PRIMARY(ci) == 0)
-		return;
-#endif
-
-	hardclock_ticks++;
-
-	tc_ticktock();
+	if (CPU_IS_PRIMARY(ci)) {
+		hardclock_ticks++;
+		tc_ticktock();
+	}
 
 	/*
 	 * Update real-time timeout queue.  Callouts are processed at a
@@ -357,6 +328,8 @@ schedclock(struct lwp *l)
 	ci->ci_data.cpu_nswtch = 0;
 	atomic_add_int((unsigned *)&uvmexp.syscalls, ci->ci_data.cpu_nsyscall);
 	ci->ci_data.cpu_nsyscall = 0;
+	atomic_add_int((unsigned *)&uvmexp.traps, ci->ci_data.cpu_ntrap);
+	ci->ci_data.cpu_ntrap = 0;
 
 	if ((l->l_flag & LW_IDLE) != 0)
 		return;

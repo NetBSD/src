@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.78 2007/03/04 06:00:49 christos Exp $ */
+/*	$NetBSD: sbus.c,v 1.78.40.1 2008/06/02 13:22:43 mjf Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.78 2007/03/04 06:00:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.78.40.1 2008/06/02 13:22:43 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -207,7 +207,7 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_space_map(sc->sc_bustag, ma->ma_reg[0].ur_paddr, 
 		ma->ma_reg[0].ur_len, 0, &sc->sc_bh) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map registers\n");
 		return;
 	}
 #endif
@@ -238,7 +238,7 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 	error = prom_getprop(node, "ranges", sizeof(struct openprom_range),
 			 &sbt->nranges, &sbt->ranges);
 	if (error)
-		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
+		panic("%s: error getting ranges property", device_xname(&sc->sc_dev));
 
 	/* initialize the IOMMU */
 
@@ -261,7 +261,7 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
 	if (name == 0)
 		panic("couldn't malloc iommu name");
-	snprintf(name, 32, "%s dvma", sc->sc_dev.dv_xname);
+	snprintf(name, 32, "%s dvma", device_xname(&sc->sc_dev));
 
 	iommu_init(name, &sc->sc_is, 0, -1);
 
@@ -274,7 +274,7 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 	ipl = 1;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
-	intr_establish(ipl, ih);
+	intr_establish(ipl, true, ih);
 	*(ih->ih_map) |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
 	
 	/*
@@ -436,13 +436,13 @@ sbus_establish(register struct sbusdev *sd, register struct device *dev)
 	 * sbus, since we might (in the future) support multiple sbus's.
 	 */
 	for (curdev = device_parent(dev); ; curdev = device_parent(curdev)) {
-		if (!curdev || !curdev->dv_xname)
+		if (!curdev || !device_xname(curdev))
 			panic("sbus_establish: can't find sbus parent for %s",
-			      sd->sd_dev->dv_xname
-					? sd->sd_dev->dv_xname
+			      device_xname(sd->sd_dev)
+					? device_xname(sd->sd_dev)
 					: "<unknown>" );
 
-		if (strncmp(curdev->dv_xname, "sbus", 4) == 0)
+		if (strncmp(device_xname(curdev), "sbus", 4) == 0)
 			break;
 	}
 	sc = (struct sbus_softc *) curdev;
@@ -462,12 +462,12 @@ sbusreset(int sbus)
 	struct sbus_softc *sc = sbus_cd.cd_devs[sbus];
 	struct device *dev;
 
-	printf("reset %s:", sc->sc_dev.dv_xname);
+	printf("reset %s:", device_xname(&sc->sc_dev));
 	for (sd = sc->sc_sbdev; sd != NULL; sd = sd->sd_bchain) {
 		if (sd->sd_reset) {
 			dev = sd->sd_dev;
 			(*sd->sd_reset)(dev);
-			printf(" %s", dev->dv_xname);
+			printf(" %s", device_xname(dev));
 		}
 	}
 	/* Reload iommu regs */
@@ -646,7 +646,7 @@ sbus_intr_establish(bus_space_tag_t t, int pri, int level,
 	ih->ih_arg = arg;
 	ih->ih_number = vec;
 	ih->ih_pil = (1<<ipl);
-	intr_establish(ipl, ih);
+	intr_establish(ipl, level != IPL_VM, ih);
 	return (ih);
 }
 

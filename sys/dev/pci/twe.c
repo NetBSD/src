@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.84.16.1 2008/04/05 23:33:22 mjf Exp $	*/
+/*	$NetBSD: twe.c,v 1.84.16.2 2008/06/02 13:23:44 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -70,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.84.16.1 2008/04/05 23:33:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.84.16.2 2008/06/02 13:23:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +346,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		aprint_error("%s: can't map i/o space\n", sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "can't map i/o space\n");
 		return;
 	}
 
@@ -364,23 +357,22 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: can't map interrupt\n", sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "can't map interrupt\n");
 		return;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, twe_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: can't establish interrupt%s%s\n",
-			sc->sc_dv.dv_xname,
+		aprint_error_dev(&sc->sc_dv, "can't establish interrupt%s%s\n",
 			(intrstr) ? " at " : "",
 			(intrstr) ? intrstr : "");
 		return;
 	}
 
 	if (intrstr != NULL)
-		aprint_normal("%s: interrupting at %s\n",
-			sc->sc_dv.dv_xname, intrstr);
+		aprint_normal_dev(&sc->sc_dv, "interrupting at %s\n",
+			intrstr);
 
 	/*
 	 * Allocate and initialise the command blocks and CCBs.
@@ -389,37 +381,32 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error("%s: unable to allocate commands, rv = %d\n",
-		    sc->sc_dv.dv_xname, rv);
+		aprint_error_dev(&sc->sc_dv, "unable to allocate commands, rv = %d\n", rv);
 		return;
 	}
 
 	if ((rv = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    (void **)&sc->sc_cmds,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		aprint_error("%s: unable to map commands, rv = %d\n",
-		    sc->sc_dv.dv_xname, rv);
+		aprint_error_dev(&sc->sc_dv, "unable to map commands, rv = %d\n", rv);
 		return;
 	}
 
 	if ((rv = bus_dmamap_create(sc->sc_dmat, size, size, 1, 0,
 	    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
-		aprint_error("%s: unable to create command DMA map, rv = %d\n",
-		    sc->sc_dv.dv_xname, rv);
+		aprint_error_dev(&sc->sc_dv, "unable to create command DMA map, rv = %d\n", rv);
 		return;
 	}
 
 	if ((rv = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_cmds,
 	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error("%s: unable to load command DMA map, rv = %d\n",
-		    sc->sc_dv.dv_xname, rv);
+		aprint_error_dev(&sc->sc_dv, "unable to load command DMA map, rv = %d\n", rv);
 		return;
 	}
 
 	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
 	if (ccb == NULL) {
-		aprint_error("%s: unable to allocate memory for ccbs\n",
-		    sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "unable to allocate memory for ccbs\n");
 		return;
 	}
 
@@ -440,8 +427,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb->ccb_dmamap_xfer);
 		if (rv != 0) {
-			aprint_error("%s: can't create dmamap, rv = %d\n",
-			    sc->sc_dv.dv_xname, rv);
+			aprint_error_dev(&sc->sc_dv, "can't create dmamap, rv = %d\n", rv);
 			return;
 		}
 
@@ -453,8 +439,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Wait for the controller to become ready. */
 	if (twe_status_wait(sc, TWE_STS_MICROCONTROLLER_READY, 6)) {
-		aprint_error("%s: microcontroller not ready\n",
-			sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "microcontroller not ready\n");
 		return;
 	}
 
@@ -465,7 +450,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	rv = twe_reset(sc);
 	splx(s);
 	if (rv) {
-		aprint_error("%s: reset failed\n", sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "reset failed\n");
 		return;
 	}
 
@@ -489,18 +474,17 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
 				NULL, NULL, 0, NULL, 0,
 				CTL_HW, CTL_EOL) != 0) {
-		printf("%s: could not create %s sysctl node\n",
-			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name);
+		aprint_error_dev(&sc->sc_dv, "could not create %s sysctl node\n",
+			ctlnames[CTL_HW].ctl_name);
 		return;
 	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
-        			0, CTLTYPE_NODE, sc->sc_dv.dv_xname,
+        			0, CTLTYPE_NODE, device_xname(&sc->sc_dv),
         			SYSCTL_DESCR("twe driver information"),
         			NULL, 0, NULL, 0,
 				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
-                printf("%s: could not create %s.%s sysctl node\n",
-			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
-			sc->sc_dv.dv_xname);
+                aprint_error_dev(&sc->sc_dv, "could not create %s.%s sysctl node\n",
+			ctlnames[CTL_HW].ctl_name, device_xname(&sc->sc_dv));
 		return;
 	}
 	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
@@ -509,9 +493,8 @@ twe_attach(struct device *parent, struct device *self, void *aux)
         			NULL, 0, &twever, 0,
 				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
 				!= 0) {
-                printf("%s: could not create %s.%s.driver_version sysctl\n",
-			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
-			sc->sc_dv.dv_xname);
+                aprint_error_dev(&sc->sc_dv, "could not create %s.%s.driver_version sysctl\n",
+			ctlnames[CTL_HW].ctl_name, device_xname(&sc->sc_dv));
 		return;
 	}
 
@@ -544,7 +527,7 @@ twe_recompute_openings(struct twe_softc *sc)
 
 #ifdef TWE_DEBUG
 	printf("%s: %d array%s, %d openings per array\n",
-	    sc->sc_dv.dv_xname, sc->sc_nunits,
+	    device_xname(&sc->sc_dv), sc->sc_nunits,
 	    sc->sc_nunits == 1 ? "" : "s", sc->sc_openings);
 #endif
 
@@ -576,8 +559,8 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	rv = twe_param_get(sc, TWE_PARAM_UNITSUMMARY,
 	    TWE_PARAM_UNITSUMMARY_Status, TWE_MAX_UNITS, NULL, &dtp);
 	if (rv != 0) {
-		aprint_error("%s: error %d fetching unit summary\n",
-		    sc->sc_dv.dv_xname, rv);
+		aprint_error_dev(&sc->sc_dv, "error %d fetching unit summary\n",
+		    rv);
 		return (rv);
 	}
 
@@ -598,16 +581,16 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	rv = twe_param_get_2(sc, TWE_PARAM_UNITINFO + unit,
 	    TWE_PARAM_UNITINFO_DescriptorSize, &dsize);
 	if (rv != 0) {
-		aprint_error("%s: error %d fetching descriptor size "
-		    "for unit %d\n", sc->sc_dv.dv_xname, rv, unit);
+		aprint_error_dev(&sc->sc_dv, "error %d fetching descriptor size "
+		    "for unit %d\n", rv, unit);
 		goto out;
 	}
 
 	rv = twe_param_get(sc, TWE_PARAM_UNITINFO + unit,
 	    TWE_PARAM_UNITINFO_Descriptor, dsize - 3, NULL, &atp);
 	if (rv != 0) {
-		aprint_error("%s: error %d fetching array descriptor "
-		    "for unit %d\n", sc->sc_dv.dv_xname, rv, unit);
+		aprint_error_dev(&sc->sc_dv, "error %d fetching array descriptor "
+		    "for unit %d\n", rv, unit);
 		goto out;
 	}
 
@@ -619,9 +602,9 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	rv = twe_param_get_4(sc, TWE_PARAM_UNITINFO + unit,
 	    TWE_PARAM_UNITINFO_Capacity, &newsize);
 	if (rv != 0) {
-		aprint_error(
-		    "%s: error %d fetching capacity for unit %d\n",
-		    sc->sc_dv.dv_xname, rv, unit);
+		aprint_error_dev(&sc->sc_dv,
+		    "error %d fetching capacity for unit %d\n",
+		    rv, unit);
 		goto out;
 	}
 
@@ -711,8 +694,7 @@ twe_reset(struct twe_softc *sc)
 
 	/* Wait for attention... */
 	if (twe_status_wait(sc, TWE_STS_ATTN_INTR, 30)) {
-		printf("%s: timeout waiting for attention interrupt\n",
-		    sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "timeout waiting for attention interrupt\n");
 		return (-1);
 	}
 
@@ -736,7 +718,7 @@ twe_reset(struct twe_softc *sc)
 		rv = twe_aen_get(sc, &aen);
 		if (rv != 0)
 			printf("%s: error %d while draining event queue\n",
-			    sc->sc_dv.dv_xname, rv);
+			    device_xname(&sc->sc_dv), rv);
 		if (TWE_AEN_CODE(aen) == TWE_AEN_QUEUE_EMPTY)
 			break;
 		if (TWE_AEN_CODE(aen) == TWE_AEN_SOFT_RESET)
@@ -745,7 +727,7 @@ twe_reset(struct twe_softc *sc)
 	}
 
 	if (!got) {
-		printf("%s: reset not reported\n", sc->sc_dv.dv_xname);
+		printf("%s: reset not reported\n", device_xname(&sc->sc_dv));
 		return (-1);
 	}
 
@@ -753,7 +735,7 @@ twe_reset(struct twe_softc *sc)
 	status = twe_inl(sc, TWE_REG_STS);
 	if (twe_status_check(sc, status)) {
 		printf("%s: controller errors detected\n",
-		    sc->sc_dv.dv_xname);
+		    device_xname(&sc->sc_dv));
 		return (-1);
 	}
 
@@ -761,8 +743,7 @@ twe_reset(struct twe_softc *sc)
 	for (;;) {
 		status = twe_inl(sc, TWE_REG_STS);
 		if (twe_status_check(sc, status) != 0) {
-			printf("%s: can't drain response queue\n",
-			    sc->sc_dv.dv_xname);
+			aprint_error_dev(&sc->sc_dv, "can't drain response queue\n");
 			return (-1);
 		}
 		if ((status & TWE_STS_RESP_QUEUE_EMPTY) != 0)
@@ -807,7 +788,7 @@ twe_intr(void *arg)
 	/* Host interrupts - purpose unknown. */
 	if ((status & TWE_STS_HOST_INTR) != 0) {
 #ifdef DEBUG
-		printf("%s: host interrupt\n", sc->sc_dv.dv_xname);
+		printf("%s: host interrupt\n", device_xname(&sc->sc_dv));
 #endif
 		twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_HOST_INTR);
 		caught = 1;
@@ -820,8 +801,7 @@ twe_intr(void *arg)
 	if ((status & TWE_STS_ATTN_INTR) != 0) {
 		rv = twe_aen_get(sc, NULL);
 		if (rv != 0)
-			printf("%s: unable to retrieve AEN (%d)\n",
-			    sc->sc_dv.dv_xname, rv);
+			aprint_error_dev(&sc->sc_dv, "unable to retrieve AEN (%d)\n", rv);
 		else
 			twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR);
 		caught = 1;
@@ -835,7 +815,7 @@ twe_intr(void *arg)
 	 */
 	if ((status & TWE_STS_CMD_INTR) != 0) {
 #ifdef DEBUG
-		printf("%s: command interrupt\n", sc->sc_dv.dv_xname);
+		printf("%s: command interrupt\n", device_xname(&sc->sc_dv));
 #endif
 		twe_outl(sc, TWE_REG_CTL, TWE_CTL_MASK_CMD_INTR);
 		caught = 1;
@@ -951,7 +931,7 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 	sc->sc_flags &= ~TWEF_AEN;
 
 	if (error) {
-		printf("%s: error retrieving AEN\n", sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "error retrieving AEN\n");
 		aen = TWE_AEN_QUEUE_EMPTY;
 	} else
 		aen = le16toh(*(u_int16_t *)tp->tp_data);
@@ -971,8 +951,7 @@ twe_aen_handler(struct twe_ccb *ccb, int error)
 	 */
 	rv = twe_aen_get(sc, NULL);
 	if (rv != 0)
-		printf("%s: unable to retrieve AEN (%d)\n",
-		    sc->sc_dv.dv_xname, rv);
+		aprint_error_dev(&sc->sc_dv, "unable to retrieve AEN (%d)\n", rv);
 }
 
 static void
@@ -987,8 +966,7 @@ twe_aen_enqueue(struct twe_softc *sc, uint16_t aen, int quiet)
 	if (! quiet) {
 		str = twe_describe_code(twe_table_aen, TWE_AEN_CODE(aen));
 		if (str == NULL) {
-			printf("%s: unknown AEN 0x%04x\n",
-			    sc->sc_dv.dv_xname, aen);
+			aprint_error_dev(&sc->sc_dv, "unknown AEN 0x%04x\n", aen);
 		} else {
 			msg = str + 3;
 			switch (str[1]) {
@@ -1010,28 +988,28 @@ twe_aen_enqueue(struct twe_softc *sc, uint16_t aen, int quiet)
 				case 'u':
 				case 'p':
 					printf("%s: %s %d: %s\n",
-					    sc->sc_dv.dv_xname,
+					    device_xname(&sc->sc_dv),
 					    str[0] == 'u' ? "unit" : "port",
 					    TWE_AEN_UNIT(aen), msg);
 					break;
 
 				default:
 					printf("%s: %s\n",
-					    sc->sc_dv.dv_xname, msg);
+					    device_xname(&sc->sc_dv), msg);
 				}
 			} else {
 				switch (str[0]) {
 				case 'u':
 				case 'p':
 					log(level, "%s: %s %d: %s\n",
-					    sc->sc_dv.dv_xname,
+					    device_xname(&sc->sc_dv),
 					    str[0] == 'u' ? "unit" : "port",
 					    TWE_AEN_UNIT(aen), msg);
 					break;
 
 				default:
 					log(level, "%s: %s\n",
-					    sc->sc_dv.dv_xname, msg);
+					    device_xname(&sc->sc_dv), msg);
 				}
 			}
 		}
@@ -1309,14 +1287,14 @@ twe_poll(struct twe_softc *sc)
 		cmdid = twe_inl(sc, TWE_REG_RESP_QUEUE);
 		cmdid = (cmdid & TWE_RESP_MASK) >> TWE_RESP_SHIFT;
 		if (cmdid >= TWE_MAX_QUEUECNT) {
-			printf("%s: bad cmdid %d\n", sc->sc_dv.dv_xname, cmdid);
+			aprint_error_dev(&sc->sc_dv, "bad cmdid %d\n", cmdid);
 			continue;
 		}
 
 		ccb = sc->sc_ccbs + cmdid;
 		if ((ccb->ccb_flags & TWE_CCB_ACTIVE) == 0) {
 			printf("%s: CCB for cmdid %d not active\n",
-			    sc->sc_dv.dv_xname, cmdid);
+			    device_xname(&sc->sc_dv), cmdid);
 			continue;
 		}
 		ccb->ccb_flags ^= TWE_CCB_COMPLETE | TWE_CCB_ACTIVE;
@@ -1388,24 +1366,22 @@ twe_status_check(struct twe_softc *sc, u_int status)
 	rv = 0;
 
 	if ((status & TWE_STS_EXPECTED_BITS) != TWE_STS_EXPECTED_BITS) {
-		printf("%s: missing status bits: 0x%08x\n", sc->sc_dv.dv_xname,
+		aprint_error_dev(&sc->sc_dv, "missing status bits: 0x%08x\n",
 		    status & ~TWE_STS_EXPECTED_BITS);
 		rv = -1;
 	}
 
 	if ((status & TWE_STS_UNEXPECTED_BITS) != 0) {
-		printf("%s: unexpected status bits: 0x%08x\n",
-		    sc->sc_dv.dv_xname, status & TWE_STS_UNEXPECTED_BITS);
+		aprint_error_dev(&sc->sc_dv, "unexpected status bits: 0x%08x\n",
+		    status & TWE_STS_UNEXPECTED_BITS);
 		rv = -1;
 		if (status & TWE_STS_PCI_PARITY_ERROR) {
-			printf("%s: PCI parity error: Reseat card, move card "
-			       "or buggy device present.\n",
-			       sc->sc_dv.dv_xname);
+			aprint_error_dev(&sc->sc_dv, "PCI parity error: Reseat card, move card "
+			       "or buggy device present.\n");
 			twe_clear_pci_parity_error(sc);
 		}
 		if (status & TWE_STS_PCI_ABORT) {
-			printf("%s: PCI abort, clearing.\n",
-			       sc->sc_dv.dv_xname);
+			aprint_error_dev(&sc->sc_dv, "PCI abort, clearing.\n");
 			twe_clear_pci_abort(sc);
 		}
 	}
@@ -1710,7 +1686,7 @@ twe_ccb_submit(struct twe_softc *sc, struct twe_ccb *ccb)
 #ifdef DIAGNOSTIC
 		if ((ccb->ccb_flags & TWE_CCB_ALLOCED) == 0)
 			panic("%s: CCB %ld not ALLOCED\n",
-			    sc->sc_dv.dv_xname, (long)(ccb - sc->sc_ccbs));
+			    device_xname(&sc->sc_dv), (long)(ccb - sc->sc_ccbs));
 #endif
 		ccb->ccb_flags |= TWE_CCB_ACTIVE;
 		pa = sc->sc_cmds_paddr +
@@ -1802,7 +1778,7 @@ tweioctl(dev_t dev, u_long cmd, void *data, int flag,
 			if (tu->tu_size > TWE_SECTOR_SIZE) {
 #ifdef TWE_DEBUG
 				printf("%s: TWEIO_COMMAND: tu_size = %d\n",
-				    twe->sc_dv.dv_xname, tu->tu_size);
+				    device_xname(&twe->sc_dv), tu->tu_size);
 #endif
 				return EINVAL;
 			}
@@ -1848,7 +1824,7 @@ tweioctl(dev_t dev, u_long cmd, void *data, int flag,
 		memcpy(&tu->tu_cmd, ccb->ccb_cmd, sizeof(struct twe_cmd));
 #ifdef TWE_DEBUG
 		printf("%s: TWEIO_COMMAND: tc_opcode = 0x%02x, "
-		    "tc_status = 0x%02x\n", twe->sc_dv.dv_xname,
+		    "tc_status = 0x%02x\n", device_xname(&twe->sc_dv),
 		    tu->tu_cmd.tc_opcode, tu->tu_cmd.tc_status);
 #endif
 
@@ -1962,17 +1938,14 @@ twe_describe_controller(struct twe_softc *sc)
 
 	if (rv) {
 		/* some error occurred */
-		aprint_error("%s: failed to fetch version information\n",
-			sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "failed to fetch version information\n");
 		return;
 	}
 
-	aprint_normal("%s: %d ports, Firmware %.16s, BIOS %.16s\n",
-		sc->sc_dv.dv_xname, ports,
-		p[1]->tp_data, p[2]->tp_data);
+	aprint_normal_dev(&sc->sc_dv, "%d ports, Firmware %.16s, BIOS %.16s\n",
+		ports, p[1]->tp_data, p[2]->tp_data);
 
-	aprint_verbose("%s: Monitor %.16s, PCB %.8s, Achip %.8s, Pchip %.8s\n",
-		sc->sc_dv.dv_xname,
+	aprint_verbose_dev(&sc->sc_dv, "Monitor %.16s, PCB %.8s, Achip %.8s, Pchip %.8s\n",
 		p[0]->tp_data, p[3]->tp_data,
 		p[4]->tp_data, p[5]->tp_data);
 
@@ -1986,8 +1959,7 @@ twe_describe_controller(struct twe_softc *sc)
 	rv = twe_param_get(sc, TWE_PARAM_DRIVESUMMARY,
 	    TWE_PARAM_DRIVESUMMARY_Status, 16, NULL, &p[0]);
 	if (rv) {
-		aprint_error("%s: failed to get drive status summary\n",
-		    sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "failed to get drive status summary\n");
 		return;
 	}
 	for (i = 0; i < ports; i++) {
@@ -1996,20 +1968,18 @@ twe_describe_controller(struct twe_softc *sc)
 		rv = twe_param_get_4(sc, TWE_PARAM_DRIVEINFO + i,
 		    TWE_PARAM_DRIVEINFO_Size, &dsize);
 		if (rv) {
-			aprint_error(
-			    "%s: unable to get drive size for port %d\n",
-			    sc->sc_dv.dv_xname, i);
+			aprint_error_dev(&sc->sc_dv, 
+			    "unable to get drive size for port %d\n", i);
 			continue;
 		}
 		rv = twe_param_get(sc, TWE_PARAM_DRIVEINFO + i,
 		    TWE_PARAM_DRIVEINFO_Model, 40, NULL, &p[1]);
 		if (rv) {
-			aprint_error(
-			    "%s: unable to get drive model for port %d\n",
-			    sc->sc_dv.dv_xname, i);
+			aprint_error_dev(&sc->sc_dv,
+			    "unable to get drive model for port %d\n", i);
 			continue;
 		}
-		aprint_verbose("%s: port %d: %.40s %d MB\n", sc->sc_dv.dv_xname,
+		aprint_verbose_dev(&sc->sc_dv, "port %d: %.40s %d MB\n",
 		    i, p[1]->tp_data, dsize / 2048);
 		free(p[1], M_DEVBUF);
 	}

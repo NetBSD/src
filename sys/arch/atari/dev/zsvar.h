@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.11 2007/03/06 14:13:02 tsutsui Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.11.40.1 2008/06/02 13:21:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,9 +55,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

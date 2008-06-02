@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.18 2008/01/20 16:28:24 joerg Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.18.6.1 2008/06/02 13:21:56 mjf Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.18 2008/01/20 16:28:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.18.6.1 2008/06/02 13:21:56 mjf Exp $");
 
 #include "opt_perfctrs.h"
 #include "opt_i80321.h"

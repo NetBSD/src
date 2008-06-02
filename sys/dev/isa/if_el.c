@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.79 2007/10/19 12:00:17 ad Exp $	*/
+/*	$NetBSD: if_el.c,v 1.79.16.1 2008/06/02 13:23:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.79 2007/10/19 12:00:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.79.16.1 2008/06/02 13:23:31 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -215,11 +215,11 @@ elattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	DPRINTF(("Attaching %s...\n", sc->sc_dev.dv_xname));
+	DPRINTF(("Attaching %s...\n", device_xname(&sc->sc_dev)));
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 16, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 
@@ -241,7 +241,7 @@ elattach(struct device *parent, struct device *self, void *aux)
 	elstop(sc);
 
 	/* Initialize ifnet structure. */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = elstart;
 	ifp->if_ioctl = elioctl;
@@ -255,14 +255,14 @@ elattach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp, myaddr);
 
 	/* Print out some information for the user. */
-	printf("%s: address %s\n", self->dv_xname, ether_sprintf(myaddr));
+	printf("%s: address %s\n", device_xname(self), ether_sprintf(myaddr));
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, elintr, sc);
 
 #if NRND > 0
 	DPRINTF(("Attaching to random...\n"));
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_NET, 0);
 #endif
 
@@ -414,7 +414,7 @@ elstart(ifp)
 #ifdef DIAGNOSTIC
 		if ((off & 0xffff) != off)
 			printf("%s: bogus off 0x%x\n",
-			    sc->sc_dev.dv_xname, off);
+			    device_xname(&sc->sc_dev), off);
 #endif
 		bus_space_write_1(iot, ioh, EL_GPBL, off & 0xff);
 		bus_space_write_1(iot, ioh, EL_GPBH, (off >> 8) & 0xff);
@@ -594,7 +594,7 @@ elread(sc, len)
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
 		printf("%s: invalid packet size %d; dropping\n",
-		    sc->sc_dev.dv_xname, len);
+		    device_xname(&sc->sc_dev), len);
 		ifp->if_ierrors++;
 		return;
 	}
@@ -754,7 +754,7 @@ elwatchdog(ifp)
 {
 	struct el_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 	sc->sc_ethercom.ec_if.if_oerrors++;
 
 	elreset(sc);

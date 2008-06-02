@@ -1,9 +1,7 @@
-/*	$NetBSD: tbfind.c,v 1.3 2007/12/11 13:16:16 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: tbfind   - find table
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.12.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,13 +114,10 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbfind.c,v 1.3 2007/12/11 13:16:16 lukem Exp $");
-
 #define __TBFIND_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/actables.h>
+#include "acpi.h"
+#include "actables.h"
 
 #define _COMPONENT          ACPI_TABLES
         ACPI_MODULE_NAME    ("tbfind")
@@ -154,15 +149,25 @@ AcpiTbFindTable (
 {
     ACPI_NATIVE_UINT        i;
     ACPI_STATUS             Status;
+    ACPI_TABLE_HEADER       Header;
 
 
     ACPI_FUNCTION_TRACE (TbFindTable);
 
 
+    /* Normalize the input strings */
+
+    ACPI_MEMSET (&Header, 0, sizeof (ACPI_TABLE_HEADER));
+    ACPI_STRNCPY (Header.Signature, Signature, ACPI_NAME_SIZE);
+    ACPI_STRNCPY (Header.OemId, OemId, ACPI_OEM_ID_SIZE);
+    ACPI_STRNCPY (Header.OemTableId, OemTableId, ACPI_OEM_TABLE_ID_SIZE);
+
+    /* Search for the table */
+
     for (i = 0; i < AcpiGbl_RootTableList.Count; ++i)
     {
         if (ACPI_MEMCMP (&(AcpiGbl_RootTableList.Tables[i].Signature),
-            Signature, ACPI_NAME_SIZE))
+                            Header.Signature, ACPI_NAME_SIZE))
         {
             /* Not the requested table */
 
@@ -190,18 +195,18 @@ AcpiTbFindTable (
         /* Check for table match on all IDs */
 
         if (!ACPI_MEMCMP (AcpiGbl_RootTableList.Tables[i].Pointer->Signature,
-                Signature, ACPI_NAME_SIZE) &&
+                            Header.Signature, ACPI_NAME_SIZE) &&
             (!OemId[0] ||
              !ACPI_MEMCMP (AcpiGbl_RootTableList.Tables[i].Pointer->OemId,
-                             OemId, ACPI_OEM_ID_SIZE)) &&
+                             Header.OemId, ACPI_OEM_ID_SIZE)) &&
             (!OemTableId[0] ||
              !ACPI_MEMCMP (AcpiGbl_RootTableList.Tables[i].Pointer->OemTableId,
-                             OemTableId, ACPI_OEM_TABLE_ID_SIZE)))
+                             Header.OemTableId, ACPI_OEM_TABLE_ID_SIZE)))
         {
             *TableIndex = i;
 
             ACPI_DEBUG_PRINT ((ACPI_DB_TABLES, "Found table [%4.4s]\n",
-                Signature));
+                Header.Signature));
             return_ACPI_STATUS (AE_OK);
         }
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.25 2007/12/29 13:09:36 wiz Exp $	*/
+/*	$NetBSD: makphy.c,v 1.25.6.1 2008/06/02 13:23:35 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -71,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.25 2007/12/29 13:09:36 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.25.6.1 2008/06/02 13:23:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.25 2007/12/29 13:09:36 wiz Exp $");
 
 #include <dev/mii/makphyreg.h>
 
-static int	makphymatch(struct device *, struct cfdata *, void *);
-static void	makphyattach(struct device *, struct device *, void *);
+static int	makphymatch(device_t, cfdata_t, void *);
+static void	makphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL(makphy, sizeof(struct mii_softc),
+CFATTACH_DECL_NEW(makphy, sizeof(struct mii_softc),
     makphymatch, makphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	makphy_service(struct mii_softc *, struct mii_data *, int);
@@ -124,8 +117,7 @@ static const struct mii_phydesc makphys[] = {
 };
 
 static int
-makphymatch(struct device *parent, struct cfdata *match,
-    void *aux)
+makphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -136,7 +128,7 @@ makphymatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-makphyattach(struct device *parent, struct device *self, void *aux)
+makphyattach(device_t parent, device_t self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
@@ -147,6 +139,7 @@ makphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &makphy_funcs;
@@ -161,7 +154,7 @@ makphyattach(struct device *parent, struct device *self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		aprint_error("no media present");

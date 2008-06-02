@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.18.16.1 2008/04/03 12:42:45 mjf Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.18.16.2 2008/06/02 13:23:32 mjf Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.18.16.1 2008/04/03 12:42:45 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.18.16.2 2008/06/02 13:23:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,8 +271,8 @@ tcic_isa_attach(struct device *parent, struct device *self, void *aux)
 		if (isa_intr_alloc(ic,
 		    sc->validirqs & (tcic_isa_intr_alloc_mask & 0xff00),
 		    IST_EDGE, &sc->irq)) {
-			printf("\n%s: can't allocate interrupt\n",
-			    sc->dev.dv_xname);
+			aprint_normal("\n");
+			aprint_error_dev(&sc->dev, "can't allocate interrupt\n");
 			return;
 		}
 		printf(": using irq %d", sc->irq);
@@ -314,7 +314,7 @@ tcic_isa_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx)\n",
-	    sc->dev.dv_xname, (long) sc->iobase,
+	    device_xname(&sc->dev), (long) sc->iobase,
 	    (long) sc->iobase + sc->iosize));
 
 	if (tcic_isa_alloc_iobase && tcic_isa_alloc_iosize) {
@@ -322,13 +322,13 @@ tcic_isa_attach(struct device *parent, struct device *self, void *aux)
 		sc->iosize = tcic_isa_alloc_iosize;
 
 		DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx "
-		    "(config override)\n", sc->dev.dv_xname, (long) sc->iobase,
+		    "(config override)\n", device_xname(&sc->dev), (long) sc->iobase,
 		    (long) sc->iobase + sc->iosize));
 	}
 	sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
 	    tcic_intr, sc);
 	if (sc->ih == NULL) {
-		printf("%s: can't establish interrupt\n", sc->dev.dv_xname);
+		printf("%s: can't establish interrupt\n", device_xname(&sc->dev));
 		return;
 	}
 
@@ -347,7 +347,7 @@ tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	int irq, ist;
 	void *ih;
 
-	DPRINTF(("%s: tcic_isa_chip_intr_establish\n", h->sc->dev.dv_xname));
+	DPRINTF(("%s: tcic_isa_chip_intr_establish\n", device_xname(&h->sc->dev)));
 
 	/* XXX should we convert level to pulse? -chb  */
 	if (pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)
@@ -364,11 +364,11 @@ tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	    fct, arg)) == NULL)
 		return (NULL);
 
-	DPRINTF(("%s: intr estrablished\n", h->sc->dev.dv_xname));
+	DPRINTF(("%s: intr estrablished\n", device_xname(&h->sc->dev)));
 
 	h->ih_irq = irq;
 
-	printf("%s: card irq %d\n", h->pcmcia->dv_xname, irq);
+	printf("%s: card irq %d\n", device_xname(h->pcmcia), irq);
 
 	return (ih);
 }
@@ -381,7 +381,7 @@ tcic_isa_chip_intr_disestablish(pch, ih)
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int val, reg;
 
-	DPRINTF(("%s: tcic_isa_chip_intr_disestablish\n", h->sc->dev.dv_xname));
+	DPRINTF(("%s: tcic_isa_chip_intr_disestablish\n", device_xname(&h->sc->dev)));
 
 	h->ih_irq = 0;
 

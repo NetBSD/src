@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.42 2007/10/19 12:00:00 ad Exp $ */
+/* $NetBSD: seeq8005.c,v 1.42.16.1 2008/06/02 13:23:27 mjf Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.42 2007/10/19 12:00:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.42.16.1 2008/06/02 13:23:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,8 +189,8 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 		sc->sc_flags |= SF_8BIT;
 		SEEQ_WRITE16(sc, iot, ioh, SEEQ_RX_PTR, 0x1234);
 		if (SEEQ_READ16(sc, iot, ioh, SEEQ_RX_PTR) != 0x1234) {
-			printf("\n%s: Cannot determine data bus width\n",
-			    sc->sc_dev.dv_xname);
+			aprint_normal("\n");
+			aprint_error_dev(&sc->sc_dev, "Cannot determine data bus width\n");
 			return;
 		}
 	}
@@ -244,22 +244,21 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 	ea_ramtest(sc);
 
 	printf("%s: %dKB packet memory, txbuf=%dKB (%d buffers), rxbuf=%dKB",
-	    sc->sc_dev.dv_xname, sc->sc_buffersize >> 10,
+	    device_xname(&sc->sc_dev), sc->sc_buffersize >> 10,
 	    sc->sc_tx_bufsize >> 10, sc->sc_tx_bufs, sc->sc_rx_bufsize >> 10);
 
 	if (padbuf == NULL) {
 		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
 		    M_ZERO | M_NOWAIT);
 		if (padbuf == NULL) {
-			printf("%s: can't allocate pad buffer\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "can't allocate pad buffer\n");
 			return;
 		}
 	}
 
 	/* Initialise ifnet structure. */
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ea_start;
 	ifp->if_ioctl = ea_ioctl;
@@ -296,7 +295,7 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 
 #if NRND > 0
 	/* After \n because it can print a line of its own. */
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 	    RND_TYPE_NET, 0);
 #endif
 }
@@ -378,8 +377,7 @@ do {									\
 	/* Report */
 
 	if (sum > 0)
-		printf("%s: buffer RAM failed self test, %d faults\n",
-		       sc->sc_dev.dv_xname, sum);
+		aprint_error_dev(&sc->sc_dev, "buffer RAM failed self test, %d faults\n", sum);
 }
 
 
@@ -416,7 +414,7 @@ ea_stoptx(struct seeq8005_softc *sc)
 	} while ((status & SEEQ_STATUS_TX_ON) && --timeout > 0);
  	if (timeout == 0)
 		log(LOG_ERR, "%s: timeout waiting for tx termination\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 
 	/* Clear any pending tx interrupt */
 	SEEQ_WRITE16(sc, iot, ioh, SEEQ_COMMAND,
@@ -456,7 +454,7 @@ ea_stoprx(struct seeq8005_softc *sc)
 	} while ((status & SEEQ_STATUS_RX_ON) && --timeout > 0);
 	if (timeout == 0)
 		log(LOG_ERR, "%s: timeout waiting for rx termination\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 
 	/* Clear any pending rx interrupt */
 
@@ -561,7 +559,7 @@ ea_await_fifo_empty(struct seeq8005_softc *sc)
 		if (SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS) &
 		    SEEQ_STATUS_FIFO_EMPTY)
 			return;
-	log(LOG_ERR, "%s: DMA FIFO failed to empty\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: DMA FIFO failed to empty\n", device_xname(&sc->sc_dev));
 }
 
 /*
@@ -579,7 +577,7 @@ ea_await_fifo_full(struct seeq8005_softc *sc)
 		if (SEEQ_READ16(sc, iot, ioh, SEEQ_STATUS) &
 		    SEEQ_STATUS_FIFO_FULL)
 			return;
-	log(LOG_ERR, "%s: DMA FIFO failed to fill\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: DMA FIFO failed to fill\n", device_xname(&sc->sc_dev));
 }
 
 /*
@@ -603,9 +601,9 @@ ea_writebuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(!ALIGNED_POINTER(buf, u_int16_t)))
-		panic("%s: unaligned writebuf", sc->sc_dev.dv_xname);
+		panic("%s: unaligned writebuf", device_xname(&sc->sc_dev));
 	if (__predict_false(addr >= SEEQ_MAX_BUFFER_SIZE))
-		panic("%s: writebuf out of range", sc->sc_dev.dv_xname);
+		panic("%s: writebuf out of range", device_xname(&sc->sc_dev));
 #endif
 
 	if (addr != -1) {
@@ -656,9 +654,9 @@ ea_readbuf(struct seeq8005_softc *sc, u_char *buf, int addr, size_t len)
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(!ALIGNED_POINTER(buf, u_int16_t)))
-		panic("%s: unaligned readbuf", sc->sc_dev.dv_xname);
+		panic("%s: unaligned readbuf", device_xname(&sc->sc_dev));
 	if (__predict_false(addr >= SEEQ_MAX_BUFFER_SIZE))
-		panic("%s: readbuf out of range", sc->sc_dev.dv_xname);
+		panic("%s: readbuf out of range", device_xname(&sc->sc_dev));
 #endif
 
 	if (addr != -1) {
@@ -1168,7 +1166,7 @@ ea_rxint(struct seeq8005_softc *sc)
 			++ifp->if_ierrors;
 			log(LOG_ERR,
 			    "%s: Rx chain corrupt at %04x (ptr = %04x)\n",
-			    sc->sc_dev.dv_xname, addr, ptr);
+			    device_xname(&sc->sc_dev), addr, ptr);
 			ea_init(ifp);
 			return;
 		}
@@ -1194,7 +1192,7 @@ ea_rxint(struct seeq8005_softc *sc)
 			++ifp->if_ierrors;
 			log(LOG_WARNING,
 			    "%s: rx packet error at %04x (err=%02x)\n",
-			    sc->sc_dev.dv_xname, addr, status & 0x0f);
+			    device_xname(&sc->sc_dev), addr, status & 0x0f);
 			/* XXX shouldn't need to reset if it's genuine. */
 			ea_init(ifp);
 			return;
@@ -1208,7 +1206,7 @@ ea_rxint(struct seeq8005_softc *sc)
 			++ifp->if_ierrors;
 			log(LOG_ERR,
 			    "%s: rx packet size error at %04x (len=%d)\n",
-			    sc->sc_dev.dv_xname, addr, len);
+			    device_xname(&sc->sc_dev), addr, len);
 			sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
 			SEEQ_WRITE16(sc, iot, ioh, SEEQ_CONFIG2,
 					  sc->sc_config2);
@@ -1491,7 +1489,7 @@ ea_watchdog(struct ifnet *ifp)
 	struct seeq8005_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: lost Tx interrupt (status = 0x%04x)\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(&sc->sc_dev),
 	    SEEQ_READ16(sc, sc->sc_iot, sc->sc_ioh, SEEQ_STATUS));
 	ifp->if_oerrors++;
 

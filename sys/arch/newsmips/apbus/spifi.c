@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.15 2007/02/28 04:21:54 thorpej Exp $	*/
+/*	$NetBSD: spifi.c,v 1.15.40.1 2008/06/02 13:22:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.15 2007/02/28 04:21:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.15.40.1 2008/06/02 13:22:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.15 2007/02/28 04:21:54 thorpej Exp $");
 #include <newsmips/apbus/apbusvar.h>
 #include <newsmips/apbus/spifireg.h>
 #include <newsmips/apbus/dmac3reg.h>
+#include <newsmips/apbus/dmac3var.h>
 
 #include <machine/adrsmap.h>
 
@@ -66,17 +67,17 @@ struct spifi_scb {
 	int cmdlen;
 	int resid;
 	vaddr_t daddr;
-	u_char target;
-	u_char lun;
-	u_char lun_targ;
-	u_char status;
+	uint8_t target;
+	uint8_t lun;
+	uint8_t lun_targ;
+	uint8_t status;
 };
 /* scb flags */
 #define SPIFI_READ	0x80
 #define SPIFI_DMA	0x01
 
 struct spifi_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct scsipi_channel sc_channel;
 	struct scsipi_adapter sc_adapter;
 
@@ -85,7 +86,7 @@ struct spifi_softc {
 	void *sc_dma;			/* attached DMA softc */
 	int sc_id;			/* my SCSI ID */
 	int sc_msgout;
-	u_char sc_omsg[16];
+	uint8_t sc_omsg[16];
 	struct spifi_scb sc_scb[16];
 	TAILQ_HEAD(, spifi_scb) free_scb;
 	TAILQ_HEAD(, spifi_scb) ready_scb;
@@ -104,8 +105,8 @@ struct spifi_softc {
 #define SPIFI_MSGOUT	(PRS_MSG | PRS_CD)
 #define SPIFI_MSGIN	(PRS_MSG | PRS_CD | PRS_IO)
 
-int spifi_match(struct device *, struct cfdata *, void *);
-void spifi_attach(struct device *, struct device *, void *);
+int spifi_match(device_t, cfdata_t, void *);
+void spifi_attach(device_t, device_t, void *);
 
 void spifi_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
     void *);
@@ -134,11 +135,11 @@ static void spifi_write_count(struct spifi_reg *, int);
 #define DMAC3_FASTACCESS(sc)  dmac3_misc((sc)->sc_dma, DMAC3_CONF_FASTACCESS)
 #define DMAC3_SLOWACCESS(sc)  dmac3_misc((sc)->sc_dma, DMAC3_CONF_SLOWACCESS)
 
-CFATTACH_DECL(spifi, sizeof(struct spifi_softc),
+CFATTACH_DECL_NEW(spifi, sizeof(struct spifi_softc),
     spifi_match, spifi_attach, NULL, NULL);
 
 int
-spifi_match(struct device *parent, struct cfdata *cf, void *aux)
+spifi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -149,17 +150,19 @@ spifi_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-spifi_attach(struct device *parent, struct device *self, void *aux)
+spifi_attach(device_t parent, device_t self, void *aux)
 {
-	struct spifi_softc *sc = (void *)self;
+	struct spifi_softc *sc = device_private(self);
 	struct apbus_attach_args *apa = aux;
-	struct device *dma;
+	struct dmac3_softc *dma;
 	int intr, i;
+
+	sc->sc_dev = self;
 
 	/* Initialize scbs. */
 	TAILQ_INIT(&sc->free_scb);
 	TAILQ_INIT(&sc->ready_scb);
-	for (i = 0; i < sizeof(sc->sc_scb)/sizeof(sc->sc_scb[0]); i++)
+	for (i = 0; i < __arraycount(sc->sc_scb); i++)
 		TAILQ_INSERT_TAIL(&sc->free_scb, &sc->sc_scb[i], chain);
 
 	sc->sc_reg = (struct spifi_reg *)apa->apa_hwbase;
@@ -168,13 +171,14 @@ spifi_attach(struct device *parent, struct device *self, void *aux)
 	/* Find my dmac3. */
 	dma = dmac3_link(apa->apa_ctlnum);
 	if (dma == NULL) {
-		printf(": cannot find slave dmac\n");
+		aprint_error(": cannot find slave dmac\n");
 		return;
 	}
 	sc->sc_dma = dma;
 
-	printf(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
-	printf(": SCSI ID = %d, using %s\n", sc->sc_id, dma->dv_xname);
+	aprint_normal(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
+	aprint_normal(": SCSI ID = %d, using %s\n",
+	    sc->sc_id, device_xname(dma->sc_dev));
 
 	dmac3_reset(sc->sc_dma);
 
@@ -182,7 +186,7 @@ spifi_attach(struct device *parent, struct device *self, void *aux)
 	spifi_reset(sc);
 	DMAC3_FASTACCESS(sc);
 
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_dev = self;
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_openings = 7;
 	sc->sc_adapter.adapt_max_periph = 1;
@@ -205,7 +209,7 @@ spifi_attach(struct device *parent, struct device *self, void *aux)
 	apbus_intr_establish(0, intr, 0, spifi_intr, sc, apa->apa_name,
 	    apa->apa_ctlnum);
 
-	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint);
 }
 
 void
@@ -214,7 +218,7 @@ spifi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
-	struct spifi_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	struct spifi_softc *sc = device_private(chan->chan_adapter->adapt_dev);
 	struct spifi_scb *scb;
 	u_int flags;
 	int s;
@@ -281,7 +285,7 @@ spifi_get_scb(struct spifi_softc *sc)
 	int s;
 
 	s = splbio();
-	scb = sc->free_scb.tqh_first;
+	scb = TAILQ_FIRST(&sc->free_scb);
 	if (scb)
 		TAILQ_REMOVE(&sc->free_scb, scb, chain);
 	splx(s);
@@ -306,7 +310,7 @@ spifi_poll(struct spifi_softc *sc)
 	struct scsipi_xfer *xs;
 	int count;
 
-	printf("spifi_poll: not implemented yet\n");
+	printf("%s: not implemented yet\n", __func__);
 	delay(10000);
 	scb->status = SCSI_OK;
 	scb->resid = 0;
@@ -346,7 +350,7 @@ spifi_sched(struct spifi_softc *sc)
 {
 	struct spifi_scb *scb;
 
-	scb = sc->ready_scb.tqh_first;
+	scb = TAILQ_FIRST(&sc->ready_scb);
 start:
 	if (scb == NULL || sc->sc_nexus != NULL)
 		return;
@@ -399,7 +403,7 @@ spifi_write_count(struct spifi_reg *reg, int count)
 
 
 #ifdef SPIFI_DEBUG
-static char scsi_phase_name[][8] = {
+static const char scsi_phase_name[][8] = {
 	"DATAOUT", "DATAIN", "COMMAND", "STATUS",
 	"", "", "MSGOUT", "MSGIN"
 };
@@ -470,7 +474,7 @@ spifi_intr(void *v)
 		return 1;
 	}
 	if (intr & INTR_DISCON)
-		panic("disconnect");
+		panic("%s: disconnect", __func__);
 
 	if (intr & INTR_TIMEO) {
 		xs->error = XS_SELTIMEOUT;
@@ -480,11 +484,12 @@ spifi_intr(void *v)
 	}
 	if (intr & INTR_BSRQ) {
 		if (scb == NULL)
-			panic("reconnect?");
+			panic("%s: reconnect?", __func__);
 
 		if (intr & INTR_PERR) {
-			printf("%s: %d:%d parity error\n", sc->sc_dev.dv_xname,
-			       scb->target, scb->lun);
+			printf("%s: %d:%d parity error\n",
+			     device_xname(sc->sc_dev),
+			     scb->target, scb->lun);
 
 			/* XXX reset */
 			xs->error = XS_DRIVER_STUFFUP;
@@ -493,9 +498,9 @@ spifi_intr(void *v)
 		}
 
 		if (state >> 4 == SPS_MSGIN && icond == ICOND_NXTREQ)
-			panic("spifi_intr: NXTREQ");
+			panic("%s: NXTREQ", __func__);
 		if (reg->fifoctrl & FIFOC_RQOVRN)
-			panic("spifi_intr RQOVRN");
+			panic("%s: RQOVRN", __func__);
 		if (icond == ICOND_UXPHASEZ)
 			panic("ICOND_UXPHASEZ");
 
@@ -523,7 +528,7 @@ spifi_intr(void *v)
 			goto done;
 		}
 
-		panic("spifi_intr: unknown intr state");
+		panic("%s: unknown intr state", __func__);
 	}
 
 done:
@@ -540,7 +545,7 @@ spifi_pmatch(struct spifi_softc *sc)
 	phase = (reg->prstat & PRS_PHASE);
 
 #ifdef SPIFI_DEBUG
-	printf("spifi_pmatch (%s)\n", scsi_phase_name[phase >> 3]);
+	printf("%s (%s)\n", __func__, scsi_phase_name[phase >> 3]);
 #endif
 
 	switch (phase) {
@@ -576,7 +581,8 @@ spifi_select(struct spifi_softc *sc)
 #endif
 
 	if (scb == NULL) {
-		printf("%s: spifi_select: NULL nexus\n", sc->sc_dev.dv_xname);
+		printf("%s: spifi_select: NULL nexus\n",
+		    device_xname(sc->sc_dev));
 		return;
 	}
 
@@ -598,7 +604,7 @@ spifi_sendmsg(struct spifi_softc *sc, int msg)
 	int id = sc->sc_id;
 	struct spifi_reg *reg = sc->sc_reg;
 
-	DPRINTF("spifi_sendmsg: sending");
+	DPRINTF("%s: sending", __func__);
 	sc->sc_msgout = msg;
 	len = 0;
 
@@ -635,10 +641,10 @@ spifi_command(struct spifi_softc *sc)
 	struct spifi_scb *scb = sc->sc_nexus;
 	struct spifi_reg *reg = sc->sc_reg;
 	int len = scb->cmdlen;
-	u_char *cmdp = (char *)&scb->cmd;
+	uint8_t *cmdp = (uint8_t *)&scb->cmd;
 	int i;
 
-	DPRINTF("spifi_command\n");
+	DPRINTF("%s\n", __func__);
 
 	reg->cmdpage = scb->lun_targ;
 
@@ -663,7 +669,7 @@ spifi_data_io(struct spifi_softc *sc)
 	struct spifi_reg *reg = sc->sc_reg;
 	int phase;
 
-	DPRINTF("spifi_data_io\n");
+	DPRINTF("%s\n", __func__);
 
 	phase = reg->prstat & PRS_PHASE;
 	dmac3_reset(sc->sc_dma);
@@ -698,7 +704,7 @@ spifi_status(struct spifi_softc *sc)
 {
 	struct spifi_reg *reg = sc->sc_reg;
 
-	DPRINTF("spifi_status\n");
+	DPRINTF("%s\n", __func__);
 	spifi_fifo_drain(sc);
 	reg->cmlen = CML_AMSG_EN | 1;
 	reg->prcmd = PRC_STATUS;
@@ -710,11 +716,11 @@ spifi_done(struct spifi_softc *sc)
 	struct spifi_scb *scb = sc->sc_nexus;
 	struct scsipi_xfer *xs = scb->xs;
 
-	DPRINTF("spifi_done\n");
+	DPRINTF("%s\n", __func__);
 
 	xs->status = scb->status;
 	if (xs->status == SCSI_CHECK) {
-		DPRINTF("spifi_done: CHECK CONDITION\n");
+		DPRINTF("%s: CHECK CONDITION\n", __func__);
 		if (xs->error == XS_NOERROR)
 			xs->error = XS_BUSY;
 	}
@@ -737,7 +743,7 @@ spifi_fifo_drain(struct spifi_softc *sc)
 	struct spifi_reg *reg = sc->sc_reg;
 	int fifoctrl, fifo_count;
 
-	DPRINTF("spifi_fifo_drain\n");
+	DPRINTF("%s\n", __func__);
 
 	if ((scb->flags & SPIFI_READ) == 0)
 		return;
@@ -762,7 +768,7 @@ spifi_reset(struct spifi_softc *sc)
 	struct spifi_reg *reg = sc->sc_reg;
 	int id = sc->sc_id;
 
-	DPRINTF("spifi_reset\n");
+	DPRINTF("%s\n", __func__);
 
 	reg->auxctrl = AUXCTRL_SRST;
 	reg->auxctrl = AUXCTRL_CRST;
@@ -796,7 +802,7 @@ spifi_bus_reset(struct spifi_softc *sc)
 {
 	struct spifi_reg *reg = sc->sc_reg;
 
-	printf("%s: bus reset\n", sc->sc_dev.dv_xname);
+	printf("%s: bus reset\n", device_xname(sc->sc_dev));
 
 	sc->sc_nexus = NULL;
 
@@ -806,7 +812,7 @@ spifi_bus_reset(struct spifi_softc *sc)
 }
 
 #if 0
-static u_char spifi_sync_period[] = {
+static uint8_t spifi_sync_period[] = {
 /* 0    1    2    3   4   5   6   7   8   9  10  11 */
  137, 125, 112, 100, 87, 75, 62, 50, 43, 37, 31, 25
 };
@@ -818,8 +824,8 @@ spifi_setsync(struct spifi_softc *sc, struct spifi_tinfo *ti)
 	if ((ti->flags & T_SYNCMODE) == 0)
 		reg->data_xfer = 0;
 	else {
-		int period = ti->period;
-		int offset = ti->offset;
+		uint8_t period = ti->period;
+		uint8_t offset = ti->offset;
 		int v;
 
 		for (v = sizeof(spifi_sync_period) - 1; v >= 0; v--)

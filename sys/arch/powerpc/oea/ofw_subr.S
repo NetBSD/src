@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.7 2008/02/14 19:41:54 garbled Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.7.6.1 2008/06/02 13:22:32 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -125,6 +125,7 @@ ENTRY(openfirmware)
 	stw	%r4,8(%r1)
 
 	li	%r0,0			/* clear battable translations */
+	mtmsr	%r0
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	mtdbatu	2,%r0
 	mtdbatu	3,%r0

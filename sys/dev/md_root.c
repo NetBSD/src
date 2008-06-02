@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.13 2007/03/04 06:01:42 christos Exp $	*/
+/*	$NetBSD: md_root.c,v 1.13.36.1 2008/06/02 13:23:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.13 2007/03/04 06:01:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.13.36.1 2008/06/02 13:23:11 mjf Exp $");
 
 #include "opt_md.h"
 
@@ -90,6 +83,7 @@ char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 void
 md_root_setconf(char *addr, size_t size)
 {
+	md_is_root = 1;
 	md_root_image = addr;
 	md_root_size = size;
 }
@@ -103,13 +97,13 @@ md_attach_hook(int unit, struct md_conf *md)
 {
 	char pbuf[9];
 
-	if (unit == 0) {
+	if (unit == 0 && md_is_root) {
 		/* Setup root ramdisk */
 		md->md_addr = (void *)md_root_image;
 		md->md_size = (size_t)md_root_size;
 		md->md_type = MD_KMEM_FIXED;
 		format_bytes(pbuf, sizeof(pbuf), md->md_size);
-		aprint_normal("md%d: internal %s image area\n", unit, pbuf);
+		aprint_verbose("md%d: internal %s image area\n", unit, pbuf);
 	}
 }
 
@@ -120,7 +114,7 @@ void
 md_open_hook(int unit, struct md_conf *md)
 {
 
-	if (unit == 0) {
+	if (unit == 0 && md_is_root) {
 		/* The root ramdisk only works single-user. */
 		boothowto |= MEMORY_RBFLAGS;
 	}

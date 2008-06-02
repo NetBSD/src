@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.21 2006/11/16 01:33:05 christos Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.21.48.1 2008/06/02 13:23:33 mjf Exp $ */
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.21 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.21.48.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include "mpu_ym.h"
 
@@ -113,7 +113,7 @@ ym_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", self->dv_xname);
+		aprint_error_dev(self, "error in region allocation\n");
 		return;
 	}
 
@@ -135,7 +135,7 @@ ym_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	ac->sc_iot = sc->sc_iot;
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, WSS_CODEC, AD1848_NPORT,
 	    &ac->sc_ioh)) {
-		printf("%s: bus_space_subregion failed\n", self->dv_xname);
+		aprint_error_dev(self, "bus_space_subregion failed\n");
 		return;
 	}
 	ac->mode = 2;
@@ -143,7 +143,7 @@ ym_isapnp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ad1848.sc_ic  = sc->sc_ic;
 
-	printf("%s: %s %s", self->dv_xname, ipa->ipa_devident,
+	printf("%s: %s %s", device_xname(self), ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
 	ym_attach(sc);

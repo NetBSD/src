@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.56 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.56.6.1 2008/06/02 13:24:21 mjf Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.56 2008/02/20 17:05:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.56.6.1 2008/06/02 13:24:21 mjf Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -115,10 +115,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.56 2008/02/20 17:05:52 matt Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_private.h>		/* XXX */
 
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>	/* XXX */
 #endif /* BRIDGE_IPF && PFIL_HOOKS */
 
 /*
@@ -2078,12 +2080,12 @@ bridge_ip_checkbasic(struct mbuf **mp)
 		if ((m = m_copyup(m, sizeof(struct ip),
 			(max_linkhdr + 3) & ~3)) == NULL) {
 			/* XXXJRT new stat, please */
-			ipstat.ips_toosmall++;
+			ip_statinc(IP_STAT_TOOSMALL);
 			goto bad;
 		}
 	} else if (__predict_false(m->m_len < sizeof (struct ip))) {
 		if ((m = m_pullup(m, sizeof (struct ip))) == NULL) {
-			ipstat.ips_toosmall++;
+			ip_statinc(IP_STAT_TOOSMALL);
 			goto bad;
 		}
 	}
@@ -2091,17 +2093,17 @@ bridge_ip_checkbasic(struct mbuf **mp)
 	if (ip == NULL) goto bad;
 
 	if (ip->ip_v != IPVERSION) {
-		ipstat.ips_badvers++;
+		ip_statinc(IP_STAT_BADVERS);
 		goto bad;
 	}
 	hlen = ip->ip_hl << 2;
 	if (hlen < sizeof(struct ip)) { /* minimum header length */
-		ipstat.ips_badhlen++;
+		ip_statinc(IP_STAT_BADHLEN);
 		goto bad;
 	}
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == 0) {
-			ipstat.ips_badhlen++;
+			ip_statinc(IP_STAT_BADHLEN);
 			goto bad;
 		}
 		ip = mtod(m, struct ip *);
@@ -2135,7 +2137,7 @@ bridge_ip_checkbasic(struct mbuf **mp)
          * Check for additional length bogosity
          */
         if (len < hlen) {
-                ipstat.ips_badlen++;
+		ip_statinc(IP_STAT_BADLEN);
                 goto bad;
         }
 
@@ -2145,7 +2147,7 @@ bridge_ip_checkbasic(struct mbuf **mp)
          * Drop packet if shorter than we expect.
          */
         if (m->m_pkthdr.len < len) {
-                ipstat.ips_tooshort++;
+		ip_statinc(IP_STAT_TOOSHORT);
                 goto bad;
         }
 
@@ -2181,14 +2183,14 @@ bridge_ip6_checkbasic(struct mbuf **mp)
                 if ((m = m_copyup(m, sizeof(struct ip6_hdr),
                                   (max_linkhdr + 3) & ~3)) == NULL) {
                         /* XXXJRT new stat, please */
-                        ip6stat.ip6s_toosmall++;
+			ip6_statinc(IP6_STAT_TOOSMALL);
                         in6_ifstat_inc(inifp, ifs6_in_hdrerr);
                         goto bad;
                 }
         } else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
                 struct ifnet *inifp = m->m_pkthdr.rcvif;
                 if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
-                        ip6stat.ip6s_toosmall++;
+			ip6_statinc(IP6_STAT_TOOSMALL);
                         in6_ifstat_inc(inifp, ifs6_in_hdrerr);
                         goto bad;
                 }
@@ -2197,7 +2199,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
         ip6 = mtod(m, struct ip6_hdr *);
 
         if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
-                ip6stat.ip6s_badvers++;
+		ip6_statinc(IP6_STAT_BADVERS);
                 in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
                 goto bad;
         }

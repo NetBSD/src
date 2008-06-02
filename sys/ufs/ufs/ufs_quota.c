@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.58.6.1 2008/04/03 12:43:14 mjf Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.58.6.2 2008/06/02 13:24:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,13 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.58.6.1 2008/04/03 12:43:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.58.6.2 2008/06/02 13:24:37 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/file.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -763,8 +762,6 @@ static LIST_HEAD(dqhashhead, dquot) *dqhashtbl;
 static u_long dqhash;
 static pool_cache_t dquot_cache;
 
-MALLOC_JUSTDEFINE(M_DQUOT, "UFS quota", "UFS quota entries");
-
 /*
  * Initialize the quota system.
  */
@@ -774,9 +771,7 @@ dqinit(void)
 
 	mutex_init(&dqlock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&dqcv, "quota");
-	malloc_type_attach(M_DQUOT);
-	dqhashtbl =
-	    hashinit(desiredvnodes, HASH_LIST, M_DQUOT, M_WAITOK, &dqhash);
+	dqhashtbl = hashinit(desiredvnodes, HASH_LIST, true, &dqhash);
 	dquot_cache = pool_cache_init(sizeof(struct dquot), 0, 0, 0, "ufsdq",
 	    NULL, IPL_NONE, NULL, NULL, NULL);
 }
@@ -790,7 +785,7 @@ dqreinit(void)
 	u_long oldmask, mask, hashval;
 	int i;
 
-	hash = hashinit(desiredvnodes, HASH_LIST, M_DQUOT, M_WAITOK, &mask);
+	hash = hashinit(desiredvnodes, HASH_LIST, true, &mask);
 	mutex_enter(&dqlock);
 	oldhash = dqhashtbl;
 	oldmask = dqhash;
@@ -805,7 +800,7 @@ dqreinit(void)
 		}
 	}
 	mutex_exit(&dqlock);
-	hashdone(oldhash, M_DQUOT);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
@@ -816,8 +811,7 @@ dqdone(void)
 {
 
 	pool_cache_destroy(dquot_cache);
-	hashdone(dqhashtbl, M_DQUOT);
-	malloc_type_detach(M_DQUOT);
+	hashdone(dqhashtbl, HASH_LIST, dqhash);
 	cv_destroy(&dqcv);
 	mutex_destroy(&dqlock);
 }

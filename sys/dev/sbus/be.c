@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.56 2008/01/19 22:10:20 dyoung Exp $	*/
+/*	$NetBSD: be.c,v 1.56.6.1 2008/06/02 13:23:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -64,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.56 2008/01/19 22:10:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.56.6.1 2008/06/02 13:23:49 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -247,7 +240,7 @@ beattach(parent, self, aux)
 
 	if (sa->sa_nreg < 3) {
 		printf("%s: only %d register sets\n",
-			self->dv_xname, sa->sa_nreg);
+			device_xname(self), sa->sa_nreg);
 		return;
 	}
 
@@ -325,15 +318,15 @@ beattach(parent, self, aux)
 	/* Get a DMA handle */
 	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
 				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
-		printf("%s: DMA map create error %d\n", self->dv_xname, error);
+		aprint_error_dev(self, "DMA map create error %d\n", error);
 		return;
 	}
 
 	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(sa->sa_dmatag, size, 0, 0,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: DMA buffer alloc error %d\n",
-			self->dv_xname, error);
+		aprint_error_dev(self, "DMA buffer alloc error %d\n",
+			error);
 		return;
 	}
 
@@ -341,8 +334,8 @@ beattach(parent, self, aux)
 	if ((error = bus_dmamem_map(sa->sa_dmatag, &seg, rseg, size,
 			            &sc->sc_rb.rb_membase,
 			            BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: DMA buffer map error %d\n",
-			self->dv_xname, error);
+		aprint_error_dev(self, "DMA buffer map error %d\n",
+			error);
 		bus_dmamem_free(sa->sa_dmatag, &seg, rseg);
 		return;
 	}
@@ -351,8 +344,8 @@ beattach(parent, self, aux)
 	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
 				     sc->sc_rb.rb_membase, size, NULL,
 				     BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: DMA buffer map load error %d\n",
-			self->dv_xname, error);
+		aprint_error_dev(self, "DMA buffer map load error %d\n",
+			error);
 		bus_dmamem_unmap(dmatag, sc->sc_rb.rb_membase, size);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
@@ -399,17 +392,15 @@ beattach(parent, self, aux)
 			 */
 #ifdef DIAGNOSTIC
 			if (LIST_NEXT(child, mii_list) != NULL) {
-				printf("%s: spurious MII device %s attached\n",
-				       sc->sc_dev.dv_xname,
-				       child->mii_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "spurious MII device %s attached\n",
+				       device_xname(child->mii_dev));
 			}
 #endif
 			if (child->mii_phy != BE_PHY_EXTERNAL ||
 			    child->mii_inst > 0) {
-				printf("%s: cannot accommodate MII device %s"
+				aprint_error_dev(&sc->sc_dev, "cannot accommodate MII device %s"
 				       " at phy %d, instance %d\n",
-				       sc->sc_dev.dv_xname,
-				       child->mii_dev.dv_xname,
+				       device_xname(child->mii_dev),
 				       child->mii_phy, child->mii_inst);
 			} else {
 				sc->sc_phys[instance] = child->mii_phy;
@@ -452,7 +443,7 @@ beattach(parent, self, aux)
 			    0, NULL);
 
 		printf("on-board transceiver at %s: 10baseT, 100baseTX, auto\n",
-			self->dv_xname);
+			device_xname(self));
 
 		be_mii_reset(sc, BE_PHY_INTERNAL);
 		/* Only set default medium here if there's no external PHY */
@@ -465,7 +456,7 @@ beattach(parent, self, aux)
 				BE_PHY_INTERNAL, MII_BMCR, BMCR_ISO);
 	}
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = bestart;
 	ifp->if_ioctl = beioctl;
@@ -729,7 +720,7 @@ bewatchdog(ifp)
 {
 	struct be_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 	++sc->sc_ethercom.ec_if.if_oerrors;
 
 	bereset(sc);
@@ -782,19 +773,19 @@ beqint(sc, why)
 	if (why & BE_CR_STAT_BERROR) {
 		r |= 1;
 		rst = 1;
-		printf("%s: bigmac error\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "bigmac error\n");
 	}
 
 	if (why & BE_CR_STAT_TXDERR) {
 		r |= 1;
 		rst = 1;
-		printf("%s: bogus tx descriptor\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "bogus tx descriptor\n");
 	}
 
 	if (why & (BE_CR_STAT_TXLERR | BE_CR_STAT_TXPERR | BE_CR_STAT_TXSERR)) {
 		r |= 1;
 		rst = 1;
-		printf("%s: tx DMA error ( ", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "tx DMA error ( ");
 		if (why & BE_CR_STAT_TXLERR)
 			printf("Late ");
 		if (why & BE_CR_STAT_TXPERR)
@@ -807,19 +798,19 @@ beqint(sc, why)
 	if (why & BE_CR_STAT_RXDROP) {
 		r |= 1;
 		rst = 1;
-		printf("%s: out of rx descriptors\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "out of rx descriptors\n");
 	}
 
 	if (why & BE_CR_STAT_RXSMALL) {
 		r |= 1;
 		rst = 1;
-		printf("%s: rx descriptor too small\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "rx descriptor too small\n");
 	}
 
 	if (why & (BE_CR_STAT_RXLERR | BE_CR_STAT_RXPERR | BE_CR_STAT_RXSERR)) {
 		r |= 1;
 		rst = 1;
-		printf("%s: rx DMA error ( ", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "rx DMA error ( ");
 		if (why & BE_CR_STAT_RXLERR)
 			printf("Late ");
 		if (why & BE_CR_STAT_RXPERR)
@@ -831,12 +822,12 @@ beqint(sc, why)
 
 	if (!r) {
 		rst = 1;
-		printf("%s: unexpected error interrupt %08x\n",
-			sc->sc_dev.dv_xname, why);
+		aprint_error_dev(&sc->sc_dev, "unexpected error interrupt %08x\n",
+			why);
 	}
 
 	if (rst) {
-		printf("%s: resetting\n", sc->sc_dev.dv_xname);
+		printf("%s: resetting\n", device_xname(&sc->sc_dev));
 		bereset(sc);
 	}
 
@@ -856,27 +847,27 @@ beeint(sc, why)
 	if (why & BE_BR_STAT_RFIFOVF) {
 		r |= 1;
 		rst = 1;
-		printf("%s: receive fifo overrun\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "receive fifo overrun\n");
 	}
 	if (why & BE_BR_STAT_TFIFO_UND) {
 		r |= 1;
 		rst = 1;
-		printf("%s: transmit fifo underrun\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "transmit fifo underrun\n");
 	}
 	if (why & BE_BR_STAT_MAXPKTERR) {
 		r |= 1;
 		rst = 1;
-		printf("%s: max packet size error\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "max packet size error\n");
 	}
 
 	if (!r) {
 		rst = 1;
-		printf("%s: unexpected error interrupt %08x\n",
-			sc->sc_dev.dv_xname, why);
+		aprint_error_dev(&sc->sc_dev, "unexpected error interrupt %08x\n",
+			why);
 	}
 
 	if (rst) {
-		printf("%s: resetting\n", sc->sc_dev.dv_xname);
+		printf("%s: resetting\n", device_xname(&sc->sc_dev));
 		bereset(sc);
 	}
 
@@ -1435,7 +1426,7 @@ be_mii_reset(sc, phy)
 		DELAY(20);
 	}
 	if (n == 0) {
-		printf("%s: bmcr reset failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "bmcr reset failed\n");
 		return (EIO);
 	}
 
@@ -1634,7 +1625,7 @@ be_intphy_service(sc, mii, cmd)
 					BE_PHY_INTERNAL, MII_BMCR, bmcr);
 
 				printf("%s: link up at %s Mbps\n",
-					sc->sc_dev.dv_xname,
+					device_xname(&sc->sc_dev),
 					(bmcr & BMCR_S100) ? "100" : "10");
 			}
 			return (0);
@@ -1644,7 +1635,7 @@ be_intphy_service(sc, mii, cmd)
 			sc->sc_mii_flags |= MIIF_DOINGAUTO;
 			sc->sc_mii_flags &= ~MIIF_HAVELINK;
 			sc->sc_intphy_curspeed = 0;
-			printf("%s: link down\n", sc->sc_dev.dv_xname);
+			printf("%s: link down\n", device_xname(&sc->sc_dev));
 		}
 
 		/* Only retry autonegotiation every 5 seconds. */

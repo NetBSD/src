@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.50 2008/01/04 22:13:57 ad Exp $	*/
+/*	$NetBSD: vr.c,v 1.50.6.1 2008/06/02 13:22:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.50 2008/01/04 22:13:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.50.6.1 2008/06/02 13:22:11 mjf Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -532,6 +532,10 @@ vr_reboot(int howto, char *bootstr)
 void
 VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
+	struct cpu_info *ci;
+
+	ci = curcpu();
+	ci->ci_idepth++;
 	uvmexp.intrs++;
 
 	/* Deal with unneded compare interrupts occasionally so that we can
@@ -553,6 +557,7 @@ VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		_splset(MIPS_INT_MASK_1|MIPS_SR_INT_IE);
 		(*vr_intr_handler[0])(vr_intr_arg[0], pc, status);
 	}
+	ci->ci_idepth--;
 
 #ifdef __HAVE_FAST_SOFTINTS
 	if (ipending & MIPS_SOFT_INT_MASK_1) {

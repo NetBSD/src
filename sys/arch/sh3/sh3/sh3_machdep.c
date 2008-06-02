@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.69.6.1 2008/04/03 12:42:25 mjf Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.69.6.2 2008/06/02 13:22:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.69.6.1 2008/04/03 12:42:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.69.6.2 2008/06/02 13:22:39 mjf Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -387,9 +380,9 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -467,10 +460,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -565,7 +558,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	tf->tf_r15 = context.sc_r15;
 	tf->tf_pr = context.sc_pr;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
@@ -573,7 +566,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }
@@ -590,7 +583,7 @@ cpu_getmcontext(l, mcp, flags)
 	__greg_t ras_pc;
 
 	/* Save register context. */
-	gr[_REG_EXPEVT] = tf->tf_expevt;
+	gr[_REG_GBR]    = tf->tf_gbr;
 	gr[_REG_PC]     = tf->tf_spc;
 	gr[_REG_SR]     = tf->tf_ssr;
 	gr[_REG_MACL]   = tf->tf_macl;
@@ -639,7 +632,7 @@ cpu_setmcontext(l, mcp, flags)
 		if (((tf->tf_ssr ^ gr[_REG_SR]) & PSL_USERSTATIC) != 0)
 			return (EINVAL);
 
-		/* _REG_EXPEVT not restored */
+		tf->tf_gbr    = gr[_REG_GBR];
 		tf->tf_spc    = gr[_REG_PC];
 		tf->tf_ssr    = gr[_REG_SR];
 		tf->tf_macl   = gr[_REG_MACL];
@@ -670,12 +663,12 @@ cpu_setmcontext(l, mcp, flags)
 	}
 #endif
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (0);
 }
@@ -692,6 +685,14 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	tf = l->l_md.md_regs;
 
+	tf->tf_ssr = PSL_USERSET;
+	tf->tf_spc = pack->ep_entry;
+	tf->tf_pr = 0;
+
+	tf->tf_gbr = 0;
+	tf->tf_macl = 0;
+	tf->tf_mach = 0;
+
 	tf->tf_r0 = 0;
 	tf->tf_r1 = 0;
 	tf->tf_r2 = 0;
@@ -707,8 +708,6 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_r12 = 0;
 	tf->tf_r13 = 0;
 	tf->tf_r14 = 0;
-	tf->tf_spc = pack->ep_entry;
-	tf->tf_ssr = PSL_USERSET;
 	tf->tf_r15 = stack;
 }
 

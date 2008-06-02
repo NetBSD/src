@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.68 2008/01/19 13:11:17 chris Exp $
+#	$NetBSD: JORNADA720,v 1.68.6.1 2008/06/02 13:22:09 mjf Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.68.6.1 $"
 
 # estimated number of users
 maxusers	32
@@ -80,6 +80,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.23.6.1 2008/04/03 12:42:57 mjf Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.23.6.2 2008/06/02 13:23:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -36,10 +36,12 @@
 #ifndef _DEV_SYSMON_SYSMONVAR_H_
 #define	_DEV_SYSMON_SYSMONVAR_H_
 
+#include <sys/param.h>
 #include <sys/envsys.h>
 #include <sys/wdog.h>
 #include <sys/power.h>
 #include <sys/queue.h>
+#include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 
@@ -48,7 +50,6 @@ struct proc;
 struct knote;
 struct uio;
 struct workqueue;
-struct callout;
 
 #define	SYSMON_MINOR_ENVSYS	0
 #define	SYSMON_MINOR_WDOG	1

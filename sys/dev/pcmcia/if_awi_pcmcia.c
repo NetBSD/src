@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.38 2007/10/19 12:01:04 ad Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.38.16.1 2008/06/02 13:23:46 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -45,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.38 2007/10/19 12:01:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.38.16.1 2008/06/02 13:23:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +194,7 @@ awi_pcmcia_attach(struct device *parent, struct device *self,
 
 	error = pcmcia_function_configure(pa->pf, awi_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -232,7 +225,7 @@ awi_pcmcia_attach(struct device *parent, struct device *self,
 	sc->sc_cansleep = 1;
 
 	if (awi_attach(sc) != 0) {
-		printf("%s: failed to attach controller\n", self->dv_xname);
+		aprint_error_dev(self, "failed to attach controller\n");
 		goto fail2;
 	}
 

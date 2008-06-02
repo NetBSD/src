@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 2007/05/10 23:22:32 dogcow Exp $
+#	$NetBSD: list,v 1.8.12.1 2008/06/02 13:21:17 mjf Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -32,7 +32,6 @@ PROG	sbin/mknod
 PROG	sbin/mount
 PROG	sbin/mount_cd9660
 PROG	sbin/mount_ffs
-PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
@@ -60,8 +59,10 @@ SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	more		srcdir	distrib/utils/more
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
+SPECIAL	ed		srcdir	distrib/utils/x_ed
+SPECIAL	umount		srcdir	distrib/utils/x_umount
 
-LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lcrypt -ll -lm -lz
+LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lcrypt -ll -lm -lz -lprop
 
 # and the termcap file
 COPY	${CURDIR}/termcap.src 			usr/share/misc/termcap
@@ -70,7 +71,7 @@ COPY	${CURDIR}/termcap.src 			usr/share/misc/termcap
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # the disktab explanation file

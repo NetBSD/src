@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463.c,v 1.14 2007/11/16 22:46:56 njoly Exp $ */
+/*	$NetBSD: adt7463.c,v 1.14.14.1 2008/06/02 13:23:16 mjf Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.14 2007/11/16 22:46:56 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.14.14.1 2008/06/02 13:23:16 mjf Exp $");
 
 /* Fan speed control added by Hanns Hartman */
 #include <sys/param.h>
@@ -60,15 +60,14 @@ static void adt7463c_refresh_temp(struct adt7463c_softc *, envsys_data_t *);
 static void adt7463c_refresh_fan(struct adt7463c_softc *, envsys_data_t *);
 static int adt7463c_verify(struct adt7463c_softc *sc);
 
-static int adt7463c_match(struct device *, struct cfdata *, void *);
-static void adt7463c_attach(struct device *, struct device *, void *);
+static int adt7463c_match(device_t, cfdata_t, void *);
+static void adt7463c_attach(device_t, device_t, void *);
 
-
-CFATTACH_DECL(adt7463c, sizeof(struct adt7463c_softc),
+CFATTACH_DECL_NEW(adt7463c, sizeof(struct adt7463c_softc),
     adt7463c_match, adt7463c_attach, NULL, NULL);
 
 static int
-adt7463c_match(struct device *parent, struct cfdata *cf, void *aux)
+adt7463c_match(device_t parent, cfdata_t cf, void *aux)
 {
         struct i2c_attach_args *ia = aux;
 	struct adt7463c_softc sc;
@@ -82,7 +81,7 @@ adt7463c_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-adt7463c_attach(struct device *parent, struct device *self, void *aux)
+adt7463c_attach(device_t parent, device_t self, void *aux)
 {
 	struct adt7463c_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
@@ -145,13 +144,12 @@ adt7463c_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Hook into the System Monitor. */
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = adt7463c_refresh;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 	}
 }

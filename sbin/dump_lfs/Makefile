@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/02/09 02:37:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2008/06/02 13:21:21 mjf Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	lfs_inode.c		LFS filestore-specific routines
@@ -18,6 +18,10 @@ SRCS=	itime.c main.c optr.c dumprmt.c rcache.c snapshot.c tape.c \
 MAN=	dump_lfs.8
 MLINKS+=dump_lfs.8 rdump_lfs.8
 CFLAGS+=-g
+
+.if ${MACHINE_ARCH} == "m68000"
+COPTS.lfs_inode.c+=	-fno-tree-ter
+.endif
 
 .PATH:  ${NETBSDSRCDIR}/sbin/dump ${NETBSDSRCDIR}/sys/ufs/lfs \
 	${NETBSDSRCDIR}/sys/ufs/ffs

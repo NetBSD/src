@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.12 2008/01/04 21:53:51 ad Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.12.6.1 2008/06/02 13:22:31 mjf Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ibus.c,v 1.12 2008/01/04 21:53:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ibus.c,v 1.12.6.1 2008/06/02 13:22:31 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -50,14 +50,14 @@ static void le_dec_copytobuf_gap2(struct lance_softc *, void *, int, int);
 static void le_dec_zerobuf_gap2(struct lance_softc *, int, int);
 
 
-static int le_pmax_match(struct device *, struct cfdata *, void *);
-static void le_pmax_attach(struct device *, struct device *, void *);
+static int le_pmax_match(device_t, cfdata_t, void *);
+static void le_pmax_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(le_pmax, sizeof(struct le_softc),
+CFATTACH_DECL_NEW(le_pmax, sizeof(struct le_softc),
     le_pmax_match, le_pmax_attach, NULL, NULL);
 
 int
-le_pmax_match(struct device *parent, struct cfdata *match, void *aux)
+le_pmax_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ibus_attach_args *d = aux;
 
@@ -67,19 +67,20 @@ le_pmax_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-le_pmax_attach(struct device *parent, struct device *self, void *aux)
+le_pmax_attach(device_t parent, device_t self, void *aux)
 {
-	struct le_softc *lesc = (void *)self;
+	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
-	u_char *cp;
+	uint8_t *cp;
 	struct ibus_attach_args *ia = aux;
 
 	/*
 	 * It's on the baseboard, with a dedicated interrupt line.
 	 */
+	sc->sc_dev = self;
 	lesc->sc_r1 = (struct lereg1 *)(ia->ia_addr);
 	sc->sc_mem = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_LANCE_B_START);
-	cp = (u_char *)(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK) + 1);
+	cp = (uint8_t *)(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK) + 1);
 
 	sc->sc_copytodesc = le_dec_copytobuf_gap2;
 	sc->sc_copyfromdesc = le_dec_copyfrombuf_gap2;
@@ -89,7 +90,7 @@ le_pmax_attach(struct device *parent, struct device *self, void *aux)
 
 	dec_le_common_attach(&lesc->sc_am7990, cp);
 
-	ibus_intr_establish(parent, (void*)ia->ia_cookie, IPL_NET,
+	ibus_intr_establish(parent, (void *)ia->ia_cookie, IPL_NET,
 	    am7990_intr, sc);
 }
 
@@ -103,18 +104,18 @@ le_pmax_attach(struct device *parent, struct device *self, void *aux)
 void
 le_dec_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 {
-	volatile char *buf = sc->sc_mem;
-	char *from = fromv;
-	volatile u_int16_t *bptr;
+	volatile uint8_t *buf = sc->sc_mem;
+	uint8_t *from = fromv;
+	volatile uint16_t *bptr;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
+		bptr = ((volatile uint16_t *)buf) + (boff - 1);
 		*bptr = (*from++ << 8) | (*bptr & 0xff);
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
+		bptr = ((volatile uint16_t *)buf) + boff;
 	while (len > 1) {
 		*bptr = (from[1] << 8) | (from[0] & 0xff);
 		bptr += 2;
@@ -122,25 +123,25 @@ le_dec_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 		len -= 2;
 	}
 	if (len == 1)
-		*bptr = (u_int16_t)*from;
+		*bptr = (uint16_t)*from;
 }
 
 void
 le_dec_copyfrombuf_gap2(struct lance_softc *sc, void *tov, int boff, int len)
 {
 	volatile void *buf = sc->sc_mem;
-	char *to = tov;
-	volatile u_int16_t *bptr;
-	u_int16_t tmp;
+	uint8_t *to = tov;
+	volatile uint16_t *bptr;
+	uint16_t tmp;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
+		bptr = ((volatile uint16_t *)buf) + (boff - 1);
 		*to++ = (*bptr >> 8) & 0xff;
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
+		bptr = ((volatile uint16_t *)buf) + boff;
 	while (len > 1) {
 		tmp = *bptr;
 		*to++ = tmp & 0xff;
@@ -156,15 +157,15 @@ static void
 le_dec_zerobuf_gap2(struct lance_softc *sc, int boff, int len)
 {
 	volatile void *buf = sc->sc_mem;
-	volatile u_int16_t *bptr;
+	volatile uint16_t *bptr;
 
-	if ((unsigned)boff & 0x1) {
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
+	if ((unsigned int)boff & 0x1) {
+		bptr = ((volatile uint16_t *)buf) + (boff - 1);
 		*bptr &= 0xff;
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
+		bptr = ((volatile uint16_t *)buf) + boff;
 	while (len > 0) {
 		*bptr = 0;
 		bptr += 2;

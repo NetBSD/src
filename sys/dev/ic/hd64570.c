@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.38 2007/10/19 11:59:52 ad Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.38.16.1 2008/06/02 13:23:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.38 2007/10/19 11:59:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.38.16.1 2008/06/02 13:23:21 mjf Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -471,7 +471,7 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 		printf("%s: port %d\n", ifp->if_xname, port);
 	else
 		printf("%s at %s port %d\n",
-		       ifp->if_xname, sc->sc_parent->dv_xname, port);
+		       ifp->if_xname, device_xname(sc->sc_parent), port);
 
 	/*
 	 * reset the last seen times on the cisco keepalive protocol
@@ -2127,7 +2127,7 @@ sca_print_clock_info(struct sca_softc *sc)
 	u_int32_t mhz, div;
 	int i;
 
-	printf("%s: base clock %d Hz\n", sc->sc_parent->dv_xname,
+	printf("%s: base clock %d Hz\n", device_xname(sc->sc_parent),
 	    sc->sc_baseclock);
 
 	/* print the information about the port clock selection */

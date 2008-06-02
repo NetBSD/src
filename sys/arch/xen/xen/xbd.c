@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.42 2008/01/05 00:31:56 ad Exp $ */
+/* $NetBSD: xbd.c,v 1.42.6.1 2008/06/02 13:22:55 mjf Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.42 2008/01/05 00:31:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.42.6.1 2008/06/02 13:22:55 mjf Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -77,36 +77,36 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.42 2008/01/05 00:31:56 ad Exp $");
 static void	control_send(blkif_request_t *, blkif_response_t *);
 static void	send_interface_connect(void);
 
-static void xbd_attach(struct device *, struct device *, void *);
-static int xbd_detach(struct device *, int);
+static void xbd_attach(device_t, device_t, void *);
+static int xbd_detach(device_t, int);
 
 #if NXBD_HYPERVISOR > 0
-int xbd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(xbd_hypervisor, sizeof(struct xbd_softc),
+int xbd_match(device_t, cfdata_t, void *);
+CFATTACH_DECL_NEW(xbd_hypervisor, sizeof(struct xbd_softc),
     xbd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver xbd_cd;
 #endif
 
 #if NWD > 0
-int xbd_wd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(wd_xen, sizeof(struct xbd_softc),
+int xbd_wd_match(device_t, cfdata_t, void *);
+CFATTACH_DECL_NEW(wd_xen, sizeof(struct xbd_softc),
     xbd_wd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver wd_cd;
 #endif
 
 #if NSD > 0
-int xbd_sd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(sd_xen, sizeof(struct xbd_softc),
+int xbd_sd_match(device_t, cfdata_t, void *);
+CFATTACH_DECL_NEW(sd_xen, sizeof(struct xbd_softc),
     xbd_sd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver sd_cd;
 #endif
 
 #if NCD > 0
-int xbd_cd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(cd_xen, sizeof(struct xbd_softc),
+int xbd_cd_match(device_t, cfdata_t, void *);
+CFATTACH_DECL_NEW(cd_xen, sizeof(struct xbd_softc),
     xbd_cd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver cd_cd;
@@ -399,7 +399,7 @@ static blkif_response_t blkif_control_rsp;
 struct xbd_ctrl {
 
 	cfprint_t xc_cfprint;
-	struct device *xc_parent;
+	device_t xc_parent;
 };
 
 static struct xbd_ctrl blkctrl;
@@ -503,19 +503,19 @@ getxbd_softc(dev_t dev)
 	    major(dev), unit));
 #if NXBD_HYPERVISOR > 0
 	if (major(dev) == xbd_major)
-		return device_lookup(&xbd_cd, unit);
+		return device_lookup_private(&xbd_cd, unit);
 #endif
 #if NWD > 0
 	if (major(dev) == xbd_wd_major || major(dev) == xbd_wd_cdev_major)
-		return device_lookup(&wd_cd, unit);
+		return device_lookup_private(&wd_cd, unit);
 #endif
 #if NSD > 0
 	if (major(dev) == xbd_sd_major || major(dev) == xbd_sd_cdev_major)
-		return device_lookup(&sd_cd, unit);
+		return device_lookup_private(&sd_cd, unit);
 #endif
 #if NCD > 0
 	if (major(dev) == xbd_cd_major || major(dev) == xbd_cd_cdev_major)
-		return device_lookup(&cd_cd, unit);
+		return device_lookup_private(&cd_cd, unit);
 #endif
 	return NULL;
 }
@@ -731,16 +731,16 @@ connect_interface(blkif_fe_interface_status_t *status)
 	return;
 }
 
-static struct device *
+static device_t
 find_device(vdisk_t *xd)
 {
-	struct device *dv;
+	device_t dv;
 	struct xbd_softc *xs = NULL;
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (!device_is_a(dv, "xbd"))
 			continue;
-		xs = (struct xbd_softc *)dv;
+		xs = device_private(dv);
 		if (xd == NULL || xs->sc_xd_device == xd->device)
 			break;
 	}
@@ -751,7 +751,7 @@ static void
 vbd_update(void)
 {
 	struct xbd_attach_args *xbda;
-	struct device *dev;
+	device_t dev;
 	vdisk_t *xd;
 	vdisk_t *vbd_info_update, *vbd_info_old;
 	int i, j, new_nr_vbds;
@@ -936,7 +936,7 @@ xbd_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 
 #if 0
 static void
-enable_update_events(struct device *self)
+enable_update_events(device_t self)
 {
 
 	kthread_create(xbd_update_create_kthread, self);
@@ -1042,7 +1042,7 @@ send_interface_connect(void)
 
 
 int
-xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
+xbd_scan(device_t self, struct xbd_attach_args *mainbus_xbda,
     cfprint_t print)
 {
 	struct xbdreq *xr;
@@ -1092,7 +1092,7 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 
 #if NXBD_HYPERVISOR > 0
 int
-xbd_match(struct device *parent, struct cfdata *match, void *aux)
+xbd_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct xbd_attach_args *xa = (struct xbd_attach_args *)aux;
 
@@ -1104,7 +1104,7 @@ xbd_match(struct device *parent, struct cfdata *match, void *aux)
 
 #if NWD > 0
 int
-xbd_wd_match(struct device *parent, struct cfdata *match, void *aux)
+xbd_wd_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct xbd_attach_args *xa = (struct xbd_attach_args *)aux;
 
@@ -1116,7 +1116,7 @@ xbd_wd_match(struct device *parent, struct cfdata *match, void *aux)
 
 #if NSD > 0
 int
-xbd_sd_match(struct device *parent, struct cfdata *match, void *aux)
+xbd_sd_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct xbd_attach_args *xa = (struct xbd_attach_args *)aux;
 
@@ -1128,7 +1128,7 @@ xbd_sd_match(struct device *parent, struct cfdata *match, void *aux)
 
 #if NCD > 0
 int
-xbd_cd_match(struct device *parent, struct cfdata *match, void *aux)
+xbd_cd_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct xbd_attach_args *xa = (struct xbd_attach_args *)aux;
 
@@ -1139,28 +1139,30 @@ xbd_cd_match(struct device *parent, struct cfdata *match, void *aux)
 #endif
 
 static void
-xbd_attach(struct device *parent, struct device *self, void *aux)
+xbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct xbd_attach_args *xbda = (struct xbd_attach_args *)aux;
-	struct xbd_softc *xs = (struct xbd_softc *)self;
+	struct xbd_softc *xs = device_private(self);
 
 	aprint_normal(": Xen Virtual Block Device");
 
+	xs->sc_dev = self;
+
 	simple_lock_init(&xs->sc_slock);
-	dk_sc_init(&xs->sc_dksc, xs, xs->sc_dev.dv_xname);
-	disk_init(&xs->sc_dksc.sc_dkdev, xs->sc_dev.dv_xname, &xbddkdriver);
+	dk_sc_init(&xs->sc_dksc, xs, device_xname(self));
+	disk_init(&xs->sc_dksc.sc_dkdev, device_xname(self), &xbddkdriver);
 	xbdinit(xs, xbda->xa_xd, xbda->xa_dkintf);
 
 #if NRND > 0
-	rnd_attach_source(&xs->sc_rnd_source, xs->sc_dev.dv_xname,
+	rnd_attach_source(&xs->sc_rnd_source, device_xname(self),
 	    RND_TYPE_DISK, 0);
 #endif
 }
 
 static int
-xbd_detach(struct device *dv, int flags)
+xbd_detach(device_t dv, int flags)
 {
-	struct	xbd_softc *xs = (struct	xbd_softc *)dv;
+	struct	xbd_softc *xs = device_private(dv);
 	int bmaj, cmaj, mn, i;
 
 	/* 
@@ -1197,6 +1199,7 @@ xbd_detach(struct device *dv, int flags)
 
 	/* Detach the disk. */
 	disk_detach(&xs->sc_dksc.sc_dkdev);
+	disk_destroy(&xs->sc_dksc.sc_dkdev);
 
 #if NRND > 0
 	/* Unhook the entropy source. */

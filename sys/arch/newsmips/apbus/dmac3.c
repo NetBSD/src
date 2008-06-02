@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3.c,v 1.9 2006/08/27 08:43:05 tsutsui Exp $	*/
+/*	$NetBSD: dmac3.c,v 1.9.56.1 2008/06/02 13:22:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.9 2006/08/27 08:43:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.9.56.1 2008/06/02 13:22:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,8 +40,11 @@ __KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.9 2006/08/27 08:43:05 tsutsui Exp $");
 
 #include <newsmips/apbus/apbusvar.h>
 #include <newsmips/apbus/dmac3reg.h>
+#include <newsmips/apbus/dmac3var.h>
 
 #include <mips/cache.h>
+
+#include "ioconf.h"
 
 #define DMA_BURST
 #define DMA_APAD_OFF
@@ -58,25 +61,16 @@ __KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.9 2006/08/27 08:43:05 tsutsui Exp $");
 # define BURST_MODE	0
 #endif
 
-struct dmac3_softc {
-	struct device sc_dev;
-	struct dmac3reg *sc_reg;
-	vaddr_t sc_dmaaddr;
-	volatile uint32_t *sc_dmamap;
-	int sc_conf;
-	int sc_ctlnum;
-};
-
-int dmac3_match(struct device *, struct cfdata *, void *);
-void dmac3_attach(struct device *, struct device *, void *);
+int dmac3_match(device_t, cfdata_t, void *);
+void dmac3_attach(device_t, device_t, void *);
 
 extern paddr_t kvtophys(vaddr_t);
 
-CFATTACH_DECL(dmac, sizeof(struct dmac3_softc),
+CFATTACH_DECL_NEW(dmac, sizeof(struct dmac3_softc),
     dmac3_match, dmac3_attach, NULL, NULL);
 
 int
-dmac3_match(struct device *parent, struct cfdata *cf, void *aux)
+dmac3_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -87,15 +81,15 @@ dmac3_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-dmac3_attach(struct device *parent, struct device *self, void *aux)
+dmac3_attach(device_t parent, device_t self, void *aux)
 {
-	struct dmac3_softc *sc = (void *)self;
+	struct dmac3_softc *sc = device_private(self);
 	struct apbus_attach_args *apa = aux;
 	struct dmac3reg *reg;
-
 	static paddr_t dmamap = DMAC3_PAGEMAP;
 	static vaddr_t dmaaddr = 0;
 
+	sc->sc_dev = self;
 	reg = (void *)apa->apa_hwbase;
 	sc->sc_reg = reg;
 	sc->sc_ctlnum = apa->apa_ctlnum;
@@ -108,24 +102,24 @@ dmac3_attach(struct device *parent, struct device *self, void *aux)
 
 	dmac3_reset(sc);
 
-	printf(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
-	printf(": ctlnum = %d, map = %p, va = %lx",
+	aprint_normal(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
+	aprint_normal(": ctlnum = %d, map = %p, va = %lx",
 	       apa->apa_ctlnum, sc->sc_dmamap, sc->sc_dmaaddr);
-	printf("\n");
+	aprint_normal("\n");
 }
 
-void *
+struct dmac3_softc *
 dmac3_link(int ctlnum)
 {
 	struct dmac3_softc *sc;
-	struct device *dv;
+	int unit;
 
-	for (dv = alldevs.tqh_first; dv; dv = dv->dv_list.tqe_next) {
-		if (strncmp(dv->dv_xname, "dmac", 4) == 0) {
-			sc = (void *)dv;
-			if (sc->sc_ctlnum == ctlnum)
-				return sc;
-		}
+	for (unit = 0; unit < dmac_cd.cd_ndevs; unit++) {
+		sc = device_private(dmac_cd.cd_devs[unit]);
+		if (sc == NULL)
+			continue;
+		if (sc->sc_ctlnum == ctlnum)
+			return sc;
 	}
 	return NULL;
 }
@@ -190,12 +184,12 @@ dmac3_intr(void *v)
 	reg->intr = intr;
 
 	if (intr & DMAC3_INTR_PERR) {
-		printf("%s: intr = 0x%x\n", sc->sc_dev.dv_xname, intr);
+		printf("%s: intr = 0x%x\n", device_xname(sc->sc_dev), intr);
 		rv = -1;
 	}
 
 	if (conf & (DMAC3_CONF_IPER | DMAC3_CONF_MPER | DMAC3_CONF_DERR)) {
-		printf("%s: conf = 0x%x\n", sc->sc_dev.dv_xname, conf);
+		printf("%s: conf = 0x%x\n", device_xname(sc->sc_dev), conf);
 		if (conf & DMAC3_CONF_DERR) {
 			printf("DMA address = 0x%x\n", reg->addr);
 			printf("resetting DMA...\n");

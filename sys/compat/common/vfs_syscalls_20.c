@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.25.6.1 2008/04/03 12:42:31 mjf Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.25.6.2 2008/06/02 13:22:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,11 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.25.6.1 2008/04/03 12:42:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.25.6.2 2008/06/02 13:22:56 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
-#include "opt_compat_43.h"
-#include "fss.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,30 +220,25 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
 		if (sfsp && count < maxcount) {
 			error = dostatvfs(mp, sbuf, l, SCARG(uap, flags), 0);
 			if (error) {
-				mutex_enter(&mountlist_lock);
-				nmp = CIRCLEQ_NEXT(mp, mnt_list);
-				vfs_unbusy(mp, false);
+				vfs_unbusy(mp, false, &nmp);
 				continue;
 			}
 			error = vfs2fs(sfsp, sbuf);
 			if (error) {
-				vfs_unbusy(mp, false);
+				vfs_unbusy(mp, false, NULL);
 				goto out;
 			}
 			sfsp++;
 			root |= strcmp(sbuf->f_mntonname, "/") == 0;
 		}
 		count++;
-		mutex_enter(&mountlist_lock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
 	if (root == 0 && l->l_proc->p_cwdi->cwdi_rdir) {

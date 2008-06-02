@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.11.6.1 2008/04/03 12:43:02 mjf Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.11.6.2 2008/06/02 13:24:09 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -183,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.11.6.1 2008/04/03 12:43:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.11.6.2 2008/06/02 13:24:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -260,11 +253,11 @@ softint_init_isr(softcpu_t *sc, const char *desc, pri_t pri, u_int level)
 
 	snprintf(si->si_name, sizeof(si->si_name), "%s/%u", desc,
 	    ci->ci_index);
-	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_MISC, NULL,
 	   "softint", si->si_name);
 	snprintf(si->si_name_block, sizeof(si->si_name_block), "%s block/%u",
 	    desc, ci->ci_index);
-	evcnt_attach_dynamic(&si->si_evcnt_block, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&si->si_evcnt_block, EVCNT_TYPE_MISC, NULL,
 	   "softint", si->si_name_block);
 
 	si->si_lwp->l_private = si;
@@ -324,8 +317,8 @@ softint_init(struct cpu_info *ci)
 		 * XXX Needs to go away.
 		 */
 #define DONETISR(n, f)							\
-    softint_netisrs[(n)] = 						\
-        softint_establish(SOFTINT_NET, (void (*)(void *))(f), NULL)
+    softint_netisrs[(n)] = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,\
+        (void (*)(void *))(f), NULL)
 #include <net/netisr_dispatch.h>
 	}
 }
@@ -431,6 +424,8 @@ softint_schedule(void *arg)
 	softint_t *si;
 	uintptr_t offset;
 	int s;
+
+	KASSERT(kpreempt_disabled());
 
 	/* Find the handler record for this CPU. */
 	offset = (uintptr_t)arg;
@@ -554,6 +549,10 @@ schednetisr(int isr)
 
 #ifndef __HAVE_FAST_SOFTINTS
 
+#ifdef __HAVE_PREEMPTION
+#error __HAVE_PREEMPTION requires __HAVE_FAST_SOFTINTS
+#endif
+
 /*
  * softint_init_md:
  *
@@ -676,7 +675,7 @@ void
 softint_overlay(void)
 {
 	struct cpu_info *ci;
-	u_int softints;
+	u_int softints, oflag;
 	softint_t *si;
 	pri_t obase;
 	lwp_t *l;
@@ -689,10 +688,11 @@ softint_overlay(void)
 	KASSERT((l->l_pflag & LP_INTR) == 0);
 
 	/* Arrange to elevate priority if the LWP blocks. */
+	s = splhigh();
 	obase = l->l_kpribase;
 	l->l_kpribase = PRI_KERNEL_RT;
-	l->l_pflag |= LP_INTR;
-	s = splhigh();
+	oflag = l->l_pflag;
+	l->l_pflag = oflag | LP_INTR | LP_BOUND;
 	while ((softints = ci->ci_data.cpu_softints) != 0) {
 		if ((softints & (1 << SOFTINT_SERIAL)) != 0) {
 			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_SERIAL);
@@ -715,9 +715,9 @@ softint_overlay(void)
 			continue;
 		}
 	}
-	splx(s);
-	l->l_pflag &= ~LP_INTR;
+	l->l_pflag = oflag;
 	l->l_kpribase = obase;
+	splx(s);
 }
 
 #else	/*  !__HAVE_FAST_SOFTINTS */
@@ -758,10 +758,10 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * the LWP locked, at this point no external agents will want to
 	 * modify the interrupt LWP's state.
 	 */
-	timing = (softint_timing ? LW_TIMEINTR : 0);
+	timing = (softint_timing ? LP_TIMEINTR : 0);
 	l->l_switchto = pinned;
 	l->l_stat = LSONPROC;
-	l->l_flag |= (LW_RUNNING | timing);
+	l->l_pflag |= (LP_RUNNING | timing);
 
 	/*
 	 * Dispatch the interrupt.  If softints are being timed, charge
@@ -773,7 +773,7 @@ softint_dispatch(lwp_t *pinned, int s)
 	if (timing) {
 		binuptime(&now);
 		updatertime(l, &now);
-		l->l_flag &= ~LW_TIMEINTR;
+		l->l_pflag &= ~LP_TIMEINTR;
 	}
 
 	/*
@@ -787,7 +787,7 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * That's not be a problem: we are lowering to level 's' which will
 	 * prevent softint_dispatch() from being reentered at level 's',
 	 * until the priority is finally dropped to IPL_NONE on entry to
-	 * the idle loop.
+	 * the LWP chosen by lwp_exit_switchaway().
 	 */
 	l->l_stat = LSIDL;
 	if (l->l_switchto == NULL) {
@@ -797,7 +797,7 @@ softint_dispatch(lwp_t *pinned, int s)
 		/* NOTREACHED */
 	}
 	l->l_switchto = NULL;
-	l->l_flag &= ~LW_RUNNING;
+	l->l_pflag &= ~LP_RUNNING;
 }
 
 #endif	/* !__HAVE_FAST_SOFTINTS */

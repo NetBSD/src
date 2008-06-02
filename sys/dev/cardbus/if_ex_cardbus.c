@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.41 2007/12/09 20:27:56 jmcneill Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.41.10.1 2008/06/02 13:23:14 mjf Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.41 2007/12/09 20:27:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.41.10.1 2008/06/02 13:23:14 mjf Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -83,24 +83,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.41 2007/12/09 20:27:56 jmcneill 
 #define EX_CB_INTR 4		/* intr acknowledge reg. CardBus only */
 #define EX_CB_INTR_ACK 0x8000 /* intr acknowledge bit */
 
-int ex_cardbus_match(struct device *, struct cfdata *, void *);
-void ex_cardbus_attach(struct device *, struct device *,void *);
-int ex_cardbus_detach(struct device *, int);
+int ex_cardbus_match(device_t, cfdata_t, void *);
+void ex_cardbus_attach(device_t, device_t, void *);
+int ex_cardbus_detach(device_t, int);
 void ex_cardbus_intr_ack(struct ex_softc *);
 
 int ex_cardbus_enable(struct ex_softc *);
 void ex_cardbus_disable(struct ex_softc *);
-void ex_cardbus_power(struct ex_softc *, int);
 
 struct ex_cardbus_softc {
 	struct ex_softc sc_softc;
 
 	cardbus_devfunc_t sc_ct;
 	int sc_intrline;
-	u_int8_t sc_cardbus_flags;
+	uint8_t sc_cardbus_flags;
 #define EX_REATTACH		0x01
 #define EX_ABSENT		0x02
-	u_int8_t sc_cardtype;
+	uint8_t sc_cardtype;
 #define EX_CB_BOOMERANG		1
 #define EX_CB_CYCLONE		2
 
@@ -121,11 +120,11 @@ struct ex_cardbus_softc {
 
 };
 
-CFATTACH_DECL(ex_cardbus, sizeof(struct ex_cardbus_softc),
+CFATTACH_DECL_NEW(ex_cardbus, sizeof(struct ex_cardbus_softc),
     ex_cardbus_match, ex_cardbus_attach, ex_cardbus_detach, ex_activate);
 
 const struct ex_cardbus_product {
-	u_int32_t	ecp_prodid;	/* CardBus product ID */
+	uint32_t	ecp_prodid;	/* CardBus product ID */
 	int		ecp_flags;	/* initial softc flags */
 	pcireg_t	ecp_csr;	/* PCI CSR flags */
 	int		ecp_cardtype;	/* card type */
@@ -191,8 +190,7 @@ const struct ex_cardbus_product *ex_cardbus_lookup
    (const struct cardbus_attach_args *);
 
 const struct ex_cardbus_product *
-ex_cardbus_lookup(ca)
-	const struct cardbus_attach_args *ca;
+ex_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct ex_cardbus_product *ecp;
 
@@ -206,8 +204,7 @@ ex_cardbus_lookup(ca)
 }
 
 int
-ex_cardbus_match(struct device *parent, struct cfdata *cf,
-    void *aux)
+ex_cardbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -218,8 +215,7 @@ ex_cardbus_match(struct device *parent, struct cfdata *cf,
 }
 
 void
-ex_cardbus_attach(struct device *parent, struct device *self,
-    void *aux)
+ex_cardbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct ex_cardbus_softc *csc = device_private(self);
 	struct ex_softc *sc = &csc->sc_softc;
@@ -231,6 +227,8 @@ ex_cardbus_attach(struct device *parent, struct device *self,
 #endif
 	const struct ex_cardbus_product *ecp;
 	bus_addr_t adr, adr1;
+
+	sc->sc_dev = self;
 
 	sc->ex_bustype = EX_BUS_CARDBUS;
 	sc->sc_dmat = ca->ca_dmat;
@@ -244,7 +242,7 @@ ex_cardbus_attach(struct device *parent, struct device *self,
 		panic("ex_cardbus_attach: impossible");
 	}
 
-	printf(": 3Com %s\n", ecp->ecp_name);
+	aprint_normal(": 3Com %s\n", ecp->ecp_name);
 
 	sc->ex_conf = ecp->ecp_flags;
 	csc->sc_cardtype = ecp->ecp_cardtype;
@@ -273,8 +271,8 @@ ex_cardbus_attach(struct device *parent, struct device *self,
 					adr1 | CARDBUS_MAPREG_TYPE_MEM;
 
 			} else {
-				printf("%s: unable to map function "
-					"status window\n", self->dv_xname);
+				aprint_error_dev(self, "unable to map function "
+					"status window\n");
 				return;
 			}
 
@@ -283,14 +281,13 @@ ex_cardbus_attach(struct device *parent, struct device *self,
 		}
 	}
 	else {
-		printf(": can't map i/o space\n");
+		aprint_naive(": can't map i/o space\n");
 		return;
 	}
 
 	/* Power management hooks. */
 	sc->enable = ex_cardbus_enable;
 	sc->disable = ex_cardbus_disable;
-	sc->power = ex_cardbus_power;
 
 	/*
 	 *  Handle power management nonsense and
@@ -308,8 +305,7 @@ ex_cardbus_attach(struct device *parent, struct device *self,
 }
 
 void
-ex_cardbus_intr_ack(sc)
-	struct ex_softc *sc;
+ex_cardbus_intr_ack(struct ex_softc *sc)
 {
 	struct ex_cardbus_softc *csc = (struct ex_cardbus_softc *)sc;
 
@@ -318,7 +314,7 @@ ex_cardbus_intr_ack(sc)
 }
 
 int
-ex_cardbus_detach(struct device *self, int arg)
+ex_cardbus_detach(device_t self, int arg)
 {
 	struct ex_cardbus_softc *csc = device_private(self);
 	struct ex_softc *sc = &csc->sc_softc;
@@ -327,7 +323,7 @@ ex_cardbus_detach(struct device *self, int arg)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL) {
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", device_xname(self));
 	}
 #endif
 
@@ -351,8 +347,7 @@ ex_cardbus_detach(struct device *self, int arg)
 }
 
 int
-ex_cardbus_enable(sc)
-	struct ex_softc *sc;
+ex_cardbus_enable(struct ex_softc *sc)
 {
 	struct ex_cardbus_softc *csc = (struct ex_cardbus_softc *)sc;
 	cardbus_function_tag_t cf = csc->sc_ct->ct_cf;
@@ -364,19 +359,16 @@ ex_cardbus_enable(sc)
 	sc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
 	    IPL_NET, ex_intr, sc);
 	if (NULL == sc->sc_ih) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
 		return (1);
 	}
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
-		csc->sc_intrline);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %d\n", csc->sc_intrline);
 
 	return (0);
 }
 
 void
-ex_cardbus_disable(sc)
-	struct ex_softc *sc;
+ex_cardbus_disable(struct ex_softc *sc)
 {
 	struct ex_cardbus_softc *csc = (struct ex_cardbus_softc *)sc;
 	cardbus_function_tag_t cf = csc->sc_ct->ct_cf;
@@ -390,28 +382,7 @@ ex_cardbus_disable(sc)
 }
 
 void
-ex_cardbus_power(sc, why)
-	struct ex_softc *sc;
-	int why;
-{
-	struct ex_cardbus_softc *csc = (void *) sc;
-
-	if (why == PWR_RESUME) {
-		/*
-		 * Give the PCI configuration registers a kick
-		 * in the head.
-		 */
-#ifdef DIAGNOSTIC
-		if (sc->enabled == 0)
-			panic("ex_cardbus_power");
-#endif
-		ex_cardbus_setup(csc);
-	}
-}
-
-void
-ex_cardbus_setup(csc)
-	struct ex_cardbus_softc *csc;
+ex_cardbus_setup(struct ex_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;

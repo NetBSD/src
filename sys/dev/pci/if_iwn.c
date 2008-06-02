@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.5.8.1 2008/04/03 12:42:50 mjf Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.5.8.2 2008/06/02 13:23:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.5.8.1 2008/04/03 12:42:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.5.8.2 2008/06/02 13:23:39 mjf Exp $");
 
 
 /*
@@ -2138,7 +2138,7 @@ iwn_start(struct ifnet *ifp)
 				break;
 
 			if (m0->m_len < sizeof (*eh) &&
-			    (m0 = m_pullup(m0, sizeof (*eh))) != NULL) {
+			    (m0 = m_pullup(m0, sizeof (*eh))) == NULL) {
 				ifp->if_oerrors++;
 				continue;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: smscvar.h,v 1.2 2007/11/16 08:00:15 xtraeme Exp $ */
+/*	$NetBSD: smscvar.h,v 1.2.14.1 2008/06/02 13:23:32 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -49,8 +42,8 @@
 /* Chip control registers */
 
 #define SMSC_LOGICAL_DEV_SEL	0x07	/* Selector for logical device */
-#define SMSC_DEVICE_ID		0X20	/* Device ID register */
-#define SMSC_DEVICE_REVISION	0X21	/* Device revision */
+#define SMSC_DEVICE_ID		0x20	/* Device ID register */
+#define SMSC_DEVICE_REVISION	0x21	/* Device revision */
 #define SMSC_IO_BASE_MSB	0x60
 #define SMSC_IO_BASE_LSB	0x61
 
@@ -60,7 +53,9 @@
 #define SMSC_CONFIG_START	0x55	/* Start configuration mode */
 #define SMSC_CONFIG_END		0xAA	/* End configuration mode */
 
-#define SMSC_ID	0x6F	/* Chip Reset/ID */
+#define SMSC_ID_47B397		0x6F	/* Chip ID */
+#define SMSC_ID_SCH5307NS	0x81
+#define SMSC_ID_SCH5317		0x85
 
 /* Data registers */
 #define SMSC_TEMP1		0x25
@@ -78,7 +73,7 @@
 #define SMSC_FAN4_LSB		0x2E
 #define SMSC_FAN4_MSB		0x2F
 
-#define SMSC_MAX_SENSORS	0x08	/* 4 temp sensors, 4 fan sensors */
+#define SMSC_MAX_SENSORS	8	/* 4 temp sensors, 4 fan sensors */
 
 struct smsc_softc {
 	struct device 		sc_dev;

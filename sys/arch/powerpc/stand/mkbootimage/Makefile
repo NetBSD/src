@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2007/12/18 18:19:07 garbled Exp $
+#	$NetBSD: Makefile,v 1.1.14.1 2008/06/02 13:22:34 mjf Exp $
 
+BINDIR=	/usr/mdec
 PROG=	mkbootimage
 SRCS=	mkbootimage.c byteorder.c
 NOMAN=	# defined

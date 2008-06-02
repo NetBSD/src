@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.8.8.1 2008/04/03 12:42:39 mjf Exp $ */
+/* $NetBSD: drm_drv.c,v 1.8.8.2 2008/06/02 13:23:15 mjf Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,10 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.8.8.1 2008/04/03 12:42:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.8.8.2 2008/06/02 13:23:15 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
+
+#include <sys/module.h>
 
 #include "drmP.h"
 #include "drm.h"
@@ -201,7 +203,7 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
         /* dev->maplist : drm_load */
         dev->context_sareas = NULL;
         dev->max_context = 0;
-	DRM_SPININIT(&dev->dev_lock, "drm device");
+	mutex_init(&dev->dev_lock, MUTEX_DEFAULT, IPL_NONE);
         dev->dma = NULL;
 	/* dev->irq : drm_load */
 	dev->irq_enabled = 0;
@@ -247,8 +249,9 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 	dev->agp_buffer_map = 0;
 	/* dev->unit - already done */
 
-	printf("\n");
-	DRM_INFO("%s (unit %d)\n", id_entry->name, dev->unit);
+	aprint_naive("\n");
+	aprint_normal(": %s (unit %d)\n", id_entry->name, dev->unit);
+
 	drm_load(dev);
 }
 
@@ -462,7 +465,7 @@ static int drm_load(drm_device_t *dev)
 
 	if (dev->driver.use_agp) {
 		if (drm_device_is_agp(dev))
-			dev->agp = drm_agp_init();
+			dev->agp = drm_agp_init(dev);
 		if (dev->driver.require_agp && dev->agp == NULL) {
 			DRM_ERROR("Card isn't AGP, or couldn't initialize "
 			    "AGP.\n");
@@ -484,7 +487,7 @@ static int drm_load(drm_device_t *dev)
 		goto error;
 	}
 	
-	DRM_INFO("Initialized %s %d.%d.%d %s\n",
+	aprint_normal_dev(&dev->device, "Initialized %s %d.%d.%d %s\n",
 	  	dev->driver.name,
 	  	dev->driver.major,
 	  	dev->driver.minor,
@@ -804,4 +807,28 @@ int drm_ioctl(DRM_CDEV kdev, u_long cmd, void *data, int flags,
 		DRM_DEBUG("    returning %d\n", retcode);
 
 	return DRM_ERR(retcode);
+}
+
+MODULE(MODULE_CLASS_MISC, drm, NULL);
+
+static int
+drm_modcmd(modcmd_t cmd, void *arg)
+{
+#ifdef _MODULE
+	int bmajor = -1, cmajor = -1;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return devsw_attach("drm", NULL, &bmajor, &drm_cdevsw, &cmajor);
+	case MODULE_CMD_FINI:
+		devsw_detach(NULL, &drm_cdevsw);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+#else
+	if (cmd == MODULE_CMD_INIT)
+		return 0;
+	return ENOTTY;
+#endif
 }

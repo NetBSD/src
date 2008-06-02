@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.37.10.1 2008/04/03 12:42:52 mjf Exp $	*/
+/*	$NetBSD: neo.c,v 1.37.10.2 2008/06/02 13:23:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.37.10.1 2008/04/03 12:42:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.37.10.2 2008/06/02 13:23:42 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,7 @@ neo_intr(void *p)
 		nm_ackint(sc, sc->misc1int);
 		x = nm_rd_1(sc, 0x400);
 		nm_wr_1(sc, 0x400, x | 2);
-		printf("%s: misc int 1\n", sc->dev.dv_xname);
+		printf("%s: misc int 1\n", device_xname(&sc->dev));
 		rv = 1;
 	}
 	if (status & sc->misc2int) {
@@ -410,13 +410,13 @@ neo_intr(void *p)
 		nm_ackint(sc, sc->misc2int);
 		x = nm_rd_1(sc, 0x400);
 		nm_wr_1(sc, 0x400, x & ~2);
-		printf("%s: misc int 2\n", sc->dev.dv_xname);
+		printf("%s: misc int 2\n", device_xname(&sc->dev));
 		rv = 1;
 	}
 	if (status) {
 		status &= ~sc->misc2int;
 		nm_ackint(sc, sc->misc2int);
-		printf("%s: unknown int\n", sc->dev.dv_xname);
+		printf("%s: unknown int\n", device_xname(&sc->dev));
 		rv = 1;
 	}
 
@@ -582,19 +582,19 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->bufiot, &sc->bufioh, &sc->buf_pciaddr, NULL)) {
-		printf("%s: can't map buffer\n", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "can't map buffer\n");
 		return;
 	}
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START + 4, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR, &sc->regiot, &sc->regioh, NULL, NULL)) {
-		printf("%s: can't map registers\n", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "can't map registers\n");
 		return;
 	}
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "couldn't map interrupt\n");
 		return;
 	}
 
@@ -602,14 +602,13 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO, neo_intr, sc);
 
 	if (sc->ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		       sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->dev), intrstr);
 
 	if (nm_init(sc) != 0)
 		return;

@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_intr.c,v 1.8 2008/01/06 03:45:27 matt Exp $ */
+/* $NetBSD: s3c2410_intr.c,v 1.8.6.1 2008/06/02 13:21:55 mjf Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.8 2008/01/06 03:45:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.8.6.1 2008/06/02 13:21:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.8 2008/01/06 03:45:27 matt Exp $"
 struct s3c2xx0_intr_dispatch handler[ICU_LEN];
 
 
-volatile int current_spl_level;
 volatile int intr_mask;
 #ifdef __HAVE_FAST_SOFTINTS
 volatile int softint_pending;
@@ -99,10 +98,10 @@ s3c2410_irq_handler(struct clockframe *frame)
 	int irqno;
 	int saved_spl_level;
 
-	saved_spl_level = current_spl_level;
+	saved_spl_level = curcpl();
 
 #ifdef	DIAGNOSTIC
-	if (curcpu()->ci_idepth > 10)
+	if (curcpu()->ci_intr_depth > 10)
 		panic("nested intr too deep");
 #endif
 
@@ -141,8 +140,7 @@ s3c2410_irq_handler(struct clockframe *frame)
 	}
 
 #ifdef __HAVE_FAST_SOFTINTS
-	if (get_pending_softint())
-		s3c2xx0_do_pending(1);
+	cpu_dosoftints();
 #endif
 }
 
@@ -246,7 +244,7 @@ s3c24x0_intr_establish(int irqno, int level, int type,
 		s3c2410_setup_extint(irqno, type);
 	}
 
-	s3c2xx0_setipl(current_spl_level);
+	s3c2xx0_setipl(curcpl());
 
 	restore_interrupts(save);
 

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.417.6.1 2008/04/03 13:54:13 mjf Exp $
+# $NetBSD: shl.mi,v 1.417.6.2 2008/06/02 13:21:17 mjf Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -15,14 +15,14 @@
 #
 ./lib/libc.so.12.159				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
-./lib/libcrypto.so.3.2				base-crypto-shlib	crypto
-./lib/libedit.so.2.10				base-sys-shlib
-./lib/libevent.so.1.0				base-sys-shlib
+./lib/libcrypto.so.4.1				base-crypto-shlib	crypto
+./lib/libedit.so.2.11				base-sys-shlib
+./lib/libevent.so.2.0				base-sys-shlib
 ./lib/libipsec.so.2.2				base-net-shlib
 ./lib/libkvm.so.5.3				base-sys-shlib
 ./lib/libm.so.0.6				base-sys-shlib
 ./lib/libprop.so.0.6				base-sys-shlib
-./lib/libradius.so.1.0				base-sys-shlib
+./lib/libradius.so.2.0				base-sys-shlib
 ./lib/libtermcap.so.0.6				base-sys-shlib
 ./lib/libtermlib.so.0.6				base-sys-shlib
 ./lib/libutil.so.7.15				base-sys-shlib
@@ -53,47 +53,50 @@
 ./usr/lib/libamu.so.3.0				base-amd-shlib
 ./usr/lib/libarchive.so.2.1			base-sys-shlib
 ./usr/lib/libasn1.so.7.0			base-krb5-shlib		kerberos
-./usr/lib/libbfd.so.8.0				base-sys-shlib		bfd
-./usr/lib/libbind9.so.0.0			base-bind-shlib
+./usr/lib/libbfd.so.9.0				base-sys-shlib		bfd
+./usr/lib/libbind9.so.1.0			base-bind-shlib
 ./usr/lib/libbluetooth.so.3.0			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
 ./usr/lib/libc.so.12.159			base-sys-shlib
 ./usr/lib/libcom_err.so.5.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.0.2			base-sys-shlib
-./usr/lib/libcrypto.so.3.2			base-crypto-shlib	crypto
-./usr/lib/libcurses.so.6.3			base-sys-shlib
+./usr/lib/libcrypto.so.4.1			base-crypto-shlib	crypto
+./usr/lib/libcurses.so.6.4			base-sys-shlib
 ./usr/lib/libdes.so.7.0				base-crypto-shlib	crypto
-./usr/lib/libdns.so.0.0				base-bind-shlib
-./usr/lib/libedit.so.2.10			base-sys-shlib
-./usr/lib/libevent.so.1.0			base-sys-shlib
+./usr/lib/libdns.so.1.0				base-bind-shlib
+./usr/lib/libedit.so.2.11			base-sys-shlib
+./usr/lib/libevent.so.2.0			base-sys-shlib
 ./usr/lib/libform.so.5.0			base-sys-shlib
 ./usr/lib/libg2c.so.2.0				base-sys-shlib		gcc=3
 ./usr/lib/libgcc_s.so.1.0			base-sys-shlib		gcc
 ./usr/lib/libgnumalloc.so.0.0			base-sys-shlib
-./usr/lib/libgssapi.so.6.0			base-krb5-shlib		kerberos
-./usr/lib/libhdb.so.10.0			base-krb5-shlib		kerberos
+./usr/lib/libgssapi.so.7.0			base-krb5-shlib		kerberos
+./usr/lib/libhdb.so.11.0			base-krb5-shlib		kerberos
 ./usr/lib/libheimntlm.so.1.0			base-krb5-shlib		kerberos
-./usr/lib/libhx509.so.1.0			base-krb5-shlib		kerberos
+./usr/lib/libhx509.so.2.0			base-krb5-shlib		kerberos
 ./usr/lib/libintl.so.0.0			base-sys-shlib
 ./usr/lib/libipsec.so.2.2			base-net-shlib
-./usr/lib/libisc.so.0.0				base-bind-shlib
-./usr/lib/libisccc.so.0.0			base-bind-shlib
-./usr/lib/libisccfg.so.0.0			base-bind-shlib
+./usr/lib/libisc.so.1.0				base-bind-shlib
+./usr/lib/libisccc.so.1.0			base-bind-shlib
+./usr/lib/libisccfg.so.1.0			base-bind-shlib
 ./usr/lib/libiscsi.so.0.0			base-iscsi-shlib	iscsi
-./usr/lib/libkadm5clnt.so.9.0			base-krb5-shlib		kerberos
-./usr/lib/libkadm5srv.so.10.0			base-krb5-shlib		kerberos
-./usr/lib/libkafs.so.8.0			base-krb5-shlib		kerberos
-./usr/lib/libkrb5.so.21.0			base-krb5-shlib		kerberos
+./usr/lib/libkadm5clnt.so.10.0			base-krb5-shlib		kerberos
+./usr/lib/libkadm5srv.so.11.0			base-krb5-shlib		kerberos
+./usr/lib/libkafs.so.9.0			base-krb5-shlib		kerberos
+./usr/lib/libkrb5.so.22.0			base-krb5-shlib		kerberos
 ./usr/lib/libkvm.so.5.3				base-sys-shlib
-./usr/lib/liblwres.so.0.0			base-bind-shlib
+./usr/lib/liblber.so.2.5			base-ldap-shlib		ldap
+./usr/lib/libldap.so.2.5			base-ldap-shlib		ldap
+./usr/lib/libldap_r.so.2.5			base-ldap-shlib		ldap
+./usr/lib/liblwres.so.1.0			base-bind-shlib
 ./usr/lib/libm.so.0.6				base-sys-shlib
 ./usr/lib/libmagic.so.1.0			base-sys-shlib
 ./usr/lib/libmenu.so.5.0			base-sys-shlib
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
 ./usr/lib/libobjc.so.2.1			base-sys-shlib		gcc=4
 ./usr/lib/libossaudio.so.0.0			base-sys-shlib
-./usr/lib/libpam.so.0.0				base-sys-shlib		pam
+./usr/lib/libpam.so.1.0				base-sys-shlib		pam
 ./usr/lib/libpcap.so.2.0			base-net-shlib
 ./usr/lib/libpci.so.1.0				base-sys-shlib
 ./usr/lib/libposix.so.0.1			base-sys-shlib
@@ -101,7 +104,7 @@
 ./usr/lib/libpthread.so.0.10			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.1.0			base-sys-shlib
 ./usr/lib/libpuffs.so.0.0			base-sys-shlib
-./usr/lib/libradius.so.1.0			base-net-shlib
+./usr/lib/libradius.so.2.0			base-net-shlib
 ./usr/lib/librefuse.so.0.0			base-sys-shlib		puffs
 ./usr/lib/libresolv.so.1.1			base-net-shlib
 ./usr/lib/libroken.so.13.0			base-krb5-shlib		kerberos
@@ -111,8 +114,8 @@
 ./usr/lib/libskey.so.1.0			base-sys-shlib		skey
 ./usr/lib/libsl.so.3.0				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.5.0				base-krb5-shlib		kerberos
-./usr/lib/libssh.so.7.0				base-secsh-bin		crypto
-./usr/lib/libssl.so.4.0				base-crypto-shlib	crypto
+./usr/lib/libssh.so.9.0				base-secsh-bin		crypto
+./usr/lib/libssl.so.6.0				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.6.0			base-sys-shlib		gcc=4
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib
@@ -121,25 +124,25 @@
 ./usr/lib/libutil.so.7.15			base-sys-shlib
 ./usr/lib/libwrap.so.0.2			base-net-shlib
 ./usr/lib/libz.so.1.0				base-sys-shlib
-./usr/lib/security/pam_afslog.so.0		base-sys-shlib		kerberos,pam
-./usr/lib/security/pam_chroot.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_deny.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_echo.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_exec.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_ftpusers.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_group.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_guest.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_krb5.so.0		base-sys-shlib		kerberos,pam
-./usr/lib/security/pam_ksu.so.0			base-sys-shlib		kerberos,pam
-./usr/lib/security/pam_lastlog.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_login_access.so.0	base-sys-shlib		pam
-./usr/lib/security/pam_nologin.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_permit.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_radius.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_rhosts.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_rootok.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_securetty.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_self.so.0		base-sys-shlib		pam
-./usr/lib/security/pam_skey.so.0		base-sys-shlib		skey,pam
-./usr/lib/security/pam_ssh.so.0			base-sys-shlib		crypto,pam
-./usr/lib/security/pam_unix.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_afslog.so.1		base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_chroot.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_deny.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_echo.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_exec.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_ftpusers.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_group.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_guest.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_krb5.so.1		base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_ksu.so.1			base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_lastlog.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_login_access.so.1	base-sys-shlib		pam
+./usr/lib/security/pam_nologin.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_permit.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_radius.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_rhosts.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_rootok.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_securetty.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_self.so.1		base-sys-shlib		pam
+./usr/lib/security/pam_skey.so.1		base-sys-shlib		skey,pam
+./usr/lib/security/pam_ssh.so.1			base-sys-shlib		crypto,pam
+./usr/lib/security/pam_unix.so.1		base-sys-shlib		pam

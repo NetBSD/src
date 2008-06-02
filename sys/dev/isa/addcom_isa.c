@@ -1,4 +1,4 @@
-/*	$NetBSD: addcom_isa.c,v 1.16 2007/10/19 12:00:14 ad Exp $	*/
+/*	$NetBSD: addcom_isa.c,v 1.16.16.1 2008/06/02 13:23:29 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Graff.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.16 2007/10/19 12:00:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: addcom_isa.c,v 1.16.16.1 2008/06/02 13:23:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ addcomattach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(iot, STATUS_IOADDR, STATUS_SIZE,
 			  0, &sc->sc_statusioh)) {
-		printf("%s: can't map status space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map status space\n");
 		return;
 	}
 
@@ -211,8 +211,7 @@ addcomattach(struct device *parent, struct device *self, void *aux)
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
 				  &sc->sc_slaveioh[i])) {
-			printf("%s: can't map i/o space for slave %d\n",
-			       sc->sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_dev, "can't map i/o space for slave %d\n", i);
 			return;
 		}
 	}

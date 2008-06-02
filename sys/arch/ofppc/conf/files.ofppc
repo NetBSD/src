@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.39 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.ofppc,v 1.39.6.1 2008/06/02 13:22:30 mjf Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -34,6 +34,7 @@ file	dev/cons.c
 #
 include "arch/powerpc/conf/files.ofw"
 include "arch/powerpc/pic/files.pic"
+include "arch/powerpc/pic/files.ipi"
 
 #
 # Generic OpenFirmware device support

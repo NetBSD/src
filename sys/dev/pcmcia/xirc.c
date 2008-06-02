@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.21.16.1 2008/04/03 12:42:54 mjf Exp $	*/
+/*	$NetBSD: xirc.c,v 1.21.16.2 2008/06/02 13:23:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.21.16.1 2008/04/03 12:42:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.21.16.2 2008/06/02 13:23:47 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -191,7 +184,7 @@ xirc_attach(parent, self, aux)
 	rv = pcmcia_scan_cis(parent, xirc_manfid_ciscallback, &sc->sc_id);
 	pcmcia_socket_disable(parent);
 	if (!rv) {
-		aprint_error("%s: failed to find ID\n", self->dv_xname);
+		aprint_error_dev(self, "failed to find ID\n");
 		return;
 	}
 
@@ -217,12 +210,12 @@ xirc_attach(parent, self, aux)
 		sc->sc_chipset = XI_CHIPSET_DINGO;
 		break;
 	default:
-		aprint_error("%s: unknown ID %04x\n", self->dv_xname,
+		aprint_error_dev(self, "unknown ID %04x\n",
 		    sc->sc_id);
 		return;
 	}
 
-	aprint_normal("%s: id=%04x\n", self->dv_xname, sc->sc_id);
+	aprint_normal_dev(self, "id=%04x\n", sc->sc_id);
 
 	if (sc->sc_id & (XIMEDIA_MODEM << 8)) {
 		if (sc->sc_chipset >= XI_CHIPSET_DINGO) {
@@ -239,8 +232,7 @@ xirc_attach(parent, self, aux)
 	} else
 		cfe = xirc_dingo_alloc_ethernet(sc);
 	if (!cfe) {
-		aprint_error("%s: failed to allocate I/O space\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "failed to allocate I/O space\n");
 		goto fail;
 	}
 
@@ -250,8 +242,7 @@ xirc_attach(parent, self, aux)
 	if (sc->sc_id & (XIMEDIA_MODEM << 8)) {
 		if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO8,
 		    &sc->sc_modem_pcioh, &sc->sc_modem_io_window)) {
-			aprint_error("%s: unable to map I/O space\n",
-			    self->dv_xname);
+			aprint_error_dev(self, "unable to map I/O space\n");
 			goto fail;
 		}
 		sc->sc_flags |= XIRC_MODEM_MAPPED;
@@ -260,8 +251,7 @@ xirc_attach(parent, self, aux)
 	if (sc->sc_id & (XIMEDIA_ETHER << 8)) {
 		if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_AUTO,
 		    &sc->sc_ethernet_pcioh, &sc->sc_ethernet_io_window)) {
-			aprint_error("%s: unable to map I/O space\n",
-			    self->dv_xname);
+			aprint_error_dev(self, "unable to map I/O space\n");
 			goto fail;
 		}
 		sc->sc_flags |= XIRC_ETHERNET_MAPPED;
@@ -503,7 +493,7 @@ xirc_enable(sc, flag, media)
 	int error;
 
 	if ((sc->sc_flags & flag) == flag) {
-		printf("%s: already enabled\n", sc->sc_dev.dv_xname);
+		printf("%s: already enabled\n", device_xname(&sc->sc_dev));
 		return (0);
 	}
 
@@ -552,7 +542,7 @@ xirc_disable(sc, flag, media)
 {
 
 	if ((sc->sc_flags & flag) == 0) {
-		printf("%s: already disabled\n", sc->sc_dev.dv_xname);
+		printf("%s: already disabled\n", device_xname(&sc->sc_dev));
 		return;
 	}
 
@@ -693,7 +683,7 @@ xi_xirc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!pcmcia_scan_cis(device_parent(&msc->sc_dev),
 	    xi_xirc_lan_nid_ciscallback, myla)) {
-		aprint_error("%s: can't find MAC address\n", self->dv_xname);
+		aprint_error_dev(self, "can't find MAC address\n");
 		return;
 	}
 

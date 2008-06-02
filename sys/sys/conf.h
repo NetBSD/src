@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.129.14.7 2008/04/14 16:23:56 mjf Exp $	*/
+/*	$NetBSD: conf.h,v 1.129.14.8 2008/06/02 13:24:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -98,7 +98,7 @@ struct cdevsw {
 
 int devsw_attach(const char *, const struct bdevsw *, int *,
 		 const struct cdevsw *, int *);
-void devsw_detach(const struct bdevsw *, const struct cdevsw *);
+int devsw_detach(const struct bdevsw *, const struct cdevsw *);
 const struct bdevsw *bdevsw_lookup(dev_t);
 const struct cdevsw *cdevsw_lookup(dev_t);
 int bdevsw_lookup_major(const struct bdevsw *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.27.6.1 2008/04/03 12:42:43 mjf Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.27.6.2 2008/06/02 13:23:28 mjf Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -611,7 +611,7 @@ struct fw_hwaddr {
 #define fw_timevalcmp(tv1, tv2, op)	timercmp((tv1), (tv2), op)
 #define fw_timevalsub(tv1, tv2)		timersub((tv1), (tv2), (tv1))
 
-#define fw_get_nameunit(dev)		(dev)->dv_xname
+#define fw_get_nameunit(dev)		device_xname(dev)
 #define fw_get_unit(dev)		device_unit((dev))
 
 #define fw_printf(dev, ...)		aprint_normal_dev((dev), __VA_ARGS__)
@@ -1215,7 +1215,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 #define FIREWIRE_IOCTL(ifp, cmd, data) \
 				ieee1394_ioctl((ifp), (cmd), (data))
 #define IF_INITNAME(ifp, dev, unit)	\
-	strcpy((ifp)->if_xname, (dev)->dv_xname);
+	strlcpy((ifp)->if_xname, device_xname(dev), IFNAMSIZ);
 #define SET_IFFUNC(ifp, start, ioctl, init, stop)	\
 	do {						\
 		(ifp)->if_start = (start);		\

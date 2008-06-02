@@ -1,7 +1,7 @@
-/* $NetBSD: acpipmtimer.c,v 1.5 2008/01/20 18:09:10 joerg Exp $ */
+/* $NetBSD: acpipmtimer.c,v 1.5.6.1 2008/06/02 13:23:17 mjf Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipmtimer.c,v 1.5 2008/01/20 18:09:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipmtimer.c,v 1.5.6.1 2008/06/02 13:23:17 mjf Exp $");
 
 #include <sys/types.h>
 
@@ -37,7 +37,7 @@ acpipmtimer_attach(struct device *dev,
 	if (!tc)
 		return (-1);
 
-	tc->tc.tc_name = dev->dv_xname;
+	tc->tc.tc_name = device_xname(dev);
 	tc->tc.tc_frequency = ACPI_PM_TIMER_FREQUENCY;
 	if (flags & ACPIPMT_32BIT)
 		tc->tc.tc_counter_mask = 0xffffffff;

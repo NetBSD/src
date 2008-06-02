@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_pckbport.c,v 1.3 2005/11/16 01:39:27 uwe Exp $ */
+/*	$NetBSD: kbd_pckbport.c,v 1.3.74.1 2008/06/02 13:22:40 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -42,13 +42,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -97,7 +90,7 @@
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.3 2005/11/16 01:39:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_pckbport.c,v 1.3.74.1 2008/06/02 13:22:40 mjf Exp $");
 
 /*
  * Serve JavaStation-1 PS/2 keyboard as a Type5 keyboard with US101A
@@ -150,10 +143,10 @@ struct kbd_pckbport_softc {
 	int sc_extended1;
 };
 
-static int	kbd_pckbport_match(struct device *, struct cfdata *, void *);
-static void	kbd_pckbport_attach(struct device *, struct device *, void *);
+static int	kbd_pckbport_match(device_t, cfdata_t, void *);
+static void	kbd_pckbport_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(kbd_pckbport, sizeof(struct kbd_pckbport_softc),
+CFATTACH_DECL_NEW(kbd_pckbport, sizeof(struct kbd_pckbport_softc),
     kbd_pckbport_match, kbd_pckbport_attach, NULL, NULL);
 
 
@@ -187,7 +180,7 @@ static int	kbd_pckbport_decode(struct kbd_pckbport_softc *, int, int *);
  */
 
 static int
-kbd_pckbport_match(struct device *parent, struct cfdata *cf, void *aux)
+kbd_pckbport_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 
@@ -199,9 +192,9 @@ kbd_pckbport_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-kbd_pckbport_attach(struct device *parent, struct device *self, void *aux)
+kbd_pckbport_attach(device_t parent, device_t self, void *aux)
 {
-	struct kbd_pckbport_softc *sc = (void *)self;
+	struct kbd_pckbport_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
 	struct kbd_softc *kbd = &sc->sc_kbd;
 
@@ -210,6 +203,7 @@ kbd_pckbport_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_kbcslot = pa->pa_slot;
 
 	/* provide upper layer a link to our middle layer */
+	kbd->k_dev = self;
 	kbd->k_ops = &kbd_ops_pckbport;
 
 	/* pre-fill keyboard type/layout */
@@ -228,10 +222,10 @@ kbd_pckbport_attach(struct device *parent, struct device *self, void *aux)
 
 	        kd_attach_input(cc);	/* XXX ???? */
 		kbd->k_isconsole = 1;
-		printf(": console input");
+		aprint_normal(": console input");
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	kbd_pckbport_set_xtscancode(sc->sc_kbctag, sc->sc_kbcslot);
 
@@ -245,15 +239,14 @@ kbd_pckbport_attach(struct device *parent, struct device *self, void *aux)
 		res = pckbport_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
 				     cmd, 2, 0, NULL, 0);
 		if (res) {
-			printf("%s: set typematic failed, error %d\n",
-			       kbd->k_dev.dv_xname, res);
+			aprint_error_dev(self,
+			    "set typematic failed, error %d\n", res);
 		}
 	}
 
 	/* register our callback with pckbport interrupt handler */
 	pckbport_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
-			       kbd_pckbport_input, sc,
-			       kbd->k_dev.dv_xname);
+			       kbd_pckbport_input, sc, device_xname(self));
 }
 
 
@@ -382,7 +375,7 @@ kbd_pckbport_do_cmd(struct kbd_softc *kbd, int suncmd, int isioctl)
 	case KBD_CMD_NOCLICK:
 		/* not supported, do nothing */
 		DPRINTF(("%s: ignoring KIOCCMD 0x%02x\n",
-			 kbd->k_dev.dv_xname, suncmd));
+			 device_xname(kbd->k_dev), suncmd));
 		break;
 
 	default:
@@ -462,7 +455,7 @@ kbd_pckbport_decode(struct kbd_pckbport_softc *sc, int data, int *sundata)
 	int sunkey;
 
 	/* XXX: DEBUG*/
-	DPRINTF(("%s: %02x", sc->sc_kbd.k_dev.dv_xname, data));
+	DPRINTF(("%s: %02x", device_xname(sc->sc_kbd.k_dev), data));
 
 	if (data == KBR_EXTENDED0) {
 		sc->sc_extended = 1;

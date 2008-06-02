@@ -1,4 +1,4 @@
-/* $NetBSD: wm.c,v 1.2 2007/12/09 09:55:58 nisimura Exp $ */
+/* $NetBSD: wm.c,v 1.2.12.1 2008/06/02 13:22:37 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -62,22 +55,38 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int wm_match(unsigned, void *);
 void *wm_init(unsigned, void *);
 int wm_send(void *, char *, unsigned);
 int wm_recv(void *, char *, unsigned, unsigned);
 
-struct rdesc {
-	uint32_t lo;	/* 31:0 */
-	uint32_t hi;	/* 63:32 */
-	uint32_t r2;	/* 31:16 checksum, 15:0 Rx frame length */
-	uint32_t r3;	/* 31:16 special, 15:8 errors, 7:0 status */
-};
 struct tdesc {
 	uint32_t lo;	/* 31:0 */
 	uint32_t hi;	/* 63:32 */
 	uint32_t t2;	/* 31:16 command, 15:0 Tx frame length */
 	uint32_t t3;	/* 31:16 VTAG, 15:8 opt, 7:0 Tx status */
 };
+struct rdesc {
+	uint32_t lo;	/* 31:0 */
+	uint32_t hi;	/* 63:32 */
+	uint32_t r2;	/* 31:16 checksum, 15:0 Rx frame length */
+	uint32_t r3;	/* 31:16 special, 15:8 errors, 7:0 status */
+};
+/* T2 command */
+#define T2_FLMASK	0xffff		/* 15:0 */
+#define T2_DTYP_C	(1U << 20)	/* data descriptor */
+#define T2_EOP		(1U << 24)	/* end of packet */
+#define T2_IFCS		(1U << 25)	/* insert FCS */
+#define T2_RS		(1U << 27)	/* report status */
+#define T2_RPS		(1U << 28)	/* report packet sent */
+#define T2_DEXT		(1U << 29)	/* descriptor extention */
+#define T2_VLE		(1U << 30)	/* VLAN enable */
+#define T2_IDE		(1U << 31)	/* interrupt delay enable */
+/* T3 status */
+#define T3_DD		(1U << 0)	/* 1: Tx has done and vacant */
+/* T3 option */
+#define T3_IXSM		(1U << 16)	/* generate IP csum */
+#define T3_TXSM		(1U << 17)	/* generate TCP/UDP csum */
 
 #define R2_FLMASK	0xffff		/* 15:0 */
 /* R3 status */
@@ -97,22 +106,6 @@ struct tdesc {
 #define R3_IPE		(1U << 14)	/* IP csum error found */
 #define R3_RXE		(1U << 15)	/* Rx data error */
 
-/* T2 command */
-#define T2_FLMASK	0xffff		/* 15:0 */
-#define T2_DTYP_C	(1U << 20)	/* data descriptor */
-#define T2_EOP		(1U << 24)	/* end of packet */
-#define T2_IFCS		(1U << 25)	/* insert FCS */
-#define T2_RS		(1U << 27)	/* report status */
-#define T2_RPS		(1U << 28)	/* report packet sent */
-#define T2_DEXT		(1U << 29)	/* descriptor extention */
-#define T2_VLE		(1U << 30)	/* VLAN enable */
-#define T2_IDE		(1U << 31)	/* interrupt delay enable */
-/* T3 status */
-#define T3_DD		(1U << 0)	/* 1: Tx has done and vacant */
-/* T3 option */
-#define T3_IXSM		(1U << 16)	/* generate IP csum */
-#define T3_TXSM		(1U << 17)	/* generate TCP/UDP csum */
-
 #define FRAMESIZE	1536
 
 struct local {
@@ -131,6 +124,19 @@ static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 static void mii_dealan(struct local *, unsigned);
 
+int
+wm_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x8086, 0x107c):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 wm_init(unsigned tag, void *data)
 {
@@ -140,12 +146,7 @@ wm_init(unsigned tag, void *data)
 	struct rdesc *rxd;
 	uint8_t *en;
 
-	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x8086
-		    && PCI_PRODUCT(val) != 0x107c)
-		return NULL;
-
-	l = ALLOC(struct local, 16);
+	l = ALLOC(struct local, sizeof(struct tdesc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = pcicfgread(tag, 0x10); /* use mem space */
 
@@ -227,7 +228,7 @@ int
 wm_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct tdesc *txd;
+	volatile struct tdesc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
@@ -254,7 +255,7 @@ int
 wm_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct rdesc *rxd;
+	volatile struct rdesc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

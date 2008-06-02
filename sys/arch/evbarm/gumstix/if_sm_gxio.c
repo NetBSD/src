@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.4 2007/10/17 19:54:12 garbled Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.4.16.1 2008/06/02 13:22:01 mjf Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -46,13 +46,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -68,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.4 2007/10/17 19:54:12 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.4.16.1 2008/06/02 13:22:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -100,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.4 2007/10/17 19:54:12 garbled Exp $
 #include "locators.h"
 
 
-static int sm_gxio_match(struct device *, struct cfdata *, void *);
-static void sm_gxio_attach(struct device *, struct device *, void *);
+static int sm_gxio_match(device_t, struct cfdata *, void *);
+static void sm_gxio_attach(device_t, device_t, void *);
 
 static int ether_serial_digit = 1;
 
@@ -116,7 +109,7 @@ CFATTACH_DECL(sm_gxio, sizeof(struct sm_gxio_softc),
 
 /* ARGSUSED */
 static int
-sm_gxio_match(struct device *parent, struct cfdata *match, void *aux)
+sm_gxio_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct gxio_attach_args *gxa = aux;
 	bus_space_tag_t iot = gxa->gxa_iot;
@@ -172,7 +165,7 @@ sm_gxio_match(struct device *parent, struct cfdata *match, void *aux)
 
 /* ARGSUSED */
 void
-sm_gxio_attach(struct device *parent, struct device *self, void *aux)
+sm_gxio_attach(device_t parent, device_t self, void *aux)
 {
 	struct sm_gxio_softc *gsc = device_private(self);
 	struct smc91cxx_softc *sc = &gsc->sc_smc;
@@ -210,6 +203,6 @@ sm_gxio_attach(struct device *parent, struct device *self, void *aux)
 	    gxa->gxa_gpirq, IST_EDGE_RISING, IPL_NET, smc91cxx_intr, sc);
 
 	if (gsc->sc_ih == NULL)
-		aprint_error("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "couldn't establish interrupt handler\n");
 }

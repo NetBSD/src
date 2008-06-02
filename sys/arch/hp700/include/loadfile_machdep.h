@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.2 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.2.72.1 2008/06/02 13:22:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -74,9 +67,9 @@
 #define	ALLOC(a)		malloc(a)
 #define	DEALLOC(a, b)		free(a)
 
-ssize_t vread __P((int, u_long, u_long *, size_t));
-void vcopy __P((u_long, u_long, u_long *, size_t));
-void vzero __P((u_long, u_long *, size_t));
+ssize_t vread(int, u_long, u_long *, size_t);
+void vcopy(u_long, u_long, u_long *, size_t);
+void vzero(u_long, u_long *, size_t);
 
 #endif
 #endif /* ! _HP700_LOADFILE_MACHDEP_H_ */

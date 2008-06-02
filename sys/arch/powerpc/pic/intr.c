@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 2007/12/11 18:04:19 garbled Exp $ */
+/*	$NetBSD: intr.c,v 1.4.8.1 2008/06/02 13:22:33 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -30,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2007/12/11 18:04:19 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4.8.1 2008/06/02 13:22:33 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -600,7 +597,7 @@ start:
 	while (realirq == ipiops.ppc_ipi_vector) {
 		ppcipi_intr(NULL);
 		pic->pic_ack_irq(pic, realirq);
-		realirq = pic->pic_get_irq(pic, PIC_GET_IRQ);
+		realirq = pic->pic_get_irq(pic, PIC_GET_RECHECK);
 	}
 	if (realirq == 255) {
 		return 0;

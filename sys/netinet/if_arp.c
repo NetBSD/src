@@ -1,7 +1,7 @@
-/*	$NetBSD: if_arp.c,v 1.131 2008/01/20 18:09:12 joerg Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.131.6.1 2008/06/02 13:24:23 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -75,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131 2008/01/20 18:09:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131.6.1 2008/06/02 13:24:23 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -100,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131 2008/01/20 18:09:12 joerg Exp $");
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/sysctl.h>
+#include <sys/socketvar.h>
+#include <sys/percpu.h>
 
 #include <net/ethertypes.h>
 #include <net/if.h>
@@ -108,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131 2008/01/20 18:09:12 joerg Exp $");
 #include <net/if_types.h>
 #include <net/if_ether.h>
 #include <net/route.h>
+#include <net/net_stats.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -169,7 +165,14 @@ int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done = 0;
 
-struct	arpstat arpstat;
+static percpu_t *arpstat_percpu;
+
+#define	ARP_STAT_GETREF()	_NET_STAT_GETREF(arpstat_percpu)
+#define	ARP_STAT_PUTREF()	_NET_STAT_PUTREF(arpstat_percpu)
+
+#define	ARP_STATINC(x)		_NET_STATINC(arpstat_percpu, x)
+#define	ARP_STATADD(x, v)	_NET_STATADD(arpstat_percpu, x, v)
+
 struct	callout arptimer_ch;
 
 /* revarp state */
@@ -231,7 +234,7 @@ const struct protosw arpsw[] = {
 	  .pr_ctlinput = 0,
 	  .pr_ctloutput = 0,
 	  .pr_usrreq =  0,
-	  .pr_init = 0,
+	  .pr_init = arp_init,
 	  .pr_fasttimo = 0,
 	  .pr_slowtimo = 0,
 	  .pr_drain = arp_drain,
@@ -243,7 +246,7 @@ struct domain arpdomain = {
 	.dom_family = PF_ARP,
 	.dom_name = "arp",
 	.dom_protosw = arpsw,
-	.dom_protoswNPROTOSW = &arpsw[sizeof(arpsw)/sizeof(arpsw[0])],
+	.dom_protoswNPROTOSW = &arpsw[__arraycount(arpsw)],
 };
 
 /*
@@ -276,11 +279,11 @@ arp_lock_try(int recurse)
 	s = splvm();
 	if (!recurse && arp_locked) {
 		splx(s);
-		return (0);
+		return 0;
 	}
 	arp_locked++;
 	splx(s);
-	return (1);
+	return 1;
 }
 
 static inline void
@@ -315,11 +318,18 @@ do {									\
 
 #define	ARP_UNLOCK()		arp_unlock()
 
+void
+arp_init(void)
+{
+
+	arpstat_percpu = percpu_alloc(sizeof(uint64_t) * ARP_NSTATS);
+}
+
 /*
  * ARP protocol drain routine.  Called when memory is in short supply.
- * Called at splvm();
+ * Called at splvm();  don't acquire softnet_lock as can be called from
+ * hardware interrupt handlers.
  */
-
 void
 arp_drain(void)
 {
@@ -327,12 +337,15 @@ arp_drain(void)
 	int count = 0;
 	struct mbuf *mold;
 
+	KERNEL_LOCK(1, NULL);
+
 	if (arp_lock_try(0) == 0) {
 		printf("arp_drain: locked; punting\n");
+		KERNEL_UNLOCK_ONE(NULL);
 		return;
 	}
 
-	for (la = LIST_FIRST(&llinfo_arp); la != 0; la = nla) {
+	for (la = LIST_FIRST(&llinfo_arp); la != NULL; la = nla) {
 		nla = LIST_NEXT(la, la_list);
 
 		mold = la->la_hold;
@@ -344,7 +357,8 @@ arp_drain(void)
 		}
 	}
 	ARP_UNLOCK();
-	arpstat.as_dfrdropped += count;
+	ARP_STATADD(ARP_STAT_DFRDROPPED, count);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 
@@ -355,19 +369,20 @@ arp_drain(void)
 static void
 arptimer(void *arg)
 {
-	int s;
 	struct llinfo_arp *la, *nla;
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	if (arp_lock_try(0) == 0) {
 		/* get it later.. */
-		splx(s);
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
 		return;
 	}
 
 	callout_reset(&arptimer_ch, arpt_prune * hz, arptimer, NULL);
-	for (la = LIST_FIRST(&llinfo_arp); la != 0; la = nla) {
+	for (la = LIST_FIRST(&llinfo_arp); la != NULL; la = nla) {
 		struct rtentry *rt = la->la_rt;
 
 		nla = LIST_NEXT(la, la_list);
@@ -389,7 +404,8 @@ arptimer(void *arg)
 
 	ARP_UNLOCK();
 
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -459,7 +475,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			ts.tv_nsec = 0;
 			tc_setclock(&ts);
 		}
-		callout_init(&arptimer_ch, 0);
+		callout_init(&arptimer_ch, CALLOUT_MPSAFE);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);
 	}
 
@@ -559,7 +575,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		}
 		satosdl(gate)->sdl_type = ifp->if_type;
 		satosdl(gate)->sdl_index = ifp->if_index;
-		if (la != 0)
+		if (la != NULL)
 			break; /* This happens on a route change */
 		/*
 		 * Case 2:  This route may come from cloning, or a manual route
@@ -576,12 +592,12 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		}
 		R_Malloc(la, struct llinfo_arp *, allocsize);
 		rt->rt_llinfo = (void *)la;
-		if (la == 0) {
+		if (la == NULL) {
 			log(LOG_DEBUG, "arp_rtrequest: malloc failed\n");
 			break;
 		}
 		arp_inuse++, arp_allocated++;
-		Bzero(la, allocsize);
+		memset(la, 0, allocsize);
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
@@ -624,11 +640,11 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		break;
 
 	case RTM_DELETE:
-		if (la == 0)
+		if (la == NULL)
 			break;
 		arp_inuse--;
 		LIST_REMOVE(la, la_list);
-		rt->rt_llinfo = 0;
+		rt->rt_llinfo = NULL;
 		rt->rt_flags &= ~RTF_LLINFO;
 
 		s = splnet();
@@ -658,6 +674,7 @@ arprequest(struct ifnet *ifp,
 	struct mbuf *m;
 	struct arphdr *ah;
 	struct sockaddr sa;
+	uint64_t *arps;
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
@@ -675,7 +692,7 @@ arprequest(struct ifnet *ifp,
 	m->m_pkthdr.len = m->m_len;
 	MH_ALIGN(m, m->m_len);
 	ah = mtod(m, struct arphdr *);
-	bzero((void *)ah, m->m_len);
+	memset(ah, 0, m->m_len);
 	switch (ifp->if_type) {
 	case IFT_IEEE1394:	/* RFC2734 */
 		/* fill it now for ar_tpa computation */
@@ -695,8 +712,10 @@ arprequest(struct ifnet *ifp,
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	m->m_flags |= M_BCAST;
-	arpstat.as_sndtotal++;
-	arpstat.as_sndrequest++;
+	arps = ARP_STAT_GETREF();
+	arps[ARP_STAT_SNDTOTAL]++;
+	arps[ARP_STAT_SENDREQUEST]++;
+	ARP_STAT_PUTREF();
 	(*ifp->if_output)(ifp, m, &sa, NULL);
 }
 
@@ -722,13 +741,13 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	if ((la = arplookup1(m, &satocsin(dst)->sin_addr, 1, 0, rt)) != NULL)
 		rt = la->la_rt;
 
-	if (la == 0 || rt == 0) {
-		arpstat.as_allocfail++;
+	if (la == NULL || rt == NULL) {
+		ARP_STATINC(ARP_STAT_ALLOCFAIL);
 		log(LOG_DEBUG,
 		    "arpresolve: can't allocate llinfo on %s for %s\n",
 		    ifp->if_xname, in_fmtaddr(satocsin(dst)->sin_addr));
 		m_freem(m);
-		return (0);
+		return 0;
 	}
 	sdl = satocsdl(rt->rt_gateway);
 	/*
@@ -737,7 +756,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	 */
 	if ((rt->rt_expire == 0 || rt->rt_expire > time_second) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
-		bcopy(CLLADDR(sdl), desten,
+		memcpy(desten, CLLADDR(sdl),
 		    min(sdl->sdl_alen, ifp->if_addrlen));
 		rt->rt_pksent = time_second; /* Time for last pkt sent */
 		return 1;
@@ -748,14 +767,14 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	 * latest one.
 	 */
 
-	arpstat.as_dfrtotal++;
+	ARP_STATINC(ARP_STAT_DFRTOTAL);
 	s = splnet();
 	mold = la->la_hold;
 	la->la_hold = m;
 	splx(s);
 
 	if (mold) {
-		arpstat.as_dfrdropped++;
+		ARP_STATINC(ARP_STAT_DFRDROPPED);
 		m_freem(mold);
 	}
 
@@ -790,7 +809,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 			}
 		}
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -805,6 +824,8 @@ arpintr(void)
 	int s;
 	int arplen;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	while (arpintrq.ifq_head) {
 		s = splnet();
 		IF_DEQUEUE(&arpintrq, m);
@@ -813,7 +834,7 @@ arpintr(void)
 			panic("arpintr");
 
 		MCLAIM(m, &arpdomain.dom_mowner);
-		arpstat.as_rcvtotal++;
+		ARP_STATINC(ARP_STAT_RCVTOTAL);
 
 		/*
 		 * First, make sure we have at least struct arphdr.
@@ -841,14 +862,16 @@ arpintr(void)
 				in_arpinput(m);
 				continue;
 			default:
-				arpstat.as_rcvbadproto++;
+				ARP_STATINC(ARP_STAT_RCVBADPROTO);
 			}
 		else {
 badlen:
-			arpstat.as_rcvbadlen++;
+			ARP_STATINC(ARP_STAT_RCVBADLEN);
 		}
 		m_freem(m);
 	}
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -870,7 +893,7 @@ in_arpinput(struct mbuf *m)
 {
 	struct arphdr *ah;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
-	struct llinfo_arp *la = 0;
+	struct llinfo_arp *la = NULL;
 	struct rtentry  *rt;
 	struct in_ifaddr *ia;
 #if NBRIDGE > 0
@@ -886,6 +909,7 @@ in_arpinput(struct mbuf *m)
 	struct mbuf *mold;
 	void *tha;
 	int s;
+	uint64_t *arps;
 
 	if (__predict_false(m_makewritable(&m, 0, m->m_pkthdr.len, M_DONTWAIT)))
 		goto out;
@@ -915,7 +939,7 @@ in_arpinput(struct mbuf *m)
 	memcpy(&itaddr, ar_tpa(ah), sizeof (itaddr));
 
 	if (m->m_flags & (M_BCAST|M_MCAST))
-		arpstat.as_rcvmcast++;
+		ARP_STATINC(ARP_STAT_RCVMCAST);
 
 	/*
 	 * If the target IP address is zero, ignore the packet.
@@ -923,7 +947,7 @@ in_arpinput(struct mbuf *m)
 	 * when we are using IP address zero (booting).
 	 */
 	if (in_nullhost(itaddr)) {
-		arpstat.as_rcvzerotpa++;
+		ARP_STATINC(ARP_STAT_RCVZEROTPA);
 		goto out;
 	}
 
@@ -933,7 +957,7 @@ in_arpinput(struct mbuf *m)
 	 * XXX: Should we bother trying to reply to these?
 	 */
 	if (in_nullhost(isaddr)) {
-		arpstat.as_rcvzerospa++;
+		ARP_STATINC(ARP_STAT_RCVZEROSPA);
 		goto out;
 	}
 
@@ -990,7 +1014,7 @@ in_arpinput(struct mbuf *m)
 		if (ia == NULL) {
 			IFP_TO_IA(ifp, ia);
 			if (ia == NULL) {
-				arpstat.as_rcvnoint++;
+				ARP_STATINC(ARP_STAT_RCVNOINT);
 				goto out;
 			}
 		}
@@ -1000,13 +1024,13 @@ in_arpinput(struct mbuf *m)
 
 	/* XXX checks for bridge case? */
 	if (!memcmp(ar_sha(ah), CLLADDR(ifp->if_sadl), ifp->if_addrlen)) {
-		arpstat.as_rcvlocalsha++;
+		ARP_STATINC(ARP_STAT_RCVLOCALSHA);
 		goto out;	/* it's from me, ignore it. */
 	}
 
 	/* XXX checks for bridge case? */
 	if (!memcmp(ar_sha(ah), ifp->if_broadcastaddr, ifp->if_addrlen)) {
-		arpstat.as_rcvbcastsha++;
+		ARP_STATINC(ARP_STAT_RCVBCASTSHA);
 		log(LOG_ERR,
 		    "%s: arp: link address is broadcast for IP address %s!\n",
 		    ifp->if_xname, in_fmtaddr(isaddr));
@@ -1014,7 +1038,7 @@ in_arpinput(struct mbuf *m)
 	}
 
 	if (in_hosteq(isaddr, myaddr)) {
-		arpstat.as_rcvlocalspa++;
+		ARP_STATINC(ARP_STAT_RCVLOCALSPA);
 		log(LOG_ERR,
 		   "duplicate IP address %s sent from link address %s\n",
 		   in_fmtaddr(isaddr), lla_snprintf(ar_sha(ah), ah->ar_hln));
@@ -1022,11 +1046,11 @@ in_arpinput(struct mbuf *m)
 		goto reply;
 	}
 	la = arplookup(m, &isaddr, in_hosteq(itaddr, myaddr), 0);
-	if (la && (rt = la->la_rt) && (sdl = satosdl(rt->rt_gateway))) {
+	if (la != NULL && (rt = la->la_rt) && (sdl = satosdl(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
 		    memcmp(ar_sha(ah), CLLADDR(sdl), sdl->sdl_alen)) {
 			if (rt->rt_flags & RTF_STATIC) {
-				arpstat.as_rcvoverperm++;
+				ARP_STATINC(ARP_STAT_RCVOVERPERM);
 				log(LOG_INFO,
 				    "%s tried to overwrite permanent arp info"
 				    " for %s\n",
@@ -1034,7 +1058,7 @@ in_arpinput(struct mbuf *m)
 				    in_fmtaddr(isaddr));
 				goto out;
 			} else if (rt->rt_ifp != ifp) {
-				arpstat.as_rcvoverint++;
+				ARP_STATINC(ARP_STAT_RCVOVERINT);
 				log(LOG_INFO,
 				    "%s on %s tried to overwrite "
 				    "arp info for %s on %s\n",
@@ -1043,7 +1067,7 @@ in_arpinput(struct mbuf *m)
 				    rt->rt_ifp->if_xname);
 				    goto out;
 			} else {
-				arpstat.as_rcvover++;
+				ARP_STATINC(ARP_STAT_RCVOVER);
 				log(LOG_INFO,
 				    "arp info overwritten for %s by %s\n",
 				    in_fmtaddr(isaddr),
@@ -1057,13 +1081,13 @@ in_arpinput(struct mbuf *m)
 		 */
 		if (sdl->sdl_alen &&
 		    sdl->sdl_alen != ah->ar_hln) {
-			arpstat.as_rcvlenchg++;
+			ARP_STATINC(ARP_STAT_RCVLENCHG);
 			log(LOG_WARNING,
 			    "arp from %s: new addr len %d, was %d",
 			    in_fmtaddr(isaddr), ah->ar_hln, sdl->sdl_alen);
 		}
 		if (ifp->if_addrlen != ah->ar_hln) {
-			arpstat.as_rcvbadlen++;
+			ARP_STATINC(ARP_STAT_RCVBADLEN);
 			log(LOG_WARNING,
 			    "arp from %s: addr len: new %d, i/f %d (ignored)",
 			    in_fmtaddr(isaddr), ah->ar_hln,
@@ -1092,7 +1116,7 @@ in_arpinput(struct mbuf *m)
 				    (riflen & 1) == 0) {
 					rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
 					rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
-					bcopy(rif, TOKEN_RIF(la), riflen);
+					memcpy(TOKEN_RIF(la), rif, riflen);
 				}
 			}
 		}
@@ -1110,19 +1134,19 @@ in_arpinput(struct mbuf *m)
 		splx(s);
 
 		if (mold) {
-			arpstat.as_dfrsent++;
+			ARP_STATINC(ARP_STAT_DFRSENT);
 			(*ifp->if_output)(ifp, mold, rt_getkey(rt), rt);
 		}
 	}
 reply:
 	if (op != ARPOP_REQUEST) {
 		if (op == ARPOP_REPLY)
-			arpstat.as_rcvreply++;
+			ARP_STATINC(ARP_STAT_RCVREPLY);
 	out:
 		m_freem(m);
 		return;
 	}
-	arpstat.as_rcvrequest++;
+	ARP_STATINC(ARP_STAT_RCVREQUEST);
 	if (in_hosteq(itaddr, myaddr)) {
 		/* I am the target */
 		tha = ar_tha(ah);
@@ -1131,7 +1155,7 @@ reply:
 		memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	} else {
 		la = arplookup(m, &itaddr, 0, SIN_PROXY);
-		if (la == 0)
+		if (la == NULL)
 			goto out;
 		rt = la->la_rt;
 		if (rt->rt_ifp->if_type == IFT_CARP &&
@@ -1166,8 +1190,10 @@ reply:
 	m->m_pkthdr.len = m->m_len;
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
-	arpstat.as_sndtotal++;
-	arpstat.as_sndreply++;
+	arps = ARP_STAT_GETREF();
+	arps[ARP_STAT_SNDTOTAL]++;
+	arps[ARP_STAT_SNDREPLY]++;
+	ARP_STAT_PUTREF();
 	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
 	return;
 }
@@ -1182,7 +1208,7 @@ static void arptfree(struct llinfo_arp *la)
 
 	ARP_LOCK_CHECK();
 
-	if (rt == 0)
+	if (rt == NULL)
 		panic("arptfree");
 	if (rt->rt_refcnt > 0 && (sdl = satosdl(rt->rt_gateway)) &&
 	    sdl->sdl_family == AF_LINK) {
@@ -1210,18 +1236,19 @@ arplookup1(struct mbuf *m, const struct in_addr *addr, int create, int proxy,
 	struct arphdr *ah;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct rtentry *rt;
-	static struct sockaddr_inarp sin;
-	const char *why = 0;
+	struct sockaddr_inarp sin;
+	const char *why = NULL;
 
 	ah = mtod(m, struct arphdr *);
 	if (rt0 == NULL) {
+		memset(&sin, 0, sizeof(sin));
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
 		sin.sin_addr = *addr;
 		sin.sin_other = proxy ? SIN_PROXY : 0;
 		rt = rtalloc1(sintosa(&sin), create);
 		if (rt == NULL)
-			return (NULL);
+			return NULL;
 		rt->rt_refcnt--;
 	} else
 		rt = rt0;
@@ -1232,33 +1259,33 @@ arplookup1(struct mbuf *m, const struct in_addr *addr, int create, int proxy,
 
 
 	if (IS_LLINFO(rt))
-		return ((struct llinfo_arp *)rt->rt_llinfo);
+		return (struct llinfo_arp *)rt->rt_llinfo;
 
 	if (create) {
 		if (rt->rt_flags & RTF_GATEWAY)
 			why = "host is not on local network";
 		else if ((rt->rt_flags & RTF_LLINFO) == 0) {
-			arpstat.as_allocfail++;
+			ARP_STATINC(ARP_STAT_ALLOCFAIL);
 			why = "could not allocate llinfo";
 		} else
 			why = "gateway route is not ours";
 		log(LOG_DEBUG, "arplookup: unable to enter address"
 		    " for %s@%s on %s (%s)\n",
 		    in_fmtaddr(*addr), lla_snprintf(ar_sha(ah), ah->ar_hln),
-		    (ifp) ? ifp->if_xname : 0, why);
+		    (ifp) ? ifp->if_xname : "null", why);
 		if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_CLONED) != 0) {
 			rtrequest(RTM_DELETE, rt_getkey(rt),
-		    	    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		    	    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
 		}
 	}
-	return (0);
+	return NULL;
 }
 
 int
 arpioctl(u_long cmd, void *data)
 {
 
-	return (EOPNOTSUPP);
+	return EOPNOTSUPP;
 }
 
 void
@@ -1361,7 +1388,7 @@ in_revarpinput(struct mbuf *m)
 		goto wake;
 	tha = ar_tha(ah);
 	KASSERT(tha);
-	if (bcmp(tha, CLLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
+	if (memcmp(tha, CLLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
 		goto out;
 	memcpy(&srv_ip, ar_spa(ah), sizeof(srv_ip));
 	memcpy(&myip, ar_tpa(ah), sizeof(myip));
@@ -1393,7 +1420,7 @@ revarprequest(struct ifnet *ifp)
 	m->m_pkthdr.len = m->m_len;
 	MH_ALIGN(m, m->m_len);
 	ah = mtod(m, struct arphdr *);
-	bzero((void *)ah, m->m_len);
+	memset(ah, 0, m->m_len);
 	ah->ar_pro = htons(ETHERTYPE_IP);
 	ah->ar_hln = ifp->if_addrlen;		/* hardware address length */
 	ah->ar_pln = sizeof(struct in_addr);	/* protocol address length */
@@ -1402,12 +1429,12 @@ revarprequest(struct ifnet *ifp)
 	memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	tha = ar_tha(ah);
 	KASSERT(tha);
-	bcopy(CLLADDR(ifp->if_sadl), tha, ah->ar_hln);
+	memcpy(tha, CLLADDR(ifp->if_sadl), ah->ar_hln);
 
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	m->m_flags |= M_BCAST;
-	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
+	(*ifp->if_output)(ifp, m, &sa, NULL);
 
 }
 
@@ -1437,8 +1464,8 @@ revarpwhoarewe(struct ifnet *ifp, struct in_addr *serv_in,
 	if (!myip_initialized)
 		return ENETUNREACH;
 
-	bcopy((void *)&srv_ip, serv_in, sizeof(*serv_in));
-	bcopy((void *)&myip, clnt_in, sizeof(*clnt_in));
+	memcpy(serv_in, &srv_ip, sizeof(*serv_in));
+	memcpy(clnt_in, &myip, sizeof(*clnt_in));
 	return 0;
 }
 
@@ -1456,7 +1483,7 @@ db_print_sa(const struct sockaddr *sa)
 	int len;
 	const u_char *p;
 
-	if (sa == 0) {
+	if (sa == NULL) {
 		db_printf("[NULL]");
 		return;
 	}
@@ -1475,7 +1502,7 @@ db_print_sa(const struct sockaddr *sa)
 static void
 db_print_ifa(struct ifaddr *ifa)
 {
-	if (ifa == 0)
+	if (ifa == NULL)
 		return;
 	db_printf("  ifa_addr=");
 	db_print_sa(ifa->ifa_addr);
@@ -1494,7 +1521,7 @@ db_print_llinfo(void *li)
 {
 	struct llinfo_arp *la;
 
-	if (li == 0)
+	if (li == NULL)
 		return;
 	la = (struct llinfo_arp *)li;
 	db_printf("  la_rt=%p la_hold=%p, la_asked=0x%lx\n",
@@ -1531,7 +1558,7 @@ db_show_rtentry(struct rtentry *rt, void *w)
 			  rt->rt_gwroute, rt->rt_llinfo);
 	db_print_llinfo(rt->rt_llinfo);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1545,6 +1572,13 @@ db_show_arptab(db_expr_t addr, bool have_addr,
 	rt_walktree(AF_INET, db_show_rtentry, NULL);
 }
 #endif
+
+static int
+sysctl_net_inet_arp_stats(SYSCTLFN_ARGS)
+{
+
+	return NETSTAT_SYSCTL(arpstat_percpu, ARP_NSTATS);
+}
 
 SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")
 {
@@ -1593,6 +1627,13 @@ SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")
 			CTLTYPE_INT, "refresh",
 			SYSCTL_DESCR("ARP entry refresh interval"),
 			NULL, 0, &arpt_refresh, 0,
+			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+	
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_STRUCT, "stats",
+			SYSCTL_DESCR("ARP statistics"),
+			sysctl_net_inet_arp_stats, 0, NULL, 0,
 			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 }
 

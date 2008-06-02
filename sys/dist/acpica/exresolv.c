@@ -1,9 +1,8 @@
-/*	$NetBSD: exresolv.c,v 1.3 2007/12/11 13:16:09 lukem Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exresolv - AML Interpreter object resolution
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,17 +115,14 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresolv.c,v 1.3 2007/12/11 13:16:09 lukem Exp $");
-
 #define __EXRESOLV_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acdispat.h>
-#include <dist/acpica/acinterp.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acparser.h>
+#include "acpi.h"
+#include "amlcode.h"
+#include "acdispat.h"
+#include "acinterp.h"
+#include "acnamesp.h"
+#include "acparser.h"
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -284,17 +280,27 @@ AcpiExResolveObjectToValue (
             {
             case ACPI_TYPE_BUFFER_FIELD:
 
-                /* Just return - leave the Reference on the stack */
+                /* Just return - do not dereference */
                 break;
 
 
             case ACPI_TYPE_PACKAGE:
 
+                /* If method call or CopyObject - do not dereference */
+
+                if ((WalkState->Opcode == AML_INT_METHODCALL_OP) ||
+                    (WalkState->Opcode == AML_COPY_OP))
+                {
+                    break;
+                }
+
+                /* Otherwise, dereference the PackageIndex to a package element */
+
                 ObjDesc = *StackDesc->Reference.Where;
                 if (ObjDesc)
                 {
                     /*
-                     * Valid obj descriptor, copy pointer to return value
+                     * Valid object descriptor, copy pointer to return value
                      * (i.e., dereference the package index)
                      * Delete the ref object, increment the returned object
                      */
@@ -305,11 +311,11 @@ AcpiExResolveObjectToValue (
                 else
                 {
                     /*
-                     * A NULL object descriptor means an unitialized element of
+                     * A NULL object descriptor means an uninitialized element of
                      * the package, can't dereference it
                      */
                     ACPI_ERROR ((AE_INFO,
-                        "Attempt to deref an Index to NULL pkg element Idx=%p",
+                        "Attempt to dereference an Index to NULL package element Idx=%p",
                         StackDesc));
                     Status = AE_AML_UNINITIALIZED_ELEMENT;
                 }
@@ -321,7 +327,7 @@ AcpiExResolveObjectToValue (
                 /* Invalid reference object */
 
                 ACPI_ERROR ((AE_INFO,
-                    "Unknown TargetType %X in Index/Reference obj %p",
+                    "Unknown TargetType %X in Index/Reference object %p",
                     StackDesc->Reference.TargetType, StackDesc));
                 Status = AE_AML_INTERNAL;
                 break;
@@ -333,7 +339,7 @@ AcpiExResolveObjectToValue (
         case AML_DEBUG_OP:
         case AML_LOAD_OP:
 
-            /* Just leave the object as-is */
+            /* Just leave the object as-is, do not dereference */
 
             break;
 
@@ -471,10 +477,10 @@ AcpiExResolveMultiple (
     }
 
     /*
-     * For reference objects created via the RefOf or Index operators,
-     * we need to get to the base object (as per the ACPI specification
-     * of the ObjectType and SizeOf operators).  This means traversing
-     * the list of possibly many nested references.
+     * For reference objects created via the RefOf, Index, or Load/LoadTable
+     * operators, we need to get to the base object (as per the ACPI
+     * specification of the ObjectType and SizeOf operators). This means
+     * traversing the list of possibly many nested references.
      */
     while (ACPI_GET_OBJECT_TYPE (ObjDesc) == ACPI_TYPE_LOCAL_REFERENCE)
     {
@@ -550,6 +556,12 @@ AcpiExResolveMultiple (
                 goto Exit;
             }
             break;
+
+
+        case AML_LOAD_OP:
+
+            Type = ACPI_TYPE_DDB_HANDLE;
+            goto Exit;
 
 
         case AML_LOCAL_OP:

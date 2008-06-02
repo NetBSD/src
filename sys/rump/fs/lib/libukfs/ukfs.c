@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.18.6.1 2008/04/03 12:43:10 mjf Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.18.6.2 2008/06/02 13:24:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -274,14 +274,14 @@ ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
 	uint8_t *buf, size_t bufsize)
 {
 	int fd, rv = 0, dummy;
-	ssize_t xfer;
+	ssize_t xfer = -1; /* XXXgcc */
 
 	precall(ukfs);
 	fd = rump_sys_open(filename, O_RDONLY, 0, &rv);
 	if (rv)
 		goto out;
 
-	xfer = rump_sys_read(fd, buf, bufsize, &rv);
+	xfer = rump_sys_pread(fd, buf, bufsize, 0, off, &rv);
 	rump_sys_close(fd, &dummy);
 
  out:
@@ -298,14 +298,14 @@ ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 	uint8_t *buf, size_t bufsize)
 {
 	int fd, rv = 0, dummy;
-	ssize_t xfer;
+	ssize_t xfer = -1; /* XXXgcc */
 
 	precall(ukfs);
 	fd = rump_sys_open(filename, O_WRONLY, 0, &rv);
 	if (rv)
 		goto out;
 
-	xfer = rump_sys_write(fd, buf, bufsize, &rv);
+	xfer = rump_sys_pwrite(fd, buf, bufsize, 0, off, &rv);
 	rump_sys_close(fd, &dummy);
 
  out:

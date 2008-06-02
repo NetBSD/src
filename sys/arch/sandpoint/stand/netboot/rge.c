@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.8 2007/12/09 09:55:58 nisimura Exp $ */
+/* $NetBSD: rge.c,v 1.8.10.1 2008/06/02 13:22:36 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -68,6 +61,9 @@ void *rge_init(unsigned, void *);
 int rge_send(void *, char *, unsigned);
 int rge_recv(void *, char *, unsigned, unsigned);
 
+struct desc {
+	uint32_t xd0, xd1, xd2, xd3;
+};
 #define T0_OWN		0x80000000	/* loaded for HW to send */
 #define T0_EOR		0x40000000	/* end of ring */
 #define T0_FS		0x20000000	/* first descriptor */
@@ -96,10 +92,6 @@ int rge_recv(void *, char *, unsigned, unsigned);
 #define R0_FRMASK	0x00003fff	/* 13:0 frame length */
 #define R1_TAVA		0x00010000	/* VTAG exists */
 #define R1_VTAG		0x0000ffff	/* TAG value */
-
-struct desc {
-	uint32_t xd0, xd1, xd2, xd3;
-};
 
 #define RGE_IDR0	0x00		/* MAC address [0] */
 #define RGE_IDR1	0x01		/* MAC address [1] */
@@ -159,6 +151,19 @@ static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 static void mii_dealan(struct local *, unsigned);
 
+int
+rge_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x10ec, 0x8169):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 rge_init(unsigned tag, void *data)
 {
@@ -168,7 +173,7 @@ rge_init(unsigned tag, void *data)
 	uint8_t *en = data;
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x10ec && PCI_PRODUCT(val) != 0x8169)
+	if (PCI_DEVICE(0x10ec, 0x8169) != val)
 		return NULL;
 
 	l = ALLOC(struct local, 256);	/* desc alignment */
@@ -234,7 +239,7 @@ int
 rge_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *txd;
+	volatile struct desc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
@@ -261,7 +266,7 @@ int
 rge_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *rxd;
+	volatile struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

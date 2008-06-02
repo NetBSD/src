@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.74.6.1 2008/04/03 12:42:35 mjf Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.74.6.2 2008/06/02 13:23:09 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.74.6.1 2008/04/03 12:42:35 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.74.6.2 2008/06/02 13:23:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1393,6 +1386,8 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 		return EBADF;
 
+	KERNEL_LOCK(1, NULL);	/* svr4_find_socket */
+
 	if (SCARG_PTR(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG_PTR(uap, ctl),
 				    &ctl, sizeof(ctl))) != 0)
@@ -1497,9 +1492,11 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 
  	switch (st->s_cmd = sc.cmd) {
 	case SVR4_TI_CONNECT_REQUEST:	/* connect 	*/
+	 	KERNEL_UNLOCK_ONE(NULL);
 		return do_sys_connect(l, SCARG(uap, fd), nam);
 
 	case SVR4_TI_SENDTO_REQUEST:	/* sendto 	*/
+	 	KERNEL_UNLOCK_ONE(NULL);
 		msg.msg_name = nam;
 		msg.msg_namelen = sasize;
 		msg.msg_iov = &aiov;
@@ -1522,6 +1519,7 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 	}
 
  out:
+ 	KERNEL_UNLOCK_ONE(NULL);
  	fd_putfile(SCARG(uap, fd));
  	return error;
 }

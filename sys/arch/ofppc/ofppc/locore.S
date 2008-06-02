@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.38 2008/02/05 18:10:46 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.38.6.1 2008/06/02 13:22:30 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -91,11 +91,15 @@ __start:
 	bl	_C_LABEL(cpu_model_init)
 	lis	12,oeacpufeat@ha
 	lwz	12,oeacpufeat@l(12)
-	and.	12,12,OEACPU_64_BRIDGE	/* Compare against OEACPU_64_BRIDGE */
+	andi.	12,12,OEACPU_64_BRIDGE	/* Compare against OEACPU_64_BRIDGE */
 	beq	2f			/* skip if this is a 32bit part */
+	li	0,0
+	sync
+	slbia				/* invalidate the slb table */
+	sync
 	clrldi	0,0,32			/* clear SF/ISF (high order bits) */
 	mtmsrd	0
-	mtspr	0x118,0			/* clear ASR[V] to enable segregs */
+	mtspr	0x118,0		/* clear ASR[V] to enable segregs */
 2:
 	isync
 	/* compute end of kernel memory */

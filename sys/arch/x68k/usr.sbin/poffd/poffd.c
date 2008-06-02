@@ -1,4 +1,4 @@
-/*	$NetBSD: poffd.c,v 1.8 2005/12/11 12:19:45 christos Exp $	*/
+/*	$NetBSD: poffd.c,v 1.8.74.1 2008/06/02 13:22:49 mjf Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -32,7 +32,7 @@
 /* poffd: looks at the power switch / alarm and does shutdown. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: poffd.c,v 1.8 2005/12/11 12:19:45 christos Exp $");
+__RCSID("$NetBSD: poffd.c,v 1.8.74.1 2008/06/02 13:22:49 mjf Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -155,7 +155,7 @@ sethandler(void)
 	if (sw & POW_ALARMSW)
 #else
 	/*
-	 * According to Takeshi Nakayama <tn@catvmics.ne.jp>,
+	 * According to Takeshi Nakayama <nakayama@NetBSD.org>,
 	 * POW_ALARMSW seems to be always 1 on some models (at least XVI).
 	 */
 	if ((sw & (POW_EXTERNALSW|POW_FRONTSW)) == 0)

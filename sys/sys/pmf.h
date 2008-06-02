@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.4.14.1 2008/04/03 12:43:12 mjf Exp $ */
+/* $NetBSD: pmf.h,v 1.4.14.2 2008/06/02 13:24:33 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Jared D. McNeill.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,8 +30,6 @@
 #define _SYS_PMF_H
 
 #ifdef _KERNEL
-
-#include <sys/callout.h>
 
 typedef enum {
 	PMFE_DISPLAY_ON,

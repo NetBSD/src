@@ -1,4 +1,4 @@
-/*	$NetBSD: gxiic.c,v 1.2 2007/12/06 17:00:32 ad Exp $ */
+/*	$NetBSD: gxiic.c,v 1.2.12.1 2008/06/02 13:22:01 mjf Exp $ */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.2 2007/12/06 17:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxiic.c,v 1.2.12.1 2008/06/02 13:22:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,8 +47,8 @@ struct gxiic_softc {
 };
 
 
-static int gxiicmatch(struct device *, struct cfdata *, void *);
-static void gxiicattach(struct device *, struct device *, void *);
+static int gxiicmatch(device_t, struct cfdata *, void *);
+static void gxiicattach(device_t, device_t, void *);
 
 /* fuctions for i2c_controller */
 static int gxiic_acquire_bus(void *, int);
@@ -63,7 +63,7 @@ CFATTACH_DECL(gxiic, sizeof(struct gxiic_softc),
 
 /* ARGSUSED */
 static int
-gxiicmatch(struct device *parent, struct cfdata *match, void *aux)
+gxiicmatch(device_t parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
@@ -71,7 +71,7 @@ gxiicmatch(struct device *parent, struct cfdata *match, void *aux)
 
 /* ARGSUSED */
 static void
-gxiicattach(struct device *parent, struct device *self, void *aux)
+gxiicattach(device_t parent, device_t self, void *aux)
 {
 	struct gxiic_softc *sc = device_private(self);
 	struct gxio_attach_args *gxa = aux;
@@ -83,7 +83,7 @@ gxiicattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pxa_i2c.sc_iot = gxa->gxa_iot;
 	sc->sc_pxa_i2c.sc_size = PXA2X0_I2C_SIZE;
 	if (pxa2x0_i2c_attach_sub(&sc->sc_pxa_i2c)) {
-		aprint_error(": unable to attach PXA I2C\n");
+		aprint_error_dev(self, "unable to attach PXA I2C\n");
 		return;
 	}
 

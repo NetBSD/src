@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.78 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.78.6.1 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8635,3 +8635,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	msk(4): Add support for Marvell 88CO55 gigabit ethernet, which 
 		is used by newer iMacs [manu 20071022]
 	cobalt: Add netboot support via tlp0 to bootloader.  [tsutsui 20071030]
+	aac(4): Added IBM ServeRAID 8k support. [sborrill 20080508]

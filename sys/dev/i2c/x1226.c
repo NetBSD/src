@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.10 2007/01/13 18:42:45 cube Exp $	*/
+/*	$NetBSD: x1226.c,v 1.10.40.1 2008/06/02 13:23:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.10 2007/01/13 18:42:45 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.10.40.1 2008/06/02 13:23:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,17 +53,17 @@ __KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.10 2007/01/13 18:42:45 cube Exp $");
 #include <dev/i2c/x1226reg.h>
 
 struct xrtc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	i2c_tag_t		sc_tag;
 	int			sc_address;
 	int			sc_open;
 	struct todr_chip_handle	sc_todr;
 };
 
-static void	xrtc_attach(struct device *, struct device *, void *);
-static int	xrtc_match(struct device *, struct cfdata *, void *);
+static void	xrtc_attach(device_t, device_t, void *);
+static int	xrtc_match(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(xrtc, sizeof(struct xrtc_softc),
+CFATTACH_DECL_NEW(xrtc, sizeof(struct xrtc_softc),
     xrtc_match, xrtc_attach, NULL, NULL);
 extern struct cfdriver xrtc_cd;
 
@@ -86,7 +86,7 @@ static int xrtc_settime(struct todr_chip_handle *, volatile struct timeval *);
  * xrtc_match()
  */
 static int
-xrtc_match(struct device *parent, struct cfdata *cf, void *arg)
+xrtc_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 
@@ -101,7 +101,7 @@ xrtc_match(struct device *parent, struct cfdata *cf, void *arg)
  * xrtc_attach()
  */
 static void
-xrtc_attach(struct device *parent, struct device *self, void *arg)
+xrtc_attach(device_t parent, device_t self, void *arg)
 {
 	struct xrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
@@ -111,6 +111,7 @@ xrtc_attach(struct device *parent, struct device *self, void *arg)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
+	sc->sc_dev = self;
 	sc->sc_open = 0;
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = xrtc_gettime;
@@ -177,8 +178,9 @@ xrtc_read(dev_t dev, struct uio *uio, int flags)
 			I2C_OP_READ_WITH_STOP,
 			sc->sc_address, cmdbuf, 2, &ch, 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
-			printf("%s: xrtc_read: read failed at 0x%x\n",
-				sc->sc_dev.dv_xname, (int)uio->uio_offset);
+			aprint_error_dev(sc->sc_dev,
+			    "xrtc_read: read failed at 0x%x\n",
+				(int)uio->uio_offset);
 			return (error);
 		}
 		if ((error = uiomove(&ch, 1, uio)) != 0) {
@@ -220,8 +222,9 @@ xrtc_write(dev_t dev, struct uio *uio, int flags)
 			uio->uio_resid ? I2C_OP_WRITE : I2C_OP_WRITE_WITH_STOP,
 			sc->sc_address, cmdbuf, 2, &cmdbuf[2], 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
-			printf("%s: xrtc_write: write failed at 0x%x\n",
-				sc->sc_dev.dv_xname, (int)uio->uio_offset);
+			aprint_error_dev(sc->sc_dev,
+			    "xrtc_write: write failed at 0x%x\n",
+				(int)uio->uio_offset);
 			return (error);
 		}
 	}
@@ -275,8 +278,8 @@ xrtc_clock_read(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 	u_int8_t bcd[X1226_REG_RTC_SIZE], cmdbuf[2];
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		printf("%s: xrtc_clock_read: failed to acquire I2C bus\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "xrtc_clock_read: failed to acquire I2C bus\n");
 		return (0);
 	}
 
@@ -291,8 +294,9 @@ xrtc_clock_read(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 			sc->sc_address, cmdbuf, 2,
 			&bcd[i], 1, I2C_F_POLL)) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
-			printf("%s: xrtc_clock_read: failed to read rtc "
-				"at 0x%x\n", sc->sc_dev.dv_xname, i);
+			aprint_error_dev(sc->sc_dev,
+			    "xrtc_clock_read: failed to read rtc "
+				"at 0x%x\n", i);
 			return (0);
 		}
 	}
@@ -351,8 +355,8 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 	bcd[X1226_REG_Y2K - X1226_REG_RTC_BASE] = TOBCD(dt->dt_year / 100);
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		printf("%s: xrtc_clock_write: failed to acquire I2C bus\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "xrtc_clock_write: failed to acquire I2C bus\n");
 		return (0);
 	}
 
@@ -365,9 +369,8 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 		I2C_OP_WRITE_WITH_STOP,
 		sc->sc_address, cmdbuf, 2, &cmdbuf[2], 1, 0) != 0) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		printf("%s: xrtc_clock_write: "
-			"failed to write-unlock status register(WEL=1)\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "xrtc_clock_write: "
+			"failed to write-unlock status register(WEL=1)\n");
 		return (0);
 	}
 
@@ -380,9 +383,8 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 		I2C_OP_WRITE_WITH_STOP,
 		sc->sc_address, cmdbuf, 2, &cmdbuf[2], 1, 0) != 0) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		printf("%s: xrtc_clock_write: "
-			"failed to write-unlock status register(RWEL=1)\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "xrtc_clock_write: "
+			"failed to write-unlock status register(RWEL=1)\n");
 		return (0);
 	}
 
@@ -407,8 +409,8 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 				&cmdbuf[2], 1, 0);
 
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
-			printf("%s: xrtc_clock_write: failed to write rtc "
-				"at 0x%x\n", sc->sc_dev.dv_xname, i);
+			aprint_error_dev(sc->sc_dev, "xrtc_clock_write: failed to write rtc "
+				"at 0x%x\n", i);
 			return (0);
 		}
 	}
@@ -422,9 +424,8 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 		I2C_OP_WRITE_WITH_STOP,
 		sc->sc_address, cmdbuf, 2, &cmdbuf[2], 1, 0) != 0) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		printf("%s: xrtc_clock_write: "
-			"failed to write-lock status register\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "xrtc_clock_write: "
+			"failed to write-lock status register\n");
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.10 2008/01/20 18:09:11 joerg Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.10.6.1 2008/06/02 13:23:48 mjf Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.10 2008/01/20 18:09:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.10.6.1 2008/06/02 13:23:48 mjf Exp $");
 
 #include "opt_ntp.h"
 
@@ -47,14 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.10 2008/01/20 18:09:11 joerg Exp $")
 
 struct pps_softc {
 	struct ppbus_device_softc pps_dev;
-	struct device *ppbus;
+	device_t ppbus;
 	int busy;
 	struct pps_state pps_state;	/* pps state */
 };
 
-static int pps_probe(struct device *, struct cfdata *, void *);
-static void pps_attach(struct device *, struct device *, void *);
-CFATTACH_DECL(pps, sizeof(struct pps_softc), pps_probe, pps_attach,
+static int pps_probe(device_t, cfdata_t, void *);
+static void pps_attach(device_t, device_t, void *);
+CFATTACH_DECL_NEW(pps, sizeof(struct pps_softc), pps_probe, pps_attach,
 	NULL, NULL);
 extern struct cfdriver pps_cd;
 
@@ -69,7 +69,7 @@ const struct cdevsw pps_cdevsw = {
 static void ppsintr(void *arg);
 
 static int
-pps_probe(struct device *parent, struct cfdata *match, void *aux)
+pps_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct ppbus_attach_args *args = aux;
 
@@ -81,11 +81,12 @@ pps_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-pps_attach(struct device *parent, struct device *self, void *aux)
+pps_attach(device_t parent, device_t self, void *aux)
 {
 	struct pps_softc *sc = device_private(self);
 
 	sc->ppbus = parent;
+	sc->pps_dev.sc_dev = self;
 
 	printf("\n");
 }
@@ -103,7 +104,7 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc->busy)
 		return (0);
 
-	if (ppbus_request_bus(sc->ppbus, &sc->pps_dev.sc_dev,
+	if (ppbus_request_bus(sc->ppbus, sc->pps_dev.sc_dev,
 			      PPBUS_WAIT|PPBUS_INTR, 0))
 		return (EINTR);
 
@@ -113,7 +114,7 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	/* XXX priority should be set here */
 	res = ppbus_add_handler(sc->ppbus, ppsintr, sc);
 	if (res) {
-		ppbus_release_bus(sc->ppbus, &sc->pps_dev.sc_dev,
+		ppbus_release_bus(sc->ppbus, sc->pps_dev.sc_dev,
 				  PPBUS_WAIT, 0);
 		return (res);
 	}
@@ -121,11 +122,14 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	ppbus_set_mode(sc->ppbus, PPBUS_PS2, 0);
 	ppbus_wctr(sc->ppbus, IRQENABLE | PCD | nINIT | SELECTIN);
 
+	mutex_spin_enter(&timecounter_lock);
 	memset((void *)&sc->pps_state, 0, sizeof(sc->pps_state));
 	sc->pps_state.ppscap = PPS_CAPTUREASSERT;
 	pps_init(&sc->pps_state);
+	mutex_spin_exit(&timecounter_lock);
 
 	sc->busy = 1;
+
 	return (0);
 }
 
@@ -133,17 +137,19 @@ static int
 ppsclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct pps_softc *sc = device_lookup(&pps_cd, minor(dev));
-	struct device *ppbus = sc->ppbus;
+	device_t ppbus = sc->ppbus;
 
 	sc->busy = 0;
+	mutex_spin_enter(&timecounter_lock);
 	sc->pps_state.ppsparam.mode = 0;
+	mutex_spin_exit(&timecounter_lock);
 
 	ppbus_wdtr(ppbus, 0);
 	ppbus_wctr(ppbus, 0);
 
 	ppbus_remove_handler(ppbus, ppsintr);
 	ppbus_set_mode(ppbus, PPBUS_COMPATIBLE, 0);
-	ppbus_release_bus(ppbus, &sc->pps_dev.sc_dev, PPBUS_WAIT, 0);
+	ppbus_release_bus(ppbus, sc->pps_dev.sc_dev, PPBUS_WAIT, 0);
 	return (0);
 }
 
@@ -151,20 +157,20 @@ static void
 ppsintr(void *arg)
 {
 	struct pps_softc *sc = arg;
-	struct device *ppbus = sc->ppbus;
+	device_t ppbus = sc->ppbus;
 
+	mutex_spin_enter(&timecounter_lock);
 	pps_capture(&sc->pps_state);
-
-	if (!(ppbus_rstr(ppbus) & nACK))
+	if (!(ppbus_rstr(ppbus) & nACK)) {
+		mutex_spin_exit(&timecounter_lock);
 		return;
-
+	}
 	if (sc->pps_state.ppsparam.mode & PPS_ECHOASSERT) 
 		ppbus_wctr(ppbus, IRQENABLE | AUTOFEED);
-
 	pps_event(&sc->pps_state, PPS_CAPTUREASSERT);
-
 	if (sc->pps_state.ppsparam.mode & PPS_ECHOASSERT) 
 		ppbus_wctr(ppbus, IRQENABLE);
+	mutex_spin_exit(&timecounter_lock);
 }
 
 static int
@@ -183,7 +189,9 @@ ppsioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 #ifdef PPS_SYNC
 	case PPS_IOC_KCBIND:
 #endif
+		mutex_spin_enter(&timecounter_lock);
 		error = pps_ioctl(cmd, data, &sc->pps_state);
+		mutex_spin_exit(&timecounter_lock);
 		break;
 
 	default:

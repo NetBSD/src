@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: pte.h,v 1.3.74.1 2008/06/02 13:21:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,8 +68,8 @@
  * here we define the data types for PDEs and PTEs
  */
 
-typedef u_int64_t pd_entry_t;		/* PDE */
-typedef u_int64_t pt_entry_t;		/* PTE */
+typedef uint64_t pd_entry_t;		/* PDE */
+typedef uint64_t pt_entry_t;		/* PTE */
 
 #endif
 

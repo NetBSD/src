@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.43.6.1 2008/04/03 12:42:25 mjf Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.43.6.2 2008/06/02 13:22:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,7 +39,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.43.6.1 2008/04/03 12:42:25 mjf Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.43.6.2 2008/06/02 13:22:39 mjf Exp $")
 
 
 /*
@@ -63,18 +56,19 @@ __KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.43.6.1 2008/04/03 12:42:25 mjf Exp
 #define SAVEPCB_AND_JUMP(pcb, jump)			  \
 	add	#SF_SIZE, pcb				; \
 	stc.l	r7_bank, @-pcb				; \
-	stc.l	sr, @-pcb				; \
 	stc.l	r6_bank, @-pcb				; \
-	sts.l	pr, @-pcb				; \
-	mov.l	r8, @-pcb				; \
-	mov.l	r9, @-pcb				; \
-	mov.l	r10, @-pcb				; \
-	mov.l	r11, @-pcb				; \
-	mov.l	r12, @-pcb				; \
-	mov.l	r13, @-pcb				; \
+	mov.l	r15, @-pcb				; \
 	mov.l	r14, @-pcb				; \
+	mov.l	r13, @-pcb				; \
+	mov.l	r12, @-pcb				; \
+	mov.l	r11, @-pcb				; \
+	mov.l	r10, @-pcb				; \
+	mov.l	r9, @-pcb				; \
+	mov.l	r8, @-pcb				; \
+	sts.l	pr, @-pcb				; \
+	stc.l	sr, @-pcb				; \
 	jump						; \
-	 mov.l	r15, @-pcb
+	 stc.l	gbr, @-pcb
 
 /* Hide ugly empty argument if we don't need the jump */
 #define SAVEPCB(pcb) \
@@ -144,22 +138,20 @@ ENTRY(cpu_switchto)
 	ldc	r11, sr		! __EXCEPTION_UNBLOCK
 
 	!! finish restoring new lwp's context from switchframe
+	!! sf_r15, sf_r6_bank, sf_r7_bank are already restored
 	mov	r10, r1		! &nlwp->l_md.md_pcb->pcb_sf
-	mov	r9, r2		! preserve olwp, we are about to clobber r9
-	add	#4, r1		! r15 already restored
-	mov.l	@r1+, r14
-	mov.l	@r1+, r13
-	mov.l	@r1+, r12
-	mov.l	@r1+, r11
-	mov.l	@r1+, r10
-	mov.l	@r1+, r9
-	mov.l	@r1+, r8
-	lds.l	@r1+, pr
-	add	#4, r1		! r6_bank already restored
+	mov	r9, r0		! return olwp (we are about to clobber r9)
+	ldc.l	@r1+, gbr
 	ldc.l	@r1+, sr
-				! r7_bank already restored
+	lds.l	@r1+, pr
+	mov.l	@r1+, r8
+	mov.l	@r1+, r9
+	mov.l	@r1+, r10
+	mov.l	@r1+, r11
+	mov.l	@r1+, r12
+	mov.l	@r1+, r13
 	rts
-	 mov	r2, r0		! return olwp
+	 mov.l	@r1+, r14
 
 	.align	2
 .L_curlwp:		.long	_C_LABEL(curlwp)

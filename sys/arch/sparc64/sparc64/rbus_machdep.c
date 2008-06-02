@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.9 2006/02/11 17:57:32 cdi Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.9.68.1 2008/06/02 13:22:44 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -28,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.9 2006/02/11 17:57:32 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.9.68.1 2008/06/02 13:22:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -223,7 +221,7 @@ pccbb_cardbus_isvalid(void *arg)
 	/* check CardBus card is present */
 	sockstat = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 	DPRINTF("%s: pccbb_cardbus_isvalid: sockstat %08x\n",
-		sc->sc_dev.dv_xname, sockstat);
+		device_xname(&sc->sc_dev), sockstat);
 	if ((sockstat & CB_SOCKET_STAT_CB) == 0 ||
 	    (sockstat & CB_SOCKET_STAT_CD) != 0)
 		return 0;
@@ -231,7 +229,7 @@ pccbb_cardbus_isvalid(void *arg)
 	/* check card is powered on */
 	sockctrl = bus_space_read_4(memt, memh, CB_SOCKET_CTRL);
 	DPRINTF("%s: pccbb_cardbus_isvalid: sockctrl %08x\n",
-		sc->sc_dev.dv_xname, sockctrl);
+		device_xname(&sc->sc_dev), sockctrl);
 	if ((sockctrl & CB_SOCKET_CTRL_VCCMASK) == 0)
 		return 0;
 
