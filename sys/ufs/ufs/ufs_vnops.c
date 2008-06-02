@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.165 2008/05/31 21:37:08 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.166 2008/06/02 16:00:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.165 2008/05/31 21:37:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.166 2008/06/02 16:00:33 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -222,10 +222,8 @@ ufs_close(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	mutex_enter(&vp->v_interlock);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	mutex_exit(&vp->v_interlock);
 	return (0);
 }
 
@@ -1905,10 +1903,8 @@ ufsspec_close(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	mutex_enter(&vp->v_interlock);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	mutex_exit(&vp->v_interlock);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
@@ -1970,10 +1966,8 @@ ufsfifo_close(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	mutex_enter(&vp->v_interlock);
 	if (ap->a_vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	mutex_exit(&vp->v_interlock);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 

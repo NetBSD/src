@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.122 2008/03/21 21:55:01 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.123 2008/06/02 16:08:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.122 2008/03/21 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.123 2008/06/02 16:08:41 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1163,9 +1163,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			 * then mark it as text.
 			 */
 			if (prot & PROT_EXEC) {
-				mutex_enter(&vp->v_interlock);
 				vn_markexec(vp);
-				mutex_exit(&vp->v_interlock);
 			}
 		} else {
 			int i = maxprot;
