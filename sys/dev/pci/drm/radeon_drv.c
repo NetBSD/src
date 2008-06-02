@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.6 2008/05/18 21:12:44 jmcneill Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.7 2008/06/02 13:26:46 jmcneill Exp $	*/
 
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.6 2008/05/18 21:12:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.7 2008/06/02 13:26:46 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_drv.c,v 1.14 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -198,7 +198,7 @@ radeondrm_modcmd(modcmd_t cmd, void *arg)
 		}
 		return 0;
 	case MODULE_CMD_FINI:
-		err = config_cfdriver_detach(&radeondrm_cd);
+		err = config_cfdata_detach(radeondrm_cfdata);
 		if (err)
 			return err;
 		config_cfattach_detach("radeondrm", &radeondrm_ca);
