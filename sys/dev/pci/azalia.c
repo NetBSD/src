@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.58 2008/06/02 11:33:22 jmcneill Exp $	*/
+/*	$NetBSD: azalia.c,v 1.59 2008/06/02 13:25:03 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.58 2008/06/02 11:33:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.59 2008/06/02 13:25:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2462,7 +2462,7 @@ azalia_modcmd(modcmd_t cmd, void *arg)
 		}
 		return 0;
 	case MODULE_CMD_FINI:
-		err = config_cfdriver_detach(&azalia_cd);
+		err = config_cfdata_detach(azalia_cfdata);
 		if (err)
 			return err;
 		config_cfattach_detach("azalia", &azalia_ca);
