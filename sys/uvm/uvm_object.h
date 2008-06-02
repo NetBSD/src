@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.24 2008/01/02 11:49:18 ad Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.25 2008/06/02 16:25:34 ad Exp $	*/
 
 /*
  *
@@ -50,7 +50,7 @@ struct uvm_object {
 	const struct uvm_pagerops *pgops;	/* pager ops */
 	struct pglist		memq;		/* pages in this object */
 	int			uo_npages;	/* # of pages in memq */
-	int			uo_refs;	/* reference count */
+	unsigned		uo_refs;	/* reference count */
 };
 
 /*

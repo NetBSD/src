@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.212 2008/05/16 09:22:00 hannken Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.213 2008/06/02 16:25:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.212 2008/05/16 09:22:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.213 2008/06/02 16:25:34 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -375,10 +375,6 @@ lfs_vflush(struct vnode *vp)
 	if (vp->v_uflag & VU_DIROP) {
 		DLOG((DLOG_VNODE, "lfs_vflush: flushing VU_DIROP\n"));
 		/* panic("lfs_vflush: VU_DIROP being flushed...this can\'t happen"); */
-	}
-	if (vp->v_usecount < 0) {
-		printf("usecount=%ld\n", (long)vp->v_usecount);
-		panic("lfs_vflush: usecount<0");
 	}
 #endif
 
