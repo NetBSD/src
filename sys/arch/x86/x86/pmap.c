@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 2008/06/02 14:41:41 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 2008/06/02 19:18:12 drochner Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2008/06/02 14:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2008/06/02 19:18:12 drochner Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2965,7 +2965,7 @@ pmap_zero_page(paddr_t pa)
 
 	memset(zerova, 0, PAGE_SIZE);
 
-#if defined(XEN)
+#if defined(DIAGNOSTIC) || defined(XEN)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
 #endif
@@ -2999,7 +2999,7 @@ pmap_pageidlezero(paddr_t pa)
 
 	rv = sse2_idlezero_page(zerova);
 
-#ifdef XEN
+#if defined(DIAGNOSTIC) || defined(XEN)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
 #endif
@@ -3037,7 +3037,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 
 	memcpy(cdstva, csrcva, PAGE_SIZE);
 
-#ifdef XEN
+#if defined(DIAGNOSTIC) || defined(XEN)
 	pmap_pte_set(spte, 0);
 	pmap_pte_set(dpte, 0);
 	pmap_pte_flush();
