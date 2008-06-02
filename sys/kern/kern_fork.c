@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.168 2008/06/02 13:58:07 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.169 2008/06/02 16:18:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.168 2008/06/02 13:58:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.169 2008/06/02 16:18:09 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -369,6 +369,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_slflag = 0;
 	parent = (flags & FORK_NOWAIT) ? initproc : p1;
 	p2->p_pptr = parent;
+	p2->p_ppid = parent->p_pid;
 	LIST_INIT(&p2->p_children);
 
 	p2->p_aio = NULL;
