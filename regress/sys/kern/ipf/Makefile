@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2008/05/20 07:08:08 darrenr Exp $
+#	$NetBSD: Makefile,v 1.19 2008/06/02 11:48:38 darrenr Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -6,8 +6,7 @@
 #
 .include <bsd.prog.mk>
 
-regress all: results tests
-all: expected.d results tests
+regress all: expected.d results tests
 
 expected.d:
 	(cd expected; make)
