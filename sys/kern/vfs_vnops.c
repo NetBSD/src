@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.157 2008/06/02 15:29:18 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.158 2008/06/02 16:08:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.157 2008/06/02 15:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.158 2008/06/02 16:08:41 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -254,13 +254,18 @@ void
 vn_markexec(struct vnode *vp)
 {
 
-	KASSERT(mutex_owned(&vp->v_interlock));
+	if ((vp->v_iflag & VI_EXECMAP) != 0) {
+		/* Safe unlocked, as long as caller holds a reference. */
+		return;
+	}
 
+	mutex_enter(&vp->v_interlock);
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
 		atomic_add_int(&uvmexp.filepages, -vp->v_uobj.uo_npages);
 		atomic_add_int(&uvmexp.execpages, vp->v_uobj.uo_npages);
+		vp->v_iflag |= VI_EXECMAP;
 	}
-	vp->v_iflag |= VI_EXECMAP;
+	mutex_exit(&vp->v_interlock);
 }
 
 /*
@@ -273,6 +278,7 @@ vn_marktext(struct vnode *vp)
 
 	if ((vp->v_iflag & (VI_TEXT|VI_EXECMAP)) == (VI_TEXT|VI_EXECMAP)) {
 		/* Safe unlocked, as long as caller holds a reference. */
+		return (0);
 	}
 
 	mutex_enter(&vp->v_interlock);
@@ -281,8 +287,11 @@ vn_marktext(struct vnode *vp)
 		mutex_exit(&vp->v_interlock);
 		return (ETXTBSY);
 	}
-	vp->v_iflag |= VI_TEXT;
-	vn_markexec(vp);
+	if ((vp->v_iflag & VI_EXECMAP) == 0) {
+		atomic_add_int(&uvmexp.filepages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.execpages, vp->v_uobj.uo_npages);
+	}
+	vp->v_iflag |= (VI_TEXT | VI_EXECMAP);
 	mutex_exit(&vp->v_interlock);
 	return (0);
 }
@@ -297,10 +306,12 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred)
 {
 	int error;
 
-	mutex_enter(&vp->v_interlock);
-	if (flags & FWRITE)
+	if (flags & FWRITE) {
+		mutex_enter(&vp->v_interlock);
 		vp->v_writecount--;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
+		mutex_exit(&vp->v_interlock);
+	}
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(vp, flags, cred);
 	vput(vp);
 	return (error);
