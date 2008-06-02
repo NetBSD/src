@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.156 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.157 2008/06/02 15:29:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.156 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.157 2008/06/02 15:29:18 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -270,6 +270,10 @@ vn_markexec(struct vnode *vp)
 int
 vn_marktext(struct vnode *vp)
 {
+
+	if ((vp->v_iflag & (VI_TEXT|VI_EXECMAP)) == (VI_TEXT|VI_EXECMAP)) {
+		/* Safe unlocked, as long as caller holds a reference. */
+	}
 
 	mutex_enter(&vp->v_interlock);
 	if (vp->v_writecount != 0) {
@@ -678,9 +682,15 @@ vn_lock(struct vnode *vp, int flags)
 	    == 0);
 
 	do {
-		if ((flags & LK_INTERLOCK) == 0)
-			mutex_enter(&vp->v_interlock);
+		/*
+		 * XXX PR 37706 forced unmount of file systems is unsafe.
+		 * Race between vclean() and this the remaining problem.
+		 */
 		if (vp->v_iflag & VI_XLOCK) {
+			if ((flags & LK_INTERLOCK) == 0) {
+				mutex_enter(&vp->v_interlock);
+			}
+			flags &= ~LK_INTERLOCK;
 			if (flags & LK_NOWAIT) {
 				mutex_exit(&vp->v_interlock);
 				return EBUSY;
@@ -689,12 +699,14 @@ vn_lock(struct vnode *vp, int flags)
 			mutex_exit(&vp->v_interlock);
 			error = ENOENT;
 		} else {
-			error = VOP_LOCK(vp,
-			    (flags & ~LK_RETRY) | LK_INTERLOCK);
+			if ((flags & LK_INTERLOCK) != 0) {
+				mutex_exit(&vp->v_interlock);
+			}
+			flags &= ~LK_INTERLOCK;
+			error = VOP_LOCK(vp, (flags & ~LK_RETRY));
 			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);
 		}
-		flags &= ~LK_INTERLOCK;
 	} while (flags & LK_RETRY);
 	return (error);
 }
