@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 2008/05/28 11:50:01 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65 2008/06/02 14:41:41 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2008/05/28 11:50:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2008/06/02 14:41:41 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2963,12 +2963,9 @@ pmap_zero_page(paddr_t pa)
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
-	if (cpu_feature & CPUID_SSE2)
-		sse2_zero_page(zerova);
-	else
-		memset(zerova, 0, PAGE_SIZE);
+	memset(zerova, 0, PAGE_SIZE);
 
-#if defined(DIAGNOSTIC) || defined(XEN)
+#if defined(XEN)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
 #endif
@@ -2984,9 +2981,30 @@ pmap_zero_page(paddr_t pa)
 bool
 pmap_pageidlezero(paddr_t pa)
 {
+	pt_entry_t *zpte;
+	void *zerova;
+	bool rv;
+	int id;
 
-	pmap_zero_page(pa);
-	return true;
+	id = cpu_number();
+	zpte = PTESLEW(zero_pte, id);
+	zerova = VASLEW(zerop, id);
+
+	KASSERT(cpu_feature & CPUID_SSE2);
+	KASSERT(*zpte == 0);
+
+	pmap_pte_set(zpte, pmap_pa2pte(pa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
+	pmap_pte_flush();
+	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
+
+	rv = sse2_idlezero_page(zerova);
+
+#ifdef XEN
+	pmap_pte_set(zpte, 0);				/* zap ! */
+	pmap_pte_flush();
+#endif
+
+	return rv;
 }
 
 /*
@@ -3009,21 +3027,17 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	csrcva = VASLEW(csrcp, id);
 	cdstva = VASLEW(cdstp, id);
 	
-#ifdef DIAGNOSTIC
-	if (*spte || *dpte)
-		panic("pmap_copy_page: lock botch");
-#endif
+	KASSERT(*spte == 0 && *dpte == 0);
 
 	pmap_pte_set(spte, pmap_pa2pte(srcpa) | PG_V | PG_RW | PG_U | PG_k);
 	pmap_pte_set(dpte,
 	    pmap_pa2pte(dstpa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
 	pmap_pte_flush();
 	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
-	if (cpu_feature & CPUID_SSE2)
-		sse2_copy_page(csrcva, cdstva);
-	else
-		memcpy(cdstva, csrcva, PAGE_SIZE);
-#if defined(DIAGNOSTIC) || defined(XEN)
+
+	memcpy(cdstva, csrcva, PAGE_SIZE);
+
+#ifdef XEN
 	pmap_pte_set(spte, 0);
 	pmap_pte_set(dpte, 0);
 	pmap_pte_flush();
