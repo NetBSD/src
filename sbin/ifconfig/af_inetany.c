@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.9 2008/05/28 17:17:14 dyoung Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.10 2008/06/02 23:19:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.9 2008/05/28 17:17:14 dyoung Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.10 2008/06/02 23:19:16 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -131,6 +131,7 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	case IFF_BROADCAST:
 		if (brd != NULL)
 			loadbuf(&param->brd, brd);
+		/*FALLTHROUGH*/
 	case 0:
 		if (mask != NULL)
 			loadbuf(&param->mask, mask);
