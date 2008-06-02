@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1154 2008/05/28 12:28:12 ad Exp $
+#	$NetBSD: mi,v 1.1155 2008/06/02 18:39:36 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1333,7 +1333,6 @@
 ./usr/include/krb5/pkcs10_asn1.h		comp-krb5-include	kerberos
 ./usr/include/krb5/pkcs12_asn1.h		comp-krb5-include	kerberos
 ./usr/include/krb5/pkcs8_asn1.h			comp-krb5-include	kerberos
-./usr/include/krb5/pkcs9_asn1.h			comp-krb5-include	kerberos
 ./usr/include/krb5/pkcs9_asn1.h			comp-krb5-include	kerberos
 ./usr/include/krb5/pkinit_asn1.h		comp-krb5-include	kerberos
 ./usr/include/krb5/resolve.h			comp-krb5-include	kerberos
