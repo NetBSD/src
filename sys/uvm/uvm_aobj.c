@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.97.6.1 2008/04/03 12:43:14 mjf Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.97.6.2 2008/06/02 13:24:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.97.6.1 2008/04/03 12:43:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.97.6.2 2008/06/02 13:24:37 mjf Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -221,6 +221,27 @@ static kmutex_t uao_list_lock;
  */
 
 #if defined(VMSWAP)
+
+/*
+ * uao_hashinit: limited version of hashinit() that uses malloc(). XXX
+ */
+static void *
+uao_hashinit(u_int elements, int mflags, u_long *hashmask)
+{
+	LIST_HEAD(, generic) *elm, *emx;
+	u_long hashsize;
+	void *p;
+
+	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
+		continue;
+	if ((p = malloc(hashsize * sizeof(*elm), M_UVMAOBJ, mflags)) == NULL)
+		return (NULL);
+	for (elm = p, emx = elm + hashsize; elm < emx; elm++)
+		LIST_INIT(elm);
+	*hashmask = hashsize - 1;
+
+	return (p);
+}
 
 /*
  * uao_find_swhash_elt: find (or create) a hash table entry for a page
@@ -502,8 +523,8 @@ uao_create(vsize_t size, int flags)
 
 		/* allocate hash table or array depending on object size */
 		if (UAO_USES_SWHASH(aobj)) {
-			aobj->u_swhash = hashinit(UAO_SWHASH_BUCKETS(aobj),
-			    HASH_LIST, M_UVMAOBJ, mflags, &aobj->u_swhashmask);
+			aobj->u_swhash = uao_hashinit(UAO_SWHASH_BUCKETS(aobj),
+			    mflags, &aobj->u_swhashmask);
 			if (aobj->u_swhash == NULL)
 				panic("uao_create: hashinit swhash failed");
 		} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.27 2007/11/19 18:51:48 ad Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.27.14.1 2008/06/02 13:23:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.27 2007/11/19 18:51:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.27.14.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include "opt_kgdb.h"
 
@@ -536,7 +536,7 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	    (gt_reva_gtmpsc_bug) ? " [Rev A. bug]" : "");
 
 	if (is_console)
-		aprint_normal("%s: console\n", sc->gtmpsc_dev.dv_xname);
+		aprint_normal_dev(&sc->gtmpsc_dev, "console\n");
 
 #ifdef DDB
 	if (is_console == 0)
@@ -551,13 +551,12 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (sc->gtmpsc_unit == comkgdbport) {
 		if (comkgdbport == 0) { /* FIXME */
-			printf("%s(kgdb): cannot share with console\n",
-				sc->gtmpsc_dev.dv_xname);
+			aprint_error_dev(&sc->gtmpsc_dev, "(kgdb): cannot share with console\n");
 			return;
 		}
 
 		sc->gtmpsc_flags |= GTMPSCF_KGDB;
-		printf("%s: kgdb\n", sc->gtmpsc_dev.dv_xname);
+		printf("%s: kgdb\n", device_xname(&sc->gtmpsc_dev));
 		gtmpsc_txflush(gtmpsc_scp[0]);
 		kgdb_attach(gtmpsc_kgdb_getc, gtmpsc_kgdb_putc, NULL);
 		kgdb_dev = 123; /* unneeded, only to satisfy some tests */
@@ -1114,7 +1113,7 @@ gtmpsc_iflush(gtmpsc_softc_t *sc)
 		if (gtmpsc_common_pollc(sc->gtmpsc_unit, &c, &stat) == 0)
 			return;
 #ifdef DIAGNOSTIC
-	printf("%s: gtmpsc_iflush timeout %02x\n", sc->gtmpsc_dev.dv_xname, c);
+	printf("%s: gtmpsc_iflush timeout %02x\n", device_xname(&sc->gtmpsc_dev), c);
 #endif
 }
 

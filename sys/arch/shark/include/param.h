@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2003/01/03 02:40:58 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.3.106.1 2008/06/02 13:22:39 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -39,5 +39,7 @@
 #define	MACHINE		"shark"
 
 #include <arm/arm32/param.h>
+
+#define PCI_MAGIC_IO_RANGE	0xf0000000
 
 #endif	/* _ARM32_PARAM_H_ */

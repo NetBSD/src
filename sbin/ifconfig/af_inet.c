@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.5 2006/11/13 05:13:39 dyoung Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.5.18.1 2008/06/02 13:21:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.5 2006/11/13 05:13:39 dyoung Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.5.18.1 2008/06/02 13:21:22 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: af_inet.c,v 1.5 2006/11/13 05:13:39 dyoung Exp $");
 
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <ifaddrs.h>
@@ -53,30 +54,23 @@ __RCSID("$NetBSD: af_inet.c,v 1.5 2006/11/13 05:13:39 dyoung Exp $");
 #include <stdio.h>
 #include <util.h>
 
+#include "env.h"
 #include "extern.h"
 #include "af_inet.h"
+#include "af_inetany.h"
 
+static void in_alias(const char *, prop_dictionary_t, prop_dictionary_t,
+    struct in_aliasreq *);
 static void in_preference(const char *, const struct sockaddr *);
 
-struct in_aliasreq in_addreq;
-
-int	setipdst;
-
-void
-setifipdst(const char *addr, int d)
+static void
+in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
+    struct in_aliasreq *creq)
 {
-
-	in_getaddr(addr, DSTADDR);
-	setipdst++;
-	clearaddr = 0;
-	newaddr = 0;
-}
-
-void
-in_alias(struct ifreq *creq)
-{
-	struct sockaddr_in *iasin;
-	int alias;
+	struct ifreq ifr;
+	int alias, s;
+	unsigned short flags;
+	struct in_aliasreq in_addreq;
 
 	if (lflag)
 		return;
@@ -84,28 +78,22 @@ in_alias(struct ifreq *creq)
 	alias = 1;
 
 	/* Get the non-alias address for this interface. */
-	getsock(AF_INET);
-	if (s < 0) {
+	if ((s = getsock(AF_INET)) == -1) {
 		if (errno == EAFNOSUPPORT)
 			return;
 		err(EXIT_FAILURE, "socket");
 	}
-	(void) memset(&ifr, 0, sizeof(ifr));
-	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	memset(&ifr, 0, sizeof(ifr));
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFADDR, &ifr) == -1) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
+		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT)
 			return;
-		} else
-			warn("SIOCGIFADDR");
+		warn("SIOCGIFADDR");
 	}
 	/* If creq and ifr are the same address, this is not an alias. */
-	if (memcmp(&ifr.ifr_addr, &creq->ifr_addr,
-		   sizeof(creq->ifr_addr)) == 0)
+	if (memcmp(&ifr.ifr_addr, &creq->ifra_addr, sizeof(ifr.ifr_addr)) == 0)
 		alias = 0;
-	(void) memset(&in_addreq, 0, sizeof(in_addreq));
-	estrlcpy(in_addreq.ifra_name, name, sizeof(in_addreq.ifra_name));
-	memcpy(&in_addreq.ifra_addr, &creq->ifr_addr,
-	    sizeof(in_addreq.ifra_addr));
+	in_addreq = *creq;
 	if (ioctl(s, SIOCGIFALIAS, &in_addreq) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			return;
@@ -113,38 +101,37 @@ in_alias(struct ifreq *creq)
 			warn("SIOCGIFALIAS");
 	}
 
-	iasin = &in_addreq.ifra_addr;
-	printf("\tinet %s%s", alias ? "alias " : "", inet_ntoa(iasin->sin_addr));
+	printf("\tinet %s%s", alias ? "alias " : "",
+	    inet_ntoa(in_addreq.ifra_addr.sin_addr));
 
-	if (flags & IFF_POINTOPOINT) {
-		iasin = &in_addreq.ifra_dstaddr;
-		printf(" -> %s", inet_ntoa(iasin->sin_addr));
-	}
+	if (getifflags(env, oenv, &flags) == -1)
+		err(EXIT_FAILURE, "%s: getifflags", __func__);
 
-	iasin = &in_addreq.ifra_mask;
-	printf(" netmask 0x%x", ntohl(iasin->sin_addr.s_addr));
+	if (flags & IFF_POINTOPOINT)
+		printf(" -> %s", inet_ntoa(in_addreq.ifra_dstaddr.sin_addr));
+
+	printf(" netmask 0x%x", ntohl(in_addreq.ifra_mask.sin_addr.s_addr));
 
 	if (flags & IFF_BROADCAST) {
-		iasin = &in_addreq.ifra_broadaddr;
-		printf(" broadcast %s", inet_ntoa(iasin->sin_addr));
+		printf(" broadcast %s",
+		    inet_ntoa(in_addreq.ifra_broadaddr.sin_addr));
 	}
 }
 
-static uint16_t
+static int16_t
 in_get_preference(const char *ifname, const struct sockaddr *sa)
 {
 	struct if_addrprefreq ifap;
+	int s;
 
-	getsock(AF_INET);
-	if (s < 0) {
+	if ((s = getsock(AF_INET)) == -1) {
 		if (errno == EPROTONOSUPPORT)
 			return 0;
 		err(EXIT_FAILURE, "socket");
 	}
-	(void)memset(&ifap, 0, sizeof(ifap));
-	(void)strncpy(ifap.ifap_name, name, sizeof(ifap.ifap_name));
-	(void)memcpy(&ifap.ifap_addr, sa,
-	    MIN(sizeof(ifap.ifap_addr), sa->sa_len));
+	memset(&ifap, 0, sizeof(ifap));
+	estrlcpy(ifap.ifap_name, ifname, sizeof(ifap.ifap_name));
+	memcpy(&ifap.ifap_addr, sa, MIN(sizeof(ifap.ifap_addr), sa->sa_len));
 	if (ioctl(s, SIOCGIFADDRPREF, &ifap) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT)
 			return 0;
@@ -156,29 +143,34 @@ in_get_preference(const char *ifname, const struct sockaddr *sa)
 static void
 in_preference(const char *ifname, const struct sockaddr *sa)
 {
-	uint16_t preference;
+	int16_t preference;
 
 	if (lflag)
 		return;
 
 	preference = in_get_preference(ifname, sa);
-	printf(" preference %" PRIu16, preference);
+	printf(" preference %" PRId16, preference);
 }
 
 void
-in_status(int force)
+in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct ifaddrs *ifap, *ifa;
-	struct ifreq isifr;
+	struct in_aliasreq ifra;
 	int printprefs = 0;
+	const char *ifname;
+
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
 
 	if (getifaddrs(&ifap) != 0)
 		err(EXIT_FAILURE, "getifaddrs");
+
 	/* Print address preference numbers if any address has a non-zero
 	 * preference assigned.
 	 */
-	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (strcmp(name, ifa->ifa_name) != 0)
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (strcmp(ifname, ifa->ifa_name) != 0)
 			continue;
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
@@ -187,86 +179,50 @@ in_status(int force)
 			break;
 		}
 	}
-	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (strcmp(name, ifa->ifa_name) != 0)
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (strcmp(ifname, ifa->ifa_name) != 0)
 			continue;
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
-		if (sizeof(isifr.ifr_addr) < ifa->ifa_addr->sa_len)
+		if (sizeof(ifra.ifra_addr) < ifa->ifa_addr->sa_len)
 			continue;
 
-		memset(&isifr, 0, sizeof(isifr));
-		estrlcpy(isifr.ifr_name, ifa->ifa_name, sizeof(isifr.ifr_name));
-		memcpy(&isifr.ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
-		in_alias(&isifr);
+		memset(&ifra, 0, sizeof(ifra));
+		estrlcpy(ifra.ifra_name, ifa->ifa_name, sizeof(ifra.ifra_name));
+		memcpy(&ifra.ifra_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
+		in_alias(ifa->ifa_name, env, oenv, &ifra);
 		if (printprefs)
 			in_preference(ifa->ifa_name, ifa->ifa_addr);
 		printf("\n");
 	}
-	if (ifa != NULL) {
-		for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-			if (strcmp(name, ifa->ifa_name) != 0)
-				continue;
-			if (ifa->ifa_addr->sa_family != AF_INET)
-				continue;
-		}
-	}
 	freeifaddrs(ifap);
 }
 
-#define SIN(x) ((struct sockaddr_in *) &(x))
-struct sockaddr_in *sintab[] = {
-    SIN(ridreq.ifr_addr), SIN(in_addreq.ifra_addr),
-    SIN(in_addreq.ifra_mask), SIN(in_addreq.ifra_broadaddr)};
-
 void
-in_getaddr(const char *str, int which)
+in_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-	struct sockaddr_in *gasin = sintab[which];
-	struct hostent *hp;
-	struct netent *np;
-
-	gasin->sin_len = sizeof(*gasin);
-	if (which != MASK)
-		gasin->sin_family = AF_INET;
-
-	if (which == ADDR) {
-		char *p = NULL;
-		if ((p = strrchr(str, '/')) != NULL) {
-			*p = '\0';
-			in_getprefix(p + 1, MASK);
-		}
-	}
-
-	if (inet_aton(str, &gasin->sin_addr) == 0) {
-		if ((hp = gethostbyname(str)) != NULL)
-			(void) memcpy(&gasin->sin_addr, hp->h_addr, hp->h_length);
-		else if ((np = getnetbyname(str)) != NULL)
-			gasin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
-		else
-			errx(EXIT_FAILURE, "%s: bad value", str);
-	}
-}
-
-void
-in_getprefix(const char *plen, int which)
-{
-	struct sockaddr_in *igsin = sintab[which];
-	u_char *cp;
-	int len = strtol(plen, (char **)NULL, 10);
-
-	if ((len < 0) || (len > 32))
-		errx(EXIT_FAILURE, "%s: bad value", plen);
-	igsin->sin_len = sizeof(*igsin);
-	if (which != MASK)
-		igsin->sin_family = AF_INET;
-	if ((len == 0) || (len == 32)) {
-		memset(&igsin->sin_addr, 0xff, sizeof(struct in_addr));
-		return;
-	}
-	memset((void *)&igsin->sin_addr, 0x00, sizeof(igsin->sin_addr));
-	for (cp = (u_char *)&igsin->sin_addr; len > 7; len -= 8)
-		*cp++ = 0xff;
-	if (len)
-		*cp = 0xff << (8 - len);
+	struct ifreq in_ifr;
+	struct in_aliasreq in_ifra;
+	struct afparam inparam = {
+		  .req = BUFPARAM(in_ifra)
+		, .dgreq = BUFPARAM(in_ifr)
+		, .name = {
+			  {.buf = in_ifr.ifr_name,
+			   .buflen = sizeof(in_ifr.ifr_name)}
+			, {.buf = in_ifra.ifra_name,
+			   .buflen = sizeof(in_ifra.ifra_name)}
+		  }
+		, .dgaddr = BUFPARAM(in_ifr.ifr_addr)
+		, .addr = BUFPARAM(in_ifra.ifra_addr)
+		, .dst = BUFPARAM(in_ifra.ifra_dstaddr)
+		, .brd = BUFPARAM(in_ifra.ifra_broadaddr)
+		, .mask = BUFPARAM(in_ifra.ifra_mask)
+		, .aifaddr = IFADDR_PARAM(SIOCAIFADDR)
+		, .difaddr = IFADDR_PARAM(SIOCDIFADDR)
+		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR)
+		, .defmask = {.buf = NULL, .buflen = 0}
+	};
+	memset(&in_ifr, 0, sizeof(in_ifr));
+	memset(&in_ifra, 0, sizeof(in_ifra));
+	commit_address(env, oenv, &inparam);
 }

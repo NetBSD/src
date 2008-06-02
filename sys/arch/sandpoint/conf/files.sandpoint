@@ -1,6 +1,6 @@
-#	$NetBSD: files.sandpoint,v 1.24 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.sandpoint,v 1.24.6.1 2008/06/02 13:22:36 mjf Exp $
 #
-# Motorola's "SandPoint" evaluation board's specific configuration info
+# Motorola's "SandPoint" evaluation board and multiplied descendents.
 #
 maxpartitions 16
 
@@ -10,14 +10,11 @@ include "arch/powerpc/pic/files.pic"
 
 file	arch/sandpoint/sandpoint/machdep.c
 file	arch/sandpoint/sandpoint/autoconf.c
-file	arch/sandpoint/sandpoint/disksubr.c		disk
-
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
+file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 file	arch/powerpc/powerpc/clock.c
-file	arch/powerpc/powerpc/procfs_machdep.c		procfs
-
-# General files
+file	kern/subr_disk_mbr.c			disk
 file	dev/cons.c
 
 #

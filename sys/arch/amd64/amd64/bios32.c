@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.11 2007/12/09 20:27:43 jmcneill Exp $	*/
+/*	$NetBSD: bios32.c,v 1.11.10.1 2008/06/02 13:21:48 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -67,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.11 2007/12/09 20:27:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.11.10.1 2008/06/02 13:21:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +113,7 @@ bios32_init()
 		if (*(p + 9) != 1)
 			continue;
 
-		entry = *(u_int32_t *)(p + 4);
+		entry = *(uint32_t *)(p + 4);
 
 		aprint_verbose("BIOS32 rev. %d found at 0x%lx\n",
 		    *(p + 8), entry);
@@ -146,7 +139,7 @@ bios32_init()
 	for (p = ISA_HOLE_VADDR(SMBIOS_START);
 	    p < (uint8_t *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
 		struct smbhdr * sh = (struct smbhdr *)p;
-		u_int8_t chksum;
+		uint8_t chksum;
 		vaddr_t eva;
 		paddr_t pa, end;
 
@@ -172,7 +165,7 @@ bios32_init()
 		if (eva == 0)
 			break;
 
-		smbios_entry.addr = (u_int8_t *)(eva +
+		smbios_entry.addr = (uint8_t *)(eva +
 		    (sh->addr & PGOFSET));
 		smbios_entry.len = sh->size;
 		smbios_entry.mjr = sh->majrev;
@@ -200,12 +193,9 @@ bios32_init()
  * in the entry point information.
  */
 int
-bios32_service(service, e, ei)
-	u_int32_t service;
-	bios32_entry_t e;
-	bios32_entry_info_t ei;
+bios32_service(uint32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 {
-	u_int32_t eax, ebx, ecx, edx;
+	uint32_t eax, ebx, ecx, edx;
 	paddr_t entry;
 
 	if (bios32_entry.offset == 0)
@@ -251,9 +241,9 @@ bios32_service(service, e, ei)
  * smbios_find_table with the same arguments.
  */
 int
-smbios_find_table(u_int8_t type, struct smbtable *st)
+smbios_find_table(uint8_t type, struct smbtable *st)
 {
-	u_int8_t *va, *end;
+	uint8_t *va, *end;
 	struct smbtblhdr *hdr;
 	int ret = 0, tcount = 1;
 
@@ -268,10 +258,10 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 	 * preceding that referenced by the handle is encoded in bits 15:31.
 	 */
 	if ((st->cookie & 0xfff) == type && st->cookie >> 16) {
-		if ((u_int8_t *)st->hdr >= va && (u_int8_t *)st->hdr < end) {
+		if ((uint8_t *)st->hdr >= va && (uint8_t *)st->hdr < end) {
 			hdr = st->hdr;
 			if (hdr->type == type) {
-				va = (u_int8_t *)hdr + hdr->size;
+				va = (uint8_t *)hdr + hdr->size;
 				for (; va + 1 < end; va++)
 					if (*va == 0 && *(va + 1) == 0)
 						break;
@@ -303,13 +293,13 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 }
 
 char *
-smbios_get_string(struct smbtable *st, u_int8_t indx, char *dest, size_t len)
+smbios_get_string(struct smbtable *st, uint8_t indx, char *dest, size_t len)
 {
-	u_int8_t *va, *end;
+	uint8_t *va, *end;
 	char *ret = NULL;
 	int i;
 
-	va = (u_int8_t *)st->hdr + st->hdr->size;
+	va = (uint8_t *)st->hdr + st->hdr->size;
 	end = smbios_entry.addr + smbios_entry.len;
 	for (i = 1; va < end && i < indx && *va; i++)
 		while (*va++)

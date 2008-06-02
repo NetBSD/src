@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.26.14.1 2008/04/03 12:42:53 mjf Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.26.14.2 2008/06/02 13:23:44 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.26.14.1 2008/04/03 12:42:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.26.14.2 2008/06/02 13:23:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ viaenv_attach(device_t parent, device_t self, void *aux)
 	}
 
 	iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_HWMON_CONF);
-	DPRINTF(("%s: iobase 0x%x\n", sc->sc_dev.dv_xname, iobase));
+	DPRINTF(("%s: iobase 0x%x\n", device_xname(self), iobase));
 	control = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_HWMON_CTL);
 
 	/* Check if the Hardware Monitor enable bit is set */

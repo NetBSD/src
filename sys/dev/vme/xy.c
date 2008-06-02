@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.78 2008/02/06 12:13:47 elad Exp $	*/
+/*	$NetBSD: xy.c,v 1.78.6.1 2008/06/02 13:23:57 mjf Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.78 2008/02/06 12:13:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.78.6.1 2008/06/02 13:23:57 mjf Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -271,7 +271,7 @@ xygetdisklabel(xy, b)
 					xydummystrat,
 				xy->sc_dk.dk_label, xy->sc_dk.dk_cpulabel);
 	if (err) {
-		printf("%s: %s\n", xy->sc_dev.dv_xname, err);
+		printf("%s: %s\n", device_xname(&xy->sc_dev), err);
 		return(XY_ERR_FAIL);
 	}
 
@@ -284,11 +284,11 @@ xygetdisklabel(xy, b)
 #endif
 	{
 		printf("%s: WARNING: no `pcyl' in disk label.\n",
-			xy->sc_dev.dv_xname);
+			device_xname(&xy->sc_dev));
 		xy->pcyl = xy->sc_dk.dk_label->d_ncylinders +
 			xy->sc_dk.dk_label->d_acylinders;
 		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n",
-		xy->sc_dev.dv_xname, xy->pcyl);
+			device_xname(&xy->sc_dev), xy->pcyl);
 	}
 
 	xy->ncyl = xy->sc_dk.dk_label->d_ncylinders;
@@ -463,8 +463,8 @@ xycattach(parent, self, aux)
 				BUS_DMA_NOWAIT,
 				&xyc->auxmap)) != 0) {
 
-		printf("%s: DMA buffer map create error %d\n",
-			xyc->sc_dev.dv_xname, error);
+		aprint_error_dev(&xyc->sc_dev, "DMA buffer map create error %d\n",
+			error);
 		return;
 	}
 
@@ -481,8 +481,8 @@ xycattach(parent, self, aux)
 				BUS_DMA_NOWAIT,
 				&xyc->iopmap)) != 0) {
 
-		printf("%s: DMA buffer map create error %d\n",
-			xyc->sc_dev.dv_xname, error);
+		aprint_error_dev(&xyc->sc_dev, "DMA buffer map create error %d\n",
+			error);
 		return;
 	}
 
@@ -491,8 +491,8 @@ xycattach(parent, self, aux)
 				     XYC_MAXIOPB * sizeof(struct xy_iopb),
 				     (void **)&xyc->iopbase,
 				     &busaddr)) != 0) {
-		printf("%s: DMA buffer alloc error %d\n",
-			xyc->sc_dev.dv_xname, error);
+		aprint_error_dev(&xyc->sc_dev, "DMA buffer alloc error %d\n",
+			error);
 		return;
 	}
 	xyc->dvmaiopb = (struct xy_iopb *)(u_long)BUS_ADDR_PADDR(busaddr);
@@ -533,8 +533,8 @@ xycattach(parent, self, aux)
 				BUS_DMA_NOWAIT,
 				&xyc->reqs[lcv].dmamap)) != 0) {
 
-			printf("%s: DMA buffer map create error %d\n",
-				xyc->sc_dev.dv_xname, error);
+			aprint_error_dev(&xyc->sc_dev, "DMA buffer map create error %d\n",
+				error);
 			return;
 		}
 	}
@@ -558,13 +558,13 @@ xycattach(parent, self, aux)
 		printf(" [OLS disabled]"); /* 450 doesn't overlap seek right */
 	printf("\n");
 	if (error) {
-		printf("%s: error: %s\n", xyc->sc_dev.dv_xname,
+		aprint_error_dev(&xyc->sc_dev, "error: %s\n",
 				xyc_e2str(error));
 		return;
 	}
 	if ((xyc->xyc->xyc_csr & XYC_ADRM) == 0) {
 		printf("%s: 24 bit addressing turned off\n",
-			xyc->sc_dev.dv_xname);
+			device_xname(&xyc->sc_dev));
 		printf("please set hardware jumpers JM1-JM2=in, JM3-JM4=out\n");
 		printf("to enable 24 bit mode and this driver\n");
 		return;
@@ -574,7 +574,7 @@ xycattach(parent, self, aux)
 	vme_intr_map(ct, va->ilevel, va->ivector, &ih);
 	vme_intr_establish(ct, ih, IPL_BIO, xycintr, xyc);
 	evcnt_attach_dynamic(&xyc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    xyc->sc_dev.dv_xname, "intr");
+	    device_xname(&xyc->sc_dev), "intr");
 
 	callout_init(&xyc->sc_tick_ch, 0);
 
@@ -672,7 +672,7 @@ xyattach(parent, self, aux)
 			}
 		}
 		printf("%s at %s",
-			xy->sc_dev.dv_xname, xy->parent->sc_dev.dv_xname);
+			device_xname(&xy->sc_dev), device_xname(&xy->parent->sc_dev));
 	}
 
 	/* we now have control */
@@ -684,8 +684,8 @@ xyattach(parent, self, aux)
 				     XYFM_BPS,
 				     (void **)&buf,
 				     &busaddr)) != 0) {
-		printf("%s: DMA buffer alloc error %d\n",
-			xyc->sc_dev.dv_xname, error);
+		aprint_error_dev(&xyc->sc_dev, "DMA buffer alloc error %d\n",
+			error);
 		return;
 	}
 	dmaddr = (void *)(u_long)BUS_ADDR_PADDR(busaddr);
@@ -726,8 +726,9 @@ xyattach(parent, self, aux)
 	}
 
 	if (error != XY_ERR_AOK) {
-		printf("\n%s: reading disk label failed: %s\n",
-			xy->sc_dev.dv_xname, xyc_e2str(error));
+		aprint_normal("\n");
+		aprint_error_dev(&xy->sc_dev, "reading disk label failed: %s\n",
+			xyc_e2str(error));
 		goto done;
 	}
 	printf(" (drive type %d)\n", xy->drive_type);
@@ -736,18 +737,18 @@ xyattach(parent, self, aux)
 
 	xy->hw_spt = spt = 0; /* XXX needed ? */
 	/* Attach the disk: must be before getdisklabel to malloc label */
-	disk_init(&xy->sc_dk, xy->sc_dev.dv_xname, &xydkdriver);
+	disk_init(&xy->sc_dk, device_xname(&xy->sc_dev), &xydkdriver);
 	disk_attach(&xy->sc_dk);
 
 	if (xygetdisklabel(xy, buf) != XY_ERR_AOK)
 		goto done;
 
 	/* inform the user of what is up */
-	printf("%s: <%s>, pcyl %d\n", xy->sc_dev.dv_xname,
+	printf("%s: <%s>, pcyl %d\n", device_xname(&xy->sc_dev),
 		buf, xy->pcyl);
 	mb = xy->ncyl * (xy->nhead * xy->nsect) / (1048576 / XYFM_BPS);
 	printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
-		xy->sc_dev.dv_xname, mb, xy->ncyl, xy->nhead, xy->nsect,
+		device_xname(&xy->sc_dev), mb, xy->ncyl, xy->nhead, xy->nsect,
 		XYFM_BPS);
 
 	/*
@@ -768,8 +769,8 @@ xyattach(parent, self, aux)
 		if (xy->nsect != oxy->nsect || xy->pcyl != oxy->pcyl ||
 			xy->nhead != oxy->nhead) {
 			printf("%s: %s and %s must be the same size!\n",
-				xyc->sc_dev.dv_xname, xy->sc_dev.dv_xname,
-				oxy->sc_dev.dv_xname);
+				device_xname(&xyc->sc_dev), device_xname(&xy->sc_dev),
+				device_xname(&oxy->sc_dev));
 			panic("xy drive size mismatch");
 		}
 	}
@@ -783,8 +784,8 @@ xyattach(parent, self, aux)
 	error = xyc_cmd(xyc, XYCMD_SDS, 0, xy->xy_drive, blk, 0, 0, fmode);
 	XYC_DONE(xyc, error);
 	if (error) {
-		printf("%s: write drive size failed: %s\n",
-			xy->sc_dev.dv_xname, xyc_e2str(error));
+		aprint_error_dev(&xy->sc_dev, "write drive size failed: %s\n",
+			xyc_e2str(error));
 		goto done;
 	}
 	newstate = XY_DRIVE_ONLINE;
@@ -801,8 +802,8 @@ xyattach(parent, self, aux)
 						dmaddr, fmode);
 	XYC_DONE(xyc, error);
 	if (error) {
-		printf("%s: reading bad144 failed: %s\n",
-			xy->sc_dev.dv_xname, xyc_e2str(error));
+		aprint_error_dev(&xy->sc_dev, "reading bad144 failed: %s\n",
+			xyc_e2str(error));
 		goto done;
 	}
 
@@ -821,8 +822,7 @@ xyattach(parent, self, aux)
 			break;
 	}
 	if (lcv != 126) {
-		printf("%s: warning: invalid bad144 sector!\n",
-			xy->sc_dev.dv_xname);
+		aprint_error_dev(&xy->sc_dev, "warning: invalid bad144 sector!\n");
 	} else {
 		bcopy(buf, &xy->dkb, XYFM_BPS);
 	}
@@ -896,7 +896,7 @@ xydump(dev, blkno, va, size)
 
 	xy = xy_cd.cd_devs[unit];
 
-	printf("%s%c: crash dump not supported (yet)\n", xy->sc_dev.dv_xname,
+	printf("%s%c: crash dump not supported (yet)\n", device_xname(&xy->sc_dev),
 	    'a' + part);
 
 	return ENXIO;
@@ -1451,7 +1451,7 @@ start:
 	if (XY_STATE(iorq->mode) != XY_SUB_FREE) {
 		DELAY(1000000);		/* XY_SUB_POLL: steal the iorq */
 		iorq->mode = XY_SUB_FREE;
-		printf("%s: stole control iopb\n", xycsc->sc_dev.dv_xname);
+		printf("%s: stole control iopb\n", device_xname(&xycsc->sc_dev));
 	}
 
 	/* init iorq/iopb */
@@ -1498,7 +1498,7 @@ xyc_startbuf(xycsc, xysc, bp)
 
 	partno = DISKPART(bp->b_dev);
 #ifdef XYC_DEBUG
-	printf("xyc_startbuf: %s%c: %s block %d\n", xysc->sc_dev.dv_xname,
+	printf("xyc_startbuf: %s%c: %s block %d\n", device_xname(&xysc->sc_dev),
 	    'a' + partno, (bp->b_flags & B_READ) ? "read" : "write", bp->b_blkno);
 	printf("xyc_startbuf: b_bcount %d, b_data 0x%x\n",
 	    bp->b_bcount, bp->b_data);
@@ -1516,8 +1516,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	error = bus_dmamap_load(xycsc->dmatag, iorq->dmamap,
 			bp->b_data, bp->b_bcount, 0, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: warning: cannot load DMA map\n",
-			xycsc->sc_dev.dv_xname);
+		aprint_error_dev(&xycsc->sc_dev, "warning: cannot load DMA map\n");
 		return (XY_ERR_FAIL);	/* XXX: need some sort of
 					 * call-back scheme here? */
 	}
@@ -1587,7 +1586,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 
 #ifdef XYC_DEBUG
 	printf("xyc_submit_iorq(%s, addr=0x%x, type=%d)\n",
-		xycsc->sc_dev.dv_xname, iorq, type);
+		device_xname(&xycsc->sc_dev), iorq, type);
 #endif
 
 	/* first check and see if controller is busy */
@@ -1610,7 +1609,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 			if (xyc_unbusy(xycsc->xyc,XYC_RESETUSEC) == XY_ERR_FAIL)
 				panic("xyc_submit_iorq: stuck xyc");
 			printf("%s: stole controller\n",
-				xycsc->sc_dev.dv_xname);
+				device_xname(&xycsc->sc_dev));
 			break;
 		default:
 			panic("xyc_submit_iorq adding");
@@ -1736,7 +1735,7 @@ xyc_piodriver(xycsc, iorq)
 	int     retval = 0;
 	u_long  res;
 #ifdef XYC_DEBUG
-	printf("xyc_piodriver(%s, 0x%x)\n", xycsc->sc_dev.dv_xname, iorq);
+	printf("xyc_piodriver(%s, 0x%x)\n", device_xname(&xycsc->sc_dev), iorq);
 #endif
 
 	while (iorq->iopb->done == 0) {
@@ -1818,7 +1817,7 @@ xyc_xyreset(xycsc, xysc)
 	}
 
 	if (del <= 0 || iopb->errs) {
-		printf("%s: off-line: %s\n", xycsc->sc_dev.dv_xname,
+		printf("%s: off-line: %s\n", device_xname(&xycsc->sc_dev),
 		    xyc_e2str(iopb->errnum));
 		del = xycsc->xyc->xyc_rsetup;
 		if (xyc_unbusy(xycsc->xyc, XYC_RESETUSEC) == XY_ERR_FAIL)
@@ -1849,7 +1848,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 	/* soft reset hardware */
 
 	if (!quiet)
-		printf("%s: soft reset\n", xycsc->sc_dev.dv_xname);
+		printf("%s: soft reset\n", device_xname(&xycsc->sc_dev));
 	del = xycsc->xyc->xyc_rsetup;
 	del = xyc_unbusy(xycsc->xyc, XYC_RESETUSEC);
 	if (del == XY_ERR_FAIL) {
@@ -1966,10 +1965,9 @@ xyc_remove_iorq(xycsc)
 		 * we dump them all.
 		 */
 		errnum = XY_ERR_DERR;
-		printf("%s: DOUBLE ERROR!\n", xycsc->sc_dev.dv_xname);
+		aprint_error_dev(&xycsc->sc_dev, "DOUBLE ERROR!\n");
 		if (xyc_reset(xycsc, 0, XY_RSET_ALL, errnum, 0) != XY_ERR_AOK) {
-			printf("%s: soft reset failed!\n",
-				xycsc->sc_dev.dv_xname);
+			aprint_error_dev(&xycsc->sc_dev, "soft reset failed!\n");
 			panic("xyc_remove_iorq: controller DEAD");
 		}
 		return (XY_ERR_AOK);
@@ -2110,8 +2108,8 @@ xyc_perror(iorq, iopb, still_trying)
 
 	int     error = iorq->lasterror;
 
-	printf("%s", (iorq->xy) ? iorq->xy->sc_dev.dv_xname
-	    : iorq->xyc->sc_dev.dv_xname);
+	printf("%s", (iorq->xy) ? device_xname(&iorq->xy->sc_dev)
+	    : device_xname(&iorq->xyc->sc_dev));
 	if (iorq->buf)
 		printf("%c: ", 'a' + DISKPART(iorq->buf->b_dev));
 	if (iopb->com == XYCMD_RD || iopb->com == XYCMD_WR)
@@ -2225,7 +2223,7 @@ xyc_tick(arg)
 			reset = 1;
 	}
 	if (reset) {
-		printf("%s: watchdog timeout\n", xycsc->sc_dev.dv_xname);
+		printf("%s: watchdog timeout\n", device_xname(&xycsc->sc_dev));
 		xyc_reset(xycsc, 0, XY_RSET_NONE, XY_ERR_FAIL, NULL);
 	}
 	splx(s);

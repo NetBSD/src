@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.9.14.1 2008/04/03 12:43:12 mjf Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.9.14.2 2008/06/02 13:24:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -39,11 +32,6 @@
 #ifndef	_SYS_SLEEPQ_H_
 #define	_SYS_SLEEPQ_H_
 
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
-#endif
-
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/sched.h>
@@ -58,11 +46,9 @@
 #define	SLEEPTAB_HASH_MASK	(SLEEPTAB_HASH_SIZE - 1)
 #define	SLEEPTAB_HASH(wchan)	(((uintptr_t)(wchan) >> 8) & SLEEPTAB_HASH_MASK)
 
-typedef struct sleepq {
-	TAILQ_HEAD(, lwp)	sq_queue;	/* queue of waiters */
-	kmutex_t		*sq_mutex;	/* mutex on struct & queue */
-	u_int			sq_waiters;	/* count of waiters */
-} sleepq_t;
+TAILQ_HEAD(sleepq, lwp);
+
+typedef struct sleepq sleepq_t;
 
 #ifdef _LP64
 typedef struct sleeptab {
@@ -80,12 +66,12 @@ typedef struct sleeptab {
 } __aligned(32) sleeptab_t;
 #endif	/* _LP64 */
 
-void	sleepq_init(sleepq_t *, kmutex_t *);
+void	sleepq_init(sleepq_t *);
 int	sleepq_remove(sleepq_t *, lwp_t *);
 void	sleepq_enqueue(sleepq_t *, wchan_t, const char *, syncobj_t *);
 u_int	sleepq_unsleep(lwp_t *, bool);
 void	sleepq_timeout(void *);
-lwp_t	*sleepq_wake(sleepq_t *, wchan_t, u_int);
+lwp_t	*sleepq_wake(sleepq_t *, wchan_t, u_int, kmutex_t *);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(lwp_t *, pri_t);
 void	sleepq_lendpri(lwp_t *, pri_t);
@@ -114,12 +100,13 @@ sleepq_dontsleep(lwp_t *l)
  * acquires and holds the per-queue interlock.
  */
 static inline sleepq_t *
-sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
+sleeptab_lookup(sleeptab_t *st, wchan_t wchan, kmutex_t **mp)
 {
 	sleepq_t *sq;
 
 	sq = &st->st_queues[SLEEPTAB_HASH(wchan)].st_queue;
-	mutex_spin_enter(sq->sq_mutex);
+	*mp = &st->st_queues[SLEEPTAB_HASH(wchan)].st_mutex;
+	mutex_spin_enter(*mp);
 	return sq;
 }
 
@@ -128,7 +115,7 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
  * safely released.
  */
 static inline void
-sleepq_enter(sleepq_t *sq, lwp_t *l)
+sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 {
 	/*
 	 * Acquire the per-LWP mutex and lend it ours (the sleep queue
@@ -136,20 +123,8 @@ sleepq_enter(sleepq_t *sq, lwp_t *l)
 	 * the kernel lock.
 	 */
 	lwp_lock(l);
-	lwp_unlock_to(l, sq->sq_mutex);
-	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
-}
-
-static inline void
-sleepq_lock(sleepq_t *sq)
-{
-	mutex_spin_enter(sq->sq_mutex);
-}
-
-static inline void
-sleepq_unlock(sleepq_t *sq)
-{
-	mutex_spin_exit(sq->sq_mutex);
+	lwp_unlock_to(l, mp);
+	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
 }
 
 /*
@@ -161,6 +136,7 @@ typedef struct turnstile {
 	struct turnstile	*ts_free;	/* turnstile free list */
 	wchan_t			ts_obj;		/* lock object */
 	sleepq_t		ts_sleepq[2];	/* sleep queues */
+	u_int			ts_waiters[2];	/* count of waiters */
 
 	/* priority inheritance */
 	pri_t			ts_eprio;
@@ -177,13 +153,13 @@ typedef struct tschain {
 #define	TS_WRITER_Q	1		/* writer sleep queue */
 
 #define	TS_WAITERS(ts, q)						\
-	(ts)->ts_sleepq[(q)].sq_waiters
+	(ts)->ts_waiters[(q)]
 
 #define	TS_ALL_WAITERS(ts)						\
-	((ts)->ts_sleepq[TS_READER_Q].sq_waiters +			\
-	 (ts)->ts_sleepq[TS_WRITER_Q].sq_waiters)
+	((ts)->ts_waiters[TS_READER_Q] +				\
+	 (ts)->ts_waiters[TS_WRITER_Q])
 
-#define	TS_FIRST(ts, q)	(TAILQ_FIRST(&(ts)->ts_sleepq[(q)].sq_queue))
+#define	TS_FIRST(ts, q)	(TAILQ_FIRST(&(ts)->ts_sleepq[(q)]))
 
 #ifdef	_KERNEL
 

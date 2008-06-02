@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.22 2007/10/19 11:59:50 ad Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.22.16.1 2008/06/02 13:23:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.22 2007/10/19 11:59:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.22.16.1 2008/06/02 13:23:20 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -354,7 +354,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 		}
 	}
 	if (i == 10000) {
-		printf("%s: wrong id(0x%x)\n", sc->sc_dev.dv_xname, reg);
+		aprint_error_dev(&sc->sc_dev, "wrong id(0x%x)\n", reg);
 		return 1; /* XXX should panic? */
 	}
 
@@ -389,7 +389,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	if (MCLBYTES < ETHER_MAX_LEN + 1 +
 		ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header)) {
 		printf("%s: MCLBYTES too small for Ethernet frame\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		return 1;
 	}
 
@@ -401,7 +401,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	sc->sc_xe_togo = cs_xmit_early_table[sc->sc_xe_ent].better_count;
 
 	/* Initialize ifnet structure. */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = cs_start_output;
 	ifp->if_init = cs_init;
@@ -429,8 +429,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	if (sc->sc_cfgflags & CFGFLG_PARSE_EEPROM) {
 		if (cs_scan_eeprom(sc) == CS_ERROR) {
 			/* failed to scan the eeprom, pretend there isn't an eeprom */
-			printf("%s: unable to scan EEPROM\n",
-				    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unable to scan EEPROM\n");
 			sc->sc_cfgflags |= CFGFLG_NOT_EEPROM;
 		}
 	}
@@ -438,8 +437,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	if ((sc->sc_cfgflags & CFGFLG_NOT_EEPROM) == 0) {
 		/* Get parameters from the EEPROM */
 		if (cs_get_params(sc) == CS_ERROR) {
-			printf("%s: unable to get settings from EEPROM\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unable to get settings from EEPROM\n");
 			return 1;
 		}
 	}
@@ -449,8 +447,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	else if ((sc->sc_cfgflags & CFGFLG_NOT_EEPROM) == 0) {
 		/* Get and store the Ethernet address */
 		if (cs_get_enaddr(sc) == CS_ERROR) {
-			printf("%s: unable to read Ethernet address\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unable to read Ethernet address\n");
 			return 1;
 		}
 	} else {
@@ -464,7 +461,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 			sc->sc_enaddr[j + 1] = v >> 8;
 		}
 #else
-		printf("%s: no Ethernet address!\n", sc->sc_dev.dv_xname);
+		printf("%s: no Ethernet address!\n", device_xname(&sc->sc_dev));
 		return 1;
 #endif
 	}
@@ -485,7 +482,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	default:
 		panic("cs_attach: impossible");
 	}
-	printf("%s: %s rev. %c, address %s, media %s\n", sc->sc_dev.dv_xname,
+	printf("%s: %s rev. %c, address %s, media %s\n", device_xname(&sc->sc_dev),
 	    chipname, sc->sc_prodrev + 'A', ether_sprintf(sc->sc_enaddr),
 	    medname);
 
@@ -494,8 +491,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 
 	sc->sc_sh = shutdownhook_establish(cs_reset, sc);
 	if (sc->sc_sh == NULL) {
-		printf("%s: unable to establish shutdownhook\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to establish shutdownhook\n");
 		cs_detach(sc);
 		return 1;
 	}
@@ -505,23 +501,22 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_NET, 0);
 #endif
 	sc->sc_cfgflags |= CFGFLG_ATTACHED;
 
 	/* Reset the chip */
 	if (cs_reset_chip(sc) == CS_ERROR) {
-		printf("%s: reset failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "reset failed\n");
 		cs_detach(sc);
 		return 1;
 	}
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	sc->sc_powerhook = powerhook_establish(device_xname(&sc->sc_dev),
 	    cs_power, sc);
 	if (sc->sc_powerhook == 0)
-		printf("%s: warning: powerhook_establish failed\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "warning: powerhook_establish failed\n");
 
 	return 0;
 }
@@ -569,20 +564,17 @@ cs_get_default_media(struct cs_softc *sc)
 	u_int16_t adp_cfg, xmit_ctl;
 
 	if (cs_verify_eeprom(sc) == CS_ERROR) {
-		printf("%s: cs_get_default_media: EEPROM missing or bad\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cs_get_default_media: EEPROM missing or bad\n");
 		goto fakeit;
 	}
 
 	if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adp_cfg) == CS_ERROR) {
-		printf("%s: unable to read adapter config from EEPROM\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to read adapter config from EEPROM\n");
 		goto fakeit;
 	}
 
 	if (cs_read_eeprom(sc, EEPROM_XMIT_CTL, &xmit_ctl) == CS_ERROR) {
-		printf("%s: unable to read transmit control from EEPROM\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to read transmit control from EEPROM\n");
 		goto fakeit;
 	}
 
@@ -604,8 +596,7 @@ cs_get_default_media(struct cs_softc *sc)
 	return;
 
  fakeit:
-	printf("%s: WARNING: default media setting may be inaccurate\n",
-	    sc->sc_dev.dv_xname);
+	aprint_error_dev(&sc->sc_dev, "WARNING: default media setting may be inaccurate\n");
 	/* XXX Arbitrary... */
 	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10_T);
 }
@@ -628,8 +619,7 @@ cs_scan_eeprom(struct cs_softc *sc)
 	u_int8_t checksum = 0;
 
 	if (cs_verify_eeprom(sc) == CS_ERROR) {
-		printf("%s: cs_scan_params: EEPROM missing or bad\n",
-				sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cs_scan_params: EEPROM missing or bad\n");
 		return (CS_ERROR);
 	}
 
@@ -672,7 +662,7 @@ cs_scan_eeprom(struct cs_softc *sc)
 	 * sum to that point.
 	 */
 	if (checksum != 0) {
-		printf("%s: eeprom checksum failure\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "eeprom checksum failure\n");
 		return (CS_ERROR);
 	}
 
@@ -752,8 +742,7 @@ cs_get_params(struct cs_softc *sc)
 	u_int16_t adapterConfig;
 
 	if (cs_verify_eeprom(sc) == CS_ERROR) {
-		printf("%s: cs_get_params: EEPROM missing or bad\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cs_get_params: EEPROM missing or bad\n");
 		return (CS_ERROR);
 	}
 
@@ -807,8 +796,7 @@ cs_get_params(struct cs_softc *sc)
 
 	return (CS_OK);
 eeprom_bad:
-	printf("%s: cs_get_params: unable to read from EEPROM\n",
-			sc->sc_dev.dv_xname);
+	aprint_error_dev(&sc->sc_dev, "cs_get_params: unable to read from EEPROM\n");
 	return (CS_ERROR);
 }
 
@@ -818,8 +806,7 @@ cs_get_enaddr(struct cs_softc *sc)
 	u_int16_t *myea;
 
 	if (cs_verify_eeprom(sc) == CS_ERROR) {
-		printf("%s: cs_get_enaddr: EEPROM missing or bad\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cs_get_enaddr: EEPROM missing or bad\n");
 		return (CS_ERROR);
 	}
 
@@ -849,8 +836,7 @@ cs_get_enaddr(struct cs_softc *sc)
 	return (CS_OK);
 
  eeprom_bad:
-	printf("%s: cs_get_enaddr: unable to read from EEPROM\n",
-	    sc->sc_dev.dv_xname);
+	aprint_error_dev(&sc->sc_dev, "cs_get_enaddr: unable to read from EEPROM\n");
 	return (CS_ERROR);
 }
 
@@ -1116,8 +1102,7 @@ cs_initChip(struct cs_softc *sc)
 		 * chip in memory mode.
 		 */
 		if (isaId != EISA_NUM_CRYSTAL) {
-			printf("%s: failed to enable memory mode\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "failed to enable memory mode\n");
 			sc->sc_memorymode = FALSE;
 		} else {
 			/*
@@ -1204,7 +1189,7 @@ cs_init(struct ifnet *ifp)
 		/* Assume we have carrier until we are told otherwise. */
 		sc->sc_carrier = 1;
 	} else {
-		printf("%s: unable to reset chip\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to reset chip\n");
 	}
 
 	splx(intState);
@@ -1404,7 +1389,7 @@ cs_intr(void *arg)
 	/* Ignore any interrupts that happen while the chip is being reset */
 	if (sc->sc_resetting) {
 		printf("%s: cs_intr: reset in progress\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		return 1;
 	}
 
@@ -1440,7 +1425,7 @@ cs_intr(void *arg)
 			break;
 		default:
 			printf("%s: unknown interrupt event 0x%x\n",
-			    sc->sc_dev.dv_xname, Event);
+			    device_xname(&sc->sc_dev), Event);
 			break;
 		}
 
@@ -1520,7 +1505,7 @@ cs_buffer_event(struct cs_softc *sc, u_int16_t bufEvent)
 			(*sc->sc_dma_process_rx)(sc);
 		else
 			/* should panic? */
-			printf("%s: unexpected DMA event\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unexpected DMA event\n");
 	}
 
 	if (bufEvent & BUF_EVENT_TX_UNDR) {
@@ -1530,7 +1515,7 @@ cs_buffer_event(struct cs_softc *sc, u_int16_t bufEvent)
 		 * about.
 		 */
 		printf("%s: transmit underrun (%d -> %d)\n",
-		    sc->sc_dev.dv_xname, sc->sc_xe_ent,
+		    device_xname(&sc->sc_dev), sc->sc_xe_ent,
 		    cs_xmit_early_table[sc->sc_xe_ent].worse);
 #endif
 		sc->sc_xe_ent = cs_xmit_early_table[sc->sc_xe_ent].worse;
@@ -1543,7 +1528,7 @@ cs_buffer_event(struct cs_softc *sc, u_int16_t bufEvent)
 
 	if (bufEvent & BUF_EVENT_SW_INT) {
 		printf("%s: software initiated interrupt\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 	}
 }
 
@@ -1565,23 +1550,19 @@ cs_transmit_event(struct cs_softc *sc, u_int16_t txEvent)
 		/* If debugging is enabled then log error messages */
 		if (ifp->if_flags & IFF_DEBUG) {
 			if (txEvent & TX_EVENT_LOSS_CRS) {
-				printf("%s: lost carrier\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "lost carrier\n");
 			}
 			if (txEvent & TX_EVENT_SQE_ERR) {
-				printf("%s: SQE error\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "SQE error\n");
 			}
 			if (txEvent & TX_EVENT_OUT_WIN) {
-				printf("%s: out-of-window collision\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "out-of-window collision\n");
 			}
 			if (txEvent & TX_EVENT_JABBER) {
-				printf("%s: jabber\n", sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "jabber\n");
 			}
 			if (txEvent & TX_EVENT_16_COLL) {
-				printf("%s: 16 collisions\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "16 collisions\n");
 			}
 		}
 	}
@@ -1617,19 +1598,19 @@ cs_print_rx_errors(struct cs_softc *sc, u_int16_t rxEvent)
 {
 
 	if (rxEvent & RX_EVENT_RUNT)
-		printf("%s: runt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "runt\n");
 
 	if (rxEvent & RX_EVENT_X_DATA)
-		printf("%s: extra data\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "extra data\n");
 
 	if (rxEvent & RX_EVENT_CRC_ERR) {
 		if (rxEvent & RX_EVENT_DRIBBLE)
-			printf("%s: alignment error\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "alignment error\n");
 		else
-			printf("%s: CRC error\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "CRC error\n");
 	} else {
 		if (rxEvent & RX_EVENT_DRIBBLE)
-			printf("%s: dribble bits\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "dribble bits\n");
 	}
 }
 
@@ -1661,8 +1642,7 @@ cs_receive_event(struct cs_softc *sc, u_int16_t rxEvent)
 					CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) |
 						  RX_CFG_SKIP);
 			} else {
-				printf("%s: implied skip\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "implied skip\n");
 			}
 		}
 	} else {
@@ -1730,8 +1710,8 @@ cs_process_receive(struct cs_softc *sc)
 	}
 
 	if (totlen > ETHER_MAX_LEN) {
-		printf("%s: invalid packet length %d\n",
-		    sc->sc_dev.dv_xname, totlen);
+		aprint_error_dev(&sc->sc_dev, "invalid packet length %d\n",
+		    totlen);
 
 		/* skip the received frame */
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
@@ -1741,8 +1721,7 @@ cs_process_receive(struct cs_softc *sc)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0) {
-		printf("%s: cs_process_receive: unable to allocate mbuf\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cs_process_receive: unable to allocate mbuf\n");
 		ifp->if_ierrors++;
 		/*
 		 * couldn't allocate an mbuf so things are not good, may as
@@ -1770,8 +1749,7 @@ cs_process_receive(struct cs_softc *sc)
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			/* couldn't allocate an mbuf cluster */
-			printf("%s: cs_process_receive: unable to allocate a cluster\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "cs_process_receive: unable to allocate a cluster\n");
 			m_freem(m);
 
 			/* skip the received frame */
@@ -1822,8 +1800,7 @@ cs_process_rx_early(struct cs_softc *sc)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0) {
-		printf("%s: cs_process_rx_early: unable to allocate mbuf\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cs_process_rx_early: unable to allocate mbuf\n");
 		ifp->if_ierrors++;
 		/*
 		 * couldn't allocate an mbuf so things are not good, may as
@@ -1844,8 +1821,7 @@ cs_process_rx_early(struct cs_softc *sc)
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		/* couldn't allocate an mbuf cluster */
-		printf("%s: cs_process_rx_early: unable to allocate a cluster\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cs_process_rx_early: unable to allocate a cluster\n");
 		m_freem(m);
 		/* skip the frame */
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
@@ -1996,8 +1972,7 @@ cs_start_output(struct ifnet *ifp)
 			 * corrupt.
 			 */
 			if (BusStatus & BUS_ST_TX_BID_ERR) {
-				printf("%s: transmit bid error (too big)",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "transmit bid error (too big)");
 
 				/* Discard the bad mbuf chain */
 				m_freem(pMbufChain);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.78.12.2 2008/04/05 23:33:22 mjf Exp $	*/
+/*	$NetBSD: ch.c,v 1.78.12.3 2008/06/02 13:23:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.78.12.2 2008/04/05 23:33:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.78.12.3 2008/06/02 13:23:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +214,7 @@ chattach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (sc->sc_settledelay) {
 		printf("%s: waiting %d seconds for changer to settle...\n",
-		    sc->sc_dev.dv_xname, sc->sc_settledelay);
+		    device_xname(&sc->sc_dev), sc->sc_settledelay);
 		delay(1000000 * sc->sc_settledelay);
 	}
 
@@ -230,11 +223,11 @@ chattach(struct device *parent, struct device *self, void *aux)
 	 * interrupts yet.
 	 */
 	if (ch_get_params(sc, XS_CTL_DISCOVERY|XS_CTL_IGNORE_MEDIA_CHANGE))
-		printf("%s: offline\n", sc->sc_dev.dv_xname);
+		printf("%s: offline\n", device_xname(&sc->sc_dev));
 	else {
 #define PLURAL(c)	(c) == 1 ? "" : "s"
 		printf("%s: %d slot%s, %d drive%s, %d picker%s, %d portal%s\n",
-		    sc->sc_dev.dv_xname,
+		    device_xname(&sc->sc_dev),
 		    sc->sc_counts[CHET_ST], PLURAL(sc->sc_counts[CHET_ST]),
 		    sc->sc_counts[CHET_DT], PLURAL(sc->sc_counts[CHET_DT]),
 		    sc->sc_counts[CHET_MT], PLURAL(sc->sc_counts[CHET_MT]),
@@ -242,11 +235,11 @@ chattach(struct device *parent, struct device *self, void *aux)
 #undef PLURAL
 #ifdef CHANGER_DEBUG
 		printf("%s: move mask: 0x%x 0x%x 0x%x 0x%x\n",
-		    sc->sc_dev.dv_xname,
+		    device_xname(&sc->sc_dev),
 		    sc->sc_movemask[CHET_MT], sc->sc_movemask[CHET_ST],
 		    sc->sc_movemask[CHET_IE], sc->sc_movemask[CHET_DT]);
 		printf("%s: exchange mask: 0x%x 0x%x 0x%x 0x%x\n",
-		    sc->sc_dev.dv_xname,
+		    device_xname(&sc->sc_dev),
 		    sc->sc_exchangemask[CHET_MT], sc->sc_exchangemask[CHET_ST],
 		    sc->sc_exchangemask[CHET_IE], sc->sc_exchangemask[CHET_DT]);
 #endif /* CHANGER_DEBUG */
@@ -784,7 +777,7 @@ ch_ousergetelemstatus(struct ch_softc *sc, int chet, u_int8_t *uptr)
 
 	if (avail != sc->sc_counts[chet])
 		printf("%s: warning, READ ELEMENT STATUS avail != count\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 
 	desc = (struct read_element_status_descriptor *)((u_long)data +
 	    sizeof(struct read_element_status_header) +
@@ -946,7 +939,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 			     ces.ces_target, ces.ces_lun)) != NULL &&
 			    dtperiph->periph_dev != NULL) {
 				strlcpy(ces.ces_xname,
-				    dtperiph->periph_dev->dv_xname,
+				    device_xname(dtperiph->periph_dev),
 				    sizeof(ces.ces_xname));
 				ces.ces_flags |= CESTATUS_XNAME_VALID;
 			}
@@ -1183,8 +1176,7 @@ ch_get_params(struct ch_softc *sc, int scsiflags)
 	    &sense_data.header, sizeof(sense_data),
 	    scsiflags | XS_CTL_DATA_ONSTACK, CHRETRIES, 6000);
 	if (error) {
-		printf("%s: could not sense element address page\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "could not sense element address page\n");
 		return (error);
 	}
 
@@ -1210,8 +1202,7 @@ ch_get_params(struct ch_softc *sc, int scsiflags)
 	    &sense_data.header, sizeof(sense_data),
 	    scsiflags | XS_CTL_DATA_ONSTACK, CHRETRIES, 6000);
 	if (error) {
-		printf("%s: could not sense capabilities page\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "could not sense capabilities page\n");
 		return (error);
 	}
 

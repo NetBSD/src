@@ -1,6 +1,35 @@
-/*	$NetBSD: cryptodev.h,v 1.12 2008/02/04 00:35:34 tls Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.12.6.1 2008/06/02 13:24:31 mjf Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Coyote Point Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -121,6 +150,21 @@ struct session_op {
   	u_int32_t	ses;		/* returns: session # */
 };
 
+/* to support multiple session creation */
+
+struct session_n_op {
+	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
+	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
+
+	u_int32_t	keylen;		/* cipher key */
+	void *		key;
+	int		mackeylen;	/* mac key */
+	void *		mackey;
+
+	u_int32_t	ses;		/* returns: session # */
+	int		status;
+};
+
 struct crypt_op {
 	u_int32_t	ses;
 	u_int16_t	op;		/* i.e. COP_ENCRYPT */
@@ -132,6 +176,64 @@ struct crypt_op {
 	void *		src, *dst;	/* become iov[] inside kernel */
 	void *		mac;		/* must be big enough for chosen MAC */
 	void *		iv;
+};
+
+/* to support multiple session creation */
+/*
+ *
+ * The reqid field is filled when the operation has 
+ * been accepted and started, and can be used to later retrieve
+ * the operation results via CIOCNCRYPTRET or identify the 
+ * request in the completion list returned by CIOCNCRYPTRETM.
+ *
+ * The opaque pointer can be set arbitrarily by the user
+ * and it is passed back in the crypt_result structure
+ * when the request completes.  This field can be used for example
+ * to track context for the request and avoid lookups in the
+ * user application.
+ */
+
+struct crypt_n_op {
+	u_int32_t	ses;
+	u_int16_t	op;		/* i.e. COP_ENCRYPT */
+#define COP_ENCRYPT	1
+#define COP_DECRYPT	2
+	u_int16_t	flags;
+#define COP_F_BATCH	0x0008		/* Dispatch as quickly as possible */
+	u_int		len;
+
+	u_int32_t	reqid;		/* request id */
+	int		status;		/* status of request -accepted or not */	
+	void		*opaque;	/* opaque pointer returned to user */
+	u_int32_t	keylen;		/* cipher key - optional */
+	void *		key;
+	u_int32_t	mackeylen;	/* also optional */
+	void *		mackey;
+
+	void *		src, *dst;	/* become iov[] inside kernel */
+	void *		mac;		/* must be big enough for chosen MAC */
+	void *		iv;
+};
+
+/* CIOCNCRYPTM ioctl argument, supporting one or more asynchronous
+ * crypt_n_op operations.
+ * Each crypt_n_op will receive a request id which can be used to check its
+ * status via CIOCNCRYPTRET, or to watch for its completion in the list
+ * obtained via CIOCNCRYPTRETM.
+ */
+struct crypt_mop {
+	size_t 		count;		/* how many */
+	struct crypt_n_op *	reqs;	/* where to get them */
+};
+
+struct crypt_sfop {
+	size_t		count;
+	u_int32_t	*sesid;
+}; 
+
+struct crypt_sgop {
+	size_t		count;
+	struct session_n_op * sessions;
 };
 
 #define CRYPTO_MAX_MAC_LEN	20
@@ -152,6 +254,51 @@ struct crypt_kop {
 	u_int		crk_pad1;
 	struct crparam	crk_param[CRK_MAXPARAM];
 };
+
+/*
+ * Used with the CIOCNFKEYM ioctl.
+ *
+ * This structure allows the OCF to return a request id
+ * for each of the kop operations specified in the CIOCNFKEYM call.
+ * 
+ * The crk_opaque pointer can be arbitrarily set by the user
+ * and it is passed back in the crypt_result structure
+ * when the request completes.  This field can be used for example
+ * to track context for the request and avoid lookups in the
+ * user application.
+ */
+struct crypt_n_kop {
+	u_int		crk_op;		/* ie. CRK_MOD_EXP or other */
+	u_int		crk_status;	/* return status */
+	u_short		crk_iparams;	/* # of input parameters */
+	u_short		crk_oparams;	/* # of output parameters */
+        u_int32_t	crk_reqid;	/* request id */
+	struct crparam	crk_param[CRK_MAXPARAM];
+	void		*crk_opaque;	/* opaque pointer returned to user */
+};
+
+struct crypt_mkop {
+	size_t	count;			/* how many */
+	struct crypt_n_kop *	reqs;	/* where to get them */
+};
+
+/* Asynchronous key or crypto result.
+ * Note that the status will be set in the crypt_result structure,
+ * not in the original crypt_kop structure (crk_status).
+ */
+struct crypt_result {
+	u_int32_t	reqid;		/* request id */
+	u_int32_t	status;		/* status of request: 0 if successful */
+	void *		opaque;		/* Opaque pointer from the user, passed along */
+};
+
+struct cryptret {
+	size_t		count;		/* space for how many */
+	struct crypt_result *	results;	/* where to put them */
+}; 
+
+
+/* Assymetric key operations */
 #define	CRK_ALGORITM_MIN	0
 #define CRK_MOD_EXP		0
 #define CRK_MOD_EXP_CRT		1
@@ -179,8 +326,16 @@ struct crypt_kop {
 #define CRF_MOD			(1 << CRK_MOD)
 
 /*
+ * A large comment here once held descriptions of the ioctl
+ * requests implemented by the device.  This text has been moved
+ * to the crypto(4) manual page and, later, removed from this file
+ * as it was always a step behind the times.
+ */
+
+/*
  * done against open of /dev/crypto, to get a cloned descriptor.
- * Please use F_SETFD against the cloned descriptor.
+ * Please use F_SETFD against the cloned descriptor.  But this ioctl
+ * is obsolete (the device now clones): please, just don't use it.
  */
 #define	CRIOGET		_IOWR('c', 100, u_int32_t)
 
@@ -189,6 +344,12 @@ struct crypt_kop {
 #define	CIOCFSESSION	_IOW('c', 102, u_int32_t)
 #define CIOCCRYPT	_IOWR('c', 103, struct crypt_op)
 #define CIOCKEY		_IOWR('c', 104, struct crypt_kop)
+#define	CIOCNGSESSION	_IOWR('c', 106, struct crypt_sgop)
+#define CIOCNCRYPTM	_IOWR('c', 107, struct crypt_mop)
+#define CIOCNFKEYM	_IOWR('c', 108, struct crypt_mkop)
+#define CIOCNFSESSION	_IOW('c', 109, struct crypt_sfop)
+#define CIOCNCRYPTRETM	_IOWR('c', 110, struct cryptret)
+#define CIOCNCRYPTRET	_IOWR('c', 111, struct crypt_result)
 
 #define CIOCASYMFEAT	_IOR('c', 105, u_int32_t)
 
@@ -257,9 +418,16 @@ struct cryptodesc {
 
 /* Structure describing complete operation */
 struct cryptop {
-	TAILQ_ENTRY(cryptop) crp_next;
-
+	union {
+		TAILQ_ENTRY(cryptop) crp_tnext;
+		SLIST_ENTRY(cryptop) crp_lnext;
+	}		crp_qun;
+#define	crp_next crp_qun.crp_tnext	/* XXX compat */
 	u_int64_t	crp_sid;	/* Session ID */
+	
+	u_int32_t	crp_reqid;	/* request id */
+	void *		crp_usropaque;	/* Opaque pointer from user, passed along */
+
 	int		crp_ilen;	/* Input data total length */
 	int		crp_olen;	/* Result total length */
 
@@ -293,6 +461,15 @@ struct cryptop {
 	void *		crp_mac;
 	struct timespec	crp_tstamp;	/* performance time stamp */
 	kcondvar_t	crp_cv;
+	struct fcrypt 	*fcrp;
+	void * 		dst;
+	void *		mac;
+	u_int		len;
+	u_char		tmp_iv[EALG_MAX_BLOCK_LEN];
+	u_char		tmp_mac[CRYPTO_MAX_MAC_LEN];
+	
+	struct iovec	iovec[1];
+	struct uio	uio;
 };
 
 #define CRYPTO_BUF_CONTIG	0x0
@@ -308,7 +485,14 @@ struct cryptop {
 #define	CRYPTO_HINT_MORE	0x1	/* more ops coming shortly */
 
 struct cryptkop {
-	TAILQ_ENTRY(cryptkop) krp_next;
+	union {
+		TAILQ_ENTRY(cryptkop) krp_tnext;
+                SLIST_ENTRY(cryptkop) krp_lnext;
+        }               krp_qun;
+#define krp_next krp_qun.krp_tnext	/* XXX compat */
+
+	u_int32_t	krp_reqid;	/* request id */
+	void *		krp_usropaque;	/* Opaque pointer from user, passed along */
 
 	u_int		krp_op;		/* ie. CRK_MOD_EXP or other */
 	u_int		krp_status;	/* return status */
@@ -319,6 +503,8 @@ struct cryptkop {
 	int		(*krp_callback)(struct cryptkop *);
 	int		krp_flags;	/* same values as crp_flags */
 	kcondvar_t	krp_cv;
+	struct fcrypt 	*fcrp;
+	struct crparam	crk_param[CRK_MAXPARAM];
 };
 
 /* Crypto capabilities structure */

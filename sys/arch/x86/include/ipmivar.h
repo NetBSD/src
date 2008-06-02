@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.6 2007/11/16 08:00:13 xtraeme Exp $ */
+/* $NetBSD: ipmivar.h,v 1.6.14.1 2008/06/02 13:22:50 mjf Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -47,9 +47,9 @@ struct ipmi_softc;
 
 struct ipmi_bmc_args{
 	int			offset;
-	u_int8_t		mask;
-	u_int8_t		value;
-	volatile u_int8_t	*v;
+	uint8_t		mask;
+	uint8_t		value;
+	volatile uint8_t	*v;
 };
 
 struct ipmi_attach_args {
@@ -70,8 +70,8 @@ struct ipmi_if {
 	int		nregs;
 	void		*(*buildmsg)(struct ipmi_softc *, int, int, int,
 			    const void *, int *);
-	int		(*sendmsg)(struct ipmi_softc *, int, const u_int8_t *);
-	int		(*recvmsg)(struct ipmi_softc *, int, int *, u_int8_t *);
+	int		(*sendmsg)(struct ipmi_softc *, int, const uint8_t *);
+	int		(*recvmsg)(struct ipmi_softc *, int, int *, uint8_t *);
 	int		(*reset)(struct ipmi_softc *);
 	int		(*probe)(struct ipmi_softc *);
 };
@@ -136,45 +136,45 @@ struct ipmi_thread {
 #define IPMI_WDOG_ACT_PRE_INTERRUPT	0x30
 
 struct ipmi_set_watchdog {
-	u_int8_t		wdog_use;
-	u_int8_t		wdog_action;
-	u_int8_t		wdog_pretimeout;
-	u_int8_t		wdog_flags;
-	u_int16_t		wdog_timeout;
+	uint8_t		wdog_use;
+	uint8_t		wdog_action;
+	uint8_t		wdog_pretimeout;
+	uint8_t		wdog_flags;
+	uint16_t		wdog_timeout;
 } __packed;
 
 struct ipmi_get_watchdog {
-	u_int8_t		wdog_use;
-	u_int8_t		wdog_action;
-	u_int8_t		wdog_pretimeout;
-	u_int8_t		wdog_flags;
-	u_int16_t		wdog_timeout;
-	u_int16_t		wdog_countdown;
+	uint8_t		wdog_use;
+	uint8_t		wdog_action;
+	uint8_t		wdog_pretimeout;
+	uint8_t		wdog_flags;
+	uint16_t		wdog_timeout;
+	uint16_t		wdog_countdown;
 } __packed;
 
 void	ipmi_poll_thread(void *);
 
 int	kcs_probe(struct ipmi_softc *);
 int	kcs_reset(struct ipmi_softc *);
-int	kcs_sendmsg(struct ipmi_softc *, int, const u_int8_t *);
-int	kcs_recvmsg(struct ipmi_softc *, int, int *len, u_int8_t *);
+int	kcs_sendmsg(struct ipmi_softc *, int, const uint8_t *);
+int	kcs_recvmsg(struct ipmi_softc *, int, int *len, uint8_t *);
 
 int	bt_probe(struct ipmi_softc *);
 int	bt_reset(struct ipmi_softc *);
-int	bt_sendmsg(struct ipmi_softc *, int, const u_int8_t *);
-int	bt_recvmsg(struct ipmi_softc *, int, int *, u_int8_t *);
+int	bt_sendmsg(struct ipmi_softc *, int, const uint8_t *);
+int	bt_recvmsg(struct ipmi_softc *, int, int *, uint8_t *);
 
 int	smic_probe(struct ipmi_softc *);
 int	smic_reset(struct ipmi_softc *);
-int	smic_sendmsg(struct ipmi_softc *, int, const u_int8_t *);
-int	smic_recvmsg(struct ipmi_softc *, int, int *, u_int8_t *);
+int	smic_sendmsg(struct ipmi_softc *, int, const uint8_t *);
+int	smic_recvmsg(struct ipmi_softc *, int, int *, uint8_t *);
 
 struct dmd_ipmi {
-	u_int8_t	dmd_sig[4];		/* Signature 'IPMI' */
-	u_int8_t	dmd_i2c_address;	/* Address of BMC */
-	u_int8_t	dmd_nvram_address;	/* Address of NVRAM */
-	u_int8_t	dmd_if_type;		/* IPMI Interface Type */
-	u_int8_t	dmd_if_rev;		/* IPMI Interface Revision */
+	uint8_t	dmd_sig[4];		/* Signature 'IPMI' */
+	uint8_t	dmd_i2c_address;	/* Address of BMC */
+	uint8_t	dmd_nvram_address;	/* Address of NVRAM */
+	uint8_t	dmd_if_type;		/* IPMI Interface Type */
+	uint8_t	dmd_if_rev;		/* IPMI Interface Revision */
 } __packed;
 
 
@@ -219,87 +219,87 @@ struct dmd_ipmi {
 #define SE_GET_SENSOR_TYPE		0x2F
 
 struct sdrhdr {
-	u_int16_t	record_id;		/* SDR Record ID */
-	u_int8_t	sdr_version;		/* SDR Version */
-	u_int8_t	record_type;		/* SDR Record Type */
-	u_int8_t	record_length;		/* SDR Record Length */
+	uint16_t	record_id;		/* SDR Record ID */
+	uint8_t	sdr_version;		/* SDR Version */
+	uint8_t	record_type;		/* SDR Record Type */
+	uint8_t	record_length;		/* SDR Record Length */
 } __packed;
 
 /* SDR: Record Type 1 */
 struct sdrtype1 {
 	struct sdrhdr	sdrhdr;
 
-	u_int8_t	owner_id;
-	u_int8_t	owner_lun;
-	u_int8_t	sensor_num;
+	uint8_t	owner_id;
+	uint8_t	owner_lun;
+	uint8_t	sensor_num;
 
-	u_int8_t	entity_id;
-	u_int8_t	entity_instance;
-	u_int8_t	sensor_init;
-	u_int8_t	sensor_caps;
-	u_int8_t	sensor_type;
-	u_int8_t	event_code;
-	u_int16_t	trigger_mask;
-	u_int16_t	reading_mask;
-	u_int16_t	settable_mask;
-	u_int8_t	units1;
-	u_int8_t	units2;
-	u_int8_t	units3;
-	u_int8_t	linear;
-	u_int8_t	m;
-	u_int8_t	m_tolerance;
-	u_int8_t	b;
-	u_int8_t	b_accuracy;
-	u_int8_t	accuracyexp;
-	u_int8_t	rbexp;
-	u_int8_t	analogchars;
-	u_int8_t	nominalreading;
-	u_int8_t	normalmax;
-	u_int8_t	normalmin;
-	u_int8_t	sensormax;
-	u_int8_t	sensormin;
-	u_int8_t	uppernr;
-	u_int8_t	upperc;
-	u_int8_t	uppernc;
-	u_int8_t	lowernr;
-	u_int8_t	lowerc;
-	u_int8_t	lowernc;
-	u_int8_t	physt;
-	u_int8_t	nhyst;
-	u_int8_t	resvd[2];
-	u_int8_t	oem;
-	u_int8_t	typelen;
-	u_int8_t	name[1];
+	uint8_t	entity_id;
+	uint8_t	entity_instance;
+	uint8_t	sensor_init;
+	uint8_t	sensor_caps;
+	uint8_t	sensor_type;
+	uint8_t	event_code;
+	uint16_t	trigger_mask;
+	uint16_t	reading_mask;
+	uint16_t	settable_mask;
+	uint8_t	units1;
+	uint8_t	units2;
+	uint8_t	units3;
+	uint8_t	linear;
+	uint8_t	m;
+	uint8_t	m_tolerance;
+	uint8_t	b;
+	uint8_t	b_accuracy;
+	uint8_t	accuracyexp;
+	uint8_t	rbexp;
+	uint8_t	analogchars;
+	uint8_t	nominalreading;
+	uint8_t	normalmax;
+	uint8_t	normalmin;
+	uint8_t	sensormax;
+	uint8_t	sensormin;
+	uint8_t	uppernr;
+	uint8_t	upperc;
+	uint8_t	uppernc;
+	uint8_t	lowernr;
+	uint8_t	lowerc;
+	uint8_t	lowernc;
+	uint8_t	physt;
+	uint8_t	nhyst;
+	uint8_t	resvd[2];
+	uint8_t	oem;
+	uint8_t	typelen;
+	uint8_t	name[1];
 } __packed;
 
 /* SDR: Record Type 2 */
 struct sdrtype2 {
 	struct sdrhdr	sdrhdr;
 
-	u_int8_t	owner_id;
-	u_int8_t	owner_lun;
-	u_int8_t	sensor_num;
+	uint8_t	owner_id;
+	uint8_t	owner_lun;
+	uint8_t	sensor_num;
 
-	u_int8_t	entity_id;
-	u_int8_t	entity_instance;
-	u_int8_t	sensor_init;
-	u_int8_t	sensor_caps;
-	u_int8_t	sensor_type;
-	u_int8_t	event_code;
-	u_int16_t	trigger_mask;
-	u_int16_t	reading_mask;
-	u_int16_t	set_mask;
-	u_int8_t	units1;
-	u_int8_t	units2;
-	u_int8_t	units3;
-	u_int8_t	share1;
-	u_int8_t	share2;
-	u_int8_t	physt;
-	u_int8_t	nhyst;
-	u_int8_t	resvd[3];
-	u_int8_t	oem;
-	u_int8_t	typelen;
-	u_int8_t	name[1];
+	uint8_t	entity_id;
+	uint8_t	entity_instance;
+	uint8_t	sensor_init;
+	uint8_t	sensor_caps;
+	uint8_t	sensor_type;
+	uint8_t	event_code;
+	uint16_t	trigger_mask;
+	uint16_t	reading_mask;
+	uint16_t	set_mask;
+	uint8_t	units1;
+	uint8_t	units2;
+	uint8_t	units3;
+	uint8_t	share1;
+	uint8_t	share2;
+	uint8_t	physt;
+	uint8_t	nhyst;
+	uint8_t	resvd[3];
+	uint8_t	oem;
+	uint8_t	typelen;
+	uint8_t	name[1];
 } __packed;
 
 int ipmi_probe(struct ipmi_attach_args *);

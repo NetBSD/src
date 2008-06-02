@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.137.6.1 2008/04/03 12:42:34 mjf Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.137.6.2 2008/06/02 13:23:08 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -44,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.137.6.1 2008/04/03 12:42:34 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.137.6.2 2008/06/02 13:23:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,10 +743,10 @@ svr4_sys_times(struct lwp *l, const struct svr4_sys_times_args *uap, register_t 
 	struct proc		 *p = l->l_proc;
 
 	ru = p->p_stats->p_ru;
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 	rulwps(p, &ru);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	tms.tms_utime = timeval_to_clock_t(&ru.ru_utime);
 	tms.tms_stime = timeval_to_clock_t(&ru.ru_stime);
@@ -831,30 +824,39 @@ svr4_sys_pgrpsys(struct lwp *l, const struct svr4_sys_pgrpsys_args *uap, registe
 		/*FALLTHROUGH*/
 
 	case 0:			/* getpgrp() */
+		mutex_enter(proc_lock);
 		*retval = p->p_pgrp->pg_id;
+		mutex_exit(proc_lock);
 		return 0;
 
 	case 2:			/* getsid(pid) */
+		mutex_enter(proc_lock);
 		if (SCARG(uap, pid) != 0 &&
-		    (p = svr4_pfind(SCARG(uap, pid))) == NULL)
+		    (p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_ZOMBIE)) == NULL) {
+			mutex_exit(proc_lock);
 			return ESRCH;
+		}
 		/*
 		 * This has already been initialized to the pid of
 		 * the session leader.
 		 */
 		*retval = (register_t) p->p_session->s_sid;
+		mutex_exit(proc_lock);
 		return 0;
 
 	case 3:			/* setsid() */
 		return sys_setsid(l, NULL, retval);
 
 	case 4:			/* getpgid(pid) */
-
+		mutex_enter(proc_lock);
 		if (SCARG(uap, pid) != 0 &&
-		    (p = svr4_pfind(SCARG(uap, pid))) == NULL)
+		    (p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_ZOMBIE)) == NULL) {
+			mutex_exit(proc_lock);
 			return ESRCH;
+		}
 
 		*retval = (int) p->p_pgrp->pg_id;
+		mutex_exit(proc_lock);
 		return 0;
 
 	case 5:			/* setpgid(pid, pgid); */
@@ -1012,7 +1014,9 @@ svr4_sys_waitsys(struct lwp *l, const struct svr4_sys_waitsys_args *uap, registe
 		break;
 
 	case SVR4_P_PGID:
+		mutex_enter(proc_lock);
 		id = -l->l_proc->p_pgid;
+		mutex_exit(proc_lock);
 		break;
 
 	case SVR4_P_ALL:

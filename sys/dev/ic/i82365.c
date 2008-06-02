@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.101 2007/12/05 07:58:29 ad Exp $	*/
+/*	$NetBSD: i82365.c,v 1.101.12.1 2008/06/02 13:23:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.101 2007/12/05 07:58:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.101.12.1 2008/06/02 13:23:22 mjf Exp $");
 
 #define	PCICDEBUG
 
@@ -319,7 +319,7 @@ pcic_attach(sc)
 		if (h->vendor == PCIC_VENDOR_NONE)
 			continue;
 
-		aprint_normal("%s: controller %d (%s) has ", sc->dev.dv_xname,
+		aprint_normal_dev(&sc->dev, "controller %d (%s) has ",
 		    chip, pcic_vendor_to_string(sc->handle[i].vendor));
 
 		if ((h->flags & PCIC_FLAG_SOCKETP) &&
@@ -357,7 +357,7 @@ pcic_power(why, arg)
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
 	int reg;
 
-	DPRINTF(("%s: power: why %d\n", h->ph_parent->dv_xname, why));
+	DPRINTF(("%s: power: why %d\n", device_xname(h->ph_parent), why));
 
 	if (h->flags & PCIC_FLAG_SOCKETP) {
 		if ((why == PWR_RESUME) &&
@@ -370,7 +370,7 @@ pcic_power(why, arg)
 			    reg |= sc->irq << PCIC_CSC_INTR_IRQ_SHIFT;
 			pcic_write(h, PCIC_CSC_INTR, reg);
 			DPRINTF(("%s: CSC_INTR was zero; reset to %s\n",
-			    sc->dev.dv_xname,
+			    device_xname(&sc->dev),
 			    bitmask_snprintf(pcic_read(h, PCIC_CSC_INTR),
 				PCIC_CSC_INTR_FORMAT,
 				bitbuf, sizeof(bitbuf))));
@@ -435,9 +435,8 @@ pcic_attach_socket(h)
 	snprintf(cs, sizeof(cs), "%d,%d", h->chip, h->socket);
 
 	if (kthread_create(PRI_NONE, 0, NULL, pcic_event_thread, h,
-	    &h->event_thread, "%s,%s", h->ph_parent->dv_xname, cs)) {
-		printf("%s: unable to create event thread for sock 0x%02x\n",
-		    h->ph_parent->dv_xname, h->sock);
+	    &h->event_thread, "%s,%s", device_xname(h->ph_parent), cs)) {
+		aprint_error_dev(h->ph_parent, "unable to create event thread for sock 0x%02x\n", h->sock);
 		panic("pcic_attach_socket");
 	}
 }
@@ -468,7 +467,7 @@ pcic_attach_socket_finish(h)
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
 	int reg;
 
-	DPRINTF(("%s: attach finish socket %ld\n", h->ph_parent->dv_xname,
+	DPRINTF(("%s: attach finish socket %ld\n", device_xname(h->ph_parent),
 	    (long) (h - &sc->handle[0])));
 
 	/*
@@ -477,7 +476,7 @@ pcic_attach_socket_finish(h)
 	 * (this works around a bug seen in suspend-to-disk on the
 	 * Sony VAIO Z505; on resume, the CSC_INTR state is not preserved).
 	 */
-	powerhook_establish(h->ph_parent->dv_xname, pcic_power, h);
+	powerhook_establish(device_xname(h->ph_parent), pcic_power, h);
 
 	/* enable interrupts on card detect, poll for them if no irq avail */
 	reg = PCIC_CSC_INTR_CD_ENABLE;
@@ -498,7 +497,7 @@ pcic_attach_socket_finish(h)
 	/* clear possible card detect interrupt */
 	(void) pcic_read(h, PCIC_CSC);
 
-	DPRINTF(("%s: attach finish vendor 0x%02x\n", h->ph_parent->dv_xname,
+	DPRINTF(("%s: attach finish vendor 0x%02x\n", device_xname(h->ph_parent),
 	    h->vendor));
 
 	/* unsleep the cirrus controller */
@@ -506,7 +505,7 @@ pcic_attach_socket_finish(h)
 		reg = pcic_read(h, PCIC_CIRRUS_MISC_CTL_2);
 		if (reg & PCIC_CIRRUS_MISC_CTL_2_SUSPEND) {
 			DPRINTF(("%s: socket %02x was suspended\n",
-			    h->ph_parent->dv_xname, h->sock));
+			    device_xname(h->ph_parent), h->sock));
 			reg &= ~PCIC_CIRRUS_MISC_CTL_2_SUSPEND;
 			pcic_write(h, PCIC_CIRRUS_MISC_CTL_2, reg);
 		}
@@ -584,7 +583,7 @@ pcic_event_thread(arg)
 			splx(s);
 
 			DPRINTF(("%s: insertion event\n",
-			    h->ph_parent->dv_xname));
+			    device_xname(h->ph_parent)));
 			pcic_attach_card(h);
 			break;
 
@@ -609,7 +608,7 @@ pcic_event_thread(arg)
 			splx(s);
 
 			DPRINTF(("%s: removal event\n",
-			    h->ph_parent->dv_xname));
+			    device_xname(h->ph_parent)));
 			pcic_detach_card(h, DETACH_FORCE);
 			break;
 
@@ -670,7 +669,7 @@ pcic_intr(arg)
 	struct pcic_softc *sc = arg;
 	int i, ret = 0;
 
-	DPRINTF(("%s: intr\n", sc->dev.dv_xname));
+	DPRINTF(("%s: intr\n", device_xname(&sc->dev)));
 
 	for (i = 0; i < __arraycount(sc->handle); i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
@@ -694,21 +693,21 @@ pcic_intr_socket(h)
 		   PCIC_CSC_BATTDEAD);
 
 	if (cscreg & PCIC_CSC_GPI) {
-		DPRINTF(("%s: %02x GPI\n", h->ph_parent->dv_xname, h->sock));
+		DPRINTF(("%s: %02x GPI\n", device_xname(h->ph_parent), h->sock));
 	}
 	if (cscreg & PCIC_CSC_CD) {
 		int statreg;
 
 		statreg = pcic_read(h, PCIC_IF_STATUS);
 
-		DPRINTF(("%s: %02x CD %x\n", h->ph_parent->dv_xname, h->sock,
+		DPRINTF(("%s: %02x CD %x\n", device_xname(h->ph_parent), h->sock,
 		    statreg));
 
 		if ((statreg & PCIC_IF_STATUS_CARDDETECT_MASK) ==
 		    PCIC_IF_STATUS_CARDDETECT_PRESENT) {
 			if (h->laststate != PCIC_LASTSTATE_PRESENT) {
 				DPRINTF(("%s: enqueing INSERTION event\n",
-					 h->ph_parent->dv_xname));
+					 device_xname(h->ph_parent)));
 				pcic_queue_event(h, PCIC_EVENT_INSERTION);
 			}
 			h->laststate = PCIC_LASTSTATE_PRESENT;
@@ -716,26 +715,26 @@ pcic_intr_socket(h)
 			if (h->laststate == PCIC_LASTSTATE_PRESENT) {
 				/* Deactivate the card now. */
 				DPRINTF(("%s: deactivating card\n",
-					 h->ph_parent->dv_xname));
+					 device_xname(h->ph_parent)));
 				pcic_deactivate_card(h);
 
 				DPRINTF(("%s: enqueing REMOVAL event\n",
-					 h->ph_parent->dv_xname));
+					 device_xname(h->ph_parent)));
 				pcic_queue_event(h, PCIC_EVENT_REMOVAL);
 			}
 			h->laststate = PCIC_LASTSTATE_EMPTY;
 		}
 	}
 	if (cscreg & PCIC_CSC_READY) {
-		DPRINTF(("%s: %02x READY\n", h->ph_parent->dv_xname, h->sock));
+		DPRINTF(("%s: %02x READY\n", device_xname(h->ph_parent), h->sock));
 		/* shouldn't happen */
 	}
 	if (cscreg & PCIC_CSC_BATTWARN) {
-		DPRINTF(("%s: %02x BATTWARN\n", h->ph_parent->dv_xname,
+		DPRINTF(("%s: %02x BATTWARN\n", device_xname(h->ph_parent),
 		    h->sock));
 	}
 	if (cscreg & PCIC_CSC_BATTDEAD) {
-		DPRINTF(("%s: %02x BATTDEAD\n", h->ph_parent->dv_xname,
+		DPRINTF(("%s: %02x BATTDEAD\n", device_xname(h->ph_parent),
 		    h->sock));
 	}
 	return (cscreg ? 1 : 0);
@@ -1249,7 +1248,7 @@ pcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 
 	/* XXX wtf is this doing here? */
 
-	printf("%s: port 0x%lx", sc->dev.dv_xname, (u_long) ioaddr);
+	printf("%s: port 0x%lx", device_xname(&sc->dev), (u_long) ioaddr);
 	if (size > 1)
 		printf("-0x%lx", (u_long) ioaddr + (u_long) size - 1);
 	printf("\n");
@@ -1484,7 +1483,7 @@ pcic_chip_socket_settype(pch, type)
 	pcic_write(h, PCIC_INTR, intr);
 
 	DPRINTF(("%s: pcic_chip_socket_settype %02x type %s %02x\n",
-	    h->ph_parent->dv_xname, h->sock,
+	    device_xname(h->ph_parent), h->sock,
 	    ((type == PCMCIA_IFTYPE_IO) ? "io" : "mem"), intr));
 }
 

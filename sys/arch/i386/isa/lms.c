@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.52 2007/03/04 05:59:58 christos Exp $	*/
+/*	$NetBSD: lms.c,v 1.52.40.1 2008/06/02 13:22:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.52 2007/03/04 05:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.52.40.1 2008/06/02 13:22:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ lmsattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": Logitech Mouse\n");
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, LMS_NPORTS, 0, &ioh)) {
-		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 

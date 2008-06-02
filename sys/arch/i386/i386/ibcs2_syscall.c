@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.38.6.1 2008/04/03 12:42:18 mjf Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.38.6.2 2008/06/02 13:22:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.38.6.1 2008/04/03 12:42:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.38.6.2 2008/06/02 13:22:15 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -124,9 +117,7 @@ ibcs2_syscall_plain(frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	KERNEL_LOCK(1, l);
 	error = (*callp->sy_call)(l, args, rval);
-	KERNEL_UNLOCK_LAST(l);
 
 	switch (error) {
 	case 0:
@@ -202,15 +193,12 @@ ibcs2_syscall_fancy(frame)
 			goto bad;
 	}
 
-	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
-		goto out;
+	if ((error = trace_enter(code, args, callp->sy_narg)) == 0) {
+		rval[0] = 0;
+		rval[1] = 0;
+		error = (*callp->sy_call)(l, args, rval);
+	}
 
-	rval[0] = 0;
-	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
-out:
-	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
 		frame->tf_eax = rval[0];

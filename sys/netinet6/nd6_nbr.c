@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.82.14.1 2008/04/03 12:43:09 mjf Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.82.14.2 2008/06/02 13:24:27 mjf Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.82.14.1 2008/04/03 12:43:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.82.14.2 2008/06/02 13:24:27 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.82.14.1 2008/04/03 12:43:09 mjf Exp $"
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/sockio.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.82.14.1 2008/04/03 12:43:09 mjf Exp $"
 #include <netinet6/scope6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+#include <netinet6/icmp6_private.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -115,7 +117,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_ns, struct nd_neighbor_solicit *, m, off, icmp6len);
 	if (nd_ns == NULL) {
-		icmp6stat.icp6s_tooshort++;
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		return;
 	}
 	ip6 = mtod(m, struct ip6_hdr *); /* adjust pointer for safety */
@@ -322,7 +324,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	nd6log((LOG_ERR, "nd6_ns_input: src=%s\n", ip6_sprintf(&saddr6)));
 	nd6log((LOG_ERR, "nd6_ns_input: dst=%s\n", ip6_sprintf(&daddr6)));
 	nd6log((LOG_ERR, "nd6_ns_input: tgt=%s\n", ip6_sprintf(&taddr6)));
-	icmp6stat.icp6s_badns++;
+	ICMP6_STATINC(ICMP6_STAT_BADNS);
 	m_freem(m);
 }
 
@@ -514,7 +516,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, &im6o, NULL, NULL);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);
-	icmp6stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT]++;
+	ICMP6_STATINC(ICMP6_STAT_OUTHIST + ND_NEIGHBOR_SOLICIT);
 
 	rtcache_free(&ro);
 	return;
@@ -568,7 +570,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_na, struct nd_neighbor_advert *, m, off, icmp6len);
 	if (nd_na == NULL) {
-		icmp6stat.icp6s_tooshort++;
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		return;
 	}
 
@@ -805,7 +807,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	return;
 
  bad:
-	icmp6stat.icp6s_badna++;
+	ICMP6_STATINC(ICMP6_STAT_BADNA);
 	m_freem(m);
 }
 
@@ -908,8 +910,7 @@ nd6_na_output(
 	/*
 	 * Select a source whose scope is the same as that of the dest.
 	 */
-	src = in6_selectsrc(satosin6(dst), NULL, NULL, &ro, NULL, NULL,
-	    &error);
+	src = in6_selectsrc(satosin6(dst), NULL, NULL, &ro, NULL, NULL, &error);
 	if (src == NULL) {
 		nd6log((LOG_DEBUG, "nd6_na_output: source can't be "
 		    "determined: dst=%s, error=%d\n",
@@ -967,11 +968,11 @@ nd6_na_output(
 	nd_na->nd_na_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(struct ip6_hdr), icmp6len);
 
-	ip6_output(m, NULL, NULL, 0, &im6o, (struct socket *)NULL, NULL);
+	ip6_output(m, NULL, NULL, 0, &im6o, NULL, NULL);
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert);
-	icmp6stat.icp6s_outhist[ND_NEIGHBOR_ADVERT]++;
+	ICMP6_STATINC(ICMP6_STAT_OUTHIST + ND_NEIGHBOR_ADVERT);
 
 	rtcache_free(&ro);
 	return;
@@ -1098,7 +1099,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 		return;
 	}
 	bzero(dp, sizeof(*dp));
-	callout_init(&dp->dad_timer_ch, 0);
+	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
 	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
@@ -1150,11 +1151,11 @@ nd6_dad_stop(struct ifaddr *ifa)
 static void
 nd6_dad_timer(struct ifaddr *ifa)
 {
-	int s;
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
 
-	s = splsoftnet();	/* XXX */
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	/* Sanity check */
 	if (ia == NULL) {
@@ -1247,7 +1248,8 @@ nd6_dad_timer(struct ifaddr *ifa)
 	}
 
 done:
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.9 2007/11/12 14:03:35 nisimura Exp $ */
+/* $NetBSD: pcn.c,v 1.9.16.1 2008/06/02 13:22:36 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -62,10 +55,15 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int pcn_match(unsigned, void *);
 void *pcn_init(unsigned, void *);
 int pcn_send(void *, char *, unsigned);
 int pcn_recv(void *, char *, unsigned, unsigned);
 
+struct desc {
+	uint32_t xd0, xd1, xd2;
+	uint32_t hole;
+};
 #define T1_OWN		(1U << 31)	/* 1: empty for HW to load anew */
 #define T1_STP		(1U << 25)	/* first frame segment */
 #define T1_ENP		(1U << 24)	/* last frame segment */
@@ -75,11 +73,6 @@ int pcn_recv(void *, char *, unsigned, unsigned);
 #define R1_ERR		(1U << 30)	/* Rx error summary */
 #define R1_ONES		0xf000		/* filler */
 #define R1_FLMASK	0x0fff		/* Rx frame length */
-
-struct desc {
-	uint32_t xd0, xd1, xd2;
-	uint32_t hole;
-};
 
 #define PCN_RDP		0x10
 #define PCN_RAP		0x12
@@ -143,6 +136,15 @@ static unsigned pcn_bcr_read(struct local *, int);
 static void pcn_bcr_write(struct local *, int, int);
 static void mii_initphy(struct local *l);
 
+int
+pcn_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	return (v == PCI_DEVICE(0x1022, 0x2000));
+}
+
 void *
 pcn_init(unsigned tag, void *data)
 {
@@ -152,11 +154,7 @@ pcn_init(unsigned tag, void *data)
 	uint8_t *en;
 	struct pcninit initblock, *ib;
 
-	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x1022 && PCI_PRODUCT(val) != 0x2000)
-		return NULL;
-
-	l = ALLOC(struct local, sizeof(struct desc));
+	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
@@ -228,7 +226,7 @@ int
 pcn_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *txd;
+	volatile struct desc *txd;
 	unsigned loop;
 	int tlen;
 
@@ -256,7 +254,7 @@ int
 pcn_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *rxd;
+	volatile struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

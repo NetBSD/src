@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.10 2007/10/19 11:59:41 ad Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.10.16.1 2008/06/02 13:23:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.10 2007/10/19 11:59:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.10.16.1 2008/06/02 13:23:15 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -76,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.10 2007/10/19 11:59:41 ad Exp $");
 #include <dev/ic/depcareg.h>
 #include <dev/ic/depcavar.h>
 
-static int	depca_eisa_match(struct device *, struct cfdata *, void *);
-static void	depca_eisa_attach(struct device *, struct device *, void *);
+static int	depca_eisa_match(device_t, cfdata_t, void *);
+static void	depca_eisa_attach(device_t, device_t, void *);
 
 struct depca_eisa_softc {
 	struct depca_softc sc_depca;
@@ -87,14 +80,14 @@ struct depca_eisa_softc {
 	int sc_ist;
 };
 
-CFATTACH_DECL(depca_eisa, sizeof(struct depca_eisa_softc),
+CFATTACH_DECL_NEW(depca_eisa, sizeof(struct depca_eisa_softc),
     depca_eisa_match, depca_eisa_attach, NULL, NULL);
 
 static void	*depca_eisa_intr_establish(struct depca_softc *,
 					   struct lance_softc *);
 
 static int
-depca_eisa_match(struct device *parent, struct cfdata *match, void *aux)
+depca_eisa_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 
@@ -105,15 +98,16 @@ depca_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 #define	DEPCA_ECU_FUNC_NETBUF	1
 
 static void
-depca_eisa_attach(struct device *parent, struct device *self, void *aux)
+depca_eisa_attach(device_t parent, device_t self, void *aux)
 {
-	struct depca_softc *sc = device_private(self);
 	struct depca_eisa_softc *esc = device_private(self);
+	struct depca_softc *sc = &esc->sc_depca;
 	struct eisa_attach_args *ea = aux;
 	struct eisa_cfg_mem ecm;
 	struct eisa_cfg_irq eci;
 
-	printf(": DEC DE422 Ethernet\n");
+	sc->sc_dev = self;
+	aprint_error(": DEC DE422 Ethernet\n");
 
 	sc->sc_iot = ea->ea_iot;
 	sc->sc_memt = ea->ea_memt;
@@ -124,31 +118,29 @@ depca_eisa_attach(struct device *parent, struct device *self, void *aux)
 
 	if (eisa_conf_read_mem(ea->ea_ec, ea->ea_slot,
 	    DEPCA_ECU_FUNC_NETBUF, 0, &ecm) != 0) {
-		printf("%s: unable to find network buffer\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to find network buffer\n");
 		return;
 	}
 
-	printf("%s: shared memory at 0x%lx-0x%lx\n", sc->sc_dev.dv_xname,
+	aprint_normal_dev(self, "shared memory at 0x%lx-0x%lx\n",
 	    ecm.ecm_addr, ecm.ecm_addr + ecm.ecm_size - 1);
 
 	sc->sc_memsize = ecm.ecm_size;
 
 	if (bus_space_map(sc->sc_iot, EISA_SLOT_ADDR(ea->ea_slot) + 0xc00, 16,
 	    0, &sc->sc_ioh) != 0) {
-		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to map i/o space\n");
 		return;
 	}
 	if (bus_space_map(sc->sc_memt, ecm.ecm_addr, sc->sc_memsize,
 	    0, &sc->sc_memh) != 0) {
-		printf("%s: unable to map memory space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to map memory space\n");
 		return;
 	}
 
 	if (eisa_conf_read_irq(ea->ea_ec, ea->ea_slot,
 	    DEPCA_ECU_FUNC_NETINTR, 0, &eci) != 0) {
-		printf("%s: unable to determine IRQ\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to determine IRQ\n");
 		return;
 	}
 
@@ -161,29 +153,29 @@ depca_eisa_attach(struct device *parent, struct device *self, void *aux)
 static void *
 depca_eisa_intr_establish(struct depca_softc *parent, struct lance_softc *child)
 {
-	struct depca_eisa_softc *esc = (void *) parent;
+	struct depca_eisa_softc *esc = (struct depca_eisa_softc *)parent;
 	eisa_intr_handle_t ih;
 	const char *intrstr;
 	void *rv;
 
 	if (eisa_intr_map(esc->sc_ec, esc->sc_irq, &ih)) {
-		printf("%s: unable to map interrupt (%d)\n",
-		    parent->sc_dev.dv_xname, esc->sc_irq);
+		aprint_error_dev(parent->sc_dev,
+		    "unable to map interrupt (%d)\n", esc->sc_irq);
 		return (NULL);
 	}
 	intrstr = eisa_intr_string(esc->sc_ec, ih);
 	rv = eisa_intr_establish(esc->sc_ec, ih, esc->sc_ist, IPL_NET,
 	    (esc->sc_ist == IST_LEVEL) ? am7990_intr : depca_intredge, child);
 	if (rv == NULL) {
-		printf("%s: unable to establish interrupt",
-		    parent->sc_dev.dv_xname);
+		aprint_error_dev(parent->sc_dev,
+		    "unable to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return (NULL);
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", parent->sc_dev.dv_xname,
+		aprint_normal_dev(parent->sc_dev, "interrupting at %s\n",
 		    intrstr);
 
 	return (rv);

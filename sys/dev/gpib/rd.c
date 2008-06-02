@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.18 2007/10/08 16:41:11 ad Exp $ */
+/*	$NetBSD: rd.c,v 1.18.18.1 2008/06/02 13:23:16 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -118,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.18 2007/10/08 16:41:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.18.18.1 2008/06/02 13:23:16 mjf Exp $");
 
 #include "rnd.h"
 
@@ -366,13 +359,14 @@ rdattach(parent, self, aux)
 		return;
 
 	if (cs80reset(parent, sc->sc_slave, sc->sc_punit)) {
-		printf("\n%s: can't reset device\n", sc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->sc_dev, "can't reset device\n");
 		return;
 	}
 
 	if (cs80describe(parent, sc->sc_slave, sc->sc_punit, &csd)) {
-		printf("\n%s: didn't respond to describe command\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->sc_dev, "didn't respond to describe command\n");
 		return;
 	}
 	memset(name, 0, sizeof(name));
@@ -384,7 +378,7 @@ rdattach(parent, self, aux)
 #ifdef DEBUG
 	if (rddebug & RDB_IDENT) {
 		printf("\n%s: name: ('%s')\n",
-		    sc->sc_dev.dv_xname, name);
+		    device_xname(&sc->sc_dev), name);
 		printf("  iuw %x, maxxfr %d, ctype %d\n",
 		    csd.d_iuw, csd.d_cmaxxfr, csd.d_ctype);
 		printf("  utype %d, bps %d, blkbuf %d, burst %d, blktime %d\n",
@@ -396,7 +390,7 @@ rdattach(parent, self, aux)
 		printf("  maxcyl/head/sect %d/%d/%d, maxvsect %d, inter %d\n",
 		    csd.d_maxcylhead >> 8, csd.d_maxcylhead & 0xff,
 		    csd.d_maxsect, csd.d_maxvsectl, csd.d_interleave);
-		printf("%s", sc->sc_dev.dv_xname);
+		printf("%s", device_xname(&sc->sc_dev));
 	}
 #endif
 
@@ -438,7 +432,7 @@ rdattach(parent, self, aux)
 	 */
 	printf(": %s\n", rdidentinfo[type].ri_desc);
 	printf("%s: %d cylinders, %d heads, %d blocks, %d bytes/block\n",
-	    sc->sc_dev.dv_xname, rdidentinfo[type].ri_ncyl,
+	    device_xname(&sc->sc_dev), rdidentinfo[type].ri_ncyl,
 	    rdidentinfo[type].ri_ntpc, rdidentinfo[type].ri_nblocks,
 	    DEV_BSIZE);
 
@@ -448,14 +442,14 @@ rdattach(parent, self, aux)
 	 * Initialize and attach the disk structure.
 	 */
 	memset(&sc->sc_dk, 0, sizeof(sc->sc_dk));
-	disk_init(&sc->sc_dk, sc->sc_dev.dv_xname, NULL);
+	disk_init(&sc->sc_dk, device_xname(&sc->sc_dev), NULL);
 	disk_attach(&sc->sc_dk);
 
 	callout_init(&sc->sc_restart_ch, 0);
 
 	if (gpibregister(sc->sc_ic, sc->sc_slave, rdcallback, sc,
 	    &sc->sc_hdl)) {
-		printf("%s: can't register callback\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't register callback\n");
 		return;
 	}
 
@@ -469,7 +463,7 @@ rdattach(parent, self, aux)
 	/*
 	 * attach the device into the random source list
 	 */
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_DISK, 0);
 #endif
 }
@@ -498,7 +492,7 @@ rdgetinfo(sc)
 		return (0);
 
 	pi = lp->d_partitions;
-	printf("%s: WARNING: %s\n", sc->sc_dev.dv_xname, msg);
+	printf("%s: WARNING: %s\n", device_xname(&sc->sc_dev), msg);
 
 	pi[RAW_PART].p_size = rdidentinfo[sc->sc_type].ri_nblocks;
 	lp->d_npartitions = RAW_PART+1;
@@ -763,7 +757,7 @@ rdstart(sc)
 	punit = sc->sc_punit;
 
 	DPRINTF(RDB_FOLLOW, ("rdstart(%s): bp %p, %c\n",
-	    sc->sc_dev.dv_xname, bp, (bp->b_flags & B_READ) ? 'R' : 'W'));
+	    device_xname(&sc->sc_dev), bp, (bp->b_flags & B_READ) ? 'R' : 'W'));
 
 again:
 
@@ -804,7 +798,7 @@ again:
 	if (sc->sc_errcnt++ < RDRETRY)
 		goto again;
 	printf("%s: rdstart err: cmd 0x%x sect %uld blk %" PRId64 " len %d\n",
-	       sc->sc_dev.dv_xname, sc->sc_ioc.c_cmd, sc->sc_ioc.c_addr,
+	       device_xname(&sc->sc_dev), sc->sc_ioc.c_cmd, sc->sc_ioc.c_addr,
 	       bp->b_blkno, sc->sc_resid);
 	bp->b_error = EIO;
 	bp = rdfinish(sc, bp);
@@ -828,7 +822,7 @@ rdintr(sc)
 	bp = BUFQ_PEEK(sc->sc_tab);
 
 	DPRINTF(RDB_FOLLOW, ("rdintr(%s): bp %p, %c, flags %x\n",
-	    sc->sc_dev.dv_xname, bp, (bp->b_flags & B_READ) ? 'R' : 'W',
+	    device_xname(&sc->sc_dev), bp, (bp->b_flags & B_READ) ? 'R' : 'W',
 	    sc->sc_flags));
 
 	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid),
@@ -926,7 +920,7 @@ rderror(sc)
 		int rdtimo = RDWAITC << sc->sc_errcnt;
 		DPRINTF(RDB_STATUS,
 		    ("%s: internal maintenance, %d-second timeout\n",
-		    sc->sc_dev.dv_xname, rdtimo));
+		    device_xname(&sc->sc_dev), rdtimo));
 		gpibrelease(sc->sc_ic, sc->sc_hdl);
 		callout_reset(&sc->sc_restart_ch, rdtimo * hz, rdrestart, sc);
 		return (0);
@@ -989,12 +983,12 @@ rderror(sc)
 	 * of the transfer, not necessary where the error occurred.
 	 */
 	printf("%s%c: hard error, sector number %" PRId64 "\n",
-	    sc->sc_dev.dv_xname, 'a'+RDPART(bp->b_dev), pbn);
+	    device_xname(&sc->sc_dev), 'a'+RDPART(bp->b_dev), pbn);
 	/*
 	 * Now report the status as returned by the hardware with
 	 * attempt at interpretation.
 	 */
-	printf("%s %s error:", sc->sc_dev.dv_xname,
+	printf("%s %s error:", device_xname(&sc->sc_dev),
 	    (bp->b_flags & B_READ) ? "read" : "write");
 	printf(" unit %d, volume %d R0x%x F0x%x A0x%x I0x%x\n",
 	       css.c_vu&0xF, (css.c_vu>>4)&0xF,
@@ -1243,7 +1237,7 @@ rddump(dev, blkno, va, size)
 			return (EIO);
 #else /* RD_DUMP_NOT_TRUSTED */
 		/* Let's just talk about this first... */
-		printf("%s: dump addr %p, blk %d\n", sc->sc_dev.dv_xname,
+		printf("%s: dump addr %p, blk %d\n", device_xname(&sc->sc_dev),
 		    va, blkno);
 		delay(500 * 1000);	/* half a second */
 #endif /* RD_DUMP_NOT_TRUSTED */

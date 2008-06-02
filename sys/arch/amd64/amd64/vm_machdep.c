@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 2008/01/15 14:50:10 joerg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.30.6.1 2008/06/02 13:21:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 2008/01/15 14:50:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30.6.1 2008/06/02 13:21:49 mjf Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -103,7 +103,9 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 2008/01/15 14:50:10 joerg Exp $"
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
+#ifdef MTRR
 #include <machine/mtrr.h>
+#endif
 
 extern char x86_64_doubleflt_stack[];
 
@@ -182,6 +184,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	l2->l_md.md_regs = tf = (struct trapframe *)pcb->pcb_rsp0 - 1;
 	*tf = *l1->l_md.md_regs;
+	tf->tf_trapno = T_ASTFLT;
 
 	setredzone(l2);
 
@@ -189,7 +192,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
-		tf->tf_rsp = (u_int64_t)stack + stacksize;
+		tf->tf_rsp = (uint64_t)stack + stacksize;
 
 	pcb->pcb_fs = l1->l_addr->u_pcb.pcb_fs;
 	pcb->pcb_gs = l1->l_addr->u_pcb.pcb_fs;
@@ -204,14 +207,14 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct trapframe *tf = l->l_md.md_regs;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
-	sf->sf_r12 = (u_int64_t)func;
-	sf->sf_r13 = (u_int64_t)arg;
+	sf->sf_r12 = (uint64_t)func;
+	sf->sf_r13 = (uint64_t)arg;
 	if (func == child_return && !(l->l_proc->p_flag & PK_32))
-		sf->sf_rip = (u_int64_t)child_trampoline;
+		sf->sf_rip = (uint64_t)child_trampoline;
 	else
-		sf->sf_rip = (u_int64_t)lwp_trampoline;
-	pcb->pcb_rsp = (u_int64_t)sf;
-	pcb->pcb_rbp = (u_int64_t)l;
+		sf->sf_rip = (uint64_t)lwp_trampoline;
+	pcb->pcb_rsp = (uint64_t)sf;
+	pcb->pcb_rbp = (uint64_t)l;
 }
 
 void
@@ -237,8 +240,10 @@ cpu_lwp_free(struct lwp *l, int proc)
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_lwp(l, false);
 
+#ifdef MTRR
 	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
+#endif
 }
 
 void

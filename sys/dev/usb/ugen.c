@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.96.6.3 2008/04/06 09:58:51 mjf Exp $	*/
+/*	$NetBSD: ugen.c,v 1.96.6.4 2008/06/02 13:23:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -21,13 +21,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -44,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.96.6.3 2008/04/06 09:58:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.96.6.4 2008/06/02 13:23:54 mjf Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -234,16 +227,17 @@ USB_ATTACH(ugen)
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	aprint_normal("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
+	sc->sc_dev = self;
 	sc->sc_udev = udev = uaa->device;
 
 	/* First set configuration index 0, the default one for ugen. */
 	err = usbd_set_config_index(udev, 0, 0);
 	if (err) {
-		aprint_error("%s: setting configuration index 0 failed\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self,
+		    "setting configuration index 0 failed\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -252,8 +246,8 @@ USB_ATTACH(ugen)
 	/* Set up all the local state for this configuration. */
 	err = ugen_set_config(sc, conf);
 	if (err) {
-		aprint_error("%s: setting configuration %d failed\n",
-		       USBDEVNAME(sc->sc_dev), conf);
+		aprint_error_dev(self, "setting configuration %d failed\n",
+		    conf);
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -996,7 +990,7 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 int
 ugen_activate(device_ptr_t self, enum devact act)
 {
-	struct ugen_softc *sc = (struct ugen_softc *)self;
+	struct ugen_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

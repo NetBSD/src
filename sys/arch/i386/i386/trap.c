@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.234 2008/01/21 07:38:22 dyoung Exp $	*/
+/*	$NetBSD: trap.c,v 1.234.6.1 2008/06/02 13:22:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -75,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.234 2008/01/21 07:38:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.234.6.1 2008/06/02 13:22:17 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -102,15 +95,15 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.234 2008/01/21 07:38:22 dyoung Exp $");
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/kauth.h>
-
+#include <sys/cpu.h>
 #include <sys/ucontext.h>
+
 #include <uvm/uvm_extern.h>
 
 #if NTPROF > 0
 #include <x86/tprof.h>
 #endif /* NTPROF > 0 */
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -291,8 +284,7 @@ trap(frame)
 	void *onfault;
 	int error;
 	uint32_t cr2;
-
-	uvmexp.traps++;
+	bool pfail;
 
 	if (__predict_true(l != NULL)) {
 		pcb = &l->l_addr->u_pcb;
@@ -325,6 +317,12 @@ trap(frame)
 
 	switch (type) {
 
+	case T_ASTFLT:
+		if (KVM86MODE) {
+			break;
+		}
+		/*FALLTHROUGH*/
+
 	default:
 	we_re_toast:
 #ifdef KSTACK_CHECK_DR0
@@ -342,6 +340,14 @@ trap(frame)
 			}
 		}
 #endif
+		if (frame->tf_trapno < trap_types)
+			printf("fatal %s", trap_type[frame->tf_trapno]);
+		else
+			printf("unknown trap %d", frame->tf_trapno);
+		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
+		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
+		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
 #ifdef DDB
 		if (kdb_trap(type, 0, frame))
 			return;
@@ -360,15 +366,6 @@ trap(frame)
 			}
 		}
 #endif
-		if (frame->tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame->tf_trapno]);
-		else
-			printf("unknown trap %d", frame->tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
-		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
-
 		panic("trap");
 		/*NOTREACHED*/
 
@@ -589,12 +586,9 @@ copyfault:
 		if ((onfault = pcb->pcb_onfault) == fusubail) {
 			goto copyefault;
 		}
-
-#if 0
-		/* XXX - check only applies to 386's and 486's with WP off */
-		if (frame->tf_err & PGEX_P)
+		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
 			goto we_re_toast;
-#endif
+		}
 
 		/*
 		 * XXXhack: xen2 hypervisor pushes cr2 onto guest's stack
@@ -656,23 +650,52 @@ copyfault:
 			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 
-			if (type == T_PAGEFLT) {
+			pfail = false;
+			while (type == T_PAGEFLT) {
 				/*
 				 * we need to switch pmap now if we're in
 				 * the middle of copyin/out.
 				 *
 				 * but we don't need to do so for kcopy as
 				 * it never touch userspace.
-				 */
-
+ 				 */
+				kpreempt_disable();
 				if (curcpu()->ci_want_pmapload) {
 					onfault = onfault_handler(pcb, frame);
-					if (onfault != NULL &&
-					    onfault != kcopy_fault) {
+					if (onfault != kcopy_fault) {
 						pmap_load();
 					}
 				}
-				return;
+				/*
+				 * We need to keep the pmap loaded and
+				 * so avoid being preempted until back
+				 * into the copy functions.  Disable
+				 * interrupts at the hardware level before
+				 * re-enabling preemption.  Interrupts
+				 * will be re-enabled by 'iret' when
+				 * returning back out of the trap stub.
+				 * They'll only be re-enabled when the
+				 * program counter is once again in
+				 * the copy functions, and so visible
+				 * to cpu_kpreempt_exit().
+				 */
+#ifndef XEN
+				x86_disable_intr();
+#endif
+				l->l_nopreempt--;
+				if (l->l_nopreempt > 0 || !l->l_dopreempt ||
+				    pfail) {
+					return;
+				}
+#ifndef XEN
+				x86_enable_intr();
+#endif
+				/*
+				 * If preemption fails for some reason,
+				 * don't retry it.  The conditions won't
+				 * change under our nose.
+				 */
+				pfail = kpreempt(0);
 			}
 			goto out;
 		}

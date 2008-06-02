@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.21 2008/02/17 21:49:17 njoly Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.21.6.1 2008/06/02 13:23:04 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.21 2008/02/17 21:49:17 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.21.6.1 2008/06/02 13:23:04 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.21 2008/02/17 21:49:17 njoly Ex
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_conv.h>
-#include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
@@ -423,13 +422,13 @@ linux32_sys_nice(struct lwp *l, const struct linux32_sys_nice_args *uap, registe
 	/* {
 		syscallarg(int) incr;
 	} */
-	struct netbsd32_setpriority_args bsa;
+	struct sys_setpriority_args bsa;
 
 	SCARG(&bsa, which) = PRIO_PROCESS;
 	SCARG(&bsa, who) = 0;
 	SCARG(&bsa, prio) = SCARG(uap, incr);
 
-	return netbsd32_setpriority(l, &bsa, retval);
+	return sys_setpriority(l, &bsa, retval);
 }
 
 int

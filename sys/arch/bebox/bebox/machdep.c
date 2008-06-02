@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2008/02/08 16:53:34 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.6.1 2008/06/02 13:21:58 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2008/02/08 16:53:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.6.1 2008/06/02 13:21:58 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -113,6 +113,7 @@ struct pic_ops *isa_pic;
 int isa_pcmciamask = 0x8b28;		/* XXXX */
 extern int primary_pic;
 void initppc(u_long, u_long, u_int, void *);
+static void disable_device(const char *);
 void setup_bebox_intr(void);
 
 extern void *startsym, *endsym;
@@ -234,6 +235,21 @@ lookup_bootinfo(type)
 	return (NULL);
 }
 
+static void
+disable_device(const char *name)
+{
+	extern struct cfdata cfdata[];
+	int i;
+
+	for (i = 0; cfdata[i].cf_name != NULL; i++)
+		if (strcmp(cfdata[i].cf_name, name) == 0) {
+			if (cfdata[i].cf_fstate == FSTATE_NOTFOUND)
+				cfdata[i].cf_fstate = FSTATE_DNOTFOUND;
+			else if (cfdata[i].cf_fstate == FSTATE_STAR)
+				cfdata[i].cf_fstate = FSTATE_DSTAR;
+		}
+}
+
 /*
  * consinit
  * Initialize system console.
@@ -251,37 +267,45 @@ consinit()
 	consinfo = (struct btinfo_console *)lookup_bootinfo(BTINFO_CONSOLE);
 	if (!consinfo)
 		panic("not found console information in bootinfo");
-	
-#if (NPC > 0) || (NVGA > 0)
+
+	/*
+	 * We need to disable genfb or vga, because foo_match() return
+	 * the same value.
+	 */
+	if (!strcmp(consinfo->devname, "be")) {
+		/*
+		 * We use Framebuffer for initialized by BootROM of BeBox.
+		 * In this case, our console will be attached more late. 
+		 */
+#if (NPCKBC > 0)
+		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
+#endif
+		disable_device("vga");
+		return;
+	}
+
+	disable_device("genfb");
+
+#if (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
-#if (NVGA > 0)
-		if (!vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag,
-		    -1, 1))
-			goto dokbd;
-#endif
-#if (NPC > 0)
-		pccnattach();
-#endif
-#if (NVGA > 0)
-dokbd:
-#endif
+		vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag, -1, 1);
 #if (NPCKBC > 0)
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
 	}
-#endif /* PC | VGA */
+#endif
 
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
 	   	bus_space_tag_t tag = &genppc_isa_io_space_tag;
 
 		if(comcnattach(tag, consinfo->addr, consinfo->speed,
-			COM_FREQ, COM_TYPE_NORMAL,
-			((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+		    COM_FREQ, COM_TYPE_NORMAL,
+		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
 			panic("can't init serial console");
-
 		return;
 	}
 #endif

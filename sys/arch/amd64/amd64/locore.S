@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39.6.1 2008/04/03 12:42:10 mjf Exp $	*/
+/*	$NetBSD: locore.S,v 1.39.6.2 2008/06/02 13:21:48 mjf Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -87,7 +87,7 @@
 
 
 /*-
- * Copyright (c) 1998, 2000, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -101,13 +101,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -188,6 +181,7 @@
 #include <machine/trap.h>
 #include <machine/bootinfo.h>
 #include <machine/frameasm.h>
+#include <machine/cputypes.h>
 
 #if NLAPIC > 0
 #include <machine/i82489reg.h>
@@ -242,11 +236,12 @@ _C_LABEL(lapic_isr):
 
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendorname), _C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature),_C_LABEL(cpu_feature2)
-	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
+	.globl	_C_LABEL(esym),_C_LABEL(eblob),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
-	.globl	_C_LABEL(gdtstore)
+	.globl	_C_LABEL(gdtstore),_C_LABEL(cpu)
+
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
@@ -260,6 +255,7 @@ _C_LABEL(cpu_vendorname):	.space	16	# vendor string returned by `cpuid'
 					#   instruction
 _C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.quad	0	# ptr to end of syms
+_C_LABEL(eblob):	.quad	0	# ptr to end of modules
 _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.quad	0
 _C_LABEL(PDPpaddr):	.quad	0	# paddr of PTD, for libkvm
@@ -349,6 +345,17 @@ start:	movw	$0x1234,0x472			# warm boot
 	jg	2f
 	movl	%ecx,%esi
 	movl	%eax,%ecx
+	/*
+	 * If any modules were loaded, record where they
+	 * end.  We'll need to skip over them.
+	 */
+	cmpl	$BTINFO_MODULELIST, 4(%esi)
+	jne	0f
+	pushl	12(%esi)		/* endpa */
+	popl	RELOC(eblob)
+	addl	$KERNBASE_LO, RELOC(eblob)
+	adcl	$KERNBASE_HI, RELOC(eblob)+4
+0:
 	rep
 	movsb
 	popl	%eax
@@ -478,6 +485,13 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	%eax,%edi
 1:
 #endif
+	/* Skip over any modules/blobs. */
+	movl	RELOC(eblob),%eax
+	testl	%eax,%eax
+	jz	1f
+	subl	$KERNBASE_LO,%eax	/* XXX */
+	movl	%eax,%edi
+1:
 	/* Clear tables */
 	movl	%edi,%esi
 	addl	$PGOFSET,%esi
@@ -696,7 +710,7 @@ longmode_hi:
 	movw	%ax,%fs
 
 	/* XXX merge these */
-	leaq	TABLESIZE(%rsi),%rdi
+	leaq	(TABLESIZE+IOM_SIZE)(%rsi),%rdi
 
 #else	/* XEN */
 	.globl	start
@@ -755,6 +769,10 @@ start:
 	movq	$tmpstk, %rax
 	subq	$8, %rax
 	movq	%rax, %rsp
+
+	xorl	%eax,%eax
+	cpuid
+	movl	%eax,_C_LABEL(cpuid_level)
 
 	call	xen_pmap_bootstrap
 
@@ -1005,7 +1023,6 @@ IDTVEC(syscall)
 	movq	L_ADDR(%r15),%r15
 	movq	PCB_RSP0(%r15),%r15
 	xchgq	%r15,%rsp
-	sti
 
 	/*
 	 * XXX don't need this whole frame, split of the
@@ -1017,6 +1034,7 @@ IDTVEC(syscall)
 	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))	/* Known to be user ss */
 	pushq	%r15				/* User space rsp */
 	movq	CPUVAR(SCRATCH),%r15
+	sti
 	subq	$TF_REGSIZE+(TF_RSP-TF_TRAPNO),%rsp
 	INTR_SAVE_GPRS
 	movw	%fs,TF_FS(%rsp)
@@ -1054,18 +1072,12 @@ IDTVEC(syscall)
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(si)
-	CHECK_ASTPENDING(%r14)
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r14)
-	STI(si)
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	movq	%rsp,%rdi
-	call	_C_LABEL(trap)
-	jmp	.Lsyscall_checkast	/* re-check ASTs */
-1:	CHECK_DEFERRED_SWITCH
+	movl	L_MD_ASTPENDING(%r14), %eax
+	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
-	STI(si)
+#ifdef XEN
+	STI(si)					/* wtf is this? */
+#endif
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
 syscall_return:
@@ -1073,11 +1085,7 @@ syscall_return:
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 #endif
-	/*
-	 * XXX interrupts off longer than they should be here.
-	 */
 #ifndef XEN
-	cli
 	swapgs
 #endif
 	movw	TF_ES(%rsp),%es
@@ -1113,9 +1121,19 @@ syscall_return:
 	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
-
-9:	STI(si)
+9:
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	jz	10f
+	STI(si)
 	call	_C_LABEL(do_pmap_load)
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
+10:
+	/* Always returning to user mode here. */
+	CLEAR_ASTPENDING(%r14)
+	STI(si)
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
+	call	_C_LABEL(trap)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
 /*
@@ -1127,13 +1145,13 @@ syscall_return:
  */
 NENTRY(lwp_trampoline)
 	movq	%rbp,%rsi
+	movq	%rbp,%r14	/* for .Losyscall_checkast */
 	movq	%rax,%rdi
 	xorq	%rbp,%rbp
 	call	_C_LABEL(lwp_startup)
 	movq	%r13,%rdi
 	call	*%r12
-	DO_DEFERRED_SWITCH
-	INTRFASTEXIT
+	jmp	.Losyscall_checkast
 	/* NOTREACHED */
 
 /*
@@ -1143,13 +1161,13 @@ NENTRY(lwp_trampoline)
  */
 NENTRY(child_trampoline)
 	movq	%rbp,%rsi
+	movq	%rbp,%r14	/* for .Lsyscall_checkast */
 	movq	%rax,%rdi
 	xorq	%rbp,%rbp
 	call	_C_LABEL(lwp_startup)
 	movq	%r13,%rdi
 	call	*%r12
-	DO_DEFERRED_SWITCH
-	jmp	syscall_return
+	jmp	.Lsyscall_checkast
 
 	.globl  _C_LABEL(osyscall_return)
 

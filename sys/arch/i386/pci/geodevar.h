@@ -1,4 +1,4 @@
-/*	$NetBSD: geodevar.h,v 1.2 2006/06/07 22:37:59 kardel Exp $	*/
+/*	$NetBSD: geodevar.h,v 1.2.66.1 2008/06/02 13:22:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Frank Kardel  All rights reserved.
@@ -42,8 +42,6 @@
 #define	_I386_PCI_GEODEVAR_H_
 
 struct geode_gcb_softc {
-	struct device		sc_dev;
-
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 };

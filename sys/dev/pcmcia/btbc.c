@@ -1,4 +1,4 @@
-/*	$NetBSD: btbc.c,v 1.11 2007/11/28 20:16:11 plunky Exp $	*/
+/*	$NetBSD: btbc.c,v 1.11.14.1 2008/06/02 13:23:45 mjf Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.11 2007/11/28 20:16:11 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.11.14.1 2008/06/02 13:23:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: btbc.c,v 1.11 2007/11/28 20:16:11 plunky Exp $");
 #define BTBC_RECV_EVENT_DATA	6		/* event packet data */
 
 /* sc_flags */
-#define BTBC_SLEEPING		(1 << 0)	/* but not with the fishes */
 #define BTBC_XMIT		(1 << 1)	/* transmit active */
 #define BTBC_ENABLED		(1 << 2)	/* is enabled */
 
@@ -77,7 +76,6 @@ struct btbc_softc {
 
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
-	void *sc_powerhook;			/* power hook descriptor */
 	int sc_flags;				/* flags */
 
 	struct hci_unit *sc_unit;		/* Bluetooth HCI Unit */
@@ -106,7 +104,8 @@ struct btbc_softc {
 static int btbc_match(device_t, struct cfdata *, void *);
 static void btbc_attach(device_t, device_t, void *);
 static int btbc_detach(device_t, int);
-static void btbc_power(int, void *);
+static bool btbc_suspend(device_t PMF_FN_PROTO);
+static bool btbc_resume(device_t PMF_FN_PROTO);
 
 static void btbc_activity_led_timeout(void *);
 static void btbc_enable_activity_led(struct btbc_softc *);
@@ -189,10 +188,11 @@ btbc_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach Bluetooth unit */
 	sc->sc_unit = hci_attach(&btbc_hci, self, 0);
+	if (sc->sc_unit == NULL)
+		aprint_error_dev(self, "HCI attach failed\n");
 
-	/* establish a power change hook */
-	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
-	    btbc_power, sc);
+	if (!pmf_device_register(self, btbc_suspend, btbc_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	callout_init(&sc->sc_ledch, 0);
 	callout_setfunc(&sc->sc_ledch, btbc_activity_led_timeout, sc);
@@ -207,12 +207,8 @@ btbc_detach(device_t self, int flags)
 	struct btbc_softc *sc = device_private(self);
 	int err = 0;
 
+	pmf_device_deregister(self);
 	btbc_disable(sc->sc_dev);
-
-	if (sc->sc_powerhook) {
-		powerhook_disestablish(sc->sc_powerhook);
-		sc->sc_powerhook = NULL;
-	}
 
 	callout_stop(&sc->sc_ledch);
 	callout_destroy(&sc->sc_ledch);
@@ -227,39 +223,32 @@ btbc_detach(device_t self, int flags)
 	return err;
 }
 
-static void
-btbc_power(int why, void *arg)
+static bool
+btbc_suspend(device_t self PMF_FN_ARGS)
 {
-	struct btbc_softc *sc = arg;
+	struct btbc_softc *sc = device_private(self);
 
-	switch(why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		if (sc->sc_flags & BTBC_ENABLED) {
-			if (sc->sc_unit) {
-				hci_detach(sc->sc_unit);
-				sc->sc_unit = NULL;
-			}
-
-			sc->sc_flags |= BTBC_SLEEPING;
-			aprint_verbose_dev(sc->sc_dev, "sleeping\n");
-		}
-		break;
-
-	case PWR_RESUME:
-		if (sc->sc_flags & BTBC_SLEEPING) {
-			aprint_verbose_dev(sc->sc_dev, "waking up\n");
-			sc->sc_flags &= ~BTBC_SLEEPING;
-
-			sc->sc_unit = hci_attach(&btbc_hci, sc->sc_dev, 0);
-		}
-		break;
-
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
+	if (sc->sc_unit) {
+		hci_detach(sc->sc_unit);
+		sc->sc_unit = NULL;
 	}
+
+	return true;
+}
+
+
+static bool
+btbc_resume(device_t self PMF_FN_ARGS)
+{
+	struct btbc_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_unit == NULL);
+
+	sc->sc_unit = hci_attach(&btbc_hci, sc->sc_dev, 0);
+	if (sc->sc_unit == NULL)
+		return false;
+
+	return true;
 }
 
 static void

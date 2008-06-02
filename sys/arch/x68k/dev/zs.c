@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.35.14.1 2008/04/03 12:42:30 mjf Exp $	*/
+/*	$NetBSD: zs.c,v 1.35.14.2 2008/06/02 13:22:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -47,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.35.14.1 2008/04/03 12:42:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.35.14.2 2008/06/02 13:22:49 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,8 +485,6 @@ zs_write_data(struct zs_chanstate *cs, uint8_t val)
 }
 
 
-static struct zs_chanstate zscn_cs;
-
 /****************************************************************
  * Console support functions (x68k specific!)
  * Note: this code is allowed to know about the layout of
@@ -531,6 +522,8 @@ cons_decl(zs);
 
 static int zs_getc(void);
 static void zs_putc(int);
+
+static struct zs_chanstate zscn_cs;
 
 /*
  * Polled input char.

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.740.6.3 2008/04/03 13:54:13 mjf Exp $
+# $NetBSD: mi,v 1.740.6.4 2008/06/02 13:21:17 mjf Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -131,6 +131,13 @@
 ./libdata/firmware/zyd/zyd-zd1211		base-sys-root
 ./libdata/firmware/zyd/zyd-zd1211b		base-sys-root
 ./libexec					base-sys-root
+./libexec/dhcpcd-hooks				base-dhcpcd-root
+./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
+./libexec/dhcpcd-hooks/10-resolv.conf		base-dhcpcd-root
+./libexec/dhcpcd-hooks/14-lookup-hostname	base-dhcpcd-root
+./libexec/dhcpcd-hooks/15-hostname		base-dhcpcd-root
+./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
+./libexec/dhcpcd-run-hooks			base-dhcpcd-root
 ./libexec/lfs_cleanerd				base-sysutil-bin
 ./mnt						base-sys-root
 ./rescue					base-sys-root
@@ -148,6 +155,7 @@
 ./sbin/devfsd					base-sysutil-root
 ./sbin/dhclient					base-dhclient-root
 ./sbin/dhclient-script				base-dhclient-root
+./sbin/dhcpcd					base-dhcpcd-root
 ./sbin/disklabel				base-sysutil-root
 ./sbin/dkctl					base-sysutil-root
 ./sbin/dkscan_bsdlabel				base-sysutil-root
@@ -216,6 +224,7 @@
 ./sbin/newfs_lfs				base-sysutil-root
 ./sbin/newfs_msdos				base-sysutil-root
 ./sbin/newfs_sysvbfs				base-sysutil-root
+./sbin/newfs_udf				base-sysutil-root
 ./sbin/newlfs					base-obsolete		obsolete
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
@@ -547,6 +556,15 @@
 ./usr/bin/lastcomm				base-util-bin
 # needed by modload for now
 ./usr/bin/ld					comp-util-bin		bfd
+./usr/bin/ldapadd				base-ldap-bin		ldap
+./usr/bin/ldapcompare				base-ldap-bin		ldap
+./usr/bin/ldapdelete				base-ldap-bin		ldap
+./usr/bin/ldapexop				base-ldap-bin		ldap
+./usr/bin/ldapmodify				base-ldap-bin		ldap
+./usr/bin/ldapmodrdn				base-ldap-bin		ldap
+./usr/bin/ldappasswd				base-ldap-bin		ldap
+./usr/bin/ldapsearch				base-ldap-bin		ldap
+./usr/bin/ldapwhoami				base-ldap-bin		ldap
 # This is also used by pkgsrc, and should stay in base-util-bin
 ./usr/bin/ldd					base-util-bin
 ./usr/bin/leave					base-util-bin
@@ -590,6 +608,7 @@
 ./usr/bin/more					base-util-bin
 ./usr/bin/mset					base-tn3270-bin
 ./usr/bin/msgs					base-util-bin
+./usr/bin/nbsvtool				base-crypto-bin		crypto
 ./usr/bin/netgroup				base-nis-bin
 ./usr/bin/netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
@@ -1051,11 +1070,12 @@
 ./usr/sbin/bootpgw				base-bootserver-bin
 ./usr/sbin/bootptest				base-bootserver-bin
 ./usr/sbin/bpm					base-pkgutil-bin
+./usr/sbin/btattach				base-sysutil-bin
 ./usr/sbin/btconfig				base-sysutil-bin
 ./usr/sbin/btcontrol				base-obsolete		obsolete
 ./usr/sbin/btdevctl				base-sysutil-bin
 ./usr/sbin/bthcid				base-sysutil-bin
-./usr/sbin/btuartd				base-sysutil-bin
+./usr/sbin/btuartd				base-obsolete		obsolete
 ./usr/sbin/catman				base-man-bin
 ./usr/sbin/chat					base-ppp-bin
 ./usr/sbin/chown				base-sysutil-bin
@@ -1169,6 +1189,7 @@
 ./usr/sbin/mknetid				base-nis-bin		yp
 ./usr/sbin/mld6query				base-netutil-bin	use_inet6
 ./usr/sbin/mlxctl				base-sysutil-bin
+./usr/sbin/mmcformat				base-sysutil-bin
 ./usr/sbin/mopa.out				base-obsolete		obsolete
 ./usr/sbin/mopchk				base-bootserver-bin
 ./usr/sbin/mopcopy				base-bootserver-bin

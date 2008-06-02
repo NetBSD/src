@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.3.6.1 2008/04/03 12:42:23 mjf Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.3.6.2 2008/06/02 13:22:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -58,7 +51,7 @@
 /*
  * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
  */
-ENTRY_NOPROFILE(_lock_cas)
+ENTRY(_lock_cas)
 1:
 	lptrarx	%r10,0,%r3
 	cmpw	%r10,%r4
@@ -76,7 +69,7 @@ ENTRY_NOPROFILE(_lock_cas)
 /*
  * void mutex_enter(kmutex_t *);
  */
-ENTRY_NOPROFILE(mutex_enter)
+ENTRY(mutex_enter)
 	GET_CPUINFO(%r8)
 	ldptr	%r9,CI_CURLWP(%r8)
 1:
@@ -93,7 +86,7 @@ ENTRY_NOPROFILE(mutex_enter)
 /*
  * void mutex_exit(kmutex_t *);
  */
-ENTRY_NOPROFILE(mutex_exit)
+ENTRY(mutex_exit)
 	GET_CPUINFO(%r8)
 	ldptr	%r9,CI_CURLWP(%r8)
 	SYNC
@@ -122,7 +115,7 @@ ENTRY_NOPROFILE(mutex_exit)
 
 #if __HAVE_RW_STUBS
 
-ENTRY_NOPROFILE(rw_enter)
+ENTRY(rw_enter)
 	cmpwi	%r3,RW_READER
 	bne-	1f
 
@@ -149,7 +142,7 @@ ENTRY_NOPROFILE(rw_enter)
 /*
  * bool rw_tryenter(krwlock_t *krw, krw_t op);
  */
-ENTRY_NOPROFILE(rw_tryenter)
+ENTRY(rw_tryenter)
 	cmpwi	%r3,RW_READER
 	bne-	1f
 
@@ -179,7 +172,7 @@ ENTRY_NOPROFILE(rw_tryenter)
 /*
  * void rw_exit(krwlock_t *krw, krw_t op);
  */
-ENTRY_NOPROFILE(rw_exit)
+ENTRY(rw_exit)
 	ldptr	%r9,RW_OWNER(%r3)
 	SYNC
 	andi.	%r0,%r9,RW_WRITE_LOCKED

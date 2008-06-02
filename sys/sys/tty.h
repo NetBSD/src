@@ -1,4 +1,30 @@
-/*	$NetBSD: tty.h,v 1.79 2007/12/31 23:33:08 ad Exp $	*/
+/*	$NetBSD: tty.h,v 1.79.6.1 2008/06/02 13:24:34 mjf Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -61,8 +87,6 @@ struct clist {
 	u_char	*c_cs;		/* start of ring buffer */
 	u_char	*c_ce;		/* c_ce + c_len */
 	u_char	*c_cq;		/* N bits/bytes long, see tty_subr.c */
-	kcondvar_t c_cv;	/* notifier, locked by tty lock */
-	kcondvar_t c_cvf;	/* notifier, locked by tty lock */
 	int	c_cc;		/* count of characters in queue */
 	int	c_cn;		/* total ring buffer length */
 };
@@ -86,11 +110,17 @@ struct tty {
 	TAILQ_ENTRY(tty) tty_link;	/* Link in global tty list. */
 	struct	clist t_rawq;		/* Device raw input queue. */
 	long	t_rawcc;		/* Raw input queue statistics. */
+	kcondvar_t t_rawcv;		/* notifier */
+	kcondvar_t t_rawcvf;		/* notifier */
 	struct	clist t_canq;		/* Device canonical queue. */
 	long	t_cancc;		/* Canonical queue statistics. */
+	kcondvar_t t_cancv;		/* notifier */
+	kcondvar_t t_cancvf;		/* notifier */
 	struct	clist t_outq;		/* Device output queue. */
-	callout_t t_rstrt_ch;		/* for delayed output start */
 	long	t_outcc;		/* Output queue statistics. */
+	kcondvar_t t_outcv;		/* notifier */
+	kcondvar_t t_outcvf;		/* notifier */
+	callout_t t_rstrt_ch;		/* for delayed output start */
 	struct	linesw *t_linesw;	/* Interface to device drivers. */
 	dev_t	t_dev;			/* Device. */
 	int	t_state;		/* Device and driver (TS*) state. */
@@ -142,6 +172,7 @@ struct tty {
 #endif /* _KERNEL */
 
 /* These flags are kept in t_state. */
+#define	TS_SIGINFO	0x00001		/* Ignore mask on dispatch SIGINFO */
 #define	TS_ASYNC	0x00002		/* Tty in async I/O mode. */
 #define	TS_BUSY		0x00004		/* Draining output. */
 #define	TS_CARR_ON	0x00008		/* Carrier is present. */
@@ -240,7 +271,8 @@ void	 ttychars(struct tty *);
 int	 ttycheckoutq(struct tty *, int);
 int	 ttyclose(struct tty *);
 void	 ttyflush(struct tty *, int);
-void	 ttyinfo(struct tty *, int);
+void	 ttygetinfo(struct tty *, int, char *, size_t);
+void	 ttyputinfo(struct tty *, char *);
 int	 ttyinput(int, struct tty *);
 int	 ttylclose(struct tty *, int);
 int	 ttylopen(dev_t, struct tty *);
@@ -266,7 +298,6 @@ bool	 ttypull(struct tty *);
 
 int	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
-void	clwakeup(struct clist *);
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_freebsd.h"

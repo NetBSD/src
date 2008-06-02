@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.82.6.1 2008/04/03 12:42:31 mjf Exp $
+#	$NetBSD: files.xen,v 1.82.6.2 2008/06/02 13:22:52 mjf Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -47,8 +47,7 @@ file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
-file	arch/i386/i386/identcpu.c
-file	arch/x86/x86/x86_identcpu.c
+file	arch/x86/x86/identcpu.c
 file	arch/i386/i386/longrun.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
@@ -82,8 +81,7 @@ file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
-file	arch/amd64/amd64/identcpu.c
-file	arch/x86/x86/x86_identcpu.c
+file	arch/x86/x86/identcpu.c
 file	arch/amd64/amd64/mem.c
 file	arch/x86/x86/pmap.c
 file	arch/amd64/amd64/process_machdep.c
@@ -99,7 +97,6 @@ endif
 
 file	kern/subr_disk_mbr.c		disk
 file	arch/xen/x86/hypervisor_machdep.c
-file	arch/xen/x86/idle_machdep.c
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/xen/x86/x86_xpmap.c
 file	arch/xen/x86/xen_intr.c
@@ -135,11 +132,11 @@ file	dev/md_root.c			memory_disk_hooks
 file	arch/x86/x86/bus_dma.c		pci
 file	arch/xen/x86/xen_bus_dma.c	pci
 file	arch/x86/x86/bus_space.c	pci
-file	arch/x86/x86/cacheinfo.c
 file	arch/xen/x86/consinit.c
 file	arch/xen/x86/intr.c
-file	arch/x86/x86/ipi.c		multiprocessor
+file	arch/x86/x86/ipi.c
 file	arch/x86/x86/sys_machdep.c
+file	arch/x86/x86/tsc.c
 file	arch/x86/x86/x86_machdep.c
 
 include	"arch/xen/conf/files.compat"

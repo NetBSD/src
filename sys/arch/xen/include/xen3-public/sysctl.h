@@ -1,4 +1,4 @@
-/* $NetBSD: sysctl.h,v 1.2 2007/09/23 16:25:29 bouyer Exp $ */
+/* $NetBSD: sysctl.h,v 1.2.28.1 2008/06/02 13:22:53 mjf Exp $ */
 /******************************************************************************
  * sysctl.h
  * 
@@ -35,18 +35,27 @@
 #include "xen.h"
 #include "domctl.h"
 
-#define XEN_SYSCTL_INTERFACE_VERSION 0x00000003
+#define XEN_SYSCTL_INTERFACE_VERSION 0x00000006
 
 /*
  * Read console content from Xen buffer ring.
  */
 #define XEN_SYSCTL_readconsole       1
 struct xen_sysctl_readconsole {
-    /* IN variables. */
-    uint32_t clear;                /* Non-zero -> clear after reading. */
-    XEN_GUEST_HANDLE_64(char) buffer; /* Buffer start */
-    /* IN/OUT variables. */
-    uint32_t count;            /* In: Buffer size;  Out: Used buffer size  */
+    /* IN: Non-zero -> clear after reading. */
+    uint8_t clear;
+    /* IN: Non-zero -> start index specified by @index field. */
+    uint8_t incremental;
+    uint8_t pad0, pad1;
+    /*
+     * IN:  Start index for consuming from ring buffer (if @incremental);
+     * OUT: End index after consuming from ring buffer.
+     */
+    uint32_t index; 
+    /* IN: Virtual address to write console data. */
+    XEN_GUEST_HANDLE_64(char) buffer;
+    /* IN: Size of buffer; OUT: Bytes written to buffer. */
+    uint32_t count;
 };
 typedef struct xen_sysctl_readconsole xen_sysctl_readconsole_t;
 DEFINE_XEN_GUEST_HANDLE(xen_sysctl_readconsole_t);
@@ -77,15 +86,33 @@ DEFINE_XEN_GUEST_HANDLE(xen_sysctl_tbuf_op_t);
  */
 #define XEN_SYSCTL_physinfo          3
 struct xen_sysctl_physinfo {
+    /* IN variables. */
     uint32_t threads_per_core;
     uint32_t cores_per_socket;
-    uint32_t sockets_per_node;
+    uint32_t nr_cpus;
     uint32_t nr_nodes;
     uint32_t cpu_khz;
     uint64_aligned_t total_pages;
     uint64_aligned_t free_pages;
     uint64_aligned_t scrub_pages;
     uint32_t hw_cap[8];
+
+    /* IN/OUT variables. */
+    /*
+     * IN: maximum addressable entry in the caller-provided cpu_to_node array.
+     * OUT: largest cpu identifier in the system.
+     * If OUT is greater than IN then the cpu_to_node array is truncated!
+     */
+    uint32_t max_cpu_id;
+    /*
+     * If not NULL, this array is filled with node identifier for each cpu.
+     * If a cpu has no node information (e.g., cpu not present) then the
+     * sentinel value ~0u is written.
+     * The size of this array is specified by the caller in @max_cpu_id.
+     * If the actual @max_cpu_id is smaller than the array then the trailing
+     * elements of the array will not be written by the sysctl.
+     */
+    XEN_GUEST_HANDLE_64(uint32) cpu_to_node;
 };
 typedef struct xen_sysctl_physinfo xen_sysctl_physinfo_t;
 DEFINE_XEN_GUEST_HANDLE(xen_sysctl_physinfo_t);
@@ -141,9 +168,7 @@ struct xen_sysctl_getdomaininfolist {
 typedef struct xen_sysctl_getdomaininfolist xen_sysctl_getdomaininfolist_t;
 DEFINE_XEN_GUEST_HANDLE(xen_sysctl_getdomaininfolist_t);
 
-/*
- * Inject debug keys into Xen.
- */
+/* Inject debug keys into Xen. */
 #define XEN_SYSCTL_debug_keys        7
 struct xen_sysctl_debug_keys {
     /* IN variables. */
@@ -153,6 +178,35 @@ struct xen_sysctl_debug_keys {
 typedef struct xen_sysctl_debug_keys xen_sysctl_debug_keys_t;
 DEFINE_XEN_GUEST_HANDLE(xen_sysctl_debug_keys_t);
 
+/* Get physical CPU information. */
+#define XEN_SYSCTL_getcpuinfo        8
+struct xen_sysctl_cpuinfo {
+    uint64_aligned_t idletime;
+};
+typedef struct xen_sysctl_cpuinfo xen_sysctl_cpuinfo_t;
+DEFINE_XEN_GUEST_HANDLE(xen_sysctl_cpuinfo_t); 
+struct xen_sysctl_getcpuinfo {
+    /* IN variables. */
+    uint32_t max_cpus;
+    XEN_GUEST_HANDLE_64(xen_sysctl_cpuinfo_t) info;
+    /* OUT variables. */
+    uint32_t nr_cpus;
+}; 
+typedef struct xen_sysctl_getcpuinfo xen_sysctl_getcpuinfo_t;
+DEFINE_XEN_GUEST_HANDLE(xen_sysctl_getcpuinfo_t); 
+
+#define XEN_SYSCTL_availheap         9
+struct xen_sysctl_availheap {
+    /* IN variables. */
+    uint32_t min_bitwidth;  /* Smallest address width (zero if don't care). */
+    uint32_t max_bitwidth;  /* Largest address width (zero if don't care). */
+    int32_t  node;          /* NUMA node of interest (-1 for all nodes). */
+    /* OUT variables. */
+    uint64_aligned_t avail_bytes;/* Bytes available in the specified region. */
+};
+typedef struct xen_sysctl_availheap xen_sysctl_availheap_t;
+DEFINE_XEN_GUEST_HANDLE(xen_sysctl_availheap_t);
+ 
 struct xen_sysctl {
     uint32_t cmd;
     uint32_t interface_version; /* XEN_SYSCTL_INTERFACE_VERSION */
@@ -164,6 +218,8 @@ struct xen_sysctl {
         struct xen_sysctl_perfc_op          perfc_op;
         struct xen_sysctl_getdomaininfolist getdomaininfolist;
         struct xen_sysctl_debug_keys        debug_keys;
+        struct xen_sysctl_getcpuinfo        getcpuinfo;
+        struct xen_sysctl_availheap         availheap;
         uint8_t                             pad[128];
     } u;
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.2 2007/12/25 18:33:37 perry Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.2.6.1 2008/06/02 13:23:17 mjf Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -409,7 +409,6 @@ struct spdmem {
 
 #define SPDMEM_TYPE_MAXLEN 16
 struct spdmem_softc {
-	struct device sc_dev;
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
 	struct spdmem	sc_spd_data;

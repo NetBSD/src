@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.10 2007/12/14 20:55:22 seanb Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.10.6.1 2008/06/02 13:24:28 mjf Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.10 2007/12/14 20:55:22 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.10.6.1 2008/06/02 13:24:28 mjf Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.10 2007/12/14 20:55:22 seanb Exp $"
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
+#include <netipsec/ipsec_private.h>
 
 #include <netipsec/ipsec_osdep.h>
 #include <net/net_osdep.h>
@@ -95,7 +96,7 @@ m_clone(struct mbuf *m0)
 				mprev->m_len += m->m_len;
 				mprev->m_next = m->m_next;	/* unlink from chain */
 				m_free(m);			/* reclaim mbuf */
-				newipsecstat.ips_mbcoalesced++;
+				IPSEC_STATINC(IPSEC_STAT_MBCOALESCED);
 			} else {
 				mprev = m;
 			}
@@ -129,7 +130,7 @@ m_clone(struct mbuf *m0)
 			mprev->m_len += m->m_len;
 			mprev->m_next = m->m_next;	/* unlink from chain */
 			m_free(m);			/* reclaim mbuf */
-			newipsecstat.ips_clcoalesced++;
+			IPSEC_STATINC(IPSEC_STAT_CLCOALESCED);
 			continue;
 		}
 
@@ -182,7 +183,7 @@ m_clone(struct mbuf *m0)
 			if (mlast != NULL)
 				mlast->m_next = n;
 			mlast = n;
-			newipsecstat.ips_clcopied++;
+			IPSEC_STATINC(IPSEC_STAT_CLCOPIED);
 
 			len -= cc;
 			if (len <= 0)
@@ -299,7 +300,7 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 			*off = 0;		/* ... of new mbuf */
 		}
 
-		newipsecstat.ips_mbinserted += alloc;
+		IPSEC_STATADD(IPSEC_STAT_MBINSERTED, alloc);
 	} else {
 		/*
 		 * Copy the remainder to the back of the mbuf
@@ -406,7 +407,7 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 	/* Remove the header and associated data from the mbuf. */
 	if (roff == 0) {
 		/* The header was at the beginning of the mbuf */
-		newipsecstat.ips_input_front++;
+		IPSEC_STATINC(IPSEC_STAT_INPUT_FRONT);
 		m_adj(m1, hlen);
 		if ((m1->m_flags & M_PKTHDR) == 0)
 			m->m_pkthdr.len -= hlen;
@@ -418,7 +419,7 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 		 * so first let's remove the remainder of the header from
 		 * the beginning of the remainder of the mbuf chain, if any.
 		 */
-		newipsecstat.ips_input_end++;
+		IPSEC_STATINC(IPSEC_STAT_INPUT_END);
 		if (roff + hlen > m1->m_len) {
 			/* Adjust the next mbuf by the remainder */
 			m_adj(m1->m_next, roff + hlen - m1->m_len);
@@ -443,7 +444,7 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 		 * The header lies in the "middle" of the mbuf; copy
 		 * the remainder of the mbuf down over the header.
 		 */
-		newipsecstat.ips_input_middle++;
+		IPSEC_STATINC(IPSEC_STAT_INPUT_MIDDLE);
 		ovbcopy(mtod(m1, u_char *) + roff + hlen,
 		      mtod(m1, u_char *) + roff,
 		      m1->m_len - (roff + hlen));

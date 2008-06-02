@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.114 2007/11/09 23:42:56 dyoung Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.114.14.1 2008/06/02 13:24:24 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -48,13 +48,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -101,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.114 2007/11/09 23:42:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.114.14.1 2008/06/02 13:24:24 mjf Exp $");
 
 #include "opt_ipsec.h"
 
@@ -128,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.114 2007/11/09 23:42:56 dyoung Exp $")
 #include <netinet/in_pcb.h>
 #include <netinet/in_proto.h>
 #include <netinet/icmp_var.h>
+#include <netinet/icmp_private.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -153,7 +147,7 @@ int	icmpprintfs = 0;
 #endif
 int	icmpreturndatabytes = 8;
 
-struct icmpstat	icmpstat;
+percpu_t *icmpstat_percpu;
 
 /*
  * List of callbacks to notify when Path MTU changes are made.
@@ -196,6 +190,8 @@ icmp_init(void)
 		icmp_redirect_timeout_q =
 			rt_timer_queue_create(icmp_redirtimeout);
 	}
+
+	icmpstat_percpu = percpu_alloc(sizeof(uint64_t) * ICMP_NSTATS);
 }
 
 /*
@@ -240,7 +236,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 		printf("icmp_error(%p, type:%d, code:%d)\n", oip, type, code);
 #endif
 	if (type != ICMP_REDIRECT)
-		icmpstat.icps_error++;
+		ICMP_STATINC(ICMP_STAT_ERROR);
 	/*
 	 * Don't send error if the original packet was encrypted.
 	 * Don't send error if not the first fragment of message.
@@ -254,7 +250,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	if (oip->ip_p == IPPROTO_ICMP && type != ICMP_REDIRECT &&
 	  n->m_len >= oiplen + ICMP_MINLEN &&
 	  !ICMP_INFOTYPE(((struct icmp *)((char *)oip + oiplen))->icmp_type)) {
-		icmpstat.icps_oldicmp++;
+		ICMP_STATINC(ICMP_STAT_OLDICMP);
 		goto freeit;
 	}
 	/* Don't send error in response to a multicast or broadcast packet */
@@ -313,7 +309,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	icp = mtod(m, struct icmp *);
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp_error");
-	icmpstat.icps_outhist[type]++;
+	ICMP_STATINC(ICMP_STAT_OUTHIST + type);
 	icp->icmp_type = type;
 	if (type == ICMP_REDIRECT)
 		icp->icmp_gwaddr.s_addr = dest;
@@ -419,12 +415,12 @@ icmp_input(struct mbuf *m, ...)
 	}
 #endif
 	if (icmplen < ICMP_MINLEN) {
-		icmpstat.icps_tooshort++;
+		ICMP_STATINC(ICMP_STAT_TOOSHORT);
 		goto freeit;
 	}
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
 	if ((m->m_len < i || M_READONLY(m)) && (m = m_pullup(m, i)) == 0) {
-		icmpstat.icps_tooshort++;
+		ICMP_STATINC(ICMP_STAT_TOOSHORT);
 		return;
 	}
 	ip = mtod(m, struct ip *);
@@ -433,7 +429,7 @@ icmp_input(struct mbuf *m, ...)
 	icp = mtod(m, struct icmp *);
 	/* Don't need to assert alignment, here. */
 	if (in_cksum(m, icmplen)) {
-		icmpstat.icps_checksum++;
+		ICMP_STATINC(ICMP_STAT_CHECKSUM);
 		goto freeit;
 	}
 	m->m_len += hlen;
@@ -449,7 +445,7 @@ icmp_input(struct mbuf *m, ...)
 #endif
 	if (icp->icmp_type > ICMP_MAXTYPE)
 		goto raw;
-	icmpstat.icps_inhist[icp->icmp_type]++;
+	ICMP_STATINC(ICMP_STAT_INHIST + icp->icmp_type);
 	code = icp->icmp_code;
 	switch (icp->icmp_type) {
 
@@ -521,7 +517,7 @@ icmp_input(struct mbuf *m, ...)
 		 */
 		if (icmplen < ICMP_ADVLENMIN || icmplen < ICMP_ADVLEN(icp) ||
 		    icp->icmp_ip.ip_hl < (sizeof(struct ip) >> 2)) {
-			icmpstat.icps_badlen++;
+			ICMP_STATINC(ICMP_STAT_BADLEN);
 			goto freeit;
 		}
 		if (IN_MULTICAST(icp->icmp_ip.ip_dst.s_addr))
@@ -538,7 +534,7 @@ icmp_input(struct mbuf *m, ...)
 		break;
 
 	badcode:
-		icmpstat.icps_badcode++;
+		ICMP_STATINC(ICMP_STAT_BADCODE);
 		break;
 
 	case ICMP_ECHO:
@@ -547,7 +543,7 @@ icmp_input(struct mbuf *m, ...)
 
 	case ICMP_TSTAMP:
 		if (icmplen < ICMP_TSLEN) {
-			icmpstat.icps_badlen++;
+			ICMP_STATINC(ICMP_STAT_BADLEN);
 			break;
 		}
 		icp->icmp_type = ICMP_TSTAMPREPLY;
@@ -563,7 +559,7 @@ icmp_input(struct mbuf *m, ...)
 		 * unless we receive it over a point-to-point interface.
 		 */
 		if (icmplen < ICMP_MASKLEN) {
-			icmpstat.icps_badlen++;
+			ICMP_STATINC(ICMP_STAT_BADLEN);
 			break;
 		}
 		if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
@@ -584,8 +580,12 @@ icmp_input(struct mbuf *m, ...)
 				ip->ip_src = ia->ia_dstaddr.sin_addr;
 		}
 reflect:
-		icmpstat.icps_reflect++;
-		icmpstat.icps_outhist[icp->icmp_type]++;
+		{
+			uint64_t *icps = percpu_getref(icmpstat_percpu);
+			icps[ICMP_STAT_REFLECT]++;
+			icps[ICMP_STAT_OUTHIST + icp->icmp_type]++;
+			percpu_putref(icmpstat_percpu);
+		}
 		icmp_reflect(m);
 		return;
 
@@ -596,7 +596,7 @@ reflect:
 			goto freeit;
 		if (icmplen < ICMP_ADVLENMIN || icmplen < ICMP_ADVLEN(icp) ||
 		    icp->icmp_ip.ip_hl < (sizeof(struct ip) >> 2)) {
-			icmpstat.icps_badlen++;
+			ICMP_STATINC(ICMP_STAT_BADLEN);
 			break;
 		}
 		/*
@@ -976,6 +976,13 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 	return (0);
 }
 
+static int
+sysctl_net_inet_icmp_stats(SYSCTLFN_ARGS)
+{
+
+	return (NETSTAT_SYSCTL(icmpstat_percpu, ICMP_NSTATS));
+}
+
 SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
 {
 
@@ -1040,9 +1047,17 @@ SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("ICMP statistics"), 
-		       NULL, 0, &icmpstat, sizeof(icmpstat),
+		       sysctl_net_inet_icmp_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS,
 		       CTL_EOL);
+}
+
+void
+icmp_statinc(u_int stat)
+{
+
+	KASSERT(stat < ICMP_NSTATS);
+	ICMP_STATINC(stat);
 }
 
 /* Table of common MTUs: */
@@ -1127,7 +1142,7 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 			rt->rt_rmx.rmx_locks |= RTV_MTU;
 		else if (rt->rt_rmx.rmx_mtu > mtu ||
 			 rt->rt_rmx.rmx_mtu == 0) {
-			icmpstat.icps_pmtuchg++;
+			ICMP_STATINC(ICMP_STAT_PMTUCHG);
 			rt->rt_rmx.rmx_mtu = mtu;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.24 2007/12/03 15:34:32 ad Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.24.14.1 2008/06/02 13:23:15 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.24 2007/12/03 15:34:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.24.14.1 2008/06/02 13:23:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +72,8 @@ struct cs4231_ebus_softc {
 void	cs4231_ebus_attach(struct device *, struct device *, void *);
 int	cs4231_ebus_match(struct device *, struct cfdata *, void *);
 
-static void	cs4231_ebus_pint(void *);
-static void	cs4231_ebus_rint(void *);
+static int	cs4231_ebus_pint(void *);
+static int	cs4231_ebus_rint(void *);
 
 CFATTACH_DECL(audiocs_ebus, sizeof(struct cs4231_ebus_softc),
     cs4231_ebus_match, cs4231_ebus_attach, NULL, NULL);
@@ -171,10 +171,10 @@ cs4231_ebus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bustag = ebsc->sc_bt = ea->ea_bustag;
 	sc->sc_dmatag = ea->ea_dmatag;
 
-	ebsc->sc_pint = softint_establish(SOFTINT_SERIAL,
-	    cs4231_ebus_pint, ebsc);
-	ebsc->sc_rint = softint_establish(SOFTINT_SERIAL,
-	    cs4231_ebus_rint, ebsc);
+	ebsc->sc_pint = sparc_softintr_establish(IPL_VM,
+	    (void *)cs4231_ebus_pint, sc);
+	ebsc->sc_rint = sparc_softintr_establish(IPL_VM,
+	    (void *)cs4231_ebus_rint, sc);
 
 	/*
 	 * These are the register we get from the prom:
@@ -487,7 +487,7 @@ cs4231_ebus_dma_intr(struct cs_transfer *t, bus_space_tag_t dt,
 
 	/* call audio(9) framework while DMA is chugging along */
 	if (t->t_intr != NULL)
-		softint_schedule(sih);
+		sparc_softintr_schedule(sih);
 	return 1;
 }
 
@@ -511,7 +511,7 @@ cs4231_ebus_intr(void *arg)
 	if (cs4231_ebus_debug > 1)
 		cs4231_ebus_regdump("audiointr", ebsc);
 
-	DPRINTF(("%s: status: %s\n", sc->sc_ad1848.sc_dev.dv_xname,
+	DPRINTF(("%s: status: %s\n", device_xname(&sc->sc_ad1848.sc_dev),
 		 bitmask_snprintf(status, AD_R2_BITS, bits, sizeof(bits))));
 #endif
 
@@ -520,7 +520,7 @@ cs4231_ebus_intr(void *arg)
 		int reason;
 
 		reason = ad_read(&sc->sc_ad1848, CS_IRQ_STATUS);
-		DPRINTF(("%s: i24: %s\n", sc->sc_ad1848.sc_dev.dv_xname,
+		DPRINTF(("%s: i24: %s\n", device_xname(&sc->sc_ad1848.sc_dev),
 		  bitmask_snprintf(reason, CS_I24_BITS, bits, sizeof(bits))));
 #endif
 		/* clear interrupt from ad1848 */
@@ -543,25 +543,32 @@ cs4231_ebus_intr(void *arg)
 		ret = 1;
 	}
 
+
 	return ret;
 }
 
-static void
+static int
 cs4231_ebus_pint(void *cookie)
 {
 	struct cs4231_softc *sc = cookie;
 	struct cs_transfer *t = &sc->sc_playback;
 
+	KERNEL_LOCK(1, NULL);
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
+	KERNEL_UNLOCK_ONE(NULL);
+	return 0;
 }
 
-static void
+static int
 cs4231_ebus_rint(void *cookie)
 {
 	struct cs4231_softc *sc = cookie;
 	struct cs_transfer *t = &sc->sc_capture;
 
+	KERNEL_LOCK(1, NULL);
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
+	KERNEL_UNLOCK_ONE(NULL);
+	return 0;
 }

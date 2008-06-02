@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.25 2007/10/17 19:53:15 garbled Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.25.16.1 2008/06/02 13:21:50 mjf Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.25 2007/10/17 19:53:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.25.16.1 2008/06/02 13:21:50 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,22 +71,22 @@ __KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.25 2007/10/17 19:53:15 garbled Exp $");
 #define badaddr(a)      badaddr_read(a, 2, NULL)
 #endif
 
-void	bzivscattach(struct device *, struct device *, void *);
-int	bzivscmatch(struct device *, struct cfdata *, void *);
+int	bzivscmatch(device_t, cfdata_t, void *);
+void	bzivscattach(device_t, device_t, void *);
 
 /* Linkup to the rest of the kernel */
-CFATTACH_DECL(bzivsc, sizeof(struct bzivsc_softc),
+CFATTACH_DECL_NEW(bzivsc, sizeof(struct bzivsc_softc),
     bzivscmatch, bzivscattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.
  */
-u_char	bzivsc_read_reg(struct ncr53c9x_softc *, int);
-void	bzivsc_write_reg(struct ncr53c9x_softc *, int, u_char);
+uint8_t	bzivsc_read_reg(struct ncr53c9x_softc *, int);
+void	bzivsc_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 int	bzivsc_dma_isintr(struct ncr53c9x_softc *);
 void	bzivsc_dma_reset(struct ncr53c9x_softc *);
 int	bzivsc_dma_intr(struct ncr53c9x_softc *);
-int	bzivsc_dma_setup(struct ncr53c9x_softc *, void **,
+int	bzivsc_dma_setup(struct ncr53c9x_softc *, uint8_t **,
 	    size_t *, int, size_t *);
 void	bzivsc_dma_go(struct ncr53c9x_softc *);
 void	bzivsc_dma_stop(struct ncr53c9x_softc *);
@@ -102,7 +102,7 @@ struct ncr53c9x_glue bzivsc_glue = {
 	bzivsc_dma_go,
 	bzivsc_dma_stop,
 	bzivsc_dma_isactive,
-	0,
+	NULL,
 };
 
 /* Maximum DMA transfer length to reduce impact on high-speed serial input */
@@ -116,10 +116,10 @@ u_long bzivsc_cnt_dma3 = 0;	/* number of pages combined */
 
 #ifdef DEBUG
 struct {
-	u_char hardbits;
-	u_char status;
-	u_char xx;
-	u_char yy;
+	uint8_t hardbits;
+	uint8_t status;
+	uint8_t xx;
+	uint8_t yy;
 } bzivsc_trace[128];
 int bzivsc_trace_ptr = 0;
 int bzivsc_trace_enable = 1;
@@ -130,36 +130,36 @@ void bzivsc_dump(void);
  * if we are a Phase5 Blizzard 12x0-IV
  */
 int
-bzivscmatch(struct device *parent, struct cfdata *cf, void *aux)
+bzivscmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zbus_args *zap;
-	volatile u_char *regs;
+	volatile uint8_t *regs;
 
 	zap = aux;
 	if (zap->manid != 0x2140)
-		return(0);			/* It's not Phase 5 */
+		return 0;			/* It's not Phase 5 */
 	if (zap->prodid != 11 && zap->prodid != 17)
-		return(0);			/* Not Blizzard 12x0 */
+		return 0;			/* Not Blizzard 12x0 */
 	if (!is_a1200())
-		return(0);			/* And not A1200 */
+		return 0;			/* And not A1200 */
 	regs = &((volatile u_char *)zap->va)[0x8000];
 	if (badaddr((void *)__UNVOLATILE(regs)))
-		return(0);
+		return 0;
 	regs[NCR_CFG1 * 4] = 0;
 	regs[NCR_CFG1 * 4] = NCRCFG1_PARENB | 7;
 	delay(5);
 	if (regs[NCR_CFG1 * 4] != (NCRCFG1_PARENB | 7))
-		return(0);
-	return(1);
+		return 0;
+	return 1;
 }
 
 /*
  * Attach this instance, and then all the sub-devices
  */
 void
-bzivscattach(struct device *parent, struct device *self, void *aux)
+bzivscattach(device_t parent, device_t self, void *aux)
 {
-	struct bzivsc_softc *bsc = (void *)self;
+	struct bzivsc_softc *bsc = device_private(self);
 	struct ncr53c9x_softc *sc = &bsc->sc_ncr53c9x;
 	struct zbus_args  *zap;
 	extern u_long scsi_nosync;
@@ -169,18 +169,19 @@ bzivscattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Set up the glue for MI code early; we use some of it here.
 	 */
+	sc->sc_dev = self;
 	sc->sc_glue = &bzivsc_glue;
 
 	/*
 	 * Save the regs
 	 */
 	zap = aux;
-	bsc->sc_reg = &((volatile u_char *)zap->va)[0x8000];
+	bsc->sc_reg = &((volatile uint8_t *)zap->va)[0x8000];
 	bsc->sc_dmabase = &bsc->sc_reg[0x8000];
 
 	sc->sc_freq = 40;		/* Clocked at 40 MHz */
 
-	printf(": address %p", bsc->sc_reg);
+	aprint_normal(": address %p", bsc->sc_reg);
 
 	sc->sc_id = 7;
 
@@ -210,7 +211,7 @@ bzivscattach(struct device *parent, struct device *self, void *aux)
 	 * NOTE: low 8 bits are to disable disconnect, and the next
 	 *       8 bits are to disable sync.
 	 */
-	device_cfdata(&sc->sc_dev)->cf_flags |= (scsi_nosync >> shift_nosync)
+	device_cfdata(self)->cf_flags |= (scsi_nosync >> shift_nosync)
 	    & 0xffff;
 	shift_nosync += 16;
 
@@ -246,7 +247,7 @@ bzivscattach(struct device *parent, struct device *self, void *aux)
  * Glue functions.
  */
 
-u_char
+uint8_t
 bzivsc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct bzivsc_softc *bsc = (struct bzivsc_softc *)sc;
@@ -255,10 +256,10 @@ bzivsc_read_reg(struct ncr53c9x_softc *sc, int reg)
 }
 
 void
-bzivsc_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
+bzivsc_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct bzivsc_softc *bsc = (struct bzivsc_softc *)sc;
-	u_char v = val;
+	uint8_t v = val;
 
 	bsc->sc_reg[reg * 4] = v;
 #ifdef DEBUG
@@ -322,7 +323,7 @@ bzivsc_dma_intr(struct ncr53c9x_softc *sc)
 	cnt = bsc->sc_dmasize - cnt;	/* number of bytes transferred */
 	NCR_DMA(("DMA xferred %d\n", cnt));
 	if (bsc->sc_xfr_align) {
-		bcopy(bsc->sc_alignbuf, *bsc->sc_dmaaddr, cnt);
+		memcpy(*bsc->sc_dmaaddr, bsc->sc_alignbuf, cnt);
 		bsc->sc_xfr_align = 0;
 	}
 	*bsc->sc_dmaaddr += cnt;
@@ -332,15 +333,15 @@ bzivsc_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 int
-bzivsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
+bzivsc_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
                  int datain, size_t *dmasize)
 {
 	struct bzivsc_softc *bsc = (struct bzivsc_softc *)sc;
 	paddr_t pa;
-	u_char *ptr;
+	uint8_t *ptr;
 	size_t xfer;
 
-	bsc->sc_dmaaddr = (char **)addr;
+	bsc->sc_dmaaddr = addr;
 	bsc->sc_pdmalen = len;
 	bsc->sc_datain = datain;
 	bsc->sc_dmasize = *dmasize;
@@ -372,14 +373,14 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	 */
 	else if ((int)ptr & 1) {
 		pa = kvtop((void *)&bsc->sc_alignbuf);
-		xfer = bsc->sc_dmasize = min(xfer, sizeof (bsc->sc_alignbuf));
+		xfer = bsc->sc_dmasize = min(xfer, sizeof(bsc->sc_alignbuf));
 		NCR_DMA(("bzivsc_dma_setup: align read by %d bytes\n", xfer));
 		bsc->sc_xfr_align = 1;
 	}
 ++bzivsc_cnt_dma;		/* number of DMA operations */
 
 	while (xfer < bsc->sc_dmasize) {
-		if ((pa + xfer) != kvtop((char*)*addr + xfer))
+		if ((pa + xfer) != kvtop(*addr + xfer))
 			break;
 		if ((bsc->sc_dmasize - xfer) < PAGE_SIZE)
 			xfer = bsc->sc_dmasize;
@@ -407,11 +408,11 @@ if (xfer != *len)
 	pa >>= 1;
 	if (!bsc->sc_datain)
 		pa |= 0x80000000;
-	bsc->sc_dmabase[0x8000] = (u_int8_t)(pa >> 24);
-	bsc->sc_dmabase[0] = (u_int8_t)(pa >> 24);
-	bsc->sc_dmabase[0] = (u_int8_t)(pa >> 16);
-	bsc->sc_dmabase[0] = (u_int8_t)(pa >> 8);
-	bsc->sc_dmabase[0] = (u_int8_t)(pa);
+	bsc->sc_dmabase[0x8000] = (uint8_t)(pa >> 24);
+	bsc->sc_dmabase[0] = (uint8_t)(pa >> 24);
+	bsc->sc_dmabase[0] = (uint8_t)(pa >> 16);
+	bsc->sc_dmabase[0] = (uint8_t)(pa >> 8);
+	bsc->sc_dmabase[0] = (uint8_t)(pa);
 	bsc->sc_active = 1;
 	return 0;
 }

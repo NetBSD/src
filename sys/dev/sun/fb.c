@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.27 2007/03/04 06:02:45 christos Exp $ */
+/*	$NetBSD: fb.c,v 1.27.36.1 2008/06/02 13:23:52 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.27 2007/03/04 06:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.27.36.1 2008/06/02 13:23:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,17 +168,17 @@ fb_attach(fb, isconsole)
 		if ((fbl->fb_next = malloc(sizeof (struct fbdevlist),
 		    M_DEVBUF, M_NOWAIT)) == NULL)
 			printf("%s: replacing %s at /dev/fb0\n",
-			    fb->fb_device->dv_xname,
-			    fblist.fb_dev->fb_device->dv_xname);
+			    device_xname(fb->fb_device),
+			    device_xname(fblist.fb_dev->fb_device));
 		else {
 			fbl = fbl->fb_next;
 			nfb++;
 			fbl->fb_dev = fblist.fb_dev;
 			fbl->fb_next = NULL;
 			printf("%s: moved to /dev/fb%d\n",
-			    fbl->fb_dev->fb_device->dv_xname, nfb);
+			    device_xname(fbl->fb_dev->fb_device), nfb);
 			printf("%s: attached to /dev/fb0\n",
-			    fb->fb_device->dv_xname);
+			    device_xname(fb->fb_device));
 		}
 		fblist.fb_dev = fb;
 		if (fb->fb_flags & FB_FORCE)
@@ -192,8 +192,8 @@ fb_attach(fb, isconsole)
 			}
 			if ((fbl->fb_next = malloc(sizeof (struct fbdevlist),
 			    M_DEVBUF, M_NOWAIT)) == NULL) {
-				printf("%s: no space to attach after /dev/fb%d\n",
-					fb->fb_device->dv_xname, nfb);
+				aprint_error_dev(fb->fb_device, "no space to attach after /dev/fb%d\n",
+					nfb);
 				return;
 			}
 			fbl = fbl->fb_next;
@@ -202,7 +202,7 @@ fb_attach(fb, isconsole)
 		fbl->fb_dev = fb;
 		fbl->fb_next = NULL;
 		printf("%s: attached to /dev/fb%d\n",
-			fbl->fb_dev->fb_device->dv_xname, nfb);
+			device_xname(fbl->fb_dev->fb_device), nfb);
 	}
 }
 

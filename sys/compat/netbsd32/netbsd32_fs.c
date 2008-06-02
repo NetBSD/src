@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.50.6.1 2008/04/03 12:42:33 mjf Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.50.6.2 2008/06/02 13:23:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.50.6.1 2008/04/03 12:42:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.50.6.2 2008/06/02 13:23:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,9 +292,9 @@ dofilewritev32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE) {
-			mutex_enter(&proclist_mutex);
+			mutex_enter(proc_lock);
 			psignal(curproc, SIGPIPE);
-			mutex_exit(&proclist_mutex);
+			mutex_exit(proc_lock);
 		}
 	}
 	cnt -= auio.uio_resid;
@@ -718,6 +716,7 @@ netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, regis
 	char   *bp, *bend;
 	int     len = (int)SCARG(uap, length);
 	int	lenused;
+	struct	cwdinfo *cwdi;
 
 	if (len > MAXPATHLEN*4)
 		len = MAXPATHLEN*4;
@@ -738,8 +737,11 @@ netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, regis
 	 * limit it to N/2 vnodes for an N byte buffer.
 	 */
 #define GETCWD_CHECK_ACCESS 0x0001
-	error = getcwd_common (p->p_cwdi->cwdi_cdir, NULL, &bp, path, len/2,
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	error = getcwd_common (cwdi->cwdi_cdir, NULL, &bp, path, len/2,
 			       GETCWD_CHECK_ACCESS, l);
+	rw_exit(&cwdi->cwdi_lock);
 
 	if (error)
 		goto out;

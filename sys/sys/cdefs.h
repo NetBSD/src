@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.66 2007/11/26 14:52:34 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.66.14.1 2008/06/02 13:24:32 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -189,6 +189,12 @@
 #define	__pure		__const
 #else
 #define	__pure
+#endif
+
+#if __GNUC_PREREQ__(3, 0)
+#define	__noinline	__attribute ((__noinline__))
+#else
+#define	__noinline	/* nothing */
 #endif
 
 #if __GNUC_PREREQ__(2, 7)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.31.12.1 2008/04/03 12:42:55 mjf Exp $ */
+/*	$NetBSD: bpp.c,v 1.31.12.2 2008/06/02 13:23:49 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.31.12.1 2008/04/03 12:42:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.31.12.2 2008/06/02 13:23:49 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -53,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.31.12.1 2008/04/03 12:42:55 mjf Exp $");
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
 #include <sys/bus.h>
 #include <sys/intr.h>
+
 #include <machine/autoconf.h>
 
 #include <dev/ic/lsi64854reg.h>
@@ -63,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.31.12.1 2008/04/03 12:42:55 mjf Exp $");
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/bppreg.h>
+
+#include "ioconf.h"
 
 #define splbpp()	spltty()	/* XXX */
 
@@ -83,11 +78,11 @@ struct bpp_param {
 #endif
 
 struct hwstate {
-	u_int16_t	hw_hcr;		/* Hardware config register */
-	u_int16_t	hw_ocr;		/* Operation config register */
-	u_int8_t	hw_tcr;		/* Transfer Control register */
-	u_int8_t	hw_or;		/* Output register */
-	u_int16_t	hw_irq;		/* IRQ; polarity bits only */
+	uint16_t	hw_hcr;		/* Hardware config register */
+	uint16_t	hw_ocr;		/* Operation config register */
+	uint8_t 	hw_tcr;		/* Transfer Control register */
+	uint8_t 	hw_or;		/* Output register */
+	uint16_t	hw_irq;		/* IRQ; polarity bits only */
 };
 
 struct bpp_softc {
@@ -95,7 +90,7 @@ struct bpp_softc {
 	struct sbusdev	sc_sd;			/* sbus device */
 
 	size_t		sc_bufsz;		/* temp buffer */
-	void *		sc_buf;
+	uint8_t		*sc_buf;
 
 	int		sc_error;		/* bottom-half error */
 	int		sc_flags;
@@ -108,21 +103,21 @@ struct bpp_softc {
 	struct selinfo	sc_rsel;
 	struct selinfo	sc_wsel;
 	struct proc	*sc_asyncproc;	/* Process to notify if async */
+	void		*sc_sih;
 
 	/* Hardware state */
 	struct hwstate		sc_hwdefault;
 	struct hwstate		sc_hwcurrent;
 };
 
-static int	bppmatch(struct device *, struct cfdata *, void *);
-static void	bppattach(struct device *, struct device *, void *);
-static int	bppintr		(void *);
+static int	bppmatch(device_t, cfdata_t, void *);
+static void	bppattach(device_t, device_t, void *);
+static int	bppintr(void *);
+static void	bppsoftintr(void *);
 static void	bpp_setparams(struct bpp_softc *, struct hwstate *);
 
-CFATTACH_DECL(bpp, sizeof(struct bpp_softc),
+CFATTACH_DECL_NEW(bpp, sizeof(struct bpp_softc),
     bppmatch, bppattach, NULL, NULL);
-
-extern struct cfdriver bpp_cd;
 
 dev_type_open(bppopen);
 dev_type_close(bppclose);
@@ -140,29 +135,28 @@ const struct cdevsw bpp_cdevsw = {
 
 
 int
-bppmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+bppmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp("SUNW,bpp", sa->sa_name) == 0);
+	return strcmp("SUNW,bpp", sa->sa_name) == 0;
 }
 
 void
-bppattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+bppattach(device_t parent, device_t self, void *aux)
 {
-	struct sbus_attach_args *sa = aux;
-	struct bpp_softc *dsc = (void *)self;
+	struct bpp_softc *dsc = device_private(self);
 	struct lsi64854_softc *sc = &dsc->sc_lsi64854;
+	struct sbus_softc *sbsc = device_private(parent);
+	struct sbus_attach_args *sa = aux;
 	int burst, sbusburst;
 	int node;
 
+	sc->sc_dev = self;
+
 	selinit(&dsc->sc_rsel);
 	selinit(&dsc->sc_wsel);
+	dsc->sc_sih = softint_establish(SOFTINT_CLOCK, bppsoftintr, dsc);
 
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
@@ -172,7 +166,7 @@ bppattach(parent, self, aux)
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot, sa->sa_offset, sa->sa_size,
 			 0, &sc->sc_regs) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		aprint_error(": cannot map registers\n");
 		return;
 	}
 
@@ -181,7 +175,7 @@ bppattach(parent, self, aux)
 	 * controller registers. This is needed on the Sun4m; do
 	 * others need it too?
 	 */
-	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+	sbusburst = sbsc->sc_burst;
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
@@ -196,7 +190,7 @@ bppattach(parent, self, aux)
 		       (burst & SBUS_BURST_16) ? 16 : 0;
 
 	/* Join the Sbus device family */
-	dsc->sc_sd.sd_reset = (void *)0;
+	dsc->sc_sd.sd_reset = NULL;
 	sbus_establish(&dsc->sc_sd, self);
 
 	/* Initialize the DMA channel */
@@ -208,7 +202,7 @@ bppattach(parent, self, aux)
 		sc->sc_intrchain = bppintr;
 		sc->sc_intrchainarg = dsc;
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY,
-					 bppintr, sc);
+		    bppintr, sc);
 	}
 
 	/* Allocate buffer XXX - should actually use dmamap_uio() */
@@ -219,7 +213,7 @@ bppattach(parent, self, aux)
 	{
 	bus_space_handle_t h = sc->sc_regs;
 	struct hwstate *hw = &dsc->sc_hwdefault;
-	int ack_rate = sa->sa_frequency/1000000;
+	int ack_rate = sa->sa_frequency / 1000000;
 
 	hw->hw_hcr = bus_space_read_2(sc->sc_bustag, h, L64854_REG_HCR);
 	hw->hw_ocr = bus_space_read_2(sc->sc_bustag, h, L64854_REG_OCR);
@@ -227,20 +221,18 @@ bppattach(parent, self, aux)
 	hw->hw_or = bus_space_read_1(sc->sc_bustag, h, L64854_REG_OR);
 
 	DPRINTF(("bpp: hcr %x ocr %x tcr %x or %x\n",
-		 hw->hw_hcr, hw->hw_ocr, hw->hw_tcr, hw->hw_or));
+	    hw->hw_hcr, hw->hw_ocr, hw->hw_tcr, hw->hw_or));
 	/* Set these to sane values */
 	hw->hw_hcr = ((ack_rate<<BPP_HCR_DSS_SHFT)&BPP_HCR_DSS_MASK)
-		| ((ack_rate<<BPP_HCR_DSW_SHFT)&BPP_HCR_DSW_MASK);
+	    | ((ack_rate<<BPP_HCR_DSW_SHFT)&BPP_HCR_DSW_MASK);
 	hw->hw_ocr |= BPP_OCR_ACK_OP;
 	}
 }
 
 void
-bpp_setparams(sc, hw)
-	struct bpp_softc *sc;
-	struct hwstate *hw;
+bpp_setparams(struct bpp_softc *sc, struct hwstate *hw)
 {
-	u_int16_t irq;
+	uint16_t irq;
 	bus_space_tag_t t = sc->sc_lsi64854.sc_bustag;
 	bus_space_handle_t h = sc->sc_lsi64854.sc_regs;
 
@@ -255,27 +247,24 @@ bpp_setparams(sc, hw)
 	irq |= (hw->hw_irq & BPP_ALLIRP);
 	bus_space_write_2(t, h, L64854_REG_ICR, irq);
 	DPRINTF(("bpp_setparams: hcr %x ocr %x tcr %x or %x, irq %x\n",
-		 hw->hw_hcr, hw->hw_ocr, hw->hw_tcr, hw->hw_or, irq));
+	    hw->hw_hcr, hw->hw_ocr, hw->hw_tcr, hw->hw_or, irq));
 }
 
 int
-bppopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+bppopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = BPPUNIT(dev);
 	struct bpp_softc *sc;
 	struct lsi64854_softc *lsi;
-	u_int16_t irq;
+	uint16_t irq;
 	int s;
 
 	if (unit >= bpp_cd.cd_ndevs)
-		return (ENXIO);
-	sc = bpp_cd.cd_devs[unit];
+		return ENXIO;
+	sc = device_lookup_private(&bpp_cd, unit);
 
 	if ((sc->sc_flags & (BPP_OPEN|BPP_XCLUDE)) == (BPP_OPEN|BPP_XCLUDE))
-		return (EBUSY);
+		return EBUSY;
 
 	lsi = &sc->sc_lsi64854;
 
@@ -289,39 +278,41 @@ bppopen(dev, flags, mode, l)
 	irq = BPP_ERR_IRQ_EN;
 	irq |= sc->sc_hwdefault.hw_irq;
 	bus_space_write_2(lsi->sc_bustag, lsi->sc_regs, L64854_REG_ICR, irq);
-	return (0);
+	return 0;
 }
 
 int
-bppclose(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+bppclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
-	struct lsi64854_softc *lsi = &sc->sc_lsi64854;
-	u_int16_t irq;
+	struct bpp_softc *sc;
+	struct lsi64854_softc *lsi;
+	uint16_t irq;
+
+	sc = device_lookup_private(&bpp_cd, BPPUNIT(dev));
+	lsi = &sc->sc_lsi64854;
 
 	/* Turn off all interrupt enables */
 	irq = sc->sc_hwdefault.hw_irq | BPP_ALLIRQ;
 	irq &= ~BPP_ALLEN;
 	bus_space_write_2(lsi->sc_bustag, lsi->sc_regs, L64854_REG_ICR, irq);
 
+	mutex_enter(proc_lock);
 	sc->sc_asyncproc = NULL;
+	mutex_exit(proc_lock);
 	sc->sc_flags = 0;
-	return (0);
+	return 0;
 }
 
 int
-bppwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+bppwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
-	struct lsi64854_softc *lsi = &sc->sc_lsi64854;
+	struct bpp_softc *sc;
+	struct lsi64854_softc *lsi;
 	int error = 0;
 	int s;
+
+	sc = device_lookup_private(&bpp_cd, BPPUNIT(dev));
+	lsi = &sc->sc_lsi64854;
 
 	/*
 	 * Wait until the DMA engine is free.
@@ -330,14 +321,14 @@ bppwrite(dev, uio, flags)
 	while ((sc->sc_flags & BPP_LOCKED) != 0) {
 		if ((flags & IO_NDELAY) != 0) {
 			splx(s);
-			return (EWOULDBLOCK);
+			return EWOULDBLOCK;
 		}
 
 		sc->sc_flags |= BPP_WANT;
 		error = tsleep(sc->sc_buf, PZERO|PCATCH, "bppwrite", 0);
 		if (error != 0) {
 			splx(s);
-			return (error);
+			return error;
 		}
 	}
 	sc->sc_flags |= BPP_LOCKED;
@@ -348,34 +339,34 @@ bppwrite(dev, uio, flags)
 	 * and start DMA.
 	 */
 	while (uio->uio_resid > 0) {
-		void *bp = sc->sc_buf;
+		uint8_t *bp = sc->sc_buf;
 		size_t len = min(sc->sc_bufsz, uio->uio_resid);
 
 		if ((error = uiomove(bp, len, uio)) != 0)
 			break;
 
 		while (len > 0) {
-			u_int8_t tcr;
+			uint8_t tcr;
 			size_t size = len;
 			DMA_SETUP(lsi, &bp, &len, 0, &size);
 
 #ifdef DEBUG
 			if (bppdebug) {
 				int i;
-				unsigned char *b = bp;
+				uint8_t *b = bp;
 				printf("bpp: writing %ld : ", len);
-				for (i=0; i<len; i++) printf("%c(0x%x)", b[i],
-				    b[i]);
+				for (i = 0; i < len; i++)
+					printf("%c(0x%x)", b[i], b[i]);
 				printf("\n");
 			}
 #endif
 
 			/* Clear direction control bit */
 			tcr = bus_space_read_1(lsi->sc_bustag, lsi->sc_regs,
-						L64854_REG_TCR);
+			    L64854_REG_TCR);
 			tcr &= ~BPP_TCR_DIR;
 			bus_space_write_1(lsi->sc_bustag, lsi->sc_regs,
-					  L64854_REG_TCR, tcr);
+			    L64854_REG_TCR, tcr);
 
 			/* Enable DMA */
 			s = splbpp();
@@ -406,7 +397,7 @@ out:
 		wakeup(sc->sc_buf);
 	}
 	splx(s);
-	return (error);
+	return error;
 }
 
 /* move to header: */
@@ -414,18 +405,15 @@ out:
 #define BPPIOCGPARAM	_IOR('P', 0x2, struct hwstate)
 
 int
-bppioctl(dev, cmd, data, flag, l)
-	dev_t	dev;
-	u_long	cmd;
-	void *	data;
-	int	flag;
-	struct	lwp *l;
+bppioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
+	struct bpp_softc *sc;
 	struct proc *p = l->l_proc;
 	struct hwstate *hw, *chw;
 	int error = 0;
 	int s;
+
+	sc = device_lookup_private(&bpp_cd, BPPUNIT(dev));
 
 	switch(cmd) {
 	case BPPIOCSPARAM:
@@ -438,7 +426,7 @@ bppioctl(dev, cmd, data, flag, l)
 #define _bpp_set(reg,mask) do {		\
 	chw->reg &= ~(mask);		\
 	chw->reg |= (hw->reg & (mask));	\
-} while (0)
+} while (/* CONSTCOND */ 0)
 		_bpp_set(hw_hcr, BPP_HCR_DSS_MASK|BPP_HCR_DSW_MASK);
 		_bpp_set(hw_ocr, BPP_OCR_USER);
 		_bpp_set(hw_tcr, BPP_TCR_USER);
@@ -465,7 +453,7 @@ bppioctl(dev, cmd, data, flag, l)
 		splx(s);
 		break;
 	case FIOASYNC:
-		s = splbpp();
+		mutex_enter(proc_lock);
 		if (*(int *)data) {
 			if (sc->sc_asyncproc != NULL)
 				error = EBUSY;
@@ -473,23 +461,22 @@ bppioctl(dev, cmd, data, flag, l)
 				sc->sc_asyncproc = p;
 		} else
 			sc->sc_asyncproc = NULL;
-		splx(s);
+		mutex_exit(proc_lock);
 		break;
 	default:
 		break;
 	}
 
-	return (error);
+	return error;
 }
 
 int
-bpppoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+bpppoll(dev_t dev, int events, struct lwp *l)
 {
-	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
+	struct bpp_softc *sc;
 	int revents = 0;
+
+	sc = device_lookup_private(&bpp_cd, BPPUNIT(dev));
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		/* read is not yet implemented */
@@ -507,7 +494,7 @@ bpppoll(dev, events, l)
 			selrecord(l, &sc->sc_wsel);
 	}
 
-	return (revents);
+	return revents;
 }
 
 static void
@@ -525,7 +512,7 @@ static int
 filt_bppread(struct knote *kn, long hint)
 {
 	/* XXX Read not yet implemented. */
-	return (0);
+	return 0;
 }
 
 static const struct filterops bppread_filtops =
@@ -548,10 +535,10 @@ filt_bpfwrite(struct knote *kn, long hint)
 	struct bpp_softc *sc = kn->kn_hook;
 
 	if (sc->sc_flags & BPP_LOCKED)
-		return (0);
+		return 0;
 
 	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
-	return (1);
+	return 1;
 }
 
 static const struct filterops bppwrite_filtops =
@@ -560,9 +547,11 @@ static const struct filterops bppwrite_filtops =
 int
 bppkqfilter(dev_t dev, struct knote *kn)
 {
-	struct bpp_softc *sc = bpp_cd.cd_devs[BPPUNIT(dev)];
+	struct bpp_softc *sc;
 	struct klist *klist;
 	int s;
+
+	sc = device_lookup_private(&bpp_cd, BPPUNIT(dev));
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -576,7 +565,7 @@ bppkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;
@@ -585,16 +574,15 @@ bppkqfilter(dev_t dev, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 int
-bppintr(arg)
-	void *arg;
+bppintr(void *arg)
 {
 	struct bpp_softc *sc = arg;
 	struct lsi64854_softc *lsi = &sc->sc_lsi64854;
-	u_int16_t irq;
+	uint16_t irq;
 
 	/* First handle any possible DMA interrupts */
 	if (lsi64854_pp_intr((void *)lsi) == -1)
@@ -603,12 +591,12 @@ bppintr(arg)
 	irq = bus_space_read_2(lsi->sc_bustag, lsi->sc_regs, L64854_REG_ICR);
 	/* Ack all interrupts */
 	bus_space_write_2(lsi->sc_bustag, lsi->sc_regs, L64854_REG_ICR,
-			  irq | BPP_ALLIRQ);
+	    irq | BPP_ALLIRQ);
 
-	DPRINTF(("bpp_intr: %x\n", irq));
+	DPRINTF(("%s: %x\n", __func__, irq));
 	/* Did our device interrupt? */
 	if ((irq & BPP_ALLIRQ) == 0)
-		return (0);
+		return 0;
 
 	if ((sc->sc_flags & BPP_LOCKED) != 0)
 		wakeup(sc);
@@ -617,11 +605,19 @@ bppintr(arg)
 		wakeup(sc->sc_buf);
 	} else {
 		selnotify(&sc->sc_wsel, 0, 0);
-		if (sc->sc_asyncproc != NULL) {
-			mutex_enter(&proclist_mutex);
-			psignal(sc->sc_asyncproc, SIGIO);
-			mutex_exit(&proclist_mutex);
-		}
+		if (sc->sc_asyncproc != NULL)
+			softint_schedule(sc->sc_sih);
 	}
-	return (1);
+	return 1;
+}
+
+static void
+bppsoftintr(void *cookie)
+{
+	struct bpp_softc *sc = cookie;
+
+	mutex_enter(proc_lock);
+	if (sc->sc_asyncproc)
+		psignal(sc->sc_asyncproc, SIGIO);
+	mutex_exit(proc_lock);
 }

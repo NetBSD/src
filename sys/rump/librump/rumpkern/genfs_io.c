@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.8 2008/01/02 15:44:03 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.8.6.1 2008/06/02 13:24:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -437,6 +437,13 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs,
 
 int
 genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+genfs_gop_write_rwmap(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 {
 
 	panic("%s: not implemented", __func__);

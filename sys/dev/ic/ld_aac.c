@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.17 2007/10/19 11:59:55 ad Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.17.16.1 2008/06/02 13:23:24 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.17 2007/10/19 11:59:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.17.16.1 2008/06/02 13:23:24 mjf Exp $");
 
 #include "rnd.h"
 
@@ -246,7 +239,7 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 			sge->SgAddress = htole64(xfer->dm_segs[i].ds_addr);
 			sge->SgByteCount = htole32(xfer->dm_segs[i].ds_len);
 			AAC_DPRINTF(AAC_D_IO,
-			    ("#%d va %p pa %lx len %lx\n", i, data,
+			    ("#%d va %p pa %llx len %lx\n", i, data,
 			    (u_int64_t)xfer->dm_segs[i].ds_addr,
 			    (u_long)xfer->dm_segs[i].ds_len));
 		}
@@ -278,8 +271,7 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 			}
 
 			if (status != ST_OK) {
-				printf("%s: I/O error: %s\n",
-				    sc->sc_ld.sc_dv.dv_xname,
+				aprint_error_dev(&sc->sc_ld.sc_dv, "I/O error: %s\n",
 				    aac_describe_code(aac_command_status_table,
 				    status));
 				rv = EIO;
@@ -333,7 +325,7 @@ ld_aac_intr(struct aac_ccb *ac)
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 
-		printf("%s: I/O error: %s\n", sc->sc_ld.sc_dv.dv_xname,
+		aprint_error_dev(&sc->sc_ld.sc_dv, "I/O error: %s\n",
 		    aac_describe_code(aac_command_status_table, status));
 	} else
 		bp->b_resid = 0;

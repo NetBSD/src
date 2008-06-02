@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.50.6.1 2008/04/03 12:43:15 mjf Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.50.6.2 2008/06/02 13:24:38 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -291,7 +291,8 @@ static int vm_physseg_find(paddr_t, int *);
 #define uvm_pagehash(obj,off) \
 	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
 
-#define	UVM_PAGEZERO_TARGET	(uvmexp.free)
+#define	UVM_PAGEZERO_LOWAT	(uvmexp.free >> 1)
+#define	UVM_PAGEZERO_HIWAT	(uvmexp.free * 10 / 9)
 
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
 

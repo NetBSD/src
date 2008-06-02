@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.270.6.1 2008/04/03 12:43:12 mjf Exp $	*/
+/*	$NetBSD: proc.h,v 1.270.6.2 2008/06/02 13:24:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -204,24 +197,21 @@ struct emul {
  *
  * a:	p_auxlock
  * k:	ktrace_mutex
- * m:	proclist_mutex
- * l:	proclist_lock
- * s:	p_smutex
+ * l:	proc_lock
  * t:	p_stmutex
- * p:	p_mutex
+ * p:	p_lock
  * q:	mqlist_mtx
  * ::	unlocked, stable
  */
 struct proc {
-	LIST_ENTRY(proc) p_list;	/* l, m: List of all processes */
+	LIST_ENTRY(proc) p_list;	/* l: List of all processes */
 
 	kmutex_t	p_auxlock;	/* :: secondary, longer term lock */
-	kmutex_t	p_mutex;	/* :: general mutex */
-	kmutex_t	p_smutex;	/* :: mutex on scheduling state */
+	kmutex_t	*p_lock;	/* :: general mutex */
 	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
 	krwlock_t	p_reflock;	/* p: lock for debugger, procfs */
-	kcondvar_t	p_waitcv;	/* s: wait, stop CV on children */
-	kcondvar_t	p_lwpcv;	/* s: wait, stop CV on LWPs */
+	kcondvar_t	p_waitcv;	/* p: wait, stop CV on children */
+	kcondvar_t	p_lwpcv;	/* p: wait, stop CV on LWPs */
       
 	/* Substructures: */
 	struct kauth_cred *p_cred;	/* p: Master copy of credentials */
@@ -238,12 +228,12 @@ struct proc {
 
 	int		p_exitsig;	/* l: signal to send to parent on exit */
 	int		p_flag;		/* p: P_* flags */
-	int		p_sflag;	/* s: PS_* flags */
+	int		p_sflag;	/* p: PS_* flags */
 	int		p_slflag;	/* s, l: PSL_* flags */
 	int		p_lflag;	/* l: PL_* flags */
 	int		p_stflag;	/* t: PST_* flags */
-	char		p_stat;		/* s: S* process status. */
-	char		p_trace_enabled;/* s: cached by syscall_intern() */
+	char		p_stat;		/* p: S* process status. */
+	char		p_trace_enabled;/* p: cached by syscall_intern() */
 	char		p_pad1[2];	/*  unused */
 
 	pid_t		p_pid;		/* :: Process identifier. */
@@ -251,32 +241,32 @@ struct proc {
 	struct proc 	*p_pptr;	/* l: Pointer to parent process. */
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
 	LIST_HEAD(, proc) p_children;	/* l: List of children. */
-	LIST_HEAD(, lwp) p_lwps;	/* s: List of LWPs. */
+	LIST_HEAD(, lwp) p_lwps;	/* p: List of LWPs. */
 	struct ras	*p_raslist;	/* a: List of RAS entries */
 
 /* The following fields are all zeroed upon creation in fork. */
 #define	p_startzero	p_nlwps
 
-	int 		p_nlwps;	/* s: Number of LWPs */
-	int 		p_nzlwps;	/* s: Number of zombie LWPs */
-	int		p_nrlwps;	/* s: Number running/sleeping LWPs */
-	int		p_nlwpwait;	/* s: Number of LWPs in lwp_wait1() */
-	int		p_ndlwps;	/* s: Number of detached LWPs */
-	int 		p_nlwpid;	/* s: Next LWP ID */
-	u_int		p_nstopchild;	/* m: Count of stopped/dead children */
-	u_int		p_waited;	/* m: parent has waited on child */
-	struct lwp	*p_zomblwp;	/* s: detached LWP to be reaped */
+	int 		p_nlwps;	/* p: Number of LWPs */
+	int 		p_nzlwps;	/* p: Number of zombie LWPs */
+	int		p_nrlwps;	/* p: Number running/sleeping LWPs */
+	int		p_nlwpwait;	/* p: Number of LWPs in lwp_wait1() */
+	int		p_ndlwps;	/* p: Number of detached LWPs */
+	int 		p_nlwpid;	/* p: Next LWP ID */
+	u_int		p_nstopchild;	/* l: Count of stopped/dead children */
+	u_int		p_waited;	/* l: parent has waited on child */
+	struct lwp	*p_zomblwp;	/* p: detached LWP to be reaped */
 
 	/* scheduling */
-	void		*p_sched_info;	/* s: Scheduler-specific structure */
-	fixpt_t		p_estcpu;	/* s: Time avg. value of p_cpticks */
-	fixpt_t		p_estcpu_inherited; /* s: cpu inherited from children */
+	void		*p_sched_info;	/* p: Scheduler-specific structure */
+	fixpt_t		p_estcpu;	/* p: Time avg. value of p_cpticks */
+	fixpt_t		p_estcpu_inherited; /* p: cpu inherited from children */
 	unsigned int	p_forktime;
-	fixpt_t         p_pctcpu;       /* s: %cpu from dead LWPs */
+	fixpt_t         p_pctcpu;       /* p: %cpu from dead LWPs */
 
 	struct proc	*p_opptr;	/* l: save parent during ptrace. */
 	struct ptimers	*p_timers;	/*    Timers: real, virtual, profiling */
-	struct bintime 	p_rtime;	/* s: real time */
+	struct bintime 	p_rtime;	/* p: real time */
 	u_quad_t 	p_uticks;	/* t: Statclock hits in user mode */
 	u_quad_t 	p_sticks;	/* t: Statclock hits in system mode */
 	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */
@@ -291,8 +281,8 @@ struct proc {
 	const struct execsw *p_execsw;	/* :: exec package information */
 	struct klist	p_klist;	/* p: knotes attached to proc */
 
-	LIST_HEAD(, lwp) p_sigwaiters;	/* s: LWPs waiting for signals */
-	sigpend_t	p_sigpend;	/* s: pending signals */
+	LIST_HEAD(, lwp) p_sigwaiters;	/* p: LWPs waiting for signals */
+	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 
 /*
@@ -305,9 +295,9 @@ struct proc {
  */
 #define	p_startcopy	p_sigctx
 
-	struct sigctx 	p_sigctx;	/* s: Shared signal state */
+	struct sigctx 	p_sigctx;	/* p: Shared signal state */
 
-	u_char		p_nice;		/* s: Process "nice" value */
+	u_char		p_nice;		/* p: Process "nice" value */
 	char		p_comm[MAXCOMLEN+1];
 					/* p: basename of last exec file */
 	struct pgrp 	*p_pgrp;	/* l: Pointer to process group */
@@ -323,7 +313,7 @@ struct proc {
  */
 #define	p_endcopy	p_xstat
 
-	u_short		p_xstat;	/* s: Exit status for wait; also stop signal */
+	u_short		p_xstat;	/* p: Exit status for wait; also stop signal */
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
 	struct mdproc	p_md;		/* p: Any machine-dependent fields */
 	vaddr_t		p_stackbase;	/* :: ASLR randomized stack base */
@@ -347,11 +337,12 @@ struct proc {
     ((p)->p_stat == SZOMB || (p)->p_stat == SDYING || (p)->p_stat == SDEAD)
 
 /*
- * These flags are kept in p_flag and are protected by p_mutex.  Access from
+ * These flags are kept in p_flag and are protected by p_lock.  Access from
  * process context only.
  */
 #define	PK_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
 #define	PK_SYSTEM	0x00000002 /* System process (kthread) */
+#define	PK_SYSVSEM	0x00000004 /* Used SysV semaphores */
 #define	PK_SUGID	0x00000100 /* Had set id privileges since last exec */
 #define	PK_EXEC		0x00004000 /* Process called exec */
 #define	PK_NOCLDWAIT	0x00020000 /* No zombies if child dies */
@@ -360,8 +351,8 @@ struct proc {
 #define	PK_MARKER	0x80000000 /* Is a dummy marker process */
 
 /*
- * These flags are kept in p_sflag and are protected by p_smutex.  Access from
- * process context or interrupt context.
+ * These flags are kept in p_sflag and are protected by p_lock.  Access from
+ * process context only.
  */
 #define	PS_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
 #define	PS_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
@@ -371,12 +362,11 @@ struct proc {
 #define	PS_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
-#define	PS_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
 
 /*
- * These flags are kept in p_sflag and are protected by the proclist_lock
- * and p_smutex.  Access from process context or interrupt context.
+ * These flags are kept in p_sflag and are protected by the proc_lock
+ * and p_lock.  Access from process context only.
  */
 #define	PSL_TRACED	0x00000800 /* Debugged process being traced */
 #define	PSL_FSTRACE	0x00010000 /* Debugger process being traced by procfs */
@@ -389,10 +379,11 @@ struct proc {
 #define	PST_PROFIL	0x00000020 /* Has started profiling */
 
 /*
- * The final set are protected by the proclist_lock.  Access
+ * The final set are protected by the proc_lock.  Access
  * from process context only.
  */
 #define	PL_CONTROLT	0x00000002 /* Has a controlling terminal */
+#define	PL_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -448,35 +439,12 @@ do {									\
 #define	FORK_SYSTEM	0x0080		/* Fork a kernel thread */
 #define	FORK_SHARELIMIT	0x0100		/* Share rlimit values */
 
-/*
- * Allow machine-dependent code to override curlwp in <machine/cpu.h> for
- * its own convenience.  Otherwise, we declare it as appropriate.
- */
-#if !defined(curlwp)
-#if defined(MULTIPROCESSOR)
-#define	curlwp		curcpu()->ci_curlwp	/* Current running LWP */
-#else
-extern struct lwp	*curlwp;		/* Current running LWP */
-#endif /* MULTIPROCESSOR */
-#endif /* ! curlwp */
-
-static inline bool
-CURCPU_IDLE_P(void)
-{
-	struct cpu_info *ci = curcpu();
-	return ci->ci_data.cpu_onproc == ci->ci_data.cpu_idlelwp;
-}
-#define	curproc		(curlwp->l_proc)
-
 extern struct proc	proc0;		/* Process slot for swapper */
 extern u_int		nprocs;		/* Current number of procs */
 extern int		maxproc;	/* Max number of procs */
 #define	vmspace_kernel()	(proc0.p_vmspace)
 
-/* Process list locks; see kern_proc.c for locking protocol details */
-extern kmutex_t		proclist_lock;
-extern kmutex_t		proclist_mutex;
-
+extern kmutex_t		*proc_lock;
 extern struct proclist	allproc;	/* List of all processes */
 extern struct proclist	zombproc;	/* List of zombie processes */
 

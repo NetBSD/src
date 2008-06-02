@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71.6.1 2008/04/03 12:42:26 mjf Exp $ */
+/*	$NetBSD: cpu.h,v 1.71.6.2 2008/06/02 13:22:43 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,7 +128,6 @@ struct cpu_info {
 	/* Interrupts */
 	struct intrhand		*ci_intrpending[16];
 	struct intrhand		*ci_tick_ih;
-	struct intrhand		*ci_sched_ih;
 
 	/* Event counters */
 	struct evcnt		ci_tick_evcnt;
@@ -316,8 +315,10 @@ struct intrhand {
 extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
-void	intr_establish(int level, struct intrhand *);
-struct intrhand *init_softint(int, int (*)(void *));
+void	intr_establish(int level, bool mpsafe, struct intrhand *);
+void	*sparc_softintr_establish(int, int (*)(void *), void *);
+void	sparc_softintr_schedule(void *);
+void	sparc_softintr_disestablish(void *);
 
 /* disksubr.c */
 struct dkbad;

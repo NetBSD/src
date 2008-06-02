@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.32.6.1 2008/04/03 12:42:31 mjf Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.32.6.2 2008/06/02 13:22:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.32.6.1 2008/04/03 12:42:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.32.6.2 2008/06/02 13:22:54 mjf Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -100,7 +100,7 @@ static struct simplelock irq_mapping_update_lock = SIMPLELOCK_INITIALIZER;
 struct evtsource *evtsource[NR_EVENT_CHANNELS];
 
 /* Reference counts for bindings to event channels */
-static u_int8_t evtch_bindcount[NR_EVENT_CHANNELS];
+static uint8_t evtch_bindcount[NR_EVENT_CHANNELS];
 
 /* event-channel <-> VIRQ mapping. */
 static int virq_to_evtch[NR_VIRQS];
@@ -110,7 +110,7 @@ static int virq_to_evtch[NR_VIRQS];
 /* event-channel <-> PIRQ mapping */
 static int pirq_to_evtch[NR_PIRQS];
 /* PIRQ needing notify */
-static u_int32_t pirq_needs_unmask_notify[NR_EVENT_CHANNELS / 32];
+static uint32_t pirq_needs_unmask_notify[NR_EVENT_CHANNELS / 32];
 int pirq_interrupt(void *);
 physdev_op_t physdev_op_notify = {
 	.cmd = PHYSDEVOP_IRQ_UNMASK_NOTIFY,
@@ -124,8 +124,31 @@ static int xen_misdirect_handler(void *);
 
 // #define IRQ_DEBUG 4
 
+/* http://mail-index.netbsd.org/port-amd64/2004/02/22/0000.html */
+#ifdef MULTIPROCESSOR
+
+/*
+ * intr_biglock_wrapper: grab biglock and call a real interrupt handler.
+ */
+
+int
+intr_biglock_wrapper(void *vp)
+{
+	struct intrhand *ih = vp;
+	int ret;
+
+	KERNEL_LOCK(1, NULL);
+
+	ret = (*ih->ih_realfun)(ih->ih_realarg);
+
+	KERNEL_UNLOCK_ONE(NULL);
+
+	return ret;
+}
+#endif /* MULTIPROCESSOR */
+
 void
-events_default_setup()
+events_default_setup(void)
 {
 	int i;
 
@@ -151,7 +174,7 @@ events_default_setup()
 }
 
 void
-init_events()
+init_events(void)
 {
 #ifndef XEN3
 	int evtch;
@@ -189,9 +212,9 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	struct intrhand *ih;
 	int	(*ih_fun)(void *, void *);
 	extern struct uvmexp uvmexp;
-	u_int32_t iplmask;
+	uint32_t iplmask;
 	int i;
-	u_int32_t iplbit;
+	uint32_t iplbit;
 
 #ifdef DIAGNOSTIC
 	if (evtch >= NR_EVENT_CHANNELS) {
@@ -238,18 +261,12 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
 	sti();
-#ifdef MULTIPROCESSOR
-	x86_intlock(regs);
-#endif
 	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
 		if (ih->ih_level <= ilevel) {
 #ifdef IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)
 		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
-#endif
-#ifdef MULTIPROCESSOR
-			x86_intunlock(regs);
 #endif
 			cli();
 			hypervisor_set_ipending(iplmask,
@@ -264,9 +281,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		ih = ih->ih_evt_next;
 	}
 	cli();
-#ifdef MULTIPROCESSOR
-	x86_intunlock(regs);
-#endif
 	hypervisor_enable_event(evtch);
 splx:
 	/*
@@ -275,24 +289,24 @@ splx:
 	 */
 	iplbit = 1 << (NIPL - 1);
 	i = (NIPL - 1);
-	while ((iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending)) != 0) {
-		if (iplbit == 0) {
-			/* another pending ipl went in while running a handler*/
-			iplbit = 1 << (NIPL - 1);
-			i = (NIPL - 1);
-		}
-		if (iplmask & iplbit) {
+	iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
+	while (iplmask != 0) {
+		KASSERT(iplbit != 0);
+		while (iplmask & iplbit) {
 			ci->ci_ipending &= ~iplbit;
 			KASSERT(i > ilevel);
 			ci->ci_ilevel = i;
 			for (ih = ci->ci_isources[i]->ipl_handlers; ih != NULL;
 			    ih = ih->ih_ipl_next) {
+				KASSERT(ih->ih_level == i);
 				sti();
 				ih_fun = (void *)ih->ih_fun;
 				ih_fun(ih->ih_arg, regs);
 				cli();
 			}
 			hypervisor_enable_ipl(i);
+			/* more pending IPLs may have been registered */
+			iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
 		}
 		i--;
 		iplbit >>= 1;
@@ -482,6 +496,9 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	struct evtsource *evts;
 	struct intrhand *ih, **ihp;
 	int s;
+#ifdef MULTIPROCESSOR
+	bool mpsafe = (level != IPL_VM);
+#endif /* MULTIPROCESSOR */
 
 #ifdef IRQ_DEBUG
 	printf("event_set_handler IRQ %d handler %p\n", evtch, func);
@@ -505,10 +522,16 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 
 
 	ih->ih_level = level;
-	ih->ih_fun = func;
-	ih->ih_arg = arg;
+	ih->ih_fun = ih->ih_realfun = func;
+	ih->ih_arg = ih->ih_realarg = arg;
 	ih->ih_evt_next = NULL;
 	ih->ih_ipl_next = NULL;
+#ifdef MULTIPROCESSOR
+	if (!mpsafe) {
+		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_arg = ih;
+	}
+#endif /* MULTIPROCESSOR */
 
 	s = splhigh();
 
@@ -530,7 +553,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 			snprintf(evts->ev_evname, sizeof(evts->ev_evname),
 			    "evt%d", evtch);
 		evcnt_attach_dynamic(&evts->ev_evcnt, EVCNT_TYPE_INTR, NULL,
-		    ci->ci_dev->dv_xname, evts->ev_evname);
+		    device_xname(ci->ci_dev), evts->ev_evname);
 	} else {
 		evts = evtsource[evtch];
 		/* sort by IPL order, higher first */
@@ -648,12 +671,10 @@ xen_debug_handler(void *arg)
 	int xci_ilevel = ci->ci_ilevel;
 	int xci_ipending = ci->ci_ipending;
 	int xci_idepth = ci->ci_idepth;
-	u_long upcall_pending =
-	    HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_pending;
-	u_long upcall_mask =
-	    HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask;
+	u_long upcall_pending = ci->ci_vcpu->evtchn_upcall_pending;
+	u_long upcall_mask = ci->ci_vcpu->evtchn_upcall_mask;
 #ifdef XEN3
-	u_long pending_sel = HYPERVISOR_shared_info->vcpu_info[0].evtchn_pending_sel;
+	u_long pending_sel = ci->ci_vcpu->evtchn_pending_sel;
 #else
 	u_long pending_sel = HYPERVISOR_shared_info->evtchn_pending_sel;
 #endif
@@ -690,7 +711,7 @@ static int
 xen_misdirect_handler(void *arg)
 {
 #if 0
-	char *msg = "misdirect\n";
+	const char *msg = "misdirect\n";
 	(void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(msg), msg);
 #endif
 	return 0;

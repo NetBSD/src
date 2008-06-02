@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.25 2007/10/19 11:59:38 ad Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.25.16.1 2008/06/02 13:23:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.25 2007/10/19 11:59:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.25.16.1 2008/06/02 13:23:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ cardbus_mapreg_map(sc, func, reg, type, busflags, tagp, handlep, basep, sizep)
 
 	tag = cardbus_make_tag(cc, cf, sc->sc_bus, func);
 
-	DPRINTF(("cardbus_mapreg_map called: %s %x\n", sc->sc_dev.dv_xname,
+	DPRINTF(("cardbus_mapreg_map called: %s %x\n", device_xname(&sc->sc_dev),
 	   type));
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
@@ -364,11 +364,11 @@ cardbus_mapreg_unmap(sc, func, reg, tag, handle, size)
 
 	if (sc->sc_iot == tag) {
 		/* bus space is io space */
-		DPRINTF(("%s: unmap i/o space\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: unmap i/o space\n", device_xname(&sc->sc_dev)));
 		rbustag = sc->sc_rbus_iot;
 	} else if (sc->sc_memt == tag) {
 		/* bus space is memory space */
-		DPRINTF(("%s: unmap mem space\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: unmap mem space\n", device_xname(&sc->sc_dev)));
 		rbustag = sc->sc_rbus_memt;
 	} else {
 		return 1;

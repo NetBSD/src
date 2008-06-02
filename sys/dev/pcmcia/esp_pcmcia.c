@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.33 2007/10/19 12:01:04 ad Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.33.16.1 2008/06/02 13:23:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.33 2007/10/19 12:01:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.33.16.1 2008/06/02 13:23:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +59,7 @@ struct esp_pcmcia_softc {
 	int		sc_datain;
 	size_t		sc_dmasize;
 	size_t		sc_dmatrans;
-	char		**sc_dmaaddr;
+	uint8_t		**sc_dmaaddr;
 	size_t		*sc_pdmalen;
 
 	/* PCMCIA-specific goo. */
@@ -82,14 +75,14 @@ struct esp_pcmcia_softc {
 #define ESP_PCMCIA_ATTACHED	3
 };
 
-int	esp_pcmcia_match(struct device *, struct cfdata *, void *);
+int	esp_pcmcia_match(device_t, cfdata_t, void *);
 int	esp_pcmcia_validate_config(struct pcmcia_config_entry *);
-void	esp_pcmcia_attach(struct device *, struct device *, void *);
+void	esp_pcmcia_attach(device_t, device_t, void *);
 void	esp_pcmcia_init(struct esp_pcmcia_softc *);
-int	esp_pcmcia_detach(struct device *, int);
-int	esp_pcmcia_enable(struct device *, int);
+int	esp_pcmcia_detach(device_t, int);
+int	esp_pcmcia_enable(device_t, int);
 
-CFATTACH_DECL(esp_pcmcia, sizeof(struct esp_pcmcia_softc),
+CFATTACH_DECL_NEW(esp_pcmcia, sizeof(struct esp_pcmcia_softc),
     esp_pcmcia_match, esp_pcmcia_attach, esp_pcmcia_detach, NULL);
 
 /*
@@ -98,12 +91,12 @@ CFATTACH_DECL(esp_pcmcia, sizeof(struct esp_pcmcia_softc),
 #ifdef ESP_PCMCIA_POLL
 void	esp_pcmcia_poll(void *);
 #endif
-u_char	esp_pcmcia_read_reg(struct ncr53c9x_softc *, int);
-void	esp_pcmcia_write_reg(struct ncr53c9x_softc *, int, u_char);
+uint8_t	esp_pcmcia_read_reg(struct ncr53c9x_softc *, int);
+void	esp_pcmcia_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 int	esp_pcmcia_dma_isintr(struct ncr53c9x_softc *);
 void	esp_pcmcia_dma_reset(struct ncr53c9x_softc *);
 int	esp_pcmcia_dma_intr(struct ncr53c9x_softc *);
-int	esp_pcmcia_dma_setup(struct ncr53c9x_softc *, void **,
+int	esp_pcmcia_dma_setup(struct ncr53c9x_softc *, uint8_t **,
 	    size_t *, int, size_t *);
 void	esp_pcmcia_dma_go(struct ncr53c9x_softc *);
 void	esp_pcmcia_dma_stop(struct ncr53c9x_softc *);
@@ -129,48 +122,47 @@ const struct pcmcia_product esp_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_RATOC, PCMCIA_PRODUCT_RATOC_REX_9530,
 	  PCMCIA_CIS_RATOC_REX_9530 },
 };
-const size_t esp_pcmcia_nproducts =
-    sizeof(esp_pcmcia_products) / sizeof(esp_pcmcia_products[0]);
+const size_t esp_pcmcia_nproducts = __arraycount(esp_pcmcia_products);
 
 int
-esp_pcmcia_match(struct device *parent, struct cfdata *match,
-    void *aux)
+esp_pcmcia_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
 	if (pcmcia_product_lookup(pa, esp_pcmcia_products, esp_pcmcia_nproducts,
 	    sizeof(esp_pcmcia_products[0]), NULL))
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 int
-esp_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+esp_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
+
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_memspace != 0 ||
 	    cfe->num_iospace != 1)
-		return (EINVAL);
-	return (0);
+		return EINVAL;
+	return 0;
 }
 
 void
-esp_pcmcia_attach(struct device *parent, struct device *self,
-    void *aux)
+esp_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
-	struct esp_pcmcia_softc *esc = (void *)self;
+	struct esp_pcmcia_softc *esc = device_private(self);
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
 	int error;
 
+	sc->sc_dev = self;
+
 	esc->sc_pf = pf;
 
 	error = pcmcia_function_configure(pf, esp_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -180,7 +172,7 @@ esp_pcmcia_attach(struct device *parent, struct device *self,
 	esc->sc_ioh = cfe->iospace[0].handle.ioh;
 	esp_pcmcia_init(esc);
 
-	printf("%s", self->dv_xname);
+	aprint_normal("%s", device_xname(self));
 
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
@@ -191,8 +183,7 @@ esp_pcmcia_attach(struct device *parent, struct device *self,
 }
 
 void
-esp_pcmcia_init(esc)
-	struct esp_pcmcia_softc *esc;
+esp_pcmcia_init(struct esp_pcmcia_softc *esc)
 {
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 
@@ -222,31 +213,27 @@ esp_pcmcia_init(esc)
 }
 
 int
-esp_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+esp_pcmcia_detach(struct device *self, int flags)
 {
-	struct esp_pcmcia_softc *sc = (void *)self;
+	struct esp_pcmcia_softc *sc = device_private(self);
 	int error;
 
 	if (sc->sc_state != ESP_PCMCIA_ATTACHED)
-		return (0);
+		return 0;
 
 	error = ncr53c9x_detach(&sc->sc_ncr53c9x, flags);
 	if (error)
-		return (error);
+		return error;
 
 	pcmcia_function_unconfigure(sc->sc_pf);
 
-	return (0);
+	return 0;
 }
 
 int
-esp_pcmcia_enable(arg, onoff)
-	struct device *arg;
-	int onoff;
+esp_pcmcia_enable(struct device *self, int onoff)
 {
-	struct esp_pcmcia_softc *sc = (void *)arg;
+	struct esp_pcmcia_softc *sc = device_private(self);
 	int error;
 
 	if (onoff) {
@@ -257,14 +244,14 @@ esp_pcmcia_enable(arg, onoff)
 		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
 		    ncr53c9x_intr, &sc->sc_ncr53c9x);
 		if (!sc->sc_ih)
-			return (EIO);
+			return EIO;
 #endif
 
 		error = pcmcia_function_enable(sc->sc_pf);
 		if (error) {
 			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 			sc->sc_ih = 0;
-			return (error);
+			return error;
 		}
 
 		/* Initialize only chip.  */
@@ -279,17 +266,16 @@ esp_pcmcia_enable(arg, onoff)
 #endif
 	}
 
-	return (0);
+	return 0;
 }
 
 #ifdef ESP_PCMCIA_POLL
 void
-esp_pcmcia_poll(arg)
-	void *arg;
+esp_pcmcia_poll(void *arg)
 {
 	struct esp_pcmcia_softc *esc = arg;
 
-	(void) ncr53c9x_intr(&esc->sc_ncr53c9x);
+	(void)ncr53c9x_intr(&esc->sc_ncr53c9x);
 	callout_reset(&esc->sc_poll_ch, 1, esp_pcmcia_poll, esc);
 }
 #endif
@@ -297,26 +283,19 @@ esp_pcmcia_poll(arg)
 /*
  * Glue functions.
  */
-u_char
-esp_pcmcia_read_reg(sc, reg)
-	struct ncr53c9x_softc *sc;
-	int reg;
+uint8_t
+esp_pcmcia_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct esp_pcmcia_softc *esc = (struct esp_pcmcia_softc *)sc;
-	u_char v;
 
-	v = bus_space_read_1(esc->sc_iot, esc->sc_ioh, reg);
-	return v;
+	return bus_space_read_1(esc->sc_iot, esc->sc_ioh, reg);
 }
 
 void
-esp_pcmcia_write_reg(sc, reg, val)
-	struct ncr53c9x_softc *sc;
-	int reg;
-	u_char val;
+esp_pcmcia_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct esp_pcmcia_softc *esc = (struct esp_pcmcia_softc *)sc;
-	u_char v = val;
+	uint8_t v = val;
 
 	if (reg == NCR_CMD && v == (NCRCMD_TRANS|NCRCMD_DMA))
 		v = NCRCMD_TRANS;
@@ -324,16 +303,14 @@ esp_pcmcia_write_reg(sc, reg, val)
 }
 
 int
-esp_pcmcia_dma_isintr(sc)
-	struct ncr53c9x_softc *sc;
+esp_pcmcia_dma_isintr(struct ncr53c9x_softc *sc)
 {
 
 	return NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT;
 }
 
 void
-esp_pcmcia_dma_reset(sc)
-	struct ncr53c9x_softc *sc;
+esp_pcmcia_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct esp_pcmcia_softc *esc = (struct esp_pcmcia_softc *)sc;
 
@@ -342,16 +319,16 @@ esp_pcmcia_dma_reset(sc)
 }
 
 int
-esp_pcmcia_dma_intr(sc)
-	struct ncr53c9x_softc *sc;
+esp_pcmcia_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_pcmcia_softc *esc = (struct esp_pcmcia_softc *)sc;
-	u_char	*p;
+	uint8_t	*p;
 	u_int	espphase, espstat, espintr;
 	int	cnt;
 
 	if (esc->sc_active == 0) {
-		printf("%s: dma_intr--inactive DMA\n", sc->sc_dev.dv_xname);
+		printf("%s: dma_intr--inactive DMA\n",
+		    device_xname(sc->sc_dev));
 		return -1;
 	}
 
@@ -363,13 +340,13 @@ esp_pcmcia_dma_intr(sc)
 	cnt = *esc->sc_pdmalen;
 	if (*esc->sc_pdmalen == 0) {
 		printf("%s: data interrupt, but no count left\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 	}
 
 	p = *esc->sc_dmaaddr;
 	espphase = sc->sc_phase;
-	espstat = (u_int) sc->sc_espstat;
-	espintr = (u_int) sc->sc_espintr;
+	espstat = (u_int)sc->sc_espstat;
+	espintr = (u_int)sc->sc_espintr;
 	do {
 		if (esc->sc_datain) {
 			*p++ = NCR_READ_REG(sc, NCR_FIFO);
@@ -389,7 +366,8 @@ esp_pcmcia_dma_intr(sc)
 		}
 
 		if (esc->sc_active) {
-			while (!(NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT));
+			while ((NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT) == 0)
+				;
 			espstat = NCR_READ_REG(sc, NCR_STAT);
 			espintr = NCR_READ_REG(sc, NCR_INTR);
 			espphase = (espintr & NCRINTR_DIS)
@@ -398,8 +376,8 @@ esp_pcmcia_dma_intr(sc)
 		}
 	} while (esc->sc_active && espintr);
 	sc->sc_phase = espphase;
-	sc->sc_espstat = (u_char) espstat;
-	sc->sc_espintr = (u_char) espintr;
+	sc->sc_espstat = (uint8_t)espstat;
+	sc->sc_espintr = (uint8_t)espintr;
 	*esc->sc_dmaaddr = p;
 	*esc->sc_pdmalen = cnt;
 
@@ -410,16 +388,12 @@ esp_pcmcia_dma_intr(sc)
 }
 
 int
-esp_pcmcia_dma_setup(sc, addr, len, datain, dmasize)
-	struct ncr53c9x_softc *sc;
-	void **addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;
+esp_pcmcia_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
+    int datain, size_t *dmasize)
 {
 	struct esp_pcmcia_softc *esc = (struct esp_pcmcia_softc *)sc;
 
-	esc->sc_dmaaddr = (void *)addr;
+	esc->sc_dmaaddr = addr;
 	esc->sc_pdmalen = len;
 	esc->sc_datain = datain;
 	esc->sc_dmasize = *dmasize;
@@ -429,8 +403,7 @@ esp_pcmcia_dma_setup(sc, addr, len, datain, dmasize)
 }
 
 void
-esp_pcmcia_dma_go(sc)
-	struct ncr53c9x_softc *sc;
+esp_pcmcia_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_pcmcia_softc *esc = (struct esp_pcmcia_softc *)sc;
 
@@ -448,5 +421,5 @@ esp_pcmcia_dma_isactive(sc)
 {
 	struct esp_pcmcia_softc *esc = (struct esp_pcmcia_softc *)sc;
 
-	return (esc->sc_active);
+	return esc->sc_active;
 }

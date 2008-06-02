@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.3.76.1 2008/04/03 12:42:12 mjf Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.3.76.2 2008/06/02 13:21:55 mjf Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -18,13 +18,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -40,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.3.76.1 2008/04/03 12:42:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.3.76.2 2008/06/02 13:21:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +66,7 @@ struct ohci_ssio_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-CFATTACH_DECL(ohci_ssio, sizeof(struct ohci_ssio_softc),
+CFATTACH_DECL_NEW(ohci_ssio, sizeof(struct ohci_ssio_softc),
     ohci_ssio_match, ohci_ssio_attach, ohci_ssio_detach, ohci_activate);
 
 int
@@ -93,12 +86,15 @@ ohci_ssio_match(struct device *parent, struct cfdata *match, void *aux)
 void
 ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ohci_ssio_softc *sc = (struct ohci_ssio_softc *)self;
+	struct ohci_ssio_softc *sc = device_private(self);
 	struct s3c2xx0_attach_args *sa = (struct s3c2xx0_attach_args *)aux;
 
 	usbd_status r;
 
 	aprint_normal("\n");
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	sc->sc.iot = sa->sa_iot;
 	/*ohcidebug=15;*/
@@ -134,8 +130,7 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 }
 
 int

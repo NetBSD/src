@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.10 2007/07/14 21:02:38 ad Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.10.28.1 2008/06/02 13:23:55 mjf Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -14,13 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	  This product includes software developed by the NetBSD
- *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -50,7 +43,7 @@
 /* midi device */
 struct umidi_mididev {
 	struct umidi_softc	*sc;
-	struct device		*mdev;
+	device_t		mdev;
 	/* */
 	struct umidi_jack	*in_jack;
 	struct umidi_jack	*out_jack;

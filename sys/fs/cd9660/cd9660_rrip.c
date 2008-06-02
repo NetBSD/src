@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.14.18.1 2008/04/03 12:42:59 mjf Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.14.18.2 2008/06/02 13:24:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.14.18.1 2008/04/03 12:42:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.14.18.2 2008/06/02 13:24:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,7 +548,8 @@ cd9660_rrip_loop(struct iso_directory_record *isodir, ISO_RRIP_ANALYZE *ana,
 			    || ana->iso_ce_off + ana->iso_ce_len > ana->imp->logical_block_size
 			    || bread(ana->imp->im_devvp,
 				     ana->iso_ce_blk << (ana->imp->im_bshift - DEV_BSHIFT),
-				     ana->imp->logical_block_size, NOCRED, &bp))
+				     ana->imp->logical_block_size, NOCRED,
+				     0, &bp))
 				/* what to do now? */
 				break;
 			phead = (ISO_SUSP_HEADER *)((char *)bp->b_data + ana->iso_ce_off);

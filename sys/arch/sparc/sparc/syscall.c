@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.17 2008/02/06 22:12:40 dsl Exp $ */
+/*	$NetBSD: syscall.c,v 1.17.6.1 2008/06/02 13:22:42 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17 2008/02/06 22:12:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17.6.1 2008/06/02 13:22:42 mjf Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -231,14 +231,7 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 	rval.o[0] = 0;
 	rval.o[1] = tf->tf_out[1];
 
-        /* Lock the kernel if the syscall isn't MP-safe. */
-	if (callp->sy_flags & SYCALL_MPSAFE) {
-		error = (*callp->sy_call)(l, &args, rval.o);
-	} else {
-		KERNEL_LOCK(1, l);
-		error = (*callp->sy_call)(l, &args, rval.o);
-		KERNEL_UNLOCK_LAST(l);
-	}
+	error = (*callp->sy_call)(l, &args, rval.o);
 
 	switch (error) {
 	case 0:
@@ -310,23 +303,13 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 
-	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(code, args.i, callp->sy_narg)) != 0) {
-		KERNEL_UNLOCK_LAST(l);
+	if ((error = trace_enter(code, args.i, callp->sy_narg)) != 0)
 		goto out;
-	}
 
 	rval.o[0] = 0;
 	rval.o[1] = tf->tf_out[1];
 
-        /* Lock the kernel if the syscall isn't MP-safe. */
-	if (callp->sy_flags & SYCALL_MPSAFE) {
-		KERNEL_UNLOCK_LAST(l);
-		error = (*callp->sy_call)(l, &args, rval.o);
-	} else {
-		error = (*callp->sy_call)(l, &args, rval.o);
-		KERNEL_UNLOCK_LAST(l);
-	}
+	error = (*callp->sy_call)(l, &args, rval.o);
 
 out:
 	switch (error) {
@@ -384,7 +367,6 @@ child_return(void *arg)
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 	ktrsysret((l->l_proc->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork,
 	    0, 0);

@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_exec.c,v 1.100 2007/12/08 18:36:06 dsl Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.100.12.1 2008/06/02 13:23:02 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.100 2007/12/08 18:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.100.12.1 2008/06/02 13:23:02 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,9 +141,11 @@ linux_e_proc_init(p, parent, forkflags)
 		MALLOC(e, void *, sizeof(struct linux_emuldata),
 			M_EMULDATA, M_WAITOK);
 	} else  {
+		mutex_enter(proc_lock);
 		e->s->refs--;
 		if (e->s->refs == 0)
 			FREE(e->s, M_EMULDATA);
+		mutex_exit(proc_lock);
 	}
 
 	memset(e, '\0', sizeof(struct linux_emuldata));
@@ -161,9 +156,11 @@ linux_e_proc_init(p, parent, forkflags)
 		ep = parent->p_emuldata;
 
 	if (forkflags & FORK_SHAREVM) {
+		mutex_enter(proc_lock);
 #ifdef DIAGNOSTIC
 		if (ep == NULL) {
 			killproc(p, "FORK_SHAREVM while emuldata is NULL\n");
+			mutex_exit(proc_lock);
 			FREE(e, M_EMULDATA);
 			return;
 		}
@@ -202,6 +199,7 @@ linux_e_proc_init(p, parent, forkflags)
 
 		s->xstat = 0;
 		s->flags = 0;
+		mutex_enter(proc_lock);
 	}
 
 	e->s = s;
@@ -219,6 +217,7 @@ linux_e_proc_init(p, parent, forkflags)
 	}
 #endif /* LINUX_NPTL */
 
+	mutex_exit(proc_lock);
 	p->p_emuldata = e;
 }
 
@@ -230,6 +229,7 @@ linux_e_proc_init(p, parent, forkflags)
 static void
 linux_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
+
 	/* exec, use our vmspace */
 	linux_e_proc_init(p, NULL, 0);
 }
@@ -245,15 +245,18 @@ linux_e_proc_exit(struct proc *p)
 #ifdef LINUX_NPTL
 	linux_nptl_proc_exit(p);
 #endif
+
 	/* Remove the thread for the group thread list */
+	mutex_enter(proc_lock);
 	LIST_REMOVE(e, threads);
 
 	/* free Linux emuldata and set the pointer to null */
 	e->s->refs--;
 	if (e->s->refs == 0)
 		FREE(e->s, M_EMULDATA);
-	FREE(e, M_EMULDATA);
 	p->p_emuldata = NULL;
+	mutex_exit(proc_lock);
+	FREE(e, M_EMULDATA);
 }
 
 /*
@@ -264,6 +267,7 @@ linux_e_proc_fork(p, parent, forkflags)
 	struct proc *p, *parent;
 	int forkflags;
 {
+
 	/*
 	 * The new process might share some vmspace-related stuff
 	 * with parent, depending on fork flags (CLONE_VM et.al).
@@ -312,7 +316,7 @@ linux_nptl_proc_exit(struct proc *p)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 
 	/* 
 	 * Check if we are a thread group leader victim of another 
@@ -333,12 +337,13 @@ linux_nptl_proc_exit(struct proc *p)
 	printf("%s:%d e->s->group_pid = %d, p->p_pid = %d, flags = 0x%x\n", 
 	    __func__, __LINE__, e->s->group_pid, p->p_pid, e->s->flags);
 #endif
-	if (e->s->group_pid != p->p_pid) {
+	if ((e->s->group_pid != p->p_pid) &&
+	    (e->clone_flags & LINUX_CLONE_THREAD)) {
 		proc_reparent(p, initproc);	
 		cv_broadcast(&initproc->p_waitcv);
 	}
 
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	/* Emulate LINUX_CLONE_CHILD_CLEARTID */
 	if (e->clear_tid != NULL) {
@@ -372,11 +377,7 @@ linux_nptl_proc_fork(p, parent, luserret)
 	struct proc *parent;
 	void (*luserret)(void);
 {
-#ifdef LINUX_NPTL
-	struct linux_emuldata *e;
-#endif
-
-	e = p->p_emuldata;
+	struct linux_emuldata *e = p->p_emuldata;
 
 	/* LINUX_CLONE_CHILD_CLEARTID: clear TID in child's memory on exit() */
 	if (e->clone_flags & LINUX_CLONE_CHILD_CLEARTID)
@@ -420,6 +421,4 @@ linux_nptl_proc_init(struct proc *p, struct proc *parent)
 
 	return;
 }
-
-
 #endif /* LINUX_NPTL */

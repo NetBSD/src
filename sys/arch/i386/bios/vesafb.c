@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.25 2007/12/09 20:27:45 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.25.10.1 2008/06/02 13:22:13 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.25 2007/12/09 20:27:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.25.10.1 2008/06/02 13:22:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,12 @@ __KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.25 2007/12/09 20:27:45 jmcneill Exp $")
 #include <arch/i386/bios/vesabios.h>
 #include <arch/i386/bios/vesabiosreg.h>
 #include <arch/i386/bios/vesafbvar.h>
+
+#ifdef VESAFB_DISABLE_TEXT
+#include <sys/reboot.h>
+#define DISABLESPLASH (boothowto & (RB_SINGLE | RB_USERCONF | RB_ASKNAME | \
+	    AB_VERBOSE | AB_DEBUG) )
+#endif
 
 MALLOC_DEFINE(M_VESAFB, "vesafb", "vesafb shadow framebuffer");
 
@@ -154,8 +160,7 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 
 	buf = kvm86_bios_addpage(0x2000);
 	if (!buf) {
-		aprint_error("%s: kvm86_bios_addpage(0x2000) failed\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "kvm86_bios_addpage(0x2000) failed\n");
 		return;
 	}
 	sc->sc_buf = buf;
@@ -182,8 +187,8 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 
 		res = kvm86_bioscall(0x10, &tf);
 		if (res || (tf.tf_eax & 0xff) != 0x4f) {
-			aprint_error("%s: vbecall: res=%d, ax=%x\n",
-			    sc->sc_dev.dv_xname, res, tf.tf_eax);
+			aprint_error_dev(&sc->sc_dev, "vbecall: res=%d, ax=%x\n",
+			    res, tf.tf_eax);
 			goto out;
 		}
 		mi = (struct modeinfoblock *)buf;
@@ -197,8 +202,7 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	}
 
 	if (i == vaa->vbaa_nmodes) {
-		aprint_error("%s: no supported mode found\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "no supported mode found\n");
 		goto out;
 	}
 
@@ -227,7 +231,7 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_vd.init_screen = vesafb_init_screen;
 	sc->sc_vd.show_screen_cb = vesafb_show_screen_cb;
 
-	aprint_normal("%s: fb %dx%dx%d @0x%x\n", sc->sc_dev.dv_xname,
+	aprint_normal_dev(&sc->sc_dev, "fb %dx%dx%d @0x%x\n",
 	       mi->XResolution, mi->YResolution,
 	       mi->BitsPerPixel, mi->PhysBasePtr);
 
@@ -245,17 +249,16 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_screensize = mi->YResolution * mi->BytesPerScanLine;
 	sc->sc_fbsize = sc->sc_scrollscreens * sc->sc_screensize;
 
-	aprint_normal("%s: %d Kb memory reported, %d screens possible\n",
-	       sc->sc_dev.dv_xname,
+	aprint_normal_dev(&sc->sc_dev, "%d Kb memory reported, %d screens possible\n",
 	       sc->sc_fbsize / 1024,
 	       sc->sc_scrollscreens);
 
 	if (sc->sc_scrollscreens == 1)
-		aprint_normal("%s: one screen, so hardware scrolling not "
-			"possible\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "one screen, so hardware scrolling not "
+			"possible\n");
 
 	if (sc->sc_pm) {
-		aprint_normal("%s: VBE/PM %d.%d\n", sc->sc_dev.dv_xname,
+		aprint_normal_dev(&sc->sc_dev, "VBE/PM %d.%d\n",
 		    (sc->sc_pmver >> 4), sc->sc_pmver & 0xf);
 	}
 
@@ -264,8 +267,7 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 			      BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
 			      &h);
 	if (res) {
-		aprint_error("%s: framebuffer mapping failed\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "framebuffer mapping failed\n");
 		goto out;
 	}
 	sc->sc_fbstart = bus_space_vaddr(X86_BUS_SPACE_MEM, h);
@@ -275,8 +277,8 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_shadowbits = malloc(sc->sc_screensize,
 				   M_VESAFB, M_NOWAIT);
 	if (sc->sc_shadowbits == NULL) {
-		aprint_error("%s: unable to allocate %d bytes for shadowfb\n",
-		    sc->sc_dev.dv_xname, sc->sc_screensize);
+		aprint_error_dev(&sc->sc_dev, "unable to allocate %d bytes for shadowfb\n",
+		    sc->sc_screensize);
 		/* Not fatal; we'll just have to continue without shadowfb */
 	}
 #endif
@@ -294,9 +296,14 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 
 	vesafb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 	vcons_init_screen(&sc->sc_vd, &vesafb_console_screen, 1, &defattr);
-#ifndef SPLASHSCREEN
-	vcons_redraw_screen(&vesafb_console_screen);
+#ifdef SPLASHSCREEN
+/*
+ * If system isn't going to go multiuser, or user has requested to see
+ * boot text, don't render splash screen immediately
+ */
+	if (DISABLESPLASH)	  
 #endif
+		vcons_redraw_screen(&vesafb_console_screen);
 
 	vesafb_stdscreen.ncols = ri->ri_cols;
 	vesafb_stdscreen.nrows = ri->ri_rows;
@@ -314,7 +321,8 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_si.si_height = ri->ri_height;
 	sc->sc_si.si_stride = ri->ri_stride;
 	sc->sc_si.si_fillrect = NULL;
-	splash_render(&sc->sc_si, SPLASH_F_CENTER|SPLASH_F_FILL);
+ 	if (!DISABLESPLASH)
+		splash_render(&sc->sc_si, SPLASH_F_CENTER|SPLASH_F_FILL);
 #endif
 
 #ifdef SPLASHSCREEN_PROGRESS
@@ -333,7 +341,8 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	aa.accesscookie = &sc->sc_vd;
 
 #ifdef VESAFB_DISABLE_TEXT
-	SCREEN_DISABLE_DRAWING(&vesafb_console_screen);
+	if (!DISABLESPLASH)
+		SCREEN_DISABLE_DRAWING(&vesafb_console_screen);
 #endif /* !VESAFB_DISABLE_TEXT */
 
 	sc->sc_isconsole = 1;
@@ -568,8 +577,8 @@ vv_copyrows(void *id, int srcrow, int dstrow, int nrows)
 		res = kvm86_bioscall(0x10, &tf);
 		if (res || (tf.tf_eax & 0xff) != 0x4f) {
 			working = 0;
-			aprint_error("%s: vbecall: res=%d, ax=%x\n",
-			    sc->sc_dev.dv_xname, res, tf.tf_eax);
+			aprint_error_dev(&sc->sc_dev, "vbecall: res=%d, ax=%x\n",
+			    res, tf.tf_eax);
 			hwbits = cur_hwbits;
 			goto out;
 		}
@@ -636,7 +645,7 @@ vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	}
 
 #ifdef VESA_DISABLE_TEXT
-	if (scr == &vesafb_console_screen)
+	if (scr == &vesafb_console_screen && !DISABLESPLASH)
 		SCREEN_DISABLE_DRAWING(&vesafb_console_screen);
 #endif
 }
@@ -659,8 +668,7 @@ vesafb_init(struct vesafb_softc *sc, int setmode)
 		regs.EBX = sc->sc_mode | 0x4000;
 		kvm86_bioscall_simple(0x10, &regs);
 		if ((regs.EAX & 0xff) != 0x4f) {
-			aprint_error("%s: bioscall failed\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "bioscall failed\n");
 			goto out;
 		}
 	}
@@ -673,8 +681,8 @@ vesafb_init(struct vesafb_softc *sc, int setmode)
 
 		kvm86_bioscall_simple(0x10, &regs);
 		if ((regs.EAX & 0xff) != 0x4f) {
-			aprint_error("%s: vbecall failed: ax=%x\n",
-			    sc->sc_dev.dv_xname, regs.EAX);
+			aprint_error_dev(&sc->sc_dev, "vbecall failed: ax=%x\n",
+			    regs.EAX);
 			goto out;
 		}
 
@@ -795,8 +803,8 @@ vesafb_set_palette(struct vesafb_softc *sc, int reg,
 
 	res = kvm86_bioscall(0x10, &tf);
 	if (res || (tf.tf_eax & 0xff) != 0x4f)
-		aprint_error("%s: vbecall: res=%d, ax=%x\n",
-		    sc->sc_dev.dv_xname, res, tf.tf_eax);
+		aprint_error_dev(&sc->sc_dev, "vbecall: res=%d, ax=%x\n",
+		    res, tf.tf_eax);
 
 	return;
 }
@@ -840,8 +848,8 @@ vesafb_gvideo(struct vesafb_softc *sc, u_int *on)
 
 	res = kvm86_bioscall(0x10, &tf);
 	if (res || (tf.tf_eax & 0xff) != 0x4f) {
-		aprint_error("%s: unable to get power state (0x%04x)\n",
-		    sc->sc_dev.dv_xname, (tf.tf_eax & 0xffff));
+		aprint_error_dev(&sc->sc_dev, "unable to get power state (0x%04x)\n",
+		    (tf.tf_eax & 0xffff));
 		return ENODEV;
 	}
 

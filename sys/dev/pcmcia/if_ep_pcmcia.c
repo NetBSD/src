@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.59 2007/10/19 12:01:04 ad Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.59.16.1 2008/06/02 13:23:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -67,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.59 2007/10/19 12:01:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.59.16.1 2008/06/02 13:23:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,8 +274,7 @@ ep_pcmcia_attach(parent, self, aux)
 		}
 	}
 	if (!cfe) {
-		aprint_error("%s: failed to allocate I/O space\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "failed to allocate I/O space\n");
 		goto ioalloc_failed;
 	}
 
@@ -295,7 +287,7 @@ ep_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
 	    PCMCIA_WIDTH_AUTO : PCMCIA_WIDTH_IO8), &psc->sc_pcioh,
 	    &psc->sc_io_window)) {
-		aprint_error("%s: can't map i/o space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map i/o space\n");
 		goto iomap_failed;
 	}
 
@@ -334,13 +326,11 @@ ep_pcmcia_attach(parent, self, aux)
 	sc->disable = ep_pcmcia_disable;
 
 	if (epconfig(sc, epp->epp_chipset, enaddr))
-		aprint_error("%s: couldn't configure controller\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "couldn't configure controller\n");
 
-	psc->sc_powerhook = powerhook_establish(self->dv_xname, ep_power, sc);
+	psc->sc_powerhook = powerhook_establish(device_xname(self), ep_power, sc);
 	if (psc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "WARNING: unable to establish power hook\n");
 
 	sc->enabled = 0;
 	ep_pcmcia_disable(sc);

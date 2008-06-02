@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.97 2008/02/18 05:24:24 dyoung Exp $        */
+/*      $NetBSD: ukbd.c,v 1.97.6.1 2008/06/02 13:23:55 mjf Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.97 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.97.6.1 2008/06/02 13:23:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +268,7 @@ const struct wskbd_mapdata ukbd_keymapdata = {
 };
 #endif
 
-static int ukbd_match(device_t, struct cfdata *, void *);
+static int ukbd_match(device_t, cfdata_t, void *);
 static void ukbd_attach(device_t, device_t, void *);
 static int ukbd_detach(device_t, int);
 static int ukbd_activate(device_t, enum devact);
@@ -283,11 +276,11 @@ static void ukbd_childdet(device_t, device_t);
 
 extern struct cfdriver ukbd_cd;
 
-CFATTACH_DECL2(ukbd, sizeof(struct ukbd_softc), ukbd_match, ukbd_attach,
+CFATTACH_DECL2_NEW(ukbd, sizeof(struct ukbd_softc), ukbd_match, ukbd_attach,
     ukbd_detach, ukbd_activate, NULL, ukbd_childdet);
 
 int
-ukbd_match(device_t parent, struct cfdata *match, void *aux)
+ukbd_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 	int size;
@@ -314,22 +307,23 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	int i;
 #endif
 
+	sc->sc_hdev.sc_dev = self;
 	sc->sc_hdev.sc_intr = ukbd_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
 	parseerr = ukbd_parse_desc(sc);
 	if (parseerr != NULL) {
-		printf("\n%s: attach failed, %s\n",
-		       sc->sc_hdev.sc_dev.dv_xname, parseerr);
+		aprint_normal("\n");
+		aprint_error_dev(self, "attach failed, %s\n", parseerr);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 #ifdef DIAGNOSTIC
-	printf(": %d modifier keys, %d key codes", sc->sc_nmod,
+	aprint_normal(": %d modifier keys, %d key codes", sc->sc_nmod,
 	       sc->sc_nkeycode);
 #endif
-	printf("\n");
+	aprint_normal("\n");
 
 
 	qflags = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
@@ -548,7 +542,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	 */
 	if (ukbdtrace) {
 		struct ukbdtraceinfo *p = &ukbdtracedata[ukbdtraceindex];
-		p->unit = device_unit(&sc->sc_hdev.sc_dev);
+		p->unit = device_unit(sc->sc_hdev.sc_dev);
 		microtime(&p->tv);
 		p->ud = *ud;
 		if (++ukbdtraceindex >= UKBDTRACESIZE)

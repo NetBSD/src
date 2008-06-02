@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.31 2008/01/28 14:31:16 dholland Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.31.6.1 2008/06/02 13:24:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.31 2008/01/28 14:31:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.31.6.1 2008/06/02 13:24:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.31 2008/01/28 14:31:16 dholland E
 #include <sys/tty.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+MODULE(MODULE_CLASS_VFS, ptyfs, NULL);
 
 MALLOC_JUSTDEFINE(M_PTYFSMNT, "ptyfs mount", "ptyfs mount structures");
 MALLOC_JUSTDEFINE(M_PTYFSTMP, "ptyfs temp", "ptyfs temporary structures");
@@ -251,7 +254,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	if ((error = set_statvfs_info(path, UIO_USERSPACE, "ptyfs",
 	    UIO_SYSSPACE, mp->mnt_op->vfs_name, mp, l)) != 0) {
-		free(pmnt, M_UFSMNT);
+		free(pmnt, M_PTYFSMNT);
 		return error;
 	}
 
@@ -291,8 +294,8 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 	/*
 	 * Finally, throw away the ptyfsmount structure
 	 */
-	free(mp->mnt_data, M_UFSMNT);
-	mp->mnt_data = 0;
+	free(mp->mnt_data, M_PTYFSMNT);
+	mp->mnt_data = NULL;
 	ptyfs_count--;
 
 	return 0;
@@ -396,8 +399,22 @@ struct vfsops ptyfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	ptyfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(ptyfs_vfsops);
+
+static int
+ptyfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&ptyfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&ptyfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

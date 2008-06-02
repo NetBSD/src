@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.16 2007/10/19 12:00:35 ad Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.16.16.1 2008/06/02 13:23:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -52,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.16 2007/10/19 12:00:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.16.16.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.16 2007/10/19 12:00:35 ad Exp $");
 
 #include <dev/mca/if_lereg.h>
 
-int 	le_mca_match(struct device *, struct cfdata *, void *);
-void	le_mca_attach(struct device *, struct device *, void *);
+int 	le_mca_match(device_t, cfdata_t, void *);
+void	le_mca_attach(device_t, device_t, void *);
 
 struct le_mca_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
@@ -93,8 +86,8 @@ struct le_mca_softc {
 	bus_space_handle_t sc_memh;
 };
 
-static void le_mca_wrcsr(struct lance_softc *, u_int16_t, u_int16_t);
-static u_int16_t le_mca_rdcsr(struct lance_softc *, u_int16_t);
+static void le_mca_wrcsr(struct lance_softc *, uint16_t, uint16_t);
+static uint16_t le_mca_rdcsr(struct lance_softc *, uint16_t);
 static void le_mca_hwreset(struct lance_softc *);
 static int le_mca_intredge(void *);
 
@@ -106,7 +99,7 @@ static inline void le_mca_wrreg(struct le_mca_softc *, int, int);
 #define le_mca_set_RAP(sc, reg_number) \
 		le_mca_wrreg(sc, reg_number, RAP | REGWRITE)
 
-CFATTACH_DECL(le_mca, sizeof(struct le_mca_softc),
+CFATTACH_DECL_NEW(le_mca, sizeof(struct le_mca_softc),
     le_mca_match, le_mca_attach, NULL, NULL);
 
 /* SKNET MC+ POS mapping */
@@ -121,8 +114,7 @@ static const u_int8_t sknet_mcp_media[] = {
 };
 
 int
-le_mca_match(struct device *parent, struct cfdata *cf,
-    void *aux)
+le_mca_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mca_attach_args *ma = aux;
 
@@ -136,13 +128,15 @@ le_mca_match(struct device *parent, struct cfdata *cf,
 }
 
 void
-le_mca_attach(struct device *parent, struct device *self, void *aux)
+le_mca_attach(device_t parent, device_t self, void *aux)
 {
 	struct le_mca_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct mca_attach_args *ma = aux;
 	int i, pos2, pos3, pos4, irq, membase, supmedia=0;
 	const char *typestr;
+
+	sc->sc_dev = self;
 
 	/*
 	 * SKNET Personal:
@@ -216,8 +210,7 @@ le_mca_attach(struct device *parent, struct device *self, void *aux)
 		supmedia = sknet_mcp_media[(pos4 & 0xc0) >> 6];
 		break;
 	default:
-		printf("%s: unknown product %d\n", sc->sc_dev.dv_xname,
-		    ma->ma_id);
+		aprint_error(": unknown product %d\n", ma->ma_id);
 		return;
 	}
 
@@ -225,11 +218,11 @@ le_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(lesc->sc_memt, membase, LE_MCA_MEMSIZE,
 		0, &lesc->sc_memh)) {
-		printf("%s: can't map memory\n", sc->sc_dev.dv_xname);
+		aprint_error(": can't map memory\n");
 		return;
 	}
 
-	printf(" slot %d irq %d: SKNET %s Ethernet\n",
+	aprint_normal(" slot %d irq %d: SKNET %s Ethernet\n",
 		ma->ma_slot + 1, irq, typestr);
 
 	/*
@@ -237,7 +230,7 @@ le_mca_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		sc->sc_enaddr[i] = bus_space_read_1(lesc->sc_memt,
-				lesc->sc_memh, LE_PROMOFF + i*2);
+				lesc->sc_memh, LE_PROMOFF + i * 2);
 
 	sc->sc_conf3 = LE_C3_ACON;
 	sc->sc_addr = 0;
@@ -268,12 +261,12 @@ le_mca_attach(struct device *parent, struct device *self, void *aux)
 	lesc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET,
 			le_mca_intredge, sc);
 	if (lesc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "couldn't establish interrupt handler\n");
 		return;
 	}
 
-	printf("%s", sc->sc_dev.dv_xname);
+	aprint_normal("%s", device_xname(self));
 	am7990_config(&lesc->sc_am7990);
 }
 
@@ -281,9 +274,9 @@ le_mca_attach(struct device *parent, struct device *self, void *aux)
  * Controller interrupt.
  */
 int
-le_mca_intredge(arg)
-	void *arg;
+le_mca_intredge(void *arg)
 {
+
 	/*
 	 * We could check the IRQ bit of LE_PORT, but it seems to be unset
 	 * at this time anyway.
@@ -300,10 +293,9 @@ le_mca_intredge(arg)
  * Push a value to LANCE controller.
  */
 static inline void
-le_mca_wrreg(sc, val, type)
-	struct le_mca_softc *sc;
-	int val, type;
+le_mca_wrreg(struct le_mca_softc *sc, int val, int type)
 {
+
 	/*
 	 * This follows steps in SKNET Personal/MC2+ docs:
 	 * 1. write reg. number to LANCE register
@@ -319,14 +311,12 @@ le_mca_wrreg(sc, val, type)
 		REGDO);
 	/* Delay here doesn't seem to be necessary */
 	/* delay(1);  */
-	while(bus_space_read_1(sc->sc_memt, sc->sc_memh, LE_PORT) & REGREQ)
+	while (bus_space_read_1(sc->sc_memt, sc->sc_memh, LE_PORT) & REGREQ)
 		;
 }
 
 static void
-le_mca_wrcsr(sc, port, val)
-	struct lance_softc *sc;
-	u_int16_t port, val;
+le_mca_wrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct le_mca_softc *lsc = (struct le_mca_softc *)sc;
 
@@ -334,10 +324,8 @@ le_mca_wrcsr(sc, port, val)
 	le_mca_wrreg(lsc, val, RDATA | REGWRITE);
 }
 
-static u_int16_t
-le_mca_rdcsr(sc, port)
-	struct lance_softc *sc;
-	u_int16_t port;
+static uint16_t
+le_mca_rdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct le_mca_softc *lsc = (struct le_mca_softc *)sc;
 
@@ -348,8 +336,7 @@ le_mca_rdcsr(sc, port)
 }
 
 static void
-le_mca_hwreset(sc)
-	struct lance_softc *sc;
+le_mca_hwreset(struct lance_softc *sc)
 {
 	struct le_mca_softc *lsc = (struct le_mca_softc *)sc;
 
@@ -361,26 +348,26 @@ le_mca_hwreset(sc)
 static void
 le_mca_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 {
-	struct le_mca_softc *dsc = (void *) sc;
+	struct le_mca_softc *lsc = (struct le_mca_softc *)sc;
 
-	bus_space_write_region_1(dsc->sc_memt, dsc->sc_memh, boff,
+	bus_space_write_region_1(lsc->sc_memt, lsc->sc_memh, boff,
 	    from, len);
 }
 
 static void
 le_mca_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 {
-	struct le_mca_softc *dsc = (void *) sc;
+	struct le_mca_softc *lsc = (struct le_mca_softc *)sc;
 
-	bus_space_read_region_1(dsc->sc_memt, dsc->sc_memh, boff,
+	bus_space_read_region_1(lsc->sc_memt, lsc->sc_memh, boff,
 	    to, len);
 }
 
 static void
 le_mca_zerobuf(struct lance_softc *sc, int boff, int len)
 {
-	struct le_mca_softc *dsc = (void *) sc;
+	struct le_mca_softc *lsc = (struct le_mca_softc *)sc;
 
-	bus_space_set_region_1(dsc->sc_memt, dsc->sc_memh, boff,
+	bus_space_set_region_1(lsc->sc_memt, lsc->sc_memh, boff,
 	    0x00, len);
 }

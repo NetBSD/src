@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.100 2007/10/19 12:00:16 ad Exp $	*/
+/*	$NetBSD: gus.c,v 1.100.16.1 2008/06/02 13:23:31 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -95,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.100 2007/10/19 12:00:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.100.16.1 2008/06/02 13:23:31 mjf Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -842,20 +835,20 @@ gusattach(struct device *parent, struct device *self, void *aux)
 
 	/* Map i/o space */
 	if (bus_space_map(iot, iobase, GUS_NPORT1, 0, &ioh1))
-		panic("%s: can't map io port range 1", self->dv_xname);
+		panic("%s: can't map io port range 1", device_xname(self));
 	sc->sc_ioh1 = ioh1;
 	if (bus_space_map(iot, iobase+GUS_IOH2_OFFSET, GUS_NPORT2, 0, &ioh2))
-		panic("%s: can't map io port range 2", self->dv_xname);
+		panic("%s: can't map io port range 2", device_xname(self));
 	sc->sc_ioh2 = ioh2;
 
 	/* XXX Maybe we shouldn't fail on mapping this, but just assume
 	 * the card is of revision 0? */
 	if (bus_space_map(iot, iobase+GUS_IOH3_OFFSET, GUS_NPORT3, 0, &ioh3))
-		panic("%s: can't map io port range 3", self->dv_xname);
+		panic("%s: can't map io port range 3", device_xname(self));
 	sc->sc_ioh3 = ioh3;
 
 	if (bus_space_map(iot, iobase+GUS_IOH4_OFFSET, GUS_NPORT4, 0, &ioh4))
-		panic("%s: can't map io port range 4", self->dv_xname);
+		panic("%s: can't map io port range 4", device_xname(self));
 	sc->sc_ioh4 = ioh4;
 
 	sc->sc_iobase = iobase;
@@ -906,7 +899,7 @@ gusattach(struct device *parent, struct device *self, void *aux)
 	}
 	if (d == -1)
 		printf("%s: WARNING: Cannot initialize drq\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 
 	/*
 	 * Program the IRQ and DMA channels on the GUS.  Note that we hardwire
@@ -953,14 +946,14 @@ gusattach(struct device *parent, struct device *self, void *aux)
 		sc->sc_play_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_playdrq);
 		if (isa_drq_alloc(sc->sc_ic, sc->sc_playdrq) != 0) {
-			printf("%s: can't reserve drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_playdrq);
+			aprint_error_dev(&sc->sc_dev, "can't reserve drq %d\n",
+			    sc->sc_playdrq);
 			return;
 		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
 		    sc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("%s: can't create map for drq %d\n",
-			       sc->sc_dev.dv_xname, sc->sc_playdrq);
+			aprint_error_dev(&sc->sc_dev, "can't create map for drq %d\n",
+			       sc->sc_playdrq);
 			return;
 		}
 	}
@@ -968,14 +961,14 @@ gusattach(struct device *parent, struct device *self, void *aux)
 		sc->sc_req_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_recdrq);
 		if (isa_drq_alloc(sc->sc_ic, sc->sc_recdrq) != 0) {
-			printf("%s: can't reserve drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_recdrq);
+			aprint_error_dev(&sc->sc_dev, "can't reserve drq %d\n",
+			    sc->sc_recdrq);
 			return;
 		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
 		    sc->sc_req_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("%s: can't create map for drq %d\n",
-			       sc->sc_dev.dv_xname, sc->sc_recdrq);
+			aprint_error_dev(&sc->sc_dev, "can't create map for drq %d\n",
+			       sc->sc_recdrq);
 			return;
 		}
 	}
@@ -1027,7 +1020,7 @@ gusattach(struct device *parent, struct device *self, void *aux)
 	snprintf(gus_device.version, sizeof(gus_device.version), "%d",
 	    sc->sc_revision);
 
-	printf("\n%s: Gravis UltraSound", sc->sc_dev.dv_xname);
+	printf("\n%s: Gravis UltraSound", device_xname(&sc->sc_dev));
 	if (sc->sc_revision >= 10)
 		printf(" MAX");
 	else {
@@ -1041,7 +1034,7 @@ gusattach(struct device *parent, struct device *self, void *aux)
 	/* A GUS MAX should always have a CODEC installed */
 	if ((sc->sc_revision >= 10) & !(HAS_CODEC(sc)))
 		printf("%s: WARNING: did not attach CODEC on MAX\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 
 	/*
 	 * Setup a default interrupt handler
@@ -1472,7 +1465,7 @@ gus_dmaout_timeout(void *arg)
 	sc = arg;
 	iot = sc->sc_iot;
 	ioh2 = sc->sc_ioh2;
-	printf("%s: dmaout timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: dmaout timeout\n", device_xname(&sc->sc_dev));
 	/*
 	 * Stop any DMA.
 	 */
@@ -1586,7 +1579,7 @@ gus_dmaout_dointr(struct gus_softc *sc)
 	if (sc->sc_voc[GUS_VOICE_LEFT].voccntl &
 	    GUSMASK_VOICE_STOPPED) {
 		if (sc->sc_flags & GUS_PLAYING) {
-			printf("%s: playing yet stopped?\n", sc->sc_dev.dv_xname);
+			printf("%s: playing yet stopped?\n", device_xname(&sc->sc_dev));
 		}
 		sc->sc_bufcnt++; /* another yet to be played */
 		gus_start_playing(sc, sc->sc_dmabuf);
@@ -1733,7 +1726,7 @@ gus_voice_intr(struct gus_softc *sc)
 			if (status & GUSMASK_VOICE_STOPPED) {
 				if (voice != GUS_VOICE_LEFT) {
 					DMAPRINTF(("%s: spurious voice %d stop?\n",
-						   sc->sc_dev.dv_xname, voice));
+						   device_xname(&sc->sc_dev), voice));
 					gus_stop_voice(sc, voice, 0);
 					continue;
 				}
@@ -1749,14 +1742,14 @@ gus_voice_intr(struct gus_softc *sc)
 					 * in place.  Start the voice again.
 					 */
 					printf("%s: stopped voice not drained? (%x)\n",
-					       sc->sc_dev.dv_xname, sc->sc_bufcnt);
+					       device_xname(&sc->sc_dev), sc->sc_bufcnt);
 					gus_falsestops++;
 
 					sc->sc_playbuf = ++sc->sc_playbuf % sc->sc_nbufs;
 					gus_start_playing(sc, sc->sc_playbuf);
 				} else if (sc->sc_bufcnt < 0) {
 					panic("%s: negative bufcnt in stopped voice",
-					      sc->sc_dev.dv_xname);
+					      device_xname(&sc->sc_dev));
 				} else {
 					sc->sc_playbuf = -1; /* none are active */
 					gus_stops++;
@@ -1936,7 +1929,7 @@ gus_continue_playing(struct gus_softc *sc, int voice)
 		DPRINTF(("gus: bufcnt 0 on continuing voice?\n"));
 	}
 	if (sc->sc_playbuf == sc->sc_dmabuf && (sc->sc_flags & GUS_LOCKED)) {
-		printf("%s: continue into active dmabuf?\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "continue into active dmabuf?\n");
 		return 1;
 	}
 

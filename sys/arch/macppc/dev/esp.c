@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.23 2007/10/17 19:55:18 garbled Exp $	*/
+/*	$NetBSD: esp.c,v 1.23.16.1 2008/06/02 13:22:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -77,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.23 2007/10/17 19:55:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.23.16.1 2008/06/02 13:22:23 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,26 +104,26 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.23 2007/10/17 19:55:18 garbled Exp $");
 #include <macppc/dev/dbdma.h>
 #include <macppc/dev/espvar.h>
 
-void	espattach	__P((struct device *, struct device *, void *));
-int	espmatch	__P((struct device *, struct cfdata *, void *));
+int	espmatch(device_t, cfdata_t, void *);
+void	espattach(device_t, device_t, void *);
 
 /* Linkup to the rest of the kernel */
-CFATTACH_DECL(esp, sizeof(struct esp_softc),
+CFATTACH_DECL_NEW(esp, sizeof(struct esp_softc),
     espmatch, espattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.
  */
-u_char	esp_read_reg __P((struct ncr53c9x_softc *, int));
-void	esp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	esp_dma_isintr __P((struct ncr53c9x_softc *));
-void	esp_dma_reset __P((struct ncr53c9x_softc *));
-int	esp_dma_intr __P((struct ncr53c9x_softc *));
-int	esp_dma_setup __P((struct ncr53c9x_softc *, void **,
-	    size_t *, int, size_t *));
-void	esp_dma_go __P((struct ncr53c9x_softc *));
-void	esp_dma_stop __P((struct ncr53c9x_softc *));
-int	esp_dma_isactive __P((struct ncr53c9x_softc *));
+uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
+void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
+int	esp_dma_isintr(struct ncr53c9x_softc *);
+void	esp_dma_reset(struct ncr53c9x_softc *);
+int	esp_dma_intr(struct ncr53c9x_softc *);
+int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **,
+	    size_t *, int, size_t *);
+void	esp_dma_go(struct ncr53c9x_softc *);
+void	esp_dma_stop(struct ncr53c9x_softc *);
+int	esp_dma_isactive(struct ncr53c9x_softc *);
 
 struct ncr53c9x_glue esp_glue = {
 	esp_read_reg,
@@ -145,14 +138,11 @@ struct ncr53c9x_glue esp_glue = {
 	NULL,			/* gl_clear_latched_intr */
 };
 
-static int espdmaintr __P((struct esp_softc *));
-static void esp_shutdownhook __P((void *));
+static int espdmaintr(struct esp_softc *);
+static void esp_shutdownhook(void *);
 
 int
-espmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+espmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -171,24 +161,23 @@ espmatch(parent, cf, aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-espattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+espattach(device_t parent, device_t self, void *aux)
 {
-	register struct confargs *ca = aux;
-	struct esp_softc *esc = (void *)self;
+	struct esp_softc *esc = device_private(self);
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
+	struct confargs *ca = aux;
 	u_int *reg;
 	int sz;
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
+	sc->sc_dev = self;
 	sc->sc_glue = &esp_glue;
 
 	esc->sc_node = ca->ca_node;
 	esc->sc_pri = ca->ca_intr[0];
-	printf(" irq %d", esc->sc_pri);
+	aprint_normal(" irq %d", esc->sc_pri);
 
 	/*
 	 * Map my registers in.
@@ -203,7 +192,7 @@ espattach(parent, self, aux)
 	/* Other settings */
 	sc->sc_id = 7;
 	sz = OF_getprop(ca->ca_node, "clock-frequency",
-		&sc->sc_freq, sizeof(int));
+	    &sc->sc_freq, sizeof(int));
 	if (sz != sizeof(int))
 		sc->sc_freq = 25000000;
 
@@ -264,10 +253,8 @@ espattach(parent, self, aux)
  * Glue functions.
  */
 
-u_char
-esp_read_reg(sc, reg)
-	struct ncr53c9x_softc *sc;
-	int reg;
+uint8_t
+esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
@@ -276,28 +263,24 @@ esp_read_reg(sc, reg)
 }
 
 void
-esp_write_reg(sc, reg, val)
-	struct ncr53c9x_softc *sc;
-	int reg;
-	u_char val;
+esp_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	u_char v = val;
+	uint8_t v = val;
 
 	out8(&esc->sc_reg[reg * 16], v);
 	/*esc->sc_reg[reg * 16] = v;*/
 }
 
 int
-esp_dma_isintr(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_isintr(struct ncr53c9x_softc *sc)
 {
+
 	return esp_read_reg(sc, NCR_STAT) & NCRSTAT_INT;
 }
 
 void
-esp_dma_reset(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
@@ -306,21 +289,16 @@ esp_dma_reset(sc)
 }
 
 int
-esp_dma_intr(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (espdmaintr(esc));
+	return espdmaintr(esc);
 }
 
 int
-esp_dma_setup(sc, addr, len, datain, dmasize)
-	struct ncr53c9x_softc *sc;
-	void **addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;
+esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
+    int datain, size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 	dbdma_command_t *cmdp;
@@ -334,7 +312,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	count = *dmasize;
 
 	if (count / PAGE_SIZE > 32)
-		panic("esp: transfer size >= 128k");
+		panic("%s: transfer size >= 128k", device_xname(sc->sc_dev));
 
 	esc->sc_dmaaddr = addr;
 	esc->sc_dmalen = len;
@@ -360,7 +338,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	/* now va is page-aligned */
 	while (count > PAGE_SIZE) {
 		DBDMA_BUILD(cmdp, cmd, 0, PAGE_SIZE, kvtop((void *)va),
-			DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+		    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 		count -= PAGE_SIZE;
 		va += PAGE_SIZE;
 		cmdp++;
@@ -369,11 +347,11 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	/* the last page (count <= PAGE_SIZE here) */
 	cmd = datain ? DBDMA_CMD_IN_LAST : DBDMA_CMD_OUT_LAST;
 	DBDMA_BUILD(cmdp, cmd , 0, count, kvtop((void *)va),
-		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	cmdp++;
 
 	DBDMA_BUILD(cmdp, DBDMA_CMD_STOP, 0, 0, 0,
-		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
 	esc->sc_dma_direction = datain ? D_WRITE : 0;
 
@@ -381,8 +359,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 }
 
 void
-esp_dma_go(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
@@ -391,8 +368,7 @@ esp_dma_go(sc)
 }
 
 void
-esp_dma_stop(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_stop(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
@@ -401,12 +377,11 @@ esp_dma_stop(sc)
 }
 
 int
-esp_dma_isactive(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (esc->sc_dmaactive);
+	return esc->sc_dmaactive;
 }
 
 
@@ -418,8 +393,7 @@ esp_dma_isactive(sc)
  * return 1 if it was a DMA continue.
  */
 int
-espdmaintr(sc)
-	struct esp_softc *sc;
+espdmaintr(struct esp_softc *sc)
 {
 	struct ncr53c9x_softc *nsc = (struct ncr53c9x_softc *)sc;
 	int trans, resid;
@@ -429,15 +403,15 @@ espdmaintr(sc)
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error: csr=%s\n", nsc->sc_dev.dv_xname,
-			bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
+		printf("%s: error: csr=%s\n", device_xname(nsc->sc_dev),
+		    bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
 		return -1;
 	}
 #endif
 
 	/* This is an "assertion" :) */
 	if (sc->sc_dmaactive == 0)
-		panic("dmaintr: DMA wasn't active");
+		panic("%s: DMA wasn't active", __func__);
 
 	/* dbdma_flush(sc->sc_dmareg); */
 
@@ -493,7 +467,7 @@ espdmaintr(sc)
 		 * another target.  As such, don't print the warning.
 		 */
 		printf("%s: xfer (%d) > req (%d)\n",
-		    sc->sc_dev.dv_xname, trans, sc->sc_dmasize);
+		    device_xname(nsc->sc_dev), trans, sc->sc_dmasize);
 #endif
 		trans = sc->sc_dmasize;
 	}
@@ -511,7 +485,7 @@ espdmaintr(sc)
 #endif
 
 	*sc->sc_dmalen -= trans;
-	*sc->sc_dmaaddr = (char *)*sc->sc_dmaaddr + trans;
+	*sc->sc_dmaaddr += trans;
 
 #if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
@@ -526,8 +500,7 @@ espdmaintr(sc)
 }
 
 void
-esp_shutdownhook(arg)
-	void *arg;
+esp_shutdownhook(void *arg)
 {
 	struct ncr53c9x_softc *sc = arg;
 

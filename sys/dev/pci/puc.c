@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.29 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: puc.c,v 1.29.48.1 2008/06/02 13:23:43 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.29 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.29.48.1 2008/06/02 13:23:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,11 +170,11 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 #else
 		printf(": unknown PCI communications device\n");
 		printf("%s: compile kernel with PUC_PRINT_REGS and larger\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		printf("%s: mesage buffer (via 'options MSGBUFSIZE=...'),\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		printf("%s: and report the result with send-pr\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 #endif
 		return;
 	}
@@ -223,13 +223,13 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 		if (sc->sc_bar_mappings[i].mapped)
 			continue;
 
-		printf("%s: couldn't map BAR at offset 0x%lx\n",
-		    sc->sc_dev.dv_xname, (long)(PCI_MAPREG_START + 4 * i));
+		aprint_error_dev(&sc->sc_dev, "couldn't map BAR at offset 0x%lx\n",
+		    (long)(PCI_MAPREG_START + 4 * i));
 	}
 
 	/* Map interrupt. */
 	if (pci_intr_map(pa, &intrhandle)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	/*
@@ -256,7 +256,7 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 		barindex = PUC_PORT_BAR_INDEX(sc->sc_desc->ports[i].bar);
 		if (!sc->sc_bar_mappings[barindex].mapped) {
 			printf("%s: %s port uses unmapped BAR (0x%x)\n",
-			    sc->sc_dev.dv_xname,
+			    device_xname(&sc->sc_dev),
 			    puc_port_type_name(sc->sc_desc->ports[i].type),
 			    sc->sc_desc->ports[i].bar);
 			continue;
@@ -286,15 +286,14 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_bar_mappings[barindex].s -
 		      sc->sc_desc->ports[i].offset,
 		    &subregion_handle) != 0) {
-			printf("%s: couldn't get subregion for port %d\n",
-			    sc->sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_dev, "couldn't get subregion for port %d\n", i);
 			continue;
 		}
 		paa.h = subregion_handle;
 
 #if 0
 		printf("%s: port %d: %s @ (index %d) 0x%x (0x%lx, 0x%lx)\n",
-		    sc->sc_dev.dv_xname, paa.port,
+		    device_xname(&sc->sc_dev), paa.port,
 		    puc_port_type_name(paa.type), barindex, (int)paa.a,
 		    (long)paa.t, (long)paa.h);
 #endif

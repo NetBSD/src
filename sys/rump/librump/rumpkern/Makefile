@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29.6.1 2008/04/03 12:43:10 mjf Exp $
+#	$NetBSD: Makefile,v 1.29.6.2 2008/06/02 13:24:31 mjf Exp $
 #
 
 .include <bsd.own.mk>
@@ -23,7 +23,8 @@ SRCS+=	clock_subr.c kern_descrip.c kern_lock.c kern_stub.c param.c	\
 	subr_bufq.c subr_hash.c subr_prf2.c subr_specificdata.c		\
 	subr_time.c subr_workqueue.c sys_descrip.c sys_generic.c vfs_bio.c \
 	vfs_cache.c vfs_getcwd.c vfs_hooks.c vfs_init.c vfs_lookup.c	\
-	vfs_subr.c vfs_subr2.c vfs_vnops.c vfs_syscalls.c vnode_if.c
+	vfs_subr.c vfs_subr2.c vfs_vnops.c vfs_syscalls.c vnode_if.c \
+	subr_kobj.c kern_module.c
 
 # sys/miscfs
 SRCS+=	genfs_vfsops.c genfs_vnops.c sync_subr.c
@@ -43,7 +44,6 @@ OBJS+=	${RUMPUSEROBJDIR}/rumpuser.o ${RUMPUSEROBJDIR}/rumpuser_pth.o
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/common/include	\
 		-I${NETBSDSRCDIR}/sys/rump/librump/rumpuser		\
 		-I${.CURDIR}/opt -DMAXUSERS=32
-CPPFLAGS+=	-DRUMP_WITHOUT_THREADS
 
 CFLAGS+=	-Wno-pointer-sign
 

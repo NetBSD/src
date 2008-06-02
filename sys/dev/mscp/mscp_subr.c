@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.34 2007/10/19 12:00:36 ad Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.34.16.1 2008/06/02 13:23:35 mjf Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.34 2007/10/19 12:00:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.34.16.1 2008/06/02 13:23:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -199,8 +199,7 @@ mscp_attach(parent, self, aux)
 	bufq_alloc(&mi->mi_resq, "fcfs", 0);
 
 	if (mscp_init(mi)) {
-		printf("%s: can't init, controller hung\n",
-		    mi->mi_dev.dv_xname);
+		aprint_error_dev(&mi->mi_dev, "can't init, controller hung\n");
 		return;
 	}
 	for (i = 0; i < NCMD; i++) {
@@ -250,7 +249,7 @@ findunit:
 			goto gotit;
 	}
 	printf("%s: no response to Get Unit Status request\n",
-	    mi->mi_dev.dv_xname);
+	    device_xname(&mi->mi_dev));
 	return;
 
 gotit:	/*
@@ -296,7 +295,7 @@ gotit:	/*
 			/*
 			 * In service, or something else equally unusable.
 			 */
-			printf("%s: unit %d off line: ", mi->mi_dev.dv_xname,
+			printf("%s: unit %d off line: ", device_xname(&mi->mi_dev),
 				mp->mscp_unit);
 			mp2 = __UNVOLATILE(mp);
 			mscp_printevent(mp2);
@@ -306,7 +305,7 @@ gotit:	/*
 		break;
 
 	default:
-		printf("%s: unable to get unit status: ", mi->mi_dev.dv_xname);
+		aprint_error_dev(&mi->mi_dev, "unable to get unit status: ");
 		mscp_printevent(__UNVOLATILE(mp));
 		return;
 	}
@@ -391,7 +390,7 @@ mscp_init(mi)
 	if (mi->mi_type & MSCPBUS_UDA) {
 		WRITE_SW(MP_GO | (BURST - 1) << 2);
 		printf("%s: DMA burst size set to %d\n",
-		    mi->mi_dev.dv_xname, BURST);
+		    device_xname(&mi->mi_dev), BURST);
 	}
 	WRITE_SW(MP_GO);
 
@@ -426,8 +425,7 @@ mscp_init(mi)
 	}
 	if (count == DELAYTEN) {
 out:
-		printf("%s: couldn't set ctlr characteristics, sa=%x\n",
-		    mi->mi_dev.dv_xname, j);
+		aprint_error_dev(&mi->mi_dev, "couldn't set ctlr characteristics, sa=%x\n", j);
 		return 1;
 	}
 	return 0;
@@ -544,7 +542,7 @@ mscp_kickaway(mi)
 		if ((mp = mscp_getcp(mi, MSCP_DONTWAIT)) == NULL) {
 			if (mi->mi_credits > MSCP_MINCREDITS)
 				printf("%s: command ring too small\n",
-				    device_parent(&mi->mi_dev)->dv_xname);
+				    device_xname(device_parent(&mi->mi_dev)));
 			/*
 			 * By some (strange) reason we didn't get a MSCP packet.
 			 * Just return and wait for free packets.

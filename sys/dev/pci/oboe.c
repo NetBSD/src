@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.29.6.1 2008/04/03 12:42:52 mjf Exp $	*/
+/*	$NetBSD: oboe.c,v 1.29.6.2 2008/06/02 13:23:42 mjf Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -45,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.29.6.1 2008/04/03 12:42:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.29.6.2 2008/06/02 13:23:42 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +189,7 @@ oboe_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O registers. */
 	if (pci_mapreg_map(pa, IO_BAR, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map I/O space\n");
 		return;
 	}
 
@@ -216,25 +209,24 @@ oboe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Reset the device; bail out upon failure. */
 	if (oboe_reset(sc) != 0) {
-		printf("%s: can't reset\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't reset\n");
 		return;
 	}
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstring = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih  = pci_intr_establish(pa->pa_pc, ih, IPL_IR, oboe_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstring != NULL)
 			printf(" at %s", intrstring);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstring);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstring);
 
 	selinit(&sc->sc_rsel);
 	selinit(&sc->sc_wsel);

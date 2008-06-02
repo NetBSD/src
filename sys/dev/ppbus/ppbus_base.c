@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.15 2008/01/04 21:18:04 ad Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.15.6.1 2008/06/02 13:23:47 mjf Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.15 2008/01/04 21:18:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.15.6.1 2008/06/02 13:23:47 mjf Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -55,26 +55,26 @@ static char * search_token(char *, int, const char *);
 
 /* Perform general ppbus I/O request */
 int
-ppbus_io(struct device * dev, int iop, u_char * addr, int cnt, u_char byte)
+ppbus_io(device_t dev, int iop, u_char * addr, int cnt, u_char byte)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	return (bus->ppbus_io(device_parent(dev), iop, addr, cnt, byte));
 }
 
 /* Execute microsequence */
 int
-ppbus_exec_microseq(struct device * dev, struct ppbus_microseq ** sequence)
+ppbus_exec_microseq(device_t dev, struct ppbus_microseq ** sequence)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	return (bus->ppbus_exec_microseq(device_parent(dev), sequence));
 }
 
 /* Read instance variables of ppbus */
 int
-ppbus_read_ivar(struct device * dev, int index, unsigned int * val)
+ppbus_read_ivar(device_t dev, int index, unsigned int * val)
 
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 	switch (index) {
 	case PPBUS_IVAR_INTR:
@@ -95,9 +95,9 @@ ppbus_read_ivar(struct device * dev, int index, unsigned int * val)
 
 /* Write an instance variable */
 int
-ppbus_write_ivar(struct device * dev, int index, unsigned int * val)
+ppbus_write_ivar(device_t dev, int index, unsigned int * val)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 	switch (index) {
 	case PPBUS_IVAR_INTR:
@@ -119,7 +119,7 @@ ppbus_write_ivar(struct device * dev, int index, unsigned int * val)
 
 /* Polls the bus for a max of 10-milliseconds */
 int
-ppbus_poll_bus(struct device * dev, int maxp, char mask, char status,
+ppbus_poll_bus(device_t dev, int maxp, char mask, char status,
 	int how)
 {
 	int i, j, error;
@@ -163,18 +163,18 @@ ppbus_poll_bus(struct device * dev, int maxp, char mask, char status,
 
 /* Get operating mode of the chipset */
 int
-ppbus_get_mode(struct device * dev)
+ppbus_get_mode(device_t dev)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 	return (bus->sc_mode);
 }
 
 /* Set the operating mode of the chipset, return 0 on success. */
 int
-ppbus_set_mode(struct device * dev, int mode, int options)
+ppbus_set_mode(device_t dev, int mode, int options)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	int error = 0;
 
 	/* If no mode change, do nothing */
@@ -221,31 +221,31 @@ ppbus_set_mode(struct device * dev, int mode, int options)
 
 /* Write charaters to the port */
 int
-ppbus_write(struct device * dev, char * buf, int len, int how, size_t * cnt)
+ppbus_write(device_t dev, char * buf, int len, int how, size_t * cnt)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 	if(bus->sc_use_ieee == PPBUS_ENABLE_IEEE) {
 		if(bus->sc_1284_state != PPBUS_FORWARD_IDLE) {
 			printf("%s(%s): bus not in forward idle mode.\n",
-				__func__, dev->dv_xname);
+				__func__, device_xname(dev));
 			return ENODEV;
 		}
 	}
 
-	return (bus->ppbus_write(device_parent(&bus->sc_dev), buf, len, how, cnt));
+	return (bus->ppbus_write(device_parent(bus->sc_dev), buf, len, how, cnt));
 }
 
 /* Read charaters from the port */
 int
-ppbus_read(struct device * dev, char * buf, int len, int how, size_t * cnt)
+ppbus_read(device_t dev, char * buf, int len, int how, size_t * cnt)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 	if(bus->sc_use_ieee == PPBUS_ENABLE_IEEE) {
 		if(bus->sc_1284_state != PPBUS_REVERSE_IDLE) {
 			printf("%s(%s): bus not in reverse idle mode.\n",
-				__func__, dev->dv_xname);
+				__func__, device_xname(dev));
 			return ENODEV;
 		}
 	}
@@ -255,9 +255,9 @@ ppbus_read(struct device * dev, char * buf, int len, int how, size_t * cnt)
 
 /* Reset the EPP timeout bit in the status register */
 int
-ppbus_reset_epp_timeout(struct device * dev)
+ppbus_reset_epp_timeout(device_t dev)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 	if(bus->sc_capabilities & PPBUS_HAS_EPP) {
 		bus->ppbus_reset_epp_timeout(device_parent(dev));
@@ -270,9 +270,9 @@ ppbus_reset_epp_timeout(struct device * dev)
 
 /* Wait for the ECP FIFO to be empty */
 int
-ppbus_ecp_sync(struct device * dev)
+ppbus_ecp_sync(device_t dev)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 	if(bus->sc_capabilities & PPBUS_HAS_ECP) {
 		bus->ppbus_ecp_sync(device_parent(dev));
@@ -285,10 +285,10 @@ ppbus_ecp_sync(struct device * dev)
 
 /* Allocate DMA for use with ppbus */
 int
-ppbus_dma_malloc(struct device * dev, void ** buf, bus_addr_t * addr,
+ppbus_dma_malloc(device_t dev, void ** buf, bus_addr_t * addr,
 	bus_size_t size)
 {
-	struct ppbus_softc * ppbus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * ppbus = device_private(dev);
 
 	if(ppbus->sc_capabilities & PPBUS_HAS_DMA)
 		return (ppbus->ppbus_dma_malloc(device_parent(dev), buf, addr,
@@ -299,10 +299,10 @@ ppbus_dma_malloc(struct device * dev, void ** buf, bus_addr_t * addr,
 
 /* Free memory allocated with ppbus_dma_malloc() */
 int
-ppbus_dma_free(struct device * dev, void ** buf, bus_addr_t * addr,
+ppbus_dma_free(device_t dev, void ** buf, bus_addr_t * addr,
 	bus_size_t size)
 {
-	struct ppbus_softc * ppbus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * ppbus = device_private(dev);
 
 	if(ppbus->sc_capabilities & PPBUS_HAS_DMA) {
 		ppbus->ppbus_dma_free(device_parent(dev), buf, addr, size);
@@ -314,9 +314,9 @@ ppbus_dma_free(struct device * dev, void ** buf, bus_addr_t * addr,
 }
 
 /* Install a handler to be called by hardware interrupt handler */
-int ppbus_add_handler(struct device * dev, void (*func)(void *), void *arg)
+int ppbus_add_handler(device_t dev, void (*func)(void *), void *arg)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 	if(bus->sc_capabilities & PPBUS_HAS_INTR)
 		return bus->ppbus_add_handler(device_parent(dev), func, arg);
@@ -325,9 +325,9 @@ int ppbus_add_handler(struct device * dev, void (*func)(void *), void *arg)
 }
 
 /* Remove a handler registered with ppbus_add_handler() */
-int ppbus_remove_handler(struct device * dev, void (*func)(void *))
+int ppbus_remove_handler(device_t dev, void (*func)(void *))
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 	if(bus->sc_capabilities & PPBUS_HAS_INTR)
 		return bus->ppbus_remove_handler(device_parent(dev), func);
@@ -341,7 +341,7 @@ int ppbus_remove_handler(struct device * dev, void (*func)(void *))
  * Read the status register and update the status info
  */
 int
-ppbus_get_status(struct device * dev, struct ppbus_status * status)
+ppbus_get_status(device_t dev, struct ppbus_status * status)
 {
 	register char r = status->status = ppbus_rstr(dev);
 
@@ -357,10 +357,10 @@ ppbus_get_status(struct device * dev, struct ppbus_status * status)
 
 /* Allocate the device to perform transfers */
 int
-ppbus_request_bus(struct device * dev, struct device * busdev, int how,
+ppbus_request_bus(device_t dev, device_t busdev, int how,
 	unsigned int timeout)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	unsigned int counter = timeout;
 	int priority = PPBUSPRI;
 	int error;
@@ -409,10 +409,10 @@ end:
 
 /* Release the device allocated with ppbus_request_bus() */
 int
-ppbus_release_bus(struct device * dev, struct device * busdev, int how,
+ppbus_release_bus(device_t dev, device_t busdev, int how,
 	unsigned int timeout)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	unsigned int counter = timeout;
 	int priority = PPBUSPRI;
 	int error;
@@ -514,9 +514,9 @@ search_token(char *str, int slen, const char *token)
 
 /* Stores the class ID of the peripherial in soft config data */
 void
-ppbus_pnp_detect(struct device * dev)
+ppbus_pnp_detect(device_t dev)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	int i;
 	int error;
 	size_t len = 0;
@@ -526,24 +526,24 @@ ppbus_pnp_detect(struct device * dev)
 	char * token;
 
 #ifdef PPBUS_VERBOSE
-	printf("%s: Probing for PnP devices.\n", dev->dv_xname);
+	printf("%s: Probing for PnP devices.\n", device_xname(dev));
 #endif
 
 	error = ppbus_1284_read_id(dev, PPBUS_NIBBLE, &str, &str_sz, &len);
 	if(str_sz != len) {
 #ifdef DEBUG_1284
 		printf("%s(%s): device returned less characters than expected "
-			"in device ID.\n", __func__, dev->dv_xname);
+			"in device ID.\n", __func__, device_xname(dev));
 #endif
 	}
 	if(error) {
 		printf("%s: Error getting device ID (errno = %d)\n",
-			dev->dv_xname, error);
+			device_xname(dev), error);
 		goto end_detect;
 	}
 
 #ifdef DEBUG_1284
-	printf("%s: <PnP> %d characters: ", dev->dv_xname, len);
+	printf("%s: <PnP> %d characters: ", device_xname(dev), len);
 	for (i = 0; i < len; i++)
 		printf("%c(0x%x) ", str[i], str[i]);
 	printf("\n");
@@ -556,10 +556,10 @@ ppbus_pnp_detect(struct device * dev)
 
 	if ((token = search_token(str, len, "MFG")) != NULL ||
 		(token = search_token(str, len, "MANUFACTURER")) != NULL)
-		printf("%s: <%s", dev->dv_xname,
+		printf("%s: <%s", device_xname(dev),
 			search_token(token, UNKNOWN_LENGTH, ":") + 1);
 	else
-		printf("%s: <unknown", dev->dv_xname);
+		printf("%s: <unknown", device_xname(dev));
 
 	if ((token = search_token(str, len, "MDL")) != NULL ||
 		(token = search_token(str, len, "MODEL")) != NULL)
@@ -603,9 +603,9 @@ end_detect:
 
 /* Scan the ppbus for IEEE1284 compliant devices */
 int
-ppbus_scan_bus(struct device * dev)
+ppbus_scan_bus(device_t dev)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	int error;
 
 	/* Try IEEE1284 modes, one device only (no IEEE1284.3 support) */
@@ -619,7 +619,7 @@ ppbus_scan_bus(struct device * dev)
 #if defined(PPBUS_VERBOSE) || defined(PPBUS_DEBUG)
 	/* IEEE1284 supported, print info */
 	printf("%s: IEEE1284 negotiation: modes %s",
-	    dev->dv_xname, "NIBBLE");
+	    device_xname(dev), "NIBBLE");
 
 	error = ppbus_1284_negotiate(dev, PPBUS_PS2, 0);
 	if (!error)

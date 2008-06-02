@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isapnp.c,v 1.13 2007/10/19 12:00:30 ad Exp $	*/
+/*	$NetBSD: aha_isapnp.c,v 1.13.16.1 2008/06/02 13:23:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.13 2007/10/19 12:00:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.13.16.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +82,7 @@ aha_isapnp_attach(struct device *parent, struct device *self,
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "error in region allocation\n");
 		return;
 	}
 
@@ -99,32 +91,32 @@ aha_isapnp_attach(struct device *parent, struct device *self,
 	sc->sc_dmat = ipa->ipa_dmat;
 
 	if (!aha_find(sc->sc_iot, sc->sc_ioh, &apd)) {
-		printf("%s: aha_find failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "aha_find failed\n");
 		return;
 	}
 
 	if (ipa->ipa_ndrq == 0) {
 		if (apd.sc_drq != -1) {
 			printf("%s: no PnP drq, but card has one\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			return;
 		}
 	} else if (apd.sc_drq != ipa->ipa_drq[0].num) {
 		printf("%s: card drq # (%d) != PnP # (%d)\n",
-		    sc->sc_dev.dv_xname, apd.sc_drq, ipa->ipa_drq[0].num);
+		    device_xname(&sc->sc_dev), apd.sc_drq, ipa->ipa_drq[0].num);
 		return;
 	} else {
 		int error = isa_dmacascade(ipa->ipa_ic, ipa->ipa_drq[0].num);
 		if (error) {
-			printf("%s: unable to cascade DRQ, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to cascade DRQ, error = %d\n",
+			    error);
 			return;
 		}
 	}
 
 	if (apd.sc_irq != ipa->ipa_irq[0].num) {
 		printf("%s: card irq # (%d) != PnP # (%d)\n",
-		    sc->sc_dev.dv_xname, apd.sc_irq, ipa->ipa_irq[0].num);
+		    device_xname(&sc->sc_dev), apd.sc_irq, ipa->ipa_irq[0].num);
 		return;
 	}
 
@@ -133,8 +125,7 @@ aha_isapnp_attach(struct device *parent, struct device *self,
 	    ipa->ipa_irq[0].type, IPL_BIO, aha_intr, sc);
 
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 

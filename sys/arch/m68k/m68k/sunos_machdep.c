@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.35 2007/12/20 23:02:40 dsl Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.35.6.1 2008/06/02 13:22:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.35 2007/12/20 23:02:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.35.6.1 2008/06/02 13:22:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,9 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		sigdelset(&p->p_sigctx.ps_sigignore, sig);
 		sigdelset(&p->p_sigctx.ps_sigcatch, sig);
 		sigdelset(&l->l_sigmask, sig);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		psignal(p, sig);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		return;
 	}
 
@@ -187,9 +187,9 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	native_sigset_to_sigset13(mask, &kf.sf_sc.sc_mask);
 
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&kf, fp, sizeof(kf));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 #ifdef DEBUG
@@ -267,7 +267,7 @@ sunos_sys_sigreturn(struct lwp *l, const struct sunos_sys_sigreturn_args *uap, r
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
 	if (scp->sc_onstack & SS_ONSTACK)
@@ -279,7 +279,7 @@ sunos_sys_sigreturn(struct lwp *l, const struct sunos_sys_sigreturn_args *uap, r
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
 	(void)sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return EJUSTRETURN;
 }

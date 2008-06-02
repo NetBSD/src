@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.127.16.1 2008/04/03 12:42:45 mjf Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.127.16.2 2008/06/02 13:23:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -81,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.127.16.1 2008/04/03 12:42:45 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.127.16.2 2008/06/02 13:23:32 mjf Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -231,7 +224,7 @@ static	int sbdsp_adjust(int, int);
 
 int	sbdsp_midi_intr(void *);
 
-static void	sbdsp_powerhook(int, void*);
+static bool	sbdsp_resume(device_t PMF_FN_PROTO);
 
 #ifdef AUDIO_DEBUG
 void	sb_printsc(struct sbdsp_softc *);
@@ -441,23 +434,19 @@ sbdsp_attach(struct sbdsp_softc *sc)
 		}
 	}
 
-	powerhook_establish(device_xname(sc->sc_dev), sbdsp_powerhook, sc);
+	if (!pmf_device_register(sc->sc_dev, NULL, sbdsp_resume))
+		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
 }
 
-static void
-sbdsp_powerhook(int why, void *arg)
+static bool
+sbdsp_resume(device_t dv PMF_FN_ARGS)
 {
-	struct sbdsp_softc *sc;
-	int i;
-
-	sc = arg;
-	if (!sc || why != PWR_RESUME)
-		return;
+	struct sbdsp_softc *sc = device_private(dv);
 
 	/* Reset the mixer. */
 	sbdsp_mix_write(sc, SBP_MIX_RESET, SBP_MIX_RESET);
-	for (i = 0; i < SB_NDEVS; i++)
-		sbdsp_set_mixer_gain (sc, i);
+
+	return true;
 }
 
 void

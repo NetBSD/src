@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030var.h,v 1.4 2007/11/16 08:00:14 xtraeme Exp $	*/
+/*	$NetBSD: adm1030var.h,v 1.4.14.1 2008/06/02 13:23:16 mjf Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -11,8 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -35,7 +33,7 @@
 #define ADM1030VAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030var.h,v 1.4 2007/11/16 08:00:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030var.h,v 1.4.14.1 2008/06/02 13:23:16 mjf Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -43,8 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: adm1030var.h,v 1.4 2007/11/16 08:00:14 xtraeme Exp $
 #include "sysmon_envsys.h"
 
 struct adm1030c_softc {
-	struct device sc_dev;
-	struct device *parent;
+	device_t parent;
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t *sc_sensor;
 	struct i2c_controller *sc_i2c;
@@ -52,6 +49,6 @@ struct adm1030c_softc {
 	uint8_t regs[3];
 };
 
-void adm1030c_setup(struct adm1030c_softc *);
+void adm1030c_setup(device_t);
 
 #endif

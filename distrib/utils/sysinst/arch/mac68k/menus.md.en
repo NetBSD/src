@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.20 2006/08/04 05:30:13 mhitch Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.20.20.1 2008/06/02 13:21:19 mjf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@ menu nodiskmap, title "Choose an option", y=16;
 			 sizeof(struct apple_part_map_entry));
  	};
 
-menu editparttable, title  "Choose your partition", exit, y=15;
+menu editparttable, title  "Choose your partition", exit, y=14;
 	display action  { msg_display (MSG_editparttable);
 			  sortmerge();
 			  if (map.selected >= map.usable_cnt)

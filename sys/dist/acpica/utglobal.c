@@ -1,9 +1,7 @@
-/*	$NetBSD: utglobal.c,v 1.3 2007/12/11 13:16:17 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: utglobal - Global variables for the ACPI subsystem
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,106 +114,16 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.3 2007/12/11 13:16:17 lukem Exp $");
-
 #define __UTGLOBAL_C__
 #define DEFINE_ACPI_GLOBALS
 
 #include "acpi.h"
 #include "acnamesp.h"
 
+ACPI_EXPORT_SYMBOL (AcpiGbl_FADT)
+
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utglobal")
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiFormatException
- *
- * PARAMETERS:  Status       - The ACPI_STATUS code to be formatted
- *
- * RETURN:      A string containing the exception text. A valid pointer is
- *              always returned.
- *
- * DESCRIPTION: This function translates an ACPI exception into an ASCII string.
- *
- ******************************************************************************/
-
-const char *
-AcpiFormatException (
-    ACPI_STATUS             Status)
-{
-    ACPI_STATUS             SubStatus;
-    const char              *Exception = NULL;
-
-
-    ACPI_FUNCTION_ENTRY ();
-
-
-    /*
-     * Status is composed of two parts, a "type" and an actual code
-     */
-    SubStatus = (Status & ~AE_CODE_MASK);
-
-    switch (Status & AE_CODE_MASK)
-    {
-    case AE_CODE_ENVIRONMENTAL:
-
-        if (SubStatus <= AE_CODE_ENV_MAX)
-        {
-            Exception = AcpiGbl_ExceptionNames_Env [SubStatus];
-        }
-        break;
-
-    case AE_CODE_PROGRAMMER:
-
-        if (SubStatus <= AE_CODE_PGM_MAX)
-        {
-            Exception = AcpiGbl_ExceptionNames_Pgm [SubStatus -1];
-        }
-        break;
-
-    case AE_CODE_ACPI_TABLES:
-
-        if (SubStatus <= AE_CODE_TBL_MAX)
-        {
-            Exception = AcpiGbl_ExceptionNames_Tbl [SubStatus -1];
-        }
-        break;
-
-    case AE_CODE_AML:
-
-        if (SubStatus <= AE_CODE_AML_MAX)
-        {
-            Exception = AcpiGbl_ExceptionNames_Aml [SubStatus -1];
-        }
-        break;
-
-    case AE_CODE_CONTROL:
-
-        if (SubStatus <= AE_CODE_CTRL_MAX)
-        {
-            Exception = AcpiGbl_ExceptionNames_Ctrl [SubStatus -1];
-        }
-        break;
-
-    default:
-        break;
-    }
-
-    if (!Exception)
-    {
-        /* Exception code was not recognized */
-
-        ACPI_ERROR ((AE_INFO,
-            "Unknown exception code: 0x%8.8X", Status));
-
-        Exception = "UNKNOWN_STATUS_CODE";
-    }
-
-    return (ACPI_CAST_CONST_PTR (char, Exception));
-}
 
 
 /*******************************************************************************
@@ -274,30 +182,46 @@ const char                  *AcpiGbl_HighestDstateNames[4] =
     "_S4D"
 };
 
-/*
- * Strings supported by the _OSI predefined (internal) method.
- * When adding strings, be sure to update ACPI_NUM_OSI_STRINGS.
- */
-const char                  *AcpiGbl_ValidOsiStrings[ACPI_NUM_OSI_STRINGS] =
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiFormatException
+ *
+ * PARAMETERS:  Status       - The ACPI_STATUS code to be formatted
+ *
+ * RETURN:      A string containing the exception text. A valid pointer is
+ *              always returned.
+ *
+ * DESCRIPTION: This function translates an ACPI exception into an ASCII string
+ *              It is here instead of utxface.c so it is always present.
+ *
+ ******************************************************************************/
+
+const char *
+AcpiFormatException (
+    ACPI_STATUS             Status)
 {
-    /* Operating System Vendor Strings */
+    const char              *Exception = NULL;
 
-    "Linux",
-    "Windows 2000",
-    "Windows 2001",
-    "Windows 2001 SP0",
-    "Windows 2001 SP1",
-    "Windows 2001 SP2",
-    "Windows 2001 SP3",
-    "Windows 2001 SP4",
-    "Windows 2001.1",
-    "Windows 2001.1 SP1",
-    "Windows 2006",
 
-    /* Feature Group Strings */
+    ACPI_FUNCTION_ENTRY ();
 
-    "Extended Address Space Descriptor"
-};
+
+    Exception = AcpiUtValidateException (Status);
+    if (!Exception)
+    {
+        /* Exception code was not recognized */
+
+        ACPI_ERROR ((AE_INFO,
+            "Unknown exception code: 0x%8.8X", Status));
+
+        Exception = "UNKNOWN_STATUS_CODE";
+    }
+
+    return (ACPI_CAST_CONST_PTR (const char, Exception));
+}
+
+ACPI_EXPORT_SYMBOL (AcpiFormatException)
 
 
 /*******************************************************************************
@@ -339,7 +263,7 @@ const ACPI_PREDEFINED_NAMES     AcpiGbl_PreDefinedNames[] =
  * Properties of the ACPI Object Types, both internal and external.
  * The table is indexed by values of ACPI_OBJECT_TYPE
  */
-const UINT8                     AcpiGbl_NsProperties[] =
+const UINT8                     AcpiGbl_NsProperties[ACPI_NUM_NS_TYPES] =
 {
     ACPI_NS_NORMAL,                     /* 00 Any              */
     ACPI_NS_NORMAL,                     /* 01 Number           */
@@ -766,6 +690,56 @@ AcpiUtGetMutexName (
 
     return (AcpiGbl_MutexNames[MutexId]);
 }
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtGetNotifyName
+ *
+ * PARAMETERS:  NotifyValue     - Value from the Notify() request
+ *
+ * RETURN:      String corresponding to the Notify Value.
+ *
+ * DESCRIPTION: Translate a Notify Value to a notify namestring.
+ *
+ ******************************************************************************/
+
+/* Names for Notify() values, used for debug output */
+
+static const char        *AcpiGbl_NotifyValueNames[] =
+{
+    "Bus Check",
+    "Device Check",
+    "Device Wake",
+    "Eject Request",
+    "Device Check Light",
+    "Frequency Mismatch",
+    "Bus Mode Mismatch",
+    "Power Fault",
+    "Capabilities Check",
+    "Device PLD Check",
+    "Reserved",
+    "System Locality Update"
+};
+
+const char *
+AcpiUtGetNotifyName (
+    UINT32                  NotifyValue)
+{
+
+    if (NotifyValue <= ACPI_NOTIFY_MAX)
+    {
+        return (AcpiGbl_NotifyValueNames[NotifyValue]);
+    }
+    else if (NotifyValue <= ACPI_MAX_SYS_NOTIFY)
+    {
+        return ("Reserved");
+    }
+    else /* Greater or equal to 0x80 */
+    {
+        return ("**Device Specific**");
+    }
+}
 #endif
 
 
@@ -844,19 +818,30 @@ AcpiUtInitGlobals (
     }
     AcpiGbl_OwnerIdMask[ACPI_NUM_OWNERID_MASKS - 1] = 0x80000000; /* Last ID is never valid */
 
+    /* Event counters */
+
+    AcpiMethodCount                     = 0;
+    AcpiSciCount                        = 0;
+    AcpiGpeCount                        = 0;
+
+    for (i = 0; i < ACPI_NUM_FIXED_EVENTS; i++)
+    {
+        AcpiFixedEventCount[i]              = 0;
+    }
+
     /* GPE support */
 
-    AcpiGpeCount                        = 0;
     AcpiGbl_GpeXruptListHead            = NULL;
     AcpiGbl_GpeFadtBlocks[0]            = NULL;
     AcpiGbl_GpeFadtBlocks[1]            = NULL;
 
-    /* Global notify handlers */
+    /* Global handlers */
 
     AcpiGbl_SystemNotify.Handler        = NULL;
     AcpiGbl_DeviceNotify.Handler        = NULL;
     AcpiGbl_ExceptionHandler            = NULL;
     AcpiGbl_InitHandler                 = NULL;
+    AcpiGbl_TableHandler                = NULL;
 
     /* Global Lock support */
 
@@ -899,7 +884,7 @@ AcpiUtInitGlobals (
 
 
 #ifdef ACPI_DEBUG_OUTPUT
-    AcpiGbl_LowestStackPointer          = ACPI_SIZE_MAX;
+    AcpiGbl_LowestStackPointer          = ACPI_CAST_PTR (ACPI_SIZE, ACPI_SIZE_MAX);
 #endif
 
 #ifdef ACPI_DBG_TRACK_ALLOCATIONS

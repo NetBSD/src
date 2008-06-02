@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.11 2008/01/06 03:45:26 matt Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.11.6.1 2008/06/02 13:21:53 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -18,13 +18,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -40,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.11 2008/01/06 03:45:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.11.6.1 2008/06/02 13:21:53 mjf Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -69,7 +62,6 @@ static u_int32_t vic1_imask[NIPL];
 static u_int32_t vic2_imask[NIPL];
 
 /* Current interrupt priority level. */
-volatile int current_spl_level;
 volatile int hardware_spl_level;
 
 /* Software copy of the IRQs we have enabled. */
@@ -78,40 +70,6 @@ volatile u_int32_t vic2_intr_enabled;
 
 /* Interrupts pending. */
 static volatile int ipending;
-
-#ifdef __HAVE_FAST_SOFTINTS
-#define	SI_SOFTCLOCK	0
-#define	SI_SOFTBIO	1
-#define	SI_SOFTNET	2
-#define	SI_SOFTSERIAL	3
-/*
- * Map a software interrupt queue index (to the unused bits in the
- * VIC1 register -- XXX will need to revisit this if those bits are
- * ever used in future steppings).
- */
-static const u_int32_t si_to_irqbit[] = {
-	[SI_SOFTCLOCK] = EP93XX_INTR_bit30,
-	[SI_SOFTBIO] = EP93XX_INTR_bit29,
-	[SI_SOFTNET] = EP93XX_INTR_bit28,
-	[SI_SOFTSERIAL] = EP93XX_INTR_bit27,
-};
-
-#define	INT_SWMASK							\
-	((1U << EP93XX_INTR_bit30) | (1U << EP93XX_INTR_bit29) |	\
-	 (1U << EP93XX_INTR_bit28) | (1U << EP93XX_INTR_bit27))
-
-#define	SI_TO_IRQBIT(si)	(1U << si_to_irqbit[(si)])
-
-/*
- * Map a software interrupt queue to an interrupt priority level.
- */
-static const int si_to_ipl[] = {
-	[SI_SOFTCLOCK] = IPL_SOFTCLOCK,	
-	[SI_SOFTBIO] = IPL_SOFTBIO,
-	[SI_SOFTNET] = IPL_SOFTNET,
-	[SI_SOFTSERIAl] = IPL_SOFTSERIAL,
-};
-#endif /* __HAVE_FAST_SOFTINTS */
 
 void	ep93xx_intr_dispatch(struct irqframe *frame);
 
@@ -193,66 +151,17 @@ ep93xx_intr_calculate_masks(void)
 	KASSERT(vic1_imask[IPL_NONE] == 0);
 	KASSERT(vic2_imask[IPL_NONE] == 0);
 
-#ifdef __HAVE_FAST_SOFTINTS
-	/*
-	 * Initialize the soft interrupt masks to block themselves.
-	 */
-	vic1_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFT);
-	vic1_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
-	vic1_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
-	vic1_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
-
-	/*
-	 * splsoftclock() is the only interface that users of the
-	 * generic software interrupt facility have to block their
-	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
-	 */
-	vic1_imask[IPL_SOFTCLOCK] |= vic1_imask[IPL_SOFT];
-	vic2_imask[IPL_SOFTCLOCK] |= vic2_imask[IPL_SOFT];
-
-	/*
-	 * splsoftbio() must also block splsoftclock(), since we don't
-	 * want timer-driven network events to occur while we're
-	 * processing incoming packets.
-	 */
-	vic1_imask[IPL_SOFTBIO] |= vic1_imask[IPL_SOFTCLOCK];
-	vic2_imask[IPL_SOFTBIO] |= vic2_imask[IPL_SOFTCLOCK];
-
-	/*
-	 * splsoftnet() must also block splsoftclock(), since we don't
-	 * want timer-driven network events to occur while we're
-	 * processing incoming packets.
-	 */
-	vic1_imask[IPL_SOFTNET] |= vic1_imask[IPL_SOFTBIO];
-	vic2_imask[IPL_SOFTNET] |= vic2_imask[IPL_SOFTBIO];
-
-	/*
-	 * Enforce a hierarchy that gives "slow" device (or devices with
-	 * limited input buffer space/"real-time" requirements) a better
-	 * chance at not dropping data.
-	 */
-	vic1_imask[IPL_SOFTSERIAL] |= vic1_imask[IPL_SOFTNET];
-	vic2_imask[IPL_SOFTSERIAL] |= vic2_imask[IPL_SOFTNET];
-
-	/*
-	 * splvm() blocks all interrupts that use the kernel memory
-	 * allocation facilities.
-	 */
-	vic1_imask[IPL_VM] |= vic1_imask[IPL_SOFTSERIAL];
-	vic2_imask[IPL_VM] |= vic2_imask[IPL_SOFTSERIAL];
-#endif /* __HAVE_FAST_SOFTINTS */
-
 	/*
 	 * splclock() must block anything that uses the scheduler.
 	 */
-	vic1_imask[IPL_CLOCK] |= vic1_imask[IPL_VM];
-	vic2_imask[IPL_CLOCK] |= vic2_imask[IPL_VM];
+	vic1_imask[IPL_SCHED] |= vic1_imask[IPL_VM];
+	vic2_imask[IPL_SCHED] |= vic2_imask[IPL_VM];
 
 	/*
 	 * splhigh() must block "everything".
 	 */
-	vic1_imask[IPL_HIGH] |= vic1_imask[IPL_CLOCK];
-	vic2_imask[IPL_HIGH] |= vic2_imask[IPL_CLOCK];
+	vic1_imask[IPL_HIGH] |= vic1_imask[IPL_SCHED];
+	vic2_imask[IPL_HIGH] |= vic2_imask[IPL_SCHED];
 
 	/*
 	 * Now compute which IRQs must be blocked when servicing any
@@ -282,42 +191,6 @@ ep93xx_intr_calculate_masks(void)
 	}
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
-static void
-ep93xx_do_pending(void)
-{
-	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
-	int	new;
-	u_int	oldirqstate, oldirqstate2;
-
-	if (__cpu_simple_lock_try(&processing) == 0)
-		return;
-
-	new = current_spl_level;
-
-	oldirqstate = disable_interrupts(I32_bit);
-
-#define	DO_SOFTINT(si)							\
-	if ((ipending & ~vic1_imask[new]) & SI_TO_IRQBIT(si)) {		\
-		ipending &= ~SI_TO_IRQBIT(si);				\
-		current_spl_level = si_to_ipl[(si)];			\
-		oldirqstate2 = enable_interrupts(I32_bit);		\
-		softintr_dispatch(si);					\
-		restore_interrupts(oldirqstate2);			\
-		current_spl_level = new;				\
-	}
-
-	DO_SOFTINT(SI_SOFTSERIAL);
-	DO_SOFTINT(SI_SOFTNET);
-	DO_SOFTINT(SI_SOFTCLOCK);
-	DO_SOFTINT(SI_SOFT);
-
-	__cpu_simple_unlock(&processing);
-
-	restore_interrupts(oldirqstate);
-}
-#endif
-
 inline void
 splx(int new)
 {
@@ -325,8 +198,8 @@ splx(int new)
 	u_int	oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	old = current_spl_level;
-	current_spl_level = new;
+	old = curcpl();
+	set_curcpl(new);
 	if (new != hardware_spl_level) {
 		hardware_spl_level = new;
 		ep93xx_set_intrmask(vic1_imask[new], vic2_imask[new]);
@@ -334,9 +207,7 @@ splx(int new)
 	restore_interrupts(oldirqstate);
 
 #ifdef __HAVE_FAST_SOFTINTS
-	/* If there are software interrupts to process, do it. */
-	if ((ipending & INT_SWMASK) & ~vic1_imask[new])
-		ep93xx_do_pending();
+	cpu_dosoftints();
 #endif
 }
 
@@ -347,8 +218,8 @@ _splraise(int ipl)
 	u_int	oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	old = current_spl_level;
-	current_spl_level = ipl;
+	old = curcpl();
+	set_curcpl(ipl);
 	restore_interrupts(oldirqstate);
 	return (old);
 }
@@ -356,29 +227,13 @@ _splraise(int ipl)
 int
 _spllower(int ipl)
 {
-	int	old = current_spl_level;
+	int	old = curcpl();
 
 	if (old <= ipl)
 		return (old);
 	splx(ipl);
 	return (old);
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-void
-_setsoftintr(int si)
-{
-	u_int	oldirqstate;
-
-	oldirqstate = disable_interrupts(I32_bit);
-	ipending |= SI_TO_IRQBIT(si);
-	restore_interrupts(oldirqstate);
-
-	/* Process unmasked pending soft interrupts. */
-	if ((ipending & INT_SWMASK) & ~vic1_imask[current_spl_level])
-		ep93xx_do_pending();
-}
-#endif
 
 /*
  * ep93xx_intr_init:
@@ -404,7 +259,8 @@ ep93xx_intr_init(void)
 				     NULL, (i < VIC_NIRQ ? "vic1" : "vic2"),
 		                     iq->iq_name);
 	}
-	current_spl_level = 0;
+	curcpu()->ci_intr_depth = 0;
+	set_curcpl(0);
 	hardware_spl_level = 0;
 
 	/* All interrupts should use IRQ not FIQ */
@@ -472,7 +328,7 @@ ep93xx_intr_dispatch(struct irqframe *frame)
 	u_int32_t		vic2_hwpend;
 	int			irq;
 
-	pcpl = current_spl_level;
+	pcpl = curcpl();
 
 	vic1_hwpend = VIC1REG(EP93XX_VIC_IRQStatus);
 	vic2_hwpend = VIC2REG(EP93XX_VIC_IRQStatus);
@@ -490,9 +346,8 @@ ep93xx_intr_dispatch(struct irqframe *frame)
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list)) {
-			current_spl_level = ih->ih_ipl;
+		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
+			set_curcpl(ih->ih_ipl);
 			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 			restore_interrupts(oldirqstate);
@@ -503,23 +358,19 @@ ep93xx_intr_dispatch(struct irqframe *frame)
 		iq = &intrq[irq + VIC_NIRQ];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list)) {
-			current_spl_level = ih->ih_ipl;
+		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
+			set_curcpl(ih->ih_ipl);
 			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 			restore_interrupts(oldirqstate);
 		}
 	}
 
-	current_spl_level = pcpl;
+	set_curcpl(pcpl);
 	hardware_spl_level = pcpl;
 	ep93xx_set_intrmask(vic1_imask[pcpl], vic2_imask[pcpl]);
 
 #ifdef __HAVE_FAST_SOFTINTS
-	/* Check for pendings soft intrs. */
-	if ((ipending & INT_SWMASK) & ~vic1_imask[pcpl]) {
-		ep93xx_do_pending();
-	}
+	cpu_dosoftints();
 #endif
 }

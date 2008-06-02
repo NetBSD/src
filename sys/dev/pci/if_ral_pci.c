@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_pci.c,v 1.7 2007/10/19 12:00:47 ad Exp $	*/
+/*	$NetBSD: if_ral_pci.c,v 1.7.16.1 2008/06/02 13:23:40 mjf Exp $	*/
 /*	$OpenBSD: if_ral_pci.c,v 1.6 2006/01/09 20:03:43 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * PCI front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.7 2007/10/19 12:00:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.7.16.1 2008/06/02 13:23:40 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ral_pci.c,v 1.7 2007/10/19 12:00:47 ad Exp $");
 #include <netinet/in.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_radiotap.h>
 
@@ -171,7 +172,7 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	(*psc->sc_opns->attach)(sc, PCI_PRODUCT(pa->pa_id));
 }

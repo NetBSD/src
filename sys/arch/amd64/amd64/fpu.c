@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.22 2008/01/15 14:50:09 joerg Exp $	*/
+/*	$NetBSD: fpu.c,v 1.22.6.1 2008/06/02 13:21:48 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.22 2008/01/15 14:50:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.22.6.1 2008/06/02 13:21:48 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.22 2008/01/15 14:50:09 joerg Exp $");
  */
 
 void fpudna(struct cpu_info *);
-static int x86fpflags_to_ksiginfo(u_int32_t);
+static int x86fpflags_to_ksiginfo(uint32_t);
 
 /*
  * Init the FPU.
@@ -147,9 +147,12 @@ fputrap(frame)
 {
 	register struct lwp *l = curcpu()->ci_fpcurlwp;
 	struct savefpu *sfp = &l->l_addr->u_pcb.pcb_savefpu;
-	u_int32_t mxcsr, statbits;
-	u_int16_t cw;
+	uint32_t mxcsr, statbits;
+	uint16_t cw;
 	ksiginfo_t ksi;
+
+	kpreempt_disable();
+	x86_enable_intr();
 
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
@@ -172,6 +175,8 @@ fputrap(frame)
 		fwait();
 		statbits = sfp->fp_fxsave.fx_fsw;
 	}
+	kpreempt_enable();
+
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
 	KSI_INIT_TRAP(&ksi);
@@ -183,7 +188,7 @@ fputrap(frame)
 }
 
 static int
-x86fpflags_to_ksiginfo(u_int32_t flags)
+x86fpflags_to_ksiginfo(uint32_t flags)
 {
 	int i;
 	static int x86fp_ksiginfo_table[] = {
@@ -214,15 +219,18 @@ x86fpflags_to_ksiginfo(u_int32_t flags)
 void
 fpudna(struct cpu_info *ci)
 {
-	u_int16_t cw;
-	u_int32_t mxcsr;
+	uint16_t cw;
+	uint32_t mxcsr;
 	struct lwp *l;
 	int s;
 
 	if (ci->ci_fpsaving) {
-		printf("recursive fpu trap; cr0=%x\n", rcr0());
+		printf("recursive fpu trap; cr0=%lx\n", rcr0());
 		return;
 	}
+
+	kpreempt_disable();
+	x86_enable_intr();
 
 	s = splipi();
 	l = ci->ci_curlwp;
@@ -283,6 +291,8 @@ fpudna(struct cpu_info *ci)
 		fldummy(&zero);
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu);
 	}
+
+	kpreempt_enable();
 }
 
 
@@ -292,6 +302,8 @@ fpusave_cpu(bool save)
 	struct cpu_info *ci = curcpu();
 	struct lwp *l;
 	int s;
+
+	KASSERT(kpreempt_disabled());
 
 	l = ci->ci_fpcurlwp;
 	if (l == NULL)
@@ -332,6 +344,7 @@ fpusave_lwp(struct lwp *l, bool save)
 
 	KDASSERT(l->l_addr != NULL);
 
+	kpreempt_disable();
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == curcpu()) {
 		int s = splipi();
@@ -354,4 +367,5 @@ fpusave_lwp(struct lwp *l, bool save)
 		}
 #endif
 	}
+	kpreempt_enable();
 }

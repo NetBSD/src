@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgdlex.l,v 1.1 2003/03/24 02:02:50 elric Exp $ */
+/* $NetBSD: cgdlex.l,v 1.1.32.1 2008/06/02 13:21:21 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -39,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgdlex.l,v 1.1 2003/03/24 02:02:50 elric Exp $");
+__RCSID("$NetBSD: cgdlex.l,v 1.1.32.1 2008/06/02 13:21:21 mjf Exp $");
 #endif
 
 #include <err.h>
@@ -67,11 +60,32 @@ __RCSID("$NetBSD: cgdlex.l,v 1.1 2003/03/24 02:02:50 elric Exp $");
 		return (x);					\
 	} while (0)
 
+#define QUOTEDBEGIN() do {						\
+		BEGIN(quoted);						\
+		quoted_string = string_zero();				\
+	} while (0)
+#define QUOTEDADD() do {						\
+		string_t	*tmp;					\
+									\
+		tmp = string_new(yytext, yyleng);			\
+		quoted_string = string_add_d(quoted_string, tmp);	\
+	} while (0)
+#define RETQUOTED(x) do {						\
+		yylval.string = quoted_string;				\
+		quoted_string = NULL;					\
+		BEGIN(INITIAL);						\
+		return(x);						\
+	} while (0)
+
 int yylineno;
+
+string_t	*quoted_string;
 
 void	yyerror(const char *);
 int	yylex(void);
 %}
+
+%x quoted
 
 %%
 
@@ -84,6 +98,7 @@ keygen					{ RETTOKEN(KEYGEN); }
 salt					{ RETTOKEN(SALT); }
 iterations				{ RETTOKEN(ITERATIONS); }
 key					{ RETTOKEN(KEY); }
+cmd					{ RETTOKEN(CMD); }
 keygen_method				{ RETTOKEN(KEYGEN_METHOD); }
 keygen_salt				{ RETTOKEN(KEYGEN_SALT); }
 keygen_iterations			{ RETTOKEN(KEYGEN_ITERATIONS); }
@@ -92,7 +107,12 @@ xor_key					{ RETTOKEN(XOR_KEY); }
 \\\n					/* ignore a quoted nl */
 [ \t]					/* ignore spaces and tabs */
 #[^;\n]*				/* ignore comments */
-[^ }{\t\n;]+				{ RETSTRING(STRINGLIT); }
+[^ }{\t\n;"]+				{ RETSTRING(STRINGLIT); }
+
+\"					{ QUOTEDBEGIN(); }
+<quoted>[^\"]+				{ QUOTEDADD(); }
+<quoted>\"				{ RETQUOTED(STRINGLIT); }
+
 .					{ return yytext[0]; }
 
 %%

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2007/11/22 16:17:02 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.22.1 2008/06/02 13:22:54 mjf Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2007/11/22 16:17:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.22.1 2008/06/02 13:22:54 mjf Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -162,11 +162,11 @@ cpu_rootconf(void)
 	if (booted_wedge) {
 		KASSERT(booted_device != NULL);
 		printf("boot device: %s (%s)\n",
-		    booted_wedge->dv_xname, booted_device->dv_xname);
+		    device_xname(booted_wedge), device_xname(booted_device));
 		setroot(booted_wedge, 0);
 	} else {
 		printf("boot device: %s\n",
-		    booted_device ? booted_device->dv_xname : "<unknown>");
+		    booted_device ? device_xname(booted_device) : "<unknown>");
 		setroot(booted_device, booted_partition);
 	}
 }
@@ -197,13 +197,13 @@ findroot(void)
 			break;
 		}
 
-		if (strncmp(xcp.xcp_bootdev, dv->dv_xname,
-		    strlen(dv->dv_xname)))
+		if (strncmp(xcp.xcp_bootdev, device_xname(dv),
+		    strlen(device_xname(dv))))
 			continue;
 
-		if (strlen(xcp.xcp_bootdev) > strlen(dv->dv_xname)) {
+		if (strlen(xcp.xcp_bootdev) > strlen(device_xname(dv))) {
 			booted_partition = toupper(
-				xcp.xcp_bootdev[strlen(dv->dv_xname)]) - 'A';
+				xcp.xcp_bootdev[strlen(device_xname(dv))]) - 'A';
 		}
 
 		booted_device = dv;
@@ -266,7 +266,8 @@ device_register(struct device *dev, void *aux)
 		union xen_cmdline_parseinfo xcp;
 
 		xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
-		if (strncmp(xcp.xcp_bootdev, dev->dv_xname, 16) == 0) {
+		if (strncmp(xcp.xcp_bootdev, device_xname(dev),
+		    sizeof(xcp.xcp_bootdev)) == 0) {
 #ifdef NFS_BOOT_BOOTSTATIC
 #ifdef DOM0OPS
 			if (xen_start_info.flags & SIF_PRIVILEGED) {
@@ -329,7 +330,7 @@ found:
 	if (booted_device) {
 		/* XXX should be a "panic()" */
 		printf("warning: double match for boot device (%s, %s)\n",
-		    booted_device->dv_xname, dev->dv_xname);
+		    device_xname(booted_device), device_xname(dev));
 		return;
 	}
 	booted_device = dev;

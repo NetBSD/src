@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.9 2007/12/25 18:33:38 perry Exp $ */
+/* $NetBSD: i82596var.h,v 1.9.6.1 2008/06/02 13:23:22 mjf Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -149,7 +149,7 @@ struct iee_rbd {
 
 
 struct iee_softc {
-	struct device sc_dev;		/* common device data */
+	device_t sc_dev;		/* common device data */
 	struct ifmedia sc_ifmedia;	/* media interface */
 	struct ethercom sc_ethercom;	/* ethernet specific stuff */
 	enum i82596_types sc_type;

@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.7 2005/12/24 22:50:07 perry Exp $	*/
+/*	$NetBSD: monitor.c,v 1.7.74.1 2008/06/02 13:21:58 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,6 +30,9 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
+
+#include "boot.h"
 
 extern int errno;
 extern char *name;
@@ -48,7 +44,7 @@ void db_cmd_mt(int, char **);
 void db_cmd_put(int, char **);
 void db_cmd_help(int, char **);
 
-extern void exec_kernel(char *, void *);
+int db_atob(char *);
 
 struct {
 	char *name;
@@ -318,13 +314,14 @@ out:
 #define STR(x) #x
 
 #define	FUNC(x) \
+unsigned int mf ## x(void); \
+void mt ## x(unsigned int); \
 unsigned int mf ## x() { \
 	unsigned int tmp; \
 	__asm volatile (STR(mf ## x %0) : STR(=r)(tmp)); \
 	return (tmp); \
 } \
-void mt ## x(data) \
-unsigned int data; \
+void mt ## x(unsigned int data) \
 { \
 	__asm volatile (STR(mt ## x %0) :: STR(r)(data)); \
 } \
@@ -332,7 +329,7 @@ unsigned int data; \
 #define DEF(x) \
 	{ #x, mf ## x, mt ## x }
 
-FUNC(msr);
+FUNC(msr)
 
 struct {
 	char *op;

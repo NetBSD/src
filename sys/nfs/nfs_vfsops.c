@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.196 2008/02/13 09:51:37 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.196.6.1 2008/06/02 13:24:30 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196 2008/02/13 09:51:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196.6.1 2008/06/02 13:24:30 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196 2008/02/13 09:51:37 yamt Exp $"
 #include <sys/systm.h>
 #include <sys/timetc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -74,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196 2008/02/13 09:51:37 yamt Exp $"
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsdiskless.h>
 #include <nfs/nfs_var.h>
+
+MODULE(MODULE_CLASS_VFS, nfs, NULL);
 
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
@@ -121,11 +124,25 @@ struct vfsops nfs_vfsops = {
 	(void *)eopnotsupp,	/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	nfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(nfs_vfsops);
+
+static int
+nfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&nfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&nfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;
@@ -362,7 +379,7 @@ nfs_mountroot()
 	mutex_exit(&mountlist_lock);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 
 	/* Get root attributes (for the time). */
 	error = VOP_GETATTR(vp, &attr, l->l_cred);
@@ -419,7 +436,7 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, l)
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
 			 ndmntp->ndm_args.hostname, vpp, l);
 	if (error) {
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		vfs_destroy(mp);
 		printf("nfs_mountroot: mount %s failed: %d\n",
 		       mntname, error);

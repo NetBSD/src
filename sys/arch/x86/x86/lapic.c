@@ -1,7 +1,7 @@
-/* $NetBSD: lapic.c,v 1.33 2008/01/25 18:56:55 xtraeme Exp $ */
+/*	$NetBSD: lapic.c,v 1.33.6.1 2008/06/02 13:22:51 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -39,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.33 2008/01/25 18:56:55 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.33.6.1 2008/06/02 13:22:51 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -104,6 +97,22 @@ lapic_map(paddr_t lapic_base)
 	pt_entry_t *pte;
 	vaddr_t va = (vaddr_t)&local_apic;
 
+	/*
+	 * If the CPU has an APIC MSR, use it and ignore the supplied value:
+	 * some ACPI implementations have been observed to pass bad values.
+	 * Additionally, ensure that the lapic is enabled as we are committed
+	 * to using it at this point.  Be conservative and assume that the MSR
+	 * is not present on the Pentium (is it?).
+	 */
+	if (CPUID2FAMILY(curcpu()->ci_signature) >= 6) {
+		lapic_base = (paddr_t)rdmsr(LAPIC_MSR);
+		if ((lapic_base & LAPIC_MSR_ADDR) == 0) {
+			lapic_base |= LAPIC_BASE;
+		}
+		wrmsr(LAPIC_MSR, lapic_base | LAPIC_MSR_ENABLE);
+		lapic_base &= LAPIC_MSR_ADDR;
+	}
+
 	x86_disable_intr();
 	s = lapic_tpr;
 
@@ -152,9 +161,9 @@ lapic_set_lvt(void)
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
-		apic_format_redir (ci->ci_dev->dv_xname, "prelint", 0, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "prelint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir (ci->ci_dev->dv_xname, "prelint", 1, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "prelint", 1, 0,
 		    i82489_readreg(LAPIC_LVINT1));
 	}
 #endif
@@ -179,8 +188,8 @@ lapic_set_lvt(void)
 
 	for (i = 0; i < mp_nintr; i++) {
 		mpi = &mp_intrs[i];
-		if (mpi->ioapic == NULL && (mpi->cpu_id == MPS_ALL_APICS
-					    || mpi->cpu_id == ci->ci_apicid)) {
+		if (mpi->ioapic == NULL && (mpi->cpu_id == MPS_ALL_APICS ||
+		    mpi->cpu_id == ci->ci_cpuid)) {
 #ifdef DIAGNOSTIC
 			if (mpi->ioapic_pin > 1)
 				panic("lapic_set_lvt: bad pin value %d",
@@ -195,15 +204,15 @@ lapic_set_lvt(void)
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
-		apic_format_redir (ci->ci_dev->dv_xname, "timer", 0, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "timer", 0, 0,
 		    i82489_readreg(LAPIC_LVTT));
-		apic_format_redir (ci->ci_dev->dv_xname, "pcint", 0, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "pcint", 0, 0,
 		    i82489_readreg(LAPIC_PCINT));
-		apic_format_redir (ci->ci_dev->dv_xname, "lint", 0, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "lint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir (ci->ci_dev->dv_xname, "lint", 1, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "lint", 1, 0,
 		    i82489_readreg(LAPIC_LVINT1));
-		apic_format_redir (ci->ci_dev->dv_xname, "err", 0, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "err", 0, 0,
 		    i82489_readreg(LAPIC_LVERR));
 	}
 #endif
@@ -310,86 +319,10 @@ extern u_int i8254_get_timecount(struct timecounter *);
 void
 lapic_clockintr(void *arg, struct intrframe *frame)
 {
-#if defined(TIMECOUNTER_DEBUG)
-	static u_int last_count[X86_MAXPROCS],
-		     last_delta[X86_MAXPROCS],
-		     last_tsc[X86_MAXPROCS],
-		     last_tscdelta[X86_MAXPROCS],
-	             last_factor[X86_MAXPROCS];
-#endif /* TIMECOUNTER_DEBUG */
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_lapic_counter += lapic_tval;
 	ci->ci_isources[LIR_TIMER]->is_evcnt.ev_count++;
-
-#if defined(TIMECOUNTER_DEBUG)
-	{
-		int cid = ci->ci_cpuid;
-		u_int c_count = i8254_get_timecount(NULL);
-		u_int c_tsc = cpu_counter32();
-		u_int delta, ddelta, tsc_delta, factor = 0;
-		int idelta;
-
-		if (c_count > last_count[cid])
-			delta = c_count - last_count[cid];
-		else
-			delta = 0x100000000ULL - last_count[cid] + c_count;
-
-		if (delta > last_delta[cid])
-			ddelta = delta - last_delta[cid];
-		else
-			ddelta = last_delta[cid] - delta;
-
-		if (c_tsc > last_tsc[cid])
-			tsc_delta = c_tsc - last_tsc[cid];
-		else
-			tsc_delta = 0x100000000ULL - last_tsc[cid] + c_tsc;
-
-		idelta = tsc_delta - last_tscdelta[cid];
-		if (idelta < 0)
-			idelta = -idelta;
-
-		if (delta) {
-			int fdelta = tsc_delta / delta - last_factor[cid];
-			if (fdelta < 0)
-				fdelta = -fdelta;
-
-			if (fdelta > last_factor[cid] / 10) {
-				printf("cpu%d: freq skew exceeds 10%%: delta %u, "
-				    "factor %u, last %u\n", cid, fdelta,
-				    tsc_delta / delta, last_factor[cid]);
-			}
-			factor = tsc_delta / delta;
-		}
-
-		if (ddelta > last_delta[cid] / 10) {
-			printf("cpu%d: tick delta exceeds 10%%: delta %u, "
-			    "last %u, tick %u, last %u, factor %u, last %u\n",
-			    cid, ddelta, last_delta[cid], c_count,
-			    last_count[cid], factor, last_factor[cid]);
-		}
-
-		if (last_count[cid] > c_count) {
-			printf("cpu%d: tick wrapped/lost: delta %u, tick %u, "
-			    "last %u\n", cid, last_count[cid] - c_count,
-			    c_count, last_count[cid]);
-		}
-
-		if (idelta > last_tscdelta[cid] / 10) {
-			printf("cpu%d: TSC delta exceeds 10%%: delta %u, "
-			    "last %u, tsc %u, factor %u, last %u\n", cid, idelta,
-			    last_tscdelta[cid], last_tsc[cid],
-			    factor, last_factor[cid]);
-		}
- 
-		last_factor[cid]   = factor;
-		last_delta[cid]    = delta;
-		last_count[cid]    = c_count;
-		last_tsc[cid]      = c_tsc;
-		last_tscdelta[cid] = tsc_delta;
-	}
-#endif /* TIMECOUNTER_DEBUG */
-
 	hardclock((struct clockframe *)frame);
 }
 
@@ -407,6 +340,7 @@ lapic_initclocks(void)
 	i82489_writereg (LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
 	i82489_writereg (LAPIC_ICR_TIMER, lapic_tval);
 	i82489_writereg (LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_TIMER_VECTOR);
+	i82489_writereg (LAPIC_EOI, 0);
 }
 
 extern unsigned int gettick(void);	/* XXX put in header file */
@@ -433,7 +367,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	int i;
 	char tbuf[9];
 
-	aprint_verbose("%s: calibrating local timer\n", ci->ci_dev->dv_xname);
+	aprint_debug_dev(ci->ci_dev, "calibrating local timer\n");
 
 	/*
 	 * Configure timer to one-shot, interrupt masked,
@@ -465,8 +399,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 
 	humanize_number(tbuf, sizeof(tbuf), lapic_per_second, "Hz", 1000);
 
-	aprint_verbose("%s: apic clock running at %s\n",
-	    ci->ci_dev->dv_xname, tbuf);
+	aprint_debug_dev(ci->ci_dev, "apic clock running at %s\n", tbuf);
 
 	if (lapic_per_second != 0) {
 		/*
@@ -487,10 +420,10 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		 * in lapic_delay.
 		 */
 
-		tmp = (1000000 * (u_int64_t)1<<32) / lapic_per_second;
+		tmp = (1000000 * (uint64_t)1<<32) / lapic_per_second;
 		lapic_frac_usec_per_cycle = tmp;
 
-		tmp = (lapic_per_second * (u_int64_t)1<<32) / 1000000;
+		tmp = (lapic_per_second * (uint64_t)1<<32) / 1000000;
 
 		lapic_frac_cycle_per_usec = tmp;
 
@@ -575,24 +508,56 @@ i82489_icr_wait(void)
 int
 x86_ipi_init(int target)
 {
+	uint32_t esr;
+
+	i82489_writereg(LAPIC_ESR, 0);
+	(void)i82489_readreg(LAPIC_ESR);
 
 	if ((target&LAPIC_DEST_MASK)==0) {
 		i82489_writereg(LAPIC_ICRHI, target<<LAPIC_ID_SHIFT);
 	}
-
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	    LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT );
-
 	i82489_icr_wait();
-
 	i8254_delay(10000);
-
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	     LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);
-
 	i82489_icr_wait();
 
-	return (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY)?EBUSY:0;
+	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
+		return EBUSY;
+	}
+	esr = i82489_readreg(LAPIC_ESR);
+	if (esr != 0) {
+		aprint_debug("x86_ipi_init: ESR %08x\n", esr);
+	}
+
+	return 0;
+}
+
+int
+x86_ipi_startup(int target, int vec)
+{
+	uint32_t esr;
+
+	i82489_writereg(LAPIC_ESR, 0);
+	(void)i82489_readreg(LAPIC_ESR);
+
+	i82489_icr_wait();
+	i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
+	i82489_writereg(LAPIC_ICRLO, vec | LAPIC_DLMODE_STARTUP |
+	    LAPIC_LEVEL_ASSERT);
+	i82489_icr_wait();
+
+	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
+		return EBUSY;
+	}
+	esr = i82489_readreg(LAPIC_ESR);
+	if (esr != 0) {
+		aprint_debug("x86_ipi_startup: ESR %08x\n", esr);
+	}
+
+	return 0;
 }
 
 int
@@ -600,7 +565,7 @@ x86_ipi(int vec, int target, int dl)
 {
 	int result, s;
 
-	s = splclock();
+	s = splhigh();
 
 	i82489_icr_wait();
 
@@ -637,7 +602,7 @@ static void
 lapic_hwmask(struct pic *pic, int pin)
 {
 	int reg;
-	u_int32_t val;
+	uint32_t val;
 
 	reg = LAPIC_LVTT + (pin << 4);
 	val = i82489_readreg(reg);
@@ -649,7 +614,7 @@ static void
 lapic_hwunmask(struct pic *pic, int pin)
 {
 	int reg;
-	u_int32_t val;
+	uint32_t val;
 
 	reg = LAPIC_LVTT + (pin << 4);
 	val = i82489_readreg(reg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.146 2007/12/03 15:34:26 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.146.14.1 2008/06/02 13:22:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 2007/12/03 15:34:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146.14.1 2008/06/02 13:22:49 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -915,8 +915,8 @@ static const int ipl2psl_table[] = {
 	[IPL_SOFTCLOCK]  = PSL_IPL1,
 	[IPL_SOFTNET]    = PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_VM]         = PSL_IPL4,
-	[IPL_SCHED]      = PSL_IPL6,
+	[IPL_VM]         = PSL_IPL5,
+	[IPL_SCHED]      = PSL_IPL7,
 };
 
 ipl_cookie_t

@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_reg.h,v 1.3 2003/03/11 23:11:27 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_reg.h,v 1.18 2008/01/16 13:08:55 jmcneill Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.18.6.1 2008/06/02 13:23:44 mjf Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp$
  *
@@ -725,6 +725,7 @@ struct bktr_softc {
     int                 msp_use_mono_source;   /* use Tuner's Mono audio output via the MSP chip */
     int                 audio_mux_present;     /* 1 = has audio mux on GPIO lines, 0 = no audio mux */
     int                 msp_source_selected;   /* 0 = TV source, 1 = Line In source, 2 = FM Radio Source */
+    void		*sih;
 
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.3 2005/03/19 17:31:48 thorpej Exp $	*/
+/*	$NetBSD: agr.c,v 1.3.20.1 2008/06/02 13:21:22 mjf Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.3 2005/03/19 17:31:48 thorpej Exp $");
+__RCSID("$NetBSD: agr.c,v 1.3.20.1 2008/06/02 13:21:22 mjf Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -41,72 +41,86 @@ __RCSID("$NetBSD: agr.c,v 1.3 2005/03/19 17:31:48 thorpej Exp $");
 #include <err.h>
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <util.h>
 
-#include "extern.h"
 #include "agr.h"
+#include "env.h"
+#include "extern.h"
+#include "parse.h"
+#include "util.h"
 
-static int checkifname(const char *);
-static void assertifname(const char *);
+static int checkifname(prop_dictionary_t);
+static void assertifname(prop_dictionary_t);
+
+static struct piface agrif = PIFACE_INITIALIZER(&agrif, "agr interface",
+    agrsetport, "agrport", &command_root.pb_parser);
+
+static const struct kwinst agrkw[] = {
+	  {.k_word = "agrport", .k_type = KW_T_INT, .k_int = AGRCMD_ADDPORT,
+	   .k_nextparser = &agrif.pif_parser}
+	, {.k_word = "-agrport", .k_type = KW_T_INT, .k_int = AGRCMD_REMPORT,
+	   .k_nextparser = &agrif.pif_parser}
+};
+
+struct pkw agr = PKW_INITIALIZER(&agr, "agr", NULL, "agrcmd",
+    agrkw, __arraycount(agrkw), NULL);
 
 static int
-checkifname(const char *ifname)
+checkifname(prop_dictionary_t env)
 {
+	const char *ifname;
+
+	if ((ifname = getifname(env)) == NULL)
+		return 1;
 
 	return strncmp(ifname, "agr", 3) != 0 ||
 	    !isdigit((unsigned char)ifname[3]);
 }
 
 static void
-assertifname(const char *ifname)
+assertifname(prop_dictionary_t env)
 {
-
-	if (checkifname(ifname)) {
+	if (checkifname(env))
 		errx(EXIT_FAILURE, "valid only with agr(4) interfaces");
-	}
 }
 
-void
-agraddport(const char *val, int d)
+int
+agrsetport(prop_dictionary_t env, prop_dictionary_t xenv)
 {
+	char buf[IFNAMSIZ];
 	struct agrreq ar;
+	const char *port;
+	int64_t cmd;
 
-	assertifname(ifr.ifr_name);
+	if (!prop_dictionary_get_int64(env, "agrcmd", &cmd)) {
+		warnx("%s.%d", __func__, __LINE__);
+		errno = ENOENT;
+		return -1;
+	}
 
+	if (!prop_dictionary_get_cstring_nocopy(env, "agrport", &port)) {
+		warnx("%s.%d", __func__, __LINE__);
+		errno = ENOENT;
+		return -1;
+	}
+	strlcpy(buf, port, sizeof(buf));
+
+	assertifname(env);
 	memset(&ar, 0, sizeof(ar));
 	ar.ar_version = AGRREQ_VERSION;
-	ar.ar_cmd = AGRCMD_ADDPORT;
-	ar.ar_buf = __UNCONST(val);
-	ar.ar_buflen = strlen(val);
-	ifr.ifr_data = (void *)&ar;
+	ar.ar_cmd = cmd;
+	ar.ar_buf = buf;
+	ar.ar_buflen = strlen(buf);
 
-	if (ioctl(s, SIOCSETAGR, &ifr) == -1) {
+	if (indirect_ioctl(env, SIOCSETAGR, &ar) == -1)
 		err(EXIT_FAILURE, "SIOCSETAGR");
-	}
+	return 0;
 }
 
 void
-agrremport(const char *val, int d)
-{
-	struct agrreq ar;
-
-	assertifname(ifr.ifr_name);
-
-	memset(&ar, 0, sizeof(ar));
-	ar.ar_version = AGRREQ_VERSION;
-	ar.ar_cmd = AGRCMD_REMPORT;
-	ar.ar_buf = __UNCONST(val);
-	ar.ar_buflen = strlen(val);
-	ifr.ifr_data = (void *)&ar;
-
-	if (ioctl(s, SIOCSETAGR, &ifr) == -1) {
-		err(EXIT_FAILURE, "SIOCSETAGR");
-	}
-}
-
-void
-agr_status()
+agr_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct agrreq ar;
 	void *buf = NULL;
@@ -115,9 +129,8 @@ agr_status()
 	struct agrportinfo *api;
 	int i;
 
-	if (checkifname(ifr.ifr_name)) {
+	if (checkifname(env))
 		return;
-	}
 
 again:
 	memset(&ar, 0, sizeof(ar));
@@ -125,9 +138,8 @@ again:
 	ar.ar_cmd = AGRCMD_PORTLIST;
 	ar.ar_buf = buf;
 	ar.ar_buflen = buflen;
-	ifr.ifr_data = (void *)&ar;
 
-	if (ioctl(s, SIOCGETAGR, &ifr) == -1) {
+	if (indirect_ioctl(env, SIOCGETAGR, &ar) == -1) {
 		if (errno != E2BIG) {
 			warn("SIOCGETAGR");
 			return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2007/12/12 04:24:57 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.6.1 2008/06/02 13:22:36 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2007/12/12 04:24:57 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.6.1 2008/06/02 13:22:36 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -122,6 +122,11 @@ void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
 	struct btinfo_magic *bi_magic = btinfo;
+	struct btinfo_memory *meminfo;
+	struct btinfo_clock *clockinfo;
+	size_t memsize;
+	u_long ticks;
+	extern u_long ticks_per_sec, ns_per_tick;
 
 	if ((unsigned)btinfo != 0 && (unsigned)btinfo < startkernel
 	    && bi_magic->magic == BOOTINFO_MAGIC)
@@ -129,41 +134,26 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	else
 		args = RB_SINGLE;	/* boot via S-record loader */
 		
-	/*
-	 * Determine real size by analysing SDRAM control registers. 
-	 */
-	{
-		struct btinfo_memory *meminfo;
-		size_t memsize;
+	meminfo = lookup_bootinfo(BTINFO_MEMORY);
+	if (meminfo)
+		memsize = meminfo->memsize & ~PGOFSET;
+	else
+		memsize = mpc107memsize();
+	physmemr[0].start = 0;
+	physmemr[0].size = memsize;
+	availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
+	availmemr[0].size = memsize - availmemr[0].start;
+	avail_end = physmemr[0].start + physmemr[0].size; /* XXX */
 
-		meminfo = lookup_bootinfo(BTINFO_MEMORY);
-		if (meminfo)
-			memsize = meminfo->memsize & ~PGOFSET;
-		else
-			memsize = mpc107memsize();
-		physmemr[0].start = 0;
-		physmemr[0].size = memsize;
-		availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
-		availmemr[0].size = memsize - availmemr[0].start;
-	}
-	avail_end = physmemr[0].start + physmemr[0].size;    /* XXX temporary */
-
-	/*
-	 * Get CPU clock
-	 */
-	{
-		struct btinfo_clock *clockinfo;
-		u_long ticks;
-		extern u_long ticks_per_sec, ns_per_tick;
-
+	clockinfo = lookup_bootinfo(BTINFO_CLOCK);
+	if (clockinfo)
+		ticks = clockinfo->ticks_per_sec;
+	else {
 		ticks = 1000000000;	/* 100 MHz */
 		ticks /= 4;		/* 4 cycles per DEC tick */
-		clockinfo = lookup_bootinfo(BTINFO_CLOCK);
-		if (clockinfo)
-			ticks = clockinfo->ticks_per_sec;
-		ticks_per_sec = ticks;
-		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
+	ticks_per_sec = ticks;
+	ns_per_tick = 1000000000 / ticks_per_sec;
 
 	/*
 	 * boothowto
@@ -385,9 +375,11 @@ cpu_reboot(int howto, char *what)
 	printf("rebooting...\n\n");
 
 #if 1
-{ extern void sandpoint_reboot(void);
-	sandpoint_reboot();
-}
+    {
+	/* XXX reboot scheme is target dependent XXX */
+	extern void jump_to_ppc_reset_entry(void);
+	jump_to_ppc_reset_entry();
+    }
 #endif
 	while (1);
 }

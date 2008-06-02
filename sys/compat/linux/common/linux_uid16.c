@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uid16.c,v 1.1 2008/01/15 22:38:35 njoly Exp $	*/
+/*	$NetBSD: linux_uid16.c,v 1.1.12.1 2008/06/02 13:23:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uid16.c,v 1.1 2008/01/15 22:38:35 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uid16.c,v 1.1.12.1 2008/06/02 13:23:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -178,9 +171,9 @@ int
 linux_sys_getresuid16(struct lwp *l, const struct linux_sys_getresuid16_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(linux_uid16_t) ruid;
-		syscallarg(linux_uid16_t) euid;
-		syscallarg(linux_uid16_t) suid;
+		syscallarg(linux_uid16_t *) ruid;
+		syscallarg(linux_uid16_t *) euid;
+		syscallarg(linux_uid16_t *) suid;
 	} */
 	kauth_cred_t pc = l->l_cred;
 	int error;
@@ -206,9 +199,9 @@ int
 linux_sys_getresgid16(struct lwp *l, const struct linux_sys_getresgid16_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(linux_gid16_t) rgid;
-		syscallarg(linux_gid16_t) egid;
-		syscallarg(linux_gid16_t) sgid;
+		syscallarg(linux_gid16_t *) rgid;
+		syscallarg(linux_gid16_t *) egid;
+		syscallarg(linux_gid16_t *) sgid;
 	} */
 	kauth_cred_t pc = l->l_cred;
 	int error;

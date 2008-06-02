@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.6 2008/02/17 14:03:16 bouyer Exp $      */
+/*      $NetBSD: xengnt.c,v 1.6.6.1 2008/06/02 13:22:55 mjf Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.6 2008/02/17 14:03:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.6.6.1 2008/06/02 13:22:55 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,6 +141,7 @@ xengnt_more_entries()
 	if (setup.status != 0) {
 		printf("xengnt_more_entries: setup table returned %d\n",
 		    setup.status);
+		free(pages, M_DEVBUF);
 		return ENOMEM;
 	}
 
@@ -160,6 +161,7 @@ xengnt_more_entries()
 		last_gnt_entry++;
 	}
 	gnt_nr_grant_frames = nframes_new;
+	free(pages, M_DEVBUF);
 	return 0;
 }
 

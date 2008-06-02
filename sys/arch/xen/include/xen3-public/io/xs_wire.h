@@ -1,4 +1,4 @@
-/* $NetBSD: xs_wire.h,v 1.7 2007/12/25 18:33:35 perry Exp $ */
+/* $NetBSD: xs_wire.h,v 1.7.6.1 2008/06/02 13:22:54 mjf Exp $ */
 /*
  * Details of the "wire" protocol between Xen Store Daemon and client
  * library or guest kernel.
@@ -61,7 +61,11 @@ struct xsd_errors
     const char *errstring;
 };
 #define XSD_ERROR(x) { x, #x }
-static struct xsd_errors xsd_errors[] __unused = {
+static struct xsd_errors xsd_errors[]
+#if defined(__GNUC__)
+__attribute__((unused))
+#endif
+    = {
     XSD_ERROR(EINVAL),
     XSD_ERROR(EACCES),
     XSD_ERROR(EEXIST),
@@ -104,6 +108,13 @@ struct xenstore_domain_interface {
     volatile XENSTORE_RING_IDX req_cons, req_prod;
     volatile XENSTORE_RING_IDX rsp_cons, rsp_prod;
 };
+
+/* Violating this is very bad.  See docs/misc/xenstore.txt. */
+#define XENSTORE_PAYLOAD_MAX 4096
+
+/* Violating these just gets you an error back */
+#define XENSTORE_ABS_PATH_MAX 3072
+#define XENSTORE_REL_PATH_MAX 2048
 
 #endif /* _XS_WIRE_H */
 

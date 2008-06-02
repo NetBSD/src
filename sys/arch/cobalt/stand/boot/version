@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.6.16.1 2008/04/03 12:42:14 mjf Exp $
+$NetBSD: version,v 1.6.16.2 2008/06/02 13:22:00 mjf Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -13,3 +13,4 @@ is taken as the current.
 0.6:	Print a cobalt model name in banner
 0.7:	Add support for netboot via 21041 on Qube2700
 0.8:	Add support for optional Z85C30 serial console on Qube2700
+0.9:	Print banner and a loading kernel name onto LCD

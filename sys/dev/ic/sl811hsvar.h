@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hsvar.h,v 1.3.6.1 2008/04/03 12:42:42 mjf Exp $	*/
+/*	$NetBSD: sl811hsvar.h,v 1.3.6.2 2008/06/02 13:23:27 mjf Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -18,7 +18,7 @@
 #include "opt_slhci.h"
 
 #define SC_DEV(sc)	((sc)->sc_dev)
-#define SC_NAME(sc)	(SC_DEV(sc)->dv_xname)
+#define SC_NAME(sc)	(device_xname(SC_DEV(sc)))
 
 typedef unsigned int Frame;
 struct slhci_pipe;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10.74.1 2008/06/02 13:22:29 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2005/12/11 12:18:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10.74.1 2008/06/02 13:22:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,23 +39,19 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2005/12/11 12:18:25 christos Exp $"
 #include <machine/autoconf.h>
 #include <machine/apbus.h>
 
-struct mainbus_softc {
-	struct device sc_dev;
-};
-
 /* Definition of the mainbus driver. */
-static int	mbmatch(struct device *, struct cfdata *, void *);
-static void	mbattach(struct device *, struct device *, void *);
+static int	mbmatch(device_t, cfdata_t, void *);
+static void	mbattach(device_t, device_t, void *);
 static int	mbprint(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
+CFATTACH_DECL_NEW(mainbus, 0,
     mbmatch, mbattach, NULL, NULL);
 
 /* There can be only one. */
 static int mainbus_found;
 
 static int
-mbmatch(struct device *parent, struct cfdata *cf, void *aux)
+mbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (mainbus_found)
@@ -65,16 +61,15 @@ mbmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-mbattach(struct device *parent, struct device *self, void *aux)
+mbattach(device_t parent, device_t self, void *aux)
 {
-	struct device *mb = self;
 	struct confargs nca;
 
 	mainbus_found = 1;
-	printf("\n");
+	aprint_normal("\n");
 
 	nca.ca_name = "cpu";
-	config_found(mb, &nca, mbprint);
+	config_found(self, &nca, mbprint);
 
 	/* XXX */
 	if (_sip != NULL) {

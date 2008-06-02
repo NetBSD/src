@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.7.6.1 2008/04/03 12:42:30 mjf Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.7.6.2 2008/06/02 13:22:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.7.6.1 2008/04/03 12:42:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.7.6.2 2008/06/02 13:22:50 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -680,8 +673,7 @@ lpcib_hpet_match(device_t parent, cfdata_t match, void *aux)
 	tag = arg->hpet_mem_t;
 
 	if (bus_space_map(tag, arg->hpet_reg, HPET_WINDOW_SIZE, 0, &handle)) {
-		aprint_verbose("%s: HPET window not mapped, skipping\n",
-		    parent->dv_xname);
+		aprint_verbose_dev(parent, "HPET window not mapped, skipping\n");
 		return 0;
 	}
 	bus_space_unmap(tag, handle, HPET_WINDOW_SIZE);

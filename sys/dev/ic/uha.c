@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.40 2007/10/19 12:00:04 ad Exp $	*/
+/*	$NetBSD: uha.c,v 1.40.16.1 2008/06/02 13:23:28 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -60,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.40 2007/10/19 12:00:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.40.16.1 2008/06/02 13:23:28 mjf Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -154,15 +147,15 @@ uha_attach(sc, upd)
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, MSCPSIZE,
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate mscps, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to allocate mscps, error = %d\n",
+		    error);
 		return;
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    MSCPSIZE, (void **)&sc->sc_mscps,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map mscps, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to map mscps, error = %d\n",
+		    error);
 		return;
 	}
 
@@ -172,14 +165,14 @@ uha_attach(sc, upd)
 	if ((error = bus_dmamap_create(sc->sc_dmat, MSCPSIZE,
 	    1, MSCPSIZE, 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
 	    &sc->sc_dmamap_mscp)) != 0) {
-		printf("%s: unable to create mscp DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create mscp DMA map, error = %d\n",
+		    error);
 		return;
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_mscp,
 	    sc->sc_mscps, MSCPSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load mscp DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to load mscp DMA map, error = %d\n",
+		    error);
 		return;
 	}
 
@@ -190,12 +183,11 @@ uha_attach(sc, upd)
 	 */
 	i = uha_create_mscps(sc, sc->sc_mscps, UHA_MSCP_MAX);
 	if (i == 0) {
-		printf("%s: unable to create mscps\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to create mscps\n");
 		return;
 	} else if (i != UHA_MSCP_MAX) {
-		printf("%s: WARNING: only %d of %d mscps created\n",
-		    sc->sc_dev.dv_xname, i, UHA_MSCP_MAX);
+		aprint_error_dev(&sc->sc_dev, "WARNING: only %d of %d mscps created\n",
+		    i, UHA_MSCP_MAX);
 	}
 
 	adapt->adapt_openings = i;
@@ -245,8 +237,8 @@ uha_init_mscp(sc, mscp)
 	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW | sc->sc_dmaflags,
 	    &mscp->dmamap_xfer);
 	if (error) {
-		printf("%s: can't create mscp DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "can't create mscp DMA map, error = %d\n",
+		    error);
 		return (error);
 	}
 
@@ -279,8 +271,8 @@ uha_create_mscps(sc, mscpstore, count)
 	for (i = 0; i < count; i++) {
 		mscp = &mscpstore[i];
 		if ((error = uha_init_mscp(sc, mscp)) != 0) {
-			printf("%s: unable to initialize mscp, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to initialize mscp, error = %d\n",
+			    error);
 			goto out;
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_mscp, mscp, chain);
@@ -367,7 +359,7 @@ uha_done(sc, mscp)
 	 * into the xfer and call whoever started it
 	 */
 	if ((mscp->flags & MSCP_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "exiting ccb not allocated!\n");
 		Debugger();
 		return;
 	}
@@ -378,8 +370,8 @@ uha_done(sc, mscp)
 				xs->error = XS_SELTIMEOUT;
 				break;
 			default:	/* Other scsi protocol messes */
-				printf("%s: host_stat %x\n",
-				    sc->sc_dev.dv_xname, mscp->host_stat);
+				aprint_error_dev(&sc->sc_dev, "host_stat %x\n",
+				    mscp->host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
 		} else if (mscp->target_stat != SCSI_OK) {
@@ -394,8 +386,8 @@ uha_done(sc, mscp)
 				xs->error = XS_BUSY;
 				break;
 			default:
-				printf("%s: target_stat %x\n",
-				    sc->sc_dev.dv_xname, mscp->target_stat);
+				aprint_error_dev(&sc->sc_dev, "target_stat %x\n",
+				    mscp->target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
 		} else
@@ -467,8 +459,8 @@ uha_scsipi_request(chan, req, arg)
 			mscp->ca = 0x01;
 		} else {
 			if (xs->cmdlen > sizeof(mscp->scsi_cmd)) {
-				printf("%s: cmdlen %d too large for MSCP\n",
-				    sc->sc_dev.dv_xname, xs->cmdlen);
+				aprint_error_dev(&sc->sc_dev, "cmdlen %d too large for MSCP\n",
+				    xs->cmdlen);
 				xs->error = XS_DRIVER_STUFFUP;
 				goto out_bad;
 			}
@@ -522,8 +514,8 @@ uha_scsipi_request(chan, req, arg)
 
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				printf("%s: error %d loading DMA map\n",
-				    sc->sc_dev.dv_xname, error);
+				aprint_error_dev(&sc->sc_dev, "error %d loading DMA map\n",
+				    error);
  out_bad:
 				uha_free_mscp(sc, mscp);
 				scsipi_done(xs);

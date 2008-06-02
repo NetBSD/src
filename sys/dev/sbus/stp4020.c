@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.53 2008/01/06 02:29:58 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.53.6.1 2008/06/02 13:23:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.53 2008/01/06 02:29:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.53.6.1 2008/06/02 13:23:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,7 +377,7 @@ stp4020attach(parent, self, aux)
 #else
 	tag = bus_space_tag_alloc(sa->sa_bustag, sc);
 	if (tag == NULL) {
-		printf("%s: attach: out of memory\n", self->dv_xname);
+		aprint_error_dev(self, "attach: out of memory\n");
 		return;
 	}
 	tag->sparc_read_2 = stp4020_read_2;
@@ -448,13 +441,13 @@ stp4020attach(parent, self, aux)
 
 	if (sa->sa_nreg < 8) {
 		printf("%s: only %d register sets\n",
-			self->dv_xname, sa->sa_nreg);
+			device_xname(self), sa->sa_nreg);
 		return;
 	}
 
 	if (sa->sa_nintr != 2) {
 		printf("%s: expect 2 interrupt Sbus levels; got %d\n",
-			self->dv_xname, sa->sa_nintr);
+			device_xname(self), sa->sa_nintr);
 		return;
 	}
 
@@ -479,8 +472,7 @@ stp4020attach(parent, self, aux)
 				 sa->sa_reg[i].oa_base,
 				 sa->sa_reg[i].oa_size,
 				 0, &bh) != 0) {
-			printf("%s: attach: cannot map registers\n",
-				self->dv_xname);
+			aprint_error_dev(self, "attach: cannot map registers\n");
 			return;
 		}
 
@@ -532,8 +524,8 @@ stp4020attach(parent, self, aux)
 	 * insert/removal events.
 	 */
 	if (kthread_create(PRI_NONE, 0, NULL, stp4020_event_thread, sc,
-	    &sc->event_thread, "%s", self->dv_xname)) {
-		panic("%s: unable to create event thread", self->dv_xname);
+	    &sc->event_thread, "%s", device_xname(self))) {
+		panic("%s: unable to create event thread", device_xname(self));
 	}
 }
 
@@ -1086,14 +1078,14 @@ stp4020_chip_socket_settype(pch, type)
 		h->int_enable = v;
 		h->int_disable = v & ~STP4020_ICR0_IOIE;
 #endif
-		DPRINTF(("%s: configuring card for IO useage\n", h->sc->sc_dev.dv_xname));
+		DPRINTF(("%s: configuring card for IO useage\n", device_xname(&h->sc->sc_dev)));
 	} else {
 		v |= STP4020_ICR0_IFTYPE_MEM;
 #ifndef SUN4U
 		h->int_enable = h->int_disable = v;
 #endif
-		DPRINTF(("%s: configuring card for IO useage\n", h->sc->sc_dev.dv_xname));
-		DPRINTF(("%s: configuring card for MEM ONLY useage\n", h->sc->sc_dev.dv_xname));
+		DPRINTF(("%s: configuring card for IO useage\n", device_xname(&h->sc->sc_dev)));
+		DPRINTF(("%s: configuring card for MEM ONLY useage\n", device_xname(&h->sc->sc_dev)));
 	}
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 }

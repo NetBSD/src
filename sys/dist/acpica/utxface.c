@@ -1,9 +1,7 @@
-/*	$NetBSD: utxface.c,v 1.5 2007/12/11 13:16:18 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: utxface - External interfaces for "global" ACPI functions
- *              $Revision: 1.5 $
+ *              $Revision: 1.5.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,19 +114,19 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.5 2007/12/11 13:16:18 lukem Exp $");
 
 #define __UTXFACE_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acevents.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acdebug.h>
+#include "acpi.h"
+#include "acevents.h"
+#include "acnamesp.h"
+#include "acdebug.h"
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utxface")
 
+
+#ifndef ACPI_ASL_COMPILER
 
 /*******************************************************************************
  *
@@ -409,6 +407,8 @@ AcpiInitializeObjects (
 ACPI_EXPORT_SYMBOL (AcpiInitializeObjects)
 
 
+#endif
+
 /*******************************************************************************
  *
  * FUNCTION:    AcpiTerminate
@@ -460,6 +460,7 @@ AcpiTerminate (
 
 ACPI_EXPORT_SYMBOL (AcpiTerminate)
 
+#ifndef ACPI_ASL_COMPILER
 
 /*******************************************************************************
  *
@@ -576,6 +577,51 @@ AcpiGetSystemInfo (
 ACPI_EXPORT_SYMBOL (AcpiGetSystemInfo)
 
 
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiGetStatistics
+ *
+ * PARAMETERS:  Stats           - Where the statistics are returned
+ *
+ * RETURN:      Status          - the status of the call
+ *
+ * DESCRIPTION: Get the contents of the various system counters
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiGetStatistics (
+    ACPI_STATISTICS         *Stats)
+{
+    ACPI_FUNCTION_TRACE (AcpiGetStatistics);
+
+
+    /* Parameter validation */
+
+    if (!Stats)
+    {
+        return_ACPI_STATUS (AE_BAD_PARAMETER);
+    }
+
+    /* Various interrupt-based event counters */
+
+    Stats->SciCount = AcpiSciCount;
+    Stats->GpeCount = AcpiGpeCount;
+
+    ACPI_MEMCPY (Stats->FixedEventCount, AcpiFixedEventCount,
+        sizeof (AcpiFixedEventCount));
+
+
+    /* Other counters */
+
+    Stats->MethodCount = AcpiMethodCount;
+
+    return_ACPI_STATUS (AE_OK);
+}
+
+ACPI_EXPORT_SYMBOL (AcpiGetStatistics)
+
+
 /*****************************************************************************
  *
  * FUNCTION:    AcpiInstallInitializationHandler
@@ -640,3 +686,5 @@ AcpiPurgeCachedObjects (
 }
 
 ACPI_EXPORT_SYMBOL (AcpiPurgeCachedObjects)
+
+#endif

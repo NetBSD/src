@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 2005/06/20 11:04:15 sekiya Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6.82.1 2008/06/02 13:22:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -58,11 +58,11 @@
  * Mode 2 is historical and deprecated by the Revision 2.0 specification.
  */
 union x86_pci_tag_u {
-	u_int32_t mode1;
+	uint32_t mode1;
 	struct {
-		u_int16_t port;
-		u_int8_t enable;
-		u_int8_t forward;
+		uint16_t port;
+		uint8_t enable;
+		uint8_t forward;
 	} mode2;
 };
 
@@ -111,6 +111,9 @@ void		pci_intr_disestablish(pci_chipset_tag_t, void *);
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
  * BY PORTABLE CODE.
  */
+
+/* Extract Bus Number for a host bridge or -1 if unknown. */
+int		pchb_get_bus_number(pci_chipset_tag_t, pcitag_t);
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PCI Specification,

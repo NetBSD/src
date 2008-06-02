@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.33 2007/03/07 21:44:10 thorpej Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.33.40.1 2008/06/02 13:22:17 mjf Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -47,13 +47,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -117,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.33 2007/03/07 21:44:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.33.40.1 2008/06/02 13:22:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +402,7 @@ ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	ahc->sc_dmaflags = ISABUS_DMA_32BIT;
 
-	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
+	ahc_set_name(ahc, device_xname(&ahc->sc_dev));
 	ahc->parent_dmat = ia->ia_dmat;
 	ahc->channel = 'A';
 	ahc->chip =  AHC_AIC7770|AHC_VL;
@@ -439,8 +432,8 @@ ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 	ahc->ih = isa_intr_establish(ia->ia_ic, irq,
 	    intrtype, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
-		aprint_error("%s: couldn't establish %s interrupt\n",
-		       ahc->sc_dev.dv_xname, intrtypestr);
+		aprint_error_dev(&ahc->sc_dev, "couldn't establish %s interrupt\n",
+		       intrtypestr);
 		goto free_io;
 	}
 
@@ -449,8 +442,8 @@ ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 	 * usefull for debugging irq problems
 	 */
 	if (bootverbose) {
-		aprint_verbose("%s: Using %s interrupts\n",
-		       ahc->sc_dev.dv_xname, intrtypestr);
+		aprint_verbose_dev(&ahc->sc_dev, "Using %s interrupts\n",
+		       intrtypestr);
 	}
 
 	/*

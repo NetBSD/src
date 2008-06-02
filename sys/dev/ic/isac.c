@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.21 2007/10/19 11:59:54 ad Exp $
+ *	$Id: isac.c,v 1.21.16.1 2008/06/02 13:23:23 mjf Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.21 2007/10/19 11:59:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.21.16.1 2008/06/02 13:23:23 mjf Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -97,7 +97,7 @@ void
 isic_isac_irq(struct isic_softc *sc, int ista)
 {
 	register u_char c = 0;
-	NDBGL1(L1_F_MSG, "%s: ista = 0x%02x", sc->sc_dev.dv_xname, ista);
+	NDBGL1(L1_F_MSG, "%s: ista = 0x%02x", device_xname(&sc->sc_dev), ista);
 
 	if(ista & ISAC_ISTA_EXI)	/* extended interrupt */
 	{
@@ -122,24 +122,24 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			if(!(rsta & ISAC_RSTA_CRC))	/* CRC error */
 			{
 				error++;
-				NDBGL1(L1_I_ERR, "%s: CRC error", sc->sc_dev.dv_xname);
+				NDBGL1(L1_I_ERR, "%s: CRC error", device_xname(&sc->sc_dev));
 			}
 
 			if(rsta & ISAC_RSTA_RDO)	/* ReceiveDataOverflow */
 			{
 				error++;
-				NDBGL1(L1_I_ERR, "%s: Data Overrun error", sc->sc_dev.dv_xname);
+				NDBGL1(L1_I_ERR, "%s: Data Overrun error", device_xname(&sc->sc_dev));
 			}
 
 			if(rsta & ISAC_RSTA_RAB)	/* ReceiveABorted */
 			{
 				error++;
-				NDBGL1(L1_I_ERR, "%s: Receive Aborted error", sc->sc_dev.dv_xname);
+				NDBGL1(L1_I_ERR, "%s: Receive Aborted error", device_xname(&sc->sc_dev));
 			}
 
 			if(error == 0)
 			{
-				NDBGL1(L1_I_ERR, "%s: RME unknown error, RSTA = 0x%02x!", sc->sc_dev.dv_xname, rsta);
+				NDBGL1(L1_I_ERR, "%s: RME unknown error, RSTA = 0x%02x!", device_xname(&sc->sc_dev), rsta);
 			}
 
 			i4b_Dfreembuf(sc->sc_ibuf);

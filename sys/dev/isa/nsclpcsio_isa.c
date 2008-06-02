@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.25 2008/01/02 10:21:08 dyoung Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.25.6.1 2008/06/02 13:23:32 mjf Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.25 2008/01/02 10:21:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.25.6.1 2008/06/02 13:23:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,8 @@ static const struct {
 #define SIO_VREF	1235	/* 1000.0 * VREF */
 
 struct nsclpcsio_softc {
-	struct device sc_dev;
+	device_t sc_dev;
+
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
@@ -205,16 +206,16 @@ struct nsclpcsio_softc {
 	bus_space_read_1((sc)->sc_iot,			\
 	    (sc)->sc_ld_ioh[SIO_LDN_VLM], (reg))
 
-static int	nsclpcsio_isa_match(struct device *, struct cfdata *, void *);
-static void	nsclpcsio_isa_attach(struct device *, struct device *, void *);
-static int	nsclpcsio_isa_detach(struct device *, int);
+static int	nsclpcsio_isa_match(device_t, cfdata_t, void *);
+static void	nsclpcsio_isa_attach(device_t, device_t, void *);
+static int	nsclpcsio_isa_detach(device_t, int);
 
-CFATTACH_DECL(nsclpcsio_isa, sizeof(struct nsclpcsio_softc),
+CFATTACH_DECL_NEW(nsclpcsio_isa, sizeof(struct nsclpcsio_softc),
     nsclpcsio_isa_match, nsclpcsio_isa_attach, nsclpcsio_isa_detach, NULL);
 
 static uint8_t	nsread(bus_space_tag_t, bus_space_handle_t, int);
 static void	nswrite(bus_space_tag_t, bus_space_handle_t, int, uint8_t);
-static int nscheck(bus_space_tag_t, int);
+static int	nscheck(bus_space_tag_t, int);
 
 static void	nsclpcsio_tms_init(struct nsclpcsio_softc *);
 static void	nsclpcsio_vlm_init(struct nsclpcsio_softc *);
@@ -260,7 +261,7 @@ nscheck(bus_space_tag_t iot, int base)
 }
 
 static int
-nsclpcsio_isa_match(struct device *parent, struct cfdata *match, void *aux)
+nsclpcsio_isa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int iobase;
@@ -309,7 +310,7 @@ nsclpcsio_envsys_init(struct nsclpcsio_softc *sc)
 	sme = sysmon_envsys_create();
 	for (i = 0; i < SIO_NUM_SENSORS; i++) {
 		if (sysmon_envsys_sensor_attach(sme, &sc->sc_sensor[i]) != 0) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "could not attach sensor %d", i);
 			goto err;
 		}
@@ -318,13 +319,13 @@ nsclpcsio_envsys_init(struct nsclpcsio_softc *sc)
 	/*
 	 * Hook into the System Monitor.
 	 */
-	sme->sme_name = device_xname(&sc->sc_dev);
+	sme->sme_name = device_xname(sc->sc_dev);
 	sme->sme_cookie = sc;
 	sme->sme_refresh = nsclpcsio_refresh;
 
-	if (sysmon_envsys_register(sme) != 0) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+	if ((i = sysmon_envsys_register(sme)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to register with sysmon (%d)\n", i);
 		goto err;
 	}
 	return sme;
@@ -334,7 +335,7 @@ err:
 }
 
 static void
-nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
+nsclpcsio_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct nsclpcsio_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
@@ -345,6 +346,7 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
+	sc->sc_dev = self;
 	sc->sc_iot = ia->ia_iot;
 	iobase = ia->ia_io[0].ir_addr;
 
@@ -397,13 +399,13 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 		gba.gba_gc = &sc->sc_gpio_gc;
 		gba.gba_pins = sc->sc_gpio_pins;
 		gba.gba_npins = SIO_GPIO_NPINS;
-		config_found_ia(&sc->sc_dev, "gpiobus", &gba, NULL);
+		config_found_ia(self, "gpiobus", &gba, NULL);
 	}
 #endif
 }
 
 static int
-nsclpcsio_isa_detach(struct device *self, int flags)
+nsclpcsio_isa_detach(device_t self, int flags)
 {
 	int i, rc;
 	struct nsclpcsio_softc *sc = device_private(self);

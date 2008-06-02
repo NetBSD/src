@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.362 2008/02/10 12:41:06 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.362.6.1 2008/06/02 13:21:20 mjf Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -58,6 +58,7 @@
 ./libdata/firmware/rum
 ./libdata/firmware/zyd
 ./libexec
+./libexec/dhcpcd-hooks
 ./mnt
 ./rescue
 ./root
@@ -224,7 +225,8 @@
 ./usr/include/adosfs
 ./usr/include/altq
 ./usr/include/arpa
-./usr/include/atf
+./usr/include/atf-c
+./usr/include/atf-c++
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm
@@ -331,10 +333,11 @@
 ./usr/libdata/debug/usr/sbin
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
+./usr/libdata/debug/usr/tests/atf/atf-c
+./usr/libdata/debug/usr/tests/atf/atf-c++
 ./usr/libdata/debug/usr/tests/atf/formats
 ./usr/libdata/debug/usr/tests/atf/test_programs
 ./usr/libdata/debug/usr/tests/atf/tools
-./usr/libdata/debug/usr/tests/atf/units
 ./usr/libdata/debug/usr/tests/fs
 ./usr/libdata/debug/usr/tests/fs/puffs
 ./usr/libdata/debug/usr/tests/fs/tmpfs
@@ -1089,12 +1092,13 @@
 ./usr/share/zoneinfo/US
 ./usr/tests
 ./usr/tests/atf
+./usr/tests/atf/atf-c
+./usr/tests/atf/atf-c++
+./usr/tests/atf/atf-sh
 ./usr/tests/atf/data
 ./usr/tests/atf/formats
-./usr/tests/atf/sh_interface
 ./usr/tests/atf/test_programs
 ./usr/tests/atf/tools
-./usr/tests/atf/units
 ./usr/tests/fs
 ./usr/tests/fs/puffs
 ./usr/tests/fs/tmpfs

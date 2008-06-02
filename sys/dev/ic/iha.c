@@ -1,4 +1,28 @@
-/*	$NetBSD: iha.c,v 1.36 2007/10/19 11:59:53 ad Exp $ */
+/*	$NetBSD: iha.c,v 1.36.16.1 2008/06/02 13:23:23 mjf Exp $ */
+
+/*-
+ * Copyright (c) 2001, 2002 Izumi Tsutsui
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -8,7 +32,6 @@
  *
  * Copyright (c) 1997-1999 Initio Corp.
  * Copyright (c) 2000, 2001 Ken Westerback
- * Copyright (c) 2001, 2002 Izumi Tsutsui
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,12 +57,12 @@
  */
 
 /*
- * Ported to NetBSD by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp> from OpenBSD:
+ * Ported to NetBSD by Izumi Tsutsui <tsutsui@NetBSD.org> from OpenBSD:
  * $OpenBSD: iha.c,v 1.3 2001/02/20 00:47:33 krw Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.36 2007/10/19 11:59:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.36.16.1 2008/06/02 13:23:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,14 +521,14 @@ iha_attach(struct iha_softc *sc)
 	TAILQ_INIT(&sc->sc_donescb);
 	error = iha_alloc_sglist(sc);
 	if (error != 0) {
-		printf(": cannot allocate sglist\n");
+		aprint_error_dev(sc->sc_dev, "cannot allocate sglist\n");
 		return;
 	}
 
 	sc->sc_scb = malloc(sizeof(struct iha_scb) * IHA_MAX_SCB,
 	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sc->sc_scb == NULL) {
-		printf(": cannot allocate SCB\n");
+		aprint_error_dev(sc->sc_dev, "cannot allocate SCB\n");
 		return;
 	}
 
@@ -521,7 +544,8 @@ iha_attach(struct iha_softc *sc)
 		    BUS_DMA_NOWAIT, &scb->dmap);
 
 		if (error != 0) {
-			printf(": couldn't create SCB DMA map, error = %d\n",
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't create SCB DMA map, error = %d\n",
 			    error);
 			return;
 		}
@@ -577,7 +601,7 @@ iha_attach(struct iha_softc *sc)
 	/*
 	 * fill in the adapter.
 	 */
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_dev = sc->sc_dev;
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_openings = IHA_MAX_SCB;
 	sc->sc_adapter.adapt_max_periph = IHA_MAX_SCB;
@@ -598,7 +622,7 @@ iha_attach(struct iha_softc *sc)
 	/*
 	 * Now try to attach all the sub devices.
 	 */
-	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 }
 
 /*
@@ -658,7 +682,7 @@ iha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct iha_softc *sc;
 	int error, s;
 
-	sc = (struct iha_softc *)chan->chan_adapter->adapt_dev;
+	sc = device_private(chan->chan_adapter->adapt_dev);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -718,7 +742,7 @@ iha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 			if (error) {
 				printf("%s: error %d loading DMA map\n",
-				    sc->sc_dev.dv_xname, error);
+				    device_xname(sc->sc_dev), error);
 				iha_append_free_scb(sc, scb);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
@@ -1242,7 +1266,7 @@ iha_done_scb(struct iha_softc *sc, struct iha_scb *scb)
 				    iha_push_sense_request(sc, scb) != 0) {
 					scb->flags &= ~FLAG_RSENS;
 					printf("%s: request sense failed\n",
-					    sc->sc_dev.dv_xname);
+					    device_xname(sc->sc_dev));
 					xs->error = XS_DRIVER_STUFFUP;
 					break;
 				}
@@ -1267,7 +1291,7 @@ iha_done_scb(struct iha_softc *sc, struct iha_scb *scb)
 
 		case HOST_SPERR:
 			printf("%s: SCSI Parity error detected\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
@@ -1349,7 +1373,7 @@ iha_timeout(void *arg)
 
 	periph = xs->xs_periph;
 
-	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	sc = device_private(periph->periph_channel->chan_adapter->adapt_dev);
 
 	scsipi_printaddr(periph);
 	printf("SCSI OpCode 0x%02x timed out\n", xs->cmd->opcode);
@@ -2622,7 +2646,7 @@ iha_read_eeprom(struct iha_softc *sc, struct iha_eeprom *eeprom)
 
 	/* Read EEProm */
 	if (iha_se2_rd_all(sc, tbuf) == 0)
-		panic("%s: cannot read EEPROM", sc->sc_dev.dv_xname);
+		panic("%s: cannot read EEPROM", device_xname(sc->sc_dev));
 
 	/* Disable EEProm programming */
 	gctrl = bus_space_read_1(iot, ioh, TUL_GCTRL0) & ~EEPRG;

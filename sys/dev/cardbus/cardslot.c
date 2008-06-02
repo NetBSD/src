@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.39 2007/12/16 21:28:31 dyoung Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.39.6.1 2008/06/02 13:23:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.39 2007/12/16 21:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.39.6.1 2008/06/02 13:23:14 mjf Exp $");
 
 #include "opt_cardslot.h"
 
@@ -118,14 +118,14 @@ cardslotattach(struct device *parent, struct device *self,
 	aprint_normal(" slot %d flags %x\n", sc->sc_slot,
 	       device_cfdata(&sc->sc_dev)->cf_flags);
 
-	DPRINTF(("%s attaching CardBus bus...\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s attaching CardBus bus...\n", device_xname(&sc->sc_dev)));
 	if (cba != NULL) {
 		csc = (void *)config_found_ia(self, "cbbus", cba,
 					      cardslot_cb_print);
 		if (csc) {
 			/* cardbus found */
 			DPRINTF(("%s: found cardbus on %s\n", __func__,
-				 sc->sc_dev.dv_xname));
+				 device_xname(&sc->sc_dev)));
 			sc->sc_cb_softc = csc;
 		}
 	}
@@ -148,9 +148,9 @@ cardslotattach(struct device *parent, struct device *self,
 	if (csc != NULL || psc != NULL) {
 		config_pending_incr();
 		if (kthread_create(PRI_NONE, 0, NULL, cardslot_event_thread,
-		    sc, &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname)) {
-			printf("%s: unable to create thread for slot %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_slot);
+		    sc, &sc->sc_event_thread, "%s", device_xname(&sc->sc_dev))) {
+			aprint_error_dev(&sc->sc_dev, "unable to create thread for slot %d\n",
+			    sc->sc_slot);
 			panic("cardslotattach");
 		}
 		sc->sc_th_enable = 1;
@@ -361,7 +361,7 @@ cardslot_event_thread(arg)
 					    CARDSLOT_STATUS_NOTWORK);
 				}
 			} else {
-				panic("no cardbus on %s", sc->sc_dev.dv_xname);
+				panic("no cardbus on %s", device_xname(&sc->sc_dev));
 			}
 
 			break;
@@ -389,7 +389,7 @@ cardslot_event_thread(arg)
 					    CARDSLOT_STATUS_WORKING);
 				}
 			} else {
-				panic("no 16-bit pcmcia on %s", sc->sc_dev.dv_xname);
+				panic("no 16-bit pcmcia on %s", device_xname(&sc->sc_dev));
 			}
 
 			break;
@@ -416,7 +416,7 @@ cardslot_event_thread(arg)
 			break;
 
 		case CARDSLOT_EVENT_REMOVAL_16:
-			DPRINTF(("%s: removal event\n", sc->sc_dev.dv_xname));
+			DPRINTF(("%s: removal event\n", device_xname(&sc->sc_dev)));
 			if (CARDSLOT_CARDTYPE(sc->sc_status) != CARDSLOT_STATUS_CARD_16) {
 				/* 16-bit card has not been inserted. */
 				break;

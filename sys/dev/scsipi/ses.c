@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.38.36.1 2008/04/05 23:33:22 mjf Exp $ */
+/*	$NetBSD: ses.c,v 1.38.36.2 2008/06/02 13:23:51 mjf Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.38.36.1 2008/04/05 23:33:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.38.36.2 2008/06/02 13:23:51 mjf Exp $");
 
 #include "opt_scsi.h"
 
@@ -275,7 +275,7 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 		tname = "SAF-TE Compliant Device";
 		break;
 	}
-	printf("\n%s: %s\n", softc->sc_device.dv_xname, tname);
+	printf("\n%s: %s\n", device_xname(&softc->sc_device), tname);
 
 	maj = cdevsw_lookup_major(&ses_cdevsw);
 	device_register_name(makedev(maj, device_unit(self)), self, true,
@@ -534,7 +534,7 @@ ses_log(struct ses_softc *ssc, const char *fmt, ...)
 {
 	va_list ap;
 
-	printf("%s: ", ssc->sc_device.dv_xname);
+	printf("%s: ", device_xname(&ssc->sc_device));
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);

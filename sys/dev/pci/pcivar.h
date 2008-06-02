@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.77.10.1 2008/04/03 12:42:53 mjf Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.77.10.2 2008/06/02 13:23:43 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -156,6 +156,17 @@ struct pci_quirkdata {
 #define	PCI_QUIRK_SKIP_FUNC6		PCI_QUIRK_SKIP_FUNC(6)
 #define	PCI_QUIRK_SKIP_FUNC7		PCI_QUIRK_SKIP_FUNC(7)
 
+struct pci_conf_state {
+	pcireg_t reg[16];
+};
+
+struct pci_child {
+	device_t		c_dev;
+	bool			c_psok;
+	pcireg_t		c_powerstate;
+	struct pci_conf_state	c_conf;
+};
+
 struct pci_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_iot, sc_memt;
@@ -168,12 +179,8 @@ struct pci_softc {
 	pcitag_t sc_intrtag;
 	int sc_flags;
 	/* accounting of child devices */
-	device_t sc_devices[32*8];
+	struct pci_child sc_devices[32*8];
 #define PCI_SC_DEVICESC(d, f) sc_devices[(d) * 8 + (f)]
-};
-
-struct pci_conf_state {
-	pcireg_t reg[16];
 };
 
 extern struct cfdriver pci_cd;
@@ -247,6 +254,22 @@ int	pci_activate(pci_chipset_tag_t, pcitag_t, device_t,
     int (*)(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t));
 int	pci_activate_null(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t);
 void	pci_disable_retry(pci_chipset_tag_t, pcitag_t);
+
+/*
+ * Device abstraction for inheritance by elanpci(4), for example.
+ */
+int pcimatch(device_t, cfdata_t, void *);
+void pciattach(device_t, device_t, void *);
+int pcidetach(device_t, int);
+void pcidevdetached(device_t, device_t);
+int pcirescan(device_t, const char *, const int *);
+
+/*
+ * Interrupts.
+ */
+#define	PCI_INTR_MPSAFE		1
+
+int	pci_intr_setattr(pci_chipset_tag_t, pci_intr_handle_t *, int, uint64_t);
 
 #endif /* _KERNEL */
 

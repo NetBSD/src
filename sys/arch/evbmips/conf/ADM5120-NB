@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-NB,v 1.2 2007/04/03 23:53:34 dyoung Exp $
+#	$NetBSD: ADM5120-NB,v 1.2.40.1 2008/06/02 13:22:03 mjf Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.2.40.1 $"
 
 maxusers	32
 
@@ -51,6 +51,7 @@ options 	SYMTAB_SPACE=180000	# size for embedded symbol table
 #options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 #options 	COMPAT_30	# NetBSD 3.0 binary compatibility
+#options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 

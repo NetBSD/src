@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2008/02/02 14:21:02 itohy Exp $	*/
+/*	$NetBSD: main.c,v 1.5.6.1 2008/06/02 13:22:08 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -39,13 +39,12 @@
 #define DEV_CL_MASK	0xf
 #define DEV_CL_SEQU	0x2	/* sequential record access media */
 
-static char *hexstr __P((char *, unsigned));
-void ipl_main __P((unsigned /*interactive*/,
-    unsigned /*sptop*/, unsigned /*psw*/));
-void load_file __P((const char *, unsigned /*loadadr*/,
-    unsigned /*interactive*/, int /*part*/));
-void load_file_ino __P((ino32_t, const char *, unsigned /*loadadr*/,
-    unsigned /*interactive*/, int /*part*/));
+static char *hexstr(char *, unsigned);
+void ipl_main(unsigned /*interactive*/, unsigned /*sptop*/, unsigned /*psw*/);
+void load_file(const char *, unsigned /*loadadr*/, unsigned /*interactive*/,
+    int /*part*/);
+void load_file_ino(ino32_t, const char *, unsigned /*loadadr*/,
+    unsigned /*interactive*/, int /*part*/);
 
 struct loadinfo {
 	void *sec_image;
@@ -55,17 +54,18 @@ struct loadinfo {
 #endif
 	unsigned entry_offset;
 };
-static inline void xi_elf32 __P((struct loadinfo *, Elf32_Ehdr *));
-static inline void xi_elf64 __P((struct loadinfo *, Elf64_Ehdr *));
-int xi_load __P((struct loadinfo *, void *));
+static inline void xi_elf32(struct loadinfo *, Elf32_Ehdr *);
+static inline void xi_elf64(struct loadinfo *, Elf64_Ehdr *);
+int xi_load(struct loadinfo *, void *);
 
-void reboot __P((void)), halt __P((void));
-void dispatch __P((unsigned /*interactive*/, unsigned /*top*/,
-    unsigned /*end*/, int /*part*/, unsigned /*entry*/));
-void print __P((const char *));
-void putch __P((int));
-int getch __P((void));
-int boot_input __P((void *, int /*len*/, int /*pos*/));
+void reboot(void);
+void halt(void);
+void dispatch(unsigned /*interactive*/, unsigned /*top*/,
+    unsigned /*end*/, int /*part*/, unsigned /*entry*/);
+void print(const char *);
+void putch(int);
+int getch(void);
+int boot_input(void *, int /*len*/, int /*pos*/);
 
 /* to make generated code relocatable, do NOT mark them as const */
 extern char str_seekseq[], str_bit_firmware[];
@@ -81,9 +81,9 @@ extern char str_ukfmt[];
 #ifdef __GNUC__
 #define memcpy(d, s, n)	__builtin_memcpy(d, s, n)
 #else
-void *memcpy __P((void *, const void *, size_t));
+void *memcpy(void *, const void *, size_t);
 #endif
-void *memmove __P((void *, const void *, size_t));
+void *memmove(void *, const void *, size_t);
 
 /* disklabel */
 union {

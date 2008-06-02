@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.12 2007/03/04 06:00:26 christos Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.12.40.1 2008/06/02 13:22:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.12 2007/03/04 06:00:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.12.40.1 2008/06/02 13:22:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,29 +41,29 @@ __KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.12 2007/03/04 06:00:26 christos Exp $");
 #include <newsmips/dev/hbvar.h>
 
 struct msreg {
-	u_char ms_data;
-	u_char ms_stat;
-	u_char ms_reset;
-	u_char ms_init;
+	volatile uint8_t ms_data;
+	volatile uint8_t ms_stat;
+	volatile uint8_t ms_reset;
+	volatile uint8_t ms_init;
 };
 
 struct ms_hb_softc {
-	struct device sc_dev;
-	volatile struct msreg *sc_reg;
+	device_t sc_dev;
+	struct msreg *sc_reg;
 	struct device *sc_wsmousedev;
 	int sc_ndata;
-	u_char sc_buf[3];
+	uint8_t sc_buf[3];
 };
 
-int ms_hb_match(struct device *, struct cfdata *, void *);
-void ms_hb_attach(struct device *, struct device *, void *);
+int ms_hb_match(device_t, cfdata_t, void *);
+void ms_hb_attach(device_t, device_t, void *);
 int ms_hb_intr(void *);
 
 int ms_hb_enable(void *);
 int ms_hb_ioctl(void *, u_long, void *, int, struct lwp *);
 void ms_hb_disable(void *);
 
-CFATTACH_DECL(ms_hb, sizeof(struct ms_hb_softc),
+CFATTACH_DECL_NEW(ms_hb, sizeof(struct ms_hb_softc),
     ms_hb_match, ms_hb_attach, NULL, NULL);
 
 struct wsmouse_accessops ms_hb_accessops = {
@@ -73,7 +73,7 @@ struct wsmouse_accessops ms_hb_accessops = {
 };
 
 int
-ms_hb_match(struct device *parent, struct cfdata *cf, void *aux)
+ms_hb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -84,13 +84,15 @@ ms_hb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-ms_hb_attach(struct device *parent, struct device *self, void *aux)
+ms_hb_attach(device_t parent, device_t self, void *aux)
 {
-	struct ms_hb_softc *sc = (void *)self;
+	struct ms_hb_softc *sc = device_private(self);
 	struct hb_attach_args *ha = aux;
-	volatile struct msreg *reg;
+	struct msreg *reg;
 	struct wsmousedev_attach_args aa;
 	int intr;
+
+	sc->sc_dev = self;
 
 	reg = (struct msreg *)ha->ha_addr;
 	intr = ha->ha_level;
@@ -103,7 +105,7 @@ ms_hb_attach(struct device *parent, struct device *self, void *aux)
 	reg->ms_reset = 0x01;
 	reg->ms_init = 0x80;	/* 1200 bps */
 
-	printf(" level %d\n", intr);
+	aprint_normal(" level %d\n", intr);
 
 	hb_intr_establish(intr, INTEN0_MSINT, IPL_TTY, ms_hb_intr, sc);
 
@@ -116,8 +118,8 @@ int
 ms_hb_intr(void *v)
 {
 	struct ms_hb_softc *sc = v;
-	volatile struct msreg *reg = sc->sc_reg;
-	volatile u_char *ien = (void *)INTEN0;
+	struct msreg *reg = sc->sc_reg;
+	volatile uint8_t *ien = (void *)INTEN0;
 	int code, index, byte0, byte1, byte2;
 	int button, dx, dy;
 	int rv = 0;
@@ -183,7 +185,7 @@ ms_hb_intr(void *v)
 int
 ms_hb_enable(void *v)
 {
-	volatile u_char *ien = (void *)INTEN0;
+	volatile uint8_t *ien = (void *)INTEN0;
 
 	*ien |= RX_MSINTE;
 	return 0;
@@ -192,7 +194,7 @@ ms_hb_enable(void *v)
 void
 ms_hb_disable(void *v)
 {
-	volatile u_char *ien = (void *)INTEN0;
+	volatile uint8_t *ien = (void *)INTEN0;
 
 	*ien &= ~RX_MSINTE;
 }

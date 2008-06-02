@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_proto.c,v 1.9 2007/11/20 20:18:00 plunky Exp $	*/
+/*	$NetBSD: bt_proto.c,v 1.9.14.1 2008/06/02 13:24:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.9 2007/11/20 20:18:00 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.9.14.1 2008/06/02 13:24:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -49,6 +49,28 @@ __KERNEL_RCSID(0, "$NetBSD: bt_proto.c,v 1.9 2007/11/20 20:18:00 plunky Exp $");
 #include <netbt/sco.h>
 
 DOMAIN_DEFINE(btdomain);	/* forward declare and add to link set */
+
+static void	bt_init(void);
+
+PR_WRAP_CTLOUTPUT(hci_ctloutput)
+PR_WRAP_CTLOUTPUT(sco_ctloutput)
+PR_WRAP_CTLOUTPUT(l2cap_ctloutput)
+PR_WRAP_CTLOUTPUT(rfcomm_ctloutput)
+
+#define	hci_ctloutput		hci_ctloutput_wrapper
+#define	sco_ctloutput		sco_ctloutput_wrapper
+#define	l2cap_ctloutput		l2cap_ctloutput_wrapper
+#define	rfcomm_ctloutput	rfcomm_ctloutput_wrapper
+
+PR_WRAP_USRREQ(hci_usrreq)
+PR_WRAP_USRREQ(sco_usrreq)
+PR_WRAP_USRREQ(l2cap_usrreq)
+PR_WRAP_USRREQ(rfcomm_usrreq)
+
+#define	hci_usrreq		hci_usrreq_wrapper
+#define	sco_usrreq		sco_usrreq_wrapper
+#define	l2cap_usrreq		l2cap_usrreq_wrapper
+#define	rfcomm_usrreq		rfcomm_usrreq_wrapper
 
 const struct protosw btsw[] = {
 	{ /* raw HCI commands */
@@ -88,6 +110,16 @@ const struct protosw btsw[] = {
 struct domain btdomain = {
 	.dom_family = AF_BLUETOOTH,
 	.dom_name = "bluetooth",
+	.dom_init = bt_init,
 	.dom_protosw = btsw,
 	.dom_protoswNPROTOSW = &btsw[__arraycount(btsw)],
 };
+
+kmutex_t *bt_lock;
+
+static void
+bt_init(void)
+{
+
+	bt_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+}

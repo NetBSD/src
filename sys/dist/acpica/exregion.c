@@ -1,9 +1,8 @@
-/*	$NetBSD: exregion.c,v 1.5 2007/12/11 13:16:09 lukem Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exregion - ACPI default OpRegion (address space) handlers
- *              $Revision: 1.5 $
+ *              $Revision: 1.5.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,13 +115,11 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.5 2007/12/11 13:16:09 lukem Exp $");
 
 #define __EXREGION_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acinterp.h>
+#include "acpi.h"
+#include "acinterp.h"
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -248,7 +245,7 @@ AcpiExSystemMemorySpaceHandler (
         {
             ACPI_ERROR ((AE_INFO,
                 "Could not map memory at %8.8X%8.8X, size %X",
-                ACPI_FORMAT_UINT64 (Address), (UINT32) WindowSize));
+                ACPI_FORMAT_NATIVE_UINT (Address), (UINT32) WindowSize));
             MemInfo->MappedLength = 0;
             return_ACPI_STATUS (AE_NO_MEMORY);
         }
@@ -268,7 +265,7 @@ AcpiExSystemMemorySpaceHandler (
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
         "System-Memory (width %d) R/W %d Address=%8.8X%8.8X\n",
-        BitWidth, Function, ACPI_FORMAT_UINT64 (Address)));
+        BitWidth, Function, ACPI_FORMAT_NATIVE_UINT (Address)));
 
     /*
      * Perform the memory read or write
@@ -378,7 +375,7 @@ AcpiExSystemIoSpaceHandler (
 
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
         "System-IO (width %d) R/W %d Address=%8.8X%8.8X\n",
-        BitWidth, Function, ACPI_FORMAT_UINT64 (Address)));
+        BitWidth, Function, ACPI_FORMAT_NATIVE_UINT (Address)));
 
     /* Decode the function parameter */
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_init.c,v 1.37 2008/01/16 12:34:51 ad Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.37.6.1 2008/06/02 13:24:14 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -74,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.37 2008/01/16 12:34:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.37.6.1 2008/06/02 13:24:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -307,8 +300,6 @@ vfs_op_check(void)
 void
 vfsinit(void)
 {
-	__link_set_decl(vfsops, struct vfsops);
-	struct vfsops * const *vfsp;
 
 	/*
 	 * Initialize the namei pathname buffer pool and cache.
@@ -340,17 +331,15 @@ vfsinit(void)
 	vfs_opv_init(vfs_special_vnodeopv_descs);
 
 	/*
+	 * Initialise VFS hooks.
+	 */
+	vfs_hooks_init();
+
+	/*
 	 * Establish each file system which was statically
 	 * included in the kernel.
 	 */
 	module_init_class(MODULE_CLASS_VFS);
-	__link_set_foreach(vfsp, vfsops) {
-		if (vfs_attach(*vfsp)) {
-			printf("multiple `%s' file systems",
-			    (*vfsp)->vfs_name);
-			panic("vfsinit");
-		}
-	}
 }
 
 /*

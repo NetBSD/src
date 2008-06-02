@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sig.c,v 1.272.6.1 2008/04/03 12:43:02 mjf Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.272.6.2 2008/06/02 13:24:09 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -73,10 +66,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.272.6.1 2008/04/03 12:43:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.272.6.2 2008/06/02 13:24:09 mjf Exp $");
 
 #include "opt_ptrace.h"
-#include "opt_multiprocessor.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -120,7 +112,7 @@ void	sigswitch(bool, int, int);
 void	sigrealloc(ksiginfo_t *);
 
 sigset_t	contsigmask, stopsigmask, sigcantmask;
-struct pool	sigacts_pool;	/* memory pool for sigacts structures */
+static pool_cache_t sigacts_cache; /* memory pool for sigacts structures */
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
 static callout_t proc_stop_ch;
@@ -157,10 +149,9 @@ signal_init(void)
 
 	sigactspool_allocator.pa_pagesz = (PAGE_SIZE)*2;
 
-	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
-	    sizeof(struct sigacts) > PAGE_SIZE ?
-	    &sigactspool_allocator : &pool_allocator_nointr,
-	    IPL_NONE);
+	sigacts_cache = pool_cache_init(sizeof(struct sigacts), 0, 0, 0,
+	    "sigacts", sizeof(struct sigacts) > PAGE_SIZE ?
+	    &sigactspool_allocator : NULL, IPL_NONE, NULL, NULL, NULL);
 
 	exechook_establish(ksiginfo_exechook, NULL);
 
@@ -191,6 +182,7 @@ sigacts_poolpage_alloc(struct pool *pp, int flags)
 static void
 sigacts_poolpage_free(struct pool *pp, void *v)
 {
+
         uvm_km_free(kernel_map, (vaddr_t)v, (PAGE_SIZE)*2, UVM_KMF_WIRED);
 }
 
@@ -209,13 +201,11 @@ sigactsinit(struct proc *pp, int share)
 	ps = pp->p_sigacts;
 
 	if (share) {
-		mutex_enter(&ps->sa_mutex);
-		ps->sa_refcnt++;
-		mutex_exit(&ps->sa_mutex);
+		atomic_inc_uint(&ps->sa_refcnt);
 		ps2 = ps;
 	} else {
-		ps2 = pool_get(&sigacts_pool, PR_WAITOK);
-		/* XXX IPL_SCHED to match p_smutex */
+		ps2 = pool_cache_get(sigacts_cache, PR_WAITOK);
+		/* XXXAD get rid of this */
 		mutex_init(&ps2->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 		mutex_enter(&ps->sa_mutex);
 		memcpy(&ps2->sa_sigdesc, ps->sa_sigdesc,
@@ -241,8 +231,8 @@ sigactsunshare(struct proc *p)
 	oldps = p->p_sigacts;
 	if (oldps->sa_refcnt == 1)
 		return;
-	ps = pool_get(&sigacts_pool, PR_WAITOK);
-	/* XXX IPL_SCHED to match p_smutex */
+	ps = pool_cache_get(sigacts_cache, PR_WAITOK);
+	/* XXXAD get rid of this */
 	mutex_init(&ps->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	memset(&ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
 	p->p_sigacts = ps;
@@ -257,15 +247,10 @@ sigactsunshare(struct proc *p)
 void
 sigactsfree(struct sigacts *ps)
 {
-	int refcnt;
 
-	mutex_enter(&ps->sa_mutex);
-	refcnt = --ps->sa_refcnt;
-	mutex_exit(&ps->sa_mutex);
-
-	if (refcnt == 0) {
+	if (atomic_dec_uint_nv(&ps->sa_refcnt) == 0) {
 		mutex_destroy(&ps->sa_mutex);
-		pool_put(&sigacts_pool, ps);
+		pool_cache_put(sigacts_cache, ps);
 	}
 }
 
@@ -365,7 +350,7 @@ execsigs(struct proc *p)
 	}
 	ksiginfo_queue_init(&kq);
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	sigclearall(p, &tset, &kq);
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
 
@@ -386,7 +371,7 @@ execsigs(struct proc *p)
 	l->l_sigstk.ss_sp = 0;
 	ksiginfo_queue_init(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	ksiginfo_queue_drain(&kq);
 }
@@ -407,9 +392,9 @@ ksiginfo_exechook(struct proc *p, void *v)
 
 	ksiginfo_queue_init(&kq);
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	sigclearall(p, NULL, &kq);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	ksiginfo_queue_drain(&kq);
 }
@@ -427,7 +412,6 @@ ksiginfo_t *
 ksiginfo_alloc(struct proc *p, ksiginfo_t *ok, int flags)
 {
 	ksiginfo_t *kp;
-	int s;
 
 	if (ok != NULL) {
 		if ((ok->ksi_flags & (KSI_QUEUED | KSI_FROMPOOL)) ==
@@ -437,9 +421,7 @@ ksiginfo_alloc(struct proc *p, ksiginfo_t *ok, int flags)
 			return ok;
 	}
 
-	s = splvm();
 	kp = pool_get(&ksiginfo_pool, flags);
-	splx(s);
 	if (kp == NULL) {
 #ifdef DIAGNOSTIC
 		printf("Out of memory allocating ksiginfo for pid %d\n",
@@ -468,13 +450,10 @@ ksiginfo_alloc(struct proc *p, ksiginfo_t *ok, int flags)
 void
 ksiginfo_free(ksiginfo_t *kp)
 {
-	int s;
 
 	if ((kp->ksi_flags & (KSI_QUEUED | KSI_FROMPOOL)) != KSI_FROMPOOL)
 		return;
-	s = splvm();
 	pool_put(&ksiginfo_pool, kp);
-	splx(s);
 }
 
 /*
@@ -486,19 +465,14 @@ void
 ksiginfo_queue_drain0(ksiginfoq_t *kq)
 {
 	ksiginfo_t *ksi;
-	int s;
 
 	KASSERT(!CIRCLEQ_EMPTY(kq));
 
-	KERNEL_LOCK(1, curlwp);		/* XXXSMP */
 	while (!CIRCLEQ_EMPTY(kq)) {
 		ksi = CIRCLEQ_FIRST(kq);
 		CIRCLEQ_REMOVE(kq, ksi, ksi_list);
-		s = splvm();
 		pool_put(&ksiginfo_pool, ksi);
-		splx(s);
 	}
-	KERNEL_UNLOCK_ONE(curlwp);	/* XXXSMP */
 }
 
 /*
@@ -579,7 +553,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 	ksiginfo_t *kp;
 	struct sigaction *sa = &SIGACTION_PS(p->p_sigacts, ksi->ksi_signo);
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT((ksi->ksi_flags & KSI_QUEUED) == 0);
 
 	sigaddset(&sp->sp_set, ksi->ksi_signo);
@@ -648,7 +622,7 @@ sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
 {
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	sigclear(&p->p_sigpend, mask, kq);
 
@@ -716,7 +690,7 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 {
 	struct proc *p = l->l_proc;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	ucp->uc_flags = 0;
 	ucp->uc_link = l->l_ctxlink;
@@ -738,9 +712,9 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 		ucp->uc_stack = l->l_sigstk;
 	}
 	ucp->uc_flags |= _UC_STACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &ucp->uc_mcontext, &ucp->uc_flags);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 }
 
 int
@@ -749,7 +723,7 @@ setucontext(struct lwp *l, const ucontext_t *ucp)
 	struct proc *p = l->l_proc;
 	int error;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	if ((ucp->uc_flags & _UC_SIGMASK) != 0) {
 		error = sigprocmask1(l, SIG_SETMASK, &ucp->uc_sigmask, NULL);
@@ -757,9 +731,9 @@ setucontext(struct lwp *l, const ucontext_t *ucp)
 			return error;
 	}
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = cpu_setmcontext(l, &ucp->uc_mcontext, ucp->uc_flags);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (error != 0)
 		return (error);
 
@@ -796,28 +770,24 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 	pc = l->l_cred;
 	nfound = 0;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	if (all) {
 		/*
 		 * broadcast
 		 */
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM || p == cp)
+			if (p->p_pid <= 1 || p == cp ||
+			    p->p_flag & (PK_SYSTEM|PK_MARKER))
 				continue;
-			mutex_enter(&p->p_mutex);
+			mutex_enter(p->p_lock);
 			if (kauth_authorize_process(pc,
 			    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signo), NULL,
 			    NULL) == 0) {
 				nfound++;
-				if (signo) {
-					mutex_enter(&proclist_mutex);
-					mutex_enter(&p->p_smutex);
+				if (signo)
 					kpsignal2(p, ksi);
-					mutex_exit(&p->p_smutex);
-					mutex_exit(&proclist_mutex);
-				}
 			}
-			mutex_exit(&p->p_mutex);
+			mutex_exit(p->p_lock);
 		}
 	} else {
 		if (pgid == 0)
@@ -833,24 +803,18 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM)
 				continue;
-			mutex_enter(&p->p_mutex);
+			mutex_enter(p->p_lock);
 			if (kauth_authorize_process(pc, KAUTH_PROCESS_SIGNAL,
 			    p, KAUTH_ARG(signo), NULL, NULL) == 0) {
 				nfound++;
-				if (signo) {
-					mutex_enter(&proclist_mutex);
-					mutex_enter(&p->p_smutex);
-					if (P_ZOMBIE(p) == 0)
-						kpsignal2(p, ksi);
-					mutex_exit(&p->p_smutex);
-					mutex_exit(&proclist_mutex);
-				}
+				if (signo && P_ZOMBIE(p) == 0)
+					kpsignal2(p, ksi);
 			}
-			mutex_exit(&p->p_mutex);
+			mutex_exit(p->p_lock);
 		}
 	}
   out:
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	return (nfound ? 0 : ESRCH);
 }
 
@@ -863,7 +827,8 @@ pgsignal(struct pgrp *pgrp, int sig, int checkctty)
 {
 	ksiginfo_t ksi;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(!cpu_intr_p());
+	KASSERT(mutex_owned(proc_lock));
 
 	KSI_INIT_EMPTY(&ksi);
 	ksi.ksi_signo = sig;
@@ -875,7 +840,8 @@ kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
 {
 	struct proc *p;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(!cpu_intr_p());
+	KASSERT(mutex_owned(proc_lock));
 
 	if (pgrp)
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
@@ -899,16 +865,17 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	ksi->ksi_lid = l->l_lid;
 	p = l->l_proc;
 
-	mutex_enter(&proclist_mutex);
-	mutex_enter(&p->p_smutex);
+	KASSERT(!cpu_intr_p());
+	mutex_enter(proc_lock);
+	mutex_enter(p->p_lock);
 	ps = p->p_sigacts;
 	if ((p->p_slflag & PSL_TRACED) == 0 &&
 	    sigismember(&p->p_sigctx.ps_sigcatch, signo) &&
 	    !sigismember(&l->l_sigmask, signo)) {
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 		l->l_ru.ru_nsignals++;
 		kpsendsig(l, ksi, &l->l_sigmask);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler,
 		    &l->l_sigmask, ksi);
 	} else {
@@ -917,8 +884,8 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		p->p_sigctx.ps_signo = ksi->ksi_signo;
 		p->p_sigctx.ps_code = ksi->ksi_trap;
 		kpsignal2(p, ksi);
-		mutex_exit(&proclist_mutex);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
 	}
 }
 
@@ -932,8 +899,8 @@ child_psignal(struct proc *p, int mask)
 	struct proc *q;
 	int xstat;
 
-	KASSERT(mutex_owned(&proclist_mutex));
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(p->p_lock));
 
 	xstat = p->p_xstat;
 
@@ -948,14 +915,14 @@ child_psignal(struct proc *p, int mask)
 
 	q = p->p_pptr;
 
-	mutex_exit(&p->p_smutex);
-	mutex_enter(&q->p_smutex);
+	mutex_exit(p->p_lock);
+	mutex_enter(q->p_lock);
 
 	if ((q->p_sflag & mask) == 0)
 		kpsignal2(q, &ksi);
 
-	mutex_exit(&q->p_smutex);
-	mutex_enter(&p->p_smutex);
+	mutex_exit(q->p_lock);
+	mutex_enter(p->p_lock);
 }
 
 void
@@ -963,13 +930,14 @@ psignal(struct proc *p, int signo)
 {
 	ksiginfo_t ksi;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(!cpu_intr_p());
+	KASSERT(mutex_owned(proc_lock));
 
 	KSI_INIT_EMPTY(&ksi);
 	ksi.ksi_signo = signo;
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	kpsignal2(p, &ksi);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 }
 
 void
@@ -978,7 +946,8 @@ kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 	fdfile_t *ff;
 	file_t *fp;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(!cpu_intr_p());
+	KASSERT(mutex_owned(proc_lock));
 
 	if ((p->p_sflag & PS_WEXIT) == 0 && data) {
 		size_t fd;
@@ -997,9 +966,9 @@ kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 			}
 		}
 	}
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	kpsignal2(p, ksi);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 }
 
 /*
@@ -1027,7 +996,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 {
 	int rv, masked;
 
-	KASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(mutex_owned(l->l_proc->p_lock));
 
 	/*
 	 * If the LWP is on the way out, sigclear() will be busy draining all
@@ -1150,7 +1119,7 @@ sigunwait(struct proc *p, const ksiginfo_t *ksi)
 	struct lwp *l;
 	int signo;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	signo = ksi->ksi_signo;
 
@@ -1209,8 +1178,9 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	ksiginfoq_t kq;
 	sig_t action;
 
-	KASSERT(mutex_owned(&proclist_mutex));
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(!cpu_intr_p());
+	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT((ksi->ksi_flags & KSI_QUEUED) == 0);
 	KASSERT(signo > 0 && signo < NSIG);
 
@@ -1288,8 +1258,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 			 * the action is default; don't stop the process below
 			 * if sleeping, and don't clear any pending SIGCONT.
 			 */
-			if (prop & SA_TTYSTOP &&
-			    (p->p_sflag & PS_ORPHANPG) != 0)
+			if (prop & SA_TTYSTOP && p->p_pgrp->pg_jobc == 0)
 				return;
 
 			if (prop & SA_KILL && p->p_nice > NZERO)
@@ -1426,7 +1395,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct proc *p = l->l_proc;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	(*p->p_emul->e_sendsig)(ksi, mask);
 }
@@ -1439,7 +1408,7 @@ proc_stop_lwps(struct proc *p)
 {
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT((p->p_sflag & PS_STOPPING) != 0);
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -1455,14 +1424,14 @@ proc_stop_lwps(struct proc *p)
 /*
  * Finish stopping of a process.  Mark it stopped and notify the parent.
  *
- * Drop p_smutex briefly if PS_NOTIFYSTOP is set and ppsig is true.
+ * Drop p_lock briefly if PS_NOTIFYSTOP is set and ppsig is true.
  */
 static void
 proc_stop_done(struct proc *p, bool ppsig, int ppmask)
 {
 
-	KASSERT(mutex_owned(&proclist_mutex));
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT((p->p_sflag & PS_STOPPING) != 0);
 	KASSERT(p->p_nrlwps == 0 || (p->p_nrlwps == 1 && p == curproc));
 
@@ -1472,7 +1441,7 @@ proc_stop_done(struct proc *p, bool ppsig, int ppmask)
 	p->p_pptr->p_nstopchild++;
 	if ((p->p_sflag & PS_NOTIFYSTOP) != 0) {
 		if (ppsig) {
-			/* child_psignal drops p_smutex briefly. */
+			/* child_psignal drops p_lock briefly. */
 			child_psignal(p, ppmask);
 		}
 		cv_broadcast(&p->p_pptr->p_waitcv);
@@ -1487,11 +1456,9 @@ sigswitch(bool ppsig, int ppmask, int signo)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-#ifdef MULTIPROCESSOR
 	int biglocks;
-#endif
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat == LSONPROC);
 	KASSERT(p->p_nrlwps > 0);
 
@@ -1511,21 +1478,21 @@ sigswitch(bool ppsig, int ppmask, int signo)
 	 * a new signal, then signal the parent.
 	 */
 	if ((p->p_sflag & PS_STOPPING) != 0) {
-		if (!mutex_tryenter(&proclist_mutex)) {
-			mutex_exit(&p->p_smutex);
-			mutex_enter(&proclist_mutex);
-			mutex_enter(&p->p_smutex);
+		if (!mutex_tryenter(proc_lock)) {
+			mutex_exit(p->p_lock);
+			mutex_enter(proc_lock);
+			mutex_enter(p->p_lock);
 		}
 
 		if (p->p_nrlwps == 1 && (p->p_sflag & PS_STOPPING) != 0) {
 			/*
 			 * Note that proc_stop_done() can drop
-			 * p->p_smutex briefly.
+			 * p->p_lock briefly.
 			 */
 			proc_stop_done(p, ppsig, ppmask);
 		}
 
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 
 	/*
@@ -1540,11 +1507,11 @@ sigswitch(bool ppsig, int ppmask, int signo)
 		lwp_unlock(l);
 	}
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	lwp_lock(l);
 	mi_switch(l);
 	KERNEL_LOCK(biglocks, l);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 }
 
 /*
@@ -1557,7 +1524,7 @@ sigchecktrace(sigpend_t **spp)
 	struct proc *p = l->l_proc;
 	int signo;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	/*
 	 * If we are no longer being traced, or the parent didn't
@@ -1608,7 +1575,7 @@ issignal(struct lwp *l)
 	sigpend_t *sp = NULL;
 	sigset_t ss;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	for (;;) {
 		/* Discard any signals that we have decided not to take. */
@@ -1720,8 +1687,12 @@ issignal(struct lwp *l)
 			 * process group, ignore tty stop signals.
 			 */
 			if (prop & SA_STOP) {
+				/*
+				 * XXX Don't hold proc_lock for p_lflag,
+				 * but it's not a big deal.
+				 */
 				if (p->p_slflag & PSL_TRACED ||
-		    		    ((p->p_sflag & PS_ORPHANPG) != 0 &&
+		    		    ((p->p_lflag & PL_ORPHANPG) != 0 &&
 				    prop & SA_TTYSTOP)) {
 				    	/* Ignore the signal. */
 					continue;
@@ -1786,7 +1757,7 @@ postsig(int signo)
 	p = l->l_proc;
 	ps = p->p_sigacts;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(signo > 0);
 
 	/*
@@ -1811,9 +1782,9 @@ postsig(int signo)
 	sigget(l->l_sigpendset, &ksi, signo, NULL);
 
 	if (ktrpoint(KTR_PSIG)) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		ktrpsig(signo, action, returnmask, NULL);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 	}
 
 	if (action == SIG_DFL) {
@@ -1848,7 +1819,7 @@ sendsig_reset(struct lwp *l, int signo)
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	p->p_sigctx.ps_lwp = 0;
 	p->p_sigctx.ps_code = 0;
@@ -1871,11 +1842,12 @@ sendsig_reset(struct lwp *l, int signo)
 void
 killproc(struct proc *p, const char *why)
 {
+
+	KASSERT(mutex_owned(proc_lock));
+
 	log(LOG_ERR, "pid %d was killed: %s\n", p->p_pid, why);
 	uprintf_locked("sorry, pid %d was killed: %s\n", p->p_pid, why);
-	mutex_enter(&proclist_mutex);	/* XXXSMP */
 	psignal(p, SIGKILL);
-	mutex_exit(&proclist_mutex);	/* XXXSMP */
 }
 
 /*
@@ -1895,7 +1867,7 @@ sigexit(struct lwp *l, int signo)
 
 	p = l->l_proc;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 	KERNEL_UNLOCK_ALL(l, NULL);
 
 	/*
@@ -1908,11 +1880,17 @@ sigexit(struct lwp *l, int signo)
 		lwp_lock(l);
 		l->l_flag |= (LW_WCORE | LW_WEXIT | LW_WSUSPEND);
 		lwp_unlock(l);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		lwp_userret(l);
-#ifdef DIAGNOSTIC
-		panic("sigexit");
-#endif
+		panic("sigexit 1");
+		/* NOTREACHED */
+	}
+
+	/* If process is already on the way out, then bail now. */
+	if ((p->p_sflag & PS_WEXIT) != 0) {
+		mutex_exit(p->p_lock);
+		lwp_exit(l);
+		panic("sigexit 2");
 		/* NOTREACHED */
 	}
 
@@ -1943,7 +1921,7 @@ sigexit(struct lwp *l, int signo)
 			 */
 			p->p_nlwpwait++;
 			cv_broadcast(&p->p_lwpcv);
-			cv_wait(&p->p_lwpcv, &p->p_smutex);
+			cv_wait(&p->p_lwpcv, p->p_lock);
 			p->p_nlwpwait--;
 		}
 	}
@@ -1951,11 +1929,9 @@ sigexit(struct lwp *l, int signo)
 	exitsig = signo;
 	p->p_acflag |= AXSIG;
 	p->p_sigctx.ps_signo = signo;
-	mutex_exit(&p->p_smutex);
-
-	KERNEL_LOCK(1, l);
 
 	if (docore) {
+		mutex_exit(p->p_lock);
 		if ((error = coredump(l, NULL)) == 0)
 			exitsig |= WCOREFLAG;
 
@@ -1974,10 +1950,9 @@ sigexit(struct lwp *l, int signo)
 #ifdef PAX_SEGVGUARD
 		pax_segvguard(l, p->p_textvp, p->p_comm, true);
 #endif /* PAX_SEGVGUARD */
+		/* Acquire the sched state mutex.  exit1() will release it. */
+		mutex_enter(p->p_lock);
 	}
-
-	/* Acquire the sched state mutex.  exit1() will release it. */
-	mutex_enter(&p->p_smutex);
 
 	/* No longer dumping core. */
 	p->p_sflag &= ~PS_WCORE;
@@ -1994,7 +1969,7 @@ proc_stop(struct proc *p, int notify, int signo)
 {
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	/*
 	 * First off, set the stopping indicator and bring all sleeping
@@ -2062,13 +2037,14 @@ proc_stop_callout(void *cookie)
 		restart = false;
 		more = false;
 
-		mutex_enter(&proclist_lock);
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
-			mutex_enter(&p->p_smutex);
+			if ((p->p_flag & PK_MARKER) != 0)
+				continue;
+			mutex_enter(p->p_lock);
 
 			if ((p->p_sflag & PS_STOPPING) == 0) {
-				mutex_exit(&p->p_smutex);
+				mutex_exit(p->p_lock);
 				continue;
 			}
 
@@ -2083,7 +2059,7 @@ proc_stop_callout(void *cookie)
 				if ((p->p_sflag & PS_NOTIFYSTOP) != 0) {
 					/*
 					 * Note that proc_stop_done() will
-					 * drop p->p_smutex briefly.
+					 * drop p->p_lock briefly.
 					 * Arrange to restart and check
 					 * all processes again.
 					 */
@@ -2093,12 +2069,11 @@ proc_stop_callout(void *cookie)
 			} else
 				more = true;
 
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 			if (restart)
 				break;
 		}
-		mutex_exit(&proclist_mutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 	} while (restart);
 
 	/*
@@ -2119,8 +2094,8 @@ proc_unstop(struct proc *p)
 	struct lwp *l;
 	int sig;
 
-	KASSERT(mutex_owned(&proclist_mutex));
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(p->p_lock));
 
 	p->p_stat = SACTIVE;
 	p->p_sflag &= ~PS_STOPPING;
@@ -2158,9 +2133,9 @@ filt_sigattach(struct knote *kn)
 	kn->kn_obj = p;
 	kn->kn_flags |= EV_CLEAR;               /* automatically set */
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (0);
 }
@@ -2170,9 +2145,9 @@ filt_sigdetach(struct knote *kn)
 {
 	struct proc *p = kn->kn_obj;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 }
 
 /*

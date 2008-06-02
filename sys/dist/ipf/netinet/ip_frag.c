@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.8 2007/10/02 06:15:12 martti Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.8.18.1 2008/06/02 13:24:03 mjf Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -103,7 +103,7 @@ extern struct timeout fr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.8 2007/10/02 06:15:12 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.8.18.1 2008/06/02 13:24:03 mjf Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.77.2.12 2007/09/20 12:51:51 darrenr Exp $";
@@ -236,7 +236,7 @@ ipfr_t *table[];
 	frentry_t *fr;
 	ip_t *ip;
 
-	if (ipfr_inuse >= IPFT_SIZE)
+	if (ipfr_inuse >= ipfr_size)
 		return NULL;
 
 	if ((fin->fin_flx & (FI_FRAG|FI_BAD)) != FI_FRAG)
@@ -259,7 +259,7 @@ ipfr_t *table[];
 	idx += ip->ip_dst.s_addr;
 	frag.ipfr_ifp = fin->fin_ifp;
 	idx *= 127;
-	idx %= IPFT_SIZE;
+	idx %= ipfr_size;
 
 	frag.ipfr_optmsk = fin->fin_fi.fi_optmsk & IPF_OPTCOPY;
 	frag.ipfr_secmsk = fin->fin_fi.fi_secmsk;
@@ -457,7 +457,7 @@ ipfr_t *table[];
 	idx += ip->ip_dst.s_addr;
 	frag.ipfr_ifp = fin->fin_ifp;
 	idx *= 127;
-	idx %= IPFT_SIZE;
+	idx %= ipfr_size;
 
 	frag.ipfr_optmsk = fin->fin_fi.fi_optmsk & IPF_OPTCOPY;
 	frag.ipfr_secmsk = fin->fin_fi.fi_secmsk;

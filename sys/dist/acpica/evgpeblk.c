@@ -1,9 +1,7 @@
-/*	$NetBSD: evgpeblk.c,v 1.5 2007/12/11 13:16:05 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: evgpeblk - GPE block creation and initialization.
- *              $Revision: 1.5 $
+ *              $Revision: 1.5.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,12 +114,9 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.5 2007/12/11 13:16:05 lukem Exp $");
-
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acevents.h>
-#include <dist/acpica/acnamesp.h>
+#include "acpi.h"
+#include "acevents.h"
+#include "acnamesp.h"
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evgpeblk")
@@ -713,6 +708,12 @@ AcpiEvDeleteGpeXrupt (
     if (GpeXrupt->Previous)
     {
         GpeXrupt->Previous->Next = GpeXrupt->Next;
+    }
+    else
+    {
+        /* No previous, update list head */
+
+        AcpiGbl_GpeXruptListHead = GpeXrupt->Next;
     }
 
     if (GpeXrupt->Next)

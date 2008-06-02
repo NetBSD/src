@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.39 2007/10/19 12:00:17 ad Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.39.16.1 2008/06/02 13:23:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.39 2007/10/19 12:00:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.39.16.1 2008/06/02 13:23:31 mjf Exp $");
 
 #define	PCICISADEBUG
 
@@ -189,7 +189,7 @@ pcic_isa_probe_interrupts(sc, h)
 	ic = isc->sc_ic;
 
 	printf("%s: controller %d detecting irqs with mask 0x%04x:",
-	    sc->dev.dv_xname, h->chip, sc->intr_mask[h->chip]);
+	    device_xname(&sc->dev), h->chip, sc->intr_mask[h->chip]);
 	DPRINTF(("\n"));
 
 	/* clear any current interrupt */
@@ -332,18 +332,17 @@ pcic_isa_config_interrupts(self)
 			if ((chipmask & (1 << sc->irq)) == 0)
 				printf("%s: warning: configured irq %d not "
 				    "detected as available\n",
-				    sc->dev.dv_xname, sc->irq);
+				    device_xname(&sc->dev), sc->irq);
 		} else if (chipmask == 0 ||
 		    isa_intr_alloc(ic, chipmask, IST_EDGE, &sc->irq)) {
-			printf("%s: no available irq; ", sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "no available irq; ");
 			sc->irq = ISA_UNKNOWN_IRQ;
 		} else if ((chipmask & ~(1 << sc->irq)) == 0 && chipuniq == 0) {
-			printf("%s: can't share irq with cards; ",
-			    sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "can't share irq with cards; ");
 			sc->irq = ISA_UNKNOWN_IRQ;
 		}
 	} else {
-		printf("%s: ", sc->dev.dv_xname);
+		printf("%s: ", device_xname(&sc->dev));
 		sc->irq = ISA_UNKNOWN_IRQ;
 	}
 
@@ -351,15 +350,14 @@ pcic_isa_config_interrupts(self)
 		sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
 		    pcic_intr, sc);
 		if (sc->ih == NULL) {
-			printf("%s: can't establish interrupt",
-			    sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "can't establish interrupt");
 			sc->irq = ISA_UNKNOWN_IRQ;
 		}
 	}
 	if (sc->irq == ISA_UNKNOWN_IRQ)
 		printf("polling for socket events\n");
 	else
-		printf("%s: using irq %d for socket events\n", sc->dev.dv_xname,
+		printf("%s: using irq %d for socket events\n", device_xname(&sc->dev),
 		    sc->irq);
 
 	pcic_attach_sockets_finish(sc);
@@ -397,7 +395,7 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, base + 0x400, length, 0, &ioh_high)) {
-		printf("%s: can't map high i/o space\n", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "can't map high i/o space\n");
 		return;
 	}
 
@@ -442,7 +440,7 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 	}
 
 	DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx (probed)\n",
-	    sc->dev.dv_xname, (long) sc->iobase,
+	    device_xname(&sc->dev), (long) sc->iobase,
 
 	    (long) sc->iobase + sc->iosize));
 
@@ -451,7 +449,7 @@ void pcic_isa_bus_width_probe (sc, iot, ioh, base, length)
 		sc->iosize = pcic_isa_alloc_iosize;
 
 		DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx "
-		    "(config override)\n", sc->dev.dv_xname, (long) sc->iobase,
+		    "(config override)\n", device_xname(&sc->dev), (long) sc->iobase,
 		    (long) sc->iobase + sc->iosize));
 	}
 }
@@ -502,7 +500,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	if ((ih = isa_intr_establish(ic, irq, ist, ipl, fct, arg)) == NULL)
 		return (NULL);
 
-	printf("%s: card irq %d\n", h->pcmcia->dv_xname, irq);
+	printf("%s: card irq %d\n", device_xname(h->pcmcia), irq);
 
 	return (ih);
 }

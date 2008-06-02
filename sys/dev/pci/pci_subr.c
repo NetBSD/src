@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.73 2007/10/19 12:00:54 ad Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.73.16.1 2008/06/02 13:23:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.73 2007/10/19 12:00:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.73.16.1 2008/06/02 13:23:42 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -426,7 +426,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
  * in a device attach routine like this:
  *
  *	#ifdef MYDEV_DEBUG
- *		printf("%s: ", sc->sc_dev.dv_xname);
+ *		printf("%s: ", device_xname(&sc->sc_dev));
  *		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
  *	#endif
  */
@@ -792,7 +792,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("PCI Express Endpoint device\n");
 		break;
 	case 0x1:
-		printf("Legcay PCI Express Endpoint device\n");
+		printf("Legacy PCI Express Endpoint device\n");
 		break;
 	case 0x4:
 		printf("Root Port of PCI Express Root Complex\n");

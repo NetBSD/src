@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.12 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.12.70.1 2008/06/02 13:23:18 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -199,7 +199,7 @@ extern int aic_debug; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 #define	AIC_ASSERT(x)	do { \
 			if (! (x)) { \
 				printf("%s at line %d: assertion failed\n", \
-				    sc->sc_dev.dv_xname, __LINE__); \
+				    device_xname(&sc->sc_dev), __LINE__); \
 				Debugger(); \
 			} } while (/* CONSTCOND */ 0)
 #else

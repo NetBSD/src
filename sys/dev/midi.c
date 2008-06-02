@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.59.6.3 2008/04/06 09:58:50 mjf Exp $	*/
+/*	$NetBSD: midi.c,v 1.59.6.4 2008/06/02 13:23:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.59.6.3 2008/04/06 09:58:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.59.6.4 2008/06/02 13:23:11 mjf Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -686,10 +679,10 @@ midi_softintr_rd(void *cookie)
 	struct proc *p;
 
 	if (sc->async != NULL) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		if ((p = sc->async) != NULL)
 			psignal(p, SIGIO);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 	midi_wakeup(&sc->rchan);
 	selnotify(&sc->rsel, 0, 0); /* filter will spin if locked */
@@ -702,10 +695,10 @@ midi_softintr_wr(void *cookie)
 	struct proc *p;
 
 	if (sc->async != NULL) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		if ((p = sc->async) != NULL)
 			psignal(p, SIGIO);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 	midi_wakeup(&sc->wchan);
 	selnotify(&sc->wsel, 0, 0); /* filter will spin if locked */
@@ -1461,7 +1454,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	size_t xfrcount;
 	int pollout = 0;
 
-	DPRINTFN(6, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit,
+	DPRINTFN(6, ("midiwrite: %p, unit=%d, count=%lu\n", sc, (int)minor(dev),
 		     (unsigned long)uio->uio_resid));
 
 	if (sc->dying)

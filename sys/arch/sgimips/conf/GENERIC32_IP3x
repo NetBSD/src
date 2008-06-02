@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.70.6.1 2008/04/03 12:42:24 mjf Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.70.6.2 2008/06/02 13:22:37 mjf Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,14 +28,14 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.70.6.1 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.70.6.2 $"
 
 maxusers	32
 
 # CPU related options
 options 	MIPS3		# MIPS3 support
-options		ENABLE_MIPS4_CACHE_R10K # enable R10000 cache ops
-#options	BLINK		# blinkenlitzen
+options 	ENABLE_MIPS4_CACHE_R10K # enable R10000 cache ops
+#options 	BLINK		# blinkenlitzen
 
 # Standard system options
 #options 	INSECURE	# disable kernel security levels
@@ -72,15 +72,16 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 
 # Compatibility options
 options 	COMPAT_15	# NetBSD 1.5
-options		COMPAT_16	# NetBSD 1.6
-options		COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_IRIX	# binary compatibility with IRIX
-#options	COMPAT_LINUX	# binary compatibility with Linux
-#options	COMPAT_ULTRIX	# binary compatibility with Ultrix 
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+#options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
@@ -109,7 +110,7 @@ file-system	EFS		# Silicon Graphics Extent File System
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -178,7 +179,7 @@ crime0 		at mainbus0 addr 0x14000000
 crmfb0		at mainbus0 addr 0x16000000
 wsdisplay* 	at crmfb? console ?
 mace0 		at mainbus0 addr 0x1f000000
-options		MACE_NEEDS_DELAYS
+options 	MACE_NEEDS_DELAYS
 macepci0 	at mace0 offset 0x080000 intr 7
 pci0 		at macepci0 bus 0
 pci*		at ppb? bus ?
@@ -444,7 +445,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if

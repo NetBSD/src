@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.7 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: frame.h,v 1.7.74.1 2008/06/02 13:21:46 mjf Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,6 +31,7 @@
 #define	_ALPHA_FRAME_H_
 
 #include <machine/alpha_cpu.h>
+#include <sys/signal.h>
 
 /*
  * Software trap, exception, and syscall frame.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.72.26.2 2008/04/06 09:58:51 mjf Exp $	*/
+/*	$NetBSD: ss.c,v 1.72.26.3 2008/06/02 13:23:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72.26.2 2008/04/06 09:58:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72.26.3 2008/06/02 13:23:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ ssopen(dev_t dev, int flag, int mode, struct lwp *l)
 	    unit, ss_cd.cd_ndevs));
 
 	if (periph->periph_flags & PERIPH_OPEN) {
-		printf("%s: already open\n", ss->sc_dev.dv_xname);
+		aprint_error_dev(&ss->sc_dev, "already open\n");
 		return (EBUSY);
 	}
 

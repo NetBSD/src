@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.348.8.2 2008/04/03 13:54:11 mjf Exp $
+#	$NetBSD: Makefile,v 1.348.8.3 2008/06/02 13:21:19 mjf Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -184,7 +184,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		MKDEBUG MKDEBUGLIB MKDOC MKDYNAMICROOT \
 		MKGCC MKGCCCMDS MKGDB \
 		MKHESIOD MKHOSTOBJ MKHTML MKIEEEFP MKINET6 MKINFO MKIPFILTER \
-		MKKERBEROS MKLINKLIB MKLINT \
+		MKKERBEROS MKLDAP MKLINKLIB MKLINT \
 		MKMAN MKMANZ MKNLS MKOBJ MKOBJDIRS \
 		MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
 		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
@@ -193,7 +193,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
 		OBJMACHINE \
 		RELEASEDIR RELEASEMACHINEDIR TOOLCHAIN_MISSING TOOLDIR \
-		USE_HESIOD USE_INET6 USE_JEMALLOC USE_KERBEROS \
+		USE_HESIOD USE_INET6 USE_JEMALLOC USE_KERBEROS USE_LDAP \
 		USE_PAM USE_SKEY USE_YP \
 		USETOOLS USR_OBJMACHINE \
 		X11SRCDIR
@@ -288,6 +288,11 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/ttys
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/etc.${MACHINE}/ttys ${DESTDIR}/etc
+.if exists(etc.${MACHINE}/boot.cfg)
+	${_MKMSG_INSTALL} ${DESTDIR}/boot.cfg
+	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    ${.CURDIR}/etc.${MACHINE}/boot.cfg ${DESTDIR}/
+.endif
 	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
@@ -332,6 +337,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 .for subdir in . atf defaults bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/sbin/dhcpcd configinstall
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/mail configinstall
 .if (${MKPF} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.sbin/pf configinstall
@@ -605,6 +611,7 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 				[ ! -f $${ks} ] && continue; \
 				knl_gz="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/$${ks}-${configfile:C/.*\///}.gz"; \
 				[ $${knl_gz} -nt $${ks} ] && continue; \
+				rm -f $${knl_gz}; \
 				echo "gzip -c -9 < $${kerndir}/$${ks} > $${knl_gz}"; \
 				gzip -c -9 < $${ks} > $${knl_gz}; \
 			done; \

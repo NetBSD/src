@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.12.14.1 2008/04/03 12:42:54 mjf Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.12.14.2 2008/06/02 13:23:44 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.12.14.1 2008/04/03 12:42:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.12.14.2 2008/06/02 13:23:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,23 +342,20 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE | 
 	    BUS_SPACE_MAP_LINEAR, 
 	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		printf("%s: failed to map the frame buffer.\n", 
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map the frame buffer.\n");
 	}
 
 	/* memory-mapped registers */
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_regt, &sc->sc_regh, &sc->sc_regs, &sc->sc_regsize)) {
-		printf("%s: failed to map memory-mapped registers.\n", 
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map memory-mapped registers.\n");
 	}
 
 	/* IO-mapped registers */
 	if (pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_ioregt, &sc->sc_ioregh, &sc->sc_ioreg,
 	    &sc->sc_ioregsize)) {
-		printf("%s: failed to map IO-mapped registers.\n", 
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map IO-mapped registers.\n");
 	}
 	voodoofb_init(sc);
 	
@@ -384,7 +379,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	sc->height = height;
 	sc->bits_per_pixel = depth;
 	sc->linebytes = linebytes;
-	printf("%s: initial resolution %dx%d, %d bit\n", sc->sc_dev.dv_xname,
+	printf("%s: initial resolution %dx%d, %d bit\n", device_xname(&sc->sc_dev),
 	    sc->width, sc->height, sc->bits_per_pixel);
 #endif
 
@@ -416,7 +411,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("%s: %d MB aperture at 0x%08x, %d MB registers at 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int)(sc->sc_fbsize >> 20),
+	    device_xname(&sc->sc_dev), (u_int)(sc->sc_fbsize >> 20),
 	    (u_int)sc->sc_fb, (u_int)(sc->sc_regsize >> 20), 
 	    (u_int)sc->sc_regs);
 #ifdef VOODOOFB_DEBUG
@@ -433,7 +428,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 #ifdef VOODOOFB_ENABLE_INTR
 	/* Interrupt. We don't use it for anything yet */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: failed to map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map interrupt\n");
 		return;
 	}
 
@@ -441,14 +436,13 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, voodoofb_intr, 
 	    sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: failed to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 #endif
 
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);
@@ -468,15 +462,15 @@ static int
 voodoofb_drm_print(void *opaque, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("direct rendering for %s", pnp);
+		aprint_normal("drm at %s", pnp);
 
-	return UNSUPP;
+	return UNCONF;
 }
 
 static int
 voodoofb_drm_unmap(struct voodoofb_softc *sc)
 {
-	printf("%s: releasing bus resources\n", sc->sc_dev.dv_xname);
+	printf("%s: releasing bus resources\n", device_xname(&sc->sc_dev));
 
 	bus_space_unmap(sc->sc_ioregt, sc->sc_ioregh, sc->sc_ioregsize);
 	bus_space_unmap(sc->sc_regt, sc->sc_regh, sc->sc_regsize);
@@ -492,23 +486,20 @@ voodoofb_drm_map(struct voodoofb_softc *sc)
 	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE | 
 	    BUS_SPACE_MAP_LINEAR, 
 	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		printf("%s: failed to map the frame buffer.\n", 
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map the frame buffer.\n");
 	}
 
 	/* memory-mapped registers */
 	if (pci_mapreg_map(&sc->sc_pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_regt, &sc->sc_regh, &sc->sc_regs, &sc->sc_regsize)) {
-		printf("%s: failed to map memory-mapped registers.\n", 
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map memory-mapped registers.\n");
 	}
 
 	/* IO-mapped registers */
 	if (pci_mapreg_map(&sc->sc_pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_ioregt, &sc->sc_ioregh, &sc->sc_ioreg,
 	    &sc->sc_ioregsize)) {
-		printf("%s: failed to map IO-mapped registers.\n", 
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map IO-mapped registers.\n");
 	}
 
 	voodoofb_init(sc);
@@ -1012,7 +1003,7 @@ voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (curlwp != NULL) {
 		if (kauth_authorize_generic(kauth_cred_get(),
 		    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "mmap() rejected.\n");
 			return -1;
 		}
 	}
@@ -1388,7 +1379,7 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
   	voodoo3_write32(sc, CLIP1MAX,        0x0fff0fff);
 	voodoo3_write32(sc, SRCXY, 0);
 	voodoofb_wait_idle(sc);
-	printf("%s: switched to %dx%d, %d bit\n", sc->sc_dev.dv_xname,
+	printf("%s: switched to %dx%d, %d bit\n", device_xname(&sc->sc_dev),
 	    sc->width, sc->height, sc->bits_per_pixel);
 }
 

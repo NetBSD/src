@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -118,8 +118,8 @@
 #ifndef __ACXFACE_H__
 #define __ACXFACE_H__
 
-#include <dist/acpica/actypes.h>
-#include <dist/acpica/actbl.h>
+#include "actypes.h"
+#include "actbl.h"
 
 
 /*
@@ -162,6 +162,10 @@ AcpiDisable (
 ACPI_STATUS
 AcpiGetSystemInfo (
     ACPI_BUFFER             *RetBuffer);
+
+ACPI_STATUS
+AcpiGetStatistics (
+    ACPI_STATISTICS         *Stats);
 
 const char *
 AcpiFormatException (
@@ -223,6 +227,15 @@ ACPI_STATUS
 AcpiGetTableByIndex (
     ACPI_NATIVE_UINT        TableIndex,
     ACPI_TABLE_HEADER       **OutTable);
+
+ACPI_STATUS
+AcpiInstallTableHandler (
+    ACPI_TABLE_HANDLER      Handler,
+    void                    *Context);
+
+ACPI_STATUS
+AcpiRemoveTableHandler (
+    ACPI_TABLE_HANDLER      Handler);
 
 
 /*

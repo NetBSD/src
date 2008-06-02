@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.51.6.1 2008/04/03 12:42:53 mjf Exp $	*/
+/*	$NetBSD: viaide.c,v 1.51.6.2 2008/06/02 13:23:44 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.51.6.1 2008/04/03 12:42:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.51.6.2 2008/06/02 13:23:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -874,7 +874,7 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 		break;
 	default:
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-		    "couldn't map sata regs, unsupportedmaptype (0x%x)\n",
+		    "couldn't map sata regs, unsupported maptype (0x%x)\n",
 		    maptype);
 		return 0;
 	}

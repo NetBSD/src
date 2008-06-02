@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.6 2007/06/30 09:37:56 pooka Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.6.28.1 2008/06/02 13:24:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -33,22 +33,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.6 2007/06/30 09:37:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.6.28.1 2008/06/02 13:24:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 
 #include <fs/ntfs/ntfs.h>
 #include <fs/ntfs/ntfs_inode.h>
 #include <fs/ntfs/ntfs_ihash.h>
-
-MALLOC_JUSTDEFINE(M_NTFSNTHASH, "NTFS nthash", "NTFS ntnode hash tables");
 
 /*
  * Structures associated with inode cacheing.
@@ -67,8 +64,7 @@ ntfs_nthashinit()
 {
 	mutex_init(&ntfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ntfs_nthash_lock, MUTEX_DEFAULT, IPL_NONE);
-	ntfs_nthashtbl = HASHINIT(desiredvnodes, M_NTFSNTHASH, M_WAITOK,
-	    &ntfs_nthash);
+	ntfs_nthashtbl = hashinit(desiredvnodes, HASH_LIST, true, &ntfs_nthash);
 }
 
 /*
@@ -83,7 +79,7 @@ ntfs_nthashreinit()
 	u_long oldmask, mask, val;
 	int i;
 
-	hash = HASHINIT(desiredvnodes, M_NTFSNTHASH, M_WAITOK, &mask);
+	hash = hashinit(desiredvnodes, HASH_LIST, true, &mask);
 
 	mutex_enter(&ntfs_nthash_lock);
 	oldhash = ntfs_nthashtbl;
@@ -98,7 +94,7 @@ ntfs_nthashreinit()
 		}
 	}
 	mutex_exit(&ntfs_nthash_lock);
-	hashdone(oldhash, M_NTFSNTHASH);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
@@ -108,7 +104,7 @@ ntfs_nthashreinit()
 void
 ntfs_nthashdone()
 {
-	hashdone(ntfs_nthashtbl, M_NTFSNTHASH);
+	hashdone(ntfs_nthashtbl, HASH_LIST, ntfs_nthash);
 	mutex_destroy(&ntfs_hashlock);
 	mutex_destroy(&ntfs_nthash_lock);
 }

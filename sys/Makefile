@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2007/09/24 14:19:36 pooka Exp $
+#	$NetBSD: Makefile,v 1.65.18.1 2008/06/02 13:21:43 mjf Exp $
 
 SUBDIR=	altq arch compat dev fs miscfs \
 	net net80211 netatalk netbt netipsec netinet netinet6 \
@@ -11,7 +11,7 @@ SUBDIR+=	rump
 .endif
 
 .if (${MACHINE} != "evbppc")
-SUBDIR+=lkm
+SUBDIR+=lkm modules
 .endif
 
 # Speedup stubs for some subtrees that don't need to run these rules

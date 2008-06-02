@@ -1,2 +1,3 @@
-# $NetBSD: md.amd64,v 1.2 2004/01/11 09:59:49 lukem Exp $
+# $NetBSD: md.amd64,v 1.2.36.1 2008/06/02 13:21:17 mjf Exp $
+./boot.cfg					etc-sys-etc
 ./etc/ttyaction					etc-sys-etc

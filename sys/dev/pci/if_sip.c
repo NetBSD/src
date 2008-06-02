@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.127.6.1 2008/04/03 12:42:51 mjf Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.127.6.2 2008/06/02 13:23:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -80,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.127.6.1 2008/04/03 12:42:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.127.6.2 2008/06/02 13:23:40 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -799,7 +792,7 @@ sipcom_dp83820_attach(struct sip_softc *sc, struct pci_attach_args *pa)
 	if (bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_PTSCR) &
 	    PTSCR_EELOAD_EN) {
 		printf("%s: timeout loading configuration from EEPROM\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		return;
 	}
 
@@ -807,7 +800,7 @@ sipcom_dp83820_attach(struct sip_softc *sc, struct pci_attach_args *pa)
 
 	reg = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG);
 	if (reg & CFG_PCI64_DET) {
-		printf("%s: 64-bit PCI slot detected", sc->sc_dev.dv_xname);
+		printf("%s: 64-bit PCI slot detected", device_xname(&sc->sc_dev));
 		/*
 		 * Check to see if this card is 64-bit.  If so, enable 64-bit
 		 * data transfers.
@@ -837,7 +830,7 @@ sipcom_dp83820_attach(struct sip_softc *sc, struct pci_attach_args *pa)
 
 	if (reg & (CFG_TBI_EN|CFG_EXT_125)) {
 		const char *sep = "";
-		printf("%s: using ", sc->sc_dev.dv_xname);
+		printf("%s: using ", device_xname(&sc->sc_dev));
 		if (reg & CFG_EXT_125) {
 			sc->sc_cfg |= CFG_EXT_125;
 			printf("%s125MHz clock", sep);
@@ -998,7 +991,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	int i, rseg, error;
 	const struct sip_product *sip;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	pcireg_t pmreg;
+	pcireg_t csr;
 	pcireg_t memtype;
 	bus_size_t tx_dmamap_size;
 	int ntxsegs_alloc;
@@ -1078,7 +1071,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sz = iosz;
 	} else {
 		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		return;
 	}
 
@@ -1088,17 +1081,16 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	 * Make sure bus mastering is enabled.  Also make sure
 	 * Write/Invalidate is enabled if we're allowed to use it.
 	 */
-	pmreg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
-		pmreg |= PCI_COMMAND_INVALIDATE_ENABLE;
+		csr |= PCI_COMMAND_INVALIDATE_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pmreg | PCI_COMMAND_MASTER_ENABLE);
+	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) &&
-	    error != EOPNOTSUPP) {
-		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
-		    error);
+	error = pci_activate(pa->pa_pc, pa->pa_tag, self, pci_activate_null);
+	if (error != 0 && error != EOPNOTSUPP) {
+		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n", error);
 		return;
 	}
 
@@ -1106,20 +1098,19 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, sipcom_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return sipcom_do_detach(self, SIP_ATTACH_MAP);
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	SIMPLEQ_INIT(&sc->sc_txfreeq);
 	SIMPLEQ_INIT(&sc->sc_txdirtyq);
@@ -1131,32 +1122,32 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct sip_control_data), PAGE_SIZE, 0, &sc->sc_seg, 1,
 	    &rseg, 0)) != 0) {
-		printf("%s: unable to allocate control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to allocate control data, error = %d\n",
+		    error);
 		return sipcom_do_detach(self, SIP_ATTACH_INTR);
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_seg, rseg,
 	    sizeof(struct sip_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT|BUS_DMA_NOCACHE)) != 0) {
-		printf("%s: unable to map control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to map control data, error = %d\n",
+		    error);
 		sipcom_do_detach(self, SIP_ATTACH_ALLOC_MEM);
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct sip_control_data), 1,
 	    sizeof(struct sip_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		printf("%s: unable to create control data DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create control data DMA map, "
+		    "error = %d\n", error);
 		sipcom_do_detach(self, SIP_ATTACH_MAP_MEM);
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct sip_control_data), NULL,
 	    0)) != 0) {
-		printf("%s: unable to load control data DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to load control data DMA map, error = %d\n",
+		    error);
 		sipcom_do_detach(self, SIP_ATTACH_CREATE_MAP);
 	}
 
@@ -1167,8 +1158,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, tx_dmamap_size,
 		    sc->sc_parm->p_ntxsegs, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			printf("%s: unable to create tx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(&sc->sc_dev, "unable to create tx DMA map %d, "
+			    "error = %d\n", i, error);
 			sipcom_do_detach(self, SIP_ATTACH_CREATE_TXMAP);
 		}
 	}
@@ -1179,8 +1170,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < sc->sc_parm->p_nrxdesc; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			printf("%s: unable to create rx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(&sc->sc_dev, "unable to create rx DMA map %d, "
+			    "error = %d\n", i, error);
 			sipcom_do_detach(self, SIP_ATTACH_CREATE_RXMAP);
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
@@ -1212,7 +1203,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 
 	(*sip->sip_variant->sipv_read_macaddr)(sc, pa, enaddr);
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
 	    ether_sprintf(enaddr));
 
 	/*
@@ -1253,7 +1244,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	ifp = &sc->sc_ethercom.ec_if;
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
@@ -1296,7 +1287,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_prev.is_vlan = VLAN_ATTACHED(&(sc)->sc_ethercom);
 	sc->sc_prev.if_capenable = ifp->if_capenable;
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 	    RND_TYPE_NET, 0);
 #endif
 
@@ -1337,39 +1328,39 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	 * Attach event counters.
 	 */
 	evcnt_attach_dynamic(&sc->sc_ev_txsstall, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txsstall");
+	    NULL, device_xname(&sc->sc_dev), "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txdstall");
+	    NULL, device_xname(&sc->sc_dev), "txdstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txforceintr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "txforceintr");
+	    NULL, device_xname(&sc->sc_dev), "txforceintr");
 	evcnt_attach_dynamic(&sc->sc_ev_txdintr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "txdintr");
+	    NULL, device_xname(&sc->sc_dev), "txdintr");
 	evcnt_attach_dynamic(&sc->sc_ev_txiintr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "txiintr");
+	    NULL, device_xname(&sc->sc_dev), "txiintr");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "rxintr");
+	    NULL, device_xname(&sc->sc_dev), "rxintr");
 	evcnt_attach_dynamic(&sc->sc_ev_hiberr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "hiberr");
+	    NULL, device_xname(&sc->sc_dev), "hiberr");
 	if (!sc->sc_gigabit) {
 		evcnt_attach_dynamic(&sc->sc_ev_rxpause, EVCNT_TYPE_INTR,
-		    NULL, sc->sc_dev.dv_xname, "rxpause");
+		    NULL, device_xname(&sc->sc_dev), "rxpause");
 	} else {
 		evcnt_attach_dynamic(&sc->sc_ev_rxpause, EVCNT_TYPE_MISC,
-		    NULL, sc->sc_dev.dv_xname, "rxpause");
+		    NULL, device_xname(&sc->sc_dev), "rxpause");
 		evcnt_attach_dynamic(&sc->sc_ev_txpause, EVCNT_TYPE_MISC,
-		    NULL, sc->sc_dev.dv_xname, "txpause");
+		    NULL, device_xname(&sc->sc_dev), "txpause");
 		evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,
-		    NULL, sc->sc_dev.dv_xname, "rxipsum");
+		    NULL, device_xname(&sc->sc_dev), "rxipsum");
 		evcnt_attach_dynamic(&sc->sc_ev_rxtcpsum, EVCNT_TYPE_MISC,
-		    NULL, sc->sc_dev.dv_xname, "rxtcpsum");
+		    NULL, device_xname(&sc->sc_dev), "rxtcpsum");
 		evcnt_attach_dynamic(&sc->sc_ev_rxudpsum, EVCNT_TYPE_MISC,
-		    NULL, sc->sc_dev.dv_xname, "rxudpsum");
+		    NULL, device_xname(&sc->sc_dev), "rxudpsum");
 		evcnt_attach_dynamic(&sc->sc_ev_txipsum, EVCNT_TYPE_MISC,
-		    NULL, sc->sc_dev.dv_xname, "txipsum");
+		    NULL, device_xname(&sc->sc_dev), "txipsum");
 		evcnt_attach_dynamic(&sc->sc_ev_txtcpsum, EVCNT_TYPE_MISC,
-		    NULL, sc->sc_dev.dv_xname, "txtcpsum");
+		    NULL, device_xname(&sc->sc_dev), "txtcpsum");
 		evcnt_attach_dynamic(&sc->sc_ev_txudpsum, EVCNT_TYPE_MISC,
-		    NULL, sc->sc_dev.dv_xname, "txudpsum");
+		    NULL, device_xname(&sc->sc_dev), "txudpsum");
 	}
 #endif /* SIP_EVENT_COUNTERS */
 
@@ -1501,7 +1492,7 @@ sipcom_start(struct ifnet *ifp)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 				break;
 			}
 			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
@@ -1509,7 +1500,7 @@ sipcom_start(struct ifnet *ifp)
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					printf("%s: unable to allocate Tx "
-					    "cluster\n", sc->sc_dev.dv_xname);
+					    "cluster\n", device_xname(&sc->sc_dev));
 					m_freem(m);
 					break;
 				}
@@ -1520,7 +1511,7 @@ sipcom_start(struct ifnet *ifp)
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", sc->sc_dev.dv_xname, error);
+				    "error = %d\n", device_xname(&sc->sc_dev), error);
 				break;
 			}
 		} else if (error == EFBIG) {
@@ -1531,7 +1522,7 @@ sipcom_start(struct ifnet *ifp)
 			 * to a single buffer.
 			 */
 			printf("%s: Tx packet consumes too many "
-			    "DMA segments, dropping...\n", sc->sc_dev.dv_xname);
+			    "DMA segments, dropping...\n", device_xname(&sc->sc_dev));
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			m_freem(m0);
 			continue;
@@ -1715,14 +1706,14 @@ sipcom_watchdog(struct ifnet *ifp)
 	sipcom_txintr(sc);
 
 	if (sc->sc_txfree != sc->sc_ntxdesc) {
-		printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+		printf("%s: device timeout\n", device_xname(&sc->sc_dev));
 		ifp->if_oerrors++;
 
 		/* Reset the interface. */
 		(void) sipcom_init(ifp);
 	} else if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: recovered from device timeout\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 
 	/* Try to get more packets going. */
 	sipcom_start(ifp);
@@ -1840,6 +1831,9 @@ sipcom_intr(void *arg)
 	u_int32_t isr;
 	int handled = 0;
 
+	if (!device_is_active(&sc->sc_dev))
+		return 0;
+
 	/* Disable interrupts. */
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IER, 0);
 
@@ -1864,14 +1858,14 @@ sipcom_intr(void *arg)
 
 			if (isr & ISR_RXORN) {
 				printf("%s: receive FIFO overrun\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 
 				/* XXX adjust rx_drain_thresh? */
 			}
 
 			if (isr & ISR_RXIDLE) {
 				printf("%s: receive ring overrun\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 
 				/* Get the receive process going again. */
 				bus_space_write_4(sc->sc_st, sc->sc_sh,
@@ -1899,7 +1893,7 @@ sipcom_intr(void *arg)
 				    : OTHER_SIP_TXFIFO_SIZE;
 
 				printf("%s: transmit FIFO underrun",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 				thresh = sc->sc_tx_drain_thresh + 1;
 				if (thresh <= __SHIFTOUT_MASK(sc->sc_bits.b_txcfg_drth_mask)
 				&& (thresh * 32) <= (txfifo_size -
@@ -1938,7 +1932,7 @@ sipcom_intr(void *arg)
 				if ((isr & (bit)) != 0) {		\
 					if ((ifp->if_flags & IFF_DEBUG) != 0) \
 						printf("%s: %s\n",	\
-						    sc->sc_dev.dv_xname, str); \
+						    device_xname(&sc->sc_dev), str); \
 					want_init = 1;			\
 				}					\
 			} while (/*CONSTCOND*/0)
@@ -2018,10 +2012,10 @@ sipcom_txintr(struct sip_softc *sc)
 			if (ifp->if_flags & IFF_DEBUG) {
 				if (cmdsts & CMDSTS_Tx_ED)
 					printf("%s: excessive deferral\n",
-					    sc->sc_dev.dv_xname);
+					    device_xname(&sc->sc_dev));
 				if (cmdsts & CMDSTS_Tx_EC)
 					printf("%s: excessive collisions\n",
-					    sc->sc_dev.dv_xname);
+					    device_xname(&sc->sc_dev));
 			}
 		} else {
 			/* Packet was transmitted successfully. */
@@ -2144,12 +2138,12 @@ gsip_rxintr(struct sip_softc *sc)
 			    (cmdsts & CMDSTS_Rx_RXO) == 0) {
 				/* Receive overrun handled elsewhere. */
 				printf("%s: receive descriptor error\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 			}
 #define	PRINTERR(bit, str)						\
 			if ((ifp->if_flags & IFF_DEBUG) != 0 &&		\
 			    (cmdsts & (bit)) != 0)			\
-				printf("%s: %s\n", sc->sc_dev.dv_xname, str)
+				printf("%s: %s\n", device_xname(&sc->sc_dev), str)
 			PRINTERR(CMDSTS_Rx_RUNT, "runt packet");
 			PRINTERR(CMDSTS_Rx_ISE, "invalid symbol error");
 			PRINTERR(CMDSTS_Rx_CRCE, "CRC error");
@@ -2314,12 +2308,12 @@ sip_rxintr(struct sip_softc *sc)
 			    (cmdsts & CMDSTS_Rx_RXO) == 0) {
 				/* Receive overrun handled elsewhere. */
 				printf("%s: receive descriptor error\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 			}
 #define	PRINTERR(bit, str)						\
 			if ((ifp->if_flags & IFF_DEBUG) != 0 &&		\
 			    (cmdsts & (bit)) != 0)			\
-				printf("%s: %s\n", sc->sc_dev.dv_xname, str)
+				printf("%s: %s\n", device_xname(&sc->sc_dev), str)
 			PRINTERR(CMDSTS_Rx_RUNT, "runt packet");
 			PRINTERR(CMDSTS_Rx_ISE, "invalid symbol error");
 			PRINTERR(CMDSTS_Rx_CRCE, "CRC error");
@@ -2487,7 +2481,7 @@ sipcom_reset(struct sip_softc *sc)
 	}
 
 	if (i == SIP_TIMEOUT) {
-		printf("%s: reset failed to complete\n", sc->sc_dev.dv_xname);
+		printf("%s: reset failed to complete\n", device_xname(&sc->sc_dev));
 		return false;
 	}
 
@@ -2639,7 +2633,7 @@ sipcom_init(struct ifnet *ifp)
 			if ((error = sipcom_add_rxbuf(sc, i)) != 0) {
 				printf("%s: unable to allocate or map rx "
 				    "buffer %d, error = %d\n",
-				    sc->sc_dev.dv_xname, i, error);
+				    device_xname(&sc->sc_dev), i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -2721,7 +2715,7 @@ sipcom_init(struct ifnet *ifp)
 	      IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx|
 	      IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx))) {
 		printf("%s: Checksum offloading does not work if MTU > 8109 - "
-		       "disabled.\n", sc->sc_dev.dv_xname);
+		       "disabled.\n", device_xname(&sc->sc_dev));
 		ifp->if_capenable &=
 		    ~(IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx|
 		     IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx|
@@ -2804,7 +2798,7 @@ sipcom_init(struct ifnet *ifp)
 
  out:
 	if (error)
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		printf("%s: interface not running\n", device_xname(&sc->sc_dev));
 	return (error);
 }
 
@@ -2870,12 +2864,12 @@ sipcom_stop(struct ifnet *ifp, int disable)
 		    (le32toh(*sipd_cmdsts(sc, &sc->sc_txdescs[txs->txs_lastdesc])) &
 		     CMDSTS_INTR) == 0)
 			printf("%s: sip_stop: last descriptor does not "
-			    "have INTR bit set\n", sc->sc_dev.dv_xname);
+			    "have INTR bit set\n", device_xname(&sc->sc_dev));
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 #ifdef DIAGNOSTIC
 		if (txs->txs_mbuf == NULL) {
 			printf("%s: dirty txsoft with no mbuf chain\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			panic("sip_stop");
 		}
 #endif
@@ -2899,7 +2893,7 @@ sipcom_stop(struct ifnet *ifp, int disable)
 	if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 	    (cmdsts & CMDSTS_INTR) == 0 && sc->sc_txfree != sc->sc_ntxdesc)
 		printf("%s: sip_stop: no INTR bits set in dirty tx "
-		    "descriptors\n", sc->sc_dev.dv_xname);
+		    "descriptors\n", device_xname(&sc->sc_dev));
 }
 
 /*
@@ -3005,7 +2999,7 @@ sipcom_add_rxbuf(struct sip_softc *sc, int idx)
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
-		    sc->sc_dev.dv_xname, idx, error);
+		    device_xname(&sc->sc_dev), idx, error);
 		panic("%s", __func__);		/* XXX */
 	}
 
@@ -3750,7 +3744,7 @@ sipcom_dp83820_read_macaddr(struct sip_softc *sc,
 
 	if (cksum != match)
 		printf("%s: Checksum (%x) mismatch (%x)",
-		    sc->sc_dev.dv_xname, cksum, match);
+		    device_xname(&sc->sc_dev), cksum, match);
 
 	enaddr[0] = eeprom_data[SIP_DP83820_EEPROM_PMATCH2 / 2] & 0xff;
 	enaddr[1] = eeprom_data[SIP_DP83820_EEPROM_PMATCH2 / 2] >> 8;
@@ -3899,7 +3893,7 @@ sipcom_dp83815_read_macaddr(struct sip_softc *sc,
 	}
 	if (cksum != match) {
 		printf("%s: Checksum (%x) mismatch (%x)",
-		    sc->sc_dev.dv_xname, cksum, match);
+		    device_xname(&sc->sc_dev), cksum, match);
 	}
 
 	/*

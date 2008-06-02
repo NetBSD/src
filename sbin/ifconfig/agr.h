@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.h,v 1.1 2005/03/18 11:11:51 yamt Exp $	*/
+/*	$NetBSD: agr.h,v 1.1.20.1 2008/06/02 13:21:22 mjf Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -25,7 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include "parse.h"
 
-void agraddport(const char *, int);
-void agrremport(const char *, int);
-void agr_status(void);
+extern struct pkw agr;
+
+int agrsetport(prop_dictionary_t, prop_dictionary_t);
+void agr_status(prop_dictionary_t, prop_dictionary_t);

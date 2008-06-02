@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.140.6.1 2008/04/03 12:42:23 mjf Exp $
+# $NetBSD: GENERIC,v 1.140.6.2 2008/06/02 13:22:34 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.140.6.1 $"
+#ident		"GENERIC-$Revision: 1.140.6.2 $"
 
 maxusers	32
 
@@ -69,7 +69,8 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0,
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -218,7 +219,7 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 # ISA Plug-and-Play bus support
 #isapnp0	at isa?
 
-# on-board I/O for IBM Personal Power Series 830 IDE controller
+# PnPbus bus support (required)
 pnpbus0	at mainbus0
 
 # Console Devices
@@ -310,8 +311,8 @@ pciide*		at pci? dev ? function ? flags 0x0000
 hptide*		at pci? dev ? function ?
 slide*		at pci? dev ? function ?
 
-#fdc0 at pnpbus?	# standard ISA floppy controller
-#fd0 at fdc0 drive ?
+fdc0 at pnpbus?	# standard ISA floppy controller
+fd0 at fdc0 drive ?
 
 # ISA Plug-and-Play IDE controllers
 #wdc*	at isapnp?
@@ -345,10 +346,6 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # Miscellaneous mass storage devices
-
-# ISA Floppy
-#fdc0 at isa? port 0x3f0 irq 6 drq 2	# standard ISA floppy controller
-#fd0 at fdc0 drive ?
 
 # Network Interfaces
 
@@ -496,10 +493,11 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # ISA Plug-and-Play audio devices
 #wss*	at isapnp?			# CS4232
+#wss0    at isa? port 0x530 irq 5 drq 1 drq2 0
 
 # Audio support
 #audio*	at uaudio?
-#audio*	at wss?
+#audio*	at audiocs?
 
 # MIDI support
 #midi*	at pcppi?		# MIDI interface to the PC speaker

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.18 2007/10/19 11:59:55 ad Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.18.16.1 2008/06/02 13:23:24 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.18 2007/10/19 11:59:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.18.16.1 2008/06/02 13:23:24 mjf Exp $");
 
 #include "rnd.h"
 
@@ -314,8 +307,8 @@ ld_icp_intr(struct icp_ccb *ic)
 	icp = (struct icp_softc *)device_parent(&sc->sc_ld.sc_dv);
 
 	if (ic->ic_status != ICP_S_OK) {
-		printf("%s: request failed; status=0x%04x\n",
-		    ic->ic_dv->dv_xname, ic->ic_status);
+		aprint_error_dev(ic->ic_dv, "request failed; status=0x%04x\n",
+		    ic->ic_status);
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.22 2006/03/29 04:16:45 thorpej Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.22.62.1 2008/06/02 13:22:22 mjf Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.22 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.22.62.1 2008/06/02 13:22:22 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,20 +74,20 @@ __KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.22 2006/03/29 04:16:45 thorpej Exp $"
 #define	SBC_DMA_OFS_DUO2	0x02000
 #define	SBC_HSK_OFS_DUO2	0x04000
 
-static int	sbc_obio_match(struct device *, struct cfdata *, void *);
-static void	sbc_obio_attach(struct device *, struct device *, void *);
+static int	sbc_obio_match(device_t, cfdata_t, void *);
+static void	sbc_obio_attach(device_t, device_t, void *);
 
 void	sbc_intr_enable(struct ncr5380_softc *);
 void	sbc_intr_disable(struct ncr5380_softc *);
 void	sbc_obio_clrintr(struct ncr5380_softc *);
 
-CFATTACH_DECL(sbc_obio, sizeof(struct sbc_softc),
+CFATTACH_DECL_NEW(sbc_obio, sizeof(struct sbc_softc),
     sbc_obio_match, sbc_obio_attach, NULL, NULL);
 
 static int
-sbc_obio_match(struct device *parent, struct cfdata *cf, void *aux)
+sbc_obio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
+	struct obio_attach_args *oa = aux;
 
 	switch (current_mac_model->machineid) {
 	case MACH_MACIIFX:	/* Note: the IIfx isn't (yet) supported. */
@@ -112,16 +112,17 @@ sbc_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sbc_obio_attach(struct device *parent, struct device *self, void *aux)
+sbc_obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct sbc_softc *sc = (struct sbc_softc *) self;
-	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;
-	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
+	struct sbc_softc *sc = device_private(self);
+	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
+	struct obio_attach_args *oa = aux;
 	char bits[64];
 	extern vaddr_t SCSIBase;
 
+	ncr_sc->sc_dev = self;
 	/* Pull in the options flags. */ 
-	sc->sc_options = ((device_cfdata(&ncr_sc->sc_dev)->cf_flags |
+	sc->sc_options = ((device_cfdata(self)->cf_flags |
 			   sbc_options) & SBC_OPTIONS_MASK);
 
 	/*
@@ -215,9 +216,9 @@ sbc_obio_attach(struct device *parent, struct device *self, void *aux)
 		ncr_sc->sc_no_disconnect = 0xff;
 
 	if (sc->sc_options)
-		printf(": options=%s", bitmask_snprintf(sc->sc_options,
+		aprint_normal(": options=%s", bitmask_snprintf(sc->sc_options,
 		    SBC_OPTIONS_BITS, bits, sizeof(bits)));
-	printf("\n");
+	aprint_normal("\n");
 
 	if (sc->sc_options & (SBC_INTR|SBC_RESELECT)) {
 		/* Enable SCSI interrupts through VIA2 */
@@ -226,8 +227,7 @@ sbc_obio_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef SBC_DEBUG
 	if (sbc_debug)
-		printf("%s: softc=%p regs=%p\n", ncr_sc->sc_dev.dv_xname,
-		    sc, sc->sc_regs);
+		aprint_debug_dev(self, "softc=%p regs=%p\n", sc, sc->sc_regs);
 #endif
 
 	ncr_sc->sc_channel.chan_id = 7;

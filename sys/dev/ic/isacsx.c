@@ -1,4 +1,4 @@
-/* $NetBSD: isacsx.c,v 1.5 2007/10/19 11:59:54 ad Exp $	*/
+/* $NetBSD: isacsx.c,v 1.5.16.1 2008/06/02 13:23:23 mjf Exp $	*/
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
  * Copyright (c) 2001 Gary Jennejohn. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_ifpi2_isac.c - i4b Fritz PCI Version 2 ISACSX handler
  *	--------------------------------------------
  *
- *	$Id: isacsx.c,v 1.5 2007/10/19 11:59:54 ad Exp $
+ *	$Id: isacsx.c,v 1.5.16.1 2008/06/02 13:23:23 mjf Exp $
  *
  * $FreeBSD: src/sys/i4b/layer1/ifpi2/i4b_ifpi2_isacsx.c,v 1.3 2002/09/02 00:52:07 brooks Exp $
  *
@@ -37,7 +37,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isacsx.c,v 1.5 2007/10/19 11:59:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isacsx.c,v 1.5.16.1 2008/06/02 13:23:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,13 +100,13 @@ isic_isacsx_irq(struct isic_softc *sc, int ista)
 	register u_char c = 0;
 	register u_char istad = 0;
 
-	NDBGL1(L1_F_MSG, "%s: ista = 0x%02x", sc->sc_dev.dv_xname, ista);
+	NDBGL1(L1_F_MSG, "%s: ista = 0x%02x", device_xname(&sc->sc_dev), ista);
 
 	/* was it an HDLC interrupt ? */
 	if (ista & ISACSX_ISTA_ICD)
 	{
 		istad = ISAC_READ(I_ISTAD);
-		NDBGL1(L1_F_MSG, "%s: istad = 0x%02x", sc->sc_dev.dv_xname, istad);
+		NDBGL1(L1_F_MSG, "%s: istad = 0x%02x", device_xname(&sc->sc_dev), istad);
 
 		if(istad & (ISACSX_ISTAD_RFO|ISACSX_ISTAD_XMR|ISACSX_ISTAD_XDU))
 		{
@@ -132,29 +132,29 @@ isic_isacsx_irq(struct isic_softc *sc, int ista)
 			if(!(rsta & ISACSX_RSTAD_VFR))	/* VFR error */
 			{
 				error++;
-				NDBGL1(L1_I_ERR, "%s: Frame not valid error", sc->sc_dev.dv_xname);
+				NDBGL1(L1_I_ERR, "%s: Frame not valid error", device_xname(&sc->sc_dev));
 			}
 
 			if(!(rsta & ISACSX_RSTAD_CRC))	/* CRC error */
 			{
 				error++;
-				NDBGL1(L1_I_ERR, "%s: CRC error", sc->sc_dev.dv_xname);
+				NDBGL1(L1_I_ERR, "%s: CRC error", device_xname(&sc->sc_dev));
 			}
 
 			if(rsta & ISACSX_RSTAD_RDO)	/* ReceiveDataOverflow */
 			{
 				error++;
-				NDBGL1(L1_I_ERR, "%s: Data Overrun error", sc->sc_dev.dv_xname);
+				NDBGL1(L1_I_ERR, "%s: Data Overrun error", device_xname(&sc->sc_dev));
 			}
 
 			if(rsta & ISACSX_RSTAD_RAB)	/* ReceiveABorted */
 			{
 				error++;
-				NDBGL1(L1_I_ERR, "%s: Receive Aborted error", sc->sc_dev.dv_xname);
+				NDBGL1(L1_I_ERR, "%s: Receive Aborted error", device_xname(&sc->sc_dev));
 			}
 
 			if(error == 0)
-				NDBGL1(L1_I_ERR, "%s: RME unknown error, RSTAD = 0x%02x!", sc->sc_dev.dv_xname, rsta);
+				NDBGL1(L1_I_ERR, "%s: RME unknown error, RSTAD = 0x%02x!", device_xname(&sc->sc_dev), rsta);
 
 			i4b_Dfreembuf(sc->sc_ibuf);
 
@@ -645,7 +645,7 @@ isic_isacsx_recover(struct isic_softc *sc)
 	 *      prints some stuff that might be helpful.
 	 */
 
-	printf("%s: isic_isacsx_recover\n", sc->sc_dev.dv_xname);
+	printf("%s: isic_isacsx_recover\n", device_xname(&sc->sc_dev));
 	/* get isac irq status */
 
 	byte = ISAC_READ(I_ISTAD);

@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.65 2007/06/08 17:56:21 wiz Exp $
+$NetBSD: isapnpdevs,v 1.65.28.1 2008/06/02 13:23:33 mjf Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@ $NetBSD: isapnpdevs,v 1.65 2007/06/08 17:56:21 wiz Exp $
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,6 +39,7 @@ driver	atppc	AT Parallel Port
 driver	com	National Semiconductor Serial
 driver	cs	Cirrus Logic Crystal CS89x0 Ethernet
 driver	ep	3Com 3CXXX Ethernet
+driver	esp	Symbios SYM53C416 SCSI
 driver	ess	ESS Audio Drive
 driver	fmv	Fujitsu FMV-18x Ethernet
 driver	joy	Generic Joystick
@@ -133,6 +127,11 @@ devlogic	ep	TCM5095		0	3Com 3c509B-5
 devlogic	ep	TCM5098		0	3Com 3c509B-8
 devlogic	ep	FAR0002		0	Farallon EtherWave ISA
 devcompat	ep	PNP80F8		0	Farallon EtherWave ISA
+
+/*
+ * esp
+ */
+devlogic	esp	SLI4163		0	Symbios SYM53C416
 
 /*
  * ess

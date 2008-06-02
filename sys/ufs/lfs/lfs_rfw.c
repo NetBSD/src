@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.9 2008/01/02 11:49:11 ad Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.9.6.1 2008/06/02 13:24:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.9 2008/01/02 11:49:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.9.6.1 2008/06/02 13:24:36 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -322,7 +315,8 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 	 * Get the inode, update times and perms.
 	 * DO NOT update disk blocks, we do that separately.
 	 */
-	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_ibsize, cred, &dbp);
+	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_ibsize,
+	    cred, 0, &dbp);
 	if (error) {
 		DLOG((DLOG_RF, "update_inoblk: bread returned %d\n", error));
 		return error;
@@ -421,7 +415,8 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	}
 
 	/* Read in the segment summary */
-	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_sumsize, cred, &bp);
+	error = bread(devvp, fsbtodb(fs, offset), fs->lfs_sumsize,
+	    cred, 0, &bp);
 	if (error)
 		return -1;
 
@@ -494,7 +489,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			if (flags & CHECK_CKSUM) {
 				/* Read in the head and add to the buffer */
 				error = bread(devvp, fsbtodb(fs, offset), fs->lfs_bsize,
-					      cred, &dbp);
+					      cred, 0, &dbp);
 				if (error) {
 					offset = -1;
 					goto err2;
@@ -520,7 +515,8 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 			if (j == fip->fi_nblocks - 1)
 				size = fip->fi_lastlength;
 			if (flags & CHECK_CKSUM) {
-				error = bread(devvp, fsbtodb(fs, offset), size, cred, &dbp);
+				error = bread(devvp, fsbtodb(fs, offset), size,
+				    cred, 0, &dbp);
 				if (error) {
 					offset = -1;
 					goto err2;

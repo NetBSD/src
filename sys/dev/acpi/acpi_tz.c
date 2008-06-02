@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.32.10.1 2008/04/03 12:42:37 mjf Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.32.10.2 2008/06/02 13:23:12 mjf Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.32.10.1 2008/04/03 12:42:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.32.10.2 2008/06/02 13:23:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,6 +347,7 @@ acpitz_switch_cooler(ACPI_OBJECT *obj, void *arg)
 		pwr_state = ACPI_STATE_D3;
 
 	switch(obj->Type) {
+	case ACPI_TYPE_LOCAL_REFERENCE:
 	case ACPI_TYPE_ANY:
 		cooler = obj->Reference.Handle;
 		break;

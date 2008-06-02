@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.12 2007/12/07 19:46:19 elad Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.12.12.1 2008/06/02 13:24:29 mjf Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.12 2007/12/07 19:46:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.12.12.1 2008/06/02 13:24:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,10 @@ static void natm_init(void);
 struct npcblist natm_pcbs = LIST_HEAD_INITIALIZER(natm_pcbs);
 struct	ifqueue natmintrq;       	/* natm packet input queue */
 int	natmqmaxlen = IFQ_MAXLEN;	/* max # of packets on queue */
+
+PR_WRAP_USRREQ(natm_usrreq)
+
+#define	natm_usrreq	natm_usrreq_wrapper
 
 const struct protosw natmsw[] = {
 { .pr_type = SOCK_STREAM,

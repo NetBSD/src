@@ -1,7 +1,7 @@
-/*	$NetBSD: hil_gpib.c,v 1.6 2006/03/29 06:33:50 thorpej Exp $	*/
+/*	$NetBSD: hil_gpib.c,v 1.6.58.1 2008/06/02 13:23:16 mjf Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.6 2006/03/29 06:33:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.6.58.1 2008/06/02 13:23:16 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ hilattach(parent, self, aux)
 
 	if (gpibregister(sc->sc_ic, sc->sc_address, hilcallback, sc,
 	    &sc->sc_hdl)) {
-		printf("%s: can't register callback\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't register callback\n");
 		return;
 	}
 

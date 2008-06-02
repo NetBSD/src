@@ -1,4 +1,4 @@
-#	$NetBSD: std.tsarm,v 1.4 2008/01/27 12:37:12 chris Exp $
+#	$NetBSD: std.tsarm,v 1.4.6.1 2008/06/02 13:22:01 mjf Exp $
 #
 # standard NetBSD/evbarm for TS7200 options
 
@@ -20,6 +20,7 @@ options		HZ=64
 
 
 makeoptions	BOARDTYPE="tsarm"
+options 	KERNEL_EXT_BASE=0xc0000000
 makeoptions	LOADADDRESS="0xc0200000"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.tsarm"
 options 	ARM_INTR_IMPL="<arch/arm/ep93xx/ep93xx_intr.h>"

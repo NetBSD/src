@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.14 2007/11/19 18:51:50 ad Exp $	*/
+/*	$NetBSD: spif.c,v 1.14.14.1 2008/06/02 13:23:50 mjf Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.14 2007/11/19 18:51:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.14.14.1 2008/06/02 13:23:50 mjf Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -391,7 +391,7 @@ stty_open(dev, flags, mode, l)
 		while (!ISSET(tp->t_cflag, CLOCAL) &&
 		    !ISSET(tp->t_state, TS_CARR_ON)) {
 			int error;
-			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+			error = ttysleep(tp, &tp->t_rawcv, true, 0);
 			if (error != 0) {
 				mutex_spin_exit(&tty_lock);
 				return (error);
@@ -976,7 +976,7 @@ spif_softintr(vsc)
 
 			if (ISSET(flags, STTYF_RING_OVERFLOW)) {
 				log(LOG_WARNING, "%s-%x: ring overflow\n",
-					stc->sc_dev.dv_xname, i);
+					device_xname(&stc->sc_dev), i);
 				r = 1;
 			}
 
@@ -1001,7 +1001,7 @@ stty_write_ccr(sc, val)
 	while (STC_READ(sc, STC_CCR) && tries--)
 		/*EMPTY*/;
 	if (tries == 0)
-		printf("%s: ccr timeout\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "ccr timeout\n");
 	STC_WRITE(sc, STC_CCR, val);
 }
 

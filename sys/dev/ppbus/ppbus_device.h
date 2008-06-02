@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_device.h,v 1.5 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: ppbus_device.h,v 1.5.70.1 2008/06/02 13:23:48 mjf Exp $ */
 
 #ifndef __PPBUS_DEVICE_H
 #define __PPBUS_DEVICE_H
@@ -18,7 +18,7 @@ struct ppbus_context {
 
 /* Parallel Port Bus Device structure. */
 struct ppbus_device_softc {
-        struct device sc_dev;
+        device_t sc_dev;
 
 	u_int16_t mode;			/* current mode of the device */
 	u_int16_t capabilities;		/* ppbus capabilities */

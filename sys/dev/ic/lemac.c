@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.34 2007/10/19 11:59:55 ad Exp $ */
+/* $NetBSD: lemac.c,v 1.34.16.1 2008/06/02 13:23:24 mjf Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.34 2007/10/19 11:59:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.34.16.1 2008/06/02 13:23:24 mjf Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -991,7 +991,7 @@ lemac_ifattach(
 {
     struct ifnet * const ifp = &sc->sc_if;
 
-    strcpy(ifp->if_xname, sc->sc_dv.dv_xname);
+    strlcpy(ifp->if_xname, device_xname(&sc->sc_dv), IFNAMSIZ);
 
     lemac_reset(sc);
 
@@ -1025,7 +1025,7 @@ lemac_ifattach(
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dv.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dv),
 			  RND_TYPE_NET, 0);
 #endif
 

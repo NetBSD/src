@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.17.6.1 2008/04/03 12:42:41 mjf Exp $ */
+/* $NetBSD: mtd803.c,v 1.17.6.2 2008/06/02 13:23:25 mjf Exp $ */
 
 /*-
  *
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -51,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.17.6.1 2008/04/03 12:42:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.17.6.2 2008/06/02 13:23:25 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -149,7 +142,7 @@ mtd_config(struct mtd_softc *sc)
 		sc->eaddr[i] = MTD_READ_1(sc, MTD_PAR0 + i);
 
 	/* Initialize ifnet structure */
-	memcpy(ifp->if_xname, sc->dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(&sc->dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_init = mtd_init;
 	ifp->if_start = mtd_start;
@@ -172,7 +165,7 @@ mtd_config(struct mtd_softc *sc)
 	mii_attach(&sc->dev, &sc->mii, 0xffffffff, MII_PHY_ANY, 0, 0);
 
 	if (LIST_FIRST(&sc->mii.mii_phys) == NULL) {
-		printf("%s: Unable to configure MII\n", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "Unable to configure MII\n");
 		return 1;
 	} else {
 		ifmedia_set(&sc->mii.mii_media, IFM_ETHER | IFM_AUTO);
@@ -187,7 +180,7 @@ mtd_config(struct mtd_softc *sc)
 
 #if NRND > 0
 	/* Initialise random source */
-	rnd_attach_source(&sc->rnd_src, sc->dev.dv_xname, RND_TYPE_NET, 0);
+	rnd_attach_source(&sc->rnd_src, device_xname(&sc->dev), RND_TYPE_NET, 0);
 #endif
 
 	/* Add shutdown hook to reset card when we reboot */
@@ -265,16 +258,14 @@ mtd_init_desc(struct mtd_softc *sc)
 	/* Allocate DMA-safe memory */
 	if ((err = bus_dmamem_alloc(sc->dma_tag, size, MTD_DMA_ALIGN,
 			 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate DMA buffer, error = %d\n",
-			sc->dev.dv_xname, err);
+		aprint_error_dev(&sc->dev, "unable to allocate DMA buffer, error = %d\n", err);
 		return 1;
 	}
 
 	/* Map memory to kernel addressable space */
 	if ((err = bus_dmamem_map(sc->dma_tag, &seg, 1, size,
 		(void **)&sc->desc, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map DMA buffer, error = %d\n",
-			sc->dev.dv_xname, err);
+		aprint_error_dev(&sc->dev, "unable to map DMA buffer, error = %d\n", err);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 1;
 	}
@@ -282,8 +273,7 @@ mtd_init_desc(struct mtd_softc *sc)
 	/* Create a DMA map */
 	if ((err = bus_dmamap_create(sc->dma_tag, size, 1,
 		size, 0, BUS_DMA_NOWAIT, &sc->desc_dma_map)) != 0) {
-		printf("%s: unable to create DMA map, error = %d\n",
-			sc->dev.dv_xname, err);
+		aprint_error_dev(&sc->dev, "unable to create DMA map, error = %d\n", err);
 		bus_dmamem_unmap(sc->dma_tag, (void *)sc->desc, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 1;
@@ -292,8 +282,8 @@ mtd_init_desc(struct mtd_softc *sc)
 	/* Load the DMA map */
 	if ((err = bus_dmamap_load(sc->dma_tag, sc->desc_dma_map, sc->desc,
 		size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load DMA map, error = %d\n",
-			sc->dev.dv_xname, err);
+		aprint_error_dev(&sc->dev, "unable to load DMA map, error = %d\n",
+			err);
 		bus_dmamap_destroy(sc->dma_tag, sc->desc_dma_map);
 		bus_dmamem_unmap(sc->dma_tag, (void *)sc->desc, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
@@ -306,8 +296,8 @@ mtd_init_desc(struct mtd_softc *sc)
 	/* Allocate DMA-safe memory */
 	if ((err = bus_dmamem_alloc(sc->dma_tag, size, MTD_DMA_ALIGN,
 			 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate DMA buffer, error = %d\n",
-			sc->dev.dv_xname, err);
+		aprint_error_dev(&sc->dev, "unable to allocate DMA buffer, error = %d\n",
+			err);
 
 		/* Undo DMA map for descriptors */
 		bus_dmamap_unload(sc->dma_tag, sc->desc_dma_map);
@@ -320,8 +310,8 @@ mtd_init_desc(struct mtd_softc *sc)
 	/* Map memory to kernel addressable space */
 	if ((err = bus_dmamem_map(sc->dma_tag, &seg, 1, size,
 		&sc->buf, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map DMA buffer, error = %d\n",
-			sc->dev.dv_xname, err);
+		aprint_error_dev(&sc->dev, "unable to map DMA buffer, error = %d\n",
+			err);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 
 		/* Undo DMA map for descriptors */
@@ -335,8 +325,8 @@ mtd_init_desc(struct mtd_softc *sc)
 	/* Create a DMA map */
 	if ((err = bus_dmamap_create(sc->dma_tag, size, 1,
 		size, 0, BUS_DMA_NOWAIT, &sc->buf_dma_map)) != 0) {
-		printf("%s: unable to create DMA map, error = %d\n",
-			sc->dev.dv_xname, err);
+		aprint_error_dev(&sc->dev, "unable to create DMA map, error = %d\n",
+			err);
 		bus_dmamem_unmap(sc->dma_tag, sc->buf, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 
@@ -351,8 +341,8 @@ mtd_init_desc(struct mtd_softc *sc)
 	/* Load the DMA map */
 	if ((err = bus_dmamap_load(sc->dma_tag, sc->buf_dma_map, sc->buf,
 		size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load DMA map, error = %d\n",
-			sc->dev.dv_xname, err);
+		aprint_error_dev(&sc->dev, "unable to load DMA map, error = %d\n",
+			err);
 		bus_dmamap_destroy(sc->dma_tag, sc->buf_dma_map);
 		bus_dmamem_unmap(sc->dma_tag, sc->buf, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
@@ -450,8 +440,8 @@ mtd_put(struct mtd_softc *sc, int index, struct mbuf *m)
 			continue;
 		} else if (tlen > MTD_TXBUF_SIZE) {
 			/* XXX FIXME: No idea what to do here. */
-			printf("%s: packet too large! Size = %i\n",
-				sc->dev.dv_xname, tlen);
+			aprint_error_dev(&sc->dev, "packet too large! Size = %i\n",
+				tlen);
 			MFREE(m, n);
 			continue;
 		}
@@ -551,7 +541,7 @@ mtd_watchdog(struct ifnet *ifp)
 	struct mtd_softc *sc = ifp->if_softc;
 	int s;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->dev));
 	++sc->ethercom.ec_if.if_oerrors;
 
 	mtd_stop(ifp, 0);
@@ -652,8 +642,7 @@ mtd_rxirq(struct mtd_softc *sc)
 	for (; !(sc->desc[sc->cur_rx].stat & MTD_RXD_OWNER);) {
 		/* Error summary set? */
 		if (sc->desc[sc->cur_rx].stat & MTD_RXD_ERRSUM) {
-			printf("%s: received packet with errors\n",
-				sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "received packet with errors\n");
 			/* Give up packet, since an error occurred */
 			sc->desc[sc->cur_rx].stat = MTD_RXD_OWNER;
 			sc->desc[sc->cur_rx].conf = MTD_RXBUF_SIZE &
@@ -670,8 +659,8 @@ mtd_rxirq(struct mtd_softc *sc)
 
 		/* Check packet size */
 		if (len <= sizeof(struct ether_header)) {
-			printf("%s: invalid packet size %d; dropping\n",
-				sc->dev.dv_xname, len);
+			aprint_error_dev(&sc->dev, "invalid packet size %d; dropping\n",
+				len);
 			sc->desc[sc->cur_rx].stat = MTD_RXD_OWNER;
 			sc->desc[sc->cur_rx].conf = MTD_RXBUF_SIZE &
 							MTD_RXD_CONF_BUFS;
@@ -691,8 +680,7 @@ mtd_rxirq(struct mtd_softc *sc)
 			sc->cur_rx = 0;
 
 		if (m == NULL) {
-			printf("%s: error pulling packet off interface\n",
-				sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "error pulling packet off interface\n");
 			++ifp->if_ierrors;
 			continue;
 		}
@@ -772,49 +760,42 @@ mtd_irq_h(void *args)
 		/* NOTE: Perhaps we should reset with some of these errors? */
 
 		if (status & MTD_ISR_RXBUN) {
-			printf("%s: receive buffer unavailable\n",
-				sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "receive buffer unavailable\n");
 			++ifp->if_ierrors;
 		}
 
 		if (status & MTD_ISR_RXERR) {
-			printf("%s: receive error\n", sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "receive error\n");
 			++ifp->if_ierrors;
 		}
 
 		if (status & MTD_ISR_TXBUN) {
-			printf("%s: transmit buffer unavailable\n",
-				sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "transmit buffer unavailable\n");
 			++ifp->if_ierrors;
 		}
 
 		if ((status & MTD_ISR_PDF)) {
-			printf("%s: parallel detection fault\n",
-				sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "parallel detection fault\n");
 			++ifp->if_ierrors;
 		}
 
 		if (status & MTD_ISR_FBUSERR) {
-			printf("%s: fatal bus error\n",
-				sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "fatal bus error\n");
 			++ifp->if_ierrors;
 		}
 
 		if (status & MTD_ISR_TARERR) {
-			printf("%s: target error\n",
-				sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "target error\n");
 			++ifp->if_ierrors;
 		}
 
 		if (status & MTD_ISR_MASTERR) {
-			printf("%s: master error\n",
-				sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "master error\n");
 			++ifp->if_ierrors;
 		}
 
 		if (status & MTD_ISR_PARERR) {
-			printf("%s: parity error\n",
-				sc->dev.dv_xname);
+			aprint_error_dev(&sc->dev, "parity error\n");
 			++ifp->if_ierrors;
 		}
 
@@ -904,7 +885,7 @@ mtd_reset(struct mtd_softc *sc)
 	}
 
 	if (i == MTD_TIMEOUT) {
-		printf("%s: reset timed out\n", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "reset timed out\n");
 	}
 
 	/* Wait a little so chip can stabilize */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.4 2007/12/02 19:28:32 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.4.14.1 2008/06/02 13:22:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -45,46 +38,49 @@
 	.file	"lock_stubs.s"
 	.text
 
-#if !defined(__mc68010__)
+#if defined(__mc68010__)
 /*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
- */
-ENTRY(_lock_cas)
-	movl	%sp@(4),%a0		| a0 = val address
-	movl	%sp@(8),%d0		| d0 = old value
-	movl	%sp@(12),%d1		| d1 = new value
-	casl	%d0,%d1,%a0@		| compare old, set new
-	beqb	1f			| matched and set
-	movq	#0,%d0
-	rts
-1:	movq	#1,%d0
-	rts
-#else /* __mc68010__ */
-/*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
+ * int _atomic_cas_32(volatile uint32_t *val, uint32_t old, uint32_t new);
  *
  * The 68010 does not have a cas instruction, so we implement this as
  * a restartable atomic sequence.  For an example of how this is used,
  * see sun68k/sun68k/isr.c
  */
-ENTRY_NOPROFILE(_lock_cas)
+ENTRY(_atomic_cas_32)
 	movl	%sp@(4),%a0
 
-	.globl _C_LABEL(_lock_cas_ras_start)
-_C_LABEL(_lock_cas_ras_start):
+	.globl _C_LABEL(_atomic_cas_ras_start)
+_C_LABEL(_atomic_cas_ras_start):
 	movl	%a0@,%d0
 	cmpl	%sp@(8),%d0
 	jne	1f
 	movl	%sp@(12),%a0@
-	.globl	_C_LABEL(_lock_cas_ras_end)
-_C_LABEL(_lock_cas_ras_end):
+	.globl	_C_LABEL(_atomic_cas_ras_end)
+_C_LABEL(_atomic_cas_ras_end):
 
-	movq	#1,%d0
-	rts
 1:
-	clrl	%d0
+	movl	%d0, %a0	/* pointers return also in %a0 */
 	rts
-#endif /* ! __mc68010__ */
+
+STRONG_ALIAS(atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_32,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_32,_atomic_cas_32)
+
+STRONG_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
+
+STRONG_ALIAS(atomic_cas_ptr_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_ulong_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32)
+#endif /* __mc68010__ */
 
 #if !defined(LOCKDEBUG)
 

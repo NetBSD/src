@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.23 2007/12/03 15:33:44 ad Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.23.14.1 2008/06/02 13:22:11 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.23 2007/12/03 15:33:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.23.14.1 2008/06/02 13:22:11 mjf Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -315,9 +308,12 @@ TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	struct tx39icu_softc *sc;
 	tx_chipset_tag_t tc;
+	struct cpu_info *ci;
 	txreg_t reg, pend, *regs;
 	int i, j;
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	uvmexp.intrs++;
 
 #ifdef __HAVE_FAST_SOFTINTS
@@ -417,6 +413,9 @@ TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 
 #ifdef __HAVE_FAST_SOFTINTS
  softintr:
+#endif
+	ci->ci_idepth--;
+#ifdef __HAVE_FAST_SOFTINTS
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 	softintr(ipending);
 #endif

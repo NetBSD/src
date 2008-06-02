@@ -1,6 +1,8 @@
-# $NetBSD: md.bebox,v 1.14 2005/05/22 03:45:30 lukem Exp $
+# $NetBSD: md.bebox,v 1.14.22.1 2008/06/02 13:21:17 mjf Exp $
 ./dev/pms0					base-obsolete		obsolete
 ./usr/bin/fdformat				base-util-bin
 ./usr/mdec/boot					base-sysutil-root
-./usr/mdec/elf2pef				base-sysutil-root
+./usr/mdec/elf2pef				base-obsolete		obsolete
 ./usr/mdec/mkbootimage				base-sysutil-root
+./usr/mdec/boot_com0				base-sysutil-root
+./usr/mdec/boot_vga				base-sysutil-root

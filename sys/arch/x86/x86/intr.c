@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.c,v 1.40 2008/01/21 02:56:14 dyoung Exp $	*/
+/*	$NetBSD: intr.c,v 1.40.6.1 2008/06/02 13:22:51 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -140,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40 2008/01/21 02:56:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40.6.1 2008/06/02 13:22:51 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -295,7 +288,7 @@ x86_nmi(void)
 /*
  * Recalculate the interrupt masks from scratch.
  */
-void
+static void
 intr_calculatemasks(struct cpu_info *ci)
 {
 	int irq, level, unusedirqs, intrlevel[MAX_INTR_SOURCES];
@@ -471,31 +464,36 @@ intr_scan_bus(int bus, int pin, int *handle)
 }
 #endif
 
-int
+static int
 intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		       int *index)
 {
-	int start, slot, i;
+	int slot, i;
 	struct intrsource *isp;
 
-	start = CPU_IS_PRIMARY(ci) ? NUM_LEGACY_IRQS : 0;
-	slot = -1;
+	if (pic == &i8259_pic) {
+		if (!CPU_IS_PRIMARY(ci))
+			return EBUSY;
+		slot = pin;
+		mutex_enter(&x86_intr_lock);
+	} else {
+		slot = -1;
 
-	mutex_enter(&x86_intr_lock);
-	for (i = start; i < MAX_INTR_SOURCES ; i++) {
-		isp = ci->ci_isources[i];
-		if (isp != NULL && isp->is_pic == pic && isp->is_pin == pin) {
-			slot = i;
-			break;
+		mutex_enter(&x86_intr_lock);
+		/*
+		 * intr_allocate_slot has checked for an existing mapping.
+		 * Now look for a free slot.
+		 */
+		for (i = 0; i < MAX_INTR_SOURCES ; i++) {
+			if (ci->ci_isources[i] == NULL) {
+				slot = i;
+				break;
+			}
 		}
-		if (isp == NULL && slot == -1) {
-			slot = i;
-			continue;
+		if (slot == -1) {
+			mutex_exit(&x86_intr_lock);
+			return EBUSY;
 		}
-	}
-	if (slot == -1) {
-		mutex_exit(&x86_intr_lock);
-		return EBUSY;
 	}
 
 	isp = ci->ci_isources[slot];
@@ -509,7 +507,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		snprintf(isp->is_evname, sizeof (isp->is_evname),
 		    "pin %d", pin);
 		evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-		    pic->pic_dev.dv_xname, isp->is_evname);
+		    device_xname(&pic->pic_dev), isp->is_evname);
 		ci->ci_isources[slot] = isp;
 	}
 	mutex_exit(&x86_intr_lock);
@@ -521,8 +519,8 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 /*
  * A simple round-robin allocator to assign interrupts to CPUs.
  */
-int
-intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
+static int
+intr_allocate_slot(struct pic *pic, int pin, int level,
 		   struct cpu_info **cip, int *index, int *idt_slot)
 {
 	CPU_INFO_ITERATOR cii;
@@ -530,73 +528,44 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 	struct intrsource *isp;
 	int slot, idtvec, error;
 
-	/*
-	 * If a legacy IRQ is wanted, try to use a fixed slot pointing
-	 * at the primary CPU. In the case of IO APICs, multiple pins
-	 * may map to one legacy IRQ, but they should not be shared
-	 * in that case, so the first one gets the legacy slot, but
-	 * a subsequent allocation with a different pin will get
-	 * a different slot.
-	 */
-	if (legacy_irq != -1) {
-		ci = &cpu_info_primary;
-		/* must check for duplicate pic + pin first */
+	/* First check if this pin is already used by an interrupt vector. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
 		for (slot = 0 ; slot < MAX_INTR_SOURCES ; slot++) {
-			isp = ci->ci_isources[slot];
-			if (isp != NULL && isp->is_pic == pic &&
-			    isp->is_pin == pin ) {
-				goto duplicate;
+			if ((isp = ci->ci_isources[slot]) == NULL)
+				continue;
+			if (isp->is_pic == pic && isp->is_pin == pin) {
+				*idt_slot = isp->is_idtvec;
+				*index = slot;
+				*cip = ci;
+				return 0;
 			}
 		}
-		slot = legacy_irq;
-		isp = ci->ci_isources[slot];
-		if (isp == NULL) {
-			MALLOC(isp, struct intrsource *,
-			    sizeof (struct intrsource), M_DEVBUF,
-			     M_NOWAIT|M_ZERO);
-			if (isp == NULL)
-				return ENOMEM;
-			snprintf(isp->is_evname, sizeof (isp->is_evname),
-			    "pin %d", pin);
-			evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR,
-			    NULL, pic->pic_dev.dv_xname, isp->is_evname);
-			mutex_enter(&x86_intr_lock);
-			ci->ci_isources[slot] = isp;
-			mutex_exit(&x86_intr_lock);
-		} else {
-			if (isp->is_pin != pin) {
-				if (pic == &i8259_pic)
-					return EINVAL;
-				goto other;
-			}
-		}
-duplicate:
-		if (pic == &i8259_pic)
-			idtvec = ICU_OFFSET + legacy_irq;
-		else {
-#ifdef IOAPIC_HWMASK
-			if (level > isp->is_maxlevel) {
-#else
-			if (isp->is_minlevel == 0 || level < isp->is_minlevel) {
-#endif
-				idtvec = idt_vec_alloc(APIC_LEVEL(level),
-				    IDT_INTR_HIGH);
-				if (idtvec == 0)
-					return EBUSY;
-			} else
-				idtvec = isp->is_idtvec;
-		}
-	} else {
-other:
-		/*
-		 * Otherwise, look for a free slot elsewhere. Do the primary
-		 * CPU first.
-		 */
-		ci = &cpu_info_primary;
-		error = intr_allocate_slot_cpu(ci, pic, pin, &slot);
-		if (error == 0)
-			goto found;
+	}
 
+	/*
+	 * The pic/pin combination doesn't have an existing mapping.
+	 * Find a slot for a new interrupt source and allocate an IDT
+	 * vector.
+	 *
+	 * For the i8259 case, this always uses the reserved slots
+	 * of the primary CPU and fixed IDT vectors.  This is required
+	 * by other parts of the code, see x86/intr.h for more details.
+	 *
+	 * For the IOAPIC case, interrupts are assigned to the
+	 * primary CPU by default, until it runs out of slots.
+	 *
+	 * PIC and APIC usage are essentially exclusive, so the reservation
+	 * of the ISA slots is ignored when assigning IOAPIC slots.
+	 *
+	 * XXX Fix interrupt allocation to Application Processors.
+	 * XXX Check how many interrupts each CPU got and assign it to
+	 * XXX the least loaded CPU.  Consider adding options to bind
+	 * XXX interrupts to specific CPUs.
+	 * XXX Drop apic level support, just assign IDT vectors sequentially.
+	 */
+	ci = &cpu_info_primary;
+	error = intr_allocate_slot_cpu(ci, pic, pin, &slot);
+	if (error != 0) {
 		/*
 		 * ..now try the others.
 		 */
@@ -605,19 +574,27 @@ other:
 				continue;
 			error = intr_allocate_slot_cpu(ci, pic, pin, &slot);
 			if (error == 0)
-				goto found;
+				break;
 		}
-		return EBUSY;
-found:
-		idtvec = idt_vec_alloc(APIC_LEVEL(level), IDT_INTR_HIGH);
-		if (idtvec == 0) {
-			mutex_enter(&x86_intr_lock);
-			FREE(ci->ci_isources[slot], M_DEVBUF);
-			ci->ci_isources[slot] = NULL;
-			mutex_exit(&x86_intr_lock);
+		if (error != 0)
 			return EBUSY;
-		}
 	}
+
+	if (pic == &i8259_pic)
+		idtvec = ICU_OFFSET + pin;
+	else
+		idtvec = idt_vec_alloc(APIC_LEVEL(level), IDT_INTR_HIGH);
+
+	if (idtvec == 0) {
+		mutex_enter(&x86_intr_lock);
+		evcnt_detach(&ci->ci_isources[slot]->is_evcnt);
+		FREE(ci->ci_isources[slot], M_DEVBUF);
+		ci->ci_isources[slot] = NULL;
+		mutex_exit(&x86_intr_lock);
+		return EBUSY;
+	}
+
+	ci->ci_isources[slot]->is_idtvec = idtvec;
 	*idt_slot = idtvec;
 	*index = slot;
 	*cip = ci;
@@ -665,7 +642,7 @@ intr_findpic(int num)
 
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
-	       int (*handler)(void *), void *arg)
+	       int (*handler)(void *), void *arg, bool known_mpsafe)
 {
 	struct intrhand **p, *q, *ih;
 	struct cpu_info *ci;
@@ -673,7 +650,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	struct intrsource *source;
 	struct intrstub *stubp;
 #ifdef MULTIPROCESSOR
-	bool mpsafe = (level != IPL_VM);
+	bool mpsafe = (known_mpsafe || level != IPL_VM);
 #endif /* MULTIPROCESSOR */
 
 #ifdef DIAGNOSTIC
@@ -684,11 +661,11 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		panic("intr_establish: non-legacy IRQ on i8259");
 #endif
 
-	error = intr_allocate_slot(pic, legacy_irq, pin, level, &ci, &slot,
+	error = intr_allocate_slot(pic, pin, level, &ci, &slot,
 	    &idt_vec);
 	if (error != 0) {
 		printf("failed to allocate interrupt slot for PIC %s pin %d\n",
-		    pic->pic_dev.dv_xname, pin);
+		    device_xname(&pic->pic_dev), pin);
 		return NULL;
 	}
 
@@ -736,7 +713,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	default:
 		mutex_exit(&x86_intr_lock);
 		panic("intr_establish: bad intr type %d for pic %s pin %d\n",
-		    source->is_type, pic->pic_dev.dv_xname, pin);
+		    source->is_type, device_xname(&pic->pic_dev), pin);
 	}
 
 	pic->pic_hwmask(pic, pin);
@@ -770,15 +747,14 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 
 	mutex_exit(&x86_intr_lock);
 
-	if (ci->ci_isources[slot]->is_resume == NULL ||
-	    source->is_idtvec != idt_vec) {
+	if (source->is_resume == NULL || source->is_idtvec != idt_vec) {
 		if (source->is_idtvec != 0 && source->is_idtvec != idt_vec)
 			idt_vec_free(source->is_idtvec);
 		source->is_idtvec = idt_vec;
 		stubp = type == IST_LEVEL ?
 		    &pic->pic_level_stubs[slot] : &pic->pic_edge_stubs[slot];
-		ci->ci_isources[slot]->is_resume = stubp->ist_resume;
-		ci->ci_isources[slot]->is_recurse = stubp->ist_recurse;
+		source->is_resume = stubp->ist_resume;
+		source->is_recurse = stubp->ist_recurse;
 		setgate(&idt[idt_vec], stubp->ist_entry, 0, SDT_SYS386IGT,
 		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
 	}
@@ -788,9 +764,10 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	pic->pic_hwunmask(pic, pin);
 
 #ifdef INTRDEBUG
-	printf("allocated pic %s type %s pin %d level %d to cpu%u slot %d idt entry %d\n",
+	printf("allocated pic %s type %s pin %d level %d to %s slot %d "
+	    "idt entry %d\n",
 	    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
-	    ci->ci_apicid, slot, idt_vec);
+	    device_xname(ci->ci_dev), slot, idt_vec);
 #endif
 
 	return (ih);
@@ -835,9 +812,9 @@ intr_disestablish(struct intrhand *ih)
 	pic->pic_hwunmask(pic, ih->ih_pin);
 
 #ifdef INTRDEBUG
-	printf("cpu%u: remove slot %d (pic %s pin %d vec %d)\n",
-	    ci->ci_apicid, ih->ih_slot, pic->pic_dev.dv_xname, ih->ih_pin,
-	    idtvec);
+	printf("%s: remove slot %d (pic %s pin %d vec %d)\n",
+	    device_xname(ci->ci_dev), ih->ih_slot, device_xname(&pic->pic_dev),
+	    ih->ih_pin, idtvec);
 #endif
 
 	if (source->is_handlers == NULL) {
@@ -869,8 +846,8 @@ intr_string(int ih)
 	if (ih & APIC_INT_VIA_APIC) {
 		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
 		if (pic != NULL) {
-			sprintf(irqstr, "%s pin %d (irq %d)",
-			    pic->pic_name, APIC_IRQ_PIN(ih), ih&0xff);
+			sprintf(irqstr, "%s pin %d",
+			    pic->pic_name, APIC_IRQ_PIN(ih));
 		} else {
 			sprintf(irqstr, "apic %d int %d (irq %d)",
 			    APIC_IRQ_APIC(ih),
@@ -899,19 +876,26 @@ struct intrhand fake_softserial_intrhand;
 struct intrhand fake_softbio_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
+struct intrhand fake_preempt_intrhand;
 
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 static const char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
 #endif
 
-static inline int
-redzone_const_or_zero(int x)
+static inline bool
+redzone_const_or_false(bool x)
 {
 #ifdef DIAGNOSTIC
 	return x;
 #else
-	return 0;
+	return false;
 #endif /* !DIAGNOSTIC */
+}
+
+static inline int
+redzone_const_or_zero(int x)
+{
+	return redzone_const_or_false(true) ? x : 0;
 }
 
 /*
@@ -921,14 +905,12 @@ redzone_const_or_zero(int x)
 void
 cpu_intr_init(struct cpu_info *ci)
 {
-#if NLAPIC > 0
 	struct intrsource *isp;
-#endif
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
 #endif
 #ifdef INTRSTACKSIZE
-	char *cp;
+	vaddr_t istack;
 #endif
 
 #if NLAPIC > 0
@@ -942,8 +924,8 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_timer_intrhand;
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_TIMER] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "timer");
+	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_MISC, NULL,
+	    device_xname(ci->ci_dev), "timer");
 
 #ifdef MULTIPROCESSOR
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
@@ -958,16 +940,43 @@ cpu_intr_init(struct cpu_info *ci)
 	ci->ci_isources[LIR_IPI] = isp;
 
 	for (i = 0; i < X86_NIPI; i++)
-		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_INTR,
-		    NULL, ci->ci_dev->dv_xname, x86_ipi_names[i]);
+		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_MISC,
+		    NULL, device_xname(ci->ci_dev), x86_ipi_names[i]);
 #endif
 #endif
+
+	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
+	    M_WAITOK|M_ZERO);
+	if (isp == NULL)
+		panic("can't allocate fixed interrupt source");
+	isp->is_recurse = Xpreemptrecurse;
+	isp->is_resume = Xpreemptresume;
+	fake_preempt_intrhand.ih_level = IPL_PREEMPT;
+	isp->is_handlers = &fake_preempt_intrhand;
+	isp->is_pic = &softintr_pic;
+	ci->ci_isources[SIR_PREEMPT] = isp;
 
 	intr_calculatemasks(ci);
 
 #if defined(INTRSTACKSIZE)
-	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
-	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
+	/*
+	 * If the red zone is activated, protect both the top and
+	 * the bottom of the stack with an unmapped page.
+	 */
+	istack = uvm_km_alloc(kernel_map,
+	    INTRSTACKSIZE + redzone_const_or_zero(2 * PAGE_SIZE), 0,
+	    UVM_KMF_WIRED);
+	if (redzone_const_or_false(true)) {
+		pmap_kremove(istack, PAGE_SIZE);
+		pmap_kremove(istack + INTRSTACKSIZE + PAGE_SIZE, PAGE_SIZE);
+		pmap_update(pmap_kernel());
+	}
+	/* 33 used to be 1.  Arbitrarily reserve 32 more register_t's
+	 * of space for ddb(4) to examine some subroutine arguments
+	 * and to hunt for the next stack frame.
+	 */
+	ci->ci_intrstack = (char *)istack + redzone_const_or_zero(PAGE_SIZE) +
+	    INTRSTACKSIZE - 33 * sizeof(register_t);
 #if defined(__x86_64__)
 	ci->ci_tss.tss_ist[0] = (uintptr_t)ci->ci_intrstack & ~0xf;
 #endif /* defined(__x86_64__) */
@@ -986,7 +995,7 @@ intr_printconfig(void)
 	CPU_INFO_ITERATOR cii;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		printf("cpu%d: interrupt masks:\n", ci->ci_apicid);
+		printf("%s: interrupt masks:\n", device_xname(ci->ci_dev));
 		for (i = 0; i < NIPL; i++)
 			printf("IPL %d mask %lx unmask %lx\n", i,
 			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
@@ -994,8 +1003,8 @@ intr_printconfig(void)
 			isp = ci->ci_isources[i];
 			if (isp == NULL)
 				continue;
-			printf("cpu%u source %d is pin %d from pic %s maxlevel %d\n",
-			    ci->ci_apicid, i, isp->is_pin,
+			printf("%s source %d is pin %d from pic %s maxlevel %d\n",
+			    device_xname(ci->ci_dev), i, isp->is_pin,
 			    isp->is_pic->pic_name, isp->is_maxlevel);
 			for (ih = isp->is_handlers; ih != NULL;
 			     ih = ih->ih_next)

@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.6.6.1 2008/04/03 12:42:44 mjf Exp $	*/
+/*	$NetBSD: aps.c,v 1.6.6.2 2008/06/02 13:23:29 mjf Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.6.6.1 2008/04/03 12:42:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.6.6.2 2008/06/02 13:23:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,6 @@ enum aps_sensors {
 };
 
 struct aps_softc {
-	struct device sc_dev;
-
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
@@ -105,9 +103,9 @@ struct aps_softc {
 	struct sensor_rec aps_data;
 };
 
-static int 	aps_match(struct device *, struct cfdata *, void *);
-static void 	aps_attach(struct device *, struct device *, void *);
-static int	aps_detach(struct device *, int);
+static int 	aps_match(device_t, cfdata_t, void *);
+static void 	aps_attach(device_t, device_t, void *);
+static int	aps_detach(device_t, int);
 
 static int 	aps_init(struct aps_softc *);
 static uint8_t  aps_mem_read_1(bus_space_tag_t, bus_space_handle_t,
@@ -117,11 +115,11 @@ static void 	aps_refresh(void *);
 static bool 	aps_suspend(device_t PMF_FN_PROTO);
 static bool 	aps_resume(device_t PMF_FN_PROTO);
 
-CFATTACH_DECL(aps, sizeof(struct aps_softc),
+CFATTACH_DECL_NEW(aps, sizeof(struct aps_softc),
 	      aps_match, aps_attach, aps_detach, NULL);
 
-int
-aps_match(struct device *parent, struct cfdata *match, void *aux)
+static int
+aps_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -189,10 +187,10 @@ aps_match(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-void
-aps_attach(struct device *parent, struct device *self, void *aux)
+static void
+aps_attach(device_t parent, device_t self, void *aux)
 {
-	struct aps_softc *sc = (void *)self;
+	struct aps_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	int iobase, i;
 
@@ -208,9 +206,8 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	if (!aps_init(sc)) {
-		aprint_error("%s: failed to initialise\n",
-		    device_xname(&sc->sc_dev));
-		return;
+		aprint_error_dev(self, "failed to initialise\n");
+		goto out;
 	}
 
 	/* Initialize sensors */
@@ -235,20 +232,20 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
-			return;
+			goto out;
 		}
 	}
         /*
          * Register with the sysmon_envsys(9) framework.
          */
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sme->sme_flags |= SME_DISABLE_REFRESH;
+	sc->sc_sme->sme_name = device_xname(self);
+	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
 
 	if ((i = sysmon_envsys_register(sc->sc_sme))) {
-		aprint_error("%s: unable to register with sysmon (%d)\n",
-		    device_xname(&sc->sc_dev), i);
+		aprint_error_dev(self,
+		    "unable to register with sysmon (%d)\n", i);
 		sysmon_envsys_destroy(sc->sc_sme);
-		return;
+		goto out;
 	}
 
 	if (!pmf_device_register(self, aps_suspend, aps_resume))
@@ -259,8 +256,11 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	callout_setfunc(&sc->sc_callout, aps_refresh, sc);
 	callout_schedule(&sc->sc_callout, (hz) / 2);
 
-        aprint_normal("%s: Thinkpad Active Protection System\n",
-	    device_xname(&sc->sc_dev));
+        aprint_normal_dev(self, "Thinkpad Active Protection System\n");
+	return;
+
+out:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, APS_ADDR_SIZE);
 }
 
 static int
@@ -301,7 +301,7 @@ aps_init(struct aps_softc *sc)
 }
 
 static int
-aps_detach(struct device *self, int flags)
+aps_detach(device_t self, int flags)
 {
 	struct aps_softc *sc = device_private(self);
 
@@ -394,7 +394,7 @@ aps_refresh_sensor_data(struct aps_softc *sc)
 static void
 aps_refresh(void *arg)
 {
-	struct aps_softc *sc = (struct aps_softc *)arg;
+	struct aps_softc *sc = arg;
 
 	aps_refresh_sensor_data(sc);
 	callout_schedule(&sc->sc_callout, (hz) / 2);

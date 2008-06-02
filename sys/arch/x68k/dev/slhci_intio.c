@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.9 2007/10/17 19:58:03 garbled Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.9.16.1 2008/06/02 13:22:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.9 2007/10/17 19:58:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.9.16.1 2008/06/02 13:22:49 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,19 +54,19 @@ __KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.9 2007/10/17 19:58:03 garbled Exp 
 
 #include <arch/x68k/dev/slhci_intio_var.h>
 
-static int  slhci_intio_match(struct device *, struct cfdata *, void *);
-static void slhci_intio_attach(struct device *, struct device *, void *);
+static int  slhci_intio_match(device_t, cfdata_t, void *);
+static void slhci_intio_attach(device_t, device_t, void *);
 static void slhci_intio_enable_power(void *, enum power_change);
 static void slhci_intio_enable_intr(void *, int);
 
-CFATTACH_DECL(slhci_intio, sizeof(struct slhci_intio_softc),
+CFATTACH_DECL_NEW(slhci_intio, sizeof(struct slhci_intio_softc),
     slhci_intio_match, slhci_intio_attach, NULL, NULL);
 
 #define INTR_ON 	1
 #define INTR_OFF 	0
 
 static int
-slhci_intio_match(struct device *parent, struct cfdata *cf, void *aux)
+slhci_intio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_bst;
@@ -117,14 +110,18 @@ slhci_intio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-slhci_intio_attach(struct device *parent, struct device *self, void *aux)
+slhci_intio_attach(device_t parent, device_t self, void *aux)
 {
-	struct slhci_intio_softc *sc = (struct slhci_intio_softc *)self;
+	struct slhci_intio_softc *isc = device_private(self);
+	struct slhci_softc *sc = &isc->sc_sc;
 	struct intio_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_bst;
 	bus_space_handle_t ioh;
 	int nc_addr;
 	int nc_size;
+
+	sc->sc_dev = self;
+	sc->sc_bus.hci_private = self;
 
 	printf(": Nereid USB\n");
 
@@ -132,38 +129,38 @@ slhci_intio_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(iot, ia->ia_addr, SL11_PORTSIZE * 2,
 			BUS_SPACE_MAP_SHIFTED, &ioh)) {
 		printf("%s: can't map I/O space\n",
-			sc->sc_sc.sc_bus.bdev.dv_xname);
+			device_xname(self));
 		return;
 	}
 
 	nc_addr = ia->ia_addr + NEREID_ADDR_OFFSET;
 	nc_size = 0x02;
 	if (bus_space_map(iot, nc_addr, nc_size,
-			BUS_SPACE_MAP_SHIFTED, &sc->sc_nch)) {
+			BUS_SPACE_MAP_SHIFTED, &isc->sc_nch)) {
 		printf("%s: can't map I/O control space\n",
-			sc->sc_sc.sc_bus.bdev.dv_xname);
+			device_xname(self));
 		return;
 	}
 
 	/* Initialize sc */
-	slhci_preinit(&sc->sc_sc, slhci_intio_enable_power, iot, ioh, 30, 
+	slhci_preinit(sc, slhci_intio_enable_power, iot, ioh, 30, 
 	    SL11_IDX_DATA);
 
 	/* Establish the interrupt handler */
 	if (intio_intr_establish(ia->ia_intr, "slhci", slhci_intr, sc)) {
 		printf("%s: can't establish interrupt\n",
-			sc->sc_sc.sc_bus.bdev.dv_xname);
+			device_xname(self));
 		return;
 	}
 
 	/* Reset controller */
-	bus_space_write_1(iot, sc->sc_nch, NEREID_CTRL, NEREID_CTRL_RESET);
+	bus_space_write_1(iot, isc->sc_nch, NEREID_CTRL, NEREID_CTRL_RESET);
 	delay(40000);
 
 	slhci_intio_enable_intr(sc, INTR_ON);
 
 	/* Attach SL811HS/T */
-	if (slhci_attach(&sc->sc_sc))
+	if (slhci_attach(sc))
 		return;
 }
 

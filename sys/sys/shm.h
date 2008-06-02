@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.43 2008/01/02 11:49:07 ad Exp $	*/
+/*	$NetBSD: shm.h,v 1.43.6.1 2008/06/02 13:24:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -141,11 +134,11 @@ struct shmid_ds {
  * might be of interest to user programs.  Do we really want/need this?
  */
 struct shminfo {
-	int32_t	shmmax;		/* max shared memory segment size (bytes) */
-	int32_t	shmmin;		/* min shared memory segment size (bytes) */
-	int32_t	shmmni;		/* max number of shared memory identifiers */
-	int32_t	shmseg;		/* max shared memory segments per process */
-	int32_t	shmall;		/* max amount of shared memory (pages) */
+	uint64_t	shmmax;	/* max shared memory segment size (bytes) */
+	uint32_t	shmmin;	/* min shared memory segment size (bytes) */
+	uint32_t	shmmni;	/* max number of shared memory identifiers */
+	uint32_t	shmseg;	/* max shared memory segments per process */
+	uint32_t	shmall;	/* max amount of shared memory (pages) */
 };
 
 /* Warning: 64-bit structure padding is needed here */
@@ -161,7 +154,6 @@ struct shmid_ds_sysctl {
 };
 struct shm_sysctl_info {
 	struct	shminfo shminfo;
-	int32_t	pad;	/* shminfo not a multiple of 64 bits */
 	struct	shmid_ds_sysctl shmids[1];
 };
 #endif /* _NETBSD_SOURCE */

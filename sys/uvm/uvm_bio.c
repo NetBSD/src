@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.64 2008/01/02 11:49:15 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.64.6.1 2008/06/02 13:24:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,14 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.64 2008/01/02 11:49:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.64.6.1 2008/06/02 13:24:37 mjf Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
@@ -169,11 +169,10 @@ ubc_init(void)
 
 	UVM_OBJ_INIT(&ubc_object.uobj, &ubc_pager, UVM_OBJ_KERN);
 
-	ubc_object.umap = malloc(ubc_nwins * sizeof(struct ubc_map),
-				 M_TEMP, M_NOWAIT);
+	ubc_object.umap = kmem_zalloc(ubc_nwins * sizeof(struct ubc_map),
+	    KM_SLEEP);
 	if (ubc_object.umap == NULL)
 		panic("ubc_init: failed to allocate ubc_map");
-	memset(ubc_object.umap, 0, ubc_nwins * sizeof(struct ubc_map));
 
 	if (ubc_winshift < PAGE_SHIFT) {
 		ubc_winshift = PAGE_SHIFT;
@@ -187,8 +186,8 @@ ubc_init(void)
 	}
 #endif
 	ubc_winsize = 1 << ubc_winshift;
-	ubc_object.inactive = malloc(UBC_NQUEUES *
-	    sizeof(struct ubc_inactive_head), M_TEMP, M_NOWAIT);
+	ubc_object.inactive = kmem_alloc(UBC_NQUEUES *
+	    sizeof(struct ubc_inactive_head), KM_SLEEP);
 	if (ubc_object.inactive == NULL)
 		panic("ubc_init: failed to allocate inactive queue heads");
 	for (i = 0; i < UBC_NQUEUES; i++) {
@@ -200,8 +199,8 @@ ubc_init(void)
 				  umap, inactive);
 	}
 
-	ubc_object.hash = hashinit(ubc_nwins, HASH_LIST, M_TEMP, M_NOWAIT,
-				   &ubc_object.hashmask);
+	ubc_object.hash = hashinit(ubc_nwins, HASH_LIST, true,
+	    &ubc_object.hashmask);
 	for (i = 0; i <= ubc_object.hashmask; i++) {
 		LIST_INIT(&ubc_object.hash[i]);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.58 2007/10/19 12:00:36 ad Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.58.16.1 2008/06/02 13:23:35 mjf Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.58 2007/10/19 12:00:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.58.16.1 2008/06/02 13:23:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -206,7 +206,7 @@ ra_putonline(ra)
 	dl = ra->ra_disk.dk_label;
 
 	ra->ra_state = DK_RDLABEL;
-	printf("%s", ra->ra_dev.dv_xname);
+	printf("%s", device_xname(&ra->ra_dev));
 	maj = cdevsw_lookup_major(&ra_cdevsw);
 	if ((msg = readdisklabel(MAKEDISKDEV(maj, device_unit(&ra->ra_dev),
 	    RAW_PART), rastrategy, dl, NULL)) != NULL)
@@ -540,7 +540,8 @@ raioctl(dev, cmd, data, flag, l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, ra->ra_dev.dv_xname);
+		strlcpy(dkw->dkw_parent, device_xname(&ra->ra_dev),
+			sizeof(dkw->dkw_parent));
 		return (dkwedge_add(dkw));
 	    }
 
@@ -552,7 +553,8 @@ raioctl(dev, cmd, data, flag, l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, ra->ra_dev.dv_xname);
+		strlcpy(dkw->dkw_parent, device_xname(&ra->ra_dev),
+			sizeof(dkw->dkw_parent));
 		return (dkwedge_del(dkw));
 	    }
 
@@ -686,12 +688,12 @@ rxattach(parent, self, aux)
 
 #if NRX
 	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) == 'X' - '@')
-		disk_init((struct disk *)&rx->ra_disk, rx->ra_dev.dv_xname, 
+		disk_init((struct disk *)&rx->ra_disk, device_xname(&rx->ra_dev), 
 		    &rxdkdriver);
 #endif
 #if NRA
 	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) != 'X' - '@')
-		disk_init((struct disk *)&rx->ra_disk, rx->ra_dev.dv_xname, 
+		disk_init((struct disk *)&rx->ra_disk, device_xname(&rx->ra_dev), 
 		    &radkdriver);
 #endif
 	disk_attach((struct disk *)&rx->ra_disk);
@@ -706,7 +708,7 @@ rxattach(parent, self, aux)
 	disk_printtype(mp->mscp_unit, mp->mscp_guse.guse_mediaid);
 #ifdef DEBUG
 	printf("%s: nspt %d group %d ngpc %d rct %d nrpt %d nrct %d\n",
-	    self->dv_xname, mp->mscp_guse.guse_nspt, mp->mscp_guse.guse_group,
+	    device_xname(self), mp->mscp_guse.guse_nspt, mp->mscp_guse.guse_group,
 	    mp->mscp_guse.guse_ngpc, mp->mscp_guse.guse_rctsize,
 	    mp->mscp_guse.guse_nrpt, mp->mscp_guse.guse_nrct);
 #endif
@@ -953,7 +955,7 @@ rrdgram(usc, mp, mi)
 	struct mscp *mp;
 	struct mscp_softc *mi;
 {
-	if (mscp_decodeerror(usc == NULL?"unconf disk" : usc->dv_xname, mp, mi))
+	if (mscp_decodeerror(usc == NULL?"unconf disk" : device_xname(usc), mp, mi))
 		return;
 	/*
 	 * SDI status information bytes 10 and 11 are the microprocessor
@@ -1009,7 +1011,7 @@ rronline(usc, mp)
 
 	wakeup((void *)&rx->ra_state);
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
-		printf("%s: attempt to bring on line failed: ", usc->dv_xname);
+		aprint_error_dev(usc, "attempt to bring on line failed: ");
 		mscp_printevent(mp);
 		return (MSCP_FAILED);
 	}
@@ -1076,7 +1078,7 @@ rrgotstatus(usc, mp)
 	struct mscp *mp;
 {
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
-		printf("%s: attempt to get status failed: ", usc->dv_xname);
+		aprint_error_dev(usc, "attempt to get status failed: ");
 		mscp_printevent(mp);
 		return (MSCP_FAILED);
 	}
@@ -1120,9 +1122,9 @@ rrioerror(usc, mp, bp)
 		bp->b_error = EIO;
 		ra->ra_state = DK_CLOSED;
 		if (code & M_OFFLINE_UNMOUNTED)
-			printf("%s: not mounted/spun down\n", usc->dv_xname);
+			aprint_error_dev(usc, "not mounted/spun down\n");
 		if (code & M_OFFLINE_DUPLICATE)
-			printf("%s: duplicate unit number!!!\n", usc->dv_xname);
+			aprint_error_dev(usc, "duplicate unit number!!!\n");
 		return MSCP_DONE;
 
 	case M_ST_AVAILABLE:
@@ -1130,7 +1132,7 @@ rrioerror(usc, mp, bp)
 		return MSCP_DONE;
 
 	default:
-		printf("%s:", usc->dv_xname);
+		printf("%s:", device_xname(usc));
 		break;
 	}
 	return (MSCP_FAILED);

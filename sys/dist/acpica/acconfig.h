@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acconfig.h - Global configuration constants
- *       $Revision: 1.2 $
+ *       $Revision: 1.2.10.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -137,7 +137,7 @@
 
 /* Current ACPICA subsystem version in YYYYMMDD format */
 
-#define ACPI_CA_VERSION                 0x20070320
+#define ACPI_CA_VERSION                 0x20080321
 
 /*
  * OS name, used for the _OS object.  The _OS object is essentially obsolete,
@@ -278,10 +278,6 @@
 /* SMBus bidirectional buffer size */
 
 #define ACPI_SMBUS_BUFFER_SIZE          34
-
-/* Number of strings associated with the _OSI reserved method */
-
-#define ACPI_NUM_OSI_STRINGS            12
 
 
 /******************************************************************************

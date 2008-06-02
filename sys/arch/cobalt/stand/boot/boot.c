@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10.16.1 2008/04/03 12:42:13 mjf Exp $	*/
+/*	$NetBSD: boot.c,v 1.10.16.2 2008/06/02 13:21:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -379,6 +372,8 @@ void
 print_banner(unsigned int memsize)
 {
 
+	lcd_banner();
+
 	printf("\n");
 	printf(">> %s " NETBSD_VERS " Bootloader, Revision %s [@%p]\n",
 			bootprog_name, bootprog_rev, (void*)&start);
@@ -434,6 +429,7 @@ main(unsigned int memsize)
 	bi_flags.bi_flags = 0x0;
 	bi_addr = bi_init();
 
+	lcd_init();
 	cobalt_id = read_board_id();
 	prominit(memsize);
 	if (cninit(&addr, &speed) != NULL)
@@ -463,6 +459,7 @@ main(unsigned int memsize)
 		strcat(bootpath, ":");
 		strcat(bootpath, kernel);
 
+		lcd_loadfile(bootpath);
 		printf("Loading: %s", bootpath);
 		if (howto)
 			printf(" (howto 0x%x)", howto);
@@ -493,6 +490,8 @@ main(unsigned int memsize)
 		(*entry)(memsize, BOOTINFO_MAGIC, bi_addr);
 	}
 
+	delay(20000);
+	lcd_failed();
 	(void)printf("Boot failed! Rebooting...\n");
 	return 0;
 }

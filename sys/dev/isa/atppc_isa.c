@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.11 2007/10/19 12:00:14 ad Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.11.16.1 2008/06/02 13:23:30 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.11 2007/10/19 12:00:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.11.16.1 2008/06/02 13:23:30 mjf Exp $");
 
 #include "opt_atppc.h"
 
@@ -76,19 +76,19 @@ struct atppc_isa_softc {
 };
 
 /* Probe and attach functions for a atppc device on the ISA bus. */
-static int atppc_isa_probe(struct device *, struct cfdata *, void *);
-static void atppc_isa_attach(struct device *, struct device *, void *);
+static int atppc_isa_probe(device_t, cfdata_t, void *);
+static void atppc_isa_attach(device_t, device_t, void *);
 
 static int atppc_isa_dma_start(struct atppc_softc *, void *, u_int,
 	u_int8_t);
 static int atppc_isa_dma_finish(struct atppc_softc *);
 static int atppc_isa_dma_abort(struct atppc_softc *);
-static int atppc_isa_dma_malloc(struct device *, void **, bus_addr_t *,
+static int atppc_isa_dma_malloc(device_t, void **, bus_addr_t *,
 	bus_size_t);
-static void atppc_isa_dma_free(struct device *, void **, bus_addr_t *,
+static void atppc_isa_dma_free(device_t, void **, bus_addr_t *,
 	bus_size_t);
 
-CFATTACH_DECL(atppc_isa, sizeof(struct atppc_isa_softc), atppc_isa_probe,
+CFATTACH_DECL_NEW(atppc_isa, sizeof(struct atppc_isa_softc), atppc_isa_probe,
 	atppc_isa_attach, NULL, NULL);
 
 /*
@@ -96,7 +96,7 @@ CFATTACH_DECL(atppc_isa, sizeof(struct atppc_isa_softc), atppc_isa_probe,
  * lpt_isa_probe() in lpt.c and atppc_detect_port() from FreeBSD's ppc.c.
  */
 static int
-atppc_isa_probe(struct device *parent, struct cfdata *cf, void *aux)
+atppc_isa_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
@@ -130,9 +130,9 @@ atppc_isa_probe(struct device *parent, struct cfdata *cf, void *aux)
 
 /* Attach function: attach and configure parallel port controller on isa bus. */
 static void
-atppc_isa_attach(struct device *parent, struct device *self, void *aux)
+atppc_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct atppc_isa_softc *sc = (struct atppc_isa_softc *)self;
+	struct atppc_isa_softc *sc = device_private(self);
 	struct atppc_softc *lsc = &sc->sc_atppc;
 	struct isa_attach_args *ia = aux;
 
@@ -146,12 +146,13 @@ atppc_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(lsc->sc_iot, sc->sc_iobase, IO_LPTSIZE, 0,
 		&lsc->sc_ioh) != 0) {
-		printf("%s: attempt to map bus space failed, device not "
-			"properly attached.\n", self->dv_xname);
+		aprint_error_dev(self, "attempt to map bus space failed, device not "
+			"properly attached.\n");
 		lsc->sc_dev_ok = ATPPC_NOATTACH;
 		return;
 	}
 
+	lsc->sc_dev = self;
 	lsc->sc_dev_ok = ATPPC_ATTACHED;
 
 	/* Assign interrupt handler */
@@ -165,7 +166,7 @@ atppc_isa_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_irq > 0) {
 		/* Establish interrupt handler. */
 		lsc->sc_ieh = isa_intr_establish(sc->sc_ic, sc->sc_irq,
-			IST_EDGE, IPL_ATPPC, atppcintr, &lsc->sc_dev);
+			IST_EDGE, IPL_ATPPC, atppcintr, lsc->sc_dev);
 
 		lsc->sc_has |= ATPPC_HAS_INTR;
 	}
@@ -201,7 +202,7 @@ static int
 atppc_isa_dma_start(struct atppc_softc *lsc, void *buf, u_int nbytes,
 	u_int8_t mode)
 {
-	struct atppc_isa_softc *sc = (struct atppc_isa_softc *)lsc;
+	struct atppc_isa_softc *sc = (struct atppc_isa_softc *) lsc;
 
 	return atppc_isadma_start(sc->sc_ic, sc->sc_drq, buf, nbytes, mode);
 }
@@ -210,7 +211,7 @@ atppc_isa_dma_start(struct atppc_softc *lsc, void *buf, u_int nbytes,
 static int
 atppc_isa_dma_finish(struct atppc_softc *lsc)
 {
-	struct atppc_isa_softc *sc = (struct atppc_isa_softc *)lsc;
+	struct atppc_isa_softc *sc = (struct atppc_isa_softc *) lsc;
 
 	return atppc_isadma_finish(sc->sc_ic, sc->sc_drq);
 }
@@ -219,27 +220,27 @@ atppc_isa_dma_finish(struct atppc_softc *lsc)
 static int
 atppc_isa_dma_abort(struct atppc_softc *lsc)
 {
-	struct atppc_isa_softc *sc = (struct atppc_isa_softc *)lsc;
+	struct atppc_isa_softc *sc = (struct atppc_isa_softc *) lsc;
 
 	return atppc_isadma_abort(sc->sc_ic, sc->sc_drq);
 }
 
 /* Allocate memory for DMA over ISA bus */
 static int
-atppc_isa_dma_malloc(struct device *dev, void **buf, bus_addr_t *bus_addr,
+atppc_isa_dma_malloc(device_t dev, void **buf, bus_addr_t *bus_addr,
 	bus_size_t size)
 {
-	struct atppc_isa_softc *sc = (struct atppc_isa_softc *)dev;
+	struct atppc_isa_softc *sc = device_private(dev);
 
 	return atppc_isadma_malloc(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
 }
 
 /* Free memory allocated by atppc_isa_dma_malloc() */
 static void
-atppc_isa_dma_free(struct device *dev, void **buf, bus_addr_t *bus_addr,
+atppc_isa_dma_free(device_t dev, void **buf, bus_addr_t *bus_addr,
 	bus_size_t size)
 {
-	struct atppc_isa_softc *sc = (struct atppc_isa_softc *)dev;
+	struct atppc_isa_softc *sc = device_private(dev);
 
 	return atppc_isadma_free(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
 }

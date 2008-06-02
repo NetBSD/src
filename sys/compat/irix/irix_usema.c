@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.29.6.1 2008/04/03 12:42:32 mjf Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.29.6.2 2008/06/02 13:22:59 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.29.6.1 2008/04/03 12:42:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.29.6.2 2008/06/02 13:22:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/condvar.h>
+#include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -107,7 +100,7 @@ struct vfsops irix_usema_dummy_vfsops = {
 	"usema_dummy", 0,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, irix_usema_dummy_vfs_init, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
 	irix_usema_vnodeopv_descs,
 };
 void irix_usema_dummy_vfs_init(void) { return; } /* Do nothing */
@@ -188,11 +181,6 @@ irix_usema_ioctl(void *v)
 	register_t *retval;
 	int error;
 
-#ifdef DEBUG_IRIX
-	printf("irix_usema_ioctl(): vp = %p, cmd = %lx, data = %p\n",
-	    vp, cmd, data);
-#endif
-
 	/*
 	 * Some ioctl commands need to set the ioctl return value. In
 	 * irix_sys_ioctl(), we copy the return value address and the
@@ -203,6 +191,11 @@ irix_usema_ioctl(void *v)
 	 */
 	data = iiu->iiu_data;
 	retval = iiu->iiu_retval;
+
+#ifdef DEBUG_IRIX
+	printf("irix_usema_ioctl(): vp = %p, cmd = %lx, data = %p\n",
+	    vp, cmd, data);
+#endif
 
 	switch (cmd) {
 	case IRIX_UIOCABLOCKQ: /* semaphore has been blocked */
@@ -217,9 +210,10 @@ irix_usema_ioctl(void *v)
 			return EBADF;
 
 		if ((iwpr = iur_proc_getfirst(iur)) != NULL) {
-			extern kcondvar_t select_cv;
 			iur_proc_release(iur, iwpr);
-			cv_broadcast(&select_cv);
+			rw_enter(&iur->iur_lock, RW_READER);
+			selnotify(&iur->iur_si, 0, 0);
+			rw_exit(&iur->iur_lock);
 		}
 		break;
 
@@ -279,8 +273,13 @@ irix_usema_poll(void *v)
 	if ((iur = iur_lookup_by_vn(vp)) == NULL)
 		return 0;
 
-	if (iur_proc_isreleased(iur, curlwp->l_proc) == 0)
+	rw_enter(&iur->iur_lock, RW_READER);
+	if (iur_proc_isreleased(iur, curlwp->l_proc) == 0) {
+		selrecord(curlwp, &iur->iur_si);
+		rw_exit(&iur->iur_lock);
 		return 0;
+	}
+	rw_exit(&iur->iur_lock);
 
 	return (events & check);
 }
@@ -529,6 +528,7 @@ iur_insert(struct irix_semaphore *sem, struct vnode *vp, struct proc *p)
 	iur->iur_p = p;
 	iur->iur_waiting_count = 0;
 	rw_init(&iur->iur_lock);
+	selinit(&iur->iur_si);
 	TAILQ_INIT(&iur->iur_waiting_p);
 	TAILQ_INIT(&iur->iur_released_p);
 	rw_enter(&irix_usema_reclist_lock, RW_WRITER);
@@ -563,6 +563,7 @@ released_restart:
 	LIST_REMOVE(iur, iur_list);
 	rw_exit(&irix_usema_reclist_lock);
 
+	seldestroy(&iur->iur_si);
 	rw_exit(&iur->iur_lock);
 	rw_destroy(&iur->iur_lock);
 	free(iur, M_DEVBUF);
@@ -616,20 +617,19 @@ iur_proc_release(struct irix_usema_rec *iur, struct irix_waiting_proc_rec *iwpr)
 }
 
 
+/* Should be called with iur_lock RW_READER held */
 static int
 iur_proc_isreleased(struct irix_usema_rec *iur, struct proc *p)
 {
 	struct irix_waiting_proc_rec *iwpr;
 	int res = 0;
 
-	rw_enter(&iur->iur_lock, RW_READER);
 	TAILQ_FOREACH(iwpr, &iur->iur_released_p, iwpr_list) {
 		if (iwpr->iwpr_p == p) {
 			res = 1;
 			break;
 		}
 	}
-	rw_exit(&iur->iur_lock);
 	return res;
 }
 

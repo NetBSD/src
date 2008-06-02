@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854var.h,v 1.10 2007/03/04 07:54:11 christos Exp $ */
+/*	$NetBSD: lsi64854var.h,v 1.10.36.1 2008/06/02 13:23:24 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 struct lsi64854_softc {
-	struct device		sc_dev;		/* base device */
+	device_t		sc_dev;		/* base device */
 	bus_space_tag_t		sc_bustag;	/* bus tags */
 	bus_dma_tag_t		sc_dmatag;
 
@@ -55,11 +48,11 @@ struct lsi64854_softc {
 	bus_dmamap_t		sc_dmamap;	/* DMA map for bus_dma_* */
 	void *			sc_dvmaaddr;	/* DVMA cookie */
 	size_t			sc_dmasize;
-	void 			**sc_dmaaddr;
+	uint8_t			**sc_dmaaddr;
 	size_t			*sc_dmalen;
 
 	void	(*reset)(struct lsi64854_softc *);/* reset routine */
-	int	(*setup)(struct lsi64854_softc *, void **, size_t *,
+	int	(*setup)(struct lsi64854_softc *, uint8_t **, size_t *,
 			      int, size_t *);	/* DMA setup */
 	int	(*intr)(void *);		/* interrupt handler */
 
@@ -86,7 +79,7 @@ struct lsi64854_softc {
 #define DMA_ISACTIVE(sc)		((sc)->sc_active)
 
 #define DMA_ENINTR(sc) do {			\
-	u_int32_t _csr = L64854_GCSR(sc);	\
+	uint32_t _csr = L64854_GCSR(sc);	\
 	_csr |= L64854_INT_EN;			\
 	L64854_SCSR(sc, _csr);			\
 } while (/*CONSTCOND*/0)
@@ -94,7 +87,7 @@ struct lsi64854_softc {
 #define DMA_ISINTR(sc)	(L64854_GCSR(sc) & (D_INT_PEND|D_ERR_PEND))
 
 #define DMA_GO(sc) do {				\
-	u_int32_t _csr = L64854_GCSR(sc);	\
+	uint32_t _csr = L64854_GCSR(sc);	\
 	_csr |= D_EN_DMA;			\
 	L64854_SCSR(sc, _csr);			\
 	sc->sc_active = 1;			\

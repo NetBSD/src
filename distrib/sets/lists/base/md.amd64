@@ -1,12 +1,22 @@
-# $NetBSD: md.amd64,v 1.15 2008/01/19 23:30:09 dyoung Exp $
+# $NetBSD: md.amd64,v 1.15.6.1 2008/06/02 13:21:17 mjf Exp $
+./@MODULEDIR@/drm				base-kernel-modules
+./@MODULEDIR@/drm/drm.kmod			base-kernel-modules
+./@MODULEDIR@/i915drm				base-kernel-modules
+./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libx86_64.so				base-sys-shlib
 ./usr/lib/libx86_64.so.0			base-sys-shlib
 ./usr/lib/libx86_64.so.0.0			base-sys-shlib
+./usr/lkm/aps.o					base-sys-lkm
 ./usr/lkm/compat_linux.o			base-sys-lkm
 ./usr/lkm/exec_linux_elf.o			base-sys-lkm
+./usr/lkm/finsio.o				base-sys-lkm
+./usr/lkm/itesio.o				base-sys-lkm
+./usr/lkm/nsclpcsio.o				base-sys-lkm
+./usr/lkm/smsc.o				base-sys-lkm
+./usr/lkm/ug.o					base-sys-lkm
 ./usr/mdec/biosboot				base-obsolete		obsolete
 ./usr/mdec/biosboot.sym				base-obsolete		obsolete
 ./usr/mdec/biosboot_com0.sym			base-obsolete		obsolete

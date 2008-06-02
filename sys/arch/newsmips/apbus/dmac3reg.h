@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3reg.h,v 1.1 2000/10/30 10:07:35 tsubai Exp $	*/
+/*	$NetBSD: dmac3reg.h,v 1.1.128.1 2008/06/02 13:22:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,11 +27,11 @@
  */
 
 struct dmac3reg {
-	volatile u_int csr;
-	volatile u_int intr;
-	volatile u_int len;
-	volatile u_int addr;
-	volatile u_int conf;
+	volatile uint32_t csr;
+	volatile uint32_t intr;
+	volatile uint32_t len;
+	volatile uint32_t addr;
+	volatile uint32_t conf;
 };
 
 #define DMAC3_CSR_DBURST	0x0020
@@ -69,16 +69,9 @@ struct dmac3reg {
 #define DMAC3_MAPSIZE	0x20000
 
 struct dma_pte {
-	u_int pad1;
-	u_int valid:1,
+	uint32_t pad1;
+	uint32_t valid:1,
 	      coherent:1,	/* ? */
 	      pad2:10,		/* ? */
 	      pfnum:20;
 };
-
-struct dmac3_softc;
-void *dmac3_link(int);
-void dmac3_reset(struct dmac3_softc *);
-void dmac3_start(struct dmac3_softc *, vaddr_t, int, int);
-int dmac3_intr(void *);
-void dmac3_misc(struct dmac3_softc *, int);

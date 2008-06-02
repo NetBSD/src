@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_intr.h,v 1.3 2008/01/06 01:37:57 matt Exp $	*/
+/*	$NetBSD: becc_intr.h,v 1.3.6.1 2008/06/02 13:21:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,10 +40,12 @@
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
+#include <arm/cpu.h>
 
 #include <arm/xscale/beccreg.h>
 #include <arm/xscale/becc_csrvar.h>
 
+#ifdef __PROG32
 static inline void __attribute__((__unused__))
 becc_set_intrmask(void)
 {
@@ -61,12 +63,10 @@ becc_set_intrmask(void)
 static inline int __attribute__((__unused__))
 becc_splraise(int ipl)
 {
-	extern volatile uint32_t current_spl_level;
 	extern uint32_t becc_imask[];
-	uint32_t old;
+	uint32_t old = curcpl();
 
-	old = current_spl_level;
-	current_spl_level |= becc_imask[ipl];
+	set_curcpl(old | becc_imask[ipl]);
 
 	return (old);
 }
@@ -75,10 +75,9 @@ static inline void __attribute__((__unused__))
 becc_splx(int new)
 {
 	extern volatile uint32_t intr_enabled, becc_ipending;
-	extern volatile uint32_t current_spl_level;
 	uint32_t oldirqstate, hwpend;
 
-	current_spl_level = new;
+	set_curcpl(new);
 
 	/*
 	 * If there are pending HW interrupts which are being
@@ -98,9 +97,8 @@ becc_splx(int new)
 static inline int __attribute__((__unused__))
 becc_spllower(int ipl)
 {
-	extern volatile uint32_t current_spl_level;
 	extern uint32_t becc_imask[];
-	uint32_t old = current_spl_level;
+	uint32_t old = curcpl();
 
 	becc_splx(becc_imask[ipl]);
 	return (old);
@@ -115,6 +113,7 @@ becc_setsoftintr(int si)
 	becc_sipending |= (1 << si);
 	BECC_CSR_WRITE(BECC_ICSR, (1U << ICU_SOFT));
 }
+#endif /* __PROG32 */
 
 int	becc_softint(void *arg);
 #endif

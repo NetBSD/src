@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.63 2007/10/19 12:00:22 ad Exp $	*/
+/*	$NetBSD: seagate.c,v 1.63.16.1 2008/06/02 13:23:32 mjf Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.63 2007/10/19 12:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.63.16.1 2008/06/02 13:23:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,7 @@ sea_queue_length(sea)
 	    scb = scb->chain.tqe_next, issued++);
 	for (scb = sea->nexus_list.tqh_first, disconnected = 0; scb;
 	    scb = scb->chain.tqe_next, disconnected++);
-	printf("%s: length: %d/%d/%d\n", sea->sc_dev.dv_xname, connected,
+	printf("%s: length: %d/%d/%d\n", device_xname(&sea->sc_dev), connected,
 	    issued, disconnected);
 }
 #endif
@@ -423,7 +423,7 @@ seaattach(struct device *parent, struct device *self, void *aux)
 	default:
 #ifdef DEBUG
 		printf("%s: board type unknown at address %p\n",
-		    sea->sc_dev.dv_xname, sea->maddr);
+		    device_xname(&sea->sc_dev), sea->maddr);
 #endif
 		return;
 	}
@@ -434,7 +434,7 @@ seaattach(struct device *parent, struct device *self, void *aux)
 
 	if ((*((u_char *)sea->maddr + SEA_RAMOFFSET) != 0xa5) ||
 	    (*((u_char *)sea->maddr + SEA_RAMOFFSET + 1) != 0x5a)) {
-		printf("%s: board RAM failure\n", sea->sc_dev.dv_xname);
+		aprint_error_dev(&sea->sc_dev, "board RAM failure\n");
 		return;
 	}
 
@@ -495,7 +495,7 @@ loop:
 
 	if (STATUS & STAT_PARITY) {
 		/* Parity error interrupt */
-		printf("%s: parity error\n", sea->sc_dev.dv_xname);
+		aprint_error_dev(&sea->sc_dev, "parity error\n");
 		return 1;
 	}
 
@@ -579,7 +579,7 @@ sea_scsipi_request(chan, req, arg)
 
 		/* XXX Reset not implemented. */
 		if (flags & XS_CTL_RESET) {
-			printf("%s: resetting\n", sea->sc_dev.dv_xname);
+			printf("%s: resetting\n", device_xname(&sea->sc_dev));
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			return;
@@ -886,7 +886,7 @@ sea_reselect(sea)
 	int abort = 0;
 
 	if (!((target_mask = STATUS) & STAT_SEL)) {
-		printf("%s: wrong state 0x%x\n", sea->sc_dev.dv_xname,
+		printf("%s: wrong state 0x%x\n", device_xname(&sea->sc_dev),
 		    target_mask);
 		return;
 	}
@@ -901,7 +901,7 @@ sea_reselect(sea)
 	/* see that we really are the initiator */
 	if (!(target_mask & sea->our_id_mask)) {
 		printf("%s: polled reselection was not for me: 0x%x\n",
-		    sea->sc_dev.dv_xname, target_mask);
+		    device_xname(&sea->sc_dev), target_mask);
 		return;
 	}
 	/* find target who won */
@@ -923,7 +923,7 @@ sea_reselect(sea)
 
 	if (!MSG_ISIDENTIFY(msg[0])) {
 		printf("%s: expecting IDENTIFY message, got 0x%x\n",
-		    sea->sc_dev.dv_xname, msg[0]);
+		    device_xname(&sea->sc_dev), msg[0]);
 		abort = 1;
 		scb = NULL;
 	} else {
@@ -944,7 +944,7 @@ sea_reselect(sea)
 			}
 		if (!scb) {
 			printf("%s: target %02x lun %d not disconnected\n",
-			    sea->sc_dev.dv_xname, target_mask, lun);
+			    device_xname(&sea->sc_dev), target_mask, lun);
 			/*
 			 * Since we have an established nexus that we can't do
 			 * anything with, we must abort it.
@@ -991,7 +991,7 @@ sea_transfer_pio(sea, phase, count, data)
 				break;
 		if (!(tmp & STAT_REQ)) {
 			printf("%s: timeout waiting for STAT_REQ\n",
-			    sea->sc_dev.dv_xname);
+			    device_xname(&sea->sc_dev));
 			break;
 		}
 
@@ -1032,7 +1032,7 @@ sea_transfer_pio(sea, phase, count, data)
 				break;
 		if (STATUS & STAT_REQ)
 			printf("%s: timeout on wait for !STAT_REQ",
-			    sea->sc_dev.dv_xname);
+			    device_xname(&sea->sc_dev));
 #endif
 	} while (--c);
 
@@ -1075,11 +1075,11 @@ sea_select(sea, scb)
 			break;
 	if (!(STATUS & STAT_ARB_CMPL)) {
 		if (STATUS & STAT_SEL) {
-			printf("%s: arbitration lost\n", sea->sc_dev.dv_xname);
+			printf("%s: arbitration lost\n", device_xname(&sea->sc_dev));
 			scb->flags |= SCB_ERROR;
 		} else {
 			printf("%s: arbitration timeout\n",
-			    sea->sc_dev.dv_xname);
+			    device_xname(&sea->sc_dev));
 			scb->flags |= SCB_TIMEOUT;
 		}
 		CONTROL = BASE_CMD;
@@ -1139,7 +1139,7 @@ sea_select(sea, scb)
 	}
 	if (!(STATUS & STAT_BSY))
 		printf("%s: after successful arbitrate: no STAT_BSY!\n",
-		    sea->sc_dev.dv_xname);
+		    device_xname(&sea->sc_dev));
 
 	sea->nexus = scb;
 	sea->busy[scb->xs->xs_periph->periph_target] |=
@@ -1281,14 +1281,14 @@ sea_information_transfer(sea)
 		tmp = STATUS;
 		if (tmp & STAT_PARITY)
 			printf("%s: parity error detected\n",
-			    sea->sc_dev.dv_xname);
+			    device_xname(&sea->sc_dev));
 		if (!(tmp & STAT_BSY)) {
 			for (loop = 0; loop < 20; loop++)
 				if ((tmp = STATUS) & STAT_BSY)
 					break;
 			if (!(tmp & STAT_BSY)) {
 				printf("%s: !STAT_BSY unit in data transfer!\n",
-				    sea->sc_dev.dv_xname);
+				    device_xname(&sea->sc_dev));
 				s = splbio();
 				sea->nexus = NULL;
 				scb->flags = SCB_ERROR;
@@ -1314,7 +1314,7 @@ sea_information_transfer(sea)
 		case PH_DATAOUT:
 #ifdef SEA_NODATAOUT
 			printf("%s: SEA_NODATAOUT set, attempted DATAOUT aborted\n",
-			    sea->sc_dev.dv_xname);
+			    device_xname(&sea->sc_dev));
 			msgout = MSG_ABORT;
 			CONTROL = BASE_CMD | CMD_ATTN;
 			break;
@@ -1330,7 +1330,7 @@ sea_information_transfer(sea)
 							break;
 					if (!(tmp & STAT_REQ)) {
 						printf("%s: timeout waiting for STAT_REQ\n",
-						    sea->sc_dev.dv_xname);
+						    device_xname(&sea->sc_dev));
 						/* XXX Do something? */
 					}
 					if (sea->type == FDOMAIN840)
@@ -1407,7 +1407,7 @@ sea_information_transfer(sea)
 				return;
 			case MSG_MESSAGE_REJECT:
 				printf("%s: message_reject received\n",
-				    sea->sc_dev.dv_xname);
+				    device_xname(&sea->sc_dev));
 				break;
 			case MSG_DISCONNECT:
 				s = splbio();
@@ -1429,7 +1429,7 @@ sea_information_transfer(sea)
 				 * message.
 				 */
 				printf("%s: unknown message in: %x\n",
-				    sea->sc_dev.dv_xname, tmp);
+				    device_xname(&sea->sc_dev), tmp);
 				break;
 			} /* switch (tmp) */
 			break;
@@ -1440,7 +1440,7 @@ sea_information_transfer(sea)
 			sea_transfer_pio(sea, &phase, &len, &data);
 			if (msgout == MSG_ABORT) {
 				printf("%s: sent message abort to target\n",
-				    sea->sc_dev.dv_xname);
+				    device_xname(&sea->sc_dev));
 				s = splbio();
 				sea->busy[scb->xs->xs_periph->periph_target] &=
 				    ~(1 << scb->xs->xs_periph->periph_lun);
@@ -1470,7 +1470,7 @@ sea_information_transfer(sea)
 	} /* for (...) */
 
 	/* If we get here we have got a timeout! */
-	printf("%s: timeout in data transfer\n", sea->sc_dev.dv_xname);
+	printf("%s: timeout in data transfer\n", device_xname(&sea->sc_dev));
 	scb->flags = SCB_TIMEOUT;
 	/* XXX Should I clear scsi-bus state? */
 	sea_done(sea, scb);

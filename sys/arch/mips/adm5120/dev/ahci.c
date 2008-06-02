@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.2 2007/12/15 00:39:21 perry Exp $	*/
+/*	$NetBSD: ahci.c,v 1.2.6.1 2008/06/02 13:22:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -45,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -71,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.2 2007/12/15 00:39:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.2.6.1 2008/06/02 13:22:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,14 +239,14 @@ struct ahci_pipe {
 	u_int32_t toggle;
 };
 
-static int	ahci_match(struct device *, struct cfdata *, void *);
-static void	ahci_attach(struct device *, struct device *, void *);
+static int	ahci_match(device_t, struct cfdata *, void *);
+static void	ahci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(ahci, sizeof(struct ahci_softc),
     ahci_match, ahci_attach, NULL, NULL);
 
 static int
-ahci_match(struct device *parent, struct cfdata *cf, void *aux)
+ahci_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct obio_attach_args *aa = aux;
 
@@ -270,10 +263,10 @@ ahci_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach SL11H/SL811HS. Return 0 if success.
  */
 void
-ahci_attach(struct device *parent, struct device *self, void *aux)
+ahci_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_attach_args *aa = aux;
-	struct ahci_softc *sc = (void *) self;
+	struct ahci_softc *sc = device_private(self);
 
 	printf("\n");
 	sc->sc_dmat = aa->oba_dt;
@@ -289,8 +282,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map the device. */
 	if (bus_space_map(sc->sc_st, aa->oba_addr,
 	    512, 0, &sc->sc_ioh) != 0) {
-		printf("%s: unable to map device\n",
-		    USBDEVNAME(sc->sc_bus.bdev));
+		aprint_error_dev(self, "unable to map device\n");
 		return;
 	}
 
@@ -298,8 +290,8 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = adm5120_intr_establish(aa->oba_irq, INTR_IRQ, ahci_intr, sc);
 
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to register interrupt handler\n",
-		    USBDEVNAME(sc->sc_bus.bdev));
+		aprint_error_dev(self,
+		    "unable to register interrupt handler\n");
 		return;
 	}
 

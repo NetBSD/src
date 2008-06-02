@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.40 2008/02/07 01:21:56 dyoung Exp $ */
+/* $NetBSD: if_lmc.c,v 1.40.6.1 2008/06/02 13:23:39 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -142,7 +142,7 @@
 
 #if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.40 2008/02/07 01:21:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.40.6.1 2008/06/02 13:23:39 mjf Exp $");
 # include <sys/param.h>	/* OS version */
 /* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */
@@ -3975,7 +3975,7 @@ ifnet_attach(softc_t *sc)
   sc->ifp->if_dunit = device_get_unit(sc->dev);
   strlcpy(sc->ifp->if_xname, device_get_nameunit(sc->dev), IFNAMSIZ);
 # elif defined(__NetBSD__)
-  strcpy(sc->ifp->if_xname, sc->dev.dv_xname);
+  strlcpy(sc->ifp->if_xname, device_xname(&sc->dev), IFNAMSIZ);
 # elif defined(__OpenBSD__)
   bcopy(sc->dev.dv_xname, sc->ifp->if_xname, IFNAMSIZ);
 # elif defined(__bsdi__)
@@ -7313,7 +7313,7 @@ obsd_attach(struct device *parent, struct device *self, void *aux)
     return;
     }
   if ((sc->irq_cookie = pci_intr_establish(pa->pa_pc, sc->intr_handle,
-   IPL_NET, bsd_interrupt, sc, self->dv_xname)) == NULL)
+   IPL_NET, bsd_interrupt, sc, device_xname(self))) == NULL)
     {
     printf("%s: pci_intr_establish() failed\n", NAME_UNIT);
     obsd_detach(self, 0);
@@ -7463,7 +7463,7 @@ int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
         if (dev == NULL) continue;
         if ((error = config_detach(dev, 0)))
           printf("%s: config_detach(): error %d\n",
-           dev->dv_xname, error);
+           device_xname(dev), error);
         }
       break;
       }

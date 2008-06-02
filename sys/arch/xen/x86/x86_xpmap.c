@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.7 2008/02/17 17:39:42 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.7.6.1 2008/06/02 13:22:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.7 2008/02/17 17:39:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.7.6.1 2008/06/02 13:22:54 mjf Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -180,21 +180,21 @@ static mmu_update_t xpq_queue[XPQUEUE_SIZE];
 static int xpq_idx = 0;
 
 void
-xpq_flush_queue()
+xpq_flush_queue(void)
 {
 	int i, ok;
 
 	XENPRINTK2(("flush queue %p entries %d\n", xpq_queue, xpq_idx));
 	for (i = 0; i < xpq_idx; i++)
 		XENPRINTK2(("%d: %p %08" PRIx64 "\n", i,
-		    (u_int64_t)xpq_queue[i].ptr, (u_int64_t)xpq_queue[i].val));
+		    (uint64_t)xpq_queue[i].ptr, (uint64_t)xpq_queue[i].val));
 	if (xpq_idx != 0 &&
 	    HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok) < 0) {
 		printf("xpq_flush_queue: %d entries \n", xpq_idx);
 		for (i = 0; i < xpq_idx; i++)
 			printf("0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
-			   (u_int64_t)xpq_queue[i].ptr,
-			   (u_int64_t)xpq_queue[i].val);
+			   (uint64_t)xpq_queue[i].ptr,
+			   (uint64_t)xpq_queue[i].val);
 		panic("HYPERVISOR_mmu_update failed\n");
 	}
 	xpq_idx = 0;
@@ -316,7 +316,7 @@ xpq_queue_set_ldt(vaddr_t va, uint32_t entries)
 }
 
 void
-xpq_queue_tlb_flush()
+xpq_queue_tlb_flush(void)
 {
 	struct mmuext_op op;
 	xpq_flush_queue();
@@ -328,7 +328,7 @@ xpq_queue_tlb_flush()
 }
 
 void
-xpq_flush_cache()
+xpq_flush_cache(void)
 {
 	struct mmuext_op op;
 	int s = splvm();
@@ -410,7 +410,7 @@ xpq_queue_set_ldt(vaddr_t va, uint32_t entries)
 }
 
 void
-xpq_queue_tlb_flush()
+xpq_queue_tlb_flush(void)
 {
 
 	XENPRINTK2(("xpq_queue_tlb_flush\n"));
@@ -420,7 +420,7 @@ xpq_queue_tlb_flush()
 }
 
 void
-xpq_flush_cache()
+xpq_flush_cache(void)
 {
 	int s = splvm();
 
@@ -459,23 +459,23 @@ xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
 
 #ifdef XENDEBUG
 void
-xpq_debug_dump()
+xpq_debug_dump(void)
 {
 	int i;
 
 	XENPRINTK2(("idx: %d\n", xpq_idx));
 	for (i = 0; i < xpq_idx; i++) {
 		sprintf(XBUF, "%" PRIx64 " %08" PRIx64,
-		    (u_int64_t)xpq_queue[i].ptr, (u_int64_t)xpq_queue[i].val);
+		    (uint64_t)xpq_queue[i].ptr, (uint64_t)xpq_queue[i].val);
 		if (++i < xpq_idx)
 			sprintf(XBUF + strlen(XBUF), "%" PRIx64 " %08" PRIx64,
-			    (u_int64_t)xpq_queue[i].ptr, (u_int64_t)xpq_queue[i].val);
+			    (uint64_t)xpq_queue[i].ptr, (uint64_t)xpq_queue[i].val);
 		if (++i < xpq_idx)
 			sprintf(XBUF + strlen(XBUF), "%" PRIx64 " %08" PRIx64, 
-			    (u_int64_t)xpq_queue[i].ptr, (u_int64_t)xpq_queue[i].val);
+			    (uint64_t)xpq_queue[i].ptr, (uint64_t)xpq_queue[i].val);
 		if (++i < xpq_idx)
 			sprintf(XBUF + strlen(XBUF), "%" PRIx64 " %08" PRIx64,
-			    (u_int64_t)xpq_queue[i].ptr, (u_int64_t)xpq_queue[i].val);
+			    (uint64_t)xpq_queue[i].ptr, (uint64_t)xpq_queue[i].val);
 		XENPRINTK2(("%d: %s\n", xpq_idx, XBUF));
 	}
 }
@@ -520,7 +520,7 @@ static const int l2_4_count = PTP_LEVELS - 1;
 #endif
 
 vaddr_t
-xen_pmap_bootstrap()
+xen_pmap_bootstrap(void)
 {
 	int count, oldcount;
 	long mapsize;
@@ -703,7 +703,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	    xpmap_ptom_masked(addr) | PG_k | PG_RW | PG_V;
 
 	__PRINTK(("L3 va 0x%lx pa 0x%" PRIx64 " entry 0x%" PRIx64 " -> L4[0x%x]\n",
-	    pdtpe, (u_int64_t)addr, (u_int64_t)bt_pgd[pl4_pi(KERNTEXTOFF)],
+	    pdtpe, (uint64_t)addr, (uint64_t)bt_pgd[pl4_pi(KERNTEXTOFF)],
 	    pl4_pi(KERNTEXTOFF)));
 #else
 	pdtpe = bt_pgd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.27 2007/10/19 11:59:42 ad Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.27.16.1 2008/06/02 13:23:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.27 2007/10/19 11:59:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.27.16.1 2008/06/02 13:23:15 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -145,22 +138,21 @@ uha_eisa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmaflags = 0;
 
 	if (eisa_intr_map(ec, upd.sc_irq, &ih)) {
-		printf("%s: couldn't map interrupt (%d)\n",
-		    sc->sc_dev.dv_xname, upd.sc_irq);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt (%d)\n",
+		    upd.sc_irq);
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih);
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    u24_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	/* Save function pointers for later use. */
 	sc->start_mbox = u24_start_mbox;
@@ -240,8 +232,7 @@ u24_start_mbox(struct uha_softc *sc, struct uha_mscp *mscp)
 		delay(100);
 	}
 	if (!spincount) {
-		printf("%s: uha_start_mbox, board not responding\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "uha_start_mbox, board not responding\n");
 		Debugger();
 	}
 
@@ -290,7 +281,7 @@ u24_intr(void *arg)
 	u_long mboxval;
 
 #ifdef	UHADEBUG
-	printf("%s: uhaintr ", sc->sc_dev.dv_xname);
+	printf("%s: uhaintr ", device_xname(&sc->sc_dev));
 #endif /*UHADEBUG */
 
 	if ((bus_space_read_1(iot, ioh, U24_SINT) & U24_SDIP) == 0)
@@ -316,7 +307,7 @@ u24_intr(void *arg)
 		mscp = uha_mscp_phys_kv(sc, mboxval);
 		if (!mscp) {
 			printf("%s: BAD MSCP RETURNED!\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			continue;	/* whatever it was, it'll timeout */
 		}
 		callout_stop(&mscp->xs->xs_callout);

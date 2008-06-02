@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 2008/02/07 19:48:37 garbled Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.6.1 2008/06/02 13:22:30 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,16 +30,48 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2008/02/07 19:48:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.6.1 2008/06/02 13:22:30 mjf Exp $");
+
+#include "opt_ppcparam.h"
+#include "opt_multiprocessor.h"
+#include "opt_interrupt.h"
+#include "opt_altivec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
+#include <powerpc/oea/hid.h>
+#include <powerpc/oea/bat.h>
+#include <powerpc/openpic.h>
+#include <powerpc/atomic.h>
+#include <powerpc/spr.h>
+#ifdef ALTIVEC
+#include <powerpc/altivec.h>
+#endif
+
+#ifdef MULTIPROCESSOR
+#include <arch/powerpc/pic/picvar.h>
+#include <arch/powerpc/pic/ipivar.h>
+#include <powerpc/rtas.h>
+#endif
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/fpu.h>
+#include <machine/pcb.h>
 #include <machine/pio.h>
+#include <machine/trap.h>
+
+#include "pic_openpic.h"
+
+#ifndef OPENPIC
+#if NPIC_OPENPIC > 0
+#define OPENPIC
+#endif /* NOPENPIC > 0 */
+#endif /* OPENPIC */
 
 static int cpu_match(struct device *, struct cfdata *, void *);
 static void cpu_attach(struct device *, struct device *, void *);
@@ -56,8 +81,7 @@ CFATTACH_DECL(cpu, sizeof(struct device),
     cpu_match, cpu_attach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
-
-#define HH_ARBCONF	0xf8000090
+extern int machine_has_rtas;
 
 int
 cpu_match(struct device *parent, struct cfdata *cfdata, void *aux)
@@ -80,15 +104,8 @@ cpu_match(struct device *parent, struct cfdata *cfdata, void *aux)
 				return 1;
 		}
 	}
-	switch (reg[0]) {
-	case 0: /* primary CPU */
+	if (reg[0] == 0)
 		return 1;
-	case 1: /* secondary CPU */
-		if (OF_finddevice("/hammerhead") != -1)
-			if (in32rb(HH_ARBCONF) & 0x02)
-				return 1;
-		break;
-	}
 	return 0;
 }
 
@@ -200,11 +217,103 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	if (ci == NULL)
 		return;
 
+	if (id > 0)
+#ifdef MULTIPROCESSOR
+		cpu_spinup(self, ci);
+#endif
+
 	if (ci->ci_khz == 0)
 		cpu_OFgetspeed(self, ci);
 
 	cpu_OFgetcache(self, ci);
-
-	if (id > 0)
-		return;
+	return;
 }
+
+#ifdef MULTIPROCESSOR
+
+extern volatile u_int cpu_spinstart_cpunum;
+extern volatile u_int cpu_spinstart_ack;
+
+int
+md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
+{
+	int i;
+	u_int msr;
+
+	msr = mfmsr();
+	h->running = -1;
+	cpu_spinstart_cpunum = ci->ci_cpuid;
+	__asm volatile("dcbf 0,%0"::"r"(&cpu_spinstart_cpunum):"memory");
+
+	for (i=0; i < 100000000; i++)
+		if (cpu_spinstart_ack == 0)
+			break;
+	return 1;
+}
+
+void
+md_presync_timebase(volatile struct cpu_hatch_data *h)
+{
+	uint64_t tb;
+	int junk;
+
+	if (machine_has_rtas && rtas_has_func(RTAS_FUNC_FREEZE_TIME_BASE)) {
+		rtas_call(RTAS_FUNC_FREEZE_TIME_BASE, 0, 1, &junk);
+		/* Sync timebase. */
+		tb = mftb();
+
+		h->tbu = tb >> 32;
+		h->tbl = tb & 0xffffffff;
+
+		h->running = 0;
+	}
+	/* otherwise, the machine has no rtas, or if it does, things
+	 * are pre-syncd, per PAPR v2.2.  I don't have anything without
+	 * rtas, so if such a machine exists, someone will have to write
+	 * code for it
+	 */
+}
+
+void
+md_start_timebase(volatile struct cpu_hatch_data *h)
+{
+	int i, junk;
+	/*
+	 * wait for secondary spin up (1.5ms @ 604/200MHz)
+	 * XXX we cannot use delay() here because timebase is not
+	 * running.
+	 */
+	for (i = 0; i < 100000; i++)
+		if (h->running)
+			break;
+
+	/* Start timebase. */
+	if (machine_has_rtas && rtas_has_func(RTAS_FUNC_THAW_TIME_BASE))
+		rtas_call(RTAS_FUNC_THAW_TIME_BASE, 0, 1, &junk);
+}
+
+/*
+ * We wait for h->running to become 0, and then we know that the time is
+ * frozen and h->tb is correct.
+ */
+
+void
+md_sync_timebase(volatile struct cpu_hatch_data *h)
+{
+	/* Sync timebase. */
+	u_int tbu = h->tbu;
+	u_int tbl = h->tbl;
+	while (h->running == -1)
+		;
+	__asm volatile ("sync; isync");
+	__asm volatile ("mttbl %0" :: "r"(0));
+	__asm volatile ("mttbu %0" :: "r"(tbu));
+	__asm volatile ("mttbl %0" :: "r"(tbl));
+}
+
+void
+md_setup_interrupts(void)
+{
+/* do nothing, this is handled in ofwpci */
+}
+#endif /* MULTIPROCESSOR */

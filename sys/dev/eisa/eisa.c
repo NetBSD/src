@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.42.16.1 2008/04/03 12:42:39 mjf Exp $	*/
+/*	$NetBSD: eisa.c,v 1.42.16.2 2008/06/02 13:23:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.42.16.1 2008/04/03 12:42:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.42.16.2 2008/06/02 13:23:15 mjf Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -131,8 +131,8 @@ eisaattach(device_t parent, device_t self, void *aux)
 		 * about it.
 		 */
 		if (bus_space_map(iot, slotaddr, EISA_SLOT_SIZE, 0, &slotioh)) {
-			printf("%s: can't map I/O space for slot %d\n",
-			    self->dv_xname, slot);
+			aprint_error_dev(self, "can't map I/O space for slot %d\n",
+			    slot);
 			continue;
 		}
 
@@ -144,7 +144,7 @@ eisaattach(device_t parent, device_t self, void *aux)
 		/* Check for device existence */
 		if (EISA_VENDID_NODEV(ea.ea_vid)) {
 #if 0
-			printf("no device at %s slot %d\n", self->dv_xname,
+			printf("no device at %s slot %d\n", device_xname(self),
 			    slot);
 			printf("\t(0x%x, 0x%x)\n", ea.ea_vid[0],
 			    ea.ea_vid[1]);
@@ -156,7 +156,7 @@ eisaattach(device_t parent, device_t self, void *aux)
 		/* And check that the firmware didn't biff something badly */
 		if (EISA_VENDID_IDDELAY(ea.ea_vid)) {
 			printf("%s slot %d not configured by BIOS?\n",
-			    self->dv_xname, slot);
+			    device_xname(self), slot);
 			bus_space_unmap(iot, slotioh, EISA_SLOT_SIZE);
 			continue;
 		}

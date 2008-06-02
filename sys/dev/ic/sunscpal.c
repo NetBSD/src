@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.21 2006/11/24 19:46:59 christos Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.21.48.1 2008/06/02 13:23:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.21 2006/11/24 19:46:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunscpal.c,v 1.21.48.1 2008/06/02 13:23:28 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -681,7 +681,7 @@ sunscpal_cmd_timeout(arg)
 	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
 	printf("%s: cmd timeout, targ=%d, lun=%d\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(&sc->sc_dev),
 	    sr->sr_target, sr->sr_lun);
 
 	/*
@@ -761,8 +761,7 @@ sunscpal_scsipi_request(chan, req, arg)
 			/* Terminate any current command. */
 			sr = sc->sc_current;
 			if (sr) {
-				printf("%s: polled request aborting %d/%d\n",
-				    sc->sc_dev.dv_xname,
+				aprint_error_dev(&sc->sc_dev, "polled request aborting %d/%d\n",
 				    sr->sr_target, sr->sr_lun);
 				sunscpal_abort(sc);
 			}
@@ -911,7 +910,7 @@ sunscpal_done(sc)
 		/* fallthrough */
 	default:
 		printf("%s: target %d, bad status=%d\n",
-		    sc->sc_dev.dv_xname, sr->sr_target, sr->sr_status);
+		    device_xname(&sc->sc_dev), sr->sr_target, sr->sr_status);
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}
@@ -1031,7 +1030,7 @@ next_job:
 		/* Work with the reselected job. */
 		if (sr->sr_flags & SR_IMMED) {
 			printf("%s: reselected while polling (abort)\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			/* Abort the reselected job. */
 			sc->sc_state |= SUNSCPAL_ABORTING;
 			sc->sc_msgpriq |= SEND_ABORT;
@@ -1066,7 +1065,7 @@ next_job:
 	case XS_BUSY:
 		/* XXX - Reset and try again. */
 		printf("%s: select found SCSI bus busy, resetting...\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		sunscpal_reset_scsibus(sc);
 		/* fallthrough */
 	case XS_SELTIMEOUT:
@@ -1123,7 +1122,7 @@ next_job:
 	if ((xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) == 0) {
 		if (sc->sc_dataptr) {
 			printf("%s: ptr but no data in/out flags?\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			SUNSCPAL_BREAK();
 			sc->sc_dataptr = NULL;
 		}
@@ -1466,7 +1465,7 @@ have_msg:
 			goto reject;
 		default:
 			printf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			SUNSCPAL_BREAK();
 			goto reject;
 		}
@@ -1475,7 +1474,7 @@ have_msg:
 	default:
 		SUNSCPAL_TRACE("msg_in: eh? imsg=0x%x\n", sc->sc_imess[0]);
 		printf("%s: unrecognized MESSAGE; sending REJECT\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		SUNSCPAL_BREAK();
 		/* fallthrough */
 	reject:
@@ -1584,8 +1583,8 @@ sunscpal_data_xfer(sc, phase)
 	 * When aborting a command, disallow any data phase.
 	 */
 	if (sc->sc_state & SUNSCPAL_ABORTING) {
-		printf("%s: aborting, bus phase=%s (reset)\n",
-		    sc->sc_dev.dv_xname, phase_names[(phase >> 8) & 7]);
+		aprint_error_dev(&sc->sc_dev, "aborting, bus phase=%s (reset)\n",
+		    phase_names[(phase >> 8) & 7]);
 		return ACT_RESET_BUS;	/* XXX */
 	}
 
@@ -1593,7 +1592,7 @@ sunscpal_data_xfer(sc, phase)
 	expected_phase = (xs->xs_control & XS_CTL_DATA_OUT) ?
 		SUNSCPAL_PHASE_DATA_OUT : SUNSCPAL_PHASE_DATA_IN;
 	if (phase != expected_phase) {
-		printf("%s: data phase error\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "data phase error\n");
 		goto abort;
 	}
 
@@ -1607,8 +1606,7 @@ sunscpal_data_xfer(sc, phase)
 		/* Make sure that caused a phase change. */
 		if (SUNSCPAL_BUS_PHASE(SUNSCPAL_READ_2(sc, sunscpal_icr)) == phase) {
 			/* More than 4k is just too much! */
-			printf("%s: too much data padding\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "too much data padding\n");
 			goto abort;
 		}
 		return ACT_CONTINUE;
@@ -1733,13 +1731,11 @@ next_phase:
 			break;
 		if (--timo <= 0) {
 			if (sc->sc_state & SUNSCPAL_ABORTING) {
-				printf("%s: no REQ while aborting, reset\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "no REQ while aborting, reset\n");
 				act_flags |= ACT_RESET_BUS;
 				goto do_actions;
 			}
-			printf("%s: no REQ for next phase, abort\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "no REQ for next phase, abort\n");
 			sc->sc_state |= SUNSCPAL_ABORTING;
 			sunscpal_sched_msgout(sc, SEND_ABORT);
 			goto next_phase;
@@ -1824,7 +1820,7 @@ do_actions:
 	 * XXX - better place to check?
 	 */
 	if (SUNSCPAL_READ_2(sc, sunscpal_icr) & SUNSCPAL_ICR_PARITY_ERROR) {
-		printf("%s: parity error!\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "parity error!\n");
 		/* XXX: sc->sc_state |= SUNSCPAL_ABORTING; */
 		sunscpal_sched_msgout(sc, SEND_PARITY_ERROR);
 	}
@@ -1843,7 +1839,7 @@ do_actions:
 		 */
 		sc->sc_state |= SUNSCPAL_ABORTING;
 		printf("%s: reset SCSI bus for TID=%d LUN=%d\n",
-		    sc->sc_dev.dv_xname, sr->sr_target, sr->sr_lun);
+		    device_xname(&sc->sc_dev), sr->sr_target, sr->sr_lun);
 		sunscpal_reset_scsibus(sc);
 	}
 
@@ -1853,7 +1849,7 @@ do_actions:
 		/* XXX: from the aic6360 driver, but why? */
 		if (sc->sc_datalen < 0) {
 			printf("%s: %d extra bytes from %d:%d\n",
-			    sc->sc_dev.dv_xname, -sc->sc_datalen,
+			    device_xname(&sc->sc_dev), -sc->sc_datalen,
 			    sr->sr_target, sr->sr_lun);
 			sc->sc_datalen = 0;
 		}
@@ -1879,7 +1875,7 @@ do_actions:
 		}
 		/* Device is sitting on the bus! */
 		printf("%s: Target %d LUN %d stuck busy, resetting...\n",
-		    sc->sc_dev.dv_xname, sr->sr_target, sr->sr_lun);
+		    device_xname(&sc->sc_dev), sr->sr_target, sr->sr_lun);
 		sunscpal_reset_scsibus(sc);
 	busfree:
 		SUNSCPAL_TRACE("machine: discon, waited %d\n",
@@ -2104,8 +2100,7 @@ sunscpal_attach(sc, options)
 	 * config_found() to make sure the adatper is disabled.
 	 */
 	if (scsipi_adapter_addref(&sc->sc_adapter) != 0) {
-		printf("%s: unable to enable controller\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to enable controller\n");
 		return;
 	}
 
