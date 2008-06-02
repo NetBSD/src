@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.103 2008/02/06 03:20:52 matt Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.103.6.1 2008/06/02 13:24:24 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.103 2008/02/06 03:20:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.103.6.1 2008/06/02 13:24:24 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.103 2008/02/06 03:20:52 matt Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_private.h>
 #include <netinet/ip_mroute.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/in_pcb.h>
@@ -96,12 +97,14 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.103 2008/02/06 03:20:52 matt Exp $");
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
-#endif /*IPSEC*/
+#include <netinet6/ipsec_private.h>
+#endif /* IPSEC */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
-#endif	/* FAST_IPSEC*/
+#include <netipsec/ipsec_var.h>
+#include <netipsec/ipsec_private.h>
+#endif	/* FAST_IPSEC */
 
 struct inpcbtable rawcbtable;
 
@@ -199,7 +202,7 @@ rip_input(struct mbuf *m, ...)
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		/* check AH/ESP integrity. */
 		else if (ipsec4_in_reject_so(m, last->inp_socket)) {
-			ipsecstat.in_polvio++;
+			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 			/* do not inject data to pcb */
 		}
 #endif /*IPSEC*/
@@ -214,18 +217,22 @@ rip_input(struct mbuf *m, ...)
 	/* check AH/ESP integrity. */
 	if (last != NULL && ipsec4_in_reject_so(m, last->inp_socket)) {
 		m_freem(m);
-		ipsecstat.in_polvio++;
-		ipstat.ips_delivered--;
+		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
+		IP_STATDEC(IP_STAT_DELIVERED);
 		/* do not inject data to pcb */
 	} else
 #endif /*IPSEC*/
 	if (last != NULL)
 		rip_sbappendaddr(last, ip, sintosa(&ripsrc), hlen, opts, m);
 	else if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
+		uint64_t *ips;
+
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,
 		    0, 0);
-		ipstat.ips_noproto++;
-		ipstat.ips_delivered--;
+		ips = IP_STAT_GETREF();
+		ips[IP_STAT_NOPROTO]++;
+		ips[IP_STAT_DELIVERED]--;
+		IP_STAT_PUTREF();
 	} else
 		m_freem(m);
 	return;
@@ -363,7 +370,7 @@ rip_output(struct mbuf *m, ...)
 		opts = NULL;
 		/* XXX prevent ip_output from overwriting header fields */
 		flags |= IP_RAWOUTPUT;
-		ipstat.ips_rawout++;
+		IP_STATINC(IP_STAT_RAWOUT);
 	}
 	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
 	     inp->inp_socket, &inp->inp_errormtu));
@@ -521,9 +528,11 @@ rip_usrreq(struct socket *so, int req,
 	s = splsoftnet();
 
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		in_pcbpurgeif0(&rawcbtable, (struct ifnet *)control);
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&rawcbtable, (struct ifnet *)control);
+		mutex_exit(softnet_lock);
 		splx(s);
 		return (0);
 	}
@@ -541,6 +550,7 @@ rip_usrreq(struct socket *so, int req,
 	switch (req) {
 
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (inp != 0) {
 			error = EISCONN;
 			break;

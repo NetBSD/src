@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.266.6.1 2008/04/03 12:42:26 mjf Exp $	*/
+/*	$NetBSD: locore.s,v 1.266.6.2 2008/06/02 13:22:44 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -58,12 +58,13 @@
 #define	SPITFIRE		/* We don't support Cheetah (USIII) yet */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
-#define	TRAPSTATS		/* Count traps */
+#undef	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #define	HWREF			/* Track ref/mod bits in trap handlers */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
 #define	USE_BLOCK_STORE_LOAD	/* enable block load/store ops */
+#define	BB_ERRATA_1		/* writes to TICK_CMPR may fail */
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3759,22 +3760,6 @@ sparc64_ipi_pause_trap_point:
 	 nop
 
 /*
- * IPI handler to sync %tick register.
- * void sparc64_ipi_sync_tick(void *);
- *
- * On entry:
- *	%g2 = %tick of master CPU
- */
-ENTRY(sparc64_ipi_sync_tick)
-	rdpr	%tick, %g3			! read old tick
-	rd	TICK_CMPR, %g5
-	sub	%g2, %g3, %g3			! delta btw old and new
-	add	%g5, %g3, %g5			! add delta to TICK_CMPR
-	wr	%g5, TICK_CMPR
-	ba	ret_from_intr_vector
-	 wrpr	%g2, 0, %tick			! write new tick
-
-/*
  * Increment IPI event counter, defined in machine/{cpu,intr}.h.
  */
 #define IPIEVC_INC(n,r1,r2)						\
@@ -5401,10 +5386,8 @@ ENTRY(openfirmware_exit)
 	/* Arrange locked kernel stack as PROM stack */
 	set	EINTSTACK  - CC64FSZ, %l5
 
-#ifdef _LP64
 	andn	%l5, 0x0f, %l5			! Needs to be 16-byte aligned
 	sub	%l5, BIAS, %l5			! and biased
-#endif
 	mov	%l5, %sp
 	flushw
 
@@ -5415,6 +5398,8 @@ ENTRY(openfirmware_exit)
 	stxa    %g0, [%l3] ASI_DMMU
 	membar	#Sync
 
+	wrpr	%g0, PSTATE_PROM, %pstate	! Disable interrupts
+						! and enable 64-bit addresses
 	wrpr	%g0, 0, %tl			! force trap level 0
 	call	%l6
 	 mov	%i0, %o0
@@ -10140,8 +10125,13 @@ ENTRY(next_tick)
 	blt,pn	%xcc, 1b	! Yes
 	 nop
 
+#ifdef BB_ERRATA_1
+	ba,a	2f
+	 nop
+#else
 	retl
 	 wr	%o2, TICK_CMPR
+#endif
 
 Ltick_ovflw:
 /*
@@ -10154,8 +10144,18 @@ Ltick_ovflw:
 	btst	%o5, %o1
 	bz,pn	%xcc, 1b
 	 mov	%o4, %o2
+#ifdef BB_ERRATA_1
+	ba,a	2f
+	 nop
+	.align	64
+2:	wr	%o2, TICK_CMPR
+	rd	TICK_CMPR, %g0
+	retl
+	 nop
+#else
 	retl
 	 wr	%o2, TICK_CMPR
+#endif
 
 
 ENTRY(setjmp)

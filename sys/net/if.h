@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.134 2008/02/07 01:21:59 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.134.6.1 2008/06/02 13:24:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -470,7 +463,7 @@ struct ifaddr {
 	uint32_t	*ifa_seqno;
 	int16_t	ifa_preference;	/* preference level for this address */
 };
-#define	IFA_ROUTE	RTF_UP /* 0x01 *//* route installed */
+#define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
 
 /*
  * Message format for use in obtaining information about interfaces
@@ -643,6 +636,7 @@ struct if_laddrreq {
 	char iflr_name[IFNAMSIZ];
 	unsigned int flags;
 #define IFLR_PREFIX	0x8000	/* in: prefix given  out: kernel fills id */
+#define IFLR_ACTIVE	0x4000	/* in/out: link-layer address activation */
 	unsigned int prefixlen;		/* in/out */
 	struct sockaddr_storage addr;	/* in/out */
 	struct sockaddr_storage dstaddr; /* out */
@@ -822,6 +816,8 @@ void    ether_input(struct ifnet *, struct mbuf *);
 int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
 
 struct ifaddr *if_dl_create(const struct ifnet *, const struct sockaddr_dl **);
+void if_activate_sadl(struct ifnet *, struct ifaddr *,
+    const struct sockaddr_dl *);
 void	if_set_sadl(struct ifnet *, const void *, u_char);
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);

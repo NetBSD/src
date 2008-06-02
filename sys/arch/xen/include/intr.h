@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23 2008/02/19 19:50:53 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.23.6.1 2008/06/02 13:22:53 mjf Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -57,7 +50,7 @@
 
 struct evtsource {
 	int ev_maxlevel;		/* max. IPL for this source */
-	u_int32_t ev_imask;		/* interrupt mask */
+	uint32_t ev_imask;		/* interrupt mask */
 	struct intrhand *ev_handlers;	/* handler chain */
 	struct evcnt ev_evcnt;		/* interrupt counter */
 	char ev_evname[32];		/* event counter name */
@@ -105,6 +98,8 @@ struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	int	ih_level;
+	int	(*ih_realfun)(void *);
+	void	*ih_realarg;
 	struct	intrhand *ih_ipl_next;
 	struct	intrhand *ih_evt_next;
 	struct cpu_info *ih_cpu;
@@ -123,7 +118,6 @@ extern void Xspllower(int);
 
 int splraise(int);
 void spllower(int);
-void softintr(int);
 
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
 
@@ -155,25 +149,22 @@ splraiseipl(ipl_cookie_t icookie)
 #include <sys/spl.h>
 
 /*
- * XXX
- */
-#define	setsoftnet()	softintr(SIR_NET)
-
-/*
  * Stub declarations.
  */
-
-extern void Xsoftintr(void);
 
 struct cpu_info;
 
 struct pcibus_attach_args;
 
+#ifdef MULTIPROCESSOR
+int intr_biglock_wrapper(void *);
+#endif
+
 void intr_default_setup(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct evtsource *);
 
-void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
+void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
 const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
@@ -184,6 +175,10 @@ void intr_printconfig(void);
 int intr_find_mpmapping(int, int, struct xen_intr_handle *);
 struct pic *intr_findpic(int);
 void intr_add_pcibus(struct pcibus_attach_args *);
+
+int x86_send_ipi(struct cpu_info *, int);
+void x86_broadcast_ipi(int);
+void x86_multicast_ipi(int, int);
 
 #endif /* !_LOCORE */
 

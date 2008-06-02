@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.10 2007/12/20 23:02:41 dsl Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.10.6.1 2008/06/02 13:22:33 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10 2007/12/20 23:02:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10.6.1 2008/06/02 13:22:33 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_altivec.h"
@@ -116,9 +116,9 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 	native_sigset_to_sigset13(mask, &frame.__sc_mask13);
 #endif
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof frame);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -213,7 +213,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	tf->tf_xtra[TF_MQ] = utf->mq;
 #endif
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
@@ -221,7 +221,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &sc.sc_mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }

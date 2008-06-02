@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.11.6.1 2008/04/03 12:42:34 mjf Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.11.6.2 2008/06/02 13:23:07 mjf Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.11.6.1 2008/04/03 12:42:34 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.11.6.2 2008/06/02 13:23:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,11 +93,11 @@ osf1_sys_getrusage(struct lwp *l, const struct osf1_sys_getrusage_args *uap, reg
 
 	switch (SCARG(uap, who)) {
 	case OSF1_RUSAGE_SELF:
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		ru = p->p_stats->p_ru;
 		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 		rulwps(p, &ru);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		break;
 
 	case OSF1_RUSAGE_CHILDREN:

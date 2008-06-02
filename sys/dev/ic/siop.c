@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.85.16.1 2008/04/03 12:42:42 mjf Exp $	*/
+/*	$NetBSD: siop.c,v 1.85.16.2 2008/06/02 13:23:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.85.16.1 2008/04/03 12:42:42 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.85.16.2 2008/06/02 13:23:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ siop_attach(sc)
 	sc->sc_currschedslot = 0;
 #ifdef SIOP_DEBUG
 	printf("%s: script size = %d, PHY addr=0x%x, VIRT=%p\n",
-	    sc->sc_c.sc_dev.dv_xname, (int)sizeof(siop_script),
+	    device_xname(&sc->sc_c.sc_dev), (int)sizeof(siop_script),
 	    (u_int32_t)sc->sc_c.sc_scriptaddr, sc->sc_c.sc_script);
 #endif
 
@@ -263,7 +263,7 @@ siop_reset(sc)
 	while((lunsw = TAILQ_FIRST(&sc->lunsw_list)) != NULL) {
 #ifdef SIOP_DEBUG
 		printf("%s: free lunsw at offset %d\n",
-				sc->sc_c.sc_dev.dv_xname, lunsw->lunsw_off);
+			device_xname(&sc->sc_c.sc_dev), lunsw->lunsw_off);
 #endif
 		TAILQ_REMOVE(&sc->lunsw_list, lunsw, next);
 		free(lunsw, M_DEVBUF);
@@ -276,14 +276,13 @@ siop_reset(sc)
 			continue;
 #ifdef SIOP_DEBUG
 		printf("%s: restore sw for target %d\n",
-				sc->sc_c.sc_dev.dv_xname, i);
+			device_xname(&sc->sc_c.sc_dev), i);
 #endif
 		target = (struct siop_target *)sc->sc_c.targets[i];
 		free(target->lunsw, M_DEVBUF);
 		target->lunsw = siop_get_lunsw(sc);
 		if (target->lunsw == NULL) {
-			printf("%s: can't alloc lunsw for target %d\n",
-			    sc->sc_c.sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_c.sc_dev, "can't alloc lunsw for target %d\n", i);
 			break;
 		}
 		siop_add_reselsw(sc, i);
@@ -438,8 +437,7 @@ siop_intr(v)
 			    siop_ctoh32(&sc->sc_c,
 				siop_cmd->cmd_tables->status));
 		else
-			printf("%s: current DSA invalid\n",
-			    sc->sc_c.sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_c.sc_dev, "current DSA invalid\n");
 		need_reset = 1;
 		}
 	}
@@ -473,7 +471,7 @@ siop_intr(v)
 			if (siop_cmd)
 				scsipi_printaddr(xs->xs_periph);
 			else
-				printf("%s:", sc->sc_c.sc_dev.dv_xname);
+				printf("%s:", device_xname(&sc->sc_c.sc_dev));
 			printf("scsi gross error\n");
 			goto reset;
 		}
@@ -524,12 +522,10 @@ siop_intr(v)
 					CALL_SCRIPT(Ent_msgin);
 					return 1;
 				}
-				printf("%s: unexpected phase mismatch %d\n",
-				    sc->sc_c.sc_dev.dv_xname,
+				aprint_error_dev(&sc->sc_c.sc_dev, "unexpected phase mismatch %d\n",
 				    sstat1 & SSTAT1_PHASE_MASK);
 			} else {
-				printf("%s: phase mismatch without command\n",
-				    sc->sc_c.sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_c.sc_dev, "phase mismatch without command\n");
 			}
 			need_reset = 1;
 		}
@@ -538,7 +534,7 @@ siop_intr(v)
 			if (siop_cmd)
 				scsipi_printaddr(xs->xs_periph);
 			else
-				printf("%s:", sc->sc_c.sc_dev.dv_xname);
+				printf("%s:", device_xname(&sc->sc_c.sc_dev));
 			printf("parity error\n");
 			goto reset;
 		}
@@ -550,8 +546,8 @@ siop_intr(v)
 				freetarget = 1;
 				goto end;
 			} else {
-				printf("%s: selection timeout without "
-				    "command\n", sc->sc_c.sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_c.sc_dev, "selection timeout without "
+				    "command\n");
 				need_reset = 1;
 			}
 		}
@@ -565,8 +561,8 @@ siop_intr(v)
 				    siop_htoc32(&sc->sc_c, SCSI_CHECK);
 				goto end;
 			}
-			printf("%s: unexpected disconnect without "
-			    "command\n", sc->sc_c.sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_c.sc_dev, "unexpected disconnect without "
+			    "command\n");
 			goto reset;
 		}
 		if (sist & (SIST1_SBMC << 8)) {
@@ -591,8 +587,8 @@ siop_intr(v)
 			return 1;
 		}
 		/* Else it's an unhandled exception (for now). */
-		printf("%s: unhandled scsi interrupt, sist=0x%x sstat1=0x%x "
-		    "DSA=0x%x DSP=0x%x\n", sc->sc_c.sc_dev.dv_xname, sist,
+		aprint_error_dev(&sc->sc_c.sc_dev, "unhandled scsi interrupt, sist=0x%x sstat1=0x%x "
+		    "DSA=0x%x DSP=0x%x\n", sist,
 		    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 			SIOP_SSTAT1),
 		    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA),
@@ -626,15 +622,14 @@ scintr:
 		 */
 		if ((irqcode & 0x80) == 0) {
 			if (siop_cmd == NULL) {
-				printf(
-			"%s: script interrupt (0x%x) with invalid DSA !!!\n",
-				    sc->sc_c.sc_dev.dv_xname, irqcode);
+				aprint_error_dev(&sc->sc_c.sc_dev, 
+			"script interrupt (0x%x) with invalid DSA !!!\n",
+				    irqcode);
 				goto reset;
 			}
 			if (siop_cmd->cmd_c.status != CMDST_ACTIVE) {
-				printf("%s: command with invalid status "
+				aprint_error_dev(&sc->sc_c.sc_dev, "command with invalid status "
 				    "(IRQ code 0x%x current status %d) !\n",
-				    sc->sc_c.sc_dev.dv_xname,
 				    irqcode, siop_cmd->cmd_c.status);
 				xs = NULL;
 			}
@@ -651,8 +646,7 @@ scintr:
 				goto reset;
 			}
 		case A_int_reseltarg:
-			printf("%s: reselect with invalid target\n",
-				    sc->sc_c.sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_c.sc_dev, "reselect with invalid target\n");
 			goto reset;
 		case A_int_resellun:
 			INCSTAT(siop_stat_intr_lunresel);
@@ -666,20 +660,20 @@ scintr:
 			    (struct siop_target *)sc->sc_c.targets[target];
 			if (siop_target == NULL) {
 				printf("%s: reselect with invalid target %d\n",
-				    sc->sc_c.sc_dev.dv_xname, target);
+				    device_xname(&sc->sc_c.sc_dev), target);
 				goto reset;
 			}
 			siop_lun = siop_target->siop_lun[lun];
 			if (siop_lun == NULL) {
 				printf("%s: target %d reselect with invalid "
-				    "lun %d\n", sc->sc_c.sc_dev.dv_xname,
+				    "lun %d\n", device_xname(&sc->sc_c.sc_dev),
 				    target, lun);
 				goto reset;
 			}
 			if (siop_lun->siop_tag[tag].active == NULL) {
 				printf("%s: target %d lun %d tag %d reselect "
 				    "without command\n",
-				    sc->sc_c.sc_dev.dv_xname,
+				    device_xname(&sc->sc_c.sc_dev),
 				    target, lun, tag);
 				goto reset;
 			}
@@ -692,7 +686,7 @@ scintr:
 			return 1;
 		case A_int_reseltag:
 			printf("%s: reselect with invalid tag\n",
-				    sc->sc_c.sc_dev.dv_xname);
+				device_xname(&sc->sc_c.sc_dev));
 			goto reset;
 		case A_int_msgin:
 		{
@@ -721,7 +715,7 @@ scintr:
 						scsipi_printaddr(xs->xs_periph);
 					else
 						printf("%s: ",
-						   sc->sc_c.sc_dev.dv_xname);
+						   device_xname(&sc->sc_c.sc_dev));
 					printf("our reject message was "
 					    "rejected\n");
 					goto reset;
@@ -773,7 +767,7 @@ scintr:
 					scsipi_printaddr(xs->xs_periph);
 				else
 					printf("%s: ",
-					    sc->sc_c.sc_dev.dv_xname);
+					    device_xname(&sc->sc_c.sc_dev));
 				if (msg == MSG_EXTENDED) {
 					printf("scsi message reject, extended "
 					    "message sent was 0x%x\n", extmsg);
@@ -797,7 +791,7 @@ scintr:
 			if (xs)
 				scsipi_printaddr(xs->xs_periph);
 			else
-				printf("%s: ", sc->sc_c.sc_dev.dv_xname);
+				printf("%s: ", device_xname(&sc->sc_c.sc_dev));
 			printf("unhandled message 0x%x\n",
 			    siop_cmd->cmd_tables->msg_in[0]);
 			siop_cmd->cmd_tables->msg_out[0] = MSG_MESSAGE_REJECT;
@@ -816,8 +810,7 @@ scintr:
 #endif
 			if (siop_cmd->cmd_tables->msg_in[1] >
 			    sizeof(siop_cmd->cmd_tables->msg_in) - 2)
-				printf("%s: extended message too big (%d)\n",
-				    sc->sc_c.sc_dev.dv_xname,
+				aprint_error_dev(&sc->sc_c.sc_dev, "extended message too big (%d)\n",
 				    siop_cmd->cmd_tables->msg_in[1]);
 			siop_cmd->cmd_tables->t_extmsgdata.count =
 			    siop_htoc32(&sc->sc_c,
@@ -943,7 +936,7 @@ scintr:
 		case A_int_done:
 			if (xs == NULL) {
 				printf("%s: done without command, DSA=0x%lx\n",
-				    sc->sc_c.sc_dev.dv_xname,
+				    device_xname(&sc->sc_c.sc_dev),
 				    (u_long)siop_cmd->cmd_c.dsa);
 				siop_cmd->cmd_c.status = CMDST_FREE;
 				CALL_SCRIPT(Ent_script_sched);
@@ -1036,7 +1029,7 @@ siop_scsicmd_end(siop_cmd)
 		INCSTAT(siop_stat_intr_qfull);
 #ifdef SIOP_DEBUG
 		printf("%s:%d:%d: queue full (tag %d)\n",
-		    sc->sc_c.sc_dev.dv_xname,
+		    device_xname(&sc->sc_c.sc_dev),
 		    xs->xs_periph->periph_target,
 		    xs->xs_periph->periph_lun, siop_cmd->cmd_c.tag);
 #endif
@@ -1145,13 +1138,13 @@ siop_handle_qtag_reject(siop_cmd)
 
 #ifdef SIOP_DEBUG
 	printf("%s:%d:%d: tag message %d (%d) rejected (status %d)\n",
-	    sc->sc_c.sc_dev.dv_xname, target, lun, tag, siop_cmd->cmd_c.tag,
+	    device_xname(&sc->sc_c.sc_dev), target, lun, tag, siop_cmd->cmd_c.tag,
 	    siop_cmd->cmd_c.status);
 #endif
 
 	if (siop_lun->siop_tag[0].active != NULL) {
 		printf("%s: untagged command already running for target %d "
-		    "lun %d (status %d)\n", sc->sc_c.sc_dev.dv_xname,
+		    "lun %d (status %d)\n", device_xname(&sc->sc_c.sc_dev),
 		    target, lun, siop_lun->siop_tag[0].active->cmd_c.status);
 		return -1;
 	}
@@ -1188,7 +1181,7 @@ siop_handle_reset(sc)
 	 * scsi bus reset. reset the chip and restart
 	 * the queue. Need to clean up all active commands
 	 */
-	printf("%s: scsi bus reset\n", sc->sc_c.sc_dev.dv_xname);
+	printf("%s: scsi bus reset\n", device_xname(&sc->sc_c.sc_dev));
 	/* stop, reset and restart the chip */
 	siop_reset(sc);
 	if (sc->sc_flags & SCF_CHAN_NOSLOT) {
@@ -1279,15 +1272,14 @@ siop_scsipi_request(chan, req, arg)
 		if (siop_target == NULL) {
 #ifdef SIOP_DEBUG
 			printf("%s: alloc siop_target for target %d\n",
-				sc->sc_c.sc_dev.dv_xname, target);
+				device_xname(&sc->sc_c.sc_dev), target);
 #endif
 			sc->sc_c.targets[target] =
 			    malloc(sizeof(struct siop_target),
 				M_DEVBUF, M_NOWAIT|M_ZERO);
 			if (sc->sc_c.targets[target] == NULL) {
-				printf("%s: can't malloc memory for "
-				    "target %d\n", sc->sc_c.sc_dev.dv_xname,
-				    target);
+				aprint_error_dev(&sc->sc_c.sc_dev, "can't malloc memory for "
+				    "target %d\n", target);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
 				splx(s);
@@ -1305,8 +1297,8 @@ siop_scsipi_request(chan, req, arg)
 			/* get a lun switch script */
 			siop_target->lunsw = siop_get_lunsw(sc);
 			if (siop_target->lunsw == NULL) {
-				printf("%s: can't alloc lunsw for target %d\n",
-				    sc->sc_c.sc_dev.dv_xname, target);
+				aprint_error_dev(&sc->sc_c.sc_dev, "can't alloc lunsw for target %d\n",
+				    target);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
 				splx(s);
@@ -1321,9 +1313,9 @@ siop_scsipi_request(chan, req, arg)
 			    malloc(sizeof(struct siop_lun), M_DEVBUF,
 			    M_NOWAIT|M_ZERO);
 			if (siop_target->siop_lun[lun] == NULL) {
-				printf("%s: can't alloc siop_lun for "
+				aprint_error_dev(&sc->sc_c.sc_dev, "can't alloc siop_lun for "
 				    "target %d lun %d\n",
-				    sc->sc_c.sc_dev.dv_xname, target, lun);
+				    target, lun);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
 				splx(s);
@@ -1340,8 +1332,8 @@ siop_scsipi_request(chan, req, arg)
 		    siop_cmd->cmd_c.dmamap_cmd,
 		    xs->cmd, xs->cmdlen, NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: unable to load cmd DMA map: %d\n",
-			    sc->sc_c.sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_c.sc_dev, "unable to load cmd DMA map: %d\n",
+			    error);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			splx(s);
@@ -1354,8 +1346,8 @@ siop_scsipi_request(chan, req, arg)
 			    ((xs->xs_control & XS_CTL_DATA_IN) ?
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (error) {
-				printf("%s: unable to load cmd DMA map: %d",
-				    sc->sc_c.sc_dev.dv_xname, error);
+				aprint_error_dev(&sc->sc_c.sc_dev, "unable to load cmd DMA map: %d",
+				    error);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
 				bus_dmamap_unload(sc->sc_c.sc_dmat,
@@ -1396,7 +1388,7 @@ siop_scsipi_request(chan, req, arg)
 
 	case ADAPTER_REQ_GROW_RESOURCES:
 #ifdef SIOP_DEBUG
-		printf("%s grow resources (%d)\n", sc->sc_c.sc_dev.dv_xname,
+		printf("%s grow resources (%d)\n", device_xname(&sc->sc_c.sc_dev),
 		    sc->sc_c.sc_adapt.adapt_openings);
 #endif
 		siop_morecbd(sc);
@@ -1634,8 +1626,7 @@ siop_morecbd(sc)
 	/* allocate a new list head */
 	newcbd = malloc(sizeof(struct siop_cbd), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (newcbd == NULL) {
-		printf("%s: can't allocate memory for command descriptors "
-		    "head\n", sc->sc_c.sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_c.sc_dev, "can't allocate memory for command descriptors head\n");
 		return;
 	}
 
@@ -1643,40 +1634,39 @@ siop_morecbd(sc)
 	newcbd->cmds = malloc(sizeof(struct siop_cmd) * SIOP_NCMDPB,
 	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (newcbd->cmds == NULL) {
-		printf("%s: can't allocate memory for command descriptors\n",
-		    sc->sc_c.sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_c.sc_dev, "can't allocate memory for command descriptors\n");
 		goto bad3;
 	}
 	error = bus_dmamem_alloc(sc->sc_c.sc_dmat, PAGE_SIZE, PAGE_SIZE, 0, &seg,
 	    1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to allocate cbd DMA memory, error = %d\n",
-		    sc->sc_c.sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_c.sc_dev, "unable to allocate cbd DMA memory, error = %d\n",
+		    error);
 		goto bad2;
 	}
 	error = bus_dmamem_map(sc->sc_c.sc_dmat, &seg, rseg, PAGE_SIZE,
 	    (void **)&newcbd->xfers, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
-		printf("%s: unable to map cbd DMA memory, error = %d\n",
-		    sc->sc_c.sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_c.sc_dev, "unable to map cbd DMA memory, error = %d\n",
+		    error);
 		goto bad2;
 	}
 	error = bus_dmamap_create(sc->sc_c.sc_dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
 	    BUS_DMA_NOWAIT, &newcbd->xferdma);
 	if (error) {
-		printf("%s: unable to create cbd DMA map, error = %d\n",
-		    sc->sc_c.sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_c.sc_dev, "unable to create cbd DMA map, error = %d\n",
+		    error);
 		goto bad1;
 	}
 	error = bus_dmamap_load(sc->sc_c.sc_dmat, newcbd->xferdma, newcbd->xfers,
 	    PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to load cbd DMA map, error = %d\n",
-		    sc->sc_c.sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_c.sc_dev, "unable to load cbd DMA map, error = %d\n",
+		    error);
 		goto bad0;
 	}
 #ifdef DEBUG
-	printf("%s: alloc newcdb at PHY addr 0x%lx\n", sc->sc_c.sc_dev.dv_xname,
+	printf("%s: alloc newcdb at PHY addr 0x%lx\n", device_xname(&sc->sc_c.sc_dev),
 	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
 #endif
 	off = (sc->sc_c.features & SF_CHIP_BE) ? 3 : 0;
@@ -1685,9 +1675,8 @@ siop_morecbd(sc)
 		    MAXPHYS, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &newcbd->cmds[i].cmd_c.dmamap_data);
 		if (error) {
-			printf("%s: unable to create data DMA map for cbd: "
-			    "error %d\n",
-			    sc->sc_c.sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_c.sc_dev, "unable to create data DMA map for cbd: "
+			    "error %d\n", error);
 			goto bad0;
 		}
 		error = bus_dmamap_create(sc->sc_c.sc_dmat,
@@ -1696,8 +1685,7 @@ siop_morecbd(sc)
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &newcbd->cmds[i].cmd_c.dmamap_cmd);
 		if (error) {
-			printf("%s: unable to create cmd DMA map for cbd %d\n",
-			    sc->sc_c.sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_c.sc_dev, "unable to create cmd DMA map for cbd %d\n", error);
 			goto bad0;
 		}
 		newcbd->cmds[i].cmd_c.siop_sc = &sc->sc_c;
@@ -1916,8 +1904,7 @@ siop_add_dev(sc, target, lun)
 		 * with this case
 		 */
 #ifdef DEBUG
-		printf("%s:%d:%d: can't allocate a lun sw slot\n",
-		    sc->sc_c.sc_dev.dv_xname, target, lun);
+		aprint_error_dev(&sc->sc_c.sc_dev, "%d:%d: can't allocate a lun sw slot\n", target, lun);
 #endif
 		return;
 	}
@@ -1940,14 +1927,13 @@ siop_add_dev(sc, target, lun)
 		 * We can hold 13 tagged-queuing capable devices in the 4k RAM.
 		 */
 #ifdef DEBUG
-		printf("%s:%d:%d: not enough memory for a lun sw slot\n",
-		    sc->sc_c.sc_dev.dv_xname, target, lun);
+		aprint_error_dev(&sc->sc_c.sc_dev, "%d:%d: not enough memory for a lun sw slot\n", target, lun);
 #endif
 		return;
 	}
 #ifdef SIOP_DEBUG
 	printf("%s:%d:%d: allocate lun sw entry\n",
-	    sc->sc_c.sc_dev.dv_xname, target, lun);
+	    device_xname(&sc->sc_c.sc_dev), target, lun);
 #endif
 	/* INT int_resellun */
 	siop_script_write(sc, sc->script_free_lo, 0x98080000);
@@ -2001,9 +1987,10 @@ siop_del_dev(sc, target, lun)
 {
 	int i;
 	struct siop_target *siop_target;
+
 #ifdef SIOP_DEBUG
-		printf("%s:%d:%d: free lun sw entry\n",
-		    sc->sc_c.sc_dev.dv_xname, target, lun);
+	printf("%s:%d:%d: free lun sw entry\n",
+	    device_xname(&sc->sc_c.sc_dev), target, lun);
 #endif
 	if (sc->sc_c.targets[target] == NULL)
 		return;
@@ -2018,7 +2005,7 @@ siop_del_dev(sc, target, lun)
 	}
 #ifdef SIOP_DEBUG
 	printf("%s: free siop_target for target %d lun %d lunsw offset %d\n",
-	    sc->sc_c.sc_dev.dv_xname, target, lun,
+	    device_xname(&sc->sc_c.sc_dev), target, lun,
 	    siop_target->lunsw->lunsw_off);
 #endif
 	/*

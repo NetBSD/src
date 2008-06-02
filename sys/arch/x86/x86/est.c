@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.7 2007/12/09 20:27:50 jmcneill Exp $	*/
+/*	$NetBSD: est.c,v 1.7.10.1 2008/06/02 13:22:51 mjf Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -37,13 +37,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -88,7 +81,7 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.7 2007/12/09 20:27:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.7.10.1 2008/06/02 13:22:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -817,7 +810,7 @@ static const uint16_t C7M_771[] = {
 };
 
 /* 1.50GHz Centaur C7-M 400 MHz FSB */
-static const u_int16_t C7M_754[] = {
+static const uint16_t C7M_754[] = {
 	ID16(1500, 1004, BUS100),
 	ID16(1400,  988, BUS100),
 	ID16(1000,  940, BUS100),
@@ -1087,9 +1080,10 @@ est_init_main(int vendor)
 	uint8_t			crhi, crlo, crcur;
 	int			i, mv, rc;
 	size_t			len, freq_len;
-	char			*freq_names, *cpuname;
+	char			*freq_names;
+	const char *cpuname;
        
-	cpuname	= curcpu()->ci_dev->dv_xname;
+	cpuname	= device_xname(curcpu()->ci_dev);
 
 	if (CPUID2FAMILY(curcpu()->ci_signature) == 15)
 		bus_clock = p4_get_bus_clock(curcpu());

@@ -1,9 +1,7 @@
-/*	$NetBSD: uteval.c,v 1.3 2007/12/11 13:16:17 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: uteval - Object evaluation
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,14 +114,11 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uteval.c,v 1.3 2007/12/11 13:16:17 lukem Exp $");
-
 #define __UTEVAL_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acinterp.h>
+#include "acpi.h"
+#include "acnamesp.h"
+#include "acinterp.h"
 
 
 #define _COMPONENT          ACPI_UTILITIES
@@ -151,16 +146,13 @@ static const char               *AcpiInterfacesSupported[] =
     /* Operating System Vendor Strings */
 
     "Linux",
-    "Windows 2000",
-    "Windows 2001",
-    "Windows 2001 SP0",
-    "Windows 2001 SP1",
-    "Windows 2001 SP2",
-    "Windows 2001 SP3",
-    "Windows 2001 SP4",
-    "Windows 2001.1",
-    "Windows 2001.1 SP1",   /* Added 03/2006 */
-    "Windows 2006",         /* Added 03/2006 */
+    "Windows 2000",         /* Windows 2000 */
+    "Windows 2001",         /* Windows XP */
+    "Windows 2001 SP1",     /* Windows XP SP1 */
+    "Windows 2001 SP2",     /* Windows XP SP2 */
+    "Windows 2001.1",       /* Windows Server 2003 */
+    "Windows 2001.1 SP1",   /* Windows Server 2003 SP1 - Added 03/2006 */
+    "Windows 2006",         /* Windows Vista - Added 03/2006 */
 
     /* Feature Group Strings */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.6.6.1 2008/04/03 12:42:23 mjf Exp $ */
+/*	$NetBSD: rtas.c,v 1.6.6.2 2008/06/02 13:22:33 mjf Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.6.6.1 2008/04/03 12:42:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.6.6.2 2008/06/02 13:22:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,8 @@ static struct {
         { "suspend", RTAS_FUNC_SUSPEND },
         { "hibernate", RTAS_FUNC_HIBERNATE },
         { "system-reboot", RTAS_FUNC_SYSTEM_REBOOT },
+	{ "freeze-time-base", RTAS_FUNC_FREEZE_TIME_BASE },
+	{ "thaw-time-base", RTAS_FUNC_THAW_TIME_BASE },
 };
 
 static int rtas_match(struct device *, struct cfdata *, void *);
@@ -117,7 +119,7 @@ rtas_attach(struct device *parent, struct device *self, void *aux)
 	 * Instantiate the RTAS.
 	 * The physical base address should be in the first 256 MB segment.
 	 */
-	if (uvm_pglistalloc(rtas_size, 0, 0x0fffffff, 4096, 256 << 20,
+	if (uvm_pglistalloc(rtas_size, 0x100000, 0x0fffffff, 4096, 256 << 20,
 	    &pglist, 1, 0))
 		goto fail;
 

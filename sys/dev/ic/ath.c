@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.98.6.1 2008/04/03 12:42:39 mjf Exp $	*/
+/*	$NetBSD: ath.c,v 1.98.6.2 2008/06/02 13:23:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.98.6.1 2008/04/03 12:42:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.98.6.2 2008/06/02 13:23:18 mjf Exp $");
 #endif
 
 /*
@@ -5048,7 +5048,10 @@ ath_watchdog(struct ifnet *ifp)
 			;
 		else if (--axq->axq_timer == 0) {
 			ATH_TXQ_UNLOCK(axq);
-			if_printf(ifp, "device timeout (txq %d)\n", i);
+			if_printf(ifp, "device timeout (txq %d, "
+			    "txintrperiod %d)\n", i, sc->sc_txintrperiod);
+			if (sc->sc_txintrperiod > 1)
+				sc->sc_txintrperiod--;
 			ath_reset(ifp);
 			ifp->if_oerrors++;
 			sc->sc_stats.ast_watchdog++;

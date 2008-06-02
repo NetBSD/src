@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.116 2008/02/19 07:46:51 dogcow Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.116.6.1 2008/06/02 13:24:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.116 2008/02/19 07:46:51 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.116.6.1 2008/06/02 13:24:11 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
-#include "opt_multiprocessor.h"
 #include "opt_dump.h"
 
 #include <sys/param.h>
@@ -185,12 +184,11 @@ panic(const char *fmt, ...)
 	 * here and spin until the system is rebooted.  Allow the CPU that
 	 * first paniced to panic again.
 	 */
-	crit_enter();
+	kpreempt_disable();
 	ci = curcpu();
 	oci = atomic_cas_ptr((void *)&paniccpu, NULL, ci);
 	if (oci != NULL && oci != ci) {
 		/* Give interrupts a chance to try and prevent deadlock. */
-		spl0();
 		for (;;) {
 			DELAY(10);
 		}
@@ -201,7 +199,7 @@ panic(const char *fmt, ...)
 	 * CPUs from scheduling unbound jobs.  Do so without taking any
 	 * locks.
 	 */
-	curlwp->l_flag |= LW_BOUND;
+	curlwp->l_pflag |= LP_BOUND;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci->ci_schedstate.spc_flags |= SPCF_OFFLINE;
 	}
@@ -419,7 +417,7 @@ uprintf(const char *fmt, ...)
 	struct proc *p = curproc;
 	va_list ap;
 
-	/* mutex_enter(&proclist_mutex); XXXSMP */
+	/* mutex_enter(proc_lock); XXXSMP */
 
 	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		/* No mutex needed; going to process TTY. */
@@ -428,7 +426,7 @@ uprintf(const char *fmt, ...)
 		va_end(ap);
 	}
 
-	/* mutex_exit(&proclist_mutex); XXXSMP */
+	/* mutex_exit(proc_lock); XXXSMP */
 }
 
 void
@@ -467,12 +465,12 @@ tprintf_open(struct proc *p)
 
 	cookie = NULL;
 
-	/* mutex_enter(&proclist_mutex); XXXSMP */
+	mutex_enter(proc_lock);
 	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		SESSHOLD(p->p_session);
 		cookie = (tpr_t)p->p_session;
 	}
-	/* mutex_exit(&proclist_mutex) XXXSMP */
+	mutex_exit(proc_lock);
 
 	return cookie;
 }
@@ -485,8 +483,11 @@ void
 tprintf_close(tpr_t sess)
 {
 
-	if (sess)
+	if (sess) {
+		mutex_enter(proc_lock);
 		SESSRELE((struct session *) sess);
+		mutex_exit(proc_lock);
+	}
 }
 
 /*
@@ -503,7 +504,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	int s, flags = TOLOG;
 	va_list ap;
 
-	/* mutex_enter(&proclist_mutex); XXXSMP */
+	/* mutex_enter(proc_lock); XXXSMP */
 	if (sess && sess->s_ttyvp && ttycheckoutq(sess->s_ttyp, 0)) {
 		flags |= TOTTY;
 		tp = sess->s_ttyp;
@@ -517,7 +518,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
-	/* mutex_exit(&proclist_mutex);	XXXSMP */
+	/* mutex_exit(proc_lock);	XXXSMP */
 
 	logwakeup();
 }
@@ -877,6 +878,21 @@ aprint_debug_ifnet(struct ifnet *ifp, const char *fmt, ...)
 	va_start(ap, fmt);
 	aprint_debug_internal(ifp->if_xname, fmt, ap);
 	va_end(ap);
+}
+
+void
+printf_tolog(const char *fmt, ...)
+{
+	va_list ap;
+	int s;
+
+	KPRINTF_MUTEX_ENTER(s);
+
+	va_start(ap, fmt);
+	(void)kprintf(fmt, TOLOG, NULL, NULL, ap);
+	va_end(ap);
+
+	KPRINTF_MUTEX_EXIT(s);
 }
 
 /*

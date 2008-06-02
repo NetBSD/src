@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.22 2007/12/01 16:07:20 ad Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.22.14.1 2008/06/02 13:22:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.22 2007/12/01 16:07:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.22.14.1 2008/06/02 13:22:17 mjf Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.22 2007/12/01 16:07:20 ad Exp $")
 
 #include <dev/pci/pcivar.h>
 #if defined(PCI_ADDR_FIXUP)
-#include <arch/i386/pci/pci_addr_fixup.h>
+#include <arch/x86/pci/pci_addr_fixup.h>
 #endif
 
 #ifndef RBUS_IO_BASE

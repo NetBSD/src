@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.5 2007/10/19 12:01:24 ad Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.5.16.1 2008/06/02 13:23:57 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -30,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.5 2007/10/19 12:01:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.5.16.1 2008/06/02 13:23:57 mjf Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H

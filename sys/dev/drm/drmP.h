@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.14.6.1 2008/04/03 12:42:39 mjf Exp $ */
+/* $NetBSD: drmP.h,v 1.14.6.2 2008/06/02 13:23:15 mjf Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -47,7 +47,9 @@ typedef struct drm_device drm_device_t;
 typedef struct drm_file drm_file_t;
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(_KERNEL_OPT)
 #include <opt_drm.h>
+#endif
 #ifdef DRM_DEBUG
 #undef DRM_DEBUG
 #define DRM_DEBUG_DEFAULT_ON 1
@@ -136,7 +138,9 @@ typedef struct drm_file drm_file_t;
 #include "drm_atomic.h"
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(_KERNEL_OPT)
 #include <opt_drm.h>
+#endif
 #ifdef DRM_DEBUG
 #undef DRM_DEBUG
 #define DRM_DEBUG_DEFAULT_ON 1
@@ -190,7 +194,11 @@ typedef struct drm_file drm_file_t;
 
 #define DRM_IF_VERSION(maj, min) (maj << 16 | min)
 
+#if !defined(_MODULE)
 MALLOC_DECLARE(M_DRM);
+#else
+#define M_DRM M_TEMP
+#endif
 
 #define __OS_HAS_AGP	1
 
@@ -230,7 +238,7 @@ MALLOC_DECLARE(M_DRM);
 #define DRM_STRUCTPROC		struct proc
 #define DRM_STRUCTCDEVPROC	struct lwp
 #define DRM_SPINTYPE		kmutex_t
-#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DRIVER, IPL_TTY)
+#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_VM)
 #define DRM_SPINUNINIT(l)	mutex_destroy(l)
 #define DRM_SPINLOCK(l)		mutex_enter(l)
 #define DRM_SPINUNLOCK(u)	mutex_exit(u)
@@ -305,6 +313,13 @@ extern drm_device_t *drm_units[];
 #define DRM_DEVICE							\
 	drm_device_t *dev = (minor(kdev) < DRM_MAXUNITS) ?		\
 		drm_units[minor(kdev)] : NULL
+#ifdef __x86_64__
+#define DRM_NETBSD_ADDR2HANDLE(addr)	(addr   & 0x7fffffffffffffff)
+#define DRM_NETBSD_HANDLE2ADDR(handle)	(handle | 0x8000000000000000)
+#else
+#define DRM_NETBSD_ADDR2HANDLE(addr)	(addr)
+#define DRM_NETBSD_HANDLE2ADDR(handle)	(handle)
+#endif
 #elif defined(__OpenBSD__)
 #define DRM_DEVICE							\
 #define DRM_SUSER(p)		(suser(p->p_ucred, &p->p_acflag) == 0)
@@ -727,13 +742,19 @@ typedef struct drm_vbl_sig {
 #define DRM_ATI_GART_MAIN 1
 #define DRM_ATI_GART_FB   2
 
-typedef struct ati_pcigart_info {
+/* GART type */
+#define DRM_ATI_GART_PCI  1
+#define DRM_ATI_GART_PCIE 2
+#define DRM_ATI_GART_IGP  3
+
+struct drm_ati_pcigart_info {
 	int gart_table_location;
-	int is_pcie;
+	int gart_reg_if;
 	void *addr;
 	dma_addr_t bus_addr;
 	drm_local_map_t mapping;
-} drm_ati_pcigart_info;
+	int table_size;
+};
 
 struct drm_driver_info {
 	int	(*load)(struct drm_device *, unsigned long flags);
@@ -1020,7 +1041,7 @@ void	drm_vbl_send_signals(drm_device_t *dev);
 /* AGP/PCI Express/GART support (drm_agpsupport.c) */
 int	drm_device_is_agp(drm_device_t *dev);
 int	drm_device_is_pcie(drm_device_t *dev);
-drm_agp_head_t *drm_agp_init(void);
+drm_agp_head_t *drm_agp_init(drm_device_t *dev);
 int	drm_agp_acquire(drm_device_t *dev);
 int	drm_agp_release(drm_device_t *dev);
 int	drm_agp_info(drm_device_t * dev, drm_agp_info_t *info);
@@ -1045,9 +1066,9 @@ extern int		drm_sysctl_cleanup(drm_device_t *dev);
 
 /* ATI PCIGART support (ati_pcigart.c) */
 int	drm_ati_pcigart_init(drm_device_t *dev,
-			     drm_ati_pcigart_info *gart_info);
+			     struct drm_ati_pcigart_info *gart_info);
 int	drm_ati_pcigart_cleanup(drm_device_t *dev,
-				drm_ati_pcigart_info *gart_info);
+				struct drm_ati_pcigart_info *gart_info);
 
 /* Locking IOCTL support (drm_drv.c) */
 int	drm_lock(DRM_IOCTL_ARGS);

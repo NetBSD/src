@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_pnpbios.c,v 1.4 2007/03/04 05:59:59 christos Exp $ */
+/* $NetBSD: atppc_pnpbios.c,v 1.4.40.1 2008/06/02 13:22:18 mjf Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.4 2007/03/04 05:59:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.4.40.1 2008/06/02 13:22:18 mjf Exp $");
 
 #include "opt_atppc.h"
 
@@ -60,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.4 2007/03/04 05:59:59 christos E
 #include <dev/ic/atppcvar.h>
 #include <dev/isa/atppc_isadma.h>
 
-static int	atppc_pnpbios_match(struct device *, struct cfdata *, void *);
-static void	atppc_pnpbios_attach(struct device *, struct device *, void *);
+static int	atppc_pnpbios_match(device_t, cfdata_t, void *);
+static void	atppc_pnpbios_attach(device_t, device_t, void *);
 
 struct atppc_pnpbios_softc {
 	struct atppc_softc sc_atppc;
@@ -70,23 +63,23 @@ struct atppc_pnpbios_softc {
 	int sc_drq;
 };
 
-CFATTACH_DECL(atppc_pnpbios, sizeof(struct atppc_pnpbios_softc),
+CFATTACH_DECL_NEW(atppc_pnpbios, sizeof(struct atppc_pnpbios_softc),
     atppc_pnpbios_match, atppc_pnpbios_attach, NULL, NULL);
 
 static int atppc_pnpbios_dma_start(struct atppc_softc *, void *, u_int, 
 	uint8_t);
 static int atppc_pnpbios_dma_finish(struct atppc_softc *);
 static int atppc_pnpbios_dma_abort(struct atppc_softc *);
-static int atppc_pnpbios_dma_malloc(struct device *, void **, bus_addr_t *, 
+static int atppc_pnpbios_dma_malloc(device_t, void **, bus_addr_t *, 
 	bus_size_t);
-static void atppc_pnpbios_dma_free(struct device *, void **, bus_addr_t *, 
+static void atppc_pnpbios_dma_free(device_t, void **, bus_addr_t *, 
 	bus_size_t);
 
 /*
  * atppc_pnpbios_match: autoconf(9) match routine
  */
 static int
-atppc_pnpbios_match(struct device *parent, struct cfdata *match, void *aux)
+atppc_pnpbios_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -98,10 +91,10 @@ atppc_pnpbios_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-atppc_pnpbios_attach(struct device *parent, struct device *self, void *aux)
+atppc_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
-	struct atppc_softc *sc = (struct atppc_softc *) self;
-	struct atppc_pnpbios_softc *asc = (struct atppc_pnpbios_softc *)self;
+	struct atppc_softc *sc = device_private(self);
+	struct atppc_pnpbios_softc *asc = device_private(self);
 	struct pnpbiosdev_attach_args *aa = aux;
 
 	sc->sc_dev_ok = ATPPC_NOATTACH;
@@ -109,20 +102,20 @@ atppc_pnpbios_attach(struct device *parent, struct device *self, void *aux)
 	printf(": AT Parallel Port\n");
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) { 	
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
 	/* find our DRQ */
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 0, &asc->sc_drq)) {
-		printf("%s: unable to get DMA channel\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "unable to get DMA channel\n");
 		return;
 	}
 
 	pnpbios_print_devres(self, aa);
 
 	/* Attach */
+	sc->sc_dev = self;
 	sc->sc_has = 0;
 	asc->sc_ic = aa->ic;
 	sc->sc_dev_ok = ATPPC_ATTACHED;
@@ -175,20 +168,20 @@ atppc_pnpbios_dma_abort(struct atppc_softc * lsc)
 
 /* Allocate memory for DMA over ISA bus */ 
 int
-atppc_pnpbios_dma_malloc(struct device * dev, void ** buf, bus_addr_t * bus_addr,
+atppc_pnpbios_dma_malloc(device_t dev, void ** buf, bus_addr_t * bus_addr,
 	bus_size_t size)
 {
-	struct atppc_pnpbios_softc * sc = (struct atppc_pnpbios_softc *) dev;
+	struct atppc_pnpbios_softc * sc = device_private(dev);
 
 	return atppc_isadma_malloc(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
 }
 
 /* Free memory allocated by atppc_isa_dma_malloc() */ 
 void 
-atppc_pnpbios_dma_free(struct device * dev, void ** buf, bus_addr_t * bus_addr, 
+atppc_pnpbios_dma_free(device_t dev, void ** buf, bus_addr_t * bus_addr, 
 	bus_size_t size)
 {
-	struct atppc_pnpbios_softc * sc = (struct atppc_pnpbios_softc *) dev;
+	struct atppc_pnpbios_softc * sc = device_private(dev);
 
 	return atppc_isadma_free(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
 }

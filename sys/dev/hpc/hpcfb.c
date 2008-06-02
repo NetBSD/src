@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.46 2008/01/30 14:12:20 ad Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.46.6.1 2008/06/02 13:23:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.46 2008/01/30 14:12:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.46.6.1 2008/06/02 13:23:16 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -318,11 +318,10 @@ hpcfbattach(struct device *parent,
 	callout_init(&sc->sc_switch_callout, 0);
 
 	/* Add a power hook to power management */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	sc->sc_powerhook = powerhook_establish(device_xname(&sc->sc_dev),
 	    hpcfb_power, sc);
 	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish power hook\n");
 
 	wa.console = hpcfbconsole;
 	wa.scrdata = &hpcfb_screenlist;
@@ -336,14 +335,13 @@ hpcfbattach(struct device *parent,
 	 * Create a kernel thread to scroll,
 	 */
 	if (kthread_create(PRI_NONE, 0, NULL, hpcfb_thread, sc,
-	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0) {
+	    &sc->sc_thread, "%s", device_xname(&sc->sc_dev)) != 0) {
 		/*
 		 * We were unable to create the HPCFB thread; bail out.
 		 */
 		sc->sc_thread = 0;
-		printf("%s: unable to create thread, kernel "
-		    "hpcfb scroll support disabled\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to create thread, kernel "
+		    "hpcfb scroll support disabled\n");
 	}
 #endif /* HPCFB_JUMP */
 }

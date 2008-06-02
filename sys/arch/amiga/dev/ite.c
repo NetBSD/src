@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.82 2007/12/02 04:21:22 mhitch Exp $ */
+/*	$NetBSD: ite.c,v 1.82.14.1 2008/06/02 13:21:50 mjf Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82 2007/12/02 04:21:22 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82.14.1 2008/06/02 13:21:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,9 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82 2007/12/02 04:21:22 mhitch Exp $");
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/custom.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
-#if defined(__m68k__)
 #include <amiga/amiga/isr.h>
-#endif
 #include <amiga/dev/iteioctl.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/kbdmap.h>

@@ -1,8 +1,8 @@
-/*	$NetBSD: if_nfe.c,v 1.28.6.1 2008/04/03 12:42:50 mjf Exp $	*/
-/*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.28.6.2 2008/06/02 13:23:39 mjf Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
- * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2005, 2006 Jonathan Gray <jsg@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.28.6.1 2008/04/03 12:42:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.28.6.2 2008/06/02 13:23:39 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -33,10 +33,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.28.6.1 2008/04/03 12:42:50 mjf Exp $");
 #include <sys/types.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/callout.h>
 #include <sys/socket.h>
 
 #include <sys/bus.h>
@@ -108,11 +109,13 @@ void	nfe_setmulti(struct nfe_softc *);
 void	nfe_get_macaddr(struct nfe_softc *, uint8_t *);
 void	nfe_set_macaddr(struct nfe_softc *, const uint8_t *);
 void	nfe_tick(void *);
+void	nfe_poweron(device_t);
+bool	nfe_resume(device_t PMF_FN_PROTO);
 
 CFATTACH_DECL_NEW(nfe, sizeof(struct nfe_softc), nfe_match, nfe_attach,
     NULL, NULL);
 
-/*#define NFE_NO_JUMBO*/
+/* #define NFE_NO_JUMBO */
 
 #ifdef NFE_DEBUG
 int nfedebug = 0;
@@ -181,6 +184,14 @@ const struct nfe_product {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN2 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN3 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN4 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN1 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN2 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN3 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN4 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN1 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN2 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN3 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN4 }
 };
 
 int
@@ -214,8 +225,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n",
-	    devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NFE_PCI_BA);
 	switch (memtype) {
@@ -248,14 +258,6 @@ nfe_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	/* Check for reversed ethernet address */
-	if ((NFE_READ(sc, NFE_TX_UNK) & NFE_MAC_ADDR_INORDER) != 0)
-		sc->sc_flags |= NFE_CORRECT_MACADDR;
-
-	nfe_get_macaddr(sc, sc->sc_enaddr);
-	aprint_normal_dev(self, "Ethernet address %s\n",
-	    ether_sprintf(sc->sc_enaddr));
-
 	sc->sc_flags = 0;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
@@ -267,6 +269,8 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		break;
 	case PCI_PRODUCT_NVIDIA_MCP51_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP51_LAN2:
+		sc->sc_flags |= NFE_40BIT_ADDR | NFE_PWR_MGMT;
+		break;
 	case PCI_PRODUCT_NVIDIA_MCP61_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP61_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP61_LAN3:
@@ -279,7 +283,19 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP73_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP73_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP73_LAN4:
-		sc->sc_flags |= NFE_40BIT_ADDR |NFE_PWR_MGMT;
+		sc->sc_flags |= NFE_40BIT_ADDR | NFE_CORRECT_MACADDR |
+		    NFE_PWR_MGMT;
+		break;
+	case PCI_PRODUCT_NVIDIA_MCP77_LAN1:
+	case PCI_PRODUCT_NVIDIA_MCP77_LAN2:
+	case PCI_PRODUCT_NVIDIA_MCP77_LAN3:
+	case PCI_PRODUCT_NVIDIA_MCP77_LAN4:
+	case PCI_PRODUCT_NVIDIA_MCP79_LAN1:
+	case PCI_PRODUCT_NVIDIA_MCP79_LAN2:
+	case PCI_PRODUCT_NVIDIA_MCP79_LAN3:
+	case PCI_PRODUCT_NVIDIA_MCP79_LAN4:
+		sc->sc_flags |= NFE_40BIT_ADDR | NFE_HW_CSUM |
+		    NFE_CORRECT_MACADDR | NFE_PWR_MGMT;
 		break;
 	case PCI_PRODUCT_NVIDIA_CK804_LAN1:
 	case PCI_PRODUCT_NVIDIA_CK804_LAN2:
@@ -287,34 +303,35 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP04_LAN2:
 		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM;
 		break;
-	case PCI_PRODUCT_NVIDIA_MCP55_LAN1:
-	case PCI_PRODUCT_NVIDIA_MCP55_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN4:
+		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR |
+		    NFE_CORRECT_MACADDR | NFE_PWR_MGMT;
+		break;
+	case PCI_PRODUCT_NVIDIA_MCP55_LAN1:
+	case PCI_PRODUCT_NVIDIA_MCP55_LAN2:
 		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM |
 		    NFE_HW_VLAN | NFE_PWR_MGMT;
 		break;
 	}
 
-	if ((sc->sc_flags & NFE_PWR_MGMT) != 0) {
-		/* wakeup some newer chips from powerdown mode */
-		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_RESET | NFE_RXTX_BIT2);
-		NFE_WRITE(sc, NFE_MAC_RESET, NFE_MAC_RESET_MAGIC);
-		DELAY(100);
-		NFE_WRITE(sc, NFE_MAC_RESET, 0);
-		DELAY(100);
-		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_BIT2);
-		NFE_WRITE(sc, NFE_PWR2_CTL,
-		    NFE_READ(sc, NFE_PWR2_CTL) & ~NFE_PWR2_WAKEUP_MASK);
-	}
+	nfe_poweron(self);
 
 #ifndef NFE_NO_JUMBO
 	/* enable jumbo frames for adapters that support it */
 	if (sc->sc_flags & NFE_JUMBO_SUP)
 		sc->sc_flags |= NFE_USE_JUMBO;
 #endif
+
+	/* Check for reversed ethernet address */
+	if ((NFE_READ(sc, NFE_TX_UNK) & NFE_MAC_ADDR_INORDER) != 0)
+		sc->sc_flags |= NFE_CORRECT_MACADDR;
+
+	nfe_get_macaddr(sc, sc->sc_enaddr);
+	aprint_normal_dev(self, "Ethernet address %s\n",
+	    ether_sprintf(sc->sc_enaddr));
 
 	/*
 	 * Allocate Tx and Rx rings.
@@ -323,6 +340,8 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "could not allocate Tx ring\n");
 		return;
 	}
+
+	mutex_init(&sc->rxq.mtx, MUTEX_SPIN, IPL_NET);
 
 	if (nfe_alloc_rx_ring(sc, &sc->rxq) != 0) {
 		aprint_error_dev(self, "could not allocate Rx ring\n");
@@ -343,6 +362,11 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, NFE_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
+
+#ifdef notyet
+	if (sc->sc_flags & NFE_USE_JUMBO)
+		ifp->if_hardmtu = NFE_JUMBO_MTU;
+#endif
 
 #if NVLAN > 0
 	if (sc->sc_flags & NFE_HW_VLAN)
@@ -380,7 +404,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, nfe_tick, sc);
 
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, nfe_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
@@ -524,18 +548,14 @@ nfe_intr(void *arg)
 		handled = 1;
 		DPRINTFN(5, ("nfe_intr: interrupt register %x\n", r));
 
-		if ((r & (NFE_IRQ_RXERR | NFE_IRQ_RX_NOBUF | NFE_IRQ_RX))
-		    != 0) {
+		if ((r & (NFE_IRQ_RXERR|NFE_IRQ_RX_NOBUF|NFE_IRQ_RX)) != 0) {
 			/* check Rx ring */
 			nfe_rxeof(sc);
 		}
-
-		if ((r & (NFE_IRQ_TXERR | NFE_IRQ_TXERR2 | NFE_IRQ_TX_DONE))
-		    != 0) {
+		if ((r & (NFE_IRQ_TXERR|NFE_IRQ_TXERR2|NFE_IRQ_TX_DONE)) != 0) {
 			/* check Tx ring */
 			nfe_txeof(sc);
 		}
-
 		if ((r & NFE_IRQ_LINK) != 0) {
 			NFE_READ(sc, NFE_PHY_STATUS);
 			NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
@@ -595,9 +615,9 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 */
 			if ((ifp->if_flags & IFF_RUNNING) &&
 			    ((ifp->if_flags ^ sc->sc_if_flags) &
-			     (IFF_ALLMULTI | IFF_PROMISC)) != 0)
+			     (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
 				nfe_setmulti(sc);
-			else
+			} else
 				nfe_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -608,7 +628,7 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
-		
+
 		error = 0;
 
 		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
@@ -786,13 +806,12 @@ nfe_rxeof(struct nfe_softc *sc)
 					goto skip1;
 				}
 
-				memcpy(mtod(mnew, void *),
+				(void)memcpy(mtod(mnew, void *),
 				    mtod(data->m, const void *), len);
 				m = mnew;
 				goto mbufcopied;
 			} else {
 				MEXTADD(mnew, jbuf->buf, NFE_JBYTES, 0, nfe_jfree, sc);
-
 				bus_dmamap_sync(sc->sc_dmat, sc->rxq.jmap,
 				    mtod(data->m, char *) - (char *)sc->rxq.jpool,
 				    NFE_JBYTES, BUS_DMASYNC_POSTREAD);
@@ -869,7 +888,6 @@ mbufcopied:
 				    device_xname(sc->sc_dev)));
 			}
 		}
-
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -888,7 +906,7 @@ skip1:
 			desc32->physaddr = htole32(physaddr);
 		}
 
- skip:
+skip:	
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			desc64->length = htole16(sc->rxq.bufsz);
 			desc64->flags = htole16(NFE_RX_READY);
@@ -916,6 +934,7 @@ nfe_txeof(struct nfe_softc *sc)
 	struct nfe_tx_data *data = NULL;
 	int i;
 	uint16_t flags;
+	char buf[128];
 
 	for (i = sc->txq.next;
 	    sc->txq.queued > 0;
@@ -945,8 +964,9 @@ nfe_txeof(struct nfe_softc *sc)
 				continue;
 
 			if ((flags & NFE_TX_ERROR_V1) != 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "tx v1 error 0x%04x\n", flags);
+				aprint_error_dev(sc->sc_dev, "tx v1 error %s\n",
+				    bitmask_snprintf(flags, NFE_V1_TXERR,
+				    buf, sizeof(buf)));
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
@@ -956,8 +976,9 @@ nfe_txeof(struct nfe_softc *sc)
 				continue;
 
 			if ((flags & NFE_TX_ERROR_V2) != 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "tx v2 error 0x%04x\n", flags);
+				aprint_error_dev(sc->sc_dev, "tx v2 error %s\n",
+				    bitmask_snprintf(flags, NFE_V2_TXERR,
+				    buf, sizeof(buf)));
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
@@ -1115,7 +1136,7 @@ nfe_start(struct ifnet *ifp)
 	int old = sc->txq.queued;
 	struct mbuf *m0;
 
-	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	for (;;) {
@@ -1256,7 +1277,7 @@ nfe_init(struct ifnet *ifp)
 	NFE_WRITE(sc, NFE_STATUS, sc->mii_phyaddr << 24 | NFE_STATUS_MAGIC);
 
 	NFE_WRITE(sc, NFE_SETUP_R4, NFE_R4_MAGIC);
-	NFE_WRITE(sc, NFE_WOL_CTL, NFE_WOL_MAGIC);
+	NFE_WRITE(sc, NFE_WOL_CTL, NFE_WOL_ENABLE);
 
 	sc->rxtxctl &= ~NFE_RXTX_BIT2;
 	NFE_WRITE(sc, NFE_RXTX_CTL, sc->rxtxctl);
@@ -1522,12 +1543,15 @@ nfe_jalloc(struct nfe_softc *sc, int i)
 {
 	struct nfe_jbuf *jbuf;
 
+	mutex_enter(&sc->rxq.mtx);
 	jbuf = SLIST_FIRST(&sc->rxq.jfreelist);
+	if (jbuf != NULL)
+		SLIST_REMOVE_HEAD(&sc->rxq.jfreelist, jnext);
+	mutex_exit(&sc->rxq.mtx);
 	if (jbuf == NULL)
 		return NULL;
 	sc->rxq.jbufmap[i] =
 	    ((char *)jbuf->buf - (char *)sc->rxq.jpool) / NFE_JBYTES;
-	SLIST_REMOVE_HEAD(&sc->rxq.jfreelist, jnext);
 	return jbuf;
 }
 
@@ -1553,10 +1577,12 @@ nfe_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	jbuf = &sc->rxq.jbuf[i];
 
 	/* ..and put it back in the free list */
+	mutex_enter(&sc->rxq.mtx);
 	SLIST_INSERT_HEAD(&sc->rxq.jfreelist, jbuf, jnext);
+	mutex_exit(&sc->rxq.mtx);
 
-        if (m != NULL)
-                pool_cache_put(mb_cache, m);
+	if (m != NULL)
+		pool_cache_put(mb_cache, m);
 }
 
 int
@@ -1845,7 +1871,18 @@ nfe_get_macaddr(struct nfe_softc *sc, uint8_t *addr)
 {
 	uint32_t tmp;
 
-	if ((sc->sc_flags & NFE_CORRECT_MACADDR) == 0) {
+	if ((sc->sc_flags & NFE_CORRECT_MACADDR) != 0) {
+		tmp = NFE_READ(sc, NFE_MACADDR_HI);
+		addr[0] = (tmp & 0xff);
+		addr[1] = (tmp >>  8) & 0xff;
+		addr[2] = (tmp >> 16) & 0xff;
+		addr[3] = (tmp >> 24) & 0xff;
+
+		tmp = NFE_READ(sc, NFE_MACADDR_LO);
+		addr[4] = (tmp & 0xff);
+		addr[5] = (tmp >> 8) & 0xff;
+
+	} else {
 		tmp = NFE_READ(sc, NFE_MACADDR_LO);
 		addr[0] = (tmp >> 8) & 0xff;
 		addr[1] = (tmp & 0xff);
@@ -1855,16 +1892,6 @@ nfe_get_macaddr(struct nfe_softc *sc, uint8_t *addr)
 		addr[3] = (tmp >> 16) & 0xff;
 		addr[4] = (tmp >>  8) & 0xff;
 		addr[5] = (tmp & 0xff);
-	} else {
-		tmp = NFE_READ(sc, NFE_MACADDR_LO);
-		addr[5] = (tmp >> 8) & 0xff;
-		addr[4] = (tmp & 0xff);
-
-		tmp = NFE_READ(sc, NFE_MACADDR_HI);
-		addr[3] = (tmp >> 24) & 0xff;
-		addr[2] = (tmp >> 16) & 0xff;
-		addr[1] = (tmp >>  8) & 0xff;
-		addr[0] = (tmp & 0xff);
 	}
 }
 
@@ -1888,4 +1915,29 @@ nfe_tick(void *arg)
 	splx(s);
 
 	callout_schedule(&sc->sc_tick_ch, hz);
+}
+
+void
+nfe_poweron(device_t self)
+{
+	struct nfe_softc *sc = device_private(self);
+
+	if ((sc->sc_flags & NFE_PWR_MGMT) != 0) {
+		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_RESET | NFE_RXTX_BIT2);
+		NFE_WRITE(sc, NFE_MAC_RESET, NFE_MAC_RESET_MAGIC);
+		DELAY(100);
+		NFE_WRITE(sc, NFE_MAC_RESET, 0);
+		DELAY(100);
+		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_BIT2);
+		NFE_WRITE(sc, NFE_PWR2_CTL,
+		    NFE_READ(sc, NFE_PWR2_CTL) & ~NFE_PWR2_WAKEUP_MASK);
+	}
+}
+
+bool
+nfe_resume(device_t dv PMF_FN_ARGS)
+{
+	nfe_poweron(dv);
+
+	return true;
 }

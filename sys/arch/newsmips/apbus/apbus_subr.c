@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus_subr.c,v 1.7 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: apbus_subr.c,v 1.7.74.1 2008/06/02 13:22:29 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus_subr.c,v 1.7 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus_subr.c,v 1.7.74.1 2008/06/02 13:22:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ apbus_lookupdev(char *devname)
 
 	/* search apbus_dev named 'devname' */
 	while (dp) {
-		if (strcmp(devname,dp->apbd_name) == 0)
+		if (strcmp(devname, dp->apbd_name) == 0)
 			return dp;
 
 		dp = dp->apbd_link;

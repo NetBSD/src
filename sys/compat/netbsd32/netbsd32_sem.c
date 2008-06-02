@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.6 2007/12/20 23:03:02 dsl Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.6.6.1 2008/06/02 13:23:07 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -12,9 +12,6 @@
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *  3. Neither the name of The NetBSD Foundation nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  *  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -30,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.6 2007/12/20 23:03:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.6.6.1 2008/06/02 13:23:07 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_posix.h"

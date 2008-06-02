@@ -1,0 +1,19 @@
+/*	$NetBSD: kmodule,v 1.1.2.2 2008/06/02 13:21:24 mjf Exp $	*/
+
+SECTIONS
+{
+   /* Pre-loaded modules must have merged BSS and data. */
+   .data 0 :
+   {
+     *(.data)
+     *(.data.*)
+     *(.bss)
+     *(.bss.*)
+     *(COMMON)
+   }
+   /* Pre-loaded modules do not need the following. */
+   /DISCARD/ :
+   {
+     *(.comment)
+   }
+}

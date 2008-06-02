@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.77 2007/10/19 11:59:48 ad Exp $	*/
+/*	$NetBSD: awi.c,v 1.77.16.1 2008/06/02 13:23:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -86,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.77 2007/10/19 11:59:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.77.16.1 2008/06/02 13:23:19 mjf Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -217,29 +210,6 @@ struct awi_chanset awi_chanset[] = {
     { 0, 0, 0, 0, 0 }
 };
 
-#ifdef __FreeBSD__
-devclass_t awi_devclass;
-
-#if __FreeBSD_version < 500043
-static char *ether_sprintf(u_int8_t *);
-
-static char *
-ether_sprintf(u_int8_t *enaddr)
-{
-	static char strbuf[18];
-
-	sprintf(strbuf, "%6D", enaddr, ":");
-	return strbuf;
-}
-#endif
-
-#define	IFQ_PURGE(ifq)		IF_DRAIN(ifq)
-#define IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
-#define IFQ_POLL(ifq, m)	IF_POLL((ifq), (m))
-#define IFQ_DEQUEUE(ifq, m)	IF_DEQUEUE((ifq), (m))
-
-#endif
-
 #ifdef AWI_DEBUG
 int awi_debug = 0;
 
@@ -287,7 +257,7 @@ awi_attach(struct awi_softc *sc)
 	ifp->if_init = awi_init;
 	ifp->if_stop = awi_stop;
 	IFQ_SET_READY(&ifp->if_snd);
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 #endif
 #ifdef __FreeBSD__
 	ifp->if_init = awi_init0;

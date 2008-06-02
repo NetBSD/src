@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.85 2007/12/16 21:28:30 dyoung Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.85.6.1 2008/06/02 13:23:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.85 2007/12/16 21:28:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.85.6.1 2008/06/02 13:23:46 mjf Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -187,7 +187,7 @@ pcmcia_card_attach(dev)
 	if (sc->card.error ||
 	    SIMPLEQ_EMPTY(&sc->card.pf_head)) {
 		printf("%s: card appears to have bogus CIS\n",
-		    sc->dev.dv_xname);
+		    device_xname(&sc->dev));
 		error = EIO;
 		goto done;
 	}
@@ -203,7 +203,7 @@ pcmcia_card_attach(dev)
 #ifdef DIAGNOSTIC
 		if (pf->child != NULL) {
 			printf("%s: %s still attached to function %d!\n",
-			    sc->dev.dv_xname, pf->child->dv_xname,
+			    device_xname(&sc->dev), device_xname(pf->child),
 			    pf->number);
 			panic("pcmcia_card_attach");
 		}
@@ -281,10 +281,10 @@ pcmcia_card_detach(dev, flags)
 		if (pf->child == NULL)
 			continue;
 		DPRINTF(("%s: detaching %s (function %d)\n",
-		    sc->dev.dv_xname, pf->child->dv_xname, pf->number));
+		    device_xname(&sc->dev), device_xname(pf->child), pf->number));
 		if ((error = config_detach(pf->child, flags)) != 0) {
 			printf("%s: error %d detaching %s (function %d)\n",
-			    sc->dev.dv_xname, error, pf->child->dv_xname,
+			    device_xname(&sc->dev), error, device_xname(pf->child),
 			    pf->number);
 		}
 	}
@@ -315,8 +315,8 @@ pcmcia_childdetached(struct device *self, struct device *child)
 		}
 	}
 
-	printf("%s: pcmcia_childdetached: %s not found\n",
-	       self->dv_xname, child->dv_xname);
+	aprint_error_dev(self, "pcmcia_childdetached: %s not found\n",
+	       device_xname(child));
 }
 
 void
@@ -337,7 +337,7 @@ pcmcia_card_deactivate(dev)
 		if (pf->child == NULL)
 			continue;
 		DPRINTF(("%s: deactivating %s (function %d)\n",
-		    sc->dev.dv_xname, pf->child->dv_xname, pf->number));
+		    device_xname(&sc->dev), device_xname(pf->child), pf->number));
 		config_deactivate(pf->child);
 	}
 }
@@ -478,7 +478,7 @@ pcmcia_socket_enable(dev)
 
 	if (sc->sc_enabled_count++ == 0)
 		pcmcia_chip_socket_enable(sc->pct, sc->pch);
-	DPRINTF(("%s: ++enabled_count = %d\n", sc->dev.dv_xname,
+	DPRINTF(("%s: ++enabled_count = %d\n", device_xname(&sc->dev),
 		 sc->sc_enabled_count));
 }
 
@@ -490,7 +490,7 @@ pcmcia_socket_disable(dev)
 
 	if (--sc->sc_enabled_count == 0)
 		pcmcia_chip_socket_disable(sc->pct, sc->pch);
-	DPRINTF(("%s: --enabled_count = %d\n", sc->dev.dv_xname,
+	DPRINTF(("%s: --enabled_count = %d\n", device_xname(&sc->dev),
 		 sc->sc_enabled_count));
 }
 
@@ -598,7 +598,7 @@ pcmcia_function_enable(pf)
 		SIMPLEQ_FOREACH(tmp, &sc->card.pf_head, pf_list) {
 			printf("%s: function %d CCR at %d offset %lx: "
 			       "%x %x %x %x, %x %x %x %x, %x\n",
-			       tmp->sc->dev.dv_xname, tmp->number,
+			       device_xname(&tmp->sc->dev), tmp->number,
 			       tmp->pf_ccr_window,
 			       (unsigned long) tmp->pf_ccr_offset,
 			       pcmcia_ccr_read(tmp, 0),
@@ -629,7 +629,7 @@ bad:
 	 * Decrement the reference count, and power down the socket, if
 	 * necessary.
 	 */
-	printf("%s: couldn't map the CCR\n", pf->child->dv_xname);
+	printf("%s: couldn't map the CCR\n", device_xname(pf->child));
 	pcmcia_socket_disable(&sc->dev);
 
 	return (error);
@@ -767,7 +767,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 	pf->pf_ih = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
 	    pf, ipl, ih_fct, ih_arg);
 	if (!pf->pf_ih)
-		printf("%s: interrupt establish failed\n", pf->child->dv_xname);
+		aprint_error_dev(pf->child, "interrupt establish failed\n");
 	return (pf->pf_ih);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.19 2007/10/19 12:00:21 ad Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.19.16.1 2008/06/02 13:23:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -64,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.19 2007/10/19 12:00:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.19.16.1 2008/06/02 13:23:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +94,11 @@ struct nca_isa_probe_data {
 
 int	nca_isa_find(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    struct nca_isa_probe_data *);
-int	nca_isa_match(struct device *, struct cfdata *, void *);
-void	nca_isa_attach(struct device *, struct device *, void *);
+int	nca_isa_match(device_t, cfdata_t, void *);
+void	nca_isa_attach(device_t, device_t, void *);
 int	nca_isa_test(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-CFATTACH_DECL(nca_isa, sizeof(struct nca_isa_softc),
+CFATTACH_DECL_NEW(nca_isa, sizeof(struct nca_isa_softc),
     nca_isa_match, nca_isa_attach, NULL, NULL);
 
 
@@ -128,11 +121,9 @@ CFATTACH_DECL(nca_isa, sizeof(struct nca_isa_softc),
  * Initialization and test function used by nca_isa_find()
  */
 int
-nca_isa_test(iot, ioh, reg_offset)
-	bus_space_tag_t	iot;
-	bus_space_handle_t ioh;
-	bus_size_t reg_offset;
+nca_isa_test(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t reg_offset)
 {
+
 	/* Reset the SCSI bus. */
 	bus_space_write_1(iot, ioh, reg_offset + C80_ICR, SCI_ICMD_RST);
 	bus_space_write_1(iot, ioh, reg_offset + C80_ODR, 0);
@@ -141,8 +132,8 @@ nca_isa_test(iot, ioh, reg_offset)
 	/* Check that status cleared. */
 	if (bus_space_read_1(iot, ioh, reg_offset + C80_CSBR) != SCI_BUS_RST) {
 #ifdef DEBUG
-		printf("nca_isa_find: reset status not cleared [0x%x]\n",
-		    bus_space_read_1(iot, ioh, reg_offset+C80_CSBR));
+		printf("%s: reset status not cleared [0x%x]\n",
+		    __func__, bus_space_read_1(iot, ioh, reg_offset+C80_CSBR));
 #endif
 		bus_space_write_1(iot, ioh, reg_offset+C80_ICR, 0);
 		return 0;
@@ -160,8 +151,8 @@ nca_isa_test(iot, ioh, reg_offset)
 	if (bus_space_read_1(iot, ioh, reg_offset + C80_BSR) & (SCI_CSR_PERR |
 	    SCI_CSR_INT | SCI_CSR_DISC)) {
 #ifdef DEBUG
-		printf("nca_isa_find: Parity/Interrupt/Busy not cleared [0x%x]\n",
-		    bus_space_read_1(iot, ioh, reg_offset+C80_BSR));
+		printf("%s: Parity/Interrupt/Busy not cleared [0x%x]\n",
+		    __func__, bus_space_read_1(iot, ioh, reg_offset+C80_BSR));
 #endif
 		return 0;
 	}
@@ -175,11 +166,8 @@ nca_isa_test(iot, ioh, reg_offset)
  * Look for the board
  */
 int
-nca_isa_find(iot, ioh, max_offset, epd)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_size_t max_offset;
-	struct nca_isa_probe_data *epd;
+nca_isa_find(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_size_t max_offset, struct nca_isa_probe_data *epd)
 {
 	/*
 	 * We check for the existence of a board by trying to initialize it,
@@ -188,7 +176,6 @@ nca_isa_find(iot, ioh, max_offset, epd)
 	 * driver. Unavoidable as that code is not suited to this task.)
 	 * This is largely stolen from FreeBSD.
 	 */
-
 	int 		cont_type;
 	bus_size_t	base_offset, reg_offset = 0;
 
@@ -204,7 +191,7 @@ nca_isa_find(iot, ioh, max_offset, epd)
 
 	for (base_offset = 0; base_offset < max_offset; base_offset += 0x08) {
 #ifdef DEBUG
-		printf("nca_isa_find: testing offset 0x%x\n", (int)base_offset);
+		printf("%s: testing offset 0x%x\n", __func__, (int)base_offset);
 #endif
 
 		/* See if anything is there */
@@ -212,7 +199,8 @@ nca_isa_find(iot, ioh, max_offset, epd)
 			continue;
 
 		/* Loop around for each board type */
-		for (cont_type = 1; cont_type <= MAX_NCA_CONTROLLER; cont_type++) {
+		for (cont_type = 1; cont_type <= MAX_NCA_CONTROLLER;
+		    cont_type++) {
 			/* Per-controller initialization */
 			switch (cont_type) {
 			case CTLR_NCR_5380:
@@ -252,8 +240,7 @@ nca_isa_find(iot, ioh, max_offset, epd)
  * If so, call the real probe to see what it is.
  */
 int
-nca_isa_match(struct device *parent, struct cfdata *match,
-    void *aux)
+nca_isa_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -263,7 +250,7 @@ nca_isa_match(struct device *parent, struct cfdata *match,
 	int rv = 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	/* See if we are looking for a port- or memory-mapped adapter */
 	if (ia->ia_nio > 0 || ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT) {
@@ -312,24 +299,24 @@ nca_isa_match(struct device *parent, struct cfdata *match,
  * Attach this instance, and then all the sub-devices
  */
 void
-nca_isa_attach(struct device *parent, struct device *self, void *aux)
+nca_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct isa_attach_args *ia = aux;
-	struct nca_isa_softc *esc = (void *)self;
+	struct nca_isa_softc *esc = device_private(self);
 	struct ncr5380_softc *sc = &esc->sc_ncr5380;
+	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	struct nca_isa_probe_data epd;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
-	printf("\n");
+	sc->sc_dev = self;
+	aprint_normal("\n");
 
 	if (ia->ia_nio > 0) {
 		iot = ia->ia_iot;
 		if (bus_space_map(iot, ia->ia_io[0].ir_addr, NCA_ISA_IOSIZE,
 		    0, &ioh)) {
-			printf("%s: can't map i/o space\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(self, "can't map i/o space\n");
 			return;
 		}
 	} else {
@@ -337,8 +324,7 @@ nca_isa_attach(struct device *parent, struct device *self, void *aux)
 		iot = ia->ia_memt;
 		if (bus_space_map(iot, ia->ia_iomem[0].ir_addr, NCA_ISA_IOSIZE,
 		    0, &ioh)) {
-			printf("%s: can't map mem space\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(self, "can't map mem space\n");
 			return;
 		}
 	}
@@ -346,10 +332,10 @@ nca_isa_attach(struct device *parent, struct device *self, void *aux)
 	switch (nca_isa_find(iot, ioh, NCA_ISA_IOSIZE, &epd)) {
 	case 0:
 		/* Not found- must have gone away */
-		printf("%s: nca_isa_find failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "nca_isa_find failed\n");
 		return;
 	case CTLR_NCR_5380:
-		printf("%s: NCR 53C80 detected\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "NCR 53C80 detected\n");
 		sc->sci_r0 = 0;
 		sc->sci_r1 = 1;
 		sc->sci_r2 = 2;
@@ -361,7 +347,7 @@ nca_isa_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_rev = NCR_VARIANT_NCR5380;
 		break;
 	case CTLR_NCR_53C400:
-		printf("%s: NCR 53C400 detected\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "NCR 53C400 detected\n");
 		sc->sci_r0 = C400_5380_REG_OFFSET + 0;
 		sc->sci_r1 = C400_5380_REG_OFFSET + 1;
 		sc->sci_r2 = C400_5380_REG_OFFSET + 2;
@@ -373,8 +359,7 @@ nca_isa_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_rev = NCR_VARIANT_NCR53C400;
 		break;
 	case CTLR_PAS16:
-		printf("%s: ProAudio Spectrum 16 detected\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "ProAudio Spectrum 16 detected\n");
 		sc->sc_rev = NCR_VARIANT_PAS16;
 		break;
 	}
@@ -398,8 +383,8 @@ nca_isa_attach(struct device *parent, struct device *self, void *aux)
 		esc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq,
 		    IST_EDGE, IPL_BIO, ncr5380_intr, esc);
 		if (esc->sc_ih == NULL) {
-			printf("%s: couldn't establish interrupt\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(self,
+			    "couldn't establish interrupt\n");
 			return;
 		}
 	} else
@@ -417,10 +402,8 @@ nca_isa_attach(struct device *parent, struct device *self, void *aux)
 	esc->sc_options = 0x0ffff;	/* all options except force poll */
 #endif
 
-	sc->sc_no_disconnect =
-		(esc->sc_options & NCA_NO_DISCONNECT);
-	sc->sc_parity_disable =
-		(esc->sc_options & NCA_NO_PARITY_CHK) >> 8;
+	sc->sc_no_disconnect = (esc->sc_options & NCA_NO_DISCONNECT);
+	sc->sc_parity_disable = (esc->sc_options & NCA_NO_PARITY_CHK) >> 8;
 	if (esc->sc_options & NCA_FORCE_POLLING)
 		sc->sc_flags |= NCR5380_FORCE_POLLING;
 	sc->sc_min_dma_len = MIN_DMA_LEN;

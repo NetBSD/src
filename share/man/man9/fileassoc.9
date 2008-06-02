@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.20 2007/05/15 19:47:43 elad Exp $
+.\" $NetBSD: fileassoc.9,v 1.20.10.1 2008/06/02 13:21:41 mjf Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -294,7 +294,7 @@ int error;
 
 error = fileassoc_clear(vp, myhook_id);
 if (error) {
-	printf("Myhook: Error occured during fileassoc removal.\n");
+	printf("Myhook: Error occurred during fileassoc removal.\n");
 	...handle error...
 }
 .Ed

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.18 2007/12/15 00:39:24 perry Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.18.6.1 2008/06/02 13:22:55 mjf Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.18 2007/12/15 00:39:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.18.6.1 2008/06/02 13:22:55 mjf Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -60,25 +60,25 @@ extern struct semaphore xenwatch_mutex;
 
 #define streq(a, b) (strcmp((a), (b)) == 0)
 
-static int  xenbus_match(struct device *, struct cfdata *, void *);
-static void xenbus_attach(struct device *, struct device *, void *);
+static int  xenbus_match(device_t, cfdata_t, void *);
+static void xenbus_attach(device_t, device_t, void *);
 static int  xenbus_print(void *, const char *);
 
 static void xenbus_probe_init(void *);
 
 static struct xenbus_device *xenbus_lookup_device_path(const char *);
 
-CFATTACH_DECL(xenbus, sizeof(struct device), xenbus_match, xenbus_attach,
+CFATTACH_DECL_NEW(xenbus, 0, xenbus_match, xenbus_attach,
     NULL, NULL);
 
-struct device *xenbus_sc;
+device_t xenbus_sc;
 
 SLIST_HEAD(, xenbus_device) xenbus_device_list;
 SLIST_HEAD(, xenbus_backend_driver) xenbus_backend_driver_list =
 	SLIST_HEAD_INITIALIZER(xenbus_backend_driver);
 
 int
-xenbus_match(struct device *parent, struct cfdata *match, void *aux)
+xenbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct xenbus_attach_args *xa = (struct xenbus_attach_args *)aux;
 
@@ -88,7 +88,7 @@ xenbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-xenbus_attach(struct device *parent, struct device *self, void *aux)
+xenbus_attach(device_t parent, device_t self, void *aux)
 {
 	int err;
 
@@ -228,7 +228,7 @@ otherend_changed(struct xenbus_watch *watch,
 			    DETACH_FORCE);
 			if (error) {
 				printf("could not detach %s: %d\n",
-				    xdev->xbusd_u.f.f_dev->dv_xname, error);
+				    device_xname(xdev->xbusd_u.f.f_dev), error);
 				return;
 			}
 		}
@@ -556,7 +556,7 @@ xenbus_probe_init(void *unused)
 	}
 
 	/* register event handler */
-	xb_init_comms((struct device *)xenbus_sc);
+	xb_init_comms(xenbus_sc);
 
 	/* Initialize the interface to xenstore. */
 	err = xs_init(); 

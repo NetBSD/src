@@ -1,9 +1,7 @@
-/*	$NetBSD: exfldio.c,v 1.3 2007/12/11 13:16:08 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: exfldio - Aml Field I/O
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,16 +114,14 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfldio.c,v 1.3 2007/12/11 13:16:08 lukem Exp $");
 
 #define __EXFLDIO_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acinterp.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acevents.h>
-#include <dist/acpica/acdispat.h>
+#include "acpi.h"
+#include "acinterp.h"
+#include "amlcode.h"
+#include "acevents.h"
+#include "acdispat.h"
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -369,7 +365,7 @@ AcpiExAccessRegion (
         ObjDesc->CommonField.AccessByteWidth,
         ObjDesc->CommonField.BaseByteOffset,
         FieldDatumByteOffset,
-        (void *) Address));
+        ACPI_CAST_PTR (void, Address)));
 
     /* Invoke the appropriate AddressSpace/OpRegion handler */
 
@@ -934,6 +930,8 @@ AcpiExInsertIntoField (
     UINT32                  DatumCount;
     UINT32                  FieldDatumCount;
     UINT32                  i;
+    UINT32                  RequiredLength;
+    void                    *NewBuffer;
 
 
     ACPI_FUNCTION_TRACE (ExInsertIntoField);
@@ -941,14 +939,33 @@ AcpiExInsertIntoField (
 
     /* Validate input buffer */
 
-    if (BufferLength <
-            ACPI_ROUND_BITS_UP_TO_BYTES (ObjDesc->CommonField.BitLength))
+    NewBuffer = NULL;
+    RequiredLength = ACPI_ROUND_BITS_UP_TO_BYTES (
+                        ObjDesc->CommonField.BitLength);
+    /*
+     * We must have a buffer that is at least as long as the field
+     * we are writing to.  This is because individual fields are
+     * indivisible and partial writes are not supported -- as per
+     * the ACPI specification.
+     */
+    if (BufferLength < RequiredLength)
     {
-        ACPI_ERROR ((AE_INFO,
-            "Field size %X (bits) is too large for buffer (%X)",
-            ObjDesc->CommonField.BitLength, BufferLength));
+        /* We need to create a new buffer */
 
-        return_ACPI_STATUS (AE_BUFFER_OVERFLOW);
+        NewBuffer = ACPI_ALLOCATE_ZEROED (RequiredLength);
+        if (!NewBuffer)
+        {
+            return_ACPI_STATUS (AE_NO_MEMORY);
+        }
+
+        /*
+         * Copy the original data to the new buffer, starting
+         * at Byte zero.  All unused (upper) bytes of the
+         * buffer will be 0.
+         */
+        ACPI_MEMCPY ((char *) NewBuffer, (char *) Buffer, BufferLength);
+        Buffer = NewBuffer;
+        BufferLength = RequiredLength;
     }
 
     /*
@@ -996,7 +1013,7 @@ AcpiExInsertIntoField (
                     MergedDatum, FieldOffset);
         if (ACPI_FAILURE (Status))
         {
-            return_ACPI_STATUS (Status);
+            goto Exit;
         }
 
         FieldOffset += ObjDesc->CommonField.AccessByteWidth;
@@ -1054,6 +1071,13 @@ AcpiExInsertIntoField (
     Status = AcpiExWriteWithUpdateRule (ObjDesc,
                 Mask, MergedDatum, FieldOffset);
 
+Exit:
+    /* Free temporary buffer if we used one */
+
+    if (NewBuffer)
+    {
+        ACPI_FREE (NewBuffer);
+    }
     return_ACPI_STATUS (Status);
 }
 

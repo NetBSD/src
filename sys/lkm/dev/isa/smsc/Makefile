@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2007/11/20 21:47:34 xtraeme Exp $
+# $NetBSD: Makefile,v 1.4.14.1 2008/06/02 13:24:17 mjf Exp $
 
 S=		${.CURDIR}/../../../..
 .PATH:		$S/dev/isa
@@ -6,12 +6,8 @@ S=		${.CURDIR}/../../../..
 KMOD= 		smsc
 SRCS= 		real-smsc.c lkm_isa.c
 BUILDSYMLINKS+=	smsc.c real-smsc.c
-NOMAN=		# yes
 
 LKM_ISA_IO_PORT=	0x02e
 LKM_ISA_DRVNAME=	smsc
-
-CLEANFILES+=	*~ ${KMOD}
-WARNS=		2
 
 .include <bsd.kmod.mk>

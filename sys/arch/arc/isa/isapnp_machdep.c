@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.7 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.7.74.1 2008/06/02 13:21:52 mjf Exp $	*/
 /*	$OpenBSD: isapnp_machdep.c,v 1.1 1997/12/27 12:13:11 niklas Exp $	*/
 /*	NetBSD: isapnp_machdep.c,v 1.5 1997/10/04 17:32:30 thorpej Exp 	*/
 
@@ -18,13 +18,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -54,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.7 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.7.74.1 2008/06/02 13:21:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

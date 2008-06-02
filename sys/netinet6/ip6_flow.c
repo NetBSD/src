@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.13 2008/01/04 23:35:00 dyoung Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.13.6.1 2008/06/02 13:24:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -45,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.13 2008/01/04 23:35:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.13.6.1 2008/06/02 13:24:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.13 2008/01/04 23:35:00 dyoung Exp $")
 #include <netinet/in_systm.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 
 /*
  * IPv6 Fast Forward caches/hashes flows from one source to destination.
@@ -315,15 +309,18 @@ static void
 ip6flow_addstats(const struct ip6flow *ip6f)
 {
 	struct rtentry *rt;
+	uint64_t *ip6s;
 
 	if ((rt = rtcache_validate(&ip6f->ip6f_ro)) != NULL)
 		rt->rt_use += ip6f->ip6f_uses;
-	ip6stat.ip6s_fastforwardflows = ip6flow_inuse;
-	ip6stat.ip6s_cantforward += ip6f->ip6f_dropped;
-	ip6stat.ip6s_odropped += ip6f->ip6f_dropped;
-	ip6stat.ip6s_total += ip6f->ip6f_uses;
-	ip6stat.ip6s_forward += ip6f->ip6f_forwarded;
-	ip6stat.ip6s_fastforward += ip6f->ip6f_forwarded;
+	ip6s = IP6_STAT_GETREF();
+	ip6s[IP6_STAT_FASTFORWARDFLOWS] = ip6flow_inuse;
+	ip6s[IP6_STAT_CANTFORWARD] += ip6f->ip6f_dropped;
+	ip6s[IP6_STAT_ODROPPED] += ip6f->ip6f_dropped;
+	ip6s[IP6_STAT_TOTAL] += ip6f->ip6f_uses;
+	ip6s[IP6_STAT_FORWARD] += ip6f->ip6f_forwarded;
+	ip6s[IP6_STAT_FASTFORWARD] += ip6f->ip6f_forwarded;
+	IP6_STAT_PUTREF();
 }
 
 /*
@@ -406,6 +403,9 @@ ip6flow_slowtimo(void)
 {
 	struct ip6flow *ip6f, *next_ip6f;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
 		if (PRT_SLOW_ISEXPIRED(ip6f->ip6f_timer) ||
@@ -419,6 +419,9 @@ ip6flow_slowtimo(void)
 			ip6f->ip6f_forwarded = 0;
 		}
 	}
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*

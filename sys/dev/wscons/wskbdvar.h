@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.14.36.1 2008/04/03 12:42:59 mjf Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.14.36.2 2008/06/02 13:23:57 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -91,6 +91,15 @@ int	wskbddevprint(void *, const char *);
 void	wskbd_input(device_t, u_int, int);
 /* for WSDISPLAY_COMPAT_RAWKBD */
 void	wskbd_rawinput(device_t, u_char *, int);
+
+/*
+ * Callbacks for (ACPI) hotkey drivers which generate
+ * keycodes.
+ */
+struct wskbd_softc;
+typedef int (wskbd_hotkey_plugin)(struct wskbd_softc *, void *, u_int, int);
+
+device_t wskbd_hotkey_register(device_t, void *, wskbd_hotkey_plugin *);
 
 /*
  * Console interface.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.3.12.1 2008/04/03 12:43:04 mjf Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.3.12.2 2008/06/02 13:24:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,23 +31,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.3.12.1 2008/04/03 12:43:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.3.12.2 2008/06/02 13:24:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
-#include <sys/kauth.h>
-#include <sys/kobj.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
+#include <sys/kobj.h>
 #include <sys/module.h>
-#include <sys/kauth.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
-static
-int
+static int
 handle_modctl_load(void *arg)
 {
 	modctl_load_t *ml = (modctl_load_t *)arg;
@@ -77,7 +66,7 @@ handle_modctl_load(void *arg)
 		goto out2;
 
 	propslen = ml->ml_propslen + 1;
-	props = (char *)malloc(propslen, M_TEMP, M_WAITOK|M_CANFAIL);
+	props = (char *)kmem_alloc(propslen, KM_SLEEP);
 	if (props == NULL) {
 		error = ENOMEM;
 		goto out2;
@@ -93,12 +82,12 @@ handle_modctl_load(void *arg)
 		goto out3;
 	}
 
-	error = module_load(path, ml->ml_flags, dict);
+	error = module_load(path, ml->ml_flags, dict, MODULE_CLASS_ANY, false);
 
 	prop_object_release(dict);
 
 out3:
-	free(props, M_TEMP);
+	kmem_free(props, propslen);
 out2:
 	PNBUF_PUT(path);
 out1:
@@ -126,20 +115,6 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	void *arg;
 
 	arg = SCARG(uap, arg);
-
-	switch (SCARG(uap, cmd)) {
-	case MODCTL_LOAD:
-	case MODCTL_UNLOAD:
-		/* Authorize. */
-		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MODULE,
-		    0, (void *)(uintptr_t)SCARG(uap, cmd), NULL, NULL);
-		if (error != 0) {
-			return error;
-		}
-		break;
-	default:
-		break;
-	}
 
 	switch (SCARG(uap, cmd)) {
 	case MODCTL_LOAD:

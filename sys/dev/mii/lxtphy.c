@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.43 2007/12/29 19:34:55 dyoung Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.43.6.1 2008/06/02 13:23:35 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.43 2007/12/29 19:34:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.43.6.1 2008/06/02 13:23:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.43 2007/12/29 19:34:55 dyoung Exp $");
 
 #include <dev/mii/lxtphyreg.h>
 
-static int	lxtphymatch(struct device *, struct cfdata *, void *);
-static void	lxtphyattach(struct device *, struct device *, void *);
+static int	lxtphymatch(device_t, cfdata_t, void *);
+static void	lxtphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL(lxtphy, sizeof(struct mii_softc),
+CFATTACH_DECL_NEW(lxtphy, sizeof(struct mii_softc),
     lxtphymatch, lxtphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	lxtphy_service(struct mii_softc *, struct mii_data *, int);
@@ -123,8 +116,7 @@ static const struct mii_phydesc lxtphys[] = {
 };
 
 static int
-lxtphymatch(struct device *parent, struct cfdata *match,
-    void *aux)
+lxtphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -135,7 +127,7 @@ lxtphymatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-lxtphyattach(struct device *parent, struct device *self, void *aux)
+lxtphyattach(device_t parent, device_t self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
@@ -146,6 +138,7 @@ lxtphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	if (mpd->mpd_model == MII_MODEL_LEVEL1_LXT971)
@@ -160,7 +153,7 @@ lxtphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(self, "");
 
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)

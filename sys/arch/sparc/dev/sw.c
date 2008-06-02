@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.19 2007/11/01 10:07:45 jnemeth Exp $	*/
+/*	$NetBSD: sw.c,v 1.19.16.1 2008/06/02 13:22:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -92,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.19 2007/11/01 10:07:45 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.19.16.1 2008/06/02 13:22:40 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -196,8 +189,8 @@ struct sw_softc {
 #define SW_OPTIONS_BITS	"\10\3RESELECT\2DMA_INTR\1DMA"
 int sw_options = SW_ENABLE_DMA;
 
-static int	sw_match(struct device *, struct cfdata *, void *);
-static void	sw_attach(struct device *, struct device *, void *);
+static int	sw_match(device_t, cfdata_t, void *);
+static void	sw_attach(device_t, device_t, void *);
 static int	sw_intr(void *);
 static void	sw_reset_adapter(struct ncr5380_softc *);
 static void	sw_minphys(struct buf *);
@@ -222,11 +215,11 @@ void	sw_intr_off(struct ncr5380_softc *);
 
 
 /* The Sun "SCSI Weird" 4/100 obio controller. */
-CFATTACH_DECL(sw, sizeof(struct sw_softc),
+CFATTACH_DECL_NEW(sw, sizeof(struct sw_softc),
     sw_match, sw_attach, NULL, NULL);
 
 static int
-sw_match(struct device *parent, struct cfdata *cf, void *aux)
+sw_match(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
@@ -248,9 +241,9 @@ sw_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sw_attach(struct device *parent, struct device *self, void *aux)
+sw_attach(device_t parent, device_t self, void *aux)
 {
-	struct sw_softc *sc = (struct sw_softc *) self;
+	struct sw_softc *sc = device_private(self);
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
@@ -258,6 +251,7 @@ sw_attach(struct device *parent, struct device *self, void *aux)
 	char bits[64];
 	int i;
 
+	ncr_sc->sc_dev = self;
 	sc->sc_dmatag = oba->oba_dmatag;
 
 	/* Map the controller registers. */
@@ -265,7 +259,7 @@ sw_attach(struct device *parent, struct device *self, void *aux)
 			  SWREG_BANK_SZ,
 			  BUS_SPACE_MAP_LINEAR,
 			  &bh) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		aprint_error(": cannot map registers\n");
 		return;
 	}
 
@@ -292,16 +286,16 @@ sw_attach(struct device *parent, struct device *self, void *aux)
 	(void)bus_intr_establish(oba->oba_bustag, oba->oba_pri, IPL_BIO,
 				 sw_intr, sc);
 
-	printf(" pri %d\n", oba->oba_pri);
+	aprint_normal(" pri %d\n", oba->oba_pri);
 
 
 	/*
 	 * Pull in the options flags.  Allow the user to completely
 	 * override the default values.
 	 */
-	if ((device_cfdata(&ncr_sc->sc_dev)->cf_flags & SW_OPTIONS_MASK) != 0)
+	if ((device_cfdata(self)->cf_flags & SW_OPTIONS_MASK) != 0)
 		sc->sc_options =
-		    device_cfdata(&ncr_sc->sc_dev)->cf_flags & SW_OPTIONS_MASK;
+		    device_cfdata(self)->cf_flags & SW_OPTIONS_MASK;
 
 	/*
 	 * Initialize fields used by the MI code
@@ -357,16 +351,15 @@ sw_attach(struct device *parent, struct device *self, void *aux)
 				BUS_DMA_NOWAIT,
 				&sc->sc_dma[i].dh_dmamap) != 0) {
 
-			printf("%s: DMA buffer map create error\n",
-				ncr_sc->sc_dev.dv_xname);
+			aprint_error_dev(self, "DMA buffer map create error\n");
 			return;
 		}
 	}
 
 	if (sc->sc_options) {
-		printf("%s: options=%s\n", ncr_sc->sc_dev.dv_xname,
-			bitmask_snprintf(sc->sc_options, SW_OPTIONS_BITS,
-			    bits, sizeof(bits)));
+		aprint_normal_dev(self, "options=%s\n",
+		    bitmask_snprintf(sc->sc_options, SW_OPTIONS_BITS,
+		    bits, sizeof(bits)));
 	}
 
 	ncr_sc->sc_channel.chan_id = 7;
@@ -382,6 +375,7 @@ sw_attach(struct device *parent, struct device *self, void *aux)
 static void
 sw_minphys(struct buf *bp)
 {
+
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef DEBUG
 		if (sw_debug) {
@@ -401,7 +395,7 @@ static int
 sw_intr(void *arg)
 {
 	struct sw_softc *sc = arg;
-	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)arg;
+	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	int dma_error, claimed;
 	u_short csr;
 
@@ -415,11 +409,11 @@ sw_intr(void *arg)
 
 	if (csr & SW_CSR_DMA_CONFLICT) {
 		dma_error |= SW_CSR_DMA_CONFLICT;
-		printf("sw_intr: DMA conflict\n");
+		printf("%s: DMA conflict\n", __func__);
 	}
 	if (csr & SW_CSR_DMA_BUS_ERR) {
 		dma_error |= SW_CSR_DMA_BUS_ERR;
-		printf("sw_intr: DMA bus error\n");
+		printf("%s: DMA bus error\n", __func__);
 	}
 	if (dma_error) {
 		if (sc->ncr_sc.sc_state & NCR_DOINGDMA)
@@ -432,7 +426,7 @@ sw_intr(void *arg)
 		claimed = ncr5380_intr(&sc->ncr_sc);
 #ifdef DEBUG
 		if (!claimed) {
-			printf("sw_intr: spurious from SBC\n");
+			printf("%s: spurious from SBC\n", __func__);
 			if (sw_debug & 4) {
 				Debugger();	/* XXX */
 			}
@@ -440,7 +434,7 @@ sw_intr(void *arg)
 #endif
 	}
 
-	return (claimed);
+	return claimed;
 }
 
 
@@ -450,7 +444,7 @@ sw_reset_adapter(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (sw_debug) {
-		printf("sw_reset_adapter\n");
+		printf("%s\n", __func__);
 	}
 #endif
 
@@ -491,7 +485,7 @@ sw_dma_alloc(struct ncr5380_softc *ncr_sc)
 
 #ifdef DIAGNOSTIC
 	if (sr->sr_dma_hand != NULL)
-		panic("sw_dma_alloc: already have DMA handle");
+		panic("%s: already have DMA handle", __func__);
 #endif
 
 #if 1	/* XXX - Temporary */
@@ -500,18 +494,18 @@ sw_dma_alloc(struct ncr5380_softc *ncr_sc)
 		return;
 #endif
 
-	addr = (u_long) ncr_sc->sc_dataptr;
+	addr = (u_long)ncr_sc->sc_dataptr;
 	xlen = ncr_sc->sc_datalen;
 
 	/* If the DMA start addr is misaligned then do PIO */
 	if ((addr & 1) || (xlen & 1)) {
-		printf("sw_dma_alloc: misaligned.\n");
+		printf("%s: misaligned.\n", __func__);
 		return;
 	}
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("sw_dma_alloc: xlen=0x%x", xlen);
+		panic("%s: xlen=0x%x", __func__, xlen);
 
 	/* Find free DMA handle.  Guaranteed to find one since we have
 	   as many DMA handles as the driver has processes. */
@@ -540,8 +534,8 @@ found:
 	if (bus_dmamap_load(sc->sc_dmatag, dh->dh_dmamap,
 			    (void *)addr, xlen, NULL, BUS_DMA_NOWAIT) != 0) {
 		/* Can't remap segment */
-		printf("sw_dma_alloc: can't remap 0x%lx/0x%x, doing PIO\n",
-			addr, dh->dh_maplen);
+		printf("%s: can't remap 0x%lx/0x%x, doing PIO\n",
+		    __func__, addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;
 	}
@@ -552,8 +546,6 @@ found:
 
 	/* success */
 	sr->sr_dma_hand = dh;
-
-	return;
 }
 
 
@@ -566,11 +558,11 @@ sw_dma_free(struct ncr5380_softc *ncr_sc)
 
 #ifdef DIAGNOSTIC
 	if (dh == NULL)
-		panic("sw_dma_free: no DMA handle");
+		panic("%s: no DMA handle", __func__);
 #endif
 
 	if (ncr_sc->sc_state & NCR_DOINGDMA)
-		panic("sw_dma_free: free while in progress");
+		panic("%s: free while in progress", __func__);
 
 	if (dh->dh_flags & SIDH_BUSY) {
 		/* Give back the DVMA space. */
@@ -603,7 +595,7 @@ sw_dma_poll(struct ncr5380_softc *ncr_sc)
 		return;
 
 	csr_mask = SW_CSR_SBC_IP | SW_CSR_DMA_IP |
-		SW_CSR_DMA_CONFLICT | SW_CSR_DMA_BUS_ERR;
+	    SW_CSR_DMA_CONFLICT | SW_CSR_DMA_BUS_ERR;
 
 	tmo = 50000;	/* X100 = 5 sec. */
 	for (;;) {
@@ -612,7 +604,7 @@ sw_dma_poll(struct ncr5380_softc *ncr_sc)
 			break;
 		if (--tmo <= 0) {
 			printf("%s: DMA timeout (while polling)\n",
-			    ncr_sc->sc_dev.dv_xname);
+			    device_xname(ncr_sc->sc_dev));
 			/* Indicate timeout as MI code would. */
 			sr->sr_flags |= SR_OVERDUE;
 			break;
@@ -622,7 +614,7 @@ sw_dma_poll(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (sw_debug) {
-		printf("sw_dma_poll: done, csr=0x%x\n", csr);
+		printf("%s: done, csr=0x%x\n", __func__, csr);
 	}
 #endif
 }
@@ -707,7 +699,7 @@ sw_dma_start(struct ncr5380_softc *ncr_sc)
 	 */
 	dva = (u_long)(dh->dh_dvma);
 	if (dva & 1)
-		panic("sw_dma_start: bad dva=0x%lx", dva);
+		panic("%s: bad dva=0x%lx", __func__, dva);
 
 	xlen = ncr_sc->sc_datalen;
 	xlen &= ~1;
@@ -715,8 +707,8 @@ sw_dma_start(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (sw_debug & 2) {
-		printf("sw_dma_start: dh=%p, dva=0x%lx, xlen=%d\n",
-		    dh, dva, xlen);
+		printf("%s: dh=%p, dva=0x%lx, xlen=%d\n",
+		    __func__, dh, dva, xlen);
 	}
 #endif
 
@@ -745,7 +737,7 @@ sw_dma_start(struct ncr5380_softc *ncr_sc)
 		adj = 2;
 #ifdef DEBUG
 		if (sw_debug & 2)
-			printf("sw_dma_start: adjusted up %d bytes\n", adj);
+			printf("%s: adjusted up %d bytes\n", __func__, adj);
 #endif
 	}
 
@@ -765,7 +757,7 @@ sw_dma_start(struct ncr5380_softc *ncr_sc)
 			    adj, dh->dh_addr);
 			if (adjlen != adj)
 				printf("%s: bad outgoing adj, %d != %d\n",
-				    ncr_sc->sc_dev.dv_xname, adjlen, adj);
+				    device_xname(ncr_sc->sc_dev), adjlen, adj);
 		}
 		SCI_CLR_INTR(ncr_sc);
 		NCR5380_WRITE(ncr_sc, sci_icmd, SCI_ICMD_DATA);
@@ -780,7 +772,7 @@ sw_dma_start(struct ncr5380_softc *ncr_sc)
 			    adj, dh->dh_addr);
 			if (adjlen != adj)
 				printf("%s: bad incoming adj, %d != %d\n",
-				    ncr_sc->sc_dev.dv_xname, adjlen, adj);
+				    device_xname(ncr_sc->sc_dev), adjlen, adj);
 		}
 		SCI_CLR_INTR(ncr_sc);
 		NCR5380_WRITE(ncr_sc, sci_icmd, 0);
@@ -798,8 +790,8 @@ sw_dma_start(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (sw_debug & 2) {
-		printf("sw_dma_start: started, flags=0x%x\n",
-		    ncr_sc->sc_state);
+		printf("%s: started, flags=0x%x\n",
+		    __func__, ncr_sc->sc_state);
 	}
 #endif
 }
@@ -837,7 +829,7 @@ sw_dma_stop(struct ncr5380_softc *ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("sw_dma_stop: DMA not running\n");
+		printf("%s: DMA not running\n", __func__);
 #endif
 		return;
 	}
@@ -889,12 +881,12 @@ sw_dma_stop(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (sw_debug & 2) {
-		printf("sw_dma_stop: ntrans=0x%x\n", ntrans);
+		printf("%s: ntrans=0x%x\n", __func__, ntrans);
 	}
 #endif
 
 	if (ntrans > ncr_sc->sc_datalen)
-		panic("sw_dma_stop: excess transfer");
+		panic("%s: excess transfer", __func__);
 
 	/* Adjust data pointer */
 	ncr_sc->sc_dataptr += ntrans;
@@ -957,7 +949,7 @@ sw_dma_stop(struct ncr5380_softc *ncr_sc)
 
 #ifdef DEBUG
 	if (sw_debug & 2) {
-		printf("sw_dma_stop: ntrans=0x%x\n", ntrans);
+		printf("%s: ntrans=0x%x\n", __func__, ntrans);
 	}
 #endif
 }

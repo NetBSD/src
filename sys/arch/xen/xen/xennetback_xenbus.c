@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.21 2007/12/03 15:34:31 ad Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.21.14.1 2008/06/02 13:22:55 mjf Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -114,7 +114,7 @@ struct xnetback_instance {
 	/* network interface stuff */
 	struct ethercom xni_ec;
 	struct callout xni_restart;
-	u_int8_t xni_enaddr[ETHER_ADDR_LEN];
+	uint8_t xni_enaddr[ETHER_ADDR_LEN];
 
 	/* remote domain communication stuff */
 	unsigned int xni_evtchn; /* our even channel */

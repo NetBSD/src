@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.6 2007/10/17 19:57:29 garbled Exp $ */
+/* $NetBSD: psm.c,v 1.6.16.1 2008/06/02 13:22:43 mjf Exp $ */
 /*
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * time with APM at this point, and some of sysmon seems "lacking".
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.6 2007/10/17 19:57:29 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.6.16.1 2008/06/02 13:22:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,9 +143,9 @@ psm_attach(struct device *parent, struct device *self, void *aux)
 	struct psm_softc	*sc = (struct psm_softc *)self;
 	struct ebus_attach_args	*ea = aux;
 	bus_addr_t		devaddr;
-	char			*xname;
+	const char		*xname;
 
-	xname = sc->sc_dev.dv_xname;
+	xname = device_xname(&sc->sc_dev);
 
 	sc->sc_memt = ea->ea_bustag;
 	devaddr = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
@@ -165,9 +165,8 @@ psm_attach(struct device *parent, struct device *self, void *aux)
 	psm_sysmon_setup(sc);
 
 	if (kthread_create(PRI_NONE, 0, NULL, psm_event_thread, sc,
-	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0) {
-		printf("%s: unable to create event kthread\n",
-		    sc->sc_dev.dv_xname);
+	    &sc->sc_thread, "%s", device_xname(&sc->sc_dev)) != 0) {
+		aprint_error_dev(&sc->sc_dev, "unable to create event kthread\n");
 	}
 
 	/*
@@ -176,7 +175,7 @@ psm_attach(struct device *parent, struct device *self, void *aux)
 	(void) bus_intr_establish(sc->sc_memt, ea->ea_intr[0], IPL_HIGH,
 	    psm_intr, sc);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev.dv_xname, "intr");
+	    device_xname(&sc->sc_dev), "intr");
 }
 
 /*
@@ -185,7 +184,7 @@ psm_attach(struct device *parent, struct device *self, void *aux)
 void
 psm_sysmon_setup(struct psm_softc *sc)
 {
-	const char	*xname	= sc->sc_dev.dv_xname;
+	const char	*xname	= device_xname(&sc->sc_dev);
 
 
 	/*
@@ -272,8 +271,7 @@ psm_init(struct psm_softc *sc)
 	/* make sure that UPS battery is reasonable */
 	if (psm_misc_rd(sc, PSM_MISC_UPS, &batt) || (batt > PSM_MAX_BATTERIES))
 		if (psm_misc_wr(sc, PSM_MISC_UPS, batt))
-			printf("%s: cannot set UPS battery",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "cannot set UPS battery");
 
 	return (0);
 }

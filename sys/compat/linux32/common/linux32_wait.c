@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.6 2007/12/20 23:02:59 dsl Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.6.6.1 2008/06/02 13:23:05 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.6 2007/12/20 23:02:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.6.6.1 2008/06/02 13:23:05 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,6 +100,7 @@ linux32_sys_wait4(struct lwp *l, const struct linux32_sys_wait4_args *uap, regis
 	int error, status, linux_options, options, was_zombie;
 	struct rusage ru;
 	struct netbsd32_rusage ru32;
+	proc_t *p;
 	int pid;
 
 	linux_options = SCARG(uap, options);
@@ -123,8 +124,10 @@ linux32_sys_wait4(struct lwp *l, const struct linux32_sys_wait4_args *uap, regis
 	if (pid == 0)
 		return error;
 
-	/* XXXAD ksiginfo leak */
-	sigdelset(&l->l_proc->p_sigpend.sp_set, SIGCHLD);
+	p = curproc;
+	mutex_enter(p->p_lock);
+	sigdelset(&p->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
+	mutex_exit(p->p_lock);
 
 	if (SCARG_P32(uap, rusage) != NULL) {
 		netbsd32_from_rusage(&ru, &ru32);

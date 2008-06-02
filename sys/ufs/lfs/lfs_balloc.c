@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.65 2008/02/15 13:30:56 ad Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.65.6.1 2008/06/02 13:24:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -67,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.65 2008/02/15 13:30:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.65.6.1 2008/06/02 13:24:36 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -205,7 +198,8 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 		} else {
 			if (nsize <= osize) {
 				/* No need to extend */
-				if (bpp && (error = bread(vp, lbn, osize, NOCRED, &bp)))
+				if (bpp && (error = bread(vp, lbn, osize,
+				    NOCRED, 0, &bp)))
 					return error;
 			} else {
 				/* Extend existing block */
@@ -337,7 +331,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 		    default:
 			idp = &indirs[num - 1];
 			if (bread(vp, idp->in_lbn, fs->lfs_bsize, NOCRED,
-				  &ibp))
+				  B_MODIFY, &ibp))
 				panic("lfs_balloc: bread bno %lld",
 				    (long long)idp->in_lbn);
 			/* XXX ondisk32 */
@@ -416,7 +410,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	 * appropriate things and making sure it all goes to disk.
 	 * Don't bother to read in that case.
 	 */
-	if (bpp && (error = bread(vp, lbn, osize, NOCRED, bpp))) {
+	if (bpp && (error = bread(vp, lbn, osize, NOCRED, 0, bpp))) {
 		brelse(*bpp, 0);
 		goto out;
 	}

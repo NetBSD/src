@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.31 2006/05/29 22:07:25 wiz Exp $
+.\"	$NetBSD: security.conf.5,v 1.31.18.1 2008/06/02 13:21:40 mjf Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -11,8 +11,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -97,7 +95,7 @@ The following configuration files are checked:
 .It Pa /etc/mtree/special
 Default files to check.
 .It Pa /etc/mtree/special.local
-Local site additions.
+Local site additions and overrides.
 .It Pa /etc/mtree/DIR.secure
 Specification for the directory
 .Pa DIR .
@@ -194,6 +192,13 @@ will ignore paths that are not under
 During the
 .Sy check_mtree
 phase, instruct mtree to follow symbolic links.
+Please note, this may cause the
+.Sy check_mtree
+phase to report errors for entries for these symbolic links (i.e. of
+type=link in the mtree specification) as they will always appear to be plain
+files for the purposes of the check. 
+.Pa /etc/mtree/special.local
+may be used to override the checks for the affected links.
 .It Sy check_passwd_nowarn_shells
 If
 .Sy check_passwd

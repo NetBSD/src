@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.111.6.1 2008/04/03 12:42:17 mjf Exp $
+#	$NetBSD: GENERIC_TINY,v 1.111.6.2 2008/06/02 13:22:13 mjf Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -15,8 +15,6 @@ maxusers	8		# estimated number of users
 # CPU-related options.
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
-# insert delay no-ops in interrupts; recommended on very old machines
-options 	PIC_DELAY
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
@@ -197,10 +195,6 @@ options 	PCDISPLAY_SOFTCURSOR
 #
 # Device configuration
 #
-
-mainbus0 at root
-
-cpu0 at mainbus0
 
 #apm0	at mainbus0			# Advanced power management
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.8 2007/10/19 12:01:22 ad Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.8.16.1 2008/06/02 13:23:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -19,13 +19,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.8 2007/10/19 12:01:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.8.16.1 2008/06/02 13:23:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +154,7 @@ ukyopon_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 	case UKYOPON_IDENTIFY:
 		strncpy(arg_id->ui_name, UKYOPON_NAME, sizeof arg_id->ui_name);
 		arg_id->ui_busno =
-		    USBDEVUNIT(*(device_ptr_t)sc->sc_umodem.sc_udev->bus->usbctl);
+		    USBDEVUNIT(sc->sc_umodem.sc_udev->bus->usbctl);
 		arg_id->ui_address = sc->sc_umodem.sc_udev->address;
 		arg_id->ui_model = UKYOPON_MODEL_UNKNOWN;
 		arg_id->ui_porttype = portno;
@@ -181,7 +174,7 @@ __strong_alias(ukyopon_activate,umodem_common_activate)
 int
 ukyopon_activate(device_ptr_t self, enum devact act)
 {
-	struct ukyopon_softc *sc = (struct ukyopon_softc *)self;
+	struct ukyopon_softc *sc = device_private(self);
 
 	return umodem_common_activate(&sc->sc_umodem, act);
 }

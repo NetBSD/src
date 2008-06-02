@@ -1,7 +1,7 @@
-/*	$NetBSD: sched_4bsd.c,v 1.13.6.1 2008/04/03 12:43:03 mjf Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.13.6.2 2008/06/02 13:24:10 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -75,13 +68,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.13.6.1 2008/04/03 12:43:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.13.6.2 2008/06/02 13:24:10 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #include "opt_perfctrs.h"
-
-#define	__MUTEX_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,45 +91,13 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.13.6.1 2008/04/03 12:43:03 mjf Exp 
 
 #include <uvm/uvm_extern.h>
 
-/*
- * Run queues.
- *
- * We maintain bitmasks of non-empty queues in order speed up finding
- * the first runnable process.  Since there can be (by definition) few
- * real time LWPs in the the system, we maintain them on a linked list,
- * sorted by priority.
- */
-
-#define	PPB_SHIFT	5
-#define	PPB_MASK	31
-
-#define	NUM_Q		(NPRI_KERNEL + NPRI_USER)
-#define	NUM_PPB		(1 << PPB_SHIFT)
-#define	NUM_B		(NUM_Q / NUM_PPB)
-
-typedef struct runqueue {
-	TAILQ_HEAD(, lwp) rq_fixedpri;		/* realtime, kthread */
-	u_int		rq_count;		/* total # jobs */
-	uint32_t	rq_bitmap[NUM_B];	/* bitmap of queues */
-	TAILQ_HEAD(, lwp) rq_queue[NUM_Q];	/* user+kernel */
-} runqueue_t;
-
-static runqueue_t global_queue; 
-
 static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);
 
-fixpt_t decay_cpu(fixpt_t, fixpt_t);
-
 extern unsigned int sched_pstats_ticks; /* defined in kern_synch.c */
-
-/* The global scheduler state */
-kmutex_t runqueue_lock;
 
 /* Number of hardclock ticks per sched_tick() */
 static int rrticks;
-
-const int schedppq = 1;
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -152,6 +111,7 @@ void
 sched_tick(struct cpu_info *ci)
 {
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
+	lwp_t *l;
 
 	spc->spc_ticks = rrticks;
 
@@ -159,17 +119,39 @@ sched_tick(struct cpu_info *ci)
 		cpu_need_resched(ci, 0);
 		return;
 	}
-
-	if (spc->spc_flags & SPCF_SEENRR) {
-		/*
-		 * The process has already been through a roundrobin
-		 * without switching and may be hogging the CPU.
-		 * Indicate that the process should yield.
-		 */
-		spc->spc_flags |= SPCF_SHOULDYIELD;
-		cpu_need_resched(ci, 0);
-	} else
-		spc->spc_flags |= SPCF_SEENRR;
+	l = ci->ci_data.cpu_onproc;
+	if (l == NULL) {
+		return;
+	}
+	switch (l->l_class) {
+	case SCHED_FIFO:
+		/* No timeslicing for FIFO jobs. */
+		break;
+	case SCHED_RR:
+		/* Force it into mi_switch() to look for other jobs to run. */
+		cpu_need_resched(ci, RESCHED_KPREEMPT);
+		break;
+	default:
+		if (spc->spc_flags & SPCF_SHOULDYIELD) {
+			/*
+			 * Process is stuck in kernel somewhere, probably
+			 * due to buggy or inefficient code.  Force a 
+			 * kernel preemption.
+			 */
+			cpu_need_resched(ci, RESCHED_KPREEMPT);
+		} else if (spc->spc_flags & SPCF_SEENRR) {
+			/*
+			 * The process has already been through a roundrobin
+			 * without switching and may be hogging the CPU.
+			 * Indicate that the process should yield.
+			 */
+			spc->spc_flags |= SPCF_SHOULDYIELD;
+			cpu_need_resched(ci, 0);
+		} else {
+			spc->spc_flags |= SPCF_SEENRR;
+		}
+		break;
+	}
 }
 
 /*
@@ -256,7 +238,7 @@ sched_tick(struct cpu_info *ci)
 /* calculations for digital decay to forget 90% of usage in 5*loadav sec */
 #define	loadfactor(loadav)	(2 * (loadav))
 
-fixpt_t
+static fixpt_t
 decay_cpu(fixpt_t loadfac, fixpt_t estcpu)
 {
 
@@ -304,7 +286,7 @@ decay_cpu_batch(fixpt_t loadfac, fixpt_t estcpu, unsigned int n)
  * Periodically called from sched_pstats(); used to recalculate priorities.
  */
 void
-sched_pstats_hook(struct lwp *l)
+sched_pstats_hook(struct lwp *l, int batch)
 {
 	fixpt_t loadfac;
 	int sleeptm;
@@ -346,162 +328,10 @@ updatepri(struct lwp *l)
 	resetpriority(l);
 }
 
-static void
-runqueue_init(runqueue_t *rq)
-{
-	int i;
-
-	for (i = 0; i < NUM_Q; i++)
-		TAILQ_INIT(&rq->rq_queue[i]);
-	for (i = 0; i < NUM_B; i++)
-		rq->rq_bitmap[i] = 0;
-	TAILQ_INIT(&rq->rq_fixedpri);
-	rq->rq_count = 0;
-}
-
-static void
-runqueue_enqueue(runqueue_t *rq, struct lwp *l)
-{
-	pri_t pri;
-	lwp_t *l2;
-
-	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-
-	pri = lwp_eprio(l);
-	rq->rq_count++;
-
-	if (pri >= PRI_KTHREAD) {
-		TAILQ_FOREACH(l2, &rq->rq_fixedpri, l_runq) {
-			if (lwp_eprio(l2) < pri) {
-				TAILQ_INSERT_BEFORE(l2, l, l_runq);
-				return;
-			}
-		}
-		TAILQ_INSERT_TAIL(&rq->rq_fixedpri, l, l_runq);
-		return;
-	}
-
-	rq->rq_bitmap[pri >> PPB_SHIFT] |=
-	    (0x80000000U >> (pri & PPB_MASK));
-	TAILQ_INSERT_TAIL(&rq->rq_queue[pri], l, l_runq);
-}
-
-static void
-runqueue_dequeue(runqueue_t *rq, struct lwp *l)
-{
-	pri_t pri;
-
-	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-
-	pri = lwp_eprio(l);
-	rq->rq_count--;
-
-	if (pri >= PRI_KTHREAD) {
-		TAILQ_REMOVE(&rq->rq_fixedpri, l, l_runq);
-		return;
-	}
-
-	TAILQ_REMOVE(&rq->rq_queue[pri], l, l_runq);
-	if (TAILQ_EMPTY(&rq->rq_queue[pri]))
-		rq->rq_bitmap[pri >> PPB_SHIFT] ^=
-		    (0x80000000U >> (pri & PPB_MASK));
-}
-
-#if (NUM_B != 3) || (NUM_Q != 96)
-#error adjust runqueue_nextlwp
-#endif
-
-static struct lwp *
-runqueue_nextlwp(runqueue_t *rq)
-{
-	pri_t pri;
-
-	KASSERT(rq->rq_count != 0);
-
-	if (!TAILQ_EMPTY(&rq->rq_fixedpri))
-		return TAILQ_FIRST(&rq->rq_fixedpri);
-
-	if (rq->rq_bitmap[2] != 0)
-		pri = 96 - ffs(rq->rq_bitmap[2]);
-	else if (rq->rq_bitmap[1] != 0)
-		pri = 64 - ffs(rq->rq_bitmap[1]);
-	else
-		pri = 32 - ffs(rq->rq_bitmap[0]);
-	return TAILQ_FIRST(&rq->rq_queue[pri]);
-}
-
-#if defined(DDB)
-static void
-runqueue_print(const runqueue_t *rq, void (*pr)(const char *, ...))
-{
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	lwp_t *l;
-	int i;
-
-	printf("PID\tLID\tPRI\tIPRI\tEPRI\tLWP\t\t NAME\n");
-
-	TAILQ_FOREACH(l, &rq->rq_fixedpri, l_runq) {
-		(*pr)("%d\t%d\%d\t%d\t%d\t%016lx %s\n",
-		    l->l_proc->p_pid, l->l_lid, (int)l->l_priority,
-		    (int)l->l_inheritedprio, lwp_eprio(l),
-		    (long)l, l->l_proc->p_comm);
-	}
-
-	for (i = NUM_Q - 1; i >= 0; i--) {
-		TAILQ_FOREACH(l, &rq->rq_queue[i], l_runq) {
-			(*pr)("%d\t%d\t%d\t%d\t%d\t%016lx %s\n",
-			    l->l_proc->p_pid, l->l_lid, (int)l->l_priority,
-			    (int)l->l_inheritedprio, lwp_eprio(l),
-			    (long)l, l->l_proc->p_comm);
-		}
-	}
-
-	printf("CPUIDX\tRESCHED\tCURPRI\tFLAGS\n");
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		printf("%d\t%d\t%d\t%04x\n", (int)ci->ci_index,
-		    (int)ci->ci_want_resched,
-		    (int)ci->ci_schedstate.spc_curpriority,
-		    (int)ci->ci_schedstate.spc_flags);
-	}
-
-	printf("NEXTLWP\n%016lx\n", (long)sched_nextlwp());
-}
-#endif /* defined(DDB) */
-
-/*
- * Initialize the (doubly-linked) run queues
- * to be empty.
- */
 void
 sched_rqinit(void)
 {
 
-	runqueue_init(&global_queue);
-	mutex_init(&runqueue_lock, MUTEX_DEFAULT, IPL_SCHED);
-}
-
-void
-sched_cpuattach(struct cpu_info *ci)
-{
-	runqueue_t *rq;
-
-	if (lwp0.l_cpu == ci) {
-		/* Initialize the lock pointer for lwp0 */
-		lwp0.l_mutex = curcpu()->ci_schedstate.spc_lwplock;
-	}
-
-	ci->ci_schedstate.spc_mutex = &runqueue_lock;
-	rq = kmem_zalloc(sizeof(*rq), KM_SLEEP);
-	runqueue_init(rq);
-	ci->ci_schedstate.spc_sched_info = rq;
-}
-
-void
-sched_setup(void)
-{
-
-	rrticks = hz / 10;
 }
 
 void
@@ -512,32 +342,12 @@ sched_setrunnable(struct lwp *l)
  		updatepri(l);
 }
 
-bool
-sched_curcpu_runnable_p(void)
-{
-	struct schedstate_percpu *spc;
-	struct cpu_info *ci;
-	int bits;
-
-	ci = curcpu();
-	spc = &ci->ci_schedstate;
-#ifndef __HAVE_FAST_SOFTINTS
-	bits = ci->ci_data.cpu_softints;
-	bits |= ((runqueue_t *)spc->spc_sched_info)->rq_count;
-#else
-	bits = ((runqueue_t *)spc->spc_sched_info)->rq_count;
-#endif
-	if (__predict_true((spc->spc_flags & SPCF_OFFLINE) == 0))
-		bits |= global_queue.rq_count;
-	return bits != 0;
-}
-
 void
 sched_nice(struct proc *p, int n)
 {
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	p->p_nice = n;
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -608,7 +418,7 @@ sched_proc_fork(struct proc *parent, struct proc *child)
 {
 	lwp_t *pl;
 
-	KASSERT(mutex_owned(&parent->p_smutex));
+	KASSERT(mutex_owned(parent->p_lock));
 
 	pl = LIST_FIRST(&parent->p_lwps);
 	child->p_estcpu_inherited = pl->l_estcpu;
@@ -629,7 +439,7 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 
 	/* XXX Only if parent != init?? */
 
-	mutex_enter(&parent->p_smutex);
+	mutex_enter(parent->p_lock);
 	pl = LIST_FIRST(&parent->p_lwps);
 	cl = LIST_FIRST(&child->p_lwps);
 	estcpu = decay_cpu_batch(loadfac, child->p_estcpu_inherited,
@@ -639,77 +449,7 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 		pl->l_estcpu = ESTCPULIM(pl->l_estcpu + cl->l_estcpu - estcpu);
 		lwp_unlock(pl);
 	}
-	mutex_exit(&parent->p_smutex);
-}
-
-void
-sched_enqueue(struct lwp *l, bool ctxswitch)
-{
-
-	if (__predict_false(l->l_target_cpu != NULL)) {
-		/* Global mutex is used - just change the CPU */
-		l->l_cpu = l->l_target_cpu;
-		l->l_target_cpu = NULL;
-	}
-
-	if ((l->l_flag & LW_BOUND) != 0)
-		runqueue_enqueue(l->l_cpu->ci_schedstate.spc_sched_info, l);
-	else
-		runqueue_enqueue(&global_queue, l);
-}
-
-/*
- * XXXSMP When LWP dispatch (cpu_switch()) is changed to use sched_dequeue(),
- * drop of the effective priority level from kernel to user needs to be
- * moved here from userret().  The assignment in userret() is currently
- * done unlocked.
- */
-void
-sched_dequeue(struct lwp *l)
-{
-
-	if ((l->l_flag & LW_BOUND) != 0)
-		runqueue_dequeue(l->l_cpu->ci_schedstate.spc_sched_info, l);
-	else
-		runqueue_dequeue(&global_queue, l);
-}
-
-struct lwp *
-sched_nextlwp(void)
-{
-	struct schedstate_percpu *spc;
-	runqueue_t *rq;
-	lwp_t *l1, *l2;
-
-	spc = &curcpu()->ci_schedstate;
-
-	/* For now, just pick the highest priority LWP. */
-	rq = spc->spc_sched_info;
-	l1 = NULL;
-	if (rq->rq_count != 0)
-		l1 = runqueue_nextlwp(rq);
-
-	rq = &global_queue;
-	if (__predict_false((spc->spc_flags & SPCF_OFFLINE) != 0) ||
-	    rq->rq_count == 0)
-		return l1;
-	l2 = runqueue_nextlwp(rq);
-
-	if (l1 == NULL)
-		return l2;
-	if (l2 == NULL)
-		return l1;
-	if (lwp_eprio(l2) > lwp_eprio(l1))
-		return l2;
-	else
-		return l1;
-}
-
-struct cpu_info *
-sched_takecpu(struct lwp *l)
-{
-
-	return l->l_cpu;
+	mutex_exit(parent->p_lock);
 }
 
 void
@@ -749,6 +489,18 @@ sched_lwp_collect(struct lwp *t)
 	lwp_unlock(l);
 }
 
+void
+sched_oncpu(lwp_t *l)
+{
+
+}
+
+void
+sched_newts(lwp_t *l)
+{
+
+}
+
 /*
  * Sysctl nodes and initialization.
  */
@@ -764,7 +516,7 @@ sysctl_sched_rtts(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
-SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
+SYSCTL_SETUP(sysctl_sched_4bsd_setup, "sysctl sched setup")
 {
 	const struct sysctlnode *node = NULL;
 
@@ -780,32 +532,20 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 		NULL, 0, NULL, 0,
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 
-	KASSERT(node != NULL);
+	if (node == NULL)
+		return;
 
-	sysctl_createv(clog, 0, &node, NULL,
+	rrticks = hz / 10;
+
+	sysctl_createv(NULL, 0, &node, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_STRING, "name", NULL,
 		NULL, 0, __UNCONST("4.4BSD"), 0,
 		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(NULL, 0, &node, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_INT, "rtts",
 		SYSCTL_DESCR("Round-robin time quantum (in miliseconds)"),
 		sysctl_sched_rtts, 0, NULL, 0,
 		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_READWRITE,
-		CTLTYPE_INT, "timesoftints",
-		SYSCTL_DESCR("Track CPU time for soft interrupts"),
-		NULL, 0, &softint_timing, 0,
-		CTL_CREATE, CTL_EOL);
 }
-
-#if defined(DDB)
-void
-sched_print_runqueue(void (*pr)(const char *, ...))
-{
-
-	runqueue_print(&global_queue, pr);
-}
-#endif /* defined(DDB) */

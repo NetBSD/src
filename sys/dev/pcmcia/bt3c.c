@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.16.14.1 2008/04/03 12:42:54 mjf Exp $ */
+/* $NetBSD: bt3c.c,v 1.16.14.2 2008/06/02 13:23:45 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.16.14.1 2008/04/03 12:42:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.16.14.2 2008/06/02 13:23:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,7 +101,6 @@ struct bt3c_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
 	int		sc_iow;			/* our i/o window */
-	void		*sc_powerhook;		/* power hook descriptor */
 	int		sc_flags;		/* flags */
 
 	struct hci_unit *sc_unit;		/* Bluetooth HCI Unit */
@@ -130,14 +129,14 @@ struct bt3c_softc {
 #define BT3C_RECV_EVENT_DATA	6		/* event packet data */
 
 /* sc_flags */
-#define BT3C_SLEEPING		(1 << 0)	/* but not with the fishes */
 #define BT3C_XMIT		(1 << 1)	/* transmit active */
 #define BT3C_ENABLED		(1 << 2)	/* enabled */
 
 static int bt3c_match(device_t, struct cfdata *, void *);
 static void bt3c_attach(device_t, device_t, void *);
 static int bt3c_detach(device_t, int);
-static void bt3c_power(int, void *);
+static bool bt3c_suspend(device_t PMF_FN_PROTO);
+static bool bt3c_resume(device_t PMF_FN_PROTO);
 
 CFATTACH_DECL_NEW(bt3c, sizeof(struct bt3c_softc),
     bt3c_match, bt3c_attach, bt3c_detach, NULL);
@@ -980,10 +979,12 @@ bt3c_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach Bluetooth unit */
 	sc->sc_unit = hci_attach(&bt3c_hci, self, BTF_POWER_UP_NOOP);
+	if (sc->sc_unit == NULL)
+		aprint_error_dev(self, "HCI attach failed\n");
 
-	/* establish a power change hook */
-	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
-	    bt3c_power, sc);
+	if (!pmf_device_register(self, bt3c_suspend, bt3c_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 iomap_failed:
@@ -1000,12 +1001,8 @@ bt3c_detach(device_t self, int flags)
 	struct bt3c_softc *sc = device_private(self);
 	int err = 0;
 
+	pmf_device_deregister(self);
 	bt3c_disable(self);
-
-	if (sc->sc_powerhook) {
-		powerhook_disestablish(sc->sc_powerhook);
-		sc->sc_powerhook = NULL;
-	}
 
 	if (sc->sc_unit) {
 		hci_detach(sc->sc_unit);
@@ -1021,38 +1018,29 @@ bt3c_detach(device_t self, int flags)
 	return err;
 }
 
-static void
-bt3c_power(int why, void *arg)
+static bool
+bt3c_suspend(device_t self PMF_FN_ARGS)
 {
-	struct bt3c_softc *sc = arg;
+	struct bt3c_softc *sc = device_private(self);
 
-	switch(why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		if (sc->sc_flags & BT3C_ENABLED) {
-			if (sc->sc_unit) {
-				hci_detach(sc->sc_unit);
-				sc->sc_unit = NULL;
-			}
-
-			sc->sc_flags |= BT3C_SLEEPING;
-			aprint_verbose_dev(sc->sc_dev, "sleeping\n");
-		}
-		break;
-
-	case PWR_RESUME:
-		if (sc->sc_flags & BT3C_SLEEPING) {
-			aprint_verbose_dev(sc->sc_dev, "waking up\n");
-			sc->sc_flags &= ~BT3C_SLEEPING;
-
-			sc->sc_unit = hci_attach(&bt3c_hci, sc->sc_dev,
-			    BTF_POWER_UP_NOOP);
-		}
-		break;
-
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
+	if (sc->sc_unit) {
+		hci_detach(sc->sc_unit);
+		sc->sc_unit = NULL;
 	}
+
+	return true;
+}
+
+static bool
+bt3c_resume(device_t self PMF_FN_ARGS)
+{
+	struct bt3c_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_unit == NULL);
+
+	sc->sc_unit = hci_attach(&bt3c_hci, self, BTF_POWER_UP_NOOP);
+	if (sc->sc_unit == NULL)
+		return false;
+
+	return true;
 }

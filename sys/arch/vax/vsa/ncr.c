@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.43.40.1 2008/04/03 12:42:29 mjf Exp $	*/
+/*	$NetBSD: ncr.c,v 1.43.40.2 2008/06/02 13:22:48 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	  This product includes software developed by the NetBSD
- *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -49,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.43.40.1 2008/04/03 12:42:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.43.40.2 2008/06/02 13:22:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +110,7 @@ static	void si_dma_eop(struct ncr5380_softc *);
 static	void si_dma_stop(struct ncr5380_softc *);
 static	void si_dma_go(void *);
 
-CFATTACH_DECL(si_vsbus, sizeof(struct si_softc),
+CFATTACH_DECL_NEW(si_vsbus, sizeof(struct si_softc),
     si_vsbus_match, si_vsbus_attach, NULL, NULL);
 
 static int
@@ -145,6 +138,8 @@ si_vsbus_attach(device_t parent, device_t self, void *aux)
 	struct si_softc * const sc = device_private(self);
 	struct ncr5380_softc * const ncr_sc = &sc->ncr_sc;
 	int tweak, target;
+
+	ncr_sc->sc_dev = self;
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc,
 		SCB_ISTACK, &sc->ncr_intrcnt);

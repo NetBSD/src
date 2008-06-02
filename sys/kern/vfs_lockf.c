@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.61.6.1 2008/04/03 12:43:05 mjf Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.61.6.2 2008/06/02 13:24:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.61.6.1 2008/04/03 12:43:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.61.6.2 2008/06/02 13:24:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.61.6.1 2008/04/03 12:43:05 mjf Exp $
 TAILQ_HEAD(locklist, lockf);
 
 struct lockf {
+	kcondvar_t lf_cv;	 /* Signalling */
 	short	lf_flags;	 /* Lock semantics: F_POSIX, F_FLOCK, F_WAIT */
 	short	lf_type;	 /* Lock type: F_RDLCK, F_WRLCK */
 	off_t	lf_start;	 /* The byte # of the start of the lock */
@@ -75,14 +76,14 @@ struct lockf {
 	struct  locklist lf_blkhd; /* List of requests blocked on this lock */
 	TAILQ_ENTRY(lockf) lf_block;/* A request waiting for a lock */
 	uid_t	lf_uid;		 /* User ID responsible */
-	kcondvar_t lf_cv;	 /* Signalling */
 };
 
 /* Maximum length of sleep chains to traverse to try and detect deadlock. */
 #define MAXDEPTH 50
 
-static POOL_INIT(lockfpool, sizeof(struct lockf), 0, 0, 0, "lockfpl",
-    &pool_allocator_nointr, IPL_NONE);
+static pool_cache_t lockf_cache;
+static kmutex_t *lockf_lock;
+static char lockstr[] = "lockf";
 
 /*
  * This variable controls the maximum number of processes that will
@@ -202,9 +203,8 @@ lf_alloc(uid_t uid, int allowfail)
 		return NULL;
 	}
 
-	lock = pool_get(&lockfpool, PR_WAITOK);
+	lock = pool_cache_get(lockf_cache, PR_WAITOK);
 	lock->lf_uid = uid;
-	cv_init(&lock->lf_cv, "lockf");
 	return lock;
 }
 
@@ -215,9 +215,27 @@ lf_free(struct lockf *lock)
 
 	uip = uid_find(lock->lf_uid);
 	atomic_dec_ulong(&uip->ui_lockcnt);
+	pool_cache_put(lockf_cache, lock);
+}
 
+static int
+lf_ctor(void *arg, void *obj, int flag)
+{
+	struct lockf *lock;
+
+	lock = obj;
+	cv_init(&lock->lf_cv, lockstr);
+
+	return 0;
+}
+
+static void
+lf_dtor(void *arg, void *obj)
+{
+	struct lockf *lock;
+
+	lock = obj;
 	cv_destroy(&lock->lf_cv);
-	pool_put(&lockfpool, lock);
 }
 
 /*
@@ -502,7 +520,6 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 	struct lockf *block;
 	struct lockf **head = lock->lf_head;
 	struct lockf **prev, *overlap, *ltmp;
-	static char lockstr[] = "lockf";
 	int ovcase, needtolink, error;
 
 #ifdef LOCKF_DEBUG
@@ -510,13 +527,6 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		lf_print("lf_setlock", lock);
 #endif /* LOCKF_DEBUG */
 
-	/*
-	 * XXX Here we used to set the sleep priority so that writers
-	 * took priority.  That's of dubious use, and is not possible
-	 * with condition variables.  Need to find a better way to ensure
-	 * fairness.
-	 */
-        
 	/*
 	 * Scan lock list for this file looking for locks that would block us.
 	 */
@@ -548,21 +558,22 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			p = (struct proc *)block->lf_id;
 			KASSERT(p != NULL);
 			while (i++ < maxlockdepth) {
-				mutex_enter(&p->p_smutex);
+				mutex_enter(p->p_lock);
 				if (p->p_nlwps > 1) {
-					mutex_exit(&p->p_smutex);
+					mutex_exit(p->p_lock);
 					break;
 				}
 				wlwp = LIST_FIRST(&p->p_lwps);
 				lwp_lock(wlwp);
-				if (wlwp->l_wmesg != lockstr) {
+				if (wlwp->l_wchan == NULL ||
+				    wlwp->l_wmesg != lockstr) {
 					lwp_unlock(wlwp);
-					mutex_exit(&p->p_smutex);
+					mutex_exit(p->p_lock);
 					break;
 				}
 				waitblock = wlwp->l_wchan;
 				lwp_unlock(wlwp);
-				mutex_exit(&p->p_smutex);
+				mutex_exit(p->p_lock);
 				if (waitblock == NULL) {
 					/*
 					 * this lwp just got up but
@@ -616,7 +627,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		error = cv_wait_sig(&lock->lf_cv, interlock);
 
 		/*
-		 * We may have been awakened by a signal (in
+		 * We may have been awoken by a signal (in
 		 * which case we must remove ourselves from the
 		 * blocked list) and/or by another process
 		 * releasing a lock (in which case we have already
@@ -803,7 +814,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	struct flock *fl = ap->a_fl;
 	struct lockf *lock = NULL;
 	struct lockf *sparelock;
-	kmutex_t *interlock = &ap->a_vp->v_interlock;
+	kmutex_t *interlock = lockf_lock;
 	off_t start, end;
 	int error = 0;
 
@@ -890,12 +901,6 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	 */
 	lock->lf_start = start;
 	lock->lf_end = end;
-	/* XXX NJWLWP
-	 * I don't want to make the entire VFS universe use LWPs, because
-	 * they don't need them, for the most part. This is an exception,
-	 * and a kluge.
-	 */
-
 	lock->lf_head = head;
 	lock->lf_type = fl->l_type;
 	lock->lf_next = (struct lockf *)0;
@@ -938,4 +943,18 @@ quit:
 		lf_free(sparelock);
 
 	return error;
+}
+
+/*
+ * Initialize subsystem.   XXX We use a global lock.  This could be the
+ * vnode interlock, but the deadlock detection code may need to inspect
+ * locks belonging to other files.
+ */
+void
+lf_init(void)
+{
+
+	lockf_cache = pool_cache_init(sizeof(struct lockf), 0, 0, 0, "lockf",
+ 	    NULL, IPL_NONE, lf_ctor, lf_dtor, NULL);
+        lockf_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 }

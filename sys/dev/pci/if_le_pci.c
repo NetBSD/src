@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.47 2007/10/19 12:00:46 ad Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.47.16.1 2008/06/02 13:23:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.47 2007/10/19 12:00:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.47.16.1 2008/06/02 13:23:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,11 +95,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.47 2007/10/19 12:00:46 ad Exp $");
 
 #include <dev/pci/if_levar.h>
 
-static int	le_pci_match(struct device *, struct cfdata *, void *);
-static void	le_pci_attach(struct device *, struct device *, void *);
+static int	le_pci_match(device_t, cfdata_t, void *);
+static void	le_pci_attach(device_t, device_t, void *);
 static int	le_pci_mediachange(struct lance_softc *);
 
-CFATTACH_DECL(le_pci, sizeof(struct le_softc),
+CFATTACH_DECL_NEW(le_pci, sizeof(struct le_softc),
     le_pci_match, le_pci_attach, NULL, NULL);
 
 /*
@@ -127,7 +120,7 @@ static int le_pci_supmedia[] = {
 };
 
 static void
-le_pci_wrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
+le_pci_wrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
@@ -137,13 +130,13 @@ le_pci_wrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 	bus_space_write_2(iot, ioh, lesc->sc_rdp, val);
 }
 
-static u_int16_t
-le_pci_rdcsr(struct lance_softc *sc, u_int16_t port)
+static uint16_t
+le_pci_rdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
-	u_int16_t val;
+	uint16_t val;
 
 	bus_space_write_2(iot, ioh, lesc->sc_rap, port);
 	val = bus_space_read_2(iot, ioh, lesc->sc_rdp);
@@ -157,7 +150,7 @@ le_pci_mediachange(struct lance_softc *sc)
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
 	int newmedia = sc->sc_media.ifm_media;
-	u_int16_t reg;
+	uint16_t reg;
 
 	if (IFM_SUBTYPE(newmedia) !=
 	    IFM_SUBTYPE(lesc->sc_currentmedia)) {
@@ -213,8 +206,7 @@ le_pci_mediachange(struct lance_softc *sc)
 }
 
 static int
-le_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+le_pci_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -230,9 +222,9 @@ le_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-le_pci_attach(struct device *parent, struct device *self, void *aux)
+le_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct le_softc *lesc = (void *)self;
+	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am79900.lsc;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
@@ -245,6 +237,8 @@ le_pci_attach(struct device *parent, struct device *self, void *aux)
 	int i, rseg;
 	const char *model, *intrstr;
 
+	sc->sc_dev = self;
+
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_PCNET_PCI:
 		model = "PCnet-PCI Ethernet";
@@ -256,11 +250,11 @@ le_pci_attach(struct device *parent, struct device *self, void *aux)
 		model = "unknown model!";
 	}
 
-	printf(": %s\n", model);
+	aprint_normal(": %s\n", model);
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL)) {
-		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't map I/O space\n");
 		return;
 	}
 
@@ -279,15 +273,13 @@ le_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamem_alloc(dmat, LE_PCI_MEMSIZE, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: couldn't allocate memory for card\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't allocate memory for card\n");
 		return;
 	}
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_PCI_MEMSIZE,
 	    (void **)&sc->sc_mem,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		printf("%s: couldn't map memory for card\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't map memory for card\n");
 		return;
 	}
 
@@ -296,15 +288,13 @@ le_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamap_create(dmat, LE_PCI_MEMSIZE, 1,
 	    LE_PCI_MEMSIZE, 0, BUS_DMA_NOWAIT, &lesc->sc_dmam)) {
-		printf("%s: couldn't create DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't create DMA map\n");
 		bus_dmamem_free(dmat, &seg, rseg);
 		return;
 	}
 	if (bus_dmamap_load(dmat, lesc->sc_dmam,
 	    sc->sc_mem, LE_PCI_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: coundn't load DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "coundn't load DMA map\n");
 		bus_dmamem_free(dmat, &seg, rseg);
 		return;
 	}
@@ -329,7 +319,7 @@ le_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mediachange = le_pci_mediachange;
 	lesc->sc_currentmedia = le_pci_supmedia[0];
 
-	printf("%s", sc->sc_dev.dv_xname);
+	aprint_normal("%s", device_xname(self));
 	am79900_config(&lesc->sc_am79900);
 
 	/* Chip is stopped. Set "software style" to 32-bit. */
@@ -344,18 +334,17 @@ le_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	lesc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, am79900_intr, sc);
 	if (lesc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 }

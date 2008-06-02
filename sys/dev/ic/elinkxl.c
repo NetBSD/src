@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.100 2008/02/07 01:21:52 dyoung Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.100.6.1 2008/06/02 13:23:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.100 2008/02/07 01:21:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.100.6.1 2008/06/02 13:23:21 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -94,9 +87,9 @@ void ex_media_stat(struct ifnet *ifp, struct ifmediareq *req);
 void ex_probe_media(struct ex_softc *);
 void ex_set_filter(struct ex_softc *);
 void ex_set_media(struct ex_softc *);
-void ex_set_xcvr(struct ex_softc *, u_int16_t);
+void ex_set_xcvr(struct ex_softc *, uint16_t);
 struct mbuf *ex_get(struct ex_softc *, int);
-u_int16_t ex_read_eeprom(struct ex_softc *, int);
+uint16_t ex_read_eeprom(struct ex_softc *, int);
 int ex_init(struct ifnet *);
 void ex_read(struct ex_softc *);
 void ex_reset(struct ex_softc *);
@@ -105,20 +98,18 @@ void ex_getstats(struct ex_softc *);
 void ex_printstats(struct ex_softc *);
 void ex_tick(void *);
 
-void ex_power(int, void *);
-
 static int ex_eeprom_busy(struct ex_softc *);
 static int ex_add_rxbuf(struct ex_softc *, struct ex_rxdesc *);
 static void ex_init_txdescs(struct ex_softc *);
 
 static void ex_setup_tx(struct ex_softc *);
-static void ex_shutdown(void *);
+static bool ex_shutdown(device_t, int);
 static void ex_start(struct ifnet *);
 static void ex_txstat(struct ex_softc *);
 
-int ex_mii_readreg(struct device *, int, int);
-void ex_mii_writereg(struct device *, int, int, int);
-void ex_mii_statchg(struct device *);
+int ex_mii_readreg(device_t, int, int);
+void ex_mii_writereg(device_t, int, int, int);
+void ex_mii_statchg(device_t);
 
 void ex_probemedia(struct ex_softc *);
 
@@ -163,8 +154,8 @@ struct ex_media ex_native_media[] = {
 /*
  * MII bit-bang glue.
  */
-u_int32_t ex_mii_bitbang_read(struct device *);
-void ex_mii_bitbang_write(struct device *, u_int32_t);
+uint32_t ex_mii_bitbang_read(device_t);
+void ex_mii_bitbang_write(device_t, uint32_t);
 
 const struct mii_bitbang_ops ex_mii_bitbang_ops = {
 	ex_mii_bitbang_read,
@@ -182,12 +173,11 @@ const struct mii_bitbang_ops ex_mii_bitbang_ops = {
  * Back-end attach and configure.
  */
 void
-ex_config(sc)
-	struct ex_softc *sc;
+ex_config(struct ex_softc *sc)
 {
 	struct ifnet *ifp;
-	u_int16_t val;
-	u_int8_t macaddr[ETHER_ADDR_LEN] = {0};
+	uint16_t val;
+	uint8_t macaddr[ETHER_ADDR_LEN] = {0};
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, error, attach_stage;
@@ -206,8 +196,7 @@ ex_config(sc)
 	macaddr[4] = val >> 8;
 	macaddr[5] = val & 0xff;
 
-	aprint_normal("%s: MAC address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(macaddr));
+	aprint_normal_dev(sc->sc_dev, "MAC address %s\n", ether_sprintf(macaddr));
 
 	if (sc->ex_conf & (EX_CONF_INV_LED_POLARITY|EX_CONF_PHY_POWER)) {
 		GO_WINDOW(2);
@@ -233,9 +222,8 @@ ex_config(sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    EX_NUPD * sizeof (struct ex_upd), PAGE_SIZE, 0, &sc->sc_useg, 1,
             &sc->sc_urseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(
-		    "%s: can't allocate upload descriptors, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't allocate upload descriptors, error = %d\n", error);
 		goto fail;
 	}
 
@@ -244,8 +232,8 @@ ex_config(sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg,
 	    EX_NUPD * sizeof (struct ex_upd), (void **)&sc->sc_upd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error("%s: can't map upload descriptors, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't map upload descriptors, error = %d\n", error);
 		goto fail;
 	}
 
@@ -255,9 +243,8 @@ ex_config(sc)
 	    EX_NUPD * sizeof (struct ex_upd), 1,
 	    EX_NUPD * sizeof (struct ex_upd), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_upd_dmamap)) != 0) {
-		aprint_error(
-		    "%s: can't create upload desc. DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't create upload desc. DMA map, error = %d\n", error);
 		goto fail;
 	}
 
@@ -266,9 +253,8 @@ ex_config(sc)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_upd_dmamap,
 	    sc->sc_upd, EX_NUPD * sizeof (struct ex_upd), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(
-		    "%s: can't load upload desc. DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't load upload desc. DMA map, error = %d\n", error);
 		goto fail;
 	}
 
@@ -281,9 +267,8 @@ ex_config(sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, PAGE_SIZE, 0, &sc->sc_dseg, 1,
 	    &sc->sc_drseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(
-		    "%s: can't allocate download descriptors, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't allocate download descriptors, error = %d\n", error);
 		goto fail;
 	}
 
@@ -292,8 +277,8 @@ ex_config(sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg,
 	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, (void **)&sc->sc_dpd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error("%s: can't map download descriptors, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't map download descriptors, error = %d\n", error);
 		goto fail;
 	}
 	memset(sc->sc_dpd, 0, DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN);
@@ -304,9 +289,8 @@ ex_config(sc)
 	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, 1,
 	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, 0, BUS_DMA_NOWAIT,
 	    &sc->sc_dpd_dmamap)) != 0) {
-		aprint_error(
-		    "%s: can't create download desc. DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't create download desc. DMA map, error = %d\n", error);
 		goto fail;
 	}
 
@@ -315,9 +299,8 @@ ex_config(sc)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dpd_dmamap,
 	    sc->sc_dpd, DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(
-		    "%s: can't load download desc. DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't load download desc. DMA map, error = %d\n", error);
 		goto fail;
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
@@ -333,9 +316,9 @@ ex_config(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    EX_NTFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_tx_dmamaps[i])) != 0) {
-			aprint_error(
-			    "%s: can't create tx DMA map %d, error = %d\n",
-			    sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't create tx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail;
 		}
 	}
@@ -349,9 +332,9 @@ ex_config(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    EX_NRFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_rx_dmamaps[i])) != 0) {
-			aprint_error(
-			    "%s: can't create rx DMA map %d, error = %d\n",
-			    sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't create rx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail;
 		}
 	}
@@ -369,8 +352,8 @@ ex_config(sc)
 		sc->sc_upd[i].upd_frags[0].fr_len =
 		    htole32((MCLBYTES - 2) | EX_FR_LAST);
 		if (ex_add_rxbuf(sc, &sc->sc_rxdescs[i]) != 0) {
-			aprint_error("%s: can't allocate or map rx buffers\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "can't allocate or map rx buffers\n");
 			goto fail;
 		}
 	}
@@ -409,7 +392,7 @@ ex_config(sc)
 		 */
 		ex_set_xcvr(sc, val);
 
-		mii_attach(&sc->sc_dev, &sc->ex_mii, 0xffffffff,
+		mii_attach(sc->sc_dev, &sc->ex_mii, 0xffffffff,
 		    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 		if (LIST_FIRST(&sc->ex_mii.mii_phys) == NULL) {
 			ifmedia_add(&sc->ex_mii.mii_media, IFM_ETHER|IFM_NONE,
@@ -421,7 +404,7 @@ ex_config(sc)
 	} else
 		ex_probemedia(sc);
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ex_start;
 	ifp->if_ioctl = ex_ioctl;
@@ -458,22 +441,14 @@ ex_config(sc)
 	/* TODO: set queues to 0 */
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_NET, 0);
 #endif
 
-	/*  Establish callback to reset card when we reboot. */
-	sc->sc_sdhook = shutdownhook_establish(ex_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-			sc->sc_dev.dv_xname);
-
-	/* Add a suspend hook to make sure we come back up after a resume. */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    ex_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-			sc->sc_dev.dv_xname);
+	if (!pmf_device_register1(sc->sc_dev, NULL, NULL, ex_shutdown))
+		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(sc->sc_dev, &sc->sc_ethercom.ec_if);
 
 	/* The attach is successful. */
 	sc->ex_flags |= EX_FLAGS_ATTACHED;
@@ -549,14 +524,13 @@ ex_config(sc)
  * Find the media present on non-MII chips.
  */
 void
-ex_probemedia(sc)
-	struct ex_softc *sc;
+ex_probemedia(struct ex_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifmedia *ifm = &sc->ex_mii.mii_media;
 	struct ex_media *exm;
-	u_int16_t config1, reset_options, default_media;
+	uint16_t config1, reset_options, default_media;
 	int defmedia = 0;
 	const char *sep = "", *defmedianame = NULL;
 
@@ -567,15 +541,15 @@ ex_probemedia(sc)
 
 	default_media = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
 
-	aprint_normal("%s: ", sc->sc_dev.dv_xname);
-
 	/* Sanity check that there are any media! */
 	if ((reset_options & ELINK_PCI_MEDIAMASK) == 0) {
-		aprint_error("no media present!\n");
+		aprint_error_dev(sc->sc_dev, "no media present!\n");
 		ifmedia_add(ifm, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(ifm, IFM_ETHER|IFM_NONE);
 		return;
 	}
+
+	aprint_normal_dev(sc->sc_dev, "");
 
 #define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
@@ -618,8 +592,7 @@ ex_probemedia(sc)
  * Setup transmitter parameters.
  */
 static void
-ex_setup_tx(sc)
-	struct ex_softc *sc;
+ex_setup_tx(struct ex_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -643,14 +616,13 @@ ex_setup_tx(sc)
  * Bring device up.
  */
 int
-ex_init(ifp)
-	struct ifnet *ifp;
+ex_init(struct ifnet *ifp)
 {
 	struct ex_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
-	u_int16_t val;
+	uint16_t val;
 	int error = 0;
 
 	if ((error = ex_enable(sc)) != 0)
@@ -728,7 +700,7 @@ ex_init(ifp)
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ifp->if_timer = 0;
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "interface not running\n");
 	}
 	return (error);
 }
@@ -742,15 +714,14 @@ ex_init(ifp)
  * here (XXX).
  */
 void
-ex_set_mc(sc)
-	struct ex_softc *sc;
+ex_set_mc(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep estep;
 	int i;
-	u_int16_t mask = FIL_INDIVIDUAL | FIL_BRDCST;
+	uint16_t mask = FIL_INDIVIDUAL | FIL_BRDCST;
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		mask |= FIL_PROMISC;
@@ -800,8 +771,7 @@ allmulti:
  * and this is the error handler.
  */
 static void
-ex_txstat(sc)
-	struct ex_softc *sc;
+ex_txstat(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -842,24 +812,24 @@ ex_txstat(sc)
 
 		ifp->if_flags &= ~IFF_OACTIVE;
 		++sc->sc_ethercom.ec_if.if_oerrors;
-		printf("%s:%s%s%s", sc->sc_dev.dv_xname,
+		aprint_error_dev(sc->sc_dev, "%s%s%s",
 		    (err & TXS_UNDERRUN) ? " transmit underrun" : "",
 		    (err & TXS_JABBER) ? " jabber" : "",
 		    (err & TXS_RECLAIM) ? " reclaim" : "");
 		if (err == 0)
-			printf(" unknown Tx error");
+			aprint_error(" unknown Tx error");
 		printf(" (%x)", err);
 		if (err & TXS_UNDERRUN) {
-			printf(" @%d", sc->tx_start_thresh);
+			aprint_error(" @%d", sc->tx_start_thresh);
 			if (sc->tx_succ_ok < 256 &&
 			    (i = min(ETHER_MAX_LEN, sc->tx_start_thresh + 20))
 			    > sc->tx_start_thresh) {
-				printf(", new threshold is %d", i);
+				aprint_error(", new threshold is %d", i);
 				sc->tx_start_thresh = i;
 			}
 			sc->tx_succ_ok = 0;
 		}
-		printf("\n");
+		aprint_error("\n");
 		if (err & TXS_MAX_COLLISION)
 			++sc->sc_ethercom.ec_if.if_collisions;
 
@@ -891,8 +861,7 @@ ex_txstat(sc)
 }
 
 int
-ex_media_chg(ifp)
-	struct ifnet *ifp;
+ex_media_chg(struct ifnet *ifp)
 {
 
 	if (ifp->if_flags & IFF_UP)
@@ -901,13 +870,11 @@ ex_media_chg(ifp)
 }
 
 void
-ex_set_xcvr(sc, media)
-	struct ex_softc *sc;
-	const u_int16_t media;
+ex_set_xcvr(struct ex_softc *sc, const uint16_t media)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t icfg;
+	uint32_t icfg;
 
 	/*
 	 * We're already in Window 3
@@ -925,12 +892,11 @@ ex_set_xcvr(sc, media)
 }
 
 void
-ex_set_media(sc)
-	struct ex_softc *sc;
+ex_set_media(struct ex_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t configreg;
+	uint32_t configreg;
 
 	if (((sc->ex_conf & EX_CONF_MII) &&
 	    (sc->ex_mii.mii_media_active & IFM_FDX))
@@ -947,7 +913,7 @@ ex_set_media(sc)
 	 * PHY which media to use.
 	 */
 	if (sc->ex_conf & EX_CONF_MII) {
-		u_int16_t val;
+		uint16_t val;
 
 		GO_WINDOW(3);
 		val = bus_space_read_2(iot, ioh, ELINK_W3_RESET_OPTIONS);
@@ -1013,12 +979,10 @@ ex_set_media(sc)
  * (if_media callback, may be called before interface is brought up).
  */
 void
-ex_media_stat(ifp, req)
-	struct ifnet *ifp;
-	struct ifmediareq *req;
+ex_media_stat(struct ifnet *ifp, struct ifmediareq *req)
 {
 	struct ex_softc *sc = ifp->if_softc;
-	u_int16_t help;
+	uint16_t help;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == (IFF_UP|IFF_RUNNING)) {
 		if (sc->ex_conf & EX_CONF_MII) {
@@ -1045,8 +1009,7 @@ ex_media_stat(ifp, req)
  * Start outputting on the interface.
  */
 static void
-ex_start(ifp)
-	struct ifnet *ifp;
+ex_start(struct ifnet *ifp)
 {
 	struct ex_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1057,7 +1020,7 @@ ex_start(ifp)
 	struct mbuf *mb_head;
 	bus_dmamap_t dmamap;
 	int m_csumflags, offset, seglen, totlen, segment, error;
-	u_int32_t csum_flags;
+	uint32_t csum_flags;
 
 	if (sc->tx_head || sc->tx_free == NULL)
 		return;
@@ -1110,12 +1073,12 @@ ex_start(ifp)
 			 * mbuf chain first.  Bail out if we can't get the
 			 * new buffers.
 			 */
-			printf("%s: too many segments, ", sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev, "too many segments, ");
 
 			MGETHDR(mn, M_DONTWAIT, MT_DATA);
 			if (mn == NULL) {
 				m_freem(mb_head);
-				printf("aborting\n");
+				aprint_error("aborting\n");
 				goto out;
 			}
 			if (mb_head->m_pkthdr.len > MHLEN) {
@@ -1123,7 +1086,7 @@ ex_start(ifp)
 				if ((mn->m_flags & M_EXT) == 0) {
 					m_freem(mn);
 					m_freem(mb_head);
-					printf("aborting\n");
+					aprint_error("aborting\n");
 					goto out;
 				}
 			}
@@ -1132,7 +1095,7 @@ ex_start(ifp)
 			mn->m_pkthdr.len = mn->m_len = mb_head->m_pkthdr.len;
 			m_freem(mb_head);
 			mb_head = mn;
-			printf("retrying\n");
+			aprint_error("retrying\n");
 			goto reload;
 		    }
 
@@ -1140,8 +1103,8 @@ ex_start(ifp)
 			/*
 			 * Some other problem; report it.
 			 */
-			printf("%s: can't load mbuf chain, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't load mbuf chain, error = %d\n", error);
 			m_freem(mb_head);
 			goto out;
 		}
@@ -1261,18 +1224,17 @@ ex_start(ifp)
 
 
 int
-ex_intr(arg)
-	void *arg;
+ex_intr(void *arg)
 {
 	struct ex_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int16_t stat;
+	uint16_t stat;
 	int ret = 0;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    !device_is_active(&sc->sc_dev))
+	    !device_is_active(sc->sc_dev))
 		return (0);
 
 	for (;;) {
@@ -1281,8 +1243,8 @@ ex_intr(arg)
 		if ((stat & XL_WATCHED_INTERRUPTS) == 0) {
 			if ((stat & INTR_LATCH) == 0) {
 #if 0
-				printf("%s: intr latch cleared\n",
-				       sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				       "intr latch cleared\n");
 #endif
 				break;
 			}
@@ -1299,8 +1261,8 @@ ex_intr(arg)
 			(*sc->intr_ack)(sc);
 
 		if (stat & HOST_ERROR) {
-			printf("%s: adapter failure (%x)\n",
-			    sc->sc_dev.dv_xname, stat);
+			aprint_error_dev(sc->sc_dev,
+			    "adapter failure (%x)\n", stat);
 			ex_reset(sc);
 			ex_init(ifp);
 			return 1;
@@ -1312,8 +1274,8 @@ ex_intr(arg)
 			ex_txstat(sc);
 #if 0
 			if (stat & DN_COMPLETE)
-				printf("%s: Ignoring Dn interrupt (%x)\n",
-				    sc->sc_dev.dv_xname, stat);
+				aprint_error_dev(sc->sc_dev,
+				    "Ignoring Dn interrupt (%x)\n", stat);
 #endif
 			/*
 			 * In some rare cases, both Tx Complete and
@@ -1369,7 +1331,7 @@ ex_intr(arg)
 			struct mbuf *m;
 			struct ex_upd *upd;
 			bus_dmamap_t rxmap;
-			u_int32_t pktstat;
+			uint32_t pktstat;
 
  rcvloop:
 			rxd = sc->rx_head;
@@ -1399,7 +1361,7 @@ ex_intr(arg)
 				 * instead.
 				 */
 				if (ex_add_rxbuf(sc, rxd) == 0) {
-					u_int16_t total_len;
+					uint16_t total_len;
 
 					if (pktstat &
 					    ((sc->sc_ethercom.ec_capenable &
@@ -1451,13 +1413,13 @@ ex_intr(arg)
 			 * stalled. We could be more subtle about this.
 			 */
 			if (bus_space_read_4(iot, ioh, ELINK_UPLISTPTR) == 0) {
-				printf("%s: uplistptr was 0\n",
-				       sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				       "uplistptr was 0\n");
 				ex_init(ifp);
 			} else if (bus_space_read_4(iot, ioh, ELINK_UPPKTSTATUS)
 				   & 0x2000) {
-				printf("%s: receive stalled\n",
-				       sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				       "receive stalled\n");
 				bus_space_write_2(iot, ioh, ELINK_COMMAND,
 						  ELINK_UPUNSTALL);
 			}
@@ -1476,10 +1438,7 @@ ex_intr(arg)
 }
 
 int
-ex_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+ex_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ex_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1532,13 +1491,12 @@ ex_ioctl(ifp, cmd, data)
 }
 
 void
-ex_getstats(sc)
-	struct ex_softc *sc;
+ex_getstats(struct ex_softc *sc)
 {
 	bus_space_handle_t ioh = sc->sc_ioh;
 	bus_space_tag_t iot = sc->sc_iot;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	u_int8_t upperok;
+	uint8_t upperok;
 
 	GO_WINDOW(6);
 	upperok = bus_space_read_1(iot, ioh, UPPER_FRAMES_OK);
@@ -1577,8 +1535,7 @@ ex_getstats(sc)
 }
 
 void
-ex_printstats(sc)
-	struct ex_softc *sc;
+ex_printstats(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1593,13 +1550,12 @@ ex_printstats(sc)
 }
 
 void
-ex_tick(arg)
-	void *arg;
+ex_tick(void *arg)
 {
 	struct ex_softc *sc = arg;
 	int s;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return;
 
 	s = splnet();
@@ -1617,10 +1573,9 @@ ex_tick(arg)
 }
 
 void
-ex_reset(sc)
-	struct ex_softc *sc;
+ex_reset(struct ex_softc *sc)
 {
-	u_int16_t val = GLOBAL_RESET;
+	uint16_t val = GLOBAL_RESET;
 
 	if (sc->ex_conf & EX_CONF_RESETHACK)
 		val |= 0x10;
@@ -1635,12 +1590,11 @@ ex_reset(sc)
 }
 
 void
-ex_watchdog(ifp)
-	struct ifnet *ifp;
+ex_watchdog(struct ifnet *ifp)
 {
 	struct ex_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
 	++sc->sc_ethercom.ec_if.if_oerrors;
 
 	ex_reset(sc);
@@ -1648,9 +1602,7 @@ ex_watchdog(ifp)
 }
 
 void
-ex_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+ex_stop(struct ifnet *ifp, int disable)
 {
 	struct ex_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1704,8 +1656,7 @@ ex_stop(ifp, disable)
 }
 
 static void
-ex_init_txdescs(sc)
-	struct ex_softc *sc;
+ex_init_txdescs(struct ex_softc *sc)
 {
 	int i;
 
@@ -1723,11 +1674,9 @@ ex_init_txdescs(sc)
 
 
 int
-ex_activate(self, act)
-	struct device *self;
-	enum devact act;
+ex_activate(device_t self, enum devact act)
 {
-	struct ex_softc *sc = (void *) self;
+	struct ex_softc *sc = device_private(self);
 	int s, error = 0;
 
 	s = splnet();
@@ -1749,8 +1698,7 @@ ex_activate(self, act)
 }
 
 int
-ex_detach(sc)
-	struct ex_softc *sc;
+ex_detach(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ex_rxdesc *rxd;
@@ -1800,8 +1748,7 @@ ex_detach(sc)
 	    EX_NUPD * sizeof (struct ex_upd));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg);
 
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
+	pmf_device_deregister(sc->sc_dev);
 
 	return (0);
 }
@@ -1809,11 +1756,10 @@ ex_detach(sc)
 /*
  * Before reboots, reset card completely.
  */
-static void
-ex_shutdown(arg)
-	void *arg;
+static bool
+ex_shutdown(device_t self, int flags)
 {
-	struct ex_softc *sc = arg;
+	struct ex_softc *sc = device_private(self);
 
 	ex_stop(&sc->sc_ethercom.ec_if, 1);
 	/*
@@ -1821,20 +1767,19 @@ ex_shutdown(arg)
 	 * otherwise firmware on some systems gets really confused.
 	 */
 	(void) ex_enable(sc);
+	return true;
 }
 
 /*
  * Read EEPROM data.
  * XXX what to do if EEPROM doesn't unbusy?
  */
-u_int16_t
-ex_read_eeprom(sc, offset)
-	struct ex_softc *sc;
-	int offset;
+uint16_t
+ex_read_eeprom(struct ex_softc *sc, int offset)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int16_t data = 0, cmd = READ_EEPROM;
+	uint16_t data = 0, cmd = READ_EEPROM;
 	int off;
 
 	off = sc->ex_conf & EX_CONF_EEPROM_OFF ? 0x30 : 0;
@@ -1853,8 +1798,7 @@ out:
 }
 
 static int
-ex_eeprom_busy(sc)
-	struct ex_softc *sc;
+ex_eeprom_busy(struct ex_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1866,7 +1810,7 @@ ex_eeprom_busy(sc)
 			return 0;
 		delay(100);
 	}
-	printf("\n%s: eeprom stays busy.\n", sc->sc_dev.dv_xname);
+	aprint_error_dev(sc->sc_dev, "eeprom stays busy.\n");
 	return (1);
 }
 
@@ -1874,9 +1818,7 @@ ex_eeprom_busy(sc)
  * Create a new rx buffer and add it to the 'soft' rx list.
  */
 static int
-ex_add_rxbuf(sc, rxd)
-	struct ex_softc *sc;
-	struct ex_rxdesc *rxd;
+ex_add_rxbuf(struct ex_softc *sc, struct ex_rxdesc *rxd)
 {
 	struct mbuf *m, *oldm;
 	bus_dmamap_t rxmap;
@@ -1914,8 +1856,8 @@ ex_add_rxbuf(sc, rxd)
 		    m->m_ext.ext_buf, MCLBYTES, NULL,
 		    BUS_DMA_READ|BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: can't load rx buffer, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(sc->sc_dev, "can't load rx buffer, error = %d\n",
+			    error);
 			panic("ex_add_rxbuf");	/* XXX */
 		}
 	}
@@ -1955,33 +1897,28 @@ ex_add_rxbuf(sc, rxd)
 	return (rval);
 }
 
-u_int32_t
-ex_mii_bitbang_read(self)
-	struct device *self;
+uint32_t
+ex_mii_bitbang_read(device_t self)
 {
-	struct ex_softc *sc = (void *) self;
+	struct ex_softc *sc = device_private(self);
 
 	/* We're already in Window 4. */
 	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT));
 }
 
 void
-ex_mii_bitbang_write(self, val)
-	struct device *self;
-	u_int32_t val;
+ex_mii_bitbang_write(device_t self, uint32_t val)
 {
-	struct ex_softc *sc = (void *) self;
+	struct ex_softc *sc = device_private(self);
 
 	/* We're already in Window 4. */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_W4_PHYSMGMT, val);
 }
 
 int
-ex_mii_readreg(v, phy, reg)
-	struct device *v;
-	int phy, reg;
+ex_mii_readreg(device_t v, int phy, int reg)
 {
-	struct ex_softc *sc = (struct ex_softc *)v;
+	struct ex_softc *sc = device_private(v);
 	int val;
 
 	if ((sc->ex_conf & EX_CONF_INTPHY) && phy != ELINK_INTPHY_ID)
@@ -1997,13 +1934,9 @@ ex_mii_readreg(v, phy, reg)
 }
 
 void
-ex_mii_writereg(v, phy, reg, data)
-        struct device *v;
-        int phy;
-        int reg;
-        int data;
+ex_mii_writereg(device_t v, int phy, int reg, int data)
 {
-	struct ex_softc *sc = (struct ex_softc *)v;
+	struct ex_softc *sc = device_private(v);
 
 	GO_WINDOW(4);
 
@@ -2013,10 +1946,9 @@ ex_mii_writereg(v, phy, reg, data)
 }
 
 void
-ex_mii_statchg(v)
-	struct device *v;
+ex_mii_statchg(device_t v)
 {
-	struct ex_softc *sc = (struct ex_softc *)v;
+	struct ex_softc *sc = device_private(v);
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int mctl;
@@ -2032,13 +1964,11 @@ ex_mii_statchg(v)
 }
 
 int
-ex_enable(sc)
-	struct ex_softc *sc;
+ex_enable(struct ex_softc *sc)
 {
 	if (sc->enabled == 0 && sc->enable != NULL) {
 		if ((*sc->enable)(sc) != 0) {
-			printf("%s: de/vice enable failed\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev, "device enable failed\n");
 			return (EIO);
 		}
 		sc->enabled = 1;
@@ -2047,8 +1977,7 @@ ex_enable(sc)
 }
 
 void
-ex_disable(sc)
-	struct ex_softc *sc;
+ex_disable(struct ex_softc *sc)
 {
 	if (sc->enabled == 1 && sc->disable != NULL) {
 		(*sc->disable)(sc);
@@ -2056,34 +1985,3 @@ ex_disable(sc)
 	}
 }
 
-void
-ex_power(why, arg)
-	int why;
-	void *arg;
-{
-	struct ex_softc *sc = (void *)arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		ex_stop(ifp, 0);
-		if (sc->power != NULL)
-			(*sc->power)(sc, why);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			if (sc->power != NULL)
-				(*sc->power)(sc, why);
-			ex_init(ifp);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}

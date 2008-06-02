@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_var.h,v 1.13 2005/12/10 23:39:56 elad Exp $	*/
+/*	$NetBSD: pim6_var.h,v 1.13.70.1 2008/06/02 13:24:27 mjf Exp $	*/
 /*	$KAME: pim6_var.h,v 1.8 2000/06/06 08:07:43 jinmei Exp $	*/
 
 /*
@@ -41,20 +41,20 @@
  * Modified by Pavlin Ivanov Radoslavov, USC/ISI, May 1998
  */
 
-struct pim6stat {
-	u_quad_t pim6s_rcv_total;	/* total PIM messages received	*/
-	u_quad_t pim6s_rcv_tooshort;	/* received with too few bytes	*/
-	u_quad_t pim6s_rcv_badsum;	/* received with bad checksum	*/
-	u_quad_t pim6s_rcv_badversion;	/* received bad PIM version	*/
-	u_quad_t pim6s_rcv_registers;	/* received registers		*/
-	u_quad_t pim6s_rcv_badregisters; /* received invalid registers	*/
-	u_quad_t pim6s_snd_registers;	/* sent registers		*/
-};
+#define	PIM6_STAT_RCV_TOTAL	0	/* total PIM messages received */
+#define	PIM6_STAT_RCV_TOOSHORT	1	/* received with too few bytes */
+#define	PIM6_STAT_RCV_BADSUM	2	/* received with bad checksum */
+#define	PIM6_STAT_RCV_BADVERSION 3	/* received bad PIM version */
+#define	PIM6_STAT_RCV_REGISTERS	4	/* received registers */
+#define	PIM6_STAT_RCV_BADREGISTERS 5	/* received invalid registers */
+#define	PIM6_STAT_SND_REGISTERS	6	/* sent registers */
 
-#if (defined(KERNEL)) || (defined(_KERNEL))
-extern struct pim6stat pim6stat;
-int pim6_input __P((struct mbuf **, int*, int));
-#endif /* KERNEL */
+#define	PIM6_NSTATS		7
+
+#if defined(_KERNEL)
+void	pim6_init(void);
+int	pim6_input(struct mbuf **, int*, int);
+#endif /* _KERNEL */
 
 /*
  * Names for PIM sysctl objects

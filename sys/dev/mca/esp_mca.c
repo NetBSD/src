@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.16 2007/10/19 12:00:34 ad Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.16.16.1 2008/06/02 13:23:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -45,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.16 2007/10/19 12:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.16.16.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,21 +86,21 @@ static int esp_mca_debug = 0;
 #define ESP_MCA_IOSIZE  0x20
 #define ESP_REG_OFFSET	0x10
 
-static void	esp_mca_attach(struct device *, struct device *, void *);
-static int	esp_mca_match(struct device *, struct cfdata *, void *);
+static int	esp_mca_match(device_t, cfdata_t, void *);
+static void	esp_mca_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(esp_mca, sizeof(struct esp_softc),
+CFATTACH_DECL_NWE(esp_mca, sizeof(struct esp_softc),
     esp_mca_match, esp_mca_attach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.
  */
-static u_char	esp_read_reg(struct ncr53c9x_softc *, int);
-static void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
+static uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
+static void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 static int	esp_dma_isintr(struct ncr53c9x_softc *);
 static void	esp_dma_reset(struct ncr53c9x_softc *);
 static int	esp_dma_intr(struct ncr53c9x_softc *);
-static int	esp_dma_setup(struct ncr53c9x_softc *, void **,
+static int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **,
 	    size_t *, int, size_t *);
 static void	esp_dma_go(struct ncr53c9x_softc *);
 static void	esp_dma_stop(struct ncr53c9x_softc *);
@@ -127,11 +120,7 @@ static struct ncr53c9x_glue esp_glue = {
 };
 
 static int
-esp_mca_match(
-	struct device *parent,
-	struct cfdata *cf,
-	void *aux
-)
+esp_mca_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mca_attach_args *ma = aux;
 
@@ -144,23 +133,21 @@ esp_mca_match(
 }
 
 static void
-esp_mca_attach(
-	struct device *parent,
-	struct device *self,
-	void *aux
-)
+esp_mca_attach(device_t parent, device_t self, void *aux)
 {
-	struct mca_attach_args *ma = aux;
 	struct esp_softc *esc = device_private(self);
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
-	u_int16_t iobase;
+	struct mca_attach_args *ma = aux;
+	uint16_t iobase;
 	int scsi_id, irq, drq, error;
 	bus_space_handle_t ioh;
 	int pos2, pos3, pos5;
 
-	static const u_int16_t ncrmca_iobase[] = {
+	static const uint16_t ncrmca_iobase[] = {
 		0, 0x240, 0x340, 0x400, 0x420, 0x3240, 0x8240, 0xa240
 	};
+
+	sc->sc_dev = self;
 
 	/*
 	 * NCR SCSI Adapter (ADF 7f4f)
@@ -193,16 +180,16 @@ esp_mca_attach(
 	pos5 = mca_conf_read(ma->ma_mc, ma->ma_slot, 5);
 
 	iobase = ncrmca_iobase[(pos2 & 0x0e) >> 1];
-	irq = 3 + 2*((pos2 & 0x30) >> 4);
+	irq = 3 + 2 * ((pos2 & 0x30) >> 4);
 	drq = (pos3 & 0x0f);
 	scsi_id = 6 + ((pos5 & 0x20) ? 1 : 0);
 
-	printf(" slot %d irq %d drq %d: NCR SCSI Adapter\n",
-		ma->ma_slot + 1, irq, drq);
+	aprint_normal(" slot %d irq %d drq %d: NCR SCSI Adapter\n",
+	    ma->ma_slot + 1, irq, drq);
 
 	/* Map the 86C01 registers */
 	if (bus_space_map(ma->ma_iot, iobase, ESP_MCA_IOSIZE, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -212,7 +199,7 @@ esp_mca_attach(
 	/* Submap the 'esp' registers */
 	if (bus_space_subregion(ma->ma_iot, ioh, ESP_REG_OFFSET,
 	    ESP_MCA_IOSIZE-ESP_REG_OFFSET, &esc->sc_esp_ioh)) {
-		printf("%s: can't subregion i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't subregion i/o space\n");
 		return;
 	}
 
@@ -221,8 +208,8 @@ esp_mca_attach(
 	if ((error = mca_dmamap_create(esc->sc_dmat, MAXPHYS,
             BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | MCABUS_DMA_IOPORT,
 	    &esc->sc_xfer, drq)) != 0){
-                printf("%s: couldn't create DMA map - error %d\n",
-                        sc->sc_dev.dv_xname, error);
+                aprint_error_dev(&sc->sc_dev,
+		    "couldn't create DMA map - error %d\n", error);
                 return;
         }
 
@@ -243,10 +230,9 @@ esp_mca_attach(
 
 	/* Establish interrupt */
 	esc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_BIO, ncr53c9x_intr,
-			esc);
+	    esc);
 	if (esc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 
@@ -257,8 +243,8 @@ esp_mca_attach(
 	mca_dma_set_ioport(drq, iobase + N86C01_PIO);
 
 	bus_space_write_1(esc->sc_iot, esc->sc_ioh, N86C01_MODE_ENABLE,
-		bus_space_read_1(esc->sc_iot, esc->sc_ioh, N86C01_MODE_ENABLE)
-		| N86C01_INTR_ENABLE);
+	    bus_space_read_1(esc->sc_iot, esc->sc_ioh, N86C01_MODE_ENABLE) |
+	    N86C01_INTR_ENABLE);
 
 	/*
 	 * Now try to attach all the sub-devices
@@ -267,7 +253,7 @@ esp_mca_attach(
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 
 	/* Do the common parts of attachment. */
-	printf("%s", sc->sc_dev.dv_xname);
+	printf("%s", device_xname(self));
 	ncr53c9x_attach(sc);
 }
 
@@ -275,21 +261,16 @@ esp_mca_attach(
  * Glue functions.
  */
 
-static u_char
-esp_read_reg(sc, reg)
-	struct ncr53c9x_softc *sc;
-	int reg;
+static uint8_t
+esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (bus_space_read_1(esc->sc_iot, esc->sc_esp_ioh, reg));
+	return bus_space_read_1(esc->sc_iot, esc->sc_esp_ioh, reg);
 }
 
 static void
-esp_write_reg(sc, reg, val)
-	struct ncr53c9x_softc *sc;
-	int reg;
-	u_char val;
+esp_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
@@ -297,19 +278,17 @@ esp_write_reg(sc, reg, val)
 }
 
 static int
-esp_dma_isintr(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	DPRINTF(("[esp_dma_isintr] "));
-	return (bus_space_read_1(esc->sc_iot, esc->sc_ioh,
-		N86C01_STATUS) & N86C01_IRQ_PEND);
+	return bus_space_read_1(esc->sc_iot, esc->sc_ioh, N86C01_STATUS) &
+	    N86C01_IRQ_PEND;
 }
 
 static void
-esp_dma_reset(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
@@ -327,68 +306,63 @@ esp_dma_reset(sc)
 }
 
 static int
-esp_dma_intr(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_intr(struct ncr53c9x_softc *sc)
 {
-	struct esp_softc *esc = (struct esp_softc *) sc;
+	struct esp_softc *esc = (struct esp_softc *)sc;
+
 	DPRINTF(("[esp_dma_intr] "));
 
 	if ((esc->sc_flags & ESP_XFER_ACTIVE) == 0) {
-		printf("%s: dma_intr--inactive DMA\n", sc->sc_dev.dv_xname);
-		return (-1);
+		printf("%s: dma_intr--inactive DMA\n",
+		    device_xname(sc->sc_dev));
+		return -1;
 	}
 
 	if ((sc->sc_espintr & NCRINTR_BS) == 0) {
 		esc->sc_flags &= ~ESP_XFER_ACTIVE;
 		mca_disk_unbusy();
-		return (0);
+		return 0;
 	}
 
 	sc->sc_espstat |= NCRSTAT_TC;	/* XXX */
 
 	if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
-		printf("%s: DMA not complete?\n", sc->sc_dev.dv_xname);
-		return (1);
+		printf("%s: DMA not complete?\n", device_xname(sc->sc_dev));
+		return 1;
 	}
 
-	bus_dmamap_sync(esc->sc_dmat, esc->sc_xfer, 0,
-		*esc->sc_xfer_len,
-		(esc->sc_flags & ESP_XFER_READ)
-			? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(esc->sc_dmat, esc->sc_xfer, 0, *esc->sc_xfer_len,
+	    (esc->sc_flags & ESP_XFER_READ) ?
+	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 	bus_dmamap_unload(esc->sc_dmat, esc->sc_xfer);
 	esc->sc_flags &= ~ESP_XFER_LOADED;
 
-	*esc->sc_xfer_addr +=  *esc->sc_xfer_len;
+	*esc->sc_xfer_addr += *esc->sc_xfer_len;
 	*esc->sc_xfer_len = 0;
 
 	esc->sc_flags &= ~ESP_XFER_ACTIVE;
 	mca_disk_unbusy();
 
-	return (0);
+	return 0;
 }
 
 /*
  * Setup DMA transfer.
  */
 static int
-esp_dma_setup(
-	struct ncr53c9x_softc *sc,
-	void **addr,
-	size_t *len,
-	int datain,
-	size_t *dmasize
-)
+esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
+    int datain, size_t *dmasize)
 {
-	struct esp_softc *esc = (struct esp_softc *) sc;
+	struct esp_softc *esc = (struct esp_softc *)sc;
 	int error;
 	int fl;
 
 	DPRINTF(("[esp_dma_setup] "));
 
 	if (esc->sc_flags & ESP_XFER_LOADED) {
-		printf("%s: esp_dma_setup: unloading leaked xfer\n",
-			sc->sc_dev.dv_xname);
+		printf("%s: %s: unloading leaked xfer\n",
+		    device_xname(sc->sc_dev), __func__);
 		bus_dmamap_unload(esc->sc_dmat, esc->sc_xfer);
 		esc->sc_flags &= ~ESP_XFER_LOADED;
 	}
@@ -398,26 +372,25 @@ esp_dma_setup(
 
 	if ((error = bus_dmamap_load(esc->sc_dmat, esc->sc_xfer, *addr,
 	    *len, NULL, BUS_DMA_STREAMING|fl))) {
-		printf("%s: esp_dma_setup: unable to load DMA buffer - error %d\n",
-			sc->sc_dev.dv_xname, error);
-		return (error);
+		printf("%s: %s: unable to load DMA buffer - error %d\n",
+		    device_xname(sc->sc_dev), __func__, error);
+		return error;
 	}
 
-	bus_dmamap_sync(esc->sc_dmat, esc->sc_xfer, 0,
-		*len, (datain) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(esc->sc_dmat, esc->sc_xfer, 0, *len,
+	    (datain) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	esc->sc_flags |= ESP_XFER_LOADED | (datain ? ESP_XFER_READ : 0);
 	esc->sc_xfer_addr = addr;
 	esc->sc_xfer_len  = len;
 
-	return (0);
+	return 0;
 }
 
 static void
-esp_dma_go(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_go(struct ncr53c9x_softc *sc)
 {
-	struct esp_softc *esc = (struct esp_softc *) sc;
+	struct esp_softc *esc = (struct esp_softc *)sc;
 	DPRINTF(("[esp_dma_go] "));
 
 	esc->sc_flags |= ESP_XFER_ACTIVE;
@@ -425,20 +398,19 @@ esp_dma_go(sc)
 }
 
 static void
-esp_dma_stop(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_stop(struct ncr53c9x_softc *sc)
 {
+
 	DPRINTF(("[esp_dma_stop] "));
 
-	panic("%s: stop not yet implemented", sc->sc_dev.dv_xname);
+	panic("%s: stop not yet implemented", device_xname(sc->sc_dev));
 }
 
 static int
-esp_dma_isactive(sc)
-	struct ncr53c9x_softc *sc;
+esp_dma_isactive(struct ncr53c9x_softc *sc)
 {
-	struct esp_softc *esc = (struct esp_softc *) sc;
+	struct esp_softc *esc = (struct esp_softc *)sc;
 	DPRINTF(("[esp_dma_isactive] "));
 
-	return (esc->sc_flags & ESP_XFER_ACTIVE);
+	return esc->sc_flags & ESP_XFER_ACTIVE;
 }

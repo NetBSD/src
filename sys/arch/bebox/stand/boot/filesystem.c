@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.5 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.5.74.1 2008/06/02 13:21:58 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,18 +30,9 @@
  */
 
 #include <lib/libsa/stand.h>
-#include <ufs.h>
-#include <cd9660.h>
-#if 0
-#include <nfs.h>
-#endif
 
 struct fs_ops file_system[] = {
-	FS_OPS(ufs),
-	FS_OPS(cd9660),
-#if 0
-	FS_OPS(nfs),
-#endif
+	FS_OPS(null),
 };
 
 int nfsys = sizeof (file_system)/sizeof (struct fs_ops);

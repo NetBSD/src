@@ -1,9 +1,8 @@
-/*	$NetBSD: exoparg1.c,v 1.3 2007/12/11 13:16:08 lukem Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exoparg1 - AML execution - opcodes with 1 argument
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,17 +115,14 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg1.c,v 1.3 2007/12/11 13:16:08 lukem Exp $");
-
 #define __EXOPARG1_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acparser.h>
-#include <dist/acpica/acdispat.h>
-#include <dist/acpica/acinterp.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acnamesp.h>
+#include "acpi.h"
+#include "acparser.h"
+#include "acdispat.h"
+#include "acinterp.h"
+#include "amlcode.h"
+#include "acnamesp.h"
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -884,23 +880,36 @@ AcpiExOpcode_1A_0T_1R (
             Value = AcpiGbl_IntegerByteWidth;
             break;
 
-        case ACPI_TYPE_BUFFER:
-            Value = TempDesc->Buffer.Length;
-            break;
-
         case ACPI_TYPE_STRING:
             Value = TempDesc->String.Length;
             break;
 
+        case ACPI_TYPE_BUFFER:
+
+            /* Buffer arguments may not be evaluated at this point */
+
+            Status = AcpiDsGetBufferArguments (TempDesc);
+            Value = TempDesc->Buffer.Length;
+            break;
+
         case ACPI_TYPE_PACKAGE:
+
+            /* Package arguments may not be evaluated at this point */
+
+            Status = AcpiDsGetPackageArguments (TempDesc);
             Value = TempDesc->Package.Count;
             break;
 
         default:
             ACPI_ERROR ((AE_INFO,
-                "Operand is not Buf/Int/Str/Pkg - found type %s",
+                "Operand must be Buffer/Integer/String/Package - found type %s",
                 AcpiUtGetTypeName (Type)));
             Status = AE_AML_OPERAND_TYPE;
+            goto Cleanup;
+        }
+
+        if (ACPI_FAILURE (Status))
+        {
             goto Cleanup;
         }
 

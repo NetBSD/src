@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.302.6.1 2008/04/03 12:42:50 mjf Exp $
+#	$NetBSD: files.pci,v 1.302.6.2 2008/06/02 13:23:38 mjf Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -931,3 +931,10 @@ defflag	opt_r128fb.h	R128FB_WAIT
 device	lii: ether, ifnet, arp, mii
 attach	lii at pci
 file	dev/pci/if_lii.c		lii
+
+# Silicon Image SteelVine SATA-II controllers
+define siisata
+file dev/ic/siisata.c atapibus & atabus & siisata
+device siisata: ata, ata_dma, ata_udma, sata, siisata
+attach siisata at pci with siisata_pci
+file dev/pci/siisata_pci.c siisata_pci

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.18 2007/03/04 06:01:54 christos Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.18.36.1 2008/06/02 13:23:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,7 +39,7 @@
  * Ethernet software status per interface.
  */
 struct ex_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
@@ -126,14 +119,10 @@ struct ex_softc {
 	/* power management hooks */
 	int (*enable)(struct ex_softc *);
 	void (*disable)(struct ex_softc *);
-	void (*power)(struct ex_softc *, int);
 	int enabled;
 
 	/* interrupt acknowledge hook */
 	void (*intr_ack)(struct ex_softc *);
-
-	void *sc_sdhook;
-	void *sc_powerhook;
 
 	bus_dma_segment_t sc_useg, sc_dseg;
 	int sc_urseg, sc_drseg;
@@ -157,7 +146,7 @@ int	ex_intr(void *);
 void	ex_stop(struct ifnet *, int);
 void	ex_watchdog(struct ifnet *);
 int	ex_ioctl(struct ifnet *ifp, u_long, void *);
-int	ex_activate(struct device *, enum devact);
+int	ex_activate(device_t, enum devact);
 int	ex_detach(struct ex_softc *);
 
 int	ex_enable(struct ex_softc *);

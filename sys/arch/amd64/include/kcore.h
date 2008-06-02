@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.1 2003/04/26 18:39:43 fvdl Exp $	*/
+/*	$NetBSD: kcore.h,v 1.1.104.1 2008/06/02 13:21:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -39,8 +39,8 @@
 #define _AMD64_KCORE_H_
 
 typedef struct cpu_kcore_hdr {
-	u_int64_t	ptdpaddr;		/* PA of PML4 */
-	u_int64_t	nmemsegs;		/* Number of RAM segments */
+	uint64_t	ptdpaddr;		/* PA of PML4 */
+	uint64_t	nmemsegs;		/* Number of RAM segments */
 #if 0
 	phys_ram_seg_t  memsegs[];		/* RAM segments */
 #endif

@@ -1,7 +1,7 @@
-/*	$NetBSD: lockdebug.h,v 1.7 2007/12/15 00:39:36 perry Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.7.6.1 2008/06/02 13:24:32 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -47,9 +40,13 @@
 #error "Sorry, nothing of interest to user level programs here."
 #endif
 
+#define	LOCKOPS_SLEEP	0
+#define	LOCKOPS_SPIN	1
+#define	LOCKOPS_CV	2
+
 typedef	struct lockops {
 	const char	*lo_name;
-	int		lo_sleeplock;
+	int		lo_type;
 	void		(*lo_dump)(volatile void *);
 } lockops_t;
 
@@ -64,34 +61,38 @@ void	lockdebug_lock_print(void *, void (*)(const char *, ...));
 
 bool	lockdebug_alloc(volatile void *, lockops_t *, uintptr_t);
 void	lockdebug_free(volatile void *);
-void	lockdebug_wantlock(volatile void *, uintptr_t, int);
-void	lockdebug_locked(volatile void *, uintptr_t, int);
+void	lockdebug_wantlock(volatile void *, uintptr_t, bool, bool);
+void	lockdebug_locked(volatile void *, void *, uintptr_t, int);
 void	lockdebug_unlocked(volatile void *, uintptr_t, int);
 void	lockdebug_barrier(volatile void *, int);
 void	lockdebug_mem_check(const char *, void *, size_t);
+void	lockdebug_wakeup(volatile void *, uintptr_t);
 
 #define	LOCKDEBUG_ALLOC(lock, ops, addr)	lockdebug_alloc(lock, ops, addr)
 #define	LOCKDEBUG_FREE(dodebug, lock) \
     if (dodebug) lockdebug_free(lock)
-#define	LOCKDEBUG_WANTLOCK(dodebug, lock, where, s) \
-    if (dodebug) lockdebug_wantlock(lock, where, s)
-#define	LOCKDEBUG_LOCKED(dodebug, lock, where, s) \
-    if (dodebug) lockdebug_locked(lock, where, s)
+#define	LOCKDEBUG_WANTLOCK(dodebug, lock, where, s, t) \
+    if (dodebug) lockdebug_wantlock(lock, where, s, t)
+#define	LOCKDEBUG_LOCKED(dodebug, lock, al, where, s) \
+    if (dodebug) lockdebug_locked(lock, al, where, s)
 #define	LOCKDEBUG_UNLOCKED(dodebug, lock, where, s) \
     if (dodebug) lockdebug_unlocked(lock, where, s)
 #define	LOCKDEBUG_BARRIER(lock, slp)		lockdebug_barrier(lock, slp)
 #define	LOCKDEBUG_MEM_CHECK(base, sz)	\
     lockdebug_mem_check(__func__, base, sz)
+#define	LOCKDEBUG_WAKEUP(dodebug, lock, where)	\
+    if (dodebug) lockdebug_wakeup(lock, where)
 
 #else	/* LOCKDEBUG */
 
 #define	LOCKDEBUG_ALLOC(lock, ops, addr)		false
 #define	LOCKDEBUG_FREE(dodebug, lock)			/* nothing */
-#define	LOCKDEBUG_WANTLOCK(dodebug, lock, where, s)	/* nothing */
-#define	LOCKDEBUG_LOCKED(dodebug, lock, where, s)	/* nothing */
+#define	LOCKDEBUG_WANTLOCK(dodebug, lock, where, s, t)	/* nothing */
+#define	LOCKDEBUG_LOCKED(dodebug, lock, al, where, s)	/* nothing */
 #define	LOCKDEBUG_UNLOCKED(dodebug, lock, where, s)	/* nothing */
 #define	LOCKDEBUG_BARRIER(lock, slp)			/* nothing */
 #define	LOCKDEBUG_MEM_CHECK(base, sz)			/* nothing */
+#define	LOCKDEBUG_WAKEUP(dodebug, lock, where)		/* nothing */
 
 #endif	/* LOCKDEBUG */
 

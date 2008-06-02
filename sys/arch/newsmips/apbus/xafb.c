@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.14 2007/03/04 06:00:26 christos Exp $	*/
+/*	$NetBSD: xafb.c,v 1.14.40.1 2008/06/02 13:22:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.14 2007/03/04 06:00:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.14.40.1 2008/06/02 13:22:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -50,34 +50,34 @@ __KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.14 2007/03/04 06:00:26 christos Exp $");
 #include <newsmips/apbus/apbusvar.h>
 
 struct xafb_reg {
-	volatile u_int r0;
-	volatile u_int index;
-	volatile u_int r2;
-	volatile u_int zero;
-	volatile u_int r4;
-	volatile u_int r5;
-	volatile u_int r6;
-	volatile u_int rgb;
+	volatile uint32_t r0;
+	volatile uint32_t index;
+	volatile uint32_t r2;
+	volatile uint32_t zero;
+	volatile uint32_t r4;
+	volatile uint32_t r5;
+	volatile uint32_t r6;
+	volatile uint32_t rgb;
 };
 
 struct xafb_devconfig {
-	u_char *dc_fbbase;		/* VRAM base address */
+	uint8_t *dc_fbbase;		/* VRAM base address */
 	paddr_t dc_fbpaddr;		/* VRAM physical address */
 	struct xafb_reg *dc_reg;	/* register address */
 	struct rasops_info dc_ri;
 };
 
 struct xafb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct xafb_devconfig *sc_dc;
 	int sc_nscreens;
-	u_char sc_cmap_red[256];
-	u_char sc_cmap_green[256];
-	u_char sc_cmap_blue[256];
+	uint8_t sc_cmap_red[256];
+	uint8_t sc_cmap_green[256];
+	uint8_t sc_cmap_blue[256];
 };
 
-int xafb_match(struct device *, struct cfdata *, void *);
-void xafb_attach(struct device *, struct device *, void *);
+int xafb_match(device_t, cfdata_t, void *);
+void xafb_attach(device_t, device_t, void *);
 
 int xafb_common_init(struct xafb_devconfig *);
 int xafb_is_console(void);
@@ -95,7 +95,7 @@ int xafb_putcmap(struct xafb_softc *, struct wsdisplay_cmap *);
 
 static inline void xafb_setcolor(struct xafb_devconfig *, int, int, int, int);
 
-CFATTACH_DECL(xafb, sizeof(struct xafb_softc),
+CFATTACH_DECL_NEW(xafb, sizeof(struct xafb_softc),
     xafb_match, xafb_attach, NULL, NULL);
 
 struct xafb_devconfig xafb_console_dc;
@@ -122,11 +122,11 @@ const struct wsscreen_descr *xafb_scrlist[] = {
 };
 
 struct wsscreen_list xafb_screenlist = {
-	sizeof(xafb_scrlist) / sizeof(xafb_scrlist[0]), xafb_scrlist
+	__arraycount(xafb_scrlist), xafb_scrlist
 };
 
 int
-xafb_match(struct device *parent, struct cfdata *match, void *aux)
+xafb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -137,15 +137,16 @@ xafb_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-xafb_attach(struct device *parent, struct device *self, void *aux)
+xafb_attach(device_t parent, device_t self, void *aux)
 {
-	struct xafb_softc *sc = (void *)self;
+	struct xafb_softc *sc = device_private(self);
 	struct apbus_attach_args *apa = aux;
 	struct wsemuldisplaydev_attach_args wsa;
 	struct xafb_devconfig *dc;
 	struct rasops_info *ri;
 	int console, i;
 
+	sc->sc_dev = self;
 	console = xafb_is_console();
 
 	if (console) {
@@ -159,7 +160,7 @@ xafb_attach(struct device *parent, struct device *self, void *aux)
 		dc->dc_fbbase = (void *)MIPS_PHYS_TO_KSEG1(dc->dc_fbpaddr);
 		dc->dc_reg = (void *)(apa->apa_hwbase + 0x3000);
 		if (xafb_common_init(dc) != 0) {
-			printf(": couldn't initialize device\n");
+			aprint_error(": couldn't initialize device\n");
 			return;
 		}
 
@@ -176,7 +177,8 @@ xafb_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_cmap_blue[i] = i;
 	}
 
-	printf(": %d x %d, %dbpp\n", ri->ri_width, ri->ri_height, ri->ri_depth);
+	aprint_normal(": %d x %d, %dbpp\n",
+	    ri->ri_width, ri->ri_height, ri->ri_depth);
 
 	wsa.console = console;
 	wsa.scrdata = &xafb_screenlist;
@@ -232,7 +234,7 @@ xafb_common_init(struct xafb_devconfig *dc)
 int
 xafb_is_console(void)
 {
-	volatile u_int *dipsw = (void *)NEWS5000_DIP_SWITCH;
+	volatile uint32_t *dipsw = (void *)NEWS5000_DIP_SWITCH;
 
 	if (*dipsw & 1)					/* XXX right? */
 		return 1;

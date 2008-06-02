@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.18 2007/10/19 12:00:04 ad Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.18.16.1 2008/06/02 13:23:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.18 2007/10/19 12:00:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.18.16.1 2008/06/02 13:23:28 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -212,8 +212,7 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	 * config_found() to make sure the adatper is disabled.
 	 */
 	if (scsipi_adapter_addref(&dev->sc_adapter) != 0) {
-		printf("%s: unable to enable controller\n",
-		    dev->sc_dev.dv_xname);
+		aprint_error_dev(&dev->sc_dev, "unable to enable controller\n");
 		return;
 	}
 
@@ -228,8 +227,8 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	    (dev->sc_dmamode == SBIC_CTL_BURST_DMA) ? "BURST DMA" : "PIO",
 	    dev->sc_channel.chan_id);
 	if (dev->sc_chip == SBIC_CHIP_WD33C93B) {
-		printf("%s: microcode revision 0x%02x",
-		    dev->sc_dev.dv_xname, dev->sc_rev);
+		aprint_error_dev(&dev->sc_dev, "microcode revision 0x%02x",
+		    dev->sc_rev);
 		if (dev->sc_minsyncperiod < 50)
 			printf(", Fast SCSI");
 		printf("\n");
@@ -1546,7 +1545,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 			case SEND_TAG:
 				printf("%s: tagged queuing rejected: "
 				    "target %d\n",
-				    dev->sc_dev.dv_xname, dev->target);
+				    device_xname(&dev->sc_dev), dev->target);
 				ti->flags &= ~T_TAG;
 				li = TINFO_LUN(ti, dev->lun);
 				if (acb->tag_type &&
@@ -1561,7 +1560,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 
 			case SEND_SDTR:
 				printf("%s: sync transfer rejected: target %d\n",
-				    dev->sc_dev.dv_xname, dev->target);
+				    device_xname(&dev->sc_dev), dev->target);
 
 				dev->sc_flags &= ~SBICF_SYNCNEGO;
 				ti->flags &= ~(T_NEGOTIATE | T_SYNCMODE);
@@ -1731,7 +1730,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 		if ((msgaddr[0]!=MSG_SIMPLE_Q_TAG) || (dev->sc_msgify==0)) {
 			printf("%s: TAG reselect without IDENTIFY;"
 			    " MSG %x; sending DEVICE RESET\n",
-			    dev->sc_dev.dv_xname, msgaddr[0]);
+			    device_xname(&dev->sc_dev), msgaddr[0]);
 			goto reset;
 		}
 		SBIC_DEBUG(TAGS, ("TAG %x/%x\n", msgaddr[0], msgaddr[1]));
@@ -1752,7 +1751,7 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 			printf("%s: reselect without IDENTIFY;"
 			    " MSG %x;"
 			    " sending DEVICE RESET\n",
-			    dev->sc_dev.dv_xname, msgaddr[0]);
+			    device_xname(&dev->sc_dev), msgaddr[0]);
 			goto reset;
 		}
 		break;
@@ -1833,7 +1832,7 @@ wd33c93_msgout(struct wd33c93_softc *dev)
 		case SEND_IDENTIFY:
 			if (dev->sc_state != SBIC_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
-				    dev->sc_dev.dv_xname, __LINE__);
+				    device_xname(&dev->sc_dev), __LINE__);
 			}
 			dev->sc_omsg[0] =
 			    MSG_IDENTIFY(acb->xs->xs_periph->periph_lun, 0);
@@ -1841,7 +1840,7 @@ wd33c93_msgout(struct wd33c93_softc *dev)
 		case SEND_TAG:
 			if (dev->sc_state != SBIC_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
-				    dev->sc_dev.dv_xname, __LINE__);
+				    device_xname(&dev->sc_dev), __LINE__);
 			}
 			dev->sc_omsg[0] = acb->tag_type;
 			dev->sc_omsg[1] = acb->tag_id;
@@ -2096,7 +2095,7 @@ wd33c93_nextstate(struct wd33c93_softc *dev, struct wd33c93_acb	*acb, u_char csr
 			/* If we didn't get an interrupt, somethink's up */
 			if ((asr & SBIC_ASR_INT) == 0) {
 				printf("%s: Reselect without identify? asr %x\n",
-				    dev->sc_dev.dv_xname, asr);
+				    device_xname(&dev->sc_dev), asr);
 				newlun = 0; /* XXXX */
 			} else {
 				/*
@@ -2179,7 +2178,7 @@ wd33c93_reselect(struct wd33c93_softc *dev, int target, int lun, int tag_type, i
 		 * for the best.
 		 */
 		SBIC_DEBUG(RSEL, ("%s: reselect with active command\n",
-			       dev->sc_dev.dv_xname));
+			       device_xname(&dev->sc_dev)));
 		ti = &dev->sc_tinfo[dev->target];
 		li = TINFO_LUN(ti, dev->lun);
 		li->state = L_STATE_IDLE;
@@ -2215,7 +2214,7 @@ wd33c93_reselect(struct wd33c93_softc *dev, int target, int lun, int tag_type, i
 	if (acb == NULL) {
 		printf("%s: reselect from target %d lun %d tag %x:%x "
 		    "with no nexus; sending ABORT\n",
-		    dev->sc_dev.dv_xname, target, lun, tag_type, tag_id);
+		    device_xname(&dev->sc_dev), target, lun, tag_type, tag_id);
 		goto abort;
 	}
 
@@ -2290,7 +2289,7 @@ wd33c93_timeout(void *arg)
 	scsipi_printaddr(periph);
 	printf("%s: timed out; asr=0x%02x [acb %p (flags 0x%x, dleft %zx)], "
 	    "<state %d, nexus %p, resid %lx, msg(q %x,o %x)>",
-	    dev->sc_dev.dv_xname, asr, acb, acb->flags, acb->dleft,
+	    device_xname(&dev->sc_dev), asr, acb, acb->flags, acb->dleft,
 	    dev->sc_state, dev->sc_nexus, (long)dev->sc_dleft,
 	    dev->sc_msgpriq, dev->sc_msgout);
 

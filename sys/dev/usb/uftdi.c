@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.35 2008/02/18 05:31:24 dyoung Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.35.6.1 2008/06/02 13:23:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.35 2008/02/18 05:31:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.35.6.1 2008/06/02 13:23:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,13 +149,13 @@ static const struct usb_devno uftdi_devs[] = {
 };
 #define uftdi_lookup(v, p) usb_lookup(uftdi_devs, v, p)
 
-int uftdi_match(device_t, struct cfdata *, void *);
+int uftdi_match(device_t, cfdata_t, void *);
 void uftdi_attach(device_t, device_t, void *);
 void uftdi_childdet(device_t, device_t);
 int uftdi_detach(device_t, int);
 int uftdi_activate(device_t, enum devact);
 extern struct cfdriver uftdi_cd;
-CFATTACH_DECL2(uftdi, sizeof(struct uftdi_softc), uftdi_match,
+CFATTACH_DECL2_NEW(uftdi, sizeof(struct uftdi_softc), uftdi_match,
     uftdi_attach, uftdi_detach, uftdi_activate, NULL, uftdi_childdet);
 
 USB_MATCH(uftdi)
@@ -184,7 +177,7 @@ USB_ATTACH(uftdi)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = device_xname(self);
 	int i,idx;
 	usbd_status err;
 	struct ucom_attach_args uca;
@@ -194,16 +187,17 @@ USB_ATTACH(uftdi)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UFTDI_CONFIG_INDEX, 1);
 	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
+		aprint_error("\n%s: failed to set configuration, err=%s\n",
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
+	sc->sc_dev = self;
 	sc->sc_udev = dev;
 	sc->sc_numports = 1;
 	switch( uaa->vendor ) {
@@ -229,8 +223,9 @@ USB_ATTACH(uftdi)
 	for (idx = UFTDI_IFACE_INDEX; idx < sc->sc_numports; idx++) {
 		err = usbd_device2interface_handle(dev, idx, &iface);
 		if (err) {
-			printf("\n%s: failed to get interface idx=%d, err=%s\n",
-				   devname, idx, usbd_errstr(err));
+			aprint_error(
+			    "\n%s: failed to get interface idx=%d, err=%s\n",
+			    devname, idx, usbd_errstr(err));
 			goto bad;
 		}
 
@@ -243,8 +238,9 @@ USB_ATTACH(uftdi)
 			int addr, dir, attr;
 			ed = usbd_interface2endpoint_descriptor(iface, i);
 			if (ed == NULL) {
-				printf("%s: could not read endpoint descriptor"
-					   ": %s\n", devname, usbd_errstr(err));
+				aprint_error_dev(self,
+				    "could not read endpoint descriptor: %s\n",
+				    usbd_errstr(err));
 				goto bad;
 			}
 
@@ -256,18 +252,19 @@ USB_ATTACH(uftdi)
 			else if (dir == UE_DIR_OUT && attr == UE_BULK)
 				uca.bulkout = addr;
 			else {
-				printf("%s: unexpected endpoint\n", devname);
+				aprint_error_dev(self,
+				    "unexpected endpoint\n");
 				goto bad;
 			}
 		}
 		if (uca.bulkin == -1) {
-			printf("%s: Could not find data bulk in\n",
-				   USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self,
+			    "Could not find data bulk in\n");
 			goto bad;
 		}
 		if (uca.bulkout == -1) {
-			printf("%s: Could not find data bulk out\n",
-				   USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self,
+			    "Could not find data bulk out\n");
 			goto bad;
 		}
 
@@ -300,9 +297,9 @@ bad:
 }
 
 int
-uftdi_activate(device_ptr_t self, enum devact act)
+uftdi_activate(device_t self, enum devact act)
 {
-	struct uftdi_softc *sc = (struct uftdi_softc *)self;
+	struct uftdi_softc *sc = device_private(self);
 	int rv = 0,i;
 
 	switch (act) {
@@ -418,7 +415,7 @@ uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
 			 lsr, sc->sc_lsr));
 		sc->sc_msr = msr;
 		sc->sc_lsr = lsr;
-		ucom_status_change((struct ucom_softc *)sc->sc_subdev[portno-1]);
+		ucom_status_change(device_private(sc->sc_subdev[portno-1]));
 	}
 
 	/* Pick up status and adjust data part. */

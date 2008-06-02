@@ -1,7 +1,8 @@
-/*	$NetBSD: bebox_bootrec.h,v 1.1 2007/12/20 22:59:59 garbled Exp $	*/
+/*	$NetBSD: bebox_bootrec.h,v 1.1.14.1 2008/06/02 13:22:34 mjf Exp $	*/
 
 #define	BEBOX_HEADER_SIZE		0x6400
-#define	BEBOX_BLOCK_SIZE		0x100
+#define	BEBOX_BLOCK_SIZE		0x200
+#define	BEBOX_FILE_BLOCK_SIZE		0x100
 #define	BEBOX_FILE_SIZE_OFFSET	0x00004494
 #define	BEBOX_FILE_SIZE_ALIGN_OFFSET	0x00004498
 #define	BEBOX_FILE_BLOCK_MAP_START	0x00000200

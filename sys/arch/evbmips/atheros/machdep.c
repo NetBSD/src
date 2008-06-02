@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.10.6.1 2008/04/03 12:42:14 mjf Exp $ */
+/* $NetBSD: machdep.c,v 1.10.6.2 2008/06/02 13:22:03 mjf Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.6.1 2008/04/03 12:42:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.6.2 2008/06/02 13:22:03 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -213,9 +213,8 @@ cal_timer(void)
 
 	curcpu()->ci_cycles_per_hz = (cntfreq + hz / 2) / hz;
 
-	/* XXX: i don't understand this logic, it was borrowed from Malta */
+	/* Compute number of cycles per 1us (1/MHz). 0.5MHz is for roundup. */
 	curcpu()->ci_divisor_delay = ((cntfreq + 500000) / 1000000);
-	MIPS_SET_CI_RECIPROCAL(curcpu());
 }
 
 void

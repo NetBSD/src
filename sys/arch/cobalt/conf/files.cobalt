@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.30.6.1 2008/04/03 12:42:13 mjf Exp $
+#	$NetBSD: files.cobalt,v 1.30.6.2 2008/06/02 13:21:59 mjf Exp $
 
 maxpartitions 16
 
@@ -73,6 +73,8 @@ include "dev/ata/files.ata"
 
 include "dev/usb/files.usb"
 
-include "arch/cobalt/conf/majors.cobalt"
-
 include "dev/ieee1394/files.ieee1394"
+
+include "dev/bluetooth/files.bluetooth"
+
+include "arch/cobalt/conf/majors.cobalt"

@@ -1,6 +1,6 @@
-$NetBSD: README.NAS,v 1.2 2007/10/17 19:56:54 garbled Exp $
+$NetBSD: README.NAS,v 1.2.22.1 2008/06/02 13:22:35 mjf Exp $
 
-//// MPC8241/8245 based NAS products ////
+//// MPC8241/8245 NAS products ////
 
 The following NAS products are known by NetBSD/sandpoint.
 
@@ -11,12 +11,36 @@ re.11	cmdide.12	Kurobox HG
 re.11	iteide.12/13	classic TeraStation
 re.11	satalink.12/13	TeraStation Pro
 re.11	iteide.12	Gigabit LinkStation
-mak.15	satalink.13	Synology DS-101g+/106e/207/106j?
-mak.15	satalink.12/13	Synology CS-406/RS-406/CS-406e
+mak.15	iteide.13	Synology DS-106j/LinkStation LANxxxG
+mak.15	satalink.13	Synology DS-101g+/106e/106/207
+mak.15	satalink.12/13	Synology CS-406/RS-406/CS-406e/CS-407e
 wm.15	satalink.13 	QNAP TS-101/201
 
-EPIC IRQ and PCI line/pin assignments
+- PCI line/pin and EPIC IRQ assignments
 
-[ research in progress ]
+		PCI IDSEL	   EPIC IRQ
+Kurobox		11, 12, 13, 14	-> 0, 1, 4, 3
+Synology	12, 13, 14, 15	-> 4, 0, 1, 2
+QNAP		12, 13, 14, 15	-> 0, 1, 2, 3
+
+- USB EHCI is a multiple function PCI device which has
+  pin assignment A, B and C.
+
+- *attention* Synology DS407 is a MPC8349E product.
+
+Freescale MPC8349E-mITXE
+		PCI IDSEL 	   MPC8349 IRQ
+  1st PCI	16		-> 22
+		satalink
+  2nd PCI	14, 15		-> 21, 20
+		miniPCI, 3.3VPCI
+
+Synology DS407
+		PCI IDSEL	   MPC8349 IRQ
+  1st PCI	13, 14, 15, 16	-> 20, 21, 22, 19
+		satalink,satalink,ehci,PCI
+  2nd PCI	???
+
+[ research still in progress ]
 
 ---

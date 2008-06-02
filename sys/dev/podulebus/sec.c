@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.9 2007/10/19 12:01:07 ad Exp $ */
+/* $NetBSD: sec.c,v 1.9.16.1 2008/06/02 13:23:47 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.9 2007/10/19 12:01:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.9.16.1 2008/06/02 13:23:47 mjf Exp $");
 
 #include <sys/param.h>
 
@@ -205,7 +205,7 @@ sec_attach(struct device *parent, struct device *self, void *aux)
 	wd33c93_attach(&sc->sc_sbic);
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    self->dv_xname, "intr");
+	    device_xname(self), "intr");
 	sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO, sec_intr,
 	    sc, &sc->sc_intrcnt);
 	sec_cli(sc);
@@ -494,7 +494,7 @@ sec_dumpdma(void *arg)
 
 	dmac_write(sc, NEC71071_CHANNEL, 0);
 	printf("%s: DMA state: cur count %02x%02x cur addr %02x%02x%02x ",
-	    sc->sc_sbic.sc_dev.dv_xname,
+	    device_xname(&sc->sc_sbic.sc_dev),
 	    dmac_read(sc, NEC71071_COUNTHI), dmac_read(sc, NEC71071_COUNTLO),
 	    dmac_read(sc, NEC71071_ADDRHI), dmac_read(sc, NEC71071_ADDRMID),
 	    dmac_read(sc, NEC71071_ADDRLO));
@@ -505,11 +505,11 @@ sec_dumpdma(void *arg)
 	    dmac_read(sc, NEC71071_ADDRLO));
 	printf("%s: DMA state: dctrl %1x%02x mode %02x status %02x req %02x "
 	    "mask %02x\n",
-	    sc->sc_sbic.sc_dev.dv_xname, dmac_read(sc, NEC71071_DCTRL2),
+	    device_xname(&sc->sc_sbic.sc_dev), dmac_read(sc, NEC71071_DCTRL2),
 	    dmac_read(sc, NEC71071_DCTRL1), dmac_read(sc, NEC71071_MODE),
 	    dmac_read(sc, NEC71071_STATUS), dmac_read(sc, NEC71071_REQUEST),
 	    dmac_read(sc, NEC71071_MASK));
-	printf("%s: soft DMA state: %zd@%p%s%d\n", sc->sc_sbic.sc_dev.dv_xname,
+	printf("%s: soft DMA state: %zd@%p%s%d\n", device_xname(&sc->sc_sbic.sc_dev),
 	    sc->sc_dmalen, sc->sc_dmaaddr, sc->sc_dmain ? "<-" : "->",
 	    sc->sc_dmaoff);
 }

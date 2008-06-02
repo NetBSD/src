@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.43 2007/12/05 18:23:23 dyoung Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.43.12.1 2008/06/02 13:23:31 mjf Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.43 2007/12/05 18:23:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.43.12.1 2008/06/02 13:23:31 mjf Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -456,7 +456,7 @@ hpattach(dvp)
 #endif
 
 #if NRND > 0
-	rnd_attach_source(&ns->rnd_source, ns->sc_dev.dv_xname,
+	rnd_attach_source(&ns->rnd_source, device_xname(&ns->sc_dev),
 			  RND_TYPE_NET, 0);
 #endif
 

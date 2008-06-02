@@ -1,4 +1,4 @@
-/*	$NetBSD: deqvar.h,v 1.2 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: deqvar.h,v 1.2.76.1 2008/06/02 13:22:23 mjf Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -35,15 +35,15 @@
 #define DEQVAR_H
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deqvar.h,v 1.2 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deqvar.h,v 1.2.76.1 2008/06/02 13:22:23 mjf Exp $");
 
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <dev/i2c/i2cvar.h>
 
 struct deq_softc {
-	struct device sc_dev;
-	struct device *sc_parent;
+	device_t sc_dev;
+	device_t sc_parent;
 	int sc_node, sc_address;
 	struct i2c_controller *sc_i2c;
 };

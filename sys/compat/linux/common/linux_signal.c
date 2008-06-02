@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.58 2007/12/20 23:02:56 dsl Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.58.6.1 2008/06/02 13:23:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -55,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.58 2007/12/20 23:02:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.58.6.1 2008/06/02 13:23:03 mjf Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -357,10 +350,10 @@ linux_sigprocmask1(struct lwp *l, int how, const linux_old_sigset_t *set, linux_
 			return (error);
 		linux_old_to_native_sigset(&nbss, &nlss);
 	}
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = sigprocmask1(l, how,
 	    set ? &nbss : NULL, oset ? &obss : NULL);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	if (error)
 		return (error);
 	if (oset) {
@@ -413,10 +406,10 @@ linux_sys_rt_sigprocmask(struct lwp *l, const struct linux_sys_rt_sigprocmask_ar
 			return (error);
 		linux_to_native_sigset(&nbss, &nlss);
 	}
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = sigprocmask1(l, how,
 	    set ? &nbss : NULL, oset ? &obss : NULL);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	if (!error && oset) {
 		native_to_linux_sigset(&olss, &obss);
 		error = copyout(&olss, oset, sizeof(olss));
@@ -590,7 +583,7 @@ linux_sys_sigaltstack(struct lwp *l, const struct linux_sys_sigaltstack_args *ua
 			return error;
 		linux_to_native_sigaltstack(&nss, &ss);
 
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 
 		if (nss.ss_flags & ~SS_ALLBITS)
 			error = EINVAL;
@@ -603,7 +596,7 @@ linux_sys_sigaltstack(struct lwp *l, const struct linux_sys_sigaltstack_args *ua
 		if (error == 0)
 			l->l_sigstk = nss;
 
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
 
 	return error;
@@ -646,16 +639,19 @@ linux_sys_tgkill(struct lwp *l, const struct linux_sys_tgkill_args *uap, registe
 		return linux_sys_kill(l, &cup, retval);
 
 	/* We use the PID as the TID, but make sure the group ID is right */
-	if ((p = pfind(SCARG(uap, tid))) == NULL)
+	/* XXX racy */
+	mutex_enter(proc_lock);
+	if ((p = p_find(SCARG(uap, tid), PFIND_LOCKED)) == NULL ||
+	    p->p_emul != &emul_linux) {
+		mutex_exit(proc_lock);
 		return ESRCH;
-
-	if (p->p_emul != &emul_linux)
-		return ESRCH;
-
+	}
 	led = p->p_emuldata;
-
-	if (led->s->group_pid != SCARG(uap, tgid))
+	if (led->s->group_pid != SCARG(uap, tgid)) {
+		mutex_exit(proc_lock);
 		return ESRCH;
+	}
+	mutex_exit(proc_lock);
 
 	return linux_sys_kill(l, &cup, retval);
 }

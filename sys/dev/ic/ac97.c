@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.86 2007/02/21 22:59:59 thorpej Exp $ */
+/*      $NetBSD: ac97.c,v 1.86.38.1 2008/06/02 13:23:17 mjf Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.86 2007/02/21 22:59:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.86.38.1 2008/06/02 13:23:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1185,7 +1185,7 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 	ac97_read(as, AC97_REG_VENDOR_ID2, &id2);
 
 	id = (id1 << 16) | id2;
-	aprint_normal("%s: ac97: ", sc_dev->dv_xname);
+	aprint_normal_dev(sc_dev, "ac97: ");
 
 	for (i = 0; ; i++) {
 		if (ac97codecid[i].id == 0) {
@@ -1231,13 +1231,12 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 				 "\14AC97_23\13AC97_22\12AMAP\11LDAC\10SDAC"
 				 "\7CDAC\4VRM\3SPDIF\2DRA\1VRA",
 				 flagbuf, FLAGBUFLEN);
-			aprint_normal("%s: ac97: ext id %s\n", sc_dev->dv_xname,
+			aprint_normal_dev(sc_dev, "ac97: ext id %s\n",
 				      flagbuf);
 
 			/* Print unusual settings */
 			if (as->ext_id & AC97_EXT_AUDIO_DSA_MASK) {
-				aprint_normal("%s: ac97: Slot assignment: ",
-					      sc_dev->dv_xname);
+				aprint_normal_dev(sc_dev, "ac97: Slot assignment: ");
 				switch (as->ext_id & AC97_EXT_AUDIO_DSA_MASK) {
 				case AC97_EXT_AUDIO_DSA01:
 					aprint_normal("7&8, 6&9, 10&11.\n");
@@ -1251,9 +1250,8 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 				}
 			}
 			if (as->host_flags & AC97_HOST_INVERTED_EAMP) {
-				aprint_normal("%s: ac97: using inverted "
-					      "AC97_POWER_EAMP bit\n",
-					      sc_dev->dv_xname);
+				aprint_normal_dev(sc_dev, "ac97: using inverted "
+					      "AC97_POWER_EAMP bit\n");
 			}
 
 			/* Enable and disable features */
@@ -1289,9 +1287,8 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 				if (rate != 44100) {
 					/* We can't believe ext_id */
 					as->ext_id = 0;
-					aprint_normal(
-					    "%s: Ignore these capabilities.\n",
-					    sc_dev->dv_xname);
+					aprint_normal_dev(sc_dev, 
+					    "Ignore these capabilities.\n");
 				}
 				/* restore the default value */
 				ac97_write(as, AC97_REG_PCM_FRONT_DAC_RATE,
@@ -1308,8 +1305,7 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 
 		ac97_read(as, AC97_REG_EXT_MODEM_ID, &as->ext_mid);
 		if (as->ext_mid == 0 || as->ext_mid == 0xffff) {
-			aprint_normal("%s: no modem codec found\n",
-				      sc_dev->dv_xname);
+			aprint_normal_dev(sc_dev, "no modem codec found\n");
 			return ENXIO;
 		}
 		as->type = AC97_CODEC_TYPE_MODEM;
@@ -1318,7 +1314,7 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 		bitmask_snprintf(as->ext_mid,
 				 "\20\5CID2\4CID1\3HANDSET\2LINE2\1LINE1",
 				 flagbuf, FLAGBUFLEN);
-		aprint_normal("%s: ac97: ext mid %s", sc_dev->dv_xname,
+		aprint_normal_dev(sc_dev, "ac97: ext mid %s",
 			      flagbuf);
 		aprint_normal(", %s codec\n",
 			      (as->ext_mid & 0xc000) == 0 ?
@@ -1331,7 +1327,7 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 		if (err != 0)
 			goto setup_modem;
 		err = sysctl_createv(&as->log, 0, NULL, &node, 0,
-				     CTLTYPE_NODE, sc_dev->dv_xname, NULL,
+				     CTLTYPE_NODE, device_xname(sc_dev), NULL,
 				     NULL, 0, NULL, 0, CTL_HW, CTL_CREATE,
 				     CTL_EOL);
 		if (err != 0)
@@ -1368,7 +1364,7 @@ setup_modem:
 		}
 		if (i <= 0) {
 			printf("%s: codec not responding, status=0x%x\n",
-			    sc_dev->dv_xname, reg);
+			    device_xname(sc_dev), reg);
 			return ENXIO;
 		}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_acpi.c,v 1.15.16.1 2008/04/03 12:42:37 mjf Exp $ */
+/* $NetBSD: lpt_acpi.c,v 1.15.16.2 2008/06/02 13:23:13 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.15.16.1 2008/04/03 12:42:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.15.16.2 2008/06/02 13:23:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,9 @@ lpt_acpi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	sc->sc_dev = self;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* parse resources */
 	rv = acpi_resource_parse(sc->sc_dev, aa->aa_node->ad_handle, "_CRS",

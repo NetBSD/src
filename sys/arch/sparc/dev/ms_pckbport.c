@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_pckbport.c,v 1.3 2006/06/07 22:38:49 kardel Exp $ */
+/*	$NetBSD: ms_pckbport.c,v 1.3.60.1 2008/06/02 13:22:40 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.3 2006/06/07 22:38:49 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.3.60.1 2008/06/02 13:22:40 mjf Exp $");
 
 /*
  * Attach PS/2 mouse at pckbport aux port
@@ -67,10 +67,10 @@ struct ms_pckbport_softc {
 	int sc_enabled;			/* input enabled? */
 };
 
-static int	ms_pckbport_match(struct device *, struct cfdata *, void *);
-static void	ms_pckbport_attach(struct device *, struct device *, void *);
+static int	ms_pckbport_match(device_t, cfdata_t, void *);
+static void	ms_pckbport_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ms_pckbport, sizeof(struct ms_pckbport_softc),
+CFATTACH_DECL_NEW(ms_pckbport, sizeof(struct ms_pckbport_softc),
     ms_pckbport_match, ms_pckbport_attach, NULL, NULL);
 
 
@@ -80,7 +80,7 @@ static void	ms_pckbport_input(void *, int);
 
 
 static int
-ms_pckbport_match(struct device *parent, struct cfdata *cf, void *aux)
+ms_pckbport_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 
@@ -89,14 +89,16 @@ ms_pckbport_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-ms_pckbport_attach(struct device *parent, struct device *self, void *aux)
+ms_pckbport_attach(device_t parent, device_t self, void *aux)
 {
-	struct ms_pckbport_softc *sc = (struct ms_pckbport_softc *)self;
+	struct ms_pckbport_softc *sc = device_private(self);
 	struct ms_softc *ms = &sc->sc_ms;
 	struct pckbport_attach_args *pa = aux;
 
 	u_char cmd[1], resp[2];
 	int res;
+
+	ms->ms_dev = self;
 
 	/* save our pckbport attachment */
 	sc->sc_kbctag = pa->pa_tag;
@@ -106,7 +108,7 @@ ms_pckbport_attach(struct device *parent, struct device *self, void *aux)
 	ms->ms_deviopen = ms_pckbport_iopen;
 	ms->ms_deviclose = ms_pckbport_iclose;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* reset the device */
 	cmd[0] = PMS_RESET;
@@ -114,20 +116,20 @@ ms_pckbport_attach(struct device *parent, struct device *self, void *aux)
 			     cmd, 1, 2, resp, 1);
 #ifdef DIAGNOSTIC
 	if (res || resp[0] != PMS_RSTDONE || resp[1] != 0) {
-		printf("ms_pckbport_attach: reset error\n");
+		aprint_error("%s: reset error\n", __func__);
 		/* return; */
 	}
 #endif
 
 	pckbport_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
-			       ms_pckbport_input, sc, ms->ms_dev.dv_xname);
+			       ms_pckbport_input, sc, device_xname(self));
 
 	/* no interrupts until device is actually opened */
 	cmd[0] = PMS_DEV_DISABLE;
 	res = pckbport_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
 			     1, 0, 0, 0);
 	if (res)
-		printf("ms_pckbport_attach: failed to disable interrupts\n");
+		aprint_error("%s: failed to disable interrupts\n", __func__);
 	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 }
 
@@ -135,7 +137,7 @@ ms_pckbport_attach(struct device *parent, struct device *self, void *aux)
 static int
 ms_pckbport_iopen(struct device *self, int flags)
 {
-	struct ms_pckbport_softc *sc = (struct ms_pckbport_softc *)self;
+	struct ms_pckbport_softc *sc = device_private(self);
 	struct ms_softc *ms = &sc->sc_ms;
 	u_char cmd[1];
 	int res;
@@ -162,7 +164,7 @@ ms_pckbport_iopen(struct device *self, int flags)
 static int
 ms_pckbport_iclose(struct device *self, int flags)
 {
-	struct ms_pckbport_softc *sc = (struct ms_pckbport_softc *)self;
+	struct ms_pckbport_softc *sc = device_private(self);
 	u_char cmd[1];
 	int res;
 

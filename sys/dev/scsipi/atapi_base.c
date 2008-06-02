@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.26 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.26.70.1 2008/06/02 13:23:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.26 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.26.70.1 2008/06/02 13:23:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,8 +194,8 @@ atapi_print_addr(struct scsipi_periph *periph)
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 
 	printf("%s(%s:%d:%d): ", periph->periph_dev != NULL ?
-	    periph->periph_dev->dv_xname : "probe",
-	    adapt->adapt_dev->dv_xname,
+	    device_xname(periph->periph_dev) : "probe",
+	    device_xname(adapt->adapt_dev),
 	    chan->chan_channel, periph->periph_target);
 }
 

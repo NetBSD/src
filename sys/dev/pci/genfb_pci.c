@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.5.6.1 2008/04/03 12:42:50 mjf Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.5.6.2 2008/06/02 13:23:38 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -30,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.5.6.1 2008/04/03 12:42:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.5.6.2 2008/06/02 13:23:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +131,7 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_memt, sc->sc_gen.sc_fboffset,
 	    sc->sc_gen.sc_fbsize, BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
 
-		aprint_error("%s: unable to map the framebuffer\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "unable to map the framebuffer\n");
 		return;
 	}
 	sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
@@ -175,8 +171,8 @@ static int
 pci_genfb_drm_print(void *aux, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("direct rendering for %s", pnp);
-	return (UNSUPP);
+		aprint_normal("drm at %s", pnp);
+	return (UNCONF);
 }
 
 
@@ -247,8 +243,7 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (me != NULL) {
 		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
 		    NULL) != 0) {
-			aprint_normal("%s: mmap() rejected.\n",
-			    sc->sc_gen.sc_dev.dv_xname);
+			aprint_normal_dev(&sc->sc_gen.sc_dev, "mmap() rejected.\n");
 			return -1;
 		}
 	}

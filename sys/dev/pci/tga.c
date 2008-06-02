@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.67 2007/10/19 12:00:55 ad Exp $ */
+/* $NetBSD: tga.c,v 1.67.16.1 2008/06/02 13:23:43 mjf Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.67 2007/10/19 12:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.67.16.1 2008/06/02 13:23:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,13 +505,13 @@ tgaattach(parent, self, aux)
 		return;
 	}
 	printf("board type %s\n", sc->sc_dc->dc_tgaconf->tgac_name);
-	printf("%s: %d x %d, %dbpp, %s RAMDAC\n", sc->sc_dev.dv_xname,
+	printf("%s: %d x %d, %dbpp, %s RAMDAC\n", device_xname(&sc->sc_dev),
 	    sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_tgaconf->tgac_phys_depth,
 	    sc->sc_dc->dc_ramdac_funcs->ramdac_name);
 
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
+		printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev),
 		    intrstr);
 
 	aa.console = console;

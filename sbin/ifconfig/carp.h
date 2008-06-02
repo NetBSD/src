@@ -1,4 +1,4 @@
-/* $NetBSD: carp.h,v 1.1 2006/05/18 09:05:50 liamjfoy Exp $ */
+/* $NetBSD: carp.h,v 1.1.20.1 2008/06/02 13:21:22 mjf Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,11 +29,15 @@
  * SUCH DAMAGE.
  */
 
-void	carp_status(void);
-void	setcarp_advbase(const char *,int);
-void	setcarp_advskew(const char *, int);
-void	setcarp_passwd(const char *, int);
-void	setcarp_vhid(const char *, int);
-void	setcarp_state(const char *, int);
-void	setcarpdev(const char *, int);
-void	unsetcarpdev(const char *, int);
+extern struct piface carpdev;
+extern struct pinteger parse_advbase, parse_advskew, parse_vhid;
+extern struct pkw carp, carpstate;
+extern struct pstr pass;
+
+void	carp_status(prop_dictionary_t, prop_dictionary_t);
+int	setcarp_advbase(prop_dictionary_t, prop_dictionary_t);
+int	setcarp_advskew(prop_dictionary_t, prop_dictionary_t);
+int	setcarp_passwd(prop_dictionary_t, prop_dictionary_t);
+int	setcarp_vhid(prop_dictionary_t, prop_dictionary_t);
+int	setcarp_state(prop_dictionary_t, prop_dictionary_t);
+int	setcarpdev(prop_dictionary_t, prop_dictionary_t);

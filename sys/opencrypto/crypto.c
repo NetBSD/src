@@ -1,6 +1,35 @@
-/*	$NetBSD: crypto.c,v 1.26 2008/02/05 12:26:13 ad Exp $ */
+/*	$NetBSD: crypto.c,v 1.26.6.1 2008/06/02 13:24:31 mjf Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Coyote Point Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -24,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.26 2008/02/05 12:26:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.26.6.1 2008/06/02 13:24:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -984,6 +1013,9 @@ crypto_done(struct cryptop *crp)
 	if (crypto_timing)
 		crypto_tstat(&cryptostats.cs_done, &crp->crp_tstamp);
 #endif
+
+	crp->crp_flags |= CRYPTO_F_DONE;
+
 	/*
 	 * Normal case; queue the callback for the thread.
 	 *
@@ -992,17 +1024,39 @@ crypto_done(struct cryptop *crp)
 	 * back to mark operations completed.  Thus we need
 	 * to mask both while manipulating the return queue.
 	 */
-	mutex_spin_enter(&crypto_mtx);
-	wasempty = TAILQ_EMPTY(&crp_ret_q);
-	DPRINTF(("crypto_done: queueing %08x\n", (uint32_t)crp));
-	crp->crp_flags |= CRYPTO_F_ONRETQ|CRYPTO_F_DONE;
-	TAILQ_INSERT_TAIL(&crp_ret_q, crp, crp_next);
-	if (wasempty) {
-		DPRINTF(("crypto_done: waking cryptoret, %08x " \
-			"hit empty queue\n.", (uint32_t)crp));
-		cv_signal(&cryptoret_cv);
+  	if (crp->crp_flags & CRYPTO_F_CBIMM) {
+		/*
+	 	* Do the callback directly.  This is ok when the
+  	 	* callback routine does very little (e.g. the
+	 	* /dev/crypto callback method just does a wakeup).
+	 	*/
+#ifdef CRYPTO_TIMING
+		if (crypto_timing) {
+			/*
+		 	* NB: We must copy the timestamp before
+		 	* doing the callback as the cryptop is
+		 	* likely to be reclaimed.
+		 	*/
+			struct timespec t = crp->crp_tstamp;
+			crypto_tstat(&cryptostats.cs_cb, &t);
+			crp->crp_callback(crp);
+			crypto_tstat(&cryptostats.cs_finis, &t);
+		} else
+#endif
+		crp->crp_callback(crp);
+	} else {
+		mutex_spin_enter(&crypto_mtx);
+		wasempty = TAILQ_EMPTY(&crp_ret_q);
+		DPRINTF(("crypto_done: queueing %08x\n", (uint32_t)crp));
+		crp->crp_flags |= CRYPTO_F_ONRETQ;
+		TAILQ_INSERT_TAIL(&crp_ret_q, crp, crp_next);
+		if (wasempty) {
+			DPRINTF(("crypto_done: waking cryptoret, %08x " \
+				"hit empty queue\n.", (uint32_t)crp));
+			cv_signal(&cryptoret_cv);
+		}
+		mutex_spin_exit(&crypto_mtx);
 	}
-	mutex_spin_exit(&crypto_mtx);
 }
 
 /*
@@ -1015,19 +1069,26 @@ crypto_kdone(struct cryptkop *krp)
 
 	if (krp->krp_status != 0)
 		cryptostats.cs_kerrs++;
+		
+	krp->krp_flags |= CRYPTO_F_DONE;
+
 	/*
 	 * The return queue is manipulated by the swi thread
 	 * and, potentially, by crypto device drivers calling
 	 * back to mark operations completed.  Thus we need
 	 * to mask both while manipulating the return queue.
 	 */
-	mutex_spin_enter(&crypto_mtx);
-	wasempty = TAILQ_EMPTY(&crp_ret_kq);
-	krp->krp_flags |= CRYPTO_F_ONRETQ|CRYPTO_F_DONE;
-	TAILQ_INSERT_TAIL(&crp_ret_kq, krp, krp_next);
-	if (wasempty)
-		cv_signal(&cryptoret_cv);
-	mutex_spin_exit(&crypto_mtx);
+	if (krp->krp_flags & CRYPTO_F_CBIMM) {
+		krp->krp_callback(krp);
+	} else {
+		mutex_spin_enter(&crypto_mtx);
+		wasempty = TAILQ_EMPTY(&crp_ret_kq);
+		krp->krp_flags |= CRYPTO_F_ONRETQ;
+		TAILQ_INSERT_TAIL(&crp_ret_kq, krp, krp_next);
+		if (wasempty)
+			cv_signal(&cryptoret_cv);
+		mutex_spin_exit(&crypto_mtx);
+	}
 }
 
 int

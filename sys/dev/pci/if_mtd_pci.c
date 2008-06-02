@@ -1,4 +1,4 @@
-/* $NetBSD: if_mtd_pci.c,v 1.10.16.1 2008/04/03 12:42:50 mjf Exp $ */
+/* $NetBSD: if_mtd_pci.c,v 1.10.16.2 2008/06/02 13:23:39 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -44,7 +37,7 @@
 /* TODO: Check why in IO space, the MII won't work. Memory mapped works */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.10.16.1 2008/04/03 12:42:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.10.16.2 2008/06/02 13:23:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,8 +115,7 @@ mtd_pci_attach(device_t parent, device_t self, void *aux)
 		sc->bus_tag = iot;
 		sc->bus_handle = ioh;
 	} else {
-		printf("%s: could not map memory or i/o space\n",
-			sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "could not map memory or i/o space\n");
 		return;
 	}
 	sc->dma_tag = pa->pa_dmat;
@@ -132,20 +124,20 @@ mtd_pci_attach(device_t parent, device_t self, void *aux)
 	mtd_config(sc);
 
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: could not map interrupt\n", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "could not map interrupt\n");
 		return;
 	}
 	intrstring = pci_intr_string(pa->pa_pc, ih);
 
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_NET, mtd_irq_h, sc) == NULL) {
-		printf("%s: could not establish interrupt", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "could not establish interrupt");
 		if (intrstring != NULL)
 			printf(" at %s", intrstring);
 		printf("\n");
 		return;
 	} else {
 		printf("%s: using %s for interrupt\n",
-			sc->dev.dv_xname,
+			device_xname(&sc->dev),
 			intrstring ? intrstring : "unknown interrupt");
 	}
 }

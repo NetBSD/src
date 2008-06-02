@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.26.14.1 2008/04/03 12:43:06 mjf Exp $	*/
+/*	$NetBSD: rarp.c,v 1.26.14.2 2008/06/02 13:24:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -188,7 +188,7 @@ rarprecv(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 	if (n == -1 || (size_t)n < sizeof(struct ether_arp)) {
 #ifdef RARP_DEBUG
 		if (debug)
-			printf("bad len=%d\n", n);
+			printf("bad len=%d\n", (int)n);
 #endif
 		return -1;
 	}

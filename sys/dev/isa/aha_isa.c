@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.23 2007/10/19 12:00:14 ad Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.23.16.1 2008/06/02 13:23:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.23 2007/10/19 12:00:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isa.c,v 1.23.16.1 2008/06/02 13:23:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +132,7 @@ aha_isa_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AHA_ISA_IOSIZE, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -147,14 +140,13 @@ aha_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
 	if (!aha_find(iot, ioh, &apd)) {
-		printf("%s: aha_find failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "aha_find failed\n");
 		return;
 	}
 
 	if (apd.sc_drq != -1) {
 		if ((error = isa_dmacascade(ic, apd.sc_drq)) != 0) {
-			printf("%s: unable to cascade DRQ, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to cascade DRQ, error = %d\n", error);
 			return;
 		}
 	}
@@ -162,8 +154,7 @@ aha_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = isa_intr_establish(ic, apd.sc_irq, IST_EDGE, IPL_BIO,
 	    aha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 

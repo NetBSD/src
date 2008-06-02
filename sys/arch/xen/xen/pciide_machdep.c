@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.8 2007/11/22 16:17:08 bouyer Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.8.14.1 2008/06/02 13:22:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.8 2007/11/22 16:17:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.8.14.1 2008/06/02 13:22:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 		return NULL;
 
 	printf("%s: %s channel interrupting at ",
-	    dev->dv_xname, PCIIDE_CHANNEL_NAME(chan));
+	    device_xname(dev), PCIIDE_CHANNEL_NAME(chan));
 #if NIOAPIC > 0
 	if (pic)
 		printf("%s pin %d", pic->pic_name, APIC_IRQ_PIN(xenih.pirq));

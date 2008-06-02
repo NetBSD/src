@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.27 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.27.6.1 2008/06/02 13:24:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -92,6 +92,7 @@ struct bpf_d {
 	callout_t	bd_callout;	/* for BPF timeouts with select */
 	pid_t		bd_pid;		/* corresponding PID */
 	LIST_ENTRY(bpf_d) bd_list;	/* list of all BPF's */
+	void		*bd_sih;	/* soft interrupt handle */
 };
 
 

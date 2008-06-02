@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.133.6.1 2008/04/03 12:42:32 mjf Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.133.6.2 2008/06/02 13:23:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.133.6.1 2008/04/03 12:42:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.133.6.2 2008/06/02 13:23:00 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -327,9 +320,9 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	linux_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -395,9 +388,9 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	linux_save_sigcontext(l, tf, mask, &frame.sf_sc);
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -539,7 +532,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	 * Linux really does it this way; it doesn't have space in sigframe
 	 * to save the onstack flag.
 	 */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	ss_gap = (ssize_t)((char *)scp->sc_esp_at_signal - (char *)sas->ss_sp);
 	if (ss_gap >= 0 && ss_gap < sas->ss_size)
 		sas->ss_flags |= SS_ONSTACK;
@@ -549,7 +542,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	/* Restore signal mask. */
 	linux_old_to_native_sigset(&mask, &scp->sc_mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	DPRINTF(("sigreturn exit esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 	return EJUSTRETURN;
@@ -594,7 +587,7 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 		error = copyout(ldt_buf, SCARG(uap, ptr),
 		    gl.num * sizeof *ldt_buf);
 	}
-	free(ldt, M_TEMP);
+	free(ldt_buf, M_TEMP);
 
 	return error;
 }

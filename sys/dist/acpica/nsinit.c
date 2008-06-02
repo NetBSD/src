@@ -1,9 +1,7 @@
-/*	$NetBSD: nsinit.c,v 1.5 2007/12/11 13:16:12 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: nsinit - namespace initialization
- *              $Revision: 1.5 $
+ *              $Revision: 1.5.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,19 +114,13 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsinit.c,v 1.5 2007/12/11 13:16:12 lukem Exp $");
 
 #define __NSXFINIT_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acdispat.h>
-#include <dist/acpica/acinterp.h>
-
-#ifdef _KERNEL
-#include <machine/acpi_machdep.h>
-#endif
+#include "acpi.h"
+#include "acnamesp.h"
+#include "acdispat.h"
+#include "acinterp.h"
 
 #define _COMPONENT          ACPI_NAMESPACE
         ACPI_MODULE_NAME    ("nsinit")
@@ -354,6 +346,10 @@ AcpiNsInitOneObject (
         Info->FieldCount++;
         break;
 
+    case ACPI_TYPE_LOCAL_BANK_FIELD:
+        Info->FieldCount++;
+        break;
+
     case ACPI_TYPE_BUFFER:
         Info->BufferCount++;
         break;
@@ -397,6 +393,12 @@ AcpiNsInitOneObject (
 
         Info->FieldInit++;
         Status = AcpiDsGetBufferFieldArguments (ObjDesc);
+        break;
+
+    case ACPI_TYPE_LOCAL_BANK_FIELD:
+
+        Info->FieldInit++;
+        Status = AcpiDsGetBankFieldArguments (ObjDesc);
         break;
 
     case ACPI_TYPE_BUFFER:
@@ -549,7 +551,6 @@ AcpiNsInitOneDevice (
     /* We are interested in Devices, Processors and ThermalZones only */
 
     DeviceNode = ACPI_CAST_PTR (ACPI_NAMESPACE_NODE, ObjHandle);
-
     if ((DeviceNode->Type != ACPI_TYPE_DEVICE)    &&
         (DeviceNode->Type != ACPI_TYPE_PROCESSOR) &&
         (DeviceNode->Type != ACPI_TYPE_THERMAL))

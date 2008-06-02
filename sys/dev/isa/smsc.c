@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.6 2007/11/17 08:30:35 kefren Exp $ */
+/*	$NetBSD: smsc.c,v 1.6.14.1 2008/06/02 13:23:32 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -47,27 +40,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.6 2007/11/17 08:30:35 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.6.14.1 2008/06/02 13:23:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/time.h>
-
 #include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 #include <dev/sysmon/sysmonvar.h>
-
 #include <dev/isa/smscvar.h>
-
-#include <sys/intr.h>
 
 #if defined(LMDEBUG)
 #define DPRINTF(x)	do { printf x; } while (0)
@@ -75,22 +59,23 @@ __KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.6 2007/11/17 08:30:35 kefren Exp $");
 #define DPRINTF(x)
 #endif
 
-static int	smsc_match(struct device *, struct cfdata *, void *);
-static void	smsc_attach(struct device *, struct device *, void *);
-static int 	smsc_detach(struct device *, int);
-static uint8_t	smsc_readreg(struct smsc_softc *, int);
-/*static void smsc_writereg(struct smsc_softc *, int, int);*/
+static int	smsc_match(device_t, cfdata_t, void *);
+static void	smsc_attach(device_t, device_t, void *);
+static int	smsc_detach(device_t, int);
+
+static uint8_t	smsc_readreg(bus_space_tag_t, bus_space_handle_t, int);
+static void 	smsc_writereg(bus_space_tag_t, bus_space_handle_t, int, int);
 
 static void 	smsc_refresh(struct sysmon_envsys *, envsys_data_t *);
 
-CFATTACH_DECL(smsc, sizeof(struct smsc_softc),
+CFATTACH_DECL_NEW(smsc, sizeof(struct smsc_softc),
     smsc_match, smsc_attach, smsc_detach, NULL);
 
 /*
  * Probe for the SMSC Super I/O chip
  */
 static int
-smsc_match(struct device *parent, struct cfdata *match, void *aux)
+smsc_match(device_t parent, cfdata_t match, void *aux)
 {
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
@@ -114,18 +99,21 @@ smsc_match(struct device *parent, struct cfdata *match, void *aux)
 	bus_space_write_1(ia->ia_iot, ioh, SMSC_ADDR, SMSC_CONFIG_START);
 
 	/* Then select the device id register */
-	bus_space_write_1(ia->ia_iot, ioh, SMSC_ADDR, SMSC_DEVICE_ID);
-
-	/* Finally, read the id from the chip */
-	cr = bus_space_read_1(ia->ia_iot, ioh, SMSC_DATA);
+	cr = smsc_readreg(ia->ia_iot, ioh, SMSC_DEVICE_ID);
 
 	/* Exit config mode, apparently this is important to do */
 	bus_space_write_1(ia->ia_iot, ioh, SMSC_ADDR, SMSC_CONFIG_END);
 
-	if (cr == SMSC_ID)
+	switch (cr) {
+	case SMSC_ID_47B397:
+	case SMSC_ID_SCH5307NS:
+	case SMSC_ID_SCH5317:
 		rv = 1;
-	else
+		break;
+	default:
 		rv = 0;
+		break;
+	}
 
 	DPRINTF(("smsc: rv = %d, cr = %x\n", rv, cr));
 
@@ -145,53 +133,56 @@ smsc_match(struct device *parent, struct cfdata *match, void *aux)
 
 /*
  * Get the base address for the monitoring registers and set up the
- * env sysmon framework.
+ * sysmon_envsys(9) framework.
  */
 static void
-smsc_attach(struct device *parent, struct device *self, void *aux)
+smsc_attach(device_t parent, device_t self, void *aux)
 {
 	struct smsc_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
-	uint8_t rev, msb, lsb;
+	uint8_t rev, msb, lsb, chipid;
 	unsigned address;
-	char label[8];
 	int i;
 
 	sc->sc_iot = ia->ia_iot;
 
-	/* To attach we need to find the actual i/o register space,
-	   map the base registers in first. */
+	aprint_naive("\n");
+
+	/* 
+	 * To attach we need to find the actual Hardware Monitor
+	 * I/O address space.
+	 */
 	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr, 2, 0,
 	    &ioh)) {
 		aprint_error(": can't map base i/o space\n");
 		return;
 	}
 
-	/* Enter config mode. */
+	/* Enter config mode */
 	bus_space_write_1(ia->ia_iot, ioh, SMSC_ADDR, SMSC_CONFIG_START);
 
-	/* While we have the base registers mapped, grab the chip revision */
-	bus_space_write_1(ia->ia_iot, ioh, SMSC_ADDR, SMSC_DEVICE_REVISION);
-	rev = bus_space_read_1(ia->ia_iot, ioh, SMSC_DATA);
+	/* 
+	 * While we have the base registers mapped, grab the chip
+	 * revision and device ID.
+	 */
+	rev = smsc_readreg(ia->ia_iot, ioh, SMSC_DEVICE_REVISION);
+	chipid = smsc_readreg(ia->ia_iot, ioh, SMSC_DEVICE_ID);
 
-	/* Select the correct logical device */
-	bus_space_write_1(ia->ia_iot, ioh, SMSC_ADDR, SMSC_LOGICAL_DEV_SEL);
-	bus_space_write_1(ia->ia_iot, ioh, SMSC_DATA, SMSC_LOGICAL_DEVICE);
+	/* Select the Hardware Monitor LDN */
+	smsc_writereg(ia->ia_iot, ioh, SMSC_LOGICAL_DEV_SEL,
+	    SMSC_LOGICAL_DEVICE);
 
 	/* Read the base address for the registers. */
-	bus_space_write_1(ia->ia_iot, ioh, SMSC_ADDR, SMSC_IO_BASE_MSB);
-	msb = bus_space_read_1(ia->ia_iot, ioh, SMSC_DATA);
-	bus_space_write_1(ia->ia_iot, ioh, SMSC_ADDR, SMSC_IO_BASE_LSB);
-	lsb = bus_space_read_1(ia->ia_iot, ioh, SMSC_DATA);
+	msb = smsc_readreg(ia->ia_iot, ioh, SMSC_IO_BASE_MSB);
+	lsb = smsc_readreg(ia->ia_iot, ioh, SMSC_IO_BASE_LSB);
 	address = (msb << 8) | lsb;
 
 	/* Exit config mode */
 	bus_space_write_1(ia->ia_iot, ioh, SMSC_ADDR, SMSC_CONFIG_END);
-
 	bus_space_unmap(ia->ia_iot, ioh, 2);
 
-	/* Map the i/o space for the registers. */
+	/* Map the Hardware Monitor I/O space. */
 	if (bus_space_map(ia->ia_iot, address, 2, 0, &sc->sc_ioh)) {
 		aprint_error(": can't map register i/o space\n");
 		return;
@@ -199,81 +190,62 @@ smsc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sme = sysmon_envsys_create();
 
-	for (i = 0; i < 4; i++) {
-		sprintf(label, "Temp-%d", i);
-		strlcpy(sc->sc_sensor[i].desc, label,
-		    sizeof(sc->sc_sensor[i].desc));
-		sc->sc_sensor[i].units = ENVSYS_STEMP;
-		switch (i) {
-		case 0:
-			sc->sc_regs[i] = SMSC_TEMP1;
-			break;
+#define INITSENSOR(index, string, reg, type) 			\
+	do {							\
+		strlcpy(sc->sc_sensor[index].desc, string,	\
+		    sizeof(sc->sc_sensor[index].desc));		\
+		sc->sc_sensor[index].units = type;		\
+		sc->sc_regs[index] = reg;			\
+		sc->sc_sensor[index].state = ENVSYS_SVALID;	\
+	} while (/* CONSTCOND */ 0)
 
-		case 1:
-			sc->sc_regs[i] = SMSC_TEMP2;
-			break;
+	/* Temperature sensors */
+	INITSENSOR(0, "Temp0", SMSC_TEMP1, ENVSYS_STEMP);
+	INITSENSOR(1, "Temp1", SMSC_TEMP2, ENVSYS_STEMP);
+	INITSENSOR(2, "Temp2", SMSC_TEMP3, ENVSYS_STEMP);
+	INITSENSOR(3, "Temp3", SMSC_TEMP4, ENVSYS_STEMP);
+	
+	/* Fan sensors */
+	INITSENSOR(4, "Fan0", SMSC_FAN1_LSB, ENVSYS_SFANRPM);
+	INITSENSOR(5, "Fan1", SMSC_FAN2_LSB, ENVSYS_SFANRPM);
+	INITSENSOR(6, "Fan2", SMSC_FAN3_LSB, ENVSYS_SFANRPM);
+	INITSENSOR(7, "Fan3", SMSC_FAN4_LSB, ENVSYS_SFANRPM);
 
-		case 2:
-			sc->sc_regs[i] = SMSC_TEMP3;
-			break;
-
-		case 3:
-			sc->sc_regs[i] = SMSC_TEMP4;
-			break;
-		}
+	for (i = 0; i < SMSC_MAX_SENSORS; i++) {
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
-			return;
-		}
-
-	}
-
-	for (i = 4; i < SMSC_MAX_SENSORS; i++) {
-		sprintf(label, "Fan-%d", i - 3);
-		strlcpy(sc->sc_sensor[i].desc, label,
-		    sizeof(sc->sc_sensor[i].desc));
-		sc->sc_sensor[i].units = ENVSYS_SFANRPM;
-		switch (i) {
-		case 4:
-			sc->sc_regs[i] = SMSC_FAN1_LSB;
-			break;
-
-		case 5:
-			sc->sc_regs[i] = SMSC_FAN2_LSB;
-			break;
-
-		case 6:
-			sc->sc_regs[i] = SMSC_FAN3_LSB;
-			break;
-
-		case 7:
-			sc->sc_regs[i] = SMSC_FAN4_LSB;
-			break;
-
-		default:
-			aprint_error(": more fans than expected");
-			break;
-		}
-		if (sysmon_envsys_sensor_attach(sc->sc_sme,
-						&sc->sc_sensor[i])) {
-			sysmon_envsys_destroy(sc->sc_sme);
+			bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
 			return;
 		}
 	}
 
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = smsc_refresh;
 
 	if ((i = sysmon_envsys_register(sc->sc_sme)) != 0) {
-		aprint_error("%s: unable to register with sysmon (%d)\n",
-		    sc->sc_dev.dv_xname, i);
+		aprint_error(": unable to register with sysmon (%d)\n", i);
 		sysmon_envsys_destroy(sc->sc_sme);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+		return;
 	}
 
-	aprint_normal(": monitor registers at 0x%04x  (rev. %u)\n",
-	       address, rev);
+	switch (chipid) {
+	case SMSC_ID_47B397:
+		aprint_normal(": SMSC LPC47B397 Super I/O");
+		break;
+	case SMSC_ID_SCH5307NS:
+		aprint_normal(": SMSC SCH5307-NS Super I/O");
+		break;
+	case SMSC_ID_SCH5317:
+		aprint_normal(": SMSC SCH5317 Super I/O");
+		break;
+	}
+
+	aprint_normal(" (rev %u)\n", rev);
+	aprint_normal_dev(self, "Hardware Monitor registers at 0x%04x\n",
+	    address);
 }
 
 static int
@@ -290,24 +262,21 @@ smsc_detach(struct device *self, int flags)
  * Read the value of the given register
  */
 static uint8_t
-smsc_readreg(struct smsc_softc *sc, int reg)
+smsc_readreg(bus_space_tag_t iot, bus_space_handle_t ioh, int reg)
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SMSC_ADDR, reg);
-	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, SMSC_DATA);
+	bus_space_write_1(iot, ioh, SMSC_ADDR, reg);
+	return bus_space_read_1(iot, ioh, SMSC_DATA);
 }
-
 
 /*
- * Write the given value to the given register - here just for completeness
- * it is unused in the current code.
-
+ * Write the given value to the given register.
+ */
 static void
-smsc_writereg (struct smsc_softc *sc, int reg, int val)
+smsc_writereg(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, int val)
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SMSC_ADDR, reg);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SMSC_DATA, val);
+	bus_space_write_1(iot, ioh, SMSC_ADDR, reg);
+	bus_space_write_1(iot, ioh, SMSC_DATA, val);
 }
-*/
 
 /* convert temperature read from the chip to micro kelvin */
 static inline int
@@ -358,18 +327,16 @@ smsc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	switch (edata->units) {
 	case ENVSYS_STEMP:
-		edata->value_cur = smsc_temp2muk(smsc_readreg(sc, reg));
+		edata->value_cur = 
+		    smsc_temp2muk(smsc_readreg(sc->sc_iot, sc->sc_ioh, reg));
 		break;
 
 	case ENVSYS_SFANRPM:
 		/* reading lsb first locks msb... */
-		lsb = smsc_readreg(sc, reg);
-		msb = smsc_readreg(sc, reg + 1); /* XXX note explicit
-						    assumption that msb is
-						    the next register along */
+		lsb = smsc_readreg(sc->sc_iot, sc->sc_ioh, reg);
+		msb = smsc_readreg(sc->sc_iot, sc->sc_ioh, reg + 1);
 		rpm = (msb << 8) | lsb;
 		edata->value_cur = smsc_reg2rpm(rpm);
 		break;
 	}
-	edata->state = ENVSYS_SVALID;
 }

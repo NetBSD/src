@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.11 2007/03/04 05:59:52 christos Exp $ */
+/*	$NetBSD: plumohci.c,v 1.11.40.1 2008/06/02 13:22:10 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.11 2007/03/04 05:59:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.11.40.1 2008/06/02 13:22:10 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ struct plumohci_softc {
 	LIST_HEAD(, plumohci_shm) sc_shm_head;
 };
 
-CFATTACH_DECL(plumohci, sizeof(struct plumohci_softc),
+CFATTACH_DECL_NEW(plumohci, sizeof(struct plumohci_softc),
     plumohci_match, plumohci_attach, NULL, NULL);
 
 int
@@ -130,9 +130,12 @@ plumohci_match(struct device *parent, struct cfdata *match, void *aux)
 void
 plumohci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct plumohci_softc *sc = (struct plumohci_softc *)self;
+	struct plumohci_softc *sc = device_private(self);
 	struct plum_attach_args *pa = aux;
 	usbd_status r;
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	sc->sc.iot = pa->pa_iot;
 	sc->sc.sc_bus.dmatag = &plumohci_bus_dma_tag.bdt;
@@ -188,8 +191,7 @@ plumohci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *) sc, &sc->sc.sc_bus,
-	    usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 }
 
 int

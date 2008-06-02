@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.39 2007/07/17 17:42:07 joerg Exp $	*/
+/*	$NetBSD: mman.h,v 1.39.28.1 2008/06/02 13:24:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -129,17 +129,29 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MCL_CURRENT	0x01	/* lock all pages currently mapped */
 #define	MCL_FUTURE	0x02	/* lock all pages mapped in the future */
 
+/*
+ * POSIX memory avissory values.
+ * Note: keep consistent with the original defintions below.
+ */
+#define	POSIX_MADV_NORMAL	0	/* No further special treatment */
+#define	POSIX_MADV_RANDOM	1	/* Expect random page references */
+#define	POSIX_MADV_SEQUENTIAL	2	/* Expect sequential page references */
+#define	POSIX_MADV_WILLNEED	3	/* Will need these pages */
+#define	POSIX_MADV_DONTNEED	4	/* Don't need these pages */
+
 #if defined(_NETBSD_SOURCE)
 /*
- * Advice to madvise
+ * Original advice values, equivalent to POSIX defintions,
+ * and few implementation-specific ones.
  */
-#define	MADV_NORMAL	0	/* no further special treatment */
-#define	MADV_RANDOM	1	/* expect random page references */
-#define	MADV_SEQUENTIAL	2	/* expect sequential page references */
-#define	MADV_WILLNEED	3	/* will need these pages */
-#define	MADV_DONTNEED	4	/* dont need these pages */
-#define	MADV_SPACEAVAIL	5	/* insure that resources are reserved */
-#define	MADV_FREE	6	/* pages are empty, free them */
+#define	MADV_NORMAL		POSIX_MADV_NORMAL
+#define	MADV_RANDOM		POSIX_MADV_RANDOM
+#define	MADV_SEQUENTIAL		POSIX_MADV_SEQUENTIAL
+#define	MADV_WILLNEED		POSIX_MADV_WILLNEED
+#define	MADV_DONTNEED		POSIX_MADV_DONTNEED
+#define	MADV_SPACEAVAIL		5	/* Insure that resources are reserved */
+#define	MADV_FREE		6	/* Pages are empty, free them */
+
 /*
  * Flags to minherit
  */
@@ -156,8 +168,8 @@ typedef	__off_t		off_t;		/* file offset */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void   *mmap(void *, size_t, int, int, int, off_t);
-void   *mremap(void *, size_t, void *, size_t, int);
+void *	mmap(void *, size_t, int, int, int, off_t);
+void *	mremap(void *, size_t, void *, size_t, int);
 int	munmap(void *, size_t);
 int	mprotect(void *, size_t, int);
 #ifndef __LIBC12_SOURCE__
@@ -172,6 +184,7 @@ int	madvise(void *, size_t, int);
 int	mincore(void *, size_t, char *);
 int	minherit(void *, size_t, int);
 #endif
+int	posix_madvise(void *, size_t, int);
 __END_DECLS
 
 #endif /* !_KERNEL */

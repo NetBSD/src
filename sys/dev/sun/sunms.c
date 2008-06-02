@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.27.28.1 2008/04/03 12:42:56 mjf Exp $	*/
+/*	$NetBSD: sunms.c,v 1.27.28.2 2008/06/02 13:23:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.27.28.1 2008/04/03 12:42:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.27.28.2 2008/06/02 13:23:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ sunms_enable(void *v)
 	if (ms->ms_ready)
 		return EBUSY;
 
-	err = sunmsiopen(v, 0);
+	err = sunmsiopen(ms->ms_dev, 0);
 	if (err)
 		return err;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1115.4.3 2008/04/03 13:54:13 mjf Exp $
+#	$NetBSD: mi,v 1.1115.4.4 2008/06/02 13:21:17 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -107,26 +107,69 @@
 ./usr/include/arpa/telnet.h			comp-c-include
 ./usr/include/arpa/tftp.h			comp-c-include
 ./usr/include/assert.h				comp-c-include
-./usr/include/atf				comp-atf-include
-./usr/include/atf.hpp				comp-atf-include
-./usr/include/atf/application.hpp		comp-atf-include
-./usr/include/atf/atffile.hpp			comp-atf-include
-./usr/include/atf/config.hpp			comp-atf-include
-./usr/include/atf/env.hpp			comp-atf-include
-./usr/include/atf/exceptions.hpp		comp-atf-include
-./usr/include/atf/expand.hpp			comp-atf-include
-./usr/include/atf/formats.hpp			comp-atf-include
-./usr/include/atf/fs.hpp			comp-atf-include
-./usr/include/atf/io.hpp			comp-atf-include
-./usr/include/atf/macros.hpp			comp-atf-include
-./usr/include/atf/parser.hpp			comp-atf-include
-./usr/include/atf/sanity.hpp			comp-atf-include
-./usr/include/atf/signals.hpp			comp-atf-include
-./usr/include/atf/tests.hpp			comp-atf-include
-./usr/include/atf/text.hpp			comp-atf-include
-./usr/include/atf/ui.hpp			comp-atf-include
-./usr/include/atf/user.hpp			comp-atf-include
-./usr/include/atf/utils.hpp			comp-atf-include
+./usr/include/atf				comp-obsolete		obsolete
+./usr/include/atf-c				comp-atf-include
+./usr/include/atf-c++				comp-atf-include
+./usr/include/atf-c++.hpp			comp-atf-include
+./usr/include/atf-c++/application.hpp		comp-atf-include
+./usr/include/atf-c++/atffile.hpp		comp-atf-include
+./usr/include/atf-c++/config.hpp		comp-atf-include
+./usr/include/atf-c++/env.hpp			comp-atf-include
+./usr/include/atf-c++/exceptions.hpp		comp-atf-include
+./usr/include/atf-c++/expand.hpp		comp-atf-include
+./usr/include/atf-c++/formats.hpp		comp-atf-include
+./usr/include/atf-c++/fs.hpp			comp-atf-include
+./usr/include/atf-c++/io.hpp			comp-atf-include
+./usr/include/atf-c++/macros.hpp		comp-atf-include
+./usr/include/atf-c++/parser.hpp		comp-atf-include
+./usr/include/atf-c++/sanity.hpp		comp-atf-include
+./usr/include/atf-c++/signals.hpp		comp-atf-include
+./usr/include/atf-c++/tests.hpp			comp-atf-include
+./usr/include/atf-c++/text.hpp			comp-atf-include
+./usr/include/atf-c++/ui.hpp			comp-atf-include
+./usr/include/atf-c++/user.hpp			comp-atf-include
+./usr/include/atf-c++/utils.hpp			comp-atf-include
+./usr/include/atf-c.h				comp-atf-include
+./usr/include/atf-c/config.h			comp-atf-include
+./usr/include/atf-c/defs.h			comp-atf-include
+./usr/include/atf-c/dynstr.h			comp-atf-include
+./usr/include/atf-c/env.h			comp-atf-include
+./usr/include/atf-c/error.h			comp-atf-include
+./usr/include/atf-c/expand.h			comp-atf-include
+./usr/include/atf-c/fs.h			comp-atf-include
+./usr/include/atf-c/io.h			comp-atf-include
+./usr/include/atf-c/list.h			comp-atf-include
+./usr/include/atf-c/macros.h			comp-atf-include
+./usr/include/atf-c/map.h			comp-atf-include
+./usr/include/atf-c/object.h			comp-atf-include
+./usr/include/atf-c/sanity.h			comp-atf-include
+./usr/include/atf-c/signals.h			comp-atf-include
+./usr/include/atf-c/tc.h			comp-atf-include
+./usr/include/atf-c/tcr.h			comp-atf-include
+./usr/include/atf-c/text.h			comp-atf-include
+./usr/include/atf-c/tp.h			comp-atf-include
+./usr/include/atf-c/ui.h			comp-atf-include
+./usr/include/atf-c/user.h			comp-atf-include
+./usr/include/atf.hpp				comp-obsolete		obsolete
+./usr/include/atf/application.hpp		comp-obsolete		obsolete
+./usr/include/atf/atffile.hpp			comp-obsolete		obsolete
+./usr/include/atf/config.hpp			comp-obsolete		obsolete
+./usr/include/atf/env.hpp			comp-obsolete		obsolete
+./usr/include/atf/exceptions.hpp		comp-obsolete		obsolete
+./usr/include/atf/expand.hpp			comp-obsolete		obsolete
+./usr/include/atf/formats.hpp			comp-obsolete		obsolete
+./usr/include/atf/fs.hpp			comp-obsolete		obsolete
+./usr/include/atf/io.hpp			comp-obsolete		obsolete
+./usr/include/atf/macros.hpp			comp-obsolete		obsolete
+./usr/include/atf/parser.hpp			comp-obsolete		obsolete
+./usr/include/atf/sanity.hpp			comp-obsolete		obsolete
+./usr/include/atf/signals.hpp			comp-obsolete		obsolete
+./usr/include/atf/tests.hpp			comp-obsolete		obsolete
+./usr/include/atf/text.hpp			comp-obsolete		obsolete
+./usr/include/atf/ui.hpp			comp-obsolete		obsolete
+./usr/include/atf/user.hpp			comp-obsolete		obsolete
+./usr/include/atf/utils.hpp			comp-obsolete		obsolete
+./usr/include/atomic.h				comp-c-include
 ./usr/include/bfd				comp-obsolete		obsolete
 ./usr/include/bfd/ansidecl.h			comp-obsolete		obsolete
 ./usr/include/bfd/bfd.h				comp-obsolete		obsolete
@@ -190,7 +233,7 @@
 ./usr/include/dev/bluetooth/bthidev.h		comp-c-include
 ./usr/include/dev/bluetooth/bthset.h		comp-obsolete		obsolete
 ./usr/include/dev/bluetooth/btsco.h		comp-c-include
-./usr/include/dev/bluetooth/btuart.h		comp-c-include
+./usr/include/dev/bluetooth/btuart.h		comp-obsolete		obsolete
 ./usr/include/dev/ccdvar.h			comp-c-include
 ./usr/include/dev/cgdvar.h			comp-c-include
 ./usr/include/dev/clock_subr.h			comp-obsolete		obsolete
@@ -561,7 +604,11 @@
 ./usr/include/err.h				comp-c-include
 ./usr/include/errno.h				comp-c-include
 ./usr/include/eti.h				comp-c-include
+./usr/include/evdns.h				comp-c-include
 ./usr/include/event.h				comp-c-include
+./usr/include/evhttp.h				comp-c-include
+./usr/include/evrpc.h				comp-c-include
+./usr/include/evutil.h				comp-c-include
 ./usr/include/fcntl.h				comp-c-include
 ./usr/include/filecorefs/filecore_mount.h	comp-c-include
 ./usr/include/float.h				comp-c-include
@@ -1300,6 +1347,13 @@
 ./usr/include/krb5/xdbm.h			comp-krb5-include	kerberos
 ./usr/include/kvm.h				comp-c-include
 ./usr/include/langinfo.h			comp-c-include
+./usr/include/lber.h				comp-ldap-include	ldap
+./usr/include/lber_types.h			comp-ldap-include	ldap
+./usr/include/ldap.h				comp-ldap-include	ldap
+./usr/include/ldap_cdefs.h			comp-ldap-include	ldap
+./usr/include/ldap_features.h			comp-ldap-include	ldap
+./usr/include/ldap_schema.h			comp-ldap-include	ldap
+./usr/include/ldap_utf8.h			comp-ldap-include	ldap
 ./usr/include/libgen.h				comp-c-include
 ./usr/include/libintl.h				comp-c-include
 ./usr/include/libmilter/mfapi.h			comp-obsolete		obsolete
@@ -1380,6 +1434,7 @@
 ./usr/include/net/if_tun.h			comp-c-include
 ./usr/include/net/if_types.h			comp-c-include
 ./usr/include/net/if_vlanvar.h			comp-c-include
+./usr/include/net/net_stats.h			comp-c-include
 ./usr/include/net/netisr.h			comp-c-include
 ./usr/include/net/pfil.h			comp-c-include
 ./usr/include/net/pfkeyv2.h			comp-c-include
@@ -1519,7 +1574,7 @@
 ./usr/include/netiso/clnp_stat.h		comp-c-include
 ./usr/include/netiso/cltp_var.h			comp-c-include
 ./usr/include/netiso/cons.h			comp-c-include
-./usr/include/netiso/cons_pcb.h			comp-c-include
+./usr/include/netiso/cons_pcb.h			comp-obsolete		obsolete
 ./usr/include/netiso/eonvar.h			comp-c-include
 ./usr/include/netiso/esis.h			comp-c-include
 ./usr/include/netiso/idrp_var.h			comp-c-include
@@ -1609,7 +1664,9 @@
 ./usr/include/openssl/blowfish.h		comp-c-include		crypto
 ./usr/include/openssl/bn.h			comp-c-include		crypto
 ./usr/include/openssl/buffer.h			comp-c-include		crypto
+./usr/include/openssl/camellia.h		comp-c-include		crypto
 ./usr/include/openssl/cast.h			comp-c-include		crypto
+./usr/include/openssl/cms.h			comp-c-include		crypto
 ./usr/include/openssl/comp.h			comp-c-include		crypto
 ./usr/include/openssl/conf.h			comp-c-include		crypto
 ./usr/include/openssl/conf_api.h		comp-c-include		crypto
@@ -1649,7 +1706,7 @@
 ./usr/include/openssl/pem2.h			comp-c-include		crypto
 ./usr/include/openssl/pkcs12.h			comp-c-include		crypto
 ./usr/include/openssl/pkcs7.h			comp-c-include		crypto
-./usr/include/openssl/pq_compat.h		comp-c-include		crypto
+./usr/include/openssl/pq_compat.h		comp-obsolete		obsolete
 ./usr/include/openssl/pqueue.h			comp-c-include		crypto
 ./usr/include/openssl/rand.h			comp-c-include		crypto
 ./usr/include/openssl/rc2.h			comp-c-include		crypto
@@ -1668,7 +1725,8 @@
 ./usr/include/openssl/store.h			comp-c-include		crypto
 ./usr/include/openssl/symhacks.h		comp-c-include		crypto
 ./usr/include/openssl/tls1.h			comp-c-include		crypto
-./usr/include/openssl/tmdiff.h			comp-c-include		crypto
+./usr/include/openssl/tmdiff.h			comp-obsolete		obsolete
+./usr/include/openssl/ts.h			comp-c-include		crypto
 ./usr/include/openssl/txt_db.h			comp-c-include		crypto
 ./usr/include/openssl/ui.h			comp-c-include		crypto
 ./usr/include/openssl/ui_compat.h		comp-c-include		crypto
@@ -2132,8 +2190,12 @@
 ./usr/lib/libarchive_p.a			comp-c-proflib		profile
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	kerberos,profile
-./usr/lib/libatf.a				comp-atf-lib
-./usr/lib/libatf_p.a				comp-atf-lib		profile
+./usr/lib/libatf-c++.a				comp-atf-lib
+./usr/lib/libatf-c++_p.a			comp-atf-lib		profile
+./usr/lib/libatf-c.a				comp-atf-lib
+./usr/lib/libatf-c_p.a				comp-atf-lib		profile
+./usr/lib/libatf.a				comp-obsolete		obsolete
+./usr/lib/libatf_p.a				comp-obsolete		obsolete
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
 ./usr/lib/libbind9.a				comp-bind-lib
 ./usr/lib/libbind9_p.a				comp-bind-proflib	profile
@@ -2229,6 +2291,12 @@
 ./usr/lib/libkvm_p.a				comp-c-proflib		profile
 ./usr/lib/libl.a				comp-c-lib
 ./usr/lib/libl_p.a				comp-c-proflib		profile
+./usr/lib/liblber.a				comp-ldap-lib		ldap
+./usr/lib/liblber_p.a				comp-ldap-proflib	ldap,profile
+./usr/lib/libldap.a				comp-ldap-lib		ldap
+./usr/lib/libldap_p.a				comp-ldap-proflib	ldap,profile
+./usr/lib/libldap_r.a				comp-ldap-lib		ldap
+./usr/lib/libldap_r_p.a				comp-ldap-proflib	ldap,profile
 ./usr/lib/liblwres.a				comp-bind-lib
 ./usr/lib/liblwres_p.a				comp-bind-profilb	profile
 ./usr/lib/libm.a				comp-c-lib
@@ -2313,7 +2381,9 @@
 ./usr/lib/libz.a				comp-c-lib
 ./usr/lib/libz_p.a				comp-c-proflib		profile
 ./usr/lib/pkgconfig				comp-c-lib
-./usr/lib/pkgconfig/atf.pc			comp-atf-lib
+./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib
+./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib
+./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chmod.debug		comp-util-debug		debug
@@ -2358,6 +2428,7 @@
 ./usr/libdata/debug/sbin/cgdconfig.debug	comp-sysutil-debug	crypto,debug
 ./usr/libdata/debug/sbin/clri.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dhclient.debug		comp-dhclient-debug	debug
+./usr/libdata/debug/sbin/dhcpcd.debug		comp-dhcpcd-debug	debug
 ./usr/libdata/debug/sbin/disklabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkscan_bsdlabel.debug	comp-sysutil-debug	debug
@@ -2412,6 +2483,7 @@
 ./usr/libdata/debug/sbin/newfs_lfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_sysvbfs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/newfs_udf.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/pfctl.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/pflogd.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/ping.debug		comp-netutil-debug	debug
@@ -2579,6 +2651,14 @@
 ./usr/libdata/debug/usr/bin/last.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/lastcomm.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ld.debug		comp-util-debug		bfd,debug
+./usr/libdata/debug/usr/bin/ldapcompare.debug	comp-ldap-debug		ldap,debug
+./usr/libdata/debug/usr/bin/ldapdelete.debug	comp-ldap-debug		ldap,debug
+./usr/libdata/debug/usr/bin/ldapexop.debug	comp-ldap-debug		ldap,debug
+./usr/libdata/debug/usr/bin/ldapmodify.debug	comp-ldap-debug		ldap,debug
+./usr/libdata/debug/usr/bin/ldapmodrdn.debug	comp-ldap-debug		ldap,debug
+./usr/libdata/debug/usr/bin/ldappasswd.debug	comp-ldap-debug		ldap,debug
+./usr/libdata/debug/usr/bin/ldapsearch.debug	comp-ldap-debug		ldap,debug
+./usr/libdata/debug/usr/bin/ldapwhoami.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldd.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/leave.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/less.debug		comp-util-debug		debug
@@ -2632,6 +2712,7 @@
 ./usr/libdata/debug/usr/bin/msgs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/msgunfmt.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/msguniq.debug	comp-c-debug		debug
+./usr/libdata/debug/usr/bin/nbsvtool.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/netgroup.debug	comp-nis-debug		debug
 ./usr/libdata/debug/usr/bin/netstat.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/newgrp.debug	comp-util-debug		debug
@@ -2923,11 +3004,12 @@
 ./usr/libdata/debug/usr/sbin/bootpef.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootpgw.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootptest.debug	comp-bootserver-debug	debug
+./usr/libdata/debug/usr/sbin/btattach.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/btconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/btcontrol.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/btdevctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/bthcid.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/btuartd.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/btuartd.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/catman.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/chown.debug	comp-sysutil-debug	debug
@@ -3013,6 +3095,7 @@
 ./usr/libdata/debug/usr/sbin/mknetid.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/mld6query.debug	comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/mlxctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/mmcformat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mopchk.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/mopcopy.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/mopd.debug		comp-bootserver-debug	debug
@@ -3176,7 +3259,11 @@
 ./usr/libdata/lint/llib-lkstream.ln		comp-c-lintlib		obsolete
 ./usr/libdata/lint/llib-lkvm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-llber.ln		comp-ldap-lintlib	lint,ldap
+./usr/libdata/lint/llib-lldap.ln		comp-ldap-lintlib	lint,ldap
+./usr/libdata/lint/llib-lldap_r.ln		comp-ldap-lintlib	lint,ldap
 ./usr/libdata/lint/llib-llwres.ln		comp-bind-lintlib	lint
+./usr/libdata/lint/llib-lm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
@@ -3273,6 +3360,7 @@
 ./usr/share/ldscripts/elf64alpha.xr		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf64alpha.xs		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf64alpha.xu		comp-obsolete		obsolete
+./usr/share/ldscripts/kmodule			comp-util-share
 ./usr/share/ldscripts/m68kelf.x			comp-obsolete		obsolete
 ./usr/share/ldscripts/m68kelf.xbn		comp-obsolete		obsolete
 ./usr/share/ldscripts/m68kelf.xn		comp-obsolete		obsolete
@@ -3593,6 +3681,7 @@
 ./usr/share/man/cat2/poll.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pollts.0			comp-c-catman		.cat
 ./usr/share/man/cat2/posix_fadvise.0		comp-c-catman		.cat
+./usr/share/man/cat2/posix_madvise.0		comp-c-catman		.cat
 ./usr/share/man/cat2/pread.0			comp-c-catman		.cat
 ./usr/share/man/cat2/preadv.0			comp-c-catman		.cat
 ./usr/share/man/cat2/profil.0			comp-c-catman		.cat
@@ -4308,6 +4397,7 @@
 ./usr/share/man/cat3/archive_write_set_bytes_per_block.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_set_callbacks.0		comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_set_compression_bzip2.0	comp-c-catman		.cat
+./usr/share/man/cat3/archive_write_set_compression_compress.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_set_compression_gzip.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_set_compression_none.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_set_compression_program.0	comp-c-catman		.cat
@@ -4330,12 +4420,13 @@
 ./usr/share/man/cat3/atanh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atanhf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atexit.0			comp-c-catman		.cat
+./usr/share/man/cat3/atf-c++-api.0		comp-atf-catman		.cat
+./usr/share/man/cat3/atf-c-api.0		comp-atf-catman		.cat
+./usr/share/man/cat3/atf-sh-api.0		comp-atf-catman		.cat
 ./usr/share/man/cat3/atof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atoi.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atoll.0			comp-c-catman		.cat
-./usr/share/man/cat3/atf-c++-api.0		comp-atf-catman		.cat
-./usr/share/man/cat3/atf-sh-api.0		comp-atf-catman		.cat
 ./usr/share/man/cat3/attr_get.0			comp-c-catman		.cat
 ./usr/share/man/cat3/attr_off.0			comp-c-catman		.cat
 ./usr/share/man/cat3/attr_on.0			comp-c-catman		.cat
@@ -4353,6 +4444,41 @@
 ./usr/share/man/cat3/bcmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bcopy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/beep.0			comp-c-catman		.cat
+./usr/share/man/cat3/ber_alloc_t.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_bvarray_add.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_bvarray_free.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_bvdup.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_bvecadd.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_bvecfree.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_bvfree.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_bvstr.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_bvstrdup.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_dupbv.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_first_element.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_flush.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_free.0			comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_get_bitstring.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_get_boolean.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_get_enum.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_get_int.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_get_next.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_get_null.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_get_stringa.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_get_stringb.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_next_element.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_peek_tag.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_printf.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_put_enum.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_put_int.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_put_null.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_put_ostring.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_put_seq.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_put_set.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_put_string.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_scanf.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_skip_tag.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_start_set.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ber_str2bv.0		comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/bind_textdomain_codeset.0	comp-c-catman		.cat
 ./usr/share/man/cat3/bindresvport.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bindresvport_sa.0		comp-c-catman		.cat
@@ -4400,6 +4526,15 @@
 ./usr/share/man/cat3/btowc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/btree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/buffer.0			comp-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_base_set.0	comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_disable.0	comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_enable.0	comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_free.0		comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_new.0		comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_read.0		comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_settimeout.0	comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_write.0	comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_write_buffer.0	comp-c-catman		.cat
 ./usr/share/man/cat3/byteorder.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bzero.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cabs.0			comp-c-catman		.cat
@@ -4582,6 +4717,7 @@
 ./usr/share/man/cat3/curses_delch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_deleteln.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_echochar.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_fileio.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_inch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_input.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_insdelln.0		comp-c-catman		.cat
@@ -4768,15 +4904,60 @@
 ./usr/share/man/cat3/ether_ntohost.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ethers.0			comp-c-catman		.cat
 ./usr/share/man/cat3/evasprintf.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_add_buffer.0	comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_add_printf.0	comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_add_vprintf.0	comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_drain.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_find.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_free.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_new.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_read.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_readline.0	comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_write.0		comp-c-catman		.cat
+./usr/share/man/cat3/evdns.0			comp-c-catman		.cat
+./usr/share/man/cat3/evdns_clear_nameservers_and_suspend.0	comp-c-catman	.cat
+./usr/share/man/cat3/evdns_count_nameservers.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_err_to_string.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/evdns_nameserver_add.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_nameserver_ip_add.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_resolv_conf_parse.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_resolve_ipv4.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_resolve_reverse.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_resume.0		comp-c-catman		.cat
+./usr/share/man/cat3/evdns_search_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/evdns_search_clear.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_search_ndots_set.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_set_log_fn.0		comp-c-catman		.cat
+./usr/share/man/cat3/evdns_shutdown.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event.0			comp-c-catman		.cat
 ./usr/share/man/cat3/event_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_base_dispatch.0	comp-c-catman		.cat
+./usr/share/man/cat3/event_base_free.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_base_loop.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_base_loopbreak.0	comp-c-catman		.cat
+./usr/share/man/cat3/event_base_loopexit.0	comp-c-catman		.cat
+./usr/share/man/cat3/event_base_once.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_base_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_del.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_dispatch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_initialized.0	comp-c-catman		.cat
 ./usr/share/man/cat3/event_loop.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_loopbreak.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_loopexit.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_once.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_pending.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/evhttp_bind_socket.0	comp-c-catman		.cat
+./usr/share/man/cat3/evhttp_free.0		comp-c-catman		.cat
+./usr/share/man/cat3/evhttp_new.0		comp-c-catman		.cat
+./usr/share/man/cat3/evtimer_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/evtimer_del.0		comp-c-catman		.cat
+./usr/share/man/cat3/evtimer_initialized.0	comp-c-catman		.cat
+./usr/share/man/cat3/evtimer_pending.0		comp-c-catman		.cat
+./usr/share/man/cat3/evtimer_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/exec.0			comp-c-catman		.cat
 ./usr/share/man/cat3/execl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/execle.0			comp-c-catman		.cat
@@ -5056,6 +5237,7 @@
 ./usr/share/man/cat3/getwc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getwchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getwd.0			comp-c-catman		.cat
+./usr/share/man/cat3/getwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gid_from_group.0		comp-c-catman		.cat
 ./usr/share/man/cat3/glob.0			comp-c-catman		.cat
@@ -5713,8 +5895,8 @@
 ./usr/share/man/cat3/krb5_rd_error.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rd_rep.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rd_req.0		comp-krb5-catman	kerberos,.cat
-./usr/share/man/cat3/krb5_rd_safe.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rd_req_with_keyblock.0	comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/krb5_rd_safe.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_realm_compare.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_ret_address.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_ret_addrs.0		comp-krb5-catman	kerberos,.cat
@@ -5874,7 +6056,124 @@
 ./usr/share/man/cat3/l64a.0			comp-c-catman		.cat
 ./usr/share/man/cat3/l64a_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/labs.0			comp-c-catman		.cat
+./usr/share/man/cat3/lber-decode.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/lber-encode.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/lber-memory.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/lber-sockbuf.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/lber-types.0		comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/lcong48.0			comp-c-catman		.cat
+./usr/share/man/cat3/ld_errno.0			comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap.0			comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_abandon.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_abandon_ext.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_add.0			comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_add_ext.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_add_ext_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_add_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_attributetype2name.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_attributetype2str.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_attributetype_free.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_bind.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_bind_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_compare.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_compare_ext.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_compare_ext_s.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_compare_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_count_entries.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_count_messages.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_count_references.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_count_values.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_count_values_len.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_dcedn2dn.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_delete.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_delete_ext.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_delete_ext_s.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_delete_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_dn2ad_canonical.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_dn2dcedn.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_dn2str.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_dn2ufn.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_err2string.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_errlist.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_error.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_explode_dn.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_explode_rdn.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_first_attribute.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_first_entry.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_first_message.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_first_reference.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_free_urldesc.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_get_dn.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_get_values.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_get_values_len.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_init.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_is_ldap_url.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_kerberos_bind1.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_kerberos_bind1_s.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_kerberos_bind2.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_kerberos_bind2_s.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_kerberos_bind_s.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_matchingrule2name.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_matchingrule2str.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_matchingrule_free.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_modify.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_modify_ext.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_modify_ext_s.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_modify_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_modrdn.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_modrdn2.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_modrdn2_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_modrdn_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_mods_free.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_msgfree.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_msgid.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_msgtype.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_next_attribute.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_next_entry.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_next_message.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_next_reference.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_objectclass2name.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_objectclass2str.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_objectclass_free.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_open.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_parse_extended_result.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_parse_reference.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_parse_result.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_parse_sasl_bind_result.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_perror.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_result.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_result2error.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_sasl_bind.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_sasl_bind_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_schema.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_scherr2str.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_search.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_search_ext.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_search_ext_s.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_search_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_search_st.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_simple_bind.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_simple_bind_s.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_sort.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_sort_entries.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_sort_strcasecmp.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_sort_values.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_str2attributetype.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_str2dn.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_str2matchingrule.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_str2objectclass.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_str2syntax.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_syntax2name.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_syntax2str.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_syntax_free.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_unbind.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_unbind_ext.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_unbind_ext_s.0	comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_unbind_s.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_url.0			comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_url_parse.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_value_free.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat3/ldap_value_free_len.0	comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat3/ldexp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ldiv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/leaveok.0			comp-c-catman		.cat
@@ -6337,9 +6636,9 @@
 ./usr/share/man/cat3/prop_string_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/proplib.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pset.0			comp-c-catman		.cat
-./usr/share/man/cat3/pset_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pset_assign.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pset_bind.0		comp-c-catman		.cat
+./usr/share/man/cat3/pset_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pset_destroy.0		comp-c-catman		.cat
 ./usr/share/man/cat3/psignal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pthread.0			comp-c-catman		.cat
@@ -6445,6 +6744,7 @@
 ./usr/share/man/cat3/putw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/putwc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/putwchar.0			comp-c-catman		.cat
+./usr/share/man/cat3/putwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_abort.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_copy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_edit.0			comp-c-catman		.cat
@@ -6561,13 +6861,13 @@
 ./usr/share/man/cat3/scanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sched.0			comp-c-catman		.cat
-./usr/share/man/cat3/sched_setparam.0		comp-c-catman		.cat
-./usr/share/man/cat3/sched_getparam.0		comp-c-catman		.cat
-./usr/share/man/cat3/sched_setscheduler.0	comp-c-catman		.cat
-./usr/share/man/cat3/sched_getscheduler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_get_priority_max.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_get_priority_min.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_getparam.0		comp-c-catman		.cat
+./usr/share/man/cat3/sched_getscheduler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_rr_get_interval.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_setparam.0		comp-c-catman		.cat
+./usr/share/man/cat3/sched_setscheduler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_yield.0		comp-c-catman		.cat
 ./usr/share/man/cat3/scrl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scroll.0			comp-c-catman		.cat
@@ -7192,6 +7492,8 @@
 ./usr/share/man/cat5/config.samples.0		comp-util-catman	.cat
 ./usr/share/man/cat5/cpio.0			comp-util-catman	.cat
 ./usr/share/man/cat5/cvs.0			comp-cvs-catman		cvs,.cat
+./usr/share/man/cat5/ldap.conf.0		comp-ldap-catman	ldap,.cat
+./usr/share/man/cat5/ldif.0			comp-ldap-catman	ldap,.cat
 ./usr/share/man/cat5/libarchive-formats.0	comp-util-catman	.cat
 ./usr/share/man/cat5/mech.0			comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat5/mk.conf.0			comp-util-catman	.cat
@@ -7565,11 +7867,12 @@
 ./usr/share/man/cat9/disk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_attach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_busy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/disk_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_detach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_detatch.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/disk_find.0		comp-sys-catman		.cat
-./usr/share/man/cat9/disk_init.0		comp-obsolete		obsolete
-./usr/share/man/cat9/disk_resetstat.0		comp-sys-catman		.cat
+./usr/share/man/cat9/disk_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/disk_resetstat.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/disk_unbusy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disklabel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/dmover.0			comp-sys-catman		.cat
@@ -7668,7 +7971,7 @@
 ./usr/share/man/cat9/getblk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/geteblk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getiobuf.0			comp-sys-catman		.cat
-./usr/share/man/cat9/getiobuf_nowait.0		comp-sys-catman		.cat
+./usr/share/man/cat9/getiobuf_nowait.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/gsignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/hardclock.0		comp-sys-catman		.cat
@@ -7777,6 +8080,10 @@
 ./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/knote.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kpause.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kpreempt.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kpreempt_disable.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kpreempt_disabled.0	comp-sys-catman		.cat
+./usr/share/man/cat9/kpreempt_enable.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_create.0		comp-sys-catman		.cat
@@ -8154,9 +8461,9 @@
 ./usr/share/man/cat9/sysmon_envsys_create.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_envsys_destroy.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_envsys_register.0	comp-sys-catman		.cat
-./usr/share/man/cat9/sysmon_envsys_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_envsys_sensor_attach.0	comp-sys-catman	.cat
 ./usr/share/man/cat9/sysmon_envsys_sensor_detach.0	comp-sys-catman	.cat
+./usr/share/man/cat9/sysmon_envsys_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/tc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_badaddr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_intr_disestablish.0	comp-sys-catman		.cat
@@ -8625,6 +8932,7 @@
 ./usr/share/man/man2/poll.2			comp-c-man		.man
 ./usr/share/man/man2/pollts.2			comp-c-man		.man
 ./usr/share/man/man2/posix_fadvise.2		comp-c-man		.man
+./usr/share/man/man2/posix_madvise.2		comp-c-man		.man
 ./usr/share/man/man2/pread.2			comp-c-man		.man
 ./usr/share/man/man2/preadv.2			comp-c-man		.man
 ./usr/share/man/man2/profil.2			comp-c-man		.man
@@ -9339,6 +9647,7 @@
 ./usr/share/man/man3/archive_write_set_bytes_per_block.3		comp-c-man		.man
 ./usr/share/man/man3/archive_write_set_callbacks.3			comp-c-man		.man
 ./usr/share/man/man3/archive_write_set_compression_bzip2.3		comp-c-man		.man
+./usr/share/man/man3/archive_write_set_compression_compress.3		comp-c-man		.man
 ./usr/share/man/man3/archive_write_set_compression_gzip.3		comp-c-man		.man
 ./usr/share/man/man3/archive_write_set_compression_none.3		comp-c-man		.man
 ./usr/share/man/man3/archive_write_set_compression_program.3		comp-c-man		.man
@@ -9361,12 +9670,13 @@
 ./usr/share/man/man3/atanh.3			comp-c-man		.man
 ./usr/share/man/man3/atanhf.3			comp-c-man		.man
 ./usr/share/man/man3/atexit.3			comp-c-man		.man
+./usr/share/man/man3/atf-c++-api.3		comp-atf-man		.man
+./usr/share/man/man3/atf-c-api.3		comp-atf-man		.man
+./usr/share/man/man3/atf-sh-api.3		comp-atf-man		.man
 ./usr/share/man/man3/atof.3			comp-c-man		.man
 ./usr/share/man/man3/atoi.3			comp-c-man		.man
 ./usr/share/man/man3/atol.3			comp-c-man		.man
 ./usr/share/man/man3/atoll.3			comp-c-man		.man
-./usr/share/man/man3/atf-c++-api.3		comp-atf-man		.man
-./usr/share/man/man3/atf-sh-api.3		comp-atf-man		.man
 ./usr/share/man/man3/attr_get.3			comp-c-man		.man
 ./usr/share/man/man3/attr_off.3			comp-c-man		.man
 ./usr/share/man/man3/attr_on.3			comp-c-man		.man
@@ -9384,6 +9694,41 @@
 ./usr/share/man/man3/bcmp.3			comp-c-man		.man
 ./usr/share/man/man3/bcopy.3			comp-c-man		.man
 ./usr/share/man/man3/beep.3			comp-c-man		.man
+./usr/share/man/man3/ber_alloc_t.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_bvarray_add.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_bvarray_free.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_bvdup.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_bvecadd.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_bvecfree.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_bvfree.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_bvstr.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_bvstrdup.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_dupbv.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_first_element.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_flush.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_free.3			comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_get_bitstring.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_get_boolean.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_get_enum.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_get_int.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_get_next.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_get_null.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_get_stringa.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_get_stringb.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_next_element.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_peek_tag.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_printf.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_put_enum.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_put_int.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_put_null.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_put_ostring.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_put_seq.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_put_set.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_put_string.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_scanf.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_skip_tag.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_start_set.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ber_str2bv.3		comp-ldap-man		ldap,.man
 ./usr/share/man/man3/bind_textdomain_codeset.3	comp-c-man		.man
 ./usr/share/man/man3/bindresvport.3		comp-c-man		.man
 ./usr/share/man/man3/bindresvport_sa.3		comp-c-man		.man
@@ -9431,6 +9776,15 @@
 ./usr/share/man/man3/btowc.3			comp-c-man		.man
 ./usr/share/man/man3/btree.3			comp-c-man		.man
 ./usr/share/man/man3/buffer.3			comp-obsolete		obsolete
+./usr/share/man/man3/bufferevent_base_set.3	comp-c-man		.man
+./usr/share/man/man3/bufferevent_disable.3	comp-c-man		.man
+./usr/share/man/man3/bufferevent_enable.3	comp-c-man		.man
+./usr/share/man/man3/bufferevent_free.3		comp-c-man		.man
+./usr/share/man/man3/bufferevent_new.3		comp-c-man		.man
+./usr/share/man/man3/bufferevent_read.3		comp-c-man		.man
+./usr/share/man/man3/bufferevent_settimeout.3	comp-c-man		.man
+./usr/share/man/man3/bufferevent_write.3	comp-c-man		.man
+./usr/share/man/man3/bufferevent_write_buffer.3	comp-c-man		.man
 ./usr/share/man/man3/byteorder.3		comp-c-man		.man
 ./usr/share/man/man3/bzero.3			comp-c-man		.man
 ./usr/share/man/man3/cabs.3			comp-c-man		.man
@@ -9613,6 +9967,7 @@
 ./usr/share/man/man3/curses_delch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_deleteln.3		comp-c-man		.man
 ./usr/share/man/man3/curses_echochar.3		comp-c-man		.man
+./usr/share/man/man3/curses_fileio.3		comp-c-man		.man
 ./usr/share/man/man3/curses_inch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_input.3		comp-c-man		.man
 ./usr/share/man/man3/curses_insdelln.3		comp-c-man		.man
@@ -9799,15 +10154,60 @@
 ./usr/share/man/man3/ether_ntohost.3		comp-c-man		.man
 ./usr/share/man/man3/ethers.3			comp-c-man		.man
 ./usr/share/man/man3/evasprintf.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_add.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_add_buffer.3	comp-c-man		.man
+./usr/share/man/man3/evbuffer_add_printf.3	comp-c-man		.man
+./usr/share/man/man3/evbuffer_add_vprintf.3	comp-c-man		.man
+./usr/share/man/man3/evbuffer_drain.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_find.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_free.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_new.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_read.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_readline.3	comp-c-man		.man
+./usr/share/man/man3/evbuffer_write.3		comp-c-man		.man
+./usr/share/man/man3/evdns.3			comp-c-man		.man
+./usr/share/man/man3/evdns_clear_nameservers_and_suspend.3	comp-c-man	.man
+./usr/share/man/man3/evdns_count_nameservers.3	comp-c-man		.man
+./usr/share/man/man3/evdns_err_to_string.3	comp-c-man		.man
+./usr/share/man/man3/evdns_init.3		comp-c-man		.man
+./usr/share/man/man3/evdns_nameserver_add.3	comp-c-man		.man
+./usr/share/man/man3/evdns_nameserver_ip_add.3	comp-c-man		.man
+./usr/share/man/man3/evdns_resolv_conf_parse.3	comp-c-man		.man
+./usr/share/man/man3/evdns_resolve_ipv4.3	comp-c-man		.man
+./usr/share/man/man3/evdns_resolve_reverse.3	comp-c-man		.man
+./usr/share/man/man3/evdns_resume.3		comp-c-man		.man
+./usr/share/man/man3/evdns_search_add.3		comp-c-man		.man
+./usr/share/man/man3/evdns_search_clear.3	comp-c-man		.man
+./usr/share/man/man3/evdns_search_ndots_set.3	comp-c-man		.man
+./usr/share/man/man3/evdns_set_log_fn.3		comp-c-man		.man
+./usr/share/man/man3/evdns_shutdown.3		comp-c-man		.man
 ./usr/share/man/man3/event.3			comp-c-man		.man
 ./usr/share/man/man3/event_add.3		comp-c-man		.man
+./usr/share/man/man3/event_base_dispatch.3	comp-c-man		.man
+./usr/share/man/man3/event_base_free.3		comp-c-man		.man
+./usr/share/man/man3/event_base_loop.3		comp-c-man		.man
+./usr/share/man/man3/event_base_loopbreak.3	comp-c-man		.man
+./usr/share/man/man3/event_base_loopexit.3	comp-c-man		.man
+./usr/share/man/man3/event_base_once.3		comp-c-man		.man
+./usr/share/man/man3/event_base_set.3		comp-c-man		.man
 ./usr/share/man/man3/event_del.3		comp-c-man		.man
 ./usr/share/man/man3/event_dispatch.3		comp-c-man		.man
 ./usr/share/man/man3/event_init.3		comp-c-man		.man
 ./usr/share/man/man3/event_initialized.3	comp-c-man		.man
 ./usr/share/man/man3/event_loop.3		comp-c-man		.man
+./usr/share/man/man3/event_loopbreak.3		comp-c-man		.man
+./usr/share/man/man3/event_loopexit.3		comp-c-man		.man
+./usr/share/man/man3/event_once.3		comp-c-man		.man
 ./usr/share/man/man3/event_pending.3		comp-c-man		.man
 ./usr/share/man/man3/event_set.3		comp-c-man		.man
+./usr/share/man/man3/evhttp_bind_socket.3	comp-c-man		.man
+./usr/share/man/man3/evhttp_free.3		comp-c-man		.man
+./usr/share/man/man3/evhttp_new.3		comp-c-man		.man
+./usr/share/man/man3/evtimer_add.3		comp-c-man		.man
+./usr/share/man/man3/evtimer_del.3		comp-c-man		.man
+./usr/share/man/man3/evtimer_initialized.3	comp-c-man		.man
+./usr/share/man/man3/evtimer_pending.3		comp-c-man		.man
+./usr/share/man/man3/evtimer_set.3		comp-c-man		.man
 ./usr/share/man/man3/exec.3			comp-c-man		.man
 ./usr/share/man/man3/execl.3			comp-c-man		.man
 ./usr/share/man/man3/execle.3			comp-c-man		.man
@@ -10087,6 +10487,7 @@
 ./usr/share/man/man3/getwc.3			comp-c-man		.man
 ./usr/share/man/man3/getwchar.3			comp-c-man		.man
 ./usr/share/man/man3/getwd.3			comp-c-man		.man
+./usr/share/man/man3/getwin.3			comp-c-man		.man
 ./usr/share/man/man3/getyx.3			comp-c-man		.man
 ./usr/share/man/man3/gid_from_group.3		comp-c-man		.man
 ./usr/share/man/man3/glob.3			comp-c-man		.man
@@ -10744,8 +11145,8 @@
 ./usr/share/man/man3/krb5_rd_error.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rd_rep.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rd_req.3		comp-krb5-man		kerberos,.man
-./usr/share/man/man3/krb5_rd_safe.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rd_req_with_keyblock.3	comp-krb5-man		kerberos,.man
+./usr/share/man/man3/krb5_rd_safe.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_realm_compare.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_ret_address.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_ret_addrs.3		comp-krb5-man		kerberos,.man
@@ -10905,7 +11306,124 @@
 ./usr/share/man/man3/l64a.3			comp-c-man		.man
 ./usr/share/man/man3/l64a_r.3			comp-c-man		.man
 ./usr/share/man/man3/labs.3			comp-c-man		.man
+./usr/share/man/man3/lber-decode.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/lber-encode.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/lber-memory.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/lber-sockbuf.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/lber-types.3		comp-ldap-man		ldap,.man
 ./usr/share/man/man3/lcong48.3			comp-c-man		.man
+./usr/share/man/man3/ld_errno.3			comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap.3			comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_abandon.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_abandon_ext.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_add.3			comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_add_ext.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_add_ext_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_add_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_attributetype2name.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_attributetype2str.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_attributetype_free.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_bind.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_bind_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_compare.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_compare_ext.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_compare_ext_s.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_compare_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_count_entries.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_count_messages.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_count_references.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_count_values.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_count_values_len.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_dcedn2dn.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_delete.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_delete_ext.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_delete_ext_s.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_delete_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_dn2ad_canonical.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_dn2dcedn.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_dn2str.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_dn2ufn.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_err2string.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_errlist.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_error.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_explode_dn.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_explode_rdn.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_first_attribute.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_first_entry.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_first_message.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_first_reference.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_free_urldesc.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_get_dn.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_get_values.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_get_values_len.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_init.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_is_ldap_url.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_kerberos_bind1.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_kerberos_bind1_s.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_kerberos_bind2.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_kerberos_bind2_s.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_kerberos_bind_s.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_matchingrule2name.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_matchingrule2str.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_matchingrule_free.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_modify.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_modify_ext.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_modify_ext_s.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_modify_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_modrdn.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_modrdn2.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_modrdn2_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_modrdn_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_mods_free.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_msgfree.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_msgid.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_msgtype.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_next_attribute.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_next_entry.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_next_message.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_next_reference.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_objectclass2name.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_objectclass2str.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_objectclass_free.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_open.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_parse_extended_result.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_parse_reference.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_parse_result.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_parse_sasl_bind_result.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_perror.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_result.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_result2error.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_sasl_bind.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_sasl_bind_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_schema.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_scherr2str.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_search.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_search_ext.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_search_ext_s.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_search_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_search_st.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_simple_bind.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_simple_bind_s.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_sort.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_sort_entries.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_sort_strcasecmp.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_sort_values.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_str2attributetype.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_str2dn.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_str2matchingrule.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_str2objectclass.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_str2syntax.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_syntax2name.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_syntax2str.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_syntax_free.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_unbind.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_unbind_ext.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_unbind_ext_s.3	comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_unbind_s.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_url.3			comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_url_parse.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_value_free.3		comp-ldap-man		ldap,.man
+./usr/share/man/man3/ldap_value_free_len.3	comp-ldap-man		ldap,.man
 ./usr/share/man/man3/ldexp.3			comp-c-man		.man
 ./usr/share/man/man3/ldiv.3			comp-c-man		.man
 ./usr/share/man/man3/leaveok.3			comp-c-man		.man
@@ -11368,9 +11886,9 @@
 ./usr/share/man/man3/prop_string_size.3		comp-c-man		.man
 ./usr/share/man/man3/proplib.3			comp-c-man		.man
 ./usr/share/man/man3/pset.3			comp-c-man		.man
-./usr/share/man/man3/pset_create.3		comp-c-man		.man
 ./usr/share/man/man3/pset_assign.3		comp-c-man		.man
 ./usr/share/man/man3/pset_bind.3		comp-c-man		.man
+./usr/share/man/man3/pset_create.3		comp-c-man		.man
 ./usr/share/man/man3/pset_destroy.3		comp-c-man		.man
 ./usr/share/man/man3/psignal.3			comp-c-man		.man
 ./usr/share/man/man3/pthread.3			comp-c-man		.man
@@ -11476,6 +11994,7 @@
 ./usr/share/man/man3/putw.3			comp-c-man		.man
 ./usr/share/man/man3/putwc.3			comp-c-man		.man
 ./usr/share/man/man3/putwchar.3			comp-c-man		.man
+./usr/share/man/man3/putwin.3			comp-c-man		.man
 ./usr/share/man/man3/pw_abort.3			comp-c-man		.man
 ./usr/share/man/man3/pw_copy.3			comp-c-man		.man
 ./usr/share/man/man3/pw_edit.3			comp-c-man		.man
@@ -11592,13 +12111,13 @@
 ./usr/share/man/man3/scanf.3			comp-c-man		.man
 ./usr/share/man/man3/scanw.3			comp-c-man		.man
 ./usr/share/man/man3/sched.3			comp-c-man		.man
-./usr/share/man/man3/sched_setparam.3		comp-c-man		.man
-./usr/share/man/man3/sched_getparam.3		comp-c-man		.man
-./usr/share/man/man3/sched_setscheduler.3	comp-c-man		.man
-./usr/share/man/man3/sched_getscheduler.3	comp-c-man		.man
 ./usr/share/man/man3/sched_get_priority_max.3	comp-c-man		.man
 ./usr/share/man/man3/sched_get_priority_min.3	comp-c-man		.man
+./usr/share/man/man3/sched_getparam.3		comp-c-man		.man
+./usr/share/man/man3/sched_getscheduler.3	comp-c-man		.man
 ./usr/share/man/man3/sched_rr_get_interval.3	comp-c-man		.man
+./usr/share/man/man3/sched_setparam.3		comp-c-man		.man
+./usr/share/man/man3/sched_setscheduler.3	comp-c-man		.man
 ./usr/share/man/man3/sched_yield.3		comp-c-man		.man
 ./usr/share/man/man3/scrl.3			comp-c-man		.man
 ./usr/share/man/man3/scroll.3			comp-c-man		.man
@@ -12219,6 +12738,8 @@
 ./usr/share/man/man5/config.samples.5		comp-util-man		.man
 ./usr/share/man/man5/cpio.5			comp-util-man		.man
 ./usr/share/man/man5/cvs.5			comp-cvs-man		cvs,.man
+./usr/share/man/man5/ldap.conf.5		comp-ldap-man		ldap,.man
+./usr/share/man/man5/ldif.5			comp-ldap-man		ldap,.man
 ./usr/share/man/man5/libarchive-formats.5	comp-util-man		.man
 ./usr/share/man/man5/mech.5			comp-krb5-man		kerberos,.man
 ./usr/share/man/man5/mk.conf.5			comp-util-man		.man
@@ -12591,11 +13112,12 @@
 ./usr/share/man/man9/disk.9			comp-sys-man		.man
 ./usr/share/man/man9/disk_attach.9		comp-sys-man		.man
 ./usr/share/man/man9/disk_busy.9		comp-sys-man		.man
+./usr/share/man/man9/disk_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/disk_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/disk_detatch.9		comp-obsolete		obsolete
 ./usr/share/man/man9/disk_find.9		comp-sys-man		.man
-./usr/share/man/man9/disk_init.9		comp-obsolete		obsolete
-./usr/share/man/man9/disk_resetstat.9		comp-sys-man		.man
+./usr/share/man/man9/disk_init.9		comp-sys-man		.man
+./usr/share/man/man9/disk_resetstat.9		comp-obsolete		obsolete
 ./usr/share/man/man9/disk_unbusy.9		comp-sys-man		.man
 ./usr/share/man/man9/disklabel.9		comp-sys-man		.man
 ./usr/share/man/man9/dmover.9			comp-sys-man		.man
@@ -12694,7 +13216,7 @@
 ./usr/share/man/man9/getblk.9			comp-sys-man		.man
 ./usr/share/man/man9/geteblk.9			comp-sys-man		.man
 ./usr/share/man/man9/getiobuf.9			comp-sys-man		.man
-./usr/share/man/man9/getiobuf_nowait.9		comp-sys-man		.man
+./usr/share/man/man9/getiobuf_nowait.9		comp-obsolete		obsolete
 ./usr/share/man/man9/getnewvnode.9		comp-sys-man		.man
 ./usr/share/man/man9/gsignal.9			comp-sys-man		.man
 ./usr/share/man/man9/hardclock.9		comp-sys-man		.man
@@ -12803,6 +13325,10 @@
 ./usr/share/man/man9/kmem_zalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/knote.9			comp-sys-man		.man
 ./usr/share/man/man9/kpause.9			comp-sys-man		.man
+./usr/share/man/man9/kpreempt.9			comp-sys-man		.man
+./usr/share/man/man9/kpreempt_disable.9		comp-sys-man		.man
+./usr/share/man/man9/kpreempt_disabled.9	comp-sys-man		.man
+./usr/share/man/man9/kpreempt_enable.9		comp-sys-man		.man
 ./usr/share/man/man9/kprintf.9			comp-sys-man		.man
 ./usr/share/man/man9/kthread.9			comp-sys-man		.man
 ./usr/share/man/man9/kthread_create.9		comp-sys-man		.man
@@ -13180,9 +13706,9 @@
 ./usr/share/man/man9/sysmon_envsys_create.9	comp-sys-man 		.man
 ./usr/share/man/man9/sysmon_envsys_destroy.9	comp-sys-man 		.man
 ./usr/share/man/man9/sysmon_envsys_register.9	comp-sys-man 		.man
-./usr/share/man/man9/sysmon_envsys_unregister.9	comp-sys-man 		.man
 ./usr/share/man/man9/sysmon_envsys_sensor_attach.9	comp-sys-man 	.man
 ./usr/share/man/man9/sysmon_envsys_sensor_detach.9	comp-sys-man 	.man
+./usr/share/man/man9/sysmon_envsys_unregister.9	comp-sys-man 		.man
 ./usr/share/man/man9/tc.9			comp-sys-man		.man
 ./usr/share/man/man9/tc_badaddr.9		comp-sys-man		.man
 ./usr/share/man/man9/tc_intr_disestablish.9	comp-sys-man		.man
@@ -13440,6 +13966,7 @@
 ./usr/share/mk/bsd.kinc.mk			comp-util-share		share
 ./usr/share/mk/bsd.klinks.mk			comp-util-share		share
 ./usr/share/mk/bsd.kmod.mk			comp-util-share		share
+./usr/share/mk/bsd.kmodule.mk			comp-util-share		share
 ./usr/share/mk/bsd.lib.mk			comp-util-share		share
 ./usr/share/mk/bsd.links.mk			comp-util-share		share
 ./usr/share/mk/bsd.man.mk			comp-util-share		share

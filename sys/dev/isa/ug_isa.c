@@ -1,4 +1,4 @@
-/* $NetBSD: ug_isa.c,v 1.5.14.1 2008/04/03 12:42:45 mjf Exp $ */
+/* $NetBSD: ug_isa.c,v 1.5.14.2 2008/06/02 13:23:32 mjf Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.5.14.1 2008/04/03 12:42:45 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.5.14.2 2008/06/02 13:23:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ ug_isa_attach(device_t parent, device_t self, void *aux)
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
-			return;
+			goto out;
 		}
 	}
 
@@ -163,7 +163,13 @@ ug_isa_attach(device_t parent, device_t self, void *aux)
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error_dev(self, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
+		goto out;
 	}
+
+	return;
+
+out:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 8);
 
 }
 

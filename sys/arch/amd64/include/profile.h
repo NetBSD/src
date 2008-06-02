@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.12 2007/12/20 23:46:12 ad Exp $	*/
+/*	$NetBSD: profile.h,v 1.12.6.1 2008/06/02 13:21:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,13 +114,13 @@ mcount_disable_intr(void)
 static inline u_long
 mcount_read_psl(void)
 {
-	return (HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask);
+	return (curcpu()->ci_vcpu->evtchn_upcall_mask);
 }
 
 static inline void
 mcount_write_psl(u_long psl)
 {
-	HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask = psl;
+	curcpu()->ci_vcpu->evtchn_upcall_mask = psl;
 	x86_lfence();
 	/* XXX can't call hypervisor_force_callback() because we're in mcount*/ 
 }
@@ -137,14 +137,14 @@ mcount_read_psl(void)
 {
 	u_long	ef;
 
-	__asm volatile("pushfl; popl %0" : "=r" (ef));
+	__asm volatile("pushfq; popq %0" : "=r" (ef));
 	return (ef);
 }
 
 static inline void
 mcount_write_psl(u_long ef)
 {
-	__asm volatile("pushl %0; popfl" : : "r" (ef));
+	__asm volatile("pushq %0; popfq" : : "r" (ef));
 }
 
 #endif /* XEN */

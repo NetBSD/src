@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.1.52.1 2008/04/03 12:42:12 mjf Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.1.52.2 2008/06/02 13:21:56 mjf Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -82,6 +82,7 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_size = 0;
 	sc->sc_ih = NULL;
 	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	/* Map I/O space */
 	if (bus_space_map(sc->sc.iot, PXA2X0_USBHC_BASE, PXA2X0_USBHC_SIZE, 0,

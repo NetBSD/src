@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1.2.2 2008/04/03 13:54:14 mjf Exp $	*/
+/*	$NetBSD: md.c,v 1.1.2.3 2008/06/02 13:21:19 mjf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,127 +39,87 @@
 
 /* md.c -- zaurus machine specific routines */
 
-#include <stdio.h>
-#include <curses.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <util.h>
-#include <sys/types.h>
-#include <sys/disklabel.h>
-#include <sys/ioctl.h>
 #include <sys/param.h>
-#include <sys/utsname.h>
+
+#include <stdio.h>
+#include <util.h>
+
 #include "defs.h"
-#include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-void backtowin(void);
+#include "md.h"
 
 int
-md_get_info (void)
+md_check_mbr(mbr_info_t *mbri)
 {
-	struct disklabel disklabel;
-	int fd;
-	char dev_name[100];
-#if 0
-	static char bb[DEV_BSIZE];
-	struct filecore_bootblock *fcbb = (struct filecore_bootblock *)bb;
-#endif
-	int offset = 0;
 
-	if (strncmp(diskdev, "wd", 2) == 0)
-		disktype = "ST506";
-	else
-		disktype = "SCSI";
+	(void)mbri;
+	return 2;
+}
 
-	snprintf(dev_name, 100, "/dev/r%s%c", diskdev, 'a' + RAW_PART);
+int
+md_mbr_use_wholedisk(mbr_info_t *mbri)
+{
 
-	fd = open(dev_name, O_RDONLY, 0);
-	if (fd < 0) {
-		endwin();
-		fprintf(stderr, "Can't open %s\n", dev_name);
-		exit(1);
-	}
-	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
-		endwin();
-		fprintf(stderr, "Can't read disklabel on %s.\n", dev_name);
-		close(fd);
-		exit(1);
-	}
+	return mbr_use_wholedisk(mbri);
+}
 
-	close(fd);
- 
-	dlcyl = disklabel.d_ncylinders;
-	dlhead = disklabel.d_ntracks;
-	dlsec = disklabel.d_nsectors;
-	sectorsize = disklabel.d_secsize;
-	dlcylsize = disklabel.d_secpercyl;
+int
+md_get_info(void)
+{
 
-	/*
-	 * Compute whole disk size. Take max of (dlcyl*dlhead*dlsec)
-	 * and secperunit,  just in case the disk is already labelled.  
-	 * (If our new label's RAW_PART size ends up smaller than the
-	 * in-core RAW_PART size  value, updating the label will fail.)
-	 */
-	dlsize = dlcyl*dlhead*dlsec;
-	if (disklabel.d_secperunit > dlsize)
-		dlsize = disklabel.d_secperunit;
-
-	ptstart = offset;
-/*	endwin();
-	printf("dlcyl=%d\n", dlcyl);
-	printf("dlhead=%d\n", dlhead);
-	printf("dlsec=%d\n", dlsec);
-	printf("secsz=%d\n", sectorsize);
-	printf("cylsz=%d\n", dlcylsize);
-	printf("dlsz=%d\n", dlsize);
-	printf("pstart=%d\n", ptstart);
-	printf("pstart=%d\n", partsize);
-	printf("secpun=%d\n", disklabel.d_secperunit);
-	backtowin();*/
-
-	return 1;
+	read_mbr(diskdev, &mbr);
+	md_bios_info(diskdev);
+	return edit_mbr(&mbr);
 }
 
 int
 md_pre_disklabel(void)
 {
+
+	msg_display(MSG_dofdisk);
+
+	/* write edited MBR onto disk. */
+	if (write_mbr(diskdev, &mbr, 1) != 0) {
+		msg_display(MSG_wmbrfail);
+		process_menu(MENU_ok, NULL);
+		return 1;
+	}
 	return 0;
 }
 
 int
 md_post_disklabel(void)
 {
+
 	return 0;
 }
 
 int
 md_post_newfs(void)
 {
-#if 0
-	/* XXX boot blocks ... */
-	printf(msg_string(MSG_dobootblks), diskdev);
-	run_program(RUN_DISPLAY, "/sbin/disklabel -B %s /dev/r%sc",
-	    "-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
-#endif
+
 	return 0;
 }
 
 int
 md_copy_filesystem(void)
 {
+
 	return 0;
 }
 
 int
 md_make_bsd_partitions(void)
 {
+
 	return make_bsd_partitions();
 }
 
 int
 md_check_partitions(void)
 {
+
 	return 1;
 }
 
@@ -168,6 +128,7 @@ md_check_partitions(void)
 int
 md_update(void)
 {
+
 	endwin();
 	md_copy_filesystem();
 	md_post_newfs();
@@ -181,34 +142,50 @@ md_update(void)
 void
 md_cleanup_install(void)
 {
-#ifndef DEBUG
+
 	enable_rc_conf();
 
 	run_program(0, "rm -f %s", target_expand("/sysinst"));
 	run_program(0, "rm -f %s", target_expand("/.termcap"));
 	run_program(0, "rm -f %s", target_expand("/.profile"));
-#endif
 }
 
 int
 md_pre_update(void)
 {
+
 	return 1;
 }
 
 void
 md_init(void)
 {
+
+	/* Nothing to do */
 }
 
 void
 md_init_set_status(int minimal)
 {
+
 	(void)minimal;
 }
 
 int
 md_post_extract(void)
 {
+
+	return 0;
+}
+
+int
+md_bios_info(char *dev)
+{
+	int cyl, head, sec;
+
+	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
+	if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
+		msg_display_add(MSG_biosguess, cyl, head, sec);
+	set_bios_geom(cyl, head, sec);
 	return 0;
 }

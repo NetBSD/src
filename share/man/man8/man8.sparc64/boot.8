@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.13 2004/04/01 16:23:55 mrg Exp $
+.\"	$NetBSD: boot.8,v 1.13.26.1 2008/06/02 13:21:40 mjf Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -219,6 +219,14 @@ boot net -sd
 .Pp
 to boot single user from network and break into the kernel debugger as
 soon as possible.
+.Pp
+Use
+.Bd -literal -offset indent
+boot net tftp:netbsd -a
+.Ed
+.Pp
+to boot a kernel named netbsd obtained via tftp and have it ask for
+root filesystem, swap partition and init location once it is up.
 .Pp
 During installation from a different operating system
 .Bd -literal -offset indent

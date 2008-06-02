@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.7 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: pdc.c,v 1.7.74.1 2008/06/02 13:22:08 mjf Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.10 1999/05/06 02:27:44 mickey Exp $	*/
 
@@ -198,7 +198,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 		}
 #ifdef PDCDEBUG
 		if (debug)
-			printf("> %d[%d]\n", (int)dp->last_blk, dp->last_read);
+			printf("> %d[%d]\n", (int)dp->last_blk, (int)dp->last_read);
 #endif
 	}
 
@@ -213,7 +213,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 #ifdef PDCDEBUG
 		if (debug)
 			printf("off=%d,xfer=%d,size=%d,blk=%d\n",
-			       offset, xfer, size, (int)blk);
+			       offset, xfer, (int)size, (int)blk);
 #endif
 		bcopy(dp->buf + offset, buf, xfer);
 		buf = (char *) buf + xfer;
@@ -251,7 +251,7 @@ iodcstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 #ifdef PDCDEBUG
 		if (debug)
 			printf("read %d(%d,%d)@%x ", ret,
-			       (int)dp->last_blk, dp->last_read, (u_int)buf);
+			       (int)dp->last_blk, (int)dp->last_read, (u_int)buf);
 #endif
 	    }
 

@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.10 2008/01/10 08:50:53 dyoung Exp $
+ * $NetBSD: if_lmc.h,v 1.10.6.1 2008/06/02 13:23:39 mjf Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1053,7 +1053,7 @@ typedef int intr_return_t;
 # define WRITE_PCI_CFG(sc, addr, data) pci_conf_write((sc)->pa_pc, (sc)->pa_tag, addr, data)
 # define  READ_CSR(sc, csr)	 bus_space_read_4 ((sc)->csr_tag, (sc)->csr_handle, csr)
 # define WRITE_CSR(sc, csr, val) bus_space_write_4((sc)->csr_tag, (sc)->csr_handle, csr, val)
-# define NAME_UNIT		sc->dev.dv_xname
+# define NAME_UNIT		device_xname(&sc->dev)
 # define BOOT_VERBOSE		(boothowto & AB_VERBOSE)
 # define TOP_LOCK(sc)		({ while (__cpu_simple_lock_try(&(sc)->top_lock)==0) \
 				 tsleep((sc), PCATCH|PZERO, DEVICE_NAME, 1); 0; })

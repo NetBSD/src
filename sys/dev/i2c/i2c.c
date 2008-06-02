@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.18 2007/12/11 12:09:21 lukem Exp $	*/
+/*	$NetBSD: i2c.c,v 1.18.8.1 2008/06/02 13:23:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.18 2007/12/11 12:09:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.18.8.1 2008/06/02 13:23:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.18 2007/12/11 12:09:21 lukem Exp $");
 #include "locators.h"
 
 struct iic_softc {
-	struct device sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_type;
 };
@@ -82,10 +81,9 @@ iic_print(void *aux, const char *pnp)
 }
 
 static int
-iic_search(struct device *parent, struct cfdata *cf,
-    const int *ldesc, void *aux)
+iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct iic_softc *sc = (void *) parent;
+	struct iic_softc *sc = device_private(parent);
 	struct i2c_attach_args ia;
 
 	ia.ia_tag = sc->sc_tag;
@@ -100,15 +98,14 @@ iic_search(struct device *parent, struct cfdata *cf,
 }
 
 static int
-iic_match(struct device *parent, struct cfdata *cf,
-    void *aux)
+iic_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 static void
-iic_attach(struct device *parent, struct device *self, void *aux)
+iic_attach(device_t parent, device_t self, void *aux)
 {
 	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
@@ -121,7 +118,7 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = iba->iba_tag;
 	sc->sc_type = iba->iba_type;
 	ic = sc->sc_tag;
-	ic->ic_devname = self->dv_xname;
+	ic->ic_devname = device_xname(self);
 
 	LIST_INIT(&(sc->sc_tag->ic_list));
 	LIST_INIT(&(sc->sc_tag->ic_proc_list));
@@ -129,7 +126,7 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	rv = kthread_create(PRI_NONE, 0, NULL, iic_smbus_intr_thread,
 	    ic, &ic->ic_intr_thread, "%s", ic->ic_devname);
 	if (rv)
-		printf("%s: unable to create intr thread\n", ic->ic_devname);
+		aprint_error_dev(self, "unable to create intr thread\n");
 
 #if notyet
 	if (sc->sc_type == I2C_TYPE_SMBUS) {
@@ -265,5 +262,5 @@ iic_smbus_intr(i2c_tag_t ic)
 	return 1;
 }
 
-CFATTACH_DECL(iic, sizeof(struct iic_softc),
+CFATTACH_DECL_NEW(iic, sizeof(struct iic_softc),
     iic_match, iic_attach, NULL, NULL);

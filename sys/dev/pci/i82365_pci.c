@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.24 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.24.48.1 2008/06/02 13:23:38 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.24 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.24.48.1 2008/06/02 13:23:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,8 +186,7 @@ pcic_pci_attach(struct device *parent, struct device *self, void *aux)
 		   PCIC_CIRRUS_EXT_CONTROL_1);
 	if ((pcic_read(&sc->handle[0], PCIC_CIRRUS_EXTENDED_DATA) &
 	    PCIC_CIRRUS_EXT_CONTROL_1_PCI_INTR_MASK)) {
-		aprint_error("%s: PCI interrupts not supported\n",
-		       sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "PCI interrupts not supported\n");
 		return;
 	}
 
@@ -198,7 +197,7 @@ pcic_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish the interrupt. */
 	sc->ih = pcic_pci_machdep_pcic_intr_establish(sc, pcic_intr);
 	if (sc->ih == NULL) {
-		aprint_error("%s: couldn't map interrupt\n", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "couldn't map interrupt\n");
 		return;
 	}
 #endif

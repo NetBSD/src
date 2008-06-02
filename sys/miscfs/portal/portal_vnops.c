@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.77.6.1 2008/04/03 12:43:06 mjf Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.77.6.2 2008/06/02 13:24:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.77.6.1 2008/04/03 12:43:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.77.6.2 2008/06/02 13:24:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,8 +254,7 @@ portal_connect(so, so2)
 	struct unpcb *unp2;
 	struct unpcb *unp3;
 
-	if (so2 == 0)
-		return (ECONNREFUSED);
+	KASSERT(solocked2(so, so2));
 
 	if (so->so_type != so2->so_type)
 		return (EPROTOTYPE);
@@ -289,11 +288,10 @@ portal_open(v)
 		int  a_mode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	struct socket *so = 0;
+	struct socket *so = 0, *so2;
 	struct portalnode *pt;
 	struct lwp *l = curlwp;
 	struct vnode *vp = ap->a_vp;
-	int s;
 	struct uio auio;
 	struct iovec aiov[2];
 	int res;
@@ -324,11 +322,17 @@ portal_open(v)
 
 	pt = VTOPORTAL(vp);
 	fmp = VFSTOPORTAL(vp->v_mount);
+	so2 = fmp->pm_server->f_data;
+
+	if (so2 == NULL) {
+		/* XXX very fishy */
+		return ECONNREFUSED;
+	}
 
 	/*
 	 * Create a new socket.
 	 */
-	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0, l);
+	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0, l, so2);
 	if (error)
 		goto bad;
 
@@ -336,16 +340,21 @@ portal_open(v)
 	 * Reserve some buffer space
 	 */
 	res = pt->pt_size + sizeof(pcred) + 512;	/* XXX */
+	solock(so);
 	error = soreserve(so, res, res);
-	if (error)
+	if (error) {
+		sounlock(so);
 		goto bad;
+	}
 
 	/*
 	 * Kick off connection
 	 */
-	error = portal_connect(so, (struct socket *)fmp->pm_server->f_data);
-	if (error)
+	error = portal_connect(so, so2);
+	if (error) {
+		sounlock(so);
 		goto bad;
+	}
 
 	/*
 	 * Wait for connection to complete
@@ -360,19 +369,17 @@ portal_open(v)
 	 * will happen if the server dies.  Sleep for 5 second intervals
 	 * and keep polling the reference count.   XXX.
 	 */
-	s = splsoftnet();
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
 		if (fmp->pm_server->f_count == 1) {
 			error = ECONNREFUSED;
-			splx(s);
+			sounlock(so);
 			goto bad;
 		}
-		(void) tsleep(&so->so_timeo, PSOCK, "portalcon", 5 * hz);
+		sowait(so, 5 * hz);
 	}
-	splx(s);
-
 	if (so->so_error) {
 		error = so->so_error;
+		sounlock(so);
 		goto bad;
 	}
 
@@ -383,7 +390,7 @@ portal_open(v)
 	so->so_snd.sb_timeo = 0;
 	so->so_rcv.sb_flags |= SB_NOINTR;
 	so->so_snd.sb_flags |= SB_NOINTR;
-
+	sounlock(so);
 
 	pcred.pcr_flag = ap->a_mode;
 	pcred.pcr_uid = kauth_cred_geteuid(ap->a_cred);
@@ -402,8 +409,7 @@ portal_open(v)
 	auio.uio_resid = aiov[0].iov_len + aiov[1].iov_len;
 	UIO_SETUP_SYSSPACE(&auio);
 
-	error = (*so->so_send)(so, (struct mbuf *) 0, &auio,
-			(struct mbuf *) 0, (struct mbuf *) 0, 0, l);
+	error = (*so->so_send)(so, NULL, &auio, NULL, NULL, 0, l);
 	if (error)
 		goto bad;
 
@@ -508,7 +514,9 @@ bad:;
 	}
 
 	if (so) {
+		solock(so);
 		soshutdown(so, 2);
+		sounlock(so);
 		soclose(so);
 	}
 	return (error);

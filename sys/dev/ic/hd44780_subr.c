@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.13 2007/11/01 13:05:32 tsutsui Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.13.16.1 2008/06/02 13:23:21 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.13 2007/11/01 13:05:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.13.16.1 2008/06/02 13:23:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,7 +420,7 @@ hd44780_attach_subr(sc)
 		if ((sc->sc_flags & HD_UP) == 0)
 			err = hd44780_init(sc);
 		if (err != 0)
-			printf("%s: LCD not responding or unconnected\n", sc->sc_dev->dv_xname);
+			aprint_error_dev(sc->sc_dev, "LCD not responding or unconnected\n");
 
 	}
 

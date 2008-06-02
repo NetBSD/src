@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.52 2007/10/17 19:57:11 garbled Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.52.16.1 2008/06/02 13:22:40 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -107,11 +107,11 @@
 #include "opt_wsemul.h"
 
 /* autoconfiguration driver */
-static int	cgfourteenmatch(struct device *, struct cfdata *, void *);
-static void	cgfourteenattach(struct device *, struct device *, void *);
-static void	cgfourteenunblank(struct device *);
+static int	cgfourteenmatch(device_t, struct cfdata *, void *);
+static void	cgfourteenattach(device_t, device_t, void *);
+static void	cgfourteenunblank(device_t);
 
-CFATTACH_DECL(cgfourteen, sizeof(struct cgfourteen_softc),
+CFATTACH_DECL_NEW(cgfourteen, sizeof(struct cgfourteen_softc),
     cgfourteenmatch, cgfourteenattach, NULL, NULL);
         
 extern struct cfdriver cgfourteen_cd;
@@ -162,7 +162,7 @@ static int  cg14_do_cursor(struct cgfourteen_softc *,
  * Match a cgfourteen.
  */
 int
-cgfourteenmatch(struct device *parent, struct cfdata *cf, void *aux)
+cgfourteenmatch(device_t parent, struct cfdata *cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -223,26 +223,27 @@ struct wsdisplay_accessops cg14_accessops = {
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-cgfourteenattach(struct device *parent, struct device *self, void *aux)
+cgfourteenattach(device_t parent, device_t self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
-	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)self;
+	struct cgfourteen_softc *sc = device_private(self);
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int node, ramsize;
 	volatile uint32_t *lut;
 	int i, isconsole;
 
+	sc->sc_dev = self;
 	node = sa->sa_node;
 
 	/* Remember cookies for cgfourteenmmap() */
 	sc->sc_bustag = sa->sa_bustag;
 
 	fb->fb_driver = &cgfourteenfbdriver;
-	fb->fb_device = &sc->sc_dev;
+	fb->fb_device = sc->sc_dev;
 	/* Mask out invalid flags from the user. */
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(sc->sc_dev)->cf_flags & FB_USERMASK;
 
 	/*
 	 * We're emulating a cg3/8, so represent ourselves as one
@@ -250,14 +251,13 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 #ifdef CG14_CG8
 	fb->fb_type.fb_type = FBTYPE_MEMCOLOR;
 	fb->fb_type.fb_depth = 32;
-	fb_setsize_obp(fb, sc->sc_fb.fb_type.fb_depth, 1152, 900, node);
-	ramsize = roundup(fb->fb_type.fb_height * 1152 * 4, NBPG);
 #else
 	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
 	fb->fb_type.fb_depth = 8;
+#endif
 	fb_setsize_obp(fb, sc->sc_fb.fb_type.fb_depth, 1152, 900, node);
 	ramsize = roundup(fb->fb_type.fb_height * fb->fb_linebytes, NBPG);
-#endif
+
 	fb->fb_type.fb_cmsize = CG14_CLUT_SIZE;
 	fb->fb_type.fb_size = ramsize + COLOUR_OFFSET;
 
@@ -335,7 +335,8 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 				    0x03800000,
 				  1152 * 900, BUS_SPACE_MAP_LINEAR,
 				  &bh) != 0) {
-			printf("%s: cannot map pixels\n",&sc->sc_dev.dv_xname[0]);
+			printf("%s: cannot map pixels\n",
+			    device_xname(sc->sc_dev));
 			return;
 		}
 		sc->sc_rcfb = sc->sc_fb;
@@ -363,7 +364,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
 	    sc->sc_physadr[CG14_PXL_IDX].sbr_offset,
 	    ramsize, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map pixels\n",&sc->sc_dev.dv_xname[0]);
+		printf("%s: cannot map pixels\n", device_xname(sc->sc_dev));
 		return;
 	}
 
@@ -399,7 +400,7 @@ cgfourteenopen(dev_t dev, int flags, int mode, struct lwp *l)
 	unit = minor(dev);
 	if (unit >= cgfourteen_cd.cd_ndevs)
 		return(ENXIO);
-	sc = cgfourteen_cd.cd_devs[minor(dev)];
+	sc = device_private(cgfourteen_cd.cd_devs[minor(dev)]);
 	if (sc == NULL)
 		return(ENXIO);
 	s = splhigh();
@@ -416,7 +417,8 @@ cgfourteenopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc = 
+	    device_private(cgfourteen_cd.cd_devs[minor(dev)]);
 	int s, opens;
 
 	s = splhigh();
@@ -437,7 +439,8 @@ cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 int
 cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc =
+	    device_private(cgfourteen_cd.cd_devs[minor(dev)]);
 	struct fbgattr *fba;
 	int error;
 
@@ -496,9 +499,9 @@ cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
  * Undo the effect of an FBIOSVIDEO that turns the video off.
  */
 static void
-cgfourteenunblank(struct device *dev)
+cgfourteenunblank(device_t dev)
 {
-	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)dev;
+	struct cgfourteen_softc *sc = device_private(dev);
 
 	cg14_set_video(sc, 1);
 #if NWSDISPLAY > 0
@@ -540,7 +543,8 @@ cgfourteenunblank(struct device *dev)
 paddr_t
 cgfourteenmmap(dev_t dev, off_t off, int prot)
 {
-	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc =
+	    device_private(cgfourteen_cd.cd_devs[minor(dev)]);
 
 	if (off & PGOFSET)
 		panic("cgfourteenmmap");
@@ -830,7 +834,7 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 	aa.accessops = &cg14_accessops;
 	aa.accesscookie = &sc->sc_vd;
 
-	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 }
 
 static void
@@ -1075,7 +1079,7 @@ cg14_set_depth(struct cgfourteen_softc *sc, int depth)
 			break;
 		default:
 			printf("%s: can't change to depth %d\n",
-			    sc->sc_dev.dv_xname, depth);
+			    device_xname(sc->sc_dev), depth);
 	}
 }
 

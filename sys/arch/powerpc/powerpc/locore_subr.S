@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.35 2008/02/14 19:41:54 garbled Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.35.6.1 2008/06/02 13:22:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -204,6 +204,9 @@ switchto_restore:
 
 	GET_CPUINFO(%r7)
 	stptr	%r31,CI_CURLWP(%r7)
+#ifdef MULTIPROCESSOR
+	stptr	%r7,L_CPU(%r31)		/* update cpu pointer */
+#endif
 	ldptr	%r4,L_ADDR(%r31)	/* put PCB addr in r4 */
 	stptr	%r4,CI_CURPCB(%r7)	/* using a new pcb */
 	ldptr	%r3,PCB_PM(%r4)
@@ -296,9 +299,41 @@ ENTRY(cpu_spinup_trampoline)
 	mtmsr	%r0
 	isync
 
-	lis	%r3,_C_LABEL(cpu_hatch_stack)@ha
-	lwz	%r1,_C_LABEL(cpu_hatch_stack)@l(%r3)
+	lis	%r4,_C_LABEL(cpu_hatch_stack)@ha
+	lwz	%r1,_C_LABEL(cpu_hatch_stack)@l(%r4)
 
 	bl	_C_LABEL(cpu_hatch)
+	mr	%r1,%r3
 	b	_C_LABEL(idle_loop)
+
+ENTRY(cpu_spinstart)
+	li	%r0,0
+	mtmsr	%r0
+	lis	%r5,oeacpufeat@ha
+	lwz	%r5,oeacpufeat@l(%r5)
+	andi.	%r5,%r5,OEACPU_64_BRIDGE
+	beq	4f
+	sync
+	slbia
+	sync
+	isync
+	clrldi	%r0,%r0,32
+	mtmsrd	%r0
+	mtspr	SPR_ASR,%r0
+4:	
+	lis	%r5,_C_LABEL(cpu_spinstart_ack)@ha
+	addi	%r5,%r5,_C_LABEL(cpu_spinstart_ack)@l
+	stw	%r3,0(%r5)
+	dcbf	0,%r5
+	lis	%r6,_C_LABEL(cpu_spinstart_cpunum)@ha
+5:
+	lwz	%r4,_C_LABEL(cpu_spinstart_cpunum)@l(%r6)
+	cmpw	%r4,%r3
+	bne	5b
+	lis	%r4,_C_LABEL(cpu_hatch_stack)@ha
+	lwz	%r1,_C_LABEL(cpu_hatch_stack)@l(%r4)
+	bla	_C_LABEL(cpu_hatch)
+	mr	%r1,%r3	/* move the return from cpu_hatch to the stackpointer*/
+	b	_C_LABEL(idle_loop)
+
 #endif /*MULTIPROCESSOR + OEA*/

@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.32 2007/10/19 12:01:19 ad Exp $ */
+/* $NetBSD: bba.c,v 1.32.16.1 2008/06/02 13:23:52 mjf Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,7 +29,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.32 2007/10/19 12:01:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.32.16.1 2008/06/02 13:23:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +221,7 @@ bba_attach(struct device *parent, struct device *self, void *aux)
 	/* get the bus space handle for codec */
 	if (bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    ia->iada_offset, 0, &sc->sc_codec_bsh)) {
-		printf("%s: unable to map device\n", asc->sc_dev.dv_xname);
+		aprint_error_dev(&asc->sc_dev, "unable to map device\n");
 		return;
 	}
 
@@ -314,15 +307,14 @@ bba_allocm(void *addr, int direction, size_t size,
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, BBA_DMABUF_ALIGN,
 	    BBA_DMABUF_BOUNDARY, &seg, 1, &rseg, w)) {
-		printf("%s: can't allocate DMA buffer\n",
-		    asc->sc_dev.dv_xname);
+		aprint_error_dev(&asc->sc_dev, "can't allocate DMA buffer\n");
 		goto bad;
 	}
 	state |= 1;
 
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    &kva, w | BUS_DMA_COHERENT)) {
-		printf("%s: can't map DMA buffer\n", asc->sc_dev.dv_xname);
+		aprint_error_dev(&asc->sc_dev, "can't map DMA buffer\n");
 		goto bad;
 	}
 	state |= 2;

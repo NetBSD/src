@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.273 2008/01/09 11:26:14 simonb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.273.4.1 2008/06/02 13:21:43 mjf Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -6,6 +6,15 @@
 .include <bsd.gcc.mk>
 # Pull in <bsd.sys.mk> here so we can override its .c.o rule
 .include <bsd.sys.mk>
+
+LIBISPRIVATE?=	no
+
+.if ${LIBISPRIVATE} != "no"
+MKDEBUGLIB:=	no
+MKLINT:=	no
+MKPIC:=		no
+MKPROFILE:=	no
+.endif
 
 ##### Basic targets
 .PHONY:		checkver libinstall
@@ -333,10 +342,12 @@ OBJS+=${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 
 STOBJS+=${OBJS}
 
-.if ${MKPRIVATELIB} != "no"
+LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
+
+.if ${LIBISPRIVATE} != "no"
 # No installation is required
 libinstall::
-.else	# ${MKPRIVATELIB} == "no"					# {
+.else	# ${LIBISPRIVATE} == "no"					# {
 
 .if ${MKDEBUGLIB} != "no"
 _LIBS+=lib${LIB}_g.a
@@ -371,12 +382,11 @@ _LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 .endif									# }
 
-LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
-.if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
+.if ${MKLINT} != "no" && !empty(LOBJS)
 _LIBS+=llib-l${LIB}.ln
 .endif
 
-.endif	# ${MKPRIVATELIB} == "no"					# }
+.endif	# ${LIBISPRIVATE} == "no"					# }
 
 ALLOBJS=
 .if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
@@ -384,7 +394,7 @@ ALLOBJS=
 ALLOBJS+=${STOBJS}
 .endif
 ALLOBJS+=${POBJS} ${SOBJS}
-.if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
+.if ${MKLINT} != "no" && !empty(LOBJS)
 ALLOBJS+=${LOBJS}
 .endif
 .else	# !defined(LIB)							# } {
@@ -441,20 +451,38 @@ _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 		-L${DESTDIR}${SHLIBINSTALLDIR}
 .endif
 
-lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
+# gcc -shared now adds -lc automatically. For libraries other than libc and
+# libgcc* we add as a dependency the installed shared libc. For libc and
+# libgcc* we avoid adding libc as a dependency by using -nostdlib. Note that
+# -Xl,-nostdlib is not enough because we want to tell the compiler-driver not
+# to add standard libraries, not the linker.
+.if !defined(LIB)
+DPLIBC ?= ${DESTDIR}${LIBC_SO}
+.else
+.if ${LIB} != "c" && ${LIB:Mgcc*} == ""
+DPLIBC ?= ${DESTDIR}${LIBC_SO}
+.else
+LDLIBC ?= -nodefaultlibs
+.if ${LIB} == "c"
+LDADD+= -lgcc_pic
+.endif
+.endif
+.endif
+
+lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	${_MKTARGET_BUILD}
 	rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
-	${CC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
+	${CC} ${LDLIBC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
 	    ${_LIBLDOPTS} \
 	    -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${LDADD} \
 	    -L${_GCC_LIBGCCDIR}
 .else
-	${CC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
-	    ${_LIBLDOPTS} \
+	${CC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} \
+	    -o ${.TARGET} ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
 .endif
 .if ${OBJECT_FMT} == "ELF"
@@ -478,6 +506,11 @@ llib-l${LIB}.ln: ${LOBJS}
 	${LINT} -C${LIB} ${.ALLSRC} ${LLIBS}
 .endif
 .endif									# }
+
+lint: ${LOBJS}
+.if defined(LOBJS) && !empty(LOBJS)
+	${LINT} ${LINTFLAGS} ${LOBJS}
+.endif
 
 cleanlib: .PHONY
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
@@ -617,7 +650,7 @@ ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_F
 .endif
 .endif
 
-.if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
+.if ${MKLINT} != "no" && !empty(LOBJS)
 libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .PRECIOUS: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 

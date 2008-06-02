@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.37 2007/12/20 23:46:12 ad Exp $	*/
+/*	$NetBSD: asm.h,v 1.37.6.1 2008/06/02 13:22:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -107,17 +107,25 @@
 #ifdef __STDC__
 #define	IDTVEC(name) \
 	ALIGN_TEXT; .globl X ## name; .type X ## name,@function; X ## name:
+#define	IDTVEC_END(name) \
+	.size X ## name, . - X ## name
 #else 
 #define	IDTVEC(name) \
 	ALIGN_TEXT; .globl X/**/name; .type X/**/name,@function; X/**/name:
+#define	IDTVEC_END(name) \
+	.size X/**/name, . - X/**/name
 #endif /* __STDC__ */ 
 #else 
 #ifdef __STDC__
 #define	IDTVEC(name) \
 	ALIGN_TEXT; .globl _X ## name; .type _X ## name,@function; _X ## name: 
+#define	IDTVEC_END(name) \
+	.size _X ## name, . - _X ## name
 #else
 #define	IDTVEC(name) \
 	ALIGN_TEXT; .globl _X/**/name; .type _X/**/name,@function; _X/**/name:
+#define	IDTVEC_END(name) \
+	.size _X/**/name, . - _X/**/name
 #endif /* __STDC__ */
 #endif /* __ELF__ */
 
@@ -167,6 +175,7 @@
 #define	NENTRY(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	LABEL(y)	_LABEL(_C_LABEL(y))
+#define	END(y)		.size y, . - y
 
 #define	ASMSTR		.asciz
 

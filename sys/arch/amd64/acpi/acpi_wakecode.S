@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.3 2007/12/18 07:17:08 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.3.10.1 2008/06/02 13:21:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	  This product includes software developed by the NetBSD
- *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -172,10 +165,19 @@ wakeup_32:
 	movl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT|CR4_PSE),%eax
 	movl	%eax,%cr4
 
-	/* Enable SYSCALL extension and Long Mode */
+	/*
+	 * First switch to Long Mode.  Do not restore the original
+	 * MSR EFER value directly, as enabling the NX bit without
+	 * paging will result in a GPF on AMD CPUs.
+	 *
+	 * Load the correct MSR EFER value now to not depend on the
+	 * data segment register directly after switching to Long Mode.
+	 * After this point, no instruction is allowed to clobber %ebx.
+	 */
+	movl	WAKEUP_efer + ACPI_WAKEUP_ADDR,%ebx
 	movl	$MSR_EFER,%ecx
 	rdmsr
-	movl	WAKEUP_msr_efer + ACPI_WAKEUP_ADDR,%eax
+	orl	$EFER_LME, %eax
 	wrmsr
 
 	/* Load temporary PML4, code will switch to full PML4 later */
@@ -197,6 +199,14 @@ wakeup_32:
 
 	.code64
 wakeup_64:
+
+	/*
+	 * Load the normal system value of MSR EFER.  This includes
+	 * enabling the SYSCALL extension and NXE (if supported).
+	 */
+	movl	%ebx, %eax
+	movl	$MSR_EFER,%ecx
+	wrmsr
 
 	/* Reload data segment with default value */
 	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
@@ -248,5 +258,5 @@ WAKEUP_beep_on_reset:	.byte 0
 
 	.global WAKEUP_curcpu
 WAKEUP_curcpu:		.quad 0
-	.global WAKEUP_msr_efer
-WAKEUP_msr_efer:	.long 0
+	.global WAKEUP_efer
+WAKEUP_efer:		.long 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.14 2008/01/10 14:57:34 tsutsui Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.14.6.1 2008/06/02 13:21:44 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -44,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.14 2008/01/10 14:57:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.14.6.1 2008/06/02 13:21:44 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -298,7 +291,6 @@ algor_p6032_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 	/* XXX assume CPU_MIPS_DOUBLE_COUNT */
 	curcpu()->ci_cycles_per_hz /= 2;
 	curcpu()->ci_divisor_delay /= 2;
-	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	printf("Timer calibration: %lu cycles/sec [(%lu, %lu) * 16]\n",
 	    cps, ctrdiff[2], ctrdiff[3]);

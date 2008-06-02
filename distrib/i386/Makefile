@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2007/03/06 21:52:45 bouyer Exp $
+#	$NetBSD: Makefile,v 1.5.12.1 2008/06/02 13:21:13 mjf Exp $
 
 SUBDIR=
 SUBDIR+=	ramdisks
 SUBDIR+=	.WAIT
 SUBDIR+=	instkernel
+SUBDIR+=	kmod
 SUBDIR+=	.WAIT
 SUBDIR+=	cdroms
 SUBDIR+=	floppies

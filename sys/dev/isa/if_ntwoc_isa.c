@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.16 2007/10/19 12:00:18 ad Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.16.16.1 2008/06/02 13:23:31 mjf Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.16 2007/10/19 12:00:18 ad Exp $
+ * $Id: if_ntwoc_isa.c,v 1.16.16.1 2008/06/02 13:23:31 mjf Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.16 2007/10/19 12:00:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.16.16.1 2008/06/02 13:23:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,8 +419,8 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 	sca->sc_iot = ia->ia_iot;
 	if ((rv = bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
 	    NTWOC_SRC_IOPORT_SIZE, 0, &sca->sc_ioh))) {
-		printf("%s: can't map io 0x%x sz %d, %d\n",
-		    sc->sc_dev.dv_xname, ia->ia_io[0].ir_addr,
+		aprint_error_dev(&sc->sc_dev, "can't map io 0x%x sz %d, %d\n",
+		    ia->ia_io[0].ir_addr,
 		    NTWOC_SRC_IOPORT_SIZE, rv);
 		return;
 	}
@@ -431,8 +431,8 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 		/* map the isa io addresses */
 		if ((tmp = bus_space_map(ia->ia_iot, ioport, 16, 0,
 		    &sca->scu_sca_ioh[i]))) {
-			printf("%s: mapping sca 0x%x sz %d failed: %d\n",
-			    sc->sc_dev.dv_xname, ioport, 16, tmp);
+			aprint_error_dev(&sc->sc_dev, "mapping sca 0x%x sz %d failed: %d\n",
+			    ioport, 16, tmp);
 			return;
 		}
 	}
@@ -463,8 +463,8 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 	sca->scu_pagemask = sca->scu_pagesize - 1;
 	if ((rv = bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
 	     sca->scu_pagesize, 0, &sca->scu_memh))) {
-		printf("%s: can't map mem 0x%x sz %ld, %d\n",
-		    sc->sc_dev.dv_xname, ia->ia_iomem[0].ir_addr,
+		aprint_error_dev(&sc->sc_dev, "can't map mem 0x%x sz %ld, %d\n",
+		    ia->ia_iomem[0].ir_addr,
 		    sca->scu_pagesize, rv);
 		return;
 	}
@@ -542,13 +542,13 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 
 #if 0
 	printf("%s: sca port 0x%x-0x%x dpram %ldk %d serial port%s\n",
-	    sc->sc_dev.dv_xname, ia->ia_io[0].ir_addr | 0x8000,
+	    device_xname(&sc->sc_dev), ia->ia_io[0].ir_addr | 0x8000,
 	    (ia->ia_io[0].ir_addr | 0x8000) + NTWOC_SRC_ASIC_SIZE - 1,
 	    pgs * (sca->scu_pagesize / 1024), sca->sc_numports,
 	    (sca->sc_numports > 1 ? "s" : ""));
 #else
 	printf("%s: dpram %ldk %d serial port%s\n",
-	    sc->sc_dev.dv_xname, pgs * (sca->scu_pagesize / 1024),
+	    device_xname(&sc->sc_dev), pgs * (sca->scu_pagesize / 1024),
 	    sca->sc_numports, (sca->sc_numports > 1 ? "s" : ""));
 #endif
 
@@ -564,15 +564,14 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, ntwoc_isa_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't establish interrupt\n");
 		return;
 	}
 
 	/* make sure we have 2 pages for each port */
 	if (pgs < 2 * sca->sc_numports) {
 		printf("%s: %d less than required pages of memory of %d\n",
-		    sc->sc_dev.dv_xname, pgs, 2 * sca->sc_numports);
+		    device_xname(&sc->sc_dev), pgs, 2 * sca->sc_numports);
 		return;
 	}
 

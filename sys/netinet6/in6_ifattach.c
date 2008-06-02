@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.79 2007/12/06 00:28:36 dyoung Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.79.12.1 2008/06/02 13:24:26 mjf Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.79 2007/12/06 00:28:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.79.12.1 2008/06/02 13:24:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.79 2007/12/06 00:28:36 dyoung Exp
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/md5.h>
+#include <sys/socketvar.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -961,7 +962,9 @@ in6_tmpaddrtimer(void *ignored_arg)
 	struct nd_ifinfo *ndi;
 	u_int8_t nullbuf[8];
 	struct ifnet *ifp;
-	int s = splsoftnet();
+
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	callout_reset(&in6_tmpaddrtimer_ch,
 	    (ip6_temp_preferred_lifetime - ip6_desync_factor -
@@ -980,5 +983,6 @@ in6_tmpaddrtimer(void *ignored_arg)
 		}
 	}
 
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }

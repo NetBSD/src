@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.11.6.1 2008/04/03 12:42:17 mjf Exp $
+#	$NetBSD: files.hppa,v 1.11.6.2 2008/06/02 13:22:12 mjf Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -12,6 +12,7 @@ defflag	opt_cputype.h	HP7000_CPU HP7100_CPU HP7150_CPU HP7100LC_CPU
 file	arch/hppa/hppa/db_interface.c		ddb
 file	arch/hppa/hppa/db_disasm.c		ddb
 file	arch/hppa/hppa/db_memrw.c		ddb | kgdb
+file	arch/hppa/hppa/db_trace.c		ddb
 file	arch/hppa/hppa/fpu.c
 file	arch/hppa/hppa/kgdb_hppa.c		kgdb
 file	arch/hppa/hppa/kobj_machdep.c		modular
@@ -28,8 +29,10 @@ file	arch/hppa/hppa/procfs_machdep.c		procfs
 #
 # Compatibility
 #
+include "compat/ossaudio/files.ossaudio"
+
 include "compat/osf1/files.osf1"
 file	arch/hp700/hp700/osf1_machdep.c		compat_osf1
+
 include	"compat/linux/files.linux"
-include "compat/ossaudio/files.ossaudio"
-file	arch/hp700/hp700/linux_machdep.c		compat_linux
+file	arch/hp700/hp700/linux_machdep.c	compat_linux

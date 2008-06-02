@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.30.40.1 2008/04/03 12:42:27 mjf Exp $	*/
+/*	$NetBSD: if_le.c,v 1.30.40.2 2008/06/02 13:22:48 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	  This product includes software developed by the NetBSD
- *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.30.40.1 2008/04/03 12:42:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.30.40.2 2008/06/02 13:22:48 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -127,7 +120,7 @@ static void	lance_copytobuf_gap2(struct lance_softc *, void *, int, int);
 static void	lance_copyfrombuf_gap2(struct lance_softc *, void *, int, int);
 static void	lance_zerobuf_gap2(struct lance_softc *, int, int);
 
-CFATTACH_DECL(le_mainbus, sizeof(struct le_softc),
+CFATTACH_DECL_NEW(le_mainbus, sizeof(struct le_softc),
     le_mainbus_match, le_mainbus_attach, NULL, NULL);
 
 void
@@ -172,6 +165,7 @@ le_mainbus_attach(device_t parent, device_t self, void *aux)
 	int *lance_addr;
 	int i, vec, br;
 
+	sc->sc_am7990.lsc.sc_dev = self;
 	sc->sc_rdp = (uint16_t *)vax_map_physmem(LE_CSR, 1);
 	sc->sc_rap = sc->sc_rdp + 2;
 
@@ -297,7 +291,7 @@ lance_zerobuf_gap2(struct lance_softc *sc, int boff, int len)
 	volatile void *buf = sc->sc_mem;
 	volatile uint16_t *bptr;
 
-	if ((unsigned)boff & 0x1) {
+	if ((unsigned int)boff & 0x1) {
 		bptr = ((volatile uint16_t *)buf) + (boff - 1);
 		*bptr &= 0xff;
 		bptr += 2;

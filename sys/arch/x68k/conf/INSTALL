@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.76.44.1 2008/04/03 12:42:29 mjf Exp $
+#	$NetBSD: INSTALL,v 1.76.44.2 2008/06/02 13:22:48 mjf Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.76.44.1 $"
+#ident 		"INSTALL-$Revision: 1.76.44.2 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -18,9 +18,7 @@ maxusers	4
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on memory-disk
 options 	MEMORY_DISK_SERVER=0	# No user space hooks
-#options 	MEMORY_DISK_ROOT_SIZE=2400	# 1.2M, same as a 130mm floppy
-#options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a 90mm floppy
-options 	MEMORY_DISK_ROOT_SIZE=2550
+options 	MEMORY_DISK_ROOT_SIZE=2600
 
 ## System kernel configuration.  See options(4) for more detail.
 
@@ -148,6 +146,7 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
 #options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken

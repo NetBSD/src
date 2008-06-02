@@ -1,9 +1,9 @@
-/* $NetBSD: spicvar.h,v 1.3.6.1 2008/04/03 12:42:42 mjf Exp $ */
+/* $NetBSD: spicvar.h,v 1.3.6.2 2008/06/02 13:23:28 mjf Exp $ */
 
 #include <dev/sysmon/sysmonvar.h>
 
 struct spic_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -13,7 +13,7 @@ struct spic_softc {
 	int sc_buttons;
 	char sc_enabled;
 
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 
 #define	SPIC_PSWITCH_LID	0
 #define	SPIC_PSWITCH_SUSPEND	1

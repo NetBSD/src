@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.63.16.1 2008/04/03 12:42:40 mjf Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.63.16.2 2008/06/02 13:23:23 mjf Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -176,8 +176,8 @@ default:							\
 #define	MBOX_NOTIFY_COMPLETE	isp_mbox_notify_done
 #define	MBOX_RELEASE		isp_mbox_release
 
-#define	FC_SCRATCH_ACQUIRE(isp, chan)
-#define	FC_SCRATCH_RELEASE(isp, chan)
+#define	FC_SCRATCH_ACQUIRE(isp, chan)	0
+#define	FC_SCRATCH_RELEASE(isp, chan)	do { } while (0)
 
 #ifndef	SCSI_GOOD
 #define	SCSI_GOOD	0x0
@@ -324,7 +324,6 @@ default:							\
 /*
  * isp_osinfo definitions, extensions and shorthand.
  */
-#define	isp_name	isp_osinfo.dev.dv_xname
 #define	isp_unit	isp_osinfo.dev.dv_unit
 
 

@@ -1,8 +1,7 @@
-/*	$NetBSD: ns16550.c,v 1.3.16.1 2008/04/03 12:42:13 mjf Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.3.16.2 2008/06/02 13:22:00 mjf Exp $	*/
 
 /*-
- * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
- * All rights reserved.
+ * Copyright (c) 2008 Izumi Tsutsui.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Gary Thomas.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,71 +25,74 @@
  */
 
 #ifdef CONS_SERIAL
-/*
- * NS16550 support
- */
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
+
+#include <dev/ic/comreg.h>
 
 #include <machine/cpu.h>
 
 #include "boot.h"
 #include "ns16550.h"
 
-int calculated_speed;
+#define CSR_READ(base, reg)		(*(volatile uint8_t *)((base) + (reg)))
+#define CSR_WRITE(base, reg, val)					\
+	do {								\
+		*(volatile uint8_t *)((base) + (reg)) = (val);		\
+	} while (/* CONSTCOND */ 0)
 
-volatile struct NS16550 *
-NS16550_init(int addr, int speed)
+void *
+com_init(int addr, int speed)
 {
-	struct NS16550 *com_port;
+	uint8_t *com_port;
 
 	com_port = (void *)MIPS_PHYS_TO_KSEG1(COM_BASE + addr);
 
-	com_port->lcr = 0x80;  /* Access baud rate */
+	CSR_WRITE(com_port, com_lctl, LCR_DLAB);
 	speed = comspeed(speed);
-	com_port->dll = speed;
-	com_port->dlm = speed >> 8;
+	CSR_WRITE(com_port, com_dlbl, speed);
+	CSR_WRITE(com_port, com_dlbh, speed >> 8);
 
-	com_port->lcr = 0x03;  /* 8 data, 1 stop, no parity */
-	com_port->mcr = 0x03;  /* 8 bits */
-	com_port->fcr = 0x07;  /* Clear & enable FIFOs */
-	com_port->ier = 0x00;
+	CSR_WRITE(com_port, com_lctl, LCR_PNONE | LCR_8BITS);
+	CSR_WRITE(com_port, com_mcr, MCR_RTS | MCR_DTR);
+	CSR_WRITE(com_port, com_fifo,
+	    FIFO_XMT_RST | FIFO_RCV_RST | FIFO_ENABLE);
+	CSR_WRITE(com_port, com_ier, 0);
 
 	return com_port;
 }
 
 void
-NS16550_putc(volatile struct NS16550 *com_port, int c)
+com_putc(void *dev, int c)
 {
+	volatile uint8_t *com_port = dev;
 
-	while ((com_port->lsr & LSR_THRE) == 0)
+	while ((CSR_READ(com_port, com_lsr) & LSR_TXRDY) == 0)
 		;
-	com_port->thr = c;
+
+	CSR_WRITE(com_port, com_data, c);
 }
 
 int
-NS16550_getc(volatile struct NS16550 *com_port)
+com_getc(void *dev)
 {
+	volatile uint8_t *com_port = dev;
 
-	while ((com_port->lsr & LSR_DR) == 0)
+	while ((CSR_READ(com_port, com_lsr) & LSR_RXRDY) == 0)
 		;
-	return com_port->rbr;
+
+	return CSR_READ(com_port, com_data);
 }
 
 int
-NS16550_scankbd(volatile struct NS16550 *com_port)
+com_scankbd(void *dev)
 {
+	volatile uint8_t *com_port = dev;
 
-	if ((com_port->lsr & LSR_DR) == 0)
+	if ((CSR_READ(com_port, com_lsr) & LSR_RXRDY) == 0)
 		return -1;
-	return com_port->rbr;
-}
 
-int
-NS16550_test(volatile struct NS16550 *com_port)
-{
-
-	return (com_port->lsr & LSR_DR) != 0;
+	return CSR_READ(com_port, com_data);
 }
 #endif /* CONS_SERIAL */

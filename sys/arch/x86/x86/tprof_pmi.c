@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.2 2008/01/04 15:44:58 yamt Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.2.12.1 2008/06/02 13:22:52 mjf Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.2 2008/01/04 15:44:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.2.12.1 2008/06/02 13:22:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ tprof_pmi_stop_cpu(void *arg1, void *arg2)
 uint64_t
 tprof_backend_estimate_freq(void)
 {
-	uint64_t cpufreq = curcpu()->ci_tsc_freq;
+	uint64_t cpufreq = curcpu()->ci_data.cpu_cc_freq;
 	uint64_t freq = 10000;
 
 	counter_val = cpufreq / freq;

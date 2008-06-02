@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.123 2008/02/06 03:20:50 matt Exp $	*/
+/*	$NetBSD: in.c,v 1.123.6.1 2008/06/02 13:24:24 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -98,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.123 2008/02/06 03:20:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.123.6.1 2008/06/02 13:24:24 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -288,12 +281,12 @@ in_mask2len(struct in_addr *mask)
 	}
 	y = 0;
 	if (x < sizeof(*mask)) {
-		for (y = 0; y < 8; y++) {
+		for (y = 0; y < NBBY; y++) {
 			if ((p[x] & (0x80 >> y)) == 0)
 				break;
 		}
 	}
-	return x * 8 + y;
+	return x * NBBY + y;
 }
 
 static void
@@ -304,10 +297,10 @@ in_len2mask(struct in_addr *mask, u_int len)
 
 	p = (u_char *)mask;
 	bzero(mask, sizeof(*mask));
-	for (i = 0; i < len / 8; i++)
+	for (i = 0; i < len / NBBY; i++)
 		p[i] = 0xff;
-	if (len % 8)
-		p[i] = (0xff00 >> (len % 8)) & 0xff;
+	if (len % NBBY)
+		p[i] = (0xff00 >> (len % NBBY)) & 0xff;
 }
 
 /*
@@ -664,10 +657,9 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			return EINVAL;
 		/* XXX need improvement */
 		sa = (struct sockaddr *)&iflr->dstaddr;
-		if (sa->sa_family
-		 && sa->sa_family != AF_INET)
+		if (sa->sa_family != AF_UNSPEC && sa->sa_family != AF_INET)
 			return EINVAL;
-		if (sa->sa_len && sa->sa_len != sizeof(struct sockaddr_in))
+		if (sa->sa_len != 0 && sa->sa_len != sizeof(struct sockaddr_in))
 			return EINVAL;
 		break;
 	default: /*shouldn't happen*/
@@ -678,7 +670,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		return EOPNOTSUPP;
 #endif
 	}
-	if (sizeof(struct in_addr) * 8 < iflr->prefixlen)
+	if (sizeof(struct in_addr) * NBBY < iflr->prefixlen)
 		return EINVAL;
 
 	switch (cmd) {

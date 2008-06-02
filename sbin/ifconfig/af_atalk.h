@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.h,v 1.1 2005/03/19 23:32:55 thorpej Exp $	*/
+/*	$NetBSD: af_atalk.h,v 1.1.20.1 2008/06/02 13:21:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -28,11 +28,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  */
+extern struct ifaliasreq at_addreq;
+extern struct pinteger phase;
+extern struct pstr parse_range;
+extern struct pkw atalk;
 
-void	setatrange(const char *, int);
-void	setatphase(const char *, int);
+int	setatrange(prop_dictionary_t, prop_dictionary_t);
+int	setatphase(prop_dictionary_t, prop_dictionary_t);
 
 void	checkatrange(struct sockaddr *);
 
-void	at_status(int);
-void	at_getaddr(const char *, int);
+void	at_status(prop_dictionary_t, prop_dictionary_t, bool);
+void	at_getaddr(const struct paddr_prefix *, int);
+void	at_commit_address(prop_dictionary_t, prop_dictionary_t);

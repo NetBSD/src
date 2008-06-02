@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.16.14.1 2008/04/03 12:43:08 mjf Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.16.14.2 2008/06/02 13:24:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.16.14.1 2008/04/03 12:43:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.16.14.2 2008/06/02 13:24:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -194,9 +194,9 @@ hci_acl_timeout(void *arg)
 {
 	struct hci_link *link = arg;
 	hci_discon_cp cp;
-	int s, err;
+	int err;
 
-	s = splsoftnet();
+	mutex_enter(bt_lock);
 	callout_ack(&link->hl_expire);
 
 	if (link->hl_refcnt > 0)
@@ -233,7 +233,7 @@ hci_acl_timeout(void *arg)
 	}
 
 out:
-	splx(s);
+	mutex_exit(bt_lock);
 }
 
 /*

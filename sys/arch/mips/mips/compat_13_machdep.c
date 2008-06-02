@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.15 2007/12/20 23:02:40 dsl Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.15.6.1 2008/06/02 13:22:24 mjf Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.15 2007/12/20 23:02:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.15.6.1 2008/06/02 13:22:24 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	if (scp->sc_fpused)
 		l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
@@ -85,7 +85,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	else
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	/* Restore signal mask-> */
 	native_sigset13_to_sigset(&ksc.sc_mask, &mask);

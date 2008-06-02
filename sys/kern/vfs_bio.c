@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_bio.c,v 1.189.6.1 2008/04/03 12:43:05 mjf Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.189.6.2 2008/06/02 13:24:14 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -114,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.189.6.1 2008/04/03 12:43:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.189.6.2 2008/06/02 13:24:14 mjf Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -126,11 +119,11 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.189.6.1 2008/04/03 12:43:05 mjf Exp $"
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
 
@@ -479,7 +472,7 @@ bufinit(void)
 		struct pool_allocator *pa;
 		struct pool *pp = &bmempools[i];
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
-		char *name = malloc(8, M_TEMP, M_WAITOK);
+		char *name = kmem_alloc(8, KM_SLEEP);
 		if (__predict_true(size >= 1024))
 			(void)snprintf(name, 8, "buf%dk", size / 1024);
 		else
@@ -506,7 +499,7 @@ bufinit(void)
 	 * For now, use an empirical 3K per buffer.
 	 */
 	nbuf = (bufmem_hiwater / 1024) / 3;
-	bufhashtbl = hashinit(nbuf, HASH_LIST, M_CACHE, M_WAITOK, &bufhash);
+	bufhashtbl = hashinit(nbuf, HASH_LIST, true, &bufhash);
 }
 
 void
@@ -523,10 +516,6 @@ static int
 buf_lotsfree(void)
 {
 	int try, thresh;
-
-	/* Always allocate if doing copy on write */
-	if (curlwp->l_pflag & LP_UFSCOW)
-		return 1;
 
 	/* Always allocate if less than the low water mark. */
 	if (bufmem < bufmem_lowater)
@@ -713,15 +702,19 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
  */
 int
 bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
-    buf_t **bpp)
+    int flags, buf_t **bpp)
 {
 	buf_t *bp;
+	int error;
 
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
 
 	/* Wait for the read to complete, and return result. */
-	return (biowait(bp));
+	error = biowait(bp);
+	if (error == 0 && (flags & B_MODIFY) != 0)
+		error = fscow_run(bp, true);
+	return error;
 }
 
 /*
@@ -730,10 +723,10 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
  */
 int
 breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
-    int *rasizes, int nrablks, kauth_cred_t cred, buf_t **bpp)
+    int *rasizes, int nrablks, kauth_cred_t cred, int flags, buf_t **bpp)
 {
 	buf_t *bp;
-	int i;
+	int error, i;
 
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
 
@@ -754,7 +747,10 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 	mutex_exit(&bufcache_lock);
 
 	/* Otherwise, we had to start a read for it; wait until it's valid. */
-	return (biowait(bp));
+	error = biowait(bp);
+	if (error == 0 && (flags & B_MODIFY) != 0)
+		error = fscow_run(bp, true);
+	return error;
 }
 
 /*
@@ -764,10 +760,11 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
  */
 int
 breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno,
-    int rabsize, kauth_cred_t cred, buf_t **bpp)
+    int rabsize, kauth_cred_t cred, int flags, buf_t **bpp)
 {
 
-	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));
+	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1,
+	    cred, flags, bpp));
 }
 
 /*
@@ -886,6 +883,9 @@ void
 bdwrite(buf_t *bp)
 {
 
+	KASSERT(bp->b_vp == NULL || bp->b_vp->v_tag != VT_UFS ||
+	    ISSET(bp->b_flags, B_COWDONE));
+
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
 
 	/* If this is a tape block, write the block now. */
@@ -978,10 +978,8 @@ brelsel(buf_t *bp, int set)
 	cv_signal(&needbuffer_cv);
 
 	/* Wake up any proceeses waiting for _this_ buffer to become */
-	if (ISSET(bp->b_cflags, BC_WANTED) != 0) {
+	if (ISSET(bp->b_cflags, BC_WANTED))
 		CLR(bp->b_cflags, BC_WANTED|BC_AGE);
-		cv_broadcast(&bp->b_busy);
-	}
 
 	/*
 	 * Determine which queue the buffer should be on, then put it there.
@@ -1075,6 +1073,7 @@ already_queued:
 	/* Unlock the buffer. */
 	CLR(bp->b_cflags, BC_AGE|BC_BUSY|BC_NOCACHE);
 	CLR(bp->b_flags, B_ASYNC);
+	cv_broadcast(&bp->b_busy);
 
 	if (bp->b_bufsize <= 0)
 		brele(bp);
@@ -1512,6 +1511,7 @@ biodone2(buf_t *bp)
 
 	if ((callout = bp->b_iodone) != NULL) {
 		/* Note callout done, then call out. */
+		KASSERT(!cv_has_waiters(&bp->b_done));
 		KERNEL_LOCK(1, NULL);		/* XXXSMP */
 		bp->b_iodone = NULL;
 		mutex_exit(bp->b_objlock);
@@ -1519,6 +1519,7 @@ biodone2(buf_t *bp)
 		KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 	} else if (ISSET(bp->b_flags, B_ASYNC)) {
 		/* If async, release. */
+		KASSERT(!cv_has_waiters(&bp->b_done));
 		mutex_exit(bp->b_objlock);
 		brelse(bp, 0);
 	} else {
@@ -1611,8 +1612,7 @@ buf_syncwait(void)
 		if (nbusy_prev == 0)
 			nbusy_prev = nbusy;
 		printf("%d ", nbusy);
-		tsleep(&nbusy, PRIBIO, "bflush",
-		    (iter == 0) ? 1 : hz / 25 * iter);
+		kpause("bflush", false, (iter == 0) ? 1 : hz / 25 * iter, NULL);
 		if (nbusy >= nbusy_prev) /* we didn't flush anything */
 			iter++;
 		else
@@ -1923,7 +1923,7 @@ nestiobuf_iodone(buf_t *bp)
 	KASSERT(bp->b_bcount <= bp->b_bufsize);
 	KASSERT(mbp != bp);
 
-	error = 0;
+	error = bp->b_error;
 	if (bp->b_error == 0 &&
 	    (bp->b_bcount < bp->b_bufsize || bp->b_resid > 0)) {
 		/*
@@ -1989,7 +1989,8 @@ nestiobuf_done(buf_t *mbp, int donebytes, int error)
 	mutex_enter(mbp->b_objlock);
 	KASSERT(mbp->b_resid >= donebytes);
 	mbp->b_resid -= donebytes;
-	mbp->b_error = error;
+	if (error)
+		mbp->b_error = error;
 	if (mbp->b_resid == 0) {
 		mutex_exit(mbp->b_objlock);
 		biodone(mbp);

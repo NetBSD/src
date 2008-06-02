@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2008/02/03 19:58:34 skrll Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2008/06/02 13:22:07 mjf Exp $
 
 #	$OpenBSD: Makefile,v 1.10 2000/05/31 19:56:51 mickey Exp $
 
 PROG=		boot
-PROGSOURCE=	srt0.S boot.c bootinfo.c conf.c tgets.c
+PROGSOURCE=	srt0.S boot.c bootinfo.c ct.c conf.c lf.c lif.c tgets.c
 NEWVERSWHAT=	"LIF/FFS/LFS Boot"
 
 CLEANFILES+=	boot.gdb boot.map
@@ -16,5 +16,8 @@ CPPFLAGS+=	-D__daddr_t=int32_t
 CPPFLAGS+=	-DBOOTARG_APIVER=3
 CPPFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 WARNS=	2
+
+CPPFLAGS+=		-D__INTERNAL_LIBSA_CREAD -DCOMPAT_UFS
+SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
 
 .include "../Makefile.buildboot"

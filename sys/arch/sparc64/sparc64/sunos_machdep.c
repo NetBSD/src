@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.28 2007/12/23 10:28:39 rjs Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.28.6.1 2008/06/02 13:22:44 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.28 2007/12/23 10:28:39 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.28.6.1 2008/06/02 13:22:44 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -155,7 +153,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	newsp = (struct rwindow32 *)((long)fp - sizeof(struct rwindow32));
 	write_user_windows();
 #ifdef DEBUG
@@ -167,7 +165,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	error = (rwindow_save(l) || 
 	    copyout((void *)&sf, (void *)fp, sizeof sf) || 
 	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error) {
 		/*
@@ -222,7 +220,7 @@ sunos_sys_sigreturn(register struct lwp *l, const struct sunos_sys_sigreturn_arg
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
 	if (rwindow_save(l)) {
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		sigexit(l, SIGILL);
 	}
 #ifdef DEBUG
@@ -274,7 +272,7 @@ sunos_sys_sigreturn(register struct lwp *l, const struct sunos_sys_sigreturn_arg
 	}
 #endif
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (scp->sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
@@ -282,7 +280,7 @@ sunos_sys_sigreturn(register struct lwp *l, const struct sunos_sys_sigreturn_arg
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }

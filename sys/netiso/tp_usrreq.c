@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.34 2008/02/06 21:57:55 ad Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.34.6.1 2008/06/02 13:24:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.34 2008/02/06 21:57:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.34.6.1 2008/06/02 13:24:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,6 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
 	struct tp_pcb *tpcb;
-	int             s;
 	int             error = 0;
 	int             flags, *outflags = &flags;
 	u_long          eotsdu = 0;
@@ -404,7 +403,6 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 
-	s = splsoftnet();
 	tpcb = sototpcb(so);
 	if (tpcb == 0 && req != PRU_ATTACH) {
 #ifdef TPPT
@@ -419,6 +417,7 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (tpcb != 0) {
 			error = EISCONN;
 			break;
@@ -725,7 +724,6 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/*
 		 * stat: don't bother with a blocksize.
 		 */
-		splx(s);
 		return (0);
 
 	case PRU_SOCKADDR:
@@ -757,7 +755,6 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 #endif
 release:
-	splx(s);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.24 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.24.48.1 2008/06/02 13:23:49 mjf Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.24 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.24.48.1 2008/06/02 13:23:49 mjf Exp $");
 
 #include <sys/errno.h>
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.24 2006/11/16 01:33:23 christos Exp 
 
 #define RF_MAX_FREE_REVENT 128
 #define RF_MIN_FREE_REVENT  32
+#define RF_EVENTQ_WAIT 5000
 
 #include <sys/proc.h>
 #include <sys/kernel.h>
@@ -78,6 +79,7 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc)
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
 	RF_ReconCtrl_t *rctrl = raidPtr->reconControl;
 	RF_ReconEvent_t *event;
+	int stall_count;
 
 	RF_LOCK_MUTEX(rctrl->eq_mutex);
 	/* q null and count==0 must be equivalent conditions */
@@ -119,14 +121,25 @@ rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc)
 			reconDesc->reconExecTicks = 0;
 		}
 	}
+
+	stall_count = 0;
 	while (!rctrl->eventQueue) {
 #if RF_RECON_STATS > 0
 		reconDesc->numReconEventWaits++;
 #endif				/* RF_RECON_STATS > 0 */
 
 		ltsleep(&(rctrl)->eventQueue, PRIBIO,  "raidframe eventq",
-			0, &((rctrl)->eq_mutex));
+			RF_EVENTQ_WAIT, &((rctrl)->eq_mutex));
 
+		stall_count++;
+
+		if ((stall_count > 10) && 
+		    rctrl->headSepCBList) {
+			/* There is work to do on the callback list, and
+			   we've waited long enough... */
+			rf_WakeupHeadSepCBWaiters(raidPtr);
+			stall_count = 0;
+		}
 		reconDesc->reconExecTicks = 0;	/* we've just waited */
 	}
 

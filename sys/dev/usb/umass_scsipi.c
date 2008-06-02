@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.30.36.1 2008/04/03 12:42:57 mjf Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.30.36.2 2008/06/02 13:23:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.30.36.1 2008/04/03 12:42:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.30.36.2 2008/06/02 13:23:55 mjf Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -138,7 +131,7 @@ umass_scsi_attach(struct umass_softc *sc)
 
 	sc->sc_refcnt++;
 	scbus->base.sc_child =
-	    config_found_ia(&sc->sc_dev, "scsi", &scbus->sc_channel,
+	    config_found_ia(sc->sc_dev, "scsi", &scbus->sc_channel,
 		scsiprint);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
@@ -166,7 +159,7 @@ umass_atapi_attach(struct umass_softc *sc)
 
 	sc->sc_refcnt++;
 	scbus->base.sc_child =
-	    config_found_ia(&sc->sc_dev, "atapi", &scbus->sc_channel,
+	    config_found_ia(sc->sc_dev, "atapi", &scbus->sc_channel,
 		atapiprint);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
@@ -188,7 +181,7 @@ umass_scsipi_setup(struct umass_softc *sc)
 
 	/* Fill in the adapter. */
 	memset(&scbus->sc_adapter, 0, sizeof(scbus->sc_adapter));
-	scbus->sc_adapter.adapt_dev = &sc->sc_dev;
+	scbus->sc_adapter.adapt_dev = sc->sc_dev;
 	scbus->sc_adapter.adapt_nchannels = 1;
 	scbus->sc_adapter.adapt_request = umass_scsipi_request;
 	scbus->sc_adapter.adapt_minphys = umass_scsipi_minphys;
@@ -214,7 +207,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 	struct scsipi_periph *periph;
 	struct scsipi_xfer *xs;
-	struct umass_softc *sc = (void *)adapt->adapt_dev;
+	struct umass_softc *sc = device_private(adapt->adapt_dev);
 	struct umass_scsipi_softc *scbus = (struct umass_scsipi_softc *)sc->bus;
 	struct scsipi_generic *cmd;
 	int cmdlen;
@@ -367,7 +360,7 @@ umass_scsipi_getgeom(struct scsipi_periph *periph, struct disk_parms *dp,
 		     u_long sectors)
 {
 	struct umass_softc *sc =
-	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	    device_private(periph->periph_channel->chan_adapter->adapt_dev);
 
 	/* If it's not a floppy, we don't know what to do. */
 	if (sc->sc_cmd != UMASS_CPROTO_UFI)

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 2007/12/24 14:17:17 njoly Exp $
+	$NetBSD: syscalls.master,v 1.22.6.1 2008/06/02 13:23:00 mjf Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -108,7 +108,7 @@
 24	STD		{ int linux_sys_sched_yield(void); }
 25	STD		{ void *linux_sys_mremap(void *old_address, \
 			    size_t old_size, size_t new_size, u_long flags); }
-26	STD		{ int linux_sys_msync(void *addr, int len, int fl); }
+26	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
 27	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
 28	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
 #ifdef SYSVSHM

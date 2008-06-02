@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.192 2008/02/06 03:20:51 matt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.192.6.1 2008/06/02 13:24:24 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -98,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.192 2008/02/06 03:20:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.192.6.1 2008/06/02 13:24:24 mjf Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -129,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.192 2008/02/06 03:20:51 matt Exp $")
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_private.h>
 #include <netinet/in_offload.h>
 
 #ifdef MROUTING
@@ -139,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.192 2008/02/06 03:20:51 matt Exp $")
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif /*IPSEC*/
@@ -262,7 +257,7 @@ ip_output(struct mbuf *m0, ...)
 		ip->ip_off = htons(0);
 		/* ip->ip_id filled in after we find out source ia */
 		ip->ip_hl = hlen >> 2;
-		ipstat.ips_localout++;
+		IP_STATINC(IP_STAT_LOCALOUT);
 	} else {
 		hlen = ip->ip_hl << 2;
 	}
@@ -298,7 +293,7 @@ ip_output(struct mbuf *m0, ...)
 	 */
 	if (flags & IP_ROUTETOIF) {
 		if ((ia = ifatoia(ifa_ifwithladdr(sintocsa(dst)))) == NULL) {
-			ipstat.ips_noroute++;
+			IP_STATINC(IP_STAT_NOROUTE);
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -315,7 +310,7 @@ ip_output(struct mbuf *m0, ...)
 		if (rt == NULL)
 			rt = rtcache_init(ro);
 		if (rt == NULL) {
-			ipstat.ips_noroute++;
+			IP_STATINC(IP_STAT_NOROUTE);
 			error = EHOSTUNREACH;
 			goto bad;
 		}
@@ -346,7 +341,7 @@ ip_output(struct mbuf *m0, ...)
 		 * output
 		 */
 		if (!ifp) {
-			ipstat.ips_noroute++;
+			IP_STATINC(IP_STAT_NOROUTE);
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -359,7 +354,7 @@ ip_output(struct mbuf *m0, ...)
 		     (ifp->if_flags & IFF_MULTICAST) == 0) ||
 		    ((m->m_flags & M_BCAST) &&
 		     (ifp->if_flags & (IFF_BROADCAST|IFF_POINTOPOINT)) == 0))  {
-			ipstat.ips_noroute++;
+			IP_STATINC(IP_STAT_NOROUTE);
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -447,7 +442,7 @@ ip_output(struct mbuf *m0, ...)
 	 * RFC 1112
 	 */
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
-		ipstat.ips_odropped++;
+		IP_STATINC(IP_STAT_ODROPPED);
 		error = EADDRNOTAVAIL;
 		goto bad;
 	}
@@ -524,7 +519,7 @@ sendit:
 	}
 
 	if (sp == NULL) {
-		ipsecstat.out_inval++;
+		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 		goto bad;
 	}
 
@@ -536,7 +531,7 @@ sendit:
 		/*
 		 * This packet is just discarded.
 		 */
-		ipsecstat.out_polvio++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_POLVIO);
 		goto bad;
 
 	case IPSEC_POLICY_BYPASS:
@@ -867,7 +862,7 @@ spd_done:
 		if (flags & IP_RETURNMTU)
 			*mtu_p = mtu;
 		error = EMSGSIZE;
-		ipstat.ips_cantfrag++;
+		IP_STATINC(IP_STAT_CANTFRAG);
 		goto bad;
 	}
 
@@ -916,7 +911,7 @@ spd_done:
 	}
 
 	if (error == 0)
-		ipstat.ips_fragmented++;
+		IP_STATINC(IP_STAT_FRAGMENTED);
 done:
 	rtcache_free(&iproute);
 
@@ -975,7 +970,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == 0) {
 			error = ENOBUFS;
-			ipstat.ips_odropped++;
+			IP_STATINC(IP_STAT_ODROPPED);
 			goto sendorfree;
 		}
 		MCLAIM(m, m0->m_owner);
@@ -1004,7 +999,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_next = m_copym(m0, off, len, M_DONTWAIT);
 		if (m->m_next == 0) {
 			error = ENOBUFS;	/* ??? */
-			ipstat.ips_odropped++;
+			IP_STATINC(IP_STAT_ODROPPED);
 			goto sendorfree;
 		}
 		m->m_pkthdr.len = mhlen + len;
@@ -1017,7 +1012,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			m->m_pkthdr.csum_data |= mhlen << 16;
 		}
-		ipstat.ips_ofragments++;
+		IP_STATINC(IP_STAT_OFRAGMENTS);
 		fragments++;
 	}
 	/*
@@ -1048,7 +1043,7 @@ sendorfree:
 		if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
 		    error == 0) {
 			error = ENOBUFS;
-			ipstat.ips_odropped++;
+			IP_STATINC(IP_STAT_ODROPPED);
 			IFQ_INC_DROPS(&ifp->if_snd);
 		}
 		splx(s);

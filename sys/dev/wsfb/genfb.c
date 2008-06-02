@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.13.6.1 2008/04/03 12:42:59 mjf Exp $ */
+/*	$NetBSD: genfb.c,v 1.13.6.2 2008/06/02 13:23:57 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -30,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.13.6.1 2008/04/03 12:42:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.13.6.2 2008/06/02 13:23:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,13 +148,12 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	/* do not attach when we're not console */
 	if (!console) {
-		aprint_normal("%s: no console, unable to continue\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "no console, unable to continue\n");
 		return -1;
 	}
 
-	aprint_verbose("%s: framebuffer at %p, size %dx%d, depth %d, "
-	    "stride %d\n", sc->sc_dev.dv_xname, sc->sc_fbaddr,
+	aprint_verbose_dev(&sc->sc_dev, "framebuffer at %p, size %dx%d, depth %d, "
+	    "stride %d\n", sc->sc_fbaddr,
 	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){

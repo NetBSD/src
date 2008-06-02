@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.71.6.1 2008/04/03 12:42:42 mjf Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.71.6.2 2008/06/02 13:23:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.71.6.1 2008/04/03 12:42:42 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.71.6.2 2008/06/02 13:23:27 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -133,9 +126,9 @@ epic_attach(sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct epic_control_data) + ETHER_PAD_LEN, PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(
-		    "%s: unable to allocate control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, 
+		    "unable to allocate control data, error = %d\n",
+		    error);
 		goto fail_0;
 	}
 
@@ -143,8 +136,7 @@ epic_attach(sc)
 	    sizeof(struct epic_control_data) + ETHER_PAD_LEN,
 	    (void **)&sc->sc_control_data,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error("%s: unable to map control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 	nullbuf =
@@ -155,17 +147,17 @@ epic_attach(sc)
 	    sizeof(struct epic_control_data), 1,
 	    sizeof(struct epic_control_data), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_cddmamap)) != 0) {
-		aprint_error("%s: unable to create control data DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create control data DMA map, "
+		    "error = %d\n", error);
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct epic_control_data), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(
-		    "%s: unable to load control data DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, 
+		    "unable to load control data DMA map, error = %d\n",
+		    error);
 		goto fail_3;
 	}
 
@@ -176,8 +168,8 @@ epic_attach(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    EPIC_NFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &EPIC_DSTX(sc, i)->ds_dmamap)) != 0) {
-			aprint_error("%s: unable to create tx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(&sc->sc_dev, "unable to create tx DMA map %d, "
+			    "error = %d\n", i, error);
 			goto fail_4;
 		}
 	}
@@ -189,8 +181,8 @@ epic_attach(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &EPIC_DSRX(sc, i)->ds_dmamap)) != 0) {
-			aprint_error("%s: unable to create rx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(&sc->sc_dev, "unable to create rx DMA map %d, "
+			    "error = %d\n", i, error);
 			goto fail_5;
 		}
 		EPIC_DSRX(sc, i)->ds_mbuf = NULL;
@@ -201,15 +193,15 @@ epic_attach(sc)
 	 */
 	if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_PAD_LEN, 1,
 	    ETHER_PAD_LEN, 0, BUS_DMA_NOWAIT,&sc->sc_nulldmamap)) != 0) {
-		printf("%s: unable to create pad buffer DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create pad buffer DMA map, "
+		    "error = %d\n", error);
 		goto fail_5;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_nulldmamap,
 	    nullbuf, ETHER_PAD_LEN, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load pad buffer DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to load pad buffer DMA map, "
+		    "error = %d\n", error);
 		goto fail_6;
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_nulldmamap, 0, ETHER_PAD_LEN,
@@ -247,7 +239,7 @@ epic_attach(sc)
 			break;
 	}
 
-	aprint_normal("%s: %s, Ethernet address %s\n", sc->sc_dev.dv_xname,
+	aprint_normal_dev(&sc->sc_dev, "%s, Ethernet address %s\n",
 	    devname, ether_sprintf(enaddr));
 
 	miiflags = 0;
@@ -280,11 +272,11 @@ epic_attach(sc)
 			    IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
 					 sc->sc_serinst),
 			    0, NULL);
-		aprint_normal("%s: 10base2/BNC\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "10base2/BNC\n");
 	} else
 		sc->sc_serinst = -1;
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = epic_ioctl;
@@ -310,8 +302,7 @@ epic_attach(sc)
 	 */
 	sc->sc_sdhook = shutdownhook_establish(epic_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish shutdown hook\n");
 	return;
 
 	/*
@@ -418,15 +409,14 @@ epic_start(ifp)
 
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
-				printf("%s: unable to allocate Tx mbuf\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "unable to allocate Tx mbuf\n");
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
-					printf("%s: unable to allocate Tx "
-					    "cluster\n", sc->sc_dev.dv_xname);
+					aprint_error_dev(&sc->sc_dev, "unable to allocate Tx "
+					    "cluster\n");
 					m_freem(m);
 					break;
 				}
@@ -436,8 +426,8 @@ epic_start(ifp)
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
-				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", sc->sc_dev.dv_xname, error);
+				aprint_error_dev(&sc->sc_dev, "unable to load Tx buffer, "
+				    "error = %d\n", error);
 				break;
 			}
 		}
@@ -554,7 +544,7 @@ epic_watchdog(ifp)
 {
 	struct epic_softc *sc = ifp->if_softc;
 
-	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: device timeout\n", device_xname(&sc->sc_dev));
 	ifp->if_oerrors++;
 
 	(void) epic_init(ifp);
@@ -654,11 +644,9 @@ epic_intr(arg)
 			 */
 			if ((rxstatus & ER_RXSTAT_PKTINTACT) == 0) {
 				if (rxstatus & ER_RXSTAT_CRCERROR)
-					printf("%s: CRC error\n",
-					    sc->sc_dev.dv_xname);
+					aprint_error_dev(&sc->sc_dev, "CRC error\n");
 				if (rxstatus & ER_RXSTAT_ALIGNERROR)
-					printf("%s: alignment error\n",
-					    sc->sc_dev.dv_xname);
+					aprint_error_dev(&sc->sc_dev, "alignment error\n");
 				ifp->if_ierrors++;
 				EPIC_INIT_RXDESC(sc, i);
 				continue;
@@ -744,8 +732,7 @@ epic_intr(arg)
 		 * Check for receive queue underflow.
 		 */
 		if (intstat & INTSTAT_RQE) {
-			printf("%s: receiver queue empty\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "receiver queue empty\n");
 			/*
 			 * Ring is already built; just restart the
 			 * receiver.
@@ -793,8 +780,7 @@ epic_intr(arg)
 			ifp->if_collisions +=
 			    TXSTAT_COLLISIONS(txstatus);
 			if (txstatus & ET_TXSTAT_CARSENSELOST)
-				printf("%s: lost carrier\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "lost carrier\n");
 		}
 
 		/* Update the dirty transmit buffer pointer. */
@@ -811,7 +797,7 @@ epic_intr(arg)
 		 * Kick the transmitter after a DMA underrun.
 		 */
 		if (intstat & INTSTAT_TXU) {
-			printf("%s: transmit underrun\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "transmit underrun\n");
 			bus_space_write_4(sc->sc_st, sc->sc_sh,
 			    EPIC_COMMAND, COMMAND_TXUGO);
 			if (sc->sc_txpending)
@@ -830,20 +816,15 @@ epic_intr(arg)
 	 */
 	if (intstat & INTSTAT_FATAL_INT) {
 		if (intstat & INTSTAT_PTA)
-			printf("%s: PCI target abort error\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "PCI target abort error\n");
 		else if (intstat & INTSTAT_PMA)
-			printf("%s: PCI master abort error\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "PCI master abort error\n");
 		else if (intstat & INTSTAT_APE)
-			printf("%s: PCI address parity error\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "PCI address parity error\n");
 		else if (intstat & INTSTAT_DPE)
-			printf("%s: PCI data parity error\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "PCI data parity error\n");
 		else
-			printf("%s: unknown fatal error\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unknown fatal error\n");
 		(void) epic_init(ifp);
 	}
 
@@ -1016,9 +997,9 @@ epic_init(ifp)
 		ds = EPIC_DSRX(sc, i);
 		if (ds->ds_mbuf == NULL) {
 			if ((error = epic_add_rxbuf(sc, i)) != 0) {
-				printf("%s: unable to allocate or map rx "
+				aprint_error_dev(&sc->sc_dev, "unable to allocate or map rx "
 				    "buffer %d error = %d\n",
-				    sc->sc_dev.dv_xname, i, error);
+				    i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -1069,7 +1050,7 @@ epic_init(ifp)
 
  out:
 	if (error)
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "interface not running\n");
 	return (error);
 }
 
@@ -1265,8 +1246,8 @@ epic_add_rxbuf(sc, idx)
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't load rx DMA map %d, error = %d\n",
-		    sc->sc_dev.dv_xname, idx, error);
+		aprint_error_dev(&sc->sc_dev, "can't load rx DMA map %d, error = %d\n",
+		    idx, error);
 		panic("epic_add_rxbuf");	/* XXX */
 	}
 
@@ -1366,7 +1347,7 @@ epic_mii_wait(sc, rw)
 		delay(2);
 	}
 	if (i == 50) {
-		printf("%s: MII timed out\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "MII timed out\n");
 		return (1);
 	}
 
@@ -1513,7 +1494,7 @@ epic_mediachange(ifp)
 	}
 #ifdef EPICMEDIADEBUG
 	printf("%s: using phy %s\n", ifp->if_xname,
-	       miisc->mii_dev.dv_xname);
+	       device_xname(miisc->mii_dev));
 #endif
 
 	if (miisc->mii_flags & MIIF_HAVEFIBER) {

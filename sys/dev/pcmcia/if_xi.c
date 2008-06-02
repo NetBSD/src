@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.63 2008/01/19 22:10:21 dyoung Exp $ */
+/*	$NetBSD: if_xi.c,v 1.63.6.1 2008/06/02 13:23:46 mjf Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.63 2008/01/19 22:10:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.63.6.1 2008/06/02 13:23:46 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -213,11 +213,11 @@ xi_attach(sc, myea)
 	/* Reset and initialize the card. */
 	xi_full_reset(sc);
 
-	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname, ether_sprintf(myea));
+	printf("%s: MAC address %s\n", device_xname(&sc->sc_dev), ether_sprintf(myea));
 
 	ifp = &sc->sc_ethercom.ec_if;
 	/* Initialize the ifnet structure. */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = xi_start;
 	ifp->if_ioctl = xi_ioctl;
@@ -254,7 +254,7 @@ xi_attach(sc, myea)
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 #if NRND > 0
-	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET, 0);
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(&sc->sc_dev), RND_TYPE_NET, 0);
 #endif
 }
 
@@ -334,7 +334,7 @@ xi_intr(arg)
 	/* Check to see if card has been ejected. */
 	if (isr == 0xff) {
 #ifdef DIAGNOSTIC
-		printf("%s: interrupt for dead card\n", sc->sc_dev.dv_xname);
+		printf("%s: interrupt for dead card\n", device_xname(&sc->sc_dev));
 #endif
 		goto end;
 	}
@@ -709,7 +709,7 @@ xi_watchdog(ifp)
 {
 	struct xi_softc *sc = ifp->if_softc;
 
-	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: device timeout\n", device_xname(&sc->sc_dev));
 	++ifp->if_oerrors;
 
 	xi_reset(sc);

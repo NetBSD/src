@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.18 2007/10/19 12:00:35 ad Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.18.16.1 2008/06/02 13:23:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -76,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.18 2007/10/19 12:00:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.18.16.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +189,7 @@ ep_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map the pio registers */
 	if (bus_space_map(ma->ma_iot, iobase, MCA_IOSZ, 0, &ioh)) {
-		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map i/o space\n");
 		return;
 	}
 
@@ -225,8 +218,7 @@ ep_mca_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish the interrupt. */
 	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
 		return;
 	}
 
@@ -251,8 +243,7 @@ ep_mca_attach(struct device *parent, struct device *self, void *aux)
 		media = IFM_10_2;
 		break;
 	default:
-		printf("%s: cannot determine media\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, " cannot determine media\n");
 		return;
 	}
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|media);

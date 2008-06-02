@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_distopenpic.c,v 1.1 2008/01/17 23:43:00 garbled Exp $ */
+/*	$NetBSD: pic_distopenpic.c,v 1.1.12.1 2008/06/02 13:22:33 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 Tim Rightnour
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.1 2008/01/17 23:43:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.1.12.1 2008/06/02 13:22:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -52,6 +52,7 @@ static void distopic_write(struct openpic_ops *, int, int, u_int);
 static void distopic_establish_irq(struct pic_ops *, int, int, int);
 static void distopic_enable_irq(struct pic_ops *, int, int);
 static void distopic_disable_irq(struct pic_ops *, int);
+static void distopic_finish_setup(struct pic_ops *);
 
 struct pic_ops *
 setup_distributed_openpic(void *addr, int nrofisus, void **isu, int *maps)
@@ -96,7 +97,7 @@ setup_distributed_openpic(void *addr, int nrofisus, void **isu, int *maps)
 	pic->pic_get_irq = opic_get_irq;
 	pic->pic_ack_irq = opic_ack_irq;
 	pic->pic_establish_irq = distopic_establish_irq;
-	pic->pic_finish_setup = opic_finish_setup;
+	pic->pic_finish_setup = distopic_finish_setup;
 	opicops->flags = OPENPIC_FLAG_DIST;
 	strcpy(pic->pic_name, "openpic");
 	pic_add(pic);
@@ -216,4 +217,25 @@ distopic_disable_irq(struct pic_ops *pic, int irq)
 	x = distopic_read(opic, isu, OPENPIC_DSRC_VECTOR_OFFSET(realirq));
 	x |= OPENPIC_IMASK;
 	distopic_write(opic, isu, OPENPIC_DSRC_VECTOR_OFFSET(realirq), x);
+}
+
+static void
+distopic_finish_setup(struct pic_ops *pic)
+{
+	struct openpic_ops *opic = (struct openpic_ops *)pic;
+	uint32_t cpumask = 0;
+	int i, irq;
+
+#ifdef OPENPIC_DISTRIBUTE
+	for (i = 0; i < ncpu; i++)
+		cpumask |= (1 << cpu_info[i].ci_index);
+#else
+	cpumask = 1;
+#endif
+	for (i=0; i < opic->nrofisus; i++) {
+		for (irq = 0; irq < opic->irq_per[i]; irq++) {
+			distopic_write(opic, i, OPENPIC_DSRC_IDEST_OFFSET(irq),
+			    cpumask);
+		}
+	}
 }

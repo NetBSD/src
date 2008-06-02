@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.12 2007/10/21 17:03:37 degroote Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.12.16.1 2008/06/02 13:23:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.12 2007/10/21 17:03:37 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.12.16.1 2008/06/02 13:23:53 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -252,31 +252,31 @@ zyd_attachhook(void *xsc)
 
 	fwname = (sc->mac_rev == ZYD_ZD1211) ? "zyd-zd1211" : "zyd-zd1211b";
 	if ((error = firmware_open("zyd", fwname, &fwh)) != 0) {
-		printf("%s: failed to open firmware %s (error=%d)\n",
-		    USBDEVNAME(sc->sc_dev), fwname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "failed to open firmware %s (error=%d)\n", fwname, error);
 		return error;
 	}
 	size = firmware_get_size(fwh);
 	fw = firmware_malloc(size);
 	if (fw == NULL) {
-		printf("%s: failed to allocate firmware memory\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev,
+		    "failed to allocate firmware memory\n");
 		firmware_close(fwh);
 		return ENOMEM;;
 	}
 	error = firmware_read(fwh, 0, fw, size);
 	firmware_close(fwh);
 	if (error != 0) {
-		printf("%s: failed to read firmware (error %d)\n",
-		    USBDEVNAME(sc->sc_dev), error);
+		aprint_error_dev(sc->sc_dev,
+		    "failed to read firmware (error %d)\n", error);
 		firmware_free(fw, 0);
 		return error;
 	}
 
 	error = zyd_loadfirmware(sc, fw, size);
 	if (error != 0) {
-		printf("%s: could not load firmware (error=%d)\n",
-		    USBDEVNAME(sc->sc_dev), error);
+		aprint_error_dev(sc->sc_dev,
+		    "could not load firmware (error=%d)\n", error);
 		firmware_free(fw, 0);
 		return ENXIO;
 	}
@@ -297,21 +297,21 @@ USB_ATTACH(zyd)
 	usb_device_descriptor_t* ddesc;
 	struct ifnet *ifp = &sc->sc_if;
 
+	sc->sc_dev = self;
 	sc->sc_udev = uaa->device;
 	sc->sc_flags = 0;
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->mac_rev = zyd_lookup(uaa->vendor, uaa->product)->rev;
 
 	ddesc = usbd_get_device_descriptor(sc->sc_udev);
 	if (UGETW(ddesc->bcdDevice) < 0x4330) {
-		printf("%s: device version mismatch: 0x%x "
-		    "(only >= 43.30 supported)\n", USBDEVNAME(sc->sc_dev),
-		    UGETW(ddesc->bcdDevice));
+		aprint_error_dev(self, "device version mismatch: 0x%x "
+		    "(only >= 43.30 supported)\n", UGETW(ddesc->bcdDevice));
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -351,42 +351,42 @@ zyd_complete_attach(struct zyd_softc *sc)
 
 	error = usbd_set_config_no(sc->sc_udev, ZYD_CONFIG_NO, 1);
 	if (error != 0) {
-		printf("%s: setting config no failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "setting config no failed\n");
 		goto fail;
 	}
 
 	error = usbd_device2interface_handle(sc->sc_udev, ZYD_IFACE_INDEX,
 	    &sc->sc_iface);
 	if (error != 0) {
-		printf("%s: getting interface handle failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev,
+		    "getting interface handle failed\n");
 		goto fail;
 	}
 
 	if ((error = zyd_open_pipes(sc)) != 0) {
-		printf("%s: could not open pipes\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "could not open pipes\n");
 		goto fail;
 	}
 
 	if ((error = zyd_read_eeprom(sc)) != 0) {
-		printf("%s: could not read EEPROM\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "could not read EEPROM\n");
 		goto fail;
 	}
 
 	if ((error = zyd_rf_attach(sc, sc->rf_rev)) != 0) {
-		printf("%s: could not attach RF\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "could not attach RF\n");
 		goto fail;
 	}
 
 	if ((error = zyd_hw_init(sc)) != 0) {
-		printf("%s: hardware initialization failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev,
+		    "hardware initialization failed\n");
 		goto fail;
 	}
 
-	printf("%s: HMAC ZD1211%s, FW %02x.%02x, RF %s, PA %x, address %s\n",
-	    USBDEVNAME(sc->sc_dev), (sc->mac_rev == ZYD_ZD1211) ? "": "B",
+	aprint_normal_dev(sc->sc_dev,
+	    "HMAC ZD1211%s, FW %02x.%02x, RF %s, PA %x, address %s\n",
+	    (sc->mac_rev == ZYD_ZD1211) ? "": "B",
 	    sc->fw_rev >> 8, sc->fw_rev & 0xff, zyd_rf_name(sc->rf_rev),
 	    sc->pa_rev, ether_sprintf(ic->ic_myaddr));
 
@@ -2673,7 +2673,7 @@ zyd_newassoc(struct ieee80211_node *ni, int isnew)
 int
 zyd_activate(device_ptr_t self, enum devact act)
 {
-	struct zyd_softc *sc = (struct zyd_softc *)self;
+	struct zyd_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.21 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.21.6.1 2008/06/02 13:22:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.21 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.21.6.1 2008/06/02 13:22:40 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,22 +67,22 @@ struct esp_softc {
 };
 
 
-int	espmatch_obio(struct device *, struct cfdata *, void *);
-void	espattach_obio(struct device *, struct device *, void *);
+int	espmatch_obio(device_t, cfdata_t, void *);
+void	espattach_obio(device_t, device_t, void *);
 
 /* Linkup to the rest of the kernel */
-CFATTACH_DECL(esp_obio, sizeof(struct esp_softc),
+CFATTACH_DECL_NEW(esp_obio, sizeof(struct esp_softc),
     espmatch_obio, espattach_obio, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.
  */
-static u_char	esp_read_reg(struct ncr53c9x_softc *, int);
-static void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
+static uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
+static void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 static int	esp_dma_isintr(struct ncr53c9x_softc *);
 static void	esp_dma_reset(struct ncr53c9x_softc *);
 static int	esp_dma_intr(struct ncr53c9x_softc *);
-static int	esp_dma_setup(struct ncr53c9x_softc *, void **,
+static int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **,
 				    size_t *, int, size_t *);
 static void	esp_dma_go(struct ncr53c9x_softc *);
 static void	esp_dma_stop(struct ncr53c9x_softc *);
@@ -109,30 +102,32 @@ static struct ncr53c9x_glue esp_obio_glue = {
 };
 
 int
-espmatch_obio(struct device *parent, struct cfdata *cf, void *aux)
+espmatch_obio(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba;
 
 	if (uoba->uoba_isobio4 == 0)
-		return (0);
+		return 0;
 
 	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, oba->oba_paddr,
+	return bus_space_probe(oba->oba_bustag, oba->oba_paddr,
 				1,	/* probe size */
 				0,	/* offset */
 				0,	/* flags */
-				NULL, NULL));
+				NULL, NULL);
 }
 
 void
-espattach_obio(struct device *parent, struct device *self, void *aux)
+espattach_obio(device_t parent, device_t self, void *aux)
 {
-	device_t dma_dev;
+	struct esp_softc *esc = device_private(self);
+	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
-	struct esp_softc *esc = (void *)self;
-	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
+	device_t dma_dev;
+
+	sc->sc_dev = self;
 
 	esc->sc_bustag = oba->oba_bustag;
 	esc->sc_dmatag = oba->oba_dmatag;
@@ -154,7 +149,7 @@ espattach_obio(struct device *parent, struct device *self, void *aux)
 			  16,	/* size (of ncr53c9xreg) */
 			  BUS_SPACE_MAP_LINEAR,
 			  &esc->sc_reg) != 0) {
-		printf("%s @ obio: cannot map registers\n", self->dv_xname);
+		aprint_error(": cannot map registers\n");
 		return;
 	}
 
@@ -246,11 +241,11 @@ espattach_obio(struct device *parent, struct device *self, void *aux)
 
 	/* Establish interrupt channel */
 	bus_intr_establish(esc->sc_bustag, oba->oba_pri, IPL_BIO,
-			   ncr53c9x_intr, sc);
+	    ncr53c9x_intr, sc);
 
 	/* register interrupt stats */
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev.dv_xname, "intr");
+	    device_xname(self), "intr");
 
 	/* Do the common parts of attachment. */
 	sc->sc_adapter.adapt_minphys = minphys;
@@ -263,16 +258,16 @@ espattach_obio(struct device *parent, struct device *self, void *aux)
  * Glue functions.
  */
 
-static u_char
+static uint8_t
 esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (bus_space_read_1(esc->sc_bustag, esc->sc_reg, reg * 4));
+	return bus_space_read_1(esc->sc_bustag, esc->sc_reg, reg * 4);
 }
 
 static void
-esp_write_reg(struct ncr53c9x_softc *sc, int reg, u_char v)
+esp_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t v)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
@@ -284,7 +279,7 @@ esp_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (DMA_ISINTR(esc->sc_dma));
+	return DMA_ISINTR(esc->sc_dma);
 }
 
 static void
@@ -300,16 +295,16 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (DMA_INTR(esc->sc_dma));
+	return DMA_INTR(esc->sc_dma);
 }
 
 static int
-esp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
-	      int datain, size_t *dmasize)
+esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
+    int datain, size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (DMA_SETUP(esc->sc_dma, addr, len, datain, dmasize));
+	return DMA_SETUP(esc->sc_dma, addr, len, datain, dmasize);
 }
 
 static void
@@ -336,5 +331,5 @@ esp_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (DMA_ISACTIVE(esc->sc_dma));
+	return DMA_ISACTIVE(esc->sc_dma);
 }

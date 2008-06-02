@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.54.16.1 2008/04/03 12:42:39 mjf Exp $	*/
+/*	$NetBSD: aha.c,v 1.54.16.2 2008/06/02 13:23:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -53,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.54.16.1 2008/04/03 12:42:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.54.16.2 2008/06/02 13:23:17 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -141,7 +134,7 @@ aha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, struct aha_softc *sc,
 	u_char opcode = ibuf[0];
 
 	if (sc != NULL)
-		name = sc->sc_dev.dv_xname;
+		name = device_xname(&sc->sc_dev);
 	else
 		name = "(aha probe)";
 
@@ -306,7 +299,7 @@ aha_finish_ccbs(struct aha_softc *sc)
 		for (i = 0; i < AHA_MBX_SIZE; i++) {
 			if (wmbi->stat != AHA_MBI_FREE) {
 				printf("%s: mbi not in round-robin order\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 				goto AGAIN;
 			}
 			aha_nextmbx(wmbi, wmbx, mbi);
@@ -316,7 +309,7 @@ aha_finish_ccbs(struct aha_softc *sc)
 		}
 #ifdef AHADIAGnot
 		printf("%s: mbi interrupt with no full mailboxes\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 #endif
 		return;
 	}
@@ -326,7 +319,7 @@ AGAIN:
 		ccb = aha_ccb_phys_kv(sc, phystol(wmbi->ccb_addr));
 		if (!ccb) {
 			printf("%s: bad mbi ccb pointer; skipping\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			goto next;
 		}
 
@@ -371,7 +364,7 @@ AGAIN:
 
 		default:
 			printf("%s: bad mbi status %02x; skipping\n",
-			    sc->sc_dev.dv_xname, wmbi->stat);
+			    device_xname(&sc->sc_dev), wmbi->stat);
 			goto next;
 		}
 
@@ -405,7 +398,7 @@ aha_intr(arg)
 	u_char sts;
 
 #ifdef AHADEBUG
-	printf("%s: aha_intr ", sc->sc_dev.dv_xname);
+	printf("%s: aha_intr ", device_xname(&sc->sc_dev));
 #endif /*AHADEBUG */
 
 	/*
@@ -474,8 +467,8 @@ aha_init_ccb(struct aha_softc *sc, struct aha_ccb *ccb)
 	error = bus_dmamap_create(dmat, AHA_MAXXFER, AHA_NSEG, AHA_MAXXFER,
 	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &ccb->dmamap_xfer);
 	if (error) {
-		printf("%s: unable to create ccb DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create ccb DMA map, error = %d\n",
+		    error);
 		return (error);
 	}
 
@@ -506,8 +499,8 @@ aha_create_ccbs(struct aha_softc *sc, struct aha_ccb *ccbstore, int count)
 	for (i = 0; i < count; i++) {
 		ccb = &ccbstore[i];
 		if ((error = aha_init_ccb(sc, ccb)) != 0) {
-			printf("%s: unable to initialize ccb, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to initialize ccb, error = %d\n",
+			    error);
 			goto out;
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
@@ -689,13 +682,13 @@ aha_done(struct aha_softc *sc, struct aha_ccb *ccb)
 	 */
 #ifdef AHADIAG
 	if (ccb->flags & CCB_SENDING) {
-		printf("%s: exiting ccb still in transit!\n", sc->sc_dev.dv_xname);
+		printf("%s: exiting ccb still in transit!\n", device_xname(&sc->sc_dev));
 		Debugger();
 		return;
 	}
 #endif
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		printf("%s: exiting ccb not allocated!\n", device_xname(&sc->sc_dev));
 		Debugger();
 		return;
 	}
@@ -707,7 +700,7 @@ aha_done(struct aha_softc *sc, struct aha_ccb *ccb)
 				break;
 			default:	/* Other scsi protocol messes */
 				printf("%s: host_stat %x\n",
-				    sc->sc_dev.dv_xname, ccb->host_stat);
+				    device_xname(&sc->sc_dev), ccb->host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
 			}
@@ -725,7 +718,7 @@ aha_done(struct aha_softc *sc, struct aha_ccb *ccb)
 				break;
 			default:
 				printf("%s: target_stat %x\n",
-				    sc->sc_dev.dv_xname, ccb->target_stat);
+				    device_xname(&sc->sc_dev), ccb->target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
 			}
@@ -873,7 +866,7 @@ aha_init(struct aha_softc *sc)
 		struct aha_extbios extbios;
 		struct aha_unlock unlock;
 
-		printf("%s: unlocking mailbox interface\n", sc->sc_dev.dv_xname);
+		printf("%s: unlocking mailbox interface\n", device_xname(&sc->sc_dev));
 		extbios.cmd.opcode = AHA_EXT_BIOS;
 		aha_cmd(iot, ioh, sc,
 		    sizeof(extbios.cmd), (u_char *)&extbios.cmd,
@@ -881,7 +874,7 @@ aha_init(struct aha_softc *sc)
 
 #ifdef AHADEBUG
 		printf("%s: flags=%02x, mailboxlock=%02x\n",
-		    sc->sc_dev.dv_xname,
+		    device_xname(&sc->sc_dev),
 		    extbios.reply.flags, extbios.reply.mailboxlock);
 #endif /* AHADEBUG */
 
@@ -929,7 +922,7 @@ aha_init(struct aha_softc *sc)
 	    sizeof(setup.reply), (u_char *)&setup.reply);
 
 	printf("%s: %s, %s\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(&sc->sc_dev),
 	    setup.reply.sync_neg ? "sync" : "async",
 	    setup.reply.parity ? "parity" : "no parity");
 
@@ -938,7 +931,7 @@ aha_init(struct aha_softc *sc)
 		    (!setup.reply.sync[i].offset && !setup.reply.sync[i].period))
 			continue;
 		printf("%s targ %d: sync, offset %d, period %dnsec\n",
-		    sc->sc_dev.dv_xname, i,
+		    device_xname(&sc->sc_dev), i,
 		    setup.reply.sync[i].offset, setup.reply.sync[i].period * 50 + 200);
 	}
 
@@ -947,15 +940,14 @@ aha_init(struct aha_softc *sc)
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct aha_control),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate control structures, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to allocate control structures, "
+		    "error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct aha_control), (void **)&sc->sc_control,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map control structures, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to map control structures, error = %d\n", error);
 		return (error);
 	}
 
@@ -966,15 +958,15 @@ aha_init(struct aha_softc *sc)
 	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct aha_control),
 	    1, sizeof(struct aha_control), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_dmamap_control)) != 0) {
-		printf("%s: unable to create control DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create control DMA map, error = %d\n",
+		    error);
 		return (error);
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_control,
 	    sc->sc_control, sizeof(struct aha_control), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load control DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to load control DMA map, error = %d\n",
+		    error);
 		return (error);
 	}
 
@@ -983,12 +975,11 @@ aha_init(struct aha_softc *sc)
 	 */
 	i = aha_create_ccbs(sc, sc->sc_control->ac_ccbs, initial_ccbs);
 	if (i == 0) {
-		printf("%s: unable to create control blocks\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to create control blocks\n");
 		return (ENOMEM);
 	} else if (i != initial_ccbs) {
 		printf("%s: WARNING: only %d of %d control blocks created\n",
-		    sc->sc_dev.dv_xname, i, initial_ccbs);
+		    device_xname(&sc->sc_dev), i, initial_ccbs);
 	}
 
 	sc->sc_adapter.adapt_openings = i;
@@ -1068,7 +1059,7 @@ aha_inquire_setup_information(struct aha_softc *sc)
 
 #ifdef AHADEBUG
 	printf("%s: inquire %x, %x, %x, %x\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(&sc->sc_dev),
 	    revision.reply.boardid, revision.reply.spec_opts,
 	    revision.reply.revision_1, revision.reply.revision_2);
 #endif /* AHADEBUG */
@@ -1107,7 +1098,7 @@ aha_inquire_setup_information(struct aha_softc *sc)
 
 noinquire:
 	printf("%s: model AHA-%s, firmware %s\n",
-	       sc->sc_dev.dv_xname,
+	       device_xname(&sc->sc_dev),
 	       sc->sc_model, sc->sc_firmware);
 }
 
@@ -1172,7 +1163,7 @@ aha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			/* can't use S/G if zero length */
 			if (xs->cmdlen > sizeof(ccb->scsi_cmd)) {
 				printf("%s: cmdlen %d too large for CCB\n",
-				    sc->sc_dev.dv_xname, xs->cmdlen);
+				    device_xname(&sc->sc_dev), xs->cmdlen);
 				xs->error = XS_DRIVER_STUFFUP;
 				goto out_bad;
 			}
@@ -1220,10 +1211,10 @@ aha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				if (error == EFBIG) {
 					printf("%s: aha_scsi_cmd, more than %d"
 					    " DMA segments\n",
-					    sc->sc_dev.dv_xname, AHA_NSEG);
+					    device_xname(&sc->sc_dev), AHA_NSEG);
 				} else {
-					printf("%s: error %d loading DMA map\n",
-					    sc->sc_dev.dv_xname, error);
+					aprint_error_dev(&sc->sc_dev, "error %d loading DMA map\n",
+					    error);
 				}
 out_bad:
 				aha_free_ccb(sc, ccb);
@@ -1352,7 +1343,7 @@ aha_timeout(void *arg)
 	 */
 	aha_collect_mbo(sc);
 	if (ccb->flags & CCB_SENDING) {
-		printf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "not taking commands!\n");
 		Debugger();
 	}
 #endif

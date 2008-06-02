@@ -1,9 +1,7 @@
-/*	$NetBSD: dsutils.c,v 1.3 2007/12/11 13:16:04 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: dsutils - Dispatcher utilities
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,18 +114,15 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsutils.c,v 1.3 2007/12/11 13:16:04 lukem Exp $");
-
 #define __DSUTILS_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acparser.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acdispat.h>
-#include <dist/acpica/acinterp.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acdebug.h>
+#include "acpi.h"
+#include "acparser.h"
+#include "amlcode.h"
+#include "acdispat.h"
+#include "acinterp.h"
+#include "acnamesp.h"
+#include "acdebug.h"
 
 #define _COMPONENT          ACPI_DISPATCHER
         ACPI_MODULE_NAME    ("dsutils")
@@ -379,7 +374,8 @@ AcpiDsIsResultUsed (
             (Op->Common.Parent->Common.AmlOpcode == AML_PACKAGE_OP)      ||
             (Op->Common.Parent->Common.AmlOpcode == AML_VAR_PACKAGE_OP)  ||
             (Op->Common.Parent->Common.AmlOpcode == AML_BUFFER_OP)       ||
-            (Op->Common.Parent->Common.AmlOpcode == AML_INT_EVAL_SUBTREE_OP))
+            (Op->Common.Parent->Common.AmlOpcode == AML_INT_EVAL_SUBTREE_OP) ||
+            (Op->Common.Parent->Common.AmlOpcode == AML_BANK_FIELD_OP))
         {
             /*
              * These opcodes allow TermArg(s) as operands and therefore
@@ -831,10 +827,9 @@ AcpiDsCreateOperands (
     ACPI_STATUS             Status = AE_OK;
     ACPI_PARSE_OBJECT       *Arg;
     ACPI_PARSE_OBJECT       *Arguments[ACPI_OBJ_NUM_OPERANDS];
-    UINT8                   ArgCount = 0;
-    UINT8                   Count = 0;
-    UINT8                   Index = WalkState->NumOperands;
-    UINT8                   i;
+    UINT32                  ArgCount = 0;
+    UINT32                  Index = WalkState->NumOperands;
+    UINT32                  i;
 
 
     ACPI_FUNCTION_TRACE_PTR (DsCreateOperands, FirstArg);
@@ -870,7 +865,7 @@ AcpiDsCreateOperands (
 
         /* Force the filling of the operand stack in inverse order */
 
-        WalkState->OperandIndex = Index;
+        WalkState->OperandIndex = (UINT8) Index;
 
         Status = AcpiDsCreateOperand (WalkState, Arg, Index);
         if (ACPI_FAILURE (Status))
@@ -878,7 +873,6 @@ AcpiDsCreateOperands (
             goto Cleanup;
         }
 
-        Count++;
         Index--;
 
         ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "Arg #%d (%p) done, Arg1=%p\n",

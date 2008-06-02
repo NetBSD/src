@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acutils.h -- prototypes for the common (subsystem-wide) procedures
- *       $Revision: 1.2 $
+ *       $Revision: 1.2.10.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -199,6 +199,10 @@ AcpiUtInitGlobals (
 const char *
 AcpiUtGetMutexName (
     UINT32                  MutexId);
+
+const char *
+AcpiUtGetNotifyName (
+    UINT32                  NotifyValue);
 
 #endif
 
@@ -649,6 +653,10 @@ AcpiUtValidInternalObject (
     void                    *Object);
 
 ACPI_OPERAND_OBJECT *
+AcpiUtCreatePackageObject (
+    UINT32                  Count);
+
+ACPI_OPERAND_OBJECT *
 AcpiUtCreateBufferObject (
     ACPI_SIZE               BufferSize);
 
@@ -928,7 +936,7 @@ AcpiUtDumpAllocationInfo (
 void
 AcpiUtDumpAllocations (
     UINT32                  Component,
-    char                    *Module);
+    const char              *Module);
 
 ACPI_STATUS
 AcpiUtCreateList (

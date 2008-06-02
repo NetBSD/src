@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.53 2007/12/20 19:53:33 dyoung Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.53.6.1 2008/06/02 13:24:26 mjf Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.53 2007/12/20 19:53:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.53.6.1 2008/06/02 13:24:26 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.53 2007/12/20 19:53:33 dyoung Exp $");
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #include <netinet6/in6_gif.h>
 #include <netinet6/in6_var.h>
 #endif
@@ -75,15 +76,9 @@ static int gif_validate6 __P((const struct ip6_hdr *, struct gif_softc *,
 
 int	ip6_gif_hlim = GIF_HLIM;
 
-extern struct domain inet6domain;
-const struct ip6protosw in6_gif_protosw =
-{ SOCK_RAW,	&inet6domain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input, rip6_output,	in6_gif_ctlinput, rip6_ctloutput,
-  rip6_usrreq,
-  0,            0,              0,              0,
-};
-
 extern LIST_HEAD(, gif_softc) gif_softc_list;
+
+extern const struct ip6protosw in6_gif_protosw;
 
 /* 
  * family - family of the packet to be encapsulate. 
@@ -230,13 +225,13 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 
 	if (gifp == NULL || (gifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
-		ip6stat.ip6s_nogif++;
+		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
 	}
 #ifndef GIF_ENCAPCHECK
 	if (!gif_validate6(ip6, (struct gif_softc *)gifp, m->m_pkthdr.rcvif)) {
 		m_freem(m);
-		ip6stat.ip6s_nogif++;
+		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
 	}
 #endif
@@ -289,7 +284,7 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 		break;
 #endif
 	default:
-		ip6stat.ip6s_nogif++;
+		IP6_STATINC(IP6_STAT_NOGIF);
 		m_freem(m);
 		return IPPROTO_DONE;
 	}
@@ -405,7 +400,7 @@ in6_gif_detach(struct gif_softc *sc)
 	return error;
 }
 
-void
+void *
 in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	struct gif_softc *sc;
@@ -415,14 +410,14 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return;
+		return NULL;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;
 	if (cmd == PRC_HOSTDEAD)
 		d = NULL;
 	else if (inet6ctlerrmap[cmd] == 0)
-		return;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -433,7 +428,7 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	}
 
 	if (!ip6)
-		return;
+		return NULL;
 
 	/*
 	 * for now we don't care which type it was, just flush the route cache.
@@ -453,4 +448,22 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		else if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr))
 			rtcache_free(&sc->gif_ro);
 	}
+
+	return NULL;
 }
+
+PR_WRAP_CTLINPUT(in6_gif_ctlinput)
+PR_WRAP_CTLOUTPUT(rip6_ctloutput)
+PR_WRAP_USRREQ(rip6_usrreq)
+
+#define	in6_gif_ctlinput	in6_gif_ctlinput_wrapper
+#define	rip6_ctloutput		rip6_ctloutput_wrapper
+#define	rip6_usrreq		rip6_usrreq_wrapper
+
+extern struct domain inet6domain;
+const struct ip6protosw in6_gif_protosw =
+{ SOCK_RAW,	&inet6domain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
+  in6_gif_input, rip6_output,	in6_gif_ctlinput, rip6_ctloutput,
+  rip6_usrreq,
+  0,            0,              0,              0,
+};

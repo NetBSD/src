@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.82.6.1 2008/04/03 12:42:58 mjf Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.82.6.2 2008/06/02 13:23:56 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,9 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__NetBSD__)
 #include <sys/callout.h>
-#endif
 
 /* From usb_mem.h */
 DECLARE_USB_DMA_T;
@@ -125,9 +116,7 @@ struct usbd_bus {
 #define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0" }
 
 	void		       *soft; /* soft interrupt cookie */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_dma_tag_t		dmatag;	/* DMA tag */
-#endif
 };
 
 struct usbd_device {
@@ -152,7 +141,8 @@ struct usbd_device {
 	usb_config_descriptor_t *cdesc;	       /* full config descr */
 	const struct usbd_quirks     *quirks;  /* device quirks, always set */
 	struct usbd_hub	       *hub;           /* only if this is a hub */
-	device_t	       *subdevs;       /* sub-devices, 0 terminated */
+	int			subdevlen;     /* array length of following */
+	device_t	       *subdevs;       /* sub-devices */
 };
 
 struct usbd_interface {
@@ -273,44 +263,3 @@ void		usb_schedsoftintr(struct usbd_bus *);
 #else
 #define SPLUSBCHECK
 #endif
-
-/* Locator stuff. */
-
-#if defined(__NetBSD__)
-#include "locators.h"
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
-/* XXX these values are used to statically bind some elements in the USB tree
- * to specific driver instances. This should be somehow emulated in FreeBSD
- * but can be done later on.
- * The values are copied from the files.usb file in the NetBSD sources.
- */
-#define UHUBCF_PORT_DEFAULT -1
-#define UHUBCF_CONFIGURATION_DEFAULT -1
-#define UHUBCF_INTERFACE_DEFAULT -1
-#define UHUBCF_VENDOR_DEFAULT -1
-#define UHUBCF_PRODUCT_DEFAULT -1
-#define UHUBCF_RELEASE_DEFAULT -1
-#endif
-
-#if defined (__OpenBSD__)
-#define	UHUBCF_PORT		0
-#define	UHUBCF_CONFIGURATION	1
-#define	UHUBCF_INTERFACE	2
-#define	UHUBCF_VENDOR		3
-#define	UHUBCF_PRODUCT		4
-#define	UHUBCF_RELEASE		5
-#endif
-
-#define	uhubcf_port		cf_loc[USBDEVIFCF_PORT]
-#define	uhubcf_configuration	cf_loc[USBDEVIFCF_CONFIGURATION]
-#define	uhubcf_interface	cf_loc[USBDEVIFCF_INTERFACE]
-#define	uhubcf_vendor		cf_loc[USBDEVIFCF_VENDOR]
-#define	uhubcf_product		cf_loc[USBDEVIFCF_PRODUCT]
-#define	uhubcf_release		cf_loc[USBDEVIFCF_RELEASE]
-#define	UHUB_UNK_PORT		USBDEVIFCF_PORT_DEFAULT /* wildcarded 'port' */
-#define	UHUB_UNK_CONFIGURATION	USBDEVIFCF_CONFIGURATION_DEFAULT /* wildcarded 'configuration' */
-#define	UHUB_UNK_INTERFACE	USBDEVIFCF_INTERFACE_DEFAULT /* wildcarded 'interface' */
-#define	UHUB_UNK_VENDOR		USBDEVIFCF_VENDOR_DEFAULT /* wildcarded 'vendor' */
-#define	UHUB_UNK_PRODUCT	USBDEVIFCF_PRODUCT_DEFAULT /* wildcarded 'product' */
-#define	UHUB_UNK_RELEASE	USBDEVIFCF_RELEASE_DEFAULT /* wildcarded 'release' */
-

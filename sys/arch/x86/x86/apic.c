@@ -1,4 +1,4 @@
-/* $NetBSD: apic.c,v 1.5 2008/01/04 18:38:32 ad Exp $ */
+/* $NetBSD: apic.c,v 1.5.6.1 2008/06/02 13:22:51 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -39,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.5 2008/01/04 18:38:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.5.6.1 2008/06/02 13:22:51 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,12 +57,8 @@ const char redirhifmt[] = "\177\20"
 	"f\30\10target\0";
 
 void
-apic_format_redir(where1, where2, idx, redirhi, redirlo)
-	const char *where1;
-	const char *where2;
-	int idx;
-	u_int32_t redirhi;
-	u_int32_t redirlo;
+apic_format_redir(const char *where1, const char *where2, int idx,
+		uint32_t redirhi, uint32_t redirlo)
 {
 	char buf[256];
 

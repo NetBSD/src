@@ -1,7 +1,7 @@
-/* $NetBSD: joy_eap.c,v 1.8.8.1 2008/04/03 12:42:51 mjf Exp $ */
+/* $NetBSD: joy_eap.c,v 1.8.8.2 2008/06/02 13:23:41 mjf Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.8.8.1 2008/04/03 12:42:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.8.8.2 2008/06/02 13:23:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ eap_joy_attach(device_t eapdev, struct eap_gameport_args *gpa)
 		return 0;
 
 	printf("%s: enabling gameport at legacy io port 0x%x\n",
-		eapdev->dv_xname, 0x200 + i * 8);
+		device_xname(eapdev), 0x200 + i * 8);
 
 	/* enable gameport on eap */
 	icsc = bus_space_read_4(gpa->gpa_iot, gpa->gpa_ioh, EAP_ICSC);

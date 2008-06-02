@@ -1,0 +1,4 @@
+#	$NetBSD: Makefile.inc,v 1.1.2.2 2008/06/02 13:24:31 mjf Exp $
+#
+
+CPPFLAGS+=	-DRUMP_WITHOUT_THREADS

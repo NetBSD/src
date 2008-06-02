@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.2 2008/01/21 12:16:31 ichiro Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.2.12.1 2008/06/02 13:23:54 mjf Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -39,13 +39,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -61,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.2 2008/01/21 12:16:31 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.2.12.1 2008/06/02 13:23:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +432,7 @@ ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	    USBDEVNAME(sc->sc_dev), sc->sc_lsr, sc->sc_msr));
 
 	for (i = 0; i < sc->sc_numif; i++) {
-		ucom_status_change((struct ucom_softc *)sc->sc_subdevs[i]);
+		ucom_status_change(device_private(sc->sc_subdevs[i]));
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.111.6.1 2008/04/03 12:42:29 mjf Exp $     */
+/*	$NetBSD: trap.c,v 1.111.6.2 2008/06/02 13:22:48 mjf Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111.6.1 2008/04/03 12:42:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111.6.2 2008/06/02 13:22:48 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -217,15 +217,9 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
-		if (usermode)
-			KERNEL_LOCK(1, l);
-		else
-			KERNEL_LOCK(1, NULL);
-
 		rv = uvm_fault(map, addr, ftype);
 		if (rv != 0) {
 			if (!usermode) {
-				KERNEL_UNLOCK_ONE(NULL);
 				FAULTCHK;
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
@@ -249,10 +243,6 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			    && (void *)addr >= vm->vm_maxsaddr)
 				uvm_grow(p, addr);
 		}
-		if (usermode)
-			KERNEL_UNLOCK_LAST(l);
-		else
-			KERNEL_UNLOCK_ONE(NULL);
 		break;
 
 	case T_BPTFLT|T_USER:
@@ -306,14 +296,12 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			printf("pid %d.%d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
 			       p->p_pid, l->l_lid, p->p_comm, sig, frame->trap,
 			       frame->code, frame->pc, frame->psl);
-		KERNEL_LOCK(1, l);
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = sig;
 		ksi.ksi_trap = frame->trap;
 		ksi.ksi_addr = (void *)frame->code;
 		ksi.ksi_code = code;
 		trapsignal(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 	}
 
 	if (!usermode)

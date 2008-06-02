@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.51 2008/01/04 23:28:07 dyoung Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.51.6.1 2008/06/02 13:24:24 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.51 2008/01/04 23:28:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.51.6.1 2008/06/02 13:24:24 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +57,28 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.51 2008/01/04 23:28:07 dyoung Exp $");
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_private.h>
 
 /*
  * Similar code is very well commented in netinet6/ip6_flow.c
  */ 
+
+struct ipflow {
+	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
+	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
+	struct in_addr ipf_dst;		/* destination address */
+	struct in_addr ipf_src;		/* source address */
+	uint8_t ipf_tos;		/* type-of-service */
+	struct route ipf_ro;		/* associated route entry */
+	u_long ipf_uses;		/* number of uses in this period */
+	u_long ipf_last_uses;		/* number of uses in last period */
+	u_long ipf_dropped;		/* ENOBUFS retured by if_output */
+	u_long ipf_errors;		/* other errors returned by if_output */
+	u_int ipf_timer;		/* lifetime timer */
+	time_t ipf_start;		/* creation time */
+};
+
+#define	IPFLOW_HASHBITS		6	/* should not be a multiple of 8 */
 
 POOL_INIT(ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl", NULL,
     IPL_NET);
@@ -296,13 +307,17 @@ static void
 ipflow_addstats(struct ipflow *ipf)
 {
 	struct rtentry *rt;
+	uint64_t *ips;
 
 	if ((rt = rtcache_validate(&ipf->ipf_ro)) != NULL)
 		rt->rt_use += ipf->ipf_uses;
-	ipstat.ips_cantforward += ipf->ipf_errors + ipf->ipf_dropped;
-	ipstat.ips_total += ipf->ipf_uses;
-	ipstat.ips_forward += ipf->ipf_uses;
-	ipstat.ips_fastforward += ipf->ipf_uses;
+	
+	ips = IP_STAT_GETREF();
+	ips[IP_STAT_CANTFORWARD] += ipf->ipf_errors + ipf->ipf_dropped;
+	ips[IP_STAT_TOTAL] += ipf->ipf_uses;
+	ips[IP_STAT_FORWARD] += ipf->ipf_uses;
+	ips[IP_STAT_FASTFORWARD] += ipf->ipf_uses;
+	IP_STAT_PUTREF();
 }
 
 static void
@@ -325,8 +340,8 @@ ipflow_free(struct ipflow *ipf)
 	splx(s);
 }
 
-struct ipflow *
-ipflow_reap(int just_one)
+static struct ipflow *
+ipflow_reap(bool just_one)
 {
 	while (just_one || ipflow_inuse > ip_maxflows) {
 		struct ipflow *ipf, *maybe_ipf = NULL;
@@ -373,11 +388,21 @@ ipflow_reap(int just_one)
 }
 
 void
+ipflow_prune(void)
+{
+
+	(void) ipflow_reap(false);
+}
+
+void
 ipflow_slowtimo(void)
 {
 	struct rtentry *rt;
 	struct ipflow *ipf, *next_ipf;
+	uint64_t *ips;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
 		if (PRT_SLOW_ISEXPIRED(ipf->ipf_timer) ||
@@ -386,12 +411,16 @@ ipflow_slowtimo(void)
 		} else {
 			ipf->ipf_last_uses = ipf->ipf_uses;
 			rt->rt_use += ipf->ipf_uses;
-			ipstat.ips_total += ipf->ipf_uses;
-			ipstat.ips_forward += ipf->ipf_uses;
-			ipstat.ips_fastforward += ipf->ipf_uses;
+			ips = IP_STAT_GETREF();
+			ips[IP_STAT_TOTAL] += ipf->ipf_uses;
+			ips[IP_STAT_FORWARD] += ipf->ipf_uses;
+			ips[IP_STAT_FASTFORWARD] += ipf->ipf_uses;
+			IP_STAT_PUTREF();
 			ipf->ipf_uses = 0;
 		}
 	}
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void
@@ -415,7 +444,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	ipf = ipflow_lookup(ip);
 	if (ipf == NULL) {
 		if (ipflow_inuse >= ip_maxflows) {
-			ipf = ipflow_reap(1);
+			ipf = ipflow_reap(true);
 		} else {
 			s = splnet();
 			ipf = pool_get(&ipflow_pool, PR_NOWAIT);

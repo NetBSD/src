@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20.10.1 2008/04/03 12:42:11 mjf Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20.10.2 2008/06/02 13:21:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.10.1 2008/04/03 12:42:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.10.2 2008/06/02 13:21:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <machine/bus.h>
+#include <sys/reboot.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.10.1 2008/04/03 12:42:11 mjf Exp $"
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
+#include "opt_pcifixup.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -64,6 +65,15 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20.10.1 2008/04/03 12:42:11 mjf Exp $"
 
 #if NIPMI > 0
 #include <x86/ipmivar.h>
+#endif
+
+#if NPCI > 0
+#if defined(PCI_BUS_FIXUP)
+#include <arch/x86/pci/pci_bus_fixup.h>
+#if defined(PCI_ADDR_FIXUP)
+#include <arch/x86/pci/pci_addr_fixup.h>
+#endif
+#endif
 #endif
 
 /*
@@ -154,6 +164,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #if NACPI > 0 || defined(MPBIOS)
 	int numioapics = 0;
 #endif
+#if defined(PCI_BUS_FIXUP)
+	int pci_maxbus = 0;
+#endif
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -164,10 +177,22 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 #if NPCI > 0
 	pci_mode = pci_mode_detect();
+#if defined(PCI_BUS_FIXUP)
+	if (pci_mode != 0) {
+		pci_maxbus = pci_bus_fixup(NULL, 0);
+		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
+		    pci_maxbus);
+#if defined(PCI_ADDR_FIXUP)
+		pciaddr.extent_port = NULL;
+		pciaddr.extent_mem = NULL;
+		pci_addr_fixup(NULL, pci_maxbus);
+#endif
+	}
+#endif
 #endif
 
 #if NACPI > 0
-	if (acpi_check(self, "acpibus"))
+	if ((boothowto & RB_MD2) == 0 && acpi_check(self, "acpibus"))
 		acpi_present = acpi_probe();
 	/*
 	 * First, see if the MADT contains CPUs, and possibly I/O APICs.

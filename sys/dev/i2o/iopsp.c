@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.30 2007/12/01 18:12:37 ad Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.30.14.1 2008/06/02 13:23:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.30 2007/12/01 18:12:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.30.14.1 2008/06/02 13:23:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +156,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	if (rv != 0)
 		goto bad;
 
-	aprint_normal("%s: ", sc->sc_dv.dv_xname);
+	aprint_normal_dev(&sc->sc_dv, "");
 	if (fc)
 		aprint_normal("FC");
 	else
@@ -201,7 +194,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 
  	/* Build the two maps, and attach to scsipi. */
 	if (iopsp_reconfig(self) != 0) {
-		aprint_error("%s: configure failed\n", sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "configure failed\n");
 		goto bad;
 	}
 	config_found(self, &sc->sc_channel, scsiprint);
@@ -285,9 +278,8 @@ iopsp_reconfig(struct device *dv)
 #if defined(DIAGNOSTIC) || defined(I2ODEBUG)
 		if (targ >= sc_chan->chan_ntargets ||
 		    lun >= sc_chan->chan_nluns) {
-			aprint_error("%s: target %d,%d (tid %d): "
-			    "bad target/LUN\n", sc->sc_dv.dv_xname,
-			    targ, lun, tid);
+			aprint_error_dev(&sc->sc_dv, "target %d,%d (tid %d): "
+			    "bad target/LUN\n", targ, lun, tid);
 			continue;
 		}
 #endif
@@ -306,8 +298,8 @@ iopsp_reconfig(struct device *dv)
 			it->it_offset = param.sdi.negoffset;
 			it->it_syncrate = syncrate;
 
-			aprint_verbose("%s: target %d (tid %d): %d-bit, ",
-			    sc->sc_dv.dv_xname, targ, tid, it->it_width);
+			aprint_verbose_dev(&sc->sc_dv, "target %d (tid %d): %d-bit, ",
+			    targ, tid, it->it_width);
 			if (it->it_syncrate == 0)
 				aprint_verbose("asynchronous\n");
 			else
@@ -321,8 +313,8 @@ iopsp_reconfig(struct device *dv)
 			if (sc->sc_tidmap == NULL ||
 			    IOPSP_TIDMAP(sc->sc_tidmap, targ, lun) !=
 			    IOPSP_TID_INUSE) {
-				aprint_verbose("%s: target %d,%d (tid %d): "
-				    "in use by tid %d\n", sc->sc_dv.dv_xname,
+				aprint_verbose_dev(&sc->sc_dv, "target %d,%d (tid %d): "
+				    "in use by tid %d\n",
 				    targ, lun, tid,
 				    le32toh(le->usertid) & 4095);
 			}
@@ -371,8 +363,8 @@ iopsp_rescan(struct iopsp_softc *sc)
 	rv = iop_msg_post(iop, im, &mf, 5*60*1000);
 	iop_msg_free(iop, im);
 	if (rv != 0)
-		aprint_error("%s: bus rescan failed (error %d)\n",
-		    sc->sc_dv.dv_xname, rv);
+		aprint_error_dev(&sc->sc_dv, "bus rescan failed (error %d)\n",
+		    rv);
 
 	if ((rv = iop_lct_get(iop)) == 0)
 		rv = iopsp_reconfig(&sc->sc_dv);
@@ -420,8 +412,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		if ((flags & XS_CTL_RESET) != 0) {
 			if (iop_simple_cmd(iop, tid, I2O_SCSI_DEVICE_RESET,
 			    sc->sc_ii.ii_ictx, 1, 30*1000) != 0) {
-				aprint_error("%s: reset failed\n",
-				    sc->sc_dv.dv_xname);
+				aprint_error_dev(&sc->sc_dv, "reset failed\n");
 				xs->error = XS_DRIVER_STUFFUP;
 			} else
 				xs->error = XS_NOERROR;
@@ -432,7 +423,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 #if defined(I2ODEBUG) || defined(SCSIDEBUG)
 		if (xs->cmdlen > sizeof(mf->cdb))
-			panic("%s: CDB too large", sc->sc_dv.dv_xname);
+			panic("%s: CDB too large", device_xname(&sc->sc_dv));
 #endif
 
 		im = iop_msg_alloc(iop, IM_POLL_INTR |
@@ -574,8 +565,8 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
 			}
-			aprint_error("%s: HBA status 0x%02x\n",
-			    sc->sc_dv.dv_xname, rb->hbastatus);
+			aprint_error_dev(&sc->sc_dv, "HBA status 0x%02x\n",
+			    rb->hbastatus);
 		} else if (rb->scsistatus != SCSI_OK) {
 			switch (rb->scsistatus) {
 			case SCSI_CHECK:

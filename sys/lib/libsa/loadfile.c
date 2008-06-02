@@ -1,7 +1,7 @@
-/* $NetBSD: loadfile.c,v 1.27 2007/12/29 17:54:41 tsutsui Exp $ */
+/* $NetBSD: loadfile.c,v 1.27.6.1 2008/06/02 13:24:16 mjf Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -88,6 +81,9 @@
 #include <sys/exec.h>
 
 #include "loadfile.h"
+
+uint32_t	netbsd_version;
+u_int		netbsd_elf_class;
 
 /*
  * Open 'filename', read in program and return the opened file
@@ -162,12 +158,14 @@ fdloadfile(int fd, u_long *marks, int flags)
 #ifdef BOOT_ELF32
 	if (memcmp(hdr.elf32.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf32.e_ident[EI_CLASS] == ELFCLASS32) {
+	    	netbsd_elf_class = ELFCLASS32;
 		rval = loadfile_elf32(fd, &hdr.elf32, marks, flags);
 	} else
 #endif
 #ifdef BOOT_ELF64
 	if (memcmp(hdr.elf64.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf64.e_ident[EI_CLASS] == ELFCLASS64) {
+	    	netbsd_elf_class = ELFCLASS64;
 		rval = loadfile_elf64(fd, &hdr.elf64, marks, flags);
 	} else
 #endif

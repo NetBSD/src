@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.24 2007/10/19 12:16:36 ad Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.24.16.1 2008/06/02 13:21:43 mjf Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.24 2007/10/19 12:16:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.24.16.1 2008/06/02 13:21:43 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -71,19 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.24 2007/10/19 12:16:36 ad Exp $");
 #endif
 
 /* machine dependent clock related includes */
-#ifdef __FreeBSD__
-#include "opt_cpu.h"	/* for FreeBSD-2.2.8 to get i586_ctr_freq */
-#include <machine/clock.h>
+#ifdef __HAVE_CPU_COUNTER
+#include <machine/cpu_counter.h>		/* for pentium tsc */
 #endif
-#if defined(__i386__)
-#include <machine/cpufunc.h>		/* for pentium tsc */
-#include <machine/specialreg.h>		/* for CPUID_TSC */
-#ifdef __FreeBSD__
-#include <machine/md_var.h>		/* for cpu_feature */
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-#include <sys/cpu.h>		/* for cpu_feature */
-#endif
-#endif /* __i386__ */
 
 /*
  * internal function prototypes
@@ -786,21 +776,10 @@ init_machclk(void)
 
 	callout_init(&tbr_callout, 0);
 
-	machclk_usepcc = 1;
-
-#if (!defined(__i386__) && !defined(__alpha__)) || defined(ALTQ_NOPCC)
-	machclk_usepcc = 0;
-#endif
-#if defined(__FreeBSD__) && defined(SMP)
-	machclk_usepcc = 0;
-#endif
-#if defined(__NetBSD__) && defined(MULTIPROCESSOR)
-	machclk_usepcc = 0;
-#endif
-#ifdef __i386__
+#ifdef __HAVE_CPU_COUNTER
 	/* check if TSC is available */
-	if (machclk_usepcc == 1 && (cpu_feature & CPUID_TSC) == 0)
-		machclk_usepcc = 0;
+	machclk_usepcc = cpu_hascounter();
+	machclk_freq = cpu_frequency(curcpu());
 #endif
 
 	if (machclk_usepcc == 0) {
@@ -812,30 +791,6 @@ init_machclk(void)
 #endif
 		return;
 	}
-
-	/*
-	 * if the clock frequency (of Pentium TSC or Alpha PCC) is
-	 * accessible, just use it.
-	 */
-#ifdef __i386__
-#ifdef __FreeBSD__
-#if (__FreeBSD_version > 300000)
-	machclk_freq = tsc_freq;
-#else
-	machclk_freq = i586_ctr_freq;
-#endif
-#elif defined(__NetBSD__)
-	machclk_freq = (u_int32_t)curcpu()->ci_tsc_freq;
-#elif defined(__OpenBSD__) && (defined(I586_CPU) || defined(I686_CPU))
-	machclk_freq = pentium_mhz * 1000000;
-#endif
-#elif defined(__alpha__)
-#ifdef __FreeBSD__
-	machclk_freq = cycles_per_sec;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	machclk_freq = (u_int32_t)(cycles_per_usec * 1000000);
-#endif
-#endif /* __alpha__ */
 
 	/*
 	 * if we don't know the clock frequency, measure it.
@@ -865,43 +820,14 @@ init_machclk(void)
 #endif
 }
 
-#if defined(__OpenBSD__) && defined(__i386__)
-static inline u_int64_t
-rdtsc(void)
-{
-	u_int64_t rv;
-	__asm __volatile(".byte 0x0f, 0x31" : "=A" (rv));
-	return (rv);
-}
-#endif /* __OpenBSD__ && __i386__ */
-
 u_int64_t
 read_machclk(void)
 {
 	u_int64_t val;
 
 	if (machclk_usepcc) {
-#if defined(__i386__)
-		val = rdtsc();
-#elif defined(__alpha__)
-		static u_int32_t last_pcc, upper;
-		u_int32_t pcc;
-
-		/*
-		 * for alpha, make a 64bit counter value out of the 32bit
-		 * alpha processor cycle counter.
-		 * read_machclk must be called within a half of its
-		 * wrap-around cycle (about 5 sec for 400MHz cpu) to properly
-		 * detect a counter wrap-around.
-		 * tbr_timeout calls read_machclk once a second.
-		 */
-		pcc = (u_int32_t)alpha_rpcc();
-		if (pcc <= last_pcc)
-			upper++;
-		last_pcc = pcc;
-		val = ((u_int64_t)upper << 32) + pcc;
-#else
-		panic("read_machclk");
+#ifdef __HAVE_CPU_COUNTER
+		return cpu_counter();
 #endif
 	} else {
 		struct timeval tv;

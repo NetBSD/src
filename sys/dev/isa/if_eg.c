@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.73.16.1 2008/04/03 12:42:44 mjf Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.73.16.2 2008/06/02 13:23:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.73.16.1 2008/04/03 12:42:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.73.16.2 2008/06/02 13:23:31 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -412,7 +412,7 @@ egattach(struct device *parent, struct device *self, void *aux)
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 0x08, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 
@@ -422,19 +422,19 @@ egattach(struct device *parent, struct device *self, void *aux)
 	sc->eg_pcb[0] = EG_CMD_GETINFO; /* Get Adapter Info */
 	sc->eg_pcb[1] = 0;
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0) {
-		printf("%s: error requesting adapter info\n", self->dv_xname);
+		aprint_error_dev(self, "error requesting adapter info\n");
 		return;
 	}
 	if (egreadPCB(iot, ioh, sc->eg_pcb) != 0) {
 		egprintpcb(sc->eg_pcb);
-		printf("%s: error reading adapter info\n", self->dv_xname);
+		aprint_error_dev(self, "error reading adapter info\n");
 		return;
 	}
 
 	if (sc->eg_pcb[0] != EG_RSP_GETINFO || /* Get Adapter Info Response */
 	    sc->eg_pcb[1] != 0x0a) {
 		egprintpcb(sc->eg_pcb);
-		printf("%s: bogus adapter info\n", self->dv_xname);
+		aprint_error_dev(self, "bogus adapter info\n");
 		return;
 	}
 
@@ -447,49 +447,46 @@ egattach(struct device *parent, struct device *self, void *aux)
 	sc->eg_pcb[0] = EG_CMD_GETEADDR; /* Get Station address */
 	sc->eg_pcb[1] = 0;
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0) {
-		printf("%s: can't send Get Station Address\n", self->dv_xname);
+		aprint_error_dev(self, "can't send Get Station Address\n");
 		return;
 	}
 	if (egreadPCB(iot, ioh, sc->eg_pcb) != 0) {
-		printf("%s: can't read station address\n", self->dv_xname);
+		aprint_error_dev(self, "can't read station address\n");
 		egprintpcb(sc->eg_pcb);
 		return;
 	}
 
 	/* check Get station address response */
 	if (sc->eg_pcb[0] != EG_RSP_GETEADDR || sc->eg_pcb[1] != 0x06) {
-		printf("%s: card responded with garbage (1)\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "card responded with garbage (1)\n");
 		egprintpcb(sc->eg_pcb);
 		return;
 	}
 	memcpy(myaddr, &sc->eg_pcb[2], ETHER_ADDR_LEN);
 
-	printf("%s: ROM v%d.%02d %dk address %s\n", self->dv_xname,
+	printf("%s: ROM v%d.%02d %dk address %s\n", device_xname(self),
 	    sc->eg_rom_major, sc->eg_rom_minor, sc->eg_ram,
 	    ether_sprintf(myaddr));
 
 	sc->eg_pcb[0] = EG_CMD_SETEADDR; /* Set station address */
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0) {
-		printf("%s: can't send Set Station Address\n", self->dv_xname);
+		printf("%s: can't send Set Station Address\n", device_xname(self));
 		return;
 	}
 	if (egreadPCB(iot, ioh, sc->eg_pcb) != 0) {
-		printf("%s: can't read Set Station Address status\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "can't read Set Station Address status\n");
 		egprintpcb(sc->eg_pcb);
 		return;
 	}
 	if (sc->eg_pcb[0] != EG_RSP_SETEADDR || sc->eg_pcb[1] != 0x02 ||
 	    sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0) {
-		printf("%s: card responded with garbage (2)\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "card responded with garbage (2)\n");
 		egprintpcb(sc->eg_pcb);
 		return;
 	}
 
 	/* Initialize ifnet structure. */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = egstart;
 	ifp->if_ioctl = egioctl;
@@ -505,7 +502,7 @@ egattach(struct device *parent, struct device *self, void *aux)
 	    IST_EDGE, IPL_NET, egintr, sc);
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_NET, 0);
 #endif
 }
@@ -531,22 +528,18 @@ eginit(sc)
 	sc->eg_pcb[2] = 3; /* receive broadcast & multicast */
 	sc->eg_pcb[3] = 0;
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0)
-		printf("%s: can't send Configure 82586\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't send Configure 82586\n");
 
 	if (egreadPCB(iot, ioh, sc->eg_pcb) != 0) {
-		printf("%s: can't read Configure 82586 status\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't read Configure 82586 status\n");
 		egprintpcb(sc->eg_pcb);
 	} else if (sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0)
-		printf("%s: configure card command failed\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "configure card command failed\n");
 
 	if (sc->eg_inbuf == NULL) {
 		sc->eg_inbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 		if (sc->eg_inbuf == NULL) {
-			printf("%s: can't allocate inbuf\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "can't allocate inbuf\n");
 			panic("eginit");
 		}
 	}
@@ -555,8 +548,7 @@ eginit(sc)
 	if (sc->eg_outbuf == NULL) {
 		sc->eg_outbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
 		if (sc->eg_outbuf == NULL) {
-			printf("%s: can't allocate outbuf\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "can't allocate outbuf\n");
 			panic("eginit");
 		}
 	}
@@ -622,7 +614,7 @@ loop:
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0) {
-		printf("%s: no header mbuf\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "no header mbuf\n");
 		panic("egstart");
 	}
 	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN - ETHER_CRC_LEN);
@@ -641,8 +633,7 @@ loop:
 	sc->eg_pcb[6] = len; /* length of packet */
 	sc->eg_pcb[7] = len >> 8;
 	if (egwritePCB(iot, ioh, sc->eg_pcb) != 0) {
-		printf("%s: can't send Send Packet command\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't send Send Packet command\n");
 		ifp->if_oerrors++;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		m_freem(m0);
@@ -711,7 +702,7 @@ egintr(arg)
 		case EG_RSP_SENDPACKET:
 			if (sc->eg_pcb[6] || sc->eg_pcb[7]) {
 				DPRINTF(("%s: packet dropped\n",
-				    sc->sc_dev.dv_xname));
+				    device_xname(&sc->sc_dev)));
 				sc->sc_ethercom.ec_if.if_oerrors++;
 			} else
 				sc->sc_ethercom.ec_if.if_opackets++;
@@ -725,7 +716,7 @@ egintr(arg)
 		/* XXX byte-order and type-size bugs here... */
 		case EG_RSP_GETSTATS:
 			DPRINTF(("%s: Card Statistics\n",
-			    sc->sc_dev.dv_xname));
+			    device_xname(&sc->sc_dev)));
 			memcpy(&i, &sc->eg_pcb[2], sizeof(i));
 			DPRINTF(("Receive Packets %d\n", i));
 			memcpy(&i, &sc->eg_pcb[6], sizeof(i));
@@ -743,7 +734,7 @@ egintr(arg)
 
 		default:
 			printf("%s: egintr: Unknown response %x??\n",
-			    sc->sc_dev.dv_xname, sc->eg_pcb[0]);
+			    device_xname(&sc->sc_dev), sc->eg_pcb[0]);
 			egprintpcb(sc->eg_pcb);
 			break;
 		}
@@ -770,8 +761,7 @@ egread(sc, buf, len)
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
-		printf("%s: invalid packet size %d; dropping\n",
-		    sc->sc_dev.dv_xname, len);
+		aprint_error_dev(&sc->sc_dev, "invalid packet size %d; dropping\n", len);
 		ifp->if_ierrors++;
 		return;
 	}
@@ -922,7 +912,7 @@ egreset(sc)
 {
 	int s;
 
-	DPRINTF(("%s: egreset()\n", sc->sc_dev.dv_xname));
+	DPRINTF(("%s: egreset()\n", device_xname(&sc->sc_dev)));
 	s = splnet();
 	egstop(sc);
 	eginit(sc);
@@ -935,7 +925,7 @@ egwatchdog(ifp)
 {
 	struct eg_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 	sc->sc_ethercom.ec_if.if_oerrors++;
 
 	egreset(sc);

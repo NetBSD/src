@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.33 2008/01/12 09:54:21 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.33.6.1 2008/06/02 13:22:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -71,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.33 2008/01/12 09:54:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.33.6.1 2008/06/02 13:22:26 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -111,10 +104,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.33 2008/01/12 09:54:21 tsutsui Exp $");
 
 #include "ioconf.h"
 
-int le_pcc_match(struct device *, struct cfdata *, void *);
-void le_pcc_attach(struct device *, struct device *, void *);
+int le_pcc_match(device_t, cfdata_t, void *);
+void le_pcc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(le_pcc, sizeof(struct le_softc),
+CFATTACH_DECL_NEW(le_pcc, sizeof(struct le_softc),
     le_pcc_match, le_pcc_attach, NULL, NULL);
 
 #if defined(_KERNEL_OPT)
@@ -152,7 +145,7 @@ le_pcc_rdcsr(struct lance_softc *sc, uint16_t port)
 
 /* ARGSUSED */
 int
-le_pcc_match(struct device *parent, struct cfdata *cf, void *aux)
+le_pcc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcc_attach_args *pa = aux;
 
@@ -165,7 +158,7 @@ le_pcc_match(struct device *parent, struct cfdata *cf, void *aux)
 
 /* ARGSUSED */
 void
-le_pcc_attach(struct device *parent, struct device *self, void *aux)
+le_pcc_attach(device_t parent, device_t self, void *aux)
 {
 	struct le_softc *lsc;
 	struct lance_softc *sc;
@@ -173,8 +166,9 @@ le_pcc_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	int rseg;
 
-	lsc = (struct le_softc *)self;
+	lsc = device_private(self);
 	sc = &lsc->sc_am7990.lsc;
+	sc->sc_dev = self;
 	pa = aux;
 
 	/* Map control registers. */
@@ -185,12 +179,12 @@ le_pcc_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, PAGE_SIZE, 0,
 	    &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT | BUS_DMA_ONBOARD_RAM | BUS_DMA_24BIT)) {
-		printf("%s: Failed to allocate ether buffer\n", self->dv_xname);
+		aprint_error(": Failed to allocate ether buffer\n");
 		return;
 	}
 	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg, ether_data_buff_size,
 	    (void **)&sc->sc_mem, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
-		printf("%s: Failed to map ether buffer\n", self->dv_xname);
+		aprint_error(": Failed to map ether buffer\n");
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
 		return;
 	}
@@ -213,7 +207,7 @@ le_pcc_attach(struct device *parent, struct device *self, void *aux)
 	am7990_config(&lsc->sc_am7990);
 
 	evcnt_attach_dynamic(&lsc->sc_evcnt, EVCNT_TYPE_INTR,
-	    pccintr_evcnt(pa->pa_ipl), "ether", sc->sc_dev.dv_xname);
+	    pccintr_evcnt(pa->pa_ipl), "ether", device_xname(self));
 
 	pccintr_establish(PCCV_LE, am7990_intr, pa->pa_ipl, sc, &lsc->sc_evcnt);
 

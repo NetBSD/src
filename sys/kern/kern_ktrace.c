@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.138.6.1 2008/04/03 12:43:01 mjf Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.138.6.2 2008/06/02 13:24:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -68,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.138.6.1 2008/04/03 12:43:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.138.6.2 2008/06/02 13:24:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,10 +176,7 @@ int ktd_intrwakdl = KTD_INTRWAKDL;	/* ditto, but when interactive */
 kmutex_t ktrace_lock;
 int ktrace_on;
 static TAILQ_HEAD(, ktr_desc) ktdq = TAILQ_HEAD_INITIALIZER(ktdq);
-
-MALLOC_DEFINE(M_KTRACE, "ktrace", "ktrace data buffer");
-POOL_INIT(kte_pool, sizeof(struct ktrace_entry), 0, 0, 0,
-    "ktepl", &pool_allocator_nointr, IPL_NONE);
+static pool_cache_t kte_cache;
 
 static void
 ktd_wakeup(struct ktr_desc *ktd)
@@ -254,6 +244,8 @@ ktrinit(void)
 {
 
 	mutex_init(&ktrace_lock, MUTEX_DEFAULT, IPL_NONE);
+	kte_cache = pool_cache_init(sizeof(struct ktrace_entry), 0, 0, 0,
+	    "ktrace", &pool_allocator_nointr, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -414,7 +406,7 @@ ktefree(struct ktrace_entry *kte)
 
 	if (kte->kte_buf != kte->kte_space)
 		kmem_free(kte->kte_buf, kte->kte_bufsz);
-	pool_put(&kte_pool, kte);
+	pool_cache_put(kte_cache, kte);
 }
 
 /*
@@ -466,11 +458,11 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 	struct proc *p;
 	int error = 0;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
-		if (p->p_tracep != ktd)
+		if ((p->p_flag & PK_MARKER) != 0 || p->p_tracep != ktd)
 			continue;
-		mutex_enter(&p->p_mutex);
+		mutex_enter(p->p_lock);
 		mutex_enter(&ktrace_lock);
 		if (p->p_tracep == ktd) {
 			if (!auth || ktrcanset(curl, p))
@@ -479,9 +471,9 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 				error = EPERM;
 		}
 		mutex_exit(&ktrace_lock);
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	return error;
 }
@@ -498,10 +490,10 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	if (ktrenter(l))
 		return EAGAIN;
 
-	kte = pool_get(&kte_pool, PR_WAITOK);
+	kte = pool_cache_get(kte_cache, PR_WAITOK);
 	if (sz > sizeof(kte->kte_space)) {
 		if ((buf = kmem_alloc(sz, KM_SLEEP)) == NULL) {
-			pool_put(&kte_pool, kte);
+			pool_cache_put(kte_cache, kte);
 			ktrexit(l);
 			return ENOMEM;
 		}
@@ -1109,7 +1101,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t *fp)
 	/*
 	 * do it
 	 */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	if (pid < 0) {
 		/*
 		 * by process group
@@ -1140,7 +1132,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t *fp)
 		else
 			ret |= ktrops(curl, p, ops, facs, ktd);
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	if (error == 0 && !ret)
 		error = EPERM;
 done:
@@ -1264,7 +1256,7 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 	int vers = ops & KTRFAC_VER_MASK;
 	int error = 0;
 
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	mutex_enter(&ktrace_lock);
 
 	if (!ktrcanset(curl, p))
@@ -1317,7 +1309,7 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 
  out:
  	mutex_exit(&ktrace_lock);
- 	mutex_exit(&p->p_mutex);
+ 	mutex_exit(p->p_lock);
 
 	return (1);
 }
@@ -1329,7 +1321,7 @@ ktrsetchildren(lwp_t *curl, struct proc *top, int ops, int facs,
 	struct proc *p;
 	int ret = 0;
 
-	KASSERT(mutex_owned(&proclist_lock));
+	KASSERT(mutex_owned(proc_lock));
 
 	p = top;
 	for (;;) {
@@ -1499,7 +1491,7 @@ ktrace_thread(void *arg)
 int
 ktrcanset(lwp_t *calll, struct proc *targetp)
 {
-	KASSERT(mutex_owned(&targetp->p_mutex));
+	KASSERT(mutex_owned(targetp->p_lock));
 	KASSERT(mutex_owned(&ktrace_lock));
 
 	if (kauth_authorize_process(calll->l_cred, KAUTH_PROCESS_KTRACE,

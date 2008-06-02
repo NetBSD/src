@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.26 2008/02/06 22:12:39 dsl Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.26.6.1 2008/06/02 13:21:45 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -96,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.26 2008/02/06 22:12:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.26.6.1 2008/06/02 13:21:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,8 +147,6 @@ osf1_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	struct proc *p = l->l_proc;
 
 	LWP_CACHE_CREDS(l, p);
-
-	KERNEL_LOCK(1, l);
 
 	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
@@ -226,7 +217,6 @@ osf1_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	}
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -241,8 +231,6 @@ osf1_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	struct proc *p = l->l_proc;
 
 	LWP_CACHE_CREDS(l, p);
-
-	KERNEL_LOCK(1, l);
 
 	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
@@ -317,8 +305,6 @@ out:
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
 	}
-
-	KERNEL_UNLOCK_LAST(l);
 
 	trace_exit(code, rval, error);
 

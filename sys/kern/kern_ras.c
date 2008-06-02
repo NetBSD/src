@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_ras.c,v 1.27 2008/01/07 20:56:32 dsl Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.27.6.1 2008/06/02 13:24:09 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,21 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.27 2008/01/07 20:56:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.27.6.1 2008/06/02 13:24:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/xcall.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
-    &pool_allocator_nointr, IPL_NONE);
 
 #define MAX_RAS_PER_PROC	16
 
@@ -114,10 +104,12 @@ ras_lookup(struct proc *p, void *addr)
 {
 	struct ras *rp;
 	void *startaddr;
+	lwp_t *l;
 
 	startaddr = (void *)-1;
+	l = curlwp;
 
-	crit_enter();
+	KPREEMPT_DISABLE(l);
 	for (rp = p->p_raslist; rp != NULL; rp = rp->ras_next) {
 		if (addr > rp->ras_startaddr && addr < rp->ras_endaddr) {
 			startaddr = rp->ras_startaddr;
@@ -125,7 +117,7 @@ ras_lookup(struct proc *p, void *addr)
 			break;
 		}
 	}
-	crit_exit();
+	KPREEMPT_ENABLE(l);
 
 	return startaddr;
 }
@@ -142,7 +134,7 @@ ras_fork(struct proc *p1, struct proc *p2)
 	struct ras *rp, *nrp;
 
 	for (rp = p1->p_raslist; rp != NULL; rp = rp->ras_next) {
-		nrp = pool_get(&ras_pool, PR_WAITOK);
+		nrp = kmem_alloc(sizeof(*nrp), KM_SLEEP);
 		nrp->ras_startaddr = rp->ras_startaddr;
 		nrp->ras_endaddr = rp->ras_endaddr;
 		nrp->ras_next = p2->p_raslist;
@@ -171,7 +163,7 @@ ras_purgeall(void)
 		ras_sync();
 		for(; rp != NULL; rp = nrp) {
 			nrp = rp->ras_next;
-			pool_put(&ras_pool, rp);
+			kmem_free(rp, sizeof(*rp));
 		}
 	}
 	mutex_exit(&p->p_auxlock);
@@ -203,7 +195,7 @@ ras_install(void *addr, size_t len)
 	if (len <= 0)
 		return (EINVAL);
 
-	newrp = pool_get(&ras_pool, PR_WAITOK);
+	newrp = kmem_alloc(sizeof(*newrp), KM_SLEEP);
 	newrp->ras_startaddr = addr;
 	newrp->ras_endaddr = endaddr;
 	error = 0;
@@ -228,7 +220,7 @@ ras_install(void *addr, size_t len)
 	 	mutex_exit(&p->p_auxlock);
 	} else {
 	 	mutex_exit(&p->p_auxlock);
- 		pool_put(&ras_pool, newrp);
+ 		kmem_free(newrp, sizeof(*newrp));
 	}
 
 	return error;
@@ -258,7 +250,7 @@ ras_purge(void *addr, size_t len)
 		*link = rp->ras_next;
 		ras_sync();
 		mutex_exit(&p->p_auxlock);
-		pool_put(&ras_pool, rp);
+		kmem_free(rp, sizeof(*rp));
 		return 0;
 	} else {
 		mutex_exit(&p->p_auxlock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.20 2007/12/20 19:53:31 dyoung Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.20.6.1 2008/06/02 13:24:23 mjf Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.20 2007/12/20 19:53:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.20.6.1 2008/06/02 13:24:23 mjf Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -735,7 +735,13 @@ agr_ioctl_multi(struct ifnet *ifp, u_long cmd, struct ifreq *ifr)
 	return error;
 }
 
-/* XXX an incomplete hack; can't filter ioctls handled ifioctl(). */
+/*
+ * XXX an incomplete hack; can't filter ioctls handled ifioctl().
+ *
+ * the intention here is to prevent operations on underlying interfaces
+ * so that their states are not changed in the way that agr(4) doesn't
+ * expect.  cf. the BUGS section in the agr(4) manual page.
+ */
 static int
 agr_ioctl_filter(struct ifnet *ifp, u_long cmd, void *arg)
 {

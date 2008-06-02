@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.101 2008/01/30 09:50:24 ad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.101.6.1 2008/06/02 13:24:30 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.101 2008/01/30 09:50:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.101.6.1 2008/06/02 13:24:30 mjf Exp $");
 
 #include "opt_nfs.h"
 
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.101 2008/01/30 09:50:24 ad Exp $");
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/lock.h>
 #include <sys/hash.h>
@@ -92,8 +91,8 @@ void
 nfs_nhinit()
 {
 
-	nfsnodehashtbl = hashinit(desiredvnodes, HASH_LIST, M_NFSNODE,
-	    M_WAITOK, &nfsnodehash);
+	nfsnodehashtbl = hashinit(desiredvnodes, HASH_LIST, true,
+	    &nfsnodehash);
 	mutex_init(&nfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -109,8 +108,7 @@ nfs_nhreinit()
 	u_long oldmask, mask, val;
 	int i;
 
-	hash = hashinit(desiredvnodes, HASH_LIST, M_NFSNODE, M_WAITOK,
-	    &mask);
+	hash = hashinit(desiredvnodes, HASH_LIST, true, &mask);
 
 	mutex_enter(&nfs_hashlock);
 	oldhash = nfsnodehashtbl;
@@ -125,7 +123,7 @@ nfs_nhreinit()
 		}
 	}
 	mutex_exit(&nfs_hashlock);
-	hashdone(oldhash, M_NFSNODE);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
@@ -134,7 +132,7 @@ nfs_nhreinit()
 void
 nfs_nhdone()
 {
-	hashdone(nfsnodehashtbl, M_NFSNODE);
+	hashdone(nfsnodehashtbl, HASH_LIST, nfsnodehash);
 	pool_destroy(&nfs_node_pool);
 	pool_destroy(&nfs_vattr_pool);
 	mutex_destroy(&nfs_hashlock);
@@ -316,8 +314,10 @@ nfs_reclaim(v)
 	 * large file handle structures that might be associated with
 	 * this nfs node.
 	 */
-	if (vp->v_type == VDIR && np->n_dircache)
-		hashdone(np->n_dircache, M_NFSDIROFF);
+	if (vp->v_type == VDIR && np->n_dircache != NULL) {
+		nfs_invaldircache(vp, NFS_INVALDIRCACHE_FORCE);
+		hashdone(np->n_dircache, HASH_LIST, nfsdirhashmask);
+	}
 	KASSERT(np->n_dirgens == NULL);
 
 	if (np->n_fhsize > NFS_SMALLFH)

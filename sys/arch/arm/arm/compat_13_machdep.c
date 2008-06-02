@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.14 2007/12/20 23:02:39 dsl Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.14.6.1 2008/06/02 13:21:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14 2007/12/20 23:02:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14.6.1 2008/06/02 13:21:52 mjf Exp $");
 
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -99,7 +99,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	tf->tf_pc    = context.sc_pc;
 	tf->tf_spsr  = context.sc_spsr;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
@@ -111,7 +111,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	native_sigset13_to_sigset(&context.sc_mask, &mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }

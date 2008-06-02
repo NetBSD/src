@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.14 2007/12/20 23:03:02 dsl Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.14.6.1 2008/06/02 13:23:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.14 2007/12/20 23:03:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.14.6.1 2008/06/02 13:23:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

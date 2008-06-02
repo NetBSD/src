@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.4 2007/12/09 20:27:48 jmcneill Exp $ */
+/* $NetBSD: i82093var.h,v 1.4.10.1 2008/06/02 13:22:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -61,8 +54,8 @@ struct ioapic_softc {
 	int			sc_apic_sz;	/* apic size*/
 	int			sc_flags;
 	paddr_t			sc_pa;		/* PA of ioapic */
-	volatile u_int32_t	*sc_reg;	/* KVA of ioapic addr */
-	volatile u_int32_t	*sc_data;	/* KVA of ioapic data */
+	volatile uint32_t	*sc_reg;	/* KVA of ioapic addr */
+	volatile uint32_t	*sc_data;	/* KVA of ioapic data */
 	struct ioapic_pin	*sc_pins;	/* sc_apic_sz entries */
 };      
 
@@ -85,19 +78,14 @@ struct ioapic_softc {
 #define APIC_IRQ_ISLEGACY(x) (!((x) & APIC_INT_VIA_APIC))
 #define APIC_IRQ_LEGACY_IRQ(x) ((x) & 0xff)
 
-void *apic_intr_establish(int, int, int, int (*)(void *), void *); 
-void apic_intr_disestablish(void *);
-
 void ioapic_print_redir(struct ioapic_softc *, const char *, int);
-void ioapic_format_redir(char *, const char *, int, u_int32_t, u_int32_t);
+void ioapic_format_redir(char *, const char *, int, uint32_t, uint32_t);
 struct ioapic_softc *ioapic_find(int);
 struct ioapic_softc *ioapic_find_bybase(int);
 
 void ioapic_enable(void);
 void ioapic_reenable(void);
-void lapic_vectorset(void); /* XXX */
 
-extern int ioapic_bsp_id;
 extern int nioapics;
 extern struct ioapic_softc *ioapics;
 

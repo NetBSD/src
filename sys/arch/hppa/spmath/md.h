@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.3.74.1 2008/06/02 13:22:13 mjf Exp $	*/
 
 /*	$OpenBSD: md.h,v 1.4 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -83,21 +83,21 @@ struct md_state {
 	    resultlo;	/* low word of result */
 };
 
-void divsfm __P((int, int, struct mdsfu_register *));
-void divsfr __P((int, int, struct mdsfu_register *));
-void divsim __P((int, int, struct mdsfu_register *));
-void divsir __P((int, int, struct mdsfu_register *));
+void divsfm(int, int, struct mdsfu_register *);
+void divsfr(int, int, struct mdsfu_register *);
+void divsim(int, int, struct mdsfu_register *);
+void divsir(int, int, struct mdsfu_register *);
 
-void divu __P((int, int, int, struct mdsfu_register *));
-void divufr __P((unsigned int, unsigned int, struct mdsfu_register *));
-void divuir __P((unsigned int, unsigned int, struct mdsfu_register *));
+void divu(int, int, int, struct mdsfu_register *);
+void divufr(unsigned int, unsigned int, struct mdsfu_register *);
+void divuir(unsigned int, unsigned int, struct mdsfu_register *);
 
-void mpyaccs __P((int, int, struct mdsfu_register *));
-void mpyaccu __P((unsigned int, unsigned int, struct mdsfu_register *));
-void mpys __P((int, int, struct mdsfu_register *));
-void mpyscv __P((int, int, struct mdsfu_register *));
-void mpyu __P((unsigned int, unsigned int, struct mdsfu_register *));
-void mpyucv __P((unsigned int, unsigned int, struct mdsfu_register *));
+void mpyaccs(int, int, struct mdsfu_register *);
+void mpyaccu(unsigned int, unsigned int, struct mdsfu_register *);
+void mpys(int, int, struct mdsfu_register *);
+void mpyscv(int, int, struct mdsfu_register *);
+void mpyu(unsigned int, unsigned int, struct mdsfu_register *);
+void mpyucv(unsigned int, unsigned int, struct mdsfu_register *);
 
-int impys __P((int *, int *, struct mdsfu_register *));
-int impyu __P((int *, int *, struct mdsfu_register *));
+int impys(int *, int *, struct mdsfu_register *);
+int impyu(int *, int *, struct mdsfu_register *);

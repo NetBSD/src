@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.23 2008/02/07 01:21:57 dyoung Exp $ */
+/* $NetBSD: if_txp.c,v 1.23.6.1 2008/06/02 13:23:40 mjf Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.23 2008/02/07 01:21:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.23.6.1 2008/06/02 13:23:40 mjf Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -87,8 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.23 2008/02/07 01:21:57 dyoung Exp $");
 #undef	TRY_TX_UDP_CSUM
 #undef	TRY_TX_TCP_CSUM
 
-int txp_probe(struct device *, struct cfdata *, void *);
-void txp_attach(struct device *, struct device *, void *);
+int txp_probe(device_t, cfdata_t, void *);
+void txp_attach(device_t, device_t, void *);
 int txp_intr(void *);
 void txp_tick(void *);
 void txp_shutdown(void *);
@@ -163,21 +163,19 @@ static const struct {
 };
 
 static const struct txp_pci_match *
-txp_pcilookup(id)
-	pcireg_t id;
+txp_pcilookup(pcireg_t id)
 {
 	int i;
 
-	for (i = 0; i < sizeof(txp_devices) / sizeof(txp_devices[0]); i++)
-		if ((PCI_VENDOR(id) == txp_devices[i].vid) &&
-		    (PCI_PRODUCT(id) == txp_devices[i].did))
-			return (&txp_devices[i]);
+	for (i = 0; i < __arraycount(txp_devices); i++)
+		if (PCI_VENDOR(id) == txp_devices[i].vid &&
+		    PCI_PRODUCT(id) == txp_devices[i].did)
+			return &txp_devices[i];
 	return (0);
 }
 
 int
-txp_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+txp_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -187,9 +185,9 @@ txp_probe(struct device *parent, struct cfdata *match,
 }
 
 void
-txp_attach(struct device *parent, struct device *self, void *aux)
+txp_attach(device_t parent, device_t self, void *aux)
 {
-	struct txp_softc *sc = (struct txp_softc *)self;
+	struct txp_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -199,16 +197,16 @@ txp_attach(struct device *parent, struct device *self, void *aux)
 	u_int16_t p1;
 	u_int32_t p2;
 	u_char enaddr[6];
-	const struct txp_pci_match *pcimatch;
+	const struct txp_pci_match *match;
 	u_int16_t subsys;
 	int i, flags;
 	char devinfo[256];
 
 	sc->sc_cold = 1;
 
-	pcimatch = txp_pcilookup(pa->pa_id);
-	flags = pcimatch->flags;
-	if (pcimatch->flags & TXP_USESUBSYSTEM) {
+	match = txp_pcilookup(pa->pa_id);
+	flags = match->flags;
+	if (match->flags & TXP_USESUBSYSTEM) {
 		subsys = PCI_PRODUCT(pci_conf_read(pc, pa->pa_tag,
 						   PCI_SUBSYS_ID_REG));
 		for (i = 0;
@@ -223,7 +221,7 @@ txp_attach(struct device *parent, struct device *self, void *aux)
 	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
 #define TXP_EXTRAINFO ((flags & (TXP_USESUBSYSTEM|TXP_SERVERVERSION)) == \
   (TXP_USESUBSYSTEM|TXP_SERVERVERSION) ? " (SVR)" : "")
-	printf(": %s%s\n%s", devinfo, TXP_EXTRAINFO, sc->sc_dev.dv_xname);
+	printf(": %s%s\n%s", devinfo, TXP_EXTRAINFO, device_xname(&sc->sc_dev));
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
@@ -291,7 +289,7 @@ txp_attach(struct device *parent, struct device *self, void *aux)
 	enaddr[4] = ((u_int8_t *)&p2)[1];
 	enaddr[5] = ((u_int8_t *)&p2)[0];
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
 	       ether_sprintf(enaddr));
 	sc->sc_cold = 0;
 
@@ -334,7 +332,7 @@ txp_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, TX_ENTRIES);
 	IFQ_SET_READY(&ifp->if_snd);
 	ifp->if_capabilities = 0;
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 
 	txp_capabilities(sc);
 
@@ -464,7 +462,7 @@ txp_download_fw(sc)
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
 	if (txp_download_fw_wait(sc)) {
-		printf("%s: fw wait failed, initial\n", sc->sc_dev.dv_xname);
+		printf("%s: fw wait failed, initial\n", device_xname(&sc->sc_dev));
 		return (-1);
 	}
 
@@ -597,7 +595,7 @@ txp_download_fw_section(sc, sect, sectnum)
 
 	if (txp_download_fw_wait(sc)) {
 		printf("%s: fw wait failed, section %d\n",
-		    sc->sc_dev.dv_xname, sectnum);
+		    device_xname(&sc->sc_dev), sectnum);
 		err = -1;
 	}
 
@@ -688,7 +686,7 @@ txp_rx_reclaim(sc, r, dma)
 		    BUS_DMASYNC_POSTREAD);
 
 		if (rxd->rx_flags & RX_FLAGS_ERROR) {
-			printf("%s: error 0x%x\n", sc->sc_dev.dv_xname,
+			printf("%s: error 0x%x\n", device_xname(&sc->sc_dev),
 			    le32toh(rxd->rx_stat));
 			ifp->if_ierrors++;
 			goto next;

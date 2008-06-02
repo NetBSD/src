@@ -1,7 +1,7 @@
-/*	$NetBSD: intio.c,v 1.33 2007/10/17 19:58:01 garbled Exp $	*/
+/*	$NetBSD: intio.c,v 1.33.16.1 2008/06/02 13:22:49 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1998 NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.33 2007/10/17 19:58:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.33.16.1 2008/06/02 13:22:49 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

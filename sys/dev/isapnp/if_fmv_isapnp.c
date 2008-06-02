@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isapnp.c,v 1.9 2007/10/19 12:00:31 ad Exp $	*/
+/*	$NetBSD: if_fmv_isapnp.c,v 1.9.16.1 2008/06/02 13:23:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.9 2007/10/19 12:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.9.16.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.9 2007/10/19 12:00:31 ad Exp $")
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
-int	fmv_isapnp_match(struct device *, struct cfdata *, void *);
-void	fmv_isapnp_attach(struct device *, struct device *, void *);
+int	fmv_isapnp_match(device_t, cfdata_t, void *);
+void	fmv_isapnp_attach(device_t, device_t, void *);
 
 struct fmv_isapnp_softc {
 	struct	mb86960_softc sc_mb86960;	/* real "mb86960" softc */
@@ -72,12 +65,11 @@ struct fmv_isapnp_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-CFATTACH_DECL(fmv_isapnp, sizeof(struct fmv_isapnp_softc),
+CFATTACH_DECL_NEW(fmv_isapnp, sizeof(struct fmv_isapnp_softc),
     fmv_isapnp_match, fmv_isapnp_attach, NULL, NULL);
 
 int
-fmv_isapnp_match(struct device *parent, struct cfdata *match,
-    void *aux)
+fmv_isapnp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	int pri, variant;
 
@@ -88,15 +80,16 @@ fmv_isapnp_match(struct device *parent, struct cfdata *match,
 }
 
 void
-fmv_isapnp_attach(struct device *parent, struct device *self,
-    void *aux)
+fmv_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct fmv_isapnp_softc *isc = device_private(self);
 	struct mb86960_softc *sc = &isc->sc_mb86960;
 	struct isapnp_attach_args * const ipa = aux;
 
+	sc->sc_dev = self;
+
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf(": can't configure isapnp resources\n");
+		aprint_error(": can't configure isapnp resources\n");
 		return;
 	}
 
@@ -109,6 +102,6 @@ fmv_isapnp_attach(struct device *parent, struct device *self,
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, mb86960_intr, sc);
 	if (isc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish interrupt handler\n");
 }

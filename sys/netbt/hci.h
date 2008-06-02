@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.22.6.1 2008/04/03 12:43:08 mjf Exp $	*/
+/*	$NetBSD: hci.h,v 1.22.6.2 2008/06/02 13:24:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.22.6.1 2008/04/03 12:43:08 mjf Exp $
+ * $Id: hci.h,v 1.22.6.2 2008/06/02 13:24:23 mjf Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2360,6 +2360,7 @@ struct btreq {
 
 #ifdef _KERNEL
 
+#include <sys/condvar.h>
 #include <sys/device.h>
 
 struct l2cap_channel;
@@ -2463,6 +2464,7 @@ struct hci_unit {
 	/* device info */
 	bdaddr_t	 hci_bdaddr;		/* device address */
 	uint16_t	 hci_flags;		/* see BTF_ above */
+	kcondvar_t	 hci_init;		/* sleep on this */
 
 	uint16_t	 hci_packet_type;	/* packet types */
 	uint16_t	 hci_acl_mask;		/* ACL packet capabilities */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.47 2008/01/15 14:50:09 joerg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.47.6.1 2008/06/02 13:21:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.47 2008/01/15 14:50:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.47.6.1 2008/06/02 13:21:48 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -62,7 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.47 2008/01/15 14:50:09 joerg 
 #include <machine/frame.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
+#ifdef MTRR
 #include <machine/mtrr.h>
+#endif
 #include <machine/netbsd32_machdep.h>
 #include <machine/sysarch.h>
 #include <machine/userret.h>
@@ -80,8 +82,13 @@ const char	machine_arch32[] = "i386";
 
 extern void (osyscall_return)(void);
 
+#ifdef MTRR
 static int x86_64_get_mtrr32(struct lwp *, void *, register_t *);
 static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
+#else
+#define x86_64_get_mtrr32(x, y, z)	ENOSYS
+#define x86_64_set_mtrr32(x, y, z)	ENOSYS
+#endif
 
 static int check_sigcontext32(const struct netbsd32_sigcontext *,
     struct trapframe *);
@@ -148,7 +155,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (u_int64_t)p->p_psstr;
+	tf->tf_rbx = (uint64_t)p->p_psstr;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
@@ -205,7 +212,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 	frame.sf_signum = sig;
 	frame.sf_code = ksi->ksi_trap;
-	frame.sf_scp = (u_int32_t)(u_long)&fp->sf_sc;
+	frame.sf_scp = (uint32_t)(u_long)&fp->sf_sc;
 
 	frame.sf_sc.sc_ds = tf->tf_ds;
 	frame.sf_sc.sc_es = tf->tf_es;
@@ -235,9 +242,9 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -256,10 +263,10 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
 
-	tf->tf_rip = (u_int64_t)catcher;
+	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_rsp = (u_int64_t)fp;
+	tf->tf_rsp = (uint64_t)fp;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 
 	/* Remember that we're now on the signal stack. */
@@ -319,10 +326,10 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext32(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -341,10 +348,10 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
 
-	tf->tf_rip = (u_int64_t)catcher;
+	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_rsp = (u_int64_t)fp;
+	tf->tf_rsp = (uint64_t)fp;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 
 	/* Remember that we're now on the signal stack. */
@@ -411,7 +418,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 	tf->tf_rsp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
@@ -419,7 +426,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }
@@ -611,6 +618,7 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, registe
 	return error;
 }
 
+#ifdef MTRR
 static int
 x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 {
@@ -739,6 +747,7 @@ fail:
 	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
 	return error;
 }
+#endif
 
 #if 0
 void
@@ -849,12 +858,12 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (0);
 }
@@ -912,8 +921,6 @@ startlwp32(void *arg)
 
 	err = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
 	pool_put(&lwp_uc_pool, uc);
-
-	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);
 }
@@ -1025,7 +1032,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	tf->tf_rsp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
@@ -1034,7 +1041,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	/* Restore signal mask. */
 	native_sigset13_to_sigset((sigset13_t *)&context.sc_mask, &mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }

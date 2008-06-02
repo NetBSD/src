@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.33 2008/02/07 01:21:54 dyoung Exp $	*/
+/*	$NetBSD: tropic.c,v 1.33.6.1 2008/06/02 13:23:28 mjf Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.33 2008/02/07 01:21:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.33.6.1 2008/06/02 13:23:28 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -194,8 +194,7 @@ tr_config(sc)
 		}
 
 		if (i == 30000 && sc->sc_srb == ACA_RDW(sc, ACA_WRBR)) {
-			printf("%s: no response for fast path cfg\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "no response for fast path cfg\n");
 			return 1;
 		}
 
@@ -203,7 +202,7 @@ tr_config(sc)
 
 		if ((SRB_INB(sc, sc->sc_srb, SRB_RETCODE) != 0)) {
 			printf("%s: cfg fast path returned: 0x%02x\n",
-			    sc->sc_dev.dv_xname,
+			    device_xname(&sc->sc_dev),
 			    SRB_INB(sc, sc->sc_srb, SRB_RETCODE));
 			return 1;
 		}
@@ -335,7 +334,7 @@ tr_attach(sc)
 	/*
 	 * init network-visible interface
 	 */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = tr_ioctl;
 	if (sc->sc_init_status & FAST_PATH_TRANSMIT)
@@ -432,7 +431,7 @@ tr_attach(sc)
 
 	token_ifattach(ifp, myaddr);
 
-	printf("%s: address %s ring speed %d Mbps\n", sc->sc_dev.dv_xname,
+	printf("%s: address %s ring speed %d Mbps\n", device_xname(&sc->sc_dev),
 	    token_sprintf(myaddr), (sc->sc_init_status & RSP_16) ? 16 : 4);
 
 	callout_init(&sc->sc_init_callout, 0);
@@ -458,7 +457,7 @@ u_int8_t speed;
 
 	if ((SRB_INB(sc, sc->sc_srb, SRB_RETCODE) != 0)) {
 		printf("%s: set default ringspeed returned: 0x%02x\n",
-		    sc->sc_dev.dv_xname, SRB_INB(sc, sc->sc_srb, SRB_RETCODE));
+		    device_xname(&sc->sc_dev), SRB_INB(sc, sc->sc_srb, SRB_RETCODE));
 		return 1;
 	}
 	return 0;
@@ -520,8 +519,7 @@ struct tr_softc *sc;
 	}
 
 	if (i == 35000 && sc->sc_srb == 0) {
-		printf("%s: no response from adapter after reset\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "no response from adapter after reset\n");
 		return 1;
 	}
 
@@ -530,12 +528,12 @@ struct tr_softc *sc;
 	ACA_OUTB(sc, ACA_RRR_e, (sc->sc_maddr >> 12));
 	sc->sc_srb = ACA_RDW(sc, ACA_WRBR);
 	if (SRB_INB(sc, sc->sc_srb, SRB_CMD) != 0x80) {
-		printf("%s: initialization incomplete, status: 0x%02x\n",
-		    sc->sc_dev.dv_xname, SRB_INB(sc, sc->sc_srb, SRB_CMD));
+		aprint_error_dev(&sc->sc_dev, "initialization incomplete, status: 0x%02x\n",
+		    SRB_INB(sc, sc->sc_srb, SRB_CMD));
 		return 1;
 	}
 	if (SRB_INB(sc, sc->sc_srb, SRB_INIT_BUC) != 0) {
-		printf("%s: Bring Up Code %02x\n", sc->sc_dev.dv_xname,
+		aprint_error_dev(&sc->sc_dev, "Bring Up Code %02x\n",
 		    SRB_INB(sc, sc->sc_srb, SRB_INIT_BUC));
 		return 1;
 	}
@@ -827,7 +825,7 @@ tr_intr(arg)
 		/* Is this interrupt caused by an adapter check? */
 		if (status & ADAP_CHK_INT) {
 			printf("%s: adapter check 0x%04x\n",
-			    sc->sc_dev.dv_xname,
+			    device_xname(&sc->sc_dev),
 			    (unsigned int)ntohs(ACA_RDW(sc, ACA_WWCR)));
 
 			/* Clear this interrupt bit */
@@ -865,9 +863,8 @@ tr_intr(arg)
 			case XMIT_UI_FRM:	/* Response to xmit request */
 				/* Response not valid? */
 				if (retcode != 0xff)
-					printf("%s: error on xmit request = "
-					    "0x%x\n", sc->sc_dev.dv_xname,
-					    retcode);
+					aprint_error_dev(&sc->sc_dev, "error on xmit request = "
+					    "0x%x\n", retcode);
 				break;
 
 			case DIR_OPEN_ADAPTER:	/* open-adapter-cmd response */
@@ -897,7 +894,7 @@ tr_intr(arg)
 						    sc->sc_xmit_buffers;
 #ifdef TROPICDEBUG
 						printf("%s: %d buffers\n",
-						    sc->sc_dev.dv_xname,
+						    device_xname(&sc->sc_dev),
 						    sc->sc_xmit_buffers);
 #endif
 						sc->sc_xmit_correlator = 0;
@@ -907,8 +904,7 @@ tr_intr(arg)
 						tr_opensap(sc, LLC_SNAP_LSAP);
 				}
 				else {
-					printf("%s: open error = 0x%x\n",
-					    sc->sc_dev.dv_xname,
+					aprint_error_dev(&sc->sc_dev, "open error = 0x%x\n",
 					    SRB_INB(sc, srb, SRB_RETCODE));
 					ifp->if_flags &= ~IFF_RUNNING;
 					ifp->if_flags &= ~IFF_UP;
@@ -924,8 +920,7 @@ tr_intr(arg)
 			case DIR_CLOSE:	/* Response to close adapter command */
 				/* Close not successful? */
 				if (retcode != 0)
-					printf("%s: close error = 0x%x\n",
-					    sc->sc_dev.dv_xname, retcode);
+					aprint_error_dev(&sc->sc_dev, "close error = 0x%x\n", retcode);
 				else {
 					ifp->if_flags &= ~IFF_RUNNING;
 					ifp->if_flags &= ~IFF_UP;
@@ -945,7 +940,7 @@ tr_intr(arg)
 					    SRB_INW(sc, sap_srb,
 					        SRB_OPNSAP_STATIONID);
 				printf("%s: Token Ring opened\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 				wakeup(&sc->tr_sleepevent);
 				break;
 /* XXX DLC_CLOSE_SAP not needed ? */
@@ -954,35 +949,34 @@ tr_intr(arg)
 			case DIR_READ_LOG:   /* Response to read log */
 				/* Cmd not successful? */
 				if (retcode != 0)
-					printf("%s: read error log cmd err = "
-					    "0x%x\n", sc->sc_dev.dv_xname,
-					    retcode);
+					aprint_error_dev(&sc->sc_dev, "read error log cmd err = "
+					    "0x%x\n", retcode);
 #ifdef TROPICDEBUG
 				log_srb = sc->sc_srb;
-				printf("%s: ERROR LOG:\n",sc->sc_dev.dv_xname);
+				printf("%s: ERROR LOG:\n", device_xname(&sc->sc_dev));
 				printf("%s: Line=%d, Internal=%d, Burst=%d\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    (SRB_INB(sc, log_srb, SRB_LOG_LINEERRS)),
 				    (SRB_INB(sc, log_srb, SRB_LOG_INTERRS)),
 				    (SRB_INB(sc, log_srb, SRB_LOG_BRSTERRS)));
 				printf("%s: A/C=%d, Abort=%d, Lost frames=%d\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    (SRB_INB(sc, log_srb, SRB_LOG_ACERRS)),
 				    (SRB_INB(sc, log_srb, SRB_LOG_ABRTERRS)),
 				    (SRB_INB(sc, log_srb, SRB_LOG_LOSTFRMS)));
 				printf("%s: Receive congestion=%d, Frame copied=%d, Frequency=%d\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    (SRB_INB(sc, log_srb, SRB_LOG_RCVCONG)),
 				    (SRB_INB(sc, log_srb, SRB_LOG_FCPYERRS)),
 				    (SRB_INB(sc, log_srb, SRB_LOG_FREQERRS)));
-				printf("%s: Token=%d\n",sc->sc_dev.dv_xname,
+				printf("%s: Token=%d\n", device_xname(&sc->sc_dev),
 				    (SRB_INB(sc, log_srb, SRB_LOG_TOKENERRS)));
 #endif /* TROPICDEBUG */
 				ifp->if_flags &= ~IFF_OACTIVE;
 				break;
 			default:
 				printf("%s: bad SRB command encountered 0x%x\n",
-				    sc->sc_dev.dv_xname, command);
+				    device_xname(&sc->sc_dev), command);
 				break;
 			}
 			/* clear the SRB-response interrupt bit */
@@ -1005,19 +999,16 @@ tr_intr(arg)
 			case REC_DATA:		/* Receive */
 				/* Response not valid? */
 				if (retcode != 0xff)
-				printf("%s: ASB bad receive response = 0x%x\n",
-				    sc->sc_dev.dv_xname, retcode);
+					aprint_error_dev(&sc->sc_dev, "ASB bad receive response = 0x%x\n", retcode);
 				break;
 			case XMIT_DIR_FRAME:	/* Transmit */
 			case XMIT_UI_FRM:   	/* Transmit */
 				/* Response not valid? */
 				if (retcode != 0xff)
-				printf("%s: ASB response err on xmit = 0x%x\n",
-				    sc->sc_dev.dv_xname, retcode);
+					aprint_error_dev(&sc->sc_dev, "ASB response err on xmit = 0x%x\n", retcode);
 				break;
 			default:
-				printf("%s: invalid command in ASB = 0x%x\n",
-				    sc->sc_dev.dv_xname, command);
+				aprint_error_dev(&sc->sc_dev, "invalid command in ASB = 0x%x\n", command);
 				break;
 			}
 			/* Clear this interrupt bit */
@@ -1030,7 +1021,7 @@ tr_intr(arg)
 			switch (command) {
 			case DLC_STATUS:    /* DLC status change */
 				printf("%s: ARB new DLC status = 0x%x\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    ARB_INW(sc, arb, ARB_DLCSTAT_STATUS));
 				break;
 			case REC_DATA:		/* Adapter has data for PC */
@@ -1041,8 +1032,7 @@ tr_intr(arg)
 			case RING_STAT_CHANGE:	/* Ring status change */
 				if (ARB_INW(sc, arb, ARB_RINGSTATUS) &
 				    (SIGNAL_LOSS + LOBE_FAULT)){
-					printf("%s: signal loss / lobe fault\n",
-					    sc->sc_dev.dv_xname);
+					aprint_error_dev(&sc->sc_dev, "signal loss / lobe fault\n");
 					ifp->if_flags &= ~IFF_RUNNING;
 					ifp->if_flags &= ~IFF_UP;
 					IFQ_PURGE(&ifp->if_snd);
@@ -1055,7 +1045,7 @@ tr_intr(arg)
 					    ~(SOFT_ERR))
 						printf("%s: ARB new ring status"
 						    " = 0x%x\n",
-						    sc->sc_dev.dv_xname,
+						    device_xname(&sc->sc_dev),
 						    ARB_INW(sc, arb,
 							ARB_RINGSTATUS));
 #endif /* TROPICDEBUG */
@@ -1079,8 +1069,7 @@ tr_intr(arg)
 				break;
 
 			default:
-				printf("%s: invalid command in ARB = 0x%x\n",
-				    sc->sc_dev.dv_xname, command);
+				aprint_error_dev(&sc->sc_dev, "invalid command in ARB = 0x%x\n", command);
 				break;
 			}
 
@@ -1103,11 +1092,11 @@ tr_intr(arg)
 				/* collect status on last packet */
 				if (retcode != 0) {
 					printf("%s: xmit return code = 0x%x\n",
-					    sc->sc_dev.dv_xname, retcode);
+					    device_xname(&sc->sc_dev), retcode);
 					/* XXXchb */
 					if (retcode == 0x22) {
 						printf("%s: FS = 0x%2x\n",
-						    sc->sc_dev.dv_xname,
+						    device_xname(&sc->sc_dev),
 						    SSB_INB(sc, ssb,
 							SSB_XMITERR));
 					}
@@ -1130,8 +1119,7 @@ tr_intr(arg)
 				    retcode);
 				break;
 			default:
-				printf("%s: SSB error, invalid command =%x\n",
-				    sc->sc_dev.dv_xname, command);
+				aprint_error_dev(&sc->sc_dev, "SSB error, invalid command =%x\n", command);
 			}
 			/* clear this interrupt bit */
 			ACA_RSTB(sc, ACA_ISRP_o, ~(SSB_RESP_INT));
@@ -1145,7 +1133,7 @@ tr_intr(arg)
 	/* Is this interrupt caused by an adapter error or access violation? */
 	if (ACA_RDB(sc, ACA_ISRP_e) & (TCR_INT | ERR_INT | ACCESS_INT)) {
 		printf("%s: adapter error, ISRP_e = 0x%x\n",
-		    sc->sc_dev.dv_xname, ACA_RDB(sc, ACA_ISRP_e));
+		    device_xname(&sc->sc_dev), ACA_RDB(sc, ACA_ISRP_e));
 
 		/* Clear these interrupt bits */
 		ACA_RSTB(sc, ACA_ISRP_e, ~(TCR_INT | ERR_INT | ACCESS_INT));
@@ -1383,8 +1371,7 @@ struct tr_softc *sc;
 			ASB_OUTW(sc, asb, XMIT_FRAMELEN, size);
 		}
 		else {
-			printf("%s: unexpected empty mbuf send queue\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unexpected empty mbuf send queue\n");
 
 			/* Set size of transmission frame in ASB to zero. */
 			ASB_OUTW(sc, asb, XMIT_FRAMELEN, 0);
@@ -1421,7 +1408,7 @@ struct tr_softc *sc;
 		txbuf = TXB_INW(sc, txbuf, XMIT_NEXTBUF) - XMIT_NEXTBUF;
 		if (TXB_INB(sc, txbuf, XMIT_RETCODE) != 0) {
 			ifp->if_oerrors++;
-			printf("%s: xmit error = 0x%x\n", sc->sc_dev.dv_xname,
+			aprint_error_dev(&sc->sc_dev, "xmit error = 0x%x\n",
 			    TXB_INB(sc, txbuf, XMIT_RETCODE));
 		}
 		sc->sc_xmit_buffers +=
@@ -1731,7 +1718,7 @@ struct tr_softc *sc;
 
 	error = tsleep(&sc->tr_sleepevent, 1, "trsleep", hz * 30);
 	if (error == EWOULDBLOCK)
-		printf("%s: sleep event timeout\n", sc->sc_dev.dv_xname);
+		printf("%s: sleep event timeout\n", device_xname(&sc->sc_dev));
 }
 
 void
@@ -1740,7 +1727,7 @@ struct ifnet	*ifp;
 {
 	struct tr_softc	*sc = ifp->if_softc;
 
-	log(LOG_ERR,"%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR,"%s: device timeout\n", device_xname(&sc->sc_dev));
 	++ifp->if_oerrors;
 
 	tr_reset(sc);
@@ -1752,8 +1739,7 @@ tr_enable(sc)
 {
 	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
-			printf("%s: device enable failed\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "device enable failed\n");
 			return (EIO);
 		}
 	}

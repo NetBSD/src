@@ -4,22 +4,6 @@ dumb|80-column dumb tty:\
 	:bl=^G:cr=^M:do=^J:sf=^J:
 unknown|unknown terminal type:\
 	:gn:tc=dumb:
-lpr|printer|line printer:\
-	:bs:hc:os:\
-	:co#132:li#66:\
-	:bl=^G:cr=^M:do=^J:ff=^L:le=^H:sf=^J:
-glasstty|classic glass tty interpreting ASCII control characters:\
-	:am:\
-	:co#80:\
-	:bl=^G:cl=^L:cr=^M:do=^J:kb=^H:kd=^J:kl=^H:le=^H:nw=^M^J:\
-	:ta=^I:
-vt52|dec vt52:\
-	:bs:\
-	:co#80:it#8:li#24:\
-	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
-	:ae=\EG:as=\EF:bl=^G:cd=\EJ:ce=\EK:cl=\EH\EJ:cm=\EY%+ %+ :\
-	:cr=^M:do=\EB:ho=\EH:kb=^H:kd=\EB:kl=\ED:kr=\EC:ku=\EA:\
-	:le=\ED:nd=\EC:nw=^M^J:sf=^J:sr=\EI:ta=^I:up=\EA:
 vt100|vt100-am|dec vt100 (w/advanced video):\
 	:am:bs:ms:xn:xo:\
 	:co#80:it#8:li#24:vt#3:\

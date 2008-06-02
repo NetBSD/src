@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.h,v 1.7 2007/10/19 12:01:07 ad Exp $ */
+/* $NetBSD: ppbus_base.h,v 1.7.16.1 2008/06/02 13:23:48 mjf Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -136,27 +136,27 @@ struct ppbus_status {
 
 
 /* PPBUS interface functions (includes parport interface) */
-int ppbus_scan_bus(struct device *);
-void ppbus_pnp_detect(struct device *);
-int ppbus_request_bus(struct device *, struct device *, int, unsigned int);
-int ppbus_release_bus(struct device *, struct device *, int, unsigned int);
-int ppbus_get_status(struct device *, struct ppbus_status *);
-int ppbus_poll_bus(struct device *, int, char, char, int);
+int ppbus_scan_bus(device_t);
+void ppbus_pnp_detect(device_t);
+int ppbus_request_bus(device_t, device_t, int, unsigned int);
+int ppbus_release_bus(device_t, device_t, int, unsigned int);
+int ppbus_get_status(device_t, struct ppbus_status *);
+int ppbus_poll_bus(device_t, int, char, char, int);
 
 /* Parport interface function prototypes */
-int ppbus_read_ivar(struct device *, int, unsigned int *);
-int ppbus_write_ivar(struct device *, int, unsigned int *);
-int ppbus_reset_epp_timeout(struct device *);
-int ppbus_ecp_sync(struct device *);
-int ppbus_set_mode(struct device *, int, int);
-int ppbus_get_mode(struct device *);
-int ppbus_write(struct device *, char *, int, int, size_t *);
-int ppbus_read(struct device *, char *, int, int, size_t *);
-int ppbus_exec_microseq(struct device *, struct ppbus_microseq * *);
-int ppbus_io(struct device *, int, u_char *, int, u_char);
-int ppbus_dma_malloc(struct device *, void **, bus_addr_t *, bus_size_t);
-int ppbus_dma_free(struct device *, void **, bus_addr_t *, bus_size_t);
-int ppbus_add_handler(struct device *, void (*)(void *), void *);
-int ppbus_remove_handler(struct device *, void (*)(void *));
+int ppbus_read_ivar(device_t, int, unsigned int *);
+int ppbus_write_ivar(device_t, int, unsigned int *);
+int ppbus_reset_epp_timeout(device_t);
+int ppbus_ecp_sync(device_t);
+int ppbus_set_mode(device_t, int, int);
+int ppbus_get_mode(device_t);
+int ppbus_write(device_t, char *, int, int, size_t *);
+int ppbus_read(device_t, char *, int, int, size_t *);
+int ppbus_exec_microseq(device_t, struct ppbus_microseq * *);
+int ppbus_io(device_t, int, u_char *, int, u_char);
+int ppbus_dma_malloc(device_t, void **, bus_addr_t *, bus_size_t);
+int ppbus_dma_free(device_t, void **, bus_addr_t *, bus_size_t);
+int ppbus_add_handler(device_t, void (*)(void *), void *);
+int ppbus_remove_handler(device_t, void (*)(void *));
 
 #endif /* __PPBUS_BASE_H */

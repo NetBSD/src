@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.59 2008/02/09 19:30:11 jmmv Exp $
+#	$NetBSD: sets.subr,v 1.59.6.1 2008/06/02 13:21:17 mjf Exp $
 #
 
 #
@@ -45,6 +45,7 @@ MKVARS="\
 	MKISCSI		\
 	MKKERBEROS	\
 	MKLINT		\
+	MKLDAP		\
 	MKMAN		\
 	MKMANPAGES	\
 	MKMANZ		\
@@ -63,7 +64,10 @@ MKVARS="\
 	MKYP		\
 	USE_INET6	\
 	USE_KERBEROS	\
+	USE_LDAP	\
 	USE_YP		\
+	NETBSDSRCDIR	\
+	MAKEVERBOSE	\
 "
 #
 # The following variables refer to tools that are used when building sets:
@@ -212,6 +216,12 @@ if [ "${MACHINE_ARCH}" = "m68000" ]; then
 	shlib=no			# Turn off shlibs for some ports.
 fi
 
+OSRELEASE=`${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh`
+MODULEDIR="stand/${MACHINE}/${OSRELEASE}/modules"
+SUBST="s#@MODULEDIR@#${MODULEDIR}#g"
+SUBST="${SUBST};s#@OSRELEASE@#${OSRELEASE}#g"
+SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
+
 #
 # list_set_files setfile [...]
 # 
@@ -219,7 +229,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.59 2008/02/09 19:30:11 jmmv Exp $
+# 	# $NetBSD: sets.subr,v 1.59.6.1 2008/06/02 13:21:17 mjf Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -287,9 +297,20 @@ fi
 #
 list_set_files()
 {
+	if [ ${MAKEVERBOSE:-2} -lt 2 ]; then
+		verbose=false
+	else
+		verbose=true
+	fi
 	for setname; do
-		list_set_lists $setname
-	done | xargs cat | \
+		list=`list_set_lists $setname`
+		for l in $list; do
+			echo $l
+			if $verbose; then
+				echo $l >&2
+			fi
+		done
+	done | xargs cat | ${SED} ${SUBST} | \
 	${AWK} -v obsolete=${obsolete} '
 		BEGIN {
 			if (obsolete)

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.28 2007/10/28 13:59:53 isaki Exp $
+#	$NetBSD: Makefile,v 1.28.8.1 2008/06/02 13:21:19 mjf Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=			inst.fs
-IMAGESIZE=		1240k
+IMAGESIZE=		1300k
 # `floppy-root' cannot be used now, due to size issue.
 #IMAGE_RELEASEDIR=	installation/floppy
 

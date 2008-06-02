@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile.rump,v 1.6 2008/01/24 22:41:07 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.6.6.1 2008/06/02 13:24:31 mjf Exp $
 #
 
 .include <bsd.own.mk>
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 NOMAN=		wizd
-MKLINT?=	no
-MKPIC?=		no
 
 WARNS?=		4
 DBG=		-g -O0
@@ -16,7 +14,7 @@ CPPFLAGS+=	-I${.CURDIR} -I.
 .if "${RUMPKERNEL}" != "no"
 CFLAGS+=	-ffreestanding
 CPPFLAGS:=	-I${NETBSDSRCDIR}/sys/rump/include ${CPPFLAGS}
-CPPFLAGS+=	-D_KERNEL -DDIAGNOSTIC -I${NETBSDSRCDIR}/common/include
+CPPFLAGS+=	-D_KERNEL -I${NETBSDSRCDIR}/common/include
 CPPFLAGS+=	-D_RUMPKERNEL -DDEBUG
 CPPFLAGS+=	-nostdinc -I${NETBSDSRCDIR}/sys
 .endif

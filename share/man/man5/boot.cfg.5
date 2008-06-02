@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.4 2008/01/05 19:29:16 apb Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.4.6.1 2008/06/02 13:21:39 mjf Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 19, 2007
+.Dd May 2, 2008
 .Dt BOOT.CFG 5
 .Os
 .Sh NAME
@@ -68,7 +68,8 @@ Used to define a menu item to be displayed to the end-user at boot time
 which allows a series of boot commands to be run without further typing.
 The value consists of the required menu text, followed by a colon
 .Pq Sq \&:
-and then the desired command.
+and then the desired command(s).
+Multiple commands can be specified separated by a semi-colon.
 If the specified menu text is empty
 (the colon appears immediately after the equals sign),
 then the displayed menu text is the same as the command.
@@ -76,6 +77,8 @@ For example:
 .Bd -literal
 menu=Boot normally:boot
 menu=Boot single-user:boot -s
+menu=Boot with module foo:load /foo.kmod;boot
+menu=Boot with serial console:consdev com0;boot
 menu=:boot hd1a:netbsd -as
 .Ed
 .Pp
@@ -84,7 +87,7 @@ i.e. the order in the
 .Nm
 file is important.
 .Pp
-The command is executed just as though the user had typed it in
+Each command is executed just as though the user had typed it in
 and so can be any valid command that would be accepted at the
 normal boot prompt.
 In addition,
@@ -112,6 +115,11 @@ If not specified, the default value will be option 1, i.e. the first item.
 Changes the console device to that specified in the value.
 Valid values are any of those that could be specified at the normal boot
 prompt with the consdev command.
+.It Sy load
+Used to load kernel modules, which will be passed on to the kernel for
+initialization during early boot.
+The argument is the complete path and file name of the module to be loaded.
+May be used as many times as needed.
 .El
 .Sh EXAMPLES
 Here is an example
@@ -125,9 +133,13 @@ banner=Please choose an option from the following menu:
 menu=Boot normally:boot
 menu=Boot single-user:boot -s
 menu=Boot from second disk:boot hd1a:
+menu=Boot with module foo:load /foo.kmod;boot
+menu=Boot with modules foo and bar:load /foo.kmod;load /bar.kmod;boot
 menu=Go to command line (advanced users only):prompt
 timeout=-1
 default=1
+# Always load ramdisk module
+load=/ramdisk.kmod
 .Ed
 .Pp
 This will display:
@@ -140,12 +152,14 @@ Please choose an option from the following menu:
       1. Boot normally
       2. Boot single-user
       3. Boot from second disk
-      4. Go to command line (advanced users only)
+      4. Boot with module foo
+      5. Boot with modules foo and bar
+      6. Go to command line (advanced users only)
 
 Option [1]:
 .Ed
 .Pp
-It will then wait for the user to type 1, 2, 3 or 4 followed by Return.
+It will then wait for the user to type 1, 2, 3, 4, 5 or 6 followed by Return.
 Pressing Return by itself will run option 1.
 There will be no timeout.
 .Sh SEE ALSO

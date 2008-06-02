@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.6.6.2 2008/04/05 23:33:20 mjf Exp $ */
+/*	$NetBSD: bio.c,v 1.6.6.3 2008/06/02 13:23:11 mjf Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.6.6.2 2008/04/05 23:33:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.6.6.3 2008/06/02 13:23:11 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -269,7 +269,7 @@ bio_lookup(char *name)
 
 	mutex_enter(&bio_lock);
 	LIST_FOREACH(bm, &bios, bm_link) {
-		if (strcmp(name, bm->bm_dev->dv_xname) == 0) {
+		if (strcmp(name, device_xname(bm->bm_dev)) == 0) {
 			mutex_exit(&bio_lock);
 			return bm;
 		}

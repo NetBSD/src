@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.35 2007/12/09 20:28:10 jmcneill Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.35.10.1 2008/06/02 13:23:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.35 2007/12/09 20:28:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.35.10.1 2008/06/02 13:23:40 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ static const struct rtk_type rtk_pci_devs[] = {
 static int	rtk_pci_match(device_t, struct cfdata *, void *);
 static void	rtk_pci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(rtk_pci, sizeof(struct rtk_pci_softc),
+CFATTACH_DECL_NEW(rtk_pci, sizeof(struct rtk_pci_softc),
     rtk_pci_match, rtk_pci_attach, NULL, NULL);
 
 static const struct rtk_type *
@@ -121,19 +121,18 @@ rtk_pci_lookup(const struct pci_attach_args *pa)
 			return (t);
 		}
 	}
-	return (NULL);
+	return NULL;
 }
 
 static int
-rtk_pci_match(device_t parent, struct cfdata *match,
-    void *aux)
+rtk_pci_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
 	if (rtk_pci_lookup(pa) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -154,15 +153,17 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 	const struct rtk_type *t;
 	int ioh_valid, memh_valid;
 
+	sc->sc_dev = self;
+
 	t = rtk_pci_lookup(pa);
 	if (t == NULL) {
-		printf("\n");
-		panic("rtk_pci_attach: impossible");
+		aprint_normal("\n");
+		panic("%s: impossible", __func__);
 	}
 
 	aprint_naive("\n");
 	aprint_normal(": %s (rev. 0x%02x)\n",
-		      t->rtk_name, PCI_REVISION(pa->pa_class));
+	    t->rtk_name, PCI_REVISION(pa->pa_class));
 
 	/*
 	 * Map control/status registers.

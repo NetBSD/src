@@ -1,6 +1,6 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.16 2007/12/15 21:33:13 apb Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.16.4.1 2008/06/02 13:21:40 mjf Exp $
 .\"
-.\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2003, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -14,13 +14,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"        This product includes software developed by the NetBSD
-.\"        Foundation, Inc. and its contributors.
-.\" 4. Neither the name of The NetBSD Foundation nor the names of its
-.\"    contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,10 +34,12 @@
 .Nm MAKEDEV
 .Nd create system and device special files
 .Sh SYNOPSIS
+.\" Please keep this in sync with MAKEDEV.local.8
 .Nm
 .Op Fl fMs
 .Op Fl m Ar mknod
 .Op Fl p Ar pax
+.Op Fl t Ar mtree
 .Bro Ar special | device Brc Op Ar ...
 .Sh DESCRIPTION
 .Nm
@@ -65,38 +60,36 @@ with the
 argument.
 .Pp
 The script is in
-.Pa /dev/MAKEDEV
-and must be called from the
+.Pa /dev/MAKEDEV .
+Devices are created in the current working directory;
+in normal use,
+.Nm
+should be invoked with
 .Pa /dev
-directory.
-For the creation of the devices,
-.Xr mknod 8
-is used, which can only be used for creating devices by the
-super-user.
-The
-.Xr mknod 8
-used can be overridden by the
-.Fl m
-flag.
+as the current working directory.
 .Pp
 Supported options are:
 .Bl -tag -width XmXmknodXX
 .It Fl f
 Force permissions to be updated on existing devices.
 This works only if
-.Xr mknod 8
-is used; it is not compatible with the
-.Fl p
+.Nm
+invokes
+.Xr mknod 8 ;
+it is not compatible with the
+.Fl p ,
+.Fl s ,
 or
-.Fl s
+.Fl t
 options.
 .It Fl M
 Create a memory file system, union mounted over the current directory,
 to contain the device special files.
-The memory file system is created using either
+The memory file system is created using
 .Xr mount_tmpfs 8
 or
-.Xr mount_mfs 8 .
+.Xr mount_mfs 8 ,
+in that order of preference.
 .Pp
 If the
 .Fl M
@@ -110,40 +103,112 @@ In this case,
 .Nm
 will also redirect its output to the system console.
 .It Fl m Ar mknod
-Name of
+Force the use of
+.Xr mknod 8 ,
+and specify the name or path to the
 .Xr mknod 8
 program.
 [Usually, $TOOL_MKNOD or mknod.]
 .It Fl p Ar pax
-Name of
+Force the use of
+.Xr pax 1 ,
+and specify the name or path to the
 .Xr pax 1
 program.
-[Usually, $TOOL_PAX or mknod.]
-If this is specified, then instead of creating device nodes
-one by one using
-.Xr mknod 8 ,
-.Nm
-will create device nodes all at once using
-.Xr pax 1 .
-This is more efficient when many device nodes are involved.
+[Usually, $TOOL_PAX or pax.]
 .It Fl s
-Generate
+Generate an
 .Xr mtree 8
 specfile instead of creating devices.
+.It Fl t Ar mtree
+Force the use of
+.Xr mtree 8 ,
+and specify the name or path to the
+.Xr mtree 8
+program.
+[Usually, $TOOL_MTREE or mtree.]
+.El
+.Pp
+.Nm
+has several possible methods of creating device nodes:
+.Bl -bullet
+.It
+By invoking the
+.Xr mknod 8
+command once for each device node.
+This is the traditional method, but it is slow because each device node
+is created using a new process.
+.Pp
+The
+.Fl m
+option forces
+.Nm
+to use the
+.Xr mknod 8
+method.
+.It
+By internally creating a specfile in a format usable by
+.Xr mtree 8 ,
+and providing the specfile on standard input to a
+.Xr pax 1
+or
+.Xr mtree 8
+command, invoked with options that request it to create the device nodes
+as well as any necessary subdirectories.
+This is much faster than creating device nodes with
+.Xr mknod 8 ,
+because it requires much fewer processes;
+however, it's not compatible with the
+.Fl f
+option.
+.Pp
+The
+.Fl p
+or
+.Fl t
+options force
+.Nm
+to use the
+.Xr pax 1
+or
+.Xr mtree 8
+methods.
+.It
+If the
+.Fl s
+option is specified, then
+.Nm
+will not create device nodes at all, but will output
+a specfile in a format usable by
+.Xr mtree 8 .
 .El
 .Pp
 The
-.Fl m , Fl p ,
+.Fl m , Fl p , Fl s ,
 and
-.Fl s
+.Fl t
 flags are mutually exclusive.
 If none of these flags is specified, then
 .Nm
-will use the
+will use
+.Xr mtree 8 ,
+.Xr pax 1 ,
+or
+.Xr mknod 8 ,
+in that order of preference, depending on which commands
+appear to be available and usable.
+In normal use, it's expected that
+.Xr mtree 8
+will be available, so it will be chosen.
+If
+.Nm
+is invoked by
+.Xr init 8 ,
+it's expected that
+.Xr mtree 8
+will not be available, but
 .Xr pax 1
-command if it appears to be usable, falling back to the
-.Xr mknod 8
-command if necessary.
+may be available.
 .Pp
 The special targets supported on
 .Nx
@@ -202,8 +267,29 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
+The
+.Fl f ,
+.Fl m ,
+and
+.Fl s
+options were added in
+.Nx 2.0 .
+The
+.Fl p ,
+.Fl t ,
+and
+.Fl M
+options were added in
+.Nx 5.0 .
 The ability to be used as a function library was added in
 .Nx 5.0 .
+.Sh BUGS
+The
+.Fl f
+option is not compatible with the use of
+.Xr mtree 8
+or
+.Xr pax 1 .
 .Sh NOTES
 Not all devices listed in this manpage are supported on all platforms.
 .Pp

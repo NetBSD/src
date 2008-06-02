@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.12 2007/10/19 12:00:33 ad Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.12.16.1 2008/06/02 13:23:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.12 2007/10/19 12:00:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.12.16.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -336,11 +336,11 @@ idma_attach(
 	sc->idma_ih[3] = ih;
 
 
-	printf("%s: irpt at irqs %d, %d, %d, %d\n", sc->idma_dev.dv_xname,
+	printf("%s: irpt at irqs %d, %d, %d, %d\n", device_xname(&sc->idma_dev),
 		IRQ_IDMA0_1, IRQ_IDMA2_3, IRQ_IDMA4_5, IRQ_IDMA6_7);
 #ifdef IDMA_ABORT_TEST
 	printf("%s: CAUTION: IDMA_ABORT_TEST enabled\n",
-		sc->idma_dev.dv_xname);
+		device_xname(&sc->idma_dev));
 #endif
 
 }
@@ -996,7 +996,7 @@ idma_abort(idma_desch_t *iddhp, unsigned int flags, const char *str)
 
 		if (try >= 100)
 			panic("%s: idma_abort %p failed\n",
-				sc->idma_dev.dv_xname, iddhp);
+				device_xname(&sc->idma_dev), iddhp);
 
 	}
 	if ((flags & IDMA_ABORT_CANCEL) == 0)
@@ -1207,7 +1207,7 @@ idma_done(
 	callback = idcp->idc_callback;
 	if (callback == 0) {
 		DIAGPRF(("%s: idma_done: chan %d no callback\n",
-			sc->idma_dev.dv_xname, chan));
+			device_xname(&sc->idma_dev), chan));
 		idma_desch_free(iddhp);
 	}
 	(*callback)(idcp->idc_arg, iddhp, ccause);
@@ -1315,7 +1315,7 @@ idma_intr_comm(
 		if (iddhp == 0) {
 			DIAGPRF(("%s: idma_intr_comm: chan %d ccause 0x%x"
 				" idc_active == 0\n",
-				sc->idma_dev.dv_xname,
+				device_xname(&sc->idma_dev),
 				chan, ccause));
 			idma_qstart(sc, idcp, chan);
 			goto next;
@@ -1337,14 +1337,14 @@ idma_intr_comm(
 		case IDMA_DESC_CTL_OWN:
 			DIAGPRF(("%s: idma_intr_comm: chan %d "
 				"descriptor OWN error, abort\n",
-				sc->idma_dev.dv_xname, chan));
+				device_xname(&sc->idma_dev), chan));
 			idma_abort(iddhp, 0, "idma_intr_comm: OWN error");
 			goto next;
 		case IDMA_DESC_CTL_TERM:
 		case (IDMA_DESC_CTL_OWN|IDMA_DESC_CTL_TERM):
 			DIAGPRF(("%s: idma_intr_comm: chan %d "
 				"transfer terminated, retry\n",
-				sc->idma_dev.dv_xname, chan));
+				device_xname(&sc->idma_dev), chan));
 			idma_retry(sc, idcp, chan, iddhp);
 			goto next;
 		}
@@ -1422,12 +1422,12 @@ idma_print_active(
 	cur = gt_read(&sc->idma_gt->gt_dev, IDMA_CUR_REG(chan));
 
 	printf("%s: regs { %#x, %#x, %#x, %#x } current %#x\n",
-		sc->idma_dev.dv_xname, cnt, src, dst, nxt, cur);
+		device_xname(&sc->idma_dev), cnt, src, dst, nxt, cur);
 
 	do {
 		iddp = iddhp->idh_desc_va;
 		printf("%s: desc %p/%p { %#x, %#x, %#x, %#x }\n",
-			sc->idma_dev.dv_xname,
+			device_xname(&sc->idma_dev),
 			iddhp->idh_desc_va, iddhp->idh_desc_pa,
 			idma_desc_read(&iddp->idd_ctl),
 			idma_desc_read(&iddp->idd_src_addr),

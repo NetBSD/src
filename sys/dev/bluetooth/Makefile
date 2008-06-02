@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.5 2007/09/30 04:07:42 kiyohara Exp $
+# $NetBSD: Makefile,v 1.5.18.1 2008/06/02 13:23:14 mjf Exp $
 
 INCSDIR=	/usr/include/dev/bluetooth
-INCS=		bcsp.h btdev.h bthidev.h btsco.h btuart.h
+INCS=		bcsp.h btdev.h bthidev.h btsco.h
 
 .include <bsd.kinc.mk>

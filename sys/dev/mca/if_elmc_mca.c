@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.23 2007/10/19 12:00:34 ad Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.23.16.1 2008/06/02 13:23:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.23 2007/10/19 12:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.23.16.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +151,7 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map the pio registers */
 	if (bus_space_map(ma->ma_iot, iobase, ELMC_IOADDR_SIZE, 0, &ioh)) {
-		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map i/o space\n");
 		return;
 	}
 
@@ -168,10 +161,9 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	 * about. Just use the first 16K.
 	 */
 	if (bus_space_map(ma->ma_memt, pbram_addr, ELMC_MADDR_SIZE, 0, &memh)) {
-		printf("%s: unable to map memory space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map memory space\n");
 		if (pbram_addr == 0xc0000) {
-			printf("%s: memory space 0xc0000 may conflict with vga\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "memory space 0xc0000 may conflict with vga\n");
 		}
 
 		bus_space_unmap(ma->ma_iot, ioh, ELMC_IOADDR_SIZE);
@@ -242,7 +234,7 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_barrier(sc->bt, sc->bh, 0, sc->sc_msize,
 			  BUS_SPACE_BARRIER_WRITE);
 	if (!i82586_proberam(sc)) {
-		printf("%s: can't talk to i82586!\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't talk to i82586!\n");
 
 		bus_space_unmap(asc->sc_regt, asc->sc_regh, ELMC_IOADDR_SIZE);
 		bus_space_unmap(sc->bt, sc->bh, ELMC_MADDR_SIZE);
@@ -255,7 +247,7 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	/* dump known info */
 	printf("%s: rev %d, i/o %#04x-%#04x, mem %#06x-%#06x, %sternal xcvr\n",
-		sc->sc_dev.dv_xname, revision,
+		device_xname(&sc->sc_dev), revision,
 		iobase, iobase + ELMC_IOADDR_SIZE - 1,
 		pbram_addr, pbram_addr + ELMC_MADDR_SIZE - 1,
 		(pos2 & 0x20) ? "ex" : "in");
@@ -267,15 +259,14 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	for(i=0; i < MIN(6, ETHER_ADDR_LEN); i++)
 		myaddr[i] = bus_space_read_1(asc->sc_regt, asc->sc_regh, i);
 
-	printf("%s:", sc->sc_dev.dv_xname);
+	printf("%s:", device_xname(&sc->sc_dev));
 	i82586_attach((void *)sc, "3C523", myaddr, NULL, 0, 0);
 
 	/* establish interrupt handler */
 	asc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET, i82586_intr,
 			sc);
 	if (asc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
 		return;
 	}
 }

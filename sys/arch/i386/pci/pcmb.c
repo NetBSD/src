@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmb.c,v 1.15 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: pcmb.c,v 1.15.52.1 2008/06/02 13:22:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.15 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.15.52.1 2008/06/02 13:22:18 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,17 +52,15 @@ __KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.15 2006/11/16 01:32:39 christos Exp $");
 
 #include "mca.h"
 
-int	pcmbmatch(struct device *, struct cfdata *, void *);
-void	pcmbattach(struct device *, struct device *, void *);
+int	pcmbmatch(device_t, cfdata_t, void *);
+void	pcmbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(pcmb, sizeof(struct device),
-    pcmbmatch, pcmbattach, NULL, NULL);
+CFATTACH_DECL_NEW(pcmb, 0, pcmbmatch, pcmbattach, NULL, NULL);
 
-void	pcmb_callback(struct device *);
+void	pcmb_callback(device_t);
 
 int
-pcmbmatch(struct device *parent, struct cfdata *match,
-    void *aux)
+pcmbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -84,7 +75,7 @@ pcmbmatch(struct device *parent, struct cfdata *match,
 }
 
 void
-pcmbattach(struct device *parent, struct device *self, void *aux)
+pcmbattach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
@@ -97,14 +88,14 @@ pcmbattach(struct device *parent, struct device *self, void *aux)
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	config_defer(self, pcmb_callback);
 }
 
 void
-pcmb_callback(struct device *self)
+pcmb_callback(device_t self)
 {
 	struct mcabus_attach_args ma;
 

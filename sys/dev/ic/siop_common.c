@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.43.16.1 2008/04/03 12:42:42 mjf Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.43.16.2 2008/06/02 13:23:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.43.16.1 2008/04/03 12:42:42 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.43.16.2 2008/06/02 13:23:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,31 +78,31 @@ siop_common_attach(sc)
 		error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE,
 		    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 		if (error) {
-			aprint_error(
-			    "%s: unable to allocate script DMA memory, "
-			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, 
+			    "unable to allocate script DMA memory, "
+			    "error = %d\n", error);
 			return error;
 		}
 		error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, PAGE_SIZE,
 		    (void **)&sc->sc_script,
 		    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 		if (error) {
-			aprint_error("%s: unable to map script DMA memory, "
-			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to map script DMA memory, "
+			    "error = %d\n", error);
 			return error;
 		}
 		error = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1,
 		    PAGE_SIZE, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
 		if (error) {
-			aprint_error("%s: unable to create script DMA map, "
-			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to create script DMA map, "
+			    "error = %d\n", error);
 			return error;
 		}
 		error = bus_dmamap_load(sc->sc_dmat, sc->sc_scriptdma,
 		    sc->sc_script, PAGE_SIZE, NULL, BUS_DMA_NOWAIT);
 		if (error) {
-			aprint_error("%s: unable to load script DMA map, "
-			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to load script DMA map, "
+			    "error = %d\n", error);
 			return error;
 		}
 		sc->sc_scriptaddr =
@@ -365,7 +365,7 @@ siop_wdtr_neg(siop_cmd)
 			siop_target->offset = siop_target->period = 0;
 			siop_update_xfer_mode(sc, target);
 			printf("%s: rejecting invalid wide negotiation from "
-			    "target %d (%d)\n", sc->sc_dev.dv_xname, target,
+			    "target %d (%d)\n", device_xname(&sc->sc_dev), target,
 			    tables->msg_in[3]);
 			tables->t_msgout.count = siop_htoc32(sc, 1);
 			tables->msg_out[0] = MSG_MESSAGE_REJECT;
@@ -424,7 +424,7 @@ siop_ppr_neg(siop_cmd)
 	int i;
 
 #ifdef DEBUG_NEG
-	printf("%s: anserw on ppr negotiation:", sc->sc_dev.dv_xname);
+	printf("%s: answer on ppr negotiation:", device_xname(&sc->sc_dev));
 	for (i = 0; i < 8; i++)
 		printf(" 0x%x", tables->msg_in[i]);
 	printf("\n");
@@ -438,7 +438,7 @@ siop_ppr_neg(siop_cmd)
 		if (options != MSG_EXT_PPR_DT) {
 			/* should't happen */
 			printf("%s: ppr negotiation for target %d: "
-			    "no DT option\n", sc->sc_dev.dv_xname, target);
+			    "no DT option\n", device_xname(&sc->sc_dev), target);
 			siop_target->status = TARST_ASYNC;
 			siop_target->flags &= ~(TARF_DT | TARF_ISDT);
 			siop_target->offset = 0;
@@ -450,7 +450,7 @@ siop_ppr_neg(siop_cmd)
 		    sync > sc->dt_maxsync) {
 			printf("%s: ppr negotiation for target %d: "
 			    "offset (%d) or sync (%d) out of range\n",
-			    sc->sc_dev.dv_xname, target, offset, sync);
+			    device_xname(&sc->sc_dev), target, offset, sync);
 			/* should not happen */
 			siop_target->offset = 0;
 			siop_target->period = 0;
@@ -472,7 +472,7 @@ siop_ppr_neg(siop_cmd)
 			if ((siop_target->flags & TARF_ISDT) == 0) {
 				printf("%s: ppr negotiation for target %d: "
 				    "sync (%d) incompatible with adapter\n",
-				    sc->sc_dev.dv_xname, target, sync);
+				    device_xname(&sc->sc_dev), target, sync);
 				/*
 				 * we didn't find it in our table, do async
 				 * send reject msg, start SDTR/WDTR neg
@@ -487,7 +487,7 @@ siop_ppr_neg(siop_cmd)
 		if (tables->msg_in[6] != 1) {
 			printf("%s: ppr negotiation for target %d: "
 			    "transfer width (%d) incompatible with dt\n",
-			    sc->sc_dev.dv_xname, target, tables->msg_in[6]);
+			    device_xname(&sc->sc_dev), target, tables->msg_in[6]);
 			/* DT mode can only be done with wide transfers */
 			siop_target->status = TARST_ASYNC;
 			goto reject;
@@ -513,7 +513,7 @@ siop_ppr_neg(siop_cmd)
 	} else {
 		/* target initiated PPR negotiation, shouldn't happen */
 		printf("%s: rejecting invalid PPR negotiation from "
-		    "target %d\n", sc->sc_dev.dv_xname, target);
+		    "target %d\n", device_xname(&sc->sc_dev), target);
 reject:
 		tables->t_msgout.count = siop_htoc32(sc, 1);
 		tables->msg_out[0] = MSG_MESSAGE_REJECT;
@@ -748,8 +748,8 @@ siop_ma(siop_cmd)
 
 	offset = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCRATCHA + 1);
 	if (offset >= SIOP_NSG) {
-		printf("%s: bad offset in siop_sdp (%d)\n",
-		    sc->sc_dev.dv_xname, offset);
+		aprint_error_dev(&sc->sc_dev, "bad offset in siop_sdp (%d)\n",
+		    offset);
 		return;
 	}
 	table = &siop_cmd->siop_tables->data[offset];
@@ -993,31 +993,31 @@ siop_modechange(sc)
 		switch(sc->mode) {
 		case STEST4_MODE_DIF:
 			printf("%s: switching to differential mode\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
 			    stest2 | STEST2_DIF);
 			break;
 		case STEST4_MODE_SE:
 			printf("%s: switching to single-ended mode\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
 			    stest2 & ~STEST2_DIF);
 			break;
 		case STEST4_MODE_LVD:
 			printf("%s: switching to LVD mode\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
 			    stest2 & ~STEST2_DIF);
 			break;
 		default:
-			printf("%s: invalid SCSI mode 0x%x\n",
-			    sc->sc_dev.dv_xname, sc->mode);
+			aprint_error_dev(&sc->sc_dev, "invalid SCSI mode 0x%x\n",
+			    sc->mode);
 			return 0;
 		}
 		return 1;
 	}
 	printf("%s: timeout waiting for DIFFSENSE to stabilise\n",
-	    sc->sc_dev.dv_xname);
+	    device_xname(&sc->sc_dev));
 	return 0;
 }
 

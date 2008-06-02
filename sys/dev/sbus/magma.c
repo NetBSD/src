@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.45 2007/11/19 18:51:50 ad Exp $	*/
+/*	$NetBSD: magma.c,v 1.45.14.1 2008/06/02 13:23:50 mjf Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.45 2007/11/19 18:51:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.45.14.1 2008/06/02 13:23:50 mjf Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -399,7 +399,8 @@ magma_attach(parent, self, aux)
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot, sa->sa_offset, sa->sa_size,
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
+		aprint_error("%s @ sbus: cannot map registers\n",
+			device_xname(self));
 		return;
 	}
 
@@ -438,7 +439,7 @@ magma_attach(parent, self, aux)
 		cd->cd_chiprev = cd1400_read_reg(cd, CD1400_GFRCR);
 
 		dprintf(("%s attach CD1400 %d addr %p rev %x clock %dMHz\n",
-			sc->ms_dev.dv_xname, chip,
+			device_xname(&sc->ms_dev), chip,
 			cd->cd_reg, cd->cd_chiprev, cd->cd_clock));
 
 		/* clear GFRCR */
@@ -475,7 +476,7 @@ magma_attach(parent, self, aux)
 
 		/* XXX don't know anything about these chips yet */
 		printf("%s: CD1190 %d addr %p (unsupported)\n",
-			self->dv_xname, chip, cd->cd_reg);
+			device_xname(self), chip, cd->cd_reg);
 	}
 
 	sbus_establish(&sc->ms_sd, &sc->ms_dev);
@@ -494,12 +495,12 @@ magma_attach(parent, self, aux)
 				 magma_hard, sc);
 	sc->ms_sicookie = softint_establish(SOFTINT_SERIAL, magma_soft, sc);
 	if (sc->ms_sicookie == NULL) {
-		printf("\n%s: cannot establish soft int handler\n",
-			sc->ms_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->ms_dev, "cannot establish soft int handler\n");
 		return;
 	}
 	evcnt_attach_dynamic(&sc->ms_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->ms_dev.dv_xname, "intr");
+	    device_xname(&sc->ms_dev), "intr");
 }
 
 /*
@@ -772,7 +773,7 @@ magma_soft(arg)
 
 			if( stat & CD1400_RDSR_OE )
 				log(LOG_WARNING, "%s%x: fifo overflow\n",
-				    mtty->ms_dev.dv_xname, port);
+				    device_xname(&mtty->ms_dev), port);
 
 			(*tp->t_linesw->l_rint)(data, tp);
 		}
@@ -783,14 +784,14 @@ magma_soft(arg)
 		splx(s);	/* ok */
 
 		if( ISSET(flags, MTTYF_CARRIER_CHANGED) ) {
-			dprintf(("%s%x: cd %s\n", mtty->ms_dev.dv_xname,
+			dprintf(("%s%x: cd %s\n", device_xname(&mtty->ms_dev),
 				port, mp->mp_carrier ? "on" : "off"));
 			(*tp->t_linesw->l_modem)(tp, mp->mp_carrier);
 		}
 
 		if( ISSET(flags, MTTYF_RING_OVERFLOW) ) {
 			log(LOG_WARNING, "%s%x: ring buffer overflow\n",
-			    mtty->ms_dev.dv_xname, port);
+			    device_xname(&mtty->ms_dev), port);
 		}
 
 		if( ISSET(flags, MTTYF_DONE) ) {

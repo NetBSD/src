@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.13.16.1 2008/04/03 12:42:30 mjf Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.13.16.2 2008/06/02 13:22:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.13.16.1 2008/04/03 12:42:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.13.16.2 2008/06/02 13:22:49 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -96,7 +89,7 @@ static int ne_neptune_intr(void *);
 
 #define ne_neptune_softc ne2000_softc
 
-CFATTACH_DECL(ne_neptune, sizeof(struct ne_neptune_softc),
+CFATTACH_DECL_NEW(ne_neptune, sizeof(struct ne_neptune_softc),
     ne_neptune_match, ne_neptune_attach, NULL, NULL);
 
 int

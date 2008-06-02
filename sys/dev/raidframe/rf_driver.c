@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.116 2008/02/12 03:12:41 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.116.6.1 2008/06/02 13:23:48 mjf Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -14,13 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -73,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.116 2008/02/12 03:12:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.116.6.1 2008/06/02 13:23:48 mjf Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -425,10 +418,10 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 		}
 	}
 	printf("\n");
-	printf("raid%d: Total Sectors: %lu (%lu MB)\n",
+	printf("raid%d: Total Sectors: %" PRIu64 " (%" PRIu64 " MB)\n",
 	       raidPtr->raidid,
-	       (unsigned long) raidPtr->totalSectors,
-	       (unsigned long) (raidPtr->totalSectors / 1024 *
+	       raidPtr->totalSectors,
+	       (raidPtr->totalSectors / 1024 *
 				(1 << raidPtr->logBytesPerSector) / 1024));
 
 	return (0);

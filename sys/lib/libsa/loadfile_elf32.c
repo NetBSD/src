@@ -1,7 +1,7 @@
-/* $NetBSD: loadfile_elf32.c,v 1.21 2007/12/29 17:54:42 tsutsui Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.21.6.1 2008/06/02 13:24:16 mjf Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -273,6 +266,11 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp = 0;
 	ssize_t nr;
+	struct __packed {
+		Elf_Nhdr	nh;
+		uint8_t		name[ELF_NOTE_NETBSD_NAMESZ + 1];
+		uint8_t		desc[ELF_NOTE_NETBSD_DESCSZ];
+	} note;
 
 	/* some ports dont use the offset */
 	offset = offset;
@@ -305,7 +303,6 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 #endif
 		if (MD_LOADSEG(&phdr[i]))
 			goto loadseg;
-
 
 		if (phdr[i].p_type != PT_LOAD ||
 		    (phdr[i].p_flags & (PF_W|PF_X)) == 0)
@@ -450,6 +447,31 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				shp[i].sh_offset = maxp - elfp;
 				maxp += roundup(shp[i].sh_size, ELFROUND);
 				first = 0;
+				break;
+			case SHT_NOTE:
+				if (shp[i].sh_size < sizeof(note)) {
+					shp[i].sh_offset = 0;
+					break;
+				}
+				if (lseek(fd, shp[i].sh_offset, SEEK_SET) == -1)  {
+					WARN(("lseek note"));
+					goto freeshp;
+				}
+				nr = read(fd, &note, sizeof(note));
+				if (nr == -1) {
+					WARN(("read note"));
+					goto freeshp;
+				}
+				if (note.nh.n_namesz == ELF_NOTE_NETBSD_NAMESZ &&
+				    note.nh.n_descsz == ELF_NOTE_NETBSD_DESCSZ &&
+				    note.nh.n_type == ELF_NOTE_TYPE_NETBSD_TAG &&
+				    memcmp(note.name, ELF_NOTE_NETBSD_NAME,
+				        sizeof(note.name)) == 0) {
+				    	memcpy(&netbsd_version, &note.desc,
+				    	    sizeof(netbsd_version));
+				}
+				shp[i].sh_offset = 0;
+				break;
 			}
 			/* Since we don't load .shstrtab, zero the name. */
 			shp[i].sh_name = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.20 2007/10/19 12:00:47 ad Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.20.16.1 2008/06/02 13:23:39 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.20 2007/10/19 12:00:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.20.16.1 2008/06/02 13:23:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,8 +210,7 @@ ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_mapreg_map(pa, PCI_CBMA_ASIC, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc_asic_iot, &sc->sc_asic_ioh, NULL, NULL)) {
-		printf("%s: Can't map register space (ASIC)\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "Can't map register space (ASIC)\n");
 		return;
 	}
 	/*
@@ -219,8 +218,7 @@ ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_mapreg_map(pa, PCI_CBMA_SCA, PCI_MAPREG_TYPE_MEM, 0,
 			   &sca->sc_iot, &sca->sc_ioh, NULL, NULL)) {
-		printf("%s: Can't map register space (SCA)\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "Can't map register space (SCA)\n");
 		return;
 	}
 
@@ -234,21 +232,20 @@ ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish the interrupt
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, ntwoc_pci_intr,
 	    sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	/*
 	 * Perform total black magic.  This is not only extremely
@@ -294,7 +291,7 @@ ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	frontend_cr = bus_space_read_2(sca->sc_iot, sca->sc_ioh, NTWOC_FECR);
 	NTWO_DPRINTF(("%s: frontend_cr = 0x%04x\n",
-		      sc->sc_dev.dv_xname, frontend_cr));
+		      device_xname(&sc->sc_dev), frontend_cr));
 
 	db0 = (frontend_cr & NTWOC_FECR_ID0) >> NTWOC_FECR_ID0_SHIFT;
 	db1 = (frontend_cr & NTWOC_FECR_ID1) >> NTWOC_FECR_ID1_SHIFT;
@@ -303,7 +300,7 @@ ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Port 1 HAS to be present.  If it isn't, don't attach anything.
 	 */
 	if (db0 == NTWOC_FE_ID_NONE) {
-		printf("%s: no ports available\n", sc->sc_dev.dv_xname);
+		printf("%s: no ports available\n", device_xname(&sc->sc_dev));
 		return;
 	}
 
@@ -315,12 +312,12 @@ ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (db1 != NTWOC_FE_ID_NONE)
 		numports++;
 
-	printf("%s: %d port%s\n", sc->sc_dev.dv_xname, numports,
+	printf("%s: %d port%s\n", device_xname(&sc->sc_dev), numports,
 	       (numports > 1 ? "s" : ""));
-	printf("%s: port 0 interface card: %s\n", sc->sc_dev.dv_xname,
+	printf("%s: port 0 interface card: %s\n", device_xname(&sc->sc_dev),
 	       ntwoc_pci_db_names[db0]);
 	if (numports > 1)
-		printf("%s: port 1 interface card: %s\n", sc->sc_dev.dv_xname,
+		printf("%s: port 1 interface card: %s\n", device_xname(&sc->sc_dev),
 		       ntwoc_pci_db_names[db1]);
 
 	/*

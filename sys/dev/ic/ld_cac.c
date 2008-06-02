@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.19 2007/10/19 11:59:55 ad Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.19.16.1 2008/06/02 13:23:24 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.19 2007/10/19 11:59:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.19.16.1 2008/06/02 13:23:24 mjf Exp $");
 
 #include "rnd.h"
 
@@ -199,23 +192,23 @@ ld_cac_done(struct device *dv, void *context, int error)
 	sc = device_private(dv);
 
 	if ((error & CAC_RET_CMD_REJECTED) == CAC_RET_CMD_REJECTED) {
-		printf("%s: command rejected\n", dv->dv_xname);
+		aprint_error_dev(dv, "command rejected\n");
 		rv = EIO;
 	}
 	if (rv == 0 && (error & CAC_RET_INVAL_BLOCK) != 0) {
-		printf("%s: invalid request block\n", dv->dv_xname);
+		aprint_error_dev(dv, "invalid request block\n");
 		rv = EIO;
 	}
 	if (rv == 0 && (error & CAC_RET_HARD_ERROR) != 0) {
-		printf("%s: hard error\n", dv->dv_xname);
+		aprint_error_dev(dv, "hard error\n");
 		rv = EIO;
 	}
 	if (rv == 0 && (error & CAC_RET_SOFT_ERROR) != 0) {
 		sc->sc_serrcnt++;
 		if (ratecheck(&sc->sc_serrtm, &ld_cac_serrintvl)) {
 			sc->sc_serrcnt = 0;
-			printf("%s: %d soft errors; array may be degraded\n",
-			    dv->dv_xname, sc->sc_serrcnt);
+			aprint_error_dev(dv, "%d soft errors; array may be degraded\n",
+			    sc->sc_serrcnt);
 		}
 	}
 

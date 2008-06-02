@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.24 2007/10/19 11:59:48 ad Exp $ */
+/* $NetBSD: atppc.c,v 1.24.16.1 2008/06/02 13:23:18 mjf Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.24 2007/10/19 11:59:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.24.16.1 2008/06/02 13:23:18 mjf Exp $");
 
 #include "opt_atppc.h"
 
@@ -89,19 +89,19 @@ static int atppc_detect_chipset(struct atppc_softc *);
 static int atppc_detect_generic(struct atppc_softc *);
 
 /* Routines for ppbus interface (bus + device) */
-static int atppc_read(struct device *, char *, int, int, size_t *);
-static int atppc_write(struct device *, char *, int, int, size_t *);
-static int atppc_setmode(struct device *, int);
-static int atppc_getmode(struct device *);
-static int atppc_check_epp_timeout(struct device *);
-static void atppc_reset_epp_timeout(struct device *);
-static void atppc_ecp_sync(struct device *);
-static int atppc_exec_microseq(struct device *, struct ppbus_microseq * *);
-static u_int8_t atppc_io(struct device *, int, u_char *, int, u_char);
-static int atppc_read_ivar(struct device *, int, unsigned int *);
-static int atppc_write_ivar(struct device *, int, unsigned int *);
-static int atppc_add_handler(struct device *, void (*)(void *), void *);
-static int atppc_remove_handler(struct device *, void (*)(void *));
+static int atppc_read(device_t, char *, int, int, size_t *);
+static int atppc_write(device_t, char *, int, int, size_t *);
+static int atppc_setmode(device_t, int);
+static int atppc_getmode(device_t);
+static int atppc_check_epp_timeout(device_t);
+static void atppc_reset_epp_timeout(device_t);
+static void atppc_ecp_sync(device_t);
+static int atppc_exec_microseq(device_t, struct ppbus_microseq * *);
+static u_int8_t atppc_io(device_t, int, u_char *, int, u_char);
+static int atppc_read_ivar(device_t, int, unsigned int *);
+static int atppc_write_ivar(device_t, int, unsigned int *);
+static int atppc_add_handler(device_t, void (*)(void *), void *);
+static int atppc_remove_handler(device_t, void (*)(void *));
 
 /* Utility functions */
 
@@ -154,21 +154,21 @@ atppc_sc_attach(struct atppc_softc *lsc)
 	if (atppc_detect_chipset(lsc) != 0) {
 		if (atppc_detect_generic(lsc) != 0) {
 			ATPPC_DPRINTF(("%s: Error detecting chipset\n",
-				lsc->sc_dev.dv_xname));
+				device_xname(lsc->sc_dev)));
 		}
 	}
 
 	/* Probe and setup FIFO queue */
 	if (atppc_detect_fifo(lsc) == 0) {
 		printf("%s: FIFO <depth,wthr,rthr>=<%d,%d,%d>\n",
-			lsc->sc_dev.dv_xname, lsc->sc_fifo, lsc->sc_wthr,
+			device_xname(lsc->sc_dev), lsc->sc_fifo, lsc->sc_wthr,
 			lsc->sc_rthr);
 	}
 
         /* Print out chipset capabilities */
 	bitmask_snprintf(lsc->sc_has, "\20\1INTR\2DMA\3FIFO\4PS2\5ECP\6EPP",
 		buf, sizeof(buf));
-	printf("%s: capabilities=%s\n", lsc->sc_dev.dv_xname, buf);
+	printf("%s: capabilities=%s\n", device_xname(lsc->sc_dev), buf);
 
 	/* Initialize device's buffer pointers */
 	lsc->sc_outb = lsc->sc_outbstart = lsc->sc_inb = lsc->sc_inbstart
@@ -176,9 +176,9 @@ atppc_sc_attach(struct atppc_softc *lsc)
 	lsc->sc_inb_nbytes = lsc->sc_outb_nbytes = 0;
 
 	/* Last configuration step: set mode to standard mode */
-	if (atppc_setmode(&(lsc->sc_dev), PPBUS_COMPATIBLE) != 0) {
+	if (atppc_setmode(lsc->sc_dev, PPBUS_COMPATIBLE) != 0) {
 		ATPPC_DPRINTF(("%s: unable to initialize mode.\n",
-			lsc->sc_dev.dv_xname));
+			device_xname(lsc->sc_dev)));
 	}
 
 #if defined (MULTIPROCESSOR) || defined (LOCKDEBUG)
@@ -237,7 +237,7 @@ atppc_sc_attach(struct atppc_softc *lsc)
 	lsc->sc_use = 0;
 
 	/* Configure child of the device. */
-	lsc->child = config_found(&(lsc->sc_dev), &(sc_parport_adapter),
+	lsc->child = config_found(lsc->sc_dev, &(sc_parport_adapter),
 		atppc_print);
 
 	return;
@@ -247,11 +247,11 @@ atppc_sc_attach(struct atppc_softc *lsc)
 int
 atppc_sc_detach(struct atppc_softc *lsc, int flag)
 {
-	struct device *dev = (struct device *)lsc;
+	device_t dev = lsc->sc_dev;
 
 	/* Detach children devices */
 	if (config_detach(lsc->child, flag) && !(flag & DETACH_QUIET)) {
-		printf("%s not able to detach child device, ", dev->dv_xname);
+		aprint_error_dev(dev, "not able to detach child device, ");
 
 		if (!(flag & DETACH_FORCE)) {
 			printf("cannot detach\n");
@@ -262,7 +262,7 @@ atppc_sc_detach(struct atppc_softc *lsc, int flag)
 	}
 
 	if (!(flag & DETACH_QUIET))
-		printf("%s detached", dev->dv_xname);
+		printf("%s detached", device_xname(dev));
 
 	return 0;
 }
@@ -409,7 +409,7 @@ atppc_detect_generic(struct atppc_softc *atppc)
 		atppc_barrier_w(atppc);
 	}
 	/* Check for EPP by checking for timeout bit */
-	if (atppc_check_epp_timeout(&(atppc->sc_dev)) != 0) {
+	if (atppc_check_epp_timeout(atppc->sc_dev) != 0) {
 		atppc->sc_has |= ATPPC_HAS_EPP;
 		atppc->sc_epp = ATPPC_EPP_1_9;
 		if (atppc->sc_has & ATPPC_HAS_ECP) {
@@ -462,7 +462,7 @@ static int
 atppc_detect_fifo(struct atppc_softc *atppc)
 {
 #ifdef ATPPC_DEBUG
-	struct device *dev = (struct device *)atppc;
+	device_t dev = atppc->sc_dev;
 #endif
 	u_int8_t ecr_sav;
 	u_int8_t ctr_sav;
@@ -493,7 +493,7 @@ atppc_detect_fifo(struct atppc_softc *atppc)
 	/* XXX 16 and 32 bits implementations not supported */
 	if (atppc->sc_pword != ATPPC_PWORD_8) {
 		ATPPC_DPRINTF(("%s(%s): FIFO PWord(%d) not supported.\n",
-			__func__, dev->dv_xname, atppc->sc_pword));
+			__func__, device_xname(dev), atppc->sc_pword));
 		goto error;
 	}
 
@@ -515,7 +515,7 @@ atppc_detect_fifo(struct atppc_softc *atppc)
 	}
 	if (i >= 1024) {
 		ATPPC_DPRINTF(("%s(%s): cannot flush FIFO.\n", __func__,
-			dev->dv_xname));
+			device_xname(dev)));
 		goto error;
 	}
 
@@ -540,7 +540,7 @@ atppc_detect_fifo(struct atppc_softc *atppc)
 	}
 	if (i >= 1024) {
 		ATPPC_DPRINTF(("%s(%s): cannot fill FIFO.\n", __func__,
-			dev->dv_xname));
+			device_xname(dev)));
 		goto error;
 	}
 
@@ -558,7 +558,7 @@ atppc_detect_fifo(struct atppc_softc *atppc)
 		atppc_barrier_r(atppc);
 		if (cc != (char)(atppc->sc_fifo - i - 1)) {
 			ATPPC_DPRINTF(("%s(%s): invalid data in FIFO.\n",
-				__func__, dev->dv_xname));
+				__func__, device_xname(dev)));
 			goto error;
 		}
 
@@ -572,7 +572,7 @@ atppc_detect_fifo(struct atppc_softc *atppc)
 		if (i > 0 && (cc & ATPPC_FIFO_EMPTY)) {
 			/* If FIFO empty before the last byte, error */
 			ATPPC_DPRINTF(("%s(%s): data lost in FIFO.\n", __func__,
-				dev->dv_xname));
+				device_xname(dev)));
 			goto error;
 		}
 	}
@@ -582,7 +582,7 @@ atppc_detect_fifo(struct atppc_softc *atppc)
 	atppc_barrier_r(atppc);
 	if (!(cc & ATPPC_FIFO_EMPTY)) {
 		ATPPC_DPRINTF(("%s(%s): cannot empty the FIFO.\n", __func__,
-			dev->dv_xname));
+			device_xname(dev)));
 		goto error;
 	}
 
@@ -611,8 +611,8 @@ error:
 int
 atppcintr(void *arg)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)arg;
-	struct device *dev = &atppc->sc_dev;
+	device_t dev = arg;
+	struct atppc_softc *atppc = device_private(dev);
 	int claim = 1;
 	enum { NONE, READER, WRITER } wake_up = NONE;
 
@@ -697,7 +697,7 @@ atppcintr(void *arg)
 		break;
 
 	default:
-		panic("%s: chipset is in invalid mode.", dev->dv_xname);
+		panic("%s: chipset is in invalid mode.", device_xname(dev));
 	}
 
 	if (claim) {
@@ -733,9 +733,9 @@ atppcintr(void *arg)
 
 /* Check EPP mode timeout */
 static int
-atppc_check_epp_timeout(struct device *dev)
+atppc_check_epp_timeout(device_t dev)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	int s;
 	int error;
 
@@ -760,9 +760,9 @@ atppc_check_epp_timeout(struct device *dev)
  * Others	- (?) write 0 to EPP timeout bit
  */
 static void
-atppc_reset_epp_timeout(struct device *dev)
+atppc_reset_epp_timeout(device_t dev)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	register unsigned char r;
 
 	r = atppc_r_str(atppc);
@@ -778,10 +778,10 @@ atppc_reset_epp_timeout(struct device *dev)
 
 /* Read from atppc device: returns 0 on success. */
 static int
-atppc_read(struct device *dev, char *buf, int len, int ioflag,
+atppc_read(device_t dev, char *buf, int len, int ioflag,
 	size_t *cnt)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	int error = 0;
 	int s;
 
@@ -822,7 +822,7 @@ atppc_read(struct device *dev, char *buf, int len, int ioflag,
 
 	default:
 		panic("%s(%s): chipset in invalid mode.\n", __func__,
-			dev->dv_xname);
+			device_xname(dev));
 	}
 
 	/* Update counter*/
@@ -843,9 +843,9 @@ atppc_read(struct device *dev, char *buf, int len, int ioflag,
 
 /* Write to atppc device: returns 0 on success. */
 static int
-atppc_write(struct device *dev, char *buf, int len, int ioflag, size_t *cnt)
+atppc_write(device_t dev, char *buf, int len, int ioflag, size_t *cnt)
 {
-	struct atppc_softc * const atppc = (struct atppc_softc *)dev;
+	struct atppc_softc * const atppc = device_private(dev);
 	int error = 0;
 	int s;
 
@@ -883,7 +883,7 @@ atppc_write(struct device *dev, char *buf, int len, int ioflag, size_t *cnt)
 
 	default:
 		panic("%s(%s): chipset in invalid mode.\n", __func__,
-			dev->dv_xname);
+			device_xname(dev));
 	}
 
 	/* Update counter*/
@@ -914,9 +914,9 @@ atppc_write(struct device *dev, char *buf, int len, int ioflag, size_t *cnt)
  * any consistency checks.
  */
 static int
-atppc_setmode(struct device *dev, int mode)
+atppc_setmode(device_t dev, int mode)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	u_int8_t ecr;
 	u_int8_t chipset_mode;
 	int s;
@@ -976,7 +976,7 @@ atppc_setmode(struct device *dev, int mode)
 		default:
 			/* Invalid mode specified for ECP chip */
 			ATPPC_DPRINTF(("%s(%s): invalid mode passed as "
-				"argument.\n", __func__, dev->dv_xname));
+				"argument.\n", __func__, device_xname(dev)));
 			rval = ENODEV;
 			goto end;
 		}
@@ -1023,7 +1023,7 @@ atppc_setmode(struct device *dev, int mode)
 
 		default:
 			ATPPC_DPRINTF(("%s(%s): invalid mode passed as "
-				"argument.\n", __func__, dev->dv_xname));
+				"argument.\n", __func__, device_xname(dev)));
 			rval = ENODEV;
 			goto end;
 		}
@@ -1048,9 +1048,9 @@ end:
 
 /* Get the current mode of chipset */
 static int
-atppc_getmode(struct device *dev)
+atppc_getmode(device_t dev)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	int mode;
 	int s;
 
@@ -1085,7 +1085,7 @@ atppc_getmode(struct device *dev)
 
 	default:
 		panic("%s(%s): device is in invalid mode!", __func__,
-			dev->dv_xname);
+			device_xname(dev));
 		break;
 	}
 
@@ -1098,9 +1098,9 @@ atppc_getmode(struct device *dev)
 
 /* Wait for FIFO buffer to empty for ECP-capable chipset */
 static void
-atppc_ecp_sync(struct device *dev)
+atppc_ecp_sync(device_t dev)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	int i;
 	int s;
 	u_int8_t r;
@@ -1131,7 +1131,7 @@ atppc_ecp_sync(struct device *dev)
 	}
 
 	ATPPC_DPRINTF(("%s: ECP sync failed, data still in FIFO.\n",
-		dev->dv_xname));
+		device_xname(dev)));
 
 end:
 	ATPPC_UNLOCK(atppc);
@@ -1142,9 +1142,9 @@ end:
 
 /* Execute a microsequence to handle fast I/O operations. */
 static int
-atppc_exec_microseq(struct device *dev, struct ppbus_microseq **p_msq)
+atppc_exec_microseq(device_t dev, struct ppbus_microseq **p_msq)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	struct ppbus_microseq *mi = *p_msq;
 	char cc, *p;
 	int i, iter, len;
@@ -1332,7 +1332,7 @@ atppc_exec_microseq(struct device *dev, struct ppbus_microseq **p_msq)
 
 		case MS_OP_CALL:
 			if (stack) {
-				panic("%s - %s: too much calls", dev->dv_xname,
+				panic("%s - %s: too much calls", device_xname(dev),
 					__func__);
 			}
 
@@ -1393,9 +1393,9 @@ atppc_exec_microseq(struct device *dev, struct ppbus_microseq **p_msq)
 
 /* General I/O routine */
 static u_int8_t
-atppc_io(struct device *dev, int iop, u_char *addr, int cnt, u_char byte)
+atppc_io(device_t dev, int iop, u_char *addr, int cnt, u_char byte)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	u_int8_t val = 0;
 	int s;
 
@@ -1470,7 +1470,7 @@ atppc_io(struct device *dev, int iop, u_char *addr, int cnt, u_char byte)
 		atppc_w_fifo(atppc, byte);
 		break;
 	default:
-		panic("%s(%s): unknown I/O operation", dev->dv_xname,
+		panic("%s(%s): unknown I/O operation", device_xname(dev),
 			__func__);
 		break;
 	}
@@ -1485,9 +1485,9 @@ atppc_io(struct device *dev, int iop, u_char *addr, int cnt, u_char byte)
 
 /* Read "instance variables" of atppc device */
 static int
-atppc_read_ivar(struct device *dev, int index, unsigned int *val)
+atppc_read_ivar(device_t dev, int index, unsigned int *val)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	int rval = 0;
 	int s;
 
@@ -1523,9 +1523,9 @@ atppc_read_ivar(struct device *dev, int index, unsigned int *val)
 
 /* Write "instance varaibles" of atppc device */
 static int
-atppc_write_ivar(struct device *dev, int index, unsigned int *val)
+atppc_write_ivar(device_t dev, int index, unsigned int *val)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	int rval = 0;
 	int s;
 
@@ -1570,9 +1570,9 @@ atppc_write_ivar(struct device *dev, int index, unsigned int *val)
 
 /* Add a handler routine to be called by the interrupt handler */
 static int
-atppc_add_handler(struct device *dev, void (*handler)(void *), void *arg)
+atppc_add_handler(device_t dev, void (*handler)(void *), void *arg)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	struct atppc_handler_node *callback;
 	int rval = 0;
 	int s;
@@ -1582,7 +1582,7 @@ atppc_add_handler(struct device *dev, void (*handler)(void *), void *arg)
 
 	if (handler == NULL) {
 		ATPPC_DPRINTF(("%s(%s): attempt to register NULL handler.\n",
-			__func__, dev->dv_xname));
+			__func__, device_xname(dev)));
 		rval = EINVAL;
 	} else {
 		callback = malloc(sizeof(struct atppc_handler_node), M_DEVBUF,
@@ -1605,9 +1605,9 @@ atppc_add_handler(struct device *dev, void (*handler)(void *), void *arg)
 
 /* Remove a handler added by atppc_add_handler() */
 static int
-atppc_remove_handler(struct device *dev, void (*handler)(void *))
+atppc_remove_handler(device_t dev, void (*handler)(void *))
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)dev;
+	struct atppc_softc *atppc = device_private(dev);
 	struct atppc_handler_node *callback;
 	int rval = EINVAL;
 	int s;
@@ -1617,7 +1617,7 @@ atppc_remove_handler(struct device *dev, void (*handler)(void *))
 
 	if (SLIST_EMPTY(&(atppc->sc_handler_listhead)))
 		panic("%s(%s): attempt to remove handler from empty list.\n",
-			__func__, dev->dv_xname);
+			__func__, device_xname(dev));
 
 	/* Search list for handler */
 	SLIST_FOREACH(callback, &(atppc->sc_handler_listhead), entries) {
@@ -1729,7 +1729,7 @@ atppc_byte_read(struct atppc_softc * const atppc)
 	atppc_barrier_r(atppc);
 	if (!(ctr & PCD)) {
 		ATPPC_DPRINTF(("%s: byte-mode read attempted without direction "
-			"bit set.", atppc->sc_dev.dv_xname));
+			"bit set.", device_xname(atppc->sc_dev)));
 		atppc->sc_inerr = ENODEV;
 		return;
 	}
@@ -1802,7 +1802,7 @@ atppc_epp_read(struct atppc_softc * atppc)
 			uint8_t str;
 			int i;
 
-			atppc_reset_epp_timeout((struct device *)atppc);
+			atppc_reset_epp_timeout(atppc->sc_dev);
 			for (i = 0; i < atppc->sc_inb_nbytes; i++) {
 				 *(atppc->sc_inbstart) = atppc_r_eppD(atppc);
 				atppc_barrier_r(atppc);
@@ -1843,7 +1843,7 @@ atppc_ecp_read(struct atppc_softc *atppc)
 	atppc_barrier_r(atppc);
 	if (!(ctr & PCD)) {
 		ATPPC_DPRINTF(("%s: ecp-mode read attempted without direction "
-			"bit set.", atppc->sc_dev.dv_xname));
+			"bit set.", device_xname(atppc->sc_dev)));
 		atppc->sc_inerr = ENODEV;
 		goto end;
 	}
@@ -2064,7 +2064,7 @@ atppc_epp_write(struct atppc_softc *atppc)
 			uint8_t str;
 			int i;
 
-			atppc_reset_epp_timeout((struct device *)atppc);
+			atppc_reset_epp_timeout(atppc->sc_dev);
 			for (i = 0; i < atppc->sc_outb_nbytes; i++) {
 				atppc_w_eppD(atppc, *(atppc->sc_outbstart));
 				atppc_barrier_w(atppc);
@@ -2327,7 +2327,7 @@ atppc_fifo_write_error(struct atppc_softc * const atppc,
 		int i;
 
 		ATPPC_DPRINTF(("%s(%s): FIFO not empty.\n", __func__,
-			atppc->sc_dev.dv_xname));
+			device_xname(atppc->sc_dev)));
 
 		/* Drive strobe low to stop data transfer */
 		ctr &= ~STROBE;

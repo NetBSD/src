@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.36 2007/12/25 18:33:46 perry Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.36.6.1 2008/06/02 13:24:23 mjf Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -512,67 +512,53 @@ struct icmp6_filter {
  * Variables related to this implementation
  * of the internet control message protocol version 6.
  */
-struct icmp6errstat {
-	u_quad_t icp6errs_dst_unreach_noroute;
-	u_quad_t icp6errs_dst_unreach_admin;
-	u_quad_t icp6errs_dst_unreach_beyondscope;
-	u_quad_t icp6errs_dst_unreach_addr;
-	u_quad_t icp6errs_dst_unreach_noport;
-	u_quad_t icp6errs_packet_too_big;
-	u_quad_t icp6errs_time_exceed_transit;
-	u_quad_t icp6errs_time_exceed_reassembly;
-	u_quad_t icp6errs_paramprob_header;
-	u_quad_t icp6errs_paramprob_nextheader;
-	u_quad_t icp6errs_paramprob_option;
-	u_quad_t icp6errs_redirect; /* we regard redirect as an error here */
-	u_quad_t icp6errs_unknown;
-};
 
-struct icmp6stat {
-/* statistics related to icmp6 packets generated */
-	u_quad_t icp6s_error;		/* # of calls to icmp6_error */
-	u_quad_t icp6s_canterror;	/* no error 'cuz old was icmp */
-	u_quad_t icp6s_toofreq;		/* no error 'cuz rate limitation */
-	u_quad_t icp6s_outhist[256];
-/* statistics related to input message processed */
-	u_quad_t icp6s_badcode;		/* icmp6_code out of range */
-	u_quad_t icp6s_tooshort;	/* packet < sizeof(struct icmp6_hdr) */
-	u_quad_t icp6s_checksum;	/* bad checksum */
-	u_quad_t icp6s_badlen;		/* calculated bound mismatch */
+/*
+ * IPv6 ICMP statistics.
+ * Each counter is an unsigned 64-bit value.
+ */
+#define	ICMP6_STAT_ERROR	0	/* # of calls to icmp6_error */
+#define	ICMP6_STAT_CANTERROR	1	/* no error (old was icmp) */
+#define	ICMP6_STAT_TOOFREQ	2	/* no error (rate limitation) */
+#define	ICMP6_STAT_OUTHIST	3	/* # of output messages */
+		/* space for 256 counters */
+#define	ICMP6_STAT_BADCODE	259	/* icmp6_code out of range */
+#define	ICMP6_STAT_TOOSHORT	260	/* packet < sizeof(struct icmp6_hdr) */
+#define	ICMP6_STAT_CHECKSUM	261	/* bad checksum */
+#define	ICMP6_STAT_BADLEN	262	/* calculated bound mismatch */
 	/*
-	 * number of responses: this member is inherited from netinet code, but
-	 * for netinet6 code, it is already available in icp6s_outhist[].
+	 * number of responses; this member is inherited from the netinet code,
+	 * but for netinet6 code, it is already available in outhist[].
 	 */
-	u_quad_t icp6s_reflect;
-	u_quad_t icp6s_inhist[256];
-	u_quad_t icp6s_nd_toomanyopt;	/* too many ND options */
-	struct icmp6errstat icp6s_outerrhist;
-#define icp6s_odst_unreach_noroute \
-	icp6s_outerrhist.icp6errs_dst_unreach_noroute
-#define icp6s_odst_unreach_admin icp6s_outerrhist.icp6errs_dst_unreach_admin
-#define icp6s_odst_unreach_beyondscope \
-	icp6s_outerrhist.icp6errs_dst_unreach_beyondscope
-#define icp6s_odst_unreach_addr icp6s_outerrhist.icp6errs_dst_unreach_addr
-#define icp6s_odst_unreach_noport icp6s_outerrhist.icp6errs_dst_unreach_noport
-#define icp6s_opacket_too_big icp6s_outerrhist.icp6errs_packet_too_big
-#define icp6s_otime_exceed_transit \
-	icp6s_outerrhist.icp6errs_time_exceed_transit
-#define icp6s_otime_exceed_reassembly \
-	icp6s_outerrhist.icp6errs_time_exceed_reassembly
-#define icp6s_oparamprob_header icp6s_outerrhist.icp6errs_paramprob_header
-#define icp6s_oparamprob_nextheader \
-	icp6s_outerrhist.icp6errs_paramprob_nextheader
-#define icp6s_oparamprob_option icp6s_outerrhist.icp6errs_paramprob_option
-#define icp6s_oredirect icp6s_outerrhist.icp6errs_redirect
-#define icp6s_ounknown icp6s_outerrhist.icp6errs_unknown
-	u_quad_t icp6s_pmtuchg;		/* path MTU changes */
-	u_quad_t icp6s_nd_badopt;	/* bad ND options */
-	u_quad_t icp6s_badns;		/* bad neighbor solicitation */
-	u_quad_t icp6s_badna;		/* bad neighbor advertisement */
-	u_quad_t icp6s_badrs;		/* bad router advertisement */
-	u_quad_t icp6s_badra;		/* bad router advertisement */
-	u_quad_t icp6s_badredirect;	/* bad redirect message */
-};
+#define	ICMP6_STAT_REFLECT	263
+#define	ICMP6_STAT_INHIST	264	/* # of input messages */
+		/* space for 256 counters */
+#define	ICMP6_STAT_ND_TOOMANYOPT 520	/* too many ND options */
+#define	ICMP6_STAT_OUTERRHIST	521
+		/* space for 13 counters */
+#define	ICMP6_STAT_PMTUCHG	534	/* path MTU changes */
+#define	ICMP6_STAT_ND_BADOPT	535	/* bad ND options */
+#define	ICMP6_STAT_BADNS	536	/* bad neighbor solicititation */
+#define	ICMP6_STAT_BADNA	537	/* bad neighbor advertisement */
+#define	ICMP6_STAT_BADRS	538	/* bad router solicitiation */
+#define	ICMP6_STAT_BADRA	539	/* bad router advertisement */
+#define	ICMP6_STAT_BADREDIRECT	540	/* bad redirect message */
+
+#define	ICMP6_NSTATS		541
+
+#define	ICMP6_ERRSTAT_DST_UNREACH_NOROUTE	0
+#define	ICMP6_ERRSTAT_DST_UNREACH_ADMIN		1
+#define	ICMP6_ERRSTAT_DST_UNREACH_BEYONDSCOPE	2
+#define	ICMP6_ERRSTAT_DST_UNREACH_ADDR		3
+#define	ICMP6_ERRSTAT_DST_UNREACH_NOPORT	4
+#define	ICMP6_ERRSTAT_PACKET_TOO_BIG		5
+#define	ICMP6_ERRSTAT_TIME_EXCEED_TRANSIT	6
+#define	ICMP6_ERRSTAT_TIME_EXCEED_REASSEMBLY	7
+#define	ICMP6_ERRSTAT_PARAMPROB_HEADER		8
+#define	ICMP6_ERRSTAT_PARAMPROB_NEXTHEADER	9
+#define	ICMP6_ERRSTAT_PARAMPROB_OPTION		10
+#define	ICMP6_ERRSTAT_REDIRECT			11
+#define	ICMP6_ERRSTAT_UNKNOWN			12
 
 /*
  * Names for ICMP sysctl objects
@@ -646,6 +632,8 @@ void	icmp6_prepare(struct mbuf *);
 void	icmp6_redirect_input(struct mbuf *, int);
 void	icmp6_redirect_output(struct mbuf *, struct rtentry *);
 int	icmp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+
+void	icmp6_statinc(u_int);
 
 struct	ip6ctlparam;
 void	icmp6_mtudisc_update(struct ip6ctlparam *, int);

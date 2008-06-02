@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.1 2008/01/01 21:28:37 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.1.14.1 2008/06/02 13:23:53 mjf Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.1 2008/01/01 21:28:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.1.14.1 2008/06/02 13:23:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ tprof_start(const struct tprof_param *param)
 	tprof_samples_per_buf = MIN(freq * 2, TPROF_MAX_SAMPLES_PER_BUF);
 
 	error = workqueue_create(&tprof_wq, "tprofmv", tprof_worker, NULL,
-	    PRI_NONE, PRI_SOFTCLOCK, WQ_MPSAFE | WQ_PERCPU);
+	    PRI_NONE, IPL_SOFTCLOCK, WQ_MPSAFE | WQ_PERCPU);
 	if (error != 0) {
 		goto done;
 	}

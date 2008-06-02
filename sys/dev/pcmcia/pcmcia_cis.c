@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.50 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.50.48.1 2008/06/02 13:23:47 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.50 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.50.48.1 2008/06/02 13:23:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,8 +162,7 @@ pcmcia_scan_cis(dev, fct, arg)
 
 	if (pcmcia_chip_mem_alloc(pct, pch, PCMCIA_CIS_SIZE, &pcmh)) {
 #ifdef DIAGNOSTIC
-		printf("%s: can't alloc memory to read attributes\n",
-		    sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "can't alloc memory to read attributes\n");
 #endif
 		return -1;
 	}
@@ -172,8 +171,7 @@ pcmcia_scan_cis(dev, fct, arg)
 	    PCMCIA_CIS_SIZE, &pcmh, &tuple.ptr, &window)) {
 		pcmcia_chip_mem_free(pct, pch, &pcmh);
 #ifdef DIAGNOSTIC
-		printf("%s: can't map memory to read attributes\n",
-		    sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "can't map memory to read attributes\n");
 #endif
 		return -1;
 	}
@@ -191,7 +189,7 @@ pcmcia_scan_cis(dev, fct, arg)
 	mfc_count = 0;
 	mfc_index = 0;
 
-	DPRINTF(("%s: CIS tuple chain:\n", sc->dev.dv_xname));
+	DPRINTF(("%s: CIS tuple chain:\n", device_xname(&sc->dev)));
 
 	while (1) {
 		DELAY(1000);
@@ -323,9 +321,8 @@ pcmcia_scan_cis(dev, fct, arg)
 					if (cksum != (sum & 0xff)) {
 						DPRINTF((" failed sum=%x\n",
 						    sum));
-						printf("%s: CIS checksum "
-						    "failed\n",
-						    sc->dev.dv_xname);
+						aprint_error_dev(&sc->dev, "CIS checksum "
+						    "failed\n");
 #if 0
 						/*
 						 * XXX Some working cards have
@@ -545,7 +542,7 @@ pcmcia_print_cis(sc)
 	struct pcmcia_config_entry *cfe;
 	int i;
 
-	printf("%s: CIS version ", sc->dev.dv_xname);
+	printf("%s: CIS version ", device_xname(&sc->dev));
 	if (card->cis1_major == 4) {
 		if (card->cis1_minor == 0)
 			printf("PCMCIA 1.0\n");
@@ -557,7 +554,7 @@ pcmcia_print_cis(sc)
 		printf("unknown (major=%d, minor=%d)\n",
 		    card->cis1_major, card->cis1_minor);
 
-	printf("%s: CIS info: ", sc->dev.dv_xname);
+	printf("%s: CIS info: ", device_xname(&sc->dev));
 	for (i = 0; i < 4; i++) {
 		if (card->cis1_info[i] == NULL)
 			break;
@@ -568,10 +565,10 @@ pcmcia_print_cis(sc)
 	printf("\n");
 
 	printf("%s: Manufacturer code 0x%x, product 0x%x\n",
-	       sc->dev.dv_xname, card->manufacturer, card->product);
+	       device_xname(&sc->dev), card->manufacturer, card->product);
 
 	SIMPLEQ_FOREACH(pf, &card->pf_head, pf_list) {
-		printf("%s: function %d: ", sc->dev.dv_xname, pf->number);
+		printf("%s: function %d: ", device_xname(&sc->dev), pf->number);
 
 		switch (pf->function) {
 		case PCMCIA_FUNCTION_UNSPEC:
@@ -626,7 +623,7 @@ pcmcia_print_cis(sc)
 
 		SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
 			printf("%s: function %d, config table entry %d: ",
-			    sc->dev.dv_xname, pf->number, cfe->number);
+			    device_xname(&sc->dev), pf->number, cfe->number);
 
 			switch (cfe->iftype) {
 			case PCMCIA_IFTYPE_MEMORY:
@@ -704,7 +701,7 @@ pcmcia_print_cis(sc)
 
 	if (card->error)
 		printf("%s: %d errors found while parsing CIS\n",
-		    sc->dev.dv_xname, card->error);
+		    device_xname(&sc->dev), card->error);
 }
 
 int

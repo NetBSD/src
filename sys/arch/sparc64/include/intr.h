@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20.6.1 2008/04/03 12:42:26 mjf Exp $ */
+/*	$NetBSD: intr.h,v 1.20.6.2 2008/06/02 13:22:43 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -39,9 +32,14 @@
 #ifndef _SPARC64_INTR_H_
 #define _SPARC64_INTR_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_multiprocessor.h"
+#endif
+
 #ifndef _LOCORE
 #include <machine/cpuset.h>
 #endif
+#include <machine/psl.h>
 
 /* XXX - arbitrary numbers; no interpretation is defined yet */
 #define	IPL_NONE	0		/* nothing */
@@ -66,7 +64,6 @@ void	sparc64_ipi_init (void);
 int	sparc64_ipi_halt_thiscpu (void *);
 int	sparc64_ipi_pause_thiscpu (void *);
 void	sparc64_do_pause(void);
-void	sparc64_ipi_sync_tick (void *);
 void	sparc64_ipi_drop_fpstate (void *);
 void	sparc64_ipi_save_fpstate (void *);
 void	sparc64_ipi_nop (void *);

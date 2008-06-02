@@ -1,4 +1,4 @@
-.\"	$NetBSD: osiop.4,v 1.4 2005/06/20 13:25:24 peter Exp $
+.\"	$NetBSD: osiop.4,v 1.4.20.1 2008/06/02 13:21:36 mjf Exp $
 .\"
 .\" Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
 .\"
@@ -10,8 +10,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,6 +31,8 @@
 .Sh SYNOPSIS
 .Ss arc
 .Cd "osiop* at jazzio? flags 0x00000"
+.Ss ews4800mips
+.Cd "osiop* at sbdio? flags 0x00000"
 .Ss hp700
 .Cd "osiop0 at gsc? flags 0x00000"
 .Ss mvme68k
@@ -114,8 +114,6 @@ will suffer.
 .Xr st 4 ,
 .Xr uk 4 ,
 .Xr scsipi 9
-.Pp
-.Pa http://www.lsilogic.com/techlib/techdocs/storage_stand_prod/
 .Sh HISTORY
 .Nm
 driver first appeared in
@@ -127,5 +125,5 @@ The original
 driver appeared in
 .Nx
 1.0 amiga port, and Izumi Tsutsui
-.Aq tsutsui@ceres.dti.ne.jp
+.Aq tsutsui@NetBSD.org
 modified the driver and made it machine-independent.

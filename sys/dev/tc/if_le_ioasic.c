@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.29 2007/03/04 15:17:06 yamt Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.29.36.1 2008/06/02 13:23:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.29 2007/03/04 15:17:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.29.36.1 2008/06/02 13:23:52 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -71,10 +71,10 @@ struct le_ioasic_softc {
 	bus_dmamap_t sc_dmamap;		/* bus dmamap */
 };
 
-static int  le_ioasic_match(struct device *, struct cfdata *, void *);
-static void le_ioasic_attach(struct device *, struct device *, void *);
+static int  le_ioasic_match(device_t, cfdata_t, void *);
+static void le_ioasic_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(le_ioasic, sizeof(struct le_softc),
+CFATTACH_DECL_NEW(le_ioasic, sizeof(struct le_softc),
     le_ioasic_match, le_ioasic_attach, NULL, NULL);
 
 static void le_ioasic_copytobuf_gap2(struct lance_softc *, void *, int, int);
@@ -85,7 +85,7 @@ static void le_ioasic_copyfrombuf_gap16(struct lance_softc *, void *,
 static void le_ioasic_zerobuf_gap16(struct lance_softc *, int, int);
 
 static int
-le_ioasic_match(struct device *parent, struct cfdata *match, void *aux)
+le_ioasic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 
@@ -96,11 +96,11 @@ le_ioasic_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 /* IOASIC LANCE DMA needs 128KB boundary aligned 128KB chunk */
-#define	LE_IOASIC_MEMSIZE	(128*1024)
-#define	LE_IOASIC_MEMALIGN	(128*1024)
+#define	LE_IOASIC_MEMSIZE	(128 * 1024)
+#define	LE_IOASIC_MEMALIGN	(128 * 1024)
 
 static void
-le_ioasic_attach(struct device *parent, struct device *self, void *aux)
+le_ioasic_attach(device_t parent, device_t self, void *aux)
 {
 	struct le_ioasic_softc *sc = device_private(self);
 	struct ioasicdev_attach_args *d = aux;
@@ -111,10 +111,11 @@ le_ioasic_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_tag_t dmat;
 	bus_dma_segment_t seg;
 	tc_addr_t tca;
-	u_int32_t ssr;
+	uint32_t ssr;
 	int rseg;
 	void *le_iomem;
 
+	le->sc_dev = self;
 	ioasic_bst = iosc->sc_bst;
 	ioasic_bsh = iosc->sc_bsh;
 	dmat = sc->sc_dmat = iosc->sc_dmat;
@@ -123,12 +124,12 @@ le_ioasic_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamem_alloc(dmat, LE_IOASIC_MEMSIZE, LE_IOASIC_MEMALIGN,
 	    0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("can't allocate DMA area for LANCE\n");
+		aprint_error(": can't allocate DMA area for LANCE\n");
 		return;
 	}
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_IOASIC_MEMSIZE,
 	    &le_iomem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		printf("can't map DMA area for LANCE\n");
+		aprint_error(": can't map DMA area for LANCE\n");
 		bus_dmamem_free(dmat, &seg, rseg);
 		return;
 	}
@@ -137,12 +138,12 @@ le_ioasic_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_dmamap_create(dmat, LE_IOASIC_MEMSIZE, 1,
 	    LE_IOASIC_MEMSIZE, 0, BUS_DMA_NOWAIT, &sc->sc_dmamap)) {
-		printf("can't create DMA map\n");
+		aprint_error(": can't create DMA map\n");
 		goto bad;
 	}
 	if (bus_dmamap_load(dmat, sc->sc_dmamap,
 	    le_iomem, LE_IOASIC_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
-		printf("can't load DMA map\n");
+		aprint_error(": can't load DMA map\n");
 		goto bad;
 	}
 	/*
@@ -164,7 +165,7 @@ le_ioasic_attach(struct device *parent, struct device *self, void *aux)
 	le->sc_zerobuf = le_ioasic_zerobuf_gap16;
 
 	dec_le_common_attach(&sc->sc_am7990,
-	    (u_char *)iosc->sc_base + IOASIC_SLOT_2_START);
+	    (uint8_t *)iosc->sc_base + IOASIC_SLOT_2_START);
 
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_NET,
 	    am7990_intr, sc);
@@ -191,17 +192,17 @@ void
 le_ioasic_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 {
 	volatile void *buf = sc->sc_mem;
-	char *from = fromv;
-	volatile u_int16_t *bptr;
+	uint8_t *from = fromv;
+	volatile uint16_t *bptr;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
+		bptr = ((volatile uint16_t *)buf) + (boff - 1);
 		*bptr = (*from++ << 8) | (*bptr & 0xff);
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
+		bptr = ((volatile uint16_t *)buf) + boff;
 	while (len > 1) {
 		*bptr = (from[1] << 8) | (from[0] & 0xff);
 		bptr += 2;
@@ -209,25 +210,25 @@ le_ioasic_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 		len -= 2;
 	}
 	if (len == 1)
-		*bptr = (u_int16_t)*from;
+		*bptr = (uint16_t)*from;
 }
 
 void
 le_ioasic_copyfrombuf_gap2(struct lance_softc *sc, void *tov, int boff, int len)
 {
 	volatile void *buf = sc->sc_mem;
-	char *to = tov;
-	volatile u_int16_t *bptr;
-	u_int16_t tmp;
+	uint8_t *to = tov;
+	volatile uint16_t *bptr;
+	uint16_t tmp;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
+		bptr = ((volatile uint16_t *)buf) + (boff - 1);
 		*to++ = (*bptr >> 8) & 0xff;
 		bptr += 2;
 		len--;
 	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
+		bptr = ((volatile uint16_t *)buf) + boff;
 	while (len > 1) {
 		tmp = *bptr;
 		*to++ = tmp & 0xff;
@@ -249,9 +250,9 @@ void
 le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
     int len)
 {
-	char *buf = (char *)sc->sc_mem;
-	char *from = fromv;
-	char *bptr;
+	uint8_t *buf = sc->sc_mem;
+	uint8_t *from = fromv;
+	uint8_t *bptr;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -271,20 +272,20 @@ le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
 
 	/* Destination of  copies is now 16-byte aligned. */
 	if (len >= 16)
-		switch ((u_long)from & (sizeof(u_int32_t) -1)) {
+		switch ((u_long)from & (sizeof(uint32_t) -1)) {
 		case 2:
 			/*  Ethernet headers make this the dominant case. */
 		do {
-			u_int32_t *dst = (u_int32_t*)bptr;
-			u_int16_t t0;
-			u_int32_t t1,  t2, t3, t4;
+			uint32_t *dst = (uint32_t *)bptr;
+			uint16_t t0;
+			uint32_t t1,  t2, t3, t4;
 
 			/* read from odd-16-bit-aligned, cached src */
-			t0 = *(u_int16_t*)from;
-			t1 = *(u_int32_t*)(from+2);
-			t2 = *(u_int32_t*)(from+6);
-			t3 = *(u_int32_t*)(from+10);
-			t4 = *(u_int16_t*)(from+14);
+			t0 = *(uint16_t *)(from +  0);
+			t1 = *(uint32_t *)(from +  2);
+			t2 = *(uint32_t *)(from +  6);
+			t3 = *(uint32_t *)(from + 10);
+			t4 = *(uint16_t *)(from + 14);
 
 			/* DMA buffer is uncached on mips */
 			dst[0] =         t0 |  (t1 << 16);
@@ -300,9 +301,9 @@ le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
 
 		case 0:
 		do {
-			u_int32_t *src = (u_int32_t*)from;
-			u_int32_t *dst = (u_int32_t*)bptr;
-			u_int32_t t0, t1, t2, t3;
+			uint32_t *src = (uint32_t*)from;
+			uint32_t *dst = (uint32_t*)bptr;
+			uint32_t t0, t1, t2, t3;
 
 			t0 = src[0]; t1 = src[1]; t2 = src[2]; t3 = src[3];
 			dst[0] = t0; dst[1] = t1; dst[2] = t2; dst[3] = t3;
@@ -331,9 +332,9 @@ void
 le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
     int len)
 {
-	char *buf = sc->sc_mem;
-	char *to = tov;
-	char *bptr;
+	uint8_t *buf = sc->sc_mem;
+	uint8_t *to = tov;
+	uint8_t *bptr;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -342,31 +343,31 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 	if (boff) {
 		int xfer;
 		xfer = min(len, 16 - boff);
-		bcopy(bptr+boff, to, xfer);
+		bcopy(bptr + boff, to, xfer);
 		to += xfer;
 		bptr += 32;
 		len -= xfer;
 	}
 	if (len >= 16)
-	switch ((u_long)to & (sizeof(u_int32_t) -1)) {
+	switch ((u_long)to & (sizeof(uint32_t) -1)) {
 	case 2:
 		/*
 		 * to is aligned to an odd 16-bit boundary.  Ethernet headers
 		 * make this the dominant case (98% or more).
 		 */
 		do {
-			u_int32_t *src = (u_int32_t*)bptr;
-			u_int32_t t0, t1, t2, t3;
+			uint32_t *src = (uint32_t *)bptr;
+			uint32_t t0, t1, t2, t3;
 
 			/* read from uncached aligned DMA buf */
 			t0 = src[0]; t1 = src[1]; t2 = src[2]; t3 = src[3];
 
 			/* write to odd-16-bit-word aligned dst */
-			*(u_int16_t *) (to+0)  = (u_short)  t0;
-			*(u_int32_t *) (to+2)  = (t0 >> 16) |  (t1 << 16);
-			*(u_int32_t *) (to+6)  = (t1 >> 16) |  (t2 << 16);
-			*(u_int32_t *) (to+10) = (t2 >> 16) |  (t3 << 16);
-			*(u_int16_t *) (to+14) = (t3 >> 16);
+			*(uint16_t *)(to +  0) = (uint16_t)t0;
+			*(uint32_t *)(to +  2) = (t0 >> 16) | (t1 << 16);
+			*(uint32_t *)(to +  6) = (t1 >> 16) | (t2 << 16);
+			*(uint32_t *)(to + 10) = (t2 >> 16) | (t3 << 16);
+			*(uint16_t *)(to + 14) = (t3 >> 16);
 			bptr += 32;
 			to += 16;
 			len -= 16;
@@ -375,9 +376,9 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 	case 0:
 		/* 32-bit aligned aligned copy. Rare. */
 		do {
-			u_int32_t *src = (u_int32_t*)bptr;
-			u_int32_t *dst = (u_int32_t*)to;
-			u_int32_t t0, t1, t2, t3;
+			uint32_t *src = (uint32_t *)bptr;
+			uint32_t *dst = (uint32_t *)to;
+			uint32_t t0, t1, t2, t3;
 
 			t0 = src[0]; t1 = src[1]; t2 = src[2]; t3 = src[3];
 			dst[0] = t0; dst[1] = t1; dst[2] = t2; dst[3] = t3;
@@ -404,8 +405,8 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 void
 le_ioasic_zerobuf_gap16(struct lance_softc *sc, int boff, int len)
 {
-	char *buf = sc->sc_mem;
-	char *bptr;
+	uint8_t *buf = sc->sc_mem;
+	uint8_t *bptr;
 	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);

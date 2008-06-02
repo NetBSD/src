@@ -1,9 +1,8 @@
-/*	$NetBSD: exmutex.c,v 1.3 2007/12/11 13:16:08 lukem Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exmutex - ASL Mutex Acquire/Release functions
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  *****************************************************************************/
 
@@ -11,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,14 +115,11 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.3 2007/12/11 13:16:08 lukem Exp $");
-
 #define __EXMUTEX_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acinterp.h>
-#include <dist/acpica/acevents.h>
+#include "acpi.h"
+#include "acinterp.h"
+#include "acevents.h"
 
 #define _COMPONENT          ACPI_EXECUTER
         ACPI_MODULE_NAME    ("exmutex")
@@ -492,10 +488,10 @@ AcpiExReleaseMutex (
         (ObjDesc != AcpiGbl_GlobalLockMutex))
     {
         ACPI_ERROR ((AE_INFO,
-            "Thread %X cannot release Mutex [%4.4s] acquired by thread %X",
-            (UINT32)WalkState->Thread->ThreadId,
+            "Thread %lX cannot release Mutex [%4.4s] acquired by thread %lX",
+            (unsigned long)WalkState->Thread->ThreadId,
             AcpiUtGetNodeName (ObjDesc->Mutex.Node),
-            (UINT32)ObjDesc->Mutex.OwnerThread->ThreadId));
+            (unsigned long)ObjDesc->Mutex.OwnerThread->ThreadId));
         return_ACPI_STATUS (AE_AML_NOT_OWNER);
     }
 

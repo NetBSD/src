@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.52.16.1 2008/04/03 12:42:53 mjf Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.52.16.2 2008/06/02 13:23:43 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.52.16.1 2008/04/03 12:42:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.52.16.2 2008/06/02 13:23:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pucvar.h>
@@ -1279,6 +1280,34 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+	    },
+	},
+ 
+	/* Digi International Digi Neo 4 Serial */
+	{ "Digi International Digi Neo 4 Serial",
+	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO4,		0, 0  },
+	    {	0xffff, 0xffff,					0, 0  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0400, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
+	    },
+	},
+
+	/* Digi International Digi Neo 8 Serial */
+	{ "Digi International Digi Neo 8 Serial",
+	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8,		0, 0  },
+	    {	0xffff, 0xffff,					0, 0  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0400, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0800, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0a00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0c00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0e00, COM_FREQ * 8 },
 	    },
 	},
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.164 2008/01/14 04:19:10 dyoung Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.164.6.1 2008/06/02 13:24:25 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -89,13 +89,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -142,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.164 2008/01/14 04:19:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.164.6.1 2008/06/02 13:24:25 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -199,6 +192,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.164 2008/01/14 04:19:10 dyoung Exp 
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_private.h>
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
@@ -444,16 +438,19 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
     long len, int hdrlen, struct mbuf **mp)
 {
 	struct mbuf *m, *m0;
+	uint64_t *tcps;
 
+	tcps = TCP_STAT_GETREF();
 	if (tp->t_force && len == 1)
-		tcpstat.tcps_sndprobe++;
+		tcps[TCP_STAT_SNDPROBE]++;
 	else if (SEQ_LT(tp->snd_nxt, tp->snd_max)) {
-		tcpstat.tcps_sndrexmitpack++;
-		tcpstat.tcps_sndrexmitbyte += len;
+		tcps[TCP_STAT_SNDREXMITPACK]++;
+		tcps[TCP_STAT_SNDREXMITBYTE] += len;
 	} else {
-		tcpstat.tcps_sndpack++;
-		tcpstat.tcps_sndbyte += len;
+		tcps[TCP_STAT_SNDPACK]++;
+		tcps[TCP_STAT_SNDBYTE] += len;
 	}
+	TCP_STAT_PUTREF();
 #ifdef notyet
 	if ((m = m_copypack(so->so_snd.sb_mb, off,
 	    (int)len, max_linkhdr + hdrlen)) == 0)
@@ -580,6 +577,7 @@ tcp_output(struct tcpcb *tp)
 #ifdef TCP_SIGNATURE
 	int sigoff = 0;
 #endif
+	uint64_t *tcps;
 
 #ifdef DIAGNOSTIC
 	if (tp->t_inpcb && tp->t_in6pcb)
@@ -1263,14 +1261,16 @@ send:
 		if (off + len == so->so_snd.sb_cc)
 			flags |= TH_PUSH;
 	} else {
+		tcps = TCP_STAT_GETREF();
 		if (tp->t_flags & TF_ACKNOW)
-			tcpstat.tcps_sndacks++;
+			tcps[TCP_STAT_SNDACKS]++;
 		else if (flags & (TH_SYN|TH_FIN|TH_RST))
-			tcpstat.tcps_sndctrl++;
+			tcps[TCP_STAT_SNDCTRL]++;
 		else if (SEQ_GT(tp->snd_up, tp->snd_una))
-			tcpstat.tcps_sndurg++;
+			tcps[TCP_STAT_SNDURG]++;
 		else
-			tcpstat.tcps_sndwinup++;
+			tcps[TCP_STAT_SNDWINUP]++;
+		TCP_STAT_PUTREF();
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m != NULL && max_linkhdr + hdrlen > MHLEN) {
@@ -1356,7 +1356,7 @@ send:
 				break;
 #endif
 			}
-			tcpstat.tcps_ecn_ect++;
+			TCP_STATINC(TCP_STAT_ECN_ECT);
 		}
 
 		/*
@@ -1520,7 +1520,7 @@ send:
 			if (tp->t_rtttime == 0) {
 				tp->t_rtttime = tcp_now;
 				tp->t_rtseq = startseq;
-				tcpstat.tcps_segstimed++;
+				TCP_STATINC(TCP_STAT_SEGSTIMED);
 			}
 		}
 
@@ -1641,7 +1641,7 @@ timer:
 	if (error) {
 out:
 		if (error == ENOBUFS) {
-			tcpstat.tcps_selfquench++;
+			TCP_STATINC(TCP_STAT_SELFQUENCH);
 #ifdef INET
 			if (tp->t_inpcb)
 				tcp_quench(tp->t_inpcb, 0);
@@ -1671,9 +1671,11 @@ out:
 	if (packetlen > tp->t_pmtud_mtu_sent)
 		tp->t_pmtud_mtu_sent = packetlen;
 	
-	tcpstat.tcps_sndtotal++;
+	tcps = TCP_STAT_GETREF();
+	tcps[TCP_STAT_SNDTOTAL]++;
 	if (tp->t_flags & TF_DELACK)
-		tcpstat.tcps_delack++;
+		tcps[TCP_STAT_DELACK]++;
+	TCP_STAT_PUTREF();
 
 	/*
 	 * Data sent (as far as we can tell).

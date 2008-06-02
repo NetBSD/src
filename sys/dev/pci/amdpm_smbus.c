@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.14 2007/08/27 15:57:13 xtraeme Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.14.22.1 2008/06/02 13:23:36 mjf Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.14 2007/08/27 15:57:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.14.22.1 2008/06/02 13:23:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,7 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 
 		if (bus_space_map(sc->sc_iot, XBOX_SMBA, XBOX_SMSIZE,
 		    0, &sc->sc_sm_ioh) == 0) {
-			aprint_normal("%s: system management at 0x%04x\n",
-			    sc->sc_dev.dv_xname, XBOX_SMBA);
+			aprint_normal_dev(&sc->sc_dev, "system management at 0x%04x\n", XBOX_SMBA);
 
 			/* Disable PM ACPI timer SCI interrupt */
 			val = bus_space_read_2(sc->sc_iot, sc->sc_sm_ioh,
@@ -126,15 +125,14 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 	}
 
 	if (pci_intr_map(sc->sc_pa, &ih))
-		aprint_error("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 	else {
 		intrstr = pci_intr_string(sc->sc_pc, ih);
 		sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
 		    amdpm_smbus_intr, sc);
 		if (sc->sc_ih != NULL)
-			aprint_normal("%s: interrupting at %s\n",
-			    sc->sc_dev.dv_xname, intrstr);
+			aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n",
+			    intrstr);
 	}
 #endif
 

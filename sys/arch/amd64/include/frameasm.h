@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.10.6.1 2008/04/03 12:42:11 mjf Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.10.6.2 2008/06/02 13:21:49 mjf Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -134,12 +134,12 @@
 #define CLI(temp_reg) \
  	movl CPUVAR(CPUID),%e/**/temp_reg ;			\
  	shlq $6,%r/**/temp_reg ;				\
- 	addq _C_LABEL(HYPERVISOR_shared_info),%r/**/temp_reg ;	\
+ 	addq CPUVAR(VCPU),%r/**/temp_reg ;			\
  	movb $1,EVTCHN_UPCALL_MASK(%r/**/temp_reg)
 #define STI(temp_reg) \
  	movl CPUVAR(CPUID),%e/**/temp_reg ;			\
  	shlq $6,%r/**/temp_reg ;				\
- 	addq _C_LABEL(HYPERVISOR_shared_info),%r/**/temp_reg ;	\
+ 	addq CPUVAR(VCPU),%r/**/temp_reg ;			\
  	movb $0,EVTCHN_UPCALL_MASK(%r/**/temp_reg)
 #else /* XEN */
 #define CLI(temp_reg) cli

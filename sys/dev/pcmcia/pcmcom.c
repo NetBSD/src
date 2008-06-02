@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.31.16.1 2008/04/03 12:42:54 mjf Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.31.16.2 2008/06/02 13:23:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -51,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.31.16.1 2008/04/03 12:42:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.31.16.2 2008/06/02 13:23:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +151,7 @@ pcmcom_attach(struct device *parent, struct device *self, void *aux)
 
 	error = pcmcia_function_configure(pa->pf, pcmcom_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -174,7 +167,7 @@ pcmcom_attach(struct device *parent, struct device *self, void *aux)
 	for (slave = 0; slave < sc->sc_nslaves; slave++) {
 		struct pcmcom_attach_args pca;
 
-		printf("%s: slave %d\n", self->dv_xname, slave);
+		printf("%s: slave %d\n", device_xname(self), slave);
 
 		pca.pca_iot = cfe->iospace[slave].handle.iot;
 		pca.pca_ioh = cfe->iospace[slave].handle.ioh;

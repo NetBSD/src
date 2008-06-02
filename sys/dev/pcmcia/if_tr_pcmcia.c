@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.19 2007/10/19 12:01:05 ad Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.19.16.1 2008/06/02 13:23:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.19 2007/10/19 12:01:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.19.16.1 2008/06/02 13:23:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,39 +135,39 @@ tr_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf) != 0) {
-		printf("%s: function enable failed\n", self->dv_xname);
+		aprint_error_dev(self, "function enable failed\n");
 		return;
 	}
 
 	if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
 	    cfe->iospace[0].length, cfe->iospace[0].length, &psc->sc_pioh) != 0) {
-		printf("%s: can't allocate pio space\n", self->dv_xname);
+		aprint_error_dev(self, "can't allocate pio space\n");
 		goto fail1;
 	}
 	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_IO8,	/* XXX _AUTO? */
 	    &psc->sc_pioh, &psc->sc_pio_window) != 0) {
-		printf("%s: can't map pio space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map pio space\n");
 		goto fail2;
 	}
 
 	if (pcmcia_mem_alloc(psc->sc_pf, TR_SRAM_SIZE, &psc->sc_sramh) != 0) {
-		printf("%s: can't allocate sram space\n", self->dv_xname);
+		aprint_error_dev(self, "can't allocate sram space\n");
 		goto fail3;
 	}
         if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_COMMON, TR_PCMCIA_SRAM_ADDR,
 	    TR_SRAM_SIZE, &psc->sc_sramh, &offset, &psc->sc_sram_window) != 0) {
-                printf("%s: can't map sram space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map sram space\n");
 		goto fail4;
         }
 
 	if (pcmcia_mem_alloc(psc->sc_pf, TR_MMIO_SIZE, &psc->sc_mmioh) != 0) {
-		printf("%s: can't allocate mmio space\n", self->dv_xname);
+		aprint_error_dev(self, "can't allocate mmio space\n");
 		goto fail5;
 		return;
 	}
         if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_COMMON, TR_PCMCIA_MMIO_ADDR,
 	    TR_MMIO_SIZE, &psc->sc_mmioh, &offset, &psc->sc_mmio_window) != 0) {
-                printf("%s: can't map mmio space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map mmio space\n");
 		goto fail6;
         }
 
@@ -219,8 +219,7 @@ tr_pcmcia_enable(sc)
 
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, tr_intr, psc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-			psc->sc_tr.sc_dev.dv_xname);
+		aprint_error_dev(&psc->sc_tr.sc_dev, "couldn't establish interrupt\n");
 		return 1;
 	}
 

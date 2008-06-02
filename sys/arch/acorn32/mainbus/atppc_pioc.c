@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_pioc.c,v 1.3 2006/03/29 04:16:45 thorpej Exp $ */
+/* $NetBSD: atppc_pioc.c,v 1.3.64.1 2008/06/02 13:21:43 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -32,7 +32,7 @@
 #include "opt_atppc.h"
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_pioc.c,v 1.3 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_pioc.c,v 1.3.64.1 2008/06/02 13:21:43 mjf Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -50,10 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_pioc.c,v 1.3 2006/03/29 04:16:45 thorpej Exp $
 #include "locators.h"
 
 /* Probe and attach functions for a atppc device on the PIOC. */
-static int atppc_pioc_probe(struct device *, struct cfdata *, void *);
-static void atppc_pioc_attach(struct device *, struct device *, void *);
+static int atppc_pioc_probe(device_t, cfdata_t, void *);
+static void atppc_pioc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(atppc_pioc, sizeof(struct atppc_softc), atppc_pioc_probe,
+CFATTACH_DECL_NEW(atppc_pioc, sizeof(struct atppc_softc), atppc_pioc_probe,
 	atppc_pioc_attach, NULL, NULL);
 
 #define IO_LPTSIZE 8
@@ -63,7 +63,7 @@ CFATTACH_DECL(atppc_pioc, sizeof(struct atppc_softc), atppc_pioc_probe,
  * lpt_isa_probe() in lpt.c and atppc_detect_port() from FreeBSD's ppc.c. 
  */
 static int
-atppc_pioc_probe(struct device *parent, struct cfdata *cf, void *aux)
+atppc_pioc_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	bus_space_handle_t ioh;
 	struct pioc_attach_args *pa = aux;
@@ -94,12 +94,13 @@ atppc_pioc_probe(struct device *parent, struct cfdata *cf, void *aux)
 
 /* Attach function: attach and configure parallel port controller on isa bus. */
 static void 
-atppc_pioc_attach(struct device *parent, struct device *self, void *aux)
+atppc_pioc_attach(device_t parent, device_t self, void *aux)
 {
-	struct atppc_softc *sc = (struct atppc_softc *)self; 
+	struct atppc_softc *sc = device_private(self); 
 	struct pioc_attach_args *pa = aux;
 	bus_addr_t iobase;
 
+	sc->sc_dev = self;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_has = 0;
 	iobase = pa->pa_iobase + pa->pa_offset;

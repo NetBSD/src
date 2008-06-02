@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.84 2008/02/06 03:20:51 matt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.84.6.1 2008/06/02 13:24:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -123,54 +123,42 @@ struct ip_moptions {
 	struct	  in_multi *imo_membership[IP_MAX_MEMBERSHIPS];
 };
 
-struct	ipstat {
-	u_quad_t ips_total;		/* total packets received */
-	u_quad_t ips_badsum;		/* checksum bad */
-	u_quad_t ips_tooshort;		/* packet too short */
-	u_quad_t ips_toosmall;		/* not enough data */
-	u_quad_t ips_badhlen;		/* ip header length < data size */
-	u_quad_t ips_badlen;		/* ip length < ip header length */
-	u_quad_t ips_fragments;		/* fragments received */
-	u_quad_t ips_fragdropped;	/* frags dropped (dups, out of space) */
-	u_quad_t ips_fragtimeout;	/* fragments timed out */
-	u_quad_t ips_forward;		/* packets forwarded */
-	u_quad_t ips_fastforward;	/* packets fast forwarded */
-	u_quad_t ips_cantforward;	/* packets rcvd for unreachable dest */
-	u_quad_t ips_redirectsent;	/* packets forwarded on same net */
-	u_quad_t ips_noproto;		/* unknown or unsupported protocol */
-	u_quad_t ips_delivered;		/* datagrams delivered to upper level*/
-	u_quad_t ips_localout;		/* total ip packets generated here */
-	u_quad_t ips_odropped;		/* lost packets due to nobufs, etc. */
-	u_quad_t ips_reassembled;	/* total packets reassembled ok */
-	u_quad_t ips_fragmented;	/* datagrams successfully fragmented */
-	u_quad_t ips_ofragments;	/* output fragments created */
-	u_quad_t ips_cantfrag;		/* don't fragment flag was set, etc. */
-	u_quad_t ips_badoptions;	/* error in option processing */
-	u_quad_t ips_noroute;		/* packets discarded due to no route */
-	u_quad_t ips_badvers;		/* ip version != 4 */
-	u_quad_t ips_rawout;		/* total raw ip packets generated */
-	u_quad_t ips_badfrags;		/* malformed fragments (bad length) */
-	u_quad_t ips_rcvmemdrop;	/* frags dropped for lack of memory */
-	u_quad_t ips_toolong;		/* ip length > max ip packet size */
-	u_quad_t ips_nogif;		/* no match gif found */
-	u_quad_t ips_badaddr;		/* invalid address on header */
-};
+/*
+ * IP statistics.
+ * Each counter is an unsigned 64-bit value.
+ */
+#define	IP_STAT_TOTAL		0	/* total packets received */
+#define	IP_STAT_BADSUM		1	/* checksum bad */
+#define	IP_STAT_TOOSHORT	2	/* packet too short */
+#define	IP_STAT_TOOSMALL	3	/* not enough data */
+#define	IP_STAT_BADHLEN		4	/* ip header length < data size */
+#define	IP_STAT_BADLEN		5	/* ip length < ip header length */
+#define	IP_STAT_FRAGMENTS	6	/* fragments received */
+#define	IP_STAT_FRAGDROPPED	7	/* frags dropped (dups, out of space) */
+#define	IP_STAT_FRAGTIMEOUT	8	/* fragments timed out */
+#define	IP_STAT_FORWARD		9	/* packets forwarded */
+#define	IP_STAT_FASTFORWARD	10	/* packets fast forwarded */
+#define	IP_STAT_CANTFORWARD	11	/* packets rcvd for unreachable dest */
+#define	IP_STAT_REDIRECTSENT	12	/* packets forwareded on same net */
+#define	IP_STAT_NOPROTO		13	/* unknown or unsupported protocol */
+#define	IP_STAT_DELIVERED	14	/* datagrams delivered to upper level */
+#define	IP_STAT_LOCALOUT	15	/* total ip packets generated here */
+#define	IP_STAT_ODROPPED	16	/* lost packets due to nobufs, etc. */
+#define	IP_STAT_REASSEMBLED	17	/* total packets reassembled ok */
+#define	IP_STAT_FRAGMENTED	18	/* datagrams successfully fragmented */
+#define	IP_STAT_OFRAGMENTS	19	/* output fragments created */
+#define	IP_STAT_CANTFRAG	20	/* don't fragment flag was set, etc. */
+#define	IP_STAT_BADOPTIONS	21	/* error in option processing */
+#define	IP_STAT_NOROUTE		22	/* packets discarded due to no route */
+#define	IP_STAT_BADVERS		23	/* ip version != 4 */
+#define	IP_STAT_RAWOUT		24	/* total raw ip packets generated */
+#define	IP_STAT_BADFRAGS	25	/* malformed fragments (bad length) */
+#define	IP_STAT_RCVMEMDROP	26	/* frags dropped for lack of memory */
+#define	IP_STAT_TOOLONG		27	/* ip length > max ip packet size */
+#define	IP_STAT_NOGIF		28	/* no match gif found */
+#define	IP_STAT_BADADDR		29	/* invalid address on header */
 
-#define	IPFLOW_HASHBITS			6 /* should not be a multiple of 8 */
-struct ipflow {
-	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
-	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
-	struct in_addr ipf_dst;		/* destination address */
-	struct in_addr ipf_src;		/* source address */
-	u_int8_t ipf_tos;		/* type-of-service */
-	struct route ipf_ro;		/* associated route entry */
-	u_long ipf_uses;		/* number of uses in this period */
-	u_long ipf_last_uses;		/* number of uses in last period */
-	u_long ipf_dropped;		/* ENOBUFS returned by if_output */
-	u_long ipf_errors;		/* other errors returned by if_output */
-	u_int ipf_timer;		/* lifetime timer */
-	time_t ipf_start;		/* creation time */
-};
+#define	IP_NSTATS		30
 
 #ifdef _KERNEL
 
@@ -188,15 +176,8 @@ struct ipflow {
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 #define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
 
-#ifdef __NO_STRICT_ALIGNMENT
-#define	IP_HDR_ALIGNED_P(ip)	1
-#else
-#define	IP_HDR_ALIGNED_P(ip)	((((vaddr_t) (ip)) & 3) == 0)
-#endif
-
 extern struct domain inetdomain;
 
-extern struct ipstat ipstat;		/* ip statistics */
 extern LIST_HEAD(ipqhead, ipq) ipq[];	/* ip reass. queue */
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */
@@ -244,6 +225,7 @@ void	 ip_slowtimo(void);
 struct mbuf *
 	 ip_srcroute(void);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void	 ip_statinc(u_int);
 void	 ipintr(void);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);
 int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf **);
@@ -253,7 +235,7 @@ int	 rip_output(struct mbuf *, ...);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 int	ipflow_init(int);
-struct	ipflow *ipflow_reap(int);
+void	ipflow_prune(void);
 void	ipflow_create(const struct route *, struct mbuf *);
 void	ipflow_slowtimo(void);
 int	ipflow_invalidate_all(int);

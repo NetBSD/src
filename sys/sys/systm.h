@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.214.6.1 2008/04/03 12:43:13 mjf Exp $	*/
+/*	$NetBSD: systm.h,v 1.214.6.2 2008/06/02 13:24:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -128,7 +128,6 @@ extern int nsysent;
 #error	"what byte order is this machine?"
 #endif
 
-#define	SYCALL_MPSAFE	0x0001	/* syscall is MP-safe */
 #define	SYCALL_INDIRECT	0x0002	/* indirect (ie syscall() or __syscall()) */
 
 extern int boothowto;		/* reboot flags, from console subsystem */
@@ -153,14 +152,12 @@ enum hashtype {
 	HASH_TAILQ
 };
 
-struct malloc_type;
-void	*hashinit(u_int, enum hashtype, struct malloc_type *, int, u_long *);
-void	hashdone(void *, struct malloc_type *);
+#ifdef _KERNEL
+void	*hashinit(u_int, enum hashtype, bool, u_long *);
+void	hashdone(void *, enum hashtype, u_long);
 int	seltrue(dev_t, int, struct lwp *);
 int	sys_nosys(struct lwp *, const void *, register_t *);
 
-
-#ifdef _KERNEL
 void	aprint_normal(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	aprint_error(const char *, ...)
@@ -199,6 +196,9 @@ void	aprint_debug_ifnet(struct ifnet *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 
 int	aprint_get_error_count(void);
+
+void	printf_tolog(const char *, ...)
+    __attribute__((__format__(__printf__,1,2)));
 
 void	printf_nolog(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
@@ -474,8 +474,8 @@ do {						\
 } while (/* CONSTCOND */ 0)
 #define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (p))
 #else
-#define	KERNEL_LOCK(count, lwp)		/* nothing */
-#define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
+#define	KERNEL_LOCK(count, lwp)		do {(void)(count); (void)(lwp);} while (/* CONSTCOND */ 0) /*NOP*/
+#define	KERNEL_UNLOCK(all, lwp, ptr)	do {(void)(all); (void)(lwp); (void)(ptr);} while (/* CONSTCOND */ 0) /*NOP*/
 #endif
 
 #define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)
@@ -483,8 +483,11 @@ do {						\
 #define	KERNEL_UNLOCK_ONE(l)		KERNEL_UNLOCK(1, (l), NULL)
 
 /* Preemption control. */
-void	crit_enter(void);
-void	crit_exit(void);
+#ifdef _KERNEL
+void	kpreempt_disable(void);
+void	kpreempt_enable(void);
+bool	kpreempt_disabled(void);
+#endif
 
 void assert_sleepable(void);
 #if defined(DEBUG)

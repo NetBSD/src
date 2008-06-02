@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.22 2007/11/10 18:29:37 ad Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.22.14.1 2008/06/02 13:23:16 mjf Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.22 2007/11/10 18:29:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.22.14.1 2008/06/02 13:23:16 mjf Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -387,7 +387,7 @@ hpf1275a_input(int c, struct tty *tp)
 
 	xtscan = hpf1275a_to_xtscan[code];
 	if (xtscan == 0) {
-		printf("%s: unknown code 0x%x\n", sc->sc_dev.dv_xname, code);
+		aprint_error_dev(&sc->sc_dev, "unknown code 0x%x\n", code);
 		return (0);
 	}
 

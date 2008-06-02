@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.11.6.1 2008/04/03 12:42:20 mjf Exp $
+# $NetBSD: GENERIC,v 1.11.6.2 2008/06/02 13:22:20 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.11.6.1 $"
+#ident          "GENERIC-$Revision: 1.11.6.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -113,7 +113,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -255,7 +255,7 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 # Network Interfaces
 
 # PCI network interfaces
-#re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2008/02/12 18:22:39 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.12.6.1 2008/06/02 13:22:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -46,6 +46,7 @@
 
 #include <libi386.h>
 #include "pxeboot.h"
+#include "bootmod.h"
 
 extern struct x86_boot_params boot_params;
 
@@ -61,6 +62,8 @@ void	command_help __P((char *));
 void	command_quit __P((char *));
 void	command_boot __P((char *));
 void	command_consdev(char *);
+void	command_load(char *);
+void	command_modules(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -68,6 +71,8 @@ const struct bootblk_command commands[] = {
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
 	{ "consdev",	command_consdev },
+	{ "modules",    command_modules },
+	{ "load",	command_load },
 	{ NULL,		NULL },
 };
 
@@ -139,6 +144,8 @@ command_help(char *arg)
 	       "boot [filename] [-adsqv]\n"
 	       "     (ex. \"netbsd.old -s\"\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "modules {enabled|disabled}\n"
+	       "load {path_to_module}\n"
 	       "help|?\n"
 	       "quit\n");
 }
@@ -195,4 +202,43 @@ command_consdev(char *arg)
 		}
 	}
 	printf("invalid console device.\n");
+}
+void
+command_modules(char *arg)
+{
+	if (strcmp(arg, "enabled") == 0 ||
+			strcmp(arg, "on") == 0)
+		boot_modules_enabled = true;
+	else if (strcmp(arg, "disabled") == 0 ||
+			strcmp(arg, "off") == 0)
+		boot_modules_enabled = false;
+	else
+		printf("invalid flag, must be 'enabled' or 'disabled'.\n");
+}
+
+void
+command_load(char *arg)
+{
+	boot_module_t *bm, *bmp;
+	size_t len;
+	char *str;
+	
+	bm = alloc(sizeof(boot_module_t));
+	len = strlen(arg) + 1;
+	str = alloc(len);
+	if (bm == NULL || str == NULL) {
+		printf("couldn't allocate module\n");
+		return;
+	}
+	memcpy(str, arg, len);
+	bm->bm_path = str;
+	bm->bm_next = NULL;
+	if (boot_modules == NULL)
+		boot_modules = bm;
+	else {
+		for (bmp = boot_modules; bmp->bm_next;
+				bmp = bmp->bm_next)
+			;
+		bmp->bm_next = bm;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.15 2007/08/30 02:17:36 dyoung Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.15.20.1 2008/06/02 13:24:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.15 2007/08/30 02:17:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.15.20.1 2008/06/02 13:24:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.15 2007/08/30 02:17:36 dyoung Exp $")
 #include <netatalk/at_extern.h>
 
 DOMAIN_DEFINE(atalkdomain);	/* forward declare and add to link set */
+
+PR_WRAP_USRREQ(ddp_usrreq)
+#define	ddp_usrreq	ddp_usrreq_wrapper
 
 const struct protosw atalksw[] = {
     {

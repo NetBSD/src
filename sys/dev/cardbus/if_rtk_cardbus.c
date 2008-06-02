@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.34 2007/12/09 20:27:56 jmcneill Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.34.10.1 2008/06/02 13:23:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.34 2007/12/09 20:27:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.34.10.1 2008/06/02 13:23:14 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -120,9 +120,9 @@ static const struct rtk_type rtk_cardbus_devs[] = {
 	{ 0, 0, 0, NULL }
 };
 
-static int rtk_cardbus_match(struct device *, struct cfdata *, void *);
-static void rtk_cardbus_attach(struct device *, struct device *, void *);
-static int rtk_cardbus_detach(struct device *, int);
+static int rtk_cardbus_match(device_t, cfdata_t, void *);
+static void rtk_cardbus_attach(device_t, device_t, void *);
+static int rtk_cardbus_detach(device_t, int);
 
 struct rtk_cardbus_softc {
 	struct rtk_softc sc_rtk;	/* real rtk softc */
@@ -139,48 +139,45 @@ struct rtk_cardbus_softc {
 	int sc_intrline;
 };
 
-CFATTACH_DECL(rtk_cardbus, sizeof(struct rtk_cardbus_softc),
+CFATTACH_DECL_NEW(rtk_cardbus, sizeof(struct rtk_cardbus_softc),
     rtk_cardbus_match, rtk_cardbus_attach, rtk_cardbus_detach, rtk_activate);
 
-const struct rtk_type *rtk_cardbus_lookup
-	(const struct cardbus_attach_args *);
+const struct rtk_type *rtk_cardbus_lookup(const struct cardbus_attach_args *);
 
-void rtk_cardbus_setup		(struct rtk_cardbus_softc *);
+void rtk_cardbus_setup(struct rtk_cardbus_softc *);
 
-int rtk_cardbus_enable		(struct rtk_softc *);
+int rtk_cardbus_enable(struct rtk_softc *);
 void rtk_cardbus_disable(struct rtk_softc *);
-void rtk_cardbus_power		(struct rtk_softc *, int);
+void rtk_cardbus_power(struct rtk_softc *, int);
+
 const struct rtk_type *
-rtk_cardbus_lookup(ca)
-	const struct cardbus_attach_args *ca;
+rtk_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct rtk_type *t;
 
 	for (t = rtk_cardbus_devs; t->rtk_name != NULL; t++){
 		if (CARDBUS_VENDOR(ca->ca_id) == t->rtk_vid &&
 		    CARDBUS_PRODUCT(ca->ca_id) == t->rtk_did) {
-			return (t);
+			return t;
 		}
 	}
-	return (NULL);
+	return NULL;
 }
 
 int
-rtk_cardbus_match(struct device *parent, struct cfdata *match,
-    void *aux)
+rtk_cardbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
 	if (rtk_cardbus_lookup(ca) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 
 void
-rtk_cardbus_attach(struct device *parent, struct device *self,
-    void *aux)
+rtk_cardbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct rtk_cardbus_softc *csc = device_private(self);
 	struct rtk_softc *sc = &csc->sc_rtk;
@@ -189,6 +186,7 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 	const struct rtk_type *t;
 	bus_addr_t adr;
 
+	sc->sc_dev = self;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
@@ -196,10 +194,10 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 
 	t = rtk_cardbus_lookup(ca);
 	if (t == NULL) {
-		printf("\n");
-		panic("rtk_cardbus_attach: impossible");
+		aprint_error("\n");
+		panic("%s: impossible", __func__);
 	 }
-	printf(": %s\n", t->rtk_name);
+	aprint_normal(": %s\n", t->rtk_name);
 
 	/*
 	 * Power management hooks.
@@ -237,8 +235,7 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 	}
 #endif
 	else {
-		printf("%s: unable to map deviceregisters\n",
-			 sc->sc_dev.dv_xname);
+		aprint_error_dev(self, " unable to map deviceregisters\n");
 		return;
 	}
 	/*
@@ -261,20 +258,20 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 }
 
 int
-rtk_cardbus_detach(struct device *self, int flags)
+rtk_cardbus_detach(device_t self, int flags)
 {
 	struct rtk_cardbus_softc *csc = device_private(self);
 	struct rtk_softc *sc = &csc->sc_rtk;
 	struct cardbus_devfunc *ct = csc->sc_ct;
-	int	rv;
+	int rv;
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", device_xname(self));
 #endif
 	rv = rtk_detach(sc);
 	if (rv)
-		return (rv);
+		return rv;
 	/*
 	 * Unhook the interrupt handler.
 	 */
@@ -286,21 +283,20 @@ rtk_cardbus_detach(struct device *self, int flags)
 	 */
 	if (csc->sc_bar_reg != 0)
 		Cardbus_mapreg_unmap(ct, csc->sc_bar_reg,
-			sc->rtk_btag, sc->rtk_bhandle, csc->sc_mapsize);
+		    sc->rtk_btag, sc->rtk_bhandle, csc->sc_mapsize);
 
-	return (0);
+	return 0;
 }
 
 void
-rtk_cardbus_setup(csc)
-	struct rtk_cardbus_softc *csc;
+rtk_cardbus_setup(struct rtk_cardbus_softc *csc)
 {
 	struct rtk_softc *sc = &csc->sc_rtk;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	pcireg_t	reg,command;
-	int		pmreg;
+	pcireg_t reg, command;
+	int pmreg;
 
 	/*
 	 * Handle power management nonsense.
@@ -310,7 +306,7 @@ rtk_cardbus_setup(csc)
 		command = cardbus_conf_read(cc, cf, csc->sc_tag,
 		    pmreg + PCI_PMCSR);
 		if (command & PCI_PMCSR_STATE_MASK) {
-			pcireg_t		iobase, membase, irq;
+			pcireg_t iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = cardbus_conf_read(cc, cf, csc->sc_tag,
@@ -321,8 +317,8 @@ rtk_cardbus_setup(csc)
 			    CARDBUS_INTERRUPT_REG);
 
 			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode "
-			    "-- setting to D0\n", sc->sc_dev.dv_xname,
+			aprint_normal_dev(sc->sc_dev,
+			    "chip is in D%d power mode -- setting to D0\n",
 			    command & PCI_PMCSR_STATE_MASK);
 			command &= ~PCI_PMCSR_STATE_MASK;
 			cardbus_conf_write(cc, cf, csc->sc_tag,
@@ -340,7 +336,7 @@ rtk_cardbus_setup(csc)
 
 	/* Program the BAR */
 	cardbus_conf_write(cc, cf, csc->sc_tag,
-		csc->sc_bar_reg, csc->sc_bar_val);
+	    csc->sc_bar_reg, csc->sc_bar_val);
 
 	/* Make sure the right access type is on the CardBus bridge. */
 	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
@@ -367,10 +363,9 @@ rtk_cardbus_setup(csc)
 }
 
 int
-rtk_cardbus_enable(sc)
-	struct rtk_softc *sc;
+rtk_cardbus_enable(struct rtk_softc *sc)
 {
-	struct rtk_cardbus_softc *csc = (void *) sc;
+	struct rtk_cardbus_softc *csc = (struct rtk_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
@@ -389,23 +384,22 @@ rtk_cardbus_enable(sc)
 	 * Map and establish the interrupt.
 	 */
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
-		IPL_NET, rtk_intr, sc);
+	    IPL_NET, rtk_intr, sc);
 	if (csc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt at %d\n",
-			sc->sc_dev.dv_xname, csc->sc_intrline);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to establish interrupt at %d\n", csc->sc_intrline);
 		Cardbus_function_disable(csc->sc_ct);
-		return (1);
+		return 1;
 	}
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
-		csc->sc_intrline);
-	return (0);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %d\n",
+	    csc->sc_intrline);
+	return 0;
 }
 
 void
-rtk_cardbus_disable(sc)
-	struct rtk_softc *sc;
+rtk_cardbus_disable(struct rtk_softc *sc)
 {
-	struct rtk_cardbus_softc *csc = (void *) sc;
+	struct rtk_cardbus_softc *csc = (struct rtk_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;

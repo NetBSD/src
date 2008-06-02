@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.71.6.1 2008/04/03 12:42:24 mjf Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.71.6.2 2008/06/02 13:22:37 mjf Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,13 +29,13 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.71.6.1 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.71.6.2 $"
 
 maxusers	32
 
 # CPU related options
 options 	MIPS3		# MIPS3 support
-options		INDY_R4600_CACHE	# Include routines to handle special
+options 	INDY_R4600_CACHE	# Include routines to handle special
 					# R4600 cache -- required for Indy.
 
 makeoptions	WANT_ECOFF="yes"	# Create an ECOFF kernel in addition
@@ -43,7 +43,7 @@ makeoptions	WANT_ECOFF="yes"	# Create an ECOFF kernel in addition
 					# netbooting Indigo (IP20) and some
 					# Indigo2 (IP22) machines
 
-#options	BLINK		# blinkenlitzen
+#options 	BLINK		# blinkenlitzen
 
 # Standard system options
 #options 	INSECURE	# disable kernel security levels
@@ -80,15 +80,16 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 
 # Compatibility options
 options 	COMPAT_15	# NetBSD 1.5
-options		COMPAT_16	# NetBSD 1.6
-options		COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_IRIX	# binary compatibility with IRIX
-#options	COMPAT_LINUX	# binary compatibility with Linux
-#options	COMPAT_ULTRIX	# binary compatibility with Ultrix 
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+#options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
@@ -117,7 +118,7 @@ file-system	EFS		# Silicon Graphics Extent File System
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -228,7 +229,7 @@ wsdisplay*	at light? console ?
 # PCI Fast Ethernet cards glued to the GIO bus
 giopci*		at gio? slot?
 pci*		at giopci? bus?
-options		PCI_NETBSD_CONFIGURE
+options 	PCI_NETBSD_CONFIGURE
 
 tlp*		at pci? dev ? function ? # Phobos G100/130/160 Fast Ethernet
 lxtphy*		at mii? phy ?		 # Level One LXT-970 PHYs 
@@ -257,7 +258,7 @@ ioc0		at mainbus0 addr 0x1fbd9800
 
 # IOC's parallel port
 pi1ppc0		at hpc0 offset ? 
-options		PI1PPC_INDY_ACK_HACK	# Indy hardware bug workaround.
+options 	PI1PPC_INDY_ACK_HACK	# Indy hardware bug workaround.
 ppbus*		at pi1ppc?
 lpt*		at ppbus?		# Parallel printer
 
@@ -304,7 +305,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 

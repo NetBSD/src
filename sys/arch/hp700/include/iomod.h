@@ -1,4 +1,4 @@
-/*	$NetBSD: iomod.h,v 1.3 2007/03/04 05:59:51 christos Exp $	*/
+/*	$NetBSD: iomod.h,v 1.3.40.1 2008/06/02 13:22:07 mjf Exp $	*/
 
 /*	$OpenBSD: iomod.h,v 1.8 2000/05/15 15:16:41 mickey Exp $	*/
 
@@ -153,10 +153,10 @@
 struct pagezero {
 	/* [0x000] Initialize Vectors */
 	int	ivec_special;		/* must be zero */
-	int	(*ivec_mempf)__P((void)); /* powerfail recovery software */
-	int	(*ivec_toc)__P((void));	/* exec'd after Transfer Of Control */
+	int	(*ivec_mempf)(void);	/* powerfail recovery software */
+	int	(*ivec_toc)(void);	/* exec'd after Transfer Of Control */
 	u_int	ivec_toclen;		/* bytes of ivec_toc code */
-	int	(*ivec_rendz)__P((void)); /* exec'd after Rendezvous Signal */
+	int	(*ivec_rendz)(void);	/* exec'd after Rendezvous Signal */
 	u_int	ivec_mempflen;		/* bytes of ivec_mempf code */
 	u_int	ivec_resv[2];		/* (reserved) */
 	u_int	ivec_mbz;		/* must be zero */
@@ -214,7 +214,7 @@ struct pagezero {
 	struct boot_err mem_be[8];	/* boot errors (see above) */
 	u_int	mem_free;		/* first free phys. memory location */
 	u_int	mem_hpa;		/* HPA of CPU */
-	int	(*mem_pdc)__P((void));	/* PDC entry point */
+	int	(*mem_pdc)(void);	/* PDC entry point */
 	u_int	mem_10msec;		/* # of Interval Timer ticks in 10msec*/
 
 	/* [0x390] Initial Memory Module */

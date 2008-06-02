@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.100 2007/12/26 13:48:53 njoly Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.100.6.1 2008/06/02 13:23:03 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.100 2007/12/26 13:48:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.100.6.1 2008/06/02 13:23:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +87,8 @@ static void bsd_to_linux_statfs64(const struct statvfs *,
 /*
  * Alarm. This is a libc call which uses setitimer(2) in NetBSD.
  * Fiddle with the timers to make it work.
+ *
+ * XXX This shouldn't be dicking about with the ptimer stuff directly.
  */
 int
 linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_t *retval)
@@ -104,19 +99,25 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 	struct proc *p = l->l_proc;
 	struct timeval now;
 	struct itimerval *itp, it;
-	struct ptimer *ptp;
-	int s;
+	struct ptimer *ptp, *spare;
+	extern kmutex_t timer_lock;
+	struct ptimers *pts;
 
-	if (p->p_timers && p->p_timers->pts_timers[ITIMER_REAL])
-		itp = &p->p_timers->pts_timers[ITIMER_REAL]->pt_time;
+	if ((pts = p->p_timers) == NULL)
+		pts = timers_alloc(p);
+	spare = NULL;
+
+ retry:
+	mutex_spin_enter(&timer_lock);
+	if (pts && pts->pts_timers[ITIMER_REAL])
+		itp = &pts->pts_timers[ITIMER_REAL]->pt_time;
 	else
 		itp = NULL;
-	s = splclock();
 	/*
 	 * Clear any pending timer alarms.
 	 */
 	if (itp) {
-		callout_stop(&p->p_timers->pts_timers[ITIMER_REAL]->pt_ch);
+		callout_stop(&pts->pts_timers[ITIMER_REAL]->pt_ch);
 		timerclear(&itp->it_interval);
 		getmicrotime(&now);
 		if (timerisset(&itp->it_value) &&
@@ -138,7 +139,7 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 	if (SCARG(uap, secs) == 0) {
 		if (itp)
 			timerclear(&itp->it_value);
-		splx(s);
+		mutex_spin_exit(&timer_lock);
 		return 0;
 	}
 
@@ -149,23 +150,29 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 	it.it_value.tv_sec = SCARG(uap, secs);
 	it.it_value.tv_usec = 0;
 	if (itimerfix(&it.it_value) || itimerfix(&it.it_interval)) {
-		splx(s);
+		mutex_spin_exit(&timer_lock);
 		return (EINVAL);
 	}
 
-	if (p->p_timers == NULL)
-		timers_alloc(p);
-	ptp = p->p_timers->pts_timers[ITIMER_REAL];
+	ptp = pts->pts_timers[ITIMER_REAL];
 	if (ptp == NULL) {
-		ptp = pool_get(&ptimer_pool, PR_WAITOK);
+		if (spare == NULL) {
+			mutex_spin_exit(&timer_lock);
+			spare = pool_get(&ptimer_pool, PR_WAITOK);
+			goto retry;
+		}
+		ptp = spare;
+		spare = NULL;
 		ptp->pt_ev.sigev_notify = SIGEV_SIGNAL;
 		ptp->pt_ev.sigev_signo = SIGALRM;
 		ptp->pt_overruns = 0;
 		ptp->pt_proc = p;
 		ptp->pt_type = CLOCK_REALTIME;
 		ptp->pt_entry = CLOCK_REALTIME;
-		callout_init(&ptp->pt_ch, 0);
-		p->p_timers->pts_timers[ITIMER_REAL] = ptp;
+		ptp->pt_active = 0;
+		ptp->pt_queued = 0;
+		callout_init(&ptp->pt_ch, CALLOUT_MPSAFE);
+		pts->pts_timers[ITIMER_REAL] = ptp;
 	}
 
 	if (timerisset(&it.it_value)) {
@@ -179,7 +186,7 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 		    realtimerexpire, ptp);
 	}
 	ptp->pt_time = it;
-	splx(s);
+	mutex_spin_exit(&timer_lock);
 
 	return 0;
 }

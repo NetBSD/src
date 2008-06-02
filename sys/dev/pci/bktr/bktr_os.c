@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.49.6.2 2008/04/05 23:33:22 mjf Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.49.6.3 2008/06/02 13:23:44 mjf Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.49.6.2 2008/04/05 23:33:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.49.6.3 2008/06/02 13:23:44 mjf Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1429,7 +1429,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 
 	bktr->ih = pci_intr_establish(pa->pa_pc, ih, IPL_VIDEO,
-				      bktr_intr, bktr, bktr->bktr_dev.dv_xname);
+				      bktr_intr, bktr, device_xname(&bktr->bktr_dev));
 	if (bktr->ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)

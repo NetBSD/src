@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.25 2007/11/22 16:17:09 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.25.14.1 2008/06/02 13:22:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.25 2007/11/22 16:17:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.25.14.1 2008/06/02 13:22:55 mjf Exp $");
 
 #include "opt_xen.h"
 
@@ -108,14 +108,14 @@ static struct xencons_softc *xencons_console_device = NULL;
 #define	XENCONS_UNIT(x)	(minor(x))
 #define XENCONS_BURST 128
 
-int xencons_match (struct device *, struct cfdata *, void *);
-void xencons_attach (struct device *, struct device *, void *);
-int xencons_intr (void *);
+int xencons_match(device_t, cfdata_t, void *);
+void xencons_attach(device_t, device_t, void *);
+int xencons_intr(void *);
 void xencons_tty_input(struct xencons_softc *, char*, int);
 
 
 struct xencons_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	tty *sc_tty;
 	int polling;
 #ifndef XEN3
@@ -129,7 +129,7 @@ struct xencons_softc {
 volatile struct xencons_interface *xencons_interface;
 #endif
 
-CFATTACH_DECL(xencons, sizeof(struct xencons_softc),
+CFATTACH_DECL_NEW(xencons, sizeof(struct xencons_softc),
     xencons_match, xencons_attach, NULL, NULL);
 
 extern struct cfdriver xencons_cd;
@@ -170,7 +170,7 @@ void	xencons_start (struct tty *);
 int	xencons_param (struct tty *, struct termios *);
 
 int
-xencons_match(struct device *parent, struct cfdata *match, void *aux)
+xencons_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct xencons_attach_args *xa = (struct xencons_attach_args *)aux;
 
@@ -180,12 +180,13 @@ xencons_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-xencons_attach(struct device *parent, struct device *self, void *aux)
+xencons_attach(device_t parent, device_t self, void *aux)
 {
-	struct xencons_softc *sc = (void *)self;
+	struct xencons_softc *sc = device_private(self);
 
 	aprint_normal(": Xen Virtual Console Driver\n");
 
+	sc->sc_dev = self;
 	sc->sc_tty = ttymalloc();
 	tty_attach(sc->sc_tty);
 	sc->sc_tty->t_oproc = xencons_start;
@@ -198,10 +199,10 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 		maj = cdevsw_lookup_major(&xencons_cdevsw);
 
 		/* There can be only one, but it can have any unit number. */
-		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
+		cn_tab->cn_dev = makedev(maj, device_unit(self));
 
-		aprint_verbose("%s: console major %d, unit %d\n",
-		    sc->sc_dev.dv_xname, maj, device_unit(&sc->sc_dev));
+		aprint_verbose_dev(self, "console major %d, unit %d\n",
+		    maj, device_unit(self));
 
 		sc->sc_tty->t_dev = cn_tab->cn_dev;
 
@@ -212,8 +213,8 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 
 		if (xen_start_info.flags & SIF_INITDOMAIN) {
 			int evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
-			aprint_verbose("%s: using event channel %d\n",
-			    sc->sc_dev.dv_xname, evtch);
+			aprint_verbose_dev(self, "using event channel %d\n",
+			    evtch);
 			if (event_set_handler(evtch, xencons_intr, sc,
 			    IPL_TTY, "xencons") != 0)
 				printf("console: "
@@ -222,7 +223,7 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 		} else {
 #ifdef XEN3
 			printf("%s: using event channel %d\n",
-			    sc->sc_dev.dv_xname, xen_start_info.console_evtchn);
+			    device_xname(self), xen_start_info.console_evtchn);
 			event_set_handler(xen_start_info.console_evtchn,
 			    xencons_handler, sc, IPL_TTY, "xencons");
 			hypervisor_enable_event(xen_start_info.console_evtchn);
@@ -240,10 +241,9 @@ int
 xencons_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct xencons_softc *sc;
-	int unit = XENCONS_UNIT(dev);
 	struct tty *tp;
 
-	sc = device_lookup(&xencons_cd, unit);
+	sc = device_lookup_private(&xencons_cd, XENCONS_UNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -271,7 +271,7 @@ xencons_open(dev_t dev, int flag, int mode, struct lwp *l)
 int
 xencons_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct xencons_softc *sc = device_lookup(&xencons_cd,
+	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
 	    XENCONS_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
@@ -288,7 +288,7 @@ xencons_close(dev_t dev, int flag, int mode, struct lwp *l)
 int
 xencons_read(dev_t dev, struct uio *uio, int flag)
 {
-	struct xencons_softc *sc = device_lookup(&xencons_cd,
+	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
 	    XENCONS_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
@@ -298,7 +298,7 @@ xencons_read(dev_t dev, struct uio *uio, int flag)
 int
 xencons_write(dev_t dev, struct uio *uio, int flag)
 {
-	struct xencons_softc *sc = device_lookup(&xencons_cd,
+	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
 	    XENCONS_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
@@ -308,7 +308,7 @@ xencons_write(dev_t dev, struct uio *uio, int flag)
 int
 xencons_poll(dev_t dev, int events, struct lwp *l)
 {
-	struct xencons_softc *sc = device_lookup(&xencons_cd,
+	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
 	    XENCONS_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
  
@@ -318,7 +318,7 @@ xencons_poll(dev_t dev, int events, struct lwp *l)
 struct tty *
 xencons_tty(dev_t dev)
 {
-	struct xencons_softc *sc = device_lookup(&xencons_cd,
+	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
 	    XENCONS_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
@@ -328,7 +328,7 @@ xencons_tty(dev_t dev)
 int
 xencons_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct xencons_softc *sc = device_lookup(&xencons_cd,
+	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
 	    XENCONS_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
@@ -498,7 +498,7 @@ xencons_rx(ctrl_msg_t *msg, unsigned long id)
 	// unsigned long flags;
 	struct xencons_softc *sc;
 
-	sc = device_lookup(&xencons_cd, XENCONS_UNIT(cn_tab->cn_dev));
+	sc = device_lookup_private(&xencons_cd, XENCONS_UNIT(cn_tab->cn_dev));
 	if (sc == NULL)
 		goto out2;
 

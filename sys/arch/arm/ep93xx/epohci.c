@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.2 2005/12/11 12:16:45 christos Exp $ */
+/*	$NetBSD: epohci.c,v 1.2.76.1 2008/06/02 13:21:53 mjf Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.2 2005/12/11 12:16:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.2.76.1 2008/06/02 13:21:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ struct epohci_softc {
 	int	sc_intr;
 };
 
-CFATTACH_DECL(epohci, sizeof(struct epohci_softc),
+CFATTACH_DECL_NEW(epohci, sizeof(struct epohci_softc),
     epohci_match, epohci_attach, NULL, NULL);
 
 int
@@ -85,10 +85,13 @@ epohci_match(struct device *parent, struct cfdata *match, void *aux)
 void
 epohci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct epohci_softc *sc = (struct epohci_softc *)self;
+	struct epohci_softc *sc = device_private(self);
 	struct epsoc_attach_args *sa = aux;
 	u_int32_t i;
 	bus_space_handle_t syscon_ioh;
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	sc->sc.iot = sa->sa_iot;
 	sc->sc.sc_bus.dmatag = sa->sa_dmat;
@@ -132,7 +135,7 @@ void
 epohci_callback(self)
         struct device *self;
 {
-	struct epohci_softc *sc = (struct epohci_softc *)self;
+	struct epohci_softc *sc = device_private(self);
 	usbd_status r;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
@@ -146,14 +149,13 @@ epohci_callback(self)
 	r = ohci_init(&sc->sc);
 
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", sc->sc.sc_bus.bdev.dv_xname, r);
+		printf("%s: init failed, error=%d\n", device_xname(self), r);
 
 		ep93xx_intr_disestablish(sc->sc_ih);
 		return;
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *) sc, &sc->sc.sc_bus,
-	    usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 
 }

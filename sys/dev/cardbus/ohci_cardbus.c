@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.24.16.1 2008/04/03 12:42:39 mjf Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.24.16.2 2008/06/02 13:23:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -45,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.24.16.1 2008/04/03 12:42:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.24.16.2 2008/06/02 13:23:14 mjf Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -125,7 +118,7 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	const char *devname = device_xname(self);
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.32 2007/10/19 12:00:36 ad Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.32.16.1 2008/06/02 13:23:35 mjf Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.32 2007/10/19 12:00:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.32.16.1 2008/06/02 13:23:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -345,7 +345,7 @@ mtdgram(usc, mp, mi)
 	struct mscp *mp;
 	struct mscp_softc *mi;
 {
-	if (mscp_decodeerror(usc == NULL?"unconf mt" : usc->dv_xname, mp, mi))
+	if (mscp_decodeerror(usc == NULL?"unconf mt" : device_xname(usc), mp, mi))
 		return;
 }
 
@@ -417,10 +417,10 @@ mtioerror(usc, mp, bp)
 		mt->mt_serex = 2;
 	else {
 		if (st && st < 17)
-			printf("%s: error %d (%s)\n", mt->mt_dev.dv_xname, st,
+			printf("%s: error %d (%s)\n", device_xname(&mt->mt_dev), st,
 			    mt_ioerrs[st-1]);
 		else
-			printf("%s: error %d\n", mt->mt_dev.dv_xname, st);
+			printf("%s: error %d\n", device_xname(&mt->mt_dev), st);
 		bp->b_error = EROFS;
 	}
 
@@ -570,7 +570,7 @@ mtcmddone(usc, mp)
 
 	if (mp->mscp_status) {
 		mt->mt_ioctlerr = EIO;
-		printf("%s: bad status %x\n", mt->mt_dev.dv_xname,
+		printf("%s: bad status %x\n", device_xname(&mt->mt_dev),
 		    mp->mscp_status);
 	}
 	wakeup(&mt->mt_inuse);

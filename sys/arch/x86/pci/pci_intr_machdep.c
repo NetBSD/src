@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.7 2008/01/04 18:38:31 ad Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.7.6.1 2008/06/02 13:22:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -80,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7 2008/01/04 18:38:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.6.1 2008/06/02 13:22:50 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,10 +108,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7 2008/01/04 18:38:31 ad Exp 
 #include <machine/mpacpi.h>
 #endif
 
+#define	MPSAFE_MASK	0x80000000
+
 int
-pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
@@ -214,7 +207,7 @@ bad:
 const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
-	return intr_string(ih);
+	return intr_string(ih & ~MPSAFE_MASK);
 }
 
 
@@ -226,15 +219,36 @@ pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	return NULL;
 }
 
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+		 int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		if (data) {
+			 *ih |= MPSAFE_MASK;
+		} else {
+			 *ih &= ~MPSAFE_MASK;
+		}
+		/* XXX Set live if already mapped. */
+		return 0;
+	default:
+		return ENODEV;
+	}
+}
+
 void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg)
 {
 	int pin, irq;
 	struct pic *pic;
+	bool mpsafe;
 
 	pic = &i8259_pic;
-	pin = irq = ih;
+	pin = irq = (ih & ~MPSAFE_MASK);
+	mpsafe = ((ih & MPSAFE_MASK) != 0);
 
 #if NIOAPIC > 0
 	if (ih & APIC_INT_VIA_APIC) {
@@ -251,7 +265,8 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 	}
 #endif
 
-	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg);
+	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg,
+	    mpsafe);
 }
 
 void

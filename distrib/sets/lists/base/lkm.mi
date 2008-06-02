@@ -1,7 +1,18 @@
-# $NetBSD: lkm.mi,v 1.20 2008/01/03 20:47:55 jdc Exp $
+# $NetBSD: lkm.mi,v 1.20.6.1 2008/06/02 13:21:17 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
+./stand/@MACHINE@				base-kernel-modules
+./stand/@MACHINE@/@OSRELEASE@			base-kernel-modules
+./@MODULEDIR@					base-kernel-modules
+./@MODULEDIR@/cd9660				base-kernel-modules
+./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules
+./@MODULEDIR@/miniroot				base-kernel-modules
+./@MODULEDIR@/miniroot/miniroot.kmod		base-kernel-modules
+./@MODULEDIR@/puffs				base-kernel-modules
+./@MODULEDIR@/puffs/puffs.kmod			base-kernel-modules
+./@MODULEDIR@/putter				base-kernel-modules
+./@MODULEDIR@/putter/putter.kmod		base-kernel-modules
 ./usr/lkm/adosfs.o				base-vfs-lkm
 ./usr/lkm/bsdcomp.o				base-ppp-lkm
 ./usr/lkm/cd9660.o				base-vfs-lkm

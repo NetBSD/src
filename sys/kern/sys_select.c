@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.3.4.2 2008/04/03 12:43:05 mjf Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.3.4.3 2008/06/02 13:24:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -77,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.3.4.2 2008/04/03 12:43:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.3.4.3 2008/06/02 13:24:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,10 +257,10 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 
 	if (mask) {
 		sigminusset(&sigcantmask, mask);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		oldmask = l->l_sigmask;
 		l->l_sigmask = *mask;
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	} else
 		oldmask = l->l_sigmask;	/* XXXgcc */
 
@@ -299,10 +292,9 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 			continue;
 		}
 		l->l_selflag = SEL_BLOCKING;
-		lwp_lock(l);
-		lwp_unlock_to(l, &sc->sc_lock);
+		l->l_kpriority = true;
+		sleepq_enter(&sc->sc_sleepq, l, &sc->sc_lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, "select", &select_sobj);
-		KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);	/* XXX */
 		error = sleepq_block(timo, true);
 		if (error != 0)
 			break;
@@ -310,9 +302,9 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 	selclear();
 
 	if (mask) {
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		l->l_sigmask = oldmask;
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
 
  done:
@@ -460,10 +452,10 @@ pollcommon(lwp_t *l, register_t *retval,
 
 	if (mask) {
 		sigminusset(&sigcantmask, mask);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		oldmask = l->l_sigmask;
 		l->l_sigmask = *mask;
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	} else
 		oldmask = l->l_sigmask;	/* XXXgcc */
 
@@ -494,10 +486,9 @@ pollcommon(lwp_t *l, register_t *retval,
 			continue;
 		}
 		l->l_selflag = SEL_BLOCKING;
-		lwp_lock(l);
-		lwp_unlock_to(l, &sc->sc_lock);
+		l->l_kpriority = true;
+		sleepq_enter(&sc->sc_sleepq, l, &sc->sc_lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, "select", &select_sobj);
-		KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);	/* XXX */
 		error = sleepq_block(timo, true);
 		if (error != 0)
 			break;
@@ -505,9 +496,9 @@ pollcommon(lwp_t *l, register_t *retval,
 	selclear();
 
 	if (mask) {
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		l->l_sigmask = oldmask;
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
  done:
 	/* poll is not restarted after signals... */
@@ -559,7 +550,7 @@ seltrue(dev_t dev, int events, lwp_t *l)
  * Record a select request.  Concurrency issues:
  *
  * The caller holds the same lock across calls to selrecord() and
- * selwakeup(), so we don't need to consider a concurrent wakeup
+ * selnotify(), so we don't need to consider a concurrent wakeup
  * while in this routine.
  *
  * The only activity we need to guard against is selclear(), called by
@@ -669,7 +660,8 @@ selnotify(struct selinfo *sip, int events, long knhint)
 			sc = cpu_lookup_byindex(index)->ci_data.cpu_selcpu;
 			mutex_spin_enter(&sc->sc_lock);
 			sc->sc_ncoll++;
-			sleepq_wake(&sc->sc_sleepq, sc, (u_int)-1);
+			sleepq_wake(&sc->sc_sleepq, sc, (u_int)-1,
+			    &sc->sc_lock);
 		} while (__predict_false(mask != 0));
 	}
 }
@@ -726,7 +718,7 @@ selsysinit(struct cpu_info *ci)
 	    coherency_unit, KM_SLEEP);
 	sc = (void *)roundup2((uintptr_t)sc, coherency_unit);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
-	sleepq_init(&sc->sc_sleepq, &sc->sc_lock);
+	sleepq_init(&sc->sc_sleepq);
 	sc->sc_ncoll = 0;
 	sc->sc_mask = (1 << cpu_index(ci));
 	ci->ci_data.cpu_selcpu = sc;
@@ -823,10 +815,8 @@ pollsock(struct socket *so, const struct timeval *tvp, int events)
 			continue;
 		}
 		l->l_selflag = SEL_BLOCKING;
-		lwp_lock(l);
-		lwp_unlock_to(l, &sc->sc_lock);
+		sleepq_enter(&sc->sc_sleepq, l, &sc->sc_lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, "pollsock", &select_sobj);
-		KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);	/* XXX */
 		error = sleepq_block(timo, true);
 		if (error != 0)
 			break;

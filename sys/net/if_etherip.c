@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.17 2008/02/20 17:05:53 matt Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.17.6.1 2008/06/02 13:24:21 mjf Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -29,7 +29,7 @@
  *  SUCH DAMAGE.
  *
  *
- *  Copyright (c) 2003, 2004 The NetBSD Foundation.
+ *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.17 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.17.6.1 2008/06/02 13:24:21 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.17 2008/02/20 17:05:53 matt Exp $")
 #include <sys/queue.h>
 #include <sys/kauth.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/intr.h>
 
 #include <net/if.h>
@@ -221,7 +222,7 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	ui = (tv.tv_sec ^ tv.tv_usec) & 0xffffff;
 	memcpy(enaddr+3, (uint8_t *)&ui, 3);
 	
-	aprint_verbose("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	aprint_verbose_dev(&sc->sc_dev, "Ethernet address %s\n",
 		       ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
 
 	/*
@@ -246,7 +247,7 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	 * to support IPv6.
 	 */
 	ifp = &sc->sc_ec.ec_if;
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = etherip_ioctl;
@@ -273,13 +274,13 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	 * etherip_sysctl_handler for details.
 	 */
 	error = sysctl_createv(NULL, 0, NULL, &node, CTLFLAG_READWRITE, 
-			       CTLTYPE_STRING, sc->sc_dev.dv_xname, NULL,
+			       CTLTYPE_STRING, device_xname(&sc->sc_dev), NULL,
 			       etherip_sysctl_handler, 0, sc, 18, CTL_NET,
 			       AF_LINK, etherip_node, device_unit(&sc->sc_dev),
 			       CTL_EOL);
 	if (error)
-		aprint_error("%s: sysctl_createv returned %d, ignoring\n",
-			     sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "sysctl_createv returned %d, ignoring\n",
+			     error);
 
 	/* insert into etherip_softc_list */
 	LIST_INSERT_HEAD(&etherip_softc_list, sc, etherip_list);
@@ -309,8 +310,8 @@ etherip_detach(struct device* self, int flags)
 	error = sysctl_destroyv(NULL, CTL_NET, AF_LINK, etherip_node,
 				device_unit(&sc->sc_dev), CTL_EOL);
 	if (error)
-		aprint_error("%s: sysctl_destroyv returned %d, ignoring\n",
-			     sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "sysctl_destroyv returned %d, ignoring\n",
+			     error);
 
 	LIST_REMOVE(sc, etherip_list);
 	etherip_delete_tunnel(ifp);
@@ -361,12 +362,13 @@ etheripintr(void *arg)
 	struct mbuf *m;
 	int s, error;
 
+	mutex_enter(softnet_lock);
 	for (;;) {
 		s = splnet();
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		splx(s);
 		if (m == NULL)
-			return;
+			break;
 		
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -393,6 +395,7 @@ etheripintr(void *arg)
 			ifp->if_flags &= ~IFF_OACTIVE;
 		} else  m_freem(m);
 	}
+	mutex_exit(softnet_lock);
 }
 
 static int
@@ -625,8 +628,7 @@ etherip_clone_destroy(struct ifnet *ifp)
 	int error;
 
 	if ((error = config_detach(dev, 0)) != 0)
-		aprint_error("%s: unable to detach instance\n",
-			     dev->dv_xname);
+		aprint_error_dev(dev, "unable to detach instance\n");
 	FREE(cf, M_DEVBUF);
 
 	return error;

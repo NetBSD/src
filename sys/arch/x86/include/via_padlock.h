@@ -1,4 +1,4 @@
-/*	$NetBSD: via_padlock.h,v 1.1 2007/02/17 00:28:25 daniel Exp $	*/
+/*	$NetBSD: via_padlock.h,v 1.1.46.1 2008/06/02 13:22:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -41,18 +41,18 @@
 #define C3_CRYPT_CWLO_KEY256		0x0000080e      /* 256bit, 15 rds */
 
 struct via_padlock_session {
-        u_int32_t	ses_ekey[4 * (RIJNDAEL_MAXNR + 1) + 4];	/* 128 bit aligned */
-        u_int32_t	ses_dkey[4 * (RIJNDAEL_MAXNR + 1) + 4];	/* 128 bit aligned */
-        u_int8_t	ses_iv[16];				/* 128 bit aligned */
-        u_int32_t	ses_cw0;
+        uint32_t	ses_ekey[4 * (RIJNDAEL_MAXNR + 1) + 4];	/* 128 bit aligned */
+        uint32_t	ses_dkey[4 * (RIJNDAEL_MAXNR + 1) + 4];	/* 128 bit aligned */
+        uint8_t	ses_iv[16];				/* 128 bit aligned */
+        uint32_t	ses_cw0;
         struct swcr_data	*swd;
         int	ses_klen;
         int	ses_used;
 };
 
 struct via_padlock_softc {
-	u_int32_t	op_cw[4];	/* 128 bit aligned */
-	u_int8_t	op_iv[16];	/* 128 bit aligned */
+	uint32_t	op_cw[4];	/* 128 bit aligned */
+	uint8_t	op_iv[16];	/* 128 bit aligned */
 	void		*op_buf;
 
 	/* normal softc stuff */

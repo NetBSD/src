@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.49 2008/02/05 15:19:38 ad Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.49.6.1 2008/06/02 13:24:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49 2008/02/05 15:19:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49.6.1 2008/06/02 13:24:04 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -89,11 +89,14 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49 2008/02/05 15:19:38 ad Exp 
 #include <sys/conf.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
 #include <fs/filecorefs/filecore_node.h>
 #include <fs/filecorefs/filecore_mount.h>
+
+MODULE(MODULE_CLASS_VFS, filecorefs, NULL);
 
 MALLOC_JUSTDEFINE(M_FILECOREMNT,
     "filecore mount", "Filecore FS mount structures");
@@ -129,15 +132,29 @@ struct vfsops filecore_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	filecore_vnodeopv_descs,
 	0,
 	{ NULL, NULL }
 };
-VFS_ATTACH(filecore_vfsops);
 
 static const struct genfs_ops filecore_genfsops = {
 	.gop_size = genfs_size,
 };
+
+static int
+filecorefs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&filecore_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&filecore_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 /*
  * Called by vfs_mountroot when iso is going to be mounted as root.
@@ -172,7 +189,7 @@ filecore_mountroot()
 
 	args.flags = FILECOREMNT_ROOT;
 	if ((error = filecore_mountfs(rootvp, mp, p, &args)) != 0) {
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -180,7 +197,7 @@ filecore_mountroot()
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
 	(void)filecore_statvfs(mp, &mp->mnt_stat, p);
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return (0);
 }
 #endif
@@ -303,7 +320,7 @@ filecore_mountfs(devvp, mp, l, argp)
 
 	/* Read the filecore boot block to check FS validity and to find the map */
 	error = bread(devvp, FILECORE_BOOTBLOCK_BLKN,
-			   FILECORE_BOOTBLOCK_SIZE, NOCRED, &bp);
+			   FILECORE_BOOTBLOCK_SIZE, NOCRED, 0, &bp);
 #ifdef FILECORE_DEBUG_BR
 		printf("bread(%p, %x, %d, CRED, %p)=%d\n", devvp,
 		       FILECORE_BOOTBLOCK_BLKN, FILECORE_BOOTBLOCK_SIZE,
@@ -330,7 +347,7 @@ filecore_mountfs(devvp, mp, l, argp)
 	bp = NULL;
 
 	/* Read the bootblock in the map */
-	error = bread(devvp, map, 1 << log2secsize, NOCRED, &bp);
+	error = bread(devvp, map, 1 << log2secsize, NOCRED, 0, &bp);
 #ifdef FILECORE_DEBUG_BR
 		printf("bread(%p, %x, %d, CRED, %p)=%d\n", devvp,
 		       map, 1 << log2secsize, bp, error);

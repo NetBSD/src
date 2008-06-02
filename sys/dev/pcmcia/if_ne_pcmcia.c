@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.150.16.1 2008/04/03 12:42:54 mjf Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.150.16.2 2008/06/02 13:23:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.150.16.1 2008/04/03 12:42:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.150.16.2 2008/06/02 13:23:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,6 +335,10 @@ static const struct ne2000dev {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_COREGA_FETHER_II_PCC_TXD,
       0, -1, { 0x00, 0x90, 0x99 }, NE2000DVF_AX88190 },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_COREGA_LAPCCTXD,
+      0, -1, { 0x00, 0x90, 0x99 }, 0 },
 
     { PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
       PCMCIA_CIS_INVALID,
@@ -729,7 +733,7 @@ found:
 	if (ne2000_attach(nsc, enaddr))
 		goto fail2;
 
-	psc->sc_powerhook = powerhook_establish(self->dv_xname,
+	psc->sc_powerhook = powerhook_establish(device_xname(self),
 	    ne2000_power, nsc);
 	if (psc->sc_powerhook == NULL)
 		aprint_error_dev(self,

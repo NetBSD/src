@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.29 2007/10/19 11:59:41 ad Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.29.16.1 2008/06/02 13:23:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.29 2007/10/19 11:59:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.29.16.1 2008/06/02 13:23:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,22 +174,21 @@ bha_eisa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmaflags = 0;
 
 	if (eisa_intr_map(ec, bpd.sc_irq, &ih)) {
-		printf("%s: couldn't map interrupt (%d)\n",
-		    sc->sc_dev.dv_xname, bpd.sc_irq);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt (%d)\n",
+		    bpd.sc_irq);
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih);
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    bha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	bha_attach(sc);
 }

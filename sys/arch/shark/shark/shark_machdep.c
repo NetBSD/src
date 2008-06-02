@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.29 2008/01/19 13:11:21 chris Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.29.6.1 2008/06/02 13:22:39 mjf Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.29 2008/01/19 13:11:21 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.29.6.1 2008/06/02 13:22:39 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -115,6 +115,8 @@ extern void consinit		__P((void));
 int	ofbus_match __P((struct device *, struct cfdata *, void *));
 void	ofbus_attach __P((struct device *, struct device *, void *));
 
+
+paddr_t isa_io_physaddr, isa_mem_physaddr;
 
 /*
  *  Exported variables
@@ -204,7 +206,6 @@ initarm(void *arg)
 {
 	ofw_handle_t ofw_handle = arg;
 	paddr_t  pclean;
-	paddr_t  isa_io_physaddr, isa_mem_physaddr;
 	vaddr_t  isa_io_virtaddr, isa_mem_virtaddr;
 	paddr_t  isadmaphysbufs;
 	extern char shark_fiq[], shark_fiq_end[];

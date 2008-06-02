@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.78.6.1 2008/04/03 12:43:12 mjf Exp $	*/
+/*	$NetBSD: lwp.h,v 1.78.6.2 2008/06/02 13:24:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -62,7 +55,7 @@
  * a:	proclist_mutex
  * c:	condition variable interlock, passed to cv_wait()
  * l:	*l_mutex
- * p:	l_proc->p_smutex
+ * p:	l_proc->p_lock
  * s:	spc_mutex, which may or may not be referenced by l_mutex
  * t:	l_proc->p_stmutex
  * S:	l_selcpu->sc_lock
@@ -73,6 +66,8 @@
  * Fields are clustered together by usage (to increase the likelyhood
  * of cache hits) and by size (to reduce dead space in the structure).
  */
+struct lockdebug;
+
 struct lwp {
 	/* Scheduling and overall state */
 	TAILQ_ENTRY(lwp) l_runq;	/* s: run queue */
@@ -88,6 +83,10 @@ struct lwp {
 	struct bintime	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
 	u_int		l_holdcnt;	/* l: if non-zero, don't swap */
+	u_int		l_rticks;	/* l: Saved start time of run */
+	u_int		l_rticksum;	/* l: Sum of ticks spent running */
+	u_int		l_slpticks;	/* l: Saved start time of sleep */
+	u_int		l_slpticksum;	/* l: Sum of ticks spent sleeping */
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
 	int		l_kpriority;	/* !: has kernel priority boost */
@@ -160,11 +159,17 @@ struct lwp {
 	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
-	u_short		l_unused;
+	u_short		l_unused;	/* !: unused */
 	u_short		l_blcnt;	/* !: count of kernel_lock held */
+	int		l_nopreempt;	/* !: don't preempt me! */
+	u_int		l_dopreempt;	/* s: kernel preemption pending */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
 	struct rusage	l_ru;		/* !: accounting information */
+	uint64_t	l_pfailtime;	/* !: for kernel preemption */
+	uintptr_t	l_pfailaddr;	/* !: for kernel preemption */
+	uintptr_t	l_pfaillock;	/* !: for kernel preemption */
+	_TAILQ_HEAD(,struct lockdebug,volatile) l_ld_locks;/* !: locks held by LWP */
 
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
@@ -195,8 +200,8 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_INMEM	0x00000004 /* Loaded into memory. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
-#define	LW_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
+#define	LW_BATCH	0x00040000 /* LWP tends to hog CPU */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */
 #define	LW_AFFINITY	0x00200000 /* Affinity is assigned to the thread */
@@ -205,18 +210,18 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
-#define	LW_RUNNING	0x20000000 /* Active on a CPU (except if LSZOMB) */
-#define	LW_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
 #define	LP_KTRCSW	0x00000002 /* ktrace context switch marker */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
-#define	LP_UFSCOW	0x00000008 /* UFS: doing copy on write */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
+#define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
+#define	LP_RUNNING	0x20000000 /* Active on a CPU */
+#define	LP_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
@@ -395,9 +400,7 @@ spc_dlock(struct cpu_info *ci1, struct cpu_info *ci2)
 	struct schedstate_percpu *spc2 = &ci2->ci_schedstate;
 
 	KASSERT(ci1 != ci2);
-	if (spc1->spc_mutex == spc2->spc_mutex) {
-		mutex_spin_enter(spc1->spc_mutex);
-	} else if (ci1 < ci2) {
+	if (ci1 < ci2) {
 		mutex_spin_enter(spc1->spc_mutex);
 		mutex_spin_enter(spc2->spc_mutex);
 	} else {
@@ -413,13 +416,62 @@ spc_dunlock(struct cpu_info *ci1, struct cpu_info *ci2)
 	struct schedstate_percpu *spc2 = &ci2->ci_schedstate;
 
 	KASSERT(ci1 != ci2);
-	if (spc1->spc_mutex == spc2->spc_mutex) {
-		mutex_spin_exit(spc1->spc_mutex);
-	} else {
-		mutex_spin_exit(spc1->spc_mutex);
-		mutex_spin_exit(spc2->spc_mutex);
-	}
+	mutex_spin_exit(spc1->spc_mutex);
+	mutex_spin_exit(spc2->spc_mutex);
 }
+
+/*
+ * Allow machine-dependent code to override curlwp in <machine/cpu.h> for
+ * its own convenience.  Otherwise, we declare it as appropriate.
+ */
+#if !defined(curlwp)
+#if defined(MULTIPROCESSOR)
+#define	curlwp		curcpu()->ci_curlwp	/* Current running LWP */
+#else
+extern struct lwp	*curlwp;		/* Current running LWP */
+#endif /* MULTIPROCESSOR */
+#endif /* ! curlwp */
+#define	curproc		(curlwp->l_proc)
+
+static inline bool
+CURCPU_IDLE_P(void)
+{
+	struct cpu_info *ci = curcpu();
+	return ci->ci_data.cpu_onproc == ci->ci_data.cpu_idlelwp;
+}
+
+/*
+ * Disable and re-enable preemption.  Only for low-level kernel
+ * use.  Code outside kern/ should use kpreempt_disable() and
+ * kpreempt_enable().
+ */
+static inline void
+KPREEMPT_DISABLE(lwp_t *l)
+{
+
+	KASSERT(l == curlwp);
+	l->l_nopreempt++;
+	__insn_barrier();
+}
+
+static inline void
+KPREEMPT_ENABLE(lwp_t *l)
+{
+
+	KASSERT(l == curlwp);
+	KASSERT(l->l_nopreempt > 0);
+	__insn_barrier();
+	if (--l->l_nopreempt != 0)
+		return;
+	__insn_barrier();
+	if (__predict_false(l->l_dopreempt))
+		kpreempt(0);
+	__insn_barrier();
+}
+
+/* For lwp::l_dopreempt */
+#define	DOPREEMPT_ACTIVE	0x01
+#define	DOPREEMPT_COUNTED	0x02
 
 #endif /* _KERNEL */
 

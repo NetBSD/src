@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.110 2008/02/20 17:13:30 matt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.110.6.1 2008/06/02 13:24:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -67,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.110 2008/02/20 17:13:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.110.6.1 2008/06/02 13:24:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,21 +576,19 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	if (only_onefs) {
 		KASSERT(fs != NULL);
-		if (vfs_trybusy(fs->lfs_ivnode->v_mount, RW_READER,
-		    &mountlist_lock))
+		if (vfs_busy(fs->lfs_ivnode->v_mount, NULL))
 			goto errout;
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, flags);
 		mutex_exit(&lfs_lock);
-		vfs_unbusy(fs->lfs_ivnode->v_mount, false);
+		vfs_unbusy(fs->lfs_ivnode->v_mount, false, NULL);
 	} else {
 		locked_fakequeue_count = 0;
 		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
+			if (vfs_busy(mp, &nmp)) {
 				DLOG((DLOG_FLUSH, "lfs_flush: fs vfs_busy\n"));
-				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
 			}
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
@@ -607,9 +598,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 				lfs_flush_fs(tfs, flags);
 				mutex_exit(&lfs_lock);
 			}
-			mutex_enter(&mountlist_lock);
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
-			vfs_unbusy(mp, false);
+			vfs_unbusy(mp, false, &nmp);
 		}
 		mutex_exit(&mountlist_lock);
 	}

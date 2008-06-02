@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.13 2008/01/25 19:02:32 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.13.6.1 2008/06/02 13:21:48 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -57,7 +50,7 @@
 #define	FULL
 #endif
 
-#define	END(name,a)	.align	a; LABEL(name)
+#define	ENDLABEL(name,a) .align	a; LABEL(name)
 #define	LOCK(num)	.Lpatch/**/num: lock
 
 #ifndef LOCKDEBUG
@@ -69,13 +62,15 @@
  */
 	.align	64
 
-NENTRY(mutex_enter)
+ENTRY(mutex_enter)
 	movq	CPUVAR(CURLWP), %rcx
 	xorq	%rax, %rax
 	LOCK(1)
 	cmpxchgq %rcx, MTX_OWNER(%rdi)
-	jnz,pn	_C_LABEL(mutex_vector_enter)
+	jnz	1f
 	ret
+1:
+	jmp	_C_LABEL(mutex_vector_enter)
 
 /*
  * void mutex_exit(kmutex_t *mtx);
@@ -86,44 +81,47 @@ NENTRY(mutex_enter)
  * on multiprocessor systems, and comments in arch/x86/include/lock.h about
  * memory ordering on Intel x86 systems.
  */
-NENTRY(mutex_exit)
+ENTRY(mutex_exit)
 	movq	CPUVAR(CURLWP), %rax
 	xorq	%rdx, %rdx
 	cmpxchgq %rdx, MTX_OWNER(%rdi)
-	jnz,pn	_C_LABEL(mutex_vector_exit)
+	jnz	1f
 	ret
+1:
+	jmp	_C_LABEL(mutex_vector_exit)
 
 /*
  * void mutex_spin_enter(kmutex_t *mtx);
  *
  * Acquire a spin mutex and post a load fence.
  */
-NENTRY(mutex_spin_enter)
-	movq	CPUVAR(SELF), %r8
+ENTRY(mutex_spin_enter)
 #if defined(FULL)
 	movl	$0x0100, %eax			/* new + expected value */
 #endif
-	movl	CPU_INFO_ILEVEL(%r8), %esi
-	subl	$1, CPU_INFO_MTX_COUNT(%r8)	/* decl doesnt set CF */
+	movl	CPUVAR(ILEVEL), %esi
 	movzbl	MTX_IPL(%rdi), %ecx		/* new SPL */
-	cmovncl	CPU_INFO_MTX_OLDSPL(%r8), %esi
 	cmpl	%ecx, %esi			/* higher? */
-	movl	%esi, CPU_INFO_MTX_OLDSPL(%r8)
 	cmovgl	%esi, %ecx
-	movl	%ecx, CPU_INFO_ILEVEL(%r8)	/* splraiseipl() */
+	movl	%ecx, CPUVAR(ILEVEL)		/* splraiseipl() */
+	subl	$1, CPUVAR(MTX_COUNT)		/* decl doesnt set CF */
+	cmovncl	CPUVAR(MTX_OLDSPL), %esi
+	movl	%esi, CPUVAR(MTX_OLDSPL)
 #if defined(FULL)
 	LOCK(11)
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* lock */
-	jnz,pn	_C_LABEL(mutex_spin_retry)	/* failed; hard case */
+	jnz	1f
 #endif
 	ret
+1:
+	jmp	_C_LABEL(mutex_spin_retry)	/* failed; hard case */
 
 /*
  * void mutex_spin_exit(kmutex_t *mtx);
  *
  * Release a spin mutex and post a load fence.
  */
-NENTRY(mutex_spin_exit)
+ENTRY(mutex_spin_exit)
 #ifdef DIAGNOSTIC
 
 	movl	$0x0001, %eax			/* new + expected value */
@@ -179,7 +177,7 @@ NENTRY(mutex_spin_exit)
  *
  * Acquire one hold on a RW lock.
  */
-NENTRY(rw_enter)
+ENTRY(rw_enter)
 	cmpl	$RW_READER, %esi
 	jne	2f
 
@@ -189,7 +187,7 @@ NENTRY(rw_enter)
 1:	movq	RW_OWNER(%rdi), %rax
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leaq	RW_READ_INCR(%rax), %rdx 
-	jnz,pn	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	LOCK(2)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz,pn	1b
@@ -203,15 +201,17 @@ NENTRY(rw_enter)
 	orq	$RW_WRITE_LOCKED, %rcx
 	LOCK(3)
 	cmpxchgq %rcx, RW_OWNER(%rdi)
-	jnz,pn	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	ret
+3:
+	jmp	_C_LABEL(rw_vector_enter)
 
 /*
  * void	rw_exit(krwlock_t *rwl);
  *
  * Release one hold on a RW lock.
  */
-NENTRY(rw_exit)
+ENTRY(rw_exit)
 	movq	RW_OWNER(%rdi), %rax
 	testb	$RW_WRITE_LOCKED, %al
 	jnz	2f
@@ -220,10 +220,10 @@ NENTRY(rw_exit)
 	 * Reader
 	 */
 1:	testb	$RW_HAS_WAITERS, %al
-	jnz,pn	3f
+	jnz	3f
 	cmpq	$RW_READ_INCR, %rax
 	leaq	-RW_READ_INCR(%rax), %rdx
-	jb,pn	3f
+	jb	3f
 	LOCK(4)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz,pn	1b
@@ -234,7 +234,7 @@ NENTRY(rw_exit)
 	 */
 2:	leaq	-RW_WRITE_LOCKED(%rax), %rdx
 	subq	CPUVAR(CURLWP), %rdx
-	jnz,pn	3f
+	jnz	3f
 	LOCK(5)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz	3f
@@ -247,21 +247,22 @@ NENTRY(rw_exit)
  *
  * Try to acquire one hold on a RW lock.
  */
-NENTRY(rw_tryenter)
+ENTRY(rw_tryenter)
 	cmpl	$RW_READER, %esi
 	jne	2f
 
 	/*
 	 * Reader: this is the most common case.
 	 */
-1:	movq	RW_OWNER(%rdi), %rax
+	movq	RW_OWNER(%rdi), %rax
+1:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leaq	RW_READ_INCR(%rax), %rdx 
 	jnz	3f
 	LOCK(8)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
-	movl	$0, %eax
-	setz	%al
+	jnz	1b
+	movl	%edi, %eax			/* nonzero */
 	ret
 
 	/*
@@ -284,7 +285,7 @@ NENTRY(rw_tryenter)
 /*
  * Spinlocks.
  */
-NENTRY(__cpu_simple_lock_init)
+ENTRY(__cpu_simple_lock_init)
 	movb	$0, (%rdi)
 	ret
 
@@ -304,11 +305,11 @@ NENTRY(__cpu_simple_lock)
 	je	1b
 	jmp	2b
 
-NENTRY(__cpu_simple_unlock)
+ENTRY(__cpu_simple_unlock)
 	movb	$0, (%rdi)
 	ret
 
-NENTRY(__cpu_simple_lock_try)
+ENTRY(__cpu_simple_lock_try)
 	movl	$0x0100, %eax
 	LOCK(7)
 	cmpxchgb %ah, (%rdi)

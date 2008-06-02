@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.175.6.3 2008/04/06 09:58:50 mjf Exp $	*/
+/*	$NetBSD: vnd.c,v 1.175.6.4 2008/06/02 13:23:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -137,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.175.6.3 2008/04/06 09:58:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.175.6.4 2008/06/02 13:23:12 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -164,6 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.175.6.3 2008/04/06 09:58:50 mjf Exp $");
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/dkio.h>
 
 #include <net/zlib.h>
 
@@ -188,6 +182,8 @@ int vnddebug = 0x00;
 #endif
 
 #define vndunit(x)	DISKUNIT(x)
+static kmutex_t vndunit_lock;
+static int	next_unit = 0;
 
 struct vndxfer {
 	struct buf vx_buf;
@@ -200,6 +196,16 @@ struct vndxfer {
 
 #define VNDLABELDEV(dev) \
     (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
+
+#define VNDCFG_UNIT	0xFFFF
+#define	VNDCFG_MINOR	minor(VNDCFG_UNIT)
+
+/* TODO: need garbage collection/checking */
+#define VNDNEXTUNIT(unit) do {						\
+	mutex_enter(&vndunit_lock);					\
+	(unit) = next_unit++;						\
+	mutex_exit(&vndunit_lock);					\
+} while (/*CONSTCOND*/0)
 
 /* called by main() at boot time (XXX: and the LKM driver) */
 void	vndattach(int);
@@ -263,12 +269,19 @@ int	vnd_destroy(device_t);
 void
 vndattach(int num)
 {
-	int error;
+	int error, maj;
 
 	error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
 	if (error)
 		aprint_error("%s: unable to register cfattach\n",
 		    vnd_cd.cd_name);
+
+	mutex_init(&vndunit_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	/* register control device node */
+	maj = cdevsw_lookup_major(&vnd_cdevsw);
+	device_register_name(makedev(maj, VNDCFG_MINOR), NULL,
+	    true, DEV_OTHER, "vndcfg");
 }
 
 static int
@@ -282,14 +295,15 @@ static void
 vnd_attach(device_t parent, device_t self, void *aux)
 {
 	struct vnd_softc *sc = device_private(self);
-	int i, unit, cmaj, bmaj;
+	int i, unit, cmaj, bmaj, error, timeout;
+	kcondvar_t cv;
 
 	sc->sc_dev = self;
 	sc->sc_comp_offsets = NULL;
 	sc->sc_comp_buff = NULL;
 	sc->sc_comp_decombuf = NULL;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
-	disk_init(&sc->sc_dkdev, self->dv_xname, NULL);
+	disk_init(&sc->sc_dkdev, device_xname(self), NULL);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
@@ -297,12 +311,26 @@ vnd_attach(device_t parent, device_t self, void *aux)
 	bmaj = bdevsw_lookup_major(&vnd_bdevsw);
 	unit = device_unit(self);
 
+	/* 
+	 * Because we will use these device files straight away we
+	 * need to wait on their creation.
+	 */
+	cv_init(&cv, "devname");
+	timeout = 100000;
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		device_register_name(MAKEDISKDEV(bmaj, unit, i), self, false,
-		    DEV_DISK, "vnd%d%c", unit, 'a' + i);
-		device_register_name(MAKEDISKDEV(cmaj, unit, i), self, true,
-		    DEV_DISK, "rvnd%d%c", unit, 'a' + i);
+		error = device_register_sync(MAKEDISKDEV(bmaj, unit, i), self, 
+		    false, DEV_DISK, cv, timeout, "vnd%d%c", unit, 'a' + i);
+		if (error != 0)
+			printf("could not create device file: vnd%d%c\n", 
+			    unit, 'a' + i);
+		    
+		error = device_register_sync(MAKEDISKDEV(cmaj, unit, i), self, 
+		    true, DEV_DISK, cv, timeout, "rvnd%d%c", unit, 'a' + i);
+		if (error != 0)
+			printf("could not create device file: rvnd%d%c\n",
+			    unit, 'a' + i);
 	}
+	cv_destroy(&cv);
 }
 
 static int
@@ -356,16 +384,19 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	int error = 0, part, pmask;
 	struct disklabel *lp;
 
+	/* We are the control node. */
+	if (minor(dev) == VNDCFG_MINOR)
+		return 0;
+
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
 	sc = device_private(device_lookup(&vnd_cd, unit));
-	if (sc == NULL) {
-		sc = vnd_spawn(unit);
-		if (sc == NULL)
-			return ENOMEM;
-	}
+
+	/* XXX: We should have always already created this device */
+	if (sc == NULL)
+		return ENXIO;
 
 	if ((error = vndlock(sc)) != 0)
 		return (error);
@@ -424,6 +455,9 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
+	if (minor(dev) == VNDCFG_MINOR)
+		return 0;
+
 	sc = device_private(device_lookup(&vnd_cd, unit));
 	if (sc == NULL)
 		return ENXIO;
@@ -945,6 +979,16 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
 		    dev, cmd, data, flag, l->l_proc, unit);
 #endif
+	/*
+	 * We need to register device names for the soon to be configured
+	 * vnd device.
+	 */
+	if (minor(dev) == VNDCFG_MINOR) {
+		VNDNEXTUNIT(unit);
+		vnd_spawn(unit);
+		return (0);
+	}
+
 	vnd = device_private(device_lookup(&vnd_cd, unit));
 	if (vnd == NULL &&
 #ifdef COMPAT_30
@@ -1418,6 +1462,33 @@ unlock_and_exit:
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
+	case DIOCAWEDGE:
+	{
+		struct dkwedge_info *dkw = (void *) data;
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, device_xname(vnd->sc_dev));
+		if ((error = dkwedge_add(dkw)) != 0)
+			return error;
+		break;
+	}
+
+	case DIOCDWEDGE:
+	{
+		struct dkwedge_info *dkw = (void *) data;
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+		/* If the ioctl happens here, the parent is us. */
+		strcpy(dkw->dkw_parent, device_xname(vnd->sc_dev));
+		return (dkwedge_del(dkw));
+	}
+
+	case DIOCLWEDGES:
+	{
+		struct dkwedge_list *dkwl = (void *) data;
+		return (dkwedge_list(&vnd->sc_dkdev, dkwl, l));
+	}
 
 	default:
 		return (ENOTTY);
@@ -1575,7 +1646,7 @@ vndsize(dev_t dev)
 	int part, unit, omask;
 	int size;
 
-	unit = vndunit(dev);
+	unit = vndunit(dev);	
 	sc = device_private(device_lookup(&vnd_cd, unit));
 	if (sc == NULL)
 		return -1;

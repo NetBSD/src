@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.13 2007/10/19 12:01:07 ad Exp $ */
+/* $NetBSD: if_ea.c,v 1.13.16.1 2008/06/02 13:23:47 mjf Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.13 2007/10/19 12:01:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.13.16.1 2008/06/02 13:23:47 mjf Exp $");
 
 #include <sys/param.h>
 
@@ -109,7 +109,7 @@ eaattach(struct device *parent, struct device *self, void *aux)
 	char *ptr;
 	int i;
 
-/*	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));*/
+/*	dprintf(("Attaching %s...\n", device_xname(&sc->sc_dev)));*/
 
 	/* Set the address of the controller for easy access */
 	podulebus_shift_tag(pa->pa_mod_t, EA_8005_SHIFT, &sc->sc_8005.sc_iot);
@@ -142,7 +142,7 @@ eaattach(struct device *parent, struct device *self, void *aux)
 	/* Claim a podule interrupt */
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    self->dv_xname, "intr");
+	    device_xname(self), "intr");
 	sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_NET, seeq8005intr,
 	    sc, &sc->sc_intrcnt);
 }

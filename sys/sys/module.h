@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.1.12.1 2008/04/03 12:43:12 mjf Exp $	*/
+/*	$NetBSD: module.h,v 1.1.12.2 2008/06/02 13:24:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -70,7 +63,7 @@ typedef enum modcmd {
 
 /* Module header structure. */
 typedef struct modinfo {
-	u_int		mi_release;
+	u_int		mi_version;
 	modclass_t	mi_class;
 	int		(*mi_modcmd)(modcmd_t, void *);
 	const char	*mi_name;
@@ -103,7 +96,7 @@ typedef struct module {
 #define	MODULE(class, name, required)				\
 static int name##_modcmd(modcmd_t, void *);			\
 static const modinfo_t name##_modinfo = {			\
-	.mi_release = __NetBSD_Version__,			\
+	.mi_version = __NetBSD_Version__,			\
 	.mi_class = (class),					\
 	.mi_modcmd = name##_modcmd,				\
 	.mi_name = #name,					\
@@ -119,14 +112,15 @@ extern u_int		module_count;
 extern struct modlist	module_list;
 
 void	module_init(void);
+void	module_init_md(void);
 void	module_init_class(modclass_t);
 int	module_prime(void *, size_t);
-void	module_jettison(void);
 
-int	module_load(const char *, int, prop_dictionary_t);
+int	module_load(const char *, int, prop_dictionary_t, modclass_t, bool);
 int	module_unload(const char *);
 int	module_hold(const char *);
 void	module_rele(const char *);
+int	module_find_section(const char *, void **, size_t *);
 
 #else	/* _KERNEL */
 

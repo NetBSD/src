@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.25.6.1 2008/04/03 12:42:26 mjf Exp $ */
+/*	$NetBSD: syscall.c,v 1.25.6.2 2008/06/02 13:22:44 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -86,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25.6.1 2008/04/03 12:42:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25.6.2 2008/06/02 13:22:44 mjf Exp $");
 
 #define NEW_FPSTATE
 
@@ -210,9 +203,7 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 		if (__predict_false(i > nap)) {	/* usually false */
 			void *pos = (char *)(u_long)tf->tf_out[6] + BIAS +
 			   offsetof(struct frame64, fr_argx);
-#ifdef DIAGNOSTIC
 			KASSERT(i <= MAXARGS);
-#endif
 			/* Read the whole block in */
 			error = copyin(pos, &args->l[nap],
 			    (i - nap) * sizeof(*argp));
@@ -229,9 +220,7 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 		if (__predict_false(i > nap)) {	/* usually false */
 			void *pos = (char *)(u_long)tf->tf_out[6] +
 			    offsetof(struct frame32, fr_argx);
-#ifdef DIAGNOSTIC
 			KASSERT(i <= MAXARGS);
-#endif
 			/* Read the whole block in */
 			error = copyin(pos, &args->i[nap],
 			    (i - nap) * sizeof(*argp));
@@ -320,14 +309,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
-        /* Lock the kernel if the syscall isn't MP-safe. */
-	if (callp->sy_flags & SYCALL_MPSAFE) {
-		error = (*callp->sy_call)(l, &args, rval);
-	} else {
-		KERNEL_LOCK(1, l);
-		error = (*callp->sy_call)(l, &args, rval);
-		KERNEL_UNLOCK_LAST(l);
-	}
+	error = (*callp->sy_call)(l, &args, rval);
 
 	switch (error) {
 	case 0:
@@ -412,9 +394,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 #else
 	ap = &args;
 #endif
-	KERNEL_LOCK(1, l);
 	if ((error = trace_enter(code, ap->r, callp->sy_narg)) != 0) {
-		KERNEL_UNLOCK_LAST(l);
 		goto out;
 	}
 #ifdef __arch64__
@@ -426,13 +406,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
-	if (callp->sy_flags & SYCALL_MPSAFE) {
-		KERNEL_UNLOCK_LAST(l);
-		error = (*callp->sy_call)(l, &args, rval);
-	} else {
-		error = (*callp->sy_call)(l, &args, rval);
-		KERNEL_UNLOCK_LAST(l);
-	}
+	error = (*callp->sy_call)(l, &args, rval);
 out:
 	switch (error) {
 	case 0:
@@ -484,7 +458,6 @@ child_return(void *arg)
 	/*
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 	ktrsysret((l->l_proc->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 }
@@ -509,6 +482,5 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, 0, 0);
 }

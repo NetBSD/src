@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.199.6.1 2008/04/03 12:43:10 mjf Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.199.6.2 2008/06/02 13:24:30 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.199.6.1 2008/04/03 12:43:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.199.6.2 2008/06/02 13:24:30 mjf Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.199.6.1 2008/04/03 12:43:10 mjf Exp $
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/malloc.h>
 #include <sys/filedesc.h>
 #include <sys/time.h>
 #include <sys/dirent.h>
@@ -564,6 +563,7 @@ static const short * const nfsrv_v3errmap[] = {
 	nfsv3err_commit,
 };
 
+extern struct vfs_hooks nfs_export_hooks;
 extern struct nfsrtt nfsrtt;
 extern struct nfsnodehashhead *nfsnodehashtbl;
 extern u_long nfsnodehash;
@@ -1203,8 +1203,8 @@ nfs_initdircache(vp)
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdirhashhead *dircache;
 
-	dircache = hashinit(NFS_DIRHASHSIZ, HASH_LIST, M_NFSDIROFF,
-	    M_WAITOK, &nfsdirhashmask);
+	dircache = hashinit(NFS_DIRHASHSIZ, HASH_LIST, true,
+	    &nfsdirhashmask);
 
 	NFSDC_LOCK(np);
 	if (np->n_dircache == NULL) {
@@ -1215,7 +1215,7 @@ nfs_initdircache(vp)
 	}
 	NFSDC_UNLOCK(np);
 	if (dircache)
-		hashdone(dircache, M_NFSDIROFF);
+		hashdone(dircache, HASH_LIST, nfsdirhashmask);
 }
 
 void
@@ -1540,6 +1540,7 @@ nfs_init0(void)
 	if (nfs_ticks < 1)
 		nfs_ticks = 1;
 #ifdef NFSSERVER
+	vfs_hooks_attach(&nfs_export_hooks);
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
 	{

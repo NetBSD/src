@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.29 2007/02/22 04:38:03 matt Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.29.42.1 2008/06/02 13:22:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.29 2007/02/22 04:38:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.29.42.1 2008/06/02 13:22:14 mjf Exp $");
 
 #include "ioapic.h"
 
@@ -233,7 +226,7 @@ eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih,
 	}
 #endif
 
-	return intr_establish(irq, pic, pin, type, level, func, arg);
+	return intr_establish(irq, pic, pin, type, level, func, arg, false);
 }
 
 void

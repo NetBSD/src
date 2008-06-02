@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.8 2008/02/02 02:39:00 tls Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.8.6.1 2008/06/02 13:22:52 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.8 2008/02/02 02:39:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.8.6.1 2008/06/02 13:22:52 mjf Exp $");
 
 #include "opt_viapadlock.h"
 
@@ -46,13 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.8 2008/02/02 02:39:00 tls Exp $");
 
 #ifdef VIA_PADLOCK
 
-int	via_padlock_crypto_newsession(void *, u_int32_t *, struct cryptoini *);
+int	via_padlock_crypto_newsession(void *, uint32_t *, struct cryptoini *);
 int	via_padlock_crypto_process(void *, struct cryptop *, int);
 int	via_padlock_crypto_swauth(struct cryptop *, struct cryptodesc *,
 	    struct swcr_data *, void *);
 int	via_padlock_crypto_encdec(struct cryptop *, struct cryptodesc *,
 	    struct via_padlock_session *, struct via_padlock_softc *, void *);
-int	via_padlock_crypto_freesession(void *, u_int64_t);
+int	via_padlock_crypto_freesession(void *, uint64_t);
 static	__inline void via_padlock_cbc(void *, void *, void *, void *, int,
 	    void *);
 
@@ -99,7 +99,7 @@ via_padlock_attach(void)
 }
 
 int
-via_padlock_crypto_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
+via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 {
 	struct cryptoini *c;
 	struct via_padlock_softc *sc = arg;
@@ -274,13 +274,13 @@ via_padlock_crypto_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 }
 
 int
-via_padlock_crypto_freesession(void *arg, u_int64_t tid)
+via_padlock_crypto_freesession(void *arg, uint64_t tid)
 {
 	struct via_padlock_softc *sc = arg;
 	struct swcr_data *swd;
 	struct auth_hash *axf;
 	int sesn;
-	u_int32_t sid = ((u_int32_t)tid) & 0xffffffff;
+	uint32_t sid = ((uint32_t)tid) & 0xffffffff;
 
 	KASSERT(sc != NULL /*, ("via_padlock_crypto_freesession: null softc")*/);
 	if (sc == NULL)
@@ -345,7 +345,7 @@ int
 via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
     struct via_padlock_session *ses, struct via_padlock_softc *sc, void *buf)
 {
-	u_int32_t *key;
+	uint32_t *key;
 	int err = 0;
 
 	if ((crd->crd_len % 16) != 0) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: hb.c,v 1.17 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: hb.c,v 1.17.74.1 2008/06/02 13:22:29 mjf Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.17 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.17.74.1 2008/06/02 13:22:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -13,22 +13,21 @@ __KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.17 2005/12/11 12:18:24 christos Exp $");
 
 #include <newsmips/dev/hbvar.h>
 
-static int	hb_match(struct device *, struct cfdata *, void *);
-static void	hb_attach(struct device *, struct device *, void *);
-static int	hb_search(struct device *, struct cfdata *,
-			  const int *, void *);
+#include "ioconf.h"
+
+static int	hb_match(device_t, cfdata_t, void *);
+static void	hb_attach(device_t, device_t, void *);
+static int	hb_search(device_t, cfdata_t, const int *, void *);
 static int	hb_print(void *, const char *);
 
-CFATTACH_DECL(hb, sizeof(struct device),
+CFATTACH_DECL_NEW(hb, 0,
     hb_match, hb_attach, NULL, NULL);
-
-extern struct cfdriver hb_cd;
 
 #define NLEVEL	4
 static struct newsmips_intr hbintr_tab[NLEVEL];
 
 static int
-hb_match(struct device *parent, struct cfdata *cf, void *aux)
+hb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -39,13 +38,13 @@ hb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-hb_attach(struct device *parent, struct device *self, void *aux)
+hb_attach(device_t parent, device_t self, void *aux)
 {
 	struct hb_attach_args ha;
 	struct newsmips_intr *ip;
 	int i;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	memset(&ha, 0, sizeof(ha));
 	for (i = 0; i < NLEVEL; i++) {
@@ -57,8 +56,7 @@ hb_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-hb_search(struct device *parent, struct cfdata *cf,
-	  const int *ldesc, void *aux)
+hb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -102,7 +100,7 @@ hb_intr_establish(int level, int mask, int priority, int (*func)(void *),
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
-		panic("hb_intr_establish: malloc failed");
+		panic("%s: malloc failed", __func__);
 
 	ih->ih_func = func;
 	ih->ih_arg = arg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.79 2008/01/02 11:48:54 ad Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.79.6.1 2008/06/02 13:24:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.79 2008/01/02 11:48:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.79.6.1 2008/06/02 13:24:12 mjf Exp $");
 
 #define SYSVSEM
 
@@ -547,6 +540,7 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 			break;
 		KASSERT(sembuf != NULL);
 		memcpy(sembuf, semaptr, sizeof(struct semid_ds));
+		sembuf->sem_perm.mode &= 0777;
 		break;
 
 	case GETNCNT:
@@ -609,6 +603,10 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 			break;
 		}
 		KASSERT(arg != NULL);
+		if ((unsigned int)arg->val > seminfo.semvmx) {
+			error = ERANGE;
+			break;
+		}
 		semaptr->_sem_base[semnum].semval = arg->val;
 		semundo_clear(ix, semnum);
 		cv_broadcast(&semcv[ix]);
@@ -619,11 +617,16 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 			break;
 		KASSERT(arg != NULL);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
-			error = copyin(&arg->array[i],
-			    &semaptr->_sem_base[i].semval,
+			unsigned short semval;
+			error = copyin(&arg->array[i], &semval,
 			    sizeof(arg->array[i]));
 			if (error != 0)
 				break;
+			if ((unsigned int)semval > seminfo.semvmx) {
+				error = ERANGE;
+				break;
+			}
+			semaptr->_sem_base[i].semval = semval;
 		}
 		semundo_clear(ix, -1);
 		cv_broadcast(&semcv[ix]);
@@ -760,6 +763,13 @@ sys_semop(struct lwp *l, const struct sys_semop_args *uap, register_t *retval)
 	int do_wakeup, do_undos;
 
 	SEM_PRINTF(("call to semop(%d, %p, %zd)\n", semid, SCARG(uap,sops), nsops));
+
+	if (__predict_false((p->p_flag & PK_SYSVSEM) == 0)) {
+		mutex_enter(p->p_lock);
+		p->p_flag |= PK_SYSVSEM;
+		mutex_exit(p->p_lock);
+	}
+
 restart:
 	if (nsops <= SMALL_SOPS) {
 		sops = small_sops;
@@ -1020,6 +1030,9 @@ semexit(struct proc *p, void *v)
 {
 	struct sem_undo *suptr;
 	struct sem_undo **supptr;
+
+	if ((p->p_flag & PK_SYSVSEM) == 0)
+		return;
 
 	mutex_enter(&semlock);
 

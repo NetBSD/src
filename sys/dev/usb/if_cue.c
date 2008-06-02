@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.52 2008/02/07 01:21:59 dyoung Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.52.6.1 2008/06/02 13:23:53 mjf Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.52 2008/02/07 01:21:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.52.6.1 2008/06/02 13:23:53 mjf Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -489,15 +489,16 @@ USB_ATTACH(cue)
 
 	DPRINTFN(5,(" : cue_attach: sc=%p, dev=%p", sc, dev));
 
+	sc->cue_dev = self;
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->cue_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, CUE_CONFIG_NO, 1);
 	if (err) {
-		printf("%s: setting config no failed\n",
-		    USBDEVNAME(sc->cue_dev));
+		aprint_error_dev(self, "setting config no failed\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -510,8 +511,7 @@ USB_ATTACH(cue)
 
 	err = usbd_device2interface_handle(dev, CUE_IFACE_IDX, &iface);
 	if (err) {
-		printf("%s: getting interface handle failed\n",
-		    USBDEVNAME(sc->cue_dev));
+		aprint_error_dev(self, "getting interface handle failed\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -522,8 +522,7 @@ USB_ATTACH(cue)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->cue_dev), i);
+			aprint_error_dev(self, "couldn't get ep %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -552,8 +551,7 @@ USB_ATTACH(cue)
 	/*
 	 * A CATC chip was detected. Inform the world.
 	 */
-	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->cue_dev),
-	    ether_sprintf(eaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
 	/* Initialize interface info.*/
 	ifp = GET_IFP(sc);
@@ -628,8 +626,7 @@ USB_DETACH(cue)
 	if (sc->cue_ep[CUE_ENDPT_TX] != NULL ||
 	    sc->cue_ep[CUE_ENDPT_RX] != NULL ||
 	    sc->cue_ep[CUE_ENDPT_INTR] != NULL)
-		printf("%s: detach has active endpoints\n",
-		       USBDEVNAME(sc->cue_dev));
+		aprint_debug_dev(self, "detach has active endpoints\n");
 #endif
 
 	sc->cue_attached = 0;
@@ -644,7 +641,7 @@ USB_DETACH(cue)
 int
 cue_activate(device_ptr_t self, enum devact act)
 {
-	struct cue_softc *sc = (struct cue_softc *)self;
+	struct cue_softc *sc = device_private(self);
 
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __func__));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.2.8.1 2008/04/03 12:42:54 mjf Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.2.8.2 2008/06/02 13:23:45 mjf Exp $	*/
 
 /* i915_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,10 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.2.8.1 2008/04/03 12:42:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.2.8.2 2008/06/02 13:23:45 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_drv.c,v 1.5 2006/05/17 06:36:28 anholt Exp $");
 */
+
+#ifdef _MODULE
+#include <sys/module.h>
+#endif
 
 #include <dev/drm/drmP.h>
 #include <dev/drm/drm.h>
@@ -146,5 +150,64 @@ i915drm_attach(struct device *parent, struct device *self, void *aux)
 
 CFATTACH_DECL(i915drm, sizeof(drm_device_t), i915drm_probe, i915drm_attach,
 	drm_detach, drm_activate);
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, i915drm, "drm");
+
+CFDRIVER_DECL(i915drm, DV_DULL, NULL);
+extern struct cfattach i915drm_ca;
+static int drmloc[] = { -1 };
+static struct cfparent drmparent = {
+	"drm", "vga", DVUNIT_ANY
+};
+static struct cfdata i915drm_cfdata[] = {
+	{
+		.cf_name = "i915drm",
+		.cf_atname = "i915drm",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = drmloc,
+		.cf_flags = 0,
+		.cf_pspec = &drmparent,
+	},
+	{ NULL }
+};
+
+static int
+i915drm_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&i915drm_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("i915drm", &i915drm_ca);
+		if (err) {
+			config_cfdriver_detach(&i915drm_cd);
+			return err;
+		}
+		err = config_cfdata_attach(i915drm_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("i915drm", &i915drm_ca);
+			config_cfdriver_detach(&i915drm_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdriver_detach(&i915drm_cd);
+		if (err)
+			return err;
+		config_cfattach_detach("i915drm", &i915drm_ca);
+		config_cfdriver_detach(&i915drm_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif
 
 #endif

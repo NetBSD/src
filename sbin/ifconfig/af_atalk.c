@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.4 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.4.18.1 2008/06/02 13:21:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.4 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.4.18.1 2008/06/02 13:21:22 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -51,51 +51,83 @@ __RCSID("$NetBSD: af_atalk.c,v 1.4 2006/08/26 18:14:28 christos Exp $");
 #include <stdio.h>
 #include <util.h>
 
+#include "env.h"
+#include "parse.h"
 #include "extern.h"
 #include "af_atalk.h"
 
+struct ifaliasreq at_addreq __attribute__((aligned(4)));
 static struct netrange at_nr;	/* AppleTalk net range */
 
-void
-at_getaddr(const char *addr, int which)
-{
-	struct sockaddr_at *sat = (struct sockaddr_at *) &addreq.ifra_addr;
-	u_int net, node;
+struct pinteger phase = PINTEGER_INITIALIZER1(&phase, "phase",
+    1, 2, 10, setatphase, "phase", &command_root.pb_parser);
 
-	sat->sat_family = AF_APPLETALK;
-	sat->sat_len = sizeof(*sat);
+struct pstr parse_range = PSTR_INITIALIZER(&range, "range", setatrange, "range",
+    &command_root.pb_parser);
+
+static const struct kwinst atalkkw[] = {
+	  {.k_word = "phase", .k_nextparser = &phase.pi_parser}
+	, {.k_word = "range", .k_nextparser = &parse_range.ps_parser}
+};
+
+struct pkw atalk = PKW_INITIALIZER(&atalk, "AppleTalk", NULL, NULL,
+    atalkkw, __arraycount(atalkkw), NULL);
+
+void
+at_getaddr(const struct paddr_prefix *pfx, int which)
+{
 	if (which == MASK)
 		errx(EXIT_FAILURE, "AppleTalk does not use netmasks");
-	if (sscanf(addr, "%u.%u", &net, &node) != 2
-	    || net == 0 || net > 0xffff || node == 0 || node > 0xfe)
-		errx(EXIT_FAILURE, "%s: illegal address", addr);
-	sat->sat_addr.s_net = htons(net);
-	sat->sat_addr.s_node = node;
+
+	memcpy(&at_addreq.ifra_addr, &pfx->pfx_addr,
+	    MIN(sizeof(at_addreq.ifra_addr), pfx->pfx_addr.sa_len));
 }
 
-void
-setatrange(const char *range, int d)
+static int
+setatrange_impl(prop_dictionary_t env, prop_dictionary_t xenv,
+    struct netrange *nr)
 {
+	char range[24];
 	u_short	first = 123, last = 123;
 
-	if (sscanf(range, "%hu-%hu", &first, &last) != 2
-	    || first == 0 /* || first > 0xffff */
-	    || last == 0 /* || last > 0xffff */ || first > last)
+	if (getargstr(env, "range", range, sizeof(range)) == -1)
+		return -1;
+
+	if (sscanf(range, "%hu-%hu", &first, &last) != 2 ||
+	    first == 0 || last == 0 || first > last)
 		errx(EXIT_FAILURE, "%s: illegal net range: %u-%u", range,
 		    first, last);
-	at_nr.nr_firstnet = htons(first);
-	at_nr.nr_lastnet = htons(last);
+	nr->nr_firstnet = htons(first);
+	nr->nr_lastnet = htons(last);
+	return 0;
+}
+
+int
+setatrange(prop_dictionary_t env, prop_dictionary_t xenv)
+{
+	return setatrange_impl(env, xenv, &at_nr);
 }
 
 void
-setatphase(const char *phase, int d)
+at_commit_address(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	if (!strcmp(phase, "1"))
-		at_nr.nr_phase = 1;
-	else if (!strcmp(phase, "2"))
-		at_nr.nr_phase = 2;
-	else
-		errx(EXIT_FAILURE, "%s: illegal phase", phase);
+}
+
+static int
+setatphase_impl(prop_dictionary_t env, prop_dictionary_t xenv,
+    struct netrange *nr)
+{
+	if (!prop_dictionary_get_uint8(env, "phase", &nr->nr_phase)) {
+		errno = ENOENT;
+		return -1;
+	}
+	return 0;
+}
+
+int
+setatphase(prop_dictionary_t env, prop_dictionary_t xenv)
+{
+	return setatphase_impl(env, xenv, &at_nr);
 }
 
 void
@@ -109,30 +141,40 @@ checkatrange(struct sockaddr *sa)
 		at_nr.nr_firstnet =	/* Default range of one */
 		at_nr.nr_lastnet = sat->sat_addr.s_net;
 	printf("\tatalk %d.%d range %d-%d phase %d\n",
-	ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
-	ntohs(at_nr.nr_firstnet), ntohs(at_nr.nr_lastnet), at_nr.nr_phase);
-	if ((u_short) ntohs(at_nr.nr_firstnet) >
-			(u_short) ntohs(sat->sat_addr.s_net)
-		    || (u_short) ntohs(at_nr.nr_lastnet) <
-			(u_short) ntohs(sat->sat_addr.s_net))
+	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
+	    ntohs(at_nr.nr_firstnet), ntohs(at_nr.nr_lastnet), at_nr.nr_phase);
+	if (ntohs(at_nr.nr_firstnet) > ntohs(sat->sat_addr.s_net) ||
+	    ntohs(at_nr.nr_lastnet) < ntohs(sat->sat_addr.s_net))
 		errx(EXIT_FAILURE, "AppleTalk address is not in range");
-	*((struct netrange *) &sat->sat_zero) = at_nr;
+	*((struct netrange *)&sat->sat_zero) = at_nr;
 }
 
 void
-at_status(int force)
+at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
-	struct sockaddr_at *sat, null_sat;
+	struct sockaddr_at *sat;
 	struct netrange *nr;
+	struct ifreq ifr;
+	int af, s;
+	const char *ifname;
+	unsigned short flags;
 
-	getsock(AF_APPLETALK);
-	if (s < 0) {
+	if ((s = getsock(AF_APPLETALK)) == -1) {
 		if (errno == EAFNOSUPPORT)
 			return;
-		err(EXIT_FAILURE, "socket");
+		err(EXIT_FAILURE, "getsock");
 	}
-	(void) memset(&ifr, 0, sizeof(ifr));
-	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
+		err(EXIT_FAILURE, "%s: getifinfo", __func__);
+
+	if ((af = getaf(env)) == -1)
+		af = AF_APPLETALK;
+	else if (af != AF_APPLETALK)
+		return;
+
+	memset(&ifr, 0, sizeof(ifr));
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_addr.sa_family = af;
 	if (ioctl(s, SIOCGIFADDR, &ifr) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
@@ -141,36 +183,30 @@ at_status(int force)
 		} else
 			warn("SIOCGIFADDR");
 	}
-	estrlcpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 	sat = (struct sockaddr_at *)&ifr.ifr_addr;
 
-	(void) memset(&null_sat, 0, sizeof(null_sat));
-
-	nr = (struct netrange *) &sat->sat_zero;
+	nr = (struct netrange *)&sat->sat_zero;
 	printf("\tatalk %d.%d range %d-%d phase %d",
 	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
 	    ntohs(nr->nr_firstnet), ntohs(nr->nr_lastnet), nr->nr_phase);
+
 	if (flags & IFF_POINTOPOINT) {
+		estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 		if (ioctl(s, SIOCGIFDSTADDR, &ifr) == -1) {
 			if (errno == EADDRNOTAVAIL)
-			    (void) memset(&ifr.ifr_addr, 0,
-				sizeof(ifr.ifr_addr));
+				memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			else
-			    warn("SIOCGIFDSTADDR");
+				warn("SIOCGIFDSTADDR");
 		}
-		estrlcpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 		sat = (struct sockaddr_at *)&ifr.ifr_dstaddr;
-		if (!sat)
-			sat = &null_sat;
 		printf("--> %d.%d",
 		    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node);
 	}
 	if (flags & IFF_BROADCAST) {
 		/* note RTAX_BRD overlap with IFF_POINTOPOINT */
 		sat = (struct sockaddr_at *)&ifr.ifr_broadaddr;
-		if (sat)
-			printf(" broadcast %d.%d", ntohs(sat->sat_addr.s_net),
-			    sat->sat_addr.s_node);
+		printf(" broadcast %d.%d", ntohs(sat->sat_addr.s_net),
+		    sat->sat_addr.s_node);
 	}
 	printf("\n");
 }

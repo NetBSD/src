@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.74 2007/12/30 21:49:47 smb Exp $	*/
+/*	$NetBSD: ucom.c,v 1.74.6.1 2008/06/02 13:23:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.74 2007/12/30 21:49:47 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.74.6.1 2008/06/02 13:23:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +168,7 @@ USB_MATCH(ucom)
 
 USB_ATTACH(ucom)
 {
-	struct ucom_softc *sc = (struct ucom_softc *)self;
+	struct ucom_softc *sc = device_private(self);
 	struct ucom_attach_args *uca = aux;
 	struct tty *tp;
 
@@ -183,6 +176,7 @@ USB_ATTACH(ucom)
 		printf(": %s", uca->info);
 	printf("\n");
 
+	sc->sc_dev = self;
 	sc->sc_udev = uca->device;
 	sc->sc_iface = uca->iface;
 	sc->sc_bulkout_no = uca->bulkout;
@@ -215,7 +209,7 @@ USB_ATTACH(ucom)
 
 USB_DETACH(ucom)
 {
-	struct ucom_softc *sc = (struct ucom_softc *)self;
+	struct ucom_softc *sc = device_private(self);
 	struct tty *tp = sc->sc_tty;
 	int maj, mn;
 	int s;
@@ -274,7 +268,7 @@ USB_DETACH(ucom)
 int
 ucom_activate(device_ptr_t self, enum devact act)
 {
-	struct ucom_softc *sc = (struct ucom_softc *)self;
+	struct ucom_softc *sc = device_private(self);
 
 	DPRINTFN(5,("ucom_activate: %d\n", act));
 
@@ -310,21 +304,18 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
-	struct ucom_softc *sc;
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd, unit);
 	struct tty *tp;
 	int s;
 	int error;
 
-	if (unit >= ucom_cd.cd_ndevs)
-		return (ENXIO);
-	sc = ucom_cd.cd_devs[unit];
 	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (ENXIO);
 
 	tp = sc->sc_tty;
@@ -502,7 +493,7 @@ bad:
 int
 ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	DPRINTF(("ucomclose: unit=%d\n", UCOMUNIT(dev)));
@@ -535,7 +526,7 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 ucomread(dev_t dev, struct uio *uio, int flag)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -552,7 +543,7 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 int
 ucomwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -569,7 +560,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 int
 ucompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int revents;
 
@@ -586,7 +577,7 @@ ucompoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 ucomtty(dev_t dev)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -595,7 +586,7 @@ ucomtty(dev_t dev)
 int
 ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
 	int error;
 
 	sc->sc_refcnt++;
@@ -751,9 +742,7 @@ XXX;
 }
 
 Static void
-ucom_break(sc, onoff)
-	struct ucom_softc *sc;
-	int onoff;
+ucom_break(struct ucom_softc *sc, int onoff)
 {
 	DPRINTF(("ucom_break: onoff=%d\n", onoff));
 
@@ -805,7 +794,8 @@ ucom_status_change(struct ucom_softc *sc)
 Static int
 ucomparam(struct tty *tp, struct termios *t)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd,
+	    UCOMUNIT(tp->t_dev));
 	int error;
 
 	if (sc->sc_dying)
@@ -899,7 +889,8 @@ XXX
 Static void
 ucomstart(struct tty *tp)
 {
-	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
+	struct ucom_softc *sc = device_lookup_private(&ucom_cd,
+	    UCOMUNIT(tp->t_dev));
 	usbd_status err;
 	int s;
 	u_char *data;
@@ -960,7 +951,8 @@ ucomstop(struct tty *tp, int flag)
 {
 	DPRINTF(("ucomstop: flag=%d\n", flag));
 #if 0
-	/*struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];*/
+	/*struct ucom_softc *sc =
+	    device_lookup_private(&ucom_cd, UCOMUNIT(dev));*/
 	int s;
 
 	s = spltty();
@@ -1084,7 +1076,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 		DPRINTFN(7,("ucomreadcb: char=0x%02x\n", *cp));
 		if ((*rint)(*cp++, tp) == -1) {
 			/* XXX what should we do? */
-			printf("%s: lost %d chars\n", USBDEVNAME(sc->sc_dev),
+			aprint_error_dev(sc->sc_dev, "lost %d chars\n",
 			       cc);
 			break;
 		}
@@ -1093,7 +1085,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 
 	err = ucomstartread(sc);
 	if (err) {
-		printf("%s: read start failed\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "read start failed\n");
 		/* XXX what should we dow now? */
 	}
 }
@@ -1139,7 +1131,7 @@ ucomprint(void *aux, const char *pnp)
 }
 
 int
-ucomsubmatch(struct device *parent, struct cfdata *cf,
+ucomsubmatch(device_t parent, cfdata_t cf,
 	     const int *ldesc, void *aux)
 {
 	struct ucom_attach_args *uca = aux;

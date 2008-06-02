@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.75.28.1 2008/04/03 12:42:40 mjf Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.75.28.2 2008/06/02 13:23:23 mjf Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.75.28.1 2008/04/03 12:42:40 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.75.28.2 2008/06/02 13:23:23 mjf Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -118,7 +118,7 @@ isp_attach(struct ispsoftc *isp)
 	callout_setfunc(&isp->isp_osinfo.ldt, isp_ldt, isp);
 	if (IS_FC(isp)) {
 		if (kthread_create(PRI_NONE, 0, NULL, isp_fc_worker, isp,
-		    &isp->isp_osinfo.thread, "%s:fc_thrd", isp->isp_name)) {
+		    &isp->isp_osinfo.thread, "%s:fc_thrd", device_xname(&isp->isp_osinfo.dev))) {
 			isp_prt(isp, ISP_LOGERR,
 			    "unable to create FC worker thread");
 			return;
@@ -1503,7 +1503,7 @@ isp_prt(struct ispsoftc *isp, int level, const char *fmt, ...)
 	if (level != ISP_LOGALL && (level & isp->isp_dblev) == 0) {
 		return;
 	}
-	printf("%s: ", isp->isp_name);
+	printf("%s: ", device_xname(&isp->isp_osinfo.dev));
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);

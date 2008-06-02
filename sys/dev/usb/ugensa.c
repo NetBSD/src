@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.15.6.1 2008/04/03 12:42:57 mjf Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.15.6.2 2008/06/02 13:23:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.15.6.1 2008/04/03 12:42:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.15.6.2 2008/06/02 13:23:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,13 +127,13 @@ static const struct ugensa_type ugensa_devs[] = {
 #define ugensa_lookup(v, p) \
 	((const struct ugensa_type *)usb_lookup(ugensa_devs, v, p))
 
-int ugensa_match(device_t, struct cfdata *, void *);
+int ugensa_match(device_t, cfdata_t, void *);
 void ugensa_attach(device_t, device_t, void *);
 void ugensa_childdet(device_t, device_t);
 int ugensa_detach(device_t, int);
 int ugensa_activate(device_t, enum devact);
 extern struct cfdriver ugensa_cd;
-CFATTACH_DECL2(ugensa, sizeof(struct ugensa_softc), ugensa_match,
+CFATTACH_DECL2_NEW(ugensa, sizeof(struct ugensa_softc), ugensa_match,
     ugensa_attach, ugensa_detach, ugensa_activate, NULL, ugensa_childdet);
 
 USB_MATCH(ugensa)
@@ -162,36 +155,38 @@ USB_ATTACH(ugensa)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = device_xname(self);
 	usbd_status err;
 	struct ucom_attach_args uca;
 	int i;
 
 	DPRINTFN(10,("\nugensa_attach: sc=%p\n", sc));
 
+	sc->sc_dev = self;
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UGENSA_CONFIG_INDEX, 1);
 	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
+		aprint_error("\n%s: failed to set configuration, err=%s\n",
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	err = usbd_device2interface_handle(dev, UGENSA_IFACE_INDEX, &iface);
 	if (err) {
-		printf("\n%s: failed to get interface, err=%s\n",
+		aprint_error("\n%s: failed to get interface, err=%s\n",
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	if (ugensa_lookup(uaa->vendor, uaa->product)->ugensa_flags & UNTESTED)
-		printf("%s: WARNING: This device is marked as untested. "
-		    "Please submit a report via send-pr(1).\n", devname);
+		aprint_normal_dev(self, "WARNING: This device is marked as "
+		    "untested. Please submit a report via send-pr(1).\n");
 
 	id = usbd_get_interface_descriptor(iface);
 
@@ -218,8 +213,9 @@ USB_ATTACH(ugensa)
 
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: could not read endpoint descriptor"
-			       ": %s\n", devname, usbd_errstr(err));
+			aprint_error_dev(self,
+			    "could not read endpoint descriptor: %s\n",
+			    usbd_errstr(err));
 			goto bad;
 		}
 
@@ -238,16 +234,14 @@ USB_ATTACH(ugensa)
 				continue;
 			}
 		}
-		printf("%s: unexpected endpoint\n", devname);
+		aprint_error_dev(self, "unexpected endpoint\n");
 	}
 	if (uca.bulkin == -1) {
-		printf("%s: Could not find data bulk in\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk in\n");
 		goto bad;
 	}
 	if (uca.bulkout == -1) {
-		printf("%s: Could not find data bulk out\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk out\n");
 		goto bad;
 	}
 

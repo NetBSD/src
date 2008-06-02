@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.50.6.1 2008/04/03 12:42:43 mjf Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.50.6.2 2008/06/02 13:23:29 mjf Exp $	*/
 
 /*
  * TODO
@@ -21,13 +21,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -48,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.50.6.1 2008/04/03 12:42:43 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.50.6.2 2008/06/02 13:23:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -661,7 +654,7 @@ irt_putc(struct tty *tp, int c)
 			mutex_spin_exit(&tty_lock);
 			goto go;
 		}
-		error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
+		error = ttysleep(tp, &tp->t_outcv, true, 0);
 		mutex_spin_exit(&tty_lock);
 		if (error)
 			return (error);

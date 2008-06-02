@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.4 2008/01/30 17:54:56 elad Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.4.8.1 2008/06/02 13:24:12 mjf Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -13,17 +13,17 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.4 2008/01/30 17:54:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.4.8.1 2008/06/02 13:24:12 mjf Exp $");
 
 #include <sys/param.h>
 
@@ -209,14 +209,14 @@ kern_pset_destroy(psetid_t psid)
 	mutex_exit(&psets_lock);
 
 	/* Unmark the processor-set ID from each thread */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		/* Safe to check and set without lock held */
 		if (l->l_psid != psid)
 			continue;
 		l->l_psid = PS_NONE;
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	/* Destroy the processor-set */
 	mutex_enter(&psets_lock);
@@ -404,17 +404,19 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 	}
 
 	/* Find the process */
-	p = p_find(pid, PFIND_UNLOCK_FAIL);
+	mutex_enter(proc_lock);
+	p = p_find(pid, PFIND_LOCKED);
 	if (p == NULL) {
+		mutex_exit(proc_lock);
 		error = ESRCH;
 		goto error;
 	}
-	mutex_enter(&p->p_smutex);
-	mutex_exit(&proclist_lock);
+	mutex_enter(p->p_lock);
+	mutex_exit(proc_lock);
 
 	/* Disallow modification of the system processes */
 	if (p->p_flag & PK_SYSTEM) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		error = EPERM;
 		goto error;
 	}
@@ -437,7 +439,7 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 		lwp_migrate(t, ci);
 		lcnt++;
 	}
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	if (lcnt == 0) {
 		error = ESRCH;
 		goto error;

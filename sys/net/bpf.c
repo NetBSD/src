@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.133.6.2 2008/04/03 12:43:07 mjf Exp $	*/
+/*	$NetBSD: bpf.c,v 1.133.6.3 2008/06/02 13:24:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.133.6.2 2008/04/03 12:43:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.133.6.3 2008/06/02 13:24:21 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -153,6 +153,7 @@ static int	bpf_ioctl(struct file *, u_long, void *);
 static int	bpf_poll(struct file *, int);
 static int	bpf_close(struct file *);
 static int	bpf_kqfilter(struct file *, struct knote *);
+static void	bpf_softintr(void *);
 
 static const struct fileops bpf_fileops = {
 	bpf_read,
@@ -403,6 +404,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d->bd_pid = l->l_proc->p_pid;
 	callout_init(&d->bd_callout, 0);
 	selinit(&d->bd_sel);
+	d->bd_sih = softint_establish(SOFTINT_CLOCK, bpf_softintr, d);
 
 	mutex_enter(&bpf_mtx);
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
@@ -422,6 +424,8 @@ bpf_close(struct file *fp)
 	struct bpf_d *d = fp->f_data;
 	int s;
 
+	KERNEL_LOCK(1, NULL);
+
 	/*
 	 * Refresh the PID associated with this bpf file.
 	 */
@@ -440,8 +444,11 @@ bpf_close(struct file *fp)
 	mutex_exit(&bpf_mtx);
 	callout_destroy(&d->bd_callout);
 	seldestroy(&d->bd_sel);
+	softint_disestablish(d->bd_sih);
 	free(d, M_DEVBUF);
 	fp->f_data = NULL;
+
+	KERNEL_UNLOCK_ONE(NULL);
 
 	return (0);
 }
@@ -476,6 +483,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	if (uio->uio_resid != d->bd_bufsize)
 		return (EINVAL);
 
+	KERNEL_LOCK(1, NULL);
 	s = splnet();
 	if (d->bd_state == BPF_WAITING)
 		callout_stop(&d->bd_callout);
@@ -490,6 +498,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 		if (fp->f_flag & FNONBLOCK) {
 			if (d->bd_slen == 0) {
 				splx(s);
+				KERNEL_UNLOCK_ONE(NULL);
 				return (EWOULDBLOCK);
 			}
 			ROTATE_BUFFERS(d);
@@ -509,6 +518,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 				d->bd_rtout);
 		if (error == EINTR || error == ERESTART) {
 			splx(s);
+			KERNEL_UNLOCK_ONE(NULL);
 			return (error);
 		}
 		if (error == EWOULDBLOCK) {
@@ -527,6 +537,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 
 			if (d->bd_slen == 0) {
 				splx(s);
+				KERNEL_UNLOCK_ONE(NULL);
 				return (0);
 			}
 			ROTATE_BUFFERS(d);
@@ -553,6 +564,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	d->bd_hlen = 0;
 done:
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
 }
 
@@ -565,11 +577,19 @@ bpf_wakeup(struct bpf_d *d)
 {
 	wakeup(d);
 	if (d->bd_async)
-		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
-
+		softint_schedule(d->bd_sih);
 	selnotify(&d->bd_sel, 0, 0);
 }
 
+static void
+bpf_softintr(void *cookie)
+{
+	struct bpf_d *d;
+
+	d = cookie;
+	if (d->bd_async)
+		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
+}
 
 static void
 bpf_timed_out(void *arg)
@@ -599,20 +619,29 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 
 	m = NULL;	/* XXX gcc */
 
-	if (d->bd_bif == 0)
+	KERNEL_LOCK(1, NULL);
+
+	if (d->bd_bif == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return (ENXIO);
+	}
 
 	ifp = d->bd_bif->bif_ifp;
 
-	if (uio->uio_resid == 0)
+	if (uio->uio_resid == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return (0);
+	}
 
 	error = bpf_movein(uio, (int)d->bd_bif->bif_dlt, ifp->if_mtu, &m,
 		(struct sockaddr *) &dst);
-	if (error)
+	if (error) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return (error);
+	}
 
 	if (m->m_pkthdr.len > ifp->if_mtu) {
+		KERNEL_UNLOCK_ONE(NULL);
 		m_freem(m);
 		return (EMSGSIZE);
 	}
@@ -623,6 +652,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 	s = splsoftnet();
 	error = (*ifp->if_output)(ifp, m, (struct sockaddr *) &dst, NULL);
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 	/*
 	 * The driver frees the mbuf.
 	 */
@@ -675,6 +705,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	/*
 	 * Refresh the PID associated with this bpf file.
 	 */
+	KERNEL_LOCK(1, NULL);
 	d->bd_pid = curproc->p_pid;
 
 	s = splnet();
@@ -927,6 +958,7 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 		error = fgetown(d->bd_pgid, cmd, addr);
 		break;
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
 }
 
@@ -1077,6 +1109,7 @@ bpf_poll(struct file *fp, int events)
 	/*
 	 * Refresh the PID associated with this bpf file.
 	 */
+	KERNEL_LOCK(1, NULL);
 	d->bd_pid = curproc->p_pid;
 
 	revents = events & (POLLOUT | POLLWRNORM);
@@ -1084,14 +1117,10 @@ bpf_poll(struct file *fp, int events)
 		/*
 		 * An imitation of the FIONREAD ioctl code.
 		 */
-		if ((d->bd_hlen != 0) ||
-		    (d->bd_immediate && d->bd_slen != 0)) {
+		if (d->bd_hlen != 0 ||
+		    ((d->bd_immediate || d->bd_state == BPF_TIMED_OUT) &&
+		     d->bd_slen != 0)) {
 			revents |= events & (POLLIN | POLLRDNORM);
-		} else if (d->bd_state == BPF_TIMED_OUT) {
-			if (d->bd_slen != 0)
-				revents |= events & (POLLIN | POLLRDNORM);
-			else
-				revents |= events & POLLIN;
 		} else {
 			selrecord(curlwp, &d->bd_sel);
 			/* Start the read timeout if necessary */
@@ -1103,6 +1132,7 @@ bpf_poll(struct file *fp, int events)
 		}
 	}
 
+	KERNEL_UNLOCK_ONE(NULL);
 	splx(s);
 	return (revents);
 }
@@ -1113,20 +1143,26 @@ filt_bpfrdetach(struct knote *kn)
 	struct bpf_d *d = kn->kn_hook;
 	int s;
 
+	KERNEL_LOCK(1, NULL);
 	s = splnet();
 	SLIST_REMOVE(&d->bd_sel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 static int
 filt_bpfread(struct knote *kn, long hint)
 {
 	struct bpf_d *d = kn->kn_hook;
+	int rv;
 
+	KERNEL_LOCK(1, NULL);
 	kn->kn_data = d->bd_hlen;
 	if (d->bd_immediate)
 		kn->kn_data += d->bd_slen;
-	return (kn->kn_data > 0);
+	rv = (kn->kn_data > 0);
+	KERNEL_UNLOCK_ONE(NULL);
+	return rv;
 }
 
 static const struct filterops bpfread_filtops =
@@ -1139,6 +1175,8 @@ bpf_kqfilter(struct file *fp, struct knote *kn)
 	struct klist *klist;
 	int s;
 
+	KERNEL_LOCK(1, NULL);
+
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		klist = &d->bd_sel.sel_klist;
@@ -1146,6 +1184,7 @@ bpf_kqfilter(struct file *fp, struct knote *kn)
 		break;
 
 	default:
+		KERNEL_UNLOCK_ONE(NULL);
 		return (EINVAL);
 	}
 
@@ -1154,6 +1193,7 @@ bpf_kqfilter(struct file *fp, struct knote *kn)
 	s = splnet();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
 
 	return (0);
 }
@@ -1416,6 +1456,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	struct bpf_hdr *hp;
 	int totlen, curlen;
 	int hdrlen = d->bd_bif->bif_hdrlen;
+	int do_wakeup = 0;
 
 	++d->bd_ccount;
 	++bpf_gstats.bs_capt;
@@ -1449,8 +1490,15 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 			return;
 		}
 		ROTATE_BUFFERS(d);
-		bpf_wakeup(d);
+		do_wakeup = 1;
 		curlen = 0;
+	} else if (d->bd_immediate || d->bd_state == BPF_TIMED_OUT) {
+		/*
+		 * Immediate mode is set, or the read timeout has
+		 * already expired during a select call.  A packet
+		 * arrived, so the reader should be woken up.
+		 */
+		do_wakeup = 1;
 	}
 
 	/*
@@ -1470,12 +1518,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	 * Call bpf_wakeup after bd_slen has been updated so that kevent(2)
 	 * will cause filt_bpfread() to be called with it adjusted.
 	 */
-	if (d->bd_immediate || d->bd_state == BPF_TIMED_OUT)
-		/*
-		 * Immediate mode is set, or the read timeout has
-		 * already expired during a select call.  A packet
-		 * arrived, so the reader should be woken up.
-		 */
+	if (do_wakeup)
 		bpf_wakeup(d);
 }
 

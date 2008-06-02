@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.88.16.1 2008/04/03 12:42:26 mjf Exp $ */
+/*	$NetBSD: clock.c,v 1.88.16.2 2008/06/02 13:22:44 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.88.16.1 2008/04/03 12:42:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.88.16.2 2008/06/02 13:22:44 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -101,7 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.88.16.1 2008/04/03 12:42:26 mjf Exp $");
  *
  * machine		hardclock	statclock	timecounter
  *  counter-timer	 timer#0	 timer#1	 %tick
- *  counter-timer + SMP	 timer#0	 %tick/CPU	 timer#1 or %tick
+ *  counter-timer + SMP	 timer#0/%tick	 -		 timer#1 or %tick
  *  no counter-timer	 %tick		 -		 %tick
  */
 
@@ -117,13 +117,14 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.88.16.1 2008/04/03 12:42:26 mjf Exp $");
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
+#ifndef MULTIPROCESSOR
 static int statscheddiv;
-
-int schedintr(void *);
+#endif
 
 static struct intrhand level10 = { .ih_fun = clockintr };
 #ifndef MULTIPROCESSOR
 static struct intrhand level14 = { .ih_fun = statintr };
+static struct intrhand *schedint;
 #endif
 
 static int	timermatch(struct device *, struct cfdata *, void *);
@@ -239,7 +240,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	/* Install the appropriate interrupt vector here */
 	level10.ih_number = ma->ma_interrupts[0];
 	level10.ih_clr = &timerreg_4u.t_clrintr[0];
-	intr_establish(PIL_CLOCK, &level10);
+	intr_establish(PIL_CLOCK, true, &level10);
 	printf(" irq vectors %lx", (u_long)level10.ih_number);
 #ifndef MULTIPROCESSOR
 	/*
@@ -247,7 +248,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	 */
 	level14.ih_number = ma->ma_interrupts[1];
 	level14.ih_clr = &timerreg_4u.t_clrintr[1];
-	intr_establish(PIL_STATCLOCK, &level14);
+	intr_establish(PIL_STATCLOCK, true, &level14);
 	printf(" and %lx", (u_long)level14.ih_number);
 #endif
 
@@ -316,21 +317,22 @@ tickintr_establish(int pil, int (*fun)(void *))
 {
 	int s;
 	struct intrhand *ih;
+	struct cpu_info *ci = curcpu();
 
-	ih = init_softint(pil, fun);
+	ih = sparc_softintr_establish(pil, fun, NULL);
 	ih->ih_number = 1;
-	if (CPU_IS_PRIMARY(curcpu()))
-		intr_establish(pil, ih);
-	curcpu()->ci_tick_ih = ih;
+	if (CPU_IS_PRIMARY(ci))
+		intr_establish(pil, true, ih);
+	ci->ci_tick_ih = ih;
 
 	/* set the next interrupt time */
-	curcpu()->ci_tick_increment = curcpu()->ci_cpu_clockrate[0] / hz;
+	ci->ci_tick_increment = ci->ci_cpu_clockrate[0] / hz;
 #ifdef DEBUG
 	printf("Using %%tick -- intr in %ld cycles\n",
-	    curcpu()->ci_tick_increment);
+	    ci->ci_tick_increment);
 #endif
 	s = intr_disable();
-	next_tick(curcpu()->ci_tick_increment);
+	next_tick(ci->ci_tick_increment);
 	intr_restore(s);
 }
 
@@ -343,7 +345,9 @@ tickintr_establish(int pil, int (*fun)(void *))
 void
 cpu_initclocks()
 {
+#ifndef MULTIPROCESSOR
 	int statint, minint;
+#endif
 	uint64_t start_time = 0;
 #ifdef DEBUG
 	extern int intrdebug;
@@ -405,6 +409,7 @@ cpu_initclocks()
 		return;
 	}
 
+#ifndef MULTIPROCESSOR
 	if (stathz == 0)
 		stathz = hz;
 	if (1000000 % stathz) {
@@ -414,11 +419,7 @@ cpu_initclocks()
 
 	profhz = stathz;		/* always */
 
-#ifdef MULTIPROCESSOR
-	statint = curcpu()->ci_cpu_clockrate[0] / stathz;
-#else
 	statint = 1000000 / stathz;
-#endif
 	minint = statint / 2 + 100;
 	while (statvar > minint)
 		statvar >>= 1;
@@ -426,11 +427,12 @@ cpu_initclocks()
 	/* 
 	 * Establish scheduler softint.
 	 */
-	curcpu()->ci_sched_ih = init_softint(PIL_SCHED, schedintr);
+	schedint = sparc_softintr_establish(PIL_SCHED, schedintr, NULL);
 	schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
 	statscheddiv = stathz / schedhz;
 	if (statscheddiv <= 0)
 		panic("statscheddiv");
+#endif
 
 	/* 
 	 * Enable counter-timer #0 interrupt for clockintr.
@@ -447,11 +449,6 @@ cpu_initclocks()
 	stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS,
 	     TMR_LIM_MASK);
 	tc_init(&counter_timecounter);
-
-	/*
-	 * Enable tick interrupt for statintr.
-	 */
-	tickintr_establish(PIL_STATCLOCK, statintr);
 #else
 	/* 
 	 * Enable counter-timer #1 interrupt for statintr.
@@ -467,9 +464,9 @@ cpu_initclocks()
 		     tmr_ustolim(statint)|TMR_LIM_IEN|TMR_LIM_RELOAD); 
 	stxa((vaddr_t)&timerreg_4u.t_mapintr[1], ASI_NUCLEUS, 
 	     timerreg_4u.t_mapintr[1]|INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT));
-#endif
 
 	statmin = statint - (statvar >> 1);
+#endif
 }
 
 /*
@@ -546,6 +543,7 @@ tickintr(void *cap)
 	return (1);
 }
 
+#ifndef MULTIPROCESSOR
 /*
  * Level 14 (stat clock) interrupt handler.
  */
@@ -555,9 +553,6 @@ statintr(cap)
 {
 	register u_long newint, r, var;
 	struct cpu_info *ci = curcpu();
-#ifdef MULTIPROCESSOR
-	int s;
-#endif
 
 #ifdef NOT_DEBUG
 	printf("statclock: count %x:%x, limit %x:%x\n", 
@@ -584,18 +579,11 @@ statintr(cap)
 
 	if (schedhz)
 		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
-			send_softint(-1, PIL_SCHED, curcpu()->ci_sched_ih);
+			send_softint(-1, PIL_SCHED, schedint);
 			ci->ci_schedstate.spc_schedticks = statscheddiv;
 		}
-#ifdef MULTIPROCESSOR
-	s = intr_disable();
-	next_tick(newint);
-	intr_restore(s);
-	curcpu()->ci_tick_evcnt.ev_count++;
-#else
 	stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, 
 	     tmr_ustolim(newint)|TMR_LIM_IEN|TMR_LIM_RELOAD);
-#endif
 	return (1);
 }
 
@@ -606,3 +594,4 @@ schedintr(void *arg)
 	schedclock(curcpu()->ci_data.cpu_onproc);
 	return (1);
 }
+#endif

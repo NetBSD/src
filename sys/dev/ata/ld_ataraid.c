@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.24.6.1 2008/04/03 12:42:38 mjf Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.24.6.2 2008/06/02 13:23:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.24.6.1 2008/04/03 12:42:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.24.6.2 2008/06/02 13:23:13 mjf Exp $");
 
 #include "rnd.h"
 
@@ -92,7 +92,7 @@ static int	ld_ataraid_start_span(struct ld_softc *, struct buf *);
 static int	ld_ataraid_start_raid0(struct ld_softc *, struct buf *);
 static void	ld_ataraid_iodone_raid0(struct buf *);
 
-CFATTACH_DECL(ld_ataraid, sizeof(struct ld_ataraid_softc),
+CFATTACH_DECL_NEW(ld_ataraid, sizeof(struct ld_ataraid_softc),
     ld_ataraid_match, ld_ataraid_attach, NULL, NULL);
 
 static int ld_ataraid_initialized;
@@ -113,18 +113,16 @@ struct cbuf {
 #define	CBUF_PUT(cbp)	pool_put(&ld_ataraid_cbufpl, (cbp))
 
 static int
-ld_ataraid_match(struct device *parent,
-    struct cfdata *match, void *aux)
+ld_ataraid_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-ld_ataraid_attach(struct device *parent, struct device *self,
-    void *aux)
+ld_ataraid_attach(device_t parent, device_t self, void *aux)
 {
-	struct ld_ataraid_softc *sc = (void *) self;
+	struct ld_ataraid_softc *sc = device_private(self);
 	struct ld_softc *ld = &sc->sc_ld;
 	struct ataraid_array_info *aai = aux;
 	const char *level;
@@ -182,8 +180,7 @@ ld_ataraid_attach(struct device *parent, struct device *self,
 	    ata_raid_type_name(aai->aai_type), level);
 
 	if (ld->sc_start == NULL) {
-		aprint_error("%s: unsupported array type\n",
-		    ld->sc_dv.dv_xname);
+		aprint_error_dev(&ld->sc_dv, "unsupported array type\n");
 		return;
 	}
 
@@ -202,7 +199,7 @@ ld_ataraid_attach(struct device *parent, struct device *self,
 		int bmajor, error;
 		dev_t dev;
 
-		bmajor = devsw_name2blk(adi->adi_dev->dv_xname, NULL, 0);
+		bmajor = devsw_name2blk(device_xname(adi->adi_dev), NULL, 0);
 		dev = MAKEDISKDEV(bmajor, device_unit(adi->adi_dev), RAW_PART);
 		error = bdevvp(dev, &vp);
 		if (error)
@@ -475,8 +472,8 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 		adi->adi_status &= ~ADI_S_ONLINE;
 
 		printf("%s: error %d on component %d (%s)\n",
-		    sc->sc_ld.sc_dv.dv_xname, bp->b_error, cbp->cb_comp,
-		    adi->adi_dev->dv_xname);
+		    device_xname(&sc->sc_ld.sc_dv), bp->b_error, cbp->cb_comp,
+		    device_xname(adi->adi_dev));
 
 		/*
 		 * If we didn't see an error yet and we are reading

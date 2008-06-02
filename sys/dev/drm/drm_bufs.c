@@ -1,4 +1,4 @@
-/* $NetBSD: drm_bufs.c,v 1.6 2007/12/11 11:17:31 lukem Exp $ */
+/* $NetBSD: drm_bufs.c,v 1.6.8.1 2008/06/02 13:23:15 mjf Exp $ */
 
 /* drm_bufs.h -- Generic buffer template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.6 2007/12/11 11:17:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.6.8.1 2008/06/02 13:23:15 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_bufs.c,v 1.3 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -276,6 +276,8 @@ int drm_addmap_ioctl(DRM_IOCTL_ARGS)
 
 	if (request.type != _DRM_SHM) {
 		request.handle = (void *)request.offset;
+	} else {
+		request.handle = (void *)DRM_NETBSD_ADDR2HANDLE((uintptr_t)map->handle);
 	}
 	DRM_COPY_TO_USER_IOCTL((drm_map_t *)data, request, sizeof(drm_map_t));
 

@@ -1,4 +1,4 @@
-# $NetBSD: SANDPOINT,v 1.2 2007/10/17 19:56:55 garbled Exp $
+# $NetBSD: SANDPOINT,v 1.2.22.1 2008/06/02 13:22:36 mjf Exp $
 #
 # Sandpoint X3/X2 machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SANDPOINT-$Revision: 1.2 $"
+#ident 		"SANDPOINT-$Revision: 1.2.22.1 $"
 
 maxusers	32
 
@@ -58,6 +58,7 @@ options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	COMPAT_LINUX		# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

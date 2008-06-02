@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.10 2007/12/20 23:02:54 dsl Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.10.6.1 2008/06/02 13:23:02 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.10 2007/12/20 23:02:54 dsl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.10.6.1 2008/06/02 13:23:02 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -101,14 +101,20 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 	struct futex *f;
 	struct futex *newf;
 	int timeout_hz = 0;
+	kmutex_t *lock;
 
 	/* First time use */
 	if (__predict_false(futex_lock == NULL)) {
-		futex_lock = kmem_alloc(sizeof(kmutex_t), KM_SLEEP);
-		mutex_init(futex_lock, MUTEX_DEFAULT, IPL_NONE);
-		FUTEX_LOCK;
-		LIST_INIT(&futex_list);
-		FUTEX_UNLOCK;
+		lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+		mutex_enter(proc_lock);
+		if (futex_lock == NULL) {
+			futex_lock = lock;
+			lock = NULL;
+			LIST_INIT(&futex_list);
+		}
+		mutex_exit(proc_lock);
+		if (lock != NULL)
+			mutex_obj_free(lock);
 	}
 
 	switch (SCARG(uap, op)) {
@@ -131,9 +137,10 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		}
 
 		FUTEXPRINTF(("FUTEX_WAIT %d.%d: val = %d, uaddr = %p, "
-		    "*uaddr = %d, timeout = %d.%09ld\n", 
+		    "*uaddr = %d, timeout = %lld.%09ld\n", 
 		    l->l_proc->p_pid, l->l_lid, SCARG(uap, val), 
-		    SCARG(uap, uaddr), val, timeout.tv_sec, timeout.tv_nsec));
+		    SCARG(uap, uaddr), val, (long long)timeout.tv_sec,
+		    timeout.tv_nsec));
 
 		f = futex_get(SCARG(uap, uaddr));
 		ret = futex_sleep(f, timeout_hz);
@@ -209,7 +216,7 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 static struct futex *
 futex_get(void *uaddr)
 {
-	struct futex *f;
+	struct futex *f, *f2;
 
 	FUTEX_LOCK;
 	LIST_FOREACH(f, &futex_list, f_list) {
@@ -222,27 +229,37 @@ futex_get(void *uaddr)
 	FUTEX_UNLOCK;
 
 	/* Not found, create it */
-	f = kmem_zalloc(sizeof(*f), KM_SLEEP);
-	f->f_uaddr = uaddr;
-	f->f_refcount = 1;
-	TAILQ_INIT(&f->f_waiting_proc);
+	f2 = kmem_zalloc(sizeof(*f2), KM_SLEEP);
+	f2->f_uaddr = uaddr;
+	f2->f_refcount = 1;
+	TAILQ_INIT(&f2->f_waiting_proc);
+
 	FUTEX_LOCK;
-	LIST_INSERT_HEAD(&futex_list, f, f_list);
+	LIST_FOREACH(f, &futex_list, f_list) {
+		if (f->f_uaddr == uaddr) {
+			f->f_refcount++;
+			FUTEX_UNLOCK;
+			kmem_free(f2, sizeof(*f2));
+			return f;
+		}
+	}
+	LIST_INSERT_HEAD(&futex_list, f2, f_list);
 	FUTEX_UNLOCK;
 
-	return f;
+	return f2;
 }
 
 static void 
 futex_put(struct futex *f)
 {
+
+	FUTEX_LOCK;
 	f->f_refcount--;
 	if (f->f_refcount == 0) {
-		FUTEX_LOCK;
 		LIST_REMOVE(f, f_list);
-		FUTEX_UNLOCK;
 		kmem_free(f, sizeof(*f));
 	}
+	FUTEX_UNLOCK;
 
 	return;
 }
@@ -254,7 +271,7 @@ futex_sleep(struct futex *f, unsigned int timeout)
 	int ret;
 
 	wp = kmem_zalloc(sizeof(*wp), KM_SLEEP);
-	cv_init(&wp->wp_futex_cv, "lnxftxcv");
+	cv_init(&wp->wp_futex_cv, "futex");
 
 	FUTEX_LOCK;
 	TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);

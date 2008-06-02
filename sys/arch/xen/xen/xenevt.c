@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.22.6.1 2008/04/03 12:42:31 mjf Exp $      */
+/*      $NetBSD: xenevt.c,v 1.22.6.2 2008/06/02 13:22:55 mjf Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.22.6.1 2008/04/03 12:42:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.22.6.2 2008/06/02 13:22:55 mjf Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -141,8 +141,8 @@ static void xenevt_record(struct xenevt_d *, evtchn_port_t);
 long xenevt_ev1;
 long xenevt_ev2[NR_EVENT_CHANNELS];
 #else
-u_int32_t xenevt_ev1;
-u_int32_t xenevt_ev2[NR_EVENT_CHANNELS];
+uint32_t xenevt_ev1;
+uint32_t xenevt_ev2[NR_EVENT_CHANNELS];
 #endif
 static int xenevt_processevt(void *);
 
@@ -152,6 +152,11 @@ xenevtattach(int n)
 {
 	struct intrhand *ih;
 	int s;
+	int level = IPL_HIGH;
+#ifdef MULTIPROCESSOR
+	bool mpsafe = (level != IPL_VM);
+#endif /* MULTIPROCESSOR */
+
 
 	devevent_sih = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))xenevt_notify, NULL);
@@ -159,16 +164,23 @@ xenevtattach(int n)
 	xenevt_ev1 = 0;
 	memset(xenevt_ev2, 0, sizeof(xenevt_ev2));
 
-	/* register a hanlder at splhigh, so that spllower() will call us */
+	/* register a handler at splhigh, so that spllower() will call us */
 	MALLOC(ih, struct intrhand *, sizeof (struct intrhand), M_DEVBUF,
 	     M_WAITOK|M_ZERO);
 	if (ih == NULL)
 		panic("can't allocate xenevt interrupt source");
-	ih->ih_fun = xenevt_processevt;
-	ih->ih_arg = NULL;
+	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
+	ih->ih_arg = ih->ih_realarg = NULL;
 	ih->ih_ipl_next = NULL;
+#ifdef MULTIPROCESSOR
+	if (!mpsafe) {
+		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_arg = ih;
+	}
+#endif /* MULTIPROCESSOR */
+
 	s = splhigh();
-	event_set_iplhandler(ih, IPL_HIGH);
+	event_set_iplhandler(ih, level);
 	splx(s);
 }
 
@@ -229,7 +241,7 @@ xenevt_event(int port)
 }
 
 void
-xenevt_notify()
+xenevt_notify(void)
 {
 
 	int s = splhigh();
@@ -476,15 +488,15 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
 	struct xenevt_d *d = fp->f_data;
-	u_int16_t *chans;
+	uint16_t *chans;
 	int i, nentries, error;
 
 	if (uio->uio_resid == 0)
 		return (0);
-	nentries = uio->uio_resid / sizeof(u_int16_t);
+	nentries = uio->uio_resid / sizeof(uint16_t);
 	if (nentries > NR_EVENT_CHANNELS)
 		return EMSGSIZE;
-	chans = kmem_alloc(nentries * sizeof(u_int16_t), KM_SLEEP);
+	chans = kmem_alloc(nentries * sizeof(uint16_t), KM_SLEEP);
 	if (chans == NULL)
 		return ENOMEM;
 	error = uiomove(chans, uio->uio_resid, uio);
@@ -497,7 +509,7 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
 		}
 	}
 out:
-	kmem_free(chans, nentries * sizeof(u_int16_t));
+	kmem_free(chans, nentries * sizeof(uint16_t));
 	return 0;
 }
 

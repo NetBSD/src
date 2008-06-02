@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.6 2007/12/14 13:18:43 njoly Exp $ */
+/* $NetBSD: spdmem.c,v 1.6.6.1 2008/06/02 13:23:17 mjf Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.6 2007/12/14 13:18:43 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.6.6.1 2008/06/02 13:23:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,13 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.6 2007/12/14 13:18:43 njoly Exp $");
 #include <dev/i2c/spdmemreg.h>
 #include <dev/i2c/spdmemvar.h>
 
-static int spdmem_match(struct device *, struct cfdata *, void *);
-static void spdmem_attach(struct device *, struct device *, void *);
+static int spdmem_match(device_t, cfdata_t, void *);
+static void spdmem_attach(device_t, device_t, void *);
 SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
 
 static uint8_t spdmem_read(struct spdmem_softc *, uint8_t);
 
-CFATTACH_DECL(spdmem, sizeof(struct spdmem_softc),
+CFATTACH_DECL_NEW(spdmem, sizeof(struct spdmem_softc),
     spdmem_match, spdmem_attach, NULL, NULL);
 
 #define IS_RAMBUS_TYPE (s->sm_len < 4)
@@ -117,7 +117,7 @@ static const uint8_t spdmem_cycle_frac[] = {
 static int hw_node = CTL_EOL;
 
 static int
-spdmem_match(struct device *parent, struct cfdata *match, void *aux)
+spdmem_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	struct spdmem_softc sc;
@@ -142,7 +142,7 @@ spdmem_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-spdmem_attach(struct device *parent, struct device *self, void *aux)
+spdmem_attach(device_t parent, device_t self, void *aux)
 {
 	struct spdmem_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
@@ -168,11 +168,13 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DEBUG
 	for (i = 0; i < 64;  i += 16) {
 		int j;
-		aprint_debug("\n%s: 0x%02x:", self->dv_xname, i);
+		aprint_debug("\n");
+		aprint_debug_dev(self, "0x%02x:", i);
 		for(j = 0; j < 16; j++)
 			aprint_debug(" %02x", ((uint8_t *)s)[i + j]);
 	}
-	aprint_debug("\n%s", self->dv_xname);
+	aprint_debug("\n");
+	aprint_debug_dev(self, "");
 #endif
 
 	/*
@@ -181,7 +183,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	if (hw_node != CTL_EOL)
 		sysctl_createv(NULL, 0, NULL, &node,
 		    0, CTLTYPE_NODE,
-		    self->dv_xname, NULL, NULL, 0, NULL, 0,
+		    device_xname(self), NULL, NULL, 0, NULL, 0,
 		    CTL_HW, CTL_CREATE, CTL_EOL);
 	if (node != NULL)
                 sysctl_createv(NULL, 0, NULL, NULL,
@@ -218,7 +220,8 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	aprint_normal("\n%s: %s memory", self->dv_xname, type);
+	aprint_normal("\n");
+	aprint_normal_dev(self, "%s memory", type);
 	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
 	if (node != NULL)
 		sysctl_createv(NULL, 0, NULL, NULL,
@@ -330,7 +333,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("\n");
 
-	aprint_verbose("%s: ", self->dv_xname);
+	aprint_verbose_dev(self, "");
 	switch (s->sm_type) {
 	case SPDMEM_MEMTYPE_EDO:
 	case SPDMEM_MEMTYPE_FPM:
@@ -384,7 +387,7 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 	else
 		refresh = "unknown";
 
-	aprint_verbose("%s: voltage %s, refresh time %s", self->dv_xname,
+	aprint_verbose_dev(self, "voltage %s, refresh time %s",
 			voltage, refresh);
 	if (s->sm_selfrefresh)
 		aprint_verbose(" (self-refreshing)");

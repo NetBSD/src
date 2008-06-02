@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.49.6.1 2008/04/03 12:42:37 mjf Exp $
+#	$NetBSD: files.acpi,v 1.49.6.2 2008/06/02 13:23:13 mjf Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -122,6 +122,11 @@ file	dev/acpi/asus_acpi.c		asus
 attach	ug at acpinodebus with ug_acpi
 file	dev/acpi/ug_acpi.c		ug_acpi
 
+# HP Quick Launch Buttons
+device	hpqlb: sysmon_power
+attach	hpqlb at acpinodebus
+file	dev/acpi/hpqlb_acpi.c		hpqlb
+
 # Sony Notebook Controller (brightness, hotkeys, etc.)
 device	sony: displaydev
 attach	sony at acpinodebus with sony_acpi
@@ -131,3 +136,8 @@ file	dev/acpi/sony_acpi.c		sony_acpi
 device	thinkpad
 attach	thinkpad at acpinodebus
 file	dev/acpi/thinkpad_acpi.c	thinkpad
+
+# Direct Application Launch Buttons
+device	acpidalb
+attach	acpidalb at acpinodebus
+file	dev/acpi/dalb_acpi.c		acpidalb

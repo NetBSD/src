@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.12.8.1 2008/04/03 12:42:44 mjf Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.12.8.2 2008/06/02 13:23:31 mjf Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.12.8.1 2008/04/03 12:42:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.12.8.2 2008/06/02 13:23:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,8 +102,8 @@ static const int itesio_vrfact[] = {
 	RFACT_NONE,	/* +3.3V	*/
 	RFACT(68, 100),	/* +5V 		*/
 	RFACT(30, 10),	/* +12V 	*/
-	RFACT(21, 10),	/* -12V 	*/
-	RFACT(83, 20),	/* -5V 		*/
+	RFACT(21, 10),	/* -5V 		*/
+	RFACT(83, 20),	/* -12V 	*/
 	RFACT(68, 100),	/* STANDBY	*/
 	RFACT_NONE	/* VBAT		*/
 };
@@ -139,6 +139,7 @@ itesio_isa_match(device_t parent, cfdata_t match, void *aux)
 	case ITESIO_ID8712:
 	case ITESIO_ID8716:
 	case ITESIO_ID8718:
+	case ITESIO_ID8726:
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = 2;
 		ia->ia_niomem = 0;
@@ -203,7 +204,7 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(sc->sc_ec_iot, sc->sc_hwmon_baseaddr, 8, 0,
 	    &sc->sc_ec_ioh)) {
 		aprint_error_dev(self, "cannot map hwmon i/o space\n");
-		return;
+		goto out2;
 	}
 
 	sc->sc_hwmon_mapped = true;
@@ -230,7 +231,7 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
-			return;
+			goto out;
 		}
 	}
 	/*
@@ -244,19 +245,16 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 		    "unable to register with sysmon (%d)\n", i);
 		sysmon_envsys_destroy(sc->sc_sme);
-		bus_space_unmap(sc->sc_ec_iot, sc->sc_ec_ioh, 8);
-		return;
+		goto out;
 	}
 	sc->sc_hwmon_enabled = true;
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	/* The IT8705 doesn't support a WDT */
-	if (sc->sc_chipid == ITESIO_ID8705) {
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
-		return;
-	}
+	/* The IT8705 doesn't support the WDT */
+	if (sc->sc_chipid == ITESIO_ID8705)
+		goto out2;
 
 	/*
 	 * Initialize the watchdog timer.
@@ -269,11 +267,16 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 
 	if (sysmon_wdog_register(&sc->sc_smw)) {
 		aprint_error_dev(self, "unable to register watchdog timer\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
-		return;
+		goto out2;
 	}
 	sc->sc_wdt_enabled = true;
 	aprint_normal_dev(self, "Watchdog Timer present\n");
+	return;
+
+out:
+	bus_space_unmap(sc->sc_ec_iot, sc->sc_ec_ioh, 8);
+out2:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
 }
 
 static int
@@ -375,8 +378,8 @@ itesio_setup_sensors(struct itesio_softc *sc)
 	COPYDESCR(sc->sc_sensor[5].desc, "+3.3V");
 	COPYDESCR(sc->sc_sensor[6].desc, "+5V");
 	COPYDESCR(sc->sc_sensor[7].desc, "+12V");
-	COPYDESCR(sc->sc_sensor[8].desc, "-12V");
-	COPYDESCR(sc->sc_sensor[9].desc, "-5V");
+	COPYDESCR(sc->sc_sensor[8].desc, "-5V");
+	COPYDESCR(sc->sc_sensor[9].desc, "-12V");
 	COPYDESCR(sc->sc_sensor[10].desc, "STANDBY");
 	COPYDESCR(sc->sc_sensor[11].desc, "VBAT");
 
@@ -437,16 +440,18 @@ itesio_refresh_volts(struct itesio_softc *sc, envsys_data_t *edata)
 
 	/* voltage returned as (mV << 4) */
 	edata->value_cur = (sdata << 4);
+	/* negative values */
+	if (i == 5 || i == 6)
+		edata->value_cur -= ITESIO_EC_VREF;
 	/* rfact is (factor * 10^4) */
 	edata->value_cur *= itesio_vrfact[i];
-
 	if (edata->rfact)
 		edata->value_cur += edata->rfact;
-	else
-		edata->rfact = itesio_vrfact[i];
-
 	/* division by 10 gets us back to uVDC */
 	edata->value_cur /= 10;
+	if (i == 5 || i == 6)
+		edata->value_cur += ITESIO_EC_VREF * 1000;
+
 	edata->state = ENVSYS_SVALID;
 }
 

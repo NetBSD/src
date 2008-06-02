@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.74.6.1 2008/04/03 12:42:40 mjf Exp $ */
+/*	$NetBSD: gem.c,v 1.74.6.2 2008/06/02 13:23:21 mjf Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.74.6.1 2008/04/03 12:42:40 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.74.6.2 2008/06/02 13:23:21 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -175,9 +175,9 @@ gem_attach(sc, enaddr)
 	if ((error = bus_dmamem_alloc(sc->sc_dmatag,
 	    sizeof(struct gem_control_data) + ETHER_MIN_TX, PAGE_SIZE,
 	    0, &sc->sc_cdseg, 1, &sc->sc_cdnseg, 0)) != 0) {
-		aprint_error(
-		   "%s: unable to allocate control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev,
+		   "unable to allocate control data, error = %d\n",
+		    error);
 		goto fail_0;
 	}
 
@@ -185,8 +185,8 @@ gem_attach(sc, enaddr)
 	if ((error = bus_dmamem_map(sc->sc_dmatag, &sc->sc_cdseg, sc->sc_cdnseg,
 	    sizeof(struct gem_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
-		aprint_error("%s: unable to map control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to map control data, error = %d\n",
+		    error);
 		goto fail_1;
 	}
 
@@ -196,33 +196,33 @@ gem_attach(sc, enaddr)
 	if ((error = bus_dmamap_create(sc->sc_dmatag,
 	    sizeof(struct gem_control_data), 1,
 	    sizeof(struct gem_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		aprint_error("%s: unable to create control data DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create control data DMA map, "
+		    "error = %d\n", error);
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmatag, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct gem_control_data), NULL,
 	    0)) != 0) {
-		aprint_error(
-		    "%s: unable to load control data DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev,
+		    "unable to load control data DMA map, error = %d\n",
+		    error);
 		goto fail_3;
 	}
 
 	memset(nullbuf, 0, ETHER_MIN_TX);
 	if ((error = bus_dmamap_create(sc->sc_dmatag,
 	    ETHER_MIN_TX, 1, ETHER_MIN_TX, 0, 0, &sc->sc_nulldmamap)) != 0) {
-		aprint_error("%s: unable to create padding DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create padding DMA map, "
+		    "error = %d\n", error);
 		goto fail_4;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmatag, sc->sc_nulldmamap,
 	    nullbuf, ETHER_MIN_TX, NULL, 0)) != 0) {
-		aprint_error(
-		    "%s: unable to load padding DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev,
+		    "unable to load padding DMA map, error = %d\n",
+		    error);
 		goto fail_5;
 	}
 
@@ -247,8 +247,8 @@ gem_attach(sc, enaddr)
 		    ETHER_MAX_LEN_JUMBO, GEM_NTXSEGS,
 		    ETHER_MAX_LEN_JUMBO, 0, 0,
 		    &txs->txs_dmamap)) != 0) {
-			aprint_error("%s: unable to create tx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(&sc->sc_dev, "unable to create tx DMA map %d, "
+			    "error = %d\n", i, error);
 			goto fail_6;
 		}
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
@@ -260,8 +260,8 @@ gem_attach(sc, enaddr)
 	for (i = 0; i < GEM_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			aprint_error("%s: unable to create rx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(&sc->sc_dev, "unable to create rx DMA map %d, "
+			    "error = %d\n", i, error);
 			goto fail_7;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
@@ -294,8 +294,7 @@ gem_attach(sc, enaddr)
 		    MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
 		if (LIST_EMPTY(&mii->mii_phys)) {
 				/* No PHY attached */
-				aprint_error("%s: PHY probe failed\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "PHY probe failed\n");
 				goto fail_7;
 		} else {
 			struct mii_softc *child;
@@ -312,11 +311,10 @@ gem_attach(sc, enaddr)
 				 * by the GEM_MIF_CONFIG  register.
 				 */
 				if (child->mii_phy > 1 || child->mii_inst > 0) {
-					aprint_error(
-					    "%s: cannot accommodate MII device"
+					aprint_error_dev(&sc->sc_dev,
+					    "cannot accommodate MII device"
 					    " %s at PHY %d, instance %d\n",
-					       sc->sc_dev.dv_xname,
-					       child->mii_dev.dv_xname,
+					       device_xname(child->mii_dev),
 					       child->mii_phy, child->mii_inst);
 					continue;
 				}
@@ -331,14 +329,12 @@ gem_attach(sc, enaddr)
 			 */
 			if (sc->sc_phys[1]) {
 #ifdef GEM_DEBUG
-				aprint_debug("%s: using external PHY\n",
-				    sc->sc_dev.dv_xname);
+				aprint_debug_dev(&sc->sc_dev, "using external PHY\n");
 #endif
 				sc->sc_mif_config |= GEM_MIF_CONFIG_PHY_SEL;
 			} else {
 #ifdef GEM_DEBUG
-				aprint_debug("%s: using internal PHY\n",
-				    sc->sc_dev.dv_xname);
+				aprint_debug_dev(&sc->sc_dev, "using internal PHY\n");
 				sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
 #endif
 			}
@@ -367,8 +363,7 @@ gem_attach(sc, enaddr)
 			    GEM_MII_DATAPATH_SERIAL);
 		}
 
-		aprint_normal("%s: using external PCS %s: ",
-		    sc->sc_dev.dv_xname,
+		aprint_normal_dev(&sc->sc_dev, "using external PCS %s: ",
 		    sc->sc_flags & GEM_SERDES ? "SERDES" : "Serialink");
 
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0, NULL);
@@ -398,7 +393,7 @@ gem_attach(sc, enaddr)
 	 */
 
 	/* Announce ourselves. */
-	aprint_normal("%s: Ethernet address %s", sc->sc_dev.dv_xname,
+	aprint_normal_dev(&sc->sc_dev, "Ethernet address %s",
 	    ether_sprintf(enaddr));
 
 	/* Get RX FIFO size */
@@ -411,7 +406,7 @@ gem_attach(sc, enaddr)
 	aprint_normal(", %uKB TX fifo\n", v / 16);
 
 	/* Initialize ifnet structure. */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
@@ -462,39 +457,39 @@ gem_attach(sc, enaddr)
 		panic("gem_config: can't establish shutdownhook");
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_NET, 0);
 #endif
 
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "interrupts");
+	    NULL, device_xname(&sc->sc_dev), "interrupts");
 #ifdef GEM_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_ev_txint, EVCNT_TYPE_INTR,
-	    &sc->sc_ev_intr, sc->sc_dev.dv_xname, "tx interrupts");
+	    &sc->sc_ev_intr, device_xname(&sc->sc_dev), "tx interrupts");
 	evcnt_attach_dynamic(&sc->sc_ev_rxint, EVCNT_TYPE_INTR,
-	    &sc->sc_ev_intr, sc->sc_dev.dv_xname, "rx interrupts");
+	    &sc->sc_ev_intr, device_xname(&sc->sc_dev), "rx interrupts");
 	evcnt_attach_dynamic(&sc->sc_ev_rxfull, EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx ring full");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx ring full");
 	evcnt_attach_dynamic(&sc->sc_ev_rxnobuf, EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx malloc failure");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx malloc failure");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[0], EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx 0desc");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx 0desc");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[1], EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx 1desc");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx 1desc");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[2], EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx 2desc");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx 2desc");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[3], EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx 3desc");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx 3desc");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[4], EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >3desc");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx >3desc");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[5], EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >7desc");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx >7desc");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[6], EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >15desc");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx >15desc");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[7], EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >31desc");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx >31desc");
 	evcnt_attach_dynamic(&sc->sc_ev_rxhist[8], EVCNT_TYPE_INTR,
-	    &sc->sc_ev_rxint, sc->sc_dev.dv_xname, "rx >63desc");
+	    &sc->sc_ev_rxint, device_xname(&sc->sc_dev), "rx >63desc");
 #endif
 
 #if notyet
@@ -502,11 +497,10 @@ gem_attach(sc, enaddr)
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
 	 */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	sc->sc_powerhook = powerhook_establish(device_xname(&sc->sc_dev),
 	    gem_power, sc);
 	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish power hook\n");
 #endif
 
 	callout_init(&sc->sc_tick_ch, 0);
@@ -595,14 +589,14 @@ gem_reset(sc)
 	int s;
 
 	s = splnet();
-	DPRINTF(sc, ("%s: gem_reset\n", sc->sc_dev.dv_xname));
+	DPRINTF(sc, ("%s: gem_reset\n", device_xname(&sc->sc_dev)));
 	gem_reset_rx(sc);
 	gem_reset_tx(sc);
 
 	/* Do a full reset */
 	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX|GEM_RESET_TX);
 	if (!gem_bitwait(sc, h, GEM_RESET, GEM_RESET_RX | GEM_RESET_TX, 0))
-		printf("%s: cannot reset device\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cannot reset device\n");
 	splx(s);
 }
 
@@ -639,7 +633,7 @@ gem_stop(struct ifnet *ifp, int disable)
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
 	struct gem_txsoft *txs;
 
-	DPRINTF(sc, ("%s: gem_stop\n", sc->sc_dev.dv_xname));
+	DPRINTF(sc, ("%s: gem_stop\n", device_xname(&sc->sc_dev)));
 
 	callout_stop(&sc->sc_tick_ch);
 	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) != 0)
@@ -696,14 +690,14 @@ gem_reset_rx(struct gem_softc *sc)
 	bus_space_barrier(t, h, GEM_RX_CONFIG, 4, BUS_SPACE_BARRIER_WRITE);
 	/* Wait till it finishes */
 	if (!gem_bitwait(sc, h, GEM_RX_CONFIG, 1, 0))
-		printf("%s: cannot disable read dma\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cannot disable read dma\n");
 
 	/* Finally, reset the ERX */
 	bus_space_write_4(t, h2, GEM_RESET, GEM_RESET_RX);
 	bus_space_barrier(t, h, GEM_RESET, 4, BUS_SPACE_BARRIER_WRITE);
 	/* Wait till it finishes */
 	if (!gem_bitwait(sc, h2, GEM_RESET, GEM_RESET_RX, 0)) {
-		printf("%s: cannot reset receiver\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cannot reset receiver\n");
 		return (1);
 	}
 	return (0);
@@ -802,7 +796,7 @@ gem_reset_tx(struct gem_softc *sc)
 	bus_space_barrier(t, h, GEM_TX_CONFIG, 4, BUS_SPACE_BARRIER_WRITE);
 	/* Wait till it finishes */
 	if (!gem_bitwait(sc, h, GEM_TX_CONFIG, 1, 0))
-		printf("%s: cannot disable read dma\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cannot disable read dma\n");
 	/* Wait 5ms extra. */
 	delay(5000);
 
@@ -811,8 +805,7 @@ gem_reset_tx(struct gem_softc *sc)
 	bus_space_barrier(t, h, GEM_RESET, 4, BUS_SPACE_BARRIER_WRITE);
 	/* Wait till it finishes */
 	if (!gem_bitwait(sc, h2, GEM_RESET, GEM_RESET_TX, 0)) {
-		printf("%s: cannot reset receiver\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cannot reset receiver\n");
 		return (1);
 	}
 	return (0);
@@ -887,9 +880,9 @@ gem_meminit(struct gem_softc *sc)
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf == NULL) {
 			if ((error = gem_add_rxbuf(sc, i)) != 0) {
-				printf("%s: unable to allocate or map rx "
+				aprint_error_dev(&sc->sc_dev, "unable to allocate or map rx "
 				    "buffer %d, error = %d\n",
-				    sc->sc_dev.dv_xname, i, error);
+				    i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -948,7 +941,7 @@ gem_pcs_start(struct gem_softc *sc)
 	uint32_t v;
 
 #ifdef GEM_DEBUG
-	aprint_debug("%s: gem_pcs_start()\n", sc->sc_dev.dv_xname);
+	aprint_debug_dev(&sc->sc_dev, "gem_pcs_start()\n");
 #endif
 
 	/*
@@ -999,7 +992,7 @@ gem_pcs_stop(struct gem_softc *sc, int disable)
 	bus_space_handle_t h = sc->sc_h1;
 
 #ifdef GEM_DEBUG
-	aprint_debug("%s: gem_pcs_stop()\n", sc->sc_dev.dv_xname);
+	aprint_debug_dev(&sc->sc_dev, "gem_pcs_stop()\n");
 #endif
 
 	/* Tell link partner that we're going away */
@@ -1048,7 +1041,7 @@ gem_init(struct ifnet *ifp)
 
 	s = splnet();
 
-	DPRINTF(sc, ("%s: gem_init: calling stop\n", sc->sc_dev.dv_xname));
+	DPRINTF(sc, ("%s: gem_init: calling stop\n", device_xname(&sc->sc_dev)));
 	/*
 	 * Initialization sequence. The numbered steps below correspond
 	 * to the sequence outlined in section 6.3.5.1 in the Ethernet
@@ -1059,7 +1052,7 @@ gem_init(struct ifnet *ifp)
 	/* step 1 & 2. Reset the Ethernet Channel */
 	gem_stop(ifp, 0);
 	gem_reset(sc);
-	DPRINTF(sc, ("%s: gem_init: restarting\n", sc->sc_dev.dv_xname));
+	DPRINTF(sc, ("%s: gem_init: restarting\n", device_xname(&sc->sc_dev)));
 
 	/* Re-initialize the MIF */
 	gem_mifinit(sc);
@@ -1308,7 +1301,7 @@ gem_start(ifp)
 	firsttx = sc->sc_txnext;
 
 	DPRINTF(sc, ("%s: gem_start: txfree %d, txnext %d\n",
-	    sc->sc_dev.dv_xname, ofree, firsttx));
+	    device_xname(&sc->sc_dev), ofree, firsttx));
 
 	/*
 	 * Loop through the send queue, setting up transmit descriptors
@@ -1338,24 +1331,23 @@ gem_start(ifp)
 		      (m0->m_pkthdr.len < ETHER_MIN_TX &&
 		       dmamap->dm_nsegs == GEM_NTXSEGS)) {
 			if (m0->m_pkthdr.len > MCLBYTES) {
-				printf("%s: unable to allocate jumbo Tx "
-				    "cluster\n", sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "unable to allocate jumbo Tx "
+				    "cluster\n");
 				IFQ_DEQUEUE(&ifp->if_snd, m0);
 				m_freem(m0);
 				continue;
 			}
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
-				printf("%s: unable to allocate Tx mbuf\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "unable to allocate Tx mbuf\n");
 				break;
 			}
 			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
-					printf("%s: unable to allocate Tx "
-					    "cluster\n", sc->sc_dev.dv_xname);
+					aprint_error_dev(&sc->sc_dev, "unable to allocate Tx "
+					    "cluster\n");
 					m_freem(m);
 					break;
 				}
@@ -1365,8 +1357,8 @@ gem_start(ifp)
 			error = bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
-				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", sc->sc_dev.dv_xname, error);
+				aprint_error_dev(&sc->sc_dev, "unable to load Tx buffer, "
+				    "error = %d\n", error);
 				break;
 			}
 		}
@@ -1537,20 +1529,20 @@ gem_start(ifp)
 
 	if (sc->sc_txfree != ofree) {
 		DPRINTF(sc, ("%s: packets enqueued, IC on %d, OWN on %d\n",
-		    sc->sc_dev.dv_xname, lasttx, firsttx));
+		    device_xname(&sc->sc_dev), lasttx, firsttx));
 		/*
 		 * The entire packet chain is set up.
 		 * Kick the transmitter.
 		 */
 		DPRINTF(sc, ("%s: gem_start: kicking tx %d\n",
-			sc->sc_dev.dv_xname, nexttx));
+			device_xname(&sc->sc_dev), nexttx));
 		bus_space_write_4(sc->sc_bustag, sc->sc_h1, GEM_TX_KICK,
 			sc->sc_txnext);
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
 		DPRINTF(sc, ("%s: gem_start: watchdog %d\n",
-			sc->sc_dev.dv_xname, ifp->if_timer));
+			device_xname(&sc->sc_dev), ifp->if_timer));
 	}
 }
 
@@ -1569,7 +1561,7 @@ gem_tint(sc)
 	int progress = 0;
 	u_int32_t v;
 
-	DPRINTF(sc, ("%s: gem_tint\n", sc->sc_dev.dv_xname));
+	DPRINTF(sc, ("%s: gem_tint\n", device_xname(&sc->sc_dev)));
 
 	/* Unload collision counters ... */
 	v = bus_space_read_4(t, mac, GEM_MAC_EXCESS_COLL_CNT) +
@@ -1673,7 +1665,7 @@ gem_tint(sc)
 		gem_start(ifp);
 	}
 	DPRINTF(sc, ("%s: gem_tint: watchdog %d\n",
-		sc->sc_dev.dv_xname, ifp->if_timer));
+		device_xname(&sc->sc_dev), ifp->if_timer));
 
 	return (1);
 }
@@ -1694,7 +1686,7 @@ gem_rint(sc)
 	u_int32_t rxcomp;
 	int i, len, progress = 0;
 
-	DPRINTF(sc, ("%s: gem_rint\n", sc->sc_dev.dv_xname));
+	DPRINTF(sc, ("%s: gem_rint\n", device_xname(&sc->sc_dev)));
 
 	/*
 	 * Ignore spurious interrupt that sometimes occurs before
@@ -1740,8 +1732,7 @@ gem_rint(sc)
 
 		if (rxstat & GEM_RD_BAD_CRC) {
 			ifp->if_ierrors++;
-			printf("%s: receive error: CRC error\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "receive error: CRC error\n");
 			GEM_INIT_RXDESC(sc, i);
 			continue;
 		}
@@ -1889,7 +1880,7 @@ swcsum:
 #ifdef GEM_DEBUG
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: rint: ring wrap\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 #endif
 		}
 		sc->sc_rxptr = i;
@@ -1969,8 +1960,8 @@ gem_add_rxbuf(struct gem_softc *sc, int idx)
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't load rx DMA map %d, error = %d\n",
-		    sc->sc_dev.dv_xname, idx, error);
+		aprint_error_dev(&sc->sc_dev, "can't load rx DMA map %d, error = %d\n",
+		    idx, error);
 		panic("gem_add_rxbuf");	/* XXX */
 	}
 
@@ -1990,7 +1981,7 @@ gem_eint(struct gem_softc *sc, u_int status)
 	u_int32_t v;
 
 	if ((status & GEM_INTR_MIF) != 0) {
-		printf("%s: XXXlink status changed\n", sc->sc_dev.dv_xname);
+		printf("%s: XXXlink status changed\n", device_xname(&sc->sc_dev));
 		return (1);
 	}
 
@@ -2003,12 +1994,12 @@ gem_eint(struct gem_softc *sc, u_int status)
 		bus_space_read_4(sc->sc_bustag, sc->sc_h2, GEM_ERROR_STATUS);
 		v = bus_space_read_4(sc->sc_bustag, sc->sc_h2,
 		    GEM_ERROR_STATUS);
-		printf("%s: bus error interrupt: 0x%02x\n",
-		    sc->sc_dev.dv_xname, v);
+		aprint_error_dev(&sc->sc_dev, "bus error interrupt: 0x%02x\n",
+		    v);
 		return (1);
 	}
 
-	printf("%s: status=%s\n", sc->sc_dev.dv_xname,
+	printf("%s: status=%s\n", device_xname(&sc->sc_dev),
 		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits)));
 	return (1);
 }
@@ -2066,19 +2057,16 @@ gem_pint(struct gem_softc *sc)
 		if (v & GEM_MII_ANEG_FUL_DUPLX) {
 			sc->sc_mii.mii_media_active |= IFM_FDX;
 #ifdef GEM_DEBUG
-			aprint_debug("%s: link up: full duplex\n",
-			    sc->sc_dev.dv_xname);
+			aprint_debug_dev(&sc->sc_dev, "link up: full duplex\n");
 #endif
 		} else if (v & GEM_MII_ANEG_HLF_DUPLX) {
 			sc->sc_mii.mii_media_active |= IFM_HDX;
 #ifdef GEM_DEBUG
-			aprint_debug("%s: link up: half duplex\n",
-			    sc->sc_dev.dv_xname);
+			aprint_debug_dev(&sc->sc_dev, "link up: half duplex\n");
 #endif
 		} else {
 #ifdef GEM_DEBUG
-			aprint_debug("%s: duplex mismatch\n",
-			    sc->sc_dev.dv_xname);
+			aprint_debug_dev(&sc->sc_dev, "duplex mismatch\n");
 #endif
 		}
 		gem_statuschange(sc);
@@ -2089,8 +2077,7 @@ gem_pint(struct gem_softc *sc)
 		sc->sc_mii.mii_media_active = IFM_ETHER | IFM_NONE;
 		sc->sc_mii.mii_media_status = IFM_AVALID;
 #ifdef GEM_DEBUG
-			aprint_debug("%s: link down\n",
-			    sc->sc_dev.dv_xname);
+			aprint_debug_dev(&sc->sc_dev, "link down\n");
 #endif
 		gem_statuschange(sc);
 
@@ -2122,7 +2109,7 @@ gem_intr(v)
 
 	status = bus_space_read_4(t, h, GEM_STATUS);
 	DPRINTF(sc, ("%s: gem_intr: cplt 0x%x status %s\n",
-		sc->sc_dev.dv_xname, (status >> 19),
+		device_xname(&sc->sc_dev), (status >> 19),
 		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits))));
 
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
@@ -2144,7 +2131,7 @@ gem_intr(v)
 		int txstat = bus_space_read_4(t, h, GEM_MAC_TX_STATUS);
 		if (txstat & ~GEM_MAC_TX_XMIT_DONE)
 			printf("%s: MAC tx fault, status %x\n",
-			    sc->sc_dev.dv_xname, txstat);
+			    device_xname(&sc->sc_dev), txstat);
 		if (txstat & (GEM_MAC_TX_UNDERRUN | GEM_MAC_TX_PKT_TOO_LONG))
 			gem_init(ifp);
 	}
@@ -2161,7 +2148,7 @@ gem_intr(v)
 			gem_reset_rxdma(sc);
 		} else if (rxstat & ~(GEM_MAC_RX_DONE | GEM_MAC_RX_FRAME_CNT))
 			printf("%s: MAC rx fault, status 0x%02x\n",
-			    sc->sc_dev.dv_xname, rxstat);
+			    device_xname(&sc->sc_dev), rxstat);
 	}
 	if (status & GEM_INTR_PCS) {
 		r |= gem_pint(sc);
@@ -2171,17 +2158,15 @@ gem_intr(v)
 	if ((status & GEM_MAC_CONTROL_STATUS) != 0) {
 		status2 = bus_read_4(sc->sc_res[0], GEM_MAC_CONTROL_STATUS);
 		if ((status2 & GEM_MAC_PAUSED) != 0)
-			aprintf_debug("%s: PAUSE received (%d slots)\n",
-			    GEM_MAC_PAUSE_TIME(status2), sc->sc_dev.dv_xname);
+			aprintf_debug_dev(&sc->sc_dev, "PAUSE received (%d slots)\n",
+			    GEM_MAC_PAUSE_TIME(status2));
 		if ((status2 & GEM_MAC_PAUSE) != 0)
-			aprintf_debug("%s: transited to PAUSE state\n",
-			    sc->sc_dev.dv_xname);
+			aprintf_debug_dev(&sc->sc_dev, "transited to PAUSE state\n");
 		if ((status2 & GEM_MAC_RESUME) != 0)
-			aprintf_debug("%s: transited to non-PAUSE state\n",
-			    sc->sc_dev.dv_xname);
+			aprintf_debug_dev(&sc->sc_dev, "transited to non-PAUSE state\n");
 	}
 	if ((status & GEM_INTR_MIF) != 0)
-		aprintf_debug("%s: MIF interrupt\n", sc->sc_dev.dv_xname);
+		aprintf_debug_dev(&sc->sc_dev, "MIF interrupt\n");
 */
 #if NRND > 0
 	rnd_add_uint32(&sc->rnd_source, status);
@@ -2202,7 +2187,7 @@ gem_watchdog(ifp)
 		bus_space_read_4(sc->sc_bustag, sc->sc_h1, GEM_MAC_RX_STATUS),
 		bus_space_read_4(sc->sc_bustag, sc->sc_h1, GEM_MAC_RX_CONFIG)));
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 	++ifp->if_oerrors;
 
 	/* Try to get more packets going. */
@@ -2267,7 +2252,7 @@ gem_mii_readreg(self, phy, reg)
 			return (v & GEM_MIF_FRAME_DATA);
 	}
 
-	printf("%s: mii_read timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: mii_read timeout\n", device_xname(&sc->sc_dev));
 	return (0);
 }
 
@@ -2302,7 +2287,7 @@ gem_mii_writereg(self, phy, reg, val)
 			return;
 	}
 
-	printf("%s: mii_write timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: mii_write timeout\n", device_xname(&sc->sc_dev));
 }
 
 static void
@@ -2365,15 +2350,13 @@ gem_statuschange(struct gem_softc* sc)
 	bus_space_barrier(t, mac, GEM_MAC_TX_CONFIG, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 	if (!gem_bitwait(sc, mac, GEM_MAC_TX_CONFIG, GEM_MAC_TX_ENABLE, 0))
-		aprint_normal("%s: cannot disable TX MAC\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "cannot disable TX MAC\n");
 	bus_space_write_4(t, mac, GEM_MAC_TX_CONFIG, txcfg);
 	bus_space_write_4(t, mac, GEM_MAC_RX_CONFIG, 0);
 	bus_space_barrier(t, mac, GEM_MAC_RX_CONFIG, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 	if (!gem_bitwait(sc, mac, GEM_MAC_RX_CONFIG, GEM_MAC_RX_ENABLE, 0))
-		aprint_normal("%s: cannot disable RX MAC\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "cannot disable RX MAC\n");
 	bus_space_write_4(t, mac, GEM_MAC_RX_CONFIG, rxcfg);
 
 	v = bus_space_read_4(t, mac, GEM_MAC_CONTROL_CONFIG) &
@@ -2443,8 +2426,7 @@ gem_ser_mediachange(struct ifnet *ifp)
 	if (s == IFM_AUTO) {
 		if (sc->sc_mii_media != s) {
 #ifdef GEM_DEBUG
-			aprint_debug("%s: setting media to auto\n",
-			    sc->sc_dev.dv_xname);
+			aprint_debug_dev(&sc->sc_dev, "setting media to auto\n");
 #endif
 			sc->sc_mii_media = s;
 			if (ifp->if_flags & IFF_UP) {
@@ -2460,9 +2442,8 @@ gem_ser_mediachange(struct ifnet *ifp)
 			if (sc->sc_mii_media != t) {
 				sc->sc_mii_media = t;
 #ifdef GEM_DEBUG
-				aprint_debug("%s:"
-				    " setting media to 1000baseSX-%s\n",
-				    sc->sc_dev.dv_xname,
+				aprint_debug_dev(&sc->sc_dev,
+				    "setting media to 1000baseSX-%s\n",
 				    t == IFM_FDX ? "FDX" : "HDX");
 #endif
 				if (ifp->if_flags & IFF_UP) {

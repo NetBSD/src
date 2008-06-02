@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.127 2008/02/07 01:21:55 dyoung Exp $	*/
+/*	$NetBSD: if_de.c,v 1.127.6.1 2008/06/02 13:23:38 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.127 2008/02/07 01:21:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.127.6.1 2008/06/02 13:23:38 mjf Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5142,7 +5142,7 @@ tulip_attach(
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__) && NRND > 0
-    rnd_attach_source(&sc->tulip_rndsource, sc->tulip_dev.dv_xname,
+    rnd_attach_source(&sc->tulip_rndsource, device_xname(&sc->tulip_dev),
 		      RND_TYPE_NET, 0);
 #endif
 }
@@ -5749,7 +5749,7 @@ tulip_pci_attach(
 #endif
 
 #if defined(__NetBSD__)
-    strlcpy(sc->tulip_if.if_xname, self->dv_xname,
+    strlcpy(sc->tulip_if.if_xname, device_xname(self),
         sizeof(sc->tulip_if.if_xname));
     sc->tulip_if.if_softc = sc;
     sc->tulip_pc = pa->pa_pc;
@@ -5871,21 +5871,20 @@ tulip_pci_attach(
 	    const char *intrstr;
 
 	    if (pci_intr_map(pa, &intrhandle)) {
-		printf("%s: couldn't map interrupt\n", sc->tulip_dev.dv_xname);
+		aprint_error_dev(&sc->tulip_dev, "couldn't map interrupt\n");
 		return;
 	    }
 	    intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	    sc->tulip_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 					      intr_rtn, sc);
 	    if (sc->tulip_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		       sc->tulip_dev.dv_xname);
+		aprint_error_dev(&sc->tulip_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 		    printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	    }
-	    printf("%s: interrupting at %s\n", sc->tulip_dev.dv_xname, intrstr);
+	    printf("%s: interrupting at %s\n", device_xname(&sc->tulip_dev), intrstr);
 	}
 	sc->tulip_ats = shutdownhook_establish(tulip_shutdown, sc);
 	if (sc->tulip_ats == NULL)

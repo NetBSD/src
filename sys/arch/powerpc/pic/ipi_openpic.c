@@ -1,4 +1,4 @@
-/* $NetBSD: ipi_openpic.c,v 1.2 2007/10/17 19:56:45 garbled Exp $ */
+/* $NetBSD: ipi_openpic.c,v 1.2.26.1 2008/06/02 13:22:33 mjf Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -14,13 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.2 2007/10/17 19:56:45 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.2.26.1 2008/06/02 13:22:33 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include <sys/param.h>
@@ -68,7 +61,13 @@ setup_openpic_ipi(void)
 	ipiops.ppc_establish_ipi = openpic_establish_ipi;
 	ipiops.ppc_ipi_vector = IPI_VECTOR;
 
-	x = openpic_read(OPENPIC_IPI_VECTOR(1));
+	/* Some (broken) openpic's byteswap on read, but not write. */
+	openpic_write(OPENPIC_IPI_VECTOR(0), OPENPIC_IMASK);
+	x = openpic_read(OPENPIC_IPI_VECTOR(0));
+	if (x != OPENPIC_IMASK)
+		x = bswap32(openpic_read(OPENPIC_IPI_VECTOR(1)));
+	else
+		x = openpic_read(OPENPIC_IPI_VECTOR(1));
 	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
 	x |= (15 << OPENPIC_PRIORITY_SHIFT) | ipiops.ppc_ipi_vector;
 	openpic_write(OPENPIC_IPI_VECTOR(1), x);
@@ -88,7 +87,7 @@ openpic_send_ipi(int target, u_long mesg)
 			break;
 		case IPI_T_NOTME:
 			for (i = 0; i < ncpu; i++) {
-				if (i != cpu_number())
+				if (i != curcpu()->ci_index)
 					cpumask |= 1 << i;
 				atomic_setbits_ulong(&IPI[i], mesg);
 			}
@@ -97,7 +96,7 @@ openpic_send_ipi(int target, u_long mesg)
 			cpumask = 1 << target;
 			atomic_setbits_ulong(&IPI[target], mesg);
 	}
-	openpic_write(OPENPIC_IPI(cpu_number(), 1), cpumask);
+	openpic_write(OPENPIC_IPI(curcpu()->ci_index, 1), cpumask);
 }
 
 static void

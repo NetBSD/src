@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.51 2007/03/04 06:01:18 christos Exp $
+	$NetBSD: syscalls.master,v 1.51.36.1 2008/06/02 13:22:59 mjf Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -81,7 +81,7 @@
 18	OBSOL		stat
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
-20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
+20	NOARGS 		{ pid_t sys_getpid(void); }
 21	UNIMPL		old_mount
 22	UNIMPL		System V umount
 23	NOARGS		{ int sys_setuid(uid_t uid); }

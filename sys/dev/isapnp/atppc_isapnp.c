@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isapnp.c,v 1.7 2007/10/19 12:00:30 ad Exp $ */
+/* $NetBSD: atppc_isapnp.c,v 1.7.16.1 2008/06/02 13:23:33 mjf Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.7 2007/10/19 12:00:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.7.16.1 2008/06/02 13:23:33 mjf Exp $");
 
 #include "opt_atppc.h"
 
@@ -62,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.7 2007/10/19 12:00:30 ad Exp $");
 #include <dev/ic/atppcvar.h>
 #include <dev/isa/atppc_isadma.h>
 
-static int	atppc_isapnp_match(struct device *, struct cfdata *, void *);
-static void	atppc_isapnp_attach(struct device *, struct device *, void *);
+static int	atppc_isapnp_match(device_t, cfdata_t, void *);
+static void	atppc_isapnp_attach(device_t, device_t, void *);
 
 struct atppc_isapnp_softc {
 	struct atppc_softc sc_atppc;
@@ -72,22 +65,22 @@ struct atppc_isapnp_softc {
 	int sc_drq;
 };
 
-CFATTACH_DECL(atppc_isapnp, sizeof(struct atppc_isapnp_softc),
+CFATTACH_DECL_NEW(atppc_isapnp, sizeof(struct atppc_isapnp_softc),
     atppc_isapnp_match, atppc_isapnp_attach, NULL, NULL);
 
 static int atppc_isapnp_dma_start(struct atppc_softc *, void *, u_int,
 	u_int8_t);
 static int atppc_isapnp_dma_finish(struct atppc_softc *);
 static int atppc_isapnp_dma_abort(struct atppc_softc *);
-static int atppc_isapnp_dma_malloc(struct device *, void **, bus_addr_t *,
+static int atppc_isapnp_dma_malloc(device_t, void **, bus_addr_t *,
 	bus_size_t);
-static void atppc_isapnp_dma_free(struct device *, void **, bus_addr_t *,
+static void atppc_isapnp_dma_free(device_t, void **, bus_addr_t *,
 	bus_size_t);
 /*
  * atppc_isapnp_match: autoconf(9) match routine
  */
 static int
-atppc_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
+atppc_isapnp_match(device_t parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
@@ -98,7 +91,7 @@ atppc_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-atppc_isapnp_attach(struct device *parent, struct device *self, void *aux)
+atppc_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct atppc_softc *sc = device_private(self);
 	struct atppc_isapnp_softc *asc = device_private(self);
@@ -109,12 +102,12 @@ atppc_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	printf(": AT Parallel Port\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "error in region allocation\n");
 		return;
 	}
 
 	/* Attach */
+	sc->sc_dev = self;
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ipa->ipa_io[0].h;
 	sc->sc_has = 0;
@@ -173,20 +166,20 @@ atppc_isapnp_dma_abort(struct atppc_softc * lsc)
 
 /* Allocate memory for DMA over ISA bus */
 int
-atppc_isapnp_dma_malloc(struct device * dev, void ** buf, bus_addr_t * bus_addr,
+atppc_isapnp_dma_malloc(device_t dev, void ** buf, bus_addr_t * bus_addr,
 	bus_size_t size)
 {
-	struct atppc_isapnp_softc * sc = (struct atppc_isapnp_softc *) dev;
+	struct atppc_isapnp_softc * sc = device_private(dev);
 
 	return atppc_isadma_malloc(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
 }
 
 /* Free memory allocated by atppc_isa_dma_malloc() */
 void
-atppc_isapnp_dma_free(struct device * dev, void ** buf, bus_addr_t * bus_addr,
+atppc_isapnp_dma_free(device_t dev, void ** buf, bus_addr_t * bus_addr,
 	bus_size_t size)
 {
-	struct atppc_isapnp_softc * sc = (struct atppc_isapnp_softc *) dev;
+	struct atppc_isapnp_softc * sc = device_private(dev);
 
 	return atppc_isadma_free(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
 }

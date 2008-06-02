@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.13 2007/12/09 20:28:03 jmcneill Exp $	*/
+/*	$NetBSD: igphy.c,v 1.13.10.1 2008/06/02 13:23:35 mjf Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -55,13 +55,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -77,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.13 2007/12/09 20:28:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.13.10.1 2008/06/02 13:23:35 mjf Exp $");
 
 #include "opt_mii.h"
 
@@ -106,10 +99,10 @@ static void igphy_reset(struct mii_softc *);
 static void igphy_load_dspcode(struct mii_softc *);
 static void igphy_smartspeed_workaround(struct mii_softc *sc);
 
-static int	igphymatch(struct device *, struct cfdata *, void *);
-static void	igphyattach(struct device *, struct device *, void *);
+static int	igphymatch(device_t, cfdata_t, void *);
+static void	igphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL(igphy, sizeof(struct igphy_softc),
+CFATTACH_DECL_NEW(igphy, sizeof(struct igphy_softc),
     igphymatch, igphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	igphy_service(struct mii_softc *, struct mii_data *, int);
@@ -131,8 +124,7 @@ static const struct mii_phydesc igphys[] = {
 };
 
 static int
-igphymatch(struct device *parent, struct cfdata *match,
-    void *aux)
+igphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -143,7 +135,7 @@ igphymatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-igphyattach(struct device *parent, struct device *self, void *aux)
+igphyattach(device_t parent, device_t self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
@@ -154,6 +146,7 @@ igphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &igphy_funcs;
@@ -167,7 +160,7 @@ igphyattach(struct device *parent, struct device *self, void *aux)
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		aprint_error("no media present");

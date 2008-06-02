@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.32 2007/11/05 20:43:02 ad Exp $	*/
+/*	$NetBSD: undefined.c,v 1.32.16.1 2008/06/02 13:21:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32 2007/11/05 20:43:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32.16.1 2008/06/02 13:21:52 mjf Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -128,7 +128,7 @@ static int
 gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 {
 	struct lwp *l;
-	l = (curlwp == NULL) ? &lwp0 : curlwp;
+	l = curlwp;
 
 #ifdef THUMB_CODE
 	if (frame->tf_spsr & PSR_T_bit) {
@@ -150,9 +150,7 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 				ksi.ksi_code = TRAP_BRKPT;
 				ksi.ksi_addr = (u_int32_t *)addr;
 				ksi.ksi_trap = 0;
-				KERNEL_LOCK(1, l);
 				trapsignal(l, &ksi);
-				KERNEL_UNLOCK_LAST(l);
 				return 0;
 			}
 #ifdef KGDB
@@ -227,7 +225,7 @@ undefinedinstruction(trapframe_t *frame)
 #endif
 
 	/* Get the current lwp/proc structure or lwp0/proc0 if there is none. */
-	l = curlwp == NULL ? &lwp0 : curlwp;
+	l = curlwp;
 
 #ifdef __PROG26
 	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
@@ -258,9 +256,7 @@ undefinedinstruction(trapframe_t *frame)
 			ksi.ksi_signo = SIGILL;
 			ksi.ksi_code = ILL_ILLOPC;
 			ksi.ksi_addr = (u_int32_t *)(intptr_t) fault_pc;
-			KERNEL_LOCK(1, l);
 			trapsignal(l, &ksi);
-			KERNEL_UNLOCK_LAST(l);
 			userret(l);
 			return;
 		}
@@ -359,9 +355,7 @@ undefinedinstruction(trapframe_t *frame)
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (u_int32_t *)fault_pc;
 		ksi.ksi_trap = fault_instruction;
-		KERNEL_LOCK(1, l);
 		trapsignal(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 	}
 
 	if ((fault_code & FAULT_USER) == 0)
@@ -370,12 +364,10 @@ undefinedinstruction(trapframe_t *frame)
 #ifdef FAST_FPE
 	/* Optimised exit code */
 	{
-
 		/*
 		 * Check for reschedule request, at the moment there is only
 		 * 1 ast so this code should always be run
 		 */
-
 		if (curcpu()->ci_want_resched) {
 			/*
 			 * We are being preempted.
@@ -386,7 +378,6 @@ undefinedinstruction(trapframe_t *frame)
 		/* Invoke MI userret code */
 		mi_userret(l);
 	}
-
 #else
 	userret(l);
 #endif

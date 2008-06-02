@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.7.14.1 2008/04/03 12:42:31 mjf Exp $ */
+/* $NetBSD: xenbus.h,v 1.7.14.2 2008/06/02 13:22:53 mjf Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -83,7 +83,7 @@ struct xenbus_device {
 	xenbusdev_type_t xbusd_type;
 	union {
 		struct {
-			struct device *f_dev;
+			device_t f_dev;
 		} f;
 		struct {
 			void *b_cookie; /* private to backend driver */

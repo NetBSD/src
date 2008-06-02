@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.70 2007/12/20 21:08:19 dyoung Exp $	*/
+/*	$NetBSD: if_se.c,v 1.70.6.1 2008/06/02 13:23:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.70 2007/12/20 21:08:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.70.6.1 2008/06/02 13:23:50 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -344,7 +344,7 @@ seattach(parent, self, aux)
 	se_get_addr(sc, myaddr);
 
 	/* Initialize ifnet structure. */
-	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof(ifp->if_xname));
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), sizeof(ifp->if_xname));
 	ifp->if_softc = sc;
 	ifp->if_start = se_ifstart;
 	ifp->if_ioctl = se_ioctl;
@@ -475,8 +475,7 @@ se_ifstart(ifp)
 	    sc->sc_tbuf, len, SERETRIES,
 	    SETIMEOUT, NULL, XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_DATA_OUT);
 	if (error) {
-		printf("%s: not queued, error %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "not queued, error %d\n", error);
 		ifp->if_oerrors++;
 		ifp->if_flags &= ~IFF_OACTIVE;
 	} else
@@ -665,7 +664,7 @@ se_read(sc, data, datalen)
 		    len > MAX_SNAP) {
 #ifdef SEDEBUG
 			printf("%s: invalid packet size %d; dropping\n",
-			       sc->sc_dev.dv_xname, len);
+			       device_xname(&sc->sc_dev), len);
 #endif
 			ifp->if_ierrors++;
 			goto next_packet;
@@ -713,7 +712,7 @@ sewatchdog(ifp)
 {
 	struct se_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 	++ifp->if_oerrors;
 
 	se_reset(sc);
@@ -776,7 +775,7 @@ se_get_addr(sc, myaddr)
 	    (void *)&get_addr_cmd, sizeof(get_addr_cmd),
 	    myaddr, ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL,
 	    XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
-	printf("%s: ethernet address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: ethernet address %s\n", device_xname(&sc->sc_dev),
 	    ether_sprintf(myaddr));
 	return (error);
 }
@@ -883,7 +882,7 @@ se_set_multi(sc, addr)
 	int error;
 
 	if (sc->sc_debug)
-		printf("%s: set_set_multi: %s\n", sc->sc_dev.dv_xname,
+		printf("%s: set_set_multi: %s\n", device_xname(&sc->sc_dev),
 		    ether_sprintf(addr));
 
 	PROTOCMD(ctron_ether_set_multi, set_multi_cmd);
@@ -906,7 +905,7 @@ se_remove_multi(sc, addr)
 	int error;
 
 	if (sc->sc_debug)
-		printf("%s: se_remove_multi: %s\n", sc->sc_dev.dv_xname,
+		printf("%s: se_remove_multi: %s\n", device_xname(&sc->sc_dev),
 		    ether_sprintf(addr));
 
 	PROTOCMD(ctron_ether_remove_multi, remove_multi_cmd);
@@ -1101,8 +1100,7 @@ se_enable(sc)
 	    (error = scsipi_adapter_addref(adapt)) == 0)
 		sc->sc_enabled = 1;
 	else
-		printf("%s: device enable failed\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "device enable failed\n");
 
 	return (error);
 }

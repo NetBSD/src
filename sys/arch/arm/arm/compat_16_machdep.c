@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.9 2007/12/21 02:27:57 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.9.6.1 2008/06/02 13:21:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.9 2007/12/21 02:27:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.9.6.1 2008/06/02 13:21:52 mjf Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -139,9 +139,9 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #endif
 
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -261,7 +261,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	tf->tf_pc    = context.sc_pc;
 	tf->tf_spsr  = context.sc_spsr;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
@@ -272,7 +272,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }

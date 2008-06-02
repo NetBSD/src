@@ -1,4 +1,4 @@
-/* $NetBSD: i82596reg.h,v 1.3 2006/07/08 16:07:47 skrll Exp $ */
+/* $NetBSD: i82596reg.h,v 1.3.54.1 2008/06/02 13:23:22 mjf Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -58,7 +58,7 @@
 #define IEE_SCB_ACK	0xf000	/* Acknowledge mask */
 
 #define IEE_SCB_CUC_NOP	0x0000	/* NOP, does not affect state of unit */
-#define IEE_SCB_CUC_EXE	0x0100	/* Start execution off CMD on CBL */
+#define IEE_SCB_CUC_EXE	0x0100	/* Start execution of CMD on CBL */
 #define IEE_SCB_CUC_RES	0x0200	/* Resume operat. of CU after suspend */
 #define IEE_SCB_CUC_SUS	0x0300	/* Suspend exec. of cmds on CBL */
 #define IEE_SCB_CUC_ABR	0x0400	/* Abort current command */

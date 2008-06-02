@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.79 2008/01/10 21:22:49 skrll Exp $
+# $NetBSD: GENERIC,v 1.79.6.1 2008/06/02 13:22:07 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.79 $"
+#ident 		"GENERIC-$Revision: 1.79.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -79,6 +79,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 # Compatibility options
 options 	COMPAT_20	# compatability with NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -304,8 +305,9 @@ lpt*	at puc? port ?			# || ports on "universal" comm boards
 # GSC SCSI controllers
 oosiop*	at gsc?				# NCR 53c700
 osiop*	at gsc? flags 0x00000		# NCR 53c710
-#siop*	at gsc? 			# NCR 53c720 (Fast/Wide)
-#siop*	at mainbus0 			# NCR 53c720 (Fast/Wide)
+siop*	at gsc? irq 3			# NCR 53c720 (Fast/Wide)
+siop*	at mainbus0 irq 3		# NCR 53c720 (Fast/Wide)
+siop*	at phantomas? irq 3		# NCR 53c720 (Fast/Wide)
 
 # PCI SCSI controllers
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI

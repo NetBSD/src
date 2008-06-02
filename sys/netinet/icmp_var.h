@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.25 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.25.70.1 2008/06/02 13:24:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,21 +38,30 @@
  * Variables related to this implementation
  * of the internet control message protocol.
  */
-struct	icmpstat {
-/* statistics related to icmp packets generated */
-	u_quad_t icps_error;		/* # of calls to icmp_error */
-	u_quad_t icps_oldshort;		/* no error 'cuz old ip too short */
-	u_quad_t icps_oldicmp;		/* no error 'cuz old was icmp */
-	u_quad_t icps_outhist[ICMP_MAXTYPE + 1];
-/* statistics related to input messages processed */
-	u_quad_t icps_badcode;		/* icmp_code out of range */
-	u_quad_t icps_tooshort;		/* packet < ICMP_MINLEN */
-	u_quad_t icps_checksum;		/* bad checksum */
-	u_quad_t icps_badlen;		/* calculated bound mismatch */
-	u_quad_t icps_reflect;		/* number of responses */
-	u_quad_t icps_inhist[ICMP_MAXTYPE + 1];
-	u_quad_t icps_pmtuchg;		/* path MTU changes */
-};
+
+/*
+ * ICMP stastistics.
+ * Each counter is an unsigned 64-bit value.
+ */
+#define	ICMP_STAT_ERROR		0	/* # of calls to icmp_error */
+#define	ICMP_STAT_OLDSHORT	1	/* no error (old ip too short) */
+#define	ICMP_STAT_OLDICMP	2	/* no error (old was icmp) */
+#define	ICMP_STAT_OUTHIST	3	/* # of output messages */
+		/* space for ICMP_MAXTYPE + 1 (19) counters */
+#define	ICMP_STAT_BADCODE	22	/* icmp_code out of range */
+#define	ICMP_STAT_TOOSHORT	23	/* packet < ICMP_MINLEN */
+#define	ICMP_STAT_CHECKSUM	24	/* bad checksum */
+#define	ICMP_STAT_BADLEN	25	/* calculated bound mismatch */
+#define	ICMP_STAT_REFLECT	26	/* number of responses */
+#define	ICMP_STAT_INHIST	27	/* # of input messages */
+		/* space for ICMP_MAXTYPE + 1 (19) counters */
+#define	ICMP_STAT_PMTUCHG	46	/* path MTU changes */
+
+#define	ICMP_NSTATS		47
+
+#if ICMP_MAXTYPE != 18
+#error ICMP_MAXTYPE too large for ICMP statistics
+#endif
 
 /*
  * Names for ICMP sysctl objects
@@ -80,13 +89,9 @@ struct	icmpstat {
 }
 
 #ifdef _KERNEL
-extern struct	icmpstat icmpstat;
 
-#ifdef __NO_STRICT_ALIGNMENT
-#define	ICMP_HDR_ALIGNED_P(ic)	1
-#else
-#define	ICMP_HDR_ALIGNED_P(ic)	((((vaddr_t) (ic)) & 3) == 0)
-#endif
+void	icmp_statinc(u_int stat);
+
 #endif /* _KERNEL_ */
 
 #endif /* !_NETINET_ICMP_VAR_H_ */

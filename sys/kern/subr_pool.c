@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_pool.c,v 1.151.6.1 2008/04/03 12:43:03 mjf Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.151.6.2 2008/06/02 13:24:11 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.151.6.1 2008/04/03 12:43:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.151.6.2 2008/06/02 13:24:11 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -814,14 +807,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_entered_file = NULL;
 	pp->pr_entered_line = 0;
 
-	/*
-	 * XXXAD hack to prevent IP input processing from blocking.
-	 */
-	if (ipl == IPL_SOFTNET) {
-		mutex_init(&pp->pr_lock, MUTEX_DEFAULT, IPL_VM);
-	} else {
-		mutex_init(&pp->pr_lock, MUTEX_DEFAULT, ipl);
-	}
+	mutex_init(&pp->pr_lock, MUTEX_DEFAULT, ipl);
 	cv_init(&pp->pr_cv, wchan);
 	pp->pr_ipl = ipl;
 
@@ -1629,9 +1615,8 @@ pool_reclaim(struct pool *pp)
 	}
 
 	/*
-	 * XXXSMP Because mutexes at IPL_SOFTXXX are still spinlocks,
-	 * and we are called from the pagedaemon without kernel_lock.
-	 * Does not apply to IPL_SOFTBIO.
+	 * XXXSMP Because we do not want to cause non-MPSAFE code
+	 * to block.
 	 */
 	if (pp->pr_ipl == IPL_SOFTNET || pp->pr_ipl == IPL_SOFTCLOCK ||
 	    pp->pr_ipl == IPL_SOFTSERIAL) {
@@ -2074,15 +2059,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	if (palloc == NULL && ipl == IPL_NONE)
 		palloc = &pool_allocator_nointr;
 	pool_init(pp, size, align, align_offset, flags, wchan, palloc, ipl);
-
-	/*
-	 * XXXAD hack to prevent IP input processing from blocking.
-	 */
-	if (ipl == IPL_SOFTNET) {
-		mutex_init(&pc->pc_lock, MUTEX_DEFAULT, IPL_VM);
-	} else {
-		mutex_init(&pc->pc_lock, MUTEX_DEFAULT, ipl);
-	}
+	mutex_init(&pc->pc_lock, MUTEX_DEFAULT, ipl);
 
 	if (ctor == NULL) {
 		ctor = (int (*)(void *, void *, int))nullop;
@@ -2392,7 +2369,7 @@ pool_cache_cpu_enter(pool_cache_t pc, int *s)
 	 * CPU-local data.  To avoid touching shared state, we
 	 * pull the neccessary information from CPU local data.
 	 */
-	crit_enter();
+	KPREEMPT_DISABLE(curlwp);
 	cc = pc->pc_cpus[curcpu()->ci_index];
 	KASSERT(cc->cc_cache == pc);
 	if (cc->cc_ipl != IPL_NONE) {
@@ -2410,13 +2387,10 @@ pool_cache_cpu_exit(pool_cache_cpu_t *cc, int *s)
 	if (cc->cc_ipl != IPL_NONE) {
 		splx(*s);
 	}
-	crit_exit();
+	KPREEMPT_ENABLE(curlwp);
 }
 
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline))
-#endif
-pool_cache_cpu_t *
+pool_cache_cpu_t * __noinline
 pool_cache_get_slow(pool_cache_cpu_t *cc, int *s, void **objectp,
 		    paddr_t *pap, int flags)
 {
@@ -2567,10 +2541,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 	return object;
 }
 
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline))
-#endif
-pool_cache_cpu_t *
+pool_cache_cpu_t * __noinline
 pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 {
 	pcg_t *pcg, *cur;

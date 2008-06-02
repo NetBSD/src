@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.h,v 1.1 2002/06/06 19:48:07 fredette Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.1.112.1 2008/06/02 13:22:07 mjf Exp $	*/
 
 /*	$OpenBSD: eisa_machdep.h,v 1.2 2000/04/18 20:55:02 mickey Exp $	*/
 
@@ -41,13 +41,13 @@ typedef int eisa_intr_handle_t;
 struct hppa_eisa_chipset {
 	void	*ec_v;
 
-	void	(*ec_attach_hook) __P((struct device *, struct device *,
-				       struct eisabus_attach_args *));
-	int	(*ec_intr_map) __P((void *, u_int, int *));
-	const char *(*ec_intr_string) __P((void *, int));
-	void	*(*ec_intr_establish) __P((void *, int, int, int,
-					   int (*)(void *), void *));
-	void	(*ec_intr_disestablish) __P((void *, void *));
+	void	(*ec_attach_hook)(struct device *, struct device *,
+				       struct eisabus_attach_args *);
+	int	(*ec_intr_map)(void *, u_int, int *);
+	const char *(*ec_intr_string)(void *, int);
+	void	*(*ec_intr_establish)(void *, int, int, int,
+					   int (*)(void *), void *);
+	void	(*ec_intr_disestablish)(void *, void *);
 };
 
 #if 0

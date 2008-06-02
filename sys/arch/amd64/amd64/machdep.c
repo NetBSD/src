@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.85 2008/02/12 17:52:19 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85.6.1 2008/06/02 13:21:48 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
+ * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -84,7 +77,6 @@
  *
  */
 
-
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -120,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2008/02/12 17:52:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85.6.1 2008/06/02 13:21:48 mjf Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -187,6 +179,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2008/02/12 17:52:19 joerg Exp $");
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
 
+#include <x86/cputypes.h>
 #include <x86/cpu_msr.h>
 #include <x86/cpuvar.h>
 
@@ -238,13 +231,15 @@ int	cpureset_delay = CPURESET_DELAY;
 int     cpureset_delay = 2000; /* default to 2s */
 #endif
 
+int	cpu_class = CPUCLASS_686;
+
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
 #endif
 
 int	physmem;
-u_int64_t	dumpmem_low;
-u_int64_t	dumpmem_high;
+uint64_t	dumpmem_low;
+uint64_t	dumpmem_high;
 int	cpu_class;
 
 vaddr_t	msgbuf_vaddr;
@@ -367,7 +362,7 @@ cpu_startup(void)
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
-	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, VM_MAP_PAGEABLE);
+	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, 0);
 	lkm_map_store.pmap = pmap_kernel();
 	lkm_map = &lkm_map_store;
 
@@ -503,6 +498,7 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
+	extern uint64_t tsc_freq;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -525,6 +521,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "diskinfo", NULL,
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "tsc_freq", NULL,
+		       NULL, 0, &tsc_freq, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 void
@@ -537,10 +538,10 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 
-	tf->tf_rip = (u_int64_t)catcher;
+	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_rsp = (u_int64_t)f;
+	tf->tf_rsp = (uint64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
@@ -557,7 +558,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct trapframe *tf = l->l_md.md_regs;
 	char *sp;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -606,10 +607,10 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, tocopy);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -703,7 +704,7 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t	dumpmag = 0x8fca0101;	/* magic number */
+uint32_t	dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
@@ -997,7 +998,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (u_int64_t)l->l_proc->p_psstr;
+	tf->tf_rbx = (uint64_t)l->l_proc->p_psstr;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
@@ -1023,38 +1024,44 @@ extern  struct user *proc0paddr;
 void
 setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl, int sel)
 {
+
+	kpreempt_disable();
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
 
-	gd->gd_looffset = (u_int64_t)func & 0xffff;
+	gd->gd_looffset = (uint64_t)func & 0xffff;
 	gd->gd_selector = sel;
 	gd->gd_ist = ist;
 	gd->gd_type = type;
 	gd->gd_dpl = dpl;
 	gd->gd_p = 1;
-	gd->gd_hioffset = (u_int64_t)func >> 16;
+	gd->gd_hioffset = (uint64_t)func >> 16;
 	gd->gd_zero = 0;
 	gd->gd_xx1 = 0;
 	gd->gd_xx2 = 0;
 	gd->gd_xx3 = 0;
 
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
+	kpreempt_enable();
 }
 
 void
 unsetgate( struct gate_descriptor *gd)
 {
+
+	kpreempt_disable();
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
 
 	memset(gd, 0, sizeof (*gd));
 
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
+	kpreempt_enable();
 }
 
 void
-setregion(struct region_descriptor *rd, void *base, u_int16_t limit)
+setregion(struct region_descriptor *rd, void *base, uint16_t limit)
 {
 	rd->rd_limit = limit;
-	rd->rd_base = (u_int64_t)base;
+	rd->rd_base = (uint64_t)base;
 }
 
 /*
@@ -1083,13 +1090,13 @@ set_sys_segment(struct sys_segment_descriptor *sd, void *base, size_t limit,
 {
 	memset(sd, 0, sizeof *sd);
 	sd->sd_lolimit = (unsigned)limit;
-	sd->sd_lobase = (u_int64_t)base;
+	sd->sd_lobase = (uint64_t)base;
 	sd->sd_type = type;
 	sd->sd_dpl = dpl;
 	sd->sd_p = 1;
 	sd->sd_hilimit = (unsigned)limit >> 16;
 	sd->sd_gran = gran;
-	sd->sd_hibase = (u_int64_t)base >> 24;
+	sd->sd_hibase = (uint64_t)base >> 24;
 }
 
 void
@@ -1222,17 +1229,21 @@ init_x86_64(paddr_t first_avail)
 #ifndef XEN
 	int first16q, ist;
 	extern struct extent *iomem_ex;
-	u_int64_t seg_start, seg_end;
-	u_int64_t seg_start1, seg_end1;
+	uint64_t seg_start, seg_end;
+	uint64_t seg_start1, seg_end1;
 #if !defined(REALEXTMEM) && !defined(REALBASEMEM)
 	struct btinfo_memmap *bim;
-	u_int64_t addr, size, io_end, new_physmem;
+	uint64_t addr, size, io_end, new_physmem;
 #endif
+	cpu_probe(&cpu_info_primary);
 #else /* XEN */
+	cpu_probe(&cpu_info_primary);
+	KASSERT(HYPERVISOR_shared_info != NULL);
+	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
+
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
 	first_bt_vaddr = (vaddr_t) (first_avail + KERNBASE + PAGE_SIZE * 2);
 	__PRINTK(("first_bt_vaddr 0x%lx\n", first_bt_vaddr));
-	cpu_probe_features(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 	/* not on Xen... */
 	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
@@ -1526,7 +1537,7 @@ init_x86_64(paddr_t first_avail)
 		if (seg_start != seg_end) {
 			if (seg_start <= (16 * 1024 * 1024) &&
 			    first16q != VM_FREELIST_DEFAULT) {
-				u_int64_t tmp;
+				uint64_t tmp;
 
 				if (seg_end > (16 * 1024 * 1024))
 					tmp = (16 * 1024 * 1024);
@@ -1561,7 +1572,7 @@ init_x86_64(paddr_t first_avail)
 		if (seg_start1 != seg_end1) {
 			if (seg_start1 <= (16 * 1024 * 1024) &&
 			    first16q != VM_FREELIST_DEFAULT) {
-				u_int64_t tmp;
+				uint64_t tmp;
 
 				if (seg_end1 > (16 * 1024 * 1024))
 					tmp = (16 * 1024 * 1024);
@@ -1605,6 +1616,7 @@ init_x86_64(paddr_t first_avail)
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
+	kpreempt_disable();
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
@@ -1739,6 +1751,7 @@ init_x86_64(paddr_t first_avail)
 #ifdef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 #endif
+	kpreempt_enable();
 
 	setregion(&region, gdtstore, DYNSEL_START - 1);
 	lgdt(&region);
@@ -1755,6 +1768,17 @@ init_x86_64(paddr_t first_avail)
 
 	init_x86_64_ksyms();
 
+#ifndef XEN
+	intr_default_setup();
+#else
+	events_default_setup();
+#endif
+
+	splraise(IPL_HIGH);
+	x86_enable_intr();
+
+	x86_init();
+
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -1766,17 +1790,6 @@ init_x86_64(paddr_t first_avail)
 		kgdb_connect(1);
 	}
 #endif
-
-#ifndef XEN
-	intr_default_setup();
-#else
-	events_default_setup();
-#endif
-
-	splraise(IPL_HIGH);
-	x86_enable_intr();
-
-	x86_init();
 }
 
 void
@@ -1803,11 +1816,12 @@ cpu_reset(void)
 	 * Try to cause a triple fault and watchdog reset by making the IDT
 	 * invalid and causing a fault.
 	 */
+	kpreempt_disable();
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);           
 	pmap_changeprot_local(idt_vaddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
-
 	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
+	kpreempt_enable();
 	breakpoint();
 
 #if 0
@@ -1899,12 +1913,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.7 2007/12/20 23:02:58 dsl Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.7.6.1 2008/06/02 13:23:04 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.7 2007/12/20 23:02:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.7.6.1 2008/06/02 13:23:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -283,11 +283,11 @@ linux32_sys_rt_sigprocmask(struct lwp *l, const struct linux32_sys_rt_sigprocmas
 		linux32_to_native_sigset(&ns, &nls32);
 	}
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = sigprocmask1(l, how,
 	    SCARG_P32(uap, set) ? &ns : NULL,
 	    SCARG_P32(uap, oset) ? &os : NULL);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
       
         if (error != 0)
 		return error;

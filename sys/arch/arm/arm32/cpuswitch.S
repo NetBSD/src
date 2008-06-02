@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.55.6.1 2008/04/03 12:42:12 mjf Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.55.6.2 2008/06/02 13:21:52 mjf Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -80,14 +80,17 @@
 #include "opt_armfpe.h"
 #include "opt_arm32_pmap.h"
 #include "opt_multiprocessor.h"
+#include "opt_cpuoptions.h"
 #include "opt_lockdebug.h"
 
 #include "assym.h"
 #include <arm/arm32/pte.h>
 #include <machine/param.h>
-#include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/asm.h>
+#include <machine/cpu.h>
+
+	RCSID("$NetBSD: cpuswitch.S,v 1.55.6.2 2008/06/02 13:21:52 mjf Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -99,46 +102,25 @@
  * These keep FIQ's enabled since FIQ's are special.
  */
 
+#ifdef _ARM_ARCH_6
+#define	IRQdisable	cpsid	i
+#define	IRQenable	cpsie	i
+#else
 #define IRQdisable \
 	mrs	r14, cpsr ; \
 	orr	r14, r14, #(I32_bit) ; \
-	msr	cpsr_c, r14 ; \
+	msr	cpsr_c, r14
 
 #define IRQenable \
 	mrs	r14, cpsr ; \
 	bic	r14, r14, #(I32_bit) ; \
-	msr	cpsr_c, r14 ; \
+	msr	cpsr_c, r14
 
-	.text
-
-#ifdef MULTIPROCESSOR
-.Lcpu_info_store:
-	.word	_C_LABEL(cpu_info_store)
-.Lcurlwp:
-	/* FIXME: This is bogus in the general case. */
-	.word	_C_LABEL(cpu_info_store) + CI_CURLWP
-
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
-#else
-.Lcurlwp:
-	.word	_C_LABEL(curlwp)
-
-.Lcurpcb:
-	.word	_C_LABEL(curpcb)
 #endif
 
-#ifndef MULTIPROCESSOR
-	.data
-	.global	_C_LABEL(curpcb)
-_C_LABEL(curpcb):
-	.word	0x00000000
 	.text
-#endif
-
-.Lblock_userspace_access:
-	.word	_C_LABEL(block_userspace_access)
-
+.Lpmap_previous_active_lwp:
+	.word	_C_LABEL(pmap_previous_active_lwp)
 
 /*
  * struct lwp *
@@ -147,38 +129,53 @@ _C_LABEL(curpcb):
  * Switch to the specified next LWP
  * Arguments:
  *
- *	r0	'struct lwp *' of the current LWP
+ *	r0	'struct lwp *' of the current LWP (or NULL if exiting)
  *	r1	'struct lwp *' of the LWP to switch to
+ *	r2	returning
  */
 ENTRY(cpu_switchto)
 	mov	ip, sp
 	stmfd	sp!, {r4-r7, ip, lr}
 
-	/* move lwps and new pcb into caller saved registers */
+	/* move lwps into caller saved registers */
 	mov	r6, r1
 	mov	r4, r0
-	ldr	r7, [r6, #(L_ADDR)]
+
+#ifdef PROCESS_ID_CURCPU
+	GET_CURCPU(r7)
+#elif defined(PROCESS_ID_IS_CURLWP)
+	mcr	p15, 0, r0, c13, c0, 4		/* get old lwp (r4 maybe 0) */
+	ldr	r7, [r0, #(L_CPU)]		/* get cpu from old lwp */
+#elif !defined(MULTIPROCESSOR) 
+	ldr	r7, [r6, #L_CPU]		/* get cpu from new lwp */
+#else
+#error curcpu() method not defined
+#endif
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
-	/* rem: r7 = new pcb */
+	/* rem: r7 = curcpu() */
 	
 	IRQdisable
 
 #ifdef MULTIPROCESSOR
-	/* XXX use curcpu() */
-	ldr	r0, .Lcpu_info_store
-	str	r0, [r6, #(L_CPU)]
+	str	r7, [r6, #(L_CPU)]
 #else
 	/* l->l_cpu initialized in fork1() for single-processor */
 #endif
 
-	/* We have a new curlwp and pcb so make a note of them */
-	ldr	r0, .Lcurlwp
-	ldr	r1, .Lcurpcb
+#if defined(PROCESS_ID_IS_CURLWP)
+	mcr	p15, 0, r6, c13, c0, 4		/* set current lwp */
+#endif
+#if !defined(PROCESS_ID_IS_CURLWP) || defined(MULTIPROCESSOR)
+	/* We have a new curlwp now so make a note it */
+	str	r6, [r7, #(CI_CURLWP)]
+#endif
 
-	str	r6, [r0]
-	str	r7, [r1]
+	/* Hook in a new pcb */
+	ldr	r0, [r6, #(L_ADDR)]
+	str	r0, [r7, #(CI_CURPCB)]
+	mov	r7, r0
 
 	/* At this point we can allow IRQ's again. */
 	IRQenable
@@ -194,7 +191,7 @@ ENTRY(cpu_switchto)
 	 * not need to save the current context. Instead we can jump
 	 * straight to restoring the context for the new process.
 	 */
-	teq	r4, #0x00000000
+	teq	r4, #0
 	beq	.Ldo_switch
 
 	/* rem: r4 = old lwp */
@@ -208,15 +205,22 @@ ENTRY(cpu_switchto)
 	ldr	r5, [r4, #(L_ADDR)]
 
 	/* Save all the registers in the old lwp's pcb */
-#ifndef __XSCALE__
-	add	r0, r5, #(PCB_R8)
-	stmia	r0, {r8-r13}
-#else
+#if defined(__XSCALE__) || defined(_ARM_ARCH_6)
 	strd	r8, [r5, #(PCB_R8)]
 	strd	r10, [r5, #(PCB_R10)]
 	strd	r12, [r5, #(PCB_R12)]
+#else
+	add	r0, r5, #(PCB_R8)
+	stmia	r0, {r8-r13}
 #endif
 
+#ifdef _ARM_ARCH_6
+	/*
+	 * Save user read/write thread/process id register
+	 */
+	mrc	p15, 0, r0, c13, c0, 2
+	str	r0, [r5, #(PCB_USER_PID_RW)]
+#endif
 	/*
 	 * NOTE: We can now use r8-r13 until it is time to restore
 	 * them for the new process.
@@ -228,7 +232,6 @@ ENTRY(cpu_switchto)
 	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
 
-	/* What else needs to be saved? Only FPA stuff when that is supported */
 #ifdef FPU_VFP
 	/*
 	 * Now's a good time to 'save' the VFP context.  Note that we
@@ -241,29 +244,43 @@ ENTRY(cpu_switchto)
 	/* Restore saved context */
 
 .Ldo_switch:
-	mov	r0, r4
-	mov	r1, r6
-	bl	_C_LABEL(pmap_switch)
-
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
 
+#ifdef _ARM_ARCH_6
+	/*
+	 * Restore user thread/process id registers
+	 */
+	ldr	r0, [r7, #(PCB_USER_PID_RW)]
+	mcr	p15, 0, r0, c13, c0, 2
+	ldr	r0, [r7, #(PCB_USER_PID_RO)]
+	mcr	p15, 0, r0, c13, c0, 3
+#endif
+
 	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
 
 	/* Restore all the saved registers */
-#ifndef __XSCALE__
-	add	r0, r7, #PCB_R8
-	ldmia	r0, {r8-r13}
-#else
+#ifdef __XSCALE__
 	ldr	r8, [r7, #(PCB_R8)]
 	ldr	r9, [r7, #(PCB_R9)]
 	ldr	r10, [r7, #(PCB_R10)]
 	ldr	r11, [r7, #(PCB_R11)]
 	ldr	r12, [r7, #(PCB_R12)]
 	ldr	r13, [r7, #(PCB_SP)]
+#elif defined(_ARM_ARCH_6)
+	ldrd	r8, [r7, #(PCB_R8)]
+	ldrd	r10, [r7, #(PCB_R10)]
+	ldrd	r12, [r7, #(PCB_R12)]
+#else
+	add	r0, r7, #PCB_R8
+	ldmia	r0, {r8-r13}
 #endif
+
+	/* Record the old lwp for pmap_activate()'s benefit */
+	ldr	r1, .Lpmap_previous_active_lwp
+	str	r4, [r1]
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = new lwp's proc */
@@ -337,3 +354,122 @@ ENTRY(lwp_trampoline)
 	PULLFRAME
 
 	movs	pc, lr			/* Exit */
+
+#ifdef __HAVE_FAST_SOFTINTS
+/*
+ *	Called at IPL_HIGH
+ *	r0 = new lwp
+ *	r1 = ipl for softint_dispatch
+ */
+ENTRY_NP(softint_switch)
+	stmfd	sp!, {r4, r6, r7, lr}
+
+	ldr	r7, [r0, #L_CPU]		/* get curcpu */
+#if defined(PROCESS_ID_IS_CURLWP)
+	mrc	p15, 0, r4, c13, c0, 4		/* get old lwp */
+#else
+	ldr	r4, [r7, #(CI_CURLWP)]		/* get old lwp */
+#endif
+	mrs	r6, cpsr			/* we need to save this */
+
+	/*
+	 * If the soft lwp blocks, it needs to return to softint_tramp
+	 */
+	mov	r2, sp				/* think ip */
+	adr	r3, softint_tramp		/* think lr */
+	stmfd	sp!, {r2-r3}
+	stmfd	sp!, {r4-r7}
+
+	mov	r5, r0				/* save new lwp */
+
+	ldr	r2, [r4, #(L_ADDR)]		/* get old lwp's pcb */
+
+	/* Save all the registers into the old lwp's pcb */
+#if defined(__XSCALE__) || defined(_ARM_ARCH_6)
+	strd	r8, [r2, #(PCB_R8)]
+	strd	r10, [r2, #(PCB_R10)]
+	strd	r12, [r2, #(PCB_R12)]
+#else
+	add	r3, r2, #(PCB_R8)
+	stmia	r3, {r8-r13}
+#endif
+
+	/* this is an invariant so load before disabling intrs */
+	ldr	r2, [r5, #(L_ADDR)]	/* get new lwp's pcb */
+
+	IRQdisable
+	/*
+	 * We're switching to a bound LWP so its l_cpu is already correct.
+	 */
+#if defined(PROCESS_ID_IS_CURLWP)
+	mcr	p15, 0, r5, c13, c0, 4		/* save new lwp */
+#endif
+#if !defined(PROCESS_ID_IS_CURLWP) || defined(MULTIPROCESSOR)
+	str	r5, [r7, #(CI_CURLWP)]		/* save new lwp */
+#endif
+
+	/* Hook in a new pcb */
+	str	r2, [r7, #(CI_CURPCB)]
+
+	/*
+	 * Normally, we'd get {r8-r13} but since this is a softint lwp
+	 * it's existing state doesn't matter.  We start the stack just
+	 * below the trapframe.
+	 */
+	ldr	sp, [r2, #(PCB_TF)]	/* get new lwp's stack ptr */
+
+	/* At this point we can allow IRQ's again. */
+	IRQenable
+
+					/* r1 still has ipl */
+	mov	r0, r4			/* r0 has pinned (old) lwp */
+	bl	_C_LABEL(softint_dispatch)
+	/*
+	 * If we've returned, we need to change everything back and return.
+	 */
+	ldr	r2, [r4, #(L_ADDR)]	/* get pinned lwp's pcb */
+
+	IRQdisable
+	/*
+	 * We don't need to restore all the registers since another lwp was
+	 * never executed.  But we do need the SP from the formerly pinned lwp.
+	 */
+
+#if defined(PROCESS_ID_IS_CURLWP)
+	mcr	p15, 0, r4, c13, c0, 4		/* restore pinned lwp */
+#endif
+#if !defined(PROCESS_ID_IS_CURLWP) || defined(MULTIPROCESSOR)
+	str	r4, [r7, #(CI_CURLWP)]		/* restore pinned lwp */
+#endif
+	str	r2, [r7, #(CI_CURPCB)]		/* restore the curpcb */
+	ldr	sp, [r2, #(PCB_SP)]	/* now running on the old stack. */
+
+	/* At this point we can allow IRQ's again. */
+	msr	cpsr_c, r6
+
+	/*
+	 * Grab the registers that got pushed at the start and return.
+	 */
+	ldmfd	sp!, {r4-r7, ip, lr}	/* eat switch frame */
+	ldmfd	sp!, {r4, r6, r7, pc}	/* pop stack and return */
+
+END(softint_switch)
+
+/*
+ * r0 = previous LWP (the soft lwp)
+ * r4 = original LWP (the current lwp)
+ * r6 = original CPSR
+ * r7 = curcpu()
+ */
+ENTRY_NP(softint_tramp)
+	ldr	r3, [r7, #(CI_MTX_COUNT)]	/* readust after mi_switch */
+	add	r3, r3, #1
+	str	r3, [r7, #(CI_MTX_COUNT)]
+
+	mov	r3, #0				/* tell softint_dispatch */
+	str	r3, [r0, #(L_CTXSWTCH)]		/*    the soft lwp blocked */
+
+	msr	cpsr_c, r6			/* restore interrupts */
+	ldmfd	sp!, {r4, r6, r7, pc}		/* pop stack and return */
+END(softint_tramp)
+#endif /* __HAVE_FAST_SOFTINTS */

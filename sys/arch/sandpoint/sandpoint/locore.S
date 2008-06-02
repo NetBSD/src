@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2008/02/05 22:31:51 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.12.6.1 2008/06/02 13:22:36 mjf Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -147,8 +147,8 @@ _C_LABEL(disable_intr):
 	mtmsr	3
 	blr
 
-	.globl	_C_LABEL(sandpoint_reboot)
-_C_LABEL(sandpoint_reboot):
+	.globl	_C_LABEL(jump_to_ppc_reset_entry)
+_C_LABEL(jump_to_ppc_reset_entry):
 	mfmsr	3
 	ori	3,3,PSL_IP@l
 	mtmsr	3

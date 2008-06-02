@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.31.6.1 2008/04/03 12:42:30 mjf Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.31.6.2 2008/06/02 13:22:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -80,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.6.1 2008/04/03 12:42:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.31.6.2 2008/06/02 13:22:51 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -161,7 +154,7 @@ do {									\
 #define _qe(bus, dev, fcn, vend, prod) \
 	{_m1tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
 struct {
-	u_int32_t tag;
+	uint32_t tag;
 	pcireg_t id;
 } pcim1_quirk_tbl[] = {
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX1),
@@ -475,7 +468,7 @@ mode2:
 }
 
 int
-pci_mode_detect()
+pci_mode_detect(void)
 {
 
 #ifdef PCI_CONF_MODE
@@ -485,7 +478,7 @@ pci_mode_detect()
 #error Invalid PCI configuration mode.
 #endif
 #else
-	u_int32_t sav, val;
+	uint32_t sav, val;
 	int i;
 	pcireg_t idreg;
 

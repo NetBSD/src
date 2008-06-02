@@ -1,9 +1,7 @@
-/*	$NetBSD: dbutils.c,v 1.3 2007/12/11 13:16:01 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: dbutils - AML debugger utilities
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,13 +114,11 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.3 2007/12/11 13:16:01 lukem Exp $");
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acdebug.h>
-#include <dist/acpica/acdisasm.h>
+#include "acpi.h"
+#include "acnamesp.h"
+#include "acdebug.h"
+#include "acdisasm.h"
 
 
 #ifdef ACPI_DEBUGGER
@@ -252,8 +248,7 @@ AcpiDbDumpExternalObject (
     {
     case ACPI_TYPE_ANY:
 
-        AcpiOsPrintf ("[Object Reference] = %p", ObjDesc->Reference.Handle);
-        AcpiDmDisplayInternalObject (ObjDesc->Reference.Handle, NULL);
+        AcpiOsPrintf ("[Null Object] (Type=0)\n");
         break;
 
 
@@ -304,7 +299,7 @@ AcpiDbDumpExternalObject (
 
     case ACPI_TYPE_LOCAL_REFERENCE:
 
-        AcpiOsPrintf ("[Object Reference] = %p", ObjDesc->Reference.Handle);
+        AcpiOsPrintf ("[Object Reference] = ", ObjDesc->Reference.Handle);
         AcpiDmDisplayInternalObject (ObjDesc->Reference.Handle, NULL);
         break;
 

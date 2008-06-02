@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.243.6.3 2008/04/06 09:58:51 mjf Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.243.6.4 2008/06/02 13:23:48 mjf Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -14,13 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -146,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.243.6.3 2008/04/06 09:58:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.243.6.4 2008/06/02 13:23:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -521,8 +514,8 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			for (col = 0; col < raidPtrs[raidID]->numCol; col++) {
 				devname = raidPtrs[raidID]->Disks[col].devname;
 				devname += sizeof("/dev/") - 1;
-				if (strncmp(devname, booted_device->dv_xname, 
-					    strlen(booted_device->dv_xname)) != 0)
+				if (strncmp(devname, device_xname(booted_device), 
+					    strlen(device_xname(booted_device))) != 0)
 					continue;
 #ifdef DEBUG
 				printf("raid%d includes boot device %s\n",
@@ -2888,7 +2881,7 @@ rf_find_raid_components()
 		}
 
 		/* need to find the device_name_to_block_device_major stuff */
-		bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+		bmajor = devsw_name2blk(device_xname(dv), NULL, 0);
 
 		/* get a vnode for the raw partition of this disk */
 
@@ -2914,7 +2907,7 @@ rf_find_raid_components()
 			    NOCRED);
 			if (error) {
 				printf("RAIDframe: can't get wedge info for "
-				    "dev %s (%d)\n", dv->dv_xname, error);
+				    "dev %s (%d)\n", device_xname(dv), error);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 				vput(vp);
@@ -2929,7 +2922,7 @@ rf_find_raid_components()
 			}
 				
 			ac_list = rf_get_component(ac_list, dev, vp,
-			    dv->dv_xname, dkw.dkw_size);
+			    device_xname(dv), dkw.dkw_size);
 			continue;
 		}
 
@@ -2942,7 +2935,7 @@ rf_find_raid_components()
 			 */
 			if (error != ENOTTY)
 				printf("RAIDframe: can't get label for dev "
-				    "%s (%d)\n", dv->dv_xname, error);
+				    "%s (%d)\n", device_xname(dv), error);
 		}
 
 		/* don't need this any more.  We'll allocate it again
@@ -2972,7 +2965,7 @@ rf_find_raid_components()
 				continue;
 			}
 			snprintf(cname, sizeof(cname), "%s%c",
-			    dv->dv_xname, 'a' + i);
+			    device_xname(dv), 'a' + i);
 			ac_list = rf_get_component(ac_list, dev, vp, cname,
 				label.d_partitions[i].p_size);
 		}

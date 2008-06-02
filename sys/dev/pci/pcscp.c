@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.40 2007/10/19 12:00:54 ad Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.40.16.1 2008/06/02 13:23:43 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -39,14 +32,11 @@
 
 /*
  * pcscp.c: device dependent code for AMD Am53c974 (PCscsi-PCI)
- * written by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp>
- *
- * Technical manual available at
- * http://www.amd.com/files/connectivitysolutions/networking/archivednetworking/19113.pdf
+ * written by Izumi Tsutsui <tsutsui@NetBSD.org>
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.40 2007/10/19 12:00:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.40.16.1 2008/06/02 13:23:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +80,7 @@ struct pcscp_softc {
 	int	sc_active;		/* DMA state */
 	int	sc_datain;		/* DMA Data Direction */
 	size_t	sc_dmasize;		/* DMA size */
-	char	**sc_dmaaddr;		/* DMA address */
+	uint8_t	**sc_dmaaddr;		/* DMA address */
 	size_t	*sc_dmalen;		/* DMA length */
 };
 
@@ -104,17 +94,24 @@ struct pcscp_softc {
 #define	PCSCP_WRITE_REG(sc, reg, val)	\
 	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg) << 2, (val))
 
+
+static int pcscp_match(device_t, cfdata_t, void *);
+static void pcscp_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(pcscp, sizeof(struct pcscp_softc),
+    pcscp_match, pcscp_attach, NULL, NULL);
+
 /*
  * Functions and the switch for the MI code.
  */
 
-static u_char	pcscp_read_reg(struct ncr53c9x_softc *, int);
-static void	pcscp_write_reg(struct ncr53c9x_softc *, int, u_char);
+static uint8_t	pcscp_read_reg(struct ncr53c9x_softc *, int);
+static void	pcscp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 static int	pcscp_dma_isintr(struct ncr53c9x_softc *);
 static void	pcscp_dma_reset(struct ncr53c9x_softc *);
 static int	pcscp_dma_intr(struct ncr53c9x_softc *);
-static int	pcscp_dma_setup(struct ncr53c9x_softc *, void **, size_t *,
-				int, size_t *);
+static int	pcscp_dma_setup(struct ncr53c9x_softc *, uint8_t **, size_t *,
+		    int, size_t *);
 static void	pcscp_dma_go(struct ncr53c9x_softc *);
 static void	pcscp_dma_stop(struct ncr53c9x_softc *);
 static int	pcscp_dma_isactive(struct ncr53c9x_softc *);
@@ -133,8 +130,7 @@ static struct ncr53c9x_glue pcscp_glue = {
 };
 
 static int
-pcscp_match(struct device *parent, struct cfdata *match,
-    void *aux)
+pcscp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -152,11 +148,11 @@ pcscp_match(struct device *parent, struct cfdata *match,
  * Attach this instance, and then all the sub-devices
  */
 static void
-pcscp_attach(struct device *parent, struct device *self, void *aux)
+pcscp_attach(device_t parent, device_t self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-	struct pcscp_softc *esc = (void *)self;
+	struct pcscp_softc *esc = device_private(self);
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
+	struct pci_attach_args *pa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	pci_intr_handle_t ih;
@@ -166,13 +162,14 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	int error, rseg;
 	char devinfo[256];
 
+	sc->sc_dev = self;
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s\n", devinfo);
-	printf("%s", sc->sc_dev.dv_xname);
+	aprint_normal(": %s\n", devinfo);
+	aprint_normal("%s", device_xname(sc->sc_dev));
 
 	if (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL)) {
-		printf(": unable to map registers\n");
+		aprint_error(": unable to map registers\n");
 		return;
 	}
 
@@ -243,7 +240,7 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_dmamap_create(esc->sc_dmat, MAXPHYS, MDL_SIZE, MDL_SEG_SIZE,
 	    MDL_SEG_SIZE, BUS_DMA_NOWAIT, &esc->sc_xfermap)) {
-		printf(": can't create DMA maps\n");
+		aprint_error(": can't create DMA maps\n");
 		return;
 	}
 
@@ -254,33 +251,35 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	if ((error = bus_dmamem_alloc(esc->sc_dmat,
 	    sizeof(uint32_t) * MDL_SIZE, PAGE_SIZE, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to allocate memory for the MDL, error = %d\n",
-		    error);
+		aprint_error(": unable to allocate memory for the MDL,"
+		    " error = %d\n", error);
 		goto fail_0;
 	}
 	if ((error = bus_dmamem_map(esc->sc_dmat, &seg, rseg,
 	    sizeof(uint32_t) * MDL_SIZE , (void **)&esc->sc_mdladdr,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf(": unable to map the MDL memory, error = %d\n", error);
+		aprint_error(": unable to map the MDL memory, error = %d\n",
+		    error);
 		goto fail_1;
 	}
 	if ((error = bus_dmamap_create(esc->sc_dmat,
 	    sizeof(uint32_t) * MDL_SIZE, 1, sizeof(uint32_t) * MDL_SIZE,
 	    0, BUS_DMA_NOWAIT, &esc->sc_mdldmap)) != 0) {
-		printf(": unable to map_create for the MDL, error = %d\n",
+		aprint_error(": unable to map_create for the MDL, error = %d\n",
 		    error);
 		goto fail_2;
 	}
 	if ((error = bus_dmamap_load(esc->sc_dmat, esc->sc_mdldmap,
 	     esc->sc_mdladdr, sizeof(uint32_t) * MDL_SIZE,
 	     NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to load for the MDL, error = %d\n", error);
+		aprint_error(": unable to load for the MDL, error = %d\n",
+		    error);
 		goto fail_3;
 	}
 
 	/* map and establish interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
+		aprint_error(": couldn't map interrupt\n");
 		goto fail_4;
 	}
 
@@ -288,17 +287,18 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	esc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 	    ncr53c9x_intr, esc);
 	if (esc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
+		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		goto fail_4;
 	}
-	if (intrstr != NULL)
-		printf(": interrupting at %s\n", intrstr);
+	if (intrstr != NULL) {
+		aprint_normal(": interrupting at %s\n", intrstr);
+		aprint_normal("%s", device_xname(sc->sc_dev));
+	}
 
 	/* Do the common parts of attachment. */
-	printf("%s", sc->sc_dev.dv_xname);
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	ncr53c9x_attach(sc);
@@ -321,14 +321,11 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamap_destroy(esc->sc_dmat, esc->sc_xfermap);
 }
 
-CFATTACH_DECL(pcscp, sizeof(struct pcscp_softc),
-    pcscp_match, pcscp_attach, NULL, NULL);
-
 /*
  * Glue functions.
  */
 
-static u_char
+static uint8_t
 pcscp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
@@ -337,7 +334,7 @@ pcscp_read_reg(struct ncr53c9x_softc *sc, int reg)
 }
 
 static void
-pcscp_write_reg(struct ncr53c9x_softc *sc, int reg, u_char v)
+pcscp_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t v)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
 
@@ -370,7 +367,7 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 	bus_dmamap_t dmap = esc->sc_xfermap;
 	int datain = esc->sc_datain;
 	uint32_t dmastat;
-	char *p = NULL;
+	uint8_t *p = NULL;
 
 	dmastat = READ_DMAREG(esc, DMA_STAT);
 
@@ -380,14 +377,15 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 		    DMACMD_ABORT | (datain ? DMACMD_DIR : 0));
 
 		printf("%s: error: DMA error detected; Aborting.\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		bus_dmamap_unload(esc->sc_dmat, dmap);
 		return -1;
 	}
 
 	if (dmastat & DMASTAT_ABT) {
 		/* XXX What should be done? */
-		printf("%s: dma_intr: DMA aborted.\n", sc->sc_dev.dv_xname);
+		printf("%s: %s: DMA aborted.\n",
+		    device_xname(sc->sc_dev), __func__);
 		WRITE_DMAREG(esc, DMA_CMD,
 		    DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 		esc->sc_active = 0;
@@ -397,7 +395,8 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 #ifdef DIAGNOSTIC
 	/* This is an "assertion" :) */
 	if (esc->sc_active == 0)
-		panic("pcscp dmaintr: DMA wasn't active");
+		panic("%s: %s: DMA wasn't active",
+		    device_xname(sc->sc_dev), __func__);
 #endif
 
 	/* DMA has stopped */
@@ -406,7 +405,8 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 
 	if (esc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
-		NCR_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
+		NCR_DMA(("%s: discarded %d bytes (tcl=%d, tcm=%d)\n",
+		    __func__,
 		    PCSCP_READ_REG(esc, NCR_TCL) |
 		    (PCSCP_READ_REG(esc, NCR_TCM) << 8),
 		    PCSCP_READ_REG(esc, NCR_TCL),
@@ -423,7 +423,7 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 	 */
 	if (!datain &&
 	    (resid = (PCSCP_READ_REG(esc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
-		NCR_DMA(("pcscp_dma_intr: empty esp FIFO of %d ", resid));
+		NCR_DMA(("%s: empty esp FIFO of %d ", __func__, resid));
 	}
 
 	if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
@@ -439,9 +439,11 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 			WRITE_DMAREG(esc, DMA_CMD, DMACMD_BLAST | DMACMD_MDL |
 			    (datain ? DMACMD_DIR : 0));
 
-			for (i = 0; i < 0x8000; i++) /* XXX 0x8000 ? */
+			for (i = 0; i < 1000; i++) { /* XXX */
 				if (READ_DMAREG(esc, DMA_STAT) & DMASTAT_BCMP)
 					break;
+				DELAY(1);
+			}
 
 			/* See the below comments... */
 			if (resid)
@@ -491,12 +493,13 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 		 * another target.  As such, don't print the warning.
 		 */
 		printf("%s: xfer (%d) > req (%d)\n",
-		    sc->sc_dev.dv_xname, trans, esc->sc_dmasize);
+		    device_xname(sc->sc_dev), trans, esc->sc_dmasize);
 #endif
 		trans = esc->sc_dmasize;
 	}
 
-	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+	NCR_DMA(("%s: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+	    __func__,
 	    PCSCP_READ_REG(esc, NCR_TCL),
 	    PCSCP_READ_REG(esc, NCR_TCM),
 	    PCSCP_READ_REG(esc, NCR_TCH),
@@ -509,7 +512,7 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 static int
-pcscp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
+pcscp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
     int datain, size_t *dmasize)
 {
 	struct pcscp_softc *esc = (struct pcscp_softc *)sc;
@@ -520,14 +523,14 @@ pcscp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 
-	esc->sc_dmaaddr = (void *)addr;
+	esc->sc_dmaaddr = addr;
 	esc->sc_dmalen = len;
 	esc->sc_dmasize = *dmasize;
 	esc->sc_datain = datain;
 
 #ifdef DIAGNOSTIC
 	if ((*dmasize / MDL_SEG_SIZE) > MDL_SIZE)
-		panic("pcscp: transfer size too large");
+		panic("%s: transfer size too large", device_xname(sc->sc_dev));
 #endif
 
 	/*
@@ -545,7 +548,7 @@ pcscp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	     BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
 		printf("%s: unable to load dmamap, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		    device_xname(sc->sc_dev), error);
 		return error;
 	}
 

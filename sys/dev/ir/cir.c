@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.17.36.3 2008/04/06 09:58:51 mjf Exp $	*/
+/*	$NetBSD: cir.c,v 1.17.36.4 2008/06/02 13:23:29 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17.36.3 2008/04/06 09:58:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17.36.4 2008/06/02 13:23:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +94,7 @@ cir_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_methods->im_read == NULL ||
 	    sc->sc_methods->im_write == NULL ||
 	    sc->sc_methods->im_setparams == NULL)
-		panic("%s: missing methods", sc->sc_dev.dv_xname);
+		panic("%s: missing methods", device_xname(&sc->sc_dev));
 #endif
 	printf("\n");
 

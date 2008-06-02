@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.22 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.22.70.1 2008/06/02 13:24:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,21 +85,19 @@
  * MULTICAST 1.3
  */
 
-struct igmpstat {
-	u_quad_t igps_rcv_total;	/* total IGMP messages received */
-	u_quad_t igps_rcv_tooshort;	/* received with too few bytes */
-	u_quad_t igps_rcv_badsum;	/* received with bad checksum */
-	u_quad_t igps_rcv_queries;	/* received membership queries */
-	u_quad_t igps_rcv_badqueries;	/* received invalid queries */
-	u_quad_t igps_rcv_reports;	/* received membership reports */
-	u_quad_t igps_rcv_badreports;	/* received invalid reports */
-	u_quad_t igps_rcv_ourreports;	/* received reports for our groups */
-	u_quad_t igps_snd_reports;	/* sent membership reports */
-};
+#define	IGMP_STAT_RCV_TOTAL	1	/* total IGMP messages received */
+#define	IGMP_STAT_RCV_TOOSHORT	2	/* received with too few bytes */
+#define	IGMP_STAT_RCV_BADSUM	3	/* received with bad checksum */
+#define	IGMP_STAT_RCV_QUERIES	4	/* received membership queries */
+#define	IGMP_STAT_RCV_BADQUERIES 5	/* received invalid queries */
+#define	IGMP_STAT_RCV_REPORTS	6	/* received membership reports */
+#define	IGMP_STAT_RCV_BADREPORTS 7	/* received invalid reports */
+#define	IGMP_STAT_RCV_OURREPORTS 8	/* received reports for our groups */
+#define	IGMP_STAT_SND_REPORTS	9	/* sent membership reports */
+
+#define	IGMP_NSTATS		10
 
 #ifdef _KERNEL
-extern	struct igmpstat igmpstat;
-
 /*
  * Macro to compute a random timer value between 1 and (IGMP_MAX_REPORTING_
  * DELAY * countdown frequency).  We assume that the routine random()
@@ -113,12 +111,13 @@ extern	struct igmpstat igmpstat;
 #define	IGMP_HDR_ALIGNED_P(ig)	((((vaddr_t) (ig)) & 3) == 0)
 #endif
 
+void	igmp_init(void);
 void	igmp_input(struct mbuf *, ...);
 int	igmp_joingroup(struct in_multi *);
 void	igmp_leavegroup(struct in_multi *);
 void	igmp_fasttimo(void);
 void	igmp_slowtimo(void);
 void	igmp_purgeif(struct ifnet *);
-#endif
+#endif /* _KERNEL */
 
 #endif /* !_NETINET_IGMP_VAR_H_ */

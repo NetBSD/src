@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.15 2008/01/19 13:11:09 chris Exp $	*/
+/*	$NetBSD: exception.S,v 1.15.6.1 2008/06/02 13:21:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -45,10 +45,12 @@
  * Based on kate/display/abort.s
  */
 
+#include "assym.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include "assym.h"
+
+	RCSID("$NetBSD: exception.S,v 1.15.6.1 2008/06/02 13:21:53 mjf Exp $")
 
 	.text	
 	.align	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pioc.c,v 1.8.112.1 2008/04/03 12:42:09 mjf Exp $	*/
+/*	$NetBSD: lpt_pioc.c,v 1.8.112.2 2008/06/02 13:21:43 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.8.112.1 2008/04/03 12:42:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.8.112.2 2008/06/02 13:21:43 mjf Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -189,7 +189,7 @@ lpt_pioc_probe(device_t parent, cfdata_t match, void *aux)
 static void
 lpt_pioc_attach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_softc *sc = (void *)self;
+	struct lpt_softc *sc = device_private(self);
 	struct pioc_attach_args *pa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;

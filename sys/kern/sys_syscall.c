@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.8 2008/02/06 22:12:42 dsl Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.8.6.1 2008/06/02 13:24:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -15,9 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -33,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.8 2008/02/06 22:12:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.8.6.1 2008/06/02 13:24:12 mjf Exp $");
 
 #include <sys/syscall_stats.h>
 

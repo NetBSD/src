@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.3 2008/02/10 13:32:14 ad Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.3.6.1 2008/06/02 13:21:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -66,6 +59,18 @@
  * r2	New value.
  */
 ENTRY_NP(_lock_cas)
+#ifdef _ARCH_ARM_6
+	.globl	_C_LABEL(_lock_cas_end)
+        mov	ip, r0
+1:      ldrex	r0, [ip]		/* eventual return value */
+        cmp	r1, r0
+	RETc(ne)
+        strex	r3, r2, [ip]
+        cmp	r3, #0
+        bne	1b
+        RET
+        END(_lock_cas)
+#else
 	ldr	r3, [r0]
 	teq	r3, r1
 	bne	1f
@@ -105,6 +110,7 @@ _C_LABEL(_lock_cas_end):
 #endif /* ARM_LOCK_CAS_DEBUG */
 	mov	r0, r3			/* return actual value */
 	RET
+#endif
 
 STRONG_ALIAS(_atomic_cas_ulong,_lock_cas)
 STRONG_ALIAS(atomic_cas_ulong,_lock_cas)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iee_sbdio.c,v 1.3.40.1 2008/04/03 12:42:15 mjf Exp $	*/
+/*	$NetBSD: if_iee_sbdio.c,v 1.3.40.2 2008/06/02 13:22:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.3.40.1 2008/04/03 12:42:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.3.40.2 2008/06/02 13:22:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.3.40.1 2008/04/03 12:42:15 mjf Ex
 #include <dev/ic/i82596reg.h>
 #include <dev/ic/i82596var.h>
 
-int iee_sbdio_match(struct device *, struct cfdata *, void *);
-void iee_sbdio_attach(struct device *, struct device *, void *);
+int iee_sbdio_match(device_t, cfdata_t, void *);
+void iee_sbdio_attach(device_t, device_t, void *);
 int iee_sbdio_cmd(struct iee_softc *, uint32_t);
 int iee_sbdio_reset(struct iee_softc *);
 
@@ -67,11 +67,11 @@ struct iee_sbdio_softc {
 	volatile uint32_t *sc_port;
 };
 
-CFATTACH_DECL(iee_sbdio, sizeof(struct iee_sbdio_softc),
-    iee_sbdio_match, iee_sbdio_attach, 0, 0);
+CFATTACH_DECL_NEW(iee_sbdio, sizeof(struct iee_sbdio_softc),
+    iee_sbdio_match, iee_sbdio_attach, NULL, NULL);
 
 int
-iee_sbdio_match(struct device *parent, struct cfdata *match, void *aux)
+iee_sbdio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbdio_attach_args *sa = aux;
 
@@ -79,17 +79,18 @@ iee_sbdio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-iee_sbdio_attach(struct device *parent, struct device *self, void *aux)
+iee_sbdio_attach(device_t parent, device_t self, void *aux)
 {
-	struct sbdio_attach_args *sa = aux;
-	struct iee_sbdio_softc *sc_ssc = (void *)self;
+	struct iee_sbdio_softc *sc_ssc = device_private(self);
 	struct iee_softc *sc = &sc_ssc->sc_iee;
+	struct sbdio_attach_args *sa = aux;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	int media[2];
 	int rsegs;
 
-	sc_ssc->sc_port = (volatile uint32_t *)
-	    MIPS_PHYS_TO_KSEG1(sa->sa_addr1);
+	sc->sc_dev = self;
+	sc_ssc->sc_port =
+	    (volatile uint32_t *)MIPS_PHYS_TO_KSEG1(sa->sa_addr1);
 	sc->sc_type = I82596_CA;
 	sc->sc_flags = IEE_NEED_SWAP;
 
@@ -101,21 +102,21 @@ iee_sbdio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_dmamem_alloc(sc->sc_dmat, IEE_SHMEM_MAX, PAGE_SIZE, 0,
 		&sc->sc_dma_segs, 1, &rsegs, BUS_DMA_NOWAIT) != 0) {
-		aprint_normal(": iee_sbdio_attach: can't allocate %d bytes of "
+		aprint_error(": iee_sbdio_attach: can't allocate %d bytes of "
 		    "DMA memory\n", (int)IEE_SHMEM_MAX);
 		return;
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dma_segs, rsegs, IEE_SHMEM_MAX,
 		(void **)sc->sc_shmem_addr, BUS_DMA_NOWAIT) != 0) {
-		aprint_normal(": iee_sbdio_attach: can't map DMA memory\n");
+		aprint_error(": iee_sbdio_attach: can't map DMA memory\n");
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
 		return;
 	}
 
 	if (bus_dmamap_create(sc->sc_dmat, IEE_SHMEM_MAX, rsegs,
 		IEE_SHMEM_MAX, 0, BUS_DMA_NOWAIT, &sc->sc_shmem_map) != 0) {
-		aprint_normal(": iee_sbdio_attach: can't create DMA map\n");
+		aprint_error(": iee_sbdio_attach: can't create DMA map\n");
 		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
 		return;
@@ -123,7 +124,7 @@ iee_sbdio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_shmem_map, sc->sc_shmem_addr,
 		IEE_SHMEM_MAX, NULL, BUS_DMA_NOWAIT) != 0) {
-		aprint_normal(": iee_sbdio_attach: can't load DMA map\n");
+		aprint_error(": iee_sbdio_attach: can't load DMA map\n");
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
 		bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, IEE_SHMEM_MAX);
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_dma_segs, rsegs);
@@ -147,7 +148,7 @@ iee_sbdio_attach(struct device *parent, struct device *self, void *aux)
 	media[0] = IFM_ETHER | IFM_MANUAL;
 	media[1] = IFM_ETHER | IFM_10_5;
 
-	intr_establish(sa->sa_irq, iee_intr, self);
+	intr_establish(sa->sa_irq, iee_intr, sc);
 	(*platform.ether_addr)(eaddr);
 	iee_attach(sc, eaddr, media, 2, IFM_ETHER | IFM_10_5);
 }
@@ -178,7 +179,8 @@ iee_sbdio_cmd(struct iee_softc *sc, uint32_t cmd)
 	if (n < retry)
 		return 0;
 
-	printf("%s: command timeout. retry=%d\n", sc->sc_dev.dv_xname, retry);
+	printf("%s: command timeout. retry=%d\n",
+	    device_xname(sc->sc_dev), retry);
 
 	return -1;
 }
@@ -199,7 +201,7 @@ iee_sbdio_reset(struct iee_softc *sc)
 	cmd = IEE_PORT_SCP | IEE_PHYS_SHMEM(IEE_SCP_OFF);
 
 	/* Initiate a Hardware reset. */
-	printf("%s: reseting chip... ", sc->sc_dev.dv_xname);
+	printf("%s: reseting chip... ", device_xname(sc->sc_dev));
 	iee_sbdio_chip_reset(sc);
 
 	/* Set SCP address to CU */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.214.6.1 2008/04/03 12:42:57 mjf Exp $	*/
+/*	$NetBSD: uhci.c,v 1.214.6.2 2008/06/02 13:23:54 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -49,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.214.6.1 2008/04/03 12:42:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.214.6.2 2008/06/02 13:23:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,12 +424,14 @@ uhci_init(uhci_softc_t *sc)
 		uhci_dumpregs(sc);
 #endif
 
+	sc->sc_suspend = PWR_RESUME;
+
 	UWRITE2(sc, UHCI_INTR, 0);		/* disable interrupts */
 	uhci_globalreset(sc);			/* reset the controller */
 	uhci_reset(sc);
 
 #ifdef __NetBSD__
-	usb_setup_reserve(sc, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
+	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
 #endif
 
@@ -752,6 +747,7 @@ uhci_resume(device_t dv PMF_FN_ARGS)
 		uhci_dumpregs(sc);
 #endif
 
+	sc->sc_suspend = PWR_RESUME;
 	splx(s);
 
 	return true;
@@ -775,7 +771,9 @@ uhci_suspend(device_t dv PMF_FN_ARGS)
 	if (sc->sc_intr_xfer != NULL)
 		usb_uncallout(sc->sc_poll_handle, uhci_poll_hub,
 		    sc->sc_intr_xfer);
+	sc->sc_suspend = PWR_SUSPEND;
 	sc->sc_bus.use_polling++;
+
 	uhci_run(sc, 0); /* stop the controller */
 	cmd &= ~UHCI_CMD_RS;
 

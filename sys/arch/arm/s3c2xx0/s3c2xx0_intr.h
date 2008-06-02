@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.11 2008/01/06 01:37:56 matt Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.11.6.1 2008/06/02 13:21:55 mjf Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -84,7 +84,6 @@ typedef int (* s3c2xx0_irq_handler_t)(void *);
 
 extern volatile uint32_t *s3c2xx0_intr_mask_reg;
 
-extern volatile int current_spl_level;
 extern volatile int intr_mask;
 extern volatile int global_intr_mask;
 #ifdef __HAVE_FAST_SOFTINTS
@@ -93,9 +92,6 @@ extern volatile int softint_pending;
 extern int s3c2xx0_imask[];
 extern int s3c2xx0_ilevel[];
 
-#ifdef __HAVE_FAST_SOFTINTS
-void s3c2xx0_do_pending(int);
-#endif
 void s3c2xx0_update_intr_masks( int, int );
 
 static inline void
@@ -119,8 +115,8 @@ s3c2xx0_unmask_interrupts(int mask)
 static inline void
 s3c2xx0_setipl(int new)
 {
-	current_spl_level = new;
-	intr_mask = s3c2xx0_imask[current_spl_level];
+	set_curcpl(new);
+	intr_mask = s3c2xx0_imask[curcpl()];
 	s3c2xx0_update_hw_mask();
 #ifdef __HAVE_FAST_SOFTINTS
 	update_softintr_mask();
@@ -138,9 +134,7 @@ s3c2xx0_splx(int new)
 	restore_interrupts(psw);
 
 #ifdef __HAVE_FAST_SOFTINTS
-	/* If there are software interrupts to process, do it. */
-	if (get_pending_softint())
-		s3c2xx0_do_pending(0);
+	cpu_dosoftints();
 #endif
 }
 
@@ -150,8 +144,8 @@ s3c2xx0_splraise(int ipl)
 {
 	int	old, psw;
 
-	old = current_spl_level;
-	if( ipl > current_spl_level ){
+	old = curcpl();
+	if( ipl > old ){
 		psw = disable_interrupts(I32_bit);
 		s3c2xx0_setipl(ipl);
 		restore_interrupts(psw);
@@ -163,43 +157,22 @@ s3c2xx0_splraise(int ipl)
 static inline int
 s3c2xx0_spllower(int ipl)
 {
-	int old = current_spl_level;
+	int old = curcpl();
 	int psw = disable_interrupts(I32_bit);
 	s3c2xx0_splx(ipl);
 	restore_interrupts(psw);
 	return(old);
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
-static inline void
-s3c2xx0_setsoftintr(int si)
-{
-
-	atomic_set_bit( (u_int *)__UNVOLATILE(&softint_pending),
-		SI_TO_IRQBIT(si) );
-
-	/* Process unmasked pending soft interrupts. */
-	if (get_pending_softint())
-		s3c2xx0_do_pending(0);
-}
-#endif
-
-
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #if !defined(EVBARM_SPL_NOINLINE)
 
 #define	splx(new)		s3c2xx0_splx(new)
 #define	_spllower(ipl)		s3c2xx0_spllower(ipl)
 #define	_splraise(ipl)		s3c2xx0_splraise(ipl)
-#if 0
-#define	_setsoftintr(si)	s3c2xx0_setsoftintr(si)
-#endif
 
 #endif	/* !EVBARM_SPL_NOINTR */
 

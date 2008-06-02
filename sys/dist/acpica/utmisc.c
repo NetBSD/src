@@ -1,9 +1,7 @@
-/*	$NetBSD: utmisc.c,v 1.3 2007/12/11 13:16:18 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: utmisc - common utility procedures
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,18 +114,11 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utmisc.c,v 1.3 2007/12/11 13:16:18 lukem Exp $");
 
 #define __UTMISC_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acnamesp.h>
-
-#ifdef _KERNEL
-/* pull in reboot.h for AB_VERBOSE definition */
-#include <sys/reboot.h>
-#endif
+#include "acpi.h"
+#include "acnamesp.h"
 
 
 #define _COMPONENT          ACPI_UTILITIES
@@ -1257,6 +1248,7 @@ AcpiUtError (
     va_start (args, Format);
     AcpiOsVprintf (Format, args);
     AcpiOsPrintf (" [%X]\n", ACPI_CA_VERSION);
+    va_end (args);
 }
 
 void  ACPI_INTERNAL_VAR_XFACE
@@ -1276,6 +1268,7 @@ AcpiUtException (
     va_start (args, Format);
     AcpiOsVprintf (Format, args);
     AcpiOsPrintf (" [%X]\n", ACPI_CA_VERSION);
+    va_end (args);
 }
 
 void  ACPI_INTERNAL_VAR_XFACE
@@ -1293,6 +1286,7 @@ AcpiUtWarning (
     va_start (args, Format);
     AcpiOsVprintf (Format, args);
     AcpiOsPrintf (" [%X]\n", ACPI_CA_VERSION);
+    va_end (args);
 }
 
 void  ACPI_INTERNAL_VAR_XFACE
@@ -1304,11 +1298,6 @@ AcpiUtInfo (
 {
     va_list                 args;
 
-#ifdef _KERNEL
-    /* Temporarily hide too verbose printfs. */
-    if (!bootverbose)
-        return;
-#endif
 
     /*
      * Removed ModuleName, LineNumber, and acpica version, not needed
@@ -1319,5 +1308,6 @@ AcpiUtInfo (
     va_start (args, Format);
     AcpiOsVprintf (Format, args);
     AcpiOsPrintf ("\n");
+    va_end (args);
 }
 

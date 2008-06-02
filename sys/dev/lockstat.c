@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.13.6.1 2008/04/05 23:33:20 mjf Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.13.6.2 2008/06/02 13:23:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -47,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.13.6.1 2008/04/05 23:33:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.13.6.2 2008/06/02 13:23:11 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -231,6 +224,7 @@ lockstat_stop(lsdisable_t *ld)
 	u_int cpuno, overflow;
 	struct timespec ts;
 	int error;
+	lwp_t *l;
 
 	KASSERT(lockstat_enabled);
 
@@ -258,6 +252,15 @@ lockstat_stop(lsdisable_t *ld)
 		error = 0;
 
 	lockstat_init_tables(NULL);
+
+	/* Run through all LWPs and clear the slate for the next run. */
+	mutex_enter(proc_lock);
+	LIST_FOREACH(l, &alllwp, l_list) {
+		l->l_pfailaddr = 0;
+		l->l_pfailtime = 0;
+		l->l_pfaillock = 0;
+	}
+	mutex_exit(proc_lock);
 
 	if (ld == NULL)
 		return error;

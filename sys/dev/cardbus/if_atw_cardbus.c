@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.19.10.1 2008/04/03 12:42:39 mjf Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.19.10.2 2008/06/02 13:23:14 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.19.10.1 2008/04/03 12:42:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.19.10.2 2008/06/02 13:23:14 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -209,7 +202,7 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 #if 0
-	printf("%s: signature %08x\n", sc->sc_dev.dv_xname,
+	printf("%s: signature %08x\n", device_xname(&sc->sc_dev),
 	    (rev >> 4) & 0xf, rev & 0xf,
 	    cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80));
 #endif
@@ -223,7 +216,7 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 	    &csc->sc_mapsize) == 0) {
 #if 0
 		printf("%s: atw_cardbus_attach mapped %d bytes mem space\n",
-		    sc->sc_dev.dv_xname, csc->sc_mapsize);
+		    device_xname(&sc->sc_dev), csc->sc_mapsize);
 #endif
 #if rbus
 #else
@@ -238,7 +231,7 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 	    &csc->sc_mapsize) == 0) {
 #if 0
 		printf("%s: atw_cardbus_attach mapped %d bytes I/O space\n",
-		    sc->sc_dev.dv_xname, csc->sc_mapsize);
+		    device_xname(&sc->sc_dev), csc->sc_mapsize);
 #endif
 #if rbus
 #else
@@ -249,8 +242,7 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 		csc->sc_bar_reg = ATW_PCI_IOBA;
 		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
 	} else {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 
@@ -263,7 +255,7 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
+	printf("%s: interrupting at %d\n", device_xname(&sc->sc_dev),
 	    csc->sc_intrline);
 #if 0
 	/*
@@ -303,7 +295,7 @@ atw_cardbus_detach(struct device *self, int flags)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
 #endif
 
 	rv = atw_detach(sc);
@@ -350,8 +342,8 @@ atw_cardbus_enable(struct atw_softc *sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
 	    atw_intr, sc);
 	if (csc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt at %d\n",
-		    sc->sc_dev.dv_xname, csc->sc_intrline);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt at %d\n",
+		    csc->sc_intrline);
 		Cardbus_function_disable(csc->sc_ct);
 		return (1);
 	}

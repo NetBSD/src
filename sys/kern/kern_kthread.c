@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.21 2008/02/14 14:26:57 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.21.6.1 2008/06/02 13:24:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.21 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.21.6.1 2008/06/02 13:24:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +96,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 		/* Minimum kernel priority level. */
 		pri = PRI_KTHREAD;
 	}
-	mutex_enter(&proc0.p_smutex);
+	mutex_enter(proc0.p_lock);
 	lwp_lock(l);
 	l->l_priority = pri;
 	if (ci != NULL) {
@@ -111,7 +104,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 			lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
 			lwp_lock(l);
 		}
-		l->l_flag |= LW_BOUND;
+		l->l_pflag |= LP_BOUND;
 		l->l_cpu = ci;
 	}
 	if ((flag & KTHREAD_INTR) != 0)
@@ -135,7 +128,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	 * into those states later, so must be considered runnable.
 	 */
 	proc0.p_nrlwps++;
-	mutex_exit(&proc0.p_smutex);
+	mutex_exit(proc0.p_lock);
 
 	/* All done! */
 	if (lp != NULL)

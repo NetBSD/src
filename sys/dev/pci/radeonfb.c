@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.24.14.1 2008/04/03 12:42:53 mjf Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.24.14.2 2008/06/02 13:23:43 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.24.14.1 2008/04/03 12:42:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.24.14.2 2008/06/02 13:23:43 mjf Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -911,8 +911,8 @@ static int
 radeonfb_drm_print(void *aux, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("direct rendering for %s", pnp);
-	return (UNSUPP);
+		aprint_normal("drm at %s", pnp);
+	return (UNCONF);
 }
 
 int
@@ -1089,7 +1089,7 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (me != NULL) {
 		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
 		    NULL) != 0) {
-			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "mmap() rejected.\n");
 			return -1;
 		}
 	}
@@ -1589,13 +1589,11 @@ nobios:
 		if ((edid_data = prop_dictionary_get(device_properties(
 		    &sc->sc_dev), "EDID")) != NULL) {
 
-			aprint_normal("%s: using static EDID\n",
-			    sc->sc_dev.dv_xname);
+			aprint_normal_dev(&sc->sc_dev, "using static EDID\n");
 			memcpy(edid, prop_data_data_nocopy(edid_data), 128);
 			if (edid_parse(edid, eip) == 0) {
 
 				sc->sc_ports[i].rp_edid_valid = 1;
-				edid_print(eip);
 			}
 		}
 		/* if we didn't find any we'll try to talk to the monitor */
@@ -3333,21 +3331,38 @@ radeonfb_pickres(struct radeonfb_display *dp, uint16_t *x, uint16_t *y,
 				continue;
 
 			if (!valid) {
-				/* initialize starting list */
-				for (j = 0; j < ep->edid_nmodes; j++) {
-					/*
-					 * ignore resolutions that are
-					 * too big for the radeon
-					 */
-					if (ep->edid_modes[j].hdisplay >
-					    dp->rd_softc->sc_maxx)
-						continue;
-					if (ep->edid_modes[j].vdisplay >
-					    dp->rd_softc->sc_maxy)
-						continue;
+				/*
+				 * Pick the preferred mode for this port
+				 * if available.
+				 */
+				if (ep->edid_preferred_mode) {
+					struct videomode *vmp = 
+						ep->edid_preferred_mode;
 
-					modes[nmodes] = ep->edid_modes[j];
-					nmodes++;
+					if ((vmp->hdisplay <= 
+					     dp->rd_softc->sc_maxx) && 
+					    (vmp->vdisplay <= 
+					     dp->rd_softc->sc_maxy))
+						modes[nmodes++] = *vmp;
+				} else {
+
+					/* initialize starting list */
+					for (j = 0; j < ep->edid_nmodes; j++) {
+						/*
+						 * ignore resolutions that are
+						 * too big for the radeon
+						 */
+						if (ep->edid_modes[j].hdisplay >
+						    dp->rd_softc->sc_maxx)
+							continue;
+						if (ep->edid_modes[j].vdisplay >
+						    dp->rd_softc->sc_maxy)
+							continue;
+
+						modes[nmodes] = 
+							ep->edid_modes[j];
+						nmodes++;
+					}
 				}
 				valid = 1;
 			} else {

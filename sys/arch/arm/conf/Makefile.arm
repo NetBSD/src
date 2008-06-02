@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.31 2008/01/26 02:06:04 chris Exp $
+#	$NetBSD: Makefile.arm,v 1.31.6.1 2008/06/02 13:21:53 mjf Exp $
 
 # Makefile for NetBSD
 #
@@ -89,10 +89,6 @@ spl.o vectors.o: assym.h
 ##
 ## (7) misc settings
 ##
-
-# XXX gcc 3.3 generates incorrect code without this
-# XXX see PR 23044
-COPTS.uipc_socket.c+=	-fno-strict-aliasing
 
 ##
 ## (8) config(8) generated machinery

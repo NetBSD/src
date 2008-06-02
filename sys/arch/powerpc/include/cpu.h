@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62.6.1 2008/04/03 12:42:23 mjf Exp $	*/
+/*	$NetBSD: cpu.h,v 1.62.6.2 2008/06/02 13:22:32 mjf Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -128,6 +128,7 @@ struct cpu_hatch_data {
 	struct cpu_info *ci;
 	int running;
 	int pir;
+	int asr;
 	int hid0;
 	int sdr1;
 	int sr[16];
@@ -150,7 +151,7 @@ void	cpu_boot_secondary_processors(void);
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
 #define CPU_INFO_ITERATOR		int
 #define CPU_INFO_FOREACH(cii, ci)					\
-	cii = 0, ci = &cpu_info[0]; cii < CPU_MAXNUM; cii++, ci++
+	cii = 0, ci = &cpu_info[0]; cii < ncpu; cii++, ci++
 
 #else
 
@@ -332,14 +333,14 @@ void md_start_timebase(volatile struct cpu_hatch_data *);
 void md_sync_timebase(volatile struct cpu_hatch_data *);
 void md_setup_interrupts(void);
 int cpu_spinup(struct device *, struct cpu_info *);
-void cpu_hatch(void);
+register_t cpu_hatch(void);
 void cpu_spinup_trampoline(void);
 #endif
 
 #define	DELAY(n)		delay(n)
 
 #define	cpu_need_resched(ci, v)	(ci->ci_want_resched = ci->ci_astpending = 1)
-#define	cpu_did_resched()	((void)(curcpu()->ci_want_resched = 0))
+#define	cpu_did_resched(l)	((void)(curcpu()->ci_want_resched = 0))
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
 #define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
 

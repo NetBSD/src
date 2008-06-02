@@ -1,4 +1,4 @@
-/* $NetBSD: upc.c,v 1.13 2007/10/19 12:00:04 ad Exp $ */
+/* $NetBSD: upc.c,v 1.13.16.1 2008/06/02 13:23:28 mjf Exp $ */
 /*-
  * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.13 2007/10/19 12:00:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.13.16.1 2008/06/02 13:23:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,7 +102,7 @@ upc1_attach(struct upc_softc *sc)
 	for (i = 0; i < 16; i++)
 		cr[i] = upc1_read_config(sc, i);
 
-	aprint_verbose("%s: config state", sc->sc_dev.dv_xname);
+	aprint_verbose_dev(&sc->sc_dev, "config state");
 	for (i = 0; i < 16; i++)
 		aprint_verbose(" %02x", cr[i]);
 	aprint_verbose("\n");

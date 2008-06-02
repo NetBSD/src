@@ -1,8 +1,33 @@
-/*	$NetBSD: psycho.c,v 1.84 2008/02/16 23:26:05 jmcneill Exp $	*/
+/*	$NetBSD: psycho.c,v 1.84.6.1 2008/06/02 13:22:43 mjf Exp $	*/
+
+/*
+ * Copyright (c) 1999, 2000 Matthew R. Green
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
- * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.84 2008/02/16 23:26:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.84.6.1 2008/06/02 13:22:43 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -672,7 +697,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 	ih->ih_fun = handler;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
-	intr_establish(ipl, ih);
+	intr_establish(ipl, ipl != IPL_VM, ih);
 	*(ih->ih_map) |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
 }
 
@@ -687,16 +712,14 @@ psycho_register_power_button(struct psycho_softc *sc)
 	sc->sc_powerpressed = 0;
 	sc->sc_smcontext = malloc(sizeof(struct sysmon_pswitch), M_DEVBUF, 0);
 	if (!sc->sc_smcontext) {
-		printf("%s: could not allocate power button context\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "could not allocate power button context\n");
 		return;
 	}
 	memset(sc->sc_smcontext, 0, sizeof(struct sysmon_pswitch));
-	sc->sc_smcontext->smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smcontext->smpsw_name = device_xname(&sc->sc_dev);
 	sc->sc_smcontext->smpsw_type = PSWITCH_TYPE_POWER;
 	if (sysmon_pswitch_register(sc->sc_smcontext) != 0)
-		printf("%s: unable to register power button with sysmon\n", 
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to register power button with sysmon\n"); 
 }
 
 static void
@@ -851,7 +874,7 @@ psycho_ue(void *arg)
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
 	printf("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s\n",
-		sc->sc_dev.dv_xname, afar, 
+		device_xname(&sc->sc_dev), afar, 
 		(long long)iommu_extract(is, (vaddr_t)afar), afsr,
 		bitmask_snprintf(afsr, PSYCHO_UE_AFSR_BITS,
 			bits, sizeof(bits)));
@@ -880,7 +903,7 @@ psycho_ce(void *arg)
 	 */
 
 	printf("%s: correctable DMA error AFAR %llx AFSR %llx\n",
-		sc->sc_dev.dv_xname, 
+		device_xname(&sc->sc_dev), 
 		(long long)regs->psy_ce_afar, (long long)regs->psy_ce_afsr);
 	return (1);
 }
@@ -895,7 +918,7 @@ psycho_bus_a(void *arg)
 	 */
 
 	panic("%s: PCI bus A error AFAR %llx AFSR %llx",
-		sc->sc_dev.dv_xname, 
+		device_xname(&sc->sc_dev), 
 		(long long)regs->psy_pcictl[0].pci_afar, 
 		(long long)regs->psy_pcictl[0].pci_afsr);
 	return (1);
@@ -911,7 +934,7 @@ psycho_bus_b(void *arg)
 	 */
 
 	panic("%s: PCI bus B error AFAR %llx AFSR %llx",
-		sc->sc_dev.dv_xname, 
+		device_xname(&sc->sc_dev), 
 		(long long)regs->psy_pcictl[0].pci_afar, 
 		(long long)regs->psy_pcictl[0].pci_afsr);
 	return (1);
@@ -942,7 +965,7 @@ int psycho_wakeup(void *arg)
 	 * Gee, we don't really have a framework to deal with this
 	 * properly.
 	 */
-	printf("%s: power management wakeup\n",	sc->sc_dev.dv_xname);
+	printf("%s: power management wakeup\n",	device_xname(&sc->sc_dev));
 	return (1);
 }
 
@@ -995,7 +1018,7 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
 	if (name == 0)
 		panic("couldn't malloc iommu name");
-	snprintf(name, 32, "%s dvma", sc->sc_dev.dv_xname);
+	snprintf(name, 32, "%s dvma", device_xname(&sc->sc_dev));
 
 	iommu_init(name, is, tsbsize, iobase);
 }
@@ -1300,7 +1323,7 @@ found:
 	    "; installing handler %p arg %p with ino %u pil %u\n",
 	    handler, arg, (u_int)ino, (u_int)ih->ih_pil));
 
-	intr_establish(ih->ih_pil, ih);
+	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
 	/*
 	 * Enable the interrupt now we have the handler installed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: flscvar.h,v 1.5 1999/09/25 21:47:11 is Exp $	*/
+/*	$NetBSD: flscvar.h,v 1.5.138.1 2008/06/02 13:21:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch.
@@ -34,10 +34,10 @@
 struct flsc_softc {
 	struct ncr53c9x_softc	sc_ncr53c9x;	/* glue to MI code */
 
-	struct	isr		 sc_isr;	/* Interrupt chain struct */
+	struct isr	sc_isr;			/* Interrupt chain struct */
 
-	volatile u_char *sc_reg;		/* the registers */
-	volatile u_char *sc_dmabase;
+	volatile uint8_t *sc_reg;		/* the registers */
+	volatile uint8_t *sc_dmabase;
 
 	int		sc_active;		/* Pseudo-DMA state vars */
 	int		sc_piomode;
@@ -45,19 +45,18 @@ struct flsc_softc {
 	int		sc_tc;
 	size_t		sc_dmasize;
 	size_t		sc_dmatrans;
-	char		**sc_dmaaddr;
+	uint8_t		**sc_dmaaddr;
 	size_t		*sc_pdmalen;
 	paddr_t		sc_pa;
 
-	char		*sc_alignbuf;
-	u_char		sc_pad1[2];		/* XXX */
-	u_char		sc_unalignbuf[256];
-	u_char		sc_pad2[16];
-	u_char		sc_hardbits;
-	u_char		sc_portbits;
-	u_char		sc_csr;
-	u_char		sc_xfr_align;
-
+	uint8_t		*sc_alignbuf;
+	uint8_t		sc_pad1[2];		/* XXX */
+	uint8_t		sc_unalignbuf[256];
+	uint8_t		sc_pad2[16];
+	uint8_t		sc_hardbits;
+	uint8_t		sc_portbits;
+	uint8_t		sc_csr;
+	uint8_t		sc_xfr_align;
 };
 
 #define FLSC_HB_DISABLED	0x01

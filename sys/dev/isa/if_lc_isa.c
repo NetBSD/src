@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.28 2007/10/19 12:00:18 ad Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.28.16.1 2008/06/02 13:23:31 mjf Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.28 2007/10/19 12:00:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.28.16.1 2008/06/02 13:23:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,14 +145,15 @@ lemac_isa_find(sc, ia, attach)
 	 */
 	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 	    ia->ia_irq[0].ir_irq != irq)
-		printf("%s: overriding IRQ %d to %d\n", sc->sc_dv.dv_xname,
+		printf("%s: overriding IRQ %d to %d\n", device_xname(&sc->sc_dv),
 		       ia->ia_irq[0].ir_irq, irq);
 
 	if (attach) {
 		sc->sc_ats = shutdownhook_establish(lemac_shutdown, sc);
-		if (sc->sc_ats == NULL)
-			printf("\n%s: warning: can't establish shutdown hook\n",
-			    sc->sc_dv.dv_xname);
+		if (sc->sc_ats == NULL) {
+			aprint_normal("\n");
+			aprint_error_dev(&sc->sc_dv, "warning: can't establish shutdown hook\n");
+		}
 
 		lemac_ifattach(sc);
 

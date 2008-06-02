@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.15 2006/11/16 01:32:39 christos Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.15.52.1 2008/06/02 13:22:18 mjf Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.15 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.15.52.1 2008/06/02 13:22:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,10 +152,10 @@ wss_pnpbios_attach(struct device *parent, struct device *self,
 	printf("\n");
 	pnpbios_print_devres(self, aa);
 
-	printf("%s", self->dv_xname);
+	printf("%s", device_xname(self));
 
 	if (!ad1848_isa_probe(&sc->sc_ad1848)) {
-		printf("%s: ad1848 probe failed\n", self->dv_xname);
+		aprint_error_dev(self, "ad1848 probe failed\n");
 		return;
 	}
 

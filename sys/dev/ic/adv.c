@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.41 2007/10/19 11:59:45 ad Exp $	*/
+/*	$NetBSD: adv.c,v 1.41.16.1 2008/06/02 13:23:17 mjf Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.41 2007/10/19 11:59:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.41.16.1 2008/06/02 13:23:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,16 +117,16 @@ adv_alloc_control_data(sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct adv_control),
 			   PAGE_SIZE, 0, &sc->sc_control_seg, 1,
 			   &sc->sc_control_nsegs, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate control structures,"
-		       " error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to allocate control structures,"
+		       " error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_control_seg,
 			   sc->sc_control_nsegs, sizeof(struct adv_control),
 			   (void **) & sc->sc_control,
 			   BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map control structures, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to map control structures, error = %d\n",
+		       error);
 		return (error);
 	}
 	/*
@@ -135,15 +135,15 @@ adv_alloc_control_data(sc)
 	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct adv_control),
 			   1, sizeof(struct adv_control), 0, BUS_DMA_NOWAIT,
 				       &sc->sc_dmamap_control)) != 0) {
-		printf("%s: unable to create control DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create control DMA map, error = %d\n",
+		       error);
 		return (error);
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_control,
 			   sc->sc_control, sizeof(struct adv_control), NULL,
 				     BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load control DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to load control DMA map, error = %d\n",
+		       error);
 		return (error);
 	}
 
@@ -188,8 +188,8 @@ adv_create_ccbs(sc, ccbstore, count)
 	for (i = 0; i < count; i++) {
 		ccb = &ccbstore[i];
 		if ((error = adv_init_ccb(sc, ccb)) != 0) {
-			printf("%s: unable to initialize ccb, error = %d\n",
-			       sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to initialize ccb, error = %d\n",
+			       error);
 			return (i);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
@@ -242,8 +242,8 @@ adv_init_ccb(sc, ccb)
 			 ASC_MAX_SG_LIST, (ASC_MAX_SG_LIST - 1) * PAGE_SIZE,
 		   0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->dmamap_xfer);
 	if (error) {
-		printf("%s: unable to create DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create DMA map, error = %d\n",
+		       error);
 		return (error);
 	}
 
@@ -368,7 +368,7 @@ adv_init(sc)
 	AscInitASC_SOFTC(sc);
 	warn = AscInitFromEEP(sc);
 	if (warn) {
-		aprint_error("%s -get: ", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "-get: ");
 		switch (warn) {
 		case -1:
 			aprint_normal("Chip is not halted\n");
@@ -411,7 +411,7 @@ adv_init(sc)
 	 */
 	warn = AscInitFromASC_SOFTC(sc);
 	if (warn) {
-		aprint_error("%s -set: ", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "-set: ");
 		switch (warn) {
 		case ASC_WARN_CMD_QNG_CONFLICT:
 			aprint_normal("tag queuing enabled w/o disconnects\n");
@@ -448,22 +448,22 @@ adv_attach(sc)
 		break;
 
 	case 1:
-		panic("%s: bad signature", sc->sc_dev.dv_xname);
+		panic("%s: bad signature", device_xname(&sc->sc_dev));
 		break;
 
 	case 2:
 		panic("%s: unable to load MicroCode",
-		      sc->sc_dev.dv_xname);
+		      device_xname(&sc->sc_dev));
 		break;
 
 	case 3:
 		panic("%s: unable to initialize MicroCode",
-		      sc->sc_dev.dv_xname);
+		      device_xname(&sc->sc_dev));
 		break;
 
 	default:
 		panic("%s: unable to initialize board RISC chip",
-		      sc->sc_dev.dv_xname);
+		      device_xname(&sc->sc_dev));
 	}
 
 	/*
@@ -503,13 +503,12 @@ adv_attach(sc)
 	 */
 	i = adv_create_ccbs(sc, sc->sc_control->ccbs, ADV_MAX_CCB);
 	if (i == 0) {
-		aprint_error("%s: unable to create control blocks\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to create control blocks\n");
 		return; /* (ENOMEM) */ ;
 	} else if (i != ADV_MAX_CCB) {
-		aprint_error(
-		    "%s: WARNING: only %d of %d control blocks created\n",
-		    sc->sc_dev.dv_xname, i, ADV_MAX_CCB);
+		aprint_error_dev(&sc->sc_dev, 
+		    "WARNING: only %d of %d control blocks created\n",
+		    i, ADV_MAX_CCB);
 	}
 
 	adapt->adapt_openings = i;
@@ -662,14 +661,13 @@ adv_scsipi_request(chan, req, arg)
  			default:
  				xs->error = XS_DRIVER_STUFFUP;
 				if (error == EFBIG) {
-					printf("%s: adv_scsi_cmd, more than %d"
+					aprint_error_dev(&sc->sc_dev, "adv_scsi_cmd, more than %d"
 					    " DMA segments\n",
-					    sc->sc_dev.dv_xname,
 					    ASC_MAX_SG_LIST);
 				} else {
-					printf("%s: adv_scsi_cmd, error %d"
+					aprint_error_dev(&sc->sc_dev, "adv_scsi_cmd, error %d"
 					    " loading DMA map\n",
-					    sc->sc_dev.dv_xname, error);
+					    error);
 				}
 
 out_bad:
@@ -919,7 +917,7 @@ adv_narrow_isr_callback(sc, qdonep)
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
 	}
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "exiting ccb not allocated!\n");
 		Debugger();
 		return;
 	}

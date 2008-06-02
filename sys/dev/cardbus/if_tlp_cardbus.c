@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.56 2008/02/06 22:11:54 dyoung Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.56.6.1 2008/06/02 13:23:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.56 2008/02/06 22:11:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.56.6.1 2008/06/02 13:23:14 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -344,8 +337,7 @@ tlp_cardbus_attach(struct device *parent, struct device *self,
 		csc->sc_bar_reg = TULIP_PCI_IOBA;
 		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
 	} else {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 
@@ -411,7 +403,7 @@ tlp_cardbus_attach(struct device *parent, struct device *self,
 		 */
 		if (sc->sc_mediasw == NULL) {
 			printf("%s: defaulting to MII-over-SIO; no bets...\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			sc->sc_mediasw = &tlp_sio_mii_mediasw;
 		}
 		break;
@@ -453,7 +445,7 @@ tlp_cardbus_attach(struct device *parent, struct device *self,
 	default:
  cant_cope:
 		printf("%s: sorry, unable to handle your board\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		return;
 	}
 
@@ -481,7 +473,7 @@ tlp_cardbus_detach(struct device *self, int flags)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
 #endif
 
 	rv = tlp_detach(sc);
@@ -529,12 +521,12 @@ tlp_cardbus_enable(sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
 	    tlp_intr, sc);
 	if (csc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt at %d\n",
-		    sc->sc_dev.dv_xname, csc->sc_intrline);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt at %d\n",
+		    csc->sc_intrline);
 		Cardbus_function_disable(csc->sc_ct);
 		return (1);
 	}
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
+	printf("%s: interrupting at %d\n", device_xname(&sc->sc_dev),
 	    csc->sc_intrline);
 
 	return (0);

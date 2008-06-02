@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.29.6.1 2008/04/03 12:43:10 mjf Exp $	*/
+/*	$NetBSD: emul.c,v 1.29.6.2 2008/06/02 13:24:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -57,8 +57,7 @@
 
 time_t time_second = 1;
 
-kmutex_t proclist_mutex;
-kmutex_t proclist_lock;
+kmutex_t *proc_lock;
 struct lwp lwp0;
 struct vnode *rootvp;
 struct device *root_device;
@@ -364,10 +363,16 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	int rv;
 
 #ifdef RUMP_WITHOUT_THREADS
-	/* XXX: fake it */
-	if (strcmp(fmt, "vrele") == 0)
+	/* fake them */
+	if (strcmp(fmt, "vrele") == 0) {
+		printf("rump warning: threads not enabled, not starting "
+		   "vrele thread\n");
 		return 0;
-	else
+	} else if (strcmp(fmt, "cachegc") == 0) {
+		printf("rump warning: threads not enabled, not starting "
+		   "namecache g/c thread\n");
+		return 0;
+	} else
 		panic("threads not available, undef RUMP_WITHOUT_THREADS");
 #endif
 
@@ -550,4 +555,10 @@ selnotify(struct selinfo *sip, int events, long knhint)
 void
 seldestroy(struct selinfo *sip)
 {
+}
+
+const char *
+device_xname(device_t dv)
+{
+	return "bogus0";
 }

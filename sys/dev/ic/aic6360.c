@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.93 2007/10/19 11:59:46 ad Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.93.16.1 2008/06/02 13:23:18 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.93 2007/10/19 11:59:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.93.16.1 2008/06/02 13:23:18 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -283,8 +283,7 @@ aicattach(struct aic_softc *sc)
 	 * config_found() to make sure the adatper is disabled.
 	 */
 	if (scsipi_adapter_addref(adapt) != 0) {
-		printf("%s: unable to enable controller\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to enable controller\n");
 		return;
 	}
 
@@ -757,8 +756,8 @@ aic_reselect(struct aic_softc *sc, int message)
 	 */
 	selid = sc->sc_selid & ~(1 << sc->sc_initiator);
 	if (selid & (selid - 1)) {
-		printf("%s: reselect with invalid selid %02x; "
-		    "sending DEVICE RESET\n", sc->sc_dev.dv_xname, selid);
+		aprint_error_dev(&sc->sc_dev, "reselect with invalid selid %02x; "
+		    "sending DEVICE RESET\n", selid);
 		AIC_BREAK();
 		goto reset;
 	}
@@ -779,7 +778,7 @@ aic_reselect(struct aic_softc *sc, int message)
 	}
 	if (acb == NULL) {
 		printf("%s: reselect from target %d lun %d with no nexus; "
-		    "sending ABORT\n", sc->sc_dev.dv_xname, target, lun);
+		    "sending ABORT\n", device_xname(&sc->sc_dev), target, lun);
 		AIC_BREAK();
 		goto abort;
 	}
@@ -1085,7 +1084,7 @@ nextbyte:
 			if (sc->sc_dleft < 0) {
 				periph = acb->xs->xs_periph;
 				printf("%s: %ld extra bytes from %d:%d\n",
-				    sc->sc_dev.dv_xname, (long)-sc->sc_dleft,
+				    device_xname(&sc->sc_dev), (long)-sc->sc_dleft,
 				    periph->periph_target, periph->periph_lun);
 				sc->sc_dleft = 0;
 			}
@@ -1195,7 +1194,7 @@ nextbyte:
 
 			default:
 				printf("%s: unrecognized MESSAGE EXTENDED; "
-				    "sending REJECT\n", sc->sc_dev.dv_xname);
+				    "sending REJECT\n", device_xname(&sc->sc_dev));
 				AIC_BREAK();
 				goto reject;
 			}
@@ -1203,7 +1202,7 @@ nextbyte:
 
 		default:
 			printf("%s: unrecognized MESSAGE; sending REJECT\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			AIC_BREAK();
 		reject:
 			aic_sched_msgout(sc, SEND_REJECT);
@@ -1214,7 +1213,7 @@ nextbyte:
 	case AIC_RESELECTED:
 		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
 			printf("%s: reselect without IDENTIFY; "
-			    "sending DEVICE RESET\n", sc->sc_dev.dv_xname);
+			    "sending DEVICE RESET\n", device_xname(&sc->sc_dev));
 			AIC_BREAK();
 			goto reset;
 		}
@@ -1223,8 +1222,7 @@ nextbyte:
 		break;
 
 	default:
-		printf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unexpected MESSAGE IN; sending DEVICE RESET\n");
 		AIC_BREAK();
 	reset:
 		aic_sched_msgout(sc, SEND_DEV_RESET);
@@ -1371,8 +1369,7 @@ nextmsg:
 		break;
 
 	default:
-		printf("%s: unexpected MESSAGE OUT; sending NOOP\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unexpected MESSAGE OUT; sending NOOP\n");
 		AIC_BREAK();
 		sc->sc_omess[0] = MSG_NOOP;
 		n = 1;
@@ -1742,7 +1739,7 @@ loop:
 	AIC_MISC(("sstat1:0x%02x ", sstat1));
 
 	if ((sstat1 & SCSIRSTI) != 0) {
-		printf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
+		printf("%s: SCSI bus reset\n", device_xname(&sc->sc_dev));
 		goto reset;
 	}
 
@@ -1750,7 +1747,7 @@ loop:
 	 * Check for less serious errors.
 	 */
 	if ((sstat1 & SCSIPERR) != 0) {
-		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
+		printf("%s: SCSI bus parity error\n", device_xname(&sc->sc_dev));
 		bus_space_write_1(iot, ioh, CLRSINT1, CLRSCSIPERR);
 		if (sc->sc_prevphase == PH_MSGIN) {
 			sc->sc_flags |= AIC_DROP_MSGIN;
@@ -1780,7 +1777,7 @@ loop:
 			 * We don't currently support target mode.
 			 */
 			printf("%s: target mode selected; going to BUS FREE\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			bus_space_write_1(iot, ioh, SCSISIG, 0);
 
 			goto sched;
@@ -1813,7 +1810,7 @@ loop:
 			 */
 			if (sc->sc_state != AIC_SELECTING) {
 				printf("%s: selection out while idle; "
-				    "resetting\n", sc->sc_dev.dv_xname);
+				    "resetting\n", device_xname(&sc->sc_dev));
 				AIC_BREAK();
 				goto reset;
 			}
@@ -1858,7 +1855,7 @@ loop:
 
 			if (sc->sc_state != AIC_SELECTING) {
 				printf("%s: selection timeout while idle; "
-				    "resetting\n", sc->sc_dev.dv_xname);
+				    "resetting\n", device_xname(&sc->sc_dev));
 				AIC_BREAK();
 				goto reset;
 			}
@@ -1876,7 +1873,7 @@ loop:
 			if (sc->sc_state != AIC_IDLE) {
 				printf("%s: BUS FREE while not idle; "
 				    "state=%d\n",
-				    sc->sc_dev.dv_xname, sc->sc_state);
+				    device_xname(&sc->sc_dev), sc->sc_state);
 				AIC_BREAK();
 				goto out;
 			}
@@ -1952,9 +1949,8 @@ loop:
 				 * disconnecting, and this is necessary to
 				 * clean up their state.
 				 */
-				printf("%s: unexpected disconnect; "
-				    "sending REQUEST SENSE\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "unexpected disconnect; "
+				    "sending REQUEST SENSE\n");
 				AIC_BREAK();
 				aic_sense(sc, acb);
 				goto out;
@@ -2059,7 +2055,7 @@ dophase:
 		goto loop;
 	}
 
-	printf("%s: unexpected bus phase; resetting\n", sc->sc_dev.dv_xname);
+	aprint_error_dev(&sc->sc_dev, "unexpected bus phase; resetting\n");
 	AIC_BREAK();
 reset:
 	aic_init(sc, 1);

@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.44 2007/10/17 19:57:44 garbled Exp $
+# $NetBSD: DISKLESS3X,v 1.44.16.1 2008/06/02 13:22:45 mjf Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -8,6 +8,8 @@
 include "arch/sun3/conf/std.sun3x"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+makeoptions	COPTS="-Os"	# bootloader has size limit (~2MB)
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE	# XXX - Ever needed?

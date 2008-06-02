@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2005/12/11 12:17:47 christos Exp $	 */
+/*	$NetBSD: conf.c,v 1.4.74.1 2008/06/02 13:22:18 mjf Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -33,6 +33,9 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/lfs.h>
+#ifdef SUPPORT_EXT2FS
+#include <lib/libsa/ext2fs.h>
+#endif
 #ifdef SUPPORT_USTARFS
 #include <lib/libsa/ustarfs.h>
 #endif
@@ -60,6 +63,9 @@ struct fs_ops file_system[] = {
 #endif
 	FS_OPS(ffsv1), FS_OPS(ffsv2),
 	FS_OPS(lfsv1), FS_OPS(lfsv2),
+#ifdef SUPPORT_EXT2FS
+	FS_OPS(ext2fs),
+#endif
 #ifdef SUPPORT_DOSFS
 	FS_OPS(dosfs),
 #endif

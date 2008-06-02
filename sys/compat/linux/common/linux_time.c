@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.22 2007/12/20 23:02:57 dsl Exp $ */
+/*	$NetBSD: linux_time.c,v 1.22.6.1 2008/06/02 13:23:04 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.22 2007/12/20 23:02:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.22.6.1 2008/06/02 13:23:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -67,8 +60,6 @@ static void native_to_linux_timespec(struct linux_timespec *,
 				     struct timespec *);
 static void linux_to_native_timespec(struct timespec *,
 				     struct linux_timespec *);
-static int linux_to_native_clockid(clockid_t *, clockid_t);
-
 /*
  * This is not implemented for alpha yet
  */
@@ -151,7 +142,7 @@ linux_to_native_timespec(struct timespec *ntp, struct linux_timespec *ltp)
 	ntp->tv_nsec = ltp->tv_nsec;
 }
 
-static int
+int
 linux_to_native_clockid(clockid_t *n, clockid_t l)
 {
 	switch (l) {

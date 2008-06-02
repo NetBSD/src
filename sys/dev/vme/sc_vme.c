@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_vme.c,v 1.14 2007/10/19 12:01:23 ad Exp $	*/
+/*	$NetBSD: sc_vme.c,v 1.14.16.1 2008/06/02 13:23:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000,2001 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -69,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.14 2007/10/19 12:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.14.16.1 2008/06/02 13:23:57 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -168,7 +161,7 @@ sc_vme_attach(parent, self, aux)
 
 	if (vme_space_map(ct, va->r[0].offset, SCREG_BANK_SZ,
 			  mod, VME_D8, 0, &bt, &bh, &resc) != 0)
-		panic("%s: vme_space_map", sc->sc_dev.dv_xname);
+		panic("%s: vme_space_map", device_xname(&sc->sc_dev));
 
 	sc->sunscpal_regt = bt;
 	sc->sunscpal_regh = bh;
@@ -219,8 +212,7 @@ sc_vme_attach(parent, self, aux)
 				BUS_DMA_NOWAIT,
 				&sc->sc_dma_handles[i].dh_dmamap) != 0) {
 
-			printf("%s: DMA buffer map create error\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "DMA buffer map create error\n");
 			return;
 		}
 	}
@@ -231,7 +223,7 @@ sc_vme_attach(parent, self, aux)
 	SUNSCPAL_WRITE_1(sc, sunscpal_intvec, va->ivector & 0xFF);
 
 	/* Do the common attach stuff. */
-	printf("%s", sc->sc_dev.dv_xname);
+	printf("%s", device_xname(&sc->sc_dev));
 	sunscpal_attach(sc, (device_cfdata(&sc->sc_dev)->cf_flags ?
 			     device_cfdata(&sc->sc_dev)->cf_flags :
 			     sunsc_vme_options));

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.140 2007/12/16 14:12:35 elad Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.140.6.1 2008/06/02 13:24:25 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,13 +49,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -102,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.140 2007/12/16 14:12:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.140.6.1 2008/06/02 13:24:25 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -151,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.140 2007/12/16 14:12:35 elad Exp $"
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_private.h>
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
@@ -209,6 +203,7 @@ tcp_usrreq(struct socket *so, int req,
 	s = splsoftnet();
 
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		switch (family) {
 #ifdef INET
 		case PF_INET:
@@ -225,12 +220,17 @@ tcp_usrreq(struct socket *so, int req,
 			break;
 #endif
 		default:
+			mutex_exit(softnet_lock);
 			splx(s);
 			return (EAFNOSUPPORT);
 		}
+		mutex_exit(softnet_lock);
 		splx(s);
 		return (0);
 	}
+
+	if (req == PRU_ATTACH)
+		sosetlock(so);
 
 	switch (family) {
 #ifdef INET
@@ -436,7 +436,7 @@ tcp_usrreq(struct socket *so, int req,
 		    (TCP_MAXWIN << tp->request_r_scale) < sb_max)
 			tp->request_r_scale++;
 		soisconnecting(so);
-		tcpstat.tcps_connattempt++;
+		TCP_STATINC(TCP_STAT_CONNATTEMPT);
 		tp->t_state = TCPS_SYN_SENT;
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
 		tp->iss = tcp_new_iss(tp, 0);
@@ -1612,6 +1612,12 @@ sysctl_tcp_keep(SYSCTLFN_ARGS)
 	return 0;
 }
 
+static int
+sysctl_net_inet_tcp_stats(SYSCTLFN_ARGS)
+{
+
+	return (NETSTAT_SYSCTL(tcpstat_percpu, TCP_NSTATS));
+}
 
 /*
  * this (second stage) setup routine is a replacement for tcp_sysctl()
@@ -1959,7 +1965,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("TCP statistics"),
-		       NULL, 0, &tcpstat, sizeof(tcpstat),
+		       sysctl_net_inet_tcp_stats, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_STATS,
 		       CTL_EOL);
 #ifdef TCP_DEBUG

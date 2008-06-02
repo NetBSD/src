@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.24.6.1 2008/04/03 12:42:38 mjf Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.24.6.2 2008/06/02 13:23:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.24.6.1 2008/04/03 12:42:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.24.6.2 2008/06/02 13:23:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -198,8 +198,8 @@ ataraid_attach(device_t parent, device_t self,
 	 * We're a pseudo-device, so we get to announce our own
 	 * presence.
 	 */
-	aprint_normal("%s: found %u RAID volume%s\n",
-	    self->dv_xname, ataraid_array_info_count,
+	aprint_normal_dev(self, "found %u RAID volume%s\n",
+	    ataraid_array_info_count,
 	    ataraid_array_info_count == 1 ? "" : "s");
 
 	TAILQ_FOREACH(aai, &ataraid_array_info_list, aai_list) {
@@ -294,7 +294,7 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
 	struct buf *bp;
 	int error;
 
-	bp = getiobuf(vp, NULL);
+	bp = getiobuf(vp, false);
 	bp->b_blkno = blkno;
 	bp->b_bcount = bp->b_resid = size;
 	bp->b_flags = bflags;

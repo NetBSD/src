@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.39 2007/10/17 17:57:11 he Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.39.16.1 2008/06/02 13:23:36 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.39 2007/10/17 17:57:11 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.39.16.1 2008/06/02 13:23:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -134,7 +134,7 @@ ofdisk_attach(struct device *parent, struct device *self, void *aux)
 	of->sc_phandle = oba->oba_phandle;
 	of->sc_unit = oba->oba_unit;
 	of->sc_ihandle = 0;
-	disk_init(&of->sc_dk, of->sc_dev.dv_xname, &ofdisk_dkdriver);
+	disk_init(&of->sc_dk, device_xname(&of->sc_dev), &ofdisk_dkdriver);
 	disk_attach(&of->sc_dk);
 	printf("\n");
 
@@ -423,7 +423,8 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, of->sc_dev.dv_xname);
+		strlcpy(dkw->dkw_parent, device_xname(&of->sc_dev),
+			sizeof(dkw->dkw_parent));
 		return (dkwedge_add(dkw));
 	    }
 
@@ -438,7 +439,8 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, of->sc_dev.dv_xname);
+		strlcpy(dkw->dkw_parent, device_xname(&of->sc_dev),
+			sizeof(dkw->dkw_parent));
 		return (dkwedge_del(dkw));
 	    }
 
@@ -560,6 +562,6 @@ ofdisk_getdisklabel(dev)
 		    unit, RAW_PART), ofdisk_strategy, lp,
 		    of->sc_dk.dk_cpulabel);
 		if (errmes != NULL)
-			printf("%s: %s\n", of->sc_dev.dv_xname, errmes);
+			printf("%s: %s\n", device_xname(&of->sc_dev), errmes);
 	}
 }

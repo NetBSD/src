@@ -1,9 +1,7 @@
-/*	$NetBSD: rscalc.c,v 1.3 2007/12/11 13:16:15 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: rscalc - Calculate stream and list lengths
- *              $Revision: 1.3 $
+ *              $Revision: 1.3.8.1 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,15 +114,12 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rscalc.c,v 1.3 2007/12/11 13:16:15 lukem Exp $");
-
 #define __RSCALC_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acresrc.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acnamesp.h>
+#include "acpi.h"
+#include "acresrc.h"
+#include "amlcode.h"
+#include "acnamesp.h"
 
 #define _COMPONENT          ACPI_RESOURCES
         ACPI_MODULE_NAME    ("rscalc")
@@ -163,7 +158,7 @@ static UINT8
 AcpiRsCountSetBits (
     UINT16                  BitField)
 {
-    UINT8                   BitsSet;
+    ACPI_NATIVE_UINT        BitsSet;
 
 
     ACPI_FUNCTION_ENTRY ();
@@ -173,10 +168,10 @@ AcpiRsCountSetBits (
     {
         /* Zero the least significant bit that is set */
 
-        BitField &= (BitField - 1);
+        BitField &= (UINT16) (BitField - 1);
     }
 
-    return (BitsSet);
+    return ((UINT8) BitsSet);
 }
 
 
@@ -317,6 +312,28 @@ AcpiRsGetAmlLength (
          */
         switch (Resource->Type)
         {
+        case ACPI_RESOURCE_TYPE_IRQ:
+
+            /* Length can be 3 or 2 */
+
+            if (Resource->Data.Irq.DescriptorLength == 2)
+            {
+                TotalSize--;
+            }
+            break;
+
+
+        case ACPI_RESOURCE_TYPE_START_DEPENDENT:
+
+            /* Length can be 1 or 0 */
+
+            if (Resource->Data.Irq.DescriptorLength == 0)
+            {
+                TotalSize--;
+            }
+            break;
+
+
         case ACPI_RESOURCE_TYPE_VENDOR:
             /*
              * Vendor Defined Resource:

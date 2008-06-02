@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.23 2007/03/04 06:00:26 christos Exp $	*/
+/*	$NetBSD: fb.c,v 1.23.40.1 2008/06/02 13:22:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.23 2007/03/04 06:00:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.23.40.1 2008/06/02 13:22:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,13 +51,13 @@ struct fb_devconfig {
 };
 
 struct fb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct fb_devconfig *sc_dc;
 	int sc_nscreens;
 };
 
-int fb_match(struct device *, struct cfdata *, void *);
-void fb_attach(struct device *, struct device *, void *);
+int fb_match(device_t, cfdata_t, void *);
+void fb_attach(device_t, device_t, void *);
 
 int fb_common_init(struct fb_devconfig *);
 int fb_is_console(void);
@@ -73,7 +73,7 @@ void fb_cnattach(void);
 
 static void fb253_init(void);
 
-CFATTACH_DECL(fb, sizeof(struct fb_softc),
+CFATTACH_DECL_NEW(fb, sizeof(struct fb_softc),
     fb_match, fb_attach, NULL, NULL);
 
 struct fb_devconfig fb_console_dc;
@@ -100,17 +100,17 @@ const struct wsscreen_descr *fb_scrlist[] = {
 };
 
 struct wsscreen_list fb_screenlist = {
-	sizeof(fb_scrlist) / sizeof(fb_scrlist[0]), fb_scrlist
+	__arraycount(fb_scrlist), fb_scrlist
 };
 
-#define NWB253_VRAM   ((u_char *) 0x88000000)
-#define NWB253_CTLREG ((u_short *)0xb8ff0000)
-#define NWB253_CRTREG ((u_short *)0xb8fe0000)
+#define NWB253_VRAM   ((uint8_t *) 0x88000000)
+#define NWB253_CTLREG ((uint16_t *)0xb8ff0000)
+#define NWB253_CRTREG ((uint16_t *)0xb8fe0000)
 
 static const char *devname[8] = { "NWB-512", "NWB-518", "NWE-501" }; /* XXX ? */
 
 int
-fb_match(struct device *parent, struct cfdata *match, void *aux)
+fb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -119,22 +119,24 @@ fb_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (hb_badaddr(NWB253_CTLREG, 2) || hb_badaddr(NWB253_CRTREG, 2))
 		return 0;
-	if ((*(volatile u_short *)NWB253_CTLREG & 7) != 4)
+	if ((*(volatile uint16_t *)NWB253_CTLREG & 7) != 4)
 		return 0;
 
 	return 1;
 }
 
 void
-fb_attach(struct device *parent, struct device *self, void *aux)
+fb_attach(device_t parent, device_t self, void *aux)
 {
-	struct fb_softc *sc = (void *)self;
+	struct fb_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args waa;
 	struct fb_devconfig *dc;
 	struct rasops_info *ri;
 	int console;
 	volatile u_short *ctlreg = NWB253_CTLREG;
 	int id;
+
+	sc->sc_dev = self;
 
 	console = fb_is_console();
 
@@ -158,7 +160,7 @@ fb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dc = dc;
 
 	id = (*ctlreg >> 8) & 0xf;
-	printf(": %s, %d x %d, %dbpp\n", devname[id],
+	aprint_normal(": %s, %d x %d, %dbpp\n", devname[id],
 	    ri->ri_width, ri->ri_height, ri->ri_depth);
 
 	waa.console = console;
@@ -173,7 +175,7 @@ int
 fb_common_init(struct fb_devconfig *dc)
 {
 	struct rasops_info *ri = &dc->dc_ri;
-	volatile u_short *ctlreg = NWB253_CTLREG;
+	volatile uint16_t *ctlreg = NWB253_CTLREG;
 	int id;
 	int width, height, xoff, yoff, cols, rows;
 
@@ -303,7 +305,7 @@ fb_free_screen(void *v, void *cookie)
 	struct fb_softc *sc = v;
 
 	if (sc->sc_dc == &fb_console_dc)
-		panic("fb_free_screen: console");
+		panic("%s: console", __func__);
 
 	sc->sc_nscreens--;
 }
@@ -418,8 +420,8 @@ static const uint8_t
 static void
 fb253_init(void)
 {
-	volatile u_short *ctlreg = NWB253_CTLREG;
-	volatile u_short *crtreg = NWB253_CRTREG;
+	volatile uint16_t *ctlreg = NWB253_CTLREG;
+	volatile uint16_t *crtreg = NWB253_CRTREG;
 	int id = (*ctlreg >> 8) & 0xf;
 	const uint8_t *p;
 	int i;

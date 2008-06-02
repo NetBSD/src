@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.10 2007/09/14 11:28:46 martti Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.10.20.1 2008/06/02 13:24:04 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.68.2.8 2007/05/11 10:44:14 darrenr Exp
+ * Id: ip_state.h,v 2.68.2.11 2008/04/14 12:19:27 darrenr Exp
  */
 #ifndef _NETINET_IP_STATE_H_
 #define _NETINET_IP_STATE_H_
@@ -222,6 +222,7 @@ extern	u_long	fr_tcpclosewait;
 extern	u_long	fr_tcplastack;
 extern	u_long	fr_tcptimeout;
 extern	u_long	fr_tcpclosed;
+extern	u_long	fr_tcptimewait;
 extern	u_long	fr_tcphalfclosed;
 extern	u_long	fr_udptimeout;
 extern	u_long	fr_udpacktimeout;
@@ -244,7 +245,7 @@ extern	ipstate_t *fr_stlookup __P((fr_info_t *, tcphdr_t *, ipftq_t **));
 extern	void	fr_statesync __P((void *));
 extern	void	fr_timeoutstate __P((void));
 extern	int	fr_tcp_age __P((struct ipftqent *, struct fr_info *,
-				struct ipftq *, int, int));
+				struct ipftq *, int));
 extern	int	fr_tcpinwindow __P((struct fr_info *, struct tcpdata *,
 				    struct tcpdata *, tcphdr_t *, int));
 extern	void	fr_stateunload __P((void));

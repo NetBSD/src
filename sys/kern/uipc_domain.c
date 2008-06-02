@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.74.6.1 2008/04/03 12:43:05 mjf Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.74.6.2 2008/06/02 13:24:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.74.6.1 2008/04/03 12:43:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.74.6.2 2008/06/02 13:24:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -93,8 +93,8 @@ domaininit(void)
 	if (rt_domain)
 		domain_attach(rt_domain);
 
-	callout_init(&pffasttimo_ch, 0);
-	callout_init(&pfslowtimo_ch, 0);
+	callout_init(&pffasttimo_ch, CALLOUT_MPSAFE);
+	callout_init(&pfslowtimo_ch, CALLOUT_MPSAFE);
 
 	callout_reset(&pffasttimo_ch, 1, pffasttimo, NULL);
 	callout_reset(&pfslowtimo_ch, 1, pfslowtimo, NULL);
@@ -563,7 +563,7 @@ pfslowtimo(void *arg)
 			if (pr->pr_slowtimo)
 				(*pr->pr_slowtimo)();
 	}
-	callout_reset(&pfslowtimo_ch, hz / 2, pfslowtimo, NULL);
+	callout_schedule(&pfslowtimo_ch, hz / 2);
 }
 
 void
@@ -579,5 +579,5 @@ pffasttimo(void *arg)
 			if (pr->pr_fasttimo)
 				(*pr->pr_fasttimo)();
 	}
-	callout_reset(&pffasttimo_ch, hz / 5, pffasttimo, NULL);
+	callout_schedule(&pffasttimo_ch, hz / 5);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.6 2007/02/21 22:14:24 martin Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.6.42.1 2008/06/02 13:22:44 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -71,7 +64,7 @@
  * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
  */
 .align	32
-_ENTRY(_C_LABEL(_lock_cas))
+ENTRY(_lock_cas)
 	CASPTR	[%o0], %o1, %o2			! compare-and-swap
 	MB_MEM
 	xor	%o1, %o2, %o2			! expected == actual?
@@ -85,7 +78,7 @@ _ENTRY(_C_LABEL(_lock_cas))
  * void mutex_enter(kmutex_t *);
  */
 .align	32
-_ENTRY(_C_LABEL(mutex_enter))
+ENTRY(mutex_enter)
 	sethi	%hi(CURLWP), %o1
 	LDPTR	[%o1 + %lo(CURLWP)], %o1	! current thread
 	CASPTR	[%o0], %g0, %o1			! compare-and-swap
@@ -103,7 +96,7 @@ _ENTRY(_C_LABEL(mutex_enter))
  * XXX This should use a restartable sequence.  See mutex_vector_enter().
  */
 .align	32
-_ENTRY(_C_LABEL(mutex_exit))
+ENTRY(mutex_exit)
 	sethi	%hi(CURLWP), %o1
 	LDPTR	[%o1 + %lo(CURLWP)], %o1	! current thread
 	clr	%o2				! new value (0)

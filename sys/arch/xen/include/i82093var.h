@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093var.h,v 1.1 2006/09/28 18:53:15 bouyer Exp $ */
+/*	 $NetBSD: i82093var.h,v 1.1.58.1 2008/06/02 13:22:53 mjf Exp $ */
 
 #include "opt_xen.h"
 #define _IOAPIC_CUSTOM_RW
@@ -7,7 +7,7 @@
 
 #ifdef XEN3
 
-static inline  u_int32_t
+static inline  uint32_t
 ioapic_read_ul(struct ioapic_softc *sc, int regid)
 {
 	physdev_op_t op;
@@ -25,7 +25,7 @@ ioapic_read_ul(struct ioapic_softc *sc, int regid)
 }
 
 static inline void
-ioapic_write_ul(struct ioapic_softc *sc, int regid, u_int32_t val)
+ioapic_write_ul(struct ioapic_softc *sc, int regid, uint32_t val)
 {
 	physdev_op_t op;
 	int ret;

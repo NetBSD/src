@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.172.6.1 2008/04/03 12:43:01 mjf Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.172.6.2 2008/06/02 13:24:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -74,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.172.6.1 2008/04/03 12:43:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.172.6.2 2008/06/02 13:24:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.172.6.1 2008/04/03 12:43:01 mjf E
 #include <sys/atomic.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/cpu.h>
 
 static int	cwdi_ctor(void *, void *, int);
 static void	cwdi_dtor(void *, void *);
@@ -1475,7 +1469,7 @@ fd_free(void)
 	/*
 	 * Close any files that the process holds open.
 	 */
-	for (fd = 0, lastfd = fdp->fd_lastfile; fd <= lastfd; fd++) {
+	for (fd = 0, lastfd = fdp->fd_nfiles - 1; fd <= lastfd; fd++) {
 		ff = fdp->fd_ofiles[fd];
 		KASSERT(fd >= NDFDFILE ||
 		    ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
@@ -1518,7 +1512,7 @@ fd_free(void)
 		free(fdp->fd_ofiles, M_FILEDESC);
 	}
 	if (fdp->fd_knhash != NULL) {
-		hashdone(fdp->fd_knhash, M_KEVENT);
+		hashdone(fdp->fd_knhash, HASH_LIST, fdp->fd_knhashmask);
 		fdp->fd_knhash = NULL;
 		fdp->fd_knhashmask = 0;
 	} else {
@@ -1717,16 +1711,16 @@ fd_checkstd(void)
 		fd_affix(p, fp, fd);
 	}
 	if (closed[0] != '\0') {
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		pp = p->p_pptr;
-		mutex_enter(&pp->p_mutex);
+		mutex_enter(pp->p_lock);
 		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
 		    "was invoked by uid %d ppid %d (%s) "
 		    "with fd %s closed\n",
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, &closed[1]);
-		mutex_exit(&pp->p_mutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(pp->p_lock);
+		mutex_exit(proc_lock);
 	}
 	return (0);
 }
@@ -1792,21 +1786,19 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	struct pgrp *pgrp;
 	ksiginfo_t ksi;
 
+	KASSERT(!cpu_intr_p());
+
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
 	ksi.ksi_code = code;
 	ksi.ksi_band = band;
 
-	/*
-	 * Since we may be called from an interrupt context, we must use
-	 * the proclist_mutex.
-	 */
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	if (pgid > 0 && (p1 = p_find(pgid, PFIND_LOCKED)))
 		kpsignal(p1, &ksi, fdescdata);
 	else if (pgid < 0 && (pgrp = pg_find(-pgid, PFIND_LOCKED)))
 		kpgsignal(pgrp, &ksi, fdescdata, 0);
-	mutex_exit(&proclist_mutex);
+	mutex_exit(proc_lock);
 }
 
 int

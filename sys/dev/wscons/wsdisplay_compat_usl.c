@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.44 2008/01/14 21:17:00 drochner Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.44.6.1 2008/06/02 13:23:57 mjf Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.44 2008/01/14 21:17:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.44.6.1 2008/06/02 13:23:57 mjf Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -141,15 +141,15 @@ static int
 usl_sync_check_sig(struct usl_syncdata *sd, int sig, int flags)
 {
 
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	if (sd->s_proc == p_find(sd->s_pid, PFIND_LOCKED)) {
 		sd->s_flags |= flags;
 		if (sig)
 			psignal(sd->s_proc, sig);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 		return (1);
 	}
-	mutex_exit(&proclist_mutex);
+	mutex_exit(proc_lock);
 
 	printf("usl_sync_check: process %d died\n", sd->s_pid);
 	usl_sync_done(sd);

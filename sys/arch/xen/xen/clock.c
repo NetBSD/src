@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44 2008/01/17 01:56:02 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.44.6.1 2008/06/02 13:22:54 mjf Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44 2008/01/17 01:56:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44.6.1 2008/06/02 13:22:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,7 @@ static void
 get_time_values_from_xen(void)
 {
 #ifdef XEN3
-	volatile struct vcpu_time_info *t =
-	    &HYPERVISOR_shared_info->vcpu_info[0].time;
+	volatile struct vcpu_time_info *t = &curcpu()->ci_vcpu->time;
 	uint32_t tversion;
 
 	do {
@@ -150,8 +149,7 @@ time_values_up_to_date(void)
 #ifndef XEN3
 	rv = shadow_time_version == HYPERVISOR_shared_info->time_version1;
 #else
-	rv = shadow_time_version == 
-	    HYPERVISOR_shared_info->vcpu_info[0].time.version;  /* XXXSMP */
+	rv = shadow_time_version == curcpu()->ci_vcpu->time.version;
 #endif
 	x86_lfence();
 
@@ -333,7 +331,7 @@ xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 }
 
 void
-startrtclock()
+startrtclock(void)
 {
 	static struct todr_chip_handle	tch;
 	tch.todr_gettime = xen_rtc_get;
@@ -355,11 +353,11 @@ xen_delay(unsigned int n)
 		 * precise enouth for short delays. Use the CPU counter
 		 * instead. We assume it's working at this point.
 		 */
-		u_int64_t cc, cc2, when;
+		uint64_t cc, cc2, when;
 		struct cpu_info *ci = curcpu();
 
 		cc = cpu_counter();
-		when = cc + (u_int64_t)n * cpu_frequency(ci) / 1000000LL;
+		when = cc + (uint64_t)n * cpu_frequency(ci) / 1000000LL;
 		if (when < cc) {
 			/* wait for counter to wrap */
 			cc2 = cpu_counter();
@@ -443,7 +441,7 @@ xen_get_timecount(struct timecounter *tc)
 }
 
 void
-xen_initclocks()
+xen_initclocks(void)
 {
 	int evtch;
 

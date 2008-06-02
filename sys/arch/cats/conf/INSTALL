@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.65 2008/01/19 13:11:12 chris Exp $
+#	$NetBSD: INSTALL,v 1.65.6.1 2008/06/02 13:21:59 mjf Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -83,6 +83,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

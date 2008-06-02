@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.86.6.1 2008/04/03 12:42:33 mjf Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.86.6.2 2008/06/02 13:23:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.86.6.1 2008/04/03 12:42:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.86.6.2 2008/06/02 13:23:03 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -125,7 +118,7 @@ int linux_to_bsd_tcp_sockopt(int);
 int linux_to_bsd_udp_sockopt(int);
 int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 static int linux_get_sa(struct lwp *, int, struct mbuf **,
-		const struct osockaddr *, int);
+		const struct osockaddr *, unsigned int);
 static int linux_sa_put(struct osockaddr *osa);
 static int linux_to_bsd_msg_flags(int);
 static int bsd_to_linux_msg_flags(int);
@@ -1000,6 +993,8 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
 
+	KERNEL_LOCK(1, NULL);
+
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;
 		goto out;
@@ -1084,6 +1079,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	}
 
 out:
+	KERNEL_UNLOCK_ONE(NULL);
 	fd_putfile(fd);
 	return error;
 }
@@ -1209,17 +1205,17 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 
 	if (error == EISCONN) {
 		struct socket *so;
-		int s, state, prflags, nbio;
+		int state, prflags, nbio;
 
 		/* getsock() will use the descriptor for us */
 	    	if (fd_getsock(SCARG(uap, s), &so) != 0)
 		    	return EISCONN;
 
-		s = splsoftnet();
+		solock(so);
 		state = so->so_state;
 		nbio = so->so_nbio;
 		prflags = so->so_proto->pr_flags;
-		splx(s);
+		sounlock(so);
 		fd_putfile(SCARG(uap, s));
 		/*
 		 * We should only let this call succeed once per
@@ -1296,7 +1292,8 @@ linux_sys_getpeername(struct lwp *l, const struct linux_sys_getpeername_args *ua
  * family and convert to sockaddr.
  */
 static int
-linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa, int salen)
+linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
+    const struct osockaddr *osa, unsigned int salen)
 {
 	int error, bdom;
 	struct sockaddr *sa;

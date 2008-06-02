@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.38.6.3 2008/04/06 09:58:52 mjf Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.38.6.4 2008/06/02 13:24:22 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -12,9 +12,6 @@
  *  2. Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *  3. Neither the name of The NetBSD Foundation nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  *  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.3 2008/04/06 09:58:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.4 2008/06/02 13:24:22 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -58,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.3 2008/04/06 09:58:52 mjf Exp $");
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/simplelock.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -109,6 +107,7 @@ struct tap_softc {
 	pid_t		sc_pgid; /* For async. IO */
 	kmutex_t	sc_rdlock;
 	struct simplelock	sc_kqlock;
+	void		*sc_sih;
 };
 
 /* autoconf(9) glue */
@@ -197,8 +196,9 @@ static void	tap_stop(struct ifnet *, int);
 static int	tap_init(struct ifnet *);
 static int	tap_ioctl(struct ifnet *, u_long, void *);
 
-/* This is an internal function to keep tap_ioctl readable */
+/* Internal functions */
 static int	tap_lifaddr(struct ifnet *, u_long, struct ifaliasreq *);
+static void	tap_softintr(void *);
 
 /*
  * tap is a clonable interface, although it is highly unrealistic for
@@ -255,6 +255,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 	int error, maj;
 
 	sc->sc_dev = self;
+	sc->sc_sih = softint_establish(SOFTINT_CLOCK, tap_softintr, sc);
 
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
@@ -373,6 +374,8 @@ tap_detach(device_t self, int flags)
 	if_down(ifp);
 	splx(s);
 
+	softint_disestablish(sc->sc_sih);
+
 	/*
 	 * Destroying a single leaf is a very straightforward operation using
 	 * sysctl_destroyv.  One should be sure to always end the path with
@@ -464,8 +467,29 @@ tap_start(struct ifnet *ifp)
 		wakeup(sc);
 		selnotify(&sc->sc_rsel, 0, 1);
 		if (sc->sc_flags & TAP_ASYNCIO)
-			fownsignal(sc->sc_pgid, SIGIO, POLL_IN,
-			    POLLIN|POLLRDNORM, NULL);
+			softint_schedule(sc->sc_sih);
+	}
+}
+
+static void
+tap_softintr(void *cookie)
+{
+	struct tap_softc *sc;
+	struct ifnet *ifp;
+	int a, b;
+
+	sc = cookie;
+
+	if (sc->sc_flags & TAP_ASYNCIO) {
+		ifp = &sc->sc_ec.ec_if;
+		if (ifp->if_flags & IFF_RUNNING) {
+			a = POLL_IN;
+			b = POLLIN|POLLRDNORM;
+		} else {
+			a = POLL_HUP;
+			b = 0;
+		}
+		fownsignal(sc->sc_pgid, SIGIO, a, b, NULL);
 	}
 }
 
@@ -559,7 +583,7 @@ tap_stop(struct ifnet *ifp, int disable)
 	wakeup(sc);
 	selnotify(&sc->sc_rsel, 0, 1);
 	if (sc->sc_flags & TAP_ASYNCIO)
-		fownsignal(sc->sc_pgid, SIGIO, POLL_HUP, 0, NULL);
+		softint_schedule(sc->sc_sih);
 }
 
 /*
@@ -602,7 +626,7 @@ tap_clone_creator(int unit)
 		cf->cf_fstate = FSTATE_STAR;
 	} else {
 		cf->cf_unit = unit;
-		cf->cf_fstate = FSTATE_NOTFOUND;
+		cf->cf_fstate = FSTATE_FOUND;
 	}
 
 	return device_private(config_attach_pseudo(cf));
@@ -616,7 +640,9 @@ tap_clone_creator(int unit)
 static int
 tap_clone_destroy(struct ifnet *ifp)
 {
-	return tap_clone_destroyer(device_private(ifp->if_softc));
+	struct tap_softc *sc = ifp->if_softc;
+
+	return tap_clone_destroyer(sc->sc_dev);
 }
 
 int
@@ -758,15 +784,22 @@ tap_fops_close(file_t *fp)
 
 	/* tap_dev_close currently always succeeds, but it might not
 	 * always be the case. */
-	if ((error = tap_dev_close(sc)) != 0)
+	KERNEL_LOCK(1, NULL);
+	if ((error = tap_dev_close(sc)) != 0) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return (error);
+	}
 
 	/* Destroy the device now that it is no longer useful,
 	 * unless it's already being destroyed. */
-	if ((sc->sc_flags & TAP_GOING) != 0)
+	if ((sc->sc_flags & TAP_GOING) != 0) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return (0);
+	}
 
-	return tap_clone_destroyer(sc->sc_dev);
+	error = tap_clone_destroyer(sc->sc_dev);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 static int
@@ -813,7 +846,12 @@ static int
 tap_fops_read(file_t *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
-	return tap_dev_read((intptr_t)fp->f_data, uio, flags);
+	int error;
+
+	KERNEL_LOCK(1, NULL);
+	error = tap_dev_read((intptr_t)fp->f_data, uio, flags);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 static int
@@ -911,7 +949,12 @@ static int
 tap_fops_write(file_t *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
-	return tap_dev_write((intptr_t)fp->f_data, uio, flags);
+	int error;
+
+	KERNEL_LOCK(1, NULL);
+	error = tap_dev_write((intptr_t)fp->f_data, uio, flags);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 static int
@@ -1117,6 +1160,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 	if (sc == NULL)
 		return (ENXIO);
 
+	KERNEL_LOCK(1, NULL);
 	switch(kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &tap_read_filterops;
@@ -1125,6 +1169,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 		kn->kn_fop = &tap_seltrue_filterops;
 		break;
 	default:
+		KERNEL_UNLOCK_ONE(NULL);
 		return (EINVAL);
 	}
 
@@ -1132,6 +1177,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 	simple_lock(&sc->sc_kqlock);
 	SLIST_INSERT_HEAD(&sc->sc_rsel.sel_klist, kn, kn_selnext);
 	simple_unlock(&sc->sc_kqlock);
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
 
@@ -1140,9 +1186,11 @@ tap_kqdetach(struct knote *kn)
 {
 	struct tap_softc *sc = (struct tap_softc *)kn->kn_hook;
 
+	KERNEL_LOCK(1, NULL);
 	simple_lock(&sc->sc_kqlock);
 	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	simple_unlock(&sc->sc_kqlock);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 static int
@@ -1151,8 +1199,9 @@ tap_kqread(struct knote *kn, long hint)
 	struct tap_softc *sc = (struct tap_softc *)kn->kn_hook;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m;
-	int s;
+	int s, rv;
 
+	KERNEL_LOCK(1, NULL);
 	s = splnet();
 	IFQ_POLL(&ifp->if_snd, m);
 
@@ -1161,7 +1210,9 @@ tap_kqread(struct knote *kn, long hint)
 	else
 		kn->kn_data = m->m_pkthdr.len;
 	splx(s);
-	return (kn->kn_data != 0 ? 1 : 0);
+	rv = (kn->kn_data != 0 ? 1 : 0);
+	KERNEL_UNLOCK_ONE(NULL);
+	return rv;
 }
 
 /*

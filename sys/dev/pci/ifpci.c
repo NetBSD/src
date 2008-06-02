@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci.c,v 1.24 2007/10/19 12:00:50 ad Exp $	*/
+/* $NetBSD: ifpci.c,v 1.24.16.1 2008/06/02 13:23:41 mjf Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.24 2007/10/19 12:00:50 ad Exp $
+ *	$Id: ifpci.c,v 1.24.16.1 2008/06/02 13:23:41 mjf Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.24 2007/10/19 12:00:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.24.16.1 2008/06/02 13:23:41 mjf Exp $");
 
 
 #include <sys/param.h>
@@ -298,7 +298,7 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0
 	   && pci_mapreg_map(pa, FRITZPCI_PORT0_IO_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0) {
-		printf("%s: can't map card\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map card\n");
 		return;
 	}
 
@@ -353,7 +353,7 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 	/* setup i4b infrastructure (have to roll our own here) */
 
 	/* sc->sc_isac_version = ((ISAC_READ(I_RBCH)) >> 5) & 0x03; */
-	 printf("%s: ISAC %s (IOM-%c)\n", sc->sc_dev.dv_xname,
+	 printf("%s: ISAC %s (IOM-%c)\n", device_xname(&sc->sc_dev),
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
 		 sc->sc_bustyp == BUS_TYPE_IOM1 ? '1' : '2');
 
@@ -387,7 +387,7 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_freeflag2 = 0;
 
 	/* init higher protocol layers */
-	drv = isdn_attach_isdnif(sc->sc_dev.dv_xname,
+	drv = isdn_attach_isdnif(device_xname(&sc->sc_dev),
 	    "AVM Fritz!PCI", &sc->sc_l2, &ifpci_l3_driver, NBCH_BRI);
 	sc->sc_l3token = drv;
 	sc->sc_l2.driver = &isic_std_driver;
@@ -841,7 +841,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 		 * a look at isic_bchannel_start() in i4b_bchan.c !
 		 */
 
-		NDBGL1(L1_H_IRQ, "%s: chan %d - XPR, Tx Fifo Empty!", sc->sc_dev.dv_xname, h_chan);
+		NDBGL1(L1_H_IRQ, "%s: chan %d - XPR, Tx Fifo Empty!", device_xname(&sc->sc_dev), h_chan);
 
 		if(chan->out_mbuf_cur == NULL) 	/* last frame is transmitted */
 		{
@@ -963,7 +963,7 @@ avma1pp_map_int(struct ifpci_softc *psc, struct pci_attach_args *pa)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		avma1pp_disable(sc);
 		return;
 	}
@@ -971,15 +971,14 @@ avma1pp_map_int(struct ifpci_softc *psc, struct pci_attach_args *pa)
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, avma1pp_intr, sc);
 	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		avma1pp_disable(sc);
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 }
 
 static void
@@ -989,7 +988,7 @@ avma1pp_hscx_init(struct isic_softc *sc, int h_chan, int activate)
 	u_int param = 0;
 
 	NDBGL1(L1_BCHAN, "%s: channel=%d, %s",
-		sc->sc_dev.dv_xname, h_chan, activate ? "activate" : "deactivate");
+		device_xname(&sc->sc_dev), h_chan, activate ? "activate" : "deactivate");
 
 	if (activate == 0)
 	{
@@ -1051,7 +1050,7 @@ avma1pp_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 	}
 
 	NDBGL1(L1_BCHAN, "%s: channel=%d, %s",
-		sc->sc_dev.dv_xname, h_chan, activate ? "activate" : "deactivate");
+		device_xname(&sc->sc_dev), h_chan, activate ? "activate" : "deactivate");
 
 	/* general part */
 

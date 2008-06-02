@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.11.10.1 2008/04/03 12:42:50 mjf Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.11.10.2 2008/06/02 13:23:38 mjf Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.11.10.1 2008/04/03 12:42:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.11.10.2 2008/06/02 13:23:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,7 +131,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_SMB_HOSTC);
-	DPRINTF(("%s: conf 0x%08x", sc->sc_dev.dv_xname, conf));
+	DPRINTF(("%s: conf 0x%08x", device_xname(&sc->sc_dev), conf));
 
 	if ((conf & LPCIB_SMB_HOSTC_HSTEN) == 0) {
 		aprint_error_dev(self, "SMBus disabled\n");
@@ -215,7 +215,7 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	char fbuf[64];
 
 	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %d, "
-	    "flags 0x%02x\n", sc->sc_dev.dv_xname, op, addr, cmdlen,
+	    "flags 0x%02x\n", device_xname(&sc->sc_dev), op, addr, cmdlen,
 	    len, flags));
 
 	/* Wait for bus to be idle */

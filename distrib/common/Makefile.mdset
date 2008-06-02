@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.30 2007/09/08 14:25:09 chris Exp $
+#	$NetBSD: Makefile.mdset,v 1.30.8.1 2008/06/02 13:21:12 mjf Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -120,11 +120,17 @@ _POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST}
 
 CLEANFILES+=	${_KERNEL.${_K}.${_F}}
 
+.if defined(MDSET_NOIMAGE.${_FILENAME})
+${_I}=
+.endif
+
 ${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
 	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
 	@rm -f ${.TARGET} ${.TARGET}.tmp ${.TARGET}.symbols.gz
 	@cp ${_KERNNAME.${_K}.${_F}} ${.TARGET}.tmp
+.if !defined(MDSET_NOIMAGE.${_FILENAME})
 	${TOOL_MDSETIMAGE} -v ${.TARGET}.tmp ${_I}
+.endif
 .if !defined(MDSET_NOSYMBOLS.${_FILENAME}) && !defined(MDSET_NOSYMBOLS)
 	${NM} ${.TARGET}.tmp | gzip -9 > ${.TARGET}.symbols.gz
 .endif

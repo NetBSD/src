@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.32 2007/03/04 06:00:48 christos Exp $	*/
+/*	$NetBSD: ffb.c,v 1.32.40.1 2008/06/02 13:22:42 mjf Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.32 2007/03/04 06:00:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.32.40.1 2008/06/02 13:22:42 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -194,7 +194,7 @@ ffb_attach(struct ffb_softc *sc)
 	printf(", model %s, dac %u\n", model, sc->sc_dacrev);
 	if (sc->sc_needredraw) 
 		printf("%s: found old DAC, enabling redraw on unblank\n", 
-		    sc->sc_dv.dv_xname);
+		    device_xname(&sc->sc_dv));
 
 	ffb_blank(sc, WSDISPLAYIO_SVIDEO, &blank);
 
@@ -262,7 +262,7 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 	
 #ifdef FFBDEBUG
 	printf("ffb_ioctl: %s cmd _IO%s%s('%c', %lu)\n",
-	       sc->sc_dv.dv_xname,
+	       device_xname(&sc->sc_dv),
 	       (cmd & IOC_IN) ? "W" : "", (cmd & IOC_OUT) ? "R" : "",
 	       (char)IOCGROUP(cmd), cmd & 0xff);
 #endif
@@ -299,13 +299,13 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 		/* the console driver is not using the hardware cursor */
 		break;
 	case FBIOGCURPOS:
-		printf("%s: FBIOGCURPOS not implemented\n", sc->sc_dv.dv_xname);
+		printf("%s: FBIOGCURPOS not implemented\n", device_xname(&sc->sc_dv));
 		return EIO;
 	case FBIOSCURPOS:
-		printf("%s: FBIOSCURPOS not implemented\n", sc->sc_dv.dv_xname);
+		printf("%s: FBIOSCURPOS not implemented\n", device_xname(&sc->sc_dv));
 		return EIO;
 	case FBIOGCURMAX:
-		printf("%s: FBIOGCURMAX not implemented\n", sc->sc_dv.dv_xname);
+		printf("%s: FBIOGCURMAX not implemented\n", device_xname(&sc->sc_dv));
 		return EIO;
 
 	case WSDISPLAYIO_GTYPE:

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.32 2006/12/29 21:49:03 yamt Exp $
+# $NetBSD: INSTALL,v 1.32.44.1 2008/06/02 13:22:44 mjf Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,9 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.32 $"
+#ident 		"INSTALL-$Revision: 1.32.44.1 $"
+
+makeoptions	COPTS="-Os"	# optimize for size
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -19,7 +21,6 @@ maxusers	2
 #options 	SYSVMSG		# System V message queues
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
@@ -67,7 +68,7 @@ file-system	KERNFS		# /kern
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
-#options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
+options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

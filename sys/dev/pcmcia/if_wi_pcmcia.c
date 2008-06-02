@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.77 2007/12/09 20:28:14 jmcneill Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.77.10.1 2008/06/02 13:23:46 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.77 2007/12/09 20:28:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.77.10.1 2008/06/02 13:23:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,14 +287,12 @@ wi_pcmcia_enable(sc)
 		if (wi_pcmcia_load_firm(sc,
 		    spectrum24t_primsym, sizeof(spectrum24t_primsym),
 		    spectrum24t_secsym, sizeof(spectrum24t_secsym))) {
-			printf("%s: couldn't load firmware\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "couldn't load firmware\n");
 			wi_pcmcia_disable(sc);
 			return (EIO);
 		}
 #else
-		printf("%s: firmware load not configured\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "firmware load not configured\n");
 		return EIO;
 #endif
 	}
@@ -350,7 +341,7 @@ wi_pcmcia_attach(struct device  *parent, struct device *self,
 
 	error = pcmcia_function_configure(pa->pf, wi_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -380,11 +371,11 @@ wi_pcmcia_attach(struct device  *parent, struct device *self,
 	sc->sc_enable = wi_pcmcia_enable;
 	sc->sc_disable = wi_pcmcia_disable;
 
-	printf("%s:", self->dv_xname);
+	printf("%s:", device_xname(self));
 
 	haveaddr = pa->pf->pf_funce_lan_nidlen == IEEE80211_ADDR_LEN;
 	if (wi_attach(sc, haveaddr ? pa->pf->pf_funce_lan_nid : 0) != 0) {
-		aprint_error("%s: failed to attach controller\n", self->dv_xname);
+		aprint_error_dev(self, "failed to attach controller\n");
 		goto fail2;
 	}
 

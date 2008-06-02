@@ -1,7 +1,7 @@
-/*	$NetBSD: spl.S,v 1.26 2008/01/11 20:00:14 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.26.6.1 2008/06/02 13:22:17 mjf Exp $	*/
 
 /*
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.26 2008/01/11 20:00:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.26.6.1 2008/06/02 13:22:17 mjf Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -63,6 +56,7 @@ ENTRY(splraise)
 	movl	%edx,CPUVAR(ILEVEL)
 1:
 	ret
+END(splraise)
 
 /*
  * void spllower(int s);
@@ -89,6 +83,7 @@ ENTRY(spllower)
 	jmp	_C_LABEL(Xspllower)
 	.align	32
 LABEL(spllower_end)
+END(spllower)
 
 /*
  * void	cx8_spllower(int s);
@@ -125,6 +120,7 @@ LABEL(cx8_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 	.align	32
 LABEL(cx8_spllower_end)
+END(cx8_spllower)
 
 #endif /* XEN */
 
@@ -149,19 +145,13 @@ LABEL(cx8_spllower_end)
 	nop	/* Don't get confused with cx8_spllower_end */
 
 IDTVEC(spllower)
-#if defined(DDB) || defined(GPROF)
 	pushl	%ebp
 	movl	%esp,%ebp
 	MCOUNT_ASM
-#endif /* defined(DDB) || defined(GPROF) */
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
-#if defined(DDB) || defined(GPROF)
 	movl	8(%ebp),%ebx
-#else /* defined(DDB) || defined(GPROF) */
-	movl	16(%esp),%ebx
-#endif /* defined(DDB) || defined(GPROF) */
 	movl	$.Lspllower_resume,%esi		# address to resume loop at
 1:
 # because of the way Xen interrupts works *%esi will in fact be called
@@ -181,7 +171,7 @@ IDTVEC(spllower)
 	testl	$PSL_I,%eax
 	jnz	.Lspllower_panic
 #else
-	movl    _C_LABEL(HYPERVISOR_shared_info),%eax
+	movl    CPUVAR(VCPU),%eax
 	movb	EVTCHN_UPCALL_MASK(%eax), %al
 	andb	%al, %al
 	jz	.Lspllower_panic
@@ -210,9 +200,7 @@ IDTVEC(spllower)
 	popl	%edi
 	popl	%esi
 	popl	%ebx
-#if defined(DDB) || defined(GPROF)
 	leave
-#endif /* defined(DDB) || defined(GPROF) */
 	ret
 #if defined(DEBUG)
 .Lspllower_panic:
@@ -221,6 +209,7 @@ IDTVEC(spllower)
 	call	_C_LABEL(panic)
 1:	.asciz	"SPLLOWER: INTERRUPT ENABLED"
 #endif /* defined(DEBUG) */
+IDTVEC_END(spllower)
 
 /*
  * Handle return from interrupt after device handler finishes.
@@ -247,7 +236,7 @@ IDTVEC(doreti)
 	testl	$PSL_I,%eax
 	jnz	.Ldoreti_panic
 #else
-	movl    _C_LABEL(HYPERVISOR_shared_info),%eax
+	movl    CPUVAR(VCPU),%eax
 	movb	EVTCHN_UPCALL_MASK(%eax), %al
 	andb	%al, %al
 	jz	.Ldoreti_panic
@@ -311,13 +300,14 @@ doreti_checkast:
 	call	_C_LABEL(panic)
 1:	.asciz	"DORETI: INTERRUPT ENABLED"
 #endif /* defined(DEBUG) */
+IDTVEC_END(doreti)
 
 #ifdef XEN
 /*
  * void evtchn_do_event(int evtch, struct intrframe *regs)
  */
 
-NENTRY(call_evtchn_do_event)
+ENTRY(call_evtchn_do_event)
 	IDEPTH_INCR
 	/*
 	 * IDEPTH_INCR leaves old %esp in %eax.
@@ -328,11 +318,12 @@ NENTRY(call_evtchn_do_event)
 	addl	$8, %esp
 	IDEPTH_DECR
 	ret
+END(call_evtchn_do_event)
 #endif /* XEN */
 
 #ifndef XEN
 /*
- * softintr()
+ * Xsoftintr()
  *
  * Switch to the LWP assigned to handle interrupts from the given
  * source.  We borrow the VM context from the interrupted LWP.
@@ -361,14 +352,15 @@ IDTVEC(softintr)
 	pushl	%esi
 	call	_C_LABEL(softint_dispatch)/* run handlers */
 	addl	$8,%esp
+	cli
 	movl	L_ADDR(%esi),%ecx
 	movl	PCB_ESP(%ecx),%esp
 	xchgl	%esi,CPUVAR(CURLWP)	/* must be globally visible */
 	popl	%edi			/* unwind switchframe */
 	popl	%esi
 	addl	$8,%esp
-	cli
 	jmp	*%esi			/* back to splx/doreti */
+IDTVEC_END(softintr)
 
 /*
  * softintr_ret()
@@ -378,19 +370,62 @@ IDTVEC(softintr)
  *
  *	%eax		prevlwp from cpu_switchto()
  */
-NENTRY(softintr_ret)
+ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
 	movl	$0, L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
 	cli
 	jmp	*%esi			/* back to splx/doreti */
+END(softintr_ret)
 
 /*
  * void softint_trigger(uintptr_t machdep);
  *
  * Software interrupt registration.
  */
-NENTRY(softint_trigger)
+ENTRY(softint_trigger)
 	movl	4(%esp),%eax
 	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
+END(softint_trigger)
+
+/*
+ * Xpreemptrecurse()
+ *
+ * Handles preemption interrupts via Xspllower().
+ */
+IDTVEC(preemptrecurse)
+	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
+	sti
+	pushl	$0
+	call	_C_LABEL(kpreempt)
+	addl	$4, %esp
+	cli
+	jmp	*%esi
+IDTVEC_END(preemptrecurse)
+
+/*
+ * Xpreemptresume()
+ *
+ * Handles preemption interrupts via Xdoreti().
+ */
+IDTVEC(preemptresume)
+	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
+	sti
+	testb   $CHK_UPL, TF_CS(%esp)
+	jnz	1f
+#ifdef VM86
+	testl	$PSL_VM,TF_EFLAGS(%esp)
+	jnz	1f
+#endif
+	movl	TF_EIP(%esp), %eax
+	pushl	%eax
+	call	_C_LABEL(kpreempt)		# from kernel
+	addl	$4, %esp
+	cli
+	jmp	*%esi
+1:
+	call	_C_LABEL(preempt)		# from user
+	cli
+	jmp	*%esi
+IDTVEC_END(preemptresume)
 #endif /* !XEN */

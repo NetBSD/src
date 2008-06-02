@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15.6.1 2008/04/03 12:42:23 mjf Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.6.2 2008/06/02 13:22:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.6.1 2008/04/03 12:42:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.6.2 2008/06/02 13:22:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,18 +66,6 @@ cpu_configure()
 		panic("configure: mainbus not configured");
 
 	genppc_cpu_configure();
-#if 1
-    {
-	int i;
-	uint8_t spd[64];
-	extern int iic_seep_bootstrap_read(int, int, uint8_t *, size_t);
-
-	printf("reading 0x50 SDRAM SPD\n");
-	iic_seep_bootstrap_read(0x50, 0, spd, sizeof(spd));
-	printf("SPD: %02x %02x %02x - %02x %02x %02x %02x %02x\n",
-	    spd[0], spd[1], spd[2], spd[3], spd[4], spd[5], spd[6], spd[7]);
-    }
-#endif
 }
 
 char *booted_kernel; /* should be a genuine filename */
@@ -101,18 +89,17 @@ device_register(struct device *dev, void *aux)
 	if (bi_rdev == NULL)
 		return; /* no clue to determine */
 
-	if (dev->dv_class == DV_IFNET) {
-		if (device_is_a(dev, bi_rdev->devname)) {
-			struct pci_attach_args *pa = aux;
-			unsigned tag = (unsigned)pa->pa_tag;
+	if (dev->dv_class == DV_IFNET
+	    && device_is_a(dev, bi_rdev->devname)) {
+		struct pci_attach_args *pa = aux;
 
-			if (bi_rdev->cookie == tag)
-				booted_device = dev;
-		}
-		return;
+		if (bi_rdev->cookie == pa->pa_tag)
+			booted_device = dev;
 	}
-	if (dev->dv_class == DV_DISK) {
-		/* XXX add diskboot case later XXX */
+	if (dev->dv_class == DV_DISK
+	    && device_is_a(dev, bi_rdev->devname)) {
+		booted_device = dev;
+		booted_partition = 0;
 	}
 }
 

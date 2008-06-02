@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463reg.h,v 1.7 2007/11/16 08:00:14 xtraeme Exp $ */
+/*	$NetBSD: adt7463reg.h,v 1.7.14.1 2008/06/02 13:23:16 mjf Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -79,11 +79,10 @@
 #define ADT7463_RPM_CONST		(90000 * 60)
 
 struct adt7463c_softc {
-	struct device sc_dev;		/* generic device structures */
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_address;
-	envsys_data_t sc_sensor[ADT7463_MAX_ENVSYS_RANGE];
 	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor[ADT7463_MAX_ENVSYS_RANGE];
 };
 
 /*

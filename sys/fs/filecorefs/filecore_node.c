@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.16 2008/01/30 09:50:20 ad Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.16.6.1 2008/06/02 13:24:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.16 2008/01/30 09:50:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.16.6.1 2008/06/02 13:24:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ filecore_init()
 	malloc_type_attach(M_FILECORETMP);
 	pool_init(&filecore_node_pool, sizeof(struct filecore_node), 0, 0, 0,
 	    "filecrnopl", &pool_allocator_nointr, IPL_NONE);
-	filecorehashtbl = hashinit(desiredvnodes, HASH_LIST, M_FILECOREMNT,
-	    M_WAITOK, &filecorehash);
+	filecorehashtbl = hashinit(desiredvnodes, HASH_LIST, true,
+	    &filecorehash);
 	simple_lock_init(&filecore_ihash_slock);
 }
 
@@ -127,8 +127,7 @@ filecore_reinit()
 	u_long oldmask, mask, val;
 	int i;
 
-	hash = hashinit(desiredvnodes, HASH_LIST, M_FILECOREMNT, M_WAITOK,
-	    &mask);
+	hash = hashinit(desiredvnodes, HASH_LIST, true, &mask);
 
 	simple_lock(&filecore_ihash_slock);
 	oldhash = filecorehashtbl;
@@ -143,7 +142,7 @@ filecore_reinit()
 		}
 	}
 	simple_unlock(&filecore_ihash_slock);
-	hashdone(oldhash, M_FILECOREMNT);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
@@ -152,7 +151,7 @@ filecore_reinit()
 void
 filecore_done()
 {
-	hashdone(filecorehashtbl, M_FILECOREMNT);
+	hashdone(filecorehashtbl, HASH_LIST, filecorehash);
 	pool_destroy(&filecore_node_pool);
 	malloc_type_detach(M_FILECORETMP);
 	malloc_type_detach(M_FILECOREMNT);

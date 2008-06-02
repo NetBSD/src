@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2008/02/07 19:48:37 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22.6.1 2008/06/02 13:22:30 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #define	_MACHINE_CPU_H_
 
 #if defined(_KERNEL)
-#define	CPU_MAXNUM	8
+#define	CPU_MAXNUM	16
 extern char bootpath[];
 #endif /* _KERNEL */
 

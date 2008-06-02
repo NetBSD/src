@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.70.6.1 2008/04/03 12:43:06 mjf Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.70.6.2 2008/06/02 13:24:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.70.6.1 2008/04/03 12:43:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.70.6.2 2008/06/02 13:24:20 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -65,10 +65,13 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.70.6.1 2008/04/03 12:43:06 mjf E
 #include <sys/dirent.h>
 #include <sys/un.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 
 #include <miscfs/portal/portal.h>
+
+MODULE(MODULE_CLASS_VFS, portal, NULL);
 
 VFS_PROTOS(portal);
 
@@ -200,7 +203,7 @@ portal_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the portalmount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 	return (0);
 }
 
@@ -307,8 +310,22 @@ struct vfsops portal_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	portal_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(portal_vfsops);
+
+static int
+portal_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&portal_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&portal_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

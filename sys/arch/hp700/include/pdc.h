@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.6 2007/03/04 05:59:51 christos Exp $	*/
+/*	$NetBSD: pdc.h,v 1.6.40.1 2008/06/02 13:22:07 mjf Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.15 2000/12/06 17:18:57 deraadt Exp $	*/
 
@@ -270,8 +270,8 @@
 
 struct iomod;
 
-typedef int (*pdcio_t) __P((int, int, ...));
-typedef int (*iodcio_t) __P((struct iomod *, int, ...));
+typedef int (*pdcio_t)(int, int, ...);
+typedef int (*iodcio_t)(struct iomod *, int, ...);
 
 /*
  * Commonly used PDC calls and the structures they return.
@@ -648,14 +648,14 @@ struct consdev;
 
 extern int kernelmapped;
 
-void pdc_init __P((void));
-int pdc_call __P((iodcio_t, int, ...));
+void pdc_init(void);
+int pdc_call(iodcio_t, int, ...);
 
-void pdccnprobe __P((struct consdev *));
-void pdccninit __P((struct consdev *));
-int pdccngetc __P((dev_t));
-void pdccnputc __P((dev_t, int));
-void pdccnpollc __P((dev_t, int));
+void pdccnprobe(struct consdev *);
+void pdccninit(struct consdev *);
+int pdccngetc(dev_t);
+void pdccnputc(dev_t, int);
+void pdccnpollc(dev_t, int);
 #endif
 
 #endif	/* !(_LOCORE) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.55.6.1 2008/04/03 12:42:26 mjf Exp $ */
+/*	$NetBSD: intr.c,v 1.55.6.2 2008/06/02 13:22:44 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.55.6.1 2008/04/03 12:42:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.55.6.2 2008/06/02 13:22:44 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -163,12 +163,9 @@ intr_biglock_wrapper(void *vp)
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(int level, struct intrhand *ih)
+intr_establish(int level, bool mpsafe, struct intrhand *ih)
 {
 	struct intrhand *q = NULL;
-#ifdef MULTIPROCESSOR
-	bool mpsafe = (level != IPL_VM);
-#endif
 	int s;
 
 	/*
@@ -243,8 +240,8 @@ intr_establish(int level, struct intrhand *ih)
 /*
  * Prepare an interrupt handler used for send_softint.
  */
-struct intrhand *
-init_softint(int pil, int (*fun)(void *))
+void *
+sparc_softintr_establish(int pil, int (*fun)(void *), void *arg)
 {
 	struct intrhand *ih;
 
@@ -254,5 +251,21 @@ init_softint(int pil, int (*fun)(void *))
 
 	ih->ih_fun = fun;
 	ih->ih_pil = pil;
+	ih->ih_arg = arg;
 	return ih;
+}
+
+void
+sparc_softintr_disestablish(void *cookie)
+{
+
+	free(cookie, M_DEVBUF);
+}
+
+void
+sparc_softintr_schedule(void *cookie)
+{
+	struct intrhand *ih = (struct intrhand *)cookie;
+
+	send_softint(-1, ih->ih_pil, ih);
 }

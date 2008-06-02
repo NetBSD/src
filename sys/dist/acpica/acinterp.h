@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acinterp.h - Interpreter subcomponent prototypes and defines
- *       $Revision: 1.2 $
+ *       $Revision: 1.2.10.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -331,10 +331,6 @@ AcpiExCreateRegion (
     UINT8                   *AmlStart,
     UINT32                  AmlLength,
     UINT8                   RegionSpace,
-    ACPI_WALK_STATE         *WalkState);
-
-ACPI_STATUS
-AcpiExCreateTableRegion (
     ACPI_WALK_STATE         *WalkState);
 
 ACPI_STATUS

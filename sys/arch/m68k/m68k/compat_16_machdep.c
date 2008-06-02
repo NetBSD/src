@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.11 2007/12/20 23:02:40 dsl Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.11.6.1 2008/06/02 13:22:22 mjf Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.11 2007/12/20 23:02:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.11.6.1 2008/06/02 13:22:22 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -232,9 +232,9 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	native_sigset_to_sigset13(mask, &kf.sf_sc.__sc_mask13);
 #endif
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&kf, fp, sizeof(kf));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 #ifdef DEBUG
@@ -398,7 +398,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
 	if (scp->sc_onstack & SS_ONSTACK)
@@ -409,7 +409,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &scp->sc_mask, 0);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)

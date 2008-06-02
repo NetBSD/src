@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.c,v 1.24 2007/03/24 00:07:17 reinoud Exp $ */
+/* $NetBSD: vesabios.c,v 1.24.34.1 2008/06/02 13:22:13 mjf Exp $ */
 
 /*
  * Copyright (c) 2002, 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.24 2007/03/24 00:07:17 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.24.34.1 2008/06/02 13:22:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,8 +220,7 @@ vesabios_attach(struct device *parent, struct device *dev,
 
 	buf = kvm86_bios_addpage(0x2000);
 	if (!buf) {
-		aprint_error("%s: kvm86_bios_addpage(0x2000) failed\n",
-		    dev->dv_xname);
+		aprint_error_dev(dev, "kvm86_bios_addpage(0x2000) failed\n");
 		return;
 	}
 	for (i = 0; i < nmodes; i++) {
@@ -234,16 +233,16 @@ vesabios_attach(struct device *parent, struct device *dev,
 
 		res = kvm86_bioscall(0x10, &tf);
 		if (res || (tf.tf_eax & 0xff) != 0x4f) {
-			aprint_error("%s: vbecall: res=%d, ax=%x\n",
-			    dev->dv_xname, res, tf.tf_eax);
-			aprint_error("%s: error getting info for mode %04x\n",
-			    dev->dv_xname, modes[i]);
+			aprint_error_dev(dev, "vbecall: res=%d, ax=%x\n",
+			    res, tf.tf_eax);
+			aprint_error_dev(dev, "error getting info for mode %04x\n",
+			    modes[i]);
 			continue;
 		}
 		mi = (struct modeinfoblock *)buf;
 #ifdef VESABIOSVERBOSE
-		aprint_verbose("%s: VESA mode %04x: attributes %04x",
-		       dev->dv_xname, modes[i], mi->ModeAttributes);
+		aprint_verbose_dev(dev, "VESA mode %04x: attributes %04x",
+		       modes[i], mi->ModeAttributes);
 #endif
 		if (!(mi->ModeAttributes & 1)) {
 #ifdef VESABIOSVERBOSE
@@ -262,9 +261,8 @@ vesabios_attach(struct device *parent, struct device *dev,
 				/* flat buffer */
 				rastermodes[nrastermodes++] = modes[i];
 #ifdef VESABIOSVERBOSE
-				aprint_verbose("%s: memory window "
+				aprint_verbose_dev(dev, "memory window "
 				    "granularity %d Kb, window size %d Kb\n",
-				    dev->dv_xname,
 				    mi->WinGranularity/1024, mi->WinSize/1024);
 #endif
 			}

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.59 2008/01/15 22:38:34 njoly Exp $
+	$NetBSD: syscalls.master,v 1.59.6.1 2008/06/02 13:23:01 mjf Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -86,7 +86,7 @@
 #else
 19	UNIMPL		compat_43_sys_lseek
 #endif
-20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
+20	NOARGS 		{ pid_t sys_getpid(void); }
 21	UNIMPL		mount
 22	OBSOL		umount
 23	NOARGS		linux_setuid16 { int sys_setuid(uid_t uid); }
@@ -267,7 +267,7 @@
 			    fd_set *writefds, fd_set *exceptfds, \
 			    struct timeval *timeout); }
 143	NOARGS		{ int sys_flock(int fd, int how); }
-144	STD		{ int linux_sys_msync(void *addr, int len, int fl); }
+144	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
 145	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, \
 				u_int iovcnt); }
 146	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.80.14.1 2008/04/03 12:43:09 mjf Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.80.14.2 2008/06/02 13:24:28 mjf Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.80.14.1 2008/04/03 12:43:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.80.14.2 2008/06/02 13:24:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.80.14.1 2008/04/03 12:43:09 mjf Ex
 #include <netinet6/in6_pcb.h>
 #include <netinet/icmp6.h>
 #include <netinet6/udp6_var.h>
+#include <netinet6/udp6_private.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet/in_offload.h>
 
@@ -108,14 +109,15 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.80.14.1 2008/04/03 12:43:09 mjf Ex
  */
 
 extern struct inpcbtable udbtable;
-struct	udp6stat udp6stat;
+
+percpu_t *udp6stat_percpu;
 
 static	void udp6_notify(struct in6pcb *, int);
 
 void
 udp6_init(void)
 {
-	/* initialization done in udp_input() due to initialization order */
+	/* initialization done in udp_init() due to initialization order */
 }
 
 /*
@@ -130,7 +132,7 @@ udp6_notify(struct in6pcb *in6p, int errno)
 	sowwakeup(in6p->in6p_socket);
 }
 
-void
+void *
 udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	struct udphdr uh;
@@ -149,10 +151,10 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return;
+		return NULL;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;
 	if (PRC_IS_REDIRECT(cmd))
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
@@ -162,7 +164,7 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		notify = in6_rtchange;
 	}
 	else if (inet6ctlerrmap[cmd] == 0)
-		return;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -190,7 +192,7 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		if (m->m_pkthdr.len < off + sizeof(*uhp)) {
 			if (cmd == PRC_MSGSIZE)
 				icmp6_mtudisc_update((struct ip6ctlparam *)d, 0);
-			return;
+			return NULL;
 		}
 
 		bzero(&uh, sizeof(uh));
@@ -247,6 +249,7 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		(void) in6_pcbnotify(&udbtable, sa, 0,
 		    (const struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
 	}
+	return NULL;
 }
 
 extern	int udp6_sendspace;
@@ -275,15 +278,17 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 				   (struct ifnet *)control, l);
 
 	if (req == PRU_PURGEIF) {
-		s = splsoftnet();
+		mutex_enter(softnet_lock);
 		in6_pcbpurgeif0(&udbtable, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&udbtable, (struct ifnet *)control);
-		splx(s);
+		mutex_exit(softnet_lock);
 		return 0;
 	}
 
-	if (in6p == NULL && req != PRU_ATTACH) {
+	if (req == PRU_ATTACH)
+		sosetlock(so);
+	else if (in6p == NULL) {
 		error = EINVAL;
 		goto release;
 	}
@@ -402,6 +407,13 @@ release:
 	return error;
 }
 
+static int
+sysctl_net_inet6_udp6_stats(SYSCTLFN_ARGS)
+{
+
+	return (NETSTAT_SYSCTL(udp6stat_percpu, UDP6_NSTATS));
+}
+
 SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")
 {
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -453,7 +465,15 @@ SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("UDPv6 statistics"),
-		       NULL, 0, &udp6stat, sizeof(udp6stat),
+		       sysctl_net_inet6_udp6_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_UDP, UDP6CTL_STATS,
 		       CTL_EOL);
+}
+
+void
+udp6_statinc(u_int stat)
+{
+
+	KASSERT(stat < UDP6_NSTATS);
+	UDP6_STATINC(stat);
 }

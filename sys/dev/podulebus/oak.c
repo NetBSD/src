@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.17 2006/03/29 07:12:56 thorpej Exp $	*/
+/*	$NetBSD: oak.c,v 1.17.58.1 2008/06/02 13:23:47 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -65,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.17 2006/03/29 07:12:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.17.58.1 2008/06/02 13:23:47 mjf Exp $");
 
 #include <sys/param.h>
 
@@ -88,12 +81,12 @@ __KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.17 2006/03/29 07:12:56 thorpej Exp $");
 
 #include <dev/podulebus/oakreg.h>
 
-void oak_attach (struct device *, struct device *, void *);
-int  oak_match  (struct device *, struct cfdata *, void *);
+int  oak_match(device_t, cfdata_t, void *);
+void oak_attach(device_t, device_t, void *);
 
 #if 0
-static int oak_pdma_in(struct ncr5380_softc *, int, int, u_char *);
-static int oak_pdma_out(struct ncr5380_softc *, int, int, u_char *);
+static int oak_pdma_in(struct ncr5380_softc *, int, int, uint8_t *);
+static int oak_pdma_out(struct ncr5380_softc *, int, int, uint8_t *);
 #endif
 
 /*
@@ -109,7 +102,7 @@ struct oak_softc {
 	bus_space_handle_t	sc_pdmah;
 };
 
-CFATTACH_DECL(oak, sizeof(struct oak_softc),
+CFATTACH_DECL_NEW(oak, sizeof(struct oak_softc),
     oak_match, oak_attach, NULL, NULL);
 
 /*
@@ -119,7 +112,7 @@ CFATTACH_DECL(oak, sizeof(struct oak_softc),
  */
 
 int
-oak_match(struct device *parent, struct cfdata *cf, void *aux)
+oak_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
@@ -141,74 +134,76 @@ oak_match(struct device *parent, struct cfdata *cf, void *aux)
  */
 
 void
-oak_attach(struct device *parent, struct device *self, void *aux)
+oak_attach(device_t parent, device_t self, void *aux)
 {
 	struct oak_softc *sc = device_private(self);
+	struct ncr5380_softc *ncr_sc = &sc->sc_ncr5380;
 	struct podulebus_attach_args *pa = aux;
 #ifndef NCR5380_USE_BUS_SPACE
-	u_char *iobase;
+	uint8_t *iobase;
 #endif
-	char hi_option[sizeof(sc->sc_ncr5380.sc_dev.dv_xname) + 8];
+	char hi_option[sizeof(self->dv_xname) + 8];
 
-	sc->sc_ncr5380.sc_flags |= NCR5380_FORCE_POLLING;
-	sc->sc_ncr5380.sc_min_dma_len = 0;
-	sc->sc_ncr5380.sc_no_disconnect = 0xff;
-	sc->sc_ncr5380.sc_parity_disable = 0;
+	ncr_sc->sc_dev = self;
+	ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
+	ncr_sc->sc_min_dma_len = 0;
+	ncr_sc->sc_no_disconnect = 0xff;
+	ncr_sc->sc_parity_disable = 0;
 
-	sc->sc_ncr5380.sc_dma_alloc = NULL;
-	sc->sc_ncr5380.sc_dma_free = NULL;
-	sc->sc_ncr5380.sc_dma_poll = NULL;
-	sc->sc_ncr5380.sc_dma_setup = NULL;
-	sc->sc_ncr5380.sc_dma_start = NULL;
-	sc->sc_ncr5380.sc_dma_eop = NULL;
-	sc->sc_ncr5380.sc_dma_stop = NULL;
-	sc->sc_ncr5380.sc_intr_on = NULL;
-	sc->sc_ncr5380.sc_intr_off = NULL;
+	ncr_sc->sc_dma_alloc = NULL;
+	ncr_sc->sc_dma_free = NULL;
+	ncr_sc->sc_dma_poll = NULL;
+	ncr_sc->sc_dma_setup = NULL;
+	ncr_sc->sc_dma_start = NULL;
+	ncr_sc->sc_dma_eop = NULL;
+	ncr_sc->sc_dma_stop = NULL;
+	ncr_sc->sc_intr_on = NULL;
+	ncr_sc->sc_intr_off = NULL;
 
 #ifdef NCR5380_USE_BUS_SPACE
-	sc->sc_ncr5380.sc_regt = pa->pa_mod_t;
-	bus_space_map(sc->sc_ncr5380.sc_regt, pa->pa_mod_base, 8, 0,
-	    &sc->sc_ncr5380.sc_regh);
-	sc->sc_ncr5380.sci_r0 = 0;
-	sc->sc_ncr5380.sci_r1 = 1;
-	sc->sc_ncr5380.sci_r2 = 2;
-	sc->sc_ncr5380.sci_r3 = 3;
-	sc->sc_ncr5380.sci_r4 = 4;
-	sc->sc_ncr5380.sci_r5 = 5;
-	sc->sc_ncr5380.sci_r6 = 6;
-	sc->sc_ncr5380.sci_r7 = 7;
+	ncr_sc->sc_regt = pa->pa_mod_t;
+	bus_space_map(ncr_sc->sc_regt, pa->pa_mod_base, 8, 0,
+	    &ncr_sc->sc_regh);
+	ncr_sc->sci_r0 = 0;
+	ncr_sc->sci_r1 = 1;
+	ncr_sc->sci_r2 = 2;
+	ncr_sc->sci_r3 = 3;
+	ncr_sc->sci_r4 = 4;
+	ncr_sc->sci_r5 = 5;
+	ncr_sc->sci_r6 = 6;
+	ncr_sc->sci_r7 = 7;
 #else
-	iobase = (u_char *)pa->pa_mod_base;
-	sc->sc_ncr5380.sci_r0 = iobase + 0;
-	sc->sc_ncr5380.sci_r1 = iobase + 4;
-	sc->sc_ncr5380.sci_r2 = iobase + 8;
-	sc->sc_ncr5380.sci_r3 = iobase + 12;
-	sc->sc_ncr5380.sci_r4 = iobase + 16;
-	sc->sc_ncr5380.sci_r5 = iobase + 20;
-	sc->sc_ncr5380.sci_r6 = iobase + 24;
-	sc->sc_ncr5380.sci_r7 = iobase + 28;
+	iobase = (uint8_t *)pa->pa_mod_base;
+	ncr_sc->sci_r0 = iobase + 0;
+	ncr_sc->sci_r1 = iobase + 4;
+	ncr_sc->sci_r2 = iobase + 8;
+	ncr_sc->sci_r3 = iobase + 12;
+	ncr_sc->sci_r4 = iobase + 16;
+	ncr_sc->sci_r5 = iobase + 20;
+	ncr_sc->sci_r6 = iobase + 24;
+	ncr_sc->sci_r7 = iobase + 28;
 #endif
 	sc->sc_pdmat = pa->pa_mod_t;
 	bus_space_map(sc->sc_pdmat, pa->pa_mod_base + OAK_PDMA_OFFSET, 0x20, 0,
 	    &sc->sc_pdmah);
 
-	sc->sc_ncr5380.sc_rev = NCR_VARIANT_NCR5380;
+	ncr_sc->sc_rev = NCR_VARIANT_NCR5380;
 
-	sc->sc_ncr5380.sc_pio_in = ncr5380_pio_in;
-	sc->sc_ncr5380.sc_pio_out = ncr5380_pio_out;
+	ncr_sc->sc_pio_in = ncr5380_pio_in;
+	ncr_sc->sc_pio_out = ncr5380_pio_out;
 
 	/* Provide an override for the host id */
-	sc->sc_ncr5380.sc_channel.chan_id = 7;
+	ncr_sc->sc_channel.chan_id = 7;
 	snprintf(hi_option, sizeof(hi_option), "%s.hostid",
-	    sc->sc_ncr5380.sc_dev.dv_xname);
+	    device_xname(self));
 	(void)get_bootconf_option(boot_args, hi_option,
-	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_channel.chan_id);
-	sc->sc_ncr5380.sc_adapter.adapt_minphys = minphys;
+	    BOOTOPT_TYPE_INT, &ncr_sc->sc_channel.chan_id);
+	ncr_sc->sc_adapter.adapt_minphys = minphys;
 
-	printf(": host=%d, using 8 bit PIO\n",
-	    sc->sc_ncr5380.sc_channel.chan_id);
+	aprint_normal(": host=%d, using 8 bit PIO\n",
+	    ncr_sc->sc_channel.chan_id);
 
-	ncr5380_attach(&sc->sc_ncr5380);
+	ncr5380_attach(ncr_sc);
 }
 
 /*
@@ -237,14 +232,14 @@ oak_ready(struct ncr5380_softc *sc)
 		status = NCR5380_READ(sc, sci_csr);
 		    if ((status & (SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH)) ==
 			(SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH))
-		    	return(1);
+		    	return 1;
 
 		if ((status & SCI_CSR_PHASE_MATCH) == 0 ||
 		    SCI_BUSY(sc) == 0)
-			return(0);
+			return 0;
 	}
-	printf("%s: ready timeout\n", sc->sc_dev.dv_xname);
-	return(0);
+	printf("%s: ready timeout\n", device_xname(sc->sc_dev));
+	return 0;
 
 #if 0 /* The Linux driver does this: */
 	struct oak_softc *sc = (void *)ncr_sc;
@@ -255,13 +250,13 @@ oak_ready(struct ncr5380_softc *sc)
 	for (i = TIMEOUT; i > 0; i--) {
 		status = bus_space_read_2(pdmat, pdmah, OAK_PDMA_STATUS);
 		if (status & 0x200)
-			return(0);
+			return 0;
 		if (status & 0x100)
-			return(1);
+			return 1;
 	}
-	printf("%s: ready timeout, status = 0x%x\n", ncr_sc->sc_dev.dv_xname,
-	    status);
-	return(0);
+	printf("%s: ready timeout, status = 0x%x\n",
+	    device_xname(ncr_sc->sc_dev), status);
+	return 0;
 #endif
 }
 
@@ -278,12 +273,12 @@ static inline void oak_wait_not_req(struct ncr5380_softc *sc)
 			return;
 		}
 	}
-	printf("%s: pdma not_req timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: pdma not_req timeout\n", device_xname(sc->sc_dev));
 }
 
 static int
 oak_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen,
-    u_char *data)
+    uint8_t *data)
 {
 	struct oak_softc *sc = (void *)ncr_sc;
 	bus_space_tag_t pdmat = sc->sc_pdmat;
@@ -301,9 +296,9 @@ oak_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen,
 		len = min(resid, OAK_TSIZE_IN);
 		if (oak_ready(ncr_sc) == 0)
 			goto interrupt;
-		KASSERT(BUS_SPACE_ALIGNED_POINTER(data, u_int16_t));
+		KASSERT(BUS_SPACE_ALIGNED_POINTER(data, uint16_t));
 		bus_space_read_multi_2(pdmat, pdmah, OAK_PDMA_READ,
-		    (u_int16_t *)data, len/2);
+		    (uint16_t *)data, len / 2);
 		data += len;
 		resid -= len;
 	}
@@ -320,9 +315,9 @@ interrupt:
 
 static int
 oak_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen,
-    u_char *data)
+    uint8_t *data)
 {
-	struct oak_softc *sc = (void *)ncr_sc;
+	struct oak_softc *sc = (struct oak_softc *)ncr_sc;
 	bus_space_tag_t pdmat = sc->sc_pdmat;
 	bus_space_handle_t pdmah = sc->sc_pdmah;
 	int i, s, icmd, resid;
@@ -350,9 +345,9 @@ oak_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen,
 		 * DMA byte counting hardware, the assumption would not
 		 * be necessary.
 		 */
-		KASSERT(BUS_SPACE_ALIGNED_POINTER(data, u_int16_t));
+		KASSERT(BUS_SPACE_ALIGNED_POINTER(data, uint16_t));
 		bus_space_write_multi_2(pdmat, pdmah, OAK_PDMA_WRITE,
-		    (u_int16_t *)data, 4/2);
+		    (uint16_t *)data, 4 / 2);
 		data += 4;
 		resid -= 4;
 
@@ -362,7 +357,7 @@ oak_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen,
 				goto interrupt;
 			}
 			bus_space_write_multi_2(pdmat, pdmah, OAK_PDMA_WRITE,
-			    (u_int16_t *)data, OAK_TSIZE_OUT/2);
+			    (uint16_t *)data, OAK_TSIZE_OUT / 2);
 			data += OAK_TSIZE_OUT;
 		}
 		if (oak_ready(ncr_sc) == 0) {
@@ -373,7 +368,7 @@ oak_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen,
 
 	if (resid) {
 		bus_space_write_multi_2(pdmat, pdmah, OAK_PDMA_WRITE,
-		    (u_int16_t *)data, resid/2);
+		    (uint16_t *)data, resid / 2);
 		resid = 0;
 	}
 	for (i = TIMEOUT; i > 0; i--) {
@@ -386,7 +381,7 @@ oak_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen,
 		bus_space_write_2(pdmat, pdmah, OAK_PDMA_WRITE, 0);
 	else
 		printf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
-			ncr_sc->sc_dev.dv_xname);
+		    device_xname(ncr_sc->sc_dev));
 
 	oak_wait_not_req(ncr_sc);
 interrupt:
@@ -395,6 +390,6 @@ interrupt:
 	    NCR5380_READ(ncr_sc, sci_mode) & ~SCI_MODE_DMA);
 	NCR5380_WRITE(ncr_sc, sci_icmd, icmd);
 	splx(s);
-	return(datalen - resid);
+	return datalen - resid;
 }
 #endif

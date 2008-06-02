@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.79.6.2 2008/04/06 09:58:51 mjf Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.79.6.3 2008/06/02 13:23:55 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.79.6.2 2008/04/06 09:58:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.79.6.3 2008/06/02 13:23:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,9 +228,11 @@ USB_ATTACH(ulpt)
 	int i, altno, maj;
 	usbd_desc_iter_t iter;
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
+	aprint_normal_dev(self, "%s, iclass %d/%d\n",
 	       devinfop, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
 
@@ -264,8 +259,8 @@ USB_ATTACH(ulpt)
 		DPRINTFN(1, ("ulpt_attach: set altno = %d\n", altno));
 		err = usbd_set_interface(iface, altno);
 		if (err) {
-			printf("%s: setting alternate interface failed\n",
-			       USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self,
+			    "setting alternate interface failed\n");
 			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -279,8 +274,7 @@ USB_ATTACH(ulpt)
 	for (i = 0; i < epcount; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self, "couldn't get ep %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -292,8 +286,7 @@ USB_ATTACH(ulpt)
 		}
 	}
 	if (sc->sc_out == -1) {
-		printf("%s: could not find bulk out endpoint\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "could not find bulk out endpoint\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -303,7 +296,7 @@ USB_ATTACH(ulpt)
 		sc->sc_in = -1;
 	}
 
-	printf("%s: using %s-directional mode\n", USBDEVNAME(sc->sc_dev),
+	aprint_normal_dev(self, "using %s-directional mode\n",
 	       sc->sc_in >= 0 ? "bi" : "uni");
 
 	sc->sc_iface = iface;
@@ -373,7 +366,7 @@ USB_ATTACH(ulpt)
 int
 ulpt_activate(device_ptr_t self, enum devact act)
 {
-	struct ulpt_softc *sc = (struct ulpt_softc *)self;
+	struct ulpt_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

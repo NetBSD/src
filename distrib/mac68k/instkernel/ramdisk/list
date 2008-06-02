@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.18 2007/05/10 23:22:30 dogcow Exp $
+#	$NetBSD: list,v 1.18.12.1 2008/06/02 13:21:14 mjf Exp $
 
 SRCDIRS bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin gnu/usr.bin/binutils
 
@@ -67,7 +67,7 @@ SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
-LIBS    libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz
+LIBS    libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz -lprop
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/group		etc/group

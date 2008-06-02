@@ -1,4 +1,4 @@
-/* $NetBSD: if_txpreg.h,v 1.4 2007/03/04 06:02:23 christos Exp $ */
+/* $NetBSD: if_txpreg.h,v 1.4.36.1 2008/06/02 13:23:40 mjf Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -596,7 +596,7 @@ struct txp_softc {
 #define TXP_FIBER		0x4
 };
 
-#define	TXP_DEVNAME(sc)		((sc)->sc_cold ? "" : (sc)->sc_dev.dv_xname)
+#define	TXP_DEVNAME(sc)		((sc)->sc_cold ? "" : device_xname(&(sc)->sc_dev))
 
 struct txp_fw_file_header {
 	u_int8_t	magicid[8];	/* TYPHOON\0 */

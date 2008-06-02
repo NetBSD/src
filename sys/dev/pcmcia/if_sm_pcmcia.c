@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.49 2007/10/19 12:01:05 ad Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.49.16.1 2008/06/02 13:23:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.49 2007/10/19 12:01:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.49.16.1 2008/06/02 13:23:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +146,7 @@ sm_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	error = pcmcia_function_configure(pa->pf, sm_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -178,8 +171,7 @@ sm_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		if (!sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[3], enaddr) &&
 		    !sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[2], enaddr))
-			aprint_error("%s: unable to get Ethernet address\n",
-			    self->dv_xname);
+			aprint_error_dev(self, "unable to get Ethernet address\n");
 	}
 
 	/* Perform generic intialization. */

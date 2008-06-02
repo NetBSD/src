@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.19 2005/09/10 13:09:01 dsl Exp $
+#	$NetBSD: list,v 1.19.20.1 2008/06/02 13:21:19 mjf Exp $
 
 SRCDIRS bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/x68k/stand
 
@@ -64,7 +64,7 @@ SPECIAL route		srcdir	distrib/utils/x_route
 SPECIAL	installboot	srcdir	sys/arch/x68k/stand/installboot
 
 # libhack.o is built by Makefile & included Makefile.inc
-LIBS	libhack.o -lz -lutil -lcurses -ltermcap -lcrypt -ll -lm
+LIBS	libhack.o -lz -lutil -lcurses -ltermcap -lcrypt -ll -lm -lprop
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd

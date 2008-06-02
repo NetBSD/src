@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.26 2007/10/19 11:59:44 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.26.16.1 2008/06/02 13:23:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.26 2007/10/19 11:59:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.26.16.1 2008/06/02 13:23:17 mjf Exp $");
 
 #include "rnd.h"
 
@@ -171,7 +164,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	    I2O_EVENT_GEN_STATE_CHANGE |
 	    I2O_EVENT_GEN_GENERAL_WARNING);
 	if (rv != 0) {
-		printf("%s: unable to register for events", self->dv_xname);
+		aprint_error_dev(self, "unable to register for events");
 		goto bad;
 	}
 	evreg = 1;
@@ -280,7 +273,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	if (enable)
 		ld->sc_flags |= LDF_ENABLED;
 	else
-		printf("%s: device not yet supported\n", self->dv_xname);
+		aprint_error_dev(self, "device not yet supported\n");
 
 	ldattach(ld);
 	return;
@@ -471,7 +464,7 @@ ld_iop_flush(struct ld_softc *ld)
 	mf.msgtctx = im->im_tctx;
 	mf.flags = 1 << 16;			/* time multiplier */
 
-	/* Aincent disks will return an error here. */
+	/* Ancient disks will return an error here. */
 	rv = iop_msg_post(iop, im, &mf, LD_IOP_TIMEOUT * 2);
 	iop_msg_free(iop, im);
 	return (rv);
@@ -500,7 +493,7 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 			errstr = "<unknown>";
 		else
 			errstr = ld_iop_errors[detail];
-		printf("%s: error 0x%04x: %s\n", dv->dv_xname, detail, errstr);
+		aprint_error_dev(dv, "error 0x%04x: %s\n", detail, errstr);
 		err = 1;
 	}
 
@@ -540,7 +533,7 @@ ld_iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 		return;
 	}
 
-	printf("%s: event 0x%08x received\n", dv->dv_xname, event);
+	printf("%s: event 0x%08x received\n", device_xname(dv), event);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.63 2008/02/07 01:21:53 dyoung Exp $	*/
+/*	$NetBSD: hme.c,v 1.63.6.1 2008/06/02 13:23:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.63 2008/02/07 01:21:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.63.6.1 2008/06/02 13:23:21 mjf Exp $");
 
 /* #define HMEDEBUG */
 
@@ -205,8 +198,8 @@ hme_config(sc)
 	if ((error = bus_dmamem_alloc(dmatag, size,
 				      2048, 0,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: DMA buffer alloc error %d\n",
-			sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "DMA buffer alloc error %d\n",
+			error);
 		return;
 	}
 
@@ -214,8 +207,8 @@ hme_config(sc)
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
 				    &sc->sc_rb.rb_membase,
 				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: DMA buffer map error %d\n",
-			sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "DMA buffer map error %d\n",
+			error);
 		bus_dmamap_unload(dmatag, sc->sc_dmamap);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
@@ -223,8 +216,8 @@ hme_config(sc)
 
 	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
 				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
-		printf("%s: DMA map create error %d\n",
-			sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "DMA map create error %d\n",
+			error);
 		return;
 	}
 
@@ -232,18 +225,18 @@ hme_config(sc)
 	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
 	    sc->sc_rb.rb_membase, size, NULL,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: DMA buffer map load error %d\n",
-			sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "DMA buffer map load error %d\n",
+			error);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
 	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
 	    ether_sprintf(sc->sc_enaddr));
 
 	/* Initialize ifnet structure. */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = hme_start;
 	ifp->if_ioctl = hme_ioctl;
@@ -290,10 +283,9 @@ hme_config(sc)
 			 * connector.
 			 */
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
-				printf("%s: cannot accommodate MII device %s"
+				aprint_error_dev(&sc->sc_dev, "cannot accommodate MII device %s"
 				       " at phy %d, instance %d\n",
-				       sc->sc_dev.dv_xname,
-				       child->mii_dev.dv_xname,
+				       device_xname(child->mii_dev),
 				       child->mii_phy, child->mii_inst);
 				continue;
 			}
@@ -320,7 +312,7 @@ hme_config(sc)
 		panic("hme_config: can't establish shutdownhook");
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_NET, 0);
 #endif
 
@@ -378,7 +370,7 @@ hme_stop(struct hme_softc *sc, bool chip_only)
 		DELAY(20);
 	}
 
-	printf("%s: hme_stop: reset failed\n", sc->sc_dev.dv_xname);
+	printf("%s: hme_stop: reset failed\n", device_xname(&sc->sc_dev));
 }
 
 void
@@ -876,7 +868,7 @@ hme_read(sc, ix, flags)
 	    ETHERMTU + sizeof(struct ether_header))) {
 #ifdef HMEDEBUG
 		printf("%s: invalid packet size %d; dropping\n",
-		    sc->sc_dev.dv_xname, len);
+		    device_xname(&sc->sc_dev), len);
 #endif
 		ifp->if_ierrors++;
 		return;
@@ -1077,7 +1069,7 @@ hme_rint(sc)
 
 		if (flags & HME_XD_OFL) {
 			printf("%s: buffer overflow, ri=%d; flags=0x%x\n",
-					sc->sc_dev.dv_xname, ri, flags);
+					device_xname(&sc->sc_dev), ri, flags);
 		} else
 			hme_read(sc, ri, flags);
 
@@ -1109,11 +1101,11 @@ hme_eint(sc, status)
 		st = bus_space_read_4(t, mif, HME_MIFI_STAT);
 		sm = bus_space_read_4(t, mif, HME_MIFI_SM);
 		printf("%s: XXXlink status changed: cfg=%x, stat %x, sm %x\n",
-			sc->sc_dev.dv_xname, cf, st, sm);
+			device_xname(&sc->sc_dev), cf, st, sm);
 		return (1);
 	}
 
-	printf("%s: status=%s\n", sc->sc_dev.dv_xname,
+	printf("%s: status=%s\n", device_xname(&sc->sc_dev),
 		bitmask_snprintf(status, HME_SEB_STAT_BITS, bits,sizeof(bits)));
 	return (1);
 }
@@ -1153,7 +1145,7 @@ hme_watchdog(ifp)
 {
 	struct hme_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 	++ifp->if_oerrors;
 
 	hme_reset(sc);
@@ -1259,7 +1251,7 @@ hme_mii_readreg(self, phy, reg)
 	}
 
 	v = 0;
-	printf("%s: mii_read timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: mii_read timeout\n", device_xname(&sc->sc_dev));
 
 out:
 	/* Restore MIFI_CFG register */
@@ -1330,7 +1322,7 @@ hme_mii_writereg(self, phy, reg, val)
 			goto out;
 	}
 
-	printf("%s: mii_write timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: mii_write timeout\n", device_xname(&sc->sc_dev));
 out:
 	/* Restore MIFI_CFG register */
 	bus_space_write_4(t, mif, HME_MIFI_CFG, mifi_cfg);

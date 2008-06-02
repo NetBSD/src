@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.6.14.1 2008/04/03 12:42:41 mjf Exp $ */
+/* $NetBSD: mfivar.h,v 1.6.14.2 2008/06/02 13:23:25 mjf Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -19,7 +19,7 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <sys/envsys.h>
 
-#define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
+#define DEVNAME(_s)     (device_xname(&(_s)->sc_dev))
 
 /* #define MFI_DEBUG */
 #ifdef MFI_DEBUG

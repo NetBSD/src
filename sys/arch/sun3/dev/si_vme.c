@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.27 2007/03/12 12:03:18 tsutsui Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.27.38.1 2008/06/02 13:22:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -81,7 +74,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.27 2007/03/12 12:03:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_vme.c,v 1.27.38.1 2008/06/02 13:22:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,10 +116,10 @@ static void si_vme_reset(struct ncr5380_softc *);
  * New-style autoconfig attachment
  */
 
-static int	si_vme_match(struct device *, struct cfdata *, void *);
-static void	si_vme_attach(struct device *, struct device *, void *);
+static int	si_vme_match(device_t, cfdata_t, void *);
+static void	si_vme_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(si_vme, sizeof(struct si_softc),
+CFATTACH_DECL_NEW(si_vme, sizeof(struct si_softc),
     si_vme_match, si_vme_attach, NULL, NULL);
 
 /*
@@ -138,19 +131,19 @@ int si_vme_options = 0x0f;
 
 
 static int 
-si_vme_match(struct device *parent, struct cfdata *cf, void *aux)
+si_vme_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int probe_addr;
 
 	/* No default VME address. */
 	if (ca->ca_paddr == -1)
-		return (0);
+		return 0;
 
 	/* Make sure something is there... */
 	probe_addr = ca->ca_paddr + 1;
 	if (bus_peek(ca->ca_bustype, probe_addr, 1) == -1)
-		return (0);
+		return 0;
 
 	/*
 	 * If this is a VME SCSI board, we have to determine whether
@@ -163,40 +156,41 @@ si_vme_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (bus_peek(ca->ca_bustype, probe_addr, 1) != -1) {
 		/* Something responded at 2K+1.  Maybe an "sc" board? */
 #ifdef	DEBUG
-		printf("si_vme_match: May be an `sc' board at pa=0x%lx\n",
-			   ca->ca_paddr);
+		printf("%s: May be an `sc' board at pa=0x%lx\n",
+		    __func__, ca->ca_paddr);
 #endif
-		return(0);
+		return 0;
 	}
 
 	/* Default interrupt priority. */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 2;
 
-	return (1);
+	return 1;
 }
 
 static void 
-si_vme_attach(struct device *parent, struct device *self, void *args)
+si_vme_attach(device_t parent, device_t self, void *args)
 {
-	struct si_softc *sc = (struct si_softc *) self;
+	struct si_softc *sc = device_private(self);
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	struct cfdata *cf = device_cfdata(self);
 	struct confargs *ca = args;
 
+	ncr_sc->sc_dev = self;
 	sc->sc_bst = ca->ca_bustag;
 	sc->sc_dmat = ca->ca_dmatag;
 
 	if (bus_space_map(sc->sc_bst, ca->ca_paddr, sizeof(struct si_regs), 0,
 	    &sc->sc_bsh) != 0) {
-		printf(": can't map register\n");
+		aprint_error(": can't map register\n");
 		return;
 	}
 	sc->sc_regs = bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
 
 	if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1, MAXPHYS, 0,
 	    BUS_DMA_NOWAIT, &sc->sc_dmap) != 0) {
-		printf(": can't create DMA map\n");
+		aprint_error(": can't create DMA map\n");
 		return;
 	}
 
@@ -206,7 +200,7 @@ si_vme_attach(struct device *parent, struct device *self, void *args)
 	else
 		sc->sc_options = si_vme_options;
 
-	printf(": options=0x%x\n", sc->sc_options);
+	aprint_normal(": options=0x%x\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
 	sc->sc_adapter_iv_am = VME_SUPV_DATA_24 | (ca->ca_intvec & 0xFF);
@@ -244,7 +238,7 @@ si_vme_reset(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug) {
-		printf("si_vme_reset\n");
+		printf("%s\n", __func__);
 	}
 #endif
 
@@ -337,15 +331,15 @@ si_vme_dma_setup(struct ncr5380_softc *ncr_sc)
 	 */
 	data_pa = dh->dh_dmaaddr;
 	if (data_pa & 1)
-		panic("si_dma_start: bad pa=0x%lx", data_pa);
+		panic("%s: bad pa=0x%lx", __func__, data_pa);
 	xlen = dh->dh_dmalen;
 	xlen &= ~1;				/* XXX: necessary? */
 	sc->sc_reqlen = xlen; 	/* XXX: or less? */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_setup: dh=%p, pa=0x%lx, xlen=0x%x\n",
-			   dh, data_pa, xlen);
+		printf("%s: dh=%p, pa=0x%lx, xlen=0x%x\n",
+		    __func__, dh, data_pa, xlen);
 	}
 #endif
 
@@ -367,8 +361,8 @@ si_vme_dma_setup(struct ncr5380_softc *ncr_sc)
 	}
 
 	/* Load the start address. */
-	si->dma_addrh = (ushort)(data_pa >> 16);
-	si->dma_addrl = (ushort)(data_pa & 0xFFFF);
+	si->dma_addrh = (uint16_t)(data_pa >> 16);
+	si->dma_addrl = (uint16_t)(data_pa & 0xFFFF);
 
 	/*
 	 * Keep the count zero or it may start early!
@@ -398,12 +392,12 @@ si_vme_dma_start(struct ncr5380_softc *ncr_sc)
 	/* This MAY be time critical (not sure). */
 	s = splhigh();
 
-	si->dma_counth = (ushort)(xlen >> 16);
-	si->dma_countl = (ushort)(xlen & 0xFFFF);
+	si->dma_counth = (uint16_t)(xlen >> 16);
+	si->dma_countl = (uint16_t)(xlen & 0xFFFF);
 
 	/* Set it anyway, even though dma_count hits it. */
-	si->fifo_cnt_hi = (ushort)(xlen >> 16);
-	si->fifo_count  = (ushort)(xlen & 0xFFFF);
+	si->fifo_cnt_hi = (uint16_t)(xlen >> 16);
+	si->fifo_count  = (uint16_t)(xlen & 0xFFFF);
 
 	/*
 	 * Acknowledge the phase change.  (After DMA setup!)
@@ -431,8 +425,8 @@ si_vme_dma_start(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: started, flags=0x%x\n",
-			   ncr_sc->sc_state);
+		printf("%s: started, flags=0x%x\n",
+		    __func__, ncr_sc->sc_state);
 	}
 #endif
 }
@@ -457,7 +451,7 @@ si_vme_dma_stop(struct ncr5380_softc *ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("si_dma_stop: DMA not running\n");
+		printf("%s: DMA not running\n", __func__);
 #endif
 		return;
 	}
@@ -504,8 +498,8 @@ si_vme_dma_stop(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_stop: resid=0x%x ntrans=0x%x\n",
-		       resid, ntrans);
+		printf("%s: resid=0x%x ntrans=0x%x\n",
+		    __func__, resid, ntrans);
 	}
 #endif
 
@@ -515,7 +509,7 @@ si_vme_dma_stop(struct ncr5380_softc *ncr_sc)
 		goto out;
 	}
 	if (ntrans > ncr_sc->sc_datalen)
-		panic("si_dma_stop: excess transfer");
+		panic("%s: excess transfer", __func__);
 
 	/* Adjust data pointer */
 	ncr_sc->sc_dataptr += ntrans;
@@ -526,9 +520,8 @@ si_vme_dma_stop(struct ncr5380_softc *ncr_sc)
 	 * "Left-over bytes" (yuck!)
 	 */
 	if (((dh->dh_flags & SIDH_OUT) == 0) &&
-		((si->si_csr & SI_CSR_LOB) != 0))
-	{
-		char *cp = ncr_sc->sc_dataptr;
+		((si->si_csr & SI_CSR_LOB) != 0)) {
+		uint8_t *cp = ncr_sc->sc_dataptr;
 #ifdef DEBUG
 		printf("si: Got Left-over bytes!\n");
 #endif

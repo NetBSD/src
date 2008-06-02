@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.65 2008/01/14 04:17:35 dyoung Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.65.6.1 2008/06/02 13:24:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.65 2008/01/14 04:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.65.6.1 2008/06/02 13:24:29 mjf Exp $");
 
 #include "opt_eon.h"
 
@@ -368,7 +368,7 @@ einval:
 		goto flush;
 	}
 	if ((el->el_flags & RTF_UP) == 0) {
-		eonrtrequest(RTM_CHANGE, rt, (struct rt_addrinfo *) 0);
+		eonrtrequest(RTM_CHANGE, rt, NULL);
 		if ((el->el_flags & RTF_UP) == 0) {
 			error = EHOSTUNREACH;
 			goto flush;

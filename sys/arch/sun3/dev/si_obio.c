@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.33 2007/02/03 18:02:57 tsutsui Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.33.44.1 2008/06/02 13:22:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -81,7 +74,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.33 2007/02/03 18:02:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.33.44.1 2008/06/02 13:22:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,10 +123,10 @@ static inline int si_obio_udc_read(volatile struct si_regs *, int);
  * New-style autoconfig attachment
  */
 
-static int	si_obio_match(struct device *, struct cfdata *, void *);
-static void	si_obio_attach(struct device *, struct device *, void *);
+static int	si_obio_match(device_t, cfdata_t, void *);
+static void	si_obio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(si_obio, sizeof(struct si_softc),
+CFATTACH_DECL_NEW(si_obio, sizeof(struct si_softc),
     si_obio_match, si_obio_attach, NULL, NULL);
 
 /*
@@ -145,42 +138,43 @@ int si_obio_options = 0x0f;
 
 
 static int 
-si_obio_match(struct device *parent, struct cfdata *cf, void *aux)
+si_obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
 	/* Make sure something is there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr + 1, 1) == -1)
-		return (0);
+		return 0;
 
 	/* Default interrupt priority. */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 2;
 
-	return (1);
+	return 1;
 }
 
 static void 
-si_obio_attach(struct device *parent, struct device *self, void *args)
+si_obio_attach(device_t parent, device_t self, void *args)
 {
-	struct si_softc *sc = (struct si_softc *) self;
+	struct si_softc *sc = device_private(self);
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	struct cfdata *cf = device_cfdata(self);
 	struct confargs *ca = args;
 
+	ncr_sc->sc_dev = self;
 	sc->sc_bst = ca->ca_bustag;
 	sc->sc_dmat = ca->ca_dmatag;
 
 	if (bus_space_map(sc->sc_bst, ca->ca_paddr, sizeof(struct si_regs), 0,
 	    &sc->sc_bsh) != 0) {
-		printf(": can't map register\n");
+		aprint_error(": can't map register\n");
 		return;
 	}
 	sc->sc_regs = bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
 
 	if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1, MAXPHYS, 0,
 	    BUS_DMA_NOWAIT, &sc->sc_dmap) != 0) {
-		printf(": can't create DMA map\n");
+		aprint_error(": can't create DMA map\n");
 		return;
 	}
 
@@ -190,7 +184,7 @@ si_obio_attach(struct device *parent, struct device *self, void *args)
 	else
 		sc->sc_options = si_obio_options;
 
-	printf(": options=0x%x\n", sc->sc_options);
+	aprint_normal(": options=0x%x\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
 
@@ -210,7 +204,7 @@ si_obio_attach(struct device *parent, struct device *self, void *args)
 	ncr_sc->sc_intr_off  = NULL;
 
 	/* Need DVMA-capable memory for the UDC command block. */
-	sc->sc_dmacmd = dvma_malloc(sizeof (struct udc_table));
+	sc->sc_dmacmd = dvma_malloc(sizeof(struct udc_table));
 
 	/* Attach interrupt handler. */
 	isr_add_autovect(si_intr, (void *)sc, ca->ca_intpri);
@@ -230,7 +224,7 @@ si_obio_reset(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug) {
-		printf("si_obio_reset\n");
+		printf("%s\n", __func__);
 	}
 #endif
 
@@ -250,6 +244,7 @@ si_obio_reset(struct ncr5380_softc *ncr_sc)
 static inline void 
 si_obio_udc_write(volatile struct si_regs *si, int regnum, int value)
 {
+
 	si->udc_addr = regnum;
 	delay(UDC_WAIT_USEC);
 	si->udc_data = value;
@@ -266,7 +261,7 @@ si_obio_udc_read(volatile struct si_regs *si, int regnum)
 	value = si->udc_data;
 	delay(UDC_WAIT_USEC);
 
-	return (value);
+	return value;
 }
 
 
@@ -296,14 +291,14 @@ si_obio_dma_setup(struct ncr5380_softc *ncr_sc)
 	 */
 	data_pa = dh->dh_dmaaddr;
 	if (data_pa & 1)
-		panic("si_dma_start: bad pa=0x%lx", data_pa);
+		panic("%s: bad pa=0x%lx", __func__, data_pa);
 	xlen = dh->dh_dmalen;
 	sc->sc_reqlen = xlen; 	/* XXX: or less? */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_setup: dh=%p, pa=0x%lx, xlen=0x%x\n",
-			   dh, data_pa, xlen);
+		printf("%s: dh=%p, pa=0x%lx, xlen=0x%x\n",
+		    __func__, dh, data_pa, xlen);
 	}
 #endif
 
@@ -338,8 +333,8 @@ si_obio_dma_setup(struct ncr5380_softc *ncr_sc)
 #ifdef	DEBUG
 	/* Make sure the extra FIFO reset did not hit the count. */
 	if (si->fifo_count != xlen) {
-		printf("si_dma_setup: fifo_count=0x%x, xlen=0x%x\n",
-			   si->fifo_count, xlen);
+		printf("%s: fifo_count=0x%x, xlen=0x%x\n",
+		    __func__, si->fifo_count, xlen);
 		Debugger();
 	}
 #endif
@@ -365,10 +360,8 @@ si_obio_dma_setup(struct ncr5380_softc *ncr_sc)
 
 	/* Tell the DMA chip where the control block is. */
 	cmd_pa = dvma_kvtopa(cmd, BUS_OBIO);
-	si_obio_udc_write(si, UDC_ADR_CAR_HIGH,
-					  (cmd_pa & 0xff0000) >> 8);
-	si_obio_udc_write(si, UDC_ADR_CAR_LOW,
-					  (cmd_pa & 0xffff));
+	si_obio_udc_write(si, UDC_ADR_CAR_HIGH, (cmd_pa & 0xff0000) >> 8);
+	si_obio_udc_write(si, UDC_ADR_CAR_LOW, (cmd_pa & 0xffff));
 
 	/* Tell the chip to be a DMA master. */
 	si_obio_udc_write(si, UDC_ADR_MODE, UDC_MODE);
@@ -391,7 +384,7 @@ si_obio_dma_start(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: sr=%p\n", sr);
+		printf("%s: sr=%p\n", __func__, sr);
 	}
 #endif
 
@@ -424,8 +417,8 @@ si_obio_dma_start(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: started, flags=0x%x\n",
-			   ncr_sc->sc_state);
+		printf("%s: started, flags=0x%x\n",
+		    __func__, ncr_sc->sc_state);
 	}
 #endif
 }
@@ -450,7 +443,7 @@ si_obio_dma_stop(struct ncr5380_softc *ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("si_dma_stop: DMA not running\n");
+		printf("%s: DMA not running\n", __func__);
 #endif
 		return;
 	}
@@ -504,8 +497,8 @@ si_obio_dma_stop(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_stop: resid=0x%x ntrans=0x%x\n",
-		       resid, ntrans);
+		printf("%s: resid=0x%x ntrans=0x%x\n",
+		    __func__, resid, ntrans);
 	}
 #endif
 
@@ -516,7 +509,7 @@ si_obio_dma_stop(struct ncr5380_softc *ncr_sc)
 		goto out;
 	}
 	if (ntrans > ncr_sc->sc_datalen)
-		panic("si_dma_stop: excess transfer");
+		panic("%s: excess transfer", __func__);
 
 	/* Adjust data pointer */
 	ncr_sc->sc_dataptr += ntrans;

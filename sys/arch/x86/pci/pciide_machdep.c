@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.7 2007/12/01 06:05:40 jmcneill Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.7.14.1 2008/06/02 13:22:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.7 2007/12/01 06:05:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.7.14.1 2008/06/02 13:22:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,12 +81,12 @@ pciide_machdep_compat_intr_establish(struct device *dev,
 	    (intr_find_mpmapping(mp_isa_bus, irq, &mpih) == 0 ||
 	     intr_find_mpmapping(mp_eisa_bus, irq, &mpih) == 0)) {
 		mpih |= irq;
-		aprint_normal("%s: %s channel interrupting at %s\n",
-		    dev->dv_xname, PCIIDE_CHANNEL_NAME(chan),
+		aprint_normal_dev(dev, "%s channel interrupting at %s\n",
+		    PCIIDE_CHANNEL_NAME(chan),
 		    intr_string(mpih));
 	} else
 #endif
-	aprint_normal("%s: %s channel interrupting at irq %d\n", dev->dv_xname,
+	aprint_normal_dev(dev, "%s channel interrupting at irq %d\n",
 	    PCIIDE_CHANNEL_NAME(chan), irq);
 	return (cookie);
 }

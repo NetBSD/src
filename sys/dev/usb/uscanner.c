@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.59.12.3 2008/04/06 09:58:51 mjf Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.59.12.4 2008/06/02 13:23:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -39,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.59.12.3 2008/04/06 09:58:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.59.12.4 2008/06/02 13:23:56 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,9 +315,11 @@ USB_ATTACH(uscanner)
 	int i, maj;
 	usbd_status err;
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev_flags = uscanner_lookup(uaa->vendor, uaa->product)->flags;
@@ -333,8 +328,7 @@ USB_ATTACH(uscanner)
 
 	err = usbd_set_config_no(uaa->device, 1, 1); /* XXX */
 	if (err) {
-		printf("%s: setting config no failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "setting config no failed\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -344,8 +338,9 @@ USB_ATTACH(uscanner)
 	if (!err && sc->sc_iface)
 	    id = usbd_get_interface_descriptor(sc->sc_iface);
 	if (err || id == 0) {
-		printf("%s: could not get interface descriptor, err=%d,id=%p\n",
-		       USBDEVNAME(sc->sc_dev), err, id);
+		aprint_error_dev(self,
+		    "could not get interface descriptor, err=%d,id=%p\n",
+		    err, id);
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -354,8 +349,8 @@ USB_ATTACH(uscanner)
 	for (i = 0 ; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == 0) {
-			printf("%s: could not read endpoint descriptor\n",
-			       USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self,
+			    "could not read endpoint descriptor\n");
 			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -374,8 +369,8 @@ USB_ATTACH(uscanner)
 
 	/* Verify that we got something sensible */
 	if (ed_bulkin == NULL || ed_bulkout == NULL) {
-		printf("%s: bulk-in and/or bulk-out endpoint not found\n",
-			USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self,
+		    "bulk-in and/or bulk-out endpoint not found\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -631,7 +626,7 @@ uscannerwrite(dev_t dev, struct uio *uio, int flag)
 int
 uscanner_activate(device_ptr_t self, enum devact act)
 {
-	struct uscanner_softc *sc = (struct uscanner_softc *)self;
+	struct uscanner_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

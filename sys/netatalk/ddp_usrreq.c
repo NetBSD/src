@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.30 2008/01/28 18:28:31 dyoung Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.30.6.1 2008/06/02 13:24:23 mjf Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.30 2008/01/28 18:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.30.6.1 2008/06/02 13:24:23 mjf Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -42,14 +42,17 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.30 2008/01/28 18:28:31 dyoung Exp $
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/kauth.h>
+#include <sys/sysctl.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_ether.h>
+#include <net/net_stats.h>
 #include <netinet/in.h>
 
 #include <netatalk/at.h>
 #include <netatalk/at_var.h>
 #include <netatalk/ddp_var.h>
+#include <netatalk/ddp_private.h>
 #include <netatalk/aarp.h>
 #include <netatalk/at_extern.h>
 
@@ -63,7 +66,7 @@ static int at_pcballoc __P((struct socket *));
 struct ifqueue atintrq1, atintrq2;
 struct ddpcb   *ddp_ports[ATPORT_LAST];
 struct ddpcb   *ddpcb = NULL;
-struct ddpstat	ddpstat;
+percpu_t *ddpstat_percpu;
 struct at_ifaddrhead at_ifaddr;		/* Here as inited in this file */
 u_long ddp_sendspace = DDP_MAXSZ;	/* Max ddp size + 1 (ddp_type) */
 u_long ddp_recvspace = 25 * (587 + sizeof(struct sockaddr_at));
@@ -93,7 +96,9 @@ ddp_usrreq(so, req, m, addr, rights, l)
 		    (struct ifnet *) rights, l));
 	}
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		at_purgeif((struct ifnet *) rights);
+		mutex_exit(softnet_lock);
 		return (0);
 	}
 	if (rights && rights->m_len) {
@@ -110,6 +115,7 @@ ddp_usrreq(so, req, m, addr, rights, l)
 			error = EINVAL;
 			break;
 		}
+		sosetlock(so);
 		if ((error = at_pcballoc(so)) != 0) {
 			break;
 		}
@@ -468,7 +474,9 @@ at_pcbdetach(so, ddp)
 {
 	soisdisconnected(so);
 	so->so_pcb = 0;
+	/* sofree drops the lock */
 	sofree(so);
+	mutex_enter(softnet_lock);
 
 	/* remove ddp from ddp_ports list */
 	if (ddp->ddp_lsat.sat_port != ATADDR_ANYPORT &&
@@ -550,8 +558,11 @@ ddp_search(
  * Initialize all the ddp & appletalk stuff
  */
 void
-ddp_init()
+ddp_init(void)
 {
+
+	ddpstat_percpu = percpu_alloc(sizeof(uint64_t) * DDP_NSTATS);
+
 	TAILQ_INIT(&at_ifaddr);
 	atintrq1.ifq_maxlen = IFQ_MAXLEN;
 	atintrq2.ifq_maxlen = IFQ_MAXLEN;
@@ -570,3 +581,42 @@ ddp_clean()
 		at_pcbdetach(ddp->ddp_socket, ddp);
 }
 #endif
+
+static int
+sysctl_net_atalk_ddp_stats(SYSCTLFN_ARGS)
+{
+
+	return (NETSTAT_SYSCTL(ddpstat_percpu, DDP_NSTATS));
+}
+
+/*
+ * Sysctl for DDP variables.
+ */
+SYSCTL_SETUP(sysctl_net_atalk_ddp_setup, "sysctl net.atalk.ddp subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "atalk", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_APPLETALK, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ddp",
+		       SYSCTL_DESCR("DDP related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_APPLETALK, ATPROTO_DDP, CTL_EOL);
+	
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("DDP statistics"),
+		       sysctl_net_atalk_ddp_stats, 0, NULL, 0,
+		       CTL_NET, PF_APPLETALK, ATPROTO_DDP, CTL_CREATE,
+		       CTL_EOL);
+}

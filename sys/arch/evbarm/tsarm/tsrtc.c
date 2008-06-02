@@ -1,4 +1,4 @@
-/*	$NetBSD: tsrtc.c,v 1.3.6.1 2008/04/03 12:42:14 mjf Exp $	*/
+/*	$NetBSD: tsrtc.c,v 1.3.6.2 2008/06/02 13:22:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.3.6.1 2008/04/03 12:42:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.3.6.2 2008/06/02 13:22:03 mjf Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -67,30 +67,32 @@ int
 tsrtc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct tspld_attach_args *aa = aux;
-	struct tsrtc_softc tsrtc, *sc;
+	struct tsrtc_softc tsrtc, *tsc;
+	struct mc146818_softc *sc;
 	unsigned int t1, t2;
 	static int found = -1;
 
 	if (found != -1)
 		return found;
 
-	sc = &tsrtc;
-	sc->sc_iot = aa->ta_iot;
-	if (bus_space_map(sc->sc_iot, TS7XXX_IO8_HWBASE + TS7XXX_RTCIDX, 1, 0,
-		 &sc->sc_idxh))
+	tsc = &tsrtc;
+	sc = &tsc->sc_mc;
+	tsc->sc_iot = aa->ta_iot;
+	if (bus_space_map(tsc->sc_iot, TS7XXX_IO8_HWBASE + TS7XXX_RTCIDX, 1, 0,
+		 &tsc->sc_idxh))
 		return (0);
-	if (bus_space_map(sc->sc_iot, TS7XXX_IO8_HWBASE + TS7XXX_RTCDAT, 1, 0,
-		 &sc->sc_dath))
+	if (bus_space_map(tsc->sc_iot, TS7XXX_IO8_HWBASE + TS7XXX_RTCDAT, 1, 0,
+		 &tsc->sc_dath))
 		return (0);
 
 	/* Read from the seconds counter. */
-	t1 = FROMBCD(tsrtc_read((struct mc146818_softc *)sc, MC_SEC));
+	t1 = FROMBCD(tsrtc_read(sc, MC_SEC));
 	if (t1 > 59)
 		goto unmap;
 
 	/* Wait, then look again. */
 	DELAY(1100000);
-	t2 = FROMBCD(tsrtc_read((struct mc146818_softc *)sc, MC_SEC));
+	t2 = FROMBCD(tsrtc_read(sc, MC_SEC));
 	if (t2 > 59)
 		goto unmap;
 
@@ -99,8 +101,8 @@ tsrtc_match(device_t parent, cfdata_t cf, void *aux)
 		found = 1;
 
  unmap:
-	bus_space_unmap(sc->sc_iot, sc->sc_idxh, 1);
-	bus_space_unmap(sc->sc_iot, sc->sc_dath, 1);
+	bus_space_unmap(tsc->sc_iot, tsc->sc_idxh, 1);
+	bus_space_unmap(tsc->sc_iot, tsc->sc_dath, 1);
 
 	return (found);
 }
@@ -108,28 +110,28 @@ tsrtc_match(device_t parent, cfdata_t cf, void *aux)
 void
 tsrtc_attach(device_t parent, device_t self, void *aux)
 {
-	struct tsrtc_softc *sc = device_private(self);
+	struct tsrtc_softc *tsc = device_private(self);
+	struct mc146818_softc *sc = &tsc->sc_mc;
 	struct tspld_attach_args *aa = aux;
 
 	sc->sc_dev = self;
-	sc->sc_iot = aa->ta_iot;
-	if (bus_space_map(sc->sc_iot, TS7XXX_IO8_HWBASE + TS7XXX_RTCIDX,
-	    1, 0, &sc->sc_idxh))
+	tsc->sc_iot = aa->ta_iot;
+	if (bus_space_map(tsc->sc_iot, TS7XXX_IO8_HWBASE + TS7XXX_RTCIDX,
+	    1, 0, &tsc->sc_idxh))
 		panic("tsrtc_attach: couldn't map clock I/O space");
-	if (bus_space_map(sc->sc_iot, TS7XXX_IO8_HWBASE + TS7XXX_RTCDAT,
-	    1, 0, &sc->sc_dath))
+	if (bus_space_map(tsc->sc_iot, TS7XXX_IO8_HWBASE + TS7XXX_RTCDAT,
+	    1, 0, &tsc->sc_dath))
 		panic("tsrtc_attach: couldn't map clock I/O space");
 
-	sc->sc_mc.sc_year0 = 2000;
-	sc->sc_mc.sc_mcread = tsrtc_read;
-	sc->sc_mc.sc_mcwrite = tsrtc_write;
-	sc->sc_mc.sc_flag = MC146818_BCD;
-	mc146818_attach(&sc->sc_mc);
+	sc->sc_year0 = 2000;
+	sc->sc_mcread = tsrtc_read;
+	sc->sc_mcwrite = tsrtc_write;
+	sc->sc_flag = MC146818_BCD;
+	mc146818_attach(sc);
 
-	aprint_error("\n");
+	aprint_normal("\n");
 
-	(*sc->sc_mc.sc_mcwrite)((struct mc146818_softc *)sc, MC_REGB, 
-		MC_REGB_24HR);
+	(*sc->sc_mcwrite)(sc, MC_REGB, MC_REGB_24HR);
 }
 
 void

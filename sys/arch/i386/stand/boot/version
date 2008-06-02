@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.5 2005/12/11 12:17:47 christos Exp $
+$NetBSD: version,v 1.5.74.1 2008/06/02 13:22:18 mjf Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -36,3 +36,4 @@ is taken as the current.
 	Keep MBR's existing BPB and partition table when installing bootxx.
 3.2:	Add support for passing boot wedge information to the kernel.
 3.3:	Add support for cd9660 file system.
+5.0:	Support for boot menu, modules.

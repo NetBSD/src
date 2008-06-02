@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.5 2008/01/04 21:18:06 ad Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.5.6.1 2008/06/02 13:23:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.5 2008/01/04 21:18:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.5.6.1 2008/06/02 13:23:54 mjf Exp $");
 
 #include <sys/param.h>
 
@@ -118,7 +111,7 @@ USB_MATCH(stuirda)
 	return (UMATCH_NONE);
 }
 
-void uirda_attach(struct device *,struct device *,void *);
+void uirda_attach(device_t, device_t, void *);
 
 USB_ATTACH(stuirda)
 {
@@ -166,7 +159,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 		USB_IRDA_DESCRIPTOR_SIZE, &sc->sc_irdadesc);
 	printf("error %d reading class desc\n", rc);
 
-	sprintf(fwname, "4210%02x%02x.sb",
+	snprintf(fwname, sizeof(fwname), "4210%02x%02x.sb",
 		usbddsc.bcdDevice[1],
 		usbddsc.bcdDevice[0]);
 

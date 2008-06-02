@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.18 2007/10/19 11:59:53 ad Exp $ */
+/* $NetBSD: i82596.c,v 1.18.16.1 2008/06/02 13:23:22 mjf Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.18 2007/10/19 11:59:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.18.16.1 2008/06/02 13:23:22 mjf Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -191,7 +191,7 @@ iee_intr(void *intarg)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		(sc->sc_iee_cmd)(sc, IEE_SCB_ACK);
-		return(1);
+		return 1;
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX,
 	    BUS_DMASYNC_POSTREAD);
@@ -213,7 +213,8 @@ iee_intr(void *intarg)
 			rbd->rbd_count = 0;
 			rbd->rbd_size = IEE_RBD_EL | rx_map->dm_segs[0].ds_len;
 			printf("%s: iee_intr: receive error %d, rfd_status="
-			    "0x%.4x, rfd_count=0x%.4x\n", sc->sc_dev.dv_xname,
+			    "0x%.4x, rfd_count=0x%.4x\n",
+			    device_xname(sc->sc_dev),
 			    ++sc->sc_rx_err, rfd->rfd_status, rbd->rbd_count);
 			sc->sc_rx_done = (sc->sc_rx_done + 1) % IEE_NRFD;
 			continue;
@@ -227,14 +228,14 @@ iee_intr(void *intarg)
 		MGETHDR(new_mbuf, M_DONTWAIT, MT_DATA);
 		if (new_mbuf == NULL) {
 			printf("%s: iee_intr: can't allocate mbuf\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			break;
 		}
 		MCLAIM(new_mbuf, &sc->sc_ethercom.ec_rx_mowner);
 		MCLGET(new_mbuf, M_DONTWAIT);
 		if ((new_mbuf->m_flags & M_EXT) == 0) {
 			printf("%s: iee_intr: can't alloc mbuf cluster\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			m_freem(new_mbuf);
 			break;
 		}
@@ -243,7 +244,7 @@ iee_intr(void *intarg)
 		    new_mbuf->m_ext.ext_buf, new_mbuf->m_ext.ext_size,
 		    NULL, BUS_DMA_READ | BUS_DMA_NOWAIT) != 0)
 			panic("%s: iee_intr: can't load RX DMA map\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		bus_dmamap_sync(sc->sc_dmat, rx_map, 0,
 		    new_mbuf->m_ext.ext_size, BUS_DMASYNC_PREREAD);
 #if NBPFILTER > 0
@@ -280,7 +281,7 @@ iee_intr(void *intarg)
 		    IEE_RFD_LIST_SZ + IEE_RBD_LIST_SZ, BUS_DMASYNC_PREWRITE);
 		(sc->sc_iee_cmd)(sc, IEE_SCB_RUC_ST);
 		printf("%s: iee_intr: receive ring buffer overrun\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 	}
 
 	if (sc->sc_next_cb != 0
@@ -315,7 +316,8 @@ iee_intr(void *intarg)
 				printf("%s: iee_intr: scb_status=0x%x "
 				    "scb_cmd=0x%x failed command %d: "
 				    "cb_status[%d]=0x%.4x cb_cmd[%d]=0x%.4x\n",
-				    sc->sc_dev.dv_xname, scb_status, scb_cmd,
+				    device_xname(sc->sc_dev),
+				    scb_status, scb_cmd,
 				    ++sc->sc_cmd_err, n, SC_CB(n)->cb_status,
 				    n, SC_CB(n)->cb_cmd);
 		}
@@ -330,38 +332,38 @@ iee_intr(void *intarg)
 	}
 	if (IEE_SWAP(SC_SCB->scb_crc_err) != sc->sc_crc_err) {
 		sc->sc_crc_err = IEE_SWAP(SC_SCB->scb_crc_err);
-		printf("%s: iee_intr: crc_err=%d\n", sc->sc_dev.dv_xname,
+		printf("%s: iee_intr: crc_err=%d\n", device_xname(sc->sc_dev),
 		    sc->sc_crc_err);
 	}
 	if (IEE_SWAP(SC_SCB->scb_align_err) != sc->sc_align_err) {
 		sc->sc_align_err = IEE_SWAP(SC_SCB->scb_align_err);
-		printf("%s: iee_intr: align_err=%d\n", sc->sc_dev.dv_xname,
+		printf("%s: iee_intr: align_err=%d\n", device_xname(sc->sc_dev),
 		    sc->sc_align_err);
 	}
 	if (IEE_SWAP(SC_SCB->scb_resource_err) != sc->sc_resource_err) {
 		sc->sc_resource_err = IEE_SWAP(SC_SCB->scb_resource_err);
-		printf("%s: iee_intr: resource_err=%d\n", sc->sc_dev.dv_xname,
-		    sc->sc_resource_err);
+		printf("%s: iee_intr: resource_err=%d\n",
+		    device_xname(sc->sc_dev), sc->sc_resource_err);
 	}
 	if (IEE_SWAP(SC_SCB->scb_overrun_err) != sc->sc_overrun_err) {
 		sc->sc_overrun_err = IEE_SWAP(SC_SCB->scb_overrun_err);
-		printf("%s: iee_intr: overrun_err=%d\n", sc->sc_dev.dv_xname,
-		    sc->sc_overrun_err);
+		printf("%s: iee_intr: overrun_err=%d\n",
+		    device_xname(sc->sc_dev), sc->sc_overrun_err);
 	}
 	if (IEE_SWAP(SC_SCB->scb_rcvcdt_err) != sc->sc_rcvcdt_err) {
 		sc->sc_rcvcdt_err = IEE_SWAP(SC_SCB->scb_rcvcdt_err);
-		printf("%s: iee_intr: rcvcdt_err=%d\n", sc->sc_dev.dv_xname,
-		    sc->sc_rcvcdt_err);
+		printf("%s: iee_intr: rcvcdt_err=%d\n",
+		    device_xname(sc->sc_dev), sc->sc_rcvcdt_err);
 	}
 	if (IEE_SWAP(SC_SCB->scb_short_fr_err) != sc->sc_short_fr_err) {
 		sc->sc_short_fr_err = IEE_SWAP(SC_SCB->scb_short_fr_err);
-		printf("%s: iee_intr: short_fr_err=%d\n", sc->sc_dev.dv_xname,
-		    sc->sc_short_fr_err);
+		printf("%s: iee_intr: short_fr_err=%d\n",
+		    device_xname(sc->sc_dev), sc->sc_short_fr_err);
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, 0, IEE_SHMEM_MAX,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	(sc->sc_iee_cmd)(sc, IEE_SCB_ACK);
-	return(1);
+	return 1;
 }
 
 
@@ -528,7 +530,7 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	}
 
 	ifp->if_softc = sc;
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = iee_start;	/* initiate output routine */
 	ifp->if_ioctl = iee_ioctl;	/* ioctl routine */
@@ -543,7 +545,7 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	ether_ifattach(ifp, eth_addr);
 
 	aprint_normal(": Intel 82596%s address %s\n",
-	    i82596_typenames[ sc->sc_type], ether_sprintf(eth_addr));
+	    i82596_typenames[sc->sc_type], ether_sprintf(eth_addr));
 
 	for (n = 0 ; n < IEE_NCB ; n++)
 		sc->sc_tx_map[n] = NULL;
@@ -554,7 +556,6 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	sc->sc_tx_timeout = 0;
 	sc->sc_setup_timeout = 0;
 	(sc->sc_iee_reset)(sc);
-	return;
 }
 
 
@@ -568,7 +569,6 @@ iee_detach(struct iee_softc *sc, int flags)
 		iee_stop(ifp, 1);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	return;
 }
 
 
@@ -580,8 +580,8 @@ iee_mediachange(struct ifnet *ifp)
 	struct iee_softc *sc = ifp->if_softc;
 
 	if (sc->sc_mediachange != NULL)
-		return ((sc->sc_mediachange)(ifp));
-	return(0);
+		return (sc->sc_mediachange)(ifp);
+	return 0;
 }
 
 
@@ -592,8 +592,7 @@ iee_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmreq)
 	struct iee_softc *sc = ifp->if_softc;
 
 	if (sc->sc_mediastatus != NULL)
-		return ((sc->sc_mediastatus)(ifp, ifmreq));
-	return;
+		(sc->sc_mediastatus)(ifp, ifmreq);
 }
 
 
@@ -621,11 +620,11 @@ iee_start(struct ifnet *ifp)
 			 * Copy the packet into a mbuf cluster to get it out.
 			 */
 			printf("%s: iee_start: failed to load DMA map\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: iee_start: can't allocate mbuf\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				m_freem(sc->sc_tx_mbuf[t]);
 				t--;
 				continue;
@@ -634,7 +633,7 @@ iee_start(struct ifnet *ifp)
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				printf("%s: iee_start: can't allocate mbuf "
-				    "cluster\n", sc->sc_dev.dv_xname);
+				    "cluster\n", device_xname(sc->sc_dev));
 				m_freem(sc->sc_tx_mbuf[t]);
 				m_freem(m);
 				t--;
@@ -649,7 +648,7 @@ iee_start(struct ifnet *ifp)
 			if(bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_tx_map[t],
 		    	    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT) != 0) {
 				printf("%s: iee_start: can't load TX DMA map\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				m_freem(sc->sc_tx_mbuf[t]);
 				t--;
 				continue;
@@ -688,7 +687,6 @@ iee_start(struct ifnet *ifp)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_shmem_map, IEE_CB_SZ,
 	    IEE_CB_LIST_SZ + IEE_TBD_LIST_SZ, BUS_DMASYNC_PREWRITE);
 	(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
-	return;
 }
 
 
@@ -727,7 +725,7 @@ iee_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 	splx(s);
-	return(err);
+	return err;
 }
 
 
@@ -767,11 +765,11 @@ iee_init(struct ifnet *ifp)
 		    MCLBYTES, IEE_NTBD, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_tx_map[t]) != 0) {
 			printf("%s: iee_init: can't create TX DMA map\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			for (n = 0 ; n < t ; n++)
 				bus_dmamap_destroy(sc->sc_dmat,
 				    sc->sc_tx_map[n]);
-			return(ENOBUFS);
+			return ENOBUFS;
 		}
 	}
 	/* Initialize Receive Frame and Receive Buffer Descriptors */
@@ -789,7 +787,7 @@ iee_init(struct ifnet *ifp)
 			MGETHDR(sc->sc_rx_mbuf[r], M_DONTWAIT, MT_DATA);
 			if (sc->sc_rx_mbuf[r] == NULL) {
 				printf("%s: iee_init: can't allocate mbuf\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				err = 1;
 				break;
 			}
@@ -797,7 +795,7 @@ iee_init(struct ifnet *ifp)
 			MCLGET(sc->sc_rx_mbuf[r], M_DONTWAIT);
 			if ((sc->sc_rx_mbuf[r]->m_flags & M_EXT) == 0) {
 				printf("%s: iee_init: can't allocate mbuf"
-				    " cluster\n", sc->sc_dev.dv_xname);
+				    " cluster\n", device_xname(sc->sc_dev));
 				m_freem(sc->sc_rx_mbuf[r]);
 				err = 1;
 				break;
@@ -807,7 +805,7 @@ iee_init(struct ifnet *ifp)
 		    MCLBYTES, 1, MCLBYTES , 0, BUS_DMA_NOWAIT,
 		    &sc->sc_rx_map[r]) != 0) {
 				printf("%s: iee_init: can't create RX "
-				    "DMA map\n", sc->sc_dev.dv_xname);
+				    "DMA map\n", device_xname(sc->sc_dev));
 				m_freem(sc->sc_rx_mbuf[r]);
 				err = 1;
 				break;
@@ -817,7 +815,7 @@ iee_init(struct ifnet *ifp)
 		    sc->sc_rx_mbuf[r]->m_ext.ext_size, NULL,
 		    BUS_DMA_READ | BUS_DMA_NOWAIT) != 0) {
 			printf("%s: iee_init: can't load RX DMA map\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rx_map[r]);
 			m_freem(sc->sc_rx_mbuf[r]);
 			err = 1;
@@ -841,7 +839,7 @@ iee_init(struct ifnet *ifp)
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_map[n]);
 			sc->sc_tx_map[n] = NULL;
 		}
-		return(ENOBUFS);
+		return ENOBUFS;
 	}
 
 	(sc->sc_iee_reset)(sc);
@@ -872,7 +870,7 @@ iee_init(struct ifnet *ifp)
 	/* Mark the interface as running and ready to RX/TX packets. */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	return(0);
+	return 0;
 }
 
 
@@ -907,7 +905,6 @@ iee_stop(struct ifnet *ifp, int disable)
 		}
 		sc->sc_rx_map[n] = NULL;
 	}
-	return;
 }
 
 
@@ -921,10 +918,9 @@ iee_watchdog(struct ifnet *ifp)
 	(sc->sc_iee_reset)(sc);
 	if (sc->sc_next_tbd != 0)
 		printf("%s: iee_watchdog: transmit timeout %d\n",
-		    sc->sc_dev.dv_xname, ++sc->sc_tx_timeout);
+		    device_xname(sc->sc_dev), ++sc->sc_tx_timeout);
 	else
 		printf("%s: iee_watchdog: setup timeout %d\n",
-		    sc->sc_dev.dv_xname, ++sc->sc_setup_timeout);
+		    device_xname(sc->sc_dev), ++sc->sc_setup_timeout);
 	iee_init(ifp);
-	return;
 }

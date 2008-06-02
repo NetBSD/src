@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.269.6.3 2008/04/06 09:58:51 mjf Exp $	*/
+/*	$NetBSD: sd.c,v 1.269.6.4 2008/06/02 13:23:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -54,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.3 2008/04/06 09:58:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.4 2008/06/02 13:23:51 mjf Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -266,7 +259,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&sd->sc_dk, sd->sc_dev.dv_xname, &sddkdriver);
+	disk_init(&sd->sc_dk, device_xname(&sd->sc_dev), &sddkdriver);
 	disk_attach(&sd->sc_dk);
 
 	/*
@@ -283,7 +276,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 		result = SDGP_RESULT_OFFLINE;
 	else
 		result = sd_get_parms(sd, &sd->params, XS_CTL_DISCOVERY);
-	aprint_normal("%s: ", sd->sc_dev.dv_xname);
+	aprint_normal_dev(&sd->sc_dev, "");
 	switch (result) {
 	case SDGP_RESULT_OK:
 		format_bytes(pbuf, sizeof(pbuf),
@@ -320,8 +313,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	if ((sd->sc_sdhook =
 	    shutdownhook_establish(sd_shutdown, sd)) == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-			sd->sc_dev.dv_xname);
+		aprint_error_dev(&sd->sc_dev, "WARNING: unable to establish shutdown hook\n");
 
 	if (!pmf_device_register(self, sd_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -330,7 +322,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * attach the device into the random source list
 	 */
-	rnd_attach_source(&sd->rnd_source, sd->sc_dev.dv_xname,
+	rnd_attach_source(&sd->rnd_source, device_xname(&sd->sc_dev),
 			  RND_TYPE_DISK, 0);
 #endif
 
@@ -649,8 +641,7 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		 */
 		if ((sd->flags & SDF_DIRTY) != 0) {
 			if (sd_flush(sd, 0)) {
-				printf("%s: cache synchronization failed\n",
-				    sd->sc_dev.dv_xname);
+				aprint_error_dev(&sd->sc_dev, "cache synchronization failed\n");
 				sd->flags &= ~SDF_FLUSHING;
 			} else
 				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
@@ -1245,7 +1236,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, sd->sc_dev.dv_xname);
+		strlcpy(dkw->dkw_parent, device_xname(&sd->sc_dev), sizeof(dkw->dkw_parent));
 		return (dkwedge_add(dkw));
 	    }
 
@@ -1257,7 +1248,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, sd->sc_dev.dv_xname);
+		strlcpy(dkw->dkw_parent, device_xname(&sd->sc_dev), sizeof(dkw->dkw_parent));
 		return (dkwedge_del(dkw));
 	    }
 
@@ -1347,7 +1338,7 @@ sdgetdisklabel(struct sd_softc *sd)
 	errstring = readdisklabel(MAKESDDEV(0, device_unit(&sd->sc_dev),
 	    RAW_PART), sdstrategy, lp, sd->sc_dk.dk_cpulabel);
 	if (errstring) {
-		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
+		aprint_error_dev(&sd->sc_dev, "%s\n", errstring);
 		return EIO;
 	}
 	return 0;
@@ -1365,8 +1356,7 @@ sd_shutdown(void *arg)
 	 */
 	if ((sd->flags & SDF_DIRTY) != 0) {
 		if (sd_flush(sd, XS_CTL_NOSLEEP|XS_CTL_POLL)) {
-			printf("%s: cache synchronization failed\n",
-			    sd->sc_dev.dv_xname);
+			aprint_error_dev(&sd->sc_dev, "cache synchronization failed\n");
 			sd->flags &= ~SDF_FLUSHING;
 		} else
 			sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
@@ -1440,7 +1430,7 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 			 * Unit In The Process Of Becoming Ready.
 			 */
 			printf("%s: waiting for pack to spin up...\n",
-			    sd->sc_dev.dv_xname);
+			    device_xname(&sd->sc_dev));
 			if (!callout_pending(&periph->periph_callout))
 				scsipi_periph_freeze(periph, 1);
 			callout_reset(&periph->periph_callout,
@@ -1448,7 +1438,7 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 			retval = ERESTART;
 		} else if (sense->ascq == 0x02) {
 			printf("%s: pack is stopped, restarting...\n",
-			    sd->sc_dev.dv_xname);
+			    device_xname(&sd->sc_dev));
 			s = splbio();
 			periph->periph_flags |= PERIPH_RECOVERING;
 			splx(s);
@@ -1456,8 +1446,7 @@ sd_interpret_sense(struct scsipi_xfer *xs)
 			    XS_CTL_URGENT|XS_CTL_HEAD_TAG|
 			    XS_CTL_THAW_PERIPH|XS_CTL_FREEZE_PERIPH);
 			if (error) {
-				printf("%s: unable to restart pack\n",
-				    sd->sc_dev.dv_xname);
+				aprint_error_dev(&sd->sc_dev, "unable to restart pack\n");
 				retval = error;
 			} else
 				retval = ERESTART;
@@ -2130,7 +2119,7 @@ sd_get_parms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	}
 
 page0:
-	printf("%s: fabricating a geometry\n", sd->sc_dev.dv_xname);
+	printf("%s: fabricating a geometry\n", device_xname(&sd->sc_dev));
 	/* Try calling driver's method for figuring out geometry. */
 	if (!sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom ||
 	    !(*sd->sc_periph->periph_channel->chan_adapter->adapt_getgeom)

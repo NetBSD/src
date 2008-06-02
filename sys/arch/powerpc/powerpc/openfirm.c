@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.19 2007/11/07 19:31:10 garbled Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.19.14.1 2008/06/02 13:22:33 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,8 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.19 2007/11/07 19:31:10 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.19.14.1 2008/06/02 13:22:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +50,9 @@ char *OF_buf;
 
 void ofw_stack(void);
 void ofbcopy(const void *, void *, size_t);
+#ifdef MULTIPROCESSOR
+void OF_start_cpu(int, u_int, int);
+#endif
 
 int
 OF_peer(int phandle)
@@ -565,6 +570,31 @@ OF_seek(int handle, u_quad_t pos)
 		return -1;
 	return args.status;
 }
+
+#ifdef MULTIPROCESSOR
+void
+OF_start_cpu(int phandle, u_int pc, int arg)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		u_int pc;
+		int arg;
+	} args = {
+		"start-cpu",
+		3,
+		0,
+	};
+	ofw_stack();
+	args.phandle = phandle;
+	args.pc = pc;
+	args.arg = arg;
+	if (openfirmware(&args) == -1)
+		panic("WTF?");
+}
+#endif
 
 void
 OF_boot(const char *bootspec)

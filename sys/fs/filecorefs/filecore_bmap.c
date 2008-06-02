@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.6 2007/10/08 18:04:03 ad Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.6.18.1 2008/06/02 13:24:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.6 2007/10/08 18:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.6.18.1 2008/06/02 13:24:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ filecore_map(fcmp, addr, lbn, bnp)
 	int error = 0;
 
 #ifdef FILECORE_DEBUG
-	printf("filecore_map(addr=%x, lbn=%x)\n", addr, lbn);
+	printf("filecore_map(addr=%x, lbn=%llx)\n", addr, (long long)lbn);
 #endif
 	frag = addr >> 8;
 	sect = (addr & 0xff) +
@@ -167,7 +167,7 @@ filecore_map(fcmp, addr, lbn, bnp)
 	sect <<= fcmp->drec.share_size;
 	do {
 		error=bread(fcmp->fc_devvp, fcmp->map + zone,
-			    1 << fcmp->drec.log2secsize, NOCRED, &bp);
+			    1 << fcmp->drec.log2secsize, NOCRED, 0, &bp);
 #ifdef FILECORE_DEBUG_BR
 		printf("bread(%p, %lx, %d, CRED, %p)=%d\n", fcmp->fc_devvp,
 		       fcmp->map+zone, 1 << fcmp->drec.log2secsize, bp, error);
@@ -256,10 +256,10 @@ filecore_bread(fcmp, addr, size, cred, bp)
 #endif
 		return error;
 	}
-	error = bread(fcmp->fc_devvp, bn, size, cred, bp);
+	error = bread(fcmp->fc_devvp, bn, size, cred, 0, bp);
 #ifdef FILECORE_DEBUG_BR
-	printf("bread(%p, %x, %d, CRED, %p)=%d\n", fcmp->fc_devvp, bn, size,
-	       *bp, error);
+	printf("bread(%p, %llx, %d, CRED, %p)=%d\n", fcmp->fc_devvp,
+	    (long long)bn, size, *bp, error);
 #endif
 	return error;
 }
@@ -277,10 +277,10 @@ filecore_dbread(ip, bp)
 	if (error)
 		return error;
 	error = bread(ip->i_mnt->fc_devvp, ip->i_block, FILECORE_DIR_SIZE,
-		      NOCRED, bp);
+		      NOCRED, 0, bp);
 #ifdef FILECORE_DEBUG_BR
-	printf("bread(%p, %x, %d, CRED, %p)=%d\n", ip->i_mnt->fc_devvp,
-	       ip->i_block, FILECORE_DIR_SIZE, *bp, error);
+	printf("bread(%p, %llx, %d, CRED, %p)=%d\n", ip->i_mnt->fc_devvp,
+	       (long long)ip->i_block, FILECORE_DIR_SIZE, *bp, error);
 #endif
 	return error;
 }

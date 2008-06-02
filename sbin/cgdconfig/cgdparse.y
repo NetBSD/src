@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgdparse.y,v 1.2 2005/06/27 03:07:45 christos Exp $ */
+/* $NetBSD: cgdparse.y,v 1.2.20.1 2008/06/02 13:21:21 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -39,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgdparse.y,v 1.2 2005/06/27 03:07:45 christos Exp $");
+__RCSID("$NetBSD: cgdparse.y,v 1.2.20.1 2008/06/02 13:21:21 mjf Exp $");
 #endif
 
 #include <stdio.h>
@@ -73,7 +66,7 @@ static struct params *yy_global_params;
 %token <string> STRINGLIT
 
 %token <token> ALGORITHM KEYLENGTH IVMETHOD VERIFY_METHOD
-%token <token> KEYGEN SALT ITERATIONS KEY
+%token <token> KEYGEN SALT ITERATIONS KEY CMD
 
 %token EOL
 
@@ -106,6 +99,7 @@ kgvars: /* empty */			{ $$ = NULL; }
 kgvar:	  SALT bits EOL			{ $$ = keygen_salt($2); }
 	| ITERATIONS INTEGER EOL	{ $$ = keygen_iterations($2); }
 	| KEY bits EOL			{ $$ = keygen_key($2); }
+	| CMD stringlit EOL		{ $$ = keygen_cmd($2); }
 	| EOL				{ $$ = NULL; }
 
 stringlit:  STRINGLIT | tokstr | intstr

@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.10.32.2 2008/04/06 09:58:51 mjf Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.10.32.3 2008/06/02 13:23:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.10.32.2 2008/04/06 09:58:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.10.32.3 2008/06/02 13:23:56 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,9 +206,11 @@ USB_ATTACH(utoppy)
 	u_int8_t epcount;
 	int i, maj;
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_dying = 0;
@@ -224,15 +219,15 @@ USB_ATTACH(utoppy)
 
 	if (usbd_set_config_index(dev, 0, 1)
 	    || usbd_device2interface_handle(dev, 0, &iface)) {
-		printf("%s: Configuration failed\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Configuration failed\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	epcount = 0;
 	(void) usbd_endpoint_count(iface, &epcount);
 	if (epcount != UTOPPY_NUMENDPOINTS) {
-		printf("%s: Expected %d endpoints, got %d\n",
-		    USBDEVNAME(sc->sc_dev), UTOPPY_NUMENDPOINTS, epcount);
+		aprint_error_dev(self, "Expected %d endpoints, got %d\n",
+		    UTOPPY_NUMENDPOINTS, epcount);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -242,8 +237,7 @@ USB_ATTACH(utoppy)
 	for (i = 0; i < epcount; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self, "couldn't get ep %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 
@@ -257,8 +251,8 @@ USB_ATTACH(utoppy)
 	}
 
 	if (sc->sc_out == -1 || sc->sc_in == -1) {
-		printf("%s: could not find bulk in/out endpoints\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self,
+		    "could not find bulk in/out endpoints\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -268,29 +262,25 @@ USB_ATTACH(utoppy)
 
 	sc->sc_out_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_out_xfer == NULL) {
-		printf("%s: could not allocate bulk out xfer\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "could not allocate bulk out xfer\n");
 		goto fail0;
 	}
 
 	sc->sc_out_buf = usbd_alloc_buffer(sc->sc_out_xfer, UTOPPY_FRAG_SIZE);
 	if (sc->sc_out_buf == NULL) {
-		printf("%s: could not allocate bulk out buffer\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "could not allocate bulk out buffer\n");
 		goto fail1;
 	}
 
 	sc->sc_in_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_in_xfer == NULL) {
-		printf("%s: could not allocate bulk in xfer\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "could not allocate bulk in xfer\n");
 		goto fail1;
 	}
 
 	sc->sc_in_buf = usbd_alloc_buffer(sc->sc_in_xfer, UTOPPY_FRAG_SIZE);
 	if (sc->sc_in_buf == NULL) {
-		printf("%s: could not allocate bulk in buffer\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "could not allocate bulk in buffer\n");
 		goto fail2;
 	}
 
@@ -316,7 +306,7 @@ USB_ATTACH(utoppy)
 int
 utoppy_activate(device_ptr_t self, enum devact act)
 {
-	struct utoppy_softc *sc = (struct utoppy_softc *)self;
+	struct utoppy_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

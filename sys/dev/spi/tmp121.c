@@ -1,4 +1,4 @@
-/* $NetBSD: tmp121.c,v 1.3 2007/11/16 08:00:16 xtraeme Exp $ */
+/* $NetBSD: tmp121.c,v 1.3.14.1 2008/06/02 13:23:51 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.3 2007/11/16 08:00:16 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.3.14.1 2008/06/02 13:23:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,24 +54,22 @@ __KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.3 2007/11/16 08:00:16 xtraeme Exp $");
 #include <dev/spi/spivar.h>
 
 struct tmp121temp_softc {
-	struct device sc_dev;
-
 	struct spi_handle *sc_sh;
 	
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor;
 };
 
-static int tmp121temp_match(struct device *, struct cfdata *, void *);
-static void tmp121temp_attach(struct device *, struct device *, void *);
+static int	tmp121temp_match(device_t, cfdata_t, void *);
+static void	tmp121temp_attach(device_t, device_t, void *);
 
-static void tmp121temp_refresh(struct sysmon_envsys *, envsys_data_t *);
+static void	tmp121temp_refresh(struct sysmon_envsys *, envsys_data_t *);
 
-CFATTACH_DECL(tmp121temp, sizeof(struct tmp121temp_softc),
+CFATTACH_DECL_NEW(tmp121temp, sizeof(struct tmp121temp_softc),
     tmp121temp_match, tmp121temp_attach, NULL, NULL);
 
 static int
-tmp121temp_match(struct device *parent, struct cfdata *cf, void *aux)
+tmp121temp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
 
@@ -83,7 +81,7 @@ tmp121temp_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-tmp121temp_attach(struct device *parent, struct device *self, void *aux)
+tmp121temp_attach(device_t parent, device_t self, void *aux)
 {
 	struct tmp121temp_softc *sc = device_private(self);
 	struct spi_attach_args *sa = aux;
@@ -107,8 +105,7 @@ tmp121temp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sme->sme_cookie = sc;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    device_xname(self));
+		aprint_error_dev(self, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 	}
 }

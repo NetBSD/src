@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_state.c,v 1.6 2007/12/15 00:39:34 perry Exp $	*/
+/*	$NetBSD: radeon_state.c,v 1.6.6.1 2008/06/02 13:23:45 mjf Exp $	*/
 
 /* radeon_state.c -- State support for Radeon -*- linux-c -*- */
 /*-
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_state.c,v 1.6 2007/12/15 00:39:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_state.c,v 1.6.6.1 2008/06/02 13:23:45 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_state.c,v 1.22 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -870,7 +870,7 @@ static void radeon_cp_dispatch_clear(drm_device_t * dev,
 		 */
 		dev_priv->sarea_priv->ctx_owner = 0;
 
-		if ((dev_priv->flags & CHIP_HAS_HIERZ)
+		if ((dev_priv->flags & RADEON_HAS_HIERZ)
 		    && (flags & RADEON_USE_HIERZ)) {
 			/* FIXME : reverse engineer that for Rx00 cards */
 			/* FIXME : the mask supposedly contains low-res z values. So can't set
@@ -915,7 +915,7 @@ static void radeon_cp_dispatch_clear(drm_device_t * dev,
 		for (i = 0; i < nbox; i++) {
 			int tileoffset, nrtilesx, nrtilesy, j;
 			/* it looks like r200 needs rv-style clears, at least if hierz is not enabled? */
-			if ((dev_priv->flags & CHIP_HAS_HIERZ)
+			if ((dev_priv->flags & RADEON_HAS_HIERZ)
 			    && !(dev_priv->microcode_version == UCODE_R200)) {
 				/* FIXME : figure this out for r200 (when hierz is enabled). Or
 				   maybe r200 actually doesn't need to put the low-res z value into
@@ -999,7 +999,7 @@ static void radeon_cp_dispatch_clear(drm_device_t * dev,
 		}
 
 		/* TODO don't always clear all hi-level z tiles */
-		if ((dev_priv->flags & CHIP_HAS_HIERZ)
+		if ((dev_priv->flags & RADEON_HAS_HIERZ)
 		    && (dev_priv->microcode_version == UCODE_R200)
 		    && (flags & RADEON_USE_HIERZ))
 			/* r100 and cards without hierarchical z-buffer have no high-level z-buffer */
@@ -3030,9 +3030,9 @@ static int radeon_cp_getparam(DRM_IOCTL_ARGS)
 		break;
 	
 	case RADEON_PARAM_CARD_TYPE:
-		if (dev_priv->flags & CHIP_IS_PCIE)
+		if (dev_priv->flags & RADEON_IS_PCIE)
 			value = RADEON_CARD_PCIE;
-		else if (dev_priv->flags & CHIP_IS_AGP)
+		else if (dev_priv->flags & RADEON_IS_AGP)
 			value = RADEON_CARD_AGP;
 		else
 			value = RADEON_CARD_PCI;
@@ -3088,9 +3088,15 @@ static int radeon_cp_setparam(DRM_IOCTL_ARGS)
 		break;
 	case RADEON_SETPARAM_PCIGART_LOCATION:
 		dev_priv->pcigart_offset = sp.value;
+		dev_priv->pcigart_offset_set = 1;
 		break;
 	case RADEON_SETPARAM_NEW_MEMMAP:
 		dev_priv->new_memmap = sp.value;
+		break;
+	case RADEON_SETPARAM_PCIGART_TABLE_SIZE:
+		dev_priv->gart_info.table_size = sp.value;
+		if (dev_priv->gart_info.table_size < RADEON_PCIGART_TABLE_SIZE)
+			dev_priv->gart_info.table_size = RADEON_PCIGART_TABLE_SIZE;
 		break;
 	default:
 		DRM_DEBUG("Invalid parameter %d\n", sp.param);

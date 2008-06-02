@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2008/01/06 01:37:58 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.6.1 2008/06/02 13:22:02 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -71,11 +71,12 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#define IST_LEVEL_LOW	 IST_LEVEL
-#define IST_LEVEL_HIGH   4
+#define IST_LEVEL_LOW	IST_LEVEL
+#define IST_LEVEL_HIGH	4
 #define IST_EDGE_FALLING IST_EDGE
-#define IST_EDGE_RISING  5
-#define IST_EDGE_BOTH    6
+#define IST_EDGE_RISING	5
+#define IST_EDGE_BOTH	6
+#define IST_SOFT	7
 
 #ifdef __OLD_INTERRUPT_CODE	/* XXX XXX XXX */
 

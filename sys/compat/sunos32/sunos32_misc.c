@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.58.6.1 2008/04/03 12:42:34 mjf Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.58.6.2 2008/06/02 13:23:08 mjf Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -79,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.58.6.1 2008/04/03 12:42:34 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.58.6.2 2008/06/02 13:23:08 mjf Exp $");
 
 #define COMPAT_SUNOS 1
 
