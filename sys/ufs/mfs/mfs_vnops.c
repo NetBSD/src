@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.51 2008/05/07 21:30:42 ad Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.52 2008/06/02 00:24:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.51 2008/05/07 21:30:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.52 2008/06/02 00:24:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_poll_desc, mfs_poll },			/* poll */
 	{ &vop_revoke_desc, mfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, mfs_mmap },			/* mmap */
-	{ &vop_fsync_desc, mfs_fsync },			/* fsync */
+	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, mfs_seek },			/* seek */
 	{ &vop_remove_desc, mfs_remove },		/* remove */
 	{ &vop_link_desc, mfs_link },			/* link */
@@ -323,16 +323,5 @@ mfs_print(void *v)
 	printf("tag VT_MFS, pid %d, base %p, size %ld\n",
 	    (mfsp->mfs_proc != NULL) ? mfsp->mfs_proc->p_pid : 0,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
-	return (0);
-}
-
-/*
- * Do a lazy sync of the filesystem.
- */
-int
-mfs_fsync(v)
-	void *v;
-{
-
 	return (0);
 }
