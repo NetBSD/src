@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.145 2008/05/27 17:48:27 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.146 2008/06/03 05:53:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.145 2008/05/27 17:48:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.146 2008/06/03 05:53:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1471,6 +1471,9 @@ ktrace_thread(void *arg)
 	 * descriptor is available in userland.
 	 */
 	closef(fp);
+
+	cv_destroy(&ktd->ktd_sync_cv);
+	cv_destroy(&ktd->ktd_cv);
 
 	callout_stop(&ktd->ktd_wakch);
 	callout_destroy(&ktd->ktd_wakch);
