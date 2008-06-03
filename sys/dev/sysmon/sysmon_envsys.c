@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.83 2008/04/02 11:19:22 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.84 2008/06/03 15:00:57 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.83 2008/04/02 11:19:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.84 2008/06/03 15:00:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -361,7 +361,8 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 
 		if (tred->sensor < sme->sme_nsensors) {
-			if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
+			if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0 &&
+			    (sme->sme_flags & SME_POLL_ONLY) == 0) {
 				mutex_enter(&sme->sme_mtx);
 				(*sme->sme_refresh)(sme, edata);
 				mutex_exit(&sme->sme_mtx);
