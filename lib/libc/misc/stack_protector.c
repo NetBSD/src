@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.1 2007/11/13 15:21:20 ad Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.2 2008/06/03 19:22:37 ad Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.1 2007/11/13 15:21:20 ad Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.2 2008/06/03 19:22:37 ad Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: stack_protector.c,v 1.1 2007/11/13 15:21:20 ad Exp $");
 #include "extern.h"
 #else
 #define __sysctl sysctl
-extern int xprintf(const char *fmt, ...);
+void xprintf(const char *fmt, ...);
 #include <stdlib.h>
 #endif
 
