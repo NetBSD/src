@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.66 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.67 2008/06/03 01:11:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.66 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.67 2008/06/03 01:11:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,9 +115,6 @@ struct acpibat_softc {
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[ACPIBAT_NSENSORS];
-	kmutex_t sc_mtx;
-
-	struct timeval sc_lastupdate, sc_updateinterval;
 };
 
 static const char * const bat_hid[] = {
@@ -179,10 +176,11 @@ static ACPI_STATUS acpibat_get_info(device_t);
 static void acpibat_print_info(device_t);
 static void acpibat_print_stat(device_t);
 static void acpibat_update(void *);
+static void acpibat_update_info(void *);
+static void acpibat_update_stat(void *);
 
 static void acpibat_init_envsys(device_t);
 static void acpibat_notify_handler(ACPI_HANDLE, UINT32, void *);
-static void acpibat_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 /*
  * acpibat_match:
@@ -216,7 +214,6 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ACPI Battery (Control Method)\n");
 
 	sc->sc_node = aa->aa_node;
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 				      ACPI_ALL_NOTIFY,
@@ -300,7 +297,6 @@ acpibat_battery_present(device_t dv)
 
 	sta = (uint32_t)val;
 
-	mutex_enter(&sc->sc_mtx);
 	sc->sc_available = ABAT_ALV_PRESENCE;
 	if (sta & ACPIBAT_STA_PRESENT) {
 		ABAT_SET(sc, ABAT_F_PRESENT);
@@ -308,8 +304,6 @@ acpibat_battery_present(device_t dv)
 		sc->sc_sensor[ACPIBAT_PRESENT].value_cur = 1;
 	} else
 		sc->sc_sensor[ACPIBAT_PRESENT].value_cur = 0;
-
-	mutex_exit(&sc->sc_mtx);
 
 	return (sta & ACPIBAT_STA_PRESENT) ? 1 : 0;
 }
@@ -348,7 +342,6 @@ acpibat_get_info(device_t dv)
 	}
 	p2 = p1->Package.Elements;
 
-	mutex_enter(&sc->sc_mtx);
 	if ((p2[0].Integer.Value & ACPIBAT_PWRUNIT_MA) != 0) {
 		ABAT_SET(sc, ABAT_F_PWRUNIT_MA);
 		capunit = ENVSYS_SAMPHOUR;
@@ -387,8 +380,6 @@ acpibat_get_info(device_t dv)
 	sc->sc_sensor[ACPIBAT_LCAPACITY].flags |=
 	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX);
 	sc->sc_available = ABAT_ALV_INFO;
-
-	mutex_exit(&sc->sc_mtx);
 
 	aprint_verbose_dev(dv, "battery info: %s, %s, %s",
 	    p2[12].String.Pointer, p2[11].String.Pointer, p2[9].String.Pointer);
@@ -439,8 +430,6 @@ acpibat_get_status(device_t dv)
 		goto out;
 	}
 	p2 = p1->Package.Elements;
-
-	mutex_enter(&sc->sc_mtx);
 
 	status = p2[0].Integer.Value;
 	battrate = p2[1].Integer.Value;
@@ -493,8 +482,6 @@ acpibat_get_status(device_t dv)
 		sc->sc_sensor[ACPIBAT_CHARGE_STATE].value_cur =
 		    ENVSYS_BATTERY_CAPACITY_CRITICAL;
 	}
-
-	mutex_exit(&sc->sc_mtx);
 
 	rv = AE_OK;
 
@@ -619,6 +606,26 @@ acpibat_update(void *arg)
 		acpibat_print_stat(dv);
 }
 
+static void
+acpibat_update_info(void *arg)
+{
+	device_t dev = arg;
+	struct acpibat_softc *sc = device_private(dev);
+
+	acpibat_clear_presence(sc);
+	acpibat_update(arg);
+}
+
+static void
+acpibat_update_stat(void *arg)
+{
+	device_t dev = arg;
+	struct acpibat_softc *sc = device_private(dev);
+
+	acpibat_clear_stat(sc);
+	acpibat_update(arg);
+}
+
 /*
  * acpibat_notify_handler:
  *
@@ -628,7 +635,6 @@ static void
 acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 {
 	device_t dv = context;
-	struct acpibat_softc *sc = device_private(dv);
 	int rv;
 
 #ifdef ACPI_BAT_DEBUG
@@ -641,10 +647,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 
 	case ACPI_NOTIFY_DeviceCheck:
 	case ACPI_NOTIFY_BatteryInformationChanged:
-		mutex_enter(&sc->sc_mtx);
-		acpibat_clear_presence(sc);
-		mutex_exit(&sc->sc_mtx);
-		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update, dv);
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_info, dv);
 		if (ACPI_FAILURE(rv))
 			aprint_error_dev(dv,
 			    "unable to queue status check: %s\n",
@@ -652,10 +655,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		break;
 
 	case ACPI_NOTIFY_BatteryStatusChanged:
-		mutex_enter(&sc->sc_mtx);
-		acpibat_clear_stat(sc);
-		mutex_exit(&sc->sc_mtx);
-		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update, dv);
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_stat, dv);
 		if (ACPI_FAILURE(rv))
 			aprint_error_dev(dv,
 			    "unable to queue status check: %s\n",
@@ -730,26 +730,14 @@ acpibat_init_envsys(device_t dv)
 	}
 
 	sc->sc_sme->sme_name = device_xname(dv);
-	sc->sc_sme->sme_cookie = dv;
-	sc->sc_sme->sme_refresh = acpibat_refresh;
+	sc->sc_sme->sme_refresh = NULL;
 	sc->sc_sme->sme_class = SME_CLASS_BATTERY;
-	sc->sc_sme->sme_flags = SME_INIT_REFRESH;
+	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
 
-	sc->sc_updateinterval.tv_sec = 1;
-	sc->sc_updateinterval.tv_usec = 0;
+	acpibat_update(dv);
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error_dev(dv, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 	}
-}
-
-static void
-acpibat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
-{
-	device_t dv = sme->sme_cookie;
-	struct acpibat_softc *sc = device_private(dv);
-
-	if (ratecheck(&sc->sc_lastupdate, &sc->sc_updateinterval))
-		acpibat_update(dv);
 }
