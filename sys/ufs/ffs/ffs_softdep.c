@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.114 2008/05/31 21:39:13 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.115 2008/06/03 09:47:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.114 2008/05/31 21:39:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.115 2008/06/03 09:47:49 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1832,6 +1832,7 @@ setup_allocindir_phase2(bp, ip, aip)
 			VOP_BMAP(bp->b_vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
 		}
+		/* No need for ffs_getblk().  This buffer will be released. */
 		newindirdep->ir_savebp =
 		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, 0);
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
