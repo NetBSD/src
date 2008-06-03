@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.4.6.1 2008/06/03 20:47:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.4.6.1 2008/06/03 20:47:08 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 
 /* internal flags */
 #define	NEED_GROUPING		0x01	/* print digits grouped (default) */
@@ -79,6 +80,8 @@ __RCSID("$NetBSD: strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp $");
 	while (isdigit((unsigned char)*fmt)) {			\
 		VAR *= 10;					\
 		VAR += *fmt - '0';				\
+		if (VAR > 0x00ffffff)				\
+			goto e2big_error;			\
 		fmt++;						\
 	}							\
 } while (/* CONSTCOND */ 0)
@@ -195,11 +198,13 @@ strfmon(char * __restrict s, size_t maxsize, const char * __restrict format,
 
 		/* field Width */
 		if (isdigit((unsigned char)*fmt)) {
+			ptrdiff_t d = dst - s;
 			GET_NUMBER(width);
 			/* Do we have enough space to put number with
 			 * required width ?
 			 */
-			if (dst + width >= s + maxsize)
+
+			if (d + width >= maxsize)
 				goto e2big_error;
 		}
 

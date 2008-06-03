@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.33 2003/08/07 09:05:17 agc Exp $
+.\"	$NetBSD: mt.1,v 1.33.18.1 2008/06/03 20:46:55 skrll Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mt.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd March 9, 2008
 .Dt MT 1
 .Os
 .Sh NAME
@@ -105,27 +105,43 @@ Back space
 .Ar count
 records.
 .It Cm rewind
-Rewind the tape
-(Count is ignored).
+Rewind the tape.
+(The
+.Ar count
+is ignored.)
 .It Cm offline , rewoffl
-Rewind the tape and place the tape unit off-line
-(Count is ignored).
+Rewind the tape and place the tape unit off-line.
+Where supported, this ejects the tape.
+(The
+.Ar count
+is ignored.)
 .It Cm status
-Print status information about the tape unit
-(Count is ignored).
+Print status information about the tape unit.
+(The
+.Ar count
+is ignored.)
 .It Cm retension
-Retensions the tape
-(Not all tape drives support this feature; count is ignored).
+Retensions the tape.
+Not all tape drives support this feature.
+(The
+.Ar count
+is ignored.)
 .It Cm erase
 Erases the tape
-(Not all tape drives support this feature; count is ignored).
+Not all tape drives support this feature.
+(The
+.Ar count
+is ignored.)
 .It Cm eew
-Enable or disabled early warning EOM behaviour.
-.Ar Count
-is set to nonzero to enable, zero to disable.
+Enable or disable early warning EOM behaviour.
+Set
+.Ar count
+to nonzero to enable, zero to disable.
 .It Cm eom
-Forward space to the end of recorded media
-(Count is ignored).
+Forward space to the end of recorded media.
+(The
+.Ar count
+is ignored.)
 .It Cm blocksize , setblk
 Set the tape blocksize to
 .Ar count
@@ -143,24 +159,31 @@ See the
 .Sx DENSITY CODES
 section for a list of codes for commonly used media types.
 .It Cm rdspos
-Read the logical block position of the tape
-(Not all tape drives support this feature; count is ignored).
+Read the logical block position of the tape.
+Not all tape drives support this feature.
+(The
+.Ar count
+is ignored.)
 .It Cm rdhpos
-Read the hardware block position of the tape
-(Not all tape drives support this feature; count is ignored).
+Read the hardware block position of the tape.
+Not all tape drives support this feature.
+(The
+.Ar count
+is ignored.)
 .It Cm setspos
 Set the logical block position of the tape to
-.Ar count
-(not all tape drives support this feature).
+.Ar count.
+Not all tape drives support this feature.
 .It Cm sethpos
 Set the hardware block position of the tape to
-.Ar count
-(not all tape drives support this feature).
+.Ar count.
+Not all tape drives support this feature.
 .It Cm compress
 If
 .Ar count
 is zero, disable compression.
-Otherwise enable compression (not all tape drives support this feature).
+Otherwise enable compression.
+Not all tape drives support this feature.
 .El
 .Pp
 If a tape name is not specified, and the environment variable

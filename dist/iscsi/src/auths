@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/dist/iscsi/src/Attic/auths,v 1.1.1.1 2006/02/08 18:56:20 agc Exp $
+# $Header: /cvsroot/src/dist/iscsi/src/Attic/auths,v 1.1.1.1.6.1 2008/06/03 20:46:57 skrll Exp $
 # passwd file for iSCSI use
 
 nulltest:none:

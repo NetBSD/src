@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.486.2.2.2.3 2008/01/06 05:00:38 wrstuden Exp $
+#	$NetBSD: 3RDPARTY,v 1.486.2.2.2.4 2008/06/03 20:47:00 skrll Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -123,8 +123,8 @@ License:	See URL above.
 Notes:
 
 Package:	bzip2
-Version:	1.0.2
-Current Vers:	1.0.3
+Version:	1.0.5
+Current Vers:	1.0.5
 Maintainer:	Julian Seward <jseward@acm.org>
 Archive Site:	http://sources.redhat.com/bzip2/
 Home Page:	http://www.bzip.org/

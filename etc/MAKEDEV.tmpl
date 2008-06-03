@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.67.2.2.2.1 2007/06/04 01:54:11 wrstuden Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.67.2.2.2.2 2008/06/03 20:47:00 skrll Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -473,6 +473,7 @@ all)
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	makedev bthub
+	makedev drvctl
 	;;
 
 init)

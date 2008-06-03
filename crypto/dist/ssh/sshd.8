@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.37 2006/09/28 21:22:15 christos Exp $
+.\"	$NetBSD: sshd.8,v 1.37.4.1 2008/06/03 20:46:56 skrll Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -502,6 +502,9 @@ This might be used, e.g. in connection with the
 option.
 .It Cm no-pty
 Prevents tty allocation (a request to allocate a pty will fail).
+.It Cm no-user-rc
+Disables execution of
+.Pa ~/.ssh/rc .
 .It Cm no-X11-forwarding
 Forbids X11 forwarding when this key is used for authentication.
 Any X11 forward requests by the client will return an error.

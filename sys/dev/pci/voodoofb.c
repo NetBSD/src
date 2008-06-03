@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.5.20.1 2007/03/10 18:43:43 bouyer Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.5.20.1.2.1 2008/06/03 20:47:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.5.20.1 2007/03/10 18:43:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.5.20.1.2.1 2008/06/03 20:47:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.5.20.1 2007/03/10 18:43:43 bouyer Exp
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/callout.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -925,6 +926,18 @@ voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 		pa = bus_space_mmap(sc->sc_fbt, offset, 0, prot, 
 		    BUS_SPACE_MAP_LINEAR);	
 		return pa;
+	}
+
+	/*
+	 * restrict all other mappings to processes with superuser privileges
+	 * or the kernel itself
+	 */
+	if (curlwp != NULL) {
+		if (kauth_authorize_generic(kauth_cred_get(),
+		    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
+			return -1;
+		}
 	}
 
 	if ((offset >= sc->sc_fb) && (offset < (sc->sc_fb + sc->sc_fbsize))) {

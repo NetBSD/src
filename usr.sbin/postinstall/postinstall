@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.31.2.2.2.3 2008/01/06 05:01:16 wrstuden Exp $
+# $NetBSD: postinstall,v 1.31.2.2.2.4 2008/06/03 20:47:48 skrll Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -454,6 +454,11 @@ obsolete_libs()
 
 	(
 
+	if [ ! -e "${DEST_DIR}/${dir}" ]
+	then
+		return 0
+	fi
+
 	cd "${DEST_DIR}/${dir}" || err 2 "can't cd to ${DEST_DIR}/${dir}"
 	echo lib*.so.* \
 	| tr ' ' '\n' \
@@ -695,9 +700,10 @@ do_motd()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_motd  fix|check"
 
-	if grep 'http://www.NetBSD.org/Misc/send-pr.html' ${DEST_DIR}/etc/motd \
-	    >/dev/null 2>&1
-	then
+	if grep -i 'http://www.NetBSD.org/Misc/send-pr.html' ${DEST_DIR}/etc/motd \
+	    >/dev/null 2>&1 || \
+	    grep -i 'http://www.NetBSD.org/support/send-pr.html' ${DEST_DIR}/etc/motd \
+	    >/dev/null 2>&1; then
 		tmp1=$(mktemp /tmp/postinstall.motd.XXXXXXXX)
 		tmp2=$(mktemp /tmp/postinstall.motd.XXXXXXXX)
 		sed '1,2d' <${SRC_DIR}/etc/motd >${tmp1}
@@ -1088,12 +1094,12 @@ do_x11()
 	_etcx11=${DEST_DIR}/etc/X11
 	if [ ! -d "${_etcx11}" ]; then
 		msg "${_etcx11} is not a directory; skipping check"
-		return 1
+		return 0
 	fi
 	_libx11=${DEST_DIR}/usr/X11R6/lib/X11
 	if [ ! -d "${_libx11}" ]; then
 		msg "${_libx11} is not a directory; skipping check"
-		return 1
+		return 0
 	fi
 
 	_notfixed=""

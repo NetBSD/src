@@ -1,4 +1,4 @@
-/* $NetBSD: strtodnrp.c,v 1.1.1.1 2006/01/25 15:18:53 kleink Exp $ */
+/* $NetBSD: strtodnrp.c,v 1.1.1.1.6.1 2008/06/03 20:47:07 skrll Exp $ */
 
 /****************************************************************
 
@@ -53,6 +53,12 @@ strtod(CONST char *s, char **sp)
 	union { ULong L[2]; double d; } u;
 
 	k = strtodg(s, sp, &fpi, &exp, bits);
+	if (k == STRTOG_NoMemory) {
+		errno = ERANGE;
+		u.L[0] = Big0;
+		u.L[1] = Big1;
+		return u.d;
+	}
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
 	  case STRTOG_Zero:

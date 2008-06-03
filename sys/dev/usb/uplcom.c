@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.50.4.1 2007/09/03 07:04:44 wrstuden Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.50.4.2 2008/06/03 20:47:34 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.50.4.1 2007/09/03 07:04:44 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.50.4.2 2008/06/03 20:47:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,59 +154,82 @@ struct	ucom_methods uplcom_methods = {
 	NULL,
 };
 
-static const struct usb_devno uplcom_devs[] = {
+static const struct uplcom_type {
+	struct usb_devno uplcom_dev;
+	int32_t          release;
+	enum pl2303_type chiptype;
+} uplcom_devs[] = {
 	/* I/O DATA USB-RSAQ2 */
-	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ2 },
+	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ2 },
+		-1, UPLCOM_TYPE_0 },
 	/* I/O DATA USB-RSAQ3 */
-	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ3 },
+	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ3 },
+		-1, UPLCOM_TYPE_HX },
 	/* I/O DATA USB-RSAQ */
-	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
+	{ { USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
+		-1, UPLCOM_TYPE_0 },
 	/* I/O DATA USB-RSAQ5 */
-	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ5 },
+	{ { USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ5 },
+		-1, UPLCOM_TYPE_HX },
 	/* PLANEX USB-RS232 URS-03 */
-	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
+	{ { USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
+		-1, UPLCOM_TYPE_0 },
+	/* TrendNet TU-S9 */
+	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
+		0x400, UPLCOM_TYPE_HX },
+	/* ST Lab USB-SERIAL-4 */
+	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
+		0x300, UPLCOM_TYPE_HX },
 	/* IOGEAR/ATEN UC-232A */
-	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
+	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
+		-1, UPLCOM_TYPE_0 },
+	/* SMART Technologies USB to serial */
+	{ { USB_VENDOR_PROLIFIC2, USB_PRODUCT_PROLIFIC2_PL2303 },
+		-1, UPLCOM_TYPE_HX },
 	/* IOGEAR/ATENTRIPPLITE */
-	{ USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
+	{ { USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
+		-1, UPLCOM_TYPE_0 },
 	/* ELECOM UC-SGT */
-	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
+	{ { USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
+		-1, UPLCOM_TYPE_0 },
 	/* ELECOM UC-SGT0 */
-	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
+	{ { USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
+		-1, UPLCOM_TYPE_0 },
 	/* Panasonic 50" Touch Panel */
-	{ USB_VENDOR_PANASONIC, USB_PRODUCT_PANASONIC_TYTP50P6S },
+	{ { USB_VENDOR_PANASONIC, USB_PRODUCT_PANASONIC_TYTP50P6S },
+		-1, UPLCOM_TYPE_0 },
 	/* RATOC REX-USB60 */
-	{ USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60 },
+	{ { USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60 },
+		-1, UPLCOM_TYPE_0 },
 	/* TDK USB-PHS Adapter UHA6400 */
-	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UHA6400 },
+	{ { USB_VENDOR_TDK, USB_PRODUCT_TDK_UHA6400 },
+		-1, UPLCOM_TYPE_0 },
 	/* TDK USB-PDC Adapter UPA9664 */
-	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UPA9664 },
+	{ { USB_VENDOR_TDK, USB_PRODUCT_TDK_UPA9664 },
+		-1, UPLCOM_TYPE_0 },
 	/* Sony Ericsson USB Cable */
-	{ USB_VENDOR_SUSTEEN, USB_PRODUCT_SUSTEEN_DCU10 },
+	{ { USB_VENDOR_SUSTEEN, USB_PRODUCT_SUSTEEN_DCU10 },
+		-1, UPLCOM_TYPE_0 },
 	/* SOURCENEXT KeikaiDenwa 8 */
-	{ USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8 },
+	{ { USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8 },
+		-1, UPLCOM_TYPE_0 },
 	/* SOURCENEXT KeikaiDenwa 8 with charger */
-	{ USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8_CHG },
+	{ { USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8_CHG },
+		-1, UPLCOM_TYPE_0 },
 	/* HAL Corporation Crossam2+USB */
-	{ USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
+	{ { USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
+		-1, UPLCOM_TYPE_0 },
 	/* Sitecom USB to serial cable */
-	{ USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_CN104 },
+	{ { USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_CN104 },
+		-1, UPLCOM_TYPE_0 },
 	/* Pharos USB GPS - Microsoft version */
-	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X },
+	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X },
+		-1, UPLCOM_TYPE_0 },
+	/* Willcom WS002IN (DD) */
+	{ { USB_VENDOR_NETINDEX, USB_PRODUCT_NETINDEX_WS002IN },
+		-1, UPLCOM_TYPE_HX },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
-
-static const struct {
-	uint16_t		vendor;
-	uint16_t		product;
-	enum pl2303_type	chiptype;
-} uplcom_devs_ext[] = {
-	/* I/O DATA USB-RSAQ3 */
-	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ3, UPLCOM_TYPE_HX },
-	/* I/O DATA USB-RSAQ5 */
-	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ5, UPLCOM_TYPE_HX },
-	{0, 0, 0}
-};
 
 
 USB_DECLARE_DRIVER(uplcom);
@@ -269,26 +292,33 @@ USB_ATTACH(uplcom)
 	}
 
 	/* determine chip type */
-	for (i = 0; uplcom_devs_ext[i].vendor != 0; i++) {
-		if (uplcom_devs_ext[i].vendor == uaa->vendor &&
-		    uplcom_devs_ext[i].product == uaa->product) {
-			sc->sc_type = uplcom_devs_ext[i].chiptype;
-			goto chiptype_determined;
+	for (i = 0; uplcom_devs[i].uplcom_dev.ud_vendor != 0; i++) {
+		if (uplcom_devs[i].uplcom_dev.ud_vendor == uaa->vendor &&
+		    uplcom_devs[i].uplcom_dev.ud_product == uaa->product &&
+		    (uplcom_devs[i].release == uaa->release ||
+		    uplcom_devs[i].release == -1)) {
+			sc->sc_type = uplcom_devs[i].chiptype;
+			break;
 		}
 	}
-	/*
-	 * NOTE: The Linux driver distinguishes between UPLCOM_TYPE_0
-	 * and UPLCOM_TYPE_1 type chips by testing other fields in the
-	 * device descriptor.  As far as the uplcom driver is
-	 * concerned, both types are identical.
-	 * The bcdDevice field should also distinguish these versions,
-	 * but who knows.
-	 */
-	if (UGETW(ddesc->bcdDevice) == 0x0300)
-		sc->sc_type = UPLCOM_TYPE_HX;
-	else
-		sc->sc_type = UPLCOM_TYPE_0;
-chiptype_determined:
+
+#ifdef USB_DEBUG
+	/* print the chip type */
+	if (sc->sc_type == UPLCOM_TYPE_HX) {
+		DPRINTF(("uplcom_attach: chiptype HX\n"));
+	} else {
+		DPRINTF(("uplcom_attach: chiptype 0\n"));
+	}
+#endif
+
+	/* Move the device into the configured state. */
+	err = usbd_set_config_index(dev, UPLCOM_CONFIG_INDEX, 1);
+	if (err) {
+		printf("%s: failed to set configuration: %s\n",
+			devname, usbd_errstr(err));
+		sc->sc_dying = 1;
+		USB_ATTACH_ERROR_RETURN;
+	}
 
 	/* get the config descriptor */
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
@@ -494,6 +524,54 @@ uplcom_reset(struct uplcom_softc *sc)
         err = usbd_do_request(sc->sc_udev, &req, 0);
 	if (err)
 		return (EIO);
+
+	return (0);
+}
+
+struct pl2303x_init {
+	uint8_t		req_type;
+	uint8_t		request;
+	uint16_t	value;
+	uint16_t	index;
+	uint16_t	length;
+};
+
+static const struct pl2303x_init pl2303x[] = {
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0, 0 },
+	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST, 0x0404,    0, 0 },
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0, 0 },
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8383,    0, 0 },
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0, 0 },
+	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST, 0x0404,    1, 0 },
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0, 0 },
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8383,    0, 0 },
+	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST,      0,    1, 0 },
+	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST,      1,    0, 0 },
+	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST,      2, 0x44, 0 }
+};
+#define N_PL2302X_INIT  (sizeof(pl2303x)/sizeof(pl2303x[0]))
+
+static usbd_status
+uplcom_pl2303x_init(struct uplcom_softc *sc)
+{
+	usb_device_request_t req;
+	usbd_status err;
+	int i;
+
+	for (i = 0; i < N_PL2302X_INIT; i++) {
+		req.bmRequestType = pl2303x[i].req_type;
+		req.bRequest = pl2303x[i].request;
+		USETW(req.wValue, pl2303x[i].value);
+		USETW(req.wIndex, pl2303x[i].index);
+		USETW(req.wLength, pl2303x[i].length);
+
+		err = usbd_do_request(sc->sc_udev, &req, 0);
+		if (err) {
+			printf("%s: uplcom_pl2303x_init failed: %s\n",
+				USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			return (EIO);
+		}
+	}
 
 	return (0);
 }
@@ -752,6 +830,9 @@ uplcom_open(void *addr, int portno)
 					return (EIO);
 		}
 	}
+
+	if (sc->sc_type == UPLCOM_TYPE_HX)
+		return (uplcom_pl2303x_init(sc));
 
 	return (0);
 }

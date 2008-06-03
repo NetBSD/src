@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_machdep.c,v 1.9 2006/05/15 20:16:31 dogcow Exp $      */
+/*      $NetBSD: pci_machdep.c,v 1.9.16.1 2008/06/03 20:47:18 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9.16.1 2008/06/03 20:47:18 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

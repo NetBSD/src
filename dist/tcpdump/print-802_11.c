@@ -1,4 +1,4 @@
-/*	$NetBSD: print-802_11.c,v 1.11 2006/08/06 17:52:17 dyoung Exp $	*/
+/*	$NetBSD: print-802_11.c,v 1.11.6.1 2008/06/03 20:46:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -28,7 +28,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-802_11.c,v 1.22.2.6 2003/12/10 09:52:33 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-802_11.c,v 1.11 2006/08/06 17:52:17 dyoung Exp $");
+__RCSID("$NetBSD: print-802_11.c,v 1.11.6.1 2008/06/03 20:46:57 skrll Exp $");
 #endif
 #endif
 
@@ -213,6 +213,8 @@ parse_elements(struct mgmt_body_t *pbody, const u_char *p, int offset)
 
 			if (pbody->tim.length <= 3)
 				break;
+			if (pbody->tim.length - 3 > sizeof pbody->tim.bitmap)
+				return 0;
 			if (!TTEST2(*(p + offset), pbody->tim.length - 3))
 				return 0;
 			memcpy(pbody->tim.bitmap, p + (pbody->tim.length - 3),
