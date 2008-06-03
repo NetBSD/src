@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.348 2008/06/02 22:56:09 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.349 2008/06/03 14:54:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.348 2008/06/02 22:56:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.349 2008/06/03 14:54:12 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -710,6 +710,36 @@ getdevvp(dev_t dev, vnode_t **vpp, enum vtype type)
 	spec_node_init(vp, dev);
 	*vpp = vp;
 	return (0);
+}
+
+/*
+ * Try to gain a reference to a vnode, without acquiring its interlock.
+ * The caller must hold a lock that will prevent the vnode from being
+ * recycled or freed.
+ */
+bool
+vtryget(vnode_t *vp)
+{
+	u_int use, next;
+
+	/*
+	 * If the vnode is being freed, don't make life any harder
+	 * for vclean() by adding another reference without waiting.
+	 * This is not strictly necessary, but we'll do it anyway.
+	 */
+	if (__predict_false((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0)) {
+		return false;
+	}
+	for (use = vp->v_usecount;; use = next) {
+		if (use == 0) { 
+			/* Need interlock held if first reference. */
+			return false;
+		}
+		next = atomic_cas_uint(&vp->v_usecount, use, use + 1);
+		if (__predict_true(next == use)) {
+			return true;
+		}
+	}
 }
 
 /*
