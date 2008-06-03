@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.100 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.101 2008/06/03 11:51:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.100 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.101 2008/06/03 11:51:01 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -588,6 +588,14 @@ uao_init(void)
 void
 uao_reference(struct uvm_object *uobj)
 {
+
+	/*
+ 	 * kernel_object already has plenty of references, leave it alone.
+ 	 */
+
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
+		return;
+
 	mutex_enter(&uobj->vmobjlock);
 	uao_reference_locked(uobj);
 	mutex_exit(&uobj->vmobjlock);
@@ -629,6 +637,14 @@ uao_reference_locked(struct uvm_object *uobj)
 void
 uao_detach(struct uvm_object *uobj)
 {
+
+	/*
+ 	 * detaching from kernel_object is a noop.
+ 	 */
+
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
+		return;;
+
 	mutex_enter(&uobj->vmobjlock);
 	uao_detach_locked(uobj);
 }
