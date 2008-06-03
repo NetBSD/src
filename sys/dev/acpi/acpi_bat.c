@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.68 2008/06/03 12:16:34 jmcneill Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.69 2008/06/03 15:02:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.68 2008/06/03 12:16:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.69 2008/06/03 15:02:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,10 @@ struct acpibat_softc {
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[ACPIBAT_NSENSORS];
+	struct timeval sc_lastupdate;
+
+	kmutex_t sc_mutex;
+	kcondvar_t sc_condvar;
 };
 
 static const char * const bat_hid[] = {
@@ -182,6 +186,7 @@ static void acpibat_update_stat(void *);
 
 static void acpibat_init_envsys(device_t);
 static void acpibat_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void acpibat_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 /*
  * acpibat_match:
@@ -232,6 +237,9 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ACPI Battery (Control Method)\n");
 
 	sc->sc_node = aa->aa_node;
+
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_condvar, device_xname(self));
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 				      ACPI_ALL_NOTIFY,
@@ -630,8 +638,10 @@ acpibat_update_info(void *arg)
 	device_t dev = arg;
 	struct acpibat_softc *sc = device_private(dev);
 
+	mutex_enter(&sc->sc_mutex);
 	acpibat_clear_presence(sc);
 	acpibat_update(arg);
+	mutex_exit(&sc->sc_mutex);
 }
 
 static void
@@ -640,8 +650,12 @@ acpibat_update_stat(void *arg)
 	device_t dev = arg;
 	struct acpibat_softc *sc = device_private(dev);
 
+	mutex_enter(&sc->sc_mutex);
 	acpibat_clear_stat(sc);
 	acpibat_update(arg);
+	microtime(&sc->sc_lastupdate);
+	cv_broadcast(&sc->sc_condvar);
+	mutex_exit(&sc->sc_mutex);
 }
 
 /*
@@ -662,7 +676,6 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 	switch (notify) {
 	case ACPI_NOTIFY_BusCheck:
 		break;
-
 	case ACPI_NOTIFY_DeviceCheck:
 	case ACPI_NOTIFY_BatteryInformationChanged:
 		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_info, dv);
@@ -748,14 +761,40 @@ acpibat_init_envsys(device_t dv)
 	}
 
 	sc->sc_sme->sme_name = device_xname(dv);
-	sc->sc_sme->sme_refresh = NULL;
+	sc->sc_sme->sme_cookie = dv;
+	sc->sc_sme->sme_refresh = acpibat_refresh;
 	sc->sc_sme->sme_class = SME_CLASS_BATTERY;
-	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
+	sc->sc_sme->sme_flags = SME_POLL_ONLY;
 
 	acpibat_update(dv);
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error_dev(dv, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
+	}
+}
+
+static void
+acpibat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	device_t dv = sme->sme_cookie;
+	struct acpibat_softc *sc = device_private(dv);
+	ACPI_STATUS rv;
+	struct timeval tv, tmp;
+
+	if (ABAT_ISSET(sc, ABAT_F_PRESENT)) {
+		tmp.tv_sec = 5;
+		tmp.tv_usec = 0;
+		microtime(&tv);
+		timersub(&tv, &tmp, &tv);
+		if (timercmp(&tv, &sc->sc_lastupdate, <))
+			return;
+
+		if (!mutex_tryenter(&sc->sc_mutex))
+			return;
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_stat, dv);
+		if (!ACPI_FAILURE(rv))
+			cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, hz);
+		mutex_exit(&sc->sc_mutex);
 	}
 }
