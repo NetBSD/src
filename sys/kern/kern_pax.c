@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.20 2007/12/28 17:14:51 elad Exp $ */
+/*	$NetBSD: kern_pax.c,v 1.21 2008/06/03 22:14:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.20 2007/12/28 17:14:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.21 2008/06/03 22:14:24 ad Exp $");
 
 #include "opt_pax.h"
 
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.20 2007/12/28 17:14:51 elad Exp $");
 int pax_aslr_enabled = 1;
 int pax_aslr_global = PAX_ASLR;
 
-specificdata_key_t pax_aslr_key;
-
 #ifndef PAX_ASLR_DELTA_MMAP_LSB
 #define PAX_ASLR_DELTA_MMAP_LSB		PGSHIFT
 #endif
@@ -72,8 +70,6 @@ specificdata_key_t pax_aslr_key;
 #ifdef PAX_MPROTECT
 static int pax_mprotect_enabled = 1;
 static int pax_mprotect_global = PAX_MPROTECT;
-
-specificdata_key_t pax_mprotect_key;
 #endif /* PAX_MPROTECT */
 
 #ifdef PAX_SEGVGUARD
@@ -96,7 +92,6 @@ static int pax_segvguard_suspension = PAX_SEGVGUARD_SUSPENSION;
 static int pax_segvguard_maxcrashes = PAX_SEGVGUARD_MAXCRASHES;
 
 static fileassoc_t segvguard_id;
-specificdata_key_t pax_segvguard_key;
 
 struct pax_segvguard_uid_entry {
 	uid_t sue_uid;
@@ -260,73 +255,27 @@ pax_init(void)
 	int error;
 #endif /* PAX_SEGVGUARD */
 
-#ifdef PAX_ASLR
-	proc_specific_key_create(&pax_aslr_key, NULL);
-#endif /* PAX_ASLR */
-
-#ifdef PAX_MPROTECT
-	proc_specific_key_create(&pax_mprotect_key, NULL);
-#endif /* PAX_MPROTECT */
-
 #ifdef PAX_SEGVGUARD
 	error = fileassoc_register("segvguard", pax_segvguard_cb,
 	    &segvguard_id);
 	if (error) {
 		panic("pax_init: segvguard_id: error=%d\n", error);
 	}
-	proc_specific_key_create(&pax_segvguard_key, NULL);
 #endif /* PAX_SEGVGUARD */
-}
-
-void
-pax_adjust(struct lwp *l, uint32_t f)
-{
-#ifdef PAX_MPROTECT
-	if (pax_mprotect_enabled) {
-		if (f & ELF_NOTE_PAX_MPROTECT)
-			proc_setspecific(l->l_proc, pax_mprotect_key,
-			    PAX_MPROTECT_EXPLICIT_ENABLE);
-		if (f & ELF_NOTE_PAX_NOMPROTECT)
-			proc_setspecific(l->l_proc, pax_mprotect_key,
-			    PAX_MPROTECT_EXPLICIT_DISABLE);
-	}
-#endif /* PAX_MPROTECT */
-
-#ifdef PAX_SEGVGUARD
-	if (pax_segvguard_enabled) {
-		if (f & ELF_NOTE_PAX_GUARD)
-			proc_setspecific(l->l_proc, pax_segvguard_key,
-			    PAX_SEGVGUARD_EXPLICIT_ENABLE);
-		if (f & ELF_NOTE_PAX_NOGUARD)
-			proc_setspecific(l->l_proc, pax_segvguard_key,
-			    PAX_SEGVGUARD_EXPLICIT_DISABLE);
-	}
-#endif /* PAX_SEGVGUARD */
-
-#ifdef PAX_ASLR
-	if (pax_aslr_enabled) {
-		if (f & ELF_NOTE_PAX_ASLR)
-			proc_setspecific(l->l_proc, pax_aslr_key,
-			    PAX_ASLR_EXPLICIT_ENABLE);
-		if (f & ELF_NOTE_PAX_NOASLR)
-			proc_setspecific(l->l_proc, pax_aslr_key,
-			    PAX_ASLR_EXPLICIT_DISABLE);
-	}
-#endif /* PAX_ASLR */
 }
 
 #ifdef PAX_MPROTECT
 void
 pax_mprotect(struct lwp *l, vm_prot_t *prot, vm_prot_t *maxprot)
 {
-	void *t;
+	uint32_t f;
 
 	if (!pax_mprotect_enabled)
 		return;
 
-	t = proc_getspecific(l->l_proc, pax_mprotect_key);
-	if ((pax_mprotect_global && t == PAX_MPROTECT_EXPLICIT_DISABLE) ||
-	    (!pax_mprotect_global && t != PAX_MPROTECT_EXPLICIT_ENABLE))
+	f = l->l_proc->p_pax;
+	if ((pax_mprotect_global && (f & ELF_NOTE_PAX_NOMPROTECT)) ||
+	    (!pax_mprotect_global && (f & ELF_NOTE_PAX_MPROTECT)))
 		return;
 
 	if ((*prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) != VM_PROT_EXECUTE) {
@@ -343,13 +292,14 @@ pax_mprotect(struct lwp *l, vm_prot_t *prot, vm_prot_t *maxprot)
 bool
 pax_aslr_active(struct lwp *l)
 {
-	void *t;
+	uint32_t f;
+
 	if (!pax_aslr_enabled)
 		return false;
 
-	t = proc_getspecific(l->l_proc, pax_aslr_key);
-	if ((pax_aslr_global && t == PAX_ASLR_EXPLICIT_DISABLE) ||
-	    (!pax_aslr_global && t != PAX_ASLR_EXPLICIT_ENABLE))
+	f = l->l_proc->p_pax;
+	if ((pax_aslr_global && (f & ELF_NOTE_PAX_NOASLR)) ||
+	    (!pax_aslr_global && (f & ELF_NOTE_PAX_ASLR)))
 		return false;
 	return true;
 }
@@ -437,15 +387,15 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	struct pax_segvguard_uid_entry *up;
 	struct timeval tv;
 	uid_t uid;
-	void *t;
+	uint32_t f;
 	bool have_uid;
 
 	if (!pax_segvguard_enabled)
 		return (0);
 
-	t = proc_getspecific(l->l_proc, pax_segvguard_key);
-	if ((pax_segvguard_global && t == PAX_SEGVGUARD_EXPLICIT_DISABLE) ||
-	    (!pax_segvguard_global && t != PAX_SEGVGUARD_EXPLICIT_ENABLE))
+	f = l->l_proc->p_pax;
+	if ((pax_segvguard_global && (f & ELF_NOTE_PAX_NOGUARD)) ||
+	    (!pax_segvguard_global && (f & ELF_NOTE_PAX_GUARD)))
 		return (0);
 
 	if (vp == NULL)
