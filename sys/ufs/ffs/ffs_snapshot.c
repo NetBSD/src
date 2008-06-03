@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.68 2008/05/29 10:00:50 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.69 2008/06/03 09:47:49 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.68 2008/05/29 10:00:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.69 2008/06/03 09:47:49 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -926,8 +926,10 @@ indiracct_ufs1(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	 * We have to expand bread here since it will deadlock looking
 	 * up the block number for any blocks that are not in the cache.
 	 */
-	bp = getblk(cancelvp, lbn, fs->fs_bsize, 0, 0);
-	bp->b_blkno = fsbtodb(fs, blkno);
+	error = ffs_getblk(cancelvp, lbn, fsbtodb(fs, blkno), fs->fs_bsize,
+	    false, &bp);
+	if (error)
+		return error;
 	if ((bp->b_oflags & (BO_DONE | BO_DELWRI)) == 0 &&
 	    (error = readfsblk(bp->b_vp, bp->b_data, fragstoblks(fs, blkno)))) {
 		brelse(bp, 0);
@@ -1192,8 +1194,10 @@ indiracct_ufs2(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	 * We have to expand bread here since it will deadlock looking
 	 * up the block number for any blocks that are not in the cache.
 	 */
-	bp = getblk(cancelvp, lbn, fs->fs_bsize, 0, 0);
-	bp->b_blkno = fsbtodb(fs, blkno);
+	error = ffs_getblk(cancelvp, lbn, fsbtodb(fs, blkno), fs->fs_bsize,
+	    false, &bp);
+	if (error)
+		return error;
 	if ((bp->b_oflags & (BO_DONE | BO_DELWRI)) == 0 &&
 	    (error = readfsblk(bp->b_vp, bp->b_data, fragstoblks(fs, blkno)))) {
 		brelse(bp, 0);
