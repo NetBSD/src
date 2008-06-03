@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.205 2008/05/19 18:00:31 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.206 2008/06/03 21:02:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.205 2008/05/19 18:00:31 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.206 2008/06/03 21:02:49 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ static const struct afswtch afs[] = {
 	   .af_aifaddr = SIOCAIFADDR, .af_gifaddr = SIOCGIFADDR,
 	   .af_ridreq = &at_addreq, .af_addreq = &at_addreq}
 	, {.af_name = "iso", .af_af = AF_ISO, .af_status = iso_status,
-	   .af_getaddr = iso_getaddr, NULL, .af_difaddr = SIOCDIFADDR_ISO,
+	   .af_getaddr = iso_getaddr, .af_difaddr = SIOCDIFADDR_ISO,
 	   .af_aifaddr = SIOCAIFADDR_ISO, .af_gifaddr = SIOCGIFADDR_ISO,
 	   .af_ridreq = &iso_ridreq, .af_addreq = &iso_addreq}
 #endif	/* INET_ONLY */
