@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.240 2008/06/03 02:16:18 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.241 2008/06/03 06:21:17 bjs Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.240 2008/06/03 02:16:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.241 2008/06/03 06:21:17 bjs Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1284,7 +1284,6 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 	rp->stamp_last = 0;
 	rp->fstamp = 0;
 	rp->drops = 0;
-	rp->pause = false;
 	rp->copying = false;
 	rp->needfill = false;
 	rp->mmapped = false;
@@ -1702,7 +1701,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
 		while ((used = audio_stream_get_used(sc->sc_rustream)) <= 0) {
-			if (!sc->sc_rbus) {
+			if (!sc->sc_rbus && !sc->sc_rr.pause) {
 				error = audiostartr(sc);
 				if (error) {
 					splx(s);
@@ -1759,11 +1758,13 @@ audio_clear(struct audio_softc *sc)
 		audio_wakeup(&sc->sc_rchan);
 		sc->hw_if->halt_input(sc->hw_hdl);
 		sc->sc_rbus = false;
+		sc->sc_rr.pause = false;
 	}
 	if (sc->sc_pbus) {
 		audio_wakeup(&sc->sc_wchan);
 		sc->hw_if->halt_output(sc->hw_hdl);
 		sc->sc_pbus = false;
+		sc->sc_pr.pause = false;
 	}
 	splx(s);
 }
@@ -2313,7 +2314,8 @@ audio_poll(struct audio_softc *sc, int events, struct lwp *l)
 		 * mark.
 		 */
 		if ((!sc->sc_full_duplex && (sc->sc_mode & AUMODE_RECORD)) ||
-		    used <= sc->sc_pr.usedlow)
+		    (!(sc->sc_mode & AUMODE_PLAY_ALL) && sc->sc_playdrop > 0) ||
+		    (used <= sc->sc_pr.usedlow))
 			revents |= events & (POLLOUT | POLLWRNORM);
 	}
 
@@ -2468,13 +2470,13 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 					   cb->s.bufsize);
 			s = splaudio();
 			sc->sc_pustream = &cb->s;
-			if (!sc->sc_pbus)
+			if (!sc->sc_pbus && !sc->sc_pr.pause)
 				(void)audiostartp(sc);
 			splx(s);
 		} else {
 			s = splaudio();
 			sc->sc_rustream = &cb->s;
-			if (!sc->sc_rbus)
+			if (!sc->sc_rbus && !sc->sc_rr.pause)
 				(void)audiostartr(sc);
 			splx(s);
 		}
@@ -2960,10 +2962,12 @@ audio_set_defaults(struct audio_softc *sc, u_int mode)
 	ai.record.encoding    = sc->sc_rparams.encoding;
 	ai.record.channels    = sc->sc_rparams.channels;
 	ai.record.precision   = sc->sc_rparams.precision;
+	ai.record.pause	      = false;
 	ai.play.sample_rate   = sc->sc_pparams.sample_rate;
 	ai.play.encoding      = sc->sc_pparams.encoding;
 	ai.play.channels      = sc->sc_pparams.channels;
 	ai.play.precision     = sc->sc_pparams.precision;
+	ai.play.pause         = false;
 	ai.mode		      = mode;
 
 	return audiosetinfo(sc, &ai);
@@ -4050,9 +4054,9 @@ audio_resume(device_t dv PMF_FN_ARGS)
 	if (sc->sc_lastinfovalid)
 		audiosetinfo(sc, &sc->sc_lastinfo);
 	audio_mixer_restore(sc);
-	if (sc->sc_pbus == true)
+	if ((sc->sc_pbus == true) && !sc->sc_pr.pause)
 		audiostartp(sc);
-	if (sc->sc_rbus == true)
+	if ((sc->sc_rbus == true) && !sc->sc_rr.pause)
 		audiostartr(sc);
 	splx(s);
 
