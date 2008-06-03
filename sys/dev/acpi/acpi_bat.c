@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.67 2008/06/03 01:11:18 jmcneill Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.68 2008/06/03 12:16:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.67 2008/06/03 01:11:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.68 2008/06/03 12:16:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,6 +163,7 @@ static const char * const bat_hid[] = {
 
 static int	acpibat_match(device_t, struct cfdata *, void *);
 static void	acpibat_attach(device_t, struct device *, void *);
+static bool	acpibat_resume(device_t PMF_FN_PROTO);
 
 CFATTACH_DECL_NEW(acpibat, sizeof(struct acpibat_softc),
     acpibat_match, acpibat_attach, NULL, NULL);
@@ -198,6 +199,23 @@ acpibat_match(device_t parent, struct cfdata *match, void *aux)
 	return acpi_match_hid(aa->aa_node->ad_devinfo, bat_hid);
 }
 
+static bool
+acpibat_resume(device_t dv PMF_FN_ARGS)
+{
+	ACPI_STATUS rv;
+
+	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_stat, dv);
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(dv, "unable to queue status check: %s\n",
+		    AcpiFormatException(rv));
+	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_info, dv);
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(dv, "unable to queue info check: %s\n",
+		    AcpiFormatException(rv));
+
+	return true;
+}
+
 /*
  * acpibat_attach:
  *
@@ -229,7 +247,7 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	ABAT_SET(sc, ABAT_F_VERBOSE);
 #endif
 
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, acpibat_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	acpibat_init_envsys(self);
@@ -650,7 +668,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_info, dv);
 		if (ACPI_FAILURE(rv))
 			aprint_error_dev(dv,
-			    "unable to queue status check: %s\n",
+			    "unable to queue info check: %s\n",
 			    AcpiFormatException(rv));
 		break;
 
