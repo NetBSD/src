@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.3.40.1 2007/09/03 07:03:16 wrstuden Exp $	*/
+/*	$NetBSD: cons.c,v 1.3.40.2 2008/06/03 20:47:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -151,7 +151,7 @@ cnscan(void)
 
 	if (cn_tab)
 		return (*cn_tab->cn_scan)(cn_tab->cn_dev);
-	return 0;
+	return -1;
 }
 
 #ifdef CONS_FB

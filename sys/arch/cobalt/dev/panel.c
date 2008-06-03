@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.10 2006/04/06 11:50:19 tsutsui Exp $ */
+/* $NetBSD: panel.c,v 1.10.14.1 2008/06/03 20:47:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.10 2006/04/06 11:50:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.10.14.1 2008/06/03 20:47:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.10 2006/04/06 11:50:19 tsutsui Exp $");
 #define PANEL_POLLRATE	(hz / 10)
 #define PANEL_REGION	0x20
 #define DATA_OFFSET	0x10
+#define PANEL_COLS	16
+#define PANEL_VCOLS	40
+#define PANEL_ROWS	2
 
 struct panel_softc {
 	struct device sc_dev;
@@ -66,8 +69,22 @@ struct panel_softc {
 	struct callout sc_callout;
 };
 
+struct lcd_message {
+	const char firstcol[PANEL_VCOLS];
+	const char secondcol[PANEL_VCOLS];
+};
+static const struct lcd_message startup_message = {
+	"NetBSD/cobalt   ",
+	"Starting up...  "
+};
+static const struct lcd_message shutdown_message = {
+	"NetBSD/cobalt   ",
+	"Shutting down..."
+};
+
 static int	panel_match(struct device *, struct cfdata *, void *);
 static void	panel_attach(struct device *, struct device *, void *);
+static void	panel_shutdown(void *);
 
 static void	panel_soft(void *);
 
@@ -103,7 +120,7 @@ panel_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct panel_softc *sc = (void *)self;
 	struct mainbus_attach_args *maa = aux;
-
+	struct hd44780_io io;
 	static struct lcdkp_xlate keys[] = {
 		{ 0xfa, 'h' },
 		{ 0xf6, 'k' },
@@ -123,8 +140,8 @@ panel_attach(struct device *parent, struct device *self, void *aux)
 	    1, &sc->sc_lcd.sc_iodr);
 
 	sc->sc_lcd.sc_dev_ok = 1;
-	sc->sc_lcd.sc_cols = 16;
-	sc->sc_lcd.sc_vcols = 40;
+	sc->sc_lcd.sc_cols = PANEL_COLS;
+	sc->sc_lcd.sc_vcols = PANEL_VCOLS;
 	sc->sc_lcd.sc_flags = HD_8BIT | HD_MULTILINE | HD_KEYPAD;
 
 	sc->sc_lcd.sc_writereg = panel_cbt_hdwritereg;
@@ -132,6 +149,15 @@ panel_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_lcd.sc_dev = self;
 
 	hd44780_attach_subr(&sc->sc_lcd);
+
+	/* Hello World */
+	io.dat = 0;
+	io.len = PANEL_VCOLS * PANEL_ROWS;
+	memcpy(io.buf, &startup_message, io.len);
+	hd44780_ddram_io(&sc->sc_lcd, sc->sc_lcd.sc_curchip, &io,
+	    HD_DDRAM_WRITE);
+
+	shutdownhook_establish(panel_shutdown, sc);
 
 	sc->sc_kp.sc_iot = maa->ma_iot;
 	sc->sc_kp.sc_ioh = MIPS_PHYS_TO_KSEG1(0x1d000000); /* XXX */
@@ -145,6 +171,20 @@ panel_attach(struct device *parent, struct device *self, void *aux)
 	callout_init(&sc->sc_callout);
 
 	printf("\n");
+}
+
+static void
+panel_shutdown(void *arg)
+{
+	struct panel_softc *sc = arg;
+	struct hd44780_io io;
+
+	/* Goodbye World */
+	io.dat = 0;
+	io.len = PANEL_VCOLS * PANEL_ROWS;
+	memcpy(io.buf, &shutdown_message, io.len);
+	hd44780_ddram_io(&sc->sc_lcd, sc->sc_lcd.sc_curchip, &io,
+	    HD_DDRAM_WRITE);
 }
 
 static uint8_t

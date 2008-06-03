@@ -1,4 +1,4 @@
-/* $NetBSD: strtodI.c,v 1.1.1.1 2006/01/25 15:18:51 kleink Exp $ */
+/* $NetBSD: strtodI.c,v 1.1.1.1.6.1 2008/06/03 20:47:07 skrll Exp $ */
 
 /****************************************************************
 
@@ -68,6 +68,8 @@ strtodI(CONST char *s, char **sp, double *dd)
 	U *u;
 
 	k = strtodg(s, sp, &fpi, &exp, bits);
+	if (k == STRTOG_NoMemory)
+		return k;
 	u = (U*)dd;
 	sign = k & STRTOG_Neg ? 0x80000000L : 0;
 	switch(k & STRTOG_Retmask) {

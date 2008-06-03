@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.21 2006/08/03 20:49:11 agc Exp $ */
+/* $NetBSD: disk.c,v 1.21.6.1 2008/06/03 20:46:57 skrll Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.

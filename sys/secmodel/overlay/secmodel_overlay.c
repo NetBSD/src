@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_overlay.c,v 1.3 2006/09/17 14:27:40 elad Exp $ */
+/* $NetBSD: secmodel_overlay.c,v 1.3.8.1 2008/06/03 20:47:42 skrll Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.3 2006/09/17 14:27:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.3.8.1 2008/06/03 20:47:42 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,12 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.3 2006/09/17 14:27:40 elad Ex
 #define	OVERLAY_ISCOPE_PROCESS	"org.netbsd.kauth.overlay.process"
 #define	OVERLAY_ISCOPE_NETWORK	"org.netbsd.kauth.overlay.network"
 #define	OVERLAY_ISCOPE_MACHDEP	"org.netbsd.kauth.overlay.machdep"
+#define	OVERLAY_ISCOPE_DEVICE	"org.netbsd.kauth.overlay.device"
 
 static kauth_scope_t secmodel_overlay_iscope_generic;
 static kauth_scope_t secmodel_overlay_iscope_system;
 static kauth_scope_t secmodel_overlay_iscope_process;
 static kauth_scope_t secmodel_overlay_iscope_network;
 static kauth_scope_t secmodel_overlay_iscope_machdep;
+static kauth_scope_t secmodel_overlay_iscope_device;
 
 extern int secmodel_bsd44_curtain;
 
@@ -81,6 +83,8 @@ secmodel_overlay_init(void)
 	    OVERLAY_ISCOPE_NETWORK, NULL, NULL);
 	secmodel_overlay_iscope_machdep = kauth_register_scope(
 	    OVERLAY_ISCOPE_MACHDEP, NULL, NULL);
+	secmodel_overlay_iscope_device = kauth_register_scope(
+	    OVERLAY_ISCOPE_DEVICE, NULL, NULL);
 
 	/*
 	 * Register fall-back listeners, from bsd44, to each internal
@@ -108,6 +112,11 @@ secmodel_overlay_init(void)
 	    secmodel_bsd44_suser_machdep_cb, NULL);
 	kauth_listen_scope(OVERLAY_ISCOPE_MACHDEP,
 	    secmodel_bsd44_securelevel_machdep_cb, NULL);
+
+	kauth_listen_scope(OVERLAY_ISCOPE_DEVICE,
+	    secmodel_bsd44_suser_device_cb, NULL);
+	kauth_listen_scope(OVERLAY_ISCOPE_DEVICE,
+	    secmodel_bsd44_securelevel_device_cb, NULL);
 
 	secmodel_bsd44_init();
 }
@@ -176,6 +185,8 @@ secmodel_start(void)
 	    secmodel_overlay_network_cb, NULL);
 	kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
 	    secmodel_overlay_machdep_cb, NULL);
+	kauth_listen_scope(KAUTH_SCOPE_DEVICE,
+	    secmodel_overlay_device_cb, NULL);
 }
 
 /*
@@ -302,6 +313,32 @@ secmodel_overlay_machdep_cb(kauth_cred_t cred, kauth_action_t action,
 	if (result == KAUTH_RESULT_DEFER) {
 		result = kauth_authorize_action(
 		    secmodel_overlay_iscope_machdep, cred, action,
+		    arg0, arg1, arg2, arg3);
+	}
+
+	return (result);
+}
+
+/*
+ * Overlay listener for the device scope.
+ */
+int
+secmodel_overlay_device_cb(kauth_cred_t cred, kauth_action_t action,
+    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	switch (action) {
+	default:
+		result = KAUTH_RESULT_DEFER;
+		break;
+	}
+
+	if (result == KAUTH_RESULT_DEFER) {
+		result = kauth_authorize_action(
+		    secmodel_overlay_iscope_device, cred, action,
 		    arg0, arg1, arg2, arg3);
 	}
 

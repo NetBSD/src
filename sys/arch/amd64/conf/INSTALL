@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.60.2.6.2.2 2008/01/06 05:00:51 wrstuden Exp $
+# $NetBSD: INSTALL,v 1.60.2.6.2.3 2008/06/03 20:47:13 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.60.2.6.2.2 $"
+#ident 		"INSTALL-$Revision: 1.60.2.6.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -318,6 +318,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 # RAID controllers and devices
 aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
+arcmsr*	at pci? dev ? function ? 	# Areca SATA RAID controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bzip2netbsd,v 1.1 2001/06/03 13:02:16 simonb Exp $
+#	$NetBSD: bzip2netbsd,v 1.1.20.1 2008/06/03 20:46:56 skrll Exp $
 #
 # Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -106,12 +106,6 @@ echo ".\\\"" >>/tmp/bzip2m$$
 cat $m >> /tmp/bzip2m$$
 mv /tmp/bzip2m$$ $m && echo added NetBSD RCS tag to $m
 	)
-done
-
-find $d -type f -name '*.texi' -print | while read t; do
-        sed "2 s/^/@c \$NetBSD\$\\
-/" < $t > /tmp/bzip4t$$
-	mv /tmp/bzip4t$$ $t && echo added NetBSD RCS tag to $t
 done
 
 echo done

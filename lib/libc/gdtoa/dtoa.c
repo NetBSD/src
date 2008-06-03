@@ -1,4 +1,4 @@
-/* $NetBSD: dtoa.c,v 1.3.4.1 2007/05/07 19:49:06 pavel Exp $ */
+/* $NetBSD: dtoa.c,v 1.3.4.1.2.1 2008/06/03 20:47:07 skrll Exp $ */
 
 /****************************************************************
 
@@ -192,6 +192,8 @@ dtoa
 #endif
 
 	b = d2b(dval(d), &be, &bbits);
+	if (b == NULL)
+		return NULL;
 #ifdef Sudden_Underflow
 	i = (int)(word0(d) >> Exp_shift1 & (Exp_mask>>Exp_shift1));
 #else
@@ -318,6 +320,8 @@ dtoa
 				i = 1;
 		}
 	s = s0 = rv_alloc((size_t)i);
+	if (s == NULL)
+		return NULL;
 
 #ifdef Honor_FLT_ROUNDS
 	if (mode > 1 && rounding != 1)
@@ -495,6 +499,8 @@ dtoa
 		b2 += i;
 		s2 += i;
 		mhi = i2b(1);
+		if (mhi == NULL)
+			return NULL;
 		}
 	if (m2 > 0 && s2 > 0) {
 		i = m2 < s2 ? m2 : s2;
@@ -506,19 +512,32 @@ dtoa
 		if (leftright) {
 			if (m5 > 0) {
 				mhi = pow5mult(mhi, m5);
+				if (mhi == NULL)
+					return NULL;
 				b1 = mult(mhi, b);
+				if (b1 == NULL)
+					return NULL;
 				Bfree(b);
 				b = b1;
 				}
 			if (( j = b5 - m5 )!=0)
 				b = pow5mult(b, j);
+				if (b == NULL)
+					return NULL;
 			}
 		else
 			b = pow5mult(b, b5);
+			if (b == NULL)
+				return NULL;
 		}
 	S = i2b(1);
-	if (s5 > 0)
+	if (S == NULL)
+		return NULL;
+	if (s5 > 0) {
 		S = pow5mult(S, s5);
+		if (S == NULL)
+			return NULL;
+	}
 
 	/* Check for special case that d is a normalized power of 2. */
 
@@ -566,16 +585,27 @@ dtoa
 		m2 += i;
 		s2 += i;
 		}
-	if (b2 > 0)
+	if (b2 > 0) {
 		b = lshift(b, b2);
-	if (s2 > 0)
+		if (b == NULL)
+			return NULL;
+	}
+	if (s2 > 0) {
 		S = lshift(S, s2);
+		if (S == NULL)
+			return NULL;
+	}
 	if (k_check) {
 		if (cmp(b,S) < 0) {
 			k--;
 			b = multadd(b, 10, 0);	/* we botched the k estimate */
-			if (leftright)
+			if (b == NULL)
+				return NULL;
+			if (leftright) {
 				mhi = multadd(mhi, 10, 0);
+				if (mhi == NULL)
+					return NULL;
+			}
 			ilim = ilim1;
 			}
 		}
@@ -592,8 +622,11 @@ dtoa
 		goto ret;
 		}
 	if (leftright) {
-		if (m2 > 0)
+		if (m2 > 0) {
 			mhi = lshift(mhi, m2);
+			if (mhi == NULL)
+				return NULL;
+		}
 
 		/* Compute mlo -- check for special case
 		 * that d is a normalized power of 2.
@@ -602,8 +635,12 @@ dtoa
 		mlo = mhi;
 		if (spec_case) {
 			mhi = Balloc(mhi->k);
+			if (mhi == NULL)
+				return NULL;
 			Bcopy(mhi, mlo);
 			mhi = lshift(mhi, Log2P);
+			if (mhi == NULL)
+				return NULL;
 			}
 
 		for(i = 1;;i++) {
@@ -613,6 +650,8 @@ dtoa
 			 */
 			j = cmp(b, mlo);
 			delta = diff(S, mhi);
+			if (delta == NULL)
+				return NULL;
 			jj1 = delta->sign ? 1 : cmp(b, delta);
 			Bfree(delta);
 #ifndef ROUND_BIASED
@@ -653,6 +692,8 @@ dtoa
 #endif /*Honor_FLT_ROUNDS*/
 				if (jj1 > 0) {
 					b = lshift(b, 1);
+					if (b == NULL)
+						return NULL;
 					jj1 = cmp(b, S);
 					if ((jj1 > 0 || (jj1 == 0 && dig & 1))
 					&& dig++ == '9')
@@ -682,11 +723,20 @@ dtoa
 			if (i == ilim)
 				break;
 			b = multadd(b, 10, 0);
-			if (mlo == mhi)
+			if (b == NULL)
+				return NULL;
+			if (mlo == mhi) {
 				mlo = mhi = multadd(mhi, 10, 0);
+				if (mlo == NULL)
+					return NULL;
+				}
 			else {
 				mlo = multadd(mlo, 10, 0);
+				if (mlo == NULL)
+					return NULL;
 				mhi = multadd(mhi, 10, 0);
+				if (mhi == NULL)
+					return NULL;
 				}
 			}
 		}
@@ -702,6 +752,8 @@ dtoa
 			if (i >= ilim)
 				break;
 			b = multadd(b, 10, 0);
+			if (b == NULL)
+				return NULL;
 			}
 
 	/* Round off last digit */

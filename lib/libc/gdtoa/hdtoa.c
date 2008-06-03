@@ -1,4 +1,4 @@
-/*	$NetBSD: hdtoa.c,v 1.5.2.3 2007/05/12 17:46:23 snj Exp $	*/
+/*	$NetBSD: hdtoa.c,v 1.5.2.3.2.1 2008/06/03 20:47:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.4 2007/01/03 04:57:58 das Exp $");
 #else
-__RCSID("$NetBSD: hdtoa.c,v 1.5.2.3 2007/05/12 17:46:23 snj Exp $");
+__RCSID("$NetBSD: hdtoa.c,v 1.5.2.3.2.1 2008/06/03 20:47:07 skrll Exp $");
 #endif
 
 #include <float.h>
@@ -185,6 +185,8 @@ hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 	 */
 	bufsize = (sigfigs > ndigits) ? sigfigs : ndigits;
 	s0 = rv_alloc(bufsize);
+	if (s0 == NULL)
+		return NULL;
 
 	/*
 	 * We work from right to left, first adding any requested zero
@@ -287,6 +289,8 @@ hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
 	 */
 	bufsize = (sigfigs > ndigits) ? sigfigs : ndigits;
 	s0 = rv_alloc(bufsize);
+	if (s0 == NULL)
+		return NULL;
 
 	/*
 	 * We work from right to left, first adding any requested zero

@@ -1,4 +1,4 @@
-/* $NetBSD: strtoll.c,v 1.2 2006/03/27 22:26:28 agc Exp $ */
+/* $NetBSD: strtoll.c,v 1.2.6.1 2008/06/03 20:46:57 skrll Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.

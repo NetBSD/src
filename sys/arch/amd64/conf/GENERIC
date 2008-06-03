@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120.2.8.2.3 2008/01/06 05:00:51 wrstuden Exp $
+# $NetBSD: GENERIC,v 1.120.2.8.2.4 2008/06/03 20:47:13 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.120.2.8.2.3 $"
+#ident 		"GENERIC-$Revision: 1.120.2.8.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -235,6 +235,9 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
+#IPMI support
+#ipmi0		at mainbus?
+
 # ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0 		at mainbus0
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
@@ -429,6 +432,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
+arcmsr*	at pci? dev ? function ? 	# Areca SATA RAID controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID

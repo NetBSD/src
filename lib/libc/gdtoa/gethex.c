@@ -1,4 +1,4 @@
-/* $NetBSD: gethex.c,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
+/* $NetBSD: gethex.c,v 1.3.6.1 2008/06/03 20:47:07 skrll Exp $ */
 
 /****************************************************************
 
@@ -121,6 +121,8 @@ gethex( CONST char **sp, CONST FPI *fpi, Long *expt, Bigint **bp, int sign)
 	for(k = 0; n > 7; n = (unsigned int)n >> 1)
 		k++;
 	b = Balloc(k);
+	if (b == NULL)
+		return STRTOG_NoMemory;
 	x = b->x;
 	n = 0;
 	L = 0;
@@ -158,6 +160,8 @@ gethex( CONST char **sp, CONST FPI *fpi, Long *expt, Bigint **bp, int sign)
 	else if (n < nbits) {
 		n = nbits - n;
 		b = lshift(b, n);
+		if (b == NULL)
+			return STRTOG_NoMemory;
 		e -= n;
 		x = b->x;
 		}

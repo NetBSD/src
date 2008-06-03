@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.7 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.7.4.1 2008/06/03 20:46:55 skrll Exp $	*/
 /* $OpenBSD: auth-options.c,v 1.40 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.7 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.7.4.1 2008/06/03 20:46:55 skrll Exp $");
 #include <sys/types.h>
 
 #include <netdb.h>
@@ -43,6 +43,7 @@ int no_port_forwarding_flag = 0;
 int no_agent_forwarding_flag = 0;
 int no_x11_forwarding_flag = 0;
 int no_pty_flag = 0;
+int no_user_rc = 0;
 
 /* "command=" option. */
 char *forced_command = NULL;
@@ -62,6 +63,7 @@ auth_clear_options(void)
 	no_port_forwarding_flag = 0;
 	no_pty_flag = 0;
 	no_x11_forwarding_flag = 0;
+	no_user_rc = 0;
 	while (custom_environment) {
 		struct envstring *ce = custom_environment;
 		custom_environment = ce->next;
@@ -119,6 +121,13 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
 			auth_debug_add("Pty allocation disabled.");
 			no_pty_flag = 1;
+			opts += strlen(cp);
+			goto next_option;
+		}
+		cp = "no-user-rc";
+		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
+			auth_debug_add("User rc file execution disabled.");
+			no_user_rc = 1;
 			opts += strlen(cp);
 			goto next_option;
 		}

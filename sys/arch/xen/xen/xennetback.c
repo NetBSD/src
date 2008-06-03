@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.22 2006/05/23 21:09:37 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.22.16.1 2008/06/03 20:47:19 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.22.16.1 2008/06/03 20:47:19 skrll Exp $");
 
 #include "opt_xen.h"
 

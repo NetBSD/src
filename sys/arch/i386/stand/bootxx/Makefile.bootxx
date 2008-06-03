@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.25 2006/10/23 21:57:46 christos Exp $
+# $NetBSD: Makefile.bootxx,v 1.25.4.1 2008/06/03 20:47:14 skrll Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -45,7 +45,7 @@ CPPFLAGS+= -DXXfs_stat=${FS}_stat
 CPPFLAGS+= -DFS=${FS}
 
 # Make sure we override any optimization options specified by the user
-COPTS=  -Os
+COPTS=  -Os -momit-leaf-frame-pointer
 DBG=
 
 CPPFLAGS+= -DNO_LBA_CHECK
@@ -58,6 +58,7 @@ LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 CPPFLAGS+= -DBOOT_ELF64
 .else
+CPPFLAGS+= -DEPIA_HACK
 .if ${HAVE_GCC} == 3
 CPUFLAGS=  -mcpu=i386
 .else

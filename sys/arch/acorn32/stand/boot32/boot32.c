@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.29 2006/08/19 22:44:57 bjh21 Exp $	*/
+/*	$NetBSD: boot32.c,v 1.29.12.1 2008/06/03 20:47:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -733,7 +733,7 @@ create_configuration(int argc, char **argv, int start_args)
 	os_readsysinfo_unique_id(&id_low, &id_high);
 
 	/* fill in the bootconfig *bconfig structure : generic version II */
-	memset(bconfig, 0, sizeof(bconfig));
+	memset(bconfig, 0, sizeof(*bconfig));
 	bconfig->magic		= BOOTCONFIG_MAGIC;
 	bconfig->version	= BOOTCONFIG_VERSION;
 	strcpy(bconfig->kernelname, booted_file);

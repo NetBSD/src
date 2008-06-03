@@ -1,4 +1,4 @@
-/* $NetBSD: strtopx.c,v 1.3 2006/03/15 17:35:18 kleink Exp $ */
+/* $NetBSD: strtopx.c,v 1.3.6.1 2008/06/03 20:47:07 skrll Exp $ */
 
 /****************************************************************
 
@@ -67,6 +67,8 @@ strtopx(CONST char *s, char **sp, void *V)
 	UShort *L = (UShort*)V;
 
 	k = strtodg(s, sp, &fpi, &expt, bits);
+	if (k == STRTOG_NoMemory)
+		return k;
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
 	  case STRTOG_Zero:

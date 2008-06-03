@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.122.2.3.2.2 2007/10/29 00:45:14 wrstuden Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.122.2.3.2.3 2008/06/03 20:47:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.122.2.3.2.2 2007/10/29 00:45:14 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.122.2.3.2.3 2008/06/03 20:47:24 skrll Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3189,12 +3189,31 @@ bge_intr(void *xsc)
 	sc = xsc;
 	ifp = &sc->ethercom.ec_if;
 
-#ifdef notdef
-	/* Avoid this for now -- checking this register is expensive. */
-	/* Make sure this is really our interrupt. */
-	if (!(CSR_READ_4(sc, BGE_MISC_LOCAL_CTL) & BGE_MLC_INTR_STATE))
-		return (0);
-#endif
+	/* 
+	 * Ascertain whether the interrupt is from this bge device.
+	 * Do the cheap test first.
+	 */  
+	if ((sc->bge_rdata->bge_status_block.bge_status &
+	    BGE_STATFLAG_UPDATED) == 0) {
+		struct pci_attach_args *pa = &(sc->bge_pa);
+		/*
+		 * Sometimes, the interrupt comes in before the
+		 * DMA update of the status block (performed prior
+		 * to the  interrupt itself) has completed.
+		 * In that case, do the (extremely expensive!)
+		 * PCI-config-space register read.
+		 */
+		uint32_t pcistate =
+		    pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE);
+
+		if (pcistate & BGE_PCISTATE_INTR_STATE)
+			return (0);
+
+	}
+	/*
+	 *  If we reach here, then the interrupt is for us.
+	 */
+
 	/* Ack interrupt and stop others from occuring. */
 	CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 1);
 
@@ -3228,8 +3247,10 @@ bge_intr(void *xsc)
 			    BRGPHY_INTRS);
 		}
 	} else {
-		if (sc->bge_rdata->bge_status_block.bge_status &
-		    BGE_STATFLAG_LINKSTATE_CHANGED) {
+		u_int32_t		status;
+
+		status = CSR_READ_4(sc, BGE_MAC_STS);
+		if (status & BGE_MACSTAT_LINK_CHANGED) {
 			sc->bge_link = 0;
 			callout_stop(&sc->bge_timeout);
 			bge_tick(sc);

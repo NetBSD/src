@@ -1,4 +1,4 @@
-/* $NetBSD: uuid.c,v 1.2 2006/05/25 19:41:06 agc Exp $ */
+/* $NetBSD: uuid.c,v 1.2.6.1 2008/06/03 20:46:57 skrll Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.

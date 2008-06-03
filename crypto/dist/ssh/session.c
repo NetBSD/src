@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.43 2006/09/28 21:22:15 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.43.4.1 2008/06/03 20:46:55 skrll Exp $	*/
 /* $OpenBSD: session.c,v 1.219 2006/08/29 10:40:19 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.43 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.43.4.1 2008/06/03 20:46:55 skrll Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -1073,8 +1073,9 @@ do_rc_files(Session *s, const char *shell)
 	do_xauth =
 	    s->display != NULL && s->auth_proto != NULL && s->auth_data != NULL;
 
-	/* ignore _PATH_SSH_USER_RC for subsystems */
-	if (!s->is_subsystem && (stat(_PATH_SSH_USER_RC, &st) >= 0)) {
+	/* ignore _PATH_SSH_USER_RC for subsystems and admin forced commands */
+	if (!s->is_subsystem && options.adm_forced_command == NULL &&
+	    !no_user_rc && (stat(_PATH_SSH_USER_RC, &st) >= 0)) {
 		snprintf(cmd, sizeof cmd, "%s -c '%s %s'",
 		    shell, _PATH_BSHELL, _PATH_SSH_USER_RC);
 		if (debug_flag)

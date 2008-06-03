@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.7 2006/11/27 22:24:27 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.7.4.1 2008/06/03 20:46:57 skrll Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.

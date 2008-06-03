@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.95 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.i386,v 1.95.6.1 2008/06/03 20:46:59 skrll Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -98,6 +98,9 @@
 ./usr/include/x86/psl.h				comp-c-include
 ./usr/include/x86/specialreg.h			comp-c-include
 ./usr/include/x86/trap.h			comp-c-include
+./usr/include/xen				comp-c-include
+./usr/include/xen/xenio.h			comp-c-include
+./usr/include/xen/xenio3.h			comp-c-include
 ./usr/include/xmmintrin.h			comp-c-include		gcccmds
 ./usr/lib/libi386.a				comp-c-lib
 ./usr/lib/libi386_p.a				comp-c-proflib		profile

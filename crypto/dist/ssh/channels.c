@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.34.4.1 2007/09/03 06:52:56 wrstuden Exp $	*/
+/*	$NetBSD: channels.c,v 1.34.4.2 2008/06/03 20:46:55 skrll Exp $	*/
 /* $OpenBSD: channels.c,v 1.266 2006/08/29 10:40:18 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.34.4.1 2007/09/03 06:52:56 wrstuden Exp $");
+__RCSID("$NetBSD: channels.c,v 1.34.4.2 2008/06/03 20:46:55 skrll Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -2863,9 +2863,6 @@ x11_create_display_inet(int x11_display_offset, int x11_use_localhost,
 			if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
 				debug2("bind port %d: %.100s", port, strerror(errno));
 				close(sock);
-
-				if (ai->ai_next)
-					continue;
 
 				for (n = 0; n < num_socks; n++) {
 					close(socks[n]);

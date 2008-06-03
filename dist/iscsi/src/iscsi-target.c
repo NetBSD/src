@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.11 2006/08/03 20:21:59 agc Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.11.6.1 2008/06/03 20:46:57 skrll Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.

@@ -1,0 +1,1105 @@
+#	$NetBSD: CHANGES-4.1,v 1.1.10.2 2008/06/03 20:47:00 skrll Exp $
+
+A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
+release:
+
+File						Revision(s)
+----						--------
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to 4.0_STABLE
+
+sys/arch/amd64/amd64/bios32.c			1.6
+sys/arch/amd64/amd64/mainbus.c			1.17
+sys/arch/amd64/conf/GENERIC			1.151
+sys/arch/amd64/conf/files.amd64			1.39 via patch
+sys/arch/x86/x86/ipmi.c				1.12
+sys/arch/x86/x86/ipmi.c				1.8
+sys/dev/DEVNAMES				1.228
+
+	Use PRIx64 for a 64-bit quantity instead of llx in a debug print.
+	Add (commented-out) support for IPMI on amd64--pretty much copied straight
+	from i386.
+	Check for duplicate sensor names in the IPMI table.  If a duplicate name
+	is found, try to make it unique by appending a count (1-99) to the sensor
+	description (truncating, if necessary).
+	[briggs, ticket #989]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.231 via patch
+
+	Implement dumping kernel cores to RAID 1 sets.  The component used
+	for the dump is selected in this order of preference:
+	   1) the master
+	   2) a used_spare of the master
+	   3) the slave
+	   4) a used_spare of the slave
+	[oster, ticket #1014]
+
+sys/dev/pci/arcmsr.c				patch
+sys/dev/pci/arcmsrvar.h				patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/files.pci				patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/XEN2_DOM0			patch
+sys/arch/i386/conf/INSTALL_LARGE		patch
+sys/arch/amd64/conf/GENERIC			patch
+sys/arch/amd64/conf/INSTALL			patch
+share/man/man4/Makefile				patch
+share/man/man4/arcmsr.4				patch
+distrib/sets/lists/man/mi			patch
+
+	Add the Areca Technology Corporation SATA RAID controller driver,
+	ported from OpenBSD.
+	[christos, ticket #1037]
+xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.3
+
+	Apply security fix for CVE-2008-0006.
+	[tron, ticket #1047]
+
+distrib/hp700/Makefile				1.3
+distrib/hp700/sysnbsd/Makefile			1.1
+distrib/notes/common/netboot			1.32
+distrib/notes/common/sysinst			1.84
+distrib/notes/common/xfer			1.61
+distrib/notes/hp700/Makefile			1.2
+distrib/notes/hp700/hardware			1.4
+distrib/notes/hp700/install			1.2
+distrib/notes/hp700/upgrade			1.2
+distrib/notes/hp700/xfer			1.2
+
+	Improve hp700 install notes somewhat.
+	Actually build and install a SYSNBSD.
+	[skrll, ticket #1035]
+
+usr.bin/xargs/Makefile				1.4
+usr.bin/xargs/pathnames.h			1.6
+usr.bin/xargs/strnsubst.c			1.1
+usr.bin/xargs/xargs.1				1.19
+usr.bin/xargs/xargs.c				1.16, 1.18
+
+	Bring in xargs from FreeBSD to gain -I, -J etc. but keep our
+	GNU compatible exit values. Fixes PR#36154 and PR#37666.
+	[apb, ticket #1036]
+
+distrib/sets/lists/base/mi			1.712
+distrib/sets/lists/comp/mi			1.1035
+distrib/sets/lists/man/mi			1.1010
+sys/netinet/tcp_usrreq.c			1.133
+sys/netinet/tcp_var.h				1.148
+usr.sbin/Makefile				1.228 via patch
+usr.sbin/tcpdrop/Makefile			1.1
+usr.sbin/tcpdrop/tcpdrop.8			1.1
+usr.sbin/tcpdrop/tcpdrop.c			1.1 - 1.3
+
+	Import tcpdrop(8) from OpenBSD
+	[ghen, ticket #1039]
+
+sys/arch/algor/algor/algor_p4032_intr.c		1.15, 1.17 via patch
+sys/arch/algor/algor/algor_p5064_intr.c		1.18, 1.20 via patch
+sys/arch/algor/algor/algor_p6032_intr.c		1.12, 1.14 via patch
+sys/arch/algor/algor/locore_machdep.S		1.4
+sys/arch/algor/dev/mcclock_mainbus.c		1.7
+sys/arch/algor/isa/mcclock_isa.c		1.9
+sys/arch/mips/mips/mips3_clock.c		1.8, 1.9
+
+	Fix botch on MI todr(9) migration of algor on September 2006:
+	initialize necessary values for mips3_delay().
+	[tsutsui, ticket #1040]
+
+sys/dev/ic/bt8xx.h				1.9
+sys/dev/pci/bktr/bktr_audio.c			1.18
+sys/dev/pci/bktr/bktr_core.c			1.46
+sys/dev/pci/bktr/bktr_core.h			1.10
+sys/dev/pci/bktr/bktr_os.c			1.49
+sys/dev/pci/bktr/bktr_reg.h			1.18
+
+	Don't assume that sizeof(long) == sizeof(int);
+	makes bktr work on amd64.
+	[jmcneill, ticket #1046]
+
+sys/dev/usb/if_aue.c				1.107, 1.108 via patch	
+sys/dev/usb/if_auereg.h				1.19, 1.20 via patch 
+
+	Prevents hang on close by unprotected creation of the formerly used
+	workqueue item.
+	[is, ticket #1048]
+
+sys/arch/x86/isa/clock.c			1.23 via patch
+	fixes clock accounting problem in i8254_get_timecount that caused
+	the auich auich_calibrate() function to get the wrong ac97 freq
+	(may cause audio to play at wrong speed on some systems).
+	[chuck, ticket #1049]
+
+sys/netinet/tcp_usrreq.c			1.134
+
+	Protect inet6_ident_core() with #ifdef INET6, fixes building without
+	options INET6.
+	[joerg, ticket #1057]
+
+sys/dev/pci/azalia_codec.c			1.48
+
+	When converting mixer values to hardware values, round up. This makes
+	stepping and restore actually work.
+	[joerg, ticket #982]
+
+lib/libkvm/kvm_sparc64.c			1.11
+sys/arch/sparc64/include/kcore.h		1.5
+sys/arch/sparc64/sparc64/pmap.c			1.201
+
+	Extend the sparc64 cpu kcore segment so that it records all kernel
+	mappings done via locked 4 MB pages.
+	[martin, ticket #983]
+
+sys/dev/pci/uhci_pci.c				1.38
+
+	Be paranoid about disabling interrupts and acknowledging any pending
+	interrupts while attaching uhci. Fixes recent problems with uvm_fault
+	during uhci attach.
+	[gavan, ticket #1000]
+
+sys/arch/xen/xen/isa_machdep.c			1.9
+sys/arch/xen/xen/pciide_machdep.c		1.7
+
+	Properly setup the IO APIC for ISA and pciide compat interrupts too.
+	Makes ACPI kernels works again with pciide controllers in compat mode.
+	[bouyer, ticket #1001]
+
+sys/dev/pci/if_bnx.c				1.11
+
+	Reprogram multicast filter after SIOCADDMULTI / SIOCDELMULTI.
+	[dyoung, ticket #1011]
+
+sys/dev/scsipi/cd.c				1.270
+sys/fs/udf/udf_subr.c				1.42
+sys/sys/cdio.h					1.29
+
+	Fix panics on certain UDF disc mounts.
+	[reinoud, ticket #1004]
+
+etc/Makefile					1.347
+
+	Remove MKUUCP from RELEASEVARS.  It is no longer used in src.
+	[minskim, ticket #1005]
+
+sys/netinet6/in6_src.c				1.40
+
+	Fix ipv6 ephemeral port allocation.
+	[yamt, ticket #1006]
+
+sys/fs/msdosfs/msdosfs_vnops.c			1.43
+
+	Fix msdos rename routine.
+	[pooka, ticket #1007]
+
+sys/fs/tmpfs/tmpfs_pool.c			1.11
+
+	Fix a diagnostic panic if the pool allocator is called with NOWAIT.
+	[pooka, ticket #1008]
+
+sys/fs/tmpfs/tmpfs_vnops.c			1.43
+
+	Fix a race condition in rename.
+	[pooka, ticket #1010]
+
+distrib/sets/lists/etc/mi			1.186
+etc/Makefile					1.338
+etc/login.conf					1.1-1.2
+
+	Add a default login.conf.
+	[elad, ticket #1012]
+
+sys/arch/atari/dev/wdc_mb.c			1.29-1.30
+        Apply missed following MI wdc changes to atari's mainbus wdc backend:
+        - make bus space handles an array for each command register
+          http://mail-index.netbsd.org/source-changes/2003/11/27/0036.html
+          (note we no longer have to specify stride for wdc after this change)
+        - add the notion of "shadow register"
+          http://mail-index.netbsd.org/source-changes/2004/05/25/0048.html
+        Problem reported by Alan Hourihane in PR#37464.
+	[tsutsui, ticket #1013]
+
+usr.sbin/postinstall/postinstall		1.56 via patch
+
+	Update URLs after website reorganization in the motd check. PR#37070.
+	[jnemeth, ticket #1022]
+
+share/examples/puffs/ssshfs/ssshfs.c		patch
+
+	Fix symlink creation, from Dieter Rolants in PR#37549
+	[pooka, ticket #1023]
+
+sbin/newfs/mkfs.c				1.104
+sbin/newfs/mount_mfs.8				1.15
+
+	PR#37503 - De Zeurkous -- inaccurate description of -s option
+	PR#37155 - Marcelo Schmidt -- specifying too large of a size
+	causes segvs
+	[jnemeth, ticket #1024]
+
+sys/arch/sun3/sun3/obmem.c			1.24
+
+	Pass correct size to allocate struct obmem_softc. Fixes an
+	occasional panic on my 3/80.
+	[tsutsui, ticket #1025]
+
+sys/arch/cobalt/cobalt/machdep.c		1.91
+
+	In icu_intr_establish(), don't panic if the specified irq
+	is already in use and just return NULL instead.
+	[tsutsui, ticket #1026]
+
+common/dist/zlib/inflate.c			1.4
+
+	Disable a sanity check output buffer != NULL in _STANDALONE case.
+	Some kernels are loaded at address 0x0 by bootloaders and
+	output buffer address could be zero in such case.
+	[tsutsui, ticket #1027]
+
+sys/dev/ic/i82557.c				1.105
+sys/dev/ic/i82557reg.h				1.19
+sys/dev/ic/i82557var.h				1.36
+
+	Pull several fixes from OpenBSD's fxp.c, fixing PR#30560 as
+	well as random pool corruption.
+	[tsutsui, ticket #1028]
+
+usr.sbin/ndiscvt/ndiscvt.8			1.6
+
+	PR#37604 - Danilo Vidovic -- we do have a ndis(4) man page
+	[jnemeth, ticket #1029]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.147
+
+	Fix unusued variable warning (depending on options).
+	[martin, ticket #1030]
+
+dist/nawk/lex.c					1.8
+
+	Bring back the fix in revision 1.6, apparently accidentally lost 
+	during last merge, to allow escape of a newline in string literals.
+	[christos, ticket #1034]
+
+usr.bin/systat/extern.h				1.38
+usr.bin/systat/keyboard.c			1.24
+usr.bin/systat/main.c				1.41
+
+	don't call curses from a signal handler!
+	[christos, ticket #1031]
+
+sys/net/bpf_filter.c				1.34
+
+	PR#37663: Guy Harris: bpf_validate rejects valid programs that use the
+	multiply instruction
+	[christos, ticket #1032]
+
+sbin/fdisk/fdisk.c				1.114
+
+	Add a sanity check to avoid possible division by zero, and
+	adjust sector numbers _after_ "Sanity check the data against all
+	zeroes".  PR#37656
+	[tsutsui, ticket #1052]
+
+sbin/fdisk/fdisk.c				1.107
+
+	Don't print drive serial number if -S (setting shell variables)
+	is specified.
+	[tsutsui, ticket #1053]
+
+games/larn/bill.c				1.9
+games/larn/header.h				1.18 via patch
+games/larn/main.c				1.21
+games/larn/scores.c				1.16 via patch
+
+	Since games are (now) setgid, not setuid, it is no longer necessary to
+	manipulate the effective uid, only the effective gid.
+	Use mkstemp to make the temporary files used when you win.
+	[dholland, ticket #1067]
+
+sys/dev/audio.c					1.233
+
+	Don't enter an infinite loop in audio_read() when the sc->sc_rustream
+	buffer is full.  Fixes kern/34659.
+	[gson, ticket #1054]
+
+sys/dev/usb/uhub.c				1.94
+
+	Speed up uhub attachment considerably.
+	[jmcneill, ticket #1056]
+
+usr.sbin/services_mkdb/services_mkdb.8		1.6 via patch
+
+	Update pathnames to the services and netgroups databases after
+	their move to /var/db.
+	[jnemeth, ticket #1033]
+
+sys/arch/ews4800mips/conf/RAMDISK		1.7
+
+	Disable agr(4) to shrink an install kernel.
+	[tsutsui, ticket #1055]
+
+sys/netipsec/ipsec_mbuf.c			1.10 via patch
+
+	Avoid a buffer overrun which could crash a FAST_IPSEC kernel.
+	PR#30124.
+	[seanb, ticket #1015]
+
+sys/dev/usb/ukbd.c				1.96
+
+	Add support for function keys F16 to F19 as present on e.g. the new
+	Apple aluminum keyboard. PR#37788.
+	[tron, ticket #1060]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.11
+	Add another translation table to make the modular kbd driver cope  
+	with our AT/PS2 pseudo XT scancodes. Tested on shark and sgimips
+	with an IBM  Model M
+	[macallan, ticket #1062]
+
+sys/arch/hpcmips/conf/GENERIC			1.199
+sys/arch/hpcmips/conf/TX3912			1.68
+sys/arch/hpcmips/conf/TX3922			1.80
+sys/arch/hpcmips/tx/tx39power.c			1.18
+sys/arch/mips/mips/cache_tx39.c			1.6
+sys/arch/mips/mips/locore_mips1.S		1.64
+
+	Make GENERIC and TX3922 kernels boot on TX3922 based machines
+	[tsutsui, ticket #1065]
+
+sys/arch/hpcmips/conf/GENERIC			1.200
+sys/arch/hpcmips/conf/LROUTER			1.36
+sys/arch/hpcmips/conf/MPC303			1.48
+sys/arch/hpcmips/conf/TX3912			1.69
+sys/arch/hpcmips/conf/TX3922			1.81
+sys/arch/hpcmips/conf/TX3922			1.82
+sys/arch/hpcmips/conf/VR41XX			1.43
+
+	Add options COMPAT_16, COMPAT_20 and COMPAT_30 to non-GENERIC kernels.
+	Requested by Risto Sainio in PR#37911.
+	Add a definition for Fujitsu PenCentra 200 and enable wsmouse at ucbtp.
+	Tested and requested by Risto Sainio.
+	[tsutsui, ticket #1066]
+
+etc/namedb/root.cache				1.12, 1.13
+
+	Update to 2008020400 version
+	[ghen, ticket #1068]
+
+distrib/notes/common/sysinst			patch
+	fix hp700 addition
+	[skrll, ticket #1071]
+
+usr.bin/stat/stat.c				1.25
+
+	Fix a segfault when doing 'stat -f %R' on the stdin file handle,
+	instead fake the filename '(stdin)' like the %N format.
+	[mlelstv, ticket #1072]
+
+usr.sbin/postinstall/postinstall		1.57, 1.58
+
+	Don't fail the X11 check if "/usr/X11R6/lib" doesn't exist. This is
+	perfectly valid setup (e.g. no X11 or modular X11 from "pkgsrc").
+	Avoid error message in "obsolete" check if "/usr/X11R6/lib"
+	doesn't exist.
+	[tron, ticket #1073]
+
+sys/dev/pci/pcidevs				1.929
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data			regen
+
+	Import PCI ids for the Matrox MGA G200e and the Intel E7230 and 82975X
+	chipsets from OpenBSD.
+	[tron, ticket #1074]
+
+sys/arch/sh3/sh3/exception_vector.S		1.21 - 1.30
+sys/arch/sh3/sh3/genassym.cf			1.11 - 1.12
+sys/arch/sh3/sh3/pmap.c				1.63
+
+	Implement fast path TLB miss handling.  Walk the page table without
+	creating a trapframe, with exceptions disabled and using only BANK1
+	registers.  If a valid pte is found, load it and return.  Otherwise
+	create a trapframe and proceed to the full-blown C handler.
+	[uwe, ticket #1075]
+
+sys/kern/kern_malloc.c				1.117 via patch
+
+	malloc: fix freelist corruption.
+	[yamt, ticket #1076]
+
+sys/arch/amd64/include/acpi_func.h		1.3
+
+	Re-sync the (broken) amd64 ACPI Global Lock macros with their i386
+	counterparts.
+	[scw, ticket #1077]
+
+share/man/man4/ddb.4				1.110, 1.111 via patch
+
+	Add magic keyboard sequence for NetBSD-amd64.
+	[tron, ticket #1079]
+
+sys/netnatm/natm.c				1.13
+sys/netnatm/natm_proto.c			1.10
+
+	Properly define the domain, and #ifdef out the sysctl routine
+	which does nothing.
+	[jnemeth, ticket #1081]
+
+sys/dev/usb/uplcom.c				1.59, 1.61 via patch
+sys/dev/usb/usbdevs				patch
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add some initialization magic from FreeBSD. This makes it work with
+	the more recent PL2303 revision 4.
+	[mlelstv, ticket #1088]
+
+sbin/veriexecctl/veriexecctl.8:			patch
+
+	reflect reality in the veriexecctl(8) man-page.
+	[elad, ticket #1080]
+
+share/man/man4/nfe.4				1.4
+sys/dev/pci/if_nfe.c				1.22, 1.23, 1.25, 1.27
+sys/dev/pci/if_nfereg.h				1.5, 1.6
+sys/dev/pci/if_nfevar.h				1.5, 1.6
+sys/dev/pci/pcidevs				1.914
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add NVIDIA MCP7[37] devices, from OpenBSD.
+	Attach to NVIDIA MCP67/73 Ethernet controllers.
+	Handle a quirk of newer MCP6x chips on reading MAC address.
+	Fix from Richy Kim in PR#36576.
+	Wakeup some newer chips from powerdown mode.
+	via OpenBSD.
+	Tested by wiz@ in PR#37868.
+	[tsutsui, ticket #1061]
+
+sys/arch/acorn32/stand/boot32/boot32.c		1.31
+
+	Zero out the whole of the structure, not just the first 4 bytes.
+	Now a small kernel will boot up on my RISC-PC.
+	[chris, ticket #1063]
+
+sys/arch/vax/vax/syscall.c			1.10
+
+	Never ever trust the user.  Fix bug introduced in version 1.8 of  
+	trap.c by ragge nearly 13 years ago.
+	[matt, ticket #1090]
+
+usr.bin/column/column.c				1.18
+
+	Fix memory allocations in column. Fixes SegFault reported by
+	Jeremy Reed on tech-misc.
+	[oster, ticket #1089]
+
+etc/rc.d/amd					1.15
+
+	Don't try to shutdown amd(8) gracefully. It seems to cause problems
+	for more people than the old (also broken) behavior. This fixes
+	PR#36506 and PR#38103.
+	[tron, ticket #1091]
+
+lib/libc/locale/mbrlen.3			1.9
+
+	bin/38047 fix bad prototype for function mbrlen
+	[tnozaki, ticket #1093]
+
+share/man/man9/uiomove.9	               patch
+	Sync struct uio's documentation with reality in uiomove(9) to reflect
+	the removal of uio_segflg and uio_procp.
+	[elad, #1092]
+
+sys/arch/ews4800mips/conf/RAMDISK		1.9
+
+	Disable more options and file-systems to shrink install kernel.
+	[tsutsui, ticket #1095]
+
+sys/arch/cobalt/pci/pci_machdep.c		1.25
+sys/arch/cobalt/stand/boot/cons.c		1.6
+
+	Properly map the primary tulip Ethernet interrupt line on Qube2700
+	cnscan() should return -1 (no input) if there is no console device,
+	fix boot on Qube2700 (which doesn't have serial console).
+	[tsutsui, ticket #1096]
+
+sys/dev/pci/pcidevs				1.930
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/pucdata.c				1.53
+
+	Support I-O DATA RSA-PCI 2 port serial board (in
+	16550A compatible mode)
+	[tsutsui, ticket #1097]
+
+sys/dev/mii/rlphy.c				1.13
+
+	Fix autonegotiation on 100BASE-TX on 8139C+ at boot time.
+	This may also fix PR#34109.
+	[tsutsui, ticket #1098]
+
+sbin/newfs/newfs.8				1.71
+
+	Fix small documentation bug as reported in PR#38192 :
+	FFS  -> FFSv1
+	UFS2 -> FFSv2
+	[reinoud, ticket #1099]
+
+lib/libc/stdlib/strfmon.c			1.5
+
+	Avoid integer overflow; reported by Maksymilian Arciemowicz.   
+	[mjf, ticket #1102]
+
+sys/arch/i386/stand/bootxx/Makefile.bootxx	1.30
+
+	Add EPIA_HACK so that boot loaders work on EDEN 5000 processors.
+	[sborrill, ticket #1064]
+
+sys/arch/i386/stand/bootxx/Makefile.bootxx	1.31
+
+	Add -momit-leaf-frame-pointer, saves a few bytes.
+	[dsl, ticket #1101]
+
+bin/mt/mt.1					1.34
+
+	Clarify that "mt offline" ejects tapes. Also some grammar and
+	formatting fixes. PR#37727 from Randolf Richardson.
+	[dholland, ticket #1100]
+
+sys/dev/ic/ahcisata_core.c			1.6
+
+	Move a delay() inside a loop, so that the 1s delay is really 1s.
+	[bouyer, ticket #1082]
+
+sys/arch/xen/include/xenio.h			1.6 via patch
+sys/arch/xen/include/xenio3.h			1.2 via patch
+sys/arch/xen/xen/privcmd.c			1.25 via patch
+
+	Fix IOCTL_PRIVCMD_HYPERCALL issue which shows up with xen-3.1.3.
+	Add a 'retval' member to the privcmd_hypercall_t argument.
+	Handle the old IOCTL_PRIVCMD_HYPERCALL under COMPAT_40.
+	[bouyer, ticket #1083]
+
+sys/arch/xen/i386/xen_machdep.c			1.17-1.18
+
+	Support root= as an alias for bootdev=, for consistency with multiboot
+	support. Suggested by Pavel Cahyna.
+	[bouyer, ticket #1084]
+
+sys/dev/ic/ahcisata_core.c			1.8 via patch
+
+	Add ATAPI support to ahcisata(4). lightly tested with a DVD burner,
+	by mounting a CD and reading from it, and blanking a DVD-RW using
+	cdrecord.
+	[bouyer, ticket #1085]
+
+sys/arch/xen/i386/xen_shm_machdep.c		1.3 via patch
+sys/arch/xen/x86/xenfunc.c			1.4 via patch
+sys/arch/xen/xen/pci_intr_machdep.c		1.4 via patch
+sys/arch/xen/xen/pci_machdep.c			1.12 via patch
+sys/arch/xen/xen/xbdback.c			1.30 via patch
+sys/arch/xen/xen/xbdback_xenbus.c		1.14 via patch
+sys/arch/xen/xen/xen_acpi_machdep.c		1.4 via patch
+sys/arch/xen/xen/xenevt.c			1.20 via patch
+sys/arch/xen/xen/xengnt.c			1.6 via patch
+sys/arch/xen/xen/xennetback.c			1.31 via patch
+
+	Add missing __KERNEL_RCSID()
+	[bouyer, ticket #1086]
+
+distrib/sets/lists/comp/md.i386			1.104 via patch
+sys/arch/i386/Makefile				1.33 via patch
+sys/arch/xen/include/Makefile			1.3 via patch
+usr.bin/kdump/Makefile.ioctl-c			1.20 via patch
+
+	Install xenio.h and xenio3.h in /usr/include/xen, for the benefit
+	of xentools3.
+	[bouyer, ticket #1087]
+
+dist/bzip2/CHANGES:				patch
+dist/bzip2/LICENSE:				patch
+dist/bzip2/Makefile-libbz2_so:			patch
+dist/bzip2/Makefile:				patch
+dist/bzip2/README.COMPILATION.PROBLEMS:		patch
+dist/bzip2/README.XML.STUFF:			patch
+dist/bzip2/README:				patch
+dist/bzip2/Y2K_INFO:				patch
+dist/bzip2/blocksort.c:				patch
+dist/bzip2/bz-common.xsl:			patch
+dist/bzip2/bz-fo.xsl:				patch
+dist/bzip2/bz-html.xsl:				patch
+dist/bzip2/bzdiff.1:				patch
+dist/bzip2/bzdiff:				patch
+dist/bzip2/bzgrep.1:				patch
+dist/bzip2/bzgrep:				patch
+dist/bzip2/bzip.css:				patch
+dist/bzip2/bzip2.1:				patch
+dist/bzip2/bzip2.c:				patch
+dist/bzip2/bzip2netbsd:				patch
+dist/bzip2/bzip2recover.c:			patch
+dist/bzip2/bzlib.c:				patch
+dist/bzip2/bzlib.h:				patch
+dist/bzip2/bzlib_private.h:			patch
+dist/bzip2/bzmore.1:				patch
+dist/bzip2/compress.c:				patch
+dist/bzip2/crctable.c:				patch
+dist/bzip2/decompress.c:			patch
+dist/bzip2/dlltest.c:				patch
+dist/bzip2/entities.xml:			patch
+dist/bzip2/format.pl:				patch
+dist/bzip2/huffman.c:				patch
+dist/bzip2/manual.html:				patch
+dist/bzip2/manual.texi:				patch
+dist/bzip2/manual.xml:				patch
+dist/bzip2/manual_1.html:			patch
+dist/bzip2/manual_2.html:			patch
+dist/bzip2/manual_3.html:			patch
+dist/bzip2/manual_4.html:			patch
+dist/bzip2/manual_abt.html:			patch
+dist/bzip2/manual_ovr.html:			patch
+dist/bzip2/manual_toc.html:			patch
+dist/bzip2/mk251.c:				patch
+dist/bzip2/randtable.c:				patch
+dist/bzip2/spewG.c:				patch
+dist/bzip2/unzcrash.c:				patch
+dist/bzip2/words0:				patch
+dist/bzip2/words2:				patch
+dist/bzip2/words3:				patch
+dist/bzip2/xmlproc.sh:				patch
+distrib/sets/lists/base/shl.mi:			patch
+distrib/sets/lists/man/mi:			patch
+distrib/sets/lists/misc/mi:			patch
+doc/3RDPARTY:					patch
+lib/libbz2/Makefile:				patch
+lib/libbz2/shlib_version:			patch
+
+	Upgrade bzip2 to 1.0.5, fixing CVE-2008-1372 and CVE-2005-0953
+	[adrianp, ticket #1106]
+sys/arch/cobalt/dev/panel.c			1.16
+
+	Print "NetBSD/cobalt Starting up...  " to LCD panel on boot, and also
+	print "NetBSD/cobalt Shutting donw..." on halt via shutdown hook.
+	This would be useful for users who don't have serial console.
+	[tsutsui, ticket #1103]
+
+sys/arch/cobalt/cobalt/machdep.c		1.93 via patch
+
+	Fix botched spl(9) bug I introduced back in 3.99.18 (rev 1.64):
+	Don't enable unhandled interrupts before all interrupts are processed.
+	Should fix "long download, network frozen" problems reported on
+	port-cobalt by several people.
+	[tsutsui, ticket #1104]
+
+sys/dev/ic/rtl8169.c				1.94, 1.95, 1.97, 1.98
+sys/dev/ic/rtl81x9reg.h				1.28
+
+	It looks vlan tag info must appear not only in the first descriptor
+	but in all descriptors of a multi-descriptor transmission attempt on
+	re(4).  Problem was reported and fix was confirmed by Chris Brookes
+	on tech-net.  Should also close PR#37959.
+	Other various, cosmetic fixes.
+	[tsutsui, ticket #1105]
+
+sys/secmodel/overlay/overlay.h			1.2
+sys/secmodel/overlay/secmodel_overlay.c		1.4 via patch
+
+	Support device scope.
+	[elad, ticket #1108]
+
+sys/dev/ata/wd.c				1.359
+	The Hitachi HDP725025GLA380 returns "aborted command" instead of
+	"id not found" when hitting the LBA48 bug, so also install the
+	LBA48 bug workaround on "aborted command" errors.
+	[bouyer, ticket #1094]
+
+share/man/man4/rum.4				1.4
+	Correct firmware path in rum(4). 
+	PR#38216 from Nicola Mingotti.
+	[dholland, ticket #1110]
+
+sys/dev/mii/rlphy.c				1.14-1.15
+	Prepare sc_rtl8201l flag in softc and use it in rlphy_status() so that
+	we don't have to check device names of device_parent(). From FreeBSD.
+	PR#38234.
+	[tsutsui, ticket #1111]
+
+sys/netinet/ip_input.c				1.263 via patch
+sys/netinet/tcp_subr.c				1.225 via patch
+	Make sure we send a reasonable fragment size when IPSEC is configured.
+	Otherwise we end up sending a dubious "0" whenever we cannot find a
+	proper association for the packet.
+	Reset sack_newdata along with snd_nxt to avoid improper integer
+	arithmetics that lead to sending data from an incorrect place in the
+	stream, making it appear as corrupted.
+	[cube, ticket #1109]
+
+src/crypto/dist/ssh/channels.c			1.38 via patch
+src/crypto/dist/ssh/session.c			1.45 via patch
+src/crypto/dist/ssh/sshd_config.5		1.14 via patch
+	Fix two vulnerabilities in OpenSSH:
+	- X11 forwarding information disclosure (CVE-2008-1483)
+	- ForceCommand bypass vulnerability
+	[adrianp, ticket #1113]
+
+src/crypto/dist/ssh/auth-options.c		1.8 via patch
+src/crypto/dist/ssh/auth-options.h		1.4 via patch
+src/crypto/dist/ssh/session.c			1.46 via patch
+src/crypto/dist/ssh/sshd.8			1.39 via patch
+	Add no-user-rc option which disables execution of ~/.ssh/rc
+	(backport from OpenSSH 4.9)
+	[adrianp, ticket #1114]
+
+lib/libc/stdlib/strfmon.c			1.6
+	Fix another integer overflow issue discovered by Maksymilian
+	Arciemowicz.  On top of this, limit the range of getnumber to
+	0x00ffffff to make sure that adding two of them does not cause
+	an integer overflow.
+	[mjf, ticket #1115]
+
+sys/dev/vnd.c					1.174
+	Add disk-info properties to vnd(4), for use by userland tools
+	such as gpt(8).
+	[riz, ticket #1116]
+
+src/sbin/gpt/add.c				1.5
+src/sbin/gpt/create.c				1.3
+src/sbin/gpt/destroy.c				1.3
+src/sbin/gpt/gpt.c				1.4-1.6
+src/sbin/gpt/label.c				1.5-1.6
+src/sbin/gpt/migrate.c				1.4
+src/sbin/gpt/recover.c				1.3
+src/sbin/gpt/remove.c				1.4
+src/sbin/gpt/show.c				1.3
+	Improve gpt(8) error and usage messages.
+	[riz, ticket #1117]
+
+src/etc/MAKEDEV.tmpl				1.100 via patch
+	Create drvctl as part of 'all'.
+	[riz, ticket #1118]
+
+src/sbin/gpt/add.c				1.6
+src/sbin/gpt/gpt.c				1.7
+src/sbin/gpt/show.c				1.4
+src/sys/dev/dkwedge/dkwedge_gpt.c		1.7
+src/sys/sys/disk.h				1.47
+src/sys/sys/disklabel_gpt.h			1.4
+	Add NetBSD GPT partition types for swap, ffs, lfs, raidframe,
+	and cgd.  gpt(8) now defaults to NetBSD ffs if no type is
+	given, but previous FreeBSD types are still recognized in
+	the DKWEDGE_AUTODISCOVER code.
+	[riz, ticket #1119]
+
+src/lib/libc/gdtoa/dmisc.c		1.4
+src/lib/libc/gdtoa/gdtoa.c		1.4
+src/lib/libc/gdtoa/gethex.c		1.4
+src/lib/libc/gdtoa/misc.c		1.4
+src/lib/libc/gdtoa/strtof_vaxf.c	1.4-1.5
+src/lib/libc/gdtoa/strtopQ.c		1.4
+src/lib/libc/gdtoa/strtopx.c		1.4
+src/lib/libc/gdtoa/strtopxL.c		1.4
+src/lib/libc/gdtoa/strtord.c		1.4
+src/lib/libc/gdtoa/dtoa.c		1.5
+src/lib/libc/gdtoa/strtod.c		1.5
+src/lib/libc/gdtoa/g_Qfmt.c		1.3
+src/lib/libc/gdtoa/g_xLfmt.c		1.3
+src/lib/libc/gdtoa/g_xfmt.c		1.3
+src/lib/libc/gdtoa/smisc.c		1.3
+src/lib/libc/gdtoa/strtof.c		1.3
+src/lib/libc/gdtoa/strtorQ.c		1.3
+src/lib/libc/gdtoa/strtorx.c		1.3
+src/lib/libc/gdtoa/strtorxL.c		1.3
+src/lib/libc/gdtoa/g_ddfmt.c		1.2
+src/lib/libc/gdtoa/g_dfmt.c		1.2
+src/lib/libc/gdtoa/g_ffmt.c		1.2
+src/lib/libc/gdtoa/strtoIQ.c		1.2
+src/lib/libc/gdtoa/strtoId.c		1.2
+src/lib/libc/gdtoa/strtoIdd.c		1.2
+src/lib/libc/gdtoa/strtoIf.c		1.2
+src/lib/libc/gdtoa/strtoIg.c		1.2
+src/lib/libc/gdtoa/strtoIx.c		1.2
+src/lib/libc/gdtoa/strtoIxL.c		1.2
+src/lib/libc/gdtoa/strtodI.c		1.2
+src/lib/libc/gdtoa/strtodnrp.c		1.2
+src/lib/libc/gdtoa/strtopd.c		1.2
+src/lib/libc/gdtoa/strtopdd.c		1.2
+src/lib/libc/gdtoa/strtopf.c		1.2
+src/lib/libc/gdtoa/strtordd.c		1.2
+src/lib/libc/gdtoa/strtorf.c		1.2
+src/lib/libc/gdtoa/sum.c		1.2
+src/lib/libc/gdtoa/gdtoa.h		1.8
+src/lib/libc/gdtoa/hdtoa.c		1.6
+src/lib/libc/gdtoa/strtodg.c		1.6
+src/lib/libc/stdio/vfwprintf.c		1.12
+	Don't coredump on out of memory conditions. This solution leaks,
+	but gdtoa is too complicated to fix.
+	Try printf %99999999999.9999999999f 2
+	[mjf, ticket #1120]
+
+src/sys/kern/kern_ktrace.c			1.112.4.1
+src/sys/kern/kern_sa.c				1.87.4.9
+src/sys/sys/ktrace.h				1.45.4.1
+	Pass an array of pointers in kernel VM space to ktrsaupcall for it
+	to create the ktrace record instead of trying to access a pointer
+	in userland.
+	Fixes PR#37534
+	[skrll, ticket #1121]
+
+crypto/dist/openssl/crypto/bn/bn_mont.c		1.2
+
+	Fix for CVE-2007-3108.
+        The BN_from_montgomery function in crypto/bn/bn_mont.c in
+	OpenSSL 0.9.8e and earlier does not properly perform Montgomery
+	multiplication, which might allow local users to conduct
+	a side-channel attack and retrieve RSA private keys.
+	[adrianp, ticket #1123]
+
+src/dist/tcpdump/print-802_11.c			patch
+src/dist/tcpdump/print-bgp.c			patch
+src/dist/tcpdump/print-isoclns.c		patch
+
+	Fix CVE-2007-1218, CVE-2007-3798 and CAN-2005-1278 in base-tcpdump.
+	[tonnerre, ticket #1124]
+
+sys/dev/pci/agp_ali.c				1.14
+
+	Fix infinite loop with AGP on Ali M1689 (from PR/38269 and PR/35416),
+	by disallowing aperture size values below 1MB.
+	[njoly, ticket #1125]
+
+sys/dev/raidframe/rf_driver.c			1.117
+
+	Fix display of total number of sectors if > 2^32 on 32-bit machines
+	[sborrill, ticket #1126]
+
+sys/dev/raidframe/rf_reconstruct.c		1.103
+
+	Fixes the (mostly cosmetic) bug where the reconstruction
+	status values stop updating, and from raidctl it appears that
+	reconstruction has totally stalled (which it actually hasn't).
+	[oster, ticket #1127]
+
+distrib/sets/lists/man/mi			1.1062, 1.1063 via patch
+share/man/man4/Makefile				1.460 via patch
+share/man/man4/lii.4				1.1 via patch
+sys/arch/i386/conf/ALL				1.161 via patch
+sys/arch/i386/conf/GENERIC			1.885 via patch
+sys/arch/i386/conf/INSTALL			1.323 via patch
+sys/arch/i386/conf/XEN2_DOM0			1.43 via patch
+sys/dev/DEVNAMES				1.238 via patch
+sys/dev/pci/files.pci				1.303 via patch
+sys/dev/pci/if_lii.c				1.1, 1.3 via patch
+sys/dev/pci/if_lii.c				1.3 via patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add a driver for the Atheros/Attansic L2 Fast-Ethernet chip found on a
+	series of hardware that includes Asus's famous EeePC.
+	[sborrill, ticket #1128]
+
+gnu/dist/binutils/bfd/elf32-vax.c		1.5.6.1
+gnu/dist/binutils/gas/config/tc-vax.c		1.4.4.1.2.1
+gnu/dist/binutils/gas/config/tc-vax.h		1.1.1.1.18.1
+gnu/dist/gcc4/gcc/config/vax/builtins.md	1.2.10.2
+gnu/dist/gcc4/gcc/config/vax/elf.h		1.1.1.1.6.1
+gnu/dist/gcc4/gcc/config/vax/netbsd-elf.h	1.1.1.1.6.1
+gnu/dist/gcc4/gcc/config/vax/predicates.md	1.3.10.2
+gnu/dist/gcc4/gcc/config/vax/vax-protos.h	1.1.1.1.6.1
+gnu/dist/gcc4/gcc/config/vax/vax.c		1.1.1.1.6.1
+gnu/dist/gcc4/gcc/config/vax/vax.h		1.2.6.1
+gnu/dist/gcc4/gcc/config/vax/vax.md		1.1.1.1.4.1.2.1
+gnu/dist/gcc4/gcc/config/vax/vax.opt		1.1.1.1.6.1
+gnu/lib/crtstuff4/Makefile			1.1.6.1
+gnu/lib/libgcc4/libgcc/Makefile			1.2.6.1
+lib/libcrypto/Makefile				1.46.4.2
+share/mk/bsd.own.mk				1.489.4.3
+sys/arch/vax/boot/Makefile.inc			1.12.16.1
+sys/arch/vax/conf/Makefile.vax			1.77.22.1
+sys/arch/vax/include/macros.h			1.37.14.1
+sys/lib/libkern/libkern.h			1.67.6.1
+tools/gcc/Makefile				1.22.4.1
+
+	Pullup changes to get vax shlibs working from the wrstuden-fixsa branch.
+	[skrll, ticket #1129]
+
+sys/dev/pcmcia/esp_pcmcia.c			1.30
+
+	Fix kernel panics on attach. Fix kern/34537 (and part of kern/26909).
+	[itohy, ticket #1130]
+
+sys/arch/i386/bios/vesafb.c			1.27
+
+	Disable splashscreen during autoconf in a number of scenarios.
+	[sborrill, ticket #1135]
+
+sys/dev/isa/if_fmv_isa.c			1.12
+
+	Fix a botch (inverted test) in rev 1.4.
+	[tsutsui, ticket #1131]
+
+sys/arch/sparc/stand/common/conf.c		1.2
+sys/arch/sparc/stand/common/promdev.c		1.21
+
+	Add support booting from UFS2 partition for sparc.
+	Tested on tme emulating SS2.
+	Closes PR#36068.
+	[tsutsui, ticket #1132]
+
+usr.bin/gzip/znew				1.3
+
+	Our gzip does not have "-o" option.
+	So replace -o with >, so that znew can now work again.
+	[nakayama, ticket #1133]
+
+usr.bin/gzip/zgrep				1.6
+
+	grep "-H" option (print the filename for each match) always prints
+	filenames whether "-h" option (suppress filenames when multiple files
+	are searched) is specified or not.
+	Make zgrep "-h" option actually work with using "-H" option only
+	when "-h" is not specified.
+	Fixes PR#36062.
+	[nakayama, ticket #1134]
+
+usr.sbin/lpr/common_source/common.c		1.38
+
+	Sort queue by time and jobid so that jobs submitted within the
+	same second are printed in order.
+	[mlelstv, ticket #1136]
+
+sys/netipsec/key.c				1.54
+
+	In key_do_allocsa_policy, fix a bad usage of key_setsadbmsg.
+	The third argument is an SADB_SATYPE_*, not an IPPROTO_* .
+	Fixes PR#38405
+	[degroote, ticket #1137]
+
+gnu/dist/gcc4/gcc/config/m68k/m68k.md		1.5
+
+	Pull the follwoing fix from upstream:
+	  http://gcc.gnu.org/viewcvs/trunk/gcc/config/m68k/m68k.md#rev117181
+	Fixes "internal compiler error: in do_SUBST" on compiling
+	floating point ops with -msoft-float or -m68010 on LP64 hosts,
+	May fix PR#38359.
+	[tsutsui, ticket #1138]
+
+gnu/dist/gcc4/gcc/genemit.c			1.2
+gnu/dist/gcc4/gcc/genrecog.c			1.2
+gnu/dist/gcc4/gcc/hwint.h			1.2
+
+	Defer wide int L/LL suffix choice in insn-*.c until we compile for
+	host using correct set of HOST_WIDE_INT* defines.  Fixes compilation
+	of native sh3 gcc on 64-bit build machines.
+	PR#34549.
+	[uwe, ticket #1139]
+
+sys/dev/raidframe/rf_layout.c			1.20
+
+	Both StripeUnitsPerParityUnit and StripeUnitsPerReconstructUnit need
+	to be positive integers.
+	[oster, ticket #1140]
+
+sys/arch/x86/isa/clock.c			1.25 via patch
+
+	unbreak i8254_get_timecount() in environments where the
+	clock interrupt is derived from other sources (e.g. lapic)
+	and the i8254 timer is running the full cycle without
+	being used as clock interrupt source.
+	[kardel, ticket #1058]
+
+sys/netinet/ip_mroute.c				1.113
+
+	Make sure to clear csum_flags before forward the packet.
+	Fix DIAGNOSTIC kernel's panic when the machine act
+	as multicast router.
+	[taca, ticket #1141]
+
+sys/dev/pci/pci_map.c				1.21
+
+	allow pci_find_mem to map a 64-bit BAR.
+	[sborrill, ticket #1142]
+
+share/man/man4/aac.4				1.13 via patch
+sys/dev/pci/aac_pci.c				1.25 via patch
+sys/dev/pci/pcidevs				1.939 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for IBM ServeRAID 8k (and 8k-l)
+	[sborrill, ticket #1143]
+
+sys/dev/pci/if_bge.c				1.144 via patch
+
+	Check wether interrupts originate from the bge hardware.
+	Fixes PR kern/33433.
+	[mlelstv, ticket #1144]
+
+usr.bin/getent/getent.1				1.17 via patch
+usr.bin/getent/getent.c				1.14 via patch
+
+	Add support for "netgroup" database. The output format matches what
+	Linux produces (because Solaris doesn't support this).
+	[tron, ticket #1147]
+
+libexec/mail.local/mail.local.c			1.24
+
+	Make sure temporary errors are reported as such, using status code
+	EX_TEMPFAIL (cannot lookup user through NSS, may be because of an
+	unreachable NIS or LDAP server), or EX_OSERR (other file or memory
+	related problems).
+	[manu, ticket #1148]
+
+src/share/man/man4/gem.4		1.5,1.6 via patch
+src/sys/arch/sparc64/conf/GENERIC	1.97 via patch
+src/sys/dev/ic/gem.c			1.59,1.61-1.68,1.70-1.73 via patch
+src/sys/dev/ic/gemreg.h			1.11 via patch
+src/sys/dev/ic/gemvar.h			1.16,1.18 via patch
+src/sys/dev/mii/bmtphy.c		1.24 via patch
+src/sys/dev/pci/if_gem_pci.c		1.25,1.27 via patch
+src/sys/dev/pci/pcidevs	1.12		via patch
+src/sys/dev/pci/pcidevs.h		regenerate
+src/sys/dev/pci/pcidevs_data.h		regenerate
+
+	Add support for Sun PCI X1141A (SX fibre) cards.
+	Add improvements to the driver.
+	Disable HW UDP4 and RX TCP4 checksums because they are buggy (PR#34799).
+	Add improvements to bmtphy.
+	[jdc, ticket #1145]
+
+sys/dev/i2o/iop.c			patch
+	Fix crash during boot on systems with an I2O controller.
+	Fix port-amd64/34323
+	[ad, ticket #1146]
+
+sys/kern/uipc_usrreq.c				1.110, 1.111 via patch
+
+	If cm->cmsg_len is not valid for unp_internalize do not use it to
+	work out where the data is in unp_scan.  Fixes PR/38391
+	[mlelstv, ticket #1151]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.155
+
+	Treat ledma the same way as sbus and dma when looking for the boot path.
+	Original Ultra 1's with sbus -> ledma -> le can now network boot again.
+	(From martin@).
+	[jdc, ticket #1152]
+
+sys/dev/raidframe/rf_reconmap.c			1.31
+sys/dev/raidframe/rf_reconmap.h			1.11
+sys/dev/raidframe/rf_reconstruct.c		1.104
+sys/dev/raidframe/rf_reconstruct.h		1.24
+sys/dev/raidframe/rf_revent.c			1.25
+
+	Convert the reconstruction code to use a "sliding status window"
+	which will scale nicely regardless of the number of
+	stripes/reconstruction units in the RAID set.  Convert the main
+	reconstruction loop to rebuild the array in chunks rather than in
+	one big lump. May fix bin/38471. 
+	[oster, ticket #1153]
+
+sys/dev/raidframe/rf_states.c			1.43
+
+	Add in a missing "bp->b_resid = bp->b_bcount" in the EIO case.
+	Spotted by Juergen Hannken-Illjes.  Thanks!
+	[oster, ticket #1154]
+

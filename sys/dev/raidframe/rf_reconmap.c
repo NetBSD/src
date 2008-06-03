@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.29 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.29.10.1 2008/06/03 20:47:33 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.29 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.29.10.1 2008/06/03 20:47:33 skrll Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -61,18 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.29 2006/11/16 01:33:23 christos Ex
 #define RF_NUM_RECON_POOL_ELEM 100
 
 static void
-compact_stat_entry(RF_Raid_t * raidPtr, RF_ReconMap_t * mapPtr,
-    int i);
-static void crunch_list(RF_ReconMap_t *mapPtr,
-			RF_ReconMapListElem_t * listPtr);
+compact_stat_entry(RF_Raid_t *, RF_ReconMap_t *, int, int);
+static void crunch_list(RF_ReconMap_t *, RF_ReconMapListElem_t *);
 static RF_ReconMapListElem_t *
-MakeReconMapListElem(RF_ReconMap_t *mapPtr, RF_SectorNum_t startSector,
-		     RF_SectorNum_t stopSector, RF_ReconMapListElem_t * next);
+MakeReconMapListElem(RF_ReconMap_t *, RF_SectorNum_t, RF_SectorNum_t,
+		     RF_ReconMapListElem_t *);
 static void
 FreeReconMapListElem(RF_ReconMap_t *mapPtr, RF_ReconMapListElem_t * p);
-#if 0
-static void PrintList(RF_ReconMapListElem_t * listPtr);
-#endif
 
 /*---------------------------------------------------------------------------
  *
@@ -99,13 +94,16 @@ rf_MakeReconMap(RF_Raid_t *raidPtr, RF_SectorCount_t ru_sectors,
 	p->totalRUs = num_rus;
 	p->spareRUs = spareUnitsPerDisk;
 	p->unitsLeft = num_rus - spareUnitsPerDisk;
+	p->low_ru = 0;
+	p->status_size = RF_RECONMAP_SIZE;
+	p->high_ru = p->status_size - 1;
+	p->head = 0;
 
-	RF_Malloc(p->status, num_rus * sizeof(RF_ReconMapListElem_t *), (RF_ReconMapListElem_t **));
+	RF_Malloc(p->status, p->status_size * sizeof(RF_ReconMapListElem_t *), (RF_ReconMapListElem_t **));
 	RF_ASSERT(p->status != (RF_ReconMapListElem_t **) NULL);
 
 	(void) memset((char *) p->status, 0,
-	    num_rus * sizeof(RF_ReconMapListElem_t *));
-
+	    p->status_size * sizeof(RF_ReconMapListElem_t *));
 
 	pool_init(&p->elem_pool, sizeof(RF_ReconMapListElem_t), 0,
 	    0, 0, "raidreconpl", NULL);
@@ -138,12 +136,13 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
 		  RF_SectorNum_t startSector, RF_SectorNum_t stopSector)
 {
 	RF_SectorCount_t sectorsPerReconUnit = mapPtr->sectorsPerReconUnit;
-	RF_SectorNum_t i, first_in_RU, last_in_RU;
+	RF_SectorNum_t i, first_in_RU, last_in_RU, ru;
 	RF_ReconMapListElem_t *p, *pt;
 
 	RF_LOCK_MUTEX(mapPtr->mutex);
 	while(mapPtr->lock) {
-		ltsleep(&mapPtr->lock, PRIBIO, "reconupdate", 0, &mapPtr->mutex);
+		ltsleep(&mapPtr->lock, PRIBIO, "reconupdate", 0, 
+			&mapPtr->mutex);
 	}
 	mapPtr->lock = 1;
 	RF_UNLOCK_MUTEX(mapPtr->mutex);
@@ -154,12 +153,51 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
 		i = startSector / mapPtr->sectorsPerReconUnit;
 		first_in_RU = i * sectorsPerReconUnit;
 		last_in_RU = first_in_RU + sectorsPerReconUnit - 1;
-		p = mapPtr->status[i];
+
+		/* do we need to move the queue? */
+		while (i > mapPtr->high_ru) {
+#ifdef DIAGNOSTIC
+			if (mapPtr->status[mapPtr->head]!=RU_ALL) {
+				printf("\nraid%d: reconmap incorrect -- working on i %" PRIu64 "\n",
+				       raidPtr->raidid, i);
+				printf("raid%d: ru %" PRIu64 " not completed!!!\n",
+				       raidPtr->raidid, mapPtr->head);
+				
+				printf("raid%d: low: %" PRIu64 " high: %" PRIu64 "\n",
+				       raidPtr->raidid, mapPtr->low_ru, mapPtr->high_ru);
+
+				panic("reconmap incorrect");
+			} 
+#endif
+			mapPtr->low_ru++;
+			mapPtr->high_ru++;
+			/* initialize "highest" RU status entry, which
+			   will take over the current head postion */
+			mapPtr->status[mapPtr->head]=RU_NOTHING;
+			
+			/* move head too */
+			mapPtr->head++;
+			if (mapPtr->head >= mapPtr->status_size)
+				mapPtr->head = 0;
+
+		}
+
+		ru = i - mapPtr->low_ru + mapPtr->head;
+		if (ru >= mapPtr->status_size)
+			ru = ru - mapPtr->status_size;
+
+		if ((ru < 0) || (ru >= mapPtr->status_size)) {
+			printf("raid%d: ru is bogus %" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64 "%" PRIu64 "\n",
+			       raidPtr->raidid, i, ru, mapPtr->head, mapPtr->low_ru, mapPtr->high_ru);
+			panic("bogus ru in reconmap");
+		}
+			       
+		p = mapPtr->status[ru];
 		if (p != RU_ALL) {
 			if (p == RU_NOTHING || p->startSector > startSector) {
 				/* insert at front of list */
 
-				mapPtr->status[i] = MakeReconMapListElem(mapPtr,startSector, RF_MIN(stopSector, last_in_RU), (p == RU_NOTHING) ? NULL : p);
+				mapPtr->status[ru] = MakeReconMapListElem(mapPtr,startSector, RF_MIN(stopSector, last_in_RU), (p == RU_NOTHING) ? NULL : p);
 
 			} else {/* general case */
 				do {	/* search for place to insert */
@@ -169,11 +207,11 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
 				pt->next = MakeReconMapListElem(mapPtr,startSector, RF_MIN(stopSector, last_in_RU), p);
 
 			}
-			compact_stat_entry(raidPtr, mapPtr, i);
+			compact_stat_entry(raidPtr, mapPtr, i, ru);
 		}
 		startSector = RF_MIN(stopSector, last_in_RU) + 1;
 	}
-	RF_LOCK_MUTEX(mapPtr->mutex);
+	RF_LOCK_MUTEX(mapPtr->mutex);    
 	mapPtr->lock = 0;
 	wakeup(&mapPtr->lock);
 	RF_UNLOCK_MUTEX(mapPtr->mutex);
@@ -200,21 +238,22 @@ rf_ReconMapUpdate(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr,
  *-------------------------------------------------------------------------*/
 
 static void
-compact_stat_entry(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, int i)
+compact_stat_entry(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, int i, int j)
 {
 	RF_SectorCount_t sectorsPerReconUnit = mapPtr->sectorsPerReconUnit;
-	RF_ReconMapListElem_t *p = mapPtr->status[i];
+	RF_ReconMapListElem_t *p = mapPtr->status[j];
 
 	crunch_list(mapPtr, p);
 
 	if ((p->startSector == i * sectorsPerReconUnit) &&
 	    (p->stopSector == i * sectorsPerReconUnit +
 			      sectorsPerReconUnit - 1)) {
-		mapPtr->status[i] = RU_ALL;
+		mapPtr->status[j] = RU_ALL;
 		mapPtr->unitsLeft--;
 		FreeReconMapListElem(mapPtr, p);
 	}
 }
+
 
 static void
 crunch_list(RF_ReconMap_t *mapPtr, RF_ReconMapListElem_t *listPtr)
@@ -283,7 +322,7 @@ rf_FreeReconMap(RF_ReconMap_t *mapPtr)
 	if (mapPtr->sectorsInDisk % mapPtr->sectorsPerReconUnit)
 		numRUs++;
 
-	for (i = 0; i < numRUs; i++) {
+	for (i = 0; i < mapPtr->status_size; i++) {
 		p = mapPtr->status[i];
 		while (p != RU_NOTHING && p != RU_ALL) {
 			q = p;
@@ -291,8 +330,9 @@ rf_FreeReconMap(RF_ReconMap_t *mapPtr)
 			RF_Free(q, sizeof(*q));
 		}
 	}
+
 	pool_destroy(&mapPtr->elem_pool);
-	RF_Free(mapPtr->status, mapPtr->totalRUs *
+	RF_Free(mapPtr->status, mapPtr->status_size *
 		sizeof(RF_ReconMapListElem_t *));
 	RF_Free(mapPtr, sizeof(RF_ReconMap_t));
 }
@@ -305,12 +345,26 @@ rf_FreeReconMap(RF_ReconMap_t *mapPtr)
 int
 rf_CheckRUReconstructed(RF_ReconMap_t *mapPtr, RF_SectorNum_t startSector)
 {
-	RF_ReconMapListElem_t *l;	/* used for searching */
 	RF_ReconUnitNum_t i;
+	int rv;
 
 	i = startSector / mapPtr->sectorsPerReconUnit;
-	l = mapPtr->status[i];
-	return ((l == RU_ALL) ? 1 : 0);
+	
+	if (i < mapPtr->low_ru)
+		rv = 1;
+	else if (i > mapPtr->high_ru)
+		rv = 0;
+	else {
+		i = i - mapPtr->low_ru + mapPtr->head;
+		if (i >= mapPtr->status_size)
+			i = i - mapPtr->status_size;
+		if (mapPtr->status[i] == RU_ALL)
+			rv = 1;
+		else
+			rv = 0;
+	}
+	
+	return rv;
 }
 
 RF_ReconUnitCount_t
@@ -319,44 +373,6 @@ rf_UnitsLeftToReconstruct(RF_ReconMap_t *mapPtr)
 	RF_ASSERT(mapPtr != NULL);
 	return (mapPtr->unitsLeft);
 }
-
-#if 0
-static void
-PrintList(RF_ReconMapListElem_t *listPtr)
-{
-	while (listPtr) {
-		printf("%d,%d -> ", (int) listPtr->startSector,
-		       (int) listPtr->stopSector);
-		listPtr = listPtr->next;
-	}
-	printf("\n");
-}
-
-void
-rf_PrintReconMap(RF_Raid_t *raidPtr, RF_ReconMap_t *mapPtr, RF_RowCol_t fcol)
-{
-	RF_ReconUnitCount_t numRUs;
-	RF_ReconMapListElem_t *p;
-	RF_ReconUnitNum_t i;
-
-	numRUs = mapPtr->totalRUs;
-	if (mapPtr->sectorsInDisk % mapPtr->sectorsPerReconUnit)
-		numRUs++;
-
-	for (i = 0; i < numRUs; i++) {
-		p = mapPtr->status[i];
-		if (p == RU_ALL)/* printf("[%d] ALL\n",i) */
-			;
-		else
-			if (p == RU_NOTHING) {
-				printf("%d: Unreconstructed\n", i);
-			} else {
-				printf("%d: ", i);
-				PrintList(p);
-			}
-	}
-}
-#endif
 
 #if RF_DEBUG_RECON
 void

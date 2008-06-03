@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.3 2006/11/14 22:14:56 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.3.12.1 2008/06/03 20:47:18 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.3.12.1 2008/06/03 20:47:18 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.7.2.1.2.1 2007/10/29 00:45:15 wrstuden Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.7.2.1.2.2 2008/06/03 20:47:24 skrll Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.7.2.1.2.1 2007/10/29 00:45:15 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.7.2.1.2.2 2008/06/03 20:47:24 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -173,7 +173,15 @@ const struct nfe_product {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN1 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN2 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN3 },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN4 }
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN4 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN1 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN2 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN3 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN4 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN1 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN2 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN3 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN4 }
 };
 
 int
@@ -241,6 +249,10 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
+	/* Check for reversed ethernet address */
+	if ((NFE_READ(sc, NFE_TX_UNK) & NFE_MAC_ADDR_INORDER) != 0)
+		sc->sc_flags |= NFE_CORRECT_MACADDR;
+
 	nfe_get_macaddr(sc, sc->sc_enaddr);
 	printf("%s: Ethernet address %s\n",
 	    sc->sc_dev.dv_xname, ether_sprintf(sc->sc_enaddr));
@@ -260,7 +272,15 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP61_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP61_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP61_LAN4:
-		sc->sc_flags |= NFE_40BIT_ADDR;
+	case PCI_PRODUCT_NVIDIA_MCP67_LAN1:
+	case PCI_PRODUCT_NVIDIA_MCP67_LAN2:
+	case PCI_PRODUCT_NVIDIA_MCP67_LAN3:
+	case PCI_PRODUCT_NVIDIA_MCP67_LAN4:
+	case PCI_PRODUCT_NVIDIA_MCP73_LAN1:
+	case PCI_PRODUCT_NVIDIA_MCP73_LAN2:
+	case PCI_PRODUCT_NVIDIA_MCP73_LAN3:
+	case PCI_PRODUCT_NVIDIA_MCP73_LAN4:
+		sc->sc_flags |= NFE_40BIT_ADDR |NFE_PWR_MGMT;
 		break;
 	case PCI_PRODUCT_NVIDIA_CK804_LAN1:
 	case PCI_PRODUCT_NVIDIA_CK804_LAN2:
@@ -275,8 +295,20 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN4:
 		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM |
-		    NFE_HW_VLAN;
+		    NFE_HW_VLAN | NFE_PWR_MGMT;
 		break;
+	}
+
+	if ((sc->sc_flags & NFE_PWR_MGMT) != 0) {
+		/* wakeup some newer chips from powerdown mode */
+		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_RESET | NFE_RXTX_BIT2);
+		NFE_WRITE(sc, NFE_MAC_RESET, NFE_MAC_RESET_MAGIC);
+		DELAY(100);
+		NFE_WRITE(sc, NFE_MAC_RESET, 0);
+		DELAY(100);
+		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_BIT2);
+		NFE_WRITE(sc, NFE_PWR2_CTL,
+		    NFE_READ(sc, NFE_PWR2_CTL) & ~NFE_PWR2_WAKEUP_MASK);
 	}
 
 #ifndef NFE_NO_JUMBO
@@ -1868,15 +1900,27 @@ nfe_get_macaddr(struct nfe_softc *sc, uint8_t *addr)
 {
 	uint32_t tmp;
 
-	tmp = NFE_READ(sc, NFE_MACADDR_LO);
-	addr[0] = (tmp >> 8) & 0xff;
-	addr[1] = (tmp & 0xff);
+	if ((sc->sc_flags & NFE_CORRECT_MACADDR) == 0) {
+		tmp = NFE_READ(sc, NFE_MACADDR_LO);
+		addr[0] = (tmp >> 8) & 0xff;
+		addr[1] = (tmp & 0xff);
 
-	tmp = NFE_READ(sc, NFE_MACADDR_HI);
-	addr[2] = (tmp >> 24) & 0xff;
-	addr[3] = (tmp >> 16) & 0xff;
-	addr[4] = (tmp >>  8) & 0xff;
-	addr[5] = (tmp & 0xff);
+		tmp = NFE_READ(sc, NFE_MACADDR_HI);
+		addr[2] = (tmp >> 24) & 0xff;
+		addr[3] = (tmp >> 16) & 0xff;
+		addr[4] = (tmp >>  8) & 0xff;
+		addr[5] = (tmp & 0xff);
+	} else {
+		tmp = NFE_READ(sc, NFE_MACADDR_LO);
+		addr[5] = (tmp >> 8) & 0xff;
+		addr[4] = (tmp & 0xff);
+
+		tmp = NFE_READ(sc, NFE_MACADDR_HI);
+		addr[3] = (tmp >> 24) & 0xff;
+		addr[2] = (tmp >> 16) & 0xff;
+		addr[1] = (tmp >>  8) & 0xff;
+		addr[0] = (tmp & 0xff);
+	}
 }
 
 void

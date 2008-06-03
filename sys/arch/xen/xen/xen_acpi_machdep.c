@@ -1,4 +1,7 @@
-/*	$NetBSD: xen_acpi_machdep.c,v 1.1 2006/04/09 19:28:01 bouyer Exp $	*/
+/*	$NetBSD: xen_acpi_machdep.c,v 1.1.40.1 2008/06/03 20:47:18 skrll Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xen_acpi_machdep.c,v 1.1.40.1 2008/06/03 20:47:18 skrll Exp $");
 
 #include "acpi.h"
 
