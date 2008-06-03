@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.107 2008/05/16 09:22:00 hannken Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.108 2008/06/03 09:47:49 hannken Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.107 2008/05/16 09:22:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.108 2008/06/03 09:47:49 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1548,12 +1548,13 @@ gotit:
 	if (fs->fs_magic == FS_UFS2_MAGIC &&
 	    ipref + INOPB(fs) > initediblk &&
 	    initediblk < ufs_rw32(cgp->cg_niblk, needswap)) {
-		ibp = getblk(ip->i_devvp, fsbtodb(fs,
+		if (ffs_getblk(ip->i_devvp, fsbtodb(fs,
 		    ino_to_fsba(fs, cg * fs->fs_ipg + initediblk)),
-		    (int)fs->fs_bsize, 0, 0);
-		    memset(ibp->b_data, 0, fs->fs_bsize);
-		    dp2 = (struct ufs2_dinode *)(ibp->b_data);
-		    for (i = 0; i < INOPB(fs); i++) {
+		    FFS_NOBLK, fs->fs_bsize, false, &ibp) != 0)
+			goto fail;
+		memset(ibp->b_data, 0, fs->fs_bsize);
+		dp2 = (struct ufs2_dinode *)(ibp->b_data);
+		for (i = 0; i < INOPB(fs); i++) {
 			/*
 			 * Don't bother to swap, it's supposed to be
 			 * random, after all.
