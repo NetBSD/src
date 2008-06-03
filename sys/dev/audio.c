@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.239 2008/04/24 15:35:27 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.240 2008/06/03 02:16:18 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.239 2008/04/24 15:35:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.240 2008/06/03 02:16:18 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -4063,34 +4063,51 @@ static void
 audio_volume_down(device_t dv)
 {
 	struct audio_softc *sc = device_private(dv);
-	u_int gain, newgain;
+	mixer_devinfo_t mi;
+	int newgain;
+	u_int gain;
 	u_char balance;
 	int s;
 
-	s = splaudio();
-	au_get_gain(sc, &sc->sc_outports, &gain, &balance);
-	newgain = gain - 32;
-	if (newgain > 255)
-		newgain = 0;
-	au_set_gain(sc, &sc->sc_outports, newgain, balance);
-	splx(s);
+	if (sc->sc_outports.index == -1 && sc->sc_outports.master != -1) {
+		mi.index = sc->sc_outports.master;
+		mi.un.v.delta = 0;
+		if (sc->hw_if->query_devinfo(sc->hw_hdl, &mi) != 0)
+			return;
+
+		s = splaudio();
+		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+		newgain = gain - mi.un.v.delta;
+		if (newgain < AUDIO_MIN_GAIN)
+			newgain = AUDIO_MIN_GAIN;
+		au_set_gain(sc, &sc->sc_outports, newgain, balance);
+		splx(s);
+	}
 }
 
 static void
 audio_volume_up(device_t dv)
 {
 	struct audio_softc *sc = device_private(dv);
+	mixer_devinfo_t mi;
 	u_int gain, newgain;
 	u_char balance;
 	int s;
 
-	s = splaudio();
-	au_get_gain(sc, &sc->sc_outports, &gain, &balance);
-	newgain = gain + 32;
-	if (newgain > 255)
-		newgain = 255;
-	au_set_gain(sc, &sc->sc_outports, newgain, balance);
-	splx(s);
+	if (sc->sc_outports.index == -1 && sc->sc_outports.master != -1) {
+		mi.index = sc->sc_outports.master;
+		mi.un.v.delta = 0;
+		if (sc->hw_if->query_devinfo(sc->hw_hdl, &mi) != 0)
+			return;
+
+		s = splaudio();
+		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+		newgain = gain + mi.un.v.delta;
+		if (newgain > AUDIO_MAX_GAIN)
+			newgain = AUDIO_MAX_GAIN;
+		au_set_gain(sc, &sc->sc_outports, newgain, balance);
+		splx(s);
+	}
 }
 
 static void
