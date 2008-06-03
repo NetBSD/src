@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.337.2.2 2007/04/06 18:47:19 bouyer Exp $
+#	$NetBSD: Makefile,v 1.337.2.2.2.1 2008/06/03 20:47:00 skrll Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -91,8 +91,8 @@ UTMPGRP= utmp
 BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	daily.conf dm.conf floppytab ftpchroot ftpusers \
 	gettytab group hosts hosts.lpd inetd.conf lkm.conf locate.conf \
-	mailer.conf man.conf monthly monthly.conf mrouted.conf named.conf \
-	netconfig networks newsyslog.conf nsswitch.conf ntp.conf \
+	login.conf mailer.conf man.conf monthly monthly.conf mrouted.conf \
+	named.conf netconfig networks newsyslog.conf nsswitch.conf ntp.conf \
 	passwd.conf phones printcap profile protocols \
 	rbootd.conf rc rc.conf rc.lkm rc.local rc.subr rc.shutdown remote rpc \
 	security security.conf services shells shrc sysctl.conf syslog.conf \
@@ -187,7 +187,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		MKMAN MKMANZ MKNLS MKOBJ MKOBJDIRS \
 		MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
 		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
-		MKUNPRIVED MKUPDATE MKUUCP MKX11 MKYP \
+		MKUNPRIVED MKUPDATE MKX11 MKYP \
 		NBUILDJOBS NETBSDSRCDIR \
 		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
 		OBJMACHINE \

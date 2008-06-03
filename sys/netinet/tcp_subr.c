@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.208.4.1 2007/06/04 01:54:24 wrstuden Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.208.4.2 2008/06/03 20:47:42 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.208.4.1 2007/06/04 01:54:24 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.208.4.2 2008/06/03 20:47:42 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1729,7 +1729,7 @@ tcp_mtudisc(struct inpcb *inp, int errno)
 		/*
 		 * Resend unacknowledged packets.
 		 */
-		tp->snd_nxt = tp->snd_una;
+		tp->snd_nxt = tp->sack_newdata = tp->snd_una;
 		tcp_output(tp);
 	}
 }
@@ -1786,7 +1786,7 @@ tcp6_mtudisc(struct in6pcb *in6p, int errno)
 		/*
 		 * Resend unacknowledged packets.
 		 */
-		tp->snd_nxt = tp->snd_una;
+		tp->snd_nxt = tp->sack_newdata = tp->snd_una;
 		tcp_output(tp);
 	}
 }

@@ -1,5 +1,3 @@
-/*	$NetBSD: spewG.c,v 1.1.1.1 2001/06/03 13:03:06 simonb Exp $	*/
-
 
 /* spew out a thoroughly gigantic file designed so that bzip2
    can compress it reasonably rapidly.  This is to help test
@@ -10,6 +8,21 @@
    Real Files; it'll just waste a lot of CPU time :-)
    (but is otherwise harmless).
 */
+
+/* ------------------------------------------------------------------
+   This file is part of bzip2/libbzip2, a program and library for
+   lossless, block-sorting data compression.
+
+   bzip2/libbzip2 version 1.0.5 of 10 December 2007
+   Copyright (C) 1996-2007 Julian Seward <jseward@bzip.org>
+
+   Please read the WARNING, DISCLAIMER and PATENTS sections in the 
+   README file.
+
+   This program is released under the terms of the license contained
+   in the file LICENSE.
+	 ------------------------------------------------------------------ */
+
 
 #define _FILE_OFFSET_BITS 64
 

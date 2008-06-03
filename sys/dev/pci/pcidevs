@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.855.2.5.2.3 2008/01/06 05:01:08 wrstuden Exp $
+$NetBSD: pcidevs,v 1.855.2.5.2.4 2008/06/03 20:47:24 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -596,9 +596,11 @@ vendor BELKIN		0x1799	Belkin
 vendor HAWKING		0x17b3	Hawking Technology
 vendor SANDBURST	0x17ba	Sandburst
 vendor I4		0x17cf	I4
+vendor ARECA 		0x17d3	Areca
 vendor S2IO		0x17d5	S2io Technologies
 vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
+vendor ATTANSIC         0x1969  Attansic Technologies
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
@@ -973,6 +975,7 @@ product APPLE U3_PPB4		0x0048	U3 PCI-PCI bridge
 product APPLE U3_PPB5		0x0049	U3 PCI-PCI bridge
 product APPLE U3_AGP		0x004b	U3 AGP Interface
 product APPLE K2_GMAC		0x004c	GMAC Ethernet
+product APPLE SHASTA_GMAC	0x0051	Shasta GMAC
 product APPLE INTREPID2_AGP	0x0066	Intrepid 2 AGP
 product APPLE INTREPID2_PCI1	0x0067	Intrepid 2 PCI
 product APPLE INTREPID2_PCI2	0x0068	Intrepid 2 PCI
@@ -985,11 +988,35 @@ product ARC 1000PV	0xa091	1000PV
 product ARC 2000PV	0xa099	2000PV
 product ARC 2000MT	0xa0a1	2000MT
 
+/* Areca products */
+product ARECA ARC1110	0x1110	ARC-1110
+product ARECA ARC1120	0x1120	ARC-1120
+product ARECA ARC1130	0x1130	ARC-1130
+product ARECA ARC1160	0x1160	ARC-1160
+product ARECA ARC1170	0x1170	ARC-1170
+product ARECA ARC1200	0x1200	ARC-1200
+product ARECA ARC1200_B	0x1201	ARC-1200 rev B
+product ARECA ARC1202	0x1202	ARC-1202
+product ARECA ARC1210	0x1210	ARC-1210
+product ARECA ARC1220	0x1220	ARC-1220
+product ARECA ARC1230	0x1230	ARC-1230
+product ARECA ARC1260	0x1260	ARC-1260
+product ARECA ARC1270	0x1270	ARC-1270
+product ARECA ARC1280	0x1280	ARC-1280
+product ARECA ARC1380	0x1380	ARC-1380
+product ARECA ARC1381	0x1381	ARC-1381
+product ARECA ARC1680	0x1680	ARC-1680
+product ARECA ARC1681	0x1681	ARC-1681
+
 /* ASIX Electronics products */
 product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
 
 /* Asustek products */
 product ASUSTEK HFCPCI		0x0675	ISDN
+
+/* Attansic Technology Corp. */
+product ATTANSIC ETHERNET_GIGA  0x1048  L1 Gigabit Ethernet Adapter
+product ATTANSIC ETHERNET_100   0x2048  L2 100 Mbit Ethernet Adapter
 
 /* ATI products */
 product ATI RADEON_RV380_3150	0x3150	Radeon Mobility X600 (M24) 3150
@@ -1885,6 +1912,7 @@ product IBM TPAUDIO	0x0153	ThinkPad 600X/A20/T20/T22 Audio
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM 133PCIX	0x01a7	133 PCI-X Bridge
 product IBM SERVERAID4	0x01bd	ServeRAID 4/5
+product IBM SERVERAID8K	0x9580	ServeRAID 8k
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IC Ensemble / VIA Technologies products */
@@ -2221,6 +2249,11 @@ product INTEL 82945P_EXP	0x2771	82945G/P PCI Express Bridge
 product INTEL 82945P_IGD	0x2772	82945G/P Integrated Graphics Device
 product INTEL 82955X_HB		0x2774	82955X Host
 product INTEL 82955X_EXP	0x2775	82955X PCI Express Bridge
+product INTEL E7230_HB		0x2778	E7230 Host
+product INTEL E7230_EXP		0x2779	E7230 PCI Express Bridge
+product INTEL 82975X_EXP_2	0x277a	82975X PCI Express Bridge
+product INTEL 82975X_HB		0x277c	82975X Host
+product INTEL 82975X_EXP	0x277d	82975X PCI Express Bridge
 product INTEL 82915G_IGDC	0x2782	82915G/GL IGD Companion
 product INTEL 82915GM_IGDC	0x2792	82915GM/GMS IGD Companion
 product INTEL 82945GM_HB	0x27a0	82945GM/PM/GMS Host Bridge
@@ -2368,6 +2401,7 @@ product INVERTEX AEON		0x0005	AEON
 /* IO Data products */
 product IODATA CBIDE2		0x0003	CBIDE2/CI-iCN NinjaATA-32Bi IDE
 product IODATA CBSCII		0x0005	CBSCII NinjaSCSI-32Bi SCSI
+product IODATA RSAPCI		0x0007	RSA-PCI 2-port serial
 
 /* ITE products */
 product ITE IT8152		0x8152	IT8152 Host Bridge
@@ -2477,6 +2511,7 @@ product MATROX MILLENNIUM2	0x051b	MGA Millennium II 2164W
 product MATROX MILLENNIUM2_AGP	0x051f	MGA Millennium II 2164WA-B AGP
 product MATROX G200_PCI		0x0520	MGA G200 PCI
 product MATROX G200_AGP		0x0521	MGA G200 AGP
+product MATROX G200E_SE		0x0522	MGA G200e (ServerEngines)
 product MATROX G400_AGP		0x0525	MGA G400 AGP
 product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX G100_PCI		0x1000	MGA G100 PCI
@@ -2922,6 +2957,43 @@ product NVIDIA	MCP67_AHCI_8	0x055b	nForce MCP67 AHCI Controller
 product NVIDIA	MCP67_HDA_1	0x055c	nForce MCP67 High Definition Audio Controller
 product NVIDIA	MCP67_HDA_2	0x055d	nForce MCP67 High Definition Audio Controller
 product NVIDIA	MCP67_IDE	0x0560	nForce MCP67 ATA133 IDE Controller
+product NVIDIA	MCP73_IDE 	0x056c	nForce MCP73 ATA133 IDE Controller
+product NVIDIA	MCP77_IDE 	0x0759	nForce MCP77 ATA133 IDE Controller
+product NVIDIA	MCP77_HDA_1 	0x0774	nForce MCP77 High Definition Audio Controller
+product NVIDIA	MCP77_HDA_2 	0x0775	nForce MCP77 High Definition Audio Controller
+product NVIDIA	MCP77_HDA_3 	0x0776	nForce MCP77 High Definition Audio Controller
+product NVIDIA	MCP77_HDA_4 	0x0777	nForce MCP77 High Definition Audio Controller
+product NVIDIA	MCP73_SMB 	0x07d8	nForce MCP73 SMBus Controller
+product NVIDIA	MCP73_LAN1	0x07dc	nForce MCP73 Gigabit Ethernet Controller
+product NVIDIA	MCP73_LAN2 	0x07dd  nForce MCP73 Gigabit Ethernet Controller
+product NVIDIA	MCP73_LAN3	0x07de	nForce MCP73 Gigabit Ethernet Controller
+product NVIDIA	MCP73_LAN4	0x07df	nForce MCP73 Gigabit Ethernet Controller
+product NVIDIA	MCP73_AHCI_1 	0x07f0	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_2	0x07f1	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_3	0x07f2	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_4	0x07f3	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_5	0x07f4	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_6	0x07f5	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_7	0x07f6	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_8	0x07f7	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_9	0x07f8	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_10	0x07f9	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_11	0x07fa	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_AHCI_12	0x07fb	nForce MCP73 AHCI Controller
+product NVIDIA	MCP73_HDA_1	0x07fc	nForce MCP73 High Definition Audio Controller
+product NVIDIA	MCP73_HDA_2	0x07fd	nForce MCP73 High Definition Audio Controller
+product NVIDIA	MCP77_AHCI_1	0x0ad0	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_2	0x0ad1	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_3	0x0ad2	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_4	0x0ad3	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_5	0x0ad4	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_6	0x0ad5	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_7	0x0ad6	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_8	0x0ad7	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_9	0x0ad8	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_10	0x0ad9	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_11	0x0ada	nForce MCP77 AHCI Controller
+product NVIDIA	MCP77_AHCI_12	0x0adb	nForce MCP77 AHCI Controller
 
 /* Nvidia & SGS-Thomson Microelectronics */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128

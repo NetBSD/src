@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.72.2.7.2.1 2007/06/03 17:26:02 wrstuden Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.72.2.7.2.2 2008/06/03 20:47:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -690,7 +690,7 @@ re_attach(struct rtk_softc *sc)
 	for (i = 0; i < RE_TX_QLEN; i++) {
 		error = bus_dmamap_create(sc->sc_dmat,
 		    round_page(IP_MAXPACKET),
-		    RE_TX_DESC_CNT(sc) - RE_NTXDESC_RSVD, RE_TDESC_CMD_FRAGLEN,
+		    RE_TX_DESC_CNT(sc), RE_TDESC_CMD_FRAGLEN,
 		    0, 0, &sc->re_ldata.re_txq[i].txq_dmamap);
 		if (error) {
 			aprint_error("%s: can't create DMA map for TX\n",
@@ -1152,12 +1152,12 @@ re_rxeof(struct rtk_softc *sc)
 		RE_RXDESCSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		rxstat = le32toh(cur_rx->re_cmdstat);
+		rxvlan = le32toh(cur_rx->re_vlanctl);
 		RE_RXDESCSYNC(sc, i, BUS_DMASYNC_PREREAD);
 		if ((rxstat & RE_RDESC_STAT_OWN) != 0) {
 			break;
 		}
 		total_len = rxstat & sc->re_rxlenmask;
-		rxvlan = le32toh(cur_rx->re_vlanctl);
 		rxs = &sc->re_ldata.re_rxsoft[i];
 		m = rxs->rxs_mbuf;
 
@@ -1374,7 +1374,7 @@ re_txeof(struct rtk_softc *sc)
 			 * them out. This only seems to be required with
 			 * the PCIe devices.
 			 */
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+			CSR_WRITE_1(sc, RTK_GTXSTART, RTK_TXSTART_START);
 		}
 	} else
 		ifp->if_timer = 0;
@@ -1534,7 +1534,7 @@ re_start(struct ifnet *ifp)
 	struct re_txq		*txq;
 	struct re_desc		*d;
 	struct m_tag		*mtag;
-	uint32_t		cmdstat, re_flags;
+	uint32_t		cmdstat, re_flags, vlanctl;
 	int			ofree, idx, error, nsegs, seg;
 	int			startdesc, curdesc, lastdesc;
 	boolean_t		pad;
@@ -1549,7 +1549,7 @@ re_start(struct ifnet *ifp)
 			break;
 
 		if (sc->re_ldata.re_txq_free == 0 ||
-		    sc->re_ldata.re_tx_free <= RE_NTXDESC_RSVD) {
+		    sc->re_ldata.re_tx_free == 0) {
 			/* no more free slots left */
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -1611,7 +1611,7 @@ re_start(struct ifnet *ifp)
 			nsegs++;
 		}
 
-		if (nsegs > sc->re_ldata.re_tx_free - RE_NTXDESC_RSVD) {
+		if (nsegs > sc->re_ldata.re_tx_free) {
 			/*
 			 * Not enough free descriptors to transmit this packet.
 			 */
@@ -1628,6 +1628,16 @@ re_start(struct ifnet *ifp)
 		 */
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Set up hardware VLAN tagging. Note: vlan tag info must
+		 * appear in all descriptors of a multi-descriptor
+		 * transmission attempt.
+		 */
+		vlanctl = 0;
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL)
+			vlanctl = bswap16(VLAN_TAG_VALUE(mtag)) |
+			    RE_TDESC_VLANCTL_TAG;
 
 		/*
 		 * Map the segment array into descriptors.
@@ -1659,7 +1669,7 @@ re_start(struct ifnet *ifp)
 			}
 #endif
 
-			d->re_vlanctl = 0;
+			d->re_vlanctl = htole32(vlanctl);
 			re_set_bufaddr(d, map->dm_segs[seg].ds_addr);
 			cmdstat = re_flags | map->dm_segs[seg].ds_len;
 			if (seg == 0)
@@ -1680,7 +1690,7 @@ re_start(struct ifnet *ifp)
 			bus_addr_t paddaddr;
 
 			d = &sc->re_ldata.re_tx_list[curdesc];
-			d->re_vlanctl = 0;
+			d->re_vlanctl = htole32(vlanctl);
 			paddaddr = RE_TXPADDADDR(sc);
 			re_set_bufaddr(d, paddaddr);
 			cmdstat = re_flags |
@@ -1695,17 +1705,6 @@ re_start(struct ifnet *ifp)
 			curdesc = RE_NEXT_TX_DESC(sc, curdesc);
 		}
 		KASSERT(lastdesc != -1);
-
-		/*
-		 * Set up hardware VLAN tagging. Note: vlan tag info must
-		 * appear in the first descriptor of a multi-descriptor
-		 * transmission attempt.
-		 */
-		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL) {
-			sc->re_ldata.re_tx_list[startdesc].re_vlanctl =
-			    htole32(bswap16(VLAN_TAG_VALUE(mtag)) |
-			    RE_TDESC_VLANCTL_TAG);
-		}
 
 		/* Transfer ownership of packet to the chip. */
 
@@ -1748,7 +1747,7 @@ re_start(struct ifnet *ifp)
 		if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
 			CSR_WRITE_1(sc, RTK_TXSTART, RTK_TXSTART_START);
 		else
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+			CSR_WRITE_1(sc, RTK_GTXSTART, RTK_TXSTART_START);
 
 		/*
 		 * Use the countdown timer for interrupt moderation.

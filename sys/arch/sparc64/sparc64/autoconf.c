@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.135 2006/11/16 01:32:39 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.135.4.1 2008/06/03 20:47:18 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.135 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.135.4.1 2008/06/03 20:47:18 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -244,7 +244,9 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	void *bi;
 	long bmagic;
 
+#if NKSYMS || defined(DDB) || defined(LKM)
 	struct btinfo_symtab *bi_sym;
+#endif
 	struct btinfo_count *bi_count;
 	struct btinfo_kernend *bi_kend;
 	struct btinfo_tlb *bi_tlb;
@@ -911,7 +913,8 @@ device_register(struct device *dev, void *aux)
 		ofnode = PCITAG_NODE(pa->pa_tag);
 		device_setofnode(dev, ofnode);
 		dev_path_exact_match(dev, ofnode);
-	} else if (device_is_a(busdev, "sbus") || device_is_a(busdev, "dma")) {
+	} else if (device_is_a(busdev, "sbus") || device_is_a(busdev, "dma")
+	    || device_is_a(busdev, "ledma")) {
 		struct sbus_attach_args *sa = aux;
 
 		ofnode = sa->sa_node;

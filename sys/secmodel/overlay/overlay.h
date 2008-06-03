@@ -1,4 +1,4 @@
-/* $NetBSD: overlay.h,v 1.1 2006/09/08 20:58:57 elad Exp $ */
+/* $NetBSD: overlay.h,v 1.1.10.1 2008/06/03 20:47:42 skrll Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -44,6 +44,8 @@ int secmodel_overlay_process_cb(kauth_cred_t, kauth_action_t, void *,
 int secmodel_overlay_network_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 int secmodel_overlay_machdep_cb(kauth_cred_t, kauth_action_t, void *,
+    void *, void *, void *, void *);
+int secmodel_overlay_device_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
 
 #endif /* !_SECMODEL_OVERLAY_OVERLAY_H_ */

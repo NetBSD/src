@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.854.2.5.2.3 2008/01/06 05:01:08 wrstuden Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.854.2.5.2.4 2008/06/03 20:47:24 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.855.2.23 2008/05/17 16:36:08 bouyer Exp
  */
 
 /*
@@ -603,9 +603,11 @@
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst */
 #define	PCI_VENDOR_I4	0x17cf		/* I4 */
+#define	PCI_VENDOR_ARECA	0x17d3		/* Areca */
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
 #define	PCI_VENDOR_LINKSYS2	0x17fe		/* Linksys */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
+#define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_DATUM	0x12e2		/* Datum Inc. Bancomm-Timing Division */
@@ -980,6 +982,7 @@
 #define	PCI_PRODUCT_APPLE_U3_PPB5	0x0049		/* U3 PCI-PCI bridge */
 #define	PCI_PRODUCT_APPLE_U3_AGP	0x004b		/* U3 AGP Interface */
 #define	PCI_PRODUCT_APPLE_K2_GMAC	0x004c		/* GMAC Ethernet */
+#define	PCI_PRODUCT_APPLE_SHASTA_GMAC	0x0051		/* Shasta GMAC */
 #define	PCI_PRODUCT_APPLE_INTREPID2_AGP	0x0066		/* Intrepid 2 AGP */
 #define	PCI_PRODUCT_APPLE_INTREPID2_PCI1	0x0067		/* Intrepid 2 PCI */
 #define	PCI_PRODUCT_APPLE_INTREPID2_PCI2	0x0068		/* Intrepid 2 PCI */
@@ -992,11 +995,35 @@
 #define	PCI_PRODUCT_ARC_2000PV	0xa099		/* 2000PV */
 #define	PCI_PRODUCT_ARC_2000MT	0xa0a1		/* 2000MT */
 
+/* Areca products */
+#define	PCI_PRODUCT_ARECA_ARC1110	0x1110		/* ARC-1110 */
+#define	PCI_PRODUCT_ARECA_ARC1120	0x1120		/* ARC-1120 */
+#define	PCI_PRODUCT_ARECA_ARC1130	0x1130		/* ARC-1130 */
+#define	PCI_PRODUCT_ARECA_ARC1160	0x1160		/* ARC-1160 */
+#define	PCI_PRODUCT_ARECA_ARC1170	0x1170		/* ARC-1170 */
+#define	PCI_PRODUCT_ARECA_ARC1200	0x1200		/* ARC-1200 */
+#define	PCI_PRODUCT_ARECA_ARC1200_B	0x1201		/* ARC-1200 rev B */
+#define	PCI_PRODUCT_ARECA_ARC1202	0x1202		/* ARC-1202 */
+#define	PCI_PRODUCT_ARECA_ARC1210	0x1210		/* ARC-1210 */
+#define	PCI_PRODUCT_ARECA_ARC1220	0x1220		/* ARC-1220 */
+#define	PCI_PRODUCT_ARECA_ARC1230	0x1230		/* ARC-1230 */
+#define	PCI_PRODUCT_ARECA_ARC1260	0x1260		/* ARC-1260 */
+#define	PCI_PRODUCT_ARECA_ARC1270	0x1270		/* ARC-1270 */
+#define	PCI_PRODUCT_ARECA_ARC1280	0x1280		/* ARC-1280 */
+#define	PCI_PRODUCT_ARECA_ARC1380	0x1380		/* ARC-1380 */
+#define	PCI_PRODUCT_ARECA_ARC1381	0x1381		/* ARC-1381 */
+#define	PCI_PRODUCT_ARECA_ARC1680	0x1680		/* ARC-1680 */
+#define	PCI_PRODUCT_ARECA_ARC1681	0x1681		/* ARC-1681 */
+
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
 
 /* Asustek products */
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
+
+/* Attansic Technology Corp. */
+#define	PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA	0x1048		/* L1 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_ETHERNET_100	0x2048		/* L2 100 Mbit Ethernet Adapter */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_RADEON_RV380_3150	0x3150		/* Radeon Mobility X600 (M24) 3150 */
@@ -1892,6 +1919,7 @@
 #define	PCI_PRODUCT_IBM_405GP	0x0156		/* PPC 405GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_133PCIX	0x01a7		/* 133 PCI-X Bridge */
 #define	PCI_PRODUCT_IBM_SERVERAID4	0x01bd		/* ServeRAID 4/5 */
+#define	PCI_PRODUCT_IBM_SERVERAID8K	0x9580		/* ServeRAID 8k */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
 
 /* IC Ensemble / VIA Technologies products */
@@ -2228,6 +2256,11 @@
 #define	PCI_PRODUCT_INTEL_82945P_IGD	0x2772		/* 82945G/P Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82955X_HB	0x2774		/* 82955X Host */
 #define	PCI_PRODUCT_INTEL_82955X_EXP	0x2775		/* 82955X PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_E7230_HB	0x2778		/* E7230 Host */
+#define	PCI_PRODUCT_INTEL_E7230_EXP	0x2779		/* E7230 PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_82975X_EXP_2	0x277a		/* 82975X PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_82975X_HB	0x277c		/* 82975X Host */
+#define	PCI_PRODUCT_INTEL_82975X_EXP	0x277d		/* 82975X PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82915G_IGDC	0x2782		/* 82915G/GL IGD Companion */
 #define	PCI_PRODUCT_INTEL_82915GM_IGDC	0x2792		/* 82915GM/GMS IGD Companion */
 #define	PCI_PRODUCT_INTEL_82945GM_HB	0x27a0		/* 82945GM/PM/GMS Host Bridge */
@@ -2375,6 +2408,7 @@
 /* IO Data products */
 #define	PCI_PRODUCT_IODATA_CBIDE2	0x0003		/* CBIDE2/CI-iCN NinjaATA-32Bi IDE */
 #define	PCI_PRODUCT_IODATA_CBSCII	0x0005		/* CBSCII NinjaSCSI-32Bi SCSI */
+#define	PCI_PRODUCT_IODATA_RSAPCI	0x0007		/* RSA-PCI 2-port serial */
 
 /* ITE products */
 #define	PCI_PRODUCT_ITE_IT8152	0x8152		/* IT8152 Host Bridge */
@@ -2484,6 +2518,7 @@
 #define	PCI_PRODUCT_MATROX_MILLENNIUM2_AGP	0x051f		/* MGA Millennium II 2164WA-B AGP */
 #define	PCI_PRODUCT_MATROX_G200_PCI	0x0520		/* MGA G200 PCI */
 #define	PCI_PRODUCT_MATROX_G200_AGP	0x0521		/* MGA G200 AGP */
+#define	PCI_PRODUCT_MATROX_G200E_SE	0x0522		/* MGA G200e (ServerEngines) */
 #define	PCI_PRODUCT_MATROX_G400_AGP	0x0525		/* MGA G400 AGP */
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 #define	PCI_PRODUCT_MATROX_G100_PCI	0x1000		/* MGA G100 PCI */
@@ -2929,6 +2964,43 @@
 #define	PCI_PRODUCT_NVIDIA_MCP67_HDA_1	0x055c		/* nForce MCP67 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP67_HDA_2	0x055d		/* nForce MCP67 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP67_IDE	0x0560		/* nForce MCP67 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_IDE	0x056c		/* nForce MCP73 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_IDE	0x0759		/* nForce MCP77 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_HDA_1	0x0774		/* nForce MCP77 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_HDA_2	0x0775		/* nForce MCP77 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_HDA_3	0x0776		/* nForce MCP77 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_HDA_4	0x0777		/* nForce MCP77 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_SMB	0x07d8		/* nForce MCP73 SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_LAN1	0x07dc		/* nForce MCP73 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_LAN2	0x07dd		/* nForce MCP73 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_LAN3	0x07de		/* nForce MCP73 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_LAN4	0x07df		/* nForce MCP73 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_1	0x07f0		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_2	0x07f1		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_3	0x07f2		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_4	0x07f3		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_5	0x07f4		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_6	0x07f5		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_7	0x07f6		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_8	0x07f7		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_9	0x07f8		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_10	0x07f9		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_11	0x07fa		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_12	0x07fb		/* nForce MCP73 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_HDA_1	0x07fc		/* nForce MCP73 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP73_HDA_2	0x07fd		/* nForce MCP73 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_1	0x0ad0		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_2	0x0ad1		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_3	0x0ad2		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_4	0x0ad3		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_5	0x0ad4		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_6	0x0ad5		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_7	0x0ad6		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_8	0x0ad7		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_9	0x0ad8		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_10	0x0ad9		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_11	0x0ada		/* nForce MCP77 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_12	0x0adb		/* nForce MCP77 AHCI Controller */
 
 /* Nvidia & SGS-Thomson Microelectronics */
 #define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */

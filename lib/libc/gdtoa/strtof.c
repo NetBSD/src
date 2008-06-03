@@ -1,4 +1,4 @@
-/* $NetBSD: strtof.c,v 1.2 2006/03/15 17:35:18 kleink Exp $ */
+/* $NetBSD: strtof.c,v 1.2.6.1 2008/06/03 20:47:07 skrll Exp $ */
 
 /****************************************************************
 
@@ -52,6 +52,10 @@ strtof(CONST char *s, char **sp)
 	union { ULong L[1]; float f; } u;
 
 	k = strtodg(s, sp, &fpi, &expt, bits);
+	if (k == STRTOG_NoMemory) {
+		errno = ERANGE;
+		return HUGE_VALF;
+	}
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
 	  case STRTOG_Zero:

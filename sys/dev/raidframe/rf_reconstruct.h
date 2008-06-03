@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.22 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.22.30.1 2008/06/03 20:47:33 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -184,6 +184,7 @@ int rf_ForceOrBlockRecon(RF_Raid_t *, RF_AccessStripeMap_t *,
 			 void (*cbFunc) (RF_Raid_t *, void *),
 			 void *);
 int rf_UnblockRecon(RF_Raid_t *, RF_AccessStripeMap_t *);
+void rf_WakeupHeadSepCBWaiters(RF_Raid_t *);
 
 extern struct pool rf_reconbuffer_pool;
 

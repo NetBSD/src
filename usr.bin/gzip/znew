@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $NetBSD: znew,v 1.2 2003/12/28 12:43:43 wiz Exp $
+# $NetBSD: znew,v 1.2.20.1 2008/06/03 20:47:47 skrll Exp $
 #
 # $OpenBSD: znew,v 1.2 2003/08/05 18:22:17 deraadt Exp $
 #
@@ -59,7 +59,7 @@ process () {
 	trap 'rm -f "$tmp"; exit 1' HUP INT QUIT PIPE TERM
 
 	# Do the actual work, producing a file "$tmp"
-	if uncompress -f -c < "$filez" | gzip -f $gzipflags -o "$tmp"; then
+	if uncompress -f -c < "$filez" | gzip -f $gzipflags > "$tmp"; then
 
 		if test $kflag -eq 1 && smaller "$filez" "$tmp"; then
 			echo -n "$prog: $filez is smaller than $filegz"

@@ -1,76 +1,30 @@
-/*	$NetBSD: compress.c,v 1.1.1.2 2002/03/15 01:35:27 mjl Exp $	*/
-
 
 /*-------------------------------------------------------------*/
 /*--- Compression machinery (not incl block sorting)        ---*/
 /*---                                            compress.c ---*/
 /*-------------------------------------------------------------*/
 
-/*--
-  This file is a part of bzip2 and/or libbzip2, a program and
-  library for lossless, block-sorting data compression.
+/* ------------------------------------------------------------------
+   This file is part of bzip2/libbzip2, a program and library for
+   lossless, block-sorting data compression.
 
-  Copyright (C) 1996-2002 Julian R Seward.  All rights reserved.
+   bzip2/libbzip2 version 1.0.5 of 10 December 2007
+   Copyright (C) 1996-2007 Julian Seward <jseward@bzip.org>
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions
-  are met:
+   Please read the WARNING, DISCLAIMER and PATENTS sections in the 
+   README file.
 
-  1. Redistributions of source code must retain the above copyright
-     notice, this list of conditions and the following disclaimer.
+   This program is released under the terms of the license contained
+   in the file LICENSE.
+   ------------------------------------------------------------------ */
 
-  2. The origin of this software must not be misrepresented; you must 
-     not claim that you wrote the original software.  If you use this 
-     software in a product, an acknowledgment in the product 
-     documentation would be appreciated but is not required.
 
-  3. Altered source versions must be plainly marked as such, and must
-     not be misrepresented as being the original software.
-
-  4. The name of the author may not be used to endorse or promote 
-     products derived from this software without specific prior written 
-     permission.
-
-  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
-  OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-  Julian Seward, Cambridge, UK.
-  jseward@acm.org
-  bzip2/libbzip2 version 1.0 of 21 March 2000
-
-  This program is based on (at least) the work of:
-     Mike Burrows
-     David Wheeler
-     Peter Fenwick
-     Alistair Moffat
-     Radford Neal
-     Ian H. Witten
-     Robert Sedgewick
-     Jon L. Bentley
-
-  For more information on these sources, see the manual.
---*/
-
-/*--
-   CHANGES
-   ~~~~~~~
-   0.9.0 -- original version.
-
-   0.9.0a/b -- no changes in this file.
-
-   0.9.0c
-      * changed setting of nGroups in sendMTFValues() so as to 
-        do a bit better on small files
---*/
+/* CHANGES
+    0.9.0    -- original version.
+    0.9.0a/b -- no changes in this file.
+    0.9.0c   -- changed setting of nGroups in sendMTFValues() 
+                so as to do a bit better on small files
+*/
 
 #include "bzlib_private.h"
 
@@ -490,9 +444,11 @@ void sendMTFValues ( EState* s )
       /*--
         Recompute the tables based on the accumulated frequencies.
       --*/
+      /* maxLen was changed from 20 to 17 in bzip2-1.0.3.  See 
+         comment in huffman.c for details. */
       for (t = 0; t < nGroups; t++)
          BZ2_hbMakeCodeLengths ( &(s->len[t][0]), &(s->rfreq[t][0]), 
-                                 alphaSize, 20 );
+                                 alphaSize, 17 /*20*/ );
    }
 
 
@@ -529,7 +485,7 @@ void sendMTFValues ( EState* s )
          if (s->len[t][i] > maxLen) maxLen = s->len[t][i];
          if (s->len[t][i] < minLen) minLen = s->len[t][i];
       }
-      AssertH ( !(maxLen > 20), 3004 );
+      AssertH ( !(maxLen > 17 /*20*/ ), 3004 );
       AssertH ( !(minLen < 1),  3005 );
       BZ2_hbAssignCodes ( &(s->code[t][0]), &(s->len[t][0]), 
                           minLen, maxLen, alphaSize );
@@ -653,8 +609,8 @@ void BZ2_compressBlock ( EState* s, Bool is_last_block )
       if (s->blockNo > 1) s->numZ = 0;
 
       if (s->verbosity >= 2)
-         VPrintf4( "    block %d: crc = 0x%8x, "
-                   "combined CRC = 0x%8x, size = %d\n",
+         VPrintf4( "    block %d: crc = 0x%08x, "
+                   "combined CRC = 0x%08x, size = %d\n",
                    s->blockNo, s->blockCRC, s->combinedCRC, s->nblock );
 
       BZ2_blockSort ( s );
@@ -705,7 +661,7 @@ void BZ2_compressBlock ( EState* s, Bool is_last_block )
       bsPutUChar ( s, 0x50 ); bsPutUChar ( s, 0x90 );
       bsPutUInt32 ( s, s->combinedCRC );
       if (s->verbosity >= 2)
-         VPrintf1( "    final combined CRC = 0x%x\n   ", s->combinedCRC );
+         VPrintf1( "    final combined CRC = 0x%08x\n   ", s->combinedCRC );
       bsFinishWrite ( s );
    }
 }

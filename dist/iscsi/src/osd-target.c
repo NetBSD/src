@@ -1,4 +1,4 @@
-/* $NetBSD: osd-target.c,v 1.5 2006/03/31 23:22:24 agc Exp $ */
+/* $NetBSD: osd-target.c,v 1.5.6.1 2008/06/03 20:46:57 skrll Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright © 2006 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: osd-target.c,v 1.5 2006/03/31 23:22:24 agc Exp $");
+__RCSID("$NetBSD: osd-target.c,v 1.5.6.1 2008/06/03 20:46:57 skrll Exp $");
 #endif
 #include "config.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.9 2006/08/25 19:33:51 matt Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.9.8.1 2008/06/03 20:47:42 skrll Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.9 2006/08/25 19:33:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.9.8.1 2008/06/03 20:47:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,35 +60,36 @@ DOMAIN_DEFINE(natmdomain);
 
 static void natm_init(void);
 
+struct npcblist natm_pcbs = LIST_HEAD_INITIALIZER(natm_pcbs);
+struct	ifqueue natmintrq;       	/* natm packet input queue */
+int	natmqmaxlen = IFQ_MAXLEN;	/* max # of packets on queue */
+
 const struct protosw natmsw[] = {
 { SOCK_STREAM,	&natmdomain,	PROTO_NATMAAL5, PR_CONNREQUIRED,
   0,	0,	0,	0,
   natm_usrreq,
   0,	0,	0,	0,
-	natm5_sysctl
 },
 { SOCK_DGRAM,	&natmdomain,	PROTO_NATMAAL5,	PR_CONNREQUIRED | PR_ATOMIC,
   0,	0,	0,	0,
   natm_usrreq,
   0,	0,	0,	0,
-	natm5_sysctl
 },
 { SOCK_STREAM,	&natmdomain,	PROTO_NATMAAL0, PR_CONNREQUIRED,
   0,	0,	0,	0,
   natm_usrreq,
   0,	0,	0,	0,
-	natm0_sysctl
 },
 };
 
-struct domain natmdomain =
-    { PF_NATM, "natm", natm_init, 0, 0,
-      natmsw, &natmsw[sizeof(natmsw)/sizeof(natmsw[0])], 0, 0,
-      { &natmitnrq } };
-
-struct npcblist natm_pcbs = LIST_HEAD_INITIALIZER(natm_pcbs);
-struct	ifqueue natmintrq;       	/* natm packet input queue */
-int	natmqmaxlen = IFQ_MAXLEN;	/* max # of packets on queue */
+struct domain natmdomain = {
+	.dom_family = PF_NATM,
+	.dom_name = "natm",
+	.dom_init = natm_init,
+	.dom_protosw = natmsw,
+	.dom_protoswNPROTOSW = &natmsw[sizeof(natmsw)/sizeof(natmsw[0])],
+	.dom_ifqueues = { &natmintrq, NULL },
+};
 #ifdef NATM_STAT
 u_int natm_sodropcnt = 0;		/* # mbufs dropped due to full sb */
 u_int natm_sodropbytes = 0;		/* # of bytes dropped */

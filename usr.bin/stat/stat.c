@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.24 2006/10/07 10:41:50 elad Exp $ */
+/*	$NetBSD: stat.c,v 1.24.4.1 2008/06/03 20:47:47 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.24 2006/10/07 10:41:50 elad Exp $");
+__RCSID("$NetBSD: stat.c,v 1.24.4.1 2008/06/03 20:47:47 skrll Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -793,13 +793,18 @@ format1(const struct stat *st,
 	case SHOW_realpath:
 		small = 0;
 		data = 0;
-		snprintf(path, sizeof(path), " -> ");
-		if (realpath(file, path + 4) == NULL) {
-			linkfail = 1;
-			l = 0;
-			path[0] = '\0';
+		if (file == NULL) {
+			(void)strncpy(path, "(stdin)", sizeof(path));
+			sdata = path;
+		} else {
+			snprintf(path, sizeof(path), " -> ");
+			if (realpath(file, path + 4) == NULL) {
+				linkfail = 1;
+				l = 0;
+				path[0] = '\0';
+			}
+			sdata = path + (ofmt == FMT_STRING ? 0: 4);
 		}
-		sdata = path + (ofmt == FMT_STRING ? 0: 4);
 
 		formats = FMTF_STRING;
 		if (ofmt == 0)

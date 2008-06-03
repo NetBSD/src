@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2006/11/18 14:25:39 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58.6.1 2008/06/03 20:47:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2006/11/18 14:25:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58.6.1 2008/06/03 20:47:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,9 @@ struct pmap __pmap_kernel;
 STATIC vaddr_t __pmap_kve;	/* VA of last kernel virtual */
 paddr_t avail_start;		/* PA of first available physical page */
 paddr_t avail_end;		/* PA of last available physical page */
+
+/* For the fast tlb miss handler */
+pt_entry_t **curptd;		/* p1 va of curlwp->...->pm_ptp */
 
 /* pmap pool */
 STATIC struct pool __pmap_pmap_pool;
@@ -313,7 +316,9 @@ pmap_activate(struct lwp *l)
 		pmap->pm_asid = __pmap_asid_alloc();
 
 	KDASSERT(pmap->pm_asid >=0 && pmap->pm_asid < 256);
+
 	sh_tlb_set_asid(pmap->pm_asid);
+	curptd = pmap->pm_ptp;
 }
 
 void

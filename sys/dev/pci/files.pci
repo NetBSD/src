@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.273.2.2.2.1 2007/09/03 07:04:29 wrstuden Exp $
+#	$NetBSD: files.pci,v 1.273.2.2.2.2 2008/06/03 20:47:24 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -71,6 +71,11 @@ file	dev/pci/amr.c			amr
 
 attach	ld at amr with ld_amr
 file	dev/pci/ld_amr.c		ld_amr
+
+# Areca SATA RAID Controllers
+device	arcmsr: scsi
+attach	arcmsr at pci
+file	dev/pci/arcmsr.c		arcmsr
 
 # Compaq RAID controllers
 attach	cac at pci with cac_pci
@@ -870,3 +875,8 @@ attach	mskc at pci
 device	msk: ether, ifnet, arp, mii
 attach	msk at mskc
 file	dev/pci/if_msk.c		mskc | msk
+
+# Atheros/Attansic L2 Fast-Ethernet     
+device  lii: ether, ifnet, arp, mii     
+attach  lii at pci
+file    dev/pci/if_lii.c                lii

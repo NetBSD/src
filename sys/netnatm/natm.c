@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.12 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: natm.c,v 1.12.26.1 2008/06/03 20:47:42 skrll Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.12 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.12.26.1 2008/06/03 20:47:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,6 @@ struct proc *p;
   struct atm_rawioctl ario;
   struct ifnet *ifp;
   int proto = so->so_proto->pr_protocol;
-#if defined(__NetBSD__)
-  struct proc *p = l ? l->l_proc : NULL;
-#endif
 
   s = SPLSOFTNET();
 
@@ -425,6 +422,7 @@ NETISR_SET(NETISR_NATM, natmintr);
 #endif
 
 
+#ifdef notyet
 /*
  * natm0_sysctl: not used, but here in case we want to add something
  * later...
@@ -466,3 +464,4 @@ size_t newlen;
     return (ENOTDIR);
   return (ENOPROTOOPT);
 }
+#endif

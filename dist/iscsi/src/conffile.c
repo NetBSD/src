@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.4 2006/08/03 20:21:59 agc Exp $ */
+/* $NetBSD: conffile.c,v 1.4.6.1 2008/06/03 20:46:57 skrll Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.

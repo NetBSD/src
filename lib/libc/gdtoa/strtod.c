@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.4 2006/06/02 19:46:56 mrg Exp $ */
+/* $NetBSD: strtod.c,v 1.4.6.1 2008/06/03 20:47:07 skrll Exp $ */
 
 /****************************************************************
 
@@ -523,12 +523,20 @@ strtod
 	/* Put digits into bd: true value = bd * 10^e */
 
 	bd0 = s2b(s0, nd0, nd, y);
+	if (bd0 == NULL)
+		goto ovfl;
 
 	for(;;) {
 		bd = Balloc(bd0->k);
+		if (bd == NULL)
+			goto ovfl;
 		Bcopy(bd, bd0);
 		bb = d2b(dval(rv), &bbe, &bbbits);	/* rv = bb * 2^bbe */
+		if (bb == NULL)
+			goto ovfl;
 		bs = i2b(1);
+		if (bs == NULL)
+			goto ovfl;
 
 		if (e >= 0) {
 			bb2 = bb5 = 0;
@@ -585,19 +593,37 @@ strtod
 			}
 		if (bb5 > 0) {
 			bs = pow5mult(bs, bb5);
+			if (bs == NULL)
+				goto ovfl;
 			bb1 = mult(bs, bb);
+			if (bb1 == NULL)
+				goto ovfl;
 			Bfree(bb);
 			bb = bb1;
 			}
-		if (bb2 > 0)
+		if (bb2 > 0) {
 			bb = lshift(bb, bb2);
-		if (bd5 > 0)
+			if (bb == NULL)
+				goto ovfl;
+			}
+		if (bd5 > 0) {
 			bd = pow5mult(bd, bd5);
-		if (bd2 > 0)
+			if (bd == NULL)
+				goto ovfl;
+			}
+		if (bd2 > 0) {
 			bd = lshift(bd, bd2);
-		if (bs2 > 0)
+			if (bd == NULL)
+				goto ovfl;
+			}
+		if (bs2 > 0) {
 			bs = lshift(bs, bs2);
+			if (bs == NULL)
+				goto ovfl;
+			}
 		delta = diff(bb, bd);
+		if (delta == NULL)
+			goto ovfl;
 		dsign = delta->sign;
 		delta->sign = 0;
 		i = cmp(delta, bs);
