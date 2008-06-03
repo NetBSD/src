@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.h,v 1.6 2008/04/28 20:22:51 martin Exp $	*/
+/*     $NetBSD: prop_array.h,v 1.7 2008/06/03 20:18:24 haad Exp $    */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -78,6 +78,63 @@ int		prop_array_copyout_ioctl(struct plistref *, const u_long,
 					 prop_array_t);
 #endif
 #endif /* __NetBSD__ */
+
+/*
+ * Utility routines to make it more convenient to work with values
+ * stored in dictionaries.
+ */
+bool		prop_array_get_bool(prop_array_t, unsigned int,
+					 bool *);
+bool		prop_array_set_bool(prop_array_t, unsigned int,
+					 bool);
+
+bool		prop_array_get_int8(prop_array_t, unsigned int,
+					 int8_t *);
+bool		prop_array_get_uint8(prop_array_t, unsigned int,
+					  uint8_t *);
+bool		prop_array_set_int8(prop_array_t, unsigned int,
+					 int8_t);
+bool		prop_array_set_uint8(prop_array_t, unsigned int,
+					  uint8_t);
+
+bool		prop_array_get_int16(prop_array_t, unsigned int,
+					  int16_t *);
+bool		prop_array_get_uint16(prop_array_t, unsigned int,
+					   uint16_t *);
+bool		prop_array_set_int16(prop_array_t, unsigned int,
+					  int16_t);
+bool		prop_array_set_uint16(prop_array_t, unsigned int,
+					   uint16_t);
+
+bool		prop_array_get_int32(prop_array_t, unsigned int,
+					  int32_t *);
+bool		prop_array_get_uint32(prop_array_t, unsigned int,
+					   uint32_t *);
+bool		prop_array_set_int32(prop_array_t, unsigned int,
+					  int32_t);
+bool		prop_array_set_uint32(prop_array_t, unsigned int,
+					   uint32_t);
+
+bool		prop_array_get_int64(prop_array_t, unsigned int,
+					  int64_t *);
+bool		prop_array_get_uint64(prop_array_t, unsigned int,
+					   uint64_t *);
+bool		prop_array_set_int64(prop_array_t, unsigned int,
+					  int64_t);
+bool		prop_array_set_uint64(prop_array_t, unsigned int,
+					   uint64_t);
+
+bool		prop_array_get_cstring(prop_array_t, unsigned int,
+					     char **);
+bool		prop_array_set_cstring(prop_array_t, unsigned int,
+					    const char *);
+
+bool		prop_array_get_cstring_nocopy(prop_array_t,
+                                                   unsigned int,
+						   const char **);
+bool		prop_array_set_cstring_nocopy(prop_array_t,
+						   unsigned int,
+						   const char *);
 
 __END_DECLS
 
