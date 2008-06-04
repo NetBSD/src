@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.10 2008/04/28 20:24:06 martin Exp $ */
+/* $NetBSD: rb.h,v 1.1 2008/06/04 14:31:15 ad Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _LIBKERN_RB_H_
-#define	_LIBKERN_RB_H_
+#ifndef _SYS_RB_H_
+#define	_SYS_RB_H_
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -178,4 +178,4 @@ void	rb_tree_check(const struct rb_tree *, bool);
 void	rb_tree_depths(const struct rb_tree *, size_t *);
 #endif
 
-#endif	/* _LIBKERN_RB_H_*/
+#endif	/* _SYS_RB_H_*/
