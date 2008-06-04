@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.127 2008/05/31 21:26:01 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.128 2008/06/04 12:45:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.127 2008/05/31 21:26:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.128 2008/06/04 12:45:28 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -96,11 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.127 2008/05/31 21:26:01 ad Exp $");
 
 static void uvm_swapout(struct lwp *);
 static int uarea_swapin(vaddr_t);
-
-#define UVM_NUAREA_HIWAT	20
-#define	UVM_NUAREA_LOWAT	16
-
-#define	UAREA_NEXTFREE(uarea)	(*(vaddr_t *)(UAREA_TO_USER(uarea)))
 
 /*
  * XXXCDC: do these really belong here?
@@ -274,16 +269,6 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * the specified entry point will be executed.
 	 */
 	cpu_lwp_fork(l1, l2, stack, stacksize, func, arg);
-}
-
-/*
- * uvm_cpu_attach: initialize per-CPU data structures.
- */
-
-void
-uvm_cpu_attach(struct cpu_info *ci)
-{
-
 }
 
 static int

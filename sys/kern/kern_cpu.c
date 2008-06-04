@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.31 2008/05/29 22:33:27 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.32 2008/06/04 12:45:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.31 2008/05/29 22:33:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.32 2008/06/04 12:45:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,6 @@ mi_cpu_attach(struct cpu_info *ci)
 	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
 
 	sched_cpuattach(ci);
-	uvm_cpu_attach(ci);
 
 	error = create_idle_lwp(ci);
 	if (error != 0) {
