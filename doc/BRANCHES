@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.253 2008/05/27 18:52:43 wrstuden Exp $
+#	$NetBSD: BRANCHES,v 1.254 2008/06/04 03:51:14 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -558,7 +558,7 @@ Description:	import newer pf from OpenBSD 4.2
 Status:		Active
 Start Date:	Sat Apr 19 2008
 End Date:	
-Base Tag:	yamt-pf42-base2
+Base Tag:	yamt-pf42-base3
 Maintainer:	Peter Postma <peter@NetBSD.org>,
 		YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src
