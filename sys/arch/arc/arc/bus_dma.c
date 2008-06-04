@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.29 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.30 2008/06/04 12:41:40 ad Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29 2008/04/28 20:23:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.30 2008/06/04 12:41:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,9 +594,9 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	lastaddr = segs[curseg]._ds_paddr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_addr = segs[curseg]._ds_paddr + t->dma_offset;
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = TAILQ_NEXT(m, pageq);
+	m = TAILQ_NEXT(m, pageq.queue);
 
-	for (; m != NULL; m = TAILQ_NEXT(m, pageq)) {
+	for (; m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < avail_start || curaddr >= high) {
@@ -642,7 +642,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 		    addr < (segs[curseg]._ds_paddr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
 			m = PHYS_TO_VM_PAGE(addr);
-			TAILQ_INSERT_TAIL(&mlist, m, pageq);
+			TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
 		}
 	}
 
