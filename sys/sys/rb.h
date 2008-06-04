@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.1 2008/06/04 14:31:15 ad Exp $ */
+/* $NetBSD: rb.h,v 1.2 2008/06/04 17:54:17 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,11 @@
 #ifndef _SYS_RB_H_
 #define	_SYS_RB_H_
 
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
+#else
+#include <stdbool.h>
+#endif
 #include <sys/queue.h>
 #include <sys/endian.h>
 
