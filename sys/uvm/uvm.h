@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.54 2008/06/04 12:45:28 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.55 2008/06/04 15:06:04 ad Exp $	*/
 
 /*
  *
@@ -104,11 +104,6 @@ struct uvm {
 
 		/* aiodone daemon */
 	struct workqueue *aiodone_queue;
-
-		/* page hash */
-	struct pglist *page_hash;	/* page hash table (vp/off->page) */
-	int page_nhash;			/* number of buckets */
-	int page_hashmask;		/* hash mask */
 
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
 	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
