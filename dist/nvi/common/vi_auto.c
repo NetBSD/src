@@ -1,3 +1,5 @@
+/*	$NetBSD: vi_auto.c,v 1.1.1.1.2.3 2008/06/04 02:03:07 yamt Exp $ */
+
 /* Do not edit: automatically built by gen_rec.awk. */
 #include <sys/types.h>
 #include <sys/queue.h>

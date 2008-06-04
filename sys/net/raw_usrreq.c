@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.33.30.1 2008/05/18 12:35:28 yamt Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.33.30.2 2008/06/04 02:05:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.33.30.1 2008/05/18 12:35:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.33.30.2 2008/06/04 02:05:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -81,7 +81,6 @@ raw_input(struct mbuf *m0, ...)
 {
 	struct rawcb *rp;
 	struct mbuf *m = m0;
-	int sockets = 0;
 	struct socket *last;
 	va_list ap;
 	struct sockproto *proto;
@@ -123,7 +122,6 @@ raw_input(struct mbuf *m0, ...)
 				m_freem(n);
 			else {
 				sorwakeup(last);
-				sockets++;
 			}
 		}
 		last = rp->rcb_socket;
@@ -132,7 +130,6 @@ raw_input(struct mbuf *m0, ...)
 		m_freem(m);
 	else {
 		sorwakeup(last);
-		sockets++;
 	}
 }
 

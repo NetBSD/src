@@ -1,4 +1,4 @@
-/*	$NetBSD: cmos.c,v 1.2 2007/12/11 11:54:36 lukem Exp $	*/
+/*	$NetBSD: cmos.c,v 1.2.10.1 2008/06/04 02:04:47 yamt Exp $	*/
 
 /*
  * Copyright (C) 2003 JONE System Co., Inc.
@@ -16,9 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of JEPRO Co., Ltd. nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -65,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.2 2007/12/11 11:54:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.2.10.1 2008/06/04 02:04:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

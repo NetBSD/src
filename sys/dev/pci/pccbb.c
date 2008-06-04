@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.167 2008/03/04 22:15:16 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.167.2.1 2008/06/04 02:05:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.167 2008/03/04 22:15:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.167.2.1 2008/06/04 02:05:14 yamt Exp $");
 
 /*
 #define CBB_DEBUG
@@ -362,6 +362,24 @@ const struct yenta_chipinfo {
 	{ MAKEID(PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6833),
 	    CB_CIRRUS, PCCBB_PCMCIA_MEM_32},
 
+	/* O2 Micro products */
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729),
+	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6730),
+	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832),
+	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6836),
+	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6872),
+	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6922),
+	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6933),
+	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972),
+	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
+
 	/* sentinel, or Generic chip */
 	{ 0 /* null id */ , CB_UNKNOWN, PCCBB_PCMCIA_MEM_32},
 };
@@ -373,7 +391,7 @@ cb_chipset(u_int32_t pci_id, int *flagp)
 
 	/* Loop over except the last default entry. */
 	for (yc = yc_chipsets; yc < yc_chipsets +
-	    sizeof(yc_chipsets) / sizeof(yc_chipsets[0]) - 1; yc++)
+	    __arraycount(yc_chipsets) - 1; yc++)
 		if (pci_id == yc->yc_id)
 			break;
 
@@ -746,7 +764,15 @@ pccbb_chipinit(struct pccbb_softc *sc)
 	/* I believe it is harmless. */
 	csr |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 	    PCI_COMMAND_MASTER_ENABLE);
-	csr |= (PCI_COMMAND_PARITY_ENABLE|PCI_COMMAND_SERR_ENABLE);
+
+	/* All O2 Micro chips have broken parity-error reporting
+	 * until proven otherwise.  The OZ6933 PCI-CardBus Bridge
+	 * is known to have the defect---see PR kern/38698.
+	 */
+	if (sc->sc_chipset != CB_O2MICRO)
+		csr |= PCI_COMMAND_PARITY_ENABLE;
+
+	csr |= PCI_COMMAND_SERR_ENABLE;
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 
 	/*

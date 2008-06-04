@@ -1,4 +1,4 @@
-/*	$NetBSD: fileio.c,v 1.1.2.1 2008/05/18 12:30:35 yamt Exp $	*/
+/*	$NetBSD: fileio.c,v 1.1.2.2 2008/06/04 02:04:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fileio.c,v 1.1.2.1 2008/05/18 12:30:35 yamt Exp $");
+__RCSID("$NetBSD: fileio.c,v 1.1.2.2 2008/06/04 02:04:34 yamt Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -210,6 +210,7 @@ getwin(FILE *fp)
 	win->scr_t = wtmp->scr_t;
 	win->scr_b = wtmp->scr_b;
 	free(wtmp);
+	wtmp = NULL;
 	__swflags(win);
 
 #ifdef HAVE_WCHAR
@@ -242,6 +243,7 @@ getwin(FILE *fp)
 error1:
 	delwin(win);
 error0:
-	free(wtmp);
+	if (wtmp)
+		free(wtmp);
 	return NULL;
 }

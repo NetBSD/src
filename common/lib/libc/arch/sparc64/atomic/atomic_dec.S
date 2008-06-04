@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec.S,v 1.5.2.1 2008/05/18 12:28:45 yamt Exp $	*/
+/*	$NetBSD: atomic_dec.S,v 1.5.2.2 2008/06/04 02:02:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_dec_32)
+ENTRY(_atomic_dec_32)
 	ld	[%o0], %o2
 1:	add	%o2, -1, %o3
 	cas	[%o0], %o2, %o3
@@ -51,7 +51,7 @@ STRONG_ALIAS(_atomic_dec_32_nv,_atomic_dec_32)
 ATOMIC_OP_ALIAS(atomic_dec_uint_nv,_atomic_dec_32)
 STRONG_ALIAS(_atomic_dec_uint_nv,_atomic_dec_32)
 
-ENTRY_NOPROFILE(_atomic_dec_64)
+ENTRY(_atomic_dec_64)
 	ldx	[%o0], %o2
 1:	add	%o2, -1, %o3
 	casx	[%o0], %o2, %o3

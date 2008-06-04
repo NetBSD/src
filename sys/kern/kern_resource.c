@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.137.4.1 2008/05/18 12:35:08 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.137.4.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.137.4.1 2008/05/18 12:35:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.137.4.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,7 +436,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
 		bintime_add(&tm, &l->l_rtime);
-		if ((l->l_flag & LW_RUNNING) != 0) {
+		if ((l->l_pflag & LP_RUNNING) != 0) {
 			struct bintime diff;
 			/*
 			 * Adjust for the current time slice.  This is

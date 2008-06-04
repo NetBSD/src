@@ -1,3 +1,5 @@
+/*	$NetBSD: vi.h,v 1.1.1.1.2.3 2008/06/04 02:03:18 yamt Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: vi.h,v 1.1.1.1.2.2 2008/05/18 12:29:32 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:32 $
+ *	Id: vi.h,v 10.27 2002/01/19 21:59:07 skimo Exp (Berkeley) Date: 2002/01/19 21:59:07
  */
 
 /* Definition of a vi "word". */

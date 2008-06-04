@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.9.8.1 2008/05/18 12:31:27 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.9.8.2 2008/06/04 02:04:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -117,29 +117,6 @@ ENTRY(do_pmap_load)
  * Newer Intel cpus have a much lower setup time, and may (someday)
  * be ably to do cache-line size copies....
  */
-
-/*
- * XXXfvdl appears only to be used by pccons.
- *
- * fillw(short pattern, void *addr, size_t len);
- * Write len copies of pattern at addr.
- * appears to be used by pccons.
- */
-ENTRY(fillw)
-	movl	%edi,%eax
-	movq	%rsi,%rdi
-	movw	%ax,%cx
-	rorl	$16,%eax
-	movw	%cx,%ax
-	movq	%rdx,%rcx
-	shrq	%rcx
-	rep
-	stosl
-	movq	%rdx,%rcx
-	andq	$1,%rcx
-	rep
-	stosw
-	ret
 
 ENTRY(kcopy)
 	GET_CURPCB(%rax)

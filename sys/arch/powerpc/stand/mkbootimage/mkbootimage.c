@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.7.14.1 2008/05/18 12:32:38 yamt Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.7.14.2 2008/06/04 02:04:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -652,7 +652,7 @@ bebox_write_header(int bebox_fd, int elf_image_len, int kern_img_len)
 
 	/* Create the Loader Header */
 	memset(&lh, 0, sizeof (lh));
-        lh.entryPointSection = sa_htobe32(1);     /* Data */
+        lh.entryPointSection = sa_htobe32(1);		/* Data */
         lh.entryPointOffset = sa_htobe32(0);
         lh.initPointSection = sa_htobe32(-1);
         lh.initPointOffset = sa_htobe32(0);
@@ -663,7 +663,7 @@ bebox_write_header(int bebox_fd, int elf_image_len, int kern_img_len)
 
 	/* Copy the pseudo-DATA */
 	memset(entry_vector, 0, sizeof (entry_vector));
-        entry_vector[0] = sa_htobe32(ENTRY);      /* Magic */
+        entry_vector[0] = sa_htobe32(BEBOX_ENTRY);	/* Magic */
         lseek(bebox_fd, dataOffset + hsize, SEEK_SET);
         write(bebox_fd, entry_vector, sizeof (entry_vector));
 
@@ -705,7 +705,7 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 			continue;
 
 		fstat(elf_fd, &elf_stat);
-		elf_img_len = elf_stat.st_size - ELFGET32(phdr.p_offset);
+		elf_img_len = ELFGET32(phdr.p_filesz);
 		lseek(elf_fd, ELFGET32(phdr.p_offset), SEEK_SET);
 
 		break;
@@ -720,7 +720,7 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	lseek(bebox_fd, hsize, SEEK_SET);
 	
 	/* write the header with the wrong values to get the offset right */
-	bebox_write_header(bebox_fd, elf_img_len, kern_len);
+	bebox_write_header(bebox_fd, elf_img_len, kern_stat.st_size);
 	
 	/* Copy kernel */
 	kern_img = (unsigned char *)malloc(kern_stat.st_size);
@@ -761,7 +761,8 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 
 	/* now rewrite the header correctly */
 	lseek(bebox_fd, hsize, SEEK_SET);
-	toff = bebox_write_header(bebox_fd, elf_img_len, kgzlen);
+	tmp = kgzlen + BEBOX_MAGICSIZE + KERNLENSIZE;
+	toff = bebox_write_header(bebox_fd, elf_img_len, tmp);
 
 	/* Copy boot image */
 	elf_img = (unsigned char *)malloc(elf_img_len);
@@ -798,10 +799,11 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	    BEBOX_FILE_BLOCK_MAP_END - BEBOX_FILE_BLOCK_MAP_START);
 
 	/* fix the file size in the header */
+	tmp = endoff - BEBOX_HEADER_SIZE;
 	*(long *)(header_img + BEBOX_FILE_SIZE_OFFSET) =
-	    (long)sa_htobe32(endoff);
+	    (long)sa_htobe32(tmp);
 	*(long *)(header_img + BEBOX_FILE_SIZE_ALIGN_OFFSET) =
-	    (long)sa_htobe32(roundup(endoff, BEBOX_BLOCK_SIZE));
+	    (long)sa_htobe32(roundup(tmp, BEBOX_FILE_BLOCK_SIZE));
 
 	gettimeofday(&tp, 0);
 	for (offset = bebox_mtime_offset; *offset != -1; offset++)

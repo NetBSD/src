@@ -3,7 +3,7 @@
 .\"
 .\" %sccs.include.redist.roff%
 .\"
-.\"	$Id: vi.apwh.ms,v 1.1.1.1.2.2 2008/05/18 12:29:26 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:26 $
+.\"	Id: vi.apwh.ms,v 8.3 2001/01/28 13:48:01 skimo Exp (Berkeley) Date: 2001/01/28 13:48:01
 .\"
 .nr LL 6.5i
 .nr FL 6.5i

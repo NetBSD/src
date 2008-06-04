@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.4.2.1 2008/05/18 12:32:38 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.4.2.2 2008/06/04 02:04:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 /*
  * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
  */
-ENTRY_NOPROFILE(_lock_cas)
+ENTRY(_lock_cas)
 1:
 	lptrarx	%r10,0,%r3
 	cmpw	%r10,%r4
@@ -69,7 +69,7 @@ ENTRY_NOPROFILE(_lock_cas)
 /*
  * void mutex_enter(kmutex_t *);
  */
-ENTRY_NOPROFILE(mutex_enter)
+ENTRY(mutex_enter)
 	GET_CPUINFO(%r8)
 	ldptr	%r9,CI_CURLWP(%r8)
 1:
@@ -86,7 +86,7 @@ ENTRY_NOPROFILE(mutex_enter)
 /*
  * void mutex_exit(kmutex_t *);
  */
-ENTRY_NOPROFILE(mutex_exit)
+ENTRY(mutex_exit)
 	GET_CPUINFO(%r8)
 	ldptr	%r9,CI_CURLWP(%r8)
 	SYNC
@@ -115,7 +115,7 @@ ENTRY_NOPROFILE(mutex_exit)
 
 #if __HAVE_RW_STUBS
 
-ENTRY_NOPROFILE(rw_enter)
+ENTRY(rw_enter)
 	cmpwi	%r3,RW_READER
 	bne-	1f
 
@@ -142,7 +142,7 @@ ENTRY_NOPROFILE(rw_enter)
 /*
  * bool rw_tryenter(krwlock_t *krw, krw_t op);
  */
-ENTRY_NOPROFILE(rw_tryenter)
+ENTRY(rw_tryenter)
 	cmpwi	%r3,RW_READER
 	bne-	1f
 
@@ -172,7 +172,7 @@ ENTRY_NOPROFILE(rw_tryenter)
 /*
  * void rw_exit(krwlock_t *krw, krw_t op);
  */
-ENTRY_NOPROFILE(rw_exit)
+ENTRY(rw_exit)
 	ldptr	%r9,RW_OWNER(%r3)
 	SYNC
 	andi.	%r0,%r9,RW_WRITE_LOCKED

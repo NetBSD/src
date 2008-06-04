@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.11 2007/12/16 23:11:08 jmcneill Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.11.8.1 2008/06/04 02:05:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.11 2007/12/16 23:11:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.11.8.1 2008/06/04 02:05:10 yamt Exp $");
 
 #include "opt_acpi.h"
 #include <sys/param.h>
@@ -91,7 +91,6 @@ struct acpi_pci_link_softc {
 	struct link *pl_links;
 	char pl_name[32];
 	ACPI_HANDLE pl_handle;
-	void *pl_powerhook;
 	TAILQ_ENTRY(acpi_pci_link_softc) pl_list;
 };
 
@@ -142,7 +141,6 @@ static void acpi_pci_link_dump(struct acpi_pci_link_softc *);
 static int acpi_pci_link_attach(struct acpi_pci_link_softc *);
 static uint8_t acpi_pci_link_search_irq(struct acpi_pci_link_softc *, int, int,
 					int);
-static void acpi_pci_link_resume(int, void *);
 static struct link *acpi_pci_link_lookup(struct acpi_pci_link_softc *, int);
 static ACPI_STATUS acpi_pci_link_srs(struct acpi_pci_link_softc *,
 				     ACPI_BUFFER *);
@@ -972,23 +970,6 @@ acpi_pci_link_route_irqs(struct acpi_pci_link_softc *sc, int *irq, int *pol,
 	return (AE_OK);
 }
 
-static void
-acpi_pci_link_resume(int why, void *arg)
-{
-	struct acpi_pci_link_softc *sc = arg;
-	ACPI_BUFFER srsbuf;
-
-	switch (why) {
-	case PWR_RESUME:
-		ACPI_SERIAL_BEGIN(pci_link);
-		if (ACPI_SUCCESS(acpi_pci_link_srs(sc, &srsbuf)))
-			AcpiOsFree(srsbuf.Pointer);
-		ACPI_SERIAL_END(pci_link);
-	default:
-		break;
-	}
-}
-
 /*
  * Pick an IRQ to use for this unrouted link.
  */
@@ -1129,7 +1110,6 @@ static void
 acpi_pci_link_init(struct acpi_pci_link_softc *sc)
 {
 	ACPI_BUFFER buf;
-	char acpipcilinkname[] = "acpi_pci_link";
 
 	/*
 	 * If the SCI is an ISA IRQ, add it to the bitmask of known good
@@ -1142,11 +1122,6 @@ acpi_pci_link_init(struct acpi_pci_link_softc *sc)
 	 */
 	if (AcpiGbl_FADT.SciInterrupt < NUM_ISA_INTERRUPTS)
 		pci_link_bios_isa_irqs |= (1 << AcpiGbl_FADT.SciInterrupt);
-
-        sc->pl_powerhook = powerhook_establish(acpipcilinkname,
-	    acpi_pci_link_resume, sc);
-        if (sc->pl_powerhook == NULL)
-                aprint_normal("can't establish powerhook\n");
 
 	buf.Length = sizeof (sc->pl_name);
 	buf.Pointer = sc->pl_name;

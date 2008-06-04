@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.90.2.1 2008/05/18 12:35:11 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.90.2.2 2008/06/04 02:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.90.2.1 2008/05/18 12:35:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.90.2.2 2008/06/04 02:05:40 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -120,8 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.90.2.1 2008/05/18 12:35:11 yamt E
  *   domains.
  */
 
-static POOL_INIT(socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL,
-    IPL_SOFTNET);
+static pool_cache_t socket_cache;
 
 u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
 static u_long sb_max_adj;	/* adjusted sb_max */
@@ -215,6 +214,14 @@ soisdisconnected(struct socket *so)
 	sorwakeup(so);
 }
 
+void
+soinit2(void)
+{
+
+	socket_cache = pool_cache_init(sizeof(struct socket), 0, 0, 0,
+	    "socket", NULL, IPL_SOFTNET, NULL, NULL, NULL);
+}
+
 /*
  * When an attempt at a new connection is noted on a socket
  * which accepts connections, sonewconn is called.  If the
@@ -284,7 +291,7 @@ soget(bool waitok)
 {
 	struct socket *so;
 
-	so = pool_get(&socket_pool, (waitok ? PR_WAITOK : PR_NOWAIT));
+	so = pool_cache_get(socket_cache, (waitok ? PR_WAITOK : PR_NOWAIT));
 	if (__predict_false(so == NULL))
 		return (NULL);
 	memset(so, 0, sizeof(*so));
@@ -313,7 +320,7 @@ soput(struct socket *so)
 	cv_destroy(&so->so_cv);
 	cv_destroy(&so->so_rcv.sb_cv);
 	cv_destroy(&so->so_snd.sb_cv);
-	pool_put(&socket_pool, so);
+	pool_cache_put(socket_cache, so);
 }
 
 void
@@ -546,16 +553,13 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
-	if (so) {
-		if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
-			maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
-		else
-			maxcc = RLIM_INFINITY;
-		uidinfo = so->so_uidinfo;
-	} else {
-		uidinfo = uid_find(0);	/* XXX: nothing better */
+
+	if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
+		maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
+	else
 		maxcc = RLIM_INFINITY;
-	}
+
+	uidinfo = so->so_uidinfo;
 	if (!chgsbsize(uidinfo, &sb->sb_hiwat, cc, maxcc))
 		return 0;
 	sb->sb_mbmax = min(cc * 2, sb_max);

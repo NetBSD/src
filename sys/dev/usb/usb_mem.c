@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.34.2.1 2008/05/18 12:34:51 yamt Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.34.2.2 2008/06/04 02:05:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.34.2.1 2008/05/18 12:34:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.34.2.2 2008/06/04 02:05:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,8 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	    EX_NOWAIT, &start);
 
 	if (error != 0) {
-		aprint_error_dev((struct device *)rs->softc, "usb_reserve_allocm of size %u failed (error %d)\n",
+		aprint_error_dev(rs->dv,
+		    "usb_reserve_allocm of size %u failed (error %d)\n",
 		    size, error);
 		return USBD_NOMEM;
 	}
@@ -338,16 +339,15 @@ usb_reserve_freem(struct usb_dma_reserve *rs, usb_dma_t *dma)
 }
 
 int
-usb_setup_reserve(void *softc, struct usb_dma_reserve *rs, bus_dma_tag_t dtag,
+usb_setup_reserve(device_t dv, struct usb_dma_reserve *rs, bus_dma_tag_t dtag,
 		  size_t size)
 {
 	int error, nseg;
 	bus_dma_segment_t seg;
-	struct device *dv = softc;
 
 	rs->dtag = dtag;
 	rs->size = size;
-	rs->softc = softc;
+	rs->dv = dv;
 
 	error = bus_dmamem_alloc(dtag, USB_MEM_RESERVE, PAGE_SIZE, 0,
 	    &seg, 1, &nseg, BUS_DMA_NOWAIT);

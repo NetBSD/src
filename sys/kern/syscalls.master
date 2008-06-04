@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.196.4.1 2008/05/18 12:35:10 yamt Exp $
+	$NetBSD: syscalls.master,v 1.196.4.2 2008/06/04 02:05:40 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -353,9 +353,9 @@
 171	EXCL		1.0 shmsys
 #endif
 172	UNIMPL
-173	STD 		{ ssize_t sys_pread(int fd, void *buf, \
+173	STD 	 RUMP	{ ssize_t sys_pread(int fd, void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
-174	STD 		{ ssize_t sys_pwrite(int fd, const void *buf, \
+174	STD 	 RUMP	{ ssize_t sys_pwrite(int fd, const void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
 ; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
 175	COMPAT_30 	 { int sys_ntp_gettime(struct ntptimeval30 *ntvp); }

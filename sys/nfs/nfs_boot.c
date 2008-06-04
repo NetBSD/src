@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.70.2.1 2008/05/18 12:35:45 yamt Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.70.2.2 2008/06/04 02:05:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.70.2.1 2008/05/18 12:35:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.70.2.2 2008/06/04 02:05:48 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
@@ -219,7 +219,7 @@ nfs_boot_ifupdown(ifp, lwp, up)
 		ireq.ifr_flags |= IFF_UP;
 	else
 		ireq.ifr_flags &= ~IFF_UP;
-	error = ifioctl(so, SIOCSIFFLAGS, (void *)&ireq, lwp);
+	error = ifioctl(so, SIOCSIFFLAGS, &ireq, lwp);
 	if (error) {
 		printf("ifupdown: SIFFLAGS, error=%d\n", error);
 		goto out;

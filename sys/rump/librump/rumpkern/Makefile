@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32.2.1 2008/05/18 12:35:48 yamt Exp $
+#	$NetBSD: Makefile,v 1.32.2.2 2008/06/04 02:05:48 yamt Exp $
 #
 
 .include <bsd.own.mk>
@@ -44,7 +44,6 @@ OBJS+=	${RUMPUSEROBJDIR}/rumpuser.o ${RUMPUSEROBJDIR}/rumpuser_pth.o
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/common/include	\
 		-I${NETBSDSRCDIR}/sys/rump/librump/rumpuser		\
 		-I${.CURDIR}/opt -DMAXUSERS=32
-CPPFLAGS+=	-DRUMP_WITHOUT_THREADS
 
 CFLAGS+=	-Wno-pointer-sign
 

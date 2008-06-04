@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.11.2.1 2008/05/18 12:32:42 yamt Exp $ */
+/* $NetBSD: sip.c,v 1.11.2.2 2008/06/04 02:04:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,13 +58,12 @@ void *sip_init(unsigned, void *);
 int sip_send(void *, char *, unsigned);
 int sip_recv(void *, char *, unsigned, unsigned);
 
-#define XD1_OWN		(1U << 31)
-#define XD1_OK		(1U << 27)
-
 struct desc {
 	uint32_t xd0, xd1, xd2;
 	uint32_t hole;
 };
+#define XD1_OWN		(1U << 31)
+#define XD1_OK		(1U << 27)
 
 #define SIP_CR		0x00
 #define  CR_RST		(1U << 8)	/* software reset */

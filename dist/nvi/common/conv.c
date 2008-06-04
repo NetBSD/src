@@ -1,3 +1,5 @@
+/*	$NetBSD: conv.c,v 1.1.1.1.2.3 2008/06/04 02:03:06 yamt Exp $ */
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "$Id: conv.c,v 1.1.1.1.2.2 2008/05/18 12:29:22 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:22 $";
+static const char sccsid[] = "Id: conv.c,v 1.27 2001/08/18 21:41:41 skimo Exp (Berkeley) Date: 2001/08/18 21:41:41";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,8 +74,8 @@ raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
 	char *bp = buffer;						\
 	outleft = CONV_BUFFER_SIZE;					\
 	errno = 0;							\
-	if (iconv(id, (char **)&str, &left, &bp, &outleft) == -1 /*&&	\
-		errno != E2BIG*/)					\
+	if (iconv(id, (const char **)&str, &left, &bp, &outleft) == -1	\
+		/* && errno != E2BIG */)				\
 	    goto err;							\
 	if ((len = CONV_BUFFER_SIZE - outleft) == 0) {			\
 	    error = -left;						\
@@ -229,7 +231,7 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 #ifdef USE_ICONV
 #define CONVERT2(len, cw, offset)					\
     do {								\
-	char *bp = buffer;						\
+	const char *bp = buffer;					\
 	while (len != 0) {						\
 	    size_t outleft = cw->blen1 - offset;			\
 	    char *obp = (char *)cw->bp1 + offset;		    	\
@@ -238,7 +240,7 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 		BINC_RETC(NULL, cw->bp1, cw->blen1, nlen);		\
 	    }						    		\
 	    errno = 0;						    	\
-	    if (iconv(id, &bp, &len, &obp, &outleft) == -1 && 	        \
+	    if (iconv(id, &bp, (size_t *) &len, &obp, &outleft) == -1 && \
 		    errno != E2BIG)					\
 		goto err;						\
 	    offset = cw->blen1 - outleft;			        \

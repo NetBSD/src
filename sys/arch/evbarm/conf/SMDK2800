@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.33 2008/01/19 13:11:13 chris Exp $
+#	$NetBSD: SMDK2800,v 1.33.8.1 2008/06/04 02:04:45 yamt Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -86,6 +86,7 @@ options 	NFS_BOOT_BOOTPARAM
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

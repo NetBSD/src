@@ -1,3 +1,5 @@
+/*	$NetBSD: gtkviwindow.h,v 1.1.1.1.2.3 2008/06/04 02:03:16 yamt Exp $ */
+
 #ifndef __GTK_VI_WINDOW_H__
 #define __GTK_VI_WINDOW_H__
 

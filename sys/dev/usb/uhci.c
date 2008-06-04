@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.216.2.1 2008/05/18 12:34:50 yamt Exp $	*/
+/*	$NetBSD: uhci.c,v 1.216.2.2 2008/06/04 02:05:20 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.216.2.1 2008/05/18 12:34:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.216.2.2 2008/06/04 02:05:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,12 +424,14 @@ uhci_init(uhci_softc_t *sc)
 		uhci_dumpregs(sc);
 #endif
 
+	sc->sc_suspend = PWR_RESUME;
+
 	UWRITE2(sc, UHCI_INTR, 0);		/* disable interrupts */
 	uhci_globalreset(sc);			/* reset the controller */
 	uhci_reset(sc);
 
 #ifdef __NetBSD__
-	usb_setup_reserve(sc, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
+	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
 #endif
 
@@ -491,7 +493,7 @@ uhci_init(uhci_softc_t *sc)
 	clsqh = uhci_alloc_sqh(sc);
 	if (clsqh == NULL)
 		return (USBD_NOMEM);
-	clsqh->hlink = bsqh;
+	clsqh->hlink = chsqh;
 	clsqh->qh.qh_hlink = htole32(chsqh->physaddr | UHCI_PTR_QH);
 	clsqh->elink = NULL;
 	clsqh->qh.qh_elink = htole32(UHCI_PTR_T);
@@ -745,6 +747,7 @@ uhci_resume(device_t dv PMF_FN_ARGS)
 		uhci_dumpregs(sc);
 #endif
 
+	sc->sc_suspend = PWR_RESUME;
 	splx(s);
 
 	return true;
@@ -768,7 +771,9 @@ uhci_suspend(device_t dv PMF_FN_ARGS)
 	if (sc->sc_intr_xfer != NULL)
 		usb_uncallout(sc->sc_poll_handle, uhci_poll_hub,
 		    sc->sc_intr_xfer);
+	sc->sc_suspend = PWR_SUSPEND;
 	sc->sc_bus.use_polling++;
+
 	uhci_run(sc, 0); /* stop the controller */
 	cmd &= ~UHCI_CMD_RS;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.50 2008/03/15 11:45:18 rtr Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.50.2.1 2008/06/04 02:05:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -77,6 +77,7 @@ struct ether_header {
 #include <net/ethertypes.h>
 
 #define	ETHER_IS_MULTICAST(addr) (*(addr) & 0x01) /* is address mcast/bcast? */
+#define	ETHER_IS_LOCAL(addr) (*(addr) & 0x02) /* is address local? */
 
 #define	ETHERMTU_JUMBO	(ETHER_MAX_LEN_JUMBO - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)

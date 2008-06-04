@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.108.2.1 2008/05/18 12:35:11 yamt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.108.2.2 2008/06/04 02:05:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.108.2.1 2008/05/18 12:35:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.108.2.2 2008/06/04 02:05:40 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -344,7 +344,7 @@ ptsopen(dev_t dev, int flag, int devtype, struct lwp *l)
 	if (!ISSET(flag, O_NONBLOCK)) {
 		while (!ISSET(tp->t_state, TS_CARR_ON)) {
 			tp->t_wopen++;
-			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+			error = ttysleep(tp, &tp->t_rawcv, true, 0);
 			tp->t_wopen--;
 			if (error) {
 				mutex_spin_exit(&tty_lock);
@@ -405,7 +405,7 @@ again:
 				mutex_spin_exit(&tty_lock);
 				return (EWOULDBLOCK);
 			}
-			error = ttysleep(tp, &tp->t_canq.c_cv, true, 0);
+			error = ttysleep(tp, &tp->t_cancv, true, 0);
 			mutex_spin_exit(&tty_lock);
 			if (error)
 				return (error);
@@ -487,7 +487,7 @@ ptsstart(tp)
 	}
 
 	selnotify(&pti->pt_selr, 0, NOTE_SUBMIT);
-	cv_broadcast(&tp->t_outq.c_cvf);
+	cv_broadcast(&tp->t_outcvf);
 }
 
 /*
@@ -513,11 +513,11 @@ ptsstop(tp, flush)
 	/* change of perspective */
 	if (flush & FREAD) {
 		selnotify(&pti->pt_selw, 0, NOTE_SUBMIT);
-		cv_broadcast(&tp->t_rawq.c_cvf);
+		cv_broadcast(&tp->t_rawcvf);
 	}
 	if (flush & FWRITE) {
 		selnotify(&pti->pt_selr, 0, NOTE_SUBMIT);
-		cv_broadcast(&tp->t_outq.c_cvf);
+		cv_broadcast(&tp->t_outcvf);
 	}
 }
 
@@ -531,11 +531,11 @@ ptcwakeup(tp, flag)
 	mutex_spin_enter(&tty_lock);
 	if (flag & FREAD) {
 		selnotify(&pti->pt_selr, 0, NOTE_SUBMIT);
-		cv_broadcast(&tp->t_outq.c_cvf);
+		cv_broadcast(&tp->t_outcvf);
 	}
 	if (flag & FWRITE) {
 		selnotify(&pti->pt_selw, 0, NOTE_SUBMIT);
-		cv_broadcast(&tp->t_rawq.c_cvf);
+		cv_broadcast(&tp->t_rawcvf);
 	}
 	mutex_spin_exit(&tty_lock);
 }
@@ -644,7 +644,7 @@ ptcread(dev, uio, flag)
 			error = EWOULDBLOCK;
 			goto out;
 		}
-		error = cv_wait_sig(&tp->t_outq.c_cvf, &tty_lock);
+		error = cv_wait_sig(&tp->t_outcvf, &tty_lock);
 		if (error)
 			goto out;
 	}
@@ -721,7 +721,7 @@ again:
 		}
 		(void) putc(0, &tp->t_canq);
 		ttwakeup(tp);
-		clwakeup(&tp->t_canq);
+		cv_broadcast(&tp->t_cancv);
 		error = 0;
 		goto out;
 	}
@@ -745,7 +745,7 @@ again:
 		while (cc > 0) {
 			if ((tp->t_rawq.c_cc + tp->t_canq.c_cc) >= TTYHOG - 2 &&
 			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_lflag, ICANON))) {
-				clwakeup(&tp->t_rawq);
+				cv_broadcast(&tp->t_rawcv);
 				goto block;
 			}
 			/* XXX - should change l_rint to be called with lock
@@ -779,7 +779,7 @@ block:
 		error = cnt == 0 ? EWOULDBLOCK : 0;
 		goto out;
 	}
-	error = cv_wait_sig(&tp->t_rawq.c_cv, &tty_lock);
+	error = cv_wait_sig(&tp->t_rawcv, &tty_lock);
 	mutex_spin_exit(&tty_lock);
 	if (error) {
 		/* adjust for data copied in but not written */

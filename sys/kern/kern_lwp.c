@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.101.2.1 2008/05/18 12:35:08 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.101.2.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  *	LWP.  The LWP may in fact be executing on a processor, may be
  *	sleeping or idle. It is expected to take the necessary action to
  *	stop executing or become "running" again within a short timeframe.
- *	The LW_RUNNING flag in lwp::l_flag indicates that an LWP is running.
+ *	The LP_RUNNING flag in lwp::l_pflag indicates that an LWP is running.
  *	Importantly, it indicates that its state is tied to a CPU.
  *
  *	LSZOMB:
@@ -138,6 +138,14 @@
  *	ONPROC -> IDL), but only happen under tightly controlled
  *	circumstances the side effects are understood.
  *
+ * Migration
+ *
+ *	Migration of threads from one CPU to another could be performed
+ *	internally by the scheduler via sched_takecpu() or sched_catchlwp()
+ *	functions.  The universal lwp_migrate() function should be used for
+ *	any other cases.  Subsystems in the kernel must be aware that CPU
+ *	of LWP may change, while it is not locked.
+ *
  * Locking
  *
  *	The majority of fields in 'struct lwp' are covered by a single,
@@ -164,7 +172,7 @@
  *	LSSLEEP:
  *
  *		Covered by a lock associated with the sleep queue that the
- *		LWP resides on, indirectly referenced by l_sleepq->sq_mutex.
+ *		LWP resides on.
  *
  *	LSSTOP, LSSUSPENDED:
  *
@@ -176,7 +184,7 @@
  *	The lock order is as follows:
  *
  *		spc::spc_lwplock ->
- *		    sleepq_t::sq_mutex ->
+ *		    sleeptab::st_mutex ->
  *			tschain_t::tc_mutex ->
  *			    spc::spc_mutex
  *
@@ -198,10 +206,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.101.2.1 2008/05/18 12:35:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.101.2.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include "opt_ddb.h"
-#include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
 #define _LWP_API_PRIVATE
@@ -570,7 +577,13 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_proc = p2;
 	l2->l_refcnt = 1;
 	l2->l_class = sclass;
-	l2->l_kpriority = l1->l_kpriority;
+
+	/*
+	 * If vfork(), we want the LWP to run fast and on the same CPU
+	 * as its parent, so that it can reuse the VM context and cache
+	 * footprint on the local CPU.
+	 */
+	l2->l_kpriority = ((flags & LWP_VFORK) ? true : false);
 	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
@@ -692,16 +705,12 @@ lwp_exit(struct lwp *l)
 
 	current = (l == curlwp);
 
-	KASSERT(current || l->l_stat == LSIDL);
+	KASSERT(current || (l->l_stat == LSIDL && l->l_target_cpu == NULL));
 
 	/*
 	 * Verify that we hold no locks other than the kernel lock.
 	 */
-#ifdef MULTIPROCESSOR
 	LOCKDEBUG_BARRIER(&kernel_lock, 0);
-#else
-	LOCKDEBUG_BARRIER(NULL, 0);
-#endif
 
 	/*
 	 * If we are the last live LWP in a process, we need to exit the
@@ -822,32 +831,6 @@ lwp_exit(struct lwp *l)
 	}
 }
 
-void
-lwp_exit_switchaway(struct lwp *l)
-{
-	struct cpu_info *ci;
-	struct lwp *idlelwp;
-
-	(void)splsched();
-	l->l_flag &= ~LW_RUNNING;
-	ci = curcpu();	
-	ci->ci_data.cpu_nswtch++;
-	idlelwp = ci->ci_data.cpu_idlelwp;
-	idlelwp->l_stat = LSONPROC;
-
-	/*
-	 * cpu_onproc must be updated with the CPU locked, as
-	 * aston() may try to set a AST pending on the LWP (and
-	 * it does so with the CPU locked).  Otherwise, the LWP
-	 * may be destroyed before the AST can be set, leading
-	 * to a user-after-free.
-	 */
-	spc_lock(ci);
-	ci->ci_data.cpu_onproc = idlelwp;
-	spc_unlock(ci);
-	cpu_switchto(NULL, idlelwp, false);
-}
-
 /*
  * Free a dead LWP's remaining resources.
  *
@@ -898,11 +881,11 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 * all locks to avoid deadlock against interrupt handlers on
 	 * the target CPU.
 	 */
-	if ((l->l_flag & LW_RUNNING) != 0 || l->l_cpu->ci_curlwp == l) {
+	if ((l->l_pflag & LP_RUNNING) != 0 || l->l_cpu->ci_curlwp == l) {
 		int count;
 		(void)count; /* XXXgcc */
 		KERNEL_UNLOCK_ALL(curlwp, &count);
-		while ((l->l_flag & LW_RUNNING) != 0 ||
+		while ((l->l_pflag & LP_RUNNING) != 0 ||
 		    l->l_cpu->ci_curlwp == l)
 			SPINLOCK_BACKOFF_HOOK;
 		KERNEL_LOCK(count, curlwp);
@@ -1060,39 +1043,58 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
  * Migrate the LWP to the another CPU.  Unlocks the LWP.
  */
 void
-lwp_migrate(lwp_t *l, struct cpu_info *ci)
+lwp_migrate(lwp_t *l, struct cpu_info *tci)
 {
-	struct schedstate_percpu *spc;
+	struct schedstate_percpu *tspc;
 	KASSERT(lwp_locked(l, NULL));
+	KASSERT(tci != NULL);
 
-	if (l->l_cpu == ci) {
+	/*
+	 * If LWP is still on the CPU, it must be handled like on LSONPROC.
+	 * The destination CPU could be changed while previous migration
+	 * was not finished.
+	 */
+	if ((l->l_pflag & LP_RUNNING) != 0 || l->l_target_cpu != NULL) {
+		l->l_target_cpu = tci;
 		lwp_unlock(l);
 		return;
 	}
 
-	spc = &ci->ci_schedstate;
+	/* Nothing to do if trying to migrate to the same CPU */
+	if (l->l_cpu == tci) {
+		lwp_unlock(l);
+		return;
+	}
+
+	KASSERT(l->l_target_cpu == NULL);
+	tspc = &tci->ci_schedstate;
 	switch (l->l_stat) {
 	case LSRUN:
 		if (l->l_flag & LW_INMEM) {
-			l->l_target_cpu = ci;
-			break;
+			l->l_target_cpu = tci;
+			lwp_unlock(l);
+			return;
 		}
 	case LSIDL:
-		l->l_cpu = ci;
-		lwp_unlock_to(l, spc->spc_mutex);
-		KASSERT(!mutex_owned(spc->spc_mutex));
+		l->l_cpu = tci;
+		lwp_unlock_to(l, tspc->spc_mutex);
 		return;
 	case LSSLEEP:
-		l->l_cpu = ci;
+		l->l_cpu = tci;
 		break;
 	case LSSTOP:
 	case LSSUSPENDED:
-		if (l->l_wchan != NULL) {
-			l->l_cpu = ci;
-			break;
+		l->l_cpu = tci;
+		if (l->l_wchan == NULL) {
+			lwp_unlock_to(l, tspc->spc_lwplock);
+			return;
 		}
+		break;
 	case LSONPROC:
-		l->l_target_cpu = ci;
+		l->l_target_cpu = tci;
+		spc_lock(l->l_cpu);
+		cpu_need_resched(l->l_cpu, RESCHED_KPREEMPT);
+		spc_unlock(l->l_cpu);
 		break;
 	}
 	lwp_unlock(l);
@@ -1309,6 +1311,8 @@ lwp_userret(struct lwp *l)
 	void (*hook)(void);
 	int sig;
 
+	KASSERT(l == curlwp);
+	KASSERT(l->l_stat == LSONPROC);
 	p = l->l_proc;
 
 #ifndef __HAVE_FAST_SOFTINTS
@@ -1655,7 +1659,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	mutex_exit(&lp->lp_lock);
 
 	KPREEMPT_DISABLE(l);
-	l->l_lwpctl->lc_curcpu = (short)curcpu()->ci_data.cpu_index;
+	l->l_lwpctl->lc_curcpu = (int)curcpu()->ci_data.cpu_index;
 	KPREEMPT_ENABLE(l);
 
 	return 0;

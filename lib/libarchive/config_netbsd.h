@@ -2,10 +2,10 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Version number of bsdcpio */
-#define BSDCPIO_VERSION_STRING "0.9.9a"
+#define BSDCPIO_VERSION_STRING "0.9.10a"
 
 /* Version number of bsdtar */
-#define BSDTAR_VERSION_STRING "2.5.0b"
+#define BSDTAR_VERSION_STRING "2.5.4b"
 
 /* Define to 1 if you have the `acl_create_entry' function. */
 /* #undef HAVE_ACL_CREATE_ENTRY */
@@ -114,6 +114,9 @@
 
 /* Define to 1 if you have the `fchown' function. */
 #define HAVE_FCHOWN 1
+
+/* Define to 1 if you have the `fcntl' function. */
+#define HAVE_FCNTL 1
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
@@ -245,6 +248,9 @@
 /* Define to 1 if you have the <paths.h> header file. */
 #define HAVE_PATHS_H 1
 
+/* Define to 1 if you have the `pipe' function. */
+#define HAVE_PIPE 1
+
 /* Define to 1 if you have the `poll' function. */
 #define HAVE_POLL 1
 
@@ -253,6 +259,9 @@
 
 /* Define to 1 if you have the <pwd.h> header file. */
 #define HAVE_PWD_H 1
+
+/* Define to 1 if you have the <regex.h> header file. */
+#define HAVE_REGEX_H 1
 
 /* Define to 1 if you have the `select' function. */
 #define HAVE_SELECT 1
@@ -383,6 +392,9 @@
 /* Define to 1 if you have the <utime.h> header file. */
 #define HAVE_UTIME_H 1
 
+/* Define to 1 if you have the `vfork' function. */
+#define HAVE_VFORK 1
+
 /* Define to 1 if you have the `vprintf' function. */
 #define HAVE_VPRINTF 1
 
@@ -405,10 +417,10 @@
 #define HAVE_ZLIB_H 1
 
 /* Version number of libarchive as a single integer */
-#define LIBARCHIVE_VERSION_NUMBER "2005000"
+#define LIBARCHIVE_VERSION_NUMBER "2005004"
 
 /* Version number of libarchive */
-#define LIBARCHIVE_VERSION_STRING "2.5.0b"
+#define LIBARCHIVE_VERSION_STRING "2.5.4b"
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -435,13 +447,13 @@
 #define PACKAGE_NAME "libarchive"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libarchive 2.5.0b"
+#define PACKAGE_STRING "libarchive 2.5.4b"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libarchive"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.5.0b"
+#define PACKAGE_VERSION "2.5.4b"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -453,7 +465,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Version number of package */
-#define VERSION "2.5.0b"
+#define VERSION "2.5.4b"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

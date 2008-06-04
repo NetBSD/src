@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1043.2.1 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1043.2.2 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -530,3 +530,16 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		time due a long DNS timeout [chuck 20080516]
 	amd64: Added support for PCI_BUS_FIXUP and PCI_ADDR_FIXUP kernel
 		options. [jmcneill 20080517]
+	acpidalb(4): Direct Application Launch Buttons. [cegger 20080518]
+	wscons(4): Add support for the Colemak keyboard layout. [ghen 20080520]
+	ipf(8): Updated to version 4.1.29. [darrenr 20080520]
+	openldap: Import 2.4.9 [lukem 20080522]
+	mac68k: Added support for Creative Systems Inc Hurdler CPI 
+		Nubus parallel printer card. [hauke 20080522]
+	siisata(4): A driver for Silicon Image SteelVine SATA-II controllers
+		(SiI3124, SiI3132, and SiI3531) [jnemeth 20080523]
+	kernel: Device attach and detach notifications are now exposed
+		via /dev/drvctl [jmcneill 20080525]
+	awk: Import 20070501 [christos 20080525]
+	uberry(4): A driver to allow RIM BlackBerries to charge from the USB
+		port [christos 20080525]

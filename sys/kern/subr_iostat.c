@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.13.42.1 2008/05/18 12:35:09 yamt Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.13.42.2 2008/06/04 02:05:39 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,9 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.13.42.1 2008/05/18 12:35:09 yamt Exp $");
-
-#include "opt_compat_netbsd.h"
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.13.42.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -320,16 +318,10 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 	/*
 	 * The original hw.diskstats call was broken and did not require
 	 * the userland to pass in it's size of struct disk_sysctl.  This
-	 * was fixed after NetBSD 1.6 was released, and any applications
-	 * that do not pass in the size are given an error only, unless
-	 * we care about 1.6 compatibility.
+	 * was fixed after NetBSD 1.6 was released.
 	 */
 	if (namelen == 0)
-#ifdef COMPAT_16
 		tocopy = offsetof(struct io_sysctl, busy);
-#else
-		return (EINVAL);
-#endif
 	else
 		tocopy = name[0];
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: ex.h,v 1.1.1.1.2.3 2008/06/04 02:03:15 yamt Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: ex.h,v 1.1.1.1.2.2 2008/05/18 12:29:26 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:26 $
+ *	Id: ex.h,v 10.30 2004/03/16 14:11:33 skimo Exp (Berkeley) Date: 2004/03/16 14:11:33
  */
 
 #define	PROMPTCHAR	':'		/* Prompt using a colon. */

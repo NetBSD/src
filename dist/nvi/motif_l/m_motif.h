@@ -1,3 +1,5 @@
+/*	$NetBSD: m_motif.h,v 1.1.1.1.2.3 2008/06/04 02:03:17 yamt Exp $ */
+
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	"$Id: m_motif.h,v 1.1.1.1.2.2 2008/05/18 12:29:30 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:30 $";
+ *	"Id: m_motif.h,v 8.11 1996/12/20 10:26:59 bostic Exp (Berkeley) Date: 1996/12/20 10:26:59";
  */
 
 /*

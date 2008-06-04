@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.57.8.1 2008/05/18 12:32:10 yamt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.57.8.2 2008/06/04 02:04:47 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57.8.1 2008/05/18 12:32:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57.8.2 2008/06/04 02:04:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -137,22 +137,18 @@ db_suspend_others(void)
 static void
 db_resume_others(void)
 {
+	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	int i;
 
 	x86_mp_online = ddb_mp_online;
 	__cpu_simple_lock(&db_lock);
 	ddb_cpu = NOCPU;
 	__cpu_simple_unlock(&db_lock);
 
-	for (i=0; i < X86_MAXPROCS; i++) {
-		ci = cpu_lookup_byindex(i);
-		if (ci == NULL)
-			continue;
+	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_flags & CPUF_PAUSE)
 			atomic_and_32(&ci->ci_flags, ~CPUF_PAUSE);
 	}
-
 }
 
 #endif
@@ -359,7 +355,7 @@ db_mach_cpu(
 		return;
 	}
 
-	if ((addr < 0) || (addr >= X86_MAXPROCS)) {
+	if (addr < 0) {
 		db_printf("%ld: CPU out of range\n", addr);
 		return;
 	}

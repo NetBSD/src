@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.2.16.1 2008/05/18 12:34:50 yamt Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.2.16.2 2008/06/04 02:05:20 yamt Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.2.16.1 2008/05/18 12:34:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.2.16.2 2008/06/04 02:05:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,7 +432,7 @@ ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	    USBDEVNAME(sc->sc_dev), sc->sc_lsr, sc->sc_msr));
 
 	for (i = 0; i < sc->sc_numif; i++) {
-		ucom_status_change((struct ucom_softc *)sc->sc_subdevs[i]);
+		ucom_status_change(device_private(sc->sc_subdevs[i]));
 	}
 }
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2430,v 1.1.20.1 2008/05/18 12:31:47 yamt Exp $
+#	$NetBSD: TISDP2430,v 1.1.20.2 2008/06/04 02:04:45 yamt Exp $
 #
 #	TISDP2430 -- TI OMAP 2430 Eval Board Kernel
 #
@@ -86,6 +86,7 @@ options		NFS_BOOT_RWSIZE=1024
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_20	# NetBSD 2.0 compatibility.
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.

@@ -1,3 +1,5 @@
+/*	$NetBSD: vi_auto.h,v 1.1.1.1.2.3 2008/06/04 02:03:07 yamt Exp $ */
+
 /* Do not edit: automatically built by gen_rec.awk. */
 
 #ifndef	vi_AUTO_H

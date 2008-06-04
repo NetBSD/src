@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.505.4.1 2008/05/18 12:31:18 yamt Exp $
+#	$NetBSD: bsd.own.mk,v 1.505.4.2 2008/06/04 02:04:39 yamt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -356,7 +356,6 @@ KMODGRP?=	wheel
 KMODOWN?=	root
 KMODMODE?=	${NONBINMODE}
 
-KMODULEDIR?=	/kernel/modules
 KMODULEGRP?=	wheel
 KMODULEOWN?=	root
 KMODULEMODE?=	${NONBINMODE}
@@ -553,7 +552,7 @@ MK${var}:=	yes
 	MKHESIOD MKHTML \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
 	MKKERBEROS \
-	MKLINKLIB MKLINT \
+	MKLDAP MKLINKLIB MKLINT \
 	MKMAN \
 	MKNLS \
 	MKOBJ \
@@ -664,7 +663,7 @@ ${var}?= no
 # USE_* options which default to "yes" unless their corresponding MK*
 # variable is set to "no".
 #
-.for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_PAM USE_YP
+.for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_LDAP USE_PAM USE_YP
 .if (${${var:S/USE_/MK/}} == "no")
 ${var}:= no
 .else

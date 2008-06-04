@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.106.2.1 2008/05/18 12:29:47 yamt Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.106.2.2 2008/06/04 02:03:21 yamt Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -170,6 +170,7 @@
 #	lpt*	stock lp
 #	lpa*	interruptless lp
 #	par*	Amiga motherboard parallel port
+#	cpi*	Macintosh Nubus CSI parallel printer card
 #
 # USB devices:
 #	usb*	USB control devices
@@ -1542,6 +1543,11 @@ par*)
 		warn "bad unit for par in: $i"
 		;;
 	esac
+	;;
+
+cpi*)
+	unit=${i#cpi}
+	mkdev cpi$unit c %cpi_chr% $unit
 	;;
 
 ite*|ttye*)

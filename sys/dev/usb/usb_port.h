@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.81.2.1 2008/05/18 12:34:51 yamt Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.81.2.2 2008/06/04 02:05:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@ MALLOC_DECLARE(M_USB);
 MALLOC_DECLARE(M_USBDEV);
 MALLOC_DECLARE(M_USBHC);
 
+#include <sys/device.h>
+
 #endif
 
 #define USB_USE_SOFTINTR
@@ -92,13 +94,13 @@ MALLOC_DECLARE(M_USBHC);
 
 typedef struct proc *usb_proc_ptr;
 
-typedef struct device *device_ptr_t;
-#define USBBASEDEVICE struct device
-#define USBDEV(bdev) (&(bdev))
-#define USBDEVNAME(bdev) (device_xname(&(bdev)))
-#define USBDEVUNIT(bdev) device_unit(&(bdev))
+typedef device_t device_ptr_t;
+#define USBBASEDEVICE device_t
+#define USBDEV(bdev) (bdev)
+#define USBDEVNAME(bdev) (device_xname(bdev))
+#define USBDEVUNIT(bdev) device_unit(bdev)
 #define USBDEVPTRNAME(bdevptr) (device_xname(bdevptr))
-#define USBGETSOFTC(d) ((void *)(d))
+#define USBGETSOFTC(d) (device_private(d))
 
 #define DECLARE_USB_DMA_T \
 	struct usb_dma_block; \
@@ -125,14 +127,14 @@ typedef struct malloc_type *usb_malloc_type;
 
 #define	USB_DNAME(dname)	dname
 #define USB_DECLARE_DRIVER(dname)  \
-int __CONCAT(dname,_match)(device_t, struct cfdata *, void *); \
+int __CONCAT(dname,_match)(device_t, cfdata_t, void *); \
 void __CONCAT(dname,_attach)(device_t, device_t, void *); \
 int __CONCAT(dname,_detach)(device_t, int); \
 int __CONCAT(dname,_activate)(device_t, enum devact); \
 \
 extern struct cfdriver __CONCAT(dname,_cd); \
 \
-CFATTACH_DECL(USB_DNAME(dname), \
+CFATTACH_DECL_NEW(USB_DNAME(dname), \
     sizeof(struct ___CONCAT(dname,_softc)), \
     ___CONCAT(dname,_match), \
     ___CONCAT(dname,_attach), \
@@ -140,8 +142,8 @@ CFATTACH_DECL(USB_DNAME(dname), \
     ___CONCAT(dname,_activate))
 
 #define USB_MATCH(dname) \
-int __CONCAT(dname,_match)(struct device *parent, \
-    struct cfdata *match, void *aux)
+int __CONCAT(dname,_match)(device_t parent, \
+    cfdata_t match, void *aux)
 
 #define USB_MATCH_START(dname, uaa) \
 	struct usb_attach_arg *uaa = aux
@@ -150,17 +152,17 @@ int __CONCAT(dname,_match)(struct device *parent, \
 	struct usbif_attach_arg *uaa = aux
 
 #define USB_ATTACH(dname) \
-void __CONCAT(dname,_attach)(struct device *parent, \
-    struct device *self, void *aux)
+void __CONCAT(dname,_attach)(device_t parent, \
+    device_t self, void *aux)
 
 #define USB_ATTACH_START(dname, sc, uaa) \
 	struct __CONCAT(dname,_softc) *sc = \
-		(struct __CONCAT(dname,_softc) *)self; \
+		device_private(self); \
 	struct usb_attach_arg *uaa = aux
 
 #define USB_IFATTACH_START(dname, sc, uaa) \
 	struct __CONCAT(dname,_softc) *sc = \
-		(struct __CONCAT(dname,_softc) *)self; \
+		device_private(self); \
 	struct usbif_attach_arg *uaa = aux
 
 /* Returns from attach */
@@ -174,28 +176,18 @@ void __CONCAT(dname,_attach)(struct device *parent, \
 	} while (0)
 
 #define USB_DETACH(dname) \
-int __CONCAT(dname,_detach)(struct device *self, int flags)
+int __CONCAT(dname,_detach)(device_t self, int flags)
 
 #define USB_DETACH_START(dname, sc) \
 	struct __CONCAT(dname,_softc) *sc = \
-		(struct __CONCAT(dname,_softc) *)self
+		device_private(self)
 
 #define USB_GET_SC_OPEN(dname, unit, sc) \
-	if (unit >= __CONCAT(dname,_cd).cd_ndevs) \
-		return (ENXIO); \
-	sc = __CONCAT(dname,_cd).cd_devs[unit]; \
+	sc = device_lookup_private(& __CONCAT(dname,_cd), unit); \
 	if (sc == NULL) \
 		return (ENXIO)
 
 #define USB_GET_SC(dname, unit, sc) \
-	sc = __CONCAT(dname,_cd).cd_devs[unit]
-
-#define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
-	(config_found_sm_loc(parent, "usbdevif", \
-			     NULL, args, print, sub))
-
-#define USB_DO_IFATTACH(dev, bdev, parent, args, print, sub) \
-	(config_found_sm_loc(parent, "usbifif", \
-			     NULL, args, print, sub))
+	sc = device_lookup_private(& __CONCAT(dname,_cd), unit)
 
 #endif /* _USB_PORT_H */

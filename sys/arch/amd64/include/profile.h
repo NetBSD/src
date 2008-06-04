@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.12.8.1 2008/05/18 12:31:28 yamt Exp $	*/
+/*	$NetBSD: profile.h,v 1.12.8.2 2008/06/04 02:04:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,14 +137,14 @@ mcount_read_psl(void)
 {
 	u_long	ef;
 
-	__asm volatile("pushfl; popl %0" : "=r" (ef));
+	__asm volatile("pushfq; popq %0" : "=r" (ef));
 	return (ef);
 }
 
 static inline void
 mcount_write_psl(u_long ef)
 {
-	__asm volatile("pushl %0; popfl" : : "r" (ef));
+	__asm volatile("pushq %0; popfq" : : "r" (ef));
 }
 
 #endif /* XEN */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.278 2008/04/16 15:31:15 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.278.2.1 2008/06/04 02:04:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5386,10 +5386,8 @@ ENTRY(openfirmware_exit)
 	/* Arrange locked kernel stack as PROM stack */
 	set	EINTSTACK  - CC64FSZ, %l5
 
-#ifdef _LP64
 	andn	%l5, 0x0f, %l5			! Needs to be 16-byte aligned
 	sub	%l5, BIAS, %l5			! and biased
-#endif
 	mov	%l5, %sp
 	flushw
 
@@ -5400,6 +5398,8 @@ ENTRY(openfirmware_exit)
 	stxa    %g0, [%l3] ASI_DMMU
 	membar	#Sync
 
+	wrpr	%g0, PSTATE_PROM, %pstate	! Disable interrupts
+						! and enable 64-bit addresses
 	wrpr	%g0, 0, %tl			! force trap level 0
 	call	%l6
 	 mov	%i0, %o0

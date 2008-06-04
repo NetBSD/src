@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and.S,v 1.2.8.1 2008/05/18 12:28:45 yamt Exp $	*/
+/*	$NetBSD: atomic_and.S,v 1.2.8.2 2008/06/04 02:02:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_and_64)
+ENTRY(_atomic_and_64)
 1:	ldarx	r10,0,r3
 	and	r10,r10,r4
 	stdcx.	r10,0,r3
@@ -45,7 +45,7 @@ ATOMIC_OP_ALIAS(atomic_and_64,_atomic_and_64)
 ATOMIC_OP_ALIAS(atomic_and_ulong,_atomic_and_64)
 STRONG_ALIAS(_atomic_and_ulong,_atomic_and_64)
 
-ENTRY_NOPROFILE(_atomic_and_64_nv)
+ENTRY(_atomic_and_64_nv)
 1:	ldarx	r10,0,r3
 	and	r10,r10,r4
 	stdcx.	r10,0,r3

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.11.6.1 2008/05/18 12:30:53 yamt Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.11.6.2 2008/06/04 02:04:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.11.6.1 2008/05/18 12:30:53 yamt Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.11.6.2 2008/06/04 02:04:37 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -120,12 +120,12 @@ static const struct kwinst kw80211kw[] = {
 	, {.k_word = "-bssid", .k_exec = unsetifbssid,
 	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "chan", .k_nextparser = &parse_chan.pi_parser}
-	, {.k_word = "-chan", .k_key = "chan", .k_type = KW_T_NUM,
-	   .k_num = IEEE80211_CHAN_ANY, .k_exec = setifchan,
+	, {.k_word = "-chan", .k_key = "chan", .k_type = KW_T_UINT,
+	   .k_uint = IEEE80211_CHAN_ANY, .k_exec = setifchan,
 	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "frag", .k_nextparser = &parse_frag.pi_parser}
-	, {.k_word = "-frag", .k_key = "frag", .k_type = KW_T_NUM,
-	   .k_num = IEEE80211_FRAG_MAX, .k_exec = setiffrag,
+	, {.k_word = "-frag", .k_key = "frag", .k_type = KW_T_INT,
+	   .k_int = IEEE80211_FRAG_MAX, .k_exec = setiffrag,
 	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "list", .k_nextparser = &lists.pk_parser}
 	, {.k_word = "nwid", .k_nextparser = &parse_ssid.ps_parser}

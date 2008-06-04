@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.c,v 1.2 2007/06/16 10:52:25 martin Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.2.10.1 2008/06/04 02:03:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -60,7 +60,7 @@ struct file;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_scan.c,v 2.40.2.9 2007/03/13 09:42:05 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_scan.c,v 2.40.2.10 2007/06/02 21:22:28 darrenr Exp";
 #endif
 
 #ifdef	IPFILTER_SCAN	/* endif at bottom of file */
@@ -590,6 +590,8 @@ void *ctx;
 		bcopy((char *)&ipsc_stat, (char *)&ipscs, sizeof(ipscs));
 		ipscs.iscs_list = ipsc_list;
 		err = BCOPYOUT(&ipscs, data, sizeof(ipscs));
+		if (err != 0)
+			err = EFAULT;
 		break;
 	default :
 		err = EINVAL;

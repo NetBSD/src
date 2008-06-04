@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.50 2008/03/22 03:23:27 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.50.2.1 2008/06/04 02:04:52 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.50 2008/03/22 03:23:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.50.2.1 2008/06/04 02:04:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -560,6 +560,7 @@ db_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 
 	SF(sr);
 	SF(pr);
+	SF(gbr);
 	SF(r8);
 	SF(r9);
 	SF(r10);
@@ -600,6 +601,7 @@ __db_print_tfstack(struct trapframe *tf, struct trapframe *tfbot)
 		TF(ssr);
 		TF(spc);
 		TF(pr);
+		TF(gbr);
 		TF(macl);
 		TF(mach);
 		TF(r0);

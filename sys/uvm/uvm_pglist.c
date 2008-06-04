@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.39.2.1 2008/05/18 12:35:56 yamt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.39.2.2 2008/06/04 02:05:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.39.2.1 2008/05/18 12:35:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.39.2.2 2008/06/04 02:05:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,7 +462,7 @@ uvm_pglistfree(struct pglist *list)
 		uvmexp.free++;
 		if (iszero)
 			uvmexp.zeropages++;
-		if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
+		if (uvmexp.zeropages < UVM_PAGEZERO_LOWAT)
 			uvm.page_idle_zero = vm_page_zero_enable;
 		STAT_DECR(uvm_pglistalloc_npages);
 	}

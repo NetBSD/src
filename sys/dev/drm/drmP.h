@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.16.2.1 2008/05/18 12:33:37 yamt Exp $ */
+/* $NetBSD: drmP.h,v 1.16.2.2 2008/06/04 02:05:10 yamt Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -47,7 +47,9 @@ typedef struct drm_device drm_device_t;
 typedef struct drm_file drm_file_t;
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(_KERNEL_OPT)
 #include <opt_drm.h>
+#endif
 #ifdef DRM_DEBUG
 #undef DRM_DEBUG
 #define DRM_DEBUG_DEFAULT_ON 1
@@ -69,7 +71,6 @@ typedef struct drm_file drm_file_t;
 #endif
 #include <sys/proc.h>
 #include <sys/lock.h>
-#include <sys/condvar.h>
 #include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/filio.h>
@@ -137,7 +138,9 @@ typedef struct drm_file drm_file_t;
 #include "drm_atomic.h"
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(_KERNEL_OPT)
 #include <opt_drm.h>
+#endif
 #ifdef DRM_DEBUG
 #undef DRM_DEBUG
 #define DRM_DEBUG_DEFAULT_ON 1
@@ -191,7 +194,11 @@ typedef struct drm_file drm_file_t;
 
 #define DRM_IF_VERSION(maj, min) (maj << 16 | min)
 
+#if !defined(_MODULE)
 MALLOC_DECLARE(M_DRM);
+#else
+#define M_DRM M_TEMP
+#endif
 
 #define __OS_HAS_AGP	1
 
@@ -199,31 +206,10 @@ MALLOC_DECLARE(M_DRM);
 #define DRM_DEV_UID	0
 #define DRM_DEV_GID	0
 
-typedef struct drm_wait_queue {
-	kcondvar_t	cv;
-	kmutex_t	lock;
-} wait_queue_head_t;
-
-#define	DRM_INIT_WAITQUEUE(q)	\
-{ \
-	mutex_init(&(q)->lock, MUTEX_DEFAULT, IPL_VM); \
-	cv_init(&(q)->cv, "drmwtq");	\
-}
-
-#define	DRM_DESTROY_WAITQUEUE(q)	\
-{ \
-	mutex_destroy(&(q)->lock);	\
-	cv_destroy(&(q)->cv);	\
-}
-
-#define	DRM_WAKEUP(q)	\
-{ \
-	mutex_enter(&(q)->lock); \
-	cv_broadcast(&(q)->cv);	\
-	mutex_exit(&(q)->lock);	\
-}
-
-#define	DRM_WAKEUP_INT DRM_WAKEUP
+#define wait_queue_head_t	atomic_t
+#define DRM_WAKEUP(w)		wakeup((void *)w)
+#define DRM_WAKEUP_INT(w)	wakeup(w)
+#define DRM_INIT_WAITQUEUE(queue) do {(void)(queue);} while (0)
 
 #if defined(__FreeBSD__) && __FreeBSD_version < 502109
 #define bus_alloc_resource_any(dev, type, rid, flags) \
@@ -252,12 +238,8 @@ typedef struct drm_wait_queue {
 #define DRM_STRUCTPROC		struct proc
 #define DRM_STRUCTCDEVPROC	struct lwp
 #define DRM_SPINTYPE		kmutex_t
-/*
- * XXX unused
- * #define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_VM)
- * #define DRM_SPINUNINIT(l)	mutex_destroy(l)
- *
- */
+#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_VM)
+#define DRM_SPINUNINIT(l)	mutex_destroy(l)
 #define DRM_SPINLOCK(l)		mutex_enter(l)
 #define DRM_SPINUNLOCK(u)	mutex_exit(u)
 #define DRM_SPINLOCK_ASSERT(l)	mutex_owned(l)
@@ -474,7 +456,7 @@ typedef vaddr_t vm_offset_t;
 #define le32_to_cpu(x) le32toh(x)
 
 #define DRM_ERR(v)		v
-#define DRM_HZ			mstohz(333)
+#define DRM_HZ			hz
 #define DRM_UDELAY(udelay)	DELAY(udelay)
 #define DRM_TIME_SLICE		(hz/20)  /* Time slice for GLXContexts	  */
 
@@ -530,27 +512,16 @@ for ( ret = 0 ; !ret && !(condition) ; ) {			\
 	DRM_LOCK();						\
 }
 #elif defined(__NetBSD__)
-#define	DRM_WAIT_ON(ret, q, timeout, condition)  		\
-mutex_enter(&(q)->lock);					\
-while (!(condition)) {						\
-	ret = cv_timedwait_sig(&(q)->cv, &(q)->lock, (timeout)); \
-	if (ret != 0 && ret != EWOULDBLOCK) {			\
-		ret = EINTR;  					\
-		break; 						\
-	} else { 						\
-		ret = 0; 					\
-	} 							\
-} 								\
-mutex_exit(&(q)->lock);
-#define	DRM_LOCAL_WAIT_ON(ret, mutex, cv) 			\
-do {								\
-	mutex_enter(mutex);					\
-	ret = cv_wait_sig(cv, mutex);				\
-	if (ret != 0 && ret != EWOULDBLOCK)			\
-		ret = EINTR;					\
-	ret = 0; 						\
-	mutex_exit(mutex); 					\
-} while (0); 
+#define DRM_WAIT_ON( ret, queue, timeout, condition )		\
+for ( ret = 0 ; !ret && !(condition) ; ) {			\
+	DRM_UNLOCK();						\
+	mutex_enter(&dev->irq_lock);				\
+	if (!(condition))					\
+	   ret = mtsleep(&(queue), PZERO | PCATCH, 		\
+			 "drmwtq", (timeout), &dev->irq_lock);	\
+	mutex_exit(&dev->irq_lock);				\
+	DRM_LOCK();						\
+}
 #else
 #define DRM_WAIT_ON( ret, queue, timeout, condition )		\
 for ( ret = 0 ; !ret && !(condition) ; ) {			\
@@ -679,8 +650,7 @@ struct drm_file {
 typedef struct drm_lock_data {
 	drm_hw_lock_t	  *hw_lock;	/* Hardware lock		   */
 	DRMFILE		  filp;	        /* Unique identifier of holding process (NULL is kernel)*/
-	kmutex_t	  lock_mutex;
-	kcondvar_t	  lock_cv;	/* Queue of blocked processes	   */
+	int		  lock_queue;	/* Queue of blocked processes	   */
 	unsigned long	  lock_time;	/* Time of last lock in jiffies	   */
 } drm_lock_data_t;
 
@@ -946,8 +916,7 @@ struct drm_device {
 
 	atomic_t	  context_flag;	/* Context swapping flag	   */
 	int		  last_context;	/* Last current context		   */
-	wait_queue_head_t  vbl_queue;	/* vbl wait channel */
-
+   	int		  vbl_queue;	/* vbl wait channel */
    	atomic_t          vbl_received;
 
 #ifdef __FreeBSD__
@@ -965,7 +934,6 @@ struct drm_device {
 	void		  *dev_private;
 	unsigned int	  agp_buffer_token;
 	drm_local_map_t   *agp_buffer_map;
-
 };
 
 extern int	drm_debug_flag;
@@ -1188,7 +1156,7 @@ static __inline__ struct drm_local_map *drm_core_findmap(struct drm_device *dev,
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if ((map->offset == offset) || (map->offset == DRM_NETBSD_HANDLE2ADDR((uintptr_t)offset)))
+		if (map->offset == offset)
 			return map;
 	}
 	return NULL;

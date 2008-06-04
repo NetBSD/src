@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.11 2007/12/06 17:00:31 ad Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.11.14.1 2008/06/04 02:04:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.11 2007/12/06 17:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.11.14.1 2008/06/04 02:04:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,8 +121,6 @@ sapcic_kthread_create(void *arg)
 	struct sapcic_socket *so = arg;
 
 	/* XXX attach card if already present */
-
-	mutex_init(&so->sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	so->laststatus = (so->pcictag->read)(so, SAPCIC_STATUS_CARD);
 	if (so->laststatus == SAPCIC_CARD_VALID) {

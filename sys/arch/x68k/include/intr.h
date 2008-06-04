@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17.16.1 2008/05/18 12:33:01 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.17.16.2 2008/06/04 02:04:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ void	spl0(void);
 #define splsoftclock()	splraise1()
 #define splsoftnet()	splraise1()
 #define splsoftserial()	splraise1()
-#define splvm()         splraise4()
+#define splvm()         splraise5()
 #define splsched()      spl7()
 #define splhigh()       spl7()
 
@@ -57,7 +57,7 @@ void	spl0(void);
 #define	IPL_SOFTNET	3
 #define	IPL_SOFTSERIAL	4
 #define	IPL_VM		5
-#define	IPL_SCHED	5
+#define	IPL_SCHED	6
 #define	IPL_HIGH	6
 #define	NIPL		7
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.131.2.1 2008/05/18 12:35:06 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.131.2.2 2008/06/04 02:05:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.131.2.1 2008/05/18 12:35:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.131.2.2 2008/06/04 02:05:38 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.131.2.1 2008/05/18 12:35:06 yamt E
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32.h>
@@ -1860,7 +1862,6 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 	int i;
 	extern struct devsw_conv *devsw_conv;
 	extern int max_devsw_convs;
-	extern kmutex_t devsw_lock;
 
 	if (newp != NULL || namelen != 0)
 		return (EINVAL);
@@ -1877,7 +1878,7 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 	 */
 	error = 0;
 	sysctl_unlock();
-	mutex_enter(&devsw_lock);
+	mutex_enter(&specfs_lock);
 	for (i = 0; i < max_devsw_convs; i++) {
 		dname = devsw_conv[i].d_name;
 		if (dname == NULL)
@@ -1890,15 +1891,15 @@ sysctl_kern_drivers(SYSCTLFN_ARGS)
 		kd.d_bmajor = devsw_conv[i].d_bmajor;
 		kd.d_cmajor = devsw_conv[i].d_cmajor;
 		strlcpy(kd.d_name, dname, sizeof kd.d_name);
-		mutex_exit(&devsw_lock);
+		mutex_exit(&specfs_lock);
 		error = dcopyout(l, &kd, where, sizeof kd);
-		mutex_enter(&devsw_lock);
+		mutex_enter(&specfs_lock);
 		if (error != 0)
 			break;
 		buflen -= sizeof kd;
 		where += sizeof kd;
 	}
-	mutex_exit(&devsw_lock);
+	mutex_exit(&specfs_lock);
 	sysctl_relock();
 	*oldlenp = where - start;
 	return error;
@@ -2936,6 +2937,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 
 	strncpy(ki->p_comm, p->p_comm,
 	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
+	strncpy(ki->p_ename, p->p_emul->e_name, sizeof(ki->p_ename));
 
 	ki->p_nlwps = p->p_nlwps;
 	ki->p_realflag = ki->p_flag;

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.496.2.1 2008/05/18 12:34:52 yamt Exp $
+$NetBSD: usbdevs,v 1.496.2.2 2008/06/04 02:05:21 yamt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1865,7 +1865,9 @@ product REALTEK RTL8150L	0x8150	RTL8150L USB-Ethernet Bridge
 product REALTEK RTL8151		0x8151	RTL8151 PNA
 
 /* Research In Motion */
-product RIM BLACKBERRY		0x0001	BlackBerry
+product RIM BLACKBERRY			0x0001	BlackBerry
+product RIM BLACKBERRY_PEARL_DUAL	0x0004	BlackBerry Pearl Dual
+product RIM BLACKBERRY_PEARL		0x0006	BlackBerry Pearl
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB

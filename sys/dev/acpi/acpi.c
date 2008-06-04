@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.113.2.1 2008/05/18 12:33:33 yamt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.113.2.2 2008/06/04 02:05:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.113.2.1 2008/05/18 12:33:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.113.2.2 2008/06/04 02:05:09 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -781,7 +781,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 				aprint_normal("       UID %s\n",
 				    ad->ad_devinfo->UniqueId.Value);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_ADR)
-				aprint_normal("       ADR 0x%016qx\n",
+				aprint_normal("       ADR 0x%016" PRIx64 "\n",
 				    ad->ad_devinfo->Address);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_STA)
 				aprint_normal("       STA 0x%08x\n",

@@ -1,3 +1,5 @@
+/*	$NetBSD: util2.c,v 1.1.1.1.2.3 2008/06/04 02:03:07 yamt Exp $ */
+
 #include "config.h"
 
 #include <sys/types.h>

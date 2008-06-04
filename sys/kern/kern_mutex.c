@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.34.2.1 2008/05/18 12:35:08 yamt Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.34.2.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,9 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.34.2.1 2008/05/18 12:35:08 yamt Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.34.2.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -78,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.34.2.1 2008/05/18 12:35:08 yamt Exp
     LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
         (uintptr_t)__builtin_return_address(0), false, false)
 #define	MUTEX_LOCKED(mtx)					\
-    LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx),			\
+    LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx), NULL,		\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_UNLOCKED(mtx)					\
     LOCKDEBUG_UNLOCKED(MUTEX_DEBUG_P(mtx), (mtx),		\
@@ -256,13 +254,13 @@ int	mutex_onproc(uintptr_t, struct cpu_info **);
 
 lockops_t mutex_spin_lockops = {
 	"Mutex",
-	0,
+	LOCKOPS_SPIN,
 	mutex_dump
 };
 
 lockops_t mutex_adaptive_lockops = {
 	"Mutex",
-	1,
+	LOCKOPS_SLEEP,
 	mutex_dump
 };
 
@@ -308,17 +306,12 @@ mutex_dump(volatile void *cookie)
  *	generates a lot of machine code in the DIAGNOSTIC case, so
  *	we ask the compiler to not inline it.
  */
-
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline)) __attribute ((noreturn))
-#endif
-void
+void __noinline
 mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
 {
 
 	LOCKDEBUG_ABORT(mtx, (MUTEX_SPIN_P(mtx) ?
 	    &mutex_spin_lockops : &mutex_adaptive_lockops), func, msg);
-	/* NOTREACHED */
 }
 
 /*

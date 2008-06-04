@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.248.2.1 2008/05/18 12:29:42 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.248.2.2 2008/06/04 02:03:21 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -505,7 +505,26 @@ Notes:		This branch is based off of the netbsd-4 branch!
 		include not allocating memory while preparing to tsleep(),
 		reducing inappropriate upcall delivery (hopefully also
 		eliminating the need to mlock stacks), and being
-		able to pthread_kill() running threads.
+		able to pthread_kill() running threads. At this date,
+		most goals have been achieved. This branch also includes
+		fixes to gdb to support working with threaded apps.
+
+Branch:  	wrstuden-revivesa
+Description:	Fix a number of issues present with Scheduler Activations.
+Status: 	Active
+Start Date:	10 May 2008
+End Date:
+Base Tag:	wrstuden-revivesa-base
+Maintainer:	Bill Stouder-Studenmund <wrstuden@NetBSD.org>
+Scope:		src, though all the interesting stuff is in the kernel
+Notes:		This branch is intended to revive Scheduler Activations
+		in -current in the 5.0 era. This branch's main goal is
+		to re-add syscall compatability so that SA-based libpthread
+		programs can run with a -current kernel. 1:1 threading will
+		remain the NetBSD-default. This branch will re-add necessary
+		upcall support, and will also serve as a chance to clean
+		out cruft that had accumulated in the implementation over
+		time.
 
 Branch:		yamt-kmem
 Description:	
@@ -529,7 +548,7 @@ Description:	make nfs client mp-safe
 Status:		Active
 Start Date:	Sun Apr 27 2008
 End Date:	
-Base Tag:	yamt-nfs-mp-base
+Base Tag:	yamt-nfs-mp-base2
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
@@ -539,7 +558,7 @@ Description:	import newer pf from OpenBSD 4.2
 Status:		Active
 Start Date:	Sat Apr 19 2008
 End Date:	
-Base Tag:	yamt-pf42-base
+Base Tag:	yamt-pf42-base2
 Maintainer:	Peter Postma <peter@NetBSD.org>,
 		YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src

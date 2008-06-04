@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1.2.2 2008/05/18 12:29:20 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:20 $
+#	Id: Makefile,v 8.30 1996/11/27 11:59:09 bostic Exp (Berkeley) Date: 1996/11/27 11:59:09
 
 CAT=	dutch english french german ru_SU.KOI8-R spanish swedish
 FILES=	../cl/*.c ../common/*.c ../ex/*.c ../vi/*.c

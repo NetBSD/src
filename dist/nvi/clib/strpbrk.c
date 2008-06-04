@@ -1,3 +1,5 @@
+/*	$NetBSD: strpbrk.c,v 1.1.1.1.2.3 2008/06/04 02:03:06 yamt Exp $ */
+
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.

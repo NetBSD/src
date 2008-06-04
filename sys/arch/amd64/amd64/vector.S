@@ -1,4 +1,33 @@
-/*	$NetBSD: vector.S,v 1.19.8.1 2008/05/18 12:31:28 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.19.8.2 2008/06/04 02:04:40 yamt Exp $	*/
+
+/*-
+ * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum and by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -35,34 +64,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
- * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum and by Andrew Doran.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
 #include <machine/asm.h>
 
 #include "opt_ddb.h"
@@ -133,6 +134,7 @@ IDTVEC(trap02)
 	movw	%es,TF_ES(%rsp)
 	movw	%ds,TF_DS(%rsp)
 	movq	%rsp,%rdi
+	incl	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 	swapgs
 	movw	TF_GS(%rsp),%gs
@@ -142,6 +144,7 @@ IDTVEC(trap02)
 	jmp	2f
 1:
 	movq	%rsp,%rdi
+	incl	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 2:
 	INTR_RESTORE_GPRS
@@ -193,13 +196,29 @@ IDTVEC(trap0f)
 #endif /* DIAGNOSTIC */
 	jmp	.Lalltraps_checkusr
 IDTVEC(trap10)
-	ZTRAP(T_ARITHTRAP)
+	pushq	$0			# dummy error code
+	pushq	$T_ARITHTRAP
+.Ldo_fputrap:
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif /* DIAGNOSTIC */
+	testb	$SEL_RPL,TF_CS(%rsp)
+	jz	1f
+	movq	%rsp,%rdi
+	call	_C_LABEL(fputrap)
+	jmp	.Lalltraps_checkusr
+1:
+  	STI(si)
+	jmp	calltrap
 IDTVEC(trap11)
 	ZTRAP(T_ALIGNFLT)
 IDTVEC(trap12)
 	ZTRAP(T_MCA)
 IDTVEC(trap13)
-	ZTRAP(T_XMM)
+	pushq	$0			# dummy error code
+	pushq	$T_XMM
+	jmp	.Ldo_fputrap
 IDTVEC(trap14)
 IDTVEC(trap15)
 IDTVEC(trap16)
@@ -266,11 +285,11 @@ calltrap:
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	movq	%rsp,%rdi
+	incl	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 .Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
-	jnz	.Lalltraps_checkast
-	jmp	6f
+	jz	6f
 .Lalltraps_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	/* Check for ASTs on exit to user mode. */
@@ -281,6 +300,7 @@ calltrap:
   	STI(si)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
+	incl	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
@@ -917,7 +937,7 @@ IDTVEC(resume_/**/name/**/num)						\
   	CLI(si)								;\
   	unmask(num)			/* unmask it in hardware */	;\
   	late_ack(num)							;\
-  	CLI(si)								;\
+  	STI(si)								;\
   	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
   
 # The unmask func for Xen events
@@ -1008,8 +1028,7 @@ NENTRY(hypervisor_callback)
 	subq	$8, %rdi; /* don't forget if_ppl */
 	call	do_hypervisor_callback
 	testb   $SEL_RPL,TF_CS(%rsp)
-	jz	1f
-	jmp doreti_checkast
+	jnz	doreti_checkast
 1:
 	INTRFASTEXIT
 

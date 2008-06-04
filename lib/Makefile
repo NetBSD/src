@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.122.2.1 2008/05/18 12:30:09 yamt Exp $
+#	$NetBSD: Makefile,v 1.122.2.2 2008/06/04 02:04:33 yamt Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -102,8 +102,17 @@ SUBDIR+=	.WAIT libgssapi libhdb
 SUBDIR+=	.WAIT libkadm5srv libkadm5clnt libkafs libsl libss
 .endif
 
+.if (${MKLDAP} != "no")
+				# depends on libcrypto - only if ${MKCRYPTO}
+SUBDIR+=	../external/bsd/openldap/lib
+.endif
+
+
+#==================== 3rd library dependency barrier ====================
+SUBDIR+=	.WAIT
+
 .if (${MKPAM} != "no")
-SUBDIR+=	.WAIT libpam		# depends on libkrb5, libkafs and more
+SUBDIR+=	libpam		# depends on libkrb5, libkafs and more
 .endif
 
 .include <bsd.subdir.mk>

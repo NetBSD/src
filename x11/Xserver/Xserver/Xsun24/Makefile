@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2005/10/03 20:22:08 macallan Exp $
+#	$NetBSD: Makefile,v 1.5.18.1 2008/06/04 02:06:00 yamt Exp $
+
+NOMAN=	# defined (must come before bsd.own.mk)
 
 .include <bsd.own.mk>
 
 PROG=	Xsun24
 BINMODE=4711
-
-MKMAN=	no
 
 .include "../Makefile.Xserver"
 
