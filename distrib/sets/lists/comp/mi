@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1155 2008/06/02 18:39:36 mlelstv Exp $
+#	$NetBSD: mi,v 1.1156 2008/06/04 08:30:26 haad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6526,6 +6526,29 @@
 ./usr/share/man/cat3/prop_array_remove.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_send_ioctl.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_get_bool.0      comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_get_cstring.0   comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_get_cstring_nocopy.0 comp-c-catman      .cat
+./usr/share/man/cat3/prop_array_get_int16.0     comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_get_int32.0     comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_get_int64.0     comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_get_int8.0      comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_get_uint16.0    comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_get_uint32.0    comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_get_uint64.0    comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_get_uint8.0     comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_set_bool.0      comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_set_cstring.0   comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_set_cstring_nocopy.0 comp-c-catman      .cat
+./usr/share/man/cat3/prop_array_set_int16.0     comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_set_int32.0     comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_set_int64.0     comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_set_int8.0      comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_set_uint16.0    comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_set_uint32.0    comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_set_uint64.0    comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_set_uint8.0     comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_util.0          comp-c-catman           .cat
 ./usr/share/man/cat3/prop_bool.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_bool_copy.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_bool_create.0		comp-c-catman		.cat
@@ -11776,6 +11799,29 @@
 ./usr/share/man/man3/prop_array_remove.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_send_ioctl.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_set.3		comp-c-man		.man
+./usr/share/man/man3/prop_array_get_bool.3      comp-c-man              .man
+./usr/share/man/man3/prop_array_get_cstring.3   comp-c-man              .man
+./usr/share/man/man3/prop_array_get_cstring_nocopy.3    comp-c-man      .man
+./usr/share/man/man3/prop_array_get_int16.3     comp-c-man              .man
+./usr/share/man/man3/prop_array_get_int32.3     comp-c-man              .man
+./usr/share/man/man3/prop_array_get_int64.3     comp-c-man              .man
+./usr/share/man/man3/prop_array_get_int8.3      comp-c-man              .man
+./usr/share/man/man3/prop_array_get_uint16.3    comp-c-man              .man
+./usr/share/man/man3/prop_array_get_uint32.3    comp-c-man              .man
+./usr/share/man/man3/prop_array_get_uint64.3    comp-c-man              .man
+./usr/share/man/man3/prop_array_get_uint8.3     comp-c-man              .man
+./usr/share/man/man3/prop_array_set_bool.3      comp-c-man              .man
+./usr/share/man/man3/prop_array_set_cstring.3   comp-c-man              .man
+./usr/share/man/man3/prop_array_set_cstring_nocopy.3    comp-c-man      .man
+./usr/share/man/man3/prop_array_set_int16.3     comp-c-man              .man
+./usr/share/man/man3/prop_array_set_int32.3     comp-c-man              .man
+./usr/share/man/man3/prop_array_set_int64.3     comp-c-man              .man
+./usr/share/man/man3/prop_array_set_int8.3      comp-c-man              .man
+./usr/share/man/man3/prop_array_set_uint16.3    comp-c-man              .man
+./usr/share/man/man3/prop_array_set_uint32.3    comp-c-man              .man
+./usr/share/man/man3/prop_array_set_uint64.3    comp-c-man              .man
+./usr/share/man/man3/prop_array_set_uint8.3     comp-c-man              .man
+./usr/share/man/man3/prop_array_util.3          comp-c-man              .man      
 ./usr/share/man/man3/prop_bool.3		comp-c-man		.man
 ./usr/share/man/man3/prop_bool_copy.3		comp-c-man		.man
 ./usr/share/man/man3/prop_bool_create.3		comp-c-man		.man
