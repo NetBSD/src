@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.53 2008/06/02 11:11:14 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.54 2008/06/04 12:45:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -118,10 +118,17 @@
 #include <uvm/uvm_pglist.h>
 
 struct vm_page {
-	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
-						 * queue or free list (P) */
 	TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
-	TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
+
+	union {
+		TAILQ_ENTRY(vm_page) queue;
+		LIST_ENTRY(vm_page) list;
+	} pageq;				/* queue info for FIFO
+						 * queue or free list (P) */
+	union {
+		TAILQ_ENTRY(vm_page) queue;
+		LIST_ENTRY(vm_page) list;
+	} listq;				/* pages in same object (O)*/
 
 	struct vm_anon		*uanon;		/* anon (O,P) */
 	struct uvm_object	*uobject;	/* object (O,P) */
@@ -291,9 +298,6 @@ static int vm_physseg_find(paddr_t, int *);
 #define uvm_pagehash(obj,off) \
 	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
 
-#define	UVM_PAGEZERO_LOWAT	(uvmexp.free >> 1)
-#define	UVM_PAGEZERO_HIWAT	(uvmexp.free * 10 / 9)
-
 #define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
 
 /*
@@ -403,6 +407,7 @@ PHYS_TO_VM_PAGE(paddr_t pa)
 }
 
 #define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
+#define	VM_FREE_PAGE_TO_CPU(pg)	((struct uvm_cpu *)((uintptr_t)pg->offset))
 
 #ifdef DEBUG
 void uvm_pagezerocheck(struct vm_page *);
