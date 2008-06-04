@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.257 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.258 2008/06/04 17:47:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.257 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.258 2008/06/04 17:47:40 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.257 2008/06/04 12:41:40 ad Exp $");
 #include <uvm/uvm_ddb.h>
 #endif
 
-#if defined(UVMMAP_NOCOUNTERS)
+#if !defined(UVMMAP_COUNTERS)
 
 #define	UVMMAP_EVCNT_DEFINE(name)	/* nothing */
 #define UVMMAP_EVCNT_INCR(ev)		/* nothing */
@@ -231,7 +231,8 @@ extern struct vm_map *pager_map; /* XXX */
  * => map need not be locked.
  */
 #define SAVE_HINT(map, check, value) do { \
-	atomic_cas_ptr(&(map)->hint, (check), (value)); \
+	if ((map)->hint == (check)) \
+		(map)->hint = (value); \
 } while (/*CONSTCOND*/ 0)
 
 /*
@@ -1322,10 +1323,11 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 				goto nomerge;
 		}
 
-		if (kmap)
+		if (kmap) {
 			UVMMAP_EVCNT_INCR(kbackmerge);
-		else
+		} else {
 			UVMMAP_EVCNT_INCR(ubackmerge);
+		}
 		UVMHIST_LOG(maphist,"  starting back merge", 0, 0, 0, 0);
 
 		/*
@@ -1437,10 +1439,11 @@ forwardmerge:
 				UVMMAP_EVCNT_INCR(ubimerge);
 			}
 		} else {
-			if (kmap)
+			if (kmap) {
 				UVMMAP_EVCNT_INCR(kforwmerge);
-			else
+			} else {
 				UVMMAP_EVCNT_INCR(uforwmerge);
+			}
 		}
 		UVMHIST_LOG(maphist,"  starting forward merge", 0, 0, 0, 0);
 
@@ -1477,10 +1480,11 @@ forwardmerge:
 nomerge:
 	if (!merged) {
 		UVMHIST_LOG(maphist,"  allocating new map entry", 0, 0, 0, 0);
-		if (kmap)
+		if (kmap) {
 			UVMMAP_EVCNT_INCR(knomerge);
-		else
+		} else {
 			UVMMAP_EVCNT_INCR(unomerge);
+		}
 
 		/*
 		 * allocate new entry and link it in.
