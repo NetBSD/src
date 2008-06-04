@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.54 2008/06/04 12:45:28 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.55 2008/06/04 15:06:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -84,8 +84,9 @@
  *	page, indexed by page number.  Each structure
  *	is an element of several lists:
  *
- *		A hash table bucket used to quickly
- *		perform object/offset lookups
+ *		A red-black tree rooted with the containing
+ *		object is used to quickly perform object+
+ *		offset lookups
  *
  *		A list of all pages for a given object,
  *		so they can be quickly deactivated at
@@ -117,8 +118,10 @@
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
 
+#include <sys/rb.h>
+
 struct vm_page {
-	TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
+	struct rb_node		rb_node;	/* tree of pages in obj (O) */
 
 	union {
 		TAILQ_ENTRY(vm_page) queue;
