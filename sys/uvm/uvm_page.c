@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.133 2008/06/04 12:45:28 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.134 2008/06/04 15:06:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.133 2008/06/04 12:45:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.134 2008/06/04 15:06:04 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -125,14 +125,6 @@ static vaddr_t      virtual_space_start;
 static vaddr_t      virtual_space_end;
 
 /*
- * we use a hash table with only one bucket during bootup.  we will
- * later rehash (resize) the hash table once the allocator is ready.
- * we static allocate the one bootstrap bucket below...
- */
-
-static struct pglist uvm_bootbucket;
-
-/*
  * we allocate an initial number of page colors in uvm_page_init(),
  * and remember them.  We may re-color pages as cache sizes are
  * discovered during the autoconfiguration phase.  But we can never
@@ -149,20 +141,6 @@ vaddr_t uvm_zerocheckkva;
 #endif /* DEBUG */
 
 /*
- * locks on the hash table.  allocated in 32 byte chunks to try
- * and reduce cache traffic between CPUs.
- */
-
-#define	UVM_HASHLOCK_CNT	32
-#define	uvm_hashlock(hash)	\
-    (&uvm_hashlocks[(hash) & (UVM_HASHLOCK_CNT - 1)].lock)
-
-static union {
-	kmutex_t	lock;
-	uint8_t		pad[32];
-} uvm_hashlocks[UVM_HASHLOCK_CNT] __aligned(32);
-
-/*
  * local prototypes
  */
 
@@ -171,11 +149,49 @@ static void uvm_pageinsert_after(struct vm_page *, struct vm_page *);
 static void uvm_pageremove(struct vm_page *);
 
 /*
+ * per-object tree of pages
+ */
+
+static signed int
+uvm_page_compare_nodes(const struct rb_node *n1, const struct rb_node *n2)
+{
+	const struct vm_page *pg1 = (const void *)n1;
+	const struct vm_page *pg2 = (const void *)n2;
+	const voff_t a = pg1->offset;
+	const voff_t b = pg2->offset;
+
+	if (a < b)
+		return 1;
+	if (a > b)
+		return -1;
+	return 0;
+}
+
+static signed int
+uvm_page_compare_key(const struct rb_node *n, const void *key)
+{
+	const struct vm_page *pg = (const void *)n;
+	const voff_t a = pg->offset;
+	const voff_t b = *(const voff_t *)key;
+
+	if (a < b)
+		return 1;
+	if (a > b)
+		return -1;
+	return 0;
+}
+
+const struct rb_tree_ops uvm_page_tree_ops = {
+	.rb_compare_nodes = uvm_page_compare_nodes,
+	.rb_compare_key = uvm_page_compare_key,
+};
+
+/*
  * inline functions
  */
 
 /*
- * uvm_pageinsert: insert a page in the object and the hash table
+ * uvm_pageinsert: insert a page in the object.
  * uvm_pageinsert_after: insert a page into the specified place in listq
  *
  * => caller must lock object
@@ -187,22 +203,14 @@ static void uvm_pageremove(struct vm_page *);
 inline static void
 uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 {
-	struct pglist *buck;
 	struct uvm_object *uobj = pg->uobject;
-	kmutex_t *lock;
-	u_int hash;
 
 	KASSERT(mutex_owned(&uobj->vmobjlock));
 	KASSERT((pg->flags & PG_TABLED) == 0);
 	KASSERT(where == NULL || (where->flags & PG_TABLED));
 	KASSERT(where == NULL || (where->uobject == uobj));
 
-	hash = uvm_pagehash(uobj, pg->offset);
-	buck = &uvm.page_hash[hash];
-	lock = uvm_hashlock(hash);
-	mutex_spin_enter(lock);
-	TAILQ_INSERT_TAIL(buck, pg, hashq);
-	mutex_spin_exit(lock);
+	rb_tree_insert_node(&uobj->rb_tree, &pg->rb_node);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 0) {
@@ -235,7 +243,7 @@ uvm_pageinsert(struct vm_page *pg)
 }
 
 /*
- * uvm_page_remove: remove page from object and hash
+ * uvm_page_remove: remove page from object.
  *
  * => caller must lock object
  * => caller must lock page queues
@@ -244,20 +252,12 @@ uvm_pageinsert(struct vm_page *pg)
 static inline void
 uvm_pageremove(struct vm_page *pg)
 {
-	struct pglist *buck;
 	struct uvm_object *uobj = pg->uobject;
-	kmutex_t *lock;
-	u_int hash;
 
 	KASSERT(mutex_owned(&uobj->vmobjlock));
 	KASSERT(pg->flags & PG_TABLED);
 
-	hash = uvm_pagehash(uobj, pg->offset);
-	buck = &uvm.page_hash[hash];
-	lock = uvm_hashlock(hash);
-	mutex_spin_enter(lock);
-	TAILQ_REMOVE(buck, pg, hashq);
-	mutex_spin_exit(lock);
+	rb_tree_remove_node(&uobj->rb_tree, &pg->rb_node);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 1) {
@@ -322,27 +322,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	uvmpdpol_init();
 	mutex_init(&uvm_pageqlock, MUTEX_DRIVER, IPL_NONE);
 	mutex_init(&uvm_fpageqlock, MUTEX_DRIVER, IPL_VM);
-
-	/*
-	 * init the <obj,offset> => <page> hash table.  for now
-	 * we just have one bucket (the bootstrap bucket).  later on we
-	 * will allocate new buckets as we dynamically resize the hash table.
-	 */
-
-	uvm.page_nhash = 1;			/* 1 bucket */
-	uvm.page_hashmask = 0;			/* mask for hash function */
-	uvm.page_hash = &uvm_bootbucket;	/* install bootstrap bucket */
-	TAILQ_INIT(uvm.page_hash);		/* init hash table */
-
-	/*
-	 * init hashtable locks.  these must be spinlocks, as they are
-	 * called from sites in the pmap modules where we cannot block.
-	 * if taking multiple locks, the order is: low numbered first,
-	 * high numbered second.
-	 */
-
-	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_init(&uvm_hashlocks[i].lock, MUTEX_SPIN, IPL_VM);
 
 	/*
 	 * allocate vm_page structures.
@@ -844,94 +823,8 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	vm_nphysseg++;
 
 	if (!preload) {
-		uvm_page_rehash();
 		uvmpdpol_reinit();
 	}
-}
-
-/*
- * uvm_page_rehash: reallocate hash table based on number of free pages.
- */
-
-void
-uvm_page_rehash(void)
-{
-	int freepages, lcv, bucketcount, oldcount, i;
-	struct pglist *newbuckets, *oldbuckets;
-	struct vm_page *pg;
-	size_t newsize, oldsize;
-
-	/*
-	 * compute number of pages that can go in the free pool
-	 */
-
-	freepages = 0;
-	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
-		freepages +=
-		    (vm_physmem[lcv].avail_end - vm_physmem[lcv].avail_start);
-
-	/*
-	 * compute number of buckets needed for this number of pages
-	 */
-
-	bucketcount = 1;
-	while (bucketcount < freepages)
-		bucketcount = bucketcount * 2;
-
-	/*
-	 * compute the size of the current table and new table.
-	 */
-
-	oldbuckets = uvm.page_hash;
-	oldcount = uvm.page_nhash;
-	oldsize = round_page(sizeof(struct pglist) * oldcount);
-	newsize = round_page(sizeof(struct pglist) * bucketcount);
-
-	/*
-	 * allocate the new buckets
-	 */
-
-	newbuckets = (struct pglist *) uvm_km_alloc(kernel_map, newsize,
-	    0, UVM_KMF_WIRED);
-	if (newbuckets == NULL) {
-		printf("uvm_page_physrehash: WARNING: could not grow page "
-		    "hash table\n");
-		return;
-	}
-	for (lcv = 0 ; lcv < bucketcount ; lcv++)
-		TAILQ_INIT(&newbuckets[lcv]);
-
-	/*
-	 * now replace the old buckets with the new ones and rehash everything
-	 */
-
-	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_spin_enter(&uvm_hashlocks[i].lock);
-
-	uvm.page_hash = newbuckets;
-	uvm.page_nhash = bucketcount;
-	uvm.page_hashmask = bucketcount - 1;  /* power of 2 */
-
-	/* ... and rehash */
-	for (lcv = 0 ; lcv < oldcount ; lcv++) {
-		while ((pg = oldbuckets[lcv].tqh_first) != NULL) {
-			TAILQ_REMOVE(&oldbuckets[lcv], pg, hashq);
-			TAILQ_INSERT_TAIL(
-			  &uvm.page_hash[uvm_pagehash(pg->uobject, pg->offset)],
-			  pg, hashq);
-		}
-	}
-
-	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_spin_exit(&uvm_hashlocks[i].lock);
-
-	/*
-	 * free old bucket array if is not the boot-time table
-	 */
-
-	if (oldbuckets != &uvm_bootbucket)
-		uvm_km_free(kernel_map, (vaddr_t) oldbuckets, oldsize,
-		    UVM_KMF_WIRED);
 }
 
 /*
@@ -1749,22 +1642,11 @@ struct vm_page *
 uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
-	struct pglist *buck;
-	kmutex_t *lock;
-	u_int hash;
 
 	KASSERT(mutex_owned(&obj->vmobjlock));
 
-	hash = uvm_pagehash(obj, off);
-	buck = &uvm.page_hash[hash];
-	lock = uvm_hashlock(hash);
-	mutex_spin_enter(lock);
-	TAILQ_FOREACH(pg, buck, hashq) {
-		if (pg->uobject == obj && pg->offset == off) {
-			break;
-		}
-	}
-	mutex_spin_exit(lock);
+	pg = (struct vm_page *)rb_tree_find_node(&obj->rb_tree, &off);
+
 	KASSERT(pg == NULL || obj->uo_npages != 0);
 	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
 		(pg->flags & PG_BUSY) != 0);
