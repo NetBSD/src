@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.32 2008/01/28 12:22:47 yamt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.33 2008/06/04 15:06:04 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.32 2008/01/28 12:22:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.33 2008/06/04 15:06:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,6 @@ uvm_init(void)
 	 * of kernel objects.
 	 */
 
-	uvm_page_rehash();
 	uao_create(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS,
 	    UAO_FLAG_KERNSWAP);
 
