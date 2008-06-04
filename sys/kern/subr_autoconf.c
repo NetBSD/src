@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.151 2008/05/27 17:50:03 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.152 2008/06/04 12:45:28 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.151 2008/05/27 17:50:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.152 2008/06/04 12:45:28 ad Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -412,6 +412,8 @@ void
 configure(void)
 {
 	extern void ssp_init(void);
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	int i, s;
 
 	/* Initialize data structures. */
@@ -454,6 +456,9 @@ configure(void)
 	splx(s);
 
 	/* Boot the secondary processors. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		uvm_cpu_attach(ci);
+	}
 	mp_online = true;
 #if defined(MULTIPROCESSOR)
 	cpu_boot_secondary_processors();

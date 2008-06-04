@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.53 2008/01/02 11:49:15 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.54 2008/06/04 12:45:28 ad Exp $	*/
 
 /*
  *
@@ -74,6 +74,19 @@
 struct workqueue;
 
 /*
+ * per-cpu data
+ */
+
+struct uvm_cpu {
+	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
+	int page_free_nextcolor;	/* next color to allocate from */
+	int page_idlezero_next;		/* which color to zero next */
+	bool page_idle_zero;		/* TRUE if we should try to zero
+					   pages in the idle loop */
+	int pages[PGFL_NQUEUES];	/* total of pages in page_free */
+};
+
+/*
  * uvm structure (vm global state: collected in one structure for ease
  * of reference...)
  */
@@ -83,10 +96,7 @@ struct uvm {
 
 		/* vm_page queues */
 	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
-	int page_free_nextcolor;	/* next color to allocate from */
 	bool page_init_done;		/* TRUE if uvm_page_init() finished */
-	bool page_idle_zero;		/* TRUE if we should try to zero
-					   pages in the idle loop */
 
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
@@ -108,6 +118,9 @@ struct uvm {
 	kcondvar_t scheduler_cv;
 	bool scheduler_kicked;
 	int swapout_enabled;
+
+	/* per-cpu data */
+	struct uvm_cpu cpus[MAXCPUS];
 };
 
 /*
