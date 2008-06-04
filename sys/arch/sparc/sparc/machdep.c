@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.278 2008/04/28 20:23:36 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.279 2008/06/04 12:41:41 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278 2008/04/28 20:23:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.279 2008/06/04 12:41:41 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -240,7 +240,7 @@ cpu_startup(void)
 	pmap_update(pmap_kernel());
 
 	/* Map the rest of the pages */
-	TAILQ_FOREACH(m, &mlist ,pageq) {
+	TAILQ_FOREACH(m, &mlist ,pageq.queue) {
 		if (va >= va0 + size)
 			panic("cpu_start: memory buffer size botch");
 		pa = VM_PAGE_TO_PHYS(m);
@@ -1600,7 +1600,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
 	 * Simply keep a pointer around to the linked list, so
 	 * bus_dmamap_free() can return it.
 	 *
-	 * NOBODY SHOULD TOUCH THE pageq FIELDS WHILE THESE PAGES
+	 * NOBODY SHOULD TOUCH THE pageq.queue FIELDS WHILE THESE PAGES
 	 * ARE IN OUR CUSTODY.
 	 */
 	segs[0]._ds_mlist = mlist;
@@ -1896,7 +1896,7 @@ sun4_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 
 	/* Map physical pages into IOMMU */
 	mlist = segs[0]._ds_mlist;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
 		if (sgsize == 0)
 			panic("sun4_dmamap_load_raw: size botch");
 		pa = VM_PAGE_TO_PHYS(m);
@@ -1993,7 +1993,7 @@ sun4_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	*kvap = (void *)va;
 
 	mlist = segs[0]._ds_mlist;
-	TAILQ_FOREACH(m, mlist, pageq) {
+	TAILQ_FOREACH(m, mlist, pageq.queue) {
 		paddr_t pa;
 
 		if (size == 0)

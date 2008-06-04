@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 2008/06/02 19:11:10 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 2008/06/04 12:41:42 ad Exp $	*/
 
 /*
  *
@@ -224,6 +224,7 @@ bool		pmap_test_attrs(struct vm_page *, unsigned);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
+void		pmap_remove_all(struct pmap *);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -241,13 +242,6 @@ bool	pmap_pageidlezero(paddr_t);
 /*
  * inline functions
  */
-
-/*ARGSUSED*/
-static __inline void
-pmap_remove_all(struct pmap *pmap)
-{
-	/* Nothing. */
-}
 
 /*
  * pmap_update_pg: flush one page from the TLB (or flush the whole thing

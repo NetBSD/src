@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.256 2008/06/02 16:08:41 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.257 2008/06/04 12:41:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.256 2008/06/02 16:08:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.257 2008/06/04 12:41:40 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4872,7 +4872,7 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 		return;
 	}
 	(*pr)("  PAGES <pg,offset>:\n  ");
-	TAILQ_FOREACH(pg, &uobj->memq, listq) {
+	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
 		cnt++;
 		(*pr)("<%p,0x%llx> ", pg, (long long)pg->offset);
 		if ((cnt % 3) == 0) {
@@ -4897,7 +4897,7 @@ uvm_page_printit(struct vm_page *pg, bool full,
 {
 	struct vm_page *tpg;
 	struct uvm_object *uobj;
-	struct pglist *pgl;
+	struct pgflist *pgl;
 	char pgbuf[128];
 	char pqbuf[128];
 
@@ -4933,7 +4933,7 @@ uvm_page_printit(struct vm_page *pg, bool full,
 			uobj = pg->uobject;
 			if (uobj) {
 				(*pr)("  checking object list\n");
-				TAILQ_FOREACH(tpg, &uobj->memq, listq) {
+				TAILQ_FOREACH(tpg, &uobj->memq, listq.queue) {
 					if (tpg == pg) {
 						break;
 					}
@@ -4958,7 +4958,7 @@ uvm_page_printit(struct vm_page *pg, bool full,
 
 	if (pgl) {
 		(*pr)("  checking pageq list\n");
-		TAILQ_FOREACH(tpg, pgl, pageq) {
+		LIST_FOREACH(tpg, pgl, pageq.list) {
 			if (tpg == pg) {
 				break;
 			}
