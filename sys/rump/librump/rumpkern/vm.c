@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.30 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.31 2008/06/04 13:10:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -104,7 +104,7 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 	pg->uanon = (void *)kmem_zalloc(PAGE_SIZE, KM_SLEEP);
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 
-	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
+	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
 
 	return pg;
 }
@@ -122,7 +122,7 @@ uvm_pagefree(struct vm_page *pg)
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
 
-	TAILQ_REMOVE(&uobj->memq, pg, listq);
+	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 	kmem_free((void *)pg->uanon, PAGE_SIZE);
 	kmem_free(pg, sizeof(*pg));
 }
@@ -460,7 +460,7 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 {
 	struct vm_page *pg;
 
-	TAILQ_FOREACH(pg, &uobj->memq, listq) {
+	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
 		if (pg->offset == off) {
 			return pg;
 		}
