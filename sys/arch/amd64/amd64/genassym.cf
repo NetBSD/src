@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.34 2008/06/01 22:28:22 ad Exp $
+#	$NetBSD: genassym.cf,v 1.35 2008/06/04 11:30:25 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -155,8 +155,6 @@ define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
 define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
 
 define	VM_MAXUSER_ADDRESS	(unsigned long long)VM_MAXUSER_ADDRESS
-
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
