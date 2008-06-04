@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.73 2008/06/01 22:06:06 christos Exp $
+#	$NetBSD: genassym.cf,v 1.74 2008/06/04 11:30:25 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -186,8 +186,6 @@ define	IOMAPSIZE		IOMAPSIZE
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
-
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
@@ -309,7 +307,6 @@ define	CPU_INFO_TLB_EVCNT	offsetof(struct cpu_info, ci_tlb_evcnt)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_CURLDT		offsetof(struct cpu_info, ci_curldt)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
-define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
 define	CPU_INFO_TSS		offsetof(struct cpu_info, ci_tss)
@@ -319,6 +316,7 @@ define	CPU_INFO_IOBASE		offsetof(struct cpu_info, ci_tss.tss_iobase)
 define	CPU_INFO_IOMAP		offsetof(struct cpu_info, ci_iomap)
 define	IOMAP_INVALOFF		IOMAP_INVALOFF
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
+define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
 define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 define	CPU_INFO_CC_SKEW	offsetof(struct cpu_info, ci_data.cpu_cc_skew)
 
