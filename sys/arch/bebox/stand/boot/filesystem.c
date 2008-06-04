@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.5.76.1 2008/05/18 12:31:44 yamt Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.5.76.2 2008/06/04 02:04:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,18 +30,9 @@
  */
 
 #include <lib/libsa/stand.h>
-#include <ufs.h>
-#include <cd9660.h>
-#if 0
-#include <nfs.h>
-#endif
 
 struct fs_ops file_system[] = {
-	FS_OPS(ufs),
-	FS_OPS(cd9660),
-#if 0
-	FS_OPS(nfs),
-#endif
+	FS_OPS(null),
 };
 
 int nfsys = sizeof (file_system)/sizeof (struct fs_ops);

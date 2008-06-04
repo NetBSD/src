@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.128.2.1 2008/05/18 12:35:11 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.128.2.2 2008/06/04 02:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.128.2.1 2008/05/18 12:35:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.128.2.2 2008/06/04 02:05:40 yamt Exp $");
 
 #include "opt_pipe.h"
 
@@ -170,10 +170,14 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 
 	if ((fp = fd_getfile(sock)) == NULL)
 		return (EBADF);
-	if (fp->f_type != DTYPE_SOCKET)
+	if (fp->f_type != DTYPE_SOCKET) {
+		fd_putfile(sock);
 		return (ENOTSOCK);
-	if ((error = fd_allocfile(&fp2, &fd)) != 0)
+	}
+	if ((error = fd_allocfile(&fp2, &fd)) != 0) {
+		fd_putfile(sock);
 		return (error);
+	}
 	nam = m_get(M_WAIT, MT_SONAME);
 	*new_sock = fd;
 	so = fp->f_data;

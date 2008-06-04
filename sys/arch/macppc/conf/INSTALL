@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.105 2007/10/17 19:55:16 garbled Exp $
+#	$NetBSD: INSTALL,v 1.105.18.1 2008/06/04 02:04:48 yamt Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -28,8 +28,9 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
-options 	COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0,
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

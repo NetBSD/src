@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.6.2.1 2008/05/18 12:34:50 yamt Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.6.2.2 2008/06/04 02:05:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.6.2.1 2008/05/18 12:34:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.6.2.2 2008/06/04 02:05:20 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -111,7 +111,7 @@ USB_MATCH(stuirda)
 	return (UMATCH_NONE);
 }
 
-void uirda_attach(struct device *,struct device *,void *);
+void uirda_attach(device_t, device_t, void *);
 
 USB_ATTACH(stuirda)
 {

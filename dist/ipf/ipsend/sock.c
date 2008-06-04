@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.13 2007/10/09 01:23:21 mrg Exp $	*/
+/*	$NetBSD: sock.c,v 1.13.6.1 2008/06/04 02:03:02 yamt Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.6 2007/02/17 12:41:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.7 2007/09/13 07:19:34 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.214.2.1 2008/05/18 12:35:10 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.214.2.2 2008/06/04 02:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.214.2.1 2008/05/18 12:35:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.214.2.2 2008/06/04 02:05:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ ttyopen(struct tty *tp, int dialout, int nonblock)
 			while (ISSET(tp->t_state, TS_DIALOUT) ||
 			       !CONNECTED(tp)) {
 				tp->t_wopen++;
-				error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+				error = ttysleep(tp, &tp->t_rawcv, true, 0);
 				tp->t_wopen--;
 				if (error)
 					goto out;
@@ -1412,7 +1412,7 @@ ttywait(struct tty *tp)
 	while ((tp->t_outq.c_cc || ISSET(tp->t_state, TS_BUSY)) &&
 	    CONNECTED(tp) && tp->t_oproc) {
 		(*tp->t_oproc)(tp);
-		error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
+		error = ttysleep(tp, &tp->t_outcv, true, 0);
 		if (error)
 			break;
 	}
@@ -1459,7 +1459,7 @@ ttyflush(struct tty *tp, int rw)
 		CLR(tp->t_state, TS_TTSTOP);
 		cdev_stop(tp, rw);
 		FLUSHQ(&tp->t_outq);
-		clwakeup(&tp->t_outq);
+		cv_broadcast(&tp->t_outcv);
 		selnotify(&tp->t_wsel, 0, NOTE_SUBMIT);
 	}
 }
@@ -1787,7 +1787,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 			mutex_spin_exit(&tty_lock);
 			return (EWOULDBLOCK);
 		}
-		error = ttysleep(tp, &tp->t_rawq.c_cv, true, slp);
+		error = ttysleep(tp, &tp->t_rawcv, true, slp);
 		mutex_spin_exit(&tty_lock);
 		/* VMIN == 0: any quantity read satisfies */
 		if (cc[VMIN] == 0 && error == EWOULDBLOCK)
@@ -1885,7 +1885,7 @@ ttycheckoutq_wlock(struct tty *tp, int wait)
 			ttstart(tp);
 			if (wait == 0)
 				return (0);
-			error = ttysleep(tp, &tp->t_outq.c_cv, true, hz);
+			error = ttysleep(tp, &tp->t_outcv, true, hz);
 			if (error == EINTR)
 				wait = 0;
 		}
@@ -1934,7 +1934,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 			goto out;
 		} else {
 			/* Sleep awaiting carrier. */
-			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+			error = ttysleep(tp, &tp->t_rawcv, true, 0);
 			mutex_spin_exit(&tty_lock);
 			if (error)
 				goto out;
@@ -2092,7 +2092,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 		error = EWOULDBLOCK;
 		goto out;
 	}
-	error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
+	error = ttysleep(tp, &tp->t_outcv, true, 0);
 	mutex_spin_exit(&tty_lock);
 	if (error)
 		goto out;
@@ -2110,7 +2110,7 @@ ttypull(struct tty *tp)
 	/* XXXSMP not yet KASSERT(mutex_owned(&tty_lock)); */
 
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		clwakeup(&tp->t_outq);
+		cv_broadcast(&tp->t_outcv);
 		selnotify(&tp->t_wsel, 0, NOTE_SUBMIT);
 	}
 	return tp->t_outq.c_cc != 0;
@@ -2285,12 +2285,7 @@ ttwakeup(struct tty *tp)
 	selnotify(&tp->t_rsel, 0, NOTE_SUBMIT);
 	if (ISSET(tp->t_state, TS_ASYNC))
 		ttysig(tp, TTYSIG_PG2, SIGIO);
-#if 0
-	/* XXX tp->t_rawq.c_cv.cv_waiters dropping to zero early!? */
-	clwakeup(&tp->t_rawq);
-#else
-	cv_wakeup(&tp->t_rawq.c_cv);
-#endif
+	cv_broadcast(&tp->t_rawcv);
 }
 
 /*
@@ -2637,9 +2632,15 @@ ttymalloc(void)
 	callout_setfunc(&tp->t_rstrt_ch, ttrstrt, tp);
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
+	cv_init(&tp->t_rawcv, "ttyraw");
+	cv_init(&tp->t_rawcvf, "ttyrawf");
 	clalloc(&tp->t_canq, 1024, 1);
+	cv_init(&tp->t_cancv, "ttycan");
+	cv_init(&tp->t_cancvf, "ttycanf");
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
+	cv_init(&tp->t_outcv, "ttycan");
+	cv_init(&tp->t_outcvf, "ttycanf");
 	/* Set default line discipline. */
 	tp->t_linesw = ttyldisc_default();
 	selinit(&tp->t_rsel);
@@ -2675,6 +2676,12 @@ ttyfree(struct tty *tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
+	cv_destroy(&tp->t_rawcv);
+	cv_destroy(&tp->t_rawcvf);
+	cv_destroy(&tp->t_cancv);
+	cv_destroy(&tp->t_cancvf);
+	cv_destroy(&tp->t_outcv);
+	cv_destroy(&tp->t_outcvf);
 	seldestroy(&tp->t_rsel);
 	seldestroy(&tp->t_wsel);
 	kmem_free(tp, sizeof(*tp));

@@ -1,3 +1,5 @@
+/*	$NetBSD: multibyte.h,v 1.1.1.1.2.3 2008/06/04 02:03:06 yamt Exp $ */
+
 #ifndef MULTIBYTE_H
 #define MULTIBYTE_H
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16 2008/02/17 03:54:21 kiyohara Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16.8.1 2008/06/04 02:04:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2008/02/17 03:54:21 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.8.1 2008/06/04 02:04:41 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,8 +67,6 @@ extern struct genppc_pci_chipset *genppc_pct;
 
 #define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0xcf8)
 #define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0xcfc)
-
-void pci_intr_fixup(int, int, int *);
 
 void
 bebox_pci_get_chipset_tag(pci_chipset_tag_t pc)

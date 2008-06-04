@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.133.2.1 2008/05/18 12:35:45 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.133.2.2 2008/06/04 02:05:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.133.2.1 2008/05/18 12:35:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.133.2.2 2008/06/04 02:05:48 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1100,10 +1100,7 @@ nfs_set_niothreads(int newval)
 {
 	struct nfs_iod *nid;
 	int error = 0;
-
-#if defined(MULTIPROCESSOR)
         int hold_count;
-#endif /* defined(MULTIPROCESSOR) */
 
 	KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 

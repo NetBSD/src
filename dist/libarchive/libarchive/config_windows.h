@@ -3,11 +3,38 @@
 #ifndef CONFIG_H_INCLUDED
 #define CONFIG_H_INCLUDED
 
-/* Version number of bsdcpio */
-#define BSDCPIO_VERSION_STRING "0.9.9"
 
-/* Version number of bsdtar */
-#define BSDTAR_VERSION_STRING "2.5.0"
+///////////////////////////////////////////////////////////////////////////
+//  Check for Watcom and Microsoft Visual C compilers (WIN32 only)  ///////
+///////////////////////////////////////////////////////////////////////////
+#if defined(__WIN32__) || defined(_WIN32) || defined(__WIN32)
+  #define IS_WIN32  1
+
+  #if defined(__TURBOC__) || defined(__BORLANDC__) /* Borland compilers */
+  #elif defined( __WATCOMC__ ) || defined(__WATCOMCPP__) /* Watcom compilers */
+    #define IS_WATCOM  1
+    /* Define to 1 if __INT64 is defined */
+    #define HAVE___INT64  1
+
+    /* Define to 1 if UID should be unsigned */
+    #define USE_UNSIGNED_UID 1
+
+    /* Define to 1 if UID should be unsigned */
+    #define USE_UNSIGNED_GID 1
+
+  #elif defined(__IBMC__) || defined(__IBMCPP__) /* IBM compilers */
+  #elif defined( __SC__ ) /* Symantec C++ compilers */
+  #elif defined( M_I86 ) && defined( MSDOS ) /* Microsoft DOS/Win 16 compilers */
+  #elif defined( _M_IX86 ) || defined( _68K_ ) /* Microsoft Win32 compilers */
+    #define IS_VISUALC 1
+    /* Define to 1 if __INT64 is defined */
+    #define HAVE___INT64  1
+  #else
+  #endif
+
+#endif
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 
 /* Define to 1 if you have the `acl_create_entry' function. */
 /* #undef HAVE_ACL_CREATE_ENTRY */
@@ -66,10 +93,10 @@
 
 /* Define to 1 if you have the declaration of `SIZE_MAX', and to 0 if you
    don't. */
+/* #undef HAVE_DECL_SIZE_MAX */
+
 #if defined(_MSC_VER) && _MSC_VER >= 1400
 #define HAVE_DECL_SIZE_MAX 1
-#else
-/* #undef HAVE_DECL_SIZE_MAX */
 #endif
 
 /* Define to 1 if you have the declaration of `strerror_r', and to 0 if you
@@ -98,7 +125,11 @@
 /* #undef HAVE_D_MD_ORDER */
 
 /* A possible errno value for invalid file format errors */
+#if ((IS_WATCOM) || (IS_VISUALC))
+#define HAVE_EFTYPE 0
+#else
 #define HAVE_EFTYPE 1
+#endif
 
 /* A possible errno value for invalid file format errors */
 #define HAVE_EILSEQ 1
@@ -122,7 +153,10 @@
 /* #undef HAVE_FCHOWN */
 
 /* Define to 1 if you have the <fcntl.h> header file. */
-#define HAVE_FCNTL_H 1
+/* #undef HAVE_FCNTL_H 1 */
+
+/* Define to 1 if you have the fcntl() function. */
+/* #undef HAVE_FCNTL_FN */
 
 /* Define to 1 if your system has a working POSIX `fnmatch' function. */
 /* #undef HAVE_FNMATCH */
@@ -393,7 +427,7 @@
 /* #undef HAVE_WMEMCPY */
 
 /* Define to 1 if you have the <zlib.h> header file. */
-/* #undef HAVE_ZLIB_H */
+#define HAVE_ZLIB_H 1
 
 /* Version number of libarchive as a single integer */
 #define LIBARCHIVE_VERSION_NUMBER "2005000"
@@ -464,18 +498,30 @@
 /* #undef const */
 
 /* Define to `int' if <sys/types.h> doesn't define. */
+#if (USE_UNSIGNED_GID)
+#define gid_t unsigned int
+#else
 #define gid_t int
+#endif
 
 /* Define to `unsigned long' if <sys/types.h> does not define. */
 #define id_t int
 
 /* Define to the type of a signed integer type of width exactly 64 bits if
    such a type exists and the standard includes do not define it. */
+#if (HAVE___INT64)
+typedef __int64 int64_t;
+#else
 #define int64_t long long
+#endif
 
 /* Define to the widest signed integer type if <stdint.h> and <inttypes.h> do
    not define. */
+#if (HAVE___INT64)
+typedef __int64 intmax_t;
+#else
 #define intmax_t long long
+#endif
 
 /* Define to `int' if <sys/types.h> does not define. */
 #define mode_t unsigned short
@@ -487,15 +533,27 @@
 /* #undef size_t */
 
 /* Define to `int' if <sys/types.h> doesn't define. */
+#if (USE_UNSIGNED_UID)
+#define uid_t unsigned int
+#else
 #define uid_t int
+#endif
 
 /* Define to the type of an unsigned integer type of width exactly 64 bits if
    such a type exists and the standard includes do not define it. */
+#if (HAVE___INT64)
+typedef unsigned __int64 uint64_t;
+#else
 #define uint64_t unsigned long long
+#endif
 
 /* Define to the widest unsigned integer type if <stdint.h> and <inttypes.h>
    do not define. */
+#if (HAVE___INT64)
+typedef unsigned __int64 uintmax_t;
+#else
 #define uintmax_t unsigned long long
+#endif
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef uintptr_t */
@@ -506,5 +564,125 @@
 #define uint32_t unsigned long
 #define uint16_t unsigned short
 #define ssize_t long
+
+
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+#if (IS_VISUALC)
+  #include <io.h>
+  #include <stdlib.h>   //brings in NULL
+  #include <sys/stat.h> //brings in S_IFMT(), etc...
+
+  #define HAVE_UINTPTR  0
+
+  #if !defined(STDIN_FILENO)
+    #define STDIN_FILENO 0
+  #endif
+
+  #if !defined(STDOUT_FILENO)
+    #define STDOUT_FILENO 1
+  #endif
+
+  #if !defined(STDERR_FILENO)
+    #define STDERR_FILENO 2
+  #endif
+
+  /* Define to 1 if ino_t is defined (possibly in sys/types.h) */
+  #define HAVE_INO_T  1
+
+  #define S_IFFIFO         _S_IFIFO
+
+  #define S_ISBLK( m )     0
+  #define S_ISFIFO( m )    (((m) & S_IFMT) == S_IFFIFO)
+  #define S_ISCHR( m )     (((m) & S_IFMT) == S_IFCHR)
+  #define S_ISDIR( m )     (((m) & S_IFMT) == S_IFDIR)
+  #define S_ISREG( m )     (((m) & S_IFMT) == S_IFREG)
+  #define S_ISUID  0004000
+  #define S_ISGID  0002000
+  #define S_ISVTX  0001000
+
+  //NOT SURE IF O_NONBLOCK is OK here but at least the 0x0004 flag is not used by anything else...
+  #define O_NONBLOCK 0x0004 /* Non-blocking I/O.  */
+  //#define O_NDELAY   O_NONBLOCK
+
+  #define lstat  _stat
+
+  /* Symbolic constants for the access() function */
+  #if !defined(F_OK)
+    #define R_OK    4       /*  Test for read permission    */
+    #define W_OK    2       /*  Test for write permission   */
+    #define X_OK    1       /*  Test for execute permission */
+    #define F_OK    0       /*  Test for existence of file  */
+  #endif
+
+#endif
+
+//////////////////////////////////////////////////////////////////////////
+#if (IS_WATCOM)
+  #include <io.h>  //brings in STDERR/OUT/IN_FILENO, dup(), dup2(), close(), write(), etc...
+  #include <process.h>  //brings in execlp() and _exit()
+  #include <stdlib.h>   //brings in NULL
+  #include <sys/stat.h>
+
+  /* Define to 1 if ino_t is defined (possibly in sys/types.h) */
+  #define HAVE_INO_T  1
+
+  //NOT SURE IF O_NONBLOCK is OK here but at least the 0x0004 flag is not used by anything else...
+  #define O_NONBLOCK 0x0004 /* Non-blocking I/O.  */
+  //#define O_NDELAY   O_NONBLOCK
+
+  //Prototypes for functions which we'll define in archive_windows.c
+  extern unsigned int sleep (unsigned int seconds);
+
+  #define lstat  _stat
+#endif
+
+
+//////////////////////////////////////////////////////////////////////////
+#if !(HAVE_UINTPTR)
+  typedef unsigned int *uintptr_t;
+  #if defined(HAVE_UINTPTR)
+    #undef  HAVE_UINTPTR
+  #endif
+  #define HAVE_UINTPTR 1
+#endif
+
+#if !defined(SSIZE_MAX)
+  //#define _POSIX_SSIZE_MAX    32767
+  #if defined(_POSIX_SSIZE_MAX)
+    #define SSIZE_MAX   _POSIX_SSIZE_MAX
+  #else
+    #define SSIZE_MAX   ((ssize_t)((size_t)-1 >> 1))
+  #endif
+#endif
+
+#if !(HAVE_FCNTL_FN)
+  #define F_SETFL   4 /* Set file status flags.  */
+
+  #if defined(HAVE_FCNTL_FN)
+    #undef HAVE_FCNTL_FN
+  #endif
+  #define HAVE_FCNTL_FN 1
+#endif
+
+  #define  _S_IFLNK        0xA000    /* symbolic link */
+  #if !defined(_S_IFMT)
+    #define _S_IFMT  S_IFMT
+  #endif
+
+  #define  _S_ISLNK(m)     (((m) & _S_IFMT) == _S_IFLNK)
+  #define   S_ISLNK(m)    _S_ISLNK(m)
+
+
+/* Replacement for major/minor/makedev. */
+#if !(MAJOR_IN_MKDEV) && !(MAJOR_IN_SYSMACROS)
+  #define major(x) ((int)(0x00ff & ((x) >> 8)))
+  #define minor(x) ((int)(0xffff00ff & (x)))
+  #define makedev(maj,min) ((0xff00 & ((maj)<<8))|(0xffff00ff & (min)))
+#endif
+
+#define set_errno(val) ((errno)=val)
+
 
 #endif /* CONFIG_H_INCLUDED */

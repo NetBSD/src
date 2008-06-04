@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.37.4.1 2008/05/18 12:35:10 yamt Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.37.4.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.37.4.1 2008/05/18 12:35:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.37.4.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,6 +453,7 @@ lwp_unpark(lwpid_t target, const void *hint)
 	sleepq_t *sq;
 	wchan_t wchan;
 	int swapin;
+	kmutex_t *mp;
 	proc_t *p;
 	lwp_t *t;
 
@@ -462,15 +463,15 @@ lwp_unpark(lwpid_t target, const void *hint)
 	 */
 	p = curproc;
 	wchan = lwp_park_wchan(p, hint);
-	sq = sleeptab_lookup(&lwp_park_tab, wchan);
+	sq = sleeptab_lookup(&lwp_park_tab, wchan, &mp);
 
-	TAILQ_FOREACH(t, &sq->sq_queue, l_sleepchain)
+	TAILQ_FOREACH(t, sq, l_sleepchain)
 		if (t->l_proc == p && t->l_lid == target)
 			break;
 
 	if (__predict_true(t != NULL)) {
 		swapin = sleepq_remove(sq, t);
-		sleepq_unlock(sq);
+		mutex_spin_exit(mp);
 		if (swapin)
 			uvm_kick_scheduler();
 		return 0;
@@ -480,7 +481,7 @@ lwp_unpark(lwpid_t target, const void *hint)
 	 * The LWP hasn't parked yet.  Take the hit and mark the
 	 * operation as pending.
 	 */
-	sleepq_unlock(sq);
+	mutex_spin_exit(mp);
 
 	mutex_enter(p->p_lock);
 	if ((t = lwp_find(p, target)) == NULL) {
@@ -514,6 +515,7 @@ lwp_park(struct timespec *ts, const void *hint)
 {
 	struct timespec tsx;
 	sleepq_t *sq;
+	kmutex_t *mp;
 	wchan_t wchan;
 	int timo, error;
 	lwp_t *l;
@@ -534,7 +536,7 @@ lwp_park(struct timespec *ts, const void *hint)
 	/* Find and lock the sleep queue. */
 	l = curlwp;
 	wchan = lwp_park_wchan(l->l_proc, hint);
-	sq = sleeptab_lookup(&lwp_park_tab, wchan);
+	sq = sleeptab_lookup(&lwp_park_tab, wchan, &mp);
 
 	/*
 	 * Before going the full route and blocking, check to see if an
@@ -544,10 +546,10 @@ lwp_park(struct timespec *ts, const void *hint)
 	if ((l->l_flag & (LW_CANCELLED | LW_UNPARKED)) != 0) {
 		l->l_flag &= ~(LW_CANCELLED | LW_UNPARKED);
 		lwp_unlock(l);
-		sleepq_unlock(sq);
+		mutex_spin_exit(mp);
 		return EALREADY;
 	}
-	lwp_unlock_to(l, sq->sq_mutex);
+	lwp_unlock_to(l, mp);
 	l->l_biglocks = 0;
 	sleepq_enqueue(sq, wchan, "parked", &lwp_park_sobj);
 	error = sleepq_block(timo, true);
@@ -625,6 +627,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 	wchan_t wchan;
 	lwpid_t targets[32], *tp, *tpp, *tmax, target;
 	int swapin, error;
+	kmutex_t *mp;
 	u_int ntargets;
 	size_t sz;
 
@@ -664,7 +667,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 
 	swapin = 0;
 	wchan = lwp_park_wchan(p, SCARG(uap, hint));
-	sq = sleeptab_lookup(&lwp_park_tab, wchan);
+	sq = sleeptab_lookup(&lwp_park_tab, wchan, &mp);
 
 	for (tmax = tp + ntargets, tpp = tp; tpp < tmax; tpp++) {
 		target = *tpp;
@@ -673,7 +676,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		 * Easy case: search for the LWP on the sleep queue.  If
 		 * it's parked, remove it from the queue and set running.
 		 */
-		TAILQ_FOREACH(t, &sq->sq_queue, l_sleepchain)
+		TAILQ_FOREACH(t, sq, l_sleepchain)
 			if (t->l_proc == p && t->l_lid == target)
 				break;
 
@@ -686,11 +689,11 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		 * The LWP hasn't parked yet.  Take the hit and
 		 * mark the operation as pending.
 		 */
-		sleepq_unlock(sq);
+		mutex_spin_exit(mp);
 		mutex_enter(p->p_lock);
 		if ((t = lwp_find(p, target)) == NULL) {
 			mutex_exit(p->p_lock);
-			sleepq_lock(sq);
+			mutex_spin_enter(mp);
 			continue;
 		}
 		lwp_lock(t);
@@ -712,10 +715,10 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		}
 
 		mutex_exit(p->p_lock);
-		sleepq_lock(sq);
+		mutex_spin_enter(mp);
 	}
 
-	sleepq_unlock(sq);
+	mutex_spin_exit(mp);
 	if (tp != targets)
 		kmem_free(tp, sz);
 	if (swapin)

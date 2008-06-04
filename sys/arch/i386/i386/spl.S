@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.26.8.1 2008/05/18 12:32:10 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.26.8.2 2008/06/04 02:04:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.26.8.1 2008/05/18 12:32:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.26.8.2 2008/06/04 02:04:47 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -307,7 +307,7 @@ IDTVEC_END(doreti)
  * void evtchn_do_event(int evtch, struct intrframe *regs)
  */
 
-NENTRY(call_evtchn_do_event)
+ENTRY(call_evtchn_do_event)
 	IDEPTH_INCR
 	/*
 	 * IDEPTH_INCR leaves old %esp in %eax.
@@ -370,7 +370,7 @@ IDTVEC_END(softintr)
  *
  *	%eax		prevlwp from cpu_switchto()
  */
-NENTRY(softintr_ret)
+ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
 	movl	$0, L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
 	cli
@@ -382,7 +382,7 @@ END(softintr_ret)
  *
  * Software interrupt registration.
  */
-NENTRY(softint_trigger)
+ENTRY(softint_trigger)
 	movl	4(%esp),%eax
 	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret

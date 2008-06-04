@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$Id: recover.in,v 1.1.1.1.2.2 2008/05/18 12:29:24 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:24 $
+#	Id: recover.in,v 8.9 2001/08/30 13:59:23 skimo Exp (Berkeley) Date: 2001/08/30 13:59:23
 #
 # Script to recover nvi edit sessions.
 

@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.69 2008/01/30 13:31:03 tsutsui Exp $
+#	$NetBSD: TX3912,v 1.69.8.1 2008/06/04 02:04:46 yamt Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -50,6 +50,7 @@ options 	COMPAT_43
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	SCSIVERBOSE	# human readable SCSI error messages

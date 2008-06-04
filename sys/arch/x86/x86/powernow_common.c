@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_common.c,v 1.8.8.1 2008/05/18 12:33:04 yamt Exp $	*/
+/*	$NetBSD: powernow_common.c,v 1.8.8.2 2008/06/04 02:05:04 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_common.c,v 1.8.8.1 2008/05/18 12:33:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_common.c,v 1.8.8.2 2008/06/04 02:05:04 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,6 @@ int
 powernow_probe(struct cpu_info *ci)
 {
 	uint32_t regs[4];
-	char line[80];
 
 	x86_cpuid(0x80000000, regs);
 
@@ -49,11 +48,6 @@ powernow_probe(struct cpu_info *ci)
 	if (regs[0] < 0x80000007)
 		return 0;
 	x86_cpuid(0x80000007, regs);
-
-	bitmask_snprintf(regs[3], "\20\6STC\5TM\4TTP\3VID\2FID\1TS", line,
-	    sizeof(line));
-	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
-	    line);
 
 	/*
 	 * For now we're only interested in FID and VID for frequency scaling.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.34.2.1 2008/05/18 12:33:04 yamt Exp $	*/
+/*	$NetBSD: lapic.c,v 1.34.2.2 2008/06/04 02:05:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.34.2.1 2008/05/18 12:33:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.34.2.2 2008/06/04 02:05:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -527,9 +527,9 @@ x86_ipi_init(int target)
 	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
 		return EBUSY;
 	}
-	esr = i82489_readreg(LAPIC_ESR) & ~0x40;
+	esr = i82489_readreg(LAPIC_ESR);
 	if (esr != 0) {
-		printf("x86_ipi_init: ESR %08x\n", esr);
+		aprint_debug("x86_ipi_init: ESR %08x\n", esr);
 	}
 
 	return 0;
@@ -552,9 +552,9 @@ x86_ipi_startup(int target, int vec)
 	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
 		return EBUSY;
 	}
-	esr = i82489_readreg(LAPIC_ESR) & ~0x40;
+	esr = i82489_readreg(LAPIC_ESR);
 	if (esr != 0) {
-		printf("x86_ipi_startup: ESR %08x\n", esr);
+		aprint_debug("x86_ipi_startup: ESR %08x\n", esr);
 	}
 
 	return 0;

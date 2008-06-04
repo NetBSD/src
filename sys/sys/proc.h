@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.271.2.1 2008/05/18 12:35:49 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.271.2.2 2008/06/04 02:05:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -284,6 +284,7 @@ struct proc {
 	LIST_HEAD(, lwp) p_sigwaiters;	/* p: LWPs waiting for signals */
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
+	pid_t		p_ppid;		/* :: cached parent pid */
 
 /*
  * End area that is zeroed on creation

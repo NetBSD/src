@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.78.8.1 2008/05/18 12:35:02 yamt Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.78.8.2 2008/06/04 02:05:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.78.8.1 2008/05/18 12:35:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.78.8.2 2008/06/04 02:05:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.78.8.1 2008/05/18 12:35:02 yamt E
 
 #include <nfs/nfsproto.h> /* for fh sizes */
 
-MODULE(MODULE_CLASS_VFS, puffs, NULL);
+MODULE(MODULE_CLASS_VFS, puffs, "putter");
 
 VFS_PROTOS(puffs_vfsop);
 

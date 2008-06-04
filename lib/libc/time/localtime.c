@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.39 2006/03/22 14:01:30 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.39.18.1 2008/06/04 02:04:34 yamt Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.78";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.39 2006/03/22 14:01:30 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.39.18.1 2008/06/04 02:04:34 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -283,16 +283,6 @@ settzname P((void))
 
 		tzname[ttisp->tt_isdst] =
 			&sp->chars[ttisp->tt_abbrind];
-#ifdef USG_COMPAT
-		if (ttisp->tt_isdst)
-			daylight = 1;
-		if (i == 0 || !ttisp->tt_isdst)
-			timezone = -(ttisp->tt_gmtoff);
-#endif /* defined USG_COMPAT */
-#ifdef ALTZONE
-		if (i == 0 || ttisp->tt_isdst)
-			altzone = -(ttisp->tt_gmtoff);
-#endif /* defined ALTZONE */
 	}
 	/*
 	** And to get the latest zone names into tzname. . .
@@ -304,6 +294,16 @@ settzname P((void))
 
 		tzname[ttisp->tt_isdst] =
 			&sp->chars[ttisp->tt_abbrind];
+#ifdef USG_COMPAT
+		if (ttisp->tt_isdst)
+			daylight = 1;
+		if (i == 0 || !ttisp->tt_isdst)
+			timezone = -(ttisp->tt_gmtoff);
+#endif /* defined USG_COMPAT */
+#ifdef ALTZONE
+		if (i == 0 || ttisp->tt_isdst)
+			altzone = -(ttisp->tt_gmtoff);
+#endif /* defined ALTZONE */
 	}
 }
 

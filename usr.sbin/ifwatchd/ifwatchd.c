@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.21.4.1 2008/05/18 12:36:18 yamt Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.21.4.2 2008/06/04 02:05:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -273,9 +273,17 @@ dispatch(void *msg, size_t len)
 		ifmp = (struct if_msghdr*)msg;
 		check_carrier(ifmp->ifm_index, ifmp->ifm_data.ifi_link_state);
 		return;
+	case RTM_ADD:
+	case RTM_DELETE:
+	case RTM_CHANGE:
+	case RTM_LOSING:
+	case RTM_REDIRECT:
+	case RTM_MISS:
+	case RTM_IEEE80211:
+		return;
 	}
 	if (verbose)
-		printf("unknown message ignored\n");
+		printf("unknown message ignored (%d)\n", hd->rtm_type);
 	return;
 
 work:

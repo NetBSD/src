@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.11 2007/12/11 04:55:02 lukem Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.11.10.1 2008/06/04 02:05:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -60,6 +60,9 @@ struct file;
 # include <sys/malloc.h>
 #endif
 
+#if defined(SOLARIS2) && !defined(_KERNEL)
+# include "radix_ipf.h"
+#endif
 #if defined(_KERNEL) && (defined(__osf__) || defined(AIX) || \
      defined(__hpux) || defined(__sgi))
 # include "radix_ipf_local.h"
@@ -83,19 +86,20 @@ static int rn_freenode __P((struct radix_node *, void *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_pool.c,v 1.11 2007/12/11 04:55:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_pool.c,v 1.11.10.1 2008/06/04 02:05:34 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.20 2007/05/31 12:27:35 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.26 2007/11/25 09:20:33 darrenr Exp";
 #endif
 #endif
 
 #ifdef IPFILTER_LOOKUP
 
-# ifndef RADIX_NODE_HEAD_LOCK
+# if !defined(RADIX_NODE_HEAD_LOCK) || !defined(RADIX_NODE_HEAD_UNLOCK) || \
+     !defined(_KERNEL)
+#  undef RADIX_NODE_HEAD_LOCK
+#  undef RADIX_NODE_HEAD_UNLOCK
 #  define RADIX_NODE_HEAD_LOCK(x)	;
-# endif
-# ifndef RADIX_NODE_HEAD_UNLOCK
 #  define RADIX_NODE_HEAD_UNLOCK(x)	;
 # endif
 
@@ -105,23 +109,6 @@ static void *ip_pool_exists __P((int, char *));
 ip_pool_stat_t ipoolstat;
 ipfrwlock_t ip_poolrw;
 
-/*
- * Binary tree routines from Sedgewick and enhanced to do ranges of addresses.
- * NOTE: Insertion *MUST* be from greatest range to least for it to work!
- * These should be replaced, eventually, by something else - most notably a
- * interval searching method.  The important feature is to be able to find
- * the best match.
- *
- * So why not use a radix tree for this?  As the first line implies, it
- * has been written to work with a _range_ of addresses.  A range is not
- * necessarily a match with any given netmask so what we end up dealing
- * with is an interval tree.  Implementations of these are hard to find
- * and the one herein is far from bug free.
- *
- * Sigh, in the end I became convinced that the bugs the code contained did
- * not make it worthwhile not using radix trees.  For now the radix tree from
- * 4.4 BSD is used, but this is not viewed as a long term solution.
- */
 ip_pool_t *ip_pool_list[IPL_LOGSIZE] = { NULL, NULL, NULL, NULL,
 					 NULL, NULL, NULL, NULL };
 
@@ -275,8 +262,6 @@ void ip_pool_fini()
 {
 	ip_pool_t *p, *q;
 	int i;
-
-	ASSERT(rw_read_locked(&ipf_global.ipf_lk) == 0);
 
 	for (i = 0; i <= IPL_LOGMAX; i++) {
 		for (q = ip_pool_list[i]; (p = q) != NULL; ) {
@@ -475,8 +460,6 @@ int info;
 	struct radix_node *rn;
 	ip_pool_node_t *x;
 
-	ASSERT(rw_read_locked(&ip_poolrw.ipf_lk) == 0);
-
 	KMALLOC(x, ip_pool_node_t *);
 	if (x == NULL) {
 		return ENOMEM;
@@ -541,32 +524,27 @@ iplookupop_t *op;
 	int poolnum, unit;
 	ip_pool_t *h;
 
-	ASSERT(rw_read_locked(&ip_poolrw.ipf_lk) == 0);
-
 	unit = op->iplo_unit;
 
-	if ((op->iplo_arg & LOOKUP_ANON) == 0)
+	if ((op->iplo_arg & LOOKUP_ANON) == 0) {
 		h = ip_pool_exists(unit, op->iplo_name);
-	else
-		h = NULL;
-
-	if (h != NULL) {
-		if ((h->ipo_flags & IPOOL_DELETE) != 0) {
+		if (h != NULL) {
+			if ((h->ipo_flags & IPOOL_DELETE) == 0)
+				return EEXIST;
 			h->ipo_flags &= ~IPOOL_DELETE;
 			return 0;
 		}
-		return EEXIST;
-	} else {
-		KMALLOC(h, ip_pool_t *);
-		if (h == NULL)
-			return ENOMEM;
-		bzero(h, sizeof(*h));
+	}
 
-		if (rn_inithead((void **)&h->ipo_head,
-				offsetof(addrfamily_t, adf_addr) << 3) == 0) {
-			KFREE(h);
-			return ENOMEM;
-		}
+	KMALLOC(h, ip_pool_t *);
+	if (h == NULL)
+		return ENOMEM;
+	bzero(h, sizeof(*h));
+
+	if (rn_inithead((void **)&h->ipo_head,
+			offsetof(addrfamily_t, adf_addr) << 3) == 0) {
+		KFREE(h);
+		return ENOMEM;
 	}
 
 	if ((op->iplo_arg & LOOKUP_ANON) != 0) {
@@ -601,18 +579,16 @@ iplookupop_t *op;
 		(void)strncpy(h->ipo_name, op->iplo_name, sizeof(h->ipo_name));
 	}
 
-	if ((h->ipo_flags & IPOOL_DELETE) == 0) {
-		h->ipo_ref = 1;
-		h->ipo_list = NULL;
-		h->ipo_unit = unit;
-		h->ipo_next = ip_pool_list[unit];
-		if (ip_pool_list[unit] != NULL)
-			ip_pool_list[unit]->ipo_pnext = &h->ipo_next;
-		h->ipo_pnext = &ip_pool_list[unit];
-		ip_pool_list[unit] = h;
+	h->ipo_ref = 1;
+	h->ipo_list = NULL;
+	h->ipo_unit = unit;
+	h->ipo_next = ip_pool_list[unit];
+	if (ip_pool_list[unit] != NULL)
+		ip_pool_list[unit]->ipo_pnext = &h->ipo_next;
+	h->ipo_pnext = &ip_pool_list[unit];
+	ip_pool_list[unit] = h;
 
-		ipoolstat.ipls_pools++;
-	}
+	ipoolstat.ipls_pools++;
 
 	return 0;
 }
@@ -631,8 +607,6 @@ int ip_pool_remove(ipo, ipe)
 ip_pool_t *ipo;
 ip_pool_node_t *ipe;
 {
-
-	ASSERT(rw_read_locked(&ip_poolrw.ipf_lk) == 0);
 
 	if (ipe->ipn_pnext != NULL)
 		*ipe->ipn_pnext = ipe->ipn_next;
@@ -801,8 +775,6 @@ void ip_pool_deref(ipo)
 ip_pool_t *ipo;
 {
 
-	ASSERT(rw_read_locked(&ip_poolrw.ipf_lk) == 0);
-
 	ipo->ipo_ref--;
 
 	if (ipo->ipo_ref == 0)
@@ -870,11 +842,11 @@ ipflookupiter_t *ilp;
 
 		if (nextipo != NULL) {
 			ATOMIC_INC(nextipo->ipo_ref);
-			if (nextipo->ipo_next == NULL)
-				token->ipt_alive = 0;
+			token->ipt_data = nextipo;
 		} else {
 			bzero((char *)&zp, sizeof(zp));
 			nextipo = &zp;
+			token->ipt_data = NULL;
 		}
 		break;
 
@@ -894,11 +866,11 @@ ipflookupiter_t *ilp;
 
 		if (nextnode != NULL) {
 			ATOMIC_INC(nextnode->ipn_ref);
-			if (nextnode->ipn_next == NULL)
-				token->ipt_alive = 0;
+			token->ipt_data = nextnode;
 		} else {
 			bzero((char *)&zn, sizeof(zn));
 			nextnode = &zn;
+			token->ipt_data = NULL;
 		}
 		break;
 	default :
@@ -919,7 +891,6 @@ ipflookupiter_t *ilp;
 			ip_pool_deref(ipo);
 			RWLOCK_EXIT(&ip_poolrw);
 		}
-		token->ipt_data = nextipo;
 		err = COPYOUT(nextipo, ilp->ili_data, sizeof(*nextipo));
 		if (err != 0)
 			err = EFAULT;
@@ -931,7 +902,6 @@ ipflookupiter_t *ilp;
 			ip_pool_node_deref(node);
 			RWLOCK_EXIT(&ip_poolrw);
 		}
-		token->ipt_data = nextnode;
 		err = COPYOUT(nextnode, ilp->ili_data, sizeof(*nextnode));
 		if (err != 0)
 			err = EFAULT;
@@ -1002,7 +972,11 @@ rn_freehead(rnh)
 {
 
 	RADIX_NODE_HEAD_LOCK(rnh);
+#  if defined(__NetBSD_Version__) && (__NetBSD_Version__ > 499002000)
 	rn_walktree(rnh, rn_freenode, rnh);
+#  else
+	(*rnh->rnh_walktree)(rnh, rn_freenode, rnh);
+#  endif
 
 	rnh->rnh_addaddr = NULL;
 	rnh->rnh_deladdr = NULL;

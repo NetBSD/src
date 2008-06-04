@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.40.2.1 2008/05/18 12:34:40 yamt Exp $	*/
+/*	$NetBSD: dl.c,v 1.40.2.2 2008/06/04 02:05:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.40.2.1 2008/05/18 12:34:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.40.2.2 2008/06/04 02:05:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ dlrint(void *arg)
 		cc = c & 0xFF;
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			clwakeup(&tp->t_rawq);
+			cv_broadcast(&tp->t_rawcv);
 			return;
 		}
 

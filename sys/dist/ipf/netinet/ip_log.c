@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_log.c,v 1.10 2007/09/17 18:02:21 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.10.22.1 2008/06/04 02:05:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_log.c,v 2.75.2.15 2007/02/03 00:49:30 darrenr Exp
+ * Id: ip_log.c,v 2.75.2.21 2007/10/27 15:47:10 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.10 2007/09/17 18:02:21 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.10.22.1 2008/06/04 02:05:34 yamt Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -55,7 +55,8 @@ struct file;
 # undef _KERNEL
 # undef KERNEL
 #endif
-#if __FreeBSD_version >= 220000 && defined(_KERNEL)
+#if (defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)) && \
+    defined(_KERNEL)
 # include <sys/fcntl.h>
 # include <sys/filio.h>
 #else
@@ -64,12 +65,14 @@ struct file;
 #include <sys/time.h>
 #if defined(_KERNEL)
 # include <sys/systm.h>
-# if defined(NetBSD) && (__NetBSD_Version__ >= 104000000)
+# if (defined(NetBSD) && (__NetBSD_Version__ >= 104000000))
 #  include <sys/proc.h>
 # endif
 #endif /* _KERNEL */
 #if !SOLARIS && !defined(__hpux) && !defined(linux)
-# if (NetBSD > 199609) || (OpenBSD > 199603) || (__FreeBSD_version >= 300000)
+# if (defined(NetBSD) && (NetBSD > 199609)) || \
+     (defined(OpenBSD) && (OpenBSD > 199603)) || \
+     (defined(__FreeBSD_version) && (__FreeBSD_version >= 300000))
 #  include <sys/dirent.h>
 # else
 #  include <sys/dir.h>
@@ -262,7 +265,8 @@ u_int flags;
 	ipflog_t ipfl;
 	u_char p;
 	mb_t *m;
-# if (SOLARIS || defined(__hpux)) && defined(_KERNEL)
+# if (SOLARIS || defined(__hpux)) && defined(_KERNEL) && \
+  !defined(_INET_IP_STACK_H)
 	qif_t *ifp;
 # else
 	struct ifnet *ifp;
@@ -291,7 +295,7 @@ u_int flags;
 			struct icmp *icmp;
 
 			icmp = (struct icmp *)fin->fin_dp;
-	
+
 			/*
 			 * For ICMP, if the packet is an error packet, also
 			 * include the information about the packet which
@@ -338,14 +342,16 @@ u_int flags;
 	 * Get the interface number and name to which this packet is
 	 * currently associated.
 	 */
-# if (SOLARIS || defined(__hpux)) && defined(_KERNEL)
+# if (SOLARIS || defined(__hpux)) && defined(_KERNEL) && \
+     !defined(_INET_IP_STACK_H)
 	ipfl.fl_unit = (u_int)ifp->qf_ppa;
-	COPYIFNAME(ifp, ipfl.fl_ifname);
+	COPYIFNAME(fin->fin_v, ifp, ipfl.fl_ifname);
 # else
 #  if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
       (defined(OpenBSD) && (OpenBSD >= 199603)) || defined(linux) || \
-      (defined(__FreeBSD__) && (__FreeBSD_version >= 501113))
-	COPYIFNAME(ifp, ipfl.fl_ifname);
+      (defined(__FreeBSD__) && (__FreeBSD_version >= 501113)) || \
+      (SOLARIS && defined(_INET_IP_STACK_H))
+	COPYIFNAME(fin->fin_v, ifp, ipfl.fl_ifname);
 #  else
 	ipfl.fl_unit = (u_int)ifp->if_unit;
 #   if defined(_KERNEL)
@@ -354,7 +360,7 @@ u_int flags;
 			if ((ipfl.fl_ifname[2] = ifp->if_name[2]))
 				ipfl.fl_ifname[3] = ifp->if_name[3];
 #   else
-	(void) strncpy(ipfl.fl_ifname, IFNAME(ifp), sizeof(ipfl.fl_ifname));
+	COPYIFNAME(fin->fin_v, ifp, ipfl.fl_ifname);
 	ipfl.fl_ifname[sizeof(ipfl.fl_ifname) - 1] = '\0';
 #   endif
 #  endif
@@ -506,7 +512,7 @@ int *types, cnt;
 		if (types[i] == 0) {
 			memcpy(ptr, items[i], itemsz[i]);
 		} else if (types[i] == 1) {
-			COPYDATA(items[i], 0, itemsz[i], ptr);
+			COPYDATA(items[i], 0, itemsz[i], (char *)ptr);
 		}
 		ptr += itemsz[i];
 	}

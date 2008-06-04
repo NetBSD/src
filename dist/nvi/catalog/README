@@ -1,4 +1,4 @@
-#	$Id: README,v 1.1.1.1.2.2 2008/05/18 12:29:20 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:20 $
+#	Id: README,v 8.4 1994/11/22 09:52:04 bostic Exp (Berkeley) Date: 1994/11/22 09:52:04
 
 Generally, all non-system error and informational messages in nvi are
 catalog messages, i.e. they can be tailored to a specific langauge.

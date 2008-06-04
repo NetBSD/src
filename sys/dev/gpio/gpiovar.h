@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.4.68.1 2008/05/18 12:33:38 yamt Exp $ */
+/* $NetBSD: gpiovar.h,v 1.4.68.2 2008/06/04 02:05:10 yamt Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,6 +19,8 @@
 
 #ifndef _DEV_GPIO_GPIOVAR_H_
 #define _DEV_GPIO_GPIOVAR_H_
+
+#include <sys/device.h>
 
 /* GPIO controller description */
 typedef struct gpio_chipset_tag {

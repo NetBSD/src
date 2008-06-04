@@ -35,7 +35,7 @@
 #include <hex.h>
 
 __RCSID("$Heimdal: digest.c 22374 2007-12-28 18:36:52Z lha $"
-        "$NetBSD: digest.c,v 1.1 2008/03/22 08:37:03 mlelstv Exp $");
+        "$NetBSD: digest.c,v 1.1.2.1 2008/06/04 02:02:58 yamt Exp $");
 
 #define MS_CHAP_V2	0x20
 #define CHAP_MD5	0x10
@@ -488,6 +488,7 @@ _kdc_do_digest(krb5_context context,
 
 	hex_encode(buf.data, buf.length, &r.u.initReply.opaque);
 	free(buf.data);
+	buf.data = NULL;
 	if (r.u.initReply.opaque == NULL) {
 	    krb5_clear_error_string(context);
 	    ret = ENOMEM;

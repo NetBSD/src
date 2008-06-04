@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.103.10.1 2008/05/18 12:36:18 yamt Exp $	*/
+/*	$NetBSD: inetd.c,v 1.103.10.2 2008/06/04 02:05:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.103.10.1 2008/05/18 12:36:18 yamt Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.103.10.2 2008/06/04 02:05:59 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -363,7 +363,7 @@ static char    *nextline(FILE *);
 static void	print_service(char *, struct servtab *);
 static void	reapchild(void);
 static void	retry(void);
-static void	run_service(int, struct servtab *);
+static void	run_service(int, struct servtab *, int);
 static int	setconfig(void);
 static void	setup(struct servtab *);
 static char    *sskip(char **);
@@ -631,7 +631,7 @@ spawn(struct servtab *sep, int ctrl)
 		}
 	}
 	if (pid == 0) {
-		run_service(ctrl, sep);
+		run_service(ctrl, sep, dofork);
 		if (dofork)
 			exit(0);
 	}
@@ -640,11 +640,12 @@ spawn(struct servtab *sep, int ctrl)
 }
 
 static void
-run_service(int ctrl, struct servtab *sep)
+run_service(int ctrl, struct servtab *sep, int didfork)
 {
 	struct passwd *pwd;
 	struct group *grp = NULL;	/* XXX gcc */
 	char buf[NI_MAXSERV];
+	struct servtab *s;
 #ifdef LIBWRAP
 	struct request_info req;
 	int denied;
@@ -685,6 +686,11 @@ run_service(int ctrl, struct servtab *sep)
 #endif /* LIBWRAP */
 
 	if (sep->se_bi) {
+		if (didfork) {
+			for (s = servtab; s; s = s->se_next)
+				if (s->se_fd != -1 && s->se_fd != ctrl)
+					close(s->se_fd);
+		}
 		(*sep->se_bi->bi_fn)(ctrl, sep);
 	} else {
 		if ((pwd = getpwnam(sep->se_user)) == NULL) {
@@ -2170,7 +2176,7 @@ tcpmux(int ctrl, struct servtab *sep)
 		if (!strcasecmp(service, sep->se_service)) {
 			if (ISMUXPLUS(sep))
 				strwrite(ctrl, "+Go\r\n");
-			run_service(ctrl, sep);
+			run_service(ctrl, sep, 1 /* forked */);
 			return;
 		}
 	}

@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.30 2006/09/27 21:42:04 manu Exp $
+# $NetBSD: RAWHIDE,v 1.30.54.1 2008/06/04 02:04:39 yamt Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -42,6 +42,7 @@ options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	SYSVMSG

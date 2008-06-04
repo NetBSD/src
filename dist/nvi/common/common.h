@@ -1,3 +1,5 @@
+/*	$NetBSD: common.h,v 1.1.1.1.2.3 2008/06/04 02:03:06 yamt Exp $ */
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: common.h,v 1.1.1.1.2.2 2008/05/18 12:29:22 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:22 $
+ *	Id: common.h,v 10.20 2002/03/02 23:36:22 skimo Exp (Berkeley) Date: 2002/03/02 23:36:22
  */
 
 /*
@@ -102,6 +104,8 @@ typedef enum { SEQ_ABBREV, SEQ_COMMAND, SEQ_INPUT } seq_t;
 #include "screen.h"		/* Required by exf.h. */
 #include "exf.h"
 #include "mem.h"
+#if defined(USE_DB4_LOGGING)
 #include "vi_auto.h"
+#endif
 
 #include "extern.h"

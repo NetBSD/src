@@ -1,7 +1,9 @@
-#       $NetBSD: files.ep93xx,v 1.2 2005/11/12 05:33:23 hamajima Exp $
+#       $NetBSD: files.ep93xx,v 1.2.80.1 2008/06/04 02:04:40 yamt Exp $
 #
 # Configuration info for Cirrus Logic EP93XX CPU support
 #
+
+makeoptions CPUFLAGS+="-march=armv4 -mtune=arm9"
 
 file	arch/arm/ep93xx/ep93xx_intr.c
 file	arch/arm/arm32/irq_dispatch.S

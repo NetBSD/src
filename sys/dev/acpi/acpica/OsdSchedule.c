@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.5.8.1 2008/05/18 12:33:34 yamt Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.5.8.2 2008/06/04 02:05:10 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.5.8.1 2008/05/18 12:33:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.5.8.2 2008/06/04 02:05:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -163,10 +163,14 @@ AcpiOsSleep(ACPI_INTEGER Milliseconds)
 {
 	ACPI_FUNCTION_TRACE(__func__);
 
-	mutex_enter(&acpi_osd_sleep_mtx);
-	cv_timedwait_sig(&acpi_osd_sleep_cv, &acpi_osd_sleep_mtx,
-	    MAX(mstohz(Milliseconds), 1));
-	mutex_exit(&acpi_osd_sleep_mtx);
+	if (cold)
+		DELAY(Milliseconds * 1000);
+	else {
+		mutex_enter(&acpi_osd_sleep_mtx);
+		cv_timedwait_sig(&acpi_osd_sleep_cv, &acpi_osd_sleep_mtx,
+		    MAX(mstohz(Milliseconds), 1));
+		mutex_exit(&acpi_osd_sleep_mtx);
+	}
 }
 
 /*

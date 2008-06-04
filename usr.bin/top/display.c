@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.18 2008/04/10 20:41:42 oster Exp $	*/
+/*	$NetBSD: display.c,v 1.18.2.1 2008/06/04 02:05:59 yamt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -47,7 +47,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.18 2008/04/10 20:41:42 oster Exp $");
+__RCSID("$NetBSD: display.c,v 1.18.2.1 2008/06/04 02:05:59 yamt Exp $");
 #endif
 
 #include "os.h"
@@ -935,7 +935,7 @@ clear_message()
     }
 }
 
-int
+double
 readline(buffer, size, numeric)
 
 char *buffer;
@@ -944,9 +944,7 @@ int  numeric;
 
 {
     char *ptr = buffer;
-    int ch;
-    int cnt = 0;
-    int maxcnt = 0;
+    int ch, dotfound = 0, cnt = 0, maxcnt = 0;
 
     /* allow room for null terminator */
     size -= 1;
@@ -990,14 +988,18 @@ int  numeric;
 	    }
 	}
 	/* check for character validity and buffer overflow */
-	else if (cnt == size || (numeric && !isdigit(ch)) ||
-		!isprint(ch))
+	else if (cnt == size || (numeric && !isdigit(ch) &&
+		(dotfound || ch != '.')) || !isprint(ch))
 	{
 	    /* not legal */
 	    putchar('\7');
 	}
 	else
 	{
+	    /* if float - there could be only one dot */
+	    if (ch == '.') {
+		dotfound = 1;
+	    }
 	    /* echo it and store it in the buffer */
 	    putchar(ch);
 	    ptr++;
@@ -1018,7 +1020,7 @@ int  numeric;
 
     /* return either inputted number or string length */
     putchar('\r');
-    return(cnt == 0 ? -1 : numeric ? atoi(buffer) : cnt);
+    return(cnt == 0 ? -1 : numeric ? atof(buffer) : cnt);
 }
 
 /* internal support routines */

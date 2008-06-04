@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.70.2.1 2008/05/18 12:32:44 yamt Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.70.2.2 2008/06/04 02:04:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.70.2.1 2008/05/18 12:32:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.70.2.2 2008/06/04 02:04:52 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -583,7 +583,7 @@ cpu_getmcontext(l, mcp, flags)
 	__greg_t ras_pc;
 
 	/* Save register context. */
-	gr[_REG_EXPEVT] = tf->tf_expevt;
+	gr[_REG_GBR]    = tf->tf_gbr;
 	gr[_REG_PC]     = tf->tf_spc;
 	gr[_REG_SR]     = tf->tf_ssr;
 	gr[_REG_MACL]   = tf->tf_macl;
@@ -632,7 +632,7 @@ cpu_setmcontext(l, mcp, flags)
 		if (((tf->tf_ssr ^ gr[_REG_SR]) & PSL_USERSTATIC) != 0)
 			return (EINVAL);
 
-		/* _REG_EXPEVT not restored */
+		tf->tf_gbr    = gr[_REG_GBR];
 		tf->tf_spc    = gr[_REG_PC];
 		tf->tf_ssr    = gr[_REG_SR];
 		tf->tf_macl   = gr[_REG_MACL];
@@ -685,6 +685,14 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	tf = l->l_md.md_regs;
 
+	tf->tf_ssr = PSL_USERSET;
+	tf->tf_spc = pack->ep_entry;
+	tf->tf_pr = 0;
+
+	tf->tf_gbr = 0;
+	tf->tf_macl = 0;
+	tf->tf_mach = 0;
+
 	tf->tf_r0 = 0;
 	tf->tf_r1 = 0;
 	tf->tf_r2 = 0;
@@ -700,8 +708,6 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_r12 = 0;
 	tf->tf_r13 = 0;
 	tf->tf_r14 = 0;
-	tf->tf_spc = pack->ep_entry;
-	tf->tf_ssr = PSL_USERSET;
 	tf->tf_r15 = stack;
 }
 

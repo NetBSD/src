@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2008/02/12 17:30:57 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.8.1 2008/06/04 02:04:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2008/02/12 17:30:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.8.1 2008/06/04 02:04:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2008/02/12 17:30:57 joerg Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+
+#include "pci.h"
+#if NPCI > 0
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#endif
 
 #include <machine/pte.h>
 #include <machine/intr.h>
@@ -120,6 +126,24 @@ findroot(void)
 void
 device_register(struct device *dev, void *aux)
 {
-	/* do nothing */
+
+#if NPCI > 0
+	if (device_is_a(dev, "genfb") &&
+	    device_is_a(device_parent(dev), "pci")) {
+		prop_dictionary_t dict = device_properties(dev);
+		struct pci_attach_args *pa = aux;
+		pcireg_t bar0;
+		uint32_t fbaddr;
+
+		bar0 = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
+		fbaddr = PCI_MAPREG_MEM_ADDR(bar0);
+
+		prop_dictionary_set_bool(dict, "is_console", 1);
+		prop_dictionary_set_uint32(dict, "width", 640);
+		prop_dictionary_set_uint32(dict, "height", 480);
+		prop_dictionary_set_uint32(dict, "depth", 8);
+		prop_dictionary_set_uint32(dict, "address", fbaddr);
+	}
+#endif
 }
 

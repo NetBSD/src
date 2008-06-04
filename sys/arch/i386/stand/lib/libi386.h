@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.23 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: libi386.h,v 1.23.76.1 2008/06/04 02:04:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -111,6 +111,7 @@ int congetc(void);
 int conisshift(void);
 int coniskey(void);
 void conputc(int);
+void conclr(void);
 
 int getextmem2(int *);
 int getextmemps2(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.140.4.1 2008/05/18 12:35:08 yamt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.140.4.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.140.4.1 2008/05/18 12:35:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.140.4.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,10 +176,7 @@ int ktd_intrwakdl = KTD_INTRWAKDL;	/* ditto, but when interactive */
 kmutex_t ktrace_lock;
 int ktrace_on;
 static TAILQ_HEAD(, ktr_desc) ktdq = TAILQ_HEAD_INITIALIZER(ktdq);
-
-MALLOC_DEFINE(M_KTRACE, "ktrace", "ktrace data buffer");
-POOL_INIT(kte_pool, sizeof(struct ktrace_entry), 0, 0, 0,
-    "ktepl", &pool_allocator_nointr, IPL_NONE);
+static pool_cache_t kte_cache;
 
 static void
 ktd_wakeup(struct ktr_desc *ktd)
@@ -247,6 +244,8 @@ ktrinit(void)
 {
 
 	mutex_init(&ktrace_lock, MUTEX_DEFAULT, IPL_NONE);
+	kte_cache = pool_cache_init(sizeof(struct ktrace_entry), 0, 0, 0,
+	    "ktrace", &pool_allocator_nointr, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -407,7 +406,7 @@ ktefree(struct ktrace_entry *kte)
 
 	if (kte->kte_buf != kte->kte_space)
 		kmem_free(kte->kte_buf, kte->kte_bufsz);
-	pool_put(&kte_pool, kte);
+	pool_cache_put(kte_cache, kte);
 }
 
 /*
@@ -491,10 +490,10 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	if (ktrenter(l))
 		return EAGAIN;
 
-	kte = pool_get(&kte_pool, PR_WAITOK);
+	kte = pool_cache_get(kte_cache, PR_WAITOK);
 	if (sz > sizeof(kte->kte_space)) {
 		if ((buf = kmem_alloc(sz, KM_SLEEP)) == NULL) {
-			pool_put(&kte_pool, kte);
+			pool_cache_put(kte_cache, kte);
 			ktrexit(l);
 			return ENOMEM;
 		}
@@ -1472,6 +1471,9 @@ ktrace_thread(void *arg)
 	 * descriptor is available in userland.
 	 */
 	closef(fp);
+
+	cv_destroy(&ktd->ktd_sync_cv);
+	cv_destroy(&ktd->ktd_cv);
 
 	callout_stop(&ktd->ktd_wakch);
 	callout_destroy(&ktd->ktd_wakch);

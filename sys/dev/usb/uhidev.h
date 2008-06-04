@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.7.34.1 2008/05/18 12:34:51 yamt Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.7.34.2 2008/06/04 02:05:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ struct uhidev_softc {
 	int sc_repdesc_size;
 
 	u_int sc_nrepid;
-	struct uhidev **sc_subdevs;
+	device_t *sc_subdevs;
 
 	int sc_refcnt;
 	u_char sc_dying;

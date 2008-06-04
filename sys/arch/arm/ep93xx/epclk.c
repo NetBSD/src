@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.11 2008/01/20 16:28:22 joerg Exp $	*/
+/*	$NetBSD: epclk.c,v 1.11.8.1 2008/06/04 02:04:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.11 2008/01/20 16:28:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.11.8.1 2008/06/04 02:04:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -254,25 +254,14 @@ delay(unsigned int n)
 	 */
 	initial_tick = TIMER4VAL();
 
-	if (n <= UINT_MAX / TIMER_FREQ) {
-		/*
-		 * For unsigned arithmetic, division can be replaced with
-		 * multiplication with the inverse and a shift.
-		 */
-		remaining = n * TIMER_FREQ / 1000000;
-	} else {
-		/* This is a very long delay.
-		 * Being slow here doesn't matter.
-		 */
-		remaining = (unsigned long long) n * TIMER_FREQ / 1000000;
-	}
+	remaining = n * TIMER_FREQ / 1000000;
 
 	while (remaining > 0) {
 		cur_tick = TIMER4VAL();
-		if (cur_tick > initial_tick)
-			remaining -= UINT_MAX - (cur_tick - initial_tick);
+		if (cur_tick >= initial_tick)
+			remaining -= cur_tick - initial_tick;
 		else
-			remaining -= initial_tick - cur_tick;
+			remaining -= UINT_MAX - initial_tick + cur_tick + 1;
 		initial_tick = cur_tick;
 	}
 }

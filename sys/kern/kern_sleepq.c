@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.25.2.1 2008/05/18 12:35:08 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.25.2.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.25.2.1 2008/05/18 12:35:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.25.2.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,7 +70,7 @@ sleeptab_init(sleeptab_t *st)
 		sq = &st->st_queues[i].st_queue;
 		mutex_init(&st->st_queues[i].st_mutex, MUTEX_DEFAULT,
 		    IPL_SCHED);
-		sleepq_init(sq, &st->st_queues[i].st_mutex);
+		sleepq_init(sq);
 	}
 }
 
@@ -80,12 +80,10 @@ sleeptab_init(sleeptab_t *st)
  *	Prepare a sleep queue for use.
  */
 void
-sleepq_init(sleepq_t *sq, kmutex_t *mtx)
+sleepq_init(sleepq_t *sq)
 {
 
-	sq->sq_waiters = 0;
-	sq->sq_mutex = mtx;
-	TAILQ_INIT(&sq->sq_queue);
+	TAILQ_INIT(sq);
 }
 
 /*
@@ -101,19 +99,9 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	struct schedstate_percpu *spc;
 	struct cpu_info *ci;
 
-	KASSERT(lwp_locked(l, sq->sq_mutex));
-	KASSERT(sq->sq_waiters > 0);
+	KASSERT(lwp_locked(l, NULL));
 
-	sq->sq_waiters--;
-	TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
-
-#ifdef DIAGNOSTIC
-	if (sq->sq_waiters == 0)
-		KASSERT(TAILQ_FIRST(&sq->sq_queue) == NULL);
-	else
-		KASSERT(TAILQ_FIRST(&sq->sq_queue) != NULL);
-#endif
-
+	TAILQ_REMOVE(sq, l, l_sleepchain);
 	l->l_syncobj = &sched_syncobj;
 	l->l_wchan = NULL;
 	l->l_sleepq = NULL;
@@ -136,18 +124,19 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
 	 */
-	if ((l->l_flag & LW_RUNNING) != 0) {
+	if ((l->l_pflag & LP_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
 		lwp_setlock(l, spc->spc_lwplock);
 		return 0;
 	}
 
-	/*
-	 * Call the wake-up handler of scheduler.
-	 * It might change the CPU for this thread.
-	 */
+	/* Update sleep time delta, call the wake-up handler of scheduler */
+	l->l_slpticksum += (hardclock_ticks - l->l_slpticks);
 	sched_wakeup(l);
+
+	/* Look for a CPU to wake up */
+	l->l_cpu = sched_takecpu(l);
 	ci = l->l_cpu;
 	spc = &ci->ci_schedstate;
 
@@ -180,7 +169,7 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 	const int pri = lwp_eprio(l);
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
-		TAILQ_FOREACH(l2, &sq->sq_queue, l_sleepchain) {
+		TAILQ_FOREACH(l2, sq, l_sleepchain) {
 			if (lwp_eprio(l2) < pri) {
 				TAILQ_INSERT_BEFORE(l2, l, l_sleepchain);
 				return;
@@ -189,9 +178,9 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 	}
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_LIFO) != 0)
-		TAILQ_INSERT_HEAD(&sq->sq_queue, l, l_sleepchain);
+		TAILQ_INSERT_HEAD(sq, l, l_sleepchain);
 	else
-		TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_sleepchain);
+		TAILQ_INSERT_TAIL(sq, l, l_sleepchain);
 }
 
 /*
@@ -206,7 +195,7 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
 {
 	lwp_t *l = curlwp;
 
-	KASSERT(lwp_locked(l, sq->sq_mutex));
+	KASSERT(lwp_locked(l, NULL));
 	KASSERT(l->l_stat == LSONPROC);
 	KASSERT(l->l_wchan == NULL && l->l_sleepq == NULL);
 
@@ -218,8 +207,10 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
 	l->l_stat = LSSLEEP;
 	l->l_sleeperr = 0;
 
-	sq->sq_waiters++;
 	sleepq_insert(sq, l, sobj);
+
+	/* Save the time when thread has slept */
+	l->l_slpticks = hardclock_ticks;
 	sched_slept(l);
 }
 
@@ -286,8 +277,9 @@ sleepq_block(int timo, bool catch)
 	}
 
 	ktrcsw(0, 0);
-
-	KERNEL_LOCK(l->l_biglocks, l);
+	if (__predict_false(l->l_biglocks != 0)) {
+		KERNEL_LOCK(l->l_biglocks, NULL);
+	}
 	return error;
 }
 
@@ -297,16 +289,16 @@ sleepq_block(int timo, bool catch)
  *	Wake zero or more LWPs blocked on a single wait channel.
  */
 lwp_t *
-sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
+sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 {
 	lwp_t *l, *next;
 	int swapin = 0;
 
-	KASSERT(mutex_owned(sq->sq_mutex));
+	KASSERT(mutex_owned(mp));
 
-	for (l = TAILQ_FIRST(&sq->sq_queue); l != NULL; l = next) {
+	for (l = TAILQ_FIRST(sq); l != NULL; l = next) {
 		KASSERT(l->l_sleepq == sq);
-		KASSERT(l->l_mutex == sq->sq_mutex);
+		KASSERT(l->l_mutex == mp);
 		next = TAILQ_NEXT(l, l_sleepchain);
 		if (l->l_wchan != wchan)
 			continue;
@@ -315,7 +307,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
 			break;
 	}
 
-	sleepq_unlock(sq);
+	mutex_spin_exit(mp);
 
 	/*
 	 * If there are newly awakend threads that need to be swapped in,
@@ -338,15 +330,16 @@ u_int
 sleepq_unsleep(lwp_t *l, bool cleanup)
 {
 	sleepq_t *sq = l->l_sleepq;
+	kmutex_t *mp = l->l_mutex;
 	int swapin;
 
-	KASSERT(lwp_locked(l, sq->sq_mutex));
+	KASSERT(lwp_locked(l, mp));
 	KASSERT(l->l_wchan != NULL);
 
 	swapin = sleepq_remove(sq, l);
 
 	if (cleanup) {
-		sleepq_unlock(sq);
+		mutex_spin_exit(mp);
 		if (swapin)
 			uvm_kick_scheduler();
 	}
@@ -440,12 +433,12 @@ sleepq_changepri(lwp_t *l, pri_t pri)
 	sleepq_t *sq = l->l_sleepq;
 	pri_t opri;
 
-	KASSERT(lwp_locked(l, sq->sq_mutex));
+	KASSERT(lwp_locked(l, NULL));
 
 	opri = lwp_eprio(l);
 	l->l_priority = pri;
 	if (lwp_eprio(l) != opri) {
-		TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
+		TAILQ_REMOVE(sq, l, l_sleepchain);
 		sleepq_insert(sq, l, l->l_syncobj);
 	}
 }
@@ -456,14 +449,14 @@ sleepq_lendpri(lwp_t *l, pri_t pri)
 	sleepq_t *sq = l->l_sleepq;
 	pri_t opri;
 
-	KASSERT(lwp_locked(l, sq->sq_mutex));
+	KASSERT(lwp_locked(l, NULL));
 
 	opri = lwp_eprio(l);
 	l->l_inheritedprio = pri;
 
 	if (lwp_eprio(l) != opri &&
 	    (l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
-		TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
+		TAILQ_REMOVE(sq, l, l_sleepchain);
 		sleepq_insert(sq, l, l->l_syncobj);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.12 2007/12/11 04:55:04 lukem Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.12.10.1 2008/06/04 02:05:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -39,11 +39,11 @@
  *   o The enclosed hack of STREAMS support is pretty sick and most likely
  *     broken.
  *
- *	Id: ip_rpcb_pxy.c,v 2.25.2.6 2007/01/17 11:34:54 darrenr Exp
+ *	Id: ip_rpcb_pxy.c,v 2.25.2.8 2007/10/26 12:15:13 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.12 2007/12/11 04:55:04 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.12.10.1 2008/06/04 02:05:34 yamt Exp $");
 
 #define	IPF_RPCB_PROXY
 
@@ -297,6 +297,7 @@ ippr_rpcb_out(fin, aps, nat)
 
 	/* Perform basic variable initialization. */
 	rs = (rpcb_session_t *)aps->aps_data;
+	rx = NULL;
 
 	m = fin->fin_m;
 	off = (char *)fin->fin_dp - (char *)fin->fin_ip;
@@ -922,14 +923,14 @@ ippr_rpcb_decoderep(fin, nat, rs, rm, rxp)
 		/* There must be only one 4 byte argument. */
 		if (!RPCB_BUF_EQ(rm, p, 4))
 			return(-1);
-		
+
 		rr->rr_v2 = p;
 		xdr = B(rr->rr_v2);
-		
+
 		/* Reply w/ a 0 port indicates service isn't registered */
 		if (xdr == 0)
 			return(0);
-		
+
 		/* Is the value sane? */
 		if (xdr > 65535)
 			return(-1);
@@ -1128,7 +1129,7 @@ ippr_rpcb_getproto(rm, xp, p)
 	else {
 		return(-1);
 	}
-	
+
 	/* Advance past the string. */
 	(*p)++;
 
@@ -1342,7 +1343,7 @@ ippr_rpcb_modv3(fin, nat, rm, m, off)
 
 	/* Write new string. */
 	COPYBACK(m, off, xlen, uaddr);
-	
+
 	/* Determine difference in data lengths. */
 	diff = xlen - XDRALIGN(B(rr->rr_v3.xu_xslen));
 

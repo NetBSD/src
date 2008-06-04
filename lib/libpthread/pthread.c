@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.99.2.1 2008/05/18 12:30:39 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.99.2.2 2008/06/04 02:04:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.99.2.1 2008/05/18 12:30:39 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.99.2.2 2008/06/04 02:04:34 yamt Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -137,6 +137,13 @@ void *pthread__static_lib_binder[] = {
 	pthread_setspecific,
 };
 
+#define	NHASHLOCK	64
+
+static union hashlock {
+	pthread_mutex_t	mutex;
+	char		pad[64];
+} hashlocks[NHASHLOCK] __aligned(64);
+
 /*
  * This needs to be started by the library loading code, before main()
  * gets to run, for various things that use the state of the initial thread
@@ -168,6 +175,9 @@ pthread__init(void)
 
 	/* Initialize locks first; they're needed elsewhere. */
 	pthread__lockprim_init();
+	for (i = 0; i < NHASHLOCK; i++) {
+		pthread_mutex_init(&hashlocks[i].mutex, NULL);
+	}
 
 	/* Fetch parameters. */
 	i = (int)_lwp_unpark_all(NULL, 0, NULL);
@@ -277,7 +287,6 @@ pthread__initthread(pthread_t t)
 	t->pt_magic = PT_MAGIC;
 	t->pt_willpark = 0;
 	t->pt_unpark = 0;
-	t->pt_sleeponq = 0;
 	t->pt_nwaiters = 0;
 	t->pt_sleepobj = NULL;
 	t->pt_signalled = 0;
@@ -995,22 +1004,21 @@ pthread__errorfunc(const char *file, int line, const char *function,
     pthread__errorfunc(__FILE__, __LINE__, __func__, msg)
 
 int
-pthread__park(pthread_t self, pthread_spin_t *lock,
+pthread__park(pthread_t self, pthread_mutex_t *lock,
 	      pthread_queue_t *queue, const struct timespec *abstime,
 	      int cancelpt, const void *hint)
 {
 	int rv, error;
 	void *obj;
 
-	/* Clear the willpark flag, since we're about to block. */
-	self->pt_willpark = 0;
-
 	/*
 	 * For non-interlocked release of mutexes we need a store
 	 * barrier before incrementing pt_blocking away from zero. 
-	 * This is provided by the caller (it will release an
-	 * interlock, or do an explicit barrier).
+	 * This is provided by pthread_mutex_unlock().
 	 */
+	self->pt_willpark = 1;
+	pthread_mutex_unlock(lock);
+	self->pt_willpark = 0;
 	self->pt_blocking++;
 
 	/*
@@ -1018,8 +1026,8 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	 * a signal, an unpark posted after we have gone asleep,
 	 * or an expired timeout.
 	 *
-	 * It is fine to test the value of both pt_sleepobj and
-	 * pt_sleeponq without holding any locks, because:
+	 * It is fine to test the value of pt_sleepobj without
+	 * holding any locks, because:
 	 *
 	 * o Only the blocking thread (this thread) ever sets them
 	 *   to a non-NULL value.
@@ -1043,13 +1051,12 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	 * to eat the previous wakeup.
 	 */
 	rv = 0;
-	while ((self->pt_sleepobj != NULL || self->pt_unpark != 0) && rv == 0) {
+	do {
 		/*
 		 * If we deferred unparking a thread, arrange to
 		 * have _lwp_park() restart it before blocking.
 		 */
-		error = _lwp_park(abstime, self->pt_unpark, hint,
-		    self->pt_unparkhint);
+		error = _lwp_park(abstime, self->pt_unpark, hint, hint);
 		self->pt_unpark = 0;
 		if (error != 0) {
 			switch (rv = errno) {
@@ -1067,173 +1074,75 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 		/* Check for cancellation. */
 		if (cancelpt && self->pt_cancel)
 			rv = EINTR;
-	}
+	} while (self->pt_sleepobj != NULL && rv == 0);
 
 	/*
 	 * If we have been awoken early but are still on the queue,
 	 * then remove ourself.  Again, it's safe to do the test
 	 * without holding any locks.
 	 */
-	if (__predict_false(self->pt_sleeponq)) {
-		pthread__spinlock(self, lock);
-		if (self->pt_sleeponq) {
+	if (__predict_false(self->pt_sleepobj != NULL)) {
+		pthread_mutex_lock(lock);
+		if ((obj = self->pt_sleepobj) != NULL) {
 			PTQ_REMOVE(queue, self, pt_sleep);
-			obj = self->pt_sleepobj;
 			self->pt_sleepobj = NULL;
-			self->pt_sleeponq = 0;
 			if (obj != NULL && self->pt_early != NULL)
 				(*self->pt_early)(obj);
 		}
-		pthread__spinunlock(self, lock);
+		pthread_mutex_unlock(lock);
 	}
 	self->pt_early = NULL;
 	self->pt_blocking--;
+	membar_sync();
 
 	return rv;
 }
 
 void
-pthread__unpark(pthread_t self, pthread_spin_t *lock,
-		pthread_queue_t *queue, pthread_t target)
+pthread__unpark(pthread_queue_t *queue, pthread_t self,
+		pthread_mutex_t *interlock)
 {
-	int rv;
+	pthread_t target;
+	u_int max, nwaiters;
 
-	if (target == NULL) {
-		pthread__spinunlock(self, lock);
-		return;
+	max = pthread__unpark_max;
+	nwaiters = self->pt_nwaiters;
+	target = PTQ_FIRST(queue);
+	if (nwaiters == max) {
+		/* Overflow. */
+		(void)_lwp_unpark_all(self->pt_waiters, nwaiters,
+		    __UNVOLATILE(&interlock->ptm_waiters));
+		nwaiters = 0;
 	}
-
-	/*
-	 * Easy: the thread has already been removed from
-	 * the queue, so just awaken it.
-	 */
 	target->pt_sleepobj = NULL;
-	target->pt_sleeponq = 0;
-
-	/*
-	 * Releasing the spinlock serves as a store barrier,
-	 * which ensures that all our modifications are visible
-	 * to the thread in pthread__park() before the unpark
-	 * operation is set in motion.
-	 */
-	pthread__spinunlock(self, lock);
-
-	/*
-	 * If the calling thread is about to block, defer
-	 * unparking the target until _lwp_park() is called.
-	 */
-	if (self->pt_willpark && self->pt_unpark == 0) {
-		self->pt_unpark = target->pt_lid;
-		self->pt_unparkhint = queue;
-	} else {
-		rv = _lwp_unpark(target->pt_lid, queue);
-		if (rv != 0 && errno != EALREADY && errno != EINTR) {
-			OOPS("_lwp_unpark failed");
-		}
-	}
+	self->pt_waiters[nwaiters++] = target->pt_lid;
+	PTQ_REMOVE(queue, target, pt_sleep);
+	self->pt_nwaiters = nwaiters;
+	pthread__mutex_deferwake(self, interlock);
 }
 
 void
-pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
-		    pthread_queue_t *queue)
+pthread__unpark_all(pthread_queue_t *queue, pthread_t self,
+		    pthread_mutex_t *interlock)
 {
-	ssize_t n, rv;
-	pthread_t thread, next;
-	void *wakeobj;
+	pthread_t target;
+	u_int max, nwaiters;
 
-	if (PTQ_EMPTY(queue) && self->pt_nwaiters == 0) {
-		pthread__spinunlock(self, lock);
-		return;
-	}
-
-	wakeobj = queue;
-
-	for (;;) {
-		/*
-		 * Pull waiters from the queue and add to this
-		 * thread's waiters list.
-		 */
-		thread = PTQ_FIRST(queue);
-		for (n = self->pt_nwaiters, self->pt_nwaiters = 0;
-		    n < pthread__unpark_max && thread != NULL;
-		    thread = next) {
-			/*
-			 * If the sleepobj pointer is non-NULL, it
-			 * means one of two things:
-			 *
-			 * o The thread has awoken early, spun
-			 *   through application code and is
-			 *   once more asleep on this object.
-			 *
-			 * o This is a new thread that has blocked
-			 *   on the object after we have released
-			 *   the interlock in this loop.
-			 *
-			 * In both cases we shouldn't remove the
-			 * thread from the queue.
-			 */
-			next = PTQ_NEXT(thread, pt_sleep);
-			if (thread->pt_sleepobj != wakeobj)
-				continue;
-			thread->pt_sleepobj = NULL;
-			thread->pt_sleeponq = 0;
-			self->pt_waiters[n++] = thread->pt_lid;
-			PTQ_REMOVE(queue, thread, pt_sleep);
+	max = pthread__unpark_max;
+	nwaiters = self->pt_nwaiters;
+	PTQ_FOREACH(target, queue, pt_sleep) {
+		if (nwaiters == max) {
+			/* Overflow. */
+			(void)_lwp_unpark_all(self->pt_waiters, nwaiters,
+			    __UNVOLATILE(&interlock->ptm_waiters));
+			nwaiters = 0;
 		}
-
-		/*
-		 * Releasing the spinlock serves as a store barrier,
-		 * which ensures that all our modifications are visible
-		 * to the thread in pthread__park() before the unpark
-		 * operation is set in motion.
-		 */
-		switch (n) {
-		case 0:
-			pthread__spinunlock(self, lock);
-			return;
-		case 1:
-			/*
-			 * If the calling thread is about to block,
-			 * defer unparking the target until _lwp_park()
-			 * is called.
-			 */
-			pthread__spinunlock(self, lock);
-			if (self->pt_willpark && self->pt_unpark == 0) {
-				self->pt_unpark = self->pt_waiters[0];
-				self->pt_unparkhint = queue;
-				return;
-			}
-			rv = (ssize_t)_lwp_unpark(self->pt_waiters[0], queue);
-			if (rv != 0 && errno != EALREADY && errno != EINTR) {
-				OOPS("_lwp_unpark failed");
-			}
-			return;
-		default:
-			/*
-			 * Clear all sleepobj pointers, since we
-			 * release the spin lock before awkening
-			 * everybody, and must synchronise with
-			 * pthread__park().
-			 */
-			while (thread != NULL) {
-				thread->pt_sleepobj = NULL;
-				thread = PTQ_NEXT(thread, pt_sleep);
-			}
-			/* 
-			 * Now only interested in waking threads
-			 * marked to be woken (sleepobj == NULL).
-			 */
-			wakeobj = NULL;
-			pthread__spinunlock(self, lock);
-			rv = _lwp_unpark_all(self->pt_waiters, (size_t)n,
-			    queue);
-			if (rv != 0 && errno != EINTR) {
-				OOPS("_lwp_unpark_all failed");
-			}
-			break;
-		}
-		pthread__spinlock(self, lock);
+		target->pt_sleepobj = NULL;
+		self->pt_waiters[nwaiters++] = target->pt_lid;
 	}
+	self->pt_nwaiters = nwaiters;
+	PTQ_INIT(queue);
+	pthread__mutex_deferwake(self, interlock);
 }
 
 #undef	OOPS
@@ -1373,4 +1282,11 @@ pthread__getenv(const char *name)
 	return __findenv(name, &off);
 }
 
+pthread_mutex_t *
+pthread__hashlock(volatile const void *p)
+{
+	uintptr_t v;
 
+	v = (uintptr_t)p;
+	return &hashlocks[((v >> 9) ^ (v >> 3)) & (NHASHLOCK - 1)].mutex;
+}

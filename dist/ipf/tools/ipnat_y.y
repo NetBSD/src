@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat_y.y,v 1.15 2007/04/14 20:34:35 martin Exp $	*/
+/*	$NetBSD: ipnat_y.y,v 1.15.10.1 2008/06/04 02:03:03 yamt Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -611,6 +611,7 @@ compare:
 range:
 	YY_RANGE_OUT			{ $$ = FR_OUTRANGE; }
 	| YY_RANGE_IN			{ $$ = FR_INRANGE; }
+	| ':'				{ $$ = FR_INCRANGE; }
 	;
 
 ipv4:	YY_NUMBER '.' YY_NUMBER '.' YY_NUMBER '.' YY_NUMBER

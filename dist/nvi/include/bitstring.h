@@ -1,3 +1,5 @@
+/*	$NetBSD: bitstring.h,v 1.1.1.1.2.3 2008/06/04 02:03:16 yamt Exp $ */
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

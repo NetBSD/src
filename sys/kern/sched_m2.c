@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.24 2008/04/12 17:02:08 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.24.2.1 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.24 2008/04/12 17:02:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.24.2.1 2008/06/04 02:05:39 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -73,25 +73,13 @@ static u_int	rt_ts;			/* Real-time time-slice */
 static u_int	ts_map[PRI_COUNT];	/* Map of time-slices */
 static pri_t	high_pri[PRI_COUNT];	/* Map for priority increase */
 
+static void	sched_precalcts(void);
+
 typedef struct {
-	u_int		sl_flags;
 	u_int		sl_timeslice;	/* Time-slice of thread */
-	u_int		sl_slept;	/* Saved sleep time for sleep sum */
-	u_int		sl_slpsum;	/* Sum of sleep time */
-	u_int		sl_lrtime;	/* Last run time */
 } sched_info_lwp_t;
 
-/* Flags */
-#define	SL_BATCH	0x01
-
-/* Pool of the scheduler-specific structures for threads */
 static pool_cache_t	sil_pool;
-
-/*
- * Prototypes.
- */
-
-static void		sched_precalcts(void);
 
 /*
  * Initialization and setup.
@@ -228,17 +216,12 @@ sched_newts(struct lwp *l)
 void
 sched_slept(struct lwp *l)
 {
-	sched_info_lwp_t *sil = l->l_sched_info;
-
-	/* Save the time when thread has slept */
-	sil->sl_slept = hardclock_ticks;
 
 	/*
 	 * If thread is in time-sharing queue and batch flag is not marked,
 	 * increase the the priority, and run with the lower time-quantum.
 	 */
-	if (l->l_priority < PRI_HIGHEST_TS &&
-	    (sil->sl_flags & SL_BATCH) == 0) {
+	if (l->l_priority < PRI_HIGHEST_TS && (l->l_flag & LW_BATCH) == 0) {
 		KASSERT(l->l_class == SCHED_OTHER);
 		l->l_priority++;
 	}
@@ -247,63 +230,16 @@ sched_slept(struct lwp *l)
 void
 sched_wakeup(struct lwp *l)
 {
-	sched_info_lwp_t *sil = l->l_sched_info;
-	const u_int slptime = hardclock_ticks - sil->sl_slept;
-
-	/* Update sleep time delta */
-	sil->sl_slpsum += (l->l_slptime == 0) ? slptime : hz;
 
 	/* If thread was sleeping a second or more - set a high priority */
-	if (l->l_slptime > 1 || slptime >= hz)
+	if (l->l_slptime >= 1)
 		l->l_priority = high_pri[l->l_priority];
-
-	/* Also, consider looking for a better CPU to wake up */
-	l->l_cpu = sched_takecpu(l);
 }
 
 void
-sched_pstats_hook(struct lwp *l)
+sched_pstats_hook(struct lwp *l, int batch)
 {
-	sched_info_lwp_t *sil = l->l_sched_info;
 	pri_t prio;
-	bool batch;
-
-	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
-	    l->l_stat == LSSUSPENDED)
-		l->l_slptime++;
-
-	/*
-	 * Set that thread is more CPU-bound, if sum of run time exceeds the
-	 * sum of sleep time.  Check if thread is CPU-bound a first time.
-	 */
-	batch = (l->l_rticksum > sil->sl_slpsum);
-	if (batch) {
-		if ((sil->sl_flags & SL_BATCH) == 0)
-			batch = false;
-		sil->sl_flags |= SL_BATCH;
-	} else
-		sil->sl_flags &= ~SL_BATCH;
-
-	/*
-	 * If thread is CPU-bound and never sleeps, it would occupy the CPU.
-	 * In such case reset the value of last sleep, and check it later, if
-	 * it is still zero - perform the migration, unmark the batch flag.
-	 */
-	if (batch && (l->l_slptime + sil->sl_slpsum) == 0) {
-		if (l->l_stat != LSONPROC && sil->sl_slept == 0) {
-			struct cpu_info *ci = sched_takecpu(l);
-
-			if (l->l_cpu != ci)
-				l->l_target_cpu = ci;
-			sil->sl_flags &= ~SL_BATCH;
-		} else {
-			sil->sl_slept = 0;
-		}
-	}
-
-	/* Reset the time sums */
-	sil->sl_slpsum = 0;
-	l->l_rticksum = 0;
 
 	/*
 	 * Estimate threads on time-sharing queue only, however,
@@ -320,7 +256,7 @@ sched_pstats_hook(struct lwp *l)
 
 	/* If thread was not ran a second or more - set a high priority */
 	if (l->l_stat == LSRUN) {
-		if (sil->sl_lrtime && (hardclock_ticks - sil->sl_lrtime >= hz))
+		if (l->l_rticks && (hardclock_ticks - l->l_rticks >= hz))
 			prio = high_pri[prio];
 		/* Re-enqueue the thread if priority has changed */
 		if (prio != l->l_priority)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.h,v 1.2 2007/04/16 02:36:24 dogcow Exp $	*/
+/*	$NetBSD: ip_lookup.h,v 1.2.10.1 2008/06/04 02:03:01 yamt Exp $	*/
 
 
 #ifndef __IP_LOOKUP_H__
@@ -92,7 +92,6 @@ extern int ip_lookup_init __P((void));
 extern int ip_lookup_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
 extern void ip_lookup_unload __P((void));
 extern void ip_lookup_deref __P((int, void *));
-extern int ip_lookup_iterate __P((void *, int, void *));
 extern void ip_lookup_iterderef __P((u_32_t, void *));
 
 #endif /* __IP_LOOKUP_H__ */

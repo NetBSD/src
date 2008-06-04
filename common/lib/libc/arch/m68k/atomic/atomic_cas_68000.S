@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_68000.S,v 1.2.4.2 2008/05/18 12:28:45 yamt Exp $	*/
+/*	$NetBSD: atomic_cas_68000.S,v 1.2.4.3 2008/06/04 02:02:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_cas_up)
+ENTRY(_atomic_cas_up)
 	.hidden	_C_LABEL(_atomic_cas_up)
 
 	movl	%sp@(4), %a0		/* Fetch ptr */

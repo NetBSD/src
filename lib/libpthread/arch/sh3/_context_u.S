@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.5 2006/01/04 17:44:53 uwe Exp $ */
+/*	$NetBSD: _context_u.S,v 1.5.20.1 2008/06/04 02:04:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Christian P. Groessler
@@ -58,6 +58,9 @@
 	mov.l	r14, @((_REG_R14 * 4), r1)				; \
 	/* _REG_R15 is too far to use @(disp, Rn) */			  \
 									  \
+	stc	gbr, r0							; \
+	mov.l	r0,  @((_REG_GBR * 4), r1)				; \
+									  \
 	/* in Hitachi calling convention mac regs are callee saved */	  \
 	sts	mach, r0						; \
 	mov.l	r0, @((_REG_MACH * 4), r1)				; \
@@ -92,6 +95,9 @@
 	mov.l	@((_REG_R13 * 4), r1), r13				; \
 	mov.l	@((_REG_R14 * 4), r1), r14				; \
 	/* _REG_R15 is too far to use @(disp, Rn) */			  \
+									  \
+	mov.l	@((_REG_GBR * 4), r1), r0				; \
+	ldc	r0, gbr							; \
 									  \
 	/* in Hitachi calling convention mac regs are callee saved */	  \
 	mov.l	@((_REG_MACH * 4), r1), r0				; \

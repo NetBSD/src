@@ -1,4 +1,4 @@
-.\"
+.\" $NetBSD: uslsa.4,v 1.2.6.2 2008/06/04 02:04:38 yamt Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,15 +71,15 @@ appeared in
 .Sh AUTHORS
 The
 .Nm
-driver was writen by Jonathan A. Kollasch.  Code and style was borrowed
-from existing NetBSD USB-serial drivers.  Due to the unavalibility of
-documentation, Craig Shelley's reverse-engineered Linux driver was used
-as documentation.
+driver was written by
+.An Jonathan A. Kollasch .
+Code and style was borrowed from existing
+.Nx
+USB-serial drivers.
+Due to the unavailability of documentation, Craig Shelley's
+reverse-engineered Linux driver was used as documentation.
 .Sh CAVEATS
-.Pp
 Hardware flow control may not work correctly.
 .Pp
 Settings other than 8 data bits, no parity, and 1 stop bit
 seem to be refused by the chip.
-.Pp
-Not all supported adapters are listed here.

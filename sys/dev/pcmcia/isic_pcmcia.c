@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.34.2.1 2008/05/18 12:34:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.34.2.2 2008/06/04 02:05:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -203,7 +203,7 @@ isic_pcmcia_attach(struct device *parent,
 	/* Which card is it? */
 	cde = find_matching_card(pa);
 	if (cde == NULL) {
-		aprint_errir_dev(&psc->sc_isic.sc_dev, "attach failed, couldn't find matching card\n");
+		aprint_error_dev(&psc->sc_isic.sc_dev, "attach failed, couldn't find matching card\n");
 		return;
 	}
 	printf("%s: %s\n", cde->name, device_xname(self));

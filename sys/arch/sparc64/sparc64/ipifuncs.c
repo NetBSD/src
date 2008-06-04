@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.20.2.1 2008/05/18 12:32:51 yamt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.20.2.2 2008/06/04 02:04:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.20.2.1 2008/05/18 12:32:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.20.2.2 2008/06/04 02:04:57 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -79,8 +79,6 @@ sparc64_ipi_halt_thiscpu(void *arg)
 
 	printf("cpu%d: shutting down\n", cpu_number());
 	CPUSET_ADD(cpus_halted, cpu_number());
-	if (CPU_IS_PRIMARY(curcpu()))
-		DELAY(1000000);		/* XXX - wait for interrupter's halt */
 	prom_stopself();
 
 	return(1);

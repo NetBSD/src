@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.26.2.1 2008/05/18 12:35:07 yamt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.26.2.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.26.2.1 2008/05/18 12:35:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.26.2.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,40 +268,27 @@ cpu_xc_offline(struct cpu_info *ci)
 
 	/*
 	 * Migrate all non-bound threads to the other CPU.
+	 *
 	 * Please note, that this runs from the xcall thread, thus handling
-	 * of LSONPROC is not needed.
+	 * of LSONPROC is not needed.  Threads which change the state will
+	 * be handled by sched_takecpu().
 	 */
 	mutex_enter(proc_lock);
-
-	/*
-	 * Note that threads on the runqueue might sleep after this, but
-	 * sched_takecpu() would migrate such threads to the appropriate CPU.
-	 */
+	spc_dlock(ci, mci);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		lwp_lock(l);
-		if (l->l_cpu == ci && (l->l_stat == LSSLEEP ||
-		    l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED)) {
-			KASSERT((l->l_flag & LW_RUNNING) == 0);
-			l->l_cpu = mci;
-		}
-		lwp_unlock(l);
-	}
-
-	/* Double-lock the run-queues */
-	spc_dlock(ci, mci);
-
-	/* Handle LSRUN and LSIDL cases */
-	LIST_FOREACH(l, &alllwp, l_list) {
-		if (l->l_cpu != ci || (l->l_pflag & LP_BOUND))
+		if (l->l_cpu != ci || (l->l_pflag & LP_BOUND) != 0) {
+			lwp_unlock(l);
 			continue;
+		}
 		if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
 			sched_dequeue(l);
 			l->l_cpu = mci;
 			lwp_setlock(l, mspc->spc_mutex);
 			sched_enqueue(l, false);
-		} else if (l->l_stat == LSRUN || l->l_stat == LSIDL) {
-			l->l_cpu = mci;
-			lwp_setlock(l, mspc->spc_mutex);
+			lwp_unlock(l);
+		} else {
+			lwp_migrate(l, mci);
 		}
 	}
 	spc_dunlock(ci, mci);

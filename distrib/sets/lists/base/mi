@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.744.2.2 2008/05/25 18:18:16 peter Exp $
+# $NetBSD: mi,v 1.744.2.3 2008/06/04 02:03:19 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -113,8 +113,6 @@
 ./etc/ssh					base-sys-root
 ./etc/systrace					base-util-root		obsolete
 ./etc/uucp					base-obsolete		obsolete
-./kernel					base-sys-root
-./kernel/modules				base-sys-root
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
@@ -133,6 +131,13 @@
 ./libdata/firmware/zyd/zyd-zd1211		base-sys-root
 ./libdata/firmware/zyd/zyd-zd1211b		base-sys-root
 ./libexec					base-sys-root
+./libexec/dhcpcd-hooks				base-dhcpcd-root
+./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
+./libexec/dhcpcd-hooks/10-resolv.conf		base-dhcpcd-root
+./libexec/dhcpcd-hooks/14-lookup-hostname	base-dhcpcd-root
+./libexec/dhcpcd-hooks/15-hostname		base-dhcpcd-root
+./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
+./libexec/dhcpcd-run-hooks			base-dhcpcd-root
 ./libexec/lfs_cleanerd				base-sysutil-bin
 ./mnt						base-sys-root
 ./rescue					base-sys-root
@@ -149,6 +154,7 @@
 ./sbin/clri					base-sysutil-root
 ./sbin/dhclient					base-dhclient-root
 ./sbin/dhclient-script				base-dhclient-root
+./sbin/dhcpcd					base-dhcpcd-root
 ./sbin/disklabel				base-sysutil-root
 ./sbin/dkctl					base-sysutil-root
 ./sbin/dkscan_bsdlabel				base-sysutil-root
@@ -548,6 +554,15 @@
 ./usr/bin/lastcomm				base-util-bin
 # needed by modload for now
 ./usr/bin/ld					comp-util-bin		bfd
+./usr/bin/ldapadd				base-ldap-bin		ldap
+./usr/bin/ldapcompare				base-ldap-bin		ldap
+./usr/bin/ldapdelete				base-ldap-bin		ldap
+./usr/bin/ldapexop				base-ldap-bin		ldap
+./usr/bin/ldapmodify				base-ldap-bin		ldap
+./usr/bin/ldapmodrdn				base-ldap-bin		ldap
+./usr/bin/ldappasswd				base-ldap-bin		ldap
+./usr/bin/ldapsearch				base-ldap-bin		ldap
+./usr/bin/ldapwhoami				base-ldap-bin		ldap
 # This is also used by pkgsrc, and should stay in base-util-bin
 ./usr/bin/ldd					base-util-bin
 ./usr/bin/leave					base-util-bin

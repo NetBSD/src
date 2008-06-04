@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uid16.c,v 1.1.16.1 2008/05/18 12:33:20 yamt Exp $	*/
+/*	$NetBSD: linux_uid16.c,v 1.1.16.2 2008/06/04 02:05:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uid16.c,v 1.1.16.1 2008/05/18 12:33:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uid16.c,v 1.1.16.2 2008/06/04 02:05:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -171,9 +171,9 @@ int
 linux_sys_getresuid16(struct lwp *l, const struct linux_sys_getresuid16_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(linux_uid16_t) ruid;
-		syscallarg(linux_uid16_t) euid;
-		syscallarg(linux_uid16_t) suid;
+		syscallarg(linux_uid16_t *) ruid;
+		syscallarg(linux_uid16_t *) euid;
+		syscallarg(linux_uid16_t *) suid;
 	} */
 	kauth_cred_t pc = l->l_cred;
 	int error;
@@ -199,9 +199,9 @@ int
 linux_sys_getresgid16(struct lwp *l, const struct linux_sys_getresgid16_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(linux_gid16_t) rgid;
-		syscallarg(linux_gid16_t) egid;
-		syscallarg(linux_gid16_t) sgid;
+		syscallarg(linux_gid16_t *) rgid;
+		syscallarg(linux_gid16_t *) egid;
+		syscallarg(linux_gid16_t *) sgid;
 	} */
 	kauth_cred_t pc = l->l_cred;
 	int error;

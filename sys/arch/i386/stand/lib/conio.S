@@ -1,4 +1,4 @@
-/*	$NetBSD: conio.S,v 1.5 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: conio.S,v 1.5.76.1 2008/06/04 02:04:47 yamt Exp $	*/
 
 /* PC console handling
   originally from: FreeBSD:sys/i386/boot/netboot/start2.S
@@ -7,6 +7,45 @@
 #include <machine/asm.h>
 
 	.text
+
+/**************************************************************************
+CLR - Clear screen
+**************************************************************************/
+ENTRY(conclr)
+	push	%ebp
+	mov	%esp,%ebp
+	push	%ecx
+	push	%ebx
+	push	%esi
+	push	%edi
+
+	movb	8(%ebp),%cl
+
+	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
+
+	/* Clear screen. */
+	movw	$0x0600, %ax
+	movw	$0x0700, %bx
+	xorw	%cx, %cx
+	movw	$0x184f, %dx	/* 80x25 */
+	int	$0x10
+
+	/* Home cursor. */
+	movb	$0x02, %ah
+	xorw	%bx, %bx
+	xorw	%dx, %dx
+	int	$0x10
+
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
+
+	pop	%edi
+	pop	%esi
+	pop	%ebx
+	pop	%ecx
+	pop	%ebp
+	ret
 
 /**************************************************************************
 PUTC - Print a character

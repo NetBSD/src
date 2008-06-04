@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.68 2007/12/31 15:31:59 ad Exp $
+# $NetBSD: GENERIC,v 1.68.8.1 2008/06/04 02:04:50 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -67,6 +67,7 @@ options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 options 	COMPAT_20		# NetBSD 2.0 binary compatibility
 options 	COMPAT_30		# NetBSD 3.0 compatibility.
+options 	COMPAT_40		# NetBSD 4.0 compatibility.
 #options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

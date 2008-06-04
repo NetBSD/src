@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.10.30.1 2008/05/18 12:34:51 yamt Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.10.30.2 2008/06/04 02:05:21 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,7 +43,7 @@
 /* midi device */
 struct umidi_mididev {
 	struct umidi_softc	*sc;
-	struct device		*mdev;
+	device_t		mdev;
 	/* */
 	struct umidi_jack	*in_jack;
 	struct umidi_jack	*out_jack;

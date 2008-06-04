@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.51 2008/02/29 06:35:40 dyoung Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.51.2.1 2008/06/04 02:05:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.51 2008/02/29 06:35:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.51.2.1 2008/06/04 02:05:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -582,7 +582,7 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 			    sc->sc_state);
 			return AE_ERROR;
 		}
-	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
+	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
 		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
 		acpiec_unlock(dv);
@@ -631,7 +631,7 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 			    sc->sc_state);
 			return AE_ERROR;
 		}
-	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
+	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
 		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
 		acpiec_unlock(dv);

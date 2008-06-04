@@ -1,4 +1,6 @@
-/* $Id: acconfig.h,v 1.1.1.1.2.2 2008/05/18 12:29:24 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:24 $ */
+/*	$NetBSD: acconfig.h,v 1.1.1.1.2.3 2008/06/04 02:03:14 yamt Exp $ */
+
+/* Id: acconfig.h,v 8.34 2002/01/19 23:01:35 skimo Exp (Berkeley) Date: 2002/01/19 23:01:35 */
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 #undef ssize_t

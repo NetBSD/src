@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.13.8.1 2008/05/18 12:34:50 yamt Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.13.8.2 2008/06/04 02:05:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.13.8.1 2008/05/18 12:34:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.13.8.2 2008/06/04 02:05:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct udsbr_softc {
 	char			sc_vol;
 	u_int32_t		sc_freq;
 
-	struct device		*sc_child;
+	device_t		sc_child;
 
 	char			sc_dying;
 };
@@ -96,13 +96,13 @@ Static	void	udsbr_stop(struct udsbr_softc *sc);
 Static	void	udsbr_setfreq(struct udsbr_softc *sc, int freq);
 Static	int	udsbr_status(struct udsbr_softc *sc);
 
-int udsbr_match(device_t, struct cfdata *, void *);
+int udsbr_match(device_t, cfdata_t, void *);
 void udsbr_attach(device_t, device_t, void *);
 void udsbr_childdet(device_t, device_t);
 int udsbr_detach(device_t, int);
 int udsbr_activate(device_t, enum devact);
 extern struct cfdriver udsbr_cd;
-CFATTACH_DECL2(udsbr, sizeof(struct udsbr_softc), udsbr_match,
+CFATTACH_DECL2_NEW(udsbr, sizeof(struct udsbr_softc), udsbr_match,
     udsbr_attach, udsbr_detach, udsbr_activate, NULL, udsbr_childdet);
 
 USB_MATCH(udsbr)
@@ -126,15 +126,16 @@ USB_ATTACH(udsbr)
 
 	DPRINTFN(10,("udsbr_attach: sc=%p\n", sc));
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, UDSBR_CONFIG_NO, 1);
 	if (err) {
-		printf("%s: setting config no failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "setting config no failed\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -172,7 +173,7 @@ USB_DETACH(udsbr)
 int
 udsbr_activate(device_ptr_t self, enum devact act)
 {
-	struct udsbr_softc *sc = (struct udsbr_softc *)self;
+	struct udsbr_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -205,8 +206,7 @@ udsbr_req(struct udsbr_softc *sc, int ureq, int value, int index)
 	USETW(req.wLength, 1);
 	err = usbd_do_request(sc->sc_udev, &req, &data);
 	if (err) {
-		printf("%s: request failed err=%d\n", USBDEVNAME(sc->sc_dev),
-		       err);
+		aprint_error_dev(sc->sc_dev, "request failed err=%d\n", err);
 	}
 	return !(data & 1);
 }

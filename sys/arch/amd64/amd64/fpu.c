@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.23.2.1 2008/05/18 12:31:27 yamt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.23.2.2 2008/06/04 02:04:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.23.2.1 2008/05/18 12:31:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.23.2.2 2008/06/04 02:04:39 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -151,6 +151,9 @@ fputrap(frame)
 	uint16_t cw;
 	ksiginfo_t ksi;
 
+	kpreempt_disable();
+	x86_enable_intr();
+
 	/*
 	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
 	 * should be set, and we should have gotten a DNA exception.
@@ -172,6 +175,8 @@ fputrap(frame)
 		fwait();
 		statbits = sfp->fp_fxsave.fx_fsw;
 	}
+	kpreempt_enable();
+
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
 	KSI_INIT_TRAP(&ksi);
@@ -223,6 +228,9 @@ fpudna(struct cpu_info *ci)
 		printf("recursive fpu trap; cr0=%lx\n", rcr0());
 		return;
 	}
+
+	kpreempt_disable();
+	x86_enable_intr();
 
 	s = splipi();
 	l = ci->ci_curlwp;
@@ -283,6 +291,8 @@ fpudna(struct cpu_info *ci)
 		fldummy(&zero);
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu);
 	}
+
+	kpreempt_enable();
 }
 
 
@@ -292,6 +302,8 @@ fpusave_cpu(bool save)
 	struct cpu_info *ci = curcpu();
 	struct lwp *l;
 	int s;
+
+	KASSERT(kpreempt_disabled());
 
 	l = ci->ci_fpcurlwp;
 	if (l == NULL)
@@ -332,6 +344,7 @@ fpusave_lwp(struct lwp *l, bool save)
 
 	KDASSERT(l->l_addr != NULL);
 
+	kpreempt_disable();
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == curcpu()) {
 		int s = splipi();
@@ -354,4 +367,5 @@ fpusave_lwp(struct lwp *l, bool save)
 		}
 #endif
 	}
+	kpreempt_enable();
 }

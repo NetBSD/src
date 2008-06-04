@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.100.4.1 2008/05/18 12:35:28 yamt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.100.4.2 2008/06/04 02:05:48 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.100.4.1 2008/05/18 12:35:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.100.4.2 2008/06/04 02:05:48 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -585,6 +585,8 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 	}
 	m->m_pkthdr.rcvif = NULL;
 	m_copyback(m, 0, datalen, data);
+	if (len > datalen)
+		(void)memset(mtod(m, char *) + datalen, 0, len - datalen);
 	rtm = mtod(m, struct rt_msghdr *);
 	for (i = 0; i < RTAX_MAX; i++) {
 		if ((sa = rtinfo->rti_info[i]) == NULL)
@@ -836,6 +838,10 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 				continue;
 			mtod(m, struct rt_msghdr *)->rtm_addrs = info.rti_addrs;
 		}
+#ifdef DIAGNOSTIC
+		if (m == NULL)
+			panic("%s: called with wrong command", __func__);
+#endif
 		route_enqueue(m, sa ? sa->sa_family : 0);
 	}
 }

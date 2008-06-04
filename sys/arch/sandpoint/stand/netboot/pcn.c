@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.10.2.1 2008/05/18 12:32:42 yamt Exp $ */
+/* $NetBSD: pcn.c,v 1.10.2.2 2008/06/04 02:04:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -60,6 +60,10 @@ void *pcn_init(unsigned, void *);
 int pcn_send(void *, char *, unsigned);
 int pcn_recv(void *, char *, unsigned, unsigned);
 
+struct desc {
+	uint32_t xd0, xd1, xd2;
+	uint32_t hole;
+};
 #define T1_OWN		(1U << 31)	/* 1: empty for HW to load anew */
 #define T1_STP		(1U << 25)	/* first frame segment */
 #define T1_ENP		(1U << 24)	/* last frame segment */
@@ -69,11 +73,6 @@ int pcn_recv(void *, char *, unsigned, unsigned);
 #define R1_ERR		(1U << 30)	/* Rx error summary */
 #define R1_ONES		0xf000		/* filler */
 #define R1_FLMASK	0x0fff		/* Rx frame length */
-
-struct desc {
-	uint32_t xd0, xd1, xd2;
-	uint32_t hole;
-};
 
 #define PCN_RDP		0x10
 #define PCN_RAP		0x12

@@ -1,4 +1,4 @@
-#	$NetBSD: VME177,v 1.27 2006/04/17 16:08:05 he Exp $
+#	$NetBSD: VME177,v 1.27.64.1 2008/06/04 02:04:51 yamt Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -55,6 +55,7 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_16
 #options 	COMPAT_20
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
+#options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

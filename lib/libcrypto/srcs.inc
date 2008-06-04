@@ -1,10 +1,10 @@
-#	$NetBSD: srcs.inc,v 1.13.18.1 2008/05/18 12:30:22 yamt Exp $
+#	$NetBSD: srcs.inc,v 1.13.18.2 2008/06/04 02:04:34 yamt Exp $
 
 CRYPTOINCS= \
 	aes.inc asn1.inc bf.inc bio.inc bn.inc buffer.inc cast.inc \
 	cms.inc comp.inc conf.inc crypto.inc des.inc dh.inc dsa.inc dso.inc \
 	ec.inc ecdh.inc ecdsa.inc engine.inc err.inc evp.inc hmac.inc \
-	krb5.inc lhash.inc \
+	krb5.inc lhash.inc camellia.inc \
 	md2.inc md4.inc md5.inc objects.inc ocsp.inc pem.inc \
 	pkcs12.inc pkcs7.inc pqueue.inc rand.inc rc2.inc rc4.inc ripemd.inc \
 	rsa.inc sha.inc stack.inc store.inc txt_db.inc ts.inc ui.inc x509.inc \

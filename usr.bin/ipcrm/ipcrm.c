@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcrm.c,v 1.12 2003/11/02 17:43:01 thorpej Exp $	*/
+/*	$NetBSD: ipcrm.c,v 1.12.32.1 2008/06/04 02:05:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -38,37 +38,40 @@
 #include <sys/shm.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <err.h>
 #include <signal.h>
+#include <sys/sysctl.h>
 
 #define IPC_TO_STR(x) (x == 'Q' ? "msq" : (x == 'M' ? "shm" : "sem"))
 #define IPC_TO_STRING(x) (x == 'Q' ? "message queue" : \
 	(x == 'M' ? "shared memory segment" : "semaphore"))
 
-int     signaled;
+static sig_atomic_t signaled;
 
-void	usage __P((void));
-int	msgrm __P((key_t, int));
-int	shmrm __P((key_t, int));
-int	semrm __P((key_t, int));
-void	not_configured __P((void));
-int	main __P((int, char *[]));
+static void	usage(void) __dead;
+static int	msgrm(key_t, int);
+static int	shmrm(key_t, int);
+static int	semrm(key_t, int);
+static int	msgrmall(void);
+static int	shmrmall(void);
+static int	semrmall(void);
+static void	not_configured(int);
 
-void 
-usage()
+static void 
+usage(void)
 {
-	fprintf(stderr, "usage: ipcrm [ [-q msqid] [-m shmid] [-s semid]\n");
-	fprintf(stderr, "        [-Q msgkey] [-M shmkey] [-S semkey] ...]\n");
+	(void)fprintf(stderr, "Usage: %s [-M shmkey] [-m shmid] [-Q msgkey]\n",
+	    getprogname());
+	(void)fprintf(stderr, "\t[-q msqid] [-S semkey] [-s semid] ...\n");
 	exit(1);
 }
 
-int 
-msgrm(key, id)
-	key_t   key;
-	int     id;
+static int 
+msgrm(key_t key, int id)
 {
 	if (key) {
 		id = msgget(key, 0);
@@ -78,10 +81,8 @@ msgrm(key, id)
 	return msgctl(id, IPC_RMID, NULL);
 }
 
-int 
-shmrm(key, id)
-	key_t   key;
-	int     id;
+static int 
+shmrm(key_t key, int id)
 {
 	if (key) {
 		id = shmget(key, 0, 0);
@@ -91,10 +92,8 @@ shmrm(key, id)
 	return shmctl(id, IPC_RMID, NULL);
 }
 
-int 
-semrm(key, id)
-	key_t   key;
-	int     id;
+static int 
+semrm(key_t key, int id)
 {
 
 	if (key) {
@@ -105,84 +104,208 @@ semrm(key, id)
 	return semctl(id, 0, IPC_RMID, NULL);
 }
 
-void 
-not_configured()
+static int
+msgrmall(void)
+{
+	int mib[4];
+	struct msg_sysctl_info *msgsi;
+	size_t i, len;
+	int result = 0;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_SYSVIPC;
+	mib[2] = KERN_SYSVIPC_INFO;
+	mib[3] = KERN_SYSVIPC_MSG_INFO;
+
+	if (sysctl(mib, 4, NULL, &len, NULL, 0) == -1)
+		err(1, "sysctl(KERN_SYSVIPC_MSG_INFO)");
+
+	if ((msgsi = malloc(len)) == NULL)
+		err(1, "malloc");
+	if (sysctl(mib, 4, msgsi, &len, NULL, 0) == -1) {
+		free(msgsi);
+		err(1, "sysctl(KERN_SYSVIPC_MSG_INFO)");
+	}
+
+	for (i = 0; i < msgsi->msginfo.msgmni; i++) {
+		struct msgid_ds_sysctl *msgptr = &msgsi->msgids[i];
+		if (msgptr->msg_qbytes != 0)
+			result -= msgrm((key_t)0,
+			    (int)IXSEQ_TO_IPCID(i, msgptr->msg_perm));
+	}
+	free(msgsi);
+	return result;
+}
+
+static int
+shmrmall(void)
+{
+	int mib[4];
+	struct shm_sysctl_info *shmsi;
+	size_t i, len;
+	int result = 0;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_SYSVIPC;
+	mib[2] = KERN_SYSVIPC_INFO;
+	mib[3] = KERN_SYSVIPC_SHM_INFO;
+
+	if (sysctl(mib, 4, NULL, &len, NULL, 0) == -1)
+		err(1, "sysctl(KERN_SYSVIPC_SHM_INFO)");
+
+	if ((shmsi = malloc(len)) == NULL)
+		err(1, "malloc");
+	if (sysctl(mib, 4, shmsi, &len, NULL, 0) == -1) {
+		free(shmsi);
+		err(1, "sysctl(KERN_SYSVIPC_SHM_INFO)");
+	}
+
+	for (i = 0; i < shmsi->shminfo.shmmni; i++) {
+		struct shmid_ds_sysctl *shmptr = &shmsi->shmids[i];
+		if (shmptr->shm_perm.mode & 0x0800)
+			result -= shmrm((key_t)0,
+			    (int)IXSEQ_TO_IPCID(i, shmptr->shm_perm));
+	}
+	free(shmsi);
+	return result;
+}
+
+static int
+semrmall(void)
+{
+	int mib[4];
+	struct sem_sysctl_info *semsi;
+	size_t i, len;
+	int result = 0;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_SYSVIPC;
+	mib[2] = KERN_SYSVIPC_INFO;
+	mib[3] = KERN_SYSVIPC_SEM_INFO;
+
+	if (sysctl(mib, 4, NULL, &len, NULL, 0) == -1)
+		err(1, "sysctl(KERN_SYSVIPC_SEM_INFO)");
+
+	if ((semsi = malloc(len)) == NULL)
+		err(1, "malloc");
+	if (sysctl(mib, 4, semsi, &len, NULL, 0) == -1) {
+		free(semsi);
+		err(1, "sysctl(KERN_SYSVIPC_SEM_INFO)");
+	}
+
+	for (i = 0; i < semsi->seminfo.semmni; i++) {
+		struct semid_ds_sysctl *semptr = &semsi->semids[i];
+		if ((semptr->sem_perm.mode & SEM_ALLOC) != 0)
+			result -= semrm((key_t)0,
+			    (int)IXSEQ_TO_IPCID(i, semptr->sem_perm));
+	}
+	free(semsi);
+	return result;
+}
+
+static void 
+/*ARGSUSED*/
+not_configured(int n)
 {
 	signaled++;
 }
 
 int 
-main(argc, argv)
-	int     argc;
-	char   *argv[];
-
+main(int argc, char *argv[])
 {
 	int     c, result, errflg, target_id;
 	key_t   target_key;
 
+	setprogname(argv[0]);
 	errflg = 0;
-	signal(SIGSYS, (void (*) __P((int))) not_configured);
+	(void)signal(SIGSYS, not_configured);
 	while ((c = getopt(argc, argv, "q:m:s:Q:M:S:")) != -1) {
-
 		signaled = 0;
-		switch (c) {
-		case 'q':
-		case 'm':
-		case 's':
-			target_id = atoi(optarg);
-			if (c == 'q')
-				result = msgrm(0, target_id);
-			else
-				if (c == 'm')
-					result = shmrm(0, target_id);
-				else
-					result = semrm(0, target_id);
-			if (result < 0) {
-				errflg++;
-				if (!signaled)
+		target_id = 0;
+		target_key = 0;
+		result = 0;
+
+		if (strcmp(optarg, "all") == 0) {
+			switch (c) {
+			case 'm':
+			case 'M':
+				result = shmrmall();
+				break;
+			case 'q':
+			case 'Q':
+				result = msgrmall();
+				break;
+			case 's':
+			case 'S':
+				result = semrmall();
+				break;
+			default:
+				usage();
+			}
+		} else {
+			switch (c) {
+			case 'q':
+			case 'm':
+			case 's':
+				target_id = atoi(optarg);
+				break;
+			case 'Q':
+			case 'M':
+			case 'S':
+				target_key = atol(optarg);
+				if (target_key == IPC_PRIVATE) {
+					warnx("can't remove private %ss",
+					    IPC_TO_STRING(c));
+					continue;
+				}
+				break;
+			default:
+				usage();
+			}
+			switch (c) {
+			case 'q':
+				result = msgrm((key_t)0, target_id);
+				break;
+			case 'm':
+				result = shmrm((key_t)0, target_id);
+				break;
+			case 's':
+				result = semrm((key_t)0, target_id);
+				break;
+			case 'Q':
+				result = msgrm(target_key, 0);
+				break;
+			case 'M':
+				result = shmrm(target_key, 0);
+				break;
+			case 'S':
+				result = semrm(target_key, 0);
+				break;
+			}
+		}
+		if (result < 0) {
+			if (!signaled) {
+				if (target_id) {
 					warn("%sid(%d): ",
 					    IPC_TO_STR(toupper(c)), target_id);
-				else
-					warnx("%ss are not configured in "
-					    "the running kernel",
-					    IPC_TO_STRING(toupper(c)));
-			}
-			break;
-		case 'Q':
-		case 'M':
-		case 'S':
-			target_key = atol(optarg);
-			if (target_key == IPC_PRIVATE) {
-				warnx("can't remove private %ss",
-				    IPC_TO_STRING(c));
-				continue;
-			}
-			if (c == 'Q')
-				result = msgrm(target_key, 0);
-			else
-				if (c == 'M')
-					result = shmrm(target_key, 0);
-				else
-					result = semrm(target_key, 0);
-			if (result < 0) {
+					errflg++;
+				} else if (target_key) {
+					warn("%skey(%ld): ", IPC_TO_STR(c),
+					    (long)target_key);
+					errflg++;
+				}
+			} else {
 				errflg++;
-				if (!signaled)
-					warn("%skey(%ld): ",
-					    IPC_TO_STR(c), (long) target_key);
-				else
-					warnx("%ss are not configured "
-					    "in the running kernel",
-					    IPC_TO_STRING(c));
+				warnx("%ss are not configured in "
+				    "the running kernel",
+				    IPC_TO_STRING(toupper(c)));
 			}
-			break;
-		default:
-			usage();
 		}
 	}
 
 	if (optind != argc) {
-		fprintf(stderr, "unknown argument: %s\n", argv[optind]);
+		warnx("Unknown argument: %s", argv[optind]);
 		usage();
 	}
-	exit(errflg);
+	return errflg;
 }

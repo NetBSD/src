@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.4.68.1 2008/05/18 12:35:06 yamt Exp $ */
+/* $NetBSD: udf_subr.h,v 1.4.68.2 2008/06/04 02:05:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -172,7 +172,7 @@ void udf_setaccessmode(struct udf_node *udf_node, mode_t mode);
 void udf_getownership(struct udf_node *udf_node, uid_t *uidp, gid_t *gidp);
 void udf_setownership(struct udf_node *udf_node, uid_t uid, gid_t gid);
 
-void udf_to_unix_name(char *result, char *id, int len, struct charspec *chsp);
+void udf_to_unix_name(char *result, int result_len, char *id, int len, struct charspec *chsp);
 void unix_to_udf_name(char *result, uint8_t *result_len, char const *name, int name_len, struct charspec *chsp);
 
 void udf_timestamp_to_timespec(struct udf_mount *ump, struct timestamp *timestamp, struct timespec *timespec);

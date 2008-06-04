@@ -1,5 +1,5 @@
 /*	$OpenBSD: auxiovar.h,v 1.7 2005/03/09 18:41:48 miod Exp $	*/
-/*	$NetBSD: auxiovar.h,v 1.6 2006/10/06 08:44:59 jnemeth Exp $	*/
+/*	$NetBSD: auxiovar.h,v 1.6.54.1 2008/06/04 02:04:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

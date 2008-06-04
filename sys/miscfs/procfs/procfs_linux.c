@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.48.10.1 2008/05/18 12:35:26 yamt Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.48.10.2 2008/06/04 02:05:47 yamt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.48.10.1 2008/05/18 12:35:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.48.10.2 2008/06/04 02:05:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.48.10.1 2008/05/18 12:35:26 yamt 
 #include <sys/conf.h>
 
 #include <miscfs/procfs/procfs.h>
+#include <miscfs/specfs/specdev.h>
+
 #include <compat/linux/common/linux_exec.h>
 
 #include <uvm/uvm_extern.h>
@@ -187,7 +189,6 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 	char *bf;
 	int offset = 0;
 	int i, error = ENAMETOOLONG;
-	extern kmutex_t devsw_lock;
 
 	/* XXX elad - may need filtering. */
 
@@ -197,7 +198,7 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 	if (offset >= LBFSZ)
 		goto out;
 
-	mutex_enter(&devsw_lock);
+	mutex_enter(&specfs_lock);
 	for (i = 0; i < max_devsw_convs; i++) {
 		if ((devsw_conv[i].d_name == NULL) || 
 		    (devsw_conv[i].d_cmajor == -1))
@@ -206,14 +207,14 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 		offset += snprintf(&bf[offset], LBFSZ - offset, 
 		    "%3d %s\n", devsw_conv[i].d_cmajor, devsw_conv[i].d_name);
 		if (offset >= LBFSZ) {
-			mutex_exit(&devsw_lock);
+			mutex_exit(&specfs_lock);
 			goto out;
 		}
 	}
 
 	offset += snprintf(&bf[offset], LBFSZ - offset, "\nBlock devices:\n");
 	if (offset >= LBFSZ) {
-		mutex_exit(&devsw_lock);
+		mutex_exit(&specfs_lock);
 		goto out;
 	}
 
@@ -225,11 +226,11 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 		offset += snprintf(&bf[offset], LBFSZ - offset, 
 		    "%3d %s\n", devsw_conv[i].d_bmajor, devsw_conv[i].d_name);
 		if (offset >= LBFSZ) {
-			mutex_exit(&devsw_lock);
+			mutex_exit(&specfs_lock);
 			goto out;
 		}
 	}
-	mutex_exit(&devsw_lock);
+	mutex_exit(&specfs_lock);
 
 	error = uiomove_frombuf(bf, offset, uio);
 out:

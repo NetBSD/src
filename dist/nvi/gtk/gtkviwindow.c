@@ -1,3 +1,5 @@
+/*	$NetBSD: gtkviwindow.c,v 1.1.1.1.2.3 2008/06/04 02:03:16 yamt Exp $ */
+
 /* change further to gtkviwindow have no knowledge of ipvi */
 #include "config.h"
 

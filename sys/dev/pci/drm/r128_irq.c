@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_irq.c,v 1.3.10.1 2008/05/18 12:34:35 yamt Exp $	*/
+/*	$NetBSD: r128_irq.c,v 1.3.10.2 2008/06/04 02:05:19 yamt Exp $	*/
 
 /* r128_irq.c -- IRQ handling for radeon -*- linux-c -*-
  */
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128_irq.c,v 1.3.10.1 2008/05/18 12:34:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128_irq.c,v 1.3.10.2 2008/06/04 02:05:19 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r128_irq.c,v 1.6 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -72,7 +72,7 @@ int r128_driver_vblank_wait(drm_device_t * dev, unsigned int *sequence)
 	 * by about a day rather than she wants to wait for years
 	 * using vertical blanks...
 	 */
-	DRM_WAIT_ON(ret, &(dev->vbl_queue), 3 * DRM_HZ,
+	DRM_WAIT_ON(ret, dev->vbl_queue, 3 * DRM_HZ,
 		    (((cur_vblank = atomic_read(&dev->vbl_received))
 		      - *sequence) <= (1 << 23)));
 

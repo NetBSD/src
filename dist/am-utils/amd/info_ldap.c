@@ -1,4 +1,4 @@
-/*	$NetBSD: info_ldap.c,v 1.6 2006/02/05 16:28:56 christos Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.6.18.1 2008/06/04 02:02:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -111,6 +111,10 @@ struct he_ent {
  */
 static int amu_ldap_rebind(ALD *a);
 static int get_ldap_timestamp(ALD *a, char *map, time_t *ts);
+
+int amu_ldap_init(mnt_map *m, char *map, time_t *tsu);
+int amu_ldap_search(mnt_map *m, char *map, char *key, char **pval, time_t *ts);
+int amu_ldap_mtime(mnt_map *m, char *map, time_t *ts);
 
 
 /*

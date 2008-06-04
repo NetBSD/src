@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.15.18.1 2008/05/18 12:36:19 yamt Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.15.18.2 2008/06/04 02:05:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,8 +41,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -63,7 +61,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.15.18.1 2008/05/18 12:36:19 yamt Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.15.18.2 2008/06/04 02:05:59 yamt Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>

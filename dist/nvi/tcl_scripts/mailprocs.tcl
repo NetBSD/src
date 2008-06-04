@@ -1,4 +1,4 @@
-#	$Id: mailprocs.tcl,v 1.1.1.1.2.2 2008/05/18 12:29:31 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:31 $
+#	Id: mailprocs.tcl,v 8.3 1996/04/29 12:31:35 bostic Exp (Berkeley) Date: 1996/04/29 12:31:35
 #
 proc validLine {} {
 	global viScreenId

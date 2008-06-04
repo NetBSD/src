@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.14.2.1 2008/05/18 12:31:28 yamt Exp $
+# $NetBSD: XEN3_DOM0,v 1.14.2.2 2008/06/04 02:04:40 yamt Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -115,7 +115,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -213,6 +213,7 @@ ioapic*		at mainbus? apid ?
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
+acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz*		at acpi?		# ACPI Thermal Zone

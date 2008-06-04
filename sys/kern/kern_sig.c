@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.275.2.1 2008/05/18 12:35:08 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.275.2.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,10 +66,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.275.2.1 2008/05/18 12:35:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.275.2.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include "opt_ptrace.h"
-#include "opt_multiprocessor.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -1457,9 +1456,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-#ifdef MULTIPROCESSOR
 	int biglocks;
-#endif
 
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat == LSONPROC);

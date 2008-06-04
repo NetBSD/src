@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/usr.bin/tar/bsdtar.h,v 1.30 2008/03/15 03:06:46 kientzle Exp $
+ * $FreeBSD: src/usr.bin/tar/bsdtar.h,v 1.32 2008/05/22 21:08:36 cperciva Exp $
  */
 
 #include "bsdtar_platform.h"
@@ -91,12 +91,14 @@ struct bsdtar {
 	 * Data for various subsystems.  Full definitions are located in
 	 * the file where they are used.
 	 */
+	struct archive_entry_linkresolver *resolver;
 	struct archive_dir	*archive_dir;	/* for write.c */
 	struct name_cache	*gname_cache;	/* for write.c */
-	struct links_cache	*links_cache;	/* for write.c */
 	struct matching		*matching;	/* for matching.c */
 	struct security		*security;	/* for read.c */
 	struct name_cache	*uname_cache;	/* for write.c */
+	struct siginfo_data	*siginfo;	/* for siginfo.c */
+	struct substitution	*substitution;	/* for subst.c */
 };
 
 void	bsdtar_errc(struct bsdtar *, int _eval, int _code,
@@ -115,12 +117,23 @@ int	process_lines(struct bsdtar *bsdtar, const char *pathname,
 	    int (*process)(struct bsdtar *, const char *));
 void	safe_fprintf(FILE *, const char *fmt, ...);
 void	set_chdir(struct bsdtar *, const char *newdir);
+void	siginfo_init(struct bsdtar *);
+void	siginfo_setinfo(struct bsdtar *, const char * oper,
+	    const char * path, int64_t size);
+void	siginfo_printinfo(struct bsdtar *, off_t progress);
+void	siginfo_done(struct bsdtar *);
 void	tar_mode_c(struct bsdtar *bsdtar);
 void	tar_mode_r(struct bsdtar *bsdtar);
 void	tar_mode_t(struct bsdtar *bsdtar);
 void	tar_mode_u(struct bsdtar *bsdtar);
 void	tar_mode_x(struct bsdtar *bsdtar);
 int	unmatched_inclusions(struct bsdtar *bsdtar);
+int	unmatched_inclusions_warn(struct bsdtar *bsdtar, const char *msg);
 void	usage(struct bsdtar *);
 int	yes(const char *fmt, ...);
 
+#if HAVE_REGEX_H
+void	add_substitution(struct bsdtar *, const char *);
+int	apply_substitution(struct bsdtar *, const char *, char **, int);
+void	cleanup_substitution(struct bsdtar *);
+#endif

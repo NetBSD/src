@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.159.2.1 2008/05/18 12:35:11 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.159.2.2 2008/06/04 02:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,12 +63,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.159.2.1 2008/05/18 12:35:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.159.2.2 2008/06/04 02:05:40 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
 #include "opt_mbuftrace.h"
 #include "opt_somaxkva.h"
+#include "opt_multiprocessor.h"	/* XXX */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +128,7 @@ EVCNT_ATTACH_STATIC(sosend_kvalimit);
 
 static struct callback_entry sokva_reclaimerentry;
 
-#ifdef SOSEND_NO_LOAN
+#if defined(SOSEND_NO_LOAN) || defined(MULTIPROCESSOR)
 int sock_loan_thresh = -1;
 #else
 int sock_loan_thresh = 4096;
@@ -435,6 +436,7 @@ soinit(void)
 	mutex_init(&so_pendfree_lock, MUTEX_DEFAULT, IPL_VM);
 	softnet_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&socurkva_cv, "sokva");
+	soinit2();
 
 	/* Set the initial adjusted socket buffer size. */
 	if (sb_max_set(sb_max))
@@ -850,8 +852,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
-	if (l)
-		l->l_ru.ru_msgsnd++;
+	l->l_ru.ru_msgsnd++;
 	if (control)
 		clen = control->m_len;
  restart:

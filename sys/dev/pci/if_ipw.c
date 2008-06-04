@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.39 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.39.2.1 2008/06/04 02:05:14 yamt Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.39 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.39.2.1 2008/06/04 02:05:14 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -788,6 +788,21 @@ ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	struct ieee80211_node *ni;
 	uint8_t macaddr[IEEE80211_ADDR_LEN];
 	uint32_t len;
+	struct ipw_rx_radiotap_header *wr = &sc->sc_rxtap;
+	struct ipw_tx_radiotap_header *wt = &sc->sc_txtap;
+
+	switch (nstate) {
+	case IEEE80211_S_INIT:
+		break;
+	default:
+		KASSERT(ic->ic_curchan != IEEE80211_CHAN_ANYC);
+		KASSERT(ic->ic_curchan != NULL);
+		wt->wt_chan_freq = htole16(ic->ic_curchan->ic_freq);
+		wt->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
+		wr->wr_chan_freq = htole16(ic->ic_curchan->ic_freq);
+		wr->wr_chan_flags = htole16(ic->ic_curchan->ic_flags);
+		break;
+	}
 
 	switch (nstate) {
 	case IEEE80211_S_RUN:
@@ -1050,10 +1065,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	if (sc->sc_drvbpf != NULL) {
 		struct ipw_rx_radiotap_header *tap = &sc->sc_rxtap;
 
-		tap->wr_flags = 0;
 		tap->wr_antsignal = status->rssi;
-		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
@@ -1324,10 +1336,6 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct ipw_tx_radiotap_header *tap = &sc->sc_txtap;
-
-		tap->wt_flags = 0;
-		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}

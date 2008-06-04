@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.184.2.1 2008/05/18 12:35:08 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.184.2.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.184.2.1 2008/05/18 12:35:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.184.2.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -466,14 +466,6 @@ void
 doshutdownhooks(void)
 {
 	struct hook_desc *dp;
-
-	if (panicstr != NULL) {
-		/*
-		 * Do as few things as possible after a panic.
-		 * We don't know the state the system is in.
-		 */
-		return;
-	}
 
 	while ((dp = LIST_FIRST(&shutdownhook_list)) != NULL) {
 		LIST_REMOVE(dp, hk_list);
@@ -960,7 +952,10 @@ setroot(struct device *bootdv, int bootpartition)
 		 */
 		rootdv = bootdv;
 
-		majdev = devsw_name2blk(device_xname(bootdv), NULL, 0);
+		if (bootdv)
+			majdev = devsw_name2blk(device_xname(bootdv), NULL, 0);
+		else
+			majdev = -1;
 		if (majdev >= 0) {
 			/*
 			 * Root is on a disk.  `bootpartition' is root,

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.26.2.1 2008/05/18 12:31:27 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.26.2.2 2008/06/04 02:04:39 yamt Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -248,6 +248,7 @@ define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
 define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_tss.tss_rsp0)
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
+define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
 define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)

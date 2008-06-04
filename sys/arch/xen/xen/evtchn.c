@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.35.2.1 2008/05/18 12:33:08 yamt Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.35.2.2 2008/06/04 02:05:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.35.2.1 2008/05/18 12:33:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.35.2.2 2008/06/04 02:05:04 yamt Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -289,24 +289,24 @@ splx:
 	 */
 	iplbit = 1 << (NIPL - 1);
 	i = (NIPL - 1);
-	while ((iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending)) != 0) {
-		if (iplbit == 0) {
-			/* another pending ipl went in while running a handler*/
-			iplbit = 1 << (NIPL - 1);
-			i = (NIPL - 1);
-		}
-		if (iplmask & iplbit) {
+	iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
+	while (iplmask != 0) {
+		KASSERT(iplbit != 0);
+		while (iplmask & iplbit) {
 			ci->ci_ipending &= ~iplbit;
 			KASSERT(i > ilevel);
 			ci->ci_ilevel = i;
 			for (ih = ci->ci_isources[i]->ipl_handlers; ih != NULL;
 			    ih = ih->ih_ipl_next) {
+				KASSERT(ih->ih_level == i);
 				sti();
 				ih_fun = (void *)ih->ih_fun;
 				ih_fun(ih->ih_arg, regs);
 				cli();
 			}
 			hypervisor_enable_ipl(i);
+			/* more pending IPLs may have been registered */
+			iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
 		}
 		i--;
 		iplbit >>= 1;

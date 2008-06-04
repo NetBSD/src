@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.3.2.1 2008/05/18 12:33:08 yamt Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.3.2.2 2008/06/04 02:05:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.3.2.1 2008/05/18 12:33:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.3.2.2 2008/06/04 02:05:04 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -70,6 +70,7 @@ spllower(int nlevel)
 	psl = x86_read_psl();
 	x86_disable_intr();
 	if (ci->ci_ipending & imask) {
+		KASSERT(psl == 0);
 		Xspllower(nlevel);
 		/* Xspllower does enable_intr() */
 	} else {
@@ -77,24 +78,6 @@ spllower(int nlevel)
 		x86_write_psl(psl);
 	}
 }
-
-#ifndef __x86_64__
-
-/*
- * Software interrupt registration
- *
- * We hand-code this to ensure that it's atomic.
- *
- * XXX always scheduled on the current CPU.
- */
-void
-softintr(int sir)
-{
-	struct cpu_info *ci = curcpu();
-
-	__asm volatile("orl %1, %0" : "=m"(ci->ci_ipending) : "ir" (1 << sir));
-}
-#endif
 
 void
 x86_disable_intr(void)

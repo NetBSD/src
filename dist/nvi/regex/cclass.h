@@ -1,3 +1,5 @@
+/*	$NetBSD: cclass.h,v 1.1.1.1.2.3 2008/06/04 02:03:17 yamt Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994

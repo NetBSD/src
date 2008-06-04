@@ -1,4 +1,4 @@
-.\"	$NetBSD: schedctl.8,v 1.3.6.1 2008/05/18 12:36:23 yamt Exp $
+.\"	$NetBSD: schedctl.8,v 1.3.6.2 2008/06/04 02:06:00 yamt Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 28, 2008
+.Dd May 26, 2008
 .Dt SCHEDCTL 8
 .Os
 .Sh NAME
@@ -35,29 +35,31 @@
 .Nd control scheduling of processes and threads
 .Sh SYNOPSIS
 .Nm
-.Fl p Ar pid
-.Op Fl A Ar processors
+.Op Fl A Ar cpus
 .Op Fl C Ar class
-.Op Fl P Ar priority
+.Op Fl P Ar pri
 .Op Fl t Ar lid
+.Fl p Ar pid | Ar command
 .Sh DESCRIPTION
 The
 .Nm
 command can be used to control the scheduling of processes and threads.
-It also returns information about current scheduling parameters
+It also returns information about the current scheduling parameters
 of the process or thread.
 Only the super-user may change the scheduling parameters.
+.Nm
+can also be used to start a new command using the specified parameters.
 .Pp
 Available options:
 .Bl -tag -width indent
-.It Fl A Ar processors
+.It Fl A Ar cpus
 Set of the processors on which process or thread should run, that
 is, affinity.
 Processors are defined as numbers (starting from zero) and separated
 by commas.
 A value of \-1 is used to unset the affinity.
 .It Fl C Ar class
-Scheduling class (policy) might be:
+Scheduling class (policy), one of:
 .Bl -tag -width SCHEDOTHERXX
 .It Dv SCHED_OTHER
 Time-sharing (TS) scheduling policy.
@@ -68,7 +70,7 @@ First in, first out (FIFO) scheduling policy.
 .It Dv SCHED_RR
 Round-robin scheduling policy.
 .El
-.It Fl P Ar priority
+.It Fl P Ar pri
 Priority which will be set for the process or thread.
 For all scheduling classes, priority might be set to any value in
 the range from
@@ -79,9 +81,16 @@ the range from
 .It Fl p Ar pid
 The target process which will be affected.
 If the process has more than one thread, all of them will be affected.
+.Pp
+If
+.Fl p
+is not given, a command to execute must be given on the command line.
 .It Fl t Ar lid
 Thread in the specified process.
 If specified, only this thread in the process will be affected.
+May only be specified if
+.Fl p
+is also given.
 .El
 .Sh EXAMPLES
 Show scheduling information about the process whose ID is
@@ -99,6 +108,13 @@ in process whose ID is
 .Dq 123 :
 .Bd -literal -offset indent
 # schedctl -p 123 -t 1 -A 0,1 -C 2 -P 63
+.Ed
+.Pp
+Run the
+.Xr top 1
+command with real-time priority:
+.Bd -literal -offset indent
+# schedctl -C SCHED_FIFO top
 .Ed
 .Sh SEE ALSO
 .Xr nice 1 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.336.2.1 2008/05/18 12:35:11 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.336.2.2 2008/06/04 02:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -72,10 +72,22 @@
  * This file contains vfs subroutines which are heavily dependant on
  * the kernel and are not suitable for standalone use.  Examples include
  * routines involved vnode and mountpoint management.
+ *
+ * Note on v_usecount and locking:
+ *
+ * At nearly all points it is known that v_usecount could be zero, the
+ * vnode interlock will be held.
+ *
+ * To change v_usecount away from zero, the interlock must be held.  To
+ * change from a non-zero value to zero, again the interlock must be
+ * held.
+ *
+ * Changing the usecount from a non-zero value to a non-zero value can
+ * safely be done using atomic operations, without the interlock held.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336.2.1 2008/05/18 12:35:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336.2.2 2008/06/04 02:05:40 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -246,7 +258,7 @@ try_nextlist:
 	 * before doing this.  If the vnode gains another reference while
 	 * being cleaned out then we lose - retry.
 	 */
-	vp->v_usecount++;
+	atomic_inc_uint(&vp->v_usecount);
 	vclean(vp, DOCLOSE);
 	if (vp->v_usecount == 1) {
 		/* We're about to dirty it. */
@@ -261,9 +273,7 @@ try_nextlist:
 		 * Don't return to freelist - the holder of the last
 		 * reference will destroy it.
 		 */
-		KASSERT(vp->v_usecount > 1);
-		vp->v_usecount--;
-		mutex_exit(&vp->v_interlock);
+		vrelel(vp, 0); /* releases vp->v_interlock */
 		mutex_enter(&vnode_free_list_lock);
 		goto retry;
 	}
@@ -468,7 +478,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 			if (tryalloc) {
 				printf("WARNING: unable to allocate new "
 				    "vnode, retrying...\n");
-				(void) tsleep(&lbolt, PRIBIO, "newvn", hz);
+				kpause("newvn", false, hz, NULL);
 				goto try_again;
 			}
 			tablefull("vnode", "increase kern.maxvnodes or NVNODE");
@@ -594,7 +604,7 @@ vremfree(vnode_t *vp)
 {
 
 	KASSERT(mutex_owned(&vp->v_interlock));
-	KASSERT(vp->v_usecount == 0);
+	KASSERT(vp->v_usecount == 1);
 
 	/*
 	 * Note that the reference count must not change until
@@ -703,6 +713,36 @@ getdevvp(dev_t dev, vnode_t **vpp, enum vtype type)
 }
 
 /*
+ * Try to gain a reference to a vnode, without acquiring its interlock.
+ * The caller must hold a lock that will prevent the vnode from being
+ * recycled or freed.
+ */
+bool
+vtryget(vnode_t *vp)
+{
+	u_int use, next;
+
+	/*
+	 * If the vnode is being freed, don't make life any harder
+	 * for vclean() by adding another reference without waiting.
+	 * This is not strictly necessary, but we'll do it anyway.
+	 */
+	if (__predict_false((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0)) {
+		return false;
+	}
+	for (use = vp->v_usecount;; use = next) {
+		if (use == 0) { 
+			/* Need interlock held if first reference. */
+			return false;
+		}
+		next = atomic_cas_uint(&vp->v_usecount, use, use + 1);
+		if (__predict_true(next == use)) {
+			return true;
+		}
+	}
+}
+
+/*
  * Grab a particular vnode from the free list, increment its
  * reference count and lock it. If the vnode lock bit is set the
  * vnode is being eliminated in vgone. In that case, we can not
@@ -725,10 +765,10 @@ vget(vnode_t *vp, int flags)
 	 * from its freelist.
 	 */
 	if (vp->v_usecount == 0) {
+		vp->v_usecount = 1;
 		vremfree(vp);
-	}
-	if (++vp->v_usecount == 0) {
-		vpanic(vp, "vget: usecount overflow");
+	} else {
+		atomic_inc_uint(&vp->v_usecount);
 	}
 
 	/*
@@ -771,6 +811,26 @@ vput(vnode_t *vp)
 }
 
 /*
+ * Try to drop reference on a vnode.  Abort if we are releasing the
+ * last reference.
+ */
+static inline bool
+vtryrele(vnode_t *vp)
+{
+	u_int use, next;
+
+	for (use = vp->v_usecount;; use = next) {
+		if (use == 1) { 
+			return false;
+		}
+		next = atomic_cas_uint(&vp->v_usecount, use, use - 1);
+		if (__predict_true(next == use)) {
+			return true;
+		}
+	}
+}
+
+/*
  * Vnode release.  If reference count drops to zero, call inactive
  * routine and either return to freelist or free to the pool.
  */
@@ -792,8 +852,7 @@ vrelel(vnode_t *vp, int flags)
 	 * If not the last reference, just drop the reference count
 	 * and unlock.
 	 */
-	if (vp->v_usecount > 1) {
-		vp->v_usecount--;
+	if (vtryrele(vp)) {
 		vp->v_iflag |= VI_INACTREDO;
 		mutex_exit(&vp->v_interlock);
 		return;
@@ -809,6 +868,8 @@ vrelel(vnode_t *vp, int flags)
  retry:
 	if ((vp->v_iflag & VI_CLEAN) == 0) {
 		recycle = false;
+		vp->v_iflag |= VI_INACTNOW;
+
 		/*
 		 * XXX This ugly block can be largely eliminated if
 		 * locking is pushed down into the file systems.
@@ -853,6 +914,7 @@ vrelel(vnode_t *vp, int flags)
 			 */
 			KASSERT(mutex_owned(&vp->v_interlock));
 			KASSERT((vp->v_iflag & VI_INACTPEND) == 0);
+			vp->v_iflag &= ~VI_INACTNOW;
 			vp->v_iflag |= VI_INACTPEND;
 			mutex_enter(&vrele_lock);
 			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
@@ -882,9 +944,9 @@ vrelel(vnode_t *vp, int flags)
 		 */
 		VOP_INACTIVE(vp, &recycle);
 		mutex_enter(&vp->v_interlock);
+		vp->v_iflag &= ~VI_INACTNOW;
 		if (!recycle) {
-			if (vp->v_usecount > 1) {
-				vp->v_usecount--;
+			if (vtryrele(vp)) {
 				mutex_exit(&vp->v_interlock);
 				return;
 			}
@@ -905,7 +967,7 @@ vrelel(vnode_t *vp, int flags)
 			atomic_add_int(&uvmexp.filepages,
 			    vp->v_uobj.uo_npages);
 		}
-		vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP|VI_MAPPED);
+		vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP);
 		vp->v_vflag &= ~VV_MAPPED;
 
 		/*
@@ -918,7 +980,7 @@ vrelel(vnode_t *vp, int flags)
 		KASSERT(vp->v_usecount > 0);
 	}
 
-	if (--vp->v_usecount != 0) {
+	if (atomic_dec_uint_nv(&vp->v_usecount) != 0) {
 		/* Gained another reference while being reclaimed. */
 		mutex_exit(&vp->v_interlock);
 		return;
@@ -961,6 +1023,9 @@ vrele(vnode_t *vp)
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
+	if ((vp->v_iflag & VI_INACTNOW) == 0 && vtryrele(vp)) {
+		return;
+	}
 	mutex_enter(&vp->v_interlock);
 	vrelel(vp, 0);
 }
@@ -987,11 +1052,6 @@ vrele_thread(void *cookie)
 		mutex_enter(&vp->v_interlock);
 		KASSERT((vp->v_iflag & VI_INACTPEND) != 0);
 		vp->v_iflag &= ~VI_INACTPEND;
-		if (vp->v_usecount > 1) {
-			vp->v_usecount--;
-			mutex_exit(&vp->v_interlock);
-			continue;
-		}
 		vrelel(vp, 0);
 	}
 }
@@ -1052,15 +1112,9 @@ vref(vnode_t *vp)
 {
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
+	KASSERT(vp->v_usecount != 0);
 
-	mutex_enter(&vp->v_interlock);
-	if (vp->v_usecount <= 0) {
-		vpanic(vp, "vref used where vget required");
-	}
-	if (++vp->v_usecount == 0) {
-		vpanic(vp, "vref: usecount overflow");
-	}
-	mutex_exit(&vp->v_interlock);
+	atomic_inc_uint(&vp->v_usecount);
 }
 
 /*
@@ -1150,8 +1204,8 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		 */
 		if (vp->v_usecount == 0) {
 			mutex_exit(&mntvnode_lock);
-			vremfree(vp);
 			vp->v_usecount++;
+			vremfree(vp);
 			vclean(vp, DOCLOSE);
 			vrelel(vp, 0);
 			mutex_enter(&mntvnode_lock);
@@ -1165,7 +1219,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		 */
 		if (flags & FORCECLOSE) {
 			mutex_exit(&mntvnode_lock);
-			vp->v_usecount++;
+			atomic_inc_uint(&vp->v_usecount);
 			if (vp->v_type != VBLK && vp->v_type != VCHR) {
 				vclean(vp, DOCLOSE);
 				vrelel(vp, 0);
@@ -1311,8 +1365,8 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp, struct lwp *l)
 	}
 	if (inter_lkp)
 		mutex_exit(inter_lkp);
-	vremfree(vp);
 	vp->v_usecount++;
+	vremfree(vp);
 	vclean(vp, DOCLOSE);
 	vrelel(vp, 0);
 	return (1);
@@ -1446,10 +1500,9 @@ vrevoke(vnode_t *vp)
 			continue;
 		}
 		mutex_exit(&specfs_lock);
-		if (vq->v_usecount == 0) {
+		if (atomic_inc_uint_nv(&vq->v_usecount) == 1) {
 			vremfree(vq);
 		}
-		vq->v_usecount++;
 		vclean(vq, DOCLOSE);
 		vrelel(vq, 0);
 		mutex_enter(&specfs_lock);

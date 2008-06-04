@@ -1,3 +1,5 @@
+/*	$NetBSD: conv.h,v 1.1.1.1.2.3 2008/06/04 02:03:06 yamt Exp $ */
+
 #define KEY_COL(sp, ch)							\
 	(INTISWIDE(ch) ? CHAR_WIDTH(sp, ch) ? CHAR_WIDTH(sp, ch) : 	\
 					      1 : /* extra space */	\

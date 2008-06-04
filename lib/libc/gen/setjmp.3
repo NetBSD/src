@@ -1,4 +1,4 @@
-.\"	$NetBSD: setjmp.3,v 1.16 2004/03/30 13:28:13 wiz Exp $
+.\"	$NetBSD: setjmp.3,v 1.16.24.1 2008/06/04 02:04:33 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)setjmp.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd August 10, 2002
+.Dd June 1, 2008
 .Dt SETJMP 3
 .Os
 .Sh NAME
@@ -125,7 +125,7 @@ function pairs save and restore the signal mask while
 .Fn _setjmp Ns / Ns Fn _longjmp
 function pairs save and restore only the register set and the stack.
 (See
-.Fn sigmask 2 . )
+.Fn sigprocmask 2 . )
 .Pp
 The
 .Fn sigsetjmp Ns / Ns Fn siglongjmp
@@ -178,6 +178,8 @@ versions of
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr sigaltstack 2 ,
+.Xr sigprocmask 2 ,
+.Xr pthread_sigmask 3 ,
 .Xr signal 3
 .Sh STANDARDS
 The

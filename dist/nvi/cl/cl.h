@@ -1,3 +1,5 @@
+/*	$NetBSD: cl.h,v 1.1.1.1.2.3 2008/06/04 02:03:05 yamt Exp $ */
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: cl.h,v 1.1.1.1.2.2 2008/05/18 12:29:21 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:21 $
+ *	Id: cl.h,v 10.32 2001/08/28 11:33:40 skimo Exp (Berkeley) Date: 2001/08/28 11:33:40
  */
 
 /* Avoid clash on OSF1 */

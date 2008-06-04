@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50.2.1 2008/05/18 12:33:04 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.2.2 2008/06/04 02:05:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.2.1 2008/05/18 12:33:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.2.2 2008/06/04 02:05:04 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -375,8 +375,8 @@ struct pmap_cpu {
 
 union {
 	struct pmap_cpu pc;
-	uint8_t padding[128];
-} pmap_cpu[X86_MAXPROCS] __aligned(64);
+	uint8_t padding[64];
+} pmap_cpu[MAXCPUS] __aligned(64);
 
 /*
  * global data structures
@@ -437,9 +437,6 @@ struct pv_hash_lock {
 struct pv_hash_head {
 	SLIST_HEAD(, pv_entry) hh_list;
 } pv_hash_heads[PV_HASH_SIZE];
-
-#define	hh_lock(hh)	mutex_spin_enter(&(hh)->hh_lock)
-#define	hh_unlock(hh)	mutex_spin_exit(&(hh)->hh_lock)
 
 static u_int
 pvhash_hash(struct vm_page *ptp, vaddr_t va)
@@ -521,7 +518,7 @@ static struct pool_cache pmap_pv_cache;
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * X86_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
+ * maxcpus*NPTECL array of PTE's, to avoid cache line thrashing
  * due to false sharing.
  */
 
@@ -1373,8 +1370,8 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	ptpp = (char *) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
 
-	virtual_avail += PAGE_SIZE * X86_MAXPROCS * NPTECL;
-	pte += X86_MAXPROCS * NPTECL;
+	virtual_avail += PAGE_SIZE * maxcpus * NPTECL;
+	pte += maxcpus * NPTECL;
 #else
 	csrcp = (void *) virtual_avail;  csrc_pte = pte;	/* allocate */
 	virtual_avail += PAGE_SIZE; pte++;			/* advance */
@@ -2966,10 +2963,7 @@ pmap_zero_page(paddr_t pa)
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
-	if (cpu_feature & CPUID_SSE2)
-		sse2_zero_page(zerova);
-	else
-		memset(zerova, 0, PAGE_SIZE);
+	memset(zerova, 0, PAGE_SIZE);
 
 #if defined(DIAGNOSTIC) || defined(XEN)
 	pmap_pte_set(zpte, 0);				/* zap ! */
@@ -2987,9 +2981,30 @@ pmap_zero_page(paddr_t pa)
 bool
 pmap_pageidlezero(paddr_t pa)
 {
+	pt_entry_t *zpte;
+	void *zerova;
+	bool rv;
+	int id;
 
-	pmap_zero_page(pa);
-	return true;
+	id = cpu_number();
+	zpte = PTESLEW(zero_pte, id);
+	zerova = VASLEW(zerop, id);
+
+	KASSERT(cpu_feature & CPUID_SSE2);
+	KASSERT(*zpte == 0);
+
+	pmap_pte_set(zpte, pmap_pa2pte(pa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
+	pmap_pte_flush();
+	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
+
+	rv = sse2_idlezero_page(zerova);
+
+#if defined(DIAGNOSTIC) || defined(XEN)
+	pmap_pte_set(zpte, 0);				/* zap ! */
+	pmap_pte_flush();
+#endif
+
+	return rv;
 }
 
 /*
@@ -3012,20 +3027,16 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	csrcva = VASLEW(csrcp, id);
 	cdstva = VASLEW(cdstp, id);
 	
-#ifdef DIAGNOSTIC
-	if (*spte || *dpte)
-		panic("pmap_copy_page: lock botch");
-#endif
+	KASSERT(*spte == 0 && *dpte == 0);
 
 	pmap_pte_set(spte, pmap_pa2pte(srcpa) | PG_V | PG_RW | PG_U | PG_k);
 	pmap_pte_set(dpte,
 	    pmap_pa2pte(dstpa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
 	pmap_pte_flush();
 	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
-	if (cpu_feature & CPUID_SSE2)
-		sse2_copy_page(csrcva, cdstva);
-	else
-		memcpy(cdstva, csrcva, PAGE_SIZE);
+
+	memcpy(cdstva, csrcva, PAGE_SIZE);
+
 #if defined(DIAGNOSTIC) || defined(XEN)
 	pmap_pte_set(spte, 0);
 	pmap_pte_set(dpte, 0);
@@ -3573,10 +3584,7 @@ startover:
 
 		error = pmap_sync_pv(pvpte, expect, ~0, &opte);
 		if (error == EAGAIN) {
-#if defined(MULTIPROCESSOR)
 			int hold_count;
-#endif /* defined(MULTIPROCESSOR) */
-
 			pp_unlock(pp);
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 			if (ptp != NULL) {
@@ -3720,10 +3728,7 @@ startover:
 
 		error = pmap_sync_pv(pvpte, expect, clearbits, &opte);
 		if (error == EAGAIN) {
-#if defined(MULTIPROCESSOR)
 			int hold_count;
-#endif /* defined(MULTIPROCESSOR) */
-
 			pp_unlock(pp);
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 			SPINLOCK_BACKOFF(count);

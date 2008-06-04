@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.255.8.1 2008/05/18 12:35:55 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.255.8.2 2008/06/04 02:05:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.255.8.1 2008/05/18 12:35:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.255.8.2 2008/06/04 02:05:53 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -873,6 +873,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (lfs_writer_daemon == 0 && kthread_create(PRI_BIO, 0, NULL,
 	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");
+
+	printf("WARNING: the log-structured file system is experimental and "
+	    "may be unstable\n");
 
 	return (0);
 

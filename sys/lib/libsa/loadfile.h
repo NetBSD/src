@@ -1,7 +1,7 @@
-/*	$NetBSD: loadfile.h,v 1.6.30.1 2008/05/18 12:35:22 yamt Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.6.30.2 2008/06/04 02:05:47 yamt Exp $	 */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -86,3 +86,6 @@ int	loadfile_elf64(int, Elf64_Ehdr *, u_long *, int);
 #include <sys/exec_aout.h>
 int	loadfile_aout(int, struct exec *, u_long *, int);
 #endif
+
+extern uint32_t	netbsd_version;
+extern u_int netbsd_elf_class;

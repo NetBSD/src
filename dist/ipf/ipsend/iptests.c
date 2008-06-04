@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.13 2007/10/09 01:23:20 mrg Exp $	*/
+/*	$NetBSD: iptests.c,v 1.13.6.1 2008/06/04 02:03:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.8 2007/02/17 12:41:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.9 2007/09/13 07:19:34 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.14.2.1 2008/05/18 12:35:48 yamt Exp $	*/
+/*	$NetBSD: locks.c,v 1.14.2.2 2008/06/04 02:05:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -222,7 +222,9 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 int
 cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 {
+#ifdef DIAGNOSTIC
 	extern int hz;
+#endif
 
 	if (ticks == 0) {
 		cv_wait(cv, mtx);

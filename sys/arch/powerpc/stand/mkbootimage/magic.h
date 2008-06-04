@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.h,v 1.3 2007/12/20 23:00:00 garbled Exp $	*/
+/*	$NetBSD: magic.h,v 1.3.16.1 2008/06/04 02:04:51 yamt Exp $	*/
 
 char bebox_magic[] = "BSD";
 char prep_magic[] = "KMA";
@@ -9,4 +9,4 @@ int kern_len;
 #define	PREP_MAGICSIZE		sizeof (prep_magic)
 #define RS6000_MAGICSIZE	sizeof (rs6000_magic)
 #define	KERNLENSIZE		sizeof (kern_len)
-#define	ENTRY			0x100000
+#define	BEBOX_ENTRY		0x3100

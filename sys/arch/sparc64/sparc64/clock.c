@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.95.2.1 2008/05/18 12:32:51 yamt Exp $ */
+/*	$NetBSD: clock.c,v 1.95.2.2 2008/06/04 02:04:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95.2.1 2008/05/18 12:32:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95.2.2 2008/06/04 02:04:57 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -240,7 +240,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	/* Install the appropriate interrupt vector here */
 	level10.ih_number = ma->ma_interrupts[0];
 	level10.ih_clr = &timerreg_4u.t_clrintr[0];
-	intr_establish(PIL_CLOCK, &level10);
+	intr_establish(PIL_CLOCK, true, &level10);
 	printf(" irq vectors %lx", (u_long)level10.ih_number);
 #ifndef MULTIPROCESSOR
 	/*
@@ -248,7 +248,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	 */
 	level14.ih_number = ma->ma_interrupts[1];
 	level14.ih_clr = &timerreg_4u.t_clrintr[1];
-	intr_establish(PIL_STATCLOCK, &level14);
+	intr_establish(PIL_STATCLOCK, true, &level14);
 	printf(" and %lx", (u_long)level14.ih_number);
 #endif
 
@@ -322,7 +322,7 @@ tickintr_establish(int pil, int (*fun)(void *))
 	ih = sparc_softintr_establish(pil, fun, NULL);
 	ih->ih_number = 1;
 	if (CPU_IS_PRIMARY(ci))
-		intr_establish(pil, ih);
+		intr_establish(pil, true, ih);
 	ci->ci_tick_ih = ih;
 
 	/* set the next interrupt time */

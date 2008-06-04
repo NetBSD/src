@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.137.2.1 2008/05/18 12:35:08 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.137.2.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,9 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.137.2.1 2008/05/18 12:35:08 yamt Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.137.2.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -119,7 +117,7 @@ void	_kernel_lock_dump(volatile void *);
 
 lockops_t _kernel_lock_ops = {
 	"Kernel lock",
-	0,
+	LOCKOPS_SPIN,
 	_kernel_lock_dump
 };
 
@@ -184,7 +182,7 @@ _kernel_lock(int nlocks)
 	if (__cpu_simple_lock_try(kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
-		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock,
+		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
 		    RETURN_ADDRESS, 0);
 		splx(s);
 		return;
@@ -214,7 +212,7 @@ _kernel_lock(int nlocks)
 		splx(s);
 		while (__SIMPLELOCK_LOCKED_P(kernel_lock)) {
 			if (SPINLOCK_SPINOUT(spins)) {
-				extern volatile int start_init_exec;
+				extern int start_init_exec;
 				if (!start_init_exec)
 					_KERNEL_LOCK_ABORT("spinout");
 			}
@@ -227,7 +225,8 @@ _kernel_lock(int nlocks)
 	ci->ci_biglock_count = nlocks;
 	l->l_blcnt = nlocks;
 	LOCKSTAT_STOP_TIMER(lsflag, spintime);
-	LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, RETURN_ADDRESS, 0);
+	LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
+	    RETURN_ADDRESS, 0);
 	if (owant == NULL) {
 		LOCKSTAT_EVENT_RA(lsflag, kernel_lock,
 		    LB_KERNEL_LOCK | LB_SPIN, 1, spintime, RETURN_ADDRESS);

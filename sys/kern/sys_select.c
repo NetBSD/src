@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.4.2.1 2008/05/18 12:35:10 yamt Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.4.2.2 2008/06/04 02:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.4.2.1 2008/05/18 12:35:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.4.2.2 2008/06/04 02:05:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,10 +293,8 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 		}
 		l->l_selflag = SEL_BLOCKING;
 		l->l_kpriority = true;
-		lwp_lock(l);
-		lwp_unlock_to(l, &sc->sc_lock);
+		sleepq_enter(&sc->sc_sleepq, l, &sc->sc_lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, "select", &select_sobj);
-		KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);	/* XXX */
 		error = sleepq_block(timo, true);
 		if (error != 0)
 			break;
@@ -489,10 +487,8 @@ pollcommon(lwp_t *l, register_t *retval,
 		}
 		l->l_selflag = SEL_BLOCKING;
 		l->l_kpriority = true;
-		lwp_lock(l);
-		lwp_unlock_to(l, &sc->sc_lock);
+		sleepq_enter(&sc->sc_sleepq, l, &sc->sc_lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, "select", &select_sobj);
-		KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);	/* XXX */
 		error = sleepq_block(timo, true);
 		if (error != 0)
 			break;
@@ -664,7 +660,8 @@ selnotify(struct selinfo *sip, int events, long knhint)
 			sc = cpu_lookup_byindex(index)->ci_data.cpu_selcpu;
 			mutex_spin_enter(&sc->sc_lock);
 			sc->sc_ncoll++;
-			sleepq_wake(&sc->sc_sleepq, sc, (u_int)-1);
+			sleepq_wake(&sc->sc_sleepq, sc, (u_int)-1,
+			    &sc->sc_lock);
 		} while (__predict_false(mask != 0));
 	}
 }
@@ -721,7 +718,7 @@ selsysinit(struct cpu_info *ci)
 	    coherency_unit, KM_SLEEP);
 	sc = (void *)roundup2((uintptr_t)sc, coherency_unit);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
-	sleepq_init(&sc->sc_sleepq, &sc->sc_lock);
+	sleepq_init(&sc->sc_sleepq);
 	sc->sc_ncoll = 0;
 	sc->sc_mask = (1 << cpu_index(ci));
 	ci->ci_data.cpu_selcpu = sc;
@@ -818,10 +815,8 @@ pollsock(struct socket *so, const struct timeval *tvp, int events)
 			continue;
 		}
 		l->l_selflag = SEL_BLOCKING;
-		lwp_lock(l);
-		lwp_unlock_to(l, &sc->sc_lock);
+		sleepq_enter(&sc->sc_sleepq, l, &sc->sc_lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, "pollsock", &select_sobj);
-		KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);	/* XXX */
 		error = sleepq_block(timo, true);
 		if (error != 0)
 			break;

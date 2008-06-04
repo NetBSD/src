@@ -1,4 +1,4 @@
-
+/*	$NetBSD: ofdev.c,v 1.18.18.2 2008/06/04 02:04:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

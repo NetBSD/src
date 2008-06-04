@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.32.18.1 2008/05/18 12:31:33 yamt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.32.18.2 2008/06/04 02:04:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32.18.1 2008/05/18 12:31:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32.18.2 2008/06/04 02:04:40 yamt Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -150,9 +150,7 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 				ksi.ksi_code = TRAP_BRKPT;
 				ksi.ksi_addr = (u_int32_t *)addr;
 				ksi.ksi_trap = 0;
-				KERNEL_LOCK(1, l);
 				trapsignal(l, &ksi);
-				KERNEL_UNLOCK_LAST(l);
 				return 0;
 			}
 #ifdef KGDB
@@ -258,9 +256,7 @@ undefinedinstruction(trapframe_t *frame)
 			ksi.ksi_signo = SIGILL;
 			ksi.ksi_code = ILL_ILLOPC;
 			ksi.ksi_addr = (u_int32_t *)(intptr_t) fault_pc;
-			KERNEL_LOCK(1, l);
 			trapsignal(l, &ksi);
-			KERNEL_UNLOCK_LAST(l);
 			userret(l);
 			return;
 		}
@@ -359,9 +355,7 @@ undefinedinstruction(trapframe_t *frame)
 		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (u_int32_t *)fault_pc;
 		ksi.ksi_trap = fault_instruction;
-		KERNEL_LOCK(1, l);
 		trapsignal(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 	}
 
 	if ((fault_code & FAULT_USER) == 0)

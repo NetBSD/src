@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2007/10/17 19:55:01 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.18.1 2008/06/04 02:04:47 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2007/10/17 19:55:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.18.1 2008/06/04 02:04:47 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -149,6 +149,7 @@ cpu_startup(void)
 	 */
 	oea_startup("IBM NetworkStation 1000 (8362-XXX)");
 
+	pic_init();
 	isa_pic = setup_prepivr(PIC_IVR_IBM);
 
         oea_install_extint(pic_ext_intr);

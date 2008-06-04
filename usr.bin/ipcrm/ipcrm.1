@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipcrm.1,v 1.9 2002/09/30 11:09:03 grant Exp $
+.\"	$NetBSD: ipcrm.1,v 1.9.32.1 2008/06/04 02:05:58 yamt Exp $
 .\"
 .\" Copyright (c) 1994 Adam Glass
 .\" All rights reserved.
@@ -23,73 +23,68 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $NetBSD: ipcrm.1,v 1.9 2002/09/30 11:09:03 grant Exp $
-.\""
-.Dd June 17, 2002
+.\" $NetBSD: ipcrm.1,v 1.9.32.1 2008/06/04 02:05:58 yamt Exp $
+.\"
+.Dd May 31, 2008
 .Dt IPCRM 1
 .Os
 .Sh NAME
 .Nm ipcrm
-.Nd remove the specified message queues, semaphore sets,
-and shared memory segments
+.Nd remove the specified message queues, semaphore sets, and shared memory segments
 .Sh SYNOPSIS
 .Nm
-.Bk -words
-.Op Fl q Ar msqid
-.Ek
-.Bk -words
-.Op Fl m Ar shmid
-.Ek
-.Bk -words
-.Op Fl s Ar semid
-.Ek
-.Bk -words
-.Op Fl Q Ar msgkey
-.Ek
-.Bk -words
 .Op Fl M Ar shmkey
-.Ek
-.Bk -words
+.Op Fl m Ar shmid
+.Op Fl Q Ar msgkey
+.Op Fl q Ar msqid
 .Op Fl S Ar semkey
-.Ek
+.Op Fl s Ar semid
 .Ar ...
 .Sh DESCRIPTION
 .Nm
-removes the specified message queues, semaphores and shared memory
+removes the specified message queues, semaphores, and shared memory
 segments.
 These System V IPC objects can be specified by their
-creation id or any associated key.
+creation ID or any associated key.
 .Pp
 The following options are used to specify which IPC objects will be removed.
 Any number and combination of these options can be used:
 .Bl -tag -width indent
-.It Fl q Ar msqid
-Remove the message queue associated with the id
-.Ar msqid
-from the system.
-.It Fl m Ar shmid
-Mark the shared memory segment associated with id
-.Ar shmid
-for removal.
-This marked segment will be destroyed after the last detach.
-.It Fl s Ar semid
-Removes the semaphore set associated with id
-.Ar semid
-from the system.
-.It Fl Q Ar msgkey
-Remove the message queue associated with key
-.Ar msgkey
-from the system.
 .It Fl M Ar shmkey
 Mark the shared memory segment associated with key
 .Ar shmkey
 for removal.
 This marked segment will be destroyed after the last detach.
+.It Fl m Ar shmid
+Mark the shared memory segment associated with ID
+.Ar shmid
+for removal.
+This marked segment will be destroyed after the last detach.
+.It Fl Q Ar msgkey
+Remove the message queue associated with key
+.Ar msgkey
+from the system.
+.It Fl q Ar msqid
+Remove the message queue associated with the ID
+.Ar msqid
+from the system.
 .It Fl S Ar semkey
 Remove the semaphore set associated with key
 .Ar semkey
 from the system.
+.It Fl s Ar semid
+Removes the semaphore set associated with ID
+.Ar semid
+from the system.
 .El
+.Pp
+If the
+.Ar id
+or
+.Ar key
+argument is
+.Dq all
+then all entries of the appropriate type are removed.
 .Pp
 The identifiers and keys associated with these System V IPC objects can be
 determined by using

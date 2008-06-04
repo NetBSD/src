@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.86 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.86.2.1 2008/06/04 02:05:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.86 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.86.2.1 2008/06/04 02:05:14 yamt Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -118,43 +118,43 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.86 2008/04/10 19:13:37 cegger Exp $");
 #define TL_NBUF 32
 #endif
 
-static int tl_pci_match(struct device *, struct cfdata *, void *);
-static void tl_pci_attach(struct device *, struct device *, void *);
+static int tl_pci_match(device_t, cfdata_t, void *);
+static void tl_pci_attach(device_t, device_t, void *);
 static int tl_intr(void *);
 
 static int tl_ifioctl(struct ifnet *, ioctl_cmd_t, void *);
 static int tl_mediachange(struct ifnet *);
 static void tl_ifwatchdog(struct ifnet *);
-static void tl_shutdown(void*);
+static void tl_shutdown(void *);
 
 static void tl_ifstart(struct ifnet *);
-static void tl_reset(tl_softc_t*);
+static void tl_reset(tl_softc_t *);
 static int  tl_init(struct ifnet *);
 static void tl_stop(struct ifnet *, int);
-static void tl_restart(void  *);
-static int  tl_add_RxBuff(tl_softc_t*, struct Rx_list*, struct mbuf*);
-static void tl_read_stats(tl_softc_t*);
-static void tl_ticks(void*);
-static int tl_multicast_hash(u_int8_t*);
-static void tl_addr_filter(tl_softc_t*);
+static void tl_restart(void *);
+static int  tl_add_RxBuff(tl_softc_t *, struct Rx_list *, struct mbuf *);
+static void tl_read_stats(tl_softc_t *);
+static void tl_ticks(void *);
+static int tl_multicast_hash(uint8_t *);
+static void tl_addr_filter(tl_softc_t *);
 
-static u_int32_t tl_intreg_read(tl_softc_t*, u_int32_t);
-static void tl_intreg_write(tl_softc_t*, u_int32_t, u_int32_t);
-static u_int8_t tl_intreg_read_byte(tl_softc_t*, u_int32_t);
-static void tl_intreg_write_byte(tl_softc_t*, u_int32_t, u_int8_t);
+static uint32_t tl_intreg_read(tl_softc_t *, uint32_t);
+static void tl_intreg_write(tl_softc_t *, uint32_t, uint32_t);
+static uint8_t tl_intreg_read_byte(tl_softc_t *, uint32_t);
+static void tl_intreg_write_byte(tl_softc_t *, uint32_t, uint8_t);
 
 void	tl_mii_sync(struct tl_softc *);
-void	tl_mii_sendbits(struct tl_softc *, u_int32_t, int);
+void	tl_mii_sendbits(struct tl_softc *, uint32_t, int);
 
 
 #if defined(TLDEBUG_RX)
-static void ether_printheader(struct ether_header*);
+static void ether_printheader(struct ether_header *);
 #endif
 
-int tl_mii_read(struct device *, int, int);
-void tl_mii_write(struct device *, int, int, int);
+int tl_mii_read(device_t, int, int);
+void tl_mii_write(device_t, int, int, int);
 
-void tl_statchg(struct device *);
+void tl_statchg(device_t);
 
 	/* I2C glue */
 static int tl_i2c_acquire_bus(void *, int);
@@ -181,34 +181,37 @@ static const struct i2c_bitbang_ops tl_i2cbb_ops = {
 	}
 };
 
-static inline void netsio_clr(tl_softc_t*, u_int8_t);
-static inline void netsio_set(tl_softc_t*, u_int8_t);
-static inline u_int8_t netsio_read(tl_softc_t*, u_int8_t);
-static inline void netsio_clr(sc, bits)
-	tl_softc_t* sc;
-	u_int8_t bits;
+static inline void netsio_clr(tl_softc_t *, uint8_t);
+static inline void netsio_set(tl_softc_t *, uint8_t);
+static inline uint8_t netsio_read(tl_softc_t *, uint8_t);
+
+static inline void
+netsio_clr(tl_softc_t *sc, uint8_t bits)
 {
+
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio,
 	    tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & (~bits));
 }
-static inline void netsio_set(sc, bits)
-	tl_softc_t* sc;
-	u_int8_t bits;
+
+static inline void
+netsio_set(tl_softc_t *sc, uint8_t bits)
 {
+
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio,
 	    tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) | bits);
 }
-static inline u_int8_t netsio_read(sc, bits)
-	tl_softc_t* sc;
-	u_int8_t bits;
+
+static inline uint8_t
+netsio_read(tl_softc_t *sc, uint8_t bits)
 {
-	return (tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & bits);
+
+	return tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & bits;
 }
 
-CFATTACH_DECL(tl, sizeof(tl_softc_t),
+CFATTACH_DECL_NEW(tl, sizeof(tl_softc_t),
     tl_pci_match, tl_pci_attach, NULL, NULL);
 
-const struct tl_product_desc tl_compaq_products[] = {
+static const struct tl_product_desc tl_compaq_products[] = {
 	{ PCI_PRODUCT_COMPAQ_N100TX, TLPHY_MEDIA_NO_10_T,
 	  "Compaq Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_INT100TX, TLPHY_MEDIA_NO_10_T,
@@ -232,7 +235,7 @@ const struct tl_product_desc tl_compaq_products[] = {
 	{ 0, 0, NULL },
 };
 
-const struct tl_product_desc tl_ti_products[] = {
+static const struct tl_product_desc tl_ti_products[] = {
 	/*
 	 * Built-in Ethernet on the TI TravelMate 5000
 	 * docking station; better product description?
@@ -243,7 +246,7 @@ const struct tl_product_desc tl_ti_products[] = {
 };
 
 struct tl_vendor_desc {
-	u_int32_t tv_vendor;
+	uint32_t tv_vendor;
 	const struct tl_product_desc *tv_products;
 };
 
@@ -253,11 +256,10 @@ const struct tl_vendor_desc tl_vendors[] = {
 	{ 0, NULL },
 };
 
-const struct tl_product_desc *tl_lookup_product(u_int32_t);
+static const struct tl_product_desc *tl_lookup_product(uint32_t);
 
-const struct tl_product_desc *
-tl_lookup_product(id)
-	u_int32_t id;
+static const struct tl_product_desc *
+tl_lookup_product(uint32_t id)
 {
 	const struct tl_product_desc *tp;
 	const struct tl_vendor_desc *tv;
@@ -267,35 +269,34 @@ tl_lookup_product(id)
 			break;
 
 	if ((tp = tv->tv_products) == NULL)
-		return (NULL);
+		return NULL;
 
 	for (; tp->tp_desc != NULL; tp++)
 		if (PCI_PRODUCT(id) == tp->tp_product)
 			break;
 
 	if (tp->tp_desc == NULL)
-		return (NULL);
+		return NULL;
 
-	return (tp);
+	return tp;
 }
 
 static int
-tl_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+tl_pci_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
 	if (tl_lookup_product(pa->pa_id) != NULL)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
-tl_pci_attach(struct device *parent, struct device *self, void *aux)
+tl_pci_attach(device_t parent, device_t self, void *aux)
 {
-	tl_softc_t *sc = (tl_softc_t *)self;
-	struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
+	tl_softc_t *sc = device_private(self);
+	struct pci_attach_args * const pa = (struct pci_attach_args *)aux;
 	const struct tl_product_desc *tp;
 	struct ifnet * const ifp = &sc->tl_if;
 	bus_space_tag_t iot, memt;
@@ -307,14 +308,15 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t reg10, reg14;
 	pcireg_t csr;
 
-	printf("\n");
+	sc->sc_dev = self;
+	aprint_normal("\n");
 
 	callout_init(&sc->tl_tick_ch, 0);
 	callout_init(&sc->tl_restart_ch, 0);
 
 	tp = tl_lookup_product(pa->pa_id);
 	if (tp == NULL)
-		panic("tl_pci_attach: impossible");
+		panic("%s: impossible", __func__);
 	sc->tl_product = tp;
 
 	/*
@@ -358,7 +360,7 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->tl_bustag = memt;
 		sc->tl_bushandle = memh;
 	} else {
-		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
 	sc->tl_dmatag = pa->pa_dmat;
@@ -368,7 +370,7 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
-	printf("%s: %s\n", device_xname(&sc->sc_dev), tp->tp_desc);
+	aprint_normal_dev(self, "%s\n", tp->tp_desc);
 
 	tl_reset(sc);
 
@@ -383,22 +385,22 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_write_byte = tl_i2c_write_byte;
 
 #ifdef TLDEBUG
-	printf("default values of INTreg: 0x%x\n",
+	aprint_debug_dev(sefl, "default values of INTreg: 0x%x\n",
 	    tl_intreg_read(sc, TL_INT_Defaults));
 #endif
 
 	/* read mac addr */
-	if (seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x83, 512/*?*/,
-				   sc->tl_enaddr, ETHER_ADDR_LEN)) {
-		aprint_error_dev(&sc->sc_dev, "error reading Ethernet address\n");
-			return;
+	if (seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x83, 256 /* 2kbit */,
+	    sc->tl_enaddr, ETHER_ADDR_LEN)) {
+		aprint_error_dev(self, "error reading Ethernet address\n");
+		return;
 	}
-	printf("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
+	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(sc->tl_enaddr));
 
 	/* Map and establish interrupts */
 	if (pci_intr_map(pa, &intrhandle)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
@@ -406,34 +408,33 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    tl_intr, sc);
 	if (sc->tl_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/* init these pointers, so that tl_shutdown won't try to read them */
 	sc->Rx_list = NULL;
 	sc->Tx_list = NULL;
 
 	/* allocate DMA-safe memory for control structs */
-	if (bus_dmamem_alloc(sc->tl_dmatag,
-	        PAGE_SIZE, 0, PAGE_SIZE,
-	        &sc->ctrl_segs, 1, &sc->ctrl_nsegs, BUS_DMA_NOWAIT) != 0 ||
+	if (bus_dmamem_alloc(sc->tl_dmatag, PAGE_SIZE, 0, PAGE_SIZE,
+	    &sc->ctrl_segs, 1, &sc->ctrl_nsegs, BUS_DMA_NOWAIT) != 0 ||
 	    bus_dmamem_map(sc->tl_dmatag, &sc->ctrl_segs,
-		sc->ctrl_nsegs, PAGE_SIZE, (void **)&sc->ctrl,
-		BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
-			aprint_error_dev(&sc->sc_dev, "can't allocate DMA memory for lists\n");
-			return;
+	    sc->ctrl_nsegs, PAGE_SIZE, (void **)&sc->ctrl,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
+		aprint_error_dev(self, "can't allocate DMA memory for lists\n");
+		return;
 	}
 	/*
 	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
 	 * doing
 	 * reboot before the driver initializes.
 	 */
-	(void) shutdownhook_establish(tl_shutdown, ifp);
+	(void)shutdownhook_establish(tl_shutdown, ifp);
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -464,7 +465,7 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->tl_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_ioctl = tl_ifioctl;
 	ifp->if_start = tl_ifstart;
@@ -477,14 +478,13 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(&(sc)->tl_if, (sc)->tl_enaddr);
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
+	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
 #endif
 }
 
 static void
-tl_reset(sc)
-	tl_softc_t *sc;
+tl_reset(tl_softc_t *sc)
 {
 	int i;
 
@@ -523,13 +523,15 @@ tl_reset(sc)
 	sc->tl_mii.mii_media_status &= ~IFM_ACTIVE;
 }
 
-static void tl_shutdown(v)
-	void *v;
+static void
+tl_shutdown(void *v)
 {
+
 	tl_stop(v, 1);
 }
 
-static void tl_stop(struct ifnet *ifp, int disable)
+static void
+tl_stop(struct ifnet *ifp, int disable)
 {
 	tl_softc_t *sc = ifp->if_softc;
 	struct Tx_list *Tx;
@@ -554,7 +556,7 @@ static void tl_stop(struct ifnet *ifp, int disable)
 
 	/* deallocate memory allocations */
 	if (sc->Rx_list) {
-		for (i=0; i< TL_NBUF; i++) {
+		for (i = 0; i< TL_NBUF; i++) {
 			if (sc->Rx_list[i].m) {
 				bus_dmamap_unload(sc->tl_dmatag,
 				    sc->Rx_list[i].m_dmamap);
@@ -590,14 +592,15 @@ static void tl_stop(struct ifnet *ifp, int disable)
 	sc->tl_mii.mii_media_status &= ~IFM_ACTIVE;
 }
 
-static void tl_restart(v)
-	void *v;
+static void
+tl_restart(void *v)
 {
+
 	tl_init(v);
 }
 
-static int tl_init(ifp)
-	struct ifnet *ifp;
+static int
+tl_init(struct ifnet *ifp)
 {
 	tl_softc_t *sc = ifp->if_softc;
 	int i, s, error;
@@ -650,7 +653,7 @@ static int tl_init(ifp)
 	 * Some boards (Set Engineering GFE) do not permit DMA transfers
 	 * across page boundaries.
 	 */
-	prop_boundary = prop_dictionary_get(device_properties(&sc->sc_dev),
+	prop_boundary = prop_dictionary_get(device_properties(sc->sc_dev),
 	    "tl-dma-page-boundary");
 	if (prop_boundary != NULL) {
 		KASSERT(prop_object_type(prop_boundary) == PROP_TYPE_NUMBER);
@@ -696,7 +699,7 @@ static int tl_init(ifp)
 		errstring = "can't DMA map DMA memory for lists";
 		goto bad;
 	}
-	for (i=0; i< TL_NBUF; i++) {
+	for (i = 0; i < TL_NBUF; i++) {
 		error = bus_dmamap_create(sc->tl_dmatag, MCLBYTES,
 		    1, MCLBYTES, boundary, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &sc->Rx_list[i].m_dmamap);
@@ -764,55 +767,48 @@ static int tl_init(ifp)
 	sc->tl_if.if_flags &= ~IFF_OACTIVE;
 	return 0;
 bad:
-	printf("%s: %s\n", device_xname(&sc->sc_dev), errstring);
+	printf("%s: %s\n", device_xname(sc->sc_dev), errstring);
 	splx(s);
 	return error;
 }
 
 
-static u_int32_t
-tl_intreg_read(sc, reg)
-	tl_softc_t *sc;
-	u_int32_t reg;
+static uint32_t
+tl_intreg_read(tl_softc_t *sc, uint32_t reg)
 {
+
 	TL_HR_WRITE(sc, TL_HOST_INTR_DIOADR, reg & TL_HOST_DIOADR_MASK);
 	return TL_HR_READ(sc, TL_HOST_DIO_DATA);
 }
 
-static u_int8_t
-tl_intreg_read_byte(sc, reg)
-	tl_softc_t *sc;
-	u_int32_t reg;
+static uint8_t
+tl_intreg_read_byte(tl_softc_t *sc, uint32_t reg)
 {
+
 	TL_HR_WRITE(sc, TL_HOST_INTR_DIOADR,
 	    (reg & (~0x07)) & TL_HOST_DIOADR_MASK);
 	return TL_HR_READ_BYTE(sc, TL_HOST_DIO_DATA + (reg & 0x07));
 }
 
 static void
-tl_intreg_write(sc, reg, val)
-	tl_softc_t *sc;
-	u_int32_t reg;
-	u_int32_t val;
+tl_intreg_write(tl_softc_t *sc, uint32_t reg, uint32_t val)
 {
+
 	TL_HR_WRITE(sc, TL_HOST_INTR_DIOADR, reg & TL_HOST_DIOADR_MASK);
 	TL_HR_WRITE(sc, TL_HOST_DIO_DATA, val);
 }
 
 static void
-tl_intreg_write_byte(sc, reg, val)
-	tl_softc_t *sc;
-	u_int32_t reg;
-	u_int8_t val;
+tl_intreg_write_byte(tl_softc_t *sc, uint32_t reg, uint8_t val)
 {
+
 	TL_HR_WRITE(sc, TL_HOST_INTR_DIOADR,
 	    (reg & (~0x03)) & TL_HOST_DIOADR_MASK);
 	TL_HR_WRITE_BYTE(sc, TL_HOST_DIO_DATA + (reg & 0x03), val);
 }
 
 void
-tl_mii_sync(sc)
-	struct tl_softc *sc;
+tl_mii_sync(struct tl_softc *sc)
 {
 	int i;
 
@@ -824,10 +820,7 @@ tl_mii_sync(sc)
 }
 
 void
-tl_mii_sendbits(sc, data, nbits)
-	struct tl_softc *sc;
-	u_int32_t data;
-	int nbits;
+tl_mii_sendbits(struct tl_softc *sc, uint32_t data, int nbits)
 {
 	int i;
 
@@ -845,11 +838,9 @@ tl_mii_sendbits(sc, data, nbits)
 }
 
 int
-tl_mii_read(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+tl_mii_read(device_t self, int phy, int reg)
 {
-	struct tl_softc *sc = (struct tl_softc *)self;
+	struct tl_softc *sc = device_private(self);
 	int val = 0, i, err;
 
 	/*
@@ -881,15 +872,13 @@ tl_mii_read(self, phy, reg)
 	netsio_clr(sc, TL_NETSIO_MCLK);
 	netsio_set(sc, TL_NETSIO_MCLK);
 
-	return (err ? 0 : val);
+	return err ? 0 : val;
 }
 
 void
-tl_mii_write(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+tl_mii_write(device_t self, int phy, int reg, int val)
 {
-	struct tl_softc *sc = (struct tl_softc *)self;
+	struct tl_softc *sc = device_private(self);
 
 	/*
 	 * Write the PHY register by manually driving the MII control lines.
@@ -908,14 +897,13 @@ tl_mii_write(self, phy, reg, val)
 }
 
 void
-tl_statchg(self)
-	struct device *self;
+tl_statchg(device_t self)
 {
-	tl_softc_t *sc = (struct tl_softc *)self;
-	u_int32_t reg;
+	tl_softc_t *sc = device_private(self);
+	uint32_t reg;
 
 #ifdef TLDEBUG
-	printf("tl_statchg, media %x\n", sc->tl_mii.mii_media.ifm_media);
+	printf("%s: media %x\n", __func__, sc->tl_mii.mii_media.ifm_media);
 #endif
 
 	/*
@@ -937,7 +925,7 @@ tl_i2c_acquire_bus(void *cookie, int flags)
 {
 
 	/* private bus */
-	return (0);
+	return 0;
 }
 
 static void
@@ -951,35 +939,35 @@ static int
 tl_i2c_send_start(void *cookie, int flags)
 {
 
-	return (i2c_bitbang_send_start(cookie, flags, &tl_i2cbb_ops));
+	return i2c_bitbang_send_start(cookie, flags, &tl_i2cbb_ops);
 }
 
 static int
 tl_i2c_send_stop(void *cookie, int flags)
 {
 
-	return (i2c_bitbang_send_stop(cookie, flags, &tl_i2cbb_ops));
+	return i2c_bitbang_send_stop(cookie, flags, &tl_i2cbb_ops);
 }
 
 static int
 tl_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
 {
 
-	return (i2c_bitbang_initiate_xfer(cookie, addr, flags, &tl_i2cbb_ops));
+	return i2c_bitbang_initiate_xfer(cookie, addr, flags, &tl_i2cbb_ops);
 }
 
 static int
 tl_i2c_read_byte(void *cookie, uint8_t *valp, int flags)
 {
 
-	return (i2c_bitbang_read_byte(cookie, valp, flags, &tl_i2cbb_ops));
+	return i2c_bitbang_read_byte(cookie, valp, flags, &tl_i2cbb_ops);
 }
 
 static int
 tl_i2c_write_byte(void *cookie, uint8_t val, int flags)
 {
 
-	return (i2c_bitbang_write_byte(cookie, val, flags, &tl_i2cbb_ops));
+	return i2c_bitbang_write_byte(cookie, val, flags, &tl_i2cbb_ops);
 }
 
 /********** I2C bit-bang glue **********/
@@ -1010,21 +998,20 @@ static uint32_t
 tl_i2cbb_read(void *cookie)
 {
 
-	return (tl_intreg_read_byte(cookie, TL_INT_NET + TL_INT_NetSio));
+	return tl_intreg_read_byte(cookie, TL_INT_NET + TL_INT_NetSio);
 }
 
 /********** End of I2C stuff **********/
 
 static int
-tl_intr(v)
-	void *v;
+tl_intr(void *v)
 {
 	tl_softc_t *sc = v;
 	struct ifnet *ifp = &sc->tl_if;
 	struct Rx_list *Rx;
 	struct Tx_list *Tx;
 	struct mbuf *m;
-	u_int32_t int_type, int_reg;
+	uint32_t int_type, int_reg;
 	int ack = 0;
 	int size;
 
@@ -1033,7 +1020,7 @@ tl_intr(v)
 	if (int_type == 0)
 		return 0;
 #if defined(TLDEBUG_RX) || defined(TLDEBUG_TX)
-	printf("%s: interrupt type %x, intr_reg %x\n", device_xname(&sc->sc_dev),
+	printf("%s: interrupt type %x, intr_reg %x\n", device_xname(sc->sc_dev),
 	    int_type, int_reg);
 #endif
 	/* disable interrupts */
@@ -1055,10 +1042,10 @@ tl_intr(v)
 			m = Rx->m;
 			size = le32toh(Rx->hw_list->stat) >> 16;
 #ifdef TLDEBUG_RX
-			printf("tl_intr: RX list complete, Rx %p, size=%d\n",
-			    Rx, size);
+			printf("%s: RX list complete, Rx %p, size=%d\n",
+			    __func__, Rx, size);
 #endif
-			if (tl_add_RxBuff(sc, Rx, m ) == 0) {
+			if (tl_add_RxBuff(sc, Rx, m) == 0) {
 				/*
 				 * No new mbuf, reuse the same. This means
 				 * that this packet
@@ -1070,7 +1057,7 @@ tl_intr(v)
 #endif
 #ifdef TLDEBUG
 				printf("%s: out of mbuf, lost input packet\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 #endif
 			}
 			Rx->next = NULL;
@@ -1088,10 +1075,12 @@ tl_intr(v)
 				m->m_pkthdr.rcvif = ifp;
 				m->m_pkthdr.len = m->m_len = size;
 #ifdef TLDEBUG_RX
-				{ struct ether_header *eh =
-				    mtod(m, struct ether_header *);
-				printf("tl_intr: Rx packet:\n");
-				ether_printheader(eh); }
+				{
+					struct ether_header *eh =
+					    mtod(m, struct ether_header *);
+					printf("%s: Rx packet:\n", __func__);
+					ether_printheader(eh);
+				}
 #endif
 #if NBPFILTER > 0
 				if (ifp->if_bpf)
@@ -1108,11 +1097,11 @@ tl_intr(v)
 #else
 		if (ack == 0) {
 			printf("%s: EOF intr without anything to read !\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			tl_reset(sc);
 			/* schedule reinit of the board */
 			callout_reset(&sc->tl_restart_ch, 1, tl_restart, ifp);
-			return(1);
+			return 1;
 		}
 #endif
 		break;
@@ -1127,7 +1116,7 @@ tl_intr(v)
 #ifdef DIAGNOSTIC
 		if (le32toh(sc->active_Rx->hw_list->stat) & TL_RX_CSTAT_CPLT) {
 			printf("%s: Rx EOC interrupt and active Tx list not "
-			    "cleared\n", device_xname(&sc->sc_dev));
+			    "cleared\n", device_xname(sc->sc_dev));
 			return 0;
 		} else
 #endif
@@ -1180,7 +1169,7 @@ tl_intr(v)
 #endif
 			TL_HR_WRITE(sc, TL_HOST_CMD, 1 | int_type |
 			    HOST_CMD_ACK | HOST_CMD_IntOn);
-			if ( sc->active_Tx != NULL) {
+			if (sc->active_Tx != NULL) {
 				/* needs a Tx go command */
 				TL_HR_WRITE(sc, TL_HOST_CH_PARM,
 				    sc->active_Tx->hw_listaddr);
@@ -1211,20 +1200,20 @@ tl_intr(v)
 		if (int_reg & TL_INTVec_MASK) {
 			/* adapter check conditions */
 			printf("%s: check condition, intvect=0x%x, "
-			    "ch_param=0x%x\n", device_xname(&sc->sc_dev),
+			    "ch_param=0x%x\n", device_xname(sc->sc_dev),
 			    int_reg & TL_INTVec_MASK,
 			    TL_HR_READ(sc, TL_HOST_CH_PARM));
 			tl_reset(sc);
 			/* schedule reinit of the board */
 			callout_reset(&sc->tl_restart_ch, 1, tl_restart, ifp);
-			return(1);
+			return 1;
 		} else {
-			u_int8_t netstat;
+			uint8_t netstat;
 			/* Network status */
 			netstat =
 			    tl_intreg_read_byte(sc, TL_INT_NET+TL_INT_NetSts);
 			printf("%s: network status, NetSts=%x\n",
-			    device_xname(&sc->sc_dev), netstat);
+			    device_xname(sc->sc_dev), netstat);
 			/* Ack interrupts */
 			tl_intreg_write_byte(sc, TL_INT_NET+TL_INT_NetSts,
 			    netstat);
@@ -1233,7 +1222,7 @@ tl_intr(v)
 		break;
 	default:
 		printf("%s: unhandled interrupt code %x!\n",
-		    device_xname(&sc->sc_dev), int_type);
+		    device_xname(sc->sc_dev), int_type);
 		ack++;
 	}
 
@@ -1253,10 +1242,7 @@ tl_intr(v)
 }
 
 static int
-tl_ifioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	ioctl_cmd_t cmd;
-	void *data;
+tl_ifioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct tl_softc *sc = ifp->if_softc;
 	int s, error;
@@ -1273,8 +1259,7 @@ tl_ifioctl(ifp, cmd, data)
 }
 
 static void
-tl_ifstart(ifp)
-	struct ifnet *ifp;
+tl_ifstart(struct ifnet *ifp)
 {
 	tl_softc_t *sc = ifp->if_softc;
 	struct mbuf *mb_head;
@@ -1288,7 +1273,7 @@ txloop:
 	/* If we don't have more space ... */
 	if (sc->Free_Tx == NULL) {
 #ifdef TLDEBUG
-		printf("tl_ifstart: No free TX list\n");
+		printf("%s: No free TX list\n", __func__);
 #endif
 		sc->tl_if.if_flags |= IFF_OACTIVE;
 		return;
@@ -1297,7 +1282,7 @@ txloop:
 	IFQ_DEQUEUE(&ifp->if_snd, mb_head);
 	if (mb_head == NULL) {
 #ifdef TLDEBUG_TX
-		printf("tl_ifstart: nothing to send\n");
+		printf("%s: nothing to send\n", __func__);
 #endif
 		return;
 	}
@@ -1331,7 +1316,7 @@ tbdinit:
 		}
 		again = 1;
 #ifdef TLDEBUG_TX
-		printf("tl_ifstart: need to copy mbuf\n");
+		printf("%s: need to copy mbuf\n", __func__);
 #endif
 #ifdef TL_PRIV_STATS
 		sc->oerr_mcopy++;
@@ -1371,7 +1356,7 @@ tbdinit:
 	if (size < ETHER_MIN_TX) {
 #ifdef DIAGNOSTIC
 		if (segment >= TL_NSEG) {
-			panic("tl_ifstart: to much segmets (%d)", segment);
+			panic("%s: to much segmets (%d)", __func__, segment);
 		}
 #endif
 		/*
@@ -1389,10 +1374,10 @@ tbdinit:
 	    htole32(TL_LAST_SEG);
 	Tx->hw_list->stat = htole32((size << 16) | 0x3000);
 #ifdef TLDEBUG_TX
-	printf("%s: sending, Tx : stat = 0x%x\n", device_xname(&sc->sc_dev),
+	printf("%s: sending, Tx : stat = 0x%x\n", device_xname(sc->sc_dev),
 	    le32toh(Tx->hw_list->stat));
 #if 0
-	for(segment = 0; segment < TL_NSEG; segment++) {
+	for (segment = 0; segment < TL_NSEG; segment++) {
 		printf("    seg %d addr 0x%x len 0x%x\n",
 		    segment,
 		    le32toh(Tx->hw_list->seg[segment].data_addr),
@@ -1403,7 +1388,7 @@ tbdinit:
 	if (sc->active_Tx == NULL) {
 		sc->active_Tx = sc->last_Tx = Tx;
 #ifdef TLDEBUG_TX
-		printf("%s: Tx GO, addr=0x%ux\n", device_xname(&sc->sc_dev),
+		printf("%s: Tx GO, addr=0x%ux\n", device_xname(sc->sc_dev),
 		    (int)Tx->hw_listaddr);
 #endif
 		bus_dmamap_sync(sc->tl_dmatag, sc->Tx_dmamap, 0,
@@ -1413,7 +1398,7 @@ tbdinit:
 		TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 	} else {
 #ifdef TLDEBUG_TX
-		printf("%s: Tx addr=0x%ux queued\n", device_xname(&sc->sc_dev),
+		printf("%s: Tx addr=0x%ux queued\n", device_xname(sc->sc_dev),
 		    (int)Tx->hw_listaddr);
 #endif
 		sc->last_Tx->hw_list->fwd = htole32(Tx->hw_listaddr);
@@ -1425,8 +1410,9 @@ tbdinit:
 #ifdef DIAGNOSTIC
 		if (sc->last_Tx->hw_list->fwd & 0x7)
 			printf("%s: physical addr 0x%x of list not properly "
-			   "aligned\n",
-			   device_xname(&sc->sc_dev), sc->last_Rx->hw_list->fwd);
+			    "aligned\n",
+			    device_xname(sc->sc_dev),
+			    sc->last_Rx->hw_list->fwd);
 #endif
 	}
 #if NBPFILTER > 0
@@ -1441,40 +1427,35 @@ tbdinit:
 	goto txloop;
 bad:
 #ifdef TLDEBUG
-	printf("tl_ifstart: Out of mbuf, Tx pkt lost\n");
+	printf("%s: Out of mbuf, Tx pkt lost\n", __func__);
 #endif
 	Tx->next = sc->Free_Tx;
 	sc->Free_Tx = Tx;
-	return;
 }
 
 static void
-tl_ifwatchdog(ifp)
-	struct ifnet *ifp;
+tl_ifwatchdog(struct ifnet *ifp)
 {
 	tl_softc_t *sc = ifp->if_softc;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-	printf("%s: device timeout\n", device_xname(&sc->sc_dev));
+	printf("%s: device timeout\n", device_xname(sc->sc_dev));
 	ifp->if_oerrors++;
 	tl_init(ifp);
 }
 
 static int
-tl_mediachange(ifp)
-	struct ifnet *ifp;
+tl_mediachange(struct ifnet *ifp)
 {
 
 	if (ifp->if_flags & IFF_UP)
 		tl_init(ifp);
-	return (0);
+	return 0;
 }
 
-static int tl_add_RxBuff(sc, Rx, oldm)
-	tl_softc_t *sc;
-	struct Rx_list *Rx;
-	struct mbuf *oldm;
+static int
+tl_add_RxBuff(tl_softc_t *sc, struct Rx_list *Rx, struct mbuf *oldm)
 {
 	struct mbuf *m;
 	int error;
@@ -1501,8 +1482,8 @@ static int tl_add_RxBuff(sc, Rx, oldm)
 	Rx->m = m;
 	if ((error = bus_dmamap_load(sc->tl_dmatag, Rx->m_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "bus_dmamap_load() failed (error %d) for "
-		    "tl_add_RxBuff\n", error);
+		printf("%s: bus_dmamap_load() failed (error %d) for "
+		    "tl_add_RxBuff ", device_xname(sc->sc_dev), error);
 		printf("size %d (%d)\n", m->m_pkthdr.len, MCLBYTES);
 		m_freem(m);
 		Rx->m = NULL;
@@ -1525,8 +1506,8 @@ static int tl_add_RxBuff(sc, Rx, oldm)
 	return (m != oldm);
 }
 
-static void tl_ticks(v)
-	void *v;
+static void
+tl_ticks(void *v)
 {
 	tl_softc_t *sc = v;
 
@@ -1540,10 +1521,9 @@ static void tl_ticks(v)
 }
 
 static void
-tl_read_stats(sc)
-	tl_softc_t *sc;
+tl_read_stats(tl_softc_t *sc)
 {
-	u_int32_t reg;
+	uint32_t reg;
 	int ierr_overr;
 	int ierr_code;
 	int ierr_crc;
@@ -1586,10 +1566,10 @@ tl_read_stats(sc)
 
 	if (ierr_overr)
 		printf("%s: receiver ring buffer overrun\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 	if (oerr_underr)
 		printf("%s: transmit buffer underrun\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 #ifdef TL_PRIV_STATS
 	sc->ierr_overr		+= ierr_overr;
 	sc->ierr_code		+= ierr_code;
@@ -1604,25 +1584,25 @@ tl_read_stats(sc)
 #endif
 }
 
-static void tl_addr_filter(sc)
-	tl_softc_t *sc;
+static void
+tl_addr_filter(tl_softc_t *sc)
 {
 	struct ether_multistep step;
 	struct ether_multi *enm;
-	u_int32_t hash[2] = {0, 0};
+	uint32_t hash[2] = {0, 0};
 	int i;
 
 	sc->tl_if.if_flags &= ~IFF_ALLMULTI;
 	ETHER_FIRST_MULTI(step, &sc->tl_ec, enm);
 	while (enm != NULL) {
 #ifdef TLDEBUG
-		printf("tl_addr_filter: addrs %s %s\n",
+		printf("%s: addrs %s %s\n", __func__,
 		   ether_sprintf(enm->enm_addrlo),
 		   ether_sprintf(enm->enm_addrhi));
 #endif
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 			i = tl_multicast_hash(enm->enm_addrlo);
-			hash[i/32] |= 1 << (i%32);
+			hash[i / 32] |= 1 << (i%32);
 		} else {
 			hash[0] = hash[1] = 0xffffffff;
 			sc->tl_if.if_flags |= IFF_ALLMULTI;
@@ -1631,31 +1611,33 @@ static void tl_addr_filter(sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 #ifdef TLDEBUG
-	printf("tl_addr_filer: hash1 %x has2 %x\n", hash[0], hash[1]);
+	printf("%s: hash1 %x has2 %x\n", __func__, hash[0], hash[1]);
 #endif
 	tl_intreg_write(sc, TL_INT_HASH1, hash[0]);
 	tl_intreg_write(sc, TL_INT_HASH2, hash[1]);
 }
 
-static int tl_multicast_hash(a)
-	u_int8_t *a;
+static int
+tl_multicast_hash(uint8_t *a)
 {
 	int hash;
 
-#define DA(addr,bit) (addr[5 - (bit/8)] & (1 << bit%8))
-#define xor8(a,b,c,d,e,f,g,h) (((a != 0) + (b != 0) + (c != 0) + (d != 0) + (e != 0) + (f != 0) + (g != 0) + (h != 0)) & 1)
+#define DA(addr,bit) (addr[5 - (bit / 8)] & (1 << (bit % 8)))
+#define xor8(a,b,c,d,e,f,g,h)						\
+	(((a != 0) + (b != 0) + (c != 0) + (d != 0) + 			\
+	  (e != 0) + (f != 0) + (g != 0) + (h != 0)) & 1)
 
-	hash  = xor8( DA(a,0), DA(a, 6), DA(a,12), DA(a,18), DA(a,24), DA(a,30),
+	hash  = xor8(DA(a,0), DA(a, 6), DA(a,12), DA(a,18), DA(a,24), DA(a,30),
 	    DA(a,36), DA(a,42));
-	hash |= xor8( DA(a,1), DA(a, 7), DA(a,13), DA(a,19), DA(a,25), DA(a,31),
+	hash |= xor8(DA(a,1), DA(a, 7), DA(a,13), DA(a,19), DA(a,25), DA(a,31),
 	    DA(a,37), DA(a,43)) << 1;
-	hash |= xor8( DA(a,2), DA(a, 8), DA(a,14), DA(a,20), DA(a,26), DA(a,32),
+	hash |= xor8(DA(a,2), DA(a, 8), DA(a,14), DA(a,20), DA(a,26), DA(a,32),
 	    DA(a,38), DA(a,44)) << 2;
-	hash |= xor8( DA(a,3), DA(a, 9), DA(a,15), DA(a,21), DA(a,27), DA(a,33),
+	hash |= xor8(DA(a,3), DA(a, 9), DA(a,15), DA(a,21), DA(a,27), DA(a,33),
 	    DA(a,39), DA(a,45)) << 3;
-	hash |= xor8( DA(a,4), DA(a,10), DA(a,16), DA(a,22), DA(a,28), DA(a,34),
+	hash |= xor8(DA(a,4), DA(a,10), DA(a,16), DA(a,22), DA(a,28), DA(a,34),
 	    DA(a,40), DA(a,46)) << 4;
-	hash |= xor8( DA(a,5), DA(a,11), DA(a,17), DA(a,23), DA(a,29), DA(a,35),
+	hash |= xor8(DA(a,5), DA(a,11), DA(a,17), DA(a,23), DA(a,29), DA(a,35),
 	    DA(a,41), DA(a,47)) << 5;
 
 	return hash;
@@ -1663,13 +1645,13 @@ static int tl_multicast_hash(a)
 
 #if defined(TLDEBUG_RX)
 void
-ether_printheader(eh)
-	struct ether_header *eh;
+ether_printheader(struct ether_header *eh)
 {
-	u_char *c = (char*)eh;
+	uint8_t *c = (uint8_t *)eh;
 	int i;
-	for (i=0; i<sizeof(struct ether_header); i++)
-		printf("%x ", (u_int)c[i]);
-		printf("\n");
+
+	for (i = 0; i < sizeof(struct ether_header); i++)
+		printf("%02x ", (u_int)c[i]);
+	printf("\n");
 }
 #endif

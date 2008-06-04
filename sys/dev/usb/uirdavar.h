@@ -1,4 +1,4 @@
-/*	$NetBSD: uirdavar.h,v 1.2.14.1 2008/05/18 12:34:51 yamt Exp $	*/
+/*	$NetBSD: uirdavar.h,v 1.2.14.2 2008/06/04 02:05:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ struct uirda_softc {
 	int			sc_wr_hdr;
 	struct selinfo		sc_wr_sel;
 
-	struct device		*sc_child;
+	device_t		sc_child;
 	struct irda_params	sc_params;
 	usb_irda_descriptor_t	sc_irdadesc;
 

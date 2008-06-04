@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.46.1 2008/06/04 02:04:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -87,6 +87,7 @@ struct trapframe {
 	/* hardware registers */
 	int	tf_spc;
 	int	tf_ssr;
+	int	tf_gbr;
 	int	tf_macl;
 	int	tf_mach;
 	int	tf_pr;
@@ -112,17 +113,18 @@ struct trapframe {
  * Stack frame inside cpu_switch()
  */
 struct switchframe {
-	int	sf_r15;
-	int	sf_r14;
-	int	sf_r13;
-	int	sf_r12;
-	int	sf_r11;
-	int	sf_r10;
-	int	sf_r9;
-	int	sf_r8;
-	int	sf_pr;
-	int	sf_r6_bank;
+	int	sf_gbr;
 	int	sf_sr;
+	int	sf_pr;
+	int	sf_r8;
+	int	sf_r9;
+	int	sf_r10;
+	int	sf_r11;
+	int	sf_r12;
+	int	sf_r13;
+	int	sf_r14;
+	int	sf_r15;
+	int	sf_r6_bank;
 	int	sf_r7_bank;
 };
 

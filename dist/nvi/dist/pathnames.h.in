@@ -1,4 +1,4 @@
-/* $Id: pathnames.h.in,v 1.1.1.1.2.2 2008/05/18 12:29:24 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:24 $ */
+/* Id: pathnames.h.in,v 8.5 2000/04/21 21:26:21 skimo Exp (Berkeley) Date: 2000/04/21 21:26:21 */
 
 #ifndef	_PATH_BSHELL
 #define	_PATH_BSHELL	"@vi_cv_path_shell@"

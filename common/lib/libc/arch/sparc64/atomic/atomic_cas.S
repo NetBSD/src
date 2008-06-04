@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.4.4.1 2008/05/18 12:28:45 yamt Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.4.4.2 2008/06/04 02:02:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_cas_32)
+ENTRY(_atomic_cas_32)
 	cas	[%o0], %o1, %o2
 	retl
 	 mov	%o2, %o0
@@ -47,7 +47,7 @@ STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
 
-ENTRY_NOPROFILE(_atomic_cas_64)
+ENTRY(_atomic_cas_64)
 	casx	[%o0], %o1, %o2
 	retl
 	 mov	%o2, %o0

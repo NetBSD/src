@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.8.2.2 2008/05/18 12:30:52 yamt Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.8.2.3 2008/06/04 02:04:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.8.2.2 2008/05/18 12:30:52 yamt Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.8.2.3 2008/06/04 02:04:37 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -84,8 +84,18 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
 		return;
 
+	strlcpy(param->name[0].buf, ifname, param->name[0].buflen);
+	strlcpy(param->name[1].buf, ifname, param->name[1].buflen);
+
 	if ((d = (prop_data_t)prop_dictionary_get(env, "address")) != NULL)
 		addr = prop_data_data_nocopy(d);
+	else if (!prop_dictionary_get_bool(env, "alias", &alias) || alias ||
+	    param->gifaddr.cmd == 0)
+		return;
+	else if (ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == -1)
+		err(EXIT_FAILURE, param->gifaddr.desc);
+	else if (ioctl(s, param->difaddr.cmd, param->dgreq.buf) == -1)
+		err(EXIT_FAILURE, param->difaddr.desc);
 	else
 		return;
 
@@ -112,9 +122,6 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 		delete = !alias;
 	}
 
-	strlcpy(param->name[0].buf, ifname, param->name[0].buflen);
-	strlcpy(param->name[1].buf, ifname, param->name[1].buflen);
-
 	loadbuf(&param->addr, addr);
 
 	/* TBD: read matching ifaddr from kernel, use the netmask as default
@@ -124,13 +131,8 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	case IFF_BROADCAST:
 		if (brd != NULL)
 			loadbuf(&param->brd, brd);
+		/*FALLTHROUGH*/
 	case 0:
-		if (mask != NULL)
-			loadbuf(&param->mask, mask);
-		else if (param->defmask.buf != NULL) {
-			memcpy(param->mask.buf, param->defmask.buf,
-			    MIN(param->mask.buflen, param->defmask.buflen));
-		}
 		break;
 	case IFF_POINTOPOINT:
 		if (dst == NULL) {
@@ -145,6 +147,12 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 		break;
 	case IFF_BROADCAST|IFF_POINTOPOINT:
 		errx(EXIT_FAILURE, "unsupported interface flags");
+	}
+	if (mask != NULL)
+		loadbuf(&param->mask, mask);
+	else if (param->defmask.buf != NULL) {
+		memcpy(param->mask.buf, param->defmask.buf,
+		    MIN(param->mask.buflen, param->defmask.buflen));
 	}
 	if (replace) {
 		if (ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == 0) {

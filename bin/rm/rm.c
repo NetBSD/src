@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.46 2007/06/24 17:59:31 christos Exp $ */
+/* $NetBSD: rm.c,v 1.46.10.1 2008/06/04 02:02:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.46 2007/06/24 17:59:31 christos Exp $");
+__RCSID("$NetBSD: rm.c,v 1.46.10.1 2008/06/04 02:02:57 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,8 +126,11 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1)
+	if (argc < 1) {
+		if (fflag)
+			return 0;
 		usage();
+	}
 
 	checkdot(argv);
 
@@ -168,9 +171,8 @@ rm_tree(char **argv)
 		flags |= FTS_NOSTAT;
 	if (Wflag)
 		flags |= FTS_WHITEOUT;
-	if (!(fts = fts_open(argv, flags,
-	    (int (*)(const FTSENT **, const FTSENT **))NULL)))
-		err(1, NULL);
+	if ((fts = fts_open(argv, flags, NULL)) == NULL)
+		err(1, "fts_open failed");
 	while ((p = fts_read(fts)) != NULL) {
 	
 		switch (p->fts_info) {

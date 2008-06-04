@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.30 2008/02/29 14:42:33 jmmv Exp $
+#	$NetBSD: OFWGENCFG,v 1.30.2.1 2008/06/04 02:04:53 yamt Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -75,6 +75,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

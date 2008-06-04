@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.33 2006/09/27 21:42:05 manu Exp $
+# 	$NetBSD: RC3230,v 1.33.54.1 2008/06/04 02:04:51 yamt Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -45,6 +45,7 @@ options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 options 	COMPAT_20		# NetBSD 2.0 binary compatibility
 options 	COMPAT_30		# NetBSD 3.0 compatibility.
+options 	COMPAT_40		# NetBSD 4.0 compatibility.
 #options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

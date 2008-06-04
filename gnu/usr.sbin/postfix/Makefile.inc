@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2007/05/28 12:06:17 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.16.10.1 2008/06/04 02:04:33 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,25 @@ CPPFLAGS+=	-DUSE_TLS
 .if ${MKINET6} == "no"
 CPPFLAGS+=	-DNO_IPV6
 .endif
+
+# LDAP support.
+.if ${USE_LDAP} != "no"
+CPPFLAGS+=	-DHAS_LDAP
+
+# Automatically link in libldap for a program.
+. if defined(PROG)
+LDADD+=		-lldap
+DPADD+=		${LIBLDAP}
+.  if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
+LDADD+=		-llber
+DPADD+=		${LIBLBER}
+.   if ${MKCRYPTO} != "no" 
+DPADD+=		${LIBSSL} ${LIBCRYPTO}
+LDADD+=		-lssl -lcrypto
+.   endif
+.  endif
+. endif
+.endif # USE_LDAP != no
 
 PFIX_SRCDIR=	${NETBSDSRCDIR}/gnu/usr.sbin/postfix
 PFIX_LIBSDIRS=	dns dns masterlib master global global util util \

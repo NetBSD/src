@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.109 2008/03/12 18:02:22 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.109.2.1 2008/06/04 02:05:49 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -388,12 +388,11 @@ extern device_t booted_device;		/* the device we booted from */
 extern device_t booted_wedge;		/* the wedge on that device */
 extern int booted_partition;		/* or the partition on that device */
 
-extern volatile int config_pending; 	/* semaphore for mountroot */
-
 struct vnode *opendisk(struct device *);
 int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
+void	drvctl_init(void);
 void	configure(void);
 
 int	config_cfdriver_attach(struct cfdriver *);

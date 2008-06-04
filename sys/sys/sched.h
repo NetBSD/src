@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.51.2.1 2008/05/18 12:35:50 yamt Exp $	*/
+/*	$NetBSD: sched.h,v 1.51.2.2 2008/06/04 02:05:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ struct schedstate_percpu {
 	/* First set of data is likely to be accessed by other CPUs. */
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	*spc_lwplock;	/* (: general purpose lock for LWPs */
+	struct lwp	*spc_migrating;	/* (: migrating LWP */
 	pri_t		spc_curpriority;/* m: usrpri of curlwp */
 	pri_t		spc_maxpriority;/* m: highest priority queued */
 	psetid_t	spc_psid;	/* (: processor-set ID */
@@ -214,7 +215,8 @@ void		sched_tick(struct cpu_info *);
 void		schedclock(struct lwp *);
 void		sched_schedclock(struct lwp *);
 void		sched_pstats(void *);
-void		sched_pstats_hook(struct lwp *);
+void		sched_lwp_stats(struct lwp *);
+void		sched_pstats_hook(struct lwp *, int);
 
 /* Runqueue-related functions */
 bool		sched_curcpu_runnable_p(void);
@@ -249,6 +251,7 @@ void		preempt(void);
 int		mi_switch(struct lwp *);
 void		resched_cpu(struct lwp *);
 void		updatertime(lwp_t *, const struct bintime *);
+void		sched_idle(void);
 
 int		do_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 int		do_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);

@@ -34,9 +34,19 @@
 # 1) find /usr/src -type f -print \
 #    | perl extract-contrib-string.pl
 #    >x
+#
 # 2) merge text after "--------" in "x" into
 #    src/distrib/notes/common/legal.common
 #
+# Options:
+#
+#     perl extract-contrib-string.pl [-d] [-h] [-x] [-?]
+#
+# where
+#     -d  debug output
+#     -h  html output
+#     -x  xml/docbook output
+#     -?  display help/usage message
 
 
 $ack_line1="[aA]ll( commercial)?( marketing or)? advertising materials mentioning( features)?";
@@ -63,6 +73,9 @@ $ack_endline=
 
 $known_bad_clause_3_wording=
       'usr.bin/lex/.*'				# UCB
+    .'|dist/bind/contrib/nslint-2.1a3/lbl/.*'	#
+    .'|usr.sbin/traceroute/ifaddrlist.h'	#
+    .'|usr.sbin/traceroute/traceroute.c'	#
     .'|usr.sbin/hilinfo/hilinfo.c'	   	# CSS @ Utah
     ;	
 
@@ -71,12 +84,26 @@ sub warning {
     print "XXX $fn line $.: $msg\n"
 }
 
-
-if ($ARGV[0]) {
-    $debug=1;
+while ($#ARGV >= 0) {
+    $debug=1 if ($ARGV[0] =~ /-d/i);
+    $html=1  if ($ARGV[0] =~ /-h/i);
+    $xml=1  if ($ARGV[0] =~ /-x/i);
+    $usage=1  if ($ARGV[0] =~ /-\?/);
     shift(@ARGV);
 }
 
+if ($usage) {
+    print "usage: find /usr/src -type f -print |\n" .
+	" perl extract-contrib-string.pl [-h] [-x] [-?] [-d]\n" .
+	"   where\n" .
+	"    -h   output html\n" .
+	"    -x   output xml/docbook\n" .
+	"    -d   debug\n" .
+	"    -?   display this help message\n";
+    exit(0);
+}
+
+$comments = !$html && !$xml;
 
 file:
 while(<>) {
@@ -98,6 +125,16 @@ while(<>) {
 	
 	print "0> $_" if $debug;
 
+	# special case perl script generating a license (openssl's
+	# mkerr.pl) - ignore the quoted license, there is another one
+	# inside:
+	if (/^\"\s\*.*$ack_line1.*\\n\"\,/) {
+		while(!/$ack_endline/i) {
+		    print "S> $_" if $debug;
+		    $_ = <F>;
+		}
+	}
+
 	if (/$ack_line1/i
 	    or (/$ack_line2/ and $fn =~ m,$known_bad_clause_3_wording,)) {
 	    
@@ -110,6 +147,7 @@ while(<>) {
 		print "2> $_" if $debug;
 		
 		$msg="";
+		$msg = $_ if ($fn =~ m,$known_bad_clause_3_wording, and /``/);
 		$cnt=0;
 		$_=<F>;
 		while(!/$ack_endline/i) {
@@ -128,20 +166,64 @@ while(<>) {
 		print "E> $_" if $debug;
 		
 		# post-process
-		$msg =~ s/^\@c\s*//g;			# texinfo
-		$msg =~ s/\n\@c\s*/\n/g;		# texinfo
+
+		if ($fn =~ m,$known_bad_clause_3_wording,) {
+			while ($msg !~ /^.*``.*\n/) {
+				last if (!$msg);
+				$msg =~ s/^.*\n//o;
+			}
+			$msg =~ s/^.*``//o;
+			$msg =~ s/\n.*``//o;
+			$msg =~ s/''.*$//o;
+		}
+
+		# *roff
+		while ($msg =~ /^\.\\"\s*/) {
+			$msg =~ s/^\.\\"\s*//o;
+		}
+		while ($msg =~ /\n\.\\"\s*/) {
+			$msg =~ s/\n\.\\"\s*/\n/o;
+		}
+		$msg =~ s/\n\.\\"\s*$/\n/g;
+
+		# C++/C99
+		while ($msg =~ /^\s*\/\/\s*/) {
+			$msg =~ s/^\s*\/\/\s*//o;
+		}
+		while ($msg =~ /\n\s*\/\/\s*$/) {
+			$msg =~ s/\n\s*\/\/\s*$//o;
+		}
+		$msg =~ s/\n\s*\/\/\s*/\n/g;
+
+		# C
+		while ($msg =~ /^\s*\*\s*/) {
+			$msg =~ s/^\s*\*\s*//o;
+		}
+		while ($msg =~ /\n\s*\*\s*$/) {
+			$msg =~ s/\n\s*\*\s*$//o;
+		}
+		$msg =~ s/\n\s*\*\s*/\n/g;
+
+		# texinfo @c
+		while ($msg =~ /^\s*\@c\s+/) {
+			$msg =~ s/^\s*\@c\s+//o;
+		}
+		while ($msg =~ /\n\s*\@c\s+$/) {
+			$msg =~ s/\n\s*\@c\s+$//o;
+		}
+		$msg =~ s/\n\s*\@c\s+/\n/g;
+
 		$msg =~ s/^REM\s*//g;			# BASIC?!?
 		$msg =~ s/\nREM\s*/\n/g;		# BASIC?!?
 		$msg =~ s/^dnl\s*//g;			# m4
 		$msg =~ s/\dnl\s*/\n/g;			# m4
-		$msg =~ s/^\.\\"\s*//g;			# *roff
-		$msg =~ s/\n\.\\"\s*/\n/g;		# *roff
-		$msg =~ s/^[#\\\|";]*\s*//g;		# sh etc.
-		$msg =~ s/\n[#\\\|";]\s*/\n/g;		# sh etc.
+		$msg =~ s/^\s+-\s+//g;			# seen in docbook files
+		$msg =~ s/\n\s+-\s+/ /g;		#
+		$msg =~ s/^[#\\\|";]+\s*//g;		# sh etc.
+		$msg =~ s/\n[#\\\|";]+\s*/\n/g;		# sh etc.
 		$msg =~ s/^[ 	*]*//g;      		# C
 		$msg =~ s/\n[ 	*]*/\n/g;    		# C
-		$msg =~ s/^\s*\/\/\s*/ /g;		# C++/C99
-		$msg =~ s/\ns*\/\/\s*/ /g;		# C++/C99
+
 		$msg =~ s/\@cartouche\n//;              # texinfo
 
 		$msg =~ s///g;
@@ -149,12 +231,10 @@ while(<>) {
 		$msg =~ s/^\s*//;
 		$msg =~ s/\\\@/\@/g;
 		$msg =~ s/\n\n/\n/g;
-	        $msg =~ s/^\s*"//;
-	        $msg =~ s/"\s*$//;
 	        $msg =~ s/^\s*``//;
 	        $msg =~ s/''\s*$//;
-                $msg .= "\n" if $msg!~/\n$/;
-
+		$msg =~ s/^\"//o;
+		$msg =~ s/\"$//o;
 
 		# Split up into separate paragraphs
 		#
@@ -163,17 +243,23 @@ while(<>) {
 		$msgs=~s,^\|,,;
 	      msg:
 		foreach $msg (split(/\|/, $msgs)) {
-		    print ".\\\" File $fn:\n";
-		    print "$msg";
-		    print "\n";
+		    while ($msg =~ /[\n\s]+$/) {
+			$msg =~ s/[\n\s]+$//o;
+		    }
+		    next if ($msg eq "");
+		    if ($comments) {
+			print ".\\\" File $fn:\n";
+			print "$msg";
+			print "\n\n";
+		    }
 		    
 		    # Figure out if there's a version w/ or w/o trailing dot
 		    # 
-		    if ($msg =~ /\.\n$/) {
+		    if ($msg =~ /\.$/) {
 			# check if there's a version of the same msg
-			# w/ a trailing dot
+			# w/o a trailing dot
 			$msg2=$msg;
-			$msg2=~s,\.\n$,\n,;
+			$msg2=~s,\.$,,;
 			if ($copyrights{"$msg2"}) {
 			    # already there - skip
 			    print "already there, w/o dot - skipping!\n"
@@ -190,10 +276,9 @@ while(<>) {
 			}
 		    } else {
 			# check if there's a version of the same msg
-			# w/o the trailing dot
+			# with a trailing dot
 			$msg2=$msg;
-			chomp($msg2);
-			$msg2.=".\n";
+			$msg2.=".";
 			if ($copyrights{"$msg2"}) {
 			    # already there - skip
 			    print "already there, w/ dot - skipping!\n"
@@ -228,14 +313,26 @@ while(<>) {
 }
 
 
-print "------------------------------------------------------------\n";
-
-$firsttime=1;
-foreach $msg (sort keys %copyrights) {
-    if ($firsttime) {
-	$firsttime=0;
-    } else {
-	print ".It\n";
+if ($html) {
+    print "<ul>\n";
+    foreach $msg (sort keys %copyrights) {
+	print "<li>$msg</li>\n";
     }
-    print "$msg";
+    print "</ul>\n";
+} elsif ($xml) {
+    foreach $msg (sort keys %copyrights) {
+	print "<listitem>$msg</listitem>\n";
+    }
+} else {
+    print "------------------------------------------------------------\n";
+
+    $firsttime=1;
+    foreach $msg (sort keys %copyrights) {
+	if ($firsttime) {
+	    $firsttime=0;
+	} else {
+	    print ".It\n";
+	}
+	print "$msg\n";
+    }
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.58.8.1 2008/05/18 12:35:56 yamt Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.58.8.2 2008/06/04 02:05:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -184,6 +184,7 @@ void  softdep_setup_directory_change(struct buf *, struct inode *,
 				     struct inode *, ino_t, int);
 void  softdep_change_linkcnt(struct inode *);
 void  softdep_releasefile(struct inode *);
+void  softdep_pace_dirrem(void);
 
 __END_DECLS
 

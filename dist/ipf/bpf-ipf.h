@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf-ipf.h,v 1.1.1.1 2004/03/28 08:55:20 martti Exp $	*/
+/*	$NetBSD: bpf-ipf.h,v 1.1.1.1.32.1 2008/06/04 02:03:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -6,7 +6,7 @@
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence 
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence
  * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@
  *
  *      @(#)bpf.h       7.1 (Berkeley) 5/7/91
  *
- * @(#) $Header: /cvsroot/src/dist/ipf/Attic/bpf-ipf.h,v 1.1.1.1 2004/03/28 08:55:20 martti Exp $ (LBL)
+ * @(#) Header: /devel/CVS/IP-Filter/bpf-ipf.h,v 2.1.4.1 2007/10/26 12:15:08 darrenr Exp (LBL)
  */
 
 #ifndef BPF_MAJOR_VERSION
@@ -55,8 +55,8 @@ typedef	int bpf_int32;
 typedef	u_int bpf_u_int32;
 
 /*
- * Alignment macros.  BPF_WORDALIGN rounds up to the next 
- * even multiple of BPF_ALIGNMENT. 
+ * Alignment macros.  BPF_WORDALIGN rounds up to the next
+ * even multiple of BPF_ALIGNMENT.
  */
 #ifndef __NetBSD__
 #define BPF_ALIGNMENT sizeof(bpf_int32)
@@ -76,7 +76,7 @@ struct bpf_program {
 	u_int bf_len;
 	struct bpf_insn *bf_insns;
 };
- 
+
 /*
  * Struct returned by BIOCGSTATS.
  */
@@ -86,7 +86,7 @@ struct bpf_stat {
 };
 
 /*
- * Struct return by BIOCVERSION.  This represents the version number of 
+ * Struct return by BIOCVERSION.  This represents the version number of
  * the filter language described by the instruction encodings below.
  * bpf understands a program iff kernel_major == filter_major &&
  * kernel_minor >= filter_minor, that is, if the value returned by the

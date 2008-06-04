@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.2.8.1 2008/05/18 12:28:45 yamt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.2.8.2 2008/06/04 02:02:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_swap_32)
+ENTRY(_atomic_swap_32)
 	movl	%sp@(4), %a0
 1:	movl	%a0@, %d0
 	movl	%sp@(8), %d1

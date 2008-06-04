@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.163 2008/03/15 00:20:08 matt Exp $
+# $NetBSD: GENERIC,v 1.163.2.1 2008/06/04 02:04:58 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.163 $"
+#ident 		"GENERIC-$Revision: 1.163.2.1 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -150,6 +150,7 @@ options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_ULTRIX
 options 	COMPAT_IBCS2	# DEC SVR.3 compatilibity
 #options 	NO_INSN_EMULATE	# CPU does not lack some hardware instructions.

@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.27.2.1 2008/05/18 12:34:22 yamt Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.27.2.2 2008/06/04 02:05:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.27.2.1 2008/05/18 12:34:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.27.2.2 2008/06/04 02:05:14 yamt Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -1594,7 +1594,6 @@ nobios:
 			if (edid_parse(edid, eip) == 0) {
 
 				sc->sc_ports[i].rp_edid_valid = 1;
-				edid_print(eip);
 			}
 		}
 		/* if we didn't find any we'll try to talk to the monitor */
@@ -3332,21 +3331,38 @@ radeonfb_pickres(struct radeonfb_display *dp, uint16_t *x, uint16_t *y,
 				continue;
 
 			if (!valid) {
-				/* initialize starting list */
-				for (j = 0; j < ep->edid_nmodes; j++) {
-					/*
-					 * ignore resolutions that are
-					 * too big for the radeon
-					 */
-					if (ep->edid_modes[j].hdisplay >
-					    dp->rd_softc->sc_maxx)
-						continue;
-					if (ep->edid_modes[j].vdisplay >
-					    dp->rd_softc->sc_maxy)
-						continue;
+				/*
+				 * Pick the preferred mode for this port
+				 * if available.
+				 */
+				if (ep->edid_preferred_mode) {
+					struct videomode *vmp = 
+						ep->edid_preferred_mode;
 
-					modes[nmodes] = ep->edid_modes[j];
-					nmodes++;
+					if ((vmp->hdisplay <= 
+					     dp->rd_softc->sc_maxx) && 
+					    (vmp->vdisplay <= 
+					     dp->rd_softc->sc_maxy))
+						modes[nmodes++] = *vmp;
+				} else {
+
+					/* initialize starting list */
+					for (j = 0; j < ep->edid_nmodes; j++) {
+						/*
+						 * ignore resolutions that are
+						 * too big for the radeon
+						 */
+						if (ep->edid_modes[j].hdisplay >
+						    dp->rd_softc->sc_maxx)
+							continue;
+						if (ep->edid_modes[j].vdisplay >
+						    dp->rd_softc->sc_maxy)
+							continue;
+
+						modes[nmodes] = 
+							ep->edid_modes[j];
+						nmodes++;
+					}
 				}
 				valid = 1;
 			} else {
