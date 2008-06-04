@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_parser.c,v 1.9.18.2 2008/04/26 12:54:34 peter Exp $	*/
+/*	$NetBSD: pfctl_parser.c,v 1.9.18.3 2008/06/04 20:34:37 joerg Exp $	*/
 /*	$OpenBSD: pfctl_parser.c,v 1.234 2006/10/31 23:46:24 mcbride Exp $ */
 
 /*
@@ -679,8 +679,8 @@ print_src_node(struct pf_src_node *sn, int opts)
 			    sn->expire, min, sec);
 		}
 		printf(", %llu pkts, %llu bytes",
-		    sn->packets[0] + sn->packets[1],
-		    sn->bytes[0] + sn->bytes[1]);
+		    (unsigned long long)sn->packets[0] + sn->packets[1],
+		    (unsigned long long)sn->bytes[0] + sn->bytes[1]);
 		switch (sn->ruletype) {
 		case PF_NAT:
 			if (sn->rule.nr != -1)

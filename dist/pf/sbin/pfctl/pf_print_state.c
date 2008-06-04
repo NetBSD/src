@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_print_state.c,v 1.3.20.1 2008/04/19 09:13:41 yamt Exp $	*/
+/*	$NetBSD: pf_print_state.c,v 1.3.20.2 2008/06/04 20:34:37 joerg Exp $	*/
 /*	$OpenBSD: pf_print_state.c,v 1.45 2007/05/31 04:13:37 mcbride Exp $	*/
 
 /*
@@ -279,10 +279,10 @@ print_state(struct pfsync_state *s, int opts)
 		s->expire /= 60;
 		printf(", expires in %.2u:%.2u:%.2u", s->expire, min, sec);
 		printf(", %llu:%llu pkts, %llu:%llu bytes",
-		    pf_state_counter_from_pfsync(s->packets[0]),
-		    pf_state_counter_from_pfsync(s->packets[1]),
-		    pf_state_counter_from_pfsync(s->bytes[0]),
-		    pf_state_counter_from_pfsync(s->bytes[1]));
+		    (unsigned long long int)pf_state_counter_from_pfsync(s->packets[0]),
+		    (unsigned long long int)pf_state_counter_from_pfsync(s->packets[1]),
+		    (unsigned long long int)pf_state_counter_from_pfsync(s->bytes[0]),
+		    (unsigned long long int)pf_state_counter_from_pfsync(s->bytes[1]));
 		if (s->anchor != -1)
 			printf(", anchor %u", s->anchor);
 		if (s->rule != -1)
@@ -295,7 +295,8 @@ print_state(struct pfsync_state *s, int opts)
 	}
 	if (opts & PF_OPT_VERBOSE2) {
 		printf("   id: %016llx creatorid: %08x%s\n",
-		    pf_state_counter_from_pfsync(s->id), ntohl(s->creatorid),
+		    (unsigned long long int)pf_state_counter_from_pfsync(s->id),
+		    ntohl(s->creatorid),
 		    ((s->sync_flags & PFSTATE_NOSYNC) ? " (no-sync)" : ""));
 	}
 }
