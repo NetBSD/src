@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.51.2.6 2008/04/29 17:24:29 peter Exp $	*/
+/*	$NetBSD: pf.c,v 1.51.2.7 2008/06/04 20:34:37 joerg Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.6 2008/04/29 17:24:29 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.7 2008/06/04 20:34:37 joerg Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -4162,8 +4162,9 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_print_flags(th->th_flags);
 			printf(" seq=%u (%u) ack=%u len=%u ackskew=%d "
 			    "pkts=%llu:%llu\n", seq, orig_seq, ack, pd->p_len,
-			    ackskew, (*state)->packets[0],
-			    (*state)->packets[1]);
+			    ackskew,
+			    (unsigned long long int)(*state)->packets[0],
+			    (unsigned long long int)(*state)->packets[1]);
 		}
 
 		if (dst->scrub || src->scrub) {
@@ -4216,7 +4217,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			printf(" seq=%u (%u) ack=%u len=%u ackskew=%d "
 			    "pkts=%llu:%llu dir=%s,%s\n",
 			    seq, orig_seq, ack, pd->p_len, ackskew,
-			    (*state)->packets[0], (*state)->packets[1],
+			    (unsigned long long int)(*state)->packets[0],
+			    (unsigned long long int)(*state)->packets[1],
 			    direction == PF_IN ? "in" : "out",
 			    direction == (*state)->state_key->direction ?
 				"fwd" : "rev");
