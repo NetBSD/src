@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.12.2.1 2008/05/18 12:32:19 yamt Exp $
+# $NetBSD: GENERIC,v 1.12.2.2 2008/06/04 02:04:47 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.12.2.1 $"
+#ident          "GENERIC-$Revision: 1.12.2.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -113,7 +113,7 @@ file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options

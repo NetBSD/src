@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.8.1 2008/05/18 12:33:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.8.2 2008/06/04 02:05:04 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -209,7 +209,8 @@ cpu_intr_init(struct cpu_info *ci)
 #if NPCI > 0 || NISA > 0
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin,
-    int type, int level, int (*handler)(void *) , void *arg)
+    int type, int level, int (*handler)(void *) , void *arg,
+    bool known_mpsafe)
 {
 	struct pintrhand *ih;
 	int evtchn;

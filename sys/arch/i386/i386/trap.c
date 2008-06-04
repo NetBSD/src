@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.235.2.1 2008/05/18 12:32:10 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.235.2.2 2008/06/04 02:04:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235.2.1 2008/05/18 12:32:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235.2.2 2008/06/04 02:04:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -95,15 +95,15 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235.2.1 2008/05/18 12:32:10 yamt Exp $");
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/kauth.h>
-
+#include <sys/cpu.h>
 #include <sys/ucontext.h>
+
 #include <uvm/uvm_extern.h>
 
 #if NTPROF > 0
 #include <x86/tprof.h>
 #endif /* NTPROF > 0 */
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -286,8 +286,6 @@ trap(frame)
 	uint32_t cr2;
 	bool pfail;
 
-	uvmexp.traps++;
-
 	if (__predict_true(l != NULL)) {
 		pcb = &l->l_addr->u_pcb;
 		p = l->l_proc;
@@ -342,6 +340,14 @@ trap(frame)
 			}
 		}
 #endif
+		if (frame->tf_trapno < trap_types)
+			printf("fatal %s", trap_type[frame->tf_trapno]);
+		else
+			printf("unknown trap %d", frame->tf_trapno);
+		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
+		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
+		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
 #ifdef DDB
 		if (kdb_trap(type, 0, frame))
 			return;
@@ -360,15 +366,6 @@ trap(frame)
 			}
 		}
 #endif
-		if (frame->tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame->tf_trapno]);
-		else
-			printf("unknown trap %d", frame->tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
-		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
-
 		panic("trap");
 		/*NOTREACHED*/
 
@@ -589,12 +586,9 @@ copyfault:
 		if ((onfault = pcb->pcb_onfault) == fusubail) {
 			goto copyefault;
 		}
-
-#if 0
-		/* XXX - check only applies to 386's and 486's with WP off */
-		if (frame->tf_err & PGEX_P)
+		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
 			goto we_re_toast;
-#endif
+		}
 
 		/*
 		 * XXXhack: xen2 hypervisor pushes cr2 onto guest's stack

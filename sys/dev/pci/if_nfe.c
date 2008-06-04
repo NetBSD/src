@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.33.2.1 2008/05/18 12:34:19 yamt Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.33.2.2 2008/06/04 02:05:14 yamt Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.33.2.1 2008/05/18 12:34:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.33.2.2 2008/06/04 02:05:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -109,6 +109,8 @@ void	nfe_setmulti(struct nfe_softc *);
 void	nfe_get_macaddr(struct nfe_softc *, uint8_t *);
 void	nfe_set_macaddr(struct nfe_softc *, const uint8_t *);
 void	nfe_tick(void *);
+void	nfe_poweron(device_t);
+bool	nfe_resume(device_t PMF_FN_PROTO);
 
 CFATTACH_DECL_NEW(nfe, sizeof(struct nfe_softc), nfe_match, nfe_attach,
     NULL, NULL);
@@ -315,16 +317,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	if ((sc->sc_flags & NFE_PWR_MGMT) != 0) {
-		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_RESET | NFE_RXTX_BIT2);
-		NFE_WRITE(sc, NFE_MAC_RESET, NFE_MAC_RESET_MAGIC);
-		DELAY(100);
-		NFE_WRITE(sc, NFE_MAC_RESET, 0);
-		DELAY(100);
-		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_BIT2);
-		NFE_WRITE(sc, NFE_PWR2_CTL,
-		    NFE_READ(sc, NFE_PWR2_CTL) & ~NFE_PWR2_WAKEUP_MASK);
-	}
+	nfe_poweron(self);
 
 #ifndef NFE_NO_JUMBO
 	/* enable jumbo frames for adapters that support it */
@@ -411,7 +404,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, nfe_tick, sc);
 
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, nfe_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
@@ -1922,4 +1915,29 @@ nfe_tick(void *arg)
 	splx(s);
 
 	callout_schedule(&sc->sc_tick_ch, hz);
+}
+
+void
+nfe_poweron(device_t self)
+{
+	struct nfe_softc *sc = device_private(self);
+
+	if ((sc->sc_flags & NFE_PWR_MGMT) != 0) {
+		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_RESET | NFE_RXTX_BIT2);
+		NFE_WRITE(sc, NFE_MAC_RESET, NFE_MAC_RESET_MAGIC);
+		DELAY(100);
+		NFE_WRITE(sc, NFE_MAC_RESET, 0);
+		DELAY(100);
+		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_BIT2);
+		NFE_WRITE(sc, NFE_PWR2_CTL,
+		    NFE_READ(sc, NFE_PWR2_CTL) & ~NFE_PWR2_WAKEUP_MASK);
+	}
+}
+
+bool
+nfe_resume(device_t dv PMF_FN_ARGS)
+{
+	nfe_poweron(dv);
+
+	return true;
 }

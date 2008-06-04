@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.5.2.1 2008/05/18 12:32:22 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.5.2.2 2008/06/04 02:04:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  * a restartable atomic sequence.  For an example of how this is used,
  * see sun68k/sun68k/isr.c
  */
-ENTRY_NOPROFILE(_atomic_cas_32)
+ENTRY(_atomic_cas_32)
 	movl	%sp@(4),%a0
 
 	.globl _C_LABEL(_atomic_cas_ras_start)

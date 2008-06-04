@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.4.4.1 2008/05/18 12:28:44 yamt Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.4.4.2 2008/06/04 02:02:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -39,25 +39,25 @@
  * We start out with no-op versions that do nothing.  We hot-patch when
  * we detect a MP system.
  */
-LEAF_NOPROFILE(_membar_producer, 0)
+LEAF(_membar_producer, 0)
 	RET
 	nop
 	END(_membar_producer)
 EXPORT(_membar_producer_end)
 
-LEAF_NOPROFILE(_membar_sync, 0)
+LEAF(_membar_sync, 0)
 	RET
 	nop
 	END(_membar_sync)
 EXPORT(_membar_sync_end)
 
-LEAF_NOPROFILE(_membar_producer_mp, 0)
+LEAF(_membar_producer_mp, 0)
 	wmb
 	RET
 	END(_membar_producer_mp)
 EXPORT(_membar_producer_mp_end)
 
-LEAF_NOPROFILE(_membar_sync_mp, 0)
+LEAF(_membar_sync_mp, 0)
 	mb
 	RET
 	END(_membar_sync_mp)
@@ -65,13 +65,13 @@ EXPORT(_membar_sync_mp_end)
 
 #else	/* _KERNEL */
 
-LEAF_NOPROFILE(_membar_producer, 0)
+LEAF(_membar_producer, 0)
 	mb
 	RET
 	END(_membar_producer)
 EXPORT(_membar_producer_end)
 
-LEAF_NOPROFILE(_membar_sync, 0)
+LEAF(_membar_sync, 0)
 	mb
 	RET
 	END(_membar_sync)

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6.12.1 2008/05/18 12:30:42 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.6.12.2 2008/06/04 02:04:34 yamt Exp $
 
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,7 +49,7 @@ define _UC_FPU				_UC_FPU
 define _UC_USER				_UC_USER
 define _UC_USER_BIT			_UC_USER_BIT
 
-define	_REG_EXPEVT	_REG_EXPEVT
+define	_REG_GBR	_REG_GBR
 define	_REG_PC		_REG_PC
 define	_REG_SR		_REG_SR
 define	_REG_MACL	_REG_MACL

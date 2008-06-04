@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.252.2.1 2008/05/18 12:35:56 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.252.2.2 2008/06/04 02:05:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.252.2.1 2008/05/18 12:35:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.252.2.2 2008/06/04 02:05:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3065,9 +3065,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 				if (UVM_OBJ_IS_VNODE(uobj) &&
 				    (current->protection & VM_PROT_EXECUTE)) {
-				    	mutex_enter(&uobj->vmobjlock);
 					vn_markexec((struct vnode *) uobj);
-				    	mutex_exit(&uobj->vmobjlock);
 				}
 			}
 		}
@@ -4137,6 +4135,7 @@ uvmspace_free(struct vmspace *vm)
 	mutex_destroy(&map->misc_lock);
 	mutex_destroy(&map->mutex);
 	rw_destroy(&map->lock);
+	cv_destroy(&map->cv);
 	pmap_destroy(map->pmap);
 	pool_cache_put(&uvm_vmspace_cache, vm);
 }

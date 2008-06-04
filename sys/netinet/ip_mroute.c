@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.111.8.1 2008/05/18 12:35:29 yamt Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.111.8.2 2008/06/04 02:05:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.111.8.1 2008/05/18 12:35:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.111.8.2 2008/06/04 02:05:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -945,7 +945,7 @@ add_vif(struct mbuf *m)
 		/* Enable promiscuous reception of all IP multicasts. */
 		sockaddr_in_init(&sin, &zeroin_addr, 0);
 		ifreq_setaddr(SIOCADDMULTI, &ifr, sintosa(&sin));
-		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (void *)&ifr);
+		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr);
 		if (error)
 			return (error);
 	}
@@ -1030,7 +1030,7 @@ reset_vif(struct vif *vifp)
 		sockaddr_in_init(&sin, &zeroin_addr, 0);
 		ifreq_setaddr(SIOCDELMULTI, &ifr, sintosa(&sin));
 		ifp = vifp->v_ifp;
-		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)&ifr);
+		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, &ifr);
 	}
 	bzero((void *)vifp, sizeof(*vifp));
 }

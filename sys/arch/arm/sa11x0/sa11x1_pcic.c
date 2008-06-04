@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.16.18.1 2008/05/18 12:31:40 yamt Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.16.18.2 2008/06/04 02:04:40 yamt Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.16.18.1 2008/05/18 12:31:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.16.18.2 2008/06/04 02:04:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,8 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 
 	sc->sc_pc.sc_iot = psc->sc_iot;
 	sc->sc_ioh = psc->sc_ioh;
+
+	mutex_init(&sc->sc_pc.sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	for (i = 0; i < 2; i++) {
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;

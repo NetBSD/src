@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.18 2007/06/24 05:41:53 isaki Exp $
+#	$NetBSD: Makefile,v 1.18.14.1 2008/06/04 02:03:20 yamt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 .include <bsd.kernobj.mk>
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	500k
+IMAGESIZE=	600k
 MAKEFS_FLAGS=	-f 15 -o density=2048
 
 WARNS=		1

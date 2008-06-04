@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.10.1 2008/05/18 12:29:49 yamt Exp $
+#	$NetBSD: Makefile,v 1.9.10.2 2008/06/04 02:04:33 yamt Exp $
 
 LIBISPRIVATE=	yes
 
@@ -294,6 +294,7 @@ insn-attrtab.o: insn-config.h
 insn-extract.o: insn-config.h
 toplev.d toplev.o: options.h
 coverage.d: gcov-iov.h
+gcov-io.h: gcov-iov.h
 
 COPTS+=-Wno-stack-protector
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.2.4.2 2008/05/18 12:33:04 yamt Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.2.4.3 2008/06/04 02:04:58 yamt Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /* 
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.2.4.2 2008/05/18 12:33:04 yamt Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.2.4.3 2008/06/04 02:04:58 yamt Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,7 +397,7 @@ amdtemp_k8_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 static void
 amdtemp_family10_init(struct amdtemp_softc *sc)
 {
-	aprint_normal(" (Family10h)");
+	aprint_normal(" (Family10h / Family11h)");
 
 	sc->sc_numsensors = 1;
 }
@@ -432,5 +432,6 @@ amdtemp_family10_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	value = (status >> 21);
 
 	edata->state = ENVSYS_SVALID;
-	edata->value_cur = (value * 125000) + 255875000;
+	/* envsys(4) wants uK... convert from Celsius. */
+	edata->value_cur = (value * 125000) + 273150000;
 }

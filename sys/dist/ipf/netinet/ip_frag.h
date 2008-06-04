@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.h,v 1.4 2007/04/14 20:34:36 martin Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.4.30.1 2008/06/04 02:05:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * Id: ip_frag.h,v 2.23.2.5 2006/12/23 11:11:47 darrenr Exp
+ * Id: ip_frag.h,v 2.23.2.6 2008/04/09 10:54:03 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FRAG_H_
@@ -89,8 +89,8 @@ extern	void	fr_forgetnat __P((void *));
 extern	void	fr_fragclear __P((void));
 extern	void	fr_fragexpire __P((void));
 
-#if     defined(_KERNEL) && ((BSD >= 199306) || SOLARIS || defined(__sgi) \
-	        || defined(__osf__) || (defined(__sgi) && (IRIX >= 60500)))
+#if defined(_KERNEL) && ((defined(BSD) && (BSD >= 199306)) || SOLARIS || \
+    defined(__sgi) || defined(__osf__) || (defined(__sgi) && (IRIX >= 60500)))
 # if defined(SOLARIS2) && (SOLARIS2 < 7)
 extern	void	fr_slowtimer __P((void));
 # else

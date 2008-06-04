@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.48.8.1 2008/05/18 12:35:54 yamt Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.48.8.2 2008/06/04 02:05:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.48.8.1 2008/05/18 12:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.48.8.2 2008/06/04 02:05:53 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.48.8.1 2008/05/18 12:35:54 yamt Exp
 
 #include <uvm/uvm.h>
 
-static int ffs_getblk(struct vnode *, daddr_t, daddr_t, int, bool, buf_t **);
 static int ffs_balloc_ufs1(struct vnode *, off_t, int, kauth_cred_t, int,
     struct buf **);
 static int ffs_balloc_ufs2(struct vnode *, off_t, int, kauth_cred_t, int,
@@ -93,22 +92,6 @@ ffs_balloc(struct vnode *vp, off_t off, int size, kauth_cred_t cred, int flags,
 	if (error == 0 && bpp != NULL && (error = fscow_run(*bpp, false)) != 0)
 		brelse(*bpp, 0);
 
-	return error;
-}
-
-static int
-ffs_getblk(struct vnode *vp, daddr_t lblkno, daddr_t blkno, int size,
-    bool clearbuf, buf_t **bpp)
-{
-	int error;
-
-	if ((*bpp = getblk(vp, lblkno, size, 0, 0)) == NULL)
-		return ENOMEM;
-	(*bpp)->b_blkno = blkno;
-	if (clearbuf)
-		clrbuf(*bpp);
-	if ((error = fscow_run(*bpp, false)) != 0)
-		brelse(*bpp, BC_INVAL);
 	return error;
 }
 
@@ -496,14 +479,16 @@ fail:
 			if (i == 0) {
 				break;
 			}
-			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
-			    0);
+			if (ffs_getblk(vp, indirs[i].in_lbn, FFS_NOBLK,
+			    fs->fs_bsize, false, &bp) != 0)
+				continue;
 			if (bp->b_oflags & BO_DELWRI) {
 				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
 				    dbtofsb(fs, bp->b_blkno))));
 				bwrite(bp);
-				bp = getblk(ip->i_devvp, nb, (int)fs->fs_cgsize,
-				    0, 0);
+				if (ffs_getblk(ip->i_devvp, nb, FFS_NOBLK,
+				    fs->fs_cgsize, false, &bp) != 0)
+					continue;
 				if (bp->b_oflags & BO_DELWRI) {
 					bwrite(bp);
 				} else {
@@ -550,9 +535,9 @@ fail:
 			}
 		}
 		for (i = unwindidx + 1; i <= num; i++) {
-			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
-			    0);
-			brelse(bp, BC_INVAL);
+			if (ffs_getblk(vp, indirs[i].in_lbn, FFS_NOBLK,
+			    fs->fs_bsize, false, &bp) == 0)
+				brelse(bp, BC_INVAL);
 		}
 	}
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
@@ -715,11 +700,11 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			   nsize, cred, &newb);
 			if (error)
 				return (error);
-			bp = getblk(vp, -1 - lbn, nsize, 0, 0);
-			bp->b_blkno = fsbtodb(fs, newb);
+			error = ffs_getblk(vp, -1 - lbn, fsbtodb(fs, newb),
+			    nsize, (flags & BA_CLRBUF) != 0, &bp);
+			if (error)
+				return error;
 			bp->b_xflags |= BX_ALTDATA;
-			if (flags & BA_CLRBUF)
-				vfs_bio_clrbuf(bp);
 			if (DOINGSOFTDEP(vp))
 				softdep_setup_allocext(ip, lbn, newb, 0,
 				    nsize, 0, bp);
@@ -1080,14 +1065,16 @@ fail:
 			if (i == 0) {
 				break;
 			}
-			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
-			    0);
+			if (ffs_getblk(vp, indirs[i].in_lbn, FFS_NOBLK,
+			    fs->fs_bsize, false, &bp) != 0)
+				continue;
 			if (bp->b_oflags & BO_DELWRI) {
 				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
 				    dbtofsb(fs, bp->b_blkno))));
 				bwrite(bp);
-				bp = getblk(ip->i_devvp, nb, (int)fs->fs_cgsize,
-				    0, 0);
+				if (ffs_getblk(ip->i_devvp, nb, FFS_NOBLK,
+				    fs->fs_cgsize, false, &bp) != 0)
+					continue;
 				if (bp->b_oflags & BO_DELWRI) {
 					bwrite(bp);
 				} else {
@@ -1134,9 +1121,9 @@ fail:
 			}
 		}
 		for (i = unwindidx + 1; i <= num; i++) {
-			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
-			    0);
-			brelse(bp, BC_INVAL);
+			if (ffs_getblk(vp, indirs[i].in_lbn, FFS_NOBLK,
+			    fs->fs_bsize, false, &bp) == 0)
+				brelse(bp, BC_INVAL);
 		}
 	}
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {

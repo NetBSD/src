@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.24.38.1 2008/05/18 12:34:51 yamt Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.24.38.2 2008/06/04 02:05:21 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ struct usb_dma_reserve {
 	bus_addr_t paddr;
 	size_t size;
 	struct extent *extent;
-	void *softc;
+	device_t dv;
 };
 
 #if defined(_KERNEL_OPT)
@@ -76,7 +76,7 @@ struct usb_dma_reserve {
 
 usbd_status usb_reserve_allocm(struct usb_dma_reserve *, usb_dma_t *,
 				u_int32_t);
-int usb_setup_reserve(void *, struct usb_dma_reserve *, bus_dma_tag_t, size_t);
+int usb_setup_reserve(device_t, struct usb_dma_reserve *, bus_dma_tag_t, size_t);
 void usb_reserve_freem(struct usb_dma_reserve *, usb_dma_t *);
 
 #endif

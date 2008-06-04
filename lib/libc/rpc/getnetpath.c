@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.12.10.1 2008/05/18 12:30:18 yamt Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.12.10.2 2008/06/04 02:04:33 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetpath.c	1.11 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetpath.c,v 1.12.10.1 2008/05/18 12:30:18 yamt Exp $");
+__RCSID("$NetBSD: getnetpath.c,v 1.12.10.2 2008/06/04 02:04:33 yamt Exp $");
 #endif
 #endif
 
@@ -184,8 +184,10 @@ getnetpath(handlep)
 		if ((ncp = getnetconfigent(npp)) != NULL) {
 					/* cobble alloc chain entry */
 			chainp = malloc(sizeof (struct netpath_chain));
-			if (chainp == NULL)
+			if (chainp == NULL) {
+				freenetconfigent(ncp);
 				return NULL;
+			}
 			chainp->ncp = ncp;
 			chainp->nchain_next = NULL;
 			if (np_sessionp->ncp_list == NULL)

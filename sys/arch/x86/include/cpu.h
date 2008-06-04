@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4.4.2 2008/05/18 12:33:01 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4.4.3 2008/06/04 02:04:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -229,8 +229,6 @@ extern struct cpu_info *cpu_info_list;
 #define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
-#define X86_MAXPROCS		32	/* because we use a bitmask */
-
 #define CPU_STARTUP(_ci, _target)	((_ci)->ci_func->start(_ci, _target))
 #define CPU_STOP(_ci)	        	((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)		((_ci)->ci_func->cleanup(_ci))
@@ -238,8 +236,12 @@ extern struct cpu_info *cpu_info_list;
 #if !defined(__GNUC__) || defined(_LKM)
 /* For non-GCC and modules */
 struct cpu_info	*x86_curcpu(void);
-lwp_t	*x86_curlwp(void);
 void	cpu_set_curpri(int);
+# ifdef __GNUC__
+lwp_t	*x86_curlwp(void) __attribute__ ((const));
+# else
+lwp_t   *x86_curlwp(void);
+# endif
 #endif
 
 #define cpu_number() 		(cpu_index(curcpu()))
@@ -343,7 +345,6 @@ void	lgdt(struct region_descriptor *);
 void	lgdt_finish(void);
 void	i386_switch_context(lwp_t *);
 #endif
-void	fillw(short, void *, size_t);
 
 struct pcb;
 void	savectx(struct pcb *);

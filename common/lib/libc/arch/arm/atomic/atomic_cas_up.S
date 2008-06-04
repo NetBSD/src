@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.1.4.2 2008/05/18 12:28:44 yamt Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.1.4.3 2008/06/04 02:02:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/ras.h>
 #include <machine/asm.h>
 
-ENTRY_NP(_atomic_cas_up)
+ENTRY(_atomic_cas_up)
 	.hidden	_C_LABEL(_atomic_cas_up)
 	mov	r3, r0
 RAS_START_ASM_HIDDEN(_atomic_cas)

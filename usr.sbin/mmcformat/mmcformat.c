@@ -1,4 +1,4 @@
-/* $NetBSD: mmcformat.c,v 1.1.2.2 2008/05/18 12:36:22 yamt Exp $ */
+/* $NetBSD: mmcformat.c,v 1.1.2.3 2008/06/04 02:05:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -210,8 +210,8 @@ static int
 uscsi_set_packet_parameters(struct uscsi_dev *mydev, int blockingnr)
 {
 	scsicmd  cmd;
-	int      blk_len = 10000, val_len;
-	uint8_t  res[blk_len], *pos;
+	int      val_len;
+	uint8_t  res[10000], *pos;
 	int      error;
 
 	/* Set up CD/DVD recording parameters */
@@ -693,11 +693,11 @@ int
 main(int argc, char *argv[])
 {
 	struct uscsi_addr saddr;
-	uint32_t caps_len = 512;
 	uint32_t blks[256], params[256];
 	uint32_t format_type, format_blks, format_param, blockingnr;
 	uint8_t  allow[256];
-	uint8_t caps[caps_len];
+	uint8_t caps[512];
+	uint32_t caps_len = sizeof(caps);
 	char *progname;
 	int blank, format, mrw, background;
 	int inquiry, spare, oldtimer;

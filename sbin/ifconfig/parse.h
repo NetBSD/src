@@ -147,16 +147,17 @@ extern const struct parser_methods pterm_methods;
 
 #define	IFKW(__word, __flag)					\
 {								\
-	.k_word = (__word), .k_neg = true, .k_type = KW_T_NUM,	\
-	.k_num = (__flag),					\
-	.k_negnum = -(__flag)					\
+	.k_word = (__word), .k_neg = true, .k_type = KW_T_INT,	\
+	.k_int = (__flag),					\
+	.k_negint = -(__flag)					\
 }
 
 #define	KW_T_NONE	0
 #define	KW_T_OBJ	1
-#define	KW_T_NUM	2
+#define	KW_T_INT	2
 #define	KW_T_STR	3
 #define	KW_T_BOOL	4
+#define	KW_T_UINT	5
 
 struct kwinst {
 	SIMPLEQ_ENTRY(kwinst)	k_next;
@@ -168,17 +169,20 @@ struct kwinst {
 	const char		*k_altdeact;
 	parser_exec_t		k_exec;
 	union kwval {
-		int64_t		u_num;
+		int64_t		u_sint;
+		uint64_t	u_uint;
 		const char	*u_str;
 		prop_object_t	u_obj;
 		bool		u_bool;
 	} k_u, k_negu;
-#define k_num	k_u.u_num
+#define k_int	k_u.u_sint
+#define k_uint	k_u.u_uint
 #define k_str	k_u.u_str
 #define k_obj	k_u.u_obj
 #define k_bool	k_u.u_bool
 
-#define k_negnum	k_negu.u_num
+#define k_negint	k_negu.u_sint
+#define k_neguint	k_negu.u_uint
 #define k_negstr	k_negu.u_str
 #define k_negobj	k_negu.u_obj
 #define k_negbool	k_negu.u_bool

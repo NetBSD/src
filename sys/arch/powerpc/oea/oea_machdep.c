@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.44 2008/02/14 19:41:54 garbled Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.44.8.1 2008/06/04 02:04:51 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44 2008/02/14 19:41:54 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44.8.1 2008/06/04 02:04:51 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -130,7 +130,7 @@ oea_init(void (*handler)(void))
 #ifdef ALTIVEC
 	register_t msr;
 #endif
-	uintptr_t exc;
+	uintptr_t exc, exc_base;
 #if defined(ALTIVEC) || defined(PPC_OEA)
 	register_t scratch;
 #endif
@@ -138,6 +138,11 @@ oea_init(void (*handler)(void))
 	size_t size;
 	struct cpu_info * const ci = &cpu_info[0];
 
+#ifdef PPC_HIGH_VEC
+	exc_base = EXC_HIGHVEC;
+#else
+	exc_base = 0;
+#endif
 	mtspr(SPR_SPRG0, ci);
 	cpuvers = mfpvr() >> 16;
 
@@ -180,8 +185,8 @@ oea_init(void (*handler)(void))
 	/*
 	 * Set up trap vectors.  Don't assume vectors are on 0x100.
 	 */
-	for (exc = 0x0; exc <= EXC_LAST; exc += 0x100) {
-		switch (exc) {
+	for (exc = exc_base; exc <= exc_base + EXC_LAST; exc += 0x100) {
+		switch (exc - exc_base) {
 		default:
 			size = (size_t)trapsize;
 			memcpy((void *)exc, trapcode, size);
@@ -195,48 +200,48 @@ oea_init(void (*handler)(void))
 #endif
 		case EXC_SC:
 			size = (size_t)scsize;
-			memcpy((void *)EXC_SC, sctrap, size);
+			memcpy((void *)exc, sctrap, size);
 			break;
 		case EXC_ALI:
 			size = (size_t)alisize;
-			memcpy((void *)EXC_ALI, alitrap, size);
+			memcpy((void *)exc, alitrap, size);
 			break;
 		case EXC_DSI:
 #ifdef PPC_OEA601
 			if (cpuvers == MPC601) {
 				size = (size_t)dsi601size;
-				memcpy((void *)EXC_DSI, dsi601trap, size);
+				memcpy((void *)exc, dsi601trap, size);
 				break;
 			} else
 #endif /* PPC_OEA601 */
 			if (oeacpufeat & OEACPU_NOBAT) {
 				size = (size_t)alisize;
-				memcpy((void *)EXC_DSI, alitrap, size);
+				memcpy((void *)exc, alitrap, size);
 			} else {
 				size = (size_t)dsisize;
-				memcpy((void *)EXC_DSI, dsitrap, size);
+				memcpy((void *)exc, dsitrap, size);
 			}
 			break;
 		case EXC_DECR:
 			size = (size_t)decrsize;
-			memcpy((void *)EXC_DECR, decrint, size);
+			memcpy((void *)exc, decrint, size);
 			break;
 		case EXC_IMISS:
 			size = (size_t)tlbimsize;
-			memcpy((void *)EXC_IMISS, tlbimiss, size);
+			memcpy((void *)exc, tlbimiss, size);
 			break;
 		case EXC_DLMISS:
 			size = (size_t)tlbdlmsize;
-			memcpy((void *)EXC_DLMISS, tlbdlmiss, size);
+			memcpy((void *)exc, tlbdlmiss, size);
 			break;
 		case EXC_DSMISS:
 			size = (size_t)tlbdsmsize;
-			memcpy((void *)EXC_DSMISS, tlbdsmiss, size);
+			memcpy((void *)exc, tlbdsmiss, size);
 			break;
 		case EXC_PERF:
 			size = (size_t)trapsize;
-			memcpy((void *)EXC_PERF, trapcode, size);
-			memcpy((void *)EXC_VEC,  trapcode, size);
+			memcpy((void *)exc, trapcode, size);
+			memcpy((void *)(exc_base + EXC_VEC),  trapcode, size);
 			break;
 #if defined(DDB) || defined(IPKDB) || defined(KGDB)
 		case EXC_RUNMODETRC:
@@ -244,7 +249,7 @@ oea_init(void (*handler)(void))
 			if (cpuvers != MPC601) {
 #endif
 				size = (size_t)trapsize;
-				memcpy((void *)EXC_RUNMODETRC, trapcode, size);
+				memcpy((void *)exc, trapcode, size);
 				break;
 #ifdef PPC_OEA601
 			}
@@ -274,8 +279,10 @@ oea_init(void (*handler)(void))
 	/*
 	 * Install a branch absolute to trap0 to force a panic.
 	 */
-	*(uint32_t *) 0 = 0x7c6802a6;
-	*(uint32_t *) 4 = 0x48000002 | (uintptr_t) trap0;
+	if ((uintptr_t)trap0 < 0x2000000) {
+		*(uint32_t *) 0 = 0x7c6802a6;
+		*(uint32_t *) 4 = 0x48000002 | (uintptr_t) trap0;
+	}
 
 	/*
 	 * Get the cache sizes because install_extint calls __syncicache.
@@ -395,6 +402,9 @@ oea_init(void (*handler)(void))
 	if (cpu_altivec)
 		cpu_pslusermod |= PSL_VEC;
 #endif
+#ifdef PPC_HIGH_VEC
+	cpu_psluserset |= PSL_IP;	/* XXX ok? */
+#endif
 
 	/*
 	 * external interrupt handler install
@@ -402,7 +412,7 @@ oea_init(void (*handler)(void))
 	if (handler)
 		oea_install_extint(handler);
 
-	__syncicache(0, EXC_LAST + 0x100);
+	__syncicache((void *)exc_base, EXC_LAST + 0x100);
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
@@ -692,9 +702,14 @@ oea_install_extint(void (*handler)(void))
 	    :	"=r" (omsr), "=r" (msr)
 	    :	"K" ((u_short)~PSL_EE));
 	extint_call[0] = (extint_call[0] & 0xfc000003) | offset;
-	memcpy((void *)EXC_EXI, extint, (size_t)extsize);
 	__syncicache((void *)extint_call, sizeof extint_call[0]);
+#ifdef PPC_HIGH_VEC
+	memcpy((void *)(EXC_HIGHVEC + EXC_EXI), extint, (size_t)extsize);
+	__syncicache((void *)(EXC_HIGHVEC + EXC_EXI), (int)extsize);
+#else
+	memcpy((void *)EXC_EXI, extint, (size_t)extsize);
 	__syncicache((void *)EXC_EXI, (int)extsize);
+#endif
 	__asm volatile ("mtmsr %0" :: "r"(omsr));
 }
 

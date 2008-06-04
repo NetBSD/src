@@ -1,4 +1,4 @@
-#	$Id: README,v 1.1.1.1.2.2 2008/05/18 12:29:20 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:20 $
+#	Id: README,v 8.29 2001/05/13 20:52:36 skimo Exp (Berkeley) Date: 2001/05/13 20:52:36
 
 Nvi uses the GNU autoconf program for configuration and compilation.  You
 should enter:

@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpu_switchto.9,v 1.9 2008/01/24 23:06:10 ad Exp $
+.\"	$NetBSD: cpu_switchto.9,v 1.9.6.1 2008/06/04 02:04:38 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -84,7 +84,9 @@ If true, it indicates that
 is a soft interrupt LWP that is blocking.
 It's a good indication that any kind of address space or user activity
 can be completely ignored.
-For example: ras_lookup(), cache flushes, TLB wirings, adjusting lazy FPU
+For example:
+.Fn ras_lookup ,
+cache flushes, TLB wirings, adjusting lazy FPU
 state.
 All that is required is to restore the register state and stack, and
 return to the interrupted LWP.

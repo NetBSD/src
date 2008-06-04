@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.2.2.1 2008/05/18 12:28:45 yamt Exp $	*/
+/*	$NetBSD: atomic.S,v 1.2.2.2 2008/06/04 02:02:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -39,79 +39,79 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_dec_32,1)
+ENTRY(_atomic_dec_32,1)
 	fetchadd4.rel	r8=[r32],-1
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_dec_64,1)
+ENTRY(_atomic_dec_64,1)
 	fetchadd8.rel	r8=[r32],-1
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_dec_32_nv,1)
+ENTRY(_atomic_dec_32_nv,1)
 	fetchadd4.rel	r8=[r32],-1
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_dec_64_nv,1)
+ENTRY(_atomic_dec_64_nv,1)
 	fetchadd8.rel	r8=[r32],-1
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_inc_32,1)
+ENTRY(_atomic_inc_32,1)
 	fetchadd4.rel	r8=[r32],1
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_inc_64,1)
+ENTRY(_atomic_inc_64,1)
 	fetchadd8.rel	r8=[r32],1
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_inc_32_nv,1)
+ENTRY(_atomic_inc_32_nv,1)
 	fetchadd4.rel	r8=[r32],1
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_inc_64_nv,1)
+ENTRY(_atomic_inc_64_nv,1)
 	fetchadd8.rel	r8=[r32],1
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_swap_32,2)
+ENTRY(_atomic_swap_32,2)
 	xchg4		r8=[r32],r33
 	;;
 	mov		r33=r8
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_swap_64,2)
+ENTRY(_atomic_swap_64,2)
 	xchg8		r8=[r32],r33
 	;;
 	mov		r33=r8
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_cas_32,3)
+ENTRY(_atomic_cas_32,3)
 	mov		ar.ccv=r33
 	;;
 	cmpxchg4.acq	r8=[r32],r34,ar.ccv
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_atomic_cas_64,3)
+ENTRY(_atomic_cas_64,3)
 	mov		ar.ccv=r33
 	;;
 	cmpxchg8.acq	r8=[r32],r34,ar.ccv
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_membar_consumer,0)
+ENTRY(_membar_consumer,0)
 	mf
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_membar_producer,0)
+ENTRY(_membar_producer,0)
 	mf
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_membar_enter,0)
+ENTRY(_membar_enter,0)
 	mf
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_membar_exit,0)
+ENTRY(_membar_exit,0)
 	mf
 	br.ret.sptk	rp
 
-ENTRY_NOPROFILE(_membar_sync,0)
+ENTRY(_membar_sync,0)
 	mf
 	br.ret.sptk	rp
 

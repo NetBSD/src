@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.40 2008/01/19 13:11:12 chris Exp $
+#	$NetBSD: ADI_BRH,v 1.40.8.1 2008/06/04 02:04:45 yamt Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -79,6 +79,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

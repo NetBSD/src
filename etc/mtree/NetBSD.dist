@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.362.8.2 2008/05/25 18:15:08 peter Exp $
+#	$NetBSD: NetBSD.dist,v 1.362.8.3 2008/06/04 02:03:21 yamt Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -51,8 +51,6 @@
 ./etc/skel
 ./etc/sliphome
 ./etc/ssh
-./kernel
-./kernel/modules
 ./lib
 ./libdata
 ./libdata/firmware
@@ -60,6 +58,7 @@
 ./libdata/firmware/rum
 ./libdata/firmware/zyd
 ./libexec
+./libexec/dhcpcd-hooks
 ./mnt
 ./rescue
 ./root

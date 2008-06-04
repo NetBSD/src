@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.43.2.1 2008/05/18 12:33:04 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.43.2.2 2008/06/04 02:05:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.43.2.1 2008/05/18 12:33:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.43.2.2 2008/06/04 02:05:03 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -642,7 +642,7 @@ intr_findpic(int num)
 
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
-	       int (*handler)(void *), void *arg)
+	       int (*handler)(void *), void *arg, bool known_mpsafe)
 {
 	struct intrhand **p, *q, *ih;
 	struct cpu_info *ci;
@@ -650,7 +650,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	struct intrsource *source;
 	struct intrstub *stubp;
 #ifdef MULTIPROCESSOR
-	bool mpsafe = (level != IPL_VM);
+	bool mpsafe = (known_mpsafe || level != IPL_VM);
 #endif /* MULTIPROCESSOR */
 
 #ifdef DIAGNOSTIC

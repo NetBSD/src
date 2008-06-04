@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.48 2006/12/26 00:13:24 alc Exp $ */
+/* $NetBSD: cp.c,v 1.48.10.1 2008/06/04 02:02:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.48 2006/12/26 00:13:24 alc Exp $");
+__RCSID("$NetBSD: cp.c,v 1.48.10.1 2008/06/04 02:02:56 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ main(int argc, char *argv[])
 	int ch, fts_options, r, have_trailing_slash;
 	char *target, **src;
 
+	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = 0;
@@ -286,7 +287,8 @@ copy(char *argv[], enum op type, int fts_options)
 	struct stat to_stat;
 	FTS *ftsp;
 	FTSENT *curr;
-	int base, dne, rval, sval;
+	int base, dne, sval;
+	int this_failed, any_failed;
 	size_t nlen;
 	char *p, *target_mid;
 
@@ -296,18 +298,19 @@ copy(char *argv[], enum op type, int fts_options)
 	if ((ftsp = fts_open(argv, fts_options, mastercmp)) == NULL)
 		err(EXIT_FAILURE, "%s", argv[0]);
 		/* NOTREACHED */
-	for (rval = 0; (curr = fts_read(ftsp)) != NULL;) {
+	for (any_failed = 0; (curr = fts_read(ftsp)) != NULL;) {
+		this_failed = 0;
 		switch (curr->fts_info) {
 		case FTS_NS:
 		case FTS_DNR:
 		case FTS_ERR:
 			warnx("%s: %s", curr->fts_path,
 					strerror(curr->fts_errno));
-			rval = 1;
+			this_failed = any_failed = 1;
 			continue;
 		case FTS_DC:			/* Warn, continue. */
 			warnx("%s: directory causes a cycle", curr->fts_path);
-			rval = 1;
+			this_failed = any_failed = 1;
 			continue;
 		}
 
@@ -320,7 +323,7 @@ copy(char *argv[], enum op type, int fts_options)
 			    to.target_end - to.p_path + 1) > MAXPATHLEN) {
 				warnx("%s/%s: name too long (not copied)",
 						to.p_path, curr->fts_name);
-				rval = 1;
+				this_failed = any_failed = 1;
 				continue;
 			}
 
@@ -366,7 +369,7 @@ copy(char *argv[], enum op type, int fts_options)
 			if (target_mid - to.p_path + nlen >= PATH_MAX) {
 				warnx("%s%s: name too long (not copied)",
 				    to.p_path, p);
-				rval = 1;
+				this_failed = any_failed = 1;
 				continue;
 			}
 			(void)strncat(target_mid, p, nlen);
@@ -384,7 +387,7 @@ copy(char *argv[], enum op type, int fts_options)
 			    to_stat.st_ino == curr->fts_statp->st_ino) {
 				warnx("%s and %s are identical (not copied).",
 				    to.p_path, curr->fts_path);
-				rval = 1;
+				this_failed = any_failed = 1;
 				if (S_ISDIR(curr->fts_statp->st_mode))
 					(void)fts_set(ftsp, curr, FTS_SKIP);
 				continue;
@@ -393,7 +396,7 @@ copy(char *argv[], enum op type, int fts_options)
 			    S_ISDIR(to_stat.st_mode)) {
 		warnx("cannot overwrite directory %s with non-directory %s",
 				    to.p_path, curr->fts_path);
-				rval = 1;
+				this_failed = any_failed = 1;
 				continue;
 			}
 			if (!S_ISDIR(curr->fts_statp->st_mode))
@@ -406,10 +409,10 @@ copy(char *argv[], enum op type, int fts_options)
 			if((fts_options & FTS_LOGICAL) ||
 			   ((fts_options & FTS_COMFOLLOW) && curr->fts_level == 0)) {
 				if (copy_file(curr, dne))
-					rval = 1;
+					this_failed = any_failed = 1;
 			} else {	
 				if (copy_link(curr, !dne))
-					rval = 1;
+					this_failed = any_failed = 1;
 			}
 			break;
 		case S_IFDIR:
@@ -418,7 +421,7 @@ copy(char *argv[], enum op type, int fts_options)
 					warnx("%s is a directory (not copied).",
 					    curr->fts_path);
 				(void)fts_set(ftsp, curr, FTS_SKIP);
-				rval = 1;
+				this_failed = any_failed = 1;
 				break;
 			}
 
@@ -459,7 +462,7 @@ copy(char *argv[], enum op type, int fts_options)
                         	 * forever.
 				 */
 				if (pflag && setfile(curr->fts_statp, 0))
-					rval = 1;
+					this_failed = any_failed = 1;
 				else if (dne)
 					(void)chmod(to.p_path, 
 					    curr->fts_statp->st_mode);
@@ -475,7 +478,7 @@ copy(char *argv[], enum op type, int fts_options)
 			{
 				warnx("directory %s encountered when not expected.",
 				    curr->fts_path);
-				rval = 1;
+				this_failed = any_failed = 1;
 				break;
 			}
 
@@ -484,25 +487,25 @@ copy(char *argv[], enum op type, int fts_options)
 		case S_IFCHR:
 			if (Rflag) {
 				if (copy_special(curr->fts_statp, !dne))
-					rval = 1;
+					this_failed = any_failed = 1;
 			} else
 				if (copy_file(curr, dne))
-					rval = 1;
+					this_failed = any_failed = 1;
 			break;
 		case S_IFIFO:
 			if (Rflag) {
 				if (copy_fifo(curr->fts_statp, !dne))
-					rval = 1;
+					this_failed = any_failed = 1;
 			} else 
 				if (copy_file(curr, dne))
-					rval = 1;
+					this_failed = any_failed = 1;
 			break;
 		default:
 			if (copy_file(curr, dne))
-				rval = 1;
+				this_failed = any_failed = 1;
 			break;
 		}
-		if (vflag && !rval)
+		if (vflag && !this_failed)
 			(void)printf("%s -> %s\n", curr->fts_path, to.p_path);
 	}
 	if (errno) {
@@ -510,7 +513,7 @@ copy(char *argv[], enum op type, int fts_options)
 		/* NOTREACHED */
 	}
 	(void)fts_close(ftsp);
-	return (rval);
+	return (any_failed);
 }
 
 /*

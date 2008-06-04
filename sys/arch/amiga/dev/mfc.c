@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.48 2007/11/19 18:51:37 ad Exp $ */
+/*	$NetBSD: mfc.c,v 1.48.16.1 2008/06/04 02:04:40 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.48 2007/11/19 18:51:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.48.16.1 2008/06/04 02:04:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,7 +546,7 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 	 */
 	while ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0) {
 		tp->t_wopen++;
-		error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+		error = ttysleep(tp, &tp->t_rawcv, true, 0);
 		tp->t_wopen--;
 		if (error) {
 			mutex_spin_exit(&tty_lock);

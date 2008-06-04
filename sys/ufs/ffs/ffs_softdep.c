@@ -1,4 +1,30 @@
-/*	$NetBSD: ffs_softdep.c,v 1.109.2.1 2008/05/18 12:35:55 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.109.2.2 2008/06/04 02:05:53 yamt Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.109.2.1 2008/05/18 12:35:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.109.2.2 2008/06/04 02:05:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1806,6 +1832,7 @@ setup_allocindir_phase2(bp, ip, aip)
 			VOP_BMAP(bp->b_vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
 		}
+		/* No need for ffs_getblk().  This buffer will be released. */
 		newindirdep->ir_savebp =
 		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, 0);
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
@@ -2946,6 +2973,21 @@ newdirrem(bp, dp, ip, isrmdir, prevdirremp)
 	dirrem->dm_state |= COMPLETE;
 	free_diradd(dap);
 	return (dirrem);
+}
+
+void
+softdep_pace_dirrem(void)
+{
+	int limit;
+
+	limit = max_softdeps >> 1;
+	if (num_dirrem <= limit)
+		return;
+
+	mutex_enter(&bufcache_lock);
+	if (num_dirrem > limit)
+		(void)cv_timedwait(&proc_wait_cv, &bufcache_lock, tickdelay);
+	mutex_exit(&bufcache_lock);
 }
 
 /*

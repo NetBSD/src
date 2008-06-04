@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.27 2007/09/05 05:29:35 dyoung Exp $       */
+/*      $NetBSD: if_atm.c,v 1.27.22.1 2008/06/04 02:05:48 yamt Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.27 2007/09/05 05:29:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.27.22.1 2008/06/04 02:05:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -164,8 +164,7 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 */
 		bcopy(CLLADDR(satocsdl(gate)), &api.aph, sizeof(api.aph));
 		api.rxhand = NULL;
-		if (rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMENA,
-							(void *)&api) != 0) {
+		if (rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMENA, &api) != 0) {
 			printf("atm: couldn't add VC\n");
 			goto failed;
 		}
@@ -207,8 +206,7 @@ failed:
 
 		bcopy(CLLADDR(satocsdl(gate)), &api.aph, sizeof(api.aph));
 		api.rxhand = NULL;
-		(void)rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMDIS,
-							(void *)&api);
+		(void)rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMDIS, &api);
 
 		break;
 	}

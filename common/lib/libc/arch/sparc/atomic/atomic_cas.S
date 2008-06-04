@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.5.4.1 2008/05/18 12:28:45 yamt Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.5.4.2 2008/06/04 02:02:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ _C_LABEL(_atomic_cas_locktab):
  * XXX NOTE!  The interlock trick only works if EVERYTHING writes to
  * XXX the memory cell through this code path!
  */
-ENTRY_NOPROFILE(_atomic_cas_32)
+ENTRY(_atomic_cas_32)
 	ACQUIRE_INTERLOCK
 	! %o4 has saved PSR value
 	! %o5 has interlock address

@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_proxy.h,v 1.8 2007/05/01 19:08:05 martti Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.8.30.1 2008/06/04 02:05:34 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_proxy.h,v 2.31.2.5 2007/04/16 21:06:52 darrenr Exp
+ * Id: ip_proxy.h,v 2.31.2.6 2007/10/26 12:15:13 darrenr Exp
  */
 
 #ifndef _NETINET_IP_PROXY_H_
@@ -142,7 +142,7 @@ typedef	struct	aproxy	{
  * This is the scratch buffer size used to hold strings from the TCP stream
  * that we may want to parse.  It's an arbitrary size, really, but it must
  * be at least as large as IPF_FTPBUFSZ.
- */ 
+ */
 #define	FTP_BUFSZ	120
 
 /*

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.204.2.1 2008/05/18 12:31:28 yamt Exp $
+# $NetBSD: GENERIC,v 1.204.2.2 2008/06/04 02:04:40 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -20,9 +20,9 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.204.2.1 $"
+#ident 		"GENERIC-$Revision: 1.204.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -268,6 +268,7 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
+acpidalb*	at acpi?		# Direct Application Launch Button
 # The ACPI Embedded Controller is generally configured via the special ECDT.
 # This is required as parts of the DSDT can reference the EC before the normal
 # attach phase.
@@ -537,6 +538,7 @@ piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
+siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 svwsata* at pci? dev ? function ?	# ServerWorks SATA controllers
@@ -826,6 +828,9 @@ ucom*   at uslsa? portno ?
 
 uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
+
+# RIM BlackBerry
+uberry* at uhub? port ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?

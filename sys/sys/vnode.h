@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.191.2.1 2008/05/18 12:35:50 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.191.2.2 2008/06/04 02:05:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -228,11 +228,11 @@ typedef struct vnode vnode_t;
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
 #define	VI_MARKER	0x00008000	/* Dummy marker vnode */
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
-#define	VI_MAPPED	0x00040000	/* duplicate of VV_MAPPED */
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
 #define	VI_FREEING	0x00400000	/* vnode is being freed */
+#define	VI_INACTNOW	0x00800000	/* VOP_INACTIVE() in progress */
 
 /*
  * The third set are locked by the underlying file system.
@@ -243,8 +243,8 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
-    "\31DIROP\32SOFTDEP" 
+    "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
+    "\28INACTNOW\31DIROP\32SOFTDEP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -595,6 +595,7 @@ int	vfinddev(dev_t, enum vtype, struct vnode **);
 int	vflush(struct mount *, struct vnode *, int);
 void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
+bool	vtryget(struct vnode *);
 void 	vgone(struct vnode *);
 void	vgonel(struct vnode *, struct lwp *);
 int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, bool, int);

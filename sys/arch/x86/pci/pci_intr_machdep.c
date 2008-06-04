@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.7.8.1 2008/05/18 12:33:04 yamt Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.7.8.2 2008/06/04 02:04:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.8.1 2008/05/18 12:33:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.8.2 2008/06/04 02:04:58 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.8.1 2008/05/18 12:33:04 yam
 #if NACPI > 0
 #include <machine/mpacpi.h>
 #endif
+
+#define	MPSAFE_MASK	0x80000000
 
 int
 pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
@@ -205,7 +207,7 @@ bad:
 const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
-	return intr_string(ih);
+	return intr_string(ih & ~MPSAFE_MASK);
 }
 
 
@@ -217,15 +219,36 @@ pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	return NULL;
 }
 
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+		 int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		if (data) {
+			 *ih |= MPSAFE_MASK;
+		} else {
+			 *ih &= ~MPSAFE_MASK;
+		}
+		/* XXX Set live if already mapped. */
+		return 0;
+	default:
+		return ENODEV;
+	}
+}
+
 void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg)
 {
 	int pin, irq;
 	struct pic *pic;
+	bool mpsafe;
 
 	pic = &i8259_pic;
-	pin = irq = ih;
+	pin = irq = (ih & ~MPSAFE_MASK);
+	mpsafe = ((ih & MPSAFE_MASK) != 0);
 
 #if NIOAPIC > 0
 	if (ih & APIC_INT_VIA_APIC) {
@@ -242,7 +265,8 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 	}
 #endif
 
-	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg);
+	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg,
+	    mpsafe);
 }
 
 void

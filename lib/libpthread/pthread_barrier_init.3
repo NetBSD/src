@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier_init.3,v 1.7.20.1 2008/05/18 12:30:39 yamt Exp $
+.\" $NetBSD: pthread_barrier_init.3,v 1.7.20.2 2008/06/04 02:04:34 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,12 +71,12 @@ Insufficient memory exists to initialize the barrier.
 .Fn pthread_barrier_init
 may fail if:
 .Bl -tag -width Er
+.It Bq Er EBUSY
+The barrier structure has been initialized already.
 .It Bq Er EINVAL
 The value specified by
 .Fa attr
 is invalid.
-.It Bq Er EBUSY
-The barrier structure has been initialized already.
 .El
 .Sh SEE ALSO
 .Xr pthread_barrier_destroy 3 ,

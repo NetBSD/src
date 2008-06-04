@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.135.2.1 2008/05/18 12:35:08 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.135.2.2 2008/06/04 02:05:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,12 +62,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.135.2.1 2008/05/18 12:35:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.135.2.2 2008/06/04 02:05:39 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

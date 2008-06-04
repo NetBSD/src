@@ -3,7 +3,7 @@
 .\"
 .\" %sccs.include.redist.roff%
 .\"
-.\"	$Id: vi.chars,v 1.1.1.1.2.2 2008/05/18 12:29:26 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:26 $
+.\"	Id: vi.chars,v 8.3 1996/06/27 19:53:17 bostic Exp (Berkeley) Date: 1996/06/27 19:53:17
 .\"
 .bd S 3
 .pn 21

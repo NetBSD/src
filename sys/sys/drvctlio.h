@@ -1,4 +1,4 @@
-/* $NetBSD: drvctlio.h,v 1.4.8.1 2008/05/18 12:35:49 yamt Exp $ */
+/* $NetBSD: drvctlio.h,v 1.4.8.2 2008/06/04 02:05:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -67,11 +67,16 @@ struct devrescanargs {
 
 #define DRVDETACHDEV _IOW('D', 123, struct devdetachargs)
 #define DRVRESCANBUS _IOW('D', 124, struct devrescanargs)
-#define DRVSUSPENDDEV _IOW('D', 125, struct devpmargs)
+#define	DRVCTLCOMMAND _IOWR('D', 125, struct plistref)
 #define DRVRESUMEDEV _IOW('D', 126, struct devpmargs)
 #define DRVLISTDEV _IOWR('D', 127, struct devlistargs)
+#define DRVGETEVENT _IOR('D', 128, struct plistref)
+#define DRVSUSPENDDEV _IOW('D', 129, struct devpmargs)
 
 /*
+ * DRVCTLCOMMAND documentation
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
  * Generic ioctl that takes a dictionary as an argument (specifies the
  * command and arguments) and returns a dictionary with the results.
  *
@@ -102,14 +107,11 @@ struct devrescanargs {
  *		<!-- results vary with command -->
  *	</dict>
  * </dict>
- */
-#define	DRVCTLCOMMAND _IOWR('D', 125, struct plistref)
-
-/*****************************************************************************
+ *
+ *
  * Commands recognized by DRVCTLCOMMAND
- *****************************************************************************/
-
-/*
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
  * get-properties
  *
  * Arguments:

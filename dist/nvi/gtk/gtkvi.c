@@ -1,3 +1,5 @@
+/*	$NetBSD: gtkvi.c,v 1.1.1.1.2.3 2008/06/04 02:03:16 yamt Exp $ */
+
 /*-
  * Copyright (c) 1999
  *	Sven Verdoolaege.  All rights reserved.

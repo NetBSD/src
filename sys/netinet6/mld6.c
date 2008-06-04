@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.44.2.1 2008/05/18 12:35:35 yamt Exp $	*/
+/*	$NetBSD: mld6.c,v 1.44.2.2 2008/06/04 02:05:48 yamt Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.44.2.1 2008/05/18 12:35:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.44.2.2 2008/06/04 02:05:48 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -668,8 +668,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		if (ifp->if_ioctl == NULL)
 			*errorp = ENXIO; /* XXX: appropriate? */
 		else
-			*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI,
-			    (void *)&ifr);
+			*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr);
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);
@@ -744,8 +743,7 @@ in6_delmulti(struct in6_multi *in6m)
 		 * reception filter.
 		 */
 		sockaddr_in6_init(&ifr.ifr_addr, &in6m->in6m_addr, 0, 0, 0);
-		(*in6m->in6m_ifp->if_ioctl)(in6m->in6m_ifp,
-		    SIOCDELMULTI, (void *)&ifr);
+		(*in6m->in6m_ifp->if_ioctl)(in6m->in6m_ifp, SIOCDELMULTI, &ifr);
 		callout_destroy(&in6m->in6m_timer_ch);
 		free(in6m, M_IPMADDR);
 	}

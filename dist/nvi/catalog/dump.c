@@ -1,3 +1,5 @@
+/*	$NetBSD: dump.c,v 1.1.1.1.2.3 2008/06/04 02:03:05 yamt Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -12,7 +14,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "$Id: dump.c,v 1.1.1.1.2.2 2008/05/18 12:29:20 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:20 $";
+static char sccsid[] = "Id: dump.c,v 8.1 1994/08/31 13:27:37 bostic Exp (Berkeley) Date: 1994/08/31 13:27:37";
 #endif /* not lint */
 
 #include <ctype.h>

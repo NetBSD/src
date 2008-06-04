@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2008/01/23 19:46:45 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12.8.1 2008/06/04 02:04:58 yamt Exp $	*/
 
 /*
  *
@@ -350,8 +350,7 @@ paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 void	pmap_cpu_init_early(struct cpu_info *);
 void	pmap_cpu_init_late(struct cpu_info *);
-void	sse2_zero_page(void *);
-void	sse2_copy_page(void *, void *);
+bool	sse2_idlezero_page(void *);
 
 
 #ifdef XEN

@@ -1,4 +1,4 @@
-/* $NetBSD: echo.c,v 1.15 2003/11/25 03:40:18 simonb Exp $	*/
+/* $NetBSD: echo.c,v 1.15.30.1 2008/06/04 02:02:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,10 +40,11 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)echo.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: echo.c,v 1.15 2003/11/25 03:40:18 simonb Exp $");
+__RCSID("$NetBSD: echo.c,v 1.15.30.1 2008/06/04 02:02:56 yamt Exp $");
 #endif
 #endif /* not lint */
 
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,6 +56,9 @@ int
 main(int argc, char *argv[])
 {
 	int nflag;
+
+	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
 
 	/* This utility may NOT do getopt(3) option parsing. */
 	if (*++argv && !strcmp(*argv, "-n")) {

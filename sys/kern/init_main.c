@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.349.2.2 2008/05/18 12:35:06 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.349.2.3 2008/06/04 02:05:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.349.2.2 2008/05/18 12:35:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.349.2.3 2008/06/04 02:05:38 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -160,6 +160,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.349.2.2 2008/05/18 12:35:06 yamt Exp
 #include <sys/msgbuf.h>
 #include <sys/module.h>
 #include <sys/event.h>
+#include <sys/lockf.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -239,7 +240,7 @@ int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
 
-volatile int start_init_exec;		/* semaphore for start_init() */
+int	start_init_exec;		/* semaphore for start_init() */
 
 static void check_console(struct lwp *l);
 static void start_init(void *);
@@ -443,6 +444,7 @@ main(void)
 		desiredvnodes = usevnodes;
 #endif
 	vfsinit();
+	lf_init();
 
 	/* Initialize fstrans. */
 	fstrans_init();
@@ -584,7 +586,6 @@ main(void)
 	 * storage to the VM system.
 	 */
 	module_init_class(MODULE_CLASS_ANY);
-	module_jettison();
 
 	/*
 	 * Finalize configuration now that all real devices have been
@@ -693,8 +694,10 @@ main(void)
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
 	 */
+	mutex_enter(proc_lock);
 	start_init_exec = 1;
-	wakeup(&start_init_exec);
+	cv_broadcast(&lbolt);
+	mutex_exit(proc_lock);
 
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
@@ -758,8 +761,10 @@ start_init(void *arg)
 	/*
 	 * Wait for main() to tell us that it's safe to exec.
 	 */
+	mutex_enter(proc_lock);
 	while (start_init_exec == 0)
-		(void) tsleep(&start_init_exec, PWAIT, "initexec", 0);
+		cv_wait(&lbolt, proc_lock);
+	mutex_exit(proc_lock);
 
 	/*
 	 * This is not the right way to do this.  We really should

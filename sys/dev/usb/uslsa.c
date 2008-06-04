@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.6.2.1 2008/05/18 12:34:52 yamt Exp $ */
+/* $NetBSD: uslsa.c,v 1.6.2.2 2008/06/04 02:05:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.6.2.1 2008/05/18 12:34:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.6.2.2 2008/06/04 02:05:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,13 +182,13 @@ static const struct usb_devno uslsa_devs[] = {
 };
 #define uslsa_lookup(v, p) usb_lookup(uslsa_devs, v, p)
 
-int uslsa_match(device_t, struct cfdata *, void *);
+int uslsa_match(device_t, cfdata_t, void *);
 void uslsa_attach(device_t, device_t, void *);
 void uslsa_childdet(device_t, device_t);
 int uslsa_detach(device_t, int);
 int uslsa_activate(device_t, enum devact);
 extern struct cfdriver uslsa_cd;
-CFATTACH_DECL2(uslsa, sizeof(struct uslsa_softc), uslsa_match,
+CFATTACH_DECL2_NEW(uslsa, sizeof(struct uslsa_softc), uslsa_match,
     uslsa_attach, uslsa_detach, uslsa_activate, NULL, uslsa_childdet);
 
 USB_MATCH(uslsa)
@@ -212,6 +212,7 @@ USB_ATTACH(uslsa)
 	struct ucom_attach_args uca;
 	int i;
 
+	sc->sc_dev = self;
 	devname = USBDEVNAME(sc->sc_dev);
 
 	DPRINTFN(10, ("\nuslsa_attach: sc=%p\n", sc));
@@ -219,21 +220,21 @@ USB_ATTACH(uslsa)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, USLSA_CONFIG_INDEX, 1);
 	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
+		aprint_error("\n%s: failed to set configuration, err=%s\n",
 	 	       devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	err = usbd_device2interface_handle(dev, USLSA_IFACE_INDEX, &iface);
 	if (err) {
-		printf("\n%s: failed to get interface, err=%s\n",
+		aprint_error("\n%s: failed to get interface, err=%s\n",
 		       devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	id = usbd_get_interface_descriptor(iface);
@@ -261,8 +262,9 @@ USB_ATTACH(uslsa)
 
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: could not read endpoint descriptor"
-			       ": %s\n", devname, usbd_errstr(err));
+			aprint_error_dev(self,
+			    "could not read endpoint descriptor: %s\n",
+			    usbd_errstr(err));
 			goto bad;
 		}
 		addr = ed->bEndpointAddress;
@@ -273,16 +275,14 @@ USB_ATTACH(uslsa)
 		else if (dir == UE_DIR_OUT && attr == UE_BULK)
 			uca.bulkout = addr;
 		else
-			printf("%s: unexpected endpoint\n", devname);
+			aprint_error_dev(self, "unexpected endpoint\n");
 	}
 	if (uca.bulkin == -1) {
-		printf("%s: Could not find data bulk in\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk in\n");
 		goto bad;
 	}
 	if (uca.bulkout == -1) {
-		printf("%s: Could not find data bulk out\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk out\n");
 		goto bad;
 	}
 

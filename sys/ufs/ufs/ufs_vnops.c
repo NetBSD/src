@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.164 2008/01/30 09:50:27 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.164.8.1 2008/06/04 02:05:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.164 2008/01/30 09:50:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.164.8.1 2008/06/04 02:05:53 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -222,10 +222,8 @@ ufs_close(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	mutex_enter(&vp->v_interlock);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	mutex_exit(&vp->v_interlock);
 	return (0);
 }
 
@@ -642,6 +640,7 @@ ufs_remove(void *v)
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
 	int		error;
+	bool		pace;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
@@ -658,8 +657,16 @@ ufs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
+	pace = DOINGSOFTDEP(dvp);
 	vput(dvp);
 	fstrans_done(dvp->v_mount);
+	if (pace) {
+		/*
+		 * Give the syncer some breathing room so that it
+		 * can flush removes.  XXX
+		 */
+		softdep_pace_dirrem();
+	}
 	return (error);
 }
 
@@ -1447,6 +1454,7 @@ ufs_rmdir(void *v)
 	struct componentname	*cnp;
 	struct inode		*ip, *dp;
 	int			error;
+	bool			pace;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
@@ -1537,8 +1545,16 @@ ufs_rmdir(void *v)
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
 	fstrans_done(dvp->v_mount);
+	pace = DOINGSOFTDEP(dvp);
 	vput(dvp);
 	vput(vp);
+	if (pace) {
+		/*
+		 * Give the syncer some breathing room so that it
+		 * can flush removes.  XXX
+		 */
+		softdep_pace_dirrem();
+	}
 	return (error);
 }
 
@@ -1887,10 +1903,8 @@ ufsspec_close(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	mutex_enter(&vp->v_interlock);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	mutex_exit(&vp->v_interlock);
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
@@ -1952,10 +1966,8 @@ ufsfifo_close(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	mutex_enter(&vp->v_interlock);
 	if (ap->a_vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	mutex_exit(&vp->v_interlock);
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 

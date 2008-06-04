@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_kill.3,v 1.6.32.1 2008/05/18 12:30:39 yamt Exp $
+.\" $NetBSD: pthread_kill.3,v 1.6.32.2 2008/06/04 02:04:34 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,12 +85,12 @@ Otherwise, an error number is returned.
 .Fn pthread_kill
 shall fail if:
 .Bl -tag -width Er
-.It Bq Er ESRCH
-.Fa thread
-is an invalid thread ID.
 .It Bq Er EINVAL
 .Fa sig
 is an invalid or unsupported signal number.
+.It Bq Er ESRCH
+.Fa thread
+is an invalid thread ID.
 .El
 .Sh SEE ALSO
 .Xr kill 2 ,

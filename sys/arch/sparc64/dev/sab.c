@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.40 2007/11/28 18:04:33 ad Exp $	*/
+/*	$NetBSD: sab.c,v 1.40.16.1 2008/06/04 02:04:56 yamt Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.40 2007/11/28 18:04:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.40.16.1 2008/06/04 02:04:56 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -717,7 +717,7 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 		    (tp->t_state & TS_CARR_ON) == 0) {
 			int error;
 
-			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+			error = ttysleep(tp, &tp->t_rawcv, true, 0);
 			if (error != 0) {
 				mutex_spin_exit(&tty_lock);
 				return (error);

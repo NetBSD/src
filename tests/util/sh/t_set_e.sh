@@ -1,4 +1,4 @@
-# $NetBSD: t_set_e.sh,v 1.1.8.1 2008/05/18 12:36:01 yamt Exp $
+# $NetBSD: t_set_e.sh,v 1.1.8.2 2008/06/04 02:05:57 yamt Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,34 +25,45 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-nl='
-'
+# references:
+#   http://www.opengroup.org/onlinepubs/009695399/utilities/set.html
+#   http://www.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html
+
+# the implementation of "sh" to test
+: ${TEST_SH:="sh"}
+
+failwith()
+{
+	case "$SH_FAILS" in
+		"") SH_FAILS=`echo "$1"`;;
+		*) SH_FAILS="$SH_FAILS"`echo; echo "$1"`;;
+	esac
+}
 
 check1()
 {
-	result="`eval $1`"
-	# Remove newlines
-	oifs="$IFS"
-	IFS="$nl"
-	result="`echo $result`"
-	IFS="$oifs"
-	atf_check_equal "$2" '$result'
-}
-
-p()
-{
-
-	if [ $? = 0 ]
-	then
-		echo ${1}0
-	else
-		echo ${1}1
+	#echo "$TEST_SH -c $1"
+	result=`$TEST_SH -c "$1" 2>/dev/null | tr '\n' ' ' | sed 's/ *$//'`
+	if [ "$result" != "$2" ]; then
+		MSG=`printf "%-56s %-8s  %s" "$3" "$result" "$2"`
+		failwith "$MSG"
+		failcount=`expr $failcount + 1`
 	fi
+	count=`expr $count + 1`
 }
 
-check()
+# direct check: try the given expression.
+dcheck()
 {
-	check1 "((set -e; $1; p X); p Y)" "$2"
+	check1 "$1" "$2" "$1"
+}
+
+# eval check: indirect through eval.
+# as of this writing, this changes the behavior pretty drastically and
+# is thus important to test. (PR bin/29861)
+echeck()
+{
+	check1 'eval '"'($1)'" "$2" "eval '($1)'"
 }
 
 atf_test_case all
@@ -60,14 +71,179 @@ all_head() {
 	atf_set "descr" "Tests that 'set -e' works correctly"
 }
 all_body() {
-	check 'exit 1' 'Y1'
-	check 'false' 'Y1'
-	check '(false)' 'Y1'
-	check 'false || false' 'Y1'
-	check 'false | true' 'X0 Y0'
-	check 'true | false' 'Y1'
-	check '/nonexistent' 'Y1'
-	check 'f() { false; }; f' 'Y1'
+	count=0
+	failcount=0
+
+	# make sure exiting from a subshell behaves as expected
+	dcheck '(set -e; exit 1; echo ERR$?); echo OK$?' 'OK1'
+	echeck '(set -e; exit 1; echo ERR$?); echo OK$?' 'OK1'
+
+	# first, check basic functioning.
+	# The ERR shouldn't print; the result of the () should be 1.
+	# Henceforth we'll assume that we don't need to check $?.
+	dcheck '(set -e; false; echo ERR$?); echo -n OK$?' 'OK1'
+	echeck '(set -e; false; echo ERR$?); echo -n OK$?' 'OK1'
+
+	# these cases should be equivalent to the preceding.
+	dcheck '(set -e; /nonexistent; echo ERR); echo OK' 'OK'
+	echeck '(set -e; /nonexistent; echo ERR); echo OK' 'OK'
+	dcheck '(set -e; nonexistent-program-on-path; echo ERR); echo OK' 'OK'
+	echeck '(set -e; nonexistent-program-on-path; echo ERR); echo OK' 'OK'
+	dcheck 'f() { false; }; (set -e; f; echo ERR); echo OK' 'OK'
+	echeck 'f() { false; }; (set -e; f; echo ERR); echo OK' 'OK'
+	dcheck 'f() { return 1; }; (set -e; f; echo ERR); echo OK' 'OK'
+	echeck 'f() { return 1; }; (set -e; f; echo ERR); echo OK' 'OK'
+
+	# but! with set -e, the false should cause an *immediate* exit.
+	# The return form should not, as such, but there's no way to
+	# distinguish it.
+	dcheck 'f() { false; echo ERR; }; (set -e; f); echo OK' 'OK'
+	echeck 'f() { false; echo ERR; }; (set -e; f); echo OK' 'OK'
+
+	# set is not scoped, so these should not exit at all.
+	dcheck 'f() { set +e; false; echo OK; }; (set -e; f); echo OK' 'OK OK'
+	echeck 'f() { set +e; false; echo OK; }; (set -e; f); echo OK' 'OK OK'
+
+	# according to the standard, only failing *simple* commands
+	# cause an exit under -e. () is not a simple command.
+	dcheck '(set -e; (set +e; false; echo OK; false); echo OK)' 'OK OK'
+	echeck '(set -e; (set +e; false; echo OK; false); echo OK)' 'OK OK'
+
+	# make sure an inner nested shell does exit though.
+	dcheck '(set -e; (false; echo ERR)); echo OK' 'OK'
+
+	# The left hand side of an || or && is explicitly tested and
+	# thus should not cause an exit. Furthermore, because a || or
+	# && expression is not a simple command, there should be no
+	# exit even if the overall result is false.
+	dcheck '(set -e; false || true; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; false || true; echo OK); echo OK' 'OK OK'
+	dcheck '(set -e; false && true; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; false && true; echo OK); echo OK' 'OK OK'
+
+	# However, the right hand side is not tested, so a failure
+	# there *should* cause an exit, regardless of whether it
+	# appears inside a non-simple command.
+	#
+	# Note that in at least one place the standard does not
+	# distinguish between the left and right hand sides of
+	# logical operators. It is possible that for strict
+	# compliance these need to not exit; however, if so that
+	# should probably be limited to when some strict-posix setting
+	# is in effect and tested accordingly.
+	#
+	dcheck '(set -e; false || false; echo ERR); echo OK' 'OK'
+	dcheck '(set -e; false && false; echo ERR); echo OK' 'OK'
+	dcheck '(set -e; true && false; echo ERR); echo OK' 'OK'
+	echeck '(set -e; false || false; echo ERR); echo OK' 'OK'
+	echeck '(set -e; false && false; echo ERR); echo OK' 'OK'
+	echeck '(set -e; true && false; echo ERR); echo OK' 'OK'
+
+	# A failure that is not reached because of short-circuit
+	# evaluation should not cause an exit, however.
+	dcheck '(set -e; true || false; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; true || false; echo OK); echo OK' 'OK OK'
+
+	# For completeness, test the other two combinations.
+	dcheck '(set -e; true || true; echo OK); echo OK' 'OK OK'
+	dcheck '(set -e; true && true; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; true || true; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; true && true; echo OK); echo OK' 'OK OK'
+
+	# likewise, none of these should exit.
+	dcheck '(set -e; while false; do :; done; echo OK); echo OK' 'OK OK'
+	dcheck '(set -e; if false; then :; fi; echo OK); echo OK' 'OK OK'
+	# problematic :-)
+	#dcheck '(set -e; until false; do :; done; echo OK); echo OK' 'OK OK'
+	dcheck '(set -e; until [ "$t" = 1 ]; do t=1; done; echo OK); echo OK' \
+	  'OK OK'
+	echeck '(set -e; while false; do :; done; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; if false; then :; fi; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; until [ "$t" = 1 ]; do t=1; done; echo OK); echo OK' \
+	  'OK OK'
+
+	# the bang operator tests its argument and thus the argument
+	# should not cause an exit. it is also not a simple command (I
+	# believe) so it also shouldn't exit even if it yields a false
+	# result.
+	dcheck '(set -e; ! false; echo OK); echo OK' 'OK OK'
+	dcheck '(set -e; ! true; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; ! false; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; ! true; echo OK); echo OK' 'OK OK'
+
+	# combined case with () and &&; the inner expression is false
+	# but does not itself exit, and the () should not cause an 
+	# exit even when failing.
+	dcheck '(set -e; (false && true); echo OK); echo OK' 'OK OK'
+	echeck '(set -e; (false && true); echo OK); echo OK' 'OK OK'
+
+	# pipelines. only the right-hand end is significant.
+	dcheck '(set -e; false | true; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; false | true; echo OK); echo OK' 'OK OK'
+	dcheck '(set -e; true | false; echo ERR); echo OK' 'OK'
+	echeck '(set -e; true | false; echo ERR); echo OK' 'OK'
+
+	dcheck '(set -e; while true | false; do :; done; echo OK); echo OK' \
+	    'OK OK'
+	dcheck '(set -e; if true | false; then :; fi; echo OK); echo OK' \
+	    'OK OK'
+
+
+	# According to dsl@ in PR bin/32282, () is not defined as a
+	# subshell, only as a grouping operator [and a scope, I guess]
+	# so the nested false ought to cause the whole shell to exit,
+	# not just the subshell. dholland@ would like to see C&V,
+	# because that seems like a bad idea. (Among other things, it
+	# would break all the above test logic, which relies on being
+	# able to isolate set -e behavior inside ().) However, I'm
+	# going to put these tests here to make sure the issue gets
+	# dealt with sometime.
+
+	# 1. error if the whole shell exits (current behavior)
+	dcheck 'echo OK; (set -e; false); echo OK' 'OK OK'
+	echeck 'echo OK; (set -e; false); echo OK' 'OK OK'
+	# 2. error if the whole shell does not exit (dsl's suggested behavior)
+	dcheck 'echo OK; (set -e; false); echo ERR' 'OK'
+	echeck 'echo OK; (set -e; false); echo ERR' 'OK'
+
+	# The current behavior of the shell is that it exits out as
+	# far as -e is set and then stops. This is probably a
+	# consequence of it handling () wrong, but it's a somewhat
+	# curious compromise position between 1. and 2. above.
+	dcheck '(set -e; (false; echo ERR); echo ERR); echo OK' 'OK'
+	echeck '(set -e; (false; echo ERR); echo ERR); echo OK' 'OK'
+
+	# backquote expansion (PR bin/17514)
+	dcheck '(set -e; echo ERR `false`; echo ERR); echo OK' 'OK'
+	dcheck '(set -e; echo ERR $(false); echo ERR); echo OK' 'OK'
+	dcheck '(set -e; echo ERR `exit 3`; echo ERR); echo OK' 'OK'
+	dcheck '(set -e; echo ERR $(exit 3); echo ERR); echo OK' 'OK'
+	dcheck '(set -e; x=`false`; echo ERR); echo OK' 'OK'
+	dcheck '(set -e; x=$(false); echo ERR); echo OK' 'OK'
+	dcheck '(set -e; x=`exit 3`; echo ERR); echo OK' 'OK'
+	dcheck '(set -e; x=$(exit 3); echo ERR); echo OK' 'OK'
+	echeck '(set -e; echo ERR `false`; echo ERR); echo OK' 'OK'
+	echeck '(set -e; echo ERR $(false); echo ERR); echo OK' 'OK'
+	echeck '(set -e; echo ERR `exit 3`; echo ERR); echo OK' 'OK'
+	echeck '(set -e; echo ERR $(exit 3); echo ERR); echo OK' 'OK'
+	echeck '(set -e; x=`false`; echo ERR); echo OK' 'OK'
+	echeck '(set -e; x=$(false); echo ERR); echo OK' 'OK'
+	echeck '(set -e; x=`exit 3`; echo ERR); echo OK' 'OK'
+	echeck '(set -e; x=$(exit 3); echo ERR); echo OK' 'OK'
+
+	# shift (PR bin/37493)
+	dcheck '(set -e; shift || true; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; shift || true; echo OK); echo OK' 'OK OK'
+
+	# Done.
+
+	if [ "x$SH_FAILS" != x ]; then
+	    printf '%-56s %-8s  %s\n' "Expression" "Result" "Should be"
+	    echo "$SH_FAILS"
+	    atf_fail "$failcount of $count failed cases"
+	else
+	    atf_pass
+	fi
 }
 
 atf_init_test_cases() {

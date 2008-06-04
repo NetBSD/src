@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.3.8.1 2008/05/18 12:34:35 yamt Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.3.8.2 2008/06/04 02:05:18 yamt Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.3.8.1 2008/05/18 12:34:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.3.8.2 2008/06/04 02:05:18 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_irq.c,v 1.4 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -67,11 +67,11 @@ irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS)
 	dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
 
 	if (temp & USER_INT_FLAG)
-		DRM_WAKEUP(&(dev_priv->irq_queue));
+		DRM_WAKEUP(&dev_priv->irq_queue);
 
 	if (temp & (VSYNC_PIPEA_FLAG | VSYNC_PIPEB_FLAG)) {
 		atomic_inc(&dev->vbl_received);
-		DRM_WAKEUP(&(dev->vbl_queue));
+		DRM_WAKEUP(&dev->vbl_queue);
 		drm_vbl_send_signals(dev);
 	}
 
@@ -121,7 +121,7 @@ static int i915_wait_irq(drm_device_t * dev, int irq_nr)
 
 	dev_priv->sarea_priv->perf_boxes |= I915_BOX_WAIT;
 
-	DRM_WAIT_ON(ret, &(dev_priv->irq_queue), 3 * DRM_HZ,
+	DRM_WAIT_ON(ret, dev_priv->irq_queue, 3 * DRM_HZ,
 		    READ_BREADCRUMB(dev_priv) >= irq_nr);
 
 	if (ret == DRM_ERR(EBUSY)) {
@@ -145,7 +145,7 @@ int i915_driver_vblank_wait(drm_device_t *dev, unsigned int *sequence)
 		return DRM_ERR(EINVAL);
 	}
 
-	DRM_WAIT_ON(ret, &(dev->vbl_queue), 3 * DRM_HZ,
+	DRM_WAIT_ON(ret, dev->vbl_queue, 3 * DRM_HZ,
 		    (((cur_vblank = atomic_read(&dev->vbl_received))
 			- *sequence) <= (1<<23)));
 	
@@ -280,7 +280,7 @@ void i915_driver_irq_postinstall(drm_device_t * dev)
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 
 	i915_enable_interrupt(dev);
-	DRM_INIT_WAITQUEUE(&(dev_priv->irq_queue));
+	DRM_INIT_WAITQUEUE(&dev_priv->irq_queue);
 }
 
 void i915_driver_irq_uninstall(drm_device_t * dev)
@@ -296,5 +296,4 @@ void i915_driver_irq_uninstall(drm_device_t * dev)
 
 	temp = I915_READ16(I915REG_INT_IDENTITY_R);
 	I915_WRITE16(I915REG_INT_IDENTITY_R, temp);
-	DRM_DESTROY_WAITQUEUE(&(dev_priv->irq_queue));
 }

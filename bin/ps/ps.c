@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.66.2.1 2008/05/18 12:28:44 yamt Exp $	*/
+/*	$NetBSD: ps.c,v 1.66.2.2 2008/06/04 02:02:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.66.2.1 2008/05/18 12:28:44 yamt Exp $");
+__RCSID("$NetBSD: ps.c,v 1.66.2.2 2008/06/04 02:02:56 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,7 @@ __RCSID("$NetBSD: ps.c,v 1.66.2.1 2008/05/18 12:28:44 yamt Exp $");
 #include <fcntl.h>
 #include <kvm.h>
 #include <limits.h>
+#include <locale.h>
 #include <nlist.h>
 #include <paths.h>
 #include <pwd.h>
@@ -155,6 +156,9 @@ main(int argc, char *argv[])
 	int prtheader, wflag, what, xflg, mode, showlwps;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	char *ttname;
+
+	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
 
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
 	     ioctl(STDERR_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&

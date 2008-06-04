@@ -1,4 +1,4 @@
-#	$Id: wc.tcl,v 1.1.1.1.2.2 2008/05/18 12:29:31 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:31 $
+#	Id: wc.tcl,v 8.2 1995/11/18 12:59:12 bostic Exp (Berkeley) Date: 1995/11/18 12:59:12
 #
 proc wc {} {
 	global viScreenId

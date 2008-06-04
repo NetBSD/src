@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.9 2008/01/19 13:11:13 chris Exp $
+# $NetBSD: HDL_G,v 1.9.8.1 2008/06/04 02:04:45 yamt Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -95,6 +95,7 @@ options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

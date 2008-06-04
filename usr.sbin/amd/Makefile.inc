@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2007/05/28 12:06:33 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.21.10.1 2008/06/04 02:05:59 yamt Exp $
 
 WARNS?=	1
 
@@ -15,6 +15,11 @@ CPPFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}/../include -I${IDIST}/libamu \
 
 .if (${USE_HESIOD} != "no")
 CPPFLAGS+=-DHAVE_MAP_HESIOD=1
+.endif
+
+.if (${USE_LDAP} != "no")
+CPPFLAGS+=-DHAVE_MAP_LDAP=1 -DHAVE_LBER_H=1 -DHAVE_LDAP_H -DHAVE_LDAP_OPEN=1
+CPPFLAGS+=-DLDAP_DEPRECATED=1	# OpenLDAP 2.2 deprecated ldap_unbind()
 .endif
 
 .if (${USE_YP} != "no")

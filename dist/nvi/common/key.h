@@ -1,3 +1,5 @@
+/*	$NetBSD: key.h,v 1.1.1.1.2.3 2008/06/04 02:03:06 yamt Exp $ */
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: key.h,v 1.1.1.1.2.2 2008/05/18 12:29:23 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:23 $
+ *	Id: key.h,v 10.50 2001/06/28 17:53:58 skimo Exp (Berkeley) Date: 2001/06/28 17:53:58
  */
 
 #include "multibyte.h"

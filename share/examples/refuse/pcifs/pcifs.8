@@ -1,3 +1,4 @@
+.\" $NetBSD: pcifs.8,v 1.1.12.1 2008/06/04 02:04:37 yamt Exp $
 .\"
 .\" Copyright © 2007 Alistair Crooks.  All rights reserved.
 .\"
@@ -33,8 +34,8 @@
 .Nd refuse-based virtual file system to display devices on PCI bus
 .Sh SYNOPSIS
 .Nm
-.Op Fl b Ar bus
 .Op Fl v
+.Op Fl b Ar bus
 .Ar mount_point
 .Sh DESCRIPTION
 The
@@ -46,14 +47,14 @@ of devices on the PCI bus.
 .Pp
 The following arguments can be used:
 .Bl -tag -width Ds
-.It Fl v
-Produce verbose output
 .It Fl b Ar bus
 Use the numeric bus number from the argument for
 the PCI bus number to list.
+.It Fl v
+Produce verbose output
 .El
 .Pp
-The 
+The
 .Nm
 utility makes use of the
 .Xr virtdir 3
@@ -72,10 +73,10 @@ The
 utility is used to retrieve the information on
 PCI devices.
 .Sh SEE ALSO
-.Xr librefuse 3 ,
 .Xr puffs 3 ,
+.Xr refuse 3 ,
 .Xr virtdir 3 ,
-.Xr pcictl 8 .
+.Xr pcictl 8
 .Sh HISTORY
 The
 .Nm

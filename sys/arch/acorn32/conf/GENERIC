@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.85 2008/02/29 00:37:26 chris Exp $
+# 	$NetBSD: GENERIC,v 1.85.2.1 2008/06/04 02:04:39 yamt Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.85 $"
+#ident		"GENERIC-$Revision: 1.85.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -112,6 +112,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options		COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

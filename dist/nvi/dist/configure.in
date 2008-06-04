@@ -1,4 +1,4 @@
-dnl	$Id: configure.in,v 1.1.1.1.2.2 2008/05/18 12:29:24 yamt Exp $
+dnl	Id: configure.in,v 8.192 2003/02/17 20:09:07 skimo Exp
 dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT(../common/main.c)

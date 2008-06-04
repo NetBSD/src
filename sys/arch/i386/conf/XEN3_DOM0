@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.8.8.1 2008/05/18 12:32:09 yamt Exp $
+#	$NetBSD: XEN3_DOM0,v 1.8.8.2 2008/06/04 02:04:47 yamt Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -29,6 +29,7 @@ ioapic*		at mainbus? apid ?
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
+acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 # The ACPI Embedded Controller is generally configured via the special ECDT.
 # This is required as parts of the DSDT can reference the EC before the normal
 # attach phase.

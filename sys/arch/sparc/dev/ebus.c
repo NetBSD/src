@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.29 2007/10/17 19:57:12 garbled Exp $ */
+/*	$NetBSD: ebus.c,v 1.29.18.1 2008/06/04 02:04:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.29 2007/10/17 19:57:12 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.29.18.1 2008/06/04 02:04:56 yamt Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG

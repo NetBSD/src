@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2008/02/16 07:24:36 matt Exp $
+#	$NetBSD: Makefile,v 1.28.4.1 2008/06/04 02:05:59 yamt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -22,6 +22,21 @@ SRCS=	am_ops.c amd.c amfs_auto.c amfs_generic.c amfs_direct.c \
 
 .if (${USE_HESIOD} != "no")
 SRCS+=	info_hesiod.c
+.endif
+
+.if (${USE_LDAP} != "no")
+SRCS+=	info_ldap.c
+
+LDADD+=	-lldap
+DPADD+=	${LIBLDAP}
+.if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != ""))
+LDADD+=	-llber
+DPADD+=	${LIBLBER}
+.if ${MKCRYPTO} != "no" 
+DPADD+=	${LIBSSL} ${LIBCRYPTO}
+LDADD+=	-lssl -lcrypto
+.endif
+.endif
 .endif
 
 .if (${USE_YP} != "no")

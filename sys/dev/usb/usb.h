@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.78.8.1 2008/05/18 12:34:51 yamt Exp $	*/
+/*	$NetBSD: usb.h,v 1.78.8.2 2008/06/04 02:05:21 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -38,14 +38,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/ioctl.h>
-#endif
-#if defined(__FreeBSD__)
-/* These two defines are used by usbd to autoload the usb kld */
-#define USB_KLD		"usb"           /* name of usb module */
-#define USB_UHUB	"usb/uhub"      /* root hub */
-#endif
 
 #if defined(_KERNEL)
 #include <dev/usb/usb_port.h>

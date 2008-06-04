@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.24 2008/03/15 13:23:25 cube Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.24.2.1 2008/06/04 02:05:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.24 2008/03/15 13:23:25 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.24.2.1 2008/06/04 02:05:13 yamt Exp $");
 
 #include "opt_pckbc.h"
 
@@ -202,6 +202,9 @@ pckbc_isa_attach(device_t parent, device_t self, void *aux)
 	sc->id = t;
 
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, pckbc_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Finish off the attach. */
 	pckbc_attach(sc);

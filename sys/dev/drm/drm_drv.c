@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.10.2.1 2008/05/18 12:33:37 yamt Exp $ */
+/* $NetBSD: drm_drv.c,v 1.10.2.2 2008/06/04 02:05:10 yamt Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,10 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.10.2.1 2008/05/18 12:33:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.10.2.2 2008/06/04 02:05:10 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
+
+#include <sys/module.h>
 
 #include "drmP.h"
 #include "drm.h"
@@ -201,6 +203,7 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
         /* dev->maplist : drm_load */
         dev->context_sareas = NULL;
         dev->max_context = 0;
+	mutex_init(&dev->dev_lock, MUTEX_DEFAULT, IPL_NONE);
         dev->dma = NULL;
 	/* dev->irq : drm_load */
 	dev->irq_enabled = 0;
@@ -234,6 +237,7 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 	}
 	dev->context_flag = 0;
 	dev->last_context = 0;
+	dev->vbl_queue = 0;
 	dev->vbl_received = 0;
 	dev->buf_pgid = 0;
 	dev->sysctl = NULL;
@@ -327,6 +331,7 @@ static int drm_firstopen(drm_device_t *dev)
 		dev->magiclist[i].tail = NULL;
 	}
 
+	dev->lock.lock_queue = 0;
 	dev->irq_enabled = 0;
 	dev->context_flag = 0;
 	dev->last_context = 0;
@@ -416,9 +421,7 @@ static int drm_lastclose(drm_device_t *dev)
 	if ( dev->lock.hw_lock ) {
 		dev->lock.hw_lock = NULL; /* SHM removed */
 		dev->lock.filp = NULL;
-                mutex_enter(&(dev->lock.lock_mutex)); 
-		cv_broadcast(&(dev->lock.lock_cv));
-		mutex_exit(&(dev->lock.lock_mutex));
+		DRM_WAKEUP_INT((void *)&dev->lock.lock_queue);
 	}
 
 	while ((filep = TAILQ_FIRST(&dev->files)) != NULL) {
@@ -434,12 +437,6 @@ static int drm_lastclose(drm_device_t *dev)
 static int drm_load(drm_device_t *dev)
 {
 	int retcode;
-
-       cv_init(&(dev->lock.lock_cv), "drm_cv");
-       mutex_init(&(dev->lock.lock_mutex), MUTEX_DEFAULT, IPL_NONE);
-       mutex_init(&(dev->dev_lock), MUTEX_DEFAULT, IPL_NONE);
-       /*mutex_init(&dev->drw_lock, MUTEX_DEFAULT, IPL_NONE);*/
-
 
 	DRM_DEBUG( "\n" );
 
@@ -504,10 +501,7 @@ error:
 	DRM_LOCK();
 	drm_lastclose(dev);
 	DRM_UNLOCK();
-        cv_destroy(&(dev->lock.lock_cv));
-	mutex_destroy(&(dev->lock.lock_mutex));
-	mutex_destroy(&dev->dev_lock);
-	/*mutex_destroy(&dev->drw_lock);*/
+	DRM_SPINUNINIT(&dev->dev_lock);
 	return retcode;
 }
 
@@ -559,6 +553,7 @@ static void drm_unload(drm_device_t *dev)
 		dev->driver.unload(dev);
 
 	drm_mem_uninit();
+	DRM_SPINUNINIT(&dev->dev_lock);
 }
 
 
@@ -661,10 +656,8 @@ int drm_close_pid(drm_device_t *dev, drm_file_t *priv, pid_t pid)
 				break;	/* Got lock */
 			}
 				/* Contention */
-
-
-			DRM_LOCAL_WAIT_ON(retcode, &dev->dev_lock,
-					  &dev->lock.lock_cv); 
+			retcode = mtsleep((void *)&dev->lock.lock_queue,
+			    PZERO | PCATCH, "drmlk2", 0, &dev->dev_lock);
 			if (retcode)
 				break;
 		}
@@ -814,4 +807,28 @@ int drm_ioctl(DRM_CDEV kdev, u_long cmd, void *data, int flags,
 		DRM_DEBUG("    returning %d\n", retcode);
 
 	return DRM_ERR(retcode);
+}
+
+MODULE(MODULE_CLASS_MISC, drm, NULL);
+
+static int
+drm_modcmd(modcmd_t cmd, void *arg)
+{
+#ifdef _MODULE
+	int bmajor = -1, cmajor = -1;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return devsw_attach("drm", NULL, &bmajor, &drm_cdevsw, &cmajor);
+	case MODULE_CMD_FINI:
+		devsw_detach(NULL, &drm_cdevsw);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+#else
+	if (cmd == MODULE_CMD_INIT)
+		return 0;
+	return ENOTTY;
+#endif
 }

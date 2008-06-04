@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.2.8.1 2008/05/18 12:28:44 yamt Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.2.8.2 2008/06/04 02:02:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-LEAF_NOPROFILE(_atomic_or_32, 2)
+LEAF(_atomic_or_32, 2)
 1:	ldl_l	t1, 0(a0)
 	bis	t1, a1, t2
 	stl_c	t2, 0(a0)
@@ -45,7 +45,7 @@ ATOMIC_OP_ALIAS(atomic_or_32,_atomic_or_32)
 ATOMIC_OP_ALIAS(atomic_or_uint,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_uint,_atomic_or_32)
 
-LEAF_NOPROFILE(_atomic_or_32_nv, 2)
+LEAF(_atomic_or_32_nv, 2)
 1:	ldl_l	t1, 0(a0)
 	bis	t1, a1, t2
 	mov	t2, v0
@@ -58,7 +58,7 @@ ATOMIC_OP_ALIAS(atomic_or_32_nv,_atomic_or_32_nv)
 ATOMIC_OP_ALIAS(atomic_or_uint_nv,_atomic_or_32_nv)
 STRONG_ALIAS(_atomic_or_uint_nv,_atomic_or_32_nv)
 
-LEAF_NOPROFILE(_atomic_or_64, 2)
+LEAF(_atomic_or_64, 2)
 1:	ldq_l	t1, 0(a0)
 	bis	t1, a1, t2
 	stq_c	t2, 0(a0)
@@ -70,7 +70,7 @@ ATOMIC_OP_ALIAS(atomic_or_64,_atomic_or_64)
 ATOMIC_OP_ALIAS(atomic_or_ulong,_atomic_or_64)
 STRONG_ALIAS(_atomic_or_ulong,_atomic_or_64)
 
-LEAF_NOPROFILE(_atomic_or_64_nv, 2)
+LEAF(_atomic_or_64_nv, 2)
 1:	ldq_l	t1, 0(a0)
 	bis	t1, a1, t2
 	mov	t2, v0

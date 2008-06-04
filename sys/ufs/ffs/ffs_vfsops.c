@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.223.2.1 2008/05/18 12:35:55 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.223.2.2 2008/06/04 02:05:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.2.1 2008/05/18 12:35:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.2.2 2008/06/04 02:05:53 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1749,9 +1749,11 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 	int error = 0;
 	u_int32_t saveflag;
 
-	bp = getblk(mp->um_devvp,
-	    fs->fs_sblockloc >> (fs->fs_fshift - fs->fs_fsbtodb),
-	    (int)fs->fs_sbsize, 0, 0);
+	error = ffs_getblk(mp->um_devvp,
+	    fs->fs_sblockloc >> (fs->fs_fshift - fs->fs_fsbtodb), FFS_NOBLK,
+	    fs->fs_sbsize, false, &bp);
+	if (error)
+		return error;
 	saveflag = fs->fs_flags & FS_INTERNAL;
 	fs->fs_flags &= ~FS_INTERNAL;
 
@@ -1787,8 +1789,10 @@ ffs_cgupdate(struct ufsmount *mp, int waitfor)
 		size = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
 			size = (blks - i) * fs->fs_fsize;
-		bp = getblk(mp->um_devvp, fsbtodb(fs, fs->fs_csaddr + i),
-		    size, 0, 0);
+		error = ffs_getblk(mp->um_devvp, fsbtodb(fs, fs->fs_csaddr + i),
+		    FFS_NOBLK, size, false, &bp);
+		if (error)
+			break;
 #ifdef FFS_EI
 		if (mp->um_flags & UFS_NEEDSWAP)
 			ffs_csum_swap((struct csum*)space,

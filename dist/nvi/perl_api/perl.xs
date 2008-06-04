@@ -14,7 +14,7 @@
 #undef VI
 
 #ifndef lint
-static const char sccsid[] = "$Id: perl.xs,v 1.1.1.1.2.2 2008/05/18 12:29:31 yamt Exp $ (Berkeley) $Date: 2008/05/18 12:29:31 $";
+static const char sccsid[] = "Id: perl.xs,v 8.46 2001/08/28 11:33:42 skimo Exp (Berkeley) Date: 2001/08/28 11:33:42";
 #endif /* not lint */
 
 #include <sys/types.h>
