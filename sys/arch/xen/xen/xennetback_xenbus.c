@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.22 2008/04/14 13:38:03 cegger Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.23 2008/06/04 12:41:42 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -214,7 +214,7 @@ xvifattach(int n)
 	    0, 0, &mlist, NB_XMIT_PAGES_BATCH, 0) != 0)
 		panic("xennetback_init: uvm_pglistalloc");
 	for (i = 0, pg = mlist.tqh_first; pg != NULL;
-	    pg = pg->pageq.tqe_next, i++)
+	    pg = pg->pageq.queue.tqe_next, i++)
 		mcl_pages[i] = xpmap_ptom(VM_PAGE_TO_PHYS(pg)) >> PAGE_SHIFT;
 	if (i != NB_XMIT_PAGES_BATCH)
 		panic("xennetback_init: %d mcl pages", i);
