@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.15 2008/04/28 20:24:06 martin Exp $ */
+/* $NetBSD: rb.c,v 1.16 2008/06/04 14:31:15 ad Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #else
 #include <lib/libkern/libkern.h>
 #endif
-#include "rb.h"
+#include <sys/rb.h>
 
 static void rb_tree_insert_rebalance(struct rb_tree *, struct rb_node *);
 static void rb_tree_removal_rebalance(struct rb_tree *, struct rb_node *,
