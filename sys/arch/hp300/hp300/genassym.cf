@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.37 2008/03/24 23:02:38 cube Exp $
+#	$NetBSD: genassym.cf,v 1.38 2008/06/04 11:30:25 ad Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -177,8 +177,6 @@ define	SIZEOF_HI		sizeof(struct hp300_intr)
 
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
-
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.27 2007/10/17 19:58:04 garbled Exp $
+#	$NetBSD: genassym.cf,v 1.28 2008/06/04 11:30:26 ad Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -219,9 +219,6 @@ define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
 # errno
 define	EFAULT			EFAULT
 define	ENAMETOOLONG		ENAMETOOLONG
-
-# UVM
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # SVR4 binary compatibility
 ifdef COMPAT_SVR4
