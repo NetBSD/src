@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.21 2008/06/03 22:14:24 ad Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.22 2008/06/04 12:26:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.21 2008/06/03 22:14:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.22 2008/06/04 12:26:20 ad Exp $");
 
 #include "opt_pax.h"
 
@@ -274,8 +274,8 @@ pax_mprotect(struct lwp *l, vm_prot_t *prot, vm_prot_t *maxprot)
 		return;
 
 	f = l->l_proc->p_pax;
-	if ((pax_mprotect_global && (f & ELF_NOTE_PAX_NOMPROTECT)) ||
-	    (!pax_mprotect_global && (f & ELF_NOTE_PAX_MPROTECT)))
+	if ((pax_mprotect_global && (f & ELF_NOTE_PAX_NOMPROTECT) != 0) ||
+	    (!pax_mprotect_global && (f & ELF_NOTE_PAX_MPROTECT) == 0))
 		return;
 
 	if ((*prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) != VM_PROT_EXECUTE) {
@@ -298,8 +298,8 @@ pax_aslr_active(struct lwp *l)
 		return false;
 
 	f = l->l_proc->p_pax;
-	if ((pax_aslr_global && (f & ELF_NOTE_PAX_NOASLR)) ||
-	    (!pax_aslr_global && (f & ELF_NOTE_PAX_ASLR)))
+	if ((pax_aslr_global && (f & ELF_NOTE_PAX_NOASLR) != 0) ||
+	    (!pax_aslr_global && (f & ELF_NOTE_PAX_ASLR) == 0))
 		return false;
 	return true;
 }
@@ -394,8 +394,8 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 		return (0);
 
 	f = l->l_proc->p_pax;
-	if ((pax_segvguard_global && (f & ELF_NOTE_PAX_NOGUARD)) ||
-	    (!pax_segvguard_global && (f & ELF_NOTE_PAX_GUARD)))
+	if ((pax_segvguard_global && (f & ELF_NOTE_PAX_NOGUARD) != 0) ||
+	    (!pax_segvguard_global && (f & ELF_NOTE_PAX_GUARD) == 0))
 		return (0);
 
 	if (vp == NULL)
