@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1156 2008/06/04 08:30:26 haad Exp $
+#	$NetBSD: mi,v 1.1157 2008/06/04 14:31:53 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1986,6 +1986,7 @@
 ./usr/include/sys/queue.h			comp-c-include
 ./usr/include/sys/radioio.h			comp-c-include
 ./usr/include/sys/ras.h				comp-c-include
+./usr/include/sys/rb.h				comp-c-include
 ./usr/include/sys/reboot.h			comp-c-include
 ./usr/include/sys/resource.h			comp-c-include
 ./usr/include/sys/resourcevar.h			comp-c-include
