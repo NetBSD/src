@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.635 2008/05/11 14:44:54 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.636 2008/06/05 21:44:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.635 2008/05/11 14:44:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.636 2008/06/05 21:44:31 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -865,6 +865,7 @@ int	waittime = -1;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	int s;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -883,15 +884,18 @@ cpu_reboot(int howto, char *bootstr)
 			resettodr();
 	}
 
-	/* Disable interrupts. */
-	splhigh();
-
 	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
+		s = splhigh();
 		dumpsys();
+		splx(s);
+	}
 
 haltsys:
 	doshutdownhooks();
+
+	/* Disable interrupts. */
+	(void)splhigh();
 
 #ifdef MULTIPROCESSOR
 	x86_broadcast_ipi(X86_IPI_HALT);
