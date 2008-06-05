@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.19 2008/06/05 09:27:11 cegger Exp $
+# $NetBSD: XEN3_DOM0,v 1.20 2008/06/05 09:37:21 cegger Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -219,6 +219,8 @@ acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz*		at acpi?		# ACPI Thermal Zone
 aiboost*	at acpi?		# ASUS AI Booster Hardware monitor
 hpqlb*		at acpi?		# HP Quick Launch Buttons
+pckbc*		at acpi?		# PC keyboard controller
+pcppi*		at acpi?		# AT-style speaker sound
 
 # PCI bus support
 pci*		at hypervisor? bus ?
