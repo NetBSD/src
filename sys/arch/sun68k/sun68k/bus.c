@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.19.40.1 2008/06/02 13:22:47 mjf Exp $	*/
+/*	$NetBSD: bus.c,v 1.19.40.2 2008/06/05 19:14:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -153,7 +153,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.19.40.1 2008/06/02 13:22:47 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.19.40.2 2008/06/05 19:14:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ extern	paddr_t avail_end;
 	 * Simply keep a pointer around to the linked list, so
 	 * bus_dmamap_free() can return it.
 	 *
-	 * NOBODY SHOULD TOUCH THE pageq FIELDS WHILE THESE PAGES
+	 * NOBODY SHOULD TOUCH THE pageq.queue FIELDS WHILE THESE PAGES
 	 * ARE IN OUR CUSTODY.
 	 */
 	segs[0]._ds_mlist = mlist;
@@ -336,7 +336,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	*kvap = (void *)va;
 
 	mlist = segs[0]._ds_mlist;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
 		paddr_t pa;
 
 		if (size == 0)

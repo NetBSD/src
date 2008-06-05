@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.11.6.1 2008/06/02 13:23:12 mjf Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.11.6.2 2008/06/05 19:14:35 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.11.6.1 2008/06/02 13:23:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.11.6.2 2008/06/05 19:14:35 mjf Exp $");
 
 #include "opt_acpi.h"
 #include <sys/param.h>
@@ -227,7 +227,7 @@ link_add_crs(ACPI_RESOURCE *res, void *context)
 				link->l_irq = res->Data.Irq.Interrupts[0];
 				link->l_trig = res->Data.Irq.Triggering;
 				link->l_pol = res->Data.Irq.Polarity;
-		}
+			}
 		} else if (res->Data.ExtendedIrq.InterruptCount == 1) {
 			link->l_irq = res->Data.ExtendedIrq.Interrupts[0];
 			link->l_trig = res->Data.ExtendedIrq.Triggering;

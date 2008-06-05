@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.8.2.2 2008/06/02 13:22:51 mjf Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.8.2.3 2008/06/05 19:14:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.8.2.2 2008/06/02 13:22:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.8.2.3 2008/06/05 19:14:34 mjf Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -444,12 +444,6 @@ cpu_probe_cyrix_cmn(struct cpu_info *ci)
 	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
 	/* disable access to ccr4/ccr5 */
 	cyrix_write_reg(0xC3, c3);
-
-	/*
-	 * XXX disable page zero in the idle loop, it seems to
-	 * cause panics on these CPUs.
-	 */
-	vm_page_zero_enable = FALSE;
 }
 
 static void

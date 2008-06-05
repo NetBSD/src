@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.11.6.2 2008/06/02 13:24:08 mjf Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.11.6.3 2008/06/05 19:14:36 mjf Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.11.6.2 2008/06/02 13:24:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.11.6.3 2008/06/05 19:14:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -73,23 +73,16 @@ idle_loop(void *dummy)
 		KASSERT(l->l_priority == PRI_IDLE);
 
 		sched_idle();
-		if (sched_curcpu_runnable_p()) {
-			goto schedule;
-		}
-		if (uvm.page_idle_zero) {
-			uvm_pageidlezero();
-			if (sched_curcpu_runnable_p()) {
-				goto schedule;
-			}
-		}
 		if (!sched_curcpu_runnable_p()) {
-			cpu_idle();
-			if (!sched_curcpu_runnable_p() &&
-			    !ci->ci_want_resched) {
-				continue;
+			uvm_pageidlezero();
+			if (!sched_curcpu_runnable_p()) {
+				cpu_idle();
+				if (!sched_curcpu_runnable_p() &&
+				    !ci->ci_want_resched) {
+					continue;
+				}
 			}
 		}
-schedule:
 		KASSERT(l->l_mutex == l->l_cpu->ci_schedstate.spc_lwplock);
 		lwp_lock(l);
 		mi_switch(l);

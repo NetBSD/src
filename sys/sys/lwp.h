@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.78.6.2 2008/06/02 13:24:33 mjf Exp $	*/
+/*	$NetBSD: lwp.h,v 1.78.6.3 2008/06/05 19:14:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -476,8 +476,8 @@ KPREEMPT_ENABLE(lwp_t *l)
 #endif /* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */
-
 #define LWP_DETACHED    0x00000040
 #define LWP_SUSPENDED   0x00000080
+#define	LWP_VFORK	0x80000000
 
 #endif	/* !_SYS_LWP_H_ */

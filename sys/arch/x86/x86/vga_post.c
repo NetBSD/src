@@ -1,4 +1,4 @@
-/* $NetBSD: vga_post.c,v 1.6.10.1 2008/04/03 12:42:31 mjf Exp $ */
+/* $NetBSD: vga_post.c,v 1.6.10.2 2008/06/05 19:14:34 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.6.10.1 2008/04/03 12:42:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.6.10.2 2008/06/05 19:14:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -173,7 +173,7 @@ vga_post_init(int bus, int device, int function)
 	uvm_km_free(kernel_map, sys_bios_data, PAGE_SIZE, UVM_KMF_VAONLY);
 
 	iter = 0;
-	TAILQ_FOREACH(pg, &sc->ram_backing, pageq) {
+	TAILQ_FOREACH(pg, &sc->ram_backing, pageq.queue) {
 		pmap_kenter_pa(sc->sys_image + iter, VM_PAGE_TO_PHYS(pg),
 				VM_PROT_READ | VM_PROT_WRITE);
 		iter += PAGE_SIZE;

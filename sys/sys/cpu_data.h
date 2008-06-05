@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.16.6.2 2008/06/02 13:24:32 mjf Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.16.6.3 2008/06/05 19:14:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -86,11 +86,12 @@ struct cpu_data {
 	u_int		cpu_nsyscall;		/* syscall counter */
 	u_int		cpu_ntrap;		/* trap counter */
 	u_int		cpu_nswtch;		/* context switch counter */
+	void		*cpu_uvm;		/* uvm per-cpu data */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
 	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
 	struct selcpu	*cpu_selcpu;		/* per-CPU select() info */
-	void		*cpu_cachelock;		/* per-cpu vfs_cache lock */
+	void		*cpu_nch;		/* per-cpu vfs_cache data */
 	_TAILQ_HEAD(,struct lockdebug,volatile) cpu_ld_locks;/* !: lockdebug */
 	__cpu_simple_lock_t cpu_ld_lock;	/* lockdebug */
 	uint64_t	cpu_cc_freq;		/* cycle counter frequency */

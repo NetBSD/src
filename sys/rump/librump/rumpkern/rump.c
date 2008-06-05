@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.35.6.2 2008/06/02 13:24:31 mjf Exp $	*/
+/*	$NetBSD: rump.c,v 1.35.6.3 2008/06/05 19:14:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -102,9 +102,7 @@ rump_init()
 		desiredvnodes = 1<<16;
 	}
 
-	rump_cpu.ci_data.cpu_cachelock = mutex_obj_alloc(MUTEX_DEFAULT,
-	    IPL_NONE);
-
+	cache_cpu_init(&rump_cpu);
 	rw_init(&rump_cwdi.cwdi_lock);
 	l = &lwp0;
 	p = &proc0;

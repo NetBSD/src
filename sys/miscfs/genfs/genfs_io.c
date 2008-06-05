@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.5.6.1 2008/06/02 13:24:19 mjf Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.5.6.2 2008/06/05 19:14:36 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.5.6.1 2008/06/02 13:24:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.5.6.2 2008/06/05 19:14:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -857,7 +857,7 @@ retry:
 		endmp.offset = (voff_t)-1;
 		endmp.flags = PG_BUSY;
 		pg = TAILQ_FIRST(&uobj->memq);
-		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
+		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq.queue);
 		uvm_lwp_hold(l);
 	} else {
 		pg = uvm_pagelookup(uobj, off);
@@ -882,7 +882,7 @@ retry:
 				if (pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
 					wasclean = false;
 				}
-				pg = TAILQ_NEXT(pg, listq);
+				pg = TAILQ_NEXT(pg, listq.queue);
 				continue;
 			}
 			off = pg->offset;
@@ -921,9 +921,9 @@ retry:
 				break;
 			}
 			if (by_list) {
-				TAILQ_INSERT_BEFORE(pg, &curmp, listq);
+				TAILQ_INSERT_BEFORE(pg, &curmp, listq.queue);
 				UVMHIST_LOG(ubchist, "curmp next %p",
-				    TAILQ_NEXT(&curmp, listq), 0,0,0);
+				    TAILQ_NEXT(&curmp, listq.queue), 0,0,0);
 			}
 			if (yld) {
 				mutex_exit(slock);
@@ -936,9 +936,9 @@ retry:
 			}
 			if (by_list) {
 				UVMHIST_LOG(ubchist, "after next %p",
-				    TAILQ_NEXT(&curmp, listq), 0,0,0);
-				pg = TAILQ_NEXT(&curmp, listq);
-				TAILQ_REMOVE(&uobj->memq, &curmp, listq);
+				    TAILQ_NEXT(&curmp, listq.queue), 0,0,0);
+				pg = TAILQ_NEXT(&curmp, listq.queue);
+				TAILQ_REMOVE(&uobj->memq, &curmp, listq.queue);
 			} else {
 				pg = uvm_pagelookup(uobj, off);
 			}
@@ -1049,7 +1049,7 @@ retry:
 		for (i = 0; i < npages; i++) {
 			tpg = pgs[i];
 			KASSERT(tpg->uobject == uobj);
-			if (by_list && tpg == TAILQ_NEXT(pg, listq))
+			if (by_list && tpg == TAILQ_NEXT(pg, listq.queue))
 				pg = tpg;
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
@@ -1071,7 +1071,7 @@ retry:
 					 * and needs_clean is false.
 					 */
 
-					nextpg = TAILQ_NEXT(tpg, listq);
+					nextpg = TAILQ_NEXT(tpg, listq.queue);
 					uvm_pagefree(tpg);
 					if (pagedaemon)
 						uvmexp.pdfreed++;
@@ -1091,14 +1091,14 @@ retry:
 
 			if (by_list) {
 				TAILQ_INSERT_AFTER(&uobj->memq, pg, &curmp,
-				    listq);
+				    listq.queue);
 			}
 			mutex_exit(slock);
 			error = GOP_WRITE(vp, pgs, npages, flags);
 			mutex_enter(slock);
 			if (by_list) {
-				pg = TAILQ_NEXT(&curmp, listq);
-				TAILQ_REMOVE(&uobj->memq, &curmp, listq);
+				pg = TAILQ_NEXT(&curmp, listq.queue);
+				TAILQ_REMOVE(&uobj->memq, &curmp, listq.queue);
 			}
 			if (error) {
 				break;
@@ -1117,7 +1117,7 @@ retry:
 				pg = nextpg;
 				nextpg = NULL;
 			} else {
-				pg = TAILQ_NEXT(pg, listq);
+				pg = TAILQ_NEXT(pg, listq.queue);
 			}
 		} else {
 			off += (npages - nback) << PAGE_SHIFT;
@@ -1127,7 +1127,7 @@ retry:
 		}
 	}
 	if (by_list) {
-		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
+		TAILQ_REMOVE(&uobj->memq, &endmp, listq.queue);
 		uvm_lwp_rele(l);
 	}
 
@@ -1146,7 +1146,7 @@ retry:
 	if (cleanall && wasclean && gp->g_dirtygen == dirtygen &&
 	    (vp->v_iflag & VI_ONWORKLST) != 0) {
 #if defined(DEBUG)
-		TAILQ_FOREACH(pg, &uobj->memq, listq) {
+		TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
 			if ((pg->flags & PG_CLEAN) == 0) {
 				printf("%s: %p: !CLEAN\n", __func__, pg);
 			}

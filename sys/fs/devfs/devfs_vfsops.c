@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_vfsops.c,v 1.1.14.4 2008/04/03 11:37:27 mjf Exp $ */
+/* 	$NetBSD: devfs_vfsops.c,v 1.1.14.5 2008/06/05 19:14:36 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_vfsops.c,v 1.1.14.4 2008/04/03 11:37:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_vfsops.c,v 1.1.14.5 2008/06/05 19:14:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -510,14 +510,14 @@ struct vfsops devfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	devfs_snapshot,			/* vfs_snapshot */
 	vfs_stdextattrctl,		/* vfs_extattrctl */
-	(void *)eopnotsupp,		/* vfs_suspendevfsctl */
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	devfs_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
 };
-VFS_ATTACH(devfs_vfsops);
 
 int
 devfs_kernel_mount(void)
@@ -548,10 +548,10 @@ devfs_kernel_mount(void)
 	mp->mnt_refcnt = 1;
 
 	TAILQ_INIT(&mp->mnt_vnodelist);
-	rw_init(&mp->mnt_lock);
+	rw_init(&mp->mnt_unmounting);
 	mutex_init(&mp->mnt_renamelock, 
 	    MUTEX_DEFAULT, IPL_NONE);
-	(void)vfs_busy(mp, RW_WRITER, 0);
+	(void)vfs_busy(mp, NULL);
 
 	mp->mnt_vnodecovered = nd.ni_vp;
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(curlwp->l_cred);
@@ -563,7 +563,7 @@ devfs_kernel_mount(void)
 	if (error != 0) {
 		nd.ni_vp->v_mountedhere = NULL;
 		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		vfs_destroy(mp);
 		goto out;
 	}
@@ -583,7 +583,7 @@ devfs_kernel_mount(void)
 	mutex_exit(&mountlist_lock);
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 		error = vfs_allocate_syncvnode(mp);
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
 	if (error) {

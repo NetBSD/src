@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.214.6.2 2008/06/02 13:23:54 mjf Exp $	*/
+/*	$NetBSD: uhci.c,v 1.214.6.3 2008/06/05 19:14:35 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.214.6.2 2008/06/02 13:23:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.214.6.3 2008/06/05 19:14:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,7 +493,7 @@ uhci_init(uhci_softc_t *sc)
 	clsqh = uhci_alloc_sqh(sc);
 	if (clsqh == NULL)
 		return (USBD_NOMEM);
-	clsqh->hlink = bsqh;
+	clsqh->hlink = chsqh;
 	clsqh->qh.qh_hlink = htole32(chsqh->physaddr | UHCI_PTR_QH);
 	clsqh->elink = NULL;
 	clsqh->qh.qh_elink = htole32(UHCI_PTR_T);

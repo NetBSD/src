@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.70 2008/01/02 11:49:17 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.70.6.1 2008/06/05 19:14:38 mjf Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.70 2008/01/02 11:49:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.70.6.1 2008/06/05 19:14:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1068,7 +1068,7 @@ ulz_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 
 	pg = TAILQ_FIRST(&uobj->memq);
 	KASSERT(pg != NULL);
-	KASSERT(TAILQ_NEXT(pg, listq) == NULL);
+	KASSERT(TAILQ_NEXT(pg, listq.queue) == NULL);
 
 	mutex_enter(&uvm_pageqlock);
 	if (pg->uanon)

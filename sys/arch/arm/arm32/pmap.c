@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.171.6.2 2008/06/02 13:21:53 mjf Exp $	*/
+/*	$NetBSD: pmap.c,v 1.171.6.3 2008/06/05 19:14:32 mjf Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171.6.2 2008/06/02 13:21:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171.6.3 2008/06/05 19:14:32 mjf Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -5141,7 +5141,7 @@ pmap_postinit(void)
 			cpu_tlb_flushD_SE(va);
 
 			va += PAGE_SIZE;
-			m = TAILQ_NEXT(m, pageq);
+			m = TAILQ_NEXT(m, pageq.queue);
 		}
 
 #ifdef DIAGNOSTIC

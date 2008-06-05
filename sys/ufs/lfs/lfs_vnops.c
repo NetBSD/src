@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.215.6.1 2008/06/02 13:24:36 mjf Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.215.6.2 2008/06/05 19:14:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.215.6.1 2008/06/02 13:24:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.215.6.2 2008/06/05 19:14:37 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1839,7 +1839,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				       ((curpg->offset & fs->lfs_bmask) ||
 					curpg->offset >= vp->v_size ||
 					curpg->offset >= endoffset))
-					curpg = TAILQ_NEXT(curpg, listq);
+					curpg = TAILQ_NEXT(curpg, listq.queue);
 			}
 			if (curpg == NULL)
 				break;
@@ -1896,7 +1896,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		}
 		if (pages_per_block > 0 && nonexistent >= pages_per_block) {
 			if (by_list) {
-				curpg = TAILQ_NEXT(curpg, listq);
+				curpg = TAILQ_NEXT(curpg, listq.queue);
 			} else {
 				soff += fs->lfs_bsize;
 			}
@@ -1940,7 +1940,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			break;
 
 		if (by_list) {
-			curpg = TAILQ_NEXT(curpg, listq);
+			curpg = TAILQ_NEXT(curpg, listq.queue);
 		} else {
 			soff += MAX(PAGE_SIZE, fs->lfs_bsize);
 		}

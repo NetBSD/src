@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.124.6.2 2008/06/02 13:24:22 mjf Exp $ */
+/*	$NetBSD: if_gre.c,v 1.124.6.3 2008/06/05 19:14:36 mjf Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.124.6.2 2008/06/02 13:24:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.124.6.3 2008/06/05 19:14:36 mjf Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -408,6 +408,7 @@ gre_clone_destroy(struct ifnet *ifp)
 	splx(s);
 
 	cv_destroy(&sc->sc_condvar);
+	cv_destroy(&sc->sc_fp_condvar);
 	mutex_destroy(&sc->sc_mtx);
 	gre_evcnt_detach(sc);
 	free(sc, M_DEVBUF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.56.6.1 2008/06/02 13:22:52 mjf Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.56.6.2 2008/06/05 19:14:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.56.6.1 2008/06/02 13:22:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.56.6.2 2008/06/05 19:14:34 mjf Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -582,10 +582,8 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 
 		if (acpi_match_hid(devinfo, pciroot_hid)) {
 			rv = mpacpi_get_bbn(acpi, parent, &bus);
-			if (ACPI_FAILURE(rv)) {
-				AcpiOsFree(buf.Pointer);
-				return -1;
-			}
+			if (ACPI_FAILURE(rv))
+				bus = 0;
 			break;
 		}
 
@@ -677,8 +675,12 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 	if (acpi_match_hid(devinfo, pciroot_hid)) {
 		/* this is PCI root bridge */
 		rv = mpacpi_get_bbn(acpi, handle, &mpr->mpr_bus);
-		if (ACPI_FAILURE(rv))
-			panic("mpacpi: PCI root bridge with broken _BBN");
+		if (ACPI_FAILURE(rv)) {
+			if (mpacpi_npciroots)
+				panic("mpacpi: PCI root bridge with broken _BBN");
+			/* For the first bus we find, assume the BBN is 0. */
+			mpr->mpr_bus = 0;
+		}
 
 		if (mp_verbose)
 			printf("mpacpi: found root PCI bus %d at level %u\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39.6.2 2008/06/02 13:21:48 mjf Exp $	*/
+/*	$NetBSD: locore.S,v 1.39.6.3 2008/06/05 19:14:32 mjf Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1249,15 +1249,20 @@ iret_return:
 	jmp	.Losyscall_checkast	/* re-check ASTs */
 
 /*
- * void sse2_zero_page(void *pg)
+ * void sse2_idlezero_page(void *pg)
  *
- * Zero a page without polluting the cache.
+ * Zero a page without polluting the cache.  Preemption must be
+ * disabled by the caller. Abort if a preemption is pending.
  */
-ENTRY(sse2_zero_page)
-	movl	$PAGE_SIZE, %ecx
+ENTRY(sse2_idlezero_page)
+	pushq	%rbp
+	movq	%rsp,%rbp
+	movl	$(PAGE_SIZE/64), %ecx
 	xorq	%rax, %rax
 	.align	16
 1:
+	cmpl	$0, CPUVAR(RESCHED)
+	jnz	2f
 	movnti	%rax, 0(%rdi)
 	movnti	%rax, 8(%rdi)
 	movnti	%rax, 16(%rdi)
@@ -1266,32 +1271,14 @@ ENTRY(sse2_zero_page)
 	movnti	%rax, 40(%rdi)
 	movnti	%rax, 48(%rdi)
 	movnti	%rax, 56(%rdi)
-	subl	$64, %ecx
-	leaq	64(%rdi), %rdi
+	addq	$64, %rdi
+	decl	%ecx
 	jnz	1b
 	sfence
+	incl	%eax
+	popq	%rbp
 	ret
-
-/*
- * void sse2_copy_page(void *src, void *dst)
- *
- * Copy a page without polluting the cache.
- */
-ENTRY(sse2_copy_page)
-	movl	$PAGE_SIZE, %ecx
-	.align	16
-1:
-	movq	0(%rdi), %rax
-	movq	8(%rdi), %rdx
-	movq	16(%rdi), %r8
-	movq	24(%rdi), %r9
-	movnti	%rax, 0(%rsi)
-	movnti	%rdx, 8(%rsi)
-	movnti	%r8, 16(%rsi)
-	movnti	%r9, 24(%rsi)
-	subl	$32, %ecx
-	leaq	32(%rdi), %rdi
-	leaq	32(%rsi), %rsi
-	jnz	1b
+2:
 	sfence
+	popq	%rbp
 	ret

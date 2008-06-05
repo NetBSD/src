@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.209.6.2 2008/06/02 13:22:44 mjf Exp $	*/
+/*	$NetBSD: pmap.c,v 1.209.6.3 2008/06/05 19:14:34 mjf Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209.6.2 2008/06/02 13:22:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209.6.3 2008/06/05 19:14:34 mjf Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1239,7 +1239,7 @@ pmap_init()
 		panic("pmap_init: no memory");
 
 	/* Map the pages */
-	TAILQ_FOREACH(pg, &pglist, pageq) {
+	TAILQ_FOREACH(pg, &pglist, pageq.queue) {
 		pa = VM_PAGE_TO_PHYS(pg);
 		pmap_zero_page(pa);
 		data = TSB_DATA(0 /* global */,
@@ -1398,8 +1398,8 @@ pmap_destroy(pm)
 
 	/* we could be a little smarter and leave pages zeroed */
 	for (pg = TAILQ_FIRST(&pm->pm_obj.memq); pg != NULL; pg = nextpg) {
-		nextpg = TAILQ_NEXT(pg, listq);
-		TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq);
+		nextpg = TAILQ_NEXT(pg, listq.queue);
+		TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
 		KASSERT(pg->mdpage.mdpg_pvh.pv_pmap == NULL);
 		uvm_pagefree(pg);
 	}
@@ -1478,7 +1478,7 @@ pmap_collect(pm)
 				     ASI_PHYS_CACHED, 0);
 				pa = (paddr_t)(u_long)ptbl;
 				pg = PHYS_TO_VM_PAGE(pa);
-				TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq);
+				TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
 				pmap_free_page(pa);
 			}
 		}
@@ -1487,7 +1487,7 @@ pmap_collect(pm)
 			     ASI_PHYS_CACHED, 0);
 			pa = (paddr_t)(u_long)pdir;
 			pg = PHYS_TO_VM_PAGE(pa);
-			TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq);
+			TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
 			pmap_free_page(pa);
 		}
 	}
@@ -1835,7 +1835,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		ptpg = PHYS_TO_VM_PAGE(ptp);
 		if (ptpg) {
 			ptpg->offset = (uint64_t)va & (0xfffffLL << 23);
-			TAILQ_INSERT_TAIL(&pm->pm_obj.memq, ptpg, listq);
+			TAILQ_INSERT_TAIL(&pm->pm_obj.memq, ptpg, listq.queue);
 		} else {
 			KASSERT(pm == pmap_kernel());
 		}
@@ -1847,7 +1847,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		ptpg = PHYS_TO_VM_PAGE(ptp);
 		if (ptpg) {
 			ptpg->offset = (((uint64_t)va >> 43) & 0x3ffLL) << 13;
-			TAILQ_INSERT_TAIL(&pm->pm_obj.memq, ptpg, listq);
+			TAILQ_INSERT_TAIL(&pm->pm_obj.memq, ptpg, listq.queue);
 		} else {
 			KASSERT(pm == pmap_kernel());
 		}

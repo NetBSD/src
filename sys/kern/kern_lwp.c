@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.93.6.2 2008/06/02 13:24:08 mjf Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.93.6.3 2008/06/05 19:14:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.93.6.2 2008/06/02 13:24:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.93.6.3 2008/06/05 19:14:36 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -577,7 +577,13 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_proc = p2;
 	l2->l_refcnt = 1;
 	l2->l_class = sclass;
-	l2->l_kpriority = l1->l_kpriority;
+
+	/*
+	 * If vfork(), we want the LWP to run fast and on the same CPU
+	 * as its parent, so that it can reuse the VM context and cache
+	 * footprint on the local CPU.
+	 */
+	l2->l_kpriority = ((flags & LWP_VFORK) ? true : false);
 	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;

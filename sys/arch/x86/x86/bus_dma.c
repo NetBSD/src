@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.40.14.1 2008/06/02 13:22:51 mjf Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.40.14.2 2008/06/05 19:14:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40.14.1 2008/06/02 13:22:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40.14.2 2008/06/05 19:14:34 mjf Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -171,13 +171,13 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	m = mlist.tqh_first;
+	m = TAILQ_FIRST(&mlist);
 	curseg = 0;
 	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
+	m = m->pageq.queue.tqe_next;
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	for (; m != NULL; m = m->pageq.queue.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
@@ -986,7 +986,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
 			m = _BUS_BUS_TO_VM_PAGE(addr);
-			TAILQ_INSERT_TAIL(&mlist, m, pageq);
+			TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
 		}
 	}
 

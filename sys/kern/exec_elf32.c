@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.132.6.1 2008/06/02 13:24:07 mjf Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.132.6.2 2008/06/05 19:14:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.132.6.1 2008/06/02 13:24:07 mjf Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.132.6.2 2008/06/05 19:14:36 mjf Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -716,8 +716,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	}
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
-	if (epp->ep_pax_flags)
-		pax_adjust(l, epp->ep_pax_flags);
+	p->p_pax = epp->ep_pax_flags;
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
 #ifdef PAX_ASLR

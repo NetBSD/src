@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.14.14.2 2008/06/02 13:24:07 mjf Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.14.14.3 2008/06/05 19:14:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.14.14.2 2008/06/02 13:24:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.14.14.3 2008/06/05 19:14:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -276,7 +276,7 @@ void
 cv_signal(kcondvar_t *cv)
 {
 
-	LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA);
+	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
 	KASSERT(cv_is_valid(cv));
 
 	if (__predict_false(TAILQ_FIRST(CV_SLEEPQ(cv)) != NULL))
@@ -326,7 +326,7 @@ void
 cv_broadcast(kcondvar_t *cv)
 {
 
-	LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA);
+	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
 	KASSERT(cv_is_valid(cv));
 
 	if (__predict_false(TAILQ_FIRST(CV_SLEEPQ(cv)) != NULL))

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2.40.1 2008/06/02 13:22:20 mjf Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2.40.2 2008/06/05 19:14:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2.40.1 2008/06/02 13:22:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2.40.2 2008/06/05 19:14:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,7 +592,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	DPRINTF(("%s: m = %p, lastaddr = 0x%08lx\n", __func__, m, lastaddr));
 
-	while ((m = TAILQ_NEXT(m, pageq)) != NULL) {
+	while ((m = TAILQ_NEXT(m, pageq.queue)) != NULL) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 		DPRINTF(("%s: m = %p, curaddr = 0x%08lx, lastaddr = 0x%08lx\n",
 			 __func__, m, curaddr, lastaddr));
@@ -645,7 +645,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 		{
 			m = PHYS_TO_VM_PAGE(addr);
 			DPRINTF(("%s: m = %p\n", __func__, m));
-			TAILQ_INSERT_TAIL(&mlist, m, pageq);
+			TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
 		}
 	}
 
