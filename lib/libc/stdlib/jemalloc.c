@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.17 2008/03/08 13:17:13 ad Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.18 2008/06/05 00:16:34 ad Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.17 2008/03/08 13:17:13 ad Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.18 2008/06/05 00:16:34 ad Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -3360,8 +3360,8 @@ malloc_init_hard(void)
 			}
 			break;
 		case 1:
-			if (issetugid() == 0 && (opts =
-			    getenv("MALLOC_OPTIONS")) != NULL) {
+			if ((opts = getenv("MALLOC_OPTIONS")) != NULL &&
+			    issetugid() == 0) {
 				/*
 				 * Do nothing; opts is already initialized to
 				 * the value of the MALLOC_OPTIONS environment
