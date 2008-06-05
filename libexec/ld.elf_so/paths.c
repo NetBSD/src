@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.38 2008/06/03 18:36:59 ad Exp $	 */
+/*	$NetBSD: paths.c,v 1.39 2008/06/05 00:03:20 ad Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: paths.c,v 1.38 2008/06/03 18:36:59 ad Exp $");
+__RCSID("$NetBSD: paths.c,v 1.39 2008/06/05 00:03:20 ad Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -340,8 +340,7 @@ _rtld_process_hints(const char *execname, Search_Path **path_p,
 	char *buf, small[128];
 	const char *b, *ep, *ptr;
 	struct stat st;
-	size_t sz;
-	ssize_t rsz;
+	ssize_t sz;
 	Search_Path **head_p = path_p;
 
 	if ((fd = open(fname, O_RDONLY)) == -1) {
@@ -349,24 +348,25 @@ _rtld_process_hints(const char *execname, Search_Path **path_p,
 		return;
 	}
 
-	if (fstat(fd, &st) == -1) {
-		/* Complain */
-		xwarn("fstat: %s", fname);
-		return;
-	}
-
-	sz = (size_t) st.st_size;
-
 	/* Try to avoid mmap/stat on the file. */
 	buf = small;
 	buf[0] = '\0';
-	rsz = read(fd, buf, sz);
-	if (rsz == -1) {
+	sz = read(fd, buf, sizeof(small));
+	if (sz == -1) {
 		xwarn("read: %s", fname);
 		(void)close(fd);
 		return;
 	}
-	if (rsz >= sizeof(small)) {
+	if (sz >= sizeof(small)) {
+		if (fstat(fd, &st) == -1) {
+			/* Complain */
+			xwarn("fstat: %s", fname);
+			(void)close(fd);
+			return;
+		}
+
+		sz = (ssize_t) st.st_size;
+
 		buf = mmap(0, sz, PROT_READ, MAP_SHARED|MAP_FILE, fd, 0);
 		if (buf == MAP_FAILED) {
 			xwarn("mmap: %s", fname);
