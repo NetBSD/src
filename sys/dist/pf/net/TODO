@@ -1,7 +1,6 @@
 pf specific:
 
 TODO:
-- implement pf_modulate_sack
 - implement bound_iface for NAT rules
 - make filter on gid/pid work
 - resolve XXXPF comments
