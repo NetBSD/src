@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.134 2008/06/04 15:06:04 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.135 2008/06/05 08:16:01 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.134 2008/06/04 15:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.135 2008/06/05 08:16:01 he Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -957,7 +957,6 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 	KASSERT(mutex_owned(&uvm_fpageqlock));
 
 	color = trycolor;
-	cpu = false;
 	pgfl = &ucpu->page_free[flist];
 	gpgfl = &uvm.page_free[flist];
 	do {
