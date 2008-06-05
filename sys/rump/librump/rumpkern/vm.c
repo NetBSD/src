@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.31 2008/06/04 13:10:06 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.32 2008/06/05 12:43:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -86,6 +86,7 @@ struct uvm uvm;
 
 struct vmspace rump_vmspace;
 struct vm_map rump_vmmap;
+const struct rb_tree_ops uvm_page_tree_ops;
 
 /*
  * vm pages 

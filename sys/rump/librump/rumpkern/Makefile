@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2008/05/29 13:12:29 pooka Exp $
+#	$NetBSD: Makefile,v 1.35 2008/06/05 12:43:52 ad Exp $
 #
 
 .include <bsd.own.mk>
@@ -34,7 +34,7 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 	bufq_readprio.c
 
 # src/lib/libkern
-SRCS+=	__assert.c scanc.c skpc.c
+SRCS+=	__assert.c scanc.c skpc.c rb.c
 
 SRCS+=	rumpvnode_if.c rump_syscalls.c
 
