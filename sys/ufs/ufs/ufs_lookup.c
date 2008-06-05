@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.97 2008/05/16 09:22:01 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.98 2008/06/05 09:32:29 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.97 2008/05/16 09:22:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.98 2008/06/05 09:32:29 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1313,7 +1313,8 @@ int ufs_dirrablks = UFS_DIRRABLKS;
 /*
  * ufs_blkatoff: Return buffer with the contents of block "offset" from
  * the beginning of directory "vp".  If "res" is non-zero, fill it in with
- * a pointer to the remaining space in the directory.
+ * a pointer to the remaining space in the directory.  If the caller intends
+ * to modify the buffer returned, "modify" must be true.
  */
 
 int
