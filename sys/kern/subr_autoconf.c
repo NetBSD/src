@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.152 2008/06/04 12:45:28 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.153 2008/06/05 21:55:51 cegger Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.152 2008/06/04 12:45:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.153 2008/06/05 21:55:51 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.152 2008/06/04 12:45:28 ad Exp $
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/devmon.h>
+#include <sys/cpu.h>
 
 #include <sys/disk.h>
 
