@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.42 2007/10/17 19:55:38 garbled Exp $
+#	$NetBSD: genassym.cf,v 1.42.16.1 2008/06/05 19:14:33 mjf Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -84,7 +84,6 @@ define	U_PCB_PPL		offsetof(struct user, u_pcb.pcb_ppl)
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
 
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 define	UVMEXP_SWTCH		offsetof(struct uvmexp, swtch)
 
 define	SIGFPE		 	SIGFPE

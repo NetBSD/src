@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21.6.2 2008/06/02 13:22:51 mjf Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21.6.3 2008/06/05 19:14:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.6.2 2008/06/02 13:22:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21.6.3 2008/06/05 19:14:34 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -283,6 +283,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		if ((boothowto & RB_MD1) != 0) {
 			aprint_error(": multiprocessor boot disabled\n");
+			if (!pmf_device_register(self, NULL, NULL))
+				aprint_error_dev(self,
+				    "couldn't establish power handler\n");
 			return;
 		}
 		aprint_naive(": Application Processor\n");
@@ -321,6 +324,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_dev = self;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_func = caa->cpu_func;
+
+	/* Must be before mi_cpu_attach(). */
+	cpu_vm_init(ci);
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		int error;
@@ -404,7 +410,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		panic("unknown processor type??\n");
 	}
 
-	cpu_vm_init(ci);
 	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
@@ -522,6 +527,9 @@ cpu_boot_secondary_processors(void)
 
 	/* Now that we know about the TSC, attach the timecounter. */
 	tsc_tc_init();
+
+	/* Enable zeroing of pages in the idle loop if we have SSE2. */
+	vm_page_zero_enable = ((cpu_feature & CPUID_SSE2) != 0);
 }
 
 static void

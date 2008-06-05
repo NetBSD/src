@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.21.6.3 2008/06/02 13:24:07 mjf Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.21.6.4 2008/06/05 19:14:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.21.6.3 2008/06/02 13:24:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.21.6.4 2008/06/05 19:14:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,6 @@ mi_cpu_attach(struct cpu_info *ci)
 	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
 
 	sched_cpuattach(ci);
-	uvm_cpu_attach(ci);
 
 	error = create_idle_lwp(ci);
 	if (error != 0) {

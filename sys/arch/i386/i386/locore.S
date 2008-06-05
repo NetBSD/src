@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.66.6.2 2008/06/02 13:22:15 mjf Exp $	*/
+/*	$NetBSD: locore.S,v 1.66.6.3 2008/06/05 19:14:33 mjf Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.66.6.2 2008/06/02 13:22:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.66.6.3 2008/06/05 19:14:33 mjf Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1227,18 +1227,21 @@ END(npx586bug1)
 #endif /* NNPX > 0 */
 
 /*
- * void sse2_zero_page(void *pg)
+ * void sse2_idlezero_page(void *pg)
  *
- * Zero a page without polluting the cache.
+ * Zero a page without polluting the cache.  Preemption must be
+ * disabled by the caller. Abort if a preemption is pending.
  */
-ENTRY(sse2_zero_page)
+ENTRY(sse2_idlezero_page)
 	pushl	%ebp
 	movl	%esp,%ebp
 	movl	8(%esp), %edx
-	movl	$(PAGE_SIZE/64), %ecx
+	movl	$(PAGE_SIZE/32), %ecx
 	xorl	%eax, %eax
 	.align	16
 1:
+	cmpl	$0, CPUVAR(RESCHED)
+	jnz	2f
 	movnti	%eax, 0(%edx)
 	movnti	%eax, 4(%edx)
 	movnti	%eax, 8(%edx)
@@ -1247,60 +1250,15 @@ ENTRY(sse2_zero_page)
 	movnti	%eax, 20(%edx)
 	movnti	%eax, 24(%edx)
 	movnti	%eax, 28(%edx)
-	movnti	%eax, 32(%edx)
-	movnti	%eax, 36(%edx)
-	movnti	%eax, 40(%edx)
-	movnti	%eax, 44(%edx)
-	movnti	%eax, 48(%edx)
-	movnti	%eax, 52(%edx)
-	movnti	%eax, 56(%edx)
-	movnti	%eax, 60(%edx)
-	addl	$64, %edx
+	addl	$32, %edx
 	decl	%ecx
 	jnz	1b
 	sfence
+	incl	%eax
 	pop	%ebp
 	ret
-END(sse2_zero_page)
-
-/*
- * void sse2_copy_page(void *src, void *dst)
- *
- * Copy a page without polluting the cache.
- */
-ENTRY(sse2_copy_page)
-	pushl	%ebp
-	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
-	movl	20(%esp), %esi
-	movl	24(%esp), %edi
-	xorl	%ebp, %ebp
-	.align	16
-1:
-	movl	0(%esi,%ebp), %eax
-	movl	4(%esi,%ebp), %ebx
-	movl	8(%esi,%ebp), %ecx
-	movl	12(%esi,%ebp), %edx
-	movnti	%eax, 0(%edi,%ebp)
-	movnti	%ebx, 4(%edi,%ebp)
-	movnti	%ecx, 8(%edi,%ebp)
-	movnti	%edx, 12(%edi,%ebp)
-	movl	16(%esi,%ebp), %eax
-	movl	20(%esi,%ebp), %ebx
-	movl	24(%esi,%ebp), %ecx
-	movl	28(%esi,%ebp), %edx
-	movnti	%eax, 16(%edi,%ebp)
-	movnti	%ebx, 20(%edi,%ebp)
-	movnti	%ecx, 24(%edi,%ebp)
-	movnti	%edx, 28(%edi,%ebp)
-	addl	$32, %ebp
-	cmpl	$PAGE_SIZE, %ebp
-	jne	1b
+2:
 	sfence
-	popl	%edi
-	popl	%esi
-	popl	%ebx
 	popl	%ebp
 	ret
-END(sse2_copy_page)
+END(sse2_idlezero_page)

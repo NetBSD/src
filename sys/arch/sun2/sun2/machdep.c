@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50.12.1 2008/06/02 13:22:45 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50.12.2 2008/06/05 19:14:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -153,7 +153,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50.12.1 2008/06/02 13:22:45 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50.12.2 2008/06/05 19:14:34 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -911,7 +911,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 
 	/* Map physical pages into MMU */
 	mlist = segs[0]._ds_mlist;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
 		if (sgsize == 0)
 			panic("_bus_dmamap_load_raw: size botch");
 		pa = VM_PAGE_TO_PHYS(m);
