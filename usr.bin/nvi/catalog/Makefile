@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/05/20 18:04:16 aymeric Exp $
+#	$NetBSD: Makefile,v 1.2 2008/06/05 21:16:15 aymeric Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
@@ -8,7 +8,7 @@ NOMAN=		# defined
 
 .PATH:	${DIST}/catalog
 
-CATALOG=	dutch english french german ru_SU.KOI8-R spanish swedish
+CATALOG=	dutch english french german ru_RU.KOI8-R spanish swedish
 VI_FILES=	${DIST}/cl/*.c ${DIST}/common/*.c \
 		${DIST}/ex/*.c ${DIST}/vi/*.c
 FILES=		${CATALOG}
