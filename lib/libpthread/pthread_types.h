@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.11 2008/06/05 21:40:17 ad Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.12 2008/06/05 23:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -98,10 +98,7 @@ struct	__pthread_mutex_st {
 #define	_PT_MUTEX_MAGIC	0x33330003
 #define	_PT_MUTEX_DEAD	0xDEAD0003
 
-#define _PTHREAD_MUTEX_INITIALIZER \
-    { _PT_MUTEX_MAGIC, 0, 0, NULL, NULL }
-#define	_PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP \
-    { _PT_MUTEX_MAGIC, 0, 0, NULL, (void *)2L }
+#define _PTHREAD_MUTEX_INITIALIZER { _PT_MUTEX_MAGIC, 0, 0, NULL, NULL }
 
 struct	__pthread_mutexattr_st {
 	unsigned int	ptma_magic;
