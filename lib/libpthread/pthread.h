@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.29 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: pthread.h,v 1.30 2008/06/05 21:40:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -244,6 +244,9 @@ __END_DECLS
 #define PTHREAD_ONCE_INIT		_PTHREAD_ONCE_INIT
 #define PTHREAD_RWLOCK_INITIALIZER	_PTHREAD_RWLOCK_INITIALIZER
 #define PTHREAD_SPINLOCK_INITIALIZER	_PTHREAD_SPINLOCK_INITIALIZER
+
+#define PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP	\
+    _PTHREAD_MUTEX_RECURSIVE_INITIALIZER_NP
 
 /*
  * Use macros to rename many pthread functions to the corresponding
