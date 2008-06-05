@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.52.10.2 2008/06/02 13:23:37 mjf Exp $	*/
+/*	$NetBSD: azalia.c,v 1.52.10.3 2008/06/05 19:14:35 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.52.10.2 2008/06/02 13:23:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.52.10.3 2008/06/05 19:14:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -401,6 +401,12 @@ azalia_pci_detach(device_t self, int flags)
 	az = device_private(self);
 	if (az->audiodev != NULL)
 		config_detach(az->audiodev, flags);
+
+#if notyet
+	DPRINTF(("%s: halt streams\n", __func__));
+	azalia_stream_halt(&az->rstream);
+	azalia_stream_halt(&az->pstream);
+#endif
 
 	DPRINTF(("%s: delete streams\n", __func__));
 	azalia_stream_delete(&az->rstream, az);
@@ -2462,7 +2468,7 @@ azalia_modcmd(modcmd_t cmd, void *arg)
 		}
 		return 0;
 	case MODULE_CMD_FINI:
-		err = config_cfdriver_detach(&azalia_cd);
+		err = config_cfdata_detach(azalia_cfdata);
 		if (err)
 			return err;
 		config_cfattach_detach("azalia", &azalia_ca);

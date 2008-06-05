@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.35.16.1 2008/06/02 13:22:00 mjf Exp $	*/
+/*	$NetBSD: maple.c,v 1.35.16.2 2008/06/05 19:14:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.35.16.1 2008/06/02 13:22:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.35.16.2 2008/06/05 19:14:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -385,7 +385,7 @@ maple_free_dma(paddr_t paddr, size_t size)
 	TAILQ_INIT(&mlist);
 	for (addr = paddr; addr < paddr + size; addr += PAGE_SIZE) {
 		m = PHYS_TO_VM_PAGE(addr);
-		TAILQ_INSERT_TAIL(&mlist, m, pageq);
+		TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
 	}
 	uvm_pglistfree(&mlist);
 }

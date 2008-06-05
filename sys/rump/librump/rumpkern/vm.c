@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.29.6.1 2008/04/03 12:43:11 mjf Exp $	*/
+/*	$NetBSD: vm.c,v 1.29.6.2 2008/06/05 19:14:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -86,6 +86,7 @@ struct uvm uvm;
 
 struct vmspace rump_vmspace;
 struct vm_map rump_vmmap;
+const struct rb_tree_ops uvm_page_tree_ops;
 
 /*
  * vm pages 
@@ -104,7 +105,7 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 	pg->uanon = (void *)kmem_zalloc(PAGE_SIZE, KM_SLEEP);
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 
-	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
+	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
 
 	return pg;
 }
@@ -122,7 +123,7 @@ uvm_pagefree(struct vm_page *pg)
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
 
-	TAILQ_REMOVE(&uobj->memq, pg, listq);
+	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 	kmem_free((void *)pg->uanon, PAGE_SIZE);
 	kmem_free(pg, sizeof(*pg));
 }
@@ -460,7 +461,7 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 {
 	struct vm_page *pg;
 
-	TAILQ_FOREACH(pg, &uobj->memq, listq) {
+	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
 		if (pg->offset == off) {
 			return pg;
 		}

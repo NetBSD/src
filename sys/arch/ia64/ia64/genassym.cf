@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2.42.2 2008/06/02 13:22:19 mjf Exp $
+#	$NetBSD: genassym.cf,v 1.2.42.3 2008/06/05 19:14:33 mjf Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,9 +123,6 @@ define	DT_SYMENT		DT_SYMENT
 
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
-
-# offsets needed by cpu_switch() to switch mappings.
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # errno values
 define	ENAMETOOLONG		ENAMETOOLONG

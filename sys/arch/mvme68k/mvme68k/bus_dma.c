@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.34.6.1 2008/06/02 13:22:26 mjf Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.34.6.2 2008/06/05 19:14:33 mjf Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34.6.1 2008/06/02 13:22:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34.6.2 2008/06/05 19:14:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -572,9 +572,9 @@ _bus_dmamem_alloc_common(bus_dma_tag_t t, bus_addr_t low, bus_addr_t high,
 	segs[curseg].ds_addr = segs[curseg]._ds_cpuaddr = lastaddr;
 	segs[curseg].ds_len = PAGE_SIZE;
 	segs[curseg]._ds_flags = 0;
-	m = m->pageq.tqe_next;
+	m = m->pageq.queue.tqe_next;
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	for (; m != NULL; m = m->pageq.queue.tqe_next) {
 		if (curseg > nsegs) {
 #ifdef DIAGNOSTIC
 			printf("%s: too many segments\n", __func__);
@@ -666,7 +666,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 		    addr < (segs[curseg]._ds_cpuaddr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
 			m = PHYS_TO_VM_PAGE(addr);
-			TAILQ_INSERT_TAIL(&mlist, m, pageq);
+			TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
 		}
 	}
 

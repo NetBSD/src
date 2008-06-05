@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.3.6.1 2008/04/03 12:42:51 mjf Exp $	*/
+/*	$NetBSD: jmide.c,v 1.3.6.2 2008/06/05 19:14:35 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.3.6.1 2008/04/03 12:42:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.3.6.2 2008/06/05 19:14:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ typedef enum {
 
 struct jmide_softc {
 	struct pciide_softc sc_pciide;
-	void *sc_ahci;
+	device_t sc_ahci;
 	int sc_npata;
 	int sc_nsata;
 	jmchan_t sc_chan_type[PCIIDE_NUM_CHANNELS];
@@ -300,7 +300,7 @@ jmide_intr(void *arg)
 
 #ifdef NJMAHCI
 	if (sc->sc_ahci)
-		ret |= ahci_intr(sc->sc_ahci);
+		ret |= ahci_intr(device_private(sc->sc_ahci));
 #endif
 	if (sc->sc_npata)
 		ret |= pciide_pci_intr(&sc->sc_pciide);

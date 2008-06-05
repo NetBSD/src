@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.199.6.2 2008/06/02 13:24:30 mjf Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.199.6.3 2008/06/05 19:14:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.199.6.2 2008/06/02 13:24:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.199.6.3 2008/06/05 19:14:37 mjf Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2670,7 +2670,7 @@ nfs_clearcommit(mp)
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
 		mutex_enter(&vp->v_uobj.vmobjlock);
-		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq) {
+		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
 		mutex_exit(&vp->v_uobj.vmobjlock);
