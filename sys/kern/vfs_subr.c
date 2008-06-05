@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.349 2008/06/03 14:54:12 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.350 2008/06/05 12:32:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.349 2008/06/03 14:54:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.350 2008/06/05 12:32:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -604,7 +604,7 @@ vremfree(vnode_t *vp)
 {
 
 	KASSERT(mutex_owned(&vp->v_interlock));
-	KASSERT(vp->v_usecount == 1);
+	KASSERT(vp->v_usecount == 0);
 
 	/*
 	 * Note that the reference count must not change until
@@ -765,8 +765,8 @@ vget(vnode_t *vp, int flags)
 	 * from its freelist.
 	 */
 	if (vp->v_usecount == 0) {
-		vp->v_usecount = 1;
 		vremfree(vp);
+		vp->v_usecount = 1;
 	} else {
 		atomic_inc_uint(&vp->v_usecount);
 	}
@@ -1204,8 +1204,8 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		 */
 		if (vp->v_usecount == 0) {
 			mutex_exit(&mntvnode_lock);
-			vp->v_usecount++;
 			vremfree(vp);
+			vp->v_usecount = 1;
 			vclean(vp, DOCLOSE);
 			vrelel(vp, 0);
 			mutex_enter(&mntvnode_lock);
@@ -1365,8 +1365,8 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp, struct lwp *l)
 	}
 	if (inter_lkp)
 		mutex_exit(inter_lkp);
-	vp->v_usecount++;
 	vremfree(vp);
+	vp->v_usecount = 1;
 	vclean(vp, DOCLOSE);
 	vrelel(vp, 0);
 	return (1);
@@ -1500,8 +1500,11 @@ vrevoke(vnode_t *vp)
 			continue;
 		}
 		mutex_exit(&specfs_lock);
-		if (atomic_inc_uint_nv(&vq->v_usecount) == 1) {
+		if (vq->v_usecount == 0) {
 			vremfree(vq);
+			vq->v_usecount = 1;
+		} else {
+			atomic_inc_uint(&vq->v_usecount);
 		}
 		vclean(vq, DOCLOSE);
 		vrelel(vq, 0);
