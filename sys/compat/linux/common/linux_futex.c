@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.13 2008/04/30 14:07:13 ad Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.14 2008/06/05 10:58:16 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.13 2008/04/30 14:07:13 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.14 2008/06/05 10:58:16 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -284,6 +284,7 @@ futex_sleep(struct futex *f, unsigned int timeout)
 		futex_put(wp->wp_new_futex); /* futex_get called in wakeup */
 	}
 
+	cv_destroy(&wp->wp_futex_cv);
 	kmem_free(wp, sizeof(*wp));
 	return ret;
 }
