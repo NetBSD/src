@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.2 2008/06/04 17:54:17 matt Exp $ */
+/* $NetBSD: rb.h,v 1.3 2008/06/05 00:33:07 ad Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ struct rb_node {
 #define	rb_left		rb_nodes[RB_DIR_LEFT]
 #define	rb_right	rb_nodes[RB_DIR_RIGHT]
 	struct rb_node *rb_parent;
+#ifndef lint
 	struct rb_properties {
 #if BYTE_ORDER == LITTLE_ENDIAN
 		unsigned long int s_data : 8 * sizeof(unsigned long int) - 5;
@@ -107,6 +108,7 @@ struct rb_node {
 			(dst)->rb_moved = (src)->rb_moved))
 #ifdef RBDEBUG
 	TAILQ_ENTRY(rb_node) rb_link;
+#endif
 #endif
 };
 
