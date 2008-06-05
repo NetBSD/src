@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.51.2.7 2008/06/04 20:34:37 joerg Exp $	*/
+/*	$NetBSD: pf.c,v 1.51.2.8 2008/06/05 20:47:28 joerg Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.7 2008/06/04 20:34:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.8 2008/06/05 20:47:28 joerg Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -1581,15 +1581,14 @@ int
 pf_modulate_sack(struct mbuf *m, int off, struct pf_pdesc *pd,
     struct tcphdr *th, struct pf_state_peer *dst)
 {
-#ifdef __NetBSD__
-	/* XXXPF TODO write NetBSD version */
-
-	return (0);
-#else
 	int hlen = (th->th_off << 2) - sizeof(*th), thoptlen = hlen;
 	u_int8_t opts[MAX_TCPOPTLEN], *opt = opts;
 	int copyback = 0, i, olen;
 	struct sackblk sack;
+
+#ifdef __NetBSD__
+#define	TCPOLEN_SACK (2 * sizeof(uint32_t))
+#endif
 
 #define TCPOLEN_SACKLEN	(TCPOLEN_SACK + 2)
 	if (hlen < TCPOLEN_SACKLEN ||
@@ -1611,12 +1610,21 @@ pf_modulate_sack(struct mbuf *m, int off, struct pf_pdesc *pd,
 				for (i = 2; i + TCPOLEN_SACK <= olen;
 				    i += TCPOLEN_SACK) {
 					memcpy(&sack, &opt[i], sizeof(sack));
-					pf_change_a(&sack.start, &th->th_sum,
-					    htonl(ntohl(sack.start) -
+#ifdef __NetBSD__
+#define	SACK_START	sack.left
+#define	SACK_END	sack.right
+#else
+#define	SACK_START	sack.start
+#define	SACK_END	sack.end
+#endif
+					pf_change_a(&SACK_START, &th->th_sum,
+					    htonl(ntohl(SACK_START) -
 					    dst->seqdiff), 0);
-					pf_change_a(&sack.end, &th->th_sum,
-					    htonl(ntohl(sack.end) -
+					pf_change_a(&SACK_END, &th->th_sum,
+					    htonl(ntohl(SACK_END) -
 					    dst->seqdiff), 0);
+#undef SACK_START
+#undef SACK_END
 					memcpy(&opt[i], &sack, sizeof(sack));
 				}
 				copyback = 1;
@@ -1633,7 +1641,6 @@ pf_modulate_sack(struct mbuf *m, int off, struct pf_pdesc *pd,
 	if (copyback)
 		m_copyback(m, off + sizeof(*th), thoptlen, opts);
 	return (copyback);
-#endif /* !__NetBSD__ */
 }
 
 void
