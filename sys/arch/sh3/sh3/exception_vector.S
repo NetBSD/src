@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.39 2008/06/06 04:16:22 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.40 2008/06/06 04:24:19 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.39 2008/06/06 04:16:22 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.40 2008/06/06 04:24:19 uwe Exp $")
 
 
 /*
@@ -98,9 +98,10 @@ NENTRY(sh_vector_generic)
 	/* general_exception(curlwp, tf, TEA); */
 1:	mov	r4, r8
 #ifdef DDB
-	MOV	(BBRA, r1)
 	mov	#0, r2
+	MOV	(BBRA, r1)
 	mov.w	r2, @r1			/* disable UBC */
+	mov.l	r2, @(TF_UBC, r14)	/* clear tf->tf_ubc */
 #endif /* DDB */
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	.Lg_general_exception, r0
@@ -120,9 +121,7 @@ NENTRY(sh_vector_generic)
 
 	!! We are returning from DDB to do single step.  Channel A in
 	!! UBC is already rigged, we just need to enable it.
-	mov	#0, r0
 	MOV	(BBRA, r3)
-	mov.l	r0, @(TF_UBC, r14)
 	__EXCEPTION_BLOCK(r0, r1)	! because we ignore insn address
 	mov.w	r2, @r3			! now safe to set BBRA = tf->tf_ubc
 #endif /* DDB */
