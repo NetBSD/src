@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.3 2008/06/05 00:33:07 ad Exp $ */
+/* $NetBSD: rb.h,v 1.4 2008/06/06 22:23:45 joerg Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,14 +53,14 @@ struct rb_node {
 		unsigned long int s_data : 8 * sizeof(unsigned long int) - 5;
 		unsigned long int s_moved : 1;
 		unsigned long int s_root : 1;
-		unsigned long int s_position : 1;
 		unsigned long int s_color : 1;
 		unsigned long int s_sentinel : 1;
+		unsigned long int s_position : 1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
+		unsigned long int s_position : 1;
 		unsigned long int s_sentinel : 1;
 		unsigned long int s_color : 1;
-		unsigned long int s_position : 1;
 		unsigned long int s_root : 1;
 		unsigned long int s_moved : 1;
 		unsigned long int s_data : 8 * sizeof(unsigned long int) - 5;
