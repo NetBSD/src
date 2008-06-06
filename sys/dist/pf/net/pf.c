@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.51.2.8 2008/06/05 20:47:28 joerg Exp $	*/
+/*	$NetBSD: pf.c,v 1.51.2.9 2008/06/06 20:17:45 christos Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.8 2008/06/05 20:47:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.9 2008/06/06 20:17:45 christos Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -2749,8 +2749,11 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 	u_int16_t		 sport, dport;
 	struct inpcbtable	*tb;
 	struct inpcb		*inp = NULL;
+	struct socket		*so = NULL;
 #if defined(__NetBSD__) && defined(INET6)
 	struct in6pcb		*in6p = NULL;
+#else
+#define in6p inp
 #endif /* __NetBSD__ && INET6 */
 
 	if (pd == NULL)
@@ -2789,45 +2792,38 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 		daddr = pd->src;
 	}
 	switch (pd->af) {
+
+#ifdef __NetBSD__
+#define in_pcbhashlookup(tbl, saddr, sport, daddr, dport) \
+    in_pcblookup_connect(tbl, saddr, sport, daddr, dport)
+#define in6_pcbhashlookup(tbl, saddr, sport, daddr, dport) \
+    in6_pcblookup_connect(tbl, saddr, sport, daddr, dport, 0)
+#define in_pcblookup_listen(tbl, addr, port, zero) \
+    in_pcblookup_bind(tbl, addr, port)
+#define in6_pcblookup_listen(tbl, addr, port, zero) \
+    in6_pcblookup_bind(tbl, addr, port, zero)
+#endif
+	
 #ifdef INET
 	case AF_INET:
-#ifdef __NetBSD__
-		inp = in_pcblookup_connect(tb, saddr->v4, sport, daddr->v4,
-		    dport);
-		if (inp == NULL) {
-			inp = in_pcblookup_bind(tb, daddr->v4, dport);
-			if (inp == NULL)
-				return (-1);
-		}
-#else
 		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
 		if (inp == NULL) {
 			inp = in_pcblookup_listen(tb, daddr->v4, dport, 0);
 			if (inp == NULL)
 				return (-1);
 		}
-#endif /* !__NetBSD__ */
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-#ifdef __NetBSD__
-		in6p = in6_pcblookup_connect(tb, &saddr->v6, sport, &daddr->v6,
-		    dport, 0);
-		if (in6p == NULL) {
-			in6p = in6_pcblookup_bind(tb, &daddr->v6, dport, 0);
-			if (in6p == NULL)
-				return (-1);
-		}
-#else
-		inp = in6_pcbhashlookup(tb, &saddr->v6, sport, &daddr->v6,
+/*###2817 [cc] warning: assignment from incompatible pointer type%%%*/
+		in6p = in6_pcbhashlookup(tb, &saddr->v6, sport, &daddr->v6,
 		    dport);
 		if (inp == NULL) {
-			inp = in6_pcblookup_listen(tb, &daddr->v6, dport, 0);
+			in6p = in6_pcblookup_listen(tb, &daddr->v6, dport, 0);
 			if (inp == NULL)
 				return (-1);
 		}
-#endif /* !__NetBSD__ */
 		break;
 #endif /* INET6 */
 
@@ -2837,24 +2833,25 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 
 #ifdef __NetBSD__
 	switch (pd->af) {
+#ifdef INET
 	case AF_INET:
-		pd->lookup.uid = inp->inp_socket->so_uidinfo->ui_uid;
-		/* XXXPF gid */
-		/* XXXPF pid */
+		so = inp->inp_socket;
 		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
-		pd->lookup.uid = in6p->in6p_socket->so_uidinfo->ui_uid;
-		/* XXXPF gid */
-		/* XXXPF pid */
+/*###2840 [cc] error: 'struct inpcb' has no member named 'in6p_head'%%%*/
+		so = in6p->in6p_socket;
 		break;
 #endif /* INET6 */
 	}
+	pd->lookup.uid = so->so_uidinfo->ui_uid;
 #else
-	pd->lookup.uid = inp->inp_socket->so_euid;
-	pd->lookup.gid = inp->inp_socket->so_egid;
-	pd->lookup.pid = inp->inp_socket->so_cpid;
+	so = inp->inp_socket;
+	pd->lookup.uid = so->so_euid;
 #endif /* !__NetBSD__ */
+	pd->lookup.gid = so->so_egid;
+	pd->lookup.pid = so->so_cpid;
 	return (1);
 }
 
