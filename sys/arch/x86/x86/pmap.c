@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 2008/06/05 21:09:12 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 2008/06/06 05:45:16 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2008/06/05 21:09:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2008/06/06 05:45:16 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1812,7 +1812,10 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 {
 	unsigned long index;
 	int level;
-	vaddr_t invaladdr, invaladdr2;
+	vaddr_t invaladdr;
+#ifdef MULTIPROCESSOR
+	vaddr_t invaladdr2;
+#endif
 	pd_entry_t opde;
 	struct pmap *curpmap = vm_map_pmap(&curlwp->l_proc->p_vmspace->vm_map);
 
@@ -4065,8 +4068,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			splx(s);
 			if (error) {
 				if (ptp != NULL && ptp->wire_count <= 1) {
-					pmap_free_ptp(pmap, ptp, va, ptes, pdes,
-					    &l->l_md.md_gc_ptp);
+					pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 				}
 				pmap_unmap_ptes(pmap, pmap2);
 				goto out;
