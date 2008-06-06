@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.16 2008/06/04 14:31:15 ad Exp $ */
+/* $NetBSD: rb.c,v 1.17 2008/06/06 12:29:59 tron Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ static bool rb_tree_check_node(const struct rb_tree *, const struct rb_node *,
 static const struct rb_node sentinel_node = {
 	.rb_nodes[0] = __UNCONST(&sentinel_node),
 	.rb_nodes[1] = __UNCONST(&sentinel_node),
-	.rb_sentinel = 1
+	.rb_info = { .s_sentinel = 1 }
 };
 
 void
