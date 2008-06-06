@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.38 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.39 2008/06/06 04:16:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.38 2008/04/28 20:23:35 martin Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.39 2008/06/06 04:16:22 uwe Exp $")
 
 
 /*
@@ -92,16 +92,15 @@ NENTRY(sh_vector_generic)
 	mov.l	.Lg_tlb_exception, r0
 	jsr	@r0
 	 mov	r14, r5			/* 2nd arg */
-	bra	2f
+	bra	.Lg_return_from_exception
 	 nop
 
 	/* general_exception(curlwp, tf, TEA); */
 1:	mov	r4, r8
 #ifdef DDB
-	mov	#0, r2
 	MOV	(BBRA, r1)
+	mov	#0, r2
 	mov.w	r2, @r1			/* disable UBC */
-	mov.l	r2, @(TF_UBC, r14)	/* clear tf->tf_ubc */
 #endif /* DDB */
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	.Lg_general_exception, r0
@@ -113,13 +112,22 @@ NENTRY(sh_vector_generic)
 	mov.l	.Lg_ast, r0
 	jsr	@r0
 	 mov	r14, r5
-#ifdef DDB	/* BBRA = tf->tf_ubc */
-	__EXCEPTION_BLOCK(r0, r1)
-	mov.l	@(TF_UBC, r14), r0
-	MOV	(BBRA, r1)
-	mov.w	r0, @r1
+
+#ifdef DDB
+	mov.l	@(TF_UBC, r14), r2
+	tst	r2, r2			! ddb single-step == 0?
+	bt	.Lg_return_from_exception
+
+	!! We are returning from DDB to do single step.  Channel A in
+	!! UBC is already rigged, we just need to enable it.
+	mov	#0, r0
+	MOV	(BBRA, r3)
+	mov.l	r0, @(TF_UBC, r14)
+	__EXCEPTION_BLOCK(r0, r1)	! because we ignore insn address
+	mov.w	r2, @r3			! now safe to set BBRA = tf->tf_ubc
 #endif /* DDB */
-2:	__EXCEPTION_RETURN
+.Lg_return_from_exception:
+	__EXCEPTION_RETURN
 
 	.align	5
 .Lg_curlwp:		.long	_C_LABEL(curlwp)
