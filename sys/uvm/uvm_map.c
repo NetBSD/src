@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.259 2008/06/06 13:52:56 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.260 2008/06/06 14:01:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.259 2008/06/06 13:52:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.260 2008/06/06 14:01:32 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4621,10 +4621,8 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 
 	pmap = vm_map_pmap(map);
 	KASSERT(pmap == pmap_kernel());
-#ifdef DIAGNOSTIC
 	if (!pmap_extract(pmap, va, &pa))
 		panic("%s: no mapping", __func__);
-#endif
 	pmap_kremove(va, PAGE_SIZE);
 	pmap_update(vm_map_pmap(map));
 	vm_map_unlock(map);
