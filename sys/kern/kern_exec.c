@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.273 2008/06/04 12:16:06 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.274 2008/06/06 22:21:11 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.273 2008/06/04 12:16:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.274 2008/06/06 22:21:11 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1071,12 +1071,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
 
- clrflg:
-	PNBUF_PUT(pathbuf);
-	rw_exit(&p->p_reflock);
 #ifdef LKM
 	rw_exit(&exec_lock);
 #endif
+
+ clrflg:
+	PNBUF_PUT(pathbuf);
+	rw_exit(&p->p_reflock);
 
 	return error;
 
