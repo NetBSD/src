@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.62 2008/06/04 12:14:02 joerg Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.63 2008/06/06 20:34:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.62 2008/06/04 12:14:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.63 2008/06/06 20:34:24 joerg Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -460,6 +460,7 @@ mpacpi_find_pcibusses(struct acpi_softc *acpi)
 
 static const char * const pciroot_hid[] = {
 	"PNP0A03",			/* PCI root bridge */
+	"PNP0A08",			/* PCI-X root bridge */
 	NULL
 };
 
