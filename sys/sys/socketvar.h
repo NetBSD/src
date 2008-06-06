@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.104.2.2 2008/06/04 02:05:49 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.104.2.3 2008/06/06 20:18:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -165,6 +165,8 @@ struct socket {
 					struct mbuf **, int *);
 	struct mowner	*so_mowner;	/* who owns mbufs for this socket */
 	struct uidinfo	*so_uidinfo;	/* who opened the socket */
+	gid_t		so_egid;	/* creator effective gid */
+	pid_t		so_cpid;	/* creator pid */
 };
 
 #define	SB_EMPTY_FIXUP(sb)						\
