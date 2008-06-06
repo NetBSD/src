@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.153 2008/06/05 21:55:51 cegger Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.154 2008/06/06 17:52:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.153 2008/06/05 21:55:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.154 2008/06/06 17:52:40 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -686,6 +686,7 @@ config_stdsubmatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	ci = cfiattr_lookup(cf->cf_pspec->cfp_iattr, parent->dv_cfdriver);
 	KASSERT(ci);
 	nlocs = ci->ci_loclen;
+	KASSERT(!nlocs || locs);
 	for (i = 0; i < nlocs; i++) {
 		cl = &ci->ci_locdesc[i];
 		/* !cld_defaultstr means no default value */
