@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.157 2008/05/27 20:46:16 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.158 2008/06/06 17:52:02 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.157 2008/05/27 20:46:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.158 2008/06/06 17:52:02 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.157 2008/05/27 20:46:16 drochner Exp 
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
+
+#include "locators.h"
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
@@ -802,6 +804,8 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	usbd_status err;
 	device_ptr_t dv;
 	usbd_interface_handle *ifaces;
+	int dlocs[USBDEVIFCF_NLOCS];
+	int ilocs[USBIFIFCF_NLOCS];
 
 	uaa.device = dev;
 	uaa.usegeneric = 0;
@@ -813,9 +817,17 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	uaa.subclass = dd->bDeviceSubClass;
 	uaa.proto = dd->bDeviceProtocol;
 
+	dlocs[USBDEVIFCF_PORT] = uaa.port;
+	dlocs[USBDEVIFCF_VENDOR] = uaa.vendor;
+	dlocs[USBDEVIFCF_PRODUCT] = uaa.product;
+	dlocs[USBDEVIFCF_RELEASE] = uaa.release;
+	/* the rest is historical ballast */
+	dlocs[USBDEVIFCF_CONFIGURATION] = -1;
+	dlocs[USBDEVIFCF_INTERFACE] = -1;
+
 	/* First try with device specific drivers. */
 	DPRINTF(("usbd_probe_and_attach: trying device specific drivers\n"));
-	dv = config_found_sm_loc(parent, "usbdevif", NULL, &uaa, usbd_print,
+	dv = config_found_sm_loc(parent, "usbdevif", dlocs, &uaa, usbd_print,
 		config_stdsubmatch);
 	if (dv) {
 		dev->subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
@@ -833,6 +845,11 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	uiaa.vendor = UGETW(dd->idVendor);
 	uiaa.product = UGETW(dd->idProduct);
 	uiaa.release = UGETW(dd->bcdDevice);
+
+	ilocs[USBIFIFCF_PORT] = uiaa.port;
+	ilocs[USBIFIFCF_VENDOR] = uiaa.vendor;
+	ilocs[USBIFIFCF_PRODUCT] = uiaa.product;
+	ilocs[USBIFIFCF_RELEASE] = uiaa.release;
 
 	DPRINTF(("usbd_probe_and_attach: looping over %d configurations\n",
 		 dd->bNumConfigurations));
@@ -854,6 +871,8 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 		}
 		nifaces = dev->cdesc->bNumInterface;
 		uiaa.configno = dev->cdesc->bConfigurationValue;
+		ilocs[USBIFIFCF_CONFIGURATION] = uiaa.configno;
+
 		ifaces = malloc(nifaces * sizeof(*ifaces), M_USB, M_NOWAIT);
 		if (ifaces == NULL)
 			goto nomem;
@@ -879,7 +898,8 @@ nomem:
 			uiaa.subclass = ifaces[i]->idesc->bInterfaceSubClass;
 			uiaa.proto = ifaces[i]->idesc->bInterfaceProtocol;
 			uiaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
-			dv = config_found_sm_loc(parent, "usbifif", NULL, &uiaa,
+			ilocs[USBIFIFCF_INTERFACE] = uiaa.ifaceno;
+			dv = config_found_sm_loc(parent, "usbifif", ilocs, &uiaa,
 				usbd_ifprint, config_stdsubmatch);
 			if (dv != NULL) {
 				found++;
@@ -905,7 +925,7 @@ nomem:
 
 	/* Finally try the generic driver. */
 	uaa.usegeneric = 1;
-	dv = config_found_sm_loc(parent, "usbdevif", NULL, &uaa, usbd_print,
+	dv = config_found_sm_loc(parent, "usbdevif", dlocs, &uaa, usbd_print,
 		config_stdsubmatch);
 	if (dv != NULL) {
 		dev->subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
