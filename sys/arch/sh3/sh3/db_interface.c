@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.54 2008/06/07 04:01:41 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.55 2008/06/07 22:32:18 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.54 2008/06/07 04:01:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.55 2008/06/07 22:32:18 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -141,10 +141,10 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	int s;
 
 	switch (type) {
-	case EXPEVT_TRAPA:	/* trapa instruction */
-	case EXPEVT_BREAK:	/* UBC */
-	case -1:		/* keyboard interrupt */
+	case EXPEVT_TRAPA:	/* FALLTHROUGH */
+	case EXPEVT_BREAK:
 		break;
+
 	default:
 		if (!db_onpanic && db_recover == NULL)
 			return 0;
