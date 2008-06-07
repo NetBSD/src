@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.15 2008/05/07 13:52:12 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.16 2008/06/07 12:56:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.15 2008/05/07 13:52:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.16 2008/06/07 12:56:57 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.15 2008/05/07 13:52:12 bouyer Ex
 #include <dev/ata/satavar.h>
 #include <dev/ata/satareg.h>
 #include <dev/ic/ahcisatavar.h>
+
+#include <dev/scsipi/scsi_all.h> /* for SCSI status */
 
 #include "atapibus.h"
 
@@ -1448,17 +1450,24 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	}
 	ata_free_xfer(chp, xfer);
 
-	if (chp->ch_status & WDCS_ERR) {
-		sc_xfer->error = XS_SHORTSENSE;
-		sc_xfer->sense.atapi_sense = chp->ch_error;
-	} 
-
 	AHCI_CMDH_SYNC(sc, achp, slot,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	sc_xfer->resid = sc_xfer->datalen;
 	sc_xfer->resid -= le32toh(achp->ahcic_cmdh[slot].cmdh_prdbc);
 	AHCIDEBUG_PRINT(("ahci_atapi_complete datalen %d resid %d\n",
 	    sc_xfer->datalen, sc_xfer->resid), DEBUG_XFERS);
+	if (chp->ch_status & WDCS_ERR && 
+	    ((sc_xfer->xs_control & XS_CTL_REQSENSE) == 0 ||
+	    sc_xfer->resid == sc_xfer->datalen)) {
+		sc_xfer->error = XS_SHORTSENSE;
+		sc_xfer->sense.atapi_sense = chp->ch_error;
+		if ((sc_xfer->xs_periph->periph_quirks &
+		    PQUIRK_NOSENSE) == 0) {
+			/* ask scsipi to send a REQUEST_SENSE */
+			sc_xfer->error = XS_BUSY;
+			sc_xfer->status = SCSI_CHECK;
+		}
+	} 
 	scsipi_done(sc_xfer);
 	atastart(chp);
 	return 0;
