@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.48 2008/05/21 14:07:29 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.49 2008/06/07 00:51:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.48 2008/05/21 14:07:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.49 2008/06/07 00:51:55 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -172,6 +172,13 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		}
 		break;
 
+	case EXPEVT_BREAK | EXP_USER:
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_TRACE;
+		ksi.ksi_addr = (void *)tf->tf_spc;
+		goto trapsignal;
+
 	case EXPEVT_ADDR_ERR_LD: /* FALLTHROUGH */
 	case EXPEVT_ADDR_ERR_ST:
 		KDASSERT(l->l_md.md_pcb->pcb_onfault != NULL);
@@ -198,13 +205,6 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = ILL_ILLOPC; /* XXX: could be ILL_PRVOPC */
-		ksi.ksi_addr = (void *)tf->tf_spc;
-		goto trapsignal;
-
-	case EXPEVT_BREAK | EXP_USER:
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGTRAP;
-		ksi.ksi_code = TRAP_TRACE;
 		ksi.ksi_addr = (void *)tf->tf_spc;
 		goto trapsignal;
 
