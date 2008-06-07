@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.55 2008/06/07 22:32:18 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.56 2008/06/07 22:37:11 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.55 2008/06/07 22:32:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.56 2008/06/07 22:37:11 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -158,14 +158,16 @@ kdb_trap(int type, int code, db_regs_t *regs)
 		}
 	}
 
-	/* XXX Should switch to kdb's own stack here. */
+	/* XXX: Should switch to ddb's own stack here. */
 
 	ddb_regs = *regs;
 
 	s = splhigh();
 	db_active++;
 	cnpollc(true);
+
 	db_trap(type, code);
+
 	cnpollc(false);
 	db_active--;
 	splx(s);
