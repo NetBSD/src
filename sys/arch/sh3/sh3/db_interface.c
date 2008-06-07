@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.53 2008/06/06 04:16:22 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.54 2008/06/07 04:01:41 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.53 2008/06/06 04:16:22 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.54 2008/06/07 04:01:41 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -718,7 +718,7 @@ db_reset_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	     const char *modif)
 {
     _cpu_exception_suspend();
-    asm volatile ("trapa #0xc3");
+    __asm volatile("trapa %0" :: "i"(_SH_TRA_BREAK));
 
     /* NOTREACHED, but just in case ... */
     printf("Reset failed\n");
