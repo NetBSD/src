@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.20 2007/02/21 22:59:51 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.21 2008/06/07 02:43:10 uwe Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20 2007/02/21 22:59:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.21 2008/06/07 02:43:10 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1474,7 +1474,7 @@ f_c0(const uint16_t *pc, char *buf)
 			break;
 
 		case 3:
-			sprintf(buf, "trapa   #%d", imm);
+			sprintf(buf, "trapa   #0x%x", imm);
 			break;
 		}
 		break;
