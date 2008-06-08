@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.38 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: mly.c,v 1.39 2008/06/08 12:43:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.38 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.39 2008/06/08 12:43:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,7 +584,7 @@ mly_shutdown(void *cookie)
 	int i;
 
 	for (i = 0; i < mly_cd.cd_ndevs; i++) {
-		if ((mly = device_lookup(&mly_cd, i)) == NULL)
+		if ((mly = device_lookup_private(&mly_cd, i)) == NULL)
 			continue;
 
 		if (mly_flush(mly))
@@ -2247,7 +2247,7 @@ mlyopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mly_softc *mly;
 
-	if ((mly = device_lookup(&mly_cd, minor(dev))) == NULL)
+	if ((mly = device_lookup_private(&mly_cd, minor(dev))) == NULL)
 		return (ENXIO);
 	if ((mly->mly_state & MLY_STATE_INITOK) == 0)
 		return (ENXIO);
@@ -2267,7 +2267,7 @@ mlyclose(dev_t dev, int flag, int mode,
 {
 	struct mly_softc *mly;
 
-	mly = device_lookup(&mly_cd, minor(dev));
+	mly = device_lookup_private(&mly_cd, minor(dev));
 	mly->mly_state &= ~MLY_STATE_OPEN;
 	return (0);
 }
@@ -2282,7 +2282,7 @@ mlyioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct mly_softc *mly;
 	int rv;
 
-	mly = device_lookup(&mly_cd, minor(dev));
+	mly = device_lookup_private(&mly_cd, minor(dev));
 
 	switch (cmd) {
 	case MLYIO_COMMAND:
