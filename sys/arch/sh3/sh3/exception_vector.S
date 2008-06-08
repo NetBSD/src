@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.41 2008/06/08 22:13:09 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.42 2008/06/08 23:45:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.41 2008/06/08 22:13:09 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.42 2008/06/08 23:45:33 uwe Exp $")
 
 
 /*
@@ -132,15 +132,15 @@ NENTRY(sh_vector_generic)
 	__EXCEPTION_RETURN
 
 	.align	5
-.Lg_curlwp:		.long	_C_LABEL(curlwp)
 REG_SYMBOL(EXPEVT)
-REG_SYMBOL(BBRA)
-REG_SYMBOL(BARA)
+.Lg_curlwp:		.long	_C_LABEL(curlwp)
 REG_SYMBOL(TEA)
+.Lg_TLB_PROT_ST:	.long	EXPEVT_TLB_PROT_ST
 .Lg_tlb_exception:	.long	_C_LABEL(tlb_exception)
 .Lg_general_exception:	.long	_C_LABEL(general_exception)
 .Lg_ast:		.long	_C_LABEL(ast)
-.Lg_TLB_PROT_ST:	.long	EXPEVT_TLB_PROT_ST
+REG_SYMBOL(BBRA)
+REG_SYMBOL(BARA)
 
 /* LINTSTUB: Var: char sh_vector_generic_end[1]; */
 VECTOR_END_MARKER(sh_vector_generic_end)
