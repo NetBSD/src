@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.63 2008/06/08 17:08:23 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.64 2008/06/08 17:27:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.63 2008/06/08 17:08:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64 2008/06/08 17:27:51 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -1587,7 +1587,8 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 		/* FALLTHROUGH */
 	case ODIOCEJECT:
-		fd_do_eject((void *)device_parent(&fd->sc_dv), fd->sc_drive);
+		fd_do_eject(device_private(device_parent(&fd->sc_dv)),
+		    fd->sc_drive);
 		return (0);
 
 	case FDIOCGETFORMAT:
@@ -1901,7 +1902,8 @@ fd_mountroot_hook(struct device *dev)
 {
 	int c;
 
-	fd_do_eject(fdc_cd.cd_devs[0], 0); /* XXX - doesn't check ``dev'' */
+	fd_do_eject(device_lookup_private(&fdc_cd, 0),
+	    0);	/* XXX - doesn't check ``dev'' */
 	printf("Insert filesystem floppy and press return.");
 	for (;;) {
 		c = cngetc();
@@ -1965,7 +1967,7 @@ fd_read_md_image(size_t *sizep, void **addrp)
 	}
 	(void)fdclose(dev, 0, S_IFCHR, NULL);
 	*sizep = offset;
-	fd_do_eject(fdc_cd.cd_devs[0], FDUNIT(dev)); /* XXX */
+	fd_do_eject(device_lookup_private(&fdc_cd, 0), FDUNIT(dev)); /* XXX */
 	return (0);
 }
 #endif
