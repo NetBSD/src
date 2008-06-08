@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.57 2008/04/19 09:26:56 njoly Exp $	*/
+/*	$NetBSD: agp.c,v 1.58 2008/06/08 12:43:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.57 2008/04/19 09:26:56 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.58 2008/06/08 12:43:51 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -837,7 +837,7 @@ static int
 agpopen(dev_t dev, int oflags, int devtype,
     struct lwp *l)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = device_lookup_private(&agp_cd, AGPUNIT(dev));
 
 	if (sc == NULL)
 		return ENXIO;
@@ -857,7 +857,7 @@ static int
 agpclose(dev_t dev, int fflag, int devtype,
     struct lwp *l)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = device_lookup_private(&agp_cd, AGPUNIT(dev));
 	struct agp_memory *mem;
 
 	/*
@@ -891,7 +891,7 @@ agpclose(dev_t dev, int fflag, int devtype,
 static int
 agpioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = device_lookup_private(&agp_cd, AGPUNIT(dev));
 
 	if (sc == NULL)
 		return ENODEV;
@@ -932,7 +932,7 @@ agpioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 static paddr_t
 agpmmap(dev_t dev, off_t offset, int prot)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = device_lookup_private(&agp_cd, AGPUNIT(dev));
 
 	if (offset > AGP_GET_APERTURE(sc))
 		return -1;
