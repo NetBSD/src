@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.72 2008/06/08 11:58:50 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.73 2008/06/08 12:43:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.72 2008/06/08 11:58:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.73 2008/06/08 12:43:52 tsutsui Exp $");
 
 #include "iop.h"
 
@@ -487,7 +487,7 @@ iop_config_interrupts(struct device *self)
  	 */
 	if (iop_systab == NULL) {
 		for (i = 0, niop = 0; i < iop_cd.cd_ndevs; i++) {
-			if ((iop = device_lookup(&iop_cd, i)) == NULL)
+			if ((iop = device_lookup_private(&iop_cd, i)) == NULL)
 				continue;
 			if ((iop->sc_flags & IOP_HAVESTATUS) == 0)
 				continue;
@@ -512,7 +512,7 @@ iop_config_interrupts(struct device *self)
 		iop_systab->version = I2O_VERSION_11;
 
 		for (i = 0, ste = iop_systab->entry; i < iop_cd.cd_ndevs; i++) {
-			if ((iop = device_lookup(&iop_cd, i)) == NULL)
+			if ((iop = device_lookup_private(&iop_cd, i)) == NULL)
 				continue;
 			if ((iop->sc_flags & IOP_HAVESTATUS) == 0)
 				continue;
@@ -877,7 +877,7 @@ iop_shutdown(void *junk)
 	printf("shutting down iop devices...");
 
 	for (i = 0; i < iop_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup(&iop_cd, i)) == NULL)
+		if ((sc = device_lookup_private(&iop_cd, i)) == NULL)
 			continue;
 		if ((sc->sc_flags & IOP_ONLINE) == 0)
 			continue;
@@ -2463,7 +2463,7 @@ iopopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct iop_softc *sc;
 
-	if ((sc = device_lookup(&iop_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&iop_cd, minor(dev))) == NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & IOP_ONLINE) == 0)
 		return (ENXIO);
@@ -2480,7 +2480,7 @@ iopclose(dev_t dev, int flag, int mode,
 {
 	struct iop_softc *sc;
 
-	sc = device_lookup(&iop_cd, minor(dev));
+	sc = device_lookup_private(&iop_cd, minor(dev));
 	sc->sc_flags &= ~IOP_OPEN;
 
 	return (0);
@@ -2493,7 +2493,7 @@ iopioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct iovec *iov;
 	int rv, i;
 
-	sc = device_lookup(&iop_cd, minor(dev));
+	sc = device_lookup_private(&iop_cd, minor(dev));
 	rv = 0;
 
 	switch (cmd) {

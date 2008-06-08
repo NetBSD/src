@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.23 2008/05/10 14:36:02 joerg Exp $ */
+/*	$NetBSD: twa.c,v 1.24 2008/06/08 12:43:52 tsutsui Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.23 2008/05/10 14:36:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.24 2008/06/08 12:43:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1631,7 +1631,7 @@ twa_shutdown(void *arg)
 	int i, rv, unit;
 
 	for (i = 0; i < twa_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup(&twa_cd, i)) == NULL)
+		if ((sc = device_lookup_private(&twa_cd, i)) == NULL)
 			continue;
 
 		for (unit = 0; unit < sc->sc_nunits; unit++)
@@ -1911,7 +1911,7 @@ twaopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twa_softc *twa;
 
-	if ((twa = device_lookup(&twa_cd, minor(dev))) == NULL)
+	if ((twa = device_lookup_private(&twa_cd, minor(dev))) == NULL)
 		return (ENXIO);
 	if ((twa->twa_sc_flags & TWA_STATE_OPEN) != 0)
 		return (EBUSY);
@@ -1930,7 +1930,7 @@ twaclose(dev_t dev, int flag, int mode,
 {
 	struct twa_softc *twa;
 
-	twa = device_lookup(&twa_cd, minor(dev));
+	twa = device_lookup_private(&twa_cd, minor(dev));
 	twa->twa_sc_flags &= ~TWA_STATE_OPEN;
 	return (0);
 }
@@ -1960,7 +1960,7 @@ twaioctl(dev_t dev, u_long cmd, void *data, int flag,
 	int32_t			start_index;
 	int			s, error = 0;
 
-	sc = device_lookup(&twa_cd, minor(dev));
+	sc = device_lookup_private(&twa_cd, minor(dev));
 
 	switch (cmd) {
 	case TW_OSL_IOCTL_FIRMWARE_PASS_THROUGH:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.48 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: cz.c,v 1.49 2008/06/08 12:43:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.48 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.49 2008/06/08 12:43:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,7 +862,7 @@ cztty_getttysoftc(dev_t dev)
 
 	for (i = 0, j = 0; i < cz_cd.cd_ndevs; i++) {
 		k = j;
-		cz = device_lookup(&cz_cd, i);
+		cz = device_lookup_private(&cz_cd, i);
 		if (cz == NULL)
 			continue;
 		if (cz->cz_ports == NULL)
