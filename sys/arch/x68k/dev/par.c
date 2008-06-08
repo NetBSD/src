@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.35 2007/10/17 19:58:03 garbled Exp $	*/
+/*	$NetBSD: par.c,v 1.36 2008/06/08 16:39:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.35 2007/10/17 19:58:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.36 2008/06/08 16:39:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -156,7 +156,7 @@ parmatch(struct device *pdp, struct cfdata *cfp, void *aux)
 void
 parattach(struct device *pdp, struct device *dp, void *aux)
 {
-	struct par_softc *sc = (struct par_softc *)dp;
+	struct par_softc *sc = device_private(dp);
 	struct intio_attach_args *ia = aux;
 	int r;
 	
@@ -197,7 +197,7 @@ paropen(dev_t dev, int flags, int mode, struct lwp *l)
 	int unit = UNIT(dev);
 	struct par_softc *sc;
 	
-	sc = device_lookup(&par_cd, unit);
+	sc = device_lookup_private(&par_cd, unit);
 	if (sc == NULL || !(sc->sc_flags & PARF_ALIVE))
 		return(ENXIO);
 	if (sc->sc_flags & PARF_OPEN)
@@ -222,7 +222,7 @@ parclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	int s;
-	struct par_softc *sc = par_cd.cd_devs[unit];
+	struct par_softc *sc = device_lookup_private(&par_cd, unit);
 	
 	sc->sc_flags &= ~(PARF_OPEN|PARF_OWRITE);
 
@@ -274,7 +274,7 @@ int
 parrw(dev_t dev, struct uio *uio)
 {
 	int unit = UNIT(dev);
-	struct par_softc *sc = par_cd.cd_devs[unit];
+	struct par_softc *sc = device_lookup_private(&par_cd, unit);
 	int len=0xdeadbeef;	/* XXX: shutup gcc */
 	int s, cnt=0;
 	char *cp;
@@ -404,7 +404,7 @@ parrw(dev_t dev, struct uio *uio)
 int
 parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct par_softc *sc = par_cd.cd_devs[UNIT(dev)];
+	struct par_softc *sc = device_lookup_private(&par_cd, UNIT(dev));
 	struct parparam *pp, *upp;
 	int error = 0;
 	
