@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.56 2008/06/07 22:37:11 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.57 2008/06/08 22:13:09 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.56 2008/06/07 22:37:11 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57 2008/06/08 22:13:09 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -232,8 +232,8 @@ db_set_single_step(db_regs_t *regs)
 
 #ifdef SH3
 	if (CPU_IS_SH3) {
-		/* A: ignore address */
-		_reg_write_4(SH_(BAMRA), 0xffffffff);
+		/* A: compare all address bits */
+		_reg_write_4(SH_(BAMRA), 0x00000000);
 
 		/* A: break after execution, ignore ASID */
 		_reg_write_4(SH_(BRCR), (UBC_CTL_A_AFTER_INSN
@@ -247,8 +247,8 @@ db_set_single_step(db_regs_t *regs)
 
 #ifdef SH4
 	if (CPU_IS_SH4) {
-		/* A: ignore address, ignore ASID */
-		_reg_write_1(SH_(BAMRA), SH4_UBC_MASK_ALL | SH4_UBC_MASK_ASID);
+		/* A: compare all address bits, ignore ASID */
+		_reg_write_1(SH_(BAMRA), SH4_UBC_MASK_NONE | SH4_UBC_MASK_ASID);
 
 		/* A: break after execution */
 		_reg_write_2(SH_(BRCR), UBC_CTL_A_AFTER_INSN);

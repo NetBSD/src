@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.40 2008/06/06 04:24:19 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.41 2008/06/08 22:13:09 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.40 2008/06/06 04:24:19 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.41 2008/06/08 22:13:09 uwe Exp $")
 
 
 /*
@@ -122,8 +122,11 @@ NENTRY(sh_vector_generic)
 	!! We are returning from DDB to do single step.  Channel A in
 	!! UBC is already rigged, we just need to enable it.
 	MOV	(BBRA, r3)
-	__EXCEPTION_BLOCK(r0, r1)	! because we ignore insn address
-	mov.w	r2, @r3			! now safe to set BBRA = tf->tf_ubc
+	MOV	(BARA, r5)
+	__EXCEPTION_BLOCK(r0, r1)
+	mov.l	@(TF_SPC, r14), r4
+	mov.l	r4, @r5			! BARA = tf->tf_spc
+	mov.w	r2, @r3			! BBRA = tf->tf_ubc
 #endif /* DDB */
 .Lg_return_from_exception:
 	__EXCEPTION_RETURN
@@ -132,6 +135,7 @@ NENTRY(sh_vector_generic)
 .Lg_curlwp:		.long	_C_LABEL(curlwp)
 REG_SYMBOL(EXPEVT)
 REG_SYMBOL(BBRA)
+REG_SYMBOL(BARA)
 REG_SYMBOL(TEA)
 .Lg_tlb_exception:	.long	_C_LABEL(tlb_exception)
 .Lg_general_exception:	.long	_C_LABEL(general_exception)
