@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.204 2008/04/28 20:23:58 martin Exp $ */
+/*	$NetBSD: st.c,v 1.205 2008/06/08 18:18:34 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.204 2008/04/28 20:23:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.205 2008/06/08 18:18:34 tsutsui Exp $");
 
 #include "opt_scsi.h"
 
@@ -538,9 +538,7 @@ stopen(dev_t dev, int flags, int mode, struct lwp *l)
 	struct scsipi_adapter *adapt;
 
 	unit = STUNIT(dev);
-	if (unit >= st_cd.cd_ndevs)
-		return (ENXIO);
-	st = st_cd.cd_devs[unit];
+	st = device_lookup_private(&st_cd, unit);
 	if (st == NULL)
 		return (ENXIO);
 
@@ -719,7 +717,7 @@ static int
 stclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int stxx, error = 0;
-	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(dev));
 	struct scsipi_periph *periph = st->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
@@ -821,7 +819,7 @@ st_mount_tape(dev_t dev, int flags)
 
 	unit = STUNIT(dev);
 	dsty = STDSTY(dev);
-	st = st_cd.cd_devs[unit];
+	st = device_lookup_private(&st_cd, unit);
 	periph = st->sc_periph;
 
 	if (st->flags & ST_MOUNTED)
@@ -1067,7 +1065,7 @@ done:
 static void
 ststrategy(struct buf *bp)
 {
-	struct st_softc *st = st_cd.cd_devs[STUNIT(bp->b_dev)];
+	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(bp->b_dev));
 	int s;
 
 	SC_DEBUG(st->sc_periph, SCSIPI_DB1,
@@ -1357,7 +1355,7 @@ stdone(struct scsipi_xfer *xs, int error)
 static int
 stread(dev_t dev, struct uio *uio, int iomode)
 {
-	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(dev));
 
 	return (physio(ststrategy, NULL, dev, B_READ,
 	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio));
@@ -1366,7 +1364,7 @@ stread(dev_t dev, struct uio *uio, int iomode)
 static int
 stwrite(dev_t dev, struct uio *uio, int iomode)
 {
-	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
+	struct st_softc *st = device_lookup_private(&st_cd, STUNIT(dev));
 
 	return (physio(ststrategy, NULL, dev, B_WRITE,
 	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio));
@@ -1394,7 +1392,7 @@ stioctl(dev_t dev, u_long cmd, void *arg, int flag, struct lwp *l)
 	flags = 0;		/* give error messages, act on errors etc. */
 	unit = STUNIT(dev);
 	dsty = STDSTY(dev);
-	st = st_cd.cd_devs[unit];
+	st = device_lookup_private(&st_cd, unit);
 	hold_blksize = st->blksize;
 	hold_density = st->density;
 
