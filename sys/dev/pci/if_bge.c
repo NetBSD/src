@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.145 2008/02/07 01:21:55 dyoung Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.146 2008/06/08 11:41:26 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.145 2008/02/07 01:21:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.146 2008/06/08 11:41:26 mlelstv Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2631,7 +2631,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 #endif
 	if (sc->bge_quirks & BGE_QUIRK_5705_CORE) {
 		sc->bge_tx_coal_ticks = (12 * 5);
-		sc->bge_rx_max_coal_bds = (12 * 5);
+		sc->bge_tx_max_coal_bds = (12 * 5);
 			aprint_verbose_dev(sc->bge_dev,
 			    "setting short Tx thresholds\n");
 	}
