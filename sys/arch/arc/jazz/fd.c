@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.35 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: fd.c,v 1.36 2008/06/08 15:44:17 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.35 2008/04/28 20:23:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.36 2008/06/08 15:44:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 void
 fdstrategy(struct buf *bp)
 {
-	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(bp->b_dev));
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(bp->b_dev));
 	int sz;
 	int s;
 
@@ -626,7 +626,7 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	struct fd_softc *fd;
 	const struct fd_type *type;
 
-	fd = device_lookup(&fd_cd, FDUNIT(dev));
+	fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 	if (fd == NULL)
 		return ENXIO;
 
@@ -649,7 +649,7 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
 	return 0;
@@ -1055,7 +1055,7 @@ fdcretry(struct fdc_softc *fdc)
 int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 	struct disklabel buffer;
 	int error;
 
