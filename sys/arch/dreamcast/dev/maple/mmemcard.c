@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.15 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.16 2008/06/08 16:39:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.15 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.16 2008/06/08 16:39:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -622,7 +622,7 @@ mmemopen(dev_t dev, int flags, int devtype, struct lwp *l)
 	unit = MMEM_UNIT(diskunit);
 	part = MMEM_PART(diskunit);
 	labelpart = DISKPART(dev);
-	if ((sc = device_lookup(&mmem_cd, unit)) == NULL
+	if ((sc = device_lookup_private(&mmem_cd, unit)) == NULL
 	    || sc->sc_stat == MMEM_INIT
 	    || sc->sc_stat == MMEM_INIT2
 	    || part >= sc->sc_npt || (pt = &sc->sc_pt[part])->pt_flags == 0)
@@ -677,7 +677,7 @@ mmemstrategy(struct buf *bp)
 	diskunit = DISKUNIT(bp->b_dev);
 	unit = MMEM_UNIT(diskunit);
 	part = MMEM_PART(diskunit);
-	if ((sc = device_lookup(&mmem_cd, unit)) == NULL
+	if ((sc = device_lookup_private(&mmem_cd, unit)) == NULL
 	    || sc->sc_stat == MMEM_INIT
 	    || sc->sc_stat == MMEM_INIT2
 	    || part >= sc->sc_npt || (pt = &sc->sc_pt[part])->pt_flags == 0)

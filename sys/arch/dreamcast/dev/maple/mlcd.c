@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.9 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.10 2008/06/08 16:39:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.9 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.10 2008/06/08 16:39:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -464,7 +464,7 @@ mlcdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 
 	unit = MLCD_UNIT(dev);
 	part = MLCD_PART(dev);
-	if ((sc = device_lookup(&mlcd_cd, unit)) == NULL
+	if ((sc = device_lookup_private(&mlcd_cd, unit)) == NULL
 	    || sc->sc_stat == MLCD_INIT
 	    || sc->sc_stat == MLCD_INIT2
 	    || part >= sc->sc_npt || (pt = &sc->sc_pt[part])->pt_flags == 0)
@@ -604,7 +604,7 @@ mlcd_buf_alloc(int dev, int flags)
 	 * malloc() may sleep, and the device may be detached during sleep.
 	 * XXX this check is not complete.
 	 */
-	if (sc != device_lookup(&mlcd_cd, unit)
+	if (sc != device_lookup_private(&mlcd_cd, unit)
 	    || sc->sc_stat == MLCD_INIT
 	    || sc->sc_stat == MLCD_INIT2
 	    || part >= sc->sc_npt || pt != &sc->sc_pt[part]
