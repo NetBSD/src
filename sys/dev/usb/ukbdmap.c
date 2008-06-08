@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.18 2006/03/18 17:33:16 jmmv Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.18.12.1 2008/06/08 20:02:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.18 2006/03/18 17:33:16 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.18.12.1 2008/06/08 20:02:17 bouyer Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -226,6 +226,38 @@ Static const keysym_t ukbd_keydesc_us_dvorak[] = {
     KC(54), 			KS_w,
     KC(55), 			KS_v,
     KC(56), 			KS_z,
+};
+
+Static const keysym_t ukbd_keydesc_us_colemak[] = {
+/*  pos      command		normal		shifted */
+    KC(4), 			KS_a,
+    KC(5), 			KS_b,
+    KC(6), 			KS_c,
+    KC(7), 			KS_s,
+    KC(8), 			KS_f,
+    KC(9), 			KS_t,
+    KC(10), 			KS_d,
+    KC(11), 			KS_h,
+    KC(12), 			KS_u,
+    KC(13), 			KS_n,
+    KC(14), 			KS_e,
+    KC(15), 			KS_i,
+    KC(16), 			KS_m,
+    KC(17), 			KS_k,
+    KC(18), 			KS_y,
+    KC(19), 			KS_semicolon,	KS_colon,
+    KC(20), 			KS_q,
+    KC(21), 			KS_p,
+    KC(22), 			KS_r,
+    KC(23), 			KS_g,
+    KC(24), 			KS_l,
+    KC(25), 			KS_v,
+    KC(26), 			KS_w,
+    KC(27), 			KS_x,
+    KC(28), 			KS_j,
+    KC(29), 			KS_z,
+    KC(51), 			KS_o,
+    KC(57), 			KS_BackSpace,
 };
 
 Static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
@@ -517,6 +549,7 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	ukbd_keydesc_us),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS,KB_US,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	ukbd_keydesc_us_dvorak),
+	KBD_MAP(KB_US | KB_COLEMAK,	KB_US,	ukbd_keydesc_us_colemak),
 	KBD_MAP(KB_JP,			KB_US,	ukbd_keydesc_jp),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS,KB_JP,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_DE,			KB_US,	ukbd_keydesc_de),
