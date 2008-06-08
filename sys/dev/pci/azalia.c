@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.62 2008/06/07 16:32:38 freza Exp $	*/
+/*	$NetBSD: azalia.c,v 1.63 2008/06/08 08:47:05 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.62 2008/06/07 16:32:38 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.63 2008/06/08 08:47:05 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -143,8 +143,6 @@ typedef struct azalia_t {
 
 	int mode_cap;
 } azalia_t;
-
-#define XNAME(sc)		device_xname((sc)->dev)
 
 #define AZ_READ_1(z, r)		bus_space_read_1((z)->iot, (z)->ioh, HDA_##r)
 #define AZ_READ_2(z, r)		bus_space_read_2((z)->iot, (z)->ioh, HDA_##r)
@@ -314,7 +312,7 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	v &= PCI_MAPREG_TYPE_MASK | PCI_MAPREG_MEM_TYPE_MASK;
 	if (pci_mapreg_map(pa, ICH_PCI_HDBARL, v, 0,
 			   &sc->iot, &sc->ioh, NULL, &sc->map_size)) {
-		aprint_error("%s: can't map device i/o space\n", XNAME(sc));
+		aprint_error_dev(self, "can't map device i/o space\n");
 		return;
 	}
 
@@ -325,7 +323,7 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: can't map interrupt\n", XNAME(sc));
+		aprint_error_dev(self, "can't map interrupt\n");
 		return;
 	}
 	sc->pc = pa->pa_pc;
@@ -333,13 +331,13 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	intrrupt_str = pci_intr_string(pa->pa_pc, ih);
 	sc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, azalia_intr, sc);
 	if (sc->ih == NULL) {
-		aprint_error("%s: can't establish interrupt", XNAME(sc));
+		aprint_error_dev(self, "can't establish interrupt");
 		if (intrrupt_str != NULL)
 			aprint_error(" at %s", intrrupt_str);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", XNAME(sc), intrrupt_str);
+	aprint_normal_dev(self, "interrupting at %s\n", intrrupt_str);
 
 	if (!pmf_device_register(self, NULL, azalia_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -348,16 +346,16 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	vendor = pci_findvendor(pa->pa_id);
 	name = pci_findproduct(pa->pa_id);
 	if (vendor != NULL && name != NULL) {
-		aprint_normal("%s: host: %s %s (rev. %d)",
-		    XNAME(sc), vendor, name, PCI_REVISION(pa->pa_class));
+		aprint_normal_dev(self, "host: %s %s (rev. %d)",
+		    vendor, name, PCI_REVISION(pa->pa_class));
 	} else {
-		aprint_normal("%s: host: 0x%4.4x/0x%4.4x (rev. %d)",
-		    XNAME(sc), PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
+		aprint_normal_dev(self, "host: 0x%4.4x/0x%4.4x (rev. %d)",
+		    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
 		    PCI_REVISION(pa->pa_class));
 	}
 
 	if (azalia_attach(sc)) {
-		aprint_error("%s: initialization failure\n", XNAME(sc));
+		aprint_error_dev(self, "initialization failure\n");
 		azalia_pci_detach(self, 0);
 		return;
 	}
@@ -510,7 +508,7 @@ azalia_attach(azalia_t *az)
 	az->nbstreams = HDA_GCAP_BSS(gcap);
 	az->ok64 = (gcap & HDA_GCAP_64OK) != 0;
 	DPRINTF(("%s: host: %d output, %d input, and %d bidi streams\n",
-	    XNAME(az), az->nostreams, az->nistreams, az->nbstreams));
+	    device_xname(az->dev), az->nostreams, az->nistreams, az->nbstreams));
 	if (az->nistreams > 0)
 		az->mode_cap |= AUMODE_RECORD;
 	if (az->nostreams > 0)
@@ -527,7 +525,7 @@ azalia_attach(azalia_t *az)
 	}
 	DPRINTF(("%s: reset counter = %d\n", __func__, i));
 	if (i <= 0) {
-		aprint_error("%s: reset failure\n", XNAME(az));
+		aprint_error_dev(az->dev, "reset failure\n");
 		return ETIMEDOUT;
 	}
 	DELAY(1000);
@@ -540,7 +538,7 @@ azalia_attach(azalia_t *az)
 	}
 	DPRINTF(("%s: reset counter = %d\n", __func__, i));
 	if (i <= 0) {
-		aprint_error("%s: reset-exit failure\n", XNAME(az));
+		aprint_error_dev(az->dev, "reset-exit failure\n");
 		return ETIMEDOUT;
 	}
 
@@ -553,14 +551,15 @@ azalia_attach(azalia_t *az)
 	statests = AZ_READ_2(az, STATESTS);
 	for (i = 0, n = 0; i < 15; i++) {
 		if ((statests >> i) & 1) {
-			DPRINTF(("%s: found a codec at #%d\n", XNAME(az), i));
+			DPRINTF(("%s: found a codec at #%d\n",
+				device_xname(az->dev), i));
 			az->codecs[n].address = i;
 			az->codecs[n++].dev = az->dev;
 		}
 	}
 	az->ncodecs = n;
 	if (az->ncodecs < 1) {
-		aprint_error("%s: No HD-Audio codecs\n", XNAME(az));
+		aprint_error_dev(az->dev, "No HD-Audio codecs\n");
 		return -1;
 	}
 	return 0;
@@ -601,7 +600,8 @@ azalia_attach_intr(device_t self)
 		goto err_exit;
 	/* Use the first audio codec */
 	az->codecno = c;
-	DPRINTF(("%s: using the #%d codec\n", XNAME(az), az->codecno));
+	DPRINTF(("%s: using the #%d codec\n",
+		device_xname(az->dev), az->codecno));
 	if (az->codecs[c].dacs.ngroups <= 0)
 		az->mode_cap &= ~AUMODE_PLAY;
 	if (az->codecs[c].adcs.ngroups <= 0)
@@ -641,7 +641,7 @@ azalia_init_corb(azalia_t *az, int reinit)
 				break;
 		}
 		if (i <= 0) {
-			aprint_error("%s: CORB is running\n", XNAME(az));
+			aprint_error_dev(az->dev, "CORB is running\n");
 			return EBUSY;
 		}
 	}
@@ -660,7 +660,7 @@ azalia_init_corb(azalia_t *az, int reinit)
 		entries = 2;
 		corbsize |= HDA_CORBSIZE_CORBSIZE_2;
 	} else {
-		aprint_error("%s: Invalid CORBSZCAP: 0x%2x\n", XNAME(az), cap);
+		aprint_error_dev(az->dev, "Invalid CORBSZCAP: 0x%2x\n", cap);
 		return -1;
 	}
 
@@ -668,8 +668,7 @@ azalia_init_corb(azalia_t *az, int reinit)
 		err = azalia_alloc_dmamem(az, entries * sizeof(corb_entry_t),
 		    128, &az->corb_dma);
 		if (err) {
-			aprint_error("%s: can't allocate CORB buffer\n",
-			    XNAME(az));
+			aprint_error_dev(az->dev, "can't allocate CORB buffer\n");
 			return err;
 		}
 	}
@@ -691,7 +690,7 @@ azalia_init_corb(azalia_t *az, int reinit)
 			break;
 	}
 	if (i <= 0) {
-		aprint_error("%s: CORBRP reset failure\n", XNAME(az));
+		aprint_error_dev(az->dev, "CORBRP reset failure\n");
 		return -1;
 	}
 	DPRINTF(("%s: CORBWP=%d; size=%d\n", __func__,
@@ -746,7 +745,7 @@ azalia_init_rirb(azalia_t *az, int reinit)
 				break;
 		}
 		if (i <= 0) {
-			aprint_error("%s: RIRB is running\n", XNAME(az));
+			aprint_error_dev(az->dev, "RIRB is running\n");
 			return EBUSY;
 		}
 	}
@@ -765,7 +764,7 @@ azalia_init_rirb(azalia_t *az, int reinit)
 		entries = 2;
 		rirbsize |= HDA_RIRBSIZE_RIRBSIZE_2;
 	} else {
-		aprint_error("%s: Invalid RIRBSZCAP: 0x%2x\n", XNAME(az), cap);
+		aprint_error_dev(az->dev, "Invalid RIRBSZCAP: 0x%2x\n", cap);
 		return -1;
 	}
 
@@ -773,8 +772,7 @@ azalia_init_rirb(azalia_t *az, int reinit)
 		err = azalia_alloc_dmamem(az, entries * sizeof(rirb_entry_t),
 		    128, &az->rirb_dma);
 		if (err) {
-			aprint_error("%s: can't allocate RIRB buffer\n",
-			    XNAME(az));
+			aprint_error_dev(az->dev, "can't allocate RIRB buffer\n");
 			return err;
 		}
 	}
@@ -796,8 +794,7 @@ azalia_init_rirb(azalia_t *az, int reinit)
 		memset(az->unsolq, 0, sizeof(rirb_entry_t) * UNSOLQ_SIZE);
 	}
 	if (az->unsolq == NULL) {
-		aprint_error("%s: can't allocate unsolicited response queue.\n",
-		    XNAME(az));
+		aprint_error_dev(az->dev, "can't allocate unsolicited response queue.\n");
 		azalia_free_dmamem(az, &az->rirb_dma);
 		return ENOMEM;
 	}
@@ -859,7 +856,7 @@ azalia_set_command(const azalia_t *az, int caddr, nid_t nid, uint32_t control,
 
 #ifdef DIAGNOSTIC
 	if ((AZ_READ_1(az, CORBCTL) & HDA_CORBCTL_CORBRUN) == 0) {
-		aprint_error("%s: CORB is not running.\n", XNAME(az));
+		aprint_error_dev(az->dev, "CORB is not running.\n");
 		return -1;
 	}
 #endif
@@ -887,7 +884,7 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 
 #ifdef DIAGNOSTIC
 	if ((AZ_READ_1(az, RIRBCTL) & HDA_RIRBCTL_RIRBDMAEN) == 0) {
-		aprint_error("%s: RIRB is not running.\n", XNAME(az));
+		aprint_error_dev(az->dev, "RIRB is not running.\n");
 		return -1;
 	}
 #endif
@@ -898,7 +895,7 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 		DELAY(10);
 	}
 	if (i <= 0) {
-		aprint_error("%s: RIRB time out\n", XNAME(az));
+		aprint_error_dev(az->dev, "RIRB time out\n");
 		return ETIMEDOUT;
 	}
 	rirb = (rirb_entry_t*)az->rirb_dma.addr;
@@ -1398,7 +1395,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		/* print playback capability */
 		if (prev_dac != this->dacs.cur) {
 			snprintf(flagbuf, FLAGBUFLEN, "%s: playback: ",
-			    XNAME(this->az));
+			    device_xname(this->dev));
 			azalia_widget_print_audio(&this->w[group->conv[0]],
 			    flagbuf, chan);
 		}
@@ -1423,7 +1420,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		/* print recording capability */
 		if (prev_adc != this->adcs.cur) {
 			snprintf(flagbuf, FLAGBUFLEN, "%s: recording: ",
-			    XNAME(this->az));
+			    device_xname(this->dev));
 			azalia_widget_print_audio(&this->w[group->conv[0]],
 			    flagbuf, chan);
 		}
@@ -1645,7 +1642,7 @@ azalia_widget_init(widget_t *this, const codec_t *codec,
 	bitmask_snprintf(this->widgetcap, "\20\014LRSWAP\013POWER\012DIGITAL"
 	    "\011CONNLIST\010UNSOL\07PROC\06STRIPE\05FORMATOV\04AMPOV\03OUTAMP"
 	    "\02INAMP\01STEREO", flagbuf, FLAGBUFLEN);
-	DPRINTF(("%s: ", XNAME(codec->az)));
+	DPRINTF(("%s: ", device_xname(codec->dev)));
 	if (this->widgetcap & COP_AWCAP_POWER) {
 		codec->comresp(codec, nid, CORB_SET_POWER_STATE, CORB_PS_D0, &result);
 		DELAY(100);
@@ -1950,7 +1947,7 @@ azalia_stream_init(stream_t *this, azalia_t *az, int regindex, int strnum, int d
 	err = azalia_alloc_dmamem(az, sizeof(bdlist_entry_t) * HDA_BDL_MAX,
 				  128, &this->bdlist);
 	if (err) {
-		aprint_error("%s: can't allocate a BDL buffer\n", XNAME(az));
+		aprint_error_dev(az->dev, "can't allocate a BDL buffer\n");
 		return err;
 	}
 	return 0;
@@ -1982,7 +1979,7 @@ azalia_stream_reset(stream_t *this)
 			break;
 	}
 	if (i <= 0) {
-		aprint_error("%s: stream reset failure 1\n", XNAME(this->az));
+		aprint_error_dev(this->az->dev, "stream reset failure 1\n");
 		return -1;
 	}
 	STR_WRITE_2(this, CTL, ctl & ~HDA_SD_CTL_SRST);
@@ -1993,7 +1990,7 @@ azalia_stream_reset(stream_t *this)
 			break;
 	}
 	if (i <= 0) {
-		aprint_error("%s: stream reset failure 2\n", XNAME(this->az));
+		aprint_error_dev(this->az->dev, "stream reset failure 2\n");
 		return -1;
 	}
 	return 0;
@@ -2221,7 +2218,7 @@ azalia_getdev(void *v, struct audio_device *dev)
 	strlcpy(dev->name, "HD-Audio", MAX_AUDIO_DEV_LEN);
 	snprintf(dev->version, MAX_AUDIO_DEV_LEN,
 	    "%d.%d", AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN));
-	strlcpy(dev->config, XNAME(az), MAX_AUDIO_DEV_LEN);
+	strlcpy(dev->config, device_xname(az->dev), MAX_AUDIO_DEV_LEN);
 	return 0;
 }
 
