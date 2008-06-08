@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.24 2008/06/08 12:43:52 tsutsui Exp $ */
+/*	$NetBSD: twa.c,v 1.25 2008/06/08 14:02:25 joerg Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.24 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.25 2008/06/08 14:02:25 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1553,10 +1553,12 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_dma64_available(pa) && use_64bit)
+	if (pci_dma64_available(pa) && use_64bit) {
+		aprint_verbose_dev(self, "64bit DMA addressing active");
 		sc->twa_dma_tag = pa->pa_dmat64;
-	else
+	} else {
 		sc->twa_dma_tag = pa->pa_dmat;
+	}
 
  	sc->sc_product_id = PCI_PRODUCT(pa->pa_id);
 	/* Enable the device. */
@@ -2503,10 +2505,8 @@ twa_init_connection(struct twa_softc *sc, uint16_t message_credits,
    	init_connect->request_id = tr->tr_request_id;
 	init_connect->message_credits = message_credits;
 	init_connect->features = set_features;
-	if (TWA_64BIT_ADDRESSES) {
-		printf("64 bit addressing supported for scatter/gather list\n");
+	if (TWA_64BIT_ADDRESSES)
 		init_connect->features |= TWA_64BIT_SG_ADDRESSES;
-	}
 	if (set_features & TWA_EXTENDED_INIT_CONNECT) {
 		/*
 		 * Fill in the extra fields needed for
