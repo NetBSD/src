@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.61 2008/05/11 14:25:48 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.62 2008/06/08 12:43:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.61 2008/05/11 14:25:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.62 2008/06/08 12:43:51 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,7 +614,7 @@ dpt_shutdown(void *cookie)
 	printf("shutting down dpt devices...");
 
 	for (i = 0; i < dpt_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup(&dpt_cd, i)) == NULL)
+		if ((sc = device_lookup_private(&dpt_cd, i)) == NULL)
 			continue;
 		dpt_cmd(sc, NULL, CP_IMMEDIATE, CPI_POWEROFF_WARN);
 	}
@@ -1121,7 +1121,7 @@ dptioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct dpt_softc *sc;
 	int rv;
 
-	sc = device_lookup(&dpt_cd, minor(dev));
+	sc = device_lookup_private(&dpt_cd, minor(dev));
 
 	switch (cmd & 0xffff) {
 	case DPT_SIGNATURE:
