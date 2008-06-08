@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.241 2008/06/03 06:21:17 bjs Exp $	*/
+/*	$NetBSD: audio.c,v 1.242 2008/06/08 18:18:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.241 2008/06/03 06:21:17 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.242 2008/06/08 18:18:33 tsutsui Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1197,7 +1197,7 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	struct audio_softc *sc;
 	int rv;
 
-	sc = audio_cd.cd_devs[AUDIOUNIT(dev)];
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc->sc_dying)
 		return 1;
 

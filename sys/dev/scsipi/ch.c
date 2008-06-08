@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.81 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: ch.c,v 1.82 2008/06/08 18:18:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.81 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.82 2008/06/08 18:18:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,8 +257,8 @@ chopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	int unit, error;
 
 	unit = CHUNIT(dev);
-	if ((unit >= ch_cd.cd_ndevs) ||
-	    ((sc = ch_cd.cd_devs[unit]) == NULL))
+	sc = device_lookup_private(&ch_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 
 	periph = sc->sc_periph;
@@ -304,7 +304,7 @@ chopen(dev_t dev, int flags, int fmt, struct lwp *l)
 static int
 chclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *sc = device_lookup_private(&ch_cd, CHUNIT(dev));
 	struct scsipi_periph *periph = sc->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
@@ -321,7 +321,7 @@ chclose(dev_t dev, int flags, int fmt, struct lwp *l)
 static int
 chread(dev_t dev, struct uio *uio, int flags)
 {
-	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *sc = device_lookup_private(&ch_cd, CHUNIT(dev));
 	int error;
 
 	if (uio->uio_resid != CHANGER_EVENT_SIZE)
@@ -340,7 +340,7 @@ chread(dev_t dev, struct uio *uio, int flags)
 static int
 chioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *sc = device_lookup_private(&ch_cd, CHUNIT(dev));
 	int error = 0;
 
 	/*
@@ -440,7 +440,7 @@ chioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 static int
 chpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *sc = device_lookup_private(&ch_cd, CHUNIT(dev));
 	int revents;
 
 	revents = events & (POLLOUT | POLLWRNORM);
@@ -484,7 +484,7 @@ static const struct filterops chwrite_filtops =
 static int
 chkqfilter(dev_t dev, struct knote *kn)
 {
-	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct ch_softc *sc = device_lookup_private(&ch_cd, CHUNIT(dev));
 	struct klist *klist;
 
 	switch (kn->kn_filter) {
