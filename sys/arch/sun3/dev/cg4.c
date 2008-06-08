@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.37 2007/03/12 12:03:18 tsutsui Exp $	*/
+/*	$NetBSD: cg4.c,v 1.38 2008/06/08 17:30:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.37 2007/03/12 12:03:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.38 2008/06/08 17:30:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ cg4match(struct device *parent, struct cfdata *cf, void *args)
 static void 
 cg4attach(struct device *parent, struct device *self, void *args)
 {
-	struct cg4_softc *sc = (struct cg4_softc *)self;
+	struct cg4_softc *sc = device_private(self);
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
@@ -328,9 +328,11 @@ cg4attach(struct device *parent, struct device *self, void *args)
 int 
 cg4open(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	struct cg4_softc *sc;
 	int unit = minor(dev);
 
-	if (unit >= cgfour_cd.cd_ndevs || cgfour_cd.cd_devs[unit] == NULL)
+	sc = device_lookup_private(&cgfour_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -338,7 +340,7 @@ cg4open(dev_t dev, int flags, int mode, struct lwp *l)
 int 
 cg4ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
+	struct cg4_softc *sc = device_lookup_private(&cgfour_cd, minor(dev));
 
 	return (fbioctlfb(&sc->sc_fb, cmd, data));
 }
@@ -357,7 +359,7 @@ cg4ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 paddr_t 
 cg4mmap(dev_t dev, off_t off, int prot)
 {
-	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
+	struct cg4_softc *sc = device_lookup_private(&cgfour_cd, minor(dev));
 	int physbase;
 
 	if (off & PGOFSET)

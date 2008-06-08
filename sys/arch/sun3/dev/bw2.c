@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.32 2007/03/12 12:03:18 tsutsui Exp $	*/
+/*	$NetBSD: bw2.c,v 1.33 2008/06/08 17:30:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.32 2007/03/12 12:03:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.33 2008/06/08 17:30:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ bw2match(struct device *parent, struct cfdata *cf, void *args)
 static void 
 bw2attach(struct device *parent, struct device *self, void *args)
 {
-	struct bw2_softc *sc = (struct bw2_softc *)self;
+	struct bw2_softc *sc = device_private(self);
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
@@ -288,9 +288,11 @@ bw2attach(struct device *parent, struct device *self, void *args)
 int 
 bw2open(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	struct bw2_softc *sc;
 	int unit = minor(dev);
 
-	if (unit >= bwtwo_cd.cd_ndevs || bwtwo_cd.cd_devs[unit] == NULL)
+	sc = device_lookup_private(&bwtwo_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -298,7 +300,7 @@ bw2open(dev_t dev, int flags, int mode, struct lwp *l)
 int 
 bw2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bw2_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
 
 	return (fbioctlfb(&sc->sc_fb, cmd, data));
 }
@@ -310,7 +312,7 @@ bw2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 paddr_t 
 bw2mmap(dev_t dev, off_t off, int prot)
 {
-	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bw2_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
 	int size = sc->sc_fb.fb_fbtype.fb_size;
 
 	if (off & PGOFSET)
