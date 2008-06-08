@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.20 2008/05/20 07:08:07 darrenr Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.21 2008/06/08 11:31:28 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -48,6 +48,9 @@
 #if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105000000) && \
     !defined(_KERNEL) && !defined(USE_INET6) && !defined(NOINET6)
 # define	USE_INET6
+#endif
+#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 106140000) && \
+    defined(_KERNEL) && !defined(IPFILTER_LKM)
 # define	IPFILTER_M_IPFILTER
 #endif
 #if defined(OpenBSD) && (OpenBSD >= 200206) && \
