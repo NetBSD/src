@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.208.2.3 2008/05/26 06:54:40 wrstuden Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.208.2.4 2008/06/08 14:54:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.208.2.3 2008/05/26 06:54:40 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.208.2.4 2008/06/08 14:54:57 wrstuden Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -607,7 +607,6 @@ exit_lwps(struct lwp *l)
 {
 	struct proc *p;
 	struct lwp *l2;
-	struct sadata_vp *vp;
 	int error;
 	lwpid_t waited;
 #if defined(MULTIPROCESSOR)
@@ -619,6 +618,7 @@ exit_lwps(struct lwp *l)
 	p = l->l_proc;
 	KASSERT(mutex_owned(p->p_lock));
 
+#if 0
 	if (p->p_sa != NULL) {
 		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 			/*
@@ -647,6 +647,7 @@ exit_lwps(struct lwp *l)
 			TAILQ_INIT(&vp->savp_woken);
 		}
 	}
+#endif
 
  retry:
 	/*
