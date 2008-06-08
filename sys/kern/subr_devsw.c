@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.21 2008/06/08 12:22:39 ad Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.22 2008/06/08 12:23:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.21 2008/06/08 12:22:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.22 2008/06/08 12:23:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -832,7 +832,6 @@ struct tty *
 cdev_tty(dev_t dev)
 {
 	const struct cdevsw *d;
-	struct tty * rv;
 
 	if ((d = cdevsw_lookup(dev)) == NULL)
 		return NULL;
