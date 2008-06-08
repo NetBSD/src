@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.21 2006/09/16 17:31:13 mhitch Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.21.4.1 2008/06/08 20:10:00 bouyer Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.21 2006/09/16 17:31:13 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.21.4.1 2008/06/08 20:10:00 bouyer Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -309,7 +309,7 @@ void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
 void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, int);
 boolean_t pmap_testbit(paddr_t, int);
 boolean_t pmap_changebit(paddr_t, int, int);
-void	pmap_enter_ptpage(pmap_t, vaddr_t);
+boolean_t pmap_enter_ptpage(pmap_t, vaddr_t, boolean_t);
 void	pmap_ptpage_addref(vaddr_t);
 int	pmap_ptpage_delref(vaddr_t);
 void	pmap_collect1(pmap_t, paddr_t, paddr_t);
@@ -1144,6 +1144,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	boolean_t can_fail = (flags & PMAP_CANFAIL) != 0;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
 	    ("pmap_enter(%p, %lx, %lx, %x, %x)\n",
@@ -1161,16 +1162,23 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 * For user mapping, allocate kernel VM resources if necessary.
 	 */
-	if (pmap->pm_ptab == NULL)
+	if (pmap->pm_ptab == NULL) {
 		pmap->pm_ptab = (pt_entry_t *)
 		    uvm_km_alloc(pt_map, M68K_MAX_PTSIZE, 0,
-		    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+		    UVM_KMF_VAONLY | 
+		    (can_fail ? UVM_KMF_NOWAIT : UVM_KMF_WAITVA));
+		if (pmap->pm_ptab == NULL)
+			return ENOMEM;
+	}
 
 	/*
 	 * Segment table entry not valid, we need a new PT page
 	 */
-	if (!pmap_ste_v(pmap, va))
-		pmap_enter_ptpage(pmap, va);
+	if (!pmap_ste_v(pmap, va)) {
+		int err = pmap_enter_ptpage(pmap, va, can_fail);
+		if (err)
+			return err;
+	}
 
 	pa = m68k_trunc_page(pa);
 	pte = pmap_pte(pmap, va);
@@ -1446,7 +1454,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	if (!pmap_ste_v(pmap, va)) {
 		s = splvm();
-		pmap_enter_ptpage(pmap, va);
+		pmap_enter_ptpage(pmap, va, FALSE);
 		splx(s);
 	}
 
@@ -2220,7 +2228,9 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
 			    NULL, PRM_TFLUSH|PRM_CFLUSH);
+			simple_lock(&uvm.kernel_object->vmobjlock);
 			uvm_pagefree(PHYS_TO_VM_PAGE(ptppa));
+			simple_unlock(&uvm.kernel_object->vmobjlock);
 			PMAP_DPRINTF(PDB_REMOVE|PDB_PTPAGE,
 			    ("remove: PT page 0x%lx (0x%lx) freed\n",
 			    ptpva, ptppa));
@@ -2532,8 +2542,8 @@ pmap_changebit(paddr_t pa, int set, int mask)
  *	Allocate and map a PT page for the specified pmap/va pair.
  */
 /* static */
-void
-pmap_enter_ptpage(pmap_t pmap, vaddr_t va)
+int
+pmap_enter_ptpage(pmap_t pmap, vaddr_t va, boolean_t can_fail)
 {
 	paddr_t ptpa;
 	struct vm_page *pg;
@@ -2554,7 +2564,12 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va)
 	if (pmap->pm_stab == Segtabzero) {
 		pmap->pm_stab = (st_entry_t *)
 		    uvm_km_alloc(st_map, M68K_STSIZE, 0,
-		    UVM_KMF_WIRED | UVM_KMF_ZERO);
+		    UVM_KMF_WIRED | UVM_KMF_ZERO |
+		    (can_fail ? UVM_KMF_NOWAIT : 0));
+		if (pmap->pm_stab == NULL) {
+			pmap->pm_stab = Segtabzero;
+			return ENOMEM;
+		}
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab,
 		    (paddr_t *)&pmap->pm_stpa);
 #if defined(M68040) || defined(M68060)
@@ -2675,11 +2690,15 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va)
 		pmap->pm_sref++;
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
 		    ("enter: about to alloc UPT pg at %lx\n", va));
+		simple_lock(&uvm.kernel_object->vmobjlock);
 		while ((pg = uvm_pagealloc(uvm.kernel_object,
 					   va - vm_map_min(kernel_map),
 					   NULL, UVM_PGA_ZERO)) == NULL) {
+			simple_unlock(&uvm.kernel_object->vmobjlock);
 			uvm_wait("ptpage");
+			simple_lock(&uvm.kernel_object->vmobjlock);
 		}
+		simple_unlock(&uvm.kernel_object->vmobjlock);
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		ptpa = VM_PAGE_TO_PHYS(pg);
@@ -2773,6 +2792,8 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va)
 		TBIAU();
 	pmap->pm_ptpages++;
 	splx(s);
+
+	return 0;
 }
 
 /*
