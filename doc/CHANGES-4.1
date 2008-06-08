@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.61 2008/05/25 19:10:58 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.62 2008/06/08 20:10:48 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1102,4 +1102,38 @@ sys/dev/raidframe/rf_states.c			1.43
 	Add in a missing "bp->b_resid = bp->b_bcount" in the EIO case.
 	Spotted by Juergen Hannken-Illjes.  Thanks!
 	[oster, ticket #1154]
+
+distrib/sets/lists/xbase/mi			1.57
+distrib/sets/lists/xbase4/mi			1.21
+share/man/man4/pckbd.4				1.15
+sys/dev/pckbport/wskbdmap_mfii.c		1.15
+sys/dev/sun/wskbdmap_sun.c			1.15
+sys/dev/usb/ukbdmap.c				1.20
+sys/dev/wscons/wsksymdef.h			1.61
+x11/bin/xkbcomp/symbols/Makefile		1.6
+x11/bin/xkbcomp/symbols/pc/Makefile		1.5
+xsrc/xfree/xc/programs/xkbcomp/symbols/colemak	1.1
+xsrc/xfree/xc/programs/xkbcomp/symbols/pc/colemak 1.1
+
+	Add support for the Colemak keyboard layout.
+	[ghen, ticket #1155]
+
+sys/dev/pci/if_ipw.c				1.40
+
+	PR#34477: Don't dereference ni_chan if it points to the special
+	``any channel'' token IEEE80211_CHAN_ANYC
+	[jmcneill, ticket #1156]
+
+bin/sh/eval.c					1.90
+
+	Port revision 1.44 of "src/bin/sh/eval.c" from FreeBSD to fix
+	PR bin/38584: exit if set -e is active an a pipeline fails.
+	[tron, ticket #1157]
+
+sys/arch/m68k/m68k/pmap_motorola.c		1.22
+
+	Allow pmap_enter_ptpage to fail, sometimes. Pass WAIT/NOWAIT flags and
+	fix some obvious locking problems. Fix panic reported in
+	http://mail-index.netbsd.org/tech-kern/2006/12/12/0000.html
+	[hauke, ticket #1158]
 
