@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.93 2008/04/29 09:56:38 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.94 2008/06/09 21:17:58 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.93 2008/04/29 09:56:38 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.94 2008/06/09 21:17:58 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1312,8 +1312,10 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 
 	m->m_len = salen;
 
-	if (salen == 0)
+	if (salen == 0) {
+		*mp = m;
 		return 0;
+	}
 
 	kosa = mtod(m, void *);
 	if ((error = copyin(osa, kosa, salen))) {
