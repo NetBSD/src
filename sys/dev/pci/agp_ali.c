@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_ali.c,v 1.14 2008/04/13 13:07:31 njoly Exp $	*/
+/*	$NetBSD: agp_ali.c,v 1.15 2008/06/09 06:49:54 freza Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.14 2008/04/13 13:07:31 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.15 2008/06/09 06:49:54 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.14 2008/04/13 13:07:31 njoly Exp $");
 #include <sys/bus.h>
 
 struct agp_ali_softc {
-	struct agp_softc agp;
 	u_int32_t	initial_aperture; /* aperture size at startup */
 	struct agp_gatt *gatt;
 };
@@ -76,9 +75,9 @@ static struct agp_methods agp_ali_methods = {
 };
 
 int
-agp_ali_attach(struct device *parent, struct device *self, void *aux)
+agp_ali_attach(device_t parent, device_t self, void *aux)
 {
-	struct agp_softc *sc = (struct agp_softc *)self;
+	struct agp_softc *sc = device_private(self);
 	struct agp_ali_softc *asc;
 	struct pci_attach_args *pa = aux;
 	struct agp_gatt *gatt;

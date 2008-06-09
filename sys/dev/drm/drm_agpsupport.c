@@ -1,4 +1,4 @@
-/* $NetBSD: drm_agpsupport.c,v 1.5 2008/05/05 14:00:10 jmcneill Exp $ */
+/* $NetBSD: drm_agpsupport.c,v 1.6 2008/06/09 06:49:55 freza Exp $ */
 
 /* drm_agpsupport.h -- DRM support for AGP/GART backend -*- linux-c -*-
  * Created: Mon Dec 13 09:56:45 1999 by faith@precisioninsight.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.5 2008/05/05 14:00:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.6 2008/06/09 06:49:55 freza Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_agpsupport.c,v 1.5 2006/04/09 20:45:44 anholt Exp $");
 */
@@ -372,7 +372,7 @@ int drm_agp_free_ioctl(DRM_IOCTL_ARGS)
 
 drm_agp_head_t *drm_agp_init(drm_device_t *dev)
 {
-	device_t agpdev;
+	void *agpdev;
 	drm_agp_head_t *head   = NULL;
 	int      agp_available = 1;
    
@@ -400,7 +400,7 @@ drm_agp_head_t *drm_agp_init(drm_device_t *dev)
 
 void *drm_agp_allocate_memory(size_t pages, u32 type)
 {
-	device_t agpdev;
+	void *agpdev;
 
 	agpdev = DRM_AGP_FIND_DEVICE();
 	if (!agpdev)
@@ -411,7 +411,7 @@ void *drm_agp_allocate_memory(size_t pages, u32 type)
 
 int drm_agp_free_memory(void *handle)
 {
-	device_t agpdev;
+	void *agpdev;
 
 	agpdev = DRM_AGP_FIND_DEVICE();
 	if (!agpdev || !handle)
@@ -424,7 +424,7 @@ int drm_agp_free_memory(void *handle)
 int drm_agp_bind_memory(void *handle, off_t start)
 {
 #ifndef DRM_NO_AGP
-	device_t agpdev;
+	void *agpdev;
 
 	agpdev = DRM_AGP_FIND_DEVICE();
 	if (!agpdev || !handle)
@@ -439,7 +439,7 @@ int drm_agp_bind_memory(void *handle, off_t start)
 int drm_agp_unbind_memory(void *handle)
 {
 #ifndef DRM_NO_AGP
-	device_t agpdev;
+	void *agpdev;
 
 	agpdev = DRM_AGP_FIND_DEVICE();
 	if (!agpdev || !handle)
