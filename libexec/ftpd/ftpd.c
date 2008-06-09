@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.184 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.185 2008/06/09 00:33:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.184 2008/04/28 20:23:03 martin Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.185 2008/06/09 00:33:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2502,11 +2502,11 @@ statcmd(void)
 {
 	struct sockinet *su = NULL;
 	static char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-	u_char *a, *p;
+	unsigned char *a, *p;
 	int ispassive, af;
 	off_t otbi, otbo, otb;
 
-	a = p = (u_char *)NULL;
+	a = p = (unsigned char *)NULL;
 
 	reply(-211, "%s FTP server status:", hostname);
 	reply(0, "Version: %s", EMPTYSTR(version) ? "<suppressed>" : version);
@@ -2563,8 +2563,8 @@ statcmd(void)
  printaddr:
 							/* PASV/PORT */
 		if (su->su_family == AF_INET) {
-			a = (u_char *) &su->su_addr;
-			p = (u_char *) &su->su_port;
+			a = (unsigned char *) &su->su_addr;
+			p = (unsigned char *) &su->su_port;
 #define UC(b) (((int) b) & 0xff)
 			reply(0, "%s (%d,%d,%d,%d,%d,%d)",
 				ispassive ? "PASV" : "PORT" ,
@@ -2579,15 +2579,15 @@ statcmd(void)
 		alen = 0;
 		switch (su->su_family) {
 		case AF_INET:
-			a = (u_char *) &su->su_addr;
-			p = (u_char *) &su->su_port;
+			a = (unsigned char *) &su->su_addr;
+			p = (unsigned char *) &su->su_port;
 			alen = sizeof(su->su_addr);
 			af = 4;
 			break;
 #ifdef INET6
 		case AF_INET6:
-			a = (u_char *) &su->su_6addr;
-			p = (u_char *) &su->su_port;
+			a = (unsigned char *) &su->su_6addr;
+			p = (unsigned char *) &su->su_port;
 			alen = sizeof(su->su_6addr);
 			af = 6;
 			break;
@@ -3721,15 +3721,20 @@ auth_conv(int num_msg, const struct pam_message **msg,
 			if (msg[i]->msg[0] == '\0') {
 				(void)strlcpy(pbuf, "password", sizeof(pbuf));
 			} else {
-				/* Uncapitalize msg, remove trailing ':' */
+					/* Uncapitalize msg */
 				(void)strlcpy(pbuf, msg[i]->msg, sizeof(pbuf));
-				n = strlen(pbuf);
 				if (isupper((unsigned char)pbuf[0]))
 					pbuf[0] = tolower(
 					    (unsigned char)pbuf[0]);
-				n = strlen(pbuf) - 1;
-				if (pbuf[n] == ':')
-					pbuf[n] = '\0';
+					/* Remove trailing ':' and whitespace */
+				n = strlen(pbuf);
+				while (n-- > 0) {
+					if (isspace((unsigned char)pbuf[n]) ||
+					    pbuf[n] == ':')
+						pbuf[n] = '\0';
+					else
+						break;
+				}
 			}
 				/* Send reply, wait for a response. */
 			reply(331, "User %s accepted, provide %s.",
@@ -3825,6 +3830,9 @@ auth_pam(void)
 	}
 
 	e = pam_authenticate(pamh, 0);
+	if (ftpd_debug)
+		syslog(LOG_DEBUG, "pam_authenticate: user '%s' returned %d",
+		    curname, e);
 	switch (e) {
 	case PAM_SUCCESS:
 		/*
@@ -3852,7 +3860,8 @@ auth_pam(void)
 				pw = sgetpwnam(tmpl_user);
 				if (ftpd_debug)
 					syslog(LOG_DEBUG,
-					    "PAM changed user from %s to %s",
+					    "auth_pam: PAM changed "
+					    "user from '%s' to '%s'",
 					    curname, pw->pw_name);
 				(void)strlcpy(curname, pw->pw_name,
 				    curname_len);
