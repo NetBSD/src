@@ -1,4 +1,4 @@
-#	$NetBSD: rc.local,v 1.30 2002/07/23 10:48:01 wennmach Exp $
+#	$NetBSD: rc.local,v 1.31 2008/06/09 21:58:57 ad Exp $
 #	originally from: @(#)rc.local	8.3 (Berkeley) 4/28/94
 #
 # This file is (nearly) the last thing invoked by /etc/rc during a
@@ -12,11 +12,8 @@
 
 echo -n 'Starting local daemons:'
 
-# Add your local daemons here.
+# Add your local daemons here, eg:
 #
-
-#if [ -f /usr/pkg/etc/rc.d/apache ]; then
-#	/usr/pkg/etc/rc.d/apache start
-#fi
+# su -l webapp /local/webapp/apache-tomcat-5.5.26/bin/startup.sh
 
 echo '.'
