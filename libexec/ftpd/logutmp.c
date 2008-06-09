@@ -1,3 +1,5 @@
+/*	$NetBSD: logutmp.c,v 1.11 2008/06/09 01:00:23 lukem Exp $	*/
+
 /*
  * Portions Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,6 +53,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: logutmp.c,v 1.11 2008/06/09 01:00:23 lukem Exp $");
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
