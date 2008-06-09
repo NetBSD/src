@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.31 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.32 2008/06/09 06:49:54 freza Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.31 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.32 2008/06/09 06:49:54 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +106,10 @@ agp_intel_vgamatch(struct pci_attach_args *pa)
 }
 
 int
-agp_intel_attach(struct device *parent, struct device *self, void *aux)
+agp_intel_attach(device_t parent, device_t self, void *aux)
 {
-	struct agp_softc *sc = (struct agp_softc *)self;
-	struct pci_attach_args *pa= aux;
+	struct agp_softc *sc = device_private(self);
+	struct pci_attach_args *pa = aux;
 	struct agp_intel_softc *isc;
 	struct agp_gatt *gatt;
 	u_int32_t value;
@@ -125,7 +125,7 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_find_device(&isc->vga_pa, agp_intel_vgamatch) == 0) {
 		aprint_normal(": using generic initialization for Intel AGP\n");
-		aprint_normal_dev(&sc->as_dev, "");
+		aprint_normal_dev(sc->as_dev, "");
 		isc->chiptype = CHIP_INTEL;
 	}
 
