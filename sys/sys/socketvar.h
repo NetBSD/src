@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.109 2008/05/26 17:21:18 ad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.110 2008/06/10 11:49:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -290,6 +290,7 @@ void	sbunlock(struct sockbuf *);
 int	sowait(struct socket *, int);
 void	solockretry(struct socket *, kmutex_t *);
 void	sosetlock(struct socket *);
+void	solockreset(struct socket *, kmutex_t *);
 
 int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
