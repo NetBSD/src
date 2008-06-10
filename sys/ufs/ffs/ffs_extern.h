@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.65 2008/06/03 09:47:49 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.65.2.1 2008/06/10 14:51:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -84,6 +84,7 @@ __BEGIN_DECLS
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/wapbl.h>
 
 /* ffs_alloc.c */
 int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, kauth_cred_t,
@@ -96,6 +97,7 @@ int	ffs_reallocblks(void *);
 int	ffs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
 daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int32_t *);
 daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int64_t *);
+int	ffs_blkalloc(struct inode *, daddr_t, long);
 void	ffs_blkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
 int	ffs_vfree(struct vnode *, ino_t, int);
 void	ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
@@ -178,6 +180,17 @@ void	softdep_setup_allocindir_page(struct inode *, daddr_t,
 				      struct buf *);
 void	softdep_fsync_mountdev(struct vnode *);
 int	softdep_sync_metadata(struct vnode *);
+
+/* Write Ahead Physical Block Logging */
+void	ffs_wapbl_verify_inodes(struct mount *, const char *);
+void	ffs_wapbl_replay_finish(struct mount *);
+int	ffs_wapbl_start(struct mount *);
+int	ffs_wapbl_stop(struct mount *, int);
+int	ffs_wapbl_replay_start(struct mount *, struct fs *, struct vnode *);
+void	ffs_wapbl_blkalloc(struct fs *, struct vnode *, daddr_t, int);
+
+void	ffs_wapbl_sync_metadata(struct mount *, daddr_t *, int *, int);
+void	ffs_wapbl_abort_sync_metadata(struct mount *, daddr_t *, int *, int);
 
 extern int (**ffs_vnodeop_p)(void *);
 extern int (**ffs_specop_p)(void *);

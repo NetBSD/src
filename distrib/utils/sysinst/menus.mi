@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.32 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.32.4.1 2008/06/10 14:51:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -145,6 +145,8 @@ menu mountoptions, title MSG_toggle, y=5, x=30, exitstring MSG_unchanged;
 		{ ((partinfo *)arg)->pi_flags ^= PIF_NOSUID; };
 	option "softdep", exit, action
 		{ ((partinfo *)arg)->pi_flags ^= PIF_SOFTDEP; };
+	option "log", exit, action
+		{ ((partinfo *)arg)->pi_flags ^= PIF_LOG; };
 
 menu netbsd, title MSG_NetBSD_VERSION_Install_System, y=-1,
     exit, exitstring MSG_Exit_Install_System;

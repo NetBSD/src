@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2005/06/27 01:25:35 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.22.26.1 2008/06/10 14:51:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -82,7 +82,11 @@ void		setinodebuf(ino_t);
 int		setup(const char *);
 void		voidquit(int);
 
-void	swap_cg(struct cg *, struct cg *);
-void copyback_cg(struct bufarea *);
-void sb_oldfscompat_write(struct fs *, struct fs *);
-void sb_oldfscompat_read(struct fs *, struct fs **);
+void		replay_wapbl(void);
+void		cleanup_wapbl(void);
+int		read_wapbl(char *, long, daddr_t);
+
+void		swap_cg(struct cg *, struct cg *);
+void		copyback_cg(struct bufarea *);
+void		sb_oldfscompat_write(struct fs *, struct fs *);
+void		sb_oldfscompat_read(struct fs *, struct fs **);

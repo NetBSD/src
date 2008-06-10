@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.6 2007/11/07 15:51:07 pooka Exp $	*/
+/*	$NetBSD: ffs.c,v 1.6.22.1 2008/06/10 14:51:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 	memset(&args, 0, sizeof(args));
 	args.fspec = argv[0];
 
-	rv = p2k_run_fs(MOUNT_FFS, argv[0], argv[1], mntflags,
+	rv = p2k_run_fs(MOUNT_FFS, argv[0], argv[1], mntflags | MNT_LOG,
 	    &args, sizeof(args), pflags);
 	if (rv)
 		err(1, "mount");

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.350 2008/06/05 12:32:57 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.350.2.1 2008/06/10 14:51:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.350 2008/06/05 12:32:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.350.2.1 2008/06/10 14:51:22 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.350 2008/06/05 12:32:57 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 #include <sys/kthread.h>
+#include <sys/wapbl.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
@@ -1302,8 +1303,13 @@ vclean(vnode_t *vp, int flags)
 	 */
 	if (flags & DOCLOSE) {
 		error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		if (error != 0)
+		if (error != 0) {
+			/* XXX, fix vn_start_write's grab of mp and use that. */
+
+			if (wapbl_vphaswapbl(vp))
+				WAPBL_DISCARD(wapbl_vptomp(vp));
 			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
+		}
 		KASSERT(error == 0);
 		KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 		if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {

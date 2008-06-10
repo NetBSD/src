@@ -1,4 +1,40 @@
-/*	$NetBSD: ffs_inode.c,v 1.97 2008/06/03 09:47:49 hannken Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.97.2.1 2008/06/10 14:51:23 simonb Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.97 2008/06/03 09:47:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.97.2.1 2008/06/10 14:51:23 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -41,23 +77,25 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.97 2008/06/03 09:47:49 hannken Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/file.h>
 #include <sys/buf.h>
-#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/fstrans.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/trace.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
 #include <sys/resourcevar.h>
-#include <sys/kauth.h>
-#include <sys/fstrans.h>
+#include <sys/trace.h>
+#include <sys/vnode.h>
+#include <sys/wapbl.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/ufs_wapbl.h>
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -128,6 +166,17 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 		softdep_update_inodeblock(ip, bp, waitfor);
 	} else if (ip->i_ffs_effnlink != ip->i_nlink)
 		panic("ffs_update: bad link cnt");
+	/* Keep unlinked inode list up to date */
+	KDASSERT(DIP(ip, nlink) == ip->i_nlink);
+	if (ip->i_mode) {
+		if (ip->i_nlink > 0) {
+			UFS_WAPBL_UNREGISTER_INODE(ip->i_ump->um_mountp,
+			    ip->i_number, ip->i_mode);
+		} else {
+			UFS_WAPBL_REGISTER_INODE(ip->i_ump->um_mountp,
+			    ip->i_number, ip->i_mode);
+		}
+	}
 	if (fs->fs_magic == FS_UFS1_MAGIC) {
 		cp = (char *)bp->b_data +
 		    (ino_to_fsbo(fs, ip->i_number) * DINODE1_SIZE);
@@ -411,8 +460,13 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			blocksreleased += count;
 			if (lastiblock[level] < 0) {
 				DIP_ASSIGN(oip, ib[level], 0);
-				ffs_blkfree(fs, oip->i_devvp, bn, fs->fs_bsize,
-				    oip->i_number);
+				if (oip->i_ump->um_mountp->mnt_wapbl) {
+					UFS_WAPBL_REGISTER_DEALLOCATION(
+					    oip->i_ump->um_mountp,
+					    fsbtodb(fs, bn), fs->fs_bsize);
+				} else
+					ffs_blkfree(fs, oip->i_devvp, bn,
+					    fs->fs_bsize, oip->i_number);
 				blocksreleased += nblocks;
 			}
 		}
@@ -434,7 +488,12 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			continue;
 		DIP_ASSIGN(oip, db[i], 0);
 		bsize = blksize(fs, oip, i);
-		ffs_blkfree(fs, oip->i_devvp, bn, bsize, oip->i_number);
+		if ((oip->i_ump->um_mountp->mnt_wapbl) &&
+		    (ovp->v_type != VREG)) {
+			UFS_WAPBL_REGISTER_DEALLOCATION(oip->i_ump->um_mountp,
+			    fsbtodb(fs, bn), bsize);
+		} else
+			ffs_blkfree(fs, oip->i_devvp, bn, bsize, oip->i_number);
 		blocksreleased += btodb(bsize);
 	}
 	if (lastblock < 0)
@@ -468,8 +527,14 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			 * required for the storage we're keeping.
 			 */
 			bn += numfrags(fs, newspace);
-			ffs_blkfree(fs, oip->i_devvp, bn, oldspace - newspace,
-			    oip->i_number);
+			if ((oip->i_ump->um_mountp->mnt_wapbl) &&
+			    (ovp->v_type != VREG)) {
+				UFS_WAPBL_REGISTER_DEALLOCATION(
+				    oip->i_ump->um_mountp, fsbtodb(fs, bn),
+				    oldspace - newspace);
+			} else
+				ffs_blkfree(fs, oip->i_devvp, bn,
+				    oldspace - newspace, oip->i_number);
 			blocksreleased += btodb(oldspace - newspace);
 		}
 	}
@@ -494,6 +559,7 @@ done:
 	DIP_ADD(oip, blocks, -blocksreleased);
 	genfs_node_unlock(ovp);
 	oip->i_flag |= IN_CHANGE;
+	UFS_WAPBL_UPDATE(ovp, NULL, NULL, 0);
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
@@ -621,7 +687,13 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 				allerror = error;
 			blocksreleased += blkcount;
 		}
-		ffs_blkfree(fs, ip->i_devvp, nb, fs->fs_bsize, ip->i_number);
+		if ((ip->i_ump->um_mountp->mnt_wapbl) &&
+		    ((level > SINGLE) || (ITOV(ip)->v_type != VREG))) {
+			UFS_WAPBL_REGISTER_DEALLOCATION(ip->i_ump->um_mountp,
+			    fsbtodb(fs, nb), fs->fs_bsize);
+		} else
+			ffs_blkfree(fs, ip->i_devvp, nb, fs->fs_bsize,
+			    ip->i_number);
 		blocksreleased += nblocks;
 	}
 

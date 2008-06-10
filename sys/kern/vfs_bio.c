@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.202 2008/06/06 12:49:15 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.202.2.1 2008/06/10 14:51:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -6,6 +6,8 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Andrew Doran.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -107,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.202 2008/06/06 12:49:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.202.2.1 2008/06/10 14:51:22 simonb Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -126,6 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.202 2008/06/06 12:49:15 ad Exp $");
 #include <sys/fstrans.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
+#include <sys/wapbl.h>
 
 #include <uvm/uvm.h>
 
@@ -712,8 +715,23 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 
 	/* Wait for the read to complete, and return result. */
 	error = biowait(bp);
-	if (error == 0 && (flags & B_MODIFY) != 0)
+	if (error == 0 && (flags & B_MODIFY) != 0)	/* XXXX before the next code block or after? */
 		error = fscow_run(bp, true);
+
+	if (!error) {
+		struct mount *mp = wapbl_vptomp(vp);
+
+		if (mp && mp->mnt_wapbl_replay &&
+		    WAPBL_REPLAY_ISOPEN(mp)) {
+			error = WAPBL_REPLAY_READ(mp, bp->b_data, bp->b_blkno,
+			    bp->b_bcount);
+			if (error) {
+				mutex_enter(&bufcache_lock);
+				SET(bp->b_cflags, BC_INVAL);
+				mutex_exit(&bufcache_lock);
+			}
+		}
+	}
 	return error;
 }
 
@@ -788,6 +806,13 @@ bwrite(buf_t *bp)
 			mp = vp->v_mount;
 	} else {
 		mp = NULL;
+	}
+
+	if (mp && mp->mnt_wapbl) {
+		if (bp->b_iodone != mp->mnt_wapbl_op->wo_wapbl_biodone) {
+			bdwrite(bp);
+			return 0;
+		}
 	}
 
 	/*
@@ -894,14 +919,22 @@ bdwrite(buf_t *bp)
 		return;
 	}
 
-	/*
+	if (wapbl_vphaswapbl(bp->b_vp)) {
+		struct mount *mp = wapbl_vptomp(bp->b_vp);
+
+		if (bp->b_iodone != mp->mnt_wapbl_op->wo_wapbl_biodone) {
+			WAPBL_ADD_BUF(mp, bp);
+		}
+	}
+
+        /*
 	 * If the block hasn't been seen before:
-	 *	(1) Mark it as having been seen,
-	 *	(2) Charge for the write,
-	 *	(3) Make sure it's on its vnode's correct block list.
+	 *      (1) Mark it as having been seen,
+	 *      (2) Charge for the write,
+	 *      (3) Make sure it's on its vnode's correct block list.
 	 */
 	KASSERT(bp->b_vp == NULL || bp->b_objlock == &bp->b_vp->v_interlock);
-
+	
 	if (!ISSET(bp->b_oflags, BO_DELWRI)) {
 		mutex_enter(&bufcache_lock);
 		mutex_enter(bp->b_objlock);
@@ -1023,6 +1056,16 @@ brelsel(buf_t *bp, int set)
 		 */
 		if (bioopsp != NULL)
 			(*bioopsp->io_deallocate)(bp);
+
+		if (ISSET(bp->b_flags, B_LOCKED)) {
+			if (wapbl_vphaswapbl(vp = bp->b_vp)) {
+				struct mount *mp = wapbl_vptomp(vp);
+
+				KASSERT(bp->b_iodone
+				    != mp->mnt_wapbl_op->wo_wapbl_biodone);
+				WAPBL_REMOVE_BUF(mp, bp);
+			}
+		}
 
 		mutex_enter(bp->b_objlock);
 		CLR(bp->b_oflags, BO_DONE|BO_DELWRI);
@@ -1219,19 +1262,22 @@ geteblk(int size)
 int
 allocbuf(buf_t *bp, int size, int preserve)
 {
-	vsize_t oldsize, desired_size;
 	void *addr;
+	vsize_t oldsize, desired_size;
+	int oldcount;
 	int delta;
 
 	desired_size = buf_roundsize(size);
 	if (desired_size > MAXBSIZE)
 		printf("allocbuf: buffer larger than MAXBSIZE requested");
 
+	oldcount = bp->b_bcount;
+
 	bp->b_bcount = size;
 
 	oldsize = bp->b_bufsize;
 	if (oldsize == desired_size)
-		return 0;
+		goto out;
 
 	/*
 	 * If we want a buffer of a different size, re-allocate the
@@ -1269,6 +1315,11 @@ allocbuf(buf_t *bp, int size, int preserve)
 		}
 	}
 	mutex_exit(&bufcache_lock);
+
+ out:
+	if (wapbl_vphaswapbl(bp->b_vp))
+		WAPBL_RESIZE_BUF(wapbl_vptomp(bp->b_vp), bp, oldsize, oldcount);
+
 	return 0;
 }
 

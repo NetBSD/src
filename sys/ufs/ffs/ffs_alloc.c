@@ -1,4 +1,40 @@
-/*	$NetBSD: ffs_alloc.c,v 1.109 2008/06/04 17:46:21 ad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.109.2.1 2008/06/10 14:51:23 simonb Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.109 2008/06/04 17:46:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.109.2.1 2008/06/10 14:51:23 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -51,13 +87,14 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.109 2008/06/04 17:46:21 ad Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
-#include <sys/kauth.h>
 #include <sys/fstrans.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/syslog.h>
+#include <sys/vnode.h>
+#include <sys/wapbl.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <ufs/ufs/quota.h>
@@ -65,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.109 2008/06/04 17:46:21 ad Exp $");
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/ufs_wapbl.h>
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -374,12 +412,28 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	}
 	bno = ffs_hashalloc(ip, cg, bpref, request, ffs_alloccg);
 	if (bno > 0) {
-		if (!DOINGSOFTDEP(ITOV(ip)))
-			ffs_blkfree(fs, ip->i_devvp, bprev, (long)osize,
-			    ip->i_number);
-		if (nsize < request)
-			ffs_blkfree(fs, ip->i_devvp, bno + numfrags(fs, nsize),
-			    (long)(request - nsize), ip->i_number);
+		if (!DOINGSOFTDEP(ITOV(ip))) {
+			if ((ip->i_ump->um_mountp->mnt_wapbl) &&
+			    (ITOV(ip)->v_type != VREG)) {
+				UFS_WAPBL_REGISTER_DEALLOCATION(
+				    ip->i_ump->um_mountp, fsbtodb(fs, bprev),
+				    osize);
+			} else
+				ffs_blkfree(fs, ip->i_devvp, bprev, (long)osize,
+				    ip->i_number);
+		}
+		if (nsize < request) {
+			if ((ip->i_ump->um_mountp->mnt_wapbl) &&
+			    (ITOV(ip)->v_type != VREG)) {
+				UFS_WAPBL_REGISTER_DEALLOCATION(
+				    ip->i_ump->um_mountp,
+				    fsbtodb(fs, (bno + numfrags(fs, nsize))),
+				    request - nsize);
+			} else
+				ffs_blkfree(fs, ip->i_devvp,
+				    bno + numfrags(fs, nsize),
+				    (long)(request - nsize), ip->i_number);
+		}
 		DIP_ADD(ip, blocks, btodb(nsize - osize));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (bpp != NULL) {
@@ -443,7 +497,7 @@ struct ctldebug debug15 = { "prtrealloc", &prtrealloc };
 #endif
 
 /*
- * NOTE: when re-enabling this, it must be updated for UFS2.
+ * NOTE: when re-enabling this, it must be updated for UFS2 and WAPBL.
  */
 
 int doasyncfree = 1;
@@ -696,11 +750,17 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	ino_t ino, ipref;
 	int cg, error;
 
+	UFS_WAPBL_JUNLOCK_ASSERT(pvp->v_mount);
+
 	*vpp = NULL;
 	pip = VTOI(pvp);
 	fs = pip->i_fs;
 	ump = pip->i_ump;
 
+	error = UFS_WAPBL_BEGIN(pvp->v_mount);
+	if (error) {
+		return error;
+	}
 	mutex_enter(&ump->um_lock);
 	if (fs->fs_cstotal.cs_nifree == 0)
 		goto noinodes;
@@ -726,9 +786,15 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	ino = (ino_t)ffs_hashalloc(pip, cg, ipref, mode, ffs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
+	UFS_WAPBL_END(pvp->v_mount);
 	error = VFS_VGET(pvp->v_mount, ino, vpp);
 	if (error) {
-		ffs_vfree(pvp, ino, mode);
+		int err;
+		err = UFS_WAPBL_BEGIN(pvp->v_mount);
+		if (err == 0)
+			ffs_vfree(pvp, ino, mode);
+		if (err == 0)
+			UFS_WAPBL_END(pvp->v_mount);
 		return (error);
 	}
 	KASSERT((*vpp)->v_type == VNON);
@@ -774,6 +840,7 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	return (0);
 noinodes:
 	mutex_exit(&ump->um_lock);
+	UFS_WAPBL_END(pvp->v_mount);
 	ffs_fserr(fs, kauth_cred_geteuid(cred), "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->fs_fsmnt);
 	return (ENOSPC);
@@ -1492,6 +1559,7 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 #endif
 
 	KASSERT(mutex_owned(&ump->um_lock));
+	UFS_WAPBL_JLOCK_ASSERT(ip->i_ump->um_mountp);
 
 	if (fs->fs_cs(fs, cg).cs_nifree == 0)
 		return (0);
@@ -1542,6 +1610,8 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	panic("ffs_nodealloccg: block not in map");
 	/* NOTREACHED */
 gotit:
+	UFS_WAPBL_REGISTER_INODE(ip->i_ump->um_mountp, cg * fs->fs_ipg + ipref,
+	    mode);
 	/*
 	 * Check to see if we need to initialize more inodes.
 	 */
@@ -1591,6 +1661,122 @@ gotit:
 	brelse(bp, 0);
 	mutex_enter(&ump->um_lock);
 	return (0);
+}
+
+/*
+ * Allocate a block or fragment.
+ *
+ * The specified block or fragment is removed from the
+ * free map, possibly fragmenting a block in the process.
+ *
+ * This implementation should mirror fs_blkfree
+ *
+ * => um_lock not held on entry or exit
+ */
+int
+ffs_blkalloc(struct inode *ip, daddr_t bno, long size)
+{
+	struct ufsmount *ump = ip->i_ump;
+	struct fs *fs = ip->i_fs;
+	struct cg *cgp;
+	struct buf *bp;
+	int32_t fragno, cgbno;
+	int i, error, cg, blk, frags, bbase;
+	u_int8_t *blksfree;
+	const int needswap = UFS_FSNEEDSWAP(fs);
+
+	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
+	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
+		printf("dev = 0x%x, bno = %" PRId64 " bsize = %d, "
+		       "size = %ld, fs = %s\n",
+		    ip->i_dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
+		panic("blkalloc: bad size");
+	}
+	cg = dtog(fs, bno);
+	if (bno >= fs->fs_size) {
+		printf("bad block %" PRId64 ", ino %" PRId64 "\n", bno,
+		    ip->i_number);
+		ffs_fserr(fs, ip->i_uid, "bad block");
+		return EINVAL;
+	}
+	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
+		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
+	if (error) {
+		brelse(bp, 0);
+		return error;
+	}
+	cgp = (struct cg *)bp->b_data;
+	if (!cg_chkmagic(cgp, needswap)) {
+		brelse(bp, 0);
+		return EIO;
+	}
+	cgp->cg_old_time = ufs_rw32(time_second, needswap);
+	cgp->cg_time = ufs_rw64(time_second, needswap);
+	cgbno = dtogd(fs, bno);
+	blksfree = cg_blksfree(cgp, needswap);
+
+	mutex_enter(&ump->um_lock);
+	if (size == fs->fs_bsize) {
+		fragno = fragstoblks(fs, cgbno);
+		if (!ffs_isblock(fs, blksfree, fragno)) {
+			mutex_exit(&ump->um_lock);
+			brelse(bp, 0);
+			return EBUSY;
+		}
+		ffs_clrblock(fs, blksfree, fragno);
+		ffs_clusteracct(fs, cgp, fragno, -1);
+		ufs_add32(cgp->cg_cs.cs_nbfree, -1, needswap);
+		fs->fs_cstotal.cs_nbfree--;
+		fs->fs_cs(fs, cg).cs_nbfree--;
+	} else {
+		bbase = cgbno - fragnum(fs, cgbno);
+
+		frags = numfrags(fs, size);
+		for (i = 0; i < frags; i++) {
+			if (isclr(blksfree, cgbno + i)) {
+				mutex_exit(&ump->um_lock);
+				brelse(bp, 0);
+				return EBUSY;
+			}
+		}
+		/*
+		 * if a complete block is being split, account for it
+		 */
+		fragno = fragstoblks(fs, bbase);
+		if (ffs_isblock(fs, blksfree, fragno)) {
+			ufs_add32(cgp->cg_cs.cs_nffree, fs->fs_frag, needswap);
+			fs->fs_cstotal.cs_nffree += fs->fs_frag;
+			fs->fs_cs(fs, cg).cs_nffree += fs->fs_frag;
+			ffs_clusteracct(fs, cgp, fragno, -1);
+			ufs_add32(cgp->cg_cs.cs_nbfree, -1, needswap);
+			fs->fs_cstotal.cs_nbfree--;
+			fs->fs_cs(fs, cg).cs_nbfree--;
+		}
+		/*
+		 * decrement the counts associated with the old frags
+		 */
+		blk = blkmap(fs, blksfree, bbase);
+		ffs_fragacct(fs, blk, cgp->cg_frsum, -1, needswap);
+		/*
+		 * allocate the fragment
+		 */
+		for (i = 0; i < frags; i++) {
+			clrbit(blksfree, cgbno + i);
+		}
+		ufs_add32(cgp->cg_cs.cs_nffree, -i, needswap);
+		fs->fs_cstotal.cs_nffree -= i;
+		fs->fs_cs(fs, cg).cs_nffree -= i;
+		/*
+		 * add back in counts associated with the new frags
+		 */
+		blk = blkmap(fs, blksfree, bbase);
+		ffs_fragacct(fs, blk, cgp->cg_frsum, 1, needswap);
+	}
+	fs->fs_fmod = 1;
+	ACTIVECG_CLR(fs, cg);
+	mutex_exit(&ump->um_lock);
+	bdwrite(bp);
+	return 0;
 }
 
 /*
@@ -1817,6 +2003,8 @@ ffs_vfree(struct vnode *vp, ino_t ino, int mode)
 /*
  * Do the actual free operation.
  * The specified inode is placed back in the free map.
+ *
+ * => um_lock not held on entry or exit
  */
 int
 ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
@@ -1831,6 +2019,8 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
+
+	UFS_WAPBL_JLOCK_ASSERT(devvp->v_specinfo->si_mountpoint);
 
 	cg = ino_to_cg(fs, ino);
 	if (devvp->v_type != VBLK) {
@@ -1871,6 +2061,8 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 			panic("ifree: freeing free inode");
 	}
 	clrbit(inosused, ino);
+	UFS_WAPBL_UNREGISTER_INODE(devvp->v_specmountpoint,
+	    ino + cg * fs->fs_ipg, mode);
 	if (ino < ufs_rw32(cgp->cg_irotor, needswap))
 		cgp->cg_irotor = ufs_rw32(ino, needswap);
 	ufs_add32(cgp->cg_cs.cs_nifree, 1, needswap);

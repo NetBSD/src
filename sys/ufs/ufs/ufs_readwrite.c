@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.88 2008/05/16 09:22:01 hannken Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.88.2.1 2008/06/10 14:51:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.88 2008/05/16 09:22:01 hannken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.88.2.1 2008/06/10 14:51:23 simonb Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -43,6 +43,9 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.88 2008/05/16 09:22:01 hannken E
 #define	WRITE_S			"lfs_write"
 #define	fs_bsize		lfs_bsize
 #define	fs_bmask		lfs_bmask
+#define	UFS_WAPBL_BEGIN(mp)	0
+#define	UFS_WAPBL_END(mp)	do { } while (0)
+#define	UFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
 #else
 #define	FS			struct fs
 #define	I_FS			i_fs
@@ -177,8 +180,15 @@ READ(void *v)
  out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
-		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
+		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
+			error = UFS_WAPBL_BEGIN(vp->v_mount);
+			if (error) {
+				fstrans_done(vp->v_mount);
+				return error;
+			}
 			error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+			UFS_WAPBL_END(vp->v_mount);
+		}
 	}
 
 	fstrans_done(vp->v_mount);
@@ -283,6 +293,15 @@ WRITE(void *v)
 	error = 0;
 
 	usepc = vp->v_type == VREG;
+
+	if ((ioflag & IO_JOURNALLOCKED) == 0) {
+		error = UFS_WAPBL_BEGIN(vp->v_mount);
+		if (error) {
+			fstrans_done(vp->v_mount);
+			return error;
+		}
+	}
+
 #ifdef LFS_READWRITE
 	async = true;
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
@@ -511,8 +530,11 @@ out:
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
 		error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
+	else
+		UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 	KASSERT(vp->v_size == ip->i_size);
-
+	if ((ioflag & IO_JOURNALLOCKED) == 0)
+		UFS_WAPBL_END(vp->v_mount);
 	fstrans_done(vp->v_mount);
 
 	return (error);

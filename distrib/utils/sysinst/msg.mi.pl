@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.60 2008/02/04 01:54:56 riz Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.60.12.1 2008/06/10 14:51:21 simonb Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -277,6 +277,9 @@ message bsize_fmt
 message fsize_fmt
 {  rozmiar fragmentu: %9d bajtow}
 
+message jsize_fmt
+{  rozmiar dziennika: %9u %8u%c %9u}
+
 message isize_fmt
 { Sredni rozm. pliku: %9d bajtow}
 message isize_fmt_dflt
@@ -326,11 +329,24 @@ message invalid_sector_number
 {Zle uformowany numer sektora
 }
 
+message journal_size
+{%s
+(>= %d %s && <= %d %s) || 0
+
+rozmiar dziennika (%s)}
+
+message invalid_journal_size
+{Zle uformowany rozmiar dziennika
+}
+
 message Select_file_system_block_size
 {Wybierz rozmiar bloku dla systemu plikow}
 
 message Select_file_system_fragment_size
 {Wybierz rozmiar fragmentu dla systemu plikow}
+
+message Select_file_system_journal_size
+{Wybierz rozmiar dziennika dla systemu plikow}
 
 message packname
 {Podaj nazwe dla swojego dysku NetBSD}

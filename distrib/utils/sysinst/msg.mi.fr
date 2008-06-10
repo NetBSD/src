@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.101 2008/02/04 01:54:56 riz Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.101.12.1 2008/06/10 14:51:21 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -286,6 +286,9 @@ message bsize_fmt
 message fsize_fmt
 {         taille de fragment: %9d bytes}
 
+message jsize_fmt
+{          taille de journal: %9u %8u%c %9u}
+
 message isize_fmt
 {  taille moyenne de fichier: %9d bytes}
 message isize_fmt_dflt
@@ -335,11 +338,24 @@ message invalid_sector_number
 {nombre de secteurs invalide
 }
 
+message journal_size
+{%s
+(>= %d %s && <= %d %s) || 0
+
+taille de journal (%s)}
+
+message invalid_journal_size
+{taille de journal mal indiqué
+}
+
 message Select_file_system_block_size
 {Selectionnez la taille de bloc du système de fichiers}
 
 message Select_file_system_fragment_size
 {Selectionnez la taille de fragment du système de fichiers}
+
+message Select_file_system_journal_size
+{Selectionnez la taille de journal du système de fichier}
 
 message packname
 {Veuillez donner un nom à votre disque.}
