@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.15 2008/04/30 13:11:00 martin Exp $
+.\" $NetBSD: config.5,v 1.16 2008/06/10 12:35:32 drochner Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -457,9 +457,27 @@ statement.
 Declares a pseudo-device.
 Those devices don't need an attachment to be declared, they will always be
 attached if they were selected by the user.
+For compatibility, an optional list of
+.Ar locators
+can be defined, which makes the declaration identical to the
+.Dq defpseudodev
+declaration below.
+This feature might be removed eventually.
+.It Ic defpseudodev Ar base Oo Bro Ar locators Brc Oc Oo : dependencies Oc
+Declares a pseudo-device.
+Those devices don't need an attachment to be declared, they will always be
+attached if they were selected by the user.
+This declaration should be used if the pseudodevice uses
+.Xr autoconf 9
+functions to manage its instances or attach children.
 As normal devices, an optional list of
 .Ar locators
-can be defined, allowing the pseudo-device to have children.
+can be defined, which defines an interface attribute named
+.Ar base ,
+allowing the pseudo-device to have children.
+Interface attributes can also be defined in the
+.Ar dependencies
+list.
 .It Ic file Ar path Oo Ar condition Oc Oo Ic needs-count Oc \
     Oo Ic needs-flag Oc Op Ic compile with Ar rule
 Adds a source file to the list of files to be compiled into the kernel, if the
