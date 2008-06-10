@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.51 2006/10/23 19:44:57 he Exp $	*/
+/*	$NetBSD: label.c,v 1.51.24.1 2008/06/10 14:51:21 simonb Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.51 2006/10/23 19:44:57 he Exp $");
+__RCSID("$NetBSD: label.c,v 1.51.24.1 2008/06/10 14:51:21 simonb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -250,6 +250,18 @@ set_fsize(partinfo *p, int fsize)
 }
 
 static int
+edit_fs_jsize(menudesc *m, void *arg)
+{
+	partinfo *p = arg;
+	int size;
+
+	size = getjsize(p->pi_size, p->pi_jsize);
+	if (size != -1)
+		p->pi_jsize = size;
+	return 0;
+}
+
+static int
 edit_fs_isize(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
@@ -351,17 +363,19 @@ edit_ptn(menudesc *menu, void *arg)
 	    {NULL, OPT_NOMENU, OPT_IGNORE, NULL},	/* displays 'end' */
 #define PTN_MENU_NEWFS		4
 	    {NULL, OPT_NOMENU, 0, edit_fs_preserve},
-#define PTN_MENU_ISIZE		5
+#define PTN_MENU_JSIZE		5
+	    {NULL, OPT_NOMENU, 0, edit_fs_jsize},
+#define PTN_MENU_ISIZE		6
 	    {NULL, OPT_NOMENU, 0, edit_fs_isize},
-#define PTN_MENU_BSIZE		6
+#define PTN_MENU_BSIZE		7
 	    {NULL, MENU_selbsize, OPT_SUB, NULL},
-#define PTN_MENU_FSIZE		7
+#define PTN_MENU_FSIZE		8
 	    {NULL, MENU_selfsize, OPT_SUB, NULL},
-#define PTN_MENU_MOUNT		8
+#define PTN_MENU_MOUNT		9
 	    {NULL, OPT_NOMENU, 0, edit_fs_mount},
-#define PTN_MENU_MOUNTOPT	9
+#define PTN_MENU_MOUNTOPT	10
 	    {NULL, MENU_mountoptions, OPT_SUB, NULL},
-#define PTN_MENU_MOUNTPT	10
+#define PTN_MENU_MOUNTPT	11
 	    {NULL, OPT_NOMENU, 0, edit_fs_mountpt},
 	    {MSG_askunits, MENU_sizechoice, OPT_SUB, NULL},
 	    {MSG_restore, OPT_NOMENU, 0, edit_restore},
@@ -447,6 +461,10 @@ set_ptn_header(menudesc *m, void *arg)
 				/* LFS doesn't have fragments */
 				continue;
 		}
+		/* Only FFS can have a journal right now */
+		if ((i == PTN_MENU_JSIZE) &&
+		    (!(p->pi_flags & PIF_NEWFS) || (t != FS_BSDFFS)))
+			continue;
 		/* Ok: we want this one */
 		m->opts[i].opt_flags &= ~OPT_IGNORE;
 	}
@@ -497,6 +515,9 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 		wprintw(m->mw, msg_string(MSG_newfs_fmt),
 			msg_string(p->pi_flags & PIF_NEWFS ? MSG_Yes : MSG_No));
 		break;
+	case PTN_MENU_JSIZE:
+		disp_sector_count(m, MSG_jsize_fmt, p->pi_jsize);
+		break;
 	case PTN_MENU_ISIZE:
 		wprintw(m->mw, msg_string(p->pi_isize > 0 ?
 			MSG_isize_fmt : MSG_isize_fmt_dflt), p->pi_isize);
@@ -528,6 +549,8 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 			wprintw(m->mw, "nosuid ");
 		if (p->pi_flags & PIF_SOFTDEP)
 			wprintw(m->mw, "softdep ");
+		if (p->pi_flags & PIF_LOG)
+			wprintw(m->mw, "log");
 		break;
 	case PTN_MENU_MOUNTPT:
 		wprintw(m->mw, msg_string(MSG_mountpt_fmt), p->pi_mount);
@@ -880,6 +903,43 @@ getpartsize(int partstart, int defpartsize)
 		return (partend - partstart);
 	}
 	/* NOTREACHED */
+}
+ 
+/* Ask for a partition offset, check bounds and do the needed roundups */
+int
+getjsize(int partsize, int defjsize)
+{
+	char defsize[20], isize[20];
+	int i, localsizemult;
+	const char *errmsg = "\n";
+	int min, max;
+
+	/* size between 4mb and 10% of disk */
+	min = NUMSEC(4*MEG/sectorsize/sizemult, sizemult, dlcylsize);
+	max = NUMSEC(partsize/10/sizemult, sizemult, dlcylsize);
+	if (min > max)
+		min = max = 0;
+
+	for (;;) {
+		snprintf(defsize, sizeof defsize, "%d", defjsize/sizemult);
+		msg_prompt_win(MSG_journal_size, -1, 12, 70, 7,
+				(defjsize != 0) ? defsize : 0, isize, sizeof isize,
+				errmsg, min/sizemult, multname,
+				max/sizemult, multname, multname);
+		if (strcmp(defsize, isize) == 0)
+			/* Don't do rounding if default accepted */
+			return defjsize;
+		atofsb(isize, &i, &localsizemult);
+		/* round to cylinder size if localsizemult != 1 */
+		if (i > 0)
+			i = NUMSEC(i/localsizemult, localsizemult, dlcylsize);
+		if (i == 0)
+			break;
+		if ((i >= min) && (i <= max))
+			break;
+		errmsg = msg_string(MSG_invalid_journal_size);
+	}
+	return i;
 }
 
 /*

@@ -1,7 +1,0 @@
-#	$NetBSD: Makefile,v 1.1 2005/11/19 02:09:27 christos Exp $
-
-SUBDIR= named-checkconf named-checkzone
-
-.include "Makefile.inc"
-
-.include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.906 2008/05/25 12:30:40 jmcneill Exp $
+#	$NetBSD: files,v 1.906.2.1 2008/06/10 14:51:21 simonb Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -109,6 +109,10 @@ defparam opt_pax.h		PAX_MPROTECT
 defflag	opt_fileassoc.h		FILEASSOC
 
 defflag	opt_gre.h		GRE_DEBUG
+
+# Write Ahead Physical Block Logging
+defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
+defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 
 # compatibility options
 #
@@ -1476,6 +1480,7 @@ file	kern/vfs_subr2.c
 file	kern/vfs_syscalls.c
 file	kern/vfs_trans.c
 file	kern/vfs_vnops.c
+file	kern/vfs_wapbl.c		wapbl
 file	kern/vfs_xattr.c
 file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c

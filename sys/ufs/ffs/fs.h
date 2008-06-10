@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.49 2007/12/25 18:33:49 perry Exp $	*/
+/*	$NetBSD: fs.h,v 1.49.14.1 2008/06/10 14:51:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -406,13 +406,17 @@ struct fs {
 /*
  * File system flags
  */
-#define	FS_UNCLEAN	0x01	/* file system not clean at mount (unused) */
-#define	FS_DOSOFTDEP	0x02	/* file system using soft dependencies */
-#define FS_NEEDSFSCK	0x04	/* needs sync fsck (FreeBSD compat, unused) */
-#define FS_INDEXDIRS	0x08	/* kernel supports indexed directories */
-#define FS_ACLS		0x10	/* file system has ACLs enabled */
-#define FS_MULTILABEL	0x20	/* file system is MAC multi-label */
+#define	FS_UNCLEAN	0x001	/* file system not clean at mount (unused) */
+#define	FS_DOSOFTDEP	0x002	/* file system using soft dependencies */
+#define FS_NEEDSFSCK	0x004	/* needs sync fsck (FreeBSD compat, unused) */
+#define FS_INDEXDIRS	0x008	/* kernel supports indexed directories */
+#define FS_ACLS		0x010	/* file system has ACLs enabled */
+#define FS_MULTILABEL	0x020	/* file system is MAC multi-label */
 #define FS_FLAGS_UPDATED 0x80	/* flags have been moved to new location */
+#define FS_DOWAPBL	0x100	/* Write ahead physical block logging */
+
+/* File system flags that are ok for NetBSD if set in fs_flags */
+#define FS_KNOWN_FLAGS	(FS_DOSOFTDEP | FS_DOWAPBL)
 
 /*
  * File system internal flags, also in fs_flags.

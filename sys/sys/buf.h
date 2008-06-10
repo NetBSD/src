@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.109 2008/06/09 15:42:01 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.109.2.1 2008/06/10 14:51:23 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -162,6 +162,7 @@ struct buf {
 	LIST_ENTRY(buf)		b_hash;		/* c: hash chain */
 	LIST_ENTRY(buf)		b_vnbufs;	/* c: associated vnode */
 	TAILQ_ENTRY(buf)	b_freelist;	/* c: position if not active */
+	LIST_ENTRY(buf)		b_wapbllist;	/* c: transaction buffer list */
 	daddr_t			b_lblkno;	/* c: logical block number */
 	int			b_freelistindex;/* c: free list index (BQ_) */
 	u_int			b_cflags;	/* c: BC_* flags */

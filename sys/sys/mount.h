@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.179 2008/05/10 02:26:10 rumble Exp $	*/
+/*	$NetBSD: mount.h,v 1.179.2.1 2008/06/10 14:51:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -121,6 +121,11 @@ struct mount {
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
 	kmutex_t	mnt_updating;		/* to serialize updates */
+	struct wapbl_ops
+			*mnt_wapbl_op;		/* logging ops */
+	struct wapbl	*mnt_wapbl;		/* log info */
+	struct wapbl_replay
+			*mnt_wapbl_replay;	/* replay support XXX: what? */
 };
 
 /*
@@ -277,6 +282,45 @@ int	fsname##_snapshot(struct mount *, struct vnode *,		\
 int	fsname##_extattrctl(struct mount *, int, struct vnode *, int,	\
 		const char *);						\
 int	fsname##_suspendctl(struct mount *, int)
+
+/*
+ * This operations vector is so wapbl can be wrapped into a filesystem lkm.
+ * XXX Eventually, we want to move this functionality
+ * down into the filesystems themselves so that this isn't needed.
+ */
+struct wapbl_ops {
+	void (*wo_wapbl_discard)(struct wapbl *);
+	int (*wo_wapbl_replay_isopen)(struct wapbl_replay *);
+	int (*wo_wapbl_replay_read)(struct wapbl_replay *, void *, daddr_t, long);
+	void (*wo_wapbl_add_buf)(struct wapbl *, struct buf *);
+	void (*wo_wapbl_remove_buf)(struct wapbl *, struct buf *);
+	void (*wo_wapbl_resize_buf)(struct wapbl *, struct buf *, long, long);
+	int (*wo_wapbl_begin)(struct wapbl *, const char *, int);
+	void (*wo_wapbl_end)(struct wapbl *);
+	void (*wo_wapbl_junlock_assert)(struct wapbl *);
+	void (*wo_wapbl_biodone)(struct buf *);
+};
+#define WAPBL_DISCARD(MP)						\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_discard)((MP)->mnt_wapbl)
+#define WAPBL_REPLAY_ISOPEN(MP)						\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_replay_isopen)((MP)->mnt_wapbl_replay)
+#define WAPBL_REPLAY_READ(MP, DATA, BLK, LEN)				\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_replay_read)((MP)->mnt_wapbl_replay,	\
+    (DATA), (BLK), (LEN))
+#define WAPBL_ADD_BUF(MP, BP)						\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_add_buf)((MP)->mnt_wapbl, (BP))
+#define WAPBL_REMOVE_BUF(MP, BP)					\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_remove_buf)((MP)->mnt_wapbl, (BP))
+#define WAPBL_RESIZE_BUF(MP, BP, OLDSZ, OLDCNT)				\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_resize_buf)((MP)->mnt_wapbl, (BP),	\
+    (OLDSZ), (OLDCNT))
+#define WAPBL_BEGIN(MP)							\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_begin)((MP)->mnt_wapbl,		\
+    __FILE__, __LINE__)
+#define WAPBL_END(MP)							\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_end)((MP)->mnt_wapbl)
+#define WAPBL_JUNLOCK_ASSERT(MP)					\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_junlock_assert)((MP)->mnt_wapbl)
 
 struct vfs_hooks {
 	void	(*vh_unmount)(struct mount *);

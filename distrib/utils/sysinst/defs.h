@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.135 2008/01/28 02:47:12 rumble Exp $	*/
+/*	$NetBSD: defs.h,v 1.135.12.1 2008/06/10 14:51:20 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -177,6 +177,7 @@ typedef struct _partinfo {
 #define pi_cpg		pi_partition.p_cpg
 	char	pi_mount[20];
 	uint	pi_isize;		/* bytes per inode (for # inodes) */
+	uint	pi_jsize;		/* journal size, in blocks */
 	uint	pi_flags;
 #define PIF_NEWFS	0x0001		/* need to 'newfs' partition */
 #define PIF_FFSv2	0x0002		/* newfs with FFSv2, not FFSv1 */
@@ -188,6 +189,7 @@ typedef struct _partinfo {
 #define PIF_NOEXEC	0x0100		/* mount -o noexec */
 #define PIF_NOSUID	0x0200		/* mount -o nosuid */
 #define PIF_SOFTDEP	0x0400		/* mount -o softdep */
+#define PIF_LOG		0x0800		/* mount -o log */
 #define PIF_MOUNT_OPTS	0x0ff0		/* all above mount flags */
 #define PIF_RESET	0x1000		/* internal - restore previous values */
 } partinfo;	/* Single partition from a disklabel */
@@ -349,6 +351,7 @@ int	incorelabel(const char *, partinfo *);
 int	edit_and_check_label(partinfo *, int, int, int);
 int	getpartoff(int);
 int	getpartsize(int, int);
+int	getjsize(int, int);
 void	set_bsize(partinfo *, int);
 void	set_fsize(partinfo *, int);
 void	set_ptype(partinfo *, int, int);

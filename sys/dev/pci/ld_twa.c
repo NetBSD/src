@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.11 2008/05/07 17:47:20 joerg Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.11.4.1 2008/06/10 14:51:22 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.11 2008/05/07 17:47:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.11.4.1 2008/06/10 14:51:22 simonb Exp $");
 
 #include "rnd.h"
 
@@ -81,7 +81,7 @@ static int	ld_twa_detach(struct device *, int);
 static int	ld_twa_dobio(struct ld_twa_softc *, void *, size_t, daddr_t,
 			     struct buf *);
 static int	ld_twa_dump(struct ld_softc *, void *, int, int);
-static int	ld_twa_flush(struct ld_softc *);
+static int	ld_twa_flush(struct ld_softc *, int);
 static void	ld_twa_handler(struct twa_request *);
 static int	ld_twa_match(struct device *, struct cfdata *, void *);
 static int	ld_twa_start(struct ld_softc *, struct buf *);
@@ -243,7 +243,7 @@ ld_twa_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 
 static int
-ld_twa_flush(struct ld_softc *ld)
+ld_twa_flush(struct ld_softc *ld, int flags)
 {
 	int s, rv = 0;
 	struct twa_request *tr;

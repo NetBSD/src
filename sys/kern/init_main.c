@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.358 2008/05/31 20:14:38 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.358.2.1 2008/06/10 14:51:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.358 2008/05/31 20:14:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.358.2.1 2008/06/10 14:51:22 simonb Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.358 2008/05/31 20:14:38 ad Exp $");
 #include "opt_fileassoc.h"
 #include "opt_ktrace.h"
 #include "opt_pax.h"
+#include "opt_wapbl.h"
 
 #include "rnd.h"
 #include "sysmon_envsys.h"
@@ -192,6 +193,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.358 2008/05/31 20:14:38 ad Exp $");
 #include <sys/ktrace.h>
 #endif
 #include <sys/kauth.h>
+#ifdef WAPBL
+#include <sys/wapbl.h>
+#endif
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
@@ -565,6 +569,11 @@ main(void)
 
 	/* Initialize the UUID system calls. */
 	uuid_init();
+
+#ifdef WAPBL
+	/* Initialize write-ahead physical block logging. */
+	wapbl_init();
+#endif
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has

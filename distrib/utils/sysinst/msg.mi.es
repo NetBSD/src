@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.21 2008/02/04 01:54:56 riz Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.21.12.1 2008/06/10 14:51:21 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -286,6 +286,9 @@ message bsize_fmt
 message fsize_fmt
 {   tamaño frag: %9d bytes}
 
+message jsize_fmt
+{  tamaño del diario: %9u %8u%c %9u}
+
 message isize_fmt
 {tam prom archi: %9d bytes (para número de inodos)}
 message isize_fmt_dflt
@@ -335,11 +338,24 @@ message invalid_sector_number
 {Número de sector mal formado
 }
 
+message journal_size
+{%s
+   Los tamaños válidos están en la gama %d %s a %d %s, o 0.
+
+tamaño del diario (%s)}
+
+message invalid_journal_size
+{Tamaño gravemente formado del diario
+}
+
 message Select_file_system_block_size
 {Seleccione el tamaño de bloque del sistema de archivos}
 
 message Select_file_system_fragment_size
 {Seleccione el tamaño de fragmento del sistema de archivos}
+
+message Select_file_system_journal_size
+{Seleccione el tamaño del diario del sistema de ficheros}
 
 message packname
 {Por favor entroduzca un nombre para el disco NetBSD}
