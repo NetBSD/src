@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.28 2007/04/06 19:21:09 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.29 2008/06/10 18:11:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -362,8 +362,20 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 		for (nv = attrs; nv != NULL; nv = nv->nv_next)
 			if (((struct attr *)(nv->nv_ptr))->a_iattr)
 				break;
-		if (nv != NULL)
+		if (nv != NULL) {
+			if (ispseudo < 2) {
+				if (version >= 20080610)
+					cfgerror("interface attribute on "
+					 "non-device pseudo `%s'", dev->d_name);
+				else {
+					cfgwarn("warning: `%s' should be "
+						"defined \"defpseudodev\"",
+						dev->d_name);
+					ispseudo = 2;
+				}
+			}
 			ht_insert(devroottab, dev->d_name, dev);
+		}
 	}
 
 	/* Committed!  Set up fields. */

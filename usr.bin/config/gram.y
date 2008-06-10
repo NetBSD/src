@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.16 2008/06/10 12:35:32 drochner Exp $	*/
+/*	$NetBSD: gram.y,v 1.17 2008/06/10 18:11:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -297,6 +297,7 @@ one_def:
 	MAXPARTITIONS NUMBER		{ maxpartitions = $2.val; } |
 	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2.val, $3.val, $4.val); } |
 	MAKEOPTIONS condmkopt_list |
+	/* interface_opt in DEFPSEUDO is for backwards compatibility */
 	DEFPSEUDO devbase interface_opt attrs_opt
 					{ defdev($2, $3, $4, 1); } |
 	DEFPSEUDODEV devbase interface_opt attrs_opt

@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.17 2008/06/10 12:56:33 wiz Exp $
+.\" $NetBSD: config.5,v 1.18 2008/06/10 18:11:31 drochner Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -453,16 +453,10 @@ It is then possible to use the associated
 as a conditional element in a
 .Ic file
 statement.
-.It Ic defpseudo Ar base Oo Bro Ar locators Brc Oc Oo : dependencies Oc
+.It Ic defpseudo Ar base Oo : dependencies Oc
 Declares a pseudo-device.
 Those devices don't need an attachment to be declared, they will always be
 attached if they were selected by the user.
-For compatibility, an optional list of
-.Ar locators
-can be defined, which makes the declaration identical to the
-.Dq defpseudodev
-declaration below.
-This feature might be removed eventually.
 .It Ic defpseudodev Ar base Oo Bro Ar locators Brc Oc Oo : dependencies Oc
 Declares a pseudo-device.
 Those devices don't need an attachment to be declared, they will always be
@@ -470,9 +464,9 @@ attached if they were selected by the user.
 This declaration should be used if the pseudodevice uses
 .Xr autoconf 9
 functions to manage its instances or attach children.
-As normal devices, an optional list of
+As for normal devices, an optional list of
 .Ar locators
-can be defined, which defines an interface attribute named
+can be defined, which implies an interface attribute named
 .Ar base ,
 allowing the pseudo-device to have children.
 Interface attributes can also be defined in the

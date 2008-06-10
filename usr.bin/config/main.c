@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2008/06/10 12:35:32 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2008/06/10 18:11:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1055,28 +1055,11 @@ devbase_has_instances(struct devbase *dev, int unit)
 	 *
 	 *	1. Included in this kernel configuration.
 	 *
-	 *	2. Be declared "defpseudodev", or (for transition)
-	 *	   have one or more interface attributes.
+	 *	2. Be declared "defpseudodev".
 	 */
 	if (dev->d_ispseudo) {
-		struct nvlist *nv;
-		struct attr *a;
-
-		if (ht_lookup(devitab, dev->d_name) == NULL)
-			return (0);
-		if (dev->d_ispseudo > 1)
-			return (1);
-		for (nv = dev->d_attrs; nv != NULL; nv = nv->nv_next) {
-			a = nv->nv_ptr;
-			if (a->a_iattr) {
-				cfgwarn("warning: %s should be defined "
-					"\"defpseudodev\"", dev->d_name);
-				/* XXX shut up further warnings */
-				dev->d_ispseudo = 2;
-				return (1);
-			}
-		}
-		return (0);
+		return ((ht_lookup(devitab, dev->d_name) != NULL)
+			&& (dev->d_ispseudo > 1));
 	}
 
 	for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
