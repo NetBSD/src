@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.47 2008/06/03 15:50:22 ad Exp $	*/
+/*	$NetBSD: rump.c,v 1.47.2.1 2008/06/10 14:51:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/queue.h>
@@ -39,7 +40,7 @@
 #include <sys/select.h>
 #include <sys/vnode.h>
 #include <sys/vfs_syscalls.h>
-#include <sys/module.h>
+#include <sys/wapbl.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -134,6 +135,7 @@ rump_init()
 	module_init();
 	vfsinit();
 	bufinit();
+	wapbl_init();
 
 	rumpvfs_init();
 

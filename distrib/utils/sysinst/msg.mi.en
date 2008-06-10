@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.149 2008/02/04 01:54:56 riz Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.149.12.1 2008/06/10 14:51:21 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -281,6 +281,9 @@ message bsize_fmt
 message fsize_fmt
 { fragment size: %9d bytes}
 
+message jsize_fmt
+{  journal size: %9u %8u%c %9u}
+
 message isize_fmt
 { avg file size: %9d bytes (for number of inodes)}
 message isize_fmt_dflt
@@ -330,11 +333,24 @@ message invalid_sector_number
 {Badly formed sector number
 }
 
+message journal_size
+{%s
+   Valid sizes are in the range %d %s to %d %s, or 0.
+
+journal size (%s)}
+
+message invalid_journal_size
+{Badly formed journal size
+}
+
 message Select_file_system_block_size
 {Select file system block size}
 
 message Select_file_system_fragment_size
 {Select file system fragment size}
+
+message Select_file_system_journal_size
+{Select file system journal size}
 
 message packname
 {Please enter a name for your NetBSD disk}

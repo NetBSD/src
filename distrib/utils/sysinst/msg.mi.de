@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.43 2008/03/25 12:54:32 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.43.6.1 2008/06/10 14:51:21 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -288,6 +288,9 @@ message bsize_fmt
 message fsize_fmt
 {Fragmentgröße: %9d bytes}
 
+message jsize_fmt
+{ Journalgröße: %9u %8u%c %9u}
+
 message isize_fmt
 { Durchschnittliche Dateigröße: %d Bytes (zur Inode-Bestimmung) }
 message isize_fmt_dflt
@@ -337,11 +340,24 @@ message invalid_sector_number
 {Ungültige Sektornummer
 }
 
+message journal_size
+{%s
+(>= %d %s && <= %d %s) || 0
+
+journalgröße (%s)}
+
+message invalid_journal_size
+{Ungültige journalgröße
+}
+
 message Select_file_system_block_size
 {Wählen Sie die Blockgröße des Dateisystems aus}
 
 message Select_file_system_fragment_size
 {Wählen Sie die Fragmentgröße des Dateisystems aus}
+
+message Select_file_system_journal_size
+{Wählen Sie die Journalgröße des Dateisystems aus}
 
 message packname
 {Bitte geben Sie Ihrer NetBSD-Festplatte einen Namen}

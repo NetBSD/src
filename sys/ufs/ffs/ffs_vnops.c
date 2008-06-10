@@ -1,4 +1,40 @@
-/*	$NetBSD: ffs_vnops.c,v 1.99 2008/04/29 18:18:09 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.99.4.1 2008/06/10 14:51:23 simonb Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.99 2008/04/29 18:18:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.99.4.1 2008/06/10 14:51:23 simonb Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ffs.h"
+#include "opt_wapbl.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.99 2008/04/29 18:18:09 ad Exp $");
 #include <sys/pool.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
+#include <sys/wapbl.h>
 #include <sys/fstrans.h>
 
 #include <miscfs/fifofs/fifo.h>
@@ -58,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.99 2008/04/29 18:18:09 ad Exp $");
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/ufs_wapbl.h>
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -246,6 +289,9 @@ ffs_fsync(void *v)
 	int bsize;
 	daddr_t blk_high;
 	struct vnode *vp;
+#ifdef WAPBL
+	struct mount *mp;
+#endif
 
 	vp = ap->a_vp;
 
@@ -275,6 +321,36 @@ ffs_fsync(void *v)
 	if (error) {
 		goto out;
 	}
+
+#ifdef WAPBL
+	mp = wapbl_vptomp(vp);
+	if (mp->mnt_wapbl) {
+		if (ap->a_flags & FSYNC_DATAONLY) {
+			fstrans_done(vp->v_mount);
+			return 0;
+		}
+		error = 0;
+		if (vp->v_tag == VT_UFS && VTOI(vp)->i_flag &
+		    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY |
+				 IN_MODIFIED | IN_ACCESSED)) {
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error) {
+				fstrans_done(vp->v_mount);
+				return error;
+			}
+			error = ffs_update(vp, NULL, NULL,
+				(ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
+			UFS_WAPBL_END(mp);
+		}
+		if (error || (ap->a_flags & FSYNC_NOLOG)) {
+			fstrans_done(vp->v_mount);
+			return error;
+		}
+		error = wapbl_flush(mp->mnt_wapbl, 0);
+		fstrans_done(vp->v_mount);
+		return error;
+	}
+#endif /* WAPBL */
 
 	/*
 	 * Then, flush indirect blocks.
@@ -349,6 +425,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 	 * Flush all dirty data associated with a vnode.
 	 */
 
+	mp = NULL;
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
 		if ((flags & FSYNC_VFS) != 0)
 			mp = vp->v_specmountpoint;
@@ -362,6 +439,52 @@ ffs_full_fsync(struct vnode *vp, int flags)
 			return error;
 	} else
 		mutex_exit(&vp->v_interlock);
+
+#ifdef WAPBL
+	mp = wapbl_vptomp(vp);	/* XXXXXX anti-kern/38057 hack */
+	if (mp && mp->mnt_wapbl) {
+		error = 0;
+		if (flags & FSYNC_DATAONLY)
+			return error;
+
+		if (VTOI(vp)->i_flag &
+		    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY |
+				 IN_MODIFIED | IN_ACCESSED)) {
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error)
+				return error;
+			error = ffs_update(vp, NULL, NULL,
+				(flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
+			UFS_WAPBL_END(mp);
+		}
+		if (error || (flags & FSYNC_NOLOG))
+			return error;
+		/*
+		 * Don't flush the log if the vnode being flushed
+		 * contains no dirty buffers that could be in the log.
+		 */
+		if (!((flags & FSYNC_RECLAIM) &&
+		    LIST_EMPTY(&vp->v_dirtyblkhd))) {
+			error = wapbl_flush(mp->mnt_wapbl, 0);
+			if (error)
+				return error;
+		}
+
+		/*
+		 * XXX temporary workaround for "dirty bufs" panic in
+		 * vinvalbuf.  need a full fix for the v_numoutput
+		 * waiters issues.
+		 */
+		if (flags & FSYNC_WAIT) {
+			mutex_enter(&vp->v_interlock);
+			while (vp->v_numoutput)
+				cv_wait(&vp->v_cv, &vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
+		}
+
+		return error;
+	}
+#endif /* WAPBL */
 
 	passes = NIADDR + 1;
 	skipmeta = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.108 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.108.4.1 2008/06/10 14:51:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.108 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.108.4.1 2008/06/10 14:51:22 simonb Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -956,8 +956,10 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	if (cnp->cn_nameptr[0] == '\0')
 		panic("relookup: null name");
 
+#ifdef ohcrap
 	if (cnp->cn_flags & ISDOTDOT)
 		panic("relookup: lookup on dot-dot");
+#endif
 
 	/*
 	 * We now have a segment name to search for, and a directory to search.
