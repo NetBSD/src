@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.365 2008/05/26 18:20:36 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.366 2008/06/10 14:14:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.365 2008/05/26 18:20:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.366 2008/06/10 14:14:01 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -301,7 +301,7 @@ static int
 mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
     const char *path, int flags, void *data, size_t *data_len, u_int recurse)
 {
-	struct mount *mp = NULL;
+	struct mount *mp;
 	struct vnode *vp = *vpp;
 	struct vattr va;
 	int error;
