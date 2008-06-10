@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.366 2008/05/24 19:39:31 joerg Exp $
+#	$NetBSD: NetBSD.dist,v 1.367 2008/06/10 18:41:47 aymeric Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1055,6 +1055,8 @@
 ./usr/share/nls/pl
 ./usr/share/nls/sk
 ./usr/share/nls/sv
+./usr/share/nvi
+./usr/share/nvi/catalog
 ./usr/share/tabset
 ./usr/share/tmac
 ./usr/share/tmac/mdoc

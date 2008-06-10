@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.750 2008/05/24 19:39:30 joerg Exp $
+# $NetBSD: mi,v 1.751 2008/06/10 18:41:47 aymeric Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -612,12 +612,15 @@
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
+./usr/bin/nex					base-util-bin
 ./usr/bin/nfsstat				base-nfsclient-bin
 ./usr/bin/nice					base-util-bin
 ./usr/bin/nl					base-util-bin
 ./usr/bin/nohup					base-util-bin
 ./usr/bin/nslookup				base-netutil-bin
 ./usr/bin/nsupdate				base-netutil-bin
+./usr/bin/nvi					base-util-bin
+./usr/bin/nview					base-util-bin
 ./usr/bin/od					base-util-bin
 ./usr/bin/openssl				base-crypto-bin		crypto
 ./usr/bin/page					base-util-bin
@@ -3055,6 +3058,15 @@
 ./usr/share/nls/sk/libc.cat			base-locale-sk		nls
 ./usr/share/nls/sv				base-locale-sv
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
+./usr/share/nvi					base-util-share
+./usr/share/nvi/catalog				base-util-share
+./usr/share/nvi/catalog/dutch			base-util-share		share
+./usr/share/nvi/catalog/english			base-util-share		share
+./usr/share/nvi/catalog/french			base-util-share		share
+./usr/share/nvi/catalog/german			base-util-share		share
+./usr/share/nvi/catalog/ru_RU.KOI8-R		base-util-share		share
+./usr/share/nvi/catalog/spanish			base-util-share		share
+./usr/share/nvi/catalog/swedish			base-util-share		share
 ./usr/share/sushi				base-obsolete	obsolete
 ./usr/share/sushi/help				base-obsolete	obsolete
 ./usr/share/sushi/index				base-obsolete	obsolete
