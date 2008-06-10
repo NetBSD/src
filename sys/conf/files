@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.906 2008/05/25 12:30:40 jmcneill Exp $
+#	$NetBSD: files,v 1.907 2008/06/10 12:49:16 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1178,11 +1178,11 @@ file	dev/ic/iavc.c			iavc
 
 # legitimate pseudo-devices
 #
-defpseudo vnd { }:	disk
+defpseudodev vnd:	disk
 defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
 defpseudo cgd:		disk, des, blowfish, cast128, rijndael
-defpseudo md { }:	disk
+defpseudodev md:	disk
 defpseudo fss:		disk
 
 defpseudo pty:		tty
@@ -1207,9 +1207,9 @@ defpseudo gif:		ifnet
 defpseudo faith:	ifnet
 defpseudo srt:		ifnet
 defpseudo stf:		ifnet
-defpseudo tap { }:	ifnet, ether, arp, bpf_filter
+defpseudodev tap:	ifnet, ether, arp, bpf_filter
 defpseudo carp:		ifnet, ether, arp, bpf_filter
-defpseudo etherip { }:	ifnet, ether, arp, bpf_filter
+defpseudodev etherip:	ifnet, ether, arp, bpf_filter
 
 defpseudo sequencer
 defpseudo clockctl
