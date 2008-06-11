@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.15 2007/03/04 10:21:26 christos Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.16 2008/06/11 21:16:28 cegger Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.15 2007/03/04 10:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.16 2008/06/11 21:16:28 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,17 +114,11 @@ ofromattach(parent, self, aux)
 }
 
 int
-ofromopen(dev, oflags, devtype, l)
-	dev_t dev;
-	int oflags, devtype;
-	struct lwp *l;
+ofromopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
 	struct ofrom_softc *sc;
-	int unit = minor(dev);
 
-	if (unit >= ofrom_cd.cd_ndevs)
-		return (ENXIO);
-	sc = ofrom_cd.cd_devs[unit];
+	sc = device_lookup_private(&ofrom_cd, minor(dev));
 	if (!sc || !sc->enabled)
 		return (ENXIO);
 
@@ -135,22 +129,17 @@ ofromopen(dev, oflags, devtype, l)
 }
 
 int
-ofromrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+ofromrw(dev_t dev, struct uio *uio, int flags)
 {
 	struct ofrom_softc *sc;
-	int c, error = 0, unit = minor(dev);
+	int c, error = 0;
 	struct iovec *iov;
 	paddr_t v;
 	psize_t o;
 	extern int physlock;
 	extern char *memhook;
 
-	if (unit >= ofrom_cd.cd_ndevs)
-		return (ENXIO);			/* XXX PANIC */
-	sc = ofrom_cd.cd_devs[unit];
+	sc = device_lookup_private(&ofrom_cd, minor(dev));
 	if (!sc || !sc->enabled)
 		return (ENXIO);			/* XXX PANIC */
 
@@ -203,17 +192,11 @@ ofromrw(dev, uio, flags)
 }
 
 paddr_t
-ofrommmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+ofrommmap(dev_t dev, off_t off, int prot)
 {
 	struct ofrom_softc *sc;
-	int unit = minor(dev);
 
-	if (unit >= ofrom_cd.cd_ndevs)
-		return (-1);			/* XXX PANIC */
-	sc = ofrom_cd.cd_devs[unit];
+	sc = device_lookup_private(&ofrom_cd, minor(dev));
 	if (!sc || !sc->enabled)
 		return (-1);			/* XXX PANIC */
 
