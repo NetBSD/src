@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.155 2008/06/11 06:26:32 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.156 2008/06/11 15:56:11 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.155 2008/06/11 06:26:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.156 2008/06/11 15:56:11 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1101,7 +1101,7 @@ static void
 config_makeroom(int n, struct cfdriver *cd)
 {
 	int old, new;
-	void **nsp;
+	device_t *nsp;
 
 	if (n < cd->cd_ndevs)
 		return;
@@ -1117,14 +1117,14 @@ config_makeroom(int n, struct cfdriver *cd)
 	while (new <= n)
 		new *= 2;
 	cd->cd_ndevs = new;
-	nsp = malloc(new * sizeof(void *), M_DEVBUF,
+	nsp = malloc(new * sizeof(device_t), M_DEVBUF,
 	    cold ? M_NOWAIT : M_WAITOK);
 	if (nsp == NULL)
 		panic("config_attach: %sing dev array",
 		    old != 0 ? "expand" : "creat");
-	memset(nsp + old, 0, (new - old) * sizeof(void *));
+	memset(nsp + old, 0, (new - old) * sizeof(device_t));
 	if (old != 0) {
-		memcpy(nsp, cd->cd_devs, old * sizeof(void *));
+		memcpy(nsp, cd->cd_devs, old * sizeof(device_t));
 		free(cd->cd_devs, M_DEVBUF);
 	}
 	cd->cd_devs = nsp;
@@ -1838,7 +1838,7 @@ config_finalize(void)
  *
  *	Look up a device instance for a given driver.
  */
-void *
+device_t
 device_lookup(cfdriver_t cd, int unit)
 {
 
