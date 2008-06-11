@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.c,v 1.1.2.2 2008/06/11 12:09:59 simonb Exp $	*/
+/*	$NetBSD: wapbl.c,v 1.1.2.3 2008/06/11 12:30:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005,2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.1.2.2 2008/06/11 12:09:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.1.2.3 2008/06/11 12:30:47 simonb Exp $");
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -98,12 +98,13 @@ replay_wapbl(void)
 	int error;
 
 	if (debug)
-		wapbl_debug_print = WAPBL_PRINT_ERROR|WAPBL_PRINT_REPLAY;
+		wapbl_debug_print = WAPBL_PRINT_ERROR | WAPBL_PRINT_REPLAY;
 	if (debug > 1)
 		wapbl_debug_print |= WAPBL_PRINT_IO;
 	error = wapbl_replay_start(&wapbl_replay,
 			0, 
-			fsbtodb(sblock, sblock->fs_size), /* journal is after file system */
+			fsbtodb(sblock, sblock->fs_size),
+					/* journal is after file system */
 			0 /* XXX */,
 			dev_bsize);
 	if (error) {
@@ -127,8 +128,10 @@ replay_wapbl(void)
 	{
 		int i;
 		for (i = 0; i < wapbl_replay->wr_inodescnt; i++) {
-			WAPBL_PRINTF(WAPBL_PRINT_REPLAY,("wapbl_replay: not cleaning inode %"PRIu32" mode %"PRIo32"\n",
-			    wapbl_replay->wr_inodes[i].wr_inumber, wapbl_replay->wr_inodes[i].wr_imode));
+			WAPBL_PRINTF(WAPBL_PRINT_REPLAY,("wapbl_replay: "
+			    "not cleaning inode %"PRIu32" mode %"PRIo32"\n",
+			    wapbl_replay->wr_inodes[i].wr_inumber,
+			    wapbl_replay->wr_inodes[i].wr_imode));
 		}
 	}
 }
