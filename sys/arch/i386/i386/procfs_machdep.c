@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.30 2008/06/11 17:29:56 njoly Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.31 2008/06/11 21:47:46 njoly Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.30 2008/06/11 17:29:56 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.31 2008/06/11 21:47:46 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 		    ((ci->ci_signature >> 8) & 15) : cpu_class + 3,
 		cpuid_level >= 0 ?
 		    ((ci->ci_signature >> 4) & 15) : 0,
-		cpu_model
+		cpu_brand_string
 	    );
 
 	left -= l;
