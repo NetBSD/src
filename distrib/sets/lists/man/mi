@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1077 2008/06/10 18:41:47 aymeric Exp $
+# $NetBSD: mi,v 1.1078 2008/06/11 23:54:43 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1735,6 +1735,7 @@
 ./usr/share/man/cat5/lastlog.0			man-sys-catman		.cat
 ./usr/share/man/cat5/lastlogx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ld.so.conf.0		man-sys-catman		.cat
+./usr/share/man/cat5/ldap_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/link.0			man-sys-catman		.cat
 ./usr/share/man/cat5/lkm.conf.0			man-sys-catman		.cat
 ./usr/share/man/cat5/locale.alias.0		man-sys-catman		.cat
@@ -4305,6 +4306,7 @@
 ./usr/share/man/man5/lastlog.5			man-sys-man		.man
 ./usr/share/man/man5/lastlogx.5			man-sys-man		.man
 ./usr/share/man/man5/ld.so.conf.5		man-sys-man		.man
+./usr/share/man/man5/ldap_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/link.5			man-sys-man		.man
 ./usr/share/man/man5/lkm.conf.5			man-sys-man		.man
 ./usr/share/man/man5/locale.alias.5		man-sys-man		.man
