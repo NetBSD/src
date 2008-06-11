@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181aiu.c,v 1.5 2008/04/28 20:23:22 martin Exp $ */
+/* $NetBSD: vr4181aiu.c,v 1.6 2008/06/11 23:53:15 cegger Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.5 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.6 2008/06/11 23:53:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -235,7 +235,8 @@ vr4181aiuopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct vr4181aiu_softc	*sc;
 
-	if ((sc = device_lookup(&vr4181aiu_cd, minor(dev))) == NULL)
+	sc = device_lookup_private(&vr4181aiu_cd, minor(dev);
+	if (sc == NULL)
 		return ENXIO;
 
 	if (sc->sc_status & ST_BUSY)
@@ -301,7 +302,7 @@ vr4181aiuopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 vr4181aiuclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	vr4181aiu_disable(device_lookup(&vr4181aiu_cd, minor(dev)));
+	vr4181aiu_disable(device_lookup_private(&vr4181aiu_cd, minor(dev)));
 	return 0;
 }
 
@@ -317,7 +318,7 @@ vr4181aiuread(dev_t dev, struct uio *uio, int flag)
 	u_int16_t		*src;
 	u_int8_t		*dst;
 
-	sc = device_lookup(&vr4181aiu_cd, minor(dev));
+	sc = device_lookup_private(&vr4181aiu_cd, minor(dev));
 
 	src = sc->sc_inbuf_tail;
 	s = splbio();
