@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.28 2008/04/08 20:40:42 cegger Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.29 2008/06/11 20:55:41 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.28 2008/04/08 20:40:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.29 2008/06/11 20:55:41 cegger Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1339,7 +1339,7 @@ gtmpsccngetc(dev_t dev)
 
 	unit = GTMPSCUNIT(dev);
 	if (major(dev) != 0) {
-		struct gtmpsc_softc *sc = device_lookup(&gtmpsc_cd, unit);
+		struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, unit);
 		if (sc == NULL)
 			return 0;
 		unit = sc->gtmpsc_unit;
@@ -1366,7 +1366,7 @@ gtmpsccnputc(dev_t dev, int c)
 
 	unit = GTMPSCUNIT(dev);
 	if (major(dev) != 0) {
-		struct gtmpsc_softc *sc = device_lookup(&gtmpsc_cd, unit);
+		struct gtmpsc_softc *sc = device_lookup_private(&gtmpsc_cd, unit);
 		if (sc == NULL)
 			return;
 		unit = sc->gtmpsc_unit;
