@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.14 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: et4000.c,v 1.15 2008/06/11 14:35:53 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.14 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.15 2008/06/11 14:35:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -384,9 +384,9 @@ etopen(dev, flags, devtype, l)
 {
 	struct et_softc *sc;
 
-	if (minor(dev) >= et_cd.cd_ndevs)
+	sc = device_lookup_private(&et_cd, minor(dev));
+	if (sc == NULL)
 		return(ENXIO);
-	sc = et_cd.cd_devs[minor(dev)];
 	if (sc->sc_flags & ET_SC_FLAGS_INUSE)
 		return(EBUSY);
 	sc->sc_flags |= ET_SC_FLAGS_INUSE;
@@ -404,7 +404,7 @@ etclose(dev, flags, devtype, l)
 	/*
 	 * XXX: Should we reset to a default mode?
 	 */
-	sc = et_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&et_cd, minor(dev));
 	sc->sc_flags &= ~ET_SC_FLAGS_INUSE;
 	return(0);
 }
@@ -438,7 +438,7 @@ etioctl(dev, cmd, data, flags, l)
 	struct grfinfo g_display;
 	struct et_softc *sc;
 
-	sc = et_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&et_cd, minor(dev));
 	switch (cmd) {
 	case GRFIOCON:
 		return(0);
@@ -489,7 +489,7 @@ etmmap(dev, offset, prot)
 {
 	struct et_softc *sc;
 
-	sc = et_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&et_cd, minor(dev));
 
 	/* 
 	 * control registers
@@ -523,8 +523,8 @@ eton(dev)
 
 	if (minor(dev) >= et_cd.cd_ndevs)
 		return(ENXIO);
-	sc = et_cd.cd_devs[minor(dev)];
-	if (!sc)
+	sc = device_lookup_private(&et_cd, minor(dev));
+	if (sc == NULL)
 		return(ENXIO);
 	return(0);
 }
