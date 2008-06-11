@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.37 2008/04/28 20:23:58 martin Exp $ */
+/*	$NetBSD: cgsix.c,v 1.38 2008/06/11 21:25:31 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.37 2008/04/28 20:23:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.38 2008/06/11 21:25:31 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,7 +672,7 @@ cgsixopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
-	if (unit >= cgsix_cd.cd_ndevs || cgsix_cd.cd_devs[unit] == NULL)
+	if (device_lookup(&cgsix_cd, unit) == NULL)
 		return ENXIO;
 	return 0;
 }
@@ -680,7 +680,7 @@ cgsixopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 cgsixclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
+	struct cgsix_softc *sc = device_lookup_private(&cgsix_cd, minor(dev));
 
 	cg6_reset(sc);
 
@@ -699,7 +699,7 @@ cgsixclose(dev_t dev, int flags, int mode, struct lwp *l)
 int
 cgsixioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
+	struct cgsix_softc *sc = device_lookup_private(&cgsix_cd, minor(dev));
 	union cursor_cmap tcm;
 	uint32_t image[32], mask[32];
 	u_int count;
@@ -1015,7 +1015,7 @@ cg6_blank(struct cgsix_softc *sc, int flag)
 static void
 cg6_unblank(struct device *dev)
 {
-	struct cgsix_softc *sc = (struct cgsix_softc *)dev;
+	struct cgsix_softc *sc = device_private(dev);
 
 	cg6_blank(sc, 0);
 }
@@ -1051,7 +1051,7 @@ struct mmo {
 paddr_t
 cgsixmmap(dev_t dev, off_t off, int prot)
 {
-	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
+	struct cgsix_softc *sc = device_lookup_private(&cgsix_cd, minor(dev));
 	struct mmo *mo;
 	u_int u, sz;
 	static struct mmo mmo[] = {
