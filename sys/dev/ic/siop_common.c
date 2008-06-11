@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.45 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.46 2008/06/11 02:09:16 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.45 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.46 2008/06/11 02:09:16 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ void
 siop_common_reset(sc)
 	struct siop_common_softc *sc;
 {
-	u_int32_t stest3;
+	u_int32_t stest1, stest3;
 
 	/* reset the chip */
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_ISTAT, ISTAT_SRST);
@@ -220,6 +220,13 @@ siop_common_reset(sc)
 	} else {
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST1, 0);
 	}
+
+	if (sc->features & SF_CHIP_USEPCIC) {
+		stest1 = bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_STEST1);
+		stest1 |= STEST1_SCLK;
+		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST1, stest1);
+	}
+
 	if (sc->features & SF_CHIP_FIFO)
 		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST5,
 		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST5) |
