@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.27 2008/04/06 07:54:17 cegger Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.28 2008/06/11 05:33:44 dyoung Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.27 2008/04/06 07:54:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.28 2008/06/11 05:33:44 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -136,15 +136,6 @@ static bool
 ath_cardbus_resume(device_t self PMF_FN_ARGS)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
-
-#if 1
-	ath_cardbus_setup(csc);
-#else
-	int rc;
-	rc = cardbus_set_powerstate(csc->sc_ct, csc->sc_tag, PCI_PWR_D0);
-	if (rc != 0)
-		aprint_debug("%s: cardbus_set_powerstate %d\n", __func__, rc);
-#endif
 
 	csc->sc_ih = cardbus_intr_establish(csc->sc_ct->ct_cc,
 	    csc->sc_ct->ct_cf, csc->sc_intrline, IPL_NET, ath_intr,
