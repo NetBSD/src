@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.120 2008/03/25 00:49:20 cube Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.121 2008/06/11 16:17:01 cegger Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.120 2008/03/25 00:49:20 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.121 2008/06/11 16:17:01 cegger Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -158,9 +158,9 @@ struct wsdisplay_scroll_data wsdisplay_default_scroll_values = {
 extern struct cfdriver wsdisplay_cd;
 
 /* Autoconfiguration definitions. */
-static int wsdisplay_emul_match(device_t , struct cfdata *, void *);
+static int wsdisplay_emul_match(device_t , cfdata_t, void *);
 static void wsdisplay_emul_attach(device_t, device_t, void *);
-static int wsdisplay_noemul_match(device_t, struct cfdata *, void *);
+static int wsdisplay_noemul_match(device_t, cfdata_t, void *);
 static void wsdisplay_noemul_attach(device_t, device_t, void *);
 static bool wsdisplay_suspend(device_t PMF_FN_PROTO);
 
@@ -514,7 +514,7 @@ wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
  * Autoconfiguration functions.
  */
 int
-wsdisplay_emul_match(device_t parent, struct cfdata *match, void *aux)
+wsdisplay_emul_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct wsemuldisplaydev_attach_args *ap = aux;
 
@@ -580,7 +580,7 @@ wsemuldisplaydevprint(void *aux, const char *pnp)
 }
 
 int
-wsdisplay_noemul_match(device_t parent, struct cfdata *match, void *aux)
+wsdisplay_noemul_match(device_t parent, cfdata_t match, void *aux)
 {
 #if 0 /* -Wunused */
 	struct wsdisplaydev_attach_args *ap = aux;
@@ -861,17 +861,14 @@ wsdisplay_preattach(const struct wsscreen_descr *type, void *cookie,
 int
 wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	device_t dv;
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	int newopen, error;
 	struct wsscreen *scr;
 
-	dv = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
-	if (dv == NULL)			/* make sure it was attached */
+	sc = device_lookup_private(&wsdisplay_cd, WSDISPLAYUNIT(dev));
+	if (sc == NULL)			/* make sure it was attached */
 		return (ENXIO);
-
-	sc = device_private(dv);
 
 	if (ISWSDISPLAYSTAT(dev)) {
 		wsevent_init(&sc->evar, l->l_proc);
@@ -992,14 +989,12 @@ wsdisplayclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 wsdisplayread(dev_t dev, struct uio *uio, int flag)
 {
-	device_t dv;
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	struct wsscreen *scr;
 	int error;
 
-	dv = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
-	sc = device_private(dv);
+	sc = device_lookup_private(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYSTAT(dev)) {
 		error = wsevent_read(&sc->evar, uio, flag);
@@ -1022,13 +1017,11 @@ wsdisplayread(dev_t dev, struct uio *uio, int flag)
 int
 wsdisplaywrite(dev_t dev, struct uio *uio, int flag)
 {
-	device_t dv;
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	struct wsscreen *scr;
 
-	dv = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
-	sc = device_private(dv);
+	sc = device_lookup_private(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYSTAT(dev)) {
 		return (0);
@@ -1050,13 +1043,11 @@ wsdisplaywrite(dev_t dev, struct uio *uio, int flag)
 int
 wsdisplaypoll(dev_t dev, int events, struct lwp *l)
 {
-	device_t dv;
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	struct wsscreen *scr;
 
-	dv = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
-	sc = device_private(dv);
+	sc = device_lookup_private(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYSTAT(dev))
 		return (wsevent_poll(&sc->evar, events, l));
@@ -1077,12 +1068,10 @@ wsdisplaypoll(dev_t dev, int events, struct lwp *l)
 int
 wsdisplaykqfilter(dev_t dev, struct knote *kn)
 {
-	device_t dv;
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
 
-	dv = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
-	sc = device_private(dv);
+	sc = device_lookup_private(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYCTL(dev))
 		return (1);
@@ -1100,12 +1089,10 @@ wsdisplaykqfilter(dev_t dev, struct knote *kn)
 struct tty *
 wsdisplaytty(dev_t dev)
 {
-	device_t dv;
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
 
-	dv = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
-	sc = device_private(dv);
+	sc = device_lookup_private(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYSTAT(dev))
 		panic("wsdisplaytty() on status device");
@@ -1487,12 +1474,10 @@ wsdisplay_stat_inject(device_t dv, u_int type, int value)
 paddr_t
 wsdisplaymmap(dev_t dev, off_t offset, int prot)
 {
-	device_t dv;
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
 
-	dv = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
-	sc = device_private(dv);
+	sc = device_lookup_private(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYSTAT(dev))
 		return (-1);
@@ -1514,7 +1499,6 @@ wsdisplaymmap(dev_t dev, off_t offset, int prot)
 void
 wsdisplaystart(struct tty *tp)
 {
-	device_t dv;
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
 	int s, n;
@@ -1525,8 +1509,7 @@ wsdisplaystart(struct tty *tp)
 		splx(s);
 		return;
 	}
-	dv = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(tp->t_dev));
-	sc = device_private(dv);
+	sc = device_lookup_private(&wsdisplay_cd, WSDISPLAYUNIT(tp->t_dev));
 	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_dev)]) == NULL) {
 		splx(s);
 		return;
