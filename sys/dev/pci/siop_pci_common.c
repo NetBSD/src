@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.27 2008/04/10 19:13:38 cegger Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.28 2008/06/11 02:09:16 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.27 2008/04/10 19:13:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.28 2008/06/11 02:09:16 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,8 +242,10 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	pcireg_t memtype;
+	prop_dictionary_t dict;
 	int memh_valid, ioh_valid;
 	bus_addr_t ioaddr, memaddr;
+	bool use_pciclock;
 
 	aprint_naive(": SCSI controller\n");
 
@@ -258,6 +260,10 @@ siop_pci_attach_common(struct siop_pci_common_softc *pci_sc,
 #ifdef SIOP_SYMLED    /* XXX Should be a devprop! */
 	siop_sc->features |= SF_CHIP_LED0;
 #endif
+	dict = device_properties(&siop_sc->sc_dev);
+	if (prop_dictionary_get_bool(dict, "use_pciclock", &use_pciclock))
+		if (use_pciclock)
+			siop_sc->features |= SF_CHIP_USEPCIC;
 	siop_sc->maxburst = pci_sc->sc_pp->maxburst;
 	siop_sc->maxoff = pci_sc->sc_pp->maxoff;
 	siop_sc->clock_div = pci_sc->sc_pp->clock_div;
