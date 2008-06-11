@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.15 2008/03/23 16:40:12 cube Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.16 2008/06/11 19:27:03 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.15 2008/03/23 16:40:12 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.16 2008/06/11 19:27:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -59,10 +59,8 @@ static int
 pciopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	device_t dv;
-	int unit;
 
-	unit = minor(dev);
-	dv = device_lookup(&pci_cd, unit);
+	dv = device_lookup(&pci_cd, minor(dev));
 	if (dv == NULL)
 		return (ENXIO);
 
