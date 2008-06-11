@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.c,v 1.1.2.1 2008/06/10 14:51:21 simonb Exp $	*/
+/*	$NetBSD: wapbl.c,v 1.1.2.2 2008/06/11 12:09:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005,2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.1.2.1 2008/06/10 14:51:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.1.2.2 2008/06/11 12:09:59 simonb Exp $");
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -103,7 +103,7 @@ replay_wapbl(void)
 		wapbl_debug_print |= WAPBL_PRINT_IO;
 	error = wapbl_replay_start(&wapbl_replay,
 			0, 
-			fsbtodb(sblock, sblock->fs_size), /* journal is after filsystem */
+			fsbtodb(sblock, sblock->fs_size), /* journal is after file system */
 			0 /* XXX */,
 			dev_bsize);
 	if (error) {
