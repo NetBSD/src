@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.229.2.1 2008/06/10 14:51:23 simonb Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.229.2.2 2008/06/11 12:20:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.229.2.1 2008/06/10 14:51:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.229.2.2 2008/06/11 12:20:59 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1085,6 +1085,12 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	}
 #endif
 
+#if 0
+/*
+ * XXX This code changes the behaviour of mounting dirty filesystems, to
+ * XXX require "mount -f ..." to mount them.  This doesn't match what
+ * XXX mount(8) describes and is disabled for now.
+ */
 	/*
 	 * If the file system is not clean, don't allow it to be mounted
 	 * unless MNT_FORCE is specified.  (Note: MNT_FORCE is always set
@@ -1097,7 +1103,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		 * could be FS_ISCLEAN
 		 */
 		if ((mp->mnt_flag & MNT_FORCE) == 0 &&
-		    (fs->fs_clean & (FS_WASCLEAN|FS_ISCLEAN)) == 0) {
+		    (fs->fs_clean & (FS_WASCLEAN | FS_ISCLEAN)) == 0) {
 			error = EPERM;
 			goto out;
 		}
@@ -1107,6 +1113,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			error = EPERM;
 			goto out;
 		}
+#endif
 
 	/*
 	 * verify that we can access the last block in the fs
