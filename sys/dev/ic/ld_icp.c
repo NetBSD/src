@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.20.4.1 2008/06/10 14:51:22 simonb Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.20.4.2 2008/06/11 05:38:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.20.4.1 2008/06/10 14:51:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.20.4.2 2008/06/11 05:38:36 simonb Exp $");
 
 #include "rnd.h"
 
@@ -70,7 +70,7 @@ int	ld_icp_detach(struct device *, int);
 int	ld_icp_dobio(struct ld_icp_softc *, void *, int, int, int,
 		     struct buf *);
 int	ld_icp_dump(struct ld_softc *, void *, int, int);
-int	ld_icp_flush(struct ld_softc *, int);
+int	ld_icp_flush(struct ld_softc *);
 void	ld_icp_intr(struct icp_ccb *);
 int	ld_icp_match(struct device *, struct cfdata *, void *);
 int	ld_icp_start(struct ld_softc *, struct buf *);
@@ -265,7 +265,7 @@ ld_icp_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 }
 
 int
-ld_icp_flush(struct ld_softc *ld, int flags)
+ld_icp_flush(struct ld_softc *ld)
 {
 	struct ld_icp_softc *sc;
 	struct icp_softc *icp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.58.4.1 2008/06/10 14:51:22 simonb Exp $	*/
+/*	$NetBSD: ld.c,v 1.58.4.2 2008/06/11 05:38:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.58.4.1 2008/06/10 14:51:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.58.4.2 2008/06/11 05:38:36 simonb Exp $");
 
 #include "rnd.h"
 
@@ -253,7 +253,7 @@ ldenddetach(struct ld_softc *sc)
 #if 0
 	/* Flush the device's cache. */
 	if (sc->sc_flush != NULL)
-		if ((*sc->sc_flush)(sc, 0) != 0)
+		if ((*sc->sc_flush)(sc) != 0)
 			aprint_error_dev(&sc->sc_dv, "unable to flush cache\n");
 #endif
 }
@@ -264,7 +264,7 @@ ld_shutdown(device_t dev, int flags)
 {
 	struct ld_softc *sc = device_private(dev);
 
-	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, LDFL_POLL) != 0) {
+	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc) != 0) {
 		printf("%s: unable to flush cache\n", device_xname(dev));
 		return false;
 	}
@@ -344,7 +344,7 @@ ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
 	if (sc->sc_dk.dk_openmask == 0) {
-		if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, 0) != 0)
+		if (sc->sc_flush != NULL && (*sc->sc_flush)(sc) != 0)
 			aprint_error_dev(&sc->sc_dv, "unable to flush cache\n");
 		if ((sc->sc_flags & LDF_KLABEL) == 0)
 			sc->sc_flags &= ~LDF_VLABEL;
@@ -486,7 +486,7 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else if (sc->sc_flush)
-			error = (*sc->sc_flush)(sc, 0);
+			error = (*sc->sc_flush)(sc);
 		else
 			error = 0;	/* XXX Error out instead? */
 		break;
