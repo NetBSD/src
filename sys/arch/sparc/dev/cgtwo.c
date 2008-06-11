@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.53 2007/03/04 06:00:43 christos Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.54 2008/06/11 21:25:31 drochner Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.53 2007/03/04 06:00:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.54 2008/06/11 21:25:31 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ cgtwoattach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t	bh;
 	vme_am_t		mod;
 	vme_mapresc_t resc;
-	struct cgtwo_softc *sc = (struct cgtwo_softc *)self;
+	struct cgtwo_softc *sc = device_private(self);
 	struct fbdevice *fb = &sc->sc_fb;
 	struct eeprom *eep = (struct eeprom *)eeprom_va;
 	int isconsole = 0;
@@ -225,7 +225,7 @@ cgtwoopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
-	if (unit >= cgtwo_cd.cd_ndevs || cgtwo_cd.cd_devs[unit] == NULL)
+	if (device_lookup(&cgtwo_cd, unit) == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -233,7 +233,8 @@ cgtwoopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 cgtwoioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
+	register struct cgtwo_softc *sc = device_lookup_private(&cgtwo_cd,
+								minor(dev));
 	register struct fbgattr *fba;
 
 	switch (cmd) {
@@ -280,7 +281,7 @@ cgtwoioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 static void
 cgtwounblank(struct device *dev)
 {
-	struct cgtwo_softc *sc = (struct cgtwo_softc *)dev;
+	struct cgtwo_softc *sc = device_private(dev);
 	sc->sc_reg->video_enab = 1;
 }
 
@@ -375,7 +376,8 @@ cgtwommap(dev_t dev, off_t off, int prot)
 	extern int sparc_vme_mmap_cookie(vme_addr_t, vme_am_t,
 					 bus_space_handle_t *);
 
-	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
+	register struct cgtwo_softc *sc = device_lookup_private(&cgtwo_cd,
+								minor(dev));
 	vme_am_t mod;
 	bus_space_handle_t bh;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.23 2008/06/11 18:50:59 cegger Exp $	*/
+/*	$NetBSD: zx.c,v 1.24 2008/06/11 21:25:31 drochner Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.23 2008/06/11 18:50:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.24 2008/06/11 21:25:31 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	volatile struct zx_command *zc;
 	int isconsole;
 
-	sc = (struct zx_softc *)self;
+	sc = device_private(self);
 	sa = args;
 	fb = &sc->sc_fb;
 	ri = &fb->fb_rinfo;
@@ -711,7 +711,7 @@ zx_blank(struct device *dv)
 	struct zx_softc *sc;
 	volatile struct zx_cross *zx;
 
-	sc = (struct zx_softc *)dv;
+	sc = device_private(dv);
 
 	if ((sc->sc_flags & ZX_BLANKED) != 0)
 		return;
@@ -728,7 +728,7 @@ zx_unblank(struct device *dv)
 	struct zx_softc *sc;
 	volatile struct zx_cross *zx;
 
-	sc = (struct zx_softc *)dv;
+	sc = device_private(dv);
 
 	if ((sc->sc_flags & ZX_BLANKED) == 0)
 		return;
