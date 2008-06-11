@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.900 2008/05/30 19:51:00 dyoung Exp $
+# $NetBSD: GENERIC,v 1.901 2008/06/11 20:37:38 perry Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.900 $"
+#ident 		"GENERIC-$Revision: 1.901 $"
 
 maxusers	64		# estimated number of users
 
@@ -1498,6 +1498,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# cmos(4) pseudo-device
+pseudo-device	cmos
 
 # pseudo audio device driver
 pseudo-device	pad
