@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.54 2008/05/27 14:13:41 ad Exp $	*/
+/*	$NetBSD: dhu.c,v 1.55 2008/06/11 17:27:59 drochner Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.54 2008/05/27 14:13:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.55 2008/06/11 17:27:59 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,10 +430,9 @@ dhuopen(dev_t dev, int flag, int mode, struct lwp *l)
 	unit = DHU_M2U(minor(dev));
 	line = DHU_LINE(minor(dev));
 
-	if (unit >= dhu_cd.cd_ndevs || dhu_cd.cd_devs[unit] == NULL)
+	sc = device_lookup_private(&dhu_cd, unit);
+	if (!sc)
 		return (ENXIO);
-
-	sc = dhu_cd.cd_devs[unit];
 
 	if (line >= sc->sc_lines)
 		return ENXIO;
