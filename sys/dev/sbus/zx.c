@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.22 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: zx.c,v 1.23 2008/06/11 18:50:59 cegger Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.22 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.23 2008/06/11 18:50:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ zxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct zx_softc *sc;
 
-	sc = (struct zx_softc *)device_lookup(&zx_cd, minor(dev));
+	sc = device_lookup_private(&zx_cd, minor(dev));
 
 	zx_reset(sc);
 	zx_cursor_blank(sc);
@@ -299,7 +299,7 @@ zxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	uint32_t curbits[2][32];
 	int rv, v, count, i;
 
-	sc = zx_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&zx_cd, minor(dev));
 
 	switch (cmd) {
 	case FBIOGTYPE:
@@ -745,7 +745,7 @@ zxmmap(dev_t dev, off_t off, int prot)
 	struct zx_softc *sc;
 	const struct zx_mmo *mm, *mmmax;
 
-	sc = device_lookup(&zx_cd, minor(dev));
+	sc = device_lookup_private(&zx_cd, minor(dev));
 	off = trunc_page(off);
 	mm = zx_mmo;
 	mmmax = mm + sizeof(zx_mmo) / sizeof(zx_mmo[0]);
