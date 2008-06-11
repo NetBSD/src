@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.33 2008/04/28 20:23:14 martin Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.34 2008/06/11 22:37:21 cegger Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.33 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.34 2008/06/11 22:37:21 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -180,8 +180,7 @@ struct consdev ixpcomcons = {
 #define CFLAGS2CR_MASK	(CR_PE | CR_OES | CR_SBS | CR_DSS | CR_BRD)
 
 void
-ixpcom_attach_subr(sc)
-	struct ixpcom_softc *sc;
+ixpcom_attach_subr(struct ixpcom_softc *sc)
 {
 	struct tty *tp;
 
@@ -253,12 +252,10 @@ ixpcom_attach_subr(sc)
 }
 
 static int
-ixpcomparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+ixpcomparam(struct tty *tp, struct termios *t)
 {
 	struct ixpcom_softc *sc
-		= device_lookup(&ixpcom_cd, COMUNIT(tp->t_dev));
+		= device_lookup_private(&ixpcom_cd, COMUNIT(tp->t_dev));
 	u_int32_t cr;
 	int s;
 
@@ -367,11 +364,10 @@ ixpcom_filltx(struct ixpcom_softc *sc)
 }
 
 static void
-ixpcomstart(tp)
-	struct tty *tp;
+ixpcomstart(struct tty *tp)
 {
 	struct ixpcom_softc *sc
-		= device_lookup(&ixpcom_cd, COMUNIT(tp->t_dev));
+		= device_lookup_private(&ixpcom_cd, COMUNIT(tp->t_dev));
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -464,17 +460,14 @@ ixpcom_shutdown(struct ixpcom_softc *sc)
 }
 
 int
-ixpcomopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+ixpcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ixpcom_softc *sc;
 	struct tty *tp;
 	int s, s2;
 	int error;
 
-	sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	sc = device_lookup_private(&ixpcom_cd, COMUNIT(dev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
@@ -610,12 +603,9 @@ bad:
 }
 
 int
-ixpcomclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+ixpcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct ixpcom_softc *sc = device_lookup_private(&ixpcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -641,12 +631,9 @@ ixpcomclose(dev, flag, mode, l)
 }
 
 int
-ixpcomread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ixpcomread(dev_t dev, struct uio *uio, int flag)
 {
-	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct ixpcom_softc *sc = device_lookup_private(&ixpcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -656,12 +643,9 @@ ixpcomread(dev, uio, flag)
 }
 
 int
-ixpcomwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ixpcomwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct ixpcom_softc *sc = device_lookup_private(&ixpcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -671,12 +655,9 @@ ixpcomwrite(dev, uio, flag)
 }
 
 int
-ixpcompoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+ixpcompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct ixpcom_softc *sc = device_lookup_private(&ixpcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -686,10 +667,9 @@ ixpcompoll(dev, events, l)
 }
 
 struct tty *
-ixpcomtty(dev)
-	dev_t dev;
+ixpcomtty(dev_t dev)
 {
-	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct ixpcom_softc *sc = device_lookup_private(&ixpcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -698,7 +678,7 @@ ixpcomtty(dev)
 int
 ixpcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct ixpcom_softc *sc = device_lookup_private(&ixpcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
@@ -755,12 +735,10 @@ ixpcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
  * Stop output on a line.
  */
 void
-ixpcomstop(tp, flag)
-	struct tty *tp;
-	int flag;
+ixpcomstop(struct tty *tp, int flag)
 {
 	struct ixpcom_softc *sc
-		= device_lookup(&ixpcom_cd, COMUNIT(tp->t_dev));
+		= device_lookup_private(&ixpcom_cd, COMUNIT(tp->t_dev));
 	int s;
 
 	s = splserial();

@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.28 2008/04/28 20:23:14 martin Exp $ */
+/*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.28 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -604,7 +604,7 @@ sscomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s, s2;
 	int error;
 
-	sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
+	sc = device_lookup_private(&sscom_cd, SSCOMUNIT(dev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, SSCOM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
 		return ENXIO;
@@ -733,7 +733,7 @@ bad:
 int
 sscomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
+	struct sscom_softc *sc = device_lookup_private(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -761,7 +761,7 @@ sscomclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 sscomread(dev_t dev, struct uio *uio, int flag)
 {
-	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
+	struct sscom_softc *sc = device_lookup_private(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (SSCOM_ISALIVE(sc) == 0)
@@ -773,7 +773,7 @@ sscomread(dev_t dev, struct uio *uio, int flag)
 int
 sscomwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
+	struct sscom_softc *sc = device_lookup_private(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (SSCOM_ISALIVE(sc) == 0)
@@ -785,7 +785,7 @@ sscomwrite(dev_t dev, struct uio *uio, int flag)
 int
 sscompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
+	struct sscom_softc *sc = device_lookup_private(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (SSCOM_ISALIVE(sc) == 0)
@@ -797,7 +797,7 @@ sscompoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 sscomtty(dev_t dev)
 {
-	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
+	struct sscom_softc *sc = device_lookup_private(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return tp;
@@ -806,7 +806,7 @@ sscomtty(dev_t dev)
 int
 sscomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
+	struct sscom_softc *sc = device_lookup_private(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
@@ -1024,7 +1024,7 @@ cflag2lcr(tcflag_t cflag)
 int
 sscomparam(struct tty *tp, struct termios *t)
 {
-	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(tp->t_dev));
+	struct sscom_softc *sc = device_lookup_private(&sscom_cd, SSCOMUNIT(tp->t_dev));
 	int ospeed;
 	u_char lcr;
 	int s;
@@ -1215,7 +1215,7 @@ sscom_loadchannelregs(struct sscom_softc *sc)
 static int
 sscomhwiflow(struct tty *tp, int block)
 {
-	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(tp->t_dev));
+	struct sscom_softc *sc = device_lookup_private(&sscom_cd, SSCOMUNIT(tp->t_dev));
 	int s;
 
 	if (SSCOM_ISALIVE(sc) == 0)
@@ -1271,7 +1271,7 @@ sscom_hwiflow(struct sscom_softc *sc)
 void
 sscomstart(struct tty *tp)
 {
-	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(tp->t_dev));
+	struct sscom_softc *sc = device_lookup_private(&sscom_cd, SSCOMUNIT(tp->t_dev));
 	int s;
 
 	if (SSCOM_ISALIVE(sc) == 0)
@@ -1322,7 +1322,7 @@ out:
 void
 sscomstop(struct tty *tp, int flag)
 {
-	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(tp->t_dev));
+	struct sscom_softc *sc = device_lookup_private(&sscom_cd, SSCOMUNIT(tp->t_dev));
 	int s;
 
 	s = splserial();
