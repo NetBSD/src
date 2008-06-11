@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.1.2.1 2008/06/10 14:51:23 simonb Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.1.2.2 2008/06/11 12:30:47 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.1.2.1 2008/06/10 14:51:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.1.2.2 2008/06/11 12:30:47 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -459,7 +459,7 @@ wapbl_ufs_rename(void *v)
 				if (DOINGSOFTDEP(tdvp))
 					softdep_change_linkcnt(tdp);
 				(void)UFS_UPDATE(tdvp, NULL, NULL,
-						 UPDATE_WAIT|UPDATE_DIROP);
+						 UPDATE_WAIT | UPDATE_DIROP);
 			}
 			goto bad;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.1.2.2 2008/06/11 12:09:59 simonb Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.1.2.3 2008/06/11 12:30:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.2 2008/06/11 12:09:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.3 2008/06/11 12:30:47 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -677,10 +677,10 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 	struct buf *bp;
 	int error;
 
-	KASSERT((flags & ~(B_WRITE|B_READ)) == 0);
+	KASSERT((flags & ~(B_WRITE | B_READ)) == 0);
 	KASSERT(devvp->v_type == VBLK);
 
-	if ((flags & (B_WRITE|B_READ)) == B_WRITE) {
+	if ((flags & (B_WRITE | B_READ)) == B_WRITE) {
 		devvp->v_numoutput++;
 		pstats->p_ru.ru_oublock++;
 	} else {
@@ -709,7 +709,8 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
 		    ("wapbl_doio: %s %zu bytes at block %" PRId64
 		    " on dev 0x%x failed with error %d\n",
-		    (((flags & (B_WRITE|B_READ)) == B_WRITE) ? "write":"read"),
+		    (((flags & (B_WRITE | B_READ)) == B_WRITE) ?
+		     "write" : "read"),
 		    len, pbn, devvp->v_rdev, error));
 	}
 

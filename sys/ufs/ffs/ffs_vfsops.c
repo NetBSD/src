@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.229.2.2 2008/06/11 12:20:59 simonb Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.229.2.3 2008/06/11 12:30:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.229.2.2 2008/06/11 12:20:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.229.2.3 2008/06/11 12:30:47 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -389,7 +389,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if (mp->mnt_flag & MNT_RDONLY)
 			xflags = FREAD;
 		else
-			xflags = FREAD|FWRITE;
+			xflags = FREAD | FWRITE;
 		error = VOP_OPEN(devvp, xflags, FSCRED);
 		if (error)
 			goto fail;
@@ -736,7 +736,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	mutex_enter(&ump->um_lock);
 	ump->um_maxfilesize = fs->fs_maxfilesize;
 
-	if (fs->fs_flags & ~(FS_KNOWN_FLAGS|FS_INTERNAL)) {
+	if (fs->fs_flags & ~(FS_KNOWN_FLAGS | FS_INTERNAL)) {
 		uprintf("%s: unknown ufs flags: 0x%08"PRIx32"%s\n",
 		    mp->mnt_stat.f_mntonname, fs->fs_flags,
 		    (mp->mnt_flag & MNT_FORCE) ? "" : ", not mounting");
@@ -1032,7 +1032,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ffs_oldfscompat_read(fs, ump, sblockloc);
 	ump->um_maxfilesize = fs->fs_maxfilesize;
 
-	if (fs->fs_flags & ~(FS_KNOWN_FLAGS|FS_INTERNAL)) {
+	if (fs->fs_flags & ~(FS_KNOWN_FLAGS | FS_INTERNAL)) {
 		uprintf("%s: unknown ufs flags: 0x%08"PRIx32"%s\n",
 		    mp->mnt_stat.f_mntonname, fs->fs_flags,
 		    (mp->mnt_flag & MNT_FORCE) ? "" : ", not mounting");
@@ -1480,7 +1480,7 @@ ffs_unmount(struct mount *mp, int mntflags)
 	if (ump->um_devvp->v_type != VBAD)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
+	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD | FWRITE,
 		NOCRED);
 	vput(ump->um_devvp);
 	free(fs->fs_csp, M_UFSMNT);
@@ -1513,7 +1513,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 #ifdef QUOTA
 	if (mp->mnt_flag & MNT_QUOTA) {
 		int i;
-		if ((error = vflush(mp, NULLVP, SKIPSYSTEM|flags)) != 0)
+		if ((error = vflush(mp, NULLVP, SKIPSYSTEM | flags)) != 0)
 			return (error);
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if (ump->um_quotas[i] == NULLVP)
@@ -1639,7 +1639,7 @@ loop:
 		mutex_enter(&vp->v_interlock);
 		ip = VTOI(vp);
 		/* XXXpooka: why wapbl check? */
-		if (ip == NULL || (vp->v_iflag & (VI_XLOCK|VI_CLEAN)) != 0 ||
+		if (ip == NULL || (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0 ||
 		    vp->v_type == VNON || ((ip->i_flag &
 		    (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) || (mp->mnt_wapbl)) &&
