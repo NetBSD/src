@@ -1,4 +1,4 @@
-/*	$NetBSD: gs.h,v 1.1.1.2 2008/05/18 14:29:45 aymeric Exp $ */
+/*	$NetBSD: gs.h,v 1.2 2008/06/11 21:32:17 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -93,7 +93,7 @@ struct _gs {
 	LIST_HEAD(_seqh, _seq) seqq;	/* Linked list of maps, abbrevs. */
 	bitstr_t bit_decl(seqb, MAX_BIT_SEQ);
 
-#define	MAX_FAST_KEY	255		/* Max fast check character.*/
+#define	MAX_FAST_KEY	254		/* Max fast check character.*/
 #define	KEY_LEN(sp, ch)							\
 	((UCHAR_T)(ch) <= MAX_FAST_KEY ?			\
 	    sp->gp->cname[(unsigned char)ch].len : v_key_len(sp, ch))
