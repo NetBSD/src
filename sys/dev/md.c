@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.52 2008/04/09 05:47:19 cegger Exp $	*/
+/*	$NetBSD: md.c,v 1.53 2008/06/11 10:38:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.52 2008/04/09 05:47:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.53 2008/06/11 10:38:44 drochner Exp $");
 
 #include "opt_md.h"
 
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: md.c,v 1.52 2008/04/09 05:47:19 cegger Exp $");
 /*
  * We should use the raw partition for ioctl.
  */
-#define MD_MAX_UNITS	0x10
 #define MD_UNIT(unit)	DISKUNIT(unit)
 
 /* autoconfig stuff... */
@@ -116,8 +115,9 @@ const struct cdevsw md_cdevsw = {
 
 static struct dkdriver mddkdriver = { mdstrategy, NULL };
 
-static int   ramdisk_ndevs;
-static void *ramdisk_devs[MD_MAX_UNITS];
+extern struct cfdriver md_cd;
+CFATTACH_DECL(md, sizeof(struct md_softc),
+	0, md_attach, 0, NULL);
 
 /*
  * This is called if we are configured as a pseudo-device
@@ -127,34 +127,25 @@ mdattach(int n)
 {
 	struct md_softc *sc;
 	int i;
+	struct cfdata *cf;
 
-#ifdef	DIAGNOSTIC
-	if (ramdisk_ndevs) {
-		aprint_error("ramdisk: multiple attach calls?\n");
+	if (config_cfattach_attach("md", &md_ca)) {
+		printf("md: cfattach_attach failed\n");
 		return;
 	}
-#endif
 
 	/* XXX:  Are we supposed to provide a default? */
 	if (n <= 1)
 		n = 1;
-	if (n > MD_MAX_UNITS)
-		n = MD_MAX_UNITS;
-	ramdisk_ndevs = n;
 
 	/* Attach as if by autoconfig. */
 	for (i = 0; i < n; i++) {
-
-		sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
-		if (!sc) {
-			aprint_error("ramdisk: malloc for attach failed!\n");
-			return;
-		}
-		ramdisk_devs[i] = sc;
-		sc->sc_dev.dv_unit = i;
-		snprintf(sc->sc_dev.dv_xname, sizeof(sc->sc_dev.dv_xname),
-		    "md%d", i);
-		md_attach(NULL, &sc->sc_dev, NULL);
+		cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+		cf->cf_name = "md";
+		cf->cf_atname = "md";
+		cf->cf_unit = i;
+		cf->cf_fstate = FSTATE_NOTFOUND;
+		sc = (struct md_softc *)config_attach_pseudo(cf);
 	}
 }
 
@@ -204,9 +195,7 @@ mdsize(dev_t dev)
 	struct md_softc *sc;
 
 	unit = MD_UNIT(dev);
-	if (unit >= ramdisk_ndevs)
-		return 0;
-	sc = ramdisk_devs[unit];
+	sc = device_lookup_private(&md_cd, unit);
 	if (sc == NULL)
 		return 0;
 
@@ -223,9 +212,7 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct md_softc *sc;
 
 	unit = MD_UNIT(dev);
-	if (unit >= ramdisk_ndevs)
-		return ENXIO;
-	sc = ramdisk_devs[unit];
+	sc = device_lookup_private(&md_cd, unit);
 	if (sc == NULL)
 		return ENXIO;
 
@@ -253,12 +240,6 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	int unit;
-
-	unit = MD_UNIT(dev);
-
-	if (unit >= ramdisk_ndevs)
-		return ENXIO;
 
 	return 0;
 }
@@ -271,10 +252,7 @@ mdread(dev_t dev, struct uio *uio, int flags)
 
 	unit = MD_UNIT(dev);
 
-	if (unit >= ramdisk_ndevs)
-		return ENXIO;
-
-	sc = ramdisk_devs[unit];
+	sc = device_lookup_private(&md_cd, unit);
 
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
@@ -290,10 +268,7 @@ mdwrite(dev_t dev, struct uio *uio, int flags)
 
 	unit = MD_UNIT(dev);
 
-	if (unit >= ramdisk_ndevs)
-		return ENXIO;
-
-	sc = ramdisk_devs[unit];
+	sc = device_lookup_private(&md_cd, unit);
 
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
@@ -314,7 +289,7 @@ mdstrategy(struct buf *bp)
 	size_t off, xfer;
 
 	unit = MD_UNIT(bp->b_dev);
-	sc = ramdisk_devs[unit];
+	sc = device_lookup_private(&md_cd, unit);
 
 	if (sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
@@ -371,7 +346,7 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct md_conf *umd;
 
 	unit = MD_UNIT(dev);
-	sc = ramdisk_devs[unit];
+	sc = device_lookup_private(&md_cd, unit);
 
 	/* If this is not the raw partition, punt! */
 	if (DISKPART(dev) != RAW_PART)
