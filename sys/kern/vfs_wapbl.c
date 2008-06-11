@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.1.2.1 2008/06/10 14:51:22 simonb Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.1.2.2 2008/06/11 12:09:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.1 2008/06/10 14:51:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.2 2008/06/11 12:09:59 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -160,7 +160,7 @@ struct wapbl {
 
 	kcondvar_t wl_reclaimable_cv;	/* m (obviously) */
 	size_t wl_reclaimable_bytes; /* m:	Amount of space available for
-						reclaimation by truncate */
+						reclamation by truncate */
 	int wl_error_count;	/* m:	# of wl_entries with errors */
 	size_t wl_reserved_bytes; /* never truncate log smaller than this */
 
