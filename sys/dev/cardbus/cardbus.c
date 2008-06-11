@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.91 2008/03/12 18:02:21 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.92 2008/06/11 07:01:54 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.91 2008/03/12 18:02:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.92 2008/06/11 07:01:54 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -782,12 +782,24 @@ enable_function(struct cardbus_softc *sc, int cdstatus, int function)
 static void
 disable_function(struct cardbus_softc *sc, int function)
 {
+	bool powerdown;
+	cardbus_devfunc_t ct;
+	device_t dv;
+	int i;
 
 	sc->sc_poweron_func &= ~(1 << function);
-	if (sc->sc_poweron_func == 0) {
-		/* power-off because no functions are enabled */
-		(*sc->sc_cf->cardbus_power)(sc->sc_cc, CARDBUS_VCC_0V);
+	if (sc->sc_poweron_func != 0)
+		return;
+	for (i = 0; i < __arraycount(sc->sc_funcs); i++) {
+		if ((ct = sc->sc_funcs[i]) == NULL)
+			continue;
+		dv = ct->ct_device;
+		if (prop_dictionary_get_bool(device_properties(dv),
+		    "pmf-powerdown", &powerdown) && !powerdown)
+			return;
 	}
+	/* power-off because no functions are enabled */
+	(*sc->sc_cf->cardbus_power)(sc->sc_cc, CARDBUS_VCC_0V);
 }
 
 /*
@@ -1167,7 +1179,6 @@ struct cardbus_child_power {
 static bool
 cardbus_child_suspend(device_t dv PMF_FN_ARGS)
 {
-	bool powerdown;
 	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 
 	cardbus_conf_capture(priv->p_cc, priv->p_cf, priv->p_tag,
@@ -1180,9 +1191,7 @@ cardbus_child_suspend(device_t dv PMF_FN_ARGS)
 		return false;
 	}
 
-	if (!prop_dictionary_get_bool(device_properties(dv), "pmf-powerdown",
-	    &powerdown) || powerdown)
-		Cardbus_function_disable(priv->p_ct);
+	Cardbus_function_disable(priv->p_ct);
 
 	return true;
 }
