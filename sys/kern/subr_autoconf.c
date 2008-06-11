@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.154 2008/06/06 17:52:40 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.155 2008/06/11 06:26:32 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.154 2008/06/06 17:52:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.155 2008/06/11 06:26:32 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -2116,8 +2116,6 @@ device_pmf_driver_deregister(device_t dev)
 	dev->dv_driver_suspend = NULL;
 	dev->dv_driver_resume = NULL;
 
-	dev->dv_pmf_private = NULL;
-
 	mutex_enter(&pp->pp_mtx);
 	dev->dv_flags &= ~DVF_POWER_HANDLERS;
 	while (pp->pp_nlock > 0 || pp->pp_nwait > 0) {
@@ -2131,6 +2129,7 @@ device_pmf_driver_deregister(device_t dev)
 		cv_wait(&pp->pp_cv, &pp->pp_mtx);
 		pmflock_debug(dev, __func__, __LINE__);
 	}
+	dev->dv_pmf_private = NULL;
 	mutex_exit(&pp->pp_mtx);
 
 	cv_destroy(&pp->pp_cv);
@@ -2210,8 +2209,8 @@ device_pmf_lock1(device_t dev PMF_FN_ARGS)
 {
 	pmf_private_t *pp = device_pmf_private(dev);
 
-	while (pp->pp_nlock > 0 && pp->pp_holder != curlwp &&
-	       device_pmf_is_registered(dev)) {
+	while (device_pmf_is_registered(dev) &&
+	    pp->pp_nlock > 0 && pp->pp_holder != curlwp) {
 		pp->pp_nwait++;
 		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
 		cv_wait(&pp->pp_cv, &pp->pp_mtx);
