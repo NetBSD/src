@@ -1,4 +1,4 @@
-/*	$NetBSD: nbsvtool.c,v 1.1 2008/05/11 17:58:09 joerg Exp $	*/
+/*	$NetBSD: nbsvtool.c,v 1.2 2008/06/11 16:31:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -112,6 +112,8 @@ verify_file(STACK_OF(X509) *cert_chain, const char *anchor,
 	BIO *sig, *in;
 	PKCS7 *p7;
 	int ret, i;
+	X509_NAME *name;
+	char *subject;
 
 	store = X509_STORE_new();
 	if (store == NULL)
@@ -144,20 +146,25 @@ verify_file(STACK_OF(X509) *cert_chain, const char *anchor,
 	if (sk_X509_num(signers) == 0)
 		errx(EXIT_FAILURE, "No signers ?");
 
+	if (key_usage != 0) {
+		for (i = 0; i < sk_X509_num(signers); i++) {
+			if ((sk_X509_value(signers, i)->ex_xkusage & key_usage)
+			    == key_usage)
+				continue;
+			name = X509_get_subject_name(sk_X509_value(signers, i));
+			subject = X509_NAME_oneline(name, NULL, 0);
+			errx(EXIT_FAILURE,
+			    "Certificate doesn't match required key usage: %s",
+			    subject);
+		}
+	}
+
 	if (verbose_flag)
 		printf("Sigature ok, signed by:\n");
 
 	for (i = 0; i < sk_X509_num(signers); i++) {
-		X509_NAME *name;
-		char *subject;
 		name = X509_get_subject_name(sk_X509_value(signers, i));
 		subject = X509_NAME_oneline(name, NULL, 0);
-
-		if (key_usage != 0 &&
-		    (sk_X509_value(signers, i)->ex_xkusage & key_usage) == 0)
-			errx(EXIT_FAILURE,
-			    "Key doesn't match required key usage: %s",
-			    subject);
 
 		if (verbose_flag)
 			printf("\t%s\n", subject);
