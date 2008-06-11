@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.367 2008/06/10 18:41:47 aymeric Exp $
+#	$NetBSD: NetBSD.dist,v 1.368 2008/06/11 23:56:15 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -37,6 +37,7 @@
 ./etc/mail
 ./etc/mtree
 ./etc/namedb
+./etc/openldap
 ./etc/openssl
 ./etc/openssl/certs
 ./etc/openssl/misc

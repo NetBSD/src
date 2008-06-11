@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.751 2008/06/10 18:41:47 aymeric Exp $
+# $NetBSD: mi,v 1.752 2008/06/11 23:56:15 lukem Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -96,6 +96,7 @@
 ./etc/mtree/set.base				base-sys-root
 ./etc/namedb					base-bind-root
 ./etc/obsolete					base-obsolete		obsolete
+./etc/openldap					base-ldap-root
 ./etc/openssl					base-crypto-root
 ./etc/openssl/certs				base-crypto-root
 ./etc/openssl/misc				base-crypto-root
