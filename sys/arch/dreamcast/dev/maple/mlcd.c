@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.10 2008/06/08 16:39:43 tsutsui Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.11 2008/06/11 14:55:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.10 2008/06/08 16:39:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.11 2008/06/11 14:55:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -488,7 +488,7 @@ mlcdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 
 	unit = MLCD_UNIT(dev);
 	part = MLCD_PART(dev);
-	sc = mlcd_cd.cd_devs[unit];
+	sc = device_lookup_private(&mlcd_cd, unit);
 	pt = &sc->sc_pt[part];
 
 	pt->pt_flags &= ~MLCD_PT_OPEN;
@@ -592,7 +592,7 @@ mlcd_buf_alloc(int dev, int flags)
 
 	unit = MLCD_UNIT(dev);
 	part = MLCD_PART(dev);
-	sc = mlcd_cd.cd_devs[unit];
+	sc = device_lookup_private(&mlcd_cd, unit);
 	KASSERT(sc);
 	pt = &sc->sc_pt[part];
 	KASSERT(pt);
@@ -665,7 +665,7 @@ mlcdwrite(dev_t dev, struct uio *uio, int flags)
 	int error = 0;
 
 	part = MLCD_PART(dev);
-	sc = mlcd_cd.cd_devs[MLCD_UNIT(dev)];
+	sc = device_lookup_private(&mlcd_cd, MLCD_UNIT(dev));
 	pt = &sc->sc_pt[part];
 
 #if 0
@@ -725,7 +725,7 @@ mlcdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	unit = MLCD_UNIT(dev);
 	part = MLCD_PART(dev);
-	sc = mlcd_cd.cd_devs[unit];
+	sc = device_lookup_private(&mlcd_cd, unit);
 	pt = &sc->sc_pt[part];
 
 	switch (cmd) {
