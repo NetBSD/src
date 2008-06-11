@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.38 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: ser.c,v 1.39 2008/06/11 14:35:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.38 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.39 2008/06/11 14:35:53 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -285,7 +285,7 @@ serattach(pdp, dp, auxp)
 struct	device *pdp, *dp;
 void	*auxp;
 {
-	struct ser_softc *sc = (void *)dp;
+	struct ser_softc *sc = device_private(dp);
 
 	if (intr_establish(1, USER_VEC, 0, (hw_ifun_t)sermintr, sc) == NULL)
 		printf("serattach: Can't establish interrupt (1)\n");
@@ -370,10 +370,8 @@ seropen(dev, flag, mode, l)
 	int s, s2;
 	int error = 0;
  
-	if (unit >= ser_cd.cd_ndevs)
-		return (ENXIO);
-	sc = ser_cd.cd_devs[unit];
-	if (!sc)
+	sc = device_lookup_private(&ser_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 
 	if (!sc->sc_tty) {
@@ -489,7 +487,7 @@ serclose(dev, flag, mode, l)
 	struct lwp	*l;
 {
 	int unit = SERUNIT(dev);
-	struct ser_softc *sc = ser_cd.cd_devs[unit];
+	struct ser_softc *sc = device_lookup_private(&ser_cd, unit);
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -517,7 +515,7 @@ serread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
+	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
@@ -529,7 +527,7 @@ serwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
+	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
@@ -541,7 +539,7 @@ serpoll(dev, events, l)
 	int events;
 	struct lwp *l;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
+	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -551,7 +549,7 @@ struct tty *
 sertty(dev)
 	dev_t dev;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(dev)];
+	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -566,7 +564,7 @@ serioctl(dev, cmd, data, flag, l)
 	struct lwp *l;
 {
 	int unit = SERUNIT(dev);
-	struct ser_softc *sc = ser_cd.cd_devs[unit];
+	struct ser_softc *sc = device_lookup_private(&ser_cd, unit);
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -675,10 +673,12 @@ serparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
+	struct ser_softc *sc =
+	    device_lookup_private(&ser_cd, SERUNIT(tp->t_dev));
 	int ospeed = serspeed(t->c_ospeed);
 	u_char ucr;
 	int s;
+
 
 	/* check requested parameters */
 	if (ospeed < 0)
@@ -889,7 +889,8 @@ serhwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
+	struct ser_softc *sc =
+	    device_lookup_private(&ser_cd, SERUNIT(tp->t_dev));
 	int s;
 
 	if (sc->sc_mcr_rts == 0)
@@ -948,7 +949,8 @@ void
 serstart(tp)
 	struct tty *tp;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
+	struct ser_softc *sc =
+	    device_lookup_private(&ser_cd, SERUNIT(tp->t_dev));
 	int s;
 
 	s = spltty();
@@ -1012,7 +1014,8 @@ serstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
+	struct ser_softc *sc =
+	    device_lookup_private(&ser_cd, SERUNIT(tp->t_dev));
 	int s;
 
 	s = splhigh();

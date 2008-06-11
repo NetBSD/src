@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.58 2007/11/19 18:51:39 ad Exp $	*/
+/*	$NetBSD: ite.c,v 1.59 2008/06/11 14:35:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.58 2007/11/19 18:51:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59 2008/06/11 14:35:53 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -285,7 +285,7 @@ getitesp(dev)
 	dev_t dev;
 {
 	if(atari_realconfig && (con_itesoftc.grf == NULL))
-		return(ite_cd.cd_devs[ITEUNIT(dev)]);
+		return(device_lookup_private(&ite_cd, ITEUNIT(dev)));
 
 	if(con_itesoftc.grf == NULL)
 		panic("no ite_softc for console");
