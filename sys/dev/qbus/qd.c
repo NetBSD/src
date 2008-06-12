@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.43 2008/03/11 05:34:01 matt Exp $	*/
+/*	$NetBSD: qd.c,v 1.44 2008/06/12 23:06:14 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.43 2008/03/11 05:34:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.44 2008/06/12 23:06:14 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -792,14 +792,12 @@ void qd_attach(parent, self, aux)
 
 /*ARGSUSED*/
 int
-qdopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+qdopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	volatile struct dga *dga;	/* ptr to gate array struct */
 	struct tty *tp;
 	volatile struct duart *duart;
+	struct uba_softc *sc;
 	int unit;
 	int minor_dev;
 
@@ -809,8 +807,9 @@ qdopen(dev, flag, mode, p)
 	/*
 	* check for illegal conditions
 	*/
-	if (unit >= qd_cd.cd_ndevs || qd_cd.cd_devs[unit] == NULL)
-		return (ENXIO);		/* no such device or address */
+	sc = device_lookup_private(&qd_cd, unit);
+	if (sc == NULL)
+		return ENXIO;
 
 	duart = (struct duart *) qdmap[unit].duart;
 	dga = (struct dga *) qdmap[unit].dga;
@@ -878,10 +877,7 @@ qdopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-qdclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+qdclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct tty *tp;
 	struct qdmap *qd;
@@ -899,8 +895,7 @@ qdclose(dev, flag, mode, p)
 	unit = minor_dev >> 2;		/* get QDSS number */
 	qd = &qdmap[unit];
 
-	uh = (struct uba_softc *)
-	     device_parent((device_t )(qd_cd.cd_devs[unit]));
+	uh = device_private(device_parent(device_lookup(&qd_cd, unit)));
 
 
 	if ((minor_dev & 0x03) == 2) {
@@ -1102,8 +1097,7 @@ qdioctl(dev, cmd, datap, flags, p)
 	short *temp;			/* a pointer to template RAM */
 	struct uba_softc *uh;
 
-	uh = (struct uba_softc *)
-	     device_parent((device_t )(qd_cd.cd_devs[unit]));
+	uh = device_private(device_parent(device_lookup(&qd_cd, unit)));
 
 	/*
 	* service graphic device ioctl commands
@@ -1718,8 +1712,7 @@ qd_strategy(bp)
 
 	unit = (minor(bp->b_dev) >> 2) & 0x07;
 
-	uh = (struct uba_softc *)
-	     device_parent((device_t )(qd_cd.cd_devs[unit]));
+	uh = device_private(device_parent(device_lookup(&qd_cd, unit)));
 
 	/*
 	* init pointers
@@ -2313,8 +2306,7 @@ qdaint(arg)
  */
 
 static void
-qdiint(arg)
-	void *arg;
+qdiint(void *arg)
 {
 	device_t dv = arg;
 	struct _vs_event *event;
@@ -2785,7 +2777,7 @@ GET_TBUTTON:
 		if (qdpolling)
 			return;
 
-		if (unit >= qd_cd.cd_ndevs || qd_cd.cd_devs[unit] == NULL)
+		if (unit >= qd_cd.cd_ndevs || device_lookup(&qd_cd, unit) == NULL)
 			return;		/* no such device or address */
 
 		tp = qd_tty[unit << 2];

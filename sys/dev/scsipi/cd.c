@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.281 2008/05/12 21:39:56 jnemeth Exp $	*/
+/*	$NetBSD: cd.c,v 1.282 2008/06/12 23:06:14 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.281 2008/05/12 21:39:56 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.282 2008/06/12 23:06:14 cegger Exp $");
 
 #include "rnd.h"
 
@@ -934,7 +934,7 @@ cdbounce(struct buf *bp)
 	struct cdbounce *bounce = (struct cdbounce *)bp->b_private;
 	struct buf *obp = bounce->obp;
 	struct cd_softc *cd =
-	    device_private(cd_cd.cd_devs[CDUNIT(obp->b_dev)]);
+	    device_lookup_private(&cd_cd, CDUNIT(obp->b_dev));
 	struct disklabel *lp = cd->sc_dk.dk_label;
 
 	if (bp->b_error != 0) {
