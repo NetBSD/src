@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.752 2008/06/11 23:56:15 lukem Exp $
+# $NetBSD: mi,v 1.753 2008/06/12 10:55:44 dogcow Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1213,6 +1213,7 @@
 ./usr/sbin/named-bootconf			base-obsolete		obsolete
 ./usr/sbin/named-checkconf			base-bind-bin
 ./usr/sbin/named-checkzone			base-bind-bin
+./usr/sbin/named-compilezone			base-bind-bin
 ./usr/sbin/named.reload				base-obsolete		obsolete
 ./usr/sbin/named.restart			base-obsolete		obsolete
 ./usr/sbin/ncdcs				base-sysutil-root
