@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.67 2008/06/10 22:53:08 cegger Exp $	*/
+/*	$NetBSD: midi.c,v 1.68 2008/06/12 22:29:41 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.67 2008/06/10 22:53:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.68 2008/06/12 22:29:41 cegger Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -290,7 +290,7 @@ midi_unit_count(void)
 {
 	int i;
 	for ( i = 0; i < midi_cd.cd_ndevs; ++i )
-	        if ( NULL == midi_cd.cd_devs[i] )
+	        if ( NULL == device_lookup(&midi_cd, i) )
 		        break;
         return i;
 }
