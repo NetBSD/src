@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.119 2008/05/04 13:19:17 martin Exp $ */
+/* $NetBSD: wskbd.c,v 1.120 2008/06/12 23:04:37 cegger Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.119 2008/05/04 13:19:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.120 2008/06/12 23:04:37 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1284,7 +1284,8 @@ wskbd_pickfree(void)
 	struct wskbd_softc *sc;
 
 	for (i = 0; i < wskbd_cd.cd_ndevs; i++) {
-		if ((sc = device_private(wskbd_cd.cd_devs[i])) == NULL)
+		sc = device_lookup_private(&wskbd_cd, i);
+		if (sc == NULL)
 			continue;
 		if (sc->sc_base.me_dispdv == NULL)
 			return (i);
