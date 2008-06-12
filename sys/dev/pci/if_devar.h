@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.49 2008/05/22 01:27:32 dyoung Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.50 2008/06/12 22:44:47 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -974,7 +974,7 @@ NETISR_SET(NETISR_DE, tulip_softintr);
 #define	ifnet_ret_t void
 typedef u_long ioctl_cmd_t;
 extern struct cfdriver de_cd;
-#define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) de_cd.cd_devs[unit])
+#define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *)device_lookup_private(&de_cd,unit))
 #define TULIP_IFP_TO_SOFTC(ifp)         ((tulip_softc_t *)((ifp)->if_softc))
 #define	tulip_unit			tulip_dev.dv_unit
 #define	tulip_xname			tulip_if.if_xname

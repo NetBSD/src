@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.49 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.50 2008/06/12 22:44:47 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.49 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.50 2008/06/12 22:44:47 cegger Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -125,11 +125,11 @@ static void pdq_pci_shutdown(int howto, void *sc);
 
 #elif defined(__bsdi__)
 extern struct cfdriver fpacd;
-#define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpacd.cd_devs[unit])
+#define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)device_lookup_private(&fpa_cd, unit))
 
 #elif defined(__NetBSD__)
 extern struct cfdriver fpa_cd;
-#define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpa_cd.cd_devs[unit])
+#define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)device_lookup_private(&fpa_cd, unit))
 #define	pdq_pci_ifwatchdog		NULL
 #endif
 
