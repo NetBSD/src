@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.121 2008/06/11 16:17:01 cegger Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.122 2008/06/12 23:04:37 cegger Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.121 2008/06/11 16:17:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.122 2008/06/12 23:04:37 cegger Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -662,7 +662,7 @@ wsdisplay_handlex(int resume)
 	device_t dv;
 
 	for (i = 0; i < wsdisplay_cd.cd_ndevs; i++) {
-		dv = wsdisplay_cd.cd_devs[i];
+		dv = device_lookup(&wsdisplay_cd, i);
 		if (!dv)
 			continue;
 		res = wsdisplay_dosync(device_private(dv), resume);
