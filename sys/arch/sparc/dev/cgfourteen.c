@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.53 2008/05/17 00:45:38 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.54 2008/06/13 13:10:18 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -394,13 +394,9 @@ int
 cgfourteenopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cgfourteen_softc *sc;
-	int unit;
 	int s, oldopens;
 
-	unit = minor(dev);
-	if (unit >= cgfourteen_cd.cd_ndevs)
-		return(ENXIO);
-	sc = device_private(cgfourteen_cd.cd_devs[minor(dev)]);
+	sc = device_lookup_private(&cgfourteen_cd, minor(dev));
 	if (sc == NULL)
 		return(ENXIO);
 	s = splhigh();
@@ -418,7 +414,7 @@ int
 cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct cgfourteen_softc *sc = 
-	    device_private(cgfourteen_cd.cd_devs[minor(dev)]);
+	    device_lookup_private(&cgfourteen_cd, minor(dev));
 	int s, opens;
 
 	s = splhigh();
@@ -440,7 +436,7 @@ int
 cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cgfourteen_softc *sc =
-	    device_private(cgfourteen_cd.cd_devs[minor(dev)]);
+	    device_lookup_private(&cgfourteen_cd, minor(dev));
 	struct fbgattr *fba;
 	int error;
 
@@ -544,7 +540,7 @@ paddr_t
 cgfourteenmmap(dev_t dev, off_t off, int prot)
 {
 	struct cgfourteen_softc *sc =
-	    device_private(cgfourteen_cd.cd_devs[minor(dev)]);
+	    device_lookup_private(&cgfourteen_cd, minor(dev));
 
 	if (off & PGOFSET)
 		panic("cgfourteenmmap");
