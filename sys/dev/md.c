@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.54 2008/06/13 19:55:26 cegger Exp $	*/
+/*	$NetBSD: md.c,v 1.55 2008/06/13 20:05:06 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.54 2008/06/13 19:55:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.55 2008/06/13 20:05:06 cegger Exp $");
 
 #include "opt_md.h"
 
@@ -172,6 +172,9 @@ md_attach(device_t parent, device_t self,
 	 */
 	disk_init(&sc->sc_dkdev, device_xname(self), &mddkdriver);
 	disk_attach(&sc->sc_dkdev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /*
