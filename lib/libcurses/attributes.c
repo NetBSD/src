@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.18 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: attributes.c,v 1.19 2008/06/13 03:15:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.18 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.19 2008/06/13 03:15:50 yamt Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -352,11 +352,11 @@ getattrs(WINDOW *win)
 chtype
 termattrs(void)
 {
+	chtype ch = 0;
+
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "termattrs\n");
 #endif
-	chtype ch = 0;
-
 	if (__tc_me != NULL) {
 		if (__tc_mb != NULL)
 			ch |= __BLINK;
@@ -388,11 +388,11 @@ termattrs(void)
 attr_t
 term_attrs(void)
 {
+	attr_t attr = 0;
+
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "term_attrs\n");
 #endif
-	attr_t attr = 0;
-
 	if (__tc_me != NULL) {
 		if (__tc_mb != NULL)
 			attr |= __BLINK;
