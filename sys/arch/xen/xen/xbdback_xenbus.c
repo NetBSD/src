@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.16 2008/03/22 14:21:56 ad Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.17 2008/06/13 22:59:03 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.16 2008/03/22 14:21:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.17 2008/06/13 22:59:03 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -306,7 +306,7 @@ xbdback_xenbus_create(struct xenbus_device *xbusd)
 
 	if ((error = xenbus_read_ul(NULL, xbusd->xbusd_path,
 	    "frontend-id", &domid, 10)) != 0) {
-		aprint_error("xbdback: can' read %s/frontend-id: %d\n",
+		aprint_error("xbdback: can't read %s/frontend-id: %d\n",
 		    xbusd->xbusd_path, error);
 		return error;
 	}
