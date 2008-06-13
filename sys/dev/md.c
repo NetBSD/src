@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.53 2008/06/11 10:38:44 drochner Exp $	*/
+/*	$NetBSD: md.c,v 1.54 2008/06/13 19:55:26 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.53 2008/06/11 10:38:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.54 2008/06/13 19:55:26 cegger Exp $");
 
 #include "opt_md.h"
 
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: md.c,v 1.53 2008/06/11 10:38:44 drochner Exp $");
 /* autoconfig stuff... */
 
 struct md_softc {
-	struct device sc_dev;	/* REQUIRED first entry */
+	device_t sc_dev;	/* REQUIRED first entry */
 	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct md_conf sc_md;
 	struct bufq_state *sc_buflist;
@@ -94,7 +94,7 @@ struct md_softc {
 
 void	mdattach(int);
 
-static void	md_attach(struct device *, struct device *, void *);
+static void	md_attach(device_t, device_t, void *);
 
 static dev_type_open(mdopen);
 static dev_type_close(mdclose);
@@ -116,7 +116,7 @@ const struct cdevsw md_cdevsw = {
 static struct dkdriver mddkdriver = { mdstrategy, NULL };
 
 extern struct cfdriver md_cd;
-CFATTACH_DECL(md, sizeof(struct md_softc),
+CFATTACH_DECL_NEW(md, sizeof(struct md_softc),
 	0, md_attach, 0, NULL);
 
 /*
@@ -125,9 +125,8 @@ CFATTACH_DECL(md, sizeof(struct md_softc),
 void
 mdattach(int n)
 {
-	struct md_softc *sc;
 	int i;
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	if (config_cfattach_attach("md", &md_ca)) {
 		printf("md: cfattach_attach failed\n");
@@ -145,16 +144,17 @@ mdattach(int n)
 		cf->cf_atname = "md";
 		cf->cf_unit = i;
 		cf->cf_fstate = FSTATE_NOTFOUND;
-		sc = (struct md_softc *)config_attach_pseudo(cf);
+		(void)config_attach_pseudo(cf);
 	}
 }
 
 static void
-md_attach(struct device *parent, struct device *self,
+md_attach(device_t parent, device_t self,
     void *aux)
 {
-	struct md_softc *sc = (struct md_softc *)self;
+	struct md_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	bufq_alloc(&sc->sc_buflist, "fcfs", 0);
 
 	/* XXX - Could accept aux info here to set the config. */
@@ -164,13 +164,13 @@ md_attach(struct device *parent, struct device *self,
 	 * All it would need to do is setup the md_conf struct.
 	 * See sys/dev/md_root.c for an example.
 	 */
-	md_attach_hook(device_unit(&sc->sc_dev), &sc->sc_md);
+	md_attach_hook(device_unit(self), &sc->sc_md);
 #endif
 
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&sc->sc_dkdev, device_xname(&sc->sc_dev), &mddkdriver);
+	disk_init(&sc->sc_dkdev, device_xname(self), &mddkdriver);
 	disk_attach(&sc->sc_dkdev);
 }
 
@@ -191,11 +191,9 @@ static int	md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
 static int
 mdsize(dev_t dev)
 {
-	int unit;
 	struct md_softc *sc;
 
-	unit = MD_UNIT(dev);
-	sc = device_lookup_private(&md_cd, unit);
+	sc = device_lookup_private(&md_cd, MD_UNIT(dev));
 	if (sc == NULL)
 		return 0;
 
@@ -247,12 +245,9 @@ mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 mdread(dev_t dev, struct uio *uio, int flags)
 {
-	int unit;
 	struct md_softc *sc;
 
-	unit = MD_UNIT(dev);
-
-	sc = device_lookup_private(&md_cd, unit);
+	sc = device_lookup_private(&md_cd, MD_UNIT(dev));
 
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
@@ -263,12 +258,9 @@ mdread(dev_t dev, struct uio *uio, int flags)
 static int
 mdwrite(dev_t dev, struct uio *uio, int flags)
 {
-	int unit;
 	struct md_softc *sc;
 
-	unit = MD_UNIT(dev);
-
-	sc = device_lookup_private(&md_cd, unit);
+	sc = device_lookup_private(&md_cd, MD_UNIT(dev));
 
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
@@ -283,13 +275,11 @@ mdwrite(dev_t dev, struct uio *uio, int flags)
 static void
 mdstrategy(struct buf *bp)
 {
-	int unit;
 	struct md_softc	*sc;
 	void *	addr;
 	size_t off, xfer;
 
-	unit = MD_UNIT(bp->b_dev);
-	sc = device_lookup_private(&md_cd, unit);
+	sc = device_lookup_private(&md_cd, MD_UNIT(bp->b_dev));
 
 	if (sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
@@ -341,12 +331,10 @@ mdstrategy(struct buf *bp)
 static int
 mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	int unit;
 	struct md_softc *sc;
 	struct md_conf *umd;
 
-	unit = MD_UNIT(dev);
-	sc = device_lookup_private(&md_cd, unit);
+	sc = device_lookup_private(&md_cd, MD_UNIT(dev));
 
 	/* If this is not the raw partition, punt! */
 	if (DISKPART(dev) != RAW_PART)
