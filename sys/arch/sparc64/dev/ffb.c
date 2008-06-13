@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.33 2008/04/05 13:40:05 cegger Exp $	*/
+/*	$NetBSD: ffb.c,v 1.34 2008/06/13 13:10:49 cegger Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.33 2008/04/05 13:40:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.34 2008/06/13 13:10:49 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -649,10 +649,9 @@ int
 ffbfb_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ffb_softc *sc;
-	int unit = minor(dev);
 
-	sc = ffb_cd.cd_devs[unit];
-	if (unit >= ffb_cd.cd_ndevs || ffb_cd.cd_devs[unit] == NULL)
+	sc = device_lookup_private(&ffb_cd, minor(dev));
+	if (sc == NULL)
 		return ENXIO;
 		
 	sc->sc_locked = 1;
@@ -662,7 +661,7 @@ ffbfb_open(dev_t dev, int flags, int mode, struct lwp *l)
 int
 ffbfb_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
+	struct ffb_softc *sc = device_lookup_private(&ffb_cd, minor(dev));
 	struct vcons_screen *ms = sc->vd.active;
 	
 	sc->sc_locked = 0;
@@ -679,7 +678,7 @@ ffbfb_close(dev_t dev, int flags, int mode, struct lwp *l)
 int
 ffbfb_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
+	struct ffb_softc *sc = device_lookup_private(&ffb_cd, minor(dev));
 
 	return ffb_ioctl(&sc->vd, NULL, cmd, data, flags, l);
 }
@@ -687,7 +686,7 @@ ffbfb_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 paddr_t
 ffbfb_mmap(dev_t dev, off_t off, int prot)
 {
-	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
+	struct ffb_softc *sc = device_lookup_private(&ffb_cd, minor(dev));
 	uint64_t size;
 	int i, reg;
 	off_t o;
