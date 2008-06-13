@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.33 2007/12/03 15:34:25 ad Exp $	*/
+/*	$NetBSD: kbd.c,v 1.34 2008/06/13 13:57:58 cegger Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33 2007/12/03 15:34:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.34 2008/06/13 13:57:58 cegger Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -176,11 +176,8 @@ int
 kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kbd_softc *k;
-	int unit = minor(dev);
 
-	if (unit >= kbd_cd.cd_ndevs)
-		return (ENXIO);
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = device_lookup_private(&kbd_cd, minor(dev));
 	if (k == NULL)
 		return (ENXIO);
 
@@ -195,7 +192,7 @@ kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+	struct kbd_softc *k = device_lookup_private(&kbd_cd, minor(dev));
 
 	/* Turn off event mode, dump the queue */
 	k->sc_event_mode = 0;
@@ -209,7 +206,7 @@ kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 int
 kbdread(dev_t dev, struct uio *uio, int flags)
 {
-	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+	struct kbd_softc *k = device_lookup_private(&kbd_cd, minor(dev));
 
 	return ev_read(&k->sc_events, uio, flags);
 }
@@ -224,7 +221,7 @@ void opm_bell_off(void);
 int
 kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+	struct kbd_softc *k = device_lookup_private(&kbd_cd, minor(dev));
 	int cmd_data;
 
 	switch (cmd) {
@@ -298,7 +295,7 @@ kbdpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct kbd_softc *k;
 
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = device_lookup_private(&kbd_cd, minor(dev));
 	return (ev_poll(&k->sc_events, events, l));
 }
 
@@ -307,7 +304,7 @@ kbdkqfilter(dev_t dev, struct knote *kn)
 {
 	struct kbd_softc *k;
 
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = device_lookup_private(&kbd_cd, minor(dev));
 	return (ev_kqfilter(&k->sc_events, kn));
 }
 
