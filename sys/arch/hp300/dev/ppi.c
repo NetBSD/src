@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.40 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: ppi.c,v 1.41 2008/06/13 09:41:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.40 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.41 2008/06/13 09:41:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,12 +195,13 @@ ppinoop(void *arg)
 int
 ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	int unit = UNIT(dev);
 	struct ppi_softc *sc;
 
-	if (unit >= ppi_cd.cd_ndevs ||
-	    (sc = device_private(ppi_cd.cd_devs[unit])) == NULL ||
-	    (sc->sc_flags & PPIF_ALIVE) == 0)
+	sc = device_lookup_private(&ppi_cd,UNIT(dev));
+	if (sc == NULL)
+		return ENXIO;
+
+	if (sc->sc_flags & PPIF_ALIVE) == 0)
 		return ENXIO;
 
 #ifdef DEBUG
@@ -221,8 +222,7 @@ ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 static int
 ppiclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	int unit = UNIT(dev);
-	struct ppi_softc *sc = device_private(ppi_cd.cd_devs[unit]);
+	struct ppi_softc *sc = device_lookup_private(&ppi_cd, UNIT(dev));
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
@@ -284,8 +284,7 @@ ppiwrite(dev_t dev, struct uio *uio, int flags)
 static int
 ppirw(dev_t dev, struct uio *uio)
 {
-	int unit = UNIT(dev);
-	struct ppi_softc *sc = device_private(ppi_cd.cd_devs[unit]);
+	struct ppi_softc *sc = device_lookup_private(&ppi_cd, UNIT(dev));
 	int s, s2, len, cnt;
 	char *cp;
 	int error = 0, gotdata = 0;
@@ -443,7 +442,7 @@ again:
 static int
 ppiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct ppi_softc *sc = device_private(ppi_cd.cd_devs[UNIT(dev)]);
+	struct ppi_softc *sc = device_lookup_private(&ppi_cd,UNIT(dev));
 	struct ppiparam *pp, *upp;
 	int error = 0;
 

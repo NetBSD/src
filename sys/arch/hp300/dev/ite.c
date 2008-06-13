@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.81 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: ite.c,v 1.82 2008/06/13 09:41:15 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.81 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82 2008/06/13 09:41:15 cegger Exp $");
 
 #include "hil.h"
 
@@ -385,8 +385,8 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	int error;
 	int first = 0;
 
-	if (unit >= ite_cd.cd_ndevs ||
-	    (sc = device_private(ite_cd.cd_devs[unit])) == NULL)
+	sc = device_lookup_private(&ite_cd, unit);
+	if (sc == NULL)
 		return ENXIO;
 	ip = sc->sc_data;
 
@@ -429,7 +429,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 static int
 iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
+	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 
@@ -447,7 +447,7 @@ iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 static int
 iteread(dev_t dev, struct uio *uio, int flag)
 {
-	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
+	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
 	struct tty *tp = sc->sc_data->tty;
 
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
@@ -456,7 +456,7 @@ iteread(dev_t dev, struct uio *uio, int flag)
 int
 itewrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
+	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
 	struct tty *tp = sc->sc_data->tty;
 
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
@@ -465,7 +465,7 @@ itewrite(dev_t dev, struct uio *uio, int flag)
 int
 itepoll(dev_t dev, int events, struct lwp *l)
 {
-	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
+	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
 	struct tty *tp = sc->sc_data->tty;
 
 	return (*tp->t_linesw->l_poll)(tp, events, l);
@@ -474,7 +474,7 @@ itepoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 itetty(dev_t dev)
 {
-	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
+	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
 
 	return sc->sc_data->tty;
 }
@@ -482,7 +482,7 @@ itetty(dev_t dev)
 int
 iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
+	struct ite_softc *sc = device_lookup_private(&ite_cd,ITEUNIT(dev));
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 	int error;
@@ -501,7 +501,7 @@ itestart(struct tty *tp)
 	struct ite_softc *sc;
 	struct ite_data *ip;
 
-	sc = device_private(ite_cd.cd_devs[ITEUNIT(tp->t_dev)]);
+	sc = device_lookup_private(&ite_cd,ITEUNIT(tp->t_dev));
 	ip = sc->sc_data;
 
 	s = splkbd();
