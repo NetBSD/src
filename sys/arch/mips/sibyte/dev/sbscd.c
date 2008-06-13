@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.12 2005/12/11 12:18:13 christos Exp $ */
+/* $NetBSD: sbscd.c,v 1.13 2008/06/13 11:57:08 cegger Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.12 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.13 2008/06/13 11:57:08 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,8 +66,7 @@ static const struct sbscd_attach_locs sb1250_sbscd_devs[] = {
 	{ 0x1FFA0, {-1,-1},	SBSCD_DEVTYPE_JTAGCONS,		},
 	/* XXX others */
 };
-static const int sb1250_sbscd_dev_count =
-    sizeof sb1250_sbscd_devs / sizeof sb1250_sbscd_devs[0];
+static const int sb1250_sbscd_dev_count = __array_count(sb1250_sbscd_devs);
 
 static int
 sbscd_match(struct device *parent, struct cfdata *match, void *aux)
