@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.23 2007/11/19 18:51:40 ad Exp $	*/
+/*	$NetBSD: pdc.c,v 1.24 2008/06/13 09:41:44 cegger Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.23 2007/11/19 18:51:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.24 2008/06/13 09:41:44 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,13 +179,13 @@ pdcattach(struct device *parent, struct device *self, void *aux)
 int
 pdcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = minor(dev);
 	struct pdc_softc *sc;
 	struct tty *tp;
 	int s;
 	int error = 0, setuptimeout;
 
-	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup_private(&pdc_cd, minor(dev));
+	if (sc == NULL)
 		return ENXIO;
 
 	s = spltty();
@@ -231,11 +231,11 @@ pdcopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 pdcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = minor(dev);
 	struct tty *tp;
 	struct pdc_softc *sc;
 
-	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup_private(&pdc_cd, minor(dev);
+	if (sc == NULL)
 		return ENXIO;
 
 	tp = sc->sc_tty;
@@ -248,11 +248,11 @@ pdcclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 pdcread(dev_t dev, struct uio *uio, int flag)
 {
-	int unit = minor(dev);
 	struct tty *tp;
 	struct pdc_softc *sc;
 
-	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+	sc = device_looup_private(&pdc_cd, minor(dev));
+	if (sc == NULL)
 		return ENXIO;
 
 	tp = sc->sc_tty;
@@ -262,11 +262,11 @@ pdcread(dev_t dev, struct uio *uio, int flag)
 int
 pdcwrite(dev_t dev, struct uio *uio, int flag)
 {
-	int unit = minor(dev);
 	struct tty *tp;
 	struct pdc_softc *sc;
 
-	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup_private(&pdc_cd, minor(dev));
+	if (sc == NULL)
 		return ENXIO;
 
 	tp = sc->sc_tty;
@@ -276,7 +276,7 @@ pdcwrite(dev_t dev, struct uio *uio, int flag)
 int
 pdcpoll(dev_t dev, int events, struct lwp *l)
 {  
-	struct pdc_softc *sc = pdc_cd.cd_devs[minor(dev)];
+	struct pdc_softc *sc = device_lookup_private(&pdc_cd,minor(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -285,12 +285,12 @@ pdcpoll(dev_t dev, int events, struct lwp *l)
 int
 pdcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	int unit = minor(dev);
 	int error;
 	struct tty *tp;
 	struct pdc_softc *sc;
 
-	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup_private(&pdc_cd, minor(dev));
+	if (sc == NULL)
 		return ENXIO;
 
 	tp = sc->sc_tty;
@@ -359,10 +359,10 @@ pdctimeout(void *v)
 struct tty *
 pdctty(dev_t dev)
 {
-	int unit = minor(dev);
 	struct pdc_softc *sc;
 
-	if (unit >= pdc_cd.cd_ndevs || (sc = pdc_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup_private(&pdc_cd, minor(dev));
+	if (sc == NULL)
 		return NULL;
 
 	return sc->sc_tty;
