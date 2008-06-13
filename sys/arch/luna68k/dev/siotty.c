@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.22 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: siotty.c,v 1.23 2008/06/13 09:58:06 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.22 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.23 2008/06/13 09:58:06 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -155,8 +155,7 @@ siotty_attach(parent, self, aux)
 /*--------------------  low level routine --------------------*/
 
 static void
-siottyintr(chan)
-	int chan;
+siottyintr(int chan)
 {
 	struct siotty_softc *sc;
 	struct sioreg *sio;
@@ -164,9 +163,10 @@ siottyintr(chan)
 	unsigned int code;
 	int rr;
 
-	if (chan >= siotty_cd.cd_ndevs)
+	sc = device_lookup_private(&siotty_cd, chan);
+	if (sc == NULL)
 		return;
-	sc = siotty_cd.cd_devs[chan];
+
 	tp = sc->sc_tty;
 	sio = sc->sc_ctl;
 	rr = getsiocsr(sio);
@@ -201,10 +201,9 @@ siottyintr(chan)
 }
 
 static void
-siostart(tp)
-	struct tty *tp;
+siostart(struct tty *tp)
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(tp->t_dev)];
+	struct siotty_softc *sc = device_lookup_private(&siotty_cd,minor(tp->t_dev));
 	int s, c;
  
 	s = spltty();
@@ -240,11 +239,9 @@ siostop(tp, flag)
 }
 
 static int
-sioparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+sioparam(struct tty *tp, struct termios *t)
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(tp->t_dev)];
+	struct siotty_softc *sc = device_lookup_private(&siotty_cd,minor(tp->t_dev));
 	int wr4, s;
 
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
@@ -349,16 +346,14 @@ siomctl(sc, control, op)
 /*--------------------  cdevsw[] interface --------------------*/
 
 int
-sioopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+sioopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct siotty_softc *sc;
 	struct tty *tp;
 	int error;
 
-	if ((sc = siotty_cd.cd_devs[minor(dev)]) == NULL)
+	sc = device_lookup_private(&siotty_cd, minor(dev));
+	if (sc == NULL)
 		return ENXIO;
 	if ((tp = sc->sc_tty) == NULL) {
 		tp = sc->sc_tty = ttymalloc();
@@ -405,12 +400,9 @@ sioopen(dev, flag, mode, l)
 }
  
 int
-sioclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+sioclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = device_lookup_private(&siotty_cd,minor(dev));
 	struct tty *tp = sc->sc_tty;
 	int s;
 
@@ -431,50 +423,36 @@ sioclose(dev, flag, mode, l)
 }
  
 int
-sioread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+sioread(dev_t dev, struct uio *uio, int flag)
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = device_lookup_private(&siotty_cd,minor(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
  
 int
-siowrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+siowrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = device_lookup_private(&siotty_cd,minor(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
-siopoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+siopoll(dev_t dev, int events, struct lwp *l)
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = device_lookup_private(&siotty_cd,minor(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-sioioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+sioioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = device_lookup_private(&siotty_cd,minor(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -526,10 +504,9 @@ sioioctl(dev, cmd, data, flag, l)
 
 /* ARSGUSED */
 struct tty *
-siotty(dev)
-	dev_t dev;
+siotty(dev_t dev)
 {
-	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct siotty_softc *sc = device_lookup_private(&siotty_cd,minor(dev));
  
 	return sc->sc_tty;
 }
@@ -537,9 +514,7 @@ siotty(dev)
 /*--------------------  miscelleneous routine --------------------*/
 
 /* EXPORT */ void
-setsioreg(sio, regno, val)
-	struct sioreg *sio;
-	int regno, val;
+setsioreg(struct sioreg *sio, int regno, int val)
 {
 	if (regno != 0)
 		sio->sio_cmd = regno;	/* DELAY(); */
@@ -547,8 +522,7 @@ setsioreg(sio, regno, val)
 }
 
 /* EXPORT */ int
-getsiocsr(sio)
-	struct sioreg *sio;
+getsiocsr(struct sioreg *sio)
 {
 	int val;
 
