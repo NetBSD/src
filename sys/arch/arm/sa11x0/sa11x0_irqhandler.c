@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.15 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.16 2008/06/13 13:24:10 rafal Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.15 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.16 2008/06/13 13:24:10 rafal Exp $");
 
 #include "opt_irqstats.h"
 
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.15 2008/04/28 20:23:14 marti
 #include <sys/malloc.h>
 #include <uvm/uvm_extern.h>
 
+#include <arm/arm32/machdep.h>
 #include <arm/sa11x0/sa11x0_reg.h>
 #include <arm/sa11x0/sa11x0_var.h>
 
@@ -91,7 +92,6 @@ irqhandler_t *irqhandlers[NIRQS];
 u_int actual_mask;
 u_int irqmasks[NIPL];
 
-extern void set_spl_masks(void);
 static int fakeintr(void *);
 #ifdef INTR_DEBUG
 static int dumpirqhandlers(void);
@@ -113,7 +113,7 @@ void stray_irqhandler(void *);
 void
 intr_calculatemasks(void)
 {
-	int irq, ipl;
+	int i, irq, ipl;
 	struct irqhandler *q;
 	int intrlevel[ICU_LEN];
 
@@ -131,15 +131,23 @@ intr_calculatemasks(void)
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << ipl))
 				irqs |= 1 << irq;
-		irqmasks[ipl] = irqs;
+
+		/* First enable the interrupt(s) at all lower level(s) */
+		for(i = 0; i < ipl; ++i)
+			irqmasks[i] |= irqs;
+
+		/* Then disable the interrupt(s) at all higher level(s) */
+		for( ; i < NIPL-1; ++i)
+			irqmasks[i] &= ~irqs;
+
 	}
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	for (ipl = IPL_NONE; ipl < NIPL - 1; ipl++)
-		irqmasks[ipl + 1] |= irqmasks[ipl];
+	for (ipl = 0; ipl < NIPL - 1; ipl++)
+		irqmasks[ipl + 1] &= irqmasks[ipl];
 }
 
 
@@ -217,7 +225,6 @@ sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
 	return ih;
 }
 
-#ifdef hpcarm
 /*
  * Deregister an interrupt handler.
  */
@@ -255,13 +262,12 @@ sa11x0_intr_disestablish(sa11x0_chipset_tag_t ic, void *arg)
 	SetCPSR(I32_bit, saved_cpsr & I32_bit);
 
 }
-#endif
 
 void
 stray_irqhandler(void *p)
 {
-
-	printf("stray interrupt\n");
+	int irq = (int)p;
+	printf("stray interrupt %d\n", irq);
 }
 
 int
