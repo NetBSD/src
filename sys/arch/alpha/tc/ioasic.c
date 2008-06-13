@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.38 2008/04/28 20:23:12 martin Exp $ */
+/* $NetBSD: ioasic.c,v 1.39 2008/06/13 05:36:50 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.38 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.39 2008/06/13 05:36:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -215,13 +215,10 @@ ioasicattach(parent, self, aux)
 }
 
 void
-ioasic_intr_establish(ioa, cookie, level, func, arg)
-	struct device *ioa;
-	void *cookie, *arg;
-	tc_intrlevel_t level;
-	int (*func) __P((void *));
+ioasic_intr_establish(device_t ioa, void *cookie, tc_intrlevel_t level,
+		int (*func)(void *), void *arg)
 {
-	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
+	struct ioasic_softc *sc = device_lookup_private(&ioasic_cd,0);
 	u_long dev, i, imsk;
 
 	dev = (u_long)cookie;
@@ -248,11 +245,9 @@ ioasic_intr_establish(ioa, cookie, level, func, arg)
 }
 
 void
-ioasic_intr_disestablish(ioa, cookie)
-	struct device *ioa;
-	void *cookie;
+ioasic_intr_disestablish(device_t ioa, void *cookie)
 {
-	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
+	struct ioasic_softc *sc = device_lookup_private(&ioasic_cd,0);
 	u_long dev, i, imsk;
 
 	dev = (u_long)cookie;
