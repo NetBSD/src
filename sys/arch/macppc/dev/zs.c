@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.46 2008/03/29 19:15:34 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.47 2008/06/13 11:54:31 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.46 2008/03/29 19:15:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.47 2008/06/13 11:54:31 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -467,9 +467,8 @@ zs_txdma_int(void *arg)
 	int ch = (int)arg;
 	struct zsc_softc *zsc;
 	struct zs_chanstate *cs;
-	int unit = 0;			/* XXX */
 
-	zsc = device_priavet(zsc_cd.cd_devs[unit]);
+	zsc = device_lookup_private(&zsc_cd, ch);
 	if (zsc == NULL)
 		panic("zs_txdma_int");
 
@@ -489,7 +488,7 @@ zs_dma_setup(struct zs_chanstate *cs, void *pa, int len)
 	dbdma_command_t *cmdp;
 	int ch = cs->cs_channel;
 
-	zsc = device_private(zsc_cd.cd_devs[ch]);
+	zsc = device_lookup_private(&zsc_cd, ch);
 	cmdp = zsc->zsc_txdmacmd[ch];
 
 	DBDMA_BUILD(cmdp, DBDMA_CMD_OUT_LAST, 0, len, kvtop(pa),
