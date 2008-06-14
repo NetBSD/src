@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.35 2008/06/13 13:57:58 cegger Exp $	*/
+/*	$NetBSD: grf.c,v 1.36 2008/06/14 13:36:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.35 2008/06/13 13:57:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.36 2008/06/14 13:36:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ grfopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (gp == NULL)
 		return ENXIO;
 
-	if (gp->g_flags & GF_ALIVE) == 0)
+	if ((gp->g_flags & GF_ALIVE) == 0)
 		return ENXIO;
 
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))

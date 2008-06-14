@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.81 2008/06/13 13:57:58 cegger Exp $	*/
+/*	$NetBSD: fd.c,v 1.82 2008/06/14 13:36:24 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.81 2008/06/13 13:57:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.82 2008/06/14 13:36:24 isaki Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -619,7 +619,6 @@ void
 fdstrategy(struct buf *bp)
 {
 	struct fd_softc *fd;
-	int unit = FDUNIT(bp->b_dev);
 	int sz;
 	int s;
 
@@ -850,11 +849,13 @@ out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, u_char x)
 int
 fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	int unit;
 	struct fd_softc *fd;
 	struct fd_type *type;
 	struct fdc_softc *fdc;
 
-	fd = device_lookup_private(&fd_cd, FDUNIT(dev));;
+	unit = FDUNIT(dev);
+	fd = device_lookup_private(&fd_cd, unit);
 	if (fd == NULL)
 		return ENXIO;
 	type = fd_dev_to_type(fd, dev);
