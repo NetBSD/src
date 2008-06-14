@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2008/05/22 20:56:24 rjs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2008/06/14 12:01:28 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2008/05/22 20:56:24 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2008/06/14 12:01:28 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -69,6 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2008/05/22 20:56:24 rjs Exp $");
 
 #include <powerpc/oea/bat.h>
 #include <arch/powerpc/pic/picvar.h>
+#include <arch/powerpc/include/pio.h>
+#include <dev/pci/pcivar.h>
+#include <dev/ic/ibm82660reg.h>
 
 #include <dev/cons.h>
 
@@ -87,29 +90,49 @@ void
 initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 {
 
+	uint32_t sa, ea, banks;
+	u_long memsize = 0;
+	pcitag_t tag;
+
 	/*
-	 * Set memory region
+	 * Set memory region by reading the memory size from the PCI
+	 * host bridge.
 	 */
-	{
-		u_long memsize;
 
-#if 0
-		/* Get the memory size from the PCI host bridge */
+	tag = genppc_pci_indirect_make_tag(NULL, 0, 0, 0);
 
-		pci_read_config_32(0, 0x90, &ea);
-		if(ea & 0xff00)
-		    memsize = (((ea >> 8) & 0xff) + 1) << 20;
-		else
-		    memsize = ((ea & 0xff) + 1) << 20;
-#else
-		memsize = 64 * 1024 * 1024;         /* 64MB hardcoded for now */
-#endif
+	out32rb(PCI_MODE1_ADDRESS_REG, tag | IBM_82660_MEM_BANK0_START);
+	sa = in32rb(PCI_MODE1_DATA_REG);
 
-		physmemr[0].start = 0;
-		physmemr[0].size = memsize & ~PGOFSET;
-		availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
-		availmemr[0].size = memsize - availmemr[0].start;
-	}
+	out32rb(PCI_MODE1_ADDRESS_REG, tag | IBM_82660_MEM_BANK0_END);
+	ea = in32rb(PCI_MODE1_DATA_REG);
+
+	/* Which memory banks are enabled? */
+	out32rb(PCI_MODE1_ADDRESS_REG, tag | IBM_82660_MEM_BANK_ENABLE);
+	banks = in32rb(PCI_MODE1_DATA_REG) & 0xFF;
+
+	/* Reset the register for the next call. */
+	out32rb(PCI_MODE1_ADDRESS_REG, 0);
+
+	if (banks & IBM_82660_MEM_BANK0_ENABLED)
+		memsize += IBM_82660_BANK0_ADDR(ea) - IBM_82660_BANK0_ADDR(sa) + 1;
+
+	if (banks & IBM_82660_MEM_BANK1_ENABLED)
+		memsize += IBM_82660_BANK1_ADDR(ea) - IBM_82660_BANK1_ADDR(sa) + 1;
+
+	if (banks & IBM_82660_MEM_BANK2_ENABLED)
+		memsize += IBM_82660_BANK2_ADDR(ea) - IBM_82660_BANK2_ADDR(sa) + 1;
+
+	if (banks & IBM_82660_MEM_BANK3_ENABLED)
+		memsize += IBM_82660_BANK3_ADDR(ea) - IBM_82660_BANK3_ADDR(sa) + 1;
+
+	memsize <<= 20;
+
+	physmemr[0].start = 0;
+	physmemr[0].size = memsize & ~PGOFSET;
+	availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
+	availmemr[0].size = memsize - availmemr[0].start;
+
 	avail_end = physmemr[0].start + physmemr[0].size;    /* XXX temporary */
 
 	/*
