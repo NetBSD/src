@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.183 2008/06/14 07:52:36 cegger Exp $	*/
+/*	$NetBSD: vnd.c,v 1.184 2008/06/14 11:44:57 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.183 2008/06/14 07:52:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.184 2008/06/14 11:44:57 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -526,6 +526,37 @@ done:
 	splx(s);
 }
 
+static bool
+vnode_has_strategy(struct vnd_softc *vnd)
+{
+	return vnode_has_op(vnd->sc_vp, VOFFSET(vop_bmap)) &&
+	    vnode_has_op(vnd->sc_vp, VOFFSET(vop_strategy));
+}
+
+static bool
+vnode_strategy_probe(struct vnd_softc *vnd)
+{
+	int error;
+	daddr_t nbn;
+
+	if (!vnode_has_strategy(vnd))
+		return false;
+
+	/* Convert the first logical block number to its
+	 * physical block number.
+	 */
+	error = 0;
+	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
+	error = VOP_BMAP(vnd->sc_vp, 0, NULL, &nbn, NULL);
+	VOP_UNLOCK(vnd->sc_vp, 0);
+
+	/* Test if that worked. */
+	if (error == 0 && (long)nbn == -1)
+		return false;
+
+	return true;
+}
+
 static void
 vndthread(void *arg)
 {
@@ -533,13 +564,12 @@ vndthread(void *arg)
 	bool usestrategy;
 	int s;
 
-	/* Determine whether we can use VOP_BMAP and VOP_STRATEGY to
+	/* Determine whether we can *use* VOP_BMAP and VOP_STRATEGY to
 	 * directly access the backing vnode.  If we can, use these two
 	 * operations to avoid messing with the local buffer cache.
 	 * Otherwise fall back to regular VOP_READ/VOP_WRITE operations
 	 * which are guaranteed to work with any file system. */
-	usestrategy = vnode_has_op(vnd->sc_vp, VOFFSET(vop_bmap)) &&
-	    vnode_has_op(vnd->sc_vp, VOFFSET(vop_strategy));
+	usestrategy = vnode_strategy_probe(vnd);
 
 #ifdef DEBUG
 	if (vnddebug & VDB_INIT)
