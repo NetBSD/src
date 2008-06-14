@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.182 2008/06/10 22:53:08 cegger Exp $	*/
+/*	$NetBSD: vnd.c,v 1.183 2008/06/14 07:52:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.182 2008/06/10 22:53:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.183 2008/06/14 07:52:36 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -572,7 +572,7 @@ vndthread(void *arg)
 		flags = obp->b_flags;
 #ifdef DEBUG
 		if (vnddebug & VDB_FOLLOW)
-			printf("vndthread(%p\n", obp);
+			printf("vndthread(%p)\n", obp);
 #endif
 
 		if (vnd->sc_vp->v_mount == NULL) {
