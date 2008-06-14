@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.13 2008/06/13 13:57:58 cegger Exp $	*/
+/*	$NetBSD: bmd.c,v 1.14 2008/06/14 13:36:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.13 2008/06/13 13:57:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.14 2008/06/14 13:36:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ bmdopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 int
 bmdclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 {
-	struct bmd_softc *sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev);
+	struct bmd_softc *sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev));
 
 	DPRINTF(("%s%d\n", __func__, BMD_UNIT(dev)));
 
@@ -257,7 +257,7 @@ bmdstrategy(struct buf *bp)
 		goto done;
 	}
 
-	sc = device_lookup_private(&bmd_cd, BMD_UNIT(bp->b_dev);
+	sc = device_lookup_private(&bmd_cd, BMD_UNIT(bp->b_dev));
 	if (sc == NULL) {
 		bp->b_error = ENXIO;
 		goto done;
@@ -323,7 +323,7 @@ bmdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	DPRINTF(("%s%d %ld\n", __func__, BMD_UNIT(dev), cmd));
 
-	sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev);;
+	sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -363,7 +363,7 @@ bmdsize(dev_t dev)
 
 	DPRINTF(("%s%d ", __func__, BMD_UNIT(dev)));
 
-	sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev);
+	sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev));
 	if (sc == NULL)
 		return 0;
 
