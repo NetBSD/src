@@ -59,12 +59,6 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciconf.h>
 
-#define	PCI_MODE1_ENABLE	0x80000000UL
-#define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0xcf8)
-#define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0xcfc)
-
-#define	PCI_CBIO		0x10
-
 void
 ibmnws_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)
 {
