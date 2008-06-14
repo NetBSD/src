@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.24 2008/06/13 09:41:44 cegger Exp $	*/
+/*	$NetBSD: pdc.c,v 1.25 2008/06/14 21:27:37 mjf Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.24 2008/06/13 09:41:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.25 2008/06/14 21:27:37 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ pdcclose(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tty *tp;
 	struct pdc_softc *sc;
 
-	sc = device_lookup_private(&pdc_cd, minor(dev);
+	sc = device_lookup_private(&pdc_cd, minor(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -251,7 +251,7 @@ pdcread(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp;
 	struct pdc_softc *sc;
 
-	sc = device_looup_private(&pdc_cd, minor(dev));
+	sc = device_lookup_private(&pdc_cd, minor(dev));
 	if (sc == NULL)
 		return ENXIO;
 
