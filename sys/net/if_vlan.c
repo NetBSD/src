@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.58 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.59 2008/06/15 16:37:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.58 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.59 2008/06/15 16:37:21 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -218,8 +218,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 	int s;
 
-	ifv = malloc(sizeof(struct ifvlan), M_DEVBUF, M_WAITOK);
-	memset(ifv, 0, sizeof(struct ifvlan));
+	ifv = malloc(sizeof(struct ifvlan), M_DEVBUF, M_WAITOK|M_ZERO);
 	ifp = &ifv->ifv_if;
 	LIST_INIT(&ifv->ifv_mc_listhead);
 
@@ -227,8 +226,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	LIST_INSERT_HEAD(&ifv_list, ifv, ifv_list);
 	splx(s);
 
-	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", ifc->ifc_name,
-	    unit);
+	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = ifv;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = vlan_start;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.137 2008/05/13 18:09:22 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.138 2008/06/15 16:37:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -815,6 +815,8 @@ void    ether_input(struct ifnet *, struct mbuf *);
 
 int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
 
+struct ifnet *if_alloc(u_char);
+void if_initname(struct ifnet *, const char *, int);
 struct ifaddr *if_dl_create(const struct ifnet *, const struct sockaddr_dl **);
 void if_activate_sadl(struct ifnet *, struct ifaddr *,
     const struct sockaddr_dl *);
