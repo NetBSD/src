@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.42 2008/06/13 11:36:11 cegger Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.43 2008/06/15 10:46:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.42 2008/06/13 11:36:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.43 2008/06/15 10:46:14 tsutsui Exp $");
 
 #ifdef _LKM
 #define IWMCF_DRIVE 0
@@ -641,7 +641,7 @@ fdopen(dev_t dev, int flags, int devType, struct lwp *l)
 	int fdType, fdUnit;
 	int ierr, err;
 #ifndef _LKM
-	iwm_softc_t *iwm;
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 	info = NULL;		/* XXX shut up egcs */
 	fd = NULL;		/* XXX shut up gcc3 */
@@ -652,10 +652,6 @@ fdopen(dev_t dev, int flags, int devType, struct lwp *l)
 	 */
 	fdType = minor(dev) % MAXPARTITIONS;
 	fdUnit = minor(dev) / MAXPARTITIONS;
-
-#ifndef _LKM
-	iwm = device_lookup_private(&iwm_cd, fdUnit);
-#endif
 	if (TRACE_OPEN)
 		printf("iwm: Open drive %d", fdUnit);
 
@@ -779,17 +775,13 @@ fdclose(dev_t dev, int flags, int devType, struct lwp *l)
 	fd_softc_t *fd;
 	int partitionMask, fdUnit, fdType;
 #ifndef _LKM
-	iwm_softc_t *iwm;
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
 #endif
 
 	if (TRACE_CLOSE)
 		printf("iwm: Closing driver.");
 	fdUnit = minor(dev) / MAXPARTITIONS;
 	fdType = minor(dev) % MAXPARTITIONS;
-
-#ifndef _LKM
-	iwm = device_lookup_private(&iwm_cd, fdUnit);
-#endif
 	fd = iwm->fd[fdUnit];
 	/* release cylinder cache memory */
 	if (fd->cbuf != NULL)
@@ -827,7 +819,7 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	int result, fdUnit, fdType;
 	fd_softc_t *fd;
 #ifndef _LKM
-	iwm_softc_t *iwm;
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
 #endif
 
 	if (TRACE_IOCTL)
@@ -843,11 +835,6 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		}
 		return ENXIO;
 	}
-#ifndef _LKM
-	iwm = device_lookup_private(&iwm_cd, fdUnit);
-	if (iwm == NULL)
-		return ENXIO;
-#endif
 	fd = iwm->fd[fdUnit];
 	result = 0;
 
@@ -995,7 +982,7 @@ fdstrategy(struct buf *bp)
 	diskPosition_t physDiskLoc;
 	fd_softc_t *fd;
 #ifndef _LKM
-	iwm_softc_t *iwm;
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
 #endif
 
 	err = 0;
@@ -1004,9 +991,6 @@ fdstrategy(struct buf *bp)
 	fd = NULL;		/* XXX shut up gcc3 */
 
 	fdUnit = minor(bp->b_dev) / MAXPARTITIONS;
-#ifndef _LKM
-	iwm = device_lookup_private(&iwm_cd, fdUnit);
-#endif
 	if (TRACE_STRAT) {
 		printf("iwm: fdstrategy()...\n");
 		printf("     struct buf is at %p\n", bp);
