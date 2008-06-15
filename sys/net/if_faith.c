@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.42 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.43 2008/06/15 18:40:55 christos Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.42 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.43 2008/06/15 18:40:55 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -111,7 +111,7 @@ faith_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet *ifp;
 
-	ifp = if_init(IFT_FAITH);
+	ifp = if_alloc(IFT_FAITH);
 
 	if_initname(ifp, ifc->ifc_name, unit);
 
