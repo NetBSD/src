@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.187 2008/04/22 10:42:16 rmind Exp $
+#	$NetBSD: Makefile.inc,v 1.188 2008/06/15 20:36:52 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -9,6 +9,9 @@ SRCS+=	__clone.S __vfork14.S brk.S exect.S fork.S pipe.S \
 	getcontext.S \
 	ptrace.S sbrk.S shmat.S \
 	syscall.S __syscall.S __clone.S cerror.S
+
+# other sources shared with the kernel, used in syscalls
+SRCS+=	cpuset.c
 
 _LSRC+=	Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	Lint_getcontext.c \
