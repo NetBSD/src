@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.23 2008/06/15 20:32:57 christos Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.24 2008/06/15 23:29:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.23 2008/06/15 20:32:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.24 2008/06/15 23:29:09 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -298,17 +298,19 @@ gencpuset(cpuset_t **dset, const cpuset_t *sset, size_t size)
 	int error;
 
 	*dset = _cpuset_create();
-
-	if (size != _cpuset_size(*dset))
+	if (size != _cpuset_size(*dset)) {
+		error = EINVAL;
 		goto out;
+	}
 
 	error = copyin(sset, *dset, size);
 	if (error)
 		goto out;
 
-	error = EINVAL;
-	if (_cpuset_nused(*dset) != 1)
+	if (_cpuset_nused(*dset) != 1) {
+		error = EINVAL;
 		goto out;
+	}
 
 	return 0;
 out:
@@ -343,13 +345,16 @@ sys__sched_setaffinity(struct lwp *l,
 
 	/* Look for a CPU in the set */
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		if ((error = CPU_ISSET(cpu_index(ci), cpuset)) == -1) {
-			error = E2BIG;
-			goto out;
-		} else if (error)
+		error = CPU_ISSET(cpu_index(ci), cpuset);
+		if (error) {
+			if (error == -1) {
+				error = E2BIG;
+				goto out;
+			}
 			break;
+		}
 	}
-			
+
 	if (ci == NULL) {
 		/* Empty set */
 		_cpuset_unuse(cpuset, NULL);
