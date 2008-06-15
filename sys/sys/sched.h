@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.58 2008/05/29 22:33:27 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.59 2008/06/15 21:12:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,34 +91,30 @@ struct sched_param {
 
 #if defined(_NETBSD_SOURCE)
 
-/* XXX: Size of the CPU set bitmap */
-#define	CPUSET_SHIFT	5
-#define	CPUSET_MASK	31
-#if MAXCPUS > 32
-#define	CPUSET_SIZE	(MAXCPUS >> CPUSET_SHIFT)
-#else
-#define	CPUSET_SIZE	1
+typedef struct _cpuset cpuset_t;
+
+#define CPU_SIZE(c)	_cpuset_size(c)
+#define CPU_ZERO(c)	_cpuset_zero(c)
+#define	CPU_ISSET(i, c)	_cpuset_isset(c, i)
+#define	CPU_SET(i, c)	_cpuset_set(c, i)
+#define	CPU_CLR(i, c)	_cpuset_clr(c, i)
+
+cpuset_t *_cpuset_create(void);
+void	_cpuset_destroy(cpuset_t *);
+void	_cpuset_zero(cpuset_t *);
+int	_cpuset_set(cpuset_t *, int);
+int	_cpuset_clr(cpuset_t *, int);
+int	_cpuset_isset(const cpuset_t *, int);
+size_t	_cpuset_size(const cpuset_t *);
+#ifdef _KERNEL
+void	_cpuset_copy(cpuset_t *, const cpuset_t *);
+void	_cpuset_use(cpuset_t *);
+void	_cpuset_unuse(cpuset_t *, cpuset_t **);
+size_t	_cpuset_nused(const cpuset_t *);
 #endif
 
-/* Bitmap of the CPUs */
-typedef struct {
-	uint32_t	bits[CPUSET_SIZE];
-} cpuset_t;
-
-#define	CPU_ZERO(c)	\
-	(memset(c, 0, sizeof(cpuset_t)))
-
-#define	CPU_ISSET(i, c)	\
-	((1 << (i & CPUSET_MASK)) & (c)->bits[i >> CPUSET_SHIFT])
-
-#define	CPU_SET(i, c)	\
-	((c)->bits[i >> CPUSET_SHIFT] |= 1 << (i & CPUSET_MASK))
-
-#define	CPU_CLR(i, c)	\
-	((c)->bits[i >> CPUSET_SHIFT] &= ~(1 << (i & CPUSET_MASK)))
-
-int	_sched_getaffinity(pid_t, lwpid_t, size_t, void *);
-int	_sched_setaffinity(pid_t, lwpid_t, size_t, void *);
+int	_sched_getaffinity(pid_t, lwpid_t, size_t, cpuset_t *);
+int	_sched_setaffinity(pid_t, lwpid_t, size_t, const cpuset_t *);
 int	_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);
 int	_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 
