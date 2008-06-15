@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.1 2008/06/15 20:33:50 christos Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.2 2008/06/15 23:41:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.1 2008/06/15 20:33:50 christos Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.2 2008/06/15 23:41:39 rmind Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -80,7 +80,8 @@ _cpuset_zero(cpuset_t *c)
 int
 _cpuset_isset(const cpuset_t *c, int i)
 {
-	int j = i >> CPUSET_SHIFT;
+	const int j = i >> CPUSET_SHIFT;
+
 	if (j >= c->size || j < 0)
 		return -1;
 	return ((1 << (i & CPUSET_MASK)) & c->bits[j]) != 0;
@@ -89,7 +90,8 @@ _cpuset_isset(const cpuset_t *c, int i)
 int
 _cpuset_set(cpuset_t *c, int i)
 {
-	int j = i >> CPUSET_SHIFT;
+	const int j = i >> CPUSET_SHIFT;
+
 	if (j >= c->size || j < 0)
 		return -1;
 	c->bits[j] |= 1 << (i & CPUSET_MASK);
@@ -99,7 +101,8 @@ _cpuset_set(cpuset_t *c, int i)
 int
 _cpuset_clr(cpuset_t *c, int i)
 {
-	int j = i >> CPUSET_SHIFT;
+	const int j = i >> CPUSET_SHIFT;
+
 	if (j >= c->size || j < 0)
 		return -1;
 	c->bits[j] &= ~(1 << (i & CPUSET_MASK));
@@ -115,8 +118,9 @@ _cpuset_create(void)
 	c = kmem_zalloc(_cpuset_size(&s), KM_SLEEP);
 #else
 	static int mib[2] = { CTL_HW, HW_NCPU };
+	size_t len;
 	int nc;
-	if (sysctl(mib, __arraycount(mib), &nc, sizeof(nc), NULL, 0) == -1)
+	if (sysctl(mib, __arraycount(mib), &nc, &len, NULL, 0) == -1)
 		return NULL;
 	s.size = CPUSET_SIZE(nc);
 	c = calloc(1, _cpuset_size(&s));
@@ -151,6 +155,7 @@ _cpuset_nused(const cpuset_t *c)
 void
 _cpuset_copy(cpuset_t *d, const cpuset_t *s)
 {
+
 	KASSERT(d->size == s->size);
 	KASSERT(d->nused == 1);
 	(void)memcpy(d->bits, s->bits, d->size * sizeof(d->bits[0]));
@@ -159,12 +164,14 @@ _cpuset_copy(cpuset_t *d, const cpuset_t *s)
 void
 _cpuset_use(cpuset_t *c)
 {
+
 	atomic_inc_uint(&c->nused);
 }
 
 void
 _cpuset_unuse(cpuset_t *c, cpuset_t **lst)
 {
+
 	if (atomic_dec_uint_nv(&c->nused) != 0)
 		return;
 	KASSERT(c->nused > 0);
