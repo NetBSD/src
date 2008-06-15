@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.116 2008/06/02 13:58:07 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.117 2008/06/15 20:32:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.116 2008/06/02 13:58:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.117 2008/06/15 20:32:57 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -649,7 +649,10 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 		/* Inherit a processor-set */
 		l2->l_psid = l1->l_psid;
 		/* Inherit an affinity */
-		memcpy(&l2->l_affinity, &l1->l_affinity, sizeof(cpuset_t));
+		if (l1->l_affinity) {
+			_cpuset_use(l1->l_affinity);
+			l2->l_affinity = l1->l_affinity;
+		}
 		/* Look for a CPU to start */
 		l2->l_cpu = sched_takecpu(l2);
 		lwp_unlock_to(l2, l2->l_cpu->ci_schedstate.spc_mutex);
@@ -743,6 +746,11 @@ lwp_exit(struct lwp *l)
 	 */
 	kauth_cred_free(l->l_cred);
 	callout_destroy(&l->l_timeout_ch);
+
+	if (l->l_affinity) {
+		_cpuset_unuse(l->l_affinity, NULL);
+		l->l_affinity = NULL;
+	}
 
 	/*
 	 * While we can still block, mark the LWP as unswappable to
