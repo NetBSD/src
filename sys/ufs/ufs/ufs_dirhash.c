@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.23 2008/06/04 11:33:19 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.24 2008/06/15 21:18:06 skd Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.23 2008/06/04 11:33:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.24 2008/06/15 21:18:06 skd Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -163,6 +163,8 @@ ufsdirhash_build(struct inode *ip)
 		/* Try to free some space. */
 		if (ufsdirhash_recycle(memreqd) != 0)
 			return (-1);
+	        else
+		    	DIRHASHLIST_UNLOCK();
 	}
 
 	/*
@@ -1081,7 +1083,6 @@ ufsdirhash_recycle(int wanted)
 		DIRHASHLIST_LOCK();
 		ufs_dirhashmem -= mem;
 	}
-	DIRHASHLIST_LOCK();
 	/* Success. */
 	return (0);
 }
