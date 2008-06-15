@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.9 2008/05/29 11:32:07 ad Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.10 2008/06/15 23:30:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.9 2008/05/29 11:32:07 ad Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.10 2008/06/15 23:30:51 rmind Exp $");
 #endif
 
 #include <stdio.h>
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 		}
 		kvm_close(kd);
 		free(sp);
-		free(cpuset);
+		_cpuset_destroy(cpuset);
 		return 0;
 	}
 
@@ -192,7 +192,7 @@ sched_set(pid_t pid, lwpid_t lid, int policy,
 	if (cpuset) {
 		/* Set the CPU-set for affinity */
 		error = _sched_setaffinity(pid, lid,
-		    sizeof(cpuset_t), cpuset);
+		    CPU_SIZE(cpuset), cpuset);
 		if (error < 0)
 			err(EXIT_FAILURE, "_sched_setaffinity");
 	}
@@ -206,15 +206,15 @@ thread_info(pid_t pid, lwpid_t lid)
 	char *cpus;
 	int error, policy;
 
-	cpuset = malloc(sizeof(cpuset_t));
+	cpuset = _cpuset_create();
 	if (cpuset == NULL)
-		err(EXIT_FAILURE, "malloc");
+		err(EXIT_FAILURE, "_cpuset_create");
 
 	error = _sched_getparam(pid, lid, &policy, &sp);
 	if (error < 0)
 		err(EXIT_FAILURE, "_sched_getparam");
 
-	error = _sched_getaffinity(pid, lid, sizeof(cpuset_t), cpuset);
+	error = _sched_getaffinity(pid, lid, CPU_SIZE(cpuset), cpuset);
 	if (error < 0)
 		err(EXIT_FAILURE, "_sched_getaffinity");
 
@@ -226,7 +226,7 @@ thread_info(pid_t pid, lwpid_t lid)
 	printf("  Affinity (CPUs):  %s\n", cpus);
 	free(cpus);
 
-	free(cpuset);
+	_cpuset_destroy(cpuset);
 }
 
 static cpuset_t *
@@ -238,9 +238,10 @@ makecpuset(char *str)
 	if (str == NULL)
 		return NULL;
 
-	cpuset = calloc(1, sizeof(cpuset_t));
+	cpuset = _cpuset_create();
 	if (cpuset == NULL)
 		err(EXIT_FAILURE, "malloc");
+	CPU_ZERO(cpuset);
 
 	cpustr = strdup(str);
 	if (cpustr == NULL)
@@ -254,17 +255,17 @@ makecpuset(char *str)
 		/* Get the CPU number and validate the range */
 		p = strsep(&s, ",");
 		if (p == NULL) {
-			free(cpuset);
+			_cpuset_destroy(cpuset);
 			cpuset = NULL;
 			break;
 		}
 		i = atoi(p);
 		if (i == -1) {
-			memset(cpuset, 0, sizeof(cpuset_t));
+			CPU_ZERO(cpuset);
 			break;
 		}
 		if ((unsigned int)i >= ncpu) {
-			free(cpuset);
+			_cpuset_destroy(cpuset);
 			cpuset = NULL;
 			break;
 		}
