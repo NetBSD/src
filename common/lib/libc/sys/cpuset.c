@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.2 2008/06/15 23:41:39 rmind Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.3 2008/06/15 23:45:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.2 2008/06/15 23:41:39 rmind Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.3 2008/06/15 23:45:51 rmind Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -125,9 +125,11 @@ _cpuset_create(void)
 	s.size = CPUSET_SIZE(nc);
 	c = calloc(1, _cpuset_size(&s));
 #endif
-	c->next = NULL;
-	c->nused = 1;
-	c->size = s.size;
+	if (c != NULL) {
+		c->next = NULL;
+		c->nused = 1;
+		c->size = s.size;
+	}
 	return c;
 }
 
