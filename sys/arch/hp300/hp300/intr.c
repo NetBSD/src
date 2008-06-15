@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.34 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.35 2008/06/15 07:15:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2008/06/15 07:15:30 tsutsui Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -66,7 +66,7 @@ static const char *hp300_intr_names[NISR] = {
 	"nmi",
 };
 
-u_short hp300_ipl2psl[NIPL];
+uint16_t ipl2psl_table[NIPL];
 volatile uint8_t ssir;
 int idepth;
 
@@ -88,14 +88,14 @@ intr_init(void)
 	}
 
 	/* Default interrupt priorities. */
-	hp300_ipl2psl[IPL_NONE]       = 0;
-	hp300_ipl2psl[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1;
-	hp300_ipl2psl[IPL_SOFTNET]    = PSL_S|PSL_IPL1;
-	hp300_ipl2psl[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1;
-	hp300_ipl2psl[IPL_SOFTBIO]    = PSL_S|PSL_IPL1;
-	hp300_ipl2psl[IPL_VM]         = PSL_S|PSL_IPL3;
-	hp300_ipl2psl[IPL_SCHED]      = PSL_S|PSL_IPL6;
-	hp300_ipl2psl[IPL_HIGH]       = PSL_S|PSL_IPL7;
+	ipl2psl_table[IPL_NONE]       = 0;
+	ipl2psl_table[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1;
+	ipl2psl_table[IPL_SOFTNET]    = PSL_S|PSL_IPL1;
+	ipl2psl_table[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1;
+	ipl2psl_table[IPL_SOFTBIO]    = PSL_S|PSL_IPL1;
+	ipl2psl_table[IPL_VM]         = PSL_S|PSL_IPL3;
+	ipl2psl_table[IPL_SCHED]      = PSL_S|PSL_IPL6;
+	ipl2psl_table[IPL_HIGH]       = PSL_S|PSL_IPL7;
 }
 
 /*
@@ -109,7 +109,7 @@ intr_computeipl(void)
 	int ipl;
 
 	/* Start with low values. */
-	hp300_ipl2psl[IPL_VM] = PSL_S|PSL_IPL3;
+	ipl2psl_table[IPL_VM] = PSL_S|PSL_IPL3;
 
 	for (ipl = 0; ipl < NISR; ipl++) {
 		for (ih = LIST_FIRST(&hp300_intr_list[ipl].hi_q); ih != NULL;
@@ -120,8 +120,8 @@ intr_computeipl(void)
 			 */
 			switch (ih->ih_priority) {
 			case IPL_VM:
-				if (ipl > PSLTOIPL(hp300_ipl2psl[IPL_VM]))
-					hp300_ipl2psl[IPL_VM] = IPLTOPSL(ipl);
+				if (ipl > PSLTOIPL(ipl2psl_table[IPL_VM]))
+					ipl2psl_table[IPL_VM] = IPLTOPSL(ipl);
 				break;
 			default:
 				printf("priority = %d\n", ih->ih_priority);
@@ -136,7 +136,7 @@ intr_printlevels(void)
 {
 
 	printf("interrupt levels: vm = %d\n",
-	    PSLTOIPL(hp300_ipl2psl[IPL_VM]));
+	    PSLTOIPL(ipl2psl_table[IPL_VM]));
 }
 
 /*
