@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.52 2008/06/13 11:36:11 cegger Exp $	*/
+/*	$NetBSD: asc.c,v 1.53 2008/06/15 10:29:18 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.52 2008/06/13 11:36:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.53 2008/06/15 10:29:18 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -253,7 +253,7 @@ ascioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int error;
 	int unit = ASCUNIT(dev);
 
-	sc = device_lookup_private(&asc_cd, ASCUNIT(dev));
+	sc = device_lookup_private(&asc_cd, unit);
 	error = 0;
 
 	switch (cmd) {
