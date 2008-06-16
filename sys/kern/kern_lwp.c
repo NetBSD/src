@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.117 2008/06/15 20:32:57 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.118 2008/06/16 01:41:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.117 2008/06/15 20:32:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.118 2008/06/16 01:41:20 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -650,7 +650,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 		l2->l_psid = l1->l_psid;
 		/* Inherit an affinity */
 		if (l1->l_affinity) {
-			_cpuset_use(l1->l_affinity);
+			kcpuset_use(l1->l_affinity);
 			l2->l_affinity = l1->l_affinity;
 		}
 		/* Look for a CPU to start */
@@ -748,7 +748,7 @@ lwp_exit(struct lwp *l)
 	callout_destroy(&l->l_timeout_ch);
 
 	if (l->l_affinity) {
-		_cpuset_unuse(l->l_affinity, NULL);
+		kcpuset_unuse(l->l_affinity, NULL);
 		l->l_affinity = NULL;
 	}
 
