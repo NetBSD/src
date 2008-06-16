@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.140 2008/05/31 21:34:42 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.141 2008/06/16 09:51:14 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.140 2008/05/31 21:34:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.141 2008/06/16 09:51:14 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -94,7 +94,6 @@ static const u_int sysctl_flagmap[] = {
 
 static const u_int sysctl_sflagmap[] = {
 	PS_NOCLDSTOP, P_NOCLDSTOP,
-	PS_PPWAIT, P_PPWAIT,
 	PS_WEXIT, P_WEXIT,
 	PS_STOPFORK, P_STOPFORK,
 	PS_STOPEXEC, P_STOPEXEC,
@@ -112,6 +111,7 @@ static const u_int sysctl_slflagmap[] = {
 
 static const u_int sysctl_lflagmap[] = {
 	PL_CONTROLT, P_CONTROLT,
+	PL_PPWAIT, P_PPWAIT,
 	0
 };
 
