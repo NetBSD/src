@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.55 2008/06/13 20:05:06 cegger Exp $	*/
+/*	$NetBSD: md.c,v 1.56 2008/06/16 10:27:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.55 2008/06/13 20:05:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.56 2008/06/16 10:27:47 drochner Exp $");
 
 #include "opt_md.h"
 
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: md.c,v 1.55 2008/06/13 20:05:06 cegger Exp $");
 /* autoconfig stuff... */
 
 struct md_softc {
-	device_t sc_dev;	/* REQUIRED first entry */
 	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct md_conf sc_md;
 	struct bufq_state *sc_buflist;
@@ -154,7 +153,6 @@ md_attach(device_t parent, device_t self,
 {
 	struct md_softc *sc = device_private(self);
 
-	sc->sc_dev = self;
 	bufq_alloc(&sc->sc_buflist, "fcfs", 0);
 
 	/* XXX - Could accept aux info here to set the config. */
