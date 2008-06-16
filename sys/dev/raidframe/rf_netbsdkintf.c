@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.247 2008/06/07 17:50:34 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.248 2008/06/16 16:58:26 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.247 2008/06/07 17:50:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.248 2008/06/16 16:58:26 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2859,6 +2859,11 @@ rf_find_raid_components()
 
 		/* we don't care about CD's... */
 		if (device_is_a(dv, "cd")) {
+			continue;
+		}
+
+		/* we don't care about md's... */
+		if (device_is_a(dv, "md")) {
 			continue;
 		}
 
