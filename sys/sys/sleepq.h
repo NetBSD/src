@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.13 2008/05/26 12:08:39 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.14 2008/06/16 09:56:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -110,6 +110,16 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan, kmutex_t **mp)
 	return sq;
 }
 
+static inline kmutex_t *
+sleepq_hashlock(wchan_t wchan)
+{
+	kmutex_t *mp;
+
+	mp = &sleeptab.st_queues[SLEEPTAB_HASH(wchan)].st_mutex;
+	mutex_spin_enter(mp);
+	return mp;
+}
+
 /*
  * Prepare to block on a sleep queue, after which any interlock can be
  * safely released.
@@ -117,13 +127,20 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan, kmutex_t **mp)
 static inline void
 sleepq_enter(sleepq_t *sq, lwp_t *l, kmutex_t *mp)
 {
+	kmutex_t *omp;
+
 	/*
 	 * Acquire the per-LWP mutex and lend it ours (the sleep queue
 	 * lock).  Once that's done we're interlocked, and so can release
 	 * the kernel lock.
 	 */
-	lwp_lock(l);
-	lwp_unlock_to(l, mp);
+	omp = l->l_mutex;
+	mutex_spin_enter(omp);
+	if (__predict_false(l->l_mutex != omp)) {
+		omp = lwp_lock_retry(l, omp);
+	}
+	l->l_mutex = mp;
+	mutex_spin_exit(omp);
 	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
 }
 
