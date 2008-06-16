@@ -1,4 +1,4 @@
-/*	$NetBSD: latency2.c,v 1.1 2008/05/28 11:34:07 ad Exp $	*/
+/*	$NetBSD: latency2.c,v 1.2 2008/06/16 00:34:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -110,13 +110,15 @@ main(int argc, char *argv[])
 		err(1, "siginal");
 	}
 
-	cs = calloc(sizeof(cpuset_t), 0);
+	cs = _cpuset_create();
 	if (cs == NULL) {
 		err(1, "malloc");
 	}
+	CPU_ZERO(cs);
+
 	cpuid = pthread_curcpu_np();
 	CPU_SET(cpuid, cs);
-	if (_sched_setaffinity(0, 0, sizeof(cpuset_t), cs) < 0) {
+	if (_sched_setaffinity(0, 0, CPU_SIZE(cs), cs) < 0) {
 		err(1, "_sched_setaffinity");
 	}
 
@@ -140,6 +142,7 @@ main(int argc, char *argv[])
 		}
 	} while (!done);
 
+	_cpuset_destroy(cs);
 	printf("\nmin=%ldns, max=%ldns, mean=%ldns\n", min, max, sum / samples);
 	return 0;
 }
