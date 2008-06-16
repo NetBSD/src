@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.59 2008/06/15 21:12:16 christos Exp $	*/
+/*	$NetBSD: sched.h,v 1.60 2008/06/16 01:41:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -90,29 +90,36 @@ struct sched_param {
 #define	SCHED_RR	2
 
 #if defined(_NETBSD_SOURCE)
-
+/*
+ * Interface of CPU-sets.
+ */
 typedef struct _cpuset cpuset_t;
 
-#define CPU_SIZE(c)	_cpuset_size(c)
-#define CPU_ZERO(c)	_cpuset_zero(c)
-#define	CPU_ISSET(i, c)	_cpuset_isset(c, i)
-#define	CPU_SET(i, c)	_cpuset_set(c, i)
-#define	CPU_CLR(i, c)	_cpuset_clr(c, i)
+#define	cpuset_create()		_cpuset_create()
+#define	cpuset_destroy(c)	_cpuset_destroy(c)
+#define	cpuset_size(c)		_cpuset_size(c)
+#define	cpuset_zero(c)		_cpuset_zero(c)
+#define	cpuset_isset(i, c)	_cpuset_isset(c, i)
+#define	cpuset_set(i, c)	_cpuset_set(c, i)
+#define	cpuset_clr(i, c)	_cpuset_clr(c, i)
 
 cpuset_t *_cpuset_create(void);
 void	_cpuset_destroy(cpuset_t *);
 void	_cpuset_zero(cpuset_t *);
-int	_cpuset_set(cpuset_t *, int);
-int	_cpuset_clr(cpuset_t *, int);
-int	_cpuset_isset(const cpuset_t *, int);
+int	_cpuset_set(cpuset_t *, cpuid_t);
+int	_cpuset_clr(cpuset_t *, cpuid_t);
+int	_cpuset_isset(const cpuset_t *, cpuid_t);
 size_t	_cpuset_size(const cpuset_t *);
 #ifdef _KERNEL
-void	_cpuset_copy(cpuset_t *, const cpuset_t *);
-void	_cpuset_use(cpuset_t *);
-void	_cpuset_unuse(cpuset_t *, cpuset_t **);
-size_t	_cpuset_nused(const cpuset_t *);
+void	kcpuset_copy(cpuset_t *, const cpuset_t *);
+void	kcpuset_use(cpuset_t *);
+void	kcpuset_unuse(cpuset_t *, cpuset_t **);
+size_t	kcpuset_nused(const cpuset_t *);
 #endif
 
+/*
+ * Internal affinity and scheduling calls.
+ */
 int	_sched_getaffinity(pid_t, lwpid_t, size_t, cpuset_t *);
 int	_sched_setaffinity(pid_t, lwpid_t, size_t, const cpuset_t *);
 int	_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);

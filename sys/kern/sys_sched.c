@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.24 2008/06/15 23:29:09 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.25 2008/06/16 01:41:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.24 2008/06/15 23:29:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.25 2008/06/16 01:41:20 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -297,8 +297,8 @@ gencpuset(cpuset_t **dset, const cpuset_t *sset, size_t size)
 {
 	int error;
 
-	*dset = _cpuset_create();
-	if (size != _cpuset_size(*dset)) {
+	*dset = cpuset_create();
+	if (size != cpuset_size(*dset)) {
 		error = EINVAL;
 		goto out;
 	}
@@ -307,14 +307,14 @@ gencpuset(cpuset_t **dset, const cpuset_t *sset, size_t size)
 	if (error)
 		goto out;
 
-	if (_cpuset_nused(*dset) != 1) {
+	if (kcpuset_nused(*dset) != 1) {
 		error = EINVAL;
 		goto out;
 	}
 
 	return 0;
 out:
-	_cpuset_unuse(*dset, NULL);
+	kcpuset_unuse(*dset, NULL);
 	return error;
 }
 
@@ -345,7 +345,7 @@ sys__sched_setaffinity(struct lwp *l,
 
 	/* Look for a CPU in the set */
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		error = CPU_ISSET(cpu_index(ci), cpuset);
+		error = cpuset_isset(cpu_index(ci), cpuset);
 		if (error) {
 			if (error == -1) {
 				error = E2BIG;
@@ -357,7 +357,7 @@ sys__sched_setaffinity(struct lwp *l,
 
 	if (ci == NULL) {
 		/* Empty set */
-		_cpuset_unuse(cpuset, NULL);
+		kcpuset_unuse(cpuset, NULL);
 		cpuset = NULL; 
 	}
 
@@ -404,9 +404,9 @@ sys__sched_setaffinity(struct lwp *l,
 		if (cpuset) {
 			/* Set the affinity flag and new CPU set */
 			t->l_flag |= LW_AFFINITY;
-			_cpuset_use(cpuset);
+			kcpuset_use(cpuset);
 			if (t->l_affinity != NULL)
-				_cpuset_unuse(t->l_affinity, &cpulst);
+				kcpuset_unuse(t->l_affinity, &cpulst);
 			t->l_affinity = cpuset;
 			/* Migrate to another CPU, unlocks LWP */
 			lwp_migrate(t, ci);
@@ -414,7 +414,7 @@ sys__sched_setaffinity(struct lwp *l,
 			/* Unset the affinity flag */
 			t->l_flag &= ~LW_AFFINITY;
 			if (t->l_affinity != NULL)
-				_cpuset_unuse(t->l_affinity, &cpulst);
+				kcpuset_unuse(t->l_affinity, &cpulst);
 			t->l_affinity = NULL;
 			lwp_unlock(t);
 		}
@@ -425,8 +425,8 @@ sys__sched_setaffinity(struct lwp *l,
 		error = ESRCH;
 out:
 	if (cpuset != NULL)
-		_cpuset_unuse(cpuset, &cpulst);
-	_cpuset_destroy(cpulst);
+		kcpuset_unuse(cpuset, &cpulst);
+	cpuset_destroy(cpulst);
 	return error;
 }
 
@@ -466,15 +466,15 @@ sys__sched_getaffinity(struct lwp *l,
 	lwp_lock(t);
 	if (t->l_flag & LW_AFFINITY) {
 		KASSERT(t->l_affinity != NULL);
-		_cpuset_copy(cpuset, t->l_affinity);
+		kcpuset_copy(cpuset, t->l_affinity);
 	} else
-		_cpuset_zero(cpuset);
+		cpuset_zero(cpuset);
 	lwp_unlock(t);
 	mutex_exit(t->l_proc->p_lock);
 
-	error = copyout(cpuset, SCARG(uap, cpuset), _cpuset_size(cpuset));
+	error = copyout(cpuset, SCARG(uap, cpuset), cpuset_size(cpuset));
 out:
-	_cpuset_unuse(cpuset, NULL);
+	kcpuset_unuse(cpuset, NULL);
 	return error;
 }
 
