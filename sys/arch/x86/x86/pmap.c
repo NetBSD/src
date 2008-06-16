@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 2008/06/06 05:45:16 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69 2008/06/16 10:31:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2008/06/06 05:45:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2008/06/16 10:31:03 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2817,31 +2817,54 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pd_entry_t pde;
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
+	struct cpu_info *ci;
+	vaddr_t pa;
+	lwp_t *l;
+	bool hard, rv;
 
-	kpreempt_disable();
-	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
-	if (!pmap_pdes_valid(va, pdes, &pde)) {
+	rv = false;
+	pa = 0;
+	l = curlwp;
+
+	KPREEMPT_DISABLE(l);
+	ci = l->l_cpu;
+	if (__predict_true(!ci->ci_want_pmapload && ci->ci_pmap == pmap) ||
+	    pmap == pmap_kernel()) {
+		/*
+		 * no need to lock, because it's pmap_kernel() or our
+		 * own pmap and is active.  if a user pmap, the caller
+		 * will hold the vm_map write/read locked and so prevent
+		 * entries from disappearing while we are here.  ptps
+		 * can disappear via pmap_remove(), pmap_protect() and
+		 * pmap_collect(), but they are called with the vm_map
+		 * write locked.
+		 */
+		hard = false;
+		ptes = PTE_BASE;
+		pdes = normal_pdes;
+	} else {
+		/* we lose, do it the hard way. */
+		hard = true;
+		pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
+	}
+	if (pmap_pdes_valid(va, pdes, &pde)) {
+		pte = ptes[pl1_i(va)];
+		if (pde & PG_PS) {
+			pa = (pde & PG_LGFRAME) | (va & (NBPD_L2 - 1));
+			rv = true;
+		} else if (__predict_true((pte & PG_V) != 0)) {
+			pa = pmap_pte2pa(pte) | (va & (NBPD_L1 - 1));
+			rv = true;
+		}
+	}
+	if (__predict_false(hard)) {
 		pmap_unmap_ptes(pmap, pmap2);
-		kpreempt_enable();
-		return false;
 	}
-	pte = ptes[pl1_i(va)];
-	pmap_unmap_ptes(pmap, pmap2);
-	kpreempt_enable();
-
-	if (pde & PG_PS) {
-		if (pap != NULL)
-			*pap = (pde & PG_LGFRAME) | (va & (NBPD_L2 - 1));
-		return (true);
+	KPREEMPT_ENABLE(l);
+	if (pap != NULL) {
+		*pap = pa;
 	}
-
-	if (__predict_true((pte & PG_V) != 0)) {
-		if (pap != NULL)
-			*pap = pmap_pte2pa(pte) | (va & (NBPD_L1 - 1));
-		return (true);
-	}
-
-	return false;
+	return rv;
 }
 
 
