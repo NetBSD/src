@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.224 2008/06/16 00:32:23 christos Exp $ */
+/* $NetBSD: init_sysent.c,v 1.225 2008/06/16 00:54:53 uebayasi Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.224 2008/06/16 00:32:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.225 2008/06/16 00:54:53 uebayasi Exp $");
 
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -23,7 +23,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.224 2008/06/16 00:32:23 christos E
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#incluse <sys/sched.h>
+#include <sys/sched.h>
 
 #ifdef COMPAT_43
 #define	compat_43(func) __CONCAT(compat_43_,func)
