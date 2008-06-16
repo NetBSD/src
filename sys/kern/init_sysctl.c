@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.141 2008/06/16 09:51:14 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.142 2008/06/16 11:26:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.141 2008/06/16 09:51:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.142 2008/06/16 11:26:28 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -1092,7 +1092,7 @@ sysctl_kern_trigger_panic(SYSCTLFN_ARGS)
 static int
 sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 {
-	int error, new_vnodes, old_vnodes;
+	int error, new_vnodes, old_vnodes, new_max;
 	struct sysctlnode node;
 
 	new_vnodes = desiredvnodes;
@@ -1101,6 +1101,11 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
+
+	/* Limits: 75% of KVA and physical memory. */
+	new_max = calc_cache_size(kernel_map, 75, 75) / VNODE_COST;
+	if (new_vnodes > new_max)
+		new_vnodes = new_max;
 
 	old_vnodes = desiredvnodes;
 	desiredvnodes = new_vnodes;
