@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.202 2008/06/06 12:49:15 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.203 2008/06/16 09:47:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.202 2008/06/06 12:49:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.203 2008/06/16 09:47:55 ad Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -778,6 +778,7 @@ bwrite(buf_t *bp)
 	struct mount *mp;
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	vp = bp->b_vp;
 	if (vp != NULL) {
@@ -885,8 +886,8 @@ bdwrite(buf_t *bp)
 
 	KASSERT(bp->b_vp == NULL || bp->b_vp->v_tag != VT_UFS ||
 	    ISSET(bp->b_flags, B_COWDONE));
-
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/* If this is a tape block, write the block now. */
 	if (bdev_type(bp->b_dev) == D_TAPE) {
@@ -946,6 +947,7 @@ bdirty(buf_t *bp)
 	KASSERT(bp->b_objlock == &bp->b_vp->v_interlock);
 	KASSERT(mutex_owned(bp->b_objlock));
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	CLR(bp->b_cflags, BC_AGE);
 
@@ -1141,6 +1143,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 			mutex_exit(&bufcache_lock);
 			return (NULL);
 		}
+		KASSERT(!cv_has_waiters(&bp->b_done));
 #ifdef DIAGNOSTIC
 		if (ISSET(bp->b_oflags, BO_DONE|BO_DELWRI) &&
 		    bp->b_bcount < size && vp->v_type != VBLK)
@@ -1309,7 +1312,6 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE].bq_queue)) != NULL ||
 	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU].bq_queue)) != NULL) {
-	    	KASSERT(!cv_has_waiters(&bp->b_done));
 	    	KASSERT(!ISSET(bp->b_cflags, BC_BUSY));
 		bremfree(bp);
 
@@ -1349,6 +1351,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
 	KASSERT(bp->b_refcnt > 0);
+    	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/*
 	 * If buffer was a delayed write, start it and return NULL
