@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.6 2008/06/16 02:53:32 christos Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.7 2008/06/16 13:02:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _STANDALONE
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.6 2008/06/16 02:53:32 christos Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.7 2008/06/16 13:02:08 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -186,4 +187,5 @@ kcpuset_unuse(cpuset_t *c, cpuset_t **lst)
 	c->next = *lst;
 	*lst = c;
 }
+#endif
 #endif
