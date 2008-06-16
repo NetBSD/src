@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.10 2008/04/28 20:23:44 martin Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.11 2008/06/16 19:57:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.10 2008/04/28 20:23:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.11 2008/06/16 19:57:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.10 2008/04/28 20:23:44 martin Exp
 #include <sys/malloc.h>
 #include <sys/fstypes.h>
 #include <sys/vfs_syscalls.h>
+#include <sys/ptrace.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -49,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.10 2008/04/28 20:23:44 martin Exp
 #include <compat/linux32/common/linux32_signal.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
+#include <compat/linux/common/linux_ptrace.h>
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_misc.h>
@@ -82,4 +84,67 @@ linux32_sys_statfs(struct lwp *l, const struct linux32_sys_statfs_args *uap, reg
 
 	STATVFSBUF_PUT(sb);
 	return error;
+}
+extern const int linux_ptrace_request_map[];
+int
+linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, register_t *retval)
+{
+	/* {
+		i386, m68k, powerpc: T=int
+		alpha, amd64: T=long
+		syscallarg(T) request;
+		syscallarg(T) pid;
+		syscallarg(T) addr;
+		syscallarg(T) data;
+	} */
+#if defined(PTRACE) || defined(_LKM)
+	const int *ptr;
+	int request;
+	int error;
+
+	ptr = linux_ptrace_request_map;
+	request = SCARG(uap, request);
+	while (*ptr != -1)
+		if (*ptr++ == request) {
+			struct netbsd32_ptrace_args pta;
+
+			SCARG(&pta, req) = *ptr;
+			SCARG(&pta, pid) = SCARG(uap, pid);
+			SCARG(&pta, addr) = (void *)SCARG(uap, addr);
+			SCARG(&pta, data) = SCARG(uap, data);
+
+			/*
+			 * Linux ptrace(PTRACE_CONT, pid, 0, 0) means actually
+			 * to continue where the process left off previously.
+			 * The same thing is achieved by addr == (void *) 1
+			 * on NetBSD, so rewrite 'addr' appropriately.
+			 */
+			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
+				SCARG(&pta, addr) = (void *) 1;
+
+			error = netbsd32_ptrace(l, &pta, retval);
+			if (error)
+				return error;
+			switch (request) {
+			case LINUX_PTRACE_PEEKTEXT:
+			case LINUX_PTRACE_PEEKDATA:
+				error = copyout (retval,
+				    (void *)SCARG(uap, data), 
+				    sizeof *retval);
+				*retval = SCARG(uap, data);
+				break;
+			default:
+				break;
+			}
+			return error;
+		}
+		else
+			ptr++;
+
+#if 0
+	return LINUX_SYS_PTRACE_ARCH(l, uap, retval);
+#endif
+#else
+	return ENOSYS;
+#endif /* PTRACE || _LKM */
 }
