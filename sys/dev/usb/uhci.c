@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.221 2008/06/06 11:21:16 jmcneill Exp $	*/
+/*	$NetBSD: uhci.c,v 1.222 2008/06/16 10:29:41 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.221 2008/06/06 11:21:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.222 2008/06/16 10:29:41 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3063,7 +3063,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 		    index, UREAD2(sc, port)));
 
 	x = URWMASK(UREAD2(sc, port));
-	UWRITE2(sc, port, x & ~UHCI_PORTSC_PR);
+	UWRITE2(sc, port, x & ~(UHCI_PORTSC_PR | UHCI_PORTSC_SUSP));
 
 	delay(100);
 
@@ -3312,7 +3312,13 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 			break;
 		case UHF_PORT_SUSPEND:
 			x = URWMASK(UREAD2(sc, port));
+			if (!(x & UHCI_PORTSC_SUSP)) /* not suspended */
+				break;
+			UWRITE2(sc, port, x | UHCI_PORTSC_RD);
+			/* see USB2 spec ch. 7.1.7.7 */
+			usb_delay_ms(&sc->sc_bus, 20);
 			UWRITE2(sc, port, x & ~UHCI_PORTSC_SUSP);
+			/* 10ms resume delay must be provided by caller */
 			break;
 		case UHF_PORT_RESET:
 			x = URWMASK(UREAD2(sc, port));
