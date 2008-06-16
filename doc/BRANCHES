@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.255 2008/06/10 14:43:36 simonb Exp $
+#	$NetBSD: BRANCHES,v 1.256 2008/06/16 07:17:42 simonb Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -608,8 +608,9 @@ Scope:		distrib/sets/lists/comp distrib/utils/sysinst include
 		sbin/fsck_ffs sbin/fsdb sbin/mount_ffs src/sys
 Notes:		Still has a number of issues:
 		 - Can't log the root filesystem (or any FS if /dev isn't an
-		   ffs).  See kern/38057 - a fix for the PR has been committed
-		   but at this stage it doesn't play well with WAPBL.
+		   ffs) or update existing mounts from non-logged to logged.
+		   See kern/38057 - a fix for the PR has been committed but
+		   at this stage it doesn't play well with WAPBL.
 		 - Log must currently live at end of partition.
 		 - No log locators.
 		 - Some heavy workload performance issues on SMP machines.
