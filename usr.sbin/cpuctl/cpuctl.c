@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.6 2008/05/12 14:16:04 ad Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.7 2008/06/16 00:33:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.6 2008/05/12 14:16:04 ad Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.7 2008/06/16 00:33:24 rmind Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -155,11 +155,12 @@ cpu_identify(char **argv)
 
 	np = sysconf(_SC_NPROCESSORS_CONF);
 	if (np != 0) {
-		cpuset = calloc(sizeof(cpuset_t), 0);
+		cpuset = _cpuset_create();
 		if (cpuset == NULL)
-			err(EXIT_FAILURE, "malloc");
+			err(EXIT_FAILURE, "_cpuset_create");
+		CPU_ZERO(cpuset);
 		CPU_SET(id, cpuset);
-		if (_sched_setaffinity(0, 0, sizeof(cpuset_t), cpuset) < 0) {
+		if (_sched_setaffinity(0, 0, CPU_SIZE(cpuset), cpuset) < 0) {
 			if (errno == EPERM) {
 				printf("Cannot bind to target CPU.  Output "
 				    "may not accurately describe the target.\n"
@@ -168,6 +169,7 @@ cpu_identify(char **argv)
 				err(EXIT_FAILURE, "_sched_setaffinity");
 			}
 		}
+		_cpuset_destroy(cpuset);
 	}
 	identifycpu(name);
 }
