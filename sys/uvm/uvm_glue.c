@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.131 2008/06/09 11:52:34 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.132 2008/06/16 10:19:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.131 2008/06/09 11:52:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.132 2008/06/16 10:19:57 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -733,6 +733,8 @@ uvm_swapout_threads(void)
 static void
 uvm_swapout(struct lwp *l)
 {
+	struct vm_map *map;
+
 	KASSERT(mutex_owned(&l->l_swaplock));
 
 #ifdef DEBUG
@@ -769,7 +771,11 @@ uvm_swapout(struct lwp *l)
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
 	uarea_swapout(USER_TO_UAREA(l->l_addr));
-	pmap_collect(vm_map_pmap(&l->l_proc->p_vmspace->vm_map));
+	map = &l->l_proc->p_vmspace->vm_map;
+	if (vm_map_lock_try(map)) {
+		pmap_collect(vm_map_pmap(map));
+		vm_map_unlock(map);
+	}
 }
 
 /*
