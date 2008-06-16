@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.4 2008/06/16 01:41:21 rmind Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.5 2008/06/16 02:30:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.4 2008/06/16 01:41:21 rmind Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.5 2008/06/16 02:30:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -58,6 +58,7 @@ struct _cpuset {
 };
 
 size_t
+/*ARGSUSED*/
 _cpuset_size(const cpuset_t *c)
 {
 	return sizeof(struct {
