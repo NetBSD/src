@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.319 2008/05/31 19:32:33 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.320 2008/06/16 11:26:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -142,6 +142,7 @@
 #ifndef BUFCACHE_VA_MAXPCT
 #define	BUFCACHE_VA_MAXPCT	20
 #endif
+#define	VNODE_COST	2048			/* assumed space in bytes */
 #endif /* _KERNEL */
 
 /* Signals. */
