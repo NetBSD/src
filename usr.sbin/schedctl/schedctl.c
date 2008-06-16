@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.10 2008/06/15 23:30:51 rmind Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.11 2008/06/16 01:41:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.10 2008/06/15 23:30:51 rmind Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.11 2008/06/16 01:41:21 rmind Exp $");
 #endif
 
 #include <stdio.h>
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 		}
 		kvm_close(kd);
 		free(sp);
-		_cpuset_destroy(cpuset);
+		cpuset_destroy(cpuset);
 		return 0;
 	}
 
@@ -192,7 +192,7 @@ sched_set(pid_t pid, lwpid_t lid, int policy,
 	if (cpuset) {
 		/* Set the CPU-set for affinity */
 		error = _sched_setaffinity(pid, lid,
-		    CPU_SIZE(cpuset), cpuset);
+		    cpuset_size(cpuset), cpuset);
 		if (error < 0)
 			err(EXIT_FAILURE, "_sched_setaffinity");
 	}
@@ -206,15 +206,15 @@ thread_info(pid_t pid, lwpid_t lid)
 	char *cpus;
 	int error, policy;
 
-	cpuset = _cpuset_create();
+	cpuset = cpuset_create();
 	if (cpuset == NULL)
-		err(EXIT_FAILURE, "_cpuset_create");
+		err(EXIT_FAILURE, "cpuset_create");
 
 	error = _sched_getparam(pid, lid, &policy, &sp);
 	if (error < 0)
 		err(EXIT_FAILURE, "_sched_getparam");
 
-	error = _sched_getaffinity(pid, lid, CPU_SIZE(cpuset), cpuset);
+	error = _sched_getaffinity(pid, lid, cpuset_size(cpuset), cpuset);
 	if (error < 0)
 		err(EXIT_FAILURE, "_sched_getaffinity");
 
@@ -226,7 +226,7 @@ thread_info(pid_t pid, lwpid_t lid)
 	printf("  Affinity (CPUs):  %s\n", cpus);
 	free(cpus);
 
-	_cpuset_destroy(cpuset);
+	cpuset_destroy(cpuset);
 }
 
 static cpuset_t *
@@ -238,10 +238,10 @@ makecpuset(char *str)
 	if (str == NULL)
 		return NULL;
 
-	cpuset = _cpuset_create();
+	cpuset = cpuset_create();
 	if (cpuset == NULL)
-		err(EXIT_FAILURE, "malloc");
-	CPU_ZERO(cpuset);
+		err(EXIT_FAILURE, "cpuset_create");
+	cpuset_zero(cpuset);
 
 	cpustr = strdup(str);
 	if (cpustr == NULL)
@@ -255,23 +255,23 @@ makecpuset(char *str)
 		/* Get the CPU number and validate the range */
 		p = strsep(&s, ",");
 		if (p == NULL) {
-			_cpuset_destroy(cpuset);
+			cpuset_destroy(cpuset);
 			cpuset = NULL;
 			break;
 		}
 		i = atoi(p);
 		if (i == -1) {
-			CPU_ZERO(cpuset);
+			cpuset_zero(cpuset);
 			break;
 		}
 		if ((unsigned int)i >= ncpu) {
-			_cpuset_destroy(cpuset);
+			cpuset_destroy(cpuset);
 			cpuset = NULL;
 			break;
 		}
 
 		/* Set the bit */
-		CPU_SET(i, cpuset);
+		cpuset_set(i, cpuset);
 	}
 
 	free(cpustr);
@@ -292,7 +292,7 @@ showcpuset(cpuset_t *cpuset)
 	memset(buf, '\0', size + 1);
 
 	for (i = 0; i < ncpu; i++)
-		if (CPU_ISSET(i, cpuset))
+		if (cpuset_isset(i, cpuset))
 			snprintf(buf, size, "%s%d,", buf, i);
 
 	i = strlen(buf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.3 2008/06/15 23:45:51 rmind Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.4 2008/06/16 01:41:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.3 2008/06/15 23:45:51 rmind Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.4 2008/06/16 01:41:21 rmind Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -78,7 +78,7 @@ _cpuset_zero(cpuset_t *c)
 }
 
 int
-_cpuset_isset(const cpuset_t *c, int i)
+_cpuset_isset(const cpuset_t *c, cpuid_t i)
 {
 	const int j = i >> CPUSET_SHIFT;
 
@@ -88,7 +88,7 @@ _cpuset_isset(const cpuset_t *c, int i)
 }
 
 int
-_cpuset_set(cpuset_t *c, int i)
+_cpuset_set(cpuset_t *c, cpuid_t i)
 {
 	const int j = i >> CPUSET_SHIFT;
 
@@ -99,7 +99,7 @@ _cpuset_set(cpuset_t *c, int i)
 }
 
 int
-_cpuset_clr(cpuset_t *c, int i)
+_cpuset_clr(cpuset_t *c, cpuid_t i)
 {
 	const int j = i >> CPUSET_SHIFT;
 
@@ -149,13 +149,13 @@ _cpuset_destroy(cpuset_t *c)
 
 #ifdef _KERNEL
 size_t
-_cpuset_nused(const cpuset_t *c)
+kcpuset_nused(const cpuset_t *c)
 {
 	return c->nused;
 }
 
 void
-_cpuset_copy(cpuset_t *d, const cpuset_t *s)
+kcpuset_copy(cpuset_t *d, const cpuset_t *s)
 {
 
 	KASSERT(d->size == s->size);
@@ -164,14 +164,14 @@ _cpuset_copy(cpuset_t *d, const cpuset_t *s)
 }
 
 void
-_cpuset_use(cpuset_t *c)
+kcpuset_use(cpuset_t *c)
 {
 
 	atomic_inc_uint(&c->nused);
 }
 
 void
-_cpuset_unuse(cpuset_t *c, cpuset_t **lst)
+kcpuset_unuse(cpuset_t *c, cpuset_t **lst)
 {
 
 	if (atomic_dec_uint_nv(&c->nused) != 0)
