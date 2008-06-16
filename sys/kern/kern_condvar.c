@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.24 2008/06/16 10:03:47 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.25 2008/06/16 12:03:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.24 2008/06/16 10:03:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.25 2008/06/16 12:03:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -388,18 +388,8 @@ cv_wakeup(kcondvar_t *cv)
 bool
 cv_has_waiters(kcondvar_t *cv)
 {
-	bool result;
-	kmutex_t *mp;
-	sleepq_t *sq;
 
-	sq = CV_SLEEPQ(cv);
-	(void)sleeptab_lookup(&sleeptab, cv, &mp);
-
-	/* we can only get a valid result with the sleepq locked */
-	result = !TAILQ_EMPTY(sq);
-
-	mutex_spin_exit(mp);
-	return result;
+	return !TAILQ_EMPTY(CV_SLEEPQ(cv));
 }
 
 /*
