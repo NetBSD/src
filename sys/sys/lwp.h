@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.99 2008/06/15 20:32:57 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.100 2008/06/16 09:45:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ void	lwp_startup(lwp_t *, lwp_t *);
 int	lwp_locked(lwp_t *, kmutex_t *);
 void	lwp_setlock(lwp_t *, kmutex_t *);
 void	lwp_unlock_to(lwp_t *, kmutex_t *);
-void	lwp_lock_retry(lwp_t *, kmutex_t *);
+kmutex_t *lwp_lock_retry(lwp_t *, kmutex_t *);
 void	lwp_relock(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);

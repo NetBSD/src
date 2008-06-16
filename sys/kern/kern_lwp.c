@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.118 2008/06/16 01:41:20 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.119 2008/06/16 09:45:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.118 2008/06/16 01:41:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.119 2008/06/16 09:45:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1206,7 +1206,7 @@ lwp_locked(struct lwp *l, kmutex_t *mtx)
 /*
  * Lock an LWP.
  */
-void
+kmutex_t *
 lwp_lock_retry(struct lwp *l, kmutex_t *old)
 {
 
@@ -1233,6 +1233,8 @@ lwp_lock_retry(struct lwp *l, kmutex_t *old)
 #else
 	} while (__predict_false(l->l_mutex != old));
 #endif
+
+	return old;
 }
 
 /*
