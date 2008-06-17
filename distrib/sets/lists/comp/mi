@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1159 2008/06/17 04:39:49 yamt Exp $
+#	$NetBSD: mi,v 1.1160 2008/06/17 04:41:44 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6708,7 +6708,7 @@
 ./usr/share/man/cat3/pthread_detach.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_equal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_exit.0		comp-c-catman		.cat
-./usr/share/man/cat3/pthread_getaffinity.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_getaffinity_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getname_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getspecific.0	comp-c-catman		.cat
@@ -6742,7 +6742,7 @@
 ./usr/share/man/cat3/pthread_rwlockattr_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_schedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_self.0		comp-c-catman		.cat
-./usr/share/man/cat3/pthread_setaffinity.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_setaffinity_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setcancelstate.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setcanceltype.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setname_np.0	comp-c-catman		.cat
@@ -11992,7 +11992,7 @@
 ./usr/share/man/man3/pthread_detach.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_equal.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_exit.3		comp-c-man		.man
-./usr/share/man/man3/pthread_getaffinity.3	comp-c-man		.man
+./usr/share/man/man3/pthread_getaffinity_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getname_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getspecific.3	comp-c-man		.man
@@ -12026,7 +12026,7 @@
 ./usr/share/man/man3/pthread_rwlockattr_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_schedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_self.3		comp-c-man		.man
-./usr/share/man/man3/pthread_setaffinity.3	comp-c-man		.man
+./usr/share/man/man3/pthread_setaffinity_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_setcancelstate.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_setcanceltype.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_setname_np.3	comp-c-man		.man
