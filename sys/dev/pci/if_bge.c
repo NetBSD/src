@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.146 2008/06/08 11:41:26 mlelstv Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.147 2008/06/17 06:04:07 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.146 2008/06/08 11:41:26 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.147 2008/06/17 06:04:07 mlelstv Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3290,38 +3290,20 @@ bge_tick(void *xsc)
 {
 	struct bge_softc *sc = xsc;
 	struct mii_data *mii = &sc->bge_mii;
-	struct ifnet *ifp = &sc->ethercom.ec_if;
 	int s;
 
 	s = splnet();
 
 	bge_stats_update(sc);
 	callout_reset(&sc->bge_timeout, hz, bge_tick, sc);
-	if (sc->bge_link) {
-		splx(s);
-		return;
-	}
 
 	if (sc->bge_tbi) {
 		if (CSR_READ_4(sc, BGE_MAC_STS) &
 		    BGE_MACSTAT_TBI_PCS_SYNCHED) {
-			sc->bge_link++;
 			CSR_WRITE_4(sc, BGE_MAC_STS, 0xFFFFFFFF);
-			if (!IFQ_IS_EMPTY(&ifp->if_snd))
-				bge_start(ifp);
 		}
-		splx(s);
-		return;
-	}
-
-	mii_tick(mii);
-
-	if (!sc->bge_link && mii->mii_media_status & IFM_ACTIVE &&
-	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-		sc->bge_link++;
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			bge_start(ifp);
-	}
+	} else
+		mii_tick(mii);
 
 	splx(s);
 }
