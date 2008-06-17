@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.203 2008/06/16 09:47:55 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.204 2008/06/17 14:53:10 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.203 2008/06/16 09:47:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.204 2008/06/17 14:53:10 reinoud Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1301,6 +1301,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		if (bp != NULL) {
 			memset((char *)bp, 0, sizeof(*bp));
 			buf_init(bp);
+			SET(bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 			mutex_enter(&bufcache_lock);
 #if defined(DIAGNOSTIC)
 			bp->b_freelistindex = -1;
@@ -2017,7 +2018,7 @@ buf_init(buf_t *bp)
 	bp->b_dev = NODEV;
 	bp->b_error = 0;
 	bp->b_flags = 0;
-	bp->b_cflags = BC_BUSY;
+	bp->b_cflags = 0;
 	bp->b_oflags = 0;
 	bp->b_objlock = &buffer_lock;
 	bp->b_iodone = NULL;
