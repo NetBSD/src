@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.24 2008/06/17 17:31:51 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.25 2008/06/17 18:24:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.24 2008/06/17 17:31:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.25 2008/06/17 18:24:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,6 @@ static void si_dma_start(struct ncr5380_softc *);
 static void si_dma_poll(struct ncr5380_softc *);
 static void si_dma_eop(struct ncr5380_softc *);
 static void si_dma_stop(struct ncr5380_softc *);
-
-static void si_dma_done(struct si_softc *);
 
 CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
     si_match, si_attach, NULL, NULL);
@@ -329,8 +327,6 @@ si_dma_poll(struct ncr5380_softc *ncr_sc)
 	if (i == POLL_TIMEOUT)
 		printf("%s: DMA polling timeout\n",
 		    device_xname(ncr_sc->sc_dev));
-
-	si_dma_done(sc);
 }
 
 /*
@@ -348,6 +344,8 @@ si_dma_stop(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct dma_regs *dmac = sc->sc_regs;
+	struct sci_req *sr = ncr_sc->sc_current;
+	int resid, ntrans;
 
 	/* check DMAC interrupt status */
 	if ((dmac->stat & DC_ST_INT) == 0) {
@@ -356,17 +354,6 @@ si_dma_stop(struct ncr5380_softc *ncr_sc)
 #endif
 		return; /* XXX */
 	}
-
-	si_dma_done(sc);
-}
-
-static void
-si_dma_done(struct si_softc *sc)
-{
-	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
-	struct dma_regs *dmac = sc->sc_regs;
-	struct sci_req *sr = ncr_sc->sc_current;
-	int resid, ntrans;
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef DEBUG
