@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.65 2008/06/13 09:41:15 cegger Exp $	*/
+/*	$NetBSD: grf.c,v 1.66 2008/06/17 19:47:49 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.65 2008/06/13 09:41:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.66 2008/06/17 19:47:49 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,6 @@ grfon(dev_t dev/*XXX*/)
 int
 grfoff(dev_t dev/*XXX*/)
 {
-	int unit = GRFUNIT(dev);
 	struct grf_softc *sc;
 	struct grf_data *gp;
 	int error;
