@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.55 2008/06/15 10:29:34 phx Exp $	*/
+/*	$NetBSD: viaide.c,v 1.56 2008/06/17 17:03:14 phx Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.55 2008/06/15 10:29:34 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.56 2008/06/17 17:03:14 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ static int	via_pcib_match(struct pci_attach_args *);
 static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	via_mapchan(struct pci_attach_args *, struct pciide_channel *,
 		    pcireg_t, bus_size_t *, bus_size_t *, int (*)(void *));
-static void	via_pegasos_mapregs_native(struct pci_attach_args *,
+static void	via_mapregs_compat_native(struct pci_attach_args *,
 		    struct pciide_channel *, bus_size_t *, bus_size_t *);
 static int	via_sata_chip_map_common(struct pciide_softc *,
 		    struct pci_attach_args *);
@@ -626,7 +626,7 @@ via_mapchan(struct pci_attach_args *pa,	struct pciide_channel *cp,
 		/* native mode with irq 14/15 requested? */
 		if (compat_nat_enable != NULL &&
 		    prop_bool_true(compat_nat_enable))
-			via_pegasos_mapregs_native(pa, cp, cmdsizep, ctlsizep);
+			via_mapregs_compat_native(pa, cp, cmdsizep, ctlsizep);
 		else
 			pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep,
 			    pci_intr);
@@ -646,7 +646,7 @@ via_mapchan(struct pci_attach_args *pa,	struct pciide_channel *cp,
  * handler for each channel, as in compatibility mode.
  */
 static void
-via_pegasos_mapregs_native(struct pci_attach_args *pa,
+via_mapregs_compat_native(struct pci_attach_args *pa,
     struct pciide_channel *cp, bus_size_t *cmdsizep, bus_size_t *ctlsizep)
 {
 	struct ata_channel *wdc_cp;
