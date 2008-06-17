@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.30 2008/05/24 14:32:48 yamt Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.31 2008/06/17 21:29:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -268,6 +268,7 @@ _prop_dict_keysym_alloc(const char *key)
 	prop_dictionary_keysym_t opdk, pdk;
 	const struct rb_node *n;
 	size_t size;
+	bool rv;
 
 	/*
 	 * Check to see if this already exists in the tree.  If it does,
@@ -325,7 +326,8 @@ _prop_dict_keysym_alloc(const char *key)
 		_prop_dict_keysym_put(pdk);
 		return (opdk);
 	}
-	_prop_rb_tree_insert_node(&_prop_dict_keysym_tree, &pdk->pdk_link);
+	rv = _prop_rb_tree_insert_node(&_prop_dict_keysym_tree, &pdk->pdk_link);
+	_PROP_ASSERT(rv == true);
 	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 	return (pdk);
 }
