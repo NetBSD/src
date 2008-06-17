@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.147 2008/06/17 06:04:07 mlelstv Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.148 2008/06/17 06:08:46 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,10 +79,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.147 2008/06/17 06:04:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.148 2008/06/17 06:08:46 mlelstv Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.147 2008/06/17 06:04:07 mlelstv Exp $")
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -2745,6 +2750,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	DPRINTFN(5, ("ether_ifattach\n"));
 	ether_ifattach(ifp, eaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->bge_dev),
+		RND_TYPE_NET, 0);
+#endif
 #ifdef BGE_EVENT_COUNTERS
 	/*
 	 * Attach event counters.
@@ -2971,6 +2980,11 @@ bge_rxeof(struct bge_softc *sc)
 	tosync = sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx -
 	    sc->bge_rx_saved_considx;
 
+#if NRND > 0
+	if (tosync != 0 && RND_ENABLED(&sc->rnd_source))
+		rnd_add_uint32(&sc->rnd_source, tosync);
+#endif
+
 	toff = offset + (sc->bge_rx_saved_considx * sizeof (struct bge_rx_bd));
 
 	if (tosync < 0) {
@@ -3123,6 +3137,11 @@ bge_txeof(struct bge_softc *sc)
 	offset = offsetof(struct bge_ring_data, bge_tx_ring);
 	tosync = sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx -
 	    sc->bge_tx_saved_considx;
+
+#if NRND > 0
+	if (tosync != 0 && RND_ENABLED(&sc->rnd_source))
+		rnd_add_uint32(&sc->rnd_source, tosync);
+#endif
 
 	toff = offset + (sc->bge_tx_saved_considx * sizeof (struct bge_tx_bd));
 
