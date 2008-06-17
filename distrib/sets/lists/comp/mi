@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1158 2008/06/16 14:25:49 rmind Exp $
+#	$NetBSD: mi,v 1.1159 2008/06/17 04:39:49 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4683,13 +4683,13 @@
 ./usr/share/man/cat3/cpow.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cpowf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset.0			comp-c-catman		.cat
+./usr/share/man/cat3/cpuset_clr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset_destroy.0		comp-c-catman		.cat
-./usr/share/man/cat3/cpuset_zero.0		comp-c-catman		.cat
-./usr/share/man/cat3/cpuset_set.0		comp-c-catman		.cat
-./usr/share/man/cat3/cpuset_clr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset_isset.0		comp-c-catman		.cat
+./usr/share/man/cat3/cpuset_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset_size.0		comp-c-catman		.cat
+./usr/share/man/cat3/cpuset_zero.0		comp-c-catman		.cat
 ./usr/share/man/cat3/creal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/crealf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/creat.0			comp-c-catman		.cat
@@ -6527,15 +6527,6 @@
 ./usr/share/man/cat3/prop_array_externalize.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_externalize_to_file.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_array_get.0		comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_internalize.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_internalize_from_file.0 comp-c-catman	.cat
-./usr/share/man/cat3/prop_array_iterator.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_make_immutable.0 comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_mutable.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_recv_ioctl.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_remove.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_send_ioctl.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_get_bool.0      comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_get_cstring.0   comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_get_cstring_nocopy.0 comp-c-catman      .cat
@@ -6547,6 +6538,15 @@
 ./usr/share/man/cat3/prop_array_get_uint32.0    comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_get_uint64.0    comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_get_uint8.0     comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_internalize.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_internalize_from_file.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_array_iterator.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_make_immutable.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_mutable.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_recv_ioctl.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_remove.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_send_ioctl.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_set_bool.0      comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_set_cstring.0   comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_set_cstring_nocopy.0 comp-c-catman      .cat
@@ -9967,13 +9967,13 @@
 ./usr/share/man/man3/cpow.3			comp-c-man		.man
 ./usr/share/man/man3/cpowf.3			comp-c-man		.man
 ./usr/share/man/man3/cpuset.3			comp-c-man		.man
+./usr/share/man/man3/cpuset_clr.3		comp-c-man		.man
 ./usr/share/man/man3/cpuset_create.3		comp-c-man		.man
 ./usr/share/man/man3/cpuset_destroy.3		comp-c-man		.man
-./usr/share/man/man3/cpuset_zero.3		comp-c-man		.man
-./usr/share/man/man3/cpuset_set.3		comp-c-man		.man
-./usr/share/man/man3/cpuset_clr.3		comp-c-man		.man
 ./usr/share/man/man3/cpuset_isset.3		comp-c-man		.man
+./usr/share/man/man3/cpuset_set.3		comp-c-man		.man
 ./usr/share/man/man3/cpuset_size.3		comp-c-man		.man
+./usr/share/man/man3/cpuset_zero.3		comp-c-man		.man
 ./usr/share/man/man3/creal.3			comp-c-man		.man
 ./usr/share/man/man3/crealf.3			comp-c-man		.man
 ./usr/share/man/man3/creat.3			comp-c-man		.man
@@ -11811,15 +11811,6 @@
 ./usr/share/man/man3/prop_array_externalize.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_externalize_to_file.3 comp-c-man	.man
 ./usr/share/man/man3/prop_array_get.3		comp-c-man		.man
-./usr/share/man/man3/prop_array_internalize.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_internalize_from_file.3 comp-c-man	.man
-./usr/share/man/man3/prop_array_iterator.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_make_immutable.3 comp-c-man		.man
-./usr/share/man/man3/prop_array_mutable.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_recv_ioctl.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_remove.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_send_ioctl.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_set.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_get_bool.3      comp-c-man              .man
 ./usr/share/man/man3/prop_array_get_cstring.3   comp-c-man              .man
 ./usr/share/man/man3/prop_array_get_cstring_nocopy.3    comp-c-man      .man
@@ -11831,6 +11822,15 @@
 ./usr/share/man/man3/prop_array_get_uint32.3    comp-c-man              .man
 ./usr/share/man/man3/prop_array_get_uint64.3    comp-c-man              .man
 ./usr/share/man/man3/prop_array_get_uint8.3     comp-c-man              .man
+./usr/share/man/man3/prop_array_internalize.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_internalize_from_file.3 comp-c-man	.man
+./usr/share/man/man3/prop_array_iterator.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_make_immutable.3 comp-c-man		.man
+./usr/share/man/man3/prop_array_mutable.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_recv_ioctl.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_remove.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_send_ioctl.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_set.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_set_bool.3      comp-c-man              .man
 ./usr/share/man/man3/prop_array_set_cstring.3   comp-c-man              .man
 ./usr/share/man/man3/prop_array_set_cstring_nocopy.3    comp-c-man      .man
