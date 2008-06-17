@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.184 2008/06/14 11:44:57 cegger Exp $	*/
+/*	$NetBSD: vnd.c,v 1.185 2008/06/17 09:01:56 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.184 2008/06/14 11:44:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.185 2008/06/17 09:01:56 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -533,6 +533,12 @@ vnode_has_strategy(struct vnd_softc *vnd)
 	    vnode_has_op(vnd->sc_vp, VOFFSET(vop_strategy));
 }
 
+/* XXX this function needs a reliable check to detect
+ * sparse files. Otherwise, bmap/strategy may be used
+ * and fail on non-allocated blocks. VOP_READ/VOP_WRITE
+ * works on sparse files.
+ */
+#if notyet
 static bool
 vnode_strategy_probe(struct vnd_softc *vnd)
 {
@@ -556,6 +562,7 @@ vnode_strategy_probe(struct vnd_softc *vnd)
 
 	return true;
 }
+#endif
 
 static void
 vndthread(void *arg)
@@ -569,7 +576,7 @@ vndthread(void *arg)
 	 * operations to avoid messing with the local buffer cache.
 	 * Otherwise fall back to regular VOP_READ/VOP_WRITE operations
 	 * which are guaranteed to work with any file system. */
-	usestrategy = vnode_strategy_probe(vnd);
+	usestrategy = vnode_has_strategy(vnd);
 
 #ifdef DEBUG
 	if (vnddebug & VDB_INIT)
