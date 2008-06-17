@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.55 2008/06/13 09:41:15 cegger Exp $	*/
+/*	$NetBSD: ct.c,v 1.56 2008/06/17 19:46:23 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.55 2008/06/13 09:41:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.56 2008/06/17 19:46:23 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ ctopen(dev_t dev, int flag, int type, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 
-	if (sc->sc_flags & CTF_ALIVE) == 0)
+	if ((sc->sc_flags & CTF_ALIVE) == 0)
 		return ENXIO;
 
 	if (sc->sc_flags & CTF_OPEN)
