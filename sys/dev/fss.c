@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.45 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: fss.c,v 1.46 2008/06/17 14:53:10 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.45 2008/04/28 20:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.46 2008/06/17 14:53:10 reinoud Exp $");
 
 #include "fss.h"
 
@@ -1150,6 +1150,7 @@ fss_bs_thread(void *arg)
 		nbp->b_blkno = bp->b_blkno;
 		nbp->b_proc = bp->b_proc;
 		nbp->b_dev = sc->sc_bdev;
+		SET(nbp->b_cflags, BC_BUSY);	/* mark buffer busy */
 
 		bdev_strategy(nbp);
 

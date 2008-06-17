@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.41 2008/06/03 12:14:08 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.42 2008/06/17 14:53:10 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.41 2008/06/03 12:14:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.42 2008/06/17 14:53:10 reinoud Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -862,6 +862,7 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 	bp->b_resid = len;
 	bp->b_flags = B_READ;
 	bp->b_data = tbuf;
+	SET(bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 
 	VOP_STRATEGY(vp, bp);
 	result = biowait(bp);
