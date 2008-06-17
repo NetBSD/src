@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.44 2008/06/13 09:41:15 cegger Exp $	*/
+/*	$NetBSD: mt.c,v 1.45 2008/06/17 21:06:57 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.44 2008/06/13 09:41:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.45 2008/06/17 21:06:57 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,7 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 
-	if (sc->sc_flags & MTF_EXISTS) == 0)
+	if ((sc->sc_flags & MTF_EXISTS) == 0)
 		return ENXIO;
 
 	dlog(LOG_DEBUG, "%s open: flags 0x%x", device_xname(sc->sc_dev),
@@ -425,7 +425,7 @@ mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 mtcommand(dev_t dev, int cmd, int cnt)
 {
-	struct mt_softc *sc = device_lookup_private(mt_cd,UNIT(dev));
+	struct mt_softc *sc = device_lookup_private(&mt_cd,UNIT(dev));
 	struct buf *bp = &sc->sc_bufstore;
 	int error = 0;
 
@@ -462,7 +462,7 @@ mtstrategy(struct buf *bp)
 	struct mt_softc *sc;
 	int s;
 
-	sc = device_lookup_private(&mt_cd,unit);
+	sc = device_lookup_private(&mt_cd,UNIT(bp->b_dev));
 	dlog(LOG_DEBUG, "%s strategy", device_xname(sc->sc_dev));
 	if ((bp->b_flags & (B_CMD | B_READ)) == 0) {
 #define WRITE_BITS_IGNORED	8
