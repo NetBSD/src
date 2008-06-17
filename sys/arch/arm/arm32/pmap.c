@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.176 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.177 2008/06/17 08:04:26 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.177 2008/06/17 08:04:26 chris Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3072,7 +3072,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 					PMAPCOUNT(exec_synced_kremove);
 				}
 			}
-			KASSERT(opg->mdpage.pvh_attrs | (PVF_COLORED|PVF_NC));
+			KASSERT(opg->mdpage.pvh_attrs & (PVF_COLORED|PVF_NC));
 			opg->mdpage.pvh_attrs &= ~PVF_KENTRY;
 			pmap_vac_me_harder(opg, NULL, 0);
 			simple_unlock(&opg->mdpage.pvh_slock);
@@ -3149,7 +3149,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 						PMAPCOUNT(exec_synced_kremove);
 					}
 				}
-				KASSERT(opg->mdpage.pvh_attrs | (PVF_COLORED|PVF_NC));
+				KASSERT(opg->mdpage.pvh_attrs & (PVF_COLORED|PVF_NC));
 				opg->mdpage.pvh_attrs &= ~PVF_KENTRY;
 				pmap_vac_me_harder(opg, NULL, 0);
 				simple_unlock(&opg->mdpage.pvh_slock);
