@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.100 2008/06/16 09:45:20 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.101 2008/06/17 09:08:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -442,7 +442,8 @@ CURCPU_IDLE_P(void)
 
 /*
  * Disable and re-enable preemption.  Only for low-level kernel
- * use.  Code outside kern/ should use kpreempt_disable() and
+ * use.  Device drivers and anything that could potentially be
+ * compiled as a module should use kpreempt_disable() and
  * kpreempt_enable().
  */
 static inline void
