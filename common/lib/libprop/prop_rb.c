@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb.c,v 1.8 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_rb.c,v 1.9 2008/06/17 21:29:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ rb_tree_reparent_nodes(struct rb_tree *rbt _PROP_ARG_UNUSED,
 	KASSERT(RB_ROOT_P(new_father) || rb_tree_check_node(rbt, grandpa, NULL, false));
 }
 
-void
+bool
 _prop_rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 {
 	struct rb_node *parent, *tmp;
@@ -176,6 +176,12 @@ _prop_rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	 */
 	while (!RB_SENTINEL_P(tmp)) {
 		const int diff = (*compare_nodes)(tmp, self);
+		if (__predict_false(diff == 0)) {
+			/*
+			 * Node already exists; don't insert.
+			 */
+			return false;
+		}
 		parent = tmp;
 		KASSERT(diff != 0);
 		if (diff < 0) {
@@ -267,6 +273,8 @@ _prop_rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	 */
 	_prop_rb_tree_check(rbt, true);
 #endif
+
+	return true;
 }
 
 static void
