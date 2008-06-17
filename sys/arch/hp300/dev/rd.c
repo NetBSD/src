@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.87 2008/06/13 09:41:15 cegger Exp $	*/
+/*	$NetBSD: rd.c,v 1.88 2008/06/17 21:08:08 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.87 2008/06/13 09:41:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.88 2008/06/17 21:08:08 he Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -603,7 +603,7 @@ rdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 
-	if (sc->sc_flags & RDF_ALIVE) == 0)
+	if ((sc->sc_flags & RDF_ALIVE) == 0)
 		return ENXIO;
 
 	/*
@@ -1236,7 +1236,7 @@ rdsize(dev_t dev)
 	if (sc == NULL)
 		return ENXIO;
 
-	if (sc->sc_flags & RDF_ALIVE) == 0)
+	if ((sc->sc_flags & RDF_ALIVE) == 0)
 		return ENXIO;
 
 	/*
@@ -1307,7 +1307,7 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	if (sc == NULL)
 		return ENXIO;
 
-	if (sc->sc_flags & RDF_ALIVE) == 0)
+	if ((sc->sc_flags & RDF_ALIVE) == 0)
 		return ENXIO;
 
 	ctlr = device_unit(device_parent(sc->sc_dev));
