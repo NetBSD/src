@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.32 2008/06/16 10:02:15 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.33 2008/06/17 09:11:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.32 2008/06/16 10:02:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.33 2008/06/17 09:11:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -269,6 +269,13 @@ sleepq_block(int timo, bool catch)
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
 		else if ((l->l_flag & LW_PENDSIG) != 0) {
+			/*
+			 * Acquiring p_lock may cause us to recurse
+			 * through the sleep path and back into this
+			 * routine, but is safe because LWPs sleeping
+			 * on locks are non-interruptable.  We will
+			 * not recurse again.
+			 */
 			mutex_enter(p->p_lock);
 			if ((sig = issignal(l)) != 0)
 				error = sleepq_sigtoerror(l, sig);
