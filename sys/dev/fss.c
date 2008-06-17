@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.46 2008/06/17 14:53:10 reinoud Exp $	*/
+/*	$NetBSD: fss.c,v 1.47 2008/06/17 15:04:12 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.46 2008/06/17 14:53:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.47 2008/06/17 15:04:12 mlelstv Exp $");
 
 #include "fss.h"
 
@@ -900,6 +900,7 @@ restart:
 		bp->b_dev = sc->sc_bdev;
 		bp->b_private = scp;
 		bp->b_iodone = fss_cluster_iodone;
+		SET(nbp->b_cflags, BC_BUSY);	/* mark buffer busy */
 
 		bdev_strategy(bp);
 
