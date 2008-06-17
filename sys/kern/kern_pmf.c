@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.19 2008/05/05 00:15:57 jmcneill Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.20 2008/06/17 16:17:21 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.19 2008/05/05 00:15:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.20 2008/06/17 16:17:21 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.19 2008/05/05 00:15:57 jmcneill Exp $
 #include <sys/device.h>
 #include <sys/pmf.h>
 #include <sys/queue.h>
+#include <sys/sched.h>
 #include <sys/syscallargs.h> /* for sys_sync */
 #include <sys/workqueue.h>
 #include <prop/proplib.h>
