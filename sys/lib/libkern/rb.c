@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.14.16.1 2008/05/18 12:35:21 yamt Exp $ */
+/* $NetBSD: rb.c,v 1.14.16.2 2008/06/17 09:15:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #else
 #include <lib/libkern/libkern.h>
 #endif
-#include "rb.h"
+#include <sys/rb.h>
 
 static void rb_tree_insert_rebalance(struct rb_tree *, struct rb_node *);
 static void rb_tree_removal_rebalance(struct rb_tree *, struct rb_node *,
@@ -65,7 +65,7 @@ static bool rb_tree_check_node(const struct rb_tree *, const struct rb_node *,
 static const struct rb_node sentinel_node = {
 	.rb_nodes[0] = __UNCONST(&sentinel_node),
 	.rb_nodes[1] = __UNCONST(&sentinel_node),
-	.rb_sentinel = 1
+	.rb_info = { .s_sentinel = 1 }
 };
 
 void

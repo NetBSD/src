@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.16.2.2 2008/06/04 02:05:39 yamt Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.16.2.3 2008/06/17 09:15:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,15 +30,11 @@
  */
 
 /*
- * Kernel condition variable implementation, modeled after those found in
- * Solaris, a description of which can be found in:
- *
- *	Solaris Internals: Core Kernel Architecture, Jim Mauro and
- *	    Richard McDougall.
+ * Kernel condition variable implementation.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.16.2.2 2008/06/04 02:05:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.16.2.3 2008/06/17 09:15:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -47,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.16.2.2 2008/06/04 02:05:39 yamt E
 #include <sys/condvar.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -127,16 +124,18 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 	kmutex_t *mp;
 
 	KASSERT(cv_is_valid(cv));
+	KASSERT(!cpu_intr_p());
 	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
 	LOCKDEBUG_LOCKED(CV_DEBUG_P(cv), cv, mtx, CV_RA, 0);
 
 	l->l_kpriority = true;
-	(void)sleeptab_lookup(&sleeptab, cv, &mp);
+	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
 	sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, cv, cv->cv_wmesg, &cv_syncobj);
 	mutex_exit(mtx);
+	KASSERT(cv_has_waiters(cv));
 }
 
 /*
@@ -181,7 +180,7 @@ cv_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(l->l_wchan == (wchan_t)cv);
 	KASSERT(l->l_sleepq == CV_SLEEPQ(cv));
 	KASSERT(cv_is_valid(cv));
-	KASSERT(!TAILQ_EMPTY(CV_SLEEPQ(cv)));
+	KASSERT(cv_has_waiters(cv));
 
 	return sleepq_unsleep(l, cleanup);
 }
@@ -276,10 +275,10 @@ void
 cv_signal(kcondvar_t *cv)
 {
 
-	LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA);
+	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
 	KASSERT(cv_is_valid(cv));
 
-	if (__predict_false(TAILQ_FIRST(CV_SLEEPQ(cv)) != NULL))
+	if (__predict_false(!TAILQ_EMPTY(CV_SLEEPQ(cv))))
 		cv_wakeup_one(cv);
 }
 
@@ -293,8 +292,8 @@ cv_wakeup_one(kcondvar_t *cv)
 
 	KASSERT(cv_is_valid(cv));
 
+	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
-	(void)sleeptab_lookup(&sleeptab, cv, &mp);
 	l = TAILQ_FIRST(sq);
 	if (l == NULL) {
 		mutex_spin_exit(mp);
@@ -326,10 +325,10 @@ void
 cv_broadcast(kcondvar_t *cv)
 {
 
-	LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA);
+	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
 	KASSERT(cv_is_valid(cv));
 
-	if (__predict_false(TAILQ_FIRST(CV_SLEEPQ(cv)) != NULL))
+	if (__predict_false(!TAILQ_EMPTY(CV_SLEEPQ(cv))))  
 		cv_wakeup_all(cv);
 }
 
@@ -343,9 +342,9 @@ cv_wakeup_all(kcondvar_t *cv)
 
 	KASSERT(cv_is_valid(cv));
 
-	sq = CV_SLEEPQ(cv);
-	(void)sleeptab_lookup(&sleeptab, cv, &mp);
+	mp = sleepq_hashlock(cv);
 	swapin = 0;
+	sq = CV_SLEEPQ(cv);
 	for (l = TAILQ_FIRST(sq); l != NULL; l = next) {
 		KASSERT(l->l_sleepq == sq);
 		KASSERT(l->l_mutex == mp);
@@ -390,7 +389,6 @@ bool
 cv_has_waiters(kcondvar_t *cv)
 {
 
-	/* No need to interlock here */
 	return !TAILQ_EMPTY(CV_SLEEPQ(cv));
 }
 

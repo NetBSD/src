@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.270.2.1 2008/05/18 12:35:07 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.270.2.2 2008/06/17 09:15:02 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.270.2.1 2008/05/18 12:35:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.270.2.2 2008/06/17 09:15:02 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -492,6 +492,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	pack.ep_emul_root = NULL;
 	pack.ep_interp = NULL;
 	pack.ep_esch = NULL;
+	pack.ep_pax_flags = 0;
 
 #ifdef LKM
 	rw_enter(&exec_lock, RW_READER);
@@ -847,15 +848,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	/*
-	 * It's OK to test PS_PPWAIT unlocked here, as other LWPs have
+	 * It's OK to test PL_PPWAIT unlocked here, as other LWPs have
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
-	if ((p->p_sflag & PS_PPWAIT) != 0) {
+	if ((p->p_lflag & PL_PPWAIT) != 0) {
 		mutex_enter(proc_lock);
-		mutex_enter(p->p_lock);
-		p->p_sflag &= ~PS_PPWAIT;
+		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
-		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 	}
 
@@ -1070,12 +1069,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
 
- clrflg:
-	PNBUF_PUT(pathbuf);
-	rw_exit(&p->p_reflock);
 #ifdef LKM
 	rw_exit(&exec_lock);
 #endif
+
+ clrflg:
+	PNBUF_PUT(pathbuf);
+	rw_exit(&p->p_reflock);
 
 	return error;
 

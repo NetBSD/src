@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.75 2008/04/05 16:06:12 cegger Exp $	*/
+/*	$NetBSD: xd.c,v 1.75.2.1 2008/06/17 09:15:02 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.75 2008/04/05 16:06:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.75.2.1 2008/06/17 09:15:02 yamt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -505,7 +505,7 @@ xdcattach(parent, self, aux)
 	bus_space_handle_t	bh;
 	vme_intr_handle_t	ih;
 	vme_am_t		mod;
-	struct xdc_softc	*xdc = (void *) self;
+	struct xdc_softc	*xdc = device_private(self);
 	struct xdc_attach_args	xa;
 	int			lcv, rqno, error;
 	struct xd_iopb_ctrl	*ctl;
@@ -727,8 +727,8 @@ xdattach(parent, self, aux)
 	void   *aux;
 
 {
-	struct xd_softc *xd = (void *) self;
-	struct xdc_softc *xdc = (void *) parent;
+	struct xd_softc *xd = device_private(self);
+	struct xdc_softc *xdc = device_private(parent);
 	struct xdc_attach_args *xa = aux;
 	int     rqno, spt = 0, mb, blk, lcv, fmode, s = 0, newstate;
 	struct xd_iopb_drive *driopb;
@@ -944,7 +944,7 @@ xdclose(dev, flag, fmt, l)
 	int     flag, fmt;
 	struct lwp *l;
 {
-	struct xd_softc *xd = xd_cd.cd_devs[DISKUNIT(dev)];
+	struct xd_softc *xd = device_lookup_private(&xd_cd, DISKUNIT(dev));
 	int     part = DISKPART(dev);
 
 	/* clear mask bits */
@@ -976,11 +976,11 @@ xddump(dev, blkno, va, size)
 	struct xd_softc *xd;
 
 	unit = DISKUNIT(dev);
-	if (unit >= xd_cd.cd_ndevs)
-		return ENXIO;
 	part = DISKPART(dev);
 
-	xd = xd_cd.cd_devs[unit];
+	xd = device_lookup_private(&xd_cd, unit);
+	if (!xd)
+		return ENXIO;
 
 	printf("%s%c: crash dump not supported (yet)\n", device_xname(&xd->sc_dev),
 	    'a' + part);
@@ -1059,7 +1059,7 @@ xdioctl(dev, command, addr, flag, l)
 
 	unit = DISKUNIT(dev);
 
-	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == NULL)
+	if ((xd = device_lookup_private(&xd_cd, unit)) == NULL)
 		return (ENXIO);
 
 	/* switch on ioctl type */
@@ -1185,7 +1185,7 @@ xdopen(dev, flag, fmt, l)
 	/* first, could it be a valid target? */
 
 	unit = DISKUNIT(dev);
-	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == NULL)
+	if ((xd = device_lookup_private(&xd_cd, unit)) == NULL)
 		return (ENXIO);
 	part = DISKPART(dev);
 
@@ -1257,7 +1257,7 @@ xdsize(dev)
 
 	/* valid unit? */
 	unit = DISKUNIT(dev);
-	if (unit >= xd_cd.cd_ndevs || (xdsc = xd_cd.cd_devs[unit]) == NULL)
+	if ((xdsc = device_lookup_private(&xd_cd, unit)) == NULL)
 		return (-1);
 
 	part = DISKPART(dev);
@@ -1294,7 +1294,7 @@ xdstrategy(bp)
 
 	/* check for live device */
 
-	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == 0 ||
+	if (!(xd = device_lookup_private(&xd_cd, unit)) ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xd->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;

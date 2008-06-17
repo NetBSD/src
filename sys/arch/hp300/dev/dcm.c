@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.79.2.1 2008/05/18 12:31:55 yamt Exp $	*/
+/*	$NetBSD: dcm.c,v 1.79.2.2 2008/06/17 09:13:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.79.2.1 2008/05/18 12:31:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.79.2.2 2008/06/17 09:13:59 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -528,8 +528,8 @@ dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	brd = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	if (brd >= dcm_cd.cd_ndevs || port >= NDCMPORT ||
-	    (sc = device_private(dcm_cd.cd_devs[brd])) == NULL)
+	sc = device_lookup_private(&dcm_cd, brd);
+	if (sc == NULL)
 		return ENXIO;
 
 	if ((sc->sc_flags & DCM_ACTIVE) == 0)
@@ -617,7 +617,7 @@ dcmclose(dev_t dev, int flag, int mode, struct lwp *l)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	sc = device_private(dcm_cd.cd_devs[board]);
+	sc = device_lookup_private(&dcm_cd,board);
 	tp = sc->sc_tty[port];
 
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -653,7 +653,7 @@ dcmread(dev_t dev, struct uio *uio, int flag)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	sc = device_private(dcm_cd.cd_devs[board]);
+	sc = device_lookup_private(&dcm_cd,board);
 	tp = sc->sc_tty[port];
 
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
@@ -670,7 +670,7 @@ dcmwrite(dev_t dev, struct uio *uio, int flag)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	sc = device_private(dcm_cd.cd_devs[board]);
+	sc = device_lookup_private(&dcm_cd, board);
 	tp = sc->sc_tty[port];
 
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
@@ -687,7 +687,7 @@ dcmpoll(dev_t dev, int events, struct lwp *l)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	sc = device_private(dcm_cd.cd_devs[board]);
+	sc = device_lookup_private(&dcm_cd, board);
 	tp = sc->sc_tty[port];
 
 	return (*tp->t_linesw->l_poll)(tp, events, l);
@@ -703,7 +703,7 @@ dcmtty(dev_t dev)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	sc = device_private(dcm_cd.cd_devs[board]);
+	sc = device_lookup_private(&dcm_cd, board);
 
 	return sc->sc_tty[port];
 }
@@ -1003,7 +1003,7 @@ dcmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	port = DCMPORT(unit);
 	board = DCMBOARD(unit);
 
-	sc = device_private(dcm_cd.cd_devs[board]);
+	sc = device_lookup_private(&dcm_cd, board);
 	dcm = sc->sc_dcm;
 	tp = sc->sc_tty[port];
 
@@ -1118,7 +1118,7 @@ dcmparam(struct tty *tp, struct termios *t)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	sc = device_private(dcm_cd.cd_devs[board]);
+	sc = device_lookup_private(&dcm_cd, board);
 	dcm = sc->sc_dcm;
 
 	/* check requested parameters */
@@ -1205,7 +1205,7 @@ dcmstart(struct tty *tp)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	sc = device_private(dcm_cd.cd_devs[board]);
+	sc = device_lookup_private(&dcm_cd, board);
 	dcm = sc->sc_dcm;
 
 	s = spltty();
@@ -1335,7 +1335,7 @@ dcmmctl(dev_t dev, int bits, int how)
 	brd = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-	sc = device_private(dcm_cd.cd_devs[brd]);
+	sc = device_lookup_private(&dcm_cd, brd);
 	dcm = sc->sc_dcm;
 
 #ifdef DEBUG
@@ -1385,7 +1385,7 @@ dcmmctl(dev_t dev, int bits, int how)
 static void
 dcmsetischeme(int brd, int flags)
 {
-	struct dcm_softc *sc = device_private(dcm_cd.cd_devs[brd]);
+	struct dcm_softc *sc = device_lookup_private(&dcm_cd, brd);
 	struct dcmdevice *dcm = sc->sc_dcm;
 	struct dcmischeme *dis = &sc->sc_scheme;
 	int i;

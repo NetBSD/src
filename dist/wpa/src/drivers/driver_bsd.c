@@ -617,13 +617,14 @@ wpa_driver_bsd_get_scan_results(void *priv,
 	uint8_t *cp, *vp;
 	struct ieee80211req_scan_result *sr;
 	struct wpa_scan_result *wsr;
-	int len, ielen;
+	int len, ielen, olen;
 
 	os_memset(results, 0, max_size * sizeof(struct wpa_scan_result));
 
 	len = get80211var(drv, IEEE80211_IOC_SCAN_RESULTS, buf, sizeof(buf));
 	if (len < 0)
 		return -1;
+	olen = len;
 	cp = buf;
 	wsr = results;
 	while (len >= sizeof(struct ieee80211req_scan_result)) {
@@ -670,7 +671,7 @@ wpa_driver_bsd_get_scan_results(void *priv,
 	      wpa_scan_result_compar);
 
 	wpa_printf(MSG_DEBUG, "Received %d bytes of scan results (%d BSSes)",
-		   len, wsr - results);
+		   olen, wsr - results);
 
 	return wsr - results;
 #undef min

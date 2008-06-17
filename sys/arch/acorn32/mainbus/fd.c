@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37.8.1 2008/05/18 12:31:19 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.8.2 2008/06/17 09:13:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.37.8.1 2008/05/18 12:31:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.37.8.2 2008/06/17 09:13:53 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -560,10 +560,9 @@ fd_dev_to_type(fd, dev)
 }
 
 void
-fdstrategy(bp)
-	register struct buf *bp;	/* IO operation to perform */
+fdstrategy(struct buf *bp)
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(bp->b_dev)];
+	struct fd_softc *fd = device_lookup_private(&fd_cd,FDUNIT(bp->b_dev));
 	int sz;
  	int s;
 
@@ -792,21 +791,13 @@ out_fdc(iot, ioh, x)
 }
 
 int
-fdopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct lwp *l;
+fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
- 	int unit;
 	struct fd_softc *fd;
 	struct fd_type *type;
 
-	unit = FDUNIT(dev);
-	if (unit >= fd_cd.cd_ndevs)
-		return ENXIO;
-	fd = fd_cd.cd_devs[unit];
-	if (fd == 0)
+	fd = device_lookup_private(&fd_cd, FDUNIT(dev));
+	if (fd == NULL)
 		return ENXIO;
 	type = fd_dev_to_type(fd, dev);
 	if (type == NULL)
@@ -825,13 +816,9 @@ fdopen(dev, flags, mode, l)
 }
 
 int
-fdclose(dev, flags, mode, l)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct lwp *l;
+fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
 	fd->sc_opts &= ~(FDOPT_NORETRY|FDOPT_SILENT);
@@ -1313,14 +1300,9 @@ fdcretry(fdc)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *addr;
-	int flag;
-	struct lwp *l;
+fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
@@ -1495,13 +1477,10 @@ fdioctl(dev, cmd, addr, flag, l)
 }
 
 int
-fdformat(dev, finfo, l)
-	dev_t dev;
-	struct ne7_fd_formb *finfo;
-	struct lwp *l;
+fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 {
 	int rv = 0;
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup_private(&fd_cd,FDUNIT(dev));
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 

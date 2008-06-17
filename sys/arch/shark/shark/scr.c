@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.22 2007/03/04 06:00:43 christos Exp $	*/
+/*	$NetBSD: scr.c,v 1.22.44.1 2008/06/17 09:14:12 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.22 2007/03/04 06:00:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.22.44.1 2008/06/17 09:14:12 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -852,28 +852,15 @@ static void initStates(struct scr_softc * sc)
 **     none.
 **--
 */
-int scropen(dev, flag, mode, l)
-    dev_t       dev;
-    int         flag;
-    int         mode;
-struct lwp *l;
+int scropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-    int                  unit = SCRUNIT(dev);
     struct scr_softc     *sc;
 
     KERN_DEBUG (scrdebug, SCROPEN_DEBUG_INFO,
                 ("scropen: called with minor device %d and flag 0x%x\n",
-                 unit, flag));
+                 SCRUNIT(dev), flag));
 
-    /* Sanity check the minor device number we have been instructed
-    ** to open and set up our softc structure pointer. 
-    */
-    if (unit >= scr_cd.cd_ndevs)
-    {
-        KERN_DEBUG (scrdebug, SCROPEN_DEBUG_INFO,("\t scropen, return ENXIO\n"));
-        return (ENXIO);
-    }
-    sc = scr_cd.cd_devs[unit];
+    sc = device_lookup_private(&scr_cd, SCRUNIT(dev));
     if (!sc)
     {
         KERN_DEBUG (scrdebug, SCROPEN_DEBUG_INFO,("\t scropen, return ENXIO\n"));
@@ -935,15 +922,10 @@ struct lwp *l;
 **     none.
 **--
 */
-int scrclose(dev, flag, mode, l)
-    dev_t       dev;
-    int         flag;
-    int         mode;
-    struct lwp *l;
+int scrclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 #if 0
-    int                unit = SCRUNIT(dev);
-    struct scr_softc   *sc  = scr_cd.cd_devs[unit];
+    struct scr_softc   *sc  = device_lookup_private(&scr_cd, SCRUNIT(dev));
 #endif
 
     KERN_DEBUG (scrdebug, SCRCLOSE_DEBUG_INFO,
@@ -1034,15 +1016,9 @@ int scrclose(dev, flag, mode, l)
 **--
 */
 int
-scrioctl(dev, cmd, data, flag, l)
-    dev_t        dev;
-    u_long       cmd;
-    void *     data;
-    int          flag;
-struct lwp  *l;
+scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-    int                 unit = SCRUNIT(dev);
-    struct scr_softc*   sc  = scr_cd.cd_devs[unit];
+    struct scr_softc*   sc = device_lookup_private(&scr_cd, SCRUNIT(dev));
     
     int                 error = 0;          /* error value returned */
     int                 masterDoneRetries= 0;         /* nuber of times we looked at masterDone */
@@ -1059,7 +1035,7 @@ struct lwp  *l;
     KERN_DEBUG (scrdebug, SCRIOCTL_DEBUG_INFO,
                 ("scrioctl: called for device 0x%x, command 0x%lx, "
                  "flag 0x%x\n",
-                 unit, cmd, flag));
+                 SCRUNIT(dev), cmd, flag));
 
 
 

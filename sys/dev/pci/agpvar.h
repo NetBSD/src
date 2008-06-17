@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.16 2008/02/22 19:47:06 drochner Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.16.2.1 2008/06/17 09:14:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -128,7 +128,7 @@ struct agp_methods {
  * All chipset drivers must have this at the start of their softc.
  */
 struct agp_softc {
-	struct device		as_dev;
+	device_t		as_dev;
 	bus_space_tag_t		as_apt;
 	int			as_capoff;
 	bus_addr_t		as_apaddr;

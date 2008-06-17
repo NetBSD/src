@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.41 2008/02/20 17:05:52 matt Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.41.8.1 2008/06/17 09:15:13 yamt Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.41 2008/02/20 17:05:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.41.8.1 2008/06/17 09:15:13 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -358,10 +358,9 @@ pvcsif_alloc(void)
 	if (pvc_number >= pvc_max_number)
 		return (NULL);
 	MALLOC(pvcsif, struct pvcsif *, sizeof(struct pvcsif),
-	       M_DEVBUF, M_WAITOK);
+	       M_DEVBUF, M_WAITOK|M_ZERO);
 	if (pvcsif == NULL)
 		return (NULL);
-	memset(pvcsif, 0, sizeof(struct pvcsif));
 
 #ifdef __NetBSD__
 	snprintf(pvcsif->sif_if.if_xname, sizeof(pvcsif->sif_if.if_xname),

@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.28 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: drsc.c,v 1.28.76.1 2008/06/17 09:13:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.28 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.28.76.1 2008/06/17 09:13:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,10 +234,13 @@ void
 drsc_dump(void)
 {
 	extern struct cfdriver drsc_cd;
+	struct siop_softc *sc;
 	int i;
 
-	for (i = 0; i < drsc_cd.cd_ndevs; ++i)
-		if (drsc_cd.cd_devs[i])
-			siop_dump(drsc_cd.cd_devs[i]);
+	for (i = 0; i < drsc_cd.cd_ndevs; ++i) {
+		sc = device_lookup_private(&drsc_cd, i);
+		if (sc != NULL)
+			siop_dump(sc);
+	}
 }
 #endif

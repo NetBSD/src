@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.62 2008/01/04 19:45:54 joerg Exp $	*/
+/*	$NetBSD: fd.c,v 1.62.8.1 2008/06/17 09:14:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62 2008/01/04 19:45:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62.8.1 2008/06/17 09:14:20 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -539,8 +539,8 @@ fdmatch(struct device *parent, struct cfdata *match, void *aux)
 void 
 fdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)parent;
-	struct fd_softc *fd = (void *)self;
+	struct fdc_softc *fdc = device_private(parent);
+	struct fd_softc *fd = device_private(self);
 	struct fdc_attach_args *fa = aux;
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
@@ -626,7 +626,7 @@ fdstrategy(struct buf *bp			/* IO operation to perform */)
 
 	/* Valid unit, controller, and request? */
 	if (unit >= fd_cd.cd_ndevs ||
-	    (fd = fd_cd.cd_devs[unit]) == 0 ||
+	    (fd = device_lookup_private(&fd_cd, unit)) == 0 ||
 	    bp->b_blkno < 0 ||
 	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
@@ -783,7 +783,7 @@ void
 fd_motor_on(void *arg)
 {
 	struct fd_softc *fd = arg;
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
+	struct fdc_softc *fdc = device_private(device_parent(&fd->sc_dv));
 	int s;
 
 	s = splbio();
@@ -841,8 +841,8 @@ fdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	unit = FDUNIT(dev);
 	if (unit >= fd_cd.cd_ndevs)
 		return (ENXIO);
-	fd = fd_cd.cd_devs[unit];
-	if (fd == 0)
+	fd = device_lookup_private(&fd_cd, unit);
+	if (fd == NULL)
 		return (ENXIO);
 	type = fd_dev_to_type(fd, dev);
 	if (type == NULL)
@@ -882,7 +882,7 @@ fdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 int 
 fdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 	int pmask = (1 << DISKPART(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
@@ -1532,7 +1532,7 @@ fdcretry(struct fdc_softc *fdc)
 int 
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
@@ -1587,7 +1587,8 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 		/* FALLTHROUGH */
 	case ODIOCEJECT:
-		fd_do_eject((void *)device_parent(&fd->sc_dv), fd->sc_drive);
+		fd_do_eject(device_private(device_parent(&fd->sc_dv)),
+		    fd->sc_drive);
 		return (0);
 
 	case FDIOCGETFORMAT:
@@ -1766,7 +1767,7 @@ int
 fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 {
 	int rv = 0;
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
@@ -1824,7 +1825,7 @@ void
 fdgetdisklabel(dev_t dev)
 {
 	int unit = FDUNIT(dev), i;
-	struct fd_softc *fd = fd_cd.cd_devs[unit];
+	struct fd_softc *fd = device_lookup_private(&fd_cd, unit);
 	struct disklabel *lp = fd->sc_dk.dk_label;
 	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
 
@@ -1901,7 +1902,8 @@ fd_mountroot_hook(struct device *dev)
 {
 	int c;
 
-	fd_do_eject(fdc_cd.cd_devs[0], 0); /* XXX - doesn't check ``dev'' */
+	fd_do_eject(device_lookup_private(&fdc_cd, 0),
+	    0);	/* XXX - doesn't check ``dev'' */
 	printf("Insert filesystem floppy and press return.");
 	for (;;) {
 		c = cngetc();
@@ -1965,7 +1967,7 @@ fd_read_md_image(size_t *sizep, void **addrp)
 	}
 	(void)fdclose(dev, 0, S_IFCHR, NULL);
 	*sizep = offset;
-	fd_do_eject(fdc_cd.cd_devs[0], FDUNIT(dev)); /* XXX */
+	fd_do_eject(device_lookup_private(&fdc_cd, 0), FDUNIT(dev)); /* XXX */
 	return (0);
 }
 #endif

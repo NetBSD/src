@@ -1,4 +1,4 @@
-/* $NetBSD: drm_atomic.h,v 1.2.16.2 2008/06/04 02:05:10 yamt Exp $ */
+/* $NetBSD: drm_atomic.h,v 1.2.16.3 2008/06/17 09:14:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic.h,v 1.2.16.2 2008/06/04 02:05:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic.h,v 1.2.16.3 2008/06/17 09:14:33 yamt Exp $");
 
 #include <sys/atomic.h>
 
@@ -54,15 +54,15 @@ typedef uint32_t atomic_t;
 			((old == atomic_cas_uint(p, o, n)) ? 1 : 0)
 
 #define	set_bit(b, p)							\
-	atomic_set_int(((volatile uint32_t *)(void *)p) + (b >> 5),	\
+	atomic_set_int(((volatile uint32_t *)(volatile void *)p) + (b >> 5),\
 			(1 << (b & 0x1f)))
 
 #define	clear_bit(b, p)							\
-	atomic_clear_int(((volatile uint32_t *)(void *)p) + (b >> 5), 	\
+	atomic_clear_int(((volatile uint32_t *)(volatile void *)p) + (b >> 5), \
 			(1 << (b & 0x1f)))
 
 #define	test_bit(b, p)							\
-	(((volatile uint32_t *)(void *)p)[bit >> 5] & (1 << (bit & 0x1f)))
+	(((volatile uint32_t *)(volatile void *)p)[b >> 5] & (1 << (b & 0x1f)))
 
 static inline uint32_t 
 test_and_set_bit(int b, volatile void *p)

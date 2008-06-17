@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.40 2008/01/08 18:04:16 joerg Exp $	*/
+/*	$NetBSD: clock.c,v 1.40.8.1 2008/06/17 09:13:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40 2008/01/08 18:04:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40.8.1 2008/06/17 09:13:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -512,10 +512,8 @@ rtcopen(dev, flag, mode, l)
 	int			unit = minor(dev);
 	struct clock_softc	*sc;
 
-	if (unit >= clock_cd.cd_ndevs)
-		return ENXIO;
-	sc = clock_cd.cd_devs[unit];
-	if (!sc)
+	sc = device_lookup_private(&clock_cd, unit);
+	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_flags & RTC_OPEN)
 		return EBUSY;
@@ -532,7 +530,7 @@ rtcclose(dev, flag, mode, l)
 	struct lwp	*l;
 {
 	int			unit = minor(dev);
-	struct clock_softc	*sc = clock_cd.cd_devs[unit];
+	struct clock_softc	*sc = device_lookup_private(&clock_cd, unit);
 
 	sc->sc_flags = 0;
 	return 0;
@@ -549,7 +547,7 @@ rtcread(dev, uio, flags)
 	int			s, length;
 	char			buffer[16];
 
-	sc = clock_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&clock_cd, minor(dev));
 
 	s = splhigh();
 	MC146818_GETTOD(RTC, &clkregs);

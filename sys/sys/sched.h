@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.51.2.2 2008/06/04 02:05:49 yamt Exp $	*/
+/*	$NetBSD: sched.h,v 1.51.2.3 2008/06/17 09:15:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -90,35 +90,38 @@ struct sched_param {
 #define	SCHED_RR	2
 
 #if defined(_NETBSD_SOURCE)
+/*
+ * Interface of CPU-sets.
+ */
+typedef struct _cpuset cpuset_t;
 
-/* XXX: Size of the CPU set bitmap */
-#define	CPUSET_SHIFT	5
-#define	CPUSET_MASK	31
-#if MAXCPUS > 32
-#define	CPUSET_SIZE	(MAXCPUS >> CPUSET_SHIFT)
-#else
-#define	CPUSET_SIZE	1
+#define	cpuset_create()		_cpuset_create()
+#define	cpuset_destroy(c)	_cpuset_destroy(c)
+#define	cpuset_size(c)		_cpuset_size(c)
+#define	cpuset_zero(c)		_cpuset_zero(c)
+#define	cpuset_isset(i, c)	_cpuset_isset(c, i)
+#define	cpuset_set(i, c)	_cpuset_set(c, i)
+#define	cpuset_clr(i, c)	_cpuset_clr(c, i)
+
+cpuset_t *_cpuset_create(void);
+void	_cpuset_destroy(cpuset_t *);
+void	_cpuset_zero(cpuset_t *);
+int	_cpuset_set(cpuset_t *, cpuid_t);
+int	_cpuset_clr(cpuset_t *, cpuid_t);
+int	_cpuset_isset(const cpuset_t *, cpuid_t);
+size_t	_cpuset_size(const cpuset_t *);
+#ifdef _KERNEL
+void	kcpuset_copy(cpuset_t *, const cpuset_t *);
+void	kcpuset_use(cpuset_t *);
+void	kcpuset_unuse(cpuset_t *, cpuset_t **);
+size_t	kcpuset_nused(const cpuset_t *);
 #endif
 
-/* Bitmap of the CPUs */
-typedef struct {
-	uint32_t	bits[CPUSET_SIZE];
-} cpuset_t;
-
-#define	CPU_ZERO(c)	\
-	(memset(c, 0, sizeof(cpuset_t)))
-
-#define	CPU_ISSET(i, c)	\
-	((1 << (i & CPUSET_MASK)) & (c)->bits[i >> CPUSET_SHIFT])
-
-#define	CPU_SET(i, c)	\
-	((c)->bits[i >> CPUSET_SHIFT] |= 1 << (i & CPUSET_MASK))
-
-#define	CPU_CLR(i, c)	\
-	((c)->bits[i >> CPUSET_SHIFT] &= ~(1 << (i & CPUSET_MASK)))
-
-int	_sched_getaffinity(pid_t, lwpid_t, size_t, void *);
-int	_sched_setaffinity(pid_t, lwpid_t, size_t, void *);
+/*
+ * Internal affinity and scheduling calls.
+ */
+int	_sched_getaffinity(pid_t, lwpid_t, size_t, cpuset_t *);
+int	_sched_setaffinity(pid_t, lwpid_t, size_t, const cpuset_t *);
 int	_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);
 int	_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap_lkm.c,v 1.5.22.1 2008/05/18 12:35:24 yamt Exp $	*/
+/*	$NetBSD: if_tap_lkm.c,v 1.5.22.2 2008/06/17 09:15:12 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2005 The NetBSD Foundation.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap_lkm.c,v 1.5.22.1 2008/05/18 12:35:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap_lkm.c,v 1.5.22.2 2008/06/17 09:15:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,13 +158,16 @@ static int
 tap_lkmunload(struct lkm_table *lkmtp, int cmd)
 {
 	int error, i;
+	device_t dev;
 
 	if_clone_detach(&tap_cloners);
 
-	for (i = 0; i < tap_cd.cd_ndevs; i++)
-		if (tap_cd.cd_devs[i] != NULL &&
-		    (error = tap_clone_destroyer(tap_cd.cd_devs[i])) != 0)
+	for (i = 0; i < tap_cd.cd_ndevs; i++) {
+		dev = device_lookup(&tap_cd, i);
+		if (dev != NULL &&
+		    (error = tap_clone_destroyer(dev)) != 0)
 			return error;
+	}
 
 	sysctl_teardown(&tap_log);
 

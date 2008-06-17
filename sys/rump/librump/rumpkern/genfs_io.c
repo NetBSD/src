@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.8.8.1 2008/05/18 12:35:48 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.8.8.2 2008/06/17 09:15:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -299,7 +299,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	/* check if all pages are clean */
 	smallest = -1;
 	for (pg = TAILQ_FIRST(&uobj->memq); pg; pg = pg_next) {
-		pg_next = TAILQ_NEXT(pg, listq);
+		pg_next = TAILQ_NEXT(pg, listq.queue);
 
 		/*
 		 * XXX: this is not correct at all.  But it's based on

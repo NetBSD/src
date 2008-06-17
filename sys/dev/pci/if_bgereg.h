@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.45 2007/12/09 20:28:08 jmcneill Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.45.12.1 2008/06/17 09:14:41 yamt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2439,4 +2439,8 @@ struct bge_softc {
 	int			bge_pending_rxintr_change;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
+
+#if NRND > 0
+	rndsource_element_t	rnd_source;	/* random source */
+#endif
 };

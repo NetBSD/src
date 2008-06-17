@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.8 2007/03/04 05:59:04 christos Exp $ */
+/* $NetBSD: arcpp.c,v 1.8.42.1 2008/06/17 09:13:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.8 2007/03/04 05:59:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.8.42.1 2008/06/17 09:13:53 yamt Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -180,7 +180,7 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 	bus_space_handle_t ioh;
 	int error, s;
 
-	sc = device_lookup(&arcpp_cd, ARCPPUNIT(dev));
+	sc = device_lookup_private(&arcpp_cd, ARCPPUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -229,7 +229,7 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 arcppclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct arcpp_softc *sc = device_lookup(&arcpp_cd, ARCPPUNIT(dev));
+	struct arcpp_softc *sc = device_lookup_private(&arcpp_cd, ARCPPUNIT(dev));
 
 	if (sc->sc_count)
 		(void) arcpppushbytes(sc);
@@ -266,7 +266,7 @@ arcpppushbytes(sc)
 int
 arcppwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct arcpp_softc *sc = device_lookup(&arcpp_cd, ARCPPUNIT(dev));
+	struct arcpp_softc *sc = device_lookup_private(&arcpp_cd, ARCPPUNIT(dev));
 	size_t n;
 	int error = 0;
 

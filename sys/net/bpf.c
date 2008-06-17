@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.137.4.2 2008/06/04 02:05:47 yamt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.137.4.3 2008/06/17 09:15:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.137.4.2 2008/06/04 02:05:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.137.4.3 2008/06/17 09:15:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -397,8 +397,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 
-	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK);
-	(void)memset(d, 0, sizeof(*d));
+	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK|M_ZERO);
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_seesent = 1;
 	d->bd_pid = l->l_proc->p_pid;
@@ -1315,7 +1314,6 @@ bpf_mtap2(void *arg, void *data, u_int dlen, struct mbuf *m)
 	mb.m_data = data;
 	mb.m_len = dlen;
 
-/*###1278 [cc] warning: passing argument 2 of 'bpf_deliver' from incompatible pointer type%%%*/
 	bpf_deliver(bp, bpf_mcpy, &mb, pktlen, 0, m->m_pkthdr.rcvif);
 }
 

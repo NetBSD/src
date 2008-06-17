@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.78 2008/01/02 11:48:22 ad Exp $ */
+/*	$NetBSD: fd.c,v 1.78.8.1 2008/06/17 09:13:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.78 2008/01/02 11:48:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.78.8.1 2008/06/17 09:13:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +396,7 @@ fdattach(struct device *pdp, struct device *dp, void *auxp)
 	int i;
 
 	ap = auxp;
-	sc = (struct fd_softc *)dp;
+	sc = device_private(dp);
 
 	bufq_alloc(&sc->bufq, "disksort", BUFQ_SORT_CYLINDER);
 	callout_init(&sc->calibrate_ch, 0);
@@ -1612,7 +1612,7 @@ fdfindwork(int unit)
 			i = -1;
 			continue;
 		}
-		if ((sc = fd_cd.cd_devs[i]) == NULL)
+		if ((sc = device_lookup_private(&fd_cd, i)) == NULL)
 			continue;
 
 		/*

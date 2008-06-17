@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.59.2.1 2008/05/18 12:30:43 yamt Exp $	*/
+/*	$NetBSD: conf.c,v 1.59.2.2 2008/06/17 09:13:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.59.2.1 2008/05/18 12:30:43 yamt Exp $");
+__RCSID("$NetBSD: conf.c,v 1.59.2.2 2008/06/17 09:13:39 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -468,7 +468,7 @@ parse_conf(const char *findclass)
 			REASSIGN(template, EMPTYSTR(arg) ? NULL : ftpd_strdup(arg));
 
 		} else if (strcasecmp(word, "umask") == 0) {
-			u_long fumask;
+			unsigned long fumask;
 
 			curclass.umask = DEFAULT_UMASK;
 			if (none || EMPTYSTR(arg))

@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.16.2.1 2008/05/18 12:33:30 yamt Exp $	*/
+/*	$NetBSD: kloader.c,v 1.16.2.2 2008/06/17 09:14:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.16.2.1 2008/05/18 12:33:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.16.2.2 2008/06/17 09:14:24 yamt Exp $");
 
 #include "debug_kloader.h"
 
@@ -470,7 +470,7 @@ kloader_get_tag(vaddr_t dst)
 
 	pg = kloader.cur_pg;
 	KDASSERT(pg != NULL);
-	kloader.cur_pg = TAILQ_NEXT(pg, pageq);
+	kloader.cur_pg = TAILQ_NEXT(pg, pageq.queue);
 
 	addr = PG_VADDR(pg);
 	tag = (void *)addr;

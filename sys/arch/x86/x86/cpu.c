@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.31.2.2 2008/06/04 02:05:03 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.31.2.3 2008/06/17 09:14:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31.2.2 2008/06/04 02:05:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31.2.3 2008/06/17 09:14:20 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -283,6 +283,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		if ((boothowto & RB_MD1) != 0) {
 			aprint_error(": multiprocessor boot disabled\n");
+			if (!pmf_device_register(self, NULL, NULL))
+				aprint_error_dev(self,
+				    "couldn't establish power handler\n");
 			return;
 		}
 		aprint_naive(": Application Processor\n");

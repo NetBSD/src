@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.15.2.1 2008/05/18 12:32:14 yamt Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.15.2.2 2008/06/17 09:14:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.15.2.1 2008/05/18 12:32:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.15.2.2 2008/06/17 09:14:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ pckbc_pnpbios_intr_establish(struct pckbc_softc *sc,
 	 * Note we're always called with sc == first.
 	 */
 	for (i = 0; i < pckbc_cd.cd_ndevs; i++) {
-		psc = pckbc_cd.cd_devs[i];
+		psc = device_lookup_private(&pckbc_cd, i);
 		if (psc && psc->sc_slot == slot) {
 			irq = psc->sc_irq;
 			ist = psc->sc_ist;

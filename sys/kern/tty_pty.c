@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.108.2.2 2008/06/04 02:05:40 yamt Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.108.2.3 2008/06/17 09:15:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.108.2.2 2008/06/04 02:05:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.108.2.3 2008/06/17 09:15:03 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -389,7 +389,7 @@ again:
 		while (isbackground(p, tp)) {	/* XXXSMP */
 			if (sigismasked(curlwp, SIGTTIN) ||
 			    p->p_pgrp->pg_jobc == 0 ||
-			    p->p_flag & PS_PPWAIT) {
+			    p->p_lflag & PL_PPWAIT) {
 				mutex_spin_exit(&tty_lock);
 				return (EIO);
 			}

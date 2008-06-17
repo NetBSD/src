@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.26.2.1 2008/05/18 12:33:08 yamt Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.26.2.2 2008/06/17 09:14:24 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.26.2.1 2008/05/18 12:33:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.26.2.2 2008/06/17 09:14:24 yamt Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -654,11 +654,9 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 int
 xbddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
-	struct xbd_xenbus_softc *sc = device_lookup_private(&xbd_cd, DISKUNIT(dev));
+	struct xbd_xenbus_softc *sc;
 
-	if (DISKUNIT(dev) > xbd_cd.cd_ndevs)
-		return (ENXIO);
-	sc = xbd_cd.cd_devs[DISKUNIT(dev)];
+	sc  = device_lookup_private(&xbd_cd, DISKUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 

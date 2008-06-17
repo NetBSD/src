@@ -438,10 +438,13 @@ wpa_supplicant_select_bss(struct wpa_supplicant *wpa_s, struct wpa_ssid *group,
 		}
 	}
 
+	if (selected)
+		return selected;
+
 	/* If no WPA-enabled AP found, try to find non-WPA AP, if configuration
 	 * allows this. */
 	wpa_printf(MSG_DEBUG, "Try to find non-WPA AP");
-	for (i = 0; i < wpa_s->scan_res->num && !selected; i++) {
+	for (i = 0; i < wpa_s->scan_res->num; i++) {
 		const u8 *ssid_;
 		u8 wpa_ie_len, rsn_ie_len, ssid_len;
 		bss = wpa_s->scan_res->res[i];
@@ -583,7 +586,7 @@ static void wpa_supplicant_event_scan_results(struct wpa_supplicant *wpa_s)
 			wpa_supplicant_associate(wpa_s, selected, ssid);
 		} else {
 			wpa_printf(MSG_DEBUG, "Already associated with the "
-				   "selected AP.");
+				   "selected AP (%d)", wpa_s->wpa_state);
 		}
 		rsn_preauth_scan_results(wpa_s->wpa, wpa_s->scan_res);
 	} else {

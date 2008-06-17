@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.42.2.1 2008/05/18 12:31:58 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.42.2.2 2008/06/17 09:14:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42.2.1 2008/05/18 12:31:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42.2.2 2008/06/17 09:14:00 yamt Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1038,7 +1038,7 @@ mbus_dmamap_load_raw(void *v, bus_dmamap_t map, bus_dma_segment_t *segs,
 	pa_next = 0;
 	seg = -1;
 	mapsize = size;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
 
 		if (size == 0)
 			panic("mbus_dmamem_load_raw: size botch");
@@ -1216,7 +1216,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	 */
 	pa_next = 0;
 	seg = -1;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
 		pa = VM_PAGE_TO_PHYS(m);
 		if (pa != pa_next) {
 			if (++seg >= nsegs) {
@@ -1236,7 +1236,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	 * Simply keep a pointer around to the linked list, so
 	 * bus_dmamap_free() can return it.
 	 *
-	 * NOBODY SHOULD TOUCH THE pageq FIELDS WHILE THESE PAGES
+	 * NOBODY SHOULD TOUCH THE pageq.queue FIELDS WHILE THESE PAGES
 	 * ARE IN OUR CUSTODY.
 	 */
 	segs[0]._ds_mlist = mlist;
@@ -1302,7 +1302,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 
 	/* Map the allocated pages into the chunk. */
 	pglist = segs[0]._ds_mlist;
-	TAILQ_FOREACH(pg, pglist, pageq) {
+	TAILQ_FOREACH(pg, pglist, pageq.queue) {
 		KASSERT(size != 0);
 		pa = VM_PAGE_TO_PHYS(pg);
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE | PMAP_NC);
@@ -1653,7 +1653,7 @@ cpu_gethpa(int n)
 {
 	struct mainbus_softc *sc;
 
-	sc = mainbus_cd.cd_devs[0];
+	sc = device_lookup_private(&mainbus_cd, 0);
 
 	return sc->sc_hpa;
 }
