@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.39 2008/06/11 20:33:12 cegger Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.40 2008/06/17 16:27:30 he Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.39 2008/06/11 20:33:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.40 2008/06/17 16:27:30 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -817,7 +817,7 @@ clmpcc_modem_control(ch, bits, howto)
 }
 
 static int
-clmpcc_param(struc tty *tp, struct termios *t)
+clmpcc_param(struct tty *tp, struct termios *t)
 {
 	struct clmpcc_softc *sc =
 	    device_lookup_private(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
@@ -1047,7 +1047,7 @@ clmpcc_start(struct tty *tp)
  * Stop output on a line.
  */
 void
-clmpccstop(struc tty *tp, int flag)
+clmpccstop(struct tty *tp, int flag)
 {
 	struct clmpcc_softc *sc =
 	    device_lookup_private(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
