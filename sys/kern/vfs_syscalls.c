@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.367 2008/06/17 16:18:01 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.368 2008/06/17 21:02:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.367 2008/06/17 16:18:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.368 2008/06/17 21:02:08 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3054,8 +3054,8 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	setbirthtime = (VOP_GETATTR(vp, &vattr, l->l_cred) == 0 &&
 	    timespeccmp(&ts[1], &vattr.va_birthtime, <));
 	VATTR_NULL(&vattr);
-	vattr.va_mtime = ts[0];
-	vattr.va_atime = ts[1];
+	vattr.va_atime = ts[0];
+	vattr.va_mtime = ts[1];
 	if (setbirthtime)
 		vattr.va_birthtime = ts[1];
 	if (vanull)
