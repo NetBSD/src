@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2008/04/28 20:24:14 martin Exp $ */
+/*	$NetBSD: main.c,v 1.19 2008/06/17 15:54:45 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.18 2008/04/28 20:24:14 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2008/06/17 15:54:45 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -54,7 +54,6 @@ __RCSID("$NetBSD: main.c,v 1.18 2008/04/28 20:24:14 martin Exp $");
 struct cache_head lcache;
 struct nchashhead *nchashtbl;
 void *uvm_vnodeops, *uvm_deviceops, *aobj_pager, *ubc_pager;
-void *kernel_floor;
 struct vm_map *kmem_map, *mb_map, *phys_map, *exec_map, *pager_map;
 struct vm_map *st_map, *pt_map, *lkm_map, *buf_map;
 u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
@@ -79,8 +78,6 @@ struct nlist ksyms[] = {
 #define NL_NCHASHTBL		6
 	{ "_nchash" },
 #define NL_NCHASH		7
-	{ "_kernel_text" },
-#define NL_KENTER		8
 	{ NULL }
 };
 
@@ -382,7 +379,6 @@ load_symbols(kvm_t *kd)
 	aobj_pager =	(void*)ksyms[NL_AOBJ_PAGER].n_value;
 	ubc_pager =	(void*)ksyms[NL_UBC_PAGER].n_value;
 
-	kernel_floor =	(void*)ksyms[NL_KENTER].n_value;
 	nchash_addr =	ksyms[NL_NCHASH].n_value;
 
 	_KDEREF(kd, ksyms[NL_MAXSSIZ].n_value, &maxssiz,
@@ -471,14 +467,12 @@ load_name_cache(kvm_t *kd)
 		oncp = NULL;
 		LIST_FOREACH(ncp, ncpp, nc_hash) {
 			if (ncp == oncp ||
-			    (void*)ncp < kernel_floor ||
 			    ncp == (void*)0xdeadbeef)
 				break;
 			oncp = ncp;
 			_KDEREF(kd, (u_long)ncp, &_ncp, sizeof(*ncp));
 			ncp = &_ncp;
-			if ((void*)ncp->nc_vp > kernel_floor &&
-			    ncp->nc_nlen > 0) {
+			if (ncp->nc_nlen > 0) {
 				if (ncp->nc_nlen > 2 ||
 				    ncp->nc_name[0] != '.' ||
 				    (ncp->nc_name[1] != '.' &&
