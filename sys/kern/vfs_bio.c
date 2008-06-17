@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.204 2008/06/17 14:53:10 reinoud Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.205 2008/06/17 19:14:14 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.204 2008/06/17 14:53:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.205 2008/06/17 19:14:14 mlelstv Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -938,6 +938,7 @@ bawrite(buf_t *bp)
  * Call with the buffer interlock held.
  *
  * Note: called only from biodone() through ffs softdep's io_complete()
+ * Note2: smbfs also learned about bdirty().
  */
 void
 bdirty(buf_t *bp)
@@ -947,7 +948,6 @@ bdirty(buf_t *bp)
 	KASSERT(bp->b_objlock == &bp->b_vp->v_interlock);
 	KASSERT(mutex_owned(bp->b_objlock));
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
-	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	CLR(bp->b_cflags, BC_AGE);
 
