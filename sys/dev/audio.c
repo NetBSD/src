@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.238.2.2 2008/06/04 02:05:09 yamt Exp $	*/
+/*	$NetBSD: audio.c,v 1.238.2.3 2008/06/17 09:14:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.238.2.2 2008/06/04 02:05:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.238.2.3 2008/06/17 09:14:24 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1005,7 +1005,7 @@ audioopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -1043,7 +1043,7 @@ audioclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 
 	device_active(sc->dev, DVA_SYSTEM);
 
@@ -1074,7 +1074,7 @@ audioread(dev_t dev, struct uio *uio, int ioflag)
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -1106,7 +1106,7 @@ audiowrite(dev_t dev, struct uio *uio, int ioflag)
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -1138,7 +1138,7 @@ audioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc->sc_dying)
 		return EIO;
 
@@ -1168,7 +1168,7 @@ audiopoll(dev_t dev, int events, struct lwp *l)
 	struct audio_softc *sc;
 	int revents;
 
- 	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+ 	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc->sc_dying)
 		return POLLHUP;
 
@@ -1197,7 +1197,7 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	struct audio_softc *sc;
 	int rv;
 
-	sc = audio_cd.cd_devs[AUDIOUNIT(dev)];
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc->sc_dying)
 		return 1;
 
@@ -1225,7 +1225,7 @@ audiommap(dev_t dev, off_t off, int prot)
 	struct audio_softc *sc;
 	paddr_t error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc->sc_dying)
 		return -1;
 

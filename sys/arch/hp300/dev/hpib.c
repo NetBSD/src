@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.36.2.1 2008/05/18 12:31:56 yamt Exp $	*/
+/*	$NetBSD: hpib.c,v 1.36.2.2 2008/06/17 09:13:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.36.2.1 2008/05/18 12:31:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.36.2.2 2008/06/17 09:13:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ hpibdevprint(void *aux, const char *pnp)
 void
 hpibreset(int unit)
 {
-	struct hpibbus_softc *sc = device_private(hpibbus_cd.cd_devs[unit]);
+	struct hpibbus_softc *sc = device_lookup_private(&hpibbus_cd,unit);
 
 	(*sc->sc_ops->hpib_reset)(sc);
 }
@@ -317,7 +317,7 @@ hpibid(int unit, int slave)
 int
 hpibsend(int unit, int slave, int sec, void *addr, int cnt)
 {
-	struct hpibbus_softc *sc = device_private(hpibbus_cd.cd_devs[unit]);
+	struct hpibbus_softc *sc = device_lookup_private(&hpibbus_cd,unit);
 
 	return (*sc->sc_ops->hpib_send)(sc, slave, sec, addr, cnt);
 }
@@ -325,7 +325,7 @@ hpibsend(int unit, int slave, int sec, void *addr, int cnt)
 int
 hpibrecv(int unit, int slave, int sec, void *addr, int cnt)
 {
-	struct hpibbus_softc *sc = device_private(hpibbus_cd.cd_devs[unit]);
+	struct hpibbus_softc *sc = device_lookup_private(&hpibbus_cd,unit);
 
 	return (*sc->sc_ops->hpib_recv)(sc, slave, sec, addr, cnt);
 }
@@ -333,7 +333,7 @@ hpibrecv(int unit, int slave, int sec, void *addr, int cnt)
 int
 hpibpptest(int unit, int slave)
 {
-	struct hpibbus_softc *sc = device_private(hpibbus_cd.cd_devs[unit]);
+	struct hpibbus_softc *sc = device_lookup_private(&hpibbus_cd,unit);
 
 	return (*sc->sc_ops->hpib_ppoll)(sc) & (0x80 >> slave);
 }
@@ -341,7 +341,7 @@ hpibpptest(int unit, int slave)
 void
 hpibppclear(int unit)
 {
-	struct hpibbus_softc *sc = device_private(hpibbus_cd.cd_devs[unit]);
+	struct hpibbus_softc *sc = device_lookup_private(&hpibbus_cd,unit);
 
 	sc->sc_flags &= ~HPIBF_PPOLL;
 }
@@ -349,7 +349,7 @@ hpibppclear(int unit)
 void
 hpibawait(int unit)
 {
-	struct hpibbus_softc *sc = device_private(hpibbus_cd.cd_devs[unit]);
+	struct hpibbus_softc *sc = device_lookup_private(&hpibbus_cd, unit);
 
 	sc->sc_flags |= HPIBF_PPOLL;
 	(*sc->sc_ops->hpib_ppwatch)(sc);
@@ -358,7 +358,7 @@ hpibawait(int unit)
 int
 hpibswait(int unit, int slave)
 {
-	struct hpibbus_softc *sc = device_private(hpibbus_cd.cd_devs[unit]);
+	struct hpibbus_softc *sc = device_lookup_private(&hpibbus_cd, unit);
 	int timo = hpibtimeout;
 	int mask, (*ppoll)(struct hpibbus_softc *);
 
@@ -376,7 +376,7 @@ hpibswait(int unit, int slave)
 int
 hpibustart(int unit)
 {
-	struct hpibbus_softc *sc = device_private(hpibbus_cd.cd_devs[unit]);
+	struct hpibbus_softc *sc = device_lookup_private(&hpibbus_cd,unit);
 
 	if (sc->sc_type == HPIBA)
 		sc->sc_dq->dq_chan = DMA0;
@@ -400,7 +400,7 @@ hpibstart(void *arg)
 void
 hpibgo(int unit, int slave, int sec, void *vbuf, int count, int rw, int timo)
 {
-	struct hpibbus_softc *sc = device_private(hpibbus_cd.cd_devs[unit]);
+	struct hpibbus_softc *sc = device_lookup_private(&hpibbus_cd,unit);
 
 	(*sc->sc_ops->hpib_go)(sc, slave, sec, vbuf, count, rw, timo);
 }

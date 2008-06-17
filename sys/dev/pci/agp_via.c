@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.16 2008/03/11 13:36:14 joerg Exp $	*/
+/*	$NetBSD: agp_via.c,v 1.16.2.1 2008/06/17 09:14:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.16 2008/03/11 13:36:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.16.2.1 2008/06/17 09:14:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,10 +85,10 @@ static int via_v3_regs[] =
 	{ AGP3_VIA_GARTCTRL, AGP3_VIA_APSIZE, AGP3_VIA_ATTBASE };
 
 int
-agp_via_attach(struct device *parent, struct device *self, void *aux)
+agp_via_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct agp_softc *sc = (void *)self;
+	struct agp_softc *sc = device_private(self);
 	struct agp_via_softc *asc;
 	struct agp_gatt *gatt;
 	pcireg_t agpsel, capval;

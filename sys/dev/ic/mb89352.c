@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.47.2.1 2008/05/18 12:33:44 yamt Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.47.2.2 2008/06/17 09:14:34 yamt Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.47.2.1 2008/05/18 12:33:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.47.2.2 2008/06/17 09:14:34 yamt Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -2136,7 +2136,7 @@ void
 spc_print_active_acb(void)
 {
 	struct spc_acb *acb;
-	struct spc_softc *sc = device_private(spc_cd.cd_devs[0]); /* XXX */
+	struct spc_softc *sc = device_lookup_private(&spc_cd, 0); /* XXX */
 
 	printf("ready list:\n");
 	TAILQ_FOREACH(acb, &sc->ready_list, chain)

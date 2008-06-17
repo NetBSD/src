@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.81.42.1 2008/06/04 02:04:56 yamt Exp $	*/
+/*	$NetBSD: iommu.c,v 1.81.42.2 2008/06/17 09:14:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.81.42.1 2008/06/04 02:04:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.81.42.2 2008/06/17 09:14:13 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -159,7 +159,7 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	is->is_ptsb = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 
 	/* Map the pages */
-	TAILQ_FOREACH(pg, &pglist, pageq) {
+	TAILQ_FOREACH(pg, &pglist, pageq.queue) {
 		pa = VM_PAGE_TO_PHYS(pg);
 		pmap_kenter_pa(va, pa | PMAP_NVC, VM_PROT_READ | VM_PROT_WRITE);
 		va += PAGE_SIZE;
@@ -866,7 +866,7 @@ iommu_dvmamap_load_raw(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
 			(long)map->dm_segs[i].ds_addr, (long)map->dm_segs[i].ds_len));
 	map->dm_segs[i].ds_len = sgend - sgstart + 1;
 
-	TAILQ_FOREACH(pg, pglist, pageq) {
+	TAILQ_FOREACH(pg, pglist, pageq.queue) {
 		if (sgsize == 0)
 			panic("iommu_dmamap_load_raw: size botch");
 		pa = VM_PAGE_TO_PHYS(pg);
@@ -1057,7 +1057,7 @@ iommu_dvmamem_map(bus_dma_tag_t t, struct strbuf_ctl *sb,
 	 * Now take this and map it into the CPU.
 	 */
 	pglist = segs[0]._ds_mlist;
-	TAILQ_FOREACH(pg, pglist, pageq) {
+	TAILQ_FOREACH(pg, pglist, pageq.queue) {
 #ifdef DIAGNOSTIC
 		if (size == 0)
 			panic("iommu_dvmamem_map: size botch");

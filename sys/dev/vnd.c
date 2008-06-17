@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.178.2.1 2008/05/18 12:33:30 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.178.2.2 2008/06/17 09:14:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.178.2.1 2008/05/18 12:33:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.178.2.2 2008/06/17 09:14:24 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -340,7 +340,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
-	sc = device_private(device_lookup(&vnd_cd, unit));
+	sc = device_lookup_private(&vnd_cd, unit);
 	if (sc == NULL) {
 		sc = vnd_spawn(unit);
 		if (sc == NULL)
@@ -404,7 +404,7 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
-	sc = device_private(device_lookup(&vnd_cd, unit));
+	sc = device_lookup_private(&vnd_cd, unit);
 	if (sc == NULL)
 		return ENXIO;
 
@@ -447,7 +447,7 @@ vndstrategy(struct buf *bp)
 {
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd =
-	    device_private(device_lookup(&vnd_cd, unit));
+	    device_lookup_private(&vnd_cd, unit);
 	struct disklabel *lp = vnd->sc_dkdev.dk_label;
 	daddr_t blkno;
 	int s = splbio();
@@ -526,6 +526,37 @@ done:
 	splx(s);
 }
 
+static bool
+vnode_has_strategy(struct vnd_softc *vnd)
+{
+	return vnode_has_op(vnd->sc_vp, VOFFSET(vop_bmap)) &&
+	    vnode_has_op(vnd->sc_vp, VOFFSET(vop_strategy));
+}
+
+static bool
+vnode_strategy_probe(struct vnd_softc *vnd)
+{
+	int error;
+	daddr_t nbn;
+
+	if (!vnode_has_strategy(vnd))
+		return false;
+
+	/* Convert the first logical block number to its
+	 * physical block number.
+	 */
+	error = 0;
+	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
+	error = VOP_BMAP(vnd->sc_vp, 0, NULL, &nbn, NULL);
+	VOP_UNLOCK(vnd->sc_vp, 0);
+
+	/* Test if that worked. */
+	if (error == 0 && (long)nbn == -1)
+		return false;
+
+	return true;
+}
+
 static void
 vndthread(void *arg)
 {
@@ -533,13 +564,12 @@ vndthread(void *arg)
 	bool usestrategy;
 	int s;
 
-	/* Determine whether we can use VOP_BMAP and VOP_STRATEGY to
+	/* Determine whether we can *use* VOP_BMAP and VOP_STRATEGY to
 	 * directly access the backing vnode.  If we can, use these two
 	 * operations to avoid messing with the local buffer cache.
 	 * Otherwise fall back to regular VOP_READ/VOP_WRITE operations
 	 * which are guaranteed to work with any file system. */
-	usestrategy = vnode_has_op(vnd->sc_vp, VOFFSET(vop_bmap)) &&
-	    vnode_has_op(vnd->sc_vp, VOFFSET(vop_strategy));
+	usestrategy = vnode_strategy_probe(vnd);
 
 #ifdef DEBUG
 	if (vnddebug & VDB_INIT)
@@ -572,7 +602,7 @@ vndthread(void *arg)
 		flags = obp->b_flags;
 #ifdef DEBUG
 		if (vnddebug & VDB_FOLLOW)
-			printf("vndthread(%p\n", obp);
+			printf("vndthread(%p)\n", obp);
 #endif
 
 		if (vnd->sc_vp->v_mount == NULL) {
@@ -852,7 +882,7 @@ vndread(dev_t dev, struct uio *uio, int flags)
 		printf("vndread(0x%x, %p)\n", dev, uio);
 #endif
 
-	sc = device_private(device_lookup(&vnd_cd, unit));
+	sc = device_lookup_private(&vnd_cd, unit);
 	if (sc == NULL)
 		return ENXIO;
 
@@ -874,7 +904,7 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 		printf("vndwrite(0x%x, %p)\n", dev, uio);
 #endif
 
-	sc = device_private(device_lookup(&vnd_cd, unit));
+	sc = device_lookup_private(&vnd_cd, unit);
 	if (sc == NULL)
 		return ENXIO;
 
@@ -894,7 +924,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 	if (*un < 0)
 		return EINVAL;
 
-	vnd = device_private(device_lookup(&vnd_cd, *un));
+	vnd = device_lookup_private(&vnd_cd, *un);
 	if (vnd == NULL)
 		return (*un >= vnd_cd.cd_ndevs) ? ENXIO : -1;
 
@@ -925,7 +955,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
 		    dev, cmd, data, flag, l->l_proc, unit);
 #endif
-	vnd = device_private(device_lookup(&vnd_cd, unit));
+	vnd = device_lookup_private(&vnd_cd, unit);
 	if (vnd == NULL &&
 #ifdef COMPAT_30
 	    cmd != VNDIOOCGET &&
@@ -1556,7 +1586,7 @@ vndsize(dev_t dev)
 	int size;
 
 	unit = vndunit(dev);
-	sc = device_private(device_lookup(&vnd_cd, unit));
+	sc = device_lookup_private(&vnd_cd, unit);
 	if (sc == NULL)
 		return -1;
 
@@ -1721,7 +1751,7 @@ compstrategy(struct buf *bp, off_t bn)
 	int error;
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd =
-	    device_private(device_lookup(&vnd_cd, unit));
+	    device_lookup_private(&vnd_cd, unit);
 	u_int32_t comp_block;
 	struct uio auio;
 	char *addr;

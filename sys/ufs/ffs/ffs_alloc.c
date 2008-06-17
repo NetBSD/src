@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.106.10.2 2008/06/04 02:05:53 yamt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.106.10.3 2008/06/17 09:15:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.10.2 2008/06/04 02:05:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.10.3 2008/06/17 09:15:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -304,6 +304,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 			allocbuf(bp, nsize, 1);
 			memset((char *)bp->b_data + osize, 0, nsize - osize);
 			mutex_enter(bp->b_objlock);
+			KASSERT(!cv_has_waiters(&bp->b_done));
 			bp->b_oflags |= BO_DONE;
 			mutex_exit(bp->b_objlock);
 			*bpp = bp;
@@ -386,6 +387,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 			allocbuf(bp, nsize, 1);
 			memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
 			mutex_enter(bp->b_objlock);
+			KASSERT(!cv_has_waiters(&bp->b_done));
 			bp->b_oflags |= BO_DONE;
 			mutex_exit(bp->b_objlock);
 			*bpp = bp;

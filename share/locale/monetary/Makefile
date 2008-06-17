@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.3 2008/06/04 02:04:37 yamt Exp $
+# $NetBSD: Makefile,v 1.1.2.4 2008/06/17 09:13:53 yamt Exp $
 
 NOMAN=		# defined
 
@@ -99,8 +99,9 @@ LOCALES += fr_FR.ISO8859-1
 LOCALES += he_IL.UTF-8
  LOCALESRC_he_IL.UTF-8 = he_IL.UTF-8
 
-LOCALES += hi_IN.ISCII-DEV
- LOCALESRC_hi_IN.ISCII-DEV = hi_IN.ISCII-DEV
+# XXX codeset not yet supported by LC_TYPE and iconv(3)
+#LOCALES += hi_IN.ISCII-DEV
+# LOCALESRC_hi_IN.ISCII-DEV = hi_IN.ISCII-DEV
 
 LOCALES += hr_HR.ISO8859-2
  LOCALESRC_hr_HR.ISO8859-2 = hr_HR.ISO8859-2

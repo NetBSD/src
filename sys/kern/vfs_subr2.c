@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.19.8.2 2008/06/04 02:05:40 yamt Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.19.8.3 2008/06/17 09:15:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.19.8.2 2008/06/04 02:05:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.19.8.3 2008/06/17 09:15:03 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -484,6 +484,7 @@ bgetvp(struct vnode *vp, struct buf *bp)
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	vholdl(vp);
 	bp->b_vp = vp;
@@ -512,6 +513,7 @@ brelvp(struct buf *bp)
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/*
 	 * Delete from old vnode list, if on one.
@@ -546,6 +548,7 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 	KASSERT(bp->b_objlock == &vp->v_interlock);
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/*
 	 * Delete from old vnode list, if on one.

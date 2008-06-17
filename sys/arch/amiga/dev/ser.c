@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.77 2007/11/19 18:51:37 ad Exp $ */
+/*	$NetBSD: ser.c,v 1.77.16.1 2008/06/17 09:13:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.77 2007/11/19 18:51:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.77.16.1 2008/06/17 09:13:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ serattach(struct device *pdp, struct device *dp, void *auxp)
 	struct tty *tp;
 	u_short ir;
 
-	sc = (struct ser_softc *)dp;
+	sc = device_private(dp);
 
 	ir = custom.intenar;
 	if (serconsole == 0)
@@ -281,11 +281,8 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
 	error = 0;
 	unit = SERUNIT(dev);
 
-	if (unit >= ser_cd.cd_ndevs)
-		return (ENXIO);
-
-	sc = ser_cd.cd_devs[unit];
-	if (sc == 0)
+	sc = device_lookup_private(&ser_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 
 	/* XXX com.c: insert KGDB check here */
@@ -372,7 +369,7 @@ serclose(dev_t dev, int flag, int mode, struct lwp *l)
 	struct ser_softc *sc;
 	struct tty *tp;
 
-	sc = ser_cd.cd_devs[0];
+	sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	tp = ser_tty;
 
 	/* XXX This is for cons.c, according to com.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.15.8.1 2008/05/18 12:31:36 yamt Exp $	*/
+/*	$NetBSD: psl.h,v 1.15.8.2 2008/06/17 09:13:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -54,17 +54,10 @@
  */
 
 #define spl0()		splx(IPL_NONE)
-#ifdef __HAVE_FAST_SOFTINTS
 #define splsoftclock()	raisespl(IPL_SOFTCLOCK)
 #define splsoftbio()	raisespl(IPL_SOFTBIO)
 #define splsoftnet()	raisespl(IPL_SOFTNET)
 #define splsoftserial()	raisespl(IPL_SOFTSERIAL)
-#else
-#define splsoftclock()	spl0()
-#define splsoftbio()	spl0()
-#define splsoftnet()	spl0()
-#define splsoftserial()	spl0()
-#endif
 #define splvm()		raisespl(IPL_VM)
 #define splsched()	raisespl(IPL_SCHED)
 #define splhigh()	raisespl(IPL_HIGH)

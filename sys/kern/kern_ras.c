@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.27.8.2 2008/06/04 02:05:39 yamt Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.27.8.3 2008/06/17 09:15:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.27.8.2 2008/06/04 02:05:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.27.8.3 2008/06/17 09:15:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,9 @@ ras_purgeall(void)
 	proc_t *p;
 
 	p = curproc;
+
+	if (p->p_raslist == NULL)
+		return 0;
 
 	mutex_enter(&p->p_auxlock);
 	if ((rp = p->p_raslist) != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.4.2.2 2008/06/04 02:05:40 yamt Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.4.2.3 2008/06/17 09:15:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.4.2.2 2008/06/04 02:05:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.4.2.3 2008/06/17 09:15:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,9 +232,11 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 		nd = p->p_fd->fd_nfiles;
 	}
 	ni = howmany(nd, NFDBITS) * sizeof(fd_mask);
-	if (ni * 6 > sizeof(smallbits))
+	if (ni * 6 > sizeof(smallbits)) {
 		bits = kmem_alloc(ni * 6, KM_SLEEP);
-	else
+		if (bits == NULL)
+			return ENOMEM;
+	} else
 		bits = smallbits;
 
 #define	getbits(name, x)						\
@@ -435,9 +437,11 @@ pollcommon(lwp_t *l, register_t *retval,
 		nfds = p->p_fd->fd_nfiles;
 	}
 	ni = nfds * sizeof(struct pollfd);
-	if (ni > sizeof(smallbits))
+	if (ni > sizeof(smallbits)) {
 		bits = kmem_alloc(ni, KM_SLEEP);
-	else
+		if (bits == NULL)
+			return ENOMEM;
+	} else
 		bits = smallbits;
 
 	error = copyin(u_fds, bits, ni);

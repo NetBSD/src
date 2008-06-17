@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.85.2.1 2008/05/18 12:34:22 yamt Exp $	*/
+/*	$NetBSD: twe.c,v 1.85.2.2 2008/06/17 09:14:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.85.2.1 2008/05/18 12:34:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.85.2.2 2008/06/17 09:14:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1694,7 +1694,7 @@ tweopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twe_softc *twe;
 
-	if ((twe = device_lookup(&twe_cd, minor(dev))) == NULL)
+	if ((twe = device_lookup_private(&twe_cd, minor(dev))) == NULL)
 		return (ENXIO);
 	if ((twe->sc_flags & TWEF_OPEN) != 0)
 		return (EBUSY);
@@ -1712,7 +1712,7 @@ tweclose(dev_t dev, int flag, int mode,
 {
 	struct twe_softc *twe;
 
-	twe = device_lookup(&twe_cd, minor(dev));
+	twe = device_lookup_private(&twe_cd, minor(dev));
 	twe->sc_flags &= ~TWEF_OPEN;
 	return (0);
 }
@@ -1742,7 +1742,7 @@ tweioctl(dev_t dev, u_long cmd, void *data, int flag,
 	int s, error = 0;
 	u_int8_t cmdid;
 
-	twe = device_lookup(&twe_cd, minor(dev));
+	twe = device_lookup_private(&twe_cd, minor(dev));
 	tu = (struct twe_usercommand *)data;
 	tp = (struct twe_paramcommand *)data;
 	td = (struct twe_drivecommand *)data;

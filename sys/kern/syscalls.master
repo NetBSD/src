@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.196.4.2 2008/06/04 02:05:40 yamt Exp $
+	$NetBSD: syscalls.master,v 1.196.4.3 2008/06/17 09:15:03 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -54,6 +54,7 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/sched.h>
 
 %%
 
@@ -702,9 +703,9 @@
 347	STD 		{ int sys__sched_getparam(pid_t pid, lwpid_t lid, \
 			    int *policy, struct sched_param *params); }
 348	STD 		{ int sys__sched_setaffinity(pid_t pid, lwpid_t lid, \
-			    size_t size, void *cpuset); }
+			    size_t size, const cpuset_t *cpuset); }
 349	STD 		{ int sys__sched_getaffinity(pid_t pid, lwpid_t lid, \
-			    size_t size, void *cpuset); }
+			    size_t size, cpuset_t *cpuset); }
 350	STD 		{ int sys_sched_yield(void); }
 351	UNIMPL
 352	UNIMPL

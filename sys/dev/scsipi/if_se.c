@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.71 2008/04/05 15:47:00 cegger Exp $	*/
+/*	$NetBSD: if_se.c,v 1.71.2.1 2008/06/17 09:14:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.71 2008/04/05 15:47:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.71.2.1 2008/06/17 09:14:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1137,9 +1137,7 @@ seopen(dev, flag, fmt, l)
 	struct scsipi_adapter *adapt;
 
 	unit = SEUNIT(dev);
-	if (unit >= se_cd.cd_ndevs)
-		return (ENXIO);
-	sc = se_cd.cd_devs[unit];
+	sc = device_lookup_private(&se_cd, unit);
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -1169,7 +1167,7 @@ seclose(dev, flag, fmt, l)
 	int flag, fmt;
 	struct lwp *l;
 {
-	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
+	struct se_softc *sc = device_lookup_private(&se_cd, SEUNIT(dev));
 	struct scsipi_periph *periph = sc->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
@@ -1195,7 +1193,7 @@ seioctl(dev, cmd, addr, flag, l)
 	int flag;
 	struct lwp *l;
 {
-	struct se_softc *sc = se_cd.cd_devs[SEUNIT(dev)];
+	struct se_softc *sc = device_lookup_private(&se_cd, SEUNIT(dev));
 
 	return (scsipi_do_ioctl(sc->sc_periph, dev, cmd, addr, flag, l));
 }

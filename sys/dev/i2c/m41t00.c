@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.13.2.1 2008/05/18 12:33:38 yamt Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.13.2.2 2008/06/17 09:14:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.13.2.1 2008/05/18 12:33:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.13.2.2 2008/06/17 09:14:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ m41t00_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct m41t00_softc *sc;
 
-	if ((sc = device_lookup(&m41trtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&m41trtc_cd, minor(dev))) == NULL)
 		return ENXIO;
 
 	/* XXX: Locking */
@@ -143,7 +143,7 @@ m41t00_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct m41t00_softc *sc;
 
-	if ((sc = device_lookup(&m41trtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&m41trtc_cd, minor(dev))) == NULL)
 		return ENXIO;
 
 	sc->sc_open = 0;
@@ -158,7 +158,7 @@ m41t00_read(dev_t dev, struct uio *uio, int flags)
 	u_int8_t ch, cmdbuf[1];
 	int a, error;
 
-	if ((sc = device_lookup(&m41trtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&m41trtc_cd, minor(dev))) == NULL)
 		return ENXIO;
 
 	if (uio->uio_offset >= M41T00_NBYTES)
@@ -197,7 +197,7 @@ m41t00_write(dev_t dev, struct uio *uio, int flags)
 	u_int8_t cmdbuf[2];
 	int a, error;
 
-	if ((sc = device_lookup(&m41trtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&m41trtc_cd, minor(dev))) == NULL)
 		return ENXIO;
 
 	if (uio->uio_offset >= M41T00_NBYTES)

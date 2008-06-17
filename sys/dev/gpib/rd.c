@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.19.2.1 2008/05/18 12:33:38 yamt Exp $ */
+/*	$NetBSD: rd.c,v 1.19.2.2 2008/06/17 09:14:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.19.2.1 2008/05/18 12:33:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.19.2.2 2008/06/17 09:14:33 yamt Exp $");
 
 #include "rnd.h"
 
@@ -502,15 +502,12 @@ rdgetinfo(sc)
 }
 
 int
-rdopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+rdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct rd_softc *sc;
 	int error, mask, part;
 
-	sc = device_lookup(&rd_cd, RDUNIT(dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(dev));
 	if (sc == NULL || (sc->sc_flags & RDF_ALIVE) ==0)
 		return (ENXIO);
 
@@ -558,16 +555,13 @@ rdopen(dev, flags, mode, l)
 }
 
 int
-rdclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+rdclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct rd_softc *sc;
 	struct disk *dk;
 	int mask, s;
 
-	sc = device_lookup(&rd_cd, RDUNIT(dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -601,8 +595,7 @@ rdclose(dev, flag, mode, l)
 }
 
 void
-rdstrategy(bp)
-	struct buf *bp;
+rdstrategy(struct buf *bp)
 {
 	struct rd_softc *sc;
 	struct partition *pinfo;
@@ -610,7 +603,7 @@ rdstrategy(bp)
 	int sz, s;
 	int offset;
 
-	sc = device_lookup(&rd_cd, RDUNIT(bp->b_dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(bp->b_dev));
 
 	DPRINTF(RDB_FOLLOW,
 	    ("rdstrategy(%p): dev %x, bn %" PRId64 ", bcount %ld, %c\n",
@@ -1022,18 +1015,13 @@ rdwrite(dev, uio, flags)
 }
 
 int
-rdioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct rd_softc *sc;
 	struct disklabel *lp;
 	int error, flags;
 
-	sc = device_lookup(&rd_cd, RDUNIT(dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	lp = sc->sc_dk.dk_label;
@@ -1124,13 +1112,12 @@ rdgetdefaultlabel(sc, lp)
 }
 
 int
-rdsize(dev)
-	dev_t dev;
+rdsize(dev_t dev)
 {
 	struct rd_softc *sc;
 	int psize, didopen = 0;
 
-	sc = device_lookup(&rd_cd, RDUNIT(dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(dev));
 	if (sc == NULL || (sc->sc_flags & RDF_ALIVE) == 0)
 		return (-1);
 
@@ -1158,11 +1145,7 @@ static int rddoingadump;	/* simple mutex */
  * Non-interrupt driven, non-dma dump routine.
  */
 int
-rddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	void *va;
-	size_t size;
+rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct rd_softc *sc;
 	int sectorsize;		/* size of a disk sector */
@@ -1179,7 +1162,7 @@ rddump(dev, blkno, va, size)
 		return (EFAULT);
 	rddoingadump = 1;
 
-	sc = device_lookup(&rd_cd, RDUNIT(dev));
+	sc = device_lookup_private(&rd_cd, RDUNIT(dev));
 	if (sc == NULL || (sc->sc_flags & RDF_ALIVE) == 0)
 		return (ENXIO);
 

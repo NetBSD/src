@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.394.2.2 2008/06/04 02:03:19 yamt Exp $
+.\"	$NetBSD: main,v 1.394.2.3 2008/06/17 09:13:32 yamt Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2066,6 +2066,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Tim Rightnour Ta Mt garbled@NetBSD.org
 .It Ta Alan Ritter Ta Mt rittera@NetBSD.org
 .It Ta Jeff Rizzo Ta Mt riz@NetBSD.org
+.It Ta Hans Rosenfeld Ta Mt hans@NetBSD.org
 .It Ta Gordon Ross Ta Mt gwr@NetBSD.org
 .It Ta Steve Rumble Ta Mt rumble@NetBSD.org
 .It Ta Ilpo Ruotsalainen Ta Mt lonewolf@NetBSD.org

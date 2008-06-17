@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.8.2.1 2008/06/04 02:04:41 yamt Exp $	*/
+/*	$NetBSD: cons.c,v 1.8.2.2 2008/06/17 09:13:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -195,6 +195,7 @@ becninit(struct consdev *cp)
 
 	video_init((u_char *)cp->address);
 	kbdreset();
+	kbd(1);		/* read out ugly data */
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.12.2.1 2008/05/18 12:34:13 yamt Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.12.2.2 2008/06/17 09:14:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.12.2.1 2008/05/18 12:34:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.12.2.2 2008/06/17 09:14:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,24 +148,16 @@ lpt_attach_subr(sc)
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit;
 	u_char flags;
 	struct lpt_softc *sc;
 	int error;
 	int spin;
 
-	unit = LPTUNIT(dev);
 	flags = LPTFLAGS(dev);
 
-	if (unit >= lpt_cd.cd_ndevs)
-		return (ENXIO);
-	sc = device_private(lpt_cd.cd_devs[unit]);
+	sc = device_lookup_private(&lpt_cd, LPTUNIT(dev));
 	if (!sc)
 		return (ENXIO);
 
@@ -240,17 +232,11 @@ lpt_wakeup(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lptclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+lptclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct lpt_softc *sc;
-	int unit;
 
-	unit = LPTUNIT(dev);
-	sc = device_private(lpt_cd.cd_devs[unit]);
+	sc = device_lookup_private(&lpt_cd, LPTUNIT(dev));
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
@@ -326,16 +312,13 @@ pushbytes(sc)
  * chars moved to the output queue.
  */
 int
-lptwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+lptwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct lpt_softc *sc;
 	size_t n;
 	int error;
 
-	sc = device_private(lpt_cd.cd_devs[LPTUNIT(dev)]);
+	sc = device_lookup_private(&lpt_cd, LPTUNIT(dev));
 	error = 0;
 
 	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {

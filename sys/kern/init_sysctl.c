@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.131.2.2 2008/06/04 02:05:38 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.131.2.3 2008/06/17 09:15:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.131.2.2 2008/06/04 02:05:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.131.2.3 2008/06/17 09:15:02 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -94,7 +94,6 @@ static const u_int sysctl_flagmap[] = {
 
 static const u_int sysctl_sflagmap[] = {
 	PS_NOCLDSTOP, P_NOCLDSTOP,
-	PS_PPWAIT, P_PPWAIT,
 	PS_WEXIT, P_WEXIT,
 	PS_STOPFORK, P_STOPFORK,
 	PS_STOPEXEC, P_STOPEXEC,
@@ -112,6 +111,7 @@ static const u_int sysctl_slflagmap[] = {
 
 static const u_int sysctl_lflagmap[] = {
 	PL_CONTROLT, P_CONTROLT,
+	PL_PPWAIT, P_PPWAIT,
 	0
 };
 
@@ -1092,7 +1092,7 @@ sysctl_kern_trigger_panic(SYSCTLFN_ARGS)
 static int
 sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 {
-	int error, new_vnodes, old_vnodes;
+	int error, new_vnodes, old_vnodes, new_max;
 	struct sysctlnode node;
 
 	new_vnodes = desiredvnodes;
@@ -1101,6 +1101,11 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
+
+	/* Limits: 75% of KVA and physical memory. */
+	new_max = calc_cache_size(kernel_map, 75, 75) / VNODE_COST;
+	if (new_vnodes > new_max)
+		new_vnodes = new_max;
 
 	old_vnodes = desiredvnodes;
 	desiredvnodes = new_vnodes;

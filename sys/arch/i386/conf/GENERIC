@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.889.2.2 2008/06/04 02:04:46 yamt Exp $
+# $NetBSD: GENERIC,v 1.889.2.3 2008/06/17 09:14:01 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.889.2.2 $"
+#ident 		"GENERIC-$Revision: 1.889.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -1498,6 +1498,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# cmos(4) pseudo-device
+pseudo-device	cmos
 
 # pseudo audio device driver
 pseudo-device	pad

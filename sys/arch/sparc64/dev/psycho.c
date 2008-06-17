@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.85.2.1 2008/06/04 02:04:56 yamt Exp $	*/
+/*	$NetBSD: psycho.c,v 1.85.2.2 2008/06/17 09:14:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.85.2.1 2008/06/04 02:04:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.85.2.2 2008/06/17 09:14:13 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -411,8 +411,7 @@ found:
 	 */
 	for (n = 0; n < psycho_cd.cd_ndevs; n++) {
 
-		struct psycho_softc *asc =
-			(struct psycho_softc *)psycho_cd.cd_devs[n];
+		struct psycho_softc *asc = device_lookup_private(&psycho_cd, n);
 
 		if (asc == NULL || asc == sc)
 			/* This entry is not there or it is me */

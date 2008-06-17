@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.9.16.1 2008/05/18 12:35:21 yamt Exp $ */
+/* $NetBSD: rb.h,v 1.4.4.2 2008/06/17 09:15:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,10 +28,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _LIBKERN_RB_H_
-#define	_LIBKERN_RB_H_
+#ifndef _SYS_RB_H_
+#define	_SYS_RB_H_
 
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
+#else
+#include <stdbool.h>
+#endif
 #include <sys/queue.h>
 #include <sys/endian.h>
 
@@ -43,19 +47,20 @@ struct rb_node {
 #define	rb_left		rb_nodes[RB_DIR_LEFT]
 #define	rb_right	rb_nodes[RB_DIR_RIGHT]
 	struct rb_node *rb_parent;
+#ifndef lint
 	struct rb_properties {
 #if BYTE_ORDER == LITTLE_ENDIAN
 		unsigned long int s_data : 8 * sizeof(unsigned long int) - 5;
 		unsigned long int s_moved : 1;
 		unsigned long int s_root : 1;
-		unsigned long int s_position : 1;
 		unsigned long int s_color : 1;
 		unsigned long int s_sentinel : 1;
+		unsigned long int s_position : 1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
+		unsigned long int s_position : 1;
 		unsigned long int s_sentinel : 1;
 		unsigned long int s_color : 1;
-		unsigned long int s_position : 1;
 		unsigned long int s_root : 1;
 		unsigned long int s_moved : 1;
 		unsigned long int s_data : 8 * sizeof(unsigned long int) - 5;
@@ -103,6 +108,7 @@ struct rb_node {
 			(dst)->rb_moved = (src)->rb_moved))
 #ifdef RBDEBUG
 	TAILQ_ENTRY(rb_node) rb_link;
+#endif
 #endif
 };
 
@@ -178,4 +184,4 @@ void	rb_tree_check(const struct rb_tree *, bool);
 void	rb_tree_depths(const struct rb_tree *, size_t *);
 #endif
 
-#endif	/* _LIBKERN_RB_H_*/
+#endif	/* _SYS_RB_H_*/

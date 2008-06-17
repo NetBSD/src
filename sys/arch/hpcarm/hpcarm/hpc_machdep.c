@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.83.8.1 2008/05/18 12:32:03 yamt Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.83.8.2 2008/06/17 09:14:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.83.8.1 2008/05/18 12:32:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.83.8.2 2008/06/17 09:14:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -310,6 +310,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	 * Heads up ... Setup the CPU / MMU / TLB functions.
 	 */
 	set_cpufuncs();
+	IRQdisable;
 
 #ifdef DEBUG_BEFOREMMU
 	/*

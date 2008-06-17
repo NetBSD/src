@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_iic.c,v 1.4.14.1 2008/06/04 02:04:45 yamt Exp $	*/
+/*	$NetBSD: armadillo9_iic.c,v 1.4.14.2 2008/06/17 09:13:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.4.14.1 2008/06/04 02:04:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.4.14.2 2008/06/17 09:13:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ armadillo9iic_attach(struct device *parent, struct device *self, void *aux)
 
 	iba.iba_tag = &sc->sc_i2c;
 
-	epgpio_out(sc->sc_gpio, sc->sc_port, sc->sc_sda);
+	epgpio_in(sc->sc_gpio, sc->sc_port, sc->sc_sda);
 	epgpio_out(sc->sc_gpio, sc->sc_port, sc->sc_scl);
 	epgpio_set(sc->sc_gpio, sc->sc_port, sc->sc_scl);
 
@@ -214,6 +214,12 @@ armadillo9iic_bb_set_bits(void *cookie, uint32_t bits)
 void
 armadillo9iic_bb_set_dir(void *cookie, uint32_t bits)
 {
+	struct armadillo9iic_softc *sc = cookie;
+
+	if(bits)
+		epgpio_out(sc->sc_gpio, sc->sc_port, sc->sc_sda);
+	else
+		epgpio_in(sc->sc_gpio, sc->sc_port, sc->sc_sda);
 }
 
 uint32_t

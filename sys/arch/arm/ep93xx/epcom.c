@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.16.8.1 2008/05/18 12:31:34 yamt Exp $ */
+/*	$NetBSD: epcom.c,v 1.16.8.2 2008/06/17 09:13:55 yamt Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.16.8.1 2008/05/18 12:31:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.16.8.2 2008/06/17 09:13:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -257,7 +257,7 @@ static int
 epcomparam(struct tty *tp, struct termios *t)
 {
 	struct epcom_softc *sc
-		= device_lookup(&epcom_cd, COMUNIT(tp->t_dev));
+		= device_lookup_private(&epcom_cd, COMUNIT(tp->t_dev));
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -349,7 +349,7 @@ static void
 epcomstart(struct tty *tp)
 {
 	struct epcom_softc *sc
-		= device_lookup(&epcom_cd, COMUNIT(tp->t_dev));
+		= device_lookup_private(&epcom_cd, COMUNIT(tp->t_dev));
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -436,7 +436,7 @@ epcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s, s2;
 	int error;
 
-	sc = device_lookup(&epcom_cd, COMUNIT(dev));
+	sc = device_lookup_private(&epcom_cd, COMUNIT(dev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
@@ -569,7 +569,7 @@ bad:
 int
 epcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
+	struct epcom_softc *sc = device_lookup_private(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -597,7 +597,7 @@ epcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 epcomread(dev_t dev, struct uio *uio, int flag)
 {
-	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
+	struct epcom_softc *sc = device_lookup_private(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -609,7 +609,7 @@ epcomread(dev_t dev, struct uio *uio, int flag)
 int
 epcomwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
+	struct epcom_softc *sc = device_lookup_private(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -621,7 +621,7 @@ epcomwrite(dev_t dev, struct uio *uio, int flag)
 int
 epcompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
+	struct epcom_softc *sc = device_lookup_private(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -633,7 +633,7 @@ epcompoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 epcomtty(dev_t dev)
 {
-	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
+	struct epcom_softc *sc = device_lookup_private(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -642,7 +642,7 @@ epcomtty(dev_t dev)
 int
 epcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct epcom_softc *sc = device_lookup(&epcom_cd, COMUNIT(dev));
+	struct epcom_softc *sc = device_lookup_private(&epcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
@@ -700,7 +700,7 @@ void
 epcomstop(struct tty *tp, int flag)
 {
 	struct epcom_softc *sc
-		= device_lookup(&epcom_cd, COMUNIT(tp->t_dev));
+		= device_lookup_private(&epcom_cd, COMUNIT(tp->t_dev));
 	int s;
 
 	s = splserial();

@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.16.2.2 2008/06/04 02:05:10 yamt Exp $ */
+/* $NetBSD: drmP.h,v 1.16.2.3 2008/06/17 09:14:33 yamt Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -684,7 +684,7 @@ typedef struct drm_agp_mem {
 } drm_agp_mem_t;
 
 typedef struct drm_agp_head {
-	device_t	   agpdev;
+	void               *agpdev;
 	struct agp_info    info;
 	const char         *chipset;
 	drm_agp_mem_t      *memory;

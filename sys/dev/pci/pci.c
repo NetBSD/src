@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.116.2.1 2008/05/18 12:34:21 yamt Exp $	*/
+/*	$NetBSD: pci.c,v 1.116.2.2 2008/06/17 09:14:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.116.2.1 2008/05/18 12:34:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.116.2.2 2008/06/17 09:14:41 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -463,7 +463,7 @@ pci_find_device(struct pci_attach_args *pa,
 	};
 
 	for (i = 0; i < pci_cd.cd_ndevs; i++) {
-		pcidev = pci_cd.cd_devs[i];
+		pcidev = device_lookup(&pci_cd, i);
 		if (pcidev != NULL &&
 		    pci_enumerate_bus(device_private(pcidev), wildcard,
 		    		      match, pa) != 0)

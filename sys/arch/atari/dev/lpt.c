@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.29 2008/03/07 17:15:51 cube Exp $ */
+/*	$NetBSD: lpt.c,v 1.29.2.1 2008/06/17 09:13:55 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.29 2008/03/07 17:15:51 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.29.2.1 2008/06/17 09:13:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,16 +177,13 @@ lpattach(device_t pdp, device_t dp, void *auxp)
 int
 lpopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int			unit = LPTUNIT(dev);
 	u_char			flags = LPTFLAGS(dev);
 	struct lpt_softc	*sc;
 	int 			error;
 	int			spin;
 	int			sps;
 
-	if (unit >= lp_cd.cd_ndevs)
-		return ENXIO;
-	sc = device_private(lp_cd.cd_devs[unit]);
+	sc = device_lookup_private(&lp_cd, LPTUNIT(dev));
 	if (!sc)
 		return ENXIO;
 
@@ -251,8 +248,7 @@ lptwakeup(void *arg)
 int
 lpclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int		 unit = LPTUNIT(dev);
-	struct lpt_softc *sc = device_private(lp_cd.cd_devs[unit]);
+	struct lpt_softc *sc = device_lookup_private(&lp_cd, LPTUNIT(dev));
 	int		 sps;
 
 	if (sc->sc_count)
@@ -335,7 +331,7 @@ pushbytes(struct lpt_softc *sc)
 int
 lpwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct lpt_softc *sc = device_private(lp_cd.cd_devs[LPTUNIT(dev)]);
+	struct lpt_softc *sc = device_lookup_private(&lp_cd,LPTUNIT(dev));
 	size_t n;
 	int error = 0;
 

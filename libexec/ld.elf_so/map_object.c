@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.35 2007/10/05 22:21:07 ad Exp $	 */
+/*	$NetBSD: map_object.c,v 1.35.6.1 2008/06/17 09:13:39 yamt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.35 2007/10/05 22:21:07 ad Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.35.6.1 2008/06/17 09:13:39 yamt Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -106,6 +106,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 
 	ehdr = mmap(NULL, _rtld_pagesz, PROT_READ, MAP_FILE | MAP_SHARED, fd,
 	    (off_t)0);
+	obj->ehdr = ehdr;
 	if (ehdr == MAP_FAILED) {
 		_rtld_error("%s: read error: %s", path, xstrerror(errno));
 		goto bad;
@@ -214,8 +215,11 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	obj->vaddrbase = base_vaddr;
 	obj->isdynamic = ehdr->e_type == ET_DYN;
 
-	munmap(ehdr, _rtld_pagesz);
-	ehdr = MAP_FAILED;
+	/* Unmap header if it overlaps the first load section. */
+	if (base_offset < _rtld_pagesz) {
+		munmap(ehdr, _rtld_pagesz);
+		obj->ehdr = MAP_FAILED;
+	}
 
 	/*
 	 * Calculate log2 of the base section alignment.
@@ -293,8 +297,8 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	return obj;
 
 bad:
-	if (ehdr != MAP_FAILED)
-		munmap(ehdr, _rtld_pagesz);
+	if (obj->ehdr != MAP_FAILED)
+		munmap(obj->ehdr, _rtld_pagesz);
 	if (mapbase != MAP_FAILED)
 		munmap(mapbase, mapsize);
 	_rtld_obj_free(obj);

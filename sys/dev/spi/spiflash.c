@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.7.2.1 2008/05/18 12:34:46 yamt Exp $ */
+/* $NetBSD: spiflash.c,v 1.7.2.2 2008/06/17 09:15:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.7.2.1 2008/05/18 12:34:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.7.2.2 2008/06/17 09:15:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -245,7 +245,8 @@ spiflash_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	spiflash_handle_t sc;
 
-	if ((sc = device_lookup(&spiflash_cd, DISKUNIT(dev))) == NULL)
+	sc = device_lookup_private(&spiflash_cd, DISKUNIT(dev));
+	if (sc == NULL)
 		return ENXIO;
 
 	/*
@@ -268,7 +269,8 @@ spiflash_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	spiflash_handle_t sc;
 
-	if ((sc = device_lookup(&spiflash_cd, DISKUNIT(dev))) == NULL)
+	sc = device_lookup_private(&spiflash_cd, DISKUNIT(dev));
+	if (sc == NULL)
 		return ENXIO;
 
 	return 0;
@@ -293,7 +295,8 @@ spiflash_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	spiflash_handle_t sc;
 
-	if ((sc = device_lookup(&spiflash_cd, DISKUNIT(dev))) == NULL)
+	sc = device_lookup_private(&spiflash_cd, DISKUNIT(dev));
+	if (sc == NULL)
 		return ENXIO;
 
 	return EINVAL;
@@ -305,7 +308,7 @@ spiflash_strategy(struct buf *bp)
 	spiflash_handle_t sc;
 	int	s;
 
-	sc = device_lookup(&spiflash_cd, DISKUNIT(bp->b_dev));
+	sc = device_lookup_private(&spiflash_cd, DISKUNIT(bp->b_dev));
 	if (sc == NULL) {
 		bp->b_error = ENXIO;
 		biodone(bp);

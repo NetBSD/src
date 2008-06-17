@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.89 2007/09/19 04:33:45 dyoung Exp $	*/
+/*	$NetBSD: socket.h,v 1.89.24.1 2008/06/17 09:15:17 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -200,8 +200,9 @@ struct	linger {
 					   in interface output routine */
 #endif
 #define AF_BLUETOOTH	31		/* Bluetooth: HCI, SCO, L2CAP, RFCOMM */
+#define	AF_IEEE80211	32		/* IEEE80211 */
 
-#define	AF_MAX		32
+#define	AF_MAX		33
 
 /*
  * Structure used by kernel to store most

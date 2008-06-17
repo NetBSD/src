@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.14.2.1 2008/05/18 12:36:04 yamt Exp $
+.\" $NetBSD: config.5,v 1.14.2.2 2008/06/17 09:15:21 yamt Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -24,7 +24,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 9, 2007
+.Dd June 10, 2008
 .Dt CONFIG 5
 .Os
 .Sh NAME
@@ -453,13 +453,25 @@ It is then possible to use the associated
 as a conditional element in a
 .Ic file
 statement.
-.It Ic defpseudo Ar base Oo Bro Ar locators Brc Oc Oo : dependencies Oc
+.It Ic defpseudo Ar base Oo : dependencies Oc
 Declares a pseudo-device.
 Those devices don't need an attachment to be declared, they will always be
 attached if they were selected by the user.
-As normal devices, an optional list of
+.It Ic defpseudodev Ar base Oo Bro Ar locators Brc Oc Oo : dependencies Oc
+Declares a pseudo-device.
+Those devices don't need an attachment to be declared, they will always be
+attached if they were selected by the user.
+This declaration should be used if the pseudodevice uses
+.Xr autoconf 9
+functions to manage its instances or attach children.
+As for normal devices, an optional list of
 .Ar locators
-can be defined, allowing the pseudo-device to have children.
+can be defined, which implies an interface attribute named
+.Ar base ,
+allowing the pseudo-device to have children.
+Interface attributes can also be defined in the
+.Ar dependencies
+list.
 .It Ic file Ar path Oo Ar condition Oc Oo Ic needs-count Oc \
     Oo Ic needs-flag Oc Op Ic compile with Ar rule
 Adds a source file to the list of files to be compiled into the kernel, if the

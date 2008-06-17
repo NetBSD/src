@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.14.2.2 2008/06/04 02:04:40 yamt Exp $
+# $NetBSD: XEN3_DOM0,v 1.14.2.3 2008/06/17 09:13:54 yamt Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -217,7 +217,10 @@ acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz*		at acpi?		# ACPI Thermal Zone
+aiboost*	at acpi?		# ASUS AI Booster Hardware monitor
 hpqlb*		at acpi?		# HP Quick Launch Buttons
+pckbc*		at acpi?		# PC keyboard controller
+pcppi*		at acpi?		# AT-style speaker sound
 
 # PCI bus support
 pci*		at hypervisor? bus ?

@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.11 2008/04/10 19:13:37 cegger Exp $
+ * $NetBSD: if_lmc.h,v 1.11.2.1 2008/06/17 09:14:41 yamt Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1012,7 +1012,7 @@ static __inline int test_and_set(volatile int *ptr, int val)
 # if _BSDI_VERSION <= 199910
 extern struct cfdriver lmccd;
 #  undef  IFP2SC
-#  define UNIT2SC(unit)		((softc_t *)lmccd.cd_devs[unit])
+#  define UNIT2SC(unit)		((softc_t *)device_lookup_private(&lmccd, unit))
 #  define IFP2SC(ifp)		(UNIT2SC((ifp)->if_unit))
 # endif
 #endif /* __bsdi__ */

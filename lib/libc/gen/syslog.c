@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.39 2006/11/22 17:23:25 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.39.16.1 2008/06/17 09:13:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.39 2006/11/22 17:23:25 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.39.16.1 2008/06/17 09:13:33 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -158,13 +158,14 @@ vsyslog_ss(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 void
 vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 {
-	size_t cnt, prlen;
+	size_t cnt, prlen, tries;
 	char ch, *p, *t;
 	time_t now;
 	struct tm tmnow;
 	int fd, saved_errno;
 #define	TBUF_LEN	2048
 #define	FMT_LEN		1024
+#define MAXTRIES	10
 	char *stdp = NULL;	/* pacify gcc */
 	char tbuf[TBUF_LEN], fmt_cpy[FMT_LEN];
 	size_t tbuf_left, fmt_left;
@@ -313,37 +314,36 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 	 * case #1 and keep send()ing data to cover case #2
 	 * to give syslogd a chance to empty its socket buffer.
 	 */
-	if (send(data->log_file, tbuf, cnt, 0) == -1) {
+	for (tries = 0; tries < MAXTRIES; tries++) {
+		if (send(data->log_file, tbuf, cnt, 0) != -1)
+			break;
 		if (errno != ENOBUFS) {
 			disconnectlog_r(data);
 			connectlog_r(data);
-		}
-		do {
-			usleep(1);
-			if (send(data->log_file, tbuf, cnt, 0) != -1)
-				break;
-		} while (errno == ENOBUFS);
+		} else
+			(void)usleep(1);
 	}
-	if (data == &sdata)
-		mutex_unlock(&syslog_mutex);
 
 	/*
 	 * Output the message to the console; try not to block
 	 * as a blocking console should not stop other processes.
 	 * Make sure the error reported is the one from the syslogd failure.
 	 */
-	if ((data->log_stat & LOG_CONS) &&
-	    (fd = open(_PATH_CONSOLE, O_WRONLY|O_NONBLOCK, 0)) >= 0) {
+	if (tries == MAXTRIES && (data->log_stat & LOG_CONS) &&
+	    (fd = open(_PATH_CONSOLE, O_WRONLY|O_NONBLOCK, 0)) >= 0 &&
+	    (p = strchr(tbuf, '>')) != NULL) {
 		struct iovec iov[2];
-		
-		p = strchr(tbuf, '>') + 1;
-		iov[0].iov_base = p;
+		iov[0].iov_base = ++p;
 		iov[0].iov_len = cnt - (p - tbuf);
 		iov[1].iov_base = __UNCONST("\r\n");
 		iov[1].iov_len = 2;
 		(void)writev(fd, iov, 2);
 		(void)close(fd);
 	}
+
+	if (data == &sdata)
+		mutex_unlock(&syslog_mutex);
+
 	if (data != &sdata)
 		closelog_r(data);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.13 2007/03/05 10:47:05 tsutsui Exp $	*/
+/*	$NetBSD: abtn.c,v 1.13.42.1 2008/06/17 09:14:04 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.13 2007/03/05 10:47:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.13.42.1 2008/06/17 09:14:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,7 +151,7 @@ abtn_adbcomplete(buffer, data, adb_command)
 	}
 	if (key != 0) {
 		key |= cmd & 0x80;
-		kbd_passup(akbd_cd.cd_devs[0],key);
+		kbd_passup(device_lookup_private(&akbd_cd, 0),key);
 		return;
 	}
 #endif

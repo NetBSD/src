@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.87.2.2 2008/06/04 02:05:49 yamt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.87.2.3 2008/06/17 09:15:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ struct lwp {
 	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
 	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
-	cpuset_t	l_affinity;	/* l: CPU set for affinity */
+	cpuset_t	*l_affinity;	/* l: CPU set for affinity */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -265,7 +265,7 @@ void	lwp_startup(lwp_t *, lwp_t *);
 int	lwp_locked(lwp_t *, kmutex_t *);
 void	lwp_setlock(lwp_t *, kmutex_t *);
 void	lwp_unlock_to(lwp_t *, kmutex_t *);
-void	lwp_lock_retry(lwp_t *, kmutex_t *);
+kmutex_t *lwp_lock_retry(lwp_t *, kmutex_t *);
 void	lwp_relock(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);

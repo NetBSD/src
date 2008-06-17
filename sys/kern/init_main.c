@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.349.2.3 2008/06/04 02:05:38 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.349.2.4 2008/06/17 09:15:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.349.2.3 2008/06/04 02:05:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.349.2.4 2008/06/17 09:15:02 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -436,10 +436,11 @@ main(void)
 	/*
 	 * If maximum number of vnodes in namei vnode cache is not explicitly
 	 * defined in kernel config, adjust the number such as we use roughly
-	 * 1.0% of memory for vnode cache (but not less than NVNODE vnodes).
+	 * 10% of memory for vnodes and associated data structures in the
+	 * assumed worst case.  Do not provide fewer than NVNODE vnodes.
 	 */
 	usevnodes =
-	    calc_cache_size(kernel_map, 1, VNODE_VA_MAXPCT) / sizeof(vnode_t);
+	    calc_cache_size(kernel_map, 10, VNODE_VA_MAXPCT) / VNODE_COST;
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif

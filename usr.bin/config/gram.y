@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.15 2007/11/11 17:35:27 cube Exp $	*/
+/*	$NetBSD: gram.y,v 1.15.6.1 2008/06/17 09:15:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,8 +103,8 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	AND AT ATTACH
 %token	BLOCK BUILD
 %token	CHAR COLONEQ COMPILE_WITH CONFIG
-%token	DEFFS DEFINE DEFOPT DEFPARAM DEFFLAG DEFPSEUDO DEVICE DEVCLASS DUMPS
-%token	DEVICE_MAJOR
+%token	DEFFS DEFINE DEFOPT DEFPARAM DEFFLAG DEFPSEUDO DEFPSEUDODEV
+%token	DEVICE DEVCLASS DUMPS DEVICE_MAJOR
 %token	ENDFILE
 %token	XFILE FILE_SYSTEM FLAGS
 %token	IDENT
@@ -297,8 +297,11 @@ one_def:
 	MAXPARTITIONS NUMBER		{ maxpartitions = $2.val; } |
 	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2.val, $3.val, $4.val); } |
 	MAKEOPTIONS condmkopt_list |
+	/* interface_opt in DEFPSEUDO is for backwards compatibility */
 	DEFPSEUDO devbase interface_opt attrs_opt
 					{ defdev($2, $3, $4, 1); } |
+	DEFPSEUDODEV devbase interface_opt attrs_opt
+					{ defdev($2, $3, $4, 2); } |
 	MAJOR '{' majorlist '}' |
 	VERSION NUMBER			{ setversion($2.val); };
 

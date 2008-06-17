@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1043.2.2 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1043.2.3 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -533,7 +533,10 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	acpidalb(4): Direct Application Launch Buttons. [cegger 20080518]
 	wscons(4): Add support for the Colemak keyboard layout. [ghen 20080520]
 	ipf(8): Updated to version 4.1.29. [darrenr 20080520]
-	openldap: Import 2.4.9 [lukem 20080522]
+	openldap: Import 2.4.9. [lukem 20080522]
+	postfix(1): Enable LDAP support for tables (see ldap_table(5))
+		[lukem 20080522]
+	amd(8): Enable LDAP support for amd maps. [lukem 20080522]
 	mac68k: Added support for Creative Systems Inc Hurdler CPI 
 		Nubus parallel printer card. [hauke 20080522]
 	siisata(4): A driver for Silicon Image SteelVine SATA-II controllers

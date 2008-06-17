@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27.8.1 2008/05/18 12:31:57 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.27.8.2 2008/06/17 09:14:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
 extern int idepth;
-extern u_short hp300_ipl2psl[];
+extern uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
@@ -74,7 +74,7 @@ static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._psl = hp300_ipl2psl[ipl]};
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
 }
 
 static inline int
@@ -94,7 +94,7 @@ splraiseipl(ipl_cookie_t icookie)
 #define	splsoftclock()	splraise1()
 #define	splsoftnet()	splraise1()
 #define	splsoftserial()	splraise1()
-#define	splvm()		_splraise(hp300_ipl2psl[IPL_VM])
+#define	splvm()		_splraise(ipl2psl_table[IPL_VM])
 #define	splsched()	spl6()
 #define	splhigh()	spl7()
 

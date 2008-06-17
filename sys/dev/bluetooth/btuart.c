@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.18 2008/04/15 11:17:48 plunky Exp $	*/
+/*	$NetBSD: btuart.c,v 1.18.2.1 2008/06/17 09:14:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.18 2008/04/15 11:17:48 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.18.2.1 2008/06/17 09:14:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -244,7 +244,7 @@ btuartopen(dev_t devno __unused, struct tty *tp)
 
 	cfdata = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	for (unit = 0; unit < btuart_cd.cd_ndevs; unit++)
-		if (btuart_cd.cd_devs[unit] == NULL)
+		if (device_lookup(&btuart_cd, unit) == NULL)
 			break;
 
 	cfdata->cf_name = btuart_cd.cd_name;

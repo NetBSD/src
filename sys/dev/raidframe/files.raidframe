@@ -1,9 +1,9 @@
-#	$NetBSD: files.raidframe,v 1.5 2006/03/01 21:41:49 oster Exp $
+#	$NetBSD: files.raidframe,v 1.5.66.1 2008/06/17 09:14:57 yamt Exp $
 
 defflag			RAID_AUTOCONFIG
 defflag			RAID_DIAGNOSTIC
 
-defpseudo raid { }:		disk
+defpseudodev raid:		disk
 
 file	dev/raidframe/rf_acctrace.c		raid		needs-flag
 file	dev/raidframe/rf_alloclist.c		raid

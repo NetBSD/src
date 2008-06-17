@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.18.18.1 2008/06/04 02:04:56 yamt Exp $	*/
+/*	$NetBSD: auxio.c,v 1.18.18.2 2008/06/17 09:14:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.18.18.1 2008/06/04 02:04:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.18.18.2 2008/06/17 09:14:13 yamt Exp $");
 
 #include "opt_auxio.h"
 
@@ -265,7 +265,7 @@ auxio_fd_control(u_int32_t bits)
 	 * XXX This does not handle > 1 auxio correctly.
 	 * We'll assume the floppy drive is tied to first auxio found.
 	 */
-	sc = (struct auxio_softc *)auxio_cd.cd_devs[0];
+	sc = device_lookup_private(&auxio_cd, 0);
 	if (sc->sc_flags & AUXIO_EBUS)
 		led = le32toh(bus_space_read_4(sc->sc_tag, sc->sc_led, 0));
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.129.2.2 2008/06/04 02:05:47 yamt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.129.2.3 2008/06/17 09:15:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.129.2.2 2008/06/04 02:05:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.129.2.3 2008/06/17 09:15:13 yamt Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -323,8 +323,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	cv_init(&sc->sc_condvar, "gre wait");
 	cv_init(&sc->sc_fp_condvar, "gre fp");
 
-	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
-	    ifc->ifc_name, unit);
+	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_type = IFT_TUNNEL;
 	sc->sc_if.if_addrlen = 0;

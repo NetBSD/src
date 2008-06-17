@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.27 2007/03/04 06:00:52 christos Exp $	*/
+/*	$NetBSD: cg2.c,v 1.27.42.1 2008/06/17 09:14:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.27 2007/03/04 06:00:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg2.c,v 1.27.42.1 2008/06/17 09:14:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ cg2match(struct device *parent, struct cfdata *cf, void *aux)
 static void 
 cg2attach(struct device *parent, struct device *self, void *args)
 {
-	struct cg2_softc *sc = (struct cg2_softc *)self;
+	struct cg2_softc *sc = device_private(self);
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
@@ -197,9 +197,11 @@ cg2attach(struct device *parent, struct device *self, void *args)
 int 
 cg2open(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	struct cg2_softc *sc;
 	int unit = minor(dev);
 
-	if (unit >= cgtwo_cd.cd_ndevs || cgtwo_cd.cd_devs[unit] == NULL)
+	sc = device_lookup_private(&cgtwo_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -207,7 +209,7 @@ cg2open(dev_t dev, int flags, int mode, struct lwp *l)
 int 
 cg2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct cg2_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
+	struct cg2_softc *sc = device_lookup_private(&cgtwo_cd, minor(dev));
 
 	return (fbioctlfb(&sc->sc_fb, cmd, data));
 }
@@ -219,7 +221,7 @@ cg2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 paddr_t 
 cg2mmap(dev_t dev, off_t off, int prot)
 {
-	struct cg2_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
+	struct cg2_softc *sc = device_lookup_private(&cgtwo_cd, minor(dev));
 
 	if (off & PGOFSET)
 		panic("cg2mmap");

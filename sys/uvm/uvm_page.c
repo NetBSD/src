@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.131.2.1 2008/06/04 02:05:54 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.131.2.2 2008/06/17 09:15:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.131.2.1 2008/06/04 02:05:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.131.2.2 2008/06/17 09:15:17 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.131.2.1 2008/06/04 02:05:54 yamt Exp 
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
@@ -124,14 +125,6 @@ static vaddr_t      virtual_space_start;
 static vaddr_t      virtual_space_end;
 
 /*
- * we use a hash table with only one bucket during bootup.  we will
- * later rehash (resize) the hash table once the allocator is ready.
- * we static allocate the one bootstrap bucket below...
- */
-
-static struct pglist uvm_bootbucket;
-
-/*
  * we allocate an initial number of page colors in uvm_page_init(),
  * and remember them.  We may re-color pages as cache sizes are
  * discovered during the autoconfiguration phase.  But we can never
@@ -148,34 +141,56 @@ vaddr_t uvm_zerocheckkva;
 #endif /* DEBUG */
 
 /*
- * locks on the hash table.  allocated in 32 byte chunks to try
- * and reduce cache traffic between CPUs.
- */
-
-#define	UVM_HASHLOCK_CNT	32
-#define	uvm_hashlock(hash)	\
-    (&uvm_hashlocks[(hash) & (UVM_HASHLOCK_CNT - 1)].lock)
-
-static union {
-	kmutex_t	lock;
-	uint8_t		pad[32];
-} uvm_hashlocks[UVM_HASHLOCK_CNT] __aligned(32);
-
-/*
  * local prototypes
  */
 
 static void uvm_pageinsert(struct vm_page *);
-static void uvm_pageinsert_after(struct vm_page *, struct vm_page *);
 static void uvm_pageremove(struct vm_page *);
+
+/*
+ * per-object tree of pages
+ */
+
+static signed int
+uvm_page_compare_nodes(const struct rb_node *n1, const struct rb_node *n2)
+{
+	const struct vm_page *pg1 = (const void *)n1;
+	const struct vm_page *pg2 = (const void *)n2;
+	const voff_t a = pg1->offset;
+	const voff_t b = pg2->offset;
+
+	if (a < b)
+		return 1;
+	if (a > b)
+		return -1;
+	return 0;
+}
+
+static signed int
+uvm_page_compare_key(const struct rb_node *n, const void *key)
+{
+	const struct vm_page *pg = (const void *)n;
+	const voff_t a = pg->offset;
+	const voff_t b = *(const voff_t *)key;
+
+	if (a < b)
+		return 1;
+	if (a > b)
+		return -1;
+	return 0;
+}
+
+const struct rb_tree_ops uvm_page_tree_ops = {
+	.rb_compare_nodes = uvm_page_compare_nodes,
+	.rb_compare_key = uvm_page_compare_key,
+};
 
 /*
  * inline functions
  */
 
 /*
- * uvm_pageinsert: insert a page in the object and the hash table
- * uvm_pageinsert_after: insert a page into the specified place in listq
+ * uvm_pageinsert: insert a page in the object.
  *
  * => caller must lock object
  * => caller must lock page queues
@@ -183,25 +198,16 @@ static void uvm_pageremove(struct vm_page *);
  *    and bumped the version counter
  */
 
-inline static void
-uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
+static inline void
+uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
+    struct vm_page *where)
 {
-	struct pglist *buck;
-	struct uvm_object *uobj = pg->uobject;
-	kmutex_t *lock;
-	u_int hash;
 
+	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(&uobj->vmobjlock));
 	KASSERT((pg->flags & PG_TABLED) == 0);
 	KASSERT(where == NULL || (where->flags & PG_TABLED));
 	KASSERT(where == NULL || (where->uobject == uobj));
-
-	hash = uvm_pagehash(uobj, pg->offset);
-	buck = &uvm.page_hash[hash];
-	lock = uvm_hashlock(hash);
-	mutex_spin_enter(lock);
-	TAILQ_INSERT_TAIL(buck, pg, hashq);
-	mutex_spin_exit(lock);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 0) {
@@ -219,44 +225,47 @@ uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 	}
 
 	if (where)
-		TAILQ_INSERT_AFTER(&uobj->memq, where, pg, listq);
+		TAILQ_INSERT_AFTER(&uobj->memq, where, pg, listq.queue);
 	else
-		TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
+		TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
 	pg->flags |= PG_TABLED;
 	uobj->uo_npages++;
 }
 
-inline static void
+
+static inline void
+uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
+{
+	bool success;
+
+	KASSERT(uobj == pg->uobject);
+	success = rb_tree_insert_node(&uobj->rb_tree, &pg->rb_node);
+	KASSERT(success);
+}
+
+static inline void
 uvm_pageinsert(struct vm_page *pg)
 {
+	struct uvm_object *uobj = pg->uobject;
 
-	uvm_pageinsert_after(pg, NULL);
+	uvm_pageinsert_tree(uobj, pg);
+	uvm_pageinsert_list(uobj, pg, NULL);
 }
 
 /*
- * uvm_page_remove: remove page from object and hash
+ * uvm_page_remove: remove page from object.
  *
  * => caller must lock object
  * => caller must lock page queues
  */
 
 static inline void
-uvm_pageremove(struct vm_page *pg)
+uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 {
-	struct pglist *buck;
-	struct uvm_object *uobj = pg->uobject;
-	kmutex_t *lock;
-	u_int hash;
 
+	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(&uobj->vmobjlock));
 	KASSERT(pg->flags & PG_TABLED);
-
-	hash = uvm_pagehash(uobj, pg->offset);
-	buck = &uvm.page_hash[hash];
-	lock = uvm_hashlock(hash);
-	mutex_spin_enter(lock);
-	TAILQ_REMOVE(buck, pg, hashq);
-	mutex_spin_exit(lock);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 1) {
@@ -275,9 +284,26 @@ uvm_pageremove(struct vm_page *pg)
 
 	/* object should be locked */
 	uobj->uo_npages--;
-	TAILQ_REMOVE(&uobj->memq, pg, listq);
+	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 	pg->flags &= ~PG_TABLED;
 	pg->uobject = NULL;
+}
+
+static inline void
+uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
+{
+
+	KASSERT(uobj == pg->uobject);
+	rb_tree_remove_node(&uobj->rb_tree, &pg->rb_node);
+}
+
+static inline void
+uvm_pageremove(struct vm_page *pg)
+{
+	struct uvm_object *uobj = pg->uobject;
+
+	uvm_pageremove_tree(uobj, pg);
+	uvm_pageremove_list(uobj, pg);
 }
 
 static void
@@ -287,7 +313,7 @@ uvm_page_init_buckets(struct pgfreelist *pgfl)
 
 	for (color = 0; color < uvmexp.ncolors; color++) {
 		for (i = 0; i < PGFL_NQUEUES; i++) {
-			TAILQ_INIT(&pgfl->pgfl_buckets[color].pgfl_queues[i]);
+			LIST_INIT(&pgfl->pgfl_buckets[color].pgfl_queues[i]);
 		}
 	}
 }
@@ -302,11 +328,14 @@ void
 uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 {
 	vsize_t freepages, pagecount, bucketcount, n;
-	struct pgflbucket *bucketarray;
+	struct pgflbucket *bucketarray, *cpuarray;
 	struct vm_page *pagearray;
 	int lcv;
 	u_int i;
 	paddr_t paddr;
+
+	KASSERT(ncpu <= 1);
+	KASSERT(sizeof(pagearray->offset) >= sizeof(struct uvm_cpu *));
 
 	/*
 	 * init the page queues and page queue locks, except the free
@@ -314,30 +343,10 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * structures).
 	 */
 
+	curcpu()->ci_data.cpu_uvm = &uvm.cpus[0];
 	uvmpdpol_init();
 	mutex_init(&uvm_pageqlock, MUTEX_DRIVER, IPL_NONE);
 	mutex_init(&uvm_fpageqlock, MUTEX_DRIVER, IPL_VM);
-
-	/*
-	 * init the <obj,offset> => <page> hash table.  for now
-	 * we just have one bucket (the bootstrap bucket).  later on we
-	 * will allocate new buckets as we dynamically resize the hash table.
-	 */
-
-	uvm.page_nhash = 1;			/* 1 bucket */
-	uvm.page_hashmask = 0;			/* mask for hash function */
-	uvm.page_hash = &uvm_bootbucket;	/* install bootstrap bucket */
-	TAILQ_INIT(uvm.page_hash);		/* init hash table */
-
-	/*
-	 * init hashtable locks.  these must be spinlocks, as they are
-	 * called from sites in the pmap modules where we cannot block.
-	 * if taking multiple locks, the order is: low numbered first,
-	 * high numbered second.
-	 */
-
-	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_init(&uvm_hashlocks[i].lock, MUTEX_SPIN, IPL_VM);
 
 	/*
 	 * allocate vm_page structures.
@@ -388,14 +397,18 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	    (PAGE_SIZE + sizeof(struct vm_page));
 
 	bucketarray = (void *)uvm_pageboot_alloc((bucketcount *
-	    sizeof(struct pgflbucket)) + (pagecount *
+	    sizeof(struct pgflbucket) * 2) + (pagecount *
 	    sizeof(struct vm_page)));
-	pagearray = (struct vm_page *)(bucketarray + bucketcount);
+	cpuarray = bucketarray + bucketcount;
+	pagearray = (struct vm_page *)(bucketarray + bucketcount * 2);
 
 	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
 		uvm.page_free[lcv].pgfl_buckets =
 		    (bucketarray + (lcv * uvmexp.ncolors));
 		uvm_page_init_buckets(&uvm.page_free[lcv]);
+		uvm.cpus[0].page_free[lcv].pgfl_buckets =
+		    (cpuarray + (lcv * uvmexp.ncolors));
+		uvm_page_init_buckets(&uvm.cpus[0].page_free[lcv]);
 	}
 	memset(pagearray, 0, pagecount * sizeof(struct vm_page));
 
@@ -455,7 +468,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * determine if we should zero pages in the idle loop.
 	 */
 
-	uvm.page_idle_zero = vm_page_zero_enable;
+	uvm.cpus[0].page_idle_zero = vm_page_zero_enable;
 
 	/*
 	 * done!
@@ -835,94 +848,8 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	vm_nphysseg++;
 
 	if (!preload) {
-		uvm_page_rehash();
 		uvmpdpol_reinit();
 	}
-}
-
-/*
- * uvm_page_rehash: reallocate hash table based on number of free pages.
- */
-
-void
-uvm_page_rehash(void)
-{
-	int freepages, lcv, bucketcount, oldcount, i;
-	struct pglist *newbuckets, *oldbuckets;
-	struct vm_page *pg;
-	size_t newsize, oldsize;
-
-	/*
-	 * compute number of pages that can go in the free pool
-	 */
-
-	freepages = 0;
-	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
-		freepages +=
-		    (vm_physmem[lcv].avail_end - vm_physmem[lcv].avail_start);
-
-	/*
-	 * compute number of buckets needed for this number of pages
-	 */
-
-	bucketcount = 1;
-	while (bucketcount < freepages)
-		bucketcount = bucketcount * 2;
-
-	/*
-	 * compute the size of the current table and new table.
-	 */
-
-	oldbuckets = uvm.page_hash;
-	oldcount = uvm.page_nhash;
-	oldsize = round_page(sizeof(struct pglist) * oldcount);
-	newsize = round_page(sizeof(struct pglist) * bucketcount);
-
-	/*
-	 * allocate the new buckets
-	 */
-
-	newbuckets = (struct pglist *) uvm_km_alloc(kernel_map, newsize,
-	    0, UVM_KMF_WIRED);
-	if (newbuckets == NULL) {
-		printf("uvm_page_physrehash: WARNING: could not grow page "
-		    "hash table\n");
-		return;
-	}
-	for (lcv = 0 ; lcv < bucketcount ; lcv++)
-		TAILQ_INIT(&newbuckets[lcv]);
-
-	/*
-	 * now replace the old buckets with the new ones and rehash everything
-	 */
-
-	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_spin_enter(&uvm_hashlocks[i].lock);
-
-	uvm.page_hash = newbuckets;
-	uvm.page_nhash = bucketcount;
-	uvm.page_hashmask = bucketcount - 1;  /* power of 2 */
-
-	/* ... and rehash */
-	for (lcv = 0 ; lcv < oldcount ; lcv++) {
-		while ((pg = oldbuckets[lcv].tqh_first) != NULL) {
-			TAILQ_REMOVE(&oldbuckets[lcv], pg, hashq);
-			TAILQ_INSERT_TAIL(
-			  &uvm.page_hash[uvm_pagehash(pg->uobject, pg->offset)],
-			  pg, hashq);
-		}
-	}
-
-	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_spin_exit(&uvm_hashlocks[i].lock);
-
-	/*
-	 * free old bucket array if is not the boot-time table
-	 */
-
-	if (oldbuckets != &uvm_bootbucket)
-		uvm_km_free(kernel_map, (vaddr_t) oldbuckets, oldsize,
-		    UVM_KMF_WIRED);
 }
 
 /*
@@ -933,11 +860,12 @@ uvm_page_rehash(void)
 void
 uvm_page_recolor(int newncolors)
 {
-	struct pgflbucket *bucketarray, *oldbucketarray;
-	struct pgfreelist pgfl;
+	struct pgflbucket *bucketarray, *cpuarray, *oldbucketarray;
+	struct pgfreelist gpgfl, pgfl;
 	struct vm_page *pg;
 	vsize_t bucketcount;
 	int lcv, color, i, ocolors;
+	struct uvm_cpu *ucpu;
 
 	if (newncolors <= uvmexp.ncolors)
 		return;
@@ -948,8 +876,9 @@ uvm_page_recolor(int newncolors)
 	}
 
 	bucketcount = newncolors * VM_NFREELIST;
-	bucketarray = malloc(bucketcount * sizeof(struct pgflbucket),
+	bucketarray = malloc(bucketcount * sizeof(struct pgflbucket) * 2,
 	    M_VMPAGE, M_NOWAIT);
+	cpuarray = bucketarray + bucketcount;
 	if (bucketarray == NULL) {
 		printf("WARNING: unable to allocate %ld page color buckets\n",
 		    (long) bucketcount);
@@ -971,24 +900,30 @@ uvm_page_recolor(int newncolors)
 	uvmexp.ncolors = newncolors;
 	uvmexp.colormask = uvmexp.ncolors - 1;
 
+	ucpu = curcpu()->ci_data.cpu_uvm;
 	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
-		pgfl.pgfl_buckets = (bucketarray + (lcv * newncolors));
+		gpgfl.pgfl_buckets = (bucketarray + (lcv * newncolors));
+		pgfl.pgfl_buckets = (cpuarray + (lcv * uvmexp.ncolors));
+		uvm_page_init_buckets(&gpgfl);
 		uvm_page_init_buckets(&pgfl);
 		for (color = 0; color < ocolors; color++) {
 			for (i = 0; i < PGFL_NQUEUES; i++) {
-				while ((pg = TAILQ_FIRST(&uvm.page_free[
+				while ((pg = LIST_FIRST(&uvm.page_free[
 				    lcv].pgfl_buckets[color].pgfl_queues[i]))
 				    != NULL) {
-					TAILQ_REMOVE(&uvm.page_free[
-					    lcv].pgfl_buckets[
-					    color].pgfl_queues[i], pg, pageq);
-					TAILQ_INSERT_TAIL(&pgfl.pgfl_buckets[
+					LIST_REMOVE(pg, pageq.list); /* global */
+					LIST_REMOVE(pg, listq.list); /* cpu */
+					LIST_INSERT_HEAD(&gpgfl.pgfl_buckets[
 					    VM_PGCOLOR_BUCKET(pg)].pgfl_queues[
-					    i], pg, pageq);
+					    i], pg, pageq.list);
+					LIST_INSERT_HEAD(&pgfl.pgfl_buckets[
+					    VM_PGCOLOR_BUCKET(pg)].pgfl_queues[
+					    i], pg, listq.list);
 				}
 			}
 		}
-		uvm.page_free[lcv].pgfl_buckets = pgfl.pgfl_buckets;
+		uvm.page_free[lcv].pgfl_buckets = gpgfl.pgfl_buckets;
+		ucpu->page_free[lcv].pgfl_buckets = pgfl.pgfl_buckets;
 	}
 
 	if (have_recolored_pages) {
@@ -1002,34 +937,90 @@ uvm_page_recolor(int newncolors)
 }
 
 /*
+ * uvm_cpu_attach: initialize per-CPU data structures.
+ */
+
+void
+uvm_cpu_attach(struct cpu_info *ci)
+{
+	struct pgflbucket *bucketarray;
+	struct pgfreelist pgfl;
+	struct uvm_cpu *ucpu;
+	vsize_t bucketcount;
+	int lcv;
+
+	if (CPU_IS_PRIMARY(ci)) {
+		/* Already done in uvm_page_init(). */
+		return;
+	}
+
+	bucketcount = uvmexp.ncolors * VM_NFREELIST;
+	bucketarray = malloc(bucketcount * sizeof(struct pgflbucket),
+	    M_VMPAGE, M_WAITOK);
+	ucpu = &uvm.cpus[cpu_index(ci)];
+	ci->ci_data.cpu_uvm = ucpu;
+	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
+		pgfl.pgfl_buckets = (bucketarray + (lcv * uvmexp.ncolors));
+		uvm_page_init_buckets(&pgfl);
+		ucpu->page_free[lcv].pgfl_buckets = pgfl.pgfl_buckets;
+	}
+}
+
+/*
  * uvm_pagealloc_pgfl: helper routine for uvm_pagealloc_strat
  */
 
 static struct vm_page *
-uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
+uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
     int *trycolorp)
 {
-	struct pglist *freeq;
+	struct pgflist *freeq;
 	struct vm_page *pg;
 	int color, trycolor = *trycolorp;
+	struct pgfreelist *gpgfl, *pgfl;
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
 
 	color = trycolor;
+	pgfl = &ucpu->page_free[flist];
+	gpgfl = &uvm.page_free[flist];
 	do {
-		if ((pg = TAILQ_FIRST((freeq =
-		    &pgfl->pgfl_buckets[color].pgfl_queues[try1]))) != NULL)
+		/* cpu, try1 */
+		if ((pg = LIST_FIRST((freeq =
+		    &pgfl->pgfl_buckets[color].pgfl_queues[try1]))) != NULL) {
+			VM_FREE_PAGE_TO_CPU(pg)->pages[try1]--;
+		    	uvmexp.cpuhit++;
 			goto gotit;
-		if ((pg = TAILQ_FIRST((freeq =
-		    &pgfl->pgfl_buckets[color].pgfl_queues[try2]))) != NULL)
+		}
+		/* global, try1 */
+		if ((pg = LIST_FIRST((freeq =
+		    &gpgfl->pgfl_buckets[color].pgfl_queues[try1]))) != NULL) {
+			VM_FREE_PAGE_TO_CPU(pg)->pages[try1]--;
+		    	uvmexp.cpumiss++;
 			goto gotit;
+		}
+		/* cpu, try2 */
+		if ((pg = LIST_FIRST((freeq =
+		    &pgfl->pgfl_buckets[color].pgfl_queues[try2]))) != NULL) {
+			VM_FREE_PAGE_TO_CPU(pg)->pages[try2]--;
+		    	uvmexp.cpuhit++;
+			goto gotit;
+		}
+		/* global, try2 */
+		if ((pg = LIST_FIRST((freeq =
+		    &gpgfl->pgfl_buckets[color].pgfl_queues[try2]))) != NULL) {
+			VM_FREE_PAGE_TO_CPU(pg)->pages[try2]--;
+		    	uvmexp.cpumiss++;
+			goto gotit;
+		}
 		color = (color + 1) & uvmexp.colormask;
 	} while (color != trycolor);
 
 	return (NULL);
 
  gotit:
-	TAILQ_REMOVE(freeq, pg, pageq);
+	LIST_REMOVE(pg, pageq.list);	/* global list */
+	LIST_REMOVE(pg, listq.list);	/* per-cpu list */
 	uvmexp.free--;
 
 	/* update zero'd page count */
@@ -1051,7 +1042,7 @@ uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
  *
  * => return null if no pages free
  * => wake up pagedaemon if number of free pages drops below low water mark
- * => if obj != NULL, obj must be locked (to put in hash)
+ * => if obj != NULL, obj must be locked (to put in obj's tree)
  * => if anon != NULL, anon must be locked (to put in anon)
  * => only one of obj or anon can be non-null
  * => caller must activate/deactivate page if it is not wired.
@@ -1069,6 +1060,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
     int flags, int strat, int free_list)
 {
 	int lcv, try1, try2, zeroit = 0, color;
+	struct uvm_cpu *ucpu;
 	struct vm_page *pg;
 	bool use_reserve;
 
@@ -1084,11 +1076,11 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * This implements a global round-robin page coloring
 	 * algorithm.
 	 *
-	 * XXXJRT: Should we make the `nextcolor' per-CPU?
 	 * XXXJRT: What about virtually-indexed caches?
 	 */
 
-	color = uvm.page_free_nextcolor;
+	ucpu = curcpu()->ci_data.cpu_uvm;
+	color = ucpu->page_free_nextcolor;
 
 	/*
 	 * check to see if we need to generate some free pages waking
@@ -1134,7 +1126,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	case UVM_PGA_STRAT_NORMAL:
 		/* Check all freelists in descending priority order. */
 		for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
-			pg = uvm_pagealloc_pgfl(&uvm.page_free[lcv],
+			pg = uvm_pagealloc_pgfl(ucpu, lcv,
 			    try1, try2, &color);
 			if (pg != NULL)
 				goto gotit;
@@ -1147,7 +1139,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	case UVM_PGA_STRAT_FALLBACK:
 		/* Attempt to allocate from the specified free list. */
 		KASSERT(free_list >= 0 && free_list < VM_NFREELIST);
-		pg = uvm_pagealloc_pgfl(&uvm.page_free[free_list],
+		pg = uvm_pagealloc_pgfl(ucpu, free_list,
 		    try1, try2, &color);
 		if (pg != NULL)
 			goto gotit;
@@ -1172,7 +1164,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * the next color accordingly.
 	 */
 
-	uvm.page_free_nextcolor = (color + 1) & uvmexp.colormask;
+	ucpu->page_free_nextcolor = (color + 1) & uvmexp.colormask;
 
 	/*
 	 * update allocation statistics and remember if we have to
@@ -1186,6 +1178,9 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		} else {
 			uvmexp.pga_zeromiss++;
 			zeroit = 1;
+		}
+		if (ucpu->pages[PGFL_ZEROS] < ucpu->pages[PGFL_UNKNOWN]) {
+			ucpu->page_idle_zero = vm_page_zero_enable;
 		}
 	}
 	mutex_spin_exit(&uvm_fpageqlock);
@@ -1235,18 +1230,21 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 void
 uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 {
+	struct uvm_object *uobj = oldpg->uobject;
 
 	KASSERT((oldpg->flags & PG_TABLED) != 0);
-	KASSERT(oldpg->uobject != NULL);
+	KASSERT(uobj != NULL);
 	KASSERT((newpg->flags & PG_TABLED) == 0);
 	KASSERT(newpg->uobject == NULL);
-	KASSERT(mutex_owned(&oldpg->uobject->vmobjlock));
+	KASSERT(mutex_owned(&uobj->vmobjlock));
 
-	newpg->uobject = oldpg->uobject;
+	newpg->uobject = uobj;
 	newpg->offset = oldpg->offset;
 
-	uvm_pageinsert_after(newpg, oldpg);
-	uvm_pageremove(oldpg);
+	uvm_pageremove_tree(uobj, oldpg);
+	uvm_pageinsert_tree(uobj, newpg);
+	uvm_pageinsert_list(uobj, newpg, oldpg);
+	uvm_pageremove_list(uobj, oldpg);
 }
 
 /*
@@ -1317,7 +1315,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 /*
  * uvm_pagefree: free page
  *
- * => erase page's identity (i.e. remove from hash/object)
+ * => erase page's identity (i.e. remove from object)
  * => put page on free list
  * => caller must lock owning object (either anon or uvm_object)
  * => caller must lock page queues
@@ -1327,7 +1325,9 @@ uvm_pagezerocheck(struct vm_page *pg)
 void
 uvm_pagefree(struct vm_page *pg)
 {
-	struct pglist *pgfl;
+	struct pgflist *pgfl;
+	struct uvm_cpu *ucpu;
+	int index, color, queue;
 	bool iszero;
 
 #ifdef DEBUG
@@ -1421,14 +1421,13 @@ uvm_pagefree(struct vm_page *pg)
 	 */
 
 	iszero = (pg->flags & PG_ZERO);
-	pgfl = &uvm.page_free[uvm_page_lookup_freelist(pg)].
-	    pgfl_buckets[VM_PGCOLOR_BUCKET(pg)].
-	    pgfl_queues[iszero ? PGFL_ZEROS : PGFL_UNKNOWN];
+	index = uvm_page_lookup_freelist(pg);
+	color = VM_PGCOLOR_BUCKET(pg);
+	queue = (iszero ? PGFL_ZEROS : PGFL_UNKNOWN);
 
 	pg->pqflags = PQ_FREE;
 #ifdef DEBUG
 	pg->uobject = (void *)0xdeadbeef;
-	pg->offset = 0xdeadbeef;
 	pg->uanon = (void *)0xdeadbeef;
 #endif
 
@@ -1439,13 +1438,24 @@ uvm_pagefree(struct vm_page *pg)
 		uvm_pagezerocheck(pg);
 #endif /* DEBUG */
 
-	TAILQ_INSERT_HEAD(pgfl, pg, pageq);
-	uvmexp.free++;
-	if (iszero)
-		uvmexp.zeropages++;
 
-	if (uvmexp.zeropages < UVM_PAGEZERO_LOWAT)
-		uvm.page_idle_zero = vm_page_zero_enable;
+	/* global list */
+	pgfl = &uvm.page_free[index].pgfl_buckets[color].pgfl_queues[queue];
+	LIST_INSERT_HEAD(pgfl, pg, pageq.list);
+	uvmexp.free++;
+	if (iszero) {
+		uvmexp.zeropages++;
+	}
+
+	/* per-cpu list */
+	ucpu = curcpu()->ci_data.cpu_uvm;
+	pg->offset = (uintptr_t)ucpu;
+	pgfl = &ucpu->page_free[index].pgfl_buckets[color].pgfl_queues[queue];
+	LIST_INSERT_HEAD(pgfl, pg, listq.list);
+	ucpu->pages[queue]++;
+	if (ucpu->pages[PGFL_ZEROS] < ucpu->pages[PGFL_UNKNOWN]) {
+		ucpu->page_idle_zero = vm_page_zero_enable;
+	}
 
 	mutex_spin_exit(&uvm_fpageqlock);
 }
@@ -1564,44 +1574,39 @@ uvm_page_own(struct vm_page *pg, const char *tag)
  *	on the CPU cache.
  * => we loop until we either reach the target or there is a lwp ready
  *      to run, or MD code detects a reason to break early.
- * => we only allow one CPU at a time to zero in the idle loop, to try
- *      and avoid swamping the system bus.
  */
 void
 uvm_pageidlezero(void)
 {
 	struct vm_page *pg;
-	struct pgfreelist *pgfl;
-	int free_list, firstbucket;
-	static int nextbucket;
-	static __cpu_simple_lock_t idlezero_lock = __SIMPLELOCK_UNLOCKED;
+	struct pgfreelist *pgfl, *gpgfl;
+	struct uvm_cpu *ucpu;
+	int free_list, firstbucket, nextbucket;
 
-	if (!__cpu_simple_lock_try(&idlezero_lock)) {
+	ucpu = curcpu()->ci_data.cpu_uvm;
+	if (!ucpu->page_idle_zero ||
+	    ucpu->pages[PGFL_UNKNOWN] < uvmexp.ncolors) {
+	    	ucpu->page_idle_zero = false;
 		return;
 	}
-	if (!mutex_tryenter(&uvm_fpageqlock)) {
-		__cpu_simple_unlock(&idlezero_lock);
-		return;
-	}
-	firstbucket = nextbucket;
+	mutex_enter(&uvm_fpageqlock);
+	firstbucket = ucpu->page_free_nextcolor;
+	nextbucket = firstbucket;
 	do {
 		if (sched_curcpu_runnable_p()) {
-			goto quit;
-		}
-		if (uvmexp.zeropages >= UVM_PAGEZERO_HIWAT) {
-			uvm.page_idle_zero = false;
-			goto quit;
+			break;
 		}
 		for (free_list = 0; free_list < VM_NFREELIST; free_list++) {
-			pgfl = &uvm.page_free[free_list];
-			while ((pg = TAILQ_FIRST(&pgfl->pgfl_buckets[
+			pgfl = &ucpu->page_free[free_list];
+			gpgfl = &uvm.page_free[free_list];
+			while ((pg = LIST_FIRST(&pgfl->pgfl_buckets[
 			    nextbucket].pgfl_queues[PGFL_UNKNOWN])) != NULL) {
 				if (sched_curcpu_runnable_p()) {
 					goto quit;
 				}
-				TAILQ_REMOVE(&pgfl->pgfl_buckets[
-				    nextbucket].pgfl_queues[PGFL_UNKNOWN],
-				    pg, pageq);
+				LIST_REMOVE(pg, pageq.list); /* global list */
+				LIST_REMOVE(pg, listq.list); /* per-cpu list */
+				ucpu->pages[PGFL_UNKNOWN]--;
 				uvmexp.free--;
 				mutex_spin_exit(&uvm_fpageqlock);
 #ifdef PMAP_PAGEIDLEZERO
@@ -1615,9 +1620,13 @@ uvm_pageidlezero(void)
 					 */
 
 					mutex_spin_enter(&uvm_fpageqlock);
-					TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
+					LIST_INSERT_HEAD(&gpgfl->pgfl_buckets[
 					    nextbucket].pgfl_queues[
-					    PGFL_UNKNOWN], pg, pageq);
+					    PGFL_UNKNOWN], pg, pageq.list);
+					LIST_INSERT_HEAD(&pgfl->pgfl_buckets[
+					    nextbucket].pgfl_queues[
+					    PGFL_UNKNOWN], pg, listq.list);
+					ucpu->pages[PGFL_UNKNOWN]++;
 					uvmexp.free++;
 					uvmexp.zeroaborts++;
 					goto quit;
@@ -1628,18 +1637,25 @@ uvm_pageidlezero(void)
 				pg->flags |= PG_ZERO;
 
 				mutex_spin_enter(&uvm_fpageqlock);
-				TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
+				LIST_INSERT_HEAD(&gpgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_ZEROS],
-				    pg, pageq);
+				    pg, pageq.list);
+				LIST_INSERT_HEAD(&pgfl->pgfl_buckets[
+				    nextbucket].pgfl_queues[PGFL_ZEROS],
+				    pg, listq.list);
+				ucpu->pages[PGFL_ZEROS]++;
 				uvmexp.free++;
 				uvmexp.zeropages++;
 			}
 		}
+		if (ucpu->pages[PGFL_UNKNOWN] < uvmexp.ncolors) {
+			break;
+		}
 		nextbucket = (nextbucket + 1) & uvmexp.colormask;
 	} while (nextbucket != firstbucket);
-quit:
+	ucpu->page_idle_zero = false;
+ quit:
 	mutex_spin_exit(&uvm_fpageqlock);
-	__cpu_simple_unlock(&idlezero_lock);
 }
 
 /*
@@ -1653,22 +1669,11 @@ struct vm_page *
 uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
-	struct pglist *buck;
-	kmutex_t *lock;
-	u_int hash;
 
 	KASSERT(mutex_owned(&obj->vmobjlock));
 
-	hash = uvm_pagehash(obj, off);
-	buck = &uvm.page_hash[hash];
-	lock = uvm_hashlock(hash);
-	mutex_spin_enter(lock);
-	TAILQ_FOREACH(pg, buck, hashq) {
-		if (pg->uobject == obj && pg->offset == off) {
-			break;
-		}
-	}
-	mutex_spin_exit(lock);
+	pg = (struct vm_page *)rb_tree_find_node(&obj->rb_tree, &off);
+
 	KASSERT(pg == NULL || obj->uo_npages != 0);
 	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
 		(pg->flags & PG_BUSY) != 0);

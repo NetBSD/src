@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.7 2007/10/05 22:21:07 ad Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.7.6.1 2008/06/17 09:13:39 yamt Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.7 2007/10/05 22:21:07 ad Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.7.6.1 2008/06/17 09:13:39 yamt Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -343,7 +343,7 @@ irealloc(void *cp, size_t nbytes)
 	if (op->ov_magic != MAGIC) {
 		static const char *err_str =
 		    "memory corruption or double free in realloc\n";
-		extern const char *__progname;
+		extern char *__progname;
 	        write(STDERR_FILENO, __progname, strlen(__progname));
 		write(STDERR_FILENO, err_str, strlen(err_str));
 		abort();

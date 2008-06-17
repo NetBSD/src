@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.53 2008/01/02 11:49:16 ad Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.53.8.1 2008/06/17 09:15:17 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.53 2008/01/02 11:49:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.53.8.1 2008/06/17 09:15:17 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -439,15 +439,15 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			 * XXX Needs some rethinking for the PGO_ALLPAGES
 			 * XXX case.
 			 */
+			pmap_update(ufi->orig_map->pmap);	/* sync what we have so far */
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj, NULL);
-			pmap_update(ufi->orig_map->pmap);	/* sync what we have so far */
 			uvm_wait("udv_fault");
 			return (ERESTART);
 		}
 	}
 
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 	pmap_update(ufi->orig_map->pmap);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 	return (retval);
 }

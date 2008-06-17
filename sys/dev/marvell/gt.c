@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.16 2008/04/08 20:40:42 cegger Exp $	*/
+/*	$NetBSD: gt.c,v 1.16.2.1 2008/06/17 09:14:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.16 2008/04/08 20:40:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.16.2.1 2008/06/17 09:14:40 yamt Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -400,7 +400,7 @@ gt_init_interrupt(struct gt_softc *gt)
 uint32_t
 gt_read_mpp (void)
 {
-	return gt_read((struct gt_softc *)gt_cd.cd_devs[0], GT_GPP_Value);
+	return gt_read(device_lookup_private(&gt_cd, 0), GT_GPP_Value); /* XXX */
 }
 
 #if 0

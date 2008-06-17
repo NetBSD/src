@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.124.2.2 2008/06/04 02:05:54 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.124.2.3 2008/06/17 09:15:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.124.2.2 2008/06/04 02:05:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.124.2.3 2008/06/17 09:15:17 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -96,11 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.124.2.2 2008/06/04 02:05:54 yamt Exp 
 
 static void uvm_swapout(struct lwp *);
 static int uarea_swapin(vaddr_t);
-
-#define UVM_NUAREA_HIWAT	20
-#define	UVM_NUAREA_LOWAT	16
-
-#define	UAREA_NEXTFREE(uarea)	(*(vaddr_t *)(UAREA_TO_USER(uarea)))
 
 /*
  * XXXCDC: do these really belong here?
@@ -276,16 +271,6 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	cpu_lwp_fork(l1, l2, stack, stacksize, func, arg);
 }
 
-/*
- * uvm_cpu_attach: initialize per-CPU data structures.
- */
-
-void
-uvm_cpu_attach(struct cpu_info *ci)
-{
-
-}
-
 static int
 uarea_swapin(vaddr_t addr)
 {
@@ -401,11 +386,11 @@ uvm_proc_exit(struct proc *p)
 	/*
 	 * borrow proc0's address space.
 	 */
-	kpreempt_disable();
+	KPREEMPT_DISABLE(l);
 	pmap_deactivate(l);
 	p->p_vmspace = proc0.p_vmspace;
 	pmap_activate(l);
-	kpreempt_enable();
+	KPREEMPT_ENABLE(l);
 
 	uvmspace_free(ovm);
 }
@@ -625,6 +610,8 @@ swappable(struct lwp *l)
 		return false;
 	if (l->l_syncobj == &rw_syncobj || l->l_syncobj == &mutex_syncobj)
 		return false;
+	if (l->l_proc->p_stat != SACTIVE && l->l_proc->p_stat != SSTOP)
+		return false;
 	return true;
 }
 
@@ -746,6 +733,8 @@ uvm_swapout_threads(void)
 static void
 uvm_swapout(struct lwp *l)
 {
+	struct vm_map *map;
+
 	KASSERT(mutex_owned(&l->l_swaplock));
 
 #ifdef DEBUG
@@ -782,7 +771,11 @@ uvm_swapout(struct lwp *l)
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
 	uarea_swapout(USER_TO_UAREA(l->l_addr));
-	pmap_collect(vm_map_pmap(&l->l_proc->p_vmspace->vm_map));
+	map = &l->l_proc->p_vmspace->vm_map;
+	if (vm_map_lock_try(map)) {
+		pmap_collect(vm_map_pmap(map));
+		vm_map_unlock(map);
+	}
 }
 
 /*

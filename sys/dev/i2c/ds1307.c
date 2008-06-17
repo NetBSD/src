@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.10.2.1 2008/05/18 12:33:38 yamt Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.10.2.2 2008/06/17 09:14:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.10.2.1 2008/05/18 12:33:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.10.2.2 2008/06/17 09:14:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ dsrtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct dsrtc_softc *sc;
 
-	if ((sc = device_lookup(&dsrtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&dsrtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	/* XXX: Locking */
@@ -140,7 +140,7 @@ dsrtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct dsrtc_softc *sc;
 
-	if ((sc = device_lookup(&dsrtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&dsrtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	sc->sc_open = 0;
@@ -155,7 +155,7 @@ dsrtc_read(dev_t dev, struct uio *uio, int flags)
 	u_int8_t ch, cmdbuf[1];
 	int a, error;
 
-	if ((sc = device_lookup(&dsrtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&dsrtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= DS1307_NVRAM_SIZE)
@@ -194,7 +194,7 @@ dsrtc_write(dev_t dev, struct uio *uio, int flags)
 	u_int8_t cmdbuf[2];
 	int a, error;
 
-	if ((sc = device_lookup(&dsrtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&dsrtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= DS1307_NVRAM_SIZE)

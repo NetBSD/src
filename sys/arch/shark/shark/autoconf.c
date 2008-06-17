@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.8.1 2008/06/17 09:14:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.8.1 2008/06/17 09:14:12 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2008/02/12 17:30:58 joerg Exp $");
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <arm/arm32/machdep.h>
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
 #include <machine/irqhandler.h>
@@ -190,15 +191,9 @@ cpu_configure()
 	ofrootfound();
 #endif
 
-#if defined(DEBUG)
-	/* Debugging information */
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
-	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-	    irqmasks[IPL_VM]);
-	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
-	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_HIGH],
-	    irqmasks[IPL_SERIAL]);
-#endif /* defined(DEBUG) */
+#if defined(DIAGNOSTIC)
+	dump_spl_masks();
+#endif /* defined(DIAGNOSTIC) */
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
 	(void)spl0();

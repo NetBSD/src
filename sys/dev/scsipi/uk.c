@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.53.2.1 2008/05/18 12:34:46 yamt Exp $	*/
+/*	$NetBSD: uk.c,v 1.53.2.2 2008/06/17 09:14:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.53.2.1 2008/05/18 12:34:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.53.2.2 2008/06/17 09:14:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,7 @@ ukopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct scsipi_adapter *adapt;
 
 	unit = UKUNIT(dev);
-	if (unit >= uk_cd.cd_ndevs)
-		return (ENXIO);
-	uk = uk_cd.cd_devs[unit];
+	uk = device_lookup_private(&uk_cd, unit);
 	if (uk == NULL)
 		return (ENXIO);
 
@@ -191,7 +189,7 @@ ukopen(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 ukclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
+	struct uk_softc *uk = device_lookup_private(&uk_cd, UKUNIT(dev));
 	struct scsipi_periph *periph = uk->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 
@@ -212,7 +210,7 @@ ukclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 ukioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
+	struct uk_softc *uk = device_lookup_private(&uk_cd, UKUNIT(dev));
 
 	return (scsipi_do_ioctl(uk->sc_periph, dev, cmd, addr, flag, l));
 }

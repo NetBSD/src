@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.61 2007/10/17 19:53:47 garbled Exp $	*/
+/*	$NetBSD: fd.c,v 1.61.18.1 2008/06/17 09:13:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61 2007/10/17 19:53:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61.18.1 2008/06/17 09:13:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,7 +387,7 @@ void		*auxp;
 	struct fd_types *type;
 	u_short		swtch;
 
-	sc = (struct fd_softc *)dp;
+	sc = device_private(dp);
 
 	callout_init(&sc->sc_motor_ch, 0);
 
@@ -760,7 +760,7 @@ register struct fd_softc	*sc;
 	for(i = sc->unit + 1; ;i++) {
 		if(i >= fd_cd.cd_ndevs)
 			i = 0;
-		if((sc1 = fd_cd.cd_devs[i]) == NULL)
+		if((sc1 = device_lookup_private(&fd_cd, i)) == NULL)
 			continue;
 		if (BUFQ_PEEK(sc1->bufq) != NULL)
 			break;

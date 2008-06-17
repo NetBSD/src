@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.35 2007/03/04 06:00:46 christos Exp $ */
+/*	$NetBSD: msiiep.c,v 1.35.42.1 2008/06/17 09:14:13 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.35 2007/03/04 06:00:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.35.42.1 2008/06/17 09:14:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -692,7 +692,7 @@ mspcic_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
 	 * to the kernel virtual address space.
 	 */
 	mlist = segs[0]._ds_mlist;
-	TAILQ_FOREACH(m, mlist, pageq) {
+	TAILQ_FOREACH(m, mlist, pageq.queue) {
 		paddr_t pa;
 
 		if (size == 0)

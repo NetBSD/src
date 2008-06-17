@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.99.2.2 2008/06/04 02:05:54 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.99.2.3 2008/06/17 09:15:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.99.2.2 2008/06/04 02:05:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.99.2.3 2008/06/17 09:15:17 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -643,7 +643,7 @@ uao_detach(struct uvm_object *uobj)
  	 */
 
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
-		return;;
+		return;
 
 	mutex_enter(&uobj->vmobjlock);
 	uao_detach_locked(uobj);
@@ -824,7 +824,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	 */
 
 	if (by_list) {
-		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
+		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq.queue);
 		nextpg = TAILQ_FIRST(&uobj->memq);
 		uvm_lwp_hold(curlwp);
 	} else {
@@ -838,7 +838,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			pg = nextpg;
 			if (pg == &endmp)
 				break;
-			nextpg = TAILQ_NEXT(pg, listq);
+			nextpg = TAILQ_NEXT(pg, listq.queue);
 			if (pg->offset < start || pg->offset >= stop)
 				continue;
 		} else {
@@ -857,16 +857,16 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 
 		if (pg->flags & PG_BUSY) {
 			if (by_list) {
-				TAILQ_INSERT_BEFORE(pg, &curmp, listq);
+				TAILQ_INSERT_BEFORE(pg, &curmp, listq.queue);
 			}
 			pg->flags |= PG_WANTED;
 			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 			    "uao_put", 0);
 			mutex_enter(&uobj->vmobjlock);
 			if (by_list) {
-				nextpg = TAILQ_NEXT(&curmp, listq);
+				nextpg = TAILQ_NEXT(&curmp, listq.queue);
 				TAILQ_REMOVE(&uobj->memq, &curmp,
-				    listq);
+				    listq.queue);
 			} else
 				curoff -= PAGE_SIZE;
 			continue;
@@ -925,7 +925,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		}
 	}
 	if (by_list) {
-		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
+		TAILQ_REMOVE(&uobj->memq, &endmp, listq.queue);
 		uvm_lwp_rele(curlwp);
 	}
 	mutex_exit(&uobj->vmobjlock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_vnd.c,v 1.7.68.1 2008/06/04 02:05:47 yamt Exp $	*/
+/*	$NetBSD: lkminit_vnd.c,v 1.7.68.2 2008/06/17 09:15:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.7.68.1 2008/06/04 02:05:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.7.68.2 2008/06/17 09:15:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -57,6 +57,7 @@ static int
 vnd_lkm(struct lkm_table *lkmtp, int cmd)
 {
 	int error = 0, i;
+	device_t dev;
 
 	if (cmd == LKM_E_LOAD) {
 		error = config_cfdriver_attach(&vnd_cd);
@@ -68,10 +69,12 @@ vnd_lkm(struct lkm_table *lkmtp, int cmd)
 		
 		vndattach(0);
 	} else if (cmd == LKM_E_UNLOAD) {
-		for (i = 0; i < vnd_cd.cd_ndevs; i++)
-			if (vnd_cd.cd_devs[i] != NULL &&
-			    (error = vnd_destroy(vnd_cd.cd_devs[i])) != 0)
+		for (i = 0; i < vnd_cd.cd_ndevs; i++) {
+			dev = device_lookup(&vnd_cd, i);
+			if (dev != NULL &&
+			    (error = vnd_destroy(dev)) != 0)
 				return 0;
+		}
 
 		if ((error = config_cfattach_detach(vnd_cd.cd_name,
 		    &vnd_ca)) != 0) {

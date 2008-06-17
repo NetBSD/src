@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.219.2.2 2008/06/04 02:04:57 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.219.2.3 2008/06/17 09:14:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219.2.2 2008/06/04 02:04:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219.2.3 2008/06/17 09:14:13 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1250,7 +1250,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 			blast_dcache();
 			break;
 		}
-		TAILQ_FOREACH(pg, pglist, pageq) {
+		TAILQ_FOREACH(pg, pglist, pageq.queue) {
 			pa = VM_PAGE_TO_PHYS(pg);
 
 			/* 
@@ -1299,7 +1299,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			if ((pglist = map->dm_segs[i]._ds_mlist) == NULL)
 				/* Should not really happen. */
 				continue;
-			TAILQ_FOREACH(pg, pglist, pageq) {
+			TAILQ_FOREACH(pg, pglist, pageq.queue) {
 				paddr_t start;
 				psize_t size = PAGE_SIZE;
 
@@ -1373,7 +1373,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 * Simply keep a pointer around to the linked list, so
 	 * bus_dmamap_free() can return it.
 	 *
-	 * NOBODY SHOULD TOUCH THE pageq FIELDS WHILE THESE PAGES
+	 * NOBODY SHOULD TOUCH THE pageq.queue FIELDS WHILE THESE PAGES
 	 * ARE IN OUR CUSTODY.
 	 */
 	segs[0]._ds_mlist = pglist;

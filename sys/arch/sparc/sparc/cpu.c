@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.210 2008/02/16 18:17:36 he Exp $ */
+/*	$NetBSD: cpu.c,v 1.210.8.1 2008/06/17 09:14:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.210 2008/02/16 18:17:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.210.8.1 2008/06/17 09:14:12 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -225,7 +225,7 @@ alloc_cpuinfo(void)
 		panic("alloc_cpuinfo: no pages");
 
 	/* Map the pages */
-	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m, pageq)) {
+	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		va += PAGE_SIZE;

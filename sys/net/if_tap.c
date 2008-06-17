@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.41.2.2 2008/06/04 02:05:47 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.41.2.3 2008/06/17 09:15:13 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.41.2.2 2008/06/04 02:05:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.41.2.3 2008/06/17 09:15:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -682,7 +682,7 @@ tap_cdev_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (minor(dev) == TAP_CLONER)
 		return tap_dev_cloner(l);
 
-	sc = device_private(device_lookup(&tap_cd, minor(dev)));
+	sc = device_lookup_private(&tap_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -751,7 +751,7 @@ tap_cdev_close(dev_t dev, int flags, int fmt,
     struct lwp *l)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, minor(dev)));
+	    device_lookup_private(&tap_cd, minor(dev));
 
 	if (sc == NULL)
 		return (ENXIO);
@@ -772,7 +772,7 @@ tap_fops_close(file_t *fp)
 	struct tap_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&tap_cd, unit));
+	sc = device_lookup_private(&tap_cd, unit);
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -852,7 +852,7 @@ static int
 tap_dev_read(int unit, struct uio *uio, int flags)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, unit));
+	    device_lookup_private(&tap_cd, unit);
 	struct ifnet *ifp;
 	struct mbuf *m, *n;
 	int error = 0, s;
@@ -955,7 +955,7 @@ static int
 tap_dev_write(int unit, struct uio *uio, int flags)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, unit));
+	    device_lookup_private(&tap_cd, unit);
 	struct ifnet *ifp;
 	struct mbuf *m, **mp;
 	int error = 0;
@@ -1024,7 +1024,7 @@ static int
 tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, unit));
+	    device_lookup_private(&tap_cd, unit);
 	int error = 0;
 
 	if (sc == NULL)
@@ -1100,7 +1100,7 @@ static int
 tap_dev_poll(int unit, int events, struct lwp *l)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, unit));
+	    device_lookup_private(&tap_cd, unit);
 	int revents = 0;
 
 	if (sc == NULL)
@@ -1149,7 +1149,7 @@ static int
 tap_dev_kqfilter(int unit, struct knote *kn)
 {
 	struct tap_softc *sc =
-	    device_private(device_lookup(&tap_cd, unit));
+	    device_lookup_private(&tap_cd, unit);
 
 	if (sc == NULL)
 		return (ENXIO);
