@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.15.2.1 2008/06/04 02:05:19 yamt Exp $	*/
+/*	$NetBSD: spif.c,v 1.15.2.2 2008/06/17 09:14:57 yamt Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.15.2.1 2008/06/04 02:05:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.15.2.2 2008/06/17 09:14:57 yamt Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -161,7 +161,7 @@ spif_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct spif_softc *sc = (struct spif_softc *)self;
+	struct spif_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = aux;
 
 	if (sa->sa_nintr != 2) {
@@ -279,7 +279,7 @@ stty_match(parent, vcf, aux)
 	struct cfdata *vcf;
 	void *aux;
 {
-	struct spif_softc *sc = (struct spif_softc *)parent;
+	struct spif_softc *sc = device_private(parent);
 
 	return (aux == stty_match && sc->sc_ttys == NULL);
 }
@@ -289,8 +289,8 @@ stty_attach(parent, dev, aux)
 	struct device *parent, *dev;
 	void *aux;
 {
-	struct spif_softc *sc = (struct spif_softc *)parent;
-	struct stty_softc *ssc = (struct stty_softc *)dev;
+	struct spif_softc *sc = device_private(parent);
+	struct stty_softc *ssc = device_private(dev);
 	int port;
 
 	sc->sc_ttys = ssc;
@@ -323,11 +323,7 @@ stty_attach(parent, dev, aux)
 }
 
 int
-stty_open(dev, flags, mode, l)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct lwp *l;
+stty_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct spif_softc *csc;
 	struct stty_softc *sc;
@@ -336,11 +332,8 @@ stty_open(dev, flags, mode, l)
 	int card = SPIF_CARD(dev);
 	int port = SPIF_PORT(dev);
 
-	if (card >= stty_cd.cd_ndevs || card >= spif_cd.cd_ndevs)
-		return (ENXIO);
-
-	sc = stty_cd.cd_devs[card];
-	csc = spif_cd.cd_devs[card];
+	sc = device_lookup_private(&stty_cd, card);
+	csc = device_lookup_private(&spif_cd, card);
 	if (sc == NULL || csc == NULL)
 		return (ENXIO);
 
@@ -404,13 +397,9 @@ stty_open(dev, flags, mode, l)
 }
 
 int
-stty_close(dev, flags, mode, l)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct lwp *l;
+stty_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
+	struct stty_softc *sc = device_lookup_private(&stty_cd, SPIF_CARD(dev));
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
 	struct spif_softc *csc = sp->sp_sc;
 	struct tty *tp = sp->sp_tty;
@@ -433,14 +422,10 @@ stty_close(dev, flags, mode, l)
 }
 
 int
-stty_ioctl(dev, cmd, data, flags, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct lwp *l;
+stty_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct stty_softc *stc = stty_cd.cd_devs[SPIF_CARD(dev)];
+	struct stty_softc *stc = device_lookup_private(&stty_cd,
+						       SPIF_CARD(dev));
 	struct stty_port *sp = &stc->sc_port[SPIF_PORT(dev)];
 	struct spif_softc *sc = sp->sp_sc;
 	struct tty *tp = sp->sp_tty;
@@ -563,11 +548,10 @@ stty_modem_control(sp, bits, how)
 }
 
 int
-stty_param(tp, t)
-	struct tty *tp;
-	struct termios *t;
+stty_param(struct tty *tp, struct termios *t)
 {
-	struct stty_softc *st = stty_cd.cd_devs[SPIF_CARD(tp->t_dev)];
+	struct stty_softc *st = device_lookup_private(&stty_cd,
+						      SPIF_CARD(tp->t_dev));
 	struct stty_port *sp = &st->sc_port[SPIF_PORT(tp->t_dev)];
 	struct spif_softc *sc = sp->sp_sc;
 	u_int8_t rbprl, rbprh, tbprl, tbprh;
@@ -661,12 +645,9 @@ stty_param(tp, t)
 }
 
 int
-stty_read(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+stty_read(dev_t dev, struct uio *uio, int flags)
 {
-	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
+	struct stty_softc *sc = device_lookup_private(&stty_cd, SPIF_CARD(dev));
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
 	struct tty *tp = sp->sp_tty;
 
@@ -674,12 +655,9 @@ stty_read(dev, uio, flags)
 }
 
 int
-stty_write(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+stty_write(dev_t dev, struct uio *uio, int flags)
 {
-	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
+	struct stty_softc *sc = device_lookup_private(&stty_cd, SPIF_CARD(dev));
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
 	struct tty *tp = sp->sp_tty;
 
@@ -687,12 +665,9 @@ stty_write(dev, uio, flags)
 }
 
 int
-stty_poll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+stty_poll(dev_t dev, int events, struct lwp *l)
 {
-	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
+	struct stty_softc *sc = device_lookup_private(&stty_cd, SPIF_CARD(dev));
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
 	struct tty *tp = sp->sp_tty;
 
@@ -700,21 +675,19 @@ stty_poll(dev, events, l)
 }
 
 struct tty *
-stty_tty(dev)
-	dev_t dev;
+stty_tty(dev_t dev)
 {
-	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(dev)];
+	struct stty_softc *sc = device_lookup_private(&stty_cd, SPIF_CARD(dev));
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(dev)];
 
 	return (sp->sp_tty);
 }
 
 void
-stty_stop(tp, flags)
-	struct tty *tp;
-	int flags;
+stty_stop(struct tty *tp, int flags)
 {
-	struct stty_softc *sc = stty_cd.cd_devs[SPIF_CARD(tp->t_dev)];
+	struct stty_softc *sc = device_lookup_private(&stty_cd,
+						      SPIF_CARD(tp->t_dev));
 	struct stty_port *sp = &sc->sc_port[SPIF_PORT(tp->t_dev)];
 	int s;
 
@@ -728,10 +701,10 @@ stty_stop(tp, flags)
 }
 
 void
-stty_start(tp)
-	struct tty *tp;
+stty_start(struct tty *tp)
 {
-	struct stty_softc *stc = stty_cd.cd_devs[SPIF_CARD(tp->t_dev)];
+	struct stty_softc *stc = device_lookup_private(&stty_cd,
+						       SPIF_CARD(tp->t_dev));
 	struct stty_port *sp = &stc->sc_port[SPIF_PORT(tp->t_dev)];
 	struct spif_softc *sc = sp->sp_sc;
 	int s;
@@ -1033,7 +1006,7 @@ sbpp_match(parent, vcf, aux)
 	struct cfdata *vcf;
 	void *aux;
 {
-	struct spif_softc *sc = (struct spif_softc *)parent;
+	struct spif_softc *sc = device_private(parent);
 
 	return (aux == sbpp_match && sc->sc_bpps == NULL);
 }
@@ -1043,8 +1016,8 @@ sbpp_attach(parent, dev, aux)
 	struct device *parent, *dev;
 	void *aux;
 {
-	struct spif_softc *sc = (struct spif_softc *)parent;
-	struct sbpp_softc *psc = (struct sbpp_softc *)dev;
+	struct spif_softc *sc = device_private(parent);
+	struct sbpp_softc *psc = device_private(dev);
 	int port;
 
 	sc->sc_bpps = psc;

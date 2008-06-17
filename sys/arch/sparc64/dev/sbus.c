@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.79.2.1 2008/06/04 02:04:56 yamt Exp $ */
+/*	$NetBSD: sbus.c,v 1.79.2.2 2008/06/17 09:14:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.79.2.1 2008/06/04 02:04:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.79.2.2 2008/06/17 09:14:13 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -178,7 +178,7 @@ sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 sbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct sbus_softc *sc = (struct sbus_softc *)self;
+	struct sbus_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	struct intrhand *ih;
 	int ipl;
@@ -459,7 +459,7 @@ void
 sbusreset(int sbus)
 {
 	register struct sbusdev *sd;
-	struct sbus_softc *sc = sbus_cd.cd_devs[sbus];
+	struct sbus_softc *sc = device_lookup_private(&sbus_cd, sbus);
 	struct device *dev;
 
 	printf("reset %s:", device_xname(&sc->sc_dev));

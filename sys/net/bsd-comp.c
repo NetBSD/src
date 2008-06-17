@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.17 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.17.8.1 2008/06/17 09:15:13 yamt Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.17 2008/02/20 17:05:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.17.8.1 2008/06/17 09:15:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,10 +340,9 @@ bsd_alloc(u_char *options, int opt_len, int decomp)
 
     maxmaxcode = MAXCODE(bits);
     newlen = sizeof(*db) + (hsize-1) * (sizeof(db->dict[0]));
-    db = malloc(newlen, M_DEVBUF, M_NOWAIT);
+    db = malloc(newlen, M_DEVBUF, M_NOWAIT|M_ZERO);
     if (!db)
 	return NULL;
-    memset(db, 0, sizeof(*db) - sizeof(db->dict));
 
     if (!decomp) {
 	db->lens = NULL;

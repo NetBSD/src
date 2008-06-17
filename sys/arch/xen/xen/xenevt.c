@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.26.2.1 2008/05/18 12:33:08 yamt Exp $      */
+/*      $NetBSD: xenevt.c,v 1.26.2.2 2008/06/17 09:14:24 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.26.2.1 2008/05/18 12:33:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.26.2.2 2008/06/17 09:14:24 yamt Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -169,6 +169,7 @@ xenevtattach(int n)
 	     M_WAITOK|M_ZERO);
 	if (ih == NULL)
 		panic("can't allocate xenevt interrupt source");
+	ih->ih_level = level;
 	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
 	ih->ih_arg = ih->ih_realarg = NULL;
 	ih->ih_ipl_next = NULL;

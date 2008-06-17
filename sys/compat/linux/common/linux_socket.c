@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.89.2.1 2008/05/18 12:33:20 yamt Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.89.2.2 2008/06/17 09:14:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.89.2.1 2008/05/18 12:33:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.89.2.2 2008/06/17 09:14:24 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -375,18 +375,23 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 		/* Some supported flag */
 		return EINVAL;
 
-	/* Read in and convert the sockaddr */
-	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, to),
-	    SCARG(uap, tolen));
-	if (error)
-		return (error);
-	msg.msg_flags = MSG_NAMEMBUF;
+	msg.msg_flags = 0;
+	msg.msg_name = NULL;
+	msg.msg_control = NULL;
 
-	msg.msg_name = nam;
-	msg.msg_namelen = SCARG(uap, tolen);
+	if (SCARG(uap, tolen)) {
+		/* Read in and convert the sockaddr */
+		error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, to),
+		    SCARG(uap, tolen));
+		if (error)
+			return (error);
+		msg.msg_flags |= MSG_NAMEMBUF;
+		msg.msg_name = nam;
+		msg.msg_namelen = SCARG(uap, tolen);
+	}
+
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
-	msg.msg_control = 0;
 	aiov.iov_base = __UNCONST(SCARG(uap, msg));
 	aiov.iov_len = SCARG(uap, len);
 
@@ -1312,8 +1317,10 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 
 	m->m_len = salen;
 
-	if (salen == 0)
+	if (salen == 0) {
+		*mp = m;
 		return 0;
+	}
 
 	kosa = mtod(m, void *);
 	if ((error = copyin(osa, kosa, salen))) {

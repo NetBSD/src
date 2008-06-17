@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.11 2007/01/24 13:08:12 hubertf Exp $	*/
+/*	$NetBSD: nvram.c,v 1.11.46.1 2008/06/17 09:14:04 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.11 2007/01/24 13:08:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.11.46.1 2008/06/17 09:14:04 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,10 +125,7 @@ nvram_attach(parent, self, aux)
 }
 
 int
-nvramread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+nvramread(dev_t dev, struct uio *uio, int flag)
 {
 	struct nvram_softc *sc;
 	u_int off, cnt;
@@ -136,7 +133,7 @@ nvramread(dev, uio, flag)
 	int error = 0;
 	char *buf;
 
-	sc = nvram_cd.cd_devs[0];
+	sc = device_lookup_private(&nvram_cd, 0);
 
 	off = uio->uio_offset;
 	cnt = uio->uio_resid;

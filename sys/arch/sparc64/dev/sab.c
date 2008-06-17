@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.40.16.1 2008/06/04 02:04:56 yamt Exp $	*/
+/*	$NetBSD: sab.c,v 1.40.16.2 2008/06/17 09:14:13 yamt Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.40.16.1 2008/06/04 02:04:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.40.16.2 2008/06/17 09:14:13 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -657,7 +657,7 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 	struct proc *p;
 	int s, s1;
 
-	sc = device_lookup(&sabtty_cd, SABUNIT(dev));
+	sc = device_lookup_private(&sabtty_cd, SABUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -752,7 +752,7 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 sabclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
+	struct sabtty_softc *sc = device_lookup_private(&sabtty_cd, SABUNIT(dev));
 	struct sab_softc *bc = sc->sc_parent;
 	struct tty *tp = sc->sc_tty;
 	int s;
@@ -792,7 +792,7 @@ sabclose(dev_t dev, int flags, int mode, struct lwp *l)
 int
 sabread(dev_t dev, struct uio *uio, int flags)
 {
-	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
+	struct sabtty_softc *sc = device_lookup_private(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flags));
@@ -801,7 +801,7 @@ sabread(dev_t dev, struct uio *uio, int flags)
 int
 sabwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
+	struct sabtty_softc *sc = device_lookup_private(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flags));
@@ -810,7 +810,7 @@ sabwrite(dev_t dev, struct uio *uio, int flags)
 int
 sabioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
+	struct sabtty_softc *sc = device_lookup_private(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -873,7 +873,7 @@ sabioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 struct tty *
 sabtty(dev_t dev)
 {
-	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
+	struct sabtty_softc *sc = device_lookup_private(&sabtty_cd, SABUNIT(dev));
 
 	return (sc->sc_tty);
 }
@@ -881,7 +881,7 @@ sabtty(dev_t dev)
 void
 sabstop(struct tty *tp, int flag)
 {
-	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(tp->t_dev));
+	struct sabtty_softc *sc = device_lookup_private(&sabtty_cd, SABUNIT(tp->t_dev));
 	int s;
 
 	s = spltty();
@@ -898,7 +898,7 @@ sabstop(struct tty *tp, int flag)
 int
 sabpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
+	struct sabtty_softc *sc = device_lookup_private(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -1063,7 +1063,7 @@ sabttyparam(struct sabtty_softc *sc, struct tty *tp, struct termios *t)
 int
 sabtty_param(struct tty *tp, struct termios *t)
 {
-	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(tp->t_dev));
+	struct sabtty_softc *sc = device_lookup_private(&sabtty_cd, SABUNIT(tp->t_dev));
 
 	return (sabttyparam(sc, tp, t));
 }
@@ -1071,7 +1071,7 @@ sabtty_param(struct tty *tp, struct termios *t)
 void
 sabtty_start(struct tty *tp)
 {
-	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(tp->t_dev));
+	struct sabtty_softc *sc = device_lookup_private(&sabtty_cd, SABUNIT(tp->t_dev));
 	int s;
 
 	s = spltty();

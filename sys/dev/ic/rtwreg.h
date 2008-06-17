@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.24 2007/11/16 23:35:19 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.24.16.1 2008/06/17 09:14:34 yamt Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -1045,7 +1045,7 @@ struct rtw_rxdesc {
 #define RTW_RBR(regs, reg0, reg1)				\
 	RTW_BARRIER(regs, reg0, reg1, BUS_SPACE_BARRIER_READ_BEFORE_READ)
 
-/* read-before-read */
+/* read-before-write */
 #define RTW_RBW(regs, reg0, reg1)				\
 	RTW_BARRIER(regs, reg0, reg1, BUS_SPACE_BARRIER_READ_BEFORE_WRITE)
 

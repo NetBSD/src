@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.63.2.1 2008/05/18 12:34:19 yamt Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.63.2.2 2008/06/17 09:14:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.63.2.1 2008/05/18 12:34:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.63.2.2 2008/06/17 09:14:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.63.2.1 2008/05/18 12:34:19 yamt E
 #include <sys/systm.h>
 #include <dev/pci/azalia.h>
 
-#define XNAME(co)	device_xname(((device_t)co->az))
+#define XNAME(co)	device_xname((co)->dev)
 #ifdef MAX_VOLUME_255
 # define MIXER_DELTA(n)	(AUDIO_MAX_GAIN / (n))
 #else

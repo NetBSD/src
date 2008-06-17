@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.72 2008/03/21 07:47:43 dyoung Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.72.2.1 2008/06/17 09:14:41 yamt Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.72 2008/03/21 07:47:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.72.2.1 2008/06/17 09:14:41 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2015,7 +2015,7 @@ iwi_load_firmware(struct iwi_softc *sc, void *fw, int size)
 	int ntries, nsegs, error;
 	int sn;
 
-	nsegs = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+	nsegs = atop((char*)fw+size-1) - atop((char *)fw) + 1;
 
 	/* Create a DMA map for the firmware image */
 	error = bus_dmamap_create(sc->sc_dmat, size, nsegs, size, 0,

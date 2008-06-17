@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.245.2.1 2008/05/18 12:34:40 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.245.2.2 2008/06/17 09:14:57 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.245.2.1 2008/05/18 12:34:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.245.2.2 2008/06/17 09:14:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2104,7 +2104,7 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 			(int) (req->numSector <<
 			    queue->raidPtr->logBytesPerSector),
 			(int) queue->raidPtr->logBytesPerSector));
-		VOP_STRATEGY(bp->b_vp, bp);
+		bdev_strategy(bp);
 
 		break;
 
@@ -2216,14 +2216,6 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	bp->b_proc = b_proc;
 	bp->b_iodone = cbFunc;
 	bp->b_private = cbArg;
-	bp->b_vp = b_vp;
-	bp->b_objlock = &b_vp->v_interlock;
-	if ((bp->b_flags & B_READ) == 0) {
-		mutex_enter(&b_vp->v_interlock);
-		b_vp->v_numoutput++;
-		mutex_exit(&b_vp->v_interlock);
-	}
-
 }
 
 static void
@@ -2867,6 +2859,11 @@ rf_find_raid_components()
 
 		/* we don't care about CD's... */
 		if (device_is_a(dv, "cd")) {
+			continue;
+		}
+
+		/* we don't care about md's... */
+		if (device_is_a(dv, "md")) {
 			continue;
 		}
 

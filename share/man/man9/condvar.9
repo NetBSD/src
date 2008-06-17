@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.10.6.1 2008/05/18 12:31:12 yamt Exp $
+.\"	$NetBSD: condvar.9,v 1.10.6.2 2008/06/17 09:13:53 yamt Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 26, 2008
+.Dd June 4, 2008
 .Dt CONDVAR 9
 .Os
 .Sh NAME
@@ -63,6 +63,9 @@
 .Fn cv_broadcast "kcondvar_t *cv"
 .Ft bool
 .Fn cv_has_waiters "kcondvar_t *cv"
+.Pp
+.Cd "options DIAGNOSTIC"
+.Cd "options LOCKDEBUG"
 .Sh DESCRIPTION
 Condition variables (CVs) are used in the kernel to synchronize access
 to resources that are limited (for example, memory) and to wait for
@@ -73,6 +76,20 @@ The
 type provides storage for the CV object.
 This should be treated as an opaque object and not examined directly by
 consumers.
+.Sh OPTIONS
+.Bl -tag -width abcd
+.It Cd "options DIAGNOSTIC"
+.Pp
+Kernels compiled with the
+.Dv DIAGNOSTIC
+option perform basic sanity checks on CV operations.
+.It Cd "options LOCKDEBUG"
+.Pp
+Kernels compiled with the
+.Dv LOCKDEBUG
+option perform potentially CPU intensive sanity checks
+on CV operations.
+.El
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn cv_init "cv" "wmesg"

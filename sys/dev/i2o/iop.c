@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.69.2.1 2008/05/18 12:33:41 yamt Exp $	*/
+/*	$NetBSD: iop.c,v 1.69.2.2 2008/06/17 09:14:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.69.2.1 2008/05/18 12:33:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.69.2.2 2008/06/17 09:14:33 yamt Exp $");
 
 #include "iop.h"
 
@@ -487,7 +487,7 @@ iop_config_interrupts(struct device *self)
  	 */
 	if (iop_systab == NULL) {
 		for (i = 0, niop = 0; i < iop_cd.cd_ndevs; i++) {
-			if ((iop = device_lookup(&iop_cd, i)) == NULL)
+			if ((iop = device_lookup_private(&iop_cd, i)) == NULL)
 				continue;
 			if ((iop->sc_flags & IOP_HAVESTATUS) == 0)
 				continue;
@@ -512,7 +512,7 @@ iop_config_interrupts(struct device *self)
 		iop_systab->version = I2O_VERSION_11;
 
 		for (i = 0, ste = iop_systab->entry; i < iop_cd.cd_ndevs; i++) {
-			if ((iop = device_lookup(&iop_cd, i)) == NULL)
+			if ((iop = device_lookup_private(&iop_cd, i)) == NULL)
 				continue;
 			if ((iop->sc_flags & IOP_HAVESTATUS) == 0)
 				continue;
@@ -877,7 +877,7 @@ iop_shutdown(void *junk)
 	printf("shutting down iop devices...");
 
 	for (i = 0; i < iop_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup(&iop_cd, i)) == NULL)
+		if ((sc = device_lookup_private(&iop_cd, i)) == NULL)
 			continue;
 		if ((sc->sc_flags & IOP_ONLINE) == 0)
 			continue;
@@ -924,14 +924,16 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 	mf.addrhigh = (u_int32_t)((u_int64_t)pa >> 32);
 	mf.length = sizeof(sc->sc_status);
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*st),
+	    BUS_DMASYNC_PREWRITE);
 	memset(st, 0, sizeof(*st));
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*st),
-	    BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTWRITE);
 
 	if ((rv = iop_post(sc, (u_int32_t *)&mf)) != 0)
 		return (rv);
 
-	for (i = 25; i != 0; i--) {
+	for (i = 100; i != 0; i--) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0,
 		    sizeof(*st), BUS_DMASYNC_POSTREAD);
 		if (st->syncbyte == 0xff)
@@ -987,9 +989,11 @@ iop_ofifo_init(struct iop_softc *sc)
 	    (u_int32_t)sc->sc_scr_seg->ds_addr;
 	mb[0] += 2 << 16;
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
+	    BUS_DMASYNC_PREWRITE);
 	*sw = 0;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTWRITE);
 
 	if ((rv = iop_post(sc, mb)) != 0)
 		return (rv);
@@ -1542,9 +1546,11 @@ iop_reset(struct iop_softc *sc)
 	mf.statuslow = (u_int32_t)pa;
 	mf.statushigh = (u_int32_t)((u_int64_t)pa >> 32);
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
+	    BUS_DMASYNC_PREWRITE);
 	*sw = htole32(0);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	if ((rv = iop_post(sc, (u_int32_t *)&mf)))
 		return (rv);
@@ -1643,9 +1649,6 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 	/* Perform reply queue DMA synchronisation. */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rep_dmamap, off,
 	    sc->sc_framesize, BUS_DMASYNC_POSTREAD);
-	if (--sc->sc_curib != 0)
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_rep_dmamap,
-		    0, sc->sc_rep_size, BUS_DMASYNC_PREREAD);
 
 #ifdef I2ODEBUG
 	if ((le32toh(rb->msgflags) & I2O_MSGFLAGS_64BIT) != 0)
@@ -1950,7 +1953,7 @@ iop_msg_map(struct iop_softc *sc, struct iop_msg *im, u_int32_t *mb,
 	ix->ix_flags = (out ? IX_OUT : IX_IN);
 	ix->ix_size = xfersize;
 	bus_dmamap_sync(sc->sc_dmat, ix->ix_map, 0, xfersize,
-	    out ? BUS_DMASYNC_POSTWRITE : BUS_DMASYNC_POSTREAD);
+	    out ? BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
 
 	/*
 	 * If this is the first xfer we've mapped for this message, adjust
@@ -2056,7 +2059,7 @@ iop_msg_map_bio(struct iop_softc *sc, struct iop_msg *im, u_int32_t *mb,
 	ix->ix_flags = (out ? IX_OUT : IX_IN);
 	ix->ix_size = xfersize;
 	bus_dmamap_sync(sc->sc_dmat, ix->ix_map, 0, xfersize,
-	    out ? BUS_DMASYNC_POSTWRITE : BUS_DMASYNC_POSTREAD);
+	    out ? BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
 
 	/*
 	 * Adjust the SGL offset and total message size fields.  We don't
@@ -2120,9 +2123,10 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
 		}
 
 	/* Perform reply buffer DMA synchronisation. */
-	if (sc->sc_curib++ == 0)
+	if (sc->sc_rep_size != 0) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rep_dmamap, 0,
 		    sc->sc_rep_size, BUS_DMASYNC_PREREAD);
+	}
 
 	/* Copy out the message frame. */
 	bus_space_write_region_4(sc->sc_msg_iot, sc->sc_msg_ioh, mfa, mb,
@@ -2459,7 +2463,7 @@ iopopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct iop_softc *sc;
 
-	if ((sc = device_lookup(&iop_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&iop_cd, minor(dev))) == NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & IOP_ONLINE) == 0)
 		return (ENXIO);
@@ -2476,7 +2480,7 @@ iopclose(dev_t dev, int flag, int mode,
 {
 	struct iop_softc *sc;
 
-	sc = device_lookup(&iop_cd, minor(dev));
+	sc = device_lookup_private(&iop_cd, minor(dev));
 	sc->sc_flags &= ~IOP_OPEN;
 
 	return (0);
@@ -2489,7 +2493,7 @@ iopioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct iovec *iov;
 	int rv, i;
 
-	sc = device_lookup(&iop_cd, minor(dev));
+	sc = device_lookup_private(&iop_cd, minor(dev));
 	rv = 0;
 
 	switch (cmd) {

@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.12.2.1 2008/05/18 12:34:40 yamt Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.12.2.2 2008/06/17 09:14:57 yamt Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.12.2.1 2008/05/18 12:34:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.12.2.2 2008/06/17 09:14:57 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -97,7 +97,7 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct pps_softc *sc;
 	int res, weg = 0;
 
-	sc = device_lookup(&pps_cd, minor(dev));
+	sc = device_lookup_private(&pps_cd, minor(dev));
 	if (!sc)
 		return (ENXIO);
 
@@ -136,7 +136,7 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 static int
 ppsclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	struct pps_softc *sc = device_lookup(&pps_cd, minor(dev));
+	struct pps_softc *sc = device_lookup_private(&pps_cd, minor(dev));
 	device_t ppbus = sc->ppbus;
 
 	sc->busy = 0;
@@ -176,7 +176,7 @@ ppsintr(void *arg)
 static int
 ppsioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct pps_softc *sc = device_lookup(&pps_cd, minor(dev));
+	struct pps_softc *sc = device_lookup_private(&pps_cd, minor(dev));
 	int error = 0;
 
 	switch (cmd) {

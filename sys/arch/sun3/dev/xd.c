@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.63 2008/02/06 12:13:47 elad Exp $	*/
+/*	$NetBSD: xd.c,v 1.63.8.1 2008/06/17 09:14:20 yamt Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.63 2008/02/06 12:13:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.63.8.1 2008/06/17 09:14:20 yamt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -542,8 +542,8 @@ xdmatch(struct device *parent, struct cfdata *cf, void *aux)
 void 
 xdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct xd_softc *xd = (void *) self;
-	struct xdc_softc *xdc = (void *) parent;
+	struct xd_softc *xd = device_private(self);
+	struct xdc_softc *xdc = device_private(parent);
 	struct xdc_attach_args *xa = aux;
 
 	printf("\n");
@@ -741,7 +741,7 @@ done:
 int 
 xdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct xd_softc *xd = xd_cd.cd_devs[DISKUNIT(dev)];
+	struct xd_softc *xd = device_lookup_private(&xd_cd, DISKUNIT(dev));
 	int     part = DISKPART(dev);
 
 	/* clear mask bits */
@@ -773,7 +773,7 @@ xddump(dev_t dev, daddr_t blkno, void *va, size_t sz)
 		return ENXIO;
 	part = DISKPART(dev);
 
-	xd = xd_cd.cd_devs[unit];
+	xd = device_lookup_private(&xd_cd, unit);
 
 	printf("%s%c: crash dump not supported (yet)\n",
 		   xd->sc_dev.dv_xname, 'a' + part);
@@ -842,7 +842,8 @@ xdioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
 
 	unit = DISKUNIT(dev);
 
-	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == NULL)
+	xd = device_lookup_private(&xd_cd, unit);
+	if (xd == NULL)
 		return (ENXIO);
 
 	/* switch on ioctl type */
@@ -934,7 +935,8 @@ xdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	/* first, could it be a valid target? */
 	unit = DISKUNIT(dev);
-	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == NULL)
+	xd = device_lookup_private(&xd_cd, unit);
+	if (xd == NULL)
 		return (ENXIO);
 	part = DISKPART(dev);
 	err = 0;
@@ -1010,7 +1012,8 @@ xdsize(dev_t dev)
 
 	/* valid unit? */
 	unit = DISKUNIT(dev);
-	if (unit >= xd_cd.cd_ndevs || (xdsc = xd_cd.cd_devs[unit]) == NULL)
+	xdsc = device_lookup_private(&xd_cd, unit);
+	if (xdsc == NULL)
 		return (-1);
 
 	part = DISKPART(dev);
@@ -1044,7 +1047,8 @@ xdstrategy(struct buf *bp)
 
 	/* check for live device */
 
-	if (unit >= xd_cd.cd_ndevs || (xd = xd_cd.cd_devs[unit]) == 0 ||
+	xd = device_lookup_private(&xd_cd, unit);
+	if (xd == NULL ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xd->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.67.62.1 2008/05/18 12:32:46 yamt Exp $ */
+/*	$NetBSD: sbus.c,v 1.67.62.2 2008/06/17 09:14:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.67.62.1 2008/05/18 12:32:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.67.62.2 2008/06/17 09:14:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -549,7 +549,7 @@ void
 sbusreset(int sbus)
 {
 	register struct sbusdev *sd;
-	struct sbus_softc *sc = device_private(sbus_cd.cd_devs[sbus]);
+	struct sbus_softc *sc = device_lookup_private(&sbus_cd, sbus);
 	device_t dev;
 
 	printf("reset %s:", device_xname(sc->sc_dev));

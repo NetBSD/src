@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.12 2008/03/21 23:13:48 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.12.2.1 2008/06/17 09:13:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.12 2008/03/21 23:13:48 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.12.2.1 2008/06/17 09:13:38 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,7 +87,7 @@ __RCSID("$NetBSD: vfwprintf.c,v 1.12 2008/03/21 23:13:48 christos Exp $");
 #define STRCONST(a)	a
 #define WDECL(a, b)	a ## b
 #define END_OF_FILE	EOF
-#define MULTI		1
+#define MULTI		LONGINT
 #endif
 
 union arg {

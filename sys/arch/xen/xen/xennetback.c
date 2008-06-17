@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.32 2008/04/14 13:38:03 cegger Exp $      */
+/*      $NetBSD: xennetback.c,v 1.32.2.1 2008/06/17 09:14:24 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.32 2008/04/14 13:38:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.32.2.1 2008/06/17 09:14:24 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -221,7 +221,7 @@ xennetback_init()
 	    0, 0, &mlist, NB_XMIT_PAGES_BATCH, 0) != 0)
 		panic("xennetback_init: uvm_pglistalloc");
 	for (i = 0, pg = mlist.tqh_first; pg != NULL;
-	    pg = pg->pageq.tqe_next, i++)
+	    pg = pg->pageq.queue.tqe_next, i++)
 		mcl_pages[i] = xpmap_ptom(VM_PAGE_TO_PHYS(pg)) >> PAGE_SHIFT;
 	if (i != NB_XMIT_PAGES_BATCH)
 		panic("xennetback_init: %d mcl pages", i);

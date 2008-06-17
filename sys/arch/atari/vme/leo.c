@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.11.42.1 2008/05/18 12:31:43 yamt Exp $	*/
+/*	$NetBSD: leo.c,v 1.11.42.2 2008/06/17 09:13:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.11.42.1 2008/05/18 12:31:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.11.42.2 2008/06/17 09:13:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,18 +247,12 @@ leo_attach(parent, self, aux)
 }
 
 int
-leoopen(dev, flags, devtype, p)
-	dev_t dev;
-	int flags, devtype;
-	struct proc *p;
+leoopen(dev_t dev, int flags, int devtype, struct proc *p)
 {
-	int unit = minor(dev);
 	struct leo_softc *sc;
 	int r;
 
-	if (unit >= leo_cd.cd_ndevs)
-		return ENXIO;
-	sc = leo_cd.cd_devs[unit];
+	sc = device_lookup_private(&leo_cd, minor(dev));
 	if (!sc)
 		return ENXIO;
 	if (sc->sc_flags & LEO_SC_FLAGS_INUSE)
@@ -346,14 +340,11 @@ leo_scroll(sc, scroll)
 }
 
 int
-leoclose(dev, flags, devtype, p)
-	dev_t dev;
-	int flags, devtype;
-	struct proc *p;
+leoclose(dev_t dev, int flags, int devtype, struct proc *p)
 {
 	struct leo_softc *sc;
 
-	sc = leo_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&leo_cd, minor(dev));
 	sc->sc_flags &= ~LEO_SC_FLAGS_INUSE;
 	return 0;
 }
@@ -361,17 +352,14 @@ leoclose(dev, flags, devtype, p)
 #define SMALLBSIZE      32
 
 int
-leomove(dev, uio, flags)
-        dev_t dev;
-        struct uio *uio;
-        int flags;
+leomove(dev_t dev, struct uio *uio, int flags)
 {
         struct leo_softc *sc;
         int length, size, error;
         u_int8_t smallbuf[SMALLBSIZE];
 	off_t offset;
 
-        sc = leo_cd.cd_devs[minor(dev)];
+        sc = device_lookup_private(&leo_cd,minor(dev));
         if (uio->uio_offset > sc->sc_msize)
                 return 0;
         length = sc->sc_msize - uio->uio_offset;
@@ -396,16 +384,11 @@ leomove(dev, uio, flags)
 }
 
 int
-leoioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flags;
-	struct proc *p;
+leoioctl(dev_t dev, u_long cmd, void *data, int flags, struct proc *p)
 {
 	struct leo_softc *sc;
 
-	sc = leo_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&leo_cd,minor(dev));
         switch (cmd) {
         case LIOCYRES:
 		return leo_init(sc, *(int *)data);
@@ -420,14 +403,11 @@ leoioctl(dev, cmd, data, flags, p)
 }
 
 paddr_t
-leommap(dev, offset, prot)
-	dev_t dev;
-	off_t offset;
-	int prot;
+leommap(dev_t dev, off_t offset, int prot)
 {
 	struct leo_softc *sc;
 
-	sc = leo_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&leo_cd, minor(dev));
 	if (offset >= 0 && offset < sc->sc_msize)
 		return m68k_btop(sc->sc_maddr + offset);
 	return -1;

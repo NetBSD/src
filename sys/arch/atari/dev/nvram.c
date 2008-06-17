@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.11 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: nvram.c,v 1.11.76.1 2008/06/17 09:13:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.11 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.11.76.1 2008/06/17 09:13:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -86,9 +86,7 @@ void		*auxp;
 
 /*ARGSUSED*/
 static void
-nvr_attach(pdp, dp, auxp)
-struct	device *pdp, *dp;
-void	*auxp;
+nvr_attach(device_t pdp, device_t dp, void *auxp)
 {
 	struct nvr_softc	*nvr_soft;
 	int			nreg;
@@ -102,7 +100,7 @@ void	*auxp;
 			mc146818_write(RTC, nreg, 0);
 		nvram_set_csum(nvram_csum());
 	}
-	nvr_soft = nvr_cd.cd_devs[0];
+	nvr_soft = device_lookup_private(&nvr_cd, 0);
 	nvr_soft->nvr_flags = NVR_CONFIGURED;
 	printf("\n");
 }
@@ -115,13 +113,12 @@ void	*auxp;
  * Kernel internal interface
  */
 int
-nvr_get_byte(byteno)
-int	byteno;
+nvr_get_byte(int byteno)
 {
 #if NNVR > 0
 	struct nvr_softc	*nvr_soft;
 
-	nvr_soft = nvr_cd.cd_devs[0];
+	nvr_soft = device_lookup_private(&nvr_cd, 0);
 	if (!(nvr_soft->nvr_flags & NVR_CONFIGURED))
 		return(NVR_INVALID);
 	return (mc146818_read(RTC, byteno + MC_NVRAM_START) & 0xff);
@@ -133,8 +130,7 @@ int	byteno;
 #if NNVR > 0
 
 int
-nvram_uio(uio)
-struct uio	*uio;
+nvram_uio(struct uio *uio)
 {
 	int			i;
 	off_t			offset;
@@ -143,7 +139,7 @@ struct uio	*uio;
 	u_char			*p;
 	struct nvr_softc	*nvr_soft;
 
-	nvr_soft = nvr_cd.cd_devs[0];
+	nvr_soft = device_lookup_private(&nvr_cd,0);
 	if (!(nvr_soft->nvr_flags & NVR_CONFIGURED))
 		return ENXIO;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.28.2.1 2008/05/18 12:32:52 yamt Exp $ */
+/*	$NetBSD: syscall.c,v 1.28.2.2 2008/06/17 09:14:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28.2.1 2008/05/18 12:32:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28.2.2 2008/06/17 09:14:13 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -459,7 +459,7 @@ child_return(void *arg)
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
 	userret(l, l->l_md.md_tf->tf_pc, 0);
-	ktrsysret((l->l_proc->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
+	ktrsysret((l->l_proc->p_lflag & PL_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 }
 
 

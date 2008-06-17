@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.45.42.1 2008/05/18 12:31:41 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.45.42.2 2008/06/17 09:13:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.45.42.1 2008/05/18 12:31:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.45.42.2 2008/06/17 09:13:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -688,7 +688,7 @@ bus_dmamem_free(t, segs, nsegs)
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
 			m = PHYS_TO_VM_PAGE(addr - offset);
-			TAILQ_INSERT_TAIL(&mlist, m, pageq);
+			TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
 		}
 	}
 
@@ -943,9 +943,9 @@ bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	lastaddr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_addr = lastaddr + offset;
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
+	m = m->pageq.queue.tqe_next;
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	for (; m != NULL; m = m->pageq.queue.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {

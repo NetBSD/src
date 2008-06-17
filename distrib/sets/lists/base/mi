@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.744.2.3 2008/06/04 02:03:19 yamt Exp $
+# $NetBSD: mi,v 1.744.2.4 2008/06/17 09:13:32 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -96,6 +96,7 @@
 ./etc/mtree/set.base				base-sys-root
 ./etc/namedb					base-bind-root
 ./etc/obsolete					base-obsolete		obsolete
+./etc/openldap					base-ldap-root
 ./etc/openssl					base-crypto-root
 ./etc/openssl/certs				base-crypto-root
 ./etc/openssl/misc				base-crypto-root
@@ -612,12 +613,15 @@
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
+./usr/bin/nex					base-util-bin
 ./usr/bin/nfsstat				base-nfsclient-bin
 ./usr/bin/nice					base-util-bin
 ./usr/bin/nl					base-util-bin
 ./usr/bin/nohup					base-util-bin
 ./usr/bin/nslookup				base-netutil-bin
 ./usr/bin/nsupdate				base-netutil-bin
+./usr/bin/nvi					base-util-bin
+./usr/bin/nview					base-util-bin
 ./usr/bin/od					base-util-bin
 ./usr/bin/openssl				base-crypto-bin		crypto
 ./usr/bin/page					base-util-bin
@@ -1211,6 +1215,7 @@
 ./usr/sbin/named-bootconf			base-obsolete		obsolete
 ./usr/sbin/named-checkconf			base-bind-bin
 ./usr/sbin/named-checkzone			base-bind-bin
+./usr/sbin/named-compilezone			base-bind-bin
 ./usr/sbin/named.reload				base-obsolete		obsolete
 ./usr/sbin/named.restart			base-obsolete		obsolete
 ./usr/sbin/ncdcs				base-sysutil-root
@@ -3057,6 +3062,15 @@
 ./usr/share/nls/sk/libc.cat			base-locale-sk		nls
 ./usr/share/nls/sv				base-locale-sv
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
+./usr/share/nvi					base-util-share
+./usr/share/nvi/catalog				base-util-share
+./usr/share/nvi/catalog/dutch			base-util-share		share
+./usr/share/nvi/catalog/english			base-util-share		share
+./usr/share/nvi/catalog/french			base-util-share		share
+./usr/share/nvi/catalog/german			base-util-share		share
+./usr/share/nvi/catalog/ru_RU.KOI8-R		base-util-share		share
+./usr/share/nvi/catalog/spanish			base-util-share		share
+./usr/share/nvi/catalog/swedish			base-util-share		share
 ./usr/share/sushi				base-obsolete	obsolete
 ./usr/share/sushi/help				base-obsolete	obsolete
 ./usr/share/sushi/index				base-obsolete	obsolete

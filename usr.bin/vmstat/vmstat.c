@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.157.4.1 2008/05/18 12:36:11 yamt Exp $ */
+/* $NetBSD: vmstat.c,v 1.157.4.2 2008/06/17 09:15:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.157.4.1 2008/05/18 12:36:11 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.157.4.2 2008/06/17 09:15:21 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -839,6 +839,10 @@ dosum(void)
 	    uvmexp.colorhit);
 	(void)printf("%9u pagealloc desired color not avail\n",
 	    uvmexp.colormiss);
+	(void)printf("%9u pagealloc local cpu avail\n",
+	    uvmexp.cpuhit);
+	(void)printf("%9u pagealloc local cpu not avail\n",
+	    uvmexp.cpumiss);
 
 	(void)printf("%9u faults with no memory\n", uvmexp.fltnoram);
 	(void)printf("%9u faults with no anons\n", uvmexp.fltnoanon);

@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.12.2.1 2008/05/18 12:33:38 yamt Exp $ */
+/* $NetBSD: pic16lc.c,v 1.12.2.2 2008/06/17 09:14:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.12.2.1 2008/05/18 12:33:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.12.2.2 2008/06/17 09:14:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ pic16lc_update(struct pic16lc_softc *sc, envsys_data_t *edata)
 static void
 pic16lc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	struct pic16lc_softc *sc = (struct pic16lc_softc *)sme->sme_cookie;
+	struct pic16lc_softc *sc = sme->sme_cookie;
 
 	pic16lc_update(sc, edata);
 }
@@ -219,7 +219,7 @@ pic16lc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 static int
 pic16lc_intr(void *opaque)
 {
-	struct pic16lc_softc *sc = (struct pic16lc_softc *)opaque;
+	struct pic16lc_softc *sc = opaque;
 	uint8_t val;
 	int rv = 0;
 

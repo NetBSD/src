@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.56.2.1 2008/05/18 12:34:18 yamt Exp $	*/
+/*	$NetBSD: agp.c,v 1.56.2.2 2008/06/17 09:14:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.56.2.1 2008/05/18 12:34:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.56.2.2 2008/06/17 09:14:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ const struct agp_product {
 	uint32_t	ap_vendor;
 	uint32_t	ap_product;
 	int		(*ap_match)(const struct pci_attach_args *);
-	int		(*ap_attach)(struct device *, struct device *, void *);
+	int		(*ap_attach)(device_t, device_t, void *);
 } agp_products[] = {
 #if NAGP_AMD64 > 0
 	{ PCI_VENDOR_ALI,	PCI_PRODUCT_ALI_M1689,
@@ -265,8 +265,7 @@ agp_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-agpmatch(struct device *parent, struct cfdata *match,
-    void *aux)
+agpmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct agpbus_attach_args *apa = aux;
 	struct pci_attach_args *pa = &apa->apa_pci_args;
@@ -291,22 +290,20 @@ static const int agp_max[][2] = {
 #define agp_max_size	(sizeof(agp_max) / sizeof(agp_max[0]))
 
 static void
-agpattach(struct device *parent, struct device *self, void *aux)
+agpattach(device_t parent, device_t self, void *aux)
 {
 	struct agpbus_attach_args *apa = aux;
 	struct pci_attach_args *pa = &apa->apa_pci_args;
-	struct agp_softc *sc = (void *)self;
+	struct agp_softc *sc = device_private(self);
 	const struct agp_product *ap;
 	int memsize, i, ret;
 
 	ap = agp_lookup(pa);
-	if (ap == NULL) {
-		printf("\n");
-		panic("agpattach: impossible");
-	}
+	KASSERT(ap != NULL);
 
 	aprint_naive(": AGP controller\n");
 
+	sc->as_dev = self;
 	sc->as_dmat = pa->pa_dmat;
 	sc->as_pc = pa->pa_pc;
 	sc->as_tag = pa->pa_tag;
@@ -314,7 +311,7 @@ agpattach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Work out an upper bound for agp memory allocation. This
-	 * uses a heurisitc table from the Linux driver.
+	 * uses a heuristic table from the Linux driver.
 	 */
 	memsize = ptoa(physmem) >> 20;
 	for (i = 0; i < agp_max_size; i++) {
@@ -343,11 +340,12 @@ agpattach(struct device *parent, struct device *self, void *aux)
 
 	if (!device_pmf_is_registered(self)) {
 		if (!pmf_device_register(self, NULL, agp_resume))
-			aprint_error_dev(self, "couldn't establish power handler\n");
+			aprint_error_dev(self, "couldn't establish power "
+			    "handler\n");
 	}
 }
 
-CFATTACH_DECL(agp, sizeof(struct agp_softc),
+CFATTACH_DECL_NEW(agp, sizeof(struct agp_softc),
     agpmatch, agpattach, NULL, NULL);
 
 int
@@ -434,7 +432,7 @@ agp_generic_enable(struct agp_softc *sc, u_int32_t mode)
 	if (pci_find_device(&pa, agpdev_match) == 0 ||
 	    pci_get_capability(pa.pa_pc, pa.pa_tag, PCI_CAP_AGP,
 	     &capoff, NULL) == 0) {
-		aprint_error_dev(&sc->as_dev, "can't find display\n");
+		aprint_error_dev(sc->as_dev, "can't find display\n");
 		return ENXIO;
 	}
 
@@ -550,7 +548,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	mutex_enter(&sc->as_mtx);
 
 	if (mem->am_is_bound) {
-		aprint_error_dev(&sc->as_dev, "memory already bound\n");
+		aprint_error_dev(sc->as_dev, "memory already bound\n");
 		mutex_exit(&sc->as_mtx);
 		return EINVAL;
 	}
@@ -558,7 +556,8 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	if (offset < 0
 	    || (offset & (AGP_PAGE_SIZE - 1)) != 0
 	    || offset + mem->am_size > AGP_GET_APERTURE(sc)) {
-		aprint_error_dev(&sc->as_dev, "binding memory at bad offset %#lx\n",
+		aprint_error_dev(sc->as_dev,
+			      "binding memory at bad offset %#lx\n",
 			      (unsigned long) offset);
 		mutex_exit(&sc->as_mtx);
 		return EINVAL;
@@ -685,7 +684,7 @@ agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	mutex_enter(&sc->as_mtx);
 
 	if (!mem->am_is_bound) {
-		aprint_error_dev(&sc->as_dev, "memory is not bound\n");
+		aprint_error_dev(sc->as_dev, "memory is not bound\n");
 		mutex_exit(&sc->as_mtx);
 		return EINVAL;
 	}
@@ -834,10 +833,9 @@ agp_unbind_user(struct agp_softc *sc, agp_unbind *unbind)
 }
 
 static int
-agpopen(dev_t dev, int oflags, int devtype,
-    struct lwp *l)
+agpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = device_lookup_private(&agp_cd, AGPUNIT(dev));
 
 	if (sc == NULL)
 		return ENXIO;
@@ -854,11 +852,13 @@ agpopen(dev_t dev, int oflags, int devtype,
 }
 
 static int
-agpclose(dev_t dev, int fflag, int devtype,
-    struct lwp *l)
+agpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = device_lookup_private(&agp_cd, AGPUNIT(dev));
 	struct agp_memory *mem;
+
+	if (sc == NULL)
+		return ENODEV;
 
 	/*
 	 * Clear the GATT and force release on last close
@@ -891,7 +891,7 @@ agpclose(dev_t dev, int fflag, int devtype,
 static int
 agpioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = device_lookup_private(&agp_cd, AGPUNIT(dev));
 
 	if (sc == NULL)
 		return ENODEV;
@@ -932,7 +932,10 @@ agpioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 static paddr_t
 agpmmap(dev_t dev, off_t offset, int prot)
 {
-	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+	struct agp_softc *sc = device_lookup_private(&agp_cd, AGPUNIT(dev));
+
+	if (sc == NULL)
+		return ENODEV;
 
 	if (offset > AGP_GET_APERTURE(sc))
 		return -1;
@@ -943,7 +946,7 @@ agpmmap(dev_t dev, off_t offset, int prot)
 
 const struct cdevsw agp_cdevsw = {
 	agpopen, agpclose, noread, nowrite, agpioctl,
-	    nostop, notty, nopoll, agpmmap, nokqfilter, D_OTHER
+	nostop, notty, nopoll, agpmmap, nokqfilter, D_OTHER
 };
 
 /* Implementation of the kernel api */
@@ -951,13 +954,14 @@ const struct cdevsw agp_cdevsw = {
 void *
 agp_find_device(int unit)
 {
-	return device_lookup(&agp_cd, unit);
+	return device_lookup_private(&agp_cd, unit);
 }
 
 enum agp_acquire_state
 agp_state(void *devcookie)
 {
 	struct agp_softc *sc = devcookie;
+
 	return sc->as_state;
 }
 
@@ -994,40 +998,45 @@ agp_enable(void *dev, u_int32_t mode)
 	return AGP_ENABLE(sc, mode);
 }
 
-void *agp_alloc_memory(void *dev, int type, vsize_t bytes)
+void *
+agp_alloc_memory(void *dev, int type, vsize_t bytes)
 {
 	struct agp_softc *sc = dev;
 
 	return (void *)AGP_ALLOC_MEMORY(sc, type, bytes);
 }
 
-void agp_free_memory(void *dev, void *handle)
+void
+agp_free_memory(void *dev, void *handle)
 {
 	struct agp_softc *sc = dev;
-	struct agp_memory *mem = (struct agp_memory *) handle;
+	struct agp_memory *mem = handle;
+
 	AGP_FREE_MEMORY(sc, mem);
 }
 
-int agp_bind_memory(void *dev, void *handle, off_t offset)
+int
+agp_bind_memory(void *dev, void *handle, off_t offset)
 {
 	struct agp_softc *sc = dev;
-	struct agp_memory *mem = (struct agp_memory *) handle;
+	struct agp_memory *mem = handle;
 
 	return AGP_BIND_MEMORY(sc, mem, offset);
 }
 
-int agp_unbind_memory(void *dev, void *handle)
+int
+agp_unbind_memory(void *dev, void *handle)
 {
 	struct agp_softc *sc = dev;
-	struct agp_memory *mem = (struct agp_memory *) handle;
+	struct agp_memory *mem = handle;
 
 	return AGP_UNBIND_MEMORY(sc, mem);
 }
 
-void agp_memory_info(void *dev, void *handle,
-    struct agp_memory_info *mi)
+void
+agp_memory_info(void *dev, void *handle, struct agp_memory_info *mi)
 {
-	struct agp_memory *mem = (struct agp_memory *) handle;
+	struct agp_memory *mem = handle;
 
 	mi->ami_size = mem->am_size;
 	mi->ami_physical = mem->am_physical;
@@ -1087,7 +1096,6 @@ void
 agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
 		void *vaddr, bus_dma_segment_t *seg, int nseg)
 {
-
 	bus_dmamap_unload(tag, map);
 	bus_dmamap_destroy(tag, map);
 	bus_dmamem_unmap(tag, vaddr, size);

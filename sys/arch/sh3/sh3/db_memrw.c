@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.8 2006/02/24 00:57:19 uwe Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.8.70.1 2008/06/17 09:14:12 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.8 2006/02/24 00:57:19 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.8.70.1 2008/06/17 09:14:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.8 2006/02/24 00:57:19 uwe Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <sh3/cache.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
@@ -70,8 +71,10 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 		*data++ = *src++;
 }
 
+
 /*
  * Write bytes to kernel address space for debugger.
+ * XXX: need support for writing to P3 read-only text pages.
  */
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
@@ -79,17 +82,16 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 	char *dst = (char *)addr;
 
 	/* properly aligned 4-byte */
-	if (size == 4 && ((addr & 3) == 0) && (((uintptr_t)data & 3) == 0)) {
+	if (size == 4 && ((addr & 3) == 0) && (((uintptr_t)data & 3) == 0))
 		*(uint32_t *)dst = *(const uint32_t *)data;
-		return;
-	}
 
 	/* properly aligned 2-byte */
-	if (size == 2 && ((addr & 1) == 0) && (((uintptr_t)data & 1) == 0)) {
+	else if (size == 2 && ((addr & 1) == 0) && (((uintptr_t)data & 1) == 0))
 		*(uint16_t *)dst = *(const uint16_t *)data;
-		return;
-	}
 
-	while (size-- > 0)
-		*dst++ = *data++;
+	else
+		while (size-- > 0)
+			*dst++ = *data++;
+
+	sh_icache_sync_all();
 }

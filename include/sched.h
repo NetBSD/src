@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.8.18.1 2008/05/18 12:30:09 yamt Exp $	*/
+/*	$NetBSD: sched.h,v 1.8.18.2 2008/06/17 09:13:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,15 +37,9 @@
 #include <sys/sched.h>
 
 /* Required by POSIX 1003.1, section 13.1, lines 12-13. */
-#include <time.h>	
-
-/* Functions */
+#include <time.h>
 
 __BEGIN_DECLS
-/* 
- * These are permitted to fail and return -1 and set errno = ENOSYS if
- * _POSIX_PRIORITY_SCHEDULING is not defined.
- */
 int	sched_setparam(pid_t, const struct sched_param *);
 int	sched_getparam(pid_t, struct sched_param *);
 int	sched_setscheduler(pid_t, int, const struct sched_param *);
@@ -54,8 +48,6 @@ int	sched_get_priority_max(int);
 int	sched_get_priority_min(int);
 int	sched_rr_get_interval(pid_t, struct timespec *);
 
-
-/* Not optional in the presence of _POSIX_THREADS */
 int	sched_yield(void);
 int	__libc_thr_yield(void);
 __END_DECLS
@@ -70,7 +62,6 @@ __END_DECLS
  * Stuff that for historical reasons is in <sched.h>, but not defined
  * by any standard.
  */
-
 __BEGIN_DECLS
 pid_t	 clone(int (*)(void *), void *, int, void *);
 pid_t	__clone(int (*)(void *), void *, int, void *);
