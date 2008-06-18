@@ -1,5 +1,10 @@
 2008-06-18  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/admin.c
+	  src/racoon/racoonctl.c : admin port code cleanup
+
+2008-06-18  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/pfkey.c : correct a phase2 status event
 
 2008-05-08  Emmanuel Dreyfus  <manu@netbsd.org>
