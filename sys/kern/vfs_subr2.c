@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.26 2008/06/16 09:48:13 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.27 2008/06/18 18:11:25 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.26 2008/06/16 09:48:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.27 2008/06/18 18:11:25 mlelstv Exp $");
 
 #include "opt_ddb.h"
 
@@ -548,7 +548,6 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 	KASSERT(bp->b_objlock == &vp->v_interlock);
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
-	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/*
 	 * Delete from old vnode list, if on one.
