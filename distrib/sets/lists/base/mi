@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.753 2008/06/12 10:55:44 dogcow Exp $
+# $NetBSD: mi,v 1.754 2008/06/18 09:06:26 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -970,7 +970,7 @@
 ./usr/libexec/cpp0				base-obsolete		obsolete
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
 ./usr/libexec/fingerd				base-netutil-bin
-./usr/libexec/ftp-proxy				base-pf-bin		pf
+./usr/libexec/ftp-proxy				base-pf-bin		obsolete
 ./usr/libexec/ftpd				base-netutil-bin
 ./usr/libexec/getNAME				base-man-bin
 ./usr/libexec/getty				base-sysutil-bin
@@ -1044,6 +1044,7 @@
 ./usr/libexec/spellprog				base-util-bin
 ./usr/libexec/ssh-keysign			base-secsh-bin		crypto
 ./usr/libexec/telnetd				base-netutil-bin
+./usr/libexec/tftp-proxy			base-pf-bin		pf
 ./usr/libexec/tftpd				base-netutil-bin
 ./usr/libexec/utmp_update			base-sysutil-bin
 ./usr/libexec/uucp				base-obsolete		obsolete
@@ -1114,6 +1115,7 @@
 ./usr/sbin/flush				base-obsolete		obsolete
 ./usr/sbin/fsinfo				base-sysutil-bin
 ./usr/sbin/fssconfig				base-sysutil-bin
+./usr/sbin/ftp-proxy				base-pf-bin		pf
 ./usr/sbin/fusermount				base-miscfs-bin		puffs
 ./usr/sbin/fwctl				base-sysutil-bin
 ./usr/sbin/g711conv				base-obsolete		obsolete
@@ -4092,6 +4094,7 @@
 ./var/at/spool					base-cron-root
 ./var/backups					base-sys-root
 ./var/chroot					base-sys-root
+./var/chroot/ftp-proxy				base-sys-root
 ./var/chroot/named				base-bind-root
 ./var/chroot/named/dev				base-bind-root
 ./var/chroot/named/etc				base-bind-root
@@ -4111,6 +4114,7 @@
 ./var/chroot/pfspamd				base-obsolete		obsolete
 ./var/chroot/spamd				base-obsolete		obsolete
 ./var/chroot/sshd				base-sys-root
+./var/chroot/tftp-proxy				base-sys-root
 ./var/crash					base-sys-root
 ./var/cron					base-cron-root
 ./var/cron/tabs					base-cron-root

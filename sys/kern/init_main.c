@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.359 2008/06/16 11:26:28 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.360 2008/06/18 09:06:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.359 2008/06/16 11:26:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.360 2008/06/18 09:06:27 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -494,6 +494,9 @@ main(void)
 
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
+
+	/* Initialize interfaces. */
+	ifinit1();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
