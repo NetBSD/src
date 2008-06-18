@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.30 2007/10/19 12:00:04 ad Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.30.24.1 2008/06/18 16:33:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.30 2007/10/19 12:00:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.30.24.1 2008/06/18 16:33:10 simonb Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -553,7 +553,7 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 	aa.accessops = &vga_raster_accessops;
 	aa.accesscookie = vc;
 
-	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 }
 
 int
@@ -1476,3 +1476,11 @@ vga_raster_replaceattr(void *id, long oldattr, long newattr)
 		vga_restore_screen(scr, type, scr->mem);
 }
 #endif /* WSDISPLAY_CUSTOM_OUTPUT */
+
+void
+vga_resume(struct vga_softc *sc)
+{
+#ifdef VGA_RESET_ON_RESUME
+	vga_initregs(&sc->sc_vc->hdl);
+#endif
+}

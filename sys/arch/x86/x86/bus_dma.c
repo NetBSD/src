@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.43 2008/06/04 12:41:42 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.43.2.1 2008/06/18 16:32:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.43 2008/06/04 12:41:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.43.2.1 2008/06/18 16:32:54 simonb Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1092,7 +1092,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
+ * Common function for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
 paddr_t

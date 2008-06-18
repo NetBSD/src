@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.35 2008/05/25 22:57:35 jmcneill Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.35.2.1 2008/06/18 16:33:19 simonb Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.35 2008/05/25 22:57:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.35.2.1 2008/06/18 16:33:19 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -341,7 +341,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->rxq.mtx, MUTEX_SPIN, IPL_NET);
+	mutex_init(&sc->rxq.mtx, MUTEX_DEFAULT, IPL_NET);
 
 	if (nfe_alloc_rx_ring(sc, &sc->rxq) != 0) {
 		aprint_error_dev(self, "could not allocate Rx ring\n");

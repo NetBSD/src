@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.42 2007/03/05 20:31:04 he Exp $ */
+/*	$NetBSD: mgnsc.c,v 1.42.48.1 2008/06/18 16:32:38 simonb Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.42 2007/03/05 20:31:04 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.42.48.1 2008/06/18 16:32:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,10 +208,13 @@ void
 mgnsc_dump(void)
 {
 	extern struct cfdriver mgnsc_cd;
+	struct siop_softc *sc;
 	int i;
 
-	for (i = 0; i < mgnsc_cd.cd_ndevs; ++i)
-		if (mgnsc_cd.cd_devs[i])
-			siop_dump(mgnsc_cd.cd_devs[i]);
+	for (i = 0; i < mgnsc_cd.cd_ndevs; ++i) {
+		sc = device_lookup_private(&mgnsc_cd, i);
+		if (sc != NULL)
+			siop_dump(sc);
+	}
 }
 #endif

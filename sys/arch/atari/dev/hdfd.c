@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.61 2008/01/03 16:06:24 he Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.61.14.1 2008/06/18 16:32:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.61 2008/01/03 16:06:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.61.14.1 2008/06/18 16:32:39 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -589,9 +589,7 @@ fdc_ctrl_intr(frame)
 }
 
 inline struct fd_type *
-fd_dev_to_type(fd, dev)
-	struct fd_softc *fd;
-	dev_t dev;
+fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	int type = FDTYPE(dev);
 
@@ -601,10 +599,9 @@ fd_dev_to_type(fd, dev)
 }
 
 void
-fdstrategy(bp)
-	register struct buf *bp;	/* IO operation to perform */
+fdstrategy(struct buf *bp)
 {
-	struct fd_softc *fd = hdfd_cd.cd_devs[FDUNIT(bp->b_dev)];
+	struct fd_softc *fd = device_lookup_private(&hdfd_cd, FDUNIT(bp->b_dev));
 	int sz;
  	int s;
 
@@ -824,21 +821,13 @@ out_fdc(x)
 }
 
 int
-fdopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct lwp *l;
+fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
- 	int unit;
 	struct fd_softc *fd;
 	struct fd_type *type;
 
-	unit = FDUNIT(dev);
-	if (unit >= hdfd_cd.cd_ndevs)
-		return ENXIO;
-	fd = hdfd_cd.cd_devs[unit];
-	if (fd == 0)
+	fd = device_lookup_private(&hdfd_cd, FDUNIT(dev));
+	if (fd == NULL)
 		return ENXIO;
 	type = fd_dev_to_type(fd, dev);
 	if (type == NULL)
@@ -857,13 +846,9 @@ fdopen(dev, flags, mode, l)
 }
 
 int
-fdclose(dev, flags, mode, l)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct lwp *l;
+fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct fd_softc *fd = hdfd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup_private(&hdfd_cd, FDUNIT(dev));
 
 	fd->sc_flags &= ~(FD_OPEN|FD_HAVELAB);
 	fd->sc_opts  &= ~(FDOPT_NORETRY|FDOPT_SILENT);
@@ -1328,12 +1313,7 @@ fdcretry(fdc)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *addr;
-	int flag;
-	struct lwp *l;
+fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc		*fd;
 	struct disklabel	buffer;
@@ -1345,7 +1325,7 @@ fdioctl(dev, cmd, addr, flag, l)
 	int			il[FD_MAX_NSEC + 1];
 	register int		i, j;
 
-	fd = hdfd_cd.cd_devs[FDUNIT(dev)];
+	fd = device_lookup_private(&hdfd_cd, FDUNIT(dev));
 
 	switch (cmd) {
 	case DIOCGDINFO:
@@ -1520,13 +1500,10 @@ fdioctl(dev, cmd, addr, flag, l)
 }
 
 int
-fdformat(dev, finfo, p)
-	dev_t dev;
-	struct ne7_fd_formb *finfo;
-	struct proc *p;
+fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 {
 	int rv = 0;
-	struct fd_softc *fd = hdfd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup_private(&hdfd_cd, FDUNIT(dev));
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 

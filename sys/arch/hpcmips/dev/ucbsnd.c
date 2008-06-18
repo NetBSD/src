@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.18 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.18.4.1 2008/06/18 16:32:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.18 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.18.4.1 2008/06/18 16:32:41 simonb Exp $");
 
 #include "opt_use_poll.h"
 
@@ -518,8 +518,8 @@ ucbsndopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct ucbsnd_softc *sc;
 	int s;
 	
-	if (unit >= ucbsnd_cd.cd_ndevs ||
-	    (sc = ucbsnd_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup_private(&ucbsnd_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 	
 	s = splaudio();
@@ -535,8 +535,8 @@ ucbsndclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	int unit = AUDIOUNIT(dev);
 	struct ucbsnd_softc *sc;
 	
-	if (unit >= ucbsnd_cd.cd_ndevs ||
-	    (sc = ucbsnd_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup_private(&ucbsnd_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 
 	return (0);
@@ -549,8 +549,8 @@ ucbsndread(dev_t dev, struct uio *uio, int ioflag)
 	struct ucbsnd_softc *sc;
 	int error = 0;
 	
-	if (unit >= ucbsnd_cd.cd_ndevs ||
-	    (sc = ucbsnd_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup_private(&ucbsnd_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 	/* not supported yet */
 
@@ -593,8 +593,8 @@ ucbsndwrite(dev_t dev, struct uio *uio, int ioflag)
 	int i, n, s, rest;
 	void *buf;
 	
-	if (unit >= ucbsnd_cd.cd_ndevs ||
-	    (sc = ucbsnd_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup_private(&ucbsnd_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 
 	len = uio->uio_resid;

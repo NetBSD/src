@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.140 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: fd.c,v 1.140.4.1 2008/06/18 16:32:48 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.140 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.140.4.1 2008/06/18 16:32:48 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -535,7 +535,7 @@ fdconf(struct fdc_softc *fdc)
 void
 fdcattach_mainbus(struct device *parent, struct device *self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)self;
+	struct fdc_softc *fdc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 
 	fdc->sc_bustag = ma->ma_bustag;
@@ -563,7 +563,7 @@ fdcattach_mainbus(struct device *parent, struct device *self, void *aux)
 void
 fdcattach_obio(struct device *parent, struct device *self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)self;
+	struct fdc_softc *fdc = device_private(self);
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 
@@ -676,7 +676,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 int
 fdmatch(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct fdc_softc *fdc = (void *)parent;
+	struct fdc_softc *fdc = device_private(parent);
 	bus_space_tag_t t = fdc->sc_bustag;
 	bus_space_handle_t h = fdc->sc_handle;
 	struct fdc_attach_args *fa = aux;
@@ -750,8 +750,8 @@ fdmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 fdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct fdc_softc *fdc = (void *)parent;
-	struct fd_softc *fd = (void *)self;
+	struct fdc_softc *fdc = device_private(parent);
+	struct fd_softc *fd = device_private(self);
 	struct fdc_attach_args *fa = aux;
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
@@ -813,8 +813,7 @@ fdstrategy(struct buf *bp)
  	int s;
 
 	/* Valid unit, controller, and request? */
-	if (unit >= fd_cd.cd_ndevs ||
-	    (fd = fd_cd.cd_devs[unit]) == 0 ||
+	if ((fd = device_lookup_private(&fd_cd, unit)) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (((bp->b_bcount % FD_BSIZE(fd)) != 0 ||
 	      (bp->b_blkno * DEV_BSIZE) % FD_BSIZE(fd) != 0) &&
@@ -883,7 +882,7 @@ done:
 void
 fdstart(struct fd_softc *fd)
 {
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
+	struct fdc_softc *fdc = device_private(device_parent(&fd->sc_dv));
 	int active = fdc->sc_drives.tqh_first != 0;
 
 	/* Link into controller queue. */
@@ -898,7 +897,7 @@ fdstart(struct fd_softc *fd)
 void
 fdfinish(struct fd_softc *fd, struct buf *bp)
 {
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
+	struct fdc_softc *fdc = device_private(device_parent(&fd->sc_dv));
 
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
@@ -995,7 +994,7 @@ void
 fd_motor_on(void *arg)
 {
 	struct fd_softc *fd = arg;
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
+	struct fdc_softc *fdc = device_private(device_parent(&fd->sc_dv));
 	int s;
 
 	s = splbio();
@@ -1083,9 +1082,7 @@ fdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct fd_type *type;
 
 	unit = FDUNIT(dev);
-	if (unit >= fd_cd.cd_ndevs)
-		return (ENXIO);
-	fd = fd_cd.cd_devs[unit];
+	fd = device_lookup_private(&fd_cd, unit);
 	if (fd == NULL)
 		return (ENXIO);
 	type = fd_dev_to_type(fd, dev);
@@ -1126,7 +1123,7 @@ fdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 int
 fdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 	int pmask = (1 << DISKPART(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
@@ -1910,8 +1907,8 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	if (unit >= fd_cd.cd_ndevs)
 		return (ENXIO);
 
-	fd = fd_cd.cd_devs[FDUNIT(dev)];
-	fdc = (struct fdc_softc *)device_parent(&fd->sc_dv);
+	fd = device_lookup_private(&fd_cd, FDUNIT(dev));
+	fdc = device_private(device_parent(&fd->sc_dv));
 
 	switch (cmd) {
 	case DIOCGDINFO:
@@ -2127,7 +2124,7 @@ int
 fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 {
 	int rv = 0;
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
@@ -2191,7 +2188,7 @@ void
 fdgetdisklabel(dev_t dev)
 {
 	int unit = FDUNIT(dev), i;
-	struct fd_softc *fd = fd_cd.cd_devs[unit];
+	struct fd_softc *fd = device_lookup_private(&fd_cd, unit);
 	struct disklabel *lp = fd->sc_dk.dk_label;
 	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
 
@@ -2252,7 +2249,7 @@ fdgetdisklabel(dev_t dev)
 void
 fd_do_eject(struct fd_softc *fd)
 {
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dv);
+	struct fdc_softc *fdc = device_private(device_parent(&fd->sc_dv));
 
 	if (CPU_ISSUN4C) {
 		auxregbisc(AUXIO4C_FDS, AUXIO4C_FEJ);
@@ -2278,7 +2275,7 @@ fd_mountroot_hook(struct device *dev)
 {
 	int c;
 
-	fd_do_eject((struct fd_softc *)dev);
+	fd_do_eject(device_private(dev));
 	printf("Insert filesystem floppy and press return.");
 	for (;;) {
 		c = cngetc();
@@ -2336,7 +2333,7 @@ fd_read_md_image(size_t	*sizep, void *	*addrp)
 	}
 	(void)fdclose(dev, 0, S_IFCHR, NULL);
 	*sizep = offset;
-	fd_do_eject(fd_cd.cd_devs[FDUNIT(dev)]);
+	fd_do_eject(device_lookup_private(&fd_cd, FDUNIT(dev)));
 	return (0);
 }
 #endif /* MEMORY_DISK_HOOKS */

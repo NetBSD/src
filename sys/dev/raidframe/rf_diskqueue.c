@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.50 2008/01/02 11:48:38 ad Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.50.14.1 2008/06/18 16:33:25 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.50 2008/01/02 11:48:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.50.14.1 2008/06/18 16:33:25 simonb Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -464,6 +464,7 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 		pool_put(&rf_pools.dqd, p);
 		return (NULL);
 	}
+	SET(p->bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 
 	p->sectorOffset = ssect + rf_protectedSectors;
 	p->numSector = nsect;

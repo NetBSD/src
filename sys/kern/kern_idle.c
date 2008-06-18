@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.20 2008/06/04 12:45:28 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.20.2.1 2008/06/18 16:33:35 simonb Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.20 2008/06/04 12:45:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.20.2.1 2008/06/18 16:33:35 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -74,7 +74,9 @@ idle_loop(void *dummy)
 
 		sched_idle();
 		if (!sched_curcpu_runnable_p()) {
-			uvm_pageidlezero();
+			if ((spc->spc_flags & SPCF_OFFLINE) == 0) {
+				uvm_pageidlezero();
+			}
 			if (!sched_curcpu_runnable_p()) {
 				cpu_idle();
 				if (!sched_curcpu_runnable_p() &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.24 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: tcx.c,v 1.24.4.1 2008/06/18 16:33:25 simonb Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.24 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.24.4.1 2008/06/18 16:33:25 simonb Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -171,7 +171,7 @@ tcxattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
-	struct tcx_softc *sc = (struct tcx_softc *)self;
+	struct tcx_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
 	int node, ramsize;
 	volatile struct bt_regs *bt;
@@ -346,18 +346,16 @@ tcxopen(dev, flags, mode, l)
 	int flags, mode;
 	struct lwp *l;
 {
-	int unit = minor(dev);
 #ifdef TCX_CG8
+	int unit = minor(dev);
 	struct tcx_softc *sc;
 	int i, s, oldopens;
 	volatile ulong *cptr;
 	struct fbdevice *fb;
-#endif
 
-	if (unit >= tcx_cd.cd_ndevs || tcx_cd.cd_devs[unit] == NULL)
+	sc = device_lookup_private(&tcx_cd, unit);
+	if (!sc)
 		return (ENXIO);
-#ifdef TCX_CG8
-	sc = tcx_cd.cd_devs[unit];
 	if (!sc->sc_8bit) {
 		s = splhigh();
 		oldopens = tcx_opens++;
@@ -384,7 +382,7 @@ tcxclose(dev, flags, mode, l)
 	int flags, mode;
 	struct lwp *l;
 {
-	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
+	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
 #ifdef TCX_CG8
 	int i, s, opens;
 	volatile ulong *cptr;
@@ -424,7 +422,7 @@ tcxioctl(dev, cmd, data, flags, l)
 	int flags;
 	struct lwp *l;
 {
-	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
+	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
 	int error;
 
 	switch (cmd) {
@@ -542,7 +540,7 @@ static void
 tcx_unblank(dev)
 	struct device *dev;
 {
-	struct tcx_softc *sc = (struct tcx_softc *)dev;
+	struct tcx_softc *sc = device_private(dev);
 
 	if (sc->sc_blanked) {
 		sc->sc_blanked = 0;
@@ -590,7 +588,7 @@ tcxmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
+	struct tcx_softc *sc = device_lookup_private(&tcx_cd, minor(dev));
 	struct openprom_addr *rr = sc->sc_physadr;
 	struct mmo *mo, *mo_end;
 	u_int u, sz;

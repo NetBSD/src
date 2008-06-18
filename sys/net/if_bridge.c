@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.61 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.61.8.1 2008/06/18 16:33:50 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.61 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.61.8.1 2008/06/18 16:33:50 simonb Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -338,8 +338,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 	int s;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK);
-	memset(sc, 0, sizeof(*sc));
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	ifp = &sc->sc_if;
 
 	sc->sc_brtmax = BRIDGE_RTABLE_MAX;
@@ -359,8 +358,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	LIST_INIT(&sc->sc_iflist);
 
-	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", ifc->ifc_name,
-	    unit);
+	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = bridge_ioctl;

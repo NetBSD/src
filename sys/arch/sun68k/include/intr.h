@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2008/01/26 14:02:54 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.18.14.1 2008/06/18 16:32:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -47,6 +47,7 @@
 #define	IPL_VM		5
 #define	IPL_SCHED	6
 #define	IPL_HIGH	7
+#define	NIPL		8
 
 #define _IPL_SOFT_LEVEL1	1
 #define _IPL_SOFT_LEVEL2	2
@@ -57,13 +58,19 @@
 #ifdef _KERNEL
 
 extern int idepth;
+extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
 	uint16_t _psl;
 } ipl_cookie_t;
 
-ipl_cookie_t makeiplcookie(ipl_t ipl);
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
+}
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)

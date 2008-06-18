@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.23 2008/06/04 11:33:19 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.23.2.1 2008/06/18 16:33:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.23 2008/06/04 11:33:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.23.2.1 2008/06/18 16:33:59 simonb Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -163,6 +163,8 @@ ufsdirhash_build(struct inode *ip)
 		/* Try to free some space. */
 		if (ufsdirhash_recycle(memreqd) != 0)
 			return (-1);
+	        else
+		    	DIRHASHLIST_UNLOCK();
 	}
 
 	/*
@@ -176,6 +178,7 @@ ufsdirhash_build(struct inode *ip)
 	}
 	memset(dh, 0, sizeof(*dh));
 	mutex_init(&dh->dh_lock, MUTEX_DEFAULT, IPL_NONE);
+	DIRHASH_LOCK(dh);
 	dh->dh_hashsz = narrays * sizeof(dh->dh_hash[0]);
 	dh->dh_hash = kmem_zalloc(dh->dh_hashsz, KM_NOSLEEP);
 	dh->dh_blkfreesz = nblocks * sizeof(dh->dh_blkfree[0]);
@@ -245,6 +248,7 @@ ufsdirhash_build(struct inode *ip)
 	DIRHASHLIST_LOCK();
 	TAILQ_INSERT_TAIL(&ufsdirhash_list, dh, dh_list);
 	dh->dh_onlist = 1;
+	DIRHASH_UNLOCK(dh);
 	DIRHASHLIST_UNLOCK();
 	return (0);
 
@@ -1081,7 +1085,6 @@ ufsdirhash_recycle(int wanted)
 		DIRHASHLIST_LOCK();
 		ufs_dirhashmem -= mem;
 	}
-	DIRHASHLIST_LOCK();
 	/* Success. */
 	return (0);
 }
