@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.19 2007/03/04 05:59:01 christos Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.20 2008/06/18 09:06:27 yamt Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.19 2007/03/04 05:59:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.20 2008/06/18 09:06:27 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -454,7 +454,7 @@ priq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 		return (ENOBUFS);
 	}
 	cl = NULL;
-	if ((t = m_tag_find(m, PACKET_TAG_PF_QID, NULL)) != NULL)
+	if ((t = m_tag_find(m, PACKET_TAG_ALTQ_QID, NULL)) != NULL)
 		cl = clh_to_clp(pif, ((struct altq_tag *)(t+1))->qid);
 #ifdef ALTQ3_COMPAT
 	else if ((ifq->altq_flags & ALTQF_CLASSIFY) && pktattr != NULL)
