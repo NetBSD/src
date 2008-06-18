@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.1.2.4 2008/06/12 08:39:21 martin Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.1.2.5 2008/06/18 17:04:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.4 2008/06/12 08:39:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.5 2008/06/18 17:04:09 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -212,8 +212,6 @@ struct wapbl_ino {
 	mode_t wi_mode;
 };
 
-static kmutex_t wapbl_global_mtx;
-
 static void wapbl_inodetrk_init(struct wapbl *wl, u_int size);
 static void wapbl_inodetrk_free(struct wapbl *wl);
 static struct wapbl_ino *wapbl_inodetrk_get(struct wapbl *wl, ino_t ino);
@@ -246,7 +244,6 @@ void
 wapbl_init()
 {
 
-	mutex_init(&wapbl_global_mtx, MUTEX_DEFAULT, IPL_NONE);
 	malloc_type_attach(M_WAPBL);
 }
 
@@ -1689,37 +1686,15 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 
 /****************************************************************/
 
-/*
- * Singleton pool init
- */
-static void
-wapbl_pool_init(int *refcnt, struct pool *pp, size_t size, const char *wchan)
-{
-
-	mutex_enter(&wapbl_global_mtx);
-	if ((*refcnt)++ == 0)
-		pool_init(pp, size, 0, 0, 0, wchan,
-		    &pool_allocator_nointr, IPL_NONE);
-	mutex_exit(&wapbl_global_mtx);
-}
-
-static void
-wapbl_pool_done(volatile int *refcnt, struct pool *pp)
-{
-
-	mutex_enter(&wapbl_global_mtx);
-	if (--(*refcnt) == 0)
-		pool_destroy(pp);
-	mutex_exit(&wapbl_global_mtx);
-}
-
 static void
 wapbl_inodetrk_init(struct wapbl *wl, u_int size)
 {
 
 	wl->wl_inohash = hashinit(size, HASH_LIST, true, &wl->wl_inohashmask);
-	wapbl_pool_init(&wapbl_ino_pool_refcount, &wapbl_ino_pool,
-	    sizeof(struct wapbl_ino), "wapblinopl");
+	if (atomic_inc_uint_nv(&wapbl_ino_pool_refcount) == 0) {
+		pool_init(&wapbl_ino_pool, sizeof(struct wapbl_ino), 0, 0, 0,
+		    "wapblinopl", &pool_allocator_nointr, IPL_NONE);
+	}
 }
 
 static void
@@ -1729,7 +1704,9 @@ wapbl_inodetrk_free(struct wapbl *wl)
 	/* XXX this KASSERT needs locking/mutex analysis */
 	KASSERT(wl->wl_inohashcnt == 0);
 	hashdone(wl->wl_inohash, HASH_LIST, wl->wl_inohashmask);
-	wapbl_pool_done(&wapbl_ino_pool_refcount, &wapbl_ino_pool);
+	if (atomic_dec_uint_nv(&wapbl_ino_pool_refcount) == 0) {
+		pool_destroy(&wapbl_ino_pool);
+	}
 }
 
 static struct wapbl_ino *
@@ -1752,12 +1729,12 @@ void
 wapbl_register_inode(struct wapbl *wl, ino_t ino, mode_t mode)
 {
 	struct wapbl_ino_head *wih;
-	struct wapbl_ino *wi = pool_get(&wapbl_ino_pool, PR_WAITOK);
+	struct wapbl_ino *wi;
+
+	wi = pool_get(&wapbl_ino_pool, PR_WAITOK);
 
 	mutex_enter(&wl->wl_mtx);
-	if (wapbl_inodetrk_get(wl, ino)) {
-		pool_put(&wapbl_ino_pool, wi);
-	} else {
+	if (wapbl_inodetrk_get(wl, ino) == NULL) {
 		wi->wi_ino = ino;
 		wi->wi_mode = mode;
 		wih = &wl->wl_inohash[ino & wl->wl_inohashmask];
@@ -1765,8 +1742,11 @@ wapbl_register_inode(struct wapbl *wl, ino_t ino, mode_t mode)
 		wl->wl_inohashcnt++;
 		WAPBL_PRINTF(WAPBL_PRINT_INODE,
 		    ("wapbl_register_inode: ino=%"PRId64"\n", ino));
+		mutex_exit(&wl->wl_mtx);
+	} else {
+		mutex_exit(&wl->wl_mtx);
+		pool_put(&wapbl_ino_pool, wi);
 	}
-	mutex_exit(&wl->wl_mtx);
 }
 
 void
@@ -2086,8 +2066,10 @@ wapbl_blkhash_init(struct wapbl_replay *wr, u_int size)
 	KASSERT(wr->wr_blkhash == 0);
 #ifdef _KERNEL
 	wr->wr_blkhash = hashinit(size, HASH_LIST, true, &wr->wr_blkhashmask);
-	wapbl_pool_init(&wapbl_blk_pool_refcount, &wapbl_blk_pool,
-	    sizeof(struct wapbl_blk), "wapblblkpl");
+	if (atomic_inc_uint_nv(&wapbl_blk_pool_refcount) == 0) {
+		pool_init(&wapbl_blk_pool, sizeof(struct wapbl_blk), 0, 0, 0,
+		    "wapblblkpl", &pool_allocator_nointr, IPL_NONE);
+        }
 #else /* ! _KERNEL */
 	/* Manually implement hashinit */
 	{
@@ -2109,7 +2091,9 @@ wapbl_blkhash_free(struct wapbl_replay *wr)
 	KASSERT(wr->wr_blkhashcnt == 0);
 #ifdef _KERNEL
 	hashdone(wr->wr_blkhash, HASH_LIST, wr->wr_blkhashmask);
-	wapbl_pool_done(&wapbl_blk_pool_refcount, &wapbl_blk_pool);
+	if (atomic_dec_uint_nv(&wapbl_blk_pool_refcount) == 0) {
+		pool_destroy(&wapbl_blk_pool);
+	}
 #else /* ! _KERNEL */
 	wapbl_free(wr->wr_blkhash);
 #endif /* ! _KERNEL */
