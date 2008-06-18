@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.11 2008/06/18 06:27:49 mgrooms Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.12 2008/06/18 07:12:04 mgrooms Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -93,6 +93,7 @@ static int handle_recv __P((vchar_t *));
 static vchar_t *f_reload __P((int, char **));
 static vchar_t *f_getsched __P((int, char **));
 static vchar_t *f_getsa __P((int, char **));
+static vchar_t *f_getsacert __P((int, char **));
 static vchar_t *f_flushsa __P((int, char **));
 static vchar_t *f_deletesa __P((int, char **));
 static vchar_t *f_exchangesa __P((int, char **));
@@ -113,6 +114,8 @@ struct cmd_tag {
 	{ f_getsched,	"sc" },
 	{ f_getsa,	"show-sa" },
 	{ f_getsa,	"ss" },
+	{ f_getsacert,	"get-cert" },
+	{ f_getsacert,	"gc" },
 	{ f_flushsa,	"flush-sa" },
 	{ f_flushsa,	"fs" },
 	{ f_deletesa,	"delete-sa" },
@@ -410,6 +413,30 @@ f_getsa(ac, av)
 		errx(1, "unknown protocol %s", *av);
 
 	return make_request(ADMIN_SHOW_SA, proto, 0);
+}
+
+static vchar_t *
+f_getsacert(ac, av)
+	int ac;
+	char **av;
+{
+	vchar_t *buf, *index;
+	struct admin_com_indexes *com;
+
+	index = get_index(ac, av);
+	if (index == NULL)
+		return NULL;
+
+	com = (struct admin_com_indexes *) index->v;
+	buf = make_request(ADMIN_GET_SA_CERT, ADMIN_PROTO_ISAKMP, index->l);
+	if (buf == NULL)
+		errx(1, "Cannot allocate buffer");
+
+	memcpy(buf->v+sizeof(struct admin_com), index->v, index->l);
+
+	vfree(index);
+
+	return buf;
 }
 
 static vchar_t *
@@ -1407,6 +1434,10 @@ handle_recv(combuf)
 		}
 		break;
 	}
+
+	case ADMIN_GET_SA_CERT:
+		fwrite(buf, len, 1, stdout);
+		break;
 
 	case ADMIN_SHOW_SA:
 	   {

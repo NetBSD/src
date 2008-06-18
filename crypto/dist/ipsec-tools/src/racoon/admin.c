@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.23 2008/06/18 07:04:23 mgrooms Exp $	*/
+/*	$NetBSD: admin.c,v 1.24 2008/06/18 07:12:04 mgrooms Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -240,6 +240,31 @@ admin_process(so2, combuf)
 			break;
 		}
 		break;
+
+	case ADMIN_GET_SA_CERT: {
+		struct admin_com_indexes *ndx;
+		struct sockaddr *src, *dst;
+		struct ph1handle *iph1;
+
+		ndx = (struct admin_com_indexes *) ((caddr_t)com + sizeof(*com));
+		src = (struct sockaddr *) &ndx->src;
+		dst = (struct sockaddr *) &ndx->dst;
+
+		if (com->ac_proto != ADMIN_PROTO_ISAKMP) {
+			ac_errno = ENOTSUP;
+			break;
+		}
+
+		iph1 = getph1byaddrwop(src, dst);
+		if (iph1 == NULL) {
+			ac_errno = ENOENT;
+			break;
+		}
+
+		if (iph1->cert_p != NULL)
+			buf = vdup(&iph1->cert_p->cert);
+		break;
+	}
 
 	case ADMIN_FLUSH_SA:
 		switch (com->ac_proto) {

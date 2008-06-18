@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.h,v 1.5 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: admin.h,v 1.6 2008/06/18 07:12:04 mgrooms Exp $	*/
 
 /* Id: admin.h,v 1.11 2005/06/19 22:37:47 manubsd Exp */
 
@@ -79,6 +79,8 @@ struct admin_com {
 #define ADMIN_DELETE_SA		0x0201
 #define ADMIN_ESTABLISH_SA	0x0202
 #define ADMIN_DELETE_ALL_SA_DST	0x0204	/* All SA for a given peer */
+
+#define ADMIN_GET_SA_CERT	0x0206
 
 /*
  * The admin_com_indexes and admin_com_psk follow, see below.
