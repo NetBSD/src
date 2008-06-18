@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.257 2008/06/17 11:37:35 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.258 2008/06/18 13:31:24 simonb Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -604,8 +604,10 @@ Start Date:	Tue Jun 10 2008
 End Date:
 Base Tag:	simonb-wapbl-base
 Maintainer:	Simon Burge <simonb@NetBSD.org>
-Scope:		distrib/sets/lists/comp distrib/utils/sysinst include
-		sbin/fsck_ffs sbin/fsdb sbin/mount_ffs src/sys
+Scope:		src/distrib/sets/lists/comp src/distrib/utils/sysinst
+		src/include
+		src/sbin/fsck_ffs src/sbin/fsdb src/sbin/mount_ffs
+		src/sys
 Notes:		Still has a number of issues:
 		 - Can't log the root filesystem (or any FS if /dev isn't an
 		   ffs) or update existing mounts from non-logged to logged.
