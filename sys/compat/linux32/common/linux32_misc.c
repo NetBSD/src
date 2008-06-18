@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.11 2008/06/16 19:57:43 christos Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.12 2008/06/18 22:58:21 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.11 2008/06/16 19:57:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.12 2008/06/18 22:58:21 njoly Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ptrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,7 +89,9 @@ linux32_sys_statfs(struct lwp *l, const struct linux32_sys_statfs_args *uap, reg
 	STATVFSBUF_PUT(sb);
 	return error;
 }
+
 extern const int linux_ptrace_request_map[];
+
 int
 linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, register_t *retval)
 {
@@ -106,11 +112,11 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 	request = SCARG(uap, request);
 	while (*ptr != -1)
 		if (*ptr++ == request) {
-			struct netbsd32_ptrace_args pta;
+			struct sys_ptrace_args pta;
 
 			SCARG(&pta, req) = *ptr;
 			SCARG(&pta, pid) = SCARG(uap, pid);
-			SCARG(&pta, addr) = (void *)SCARG(uap, addr);
+			SCARG(&pta, addr) = NETBSD32IPTR64(SCARG(uap, addr));
 			SCARG(&pta, data) = SCARG(uap, data);
 
 			/*
@@ -122,14 +128,14 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
 				SCARG(&pta, addr) = (void *) 1;
 
-			error = netbsd32_ptrace(l, &pta, retval);
+			error = sys_ptrace(l, &pta, retval);
 			if (error)
 				return error;
 			switch (request) {
 			case LINUX_PTRACE_PEEKTEXT:
 			case LINUX_PTRACE_PEEKDATA:
 				error = copyout (retval,
-				    (void *)SCARG(uap, data), 
+				    NETBSD32IPTR64(SCARG(uap, data)), 
 				    sizeof *retval);
 				*retval = SCARG(uap, data);
 				break;
@@ -141,9 +147,7 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 		else
 			ptr++;
 
-#if 0
-	return LINUX_SYS_PTRACE_ARCH(l, uap, retval);
-#endif
+	return EIO;
 #else
 	return ENOSYS;
 #endif /* PTRACE || _LKM */
