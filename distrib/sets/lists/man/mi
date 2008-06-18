@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1078 2008/06/11 23:54:43 lukem Exp $
+# $NetBSD: mi,v 1.1079 2008/06/18 09:06:26 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2521,6 +2521,7 @@
 ./usr/share/man/cat8/tcpdrop.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/tcpdump.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/telnetd.0			man-netutil-catman	.cat
+./usr/share/man/cat8/tftp-proxy.0		man-pf-catman		pf,.cat
 ./usr/share/man/cat8/tftpd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/timed.0			man-timed-catman	.cat
 ./usr/share/man/cat8/timedc.0			man-timed-catman	.cat
@@ -5092,6 +5093,7 @@
 ./usr/share/man/man8/tcpdrop.8			man-netutil-man		.man
 ./usr/share/man/man8/tcpdump.8			man-netutil-man		.man
 ./usr/share/man/man8/telnetd.8			man-netutil-man		.man
+./usr/share/man/man8/tftp-proxy.8		man-pf-man		pf,.man
 ./usr/share/man/man8/tftpd.8			man-netutil-man		.man
 ./usr/share/man/man8/timed.8			man-timed-man		.man
 ./usr/share/man/man8/timedc.8			man-timed-man		.man

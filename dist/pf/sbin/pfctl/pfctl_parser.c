@@ -1,5 +1,5 @@
-/*	$NetBSD: pfctl_parser.c,v 1.9 2006/07/03 20:26:19 peter Exp $	*/
-/*	$OpenBSD: pfctl_parser.c,v 1.211 2004/12/07 10:33:41 dhartmei Exp $ */
+/*	$NetBSD: pfctl_parser.c,v 1.10 2008/06/18 09:06:26 yamt Exp $	*/
+/*	$OpenBSD: pfctl_parser.c,v 1.234 2006/10/31 23:46:24 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -54,12 +54,14 @@
 #include <errno.h>
 #include <err.h>
 #include <ifaddrs.h>
-#ifdef __NetBSD__
-#include <limits.h>
-#endif
+#include <unistd.h>
 
 #include "pfctl_parser.h"
 #include "pfctl.h"
+
+#ifdef __NetBSD__
+#include <net/if_compat.h>
+#endif /* __NetBSD__ */
 
 void		 print_op (u_int8_t, const char *, const char *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, const char *);
@@ -69,6 +71,7 @@ void		 print_fromto(struct pf_rule_addr *, pf_osfp_t,
 		    struct pf_rule_addr *, u_int8_t, u_int8_t, int);
 int		 ifa_skip_if(const char *filter, struct node_host *p);
 
+struct node_host	*ifa_grouplookup(const char *, int);
 struct node_host	*host_if(const char *, int);
 struct node_host	*host_v4(const char *, int);
 struct node_host	*host_v6(const char *, int);
@@ -518,9 +521,11 @@ const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
 void
 print_status(struct pf_status *s, int opts)
 {
-	char	statline[80], *running;
-	time_t	runtime;
-	int	i;
+	char			statline[80], *running;
+	time_t			runtime;
+	int			i;
+	char			buf[PF_MD5_DIGEST_LENGTH * 2 + 1];
+	static const char	hex[] = "0123456789abcdef";
 
 	runtime = time(NULL) - s->since;
 	running = s->running ? "Enabled" : "Disabled";
@@ -554,7 +559,18 @@ print_status(struct pf_status *s, int opts)
 		printf("%15s\n\n", "Debug: Loud");
 		break;
 	}
-	printf("Hostid: 0x%08x\n\n", ntohl(s->hostid));
+
+	if (opts & PF_OPT_VERBOSE) {
+		printf("Hostid:   0x%08x\n", ntohl(s->hostid));
+
+		for (i = 0; i < PF_MD5_DIGEST_LENGTH; i++) {
+			buf[i + i] = hex[s->pf_chksum[i] >> 4];
+			buf[i + i + 1] = hex[s->pf_chksum[i] & 0x0f];
+		}
+		buf[i + i] = '\0';
+		printf("Checksum: 0x%s\n\n", buf);
+	}
+
 	if (s->ifname[0] != 0) {
 		printf("Interface Stats for %-16s %5s %16s\n",
 		    s->ifname, "IPv4", "IPv6");
@@ -662,7 +678,9 @@ print_src_node(struct pf_src_node *sn, int opts)
 			printf(", expires in %.2u:%.2u:%.2u",
 			    sn->expire, min, sec);
 		}
-		printf(", %u pkts, %u bytes", sn->packets, sn->bytes);
+		printf(", %llu pkts, %llu bytes",
+		    (unsigned long long)sn->packets[0] + sn->packets[1],
+		    (unsigned long long)sn->bytes[0] + sn->bytes[1]);
 		switch (sn->ruletype) {
 		case PF_NAT:
 			if (sn->rule.nr != -1)
@@ -695,10 +713,13 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		printf("@%d ", r->nr);
 	if (r->action > PF_NORDR)
 		printf("action(%d)", r->action);
-	else if (anchor_call[0])
-		printf("%s \"%s\"", anchortypes[r->action],
-		    anchor_call);
-	else {
+	else if (anchor_call[0]) {
+		if (anchor_call[0] == '_') {
+			printf("%s", anchortypes[r->action]);
+		} else
+			printf("%s \"%s\"", anchortypes[r->action],
+			    anchor_call);
+	} else {
 		printf("%s", actiontypes[r->action]);
 		if (r->natpass)
 			printf(" pass");
@@ -753,10 +774,22 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		printf(" in");
 	else if (r->direction == PF_OUT)
 		printf(" out");
-	if (r->log == 1)
+	if (r->log) {
 		printf(" log");
-	else if (r->log == 2)
-		printf(" log-all");
+		if (r->log & ~PF_LOG || r->logif) {
+			int count = 0;
+
+			printf(" (");
+			if (r->log & PF_LOG_ALL)
+				printf("%sall", count++ ? ", " : "");
+			if (r->log & PF_LOG_SOCKET_LOOKUP)
+				printf("%suser", count++ ? ", " : "");
+			if (r->logif)
+				printf("%sto pflog%u", count++ ? ", " : "",
+				    r->logif);
+			printf(")");
+		}
+	}
 	if (r->quick)
 		printf(" quick");
 	if (r->ifname[0]) {
@@ -806,7 +839,11 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		print_flags(r->flags);
 		printf("/");
 		print_flags(r->flagset);
-	}
+	} else if (r->action == PF_PASS &&
+	    (!r->proto || r->proto == IPPROTO_TCP) &&
+	    !(r->rule_flag & PFRULE_FRAGMENT) &&
+	    !anchor_call[0] && r->keep_state)
+		printf(" flags any");
 	if (r->type) {
 		const struct icmptypeent	*it;
 
@@ -831,7 +868,9 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 	}
 	if (r->tos)
 		printf(" tos 0x%2.2x", r->tos);
-	if (r->keep_state == PF_STATE_NORMAL)
+	if (!r->keep_state && r->action == PF_PASS && !anchor_call[0])
+		printf(" no state");
+	else if (r->keep_state == PF_STATE_NORMAL)
 		printf(" keep state");
 	else if (r->keep_state == PF_STATE_MODULATE)
 		printf(" modulate state");
@@ -859,7 +898,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		opts = 1;
 	if (r->rule_flag & PFRULE_SRCTRACK)
 		opts = 1;
-	if (r->rule_flag & (PFRULE_IFBOUND | PFRULE_GRBOUND))
+	if (r->rule_flag & PFRULE_IFBOUND)
 		opts = 1;
 	for (i = 0; !opts && i < PFTM_MAX; ++i)
 		if (r->timeout[i])
@@ -927,12 +966,6 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			printf("if-bound");
 			opts = 0;
 		}
-		if (r->rule_flag & PFRULE_GRBOUND) {
-			if (!opts)
-				printf(", ");
-			printf("group-bound");
-			opts = 0;
-		}
 		for (i = 0; i < PFTM_MAX; ++i)
 			if (r->timeout[i]) {
 				int j;
@@ -940,11 +973,12 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 				if (!opts)
 					printf(", ");
 				opts = 0;
-				for (j = 0; pf_timeouts[j].name; ++j)
+				for (j = 0; pf_timeouts[j].name != NULL;
+				    ++j)
 					if (pf_timeouts[j].timeout == i)
 						break;
-				printf("%s %u", pf_timeouts[j].name ?
-				    pf_timeouts[j].name : "inv.timeout",
+				printf("%s %u", pf_timeouts[j].name == NULL ?
+				    "inv.timeout" : pf_timeouts[j].name,
 				    r->timeout[i]);
 			}
 		printf(")");
@@ -985,13 +1019,14 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			printf(" !");
 		printf(" tagged %s", r->match_tagname);
 	}
+	if (r->rtableid != -1)
+		printf(" rtable %u", r->rtableid);
 	if (!anchor_call[0] && (r->action == PF_NAT ||
 	    r->action == PF_BINAT || r->action == PF_RDR)) {
 		printf(" -> ");
 		print_pool(&r->rpool, r->rpool.proxy_port[0],
 		    r->rpool.proxy_port[1], r->af, r->action);
 	}
-	printf("\n");
 }
 
 void
@@ -1184,12 +1219,35 @@ ifa_load(void)
 }
 
 struct node_host *
-ifa_exists(const char *ifa_name, int group_ok)
+ifa_exists(const char *ifa_name)
 {
 	struct node_host	*n;
+#ifndef __NetBSD__
+	struct ifgroupreq	ifgr;
+	int			s;
+#endif /* !__NetBSD__ */
 
 	if (iftab == NULL)
 		ifa_load();
+
+	/* check wether this is a group */
+#ifndef __NetBSD__
+	/* XXXPF TODO investigate what's needed for NetBSD */
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		err(1, "socket");
+	bzero(&ifgr, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, ifa_name, sizeof(ifgr.ifgr_name));
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == 0) {
+		/* fake a node_host */
+		if ((n = calloc(1, sizeof(*n))) == NULL)
+			err(1, "calloc");
+		if ((n->ifname = strdup(ifa_name)) == NULL)
+			err(1, "strdup");
+		close(s);
+		return (n);
+	}
+	close(s);
+#endif /* !__NetBSD__ */
 
 	for (n = iftab; n; n = n->next) {
 		if (n->af == AF_LINK && !strncmp(n->ifname, ifa_name, IFNAMSIZ))
@@ -1200,11 +1258,61 @@ ifa_exists(const char *ifa_name, int group_ok)
 }
 
 struct node_host *
+ifa_grouplookup(const char *ifa_name, int flags)
+{
+#ifdef __NetBSD__
+	/* XXXPF TODO investigate what's needed for NetBSD */
+
+	return (NULL);
+#else
+	struct ifg_req		*ifg;
+	struct ifgroupreq	 ifgr;
+	int			 s, len;
+	struct node_host	*n, *h = NULL;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		err(1, "socket");
+	bzero(&ifgr, sizeof(ifgr));
+	strlcpy(ifgr.ifgr_name, ifa_name, sizeof(ifgr.ifgr_name));
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
+		close(s);
+		return (NULL);
+	}
+
+	len = ifgr.ifgr_len;
+	if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
+		err(1, "calloc");
+	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
+		err(1, "SIOCGIFGMEMB");
+
+	for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(struct ifg_req);
+	    ifg++) {
+		len -= sizeof(struct ifg_req);
+		if ((n = ifa_lookup(ifg->ifgrq_member, flags)) == NULL)
+			continue;
+		if (h == NULL)
+			h = n;
+		else {
+			h->tail->next = n;
+			h->tail = n->tail;
+		}
+	}
+	free(ifgr.ifgr_groups);
+	close(s);
+
+	return (h);
+#endif /* !__NetBSD__ */
+}
+
+struct node_host *
 ifa_lookup(const char *ifa_name, int flags)
 {
 	struct node_host	*p = NULL, *h = NULL, *n = NULL;
 	int			 got4 = 0, got6 = 0;
 	const char		 *last_if = NULL;
+
+	if ((h = ifa_grouplookup(ifa_name, flags)) != NULL)
+		return (h);
 
 	if (!strncmp(ifa_name, "self", IFNAMSIZ))
 		ifa_name = NULL;
@@ -1383,7 +1491,7 @@ host_if(const char *s, int mask)
 		free(ps);
 		return (NULL);
 	}
-	if (ifa_exists(ps, 1) || !strncmp(ps, "self", IFNAMSIZ)) {
+	if (ifa_exists(ps) || !strncmp(ps, "self", IFNAMSIZ)) {
 		/* interface with this name exists */
 		h = ifa_lookup(ps, flags);
 		for (n = h; n != NULL && mask > -1; n = n->next)

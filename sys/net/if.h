@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.138 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.139 2008/06/18 09:06:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -292,6 +292,12 @@ struct ifnet {				/* and the entries */
 	struct	mowner *if_mowner;	/* who owns mbufs for this interface */
 
 	void	*if_agrprivate;		/* used only when #if NAGR > 0 */
+
+	/*
+	 * pf specific data, used only when #if NPF > 0.
+	 */
+	void	*if_pf_kif;		/* pf interface abstraction */
+	void	*if_pf_groups;		/* pf interface groups */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -835,6 +841,7 @@ void	if_slowtimo(void *);
 void	if_up(struct ifnet *);
 int	ifconf(u_long, void *);
 void	ifinit(void);
+void	ifinit1(void);
 int	ifioctl(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);
