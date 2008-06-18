@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.258 2008/06/18 13:31:24 simonb Exp $
+#	$NetBSD: BRANCHES,v 1.259 2008/06/18 17:08:40 simonb Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -617,6 +617,8 @@ Notes:		Still has a number of issues:
 		 - No log locators.
 		 - Some heavy workload performance issues on SMP machines.
 		 - Some stability issues on SMP machines.
+		 - "Mutex error: free: allocation contains active lock" panic
+		   on unmount with LOCKDEBUG enabled.
 
 Branch:		thorpej-atomic
 Description:	Implementation of an atomic memory operations API modeled
