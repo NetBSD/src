@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.34 2008/06/18 06:47:25 mgrooms Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.35 2008/06/18 07:04:23 mgrooms Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1628,6 +1628,7 @@ isakmp_open()
 				"socket (%s)\n", strerror(errno));
 			goto err_and_next;
 		}
+		close_on_exec(p->sock);
 
 		if (fcntl(p->sock, F_SETFL, O_NONBLOCK) == -1)
 			plog(LLV_WARNING, LOCATION, NULL,
