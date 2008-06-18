@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.1.2.5 2008/06/18 17:04:09 rmind Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.1.2.6 2008/06/18 17:53:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.5 2008/06/18 17:04:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.6 2008/06/18 17:53:21 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -655,6 +655,10 @@ wapbl_stop(struct wapbl *wl, int force)
 	wapbl_free(wl->wl_dealloclens);
 #endif
 	wapbl_inodetrk_free(wl);
+
+	cv_destroy(&wl->wl_reclaimable_cv);
+	mutex_destroy(&wl->wl_mtx);
+	rw_destroy(&wl->wl_rwlock);
 	wapbl_free(wl);
 
 	return 0;
