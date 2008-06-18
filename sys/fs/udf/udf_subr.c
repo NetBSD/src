@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.49 2008/05/19 23:48:04 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.50 2008/06/18 21:23:32 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.49 2008/05/19 23:48:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.50 2008/06/18 21:23:32 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -4329,7 +4329,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 
 	udf_node->i_flags |= IN_CHANGE | IN_MODIFY; /* | IN_CREATE? */
 	/* VN_KNOTE(udf_node,  ...) */
-	udf_update(udf_node->vnode, NULL, NULL, 0);
+	udf_update(udf_node->vnode, NULL, NULL, NULL, 0);
 
 	free(fid, M_TEMP);
 
@@ -5083,12 +5083,14 @@ udf_resize_node(struct udf_node *udf_node, uint64_t new_size, int *extended)
 
 void
 udf_itimes(struct udf_node *udf_node, struct timespec *acc,
-	struct timespec *mod, struct timespec *changed)
+	struct timespec *mod, struct timespec *birth)
 {
 	struct timespec now;
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
-	struct timestamp *atime, *mtime, *attrtime;
+	struct timestamp *atime, *mtime, *attrtime, *ctime;
+	struct timestamp  fe_ctime;
+	struct timespec   cur_birth;
 
 	/* protect against rogue values */
 	if (!udf_node)
@@ -5105,11 +5107,14 @@ udf_itimes(struct udf_node *udf_node, struct timespec *acc,
 		atime    = &fe->atime;
 		mtime    = &fe->mtime;
 		attrtime = &fe->attrtime;
+		/* TODO find our extended attribute */
+		ctime    = &fe_ctime;
 	} else {
 		assert(udf_node->efe);
 		atime    = &efe->atime;
 		mtime    = &efe->mtime;
 		attrtime = &efe->attrtime;
+		ctime    = &efe->ctime;
 	}
 
 	vfs_timestamp(&now);
@@ -5126,14 +5131,24 @@ udf_itimes(struct udf_node *udf_node, struct timespec *acc,
 		if (mod == NULL)
 			mod = &now;
 		udf_timespec_to_timestamp(mod, mtime);
+
+		/* ensure birthtime is older than set modification! */
+		udf_timestamp_to_timespec(udf_node->ump, ctime, &cur_birth);
+		if ((cur_birth.tv_sec > mod->tv_sec) ||
+			  ((cur_birth.tv_sec == mod->tv_sec) &&
+			     (cur_birth.tv_nsec > mod->tv_nsec))) {
+			udf_timespec_to_timestamp(mod, ctime);
+		}
 	}
 
+	/* update birthtime if specified */
+	/* XXX we asume here that given birthtime is older than mod */
+	if (birth)
+		udf_timespec_to_timestamp(birth, ctime);
+
 	/* set change time */
-	if (udf_node->i_flags & (IN_CHANGE | IN_MODIFY)) {
-		if (changed == NULL)
-			changed = &now;
-		udf_timespec_to_timestamp(changed, attrtime);
-	}
+	if (udf_node->i_flags & (IN_CHANGE | IN_MODIFY))
+		udf_timespec_to_timestamp(&now, attrtime);
 
 	/* notify updates to the node itself */
 	if (udf_node->i_flags & (IN_ACCESS | IN_MODIFY))
@@ -5149,7 +5164,7 @@ udf_itimes(struct udf_node *udf_node, struct timespec *acc,
 
 int
 udf_update(struct vnode *vp, struct timespec *acc,
-	struct timespec *mod, int updflags)
+	struct timespec *mod, struct timespec *birth, int updflags)
 {
 	struct udf_node  *udf_node = VTOI(vp);
 	struct udf_mount *ump = udf_node->ump;
@@ -5159,7 +5174,8 @@ udf_update(struct vnode *vp, struct timespec *acc,
 
 #ifdef DEBUG
 	char bits[128];
-	DPRINTF(CALL, ("udf_update(node, %p, %p, %d)\n", acc, mod, updflags));
+	DPRINTF(CALL, ("udf_update(node, %p, %p, %p, %d)\n", acc, mod, birth,
+		updflags));
 	bitmask_snprintf(udf_node->i_flags, IN_FLAGBITS, bits, sizeof(bits));
 	DPRINTF(CALL, ("\tnode flags %s\n", bits));
 	DPRINTF(CALL, ("\t\tmnt_async = %d\n", mnt_async));
