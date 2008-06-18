@@ -1,12 +1,15 @@
-#	$NetBSD: Makefile,v 1.2 2005/02/22 14:40:02 peter Exp $
-#	$OpenBSD: Makefile,v 1.4 2003/11/20 23:23:09 avsm Exp $
-#	@(#)Makefile	8.2 (Berkeley) 4/4/94
+#	$NetBSD: Makefile,v 1.3 2008/06/18 09:06:28 yamt Exp $
+#	$OpenBSD: Makefile,v 1.3 2006/11/26 11:31:13 deraadt Exp $
 
 PROG=	ftp-proxy
-SRCS=	ftp-proxy.c getline.c util.c
+SRCS=	ftp-proxy.c filter.c
 MAN=	ftp-proxy.8
 
 WARNS?=	2
+
+CFLAGS+= -I${.CURDIR}
+LDADD+=	-levent
+DPADD+= ${LIBEVENT}
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys
 
@@ -18,12 +21,8 @@ SRCS+=	ipf.c
 CPPFLAGS+=-I${NETBSDSRCDIR}/sys/dist/ipf -DWITH_IPF
 .endif
 
-CPPFLAGS+=-DLIBWRAP
-LDADD+=	-lwrap
-DPADD+=	${LIBWRAP}
-
-BINDIR=	/usr/libexec
+BINDIR= /usr/sbin
 
 .include <bsd.prog.mk>
 
-.PATH: ${NETBSDSRCDIR}/dist/pf/libexec/ftp-proxy
+.PATH: ${NETBSDSRCDIR}/dist/pf/usr.sbin/ftp-proxy

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.226 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.227 2008/06/18 09:06:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.226 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.227 2008/06/18 09:06:28 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -177,6 +177,16 @@ ifinit(void)
 
 	callout_init(&if_slowtimo_ch, 0);
 	if_slowtimo(NULL);
+}
+
+/*
+ * XXX Initialization before configure().
+ * XXX hack to get pfil_add_hook working in autoconf.
+ */
+void
+ifinit1(void)
+{
+
 #ifdef PFIL_HOOKS
 	if_pfil.ph_type = PFIL_TYPE_IFNET;
 	if_pfil.ph_ifnet = NULL;

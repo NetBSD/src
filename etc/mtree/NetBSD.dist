@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.368 2008/06/11 23:56:15 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.369 2008/06/18 09:06:26 yamt Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1121,6 +1121,7 @@
 ./var/at/spool			mode=0700
 ./var/backups
 ./var/chroot
+./var/chroot/ftp-proxy		mode=0755
 ./var/chroot/named
 ./var/chroot/named/dev
 ./var/chroot/named/etc
@@ -1138,6 +1139,7 @@
 ./var/chroot/ntpd/var/run	mode=0775 gname=ntpd
 ./var/chroot/pflogd		mode=0755
 ./var/chroot/sshd		mode=0755
+./var/chroot/tftp-proxy		mode=0755
 ./var/crash			mode=0770
 ./var/cron
 ./var/cron/tabs			mode=0700
