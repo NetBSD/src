@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.14 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: lunaws.c,v 1.14.4.1 2008/06/18 16:32:42 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.14 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.14.4.1 2008/06/18 16:32:42 simonb Exp $");
 
 #include "wsmouse.h"
 
@@ -180,10 +180,9 @@ wsattach(parent, self, aux)
 
 /*ARGSUSED*/
 static void
-wsintr(chan)
-	int chan;
+wsintr(int chan)
 {
-	struct ws_softc *sc = ws_cd.cd_devs[0];
+	struct ws_softc *sc = device_lookup_private(&ws_cd, 0);
 	struct sioreg *sio = sc->sc_ctl;
 	u_int code;
 	int rr;

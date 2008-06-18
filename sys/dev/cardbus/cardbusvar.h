@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.38 2008/01/02 23:11:34 dyoung Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.38.14.1 2008/06/18 16:33:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -228,7 +228,7 @@ typedef struct cardbus_devfunc {
 	cardbusreg_t ct_bhlc;		/* Latency timer and cache line size */
 	/* u_int32_t ct_cisreg; */	/* CIS reg: is it needed??? */
 
-	struct device *ct_device;	/* pointer to the device */
+	device_t ct_device;	/* pointer to the device */
 
 	/* some data structure needed for tuple??? */
 } *cardbus_devfunc_t;

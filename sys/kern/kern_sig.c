@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.284 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.284.2.1 2008/06/18 16:33:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.284 2008/05/19 17:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.284.2.1 2008/06/18 16:33:35 simonb Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -1601,14 +1601,14 @@ issignal(struct lwp *l)
 		if (signo == 0) {
 			sp = &l->l_sigpend;
 			ss = sp->sp_set;
-			if ((p->p_sflag & PS_PPWAIT) != 0)
+			if ((p->p_lflag & PL_PPWAIT) != 0)
 				sigminusset(&stopsigmask, &ss);
 			sigminusset(&l->l_sigmask, &ss);
 
 			if ((signo = firstsig(&ss)) == 0) {
 				sp = &p->p_sigpend;
 				ss = sp->sp_set;
-				if ((p->p_sflag & PS_PPWAIT) != 0)
+				if ((p->p_lflag & PL_PPWAIT) != 0)
 					sigminusset(&stopsigmask, &ss);
 				sigminusset(&l->l_sigmask, &ss);
 
@@ -1642,7 +1642,7 @@ issignal(struct lwp *l)
 		 * for us, don't hang as we could deadlock.
 		 */
 		if ((p->p_slflag & PSL_TRACED) != 0 &&
-		    (p->p_sflag & PS_PPWAIT) == 0 && signo != SIGKILL) {
+		    (p->p_lflag & PL_PPWAIT) == 0 && signo != SIGKILL) {
 			/* Take the signal. */
 			(void)sigget(sp, NULL, signo, NULL);
 			p->p_xstat = signo;

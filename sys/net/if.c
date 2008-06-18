@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.225 2008/05/13 20:40:33 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.225.2.1 2008/06/18 16:33:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.225 2008/05/13 20:40:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.225.2.1 2008/06/18 16:33:50 simonb Exp $");
 
 #include "opt_inet.h"
 
@@ -177,12 +177,35 @@ ifinit(void)
 
 	callout_init(&if_slowtimo_ch, 0);
 	if_slowtimo(NULL);
+}
+
+/*
+ * XXX Initialization before configure().
+ * XXX hack to get pfil_add_hook working in autoconf.
+ */
+void
+ifinit1(void)
+{
+
 #ifdef PFIL_HOOKS
 	if_pfil.ph_type = PFIL_TYPE_IFNET;
 	if_pfil.ph_ifnet = NULL;
 	if (pfil_head_register(&if_pfil) != 0)
 		printf("WARNING: unable to register pfil hook\n");
 #endif
+}
+
+struct ifnet *
+if_alloc(u_char type)
+{
+	return malloc(sizeof(struct ifnet), M_DEVBUF, M_WAITOK|M_ZERO);
+}
+
+void
+if_initname(struct ifnet *ifp, const char *name, int unit)
+{
+	(void)snprintf(ifp->if_xname, sizeof(ifp->if_xname),
+	    "%s%d", name, unit);
 }
 
 /*

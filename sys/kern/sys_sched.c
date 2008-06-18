@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.22 2008/05/25 23:34:24 ad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.22.2.1 2008/06/18 16:33:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.22 2008/05/25 23:34:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.22.2.1 2008/06/18 16:33:35 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -291,6 +291,33 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 	return (error);
 }
 
+/* Allocate the CPU set, and get it from userspace */
+static int
+gencpuset(cpuset_t **dset, const cpuset_t *sset, size_t size)
+{
+	int error;
+
+	*dset = cpuset_create();
+	if (size != cpuset_size(*dset)) {
+		error = EINVAL;
+		goto out;
+	}
+
+	error = copyin(sset, *dset, size);
+	if (error)
+		goto out;
+
+	if (kcpuset_nused(*dset) != 1) {
+		error = EINVAL;
+		goto out;
+	}
+
+	return 0;
+out:
+	kcpuset_unuse(*dset, NULL);
+	return error;
+}
+
 /*
  * Set affinity.
  */
@@ -302,9 +329,9 @@ sys__sched_setaffinity(struct lwp *l,
 		syscallarg(pid_t) pid;
 		syscallarg(lwpid_t) lid;
 		syscallarg(size_t) size;
-		syscallarg(void *) cpuset;
+		syscallarg(const cpuset_t *) cpuset;
 	} */
-	cpuset_t *cpuset;
+	cpuset_t *cpuset, *cpulst = NULL;
 	struct cpu_info *ci = NULL;
 	struct proc *p;
 	struct lwp *t;
@@ -313,20 +340,24 @@ sys__sched_setaffinity(struct lwp *l,
 	u_int lcnt;
 	int error;
 
-	/* Allocate the CPU set, and get it from userspace */
-	cpuset = kmem_zalloc(sizeof(cpuset_t), KM_SLEEP);
-	error = copyin(SCARG(uap, cpuset), cpuset,
-	    min(SCARG(uap, size), sizeof(cpuset_t)));
-	if (error)
-		goto error;
+	if ((error = gencpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size))))
+		return error;
 
 	/* Look for a CPU in the set */
-	for (CPU_INFO_FOREACH(cii, ci))
-		if (CPU_ISSET(cpu_index(ci), cpuset))
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		error = cpuset_isset(cpu_index(ci), cpuset);
+		if (error) {
+			if (error == -1) {
+				error = E2BIG;
+				goto out;
+			}
 			break;
+		}
+	}
+
 	if (ci == NULL) {
 		/* Empty set */
-		kmem_free(cpuset, sizeof(cpuset_t));
+		kcpuset_unuse(cpuset, NULL);
 		cpuset = NULL; 
 	}
 
@@ -337,7 +368,7 @@ sys__sched_setaffinity(struct lwp *l,
 		if (p == NULL) {
 			mutex_exit(proc_lock);
 			error = ESRCH;
-			goto error;
+			goto out;
 		}
 		mutex_enter(p->p_lock);
 		mutex_exit(proc_lock);
@@ -345,7 +376,7 @@ sys__sched_setaffinity(struct lwp *l,
 		if ((p->p_flag & PK_SYSTEM) != 0) {
 			mutex_exit(p->p_lock);
 			error = EPERM;
-			goto error;
+			goto out;
 		}
 	} else {
 		/* Use the calling process */
@@ -360,7 +391,7 @@ sys__sched_setaffinity(struct lwp *l,
 	    KAUTH_PROCESS_SCHEDULER_SETAFFINITY, p, NULL, NULL, NULL);
 	if (error != 0) {
 		mutex_exit(p->p_lock);
-		goto error;
+		goto out;
 	}
 
 	/* Find the LWP(s) */
@@ -373,12 +404,18 @@ sys__sched_setaffinity(struct lwp *l,
 		if (cpuset) {
 			/* Set the affinity flag and new CPU set */
 			t->l_flag |= LW_AFFINITY;
-			memcpy(&t->l_affinity, cpuset, sizeof(cpuset_t));
+			kcpuset_use(cpuset);
+			if (t->l_affinity != NULL)
+				kcpuset_unuse(t->l_affinity, &cpulst);
+			t->l_affinity = cpuset;
 			/* Migrate to another CPU, unlocks LWP */
 			lwp_migrate(t, ci);
 		} else {
 			/* Unset the affinity flag */
 			t->l_flag &= ~LW_AFFINITY;
+			if (t->l_affinity != NULL)
+				kcpuset_unuse(t->l_affinity, &cpulst);
+			t->l_affinity = NULL;
 			lwp_unlock(t);
 		}
 		lcnt++;
@@ -386,9 +423,10 @@ sys__sched_setaffinity(struct lwp *l,
 	mutex_exit(p->p_lock);
 	if (lcnt == 0)
 		error = ESRCH;
-error:
+out:
 	if (cpuset != NULL)
-		kmem_free(cpuset, sizeof(cpuset_t));
+		kcpuset_unuse(cpuset, &cpulst);
+	cpuset_destroy(cpulst);
 	return error;
 }
 
@@ -403,39 +441,40 @@ sys__sched_getaffinity(struct lwp *l,
 		syscallarg(pid_t) pid;
 		syscallarg(lwpid_t) lid;
 		syscallarg(size_t) size;
-		syscallarg(void *) cpuset;
+		syscallarg(cpuset_t *) cpuset;
 	} */
 	struct lwp *t;
-	void *cpuset;
+	cpuset_t *cpuset;
 	int error;
 
-	if (SCARG(uap, size) <= 0)
-		return EINVAL;
-	cpuset = kmem_zalloc(sizeof(cpuset_t), KM_SLEEP);
+	if ((error = gencpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size))))
+		return error;
 
 	/* Locks the LWP */
 	t = lwp_find2(SCARG(uap, pid), SCARG(uap, lid));
 	if (t == NULL) {
-		kmem_free(cpuset, sizeof(cpuset_t));
-		return ESRCH;
+		error = ESRCH;
+		goto out;
 	}
 	/* Check the permission */
 	if (kauth_authorize_process(l->l_cred,
 	    KAUTH_PROCESS_SCHEDULER_GETAFFINITY, t->l_proc, NULL, NULL, NULL)) {
 		mutex_exit(t->l_proc->p_lock);
-		kmem_free(cpuset, sizeof(cpuset_t));
-		return EPERM;
+		error = EPERM;
+		goto out;
 	}
 	lwp_lock(t);
-	if (t->l_flag & LW_AFFINITY)
-		memcpy(cpuset, &t->l_affinity, sizeof(cpuset_t));
+	if (t->l_flag & LW_AFFINITY) {
+		KASSERT(t->l_affinity != NULL);
+		kcpuset_copy(cpuset, t->l_affinity);
+	} else
+		cpuset_zero(cpuset);
 	lwp_unlock(t);
 	mutex_exit(t->l_proc->p_lock);
 
-	error = copyout(cpuset, SCARG(uap, cpuset),
-	    min(SCARG(uap, size), sizeof(cpuset_t)));
-
-	kmem_free(cpuset, sizeof(cpuset_t));
+	error = copyout(cpuset, SCARG(uap, cpuset), cpuset_size(cpuset));
+out:
+	kcpuset_unuse(cpuset, NULL);
 	return error;
 }
 

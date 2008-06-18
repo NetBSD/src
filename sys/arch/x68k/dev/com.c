@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.52 2008/05/27 14:13:41 ad Exp $	*/
+/*	$NetBSD: com.c,v 1.52.2.1 2008/06/18 16:32:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.52 2008/05/27 14:13:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.52.2.1 2008/06/18 16:32:54 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -384,16 +384,13 @@ comattach(struct device *parent, struct device *dev, void *aux)
 int
 comopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = COMUNIT(dev);
 	struct com_softc *sc;
 	int iobase;
 	struct tty *tp;
 	int s;
 	int error = 0;
 
-	if (unit >= xcom_cd.cd_ndevs)
-		return ENXIO;
-	sc =  xcom_cd.cd_devs[unit];
+	sc =  device_lookup_private(&xcom_cd, COMUNIT(dev));
 	if (!sc)
 		return ENXIO;
 
@@ -507,8 +504,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 comclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = COMUNIT(dev);
-	struct com_softc *sc = xcom_cd.cd_devs[unit];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
 	int s;
@@ -544,7 +540,7 @@ comclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 comread(dev_t dev, struct uio *uio, int flag)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
@@ -553,7 +549,7 @@ comread(dev_t dev, struct uio *uio, int flag)
 int
 comwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
@@ -562,7 +558,7 @@ comwrite(dev_t dev, struct uio *uio, int flag)
 int
 compoll(dev_t dev, int events, struct lwp *l)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -571,7 +567,7 @@ compoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 comtty(dev_t dev)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -592,8 +588,7 @@ tiocm_xxx2mcr(int data)
 int
 comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	int unit = COMUNIT(dev);
-	struct com_softc *sc = xcom_cd.cd_devs[unit];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int iobase = sc->sc_iobase;
 	int error;
@@ -704,7 +699,7 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static int
 comparam(struct tty *tp, struct termios *t)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(tp->t_dev));
 	int iobase = sc->sc_iobase;
 	int ospeed = comspeed(t->c_ospeed);
 	u_char lcr;
@@ -815,7 +810,7 @@ int comdebug = 0;
 static void
 comstart(struct tty *tp)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, COMUNIT(tp->t_dev));
 	int iobase = sc->sc_iobase;
 	int s;
 
@@ -930,8 +925,8 @@ compollin(void *arg)
 	splx(s);
 
 	for (unit = 0; unit < xcom_cd.cd_ndevs; unit++) {
-		sc = xcom_cd.cd_devs[unit];
-		if (sc == 0 || sc->sc_ibufp == sc->sc_ibuf)
+		sc = device_lookup_private(&xcom_cd, unit);
+		if (sc == NULL || sc->sc_ibufp == sc->sc_ibuf)
 			continue;
 
 		tp = sc->sc_tty;
@@ -986,7 +981,7 @@ out:
 int
 comintr(void *arg)
 {
-	struct com_softc *sc = xcom_cd.cd_devs[(int)arg];
+	struct com_softc *sc = device_lookup_private(&xcom_cd, *((int *)arg));
 	int iobase = sc->sc_iobase;
 	struct tty *tp;
 	u_char lsr, data, msr, delta;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.59 2008/04/08 20:10:44 cegger Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.59.8.1 2008/06/18 16:33:18 simonb Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.59 2008/04/08 20:10:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.59.8.1 2008/06/18 16:33:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -237,10 +237,8 @@ raopen(dev, flag, fmt, l)
 	 * Make sure this is a reasonable open request.
 	 */
 	unit = DISKUNIT(dev);
-	if (unit >= ra_cd.cd_ndevs)
-		return ENXIO;
-	ra = ra_cd.cd_devs[unit];
-	if (ra == 0)
+	ra = device_lookup_private(&ra_cd, unit);
+	if (!ra)
 		return ENXIO;
 
 	part = DISKPART(dev);
@@ -313,7 +311,7 @@ raclose(dev, flags, fmt, l)
 	struct	lwp *l;
 {
 	int unit = DISKUNIT(dev);
-	struct ra_softc *ra = ra_cd.cd_devs[unit];
+	struct ra_softc *ra = device_lookup_private(&ra_cd, unit);
 	int mask = (1 << DISKPART(dev));
 
 	mutex_enter(&ra->ra_disk.dk_openlock);
@@ -363,7 +361,7 @@ rastrategy(bp)
 	 * Make sure this is a reasonable drive to use.
 	 */
 	unit = DISKUNIT(bp->b_dev);
-	if (unit > ra_cd.cd_ndevs || (ra = ra_cd.cd_devs[unit]) == NULL) {
+	if ((ra = device_lookup_private(&ra_cd, unit)) == NULL) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
@@ -437,7 +435,7 @@ raioctl(dev, cmd, data, flag, l)
 {
 	int unit = DISKUNIT(dev);
 	struct disklabel *lp, *tp;
-	struct ra_softc *ra = ra_cd.cd_devs[unit];
+	struct ra_softc *ra = device_lookup_private(&ra_cd, unit);
 	int error = 0;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -593,10 +591,9 @@ rasize(dev)
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra;
 
-	if (unit >= ra_cd.cd_ndevs || ra_cd.cd_devs[unit] == 0)
+	ra = device_lookup_private(&ra_cd, unit);
+	if (!ra)
 		return -1;
-
-	ra = ra_cd.cd_devs[unit];
 
 	if (ra->ra_state == DK_CLOSED)
 		if (ra_putonline(ra) == MSCP_FAILED)
@@ -771,10 +768,8 @@ rxopen(dev, flag, fmt, l)
 	 * Make sure this is a reasonable open request.
 	 */
 	unit = DISKUNIT(dev);
-	if (unit >= rx_cd.cd_ndevs)
-		return ENXIO;
-	rx = rx_cd.cd_devs[unit];
-	if (rx == 0)
+	rx = device_lookup_private(&rx_cd, unit);
+	if (!rx)
 		return ENXIO;
 
 	/*
@@ -807,7 +802,7 @@ rxstrategy(bp)
 	 * Make sure this is a reasonable drive to use.
 	 */
 	unit = DISKUNIT(bp->b_dev);
-	if (unit > rx_cd.cd_ndevs || (rx = rx_cd.cd_devs[unit]) == NULL) {
+	if ((rx = device_lookup_private(&rx_cd, unit)) == NULL) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
@@ -872,7 +867,7 @@ rxioctl(dev, cmd, data, flag, l)
 {
 	int unit = DISKUNIT(dev);
 	struct disklabel *lp;
-	struct rx_softc *rx = rx_cd.cd_devs[unit];
+	struct rx_softc *rx = device_lookup_private(&rx_cd, unit);
 	int error = 0;
 
 	lp = rx->ra_disk.dk_label;
@@ -981,12 +976,12 @@ rriodone(usc, bp)
 	unit = DISKUNIT(bp->b_dev);
 #if NRA
 	if (cdevsw_lookup(bp->b_dev) == &ra_cdevsw)
-		ra = ra_cd.cd_devs[unit];
+		ra = device_lookup_private(&ra_cd, unit);
 	else
 #endif
 #if NRX
 	if (cdevsw_lookup(bp->b_dev) == &rx_cdevsw)
-		ra = rx_cd.cd_devs[unit];
+		ra = device_lookup_private(&rx_cd, unit);
 	else
 #endif
 		panic("rriodone: unexpected major %d unit %d",
@@ -1153,11 +1148,11 @@ rrfillin(bp, mp)
 
 #if NRA
 	if (cdevsw_lookup(bp->b_dev) == &ra_cdevsw)
-		rx = ra_cd.cd_devs[unit];
+		rx = device_lookup_private(&ra_cd, unit);
 #endif
 #if NRX
 	if (cdevsw_lookup(bp->b_dev) == &rx_cdevsw)
-		rx = rx_cd.cd_devs[unit];
+		rx = device_lookup_private(&rx_cd, unit);
 #endif
 	lp = rx->ra_disk.dk_label;
 

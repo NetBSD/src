@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.10 2008/05/10 15:31:04 martin Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.10.2.1 2008/06/18 16:32:40 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -305,7 +305,8 @@ lcdclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 paddr_t
 lcdmmap(dev_t dev, off_t offset, int size)
 {
-	struct pxa2x0_lcd_softc *sc = device_lookup(&lcd_cd, minor(dev));
+	struct pxa2x0_lcd_softc *sc =
+		device_lookup_private(&lcd_cd, minor(dev));
 	struct pxa2x0_lcd_screen *scr = sc->active;
 
 	return bus_dmamem_mmap( &pxa2x0_bus_dma_tag, scr->segs, scr->nsegs,

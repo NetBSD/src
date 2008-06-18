@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.12 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: gpib.c,v 1.12.4.1 2008/06/18 16:33:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.12 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.12.4.1 2008/06/18 16:33:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,14 +518,11 @@ recverror:
  */
 
 int
-gpibopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+gpibopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct gpib_softc *sc;
 
-	sc = device_lookup(&gpib_cd, GPIBUNIT(dev));
+	sc = device_lookup_private(&gpib_cd, GPIBUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -539,14 +536,11 @@ gpibopen(dev, flags, mode, l)
 }
 
 int
-gpibclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+gpibclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct gpib_softc *sc;
 
-	sc = device_lookup(&gpib_cd, GPIBUNIT(dev));
+	sc = device_lookup_private(&gpib_cd, GPIBUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -558,14 +552,11 @@ gpibclose(dev, flag, mode, l)
 }
 
 int
-gpibread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+gpibread(dev_t dev, struct uio *uio, int flags)
 {
 	struct gpib_softc *sc;
 
-	sc = device_lookup(&gpib_cd, GPIBUNIT(dev));
+	sc = device_lookup_private(&gpib_cd, GPIBUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -575,14 +566,11 @@ gpibread(dev, uio, flags)
 }
 
 int
-gpibwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+gpibwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct gpib_softc *sc;
 
-	sc = device_lookup(&gpib_cd, GPIBUNIT(dev));
+	sc = device_lookup_private(&gpib_cd, GPIBUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -592,16 +580,11 @@ gpibwrite(dev, uio, flags)
 }
 
 int
-gpibioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+gpibioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct gpib_softc *sc;
 
-	sc = device_lookup(&gpib_cd, GPIBUNIT(dev));
+	sc = device_lookup_private(&gpib_cd, GPIBUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -618,14 +601,11 @@ gpibioctl(dev, cmd, data, flag, l)
 }
 
 int
-gpibpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+gpibpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct gpib_softc *sc;
 
-	sc = device_lookup(&gpib_cd, GPIBUNIT(dev));
+	sc = device_lookup_private(&gpib_cd, GPIBUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 

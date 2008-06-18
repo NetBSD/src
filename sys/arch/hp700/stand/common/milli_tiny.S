@@ -1,4 +1,4 @@
-;	$NetBSD: milli_tiny.S,v 1.2 2005/12/11 12:17:25 christos Exp $
+;	$NetBSD: milli_tiny.S,v 1.1.4.2 2008/06/18 16:32:41 simonb Exp $
 
 ; Copyright (c) 2003 ITOH Yasufumi.
 ; All rights reserved.

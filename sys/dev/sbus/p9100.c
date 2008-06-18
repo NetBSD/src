@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.38 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: p9100.c,v 1.38.4.1 2008/06/18 16:33:25 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.38 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.38.4.1 2008/06/18 16:33:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ p9100_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 {
-	struct p9100_softc *sc = (struct p9100_softc *)self;
+	struct p9100_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
 	struct fbdevice *fb = &sc->sc_fb;
 	int isconsole;
@@ -501,7 +501,7 @@ p9100open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = minor(dev);
 
-	if (unit >= pnozz_cd.cd_ndevs || pnozz_cd.cd_devs[unit] == NULL)
+	if (device_lookup(&pnozz_cd, unit) == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -509,7 +509,7 @@ p9100open(dev_t dev, int flags, int mode, struct lwp *l)
 int
 p9100ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
+	struct p9100_softc *sc = device_lookup_private(&pnozz_cd, minor(dev));
 	struct fbgattr *fba;
 	int error, v;
 
@@ -890,7 +890,7 @@ p9100_ramdac_write_ctl(struct p9100_softc *sc, int off, uint8_t val)
 static void
 p9100unblank(struct device *dev)
 {
-	struct p9100_softc *sc = (struct p9100_softc *)dev;
+	struct p9100_softc *sc = device_private(dev);
 
 	p9100_set_video((struct p9100_softc *)dev, 1);
 
@@ -984,7 +984,7 @@ p9100loadcmap(struct p9100_softc *sc, int start, int ncolors)
 static paddr_t
 p9100mmap(dev_t dev, off_t off, int prot)
 {
-	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
+	struct p9100_softc *sc = device_lookup_private(&pnozz_cd, minor(dev));
 
 	if (off & PGOFSET)
 		panic("p9100mmap");

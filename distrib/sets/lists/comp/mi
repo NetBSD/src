@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1157.2.1 2008/06/10 14:51:20 simonb Exp $
+#	$NetBSD: mi,v 1.1157.2.2 2008/06/18 16:32:36 simonb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4252,6 +4252,7 @@
 ./usr/share/man/cat3/addnstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/addr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/addstr.0			comp-c-catman		.cat
+./usr/share/man/cat3/affinity.0			comp-c-catman		.cat
 ./usr/share/man/cat3/aio_cancel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/aio_error.0		comp-c-catman		.cat
 ./usr/share/man/cat3/aio_fsync.0		comp-c-catman		.cat
@@ -4682,6 +4683,14 @@
 ./usr/share/man/cat3/coshf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cpow.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cpowf.0			comp-c-catman		.cat
+./usr/share/man/cat3/cpuset.0			comp-c-catman		.cat
+./usr/share/man/cat3/cpuset_clr.0		comp-c-catman		.cat
+./usr/share/man/cat3/cpuset_create.0		comp-c-catman		.cat
+./usr/share/man/cat3/cpuset_destroy.0		comp-c-catman		.cat
+./usr/share/man/cat3/cpuset_isset.0		comp-c-catman		.cat
+./usr/share/man/cat3/cpuset_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/cpuset_size.0		comp-c-catman		.cat
+./usr/share/man/cat3/cpuset_zero.0		comp-c-catman		.cat
 ./usr/share/man/cat3/creal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/crealf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/creat.0			comp-c-catman		.cat
@@ -6519,15 +6528,6 @@
 ./usr/share/man/cat3/prop_array_externalize.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_externalize_to_file.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_array_get.0		comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_internalize.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_internalize_from_file.0 comp-c-catman	.cat
-./usr/share/man/cat3/prop_array_iterator.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_make_immutable.0 comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_mutable.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_recv_ioctl.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_remove.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_send_ioctl.0	comp-c-catman		.cat
-./usr/share/man/cat3/prop_array_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_get_bool.0      comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_get_cstring.0   comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_get_cstring_nocopy.0 comp-c-catman      .cat
@@ -6539,6 +6539,15 @@
 ./usr/share/man/cat3/prop_array_get_uint32.0    comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_get_uint64.0    comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_get_uint8.0     comp-c-catman           .cat
+./usr/share/man/cat3/prop_array_internalize.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_internalize_from_file.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_array_iterator.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_make_immutable.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_mutable.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_recv_ioctl.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_remove.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_send_ioctl.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_set_bool.0      comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_set_cstring.0   comp-c-catman           .cat
 ./usr/share/man/cat3/prop_array_set_cstring_nocopy.0 comp-c-catman      .cat
@@ -6700,6 +6709,7 @@
 ./usr/share/man/cat3/pthread_detach.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_equal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_exit.0		comp-c-catman		.cat
+./usr/share/man/cat3/pthread_getaffinity_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getname_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getspecific.0	comp-c-catman		.cat
@@ -6733,6 +6743,7 @@
 ./usr/share/man/cat3/pthread_rwlockattr_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_schedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_self.0		comp-c-catman		.cat
+./usr/share/man/cat3/pthread_setaffinity_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setcancelstate.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setcanceltype.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setname_np.0	comp-c-catman		.cat
@@ -9525,6 +9536,7 @@
 ./usr/share/man/man3/addnstr.3			comp-c-man		.man
 ./usr/share/man/man3/addr.3			comp-c-man		.man
 ./usr/share/man/man3/addstr.3			comp-c-man		.man
+./usr/share/man/man3/affinity.3			comp-c-man		.man
 ./usr/share/man/man3/aio_cancel.3		comp-c-man		.man
 ./usr/share/man/man3/aio_error.3		comp-c-man		.man
 ./usr/share/man/man3/aio_fsync.3		comp-c-man		.man
@@ -9955,6 +9967,14 @@
 ./usr/share/man/man3/coshf.3			comp-c-man		.man
 ./usr/share/man/man3/cpow.3			comp-c-man		.man
 ./usr/share/man/man3/cpowf.3			comp-c-man		.man
+./usr/share/man/man3/cpuset.3			comp-c-man		.man
+./usr/share/man/man3/cpuset_clr.3		comp-c-man		.man
+./usr/share/man/man3/cpuset_create.3		comp-c-man		.man
+./usr/share/man/man3/cpuset_destroy.3		comp-c-man		.man
+./usr/share/man/man3/cpuset_isset.3		comp-c-man		.man
+./usr/share/man/man3/cpuset_set.3		comp-c-man		.man
+./usr/share/man/man3/cpuset_size.3		comp-c-man		.man
+./usr/share/man/man3/cpuset_zero.3		comp-c-man		.man
 ./usr/share/man/man3/creal.3			comp-c-man		.man
 ./usr/share/man/man3/crealf.3			comp-c-man		.man
 ./usr/share/man/man3/creat.3			comp-c-man		.man
@@ -11792,15 +11812,6 @@
 ./usr/share/man/man3/prop_array_externalize.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_externalize_to_file.3 comp-c-man	.man
 ./usr/share/man/man3/prop_array_get.3		comp-c-man		.man
-./usr/share/man/man3/prop_array_internalize.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_internalize_from_file.3 comp-c-man	.man
-./usr/share/man/man3/prop_array_iterator.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_make_immutable.3 comp-c-man		.man
-./usr/share/man/man3/prop_array_mutable.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_recv_ioctl.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_remove.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_send_ioctl.3	comp-c-man		.man
-./usr/share/man/man3/prop_array_set.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_get_bool.3      comp-c-man              .man
 ./usr/share/man/man3/prop_array_get_cstring.3   comp-c-man              .man
 ./usr/share/man/man3/prop_array_get_cstring_nocopy.3    comp-c-man      .man
@@ -11812,6 +11823,15 @@
 ./usr/share/man/man3/prop_array_get_uint32.3    comp-c-man              .man
 ./usr/share/man/man3/prop_array_get_uint64.3    comp-c-man              .man
 ./usr/share/man/man3/prop_array_get_uint8.3     comp-c-man              .man
+./usr/share/man/man3/prop_array_internalize.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_internalize_from_file.3 comp-c-man	.man
+./usr/share/man/man3/prop_array_iterator.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_make_immutable.3 comp-c-man		.man
+./usr/share/man/man3/prop_array_mutable.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_recv_ioctl.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_remove.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_send_ioctl.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_set.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_set_bool.3      comp-c-man              .man
 ./usr/share/man/man3/prop_array_set_cstring.3   comp-c-man              .man
 ./usr/share/man/man3/prop_array_set_cstring_nocopy.3    comp-c-man      .man
@@ -11973,6 +11993,7 @@
 ./usr/share/man/man3/pthread_detach.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_equal.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_exit.3		comp-c-man		.man
+./usr/share/man/man3/pthread_getaffinity_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getname_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getspecific.3	comp-c-man		.man
@@ -12006,6 +12027,7 @@
 ./usr/share/man/man3/pthread_rwlockattr_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_schedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_self.3		comp-c-man		.man
+./usr/share/man/man3/pthread_setaffinity_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_setcancelstate.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_setcanceltype.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_setname_np.3	comp-c-man		.man

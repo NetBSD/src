@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.37 2007/12/03 15:33:11 ad Exp $ */
+/*	$NetBSD: atzsc.c,v 1.37.22.1 2008/06/18 16:32:38 simonb Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.37 2007/12/03 15:33:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.37.22.1 2008/06/18 16:32:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,10 +360,13 @@ void
 atzsc_dump(void)
 {
 	extern struct cfdriver atzsc_cd;
+	struct sbic_softc *sc;
 	int i;
 
-	for (i = 0; i < atzsc_cd.cd_ndevs; ++i)
-		if (atzsc_cd.cd_devs[i])
-			sbic_dump(atzsc_cd.cd_devs[i]);
+	for (i = 0; i < atzsc_cd.cd_ndevs; ++i) {
+		sc = device_lookup_private(&atysc_cd, i);
+		if (sc != NULL)
+			sbic_dump(sc);
+	}
 }
 #endif

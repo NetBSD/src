@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.54 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: ct.c,v 1.54.4.1 2008/06/18 16:32:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.54 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.54.4.1 2008/06/18 16:32:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,9 +359,11 @@ ctopen(dev_t dev, int flag, int type, struct lwp *l)
 	uint8_t stat;
 	int cc, ctlr, slave;
 
-	if (UNIT(dev) >= ct_cd.cd_ndevs ||
-	    (sc = device_private(ct_cd.cd_devs[UNIT(dev)])) == NULL ||
-	    (sc->sc_flags & CTF_ALIVE) == 0)
+	sc = device_lookup_private(&ct_cd, UNIT(dev));
+	if (sc == NULL)
+		return ENXIO;
+
+	if ((sc->sc_flags & CTF_ALIVE) == 0)
 		return ENXIO;
 
 	if (sc->sc_flags & CTF_OPEN)
@@ -401,7 +403,7 @@ ctopen(dev_t dev, int flag, int type, struct lwp *l)
 static int
 ctclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct ct_softc *sc = device_private(ct_cd.cd_devs[UNIT(dev)]);
+	struct ct_softc *sc = device_lookup_private(&ct_cd,UNIT(dev));
 
 	if ((sc->sc_flags & (CTF_WRT|CTF_WRTTN)) == (CTF_WRT|CTF_WRTTN) &&
 	    (sc->sc_flags & CTF_EOT) == 0 ) { /* XXX return error if EOT ?? */
@@ -432,7 +434,7 @@ ctclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static void
 ctcommand(dev_t dev, int cmd, int cnt)
 {
-	struct ct_softc *sc = device_private(ct_cd.cd_devs[UNIT(dev)]);
+	struct ct_softc *sc = device_lookup_private(&ct_cd,UNIT(dev));
 	struct buf *bp = &sc->sc_bufstore;
 	struct buf *nbp = 0;
 
@@ -483,11 +485,10 @@ ctcommand(dev_t dev, int cmd, int cnt)
 static void
 ctstrategy(struct buf *bp)
 {
-	int s, unit;
+	int s;
 	struct ct_softc *sc;
 
-	unit = UNIT(bp->b_dev);
-	sc = device_private(ct_cd.cd_devs[unit]);
+	sc = device_lookup_private(&ct_cd, UNIT(bp->b_dev));
 
 	s = splbio();
 	BUFQ_PUT(sc->sc_tab, bp);

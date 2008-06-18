@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.38 2008/03/11 05:34:02 matt Exp $	*/
+/*	$NetBSD: rl.c,v 1.38.8.1 2008/06/18 16:33:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.38 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.38.8.1 2008/06/18 16:33:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -369,7 +369,7 @@ int
 rlclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int unit = DISKUNIT(dev);
-	struct rl_softc *rc = rl_cd.cd_devs[unit];
+	struct rl_softc *rc = device_lookup_private(&rl_cd, unit);
 	int mask = (1 << DISKPART(dev));
 
 	mutex_enter(&rc->rc_disk.dk_openlock);
@@ -424,7 +424,7 @@ done:	biodone(bp);
 int
 rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct rl_softc *rc = rl_cd.cd_devs[DISKUNIT(dev)];
+	struct rl_softc *rc = device_lookup_private(&rl_cd, DISKUNIT(dev));
 	struct disklabel *lp = rc->rc_disk.dk_label;
 	int err = 0;
 #ifdef __HAVE_OLD_DISKLABEL
@@ -634,7 +634,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 		bp = ob;
 	sc->sc_active = bp;
 
-	rc = rl_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	rc = device_lookup_private(&rl_cd, DISKUNIT(bp->b_dev));
 	bn = sc->sc_diskblk;
 	lp = rc->rc_disk.dk_label;
 	if (bn) {

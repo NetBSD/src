@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.28 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: if_media.c,v 1.28.4.1 2008/06/18 16:33:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.28 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.28.4.1 2008/06/18 16:33:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,6 +408,19 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 		}
 	}
 }
+
+void
+ifmedia_removeall(struct ifmedia *ifm)
+{
+	struct ifmedia_entry *ife, *nife;
+
+	for (ife = TAILQ_FIRST(&ifm->ifm_list); ife != NULL; ife = nife) {
+		nife = TAILQ_NEXT(ife, ifm_list);
+		TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
+		free(ife, M_IFMEDIA);
+	}
+}
+
 
 /*
  * Compute the interface `baudrate' from the media, for the interface
