@@ -1,5 +1,12 @@
 2008-06-18  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/admin.h
+	  src/racoon/admin.c
+	  src/racoon/racoonctl.c
+	  src/racoon/racoonctl.8 : acquire peer certificate via admin port
+
+2008-06-18  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/misc.c
 	  src/racoon/misc.h
 	  src/racoon/admin.c
