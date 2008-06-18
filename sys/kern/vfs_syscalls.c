@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.365.2.1 2008/06/10 14:51:22 simonb Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.365.2.2 2008/06/18 16:33:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.365.2.1 2008/06/10 14:51:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.365.2.2 2008/06/18 16:33:35 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -305,7 +305,7 @@ static int
 mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
     const char *path, int flags, void *data, size_t *data_len, u_int recurse)
 {
-	struct mount *mp = NULL;
+	struct mount *mp;
 	struct vnode *vp = *vpp;
 	struct vattr va;
 	int error;
@@ -3025,41 +3025,52 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	struct vattr vattr;
 	struct nameidata nd;
 	int error;
+	bool vanull, setbirthtime;
+	struct timespec ts[2];
 
-	VATTR_NULL(&vattr);
 	if (tptr == NULL) {
-		nanotime(&vattr.va_atime);
-		vattr.va_mtime = vattr.va_atime;
-		vattr.va_vaflags |= VA_UTIMES_NULL;
+		vanull = true;
+		nanotime(&ts[0]);
+		ts[1] = ts[0];
 	} else {
 		struct timeval tv[2];
 
+		vanull = false;
 		if (seg != UIO_SYSSPACE) {
 			error = copyin(tptr, &tv, sizeof (tv));
 			if (error != 0)
 				return error;
 			tptr = tv;
 		}
-		TIMEVAL_TO_TIMESPEC(tptr, &vattr.va_atime);
-		TIMEVAL_TO_TIMESPEC(tptr + 1, &vattr.va_mtime);
+		TIMEVAL_TO_TIMESPEC(&tptr[0], &ts[0]);
+		TIMEVAL_TO_TIMESPEC(&tptr[1], &ts[1]);
 	}
 
 	if (vp == NULL) {
 		NDINIT(&nd, LOOKUP, flag | TRYEMULROOT, UIO_USERSPACE, path);
 		if ((error = namei(&nd)) != 0)
-			return (error);
+			return error;
 		vp = nd.ni_vp;
 	} else
 		nd.ni_vp = NULL;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	setbirthtime = (VOP_GETATTR(vp, &vattr, l->l_cred) == 0 &&
+	    timespeccmp(&ts[1], &vattr.va_birthtime, <));
+	VATTR_NULL(&vattr);
+	vattr.va_atime = ts[0];
+	vattr.va_mtime = ts[1];
+	if (setbirthtime)
+		vattr.va_birthtime = ts[1];
+	if (vanull)
+		vattr.va_flags |= VA_UTIMES_NULL;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	VOP_UNLOCK(vp, 0);
 
 	if (nd.ni_vp != NULL)
 		vrele(nd.ni_vp);
 
-	return (error);
+	return error;
 }
 
 /*

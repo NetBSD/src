@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.80 2008/06/08 12:43:51 tsutsui Exp $	*/
+/*	$NetBSD: midway.c,v 1.80.2.1 2008/06/18 16:33:10 simonb Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.80 2008/06/08 12:43:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.80.2.1 2008/06/18 16:33:10 simonb Exp $");
 
 #include "opt_natm.h"
 
@@ -1153,7 +1153,7 @@ void *data;
 
 {
 #ifdef MISSING_IF_SOFTC
-    struct en_softc *sc = (struct en_softc *) en_cd.cd_devs[ifp->if_unit];
+    struct en_softc *sc = (struct en_softc *)device_lookup_private(&en_cd, ifp->if_unit);
 #else
     struct en_softc *sc = (struct en_softc *) ifp->if_softc;
 #endif
@@ -1689,7 +1689,7 @@ struct ifnet *ifp;
 
 {
 #ifdef MISSING_IF_SOFTC
-    struct en_softc *sc = (struct en_softc *) en_cd.cd_devs[ifp->if_unit];
+    struct en_softc *sc = (struct en_softc *)device_lookup_private(&en_cd, ifp->if_unit);
 #else
     struct en_softc *sc = (struct en_softc *) ifp->if_softc;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.47 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: mha.c,v 1.47.4.1 2008/06/18 16:32:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.47 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.47.4.1 2008/06/18 16:32:54 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -2022,7 +2022,7 @@ void
 mha_print_active_acb(void)
 {
 	struct acb *acb;
-	struct mha_softc *sc = mha_cd.cd_devs[0]; /* XXX */
+	struct mha_softc *sc = device_lookup_private(&mha_cd, 0); /* XXX */
 
 	printf("ready list:\n");
 	for (acb = sc->ready_list.tqh_first; acb != NULL;

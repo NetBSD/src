@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.202.2.1 2008/06/10 14:51:22 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.202.2.2 2008/06/18 16:33:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.202.2.1 2008/06/10 14:51:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.202.2.2 2008/06/18 16:33:35 simonb Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -796,6 +796,7 @@ bwrite(buf_t *bp)
 	struct mount *mp;
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	vp = bp->b_vp;
 	if (vp != NULL) {
@@ -910,8 +911,8 @@ bdwrite(buf_t *bp)
 
 	KASSERT(bp->b_vp == NULL || bp->b_vp->v_tag != VT_UFS ||
 	    ISSET(bp->b_flags, B_COWDONE));
-
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/* If this is a tape block, write the block now. */
 	if (bdev_type(bp->b_dev) == D_TAPE) {
@@ -970,6 +971,7 @@ bawrite(buf_t *bp)
  * Call with the buffer interlock held.
  *
  * Note: called only from biodone() through ffs softdep's io_complete()
+ * Note2: smbfs also learned about bdirty().
  */
 void
 bdirty(buf_t *bp)
@@ -1184,6 +1186,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 			mutex_exit(&bufcache_lock);
 			return (NULL);
 		}
+		KASSERT(!cv_has_waiters(&bp->b_done));
 #ifdef DIAGNOSTIC
 		if (ISSET(bp->b_oflags, BO_DONE|BO_DELWRI) &&
 		    bp->b_bcount < size && vp->v_type != VBLK)
@@ -1349,6 +1352,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		if (bp != NULL) {
 			memset((char *)bp, 0, sizeof(*bp));
 			buf_init(bp);
+			SET(bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 			mutex_enter(&bufcache_lock);
 #if defined(DIAGNOSTIC)
 			bp->b_freelistindex = -1;
@@ -1360,7 +1364,6 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE].bq_queue)) != NULL ||
 	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU].bq_queue)) != NULL) {
-	    	KASSERT(!cv_has_waiters(&bp->b_done));
 	    	KASSERT(!ISSET(bp->b_cflags, BC_BUSY));
 		bremfree(bp);
 
@@ -1400,6 +1403,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
 	KASSERT(bp->b_refcnt > 0);
+    	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/*
 	 * If buffer was a delayed write, start it and return NULL
@@ -2065,7 +2069,7 @@ buf_init(buf_t *bp)
 	bp->b_dev = NODEV;
 	bp->b_error = 0;
 	bp->b_flags = 0;
-	bp->b_cflags = BC_BUSY;
+	bp->b_cflags = 0;
 	bp->b_oflags = 0;
 	bp->b_objlock = &buffer_lock;
 	bp->b_iodone = NULL;

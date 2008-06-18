@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.24 2008/04/28 20:23:55 martin Exp $ */
+/* $NetBSD: pckbd.c,v 1.24.4.1 2008/06/18 16:33:25 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.24 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.24.4.1 2008/06/18 16:33:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -700,14 +700,6 @@ void
 pckbd_cnpollc(void *v, int on)
 {
 	struct pckbd_internal *t = v;
-
-	if (on) {
-		u_char cmd[1];
-
-		cmd[0] = KBC_ENABLE;
-		(void)pckbport_poll_cmd(t->t_kbctag, t->t_kbcslot, cmd,
-		    1, 0, 0, 0);
-	}
 
 	pckbport_set_poll(t->t_kbctag, t->t_kbcslot, on);
 }

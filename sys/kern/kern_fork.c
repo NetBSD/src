@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.169 2008/06/02 16:18:09 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.169.2.1 2008/06/18 16:33:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.169 2008/06/02 16:18:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.169.2.1 2008/06/18 16:33:35 simonb Exp $");
 
 #include "opt_ktrace.h"
 
@@ -364,8 +364,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_limit = p1_lim;
 	}
 
-	p2->p_sflag = ((flags & FORK_PPWAIT) ? PS_PPWAIT : 0);
-	p2->p_lflag = 0;
+	p2->p_lflag = ((flags & FORK_PPWAIT) ? PL_PPWAIT : 0);
+	p2->p_sflag = 0;
 	p2->p_slflag = 0;
 	parent = (flags & FORK_NOWAIT) ? initproc : p1;
 	p2->p_pptr = parent;
@@ -525,12 +525,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
-	 * child to exec or exit, set PS_PPWAIT on child, and sleep on our
+	 * child to exec or exit, set PL_PPWAIT on child, and sleep on our
 	 * proc (in case of exit).
 	 */
-	if (flags & FORK_PPWAIT)
-		while (p2->p_sflag & PS_PPWAIT)
-			cv_wait(&p1->p_waitcv, proc_lock);
+	while (p2->p_lflag & PL_PPWAIT)
+		cv_wait(&p1->p_waitcv, proc_lock);
 
 	mutex_exit(proc_lock);
 

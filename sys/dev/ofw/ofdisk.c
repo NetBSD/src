@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.40 2008/04/08 20:11:57 cegger Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.40.8.1 2008/06/18 16:33:18 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.40 2008/04/08 20:11:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.40.8.1 2008/06/18 16:33:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -149,14 +149,12 @@ ofdisk_attach(struct device *parent, struct device *self, void *aux)
 int
 ofdisk_open(dev_t dev, int flags, int fmt, struct lwp *lwp)
 {
-	int unit = DISKUNIT(dev);
 	struct ofdisk_softc *of;
 	char path[256];
 	int error, l, part;
 
-	if (unit >= ofdisk_cd.cd_ndevs)
-		return ENXIO;
-	if (!(of = ofdisk_cd.cd_devs[unit]))
+	of = device_lookup_private(&ofdisk_cd, DISKUNIT(dev));
+	if (of == NULL)
 		return ENXIO;
 
 	part = DISKPART(dev);
@@ -233,7 +231,8 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct lwp *lwp)
 int
 ofdisk_close(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
+	struct ofdisk_softc *of =
+		device_lookup_private(&ofdisk_cd, DISKUNIT(dev));
 
 	mutex_enter(&of->sc_dk.dk_openlock);
 
@@ -265,7 +264,8 @@ ofdisk_close(dev_t dev, int flags, int fmt, struct lwp *l)
 void
 ofdisk_strategy(struct buf *bp)
 {
-	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	struct ofdisk_softc *of =
+		device_lookup_private(&ofdisk_cd, DISKUNIT(bp->b_dev));
 	struct partition *p;
 	u_quad_t off;
 	int read;
@@ -314,7 +314,8 @@ done:
 static void
 ofminphys(struct buf *bp)
 {
-	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	struct ofdisk_softc *of =
+		device_lookup_private(&ofdisk_cd, DISKUNIT(bp->b_dev));
 
 	if (bp->b_bcount > of->max_transfer)
 		bp->b_bcount = of->max_transfer;
@@ -335,7 +336,8 @@ ofdisk_write(dev_t dev, struct uio *uio, int flags)
 int
 ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
+	struct ofdisk_softc *of =
+		device_lookup_private(&ofdisk_cd, DISKUNIT(dev));
 	int error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -470,12 +472,11 @@ ofdisk_size(dev_t dev)
 {
 	struct ofdisk_softc *of;
 	struct disklabel *lp;
-	int size, part, omask, unit;
+	int size, part, omask;
 
-	unit = DISKUNIT(dev);
-	if (unit >= ofdisk_cd.cd_ndevs ||
-	    (of = ofdisk_cd.cd_devs[unit]) == NULL)
-		return -1;
+	of = device_lookup_private(&ofdisk_cd, DISKUNIT(dev));
+	if (of == NULL)
+		return ENXIO;
 
 	part = DISKPART(dev);
 	omask = of->sc_dk.dk_openmask & (1 << part);
@@ -529,11 +530,11 @@ ofdisk_getdefaultlabel(struct ofdisk_softc *of, struct disklabel *lp)
 }
 
 void
-ofdisk_getdisklabel(dev)
-	dev_t dev;
+ofdisk_getdisklabel(dev_t dev)
 {
 	int unit = DISKUNIT(dev);
-	struct ofdisk_softc *of = ofdisk_cd.cd_devs[unit];
+	struct ofdisk_softc *of =
+		device_lookup_private(&ofdisk_cd, unit);
 	struct disklabel *lp = of->sc_dk.dk_label;
 	const char *errmes;
 	int l;

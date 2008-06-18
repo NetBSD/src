@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.29 2008/04/08 20:40:42 cegger Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.29.8.1 2008/06/18 16:33:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.29 2008/04/08 20:40:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.29.8.1 2008/06/18 16:33:10 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -756,7 +756,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    rxq->rxq_fi * sizeof(*rxb), buflen, BUS_DMASYNC_POSTREAD);
 
 		KASSERT(m->m_len == 0 && m->m_pkthdr.len == 0);
-		memcpy(m->m_data + m->m_len, rxb->rb_data, buflen);
+		memcpy(m->m_data + m->m_len, rxb->rxb_data, buflen);
 		m->m_len = buflen;
 		m->m_pkthdr.len = buflen;
 

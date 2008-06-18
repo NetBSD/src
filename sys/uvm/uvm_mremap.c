@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.11 2008/06/02 16:25:34 ad Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.11.2.1 2008/06/18 16:33:59 simonb Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.11 2008/06/02 16:25:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.11.2.1 2008/06/18 16:33:59 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/atomic.h>

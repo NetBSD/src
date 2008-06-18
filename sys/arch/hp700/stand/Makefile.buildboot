@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.11 2008/05/10 19:11:59 skrll Exp $
+#	$NetBSD: Makefile.buildboot,v 1.11.2.1 2008/06/18 16:32:41 simonb Exp $
 
 RELOC=	120000
 HEAP_LIMIT=0x1c0000
@@ -42,7 +42,7 @@ CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT}
 CPPFLAGS+=		-DNO_NET
 
 COMMONSOURCE=		cons.c dev_hppa.c dk.c itecons.c \
-			machdep.c pdc.c time.c
+			machdep.c milli_tiny.S pdc.c time.c
 DRIVERSOURCE=		
 
 ### find out what to use for libkern

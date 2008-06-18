@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.27 2007/11/19 18:51:38 ad Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.27.22.1 2008/06/18 16:32:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.27 2007/11/19 18:51:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.27.22.1 2008/06/18 16:32:38 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -222,18 +222,12 @@ static void fcomstart __P((struct tty *));
 static int fcomparam __P((struct tty *, struct termios *));
 
 int
-fcomopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+fcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct fcom_softc *sc;
-	int unit = minor(dev);
 	struct tty *tp;
 
-	if (unit >= fcom_cd.cd_ndevs)
-		return ENXIO;
-	sc = fcom_cd.cd_devs[unit];
+	sc = device_lookup_private(&fcom_cd, minor(dev));
 	if (!sc)
 		return ENXIO;
 	if (!(tp = sc->sc_tty))
@@ -281,12 +275,9 @@ fcomopen(dev, flag, mode, l)
 }
 
 int
-fcomclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+fcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
+	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -307,50 +298,36 @@ fcomclose(dev, flag, mode, l)
 }
 
 int
-fcomread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+fcomread(dev_t dev, struct uio *uio, int flag)
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
+	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
-fcomwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+fcomwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
+	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 	
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
-fcompoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+fcompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
+	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-fcomioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+fcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
+	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 	
@@ -378,23 +355,21 @@ fcomioctl(dev, cmd, data, flag, l)
 }
 
 struct tty *
-fcomtty(dev)
-	dev_t dev;
+fcomtty(dev_t dev)
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
+	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(dev));
 
 	return sc->sc_tty;
 }
 
 static void
-fcomstart(tp)
-	struct tty *tp;
+fcomstart(struct tty *tp)
 {
 	struct clist *cl;
 	int s, len;
 	u_char buf[64];
 	int loop;
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(tp->t_dev)];
+	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(tp->t_dev));
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int timo;
@@ -446,11 +421,9 @@ fcomstart(tp)
 }
 
 static int
-fcomparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+fcomparam(struct tty *tp, struct termios *t)
 {
-	struct fcom_softc *sc = fcom_cd.cd_devs[minor(tp->t_dev)];
+	struct fcom_softc *sc = device_lookup_private(&fcom_cd, minor(tp->t_dev));
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int baudrate;

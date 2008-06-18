@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.154 2008/06/06 17:52:40 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.154.2.1 2008/06/18 16:33:35 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.154 2008/06/06 17:52:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.154.2.1 2008/06/18 16:33:35 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1101,7 +1101,7 @@ static void
 config_makeroom(int n, struct cfdriver *cd)
 {
 	int old, new;
-	void **nsp;
+	device_t *nsp;
 
 	if (n < cd->cd_ndevs)
 		return;
@@ -1117,14 +1117,14 @@ config_makeroom(int n, struct cfdriver *cd)
 	while (new <= n)
 		new *= 2;
 	cd->cd_ndevs = new;
-	nsp = malloc(new * sizeof(void *), M_DEVBUF,
+	nsp = malloc(new * sizeof(device_t), M_DEVBUF,
 	    cold ? M_NOWAIT : M_WAITOK);
 	if (nsp == NULL)
 		panic("config_attach: %sing dev array",
 		    old != 0 ? "expand" : "creat");
-	memset(nsp + old, 0, (new - old) * sizeof(void *));
+	memset(nsp + old, 0, (new - old) * sizeof(device_t));
 	if (old != 0) {
-		memcpy(nsp, cd->cd_devs, old * sizeof(void *));
+		memcpy(nsp, cd->cd_devs, old * sizeof(device_t));
 		free(cd->cd_devs, M_DEVBUF);
 	}
 	cd->cd_devs = nsp;
@@ -1838,7 +1838,7 @@ config_finalize(void)
  *
  *	Look up a device instance for a given driver.
  */
-void *
+device_t
 device_lookup(cfdriver_t cd, int unit)
 {
 
@@ -2116,8 +2116,6 @@ device_pmf_driver_deregister(device_t dev)
 	dev->dv_driver_suspend = NULL;
 	dev->dv_driver_resume = NULL;
 
-	dev->dv_pmf_private = NULL;
-
 	mutex_enter(&pp->pp_mtx);
 	dev->dv_flags &= ~DVF_POWER_HANDLERS;
 	while (pp->pp_nlock > 0 || pp->pp_nwait > 0) {
@@ -2131,6 +2129,7 @@ device_pmf_driver_deregister(device_t dev)
 		cv_wait(&pp->pp_cv, &pp->pp_mtx);
 		pmflock_debug(dev, __func__, __LINE__);
 	}
+	dev->dv_pmf_private = NULL;
 	mutex_exit(&pp->pp_mtx);
 
 	cv_destroy(&pp->pp_cv);
@@ -2210,8 +2209,8 @@ device_pmf_lock1(device_t dev PMF_FN_ARGS)
 {
 	pmf_private_t *pp = device_pmf_private(dev);
 
-	while (pp->pp_nlock > 0 && pp->pp_holder != curlwp &&
-	       device_pmf_is_registered(dev)) {
+	while (device_pmf_is_registered(dev) &&
+	    pp->pp_nlock > 0 && pp->pp_holder != curlwp) {
 		pp->pp_nwait++;
 		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
 		cv_wait(&pp->pp_cv, &pp->pp_mtx);

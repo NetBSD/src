@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.74 2008/03/07 17:15:51 cube Exp $	*/
+/*	$NetBSD: lpt.c,v 1.74.8.1 2008/06/18 16:33:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.74 2008/03/07 17:15:51 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.74.8.1 2008/06/18 16:33:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int error;
 	int spin;
 
-	sc = device_private(device_lookup(&lpt_cd, LPTUNIT(dev)));
+	sc = device_lookup_private(&lpt_cd, LPTUNIT(dev));
 	if (!sc || !sc->sc_dev_ok)
 		return ENXIO;
 
@@ -266,7 +266,7 @@ lptclose(dev_t dev, int flag, int mode,
     struct lwp *l)
 {
 	struct lpt_softc *sc =
-	    device_private(device_lookup(&lpt_cd, LPTUNIT(dev)));
+	    device_lookup_private(&lpt_cd, LPTUNIT(dev));
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -361,7 +361,7 @@ int
 lptwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct lpt_softc *sc =
-	    device_private(device_lookup(&lpt_cd, LPTUNIT(dev)));
+	    device_lookup_private(&lpt_cd, LPTUNIT(dev));
 	size_t n;
 	int error = 0;
 

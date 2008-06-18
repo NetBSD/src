@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.16 2008/06/08 16:39:43 tsutsui Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.16.2.1 2008/06/18 16:32:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.16 2008/06/08 16:39:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.16.2.1 2008/06/18 16:32:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -650,7 +650,7 @@ mmemclose(dev_t dev, int flags, int devtype, struct lwp *l)
 	diskunit = DISKUNIT(dev);
 	unit = MMEM_UNIT(diskunit);
 	part = MMEM_PART(diskunit);
-	sc = mmem_cd.cd_devs[unit];
+	sc = device_lookup_private(&mmem_cd, unit);
 	pt = &sc->sc_pt[part];
 	labelpart = DISKPART(dev);
 
@@ -916,7 +916,7 @@ mmemioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	diskunit = DISKUNIT(dev);
 	unit = MMEM_UNIT(diskunit);
 	part = MMEM_PART(diskunit);
-	sc = mmem_cd.cd_devs[unit];
+	sc = device_lookup_private(&mmem_cd, unit);
 	pt = &sc->sc_pt[part];
 
 	switch (cmd) {

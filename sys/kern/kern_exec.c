@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.274 2008/06/06 22:21:11 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.274.2.1 2008/06/18 16:33:35 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.274 2008/06/06 22:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.274.2.1 2008/06/18 16:33:35 simonb Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -848,15 +848,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	/*
-	 * It's OK to test PS_PPWAIT unlocked here, as other LWPs have
+	 * It's OK to test PL_PPWAIT unlocked here, as other LWPs have
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
-	if ((p->p_sflag & PS_PPWAIT) != 0) {
+	if ((p->p_lflag & PL_PPWAIT) != 0) {
 		mutex_enter(proc_lock);
-		mutex_enter(p->p_lock);
-		p->p_sflag &= ~PS_PPWAIT;
+		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
-		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 	}
 

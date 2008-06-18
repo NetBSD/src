@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.100 2008/05/04 20:02:06 rumble Exp $	*/
+/*	$NetBSD: ath.c,v 1.100.4.1 2008/06/18 16:33:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.100 2008/05/04 20:02:06 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.100.4.1 2008/06/18 16:33:10 simonb Exp $");
 #endif
 
 /*
@@ -3397,6 +3397,15 @@ ath_freetx(struct mbuf *m)
 }
 
 static int
+deduct_pad_bytes(int len, int hdrlen)
+{
+	/* XXX I am suspicious that this code, which I extracted
+	 * XXX from ath_tx_start() for reuse, does the right thing.
+	 */
+	return len - (hdrlen & 3);
+}
+
+static int
 ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf,
     struct mbuf *m0)
 {
@@ -3428,7 +3437,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	 * Packet length must not include any
 	 * pad bytes; deduct them here.
 	 */
-	pktlen = m0->m_pkthdr.len - (hdrlen & 3);
+	pktlen = deduct_pad_bytes(m0->m_pkthdr.len, hdrlen);
 
 	if (iswep) {
 		const struct ieee80211_cipher *cip;
@@ -3705,8 +3714,10 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			 * the ACK duration
 			 */
 			dur += ath_hal_computetxtime(ah, rt,
-					m0->m_nextpkt->m_pkthdr.len,
-					rix, shortPreamble);
+			    deduct_pad_bytes(m0->m_nextpkt->m_pkthdr.len,
+			        hdrlen) -  
+			    deduct_pad_bytes(m0->m_pkthdr.len, hdrlen) + pktlen,
+			    rix, shortPreamble);
 		}
 		if (isfrag) {
 			/*

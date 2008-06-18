@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.49 2008/05/25 19:22:21 ad Exp $ */
+/*	$NetBSD: mfc.c,v 1.49.2.1 2008/06/18 16:32:38 simonb Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.49 2008/05/25 19:22:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.49.2.1 2008/06/18 16:32:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -437,8 +437,8 @@ mfcsattach(struct device *pdp, struct device *dp, void *auxp)
 	struct mfc_args *ma;
 	struct mfc_regs *rp;
 
-	sc = (struct mfcs_softc *) dp;
-	scc = (struct mfc_softc *) pdp;
+	sc = device_private(dp);
+	scc = device_private(pdp);
 	ma = auxp;
 
 	if (dp) {
@@ -483,9 +483,9 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 	error = 0;
 	unit = dev & 0x1f;
 
-	if (unit >= mfcs_cd.cd_ndevs || (mfcs_active & (1 << unit)) == 0)
+	sc = device_lookup_private(&mfcs_cd, unit);
+	if (sc == NULL || (mfcs_active & (1 << unit)) == 0)
 		return (ENXIO);
-	sc = mfcs_cd.cd_devs[unit];
 
 	if (sc->sc_tty)
 		tp = sc->sc_tty;
@@ -574,7 +574,7 @@ mfcsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp;
 	int unit;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, dev & 31);
 	struct mfc_softc *scc= sc->sc_mfc;
 
 	unit = dev & 31;
@@ -613,7 +613,7 @@ mfcsclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 mfcsread(dev_t dev, struct uio *uio, int flag)
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, dev & 31);
 	struct tty *tp = sc->sc_tty;
 	if (tp == NULL)
 		return(ENXIO);
@@ -623,7 +623,7 @@ mfcsread(dev_t dev, struct uio *uio, int flag)
 int
 mfcswrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, dev & 31);
 	struct tty *tp = sc->sc_tty;
 
 	if (tp == NULL)
@@ -634,7 +634,7 @@ mfcswrite(dev_t dev, struct uio *uio, int flag)
 int
 mfcspoll(dev_t dev, int events, struct lwp *l)
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, dev & 31);
 	struct tty *tp = sc->sc_tty;
 
 	if (tp == NULL)
@@ -645,7 +645,7 @@ mfcspoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 mfcstty(dev_t dev)
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, dev & 31);
 
 	return (sc->sc_tty);
 }
@@ -655,7 +655,7 @@ mfcsioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	register struct tty *tp;
 	register int error;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, dev & 31);
 
 	tp = sc->sc_tty;
 	if (!tp)
@@ -726,7 +726,7 @@ int
 mfcsparam(struct tty *tp, struct termios *t)
 {
 	int cflag, unit, ospeed;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, tp->t_dev & 31);
 	struct mfc_softc *scc= sc->sc_mfc;
 
 	cflag = t->c_cflag;
@@ -793,7 +793,7 @@ mfcsparam(struct tty *tp, struct termios *t)
 int
 mfcshwiflow(struct tty *tp, int flag)
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, tp->t_dev & 31);
 	int unit = tp->t_dev & 1;
 
         if (flag)
@@ -807,7 +807,7 @@ void
 mfcsstart(struct tty *tp)
 {
 	int cc, s, unit;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, tp->t_dev & 31);
 	struct mfc_softc *scc= sc->sc_mfc;
 
 	if ((tp->t_state & TS_ISOPEN) == 0)
@@ -878,7 +878,7 @@ mfcsmctl(dev_t dev, int bits, int how)
 {
 	int unit, s;
 	u_char ub = 0;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, dev & 31);
 
 	unit = dev & 1;
 
@@ -953,7 +953,7 @@ mfcintr(void *arg)
 		return (0);
 	unit = device_unit(&scc->sc_dev) * 2;
 	if (istat & 0x02) {		/* channel A receive interrupt */
-		sc = mfcs_cd.cd_devs[unit];
+		sc = device_lookup_private(&mfcs_cd, unit);
 		while (1) {
 			c = regs->du_sra << 8;
 			if ((c & 0x0100) == 0)
@@ -974,7 +974,7 @@ mfcintr(void *arg)
 		}
 	}
 	if (istat & 0x20) {		/* channel B receive interrupt */
-		sc = mfcs_cd.cd_devs[unit + 1];
+		sc = device_lookup_private(&mfcs_cd, unit + 1);
 		while (1) {
 			c = regs->du_srb << 8;
 			if ((c & 0x0100) == 0)
@@ -995,7 +995,7 @@ mfcintr(void *arg)
 		}
 	}
 	if (istat & 0x01) {		/* channel A transmit interrupt */
-		sc = mfcs_cd.cd_devs[unit];
+		sc = device_lookup_private(&mfcs_cd, unit);
 		tp = sc->sc_tty;
 		if (sc->ptr == sc->end) {
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
@@ -1010,7 +1010,7 @@ mfcintr(void *arg)
 			regs->du_tba = *sc->ptr++;
 	}
 	if (istat & 0x10) {		/* channel B transmit interrupt */
-		sc = mfcs_cd.cd_devs[unit + 1];
+		sc = device_lookup_private(&mfcs_cd, unit + 1);
 		tp = sc->sc_tty;
 		if (sc->ptr == sc->end) {
 			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
@@ -1034,7 +1034,7 @@ void
 mfcsxintr(int unit)
 {
 	int s1, s2, ovfl;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[unit];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, unit);
 	struct tty *tp = sc->sc_tty;
 
 	/*
@@ -1077,7 +1077,7 @@ mfcsxintr(int unit)
 void
 mfcseint(int unit, int stat)
 {
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[unit];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, unit);
 	struct tty *tp;
 	u_char ch;
 	int c;
@@ -1109,7 +1109,7 @@ mfcseint(int unit, int stat)
 
 	if (stat & 0x1000)
 		log(LOG_WARNING, "%s: fifo overflow\n",
-		    ((struct mfcs_softc *)mfcs_cd.cd_devs[unit])->sc_dev.dv_xname);
+		    device_xname(device_lookup_private(&mfcs_cd, unit)));
 
 	tp->t_linesw->l_rint(c, tp);
 }
@@ -1124,7 +1124,7 @@ void
 mfcsmint(int unit)
 {
 	struct tty *tp;
-	struct mfcs_softc *sc = mfcs_cd.cd_devs[unit];
+	struct mfcs_softc *sc = device_lookup_private(&mfcs_cd, unit);
 	u_char stat, last, istat;
 
 	tp = sc->sc_tty;

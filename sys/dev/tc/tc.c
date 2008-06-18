@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.47 2008/02/19 18:30:33 matt Exp $	*/
+/*	$NetBSD: tc.c,v 1.47.14.1 2008/06/18 16:33:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.47 2008/02/19 18:30:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.47.14.1 2008/06/18 16:33:26 simonb Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -245,7 +245,7 @@ tc_checkslot(tc_addr_t slotbase, char *namep)
 const struct evcnt *
 tc_intr_evcnt(struct device *dev, void *cookie)
 {
-	struct tc_softc *sc = tc_cd.cd_devs[0];
+	struct tc_softc *sc = device_lookup_private(&tc_cd, 0);
 
 	return ((*sc->sc_intr_evcnt)(dev, cookie));
 }
@@ -254,7 +254,7 @@ void
 tc_intr_establish(struct device *dev, void *cookie, int level,
     int (*handler)(void *), void *arg)
 {
-	struct tc_softc *sc = tc_cd.cd_devs[0];
+	struct tc_softc *sc = device_lookup_private(&tc_cd, 0);
 
 	(*sc->sc_intr_establish)(dev, cookie, level, handler, arg);
 }
@@ -262,7 +262,7 @@ tc_intr_establish(struct device *dev, void *cookie, int level,
 void
 tc_intr_disestablish(struct device *dev, void *cookie)
 {
-	struct tc_softc *sc = tc_cd.cd_devs[0];
+	struct tc_softc *sc = device_lookup_private(&tc_cd, 0);
 
 	(*sc->sc_intr_disestablish)(dev, cookie);
 }

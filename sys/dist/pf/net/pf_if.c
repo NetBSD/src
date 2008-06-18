@@ -1,7 +1,9 @@
-/*	$NetBSD: pf_if.c,v 1.15 2008/02/11 22:11:27 dyoung Exp $	*/
-/*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
+/*	$NetBSD: pf_if.c,v 1.15.14.1 2008/06/18 16:33:34 simonb Exp $	*/
+/*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
+ * Copyright 2005 Henning Brauer <henning@openbsd.org>
+ * Copyright 2005 Ryan McBride <mcbride@openbsd.org>
  * Copyright (c) 2001 Daniel Hartmeier
  * Copyright (c) 2003 Cedric Berger
  * All rights reserved.
@@ -32,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.15 2008/02/11 22:11:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.15.14.1 2008/06/18 16:33:34 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_pfil_hooks.h"
 #endif
 
 #include <sys/param.h>
@@ -63,43 +66,31 @@ __KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.15 2008/02/11 22:11:27 dyoung Exp $");
 #include <netinet/ip6.h>
 #endif /* INET6 */
 
-#define ACCEPT_FLAGS(oklist)			\
-	do {					\
-		if ((flags & ~(oklist)) &	\
-		    PFI_FLAG_ALLMASK)		\
-			return (EINVAL);	\
-	} while (0)
-
-#define senderr(e)      do { rv = (e); goto _bad; } while (0)
-
-struct pfi_kif		**pfi_index2kif;
-struct pfi_kif		 *pfi_self;
-int			  pfi_indexlim;
-struct pfi_ifhead	  pfi_ifs;
-struct pfi_statehead	  pfi_statehead;
-int			  pfi_ifcnt;
+struct pfi_kif		 *pfi_all = NULL;
 struct pool		  pfi_addr_pl;
+struct pfi_ifhead	  pfi_ifs;
 long			  pfi_update = 1;
 struct pfr_addr		 *pfi_buffer;
 int			  pfi_buffer_cnt;
 int			  pfi_buffer_max;
 
-void		 pfi_dynaddr_update(void *);
-void		 pfi_kifaddr_update(void *);
-#ifdef __NetBSD__
-void		 pfi_kifaddr_update_if(struct ifnet *);
-#endif
+void		 pfi_kif_update(struct pfi_kif *);
+void		 pfi_dynaddr_update(struct pfi_dynaddr *dyn);
 void		 pfi_table_update(struct pfr_ktable *, struct pfi_kif *,
 		    int, int);
+void		 pfi_kifaddr_update(void *);
 void		 pfi_instance_add(struct ifnet *, int, int);
 void		 pfi_address_add(struct sockaddr *, int, int);
 int		 pfi_if_compare(struct pfi_kif *, struct pfi_kif *);
-struct pfi_kif	*pfi_if_create(const char *, struct pfi_kif *, int);
-void		 pfi_copy_group(char *, const char *, int);
-void		 pfi_newgroup(const char *, int);
-int		 pfi_skip_if(const char *, struct pfi_kif *, int);
+int		 pfi_skip_if(const char *, struct pfi_kif *);
 int		 pfi_unmask(void *);
-void		 pfi_dohooks(struct pfi_kif *);
+#ifdef __NetBSD__
+void		 pfi_init_groups(struct ifnet *);
+void		 pfi_destroy_groups(struct ifnet *);
+
+int		 pfil_ifnet_wrapper(void *, struct mbuf **, struct ifnet *, int);
+int		 pfil_ifaddr_wrapper(void *, struct mbuf **, struct ifnet *, int);
+#endif
 
 RB_PROTOTYPE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 RB_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
@@ -107,219 +98,312 @@ RB_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 #define PFI_BUFFER_MAX		0x10000
 #define PFI_MTYPE		M_IFADDR
 
-#ifdef __NetBSD__
-static void	*hook_establish(struct hook_desc_head *, int, void (*)(void *),
-			void *);
-static void	hook_disestablish(struct hook_desc_head *, void *);
-static void	dohooks(struct hook_desc_head *, int);
-
-#define HOOK_REMOVE	0x01
-#define HOOK_FREE	0x02
-#endif
-
 void
 pfi_initialize(void)
 {
-	if (pfi_self != NULL)	/* already initialized */
+#ifdef __NetBSD__
+	int i;
+#endif /* __NetBSD__ */
+
+	if (pfi_all != NULL)	/* already initialized */
 		return;
 
-	TAILQ_INIT(&pfi_statehead);
 #ifdef __NetBSD__
 	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
 	    "pfiaddrpl", &pool_allocator_nointr, IPL_NONE);
 #else
 	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
 	    "pfiaddrpl", &pool_allocator_nointr);
-#endif
+#endif /* !__NetBSD__ */
 	pfi_buffer_max = 64;
 	pfi_buffer = malloc(pfi_buffer_max * sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);
-	pfi_self = pfi_if_create("self", NULL, PFI_IFLAG_GROUP);
+
+	if ((pfi_all = pfi_kif_get(IFG_ALL)) == NULL)
+		panic("pfi_kif_get for pfi_all failed");
+
+#ifdef __NetBSD__
+	for (i = 0; i < if_indexlim; i++) {
+		struct ifnet *ifp = ifindex2ifnet[i];
+
+		if (ifp != NULL) {
+			pfi_init_groups(ifp);
+
+			pfi_attach_ifnet(ifp);
+		}
+	}
+
+	pfil_add_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, &if_pfil);
+	pfil_add_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
+#endif /* __NetBSD__ */
 }
 
 #ifdef _LKM
 void
 pfi_destroy(void)
 {
+	struct pfi_kif *p;
+	int i;
+
+	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
+	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, &if_pfil);
+
+	for (i = 0; i < if_indexlim; i++) {
+		struct ifnet *ifp = ifindex2ifnet[i];
+
+		if (ifp != NULL) {
+			pfi_detach_ifnet(ifp);
+
+			pfi_destroy_groups(ifp);
+		}
+	}
+
+	while ((p = RB_MIN(pfi_ifhead, &pfi_ifs))) {
+		RB_REMOVE(pfi_ifhead, &pfi_ifs, p);
+		free(p, PFI_MTYPE);
+	}
+
 	pool_destroy(&pfi_addr_pl);
 
 	free(pfi_buffer, PFI_MTYPE);
 }
-#endif
+#endif /* _LKM */
+
+struct pfi_kif *
+pfi_kif_get(const char *kif_name)
+{
+	struct pfi_kif		*kif;
+	struct pfi_kif_cmp	 s;
+
+	bzero(&s, sizeof(s));
+	strlcpy(s.pfik_name, kif_name, sizeof(s.pfik_name));
+	if ((kif = RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&s)) != NULL)
+		return (kif);
+
+	/* create new one */
+	if ((kif = malloc(sizeof(*kif), PFI_MTYPE, M_DONTWAIT)) == NULL)
+		return (NULL);
+
+	bzero(kif, sizeof(*kif));
+	strlcpy(kif->pfik_name, kif_name, sizeof(kif->pfik_name));
+#ifdef __NetBSD__
+	/* time_second is not valid yet */
+	kif->pfik_tzero = (time_second > 7200) ? time_second : 0;
+#else
+	kif->pfik_tzero = time_second;
+#endif /* !__NetBSD__ */
+	TAILQ_INIT(&kif->pfik_dynaddrs);
+
+	RB_INSERT(pfi_ifhead, &pfi_ifs, kif);
+	return (kif);
+}
 
 void
-pfi_attach_clone(struct if_clone *ifc)
+pfi_kif_ref(struct pfi_kif *kif, enum pfi_kif_refs what)
 {
-	pfi_initialize();
-	pfi_newgroup(ifc->ifc_name, PFI_IFLAG_CLONABLE);
+	switch (what) {
+	case PFI_KIF_REF_RULE:
+		kif->pfik_rules++;
+		break;
+	case PFI_KIF_REF_STATE:
+		kif->pfik_states++;
+		break;
+	default:
+		panic("pfi_kif_ref with unknown type");
+	}
+}
+
+void
+pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
+{
+	if (kif == NULL)
+		return;
+
+	switch (what) {
+	case PFI_KIF_REF_NONE:
+		break;
+	case PFI_KIF_REF_RULE:
+		if (kif->pfik_rules <= 0) {
+			printf("pfi_kif_unref: rules refcount <= 0\n");
+			return;
+		}
+		kif->pfik_rules--;
+		break;
+	case PFI_KIF_REF_STATE:
+		if (kif->pfik_states <= 0) {
+			printf("pfi_kif_unref: state refcount <= 0\n");
+			return;
+		}
+		kif->pfik_states--;
+		break;
+	default:
+		panic("pfi_kif_unref with unknown type");
+	}
+
+	if (kif->pfik_ifp != NULL || kif->pfik_group != NULL || kif == pfi_all)
+		return;
+
+	if (kif->pfik_rules || kif->pfik_states)
+		return;
+
+	RB_REMOVE(pfi_ifhead, &pfi_ifs, kif);
+	free(kif, PFI_MTYPE);
+}
+
+int
+pfi_kif_match(struct pfi_kif *rule_kif, struct pfi_kif *packet_kif)
+{
+	struct ifg_list *p;
+
+	if (rule_kif == NULL || rule_kif == packet_kif)
+		return (1);
+
+	if (rule_kif->pfik_group != NULL) {
+		struct ifg_list_head *ifgh =
+		    if_get_groups(packet_kif->pfik_ifp);
+
+		TAILQ_FOREACH(p, ifgh, ifgl_next)
+			if (p->ifgl_group == rule_kif->pfik_group)
+				return (1);
+	}
+
+	return (0);
 }
 
 void
 pfi_attach_ifnet(struct ifnet *ifp)
 {
-	struct pfi_kif	*p, *q, key;
-	int		 s;
+	struct pfi_kif		*kif;
+	int			 s;
 
 	pfi_initialize();
 	s = splsoftnet();
 	pfi_update++;
-	if (ifp->if_index >= pfi_indexlim) {
-		/*
-		 * grow pfi_index2kif,  similar to ifindex2ifnet code in if.c
-		 */
-		size_t m, n, oldlim;
-		struct pfi_kif **mp, **np;
+	if ((kif = pfi_kif_get(ifp->if_xname)) == NULL)
+		panic("pfi_kif_get failed");
 
-		oldlim = pfi_indexlim;
-		if (pfi_indexlim == 0)
-			pfi_indexlim = 64;
-		while (ifp->if_index >= pfi_indexlim)
-			pfi_indexlim <<= 1;
+	kif->pfik_ifp = ifp;
+	ifp->if_pf_kif = kif;
 
-		m = oldlim * sizeof(struct pfi_kif *);
-		mp = pfi_index2kif;
-		n = pfi_indexlim * sizeof(struct pfi_kif *);
-		np = malloc(n, PFI_MTYPE, M_DONTWAIT);
-		if (np == NULL)
-			panic("pfi_attach_ifnet: "
-			    "cannot allocate translation table");
-		bzero(np, n);
-		if (mp != NULL)
-			bcopy(mp, np, m);
-		pfi_index2kif = np;
-		if (mp != NULL)
-			free(mp, PFI_MTYPE);
-	}
+#ifndef __NetBSD__
+	if ((kif->pfik_ah_cookie = hook_establish(ifp->if_addrhooks, 1,
+	    pfi_kifaddr_update, kif)) == NULL)
+		panic("pfi_attach_ifnet: cannot allocate '%s' address hook",
+		    ifp->if_xname);
+#endif /* !__NetBSD__ */
 
-	strlcpy(key.pfik_name, ifp->if_xname, sizeof(key.pfik_name));
-	p = RB_FIND(pfi_ifhead, &pfi_ifs, &key);
-	if (p == NULL) {
-		/* add group */
-		pfi_copy_group(key.pfik_name, ifp->if_xname,
-		    sizeof(key.pfik_name));
-		q = RB_FIND(pfi_ifhead, &pfi_ifs, &key);
-		if (q == NULL)
-		    q = pfi_if_create(key.pfik_name, pfi_self, PFI_IFLAG_GROUP);
-		if (q == NULL)
-			panic("pfi_attach_ifnet: "
-			    "cannot allocate '%s' group", key.pfik_name);
+	pfi_kif_update(kif);
 
-		/* add interface */
-		p = pfi_if_create(ifp->if_xname, q, PFI_IFLAG_INSTANCE);
-		if (p == NULL)
-			panic("pfi_attach_ifnet: "
-			    "cannot allocate '%s' interface", ifp->if_xname);
-	} else
-		q = p->pfik_parent;
-	p->pfik_ifp = ifp;
-	p->pfik_flags |= PFI_IFLAG_ATTACHED;
-#ifdef __OpenBSD__
-	p->pfik_ah_cookie =
-	    hook_establish(ifp->if_addrhooks, 1, pfi_kifaddr_update, p);
-#else
-	p->pfik_ah_cookie =
-	    hook_establish(&p->pfik_ifaddrhooks, 1, pfi_kifaddr_update, p);
-#endif
-	pfi_index2kif[ifp->if_index] = p;
-	pfi_dohooks(p);
 	splx(s);
 }
 
 void
 pfi_detach_ifnet(struct ifnet *ifp)
 {
-	struct pfi_kif	*p, *q, key;
-	int		 s;
+	int			 s;
+	struct pfi_kif		*kif;
 
-	strlcpy(key.pfik_name, ifp->if_xname, sizeof(key.pfik_name));
+	if ((kif = (struct pfi_kif *)ifp->if_pf_kif) == NULL)
+		return;
 
 	s = splsoftnet();
 	pfi_update++;
-	p = RB_FIND(pfi_ifhead, &pfi_ifs, &key);
-	if (p == NULL) {
-		printf("pfi_detach_ifnet: cannot find %s", ifp->if_xname);
-		splx(s);
-		return;
-	}
-#ifdef __OpenBSD__
-	hook_disestablish(p->pfik_ifp->if_addrhooks, p->pfik_ah_cookie);
-#else
-	hook_disestablish(&p->pfik_ifaddrhooks, p->pfik_ah_cookie);
-#endif
-	q = p->pfik_parent;
-	p->pfik_ifp = NULL;
-	p->pfik_flags &= ~PFI_IFLAG_ATTACHED;
-	pfi_index2kif[ifp->if_index] = NULL;
-	pfi_dohooks(p);
-	pfi_maybe_destroy(p);
+#ifndef __NetBSD__
+	hook_disestablish(ifp->if_addrhooks, kif->pfik_ah_cookie);
+#endif /* !__NetBSD__ */
+	pfi_kif_update(kif);
+
+	kif->pfik_ifp = NULL;
+	ifp->if_pf_kif = NULL;
+	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 	splx(s);
 }
 
-struct pfi_kif *
-pfi_lookup_create(const char *name)
+void
+pfi_attach_ifgroup(struct ifg_group *ifg)
 {
-	struct pfi_kif	*p, *q, key;
+	struct pfi_kif	*kif;
 	int		 s;
 
+	pfi_initialize();
 	s = splsoftnet();
-	p = pfi_lookup_if(name);
-	if (p == NULL) {
-		pfi_copy_group(key.pfik_name, name, sizeof(key.pfik_name));
-		q = pfi_lookup_if(key.pfik_name);
-		if (q == NULL) {
-			pfi_newgroup(key.pfik_name, PFI_IFLAG_DYNAMIC);
-			q = pfi_lookup_if(key.pfik_name);
-		}
-		p = pfi_lookup_if(name);
-		if (p == NULL && q != NULL)
-			p = pfi_if_create(name, q, PFI_IFLAG_INSTANCE);
-	}
+	pfi_update++;
+	if ((kif = pfi_kif_get(ifg->ifg_group)) == NULL)
+		panic("pfi_kif_get failed");
+
+	kif->pfik_group = ifg;
+	ifg->ifg_pf_kif = kif;
+
 	splx(s);
-	return (p);
-}
-
-struct pfi_kif *
-pfi_attach_rule(const char *name)
-{
-	struct pfi_kif	*p;
-
-	p = pfi_lookup_create(name);
-	if (p != NULL)
-		p->pfik_rules++;
-	return (p);
 }
 
 void
-pfi_detach_rule(struct pfi_kif *p)
+pfi_detach_ifgroup(struct ifg_group *ifg)
 {
-	if (p == NULL)
+	int		 s;
+	struct pfi_kif	*kif;
+
+	if ((kif = (struct pfi_kif *)ifg->ifg_pf_kif) == NULL)
 		return;
-	if (p->pfik_rules > 0)
-		p->pfik_rules--;
-	else
-		printf("pfi_detach_rule: reference count at 0\n");
-	pfi_maybe_destroy(p);
+
+	s = splsoftnet();
+	pfi_update++;
+
+	kif->pfik_group = NULL;
+	ifg->ifg_pf_kif = NULL;
+	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
+	splx(s);
 }
 
 void
-pfi_attach_state(struct pfi_kif *p)
+pfi_group_change(const char *group)
 {
-	if (!p->pfik_states++)
-		TAILQ_INSERT_TAIL(&pfi_statehead, p, pfik_w_states);
+	struct pfi_kif		*kif;
+	int			 s;
+
+	s = splsoftnet();
+	pfi_update++;
+	if ((kif = pfi_kif_get(group)) == NULL)
+		panic("pfi_kif_get failed");
+
+	pfi_kif_update(kif);
+
+	splx(s);
 }
 
-void
-pfi_detach_state(struct pfi_kif *p)
+int
+pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 {
-	if (p == NULL)
-		return;
-	if (p->pfik_states <= 0) {
-		printf("pfi_detach_state: reference count <= 0\n");
-		return;
+	switch (af) {
+#ifdef INET
+	case AF_INET:
+		switch (dyn->pfid_acnt4) {
+		case 0:
+			return (0);
+		case 1:
+			return (PF_MATCHA(0, &dyn->pfid_addr4,
+			    &dyn->pfid_mask4, a, AF_INET));
+		default:
+			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET));
+		}
+		break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
+		switch (dyn->pfid_acnt6) {
+		case 0:
+			return (0);
+		case 1:
+			return (PF_MATCHA(0, &dyn->pfid_addr6,
+			    &dyn->pfid_mask6, a, AF_INET6));
+		default:
+			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET6));
+		}
+		break;
+#endif /* INET6 */
+	default:
+		return (0);
 	}
-	if (!--p->pfik_states)
-		TAILQ_REMOVE(&pfi_statehead, p, pfik_w_states);
-	pfi_maybe_destroy(p);
 }
 
 int
@@ -332,15 +416,20 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 
 	if (aw->type != PF_ADDR_DYNIFTL)
 		return (0);
-	dyn = pool_get(&pfi_addr_pl, PR_NOWAIT);
-	if (dyn == NULL)
+	if ((dyn = pool_get(&pfi_addr_pl, PR_NOWAIT)) == NULL)
 		return (1);
 	bzero(dyn, sizeof(*dyn));
 
 	s = splsoftnet();
-	dyn->pfid_kif = pfi_attach_rule(aw->v.ifname);
-	if (dyn->pfid_kif == NULL)
-		senderr(1);
+	if (!strcmp(aw->v.ifname, "self"))
+		dyn->pfid_kif = pfi_kif_get(IFG_ALL);
+	else
+		dyn->pfid_kif = pfi_kif_get(aw->v.ifname);
+	if (dyn->pfid_kif == NULL) {
+		rv = 1;
+		goto _bad;
+	}
+	pfi_kif_ref(dyn->pfid_kif, PFI_KIF_REF_RULE);
 
 	dyn->pfid_net = pfi_unmask(&aw->v.a.mask);
 	if (af == AF_INET && dyn->pfid_net == 32)
@@ -357,24 +446,23 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 	if (dyn->pfid_net != 128)
 		snprintf(tblname + strlen(tblname),
 		    sizeof(tblname) - strlen(tblname), "/%d", dyn->pfid_net);
-	ruleset = pf_find_or_create_ruleset(PF_RESERVED_ANCHOR);
-	if (ruleset == NULL)
-		senderr(1);
+	if ((ruleset = pf_find_or_create_ruleset(PF_RESERVED_ANCHOR)) == NULL) {
+		rv = 1;
+		goto _bad;
+	}
 
-	dyn->pfid_kt = pfr_attach_table(ruleset, tblname);
-	if (dyn->pfid_kt == NULL)
-		senderr(1);
+	if ((dyn->pfid_kt = pfr_attach_table(ruleset, tblname)) == NULL) {
+		rv = 1;
+		goto _bad;
+	}
 
 	dyn->pfid_kt->pfrkt_flags |= PFR_TFLAG_ACTIVE;
 	dyn->pfid_iflags = aw->iflags;
 	dyn->pfid_af = af;
-	dyn->pfid_hook_cookie = hook_establish(dyn->pfid_kif->pfik_ah_head, 1,
-	    pfi_dynaddr_update, dyn);
-	if (dyn->pfid_hook_cookie == NULL)
-		senderr(1);
 
+	TAILQ_INSERT_TAIL(&dyn->pfid_kif->pfik_dynaddrs, dyn, entry);
 	aw->p.dyn = dyn;
-	pfi_dynaddr_update(aw->p.dyn);
+	pfi_kif_update(dyn->pfid_kif);
 	splx(s);
 	return (0);
 
@@ -384,16 +472,35 @@ _bad:
 	if (ruleset != NULL)
 		pf_remove_if_empty_ruleset(ruleset);
 	if (dyn->pfid_kif != NULL)
-		pfi_detach_rule(dyn->pfid_kif);
+		pfi_kif_unref(dyn->pfid_kif, PFI_KIF_REF_RULE);
 	pool_put(&pfi_addr_pl, dyn);
 	splx(s);
 	return (rv);
 }
 
 void
-pfi_dynaddr_update(void *p)
+pfi_kif_update(struct pfi_kif *kif)
 {
-	struct pfi_dynaddr	*dyn = (struct pfi_dynaddr *)p;
+	struct ifg_list		*ifgl;
+	struct pfi_dynaddr	*p;
+
+	/* update all dynaddr */
+	TAILQ_FOREACH(p, &kif->pfik_dynaddrs, entry)
+		pfi_dynaddr_update(p);
+
+	/* again for all groups kif is member of */
+	if (kif->pfik_ifp != NULL) {
+		struct ifg_list_head *ifgh = if_get_groups(kif->pfik_ifp);
+
+		TAILQ_FOREACH(ifgl, ifgh, ifgl_next)
+			pfi_kif_update((struct pfi_kif *)
+			    ifgl->ifgl_group->ifg_pf_kif);
+	}
+}
+
+void
+pfi_dynaddr_update(struct pfi_dynaddr *dyn)
+{
 	struct pfi_kif		*kif;
 	struct pfr_ktable	*kt;
 
@@ -402,6 +509,7 @@ pfi_dynaddr_update(void *p)
 
 	kif = dyn->pfid_kif;
 	kt = dyn->pfid_kt;
+
 	if (kt->pfrkt_larg != pfi_update) {
 		/* this table needs to be brought up-to-date */
 		pfi_table_update(kt, kif, dyn->pfid_net, dyn->pfid_iflags);
@@ -414,28 +522,18 @@ void
 pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 {
 	int			 e, size2 = 0;
-	struct pfi_kif		*p;
-	struct pfr_table	 t;
+	struct ifg_member	*ifgm;
 
-	if ((kif->pfik_flags & PFI_IFLAG_INSTANCE) && kif->pfik_ifp == NULL) {
-		pfr_clr_addrs(&kt->pfrkt_t, NULL, 0);
-		return;
-	}
 	pfi_buffer_cnt = 0;
-	if ((kif->pfik_flags & PFI_IFLAG_INSTANCE))
+
+	if (kif->pfik_ifp != NULL)
 		pfi_instance_add(kif->pfik_ifp, net, flags);
-	else if (strcmp(kif->pfik_name, "self")) {
-		TAILQ_FOREACH(p, &kif->pfik_grouphead, pfik_instances)
-			pfi_instance_add(p->pfik_ifp, net, flags);
-	} else {
-		RB_FOREACH(p, pfi_ifhead, &pfi_ifs)
-			if (p->pfik_flags & PFI_IFLAG_INSTANCE)
-				pfi_instance_add(p->pfik_ifp, net, flags);
-	}
-	t = kt->pfrkt_t;
-	t.pfrt_flags = 0;
-	if ((e = pfr_set_addrs(&t, pfi_buffer, pfi_buffer_cnt, &size2,
-	    NULL, NULL, NULL, 0)))
+	else if (kif->pfik_group != NULL)
+		TAILQ_FOREACH(ifgm, &kif->pfik_group->ifg_members, ifgm_next)
+			pfi_instance_add(ifgm->ifgm_ifp, net, flags);
+
+	if ((e = pfr_set_addrs(&kt->pfrkt_t, pfi_buffer, pfi_buffer_cnt, &size2,
+	    NULL, NULL, NULL, 0, PFR_TFLAG_ALLMASK)))
 		printf("pfi_table_update: cannot set %d new addresses "
 		    "into table %s: %d\n", pfi_buffer_cnt, kt->pfrkt_name, e);
 }
@@ -479,13 +577,12 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 			got6 = 1;
 		net2 = net;
 		if (net2 == 128 && (flags & PFI_AFLAG_NETWORK)) {
-			if (af == AF_INET) {
+			if (af == AF_INET)
 				net2 = pfi_unmask(&((struct sockaddr_in *)
 				    ia->ifa_netmask)->sin_addr);
-			} else if (af == AF_INET6) {
+			else if (af == AF_INET6)
 				net2 = pfi_unmask(&((struct sockaddr_in6 *)
 				    ia->ifa_netmask)->sin6_addr);
-			}
 		}
 		if (af == AF_INET && net2 > 32)
 			net2 = 32;
@@ -533,9 +630,9 @@ pfi_address_add(struct sockaddr *sa, int af, int net)
 	p->pfra_net = net;
 	if (af == AF_INET)
 		p->pfra_ip4addr = ((struct sockaddr_in *)sa)->sin_addr;
-	if (af == AF_INET6) {
+	else if (af == AF_INET6) {
 		p->pfra_ip6addr = ((struct sockaddr_in6 *)sa)->sin6_addr;
-		if (IN6_IS_ADDR_LINKLOCAL(&p->pfra_ip6addr))
+		if (IN6_IS_SCOPE_EMBEDDABLE(&p->pfra_ip6addr))
 			p->pfra_ip6addr.s6_addr16[1] = 0;
 	}
 	/* mask network address bits */
@@ -555,9 +652,8 @@ pfi_dynaddr_remove(struct pf_addr_wrap *aw)
 		return;
 
 	s = splsoftnet();
-	hook_disestablish(aw->p.dyn->pfid_kif->pfik_ah_head,
-	    aw->p.dyn->pfid_hook_cookie);
-	pfi_detach_rule(aw->p.dyn->pfid_kif);
+	TAILQ_REMOVE(&aw->p.dyn->pfid_kif->pfik_dynaddrs, aw->p.dyn, entry);
+	pfi_kif_unref(aw->p.dyn->pfid_kif, PFI_KIF_REF_RULE);
 	aw->p.dyn->pfid_kif = NULL;
 	pfr_detach_table(aw->p.dyn->pfid_kt);
 	aw->p.dyn->pfid_kt = NULL;
@@ -578,26 +674,14 @@ pfi_dynaddr_copyout(struct pf_addr_wrap *aw)
 void
 pfi_kifaddr_update(void *v)
 {
-	int		 s;
+	int			 s;
+	struct pfi_kif		*kif = (struct pfi_kif *)v;
 
 	s = splsoftnet();
 	pfi_update++;
-	pfi_dohooks(v);
+	pfi_kif_update(kif);
 	splx(s);
 }
-
-#ifdef __NetBSD__
-void
-pfi_kifaddr_update_if(struct ifnet *ifp)
-{
-	struct pfi_kif *p;
-
-	p = pfi_lookup_if(ifp->if_xname);
-	if (p == NULL)
-		panic("can't find interface");
-	pfi_kifaddr_update(p);
-}
-#endif
 
 int
 pfi_if_compare(struct pfi_kif *p, struct pfi_kif *q)
@@ -605,111 +689,16 @@ pfi_if_compare(struct pfi_kif *p, struct pfi_kif *q)
 	return (strncmp(p->pfik_name, q->pfik_name, IFNAMSIZ));
 }
 
-struct pfi_kif *
-pfi_if_create(const char *name, struct pfi_kif *q, int flags)
-{
-	struct pfi_kif *p;
-
-	p = malloc(sizeof(*p), PFI_MTYPE, M_DONTWAIT);
-	if (p == NULL)
-		return (NULL);
-	bzero(p, sizeof(*p));
-	p->pfik_ah_head = malloc(sizeof(*p->pfik_ah_head), PFI_MTYPE,
-	    M_DONTWAIT);
-	if (p->pfik_ah_head == NULL) {
-		free(p, PFI_MTYPE);
-		return (NULL);
-	}
-	bzero(p->pfik_ah_head, sizeof(*p->pfik_ah_head));
-	TAILQ_INIT(p->pfik_ah_head);
-	TAILQ_INIT(&p->pfik_grouphead);
-#ifdef __NetBSD__
-	bzero(&p->pfik_ifaddrhooks, sizeof(p->pfik_ifaddrhooks));
-	TAILQ_INIT(&p->pfik_ifaddrhooks);
-#endif
-	strlcpy(p->pfik_name, name, sizeof(p->pfik_name));
-	RB_INIT(&p->pfik_lan_ext);
-	RB_INIT(&p->pfik_ext_gwy);
-	p->pfik_flags = flags;
-	p->pfik_parent = q;
-	p->pfik_tzero = time_second;
-
-	RB_INSERT(pfi_ifhead, &pfi_ifs, p);
-	if (q != NULL) {
-		q->pfik_addcnt++;
-		TAILQ_INSERT_TAIL(&q->pfik_grouphead, p, pfik_instances);
-	}
-	pfi_ifcnt++;
-	return (p);
-}
-
-int
-pfi_maybe_destroy(struct pfi_kif *p)
-{
-	int		 i, j, k, s;
-	struct pfi_kif	*q = p->pfik_parent;
-
-	if ((p->pfik_flags & (PFI_IFLAG_ATTACHED | PFI_IFLAG_GROUP)) ||
-	    p->pfik_rules > 0 || p->pfik_states > 0)
-		return (0);
-
-	s = splsoftnet();
-	if (q != NULL) {
-		for (i = 0; i < 2; i++)
-			for (j = 0; j < 2; j++)
-				for (k = 0; k < 2; k++) {
-					q->pfik_bytes[i][j][k] +=
-					    p->pfik_bytes[i][j][k];
-					q->pfik_packets[i][j][k] +=
-					    p->pfik_packets[i][j][k];
-				}
-		q->pfik_delcnt++;
-		TAILQ_REMOVE(&q->pfik_grouphead, p, pfik_instances);
-	}
-	pfi_ifcnt--;
-	RB_REMOVE(pfi_ifhead, &pfi_ifs, p);
-	splx(s);
-
-	free(p->pfik_ah_head, PFI_MTYPE);
-	free(p, PFI_MTYPE);
-	return (1);
-}
-
-void
-pfi_copy_group(char *p, const char *q, int m)
-{
-	while (m > 1 && *q && !(*q >= '0' && *q <= '9')) {
-		*p++ = *q++;
-		m--;
-	}
-	if (m > 0)
-		*p++ = '\0';
-}
-
-void
-pfi_newgroup(const char *name, int flags)
-{
-	struct pfi_kif	*p;
-
-	p = pfi_lookup_if(name);
-	if (p == NULL)
-		p = pfi_if_create(name, pfi_self, PFI_IFLAG_GROUP);
-	if (p == NULL) {
-		printf("pfi_newgroup: cannot allocate '%s' group", name);
-		return;
-	}
-	p->pfik_flags |= flags;
-}
-
 void
 pfi_fill_oldstatus(struct pf_status *pfs)
 {
-	struct pfi_kif	*p, key;
-	int		 i, j, k, s;
+	struct pfi_kif		*p;
+	struct pfi_kif_cmp 	 key;
+	int			 i, j, k, s;
 
 	strlcpy(key.pfik_name, pfs->ifname, sizeof(key.pfik_name));
 	s = splsoftnet();
-	p = RB_FIND(pfi_ifhead, &pfi_ifs, &key);
+	p = RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&key);
 	if (p == NULL) {
 		splx(s);
 		return;
@@ -728,26 +717,70 @@ pfi_fill_oldstatus(struct pf_status *pfs)
 }
 
 int
-pfi_clr_istats(const char *name, int *nzero, int flags)
+pfi_clr_istats(const char *name)
 {
 	struct pfi_kif	*p;
-	int		 n = 0, s;
-	long		 tzero = time_second;
+	int		 s;
 
-	ACCEPT_FLAGS(PFI_FLAG_GROUP|PFI_FLAG_INSTANCE);
 	s = splsoftnet();
 	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
-		if (pfi_skip_if(name, p, flags))
+		if (pfi_skip_if(name, p))
 			continue;
 		bzero(p->pfik_packets, sizeof(p->pfik_packets));
 		bzero(p->pfik_bytes, sizeof(p->pfik_bytes));
-		p->pfik_tzero = tzero;
-		n++;
+		p->pfik_tzero = time_second;
 	}
 	splx(s);
-	if (nzero != NULL)
-		*nzero = n;
+
 	return (0);
+}
+
+int
+pfi_get_ifaces(const char *name, struct pfi_kif *buf, int *size)
+{
+	struct pfi_kif	*p, *nextp;
+	int		 s, n = 0;
+
+	s = splsoftnet();
+	for (p = RB_MIN(pfi_ifhead, &pfi_ifs); p; p = nextp) {
+		nextp = RB_NEXT(pfi_ifhead, &pfi_ifs, p);
+		if (pfi_skip_if(name, p))
+			continue;
+		if (*size > n++) {
+			if (!p->pfik_tzero)
+				p->pfik_tzero = time_second;
+			pfi_kif_ref(p, PFI_KIF_REF_RULE);
+			if (copyout(p, buf++, sizeof(*buf))) {
+				pfi_kif_unref(p, PFI_KIF_REF_RULE);
+				splx(s);
+				return (EFAULT);
+			}
+			nextp = RB_NEXT(pfi_ifhead, &pfi_ifs, p);
+			pfi_kif_unref(p, PFI_KIF_REF_RULE);
+		}
+	}
+	splx(s);
+	*size = n;
+	return (0);
+}
+
+int
+pfi_skip_if(const char *filter, struct pfi_kif *p)
+{
+	int	n;
+
+	if (filter == NULL || !*filter)
+		return (0);
+	if (!strcmp(p->pfik_name, filter))
+		return (0);	/* exact match */
+	n = strlen(filter);
+	if (n < 1 || n >= IFNAMSIZ)
+		return (1);	/* sanity check */
+	if (filter[n-1] >= '0' && filter[n-1] <= '9')
+		return (1);	/* only do exact match in that case */
+	if (strncmp(p->pfik_name, filter, n))
+		return (1);	/* prefix doesn't match */
+	return (p->pfik_name[n] < '0' || p->pfik_name[n] > '9');
 }
 
 int
@@ -756,12 +789,9 @@ pfi_set_flags(const char *name, int flags)
 	struct pfi_kif	*p;
 	int		 s;
 
-	if (flags & ~PFI_IFLAG_SETABLE_MASK)
-		return (EINVAL);
-
 	s = splsoftnet();
 	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
-		if (pfi_skip_if(name, p, PFI_FLAG_GROUP|PFI_FLAG_INSTANCE))
+		if (pfi_skip_if(name, p))
 			continue;
 		p->pfik_flags |= flags;
 	}
@@ -775,75 +805,14 @@ pfi_clear_flags(const char *name, int flags)
 	struct pfi_kif	*p;
 	int		 s;
 
-	if (flags & ~PFI_IFLAG_SETABLE_MASK)
-		return (EINVAL);
-
 	s = splsoftnet();
 	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
-		if (pfi_skip_if(name, p, PFI_FLAG_GROUP|PFI_FLAG_INSTANCE))
+		if (pfi_skip_if(name, p))
 			continue;
 		p->pfik_flags &= ~flags;
 	}
 	splx(s);
 	return (0);
-}
-
-int
-pfi_get_ifaces(const char *name, struct pfi_if *buf, int *size, int flags)
-{
-	struct pfi_kif	*p;
-	int		 s, n = 0;
-
-	ACCEPT_FLAGS(PFI_FLAG_GROUP|PFI_FLAG_INSTANCE);
-	s = splsoftnet();
-	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
-		if (pfi_skip_if(name, p, flags))
-			continue;
-		if (*size > n++) {
-			if (!p->pfik_tzero)
-				p->pfik_tzero = time_second;
-			if (copyout(p, buf++, sizeof(*buf))) {
-				splx(s);
-				return (EFAULT);
-			}
-		}
-	}
-	splx(s);
-	*size = n;
-	return (0);
-}
-
-struct pfi_kif *
-pfi_lookup_if(const char *name)
-{
-	struct pfi_kif	*p, key;
-
-	strlcpy(key.pfik_name, name, sizeof(key.pfik_name));
-	p = RB_FIND(pfi_ifhead, &pfi_ifs, &key);
-	return (p);
-}
-
-int
-pfi_skip_if(const char *filter, struct pfi_kif *p, int f)
-{
-	int	n;
-
-	if ((p->pfik_flags & PFI_IFLAG_GROUP) && !(f & PFI_FLAG_GROUP))
-		return (1);
-	if ((p->pfik_flags & PFI_IFLAG_INSTANCE) && !(f & PFI_FLAG_INSTANCE))
-		return (1);
-	if (filter == NULL || !*filter)
-		return (0);
-	if (!strcmp(p->pfik_name, filter))
-		return (0);	/* exact match */
-	n = strlen(filter);
-	if (n < 1 || n >= IFNAMSIZ)
-		return (1);	/* sanity check */
-	if (filter[n-1] >= '0' && filter[n-1] <= '9')
-		return (1);	/* only do exact match in that case */
-	if (strncmp(p->pfik_name, filter, n))
-		return (1);	/* prefix doesn't match */
-	return (p->pfik_name[n] < '0' || p->pfik_name[n] > '9');
 }
 
 /* from pf_print_state.c */
@@ -866,103 +835,84 @@ pfi_unmask(void *addr)
 	return (b);
 }
 
-void
-pfi_dohooks(struct pfi_kif *p)
+#ifdef __NetBSD__
+static void
+pfi_copy_group(char *dest, const char *src, ssize_t sz)
 {
-	for (; p != NULL; p = p->pfik_parent)
-		dohooks(p->pfik_ah_head, 0);
+	while (sz > 1 && *src && !(*src >= '0' && *src <= '9')) {
+		*dest++ = *src++;
+		sz--;
+	}
+	if (sz > 0)
+		*dest++ = '\0';
+}
+
+void
+pfi_init_groups(struct ifnet *ifp)
+{
+	char group[IFNAMSIZ];
+
+	if_init_groups(ifp);
+	if_addgroup(ifp, IFG_ALL);
+
+	pfi_copy_group(group, ifp->if_xname, sizeof(group));
+	if_addgroup(ifp, group);
+}
+
+void
+pfi_destroy_groups(struct ifnet *ifp)
+{
+	char group[IFNAMSIZ];
+
+	pfi_copy_group(group, ifp->if_xname, sizeof(group));
+	if_delgroup(ifp, group);
+
+	if_delgroup(ifp, IFG_ALL);
+	if_destroy_groups(ifp);
 }
 
 int
-pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
+pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
-	switch (af) {
-#ifdef INET
-	case AF_INET:
-		switch (dyn->pfid_acnt4) {
-		case 0:
-			return (0);
-		case 1:
-			return (PF_MATCHA(0, &dyn->pfid_addr4,
-			    &dyn->pfid_mask4, a, AF_INET));
-		default:
-			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET));
-		}
+	u_long cmd = (u_long)mp;
+
+	switch (cmd) {
+	case PFIL_IFNET_ATTACH:
+		pfi_init_groups(ifp);
+
+		pfi_attach_ifnet(ifp);
 		break;
-#endif /* INET */
-#ifdef INET6
-	case AF_INET6:
-		switch (dyn->pfid_acnt6) {
-		case 0:
-			return (0);
-		case 1:
-			return (PF_MATCHA(0, &dyn->pfid_addr6,
-			    &dyn->pfid_mask6, a, AF_INET6));
-		default:
-			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET6));
-		}
+	case PFIL_IFNET_DETACH:
+		pfi_detach_ifnet(ifp);
+
+		pfi_destroy_groups(ifp);
 		break;
-#endif /* INET6 */
 	default:
-		return (0);
+		panic("pfil_ifnet_wrapper: unexpected cmd %lu", cmd);
 	}
+
+	return (0);
 }
 
-/* from openbsd/sys/kern/kern_subr.c */
-#ifdef __NetBSD__
-static void *
-hook_establish(struct hook_desc_head *head, int tail, void (*fn)(void *),
-    void *arg)
+int
+pfil_ifaddr_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
-	struct hook_desc *hdp;
+	u_long cmd = (u_long)mp;
 
-	hdp = (struct hook_desc *)malloc(sizeof (*hdp), M_DEVBUF, M_NOWAIT);
-	if (hdp == NULL)
-		return (NULL);
-
-	hdp->hd_fn = fn;
-	hdp->hd_arg = arg;
-	if (tail)
-		TAILQ_INSERT_TAIL(head, hdp, hd_list);
-	else
-		TAILQ_INSERT_HEAD(head, hdp, hd_list);
-
-	return (hdp);
-}
-
-static void
-hook_disestablish(struct hook_desc_head *head, void *vhook)
-{
-	struct hook_desc *hdp;
-
-#ifdef DIAGNOSTIC
-	TAILQ_FOREACH(hdp, head, hd_list)
-                if (hdp == vhook)
-			break;
-	if (hdp == NULL)
-		panic("hook_disestablish: hook not established");
-#endif
-	hdp = vhook;
-	TAILQ_REMOVE(head, hdp, hd_list);
-	free(hdp, M_DEVBUF);
-}
-
-static void
-dohooks(struct hook_desc_head *head, int flags)
-{
-	struct hook_desc *hdp;
-
-	if ((flags & HOOK_REMOVE) == 0) {
-		TAILQ_FOREACH(hdp, head, hd_list) {
-			(*hdp->hd_fn)(hdp->hd_arg);
-		}
-	} else {
-		while ((hdp = TAILQ_FIRST(head)) != NULL) {
-			TAILQ_REMOVE(head, hdp, hd_list);
-			(*hdp->hd_fn)(hdp->hd_arg);
-			if ((flags & HOOK_FREE) != 0)
-				free(hdp, M_DEVBUF);
-		}
+	switch (cmd) {
+	case SIOCSIFADDR:
+	case SIOCAIFADDR:
+	case SIOCDIFADDR:
+#ifdef INET6
+	case SIOCAIFADDR_IN6:
+	case SIOCDIFADDR_IN6:
+#endif /* INET6 */
+		pfi_kifaddr_update(ifp->if_pf_kif);
+		break;
+	default:
+		panic("pfil_ifaddr_wrapper: unexpected ioctl %lu", cmd);
 	}
+
+	return (0);
 }
-#endif
+#endif /* __NetBSD__ */

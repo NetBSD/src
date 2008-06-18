@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.6 2008/01/09 08:15:53 elad Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.6.14.1 2008/06/18 16:32:40 simonb Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.6 2008/01/09 08:15:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.6.14.1 2008/06/18 16:32:40 simonb Exp $");
 
 #include "opt_kgdb.h"
 
@@ -396,7 +396,7 @@ xlcom_open(dev_t dev, int flags, int mode, struct lwp *l)
 	struct tty 		*tp;
 	int 			error, s;
 
-	sc = device_lookup(&xlcom_cd, minor(dev));
+	sc = device_lookup_private(&xlcom_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -452,7 +452,7 @@ xlcom_read(dev_t dev, struct uio *uio, int flag)
 	struct xlcom_softc 	*sc;
 	struct tty 		*tp;
 
-	sc = device_lookup(&xlcom_cd, minor(dev));
+	sc = device_lookup_private(&xlcom_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	tp = sc->sc_tty;
@@ -466,7 +466,7 @@ xlcom_write(dev_t dev, struct uio *uio, int flag)
 	struct xlcom_softc 	*sc;
 	struct tty 		*tp;
 
-	sc = device_lookup(&xlcom_cd, minor(dev));
+	sc = device_lookup_private(&xlcom_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	tp = sc->sc_tty;
@@ -480,7 +480,7 @@ xlcom_poll(dev_t dev, int events, struct lwp *l)
 	struct xlcom_softc 	*sc;
 	struct tty 		*tp;
 
-	sc = device_lookup(&xlcom_cd, minor(dev));
+	sc = device_lookup_private(&xlcom_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	tp = sc->sc_tty;
@@ -494,7 +494,7 @@ xlcom_tty(dev_t dev)
 	struct xlcom_softc 	*sc;
 	struct tty 		*tp;
 
-	sc = device_lookup(&xlcom_cd, minor(dev));
+	sc = device_lookup_private(&xlcom_cd, minor(dev));
 	if (sc == NULL)
 		return (NULL);
 	tp = sc->sc_tty;
@@ -509,7 +509,7 @@ xlcom_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct tty 		*tp;
 	int 			error;
 
-	sc = device_lookup(&xlcom_cd, minor(dev));
+	sc = device_lookup_private(&xlcom_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	tp = sc->sc_tty;
@@ -533,7 +533,7 @@ xlcom_close(dev_t dev, int flag, int mode, struct lwp *l)
 	struct xlcom_softc 	*sc;
 	struct tty 		*tp;
 
-	sc = device_lookup(&xlcom_cd, minor(dev));
+	sc = device_lookup_private(&xlcom_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	tp = sc->sc_tty;
@@ -554,7 +554,7 @@ xlcom_stop(struct tty *tp, int flag)
 	struct xlcom_softc 	*sc;
 	int 			s;
 
-	sc = device_lookup(&xlcom_cd, UNIT(tp->t_dev));
+	sc = device_lookup_private(&xlcom_cd, UNIT(tp->t_dev));
 	if (sc == NULL)
 		return ;
 
@@ -590,7 +590,7 @@ xlcom_start(struct tty *tp)
 	struct xlcom_softc 	*sc;
 	int 			s1, s2;
 
-	sc = device_lookup(&xlcom_cd, UNIT(tp->t_dev));
+	sc = device_lookup_private(&xlcom_cd, UNIT(tp->t_dev));
 	if (sc == NULL)
 		return ;
 

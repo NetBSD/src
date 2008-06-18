@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.43 2008/04/28 20:23:14 martin Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.43.4.1 2008/06/18 16:32:39 simonb Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.43 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.43.4.1 2008/06/18 16:32:39 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -496,7 +496,7 @@ sacomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s, s2;
 	int error;
 
-	sc = device_lookup(&sacom_cd, COMUNIT(dev));
+	sc = device_lookup_private(&sacom_cd, COMUNIT(dev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
 		return ENXIO;
@@ -626,7 +626,8 @@ bad:
 int
 sacomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
+	struct sacom_softc *sc =
+		device_lookup_private(&sacom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -654,7 +655,8 @@ sacomclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 sacomread(dev_t dev, struct uio *uio, int flag)
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
+	struct sacom_softc *sc =
+		device_lookup_private(&sacom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -666,7 +668,8 @@ sacomread(dev_t dev, struct uio *uio, int flag)
 int
 sacomwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
+	struct sacom_softc *sc =
+		device_lookup_private(&sacom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -678,7 +681,8 @@ sacomwrite(dev_t dev, struct uio *uio, int flag)
 int
 sacompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
+	struct sacom_softc *sc =
+		device_lookup_private(&sacom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -690,7 +694,8 @@ sacompoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 sacomtty(dev_t dev)
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
+	struct sacom_softc *sc =
+		device_lookup_private(&sacom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return tp;
@@ -699,7 +704,8 @@ sacomtty(dev_t dev)
 int
 sacomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
+	struct sacom_softc *sc =
+		device_lookup_private(&sacom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
@@ -849,7 +855,8 @@ cflag2cr0(tcflag_t cflag)
 int
 sacomparam(struct tty *tp, struct termios *t)
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
+	struct sacom_softc *sc =
+		device_lookup_private(&sacom_cd, COMUNIT(tp->t_dev));
 	int ospeed = SACOMSPEED(t->c_ospeed);
 	u_int cr0;
 	int s;
@@ -994,7 +1001,8 @@ int
 sacomhwiflow(struct tty *tp, int block)
 {
 #if 0
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
+	struct sacom_softc *sc =
+		device_lookup_private(&sacom_cd, COMUNIT(tp->t_dev));
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -1046,7 +1054,8 @@ sacom_hwiflow(struct sacom_softc *sc)
 void
 sacomstart(struct tty *tp)
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
+	struct sacom_softc *sc =
+		device_lookup_private(&sacom_cd, COMUNIT(tp->t_dev));
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int s;
@@ -1119,7 +1128,8 @@ sacom_filltx(struct sacom_softc *sc)
 void
 sacomstop(struct tty *tp, int flag)
 {
-	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
+	struct sacom_softc *sc =
+		device_lookup_private(&sacom_cd, COMUNIT(tp->t_dev));
 	int s;
 
 	s = splserial();

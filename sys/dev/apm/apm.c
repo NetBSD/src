@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.21 2008/04/28 20:23:47 martin Exp $ */
+/*	$NetBSD: apm.c,v 1.21.4.1 2008/06/18 16:33:03 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.21 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.21.4.1 2008/06/18 16:33:03 simonb Exp $");
 
 #include "opt_apm.h"
 
@@ -702,14 +702,11 @@ apm_thread(void *arg)
 int
 apmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = APMUNIT(dev);
 	int ctl = APM(dev);
 	int error = 0;
 	struct apm_softc *sc;
 
-	if (unit >= apm_cd.cd_ndevs)
-		return ENXIO;
-	sc = device_private(apm_cd.cd_devs[unit]);
+	sc = device_lookup_private(&apm_cd, APMUNIT(dev));
 	if (!sc)
 		return ENXIO;
 
@@ -752,7 +749,7 @@ int
 apmclose(dev_t dev, int flag, int mode,
 	struct lwp *l)
 {
-	struct apm_softc *sc = device_private(apm_cd.cd_devs[APMUNIT(dev)]);
+	struct apm_softc *sc = device_lookup_private(&apm_cd, APMUNIT(dev));
 	int ctl = APM(dev);
 
 	DPRINTF(APMDEBUG_DEVICE,
@@ -779,7 +776,7 @@ int
 apmioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
-	struct apm_softc *sc = device_private(apm_cd.cd_devs[APMUNIT(dev)]);
+	struct apm_softc *sc = device_lookup_private(&apm_cd, APMUNIT(dev));
 	struct apm_power_info *powerp;
 	struct apm_event_info *evp;
 #if 0
@@ -878,7 +875,7 @@ apmioctl(dev_t dev, u_long cmd, void *data, int flag,
 int
 apmpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct apm_softc *sc = device_private(apm_cd.cd_devs[APMUNIT(dev)]);
+	struct apm_softc *sc = device_lookup_private(&apm_cd, APMUNIT(dev));
 	int revents = 0;
 
 	APM_LOCK(sc);
@@ -918,7 +915,7 @@ static const struct filterops apmread_filtops =
 int
 apmkqfilter(dev_t dev, struct knote *kn)
 {
-	struct apm_softc *sc = device_private(apm_cd.cd_devs[APMUNIT(dev)]);
+	struct apm_softc *sc = device_lookup_private(&apm_cd, APMUNIT(dev));
 	struct klist *klist;
 
 	switch (kn->kn_filter) {

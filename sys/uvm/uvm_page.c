@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.135 2008/06/05 08:16:01 he Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.135.2.1 2008/06/18 16:33:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.135 2008/06/05 08:16:01 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.135.2.1 2008/06/18 16:33:59 simonb Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -145,7 +145,6 @@ vaddr_t uvm_zerocheckkva;
  */
 
 static void uvm_pageinsert(struct vm_page *);
-static void uvm_pageinsert_after(struct vm_page *, struct vm_page *);
 static void uvm_pageremove(struct vm_page *);
 
 /*
@@ -192,7 +191,6 @@ const struct rb_tree_ops uvm_page_tree_ops = {
 
 /*
  * uvm_pageinsert: insert a page in the object.
- * uvm_pageinsert_after: insert a page into the specified place in listq
  *
  * => caller must lock object
  * => caller must lock page queues
@@ -200,17 +198,16 @@ const struct rb_tree_ops uvm_page_tree_ops = {
  *    and bumped the version counter
  */
 
-inline static void
-uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
+static inline void
+uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
+    struct vm_page *where)
 {
-	struct uvm_object *uobj = pg->uobject;
 
+	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(&uobj->vmobjlock));
 	KASSERT((pg->flags & PG_TABLED) == 0);
 	KASSERT(where == NULL || (where->flags & PG_TABLED));
 	KASSERT(where == NULL || (where->uobject == uobj));
-
-	rb_tree_insert_node(&uobj->rb_tree, &pg->rb_node);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 0) {
@@ -235,11 +232,24 @@ uvm_pageinsert_after(struct vm_page *pg, struct vm_page *where)
 	uobj->uo_npages++;
 }
 
-inline static void
+
+static inline void
+uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
+{
+	bool success;
+
+	KASSERT(uobj == pg->uobject);
+	success = rb_tree_insert_node(&uobj->rb_tree, &pg->rb_node);
+	KASSERT(success);
+}
+
+static inline void
 uvm_pageinsert(struct vm_page *pg)
 {
+	struct uvm_object *uobj = pg->uobject;
 
-	uvm_pageinsert_after(pg, NULL);
+	uvm_pageinsert_tree(uobj, pg);
+	uvm_pageinsert_list(uobj, pg, NULL);
 }
 
 /*
@@ -250,14 +260,12 @@ uvm_pageinsert(struct vm_page *pg)
  */
 
 static inline void
-uvm_pageremove(struct vm_page *pg)
+uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 {
-	struct uvm_object *uobj = pg->uobject;
 
+	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(&uobj->vmobjlock));
 	KASSERT(pg->flags & PG_TABLED);
-
-	rb_tree_remove_node(&uobj->rb_tree, &pg->rb_node);
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 1) {
@@ -279,6 +287,23 @@ uvm_pageremove(struct vm_page *pg)
 	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 	pg->flags &= ~PG_TABLED;
 	pg->uobject = NULL;
+}
+
+static inline void
+uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
+{
+
+	KASSERT(uobj == pg->uobject);
+	rb_tree_remove_node(&uobj->rb_tree, &pg->rb_node);
+}
+
+static inline void
+uvm_pageremove(struct vm_page *pg)
+{
+	struct uvm_object *uobj = pg->uobject;
+
+	uvm_pageremove_tree(uobj, pg);
+	uvm_pageremove_list(uobj, pg);
 }
 
 static void
@@ -1205,18 +1230,21 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 void
 uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 {
+	struct uvm_object *uobj = oldpg->uobject;
 
 	KASSERT((oldpg->flags & PG_TABLED) != 0);
-	KASSERT(oldpg->uobject != NULL);
+	KASSERT(uobj != NULL);
 	KASSERT((newpg->flags & PG_TABLED) == 0);
 	KASSERT(newpg->uobject == NULL);
-	KASSERT(mutex_owned(&oldpg->uobject->vmobjlock));
+	KASSERT(mutex_owned(&uobj->vmobjlock));
 
-	newpg->uobject = oldpg->uobject;
+	newpg->uobject = uobj;
 	newpg->offset = oldpg->offset;
 
-	uvm_pageinsert_after(newpg, oldpg);
-	uvm_pageremove(oldpg);
+	uvm_pageremove_tree(uobj, oldpg);
+	uvm_pageinsert_tree(uobj, newpg);
+	uvm_pageinsert_list(uobj, newpg, oldpg);
+	uvm_pageremove_list(uobj, oldpg);
 }
 
 /*

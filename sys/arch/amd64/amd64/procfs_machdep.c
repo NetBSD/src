@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.9 2008/05/11 15:32:20 ad Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.9.2.1 2008/06/18 16:32:37 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.9 2008/05/11 15:32:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.9.2.1 2008/06/18 16:32:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,12 +172,12 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 		"model name\t: %s\n"
 		"stepping\t: ",
 		xcpu,
-		cpu_brand_string,
+		(char *)ci->ci_vendor,
 		cpuid_level >= 0 ?
 		    ((ci->ci_signature >> 8) & 15) : cpu_class + 3,
 		cpuid_level >= 0 ?
 		    ((ci->ci_signature >> 4) & 15) : 0,
-		cpu_model
+		cpu_brand_string
 	    );
 
 	left -= l;
@@ -214,7 +214,7 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	l = snprintf(p, left,
 		"fdiv_bug\t: %s\n"
 		"fpu\t\t: %s\n"
-		"fpu_exception:\t: %s\n"
+		"fpu_exception\t: %s\n"
 		"cpuid level\t: %d\n"
 		"wp\t\t: %s\n"
 		"flags\t\t: %s\n",

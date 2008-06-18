@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.81 2008/03/29 06:47:07 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.81.8.1 2008/06/18 16:32:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.81 2008/03/29 06:47:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.81.8.1 2008/06/18 16:32:40 simonb Exp $");
 
 #include "ite.h"
 #include "rnd.h"
@@ -721,7 +721,7 @@ static void
 filt_hilrdetach(struct knote *kn)
 {
 	dev_t dev = (intptr_t) kn->kn_hook;
-	struct hil_softc *sc = device_private(hil_cd.cd_devs[HILLOOP(dev)]);
+	struct hil_softc *sc = device_lookup_private(&hil_cd,HILLOOP(dev));
 	struct hilloopdev *dptr = &sc->sc_device[HILUNIT(dev)];
 	int s;
 
@@ -735,7 +735,7 @@ filt_hilread(struct knote *kn, long hint)
 {
 	dev_t dev = (intptr_t) kn->kn_hook;
 	int device = HILUNIT(dev);
-	struct hil_softc *sc = device_private(hil_cd.cd_devs[HILLOOP(dev)]);
+	struct hil_softc *sc = device_lookup_private(&hil_cd,HILLOOP(dev));
 	struct hilloopdev *dptr = &sc->sc_device[device];
 	struct hiliqueue *qp;
 	int mask;
@@ -791,7 +791,7 @@ static const struct filterops hil_seltrue_filtops =
 static int
 hilkqfilter(dev_t dev, struct knote *kn)
 {
-	struct hil_softc *sc = device_private(hil_cd.cd_devs[HILLOOP(dev)]);
+	struct hil_softc *sc = device_lookup_private(&hil_cd,HILLOOP(dev));
 	struct hilloopdev *dptr = &sc->sc_device[HILUNIT(dev)];
 	struct klist *klist;
 	int s;

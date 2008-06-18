@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2008/03/10 20:19:28 skrll Exp $
+#	$NetBSD: Makefile,v 1.9.8.1 2008/06/18 16:32:41 simonb Exp $
 
 PROG=	xxboot
 NOMAN=	# defined
 SRCS=	start.S main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.S
+
+.PATH:	${.CURDIR}/../common
 
 CPPFLAGS+=	-mpa-risc-1-0 -I${.CURDIR}/../../../.. -I. -D_STANDALONE
 # configuration for readufs module
