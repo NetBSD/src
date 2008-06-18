@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.22 2008/06/18 06:47:25 mgrooms Exp $	*/
+/*	$NetBSD: admin.c,v 1.23 2008/06/18 07:04:23 mgrooms Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -113,6 +113,7 @@ admin_handler()
 			strerror(errno));
 		return -1;
 	}
+	close_on_exec(so2);
 
 	/* get buffer length */
 	while ((len = recv(so2, (char *)&com, sizeof(com), MSG_PEEK)) < 0) {
@@ -675,6 +676,7 @@ admin_init()
 			"socket: %s\n", strerror(errno));
 		return -1;
 	}
+	close_on_exec(lcconf->sock_admin);
 
 	unlink(sunaddr.sun_path);
 	if (bind(lcconf->sock_admin, (struct sockaddr *)&sunaddr,
