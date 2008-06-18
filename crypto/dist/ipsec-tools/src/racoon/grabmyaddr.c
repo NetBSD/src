@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.7 2008/06/18 06:47:25 mgrooms Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.8 2008/06/18 07:04:23 mgrooms Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -831,6 +831,7 @@ initmyaddr()
 			strerror(errno));
 		return -1;
 	}
+	close_on_exec(lcconf->rtsock);
 
 #ifdef __linux__
    {
