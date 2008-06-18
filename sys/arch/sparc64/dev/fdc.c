@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.23 2008/06/13 13:10:49 cegger Exp $	*/
+/*	$NetBSD: fdc.c,v 1.24 2008/06/18 01:10:11 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.23 2008/06/13 13:10:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.24 2008/06/18 01:10:11 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2526,7 +2526,7 @@ fd_read_md_image(size_t	*sizep, void **addrp)
 	}
 	(void)fdclose(dev, 0, S_IFCHR, NULL);
 	*sizep = offset;
-	fd_do_eject(device_lookup_private(&fd_cd,FDUNIT(dev));
+	fd_do_eject(device_lookup_private(&fd_cd,FDUNIT(dev)));
 	return 0;
 }
 #endif /* MEMORY_DISK_HOOKS */
