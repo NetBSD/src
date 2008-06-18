@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.27 2008/03/06 00:46:04 mgrooms Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.28 2008/06/18 06:11:38 mgrooms Exp $	*/
 
-/* $Id: pfkey.c,v 1.27 2008/03/06 00:46:04 mgrooms Exp $ */
+/* $Id: pfkey.c,v 1.28 2008/06/18 06:11:38 mgrooms Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1282,7 +1282,7 @@ pk_recvupdate(mhp)
 
 	/* update status */
 	iph2->status = PHASE2ST_ESTABLISHED;
-	evt_phase2(iph2, EVTT_PHASE2_UP, NULL);
+	evt_phase2(iph2, EVT_PHASE2_UP, NULL);
 
 #ifdef ENABLE_STATS
 	gettimeofday(&iph2->end, NULL);
