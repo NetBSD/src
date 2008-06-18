@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.6 2008/05/19 20:12:36 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.7 2008/06/18 21:23:32 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -161,9 +161,9 @@ int udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node, struct udf_
 void udf_add_to_dirtylist(struct udf_node *udf_node);
 void udf_remove_from_dirtylist(struct udf_node *udf_node);
 void udf_itimes(struct udf_node *udf_node, struct timespec *acc,
-	struct timespec *mod, struct timespec *changed);
+	struct timespec *mod, struct timespec *birth);
 int  udf_update(struct vnode *node, struct timespec *acc,
-	struct timespec *mod, int updflags);
+	struct timespec *mod, struct timespec *birth, int updflags);
 
 /* helpers and converters */
 long udf_calchash(struct long_ad *icbptr);    /* for `inode' numbering */

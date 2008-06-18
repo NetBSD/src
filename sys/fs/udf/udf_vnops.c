@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.19 2008/05/19 20:12:36 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.20 2008/06/18 21:23:32 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.19 2008/05/19 20:12:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.20 2008/06/18 21:23:32 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -119,7 +119,7 @@ udf_inactive(void *v)
 
 	/* write out its node */
 	if (udf_node->i_flags & (IN_CHANGE | IN_UPDATE | IN_MODIFIED))
-		udf_update(vp, NULL, NULL, 0);
+		udf_update(vp, NULL, NULL, NULL, 0);
 	VOP_UNLOCK(vp, 0);
 
 	return 0;
@@ -148,7 +148,7 @@ udf_reclaim(void *v)
 	}
 
 	/* update note for closure */
-	udf_update(vp, NULL, NULL, UPDATE_CLOSE);
+	udf_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
 
 	/* async check to see if all node descriptors are written out */
 	while ((volatile int) udf_node->outstanding_nodedscr > 0) {
@@ -253,7 +253,7 @@ udf_read(void *v)
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		udf_node->i_flags |= IN_ACCESS;
 		if ((ioflag & IO_SYNC) == IO_SYNC)
-			error = udf_update(vp, NULL, NULL, UPDATE_WAIT);
+			error = udf_update(vp, NULL, NULL, NULL, UPDATE_WAIT);
 	}
 
 	return error;
@@ -381,7 +381,7 @@ udf_write(void *v)
 	} else {
 		/* if we write and we're synchronous, update node */
 		if ((resid > uio->uio_resid) && ((ioflag & IO_SYNC) == IO_SYNC))
-			error = udf_update(vp, NULL, NULL, UPDATE_WAIT);
+			error = udf_update(vp, NULL, NULL, NULL, UPDATE_WAIT);
 	}
 
 	return error;
@@ -1062,7 +1062,7 @@ udf_chsize(struct vnode *vp, u_quad_t newsize, kauth_cred_t cred)
 		/* mark change */
 		udf_node->i_flags |= IN_CHANGE | IN_MODIFY;
 		VN_KNOTE(vp, NOTE_ATTRIB | (extended ? NOTE_EXTEND : 0));
-		udf_update(vp, NULL, NULL, 0);
+		udf_update(vp, NULL, NULL, NULL, 0);
 	}
 
 	return error;
@@ -1125,23 +1125,10 @@ udf_chtimes(struct vnode *vp,
 	if (atime->tv_sec != VNOVAL)
 		if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
 			udf_node->i_flags |= IN_ACCESS;
-	if (mtime->tv_sec != VNOVAL)
+	if ((mtime->tv_sec != VNOVAL) || (birthtime->tv_sec != VNOVAL))
 		udf_node->i_flags |= IN_CHANGE | IN_UPDATE;
 
-	/* we need to take care of birthtime here */
-	if (birthtime->tv_sec != VNOVAL) {
-		if (udf_node->efe) {
-			/* in udf its [c]reation time */
-			udf_timespec_to_timestamp(birthtime,
-				&udf_node->efe->ctime);
-		} else {
-			/* set extended times attribute */
-			printf("UDF: Can't set birthtime on file entry yet\n");
-			/* TODO setting birthtime on file entry */
-		}
-	}
-
-	return udf_update(vp, atime, mtime, 0);
+	return udf_update(vp, atime, mtime, birthtime, 0);
 }
 
 
@@ -1171,12 +1158,12 @@ udf_setattr(void *v)
 	    vap->va_fileid != VNOVAL ||
 	    vap->va_blocksize != VNOVAL ||
 #ifdef notyet
-	    /* check is debated */
+	    /* checks are debated */
 	    vap->va_ctime.tv_sec != VNOVAL ||
 	    vap->va_ctime.tv_nsec != VNOVAL ||
-#endif
 	    vap->va_birthtime.tv_sec != VNOVAL ||
 	    vap->va_birthtime.tv_nsec != VNOVAL ||
+#endif
 	    vap->va_gen != VNOVAL ||
 	    vap->va_rdev != VNOVAL ||
 	    vap->va_bytes != VNOVAL)
@@ -1317,9 +1304,8 @@ udf_close(void *v)
 	udf_node = udf_node;	/* shut up gcc */
 
 	mutex_enter(&vp->v_interlock);
-		if (vp->v_usecount > 1) {
+		if (vp->v_usecount > 1)
 			udf_itimes(udf_node, NULL, NULL, NULL);
-		}
 	mutex_exit(&vp->v_interlock);
 
 	return 0;
