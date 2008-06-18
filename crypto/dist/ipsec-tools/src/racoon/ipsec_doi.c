@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.34 2008/02/25 20:06:55 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.35 2008/06/18 06:47:25 mgrooms Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -3657,24 +3657,9 @@ ipsecdoi_checkid1(iph1)
 			 * always permit if port is equal to PORT_ISAKMP
 			 */
 			if (ntohs(id_b->port) != PORT_ISAKMP) {
-
 				u_int16_t port;
 
-				switch (iph1->remote->sa_family) {
-				case AF_INET:
-					port = ((struct sockaddr_in *)iph1->remote)->sin_port;
-					break;
-#ifdef INET6
-				case AF_INET6:
-					port = ((struct sockaddr_in6 *)iph1->remote)->sin6_port;
-					break;
-#endif
-				default:
-					plog(LLV_ERROR, LOCATION, NULL,
-						"invalid family: %d\n",
-						iph1->remote->sa_family);
-					return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
-				}
+				port = extract_port(iph1->remote);
 				if (ntohs(id_b->port) != port) {
 					plog(LLV_WARNING, LOCATION, NULL,
 						"port %d expected, but %d\n",

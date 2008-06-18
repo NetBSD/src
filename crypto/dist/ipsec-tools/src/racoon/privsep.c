@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.12 2008/05/24 18:39:40 christos Exp $	*/
+/*	$NetBSD: privsep.c,v 1.13 2008/06/18 06:47:25 mgrooms Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -608,24 +608,7 @@ privsep_init(void)
 				goto out;
 			}
 
-			switch (bind_args.addr->sa_family) {
-			case AF_INET:
-				port = ntohs(((struct sockaddr_in *)
-					      bind_args.addr)->sin_port);
-				break;
-			case AF_INET6:
-				port = ntohs(((struct sockaddr_in6 *)
-					      bind_args.addr)->sin6_port);
-				break;
-			default:
-				plog(LLV_ERROR, LOCATION, NULL,
-				     "privsep_bind: "
-				     "unauthorized address family (%d)\n",
-				     bind_args.addr->sa_family);
-				close(bind_args.s);
-				goto out;
-			}
-
+			port = extract_port(bind_args.addr);
 			if (port != PORT_ISAKMP && port != PORT_ISAKMP_NATT &&
 			    port != lcconf->port_isakmp &&
 			    port != lcconf->port_isakmp_natt) {
