@@ -1,3 +1,13 @@
+2008-06-18  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/grabmyaddr.c
+	  src/racoon/ipsec_doi.c
+	  src/racoon/isakmp.c
+	  src/racoon/isakmp_cfg.c
+	  src/racoon/isakmp_inf.c
+	  src/racoon/remoteconf.c
+	  src/racoon/admin.c : network port value manipulation cleanup
+
 2008-04-25  Yvan Vanhullebus  <vanhu@netasq.com>
 	Track:4, from Timo Teras:
 	* src/racoon/isakmp_inf.c: extract ports information from
