@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.14.4.11 2008/04/25 14:42:06 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.14.4.12 2008/06/18 07:30:19 mgrooms Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -921,27 +921,15 @@ isakmp_info_send_common(iph1, payload, np, flags)
 		delph2(iph2);
 		goto end;
 	}
-	switch (iph1->remote->sa_family) {
-	case AF_INET:
 #if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-		((struct sockaddr_in *)iph2->dst)->sin_port = 0;
-		((struct sockaddr_in *)iph2->src)->sin_port = 0;
-#endif
-		break;
-#ifdef INET6
-	case AF_INET6:
-#if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-		((struct sockaddr_in6 *)iph2->dst)->sin6_port = 0;
-		((struct sockaddr_in6 *)iph2->src)->sin6_port = 0;
-#endif
-		break;
-#endif
-	default:
+	if (set_port(iph2->dst, 0) == NULL ||
+	    set_port(iph2->src, 0) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid family: %d\n", iph1->remote->sa_family);
+		     "invalid family: %d\n", iph1->remote->sa_family);
 		delph2(iph2);
 		goto end;
 	}
+#endif
 	iph2->ph1 = iph1;
 	iph2->side = INITIATOR;
 	iph2->status = PHASE2ST_START;

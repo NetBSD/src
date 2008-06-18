@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.17.6.1 2007/08/01 11:52:19 vanhu Exp $	*/
+/*	$NetBSD: admin.c,v 1.17.6.2 2008/06/18 07:30:19 mgrooms Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -430,7 +430,7 @@ out2:
 			if ((local = dupsaddr(src)) == NULL)
 				goto out1;
 
-			port = ntohs(getmyaddrsport(local));
+			port = getmyaddrsport(local);
 			if (set_port(local, port) == NULL)
 				goto out1;
 
