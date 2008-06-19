@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_fifoops.c,v 1.7 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.c,v 1.8 2008/06/19 23:57:22 skd Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.7 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_fifoops.c,v 1.8 2008/06/19 23:57:22 skd Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -105,7 +105,7 @@ tmpfs_fifo_close(void *v)
 
 	int error;
 
-	tmpfs_update(vp, NULL, NULL, UPDATE_CLOSE);
+	tmpfs_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
 	error = VOCALL(fifo_vnodeop_p, VOFFSET(vop_close), v);
 
 	return error;
