@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.5 2008/06/19 12:33:54 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.6 2008/06/19 13:35:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.5 2008/06/19 12:33:54 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.6 2008/06/19 13:35:26 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -351,7 +351,6 @@ udf_create_anchor(int num)
 
 	/* CRC length for an anchor is 512 - tag length; defined in Ecma 167 */
 	avdp->tag.desc_crc_len = udf_rw16(512-UDF_DESC_TAG_LENGTH);
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) avdp);
 
 	context.anchors[num] = avdp;
 	return 0;
@@ -366,7 +365,6 @@ udf_create_terminator(union dscrptr *dscr, uint32_t loc)
 
 	/* CRC length for an anchor is 512 - tag length; defined in Ecma 167 */
 	dscr->tag.desc_crc_len = udf_rw16(512-UDF_DESC_TAG_LENGTH);
-	(void) udf_validate_tag_and_crc_sums(dscr);
 }
 
 
@@ -553,8 +551,6 @@ udf_create_primaryd(void)
 	crclen = sizeof(struct pri_vol_desc) - UDF_DESC_TAG_LENGTH;
 	pri->tag.desc_crc_len = udf_rw16(crclen);
 
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) pri);
-
 	context.primary_vol = pri;
 
 	return 0;
@@ -615,8 +611,6 @@ udf_create_partitiond(int part_num, int part_accesstype)
 	crclen = sizeof(struct part_desc) - UDF_DESC_TAG_LENGTH;
 	pd->tag.desc_crc_len = udf_rw16(crclen);
 
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) pd);
-
 	context.partitions[part_num] = pd;
 
 	return 0;
@@ -642,8 +636,6 @@ udf_create_unalloc_spaced(void)
 	crclen  = sizeof(struct unalloc_sp_desc) - sizeof(struct extent_ad);
 	crclen -= UDF_DESC_TAG_LENGTH;
 	usd->tag.desc_crc_len = udf_rw16(crclen);
-
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) usd);
 
 	context.unallocated = usd;
 
@@ -692,8 +684,6 @@ udf_create_base_logical_dscr(void)
 	crclen  = sizeof(struct logvol_desc) - 1 - UDF_DESC_TAG_LENGTH;
 	lvd->tag.desc_crc_len = udf_rw16(crclen);
 
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) lvd);
-
 	context.logical_vol = lvd;
 	context.vtop_tp[UDF_VTOP_RAWPART] = UDF_VTOP_TYPE_RAW;
 
@@ -731,8 +721,6 @@ udf_add_logvol_part_physical(uint16_t phys_part)
 
 	crclen = udf_rw16(logvol->tag.desc_crc_len) + pmap1_size;
 	logvol->tag.desc_crc_len = udf_rw16(crclen);
-
-	(void) udf_validate_tag_and_crc_sums((union dscrptr*) logvol);
 }
 
 
@@ -770,8 +758,6 @@ udf_add_logvol_part_virtual(uint16_t phys_part)
 
 	crclen = udf_rw16(logvol->tag.desc_crc_len) + pmapv_size;
 	logvol->tag.desc_crc_len = udf_rw16(crclen);
-
-	(void) udf_validate_tag_and_crc_sums((union dscrptr*) logvol);
 }
 
 
@@ -825,8 +811,6 @@ udf_add_logvol_part_sparable(uint16_t phys_part)
 
 	crclen = udf_rw16(logvol->tag.desc_crc_len) + pmaps_size;
 	logvol->tag.desc_crc_len = udf_rw16(crclen);
-
-	(void) udf_validate_tag_and_crc_sums((union dscrptr*) logvol);
 }
 
 
@@ -862,8 +846,6 @@ udf_create_sparing_tabled(void)
 	crclen  = sizeof(struct udf_sparing_table) - UDF_DESC_TAG_LENGTH;
 	crclen += (layout.sparable_blocks-1) * sizeof(struct spare_map_entry);
 	spt->tag.desc_crc_len = udf_rw16(crclen);
-
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) spt);
 
 	context.sparing_table = spt;
 
@@ -931,8 +913,6 @@ udf_create_impvold(char *field1, char *field2, char *field3)
 	crclen  = sizeof(struct impvol_desc) - UDF_DESC_TAG_LENGTH;
 	ivd->tag.desc_crc_len = udf_rw16(crclen);
 
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) ivd);
-
 	context.implementation = ivd;
 
 	return 0;
@@ -994,8 +974,6 @@ udf_update_lvintd(int type)
 	crclen  = sizeof(struct logvol_int_desc) -4 -UDF_DESC_TAG_LENGTH + l_iu;
 	crclen += num_partmappings * 2 * 4;
 	lvid->tag.desc_crc_len = udf_rw16(crclen);
-
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) lvid);
 
 	context.logvol_info = lvinfo;
 }
@@ -1062,7 +1040,6 @@ udf_create_fsd(void)
 
 	crclen = sizeof(struct fileset_desc) - UDF_DESC_TAG_LENGTH;
 	fsd->tag.desc_crc_len = udf_rw16(crclen);
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fsd);
 
 	context.fileset_desc = fsd;
 
@@ -1093,7 +1070,6 @@ udf_create_space_bitmap(struct space_bitmap_desc **sbdp)
 	/* set crc to only cover the header (UDF 2.3.1.2, 2.3.8.1) */
 	crclen = sizeof(struct space_bitmap_desc) -1 - UDF_DESC_TAG_LENGTH;
 	sbd->tag.desc_crc_len = udf_rw16(crclen);
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) sbd);
 
 	*sbdp = sbd;
 	return 0;
@@ -1132,8 +1108,6 @@ udf_register_bad_block(uint32_t location)
 		return EINVAL;
 	}
 	free_sme->org = udf_rw32(location);
-
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) spt);
 
 	return 0;
 }
@@ -1205,7 +1179,9 @@ udf_create_parentfid(struct fileid_desc *fid, struct long_ad *parent,
 	fid->icb = *parent;
 	fid->icb.longad_uniqueid = udf_rw32((uint32_t) unique_id);
 	fid->tag.desc_crc_len = fidsize - UDF_DESC_TAG_LENGTH;
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fid);
+
+	/* we have to do the fid here explicitly for simplicity */
+	udf_validate_tag_and_crc_sums((union dscrptr *) fid);
 
 	return fidsize;
 }
@@ -1262,7 +1238,6 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	extattrhdr->impl_attr_loc = udf_rw32(exthdr_len);
 	extattrhdr->appl_attr_loc = udf_rw32(exthdr_len);
 	extattrhdr->tag.desc_crc_len = udf_rw16(8);
-	udf_validate_tag_and_crc_sums((union dscrptr *) extattrhdr);
 
 	/* record extended attribute header length */
 	fe->l_ea = udf_rw32(exthdr_len);
@@ -1286,8 +1261,6 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	crclen  = sizeof(struct file_entry) - 1 - UDF_DESC_TAG_LENGTH;
 	crclen += udf_rw32(fe->l_ea) + fidsize;
 	fe->tag.desc_crc_len = udf_rw16(crclen);
-
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fe);
 
 	*fep = fe;
 	return 0;
@@ -1350,8 +1323,6 @@ udf_create_new_efe(struct extfile_entry **efep, int file_type,
 	crclen += fidsize;
 	efe->tag.desc_crc_len = udf_rw16(crclen);
 
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) efe);
-
 	*efep = efe;
 	return 0;
 }
@@ -1393,7 +1364,6 @@ udf_create_new_rootdir(union dscrptr **dscr)
 	context.num_directories++;
 	assert(context.num_directories == 1);
 
-	(void) udf_validate_tag_and_crc_sums(*dscr);
 	return 0;
 }
 
@@ -1461,7 +1431,6 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 
 		/* adjust offsets for added appended impl. use extended attr. */
 		extattrhdr->appl_attr_loc = udf_rw32(appl_attr_loc + ea_len);
-		udf_validate_tag_and_crc_sums((union dscrptr *) extattrhdr);
 		fe->l_ea = udf_rw32(udf_rw32(fe->l_ea) + ea_len);
 
 		/* writeout VAT locations (partion offsets) */
@@ -1525,8 +1494,6 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		*vat_dscr = (union dscrptr *) efe;
 	}
 	
-	(void) udf_validate_tag_and_crc_sums(*vat_dscr);
-
 	return 0;
 }
 
