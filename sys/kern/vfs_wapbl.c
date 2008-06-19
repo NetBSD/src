@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.1.2.6 2008/06/18 17:53:21 simonb Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.1.2.7 2008/06/19 03:27:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.6 2008/06/18 17:53:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.7 2008/06/19 03:27:23 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -1695,7 +1695,7 @@ wapbl_inodetrk_init(struct wapbl *wl, u_int size)
 {
 
 	wl->wl_inohash = hashinit(size, HASH_LIST, true, &wl->wl_inohashmask);
-	if (atomic_inc_uint_nv(&wapbl_ino_pool_refcount) == 0) {
+	if (atomic_inc_uint_nv(&wapbl_ino_pool_refcount) == 1) {
 		pool_init(&wapbl_ino_pool, sizeof(struct wapbl_ino), 0, 0, 0,
 		    "wapblinopl", &pool_allocator_nointr, IPL_NONE);
 	}
@@ -2070,7 +2070,7 @@ wapbl_blkhash_init(struct wapbl_replay *wr, u_int size)
 	KASSERT(wr->wr_blkhash == 0);
 #ifdef _KERNEL
 	wr->wr_blkhash = hashinit(size, HASH_LIST, true, &wr->wr_blkhashmask);
-	if (atomic_inc_uint_nv(&wapbl_blk_pool_refcount) == 0) {
+	if (atomic_inc_uint_nv(&wapbl_blk_pool_refcount) == 1) {
 		pool_init(&wapbl_blk_pool, sizeof(struct wapbl_blk), 0, 0, 0,
 		    "wapblblkpl", &pool_allocator_nointr, IPL_NONE);
         }
