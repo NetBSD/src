@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1161 2008/06/19 03:35:58 yamt Exp $
+#	$NetBSD: mi,v 1.1162 2008/06/19 13:07:37 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2927,7 +2927,7 @@
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-fortran-debug	gcc=3,gcccmds,debug
 ./usr/libdata/debug/usr/libexec/f771.debug	comp-obsolete		gcc=4,obsolete,debug
 ./usr/libdata/debug/usr/libexec/fingerd.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/libexec/ftp-proxy.debug	comp-pf-debug		pf,debug
+./usr/libdata/debug/usr/libexec/ftp-proxy.debug	comp-obsolete		pf,obsolete
 ./usr/libdata/debug/usr/libexec/ftpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/getNAME.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/libexec/getty.debug	comp-sysutil-debug	debug
@@ -2984,6 +2984,7 @@
 ./usr/libdata/debug/usr/libexec/spellprog.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/libexec/ssh-keysign.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/libexec/telnetd.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/libexec/tftp-proxy.debug	comp-pf-debug		pf,debug
 ./usr/libdata/debug/usr/libexec/tftpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/utmp_update.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/libexec/uucp/uucico.debug	comp-obsolete		obsolete
@@ -3037,6 +3038,7 @@
 ./usr/libdata/debug/usr/sbin/fixmount.debug	comp-nfsclient-debug	debug
 ./usr/libdata/debug/usr/sbin/fsinfo.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/fssconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ftp-proxy.debug	comp-pf-debug		pf,debug
 ./usr/libdata/debug/usr/sbin/fwctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/getencstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/gpioctl.debug	comp-sysutil-debug	debug
