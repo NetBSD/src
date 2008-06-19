@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.3 2008/06/19 10:25:51 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.4 2008/06/19 12:24:58 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.3 2008/06/19 10:25:51 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.4 2008/06/19 12:24:58 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1215,9 +1215,12 @@ int
 udf_create_new_fe(struct file_entry **fep, int file_type,
 	struct long_ad *parent_icb)
 {
-	struct file_entry  *fe;
-	struct icb_tag     *icb;
-	uint32_t fidsize;
+	struct file_entry      *fe;
+	struct icb_tag         *icb;
+	struct extattrhdr_desc *extattrhdr;
+	struct timestamp        birthtime;
+	uint32_t exthdr_len, easize, fidsize;
+	uint8_t *bpos;
 	int crclen;
 
 	*fep = NULL;
@@ -1241,6 +1244,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	fe->link_cnt = udf_rw16(0);		/* explicit setting */
 
 	fe->ckpoint  = udf_rw32(1);		/* user supplied file version */
+	udf_set_timestamp_now(&birthtime);
 	udf_set_timestamp_now(&fe->atime);
 	udf_set_timestamp_now(&fe->attrtime);
 	udf_set_timestamp_now(&fe->mtime);
@@ -1248,10 +1252,31 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	udf_set_regid(&fe->imp_id, context.impl_name);
 	udf_add_impl_regid(&fe->imp_id);
 
+	/* create empty extended attribute header */
+	bpos = (uint8_t *) fe->data;
+	extattrhdr = (struct extattrhdr_desc *) bpos;
+	exthdr_len = sizeof(struct extattrhdr_desc);
+
+	udf_inittag(&extattrhdr->tag, TAGID_EXTATTR_HDR, /* loc */ 0);
+	extattrhdr->impl_attr_loc = udf_rw32(exthdr_len);
+	extattrhdr->appl_attr_loc = udf_rw32(exthdr_len);
+	extattrhdr->tag.desc_crc_len = udf_rw16(8);
+	udf_validate_tag_and_crc_sums((union dscrptr *) extattrhdr);
+
+	/* record extended attribute header length */
+	fe->l_ea = udf_rw32(exthdr_len);
+
+	/* advance */
+	easize  = exthdr_len;
+	bpos   += exthdr_len;
+
+	/* TODO create extended attribute to record our creation time */
+
+	/* if its a directory, create '..' */
 	fidsize = 0;
 	fe->unique_id = udf_rw64(context.unique_id);
 	if (file_type == UDF_ICB_FILETYPE_DIRECTORY) {
-		fidsize = udf_create_parentfid((struct fileid_desc *) fe->data,
+		fidsize = udf_create_parentfid((struct fileid_desc *) bpos,
 			parent_icb, context.unique_id);
 	}
 	udf_advance_uniqueid();
@@ -1262,7 +1287,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	fe->logblks_rec = udf_rw64(0);		/* intern */
 
 	crclen  = sizeof(struct file_entry) - 1 - UDF_DESC_TAG_LENGTH;
-	crclen += fidsize;
+	crclen += fidsize + easize;
 	fe->tag.desc_crc_len = udf_rw16(crclen);
 
 	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fe);
@@ -1386,10 +1411,10 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 	struct vatlvext_extattr_entry *vatlvext;
 	struct udf_oldvat_tail *oldvat_tail;
 	struct udf_vat *vathdr;
-	uint32_t *vat_pos;
+	uint32_t *vat_pos, impl_attr_loc, appl_attr_loc;
 	uint16_t *spos;
 	uint8_t *bpos;
-	int inf_len, ea_len, vat_len, exthdr_len, filetype;
+	int inf_len, ea_len, vat_len, filetype;
 	int error;
 
 	assert((layout.rootdir < 2) && (layout.fsd < 2));
@@ -1400,28 +1425,25 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		if (error)
 			return error;
 
-		/* prepend "*UDF VAT LVExtension" extended attribute : */
+		/* create "*UDF VAT LVExtension" extended attribute */
+		bpos = (uint8_t *) fe->data;
+		extattrhdr = (struct extattrhdr_desc *) bpos;
+
+		/* assert no application attributes recorded yet */
+		impl_attr_loc = udf_rw32(extattrhdr->impl_attr_loc);
+		appl_attr_loc = udf_rw32(extattrhdr->appl_attr_loc);
+		assert(appl_attr_loc == impl_attr_loc);
 
 		/* calculate size of VAT LVExtension attribute */
 		ea_len = sizeof(struct impl_extattr_entry) - 1 +
 			 sizeof(struct vatlvext_extattr_entry) + 4;
 
-		/* create extended attribute header */
-		bpos = (uint8_t *) fe->data;
-		extattrhdr = (struct extattrhdr_desc *) bpos;
-		udf_inittag(&extattrhdr->tag, TAGID_EXTATTR_HDR, layout.vat);
-		exthdr_len = sizeof(struct extattrhdr_desc);
-		extattrhdr->impl_attr_loc = udf_rw32(exthdr_len);
-		extattrhdr->appl_attr_loc = udf_rw32(exthdr_len + ea_len);
-		extattrhdr->tag.desc_crc_len = udf_rw16(8);
-		udf_validate_tag_and_crc_sums((union dscrptr *) extattrhdr);
-		bpos += sizeof(struct extattrhdr_desc);
-
 		/* create generic implementation use extended attr. */
+		bpos += impl_attr_loc;
 		implext  = (struct impl_extattr_entry *) bpos;
 		implext->hdr.type = udf_rw32(2048);	/* [4/48.10.8] */
 		implext->hdr.subtype = 1;		/* [4/48.10.8.2] */
-		implext->hdr.a_l = udf_rw32(ea_len);	/* complete EA size */
+		implext->hdr.a_l = udf_rw32(ea_len);	/* VAT LVext EA size */
 		/* use 4 bytes of imp use for UDF checksum [UDF 3.3.4.5] */
 		implext->iu_l = udf_rw32(4);
 		udf_set_regid(&implext->imp_id, "*UDF VAT LVExtension");
@@ -1440,12 +1462,13 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		vatlvext->num_directories = udf_rw32(context.num_directories);
 		memcpy(vatlvext->logvol_id, context.logical_vol->logvol_id, 128);
 
-		/* calculate extended attribute to file data offset */
-		ea_len += sizeof(struct extattrhdr_desc);
-		fe->l_ea = udf_rw32(ea_len);
+		/* adjust offsets for added appended impl. use extended attr. */
+		extattrhdr->appl_attr_loc = udf_rw32(appl_attr_loc + ea_len);
+		udf_validate_tag_and_crc_sums((union dscrptr *) extattrhdr);
+		fe->l_ea = udf_rw32(udf_rw32(fe->l_ea) + ea_len);
 
 		/* writeout VAT locations (partion offsets) */
-		vat_pos = (uint32_t *) (fe->data + ea_len);
+		vat_pos = (uint32_t *) (fe->data + udf_rw32(fe->l_ea));
 		vat_pos[layout.rootdir] = udf_rw32(layout.rootdir); 
 		vat_pos[layout.fsd    ] = udf_rw32(layout.fsd);
 
@@ -1459,7 +1482,9 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		inf_len = 2 * 4 + sizeof(struct udf_oldvat_tail);
 		fe->inf_len = udf_rw64(inf_len);
 		fe->l_ad    = udf_rw32(inf_len);
-		vat_len = inf_len + ea_len +
+
+		/* update vat descriptor's CRC length */
+		vat_len = inf_len + udf_rw32(fe->l_ea) +
 			sizeof(struct file_entry) - 1 - UDF_DESC_TAG_LENGTH;
 		fe->tag.desc_crc_len = udf_rw16(vat_len);
 
@@ -1507,6 +1532,4 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 
 	return 0;
 }
-
-
 
