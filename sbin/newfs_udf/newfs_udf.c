@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.2 2008/06/19 12:23:01 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -452,18 +452,37 @@ static int
 udf_write_dscr_virt(union dscrptr *dscr, uint32_t location, uint32_t vpart,
 	uint32_t sects)
 {
+	struct file_entry *fe;
+	struct extfile_entry *efe;
+	struct extattrhdr_desc *extattrhdr;
 	uint32_t phys;
 	uint8_t *bpos;
 	int error, cnt;
 
+	extattrhdr = NULL;
+	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
+		fe = (struct file_entry *) dscr;
+		if (udf_rw32(fe->l_ea) > 0)
+			extattrhdr = (struct extattrhdr_desc *) fe->data;
+	}
+	if (udf_rw16(dscr->tag.id) == TAGID_EXTFENTRY) {
+		efe = (struct extfile_entry *) dscr;
+		if (udf_rw32(efe->l_ea) > 0)
+			extattrhdr = (struct extattrhdr_desc *) efe->data;
+	}
+	if (extattrhdr) {
+		extattrhdr->tag.tag_loc = udf_rw32(location);
+		udf_validate_tag_and_crc_sums((union dscrptr *) extattrhdr);
+	}
+
 	dscr->tag.tag_loc = udf_rw32(location);
-	(void) udf_validate_tag_and_crc_sums(dscr);
+	udf_validate_tag_and_crc_sums(dscr);
 
 	for (cnt = 0; cnt < sects; cnt++) {
 		bpos  = (uint8_t *) dscr;
 		bpos += context.sector_size * cnt;
 
-		/* NOTE liniar mapping assumed in the ranges used */
+		/* NOTE linear mapping assumed in the ranges used */
 		/* XXX 1:1 translation */
 		phys = layout.part_start_lba + location + cnt;
 
