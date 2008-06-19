@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.4 2008/06/19 12:24:58 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.5 2008/06/19 12:33:54 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.4 2008/06/19 12:24:58 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.5 2008/06/19 12:33:54 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1219,7 +1219,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	struct icb_tag         *icb;
 	struct extattrhdr_desc *extattrhdr;
 	struct timestamp        birthtime;
-	uint32_t exthdr_len, easize, fidsize;
+	uint32_t exthdr_len, fidsize;
 	uint8_t *bpos;
 	int crclen;
 
@@ -1251,6 +1251,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 
 	udf_set_regid(&fe->imp_id, context.impl_name);
 	udf_add_impl_regid(&fe->imp_id);
+	fe->unique_id = udf_rw64(context.unique_id);
 
 	/* create empty extended attribute header */
 	bpos = (uint8_t *) fe->data;
@@ -1266,15 +1267,11 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	/* record extended attribute header length */
 	fe->l_ea = udf_rw32(exthdr_len);
 
-	/* advance */
-	easize  = exthdr_len;
-	bpos   += exthdr_len;
-
 	/* TODO create extended attribute to record our creation time */
 
 	/* if its a directory, create '..' */
+	bpos = (uint8_t *) fe->data + udf_rw32(fe->l_ea);
 	fidsize = 0;
-	fe->unique_id = udf_rw64(context.unique_id);
 	if (file_type == UDF_ICB_FILETYPE_DIRECTORY) {
 		fidsize = udf_create_parentfid((struct fileid_desc *) bpos,
 			parent_icb, context.unique_id);
@@ -1287,7 +1284,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	fe->logblks_rec = udf_rw64(0);		/* intern */
 
 	crclen  = sizeof(struct file_entry) - 1 - UDF_DESC_TAG_LENGTH;
-	crclen += fidsize + easize;
+	crclen += udf_rw32(fe->l_ea) + fidsize;
 	fe->tag.desc_crc_len = udf_rw16(crclen);
 
 	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fe);
