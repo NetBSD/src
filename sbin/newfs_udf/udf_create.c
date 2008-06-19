@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.2 2008/06/19 10:23:31 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.3 2008/06/19 10:25:51 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.2 2008/06/19 10:23:31 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.3 2008/06/19 10:25:51 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -150,9 +150,8 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 	if (format_flags & FORMAT_WORM)
 		layout.lvis_size = 64 * blockingnr;
 
-	/* TODO skip bad blocks in LVID sequence */
-	/* using f.e. first_lba+=96; */
- 
+	/* TODO skip bad blocks in LVID sequence; for now use f.e. */
+	/* first_lba+=128; */
 	layout.lvis = first_lba;
 	first_lba += layout.lvis_size;
 
