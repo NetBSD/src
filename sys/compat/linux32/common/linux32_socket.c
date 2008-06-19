@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.5 2007/12/20 23:02:58 dsl Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.6 2008/06/19 16:09:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.5 2007/12/20 23:02:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.6 2008/06/19 16:09:25 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,20 +46,29 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.5 2007/12/20 23:02:58 dsl Exp $
 #include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/swap.h>
+#include <sys/file.h>
+#include <sys/vnode.h>
+#include <sys/filedesc.h>
 
 #include <machine/types.h>
+
+#include <net/if.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+#include <compat/sys/sockio.h>
 
+#include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_oldolduname.h>
+#include <compat/linux/common/linux_ioctl.h>
+#include <compat/linux/common/linux_sockio.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
@@ -67,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.5 2007/12/20 23:02:58 dsl Exp $
 #include <compat/linux32/common/linux32_machdep.h>
 #include <compat/linux32/common/linux32_sysctl.h>
 #include <compat/linux32/common/linux32_socketcall.h>
+#include <compat/linux32/common/linux32_ioctl.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
@@ -359,4 +369,106 @@ linux32_sys_recv(struct lwp *l, const struct linux32_sys_recv_args *uap, registe
 	SCARG(&ua, fromlenaddr) = NULL;
 
 	return sys_recvfrom(l, &ua, retval);
+}
+
+int
+linux32_ioctl_socket(struct lwp *l, const struct linux32_sys_ioctl_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(u_long) com;
+		syscallarg(void *) data;
+	} */
+	u_long com;
+	int error = 0, isdev = 0, dosys = 1;
+	struct netbsd32_ioctl_args ia;
+	file_t *fp;
+	struct vnode *vp;
+	int (*ioctlf)(file_t *, u_long, void *);
+	struct ioctl_pt pt;
+
+	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
+		return (EBADF);
+
+	if (fp->f_type == DTYPE_VNODE) {
+		vp = (struct vnode *)fp->f_data;
+		isdev = vp->v_type == VCHR;
+	}
+
+	/*
+	 * Don't try to interpret socket ioctl calls that are done
+	 * on a device filedescriptor, just pass them through, to
+	 * emulate Linux behaviour. Use PTIOCLINUX so that the
+	 * device will only handle these if it's prepared to do
+	 * so, to avoid unexpected things from happening.
+	 */
+	if (isdev) {
+		dosys = 0;
+		ioctlf = fp->f_ops->fo_ioctl;
+		pt.com = SCARG(uap, com);
+		pt.data = (void *)NETBSD32PTR64(SCARG(uap, data));
+		error = ioctlf(fp, PTIOCLINUX, &pt);
+		/*
+		 * XXX hack: if the function returns EJUSTRETURN,
+		 * it has stuffed a sysctl return value in pt.data.
+		 */
+		if (error == EJUSTRETURN) {
+			retval[0] = (register_t)pt.data;
+			error = 0;
+		}
+		goto out;
+	}
+
+	com = SCARG(uap, com);
+	retval[0] = 0;
+
+	switch (com) {
+	case LINUX_SIOCGIFCONF:
+		SCARG(&ia, com) = OOSIOCGIFCONF;
+		break;
+	case LINUX_SIOCGIFFLAGS:
+		SCARG(&ia, com) = OSIOCGIFFLAGS;
+		break;
+	case LINUX_SIOCSIFFLAGS:
+		SCARG(&ia, com) = OSIOCSIFFLAGS;
+		break;
+	case LINUX_SIOCGIFADDR:
+		SCARG(&ia, com) = OOSIOCGIFADDR;
+		break;
+	case LINUX_SIOCGIFDSTADDR:
+		SCARG(&ia, com) = OOSIOCGIFDSTADDR;
+		break;
+	case LINUX_SIOCGIFBRDADDR:
+		SCARG(&ia, com) = OOSIOCGIFBRDADDR;
+		break;
+	case LINUX_SIOCGIFNETMASK:
+		SCARG(&ia, com) = OOSIOCGIFNETMASK;
+		break;
+	case LINUX_SIOCADDMULTI:
+		SCARG(&ia, com) = OSIOCADDMULTI;
+		break;
+	case LINUX_SIOCDELMULTI:
+		SCARG(&ia, com) = OSIOCDELMULTI;
+		break;
+#ifdef notyet
+	case LINUX_SIOCGIFHWADDR:
+		error = linux_getifhwaddr(l, retval, SCARG(uap, fd),
+		    SCARG(uap, data));
+		dosys = 0;
+		break;
+#endif
+	default:
+		error = EINVAL;
+	}
+
+ out:
+ 	fd_putfile(SCARG(uap, fd));
+
+	if (error == 0 && dosys) {
+		SCARG(&ia, fd) = SCARG(uap, fd);
+		SCARG(&ia, data) = SCARG(uap, data);
+		error = netbsd32_ioctl(curlwp, &ia, retval);
+	}
+
+	return error;
 }
