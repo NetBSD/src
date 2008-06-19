@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.260 2008/06/18 17:51:38 simonb Exp $
+#	$NetBSD: BRANCHES,v 1.261 2008/06/19 03:38:44 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -552,17 +552,6 @@ Base Tag:	yamt-nfs-mp-base2
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
-
-Branch:		yamt-pf42
-Description:	import newer pf from OpenBSD 4.2
-Status:		Active
-Start Date:	Sat Apr 19 2008
-End Date:	
-Base Tag:	yamt-pf42-base4
-Maintainer:	Peter Postma <peter@NetBSD.org>,
-		YAMAMOTO Takashi <yamt@NetBSD.org>
-Scope:		src
-Notes:		see sys/dist/pf/net/TODO
 
 Branch:		reinoud-bufcleanup
 Description:	implement and evaluate struct buf usage cleanup strategies.
@@ -1483,6 +1472,17 @@ Base Tag:	yamt-pdpolicy-base9
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
+
+Branch:		yamt-pf42
+Description:	import newer pf from OpenBSD 4.2
+Status:		Terminated; merged to -current
+Start Date:	Sat Apr 19 2008
+End Date:	Wed Jun 18 2008
+Base Tag:	yamt-pf42-base4
+Maintainer:	Peter Postma <peter@NetBSD.org>,
+		YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src
+Notes:		see sys/dist/pf/net/TODO
 
 Branch:		yamt-readahead
 Description:	play with file readahead
