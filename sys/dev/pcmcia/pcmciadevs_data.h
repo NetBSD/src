@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.228 2008/05/16 20:21:59 jnemeth Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.229 2008/06/19 18:21:32 imp Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.225 2008/05/16 20:21:12 jnemeth Exp
+ *	NetBSD: pcmciadevs,v 1.226 2008/06/19 18:20:33 imp Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -897,11 +897,46 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Nokia C020 WLAN Card",	}
 	,
 	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_OC2220,
+	    PCMCIA_CIS_OLICOM_OC2220,
+	    0,
+	    "Olicom",
+	    "GoCard Ethernet",	}
+	,
+	{
 	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_TR,
 	    PCMCIA_CIS_OLICOM_TR,
 	    0,
 	    "Olicom",
 	    "GoCard Token Ring 16/4",	}
+	,
+	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_OC2231,
+	    PCMCIA_CIS_OLICOM_OC2231,
+	    0,
+	    "Olicom",
+	    "GoCard Combo Eth/Modem 288",	}
+	,
+	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_OC3231,
+	    PCMCIA_CIS_OLICOM_OC3231,
+	    0,
+	    "Olicom",
+	    "GoCard Token Ring 16/4/Modem 288",	}
+	,
+	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_OC2232,
+	    PCMCIA_CIS_OLICOM_OC2232,
+	    0,
+	    "Olicom",
+	    "GoCard Combo Eth/Modem 336",	}
+	,
+	{
+	    PCMCIA_VENDOR_OLICOM, PCMCIA_PRODUCT_OLICOM_OC3232,
+	    PCMCIA_CIS_OLICOM_OC3232,
+	    0,
+	    "Olicom",
+	    "GoCard Token Ring 16/4/Modem 336",	}
 	,
 	{
 	    PCMCIA_VENDOR_OSITECH, PCMCIA_PRODUCT_OSITECH_TRUMPCARD_SOD,
