@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.2 2008/06/19 10:23:31 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.2 2008/06/19 10:23:31 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -152,7 +152,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 
 	/* TODO skip bad blocks in LVID sequence */
 	/* using f.e. first_lba+=96; */
-
+ 
 	layout.lvis = first_lba;
 	first_lba += layout.lvis_size;
 
@@ -1450,7 +1450,7 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		vat_pos[layout.rootdir] = udf_rw32(layout.rootdir); 
 		vat_pos[layout.fsd    ] = udf_rw32(layout.fsd);
 
-		/* Append "*UDF Virtual Alloc Tbl" id nd prev. VAT location */
+		/* Append "*UDF Virtual Alloc Tbl" id and prev. VAT location */
 		oldvat_tail = (struct udf_oldvat_tail *) (vat_pos + 2);
 		udf_set_regid(&oldvat_tail->id, "*UDF Virtual Alloc Tbl");
 		udf_add_udf_regid(&oldvat_tail->id);
