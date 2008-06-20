@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.608 2008/05/29 03:04:05 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.609 2008/06/20 17:27:41 peter Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -696,8 +696,8 @@ License:	Public domain
 pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
 Package:	PF (openbsd packet filter)
-Version:	OpenBSD 3.7
-Current Vers:	OpenBSD 3.9-current
+Version:	OpenBSD 4.2
+Current Vers:	OpenBSD 4.3-current
 Maintainer:	The OpenBSD Project
 Archive Site:	ftp://ftp.openbsd.org/
 Home Page:	http://www.openbsd.org/faq/pf/
