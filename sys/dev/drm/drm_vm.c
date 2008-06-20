@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.12 2008/06/20 05:53:46 bjs Exp $ */
+/* $NetBSD: drm_vm.c,v 1.13 2008/06/20 09:15:39 cegger Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.12 2008/06/20 05:53:46 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.13 2008/06/20 09:15:39 cegger Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -89,13 +89,13 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		if (map->type == _DRM_SHM) {
 			if ((roffset >= (uintptr_t)map->handle) && 
 			    (roffset < (uintptr_t)map->handle + map->size)) {
-				DRM_DEBUG("found _DRM_SHM map for offset (%lx)\n", roffset);
+				DRM_DEBUG("found _DRM_SHM map for offset (%lx)\n", (long)roffset);
 				break;
 			}  
 		} else {
 			if ((offset >= map->cookie) && 
 		    	    (offset < map->cookie + map->size)) {
-			DRM_DEBUG("found cookie (%lx) for offset (%lx)", map->cookie, offset);
+			DRM_DEBUG("found cookie (%lx) for offset (%lx)", map->cookie, (long)offset);
 			offset -= map->cookie;
 				break;
 		}
