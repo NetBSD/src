@@ -1,4 +1,4 @@
-/* $NetBSD: drm_bufs.c,v 1.8 2008/06/20 00:14:28 bjs Exp $ */
+/* $NetBSD: drm_bufs.c,v 1.9 2008/06/20 05:53:46 bjs Exp $ */
 
 /* drm_bufs.h -- Generic buffer template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.8 2008/06/20 00:14:28 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.9 2008/06/20 05:53:46 bjs Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_bufs.c,v 1.3 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -178,7 +178,7 @@ int drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 #endif
 		break;
 	case _DRM_SHM:
-		map->mem = drm_dmamem_pgalloc(dev, btop(map->size));
+		map->mem = drm_dmamem_pgalloc(dev, round_page(map->size) >> PAGE_SHIFT);
 		DRM_DEBUG( "%lu %d %p\n",
 			   map->size, drm_order(map->size), map->handle );
 		if ( map->mem == NULL ) {
