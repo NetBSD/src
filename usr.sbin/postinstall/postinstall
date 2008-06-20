@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.62 2008/06/18 09:06:28 yamt Exp $
+# $NetBSD: postinstall,v 1.63 2008/06/20 17:04:45 peter Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -823,7 +823,10 @@ do_pf()
 			# ${dir} is set by find_file_in_dirlist()
 	populate_dir ${op} true \
 	    ${dir} ${DEST_DIR}/etc 644 \
-	    pf.conf pf.os
+	    pf.conf
+	failed=$(( ${failed} + $? ))
+
+	compare_dir ${op} ${dir} ${DEST_DIR}/etc 444 pf.os
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
