@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1070 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1071 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -546,3 +546,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	awk: Import 20070501 [christos 20080525]
 	uberry(4): A driver to allow RIM BlackBerries to charge from the USB
 		port [christos 20080525]
+	pf(4): Updated to OpenBSD 4.2 PF [yamt,peter,christos,joerg 20080618]
