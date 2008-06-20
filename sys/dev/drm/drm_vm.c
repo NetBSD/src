@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.11 2008/06/20 00:14:28 bjs Exp $ */
+/* $NetBSD: drm_vm.c,v 1.12 2008/06/20 05:53:46 bjs Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.11 2008/06/20 00:14:28 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.12 2008/06/20 05:53:46 bjs Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -40,7 +40,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	drm_local_map_t *map;
 	drm_file_t *priv;
 	drm_map_type_t type;
-	paddr_t phys;
+	/* paddr_t phys; */
 	uintptr_t roffset;
 
 	DRM_LOCK();
@@ -63,6 +63,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 			unsigned long page = offset >> PAGE_SHIFT;
 			unsigned long pphys = dma->pagelist[page];
 
+/* XXX fixme */
 #ifdef macppc
 			return pphys;
 #else
@@ -118,7 +119,8 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	case _DRM_FRAME_BUFFER:
 	case _DRM_REGISTERS:
 	case _DRM_AGP:
-		phys = offset + map->offset;
+		return bus_space_mmap(map->bst, offset + map->offset, 0, prot,
+			BUS_SPACE_MAP_LINEAR);
 		break;
 	/* All _DRM_CONSISTENT and _DRM_SHM mappings have a 0 offset */
 	case _DRM_CONSISTENT:
@@ -137,12 +139,8 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		break;
 	default:
 		DRM_ERROR("bad map type %d\n", type);
-		return -1;	/* This should never happen. */
+		break;
 	}
 
-#ifdef macppc
-	return phys;
-#else
-	return atop(phys);
-#endif
+		return -1;	/* This should never happen. */
 }
