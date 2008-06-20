@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.15 2008/06/20 11:31:40 njoly Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.16 2008/06/20 11:38:26 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.15 2008/06/20 11:31:40 njoly Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.16 2008/06/20 11:38:26 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -215,11 +215,11 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 	case LINUX_FUTEX_FD:
 		FUTEXPRINTF(("linux_sys_futex: unimplemented op %d\n", 
 		    SCARG(uap, op)));
-		break;
+		return ENOSYS;
 	default:
 		FUTEXPRINTF(("linux_sys_futex: unknown op %d\n", 
 		    SCARG(uap, op)));
-		break;
+		return ENOSYS;
 	}
 	return 0;
 }
