@@ -1,4 +1,4 @@
-/* $NetBSD: drm_pci.c,v 1.11 2008/06/20 00:14:28 bjs Exp $ */
+/* $NetBSD: drm_pci.c,v 1.12 2008/06/20 05:53:46 bjs Exp $ */
 
 /*
  * Copyright 2003 Eric Anholt.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.11 2008/06/20 00:14:28 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.12 2008/06/20 05:53:46 bjs Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_pci.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -41,7 +41,7 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 	if (h == NULL)
 		return NULL;
 
-	h->mem = drm_dmamem_pgalloc(dev, round_page(btop(size)));
+	h->mem = drm_dmamem_pgalloc(dev, round_page(size) >> PAGE_SHIFT);
 	if (h->mem == NULL) {
 	free(h, M_DRM);
 	return NULL;
@@ -49,6 +49,7 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 
 	h->busaddr = DRM_DMAMEM_BUSADDR(h->mem);
 	h->vaddr = DRM_DMAMEM_KERNADDR(h->mem);
+	h->size = h->mem->dd_dmam->dm_mapsize;
 
 	return h;
 	
