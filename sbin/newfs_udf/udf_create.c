@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.6 2008/06/19 13:35:26 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.7 2008/06/20 22:41:42 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.6 2008/06/19 13:35:26 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.7 2008/06/20 22:41:42 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: udf_create.c,v 1.6 2008/06/19 13:35:26 reinoud Exp $");
 #include <errno.h>
 #include <time.h>
 #include <assert.h>
+#include <err.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include "udf_create.h"
@@ -1187,15 +1188,130 @@ udf_create_parentfid(struct fileid_desc *fid, struct long_ad *parent,
 }
 
 
+/*
+ * Order of extended attributes :
+ *   ECMA 167 EAs
+ *   Non block aligned Implementation Use EAs
+ *   Block aligned Implementation Use EAs	(not in newfs_udf)
+ *   Application Use EAs			(not in newfs_udf)
+ *
+ *   no checks for doubles, must be called in-order
+ */
+static void
+udf_append_internal_extattr(union dscrptr *dscr, struct extattr_entry *extattr)
+{
+	struct file_entry      *fe;
+	struct extfile_entry   *efe;
+	struct extattrhdr_desc *extattrhdr;
+	struct impl_extattr_entry *implext;
+	uint32_t impl_attr_loc, appl_attr_loc, l_ea, a_l, exthdr_len;
+	uint32_t *l_eap, l_ad;
+	uint16_t *spos;
+	uint8_t *bpos, *data;
+
+	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
+		fe    = &dscr->fe;
+		data  = fe->data;
+		l_eap = &fe->l_ea;
+		l_ad  = udf_rw32(fe->l_ad);
+	} else if (udf_rw16(dscr->tag.id) == TAGID_EXTFENTRY) {
+		efe   = &dscr->efe;
+		data  = efe->data;
+		l_eap = &efe->l_ea;
+		l_ad  = udf_rw32(efe->l_ad);
+	} else {
+		errx(1, "Bad tag passed to udf_append_internal_extattr");
+	}
+
+	/* should have a header! */
+	extattrhdr = (struct extattrhdr_desc *) data;
+	l_ea = udf_rw32(*l_eap);
+	if (l_ea == 0) {
+		assert(l_ad == 0);
+		/* create empty extended attribute header */
+		exthdr_len = sizeof(struct extattrhdr_desc);
+
+		udf_inittag(&extattrhdr->tag, TAGID_EXTATTR_HDR, /* loc */ 0);
+		extattrhdr->impl_attr_loc = udf_rw32(exthdr_len);
+		extattrhdr->appl_attr_loc = udf_rw32(exthdr_len);
+		extattrhdr->tag.desc_crc_len = udf_rw16(8);
+
+		/* record extended attribute header length */
+		l_ea = exthdr_len;
+		*l_eap = udf_rw32(l_ea);
+	}
+
+	/* extract locations */
+	impl_attr_loc = udf_rw32(extattrhdr->impl_attr_loc);
+	appl_attr_loc = udf_rw32(extattrhdr->appl_attr_loc);
+	if (impl_attr_loc == UDF_IMPL_ATTR_LOC_NOT_PRESENT)
+		impl_attr_loc = l_ea;
+	if (appl_attr_loc == UDF_IMPL_ATTR_LOC_NOT_PRESENT)
+		appl_attr_loc = l_ea;
+
+	/* Ecma 167 EAs */
+	if (udf_rw32(extattr->type) < 2048) {
+		assert(impl_attr_loc == l_ea);
+		assert(appl_attr_loc == l_ea);
+	}
+
+	/* implementation use extended attributes */
+	if (udf_rw32(extattr->type) == 2048) {
+		assert(appl_attr_loc == l_ea);
+
+		/* calculate and write extended attribute header checksum */
+		implext = (struct impl_extattr_entry *) extattr;
+		assert(udf_rw32(implext->iu_l) == 4);	/* [UDF 3.3.4.5] */
+		spos = (uint16_t *) implext->data;
+		*spos = udf_rw16(udf_ea_cksum((uint8_t *) implext));
+
+	}
+
+	/* application use extended attributes */
+	assert(udf_rw32(extattr->type) != 65536);
+	assert(appl_attr_loc == l_ea);
+
+	/* append the attribute at the end of the current space */
+	bpos = data + udf_rw32(*l_eap);
+	a_l  = udf_rw32(extattr->a_l);
+
+	/* update impl. attribute locations */
+	if (udf_rw32(extattr->type) < 2048) {
+		impl_attr_loc = l_ea + a_l;
+		appl_attr_loc = l_ea + a_l;
+	}
+	if (udf_rw32(extattr->type) == 2048) {
+		appl_attr_loc = l_ea + a_l;
+	}
+
+	/* copy and advance */
+	memcpy(bpos, extattr, a_l);
+	l_ea += a_l;
+	*l_eap = udf_rw32(l_ea);
+
+	/* do the `dance` again backwards */
+	if (context.dscrver != 2) {
+		if (impl_attr_loc == l_ea)
+			impl_attr_loc = UDF_IMPL_ATTR_LOC_NOT_PRESENT;
+		if (appl_attr_loc == l_ea)
+			appl_attr_loc = UDF_APPL_ATTR_LOC_NOT_PRESENT;
+	}
+
+	/* store offsets */
+	extattrhdr->impl_attr_loc = udf_rw32(impl_attr_loc);
+	extattrhdr->appl_attr_loc = udf_rw32(appl_attr_loc);
+}
+
+
 int
 udf_create_new_fe(struct file_entry **fep, int file_type,
 	struct long_ad *parent_icb)
 {
 	struct file_entry      *fe;
 	struct icb_tag         *icb;
-	struct extattrhdr_desc *extattrhdr;
 	struct timestamp        birthtime;
-	uint32_t exthdr_len, fidsize;
+	struct filetimes_extattr_entry *ft_extattr;
+	uint32_t fidsize;
 	uint8_t *bpos;
 	int crclen;
 
@@ -1229,20 +1345,16 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	udf_add_impl_regid(&fe->imp_id);
 	fe->unique_id = udf_rw64(context.unique_id);
 
-	/* create empty extended attribute header */
-	bpos = (uint8_t *) fe->data;
-	extattrhdr = (struct extattrhdr_desc *) bpos;
-	exthdr_len = sizeof(struct extattrhdr_desc);
+	/* create extended attribute to record our creation time */
+	ft_extattr = calloc(1, UDF_FILETIMES_ATTR_LEN(1));
+	ft_extattr->hdr.type = udf_rw32(UDF_FILETIMES_ATTR_NO);
+	ft_extattr->hdr.subtype = 1;	/* [4/48.10.5] */
+	ft_extattr->hdr.a_l = UDF_FILETIMES_ATTR_LEN(1);
+	ft_extattr->existence = UDF_FILETIMES_FILE_CREATION;
 
-	udf_inittag(&extattrhdr->tag, TAGID_EXTATTR_HDR, /* loc */ 0);
-	extattrhdr->impl_attr_loc = udf_rw32(exthdr_len);
-	extattrhdr->appl_attr_loc = udf_rw32(exthdr_len);
-	extattrhdr->tag.desc_crc_len = udf_rw16(8);
-
-	/* record extended attribute header length */
-	fe->l_ea = udf_rw32(exthdr_len);
-
-	/* TODO create extended attribute to record our creation time */
+	udf_append_internal_extattr((union dscrptr *) fe,
+		(struct extattr_entry *) ft_extattr);
+	free(ft_extattr);
 
 	/* if its a directory, create '..' */
 	bpos = (uint8_t *) fe->data + udf_rw32(fe->l_ea);
@@ -1373,14 +1485,12 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 {
 	struct file_entry *fe;
 	struct extfile_entry *efe;
-	struct extattrhdr_desc *extattrhdr;
 	struct impl_extattr_entry *implext;
 	struct vatlvext_extattr_entry *vatlvext;
 	struct udf_oldvat_tail *oldvat_tail;
 	struct udf_vat *vathdr;
-	uint32_t *vat_pos, impl_attr_loc, appl_attr_loc;
-	uint16_t *spos;
-	uint8_t *bpos;
+	uint32_t *vat_pos;
+	uint8_t *bpos, *extattr;
 	int inf_len, ea_len, vat_len, filetype;
 	int error;
 
@@ -1392,22 +1502,13 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		if (error)
 			return error;
 
-		/* create "*UDF VAT LVExtension" extended attribute */
-		bpos = (uint8_t *) fe->data;
-		extattrhdr = (struct extattrhdr_desc *) bpos;
-
-		/* assert no application attributes recorded yet */
-		impl_attr_loc = udf_rw32(extattrhdr->impl_attr_loc);
-		appl_attr_loc = udf_rw32(extattrhdr->appl_attr_loc);
-		assert(appl_attr_loc == impl_attr_loc);
-
-		/* calculate size of VAT LVExtension attribute */
+		/* append VAT LVExtension attribute */
 		ea_len = sizeof(struct impl_extattr_entry) - 1 +
 			 sizeof(struct vatlvext_extattr_entry) + 4;
 
-		/* create generic implementation use extended attr. */
-		bpos += impl_attr_loc;
-		implext  = (struct impl_extattr_entry *) bpos;
+		extattr = calloc(1, ea_len);
+
+		implext  = (struct impl_extattr_entry *) extattr;
 		implext->hdr.type = udf_rw32(2048);	/* [4/48.10.8] */
 		implext->hdr.subtype = 1;		/* [4/48.10.8.2] */
 		implext->hdr.a_l = udf_rw32(ea_len);	/* VAT LVext EA size */
@@ -1415,10 +1516,6 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		implext->iu_l = udf_rw32(4);
 		udf_set_regid(&implext->imp_id, "*UDF VAT LVExtension");
 		udf_add_udf_regid(&implext->imp_id);
-
-		/* calculate and write extended attribute header checksum */
-		spos = (uint16_t *) implext->data;
-		*spos = udf_rw16(udf_ea_cksum((uint8_t *) implext));
 
 		/* VAT LVExtension data follows UDF IU space */
 		bpos = ((uint8_t *) implext->data) + 4;
@@ -1429,9 +1526,10 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		vatlvext->num_directories = udf_rw32(context.num_directories);
 		memcpy(vatlvext->logvol_id, context.logical_vol->logvol_id, 128);
 
-		/* adjust offsets for added appended impl. use extended attr. */
-		extattrhdr->appl_attr_loc = udf_rw32(appl_attr_loc + ea_len);
-		fe->l_ea = udf_rw32(udf_rw32(fe->l_ea) + ea_len);
+		udf_append_internal_extattr((union dscrptr *) fe,
+			(struct extattr_entry *) extattr);
+
+		free(extattr);
 
 		/* writeout VAT locations (partion offsets) */
 		vat_pos = (uint32_t *) (fe->data + udf_rw32(fe->l_ea));
