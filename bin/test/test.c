@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.35 2008/05/26 14:21:08 christos Exp $ */
+/* $NetBSD: test.c,v 1.36 2008/06/20 23:29:36 christos Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.35 2008/05/26 14:21:08 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.36 2008/06/20 23:29:36 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -166,7 +166,7 @@ static int test_access(struct stat *, mode_t);
 static int filstat(char *, enum token);
 static enum token t_lex(char *);
 static int isoperand(void);
-static int getn(const char *);
+static long long getn(const char *);
 static int newerf(const char *, const char *);
 static int olderf(const char *, const char *);
 static int equalf(const char *, const char *);
@@ -313,7 +313,7 @@ primary(enum token n)
 		case STRNZ:
 			return strlen(*t_wp) != 0;
 		case FILTT:
-			return isatty(getn(*t_wp));
+			return isatty((int)getn(*t_wp));
 		default:
 			return filstat(*t_wp, n);
 		}
@@ -665,16 +665,17 @@ isoperand(void)
 }
 
 /* atoi with error detection */
-static int
+static long long
 getn(const char *s)
 {
 	char *p;
-	long r;
+	long long r;
 
 	errno = 0;
-	r = strtol(s, &p, 10);
+	r = strtoll(s, &p, 10);
 
 	if (errno != 0)
+	if (errno == ERANGE && (r == LLONG_MAX || r == LLONG_MIN))
 	      error("%s: out of range", s);
 
 	while (isspace((unsigned char)*p))
@@ -683,7 +684,7 @@ getn(const char *s)
 	if (*p)
 	      error("%s: bad number", s);
 
-	return (int) r;
+	return r;
 }
 
 static int
