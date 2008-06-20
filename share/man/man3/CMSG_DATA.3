@@ -1,7 +1,8 @@
+.\"	$NetBSD: CMSG_DATA.3,v 1.2 2008/06/20 14:35:10 christos Exp $
 .\"	$OpenBSD: CMSG_DATA.3,v 1.5 2008/03/24 16:11:07 deraadt Exp $
 .\" Written by Jared Yanovich <jaredy@openbsd.org>
 .\" Public domain, July 3, 2005
-.Dd $Mdocdate: March 13 2008 $
+.Dd June 20, 2008
 .Dt CMSG_DATA 3
 .Os
 .Sh NAME
@@ -66,6 +67,7 @@ This value is what is normally stored in the
 of each control message.
 This routine accounts for any alignment constraints on the beginning of
 ancillary data.
+This macro might not evaluate to a compile-time constant.
 .It Fn CMSG_NXTHDR mhdr cmsg
 This routine returns the location of the control message following
 .Fa cmsg
@@ -84,6 +86,7 @@ This value is what is normally stored in
 .Fa msg_msgcontrollen .
 This routine accounts for any alignment constraints on the beginning of
 ancillary data as well as any needed to pad the next control message.
+This macro might not evaluate to a compile-time constant.
 .El
 .Sh EXAMPLES
 The following example constructs a control message containing a file
@@ -91,14 +94,21 @@ descriptor and passes it over a socket:
 .Bd -literal -offset indent
 struct msghdr	 msg;
 struct cmsghdr	*cmsg;
+/* We use a union to make sure hdr is aligned */
 union {
 	struct cmsghdr hdr;
 	unsigned char	 buf[CMSG_SPACE(sizeof(int))];
-} cmsgbuf;
+} *cmsgbuf;
 
-memset(&msg, 0, sizeof(msg));
-msg.msg_control = &cmsgbuf.buf;
-msg.msg_controllen = sizeof(cmsgbuf.buf);
+/*
+ * We allocate in the heap instead of the stack to avoid C99
+ * variable stack allocation, which breaks gcc -fstack-protector.
+ */
+if ((cmsgbuf = malloc(sizeof(*cmsgbuf))) == NULL)
+	err(1, "malloc");
+(void)memset(&msg, 0, sizeof(msg));
+msg.msg_control = cmsgbuf->buf;
+msg.msg_controllen = sizeof(cmsgbuf->buf);
 
 cmsg = CMSG_FIRSTHDR(&msg);
 cmsg->cmsg_len = CMSG_LEN(sizeof(int));
@@ -108,6 +118,7 @@ cmsg->cmsg_type = SCM_RIGHTS;
 
 if (sendmsg(s, &msg, 0) == -1)
 	err(1, "sendmsg");
+free(cmsgbuf);
 .Ed
 .Pp
 And an example that receives and decomposes the control message:
@@ -117,15 +128,17 @@ struct cmsghdr	*cmsg;
 union {
 	struct cmsghdr hdr;
 	unsigned char	 buf[CMSG_SPACE(sizeof(int))];
-} cmsgbuf;
+} *cmsgbuf;
 
-memset(&msg, 0, sizeof(msg));
-msg.msg_control = &cmsgbuf.buf;
-msg.msg_controllen = sizeof(cmsgbuf.buf);
+if ((cmsgbuf = malloc(sizeof(*cmsgbuf))) == NULL)
+	err(1, "malloc");
+(void)memset(&msg, 0, sizeof(msg));
+msg.msg_control = cmsgbuf->buf;
+msg.msg_controllen = sizeof(cmsgbuf->buf);
 
 if (recvmsg(s, &msg, 0) == -1)
 	err(1, "recvmsg");
-if ((msg.msg_flags & MSG_TRUNC) || (msg.msg_flags & MSG_CTRUNC))
+if ((msg.msg_flags & (MSG_TRUNC|MSG_CTRUNC))
 	errx(1, "control message truncated");
 for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
     cmsg = CMSG_NXTHDR(&msg, cmsg)) {
@@ -136,6 +149,7 @@ for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
 		/* Do something with the descriptor. */
 	}
 }
+free(cmsgbuf);
 .Ed
 .Sh SEE ALSO
 .Xr recvmsg 2 ,
@@ -144,4 +158,3 @@ for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
 .Sh HISTORY
 The control message API first appeared in
 .Bx 4.2 .
-
