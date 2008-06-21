@@ -1,10 +1,10 @@
-/*	$NetBSD: byaddr.c,v 1.1.1.5 2007/01/27 21:07:20 christos Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.1.1.6 2008/06/21 18:32:25 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: byaddr.c,v 1.34.18.3 2005/04/29 00:15:49 marka Exp */
+/* Id: byaddr.c,v 1.39 2007/06/19 23:47:16 tbox Exp */
 
 /*! \file */
 

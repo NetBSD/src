@@ -1,10 +1,10 @@
-/*	$NetBSD: herror.c,v 1.1.1.4 2007/01/27 21:09:19 christos Exp $	*/
+/*	$NetBSD: herror.c,v 1.1.1.5 2008/06/21 18:30:46 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -74,7 +74,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] =
-	"Id: herror.c,v 1.13.18.2 2005/04/29 00:17:18 marka Exp";
+	"Id: herror.c,v 1.17 2007/06/19 23:47:22 tbox Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>

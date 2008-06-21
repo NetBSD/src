@@ -1,7 +1,7 @@
-/*	$NetBSD: ctl_clnt.c,v 1.1.1.4 2007/01/27 21:09:02 christos Exp $	*/
+/*	$NetBSD: ctl_clnt.c,v 1.1.1.5 2008/06/21 18:33:19 christos Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ctl_clnt.c,v 1.7.18.1 2005/04/27 05:01:05 sra Exp";
+static const char rcsid[] = "Id: ctl_clnt.c,v 1.9.140.1 2008/02/18 04:10:16 marka Exp";
 #endif /* not lint */
 
 /*
@@ -40,6 +40,9 @@ static const char rcsid[] = "Id: ctl_clnt.c,v 1.7.18.1 2005/04/27 05:01:05 sra E
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef HAVE_MEMORY_H
+#include <memory.h>
+#endif
 
 #include <isc/assertions.h>
 #include <isc/ctl.h>
@@ -115,6 +118,19 @@ static void		stop_timer(struct ctl_cctx *);
 static void		touch_timer(struct ctl_cctx *);
 static void		timer(evContext, void *,
 			      struct timespec, struct timespec);
+
+#ifndef HAVE_MEMCHR
+static void *
+memchr(const void *b, int c, size_t len) {
+	const unsigned char *p = b;
+	size_t i;
+
+	for (i = 0; i < len; i++, p++)
+		if (*p == (unsigned char)c)
+			return ((void *)p); 
+	return (NULL);
+}
+#endif
 
 /* Private data. */
 

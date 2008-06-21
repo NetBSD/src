@@ -1,10 +1,10 @@
-/*	$NetBSD: cert.h,v 1.1.1.4 2007/01/27 21:07:32 christos Exp $	*/
+/*	$NetBSD: cert.h,v 1.1.1.5 2008/06/21 18:32:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cert.h,v 1.13.18.2 2005/04/29 00:16:10 marka Exp */
+/* Id: cert.h,v 1.19 2007/06/19 23:47:16 tbox Exp */
 
 #ifndef DNS_CERT_H
 #define DNS_CERT_H 1
 
-/*! \file */
+/*! \file dns/cert.h */
 
 #include <isc/lang.h>
 

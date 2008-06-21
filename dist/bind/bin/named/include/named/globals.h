@@ -1,10 +1,10 @@
-/*	$NetBSD: globals.h,v 1.1.1.4 2007/01/27 21:03:43 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.1.1.5 2008/06/21 18:35:23 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: globals.h,v 1.64.18.4 2006/03/02 00:37:21 marka Exp */
+/* Id: globals.h,v 1.73 2007/09/26 03:22:43 marka Exp */
 
 #ifndef NAMED_GLOBALS_H
 #define NAMED_GLOBALS_H 1
@@ -115,6 +115,8 @@ EXTERN const char *		lwresd_g_defaultpidfile INIT(NS_LOCALSTATEDIR
 EXTERN const char *		ns_g_username		INIT(NULL);
 
 EXTERN int			ns_g_listen		INIT(3);
+EXTERN isc_time_t		ns_g_boottime;
+EXTERN isc_boolean_t		ns_g_memstatistics	INIT(ISC_FALSE);
 
 #undef EXTERN
 #undef INIT

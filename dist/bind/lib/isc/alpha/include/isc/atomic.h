@@ -1,9 +1,9 @@
-/*	$NetBSD: atomic.h,v 1.1.1.1 2007/01/27 21:07:51 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.1.2 2008/06/21 18:31:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: atomic.h,v 1.2.2.2 2005/06/16 22:01:01 jinmei Exp */
+/* Id: atomic.h,v 1.5 2007/06/19 23:47:17 tbox Exp */
 
 /*
  * This code was written based on FreeBSD's kernel source whose copyright

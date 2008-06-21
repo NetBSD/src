@@ -1,9 +1,9 @@
-/*	$NetBSD: hmacsha.c,v 1.1.1.1 2007/01/27 21:07:44 christos Exp $	*/
+/*	$NetBSD: hmacsha.c,v 1.1.1.2 2008/06/21 18:31:15 christos Exp $	*/
 
 /*
- * Copyright (C) 2005, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hmacsha.c,v 1.2.2.4 2006/08/16 03:18:14 marka Exp */
+/* Id: hmacsha.c,v 1.8 2007/08/27 03:27:53 marka Exp */
 
 /*
  * This code implements the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256, HMAC-SHA384
@@ -114,7 +114,7 @@ isc_boolean_t
 isc_hmacsha1_verify(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
 	unsigned char newdigest[ISC_SHA1_DIGESTLENGTH];
 
-	REQUIRE(len <= ISC_SHA1_BLOCK_LENGTH);
+	REQUIRE(len <= ISC_SHA1_DIGESTLENGTH);
 	isc_hmacsha1_sign(ctx, newdigest, ISC_SHA1_DIGESTLENGTH);
 	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
 }

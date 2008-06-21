@@ -1,4 +1,4 @@
-/*	$NetBSD: logging.c,v 1.1.1.4 2007/01/27 21:09:04 christos Exp $	*/
+/*	$NetBSD: logging.c,v 1.1.1.5 2008/06/21 18:33:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: logging.c,v 1.6.18.1 2005/04/27 05:01:07 sra Exp";
+static const char rcsid[] = "Id: logging.c,v 1.7.672.1 2008/02/28 05:46:12 marka Exp";
 #endif /* not lint */
 
 #include "port_before.h"
@@ -44,12 +44,6 @@ static const char rcsid[] = "Id: logging.c,v 1.6.18.1 2005/04/27 05:01:07 sra Ex
 #include <isc/misc.h>
 
 #include "port_after.h"
-
-#ifdef VSPRINTF_CHAR
-# define VSPRINTF(x) strlen(vsprintf/**/x)
-#else
-# define VSPRINTF(x) ((size_t)vsprintf x)
-#endif
 
 #include "logging_p.h"
 
@@ -365,8 +359,8 @@ log_vwrite(log_context lc, int category, int level, const char *format,
 			continue;
 
 		if (!did_vsprintf) {
-			if (VSPRINTF((lc->buffer, format, args)) >
-			    (size_t)LOG_BUFFER_SIZE) {
+			(void)vsprintf(lc->buffer, format, args);
+			if (strlen(lc->buffer) > (size_t)LOG_BUFFER_SIZE) {
 				syslog(LOG_CRIT,
 				       "memory overrun in log_vwrite()");
 				exit(1);

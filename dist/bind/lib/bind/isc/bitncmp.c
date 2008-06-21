@@ -1,4 +1,4 @@
-/*	$NetBSD: bitncmp.c,v 1.1.1.4 2007/01/27 21:09:01 christos Exp $	*/
+/*	$NetBSD: bitncmp.c,v 1.1.1.5 2008/06/21 18:33:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: bitncmp.c,v 1.2.18.1 2005/04/27 05:01:05 sra Exp";
+static const char rcsid[] = "Id: bitncmp.c,v 1.3 2005/04/27 04:56:35 sra Exp";
 #endif
 
 #include "port_before.h"

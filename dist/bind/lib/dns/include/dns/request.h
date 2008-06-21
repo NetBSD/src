@@ -1,10 +1,10 @@
-/*	$NetBSD: request.h,v 1.1.1.4 2007/01/27 21:07:38 christos Exp $	*/
+/*	$NetBSD: request.h,v 1.1.1.5 2008/06/21 18:32:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: request.h,v 1.21.18.2 2005/04/29 00:16:20 marka Exp */
+/* Id: request.h,v 1.27 2007/06/19 23:47:17 tbox Exp */
 
 #ifndef DNS_REQUEST_H
 #define DNS_REQUEST_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/request.h
  *
  * \brief
  * The request module provides simple request/response services useful for

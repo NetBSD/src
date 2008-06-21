@@ -1,10 +1,10 @@
-/*	$NetBSD: dnskey_48.h,v 1.1.1.2 2007/01/27 21:07:23 christos Exp $	*/
+/*	$NetBSD: dnskey_48.h,v 1.1.1.3 2008/06/21 18:32:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -20,7 +20,7 @@
 #ifndef GENERIC_DNSKEY_48_H
 #define GENERIC_DNSKEY_48_H 1
 
-/* Id: dnskey_48.h,v 1.3.20.2 2005/04/29 00:16:32 marka Exp */
+/* Id: dnskey_48.h,v 1.7 2007/06/19 23:47:17 tbox Exp */
 
 /*!
  *  \brief per RFC2535 */

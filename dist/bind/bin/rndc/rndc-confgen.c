@@ -1,10 +1,10 @@
-/*	$NetBSD: rndc-confgen.c,v 1.1.1.4 2007/01/27 21:05:04 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.1.1.5 2008/06/21 18:33:46 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc-confgen.c,v 1.18.18.3 2005/04/29 00:15:40 marka Exp */
+/* Id: rndc-confgen.c,v 1.24 2007/06/18 23:47:25 tbox Exp */
 
 /*! \file */
 
@@ -162,6 +162,8 @@ main(int argc, char **argv) {
 	serveraddr = DEFAULT_SERVER;
 	port = DEFAULT_PORT;
 
+	isc_commandline_errprint = ISC_FALSE;
+
 	while ((ch = isc_commandline_parse(argc, argv,
 					   "ab:c:hk:Mmp:r:s:t:u:Vy")) != -1) {
 		switch (ch) {
@@ -216,12 +218,17 @@ main(int argc, char **argv) {
 			verbose = ISC_TRUE;
 			break;
 		case '?':
-			usage(1);
+			if (isc_commandline_option != '?') {
+				fprintf(stderr, "%s: invalid argument -%c\n",
+					program, isc_commandline_option);
+				usage(1);
+			} else
+				usage(0);
 			break;
 		default:
-			fatal("unexpected error parsing command arguments: "
-			      "got %c\n", ch);
-			break;
+			fprintf(stderr, "%s: unhandled option -%c\n",
+				program, isc_commandline_option);
+			exit(1);
 		}
 	}
 

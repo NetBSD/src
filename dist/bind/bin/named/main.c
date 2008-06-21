@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.1.1.5 2007/01/27 21:03:27 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.6 2008/06/21 18:35:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.c,v 1.136.18.17 2006/11/10 18:51:14 marka Exp */
+/* Id: main.c,v 1.158.48.2 2008/04/03 23:46:30 tbox Exp */
 
 /*! \file */
 
@@ -358,7 +358,7 @@ parse_command_line(int argc, char *argv[]) {
 
 	isc_commandline_errprint = ISC_FALSE;
 	while ((ch = isc_commandline_parse(argc, argv,
-			           "46c:C:d:fgi:lm:n:N:p:P:st:u:vx:")) != -1) {
+				   "46c:C:d:fgi:lm:n:N:p:P:st:u:vx:")) != -1) {
 		switch (ch) {
 		case '4':
 			if (disable4)
@@ -449,6 +449,8 @@ parse_command_line(int argc, char *argv[]) {
 			exit(0);
 		case '?':
 			usage();
+			if (isc_commandline_option == '?')
+				exit(0);
 			ns_main_earlyfatal("unknown option '-%c'",
 					   isc_commandline_option);
 		default:
@@ -667,10 +669,18 @@ setup(void) {
 					       sizeof(absolute_conffile));
 		if (result != ISC_R_SUCCESS)
 			ns_main_earlyfatal("could not construct absolute path of "
-					   "configuration file: %s", 
+					   "configuration file: %s",
 					   isc_result_totext(result));
 		ns_g_conffile = absolute_conffile;
 	}
+
+	/*
+	 * Record the server's startup time.
+	 */
+	result = isc_time_now(&ns_g_boottime);
+	if (result != ISC_R_SUCCESS)
+		ns_main_earlyfatal("isc_time_now() failed: %s",
+				   isc_result_totext(result));
 
 	result = create_managers();
 	if (result != ISC_R_SUCCESS)
@@ -759,7 +769,7 @@ ns_smf_get_instance(char **ins_name, int debug, isc_mem_t *mctx) {
 		if (debug)
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
 					 "scf_handle_create() failed: %s",
-			 		 scf_strerror(scf_error()));
+					 scf_strerror(scf_error()));
 		return (ISC_R_FAILURE);
 	}
 
@@ -859,6 +869,7 @@ main(int argc, char *argv[]) {
 	if (result != ISC_R_SUCCESS)
 		ns_main_earlyfatal("isc_mem_create() failed: %s",
 				   isc_result_totext(result));
+	isc_mem_setname(ns_g_mctx, "main", NULL);
 
 	setup();
 
@@ -904,7 +915,8 @@ main(int argc, char *argv[]) {
 		isc_mem_stats(ns_g_mctx, stdout);
 		isc_mutex_stats(stdout);
 	}
-	if (memstats != NULL) {
+
+	if (ns_g_memstatistics && memstats != NULL) {
 		FILE *fp = NULL;
 		result = isc_stdio_open(memstats, "w", &fp);
 		if (result == ISC_R_SUCCESS) {

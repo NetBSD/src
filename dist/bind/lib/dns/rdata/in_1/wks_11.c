@@ -1,10 +1,10 @@
-/*	$NetBSD: wks_11.c,v 1.1.1.4 2007/01/27 21:07:31 christos Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.1.1.5 2008/06/21 18:32:47 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: wks_11.c,v 1.51.18.1 2004/09/16 01:02:19 marka Exp */
+/* Id: wks_11.c,v 1.54 2007/06/19 23:47:17 tbox Exp */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 

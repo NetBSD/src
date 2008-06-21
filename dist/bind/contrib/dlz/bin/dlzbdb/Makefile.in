@@ -13,7 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.2.2.1 2005/09/05 00:18:14 marka Exp
+# Id: Makefile.in,v 1.3 2007/09/07 06:53:03 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -23,16 +23,16 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_MAKE_INCLUDES@
 
-DLZINCLUDES =	@DLZ_BDB_INC@
+DLZINCLUDES =	@DLZ_DRIVER_INCLUDES@
 
 CINCLUDES =	-I${srcdir}/include -I${srcdir}/unix/include \
                 ${ISC_INCLUDES} ${DLZINCLUDES}
                 
-CDEFINES =      @USE_DLZ_BDB@
+CDEFINES =      @USE_DLZ@
 CWARNINGS =
 
-DLZLIBS = 	@DLZ_BDB_LIBS@
-ISCLIBS =	../../lib/isc/libisc.@A@
+DLZLIBS = 	@DLZ_DRIVER_LIBS@
+ISCLIBS =	../../../../lib/isc/libisc.@A@
 
 DEPLIBS =	${ISCDEPLIBS}
 
