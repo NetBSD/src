@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.14 2008/06/21 20:41:48 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.15 2008/06/21 23:37:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_send.c,v 1.18.10.1 2008/01/27 02:06:46 marka Exp";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.14 2008/06/21 20:41:48 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.15 2008/06/21 23:37:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -130,7 +130,9 @@ __weak_alias(res_nsend,__res_nsend)
 #endif /* USE_POLL */
 
 /* Options.  Leave them on. */
+#ifndef DEBUG
 #define DEBUG
+#endif
 #include "res_debug.h"
 #include "res_private.h"
 
