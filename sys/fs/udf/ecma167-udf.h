@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.8 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.9 2008/06/21 00:12:09 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006, 2008 Reinoud Zandijk
@@ -700,6 +700,11 @@ struct filetimes_extattr_entry {
 	struct timestamp	times[1];	/* in order of assending bits */
 } __packed;
 #define UDF_FILETIMES_ATTR_NO	5
+#define UDF_FILETIMES_FILE_CREATION	1
+#define UDF_FILETIMES_FILE_DELETION	4
+#define UDF_FILETIMES_FILE_EFFECTIVE	8
+#define UDF_FILETIMES_FILE_BACKUPED	16
+#define UDF_FILETIMES_ATTR_LEN(no)	(16 + (no)*sizeof(struct timestamp))
 
 
 /* Device Specification Extended Attribute [4/4.10.7] */
