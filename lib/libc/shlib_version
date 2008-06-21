@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.200 2008/05/03 07:06:30 yamt Exp $
+#	$NetBSD: shlib_version,v 1.201 2008/06/21 20:41:48 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -26,4 +26,4 @@
 # - remove frexp, ldexp, modf: they belong to libm.
 # - make sure we can support thread local [on arm don't use r9 for example]
 major=12
-minor=159
+minor=160
