@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.609 2008/06/20 17:27:41 peter Exp $
+#	$NetBSD: 3RDPARTY,v 1.610 2008/06/21 20:49:05 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -91,8 +91,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
-Version:	libc/includes: 9.4.1, bind: 9.4.1-P1
-Current Vers:	9.4.1-P1
+Version:	libc/includes: 9.5.0, bind: 9.5.0
+Current Vers:	9.5.0
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/sw/bind/
@@ -102,6 +102,7 @@ License:	BSD-like (2-clause)
 Notes:
 First bind2netbsd script to import into src/dist/bind.
 The Makefiles in src/usr.sbin/bind are not handled by the script.
+Build bind to generate the include files.
 Then binclude4netbsd script to import into src/usr.sbin/bind/include.
 Then include4netbsd script to import into src/include.
 Then libc4netbsd script to update the resolver in libc.
