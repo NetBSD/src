@@ -1,4 +1,4 @@
-/*	$NetBSD: h_errno.c,v 1.2 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: h_errno.c,v 1.3 2008/06/21 20:41:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: h_errno.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: h_errno.c,v 1.3 2008/06/21 20:41:48 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -43,6 +43,13 @@ __RCSID("$NetBSD: h_errno.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
 #undef h_errno
 
 extern int h_errno;
+extern struct __res_state _nres;
+
+int *
+__h_errno(void)
+{
+	return &_nres.res_h_errno;
+}
 
 void
 __h_errno_set(res_state res, int err)

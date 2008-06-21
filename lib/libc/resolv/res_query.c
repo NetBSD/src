@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.9 2007/03/30 20:23:05 ghen Exp $	*/
+/*	$NetBSD: res_query.c,v 1.10 2008/06/21 20:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -74,9 +74,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #ifdef notdef
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_query.c,v 1.7.18.1 2005/04/27 05:01:11 sra Exp";
+static const char rcsid[] = "Id: res_query.c,v 1.8.672.2 2008/04/03 10:49:22 marka Exp";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.9 2007/03/30 20:23:05 ghen Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.10 2008/06/21 20:41:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,9 +108,7 @@ __weak_alias(res_hostalias,__res_hostalias)
 #endif
 
 /* Options.  Leave them on. */
-#ifndef DEBUG
 #define DEBUG
-#endif
 
 #if PACKETSZ > 1024
 #define MAXPACKET	PACKETSZ
@@ -139,6 +137,7 @@ res_nquery(res_state statp,
 	HEADER *hp = (HEADER *)(void *)answer;
 	int n;
 	u_int oflags;
+	u_char *rdata;
 
 	oflags = statp->_flags;
 
@@ -153,8 +152,14 @@ again:
 			 buf, sizeof(buf));
 #ifdef RES_USE_EDNS0
 	if (n > 0 && (statp->_flags & RES_F_EDNS0ERR) == 0 &&
-	    (statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC)) != 0U)
+	    (statp->options & (RES_USE_EDNS0|RES_USE_DNSSEC|RES_NSID)) != 0U) {
 		n = res_nopt(statp, n, buf, sizeof(buf), anslen);
+		rdata = &buf[n];
+		if (n > 0 && (statp->options & RES_NSID) != 0U) {
+			n = res_nopt_rdata(statp, n, buf, sizeof(buf), rdata,
+					   NS_OPT_NSID, 0, NULL);
+		}
+	}
 #endif
 	if (n <= 0) {
 #ifdef DEBUG
@@ -164,6 +169,7 @@ again:
 		RES_SET_H_ERRNO(statp, NO_RECOVERY);
 		return (n);
 	}
+
 	n = res_nsend(statp, buf, n, answer, anslen);
 	if (n < 0) {
 #ifdef RES_USE_EDNS0

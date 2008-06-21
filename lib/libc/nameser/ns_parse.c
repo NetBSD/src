@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parse.c,v 1.5 2007/03/30 20:23:03 ghen Exp $	*/
+/*	$NetBSD: ns_parse.c,v 1.6 2008/06/21 20:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef notdef
-static const char rcsid[] = "Id: ns_parse.c,v 1.5.18.3 2005/10/11 00:25:10 marka Exp";
+static const char rcsid[] = "Id: ns_parse.c,v 1.9 2007/08/27 03:32:26 marka Exp";
 #else
-__RCSID("$NetBSD: ns_parse.c,v 1.5 2007/03/30 20:23:03 ghen Exp $");
+__RCSID("$NetBSD: ns_parse.c,v 1.6 2008/06/21 20:41:48 christos Exp $");
 #endif
 #endif
 
@@ -47,7 +47,7 @@ static void	setsection(ns_msg *msg, ns_sect sect);
 
 /* Macros. */
 
-#ifndef SOLARIS2
+#if !defined(SOLARIS2) || defined(__COVERITY__)
 #define RETERR(err) do { errno = (err); return (-1); } while (/*NOTREACHED*//*CONSTCOND*/0)
 #else
 #define RETERR(err) \
