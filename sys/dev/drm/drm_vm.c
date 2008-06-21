@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.13 2008/06/20 09:15:39 cegger Exp $ */
+/* $NetBSD: drm_vm.c,v 1.14 2008/06/21 19:31:31 bjs Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.13 2008/06/20 09:15:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.14 2008/06/21 19:31:31 bjs Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -119,8 +119,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	case _DRM_FRAME_BUFFER:
 	case _DRM_REGISTERS:
 	case _DRM_AGP:
-		return bus_space_mmap(map->bst, offset + map->offset, 0, prot,
-			BUS_SPACE_MAP_LINEAR);
+		return atop(offset + map->offset);
 		break;
 	/* All _DRM_CONSISTENT and _DRM_SHM mappings have a 0 offset */
 	case _DRM_CONSISTENT:
