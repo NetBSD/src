@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.16 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: crt0.c,v 1.17 2008/06/21 00:52:52 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,11 +71,7 @@ __start(kfp)
 
 #ifdef DYNAMIC
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
-#ifdef stupid_gcc
 	if (&_DYNAMIC)
-#else
-	if ( ({volatile caddr_t x = (caddr_t)&_DYNAMIC; x; }) )
-#endif
 		__load_rtld(&_DYNAMIC);
 #endif /* DYNAMIC */
 
@@ -110,7 +106,7 @@ __asm ("__callmain:");		/* Defined for the benefit of debuggers */
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.16 2008/04/28 20:22:55 martin Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.17 2008/06/21 00:52:52 gmcgarry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0

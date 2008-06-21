@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.6 2002/01/01 01:31:06 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.7 2008/06/21 00:52:52 gmcgarry Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -68,7 +68,7 @@ __asm("	.text			\n"
 "	b	" ___STRING(_C_LABEL(___start)) " ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.6 2002/01/01 01:31:06 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.7 2008/06/21 00:52:52 gmcgarry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
@@ -89,11 +89,7 @@ ___start(int argc, char **argv, char **envp, struct ps_strings *ps_strings,
 
 #ifdef	DYNAMIC
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
-#ifdef	stupid_gcc
 	if (&_DYNAMIC)
-#else
-	if ( ({volatile caddr_t x = (caddr_t)&_DYNAMIC; x; }) )
-#endif
                 _rtld_setup(cleanup, obj);
 #endif	/* DYNAMIC */
 
