@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_udf.8,v 1.2 2008/06/19 13:20:09 reinoud Exp $
+.\" $NetBSD: newfs_udf.8,v 1.3 2008/06/21 17:11:03 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd May 9, 2008
+.Dd June 19, 2008
 .Dt NEWFS_UDF 8
 .Os
 .Sh NAME
@@ -34,22 +34,20 @@
 .Nd construct a new UDF file system
 .Sh SYNOPSIS
 .Nm
-.Op Fl c
-.Op Fl F
+.Op Fl cFM
 .Op Fl L Ar loglabel
-.Op Fl M
-.Op Fl v Ar min_udf
-.Op Fl V Ar max_udf
 .Op Fl P Ar discid
-.Op Fl s Ar size
 .Op Fl S Ar setlabel
+.Op Fl s Ar size
 .Op Fl t Ar gmtoff
+.Op Fl V Ar max_udf
+.Op Fl v Ar min_udf
 .Ar special
 .Sh DESCRIPTION
 The
 .Nm
-utility creates an UDF file system on device 
-.Ar special 
+utility creates an UDF file system on device
+.Ar special
 suitable for the media currently inserted.
 .Pp
 The options are as follow:
@@ -64,47 +62,54 @@ Set the disc logical label to the specified
 .Ar loglabel .
 .It Fl M
 Disable metadata partition flavour selection.
-.It Fl v Ar min_udf
-Select
-.Ar min_udf
-as the minimum UDF version to be supported. Notation "0x201" or "2.01" for UDF version
-2.01.
-.It Fl V Ar max_udf
-Select
-.Ar max_udf
-as the maximum UDF version to be supported. Notation "0x250" or "2.50" for UDF version
-2.50.
 .It Fl P Ar discid
 Set the phyisical disc label to the specified
 .Ar discid .
-For strict conformance and interchange dont set this manually.
-.It Fl s Ar size
-Ignored for now.
+For strict conformance and interchange, don't set this manually.
 .It Fl S Ar setlabel
 Set the disc set label to the specified
 .Ar setlabel .
-For strict conformance and interchange dont set this manually.
+For strict conformance and interchange, don't set this manually.
+.It Fl s Ar size
+Ignored for now.
 .It Fl t Ar gmtoff
 Use the specified
 .Ar gmtoff
 as gmt time offset for recording times on the disc.
+.It Fl V Ar max_udf
+Select
+.Ar max_udf
+as the maximum UDF version to be supported.
+For UDF version 2.50, use
+.Dq 0x250
+or
+.Dq 2.50 .
+.It Fl v Ar min_udf
+Select
+.Ar min_udf
+as the minimum UDF version to be supported.
+For UDF version 2.01, use
+.Dq 0x201
+or
+.Dq 2.01 .
 .El
 .Sh NOTES
-The UDF file system is defined for the entire optical medium. It can only
-function on the entire CD/DVD/BD so the raw partition has to be specified for
-read/write actions. For
+The UDF file system is defined for the entire optical medium.
+It can only function on the entire CD/DVD/BD so the raw partition
+has to be specified for read/write actions.
+For
 .Nm
-this means specifying the raw device with the raw partition. i.e.
+this means specifying the raw device with the raw partition, i.e.
 .Pa /dev/rcd0d
 or
-.Pa /dev/rcd0c.
+.Pa /dev/rcd0c .
 .Pp
 Some rewritable optical media needs to be formatted first before it can be
-used by UDF. This can be done using
+used by UDF.
+This can be done using
 .Xr mmcformat 8 .
 .Pp
-The default UDF version is version 2.01 that can be specified if required
-as "0x201".
+The default UDF version is version 2.01.
 .Sh EXAMPLES
 .Bd -literal -offset indent
 newfs_udf -S "Encyclopedia" -L "volume 2" -P "copy-nr-1" /dev/rcd0d
@@ -122,13 +127,14 @@ newfs_udf -L bigdisk /dev/rvnd0d
 .Pp
 Create a 4.8 Gb sparse file and configure it using
 .Xr vnconfig 8
-to be a 2048 sector size disc and create a new UDF file system on 
+to be a 2048 sector size disc and create a new UDF file system on
 .Pa /dev/rvnd0d .
 .Bd -literal -offset indent
 newfs_udf -L "My USB stick" /dev/rsd0d
 .Ed
 .Pp
-Create a new UDF file system on the inserted USB stick using its `native'
+Create a new UDF file system on the inserted USB stick using its
+.Dq native
 sectorsize of 512.
 .Sh SEE ALSO
 .Xr disktab 5 ,
@@ -141,4 +147,4 @@ The
 command first appeared in
 .Nx 5.0 .
 .Sh AUTHORS
-.An Reinoud Zandijk Aq reinoud@NetBSD.org .
+.An Reinoud Zandijk Aq reinoud@NetBSD.org
