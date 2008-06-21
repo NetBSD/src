@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.9 2008/06/21 20:41:48 christos Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.10 2008/06/21 23:37:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_mkquery.c,v 1.6.672.1 2008/04/03 02:12:21 marka Exp";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.9 2008/06/21 20:41:48 christos Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.10 2008/06/21 23:37:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -101,7 +101,9 @@ __weak_alias(res_nopt,_res_nopt)
 #endif
 
 /* Options.  Leave them on. */
+#ifndef DEBUG
 #define DEBUG
+#endif
 
 extern const char *_res_opcodes[];
 
@@ -306,7 +308,7 @@ res_nopt_rdata(res_state statp,
 	ns_put16(len, cp);
 	cp += INT16SZ;
 
-	memcpy(cp, data, len);
+	(void)memcpy(cp, data, (size_t)len);
 	cp += len;
 
 	len = cp - rdata;
