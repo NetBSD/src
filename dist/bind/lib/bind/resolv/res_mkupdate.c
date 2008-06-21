@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkupdate.c,v 1.1.1.5 2007/01/27 21:09:13 christos Exp $	*/
+/*	$NetBSD: res_mkupdate.c,v 1.1.1.6 2008/06/21 18:33:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,7 +24,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: res_mkupdate.c,v 1.4.18.4 2005/10/14 05:44:12 marka Exp";
+static const char rcsid[] = "Id: res_mkupdate.c,v 1.8 2005/10/14 05:44:26 marka Exp";
 #endif /* not lint */
 
 #include "port_before.h"

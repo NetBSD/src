@@ -1,10 +1,10 @@
-/*	$NetBSD: db.h,v 1.1.1.5 2007/01/27 21:07:33 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.1.1.6 2008/06/21 18:32:31 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.h,v 1.76.18.7 2005/10/13 02:12:25 marka Exp */
+/* Id: db.h,v 1.89.128.2 2008/04/03 06:20:34 tbox Exp */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/db.h
  * \brief
  * The DNS DB interface allows named rdatasets to be stored and retrieved.
  *
@@ -148,6 +148,9 @@ typedef struct dns_dbmethods {
 	void		(*overmem)(dns_db_t *db, isc_boolean_t overmem);
 	void		(*settask)(dns_db_t *db, isc_task_t *);
 	isc_result_t	(*getoriginnode)(dns_db_t *db, dns_dbnode_t **nodep);
+	void		(*transfernode)(dns_db_t *db, dns_dbnode_t **sourcep,
+					dns_dbnode_t **targetp);
+	dns_stats_t	*(*getrrsetstats)(dns_db_t *db);
 } dns_dbmethods_t;
 
 typedef isc_result_t
@@ -155,7 +158,7 @@ typedef isc_result_t
 		      dns_dbtype_t type, dns_rdataclass_t rdclass,
 		      unsigned int argc, char *argv[], void *driverarg,
 		      dns_db_t **dbp);
-					
+
 #define DNS_DB_MAGIC		ISC_MAGIC('D','N','S','D')
 #define DNS_DB_VALID(db)	ISC_MAGIC_VALID(db, DNS_DB_MAGIC)
 
@@ -788,7 +791,7 @@ dns_db_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
  *						the negative caching proof.
  *
  *	\li	#DNS_R_EMPTYNAME			The name exists but there is
- *						no data at the name. 
+ *						no data at the name.
  *
  *	\li	#DNS_R_COVERINGNSEC		The returned data is a NSEC
  *						that potentially covers 'name'.
@@ -862,7 +865,7 @@ dns_db_attachnode(dns_db_t *db, dns_dbnode_t *source, dns_dbnode_t **targetp);
  *
  * \li	'source' is a valid node.
  *
- * \li	'targetp' points to a NULL dns_node_t *.
+ * \li	'targetp' points to a NULL dns_dbnode_t *.
  *
  * Ensures:
  *
@@ -883,6 +886,27 @@ dns_db_detachnode(dns_db_t *db, dns_dbnode_t **nodep);
  * Ensures:
  *
  * \li	*nodep is NULL.
+ */
+
+void
+dns_db_transfernode(dns_db_t *db, dns_dbnode_t **sourcep,
+		    dns_dbnode_t **targetp);
+/*%<
+ * Transfer a node between pointer.
+ *
+ * This is equivalent to calling dns_db_attachnode() then dns_db_detachnode().
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database.
+ *
+ * \li	'*sourcep' is a valid node.
+ *
+ * \li	'targetp' points to a NULL dns_dbnode_t *.
+ *
+ * Ensures:
+ *
+ * \li	'*sourcep' is NULL.
  */
 
 isc_result_t
@@ -1294,6 +1318,21 @@ dns_db_getoriginnode(dns_db_t *db, dns_dbnode_t **nodep);
  * Returns:
  * \li	#ISC_R_SUCCESS
  * \li	#ISC_R_NOTFOUND - the DB implementation does not support this feature.
+ */
+
+dns_stats_t *
+dns_db_getrrsetstats(dns_db_t *db);
+/*%<
+ * Get statistics information counting RRsets stored in the DB, when available.
+ * The statistics may not be available depending on the DB implementation.
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database (zone or cache).
+ *
+ * Returns:
+ * \li	when available, a pointer to a statistics object created by
+ *	dns_rdatasetstats_create(); otherwise NULL.
  */
 
 ISC_LANG_ENDDECLS

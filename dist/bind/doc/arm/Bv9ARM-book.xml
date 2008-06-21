@@ -1,11 +1,11 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+              "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  -
@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: Id: Bv9ARM-book.xml,v 1.241.18.66.10.1 2007/07/09 02:23:16 marka Exp -->
+<!-- File: $Id: Bv9ARM-book.xml,v 1.1.1.8 2008/06/21 18:26:33 christos Exp $ -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -28,6 +28,7 @@
       <year>2005</year>
       <year>2006</year>
       <year>2007</year>
+      <year>2008</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -66,7 +67,7 @@
       </para>
 
       <para>
-        This version of the manual corresponds to BIND version 9.4.
+        This version of the manual corresponds to BIND version 9.5.
       </para>
 
     </sect1>
@@ -91,8 +92,8 @@
         security considerations, and
         <emphasis>Section 8</emphasis> contains troubleshooting help. The
         main body of the document is followed by several
-        <emphasis>Appendices</emphasis> which contain useful reference
-        information, such as a <emphasis>Bibliography</emphasis> and
+        <emphasis>appendices</emphasis> which contain useful reference
+        information, such as a <emphasis>bibliography</emphasis> and
         historic information related to <acronym>BIND</acronym>
         and the Domain Name
         System.
@@ -229,8 +230,8 @@
       <title>The Domain Name System (<acronym>DNS</acronym>)</title>
       <para>
         The purpose of this document is to explain the installation
-        and upkeep of the <acronym>BIND</acronym> software
-        package, and we
+        and upkeep of the <acronym>BIND</acronym> (Berkeley Internet
+	Name Domain) software package, and we
         begin by reviewing the fundamentals of the Domain Name System
         (<acronym>DNS</acronym>) as they relate to <acronym>BIND</acronym>.
       </para>
@@ -464,7 +465,7 @@
         <title>Caching Name Servers</title>
 
 	<!--
-	  - Terminology here is inconsistant.  Probably ought to
+	  - Terminology here is inconsistent.  Probably ought to
 	  - convert to using "recursive name server" everywhere
 	  - with just a note about "caching" terminology.
 	  -->
@@ -600,7 +601,7 @@
         traffic.
         Additionally, if additional section caching
         (<xref linkend="acache"/>) is enabled,
-        the <command>max-acache-size</command> can be used to
+        the <command>max-acache-size</command> option can be used to
         limit the amount
         of memory used by the mechanism.
         It is still good practice to have enough memory to load
@@ -741,8 +742,8 @@ zone "eng.example.com" {
 
       <para>
         A primitive form of load balancing can be achieved in
-        the <acronym>DNS</acronym> by using multiple A records for
-        one name.
+        the <acronym>DNS</acronym> by using multiple records
+	(such as multiple A records) for one name.
       </para>
 
       <para>
@@ -955,12 +956,15 @@ zone "eng.example.com" {
                 </para>
                 <cmdsynopsis label="Usage">
                   <command>host</command>
-                  <arg>-aCdlrTwv</arg>
+                  <arg>-aCdlnrsTwv</arg>
                   <arg>-c <replaceable>class</replaceable></arg>
                   <arg>-N <replaceable>ndots</replaceable></arg>
                   <arg>-t <replaceable>type</replaceable></arg>
                   <arg>-W <replaceable>timeout</replaceable></arg>
                   <arg>-R <replaceable>retries</replaceable></arg>
+                  <arg>-m <replaceable>flag</replaceable></arg>
+		  <arg>-4</arg>
+		  <arg>-6</arg>
                   <arg choice="plain"><replaceable>hostname</replaceable></arg>
                   <arg><replaceable>server</replaceable></arg>
                 </cmdsynopsis>
@@ -1085,6 +1089,12 @@ zone "eng.example.com" {
                   (<command>rndc</command>) program allows the
                   system
                   administrator to control the operation of a name server.
+                  Since <acronym>BIND</acronym> 9.2, <command>rndc</command>
+                  supports all the commands of the BIND 8 <command>ndc</command>
+                  utility except <command>ndc start</command> and
+                  <command>ndc restart</command>, which were also
+                  not supported in <command>ndc</command>'s
+                  channel mode.
                   If you run <command>rndc</command> without any
                   options
                   it will display a usage message as follows:
@@ -1357,15 +1367,6 @@ zone "eng.example.com" {
                 </variablelist>
 
                 <para>
-                  In <acronym>BIND</acronym> 9.2, <command>rndc</command>
-                  supports all the commands of the BIND 8 <command>ndc</command>
-                  utility except <command>ndc start</command> and
-                  <command>ndc restart</command>, which were also
-                  not supported in <command>ndc</command>'s
-                  channel mode.
-                </para>
-
-                <para>
                   A configuration file is required, since all
                   communication with the server is authenticated with
                   digital signatures that rely on a shared secret, and
@@ -1620,10 +1621,15 @@ controls {
       </para>
 
       <para>
-        Dynamic update is enabled by
-        including an <command>allow-update</command> or
-        <command>update-policy</command> clause in the
-        <command>zone</command> statement.
+	Dynamic update is enabled by including an
+	<command>allow-update</command> or <command>update-policy</command>
+	clause in the <command>zone</command> statement.  The
+	<command>tkey-gssapi-credential</command> and
+	<command>tkey-domain</command> clauses in the
+	<command>options</command>        statement enable the
+	server to negotiate keys that can be matched against those
+	in <command>update-policy</command> or
+	<command>allow-update</command>.
       </para>
 
       <para>
@@ -1743,7 +1749,7 @@ controls {
 	However, since listing addresses of internal servers that
         external clients cannot possibly reach can result in
         connection delays and other annoyances, an organization may
-        choose to use a Split DNS to present a consistant view of itself
+        choose to use a Split DNS to present a consistent view of itself
         to the outside world.
       </para>
       <para>
@@ -1753,9 +1759,8 @@ controls {
         on the Internet. Split DNS can also be used to allow mail from outside
         back in to the internal network.
       </para>
-      <para>
-        Here is an example of a split DNS setup:
-      </para>
+     <sect2>
+      <title>Example split DNS setup</title>
       <para>
         Let's say a company named <emphasis>Example, Inc.</emphasis>
         (<literal>example.com</literal>)
@@ -1990,6 +1995,7 @@ nameserver 172.16.72.3
 nameserver 172.16.72.4
 </programlisting>
 
+     </sect2>
     </sect1>
     <sect1 id="tsig">
       <title>TSIG</title>
@@ -2154,15 +2160,16 @@ server 10.1.2.3 {
 allow-update { key host1-host2. ;};
 </programlisting>
 
-        <para>
-          This allows dynamic updates to succeed only if the request
-          was signed by a key named
-          "<command>host1-host2.</command>".
-        </para>
 	<para>
-          You may want to read about the more
-          powerful <command>update-policy</command> statement in <xref linkend="dynamic_update_policies"/>.
-        </para>
+	  This allows dynamic updates to succeed only if the request
+	  was signed by a key named "<command>host1-host2.</command>".
+	</para>
+
+	<para>
+	  You may want to read about the more powerful
+	  <command>update-policy</command> statement in
+	  <xref linkend="dynamic_update_policies"/>.
+	</para>
 
       </sect2>
       <sect2>
@@ -2187,7 +2194,7 @@ allow-update { key host1-host2. ;};
           outside of the allowed range, the response will be signed with
           the TSIG extended error code set to BADTIME, and the time values
           will be adjusted so that the response can be successfully
-          verified. In any of these cases, the message's rcode is set to
+          verified. In any of these cases, the message's rcode (response code) is set to
           NOTAUTH (not authenticated).
         </para>
 
@@ -2266,7 +2273,7 @@ allow-update { key host1-host2. ;};
       <para>
         Cryptographic authentication of DNS information is possible
         through the DNS Security (<emphasis>DNSSEC-bis</emphasis>) extensions,
-        defined in RFC 4033, RFC 4034 and RFC 4035.
+        defined in RFC 4033, RFC 4034, and RFC 4035.
 	This section describes the creation and use of DNSSEC signed zones.
       </para>
 
@@ -2334,7 +2341,7 @@ allow-update { key host1-host2. ;};
           <filename>Kchild.example.+005+12345.key</filename> and
           <filename>Kchild.example.+005+12345.private</filename>
           (where
-          12345 is an example of a key tag).  The key file names contain
+          12345 is an example of a key tag).  The key filenames contain
           the key name (<filename>child.example.</filename>),
           algorithm (3
           is DSA, 1 is RSAMD5, 5 is RSASHA1, etc.), and the key tag (12345 in
@@ -2402,7 +2409,7 @@ allow-update { key host1-host2. ;};
         <para><command>dnssec-signzone</command>
 	  will also produce a keyset and dsset files and optionally a
           dlvset file.  These are used to provide the parent zone
-          administators with the <literal>DNSKEYs</literal> (or their
+          administrators with the <literal>DNSKEYs</literal> (or their
           corresponding <literal>DS</literal> records) that are the
           secure entry point to the zone.
         </para>
@@ -2421,7 +2428,7 @@ allow-update { key host1-host2. ;};
 	<para>
 	  To enable <command>named</command> to validate answers from
 	  other servers both <command>dnssec-enable</command> and
-	  <command>dnssec-validate</command> must be set and some
+	  <command>dnssec-validation</command> must be set and some
 	  <command>trusted-keys</command> must be configured
 	  into <filename>named.conf</filename>.
         </para>
@@ -2792,33 +2799,29 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
                   <varname>ip6_addr</varname>
                 </para>
               </entry>
-              <entry colname="2">
-                <para>
-                  An IPv6 address, such as <command>2001:db8::1234</command>.
-                  IPv6 scoped addresses that have ambiguity on their scope
-                  zones must be
-                  disambiguated by an appropriate zone ID with the percent
-                  character
-                  (`%') as delimiter.
-                  It is strongly recommended to use string zone names rather
-                  than
-                  numeric identifiers, in order to be robust against system
-                  configuration changes.
-                  However, since there is no standard mapping for such names
-                  and
-                  identifier values, currently only interface names as link
-                  identifiers
-                  are supported, assuming one-to-one mapping between
-                  interfaces and links.
-                  For example, a link-local address <command>fe80::1</command> on the
-                  link attached to the interface <command>ne0</command>
-                  can be specified as <command>fe80::1%ne0</command>.
-                  Note that on most systems link-local addresses always have
-                  the
-                  ambiguity, and need to be disambiguated.
-                </para>
-              </entry>
-            </row>
+	      <entry colname="2">
+		<para>
+		  An IPv6 address, such as <command>2001:db8::1234</command>.
+		  IPv6 scoped addresses that have ambiguity on their
+		  scope zones must be disambiguated by an appropriate
+		  zone ID with the percent character (`%') as
+		  delimiter.  It is strongly recommended to use
+		  string zone names rather than numeric identifiers,
+		  in order to be robust against system configuration
+		  changes.  However, since there is no standard
+		  mapping for such names and identifier values,
+		  currently only interface names as link identifiers
+		  are supported, assuming one-to-one mapping between
+		  interfaces and links.  For example, a link-local
+		  address <command>fe80::1</command> on the link
+		  attached to the interface <command>ne0</command>
+		  can be specified as <command>fe80::1%ne0</command>.
+		  Note that on most systems link-local addresses
+		  always have the ambiguity, and need to be
+		  disambiguated.
+		</para>
+	      </entry>
+	    </row>
             <row rowsep="0">
               <entry colname="1">
                 <para>
@@ -2840,7 +2843,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
               <entry colname="2">
                 <para>
                   An IP port <varname>number</varname>.
-                  <varname>number</varname> is limited to 0
+                  The <varname>number</varname> is limited to 0
                   through 65535, with values
                   below 1024 typically restricted to use by processes running
                   as root.
@@ -2867,6 +2870,11 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
                   network <command>127.0.0.0</command> with
                   netmask <command>255.0.0.0</command> and <command>1.2.3.0/28</command> is
                   network <command>1.2.3.0</command> with netmask <command>255.255.255.240</command>.
+                </para>
+                <para>
+		  When specifying a prefix involving a IPv6 scoped address
+		  the scope may be omitted.  In that case the prefix will
+		  match packets from any scope.
                 </para>
               </entry>
             </row>
@@ -3016,9 +3024,8 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
             Address match lists are primarily used to determine access
             control for various server operations. They are also used in
             the <command>listen-on</command> and <command>sortlist</command>
-            statements. The elements
-            which constitute an address match list can be any of the
-            following:
+            statements. The elements which constitute an address match
+            list can be any of the following:
           </para>
           <itemizedlist>
             <listitem>
@@ -3046,28 +3053,30 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
           <para>
             Elements can be negated with a leading exclamation mark (`!'),
             and the match list names "any", "none", "localhost", and
-            "localnets"
-            are predefined. More information on those names can be found in
-            the description of the acl statement.
+            "localnets" are predefined. More information on those names
+            can be found in the description of the acl statement.
           </para>
 
           <para>
             The addition of the key clause made the name of this syntactic
             element something of a misnomer, since security keys can be used
             to validate access without regard to a host or network address.
-            Nonetheless,
-            the term "address match list" is still used throughout the
-            documentation.
+            Nonetheless, the term "address match list" is still used
+            throughout the documentation.
           </para>
 
           <para>
             When a given IP address or prefix is compared to an address
-            match list, the list is traversed in order until an element
-            matches.
+            match list, the comparison takes place in approximately O(1)
+            time.  However, key comparisons require that the list of keys
+            be traversed until a matching key is found, and therefore may
+            be somewhat slower.
+          </para>
+
+          <para>
             The interpretation of a match depends on whether the list is being
-            used
-            for access control, defining listen-on ports, or in a sortlist,
-            and whether the element was negated.
+            used for access control, defining listen-on ports, or in a
+            sortlist, and whether the element was negated.
           </para>
 
 	  <para>
@@ -3075,30 +3084,36 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 	    allows access and a negated match denies access. If
 	    there is no match, access is denied. The clauses
 	    <command>allow-notify</command>,
+	    <command>allow-recursion</command>,
+	    <command>allow-recursion-on</command>,
 	    <command>allow-query</command>,
+	    <command>allow-query-on</command>,
 	    <command>allow-query-cache</command>,
+	    <command>allow-query-cache-on</command>,
 	    <command>allow-transfer</command>,
 	    <command>allow-update</command>,
 	    <command>allow-update-forwarding</command>, and
 	    <command>blackhole</command> all use address match
 	    lists.  Similarly, the listen-on option will cause the
-	    server to not accept queries on any of the machine's
+	    server to refuse queries on any of the machine's
 	    addresses which do not match the list.
 	  </para>
 
           <para>
-            Because of the first-match aspect of the algorithm, an element
-            that defines a subset of another element in the list should come
-            before the broader element, regardless of whether either is
-            negated. For
-            example, in
-            <command>1.2.3/24; ! 1.2.3.13;</command> the 1.2.3.13
-            element is
-            completely useless because the algorithm will match any lookup for
-            1.2.3.13 to the 1.2.3/24 element.
-            Using <command>! 1.2.3.13; 1.2.3/24</command> fixes
-            that problem by having 1.2.3.13 blocked by the negation but all
-            other 1.2.3.* hosts fall through.
+            Order of insertion is signficant.  If more than one element
+            in an ACL is found to match a given IP address or prefix,
+            preference will be given to the one that came
+            <emphasis>first</emphasis> in the ACL definition.
+            Because of this first-match behavior, an element that
+            defines a subset of another element in the list should
+            come before the broader element, regardless of whether
+            either is negated. For example, in
+            <command>1.2.3/24; ! 1.2.3.13;</command>
+            the 1.2.3.13 element is completely useless because the
+            algorithm will match any lookup for 1.2.3.13 to the 1.2.3/24
+            element.  Using <command>! 1.2.3.13; 1.2.3/24</command> fixes
+            that problem by having 1.2.3.13 blocked by the negation, but
+            all other 1.2.3.* hosts fall through.
           </para>
         </sect3>
       </sect2>
@@ -3109,7 +3124,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
         <para>
           The <acronym>BIND</acronym> 9 comment syntax allows for
           comments to appear
-          anywhere that white space may appear in a <acronym>BIND</acronym> configuration
+          anywhere that whitespace may appear in a <acronym>BIND</acronym> configuration
           file. To appeal to programmers of all kinds, they can be written
           in the C, C++, or shell/perl style.
         </para>
@@ -3126,7 +3141,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
         <sect3>
           <title>Definition and Usage</title>
           <para>
-            Comments may appear anywhere that white space may appear in
+            Comments may appear anywhere that whitespace may appear in
             a <acronym>BIND</acronym> configuration file.
           </para>
           <para>
@@ -3307,6 +3322,17 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
             </row>
             <row rowsep="0">
               <entry colname="1">
+                <para><command>statistics-channels</command></para>
+              </entry>
+              <entry colname="2">
+                <para>
+		  declares communication channels to get access to
+		  <command>named</command> statistics.
+                </para>
+              </entry>
+            </row>
+            <row rowsep="0">
+              <entry colname="1">
                 <para><command>server</command></para>
               </entry>
               <entry colname="2">
@@ -3379,8 +3405,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
         <para>
           Note that an address match list's name must be defined
           with <command>acl</command> before it can be used
-          elsewhere; no
-          forward references are allowed.
+          elsewhere; no forward references are allowed.
         </para>
 
         <para>
@@ -3581,7 +3606,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
       </sect2>
       <sect2>
         <title><command>include</command> Statement Grammar</title>
-        <programlisting>include <replaceable>filename</replaceable>;</programlisting>
+        <programlisting><command>include</command> <replaceable>filename</replaceable>;</programlisting>
       </sect2>
       <sect2>
         <title><command>include</command> Statement Definition and
@@ -3602,7 +3627,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
       <sect2>
         <title><command>key</command> Statement Grammar</title>
 
-<programlisting>key <replaceable>key_id</replaceable> {
+<programlisting><command>key</command> <replaceable>key_id</replaceable> {
     algorithm <replaceable>string</replaceable>;
     secret <replaceable>string</replaceable>;
 };
@@ -3649,7 +3674,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 	  <literal>hmac-sha256</literal>, <literal>hmac-sha384</literal>
 	  and <literal>hmac-sha512</literal> TSIG authentication.
 	  Truncated hashes are supported by appending the minimum
-	  number of required bits preceeded by a dash, e.g.
+	  number of required bits preceded by a dash, e.g.
 	  <literal>hmac-sha1-80</literal>.  The
 	  <replaceable>secret_string</replaceable> is the secret
 	  to be used by the algorithm, and is treated as a base-64
@@ -4194,15 +4219,18 @@ category notify { null; };
                       enable query logging unless <command>querylog</command> option has been
                       specified.
                     </para>
-                    <para>
-                      The query log entry reports the client's IP address and
-                      port number, and the
-                      query name, class and type.  It also reports whether the
-                      Recursion Desired
-                      flag was set (+ if set, - if not set), EDNS was in use
-                      (E) or if the
-                      query was signed (S).
-                    </para>
+
+		    <para>
+		      The query log entry reports the client's IP
+		      address and port number, and the query name,
+		      class and type.  It also reports whether the
+		      Recursion Desired flag was set (+ if set, -
+		      if not set), if the query was signed (S),
+		      EDNS was in use (E), if DO (DNSSEC Ok) was
+		      set (D), or if CD (Checking Disabled) was set
+		      (C).
+		    </para>
+
                     <para>
                       <computeroutput>client 127.0.0.1#62536: query: www.example.com IN AAAA +SE</computeroutput>
                     </para>
@@ -4259,10 +4287,44 @@ category notify { null; };
                     </para>
                   </entry>
                 </row>
-              </tbody>
-            </tgroup>
-          </informaltable>
-        </sect3>
+                <row rowsep="0">
+                  <entry colname="1">
+                    <para><command>edns-disabled</command></para>
+                  </entry>
+		  <entry colname="2">
+		    <para>
+		      Log queries that have been forced to use plain
+		      DNS due to timeouts.  This is often due to
+		      the remote servers not being RFC 1034 compliant
+		      (not always returning FORMERR or similar to
+		      EDNS queries and other extensions to the DNS
+		      when they are not understood).  In other words, this is
+		      targeted at servers that fail to respond to
+		      DNS queries that they don't understand.
+		    </para>
+		    <para>
+		      Note: the log message can also be due to
+		      packet loss.  Before reporting servers for
+		      non-RFC 1034 compliance they should be re-tested
+		      to determine the nature of the non-compliance.
+		      This testing should prevent or reduce the
+		      number of false-positive reports.
+		    </para>
+		    <para>
+		      Note: eventually named will have to stop
+		      treating such timeouts as due to RFC 1034 non
+		      compliance and start treating it as plain
+		      packet loss.  Falsely classifying packet
+		      loss as due to RFC 1034 non compliance impacts
+		      on DNSSEC validation which requires EDNS for
+		      the DNSSEC records to be returned.
+		    </para>
+		  </entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </informaltable>
+	</sect3>
       </sect2>
 
       <sect2>
@@ -4289,7 +4351,7 @@ category notify { null; };
           The <command>lwres</command> statement configures the
           name
           server to also act as a lightweight resolver server. (See
-          <xref linkend="lwresd"/>.)  There may be be multiple
+          <xref linkend="lwresd"/>.)  There may be multiple
           <command>lwres</command> statements configuring
           lightweight resolver servers with different properties.
         </para>
@@ -4363,19 +4425,22 @@ category notify { null; };
           statement in the <filename>named.conf</filename> file:
         </para>
 
-<programlisting>options {
+<programlisting><command>options</command> {
     <optional> version <replaceable>version_string</replaceable>; </optional>
     <optional> hostname <replaceable>hostname_string</replaceable>; </optional>
     <optional> server-id <replaceable>server_id_string</replaceable>; </optional>
     <optional> directory <replaceable>path_name</replaceable>; </optional>
     <optional> key-directory <replaceable>path_name</replaceable>; </optional>
     <optional> named-xfer <replaceable>path_name</replaceable>; </optional>
+    <optional> tkey-gssapi-credential <replaceable>principal</replaceable>; </optional>
     <optional> tkey-domain <replaceable>domainname</replaceable>; </optional>
     <optional> tkey-dhkey <replaceable>key_name</replaceable> <replaceable>key_tag</replaceable>; </optional>
     <optional> cache-file <replaceable>path_name</replaceable>; </optional>
     <optional> dump-file <replaceable>path_name</replaceable>; </optional>
+    <optional> memstatistics <replaceable>yes_or_no</replaceable>; </optional>
     <optional> memstatistics-file <replaceable>path_name</replaceable>; </optional>
     <optional> pid-file <replaceable>path_name</replaceable>; </optional>
+    <optional> recursing-file <replaceable>path_name</replaceable>; </optional>
     <optional> statistics-file <replaceable>path_name</replaceable>; </optional>
     <optional> zone-statistics <replaceable>yes_or_no</replaceable>; </optional>
     <optional> auth-nxdomain <replaceable>yes_or_no</replaceable>; </optional>
@@ -4415,12 +4480,16 @@ category notify { null; };
     <optional> check-sibling <replaceable>yes_or_no</replaceable>; </optional>
     <optional> allow-notify { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-query { <replaceable>address_match_list</replaceable> }; </optional>
+    <optional> allow-query-on { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-query-cache { <replaceable>address_match_list</replaceable> }; </optional>
+    <optional> allow-query-cache-on { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-transfer { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-recursion { <replaceable>address_match_list</replaceable> }; </optional>
+    <optional> allow-recursion-on { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-update { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-update-forwarding { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> update-check-ksk <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> try-tcp-refresh <replaceable>yes_or_no</replaceable>; </optional>
     <optional> allow-v6-synthesis { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> blackhole { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> avoid-v4-udp-ports { <replaceable>port_list</replaceable> }; </optional>
@@ -4435,6 +4504,9 @@ category notify { null; };
 	<optional> port ( <replaceable>ip_port</replaceable> | <replaceable>*</replaceable> ) </optional> | 
 	<optional> address ( <replaceable>ip6_addr</replaceable> | <replaceable>*</replaceable> ) </optional> 
 	<optional> port ( <replaceable>ip_port</replaceable> | <replaceable>*</replaceable> ) </optional> ) ; </optional>
+    <optional> use-queryport-pool <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> queryport-pool-ports <replaceable>number</replaceable>; </optional>
+    <optional> queryport-pool-interval <replaceable>number</replaceable>; </optional>
     <optional> max-transfer-time-in <replaceable>number</replaceable>; </optional>
     <optional> max-transfer-time-out <replaceable>number</replaceable>; </optional>
     <optional> max-transfer-idle-in <replaceable>number</replaceable>; </optional>
@@ -4453,8 +4525,10 @@ category notify { null; };
     <optional> alt-transfer-source (<replaceable>ip4_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
     <optional> alt-transfer-source-v6 (<replaceable>ip6_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
     <optional> use-alt-transfer-source <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> notify-delay <replaceable>seconds</replaceable> ; </optional>
     <optional> notify-source (<replaceable>ip4_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
     <optional> notify-source-v6 (<replaceable>ip6_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
+    <optional> notify-to-soa <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> also-notify { <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; <optional> <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; ... </optional> }; </optional>
     <optional> max-ixfr-log-size <replaceable>number</replaceable>; </optional>
     <optional> max-journal-size <replaceable>size_spec</replaceable>; </optional>
@@ -4563,39 +4637,57 @@ category notify { null; };
 
           <varlistentry>
             <term><command>named-xfer</command></term>
-            <listitem>
-              <para>
-                <emphasis>This option is obsolete.</emphasis>
-                It was used in <acronym>BIND</acronym> 8 to
-                specify the pathname to the <command>named-xfer</command> program.
-                In <acronym>BIND</acronym> 9, no separate <command>named-xfer</command> program is
-                needed; its functionality is built into the name server.
-              </para>
+	    <listitem>
+	      <para>
+		<emphasis>This option is obsolete.</emphasis> It
+		was used in <acronym>BIND</acronym> 8 to specify
+		the pathname to the <command>named-xfer</command>
+		program.  In <acronym>BIND</acronym> 9, no separate
+		<command>named-xfer</command> program is needed;
+		its functionality is built into the name server.
+	      </para>
+	    </listitem>
+	  </varlistentry>
 
-            </listitem>
-          </varlistentry>
+	  <varlistentry>
+	    <term><command>tkey-gssapi-credential</command></term>
+	    <listitem>
+	      <para>
+		The security credential with which the server should
+		authenticate keys requested by the GSS-TSIG protocol.
+		Currently only Kerberos 5 authentication is available
+		and the credential is a Kerberos principal which
+		the server can acquire through the default system
+		key file, normally <filename>/etc/krb5.keytab</filename>.
+		Normally this principal is of the form
+		"<userinput>dns/</userinput><varname>server.domain</varname>".
+		To use GSS-TSIG, <command>tkey-domain</command>
+		must also be set.
+	      </para>
+	    </listitem>
+	  </varlistentry>
 
           <varlistentry>
             <term><command>tkey-domain</command></term>
-            <listitem>
-              <para>
-                The domain appended to the names of all
-                shared keys generated with
-                <command>TKEY</command>. When a client
-                requests a <command>TKEY</command> exchange, it
-                may or may not specify
-                the desired name for the key. If present, the name of the
-                shared
-                key will be "<varname>client specified part</varname>" +
-                "<varname>tkey-domain</varname>".
-                Otherwise, the name of the shared key will be "<varname>random hex
-digits</varname>" + "<varname>tkey-domain</varname>". In most cases,
-                the <command>domainname</command> should be the
-                server's domain
-                name.
-              </para>
-            </listitem>
-          </varlistentry>
+	    <listitem>
+	      <para>
+		The domain appended to the names of all shared keys
+		generated with <command>TKEY</command>.  When a
+		client requests a <command>TKEY</command> exchange,
+		it may or may not specify the desired name for the
+		key. If present, the name of the shared key will
+		will be <varname>client specified part</varname> +
+		<varname>tkey-domain</varname>.  Otherwise, the
+		name of the shared key will be <varname>random hex
+		digits</varname> + <varname>tkey-domain</varname>.
+		In most cases, the <command>domainname</command>
+		should be the server's domain name, or an otherwise
+		non-existent subdomain like
+		"_tkey.<varname>domainname</varname>".  If you are
+		using GSS-TSIG, this variable must be defined.
+	      </para>
+	    </listitem>
+	  </varlistentry>
 
           <varlistentry>
             <term><command>tkey-dhkey</command></term>
@@ -4640,8 +4732,7 @@ digits</varname>" + "<varname>tkey-domain</varname>". In most cases,
               <para>
                 The pathname of the file the server writes memory
                 usage statistics to on exit. If not specified,
-                the default is
-                <filename>named.memstats</filename>.
+                the default is <filename>named.memstats</filename>.
               </para>
             </listitem>
           </varlistentry>
@@ -4657,9 +4748,21 @@ digits</varname>" + "<varname>tkey-domain</varname>". In most cases,
                 name server. Specifying <command>pid-file none</command> disables the
                 use of a PID file &mdash; no file will be written and any
                 existing one will be removed.  Note that <command>none</command>
-                is a keyword, not a file name, and therefore is not enclosed
+                is a keyword, not a filename, and therefore is not enclosed
                 in
                 double quotes.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><command>recursing-file</command></term>
+            <listitem>
+              <para>
+                The pathname of the file the server dumps
+                the queries that are currently recursing when instructed
+                to do so with <command>rndc recursing</command>.
+                If not specified, the default is <filename>named.recursing</filename>.
               </para>
             </listitem>
           </varlistentry>
@@ -4837,6 +4940,19 @@ options {
                   8 to enable checking
                   for memory leaks on exit. <acronym>BIND</acronym> 9 ignores the option and always performs
                   the checks.
+                </para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term><command>memstatistics</command></term>
+              <listitem>
+                <para>
+		  Write memory statistics to the file specfied by
+		  <command>memstatistics-file</command> at exit.
+		  The default is <userinput>no</userinput> unless
+		  '-m record' is specified on the command line in
+		  which case it is <userinput>yes</userinput>.
                 </para>
               </listitem>
             </varlistentry>
@@ -5210,6 +5326,22 @@ options {
             </varlistentry>
 
             <varlistentry>
+              <term><command>notify-to-soa</command></term>
+              <listitem>
+                <para>
+		  If <userinput>yes</userinput> do not check the nameservers
+		  in the NS RRset against the SOA MNAME.  Normally a NOTIFY
+		  message is not sent to the SOA MNAME (SOA ORIGIN) as it is
+		  supposed to contain the name of the ultimate master.
+		  Sometimes, however, a slave is listed as the SOA MNAME in
+		  hidden master configurations and in that case you would
+		  want the ultimate master to still send NOTIFY messages to
+		  all the nameservers listed in the NS RRset.
+                </para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
               <term><command>recursion</command></term>
               <listitem>
                 <para>
@@ -5286,7 +5418,7 @@ options {
                 <para>
                   <emphasis>This option is obsolete</emphasis>.
                   If you need to disable IXFR to a particular server or
-                  servers see
+                  servers, see
                   the information on the <command>provide-ixfr</command> option
                   in <xref linkend="server_statement_definition_and_usage"/>.
                   See also
@@ -5520,6 +5652,7 @@ options {
                 <para>
 		  Accept expired signatures when verifying DNSSEC signatures.
                   The default is <userinput>no</userinput>.
+		  Setting this option to "yes" leaves named vulnerable to replay attacks.
                 </para>
               </listitem>
             </varlistentry>
@@ -5558,12 +5691,12 @@ options {
                   from RFC 952 and RFC 821 as modified by RFC 1123.
                 </para>
                 <para><command>check-names</command>
-		  applies to the owner names of A, AAA and MX records.
+		  applies to the owner names of A, AAAA and MX records.
 		  It also applies to the domain names in the RDATA of NS, SOA
 		  and MX records.
 		  It also applies to the RDATA of PTR records where the owner
 		  name indicated that it is a reverse lookup of a hostname
-		  (the owner name ends in IN-ADDR.ARPA, IP6.ARPA or IP6.INT).
+		  (the owner name ends in IN-ADDR.ARPA, IP6.ARPA, or IP6.INT).
                 </para>
               </listitem>
             </varlistentry>
@@ -5606,7 +5739,7 @@ options {
 		  MX and SRV records only in-zone hostnames are
 		  checked (for out-of-zone hostnames use named-checkzone).
 		  For NS records only names below top of zone are
-		  checked (for out-of-zone names and glue consistancy
+		  checked (for out-of-zone names and glue consistency
 		  checks use named-checkzone).  The default is
 		  <command>yes</command>.
 		</para>
@@ -5679,6 +5812,17 @@ options {
 		  if there are not DNSKEY RRs both with and without
 		  a KSK.
 		  The default is <command>yes</command>.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>try-tcp-refresh</command></term>
+	      <listitem>
+	        <para>
+		  Try to refresh the zone using TCP if UDP queries fail.
+		  For BIND 8 compatibility, the default is
+		  <command>yes</command>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -5823,6 +5967,35 @@ options {
 	    </varlistentry>
 
 	    <varlistentry>
+	      <term><command>allow-query-on</command></term>
+	      <listitem>
+		<para>
+		  Specifies which local addresses can accept ordinary
+		  DNS questions. This makes it possible, for instance,
+		  to allow queries on internal-facing interfaces but
+		  disallow them on external-facing ones, without
+		  necessarily knowing the internal network's addresses.
+		</para>
+		<para>
+		  <command>allow-query-on</command> may
+		  also be specified in the <command>zone</command>
+		  statement, in which case it overrides the
+		  <command>options allow-query-on</command> statement.
+		</para>
+		<para>
+		  If not specified, the default is to allow queries
+		  on all addresses.
+		</para>
+		<note>
+		  <para>
+		    <command>allow-query-cache</command> is
+		    used to specify access to the cache.
+		  </para>
+		</note>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
 	      <term><command>allow-query-cache</command></term>
 	      <listitem>
 		<para>
@@ -5833,6 +6006,19 @@ options {
 		  is used if set, otherwise the default
 		  (<command>localnets;</command>
 		  <command>localhost;</command>) is used.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><command>allow-query-cache-on</command></term>
+	      <listitem>
+		<para>
+		  Specifies which local addresses can give answers
+		  from the cache.  If not specified, the default is
+		  to allow cache queries on any address,
+		  <command>localnets</command> and
+		  <command>localhost</command>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -5850,6 +6036,17 @@ options {
 		  (<command>localnets;</command>
 		  <command>localhost;</command>) is used.
 		</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term><command>allow-recursion-on</command></term>
+              <listitem>
+                <para>
+		  Specifies which local addresses can accept recursive
+		  queries.  If not specified, the default is to allow
+		  recursive queries on all addresses.
+                </para>
               </listitem>
             </varlistentry>
 
@@ -6035,7 +6232,7 @@ listen-on-v6 port 1234 { !2001:db8::/32; any; };
           </para>
         </sect3>
 
-        <sect3>
+        <sect3 id="query_address">
           <title>Query Address</title>
           <para>
             If the server doesn't know the answer to a question, it will
@@ -6046,22 +6243,61 @@ listen-on-v6 port 1234 { !2001:db8::/32; any; };
             a wildcard IP address (<command>INADDR_ANY</command>)
             will be used.
             If <command>port</command> is <command>*</command> or is omitted,
-            a random unprivileged port will be used. The <command>avoid-v4-udp-ports</command>
+            a pool of random unprivileged ports will be used.  See the
+	    <command>use-queryport-pool</command>,
+	    <command>queryport-pool-ports</command> and
+	    <command>queryport-pool-updateinterval</command> options below for how the pool
+	    is configured.
+	    The <command>avoid-v4-udp-ports</command>
             and <command>avoid-v6-udp-ports</command> options can be used
             to prevent named
-            from selecting certain ports. The defaults are:
+            from selecting certain ports.
+	    The defaults are:
           </para>
 
 <programlisting>query-source address * port *;
 query-source-v6 address * port *;
 </programlisting>
 
+          <variablelist>
+            <varlistentry>
+              <term><command>use-queryport-pool</command></term>
+              <listitem>
+                <para>
+		  Enable the use of query port pools.  By default query port
+		  pools are enabled unless there is a explicit port defined
+		  in <command>query-source</command> or
+		  <command>query-source-v6</command>.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+            <varlistentry>
+              <term><command>queryport-pool-ports</command></term>
+              <listitem>
+                <para>
+		  Specify how many pool ports to use.  The default is 8.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+            <varlistentry>
+              <term><command>queryport-pool-updateinterval</command></term>
+              <listitem>
+                <para>
+		  Specify how often, in minutes, that the queryport pool
+		  should be recreated (new ports selected).  The default
+		  is 15 minutes.
+		</para>
+	      </listitem>
+	    </varlistentry>
+	    
+          </variablelist>
           <note>
             <para>
               The address specified in the <command>query-source</command> option
               is used for both UDP and TCP queries, but the port applies only
-              to
-              UDP queries.  TCP queries always use a random
+              to UDP queries.  TCP queries always use a random
               unprivileged port.
             </para>
           </note>
@@ -6588,9 +6824,7 @@ query-source-v6 address * port *;
                   with
                   multiple views, the limit applies separately to the cache of
                   each
-                  view.  The default is <literal>unlimited</literal>, meaning that
-                  records are purged from the cache only when their TTLs
-                  expire.
+                  view.  The default is <literal>32M</literal>.
                 </para>
               </listitem>
             </varlistentry>
@@ -6624,11 +6858,14 @@ query-source-v6 address * port *;
               <term><command>cleaning-interval</command></term>
               <listitem>
                 <para>
-                  The server will remove expired resource records
+		  This interval is effectively obsolete.  Previously,
+		  the server would remove expired resource records
                   from the cache every <command>cleaning-interval</command> minutes.
-                  The default is 60 minutes.  The maximum value is 28 days
-                  (40320 minutes).
-                  If set to 0, no periodic cleaning will occur.
+		  <acronym>BIND</acronym> 9 now manages cache
+		  memory in a more sophisticated manner and does not
+		  rely on the periodic cleaning any more.
+		  Specifying this option therefore has no effect on
+		  the server's behavior.
                 </para>
               </listitem>
             </varlistentry>
@@ -6680,7 +6917,7 @@ query-source-v6 address * port *;
                   </para><note>
                   <simpara>
                     Not yet implemented in
-                    <acronym>BIND</acronym>9.
+                    <acronym>BIND</acronym> 9.
                   </simpara>
                 </note>
               </listitem>
@@ -6910,8 +7147,13 @@ query-source-v6 address * port *;
                   </entry>
                   <entry colname="2">
                     <para>
-                      Records are returned in a round-robin
-                      order.
+                      Records are returned in a cyclic round-robin order.
+                    </para>
+                    <para>
+                      If <acronym>BIND</acronym> is configured with the
+                      "--enable-fixed-rrset" option at compile time, then
+                      the initial ordering of the RRset will match the
+                      one specified in the zone file.
                     </para>
                   </entry>
                 </row>
@@ -6942,9 +7184,11 @@ query-source-v6 address * port *;
 
           <note>
             <simpara>
-              The <command>rrset-order</command> statement
-              is not yet fully implemented in <acronym>BIND</acronym> 9.
-              BIND 9 currently does not fully support "fixed" ordering.
+              In this release of <acronym>BIND</acronym> 9, the
+              <command>rrset-order</command> statement does not support
+              "fixed" ordering by default.  Fixed ordering can be enabled
+              at compile time by specifying "--enable-fixed-rrset" on
+              the "configure" command line.
             </simpara>
           </note>
         </sect3>
@@ -7067,7 +7311,7 @@ query-source-v6 address * port *;
                   values are 512 to 4096 (values outside this range
                   will be silently adjusted).  The default value is
                   4096.  The usual reason for setting edns-udp-size to
-                  a non-default value it to get UDP answers to pass
+                  a non-default value is to get UDP answers to pass
                   through broken firewalls that block fragmented
                   packets and/or block UDP packets that are greater
                   than 512 bytes.
@@ -7087,6 +7331,8 @@ query-source-v6 address * port *;
 		  answers to pass through broken firewalls that
 		  block fragmented packets and/or block UDP packets
 		  that are greater than 512 bytes.
+		  This is independent of the advertised receive
+		  buffer (<command>edns-udp-size</command>).
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -7155,6 +7401,16 @@ query-source-v6 address * port *;
 		</para>
               </listitem>
 	    </varlistentry>
+
+            <varlistentry>
+              <term><command>notify-delay</command></term>
+              <listitem>
+                <para>
+                  The delay, in seconds, between sending sets of notify
+                  messages for a zone.  The default is zero.
+                </para>
+              </listitem>
+            </varlistentry>
 	  </variablelist>
 
         </sect3>
@@ -7221,9 +7477,10 @@ query-source-v6 address * port *;
               <term><command>server-id</command></term>
               <listitem>
                 <para>
-                  The ID of the server should report via a query of
-                  the name <filename>ID.SERVER</filename>
-                  with type <command>TXT</command>, class <command>CHAOS</command>.
+                  The ID the server should report when receiving a Name
+                  Server Identifier (NSID) query, or a query of the name
+                  <filename>ID.SERVER</filename> with type
+                  <command>TXT</command>, class <command>CHAOS</command>.
                   The primary purpose of such queries is to
                   identify which of a group of anycast servers is actually
                   answering your queries.  Specifying <command>server-id none;</command>
@@ -7245,7 +7502,7 @@ query-source-v6 address * port *;
 	    Named has some built-in empty zones (SOA and NS records only).
 	    These are for zones that should normally be answered locally
 	    and which queries should not be sent to the Internet's root
-	    servers.  The offical servers which cover these namespaces
+	    servers.  The official servers which cover these namespaces
 	    return NXDOMAIN responses to these queries.  In particular,
 	    these cover the reverse namespace for addresses from RFC 1918 and
 	    RFC 3330.  They also include the reverse namespace for IPv6 local
@@ -7304,10 +7561,10 @@ query-source-v6 address * port *;
 	    If you are using the address ranges covered here, you should
 	    already have reverse zones covering the addresses you use.
 	    In practice this appears to not be the case with many queries
-	    being made to the infrustructure servers for names in these
+	    being made to the infrastructure servers for names in these
 	    spaces.  So many in fact that sacrificial servers were needed
 	    to be deployed to channel the query load away from the
-	    infrustructure servers.
+	    infrastructure servers.
 	  </para>
 	  <note>
 	    The real parent servers for these zones should disable all
@@ -7358,136 +7615,6 @@ query-source-v6 address * port *;
 	      </listitem>
 	    </varlistentry>
           </variablelist>
-        </sect3>
-  
-        <sect3 id="statsfile">
-          <title>The Statistics File</title>
-
-          <para>
-            The statistics file generated by <acronym>BIND</acronym> 9
-            is similar, but not identical, to that
-            generated by <acronym>BIND</acronym> 8.
-          </para>
-          <para>
-            The statistics dump begins with a line, like:
-	  </para>
-          <para>
-	    <command>+++ Statistics Dump +++ (973798949)</command>
-	  </para>
-	  <para>
-	    The number in parentheses is a standard
-            Unix-style timestamp, measured as seconds since January 1, 1970.
-            Following
-            that line are a series of lines containing a counter type, the
-            value of the
-            counter, optionally a zone name, and optionally a view name.
-            The lines without view and zone listed are global statistics for
-            the entire server.
-            Lines with a zone and view name for the given view and zone (the
-            view name is
-            omitted for the default view).
-	  </para>
-	  <para>
-	    The statistics dump ends with the line where the
-            number is identical to the number in the beginning line; for example:
-          </para>
-          <para>
-	    <command>--- Statistics Dump --- (973798949)</command>
-          </para>
-          <para>
-            The following statistics counters are maintained:
-          </para>
-          <informaltable colsep="0" rowsep="0">
-            <tgroup cols="2" colsep="0" rowsep="0" tgroupstyle="4Level-table">
-              <colspec colname="1" colnum="1" colsep="0" colwidth="1.150in"/>
-              <colspec colname="2" colnum="2" colsep="0" colwidth="3.350in"/>
-              <tbody>
-                <row rowsep="0">
-                  <entry colname="1">
-                    <para><command>success</command></para>
-                  </entry>
-                  <entry colname="2">
-                    <para>
-                      The number of
-                      successful queries made to the server or zone.  A
-                      successful query
-                      is defined as query which returns a NOERROR response
-                      with at least
-                      one answer RR.
-                    </para>
-                  </entry>
-                </row>
-                <row rowsep="0">
-                  <entry colname="1">
-                    <para><command>referral</command></para>
-                  </entry>
-                  <entry colname="2">
-                    <para>
-                      The number of queries which resulted
-                      in referral responses.
-                    </para>
-                  </entry>
-                </row>
-                <row rowsep="0">
-                  <entry colname="1">
-                    <para><command>nxrrset</command></para>
-                  </entry>
-                  <entry colname="2">
-                    <para>
-                      The number of queries which resulted in
-                      NOERROR responses with no data.
-                    </para>
-                  </entry>
-                </row>
-                <row rowsep="0">
-                  <entry colname="1">
-                    <para><command>nxdomain</command></para>
-                  </entry>
-                  <entry colname="2">
-                    <para>
-                      The number
-                      of queries which resulted in NXDOMAIN responses.
-                    </para>
-                  </entry>
-                </row>
-                <row rowsep="0">
-                  <entry colname="1">
-                    <para><command>failure</command></para>
-                  </entry>
-                  <entry colname="2">
-                    <para>
-                      The number of queries which resulted in a
-                      failure response other than those above.
-                    </para>
-                  </entry>
-                </row>
-                <row rowsep="0">
-                  <entry colname="1">
-                    <para><command>recursion</command></para>
-                  </entry>
-                  <entry colname="2">
-                    <para>
-                      The number of queries which caused the server
-                      to perform recursion in order to find the final answer.
-                    </para>
-                  </entry>
-                </row>
-              </tbody>
-            </tgroup>
-          </informaltable>
-
-          <para>
-            Each query received by the server will cause exactly one of
-            <command>success</command>,
-            <command>referral</command>,
-            <command>nxrrset</command>,
-            <command>nxdomain</command>, or
-            <command>failure</command>
-            to be incremented, and may additionally cause the
-            <command>recursion</command> counter to be
-            incremented.
-          </para>
-
         </sect3>
 
         <sect3 id="acache">
@@ -7596,10 +7723,7 @@ query-source-v6 address * port *;
                   In a server with multiple views, the limit applies
                   separately to the
                   acache of each view.
-                  The default is <literal>unlimited</literal>,
-                  meaning that
-                  entries are purged from the acache only at the
-                  periodic cleaning time.
+                  The default is <literal>16M</literal>.
                 </para>
               </listitem>
             </varlistentry>
@@ -7610,10 +7734,78 @@ query-source-v6 address * port *;
 
       </sect2>
 
+      <sect2 id="statschannels">
+        <title><command>statistics-channels</command> Statement Grammar</title>
+
+<programlisting><command>statistics-channels</command> {
+   [ inet ( ip_addr | * ) [ port ip_port ] [allow { <replaceable> address_match_list </replaceable> } ]; ]
+   [ inet ...; ]
+};
+</programlisting>
+      </sect2>
+
+      <sect2>
+          <title><command>statistics-channels</command> Statement Definition and
+            Usage</title>
+
+        <para>
+          The <command>statistics-channels</command> statement
+	  declares communication channels to be used by system
+	  administrators to get access to statistics information of
+	  the name server.
+        </para>
+
+        <para>
+	  This statement intends to be flexible to support multiple
+	  communication protocols in the future, but currently only
+	  HTTP access is supported.
+	  It requires that BIND 9 be compiled with libxml2;
+	  the <command>statistics-channels</command> statement is
+	  still accepted even if it is built without the library,
+	  but any HTTP access will fail with an error.
+        </para>
+
+        <para>
+          An <command>inet</command> control channel is a TCP socket
+	  listening at the specified <command>ip_port</command> on the
+	  specified <command>ip_addr</command>, which can be an IPv4 or IPv6
+	  address.  An <command>ip_addr</command> of <literal>*</literal> (asterisk) is
+	  interpreted as the IPv4 wildcard address; connections will be
+	  accepted on any of the system's IPv4 addresses.
+	  To listen on the IPv6 wildcard address,
+          use an <command>ip_addr</command> of <literal>::</literal>.
+        </para>
+
+        <para>
+          If no port is specified, port 80 is used for HTTP channels.
+	  The asterisk "<literal>*</literal>" cannot be used for
+	  <command>ip_port</command>.
+        </para>
+
+        <para>
+          The attempt of opening a statistics channel is
+          restricted by the optional <command>allow</command> clause.
+	  Connections to the statistics channel are permitted based on the
+          <command>address_match_list</command>.
+	  If no <command>allow</command> clause is present,
+	  <command>named</command> accepts connection
+	  attempts from any address; since the statistics may
+	  contain sensitive internal information, it is highly
+	  recommended to restrict the source of connection requests
+	  appropriately.
+        </para>
+
+        <para>
+          If no <command>statistics-channels</command> statement is present,
+          <command>named</command> will not open any communication channels.
+        </para>
+
+      </sect2>
+
       <sect2 id="server_statement_grammar">
         <title><command>server</command> Statement Grammar</title>
 
-<programlisting>server <replaceable>ip_addr[/prefixlen]</replaceable> {
+<programlisting><command>server</command> <replaceable>ip_addr[/prefixlen]</replaceable> {
     <optional> bogus <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> provide-ixfr <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> request-ixfr <replaceable>yes_or_no</replaceable> ; </optional>
@@ -7629,6 +7821,9 @@ query-source-v6 address * port *;
     <optional> notify-source-v6 (<replaceable>ip6_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
     <optional> query-source <optional> address ( <replaceable>ip_addr</replaceable> | <replaceable>*</replaceable> ) </optional> <optional> port ( <replaceable>ip_port</replaceable> | <replaceable>*</replaceable> ) </optional>; </optional>
     <optional> query-source-v6 <optional> address ( <replaceable>ip_addr</replaceable> | <replaceable>*</replaceable> ) </optional> <optional> port ( <replaceable>ip_port</replaceable> | <replaceable>*</replaceable> ) </optional>; </optional>
+    <optional> use-queryport-pool <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> queryport-pool-ports <replaceable>number</replaceable>; </optional>
+    <optional> queryport-pool-interval <replaceable>number</replaceable>; </optional>
 };
 </programlisting>
 
@@ -7822,7 +8017,7 @@ query-source-v6 address * port *;
         <sect2>
           <title><command>trusted-keys</command> Statement Grammar</title>
 
-<programlisting>trusted-keys {
+<programlisting><command>trusted-keys</command> {
     <replaceable>string</replaceable> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>string</replaceable> ;
     <optional> <replaceable>string</replaceable> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>string</replaceable> ; <optional>...</optional></optional>
 };
@@ -7863,7 +8058,7 @@ query-source-v6 address * port *;
         <sect2 id="view_statement_grammar">
           <title><command>view</command> Statement Grammar</title>
 
-<programlisting>view <replaceable>view_name</replaceable>
+<programlisting><command>view</command> <replaceable>view_name</replaceable>
       <optional><replaceable>class</replaceable></optional> {
       match-clients { <replaceable>address_match_list</replaceable> };
       match-destinations { <replaceable>address_match_list</replaceable> };
@@ -8004,9 +8199,10 @@ view "external" {
           <title><command>zone</command>
             Statement Grammar</title>
 
-<programlisting>zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replaceable></optional> {
+<programlisting><command>zone</command> <replaceable>zone_name</replaceable> <optional><replaceable>class</replaceable></optional> {
     type master;
     <optional> allow-query { <replaceable>address_match_list</replaceable> }; </optional>
+    <optional> allow-query-on { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-transfer { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-update { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> update-policy { <replaceable>update_policy_rule</replaceable> <optional>...</optional> }; </optional>
@@ -8028,6 +8224,8 @@ view "external" {
     <optional> max-transfer-idle-out <replaceable>number</replaceable> ; </optional>
     <optional> max-transfer-time-out <replaceable>number</replaceable> ; </optional>
     <optional> notify <replaceable>yes_or_no</replaceable> | <replaceable>explicit</replaceable> | <replaceable>master-only</replaceable> ; </optional>
+    <optional> notify-delay <replaceable>seconds</replaceable> ; </optional>
+    <optional> notify-to-soa <replaceable>yes_or_no</replaceable>; </optional>
     <optional> pubkey <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>string</replaceable> ; </optional>
     <optional> notify-source (<replaceable>ip4_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
     <optional> notify-source-v6 (<replaceable>ip6_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
@@ -8046,9 +8244,11 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
     type slave;
     <optional> allow-notify { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-query { <replaceable>address_match_list</replaceable> }; </optional>
+    <optional> allow-query-on { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-transfer { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-update-forwarding { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> update-check-ksk <replaceable>yes_or_no</replaceable>; </optional>
+    <optional> try-tcp-refresh <replaceable>yes_or_no</replaceable>; </optional>
     <optional> also-notify { <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; <optional> <replaceable>ip_addr</replaceable> <optional>port <replaceable>ip_port</replaceable></optional> ; ... </optional> }; </optional>
     <optional> check-names (<constant>warn</constant>|<constant>fail</constant>|<constant>ignore</constant>) ; </optional>
     <optional> dialup <replaceable>dialup_option</replaceable> ; </optional>
@@ -8067,6 +8267,8 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
     <optional> max-transfer-time-in <replaceable>number</replaceable> ; </optional>
     <optional> max-transfer-time-out <replaceable>number</replaceable> ; </optional>
     <optional> notify <replaceable>yes_or_no</replaceable> | <replaceable>explicit</replaceable> | <replaceable>master-only</replaceable> ; </optional>
+    <optional> notify-delay <replaceable>seconds</replaceable> ; </optional>
+    <optional> notify-to-soa <replaceable>yes_or_no</replaceable>; </optional>
     <optional> pubkey <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>number</replaceable> <replaceable>string</replaceable> ; </optional>
     <optional> transfer-source (<replaceable>ip4_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
     <optional> transfer-source-v6 (<replaceable>ip6_addr</replaceable> | <constant>*</constant>) <optional>port <replaceable>ip_port</replaceable></optional> ; </optional>
@@ -8095,6 +8297,7 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
 zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replaceable></optional> {
     type stub;
     <optional> allow-query { <replaceable>address_match_list</replaceable> }; </optional>
+    <optional> allow-query-on { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> check-names (<constant>warn</constant>|<constant>fail</constant>|<constant>ignore</constant>) ; </optional>
     <optional> dialup <replaceable>dialup_option</replaceable> ; </optional>
     <optional> delegation-only <replaceable>yes_or_no</replaceable> ; </optional>
@@ -8194,7 +8397,7 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                         numbers (in the
                         tens or hundreds of thousands) of zones per server, it
                         is best to
-                        use a two-level naming scheme for zone file names. For
+                        use a two-level naming scheme for zone filenames. For
                         example,
                         a slave server for the zone <literal>example.com</literal> might place
                         the zone contents into a file called
@@ -8364,7 +8567,7 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
               a synonym for hesiod.
             </para>
             <para>
-              Another MIT development is CHAOSnet, a LAN protocol created
+              Another MIT development is Chaosnet, a LAN protocol created
               in the mid-1970s. Zone data for it can be specified with the <literal>CHAOS</literal> class.
             </para>
           </sect3>
@@ -8390,6 +8593,16 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                   <para>
                     See the description of
                     <command>allow-query</command> in <xref linkend="access_control"/>.
+                  </para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term><command>allow-query-on</command></term>
+                <listitem>
+                  <para>
+                    See the description of
+                    <command>allow-query-on</command> in <xref linkend="access_control"/>.
                   </para>
                 </listitem>
               </varlistentry>
@@ -8533,6 +8746,16 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                 </listitem>
               </varlistentry>
 
+	      <varlistentry>
+	        <term><command>try-tcp-refresh</command></term>
+                <listitem>
+                  <para>
+                    See the description of
+                    <command>try-tcp-refresh</command> in <xref linkend="boolean_options"/>.
+                  </para>
+                </listitem>
+              </varlistentry>
+
               <varlistentry>
                 <term><command>database</command></term>
                 <listitem>
@@ -8640,8 +8863,8 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                 <term><command>journal</command></term>
                 <listitem>
                   <para>
-                    Allow the default journal's file name to be overridden.
-                    The default is the zone's file with "<filename>.jnl</filename>" appended.
+                    Allow the default journal's filename to be overridden.
+                    The default is the zone's filename with "<filename>.jnl</filename>" appended.
                     This is applicable to <command>master</command> and <command>slave</command> zones.
                   </para>
                 </listitem>
@@ -8693,6 +8916,27 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                   <para>
                     See the description of
                     <command>notify</command> in <xref linkend="boolean_options"/>.
+                  </para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term><command>notify-delay</command></term>
+                <listitem>
+                  <para>
+                    See the description of
+                    <command>notify-delay</command> in <xref linkend="tuning"/>.
+                  </para>
+                </listitem>
+              </varlistentry>
+
+              <varlistentry>
+                <term><command>notify-to-soa</command></term>
+                <listitem>
+                  <para>
+                    See the description of
+                    <command>notify-to-soa</command> in
+		    <xref linkend="boolean_options"/>.
                   </para>
                 </listitem>
               </varlistentry>
@@ -8862,45 +9106,41 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
           </sect3>
           <sect3 id="dynamic_update_policies">
             <title>Dynamic Update Policies</title>
-            <para>
-              <acronym>BIND</acronym> 9 supports two alternative
-              methods of granting clients
-              the right to perform dynamic updates to a zone,
-              configured by the <command>allow-update</command>
-              and
-              <command>update-policy</command> option,
-              respectively.
-            </para>
-            <para>
-              The <command>allow-update</command> clause works the
-              same
-              way as in previous versions of <acronym>BIND</acronym>. It grants given clients the
-              permission to update any record of any name in the zone.
-            </para>
-            <para>
-              The <command>update-policy</command> clause is new
-              in <acronym>BIND</acronym>
-              9 and allows more fine-grained control over what updates are
-              allowed.
-              A set of rules is specified, where each rule either grants or
-              denies
-              permissions for one or more names to be updated by one or more
-              identities.
-              If the dynamic update request message is signed (that is, it
-              includes
-              either a TSIG or SIG(0) record), the identity of the signer can
-              be determined.
-            </para>
-            <para>
-              Rules are specified in the <command>update-policy</command> zone
-              option, and are only meaningful for master zones.  When the <command>update-policy</command> statement
-              is present, it is a configuration error for the <command>allow-update</command> statement
-              to be present.  The <command>update-policy</command>
-              statement only
-              examines the signer of a message; the source address is not
-              relevant.
-            </para>
-            <para>
+	    <para><acronym>BIND</acronym> 9 supports two alternative
+	      methods of granting clients the right to perform
+	      dynamic updates to a zone, configured by the
+	      <command>allow-update</command> and
+	      <command>update-policy</command> option, respectively.
+	    </para>
+	    <para>
+	      The <command>allow-update</command> clause works the
+	      same way as in previous versions of <acronym>BIND</acronym>.
+	      It grants given clients the permission to update any
+	      record of any name in the zone.
+	    </para>
+	    <para>
+	      The <command>update-policy</command> clause is new
+	      in <acronym>BIND</acronym> 9 and allows more fine-grained
+	      control over what updates are allowed.  A set of rules
+	      is specified, where each rule either grants or denies
+	      permissions for one or more names to be updated by
+	      one or more identities.  If the dynamic update request
+	      message is signed (that is, it includes either a TSIG
+	      or SIG(0) record), the identity of the signer can be
+	      determined.
+	    </para>
+	    <para>
+	      Rules are specified in the <command>update-policy</command>
+	      zone option, and are only meaningful for master zones.
+	      When the <command>update-policy</command> statement
+	      is present, it is a configuration error for the
+	      <command>allow-update</command> statement to be
+	      present.  The <command>update-policy</command> statement
+	      only examines the signer of a message; the source
+	      address is not relevant.
+	    </para>
+
+	    <para>
               This is how a rule definition looks:
             </para>
 
@@ -8918,22 +9158,23 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
               matches
               the types specified in the type field.
             </para>
-
-            <para>
-              The identity field specifies a name or a wildcard name.
-              Normally, this
-              is the name of the TSIG or SIG(0) key used to sign the update
-              request.  When a
-              TKEY exchange has been used to create a shared secret, the
-              identity of the
-              shared secret is the same as the identity of the key used to
-              authenticate the
-              TKEY exchange.  When the <replaceable>identity</replaceable> field specifies a
-              wildcard name, it is subject to DNS wildcard expansion, so the
-              rule will apply
-              to multiple identities.  The <replaceable>identity</replaceable> field must
-              contain a fully qualified domain name.
-            </para>
+	    <para>
+	      The identity field specifies a name or a wildcard
+	      name.  Normally, this is the name of the TSIG or
+	      SIG(0) key used to sign the update request.  When a
+	      TKEY exchange has been used to create a shared secret,
+	      the identity of the shared secret is the same as the
+	      identity of the key used to authenticate the TKEY
+	      exchange.  TKEY is also the negotiation method used
+	      by GSS-TSIG, which establishes an identity that is
+	      the Kerberos principal of the client, such as
+	      <userinput>"user@host.domain"</userinput>.  When the
+	      <replaceable>identity</replaceable> field specifies
+	      a wildcard name, it is subject to DNS wildcard
+	      expansion, so the rule will apply to multiple identities.
+	      The <replaceable>identity</replaceable> field must
+	      contain a fully-qualified domain name.
+	    </para>
 
             <para>
               The <replaceable>nametype</replaceable> field has 6
@@ -9046,7 +9287,7 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
             <para>
               In all cases, the <replaceable>name</replaceable>
               field must
-              specify a fully qualified domain name.
+              specify a fully-qualified domain name.
             </para>
 
             <para>
@@ -9659,7 +9900,7 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
                     </entry>
                     <entry colname="2">
                       <para>
-                        CHAOSnet, a LAN protocol created at MIT in the
+                        Chaosnet, a LAN protocol created at MIT in the
                         mid-1970s.
                         Rarely used for its historical purpose, but reused for
                         BIND's
@@ -10239,7 +10480,7 @@ zone <replaceable>zone_name</replaceable> <optional><replaceable>class</replacea
           <note>
             <para>
               The <command>$ORIGIN</command> lines in the examples
-              are for providing context to the examples only-they do not
+              are for providing context to the examples only &mdash; they do not
               necessarily
               appear in the actual usage. They are only used here to indicate
               that the example is relative to the listed origin.
@@ -10372,7 +10613,7 @@ $GENERATE 1-127 $ CNAME $.0</programlisting>
             is equivalent to
           </para>
 
-<programlisting>0.0.0.192.IN-ADDR.ARPA NS SERVER1.EXAMPLE.
+<programlisting>0.0.0.192.IN-ADDR.ARPA. NS SERVER1.EXAMPLE.
 0.0.0.192.IN-ADDR.ARPA. NS SERVER2.EXAMPLE.
 1.0.0.192.IN-ADDR.ARPA. CNAME 1.0.0.0.192.IN-ADDR.ARPA.
 2.0.0.192.IN-ADDR.ARPA. CNAME 2.0.0.0.192.IN-ADDR.ARPA.
@@ -10403,14 +10644,14 @@ $GENERATE 1-127 $ CNAME $.0</programlisting>
                     <para><command>lhs</command></para>
                   </entry>
                   <entry colname="2">
-                    <para><command>lhs</command>
+                    <para>This
 		      describes the owner name of the resource records
                       to be created.  Any single <command>$</command>
                       (dollar sign)
                       symbols within the <command>lhs</command> side
                       are replaced by the iterator value.
 
-                      To get a $ in the output you need to escape the
+                      To get a $ in the output, you need to escape the
                       <command>$</command> using a backslash
                       <command>\</command>,
                       e.g. <command>\$</command>. The
@@ -10419,7 +10660,7 @@ $GENERATE 1-127 $ CNAME $.0</programlisting>
                       iterator, field width and base.
 
                       Modifiers are introduced by a
-                      <command>{</command> immediately following the
+                      <command>{</command> (left brace) immediately following the
                       <command>$</command> as
                       <command>${offset[,width[,base]]}</command>.
                       For example, <command>${-20,3,d}</command>
@@ -10492,7 +10733,7 @@ $GENERATE 1-127 $ CNAME $.0</programlisting>
                   </entry>
                   <entry colname="2">
                     <para>
-                      A domain name. It is processed
+                      <command>rhs</command> is a domain name. It is processed
                       similarly to lhs.
                     </para>
                   </entry>
@@ -10551,6 +10792,1275 @@ $GENERATE 1-127 $ CNAME $.0</programlisting>
 	  </para>
 	</sect2>
       </sect1>
+
+      <sect1>
+        <title>BIND9 Statistics</title>
+        <para>
+	  <acronym>BIND</acronym> 9 maintains lots of statistics
+	  information and provides several interfaces for users to
+	  get access to the statistics.
+	  The available statistics include all statistics counters
+	  that were available in <acronym>BIND</acronym> 8 and
+	  are meaningful in <acronym>BIND</acronym> 9,
+	  and other information that is considered useful.
+        </para>
+
+        <para>
+	  The statistics information is categorized into the following
+	  sections.
+        </para>
+
+	<informaltable frame="all">
+          <tgroup cols="2">
+            <colspec colname="1" colnum="1" colsep="0" colwidth="3.300in"/>
+            <colspec colname="2" colnum="2" colsep="0" colwidth="2.625in"/>
+            <tbody>
+
+	      <row rowsep="0">
+                <entry colname="1">
+                  <para>Incoming Requests</para>
+                </entry>
+                <entry colname="2">
+                  <para>
+                    The number of incoming DNS requests for each OPCODE.
+                  </para>
+                </entry>
+	      </row>
+
+	      <row rowsep="0">
+                <entry colname="1">
+                  <para>Incoming Queries</para>
+                </entry>
+                <entry colname="2">
+                  <para>
+		    The number of incoming queries for each RR type.
+                  </para>
+                </entry>
+	      </row>
+
+	      <row rowsep="0">
+                <entry colname="1">
+                  <para>Outgoing Queries</para>
+                </entry>
+                <entry colname="2">
+                  <para>
+                    The number of outgoing queries for each RR
+                    type sent from the internal resolver.
+		    Maintained per view.
+                  </para>
+                </entry>
+	      </row>
+
+	      <row rowsep="0">
+                <entry colname="1">
+                  <para>Name Server Statistics</para>
+                </entry>
+                <entry colname="2">
+                  <para>
+                    Statistics counters about incoming request processing.
+                  </para>
+                </entry>
+	      </row>
+
+	      <row rowsep="0">
+                <entry colname="1">
+                  <para>Zone Maintenance Statistics</para>
+                </entry>
+                <entry colname="2">
+                  <para>
+                    Statistics counters regarding zone maintenance
+                    operations such as zone transfers.
+                  </para>
+                </entry>
+	      </row>
+
+	      <row rowsep="0">
+                <entry colname="1">
+                  <para>Resolver Statistics</para>
+                </entry>
+                <entry colname="2">
+                  <para>
+                    Statistics counters about name resolution
+                    performed in the internal resolver.
+		    Maintained per view.
+                  </para>
+                </entry>
+	      </row>
+
+	      <row rowsep="0">
+                <entry colname="1">
+                  <para>Cache DB RRsets</para>
+                </entry>
+                <entry colname="2">
+                  <para>
+                    The number of RRsets per RR type (positive
+                    or negative) and nonexistent names stored in the
+                    cache database.
+		    Maintained per view.
+                  </para>
+                </entry>
+	      </row>
+
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+
+	<para>
+	  A subset of Name Server Statistics is collected and shown
+	  per zone for which the server has the authority when
+	  <command>zone-statistics</command> is set to
+	  <userinput>yes</userinput>.
+	  These statistics counters are shown with their zone and view
+	  names.
+	  In some cases the view names are omitted for the default view.
+	</para>
+
+	<para>
+	  There are currently two user interfaces to get access to the
+	  statistics.
+	  One is in the plain text format dumped to the file specified
+	  by the <command>statistics-file</command> configuration option.
+	  The other is remotely accessible via a statistics channel
+	  when the <command>statistics-channels</command> statement
+	  is specified in the configuration file
+	  (see <xref linkend="statschannels"/>.)
+	</para>
+
+        <sect3 id="statsfile">
+          <title>The Statistics File</title>
+          <para>
+            The text format statistics dump begins with a line, like:
+	  </para>
+          <para>
+	    <command>+++ Statistics Dump +++ (973798949)</command>
+	  </para>
+	  <para>
+	    The number in parentheses is a standard
+            Unix-style timestamp, measured as seconds since January 1, 1970.
+
+            Following
+            that line is a set of statistics information, which is categorized
+            as described above.
+	    Each section begins with a line, like:
+	  </para>
+
+	  <para>
+	    <command>++ Name Server Statistics ++</command>
+	  </para>
+
+	  <para>
+	    Each section consists of lines, each containing the statistics
+	    counter value followed by its textual description.
+	    See below for available counters.
+	    For brevity, counters that have a value of 0 are not shown
+	    in the statistics file.
+	  </para>
+
+	  <para>
+	    The statistics dump ends with the line where the
+            number is identical to the number in the beginning line; for example:
+          </para>
+          <para>
+	    <command>--- Statistics Dump --- (973798949)</command>
+          </para>
+	</sect3>
+
+        <sect2>
+	  <title>Statistics Counters</title>
+	  <para>
+	    The following tables summarize statistics counters that
+	    <acronym>BIND</acronym> 9 provides.
+	    For each row of the tables, the leftmost column is the
+	    abbreviated symbol name of that counter.
+	    These symbols are shown in the statistics information
+	    accessed via an HTTP statistics channel.
+	    The rightmost column gives the description of the counter,
+	    which is also shown in the statistics file
+	    (but, in this document, possibly with slight modification
+	    for better readability).
+	    Additional notes may also be provided in this column.
+	    When a middle column exists between these two columns,
+	    it gives the corresponding counter name of the
+	    <acronym>BIND</acronym> 8 statistics, if applicable.
+	  </para>
+
+	  <sect3>
+            <title>Name Server Statistics Counters</title>
+
+            <informaltable colsep="0" rowsep="0">
+              <tgroup cols="3" colsep="0" rowsep="0" tgroupstyle="4Level-table">
+		<colspec colname="1" colnum="1" colsep="0" colwidth="1.150in"/>
+		<colspec colname="2" colnum="2" colsep="0" colwidth="1.150in"/>
+		<colspec colname="3" colnum="3" colsep="0" colwidth="3.350in"/>
+		<tbody>
+		  <row>
+		    <entry colname="1">
+                      <para>
+			<emphasis>Symbol</emphasis>
+                      </para>
+		    </entry>
+		    <entry colname="2">
+                      <para>
+			<emphasis>BIND8 Symbol</emphasis>
+                      </para>
+		    </entry>
+		    <entry colname="3">
+                      <para>
+			<emphasis>Description</emphasis>
+                      </para>
+		    </entry>
+		  </row>
+
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Requestv4</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			IPv4 requests received.
+			Note: this also counts non query requests.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Requestv6</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			IPv6 requests received.
+			Note: this also counts non query requests.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>ReqEdns0</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Requests with EDNS(0) received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>ReqBadEDNSVer</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Requests with unsupported EDNS version received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>ReqTSIG</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Requests with TSIG received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>ReqSIG0</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Requests with SIG(0) received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>ReqBadSIG</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Requests with invalid (TSIG or SIG(0)) signature.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>ReqTCP</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RTCP</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			TCP requests received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>AuthQryRej</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RUQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Authoritative (non recursive) queries rejected.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>RecQryRej</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RURQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Recursive queries rejected.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>XfrRej</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RUXFR</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Zone transfer requests rejected.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>UpdateRej</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RUUpd</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Dynamic update requests rejected.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Response</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>SAns</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Responses sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>RespTruncated</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Truncated responses sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>RespEDNS0</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Responses with EDNS(0) sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>RespTSIG</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Responses with TSIG sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>RespSIG0</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Responses with SIG(0) sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QrySuccess</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries resulted in a successful answer.
+			This means the query which returns a NOERROR response
+			with at least one answer RR.
+			This corresponds to the
+			<command>success</command> counter
+			of previous versions of
+			<acronym>BIND</acronym> 9.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QryAuthAns</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries resulted in authoritative answer.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QryNoauthAns</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>SNaAns</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries resulted in non authoritative answer.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QryReferral</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries resulted in referral answer.
+			This corresponds to the
+			<command>referral</command> counter
+			of previous versions of
+			<acronym>BIND</acronym> 9.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QryNxrrset</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries resulted in NOERROR responses with no data.
+			This corresponds to the
+			<command>nxrrset</command> counter
+			of previous versions of
+			<acronym>BIND</acronym> 9.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QrySERVFAIL</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>SFail</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries resulted in SERVFAIL.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QryFORMERR</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>SFErr</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries resulted in FORMERR.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QryNXDOMAIN</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>SNXD</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries resulted in NXDOMAIN.
+			This corresponds to the
+			<command>nxdomain</command> counter
+			of previous versions of
+			<acronym>BIND</acronym> 9.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QryRecursion</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RFwdQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries which caused the server
+			to perform recursion in order to find the final answer.
+			This corresponds to the
+			<command>recursion</command> counter
+			of previous versions of
+			<acronym>BIND</acronym> 9.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QryDuplicate</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RDupQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries which the server attempted to
+			recurse but discovered an existing query with the same
+			IP address, port, query ID, name, type and class
+			already being processed.
+			This corresponds to the
+			<command>duplicate</command> counter
+			of previous versions of
+			<acronym>BIND</acronym> 9.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QryDropped</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Queries for which the server
+			discovered an excessive number of existing
+			recursive queries for the same name, type and
+			class and were subsequently dropped.
+			This corresponds to the
+			<command>dropped</command> counter
+			of previous versions of
+			<acronym>BIND</acronym> 9.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>QryFailure</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Other query failures.
+			This corresponds to the
+			<command>failure</command> counter
+			of previous versions of
+			<acronym>BIND</acronym> 9.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>XfrReqDone</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Requested zone transfers completed.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>UpdateReqFwd</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Update requests forwarded.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>UpdateRespFwd</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Update responses forwarded.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>UpdateFwdFail</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Dynamic update forward failed.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>UpdateDone</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Dynamic updates completed.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>UpdateFail</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Dynamic updates failed.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>UpdateBadPrereq</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Dynamic updates rejected due to prerequisite failure.
+		      </para>
+		    </entry>
+		  </row>
+		</tbody>
+              </tgroup>
+            </informaltable>
+          </sect3>
+
+	  <sect3>
+            <title>Zone Maintenance Statistics Counters</title>
+
+            <informaltable colsep="0" rowsep="0">
+              <tgroup cols="2" colsep="0" rowsep="0" tgroupstyle="4Level-table">
+		<colspec colname="1" colnum="1" colsep="0" colwidth="1.150in"/>
+		<colspec colname="2" colnum="2" colsep="0" colwidth="3.350in"/>
+		<tbody>
+		  <row>
+		    <entry colname="1">
+                      <para>
+			<emphasis>Symbol</emphasis>
+                      </para>
+		    </entry>
+		    <entry colname="2">
+                      <para>
+			<emphasis>Description</emphasis>
+                      </para>
+		    </entry>
+		  </row>
+
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>NotifyOutv4</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			IPv4 notifies sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>NotifyOutv6</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			IPv6 notifies sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>NotifyInv4</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			IPv4 notifies received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>NotifyInv6</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			IPv6 notifies received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>NotifyRej</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			Incoming notifies rejected.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>SOAOutv4</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			IPv4 SOA queries sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>SOAOutv6</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			IPv6 SOA queries sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>AXFRReqv4</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			IPv4 AXFR requested.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>AXFRReqv6</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			IPv6 AXFR requested.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>IXFRReqv4</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			IPv4 IXFR requested.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>IXFRReqv6</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			IPv6 IXFR requested.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>XfrSuccess</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			Zone transfer requests succeeded.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>XfrFail</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para>
+			Zone transfer requests failed.
+		      </para>
+		    </entry>
+		  </row>
+		</tbody>
+              </tgroup>
+            </informaltable>
+	  </sect3>
+
+	  <sect3>
+            <title>Resolver Statistics Counters</title>
+
+            <informaltable colsep="0" rowsep="0">
+              <tgroup cols="3" colsep="0" rowsep="0" tgroupstyle="4Level-table">
+		<colspec colname="1" colnum="1" colsep="0" colwidth="1.150in"/>
+		<colspec colname="2" colnum="2" colsep="0" colwidth="1.150in"/>
+		<colspec colname="3" colnum="3" colsep="0" colwidth="3.350in"/>
+		<tbody>
+		  <row>
+		    <entry colname="1">
+                      <para>
+			<emphasis>Symbol</emphasis>
+                      </para>
+		    </entry>
+		    <entry colname="2">
+                      <para>
+			<emphasis>BIND8 Symbol</emphasis>
+                      </para>
+		    </entry>
+		    <entry colname="3">
+                      <para>
+			<emphasis>Description</emphasis>
+                      </para>
+		    </entry>
+		  </row>
+
+
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Queryv4</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>SFwdQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			IPv4 queries sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Queryv6</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>SFwdQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			IPv6 queries sent.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Responsev4</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RR</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			IPv4 responses received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Responsev6</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RR</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			IPv6 responses received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>NXDOMAIN</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RNXD</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			NXDOMAIN received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>SERVFAIL</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RFail</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			SERVFAIL received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>FORMERR</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RFErr</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			FORMERR received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>OtherError</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RErr</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Other errors received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>EDNS0Fail</command></para>
+						 </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			EDNS(0) query failures.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Mismatch</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RDupR</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Mismatch responses received.
+			When shown via an HTTP statistics channel,
+			this counter is shown in the
+			Name Server Statistics section for brevity.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Truncated</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Truncated responses received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Lame</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>RLame</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Lame delegations received.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>Retry</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>SDupQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			Query retries performed.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>GlueFetchv4</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>SSysQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			IPv4 NS address fetches invoked.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>GlueFetchv6</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command>SSysQ</command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			IPv6 NS address fetches invoked.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>GlueFetchv4Fail</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			IPv4 NS address fetch failed.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>GlueFetchv6Fail</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			IPv6 NS address fetch failed.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>ValAttempt</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			DNSSEC validation attempted.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>ValOk</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			DNSSEC validation succeeded.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>ValNegOk</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			DNSSEC validation on negative information succeeded.
+		      </para>
+		    </entry>
+		  </row>
+		  <row rowsep="0">
+		    <entry colname="1">
+		      <para><command>ValFail</command></para>
+		    </entry>
+		    <entry colname="2">
+		      <para><command></command></para>
+		    </entry>
+		    <entry colname="3">
+		      <para>
+			DNSSEC validation failed.
+		      </para>
+		    </entry>
+		  </row>
+
+		</tbody>
+              </tgroup>
+            </informaltable>
+
+	  </sect3>
+
+	  <sect3>
+            <title>Compatibility with <emphasis>BIND</emphasis> 8 Counters</title>
+	    <para>
+	      Most statistics counters that were available
+	      in <command>BIND</command> 8 are also supported in
+	      <command>BIND</command> 9 as shown in the above tables.
+	      Here are notes about other counters that do not appear
+	      in these tables.
+	    </para>
+
+            <variablelist>
+              <varlistentry>
+		<term><command>RFwdR,SFwdR</command></term>
+		<listitem>
+		  <para>
+		    These counters are not supported
+		    because <command>BIND</command> 9 does not adopt
+		    the notion of <emphasis>forwarding</emphasis>
+		    as <command>BIND</command> 8 did.
+		  </para>
+		</listitem>
+	      </varlistentry>
+
+              <varlistentry>
+		<term><command>RAXFR</command></term>
+		<listitem>
+		  <para>
+		    This counter is accessible in the Incoming Queries section.
+		  </para>
+		</listitem>
+	      </varlistentry>
+
+              <varlistentry>
+		<term><command>RIQ</command></term>
+		<listitem>
+		  <para>
+		    This counter is accessible in the Incoming Requests section.
+		  </para>
+		</listitem>
+	      </varlistentry>
+
+              <varlistentry>
+		<term><command>ROpts</command></term>
+		<listitem>
+		  <para>
+		    This counter is not supported
+		    because <command>BIND</command> 9 does not care
+		    about IP options in the first place.
+		  </para>
+		</listitem>
+	      </varlistentry>
+
+              <varlistentry>
+		<term><command>SErr</command></term>
+		<listitem>
+		  <para>
+		    This counter could be implemented, but is not yet
+		    supported.
+		  </para>
+		</listitem>
+	      </varlistentry>
+
+	    </variablelist>
+	  </sect3>
+        </sect2>
+      </sect1>
+
     </chapter>
     <chapter id="Bv9ARM.ch07">
       <title><acronym>BIND</acronym> 9 Security Considerations</title>
@@ -10559,7 +12069,8 @@ $GENERATE 1-127 $ CNAME $.0</programlisting>
         <para>
           Access Control Lists (ACLs), are address match lists that
           you can set up and nickname for future use in <command>allow-notify</command>,
-          <command>allow-query</command>, <command>allow-recursion</command>,
+          <command>allow-query</command>, <command>allow-query-on</command>,
+	  <command>allow-recursion</command>, <command>allow-recursion-on</command>,
           <command>blackhole</command>, <command>allow-transfer</command>,
           etc.
         </para>
@@ -10619,7 +12130,7 @@ zone "example.com" {
         </para>
       </sect1>
       <sect1>
-        <title><command>chroot</command> and <command>setuid</command></title>
+        <title><command>Chroot</command> and <command>Setuid</command></title>
         <para>
           On UNIX servers, it is possible to run <acronym>BIND</acronym> in a <emphasis>chrooted</emphasis> environment
           (using the <command>chroot()</command> function) by specifying the "<option>-t</option>"
@@ -10658,7 +12169,7 @@ zone "example.com" {
             for this.
           </para>
           <para>
-            Unlike with earlier versions of BIND, you will typically
+            Unlike with earlier versions of BIND, you typically will
             <emphasis>not</emphasis> need to compile <command>named</command>
             statically nor install shared libraries under the new root.
             However, depending on your operating system, you may need
@@ -10758,18 +12269,18 @@ zone "example.com" {
       <sect1>
         <title>Incrementing and Changing the Serial Number</title>
 
-        <para>
-          Zone serial numbers are just numbers-they aren't date
-          related.  A lot of people set them to a number that represents a
-          date, usually of the form YYYYMMDDRR. A number of people have been
-          testing these numbers for Y2K compliance and have set the number
-          to the year 2000 to see if it will work. They then try to restore
-          the old serial number. This will cause problems because serial
-          numbers are used to indicate that a zone has been updated. If the
-          serial number on the slave server is lower than the serial number
-          on the master, the slave server will attempt to update its copy of
-          the zone.
-        </para>
+	<para>
+	  Zone serial numbers are just numbers &mdash; they aren't
+	  date related.  A lot of people set them to a number that
+	  represents a date, usually of the form YYYYMMDDRR.
+	  Occasionally they will make a mistake and set them to a
+	  "date in the future" then try to correct them by setting
+	  them to the "current date".  This causes problems because
+	  serial numbers are used to indicate that a zone has been
+	  updated.  If the serial number on the slave server is
+	  lower than the serial number on the master, the slave
+	  server will attempt to update its copy of the zone.
+	</para>
 
         <para>
           Setting the serial number to a lower number on the master
@@ -10866,7 +12377,7 @@ zone "example.com" {
             during that time: Doug Kingston, Craig Partridge, Smoot
             Carl-Mitchell,
             Mike Muuss, Jim Bloom and Mike Schwartz. <acronym>BIND</acronym> maintenance was subsequently
-            handled by Mike Karels and O. Kure.
+            handled by Mike Karels and &#216;ivind Kure.
           </para>
           <para>
             <acronym>BIND</acronym> versions 4.9 and 4.9.1 were
@@ -10881,7 +12392,7 @@ zone "example.com" {
             Wolfhugel, and others.
           </para>
           <para>
-            <acronym>BIND</acronym> version 4.9.2 was sponsored by
+            In 1994, <acronym>BIND</acronym> version 4.9.2 was sponsored by
             Vixie Enterprises. Paul
             Vixie became <acronym>BIND</acronym>'s principal
             architect/programmer.
@@ -10891,9 +12402,24 @@ zone "example.com" {
             have been developed and maintained
             by the Internet Systems Consortium and its predecessor,
             the Internet Software Consortium,  with support being provided
-            by ISC's sponsors. As co-architects/programmers, Bob Halley and
+            by ISC's sponsors.
+          </para>
+	  <para>
+	    As co-architects/programmers, Bob Halley and
             Paul Vixie released the first production-ready version of
 	    <acronym>BIND</acronym> version 8 in May 1997.
+          </para>
+	  <para>
+	    BIND version 9 was released in September 2000 and is a
+	    major rewrite of nearly all aspects of the underlying
+	    BIND architecture.
+          </para>
+          <para>
+	    BIND version 4 is officially deprecated and BIND version
+	    8 development is considered maintenance-only in favor
+	    of BIND version 9. No additional development is done
+	    on BIND version 4 or BIND version 8 other than for
+	    security-related patches.
           </para>
           <para>
             <acronym>BIND</acronym> development work is made
@@ -10915,7 +12441,8 @@ zone "example.com" {
             <emphasis>Anycast</emphasis>,
             an identifier for a set of interfaces; and <emphasis>Multicast</emphasis>,
             an identifier for a set of interfaces. Here we describe the global
-            Unicast address scheme. For more information, see RFC 3587.
+            Unicast address scheme. For more information, see RFC 3587,
+	    "Global Unicast Address Format."
           </para>
           <para>
 	    IPv6 unicast addresses consist of a
@@ -11965,15 +13492,6 @@ zone "example.com" {
                 </authorgroup>
                 <title>DNS IPv6 Transport Operational Guidelines</title>
                 <pubdate>September 2004</pubdate>
-              </biblioentry>
-              <biblioentry>
-                <abbrev>RFC2352</abbrev>
-                <author>
-                  <surname>Vaughan</surname>
-                  <firstname>O.</firstname>
-                </author>
-                <title>A Convention For Using Legal Names as Domain Names</title>
-                <pubdate>May 1998</pubdate>
               </biblioentry>
             </bibliodiv>
             <bibliodiv>

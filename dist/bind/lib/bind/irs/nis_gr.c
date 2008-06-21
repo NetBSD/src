@@ -1,4 +1,4 @@
-/*	$NetBSD: nis_gr.c,v 1.1.1.4 2007/01/27 21:08:59 christos Exp $	*/
+/*	$NetBSD: nis_gr.c,v 1.1.1.5 2008/06/21 18:33:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -51,7 +51,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: nis_gr.c,v 1.3.18.1 2005/04/27 05:01:03 sra Exp";
+static const char rcsid[] = "Id: nis_gr.c,v 1.4 2005/04/27 04:56:32 sra Exp";
 /* from getgrent.c 8.2 (Berkeley) 3/21/94"; */
 /* from BSDI Id: getgrent.c,v 2.8 1996/05/28 18:15:14 bostic Exp $	*/
 #endif /* LIBC_SCCS and not lint */

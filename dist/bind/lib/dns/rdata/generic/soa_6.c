@@ -1,10 +1,10 @@
-/*	$NetBSD: soa_6.c,v 1.1.1.4 2007/01/27 21:07:27 christos Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.1.1.5 2008/06/21 18:32:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: soa_6.c,v 1.59 2004/03/05 05:10:18 marka Exp */
+/* Id: soa_6.c,v 1.61 2007/06/19 23:47:17 tbox Exp */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 

@@ -1,11 +1,24 @@
-/*	$NetBSD: openssl_link.c,v 1.1.1.2 2007/01/27 21:06:44 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.1.1.3 2008/06/21 18:32:04 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -20,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssl_link.c,v 1.1.6.9 2006/05/23 23:51:04 marka Exp
+ * Id: openssl_link.c,v 1.16 2007/08/28 07:20:42 tbox Exp
  */
 #ifdef OPENSSL
 
@@ -52,13 +65,13 @@
 #endif
 
 static RAND_METHOD *rm = NULL;
+
 static isc_mutex_t *locks = NULL;
 static int nlocks;
 
 #ifdef USE_ENGINE
 static ENGINE *e;
 #endif
-
 
 static int
 entropy_get(unsigned char *buf, int num) {
@@ -67,6 +80,11 @@ entropy_get(unsigned char *buf, int num) {
 		return (-1);
 	result = dst__entropy_getdata(buf, (unsigned int) num, ISC_FALSE);
 	return (result == ISC_R_SUCCESS ? num : -1);
+}
+
+static int
+entropy_status(void) {
+	return (dst__entropy_status() > 32);
 }
 
 static int
@@ -151,6 +169,7 @@ dst__openssl_init() {
 		goto cleanup_mutexalloc;
 	CRYPTO_set_locking_callback(lock_callback);
 	CRYPTO_set_id_callback(id_callback);
+
 	rm = mem_alloc(sizeof(RAND_METHOD));
 	if (rm == NULL) {
 		result = ISC_R_NOMEMORY;
@@ -161,7 +180,7 @@ dst__openssl_init() {
 	rm->cleanup = NULL;
 	rm->add = entropy_add;
 	rm->pseudorand = entropy_getpseudo;
-	rm->status = NULL;
+	rm->status = entropy_status;
 #ifdef USE_ENGINE
 	e = ENGINE_new();
 	if (e == NULL) {
@@ -172,7 +191,7 @@ dst__openssl_init() {
 	RAND_set_rand_method(rm);
 #else
 	RAND_set_rand_method(rm);
-#endif
+#endif /* USE_ENGINE */
 	return (ISC_R_SUCCESS);
 
 #ifdef USE_ENGINE
@@ -180,6 +199,7 @@ dst__openssl_init() {
 	mem_free(rm);
 #endif
  cleanup_mutexinit:
+	CRYPTO_set_locking_callback(NULL);
 	DESTROYMUTEXBLOCK(locks, nlocks);
  cleanup_mutexalloc:
 	mem_free(locks);
@@ -223,15 +243,16 @@ dst__openssl_destroy() {
 	}
 #endif
 #endif
-	if (locks != NULL) {
-		DESTROYMUTEXBLOCK(locks, nlocks);
-		mem_free(locks);
-	}
 	if (rm != NULL) {
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 		RAND_cleanup();
 #endif
 		mem_free(rm);
+	}
+	if (locks != NULL) {
+		CRYPTO_set_locking_callback(NULL);
+		DESTROYMUTEXBLOCK(locks, nlocks);
+		mem_free(locks);
 	}
 }
 

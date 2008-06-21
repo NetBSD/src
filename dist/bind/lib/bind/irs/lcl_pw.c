@@ -1,4 +1,4 @@
-/*	$NetBSD: lcl_pw.c,v 1.1.1.4 2007/01/27 21:08:58 christos Exp $	*/
+/*	$NetBSD: lcl_pw.c,v 1.1.1.5 2008/06/21 18:33:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -51,7 +51,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: lcl_pw.c,v 1.2.18.1 2005/04/27 05:01:03 sra Exp";
+static const char rcsid[] = "Id: lcl_pw.c,v 1.3 2005/04/27 04:56:31 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Extern */

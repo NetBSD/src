@@ -1,10 +1,10 @@
-/*	$NetBSD: config.h,v 1.1.1.4 2007/01/27 21:03:43 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.1.1.5 2008/06/21 18:35:23 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h,v 1.6.18.6 2006/02/28 03:10:47 marka Exp */
+/* Id: config.h,v 1.14 2007/06/19 23:46:59 tbox Exp */
 
 #ifndef NAMED_CONFIG_H
 #define NAMED_CONFIG_H 1

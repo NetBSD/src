@@ -1,10 +1,10 @@
-/*	$NetBSD: os.c,v 1.1.1.5 2007/01/27 21:03:41 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.6 2008/06/21 18:35:21 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.66.18.11 2006/02/03 23:51:38 marka Exp */
+/* Id: os.c,v 1.79.128.5 2008/05/06 01:32:51 each Exp */
 
 /*! \file */
 
@@ -71,7 +71,7 @@ static int devnullfd = -1;
 /*
  * Linux defines:
  *	(T) HAVE_LINUXTHREADS
- *	(C) HAVE_LINUX_CAPABILITY_H
+ *	(C) HAVE_SYS_CAPABILITY_H (or HAVE_LINUX_CAPABILITY_H)
  *	(P) HAVE_SYS_PRCTL_H
  * The possible cases are:
  *	none:	setuid() normally
@@ -118,6 +118,9 @@ static int dfd[2] = { -1, -1 };
 static isc_boolean_t non_root = ISC_FALSE;
 static isc_boolean_t non_root_caps = ISC_FALSE;
 
+#ifdef HAVE_SYS_CAPABILITY_H
+#include <sys/capability.h>
+#else
 /*%
  * We define _LINUX_FS_H to prevent it from being included.  We don't need
  * anything from it, and the files it includes cause warnings with 2.2
@@ -125,9 +128,15 @@ static isc_boolean_t non_root_caps = ISC_FALSE;
  * and <string.h>) on 2.3 kernels.
  */
 #define _LINUX_FS_H
-
-#include <sys/syscall.h>	/* Required for syscall(). */
-#include <linux/capability.h>	/* Required for _LINUX_CAPABILITY_VERSION. */
+#include <linux/capability.h>
+#include <syscall.h>
+#ifndef SYS_capset
+#ifndef __NR_capset
+#include <asm/unistd.h> /* Slackware 4.0 needs this. */
+#endif /* __NR_capset */
+#define SYS_capset __NR_capset
+#endif /* SYS_capset */
+#endif /* HAVE_SYS_CAPABILITY_H */
 
 #ifdef HAVE_SYS_PRCTL_H
 #include <sys/prctl.h>		/* Required for prctl(). */
@@ -144,22 +153,24 @@ static isc_boolean_t non_root_caps = ISC_FALSE;
 
 #endif /* HAVE_SYS_PRCTL_H */
 
-#ifndef SYS_capset
-#ifndef __NR_capset
-#include <asm/unistd.h> /* Slackware 4.0 needs this. */
-#endif
-#define SYS_capset __NR_capset
-#endif
+#ifdef HAVE_LIBCAP
+#define SETCAPS_FUNC "cap_set_proc "
+#else
+typedef unsigned int cap_t;
+#define SETCAPS_FUNC "syscall(capset) "
+#endif /* HAVE_LIBCAP */
 
 static void
-linux_setcaps(unsigned int caps) {
+linux_setcaps(cap_t caps) {
+#ifndef HAVE_LIBCAP
 	struct __user_cap_header_struct caphead;
 	struct __user_cap_data_struct cap;
+#endif
 	char strbuf[ISC_STRERRORSIZE];
 
 	if ((getuid() != 0 && !non_root_caps) || non_root)
 		return;
-
+#ifndef HAVE_LIBCAP
 	memset(&caphead, 0, sizeof(caphead));
 	caphead.version = _LINUX_CAPABILITY_VERSION;
 	caphead.pid = 0;
@@ -167,36 +178,74 @@ linux_setcaps(unsigned int caps) {
 	cap.effective = caps;
 	cap.permitted = caps;
 	cap.inheritable = 0;
+#endif
+#ifdef HAVE_LIBCAP
+	if (cap_set_proc(caps) < 0) {
+#else
 	if (syscall(SYS_capset, &caphead, &cap) < 0) {
+#endif
 		isc__strerror(errno, strbuf, sizeof(strbuf));
-		ns_main_earlyfatal("capset failed: %s:"
+		ns_main_earlyfatal(SETCAPS_FUNC "failed: %s:"
 				   " please ensure that the capset kernel"
 				   " module is loaded.  see insmod(8)",
 				   strbuf);
 	}
 }
 
+#ifdef HAVE_LIBCAP
+#define SET_CAP(flag) \
+	do { \
+		capval = (flag); \
+		err = cap_set_flag(caps, CAP_EFFECTIVE, 1, &capval, CAP_SET); \
+		if (err == -1) { \
+			isc__strerror(errno, strbuf, sizeof(strbuf)); \
+			ns_main_earlyfatal("cap_set_proc failed: %s", strbuf); \
+		} \
+		\
+		err = cap_set_flag(caps, CAP_PERMITTED, 1, &capval, CAP_SET); \
+		if (err == -1) { \
+			isc__strerror(errno, strbuf, sizeof(strbuf)); \
+			ns_main_earlyfatal("cap_set_proc failed: %s", strbuf); \
+		} \
+	} while (0)
+#define INIT_CAP \
+	do { \
+		caps = cap_init(); \
+		if (caps == NULL) { \
+			isc__strerror(errno, strbuf, sizeof(strbuf)); \
+			ns_main_earlyfatal("cap_init failed: %s", strbuf); \
+		} \
+	} while (0)
+#else
+#define SET_CAP(flag) { caps |= (1 << (flag)); }
+#define INIT_CAP { caps = 0; }
+#endif /* HAVE_LIBCAP */
+
 static void
 linux_initialprivs(void) {
-	unsigned int caps;
+	cap_t caps;
+#ifdef HAVE_LIBCAP
+	cap_value_t capval;
+	char strbuf[ISC_STRERRORSIZE];
+	int err;
+#endif
 
 	/*%
 	 * We don't need most privileges, so we drop them right away.
 	 * Later on linux_minprivs() will be called, which will drop our
 	 * capabilities to the minimum needed to run the server.
 	 */
-
-	caps = 0;
+	INIT_CAP;
 
 	/*
 	 * We need to be able to bind() to privileged ports, notably port 53!
 	 */
-	caps |= (1 << CAP_NET_BIND_SERVICE);
+	SET_CAP(CAP_NET_BIND_SERVICE);
 
 	/*
 	 * We need chroot() initially too.
 	 */
-	caps |= (1 << CAP_SYS_CHROOT);
+	SET_CAP(CAP_SYS_CHROOT);
 
 #if defined(HAVE_SYS_PRCTL_H) || !defined(HAVE_LINUXTHREADS)
 	/*
@@ -205,19 +254,19 @@ linux_initialprivs(void) {
 	 * tried) or we're not using threads.  If either of these is
 	 * true, we want the setuid capability.
 	 */
-	caps |= (1 << CAP_SETUID);
+	SET_CAP(CAP_SETUID);
 #endif
 
 	/*
 	 * Since we call initgroups, we need this.
 	 */
-	caps |= (1 << CAP_SETGID);
+	SET_CAP(CAP_SETGID);
 
 	/*
 	 * Without this, we run into problems reading a configuration file
 	 * owned by a non-root user and non-world-readable on startup.
 	 */
-	caps |= (1 << CAP_DAC_READ_SEARCH);
+	SET_CAP(CAP_DAC_READ_SEARCH);
 
 	/*
 	 * XXX  We might want to add CAP_SYS_RESOURCE, though it's not
@@ -226,15 +275,21 @@ linux_initialprivs(void) {
 	 * of files, the stack size, data size, and core dump size to
 	 * support named.conf options, this is now being added to test.
 	 */
-	caps |= (1 << CAP_SYS_RESOURCE);
+	SET_CAP(CAP_SYS_RESOURCE);
 
 	linux_setcaps(caps);
 }
 
 static void
 linux_minprivs(void) {
-	unsigned int caps;
+	cap_t caps;
+#ifdef HAVE_LIBCAP
+	cap_value_t capval;
+	char strbuf[ISC_STRERRORSIZE];
+	int err;
+#endif
 
+	INIT_CAP;
 	/*%
 	 * Drop all privileges except the ability to bind() to privileged
 	 * ports.
@@ -243,8 +298,7 @@ linux_minprivs(void) {
 	 * chroot() could be used to escape from the chrooted area.
 	 */
 
-	caps = 0;
-	caps |= (1 << CAP_NET_BIND_SERVICE);
+	SET_CAP(CAP_NET_BIND_SERVICE);
 
 	/*
 	 * XXX  We might want to add CAP_SYS_RESOURCE, though it's not
@@ -253,7 +307,7 @@ linux_minprivs(void) {
 	 * of files, the stack size, data size, and core dump size to
 	 * support named.conf options, this is now being added to test.
 	 */
-	caps |= (1 << CAP_SYS_RESOURCE);
+	SET_CAP(CAP_SYS_RESOURCE);
 
 	linux_setcaps(caps);
 }
@@ -328,7 +382,7 @@ ns_os_daemonize(void) {
 		/*
 		 * Wait for the child to finish loading for the first time.
 		 * This would be so much simpler if fork() worked once we
-	         * were multi-threaded.
+		 * were multi-threaded.
 		 */
 		(void)close(dfd[1]);
 		do {
@@ -498,15 +552,19 @@ ns_os_changeuser(void) {
 		ns_main_earlyfatal("setuid(): %s", strbuf);
 	}
 
-#if defined(HAVE_LINUX_CAPABILITY_H) && !defined(HAVE_LINUXTHREADS)
-	linux_minprivs();
-#endif
 #if defined(HAVE_SYS_PRCTL_H) && defined(PR_SET_DUMPABLE)
 	/*
 	 * Restore the ability of named to drop core after the setuid()
 	 * call has disabled it.
 	 */
-	prctl(PR_SET_DUMPABLE,1,0,0,0);
+	if (prctl(PR_SET_DUMPABLE,1,0,0,0) < 0) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		ns_main_earlywarning("prctl(PR_SET_DUMPABLE) failed: %s",
+				     strbuf);
+	}
+#endif
+#if defined(HAVE_LINUX_CAPABILITY_H) && !defined(HAVE_LINUXTHREADS)
+	linux_minprivs();
 #endif
 }
 
@@ -667,7 +725,7 @@ ns_os_shutdownmsg(char *command, isc_buffer_t *text) {
 	ptr = next_token(&input, " \t");
 	if (ptr == NULL)
 		return;
-	
+
 	if (strcmp(ptr, "-p") != 0)
 		return;
 

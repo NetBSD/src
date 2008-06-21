@@ -1,10 +1,10 @@
-/*	$NetBSD: zt.c,v 1.1.1.4 2007/01/27 21:07:20 christos Exp $	*/
+/*	$NetBSD: zt.c,v 1.1.1.5 2008/06/21 18:32:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zt.c,v 1.38.18.5 2005/11/30 03:44:39 marka Exp */
+/* Id: zt.c,v 1.47 2007/06/19 23:47:16 tbox Exp */
 
 /*! \file */
 
@@ -65,7 +65,8 @@ static isc_result_t
 freezezones(dns_zone_t *zone, void *uap);
 
 isc_result_t
-dns_zt_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, dns_zt_t **ztp) {
+dns_zt_create(isc_mem_t *mctx, dns_rdataclass_t rdclass, dns_zt_t **ztp)
+{
 	dns_zt_t *zt;
 	isc_result_t result;
 

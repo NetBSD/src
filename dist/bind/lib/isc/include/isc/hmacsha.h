@@ -1,9 +1,9 @@
-/*	$NetBSD: hmacsha.h,v 1.1.1.1 2007/01/27 21:07:53 christos Exp $	*/
+/*	$NetBSD: hmacsha.h,v 1.1.1.2 2008/06/21 18:31:18 christos Exp $	*/
 
 /*
- * Copyright (C) 2005, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,9 +16,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hmacsha.h,v 1.2.2.3 2006/08/16 03:18:14 marka Exp */
+/* Id: hmacsha.h,v 1.7 2007/06/19 23:47:18 tbox Exp */
 
-/*
+/*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,
  * HMAC-SHA334 and HMAC-SHA512 hash algorithm described in RFC 2104.
  */
