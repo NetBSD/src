@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.34 2008/06/21 20:12:49 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.35 2008/06/21 20:24:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -298,15 +298,20 @@ __END_DECLS
 #define hostalias		__hostalias
 #define p_query			__p_query
 #define res_close		__res_close
-#define	res_init		__res_init
 #define res_isourserver		__res_isourserver
-#define	res_mkquery		__res_mkquery
 #define	res_opt			__res_opt
-#define	res_query		__res_query
 #define	res_querydomain		__res_querydomain
-#define	res_search		__res_search
 #define res_send		__res_send
 #define res_sendsigned		__res_sendsigned
+
+#ifdef notdef
+/* NetBSD protects these via weak symbols. */
+#define	res_init		__res_init
+#define	res_query		__res_query
+#define	res_mkquery		__res_mkquery
+#define	dn_expand		__dn_expand
+#define	res_search		__res_search
+#endif
 
 __BEGIN_DECLS
 void		fp_nquery(const u_char *, int, FILE *);
@@ -348,7 +353,6 @@ extern const struct res_sym __p_rcode_syms[];
 #define b64_pton		__b64_pton
 #define dn_comp			__dn_comp
 #define dn_count_labels		__dn_count_labels
-#define	dn_expand		__dn_expand
 #define dn_skipname		__dn_skipname
 #define fp_resstat		__fp_resstat
 #define loc_aton		__loc_aton
