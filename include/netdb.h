@@ -1,6 +1,8 @@
-/*	$NetBSD: netdb.h,v 1.59 2007/05/10 17:45:50 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.60 2008/06/21 20:12:49 christos Exp $	*/
 
 /*
+ * ++Copyright++ 1980, 1983, 1988, 1993
+ * -
  * Copyright (c) 1980, 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -82,7 +84,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	Id: netdb.h,v 1.15.18.6 2006/10/02 01:23:09 marka Exp
+ *	Id: netdb.h,v 1.21.288.1 2008/02/28 05:46:12 marka Exp
  */
 
 #ifndef _NETDB_H_
@@ -130,6 +132,10 @@ typedef _BSD_SIZE_T_	size_t;
 
 __BEGIN_DECLS
 extern int h_errno;
+extern int * __h_errno __P((void));
+#ifdef _REENTRANT
+#define	h_errno (*__h_errno())
+#endif
 __END_DECLS
 
 /*%
@@ -281,6 +287,7 @@ struct addrinfo {
 #define	NI_NAMEREQD	0x00000004
 #define	NI_NUMERICSERV	0x00000008
 #define	NI_DGRAM	0x00000010
+#define	NI_WITHSCOPEID	0x00000020
 #define	NI_NUMERICSCOPE	0x00000040
 
 /*%
