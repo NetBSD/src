@@ -1,6 +1,10 @@
-/*	$NetBSD: atomic.h,v 1.5 2008/06/21 22:53:06 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.6 2008/06/21 23:57:25 matt Exp $	*/
+
+#ifndef ISC_ATOMIC_H
+#define ISC_ATOMIC_H 1
 
 #include <sys/atomic.h>
+#include <isc/types.h>
 
 /*
  * This routine atomically increments the value stored in 'p' by 'val', and
@@ -39,3 +43,4 @@ isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 	    (uint32_t)cmpval, (uint32_t)val);
 }
 
+#endif /* ISC_ATOMIC_H */
