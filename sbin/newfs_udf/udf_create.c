@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.7 2008/06/20 22:41:42 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.8 2008/06/21 13:12:33 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.7 2008/06/20 22:41:42 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.8 2008/06/21 13:12:33 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1351,6 +1351,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	ft_extattr->hdr.subtype = 1;	/* [4/48.10.5] */
 	ft_extattr->hdr.a_l = UDF_FILETIMES_ATTR_LEN(1);
 	ft_extattr->existence = UDF_FILETIMES_FILE_CREATION;
+	ft_extattr->times[0]  = birthtime;
 
 	udf_append_internal_extattr((union dscrptr *) fe,
 		(struct extattr_entry *) ft_extattr);
