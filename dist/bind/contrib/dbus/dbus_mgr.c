@@ -1,4 +1,4 @@
-/*	$NetBSD: dbus_mgr.c,v 1.1.1.1 2007/01/27 21:06:15 christos Exp $	*/
+/*	$NetBSD: dbus_mgr.c,v 1.1.1.2 2008/06/21 18:29:15 christos Exp $	*/
 
 /* dbus_mgr.c
  *
@@ -6,6 +6,7 @@
  *  response to D-BUS dhcp events or commands.
  *
  *  Copyright(C) Jason Vas Dias, Red Hat Inc., 2005
+ *  Modified by Adam Tkac, Red Hat Inc., 2007
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -168,6 +169,9 @@ dbus_mgr_init_dbus(ns_dbus_mgr_t *);
 static isc_result_t
 dbus_mgr_record_initial_fwdtable(ns_dbus_mgr_t *);
 
+static
+dns_fwdtable_t *dbus_mgr_get_fwdtable(void);
+
 static void
 dbus_mgr_free_initial_fwdtable(ns_dbus_mgr_t *);
 
@@ -273,6 +277,8 @@ dbus_mgr_create
     return ISC_R_SUCCESS;
 
  cleanup_mgr:
+    if ( dbus_mgr_get_fwdtable() != NULL)
+	dbus_mgr_free_initial_fwdtable (mgr);
     if( mgr->task != 0L )
 	isc_task_detach(&(mgr->task));
     isc_mem_put(mctx, mgr, sizeof(*mgr));
@@ -283,6 +289,7 @@ static isc_result_t
 dbus_mgr_init_dbus(ns_dbus_mgr_t * mgr)
 {
     char destination[]=DBUSMGR_DESTINATION;
+    isc_result_t result;
 
     if( mgr->sockets != 0L )
     {
@@ -298,14 +305,11 @@ dbus_mgr_init_dbus(ns_dbus_mgr_t * mgr)
 	mgr->dbus = 0L;
     }
 
-    mgr->dbus = 
-	dbus_svc_init
-	(   DBUS_PRIVATE_SYSTEM,
-	    destination,
-	    dbus_mgr_watch_handler,
-	    0L, 0L,
-	    mgr
-	);
+    result = dbus_svc_init(DBUS_PRIVATE_SYSTEM, destination, &mgr->dbus,
+					dbus_mgr_watch_handler, 0L, 0L, mgr);
+
+    if(result != ISC_R_SUCCESS)
+	goto cleanup;
 
     if( mgr->dbus == 0L )
     {
@@ -626,7 +630,7 @@ static void dbus_mgr_record_initial_forwarder( dns_name_t *name, dns_forwarders_
 
     dns_name_init(&(ifwdr->dn), NULL);
     if( dns_name_dupwithoffsets(name, mgr->mctx, &(ifwdr->dn)) != ISC_R_SUCCESS )
-	return;
+	goto namedup_err;
 
     ISC_LIST_INIT(ifwdr->sa);
     
@@ -637,14 +641,27 @@ static void dbus_mgr_record_initial_forwarder( dns_name_t *name, dns_forwarders_
     {
 	nsa = isc_mem_get(mgr->mctx, sizeof(isc_sockaddr_t));
 	if( nsa == 0L ) 
-	    return;
+	    goto nsa_err;
 	*nsa = *sa;
 	ISC_LINK_INIT(nsa, link);
 	ISC_LIST_APPEND(ifwdr->sa, nsa, link);
     }
     ISC_LINK_INIT(ifwdr, link);
     tsearch( ifwdr, &(mgr->ifwdt), dbus_mgr_ifwdr_comparator);
-} 
+
+    return;
+
+nsa_err:
+    while ( (sa = ISC_LIST_HEAD (ifwdr->sa)) != NULL) {
+	ISC_LIST_UNLINK (ifwdr->sa, sa, link);
+	isc_mem_put (mgr->mctx, sa, sizeof (*sa));
+    }
+
+namedup_err:
+    isc_mem_put (mgr->mctx, ifwdr, sizeof (*ifwdr));
+
+    return;
+}
 
 static isc_result_t
 dbus_mgr_record_initial_fwdtable( ns_dbus_mgr_t *mgr )

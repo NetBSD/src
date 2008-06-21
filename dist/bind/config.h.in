@@ -1,9 +1,9 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.60.18.24 2007/02/12 00:54:52 marka Exp */
+/* Id: config.h.in,v 1.90.60.8 2008/05/06 01:32:51 each Exp */
 
 /*! \file */
 
@@ -157,17 +157,29 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if you cannot bind() before connect() for TCP sockets. */
 #undef BROKEN_TCP_BIND_BEFORE_CONNECT
 
+/* Define to enable "rrset-order fixed" syntax. */
+#undef DNS_RDATASET_FIXED
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+/* Define to 1 if you have the <gssapi/gssapi.h> header file. */
+#undef HAVE_GSSAPI_GSSAPI_H
+
+/* Define to 1 if you have the <gssapi.h> header file. */
+#undef HAVE_GSSAPI_H
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
 /* Define to 1 if you have the `c' library (-lc). */
 #undef HAVE_LIBC
+
+/* Define to 1 if you have the `cap' library (-lcap). */
+#undef HAVE_LIBCAP
 
 /* Define to 1 if you have the `c_r' library (-lc_r). */
 #undef HAVE_LIBC_R
@@ -186,6 +198,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `thr' library (-lthr). */
 #undef HAVE_LIBTHR
+
+/* Define if libxml2 was found */
+#undef HAVE_LIBXML2
 
 /* Define to 1 if you have the <linux/capability.h> header file. */
 #undef HAVE_LINUX_CAPABILITY_H
@@ -213,6 +228,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/capability.h> header file. */
+#undef HAVE_SYS_CAPABILITY_H
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
@@ -299,7 +317,7 @@ int sigwait(const unsigned int *set, int *sig);
 #undef inline
 #endif
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define to `int' if <sys/types.h> does not define. */
@@ -307,3 +325,7 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to `unsigned long' if <sys/types.h> does not define. */
 #undef uintptr_t
+
+/* Define to empty if the keyword `volatile' does not work. Warning: valid
+   code using `volatile' can become incorrect without. Disable with care. */
+#undef volatile

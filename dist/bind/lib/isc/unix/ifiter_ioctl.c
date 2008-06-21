@@ -1,10 +1,10 @@
-/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.5 2007/01/27 21:07:59 christos Exp $	*/
+/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.6 2008/06/21 18:31:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ifiter_ioctl.c,v 1.44.18.11 2006/02/03 23:51:38 marka Exp */
+/* Id: ifiter_ioctl.c,v 1.58 2007/08/30 06:02:28 marka Exp */
 
 /*! \file
  * \brief
@@ -907,7 +907,8 @@ internal_next4(isc_interfaceiter_t *iter) {
 	struct ifreq *ifrp;
 #endif
 
-	REQUIRE (iter->pos < (unsigned int) iter->ifc.ifc_len);
+	REQUIRE(iter->ifc.ifc_len == 0 ||
+	        iter->pos < (unsigned int) iter->ifc.ifc_len);
 
 #ifdef __linux
 	if (linux_if_inet6_next(iter) == ISC_R_SUCCESS)
@@ -915,6 +916,10 @@ internal_next4(isc_interfaceiter_t *iter) {
 	if (!iter->first)
 		return (ISC_R_SUCCESS);
 #endif
+
+	if (iter->ifc.ifc_len == 0)
+		return (ISC_R_NOMORE);
+
 #ifdef ISC_PLATFORM_HAVESALEN
 	ifrp = (struct ifreq *)((char *) iter->ifc.ifc_req + iter->pos);
 

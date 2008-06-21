@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# Copyright (C) 2005, 2006  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -14,10 +14,11 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.2.2.2 2006/01/27 23:57:44 marka Exp
+# Id: clean.sh,v 1.6 2007/09/26 03:22:44 marka Exp
 
 #
 # Clean up after tsig tests.
 #
 
 rm -f dig.out.*
+rm -f */named.memstats

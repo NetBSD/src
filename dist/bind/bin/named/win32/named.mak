@@ -148,6 +148,7 @@ CLEAN :
 	-@erase "$(INTDIR)\query.obj"
 	-@erase "$(INTDIR)\server.obj"
 	-@erase "$(INTDIR)\sortlist.obj"
+	-@erase "$(INTDIR)\statschannel.obj"
 	-@erase "$(INTDIR)\tkeyconf.obj"
 	-@erase "$(INTDIR)\tsigconf.obj"
 	-@erase "$(INTDIR)\update.obj"
@@ -192,6 +193,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\query.obj" \
 	"$(INTDIR)\server.obj" \
 	"$(INTDIR)\sortlist.obj" \
+	"$(INTDIR)\statschannel.obj" \
 	"$(INTDIR)\tkeyconf.obj" \
 	"$(INTDIR)\tsigconf.obj" \
 	"$(INTDIR)\update.obj" \
@@ -284,6 +286,8 @@ CLEAN :
 	-@erase "$(INTDIR)\server.sbr"
 	-@erase "$(INTDIR)\sortlist.obj"
 	-@erase "$(INTDIR)\sortlist.sbr"
+	-@erase "$(INTDIR)\statschannel.obj"
+	-@erase "$(INTDIR)\statschannel.sbr"
 	-@erase "$(INTDIR)\tkeyconf.obj"
 	-@erase "$(INTDIR)\tkeyconf.sbr"
 	-@erase "$(INTDIR)\tsigconf.obj"
@@ -334,6 +338,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\query.sbr" \
 	"$(INTDIR)\server.sbr" \
 	"$(INTDIR)\sortlist.sbr" \
+	"$(INTDIR)\statschannel.sbr" \
 	"$(INTDIR)\tkeyconf.sbr" \
 	"$(INTDIR)\tsigconf.sbr" \
 	"$(INTDIR)\update.sbr" \
@@ -373,6 +378,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\query.obj" \
 	"$(INTDIR)\server.obj" \
 	"$(INTDIR)\sortlist.obj" \
+	"$(INTDIR)\statschannel.obj" \
 	"$(INTDIR)\tkeyconf.obj" \
 	"$(INTDIR)\tsigconf.obj" \
 	"$(INTDIR)\update.obj" \
@@ -876,6 +882,24 @@ SOURCE=..\sortlist.c
 
 
 "$(INTDIR)\sortlist.obj"	"$(INTDIR)\sortlist.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\statschannel.c
+
+!IF  "$(CFG)" == "named - Win32 Release"
+
+
+"$(INTDIR)\statschannel.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "named - Win32 Debug"
+
+
+"$(INTDIR)\statschannel.obj"	"$(INTDIR)\statschannel.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

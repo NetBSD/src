@@ -1,11 +1,11 @@
-/*	$NetBSD: tree.h,v 1.1.1.2 2007/01/27 21:09:09 christos Exp $	*/
+/*	$NetBSD: tree.h,v 1.1.1.3 2008/06/21 18:33:26 christos Exp $	*/
 
 /* tree.h - declare structures used by tree library
  *
  * vix 22jan93 [revisited; uses RCS, ANSI, POSIX; has bug fixes]
  * vix 27jun86 [broken out of tree.c]
  *
- * Id: tree.h,v 1.2.164.1 2005/04/27 05:00:52 sra Exp
+ * Id: tree.h,v 1.3 2005/04/27 04:56:18 sra Exp
  */
 
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: log.c,v 1.1.1.4 2007/01/27 21:06:47 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.5 2008/06/21 18:31:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.c,v 1.36.18.4 2005/09/05 00:18:24 marka Exp */
+/* Id: log.c,v 1.45 2007/06/18 23:47:40 tbox Exp */
 
 /*! \file */
 
@@ -31,7 +31,7 @@
 
 /*%
  * When adding a new category, be sure to add the appropriate
- * #define to <dns/log.h>.
+ * \#define to <dns/log.h>.
  */
 LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 	{ "notify", 	0 },
@@ -45,12 +45,13 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 	{ "dispatch",	0 },
 	{ "lame-servers", 0 },
 	{ "delegation-only", 0 },
+	{ "edns-disabled", 0 },
 	{ NULL, 	0 }
 };
 
 /*%
  * When adding a new module, be sure to add the appropriate
- * #define to <dns/log.h>.
+ * \#define to <dns/log.h>.
  */
 LIBDNS_EXTERNAL_DATA isc_logmodule_t dns_modules[] = {
 	{ "dns/db",	 	0 },

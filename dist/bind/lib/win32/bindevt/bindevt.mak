@@ -56,7 +56,7 @@ _VC_MANIFEST_AUTO_RES=
 MT_SPECIAL_RETURN=0
 MT_SPECIAL_SWITCH=
 _VC_MANIFEST_EMBED_EXE= \
-if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).  auto.manifest $(MT_SPECIAL_SWITCH) & \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
 if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
 rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
 link $** /out:$@ $(LFLAGS)
@@ -78,8 +78,7 @@ if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;1
 MT_SPECIAL_RETURN=0
 MT_SPECIAL_SWITCH=
 _VC_MANIFEST_EMBED_EXE= \
-if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).
-auto.manifest $(MT_SPECIAL_SWITCH) & \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
 if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
 rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
 link $** /out:$@ $(LFLAGS)

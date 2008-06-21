@@ -4,7 +4,7 @@
 <!--
  - Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  -
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  -
@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named.conf.docbook,v 1.1.2.25 2007/01/29 23:57:20 marka Exp -->
+<!-- Id: named.conf.docbook,v 1.34 2007/10/19 17:15:53 explorer Exp -->
 <refentry>
   <refentryinfo>
     <date>Aug 13, 2004</date>
@@ -219,6 +219,7 @@ options {
 	use-ixfr <replaceable>boolean</replaceable>;
 	version ( <replaceable>quoted_string</replaceable> | none );
 	allow-recursion { <replaceable>address_match_element</replaceable>; ... };
+	allow-recursion-on { <replaceable>address_match_element</replaceable>; ... };
 	sortlist { <replaceable>address_match_element</replaceable>; ... };
 	topology { <replaceable>address_match_element</replaceable>; ... }; // not implemented
 	auth-nxdomain <replaceable>boolean</replaceable>; // default changed
@@ -235,14 +236,17 @@ options {
 	additional-from-cache <replaceable>boolean</replaceable>;
 	query-source ( ( <replaceable>ipv4_address</replaceable> | * ) | <optional> address ( <replaceable>ipv4_address</replaceable> | * ) </optional> ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	query-source-v6 ( ( <replaceable>ipv6_address</replaceable> | * ) | <optional> address ( <replaceable>ipv6_address</replaceable> | * ) </optional> ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
+	use-queryport-pool <replaceable>boolean</replaceable>;
+	queryport-pool-ports <replaceable>integer</replaceable>;
+	queryport-pool-updateinterval <replaceable>integer</replaceable>;
 	cleaning-interval <replaceable>integer</replaceable>;
 	min-roots <replaceable>integer</replaceable>; // not implemented
 	lame-ttl <replaceable>integer</replaceable>;
 	max-ncache-ttl <replaceable>integer</replaceable>;
 	max-cache-ttl <replaceable>integer</replaceable>;
 	transfer-format ( many-answers | one-answer );
-	max-cache-size <replaceable>size_no_default</replaceable>;
-	max-acache-size <replaceable>size_no_default</replaceable>;
+	max-cache-size <replaceable>size</replaceable>;
+	max-acache-size <replaceable>size</replaceable>;
 	clients-per-query <replaceable>number</replaceable>;
 	max-clients-per-query <replaceable>number</replaceable>;
 	check-names ( master | slave | response )
@@ -278,16 +282,20 @@ options {
 	ixfr-from-differences <replaceable>ixfrdiff</replaceable>;
 
 	allow-query { <replaceable>address_match_element</replaceable>; ... };
+	allow-query-on { <replaceable>address_match_element</replaceable>; ... };
 	allow-query-cache { <replaceable>address_match_element</replaceable>; ... };
+	allow-query-cache-on { <replaceable>address_match_element</replaceable>; ... };
 	allow-transfer { <replaceable>address_match_element</replaceable>; ... };
 	allow-update { <replaceable>address_match_element</replaceable>; ... };
 	allow-update-forwarding { <replaceable>address_match_element</replaceable>; ... };
 	update-check-ksk <replaceable>boolean</replaceable>;
 
+	masterfile-format ( text | raw );
 	notify <replaceable>notifytype</replaceable>;
 	notify-source ( <replaceable>ipv4_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	notify-source-v6 ( <replaceable>ipv6_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	notify-delay <replaceable>seconds</replaceable>;
+	notify-to-soa <replaceable>boolean</replaceable>;
 	also-notify <optional> port <replaceable>integer</replaceable> </optional> { ( <replaceable>ipv4_address</replaceable> | <replaceable>ipv6_address</replaceable> )
 		<optional> port <replaceable>integer</replaceable> </optional>; ... };
 	allow-notify { <replaceable>address_match_element</replaceable>; ... };
@@ -322,6 +330,7 @@ options {
 
 	zone-statistics <replaceable>boolean</replaceable>;
 	key-directory <replaceable>quoted_string</replaceable>;
+	try-tcp-refresh <replaceable>boolean</replaceable>;
 	zero-no-soa-ttl <replaceable>boolean</replaceable>;
 	zero-no-soa-ttl-cache <replaceable>boolean</replaceable>;
 
@@ -367,6 +376,7 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	};
 
 	allow-recursion { <replaceable>address_match_element</replaceable>; ... };
+	allow-recursion-on { <replaceable>address_match_element</replaceable>; ... };
 	sortlist { <replaceable>address_match_element</replaceable>; ... };
 	topology { <replaceable>address_match_element</replaceable>; ... }; // not implemented
 	auth-nxdomain <replaceable>boolean</replaceable>; // default changed
@@ -383,14 +393,17 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	additional-from-cache <replaceable>boolean</replaceable>;
 	query-source ( ( <replaceable>ipv4_address</replaceable> | * ) | <optional> address ( <replaceable>ipv4_address</replaceable> | * ) </optional> ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	query-source-v6 ( ( <replaceable>ipv6_address</replaceable> | * ) | <optional> address ( <replaceable>ipv6_address</replaceable> | * ) </optional> ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
+	use-queryport-pool <replaceable>boolean</replaceable>;
+	queryport-pool-ports <replaceable>integer</replaceable>;
+	queryport-pool-updateinterval <replaceable>integer</replaceable>;
 	cleaning-interval <replaceable>integer</replaceable>;
 	min-roots <replaceable>integer</replaceable>; // not implemented
 	lame-ttl <replaceable>integer</replaceable>;
 	max-ncache-ttl <replaceable>integer</replaceable>;
 	max-cache-ttl <replaceable>integer</replaceable>;
 	transfer-format ( many-answers | one-answer );
-	max-cache-size <replaceable>size_no_default</replaceable>;
-	max-acache-size <replaceable>size_no_default</replaceable>;
+	max-cache-size <replaceable>size</replaceable>;
+	max-acache-size <replaceable>size</replaceable>;
 	clients-per-query <replaceable>number</replaceable>;
 	max-clients-per-query <replaceable>number</replaceable>;
 	check-names ( master | slave | response )
@@ -426,16 +439,20 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	ixfr-from-differences <replaceable>ixfrdiff</replaceable>;
 
 	allow-query { <replaceable>address_match_element</replaceable>; ... };
+	allow-query-on { <replaceable>address_match_element</replaceable>; ... };
 	allow-query-cache { <replaceable>address_match_element</replaceable>; ... };
+	allow-query-cache-on { <replaceable>address_match_element</replaceable>; ... };
 	allow-transfer { <replaceable>address_match_element</replaceable>; ... };
 	allow-update { <replaceable>address_match_element</replaceable>; ... };
 	allow-update-forwarding { <replaceable>address_match_element</replaceable>; ... };
 	update-check-ksk <replaceable>boolean</replaceable>;
 
+	masterfile-format ( text | raw );
 	notify <replaceable>notifytype</replaceable>;
 	notify-source ( <replaceable>ipv4_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	notify-source-v6 ( <replaceable>ipv6_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	notify-delay <replaceable>seconds</replaceable>;
+	notify-to-soa <replaceable>boolean</replaceable>;
 	also-notify <optional> port <replaceable>integer</replaceable> </optional> { ( <replaceable>ipv4_address</replaceable> | <replaceable>ipv6_address</replaceable> )
 		<optional> port <replaceable>integer</replaceable> </optional>; ... };
 	allow-notify { <replaceable>address_match_element</replaceable>; ... };
@@ -469,6 +486,7 @@ view <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	use-alt-transfer-source <replaceable>boolean</replaceable>;
 
 	zone-statistics <replaceable>boolean</replaceable>;
+	try-tcp-refresh <replaceable>boolean</replaceable>;
 	key-directory <replaceable>quoted_string</replaceable>;
 	zero-no-soa-ttl <replaceable>boolean</replaceable>;
 	zero-no-soa-ttl-cache <replaceable>boolean</replaceable>;
@@ -508,6 +526,7 @@ zone <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	zero-no-soa-ttl <replaceable>boolean</replaceable>;
 
 	allow-query { <replaceable>address_match_element</replaceable>; ... };
+	allow-query-on { <replaceable>address_match_element</replaceable>; ... };
 	allow-transfer { <replaceable>address_match_element</replaceable>; ... };
 	allow-update { <replaceable>address_match_element</replaceable>; ... };
 	allow-update-forwarding { <replaceable>address_match_element</replaceable>; ... };
@@ -518,10 +537,12 @@ zone <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	};
 	update-check-ksk <replaceable>boolean</replaceable>;
 
+	masterfile-format ( text | raw );
 	notify <replaceable>notifytype</replaceable>;
 	notify-source ( <replaceable>ipv4_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	notify-source-v6 ( <replaceable>ipv6_address</replaceable> | * ) <optional> port ( <replaceable>integer</replaceable> | * ) </optional>;
 	notify-delay <replaceable>seconds</replaceable>;
+	notify-to-soa <replaceable>boolean</replaceable>;
 	also-notify <optional> port <replaceable>integer</replaceable> </optional> { ( <replaceable>ipv4_address</replaceable> | <replaceable>ipv6_address</replaceable> )
 		<optional> port <replaceable>integer</replaceable> </optional>; ... };
 	allow-notify { <replaceable>address_match_element</replaceable>; ... };
@@ -555,6 +576,7 @@ zone <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
 	use-alt-transfer-source <replaceable>boolean</replaceable>;
 
 	zone-statistics <replaceable>boolean</replaceable>;
+	try-tcp-refresh <replaceable>boolean</replaceable>;
 	key-directory <replaceable>quoted_string</replaceable>;
 
 	ixfr-base <replaceable>quoted_string</replaceable>; // obsolete
@@ -578,11 +600,12 @@ zone <replaceable>string</replaceable> <replaceable>optional_class</replaceable>
         <refentrytitle>named</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>rndc</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>named-checkconf</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>BIND 9 Administrator Reference Manual</refentrytitle>
-      </citerefentry>.
+        <refentrytitle>rndc</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citetitle>BIND 9 Administrator Reference Manual</citetitle>.
     </para>
   </refsect1>
 
