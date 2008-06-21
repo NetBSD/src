@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.1.1.1 2008/06/21 18:35:14 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.2 2008/06/21 20:55:56 christos Exp $	*/
 
 /*
  * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -849,7 +849,7 @@ set_desc(int counter, int maxcounter, const char *desc, const char **descs) {
 }
 
 static void
-init_desc() {
+init_desc(void) {
 	int i;
 
 	/* Initialize name server statistics */
