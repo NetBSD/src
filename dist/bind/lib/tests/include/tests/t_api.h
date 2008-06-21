@@ -1,10 +1,10 @@
-/*	$NetBSD: t_api.h,v 1.1.1.5 2007/01/27 21:08:12 christos Exp $	*/
+/*	$NetBSD: t_api.h,v 1.1.1.6 2008/06/21 18:30:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_api.h,v 1.15.18.3 2005/04/29 00:17:24 marka Exp */
+/* Id: t_api.h,v 1.22 2007/06/19 23:47:24 tbox Exp */
 
 #ifndef TESTS_T_API_H
 #define TESTS_T_API_H 1
 
-/*! \file */
+/*! \file tests/t_api.h */
 
 #include <stdio.h>
 

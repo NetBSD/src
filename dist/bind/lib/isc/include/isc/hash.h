@@ -1,10 +1,10 @@
-/*	$NetBSD: hash.h,v 1.1.1.4 2007/01/27 21:07:53 christos Exp $	*/
+/*	$NetBSD: hash.h,v 1.1.1.5 2008/06/21 18:31:17 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hash.h,v 1.4.18.2 2005/04/29 00:16:55 marka Exp */
+/* Id: hash.h,v 1.10 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file isc/hash.h
  *
  * \brief The hash API
  *	provides an unpredictable hash value for variable length data.

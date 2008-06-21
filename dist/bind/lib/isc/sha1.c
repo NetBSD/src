@@ -1,10 +1,10 @@
-/*	$NetBSD: sha1.c,v 1.1.1.4 2007/01/27 21:07:47 christos Exp $	*/
+/*	$NetBSD: sha1.c,v 1.1.1.5 2008/06/21 18:31:07 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,9 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sha1.c,v 1.14.18.2 2005/04/29 00:16:49 marka Exp */
+/* Id: sha1.c,v 1.18 2007/06/19 23:47:17 tbox Exp */
 
-/*	$NetBSD: sha1.c,v 1.1.1.4 2007/01/27 21:07:47 christos Exp $	*/
+/*	$NetBSD: sha1.c,v 1.1.1.5 2008/06/21 18:31:07 christos Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*! \file

@@ -1,9 +1,9 @@
-/*	$NetBSD: dlv_32769.h,v 1.1.1.1 2007/01/27 21:07:23 christos Exp $	*/
+/*	$NetBSD: dlv_32769.h,v 1.1.1.2 2008/06/21 18:32:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlv_32769.h,v 1.2.2.2 2006/02/19 06:50:47 marka Exp */
+/* Id: dlv_32769.h,v 1.5 2007/06/19 23:47:17 tbox Exp */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 #ifndef GENERIC_DLV_32769_H

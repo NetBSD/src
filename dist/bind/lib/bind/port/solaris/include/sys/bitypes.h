@@ -1,10 +1,10 @@
-/*	$NetBSD: bitypes.h,v 1.1.1.4 2007/01/27 21:08:50 christos Exp $	*/
+/*	$NetBSD: bitypes.h,v 1.1.1.5 2008/06/21 18:33:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: bitypes.h,v 1.3 2004/03/16 05:22:28 marka Exp */
+/* Id: bitypes.h,v 1.5 2007/06/19 23:47:15 tbox Exp */
 
 #ifndef __BIT_TYPES_DEFINED__
 #define __BIT_TYPES_DEFINED__

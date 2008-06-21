@@ -1,10 +1,10 @@
-/*	$NetBSD: resolver.h,v 1.1.1.4 2007/01/27 21:07:38 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.1.1.5 2008/06/21 18:32:29 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.h,v 1.40.18.11 2006/02/01 22:39:17 marka Exp */
+/* Id: resolver.h,v 1.56.128.2 2008/04/03 06:08:27 tbox Exp */
 
 #ifndef DNS_RESOLVER_H
 #define DNS_RESOLVER_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/resolver.h
  *
  * \brief
  * This is the BIND 9 resolver, the module responsible for resolving DNS
@@ -95,7 +95,8 @@ typedef struct dns_fetchevent {
 #define DNS_FETCHOPT_FORWARDONLY	0x10	     /*%< Only use forwarders. */
 #define DNS_FETCHOPT_NOVALIDATE		0x20	     /*%< Disable validation. */
 #define DNS_FETCHOPT_EDNS512		0x40	     /*%< Advertise a 512 byte
-						          UDP buffer. */
+							  UDP buffer. */
+#define DNS_FETCHOPT_WANTNSID           0x80         /*%< Request NSID */
 
 #define	DNS_FETCHOPT_EDNSVERSIONSET	0x00800000
 #define	DNS_FETCHOPT_EDNSVERSIONMASK	0xff000000
@@ -108,6 +109,8 @@ typedef struct dns_fetchevent {
 
 #define DNS_RESOLVER_CHECKNAMES		0x01
 #define DNS_RESOLVER_CHECKNAMESFAIL	0x02
+#define DNS_RESOLVER_USEDISPATCHPOOL4	0x04
+#define DNS_RESOLVER_USEDISPATCHPOOL6	0x08
 
 isc_result_t
 dns_resolver_create(dns_view_t *view,
@@ -127,8 +130,6 @@ dns_resolver_create(dns_view_t *view,
  *
  *\li	Generally, applications should not create a resolver directly, but
  *	should instead call dns_view_createresolver().
- *
- *\li	No options are currently defined.
  *
  * Requires:
  *
@@ -472,9 +473,39 @@ dns_resolver_getclientsperquery(dns_resolver_t *resolver, isc_uint32_t *cur,
 
 isc_boolean_t
 dns_resolver_getzeronosoattl(dns_resolver_t *resolver);
- 
+
 void
 dns_resolver_setzeronosoattl(dns_resolver_t *resolver, isc_boolean_t state);
+
+unsigned int
+dns_resolver_getoptions(dns_resolver_t *resolver);
+
+isc_result_t
+dns_resolver_createdispatchpool(dns_resolver_t *res, unsigned int ndisps,
+				unsigned int interval);
+/*%<
+ * Create a pool of dispatches
+ *
+ * Notes:
+ *
+ *\li	Generally, applications should not create a resolver directly, but
+ *	should instead call dns_view_createresolver().
+ *
+ * Requires:
+ *
+ *\li	'res' is a valid resolver that has not been frozen.  Also it must have
+ *	either the _USEDISPATCHPOOL4 or _USEDISPATCHPOOL6 option.
+ *
+ *\li	'taskmgr' is a valid task manager.
+ *
+ *\li	'ndisps' > 0.
+ *
+ * Returns:
+ *
+ *\li	#ISC_R_SUCCESS				On success.
+ *
+ *\li	Anything else				Failure.
+ */
 
 ISC_LANG_ENDDECLS
 

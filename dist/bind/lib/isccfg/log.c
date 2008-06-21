@@ -1,10 +1,10 @@
-/*	$NetBSD: log.c,v 1.1.1.4 2007/01/27 21:09:14 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.5 2008/06/21 18:30:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.c,v 1.5.18.2 2005/04/29 00:17:15 marka Exp */
+/* Id: log.c,v 1.11 2007/06/19 23:47:22 tbox Exp */
 
 /*! \file */
 
@@ -29,7 +29,7 @@
 
 /*%
  * When adding a new category, be sure to add the appropriate
- * #define to <isccfg/log.h>.
+ * \#define to <isccfg/log.h>.
  */
 LIBISCCFG_EXTERNAL_DATA isc_logcategory_t cfg_categories[] = {
 	{ "config", 	0 },
@@ -38,7 +38,7 @@ LIBISCCFG_EXTERNAL_DATA isc_logcategory_t cfg_categories[] = {
 
 /*%
  * When adding a new module, be sure to add the appropriate
- * #define to <isccfg/log.h>.
+ * \#define to <isccfg/log.h>.
  */
 LIBISCCFG_EXTERNAL_DATA isc_logmodule_t cfg_modules[] = {
 	{ "isccfg/parser",	0 },

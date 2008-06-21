@@ -5,7 +5,7 @@
  - Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2002  Internet Software Consortium.
  -
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  -
@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named-checkzone.docbook,v 1.11.18.17 2007/01/29 23:57:20 marka Exp -->
+<!-- Id: named-checkzone.docbook,v 1.34 2007/06/19 06:58:03 marka Exp -->
 <refentry id="man.named-checkzone">
   <refentryinfo>
     <date>June 13, 2000</date>
@@ -56,6 +56,7 @@
     <cmdsynopsis>
       <command>named-checkzone</command>
       <arg><option>-d</option></arg>
+      <arg><option>-h</option></arg>
       <arg><option>-j</option></arg>
       <arg><option>-q</option></arg>
       <arg><option>-v</option></arg>
@@ -117,7 +118,7 @@
 	Additionally, it applies stricter check levels by default,
         since the dump output will be used as an actual zone file
 	loaded by <command>named</command>.
-	When manaully specified otherwise, the check levels must at
+	When manually specified otherwise, the check levels must at
         least be as strict as those specified in the
 	<command>named</command> configuration file.
      </para>
@@ -132,6 +133,15 @@
         <listitem>
           <para>
             Enable debugging.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-h</term>
+        <listitem>
+          <para>
+            Print the usage summary and exit.
           </para>
         </listitem>
       </varlistentry>
@@ -177,7 +187,7 @@
         <term>-i <replaceable class="parameter">mode</replaceable></term>
 	<listitem>
 	  <para>
-	      Perform post load zone integrity checks.  Possible modes are
+	      Perform post-load zone integrity checks.  Possible modes are
 	      <command>"full"</command> (default),
 	      <command>"full-sibling"</command>,
 	      <command>"local"</command>,
@@ -199,7 +209,7 @@
 	  <para>
 	      Mode <command>"full"</command> checks that delegation NS
 	      records refer to A or AAAA record (both in-zone and out-of-zone
-	      hostnames).  It also checks that glue addresses records
+	      hostnames).  It also checks that glue address records
 	      in the zone match those advertised by the child.
 	      Mode <command>"local"</command> only checks NS records which
 	      refer to in-zone hostnames or that some required glue exists,
@@ -301,6 +311,8 @@
         <listitem>
           <para>
             Write zone output to <filename>filename</filename>.
+	    If <filename>filename</filename> is <filename>-</filename> then
+	    write to standard out.
 	    This is mandatory for <command>named-compilezone</command>.
           </para>
         </listitem>
@@ -342,7 +354,7 @@
         <term>-t <replaceable class="parameter">directory</replaceable></term>
         <listitem>
           <para>
-            chroot to <filename>directory</filename> so that
+            Chroot to <filename>directory</filename> so that
             include
             directives in the configuration file are processed as if
             run by a similarly chrooted named.
@@ -421,6 +433,9 @@
     <title>SEE ALSO</title>
     <para><citerefentry>
         <refentrytitle>named</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>named-checkconf</refentrytitle><manvolnum>8</manvolnum>  
       </citerefentry>,
       <citetitle>RFC 1035</citetitle>,
       <citetitle>BIND 9 Administrator Reference Manual</citetitle>.

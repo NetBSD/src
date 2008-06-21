@@ -1,11 +1,24 @@
-/*	$NetBSD: hmac_link.c,v 1.1.1.2 2007/01/27 21:06:46 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.1.1.3 2008/06/21 18:32:02 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -20,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: hmac_link.c,v 1.1.6.5 2006/01/27 23:57:44 marka Exp
+ * Id: hmac_link.c,v 1.9 2007/08/28 07:20:42 tbox Exp
  */
 
 #include <config.h>
@@ -45,9 +58,9 @@
 
 static isc_result_t hmacmd5_fromdns(dst_key_t *key, isc_buffer_t *data);
 
-typedef struct hmackey {
+struct dst_hmacmd5_key {
 	unsigned char key[HMAC_LEN];
-} HMAC_Key;
+};
 
 static isc_result_t
 getkeybits(dst_key_t *key, struct dst_private_element *element) {
@@ -63,30 +76,30 @@ getkeybits(dst_key_t *key, struct dst_private_element *element) {
 static isc_result_t
 hmacmd5_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacmd5_t *hmacmd5ctx;
-	HMAC_Key *hkey = key->opaque;
+	dst_hmacmd5_key_t *hkey = key->keydata.hmacmd5;
 
 	hmacmd5ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacmd5_t));
 	if (hmacmd5ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacmd5_init(hmacmd5ctx, hkey->key, HMAC_LEN);
-	dctx->opaque = hmacmd5ctx;
+	dctx->ctxdata.hmacmd5ctx = hmacmd5ctx;
 	return (ISC_R_SUCCESS);
 }
 
 static void
 hmacmd5_destroyctx(dst_context_t *dctx) {
-	isc_hmacmd5_t *hmacmd5ctx = dctx->opaque;
+	isc_hmacmd5_t *hmacmd5ctx = dctx->ctxdata.hmacmd5ctx;
 
 	if (hmacmd5ctx != NULL) {
 		isc_hmacmd5_invalidate(hmacmd5ctx);
 		isc_mem_put(dctx->mctx, hmacmd5ctx, sizeof(isc_hmacmd5_t));
-		dctx->opaque = NULL;
+		dctx->ctxdata.hmacmd5ctx = NULL;
 	}
 }
 
 static isc_result_t
 hmacmd5_adddata(dst_context_t *dctx, const isc_region_t *data) {
-	isc_hmacmd5_t *hmacmd5ctx = dctx->opaque;
+	isc_hmacmd5_t *hmacmd5ctx = dctx->ctxdata.hmacmd5ctx;
 
 	isc_hmacmd5_update(hmacmd5ctx, data->base, data->length);
 	return (ISC_R_SUCCESS);
@@ -94,7 +107,7 @@ hmacmd5_adddata(dst_context_t *dctx, const isc_region_t *data) {
 
 static isc_result_t
 hmacmd5_sign(dst_context_t *dctx, isc_buffer_t *sig) {
-	isc_hmacmd5_t *hmacmd5ctx = dctx->opaque;
+	isc_hmacmd5_t *hmacmd5ctx = dctx->ctxdata.hmacmd5ctx;
 	unsigned char *digest;
 
 	if (isc_buffer_availablelength(sig) < ISC_MD5_DIGESTLENGTH)
@@ -108,7 +121,7 @@ hmacmd5_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 static isc_result_t
 hmacmd5_verify(dst_context_t *dctx, const isc_region_t *sig) {
-	isc_hmacmd5_t *hmacmd5ctx = dctx->opaque;
+	isc_hmacmd5_t *hmacmd5ctx = dctx->ctxdata.hmacmd5ctx;
 
 	if (sig->length > ISC_MD5_DIGESTLENGTH)
 		return (DST_R_VERIFYFAILURE);
@@ -121,10 +134,10 @@ hmacmd5_verify(dst_context_t *dctx, const isc_region_t *sig) {
 
 static isc_boolean_t
 hmacmd5_compare(const dst_key_t *key1, const dst_key_t *key2) {
-	HMAC_Key *hkey1, *hkey2;
+	dst_hmacmd5_key_t *hkey1, *hkey2;
 
-	hkey1 = (HMAC_Key *)key1->opaque;
-	hkey2 = (HMAC_Key *)key2->opaque;
+	hkey1 = key1->keydata.hmacmd5;
+	hkey2 = key2->keydata.hmacmd5;
 
 	if (hkey1 == NULL && hkey2 == NULL)
 		return (ISC_TRUE);
@@ -172,20 +185,20 @@ hmacmd5_isprivate(const dst_key_t *key) {
 
 static void
 hmacmd5_destroy(dst_key_t *key) {
-	HMAC_Key *hkey = key->opaque;
-	memset(hkey, 0, sizeof(HMAC_Key));
-	isc_mem_put(key->mctx, hkey, sizeof(HMAC_Key));
-	key->opaque = NULL;
+	dst_hmacmd5_key_t *hkey = key->keydata.hmacmd5;
+	memset(hkey, 0, sizeof(dst_hmacmd5_key_t));
+	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacmd5_key_t));
+	key->keydata.hmacmd5 = NULL;
 }
 
 static isc_result_t
 hmacmd5_todns(const dst_key_t *key, isc_buffer_t *data) {
-	HMAC_Key *hkey;
+	dst_hmacmd5_key_t *hkey;
 	unsigned int bytes;
 
-	REQUIRE(key->opaque != NULL);
+	REQUIRE(key->keydata.hmacmd5 != NULL);
 
-	hkey = (HMAC_Key *) key->opaque;
+	hkey = key->keydata.hmacmd5;
 
 	bytes = (key->key_size + 7) / 8;
 	if (isc_buffer_availablelength(data) < bytes)
@@ -197,7 +210,7 @@ hmacmd5_todns(const dst_key_t *key, isc_buffer_t *data) {
 
 static isc_result_t
 hmacmd5_fromdns(dst_key_t *key, isc_buffer_t *data) {
-	HMAC_Key *hkey;
+	dst_hmacmd5_key_t *hkey;
 	int keylen;
 	isc_region_t r;
 	isc_md5_t md5ctx;
@@ -206,7 +219,7 @@ hmacmd5_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = (HMAC_Key *) isc_mem_get(key->mctx, sizeof(HMAC_Key));
+	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacmd5_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -224,7 +237,7 @@ hmacmd5_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	}
 
 	key->key_size = keylen * 8;
-	key->opaque = hkey;
+	key->keydata.hmacmd5 = hkey;
 
 	return (ISC_R_SUCCESS);
 }
@@ -232,15 +245,15 @@ hmacmd5_fromdns(dst_key_t *key, isc_buffer_t *data) {
 static isc_result_t
 hmacmd5_tofile(const dst_key_t *key, const char *directory) {
 	int cnt = 0;
-	HMAC_Key *hkey;
+	dst_hmacmd5_key_t *hkey;
 	dst_private_t priv;
 	int bytes = (key->key_size + 7) / 8;
 	unsigned char buf[2];
 
-	if (key->opaque == NULL)
+	if (key->keydata.hmacmd5 == NULL)
 		return (DST_R_NULLKEY);
 
-	hkey = (HMAC_Key *) key->opaque;
+	hkey = key->keydata.hmacmd5;
 
 	priv.elements[cnt].tag = TAG_HMACMD5_KEY;
 	priv.elements[cnt].length = bytes;
@@ -324,37 +337,37 @@ dst__hmacmd5_init(dst_func_t **funcp) {
 
 static isc_result_t hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data);
 
-typedef struct {
+struct dst_hmacsha1_key {
 	unsigned char key[ISC_SHA1_DIGESTLENGTH];
-} HMACSHA1_Key;
+};
 
 static isc_result_t
 hmacsha1_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacsha1_t *hmacsha1ctx;
-	HMACSHA1_Key *hkey = key->opaque;
+	dst_hmacsha1_key_t *hkey = key->keydata.hmacsha1;
 
 	hmacsha1ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacsha1_t));
 	if (hmacsha1ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacsha1_init(hmacsha1ctx, hkey->key, ISC_SHA1_DIGESTLENGTH);
-	dctx->opaque = hmacsha1ctx;
+	dctx->ctxdata.hmacsha1ctx = hmacsha1ctx;
 	return (ISC_R_SUCCESS);
 }
 
 static void
 hmacsha1_destroyctx(dst_context_t *dctx) {
-	isc_hmacsha1_t *hmacsha1ctx = dctx->opaque;
+	isc_hmacsha1_t *hmacsha1ctx = dctx->ctxdata.hmacsha1ctx;
 
 	if (hmacsha1ctx != NULL) {
 		isc_hmacsha1_invalidate(hmacsha1ctx);
 		isc_mem_put(dctx->mctx, hmacsha1ctx, sizeof(isc_hmacsha1_t));
-		dctx->opaque = NULL;
+		dctx->ctxdata.hmacsha1ctx = NULL;
 	}
 }
 
 static isc_result_t
 hmacsha1_adddata(dst_context_t *dctx, const isc_region_t *data) {
-	isc_hmacsha1_t *hmacsha1ctx = dctx->opaque;
+	isc_hmacsha1_t *hmacsha1ctx = dctx->ctxdata.hmacsha1ctx;
 
 	isc_hmacsha1_update(hmacsha1ctx, data->base, data->length);
 	return (ISC_R_SUCCESS);
@@ -362,7 +375,7 @@ hmacsha1_adddata(dst_context_t *dctx, const isc_region_t *data) {
 
 static isc_result_t
 hmacsha1_sign(dst_context_t *dctx, isc_buffer_t *sig) {
-	isc_hmacsha1_t *hmacsha1ctx = dctx->opaque;
+	isc_hmacsha1_t *hmacsha1ctx = dctx->ctxdata.hmacsha1ctx;
 	unsigned char *digest;
 
 	if (isc_buffer_availablelength(sig) < ISC_SHA1_DIGESTLENGTH)
@@ -376,7 +389,7 @@ hmacsha1_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 static isc_result_t
 hmacsha1_verify(dst_context_t *dctx, const isc_region_t *sig) {
-	isc_hmacsha1_t *hmacsha1ctx = dctx->opaque;
+	isc_hmacsha1_t *hmacsha1ctx = dctx->ctxdata.hmacsha1ctx;
 
 	if (sig->length > ISC_SHA1_DIGESTLENGTH || sig->length == 0)
 		return (DST_R_VERIFYFAILURE);
@@ -389,10 +402,10 @@ hmacsha1_verify(dst_context_t *dctx, const isc_region_t *sig) {
 
 static isc_boolean_t
 hmacsha1_compare(const dst_key_t *key1, const dst_key_t *key2) {
-	HMACSHA1_Key *hkey1, *hkey2;
+	dst_hmacsha1_key_t *hkey1, *hkey2;
 
-	hkey1 = (HMACSHA1_Key *)key1->opaque;
-	hkey2 = (HMACSHA1_Key *)key2->opaque;
+	hkey1 = key1->keydata.hmacsha1;
+	hkey2 = key2->keydata.hmacsha1;
 
 	if (hkey1 == NULL && hkey2 == NULL)
 		return (ISC_TRUE);
@@ -440,20 +453,20 @@ hmacsha1_isprivate(const dst_key_t *key) {
 
 static void
 hmacsha1_destroy(dst_key_t *key) {
-	HMACSHA1_Key *hkey = key->opaque;
-	memset(hkey, 0, sizeof(HMACSHA1_Key));
-	isc_mem_put(key->mctx, hkey, sizeof(HMACSHA1_Key));
-	key->opaque = NULL;
+	dst_hmacsha1_key_t *hkey = key->keydata.hmacsha1;
+	memset(hkey, 0, sizeof(dst_hmacsha1_key_t));
+	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacsha1_key_t));
+	key->keydata.hmacsha1 = NULL;
 }
 
 static isc_result_t
 hmacsha1_todns(const dst_key_t *key, isc_buffer_t *data) {
-	HMACSHA1_Key *hkey;
+	dst_hmacsha1_key_t *hkey;
 	unsigned int bytes;
 
-	REQUIRE(key->opaque != NULL);
+	REQUIRE(key->keydata.hmacsha1 != NULL);
 
-	hkey = (HMACSHA1_Key *) key->opaque;
+	hkey = key->keydata.hmacsha1;
 
 	bytes = (key->key_size + 7) / 8;
 	if (isc_buffer_availablelength(data) < bytes)
@@ -465,7 +478,7 @@ hmacsha1_todns(const dst_key_t *key, isc_buffer_t *data) {
 
 static isc_result_t
 hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data) {
-	HMACSHA1_Key *hkey;
+	dst_hmacsha1_key_t *hkey;
 	int keylen;
 	isc_region_t r;
 	isc_sha1_t sha1ctx;
@@ -474,7 +487,7 @@ hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = (HMACSHA1_Key *) isc_mem_get(key->mctx, sizeof(HMACSHA1_Key));
+	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacsha1_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -492,7 +505,7 @@ hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	}
 
 	key->key_size = keylen * 8;
-	key->opaque = hkey;
+	key->keydata.hmacsha1 = hkey;
 
 	return (ISC_R_SUCCESS);
 }
@@ -500,15 +513,15 @@ hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data) {
 static isc_result_t
 hmacsha1_tofile(const dst_key_t *key, const char *directory) {
 	int cnt = 0;
-	HMACSHA1_Key *hkey;
+	dst_hmacsha1_key_t *hkey;
 	dst_private_t priv;
 	int bytes = (key->key_size + 7) / 8;
 	unsigned char buf[2];
 
-	if (key->opaque == NULL)
+	if (key->keydata.hmacsha1 == NULL)
 		return (DST_R_NULLKEY);
 
-	hkey = (HMACSHA1_Key *) key->opaque;
+	hkey = key->keydata.hmacsha1;
 
 	priv.elements[cnt].tag = TAG_HMACSHA1_KEY;
 	priv.elements[cnt].length = bytes;
@@ -593,37 +606,37 @@ dst__hmacsha1_init(dst_func_t **funcp) {
 
 static isc_result_t hmacsha224_fromdns(dst_key_t *key, isc_buffer_t *data);
 
-typedef struct {
+struct dst_hmacsha224_key {
 	unsigned char key[ISC_SHA224_DIGESTLENGTH];
-} HMACSHA224_Key;
+};
 
 static isc_result_t
 hmacsha224_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacsha224_t *hmacsha224ctx;
-	HMACSHA224_Key *hkey = key->opaque;
+	dst_hmacsha224_key_t *hkey = key->keydata.hmacsha224;
 
 	hmacsha224ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacsha224_t));
 	if (hmacsha224ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacsha224_init(hmacsha224ctx, hkey->key, ISC_SHA224_DIGESTLENGTH);
-	dctx->opaque = hmacsha224ctx;
+	dctx->ctxdata.hmacsha224ctx = hmacsha224ctx;
 	return (ISC_R_SUCCESS);
 }
 
 static void
 hmacsha224_destroyctx(dst_context_t *dctx) {
-	isc_hmacsha224_t *hmacsha224ctx = dctx->opaque;
+	isc_hmacsha224_t *hmacsha224ctx = dctx->ctxdata.hmacsha224ctx;
 
 	if (hmacsha224ctx != NULL) {
 		isc_hmacsha224_invalidate(hmacsha224ctx);
 		isc_mem_put(dctx->mctx, hmacsha224ctx, sizeof(isc_hmacsha224_t));
-		dctx->opaque = NULL;
+		dctx->ctxdata.hmacsha224ctx = NULL;
 	}
 }
 
 static isc_result_t
 hmacsha224_adddata(dst_context_t *dctx, const isc_region_t *data) {
-	isc_hmacsha224_t *hmacsha224ctx = dctx->opaque;
+	isc_hmacsha224_t *hmacsha224ctx = dctx->ctxdata.hmacsha224ctx;
 
 	isc_hmacsha224_update(hmacsha224ctx, data->base, data->length);
 	return (ISC_R_SUCCESS);
@@ -631,7 +644,7 @@ hmacsha224_adddata(dst_context_t *dctx, const isc_region_t *data) {
 
 static isc_result_t
 hmacsha224_sign(dst_context_t *dctx, isc_buffer_t *sig) {
-	isc_hmacsha224_t *hmacsha224ctx = dctx->opaque;
+	isc_hmacsha224_t *hmacsha224ctx = dctx->ctxdata.hmacsha224ctx;
 	unsigned char *digest;
 
 	if (isc_buffer_availablelength(sig) < ISC_SHA224_DIGESTLENGTH)
@@ -645,7 +658,7 @@ hmacsha224_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 static isc_result_t
 hmacsha224_verify(dst_context_t *dctx, const isc_region_t *sig) {
-	isc_hmacsha224_t *hmacsha224ctx = dctx->opaque;
+	isc_hmacsha224_t *hmacsha224ctx = dctx->ctxdata.hmacsha224ctx;
 
 	if (sig->length > ISC_SHA224_DIGESTLENGTH || sig->length == 0)
 		return (DST_R_VERIFYFAILURE);
@@ -658,10 +671,10 @@ hmacsha224_verify(dst_context_t *dctx, const isc_region_t *sig) {
 
 static isc_boolean_t
 hmacsha224_compare(const dst_key_t *key1, const dst_key_t *key2) {
-	HMACSHA224_Key *hkey1, *hkey2;
+	dst_hmacsha224_key_t *hkey1, *hkey2;
 
-	hkey1 = (HMACSHA224_Key *)key1->opaque;
-	hkey2 = (HMACSHA224_Key *)key2->opaque;
+	hkey1 = key1->keydata.hmacsha224;
+	hkey2 = key2->keydata.hmacsha224;
 
 	if (hkey1 == NULL && hkey2 == NULL)
 		return (ISC_TRUE);
@@ -709,20 +722,20 @@ hmacsha224_isprivate(const dst_key_t *key) {
 
 static void
 hmacsha224_destroy(dst_key_t *key) {
-	HMACSHA224_Key *hkey = key->opaque;
-	memset(hkey, 0, sizeof(HMACSHA224_Key));
-	isc_mem_put(key->mctx, hkey, sizeof(HMACSHA224_Key));
-	key->opaque = NULL;
+	dst_hmacsha224_key_t *hkey = key->keydata.hmacsha224;
+	memset(hkey, 0, sizeof(dst_hmacsha224_key_t));
+	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacsha224_key_t));
+	key->keydata.hmacsha224 = NULL;
 }
 
 static isc_result_t
 hmacsha224_todns(const dst_key_t *key, isc_buffer_t *data) {
-	HMACSHA224_Key *hkey;
+	dst_hmacsha224_key_t *hkey;
 	unsigned int bytes;
 
-	REQUIRE(key->opaque != NULL);
+	REQUIRE(key->keydata.hmacsha224 != NULL);
 
-	hkey = (HMACSHA224_Key *) key->opaque;
+	hkey = key->keydata.hmacsha224;
 
 	bytes = (key->key_size + 7) / 8;
 	if (isc_buffer_availablelength(data) < bytes)
@@ -734,7 +747,7 @@ hmacsha224_todns(const dst_key_t *key, isc_buffer_t *data) {
 
 static isc_result_t
 hmacsha224_fromdns(dst_key_t *key, isc_buffer_t *data) {
-	HMACSHA224_Key *hkey;
+	dst_hmacsha224_key_t *hkey;
 	int keylen;
 	isc_region_t r;
 	isc_sha224_t sha224ctx;
@@ -743,7 +756,7 @@ hmacsha224_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = (HMACSHA224_Key *) isc_mem_get(key->mctx, sizeof(HMACSHA224_Key));
+	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacsha224_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -761,7 +774,7 @@ hmacsha224_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	}
 
 	key->key_size = keylen * 8;
-	key->opaque = hkey;
+	key->keydata.hmacsha224 = hkey;
 
 	return (ISC_R_SUCCESS);
 }
@@ -769,15 +782,15 @@ hmacsha224_fromdns(dst_key_t *key, isc_buffer_t *data) {
 static isc_result_t
 hmacsha224_tofile(const dst_key_t *key, const char *directory) {
 	int cnt = 0;
-	HMACSHA224_Key *hkey;
+	dst_hmacsha224_key_t *hkey;
 	dst_private_t priv;
 	int bytes = (key->key_size + 7) / 8;
 	unsigned char buf[2];
 
-	if (key->opaque == NULL)
+	if (key->keydata.hmacsha224 == NULL)
 		return (DST_R_NULLKEY);
 
-	hkey = (HMACSHA224_Key *) key->opaque;
+	hkey = key->keydata.hmacsha224;
 
 	priv.elements[cnt].tag = TAG_HMACSHA224_KEY;
 	priv.elements[cnt].length = bytes;
@@ -862,37 +875,37 @@ dst__hmacsha224_init(dst_func_t **funcp) {
 
 static isc_result_t hmacsha256_fromdns(dst_key_t *key, isc_buffer_t *data);
 
-typedef struct {
+struct dst_hmacsha256_key {
 	unsigned char key[ISC_SHA256_DIGESTLENGTH];
-} HMACSHA256_Key;
+};
 
 static isc_result_t
 hmacsha256_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacsha256_t *hmacsha256ctx;
-	HMACSHA256_Key *hkey = key->opaque;
+	dst_hmacsha256_key_t *hkey = key->keydata.hmacsha256;
 
 	hmacsha256ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacsha256_t));
 	if (hmacsha256ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacsha256_init(hmacsha256ctx, hkey->key, ISC_SHA256_DIGESTLENGTH);
-	dctx->opaque = hmacsha256ctx;
+	dctx->ctxdata.hmacsha256ctx = hmacsha256ctx;
 	return (ISC_R_SUCCESS);
 }
 
 static void
 hmacsha256_destroyctx(dst_context_t *dctx) {
-	isc_hmacsha256_t *hmacsha256ctx = dctx->opaque;
+	isc_hmacsha256_t *hmacsha256ctx = dctx->ctxdata.hmacsha256ctx;
 
 	if (hmacsha256ctx != NULL) {
 		isc_hmacsha256_invalidate(hmacsha256ctx);
 		isc_mem_put(dctx->mctx, hmacsha256ctx, sizeof(isc_hmacsha256_t));
-		dctx->opaque = NULL;
+		dctx->ctxdata.hmacsha256ctx = NULL;
 	}
 }
 
 static isc_result_t
 hmacsha256_adddata(dst_context_t *dctx, const isc_region_t *data) {
-	isc_hmacsha256_t *hmacsha256ctx = dctx->opaque;
+	isc_hmacsha256_t *hmacsha256ctx = dctx->ctxdata.hmacsha256ctx;
 
 	isc_hmacsha256_update(hmacsha256ctx, data->base, data->length);
 	return (ISC_R_SUCCESS);
@@ -900,7 +913,7 @@ hmacsha256_adddata(dst_context_t *dctx, const isc_region_t *data) {
 
 static isc_result_t
 hmacsha256_sign(dst_context_t *dctx, isc_buffer_t *sig) {
-	isc_hmacsha256_t *hmacsha256ctx = dctx->opaque;
+	isc_hmacsha256_t *hmacsha256ctx = dctx->ctxdata.hmacsha256ctx;
 	unsigned char *digest;
 
 	if (isc_buffer_availablelength(sig) < ISC_SHA256_DIGESTLENGTH)
@@ -914,7 +927,7 @@ hmacsha256_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 static isc_result_t
 hmacsha256_verify(dst_context_t *dctx, const isc_region_t *sig) {
-	isc_hmacsha256_t *hmacsha256ctx = dctx->opaque;
+	isc_hmacsha256_t *hmacsha256ctx = dctx->ctxdata.hmacsha256ctx;
 
 	if (sig->length > ISC_SHA256_DIGESTLENGTH || sig->length == 0)
 		return (DST_R_VERIFYFAILURE);
@@ -927,10 +940,10 @@ hmacsha256_verify(dst_context_t *dctx, const isc_region_t *sig) {
 
 static isc_boolean_t
 hmacsha256_compare(const dst_key_t *key1, const dst_key_t *key2) {
-	HMACSHA256_Key *hkey1, *hkey2;
+	dst_hmacsha256_key_t *hkey1, *hkey2;
 
-	hkey1 = (HMACSHA256_Key *)key1->opaque;
-	hkey2 = (HMACSHA256_Key *)key2->opaque;
+	hkey1 = key1->keydata.hmacsha256;
+	hkey2 = key2->keydata.hmacsha256;
 
 	if (hkey1 == NULL && hkey2 == NULL)
 		return (ISC_TRUE);
@@ -978,20 +991,20 @@ hmacsha256_isprivate(const dst_key_t *key) {
 
 static void
 hmacsha256_destroy(dst_key_t *key) {
-	HMACSHA256_Key *hkey = key->opaque;
-	memset(hkey, 0, sizeof(HMACSHA256_Key));
-	isc_mem_put(key->mctx, hkey, sizeof(HMACSHA256_Key));
-	key->opaque = NULL;
+	dst_hmacsha256_key_t *hkey = key->keydata.hmacsha256;
+	memset(hkey, 0, sizeof(dst_hmacsha256_key_t));
+	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacsha256_key_t));
+	key->keydata.hmacsha256 = NULL;
 }
 
 static isc_result_t
 hmacsha256_todns(const dst_key_t *key, isc_buffer_t *data) {
-	HMACSHA256_Key *hkey;
+	dst_hmacsha256_key_t *hkey;
 	unsigned int bytes;
 
-	REQUIRE(key->opaque != NULL);
+	REQUIRE(key->keydata.hmacsha256 != NULL);
 
-	hkey = (HMACSHA256_Key *) key->opaque;
+	hkey = key->keydata.hmacsha256;
 
 	bytes = (key->key_size + 7) / 8;
 	if (isc_buffer_availablelength(data) < bytes)
@@ -1003,7 +1016,7 @@ hmacsha256_todns(const dst_key_t *key, isc_buffer_t *data) {
 
 static isc_result_t
 hmacsha256_fromdns(dst_key_t *key, isc_buffer_t *data) {
-	HMACSHA256_Key *hkey;
+	dst_hmacsha256_key_t *hkey;
 	int keylen;
 	isc_region_t r;
 	isc_sha256_t sha256ctx;
@@ -1012,7 +1025,7 @@ hmacsha256_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = (HMACSHA256_Key *) isc_mem_get(key->mctx, sizeof(HMACSHA256_Key));
+	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacsha256_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -1030,7 +1043,7 @@ hmacsha256_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	}
 
 	key->key_size = keylen * 8;
-	key->opaque = hkey;
+	key->keydata.hmacsha256 = hkey;
 
 	return (ISC_R_SUCCESS);
 }
@@ -1038,15 +1051,15 @@ hmacsha256_fromdns(dst_key_t *key, isc_buffer_t *data) {
 static isc_result_t
 hmacsha256_tofile(const dst_key_t *key, const char *directory) {
 	int cnt = 0;
-	HMACSHA256_Key *hkey;
+	dst_hmacsha256_key_t *hkey;
 	dst_private_t priv;
 	int bytes = (key->key_size + 7) / 8;
 	unsigned char buf[2];
 
-	if (key->opaque == NULL)
+	if (key->keydata.hmacsha256 == NULL)
 		return (DST_R_NULLKEY);
 
-	hkey = (HMACSHA256_Key *) key->opaque;
+	hkey = key->keydata.hmacsha256;
 
 	priv.elements[cnt].tag = TAG_HMACSHA256_KEY;
 	priv.elements[cnt].length = bytes;
@@ -1131,37 +1144,37 @@ dst__hmacsha256_init(dst_func_t **funcp) {
 
 static isc_result_t hmacsha384_fromdns(dst_key_t *key, isc_buffer_t *data);
 
-typedef struct {
+struct dst_hmacsha384_key {
 	unsigned char key[ISC_SHA384_DIGESTLENGTH];
-} HMACSHA384_Key;
+};
 
 static isc_result_t
 hmacsha384_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacsha384_t *hmacsha384ctx;
-	HMACSHA384_Key *hkey = key->opaque;
+	dst_hmacsha384_key_t *hkey = key->keydata.hmacsha384;
 
 	hmacsha384ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacsha384_t));
 	if (hmacsha384ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacsha384_init(hmacsha384ctx, hkey->key, ISC_SHA384_DIGESTLENGTH);
-	dctx->opaque = hmacsha384ctx;
+	dctx->ctxdata.hmacsha384ctx = hmacsha384ctx;
 	return (ISC_R_SUCCESS);
 }
 
 static void
 hmacsha384_destroyctx(dst_context_t *dctx) {
-	isc_hmacsha384_t *hmacsha384ctx = dctx->opaque;
+	isc_hmacsha384_t *hmacsha384ctx = dctx->ctxdata.hmacsha384ctx;
 
 	if (hmacsha384ctx != NULL) {
 		isc_hmacsha384_invalidate(hmacsha384ctx);
 		isc_mem_put(dctx->mctx, hmacsha384ctx, sizeof(isc_hmacsha384_t));
-		dctx->opaque = NULL;
+		dctx->ctxdata.hmacsha384ctx = NULL;
 	}
 }
 
 static isc_result_t
 hmacsha384_adddata(dst_context_t *dctx, const isc_region_t *data) {
-	isc_hmacsha384_t *hmacsha384ctx = dctx->opaque;
+	isc_hmacsha384_t *hmacsha384ctx = dctx->ctxdata.hmacsha384ctx;
 
 	isc_hmacsha384_update(hmacsha384ctx, data->base, data->length);
 	return (ISC_R_SUCCESS);
@@ -1169,7 +1182,7 @@ hmacsha384_adddata(dst_context_t *dctx, const isc_region_t *data) {
 
 static isc_result_t
 hmacsha384_sign(dst_context_t *dctx, isc_buffer_t *sig) {
-	isc_hmacsha384_t *hmacsha384ctx = dctx->opaque;
+	isc_hmacsha384_t *hmacsha384ctx = dctx->ctxdata.hmacsha384ctx;
 	unsigned char *digest;
 
 	if (isc_buffer_availablelength(sig) < ISC_SHA384_DIGESTLENGTH)
@@ -1183,7 +1196,7 @@ hmacsha384_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 static isc_result_t
 hmacsha384_verify(dst_context_t *dctx, const isc_region_t *sig) {
-	isc_hmacsha384_t *hmacsha384ctx = dctx->opaque;
+	isc_hmacsha384_t *hmacsha384ctx = dctx->ctxdata.hmacsha384ctx;
 
 	if (sig->length > ISC_SHA384_DIGESTLENGTH || sig->length == 0)
 		return (DST_R_VERIFYFAILURE);
@@ -1196,10 +1209,10 @@ hmacsha384_verify(dst_context_t *dctx, const isc_region_t *sig) {
 
 static isc_boolean_t
 hmacsha384_compare(const dst_key_t *key1, const dst_key_t *key2) {
-	HMACSHA384_Key *hkey1, *hkey2;
+	dst_hmacsha384_key_t *hkey1, *hkey2;
 
-	hkey1 = (HMACSHA384_Key *)key1->opaque;
-	hkey2 = (HMACSHA384_Key *)key2->opaque;
+	hkey1 = key1->keydata.hmacsha384;
+	hkey2 = key2->keydata.hmacsha384;
 
 	if (hkey1 == NULL && hkey2 == NULL)
 		return (ISC_TRUE);
@@ -1247,20 +1260,20 @@ hmacsha384_isprivate(const dst_key_t *key) {
 
 static void
 hmacsha384_destroy(dst_key_t *key) {
-	HMACSHA384_Key *hkey = key->opaque;
-	memset(hkey, 0, sizeof(HMACSHA384_Key));
-	isc_mem_put(key->mctx, hkey, sizeof(HMACSHA384_Key));
-	key->opaque = NULL;
+	dst_hmacsha384_key_t *hkey = key->keydata.hmacsha384;
+	memset(hkey, 0, sizeof(dst_hmacsha384_key_t));
+	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacsha384_key_t));
+	key->keydata.hmacsha384 = NULL;
 }
 
 static isc_result_t
 hmacsha384_todns(const dst_key_t *key, isc_buffer_t *data) {
-	HMACSHA384_Key *hkey;
+	dst_hmacsha384_key_t *hkey;
 	unsigned int bytes;
 
-	REQUIRE(key->opaque != NULL);
+	REQUIRE(key->keydata.hmacsha384 != NULL);
 
-	hkey = (HMACSHA384_Key *) key->opaque;
+	hkey = key->keydata.hmacsha384;
 
 	bytes = (key->key_size + 7) / 8;
 	if (isc_buffer_availablelength(data) < bytes)
@@ -1272,7 +1285,7 @@ hmacsha384_todns(const dst_key_t *key, isc_buffer_t *data) {
 
 static isc_result_t
 hmacsha384_fromdns(dst_key_t *key, isc_buffer_t *data) {
-	HMACSHA384_Key *hkey;
+	dst_hmacsha384_key_t *hkey;
 	int keylen;
 	isc_region_t r;
 	isc_sha384_t sha384ctx;
@@ -1281,7 +1294,7 @@ hmacsha384_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = (HMACSHA384_Key *) isc_mem_get(key->mctx, sizeof(HMACSHA384_Key));
+	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacsha384_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -1299,7 +1312,7 @@ hmacsha384_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	}
 
 	key->key_size = keylen * 8;
-	key->opaque = hkey;
+	key->keydata.hmacsha384 = hkey;
 
 	return (ISC_R_SUCCESS);
 }
@@ -1307,15 +1320,15 @@ hmacsha384_fromdns(dst_key_t *key, isc_buffer_t *data) {
 static isc_result_t
 hmacsha384_tofile(const dst_key_t *key, const char *directory) {
 	int cnt = 0;
-	HMACSHA384_Key *hkey;
+	dst_hmacsha384_key_t *hkey;
 	dst_private_t priv;
 	int bytes = (key->key_size + 7) / 8;
 	unsigned char buf[2];
 
-	if (key->opaque == NULL)
+	if (key->keydata.hmacsha384 == NULL)
 		return (DST_R_NULLKEY);
 
-	hkey = (HMACSHA384_Key *) key->opaque;
+	hkey = key->keydata.hmacsha384;
 
 	priv.elements[cnt].tag = TAG_HMACSHA384_KEY;
 	priv.elements[cnt].length = bytes;
@@ -1400,37 +1413,37 @@ dst__hmacsha384_init(dst_func_t **funcp) {
 
 static isc_result_t hmacsha512_fromdns(dst_key_t *key, isc_buffer_t *data);
 
-typedef struct {
+struct dst_hmacsha512_key {
 	unsigned char key[ISC_SHA512_DIGESTLENGTH];
-} HMACSHA512_Key;
+};
 
 static isc_result_t
 hmacsha512_createctx(dst_key_t *key, dst_context_t *dctx) {
 	isc_hmacsha512_t *hmacsha512ctx;
-	HMACSHA512_Key *hkey = key->opaque;
+	dst_hmacsha512_key_t *hkey = key->keydata.hmacsha512;
 
 	hmacsha512ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacsha512_t));
 	if (hmacsha512ctx == NULL)
 		return (ISC_R_NOMEMORY);
 	isc_hmacsha512_init(hmacsha512ctx, hkey->key, ISC_SHA512_DIGESTLENGTH);
-	dctx->opaque = hmacsha512ctx;
+	dctx->ctxdata.hmacsha512ctx = hmacsha512ctx;
 	return (ISC_R_SUCCESS);
 }
 
 static void
 hmacsha512_destroyctx(dst_context_t *dctx) {
-	isc_hmacsha512_t *hmacsha512ctx = dctx->opaque;
+	isc_hmacsha512_t *hmacsha512ctx = dctx->ctxdata.hmacsha512ctx;
 
 	if (hmacsha512ctx != NULL) {
 		isc_hmacsha512_invalidate(hmacsha512ctx);
 		isc_mem_put(dctx->mctx, hmacsha512ctx, sizeof(isc_hmacsha512_t));
-		dctx->opaque = NULL;
+		dctx->ctxdata.hmacsha512ctx = NULL;
 	}
 }
 
 static isc_result_t
 hmacsha512_adddata(dst_context_t *dctx, const isc_region_t *data) {
-	isc_hmacsha512_t *hmacsha512ctx = dctx->opaque;
+	isc_hmacsha512_t *hmacsha512ctx = dctx->ctxdata.hmacsha512ctx;
 
 	isc_hmacsha512_update(hmacsha512ctx, data->base, data->length);
 	return (ISC_R_SUCCESS);
@@ -1438,7 +1451,7 @@ hmacsha512_adddata(dst_context_t *dctx, const isc_region_t *data) {
 
 static isc_result_t
 hmacsha512_sign(dst_context_t *dctx, isc_buffer_t *sig) {
-	isc_hmacsha512_t *hmacsha512ctx = dctx->opaque;
+	isc_hmacsha512_t *hmacsha512ctx = dctx->ctxdata.hmacsha512ctx;
 	unsigned char *digest;
 
 	if (isc_buffer_availablelength(sig) < ISC_SHA512_DIGESTLENGTH)
@@ -1452,7 +1465,7 @@ hmacsha512_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 static isc_result_t
 hmacsha512_verify(dst_context_t *dctx, const isc_region_t *sig) {
-	isc_hmacsha512_t *hmacsha512ctx = dctx->opaque;
+	isc_hmacsha512_t *hmacsha512ctx = dctx->ctxdata.hmacsha512ctx;
 
 	if (sig->length > ISC_SHA512_DIGESTLENGTH || sig->length == 0)
 		return (DST_R_VERIFYFAILURE);
@@ -1465,10 +1478,10 @@ hmacsha512_verify(dst_context_t *dctx, const isc_region_t *sig) {
 
 static isc_boolean_t
 hmacsha512_compare(const dst_key_t *key1, const dst_key_t *key2) {
-	HMACSHA512_Key *hkey1, *hkey2;
+	dst_hmacsha512_key_t *hkey1, *hkey2;
 
-	hkey1 = (HMACSHA512_Key *)key1->opaque;
-	hkey2 = (HMACSHA512_Key *)key2->opaque;
+	hkey1 = key1->keydata.hmacsha512;
+	hkey2 = key2->keydata.hmacsha512;
 
 	if (hkey1 == NULL && hkey2 == NULL)
 		return (ISC_TRUE);
@@ -1516,20 +1529,20 @@ hmacsha512_isprivate(const dst_key_t *key) {
 
 static void
 hmacsha512_destroy(dst_key_t *key) {
-	HMACSHA512_Key *hkey = key->opaque;
-	memset(hkey, 0, sizeof(HMACSHA512_Key));
-	isc_mem_put(key->mctx, hkey, sizeof(HMACSHA512_Key));
-	key->opaque = NULL;
+	dst_hmacsha512_key_t *hkey = key->keydata.hmacsha512;
+	memset(hkey, 0, sizeof(dst_hmacsha512_key_t));
+	isc_mem_put(key->mctx, hkey, sizeof(dst_hmacsha512_key_t));
+	key->keydata.hmacsha512 = NULL;
 }
 
 static isc_result_t
 hmacsha512_todns(const dst_key_t *key, isc_buffer_t *data) {
-	HMACSHA512_Key *hkey;
+	dst_hmacsha512_key_t *hkey;
 	unsigned int bytes;
 
-	REQUIRE(key->opaque != NULL);
+	REQUIRE(key->keydata.hmacsha512 != NULL);
 
-	hkey = (HMACSHA512_Key *) key->opaque;
+	hkey = key->keydata.hmacsha512;
 
 	bytes = (key->key_size + 7) / 8;
 	if (isc_buffer_availablelength(data) < bytes)
@@ -1541,7 +1554,7 @@ hmacsha512_todns(const dst_key_t *key, isc_buffer_t *data) {
 
 static isc_result_t
 hmacsha512_fromdns(dst_key_t *key, isc_buffer_t *data) {
-	HMACSHA512_Key *hkey;
+	dst_hmacsha512_key_t *hkey;
 	int keylen;
 	isc_region_t r;
 	isc_sha512_t sha512ctx;
@@ -1550,7 +1563,7 @@ hmacsha512_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
 
-	hkey = (HMACSHA512_Key *) isc_mem_get(key->mctx, sizeof(HMACSHA512_Key));
+	hkey = isc_mem_get(key->mctx, sizeof(dst_hmacsha512_key_t));
 	if (hkey == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -1568,7 +1581,7 @@ hmacsha512_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	}
 
 	key->key_size = keylen * 8;
-	key->opaque = hkey;
+	key->keydata.hmacsha512 = hkey;
 
 	return (ISC_R_SUCCESS);
 }
@@ -1576,15 +1589,15 @@ hmacsha512_fromdns(dst_key_t *key, isc_buffer_t *data) {
 static isc_result_t
 hmacsha512_tofile(const dst_key_t *key, const char *directory) {
 	int cnt = 0;
-	HMACSHA512_Key *hkey;
+	dst_hmacsha512_key_t *hkey;
 	dst_private_t priv;
 	int bytes = (key->key_size + 7) / 8;
 	unsigned char buf[2];
 
-	if (key->opaque == NULL)
+	if (key->keydata.hmacsha512 == NULL)
 		return (DST_R_NULLKEY);
 
-	hkey = (HMACSHA512_Key *) key->opaque;
+	hkey = key->keydata.hmacsha512;
 
 	priv.elements[cnt].tag = TAG_HMACSHA512_KEY;
 	priv.elements[cnt].length = bytes;

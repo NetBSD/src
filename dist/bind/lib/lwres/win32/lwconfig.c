@@ -1,10 +1,10 @@
-/*	$NetBSD: lwconfig.c,v 1.1.1.2 2007/01/27 21:09:21 christos Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.1.1.3 2008/06/21 18:30:58 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwconfig.c,v 1.2.18.2 2006/10/03 23:50:51 marka Exp */
+/* Id: lwconfig.c,v 1.7 2007/12/14 01:40:42 marka Exp */
 
 /*
  * We do this so that we may incorporate everything in the main routines
@@ -53,7 +53,6 @@ get_win32_searchlist(lwres_context_t *ctx) {
 	char searchlist[MAX_PATH];
 	DWORD searchlen = MAX_PATH;
 	char *cp;
-	int idx;
 	lwres_conf_t *confdata;
 
 	REQUIRE(ctx != NULL);
@@ -69,22 +68,19 @@ get_win32_searchlist(lwres_context_t *ctx) {
 		if (RegQueryValueEx(hKey, "SearchList", NULL, NULL,
 			(LPBYTE)searchlist, &searchlen) != ERROR_SUCCESS)
 			keyFound = FALSE;
+		RegCloseKey(hKey);
 	}
-	
-	RegCloseKey(hKey);
 
 	confdata->searchnxt = 0;
-
-	idx = 0;
 	cp = strtok((char *)searchlist, ", \0");
 	while (cp != NULL) {
 		if (confdata->searchnxt == LWRES_CONFMAXSEARCH)
 			break;
 		if (strlen(cp) <= MAX_PATH && strlen(cp) > 0) {
-			confdata->search[idx] = lwres_strdup(ctx, cp);
+			confdata->search[confdata->searchnxt] = lwres_strdup(ctx, cp);
+			if (confdata->search[confdata->searchnxt] != NULL)
+				confdata->searchnxt++;
 		}
-		idx++;
-		confdata->searchnxt++;
 		cp = strtok(NULL, ", \0");
 	}
 }
@@ -128,13 +124,14 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 	get_win32_searchlist(ctx);
 
 	/* Use only if there is no search list */
-	if (confdata->searchnxt == 0) {
+	if (confdata->searchnxt == 0 && strlen(FixedInfo->DomainName) > 0) {
 		confdata->domainname = lwres_strdup(ctx, FixedInfo->DomainName);
 		if (confdata->domainname == NULL) {
 			GlobalFree(FixedInfo);
 			return (LWRES_R_FAILURE);
 		}
-	}
+	} else
+		confdata->domainname = NULL;
 
 	/* Get the list of nameservers */
 	pIPAddr = &FixedInfo->DnsServerList;

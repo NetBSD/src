@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_data.c,v 1.1.1.4 2007/01/27 21:09:06 christos Exp $	*/
+/*	$NetBSD: inet_data.c,v 1.1.1.5 2008/06/21 18:33:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "Id: inet_data.c,v 1.3.18.1 2005/04/27 05:00:53 sra Exp";
+static char rcsid[] = "Id: inet_data.c,v 1.4 2005/04/27 04:56:19 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"

@@ -1,10 +1,10 @@
-/*	$NetBSD: name.c,v 1.1.1.5 2007/01/27 21:06:55 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.1.1.6 2008/06/21 18:32:03 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.c,v 1.144.18.16 2006/12/07 07:03:10 marka Exp */
+/* Id: name.c,v 1.163.128.2 2008/03/31 23:46:42 tbox Exp */
 
 /*! \file */
 
@@ -157,7 +157,7 @@ do { \
 static unsigned char root_ndata[] = { '\0' };
 static unsigned char root_offsets[] = { 0 };
 
-static dns_name_t root = 
+static dns_name_t root =
 {
 	DNS_NAME_MAGIC,
 	root_ndata, 1, 1,
@@ -300,7 +300,7 @@ dns_name_ismailbox(const dns_name_t *name) {
 	REQUIRE(name->labels > 0);
 	REQUIRE(name->attributes & DNS_NAMEATTR_ABSOLUTE);
 
-	/* 
+	/*
 	 * Root label.
 	 */
 	if (name->length == 1)
@@ -314,7 +314,7 @@ dns_name_ismailbox(const dns_name_t *name) {
 		if (!domainchar(ch))
 			return (ISC_FALSE);
 	}
-	
+
 	if (ndata == name->ndata + name->length)
 		return (ISC_FALSE);
 
@@ -349,8 +349,8 @@ dns_name_ishostname(const dns_name_t *name, isc_boolean_t wildcard) {
 	REQUIRE(VALID_NAME(name));
 	REQUIRE(name->labels > 0);
 	REQUIRE(name->attributes & DNS_NAMEATTR_ABSOLUTE);
-	
-	/* 
+
+	/*
 	 * Root label.
 	 */
 	if (name->length == 1)
@@ -920,7 +920,7 @@ dns_name_getlabelsequence(const dns_name_t *source,
 
 	target->ndata = &source->ndata[firstoffset];
 	target->length = endoffset - firstoffset;
-	
+
 	if (first + n == source->labels && n > 0 &&
 	    (source->attributes & DNS_NAMEATTR_ABSOLUTE) != 0)
 		target->attributes |= DNS_NAMEATTR_ABSOLUTE;
@@ -993,7 +993,7 @@ dns_name_fromregion(dns_name_t *name, const isc_region_t *r) {
 		name->length = len;
 	} else {
 		name->ndata = r->base;
-		name->length = (r->length <= DNS_NAME_MAXWIRE) ? 
+		name->length = (r->length <= DNS_NAME_MAXWIRE) ?
 			r->length : DNS_NAME_MAXWIRE;
 	}
 
@@ -1051,7 +1051,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 	REQUIRE(ISC_BUFFER_VALID(source));
 	REQUIRE((target != NULL && ISC_BUFFER_VALID(target)) ||
 		(target == NULL && ISC_BUFFER_VALID(name->buffer)));
-	
+
 	downcase = ISC_TF((options & DNS_NAME_DOWNCASE) != 0);
 
 	if (target == NULL && name->buffer != NULL) {
@@ -1299,24 +1299,25 @@ totext_filter_proc_key_init(void) {
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
-        if (!thread_key_initialized) {
+	if (!thread_key_initialized) {
 		LOCK(&thread_key_mutex);
 		if (thread_key_mctx == NULL)
 			result = isc_mem_create2(0, 0, &thread_key_mctx, 0);
 		if (result != ISC_R_SUCCESS)
 			goto unlock;
+		isc_mem_setname(thread_key_mctx, "threadkey", NULL);
 		isc_mem_setdestroycheck(thread_key_mctx, ISC_FALSE);
-		
+
 		if (!thread_key_initialized &&
 		     isc_thread_key_create(&totext_filter_proc_key,
-					    free_specific) != 0) {
+					   free_specific) != 0) {
 			result = ISC_R_FAILURE;
 			isc_mem_detach(&thread_key_mctx);
 		} else
 			thread_key_initialized = 1;
  unlock:
 		UNLOCK(&thread_key_mutex);
-        }
+	}
 	return (result);
 }
 #endif
@@ -1932,7 +1933,8 @@ dns_name_towire(const dns_name_t *name, dns_compress_t *cctx,
 
 	methods = dns_compress_getmethods(cctx);
 
-	if ((methods & DNS_COMPRESS_GLOBAL14) != 0)
+	if ((name->attributes & DNS_NAMEATTR_NOCOMPRESS) == 0 &&
+	    (methods & DNS_COMPRESS_GLOBAL14) != 0)
 		gf = dns_compress_findglobal(cctx, name, &gp, &go);
 	else
 		gf = ISC_FALSE;
@@ -2300,7 +2302,7 @@ dns_name_settotextfilter(dns_name_totextfilter_t proc) {
 			result = ISC_R_UNEXPECTED;
 		return (result);
 	}
-	
+
 	mem = isc_mem_get(thread_key_mctx, sizeof(*mem));
 	if (mem == NULL)
 		return (ISC_R_NOMEMORY);

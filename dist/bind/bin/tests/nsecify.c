@@ -1,10 +1,10 @@
-/*	$NetBSD: nsecify.c,v 1.1.1.3 2007/01/27 21:04:03 christos Exp $	*/
+/*	$NetBSD: nsecify.c,v 1.1.1.4 2008/06/21 18:33:56 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsecify.c,v 1.3.20.1 2004/08/28 06:17:28 marka Exp */
+/* Id: nsecify.c,v 1.6 2007/06/19 23:46:59 tbox Exp */
 
 #include <config.h>
 

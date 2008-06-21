@@ -1,7 +1,7 @@
-/*	$NetBSD: ctl_srvr.c,v 1.1.1.4 2007/01/27 21:09:02 christos Exp $	*/
+/*	$NetBSD: ctl_srvr.c,v 1.1.1.5 2008/06/21 18:33:17 christos Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ctl_srvr.c,v 1.6.18.2 2006/12/07 04:53:02 marka Exp";
+static const char rcsid[] = "Id: ctl_srvr.c,v 1.8.246.1 2008/02/18 04:10:16 marka Exp";
 #endif /* not lint */
 
 /*
@@ -42,6 +42,9 @@ static const char rcsid[] = "Id: ctl_srvr.c,v 1.6.18.2 2006/12/07 04:53:02 marka
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
+#ifdef HAVE_MEMORY_H
+#include <memory.h>
+#endif
 
 #include <isc/assertions.h>
 #include <isc/ctl.h>

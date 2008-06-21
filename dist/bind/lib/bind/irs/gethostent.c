@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostent.c,v 1.1.1.4 2007/01/27 21:08:55 christos Exp $	*/
+/*	$NetBSD: gethostent.c,v 1.1.1.5 2008/06/21 18:33:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: gethostent.c,v 1.6.18.2 2006/01/10 05:09:08 marka Exp";
+static const char rcsid[] = "Id: gethostent.c,v 1.8 2006/01/10 05:06:00 marka Exp";
 #endif
 
 /* Imports */

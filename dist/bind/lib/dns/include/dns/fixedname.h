@@ -1,10 +1,10 @@
-/*	$NetBSD: fixedname.h,v 1.1.1.4 2007/01/27 21:07:34 christos Exp $	*/
+/*	$NetBSD: fixedname.h,v 1.1.1.5 2008/06/21 18:32:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: fixedname.h,v 1.13.18.2 2005/04/29 00:16:13 marka Exp */
+/* Id: fixedname.h,v 1.19 2007/06/19 23:47:16 tbox Exp */
 
 #ifndef DNS_FIXEDNAME_H
 #define DNS_FIXEDNAME_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/fixedname.h
  * \brief
  * Fixed-size Names
  *

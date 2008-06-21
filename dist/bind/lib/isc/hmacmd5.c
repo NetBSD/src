@@ -1,10 +1,10 @@
-/*	$NetBSD: hmacmd5.c,v 1.1.1.4 2007/01/27 21:07:43 christos Exp $	*/
+/*	$NetBSD: hmacmd5.c,v 1.1.1.5 2008/06/21 18:31:05 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hmacmd5.c,v 1.7.18.5 2006/02/26 22:30:56 marka Exp */
+/* Id: hmacmd5.c,v 1.14 2007/06/19 23:47:17 tbox Exp */
 
 /*! \file
  * This code implements the HMAC-MD5 keyed hash algorithm

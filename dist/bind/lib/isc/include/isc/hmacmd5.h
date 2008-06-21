@@ -1,10 +1,10 @@
-/*	$NetBSD: hmacmd5.h,v 1.1.1.4 2007/01/27 21:07:53 christos Exp $	*/
+/*	$NetBSD: hmacmd5.h,v 1.1.1.5 2008/06/21 18:31:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,9 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: hmacmd5.h,v 1.5.18.4 2006/01/27 23:57:45 marka Exp */
+/* Id: hmacmd5.h,v 1.12 2007/06/19 23:47:18 tbox Exp */
 
-/*! \file
+/*! \file isc/hmacmd5.h
  * \brief This is the header file for the HMAC-MD5 keyed hash algorithm
  * described in RFC2104.
  */

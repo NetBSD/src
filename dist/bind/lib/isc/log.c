@@ -1,10 +1,10 @@
-/*	$NetBSD: log.c,v 1.1.1.5 2007/01/27 21:07:45 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.6 2008/06/21 18:31:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.c,v 1.84.18.8 2006/03/02 00:37:22 marka Exp */
+/* Id: log.c,v 1.94 2007/06/19 23:47:17 tbox Exp */
 
 /*! \file
  * \author  Principal Authors: DCL */

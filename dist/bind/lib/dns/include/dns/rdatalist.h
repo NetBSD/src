@@ -1,10 +1,10 @@
-/*	$NetBSD: rdatalist.h,v 1.1.1.4 2007/01/27 21:07:37 christos Exp $	*/
+/*	$NetBSD: rdatalist.h,v 1.1.1.5 2008/06/21 18:32:26 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatalist.h,v 1.14.18.2 2005/04/29 00:16:19 marka Exp */
+/* Id: rdatalist.h,v 1.20.128.2 2008/04/03 06:08:27 tbox Exp */
 
 #ifndef DNS_RDATALIST_H
 #define DNS_RDATALIST_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/rdatalist.h
  * \brief
  * A DNS rdatalist is a list of rdata of a common type and class.
  *
@@ -95,6 +95,27 @@ dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist,
  *	on success,
  *
  *\li		'rdataset' is associated with the rdata in rdatalist.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ */
+
+isc_result_t
+dns_rdatalist_fromrdataset(dns_rdataset_t *rdataset,
+			   dns_rdatalist_t **rdatalist);
+/*%<
+ * Point 'rdatalist' to the rdatalist in 'rdataset'.
+ *
+ * Requires:
+ *
+ *\li	'rdatalist' is a pointer to a NULL dns_rdatalist_t pointer.
+ *
+ *\li	'rdataset' is a valid rdataset associated with an rdatalist.
+ *
+ * Ensures,
+ *	on success,
+ *
+ *\li		'rdatalist' is pointed to the rdatalist in rdataset.
  *
  * Returns:
  *\li	#ISC_R_SUCCESS

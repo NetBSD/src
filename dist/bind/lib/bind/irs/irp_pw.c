@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_pw.c,v 1.1.1.4 2007/01/27 21:08:57 christos Exp $	*/
+/*	$NetBSD: irp_pw.c,v 1.1.1.5 2008/06/21 18:33:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: irp_pw.c,v 1.3.18.1 2005/04/27 05:01:01 sra Exp";
+static const char rcsid[] = "Id: irp_pw.c,v 1.4 2005/04/27 04:56:29 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Extern */

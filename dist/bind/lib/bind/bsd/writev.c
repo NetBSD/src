@@ -1,7 +1,7 @@
-/*	$NetBSD: writev.c,v 1.1.1.2 2007/01/27 21:08:47 christos Exp $	*/
+/*	$NetBSD: writev.c,v 1.1.1.3 2008/06/21 18:33:13 christos Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Id: writev.c,v 1.2.164.1 2005/04/27 05:00:47 sra Exp";
+static const char rcsid[] = "Id: writev.c,v 1.3 2005/04/27 04:56:13 sra Exp";
 #endif
 
 #include "port_before.h"

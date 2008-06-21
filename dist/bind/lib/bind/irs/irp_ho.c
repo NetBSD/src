@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_ho.c,v 1.1.1.4 2007/01/27 21:08:57 christos Exp $	*/
+/*	$NetBSD: irp_ho.c,v 1.1.1.5 2008/06/21 18:33:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: irp_ho.c,v 1.2.18.1 2005/04/27 05:01:00 sra Exp";
+static const char rcsid[] = "Id: irp_ho.c,v 1.3 2005/04/27 04:56:28 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports. */

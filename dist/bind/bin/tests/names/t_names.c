@@ -1,10 +1,10 @@
-/*	$NetBSD: t_names.c,v 1.1.1.4 2007/01/27 21:04:07 christos Exp $	*/
+/*	$NetBSD: t_names.c,v 1.1.1.5 2008/06/21 18:34:07 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_names.c,v 1.36.18.5 2006/12/07 23:57:58 marka Exp */
+/* Id: t_names.c,v 1.43.128.3 2008/01/17 23:46:36 tbox Exp */
 
 #include <config.h>
 
@@ -211,6 +211,7 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 		else if (('A' <= c) && (c <= 'Z'))
 			val = c - 'A'+ 10;
 		else {
+			(void)fclose(fp);
 			t_info("Bad format in datafile\n");
 			return (0);
 		}
@@ -224,6 +225,7 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 				/*
 				 * Buffer too small.
 				 */
+				(void)fclose(fp);
 				t_info("Buffer overflow error\n");
 				return (0);
 			}
@@ -581,7 +583,7 @@ t_dns_name_isabsolute(void) {
 				 * label, bitpos, expected value.
 				 */
 				result = test_dns_name_isabsolute(Tokens[0],
-							        atoi(Tokens[1])
+								atoi(Tokens[1])
 								  == 0 ?
 								  ISC_FALSE :
 								  ISC_TRUE);
@@ -1366,7 +1368,7 @@ t_dns_name_getlabel(void) {
 				 */
 				result = test_dns_name_getlabel(Tokens[0],
 							      atoi(Tokens[1]),
-							           Tokens[2],
+								   Tokens[2],
 							      atoi(Tokens[3]));
 			} else {
 				t_info("bad format at line %d\n", line);

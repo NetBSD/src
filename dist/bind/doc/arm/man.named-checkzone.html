@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004-2007 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2008 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and distribute this software for any
@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: man.named-checkzone.html,v 1.2.2.40.10.1 2007/07/09 02:25:53 marka Exp -->
+<!-- Id: man.named-checkzone.html,v 1.63.18.14 2008/05/15 01:42:11 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -47,11 +47,11 @@
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="cmdsynopsis"><p><code class="command">named-checkzone</code>  [<code class="option">-d</code>] [<code class="option">-j</code>] [<code class="option">-q</code>] [<code class="option">-v</code>] [<code class="option">-c <em class="replaceable"><code>class</code></em></code>] [<code class="option">-f <em class="replaceable"><code>format</code></em></code>] [<code class="option">-F <em class="replaceable"><code>format</code></em></code>] [<code class="option">-i <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-k <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-m <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-M <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-n <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-o <em class="replaceable"><code>filename</code></em></code>] [<code class="option">-s <em class="replaceable"><code>style</code></em></code>] [<code class="option">-S <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-t <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-w <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-D</code>] [<code class="option">-W <em class="replaceable"><code>mode</code></em></code>] {zonename} {filename}</p></div>
+<div class="cmdsynopsis"><p><code class="command">named-checkzone</code>  [<code class="option">-d</code>] [<code class="option">-h</code>] [<code class="option">-j</code>] [<code class="option">-q</code>] [<code class="option">-v</code>] [<code class="option">-c <em class="replaceable"><code>class</code></em></code>] [<code class="option">-f <em class="replaceable"><code>format</code></em></code>] [<code class="option">-F <em class="replaceable"><code>format</code></em></code>] [<code class="option">-i <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-k <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-m <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-M <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-n <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-o <em class="replaceable"><code>filename</code></em></code>] [<code class="option">-s <em class="replaceable"><code>style</code></em></code>] [<code class="option">-S <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-t <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-w <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-D</code>] [<code class="option">-W <em class="replaceable"><code>mode</code></em></code>] {zonename} {filename}</p></div>
 <div class="cmdsynopsis"><p><code class="command">named-compilezone</code>  [<code class="option">-d</code>] [<code class="option">-j</code>] [<code class="option">-q</code>] [<code class="option">-v</code>] [<code class="option">-c <em class="replaceable"><code>class</code></em></code>] [<code class="option">-C <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-f <em class="replaceable"><code>format</code></em></code>] [<code class="option">-F <em class="replaceable"><code>format</code></em></code>] [<code class="option">-i <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-k <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-m <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-n <em class="replaceable"><code>mode</code></em></code>] [<code class="option">-o <em class="replaceable"><code>filename</code></em></code>] [<code class="option">-s <em class="replaceable"><code>style</code></em></code>] [<code class="option">-t <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-w <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-D</code>] [<code class="option">-W <em class="replaceable"><code>mode</code></em></code>] {zonename} {filename}</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2601347"></a><h2>DESCRIPTION</h2>
+<a name="id2606692"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">named-checkzone</strong></span>
       checks the syntax and integrity of a zone file.  It performs the
       same checks as <span><strong class="command">named</strong></span> does when loading a
@@ -65,17 +65,21 @@
 	Additionally, it applies stricter check levels by default,
         since the dump output will be used as an actual zone file
 	loaded by <span><strong class="command">named</strong></span>.
-	When manaully specified otherwise, the check levels must at
+	When manually specified otherwise, the check levels must at
         least be as strict as those specified in the
 	<span><strong class="command">named</strong></span> configuration file.
      </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2601397"></a><h2>OPTIONS</h2>
+<a name="id2606742"></a><h2>OPTIONS</h2>
 <div class="variablelist"><dl>
 <dt><span class="term">-d</span></dt>
 <dd><p>
             Enable debugging.
+          </p></dd>
+<dt><span class="term">-h</span></dt>
+<dd><p>
+            Print the usage summary and exit.
           </p></dd>
 <dt><span class="term">-q</span></dt>
 <dd><p>
@@ -97,7 +101,7 @@
 <dt><span class="term">-i <em class="replaceable"><code>mode</code></em></span></dt>
 <dd>
 <p>
-	      Perform post load zone integrity checks.  Possible modes are
+	      Perform post-load zone integrity checks.  Possible modes are
 	      <span><strong class="command">"full"</strong></span> (default),
 	      <span><strong class="command">"full-sibling"</strong></span>,
 	      <span><strong class="command">"local"</strong></span>,
@@ -119,7 +123,7 @@
 <p>
 	      Mode <span><strong class="command">"full"</strong></span> checks that delegation NS
 	      records refer to A or AAAA record (both in-zone and out-of-zone
-	      hostnames).  It also checks that glue addresses records
+	      hostnames).  It also checks that glue address records
 	      in the zone match those advertised by the child.
 	      Mode <span><strong class="command">"local"</strong></span> only checks NS records which
 	      refer to in-zone hostnames or that some required glue exists,
@@ -187,6 +191,8 @@
 <dt><span class="term">-o <em class="replaceable"><code>filename</code></em></span></dt>
 <dd><p>
             Write zone output to <code class="filename">filename</code>.
+	    If <code class="filename">filename</code> is <code class="filename">-</code> then
+	    write to standard out.
 	    This is mandatory for <span><strong class="command">named-compilezone</strong></span>.
           </p></dd>
 <dt><span class="term">-s <em class="replaceable"><code>style</code></em></span></dt>
@@ -213,7 +219,7 @@
 	  </p></dd>
 <dt><span class="term">-t <em class="replaceable"><code>directory</code></em></span></dt>
 <dd><p>
-            chroot to <code class="filename">directory</code> so that
+            Chroot to <code class="filename">directory</code> so that
             include
             directives in the configuration file are processed as if
             run by a similarly chrooted named.
@@ -251,21 +257,22 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2654948"></a><h2>RETURN VALUES</h2>
+<a name="id2658270"></a><h2>RETURN VALUES</h2>
 <p><span><strong class="command">named-checkzone</strong></span>
       returns an exit status of 1 if
       errors were detected and 0 otherwise.
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2654962"></a><h2>SEE ALSO</h2>
+<a name="id2658284"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>,
+      <span class="citerefentry"><span class="refentrytitle">named-checkconf</span>(8)</span>,
       <em class="citetitle">RFC 1035</em>,
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>.
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2654986"></a><h2>AUTHOR</h2>
+<a name="id2658317"></a><h2>AUTHOR</h2>
 <p><span class="corpauthor">Internet Systems Consortium</span>
     </p>
 </div>

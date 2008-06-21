@@ -78,8 +78,7 @@ if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;1
 MT_SPECIAL_RETURN=0
 MT_SPECIAL_SWITCH=
 _VC_MANIFEST_EMBED_EXE= \
-if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).
-auto.manifest $(MT_SPECIAL_SWITCH) & \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
 if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
 rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
 link $** /out:$@ $(LFLAGS)
@@ -135,6 +134,7 @@ CLEAN :
 	-@erase "$(INTDIR)\lwres_noop.obj"
 	-@erase "$(INTDIR)\lwresutil.obj"
 	-@erase "$(INTDIR)\vc60.idb"
+	-@erase "$(INTDIR)\socket.obj"
 	-@erase "$(INTDIR)\version.obj"
 	-@erase "$(OUTDIR)\liblwres.exp"
 	-@erase "$(OUTDIR)\liblwres.lib"
@@ -174,6 +174,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\lwres_grbn.obj" \
 	"$(INTDIR)\lwres_noop.obj" \
 	"$(INTDIR)\lwresutil.obj" \
+	"$(INTDIR)\socket.obj" \
 	"$(INTDIR)\version.obj" \
 	"$(INTDIR)\lwconfig.obj"
 
@@ -237,6 +238,8 @@ CLEAN :
 	-@erase "$(INTDIR)\lwresutil.sbr"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
+	-@erase "$(INTDIR)\socket.obj"
+	-@erase "$(INTDIR)\socket.sbr"
 	-@erase "$(INTDIR)\version.obj"
 	-@erase "$(INTDIR)\version.sbr"
 	-@erase "$(OUTDIR)\liblwres.bsc"
@@ -250,7 +253,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../lib/lwres/win32/include/lwres" /I "include" /I "../include" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/include" /I "../../../lib/isc/noatomic/include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBLWRES_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\liblwres.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
+CPP_PROJ=/nologo /MDd /W3 /Gm /GX /ZI /Od /I "./" /I "../../../lib/lwres/win32/include/lwres" /I "include" /I "../include" /I "../../../" /I "../../../lib/isc/win32" /I "../../../lib/isc/win32/include" /I "../../../lib/dns/win32/include" /I "../../../lib/dns/include" /I "../../../lib/isc/include" /I "../../../lib/isc/noatomic/include" /I "../..../lib/dns/sec/openssl/include" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "__STDC__" /D "_MBCS" /D "_USRDLL" /D "USE_MD5" /D "OPENSSL" /D "DST_USE_PRIVATE_OPENSSL" /D "LIBLWRES_EXPORTS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\liblwres.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\liblwres.bsc" 
@@ -274,6 +277,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\lwres_grbn.sbr" \
 	"$(INTDIR)\lwres_noop.sbr" \
 	"$(INTDIR)\lwresutil.sbr" \
+	"$(INTDIR)\socket.sbr" \
 	"$(INTDIR)\version.sbr" \
 	"$(INTDIR)\lwconfig.sbr"
 
@@ -306,6 +310,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\lwres_grbn.obj" \
 	"$(INTDIR)\lwres_noop.obj" \
 	"$(INTDIR)\lwresutil.obj" \
+	"$(INTDIR)\socket.obj" \
 	"$(INTDIR)\version.obj" \
 	"$(INTDIR)\lwconfig.obj"
 
@@ -710,6 +715,22 @@ SOURCE=..\lwresutil.c
 
 "$(INTDIR)\lwresutil.obj"	"$(INTDIR)\lwresutil.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=.\socket.c
+
+!IF  "$(CFG)" == "liblwres - Win32 Release"
+
+
+"$(INTDIR)\socket.obj" : $(SOURCE) "$(INTDIR)"
+
+
+!ELSEIF  "$(CFG)" == "liblwres - Win32 Debug"
+
+
+"$(INTDIR)\socket.obj"	"$(INTDIR)\socket.sbr" : $(SOURCE) "$(INTDIR)"
 
 
 !ENDIF 

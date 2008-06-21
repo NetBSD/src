@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.1.1.5 2007/01/27 21:09:09 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.1.1.6 2008/06/21 18:33:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -52,7 +52,7 @@
 
 /*%
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	Id: resolv.h,v 1.19.18.3 2005/08/25 04:43:51 marka Exp
+ *	Id: resolv.h,v 1.23.564.1 2008/04/03 02:12:21 marka Exp
  */
 
 #ifndef _RESOLV_H_
@@ -252,6 +252,7 @@ union res_sockaddr_union {
 #define	RES_NOCHECKNAME	0x00008000	/*%< do not check names for sanity. */
 #define	RES_KEEPTSIG	0x00010000	/*%< do not strip TSIG records */
 #define	RES_BLAST	0x00020000	/*%< blast all recursive servers */
+#define RES_NSID	0x00040000      /*%< request name server ID */
 #define RES_NOTLDQUERY	0x00100000	/*%< don't unqualified name as a tld */
 #define RES_USE_DNSSEC	0x00200000	/*%< use DNSSEC using OK bit in OPT */
 /* #define RES_DEBUG2	0x00400000 */	/* nslookup internal */
@@ -398,6 +399,7 @@ extern const struct res_sym __p_rcode_syms[];
 #define sym_ntos		__sym_ntos
 #define sym_ston		__sym_ston
 #define res_nopt		__res_nopt
+#define res_nopt_rdata       	__res_nopt_rdata
 #define res_ndestroy		__res_ndestroy
 #define	res_nametoclass		__res_nametoclass
 #define	res_nametotype		__res_nametotype
@@ -484,6 +486,8 @@ int		res_findzonecut2 __P((res_state, const char *, ns_class, int,
 				      union res_sockaddr_union *, int));
 void		res_nclose __P((res_state));
 int		res_nopt __P((res_state, int, u_char *, int, int));
+int		res_nopt_rdata __P((res_state, int, u_char *, int, u_char *,
+				    u_short, u_short, u_char *));
 void		res_send_setqhook __P((res_send_qhook));
 void		res_send_setrhook __P((res_send_rhook));
 int		__res_vinit __P((res_state, int));

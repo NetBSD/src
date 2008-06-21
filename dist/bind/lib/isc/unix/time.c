@@ -1,10 +1,10 @@
-/*	$NetBSD: time.c,v 1.1.1.4 2007/01/27 21:08:03 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.5 2008/06/21 18:31:30 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: time.c,v 1.47.18.2 2005/04/29 00:17:09 marka Exp */
+/* Id: time.c,v 1.54.128.2 2008/02/18 23:46:30 tbox Exp */
 
 /*! \file */
 
@@ -229,7 +229,7 @@ isc_time_nowplusinterval(isc_time_t *t, const isc_interval_t *i) {
 
 	t->seconds = tv.tv_sec + i->seconds;
 	t->nanoseconds = tv.tv_usec * NS_PER_US + i->nanoseconds;
-	if (t->nanoseconds > NS_PER_S) {
+	if (t->nanoseconds >= NS_PER_S) {
 		t->seconds++;
 		t->nanoseconds -= NS_PER_S;
 	}
@@ -412,5 +412,29 @@ isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len) {
 		snprintf(buf + flen, len - flen,
 			 ".%03u", t->nanoseconds / 1000000);
 	else
-                snprintf(buf, len, "99-Bad-9999 99:99:99.999");
+		snprintf(buf, len, "99-Bad-9999 99:99:99.999");
+}
+
+void
+isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
+	time_t now;
+	unsigned int flen;
+
+	REQUIRE(len > 0);
+
+	now = (time_t)t->seconds;
+	flen = strftime(buf, len, "%a, %d %b %Y %H:%M:%S GMT", gmtime(&now));
+	INSIST(flen < len);
+}
+
+void
+isc_time_formatISO8601(const isc_time_t *t, char *buf, unsigned int len) {
+	time_t now;
+	unsigned int flen;
+
+	REQUIRE(len > 0);
+
+	now = (time_t)t->seconds;
+	flen = strftime(buf, len, "%Y-%m-%dT%H:%M:%SZ", gmtime(&now));
+	INSIST(flen < len);
 }

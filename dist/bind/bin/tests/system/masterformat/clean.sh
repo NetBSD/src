@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -14,9 +14,10 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.2.2.1 2005/06/20 01:19:29 marka Exp
+# Id: clean.sh,v 1.5 2007/09/26 03:22:44 marka Exp
 
 rm -f named-compilezone
 rm -f ns1/example.db.raw
 rm -f ns2/example.db
 rm -f dig.out.*
+rm -f */named.memstats

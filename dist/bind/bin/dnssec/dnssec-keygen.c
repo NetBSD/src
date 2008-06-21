@@ -1,11 +1,24 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.1.1.6 2007/03/30 19:15:59 ghen Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.1.1.7 2008/06/21 18:33:53 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -18,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-keygen.c,v 1.66.18.9 2007/01/18 00:06:11 marka Exp */
+/* Id: dnssec-keygen.c,v 1.79 2007/08/28 07:20:42 tbox Exp */
 
 /*! \file */
 
@@ -63,7 +76,7 @@ dsa_size_ok(int size) {
 static void
 usage(void) {
 	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "    %s -a alg -b bits -n type [options] name\n\n",
+	fprintf(stderr, "    %s -a alg -b bits [-n type] [options] name\n\n",
 		program);
 	fprintf(stderr, "Version: %s\n", VERSION);
 	fprintf(stderr, "Required options:\n");
@@ -80,6 +93,7 @@ usage(void) {
 	fprintf(stderr, "        HMAC-SHA384:\t[1..384]\n");
 	fprintf(stderr, "        HMAC-SHA512:\t[1..512]\n");
 	fprintf(stderr, "    -n nametype: ZONE | HOST | ENTITY | USER | OTHER\n");
+	fprintf(stderr, "        (DNSKEY generation defaults to ZONE\n");
 	fprintf(stderr, "    name: owner of the key\n");
 	fprintf(stderr, "Other options:\n");
 	fprintf(stderr, "    -c <class> (default: IN)\n");
@@ -136,8 +150,10 @@ main(int argc, char **argv) {
 
 	dns_result_register();
 
+	isc_commandline_errprint = ISC_FALSE;
+
 	while ((ch = isc_commandline_parse(argc, argv,
-					   "a:b:c:d:ef:g:kn:t:p:s:r:v:h")) != -1)
+					 "a:b:c:d:ef:g:kn:t:p:s:r:v:h")) != -1)
 	{
 	    switch (ch) {
 		case 'a':
@@ -204,12 +220,17 @@ main(int argc, char **argv) {
 				fatal("-v must be followed by a number");
 			break;
 
+		case '?':
+			if (isc_commandline_option != '?')
+				fprintf(stderr, "%s: invalid argument -%c\n",
+					program, isc_commandline_option);
 		case 'h':
 			usage();
+
 		default:
-			fprintf(stderr, "%s: invalid argument -%c\n",
-				program, ch);
-			usage();
+			fprintf(stderr, "%s: unhandled option -%c\n",
+				program, isc_commandline_option);
+			exit(1);
 		}
 	}
 
@@ -358,11 +379,13 @@ main(int argc, char **argv) {
 	if (alg != DNS_KEYALG_DH && generator != 0)
 		fatal("specified DH generator for a non-DH key");
 
-	if (nametype == NULL)
-		fatal("no nametype specified");
-	if (strcasecmp(nametype, "zone") == 0)
+	if (nametype == NULL) {
+		if ((options & DST_TYPE_KEY) != 0) /* KEY / HMAC */
+			fatal("no nametype specified");
+		flags |= DNS_KEYOWNER_ZONE;	/* DNSKEY */
+	} else if (strcasecmp(nametype, "zone") == 0)
 		flags |= DNS_KEYOWNER_ZONE;
-	else if ((options & DST_TYPE_KEY) != 0)	{ /* KEY */
+	else if ((options & DST_TYPE_KEY) != 0)	{ /* KEY / HMAC */
 		if (strcasecmp(nametype, "host") == 0 ||
 			 strcasecmp(nametype, "entity") == 0)
 			flags |= DNS_KEYOWNER_ENTITY;
@@ -375,7 +398,7 @@ main(int argc, char **argv) {
 
 	rdclass = strtoclass(classname);
 
-	if ((options & DST_TYPE_KEY) != 0)  /* KEY */
+	if ((options & DST_TYPE_KEY) != 0)  /* KEY / HMAC */
 		flags |= signatory;
 	else if ((flags & DNS_KEYOWNER_ZONE) != 0) /* DNSKEY */
 		flags |= ksk;

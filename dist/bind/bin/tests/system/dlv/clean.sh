@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.2.2.1 2004/05/14 05:19:47 marka Exp
+# Id: clean.sh,v 1.5 2007/09/26 03:22:43 marka Exp
 
 rm -f random.data
 rm -f ns*/named.run
@@ -25,3 +25,4 @@ rm -f ns3/dlvset-*
 rm -f ns3/dsset-*
 rm -f ns3/keyset-*
 rm -f ns3/trusted.conf ns5/trusted.conf
+rm -f */named.memstats

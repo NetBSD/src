@@ -1,7 +1,7 @@
 # Microsoft Developer Studio Project File - Name="libisc" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
-
+     
 # TARGTYPE "Win32 (x86) Dynamic-Link Library" 0x0102
 
 CFG=libisc - Win32 Debug
@@ -297,6 +297,10 @@ SOURCE=..\include\isc\hmacsha.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\isc\httpd.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\include\isc\int.h
 # End Source File
 # Begin Source File
@@ -414,6 +418,10 @@ SOURCE=..\include\isc\print.h
 # Begin Source File
 
 SOURCE=..\include\isc\quota.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\radix.h
 # End Source File
 # Begin Source File
 
@@ -601,6 +609,10 @@ SOURCE=..\hmacsha.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\httpd.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\inet_aton.c
 # End Source File
 # Begin Source File
@@ -662,6 +674,10 @@ SOURCE=..\parseint.c
 # Begin Source File
 
 SOURCE=..\quota.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\radix.c
 # End Source File
 # Begin Source File
 

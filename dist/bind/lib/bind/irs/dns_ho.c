@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_ho.c,v 1.1.1.5 2007/01/27 21:08:52 christos Exp $	*/
+/*	$NetBSD: dns_ho.c,v 1.1.1.6 2008/06/21 18:33:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993
@@ -54,7 +54,7 @@
 /* BIND Id: gethnamaddr.c,v 8.15 1996/05/22 04:56:30 vixie Exp $ */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns_ho.c,v 1.14.18.7 2006/12/07 03:54:24 marka Exp";
+static const char rcsid[] = "Id: dns_ho.c,v 1.21 2006/12/07 03:51:29 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports. */

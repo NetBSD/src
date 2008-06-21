@@ -1,10 +1,10 @@
-/*	$NetBSD: dbtable.c,v 1.1.1.4 2007/01/27 21:06:41 christos Exp $	*/
+/*	$NetBSD: dbtable.c,v 1.1.1.5 2008/06/21 18:31:49 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: dbtable.c,v 1.28.18.3 2005/07/12 01:22:19 marka Exp
+ * Id: dbtable.c,v 1.33 2007/06/19 23:47:16 tbox Exp
  */
 
 /*! \file

@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_connects.c,v 1.1.1.4 2007/01/27 21:09:02 christos Exp $	*/
+/*	$NetBSD: ev_connects.c,v 1.1.1.5 2008/06/21 18:33:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_connects.c,v 1.5.18.3 2006/03/10 00:20:08 marka Exp";
+static const char rcsid[] = "Id: ev_connects.c,v 1.8 2006/03/09 23:57:56 marka Exp";
 #endif
 
 /* Import. */

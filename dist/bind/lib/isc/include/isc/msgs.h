@@ -1,10 +1,10 @@
-/*	$NetBSD: msgs.h,v 1.1.1.4 2007/01/27 21:07:55 christos Exp $	*/
+/*	$NetBSD: msgs.h,v 1.1.1.5 2008/06/21 18:31:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: msgs.h,v 1.9.18.2 2005/04/29 00:16:59 marka Exp */
+/* Id: msgs.h,v 1.15 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_MSGS_H
 #define ISC_MSGS_H 1
 
-/*! \file */
+/*! \file isc/msgs.h */
 
 #include <isc/lib.h>		/* Provide isc_msgcat global variable. */
 #include <isc/msgcat.h>		/* Provide isc_msgcat_*() functions. */

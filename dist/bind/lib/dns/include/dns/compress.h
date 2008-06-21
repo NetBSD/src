@@ -1,10 +1,10 @@
-/*	$NetBSD: compress.h,v 1.1.1.4 2007/01/27 21:07:32 christos Exp $	*/
+/*	$NetBSD: compress.h,v 1.1.1.5 2008/06/21 18:32:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: compress.h,v 1.32.18.6 2006/03/02 00:37:21 marka Exp */
+/* Id: compress.h,v 1.40 2007/06/19 23:47:16 tbox Exp */
 
 #ifndef DNS_COMPRESS_H
 #define DNS_COMPRESS_H 1
@@ -34,7 +34,7 @@ ISC_LANG_BEGINDECLS
 #define DNS_COMPRESS_ALL		0x01	/*%< all compression. */
 #define DNS_COMPRESS_CASESENSITIVE	0x02	/*%< case sensitive compression. */
 
-/*! \file
+/*! \file dns/compress.h
  *	Direct manipulation of the structures is strongly discouraged.
  */
 

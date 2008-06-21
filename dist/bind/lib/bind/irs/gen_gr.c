@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_gr.c,v 1.1.1.5 2007/01/27 21:08:53 christos Exp $	*/
+/*	$NetBSD: gen_gr.c,v 1.1.1.6 2008/06/21 18:33:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: gen_gr.c,v 1.6.18.2 2005/04/27 05:00:56 sra Exp";
+static const char rcsid[] = "Id: gen_gr.c,v 1.8 2005/04/27 04:56:23 sra Exp";
 #endif
 
 /* Imports */
