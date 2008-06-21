@@ -1,10 +1,10 @@
-/*	$NetBSD: peer.h,v 1.1.1.4 2007/01/27 21:07:36 christos Exp $	*/
+/*	$NetBSD: peer.h,v 1.1.1.5 2008/06/21 18:32:30 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: peer.h,v 1.20.18.8 2006/02/28 03:10:48 marka Exp */
+/* Id: peer.h,v 1.31.128.2 2008/04/03 06:08:27 tbox Exp */
 
 #ifndef DNS_PEER_H
 #define DNS_PEER_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/peer.h
  * \brief
  * Data structures for peers (e.g. a 'server' config file statement)
  */
@@ -75,10 +75,11 @@ struct dns_peer {
 	isc_boolean_t		provide_ixfr;
 	isc_boolean_t		request_ixfr;
 	isc_boolean_t		support_edns;
+	isc_boolean_t		request_nsid;
 	dns_name_t	       *key;
 	isc_sockaddr_t	       *transfer_source;
-	isc_sockaddr_t	       *notify_source;  
-	isc_sockaddr_t	       *query_source;  
+	isc_sockaddr_t	       *notify_source;
+	isc_sockaddr_t	       *query_source;
 	isc_uint16_t		udpsize;		/* recieve size */
 	isc_uint16_t		maxudp;			/* transmit size */
 
@@ -150,6 +151,12 @@ dns_peer_setprovideixfr(dns_peer_t *peer, isc_boolean_t newval);
 
 isc_result_t
 dns_peer_getprovideixfr(dns_peer_t *peer, isc_boolean_t *retval);
+
+isc_result_t
+dns_peer_setrequestnsid(dns_peer_t *peer, isc_boolean_t newval);
+
+isc_result_t
+dns_peer_getrequestnsid(dns_peer_t *peer, isc_boolean_t *retval);
 
 isc_result_t
 dns_peer_setsupportedns(dns_peer_t *peer, isc_boolean_t newval);

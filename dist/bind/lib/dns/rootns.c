@@ -1,10 +1,10 @@
-/*	$NetBSD: rootns.c,v 1.1.1.4 2007/01/27 21:07:10 christos Exp $	*/
+/*	$NetBSD: rootns.c,v 1.1.1.5 2008/06/21 18:31:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rootns.c,v 1.26.18.3 2005/04/27 05:01:26 sra Exp */
+/* Id: rootns.c,v 1.32.24.2 2008/02/05 23:46:39 tbox Exp */
 
 /*! \file */
 
@@ -47,8 +47,6 @@ static char root_ns[] =
 ";\n"
 "; Internet Root Nameservers\n"
 ";\n"
-"; Thu Sep 23 17:57:37 PDT 1999\n"
-";\n"
 "$TTL 518400\n"
 ".                       518400  IN      NS      A.ROOT-SERVERS.NET.\n"
 ".                       518400  IN      NS      B.ROOT-SERVERS.NET.\n"
@@ -64,25 +62,31 @@ static char root_ns[] =
 ".                       518400  IN      NS      L.ROOT-SERVERS.NET.\n"
 ".                       518400  IN      NS      M.ROOT-SERVERS.NET.\n"
 "A.ROOT-SERVERS.NET.     3600000 IN      A       198.41.0.4\n"
+"A.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:BA3E::2:30\n"
 "B.ROOT-SERVERS.NET.     3600000 IN      A       192.228.79.201\n"
 "C.ROOT-SERVERS.NET.     3600000 IN      A       192.33.4.12\n"
 "D.ROOT-SERVERS.NET.     3600000 IN      A       128.8.10.90\n"
 "E.ROOT-SERVERS.NET.     3600000 IN      A       192.203.230.10\n"
 "F.ROOT-SERVERS.NET.     3600000 IN      A       192.5.5.241\n"
+"F.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2F::F\n"
 "G.ROOT-SERVERS.NET.     3600000 IN      A       192.112.36.4\n"
 "H.ROOT-SERVERS.NET.     3600000 IN      A       128.63.2.53\n"
+"H.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:1::803F:235\n"
 "I.ROOT-SERVERS.NET.     3600000 IN      A       192.36.148.17\n"
 "J.ROOT-SERVERS.NET.     3600000 IN      A       192.58.128.30\n"
+"J.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:503:C27::2:30\n"
 "K.ROOT-SERVERS.NET.     3600000 IN      A       193.0.14.129\n"
-"L.ROOT-SERVERS.NET.     3600000 IN      A       198.32.64.12\n"
-"M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n";
+"K.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7FD::1\n"
+"L.ROOT-SERVERS.NET.     3600000 IN      A       199.7.83.42\n"
+"M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n"
+"M.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:DC3::35\n";
 
 static isc_result_t
 in_rootns(dns_rdataset_t *rootns, dns_name_t *name) {
 	isc_result_t result;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_ns_t ns;
-	
+
 	if (!dns_rdataset_isassociated(rootns))
 		return (ISC_R_NOTFOUND);
 
@@ -101,7 +105,7 @@ in_rootns(dns_rdataset_t *rootns, dns_name_t *name) {
 	return (result);
 }
 
-static isc_result_t 
+static isc_result_t
 check_node(dns_rdataset_t *rootns, dns_name_t *name,
 	   dns_rdatasetiter_t *rdsiter) {
 	isc_result_t result;
@@ -229,7 +233,7 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 		 * Default to using the Internet root servers.
 		 */
 		result = dns_master_loadbuffer(&source, &db->origin,
-					       &db->origin, db->rdclass, 
+					       &db->origin, db->rdclass,
 					       DNS_MASTER_HINT,
 					       &callbacks, db->mctx);
 	} else
@@ -264,11 +268,11 @@ report(dns_view_t *view, dns_name_t *name, isc_boolean_t missing,
 	isc_buffer_t buffer;
 	isc_result_t result;
 
-        if (strcmp(view->name, "_bind") != 0 &&
-            strcmp(view->name, "_default") != 0) {
-                viewname = view->name;
-                sep = ": view ";
-        }
+	if (strcmp(view->name, "_bind") != 0 &&
+	    strcmp(view->name, "_default") != 0) {
+		viewname = view->name;
+		sep = ": view ";
+	}
 
 	dns_name_format(name, namebuf, sizeof(namebuf));
 	dns_rdatatype_format(rdata->type, typebuf, sizeof(typebuf));
@@ -348,7 +352,7 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 				report(view, name, ISC_FALSE, &rdata);
 			result = dns_rdataset_next(&hintrrset);
 		}
-	} 
+	}
 	if (hresult == ISC_R_NOTFOUND &&
 	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE)) {
 		result = dns_rdataset_first(&rootrrset);
@@ -389,7 +393,7 @@ check_address_records(dns_view_t *view, dns_db_t *hints, dns_db_t *db,
 			dns_rdata_reset(&rdata);
 			result = dns_rdataset_next(&hintrrset);
 		}
-	} 
+	}
 	if (hresult == ISC_R_NOTFOUND &&
 	    (rresult == ISC_R_SUCCESS || rresult == DNS_R_GLUE)) {
 		result = dns_rdataset_first(&rootrrset);
@@ -423,11 +427,11 @@ dns_root_checkhints(dns_view_t *view, dns_db_t *hints, dns_db_t *db) {
 
 	isc_stdtime_get(&now);
 
-        if (strcmp(view->name, "_bind") != 0 &&
-            strcmp(view->name, "_default") != 0) {
-                viewname = view->name;
-                sep = ": view ";
-        }
+	if (strcmp(view->name, "_bind") != 0 &&
+	    strcmp(view->name, "_default") != 0) {
+		viewname = view->name;
+		sep = ": view ";
+	}
 
 	dns_rdataset_init(&hintns);
 	dns_rdataset_init(&rootns);
@@ -455,7 +459,7 @@ dns_root_checkhints(dns_view_t *view, dns_db_t *hints, dns_db_t *db) {
 			      dns_result_totext(result));
 		goto cleanup;
 	}
-	
+
 	/*
 	 * Look for missing root NS names.
 	 */
@@ -474,7 +478,7 @@ dns_root_checkhints(dns_view_t *view, dns_db_t *hints, dns_db_t *db) {
 				      "checkhints%s%s: unable to find root "
 				      "NS '%s' in hints", sep, viewname,
 				      namebuf);
-		} else 
+		} else
 			check_address_records(view, hints, db, &ns.name, now);
 		dns_rdata_reset(&rdata);
 		result = dns_rdataset_next(&rootns);

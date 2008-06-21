@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2001-2003  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/* Id: port_after.h.in,v 1.53.128.7 2008/02/28 05:46:12 marka Exp */
+
 #ifndef port_after_h
 #define port_after_h
 
@@ -16,12 +35,20 @@
 #include <sys/select.h>
 #endif /* HAVE_SYS_SELECT_H */
 
+#ifdef REENABLE_SEND
+#undef send
+#endif
+
 @NEED_PSELECT@
 @HAVE_SA_LEN@
 @HAVE_MINIMUM_IFREQ@
 @NEED_DAEMON@
 @NEED_STRSEP@
 @NEED_STRERROR@
+#ifdef NEED_STRERROR
+const char *isc_strerror(int);
+#define strerror isc_strerror
+#endif
 @HAS_INET6_STRUCTS@
 @HAVE_SIN6_SCOPE_ID@
 @NEED_IN6ADDR_ANY@
@@ -30,11 +57,17 @@
 @NEED_GETTIMEOFDAY@
 @HAVE_STRNDUP@
 @USE_FIONBIO_IOCTL@
-@USE_SYSERROR_LIST@
 @INNETGR_ARGS@
 @SETNETGRENT_ARGS@
 @USE_IFNAMELINKID@
 @PORT_NONBLOCK@
+
+#ifndef _POSIX_PATH_MAX
+#define _POSIX_PATH_MAX 255
+#endif
+#ifndef PATH_MAX
+#define PATH_MAX _POSIX_PATH_MAX
+#endif
 
 /*
  * We need to know the IPv6 address family number even on IPv4-only systems.
@@ -60,7 +93,7 @@
 #ifndef HAS_INET6_STRUCTS
 /* Replace with structure from later rev of O/S if known. */
 struct in6_addr {
-        u_int8_t        s6_addr[16];
+	u_int8_t        s6_addr[16];
 };
 
 #define IN6ADDR_ANY_INIT \
@@ -74,15 +107,15 @@ struct in6_addr {
 /* Replace with structure from later rev of O/S if known. */
 struct sockaddr_in6 {
 #ifdef  HAVE_SA_LEN
-        u_int8_t        sin6_len;       /* length of this struct */
-        u_int8_t        sin6_family;    /* AF_INET6 */
+	u_int8_t        sin6_len;       /* length of this struct */
+	u_int8_t        sin6_family;    /* AF_INET6 */
 #else
-        u_int16_t       sin6_family;    /* AF_INET6 */
+	u_int16_t       sin6_family;    /* AF_INET6 */
 #endif
-        u_int16_t       sin6_port;      /* transport layer port # */
-        u_int32_t       sin6_flowinfo;  /* IPv6 flow information */
-        struct in6_addr sin6_addr;      /* IPv6 address */
-        u_int32_t       sin6_scope_id;  /* set of interfaces for a scope */
+	u_int16_t       sin6_port;      /* transport layer port # */
+	u_int32_t       sin6_flowinfo;  /* IPv6 flow information */
+	struct in6_addr sin6_addr;      /* IPv6 address */
+	u_int32_t       sin6_scope_id;  /* set of interfaces for a scope */
 };
 #endif  /* HAS_INET6_STRUCTS */
 
@@ -129,21 +162,21 @@ struct sockaddr_in6 {
 #endif
 
 #ifndef HAVE_SOCKADDR_STORAGE
-#define __SS_MAXSIZE 128 
-#define __SS_ALLIGSIZE (sizeof (long)) 
+#define __SS_MAXSIZE 128
+#define __SS_ALLIGSIZE (sizeof (long))
 
 struct sockaddr_storage {
 #ifdef  HAVE_SA_LEN
-        u_int8_t        ss_len;       /* address length */
-        u_int8_t        ss_family;    /* address family */
-        char            __ss_pad1[__SS_ALLIGSIZE - 2 * sizeof(u_int8_t)];
-        long            __ss_align;
-        char            __ss_pad2[__SS_MAXSIZE - 2 * __SS_ALLIGSIZE];
-#else   
-        u_int16_t       ss_family;    /* address family */
-        char            __ss_pad1[__SS_ALLIGSIZE - sizeof(u_int16_t)];
-        long            __ss_align;
-        char            __ss_pad2[__SS_MAXSIZE - 2 * __SS_ALLIGSIZE];
+	u_int8_t        ss_len;       /* address length */
+	u_int8_t        ss_family;    /* address family */
+	char            __ss_pad1[__SS_ALLIGSIZE - 2 * sizeof(u_int8_t)];
+	long            __ss_align;
+	char            __ss_pad2[__SS_MAXSIZE - 2 * __SS_ALLIGSIZE];
+#else
+	u_int16_t       ss_family;    /* address family */
+	char            __ss_pad1[__SS_ALLIGSIZE - sizeof(u_int16_t)];
+	long            __ss_align;
+	char            __ss_pad2[__SS_MAXSIZE - 2 * __SS_ALLIGSIZE];
 #endif
 };
 #endif
@@ -254,7 +287,7 @@ extern const struct in6_addr isc_in6addr_loopback;
 #ifdef NEED_DAEMON
 int daemon(int nochdir, int noclose);
 #endif
-  
+
 #ifdef NEED_STRSEP
 char * strsep(char **stringp, const char *delim);
 #endif
@@ -309,16 +342,16 @@ innetgr_r(const char *, const char *, const char *, const char *);
 #endif
 
 #ifdef NEED_SETNETGRENT_R
-#ifdef NGR_R_ENT_ARGS
-NGR_R_SET_RETURN setnetgrent_r(const char *netgroup, NGR_R_ENT_ARGS);
+#ifdef NGR_R_SET_ARGS
+NGR_R_SET_RETURN setnetgrent_r(NGR_R_SET_CONST char *netgroup, NGR_R_SET_ARGS);
 #else
-NGR_R_SET_RETURN setnetgrent_r(const char *netgroup);
+NGR_R_SET_RETURN setnetgrent_r(NGR_R_SET_CONST char *netgroup);
 #endif
 #endif
 
 #ifdef NEED_ENDNETGRENT_R
-#ifdef NGR_R_ENT_ARGS
-NGR_R_END_RETURN endnetgrent_r(NGR_R_ENT_ARGS);
+#ifdef NGR_R_END_ARGS
+NGR_R_END_RETURN endnetgrent_r(NGR_R_END_ARGS);
 #else
 NGR_R_END_RETURN endnetgrent_r(void);
 #endif
@@ -327,25 +360,25 @@ NGR_R_END_RETURN endnetgrent_r(void);
 #ifdef POSIX_GETPWNAM_R
 int
 __posix_getpwnam_r(const char *login,  struct passwd *pwptr,
-                char *buf, size_t buflen, struct passwd **result);
+		char *buf, size_t buflen, struct passwd **result);
 #endif
 
 #ifdef NEED_GETPWNAM_R
 int
 getpwnam_r(const char *login,  struct passwd *pwptr,
-                char *buf, size_t buflen, struct passwd **result);
+		char *buf, size_t buflen, struct passwd **result);
 #endif
 
 #ifdef POSIX_GETPWUID_R
 int
 __posix_getpwuid_r(uid_t uid, struct passwd *pwptr,
-                char *buf, int buflen, struct passwd **result);
+		char *buf, int buflen, struct passwd **result);
 #endif
 
 #ifdef NEED_GETPWUID_R
 int
 getpwuid_r(uid_t uid, struct passwd *pwptr,
-                char *buf, size_t buflen, struct passwd **result);
+		char *buf, size_t buflen, struct passwd **result);
 #endif
 
 #ifdef NEED_SETPWENT_R
@@ -384,10 +417,12 @@ int isc__gettimeofday(struct timeval *tvp, struct _TIMEZONE *tzp);
 int isc__gettimeofday(struct timeval *tp, struct timezone *tzp);
 #endif
 
-int getnetgrent(char **machinep, char **userp, char **domainp);
+int getnetgrent(NGR_R_CONST char **machinep, NGR_R_CONST char **userp,
+		NGR_R_CONST char **domainp);
 
 #ifdef NGR_R_ARGS
-int getnetgrent_r(char **machinep, char **userp, char **domainp, NGR_R_ARGS);
+int getnetgrent_r(NGR_R_CONST char **machinep, NGR_R_CONST char **userp,
+		  NGR_R_CONST char **domainp, NGR_R_ARGS);
 #endif
 
 #ifdef SETNETGRENT_ARGS
@@ -405,11 +440,87 @@ int innetgr(const char *netgroup, const char *machine,
 	    const char *user, const char *domain);
 #endif
 
-#ifdef NGR_R_ENT_ARGS
+#ifdef NGR_R_SET_ARGS
 NGR_R_SET_RETURN
-setnetgrent_r(const char *netgroup, NGR_R_ENT_ARGS);
+setnetgrent_r(NGR_R_SET_CONST char *netgroup, NGR_R_SET_ARGS);
 #else
 NGR_R_SET_RETURN
-setnetgrent_r(const char *netgroup);
+setnetgrent_r(NGR_R_SET_CONST char *netgroup);
 #endif
+
+#ifdef NEED_STRTOUL
+unsigned long strtoul(const char *, char **, int);
+#endif
+
+#ifdef NEED_SUN4PROTOS
+#include <stdarg.h>
+#ifndef __SIZE_TYPE__
+#define __SIZE_TYPE__ int
+#endif
+struct sockaddr;
+struct iovec;
+struct timeval;
+struct timezone;
+int fprintf(FILE *, const char *, ...);
+int getsockname(int, struct sockaddr *, int *);
+int getpeername(int, struct sockaddr *, int *);
+int socket(int, int, int);
+int connect(int, const struct sockaddr *, int);
+int writev(int, struct iovec *, int);
+int readv(int, struct iovec *, int);
+int send(int, const char *, int, int);
+void bzero(char *, int);
+int recvfrom(int, char *, int, int, struct sockaddr *, int *);
+int syslog(int, const char *, ... );
+int printf(const char *, ...);
+__SIZE_TYPE__ fread(void *, __SIZE_TYPE__, __SIZE_TYPE__, FILE *);
+__SIZE_TYPE__ fwrite(const void *, __SIZE_TYPE__, __SIZE_TYPE__, FILE *);
+int fclose(FILE *);
+int ungetc(int, FILE *);
+int scanf(const char *, ...);
+int sscanf(const char *, const char *, ... );
+int tolower(int);
+int toupper(int);
+int strcasecmp(const char *, const char *);
+int strncasecmp(const char *, const char *, int);
+int select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+#ifdef gettimeofday
+#undef gettimeofday
+int gettimeofday(struct timeval *, struct timezone *);
+#define gettimeofday isc__gettimeofday
+#else
+int gettimeofday(struct timeval *, struct timezone *);
+#endif
+long strtol(const char*, char **, int);
+int fseek(FILE *, long, int);
+int setsockopt(int, int, int, const char *, int);
+int bind(int, const struct sockaddr *, int);
+void bcopy(char *, char *, int);
+int fputc(char, FILE *);
+int listen(int, int);
+int accept(int, struct sockaddr *, int *);
+int getsockopt(int, int, int, char *, int *);
+int vfprintf(FILE *, const char *, va_list);
+int fflush(FILE *);
+int fgetc(FILE *);
+int fputs(const char *, FILE *);
+int fchown(int, int, int);
+void setbuf(FILE *, char *);
+int gethostname(char *, int);
+int rename(const char *, const char *);
+time_t time(time_t *);
+int fscanf(FILE *, const char *, ...);
+int sscanf(const char *, const char *, ...);
+int ioctl(int, int, caddr_t);
+void perror(const char *);
+
+#if !defined(__USE_FIXED_PROTOTYPES__) && !defined(__cplusplus) && !defined(__STRICT_ANSI__)
+/*
+ * 'gcc -ansi' changes the prototype for vsprintf().
+ * Use this prototype when 'gcc -ansi' is not in effect.
+ */
+char *vsprintf(char *, const char *, va_list);
+#endif
+#endif
+
 #endif

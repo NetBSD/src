@@ -1,10 +1,10 @@
-/*	$NetBSD: ntservice.h,v 1.1.1.4 2007/01/27 21:03:43 christos Exp $	*/
+/*	$NetBSD: ntservice.h,v 1.1.1.5 2008/06/21 18:35:22 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ntservice.h,v 1.4 2004/03/05 04:58:11 marka Exp */
+/* Id: ntservice.h,v 1.6 2007/06/19 23:46:59 tbox Exp */
 
 #ifndef NTSERVICE_H
 #define NTSERVICE_H

@@ -1,10 +1,10 @@
-/*	$NetBSD: socket_p.h,v 1.1.1.4 2007/01/27 21:08:02 christos Exp $	*/
+/*	$NetBSD: socket_p.h,v 1.1.1.5 2008/06/21 18:31:30 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket_p.h,v 1.7.18.2 2005/04/29 00:17:08 marka Exp */
+/* Id: socket_p.h,v 1.11 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_SOCKET_P_H
 #define ISC_SOCKET_P_H

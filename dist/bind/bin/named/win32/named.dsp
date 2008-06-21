@@ -188,6 +188,10 @@ SOURCE=..\sortlist.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\statschannel.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\tkeyconf.c
 # End Source File
 # Begin Source File
@@ -285,6 +289,10 @@ SOURCE=..\include\named\server.h
 # Begin Source File
 
 SOURCE=..\include\named\sortlist.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\named\statschannel.h
 # End Source File
 # Begin Source File
 

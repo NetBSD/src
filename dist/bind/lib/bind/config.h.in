@@ -5,12 +5,21 @@
 #undef HAVE_STROPTS_H
 #undef HAVE_SYS_TIMERS_H
 #undef HAVE_SYS_SELECT_H
+#undef HAVE_MEMORY_H
 #undef SYS_CDEFS_H
 #undef _POSIX_PTHREAD_SEMANTICS
 #undef POSIX_GETPWUID_R
 #undef POSIX_GETPWNAM_R
 #undef POSIX_GETGRGID_R
 #undef POSIX_GETGRNAM_R
+#undef HAVE_MEMMOVE
+#undef HAVE_MEMCHR
+#undef SPRINTF_CHAR
+#undef VSPRINTF_CHAR
+#undef USE_SYSERROR_LIST
+#undef NEED_STRTOUL
+#undef NEED_SUN4PROTOS
+#undef REENABLE_SEND
 
 #undef NEED_SETGROUPENT
 #undef NEED_GETGROUPLIST
@@ -38,6 +47,7 @@
 
 #undef HAS_PW_CLASS
 
+#undef ssize_t
 #undef uintptr_t
 
 /* Shut up warnings about sputaux in stdio.h on BSD/OS pre-4.1 */ 

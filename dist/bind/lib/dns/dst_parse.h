@@ -1,11 +1,24 @@
-/*	$NetBSD: dst_parse.h,v 1.1.1.2 2007/01/27 21:06:44 christos Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.1.1.3 2008/06/21 18:31:49 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -18,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst_parse.h,v 1.1.6.5 2006/01/27 23:57:44 marka Exp */
+/* Id: dst_parse.h,v 1.8.92.2 2008/05/15 23:46:37 tbox Exp */
 
 /*! \file */
 #ifndef DST_DST_PARSE_H
@@ -77,7 +90,7 @@
 
 #define HMACSHA256_NTAGS	2
 #define TAG_HMACSHA256_KEY	((DST_ALG_HMACSHA256 << TAG_SHIFT) + 0)
-#define TAG_HMACSHA256_BITS	((DST_ALG_HMACSHA224 << TAG_SHIFT) + 1)
+#define TAG_HMACSHA256_BITS	((DST_ALG_HMACSHA256 << TAG_SHIFT) + 1)
 
 #define HMACSHA384_NTAGS	2
 #define TAG_HMACSHA384_KEY	((DST_ALG_HMACSHA384 << TAG_SHIFT) + 0)

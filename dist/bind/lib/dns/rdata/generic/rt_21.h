@@ -1,10 +1,10 @@
-/*	$NetBSD: rt_21.h,v 1.1.1.4 2007/01/27 21:07:26 christos Exp $	*/
+/*	$NetBSD: rt_21.h,v 1.1.1.5 2008/06/21 18:32:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -20,7 +20,7 @@
 #ifndef GENERIC_RT_21_H
 #define GENERIC_RT_21_H 1
 
-/* Id: rt_21.h,v 1.17.18.2 2005/04/29 00:16:40 marka Exp */
+/* Id: rt_21.h,v 1.21 2007/06/19 23:47:17 tbox Exp */
 
 /*!
  *  \brief Per RFC1183 */
