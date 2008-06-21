@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2007/11/04 23:28:18 tls Exp $
+#	$NetBSD: Makefile,v 1.2 2008/06/21 23:32:19 christos Exp $
 
 LIB=dns
 
@@ -24,7 +24,7 @@ DNSSEC_SRCS=	dst_api.c dst_lib.c dst_parse.c dst_result.c \
 
 SRCS=	acl.c acache.c adb.c byaddr.c cache.c callbacks.c compress.c \
 	db.c dbiterator.c dbtable.c diff.c dispatch.c dlz.c dnssec.c ds.c \
-	forward.c journal.c keytable.c lib.c log.c lookup.c \
+	forward.c iptable.c journal.c keytable.c lib.c log.c lookup.c \
 	master.c masterdump.c message.c name.c ncache.c nsec.c \
 	order.c peer.c portlist.c rbt.c rbtdb.c rbtdb64.c rcode.c \
 	rdata.c rdatalist.c rdataset.c rdatasetiter.c rdataslab.c \
