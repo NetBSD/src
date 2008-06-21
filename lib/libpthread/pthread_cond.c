@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.47 2008/05/26 02:06:21 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.48 2008/06/21 11:27:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.47 2008/05/26 02:06:21 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.48 2008/06/21 11:27:41 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -171,7 +171,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 			}
 		}
 		if (__predict_false(self->pt_cancel | retval)) {
-			pthread_cond_broadcast(cond);
+			pthread_cond_signal(cond);
 			if (self->pt_cancel) {
 				pthread__cancelled();
 			}
@@ -202,9 +202,17 @@ pthread_cond_signal(pthread_cond_t *cond)
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
 
-	/* Pull the first thread off the queue. */
+	/*
+	 * Pull the first thread off the queue.  If the current thread
+	 * is associated with the condition variable, remove it without
+	 * awakening (error case in pthread_cond_timedwait()).
+	 */
 	self = pthread__self();
 	pthread__spinlock(self, &cond->ptc_lock);
+	if (self->pt_sleepobj == cond) {
+		PTQ_REMOVE(&cond->ptc_waiters, self, pt_sleep);
+		self->pt_sleepobj = NULL;
+	}
 	signaled = PTQ_FIRST(&cond->ptc_waiters);
 	if (__predict_false(signaled == NULL)) {
 		pthread__spinunlock(self, &cond->ptc_lock);
@@ -262,7 +270,7 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	mutex = cond->ptc_mutex;
 	nwaiters = self->pt_nwaiters;
 	PTQ_FOREACH(signaled, &cond->ptc_waiters, pt_sleep) {
-		if (nwaiters == max) {
+		if (__predict_false(nwaiters == max)) {
 			/* Overflow. */
 			(void)_lwp_unpark_all(self->pt_waiters,
 			    nwaiters, __UNVOLATILE(&mutex->ptm_waiters));
