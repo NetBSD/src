@@ -1,11 +1,24 @@
-/*	$NetBSD: dst_api.c,v 1.2 2008/02/03 04:07:34 mrg Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.3 2008/06/21 18:59:25 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -20,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: dst_api.c,v 1.1.6.7 2006/01/27 23:57:44 marka Exp
+ * Id: dst_api.c,v 1.11.92.2 2008/03/31 23:46:42 tbox Exp
  */
 
 /*! \file */
@@ -61,6 +74,8 @@ static dst_func_t *dst_t_func[DST_MAX_ALGS];
 static isc_entropy_t *dst_entropy_pool = NULL;
 static unsigned int dst_entropy_flags = 0;
 static isc_boolean_t dst_initialized = ISC_FALSE;
+
+void gss_log(int level, const char *fmt, ...) ISC_FORMAT_PRINTF(2, 3);
 
 isc_mem_t *dst__memory_pool = NULL;
 
@@ -115,16 +130,16 @@ static isc_result_t	addsuffix(char *filename, unsigned int len,
 #ifdef OPENSSL
 static void *
 default_memalloc(void *arg, size_t size) {
-        UNUSED(arg);
-        if (size == 0U)
-                size = 1;
-        return (malloc(size));
+	UNUSED(arg);
+	if (size == 0U)
+		size = 1;
+	return (malloc(size));
 }
 
 static void
 default_memfree(void *arg, void *ptr) {
-        UNUSED(arg);
-        free(ptr);
+	UNUSED(arg);
+	free(ptr);
 }
 #endif
 
@@ -151,6 +166,7 @@ dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags) {
 				  NULL, &dst__memory_pool, 0);
 	if (result != ISC_R_SUCCESS)
 		return (result);
+	isc_mem_setname(dst__memory_pool, "dst", NULL);
 	isc_mem_setdestroycheck(dst__memory_pool, ISC_FALSE);
 #else
 	isc_mem_attach(mctx, &dst__memory_pool);
@@ -227,7 +243,7 @@ dst_context_create(dst_key_t *key, isc_mem_t *mctx, dst_context_t **dctxp) {
 
 	if (key->func->createctx == NULL)
 		return (DST_R_UNSUPPORTEDALG);
-	if (key->opaque == NULL)
+	if (key->keydata.generic == NULL)
 		return (DST_R_NULLKEY);
 
 	dctx = isc_mem_get(mctx, sizeof(dst_context_t));
@@ -277,7 +293,7 @@ dst_context_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 	key = dctx->key;
 	CHECKALG(key->key_alg);
-	if (key->opaque == NULL)
+	if (key->keydata.generic == NULL)
 		return (DST_R_NULLKEY);
 	if (key->func->sign == NULL)
 		return (DST_R_NOTPRIVATEKEY);
@@ -294,7 +310,7 @@ dst_context_verify(dst_context_t *dctx, isc_region_t *sig) {
 	REQUIRE(sig != NULL);
 
 	CHECKALG(dctx->key->key_alg);
-	if (dctx->key->opaque == NULL)
+	if (dctx->key->keydata.generic == NULL)
 		return (DST_R_NULLKEY);
 	if (dctx->key->func->verify == NULL)
 		return (DST_R_NOTPUBLICKEY);
@@ -313,7 +329,7 @@ dst_key_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 	CHECKALG(pub->key_alg);
 	CHECKALG(priv->key_alg);
 
-	if (pub->opaque == NULL || priv->opaque == NULL)
+	if (pub->keydata.generic == NULL || priv->keydata.generic == NULL)
 		return (DST_R_NULLKEY);
 
 	if (pub->key_alg != priv->key_alg ||
@@ -387,10 +403,8 @@ dst_key_fromfile(dns_name_t *name, dns_keytag_t id,
 		return (result);
 	}
 
-	if (!dns_name_equal(name, key->key_name) ||
-	    id != key->key_id ||
-	    alg != key->key_alg)
-	{
+	if (!dns_name_equal(name, key->key_name) || id != key->key_id ||
+	    alg != key->key_alg) {
 		dst_key_free(&key);
 		return (DST_R_INVALIDPRIVATEKEY);
 	}
@@ -431,8 +445,7 @@ dst_key_fromnamedfile(const char *filename, int type, isc_mem_t *mctx,
 		return (result);
 
 	if ((type & (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC)) == DST_TYPE_PUBLIC ||
-	    (pubkey->key_flags & DNS_KEYFLAG_TYPEMASK) == DNS_KEYTYPE_NOKEY)
-	{
+	    (pubkey->key_flags & DNS_KEYFLAG_TYPEMASK) == DNS_KEYTYPE_NOKEY) {
 		result = computeid(pubkey);
 		if (result != ISC_R_SUCCESS) {
 			dst_key_free(&pubkey);
@@ -516,7 +529,7 @@ dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
 						    & 0xffff));
 	}
 
-	if (key->opaque == NULL) /*%< NULL KEY */
+	if (key->keydata.generic == NULL) /*%< NULL KEY */
 		return (ISC_R_SUCCESS);
 
 	return (key->func->todns(key, target));
@@ -624,20 +637,29 @@ dst_key_privatefrombuffer(dst_key_t *key, isc_buffer_t *buffer) {
 	return (result);
 }
 
+gss_ctx_id_t
+dst_key_getgssctx(const dst_key_t *key)
+{
+	REQUIRE(key != NULL);
+
+	return (key->keydata.gssctx);
+}
+
 isc_result_t
-dst_key_fromgssapi(dns_name_t *name, void *opaque, isc_mem_t *mctx,
+dst_key_fromgssapi(dns_name_t *name, gss_ctx_id_t gssctx, isc_mem_t *mctx,
 		   dst_key_t **keyp)
 {
 	dst_key_t *key;
 
-	REQUIRE(opaque != NULL);
+	REQUIRE(gssctx != NULL);
 	REQUIRE(keyp != NULL && *keyp == NULL);
 
 	key = get_key_struct(name, DST_ALG_GSSAPI, 0, DNS_KEYPROTO_DNSSEC,
 			     0, dns_rdataclass_in, mctx);
 	if (key == NULL)
 		return (ISC_R_NOMEMORY);
-	key->opaque = opaque;
+
+	key->keydata.gssctx = gssctx;
 	*keyp = key;
 	return (ISC_R_SUCCESS);
 }
@@ -738,7 +760,7 @@ dst_key_free(dst_key_t **keyp) {
 	key = *keyp;
 	mctx = key->mctx;
 
-	if (key->opaque != NULL) {
+	if (key->keydata.generic != NULL) {
 		INSIST(key->func->destroy != NULL);
 		key->func->destroy(key);
 	}
@@ -864,7 +886,7 @@ get_key_struct(dns_name_t *name, unsigned int alg,
 	key->key_flags = flags;
 	key->key_proto = protocol;
 	key->mctx = mctx;
-	key->opaque = NULL;
+	key->keydata.generic = NULL;
 	key->key_size = bits;
 	key->key_class = rdclass;
 	key->func = dst_t_func[alg];
@@ -1120,8 +1142,10 @@ buildfilename(dns_name_t *name, dns_keytag_t id,
 	len = 1 + 3 + 1 + 5 + strlen(suffix) + 1;
 	if (isc_buffer_availablelength(out) < len)
 		return (ISC_R_NOSPACE);
-	sprintf((char *) isc_buffer_used(out), "+%03d+%05d%s", alg, id, suffix);
+	sprintf((char *) isc_buffer_used(out), "+%03d+%05d%s", alg, id,
+		suffix);
 	isc_buffer_add(out, len);
+
 	return (ISC_R_SUCCESS);
 }
 
@@ -1222,4 +1246,9 @@ dst__entropy_getdata(void *buf, unsigned int len, isc_boolean_t pseudo) {
 	if (pseudo)
 		flags &= ~ISC_ENTROPY_GOODONLY;
 	return (isc_entropy_getdata(dst_entropy_pool, buf, len, NULL, flags));
+}
+
+unsigned int
+dst__entropy_status(void) {
+	return (isc_entropy_status(dst_entropy_pool));
 }

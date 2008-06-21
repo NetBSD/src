@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.2 2008/01/18 16:21:51 christos Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.3 2008/06/21 18:59:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
