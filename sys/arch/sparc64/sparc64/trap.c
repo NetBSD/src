@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.147.6.2 2008/05/14 19:54:11 wrstuden Exp $ */
+/*	$NetBSD: trap.c,v 1.147.6.3 2008/06/22 18:12:03 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147.6.2 2008/05/14 19:54:11 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147.6.3 2008/06/22 18:12:03 wrstuden Exp $");
 
 #define NEW_FPSTATE
 
@@ -1148,8 +1148,13 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 				return;
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = addr;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
+	}
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
@@ -1247,6 +1252,7 @@ kfault:
 		trapsignal(l, &ksi);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}

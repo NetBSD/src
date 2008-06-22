@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125.12.1 2008/05/10 23:48:46 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.125.12.2 2008/06/22 18:12:03 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.12.1 2008/05/10 23:48:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.12.2 2008/06/22 18:12:03 wrstuden Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -146,6 +146,10 @@ trap(struct trapframe *frame)
 					    trunc_page(va), false)) {
 					return;
 				}
+				if (l->l_flag & LW_SA) {
+					l->l_savp->savp_faultaddr = va;
+					l->l_pflag |= LP_SA_PAGEFAULT;
+				}
 #if defined(DIAGNOSTIC) && !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
 				printf("trap: kernel %s DSI trap @ %#lx by %#lx"
@@ -175,6 +179,7 @@ trap(struct trapframe *frame)
 				 */
 				if (rv == 0)
 					uvm_grow(p, trunc_page(va));
+				l->l_pflag &= ~LP_SA_PAGEFAULT;
 			}
 			if (rv == 0)
 				return;
@@ -231,12 +236,17 @@ trap(struct trapframe *frame)
 			break;
 		}
 
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
 		rv = uvm_fault(map, trunc_page(frame->dar), ftype);
 		if (rv == 0) {
 			/*
 			 * Record any stack growth...
 			 */
 			uvm_grow(p, trunc_page(frame->dar));
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
 		ci->ci_ev_udsi_fatal.ev_count++;
@@ -262,6 +272,7 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = SIGKILL;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 
 	case EXC_ISI:
@@ -294,9 +305,14 @@ trap(struct trapframe *frame)
 			break;
 		}
 
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->srr0;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
 		ftype = VM_PROT_EXECUTE;
 		rv = uvm_fault(map, trunc_page(frame->srr0), ftype);
 		if (rv == 0) {
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
 		ci->ci_ev_isi_fatal.ev_count++;
@@ -311,6 +327,7 @@ trap(struct trapframe *frame)
 		ksi.ksi_addr = (void *)frame->srr0;
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		(*p->p_emul->e_trapsignal)(l, &ksi);
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 
 	case EXC_FPU|EXC_USER:

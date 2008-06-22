@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.46.12.1 2008/05/10 23:48:46 wrstuden Exp $	*/
+/*	$NetBSD: exception.c,v 1.46.12.2 2008/06/22 18:12:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46.12.1 2008/05/10 23:48:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46.12.2 2008/06/22 18:12:03 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -361,6 +361,11 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		return;
 	}
 
+	if ((map != kernel_map) && (l->l_flag & LW_SA)) {
+		l->l_savp->savp_faultaddr = (vaddr_t)va;
+		l->l_pflag |= LP_SA_PAGEFAULT;
+	}
+
 	err = uvm_fault(map, va, ftype);
 
 	/* User stack extension */
@@ -378,6 +383,8 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		}
 	}
 
+	if (map != kernel_map)
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 	/* Page in. load PTE to TLB. */
 	if (err == 0) {
 		bool loaded = __pmap_pte_load(pmap, va, track);
@@ -411,6 +418,19 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 	ast(l, tf);
+
+/*
+ * void upcallret(struct lwp *l):
+ *
+ *	Perform userret() for an LWP.
+ *	XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+
+	userret(l);
+}
 	return;
 
  tlb_panic:

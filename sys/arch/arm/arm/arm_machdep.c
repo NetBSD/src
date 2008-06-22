@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.18 2008/03/15 10:18:13 rearnsha Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.18.6.1 2008/06/22 18:12:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.18 2008/03/15 10:18:13 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.18.6.1 2008/06/22 18:12:01 wrstuden Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -185,4 +185,59 @@ startlwp(void *arg)
 	pool_put(&lwp_uc_pool, uc);
 
 	userret(l);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+
+	userret(l);
+}
+
+/*
+ * cpu_upcall:
+ *
+ *	Send an an upcall to userland.
+ */
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+	struct saframe *sf, frame;
+
+	tf = process_frame(l);
+
+	/* Finally, copy out the rest of the frame. */
+#if 0 /* First 4 args in regs (see below). */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+#endif
+	frame.sa_arg = ap;
+
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->tf_r0 = type;
+	tf->tf_r1 = (int) sas;
+	tf->tf_r2 = nevents;
+	tf->tf_r3 = ninterrupted;
+	tf->tf_pc = (int) upcall;
+#ifdef THUMB_CODE
+	if (((int) upcall) & 1)
+		tf->tf_spsr |= PSR_T_bit;
+	else
+		tf->tf_spsr &= ~PSR_T_bit;
+#endif
+	tf->tf_usr_sp = (int) sf;
+	tf->tf_usr_lr = 0;		/* no return */
 }

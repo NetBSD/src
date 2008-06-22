@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.72.2.2 2008/05/14 19:54:10 wrstuden Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.72.2.3 2008/06/22 18:12:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.72.2.2 2008/05/14 19:54:10 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.72.2.3 2008/06/22 18:12:03 wrstuden Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -305,6 +305,47 @@ cpu_dumpconf()
 void
 dumpsys()
 {
+}
+
+/*
+ * void cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+ *     void *sas, void *ap, void *sp, sa_upcall_t upcall):
+ *
+ * Send an upcall to userland.
+ */
+void
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+	struct saframe *sf, frame;
+
+	tf = l->l_md.md_regs;
+
+	/* Build the stack frame. */
+#if 0 /* First 4 args in regs (see below). */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+#endif
+	frame.sa_arg = ap;
+
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work.  Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->tf_r4 = type;
+	tf->tf_r5 = (int) sas;
+	tf->tf_r6 = nevents;
+	tf->tf_r7 = ninterrupted;
+
+	tf->tf_spc = (int) upcall;
+	tf->tf_pr = 0;		/* no return */
+	tf->tf_r15 = (int) sf;
 }
 
 /*
