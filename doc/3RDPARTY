@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.611 2008/06/22 14:40:03 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.612 2008/06/22 15:48:49 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -633,6 +633,18 @@ License:	BSD (3-clause)
 Notes:
 Next import will need $ Id removal..
 
+Package:	HPN-SSH
+Version:	5.0p1 13 v3
+Current Vers:	5.0p1 13 v3
+Maintainer:	www.psc.edu
+Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.0p1-hpn13v3.diff.gz
+Home Page:	http://www.psc.edu/networking/projects/hpn-ssh/
+Mailing List:
+Responsible:	christos
+License:	
+Notes:
+Patch applied after OpenSSH import.
+
 Package:	OpenSSH
 Version:	5.0
 Current Vers:	5.0 / portable 5.0p1
@@ -656,6 +668,7 @@ markus is very cooperative about it):
 - uidswap.c changed order of set{e,}{u,g}id so that it works on NetBSD
 - added moduli from portable openssh
 - added USE_PAM patches and auth_pam.[ch] from portable openssh
+- add the HPN patch 
 - always bump major when importing to avoid api problems.
 
 Package:	OpenSSL
