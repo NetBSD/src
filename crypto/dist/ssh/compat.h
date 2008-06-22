@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.h,v 1.5 2007/03/10 22:52:05 christos Exp $	*/
+/*	$NetBSD: compat.h,v 1.6 2008/06/22 15:42:50 christos Exp $	*/
 /* $OpenBSD: compat.h,v 1.41 2006/12/12 03:58:42 djm Exp $ */
 
 /*
@@ -59,6 +59,7 @@
 #define SSH_OLD_FORWARD_ADDR	0x01000000
 #define SSH_BUG_RFWD_ADDR	0x02000000
 #define SSH_BUG_K5USER		0x04000000
+#define SSH_BUG_LARGEWINDOW     0x08000000
 
 void     enable_compat13(void);
 void     enable_compat20(void);

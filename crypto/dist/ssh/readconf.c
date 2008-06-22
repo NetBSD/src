@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.34 2008/04/06 23:38:19 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.35 2008/06/22 15:42:50 christos Exp $	*/
 /* $OpenBSD: readconf.c,v 1.165 2008/01/19 23:09:49 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.34 2008/04/06 23:38:19 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.35 2008/06/22 15:42:50 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -140,6 +140,8 @@ typedef enum {
 	oServerAliveInterval, oServerAliveCountMax, oIdentitiesOnly,
 	oSendEnv, oControlPath, oControlMaster, oHashKnownHosts,
 	oTunnel, oTunnelDevice, oLocalCommand, oPermitLocalCommand,
+	oNoneEnabled, oTcpRcvBufPoll, oTcpRcvBuf, oNoneSwitch, oHPNDisabled,
+	oHPNBufferSize,
 	oDeprecated, oUnsupported
 } OpCodes;
 
@@ -244,6 +246,12 @@ static struct {
 	{ "tunneldevice", oTunnelDevice },
 	{ "localcommand", oLocalCommand },
 	{ "permitlocalcommand", oPermitLocalCommand },
+        { "noneenabled", oNoneEnabled },
+        { "tcprcvbufpoll", oTcpRcvBufPoll },
+        { "tcprcvbuf", oTcpRcvBuf },
+        { "noneswitch", oNoneSwitch },
+	{ "hpndisabled", oHPNDisabled },
+	{ "hpnbuffersize", oHPNBufferSize },
 	{ NULL, oBadOption }
 };
 
@@ -487,6 +495,37 @@ parse_flag:
 		intptr = &options->check_host_ip;
 		goto parse_flag;
 
+	case oNoneEnabled:
+		intptr = &options->none_enabled;
+		goto parse_flag;
+ 
+	/* we check to see if the command comes from the */
+	/* command line or not. If it does then enable it */
+	/* otherwise fail. NONE should never be a default configuration */
+	case oNoneSwitch:
+		if(strcmp(filename,"command-line")==0)
+		{		
+		    intptr = &options->none_switch;
+		    goto parse_flag;
+		} else {
+		    error("NoneSwitch is found in %.200s.\nYou may only use this configuration option from the command line", filename);
+		    error("Continuing...");
+		    debug("NoneSwitch directive found in %.200s.", filename);
+		    return 0;
+	        }
+
+	case oHPNDisabled:
+		intptr = &options->hpn_disabled;
+		goto parse_flag;
+
+	case oHPNBufferSize:
+		intptr = &options->hpn_buffer_size;
+		goto parse_int;
+
+	case oTcpRcvBufPoll:
+		intptr = &options->tcp_rcv_buf_poll;
+		goto parse_flag;
+
 	case oVerifyHostKeyDNS:
 		intptr = &options->verify_host_key_dns;
 		goto parse_yesnoask;
@@ -664,6 +703,10 @@ parse_int:
 
 	case oConnectionAttempts:
 		intptr = &options->connection_attempts;
+		goto parse_int;
+
+	case oTcpRcvBuf:
+		intptr = &options->tcp_rcv_buf;
 		goto parse_int;
 
 	case oCipher:
@@ -1110,6 +1153,12 @@ initialize_options(Options * options)
 	options->tun_remote = -1;
 	options->local_command = NULL;
 	options->permit_local_command = -1;
+	options->none_switch = -1;
+	options->none_enabled = -1;
+	options->hpn_disabled = -1;
+	options->hpn_buffer_size = -1;
+	options->tcp_rcv_buf_poll = -1;
+	options->tcp_rcv_buf = -1;
 }
 
 /*
@@ -1244,6 +1293,29 @@ fill_default_options(Options * options)
 		options->server_alive_interval = 0;
 	if (options->server_alive_count_max == -1)
 		options->server_alive_count_max = 3;
+	if (options->none_switch == -1)
+	        options->none_switch = 0;
+	if (options->hpn_disabled == -1)
+	        options->hpn_disabled = 0;
+	if (options->hpn_buffer_size > -1)
+	{
+	  /* if a user tries to set the size to 0 set it to 1KB */
+		if (options->hpn_buffer_size == 0)
+		options->hpn_buffer_size = 1024;
+		/*limit the buffer to 64MB*/
+		if (options->hpn_buffer_size > 65536)
+		{
+			options->hpn_buffer_size = 65536*1024;
+			debug("User requested buffer larger than 64MB. Request reverted to 64MB");
+		}
+		debug("hpn_buffer_size set to %d", options->hpn_buffer_size);
+	}
+	if (options->tcp_rcv_buf == 0)
+		options->tcp_rcv_buf = 1;
+	if (options->tcp_rcv_buf > -1) 
+		options->tcp_rcv_buf *=1024;
+	if (options->tcp_rcv_buf_poll == -1)
+		options->tcp_rcv_buf_poll = 1;
 	if (options->control_master == -1)
 		options->control_master = 0;
 	if (options->hash_known_hosts == -1)

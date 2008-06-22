@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.38 2008/04/06 23:38:20 christos Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.39 2008/06/22 15:42:51 christos Exp $	*/
 /* $OpenBSD: sshconnect.c,v 1.203 2007/12/27 14:22:08 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.38 2008/04/06 23:38:20 christos Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.39 2008/06/22 15:42:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -176,6 +176,31 @@ ssh_proxy_connect(const char *host, u_short port, const char *proxy_command)
 }
 
 /*
+ * Set TCP receive buffer if requested.
+ * Note: tuning needs to happen after the socket is
+ * created but before the connection happens
+ * so winscale is negotiated properly -cjr
+ */
+static void
+ssh_set_socket_recvbuf(int sock)
+{
+	void *buf = (void *)&options.tcp_rcv_buf;
+	int sz = sizeof(options.tcp_rcv_buf);
+	int socksize;
+	socklen_t socksizelen = sizeof(int);
+
+	debug("setsockopt Attempting to set SO_RCVBUF to %d", options.tcp_rcv_buf);
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, buf, sz) >= 0) {
+	  getsockopt(sock, SOL_SOCKET, SO_RCVBUF, &socksize, &socksizelen);
+	  debug("setsockopt SO_RCVBUF: %.100s %d", strerror(errno), socksize);
+	}
+	else
+		error("Couldn't set socket receive buffer to %d: %.100s",
+		    options.tcp_rcv_buf, strerror(errno));
+}
+
+
+/*
  * Creates a (possibly privileged) socket for use as the ssh connection.
  */
 static int
@@ -198,6 +223,9 @@ ssh_create_socket(int privileged, struct addrinfo *ai)
 			    strerror(errno));
 		else
 			debug("Allocated local port %d.", p);
+
+		if (options.tcp_rcv_buf > 0)
+			ssh_set_socket_recvbuf(sock);		
 		return sock;
 	}
 	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
@@ -211,7 +239,10 @@ ssh_create_socket(int privileged, struct addrinfo *ai)
 		}
 		return -1;
 	}
-  
+
+	if (options.tcp_rcv_buf > 0)
+		ssh_set_socket_recvbuf(sock);
+	
 	/* Bind the socket to an alternative local IP address */
 	if (options.bind_address == NULL)
 		return sock;
@@ -556,7 +587,7 @@ ssh_exchange_identification(int timeout_ms)
 	snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n",
 	    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
 	    compat20 ? PROTOCOL_MINOR_2 : minor1,
-	    SSH_VERSION);
+	    SSH_RELEASE);
 	if (atomicio(vwrite, connection_out, buf, strlen(buf)) != strlen(buf))
 		fatal("write: %.100s", strerror(errno));
 	client_version_string = xstrdup(buf);
