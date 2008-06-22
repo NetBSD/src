@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_session.c,v 1.3 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: tls_session.c,v 1.4 2008/06/22 14:38:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -9,11 +9,11 @@
 /*	#include <tls.h>
 /*
 /*	void	tls_session_stop(ctx, stream, timeout, failure, TLScontext)
-/*	SSL_CTX	*ctx;
+/*	TLS_APPL_STATE *ctx;
 /*	VSTREAM	*stream;
 /*	int	timeout;
 /*	int	failure;
-/*	TLScontext_t *TLScontext;
+/*	TLS_SESS_STATE *TLScontext;
 /*
 /*	VSTRING	*tls_session_passivate(session)
 /*	SSL_SESSION *session;
@@ -51,6 +51,9 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Victor Duchovni
+/*	Morgan Stanley
 /*--*/
 
 /* System library. */
@@ -76,8 +79,8 @@
 
 /* tls_session_stop - shut down the TLS connection and reset state */
 
-void    tls_session_stop(SSL_CTX *unused_ctx, VSTREAM *stream, int timeout,
-			         int failure, TLScontext_t *TLScontext)
+void    tls_session_stop(TLS_APPL_STATE *unused_ctx, VSTREAM *stream, int timeout,
+			         int failure, TLS_SESS_STATE *TLScontext)
 {
     const char *myname = "tls_session_stop";
     int     retval;

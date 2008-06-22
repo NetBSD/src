@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.2 2008/02/04 02:21:30 mrg Exp $	*/
+/*	$NetBSD: smtp.c,v 1.3 2008/06/22 14:38:42 christos Exp $	*/
 
 /*++
 /* NAME
@@ -96,6 +96,7 @@
 /*	RFC 3207 (STARTTLS command)
 /*	RFC 3461 (SMTP DSN Extension)
 /*	RFC 3463 (Enhanced Status Codes)
+/*	RFC 4954 (AUTH command)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue manager can
@@ -212,6 +213,18 @@
 /*	When authenticating to a remote SMTP or LMTP server with the
 /*	default setting "no", send no SASL authoriZation ID (authzid); send
 /*	only the SASL authentiCation ID (authcid) plus the authcid's password.
+/* .PP
+/*      Available in Postfix version 2.5 and later:
+/* .IP "\fBsmtp_header_checks (empty)\fR"
+/*	Restricted \fBheader_checks\fR(5) tables for the Postfix SMTP client.
+/* .IP "\fBsmtp_mime_header_checks (empty)\fR"
+/*	Restricted \fBmime_header_checks\fR(5) tables for the Postfix SMTP
+/*	client.
+/* .IP "\fBsmtp_nested_header_checks (empty)\fR"
+/*	Restricted \fBnested_header_checks\fR(5) tables for the Postfix SMTP
+/*	client.
+/* .IP "\fBsmtp_body_checks (empty)\fR"
+/*	Restricted \fBbody_checks\fR(5) tables for the Postfix SMTP client.
 /* MIME PROCESSING CONTROLS
 /* .ad
 /* .fi
@@ -239,7 +252,8 @@
 /*	per remote hostname or domain, or sender address when sender-dependent
 /*	authentication is enabled.
 /* .IP "\fBsmtp_sasl_security_options (noplaintext, noanonymous)\fR"
-/*	SASL security options; as of Postfix 2.3 the list of available
+/*	Postfix SMTP client SASL security options; as of Postfix 2.3
+/*	the list of available
 /*	features depends on the SASL client implementation that is selected
 /*	with \fBsmtp_sasl_type\fR.
 /* .PP
@@ -255,12 +269,26 @@
 /*	caching to ensure that mail from different senders will use the
 /*	appropriate credentials.
 /* .IP "\fBsmtp_sasl_path (empty)\fR"
-/*	Implementation-specific information that is passed through to
+/*	Implementation-specific information that the Postfix SMTP client
+/*	passes through to
 /*	the SASL plug-in implementation that is selected with
 /*	\fBsmtp_sasl_type\fR.
 /* .IP "\fBsmtp_sasl_type (cyrus)\fR"
 /*	The SASL plug-in type that the Postfix SMTP client should use
 /*	for authentication.
+/* .PP
+/*	Available in Postfix version 2.5 and later:
+/* .IP "\fBsmtp_sasl_auth_cache_name (empty)\fR"
+/*	An optional table to prevent repeated SASL authentication
+/*	failures with the same remote SMTP server hostname, username and
+/*	password.
+/* .IP "\fBsmtp_sasl_auth_cache_time (90d)\fR"
+/*	The maximal age of an smtp_sasl_auth_cache_name entry before it
+/*	is removed.
+/* .IP "\fBsmtp_sasl_auth_soft_bounce (yes)\fR"
+/*	When a remote SMTP server rejects a SASL authentication request
+/*	with a 535 reply code, defer mail delivery instead of returning
+/*	mail as undeliverable.
 /* STARTTLS SUPPORT CONTROLS
 /* .ad
 /* .fi
@@ -312,9 +340,9 @@
 /*	policy by next-hop destination; when a non-empty value is specified,
 /*	this overrides the obsolete smtp_tls_per_site parameter.
 /* .IP "\fBsmtp_tls_mandatory_protocols (SSLv3, TLSv1)\fR"
-/*	List of TLS protocols that the Postfix SMTP client will use
-/*	with mandatory TLS encryption.
-/* .IP "\fBsmtp_tls_scert_verifydepth (5)\fR"
+/*	List of SSL/TLS protocols that the Postfix SMTP client will use with
+/*	mandatory TLS encryption.
+/* .IP "\fBsmtp_tls_scert_verifydepth (9)\fR"
 /*	The verification depth for remote SMTP server certificates.
 /* .IP "\fBsmtp_tls_secure_cert_match (nexthop, dot-nexthop)\fR"
 /*	The server certificate peername verification method for the
@@ -349,6 +377,15 @@
 /*	The SASL authentication security options that the Postfix SMTP
 /*	client uses for TLS encrypted SMTP sessions with a verified server
 /*	certificate.
+/* .PP
+/*	Available in Postfix version 2.5 and later:
+/* .IP "\fBsmtp_tls_fingerprint_cert_match (empty)\fR"
+/*	List of acceptable remote SMTP server certificate fingerprints
+/*	for the "fingerprint" TLS security level (\fBsmtp_tls_security_level\fR =
+/*	fingerprint).
+/* .IP "\fBsmtp_tls_fingerprint_digest (md5)\fR"
+/*	The message digest algorithm used to construct remote SMTP server
+/*	certificate fingerprints.
 /* OBSOLETE STARTTLS CONTROLS
 /* .ad
 /* .fi
@@ -537,6 +574,9 @@
 /*	Optional list of relay hosts for SMTP destinations that can't be
 /*	found or that are unreachable.
 /* SEE ALSO
+/*	generic(5), output address rewriting
+/*	header_checks(5), message header content inspection
+/*	body_checks(5), body parts content inspection
 /*	qmgr(8), queue manager
 /*	bounce(8), delivery status reports
 /*	scache(8), connection cache server
@@ -577,16 +617,16 @@
 /*	SuSE Rhein/Main AG
 /*	65760 Eschborn, Germany
 /*
-/*	Connection caching in cooperation with:
-/*	Victor Duchovni
-/*	Morgan Stanley
-/*
 /*	TLS support originally by:
 /*	Lutz Jaenicke
 /*	BTU Cottbus
 /*	Allgemeine Elektrotechnik
 /*	Universitaetsplatz 3-4
 /*	D-03044 Cottbus, Germany
+/*
+/*	Revised TLS and SMTP connection cache support by:
+/*	Victor Duchovni
+/*	Morgan Stanley
 /*--*/
 
 /* System library. */
@@ -705,7 +745,8 @@ char   *var_smtp_tls_mand_proto;
 char   *var_smtp_tls_sec_cmatch;
 int     var_smtp_tls_scert_vd;
 char   *var_smtp_tls_vfy_cmatch;
-int     var_tls_daemon_rand_bytes;
+char   *var_smtp_tls_fpt_cmatch;
+char   *var_smtp_tls_fpt_dgst;
 
 #endif
 
@@ -717,6 +758,16 @@ int     var_scache_proto_tmout;
 bool    var_smtp_cname_overr;
 char   *var_smtp_pix_bug_words;
 char   *var_smtp_pix_bug_maps;
+char   *var_cyrus_conf_path;
+char   *var_smtp_head_chks;
+char   *var_smtp_mime_chks;
+char   *var_smtp_nest_chks;
+char   *var_smtp_body_chks;
+
+ /* Special handling of 535 AUTH errors. */
+char   *var_smtp_sasl_auth_cache_name;
+int     var_smtp_sasl_auth_cache_time;
+bool    var_smtp_sasl_auth_soft_bounce;
 
  /*
   * Global variables.
@@ -728,13 +779,15 @@ MAPS   *smtp_ehlo_dis_maps;
 MAPS   *smtp_generic_maps;
 int     smtp_ext_prop_mask;
 MAPS   *smtp_pix_bug_maps;
+HBC_CHECKS *smtp_header_checks;		/* limited header checks */
+HBC_CHECKS *smtp_body_checks;		/* limited body checks */
 
 #ifdef USE_TLS
 
  /*
-  * OpenSSL client state.
+  * OpenSSL client state (opaque handle)
   */
-SSL_CTX *smtp_tls_ctx;
+TLS_APPL_STATE *smtp_tls_ctx;
 
 #endif
 
@@ -816,7 +869,7 @@ static void smtp_service(VSTREAM *client_stream, char *service, char **argv)
 
 static void post_init(char *unused_name, char **unused_argv)
 {
-    static NAME_MASK lookup_masks[] = {
+    static const NAME_MASK lookup_masks[] = {
 	SMTP_HOST_LOOKUP_DNS, SMTP_HOST_FLAG_DNS,
 	SMTP_HOST_LOOKUP_NATIVE, SMTP_HOST_FLAG_NATIVE,
 	0,
@@ -871,38 +924,55 @@ static void pre_init(char *unused_name, char **unused_argv)
 		 VAR_SMTP_SASL_ENABLE);
 #endif
 
-#ifdef USE_TLS
-    if (*var_smtp_tls_level)
-	use_tls = tls_level_lookup(var_smtp_tls_level) > TLS_LEV_NONE;
-    else
-	use_tls = var_smtp_enforce_tls || var_smtp_use_tls;
-#else
-    use_tls = 0;
-#endif
+    if (*var_smtp_tls_level != 0)
+	switch (tls_level_lookup(var_smtp_tls_level)) {
+	case TLS_LEV_SECURE:
+	case TLS_LEV_VERIFY:
+	case TLS_LEV_FPRINT:
+	case TLS_LEV_ENCRYPT:
+	    var_smtp_use_tls = var_smtp_enforce_tls = 1;
+	    break;
+	case TLS_LEV_MAY:
+	    var_smtp_use_tls = 1;
+	    var_smtp_enforce_tls = 0;
+	    break;
+	case TLS_LEV_NONE:
+	    var_smtp_use_tls = var_smtp_enforce_tls = 0;
+	    break;
+	default:
+	    /* tls_level_lookup() logs no warning. */
+	    /* session_tls_init() assumes that var_smtp_tls_level is sane. */
+	    msg_fatal("Invalid TLS level \"%s\"", var_smtp_tls_level);
+	}
+    use_tls = (var_smtp_use_tls || var_smtp_enforce_tls);
 
     /*
      * Initialize the TLS data before entering the chroot jail
      */
     if (use_tls || var_smtp_tls_per_site[0] || var_smtp_tls_policy[0]) {
 #ifdef USE_TLS
-	tls_client_init_props props;
+	TLS_CLIENT_INIT_PROPS props;
 
 	/*
 	 * We get stronger type safety and a cleaner interface by combining
 	 * the various parameters into a single tls_client_props structure.
+	 * 
+	 * Large parameter lists are error-prone, so we emulate a language
+	 * feature that C does not have natively: named parameter lists.
 	 */
-	props.log_level = var_smtp_tls_loglevel;
-	props.verifydepth = var_smtp_tls_scert_vd;
-	props.cache_type = strcmp(var_procname, "smtp") == 0 ?
-	    TLS_MGR_SCACHE_SMTP : TLS_MGR_SCACHE_LMTP;
-	props.cert_file = var_smtp_tls_cert_file;
-	props.key_file = var_smtp_tls_key_file;
-	props.dcert_file = var_smtp_tls_dcert_file;
-	props.dkey_file = var_smtp_tls_dkey_file;
-	props.CAfile = var_smtp_tls_CAfile;
-	props.CApath = var_smtp_tls_CApath;
-
-	smtp_tls_ctx = tls_client_init(&props);
+	smtp_tls_ctx =
+	    TLS_CLIENT_INIT(&props,
+			    log_level = var_smtp_tls_loglevel,
+			    verifydepth = var_smtp_tls_scert_vd,
+			    cache_type = strcmp(var_procname, "smtp") == 0 ?
+			    TLS_MGR_SCACHE_SMTP : TLS_MGR_SCACHE_LMTP,
+			    cert_file = var_smtp_tls_cert_file,
+			    key_file = var_smtp_tls_key_file,
+			    dcert_file = var_smtp_tls_dcert_file,
+			    dkey_file = var_smtp_tls_dkey_file,
+			    CAfile = var_smtp_tls_CAfile,
+			    CApath = var_smtp_tls_CApath,
+			    fpt_dgst = var_smtp_tls_fpt_dgst);
 	smtp_tls_list_init();
 #else
 	msg_warn("TLS has been selected, but TLS support is not compiled in");
@@ -946,6 +1016,18 @@ static void pre_init(char *unused_name, char **unused_argv)
 	smtp_generic_maps =
 	    maps_create(VAR_SMTP_GENERIC_MAPS, var_smtp_generic_maps,
 			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
+
+    /*
+     * Header/body checks.
+     */
+    smtp_header_checks = hbc_header_checks_create(
+				     VAR_SMTP_HEAD_CHKS, var_smtp_head_chks,
+				     VAR_SMTP_MIME_CHKS, var_smtp_mime_chks,
+				     VAR_SMTP_NEST_CHKS, var_smtp_nest_chks,
+						  smtp_hbc_callbacks);
+    smtp_body_checks = hbc_body_checks_create(
+				     VAR_SMTP_BODY_CHKS, var_smtp_body_chks,
+					      smtp_hbc_callbacks);
 }
 
 /* pre_accept - see if tables have changed */
