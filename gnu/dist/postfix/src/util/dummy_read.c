@@ -1,4 +1,4 @@
-/*	$NetBSD: dummy_read.c,v 1.1.1.2 2006/07/19 01:17:52 rpaulo Exp $	*/
+/*	$NetBSD: dummy_read.c,v 1.1.1.3 2008/06/22 14:03:57 christos Exp $	*/
 
 /*++
 /* NAME
@@ -19,8 +19,8 @@
 /*
 /*	Arguments:
 /* .IP fd
-/*	File descriptor in the range 0..FD_SETSIZE. Its value is logged
-/*	when verbose logging is turned on.
+/*	File descriptor whose value is logged when verbose logging
+/*	is turned on.
 /* .IP buf
 /*	Read buffer pointer. Not used.
 /* .IP buf_len

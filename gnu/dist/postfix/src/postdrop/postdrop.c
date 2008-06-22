@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.1.1.10 2007/08/02 08:05:21 heas Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.1.1.11 2008/06/22 14:03:02 christos Exp $	*/
 
 /*++
 /* NAME
@@ -159,7 +159,7 @@
   */
 char   *var_submit_acl;
 
-static CONFIG_STR_TABLE str_table[] = {
+static const CONFIG_STR_TABLE str_table[] = {
     VAR_SUBMIT_ACL, DEF_SUBMIT_ACL, &var_submit_acl, 0, 0,
     0,
 };

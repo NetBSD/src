@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_transport.c,v 1.1.1.4 2007/05/19 16:28:24 heas Exp $	*/
+/*	$NetBSD: qmgr_transport.c,v 1.1.1.5 2008/06/22 14:02:55 christos Exp $	*/
 
 /*++
 /* NAME
@@ -378,21 +378,34 @@ QMGR_TRANSPORT *qmgr_transport_create(const char *name)
      * Use global configuration settings or transport-specific settings.
      */
     transport->dest_concurrency_limit =
-	get_mail_conf_int2(name, "_destination_concurrency_limit",
+	get_mail_conf_int2(name, _DEST_CON_LIMIT,
 			   var_dest_con_limit, 0, 0);
     transport->recipient_limit =
-	get_mail_conf_int2(name, "_destination_recipient_limit",
+	get_mail_conf_int2(name, _DEST_RCPT_LIMIT,
 			   var_dest_rcpt_limit, 0, 0);
+    transport->init_dest_concurrency =
+	get_mail_conf_int2(name, _INIT_DEST_CON,
+			   var_init_dest_concurrency, 1, 0);
+    transport->rate_delay = get_mail_conf_time2(name, _DEST_RATE_DELAY,
+						var_dest_rate_delay, 
+						's', 0, 0);
 
-    if (transport->dest_concurrency_limit == 0
-	|| transport->dest_concurrency_limit >= var_init_dest_concurrency)
-	transport->init_dest_concurrency = var_init_dest_concurrency;
-    else
+    if (transport->rate_delay > 0)
+	transport->dest_concurrency_limit = 1;
+    if (transport->dest_concurrency_limit != 0
+    && transport->dest_concurrency_limit < transport->init_dest_concurrency)
 	transport->init_dest_concurrency = transport->dest_concurrency_limit;
 
     transport->queue_byname = htable_create(0);
     QMGR_LIST_INIT(transport->queue_list);
     transport->dsn = 0;
+    qmgr_feedback_init(&transport->pos_feedback, name, _CONC_POS_FDBACK,
+		       VAR_CONC_POS_FDBACK, var_conc_pos_feedback);
+    qmgr_feedback_init(&transport->neg_feedback, name, _CONC_NEG_FDBACK,
+		       VAR_CONC_NEG_FDBACK, var_conc_neg_feedback);
+    transport->fail_cohort_limit =
+	get_mail_conf_int2(name, _CONC_COHORT_LIM,
+			   var_conc_cohort_limit, 0, 0);
     if (qmgr_transport_byname == 0)
 	qmgr_transport_byname = htable_create(10);
     htable_enter(qmgr_transport_byname, name, (char *) transport);

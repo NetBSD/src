@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_glue.c,v 1.1.1.8 2006/07/19 01:17:47 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_sasl_glue.c,v 1.1.1.9 2008/06/22 14:03:41 christos Exp $	*/
 
 /*++
 /* NAME
@@ -250,21 +250,23 @@ int     smtpd_sasl_authenticate(SMTPD_STATE *state,
 	 */
 	smtpd_chat_query(state);
 	if (strcmp(STR(state->buffer), "*") == 0) {
-	    msg_warn("%s[%s]: SASL %s authentication aborted",
-		     state->name, state->addr, sasl_method);
+	    msg_warn("%s: SASL %s authentication aborted",
+		     state->namaddr, sasl_method);
 	    smtpd_chat_reply(state, "501 5.7.0 Authentication aborted");
 	    return (-1);
 	}
     }
     if (status != XSASL_AUTH_DONE) {
-	msg_warn("%s[%s]: SASL %s authentication failed: %s",
-		 state->name, state->addr, sasl_method,
+	msg_warn("%s: SASL %s authentication failed: %s",
+		 state->namaddr, sasl_method,
 		 STR(state->sasl_reply));
-	smtpd_chat_reply(state, "535 5.7.0 Error: authentication failed: %s",
+	/* RFC 4954 Section 6. */
+	smtpd_chat_reply(state, "535 5.7.8 Error: authentication failed: %s",
 			 STR(state->sasl_reply));
 	return (-1);
     }
-    smtpd_chat_reply(state, "235 2.0.0 Authentication successful");
+    /* RFC 4954 Section 6. */
+    smtpd_chat_reply(state, "235 2.7.0 Authentication successful");
     if ((sasl_username = xsasl_server_get_username(state->sasl_server)) == 0)
 	msg_panic("cannot look up the authenticated SASL username");
     state->sasl_username = mystrdup(sasl_username);

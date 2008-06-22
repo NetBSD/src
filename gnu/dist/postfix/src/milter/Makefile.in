@@ -1,6 +1,6 @@
 SHELL	= /bin/sh
-SRCS	= milter.c milter8.c
-OBJS	= milter.o milter8.o
+SRCS	= milter.c milter8.c milter_macros.c
+OBJS	= milter.o milter8.o milter_macros.o
 HDRS	= milter.h
 TESTSRC	= 
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
@@ -67,7 +67,7 @@ milter:	milter.c $(LIB) $(LIBS)
 	mv junk $@.o
 
 test-milter: test-milter.c
-	cc -g -o $@ $? -lmilter -lpthread
+	cc -g -I/usr/local/include -o $@ $? -L/usr/local/lib -lmilter -lpthread
 
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
@@ -117,4 +117,15 @@ milter8.o: ../../include/vstream.h
 milter8.o: ../../include/vstring.h
 milter8.o: milter.h
 milter8.o: milter8.c
+milter_macros.o: ../../include/argv.h
+milter_macros.o: ../../include/attr.h
+milter_macros.o: ../../include/iostuff.h
+milter_macros.o: ../../include/mail_proto.h
+milter_macros.o: ../../include/mymalloc.h
+milter_macros.o: ../../include/sys_defs.h
+milter_macros.o: ../../include/vbuf.h
+milter_macros.o: ../../include/vstream.h
+milter_macros.o: ../../include/vstring.h
+milter_macros.o: milter.h
+milter_macros.o: milter_macros.c
 test-milter.o: test-milter.c

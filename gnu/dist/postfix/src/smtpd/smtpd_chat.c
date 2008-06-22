@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_chat.c,v 1.1.1.7 2006/07/19 01:17:46 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_chat.c,v 1.1.1.8 2008/06/22 14:03:36 christos Exp $	*/
 
 /*++
 /* NAME
@@ -106,7 +106,8 @@ void    smtpd_chat_reset(SMTPD_STATE *state)
 
 /* smtp_chat_append - append record to SMTP transaction log */
 
-static void smtp_chat_append(SMTPD_STATE *state, char *direction)
+static void smtp_chat_append(SMTPD_STATE *state, char *direction,
+			             const char *text)
 {
     char   *line;
 
@@ -115,7 +116,7 @@ static void smtp_chat_append(SMTPD_STATE *state, char *direction)
 
     if (state->history == 0)
 	state->history = argv_alloc(10);
-    line = concatenate(direction, STR(state->buffer), (char *) 0);
+    line = concatenate(direction, text, (char *) 0);
     argv_add(state->history, line, (char *) 0);
     myfree(line);
 }
@@ -127,14 +128,14 @@ void    smtpd_chat_query(SMTPD_STATE *state)
     int     last_char;
 
     last_char = smtp_get(state->buffer, state->client, var_line_limit);
-    smtp_chat_append(state, "In:  ");
+    smtp_chat_append(state, "In:  ", STR(state->buffer));
     if (last_char != '\n')
-	msg_warn("%s[%s]: request longer than %d: %.30s...",
-		 state->name, state->addr, var_line_limit,
+	msg_warn("%s: request longer than %d: %.30s...",
+		 state->namaddr, var_line_limit,
 		 printable(STR(state->buffer), '?'));
 
     if (msg_verbose)
-	msg_info("< %s[%s]: %s", state->name, state->addr, STR(state->buffer));
+	msg_info("< %s: %s", state->namaddr, STR(state->buffer));
 }
 
 /* smtpd_chat_reply - format, send and record an SMTP response */
@@ -143,20 +144,9 @@ void    smtpd_chat_reply(SMTPD_STATE *state, const char *format,...)
 {
     va_list ap;
     int     delay = 0;
-
-    va_start(ap, format);
-    vstring_vsprintf(state->buffer, format, ap);
-    va_end(ap);
-    /* All 5xx replies must have a 5.xx.xx detail code. */
-    if (var_soft_bounce && STR(state->buffer)[0] == '5') {
-	STR(state->buffer)[0] = '4';
-	if (STR(state->buffer)[4] == '5')
-	    STR(state->buffer)[4] = '4';
-    }
-    smtp_chat_append(state, "Out: ");
-
-    if (msg_verbose)
-	msg_info("> %s[%s]: %s", state->name, state->addr, STR(state->buffer));
+    char   *cp;
+    char   *next;
+    char   *end;
 
     /*
      * Slow down clients that make errors. Sleep-on-anything slows down
@@ -165,7 +155,35 @@ void    smtpd_chat_reply(SMTPD_STATE *state, const char *format,...)
     if (state->error_count >= var_smtpd_soft_erlim)
 	sleep(delay = var_smtpd_err_sleep);
 
-    smtp_fputs(STR(state->buffer), LEN(state->buffer), state->client);
+    va_start(ap, format);
+    vstring_vsprintf(state->buffer, format, ap);
+    va_end(ap);
+    /* All 5xx replies must have a 5.xx.xx detail code. */
+    for (cp = STR(state->buffer), end = cp + strlen(STR(state->buffer));;) {
+	if (var_soft_bounce) {
+	    if (cp[0] == '5') {
+		cp[0] = '4';
+		if (cp[4] == '5')
+		    cp[4] = '4';
+	    }
+	}
+	/* This is why we use strlen() above instead of VSTRING_LEN(). */
+	if ((next = strstr(cp, "\r\n")) != 0) {
+	    *next = 0;
+	} else {
+	    next = end;
+	}
+	smtp_chat_append(state, "Out: ", cp);
+
+	if (msg_verbose)
+	    msg_info("> %s: %s", state->namaddr, cp);
+
+	smtp_fputs(cp, next - cp, state->client);
+	if (next < end)
+	    cp = next + 2;
+	else
+	    break;
+    }
 
     /*
      * Flush unsent output if no I/O happened for a while. This avoids
@@ -238,8 +256,8 @@ void    smtpd_chat_notify(SMTPD_STATE *state)
     post_mail_fprintf(notice, "From: %s (Mail Delivery System)",
 		      mail_addr_mail_daemon());
     post_mail_fprintf(notice, "To: %s (Postmaster)", var_error_rcpt);
-    post_mail_fprintf(notice, "Subject: %s SMTP server: errors from %s[%s]",
-		      var_mail_name, state->name, state->addr);
+    post_mail_fprintf(notice, "Subject: %s SMTP server: errors from %s",
+		      var_mail_name, state->namaddr);
     post_mail_fputs(notice, "");
     post_mail_fputs(notice, "Transcript of session follows.");
     post_mail_fputs(notice, "");

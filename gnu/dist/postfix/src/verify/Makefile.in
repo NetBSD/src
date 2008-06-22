@@ -60,6 +60,7 @@ depend: $(MAKES)
 verify.o: ../../include/argv.h
 verify.o: ../../include/attr.h
 verify.o: ../../include/cleanup_user.h
+verify.o: ../../include/data_redirect.h
 verify.o: ../../include/deliver_request.h
 verify.o: ../../include/dict.h
 verify.o: ../../include/dict_ht.h
@@ -77,6 +78,7 @@ verify.o: ../../include/msg_stats.h
 verify.o: ../../include/mymalloc.h
 verify.o: ../../include/post_mail.h
 verify.o: ../../include/recipient_list.h
+verify.o: ../../include/set_eugid.h
 verify.o: ../../include/split_at.h
 verify.o: ../../include/stringops.h
 verify.o: ../../include/sys_defs.h
