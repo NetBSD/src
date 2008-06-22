@@ -55,11 +55,11 @@ CLEANUP(8)                                                          CLEANUP(8)
        bounce  the message back to the sender in case of trouble.
 
 <b>STANDARDS</b>
-       <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
-       <a href="http://www.faqs.org/rfcs/rfc2045.html">RFC 2045</a> (MIME: Format of Internet Message Bodies)
-       <a href="http://www.faqs.org/rfcs/rfc2046.html">RFC 2046</a> (MIME: Media Types)
-       <a href="http://www.faqs.org/rfcs/rfc3463.html">RFC 3463</a> (Enhanced Status Codes)
-       <a href="http://www.faqs.org/rfcs/rfc3464.html">RFC 3464</a> (Delivery status notifications)
+       <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
+       <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> (MIME: Format of Internet Message Bodies)
+       <a href="http://tools.ietf.org/html/rfc2046">RFC 2046</a> (MIME: Media Types)
+       <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced Status Codes)
+       <a href="http://tools.ietf.org/html/rfc3464">RFC 3464</a> (Delivery status notifications)
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
@@ -211,6 +211,12 @@ CLEANUP(8)                                                          CLEANUP(8)
               The macros that are sent to  Milter  (mail  filter)
               applications after the message end-of-data.
 
+       Available in Postfix version 2.5 and later:
+
+       <b><a href="postconf.5.html#milter_end_of_header_macros">milter_end_of_header_macros</a> (see postconf -n output)</b>
+              The  macros  that  are sent to Milter (mail filter)
+              applications after the end of the message header.
+
 <b>MIME PROCESSING CONTROLS</b>
        Available in Postfix version 2.0 and later:
 
@@ -226,20 +232,28 @@ CLEANUP(8)                                                          CLEANUP(8)
               will handle.
 
        <b><a href="postconf.5.html#strict_8bitmime">strict_8bitmime</a> (no)</b>
-              Enable  both  <a href="postconf.5.html#strict_7bit_headers">strict_7bit_headers</a>  and strict_8bit-
+              Enable both  <a href="postconf.5.html#strict_7bit_headers">strict_7bit_headers</a>  and  strict_8bit-
               mime_body.
 
        <b><a href="postconf.5.html#strict_7bit_headers">strict_7bit_headers</a> (no)</b>
               Reject mail with 8-bit text in message headers.
 
        <b><a href="postconf.5.html#strict_8bitmime_body">strict_8bitmime_body</a> (no)</b>
-              Reject 8-bit message body text without  8-bit  MIME
+              Reject  8-bit  message body text without 8-bit MIME
               content encoding information.
 
        <b><a href="postconf.5.html#strict_mime_encoding_domain">strict_mime_encoding_domain</a> (no)</b>
               Reject mail with invalid Content-Transfer-Encoding:
-              information for the message/* or  multipart/*  MIME
+              information  for  the message/* or multipart/* MIME
               content types.
+
+       Available in Postfix version 2.5 and later:
+
+       <b><a href="postconf.5.html#detect_8bit_encoding_header">detect_8bit_encoding_header</a> (yes)</b>
+              Automatically detect 8BITMIME body content by look-
+              ing  at Content-Transfer-Encoding: message headers;
+              historically, this behavior was  hard-coded  to  be
+              "always on".
 
 <b>AUTOMATIC BCC RECIPIENT CONTROLS</b>
        Postfix can automatically add BCC (blind carbon copy) when

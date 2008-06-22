@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_request.c,v 1.1.1.7 2006/07/19 01:17:22 rpaulo Exp $	*/
+/*	$NetBSD: deliver_request.c,v 1.1.1.8 2008/06/22 14:02:18 christos Exp $	*/
 
 /*++
 /* NAME
@@ -24,6 +24,7 @@
 /*		DSN	*hop_status;
 /*		char	*client_name;
 /*		char	*client_addr;
+/*		char	*client_port;
 /*		char	*client_proto;
 /*		char	*client_helo;
 /*		char	*sasl_method;
@@ -56,9 +57,15 @@
 /*	of the following:
 /* .IP \fBDEL_REQ_FLAG_SUCCESS\fR
 /*	Delete successful recipients from the queue file.
+/*
+/*	Note: currently, this also controls whether bounced recipients
+/*	are deleted.
+/*
+/*	Note: the deliver_completed() function ignores this request
+/*	when the recipient queue file offset is -1.
 /* .IP \fBDEL_REQ_FLAG_BOUNCE\fR
 /*	Delete bounced recipients from the queue file. Currently,
-/*	this flag is considered to be "always on".
+/*	this flag is non-functional.
 /* .PP
 /*	The \fBDEL_REQ_FLAG_DEFLT\fR constant provides a convenient shorthand
 /*	for the most common case: delete successful and bounced recipients.
@@ -191,6 +198,7 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
     static VSTRING *address;
     static VSTRING *client_name;
     static VSTRING *client_addr;
+    static VSTRING *client_port;
     static VSTRING *client_proto;
     static VSTRING *client_helo;
     static VSTRING *sasl_method;
@@ -215,6 +223,7 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
 	address = vstring_alloc(10);
 	client_name = vstring_alloc(10);
 	client_addr = vstring_alloc(10);
+	client_port = vstring_alloc(10);
 	client_proto = vstring_alloc(10);
 	client_helo = vstring_alloc(10);
 	sasl_method = vstring_alloc(10);
@@ -241,16 +250,20 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
 		  ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, dsn_envid,
 		  ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, &dsn_ret,
 	       ATTR_TYPE_FUNC, msg_stats_scan, (void *) &request->msg_stats,
+    /* XXX Should be encapsulated with ATTR_TYPE_FUNC. */
 		  ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_NAME, client_name,
 		  ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_ADDR, client_addr,
+		  ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_PORT, client_port,
 		  ATTR_TYPE_STR, MAIL_ATTR_LOG_PROTO_NAME, client_proto,
 		  ATTR_TYPE_STR, MAIL_ATTR_LOG_HELO_NAME, client_helo,
+    /* XXX Should be encapsulated with ATTR_TYPE_FUNC. */
 		  ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD, sasl_method,
 		  ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, sasl_username,
 		  ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, sasl_sender,
+    /* XXX Ditto if we want to pass TLS certificate info. */
 		  ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, rewrite_context,
 		  ATTR_TYPE_INT, MAIL_ATTR_RCPT_COUNT, &rcpt_count,
-		  ATTR_TYPE_END) != 20) {
+		  ATTR_TYPE_END) != 21) {
 	msg_warn("%s: error receiving common attributes", myname);
 	return (-1);
     }
@@ -269,6 +282,7 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
     request->sender = mystrdup(vstring_str(address));
     request->client_name = mystrdup(vstring_str(client_name));
     request->client_addr = mystrdup(vstring_str(client_addr));
+    request->client_port = mystrdup(vstring_str(client_port));
     request->client_proto = mystrdup(vstring_str(client_proto));
     request->client_helo = mystrdup(vstring_str(client_helo));
     request->sasl_method = mystrdup(vstring_str(sasl_method));
@@ -349,6 +363,7 @@ static DELIVER_REQUEST *deliver_request_alloc(void)
     request->hop_status = 0;
     request->client_name = 0;
     request->client_addr = 0;
+    request->client_port = 0;
     request->client_proto = 0;
     request->client_helo = 0;
     request->sasl_method = 0;
@@ -382,6 +397,8 @@ static void deliver_request_free(DELIVER_REQUEST *request)
 	myfree(request->client_name);
     if (request->client_addr)
 	myfree(request->client_addr);
+    if (request->client_port)
+	myfree(request->client_port);
     if (request->client_proto)
 	myfree(request->client_proto);
     if (request->client_helo)

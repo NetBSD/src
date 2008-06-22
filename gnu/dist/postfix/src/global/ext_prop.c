@@ -1,4 +1,4 @@
-/*	$NetBSD: ext_prop.c,v 1.1.1.5 2006/07/19 01:17:23 rpaulo Exp $	*/
+/*	$NetBSD: ext_prop.c,v 1.1.1.6 2008/06/22 14:02:23 christos Exp $	*/
 
 /*++
 /* NAME
@@ -66,7 +66,7 @@
 
 int     ext_prop_mask(const char *param_name, const char *pattern)
 {
-    static NAME_MASK table[] = {
+    static const NAME_MASK table[] = {
 	"canonical", EXT_PROP_CANONICAL,
 	"virtual", EXT_PROP_VIRTUAL,
 	"alias", EXT_PROP_ALIAS,

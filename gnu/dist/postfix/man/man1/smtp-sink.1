@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp-sink.1,v 1.1.1.6 2007/05/19 16:27:48 heas Exp $
+.\"	$NetBSD: smtp-sink.1,v 1.1.1.7 2008/06/22 14:01:00 christos Exp $
 .\"
 .TH SMTP-SINK 1 
 .ad
@@ -119,6 +119,14 @@ Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
 DATA, ., RSET, NOOP, and QUIT. Separate command names by
 white space or commas, and use quotes to protect white space
 from the shell. Command names are case-insensitive.
+.IP "\fB-Q \fIcommand,command,...\fR"
+Send a 421 reply and disconnect after receiving one
+of the specified commands.
+.sp
+Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
+DATA, ., RSET, NOOP, and QUIT. Separate command names by
+white space or commas, and use quotes to protect white space
+from the shell. Command names are case-insensitive.
 .IP "\fB-r \fIcommand,command,...\fR"
 Reject the specified commands with a soft (4xx) error code.
 This option implies \fB-p\fR.
@@ -158,6 +166,13 @@ with super-user privileges. See also the \fB-R\fR option.
 Show the SMTP conversations.
 .IP "\fB-w \fIdelay\fR"
 Wait \fIdelay\fR seconds before responding to a DATA command.
+.IP "\fB-W \fIcommand:delay[:odds]\fR"
+Wait \fIdelay\fR seconds before responding to \fIcommand\fR.
+If \fIodds\fR is also specified (a number between 1-99
+inclusive), wait for a random multiple of \fIdelay\fR. The
+random multiplier is equal to the number of times the program
+needs to roll a dice with a range of 0..99 inclusive, before
+the dice produces a result greater than or equal to \fIodds\fR.
 .IP [\fBinet:\fR][\fIhost\fR]:\fIport\fR
 Listen on network interface \fIhost\fR (default: any interface)
 TCP port \fIport\fR. Both \fIhost\fR and \fIport\fR may be

@@ -7,6 +7,8 @@
 # - Process input as text blocks separated by one or more empty
 # (or all whitespace) lines.
 #
+# - Skip text between <!-- and -->; each must be on a different line.
+#
 # - Don't touch blocks that start with `<' in column zero.
 #
 # The only changes made are:
@@ -36,10 +38,21 @@ while(<>) {
 
     # Gobble up the next text block.
     $block = "";
+    $comment = 0;
     do {
 	$_ =~ s/\s+\n$/\n/;
 	$block .= $_;
-    } while(($_ = <>) && /\S/);
+	if ($_ =~ /<!--/)
+	    { $comment = 1; } 
+	if ($comment && $_ =~ /-->/)
+	    { $comment = 0; $block =~ s/<!--.*-->//sg; }
+    } while((($_ = <>) && /\S/) || $comment);
+
+    # Skip blanks after comment elimination.
+    if ($block =~ /^\s/) {
+	$block =~ s/^\s+//s;
+	next if ($block eq "");
+    }
 
     # Don't touch a text block starting with < in column zero.
     if ($block =~ /^</) {

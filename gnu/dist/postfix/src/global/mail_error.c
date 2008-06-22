@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_error.c,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: mail_error.c,v 1.1.1.3 2008/06/22 14:02:26 christos Exp $	*/
 
 /*++
 /* NAME
@@ -66,7 +66,7 @@
   * also contains a function that is being called explicitly. REF/DEF and all
   * that.
   */
-NAME_MASK mail_error_masks[] = {
+const NAME_MASK mail_error_masks[] = {
     "bounce", MAIL_ERROR_BOUNCE,
     "2bounce", MAIL_ERROR_2BOUNCE,
     "delay", MAIL_ERROR_DELAY,

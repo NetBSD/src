@@ -54,6 +54,14 @@ VERIFY(8)                                                            VERIFY(8)
        trades one problem (disk space exhaustion) for another one
        (poor response time to client requests).
 
+       With  Postfix  version 2.5 and later, the <a href="verify.8.html"><b>verify</b>(8)</a> server
+       no  longer  uses  root   privileges   when   opening   the
+       <b><a href="postconf.5.html#address_verify_map">address_verify_map</a></b>  cache  file.  The  file  should now be
+       stored  under  the  Postfix-owned  <b><a href="postconf.5.html#data_directory">data_directory</a></b>.   As  a
+       migration  aid,  an  attempt  to open a cache file under a
+       non-Postfix directory is redirected to  the  Postfix-owned
+       <b><a href="postconf.5.html#data_directory">data_directory</a></b>, and a warning is logged.
+
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
 
@@ -82,12 +90,13 @@ VERIFY(8)                                                            VERIFY(8)
               Optional  lookup table for persistent address veri-
               fication status storage.
 
-       <b><a href="postconf.5.html#address_verify_sender">address_verify_sender</a> (postmaster)</b>
+       <b><a href="postconf.5.html#address_verify_sender">address_verify_sender</a> ($<a href="postconf.5.html#double_bounce_sender">double_bounce_sender</a>)</b>
               The sender address to use in  address  verification
-              probes.
+              probes; prior to Postfix 2.5 the default was "post-
+              master".
 
        <b><a href="postconf.5.html#address_verify_positive_expire_time">address_verify_positive_expire_time</a> (31d)</b>
-              The  time  after  which  a successful probe expires
+              The time after which  a  successful  probe  expires
               from the address verification cache.
 
        <b><a href="postconf.5.html#address_verify_positive_refresh_time">address_verify_positive_refresh_time</a> (7d)</b>
@@ -99,24 +108,24 @@ VERIFY(8)                                                            VERIFY(8)
               results.
 
        <b><a href="postconf.5.html#address_verify_negative_expire_time">address_verify_negative_expire_time</a> (3d)</b>
-              The time after which a failed  probe  expires  from
+              The  time  after  which a failed probe expires from
               the address verification cache.
 
        <b><a href="postconf.5.html#address_verify_negative_refresh_time">address_verify_negative_refresh_time</a> (3h)</b>
-              The  time after which a failed address verification
+              The time after which a failed address  verification
               probe needs to be refreshed.
 
 <b>PROBE MESSAGE ROUTING CONTROLS</b>
-       By default, probe messages  are  delivered  via  the  same
-       route  as  regular messages.  The following parameters can
+       By  default,  probe  messages  are  delivered via the same
+       route as regular messages.  The following  parameters  can
        be used to override specific message routing mechanisms.
 
        <b><a href="postconf.5.html#address_verify_relayhost">address_verify_relayhost</a> ($<a href="postconf.5.html#relayhost">relayhost</a>)</b>
-              Overrides  the  <a href="postconf.5.html#relayhost">relayhost</a>  parameter  setting   for
+              Overrides   the  <a href="postconf.5.html#relayhost">relayhost</a>  parameter  setting  for
               address verification probes.
 
        <b><a href="postconf.5.html#address_verify_transport_maps">address_verify_transport_maps</a> ($<a href="postconf.5.html#transport_maps">transport_maps</a>)</b>
-              Overrides  the <a href="postconf.5.html#transport_maps">transport_maps</a> parameter setting for
+              Overrides the <a href="postconf.5.html#transport_maps">transport_maps</a> parameter setting  for
               address verification probes.
 
        <b><a href="postconf.5.html#address_verify_local_transport">address_verify_local_transport</a> ($<a href="postconf.5.html#local_transport">local_transport</a>)</b>
@@ -124,7 +133,7 @@ VERIFY(8)                                                            VERIFY(8)
               address verification probes.
 
        <b><a href="postconf.5.html#address_verify_virtual_transport">address_verify_virtual_transport</a> ($<a href="postconf.5.html#virtual_transport">virtual_transport</a>)</b>
-              Overrides  the  <a href="postconf.5.html#virtual_transport">virtual_transport</a> parameter setting
+              Overrides the <a href="postconf.5.html#virtual_transport">virtual_transport</a>  parameter  setting
               for address verification probes.
 
        <b><a href="postconf.5.html#address_verify_relay_transport">address_verify_relay_transport</a> ($<a href="postconf.5.html#relay_transport">relay_transport</a>)</b>
@@ -132,17 +141,17 @@ VERIFY(8)                                                            VERIFY(8)
               address verification probes.
 
        <b><a href="postconf.5.html#address_verify_default_transport">address_verify_default_transport</a> ($<a href="postconf.5.html#default_transport">default_transport</a>)</b>
-              Overrides  the  <a href="postconf.5.html#default_transport">default_transport</a> parameter setting
+              Overrides the <a href="postconf.5.html#default_transport">default_transport</a>  parameter  setting
               for address verification probes.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much time a Postfix daemon process may take to
-              handle a request  before  it  is  terminated  by  a
+              How much time a Postfix daemon process may take  to
+              handle  a  request  before  it  is  terminated by a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
@@ -150,23 +159,23 @@ VERIFY(8)                                                            VERIFY(8)
               over an internal communication channel.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
+              The  process  ID  of  a  Postfix  command or daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
+              The process name of a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The  mail  system  name  that  is  prepended to the
-              process name in syslog  records,  so  that  "smtpd"
+              The mail system  name  that  is  prepended  to  the
+              process  name  in  syslog  records, so that "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
@@ -179,7 +188,7 @@ VERIFY(8)                                                            VERIFY(8)
        <a href="ADDRESS_VERIFICATION_README.html">ADDRESS_VERIFICATION_README</a>, address verification howto
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>HISTORY</b>

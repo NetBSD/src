@@ -47,6 +47,13 @@ TLSMGR(8)                                                            TLSMGR(8)
        source  and  exchange  file,  and creates or truncates the
        optional TLS session cache files.
 
+       With Postfix version  2.5  and  later,  the  <a href="tlsmgr.8.html"><b>tlsmgr</b>(8)</a>  no
+       longer  uses  root  privileges  when  opening cache files.
+       These files should now be stored under  the  Postfix-owned
+       <b><a href="postconf.5.html#data_directory">data_directory</a></b>.   As a migration aid, an attempt to open a
+       cache file under a non-Postfix directory is redirected  to
+       the Postfix-owned <b><a href="postconf.5.html#data_directory">data_directory</a></b>, and a warning is logged.
+
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to the syslog daemon.
 
@@ -111,7 +118,7 @@ TLSMGR(8)                                                            TLSMGR(8)
               $<a href="postconf.5.html#tls_random_source">tls_random_source</a> when (re)seeding  the  in-memory
               pseudo random number generator (PRNG) pool.
 
-       <b><a href="postconf.5.html#tls_random_exchange_name">tls_random_exchange_name</a> (${<a href="postconf.5.html#config_directory">config_directory</a>}/prng_exch)</b>
+       <b><a href="postconf.5.html#tls_random_exchange_name">tls_random_exchange_name</a> (see 'postconf -d' output)</b>
               Name  of  the pseudo random number generator (PRNG)
               state file that is maintained by <a href="tlsmgr.8.html"><b>tlsmgr</b>(8)</a>.
 
@@ -131,25 +138,29 @@ TLSMGR(8)                                                            TLSMGR(8)
               The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
               <a href="master.5.html">master.cf</a> configuration files.
 
+       <b><a href="postconf.5.html#data_directory">data_directory</a> (see 'postconf -d' output)</b>
+              The directory with Postfix-writable data files (for
+              example: caches, pseudo-random numbers).
+
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process may take  to
-              handle  a  request  before  it  is  terminated by a
+              How  much time a Postfix daemon process may take to
+              handle a request  before  it  is  terminated  by  a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
+              The  process  ID  of  a  Postfix  command or daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
+              The process name of a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
@@ -164,7 +175,7 @@ TLSMGR(8)                                                            TLSMGR(8)
        <a href="TLS_README.html">TLS_README</a>, Postfix TLS configuration and operation
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

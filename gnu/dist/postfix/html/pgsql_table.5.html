@@ -61,7 +61,7 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
 
            <b>query</b> = SELECT <i>select</i><b>_</b><i>function</i>('%s')
 
-       or  in the absence of <b>selection_function</b>, the lower prece-
+       or  in  the  absence  of <b>select_function</b>, the lower prece-
        dence:
 
            <b>query</b> = SELECT <i>select</i><b>_</b><i>field</i>
@@ -264,23 +264,26 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
               limit is exceeded.  Setting the limit to 1  ensures
               that lookups do not return multiple values.
 
-       Pre-Postfix 2.2 legacy interfaces:
+<b>OBSOLETE QUERY INTERFACES</b>
+       This  section  describes  query interfaces that are depre-
+       cated as of Postfix 2.2.  Please migrate to the new  <b>query</b>
+       interface  as  the  old interfaces are slated to be phased
+       out.
 
        <b>select_function</b>
-              This  parameter specifies a database function name.
+              This parameter specifies a database function  name.
               Example:
                   select_function = my_lookup_user_alias
 
               This is equivalent to:
                   query = SELECT my_lookup_user_alias('%s')
 
-              This parameter overrides the  legacy  table-related
-              fields  (described  below).  With  Postfix versions
-              prior to 2.2, it also overrides the  <b>query</b>  parame-
+              This  parameter  overrides the legacy table-related
+              fields (described  below).  With  Postfix  versions
+              prior  to  2.2, it also overrides the <b>query</b> parame-
               ter. Starting with Postfix 2.2, the <b>query</b> parameter
-              has highest precedence, and this parameter is  dep-
-              recated.  Please migrate to the new <b>query</b> interface
-              as this interface is slated to be phased out.
+              has  highest  precedence,  and  the <b>select_function</b>
+              parameter is deprecated.
 
        The following parameters (with lower precedence  than  the
        <b>select_function</b>  interface described above) can be used to
@@ -299,9 +302,8 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
        Starting  with Postfix 2.2, this interface is obsoleted by
        the more  general  <b>query</b>  interface  described  above.  If
        higher  precedence the <b>query</b> or <b>select_function</b> parameters
-       described above are defined, these parameters are ignored.
-       Please  migrate  to the new <b>query</b> interface as this inter-
-       face is slated to be phased out.
+       described above are defined, the parameters described here
+       are ignored.
 
        <b>select_field</b>
               The SQL "select" parameter. Example:
@@ -329,7 +331,7 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
        <a href="PGSQL_README.html">PGSQL_README</a>, Postfix PostgreSQL client guide
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>HISTORY</b>

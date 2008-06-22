@@ -340,7 +340,7 @@ delayed mail delivery attempts is described in the QSHAPE_README
 and TUNING_README documents. </p>
 
 <li> <p> The trivial-rewrite(8) server resolves each recipient
-address according to its local and remote address class, as defined
+address according to its local or remote address class, as defined
 in the ADDRESS_CLASS_README document.  Additional routing information
 can be specified with the optional transport(5) table.  The
 trivial-rewrite(8) server optionally queries the relocated(5) table
@@ -532,10 +532,12 @@ ination<br> logs </td> </tr>
 
 </table>
 
-<li> <p> The proxymap(8) servers provide read-only table lookup
+<li> <p> The proxymap(8) servers provide read-only and read-write
+table lookup
 service to Postfix processes. This overcomes chroot restrictions,
-and reduces the number of open lookup tables by sharing one open
-table among multiple processes. </p>
+reduces the number of open lookup tables by sharing one open
+table among multiple processes, and implements single-updater
+tables. </p>
 
 <li> <p> The scache(8) server maintains the connection cache for
 the Postfix smtp(8) client. When connection caching is enabled for

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.8 2007/08/02 08:05:06 heas Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.9 2008/06/22 14:02:12 christos Exp $	*/
 
 /*++
 /* NAME
@@ -13,7 +13,8 @@
 /*	the queue manager. Each request specifies a queue file, a sender
 /*	address, the reason for non-delivery (specified as the
 /*	next-hop destination), and recipient information.
-/*	The reason may be prefixed with an RFC 3463-compatible detail code.
+/*	The reason may be prefixed with an RFC 3463-compatible detail code;
+/*	if none is specified a default 4.0.0 or 5.0.0 code is used instead.
 /*	This program expects to be run from the \fBmaster\fR(8) process
 /*	manager.
 /*

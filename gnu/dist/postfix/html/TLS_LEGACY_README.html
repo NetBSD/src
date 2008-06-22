@@ -33,7 +33,7 @@ encrypted session protects the information that is transmitted with
 SMTP mail or with SASL authentication.
 
 <p> Postfix version 2.2 introduces support for TLS as described in
-<a href="http://www.faqs.org/rfcs/rfc3207.html">RFC 3207</a>.  TLS Support for older Postfix versions was available as
+<a href="http://tools.ietf.org/html/rfc3207">RFC 3207</a>.  TLS Support for older Postfix versions was available as
 an add-on patch.  The section "<a href="#compat">Compatibility with
 Postfix < 2.2 TLS support</a>" below discusses the differences
 between these implementations.  </p>
@@ -425,7 +425,7 @@ private key. This is intended behavior. </p>
 
 <p> You can ENFORCE the use of TLS, so that the Postfix SMTP server
 announces STARTTLS and accepts no mail without TLS encryption, by
-setting "<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes". According to <a href="http://www.faqs.org/rfcs/rfc2487.html">RFC 2487</a> this MUST
+setting "<a href="postconf.5.html#smtpd_enforce_tls">smtpd_enforce_tls</a> = yes". According to <a href="http://tools.ietf.org/html/rfc2487">RFC 2487</a> this MUST
 NOT be applied in case of a publicly-referenced Postfix SMTP server.
 This option is off by default and should only seldom be used. </p>
 
@@ -564,13 +564,18 @@ the cost of repeatedly negotiating TLS session keys is high.</p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = btree:/etc/postfix/smtpd_scache
+    <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = btree:/var/lib/postfix/smtpd_scache
 </pre>
 </blockquote>
 
+<p> As of version 2.5, Postfix will no longer maintain this file
+in a directory with non-Postfix ownership. As a migration aid,
+attempts to open such files are redirected to the Postfix-owned
+$<a href="postconf.5.html#data_directory">data_directory</a>, and a warning is logged. </p>
+
 <p> Cached Postfix SMTP server session information expires after
 a certain amount of time.  Postfix/TLS does not use the OpenSSL
-default of 300s, but a longer time of 3600sec (=1 hour). <a href="http://www.faqs.org/rfcs/rfc2246.html">RFC 2246</a>
+default of 300s, but a longer time of 3600sec (=1 hour). <a href="http://tools.ietf.org/html/rfc2246">RFC 2246</a>
 recommends a maximum of 24 hours.  </p>
 
 <p> Example: </p>
@@ -933,13 +938,18 @@ is allowed to negotiate per unit time.</p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = btree:/etc/postfix/smtp_scache
+    <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = btree:/var/lib/postfix/smtp_scache
 </pre>
 </blockquote>
 
+<p> As of version 2.5, Postfix will no longer maintain this file
+in a directory with non-Postfix ownership. As a migration aid,
+attempts to open such files are redirected to the Postfix-owned
+$<a href="postconf.5.html#data_directory">data_directory</a>, and a warning is logged. </p>
+
 <p> Cached Postfix SMTP client session information expires after
 a certain amount of time.  Postfix/TLS does not use the OpenSSL
-default of 300s, but a longer time of 3600s (=1 hour). <a href="http://www.faqs.org/rfcs/rfc2246.html">RFC 2246</a>
+default of 300s, but a longer time of 3600s (=1 hour). <a href="http://tools.ietf.org/html/rfc2246">RFC 2246</a>
 recommends a maximum of 24 hours.  </p>
 
 <p> Example: </p>
@@ -994,7 +1004,7 @@ CommonName is checked.  Verification may be turned off with the
 
 <p> Enforcing the use of TLS is useful if you know that you will
 only
-connect to servers that support <a href="http://www.faqs.org/rfcs/rfc2487.html">RFC 2487</a> _and_ that present server
+connect to servers that support <a href="http://tools.ietf.org/html/rfc2487">RFC 2487</a> _and_ that present server
 certificates that meet the above requirements.  An example would
 be a client only sends email to one specific mailhub that offers
 the necessary STARTTLS support.  </p>
@@ -1011,7 +1021,7 @@ the necessary STARTTLS support.  </p>
 <h3> <a name="client_tls_nopeer"> Disabling server certificate
 verification </a> </h3>
 
-<p> As of <a href="http://www.faqs.org/rfcs/rfc2487.html">RFC 2487</a> the requirements for hostname checking for MTA
+<p> As of <a href="http://tools.ietf.org/html/rfc2487">RFC 2487</a> the requirements for hostname checking for MTA
 clients are not set. When TLS is required (<a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a> = yes),
 the option <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a> can be set to "no" to disable
 strict remote SMTP server hostname checking. In this case, the mail

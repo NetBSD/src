@@ -409,8 +409,47 @@ caching does not solve the problem, there is a subtle workaround. </p>
 
 <ul>
 
+<li> <p> Postfix version 2.5 and later: </p>
+
+<ul>
+
+<li> <p> In <a href="master.5.html">master.cf</a> set up a dedicated clone of the "smtp" transport
+for the destination in question. In the example below we will call
+it "fragile". </p>
+
+<li> <p> In <a href="master.5.html">master.cf</a> configure a reasonable process limit for the
+cloned smtp transport (a number in the 10-20 range is typical). </p>
+
+<li> <p> IMPORTANT!!! In <a href="postconf.5.html">main.cf</a> configure a large per-destination
+pseudo-cohort failure limit for the cloned smtp transport. </p>
+
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+    fragile_destination_concurrency_failed_cohort_limit = 100
+    fragile_destination_concurrency_limit = 20
+
+/etc/postfix/transport:
+    example.com  fragile:
+
+/etc/postfix/<a href="master.5.html">master.cf</a>:
+    # service type  private unpriv  chroot  wakeup  maxproc command
+    fragile   unix     -       -       n       -      20    smtp
+</pre>
+
+<p> See also the documentation for
+<a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">default_destination_concurrency_failed_cohort_limit</a> and
+<a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concurrency_limit</a>. </p>
+
+</ul>
+
+<li> <p> Earlier Postfix versions: </p>
+
+<ul>
+
 <li> <p> In <a href="master.5.html">master.cf</a> set up a dedicated clone of the "smtp"
-transport for the destination in question. </p>
+transport for the destination in question. In the example below
+we will call it "fragile". </p>
 
 <li> <p> In <a href="master.5.html">master.cf</a> configure a reasonable process limit for the
 transport (a number in the 10-20 range is typical). </p>
@@ -420,16 +459,26 @@ and destination concurrency limit for this transport (say 2000). </p>
 
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
     <a href="postconf.5.html#initial_destination_concurrency">initial_destination_concurrency</a> = 2000
-    <i>transportname</i>_destination_concurrency_limit = 2000
+    fragile_destination_concurrency_limit = 2000
+
+/etc/postfix/transport:
+    example.com  fragile:
+
+/etc/postfix/<a href="master.5.html">master.cf</a>:
+    # service type  private unpriv  chroot  wakeup  maxproc command
+    fragile   unix     -       -       n       -      20    smtp
 </pre>
 
-<p> Where <i>transportname</i> is the name of the <a href="master.5.html">master.cf</a> entry
-in question. </p>
+<p> See also the documentation for <a href="postconf.5.html#default_destination_concurrency_limit">default_destination_concurrency_limit</a>.
+</p>
 
 </ul>
 
-<p> The effect of this surprising configuration is that up to 2000
+</ul>
+
+<p> The effect of this configuration is that up to 2000
 consecutive errors are tolerated without marking the destination
 dead, while the total concurrency remains reasonable (10-20
 processes). This trick is only for a very specialized situation:
@@ -443,6 +492,42 @@ insert brief delays between delivery attempts. </p>
 
 <ul> 
 
+<li> <p> Postfix version 2.5 and later: </p>
+
+<ul>
+
+<li> <p> In <a href="master.5.html">master.cf</a> set up a dedicated clone of the "smtp" transport
+for the problem destination. In the example below we call it "slow".
+</p>
+
+<li> <p> In <a href="postconf.5.html">main.cf</a> configure a short delay between deliveries to
+the same destination.  </p>
+
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+    slow_destination_rate_delay = 1
+
+/etc/postfix/transport:
+    example.com  slow:
+
+/etc/postfix/<a href="master.5.html">master.cf</a>:
+    # service type  private unpriv  chroot  wakeup  maxproc command
+    slow      unix     -       -       n       -       -    smtp
+</pre>
+
+</ul>
+
+<p> See also the documentation for <a href="postconf.5.html#default_destination_rate_delay">default_destination_rate_delay</a>. </p>
+
+<p> This solution forces the Postfix <a href="smtp.8.html">smtp(8)</a> client to wait for
+$slow_destination_rate_delay seconds between deliveries to the same
+destination.  </p>
+
+<li> <p> Earlier Postfix versions: </p>
+
+<ul>
+
 <li> <p>  In the transport map entry for the problem destination,
 specify a dead host as the primary nexthop. </p>
 
@@ -451,25 +536,28 @@ problem destination as the <a href="postconf.5.html#fallback_relay">fallback_rel
 <a href="postconf.5.html#smtp_connect_timeout">smtp_connect_timeout</a> value. </p>
 
 <pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport
+
 /etc/postfix/transport:
-    problem.example.com  slow:[dead.host]
+    example.com  slow:[dead.host]
 
 /etc/postfix/<a href="master.5.html">master.cf</a>:
     # service type  private unpriv  chroot  wakeup  maxproc command
     slow      unix     -       -       n       -       1    smtp
         -o <a href="postconf.5.html#fallback_relay">fallback_relay</a>=problem.example.com
         -o <a href="postconf.5.html#smtp_connect_timeout">smtp_connect_timeout</a>=1
+        -o <a href="postconf.5.html#smtp_connection_cache_on_demand">smtp_connection_cache_on_demand</a>=no
 </pre>
 
 </ul>
 
 <p> This solution forces the Postfix <a href="smtp.8.html">smtp(8)</a> client to wait for
-$<a href="postconf.5.html#smtp_connect_timeout">smtp_connect_timeout</a> seconds between deliveries. The solution
-depends on Postfix connection management details, and needs to be
-updated when SMTP connection caching is introduced.  </p>
+$<a href="postconf.5.html#smtp_connect_timeout">smtp_connect_timeout</a> seconds between deliveries. The connection
+caching feature is disabled to prevent the client from skipping
+over the dead host.  </p>
 
-<p> Hopefully a more elegant solution to these problems will be
-found in the future. </p>
+</ul>
 
 <h2><a name="queues">Postfix queue directories</a></h2>
 

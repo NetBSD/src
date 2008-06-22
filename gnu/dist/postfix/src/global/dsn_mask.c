@@ -1,4 +1,4 @@
-/*	$NetBSD: dsn_mask.c,v 1.1.1.1 2006/07/19 01:17:23 rpaulo Exp $	*/
+/*	$NetBSD: dsn_mask.c,v 1.1.1.2 2008/06/22 14:02:23 christos Exp $	*/
 
 /*++
 /* NAME
@@ -73,7 +73,7 @@
 
 /* Application-specific. */
 
-static NAME_MASK dsn_notify_table[] = {
+static const NAME_MASK dsn_notify_table[] = {
     "NEVER", DSN_NOTIFY_NEVER,
     "SUCCESS", DSN_NOTIFY_SUCCESS,
     "FAILURE", DSN_NOTIFY_FAILURE,
@@ -81,7 +81,7 @@ static NAME_MASK dsn_notify_table[] = {
     0, 0,
 };
 
-static NAME_CODE dsn_ret_table[] = {
+static const NAME_CODE dsn_ret_table[] = {
     "FULL", DSN_RET_FULL,
     "HDRS", DSN_RET_HDRS,
     0, 0,

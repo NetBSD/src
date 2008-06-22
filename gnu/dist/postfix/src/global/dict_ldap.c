@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.1.1.5 2007/05/19 16:28:10 heas Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.1.1.6 2008/06/22 14:02:19 christos Exp $	*/
 
 /*++
 /* NAME
@@ -123,7 +123,11 @@
 /*	tls_cert.
 /* .IP tls_require_cert
 /*	Whether or not to request server's X509 certificate and check its
-/*	validity.
+/*	validity. The value "no" means don't check the cert trust chain
+/*	and (OpenLDAP 2.1+) don't check the peername. The value "yes" means
+/*	check both the trust chain and the peername (with OpenLDAP <= 2.0.11,
+/*	the peername checks use the reverse hostname from the LDAP servers's
+/*	IP address, not the user supplied servername).
 /* .IP tls_random_file
 /*	Path of a file to obtain random bits from when /dev/[u]random is
 /*	not available. Generally set to the name of the EGD/PRNGD socket.
@@ -200,12 +204,12 @@
 
 /* Utility library. */
 
-#include "msg.h"
-#include "mymalloc.h"
-#include "vstring.h"
-#include "dict.h"
-#include "stringops.h"
-#include "binhash.h"
+#include <msg.h>
+#include <mymalloc.h>
+#include <vstring.h>
+#include <dict.h>
+#include <stringops.h>
+#include <binhash.h>
 
 /* Global library. */
 
@@ -268,6 +272,13 @@ typedef struct {
 
 #define DICT_LDAP_CONN(d) ((LDAP_CONN *)((d)->ht->value))
 
+#define DICT_LDAP_UNBIND_RETURN(__ld, __err, __ret) do { \
+	dict_ldap_unbind(__ld); \
+	(__ld) = 0; \
+	dict_errno = (__err); \
+	return ((__ret)); \
+    } while (0)
+
  /*
   * Bitrot: LDAP_API 3000 and up (OpenLDAP 2.2.x) deprecated ldap_unbind()
   */
@@ -278,6 +289,31 @@ typedef struct {
 #define dict_ldap_unbind(ld)		ldap_unbind(ld)
 #define dict_ldap_abandon(ld, msg)	ldap_abandon((ld), (msg))
 #endif
+
+static int dict_ldap_vendor_version(void)
+{
+    const char *myname = "dict_ldap_api_info";
+    LDAPAPIInfo api;
+
+    /*
+     * We tell the library our version, and it tells us its version and/or
+     * may return an error code if the versions are not the same.
+     */
+    api.ldapai_info_version = LDAP_API_INFO_VERSION;
+    if (ldap_get_option(0, LDAP_OPT_API_INFO, &api) != LDAP_SUCCESS
+	|| api.ldapai_info_version != LDAP_API_INFO_VERSION) {
+	if (api.ldapai_info_version != LDAP_API_INFO_VERSION)
+	    msg_fatal("%s: run-time API_INFO version: %d, compiled with: %d",
+		    myname, api.ldapai_info_version, LDAP_API_INFO_VERSION);
+	else
+	    msg_fatal("%s: ldap_get_option(API_INFO) failed", myname);
+    }
+    if (strcmp(api.ldapai_vendor_name, LDAP_VENDOR_NAME) != 0)
+	msg_fatal("%s: run-time API vendor: %s, compiled with: %s",
+		  myname, api.ldapai_vendor_name, LDAP_VENDOR_NAME);
+
+    return (api.ldapai_vendor_version);
+}
 
 /*
  * Quoting rules.
@@ -446,7 +482,7 @@ static int search_st(LDAP *ld, char *base, int scope, char *query,
 }
 
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
-static void dict_ldap_set_tls_options(DICT_LDAP *dict_ldap)
+static int dict_ldap_set_tls_options(DICT_LDAP *dict_ldap)
 {
     const char *myname = "dict_ldap_set_tls_options";
     int     rc;
@@ -454,54 +490,67 @@ static void dict_ldap_set_tls_options(DICT_LDAP *dict_ldap)
     if (dict_ldap->start_tls || dict_ldap->ldap_ssl) {
 	if (*dict_ldap->tls_random_file) {
 	    if ((rc = ldap_set_option(NULL, LDAP_OPT_X_TLS_RANDOM_FILE,
-			       dict_ldap->tls_random_file)) != LDAP_SUCCESS)
+			       dict_ldap->tls_random_file)) != LDAP_SUCCESS) {
 		msg_warn("%s: Unable to set tls_random_file to %s: %d: %s",
 			 myname, dict_ldap->tls_random_file,
 			 rc, ldap_err2string(rc));
+		return (-1);
+	    }
 	}
 	if (*dict_ldap->tls_ca_cert_file) {
 	    if ((rc = ldap_set_option(NULL, LDAP_OPT_X_TLS_CACERTFILE,
-			      dict_ldap->tls_ca_cert_file)) != LDAP_SUCCESS)
+			      dict_ldap->tls_ca_cert_file)) != LDAP_SUCCESS) {
 		msg_warn("%s: Unable to set tls_ca_cert_file to %s: %d: %s",
 			 myname, dict_ldap->tls_ca_cert_file,
 			 rc, ldap_err2string(rc));
+		return (-1);
+	    }
 	}
 	if (*dict_ldap->tls_ca_cert_dir) {
 	    if ((rc = ldap_set_option(NULL, LDAP_OPT_X_TLS_CACERTDIR,
-			       dict_ldap->tls_ca_cert_dir)) != LDAP_SUCCESS)
+			       dict_ldap->tls_ca_cert_dir)) != LDAP_SUCCESS) {
 		msg_warn("%s: Unable to set tls_ca_cert_dir to %s: %d: %s",
 			 myname, dict_ldap->tls_ca_cert_dir,
 			 rc, ldap_err2string(rc));
+		return (-1);
+	    }
 	}
 	if (*dict_ldap->tls_cert) {
 	    if ((rc = ldap_set_option(NULL, LDAP_OPT_X_TLS_CERTFILE,
-				      dict_ldap->tls_cert)) != LDAP_SUCCESS)
+				      dict_ldap->tls_cert)) != LDAP_SUCCESS) {
 		msg_warn("%s: Unable to set tls_cert to %s: %d: %s",
 			 myname, dict_ldap->tls_cert,
 			 rc, ldap_err2string(rc));
+		return (-1);
+	    }
 	}
 	if (*dict_ldap->tls_key) {
 	    if ((rc = ldap_set_option(NULL, LDAP_OPT_X_TLS_KEYFILE,
-				      dict_ldap->tls_key)) != LDAP_SUCCESS)
+				      dict_ldap->tls_key)) != LDAP_SUCCESS) {
 		msg_warn("%s: Unable to set tls_key to %s: %d: %s",
 			 myname, dict_ldap->tls_key,
 			 rc, ldap_err2string(rc));
+		return (-1);
+	    }
 	}
 	if (*dict_ldap->tls_cipher_suite) {
 	    if ((rc = ldap_set_option(NULL, LDAP_OPT_X_TLS_CIPHER_SUITE,
-			      dict_ldap->tls_cipher_suite)) != LDAP_SUCCESS)
+			      dict_ldap->tls_cipher_suite)) != LDAP_SUCCESS) {
 		msg_warn("%s: Unable to set tls_cipher_suite to %s: %d: %s",
 			 myname, dict_ldap->tls_cipher_suite,
 			 rc, ldap_err2string(rc));
+		return (-1);
+	    }
 	}
-	if (dict_ldap->tls_require_cert) {
-	    if ((rc = ldap_set_option(NULL, LDAP_OPT_X_TLS_REQUIRE_CERT,
-			   &(dict_ldap->tls_require_cert))) != LDAP_SUCCESS)
-		msg_warn("%s: Unable to set tls_require_cert to %d: %d: %s",
-			 myname, dict_ldap->tls_require_cert,
-			 rc, ldap_err2string(rc));
+	if ((rc = ldap_set_option(NULL, LDAP_OPT_X_TLS_REQUIRE_CERT,
+		       &(dict_ldap->tls_require_cert))) != LDAP_SUCCESS) {
+	    msg_warn("%s: Unable to set tls_require_cert to %d: %d: %s",
+		     myname, dict_ldap->tls_require_cert,
+		     rc, ldap_err2string(rc));
+	    return (-1);
 	}
     }
+    return (0);
 }
 
 #endif
@@ -545,7 +594,10 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
 
 #ifdef LDAP_OPT_NETWORK_TIMEOUT
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
-    dict_ldap_set_tls_options(dict_ldap);
+    if (dict_ldap_set_tls_options(dict_ldap) != 0) {
+	dict_errno = DICT_ERR_RETRY;
+	return (-1);
+    }
     ldap_initialize(&(dict_ldap->ld), dict_ldap->server_host);
 #else
     dict_ldap->ld = ldap_init(dict_ldap->server_host,
@@ -560,8 +612,10 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
     mytimeval.tv_sec = dict_ldap->timeout;
     mytimeval.tv_usec = 0;
     if (ldap_set_option(dict_ldap->ld, LDAP_OPT_NETWORK_TIMEOUT, &mytimeval) !=
-	LDAP_OPT_SUCCESS)
+	LDAP_OPT_SUCCESS) {
 	msg_warn("%s: Unable to set network timeout.", myname);
+	DICT_LDAP_UNBIND_RETURN(dict_ldap->ld, DICT_ERR_RETRY, -1);
+    }
 #else
     if ((saved_alarm = signal(SIGALRM, dict_ldap_timeout)) == SIG_ERR) {
 	msg_warn("%s: Error setting signal handler for open timeout: %m",
@@ -597,9 +651,10 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
      */
 #ifdef LDAP_OPT_PROTOCOL_VERSION
     if (ldap_set_option(dict_ldap->ld, LDAP_OPT_PROTOCOL_VERSION,
-			&dict_ldap->version) != LDAP_OPT_SUCCESS)
+			&dict_ldap->version) != LDAP_OPT_SUCCESS) {
 	msg_warn("%s: Unable to set LDAP protocol version", myname);
-
+	DICT_LDAP_UNBIND_RETURN(dict_ldap->ld, DICT_ERR_RETRY, -1);
+    }
     if (msg_verbose) {
 	if (ldap_get_option(dict_ldap->ld,
 			    LDAP_OPT_PROTOCOL_VERSION,
@@ -616,9 +671,11 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
      */
     if (dict_ldap->size_limit) {
 	if (ldap_set_option(dict_ldap->ld, LDAP_OPT_SIZELIMIT,
-			    &dict_ldap->size_limit) != LDAP_OPT_SUCCESS)
+			    &dict_ldap->size_limit) != LDAP_OPT_SUCCESS) {
 	    msg_warn("%s: %s: Unable to set query result size limit to %ld.",
 		     myname, dict_ldap->parser->name, dict_ldap->size_limit);
+	    DICT_LDAP_UNBIND_RETURN(dict_ldap->ld, DICT_ERR_RETRY, -1);
+	}
     }
 
     /*
@@ -631,15 +688,13 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
 
     /* Chase referrals. */
 
-    /*
-     * I have no clue where this was originally added so i'm skipping all
-     * tests
-     */
 #ifdef LDAP_OPT_REFERRALS
     if (ldap_set_option(dict_ldap->ld, LDAP_OPT_REFERRALS,
 		    dict_ldap->chase_referrals ? LDAP_OPT_ON : LDAP_OPT_OFF)
-	!= LDAP_OPT_SUCCESS)
+	!= LDAP_OPT_SUCCESS) {
 	msg_warn("%s: Unable to set Referral chasing.", myname);
+	DICT_LDAP_UNBIND_RETURN(dict_ldap->ld, DICT_ERR_RETRY, -1);
+    }
 #else
     if (dict_ldap->chase_referrals) {
 	msg_warn("%s: Unable to set Referral chasing.", myname);
@@ -651,14 +706,16 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
 	if ((saved_alarm = signal(SIGALRM, dict_ldap_timeout)) == SIG_ERR) {
 	    msg_warn("%s: Error setting signal handler for STARTTLS timeout: %m",
 		     myname);
-	    dict_errno = DICT_ERR_RETRY;
-	    return (-1);
+	    DICT_LDAP_UNBIND_RETURN(dict_ldap->ld, DICT_ERR_RETRY, -1);
 	}
 	alarm(dict_ldap->timeout);
 	if (setjmp(env) == 0)
 	    rc = ldap_start_tls_s(dict_ldap->ld, NULL, NULL);
-	else
+	else {
 	    rc = LDAP_TIMEOUT;
+	    dict_ldap->ld = 0;			/* Unknown state after
+						 * longjmp() */
+	}
 	alarm(0);
 
 	if (signal(SIGALRM, saved_alarm) == SIG_ERR) {
@@ -691,8 +748,7 @@ static int dict_ldap_connect(DICT_LDAP *dict_ldap)
 	    msg_warn("%s: Unable to bind to server %s as %s: %d (%s)",
 		     myname, dict_ldap->server_host, dict_ldap->bind_dn,
 		     rc, ldap_err2string(rc));
-	    dict_errno = DICT_ERR_RETRY;
-	    return (-1);
+	    DICT_LDAP_UNBIND_RETURN(dict_ldap->ld, DICT_ERR_RETRY, -1);
 	}
 	if (msg_verbose)
 	    msg_info("%s: Successful bind to server %s as %s ",
@@ -895,9 +951,9 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage *res,
 	     * recursing (for dn or url attributes of non-terminal entries)
 	     */
 	    if (i < dict_ldap->num_attributes || is_terminal) {
-		if (is_terminal && i >= dict_ldap->num_terminal
-		    || !is_leaf &&
-		    i < dict_ldap->num_terminal + dict_ldap->num_leaf) {
+		if ((is_terminal && i >= dict_ldap->num_terminal)
+		    || (!is_leaf &&
+			i < dict_ldap->num_terminal + dict_ldap->num_leaf)) {
 		    if (msg_verbose)
 			msg_info("%s[%d]: skipping %ld value(s) of %s "
 				 "attribute %s", myname, recursion, i,
@@ -1086,9 +1142,12 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
      */
     sizelimit = dict_ldap->size_limit ? dict_ldap->size_limit : LDAP_NO_LIMIT;
     if (ldap_set_option(dict_ldap->ld, LDAP_OPT_SIZELIMIT, &sizelimit)
-	!= LDAP_OPT_SUCCESS)
+	!= LDAP_OPT_SUCCESS) {
 	msg_warn("%s: %s: Unable to set query result size limit to %ld.",
 		 myname, dict_ldap->parser->name, dict_ldap->size_limit);
+	dict_errno = DICT_ERR_RETRY;
+	return (0);
+    }
 
     /*
      * Expand the search base and query. Skip lookup when the input key lacks
@@ -1278,6 +1337,7 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
     char   *scope;
     char   *attr;
     int     tmp;
+    int     vendor_version = dict_ldap_vendor_version();
 
     if (msg_verbose)
 	msg_info("%s: Using LDAP source %s", myname, ldapsource);
@@ -1301,7 +1361,7 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
 	cfg_get_int(dict_ldap->parser, "server_port", LDAP_PORT, 0, 0);
 
     /*
-     * Define LDAP Version.
+     * Define LDAP Protocol Version.
      */
     dict_ldap->version = cfg_get_int(dict_ldap->parser, "version", 2, 2, 0);
     switch (dict_ldap->version) {
@@ -1312,7 +1372,7 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
 	dict_ldap->version = LDAP_VERSION3;
 	break;
     default:
-	msg_warn("%s: %s Unknown version %d.", myname, ldapsource,
+	msg_warn("%s: %s Unknown version %d, using 2.", myname, ldapsource,
 		 dict_ldap->version);
 	dict_ldap->version = LDAP_VERSION2;
     }
@@ -1544,14 +1604,24 @@ DICT   *dict_ldap_open(const char *ldapsource, int dummy, int dict_flags)
      */
     /* get configured value of "start_tls"; default to no */
     dict_ldap->start_tls = cfg_get_bool(dict_ldap->parser, "start_tls", 0);
-    if (dict_ldap->start_tls && dict_ldap->version < LDAP_VERSION3) {
-	msg_warn("%s: %s start_tls requires protocol version 3",
-		 myname, ldapsource);
-	dict_ldap->version = LDAP_VERSION3;
+    if (dict_ldap->start_tls) {
+	if (dict_ldap->version < LDAP_VERSION3) {
+	    msg_warn("%s: %s start_tls requires protocol version 3",
+		     myname, ldapsource);
+	    dict_ldap->version = LDAP_VERSION3;
+	}
+	/* Binary incompatibility in the OpenLDAP API from 2.0.11 to 2.0.12 */
+	if (((LDAP_VENDOR_VERSION <= 20011) && !(vendor_version <= 20011))
+	  || (!(LDAP_VENDOR_VERSION <= 20011) && (vendor_version <= 20011)))
+	    msg_fatal("%s: incompatible TLS support: "
+		      "compile-time OpenLDAP version %d, "
+		      "run-time OpenLDAP version %d",
+		      myname, LDAP_VENDOR_VERSION, vendor_version);
     }
     /* get configured value of "tls_require_cert"; default to no */
-    dict_ldap->tls_require_cert = cfg_get_bool(dict_ldap->parser,
-					       "tls_require_cert", 0);
+    dict_ldap->tls_require_cert =
+	cfg_get_bool(dict_ldap->parser, "tls_require_cert", 0) ?
+	LDAP_OPT_X_TLS_DEMAND : LDAP_OPT_X_TLS_NEVER;
 
     /* get configured value of "tls_ca_cert_file"; default "" */
     dict_ldap->tls_ca_cert_file = cfg_get_str(dict_ldap->parser,

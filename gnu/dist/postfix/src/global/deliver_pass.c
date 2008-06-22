@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_pass.c,v 1.1.1.8 2006/07/19 01:17:22 rpaulo Exp $	*/
+/*	$NetBSD: deliver_pass.c,v 1.1.1.9 2008/06/22 14:02:17 christos Exp $	*/
 
 /*++
 /* NAME
@@ -111,13 +111,17 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
 	       ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, request->dsn_envid,
 	       ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, request->dsn_ret,
 	       ATTR_TYPE_FUNC, msg_stats_print, (void *) &request->msg_stats,
+    /* XXX Should be encapsulated with ATTR_TYPE_FUNC. */
 	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_NAME, request->client_name,
 	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_ADDR, request->client_addr,
+	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_PORT, request->client_port,
 	     ATTR_TYPE_STR, MAIL_ATTR_LOG_PROTO_NAME, request->client_proto,
 	       ATTR_TYPE_STR, MAIL_ATTR_LOG_HELO_NAME, request->client_helo,
+    /* XXX Should be encapsulated with ATTR_TYPE_FUNC. */
 	       ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD, request->sasl_method,
 	     ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, request->sasl_username,
 	       ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, request->sasl_sender,
+    /* XXX Ditto if we want to pass TLS certificate info. */
 	     ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, request->rewrite_context,
 	       ATTR_TYPE_INT, MAIL_ATTR_RCPT_COUNT, 1,
 	       ATTR_TYPE_END);

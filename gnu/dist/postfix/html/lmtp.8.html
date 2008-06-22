@@ -99,21 +99,22 @@ SMTP(8)                                                                SMTP(8)
        low privilege.
 
 <b>STANDARDS</b>
-       <a href="http://www.faqs.org/rfcs/rfc821.html">RFC 821</a> (SMTP protocol)
-       <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
-       <a href="http://www.faqs.org/rfcs/rfc1651.html">RFC 1651</a> (SMTP service extensions)
-       <a href="http://www.faqs.org/rfcs/rfc1652.html">RFC 1652</a> (8bit-MIME transport)
-       <a href="http://www.faqs.org/rfcs/rfc1870.html">RFC 1870</a> (Message Size Declaration)
-       <a href="http://www.faqs.org/rfcs/rfc2033.html">RFC 2033</a> (LMTP protocol)
-       <a href="http://www.faqs.org/rfcs/rfc2034.html">RFC 2034</a> (SMTP Enhanced Error Codes)
-       <a href="http://www.faqs.org/rfcs/rfc2045.html">RFC 2045</a> (MIME: Format of Internet Message Bodies)
-       <a href="http://www.faqs.org/rfcs/rfc2046.html">RFC 2046</a> (MIME: Media Types)
-       <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC 2554</a> (AUTH command)
-       <a href="http://www.faqs.org/rfcs/rfc2821.html">RFC 2821</a> (SMTP protocol)
-       <a href="http://www.faqs.org/rfcs/rfc2920.html">RFC 2920</a> (SMTP Pipelining)
-       <a href="http://www.faqs.org/rfcs/rfc3207.html">RFC 3207</a> (STARTTLS command)
-       <a href="http://www.faqs.org/rfcs/rfc3461.html">RFC 3461</a> (SMTP DSN Extension)
-       <a href="http://www.faqs.org/rfcs/rfc3463.html">RFC 3463</a> (Enhanced Status Codes)
+       <a href="http://tools.ietf.org/html/rfc821">RFC 821</a> (SMTP protocol)
+       <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
+       <a href="http://tools.ietf.org/html/rfc1651">RFC 1651</a> (SMTP service extensions)
+       <a href="http://tools.ietf.org/html/rfc1652">RFC 1652</a> (8bit-MIME transport)
+       <a href="http://tools.ietf.org/html/rfc1870">RFC 1870</a> (Message Size Declaration)
+       <a href="http://tools.ietf.org/html/rfc2033">RFC 2033</a> (LMTP protocol)
+       <a href="http://tools.ietf.org/html/rfc2034">RFC 2034</a> (SMTP Enhanced Error Codes)
+       <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> (MIME: Format of Internet Message Bodies)
+       <a href="http://tools.ietf.org/html/rfc2046">RFC 2046</a> (MIME: Media Types)
+       <a href="http://tools.ietf.org/html/rfc2554">RFC 2554</a> (AUTH command)
+       <a href="http://tools.ietf.org/html/rfc2821">RFC 2821</a> (SMTP protocol)
+       <a href="http://tools.ietf.org/html/rfc2920">RFC 2920</a> (SMTP Pipelining)
+       <a href="http://tools.ietf.org/html/rfc3207">RFC 3207</a> (STARTTLS command)
+       <a href="http://tools.ietf.org/html/rfc3461">RFC 3461</a> (SMTP DSN Extension)
+       <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced Status Codes)
+       <a href="http://tools.ietf.org/html/rfc4954">RFC 4954</a> (AUTH command)
 
 <b>DIAGNOSTICS</b>
        Problems  and transactions are logged to <b>syslogd</b>(8).  Cor-
@@ -193,7 +194,7 @@ SMTP(8)                                                                SMTP(8)
 
        <b><a href="postconf.5.html#smtp_quote_rfc821_envelope">smtp_quote_rfc821_envelope</a> (yes)</b>
               Quote addresses in SMTP MAIL FROM and RCPT TO  com-
-              mands as required by <a href="http://www.faqs.org/rfcs/rfc821.html">RFC 821</a>.
+              mands as required by <a href="http://tools.ietf.org/html/rfc821">RFC 821</a>.
 
        <b><a href="postconf.5.html#smtp_skip_5xx_greeting">smtp_skip_5xx_greeting</a> (yes)</b>
               Skip SMTP servers that greet with a 5XX status code
@@ -261,6 +262,24 @@ SMTP(8)                                                                SMTP(8)
               riZation ID (authzid); send only the SASL authenti-
               Cation ID (authcid) plus the authcid's password.
 
+       Available in Postfix version 2.5 and later:
+
+       <b><a href="postconf.5.html#smtp_header_checks">smtp_header_checks</a> (empty)</b>
+              Restricted  <a href="header_checks.5.html"><b>header_checks</b>(5)</a> tables for the Postfix
+              SMTP client.
+
+       <b><a href="postconf.5.html#smtp_mime_header_checks">smtp_mime_header_checks</a> (empty)</b>
+              Restricted  <b><a href="postconf.5.html#mime_header_checks">mime_header_checks</a></b>(5)  tables  for  the
+              Postfix SMTP client.
+
+       <b><a href="postconf.5.html#smtp_nested_header_checks">smtp_nested_header_checks</a> (empty)</b>
+              Restricted  <b><a href="postconf.5.html#nested_header_checks">nested_header_checks</a></b>(5)  tables for the
+              Postfix SMTP client.
+
+       <b><a href="postconf.5.html#smtp_body_checks">smtp_body_checks</a> (empty)</b>
+              Restricted <a href="header_checks.5.html"><b>body_checks</b>(5)</a> tables  for  the  Postfix
+              SMTP client.
+
 <b>MIME PROCESSING CONTROLS</b>
        Available in Postfix version 2.0 and later:
 
@@ -296,10 +315,10 @@ SMTP(8)                                                                SMTP(8)
               tion is enabled.
 
        <b><a href="postconf.5.html#smtp_sasl_security_options">smtp_sasl_security_options</a> (noplaintext, noanonymous)</b>
-              SASL security options; as of Postfix 2.3  the  list
-              of  available  features  depends on the SASL client
-              implementation    that     is     selected     with
-              <b><a href="postconf.5.html#smtp_sasl_type">smtp_sasl_type</a></b>.
+              Postfix SMTP client SASL security  options;  as  of
+              Postfix  2.3 the list of available features depends
+              on the SASL client implementation that is  selected
+              with <b><a href="postconf.5.html#smtp_sasl_type">smtp_sasl_type</a></b>.
 
        Available in Postfix version 2.2 and later:
 
@@ -318,52 +337,70 @@ SMTP(8)                                                                SMTP(8)
               will use the appropriate credentials.
 
        <b><a href="postconf.5.html#smtp_sasl_path">smtp_sasl_path</a> (empty)</b>
-              Implementation-specific  information that is passed
-              through to the SASL plug-in implementation that  is
-              selected with <b><a href="postconf.5.html#smtp_sasl_type">smtp_sasl_type</a></b>.
+              Implementation-specific  information that the Post-
+              fix SMTP client passes through to the SASL  plug-in
+              implementation     that     is     selected    with
+              <b><a href="postconf.5.html#smtp_sasl_type">smtp_sasl_type</a></b>.
 
        <b><a href="postconf.5.html#smtp_sasl_type">smtp_sasl_type</a> (cyrus)</b>
-              The  SASL plug-in type that the Postfix SMTP client
+              The SASL plug-in type that the Postfix SMTP  client
               should use for authentication.
 
+       Available in Postfix version 2.5 and later:
+
+       <b><a href="postconf.5.html#smtp_sasl_auth_cache_name">smtp_sasl_auth_cache_name</a> (empty)</b>
+              An  optional table to prevent repeated SASL authen-
+              tication failures with the same remote SMTP  server
+              hostname, username and password.
+
+       <b><a href="postconf.5.html#smtp_sasl_auth_cache_time">smtp_sasl_auth_cache_time</a> (90d)</b>
+              The  maximal  age  of  an <a href="postconf.5.html#smtp_sasl_auth_cache_name">smtp_sasl_auth_cache_name</a>
+              entry before it is removed.
+
+       <b><a href="postconf.5.html#smtp_sasl_auth_soft_bounce">smtp_sasl_auth_soft_bounce</a> (yes)</b>
+              When a remote SMTP server rejects a SASL  authenti-
+              cation  request  with  a 535 reply code, defer mail
+              delivery instead of returning  mail  as  undeliver-
+              able.
+
 <b>STARTTLS SUPPORT CONTROLS</b>
-       Detailed information about STARTTLS configuration  may  be
+       Detailed  information  about STARTTLS configuration may be
        found in the <a href="TLS_README.html">TLS_README</a> document.
 
        <b><a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> (empty)</b>
               The default SMTP TLS security level for the Postfix
-              SMTP client; when a non-empty value  is  specified,
-              this     overrides    the    obsolete    parameters
+              SMTP  client;  when a non-empty value is specified,
+              this    overrides    the    obsolete     parameters
               <a href="postconf.5.html#smtp_use_tls">smtp_use_tls</a>,         <a href="postconf.5.html#smtp_enforce_tls">smtp_enforce_tls</a>,         and
               <a href="postconf.5.html#smtp_tls_enforce_peername">smtp_tls_enforce_peername</a>.
 
        <b><a href="postconf.5.html#smtp_sasl_tls_security_options">smtp_sasl_tls_security_options</a>           ($<a href="postconf.5.html#smtp_sasl_security_options">smtp_sasl_secu</a>-</b>
        <b><a href="postconf.5.html#smtp_sasl_security_options">rity_options</a>)</b>
-              The  SASL  authentication security options that the
-              Postfix SMTP client uses  for  TLS  encrypted  SMTP
+              The SASL authentication security options  that  the
+              Postfix  SMTP  client  uses  for TLS encrypted SMTP
               sessions.
 
        <b><a href="postconf.5.html#smtp_starttls_timeout">smtp_starttls_timeout</a> (300s)</b>
-              Time  limit  for Postfix SMTP client write and read
-              operations during TLS startup  and  shutdown  hand-
+              Time limit for Postfix SMTP client write  and  read
+              operations  during  TLS  startup and shutdown hand-
               shake procedures.
 
        <b><a href="postconf.5.html#smtp_tls_CAfile">smtp_tls_CAfile</a> (empty)</b>
-              The  file with the certificate of the certification
-              authority (CA) that issued the Postfix SMTP  client
+              The file with the certificate of the  certification
+              authority  (CA) that issued the Postfix SMTP client
               certificate.
 
        <b><a href="postconf.5.html#smtp_tls_CApath">smtp_tls_CApath</a> (empty)</b>
-              Directory  with  PEM  format  certificate authority
-              certificates that the Postfix SMTP client  uses  to
+              Directory with  PEM  format  certificate  authority
+              certificates  that  the Postfix SMTP client uses to
               verify a remote SMTP server certificate.
 
        <b><a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a> (empty)</b>
-              File  with  the Postfix SMTP client RSA certificate
+              File with the Postfix SMTP client  RSA  certificate
               in PEM format.
 
        <b><a href="postconf.5.html#smtp_tls_mandatory_ciphers">smtp_tls_mandatory_ciphers</a> (medium)</b>
-              The minimum TLS cipher grade that the Postfix  SMTP
+              The  minimum TLS cipher grade that the Postfix SMTP
               client will use with mandatory TLS encryption.
 
        <b><a href="postconf.5.html#smtp_tls_exclude_ciphers">smtp_tls_exclude_ciphers</a> (empty)</b>
@@ -372,43 +409,43 @@ SMTP(8)                                                                SMTP(8)
               levels.
 
        <b><a href="postconf.5.html#smtp_tls_mandatory_exclude_ciphers">smtp_tls_mandatory_exclude_ciphers</a> (empty)</b>
-              Additional  list  of  ciphers  or  cipher  types to
-              exclude from the SMTP client cipher list at  manda-
+              Additional list  of  ciphers  or  cipher  types  to
+              exclude  from the SMTP client cipher list at manda-
               tory TLS security levels.
 
        <b><a href="postconf.5.html#smtp_tls_dcert_file">smtp_tls_dcert_file</a> (empty)</b>
-              File  with  the Postfix SMTP client DSA certificate
+              File with the Postfix SMTP client  DSA  certificate
               in PEM format.
 
        <b><a href="postconf.5.html#smtp_tls_dkey_file">smtp_tls_dkey_file</a> ($<a href="postconf.5.html#smtp_tls_dcert_file">smtp_tls_dcert_file</a>)</b>
-              File with the Postfix SMTP client DSA  private  key
+              File  with  the Postfix SMTP client DSA private key
               in PEM format.
 
        <b><a href="postconf.5.html#smtp_tls_key_file">smtp_tls_key_file</a> ($<a href="postconf.5.html#smtp_tls_cert_file">smtp_tls_cert_file</a>)</b>
-              File  with  the Postfix SMTP client RSA private key
+              File with the Postfix SMTP client RSA  private  key
               in PEM format.
 
        <b><a href="postconf.5.html#smtp_tls_loglevel">smtp_tls_loglevel</a> (0)</b>
-              Enable additional Postfix SMTP  client  logging  of
+              Enable  additional  Postfix  SMTP client logging of
               TLS activity.
 
        <b><a href="postconf.5.html#smtp_tls_note_starttls_offer">smtp_tls_note_starttls_offer</a> (no)</b>
-              Log  the  hostname  of  a  remote  SMTP server that
-              offers STARTTLS, when TLS is  not  already  enabled
+              Log the hostname  of  a  remote  SMTP  server  that
+              offers  STARTTLS,  when  TLS is not already enabled
               for that server.
 
        <b><a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> (empty)</b>
               Optional lookup tables with the Postfix SMTP client
               TLS security policy by next-hop destination; when a
-              non-empty  value  is  specified, this overrides the
+              non-empty value is specified,  this  overrides  the
               obsolete <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> parameter.
 
        <b><a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a> (SSLv3, TLSv1)</b>
-              List of TLS protocols that the Postfix SMTP  client
-              will use with mandatory TLS encryption.
+              List  of  SSL/TLS  protocols  that the Postfix SMTP
+              client will use with mandatory TLS encryption.
 
-       <b><a href="postconf.5.html#smtp_tls_scert_verifydepth">smtp_tls_scert_verifydepth</a> (5)</b>
-              The  verification depth for remote SMTP server cer-
+       <b><a href="postconf.5.html#smtp_tls_scert_verifydepth">smtp_tls_scert_verifydepth</a> (9)</b>
+              The verification depth for remote SMTP server  cer-
               tificates.
 
        <b><a href="postconf.5.html#smtp_tls_secure_cert_match">smtp_tls_secure_cert_match</a> (nexthop, dot-nexthop)</b>
@@ -416,7 +453,7 @@ SMTP(8)                                                                SMTP(8)
               for the "secure" TLS security level.
 
        <b><a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> (empty)</b>
-              Name  of  the  file containing the optional Postfix
+              Name of the file containing  the  optional  Postfix
               SMTP client TLS session cache.
 
        <b><a href="postconf.5.html#smtp_tls_session_cache_timeout">smtp_tls_session_cache_timeout</a> (3600s)</b>
@@ -428,9 +465,9 @@ SMTP(8)                                                                SMTP(8)
               for the "verify" TLS security level.
 
        <b><a href="postconf.5.html#tls_daemon_random_bytes">tls_daemon_random_bytes</a> (32)</b>
-              The number of pseudo-random bytes that  an  <a href="smtp.8.html"><b>smtp</b>(8)</a>
-              or  <a href="smtpd.8.html"><b>smtpd</b>(8)</a>  process  requests  from the <a href="tlsmgr.8.html"><b>tlsmgr</b>(8)</a>
-              server in order to seed its internal pseudo  random
+              The  number  of pseudo-random bytes that an <a href="smtp.8.html"><b>smtp</b>(8)</a>
+              or <a href="smtpd.8.html"><b>smtpd</b>(8)</a> process  requests  from  the  <a href="tlsmgr.8.html"><b>tlsmgr</b>(8)</a>
+              server  in order to seed its internal pseudo random
               number generator (PRNG).
 
        <b><a href="postconf.5.html#tls_high_cipherlist">tls_high_cipherlist</a></b>
@@ -442,7 +479,7 @@ SMTP(8)                                                                SMTP(8)
               ciphers.
 
        <b><a href="postconf.5.html#tls_low_cipherlist">tls_low_cipherlist</a> (ALL:!EXPORT:+RC4:@STRENGTH)</b>
-              The OpenSSL cipherlist for "LOW"  or  higher  grade
+              The  OpenSSL  cipherlist  for "LOW" or higher grade
               ciphers.
 
        <b><a href="postconf.5.html#tls_export_cipherlist">tls_export_cipherlist</a> (ALL:+RC4:@STRENGTH)</b>
@@ -450,16 +487,27 @@ SMTP(8)                                                                SMTP(8)
               ciphers.
 
        <b><a href="postconf.5.html#tls_null_cipherlist">tls_null_cipherlist</a> (eNULL:!aNULL)</b>
-              The OpenSSL cipherlist  for  "NULL"  grade  ciphers
+              The  OpenSSL  cipherlist  for  "NULL" grade ciphers
               that provide authentication without encryption.
 
        Available in Postfix version 2.4 and later:
 
        <b><a href="postconf.5.html#smtp_sasl_tls_verified_security_options">smtp_sasl_tls_verified_security_options</a></b>
        <b>($<a href="postconf.5.html#smtp_sasl_tls_security_options">smtp_sasl_tls_security_options</a>)</b>
-              The  SASL  authentication security options that the
-              Postfix SMTP client uses  for  TLS  encrypted  SMTP
+              The SASL authentication security options  that  the
+              Postfix  SMTP  client  uses  for TLS encrypted SMTP
               sessions with a verified server certificate.
+
+       Available in Postfix version 2.5 and later:
+
+       <b><a href="postconf.5.html#smtp_tls_fingerprint_cert_match">smtp_tls_fingerprint_cert_match</a> (empty)</b>
+              List of acceptable remote SMTP  server  certificate
+              fingerprints  for  the  "fingerprint"  TLS security
+              level (<b><a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a></b> = fingerprint).
+
+       <b><a href="postconf.5.html#smtp_tls_fingerprint_digest">smtp_tls_fingerprint_digest</a> (md5)</b>
+              The message  digest  algorithm  used  to  construct
+              remote SMTP server certificate fingerprints.
 
 <b>OBSOLETE STARTTLS CONTROLS</b>
        The  following configuration parameters exist for compati-
@@ -730,6 +778,9 @@ SMTP(8)                                                                SMTP(8)
               that can't be found or that are unreachable.
 
 <b>SEE ALSO</b>
+       <a href="generic.5.html">generic(5)</a>, output address rewriting
+       <a href="header_checks.5.html">header_checks(5)</a>, message header content inspection
+       <a href="header_checks.5.html">body_checks(5)</a>, body parts content inspection
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="bounce.8.html">bounce(8)</a>, delivery status reports
        <a href="scache.8.html">scache(8)</a>, connection cache server
@@ -766,16 +817,16 @@ SMTP(8)                                                                SMTP(8)
        SuSE Rhein/Main AG
        65760 Eschborn, Germany
 
-       Connection caching in cooperation with:
-       Victor Duchovni
-       Morgan Stanley
-
        TLS support originally by:
        Lutz Jaenicke
        BTU Cottbus
        Allgemeine Elektrotechnik
        Universitaetsplatz 3-4
        D-03044 Cottbus, Germany
+
+       Revised TLS and SMTP connection cache support by:
+       Victor Duchovni
+       Morgan Stanley
 
                                                                        SMTP(8)
 </pre> </body> </html>

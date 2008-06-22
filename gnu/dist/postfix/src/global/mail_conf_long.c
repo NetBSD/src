@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_long.c,v 1.1.1.1 2006/07/19 01:17:24 rpaulo Exp $	*/
+/*	$NetBSD: mail_conf_long.c,v 1.1.1.2 2008/06/22 14:02:25 christos Exp $	*/
 
 /*++
 /* NAME
@@ -25,10 +25,10 @@
 /*	long	value;
 /*
 /*	void	get_mail_conf_long_table(table)
-/*	CONFIG_LONG_TABLE *table;
+/*	const CONFIG_LONG_TABLE *table;
 /*
 /*	void	get_mail_conf_long_fn_table(table)
-/*	CONFIG_LONG_TABLE *table;
+/*	const CONFIG_LONG_TABLE *table;
 /* AUXILIARY FUNCTIONS
 /*	int	get_mail_conf_long2(name1, name2, defval, min, max);
 /*	const char *name1;
@@ -174,7 +174,7 @@ void    set_mail_conf_long(const char *name, long value)
 
 /* get_mail_conf_long_table - look up table of integers */
 
-void    get_mail_conf_long_table(CONFIG_LONG_TABLE *table)
+void    get_mail_conf_long_table(const CONFIG_LONG_TABLE *table)
 {
     while (table->name) {
 	table->target[0] = get_mail_conf_long(table->name, table->defval,
@@ -185,7 +185,7 @@ void    get_mail_conf_long_table(CONFIG_LONG_TABLE *table)
 
 /* get_mail_conf_long_fn_table - look up integers, defaults are functions */
 
-void    get_mail_conf_long_fn_table(CONFIG_LONG_FN_TABLE *table)
+void    get_mail_conf_long_fn_table(const CONFIG_LONG_FN_TABLE *table)
 {
     while (table->name) {
 	table->target[0] = get_mail_conf_long_fn(table->name, table->defval,

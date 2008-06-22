@@ -143,7 +143,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
                   timeout = 5
 
        <b>search_base (No default; you must configure this)</b>
-              The <a href="http://www.faqs.org/rfcs/rfc2253.html">RFC2253</a> base DN at which to conduct the search,
+              The <a href="http://tools.ietf.org/html/rfc2253">RFC2253</a> base DN at which to conduct the search,
               e.g.
 
                   search_base = dc=your, dc=com
@@ -153,21 +153,21 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
 
               <b>%%</b>     This is replaced by a literal '%' character.
 
-              <b>%s</b>     This is replaced by the input key.  <a href="http://www.faqs.org/rfcs/rfc2253.html">RFC 2253</a>
+              <b>%s</b>     This is replaced by the input key.  <a href="http://tools.ietf.org/html/rfc2253">RFC 2253</a>
                      quoting is used to make sure that the  input
                      key  does not add unexpected metacharacters.
 
               <b>%u</b>     When the input key is an address of the form
-                     user@domain,  <b>%u</b>  is  replaced  by  the (<a href="http://www.faqs.org/rfcs/rfc2253.html">RFC</a>
-                     <a href="http://www.faqs.org/rfcs/rfc2253.html">2253</a>) quoted  local  part  of  the  address.
+                     user@domain,  <b>%u</b>  is  replaced  by  the (<a href="http://tools.ietf.org/html/rfc2253">RFC</a>
+                     <a href="http://tools.ietf.org/html/rfc2253">2253</a>) quoted  local  part  of  the  address.
                      Otherwise,  <b>%u</b>  is  replaced  by  the entire
                      search string.  If the localpart  is  empty,
                      the  search  is  suppressed  and  returns no
                      results.
 
               <b>%d</b>     When the input key is an address of the form
-                     user@domain,  <b>%d</b>  is  replaced  by  the (<a href="http://www.faqs.org/rfcs/rfc2253.html">RFC</a>
-                     <a href="http://www.faqs.org/rfcs/rfc2253.html">2253</a>) quoted domain  part  of  the  address.
+                     user@domain,  <b>%d</b>  is  replaced  by  the (<a href="http://tools.ietf.org/html/rfc2253">RFC</a>
+                     <a href="http://tools.ietf.org/html/rfc2253">2253</a>) quoted domain  part  of  the  address.
                      Otherwise,  the  search  is  suppressed  and
                      returns no results.
 
@@ -191,7 +191,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
                      returns no results.
 
        <b>query_filter (default: mailacceptinggeneralid=%s)</b>
-              The  <a href="http://www.faqs.org/rfcs/rfc2254.html">RFC2254</a>  filter  used to search the directory,
+              The  <a href="http://tools.ietf.org/html/rfc2254">RFC2254</a>  filter  used to search the directory,
               where <b>%s</b> is a substitute for the address Postfix is
               trying to resolve, e.g.
 
@@ -203,21 +203,21 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               <b>%%</b>     This is replaced by a literal '%' character.
                      (Postfix 2.2 and later).
 
-              <b>%s</b>     This is replaced by the input key.  <a href="http://www.faqs.org/rfcs/rfc2254.html">RFC 2254</a>
+              <b>%s</b>     This is replaced by the input key.  <a href="http://tools.ietf.org/html/rfc2254">RFC 2254</a>
                      quoting is used to make sure that the  input
                      key  does not add unexpected metacharacters.
 
               <b>%u</b>     When the input key is an address of the form
-                     user@domain,  <b>%u</b>  is  replaced  by  the (<a href="http://www.faqs.org/rfcs/rfc2254.html">RFC</a>
-                     <a href="http://www.faqs.org/rfcs/rfc2254.html">2254</a>) quoted  local  part  of  the  address.
+                     user@domain,  <b>%u</b>  is  replaced  by  the (<a href="http://tools.ietf.org/html/rfc2254">RFC</a>
+                     <a href="http://tools.ietf.org/html/rfc2254">2254</a>) quoted  local  part  of  the  address.
                      Otherwise,  <b>%u</b>  is  replaced  by  the entire
                      search string.  If the localpart  is  empty,
                      the  search  is  suppressed  and  returns no
                      results.
 
               <b>%d</b>     When the input key is an address of the form
-                     user@domain,  <b>%d</b>  is  replaced  by  the (<a href="http://www.faqs.org/rfcs/rfc2254.html">RFC</a>
-                     <a href="http://www.faqs.org/rfcs/rfc2254.html">2254</a>) quoted domain  part  of  the  address.
+                     user@domain,  <b>%d</b>  is  replaced  by  the (<a href="http://tools.ietf.org/html/rfc2254">RFC</a>
+                     <a href="http://tools.ietf.org/html/rfc2254">2254</a>) quoted domain  part  of  the  address.
                      Otherwise,  the  search  is  suppressed  and
                      returns no results.
 
@@ -583,18 +583,56 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        <b>tls_require_cert (default: no)</b>
               Whether or not to request server's X509 certificate
               and  check  its  validity when establishing SSL/TLS
-              connections.
+              connections.  The supported values are <b>no</b> and  <b>yes</b>.
+
+              With  <b>no</b>, the server certificate trust chain is not
+              checked, but with OpenLDAP  prior  to  2.1.13,  the
+              name in the server certificate must still match the
+              LDAP server name. With OpenLDAP 2.0.0 to 2.0.11 the
+              server  name is not necessarily what you specified,
+              rather it is determined (by  reverse  lookup)  from
+              the  IP address of the LDAP server connection. With
+              OpenLDAP prior  to  2.0.13,  subjectAlternativeName
+              extensions  in  the  LDAP  server  certificate  are
+              ignored: the server name  must  match  the  subject
+              CommonName. The <b>no</b> setting corresponds to the <b>never</b>
+              value of <b>TLS_REQCERT</b> in LDAP  client  configuration
+              files.
+
+              Don't  use  TLS with OpenLDAP 2.0.x (and especially
+              with x &lt;= 11) if you can avoid it.
+
+              With <b>yes</b>, the server certificate must be issued  by
+              a  trusted  CA, and not be expired. The LDAP server
+              name must match one of the  name(s)  found  in  the
+              certificate (see above for OpenLDAP library version
+              dependent behavior). The <b>yes</b> setting corresponds to
+              the <b>demand</b> value of <b>TLS_REQCERT</b> in LDAP client con-
+              figuration files.
+
+              The "try" and "never" values of <b>TLS_REQCERT</b> have no
+              equivalents  here.  They  are  not  available  with
+              OpenLDAP 2.0, and in  any  case  have  questionable
+              security  properties.  Either you want TLS verified
+              LDAP connections, or you don't.
+
+              The <b>yes</b> value only works correctly with Postfix 2.5
+              and  later,  or  with OpenLDAP 2.0. Earlier Postfix
+              releases or  later  OpenLDAP  releases  don't  work
+              together  with  this setting. Support for LDAP over
+              TLS was added to Postfix based on the OpenLDAP  2.0
+              API.
 
        <b>tls_random_file (No default)</b>
-              Path of a file to  obtain  random  bits  from  when
-              /dev/[u]random  is not available, to be used by the
+              Path  of  a  file  to  obtain random bits from when
+              /dev/[u]random is not available, to be used by  the
               client in SSL/TLS connections.
 
        <b>tls_cipher_suite (No default)</b>
               Cipher suite to use in SSL/TLS negotiations.
 
 <b>EXAMPLE</b>
-       Here's a basic example for using LDAP to look up  <a href="local.8.html">local(8)</a>
+       Here's  a basic example for using LDAP to look up <a href="local.8.html">local(8)</a>
        aliases.  Assume that in <a href="postconf.5.html">main.cf</a>, you have:
 
            <a href="postconf.5.html#alias_maps">alias_maps</a> = hash:/etc/aliases,
@@ -605,14 +643,14 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
            server_host = ldap.example.com
            search_base = dc=example, dc=com
 
-       Upon  receiving  mail  for a local address "ldapuser" that
-       isn't found in the  /etc/aliases  database,  Postfix  will
+       Upon receiving mail for a local  address  "ldapuser"  that
+       isn't  found  in  the  /etc/aliases database, Postfix will
        search the LDAP server listening at port 389 on ldap.exam-
-       ple.com.  It will bind anonymously, search for any  direc-
-       tory  entries  whose  mailacceptinggeneralid  attribute is
+       ple.com.   It will bind anonymously, search for any direc-
+       tory entries  whose  mailacceptinggeneralid  attribute  is
        "ldapuser", read the "maildrop" attributes of those found,
        and build a list of their maildrops, which will be treated
-       as <a href="http://www.faqs.org/rfcs/rfc822.html">RFC822</a> addresses to which the message  will  be  deliv-
+       as  <a href="http://tools.ietf.org/html/rfc822">RFC822</a>  addresses  to which the message will be deliv-
        ered.
 
 <b>SEE ALSO</b>
@@ -626,13 +664,13 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
        <a href="LDAP_README.html">LDAP_README</a>, Postfix LDAP client guide
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
-       Carsten  Hoeger,  Hery  Rakotoarisoa,  John Hensley, Keith
-       Stevenson, LaMont Jones, Liviu Daia, Manuel Guesdon,  Mike
-       Mattice,  Prabhat K Singh, Sami Haahtinen, Samuel Tardieu,
+       Carsten Hoeger, Hery  Rakotoarisoa,  John  Hensley,  Keith
+       Stevenson,  LaMont Jones, Liviu Daia, Manuel Guesdon, Mike
+       Mattice, Prabhat K Singh, Sami Haahtinen, Samuel  Tardieu,
        Victor Duchovni, and many others.
 
                                                                  LDAP_TABLE(5)
