@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.9 2008/06/22 18:15:33 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.10 2008/06/22 18:18:02 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.9 2008/06/22 18:15:33 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.10 2008/06/22 18:18:02 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1198,7 +1198,7 @@ udf_create_parentfid(struct fileid_desc *fid, struct long_ad *parent,
  *   no checks for doubles, must be called in-order
  */
 static void
-udf_append_internal_extattr(union dscrptr *dscr, struct extattr_entry *extattr)
+udf_extattr_append_internal(union dscrptr *dscr, struct extattr_entry *extattr)
 {
 	struct file_entry      *fe;
 	struct extfile_entry   *efe;
@@ -1220,7 +1220,7 @@ udf_append_internal_extattr(union dscrptr *dscr, struct extattr_entry *extattr)
 		l_eap = &efe->l_ea;
 		l_ad  = udf_rw32(efe->l_ad);
 	} else {
-		errx(1, "Bad tag passed to udf_append_internal_extattr");
+		errx(1, "Bad tag passed to udf_extattr_append_internal");
 	}
 
 	/* should have a header! */
@@ -1354,7 +1354,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	ft_extattr->existence = UDF_FILETIMES_FILE_CREATION;
 	ft_extattr->times[0]  = birthtime;
 
-	udf_append_internal_extattr((union dscrptr *) fe,
+	udf_extattr_append_internal((union dscrptr *) fe,
 		(struct extattr_entry *) ft_extattr);
 	free(ft_extattr);
 
@@ -1528,7 +1528,7 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 		vatlvext->num_directories = udf_rw32(context.num_directories);
 		memcpy(vatlvext->logvol_id, context.logical_vol->logvol_id, 128);
 
-		udf_append_internal_extattr((union dscrptr *) fe,
+		udf_extattr_append_internal((union dscrptr *) fe,
 			(struct extattr_entry *) extattr);
 
 		free(extattr);
