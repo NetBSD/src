@@ -16,6 +16,10 @@ pcre_table(5) manual page. Information about PCRE itself can be found at http:/
 
 BBuuiillddiinngg PPoossttffiixx wwiitthh PPCCRREE ssuuppppoorrtt
 
+These instructions assume that you build Postfix from source code as described
+in the INSTALL document. Some modification may be required if you build Postfix
+from a vendor-specific source package.
+
 Note: to use pcre with Debian GNU/Linux's Postfix, all you need is to install
 the postfix-pcre package and you're done. There is no need to recompile
 Postfix.
