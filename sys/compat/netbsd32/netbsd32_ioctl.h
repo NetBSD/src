@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.22 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.23 2008/06/22 22:40:15 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -147,7 +147,7 @@ sys/scsiio.h:43:#define SCIOCCOMMAND	_IOWR('Q', 1, scsireq_t)
 
 /* from <net/if.h> */
 
-typedef int32_t netbsd32_ifreq_tp_t;
+typedef netbsd32_pointer_t netbsd32_ifreq_tp_t;
 /*
  * note that ifr_data is the only one that needs to be changed
  */
