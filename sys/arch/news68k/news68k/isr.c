@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.18 2008/06/15 07:20:46 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.19 2008/06/22 17:33:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.18 2008/06/15 07:20:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.19 2008/06/22 17:33:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,13 +267,6 @@ isrdispatch_vectored(int pc, int evec, void *frame)
 	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
 		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
 	idepth--;
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return idepth != 0;
 }
 
 void

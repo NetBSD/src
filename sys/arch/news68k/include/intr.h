@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2008/06/15 07:20:46 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2008/06/22 17:33:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,14 @@
 #define	NIPL		8
 
 extern int idepth;
+
+static inline bool    
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
+}       
+        
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
