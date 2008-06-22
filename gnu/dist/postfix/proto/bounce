@@ -135,14 +135,16 @@
 #	subject to the following restrictions:
 # .IP \(bu
 #	Template message header names can be specified in upper
-#	case, lower case or mixed case. Postfix always uses the
-#	spelling as shown in the example above.
+#	case, lower case or mixed case. Postfix always produces
+#	bounce message header labels of the form "\fBFrom:\fR" and
+#	"\fBSubject:\fR".
 # .IP \(bu
 #	Template message headers must not span multiple lines.
 # .IP \(bu
-#	Template message headers must not contain main.cf $parameters.
+#	Template message headers do not support $parameter expansions.
 # .IP \(bu
-#	Template message headers must contain ASCII characters only.
+#	Template message headers must contain ASCII characters only,
+#	and must not contain ASCII null characters.
 # TEMPLATE MESSAGE TEXT FORMAT
 # .ad
 # .fi

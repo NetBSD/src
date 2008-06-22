@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_open.c,v 1.1.1.5 2005/08/18 21:06:50 rpaulo Exp $	*/
+/*	$NetBSD: mkmap_open.c,v 1.1.1.6 2008/06/22 14:02:37 christos Exp $	*/
 
 /*++
 /* NAME
@@ -68,6 +68,7 @@
 #include <dict_cdb.h>
 #include <dict_dbm.h>
 #include <dict_sdbm.h>
+#include <dict_proxy.h>
 #include <sigdelay.h>
 #include <mymalloc.h>
 
@@ -77,14 +78,17 @@
 
  /*
   * Information about available database types. Here, we list only those map
-  * types that exist as files. Network-based maps are not of interest.
+  * types that support "create" operations.
+  * 
+  * We use a different table (in dict_open.c) when querying maps.
   */
 typedef struct {
     char   *type;
     MKMAP  *(*before_open) (const char *);
 } MKMAP_OPEN_INFO;
 
-MKMAP_OPEN_INFO mkmap_types[] = {
+static const MKMAP_OPEN_INFO mkmap_types[] = {
+    DICT_TYPE_PROXY, mkmap_proxy_open,
 #ifdef HAS_CDB
     DICT_TYPE_CDB, mkmap_cdb_open,
 #endif
@@ -147,7 +151,7 @@ MKMAP  *mkmap_open(const char *type, const char *path,
 		           int open_flags, int dict_flags)
 {
     MKMAP  *mkmap;
-    MKMAP_OPEN_INFO *mp;
+    const MKMAP_OPEN_INFO *mp;
 
     /*
      * Find out what map type to use.

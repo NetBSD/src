@@ -1,4 +1,4 @@
-/*	$NetBSD: ehlo_mask.c,v 1.1.1.2 2006/07/19 01:17:23 rpaulo Exp $	*/
+/*	$NetBSD: ehlo_mask.c,v 1.1.1.3 2008/06/22 14:02:23 christos Exp $	*/
 
 /*++
 /* NAME
@@ -64,7 +64,7 @@
  /*
   * The lookup table.
   */
-static NAME_MASK ehlo_mask_table[] = {
+static const NAME_MASK ehlo_mask_table[] = {
     "8BITMIME", EHLO_MASK_8BITMIME,
     "AUTH", EHLO_MASK_AUTH,
     "ETRN", EHLO_MASK_ETRN,

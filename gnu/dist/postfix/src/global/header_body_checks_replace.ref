@@ -1,0 +1,64 @@
+header_body_checks: test-queueID: replace: header subject: primary subject: header: head
+0 MAIN 0	|header: head
+header_body_checks: test-queueID: replace: header content-type: multipart/(co\m\)ment)mumble mumble; boundary = "ab\cd ? ef" mumble: header: mime
+1 MAIN 71	|header: mime
+HEADER END
+2 BODY N 0	|
+header_body_checks: test-queueID: replace: body abcdef prolog: body
+3 BODY N 1	|body
+4 BODY N 15	|
+header_body_checks: test-queueID: replace: body --abcd ef: body
+5 BODY N 16	|body
+header_body_checks: test-queueID: replace: header content-type: message/rfc822; mumble: header: mime
+6 MULT 0	|header: mime
+7 BODY N 0	|
+header_body_checks: test-queueID: replace: header subject: nested subject: header: nest
+8 NEST 0	|header: nest
+header_body_checks: test-queueID: replace: header content-type: multipart/mumble; boundary(comment)="pqrs": header: mime
+9 NEST 57	|header: mime
+header_body_checks: test-queueID: replace: header content-transfer-encoding: base64: header: mime
+10 NEST 91	|header: mime
+header_body_checks: warning: invalid message/* or multipart/* encoding domain: base64
+11 BODY N 0	|
+header_body_checks: test-queueID: replace: body pqrs prolog: body
+12 BODY N 1	|body
+13 BODY N 13	|
+header_body_checks: test-queueID: replace: body --pqrs: body
+14 BODY N 14	|body
+header_body_checks: test-queueID: replace: header header: pqrs part 01: header: mime
+15 MULT 0	|header: mime
+16 BODY N 0	|
+header_body_checks: test-queueID: replace: body body pqrs part 01: body
+17 BODY N 1	|body
+18 BODY N 19	|
+header_body_checks: test-queueID: replace: body --pqrs: body
+19 BODY N 20	|body
+header_body_checks: test-queueID: replace: header header: pqrs part 02: header: mime
+20 MULT 0	|header: mime
+21 BODY N 0	|
+header_body_checks: test-queueID: replace: body body pqrs part 02: body
+22 BODY N 1	|body
+23 BODY N 19	|
+header_body_checks: test-queueID: replace: body --bogus-boundary: body
+24 BODY N 20	|body
+header_body_checks: test-queueID: replace: body header: wietse: body
+25 BODY N 37	|body
+26 BODY N 52	|
+header_body_checks: test-queueID: replace: body body asdasads: body
+27 BODY N 53	|body
+28 BODY N 67	|
+header_body_checks: test-queueID: replace: body --abcd ef: body
+29 BODY N 68	|body
+header_body_checks: test-queueID: replace: header header: abcdef part 02: header: mime
+30 MULT 0	|header: mime
+31 BODY N 0	|
+header_body_checks: test-queueID: replace: body body abcdef part 02: body
+32 BODY N 1	|body
+33 BODY N 21	|
+header_body_checks: test-queueID: replace: body --abcd ef--: body
+34 BODY N 0	|body
+35 BODY N 12	|
+header_body_checks: test-queueID: replace: body epilog: body
+36 BODY N 13	|body
+BODY END
+header_body_checks: warning: improper message/* or multipart/* encoding domain

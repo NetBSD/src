@@ -100,6 +100,8 @@ encryption_protocol=TLSv1/SSLv3
 encryption_cipher=DHE-RSA-AES256-SHA
 encryption_keysize=256
 etrn_domain=
+<b>Postfix version 2.5 and later:</b>
+stress=
 [empty line]
 </pre>
 </blockquote>
@@ -177,6 +179,9 @@ etrn_domain=
     <li> <p> The "etrn_domain" attribute is defined only in the
     context of the ETRN command, and specifies the ETRN command
     parameter. </p>
+
+    <li> <p> The "stress" attribute is either empty or "yes".  See
+    the <a href="STRESS_README.html">STRESS_README</a> document for further information. </p>
 
 </ul>
 

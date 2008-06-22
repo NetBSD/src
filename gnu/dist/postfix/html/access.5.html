@@ -179,7 +179,7 @@ ACCESS(5)                                                            ACCESS(5)
 
 <b>REJECT ACTIONS</b>
        Postfix version 2.3  and  later  support  enhanced  status
-       codes  as  defined in <a href="http://www.faqs.org/rfcs/rfc3463.html">RFC 3463</a>.  When no code is specified
+       codes  as  defined in <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>.  When no code is specified
        at the beginning of the  <i>text</i>  below,  Postfix  inserts  a
        default  enhanced  status  code  of "5.7.1" in the case of
        reject actions, and "4.7.1" in the case of defer  actions.
@@ -224,6 +224,17 @@ ACCESS(5)                                                            ACCESS(5)
        <i>restriction...</i>
               Apply the named UCE restriction(s) (<b>permit</b>, <b>reject</b>,
               <b><a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a></b>, and so on).
+
+       <b>BCC</b> <i>user@domain</i>
+              Send  one  copy  of  the  message  to the specified
+              recipient.
+
+              If multiple BCC actions are  specified  within  the
+              same  SMTP  MAIL  transaction, only the last action
+              will be used.
+
+              This feature is not  part  of  the  stable  Postfix
+              release.
 
        <b>DISCARD</b> <i>optional text...</i>
               Claim  successful delivery and silently discard the
@@ -311,7 +322,7 @@ ACCESS(5)                                                            ACCESS(5)
 
 <b>ENHANCED STATUS CODES</b>
        Postfix version 2.3  and  later  support  enhanced  status
-       codes  as  defined  in  <a href="http://www.faqs.org/rfcs/rfc3463.html">RFC 3463</a>.  When an enhanced status
+       codes  as  defined  in  <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>.  When an enhanced status
        code is specified in an access table,  it  is  subject  to
        modification.  The  following  transformations  are needed
        when the same access  table  is  used  for  client,  helo,
