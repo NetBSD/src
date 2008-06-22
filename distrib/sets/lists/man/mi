@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1079 2008/06/18 09:06:26 yamt Exp $
+# $NetBSD: mi,v 1.1080 2008/06/22 17:47:37 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2363,6 +2363,7 @@
 ./usr/share/man/cat8/prep/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/prep/mkbootimage.0	man-sys-catman		.cat
 ./usr/share/man/cat8/proxymap.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/psrset.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pstat.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pvcsif.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/pvctxctl.0			man-netutil-catman	.cat
@@ -4935,6 +4936,7 @@
 ./usr/share/man/man8/prep/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/prep/mkbootimage.8	man-sys-man		.man
 ./usr/share/man/man8/proxymap.8			man-postfix-man		postfix,.man
+./usr/share/man/man8/psrset.8			man-sysutil-man		.man
 ./usr/share/man/man8/pstat.8			man-sysutil-man		.man
 ./usr/share/man/man8/pvcsif.8			man-netutil-man		.man
 ./usr/share/man/man8/pvctxctl.8			man-netutil-man		.man
