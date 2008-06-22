@@ -1,4 +1,4 @@
-#	$NetBSD: std.ixdp425,v 1.9 2008/05/09 00:08:37 matt Exp $
+#	$NetBSD: std.ixdp425,v 1.10 2008/06/22 08:27:18 kiyohara Exp $
 #
 # standard NetBSD/evbarm for IXDP425 options
 
@@ -18,7 +18,7 @@ options 	COM_PXA2X0		# Enable IXP Uart support in com(4)
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
-options 	KERNEL_EXT_BASE=0xc0000000
+options 	KERNEL_BASE_EXT=0xc0000000
 makeoptions	LOADADDRESS="0xc0200000"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.ixdp425"
 
