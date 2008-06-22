@@ -1,4 +1,4 @@
-/*	$NetBSD: test-milter.c,v 1.1.1.3 2007/05/19 16:28:22 heas Exp $	*/
+/*	$NetBSD: test-milter.c,v 1.1.1.4 2008/06/22 14:02:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -18,9 +18,9 @@
 /*	to maintain compatibility between successive versions.
 /*
 /*	Arguments (multiple alternatives are separated by "\fB|\fR"):
-/* .IP "\fB-a accept|tempfail|reject|discard|\fIddd x.y.z text\fR"
-/*	Specifies a non-default reply. The default is to continue
-/*	(i.e. \fBtempfail\fR).
+/* .IP "\fB-a accept|tempfail|reject|discard|skip|\fIddd x.y.z text\fR"
+/*	Specifies a non-default reply for the MTA command specified
+/*	with \fB-c\fR. The default is \fBtempfail\fR.
 /* .IP "\fB-d\fI level\fR"
 /*	Enable libmilter debugging at the specified level.
 /* .IP "\fB-c connect|helo|mail|rcpt|data|header|eoh|body|eom|unknown|close|abort\fR"
@@ -28,11 +28,24 @@
 /*	The default protocol stage is \fBconnect\fR.
 /* .IP "\fB-C\fI count\fR"
 /*	Terminate after \fIcount\fR connections.
-/* .IP "\fB-i \"\fIindex header-label header-value\"\fR"
+/* .IP "\fB-i \fI'index header-label header-value'\fR"
 /*	Insert header at specified position.
+/* .IP "\fB-l\fR"
+/*	Header values include leading space. Specify this option
+/*	before \fB-i\fR or \fB-r\fR.
+/* .IP "\fB-m connect|helo|mail|rcpt|data|eoh|eom\fR"
+/*	The protocol stage that receives the list of macros specified
+/*	with \fB-M\fR.  The default protocol stage is \fBconnect\fR.
+/* .IP "\fB-M \fIset_macro_list\fR"
+/*	A non-default list of macros that the MTA should send at
+/*	the protocol stage specified with \fB-m\fR.
+/* .IP "\fB-n connect|helo|mail|rcpt|data|header|eoh|body|eom|unknown\fR"
+/*	The event that the MTA should not send.
+/* .IP "\fB-N connect|helo|mail|rcpt|data|header|eoh|body|eom|unknown\fR"
+/*	The event for which the filter will not reply.
 /* .IP "\fB-p inet:\fIport\fB@\fIhost\fB|unix:\fIpathname\fR"
 /*	The mail filter listen endpoint.
-/* .IP "\fB-r "index header-label header-value"
+/* .IP "\fB-r \fI'index header-label header-value'\fR"
 /*	Replace the message header at the specified position.
 /* .IP "\fB-R pathname
 /*	Replace the message body by the content of the specified file.
@@ -92,23 +105,23 @@ struct command_map {
     int    *reply;
 };
 
-static struct command_map command_map[] = {
+static const struct command_map command_map[] = {
     "connect", &test_connect_reply,
     "helo", &test_helo_reply,
     "mail", &test_mail_reply,
     "rcpt", &test_rcpt_reply,
-#if SMFI_VERSION > 3
-    "data", &test_data_reply,
-#endif
     "header", &test_header_reply,
     "eoh", &test_eoh_reply,
     "body", &test_body_reply,
     "eom", &test_eom_reply,
+    "abort", &test_abort_reply,
+    "close", &test_close_reply,
 #if SMFI_VERSION > 2
     "unknown", &test_unknown_reply,
 #endif
-    "close", &test_close_reply,
-    "abort", &test_abort_reply,
+#if SMFI_VERSION > 3
+    "data", &test_data_reply,
+#endif
     0, 0,
 };
 
@@ -142,8 +155,10 @@ static int test_reply(SMFICTX *ctx, int code)
     if (code == SMFIR_REPLYCODE) {
 	if (smfi_setreply(ctx, reply_code, reply_dsn, reply_message) == MI_FAILURE)
 	    fprintf(stderr, "smfi_setreply failed\n");
+	printf("test_reply %s\n", reply_code);
 	return (reply_code[0] == '4' ? SMFIS_TEMPFAIL : SMFIS_REJECT);
     } else {
+	printf("test_reply %d\n", code);
 	return (code);
     }
 }
@@ -162,7 +177,7 @@ static sfsistat test_connect(SMFICTX *ctx, char *name, struct sockaddr * sa)
 	    print_addr = inet_ntop(AF_INET, &sin->sin_addr, buf, sizeof(buf));
 	    if (print_addr == 0)
 		print_addr = strerror(errno);
-	    printf("AF_INET (%s)\n", print_addr);
+	    printf("AF_INET (%s:%d)\n", print_addr, ntohs(sin->sin_port));
 	}
 	break;
 #ifdef HAS_IPV6
@@ -173,7 +188,7 @@ static sfsistat test_connect(SMFICTX *ctx, char *name, struct sockaddr * sa)
 	    print_addr = inet_ntop(AF_INET, &sin6->sin6_addr, buf, sizeof(buf));
 	    if (print_addr == 0)
 		print_addr = strerror(errno);
-	    printf("AF_INET6 (%s)\n", print_addr);
+	    printf("AF_INET6 (%s:%d)\n", print_addr, ntohs(sin6->sin6_port));
 	}
 	break;
 #endif
@@ -245,14 +260,6 @@ static sfsistat test_body(SMFICTX *ctx, unsigned char *data, size_t data_len)
 static sfsistat test_eom(SMFICTX *ctx)
 {
     printf("test_eom\n");
-#ifdef SMFIR_INSHEADER
-    if (ins_hdr && smfi_insheader(ctx, ins_idx, ins_hdr, ins_val) == MI_FAILURE)
-	fprintf(stderr, "smfi_insheader failed");
-#endif
-#ifdef SMFIR_CHGHEADER
-    if (chg_hdr && smfi_chgheader(ctx, chg_hdr, chg_idx, chg_val) == MI_FAILURE)
-	fprintf(stderr, "smfi_chgheader failed");
-#endif
 #ifdef SMFIR_REPLBODY
     if (body_file) {
 	char    buf[BUFSIZ + 2];
@@ -266,8 +273,8 @@ static sfsistat test_eom(SMFICTX *ctx)
 	    printf("replace body with content of %s\n", body_file);
 	    for (count = 0; fgets(buf, BUFSIZ, fp) != 0; count++) {
 		len = strcspn(buf, "\n");
-		buf[len+0] = '\r';
-		buf[len+1] = '\n';
+		buf[len + 0] = '\r';
+		buf[len + 1] = '\n';
 		if (smfi_replacebody(ctx, buf, len + 2) == MI_FAILURE) {
 		    fprintf(stderr, "body replace failure\n");
 		    exit(1);
@@ -280,6 +287,14 @@ static sfsistat test_eom(SMFICTX *ctx)
 	    (void) fclose(fp);
 	}
     }
+#endif
+#ifdef SMFIR_INSHEADER
+    if (ins_hdr && smfi_insheader(ctx, ins_idx, ins_hdr, ins_val) == MI_FAILURE)
+	fprintf(stderr, "smfi_insheader failed");
+#endif
+#ifdef SMFIR_CHGHEADER
+    if (chg_hdr && smfi_chgheader(ctx, chg_hdr, chg_idx, chg_val) == MI_FAILURE)
+	fprintf(stderr, "smfi_chgheader failed");
 #endif
     return (test_reply(ctx, test_eom_reply));
 }
@@ -312,13 +327,18 @@ static sfsistat test_data(SMFICTX *ctx)
 
 #if SMFI_VERSION > 2
 
-static sfsistat test_unknown(SMFICTX *ctx)
+static sfsistat test_unknown(SMFICTX *ctx, const char *what)
 {
-    printf("test_unknown\n");
+    printf("test_unknown %s\n", what);
     return (test_reply(ctx, test_unknown_reply));
 }
 
 #endif
+
+static sfsistat test_negotiate(SMFICTX *, unsigned long, unsigned long,
+			               unsigned long, unsigned long,
+			               unsigned long *, unsigned long *,
+			               unsigned long *, unsigned long *);
 
 static struct smfiDesc smfilter =
 {
@@ -341,7 +361,79 @@ static struct smfiDesc smfilter =
 #if SMFI_VERSION > 3
     test_data,
 #endif
+#if SMFI_VERSION > 5
+    test_negotiate,
+#endif
 };
+
+#if SMFI_VERSION > 5
+
+static const char *macro_states[] = {
+    "connect",				/* SMFIM_CONNECT */
+    "helo",				/* SMFIM_HELO */
+    "mail",				/* SMFIM_ENVFROM */
+    "rcpt",				/* SMFIM_ENVRCPT */
+    "data",				/* SMFIM_DATA */
+    "eom",				/* SMFIM_EOM < SMFIM_EOH */
+    "eoh",				/* SMFIM_EOH > SMFIM_EOM */
+    0,
+};
+
+static int set_macro_state;
+static char *set_macro_list;
+
+typedef sfsistat (*FILTER_ACTION) ();
+
+struct noproto_map {
+    const char *name;
+    int     send_mask;
+    int     reply_mask;
+    int    *reply;
+    FILTER_ACTION *action;
+};
+
+static const struct noproto_map noproto_map[] = {
+    "connect", SMFIP_NOCONNECT, SMFIP_NR_CONN, &test_connect_reply, &smfilter.xxfi_connect,
+    "helo", SMFIP_NOHELO, SMFIP_NR_HELO, &test_helo_reply, &smfilter.xxfi_helo,
+    "mail", SMFIP_NOMAIL, SMFIP_NR_MAIL, &test_mail_reply, &smfilter.xxfi_envfrom,
+    "rcpt", SMFIP_NORCPT, SMFIP_NR_RCPT, &test_rcpt_reply, &smfilter.xxfi_envrcpt,
+    "data", SMFIP_NODATA, SMFIP_NR_DATA, &test_data_reply, &smfilter.xxfi_data,
+    "header", SMFIP_NOHDRS, SMFIP_NR_HDR, &test_header_reply, &smfilter.xxfi_header,
+    "eoh", SMFIP_NOEOH, SMFIP_NR_EOH, &test_eoh_reply, &smfilter.xxfi_eoh,
+    "body", SMFIP_NOBODY, SMFIP_NR_BODY, &test_body_reply, &smfilter.xxfi_body,
+    "unknown", SMFIP_NOUNKNOWN, SMFIP_NR_UNKN, &test_connect_reply, &smfilter.xxfi_unknown,
+    0,
+};
+
+static int nosend_mask;
+static int noreply_mask;
+static int misc_mask;
+
+static sfsistat test_negotiate(SMFICTX *ctx,
+			               unsigned long f0,
+			               unsigned long f1,
+			               unsigned long f2,
+			               unsigned long f3,
+			               unsigned long *pf0,
+			               unsigned long *pf1,
+			               unsigned long *pf2,
+			               unsigned long *pf3)
+{
+    if (set_macro_list) {
+	if (verbose)
+	    printf("set symbol list %s to \"%s\"\n",
+		   macro_states[set_macro_state], set_macro_list);
+	smfi_setsymlist(ctx, set_macro_state, set_macro_list);
+    }
+    if (verbose)
+	printf("negotiate f0=%lx *pf0 = %lx f1=%lx *pf1=%lx nosend=%lx noreply=%lx misc=%lx\n",
+	       f0, *pf0, f1, *pf1, (long) nosend_mask, (long) noreply_mask, (long) misc_mask);
+    *pf0 = f0;
+    *pf1 = f1 & (nosend_mask | noreply_mask | misc_mask);
+    return (SMFIS_CONTINUE);
+}
+
+#endif
 
 static void parse_hdr_info(const char *optarg, int *idx,
 			           char **hdr, char **value)
@@ -353,7 +445,9 @@ static void parse_hdr_info(const char *optarg, int *idx,
 	fprintf(stderr, "out of memory\n");
 	exit(1);
     }
-    if (sscanf(optarg, "%d %s %[^\n]", idx, *hdr, *value) != 3) {
+    if ((misc_mask & SMFIP_HDR_LEADSPC) == 0 ?
+	sscanf(optarg, "%d %s %[^\n]", idx, *hdr, *value) != 3 :
+	sscanf(optarg, "%d %[^ ]%[^\n]", idx, *hdr, *value) != 3) {
 	fprintf(stderr, "bad header info: %s\n", optarg);
 	exit(1);
     }
@@ -363,11 +457,16 @@ int     main(int argc, char **argv)
 {
     char   *action = 0;
     char   *command = 0;
-    struct command_map *cp;
+    const struct command_map *cp;
     int     ch;
     int     code;
+    const char **cpp;
+    char   *set_macro_state_arg = 0;
+    char   *nosend = 0;
+    char   *noreply = 0;
+    const struct noproto_map *np;
 
-    while ((ch = getopt(argc, argv, "a:c:C:d:i:p:r:R:v")) > 0) {
+    while ((ch = getopt(argc, argv, "a:c:C:d:i:lm:M:n:N:p:r:R:v")) > 0) {
 	switch (ch) {
 	case 'a':
 	    action = optarg;
@@ -391,6 +490,63 @@ int     main(int argc, char **argv)
 #else
 	    fprintf(stderr, "no libmilter support to insert header\n");
 	    exit(1);
+#endif
+	    break;
+	case 'l':
+#if SMFI_VERSION > 5
+	    if (ins_hdr || chg_hdr) {
+		fprintf(stderr, "specify -l before -i or -r\n");
+		exit(1);
+	    }
+	    misc_mask |= SMFIP_HDR_LEADSPC;
+#else
+	    fprintf(stderr, "no libmilter support for leading space\n");
+	    exit(1);
+#endif
+	    break;
+	case 'm':
+#if SMFI_VERSION > 5
+	    if (set_macro_state_arg) {
+		fprintf(stderr, "too many -m options\n");
+		exit(1);
+	    }
+	    set_macro_state_arg = optarg;
+#else
+	    fprintf(stderr, "no libmilter support to specify macro list\n");
+	    exit(1);
+#endif
+	    break;
+	case 'M':
+#if SMFI_VERSION > 5
+	    if (set_macro_list) {
+		fprintf(stderr, "too many -M options\n");
+		exit(1);
+	    }
+	    set_macro_list = optarg;
+#else
+	    fprintf(stderr, "no libmilter support to specify macro list\n");
+#endif
+	    break;
+	case 'n':
+#if SMFI_VERSION > 5
+	    if (nosend) {
+		fprintf(stderr, "too many -n options\n");
+		exit(1);
+	    }
+	    nosend = optarg;
+#else
+	    fprintf(stderr, "no libmilter support for negotiate callback\n");
+#endif
+	    break;
+	case 'N':
+#if SMFI_VERSION > 5
+	    if (noreply) {
+		fprintf(stderr, "too many -n options\n");
+		exit(1);
+	    }
+	    noreply = optarg;
+#else
+	    fprintf(stderr, "no libmilter support for negotiate callback\n");
 #endif
 	    break;
 	case 'p':
@@ -432,6 +588,10 @@ int     main(int argc, char **argv)
 		    "\t[-a action]              non-default action\n"
 		    "\t[-c command]             non-default action trigger\n"
 		    "\t[-i 'index label value'] insert header\n"
+		    "\t[-m macro_state]		non-default macro state\n"
+		    "\t[-M macro_list]		non-default macro list\n"
+		    "\t[-n events]		don't receive these events\n"
+		  "\t[-N events]		don't reply to these events\n"
 		    "\t-p port                  milter application\n"
 		    "\t[-r 'index label value'] replace header\n"
 		    "\t[-C conn_count]          when to exit\n",
@@ -439,10 +599,6 @@ int     main(int argc, char **argv)
 		    argv[0]);
 	    exit(1);
 	}
-    }
-    if (smfi_register(smfilter) == MI_FAILURE) {
-	fprintf(stderr, "smfi_register failed\n");
-	exit(1);
     }
     if (command) {
 	for (cp = command_map; /* see below */ ; cp++) {
@@ -465,6 +621,10 @@ int     main(int argc, char **argv)
 	    cp->reply[0] = SMFIS_ACCEPT;
 	} else if (strcmp(action, "discard") == 0) {
 	    cp->reply[0] = SMFIS_DISCARD;
+#ifdef SMFIS_SKIP
+	} else if (strcmp(action, "skip") == 0) {
+	    cp->reply[0] = SMFIS_SKIP;
+#endif
 	} else if ((code = atoi(action)) >= 400
 		   && code <= 599
 		   && action[3] == ' ') {
@@ -497,6 +657,47 @@ int     main(int argc, char **argv)
 		       reply_code, reply_dsn ? reply_dsn : "(null)",
 		       reply_message ? reply_message : "(null)");
 	}
+    }
+#if SMFI_VERSION > 5
+    if (set_macro_state_arg) {
+	for (cpp = macro_states; /* see below */ ; cpp++) {
+	    if (*cpp == 0) {
+		fprintf(stderr, "bad -m argument: %s\n", set_macro_state_arg);
+		exit(1);
+	    }
+	    if (strcmp(set_macro_state_arg, *cpp) == 0)
+		break;
+	}
+	set_macro_state = cpp - macro_states;
+    }
+    if (nosend) {
+	for (np = noproto_map; /* see below */ ; np++) {
+	    if (np->name == 0) {
+		fprintf(stderr, "bad -n argument: %s\n", nosend);
+		exit(1);
+	    }
+	    if (strcmp(nosend, np->name) == 0)
+		break;
+	}
+	nosend_mask = np->send_mask;
+	np->action[0] = 0;
+    }
+    if (noreply) {
+	for (np = noproto_map; /* see below */ ; np++) {
+	    if (np->name == 0) {
+		fprintf(stderr, "bad -N argument: %s\n", noreply);
+		exit(1);
+	    }
+	    if (strcmp(noreply, np->name) == 0)
+		break;
+	}
+	noreply_mask = np->reply_mask;
+	*np->reply = SMFIS_NOREPLY;
+    }
+#endif
+    if (smfi_register(smfilter) == MI_FAILURE) {
+	fprintf(stderr, "smfi_register failed\n");
+	exit(1);
     }
     return (smfi_main());
 }

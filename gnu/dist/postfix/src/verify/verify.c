@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.1.1.6 2007/05/19 16:28:50 heas Exp $	*/
+/*	$NetBSD: verify.c,v 1.1.1.7 2008/06/22 14:04:15 christos Exp $	*/
 
 /*++
 /* NAME
@@ -46,6 +46,14 @@
 /*	unlimited amounts of garbage. Limiting the cache size
 /*	trades one problem (disk space exhaustion) for another
 /*	one (poor response time to client requests).
+/*
+/*	With Postfix version 2.5 and later, the \fBverify\fR(8)
+/*	server no longer uses root privileges when opening the
+/*	\fBaddress_verify_map\fR cache file. The file should now
+/*	be stored under the Postfix-owned \fBdata_directory\fR.  As
+/*	a migration aid, an attempt to open a cache file under a
+/*	non-Postfix directory is redirected to the Postfix-owned
+/*	\fBdata_directory\fR, and a warning is logged.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* BUGS
@@ -74,8 +82,9 @@
 /* .IP "\fBaddress_verify_map (empty)\fR"
 /*	Optional lookup table for persistent address verification status
 /*	storage.
-/* .IP "\fBaddress_verify_sender (postmaster)\fR"
-/*	The sender address to use in address verification probes.
+/* .IP "\fBaddress_verify_sender ($double_bounce_sender)\fR"
+/*	The sender address to use in address verification probes; prior
+/*	to Postfix 2.5 the default was "postmaster".
 /* .IP "\fBaddress_verify_positive_expire_time (31d)\fR"
 /*	The time after which a successful probe expires from the address
 /*	verification cache.
@@ -183,6 +192,7 @@
 #include <dict.h>
 #include <split_at.h>
 #include <stringops.h>
+#include <set_eugid.h>
 
 /* Global library. */
 
@@ -191,6 +201,7 @@
 #include <mail_version.h>
 #include <mail_proto.h>
 #include <post_mail.h>
+#include <data_redirect.h>
 #include <verify_clnt.h>
 
 /* Server skeleton. */
@@ -542,6 +553,37 @@ static void post_jail_init(char *unused_name, char **unused_argv)
 static void pre_jail_init(char *unused_name, char **unused_argv)
 {
     mode_t  saved_mask;
+    VSTRING *redirect;
+
+    /*
+     * Never, ever, get killed by a master signal, as that would corrupt the
+     * database when we're in the middle of an update.
+     */
+    setsid();
+
+    /*
+     * Security: don't create root-owned files that contain untrusted data.
+     * And don't create Postfix-owned files in root-owned directories,
+     * either. We want a correct relationship between (file/directory)
+     * ownership and (file/directory) content.
+     * 
+     * XXX Non-root open can violate the principle of least surprise: Postfix
+     * can't open an *SQL config file for database read-write access, even
+     * though it can open that same control file for database read-only
+     * access.
+     * 
+     * The solution is to query a map type and obtain its properties before
+     * opening it. A clean solution is to add a dict_info() API that is
+     * simlar to dict_open() except it returns properties (dict flags) only.
+     * A pragmatic solution is to overload the existing API and have
+     * dict_open() return a dummy map when given a null map name.
+     * 
+     * However, the proxymap daemon has been opening *SQL maps as non-root for
+     * years now without anyone complaining, let's not solve a problem that
+     * doesn't exist.
+     */
+    SAVE_AND_SET_EUGID(var_owner_uid, var_owner_gid);
+    redirect = vstring_alloc(100);
 
     /*
      * Keep state in persistent (external) or volatile (internal) map.
@@ -550,7 +592,7 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 
     if (*var_verify_map) {
 	saved_mask = umask(022);
-	verify_map = dict_open(var_verify_map,
+	verify_map = dict_open(data_redirect_map(redirect, var_verify_map),
 			       O_CREAT | O_RDWR,
 			       VERIFY_DICT_OPEN_FLAGS);
 	(void) umask(saved_mask);
@@ -559,10 +601,10 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
     }
 
     /*
-     * Never, ever, get killed by a master signal, as that would corrupt the
-     * database when we're in the middle of an update.
+     * Clean up and restore privilege.
      */
-    setsid();
+    vstring_free(redirect);
+    RESTORE_SAVED_EUGID();
 }
 
 MAIL_VERSION_STAMP_DECLARE;
@@ -571,12 +613,12 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_STR_TABLE str_table[] = {
+    static const CONFIG_STR_TABLE str_table[] = {
 	VAR_VERIFY_MAP, DEF_VERIFY_MAP, &var_verify_map, 0, 0,
 	VAR_VERIFY_SENDER, DEF_VERIFY_SENDER, &var_verify_sender, 0, 0,
 	0,
     };
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_VERIFY_POS_EXP, DEF_VERIFY_POS_EXP, &var_verify_pos_exp, 1, 0,
 	VAR_VERIFY_POS_TRY, DEF_VERIFY_POS_TRY, &var_verify_pos_try, 1, 0,
 	VAR_VERIFY_NEG_EXP, DEF_VERIFY_NEG_EXP, &var_verify_neg_exp, 1, 0,

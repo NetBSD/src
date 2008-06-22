@@ -1,4 +1,4 @@
-/*	$NetBSD: master_vars.c,v 1.1.1.4 2005/08/18 21:07:42 rpaulo Exp $	*/
+/*	$NetBSD: master_vars.c,v 1.1.1.5 2008/06/22 14:02:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -57,15 +57,15 @@ int     var_throttle_time;
 void    master_vars_init(void)
 {
     char   *path;
-    static CONFIG_STR_TABLE str_table[] = {
+    static const CONFIG_STR_TABLE str_table[] = {
 	VAR_INET_PROTOCOLS, DEF_INET_PROTOCOLS, &var_inet_protocols, 1, 0,
 	0,
     };
-    static CONFIG_INT_TABLE int_table[] = {
+    static const CONFIG_INT_TABLE int_table[] = {
 	VAR_PROC_LIMIT, DEF_PROC_LIMIT, &var_proc_limit, 1, 0,
 	0,
     };
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_THROTTLE_TIME, DEF_THROTTLE_TIME, &var_throttle_time, 1, 0,
 	0,
     };

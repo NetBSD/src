@@ -91,6 +91,7 @@ xsasl_client.o: xsasl.h
 xsasl_client.o: xsasl_client.c
 xsasl_client.o: xsasl_cyrus.h
 xsasl_cyrus_client.o: ../../include/argv.h
+xsasl_cyrus_client.o: ../../include/mail_params.h
 xsasl_cyrus_client.o: ../../include/msg.h
 xsasl_cyrus_client.o: ../../include/mymalloc.h
 xsasl_cyrus_client.o: ../../include/stringops.h
@@ -132,6 +133,7 @@ xsasl_dovecot_server.o: ../../include/iostuff.h
 xsasl_dovecot_server.o: ../../include/mail_params.h
 xsasl_dovecot_server.o: ../../include/msg.h
 xsasl_dovecot_server.o: ../../include/mymalloc.h
+xsasl_dovecot_server.o: ../../include/name_mask.h
 xsasl_dovecot_server.o: ../../include/split_at.h
 xsasl_dovecot_server.o: ../../include/stringops.h
 xsasl_dovecot_server.o: ../../include/sys_defs.h

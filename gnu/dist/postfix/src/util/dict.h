@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.1.1.9 2007/05/19 16:28:43 heas Exp $	*/
+/*	$NetBSD: dict.h,v 1.1.1.10 2008/06/22 14:03:51 christos Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -97,7 +97,9 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_PARANOID \
 	(DICT_FLAG_NO_REGSUB | DICT_FLAG_NO_PROXY | DICT_FLAG_NO_UNAUTH)
 #define DICT_FLAG_IMPL_MASK	(DICT_FLAG_FIXED | DICT_FLAG_PATTERN)
-#define DICT_FLAG_RQST_MASK	DICT_FLAG_FOLD_ANY
+#define DICT_FLAG_RQST_MASK	(DICT_FLAG_FOLD_ANY | DICT_FLAG_LOCK | \
+				DICT_FLAG_DUP_REPLACE | DICT_FLAG_DUP_WARN | \
+				DICT_FLAG_SYNC_UPDATE)
 #define DICT_FLAG_NP_INST_MASK	~(DICT_FLAG_IMPL_MASK | DICT_FLAG_RQST_MASK)
 #define DICT_FLAG_INST_MASK	(DICT_FLAG_NP_INST_MASK | DICT_FLAG_PARANOID)
 
@@ -139,7 +141,7 @@ extern DICT *dict_open(const char *, int, int);
 extern DICT *dict_open3(const char *, const char *, int, int);
 extern void dict_open_register(const char *, DICT *(*) (const char *, int, int));
 
-#define dict_get(dp, key)	(dp)->lookup((dp), (key))
+#define dict_get(dp, key)	((const char *) (dp)->lookup((dp), (key)))
 #define dict_put(dp, key, val)	(dp)->update((dp), (key), (val))
 #define dict_del(dp, key)	(dp)->delete((dp), (key))
 #define dict_seq(dp, f, key, val) (dp)->sequence((dp), (f), (key), (val))
