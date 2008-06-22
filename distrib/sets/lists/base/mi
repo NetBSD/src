@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.754 2008/06/18 09:06:26 yamt Exp $
+# $NetBSD: mi,v 1.755 2008/06/22 13:54:00 ad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1269,6 +1269,7 @@
 ./usr/sbin/pppoectl				base-obsolete		obsolete
 ./usr/sbin/pppstats				base-ppp-bin
 ./usr/sbin/praliases				base-obsolete		obsolete
+./usr/sbin/psrset				base-sysutil-bin
 ./usr/sbin/pstat				base-sysutil-bin
 ./usr/sbin/pvcsif				base-netutil-bin
 ./usr/sbin/pvctxctl				base-netutil-bin

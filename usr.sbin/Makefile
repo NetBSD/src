@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.233 2008/05/14 16:49:47 reinoud Exp $
+#	$NetBSD: Makefile,v 1.234 2008/06/22 13:53:59 ad Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -15,8 +15,8 @@ SUBDIR=	ac accton acpitools altq amd apm apmd arp bad144 bind bootp \
 	mrinfo mrouted mscdlabel mtrace \
 	mtree ndbootd ndiscvt netgroup_mkdb nfsd ntp ofctl paxctl pcictl \
 	pkg_install \
-	pppd pstat pwd_mkdb postinstall powerd quot quotacheck quotaon \
-	rarpd rbootd rdate \
+	pppd psrset pstat pwd_mkdb postinstall powerd quot quotacheck \
+	quotaon rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
  	rpc.statd rpcbind rwhod sa screenblank sdpd services_mkdb sesd \
 	schedctl sliplogin sntp \
