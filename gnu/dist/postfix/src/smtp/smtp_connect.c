@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.1.1.16 2007/08/02 08:05:25 heas Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.1.1.17 2008/06/22 14:03:22 christos Exp $	*/
 
 /*++
 /* NAME
@@ -299,7 +299,11 @@ static SMTP_SESSION *smtp_connect_sock(int sock, struct sockaddr * sa,
 	conn_stat = sane_connect(sock, sa, salen);
     }
     if (conn_stat < 0) {
-	dsb_simple(why, "4.4.1", "connect to %s[%s]: %m", name, addr);
+	if (port)
+	    dsb_simple(why, "4.4.1", "connect to %s[%s]:%d: %m",
+		       name, addr, ntohs(port));
+	else
+	    dsb_simple(why, "4.4.1", "connect to %s[%s]: %m", name, addr);
 	close(sock);
 	return (0);
     }
@@ -437,12 +441,36 @@ static void smtp_cleanup_session(SMTP_STATE *state)
     request->msg_stats.reuse_count = 0;
 }
 
+static void smtp_cache_policy(SMTP_STATE *state, const char *dest)
+{
+    DELIVER_REQUEST *request = state->request;
+
+    state->misc_flags &= ~SMTP_MISC_FLAG_CONN_CACHE_MASK;
+
+    /*
+     * XXX Disable connection caching when sender-dependent authentication is
+     * enabled. We must not send someone elses mail over an authenticated
+     * connection, and we must not send mail that requires authentication
+     * over a connection that wasn't authenticated.
+     */
+    if (var_smtp_sender_auth)
+	return;
+
+    if (smtp_cache_dest && string_list_match(smtp_cache_dest, dest)) {
+	state->misc_flags |= SMTP_MISC_FLAG_CONN_CACHE_MASK;
+    } else if (var_smtp_cache_demand) {
+	if (request->flags & DEL_REQ_FLAG_CONN_LOAD)
+	    state->misc_flags |= SMTP_MISC_FLAG_CONN_LOAD;
+	if (request->flags & DEL_REQ_FLAG_CONN_STORE)
+	    state->misc_flags |= SMTP_MISC_FLAG_CONN_STORE;
+    }
+}
+
 /* smtp_connect_local - connect to local server */
 
 static void smtp_connect_local(SMTP_STATE *state, const char *path)
 {
     const char *myname = "smtp_connect_local";
-    DELIVER_REQUEST *request = state->request;
     SMTP_SESSION *session;
     DSN_BUF *why = state->why;
 
@@ -452,19 +480,8 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
      * 
      * Connection cache management is based on the UNIX-domain pathname, without
      * the "unix:" prefix.
-     * 
-     * XXX Disable connection caching when sender-dependent authentication is
-     * enabled. We must not send someone elses mail over an authenticated
-     * connection, and we must not send mail that requires authentication
-     * over a connection that wasn't authenticated.
      */
-#define CAN_ENABLE_CONN_CACHE(request, dest) \
-    (!var_smtp_sender_auth \
-     && ((var_smtp_cache_demand && (request->flags & DEL_REQ_FLAG_SCACHE)) \
-	 || (smtp_cache_dest && string_list_match(smtp_cache_dest, dest))))
-
-    if (CAN_ENABLE_CONN_CACHE(request, path))
-	state->misc_flags |= SMTP_MISC_FLAG_CONN_CACHE;
+    smtp_cache_policy(state, path);
 
     /*
      * XXX We assume that the session->addr member refers to a copy of the
@@ -484,7 +501,7 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
      * available, "encrypt" may be a sensible policy. Otherwise, we also
      * downgrade "encrypt" to "none", this time just to avoid waste.
      */
-    if ((state->misc_flags & SMTP_MISC_FLAG_CONN_CACHE) == 0
+    if ((state->misc_flags & SMTP_MISC_FLAG_CONN_LOAD) == 0
 	|| (session = smtp_reuse_addr(state, path, NO_PORT)) == 0)
 	session = smtp_connect_unix(path, why, state->misc_flags);
     if ((state->session = session) != 0) {
@@ -794,10 +811,10 @@ static void smtp_connect_remote(SMTP_STATE *state, const char *nexthop,
 	 * authenticated connection, and we must not send mail that requires
 	 * authentication over a connection that wasn't authenticated.
 	 */
-	if (addr_list && (state->misc_flags & SMTP_MISC_FLAG_FIRST_NEXTHOP)
-	    && CAN_ENABLE_CONN_CACHE(request, domain)) {
-	    state->misc_flags |= SMTP_MISC_FLAG_CONN_CACHE;
-	    SET_NEXTHOP_STATE(state, lookup_mx, domain, port);
+	if (addr_list && (state->misc_flags & SMTP_MISC_FLAG_FIRST_NEXTHOP)) {
+	    smtp_cache_policy(state, domain);
+	    if (state->misc_flags & SMTP_MISC_FLAG_CONN_STORE)
+		SET_NEXTHOP_STATE(state, lookup_mx, domain, port);
 	}
 
 	/*
@@ -810,7 +827,7 @@ static void smtp_connect_remote(SMTP_STATE *state, const char *nexthop,
 	 * fall-back destination. smtp_reuse_session() will truncate the
 	 * address list when either limit is reached.
 	 */
-	if (addr_list && state->misc_flags & SMTP_MISC_FLAG_CONN_CACHE) {
+	if (addr_list && (state->misc_flags & SMTP_MISC_FLAG_CONN_LOAD)) {
 	    if (state->cache_used->used > 0)
 		smtp_scrub_addr_list(state->cache_used, &addr_list);
 	    sess_count = addr_count =
@@ -841,7 +858,7 @@ static void smtp_connect_remote(SMTP_STATE *state, const char *nexthop,
 	    next = addr->next;
 	    if (++addr_count == var_smtp_mxaddr_limit)
 		next = 0;
-	    if ((state->misc_flags & SMTP_MISC_FLAG_CONN_CACHE) == 0
+	    if ((state->misc_flags & SMTP_MISC_FLAG_CONN_LOAD) == 0
 		|| addr->pref == domain_best_pref
 		|| dns_rr_to_pa(addr, &hostaddr) == 0
 		|| !(session = smtp_reuse_addr(state, hostaddr.buf, port)))
@@ -899,7 +916,8 @@ static void smtp_connect_remote(SMTP_STATE *state, const char *nexthop,
 		}
 		smtp_cleanup_session(state);
 	    } else {
-		msg_info("%s (port %d)", STR(why->reason), ntohs(port));
+		/* The reason already includes the IP address and TCP port. */
+		msg_info("%s", STR(why->reason));
 	    }
 	    /* Insert: test if we must skip the remaining MX hosts. */
 	}

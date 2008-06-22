@@ -13,7 +13,7 @@
 # or lower/upper bounds still result in "postconf -d" duplicates,
 # which are a sign of an error somewhere...
 
-/^(static| )*CONFIG_INT_TABLE .*\{/,/\};/ { 
+/^(static| )*(const +)?CONFIG_INT_TABLE .*\{/,/\};/ { 
     if ($1 ~ /VAR/) {
 	print "int " substr($3,2,length($3)-2) ";" > "int_vars.h"
 	if (++itab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
@@ -21,7 +21,7 @@
 	}
     }
 }
-/^(static| )*CONFIG_STR_TABLE .*\{/,/\};/ { 
+/^(static| )*(const +)?CONFIG_STR_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
 	print "char *" substr($3,2,length($3)-2) ";" > "str_vars.h"
 	if (++stab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
@@ -29,7 +29,7 @@
 	}
     }
 }
-/^(static| )*CONFIG_RAW_TABLE .*\{/,/\};/ { 
+/^(static| )*(const +)?CONFIG_RAW_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
 	print "char *" substr($3,2,length($3)-2) ";" > "raw_vars.h"
 	if (++rtab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
@@ -37,7 +37,7 @@
 	}
     }
 }
-/^(static| )*CONFIG_BOOL_TABLE .*\{/,/\};/ { 
+/^(static| )*(const +)?CONFIG_BOOL_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
 	print "int " substr($3,2,length($3)-2) ";" > "bool_vars.h"
 	if (++btab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
@@ -45,7 +45,7 @@
 	}
     }
 }
-/^(static| )*CONFIG_TIME_TABLE .*\{/,/\};/ { 
+/^(static| )*(const +)?CONFIG_TIME_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
 	print "int " substr($3,2,length($3)-2) ";" > "time_vars.h"
 	if (++ttab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {

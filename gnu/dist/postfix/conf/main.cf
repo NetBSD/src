@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.1.1.16 2006/07/19 01:16:43 rpaulo Exp $
+#	$NetBSD: main.cf,v 1.1.1.17 2008/06/22 14:00:00 christos Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -42,6 +42,12 @@ command_directory = /usr/sbin
 # directory must be owned by root.
 #
 daemon_directory = /usr/libexec/postfix
+
+# The data_directory parameter specifies the location of Postfix-writable
+# data files (caches, random numbers). This directory must be owned
+# by the mail_owner account (see below).
+#
+data_directory = /var/lib/postfix
 
 # QUEUE AND PROCESS OWNERSHIP
 #
@@ -583,7 +589,7 @@ debug_peer_level = 2
 #
 debugger_command =
 	 PATH=/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin
-	 xxgdb $daemon_directory/$process_name $process_id & sleep 5
+	 ddd $daemon_directory/$process_name $process_id & sleep 5
 
 # If you can't use X, use this to capture the call stack when a
 # daemon crashes. The result is in a file in the configuration

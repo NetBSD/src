@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_enable.c,v 1.1.1.2 2004/05/31 00:24:44 heas Exp $	*/
+/*	$NetBSD: qmgr_enable.c,v 1.1.1.3 2008/06/22 14:03:07 christos Exp $	*/
 
 /*++
 /* NAME
@@ -99,11 +99,11 @@ void    qmgr_enable_transport(QMGR_TRANSPORT *transport)
 
 void    qmgr_enable_queue(QMGR_QUEUE *queue)
 {
-    if (queue->window == 0) {
+    if (QMGR_QUEUE_THROTTLED(queue)) {
 	if (msg_verbose)
 	    msg_info("enable site %s/%s", queue->transport->name, queue->name);
 	qmgr_queue_unthrottle(queue);
     }
-    if (queue->todo.next == 0 && queue->busy.next == 0)
+    if (QMGR_QUEUE_READY(queue) && queue->todo.next == 0 && queue->busy.next == 0)
 	qmgr_queue_done(queue);
 }

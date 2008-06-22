@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf.h,v 1.1.1.5 2007/05/19 16:28:12 heas Exp $	*/
+/*	$NetBSD: mail_conf.h,v 1.1.1.6 2008/06/22 14:02:25 christos Exp $	*/
 
 #ifndef _MAIL_CONF_H_INCLUDED_
 #define _MAIL_CONF_H_INCLUDED_
@@ -53,6 +53,7 @@ extern int get_mail_conf_bool(const char *, int);
 extern int get_mail_conf_time(const char *, const char *, int, int);
 extern char *get_mail_conf_raw(const char *, const char *, int, int);
 
+extern char *get_mail_conf_str2(const char *, const char *, const char *, int, int);
 extern int get_mail_conf_int2(const char *, const char *, int, int, int);
 extern long get_mail_conf_long2(const char *, const char *, long, long, long);
 extern int get_mail_conf_time2(const char *, const char *, int, int, int, int);
@@ -127,12 +128,12 @@ typedef struct {
     int     max;			/* upper bound or zero */
 } CONFIG_TIME_TABLE;
 
-extern void get_mail_conf_str_table(CONFIG_STR_TABLE *);
-extern void get_mail_conf_int_table(CONFIG_INT_TABLE *);
-extern void get_mail_conf_long_table(CONFIG_LONG_TABLE *);
-extern void get_mail_conf_bool_table(CONFIG_BOOL_TABLE *);
-extern void get_mail_conf_time_table(CONFIG_TIME_TABLE *);
-extern void get_mail_conf_raw_table(CONFIG_RAW_TABLE *);
+extern void get_mail_conf_str_table(const CONFIG_STR_TABLE *);
+extern void get_mail_conf_int_table(const CONFIG_INT_TABLE *);
+extern void get_mail_conf_long_table(const CONFIG_LONG_TABLE *);
+extern void get_mail_conf_bool_table(const CONFIG_BOOL_TABLE *);
+extern void get_mail_conf_time_table(const CONFIG_TIME_TABLE *);
+extern void get_mail_conf_raw_table(const CONFIG_RAW_TABLE *);
 
  /*
   * Tables to initialize parameters from the global configuration file or
@@ -176,11 +177,11 @@ typedef struct {
     int    *target;			/* pointer to global variable */
 } CONFIG_BOOL_FN_TABLE;
 
-extern void get_mail_conf_str_fn_table(CONFIG_STR_FN_TABLE *);
-extern void get_mail_conf_int_fn_table(CONFIG_INT_FN_TABLE *);
-extern void get_mail_conf_long_fn_table(CONFIG_LONG_FN_TABLE *);
-extern void get_mail_conf_bool_fn_table(CONFIG_BOOL_FN_TABLE *);
-extern void get_mail_conf_raw_fn_table(CONFIG_RAW_FN_TABLE *);
+extern void get_mail_conf_str_fn_table(const CONFIG_STR_FN_TABLE *);
+extern void get_mail_conf_int_fn_table(const CONFIG_INT_FN_TABLE *);
+extern void get_mail_conf_long_fn_table(const CONFIG_LONG_FN_TABLE *);
+extern void get_mail_conf_bool_fn_table(const CONFIG_BOOL_FN_TABLE *);
+extern void get_mail_conf_raw_fn_table(const CONFIG_RAW_FN_TABLE *);
 
 /* LICENSE
 /* .ad

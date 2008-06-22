@@ -1,4 +1,4 @@
-/*	$NetBSD: rcpt_print.c,v 1.1.1.1 2006/07/19 01:17:28 rpaulo Exp $	*/
+/*	$NetBSD: rcpt_print.c,v 1.1.1.2 2008/06/22 14:02:39 christos Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
 /*	routine. rcpt_print() is meant to be passed as a call-back
 /*	to attr_print(), thusly:
 /*
-/*	... ATTR_PRINT_FUNC, rcpt_print, (void *) recipient, ...
+/*	... ATTR_TYPE_FUNC, rcpt_print, (void *) recipient, ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE

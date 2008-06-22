@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_entry.c,v 1.1.1.7 2007/05/19 16:28:29 heas Exp $	*/
+/*	$NetBSD: qmgr_entry.c,v 1.1.1.8 2008/06/22 14:03:08 christos Exp $	*/
 
 /*++
 /* NAME
@@ -79,7 +79,7 @@
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*
-/*	Scheduler enhancements:
+/*	Preemptive scheduler enhancements:
 /*	Patrik Rak
 /*	Modra 6
 /*	155 00, Prague, Czech Republic
@@ -137,9 +137,8 @@ QMGR_ENTRY *qmgr_entry_select(QMGR_PEER *peer)
 	 * (we need to recognize back-to-back deliveries for transports with
 	 * concurrency 1).
 	 * 
-	 * XXX It would be nice if we could say "try to reuse a cached
-	 * connection, but don't bother saving it when you're done". As long
-	 * as we can't, we must not turn off session caching too early.
+	 * If caching has previously been enabled, but is not now, fetch any
+	 * existing entries from the cache, but don't add new ones.
 	 */
 #define CONCURRENT_OR_BACK_TO_BACK_DELIVERY() \
 	    (queue->busy_refcount > 1 || BACK_TO_BACK_DELIVERY())
@@ -153,12 +152,12 @@ QMGR_ENTRY *qmgr_entry_select(QMGR_PEER *peer)
 	 * prevents unnecessary session caching when we have a burst of mail
 	 * <= the initial concurrency limit.
 	 */
-	if ((queue->dflags & DEL_REQ_FLAG_SCACHE) == 0) {
+	if ((queue->dflags & DEL_REQ_FLAG_CONN_STORE) == 0) {
 	    if (BACK_TO_BACK_DELIVERY()) {
 		if (msg_verbose)
 		    msg_info("%s: allowing on-demand session caching for %s",
 			     myname, queue->name);
-		queue->dflags |= DEL_REQ_FLAG_SCACHE;
+		queue->dflags |= DEL_REQ_FLAG_CONN_MASK;
 	    }
 	}
 
@@ -173,7 +172,7 @@ QMGR_ENTRY *qmgr_entry_select(QMGR_PEER *peer)
 		if (msg_verbose)
 		    msg_info("%s: disallowing on-demand session caching for %s",
 			     myname, queue->name);
-		queue->dflags &= ~DEL_REQ_FLAG_SCACHE;
+		queue->dflags &= ~DEL_REQ_FLAG_CONN_STORE;
 	    }
 	}
     }
@@ -188,10 +187,10 @@ void    qmgr_entry_unselect(QMGR_ENTRY *entry)
     QMGR_QUEUE *queue = entry->queue;
 
     /*
-     * Move the entry back to the todo lists. In case of the peer list,
-     * put it back to the beginning, so the select()/unselect() does
-     * not reorder entries. We use this in qmgr_message_assign()
-     * to put recipients into existing entries when possible.
+     * Move the entry back to the todo lists. In case of the peer list, put
+     * it back to the beginning, so the select()/unselect() does not reorder
+     * entries. We use this in qmgr_message_assign() to put recipients into
+     * existing entries when possible.
      */
     QMGR_LIST_UNLINK(queue->busy, QMGR_ENTRY *, entry, queue_peers);
     queue->busy_refcount--;
@@ -251,6 +250,7 @@ void    qmgr_entry_move_todo(QMGR_QUEUE *dst_queue, QMGR_ENTRY *entry)
 
 void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
 {
+    const char *myname = "qmgr_entry_done";
     QMGR_QUEUE *queue = entry->queue;
     QMGR_MESSAGE *message = entry->message;
     QMGR_PEER *peer = entry->peer;
@@ -261,7 +261,7 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
      * Take this entry off the in-core queue.
      */
     if (entry->stream != 0)
-	msg_panic("qmgr_entry_done: file is open");
+	msg_panic("%s: file is open", myname);
     if (which == QMGR_QUEUE_BUSY) {
 	QMGR_LIST_UNLINK(queue->busy, QMGR_ENTRY *, entry, queue_peers);
 	queue->busy_refcount--;
@@ -271,7 +271,7 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
 	QMGR_LIST_UNLINK(queue->todo, QMGR_ENTRY *, entry, queue_peers);
 	queue->todo_refcount--;
     } else {
-	msg_panic("qmgr_entry_done: bad queue spec: %d", which);
+	msg_panic("%s: bad queue spec: %d", myname, which);
     }
 
     /*
@@ -321,7 +321,7 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
 	    transport->job_current = transport->job_list.next;
 	    transport->candidate_cache_current = 0;
 	}
-	if (queue->window > queue->busy_refcount || queue->window == 0)
+	if (queue->window > queue->busy_refcount || QMGR_QUEUE_THROTTLED(queue))
 	    queue->blocker_tag = 0;
     }
 
@@ -336,18 +336,32 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
     /*
      * Maintain back-to-back delivery status.
      */
-    queue->last_done = event_time();
+    if (which == QMGR_QUEUE_BUSY)
+	queue->last_done = event_time();
+
+    /*
+     * Suspend a rate-limited queue, so that mail trickles out.
+     */
+    if (which == QMGR_QUEUE_BUSY && transport->rate_delay > 0) {
+	if (queue->window > 1)
+	    msg_panic("%s: queue %s/%s: window %d > 1 on rate-limited service",
+		      myname, transport->name, queue->name, queue->window);
+	if (QMGR_QUEUE_THROTTLED(queue))	/* XXX */
+	    qmgr_queue_unthrottle(queue);
+	if (QMGR_QUEUE_READY(queue))
+	    qmgr_queue_suspend(queue, transport->rate_delay);
+    }
 
     /*
      * When the in-core queue for this site is empty and when this site is
-     * not dead, discard the in-core queue. When this site is dead, but the
-     * number of in-core queues exceeds some threshold, get rid of this
-     * in-core queue anyway, in order to avoid running out of memory.
+     * not dead or suspended, discard the in-core queue. When this site is
+     * dead, but the number of in-core queues exceeds some threshold, get rid
+     * of this in-core queue anyway, in order to avoid running out of memory.
      */
     if (queue->todo.next == 0 && queue->busy.next == 0) {
-	if (queue->window == 0 && qmgr_queue_count > 2 * var_qmgr_rcpt_limit)
+	if (QMGR_QUEUE_THROTTLED(queue) && qmgr_queue_count > 2 * var_qmgr_rcpt_limit)
 	    qmgr_queue_unthrottle(queue);
-	if (queue->window > 0)
+	if (QMGR_QUEUE_READY(queue))
 	    qmgr_queue_done(queue);
     }
 
@@ -370,7 +384,7 @@ QMGR_ENTRY *qmgr_entry_create(QMGR_PEER *peer, QMGR_MESSAGE *message)
     /*
      * Sanity check.
      */
-    if (queue->window == 0)
+    if (QMGR_QUEUE_THROTTLED(queue))
 	msg_panic("qmgr_entry_create: dead queue: %s", queue->name);
 
     /*

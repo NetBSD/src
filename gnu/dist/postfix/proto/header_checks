@@ -81,17 +81,17 @@
 #	For a discussion of specific pattern or flags syntax,
 #	see \fBpcre_table\fR(5) or \fBregexp_table\fR(5), respectively.
 # .IP "\fB/\fIpattern\fB/\fIflags action\fR"
-#	When \fIpattern\fR matches the input string, execute
+#	When /\fIpattern\fR/ matches the input string, execute
 #	the corresponding \fIaction\fR. See below for a list
 #	of possible actions.
 # .IP "\fB!/\fIpattern\fB/\fIflags action\fR"
-#	When \fIpattern\fR does \fBnot\fR match the input string,
+#	When /\fIpattern\fR/ does \fBnot\fR match the input string,
 #	execute the corresponding \fIaction\fR.
 # .IP "\fBif /\fIpattern\fB/\fIflags\fR"
 # .IP "\fBendif\fR"
 #	Match the input string against the patterns between \fBif\fR
 #	and \fBendif\fR, if and only if the same input string also
-#	matches \fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
+#	matches /\fIpattern\fR/. The \fBif\fR..\fBendif\fR can nest.
 # .sp
 #	Note: do not prepend whitespace to patterns inside
 #	\fBif\fR..\fBendif\fR.
@@ -99,7 +99,7 @@
 # .IP "\fBendif\fR"
 #	Match the input string against the patterns between \fBif\fR
 #	and \fBendif\fR, if and only if the same input string does
-#	\fBnot\fR match \fIpattern\fR. The \fBif\fR..\fBendif\fR
+#	\fBnot\fR match /\fIpattern\fR/. The \fBif\fR..\fBendif\fR
 #	can nest.
 # .IP "blank lines and comments"
 #	Empty lines and whitespace-only lines are ignored, as
@@ -281,6 +281,10 @@
 #	action is useful for debugging and for testing a pattern
 #	before applying more drastic actions.
 # BUGS
+#	Empty lines never match, because some map types mis-behave
+#	when given a zero-length search string.  This limitation may
+#	be removed for regular expression tables in a future release.
+#
 #	Many people overlook the main limitations of header and body_checks
 #	rules.
 # .IP \(bu

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.1.1.11 2007/05/19 16:28:05 heas Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.1.1.12 2008/06/22 14:02:05 christos Exp $	*/
 
 /*++
 /* NAME
@@ -80,6 +80,7 @@ typedef struct CLEANUP_STATE {
     off_t   append_hdr_pt_target;	/* target of above record */
     ssize_t rcpt_count;			/* recipient count */
     char   *reason;			/* failure reason */
+    char   *smtp_reply;			/* failure reason, SMTP-style */
     NVTABLE *attr;			/* queue file attribute list */
     MIME_STATE *mime_state;		/* MIME state engine */
     int     mime_errs;			/* MIME error flags */
@@ -106,6 +107,7 @@ typedef struct CLEANUP_STATE {
     const char *client_port;		/* real or ersatz client */
     VSTRING *milter_ext_from;		/* externalized sender */
     VSTRING *milter_ext_rcpt;		/* externalized recipient */
+    VSTRING *milter_err_text;		/* milter call-back reply */
 
     /*
      * Support for Milter body replacement requests.

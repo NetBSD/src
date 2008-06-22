@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_local.c,v 1.1.1.4 2006/07/19 01:17:53 rpaulo Exp $	*/
+/*	$NetBSD: inet_addr_local.c,v 1.1.1.5 2008/06/22 14:04:02 christos Exp $	*/
 
 /*++
 /* NAME
@@ -101,9 +101,10 @@
   * With SIOCGLIFNETMASK we can obtain the netmask for either address family.
   * Again, this is not present in all major operating systems.
   * 
-  * - On Linux, get IPv4 interface information with SIOCGIFCONF, and read IPv6
-  * address/prefix information from a file in the /proc filesystem. Linux
-  * does not return IPv6 addresses with SIOCGIFCONF.
+  * - On Linux, glibc's getifaddrs(3) has returned IPv4 information for some
+  * time, but IPv6 information was not returned until 2.3.3. With older Linux
+  * versions we get IPv4 interface information with SIOCGIFCONF, and read
+  * IPv6 address/prefix information from a file in the /proc filesystem.
   * 
   * - On other systems we expect SIOCGIFCONF to return IPv6 addresses. Since
   * SIOCGIFNETMASK does not work reliably for IPv6 addresses, we always set
@@ -439,7 +440,7 @@ static int ial_siocgif(INET_ADDR_LIST *addr_list,
 #ifdef HAS_PROCNET_IFINET6
 
 /*
- * Linux does not provide proper calls to retrieve IPv6 interface
+ * Older Linux versions lack proper calls to retrieve IPv6 interface
  * addresses. Instead, the addresses can be read from a file in the
  * /proc tree. The most important issue with this approach however
  * is that the /proc tree may not always be available, for example

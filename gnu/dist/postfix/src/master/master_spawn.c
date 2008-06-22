@@ -1,4 +1,4 @@
-/*	$NetBSD: master_spawn.c,v 1.1.1.5 2006/07/19 01:17:32 rpaulo Exp $	*/
+/*	$NetBSD: master_spawn.c,v 1.1.1.6 2008/06/22 14:02:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -71,6 +71,10 @@
 #include <events.h>
 #include <vstring.h>
 #include <argv.h>
+
+/* Global library. */
+
+#include <mail_conf.h>
 
 /* Application-specific. */
 
@@ -179,6 +183,10 @@ void    master_spawn(MASTER_SERV *serv)
 	 * connection and run the requested command. Leave child stderr
 	 * alone. Disable exit handlers: they should be executed by the
 	 * parent only.
+	 * 
+	 * When we reach the process limit on a public internet service, we
+	 * create stress-mode processes until the process count stays below
+	 * the limit for some amount of time. See master_avail_listen().
 	 */
     case 0:
 	msg_cleanup((void (*) (void)) 0);	/* disable exit handler */
@@ -218,6 +226,8 @@ void    master_spawn(MASTER_SERV *serv)
 	vstring_sprintf(env_gen, "%s=%o", MASTER_GEN_NAME, master_generation);
 	if (putenv(vstring_str(env_gen)) < 0)
 	    msg_fatal("%s: putenv: %m", myname);
+	if (serv->stress_param_val && serv->stress_expire_time > event_time())
+	    serv->stress_param_val[0] = CONFIG_BOOL_YES[0];
 
 	execvp(serv->path, serv->args->argv);
 	msg_fatal("%s: exec %s: %m", myname, serv->path);

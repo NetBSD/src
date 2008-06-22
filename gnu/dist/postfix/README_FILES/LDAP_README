@@ -26,6 +26,10 @@ Topics covered in this document:
 
 BBuuiillddiinngg PPoossttffiixx wwiitthh LLDDAAPP ssuuppppoorrtt
 
+These instructions assume that you build Postfix from source code as described
+in the INSTALL document. Some modification may be required if you build Postfix
+from a vendor-specific source package.
+
 Note 1: Postfix no longer supports the LDAP version 1 interface.
 
 Note 2: to use LDAP with Debian GNU/Linux's Postfix, all you need is to install

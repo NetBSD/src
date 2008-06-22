@@ -1,4 +1,4 @@
-/*	$NetBSD: anvil.c,v 1.1.1.4 2007/05/19 16:28:04 heas Exp $	*/
+/*	$NetBSD: anvil.c,v 1.1.1.5 2008/06/22 14:02:02 christos Exp $	*/
 
 /*++
 /* NAME
@@ -849,7 +849,7 @@ static void anvil_service(VSTREAM *client_stream, char *unused_service, char **a
 {
     static VSTRING *request;
     static VSTRING *ident;
-    static ANVIL_REQ_TABLE request_table[] = {
+    static const ANVIL_REQ_TABLE request_table[] = {
 	ANVIL_REQ_CONN, anvil_remote_connect,
 	ANVIL_REQ_MAIL, anvil_remote_mail,
 	ANVIL_REQ_RCPT, anvil_remote_rcpt,
@@ -859,7 +859,7 @@ static void anvil_service(VSTREAM *client_stream, char *unused_service, char **a
 	ANVIL_REQ_LOOKUP, anvil_remote_lookup,
 	0, 0,
     };
-    ANVIL_REQ_TABLE *rp;
+    const ANVIL_REQ_TABLE *rp;
 
     /*
      * Sanity check. This service takes no command-line arguments.
@@ -943,7 +943,7 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_ANVIL_TIME_UNIT, DEF_ANVIL_TIME_UNIT, &var_anvil_time_unit, 1, 0,
 	VAR_ANVIL_STAT_TIME, DEF_ANVIL_STAT_TIME, &var_anvil_stat_time, 1, 0,
 	0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.c,v 1.1.1.8 2006/07/19 01:17:50 rpaulo Exp $	*/
+/*	$NetBSD: dict.c,v 1.1.1.9 2008/06/22 14:03:50 christos Exp $	*/
 
 /*++
 /* NAME
@@ -521,7 +521,7 @@ int     dict_changed(void)
  /*
   * Mapping between flag names and flag values.
   */
-static NAME_MASK dict_mask[] = {
+static const NAME_MASK dict_mask[] = {
     "warn_dup", (1 << 0),		/* if file, warn about dups */
     "ignore_dup", (1 << 1),		/* if file, ignore dups */
     "try0null", (1 << 2),		/* do not append 0 to key/value */

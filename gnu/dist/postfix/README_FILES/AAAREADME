@@ -4,6 +4,7 @@
 GGeenneerraall ccoonnffiigguurraattiioonn
 
   * BASIC_CONFIGURATION_README: Basic configuration
+  * SOHO_README: Small/home office hints and tips
   * STANDARD_CONFIGURATION_README: Standard configuration examples
   * ADDRESS_REWRITING_README: Address rewriting
   * VIRTUAL_README: Virtual domain hosting
@@ -16,6 +17,7 @@ GGeenneerraall ccoonnffiigguurraattiioonn
 PPrroobblleemm ssoollvviinngg
 
   * QSHAPE_README: Bottleneck analysis
+  * STRESS_README: Stress-dependent configuration
   * TUNING_README: Performance tuning
   * DEBUG_README: Debugging strategies
 
@@ -24,6 +26,7 @@ CCoonntteenntt iinnssppeeccttiioonn
   * CONTENT_INSPECTION_README: Content inspection overview
   * BACKSCATTER_README: Stopping backscatter mail
   * BUILTIN_FILTER_README: Built-in content inspection
+
   * FILTER_README: After-queue content filter
   * SMTPD_PROXY_README: Before-queue content filter
   * MILTER_README: Before-queue Milter applications

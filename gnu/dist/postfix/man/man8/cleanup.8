@@ -1,4 +1,4 @@
-.\"	$NetBSD: cleanup.8,v 1.1.1.12 2007/05/19 16:27:51 heas Exp $
+.\"	$NetBSD: cleanup.8,v 1.1.1.13 2008/06/22 14:01:10 christos Exp $
 .\"
 .TH CLEANUP 8 
 .ad
@@ -181,6 +181,11 @@ filter) applications after an unknown SMTP command.
 .IP "\fBmilter_end_of_data_macros (see postconf -n output)\fR"
 The macros that are sent to Milter (mail filter) applications
 after the message end-of-data.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBmilter_end_of_header_macros (see postconf -n output)\fR"
+The macros that are sent to Milter (mail filter) applications
+after the end of the message header.
 .SH "MIME PROCESSING CONTROLS"
 .na
 .nf
@@ -203,6 +208,12 @@ information.
 .IP "\fBstrict_mime_encoding_domain (no)\fR"
 Reject mail with invalid Content-Transfer-Encoding: information
 for the message/* or multipart/* MIME content types.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBdetect_8bit_encoding_header (yes)\fR"
+Automatically detect 8BITMIME body content by looking at
+Content-Transfer-Encoding: message headers; historically, this
+behavior was hard-coded to be "always on".
 .SH "AUTOMATIC BCC RECIPIENT CONTROLS"
 .na
 .nf

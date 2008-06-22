@@ -1,4 +1,4 @@
-/*	$NetBSD: set_eugid.h,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: set_eugid.h,v 1.1.1.3 2008/06/22 14:04:09 christos Exp $	*/
 
 #ifndef _SET_EUGID_H_INCLUDED_
 #define _SET_EUGID_H_INCLUDED_
@@ -16,6 +16,20 @@
  /* External interface. */
 
 extern void set_eugid(uid_t, gid_t);
+
+ /*
+  * The following macros open and close a block that runs at a different
+  * privilege level. To make mistakes with stray curly braces less likely, we
+  * shape the macros below as the head and tail of a do-while loop.
+  */
+#define SAVE_AND_SET_EUGID(uid, gid) do { \
+	uid_t __set_eugid_uid = geteuid(); \
+	gid_t __set_eugid_gid = getegid(); \
+	set_eugid((uid), (gid));
+
+#define RESTORE_SAVED_EUGID() \
+	set_eugid(__set_eugid_uid, __set_eugid_gid); \
+    } while (0)
 
 /* LICENSE
 /* .ad
