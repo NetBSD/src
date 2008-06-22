@@ -242,7 +242,9 @@
  * If the "xaddq" operation (64bit xadd) is available on this architecture,
  * ISC_PLATFORM_HAVEXADDQ will be defined.
  */
+#if defined(_LP64) || defined(__i386__)
 #define ISC_PLATFORM_HAVEXADDQ 1
+#endif
 
 /*
  * If the "atomic swap" operation is available on this architecture,
