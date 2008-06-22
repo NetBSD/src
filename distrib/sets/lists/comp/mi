@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1163 2008/06/20 14:39:28 christos Exp $
+#	$NetBSD: mi,v 1.1164 2008/06/22 13:54:00 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3148,6 +3148,7 @@
 ./usr/libdata/debug/usr/sbin/pppd.debug		comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/pppdump.debug	comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/pppstats.debug	comp-ppp-debug		debug
+./usr/libdata/debug/usr/sbin/psrset.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pvcsif.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pvctxctl.debug	comp-netutil-debug	debug
