@@ -1,4 +1,4 @@
-.\"	$NetBSD: pset.3,v 1.5 2008/06/16 14:34:10 rmind Exp $
+.\"	$NetBSD: pset.3,v 1.6 2008/06/22 08:24:40 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 5, 2008
+.Dd June 16, 2008
 .Dt PSET 3
 .Os
 .Sh NAME
@@ -164,19 +164,19 @@ is set to indicate the error.
 .Sh EXAMPLES
 An example of code fragment, which assigns the CPU whose ID is 0,
 for current process:
-.Bd -unfilled
+.Bd -literal
 	psetid_t psid;
 	cpuid_t ci = 0;
 
-	if (pset_create(&psid) < 0)
+	if (pset_create(\*[Am]psid) \*[Lt] 0)
 		err(EXIT_FAILURE, "pset_create");
 
 	/* Assign CPU 0 to the processor-set */
-	if (pset_assign(psid, ci, NULL) < 0)
+	if (pset_assign(psid, ci, NULL) \*[Lt] 0)
 		err(EXIT_FAILURE, "pset_assign");
 
 	/* Bind the current process to the processor-set */
-	if (pset_bind(psid, P_PID, P_MYID, NULL) < 0)
+	if (pset_bind(psid, P_PID, P_MYID, NULL) \*[Lt] 0)
 		err(EXIT_FAILURE, "pset_bind");
 
 	/*
@@ -184,7 +184,7 @@ for current process:
 	 */
 	perform_work();
 
-	if (pset_destroy(psid) < 0)
+	if (pset_destroy(psid) \*[Lt] 0)
 		err(EXIT_FAILURE, "pset_destroy")
 .Ed
 .Sh ERRORS
