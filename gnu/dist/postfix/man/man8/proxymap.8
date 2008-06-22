@@ -1,4 +1,4 @@
-.\"	$NetBSD: proxymap.8,v 1.1.1.7 2007/05/19 16:27:52 heas Exp $
+.\"	$NetBSD: proxymap.8,v 1.1.1.8 2008/06/22 14:01:15 christos Exp $
 .\"
 .TH PROXYMAP 8 
 .ad
@@ -14,9 +14,10 @@ Postfix lookup table proxy server
 .SH DESCRIPTION
 .ad
 .fi
-The \fBproxymap\fR(8) server provides read-only table
-lookup service to Postfix processes. The purpose
-of the service is:
+The \fBproxymap\fR(8) server provides read-only or read-write
+table lookup service to Postfix processes. These services are
+implemented with distinct service names: \fBproxymap\fR and
+\fBproxywrite\fR, respectively. The purpose of these services is:
 .IP \(bu
 To overcome chroot restrictions. For example, a chrooted SMTP
 server needs access to the system passwd file in order to
@@ -41,6 +42,10 @@ virtual_alias_maps =
 .sp
 The total number of connections is limited by the number of
 proxymap server processes.
+.IP \(bu
+To provide single-updater functionality for lookup tables
+that do not reliably support multiple writers (i.e. all
+file-based tables).
 .PP
 The \fBproxymap\fR(8) server implements the following requests:
 .IP "\fBopen\fR \fImaptype:mapname flags\fR"
@@ -50,11 +55,34 @@ dependent flags (to distinguish a fixed string table from a regular
 expression table).
 .IP "\fBlookup\fR \fImaptype:mapname flags key\fR"
 Look up the data stored under the requested key.
-The reply is the request completion status code (below) and
+The reply is the request completion status code and
 the lookup result value.
 The \fImaptype:mapname\fR and \fIflags\fR are the same
 as with the \fBopen\fR request.
+.IP "\fBupdate\fR \fImaptype:mapname flags key value\fR"
+Update the data stored under the requested key.
+The reply is the request completion status code.
+The \fImaptype:mapname\fR and \fIflags\fR are the same
+as with the \fBopen\fR request.
+.sp
+To implement single-updater maps, specify a process limit
+of 1 in the master.cf file entry for the \fBproxywrite\fR
+service.
+.sp
+This request is supported in Postfix 2.5 and later.
+.IP "\fBdelete\fR \fImaptype:mapname flags key\fR"
+Delete the data stored under the requested key.
+The reply is the request completion status code.
+The \fImaptype:mapname\fR and \fIflags\fR are the same
+as with the \fBopen\fR request.
+.sp
+This request is supported in Postfix 2.5 and later.
 .PP
+The request completion status is one of OK, RETRY, NOKEY
+(lookup failed because the key was not found), BAD (malformed
+request) or DENY (the table is not approved for proxy read
+or update access).
+
 There is no \fBclose\fR command, nor are tables implicitly closed
 when a client disconnects. The purpose is to share tables among
 multiple client processes.
@@ -76,8 +104,9 @@ or after \fB$max_idle\fR seconds of idle time.
 .nf
 .ad
 .fi
-The \fBproxymap\fR(8) server opens only tables that are approved via the
-\fBproxy_read_maps\fR configuration parameter, does not talk to
+The \fBproxymap\fR(8) server opens only tables that are
+approved via the \fBproxy_read_maps\fR or \fBproxy_write_maps\fR
+configuration parameters, does not talk to
 users, and can run at fixed low privilege, chrooted or not.
 However, running the proxymap server chrooted severely limits
 usability, because it can open only chrooted tables.
@@ -90,6 +119,15 @@ In Postfix version 2.2 and later, the proxymap client recognizes
 requests to access a table for security-sensitive purposes,
 and opens the table directly. This allows the same main.cf
 setting to be used by sensitive and non-sensitive processes.
+
+Postfix-writable data files should be stored under a dedicated
+directory that is writable only by the Postfix mail system,
+such as the Postfix-owned \fBdata_directory\fR.
+
+In particular, Postfix-writable files should never exist
+in root-owned directories. That would open up a particular
+type of security hole where ownership of a file or directory
+does not match the provider of its content.
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -100,6 +138,15 @@ Problems and transactions are logged to \fBsyslogd\fR(8).
 The \fBproxymap\fR(8) server provides service to multiple clients,
 and must therefore not be used for tables that have high-latency
 lookups.
+
+The \fBproxymap\fR(8) read-write service does not explicitly
+close lookup tables (even if it did, this could not be relied on,
+because the process may be terminated between table updates).
+The read-write service should therefore not be used with tables that
+leave persistent storage in an inconsistent state between
+updates (for example, CDB). Tables that support "sync on
+update" should be safe (for example, Berkeley DB) as should
+tables that are implemented by a real DBMS.
 .SH "CONFIGURATION PARAMETERS"
 .na
 .nf
@@ -115,6 +162,9 @@ The text below provides only a parameter summary. See
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 The default location of the Postfix main.cf and master.cf
 configuration files.
+.IP "\fBdata_directory (see 'postconf -d' output)\fR"
+The directory with Postfix-writable data files (for example:
+caches, pseudo-random numbers).
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
 request before it is terminated by a built-in watchdog timer.
@@ -132,7 +182,16 @@ The process ID of a Postfix command or daemon process.
 .IP "\fBprocess_name (read-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBproxy_read_maps (see 'postconf -d' output)\fR"
-The lookup tables that the \fBproxymap\fR(8) server is allowed to access.
+The lookup tables that the \fBproxymap\fR(8) server is allowed to
+access for the read-only service.
+.PP
+Available in Postfix 2.5 and later:
+.IP "\fBdata_directory (see 'postconf -d' output)\fR"
+The directory with Postfix-writable data files (for example:
+caches, pseudo-random numbers).
+.IP "\fBproxy_write_maps (see 'postconf -d' output)\fR"
+The lookup tables that the \fBproxymap\fR(8) server is allowed to
+access for the read-write service.
 .SH "SEE ALSO"
 .na
 .nf

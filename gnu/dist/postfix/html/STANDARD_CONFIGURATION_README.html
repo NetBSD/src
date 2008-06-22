@@ -81,9 +81,13 @@ what is covered in the <a href="BASIC_CONFIGURATION_README.html">BASIC_CONFIGURA
     # Optional: specify NAT/proxy external address.
     #<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> = 1.2.3.4
 
-    # Don't relay mail from other hosts.
+    # Alternative 1: don't relay mail from other hosts.
     <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = host
     <a href="postconf.5.html#relay_domains">relay_domains</a> =
+
+    # Alternative 2: relay mail from local clients only.
+    # <a href="postconf.5.html#mynetworks">mynetworks</a> = 192.168.1.0/28
+    # <a href="postconf.5.html#relay_domains">relay_domains</a> =
 </pre>
 </blockquote>
 
@@ -789,7 +793,7 @@ discussed the first half of this document. </p>
 
 <li> <p> Lines 2-3: Substitute your fantasy hostname here. Do not
 use a domain name that is already in use by real organizations
-on the Internet. See <a href="http://www.faqs.org/rfcs/rfc2606.html">RFC 2606</a> for examples of domain
+on the Internet. See <a href="http://tools.ietf.org/html/rfc2606">RFC 2606</a> for examples of domain
 names that are guaranteed not to be owned by anyone. </p>
 
 <li> <p> Lines 5, 9, 10: This provides the mapping from

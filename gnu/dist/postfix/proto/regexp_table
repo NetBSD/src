@@ -81,14 +81,14 @@
 # .IP "\fBi\fR (default: on)"
 #	Toggles the case sensitivity flag. By default, matching is case
 #	insensitive.
-# .IP "\fBx\fR (default: on)"
-#	Toggles the extended expression syntax flag. By default, support
-#	for extended expression syntax is enabled.
 # .IP "\fBm\fR (default: off)"
 #	Toggle the multi-line mode flag. When this flag is on, the \fB^\fR
 #	and \fB$\fR metacharacters match immediately after and immediately
 #	before a newline character, respectively, in addition to
 #	matching at the start and end of the input string.
+# .IP "\fBx\fR (default: on)"
+#	Toggles the extended expression syntax flag. By default, support
+#	for extended expression syntax is enabled.
 # TABLE SEARCH ORDER
 # .ad
 # .fi

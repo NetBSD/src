@@ -30,14 +30,16 @@ PIPE(8)                                                                PIPE(8)
        <a href="trace.8.html"><b>trace</b>(8)</a> daemon as appropriate.
 
 <b>SINGLE-RECIPIENT DELIVERY</b>
-       Some external commands cannot handle more than one recipi-
-       ent per delivery request. Examples of such transports  are
-       pagers or fax machines.
+       Some  destinations  cannot  handle more than one recipient
+       per delivery request. Examples are pagers or fax machines.
+       In  addition, multi-recipient delivery is undesirable when
+       prepending  a  <b>Delivered-to:</b>  or  <b>X-Original-To:</b>   message
+       header.
 
        To  prevent  Postfix  from sending multiple recipients per
        delivery request, specify
 
-           <i>transport</i><b>_destination_recipient_limit = 1</b>
+           <b><a href="postconf.5.html#transport_destination_recipient_limit"><i>transport</i>_destination_recipient_limit</a> = 1</b>
 
        in the Postfix <a href="postconf.5.html"><b>main.cf</b></a> file, where <i>transport</i> is  the  name
        in the first column of the Postfix <a href="master.5.html"><b>master.cf</b></a> entry for the
@@ -74,7 +76,7 @@ PIPE(8)                                                                PIPE(8)
               escape sequences are recognized: <b>\a \b \f \n \r  \t</b>
               <b>\v \</b><i>ddd</i> (up to three octal digits) and <b>\\</b>.
 
-       <b>flags=BDFORhqu.</b>&gt; (optional)
+       <b>flags=BDFORXhqu.</b>&gt; (optional)
               Optional  message  processing  flags. By default, a
               message is copied unchanged.
 
@@ -86,7 +88,15 @@ PIPE(8)                                                                PIPE(8)
               <b>D</b>      Prepend  a "<b>Delivered-To:</b> <i>recipient</i>" message
                      header with the envelope recipient  address.
                      Note: for this to work, the <i>transport</i><b>_desti-</b>
-                     <b>nation_recipient_limit</b> must be 1.
+                     <b>nation_recipient_limit</b> must be 1  (see  SIN-
+                     GLE-RECIPIENT DELIVERY above for details).
+
+                     The  <b>D</b>  flag  also  enforces  loop detection
+                     (Postfix  2.5  and  later):  if  a   message
+                     already contains a <b>Delivered-To:</b> header with
+                     the same recipient address, then the message
+                     is  returned  as  undeliverable. The address
+                     comparison is case insensitive.
 
                      This feature is available as of Postfix 2.0.
 
@@ -97,25 +107,38 @@ PIPE(8)                                                                PIPE(8)
               <b>O</b>      Prepend  an  "<b>X-Original-To:</b> <i>recipient</i>" mes-
                      sage header with the  recipient  address  as
                      given  to  Postfix.  Note: for this to work,
-                     the    <i>transport</i><b>_destination_recipient_limit</b>
-                     must be 1.
+                     the    <b><a href="postconf.5.html#transport_destination_recipient_limit"><i>transport</i>_destination_recipient_limit</a></b>
+                     must  be  1  (see  SINGLE-RECIPIENT DELIVERY
+                     above for details).
 
                      This feature is available as of Postfix 2.0.
 
-              <b>R</b>      Prepend a <b>Return-Path:</b> message  header  with
+              <b>R</b>      Prepend  a  <b>Return-Path:</b> message header with
                      the envelope sender address.
 
-              <b>h</b>      Fold the command-line <b>$recipient</b> domain name
-                     and <b>$nexthop</b> host name to lower case.   This
-                     is recommended for delivery via <b>UUCP</b>.
+              <b>X</b>      Indicate that the external command  performs
+                     final  delivery.  This flag affects the sta-
+                     tus reported in "success" DSN (delivery sta-
+                     tus  notification)  messages, and changes it
+                     from "relayed" into "delivered".
+
+                     This feature is available as of Postfix 2.5.
+
+              <b>h</b>      Fold  the  command-line  <b>$original_recipient</b>
+                     and <b>$recipient</b> address domain part (text  to
+                     the  right of the right-most <b>@</b> character) to
+                     lower case;  fold  the  entire  command-line
+                     <b>$domain</b> and <b>$nexthop</b> host or domain informa-
+                     tion to lower case.  This is recommended for
+                     delivery via <b>UUCP</b>.
 
               <b>q</b>      Quote  white space and other special charac-
-                     ters in the command-line <b>$sender</b> and <b>$recip-</b>
-                     <b>ient</b> address localparts (text to the left of
-                     the right-most <b>@</b> character), according to an
-                     8-bit  transparent version of <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a>.  This
-                     is recommended  for  delivery  via  <b>UUCP</b>  or
-                     <b>BSMTP</b>.
+                     ters in the  command-line  <b>$sender</b>,  <b>$origi-</b>
+                     <b>nal_recipient</b>  and <b>$recipient</b> address local-
+                     parts (text to the left of the right-most  <b>@</b>
+                     character),  according to an 8-bit transpar-
+                     ent version of <a href="http://tools.ietf.org/html/rfc822">RFC 822</a>.  This is recommended
+                     for delivery via <b>UUCP</b> or <b>BSMTP</b>.
 
                      The  result  is  compatible with the address
                      parsing of command-line  recipients  by  the
@@ -126,53 +149,53 @@ PIPE(8)                                                                PIPE(8)
                      <b>$user</b>, <b>$extension</b> or  <b>$mailbox</b>  command-line
                      macros.
 
-              <b>u</b>      Fold  the  command-line  <b>$recipient</b>  address
-                     localpart (text to the left  of  the  right-
-                     most  <b>@</b>  character)  to lower case.  This is
-                     recommended for delivery via <b>UUCP</b>.
+              <b>u</b>      Fold  the  command-line  <b>$original_recipient</b>
+                     and <b>$recipient</b> address  localpart  (text  to
+                     the  left  of the right-most <b>@</b> character) to
+                     lower case.  This is recommended for  deliv-
+                     ery via <b>UUCP</b>.
 
               <b>.</b>      Prepend "<b>.</b>" to lines starting with "<b>.</b>". This
                      is needed by, for example, <b>BSMTP</b> software.
 
-              &gt;      Prepend  "&gt;" to lines starting with "<b>From</b> ".
+              &gt;      Prepend "&gt;" to lines starting with "<b>From</b>  ".
                      This is expected by, for example, <b>UUCP</b> soft-
                      ware.
 
        <b>null_sender</b>=<i>replacement</i> (default: MAILER-DAEMON)
               Replace the null sender address (typically used for
-              delivery status notifications) with  the  specified
+              delivery  status  notifications) with the specified
               text when expanding the <b>$sender</b> command-line macro,
               and when generating a From_ or Return-Path: message
               header.
 
-              If  the null sender replacement text is a non-empty
-              string then it  is  affected  by  the  <b>q</b>  flag  for
+              If the null sender replacement text is a  non-empty
+              string  then  it  is  affected  by  the  <b>q</b> flag for
               address quoting in command-line arguments.
 
               The null sender replacement text may be empty; this
-              form is recommended for content filters  that  feed
+              form  is  recommended for content filters that feed
               mail back into Postfix. The empty sender address is
-              not affected by the <b>q</b> flag for address  quoting  in
+              not  affected  by the <b>q</b> flag for address quoting in
               command-line arguments.
 
               Caution: a null sender address is easily mis-parsed
-              by naive software. For example,  when  the  <a href="pipe.8.html"><b>pipe</b>(8)</a>
+              by  naive  software.  For example, when the <a href="pipe.8.html"><b>pipe</b>(8)</a>
               daemon executes a command such as:
 
                   command -f$sender -- $recipient (<i>bad</i>)
 
               the command will mis-parse the -f option value when
-              the sender address is a null string.   For  correct
+              the  sender  address is a null string.  For correct
               parsing, specify <b>$sender</b> as an argument by itself:
 
                   command -f $sender -- $recipient (<i>good</i>)
 
-              This  feature  is  available  with  Postfix 2.3 and
-              later.
+              This feature is available as of Postfix 2.3.
 
        <b>size</b>=<i>size</i><b>_</b><i>limit</i> (optional)
-              Messages greater in size than this limit (in bytes)
-              will be returned to the sender as undeliverable.
+              Don't deliver messages that exceed this size  limit
+              (in bytes); return them to the sender instead.
 
        <b>user</b>=<i>username</i> (required)
 
@@ -218,43 +241,76 @@ PIPE(8)                                                                PIPE(8)
 
                      This is available in Postfix 2.2 and  later.
 
+              <b>${client_port</b>}
+                     This  macro expands to the remote client TCP
+                     port number.
+
+                     This is available in Postfix 2.5 and  later.
+
               <b>${client_protocol</b>}
                      This macro expands to the remote client pro-
                      tocol.
 
                      This is available in Postfix 2.2 and  later.
 
+              <b>${domain</b>}
+                     This  macro expands to the domain portion of
+                     the recipient address.  For example, with an
+                     address   <i>user+foo@domain</i>   the   domain  is
+                     <i>domain</i>.
+
+                     This information is modified by the  <b>h</b>  flag
+                     for case folding.
+
+                     This  is available in Postfix 2.5 and later.
+
               <b>${extension</b>}
-                     This  macro expands to the extension part of
-                     a recipient address.  For example,  with  an
+                     This macro expands to the extension part  of
+                     a  recipient  address.  For example, with an
                      address  <i>user+foo@domain</i>  the  extension  is
                      <i>foo</i>.
 
-                     A  command-line   argument   that   contains
-                     <b>${extension</b>}  expands  into as many command-
+                     A   command-line   argument   that  contains
+                     <b>${extension</b>} expands into as  many  command-
                      line arguments as there are recipients.
 
-                     This information is modified by the  <b>u</b>  flag
+                     This  information  is modified by the <b>u</b> flag
                      for case folding.
 
               <b>${mailbox</b>}
-                     This  macro  expands  to  the complete local
-                     part of a recipient address.   For  example,
-                     with  an address <i>user+foo@domain</i> the mailbox
+                     This macro expands  to  the  complete  local
+                     part  of  a recipient address.  For example,
+                     with an address <i>user+foo@domain</i> the  mailbox
                      is <i>user+foo</i>.
 
-                     A  command-line   argument   that   contains
-                     <b>${mailbox</b>}  expands  to as many command-line
+                     A   command-line   argument   that  contains
+                     <b>${mailbox</b>} expands to as  many  command-line
                      arguments as there are recipients.
 
-                     This information is modified by the  <b>u</b>  flag
+                     This  information  is modified by the <b>u</b> flag
                      for case folding.
 
               <b>${nexthop</b>}
                      This macro expands to the next-hop hostname.
 
-                     This information is modified by the  <b>h</b>  flag
+                     This  information  is modified by the <b>h</b> flag
                      for case folding.
+
+              <b>${original_recipient</b>}
+                     This macro expands to the complete recipient
+                     address  before  any  address  rewriting  or
+                     aliasing.
+
+                     A  command-line   argument   that   contains
+                     <b>${original_recipient</b>}  expands  to  as  many
+                     command-line arguments as there are  recipi-
+                     ents.
+
+                     This  information  is  modified  by  the <b>hqu</b>
+                     flags for quoting and case folding.
+
+                     This feature is available in Postfix 2.5 and
+                     later.
 
               <b>${recipient</b>}
                      This macro expands to the complete recipient
@@ -278,8 +334,8 @@ PIPE(8)                                                                PIPE(8)
 
               <b>${sasl_sender</b>}
                      This macro expands to the SASL  sender  name
-                     (i.e.  the  original  submitter  as  per <a href="http://www.faqs.org/rfcs/rfc2554.html">RFC</a>
-                     <a href="http://www.faqs.org/rfcs/rfc2554.html">2554</a>) used during the reception of the  mes-
+                     (i.e.  the  original  submitter  as  per <a href="http://tools.ietf.org/html/rfc4954">RFC</a>
+                     <a href="http://tools.ietf.org/html/rfc4954">4954</a>) used during the reception of the  mes-
                      sage.
 
                      This  is available in Postfix 2.2 and later.
@@ -321,14 +377,14 @@ PIPE(8)                                                                PIPE(8)
                      for case folding.
 
 <b>STANDARDS</b>
-       <a href="http://www.faqs.org/rfcs/rfc3463.html">RFC 3463</a> (Enhanced status codes)
+       <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced status codes)
 
 <b>DIAGNOSTICS</b>
        Command  exit status codes are expected to follow the con-
        ventions defined in &lt;<b>sysexits.h</b>&gt;.   Exit  status  0  means
        normal successful completion.
 
-       Postfix  version  2.3  and  later  support  <a href="http://www.faqs.org/rfcs/rfc3463.html">RFC 3463</a>-style
+       Postfix  version  2.3  and  later  support  <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>-style
        enhanced status codes.  If a  command  terminates  with  a
        non-zero  exit  status, and the command output begins with
        an enhanced status code, this status code takes precedence
@@ -356,19 +412,19 @@ PIPE(8)                                                                PIPE(8)
        In the text below, <i>transport</i> is the first field in a  <b>mas-</b>
        <b>ter.cf</b> entry.
 
-       <i>transport</i><b>_destination_concurrency_limit ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destina</a>-</b>
+       <b><a href="postconf.5.html#transport_destination_concurrency_limit"><i>transport</i>_destination_concurrency_limit</a> ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destina</a>-</b>
        <b><a href="postconf.5.html#default_destination_concurrency_limit">tion_concurrency_limit</a>)</b>
               Limit the number of parallel deliveries to the same
               destination, for delivery via the named  <i>transport</i>.
               The limit is enforced by the Postfix queue manager.
 
-       <i>transport</i><b>_destination_recipient_limit   ($<a href="postconf.5.html#default_destination_recipient_limit">default_destina</a>-</b>
+       <b><a href="postconf.5.html#transport_destination_recipient_limit"><i>transport</i>_destination_recipient_limit</a>   ($<a href="postconf.5.html#default_destination_recipient_limit">default_destina</a>-</b>
        <b><a href="postconf.5.html#default_destination_recipient_limit">tion_recipient_limit</a>)</b>
               Limit the number of recipients per  message  deliv-
               ery,  for  delivery  via  the named <i>transport</i>.  The
               limit is enforced by the Postfix queue manager.
 
-       <i>transport</i><b>_time_limit ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
+       <b><a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
               Limit the time for delivery  to  external  command,
               for delivery via the named <i>transport</i>.  The limit is
               enforced by the pipe delivery agent.

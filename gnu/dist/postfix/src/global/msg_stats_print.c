@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_stats_print.c,v 1.1.1.1 2006/07/19 01:17:27 rpaulo Exp $	*/
+/*	$NetBSD: msg_stats_print.c,v 1.1.1.2 2008/06/22 14:02:32 christos Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
 /*	msg_stats_print() is meant to be passed as a call-back to
 /*	attr_print(), thusly:
 /*
-/*	... ATTR_PRINT_FUNC, msg_stats_print, (void *) stats, ...
+/*	... ATTR_TYPE_FUNC, msg_stats_print, (void *) stats, ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE

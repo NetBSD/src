@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_bounce.c,v 1.1.1.3 2007/05/19 16:28:05 heas Exp $	*/
+/*	$NetBSD: cleanup_bounce.c,v 1.1.1.4 2008/06/22 14:02:07 christos Exp $	*/
 
 /*++
 /* NAME
@@ -88,7 +88,7 @@ int     cleanup_bounce(CLEANUP_STATE *state)
 {
     const char *myname = "cleanup_bounce";
     VSTRING *buf = vstring_alloc(100);
-    CLEANUP_STAT_DETAIL *detail;
+    const CLEANUP_STAT_DETAIL *detail;
     DSN_SPLIT dp;
     const char *dsn_status;
     const char *dsn_text;

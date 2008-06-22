@@ -1,4 +1,4 @@
-/*	$NetBSD: header_opts.h,v 1.1.1.4 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: header_opts.h,v 1.1.1.5 2008/06/22 14:02:24 christos Exp $	*/
 
 #ifndef _HEADER_OPTS_H_INCLUDED_
 #define _HEADER_OPTS_H_INCLUDED_
@@ -69,7 +69,7 @@ typedef struct {
 
 #define HDR_OPT_XRECIP	(HDR_OPT_RECIP | HDR_OPT_EXTRACT)
 
-extern HEADER_OPTS *header_opts_find(const char *);
+extern const HEADER_OPTS *header_opts_find(const char *);
 
 /* LICENSE
 /* .ad

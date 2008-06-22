@@ -149,8 +149,8 @@ OQMGR(8)                                                              OQMGR(8)
        manager of the arrival of new mail one would request <b>I</b>.
 
 <b>STANDARDS</b>
-       <a href="http://www.faqs.org/rfcs/rfc3463.html">RFC 3463</a> (Enhanced status codes)
-       <a href="http://www.faqs.org/rfcs/rfc3464.html">RFC 3464</a> (Delivery status notifications)
+       <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced status codes)
+       <a href="http://tools.ietf.org/html/rfc3464">RFC 3464</a> (Delivery status notifications)
 
 <b>SECURITY</b>
        The <a href="qmgr.8.html"><b>oqmgr</b>(8)</a> daemon is not security  sensitive.  It  reads
@@ -187,9 +187,11 @@ OQMGR(8)                                                              OQMGR(8)
        <b>ter.cf</b> entry.
 
 <b>COMPATIBILITY CONTROLS</b>
+       Available before Postfix version 2.5:
+
        <b><a href="postconf.5.html#allow_min_user">allow_min_user</a> (no)</b>
-              Allow a recipient address to have `-' as the  first
-              character.
+              Allow a sender or recipient address to have `-'  as
+              the first character.
 
 <b>ACTIVE QUEUE CONTROLS</b>
        <b><a href="postconf.5.html#qmgr_clog_warn_time">qmgr_clog_warn_time</a> (300s)</b>
@@ -220,33 +222,75 @@ OQMGR(8)                                                              OQMGR(8)
               The default maximal number of  parallel  deliveries
               to the same destination.
 
-       <i>transport</i><b>_destination_concurrency_limit</b>
+       <b><a href="postconf.5.html#transport_destination_concurrency_limit"><i>transport</i>_destination_concurrency_limit</a> ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destina</a>-</b>
+       <b><a href="postconf.5.html#default_destination_concurrency_limit">tion_concurrency_limit</a>)</b>
               Idem, for delivery via the named message <i>transport</i>.
+
+       Available in Postfix version 2.5 and later:
+
+       <b><a href="postconf.5.html#transport_initial_destination_concurrency"><i>transport</i>_initial_destination_concurrency</a> ($<a href="postconf.5.html#initial_destination_concurrency">initial_desti</a>-</b>
+       <b><a href="postconf.5.html#initial_destination_concurrency">nation_concurrency</a>)</b>
+              Initial concurrency for delivery via the named mes-
+              sage <i>transport</i>.
+
+       <b><a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">default_destination_concurrency_failed_cohort_limit</a> (1)</b>
+              How  many  pseudo-cohorts must suffer connection or
+              handshake failure before a specific destination  is
+              considered  unavailable  (and  further  delivery is
+              suspended).
+
+       <b><a href="postconf.5.html#transport_destination_concurrency_failed_cohort_limit"><i>transport</i>_destination_concurrency_failed_cohort_limit</a></b>
+       <b>($<a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">default_destination_concurrency_failed_cohort_limit</a>)</b>
+              Idem, for delivery via the named message <i>transport</i>.
+
+       <b><a href="postconf.5.html#default_destination_concurrency_negative_feedback">default_destination_concurrency_negative_feedback</a> (1)</b>
+              The  per-destination amount of delivery concurrency
+              negative feedback, after a delivery completes  with
+              a connection or handshake failure.
+
+       <b><a href="postconf.5.html#transport_destination_concurrency_positive_feedback"><i>transport</i>_destination_concurrency_negative_feedback</a></b>
+       <b>($<a href="postconf.5.html#default_destination_concurrency_negative_feedback">default_destination_concurrency_negative_feedback</a>)</b>
+              Idem, for delivery via the named message <i>transport</i>.
+
+       <b><a href="postconf.5.html#default_destination_concurrency_positive_feedback">default_destination_concurrency_positive_feedback</a> (1)</b>
+              The per-destination amount of delivery  concurrency
+              positive feedback, after a delivery completes with-
+              out connection or handshake failure.
+
+       <b><a href="postconf.5.html#transport_destination_concurrency_positive_feedback"><i>transport</i>_destination_concurrency_positive_feedback</a></b>
+       <b>($<a href="postconf.5.html#default_destination_concurrency_positive_feedback">default_destination_concurrency_positive_feedback</a>)</b>
+              Idem, for delivery via the named message <i>transport</i>.
+
+       <b><a href="postconf.5.html#destination_concurrency_feedback_debug">destination_concurrency_feedback_debug</a> (no)</b>
+              Make the queue manager's feedback algorithm verbose
+              for performance analysis purposes.
 
 <b>RECIPIENT SCHEDULING CONTROLS</b>
        <b><a href="postconf.5.html#default_destination_recipient_limit">default_destination_recipient_limit</a> (50)</b>
               The default maximal number of recipients  per  mes-
               sage delivery.
 
-       <i>transport</i><b>_destination_recipient_limit</b>
+       <b><a href="postconf.5.html#transport_destination_recipient_limit"><i>transport</i>_destination_recipient_limit</a></b>
               Idem, for delivery via the named message <i>transport</i>.
 
 <b>OTHER RESOURCE AND RATE CONTROLS</b>
-       <b><a href="postconf.5.html#minimal_backoff_time">minimal_backoff_time</a> (version dependent)</b>
+       <b><a href="postconf.5.html#minimal_backoff_time">minimal_backoff_time</a> (300s)</b>
               The minimal time  between  attempts  to  deliver  a
-              deferred message.
+              deferred  message; prior to Postfix 2.4 the default
+              value was 1000s.
 
        <b><a href="postconf.5.html#maximal_backoff_time">maximal_backoff_time</a> (4000s)</b>
-              The  maximal  time  between  attempts  to deliver a
+              The maximal time  between  attempts  to  deliver  a
               deferred message.
 
        <b><a href="postconf.5.html#maximal_queue_lifetime">maximal_queue_lifetime</a> (5d)</b>
-              The maximal time a message is queued before  it  is
+              The  maximal  time a message is queued before it is
               sent back as undeliverable.
 
-       <b><a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (version dependent)</b>
-              The  time between <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scans by the queue
-              manager.
+       <b><a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (300s)</b>
+              The time between <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scans by the  queue
+              manager; prior to Postfix 2.4 the default value was
+              1000s.
 
        <b><a href="postconf.5.html#transport_retry_time">transport_retry_time</a> (60s)</b>
               The time between attempts by the Postfix queue man-
@@ -259,14 +303,27 @@ OQMGR(8)                                                              OQMGR(8)
               The maximal time a bounce message is queued  before
               it is considered undeliverable.
 
+       Available in Postfix version 2.5 and later:
+
+       <b><a href="postconf.5.html#default_destination_rate_delay">default_destination_rate_delay</a> (0s)</b>
+              The  default  amount  of  delay  that  is  inserted
+              between individual deliveries to the same  destina-
+              tion;  with  per-destination recipient limit &gt; 1, a
+              destination is a domain, otherwise it is a  recipi-
+              ent.
+
+       <b><a href="postconf.5.html#transport_destination_rate_delay"><i>transport</i>_destination_rate_delay</a>         $<a href="postconf.5.html#default_destination_rate_delay">default_destina</a>-</b>
+       <b><a href="postconf.5.html#default_destination_rate_delay">tion_rate_delay</a></b>
+              Idem, for delivery via the named message <i>transport</i>.
+
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process may take  to
-              handle  a  request  before  it  is  terminated by a
+              How  much time a Postfix daemon process may take to
+              handle a request  before  it  is  terminated  by  a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#defer_transports">defer_transports</a> (empty)</b>
@@ -275,11 +332,11 @@ OQMGR(8)                                                              OQMGR(8)
               "<b>sendmail -q</b>" or equivalent.
 
        <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
-              The maximal number  of  digits  after  the  decimal
+              The  maximal  number  of  digits  after the decimal
               point when logging sub-second delay values.
 
        <b><a href="postconf.5.html#helpful_warnings">helpful_warnings</a> (yes)</b>
-              Log  warnings  about problematic configuration set-
+              Log warnings about problematic  configuration  set-
               tings, and provide helpful suggestions.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
@@ -287,23 +344,23 @@ OQMGR(8)                                                              OQMGR(8)
               over an internal communication channel.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process  ID  of  a  Postfix  command or daemon
+              The process ID  of  a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The process name of a  Postfix  command  or  daemon
+              The  process  name  of  a Postfix command or daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The  location of the Postfix top-level queue direc-
+              The location of the Postfix top-level queue  direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>FILES</b>
@@ -326,7 +383,7 @@ OQMGR(8)                                                              OQMGR(8)
        <a href="QSHAPE_README.html">QSHAPE_README</a>, Postfix queue analysis
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

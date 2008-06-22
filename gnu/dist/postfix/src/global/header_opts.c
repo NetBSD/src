@@ -1,4 +1,4 @@
-/*	$NetBSD: header_opts.c,v 1.1.1.4 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: header_opts.c,v 1.1.1.5 2008/06/22 14:02:23 christos Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,7 @@
 /* SYNOPSIS
 /*	#include <header_opts.h>
 /*
-/*	HEADER_OPTS *header_opts_find(string)
+/*	const HEADER_OPTS *header_opts_find(string)
 /*	const char *string;
 /* DESCRIPTION
 /*	header_opts_find() takes a message header line and looks up control
@@ -50,7 +50,7 @@
   * Header names are given in the preferred capitalization. The lookups are
   * case-insensitive.
   */
-static HEADER_OPTS header_opts[] = {
+static const HEADER_OPTS header_opts[] = {
     "Apparently-To", HDR_APPARENTLY_TO, HDR_OPT_RECIP,
     "Bcc", HDR_BCC, HDR_OPT_DROP | HDR_OPT_XRECIP,
     "Cc", HDR_CC, HDR_OPT_XRECIP,
@@ -93,7 +93,7 @@ static VSTRING *header_key;
 
 static void header_opts_init(void)
 {
-    HEADER_OPTS *hp;
+    const HEADER_OPTS *hp;
     const char *cp;
 
     /*
@@ -113,7 +113,7 @@ static void header_opts_init(void)
 
 /* header_opts_find - look up header options */
 
-HEADER_OPTS *header_opts_find(const char *string)
+const HEADER_OPTS *header_opts_find(const char *string)
 {
     const char *cp;
 
@@ -133,5 +133,5 @@ HEADER_OPTS *header_opts_find(const char *string)
 		     trimblanks(vstring_str(header_key), cp - string)
 		     - vstring_str(header_key));
     VSTRING_TERMINATE(header_key);
-    return ((HEADER_OPTS *) htable_find(header_hash, vstring_str(header_key)));
+    return ((const HEADER_OPTS *) htable_find(header_hash, vstring_str(header_key)));
 }
