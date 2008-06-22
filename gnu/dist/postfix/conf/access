@@ -219,6 +219,17 @@
 #               Apply the named UCE restriction(s) (permit, reject,
 #               reject_unauth_destination, and so on).
 # 
+#        BCC user@domain
+#               Send  one  copy  of  the  message  to the specified
+#               recipient.
+# 
+#               If multiple BCC actions are  specified  within  the
+#               same  SMTP  MAIL  transaction, only the last action
+#               will be used.
+# 
+#               This feature is not  part  of  the  stable  Postfix
+#               release.
+# 
 #        DISCARD optional text...
 #               Claim  successful delivery and silently discard the
 #               message.  Log the optional text if specified,  oth-
