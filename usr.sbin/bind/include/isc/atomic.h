@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.6 2008/06/21 23:57:25 matt Exp $	*/
+/*	$NetBSD: atomic.h,v 1.7 2008/06/22 00:14:06 christos Exp $	*/
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
@@ -17,12 +17,14 @@ isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 	return prev;
 }
 
+#ifdef ISC_PLATFORM_HAVEXADDQ
 static __inline isc_int64_t
 isc_atomic_xaddq(isc_int64_t *p, isc_int64_t val) {
         isc_int64_t prev = val;
 	atomic_add_64((volatile uint64_t *)p, (uint64_t)val);
         return prev;
 }
+#endif
 
 /*
  * This routine atomically stores the value 'val' in 'p'.
