@@ -1,4 +1,4 @@
-.\"	$NetBSD: master.5,v 1.1.1.3 2006/08/27 00:38:03 rpaulo Exp $
+.\"	$NetBSD: master.5,v 1.1.1.4 2008/06/22 14:01:02 christos Exp $
 .\"
 .TH MASTER 5 
 .ad
@@ -19,9 +19,9 @@ run in the background under control of the \fBmaster\fR(8)
 process.  The master.cf configuration file defines how a
 client program connects to a service, and what daemon
 program runs when a service is requested.  Most daemon
-processes are short-lived and terminate after serving
-\fBmax_use\fR clients, or after inactivity for \fBmax_idle\fR
-or more units of time.
+processes are short-lived and terminate voluntarily after
+serving \fBmax_use\fR clients, or after inactivity for
+\fBmax_idle\fR or more units of time.
 
 All daemons specified here must speak a Postfix-internal
 protocol. In order to execute non-Postfix software use the
@@ -103,6 +103,16 @@ for local clients only.
 The service name is a pathname relative to the Postfix
 queue directory (pathname controlled with the \fBqueue_directory\fR
 configuration parameter in main.cf).
+.IP \fBpass\fR
+The service listens on a UNIX-domain socket, receives one
+open connection (file descriptor passing) per connection
+request, and is accessible to local clients only.
+
+The service name is a pathname relative to the Postfix
+queue directory (pathname controlled with the \fBqueue_directory\fR
+configuration parameter in main.cf).
+
+This feature is available as of Postfix version 2.5.
 .RE
 .IP "\fBPrivate (default: y)\fR"
 Whether or not access is restricted to the mail system.

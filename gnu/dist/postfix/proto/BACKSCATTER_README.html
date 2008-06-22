@@ -20,11 +20,8 @@ Backscatter Howto</h1>
 
 <h2>Overview </h2>
 
-This document describes features that require Postfix version 2.0
-or later.  The examples use Perl Compatible Regular Expressions
-(Postfix pcre: tables), but also provide a translation to POSIX
-regular expressions (Postfix regexp: tables). PCRE is preferred
-primarily because the implementation is often faster.</p>
+<p> This document describes features that require Postfix version
+2.0 or later. </p>
 
 <p> Topics covered in this document: </p>
 
@@ -56,6 +53,11 @@ scanners</a>
 
 </ul>
 
+<p> The examples use Perl Compatible Regular Expressions (Postfix
+pcre: tables), but also provide a translation to POSIX regular
+expressions (Postfix regexp: tables). PCRE is preferred primarily
+because the implementation is often faster.</p>
+
 <h2><a name="wtf">What is backscatter mail?</a></h2>
 
 <p> When a spammer or worm sends mail with forged sender addresses,
@@ -73,7 +75,7 @@ to=&lt;yyyyyy@your.domain.here&gt; proto=ESMTP helo=&lt;zzzzzz&gt;
 </pre>
 </blockquote>
 
-<p> What you see are lots of "user unknown" errors with "from=<>".
+<p> What you see are lots of "user unknown" errors with "from=&lt;&gt;".
 These are error reports from MAILER-DAEMONs elsewhere on the Internet.
 </p>
 

@@ -533,6 +533,38 @@
 # .IP "\fBtls_require_cert (default: no)\fR"
 #	Whether or not to request server's X509 certificate and
 #	check its validity when establishing SSL/TLS connections.
+#	The supported values are \fBno\fR and \fByes\fR.
+# .sp
+#	With \fBno\fR, the server certificate trust chain is not checked,
+#	but with OpenLDAP prior to 2.1.13, the name in the server
+#	certificate must still match the LDAP server name. With OpenLDAP
+#	2.0.0 to 2.0.11 the server name is not necessarily what you
+#	specified, rather it is determined (by reverse lookup) from the
+#	IP address of the LDAP server connection. With OpenLDAP prior to
+#	2.0.13, subjectAlternativeName extensions in the LDAP server
+#	certificate are ignored: the server name must match the subject
+#	CommonName. The \fBno\fR setting corresponds to the \fBnever\fR
+#	value of \fBTLS_REQCERT\fR in LDAP client configuration files.
+# .sp
+#	Don't use TLS with OpenLDAP 2.0.x (and especially with x <= 11)
+#	if you can avoid it.
+# .sp
+#	With \fByes\fR, the server certificate must be issued by a trusted
+#	CA, and not be expired. The LDAP server name must match one of the
+#	name(s) found in the certificate (see above for OpenLDAP library
+#	version dependent behavior). The \fByes\fR setting corresponds to the
+#	\fBdemand\fR value of \fBTLS_REQCERT\fR in LDAP client configuration
+#	files.
+# .sp
+#	The "try" and "never" values of \fBTLS_REQCERT\fR have no equivalents
+#	here. They are not available with OpenLDAP 2.0, and in any case have
+#	questionable security properties. Either you want TLS verified LDAP
+#	connections, or you don't.
+# .sp
+#	The \fByes\fR value only works correctly with Postfix 2.5 and later,
+#	or with OpenLDAP 2.0. Earlier Postfix releases or later OpenLDAP
+#	releases don't work together with this setting. Support for LDAP
+#	over TLS was added to Postfix based on the OpenLDAP 2.0 API.
 # .IP "\fBtls_random_file (No default)\fR"
 #	Path of a file to obtain random bits from when /dev/[u]random
 #	is not available, to be used by the client in SSL/TLS

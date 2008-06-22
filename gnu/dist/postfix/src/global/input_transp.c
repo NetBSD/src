@@ -1,4 +1,4 @@
-/*	$NetBSD: input_transp.c,v 1.1.1.5 2006/07/19 01:17:24 rpaulo Exp $	*/
+/*	$NetBSD: input_transp.c,v 1.1.1.6 2008/06/22 14:02:24 christos Exp $	*/
 
 /*++
 /* NAME
@@ -71,7 +71,7 @@
 
 int     input_transp_mask(const char *param_name, const char *pattern)
 {
-    static NAME_MASK table[] = {
+    static const NAME_MASK table[] = {
 	"no_unknown_recipient_checks", INPUT_TRANSP_UNKNOWN_RCPT,
 	"no_address_mappings", INPUT_TRANSP_ADDRESS_MAPPING,
 	"no_header_body_checks", INPUT_TRANSP_HEADER_BODY,

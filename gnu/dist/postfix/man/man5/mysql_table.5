@@ -1,4 +1,4 @@
-.\"	$NetBSD: mysql_table.5,v 1.1.1.4 2007/05/19 16:27:49 heas Exp $
+.\"	$NetBSD: mysql_table.5,v 1.1.1.5 2008/06/22 14:01:02 christos Exp $
 .\"
 .TH MYSQL_TABLE 5 
 .ad
@@ -260,7 +260,18 @@ A setting of zero disables the limit. Lookups fail with a
 temporary error if the limit is exceeded.  Setting the
 limit to 1 ensures that lookups do not return multiple
 values.
-.PP
+.SH "OBSOLETE QUERY INTERFACE"
+.na
+.nf
+.ad
+.fi
+This section describes an interface that is deprecated as
+of Postfix 2.2. It is replaced by the more general \fBquery\fR
+interface described above.  If the \fBquery\fR parameter
+is defined, the legacy parameters described here ignored.
+Please migrate to the new interface as the legacy interface
+may be removed in a future release.
+
 The following parameters can be used to fill in a
 SELECT template statement of the form:
 
@@ -274,12 +285,6 @@ SELECT template statement of the form:
 The specifier %s is replaced by the search string, and is
 escaped so if it contains single quotes or other odd characters,
 it will not cause a parse error, or worse, a security problem.
-
-As of Postfix 2.2 this interface is obsolete, it is replaced
-by the more general \fBquery\fR interface described above.
-If the \fBquery\fR parameter is defined, the legacy parameters
-are ignored. Please migrate to the new interface as the legacy
-interface may be removed in a future release.
 .IP "\fBselect_field\fR"
 The SQL "select" parameter. Example:
 .nf

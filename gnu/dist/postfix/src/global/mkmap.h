@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap.h,v 1.1.1.4 2005/08/18 21:06:50 rpaulo Exp $	*/
+/*	$NetBSD: mkmap.h,v 1.1.1.5 2008/06/22 14:02:31 christos Exp $	*/
 
 #ifndef _MKMAP_H_INCLUDED_
 #define _MKMAP_H_INCLUDED_
@@ -42,6 +42,7 @@ extern MKMAP *mkmap_cdb_open(const char *);
 extern MKMAP *mkmap_hash_open(const char *);
 extern MKMAP *mkmap_btree_open(const char *);
 extern MKMAP *mkmap_sdbm_open(const char *);
+extern MKMAP *mkmap_proxy_open(const char *);
 
 /* LICENSE
 /* .ad

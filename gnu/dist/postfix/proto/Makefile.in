@@ -33,7 +33,9 @@ HTML	= ../html/ADDRESS_CLASS_README.html \
 	../html/SCHEDULER_README.html ../html/SMTPD_ACCESS_README.html \
 	../html/SMTPD_POLICY_README.html \
 	../html/SMTPD_PROXY_README.html \
+	../html/SOHO_README.html \
 	../html/STANDARD_CONFIGURATION_README.html \
+	../html/STRESS_README.html \
 	../html/TLS_README.html ../html/TLS_LEGACY_README.html \
 	../html/TUNING_README.html \
 	../html/UUCP_README.html \
@@ -68,7 +70,9 @@ README	= ../README_FILES/ADDRESS_CLASS_README \
 	../README_FILES/SASL_README ../README_FILES/SCHEDULER_README \
 	../README_FILES/SMTPD_ACCESS_README \
 	../README_FILES/SMTPD_POLICY_README ../README_FILES/SMTPD_PROXY_README \
+	../README_FILES/SOHO_README \
 	../README_FILES/STANDARD_CONFIGURATION_README \
+	../README_FILES/STRESS_README \
 	../README_FILES/TLS_README ../README_FILES/TLS_LEGACY_README \
 	../README_FILES/TUNING_README \
 	../README_FILES/UUCP_README \
@@ -83,6 +87,8 @@ SRCTOMAN= ../mantools/srctoman
 POSTLINK= ../mantools/postlink
 HT2READ	= ../mantools/html2readme
 MAKEAAA	= ../mantools/makereadme
+MAKESOHO= ../mantools/make_soho_readme
+DEPSOHO	= SASL_README.html STANDARD_CONFIGURATION_README.html
 
 update:	$(CONFIG) $(HTML) $(README) $(MAN)
 
@@ -232,7 +238,13 @@ clobber:
 ../html/SMTPD_PROXY_README.html: SMTPD_PROXY_README.html
 	$(POSTLINK) $? >$@
 
+../html/SOHO_README.html: $(MAKESOHO) $(DEPSOHO)
+	$(MAKESOHO) | $(POSTLINK) >$@
+
 ../html/STANDARD_CONFIGURATION_README.html: STANDARD_CONFIGURATION_README.html
+	$(POSTLINK) $? >$@
+
+../html/STRESS_README.html: STRESS_README.html
 	$(POSTLINK) $? >$@
 
 ../html/TUNING_README.html: TUNING_README.html
@@ -373,7 +385,13 @@ clobber:
 ../README_FILES/SMTPD_PROXY_README: SMTPD_PROXY_README.html
 	$(HT2READ) $? >$@
 
+../README_FILES/SOHO_README: $(MAKESOHO) $(DEPSOHO)
+	$(MAKESOHO) | $(HT2READ) >$@
+
 ../README_FILES/STANDARD_CONFIGURATION_README: STANDARD_CONFIGURATION_README.html
+	$(HT2READ) $? >$@
+
+../README_FILES/STRESS_README: STRESS_README.html
 	$(HT2READ) $? >$@
 
 ../README_FILES/TUNING_README: TUNING_README.html
@@ -409,8 +427,8 @@ clobber:
 ../man/man5/postconf.5: postconf.man.prolog postconf.proto postconf.man.epilog \
 	../mantools/xpostconf ../mantools/postconf2html ../mantools/postconf2man
 	(cat postconf.man.prolog; ../mantools/xpostconf postconf.proto | \
-	    ../mantools/postconf2html | ../mantools/postconf2man; \
-	    cat postconf.man.epilog ) > $@
+	    ../mantools/postconf2html | ../mantools/postconf2man | \
+		sed 's/\\e&/\\\&/'; cat postconf.man.epilog ) > $@
 
 ../html/postconf.5.html: postconf.html.prolog postconf.proto \
 	postconf.html.epilog ../mantools/xpostconf ../mantools/postconf2html \

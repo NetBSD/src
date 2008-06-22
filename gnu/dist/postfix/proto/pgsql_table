@@ -57,7 +57,7 @@
 #	    \fBquery\fR = SELECT \fIselect_function\fR('%s')
 # .fi
 #
-#	or in the absence of \fBselection_function\fR, the lower precedence:
+#	or in the absence of \fBselect_function\fR, the lower precedence:
 #
 # .nf
 #	    \fBquery\fR = SELECT \fIselect_field\fR
@@ -249,8 +249,13 @@
 #     temporary error if the limit is exceeded.  Setting the
 #     limit to 1 ensures that lookups do not return multiple
 #     values.
-# .PP
-#	Pre-Postfix 2.2 legacy interfaces:
+# OBSOLETE QUERY INTERFACES
+# .ad
+# .fi
+#	This section describes query interfaces that are deprecated
+#	as of Postfix 2.2.  Please migrate to the new \fBquery\fR
+#	interface as the old interfaces are slated to be phased
+#	out.
 # .IP "\fBselect_function\fR"
 #	This parameter specifies a database function name. Example:
 # .nf
@@ -265,9 +270,8 @@
 #	This parameter overrides the legacy table-related fields (described
 #	below). With Postfix versions prior to 2.2, it also overrides the
 #	\fBquery\fR parameter. Starting with Postfix 2.2, the \fBquery\fR
-#	parameter has highest precedence, and this parameter is deprecated.
-#	Please migrate to the new \fBquery\fR interface as this interface
-#	is slated to be phased out.
+#	parameter has highest precedence, and the \fBselect_function\fR
+#	parameter is deprecated.
 # .PP
 #	The following parameters (with lower precedence than the
 #	\fBselect_function\fR interface described above) can be used to
@@ -288,8 +292,7 @@
 #	Starting with Postfix 2.2, this interface is obsoleted by the more
 #	general \fBquery\fR interface described above. If higher precedence
 #	the \fBquery\fR or \fBselect_function\fR parameters described above
-#	are defined, these parameters are ignored. Please migrate to the new
-#	\fBquery\fR interface as this interface is slated to be phased out.
+#	are defined, the parameters described here are ignored.
 # .IP "\fBselect_field\fR"
 #	The SQL "select" parameter. Example:
 # .nf

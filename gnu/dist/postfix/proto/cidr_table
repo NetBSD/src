@@ -80,6 +80,8 @@
 # .na
 # .nf
 #	DATABASE_README, Postfix lookup table overview
+# HISTORY
+#	CIDR table support was introduced with Postfix version 2.1.
 # AUTHOR(S)
 #	The CIDR table lookup code was originally written by:
 #	Jozsef Kadlecsik

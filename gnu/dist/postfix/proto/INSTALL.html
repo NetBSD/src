@@ -308,6 +308,9 @@ default</th> </tr>
 <tr> <td>DEF_DAEMON_DIR</td> <td>daemon_directory</td>
 <td>/usr/libexec/postfix</td> </tr>
 
+<tr> <td>DEF_DATA_DIR</td> <td>data_directory</td>
+<td>/var/lib/postfix</td> </tr>
+
 <tr> <td>DEF_MAILQ_PATH</td> <td>mailq_path</td> <td>/usr/bin/mailq</td>
 </tr>
 
@@ -332,6 +335,9 @@ default</th> </tr>
 </table>
 
 </blockquote>
+
+<p> Note: the data_directory parameter (for caches and pseudo-random
+numbers) was introduced with Postfix version 2.5. </p>
 
 <h3>4.5 - Support for thousands of processes</h3>
 
@@ -738,7 +744,7 @@ Postfix system with: </p>
 </blockquote>
 
 <p> and watch your maillog file for any error messages. The pathname
-is /var/log/maillog, /var/log/mail, /var/log/syslog, or someting
+is /var/log/maillog, /var/log/mail, /var/log/syslog, or something
 else. Typically, the pathname is defined in the /etc/syslog.conf
 file. </p>
 

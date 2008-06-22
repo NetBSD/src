@@ -139,49 +139,50 @@ BOUNCE(5)                                                            BOUNCE(5)
 
        <b>o</b>      Template message header names can be  specified  in
               upper  case,  lower  case  or  mixed  case. Postfix
-              always uses the spelling as shown  in  the  example
-              above.
+              always produces bounce message header labels of the
+              form "<b>From:</b>" and "<b>Subject:</b>".
 
        <b>o</b>      Template  message  headers  must  not span multiple
               lines.
 
-       <b>o</b>      Template message headers must not  contain  <a href="postconf.5.html">main.cf</a>
-              $parameters.
+       <b>o</b>      Template message headers do not support  $parameter
+              expansions.
 
        <b>o</b>      Template message headers must contain ASCII charac-
-              ters only.
+              ters only, and must not contain ASCII null  charac-
+              ters.
 
 <b>TEMPLATE MESSAGE TEXT FORMAT</b>
-       The second portion of a bounce template consists  of  mes-
-       sage  text.  As  the above example shows, template message
-       text may contain <a href="postconf.5.html">main.cf</a> $parameters. Besides the  parame-
+       The  second  portion of a bounce template consists of mes-
+       sage text. As the above example  shows,  template  message
+       text  may contain <a href="postconf.5.html">main.cf</a> $parameters. Besides the parame-
        ters that are defined in <a href="postconf.5.html">main.cf</a>, the following parameters
-       are treated specially depending  on  the  suffix  that  is
+       are  treated  specially  depending  on  the suffix that is
        appended to their name.
 
        <b>delay_warning_time_</b><i>suffix</i>
-              Expands  into  the  value of the <b><a href="postconf.5.html#delay_warning_time">delay_warning_time</a></b>
-              parameter, expressed in the time unit specified  by
-              <i>suffix</i>,  which  is  one of <b>seconds</b>, <b>minutes</b>, <b>hours,</b>
+              Expands into the value  of  the  <b><a href="postconf.5.html#delay_warning_time">delay_warning_time</a></b>
+              parameter,  expressed in the time unit specified by
+              <i>suffix</i>, which is one of  <b>seconds</b>,  <b>minutes</b>,  <b>hours,</b>
               <b>days</b>, or <b>weeks</b>.
 
        <b>maximal_queue_lifetime_</b><i>suffix</i>
-              Expands into the value of  the  <b><a href="postconf.5.html#maximal_queue_lifetime">maximal_queue_life</a>-</b>
-              <b><a href="postconf.5.html#maximal_queue_lifetime">time</a></b>  parameter,  expressed in the time unit speci-
+              Expands  into  the value of the <b><a href="postconf.5.html#maximal_queue_lifetime">maximal_queue_life</a>-</b>
+              <b><a href="postconf.5.html#maximal_queue_lifetime">time</a></b> parameter, expressed in the time  unit  speci-
               fied by <i>suffix</i>.  See above under <b><a href="postconf.5.html#delay_warning_time">delay_warning_time</a></b>
               for possible <i>suffix</i> values.
 
-       The  usage  and  specification of template message text is
+       The usage and specification of template  message  text  is
        subject to the following restrictions:
 
        <b>o</b>      The template message text is not sent in Postmaster
               copies of delivery status notifications.
 
-       <b>o</b>      If  the  template  message  text contains non-ASCII
+       <b>o</b>      If the template  message  text  contains  non-ASCII
               characters, Postfix requires that the <b>Charset:</b> tem-
-              plate  header  is  updated.  Specify an appropriate
+              plate header is updated.   Specify  an  appropriate
               superset of US-ASCII.  A superset is needed because
-              Postfix  appends  ASCII text after the message tem-
+              Postfix appends ASCII text after the  message  tem-
               plate when it sends a delivery status notification.
 
 <b>SEE ALSO</b>
@@ -189,11 +190,11 @@ BOUNCE(5)                                                            BOUNCE(5)
        <a href="postconf.5.html">postconf(5)</a>, configuration parameters
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>HISTORY</b>
-       The Postfix bounce template format was  originally  devel-
+       The  Postfix  bounce template format was originally devel-
        oped by Nicolas Riendeau.
 
 <b>AUTHOR(S)</b>
