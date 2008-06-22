@@ -290,54 +290,121 @@ If one finds oneself needing to deliver a high volume of mail to a destination
 that exhibits frequent brief bursts of errors and connection caching does not
 solve the problem, there is a subtle workaround.
 
-  * In master.cf set up a dedicated clone of the "smtp" transport for the
-    destination in question.
+  * Postfix version 2.5 and later:
 
-  * In master.cf configure a reasonable process limit for the transport (a
-    number in the 10-20 range is typical).
+      o In master.cf set up a dedicated clone of the "smtp" transport for the
+        destination in question. In the example below we will call it
+        "fragile".
 
-  * IMPORTANT!!! In main.cf configure a very large initial and destination
-    concurrency limit for this transport (say 2000).
+      o In master.cf configure a reasonable process limit for the cloned smtp
+        transport (a number in the 10-20 range is typical).
 
-    /etc/postfix/main.cf:
-        initial_destination_concurrency = 2000
-        transportname_destination_concurrency_limit = 2000
+      o IMPORTANT!!! In main.cf configure a large per-destination pseudo-cohort
+        failure limit for the cloned smtp transport.
 
-    Where transportname is the name of the master.cf entry in question.
+        /etc/postfix/main.cf:
+            transport_maps = hash:/etc/postfix/transport
+            fragile_destination_concurrency_failed_cohort_limit = 100
+            fragile_destination_concurrency_limit = 20
 
-The effect of this surprising configuration is that up to 2000 consecutive
-errors are tolerated without marking the destination dead, while the total
-concurrency remains reasonable (10-20 processes). This trick is only for a very
-specialized situation: high volume delivery into a channel with multi-error
-bursts that is capable of high throughput, but is repeatedly throttled by the
-bursts of errors.
+        /etc/postfix/transport:
+            example.com  fragile:
+
+        /etc/postfix/master.cf:
+            # service type  private unpriv  chroot  wakeup  maxproc command
+            fragile   unix     -       -       n       -      20    smtp
+
+        See also the documentation for
+        default_destination_concurrency_failed_cohort_limit and
+        default_destination_concurrency_limit.
+
+  * Earlier Postfix versions:
+
+      o In master.cf set up a dedicated clone of the "smtp" transport for the
+        destination in question. In the example below we will call it
+        "fragile".
+
+      o In master.cf configure a reasonable process limit for the transport (a
+        number in the 10-20 range is typical).
+
+      o IMPORTANT!!! In main.cf configure a very large initial and destination
+        concurrency limit for this transport (say 2000).
+
+        /etc/postfix/main.cf:
+            transport_maps = hash:/etc/postfix/transport
+            initial_destination_concurrency = 2000
+            fragile_destination_concurrency_limit = 2000
+
+        /etc/postfix/transport:
+            example.com  fragile:
+
+        /etc/postfix/master.cf:
+            # service type  private unpriv  chroot  wakeup  maxproc command
+            fragile   unix     -       -       n       -      20    smtp
+
+        See also the documentation for default_destination_concurrency_limit.
+
+The effect of this configuration is that up to 2000 consecutive errors are
+tolerated without marking the destination dead, while the total concurrency
+remains reasonable (10-20 processes). This trick is only for a very specialized
+situation: high volume delivery into a channel with multi-error bursts that is
+capable of high throughput, but is repeatedly throttled by the bursts of
+errors.
 
 When a destination is unable to handle the load even after the Postfix process
 limit is reduced to 1, a desperate measure is to insert brief delays between
 delivery attempts.
 
-  * In the transport map entry for the problem destination, specify a dead host
-    as the primary nexthop.
+  * Postfix version 2.5 and later:
 
-  * In the master.cf entry for the transport specify the problem destination as
-    the fallback_relay and specify a small smtp_connect_timeout value.
+      o In master.cf set up a dedicated clone of the "smtp" transport for the
+        problem destination. In the example below we call it "slow".
 
-    /etc/postfix/transport:
-        problem.example.com  slow:[dead.host]
+      o In main.cf configure a short delay between deliveries to the same
+        destination.
 
-    /etc/postfix/master.cf:
-        # service type  private unpriv  chroot  wakeup  maxproc command
-        slow      unix     -       -       n       -       1    smtp
-            -o fallback_relay=problem.example.com
-            -o smtp_connect_timeout=1
+        /etc/postfix/main.cf:
+            transport_maps = hash:/etc/postfix/transport
+            slow_destination_rate_delay = 1
 
-This solution forces the Postfix smtp(8) client to wait for
-$smtp_connect_timeout seconds between deliveries. The solution depends on
-Postfix connection management details, and needs to be updated when SMTP
-connection caching is introduced.
+        /etc/postfix/transport:
+            example.com  slow:
 
-Hopefully a more elegant solution to these problems will be found in the
-future.
+        /etc/postfix/master.cf:
+            # service type  private unpriv  chroot  wakeup  maxproc command
+            slow      unix     -       -       n       -       -    smtp
+
+    See also the documentation for default_destination_rate_delay.
+
+    This solution forces the Postfix smtp(8) client to wait for
+    $slow_destination_rate_delay seconds between deliveries to the same
+    destination.
+
+  * Earlier Postfix versions:
+
+      o In the transport map entry for the problem destination, specify a dead
+        host as the primary nexthop.
+
+      o In the master.cf entry for the transport specify the problem
+        destination as the fallback_relay and specify a small
+        smtp_connect_timeout value.
+
+        /etc/postfix/main.cf:
+            transport_maps = hash:/etc/postfix/transport
+
+        /etc/postfix/transport:
+            example.com  slow:[dead.host]
+
+        /etc/postfix/master.cf:
+            # service type  private unpriv  chroot  wakeup  maxproc command
+            slow      unix     -       -       n       -       1    smtp
+                -o fallback_relay=problem.example.com
+                -o smtp_connect_timeout=1
+                -o smtp_connection_cache_on_demand=no
+
+    This solution forces the Postfix smtp(8) client to wait for
+    $smtp_connect_timeout seconds between deliveries. The connection caching
+    feature is disabled to prevent the client from skipping over the dead host.
 
 PPoossttffiixx qquueeuuee ddiirreeccttoorriieess
 

@@ -103,9 +103,10 @@ LLiimmiittaattiioonnss ooff aaddddrreessss vveerriiffi
     response to end of DATA after a message is transferred. Postfix address
     verification does not work with such sites.
 
-  * By default, Postfix probe messages have "postmaster@$myorigin" as the
-    sender address. This is SAFE because the Postfix SMTP server does not
-    reject mail for this address.
+  * By default, Postfix probe messages have "double-bounce@$myorigin" as the
+    sender address (with Postfix versions before 2.5, the default is
+    "postmaster@$myorigin"). This is SAFE because the Postfix SMTP server does
+    not reject mail for this address.
 
     You can change this into the null address ("address_verify_sender ="). This
     is UNSAFE because address probes will fail with mis-configured sites that
@@ -157,7 +158,7 @@ domains that often appear in forged email.
         unverified_sender_reject_code = 550
         # Note 1: Be sure to read the "Caching" section below!
         # Note 2: Avoid hash files here. Use btree instead.
-        address_verify_map = btree:/var/mta/verify
+        address_verify_map = btree:/var/lib/postfix/verify
 
     /etc/postfix/sender_access:
         aol.com     reject_unverified_sender
@@ -193,7 +194,7 @@ be blocked:
             ...
         # Note 1: Be sure to read the "Caching" section below!
         # Note 2: Avoid hash files here. Use btree instead.
-        address_verify_map = btree:/var/mta/verify
+        address_verify_map = btree:/var/lib/postfix/verify
 
 This is also a good way to populate your cache with address verification
 results before you start to actually reject mail.
@@ -239,16 +240,23 @@ If your /var file system has sufficient space, try:
 
     /etc/postfix/main.cf:
         # Note: avoid hash files here. Use btree instead.
-        address_verify_map = btree:/var/mta/verify
+        address_verify_map = btree:/var/lib/postfix/verify
 
-NOTE: Do not put this file in a file system that may run out of space. When the
-address verification table gets corrupted the world comes to an end and YOU
+NOTE 1: As of version 2.5, Postfix no longer uses root privileges when opening
+this file. The file should now be stored under the Postfix-owned
+data_directory. As a migration aid, an attempt to open the file under a non-
+Postfix directory is redirected to the Postfix-owned data_directory, and a
+warning is logged. If you wish to continue using a pre-existing database file,
+move it to the data_directory, and change ownership to the account specified
+with the mail_owner parameter.
+
+NOTE 2: Do not put this file in a file system that may run out of space. When
+the address verification table gets corrupted the world comes to an end and YOU
 will have to MANUALLY fix things as described in the next section. Meanwhile,
 you will not receive mail via SMTP.
 
-The verify(8) daemon process will create a new database when none exists, and
-will open/create the file before it enters the chroot jail and before it drops
-root privileges.
+NOTE 3: The verify(8) daemon process will create a new database when none
+exists, and will open/create the file before it enters the chroot jail.
 
 MMaannaaggiinngg tthhee aaddddrreessss vveerriiffiiccaattiioonn ddaattaabbaassee
 

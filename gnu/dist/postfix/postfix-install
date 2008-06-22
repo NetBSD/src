@@ -88,6 +88,11 @@
 #	The built-in default directory name is /etc/postfix.
 #	This parameter setting is not recorded in the installed main.cf file
 #	and can be changed only by recompiling Postfix.
+# .IP data_directory
+#	The final destination directory for Postfix-writable data files such
+#	as caches. This directory should not be shared with non-Postfix
+#	software. The built-in default directory name is /var/lib/postfix.
+#	This parameter setting is recorded in the installed main.cf file.
 # .IP daemon_directory
 #	The final destination directory for Postfix daemon programs. This
 #	directory should not be in the command search path of any users.
@@ -308,6 +313,10 @@ Postfix.  You must have write permission in this directory."
 config_directory_prompt="the final destination directory for
 installed Postfix configuration files."
 
+data_directory_prompt="the final destination directory for
+Postfix-writable data files such as caches or random numbers.  This
+directory should not be shared with non-Postfix software."
+
 daemon_directory_prompt="the final destination directory for
 installed Postfix daemon programs.  This directory should not be
 in the command search path of any users."
@@ -343,9 +352,6 @@ mail_owner account. You can no longer specify \"no\" here."
 
 manpage_directory_prompt="the destination directory for the Postfix on-line
 manual pages. You can no longer specify \"no\" here."
-
-sample_directory_prompt="the destination directory for the Postfix
-sample configuration files."
 
 readme_directory_prompt="the destination directory for the Postfix
 README files. Specify \"no\" if you do not want to install these files."
@@ -414,12 +420,14 @@ grep setgid_group $CONFIG_DIRECTORY/main.cf >/dev/null 2>&1 || {
     }
 }
 
+CONFIG_PARAMS="command_directory daemon_directory data_directory \
+html_directory mail_owner mailq_path  manpage_directory newaliases_path \
+queue_directory readme_directory sendmail_path setgid_group"
+
 # Extract parameter settings from the installed main.cf file.
 
 test -f $CONFIG_DIRECTORY/main.cf && {
-    for name in daemon_directory command_directory queue_directory mail_owner \
-	setgid_group sendmail_path newaliases_path mailq_path manpage_directory \
-	sample_directory html_directory readme_directory
+    for name in $CONFIG_PARAMS sample_directory
     do
 	eval junk=\$$name
 	case "$junk" in
@@ -432,9 +440,7 @@ test -f $CONFIG_DIRECTORY/main.cf && {
 
 # Use built-in defaults as the final source of parameter settings.
 
-for name in daemon_directory command_directory queue_directory mail_owner \
-    setgid_group sendmail_path newaliases_path mailq_path manpage_directory \
-    sample_directory html_directory readme_directory
+for name in $CONFIG_PARAMS sample_directory
 do
     eval junk=\$$name
     case "$junk" in
@@ -445,9 +451,7 @@ done
 
 # Override settings manually.
 
-test -z "$non_interactive" && for name in daemon_directory command_directory \
-    queue_directory sendmail_path newaliases_path mailq_path mail_owner \
-    setgid_group html_directory manpage_directory readme_directory
+test -z "$non_interactive" && for name in $CONFIG_PARAMS
 do
     while :
     do
@@ -490,7 +494,7 @@ do
    esac
 done
 
-for path in "$daemon_directory" "$command_directory" "$queue_directory" \
+for path in "$daemon_directory" "$data_directory" "$command_directory" "$queue_directory" \
     "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory"
 do
    case "$path" in
@@ -507,7 +511,7 @@ do
     }
 done
 
-for path in command_directory config_directory daemon_directory \
+for path in command_directory config_directory daemon_directory data_directory \
     manpage_directory queue_directory html_directory readme_directory
 do
     eval test -f $install_root\$$path && {
@@ -559,7 +563,6 @@ QUEUE_DIRECTORY=$install_root$queue_directory
 SENDMAIL_PATH=$install_root$sendmail_path
 HTML_DIRECTORY=$install_root$html_directory
 MANPAGE_DIRECTORY=$install_root$manpage_directory
-SAMPLE_DIRECTORY=$install_root$sample_directory
 README_DIRECTORY=$install_root$readme_directory
 
 # Avoid repeated tests for existence of these; default permissions suffice.
@@ -723,6 +726,7 @@ do
 
 bin/postconf -c $CONFIG_DIRECTORY -e \
     "daemon_directory = $daemon_directory" \
+    "data_directory = $data_directory" \
     "command_directory = $command_directory" \
     "queue_directory = $queue_directory" \
     "mail_owner = $mail_owner" \
