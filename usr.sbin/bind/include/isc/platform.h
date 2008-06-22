@@ -1,3 +1,5 @@
+/*	$NetBSD: platform.h,v 1.8 2008/06/22 13:23:50 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*$Id: platform.h.in,v 1.45.60.2 2008/01/24 23:46:26 tbox Exp */
+/* Id: platform.h.in,v 1.45.60.2 2008/01/24 23:46:26 tbox Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
