@@ -1,4 +1,5 @@
-#	$NetBSD: post-install,v 1.13 2007/05/19 17:49:39 heas Exp $
+#!/bin/sh
+#	$NetBSD: post-install,v 1.14 2008/06/22 14:38:41 christos Exp $
 #
 
 # To view the formatted manual page of this file, type:
@@ -142,6 +143,8 @@
 #	directory should be in the command search path of adminstrative users.
 # .IP queue_directory
 #	The directory for Postfix queues.
+# .IP data_directory
+#	The directory for Postfix writable data files (caches, etc.).
 # .IP sendmail_path
 #	The full pathname for the Postfix sendmail command.
 #	This is the Sendmail-compatible mail posting interface.
@@ -165,6 +168,7 @@
 #	The directory for the Postfix on-line manual pages.
 # .IP sample_directory
 #	The directory for the Postfix sample configuration files.
+#	This feature is obsolete as of Postfix 2.1.
 # .IP readme_directory
 #	The directory for the Postfix README files.
 # SEE ALSO
@@ -191,6 +195,10 @@ SHELL=/bin/sh
 IFS=" 	
 "
 BACKUP_IFS="$IFS"
+MOST_PARAMETERS="command_directory daemon_directory data_directory
+    html_directory mail_owner mailq_path manpage_directory
+    newaliases_path queue_directory readme_directory sample_directory
+    sendmail_path setgid_group"
 
 USAGE="Usage: $0 [name=value] command
     create-missing          Create missing queue directories.
@@ -303,9 +311,7 @@ grep setgid_group $config_directory/main.cf >/dev/null 2>&1 || {
 # Extract parameter settings from the installed main.cf file.
 
 test -f $config_directory/main.cf && {
-    for name in daemon_directory command_directory queue_directory mail_owner \
-        setgid_group sendmail_path newaliases_path mailq_path \
-	html_directory manpage_directory sample_directory readme_directory
+    for name in $MOST_PARAMETERS
     do
 	eval junk=\$$name
         case "$junk" in
@@ -349,9 +355,7 @@ done
 # via environment, or via installed configuration files.
 
 missing=
-for name in daemon_directory command_directory queue_directory mail_owner \
-    setgid_group sendmail_path newaliases_path mailq_path manpage_directory \
-    readme_directory html_directory
+for name in $MOST_PARAMETERS
 do
     eval test -n \"\$$name\" || missing="$missing $name"
 done
@@ -384,9 +388,7 @@ POSTCONF="$command_directory/postconf"
 # Save settings, allowing command line/environment override.
 
 override=
-for name in daemon_directory command_directory queue_directory mail_owner \
-    setgid_group sendmail_path newaliases_path mailq_path manpage_directory \
-    sample_directory readme_directory html_directory
+for name in $MOST_PARAMETERS
 do
     eval test \"\$$name\" = \"`$POSTCONF -c $config_directory -h $name`\" || {
 	override=1
@@ -399,6 +401,7 @@ test -n "$override" && {
 	"daemon_directory = $daemon_directory" \
 	"command_directory = $command_directory" \
 	"queue_directory = $queue_directory" \
+	"data_directory = $data_directory" \
 	"mail_owner = $mail_owner" \
 	"setgid_group = $setgid_group" \
 	"sendmail_path = $sendmail_path" \
@@ -657,6 +660,28 @@ EOF
 	echo Editing $config_directory/master.cf, adding missing entry for retry service
 	cat >>$config_directory/master.cf <<EOF || exit 1
 retry     unix  -       -       n       -       -       error
+EOF
+    }
+
+    # Add missing proxywrite service to master.cf.
+
+    grep '^proxywrite.*proxymap' $config_directory/master.cf >/dev/null || {
+	echo Editing $config_directory/master.cf, adding missing entry for proxywrite service
+	cat >>$config_directory/master.cf <<EOF || exit 1
+proxywrite unix -       -       n       -       1       proxymap
+EOF
+    }
+
+    # Fix a typo in the default master.cf proxywrite entry.
+
+    grep '^proxywrite.*-[ 	]*proxymap' $config_directory/master.cf >/dev/null && {
+	echo Editing $config_directory/master.cf, setting proxywrite process limit to 1
+	    ed $config_directory/master.cf <<EOF || exit 1
+/^proxywrite.*-[       ]*proxymap/
+s/-\([ 	]*proxymap\)/1\1/
+p
+w
+q
 EOF
     }
 

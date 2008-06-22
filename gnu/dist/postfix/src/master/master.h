@@ -1,4 +1,4 @@
-/*	$NetBSD: master.h,v 1.9 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: master.h,v 1.10 2008/06/22 14:38:41 christos Exp $	*/
 
 /*++
 /* NAME
@@ -35,9 +35,6 @@ typedef struct MASTER_SERV {
     int     wakeup_time;		/* wakeup interval */
     int    *listen_fd;			/* incoming requests */
     int     listen_fd_count;		/* nr of descriptors */
-#ifdef MASTER_SERV_TYPE_PASS
-    struct PASS_INFO *pass_info;	/* descriptor passing state */
-#endif
     union {
 	struct {
 	    char   *port;		/* inet listen port */
@@ -49,6 +46,8 @@ typedef struct MASTER_SERV {
     int     max_proc;			/* upper bound on # processes */
     char   *path;			/* command pathname */
     struct ARGV *args;			/* argument vector */
+    char   *stress_param_val;		/* stress value: "yes" or empty */
+    time_t  stress_expire_time;		/* stress pulse stretcher */
     int     avail_proc;			/* idle processes */
     int     total_proc;			/* number of processes */
     int     throttle_delay;		/* failure recovery parameter */
@@ -78,7 +77,7 @@ typedef struct MASTER_SERV {
 #define MASTER_SERV_TYPE_UNIX	1	/* AF_UNIX domain socket */
 #define MASTER_SERV_TYPE_INET	2	/* AF_INET domain socket */
 #define MASTER_SERV_TYPE_FIFO	3	/* fifo (named pipe) */
-/*#define MASTER_SERV_TYPE_PASS	4	/* AF_UNIX domain socket */
+#define MASTER_SERV_TYPE_PASS	4	/* AF_UNIX domain socket */
 
  /*
   * Default process management policy values. This is only the bare minimum.

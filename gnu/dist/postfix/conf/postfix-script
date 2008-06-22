@@ -1,4 +1,5 @@
-#	$NetBSD: postfix-script,v 1.5 2007/05/19 17:49:39 heas Exp $
+#!/bin/sh
+#	$NetBSD: postfix-script,v 1.6 2008/06/22 14:38:41 christos Exp $
 #
 
 #++
@@ -179,11 +180,22 @@ check)
 	exit 0
 	;;
 
+status)
+
+	$daemon_directory/master -t 2>/dev/null && {
+		$INFO the Postfix mail system is not running
+		exit 1
+	}
+	$INFO the Postfix mail system is running: PID: `sed 1q pid/master.pid`
+	exit 0
+	;;
+
+
 check-fatal)
 	# This command is NOT part of the public interface.
 
 	$SHELL $config_directory/post-install create-missing || {
-		$WARN unable to create missing queue directories
+		$FATAL unable to create missing queue directories
 		exit 1
 	}
 
@@ -217,6 +229,9 @@ check-warn)
 	find $daemon_directory/. $config_directory/. \
 		\( -perm -020 -o -perm -002 \) -type f \
 		-exec $WARN group or other writable: {} \;
+
+	find $data_directory/. ! -user $mail_owner \
+		-exec $WARN not owned by $mail_owner: {} \;
 
 	find `ls -d $queue_directory/* | \
 	    egrep '/(incoming|active|defer|deferred|bounce|hold|trace|corrupt|public|private|flush)$'` \
@@ -286,7 +301,7 @@ post-install)
 
 *)
 
-	$FATAL "usage: postfix start (or stop, reload, abort, flush, check, set-permissions, upgrade-configuration)"
+	$FATAL "usage: postfix start (or stop, reload, abort, flush, check, status, set-permissions, upgrade-configuration)"
 	exit 1
 	;;
 

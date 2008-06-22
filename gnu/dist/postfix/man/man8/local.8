@@ -1,4 +1,4 @@
-.\"	$NetBSD: local.8,v 1.9 2007/05/19 17:49:43 heas Exp $
+.\"	$NetBSD: local.8,v 1.10 2008/06/22 14:38:41 christos Exp $
 .\"
 .TH LOCAL 8 
 .ad
@@ -228,6 +228,9 @@ The bare recipient name.
 .IP \fBLOCAL\fR
 The entire recipient address localpart (text to the left of the
 rightmost @ character).
+.IP \fBORIGINAL_RECIPIENT\fR
+The entire recipient address, before any address rewriting
+or aliasing (Postfix 2.5 and later).
 .IP \fBRECIPIENT\fR
 The entire recipient address.
 .IP \fBSENDER\fR
