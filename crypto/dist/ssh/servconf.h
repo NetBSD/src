@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.h,v 1.24 2008/04/06 23:38:19 christos Exp $	*/
+/*	$NetBSD: servconf.h,v 1.25 2008/06/22 15:42:50 christos Exp $	*/
 /* $OpenBSD: servconf.h,v 1.82 2008/02/13 22:38:17 djm Exp $ */
 
 /*
@@ -148,6 +148,10 @@ typedef struct {
 	char   *authorized_keys_file2;
 
 	int	use_pam;		/* Enable auth via PAM */
+        int     none_enabled;           /* enable NONE cipher switch */
+        int     tcp_rcv_buf_poll;       /* poll tcp rcv window in autotuning kernels*/
+	int	hpn_disabled;		/* disable hpn functionality. false by default */
+	int	hpn_buffer_size;	/* set the hpn buffer size - default 3MB */
 
 	char   *adm_forced_command;
 

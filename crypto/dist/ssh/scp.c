@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.33 2008/04/06 23:38:19 christos Exp $	*/
+/*	$NetBSD: scp.c,v 1.34 2008/06/22 15:42:50 christos Exp $	*/
 /* $OpenBSD: scp.c,v 1.162 2008/01/01 09:06:39 dtucker Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.33 2008/04/06 23:38:19 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.34 2008/06/22 15:42:50 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -617,7 +617,7 @@ source(int argc, char **argv)
 	BUF *bp;
 	off_t i, amt, statbytes;
 	int fd = -1, haderr, indx;
-	char *last, *name, buf[2048], encname[MAXPATHLEN];
+	char *last, *name, buf[16384], encname[MAXPATHLEN];
 	int len;
 
 	for (indx = 0; indx < argc; ++indx) {
@@ -850,7 +850,7 @@ sink(int argc, char **argv)
 	mode_t mode, omode, mask;
 	off_t size, statbytes;
 	int setimes, targisdir, wrerrno = 0;
-	char ch, *cp, *np, *targ, *why, *vect[1], buf[2048];
+	char ch, *cp, *np, *targ, *why, *vect[1], buf[16384];
 	struct timeval tv[2];
 
 #define	atime	tv[0]
