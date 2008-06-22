@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.101 2008/06/17 09:08:52 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.102 2008/06/22 00:06:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ struct lwp {
 	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
 	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
-	cpuset_t	*l_affinity;	/* l: CPU set for affinity */
+	kcpuset_t	*l_affinity;	/* l: CPU set for affinity */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
