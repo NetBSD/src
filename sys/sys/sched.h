@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.61 2008/06/22 00:06:36 christos Exp $	*/
+/*	$NetBSD: sched.h,v 1.62 2008/06/22 14:00:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ struct schedstate_percpu {
 	struct lwp	*spc_migrating;	/* (: migrating LWP */
 	pri_t		spc_curpriority;/* m: usrpri of curlwp */
 	pri_t		spc_maxpriority;/* m: highest priority queued */
-	psetid_t	spc_psid;	/* (: processor-set ID */
+	psetid_t	spc_psid;	/* c: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */
 
 	/* For the most part, this set of data is CPU-private. */
