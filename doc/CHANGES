@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1073 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1074 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -549,3 +549,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	pf(4): Updated to OpenBSD 4.2 PF [yamt,peter,christos,joerg 20080618]
 	bind: Import 9.5.0 [christos 20080621]
 	psrset(8): Utility to control processor sets [ad 20080622]
+	postfix: Import 2.5.2 [christos 20080622]
