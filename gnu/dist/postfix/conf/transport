@@ -267,6 +267,7 @@
 # 
 # SEE ALSO
 #        trivial-rewrite(8), rewrite and resolve addresses
+#        master(5), master.cf file format
 #        postconf(5), configuration parameters
 #        postmap(1), Postfix lookup table manager
 # 
