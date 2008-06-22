@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.2.2 2008/06/22 18:12:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -862,6 +862,12 @@ setregs(register struct lwp *l, struct exec_package *pack, u_long stack)
 
 void
 sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+	return;
+}
+ 
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	return;
 }

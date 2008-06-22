@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.55.2.2 2008/06/22 18:12:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55.2.1 2008/05/10 23:48:44 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55.2.2 2008/06/22 18:12:02 wrstuden Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -842,8 +842,13 @@ do_onfault:
 		 */
 		if (!(type & T_USER) && space == HPPA_SID_KERNEL)
 			map = kernel_map;
-		else
+		else {
 			map = &vm->vm_map;
+			if (l->l_flag & LW_SA) {
+				l->l_savp->savp_faultaddr = va;
+				l->l_pflag |= LP_SA_PAGEFAULT;
+			}
+		}
 
 		va = trunc_page(va);
 
@@ -868,6 +873,9 @@ do_onfault:
 		printf("uvm_fault(%p, %x, %d)=%d\n",
 		    map, (u_int)va, vftype, ret);
 #endif
+
+		if (map != kernel_map)
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -1357,5 +1365,14 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
+	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 }

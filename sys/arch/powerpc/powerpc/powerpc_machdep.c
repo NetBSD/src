@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.38.12.1 2008/05/10 23:48:46 wrstuden Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.38.12.2 2008/06/22 18:12:03 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.38.12.1 2008/05/10 23:48:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.38.12.2 2008/06/22 18:12:03 wrstuden Exp $");
 
 #include "opt_altivec.h"
 
@@ -270,6 +270,28 @@ cpu_dumpconf(void)
 		dumpsize = dtoc(nblks - dumplo);
 	if (dumplo < nblks - ctod(dumpsize))
 		dumplo = nblks - ctod(dumpsize);
+}
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+
+	tf = trapframe(l);
+
+	/*
+	 * Build context to run handler in.
+	 */
+	tf->fixreg[1] = (register_t)((struct saframe *)sp - 1);
+	tf->lr = 0;
+	tf->fixreg[3] = (register_t)type;
+	tf->fixreg[4] = (register_t)sas;
+	tf->fixreg[5] = (register_t)nevents;
+	tf->fixreg[6] = (register_t)ninterrupted;
+	tf->fixreg[7] = (register_t)ap;
+	tf->srr0 = (register_t)upcall;
+	tf->srr1 &= ~PSL_SE;
 }
 
 bool

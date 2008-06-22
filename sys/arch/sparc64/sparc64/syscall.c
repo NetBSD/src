@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.30.2.1 2008/05/10 23:48:46 wrstuden Exp $ */
+/*	$NetBSD: syscall.c,v 1.30.2.2 2008/06/22 18:12:03 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30.2.1 2008/05/10 23:48:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30.2.2 2008/06/22 18:12:03 wrstuden Exp $");
 
 #define NEW_FPSTATE
 
@@ -484,5 +484,13 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
+	userret(l, 0, 0);
+}
+
+void
+upcallret(struct lwp *l)
+{
+
+	KERNEL_UNLOCK_LAST(l);
 	userret(l, 0, 0);
 }

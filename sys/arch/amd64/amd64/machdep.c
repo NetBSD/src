@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92.2.2 2008/05/14 19:54:09 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.2.3 2008/06/22 18:12:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.2 2008/05/14 19:54:09 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.3 2008/06/22 18:12:01 wrstuden Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -629,7 +629,40 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
+}
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+
+	tf = l->l_md.md_regs;
+
+#if 0
+	printf("proc %d: upcall to lwp %d, type %d ev %d int %d sas %p to %p\n",
+	    (int)l->l_proc->p_pid, (int)l->l_lid, type, nevents, ninterrupted,
+	    sas, (void *)upcall);
+#endif
+
+	tf->tf_rdi = type;
+	tf->tf_rsi = (u_int64_t)sas;
+	tf->tf_rdx = nevents;
+	tf->tf_rcx = ninterrupted;
+	tf->tf_r8 = (u_int64_t)ap;
+
+	tf->tf_rip = (u_int64_t)upcall;
+	tf->tf_rsp = ((unsigned long)sp & ~15) - 8;
+	tf->tf_rbp = 0; /* indicate call-frame-top to debuggers */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+
+	l->l_md.md_flags |= MDP_IRET;
 }
 
 int	waittime = -1;
@@ -840,6 +873,42 @@ cpu_dumpconf(void)
  */
 #define BYTES_PER_DUMP  PAGE_SIZE /* must be a multiple of pagesize XXX small */
 static vaddr_t dumpspace;
+
+void
+netbsd32_cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+	struct netbsd32_saframe *sf, frame;
+
+	tf = l->l_md.md_regs;
+
+	frame.sa_type = type;
+	frame.sa_sas = (uintptr_t)sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+	frame.sa_arg = (uintptr_t)ap;
+	frame.sa_ra = 0;
+
+	sf = (struct netbsd32_saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->tf_rip = (uintptr_t)upcall;
+	tf->tf_rsp = (uintptr_t)sf;
+	tf->tf_rbp = 0;
+	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+
+	l->l_md.md_flags |= MDP_IRET;
+}
 
 vaddr_t
 reserve_dumppages(vaddr_t p)

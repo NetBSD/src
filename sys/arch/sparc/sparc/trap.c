@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.175.4.1 2008/05/10 23:48:46 wrstuden Exp $ */
+/*	$NetBSD: trap.c,v 1.175.4.2 2008/06/22 18:12:03 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175.4.1 2008/05/10 23:48:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175.4.2 2008/06/22 18:12:03 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -870,8 +870,13 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 				return;
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)v;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
+	}
 
 	/*
 	 * mmu_pagein returns -1 if the page is already valid, in which
@@ -958,6 +963,7 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}
@@ -1170,8 +1176,13 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 			}
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)sfva;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
+	}
 
 	vm = p->p_vmspace;
 
@@ -1231,12 +1242,24 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 out_nounlock:
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}
 }
 #endif /* SUN4M */
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+
+	KERNEL_UNLOCK_LAST(l);
+	userret(l, l->l_md.md_tf->tf_pc, 0);
+}
 
 /*
  * Start a new LWP
