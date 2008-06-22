@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2008/05/03 14:48:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2008/06/22 14:38:13 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -37,6 +37,7 @@ SRCS=	abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	sys_exits.c timed_ipc.c tok822_find.c tok822_node.c tok822_parse.c \
 	tok822_resolve.c tok822_rewrite.c tok822_tree.c trace.c \
 	user_acl.c valid_mailhost_addr.c verify.c verify_clnt.c \
-	verp_sender.c wildcard_inet_addr.c xtext.c
+	verp_sender.c wildcard_inet_addr.c xtext.c data_redirect.c \
+	delivered_hdr.c fold_addr.c mkmap_proxy.c header_body_checks.c
 
 .include <bsd.lib.mk>
