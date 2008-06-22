@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.30 2008/06/22 16:29:36 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.31 2008/06/22 17:35:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -63,6 +63,14 @@
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
 extern int idepth;
+
+static inline bool
+cpu_intr_p(void) 
+{
+ 
+	return idepth != 0;
+}
+
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;

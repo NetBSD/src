@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.36 2008/06/22 16:29:36 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.37 2008/06/22 17:35:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36 2008/06/22 16:29:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37 2008/06/22 17:35:14 tsutsui Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -222,11 +222,4 @@ intr_dispatch(int evec /* format | vector offset */)
 		printf("intr_dispatch: stray level %d interrupt\n", ipl);
 
 	idepth--;
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return idepth != 0;
 }
