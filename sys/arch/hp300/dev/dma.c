@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.41 2008/06/15 07:15:30 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.42 2008/06/22 16:29:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.41 2008/06/15 07:15:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.42 2008/06/22 16:29:36 tsutsui Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -272,8 +272,8 @@ dmacomputeipl(void)
 	 * Our interrupt level must be as high as the highest
 	 * device using DMA (i.e. splbio).
 	 */
-	sc->sc_ipl = PSLTOIPL(ipl2psl_table[IPL_BIO]);
-	sc->sc_ih = intr_establish(dmaintr, sc, sc->sc_ipl, IPL_BIO);
+	sc->sc_ipl = PSLTOIPL(ipl2psl_table[IPL_VM]);
+	sc->sc_ih = intr_establish(dmaintr, sc, sc->sc_ipl, IPL_VM);
 }
 
 int
