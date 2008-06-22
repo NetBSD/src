@@ -1,4 +1,4 @@
-/*	$NetBSD: showq.c,v 1.1.1.11 2007/05/19 16:28:32 heas Exp $	*/
+/*	$NetBSD: showq.c,v 1.1.1.12 2008/06/22 14:03:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -400,7 +400,7 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_INT_TABLE int_table[] = {
+    static const CONFIG_INT_TABLE int_table[] = {
 	VAR_DUP_FILTER_LIMIT, DEF_DUP_FILTER_LIMIT, &var_dup_filter_limit, 0, 0,
 	0,
     };

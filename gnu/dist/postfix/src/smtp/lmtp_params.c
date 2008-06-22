@@ -1,6 +1,6 @@
-/*	$NetBSD: lmtp_params.c,v 1.1.1.3 2007/05/19 16:28:32 heas Exp $	*/
+/*	$NetBSD: lmtp_params.c,v 1.1.1.4 2008/06/22 14:03:22 christos Exp $	*/
 
-    static CONFIG_STR_TABLE lmtp_str_table[] = {
+    static const CONFIG_STR_TABLE lmtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
 	VAR_BESTMX_TRANSP, DEF_BESTMX_TRANSP, &var_bestmx_transp, 0, 0,
 	VAR_ERROR_RCPT, DEF_ERROR_RCPT, &var_error_rcpt, 1, 0,
@@ -21,14 +21,11 @@
 	VAR_LMTP_TLS_MAND_CIPH, DEF_LMTP_TLS_MAND_CIPH, &var_smtp_tls_mand_ciph, 1, 0,
 	VAR_LMTP_TLS_EXCL_CIPH, DEF_LMTP_TLS_EXCL_CIPH, &var_smtp_tls_excl_ciph, 0, 0,
 	VAR_LMTP_TLS_MAND_EXCL, DEF_LMTP_TLS_MAND_EXCL, &var_smtp_tls_mand_excl, 0, 0,
-	VAR_TLS_HIGH_CLIST, DEF_TLS_HIGH_CLIST, &var_tls_high_clist, 1, 0,
-	VAR_TLS_MEDIUM_CLIST, DEF_TLS_MEDIUM_CLIST, &var_tls_medium_clist, 1, 0,
-	VAR_TLS_LOW_CLIST, DEF_TLS_LOW_CLIST, &var_tls_low_clist, 1, 0,
-	VAR_TLS_EXPORT_CLIST, DEF_TLS_EXPORT_CLIST, &var_tls_export_clist, 1, 0,
-	VAR_TLS_NULL_CLIST, DEF_TLS_NULL_CLIST, &var_tls_null_clist, 1, 0,
 	VAR_LMTP_TLS_MAND_PROTO, DEF_LMTP_TLS_MAND_PROTO, &var_smtp_tls_mand_proto, 0, 0,
 	VAR_LMTP_TLS_VFY_CMATCH, DEF_LMTP_TLS_VFY_CMATCH, &var_smtp_tls_vfy_cmatch, 1, 0,
 	VAR_LMTP_TLS_SEC_CMATCH, DEF_LMTP_TLS_SEC_CMATCH, &var_smtp_tls_sec_cmatch, 1, 0,
+	VAR_LMTP_TLS_FPT_CMATCH, DEF_LMTP_TLS_FPT_CMATCH, &var_smtp_tls_fpt_cmatch, 0, 0,
+	VAR_LMTP_TLS_FPT_DGST, DEF_LMTP_TLS_FPT_DGST, &var_smtp_tls_fpt_dgst, 1, 0,
 #endif
 	VAR_LMTP_SASL_MECHS, DEF_LMTP_SASL_MECHS, &var_smtp_sasl_mechs, 0, 0,
 	VAR_LMTP_SASL_TYPE, DEF_LMTP_SASL_TYPE, &var_smtp_sasl_type, 1, 0,
@@ -48,9 +45,15 @@
 	VAR_LMTP_TCP_PORT, DEF_LMTP_TCP_PORT, &var_lmtp_tcp_port, 0, 0,
 	VAR_LMTP_PIX_BUG_WORDS, DEF_LMTP_PIX_BUG_WORDS, &var_smtp_pix_bug_words, 0, 0,
 	VAR_LMTP_PIX_BUG_MAPS, DEF_LMTP_PIX_BUG_MAPS, &var_smtp_pix_bug_maps, 0, 0,
+	VAR_LMTP_SASL_AUTH_CACHE_NAME, DEF_LMTP_SASL_AUTH_CACHE_NAME, &var_smtp_sasl_auth_cache_name, 0, 0,
+	VAR_CYRUS_CONF_PATH, DEF_CYRUS_CONF_PATH, &var_cyrus_conf_path, 0, 0,
+	VAR_LMTP_HEAD_CHKS, DEF_LMTP_HEAD_CHKS, &var_smtp_head_chks, 0, 0,
+	VAR_LMTP_MIME_CHKS, DEF_LMTP_MIME_CHKS, &var_smtp_mime_chks, 0, 0,
+	VAR_LMTP_NEST_CHKS, DEF_LMTP_NEST_CHKS, &var_smtp_nest_chks, 0, 0,
+	VAR_LMTP_BODY_CHKS, DEF_LMTP_BODY_CHKS, &var_smtp_body_chks, 0, 0,
 	0,
     };
-    static CONFIG_TIME_TABLE lmtp_time_table[] = {
+    static const CONFIG_TIME_TABLE lmtp_time_table[] = {
 	VAR_LMTP_CONN_TMOUT, DEF_LMTP_CONN_TMOUT, &var_smtp_conn_tmout, 0, 0,
 	VAR_LMTP_HELO_TMOUT, DEF_LMTP_HELO_TMOUT, &var_smtp_helo_tmout, 1, 0,
 	VAR_LMTP_XFWD_TMOUT, DEF_LMTP_XFWD_TMOUT, &var_smtp_xfwd_tmout, 1, 0,
@@ -69,20 +72,20 @@
 	VAR_LMTP_STARTTLS_TMOUT, DEF_LMTP_STARTTLS_TMOUT, &var_smtp_starttls_tmout, 1, 0,
 #endif
 	VAR_SCACHE_PROTO_TMOUT, DEF_SCACHE_PROTO_TMOUT, &var_scache_proto_tmout, 1, 0,
+	VAR_LMTP_SASL_AUTH_CACHE_TIME, DEF_LMTP_SASL_AUTH_CACHE_TIME, &var_smtp_sasl_auth_cache_time, 0, 0,
 	0,
     };
-    static CONFIG_INT_TABLE lmtp_int_table[] = {
+    static const CONFIG_INT_TABLE lmtp_int_table[] = {
 	VAR_LMTP_LINE_LIMIT, DEF_LMTP_LINE_LIMIT, &var_smtp_line_limit, 0, 0,
 	VAR_LMTP_MXADDR_LIMIT, DEF_LMTP_MXADDR_LIMIT, &var_smtp_mxaddr_limit, 0, 0,
 	VAR_LMTP_MXSESS_LIMIT, DEF_LMTP_MXSESS_LIMIT, &var_smtp_mxsess_limit, 0, 0,
 #ifdef USE_TLS
 	VAR_LMTP_TLS_SCERT_VD, DEF_LMTP_TLS_SCERT_VD, &var_smtp_tls_scert_vd, 0, 0,
 	VAR_LMTP_TLS_LOGLEVEL, DEF_LMTP_TLS_LOGLEVEL, &var_smtp_tls_loglevel, 0, 0,
-	VAR_TLS_DAEMON_RAND_BYTES, DEF_TLS_DAEMON_RAND_BYTES, &var_tls_daemon_rand_bytes, 1, 0,
 #endif
 	0,
     };
-    static CONFIG_BOOL_TABLE lmtp_bool_table[] = {
+    static const CONFIG_BOOL_TABLE lmtp_bool_table[] = {
 	VAR_LMTP_SKIP_5XX, DEF_LMTP_SKIP_5XX, &var_smtp_skip_5xx_greeting,
 	VAR_SKIP_QUIT_RESP, DEF_SKIP_QUIT_RESP, &var_skip_quit_resp,
 	VAR_LMTP_SASL_ENABLE, DEF_LMTP_SASL_ENABLE, &var_smtp_sasl_enable,
@@ -99,5 +102,6 @@
 #endif
 	VAR_LMTP_SENDER_AUTH, DEF_LMTP_SENDER_AUTH, &var_smtp_sender_auth,
 	VAR_LMTP_CNAME_OVERR, DEF_LMTP_CNAME_OVERR, &var_smtp_cname_overr,
+	VAR_LMTP_SASL_AUTH_SOFT_BOUNCE, DEF_LMTP_SASL_AUTH_SOFT_BOUNCE, &var_smtp_sasl_auth_soft_bounce,
 	0,
     };

@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_transport.c,v 1.1.1.5 2007/05/19 16:28:28 heas Exp $	*/
+/*	$NetBSD: qmgr_transport.c,v 1.1.1.6 2008/06/22 14:03:07 christos Exp $	*/
 
 /*++
 /* NAME
@@ -67,7 +67,7 @@
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*
-/*	Scheduler enhancements:
+/*	Preemptive scheduler enhancements:
 /*	Patrik Rak
 /*	Modra 6
 /*	155 00, Prague, Czech Republic
@@ -388,11 +388,17 @@ QMGR_TRANSPORT *qmgr_transport_create(const char *name)
     transport->recipient_limit =
 	get_mail_conf_int2(name, _DEST_RCPT_LIMIT,
 			   var_dest_rcpt_limit, 0, 0);
+    transport->init_dest_concurrency =
+	get_mail_conf_int2(name, _INIT_DEST_CON,
+			   var_init_dest_concurrency, 1, 0);
+    transport->rate_delay = get_mail_conf_time2(name, _DEST_RATE_DELAY,
+						var_dest_rate_delay, 
+						's', 0, 0);
 
-    if (transport->dest_concurrency_limit == 0
-	|| transport->dest_concurrency_limit >= var_init_dest_concurrency)
-	transport->init_dest_concurrency = var_init_dest_concurrency;
-    else
+    if (transport->rate_delay > 0)
+	transport->dest_concurrency_limit = 1;
+    if (transport->dest_concurrency_limit != 0
+    && transport->dest_concurrency_limit < transport->init_dest_concurrency)
 	transport->init_dest_concurrency = transport->dest_concurrency_limit;
 
     transport->slot_cost = get_mail_conf_int2(name, _DELIVERY_SLOT_COST,
@@ -425,6 +431,13 @@ QMGR_TRANSPORT *qmgr_transport_create(const char *name)
     transport->candidate_cache_time = (time_t) 0;
     transport->blocker_tag = 1;
     transport->dsn = 0;
+    qmgr_feedback_init(&transport->pos_feedback, name, _CONC_POS_FDBACK,
+		       VAR_CONC_POS_FDBACK, var_conc_pos_feedback);
+    qmgr_feedback_init(&transport->neg_feedback, name, _CONC_NEG_FDBACK,
+		       VAR_CONC_NEG_FDBACK, var_conc_neg_feedback);
+    transport->fail_cohort_limit =
+	get_mail_conf_int2(name, _CONC_COHORT_LIM,
+			   var_conc_cohort_limit, 0, 0);
     if (qmgr_transport_byname == 0)
 	qmgr_transport_byname = htable_create(10);
     htable_enter(qmgr_transport_byname, name, (char *) transport);

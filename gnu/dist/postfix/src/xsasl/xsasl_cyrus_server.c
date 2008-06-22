@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_server.c,v 1.1.1.1 2006/07/19 01:17:58 rpaulo Exp $	*/
+/*	$NetBSD: xsasl_cyrus_server.c,v 1.1.1.2 2008/06/22 14:04:18 christos Exp $	*/
 
 /*++
 /* NAME
@@ -215,6 +215,20 @@ XSASL_SERVER_IMPL *xsasl_cyrus_server_init(const char *unused_server_type,
     }
 #endif
 
+    if (*var_cyrus_conf_path) {
+#ifdef SASL_PATH_TYPE_CONFIG			/* Cyrus SASL 2.1.22 */
+	if (sasl_set_path(SASL_PATH_TYPE_CONFIG,
+			  var_cyrus_conf_path) != SASL_OK)
+	    msg_warn("failed to set Cyrus SASL configuration path: \"%s\"",
+		     var_cyrus_conf_path);
+#else
+	msg_warn("%s is not empty, but setting the Cyrus SASL configuration "
+		 "path is not supported with SASL library version %d.%d.%d",
+		 VAR_CYRUS_CONF_PATH, SASL_VERSION_MAJOR,
+		 SASL_VERSION_MINOR, SASL_VERSION_STEP);
+#endif
+    }
+
     /*
      * Initialize the library: load SASL plug-in routines, etc.
      */
@@ -313,9 +327,9 @@ static XSASL_SERVER *xsasl_cyrus_server_create(XSASL_SERVER_IMPL *unused_impl,
     }
 
     /*
-     * Extend the XSASL_SERVER_IMPL object with our own data. We use
-     * long-lived conversion buffers rather than local variables to avoid
-     * memory leaks in case of read/write timeout or I/O error.
+     * Extend the XSASL_SERVER object with our own data. We use long-lived
+     * conversion buffers rather than local variables to avoid memory leaks
+     * in case of read/write timeout or I/O error.
      */
     server = (XSASL_CYRUS_SERVER *) mymalloc(sizeof(*server));
     server->xsasl.free = xsasl_cyrus_server_free;

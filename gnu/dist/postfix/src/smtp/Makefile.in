@@ -1,11 +1,13 @@
 SHELL	= /bin/sh
 SRCS	= smtp.c smtp_connect.c smtp_proto.c smtp_chat.c smtp_session.c \
 	smtp_addr.c smtp_trouble.c smtp_state.c smtp_rcpt.c \
-	smtp_sasl_proto.c smtp_sasl_glue.c smtp_reuse.c smtp_map11.c
+	smtp_sasl_proto.c smtp_sasl_glue.c smtp_reuse.c smtp_map11.c \
+	smtp_sasl_auth_cache.c
 OBJS	= smtp.o smtp_connect.o smtp_proto.o smtp_chat.o smtp_session.o \
 	smtp_addr.o smtp_trouble.o smtp_state.o smtp_rcpt.o \
-	smtp_sasl_proto.o smtp_sasl_glue.o smtp_reuse.o smtp_map11.o
-HDRS	= smtp.h smtp_sasl.h smtp_addr.h smtp_reuse.h
+	smtp_sasl_proto.o smtp_sasl_glue.o smtp_reuse.o smtp_map11.o \
+	smtp_sasl_auth_cache.o
+HDRS	= smtp.h smtp_sasl.h smtp_addr.h smtp_reuse.h smtp_sasl_auth_cache.h
 TESTSRC	= 
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -95,6 +97,8 @@ smtp.o: ../../include/dsn.h
 smtp.o: ../../include/dsn_buf.h
 smtp.o: ../../include/ext_prop.h
 smtp.o: ../../include/flush_clnt.h
+smtp.o: ../../include/header_body_checks.h
+smtp.o: ../../include/header_opts.h
 smtp.o: ../../include/htable.h
 smtp.o: ../../include/mail_conf.h
 smtp.o: ../../include/mail_params.h
@@ -103,6 +107,7 @@ smtp.o: ../../include/mail_version.h
 smtp.o: ../../include/maps.h
 smtp.o: ../../include/match_list.h
 smtp.o: ../../include/match_ops.h
+smtp.o: ../../include/mime_state.h
 smtp.o: ../../include/msg.h
 smtp.o: ../../include/msg_stats.h
 smtp.o: ../../include/mymalloc.h
@@ -131,6 +136,8 @@ smtp_addr.o: ../../include/dict.h
 smtp_addr.o: ../../include/dns.h
 smtp_addr.o: ../../include/dsn.h
 smtp_addr.o: ../../include/dsn_buf.h
+smtp_addr.o: ../../include/header_body_checks.h
+smtp_addr.o: ../../include/header_opts.h
 smtp_addr.o: ../../include/htable.h
 smtp_addr.o: ../../include/inet_addr_list.h
 smtp_addr.o: ../../include/inet_proto.h
@@ -138,12 +145,12 @@ smtp_addr.o: ../../include/mail_params.h
 smtp_addr.o: ../../include/maps.h
 smtp_addr.o: ../../include/match_list.h
 smtp_addr.o: ../../include/match_ops.h
+smtp_addr.o: ../../include/mime_state.h
 smtp_addr.o: ../../include/msg.h
 smtp_addr.o: ../../include/msg_stats.h
 smtp_addr.o: ../../include/myaddrinfo.h
 smtp_addr.o: ../../include/mymalloc.h
 smtp_addr.o: ../../include/name_code.h
-smtp_addr.o: ../../include/name_mask.h
 smtp_addr.o: ../../include/own_inet_addr.h
 smtp_addr.o: ../../include/recipient_list.h
 smtp_addr.o: ../../include/resolve_clnt.h
@@ -168,6 +175,8 @@ smtp_chat.o: ../../include/dict.h
 smtp_chat.o: ../../include/dsn.h
 smtp_chat.o: ../../include/dsn_buf.h
 smtp_chat.o: ../../include/dsn_util.h
+smtp_chat.o: ../../include/header_body_checks.h
+smtp_chat.o: ../../include/header_opts.h
 smtp_chat.o: ../../include/htable.h
 smtp_chat.o: ../../include/int_filt.h
 smtp_chat.o: ../../include/line_wrap.h
@@ -177,6 +186,7 @@ smtp_chat.o: ../../include/mail_params.h
 smtp_chat.o: ../../include/maps.h
 smtp_chat.o: ../../include/match_list.h
 smtp_chat.o: ../../include/match_ops.h
+smtp_chat.o: ../../include/mime_state.h
 smtp_chat.o: ../../include/msg.h
 smtp_chat.o: ../../include/msg_stats.h
 smtp_chat.o: ../../include/mymalloc.h
@@ -205,6 +215,8 @@ smtp_connect.o: ../../include/dict.h
 smtp_connect.o: ../../include/dns.h
 smtp_connect.o: ../../include/dsn.h
 smtp_connect.o: ../../include/dsn_buf.h
+smtp_connect.o: ../../include/header_body_checks.h
+smtp_connect.o: ../../include/header_opts.h
 smtp_connect.o: ../../include/host_port.h
 smtp_connect.o: ../../include/htable.h
 smtp_connect.o: ../../include/inet_addr_list.h
@@ -215,6 +227,7 @@ smtp_connect.o: ../../include/mail_proto.h
 smtp_connect.o: ../../include/maps.h
 smtp_connect.o: ../../include/match_list.h
 smtp_connect.o: ../../include/match_ops.h
+smtp_connect.o: ../../include/mime_state.h
 smtp_connect.o: ../../include/msg.h
 smtp_connect.o: ../../include/msg_stats.h
 smtp_connect.o: ../../include/myaddrinfo.h
@@ -247,15 +260,17 @@ smtp_map11.o: ../../include/deliver_request.h
 smtp_map11.o: ../../include/dict.h
 smtp_map11.o: ../../include/dsn.h
 smtp_map11.o: ../../include/dsn_buf.h
+smtp_map11.o: ../../include/header_body_checks.h
+smtp_map11.o: ../../include/header_opts.h
 smtp_map11.o: ../../include/htable.h
 smtp_map11.o: ../../include/mail_addr_map.h
 smtp_map11.o: ../../include/maps.h
 smtp_map11.o: ../../include/match_list.h
 smtp_map11.o: ../../include/match_ops.h
+smtp_map11.o: ../../include/mime_state.h
 smtp_map11.o: ../../include/msg.h
 smtp_map11.o: ../../include/msg_stats.h
 smtp_map11.o: ../../include/name_code.h
-smtp_map11.o: ../../include/name_mask.h
 smtp_map11.o: ../../include/quote_822_local.h
 smtp_map11.o: ../../include/quote_flags.h
 smtp_map11.o: ../../include/recipient_list.h
@@ -283,6 +298,7 @@ smtp_proto.o: ../../include/dsn_buf.h
 smtp_proto.o: ../../include/dsn_mask.h
 smtp_proto.o: ../../include/ehlo_mask.h
 smtp_proto.o: ../../include/ext_prop.h
+smtp_proto.o: ../../include/header_body_checks.h
 smtp_proto.o: ../../include/header_opts.h
 smtp_proto.o: ../../include/htable.h
 smtp_proto.o: ../../include/iostuff.h
@@ -334,15 +350,17 @@ smtp_rcpt.o: ../../include/dict.h
 smtp_rcpt.o: ../../include/dsn.h
 smtp_rcpt.o: ../../include/dsn_buf.h
 smtp_rcpt.o: ../../include/dsn_mask.h
+smtp_rcpt.o: ../../include/header_body_checks.h
+smtp_rcpt.o: ../../include/header_opts.h
 smtp_rcpt.o: ../../include/htable.h
 smtp_rcpt.o: ../../include/maps.h
 smtp_rcpt.o: ../../include/match_list.h
 smtp_rcpt.o: ../../include/match_ops.h
+smtp_rcpt.o: ../../include/mime_state.h
 smtp_rcpt.o: ../../include/msg.h
 smtp_rcpt.o: ../../include/msg_stats.h
 smtp_rcpt.o: ../../include/mymalloc.h
 smtp_rcpt.o: ../../include/name_code.h
-smtp_rcpt.o: ../../include/name_mask.h
 smtp_rcpt.o: ../../include/recipient_list.h
 smtp_rcpt.o: ../../include/resolve_clnt.h
 smtp_rcpt.o: ../../include/scache.h
@@ -363,16 +381,18 @@ smtp_reuse.o: ../../include/deliver_request.h
 smtp_reuse.o: ../../include/dict.h
 smtp_reuse.o: ../../include/dsn.h
 smtp_reuse.o: ../../include/dsn_buf.h
+smtp_reuse.o: ../../include/header_body_checks.h
+smtp_reuse.o: ../../include/header_opts.h
 smtp_reuse.o: ../../include/htable.h
 smtp_reuse.o: ../../include/mail_params.h
 smtp_reuse.o: ../../include/maps.h
 smtp_reuse.o: ../../include/match_list.h
 smtp_reuse.o: ../../include/match_ops.h
+smtp_reuse.o: ../../include/mime_state.h
 smtp_reuse.o: ../../include/msg.h
 smtp_reuse.o: ../../include/msg_stats.h
 smtp_reuse.o: ../../include/mymalloc.h
 smtp_reuse.o: ../../include/name_code.h
-smtp_reuse.o: ../../include/name_mask.h
 smtp_reuse.o: ../../include/recipient_list.h
 smtp_reuse.o: ../../include/resolve_clnt.h
 smtp_reuse.o: ../../include/scache.h
@@ -387,23 +407,59 @@ smtp_reuse.o: ../../include/vstring.h
 smtp_reuse.o: smtp.h
 smtp_reuse.o: smtp_reuse.c
 smtp_reuse.o: smtp_reuse.h
+smtp_sasl_auth_cache.o: ../../include/argv.h
+smtp_sasl_auth_cache.o: ../../include/attr.h
+smtp_sasl_auth_cache.o: ../../include/base64_code.h
+smtp_sasl_auth_cache.o: ../../include/deliver_request.h
+smtp_sasl_auth_cache.o: ../../include/dict.h
+smtp_sasl_auth_cache.o: ../../include/dict_proxy.h
+smtp_sasl_auth_cache.o: ../../include/dsn.h
+smtp_sasl_auth_cache.o: ../../include/dsn_buf.h
+smtp_sasl_auth_cache.o: ../../include/dsn_util.h
+smtp_sasl_auth_cache.o: ../../include/header_body_checks.h
+smtp_sasl_auth_cache.o: ../../include/header_opts.h
+smtp_sasl_auth_cache.o: ../../include/htable.h
+smtp_sasl_auth_cache.o: ../../include/maps.h
+smtp_sasl_auth_cache.o: ../../include/match_list.h
+smtp_sasl_auth_cache.o: ../../include/match_ops.h
+smtp_sasl_auth_cache.o: ../../include/mime_state.h
+smtp_sasl_auth_cache.o: ../../include/msg.h
+smtp_sasl_auth_cache.o: ../../include/msg_stats.h
+smtp_sasl_auth_cache.o: ../../include/mymalloc.h
+smtp_sasl_auth_cache.o: ../../include/name_code.h
+smtp_sasl_auth_cache.o: ../../include/recipient_list.h
+smtp_sasl_auth_cache.o: ../../include/resolve_clnt.h
+smtp_sasl_auth_cache.o: ../../include/scache.h
+smtp_sasl_auth_cache.o: ../../include/string_list.h
+smtp_sasl_auth_cache.o: ../../include/stringops.h
+smtp_sasl_auth_cache.o: ../../include/sys_defs.h
+smtp_sasl_auth_cache.o: ../../include/tls.h
+smtp_sasl_auth_cache.o: ../../include/tok822.h
+smtp_sasl_auth_cache.o: ../../include/vbuf.h
+smtp_sasl_auth_cache.o: ../../include/vstream.h
+smtp_sasl_auth_cache.o: ../../include/vstring.h
+smtp_sasl_auth_cache.o: smtp.h
+smtp_sasl_auth_cache.o: smtp_sasl_auth_cache.c
+smtp_sasl_auth_cache.o: smtp_sasl_auth_cache.h
 smtp_sasl_glue.o: ../../include/argv.h
 smtp_sasl_glue.o: ../../include/attr.h
 smtp_sasl_glue.o: ../../include/deliver_request.h
 smtp_sasl_glue.o: ../../include/dict.h
 smtp_sasl_glue.o: ../../include/dsn.h
 smtp_sasl_glue.o: ../../include/dsn_buf.h
+smtp_sasl_glue.o: ../../include/header_body_checks.h
+smtp_sasl_glue.o: ../../include/header_opts.h
 smtp_sasl_glue.o: ../../include/htable.h
 smtp_sasl_glue.o: ../../include/mail_addr_find.h
 smtp_sasl_glue.o: ../../include/mail_params.h
 smtp_sasl_glue.o: ../../include/maps.h
 smtp_sasl_glue.o: ../../include/match_list.h
 smtp_sasl_glue.o: ../../include/match_ops.h
+smtp_sasl_glue.o: ../../include/mime_state.h
 smtp_sasl_glue.o: ../../include/msg.h
 smtp_sasl_glue.o: ../../include/msg_stats.h
 smtp_sasl_glue.o: ../../include/mymalloc.h
 smtp_sasl_glue.o: ../../include/name_code.h
-smtp_sasl_glue.o: ../../include/name_mask.h
 smtp_sasl_glue.o: ../../include/recipient_list.h
 smtp_sasl_glue.o: ../../include/resolve_clnt.h
 smtp_sasl_glue.o: ../../include/scache.h
@@ -419,6 +475,7 @@ smtp_sasl_glue.o: ../../include/vstring.h
 smtp_sasl_glue.o: ../../include/xsasl.h
 smtp_sasl_glue.o: smtp.h
 smtp_sasl_glue.o: smtp_sasl.h
+smtp_sasl_glue.o: smtp_sasl_auth_cache.h
 smtp_sasl_glue.o: smtp_sasl_glue.c
 smtp_sasl_proto.o: ../../include/argv.h
 smtp_sasl_proto.o: ../../include/attr.h
@@ -426,16 +483,18 @@ smtp_sasl_proto.o: ../../include/deliver_request.h
 smtp_sasl_proto.o: ../../include/dict.h
 smtp_sasl_proto.o: ../../include/dsn.h
 smtp_sasl_proto.o: ../../include/dsn_buf.h
+smtp_sasl_proto.o: ../../include/header_body_checks.h
+smtp_sasl_proto.o: ../../include/header_opts.h
 smtp_sasl_proto.o: ../../include/htable.h
 smtp_sasl_proto.o: ../../include/mail_params.h
 smtp_sasl_proto.o: ../../include/maps.h
 smtp_sasl_proto.o: ../../include/match_list.h
 smtp_sasl_proto.o: ../../include/match_ops.h
+smtp_sasl_proto.o: ../../include/mime_state.h
 smtp_sasl_proto.o: ../../include/msg.h
 smtp_sasl_proto.o: ../../include/msg_stats.h
 smtp_sasl_proto.o: ../../include/mymalloc.h
 smtp_sasl_proto.o: ../../include/name_code.h
-smtp_sasl_proto.o: ../../include/name_mask.h
 smtp_sasl_proto.o: ../../include/recipient_list.h
 smtp_sasl_proto.o: ../../include/resolve_clnt.h
 smtp_sasl_proto.o: ../../include/scache.h
@@ -457,6 +516,7 @@ smtp_session.o: ../../include/deliver_request.h
 smtp_session.o: ../../include/dict.h
 smtp_session.o: ../../include/dsn.h
 smtp_session.o: ../../include/dsn_buf.h
+smtp_session.o: ../../include/header_body_checks.h
 smtp_session.o: ../../include/header_opts.h
 smtp_session.o: ../../include/htable.h
 smtp_session.o: ../../include/mail_params.h
@@ -468,7 +528,6 @@ smtp_session.o: ../../include/msg.h
 smtp_session.o: ../../include/msg_stats.h
 smtp_session.o: ../../include/mymalloc.h
 smtp_session.o: ../../include/name_code.h
-smtp_session.o: ../../include/name_mask.h
 smtp_session.o: ../../include/recipient_list.h
 smtp_session.o: ../../include/resolve_clnt.h
 smtp_session.o: ../../include/scache.h
@@ -490,16 +549,18 @@ smtp_state.o: ../../include/deliver_request.h
 smtp_state.o: ../../include/dict.h
 smtp_state.o: ../../include/dsn.h
 smtp_state.o: ../../include/dsn_buf.h
+smtp_state.o: ../../include/header_body_checks.h
+smtp_state.o: ../../include/header_opts.h
 smtp_state.o: ../../include/htable.h
 smtp_state.o: ../../include/mail_params.h
 smtp_state.o: ../../include/maps.h
 smtp_state.o: ../../include/match_list.h
 smtp_state.o: ../../include/match_ops.h
+smtp_state.o: ../../include/mime_state.h
 smtp_state.o: ../../include/msg.h
 smtp_state.o: ../../include/msg_stats.h
 smtp_state.o: ../../include/mymalloc.h
 smtp_state.o: ../../include/name_code.h
-smtp_state.o: ../../include/name_mask.h
 smtp_state.o: ../../include/recipient_list.h
 smtp_state.o: ../../include/resolve_clnt.h
 smtp_state.o: ../../include/scache.h
@@ -522,11 +583,14 @@ smtp_trouble.o: ../../include/deliver_request.h
 smtp_trouble.o: ../../include/dict.h
 smtp_trouble.o: ../../include/dsn.h
 smtp_trouble.o: ../../include/dsn_buf.h
+smtp_trouble.o: ../../include/header_body_checks.h
+smtp_trouble.o: ../../include/header_opts.h
 smtp_trouble.o: ../../include/htable.h
 smtp_trouble.o: ../../include/mail_error.h
 smtp_trouble.o: ../../include/maps.h
 smtp_trouble.o: ../../include/match_list.h
 smtp_trouble.o: ../../include/match_ops.h
+smtp_trouble.o: ../../include/mime_state.h
 smtp_trouble.o: ../../include/msg.h
 smtp_trouble.o: ../../include/msg_stats.h
 smtp_trouble.o: ../../include/name_code.h
@@ -552,15 +616,17 @@ smtp_unalias.o: ../../include/dict.h
 smtp_unalias.o: ../../include/dns.h
 smtp_unalias.o: ../../include/dsn.h
 smtp_unalias.o: ../../include/dsn_buf.h
+smtp_unalias.o: ../../include/header_body_checks.h
+smtp_unalias.o: ../../include/header_opts.h
 smtp_unalias.o: ../../include/htable.h
 smtp_unalias.o: ../../include/maps.h
 smtp_unalias.o: ../../include/match_list.h
 smtp_unalias.o: ../../include/match_ops.h
+smtp_unalias.o: ../../include/mime_state.h
 smtp_unalias.o: ../../include/msg.h
 smtp_unalias.o: ../../include/msg_stats.h
 smtp_unalias.o: ../../include/myaddrinfo.h
 smtp_unalias.o: ../../include/name_code.h
-smtp_unalias.o: ../../include/name_mask.h
 smtp_unalias.o: ../../include/recipient_list.h
 smtp_unalias.o: ../../include/resolve_clnt.h
 smtp_unalias.o: ../../include/scache.h

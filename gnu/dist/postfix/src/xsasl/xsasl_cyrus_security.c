@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_security.c,v 1.1.1.1 2006/07/19 01:17:58 rpaulo Exp $	*/
+/*	$NetBSD: xsasl_cyrus_security.c,v 1.1.1.2 2008/06/22 14:04:17 christos Exp $	*/
 
 /*++
 /* NAME
@@ -62,7 +62,7 @@
  /*
   * SASL Security options.
   */
-static NAME_MASK xsasl_cyrus_sec_mask[] = {
+static const NAME_MASK xsasl_cyrus_sec_mask[] = {
     "noplaintext", SASL_SEC_NOPLAINTEXT,
     "noactive", SASL_SEC_NOACTIVE,
     "nodictionary", SASL_SEC_NODICTIONARY,

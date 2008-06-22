@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.c,v 1.1.1.6 2007/05/19 16:28:40 heas Exp $	*/
+/*	$NetBSD: smtpd_proxy.c,v 1.1.1.7 2008/06/22 14:03:41 christos Exp $	*/
 
 /*++
 /* NAME
@@ -180,6 +180,7 @@
 #define SMTPD_PROXY_XFORWARD_HELO  (1<<3)	/* client helo */
 #define SMTPD_PROXY_XFORWARD_IDENT (1<<4)	/* message identifier */
 #define SMTPD_PROXY_XFORWARD_DOMAIN (1<<5)	/* origin type */
+#define SMTPD_PROXY_XFORWARD_PORT  (1<<6)	/* client port */
 
  /*
   * SLMs.
@@ -256,15 +257,16 @@ int     smtpd_proxy_open(SMTPD_STATE *state, const char *service,
     VSTRING *buf;
     int     bad;
     char   *word;
-    static NAME_CODE xforward_features[] = {
+    static const NAME_CODE xforward_features[] = {
 	XFORWARD_NAME, SMTPD_PROXY_XFORWARD_NAME,
 	XFORWARD_ADDR, SMTPD_PROXY_XFORWARD_ADDR,
+	XFORWARD_PORT, SMTPD_PROXY_XFORWARD_PORT,
 	XFORWARD_PROTO, SMTPD_PROXY_XFORWARD_PROTO,
 	XFORWARD_HELO, SMTPD_PROXY_XFORWARD_HELO,
 	XFORWARD_DOMAIN, SMTPD_PROXY_XFORWARD_DOMAIN,
 	0, 0,
     };
-    CLEANUP_STAT_DETAIL *detail;
+    const CLEANUP_STAT_DETAIL *detail;
     int     (*connect_fn) (const char *, int, int);
     const char *endpoint;
 
@@ -370,6 +372,11 @@ int     smtpd_proxy_open(SMTPD_STATE *state, const char *service,
 				 IS_AVAIL_CLIENT_ADDR(FORWARD_ADDR(state)),
 				 FORWARD_ADDR(state));
 	if (bad == 0
+	    && (state->proxy_xforward_features & SMTPD_PROXY_XFORWARD_PORT))
+	    bad = smtpd_xforward(state, buf, XFORWARD_PORT,
+				 IS_AVAIL_CLIENT_PORT(FORWARD_PORT(state)),
+				 FORWARD_PORT(state));
+	if (bad == 0
 	    && (state->proxy_xforward_features & SMTPD_PROXY_XFORWARD_HELO))
 	    bad = smtpd_xforward(state, buf, XFORWARD_HELO,
 				 IS_AVAIL_CLIENT_HELO(FORWARD_HELO(state)),
@@ -455,7 +462,7 @@ int     smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
     int     last_char;
     int     err = 0;
     static VSTRING *buffer = 0;
-    CLEANUP_STAT_DETAIL *detail;
+    const CLEANUP_STAT_DETAIL *detail;
 
     /*
      * Errors first. Be prepared for delayed errors from the DATA phase.

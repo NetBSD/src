@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_proto.c,v 1.1.1.2 2006/07/19 01:17:53 rpaulo Exp $	*/
+/*	$NetBSD: inet_proto.c,v 1.1.1.3 2008/06/22 14:04:02 christos Exp $	*/
 
 /*++
 /* NAME
@@ -119,7 +119,7 @@ INET_PROTO_INFO *inet_proto_table = 0;
 #define INET_PROTO_MASK_IPV4	(1<<0)
 #define INET_PROTO_MASK_IPV6	(1<<1)
 
-static NAME_MASK proto_table[] = {
+static const NAME_MASK proto_table[] = {
 #ifdef HAS_IPV6
     INET_PROTO_NAME_ALL, INET_PROTO_MASK_IPV4 | INET_PROTO_MASK_IPV6,
     INET_PROTO_NAME_IPV6, INET_PROTO_MASK_IPV6,

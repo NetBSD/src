@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd_peer.c,v 1.1.1.6 2007/08/02 08:05:24 heas Exp $	*/
+/*	$NetBSD: qmqpd_peer.c,v 1.1.1.7 2008/06/22 14:03:18 christos Exp $	*/
 
 /*++
 /* NAME
@@ -26,7 +26,7 @@
 /* .IP addr
 /*	Printable representation of the client address.
 /* .IP namaddr
-/*	String of the form: "name[addr]".
+/*	String of the form: "name[addr]:port".
 /* .PP
 /*	qmqpd_peer_reset() releases memory allocated by qmqpd_peer_init().
 /* LICENSE
@@ -98,6 +98,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	state->addr = mystrdup(CLIENT_ADDR_UNKNOWN);
 	state->rfc_addr = mystrdup(CLIENT_ADDR_UNKNOWN);
 	state->addr_family = AF_UNSPEC;
+	state->port = mystrdup(CLIENT_PORT_UNKNOWN);
     }
 
     /*
@@ -116,6 +117,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 		 )) {
 	MAI_HOSTNAME_STR client_name;
 	MAI_HOSTADDR_STR client_addr;
+	MAI_SERVPORT_STR client_port;
 	int     aierr;
 	char   *colonp;
 
@@ -145,9 +147,10 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	 * Convert the client address to printable form.
 	 */
 	if ((aierr = sockaddr_to_hostaddr(sa, sa_length, &client_addr,
-					  (MAI_SERVPORT_STR *) 0, 0)) != 0)
-	    msg_fatal("%s: cannot convert client address to string: %s",
+					  &client_port, 0)) != 0)
+	    msg_fatal("%s: cannot convert client address/port to string: %s",
 		      myname, MAI_STRERROR(aierr));
+	state->port = mystrdup(client_port.buf);
 
 	/*
 	 * We convert IPv4-in-IPv6 address to 'true' IPv4 address early on,
@@ -268,13 +271,16 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 	state->addr = mystrdup("127.0.0.1");	/* XXX bogus. */
 	state->rfc_addr = mystrdup("127.0.0.1");/* XXX bogus. */
 	state->addr_family = AF_UNSPEC;
+	state->port = mystrdup("0");		/* XXX bogus. */
     }
 
     /*
-     * Do the name[addr] formatting for pretty reports.
+     * Do the name[addr]:port formatting for pretty reports.
      */
     state->namaddr =
-	concatenate(state->name, "[", state->addr, "]", (char *) 0);
+	concatenate(state->name, "[", state->addr, "]",
+		    var_qmqpd_client_port_log ? ":" : (char *) 0,
+		    state->port, (char *) 0);
 }
 
 /* qmqpd_peer_reset - destroy peer information */
@@ -285,4 +291,5 @@ void    qmqpd_peer_reset(QMQPD_STATE *state)
     myfree(state->addr);
     myfree(state->namaddr);
     myfree(state->rfc_addr);
+    myfree(state->port);
 }

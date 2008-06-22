@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_level.c,v 1.1.1.1 2006/07/19 01:17:40 rpaulo Exp $	*/
+/*	$NetBSD: tls_level.c,v 1.1.1.2 2008/06/22 14:03:16 christos Exp $	*/
 
 /*++
 /* NAME
@@ -19,8 +19,8 @@
 /*	because they evaluate their arguments only once.
 /*
 /*	tls_level_lookup() converts a TLS level from symbolic name
-/*	to internal form. The result is TLS_NOTFOUND for an unknown
-/*	level.
+/*	to internal form. When an unknown level is specified,
+/*	tls_level_lookup() logs no warning, and returns TLS_LEV_INVALID.
 /*
 /*	str_tls_level() converts a TLS level from internal form to
 /*	symbolic name. The result is a null pointer for an unknown
@@ -36,6 +36,9 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Victor Duchovni
+/*	Morgan Stanley
 /*--*/
 
 /* System library. */
@@ -52,11 +55,21 @@
 
 /* Application-specific. */
 
-NAME_CODE tls_level_table[] = {
+ /*
+  * Order is critical:
+  * 
+  * Levels > "encrypt" are expected to match a peer certificate.
+  * 
+  * Levels >= "verify" are expected to require a valid CA trust-chain
+  * 
+  * This forces "fingerprint" between "encrypt" and "verify".
+  */
+const NAME_CODE tls_level_table[] = {
     "none", TLS_LEV_NONE,
     "may", TLS_LEV_MAY,
     "encrypt", TLS_LEV_ENCRYPT,
+    "fingerprint", TLS_LEV_FPRINT,
     "verify", TLS_LEV_VERIFY,
     "secure", TLS_LEV_SECURE,
-    0, TLS_LEV_NOTFOUND,
+    0, TLS_LEV_INVALID,
 };

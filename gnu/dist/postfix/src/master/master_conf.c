@@ -1,4 +1,4 @@
-/*	$NetBSD: master_conf.c,v 1.1.1.4 2006/07/19 01:17:31 rpaulo Exp $	*/
+/*	$NetBSD: master_conf.c,v 1.1.1.5 2008/06/22 14:02:47 christos Exp $	*/
 
 /*++
 /* NAME
@@ -136,6 +136,7 @@ void    master_config(void)
 	    SWAP(char *, serv->ext_name, entry->ext_name);
 	    SWAP(char *, serv->path, entry->path);
 	    SWAP(ARGV *, serv->args, entry->args);
+	    SWAP(char *, serv->stress_param_val, entry->stress_param_val);
 	    master_restart_service(serv);
 	    free_master_ent(entry);
 	}

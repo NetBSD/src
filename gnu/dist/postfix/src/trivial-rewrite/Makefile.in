@@ -119,6 +119,7 @@ rewrite.o: trivial-rewrite.h
 transport.o: ../../include/argv.h
 transport.o: ../../include/attr.h
 transport.o: ../../include/dict.h
+transport.o: ../../include/events.h
 transport.o: ../../include/iostuff.h
 transport.o: ../../include/mail_params.h
 transport.o: ../../include/mail_proto.h

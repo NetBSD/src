@@ -8,6 +8,7 @@ CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG= 
 MAKES	= bool_table.h bool_vars.h int_table.h int_vars.h str_table.h \
 	str_vars.h time_table.h time_vars.h raw_table.h raw_vars.h
+AUTOS	= auto_table.h auto_vars.h
 PROG	= postconf
 SAMPLES	= ../../conf/main.cf.default
 INC_DIR	= ../../include
@@ -44,6 +45,9 @@ update: ../../bin/$(PROG) $(SAMPLES)
 $(MAKES): $(INC_DIR)/mail_params.h ../global/mail_params.c
 	$(AWK) -f extract.awk ../*/*.c
 
+$(AUTOS): auto.awk
+	$(AWK) -f auto.awk
+
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
 	mkdir printfck
@@ -56,7 +60,7 @@ lint:
 	lint $(DEFS) $(SRCS) $(LINTFIX)
 
 clean:
-	rm -f *.o *core $(PROG) $(TESTPROG) junk $(MAKES)
+	rm -f *.o *core $(PROG) $(TESTPROG) junk $(MAKES) $(AUTOS)
 	rm -rf printfck
 
 tidy:	clean

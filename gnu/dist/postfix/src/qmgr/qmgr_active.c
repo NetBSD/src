@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_active.c,v 1.1.1.8 2007/05/19 16:28:28 heas Exp $	*/
+/*	$NetBSD: qmgr_active.c,v 1.1.1.9 2008/06/22 14:03:05 christos Exp $	*/
 
 /*++
 /* NAME
@@ -132,8 +132,6 @@ static void qmgr_active_corrupt(const char *queue_id)
 	if (errno != ENOENT)
 	    msg_fatal("%s: save corrupt file queue %s id %s: %m",
 		      myname, MAIL_QUEUE_ACTIVE, queue_id);
-	msg_warn("%s: save corrupt file queue %s id %s: %m",
-		 myname, MAIL_QUEUE_ACTIVE, queue_id);
     } else {
 	msg_warn("saving corrupt file \"%s\" from queue \"%s\" to queue \"%s\"",
 		 queue_id, MAIL_QUEUE_ACTIVE, MAIL_QUEUE_CORRUPT);

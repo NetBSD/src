@@ -1,4 +1,4 @@
-/*	$NetBSD: trigger.h,v 1.1.1.3 2006/07/19 01:17:56 rpaulo Exp $	*/
+/*	$NetBSD: trigger.h,v 1.1.1.4 2008/06/22 14:04:10 christos Exp $	*/
 
 #ifndef _TRIGGER_H_INCLUDED_
 #define _TRIGGER_H_INCLUDED_
@@ -20,6 +20,7 @@ extern int unix_trigger(const char *, const char *, ssize_t, int);
 extern int inet_trigger(const char *, const char *, ssize_t, int);
 extern int fifo_trigger(const char *, const char *, ssize_t, int);
 extern int stream_trigger(const char *, const char *, ssize_t, int);
+extern int upass_trigger(const char *, const char *, ssize_t, int);
 
 /* LICENSE
 /* .ad

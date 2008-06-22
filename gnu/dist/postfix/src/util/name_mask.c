@@ -1,4 +1,4 @@
-/*	$NetBSD: name_mask.c,v 1.1.1.4 2006/07/19 01:17:54 rpaulo Exp $	*/
+/*	$NetBSD: name_mask.c,v 1.1.1.5 2008/06/22 14:04:06 christos Exp $	*/
 
 /*++
 /* NAME
@@ -10,23 +10,23 @@
 /*
 /*	int	name_mask(context, table, names)
 /*	const char *context;
-/*	NAME_MASK *table;
+/*	const NAME_MASK *table;
 /*	const char *names;
 /*
 /*	const char *str_name_mask(context, table, mask)
 /*	const char *context;
-/*	NAME_MASK *table;
+/*	const NAME_MASK *table;
 /*	int	mask;
 /*
 /*	int	name_mask_opt(context, table, names, flags)
 /*	const char *context;
-/*	NAME_MASK *table;
+/*	const NAME_MASK *table;
 /*	const char *names;
 /*	int	flags;
 /*
 /*	int	name_mask_delim_opt(context, table, names, delim, flags)
 /*	const char *context;
-/*	NAME_MASK *table;
+/*	const NAME_MASK *table;
 /*	const char *names;
 /*	const char *delim;
 /*	int	flags;
@@ -34,7 +34,7 @@
 /*	const char *str_name_mask_opt(buf, context, table, mask, flags)
 /*	VSTRING	*buf;
 /*	const char *context;
-/*	NAME_MASK *table;
+/*	const NAME_MASK *table;
 /*	int	mask;
 /*	int	flags;
 /* DESCRIPTION
@@ -131,14 +131,14 @@
 
 /* name_mask_delim_opt - compute mask corresponding to list of names */
 
-int     name_mask_delim_opt(const char *context, NAME_MASK *table,
+int     name_mask_delim_opt(const char *context, const NAME_MASK *table,
 		            const char *names, const char *delim, int flags)
 {
     const char *myname = "name_mask";
     char   *saved_names = mystrdup(names);
     char   *bp = saved_names;
     int     result = 0;
-    NAME_MASK *np;
+    const NAME_MASK *np;
     char   *name;
     int     (*lookup) (const char *, const char *);
 
@@ -179,11 +179,11 @@ int     name_mask_delim_opt(const char *context, NAME_MASK *table,
 /* str_name_mask_opt - mask to string */
 
 const char *str_name_mask_opt(VSTRING *buf, const char *context,
-			              NAME_MASK *table,
+			              const NAME_MASK *table,
 			              int mask, int flags)
 {
     const char *myname = "name_mask";
-    NAME_MASK *np;
+    const NAME_MASK *np;
     int     len;
     static VSTRING *my_buf = 0;
     int     delim = (flags & NAME_MASK_COMMA ? ',' :
@@ -232,7 +232,7 @@ const char *str_name_mask_opt(VSTRING *buf, const char *context,
 
 int     main(int argc, char **argv)
 {
-    static NAME_MASK table[] = {
+    static const NAME_MASK table[] = {
 	"zero", 1 << 0,
 	"one", 1 << 1,
 	"two", 1 << 2,

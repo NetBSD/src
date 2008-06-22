@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.c,v 1.1.1.11 2007/05/19 16:28:41 heas Exp $	*/
+/*	$NetBSD: trivial-rewrite.c,v 1.1.1.12 2008/06/22 14:03:45 christos Exp $	*/
 
 /*++
 /* NAME
@@ -92,6 +92,11 @@
 /* .IP "\fBresolve_numeric_domain (no)\fR"
 /*	Resolve "user@ipaddress" as "user@[ipaddress]", instead of
 /*	rejecting the address as invalid.
+/* .PP
+/*	Available with Postfix version 2.5 and later:
+/* .IP "\fBallow_min_user (no)\fR"
+/*	Allow a sender or recipient address to have `-' as the first
+/*	character.
 /* ADDRESS REWRITING CONTROLS
 /* .ad
 /* .fi
@@ -152,6 +157,11 @@
 /* .IP "\fBsender_dependent_relayhost_maps (empty)\fR"
 /*	A sender-dependent override for the global relayhost parameter
 /*	setting.
+/* .PP
+/*	Available in Postfix version 2.5 and later:
+/* .IP "\fBempty_address_relayhost_maps_lookup_key (<>)\fR"
+/*	The sender_dependent_relayhost_maps search string that will be
+/*	used instead of the null sender address.
 /* ADDRESS VERIFICATION CONTROLS
 /* .ad
 /* .fi
@@ -182,7 +192,7 @@
 /*	probes.
 /* .PP
 /*	Available in Postfix version 2.3 and later:
-/* .IP "\fBaddress_verify_sender_dependent_relayhost_maps (empty)\fR"
+/* .IP "\fBaddress_verify_sender_dependent_relayhost_maps ($sender_dependent_relayhost_maps)\fR"
 /*	Overrides the sender_dependent_relayhost_maps parameter setting for address
 /*	verification probes.
 /* MISCELLANEOUS CONTROLS
@@ -317,7 +327,9 @@ int     var_show_unk_rcpt_table;
 int     var_resolve_nulldom;
 char   *var_remote_rwr_domain;
 char   *var_snd_relay_maps;
+char   *var_null_relay_maps_key;
 int     var_resolve_num_dom;
+bool    var_allow_min_user;
 
  /*
   * Shadow personality for address verification.
@@ -366,7 +378,7 @@ RES_CONTEXT resolve_verify = {
   * This code detaches the trivial-rewrite process from the master, stops
   * accepting new clients, and handles established clients in the background,
   * asking them to reconnect the next time they send a request. The master
-  * create a new process that accepts connections. This is reasonably safe
+  * creates a new process that accepts connections. This is reasonably safe
   * because the number of trivial-rewrite server processes is small compared
   * to the number of trivial-rewrite client processes. The few extra
   * background processes should not make a difference in Postfix's footprint.
@@ -539,7 +551,7 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_STR_TABLE str_table[] = {
+    static const CONFIG_STR_TABLE str_table[] = {
 	VAR_TRANSPORT_MAPS, DEF_TRANSPORT_MAPS, &var_transport_maps, 0, 0,
 	VAR_LOCAL_TRANSPORT, DEF_LOCAL_TRANSPORT, &var_local_transport, 1, 0,
 	VAR_VIRT_TRANSPORT, DEF_VIRT_TRANSPORT, &var_virt_transport, 1, 0,
@@ -559,10 +571,11 @@ int     main(int argc, char **argv)
 	VAR_VRFY_RELAYHOST, DEF_VRFY_RELAYHOST, &var_vrfy_relayhost, 0, 0,
 	VAR_REM_RWR_DOMAIN, DEF_REM_RWR_DOMAIN, &var_remote_rwr_domain, 0, 0,
 	VAR_SND_RELAY_MAPS, DEF_SND_RELAY_MAPS, &var_snd_relay_maps, 0, 0,
+	VAR_NULL_RELAY_MAPS_KEY, DEF_NULL_RELAY_MAPS_KEY, &var_null_relay_maps_key, 1, 0,
 	VAR_VRFY_RELAY_MAPS, DEF_VRFY_RELAY_MAPS, &var_vrfy_relay_maps, 0, 0,
 	0,
     };
-    static CONFIG_BOOL_TABLE bool_table[] = {
+    static const CONFIG_BOOL_TABLE bool_table[] = {
 	VAR_SWAP_BANGPATH, DEF_SWAP_BANGPATH, &var_swap_bangpath,
 	VAR_APP_DOT_MYDOMAIN, DEF_APP_DOT_MYDOMAIN, &var_append_dot_mydomain,
 	VAR_APP_AT_MYORIGIN, DEF_APP_AT_MYORIGIN, &var_append_at_myorigin,
@@ -571,6 +584,7 @@ int     main(int argc, char **argv)
 	VAR_SHOW_UNK_RCPT_TABLE, DEF_SHOW_UNK_RCPT_TABLE, &var_show_unk_rcpt_table,
 	VAR_RESOLVE_NULLDOM, DEF_RESOLVE_NULLDOM, &var_resolve_nulldom,
 	VAR_RESOLVE_NUM_DOM, DEF_RESOLVE_NUM_DOM, &var_resolve_num_dom,
+	VAR_ALLOW_MIN_USER, DEF_ALLOW_MIN_USER, &var_allow_min_user,
 	0,
     };
 

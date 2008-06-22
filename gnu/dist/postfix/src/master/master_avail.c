@@ -1,4 +1,4 @@
-/*	$NetBSD: master_avail.c,v 1.1.1.3 2006/07/19 01:17:31 rpaulo Exp $	*/
+/*	$NetBSD: master_avail.c,v 1.1.1.4 2008/06/22 14:02:46 christos Exp $	*/
 
 /*++
 /* NAME
@@ -27,6 +27,10 @@
 /*	exceeded, a connection request is either handled by an existing
 /*	available process, or this module causes a new process to be
 /*	created to service the request.
+/*
+/*	When the service runs out of process slots, a warning is logged.
+/*	When the service is eligible for stress-mode operation, servers
+/*	are restarted and new servers are created with stress mode enabled.
 /*
 /*	master_avail_listen() ensures that someone monitors the service's
 /*	listen socket for connection requests (as long as resources
@@ -78,6 +82,7 @@
 static void master_avail_event(int event, char *context)
 {
     MASTER_SERV *serv = (MASTER_SERV *) context;
+    time_t  now;
     int     n;
 
     if (event == 0)				/* XXX Can this happen? */
@@ -86,6 +91,30 @@ static void master_avail_event(int event, char *context)
 	for (n = 0; n < serv->listen_fd_count; n++)
 	    event_disable_readwrite(serv->listen_fd[n]);
     } else {
+
+	/*
+	 * When all servers for a public internet service are busy, we start
+	 * creating server processes with "-o stress=yes" on the command
+	 * line, and keep creating such processes until the process count is
+	 * below the limit for at least 1000 seconds. This provides a minimal
+	 * solution that can be adopted into legacy and stable Postfix
+	 * releases.
+	 * 
+	 * This is not the right place to update serv->stress_param_val in
+	 * response to stress level changes. Doing so would would contaminate
+	 * the "postfix reload" code with stress management implementation
+	 * details, creating a source of future bugs. Instead, we update
+	 * simple counters or flags here, and use their values to determine
+	 * the proper serv->stress_param_val value when exec-ing a server
+	 * process.
+	 */
+	if (serv->stress_param_val != 0
+	    && !MASTER_LIMIT_OK(serv->max_proc, serv->total_proc + 1)) {
+	    now = event_time();
+	    if (serv->stress_expire_time < now)
+		master_restart_service(serv);
+	    serv->stress_expire_time = now + 1000;
+	}
 	master_spawn(serv);
     }
 }
@@ -122,6 +151,9 @@ void    master_avail_listen(MASTER_SERV *serv)
 		     serv->ext_name, serv->name, serv->max_proc);
 	    msg_warn("to avoid this condition, increase the process count "
 		     "in master.cf or reduce the service time per client");
+	    if (serv->stress_param_val)
+		msg_warn("see http://www.postfix.org/STRESS_README.html for "
+		      "examples of stress-adapting configuration settings");
 	}
     }
 }

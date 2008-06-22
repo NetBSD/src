@@ -1,4 +1,4 @@
-/*	$NetBSD: milter.h,v 1.1.1.3 2007/08/02 08:05:18 heas Exp $	*/
+/*	$NetBSD: milter.h,v 1.1.1.4 2008/06/22 14:02:50 christos Exp $	*/
 
 #ifndef _MILTER_H_INCLUDED_
 #define _MILTER_H_INCLUDED_
@@ -21,6 +21,11 @@
 #include <argv.h>
 
  /*
+  * Global library.
+  */
+#include <attr.h>
+
+ /*
   * Each Milter handle is an element of a null-terminated linked list. The
   * functions are virtual so that we can support multiple MTA-side Milter
   * implementations. The Sendmail 8 and Sendmail X Milter-side APIs are too
@@ -30,12 +35,13 @@ typedef struct MILTER {
     char   *name;			/* full name including transport */
     struct MILTER *next;		/* linkage */
     struct MILTERS *parent;		/* parent information */
+    struct MILTER_MACROS *macros;	/* private macros */
     const char *(*conn_event) (struct MILTER *, const char *, const char *, const char *, unsigned, ARGV *);
     const char *(*helo_event) (struct MILTER *, const char *, int, ARGV *);
     const char *(*mail_event) (struct MILTER *, const char **, ARGV *);
     const char *(*rcpt_event) (struct MILTER *, const char **, ARGV *);
     const char *(*data_event) (struct MILTER *, ARGV *);
-    const char *(*message) (struct MILTER *, VSTREAM *, off_t, ARGV *);
+    const char *(*message) (struct MILTER *, VSTREAM *, off_t, ARGV *, ARGV *);
     const char *(*unknown_event) (struct MILTER *, const char *, ARGV *);
     const char *(*other_event) (struct MILTER *);
     void    (*abort) (struct MILTER *);
@@ -49,42 +55,69 @@ extern MILTER *milter8_create(const char *, int, int, int, const char *, const c
 extern MILTER *milter8_receive(VSTREAM *, struct MILTERS *);
 
  /*
-  * A bunch of Milters.
+  * As of Sendmail 8.14 each milter can override the default macro list. If a
+  * Milter has its own macro list, a null member means use the global
+  * definition.
   */
-typedef struct MILTERS {
-    MILTER *milter_list;		/* linked list of Milters */
-    const char *(*mac_lookup) (const char *, void *);
-    void   *mac_context;		/* macro lookup context */
+typedef struct MILTER_MACROS {
     char   *conn_macros;		/* macros for connect event */
     char   *helo_macros;		/* macros for HELO/EHLO command */
     char   *mail_macros;		/* macros for MAIL FROM command */
     char   *rcpt_macros;		/* macros for RCPT TO command */
     char   *data_macros;		/* macros for DATA command */
+    char   *eoh_macros;			/* macros for end-of-headers */
     char   *eod_macros;			/* macros for END-OF-DATA command */
     char   *unk_macros;			/* macros for unknown command */
-    void   *chg_context;		/* context for queue file changes */
-    const char *(*add_header) (void *, char *, char *);
-    const char *(*upd_header) (void *, ssize_t, char *, char *);
-    const char *(*del_header) (void *, ssize_t, char *);
-    const char *(*ins_header) (void *, ssize_t, char *, char *);
-    const char *(*add_rcpt) (void *, char *);
-    const char *(*del_rcpt) (void *, char *);
-    const char *(*repl_body) (void *, int, VSTRING *);
-} MILTERS;
+} MILTER_MACROS;
 
+extern MILTER_MACROS *milter_macros_create(const char *, const char *,
+					         const char *, const char *,
+					         const char *, const char *,
+					        const char *, const char *);
+extern MILTER_MACROS *milter_macros_alloc(int);
+extern void milter_macros_free(MILTER_MACROS *);
+extern int milter_macros_print(ATTR_PRINT_MASTER_FN, VSTREAM *, int, void *);
+extern int milter_macros_scan(ATTR_SCAN_MASTER_FN, VSTREAM *, int, void *);
+
+#define MILTER_MACROS_ALLOC_ZERO	1	/* null pointer */
+#define MILTER_MACROS_ALLOC_EMPTY	2	/* mystrdup(""); */
+
+ /*
+  * A bunch of Milters.
+  */
 typedef const char *(*MILTER_MAC_LOOKUP_FN) (const char *, void *);
-typedef const char *(*MILTER_ADD_HEADER_FN) (void *, char *, char *);
-typedef const char *(*MILTER_EDIT_HEADER_FN) (void *, ssize_t, char *, char *);
-typedef const char *(*MILTER_DEL_HEADER_FN) (void *, ssize_t, char *);
-typedef const char *(*MILTER_EDIT_RCPT_FN) (void *, char *);
+typedef const char *(*MILTER_ADD_HEADER_FN) (void *, const char *, const char *, const char *);
+typedef const char *(*MILTER_EDIT_HEADER_FN) (void *, ssize_t, const char *, const char *, const char *);
+typedef const char *(*MILTER_DEL_HEADER_FN) (void *, ssize_t, const char *);
+typedef const char *(*MILTER_EDIT_RCPT_FN) (void *, const char *);
 typedef const char *(*MILTER_EDIT_BODY_FN) (void *, int, VSTRING *);
 
-extern MILTERS *milter_create(const char *, int, int, int,
-			              const char *, const char *,
-			              const char *, const char *,
-			              const char *, const char *,
-			              const char *, const char *,
-			              const char *);
+typedef struct MILTERS {
+    MILTER *milter_list;		/* linked list of Milters */
+    MILTER_MAC_LOOKUP_FN mac_lookup;
+    void   *mac_context;		/* macro lookup context */
+    struct MILTER_MACROS *macros;
+    void   *chg_context;		/* context for queue file changes */
+    MILTER_ADD_HEADER_FN add_header;
+    MILTER_EDIT_HEADER_FN upd_header;
+    MILTER_DEL_HEADER_FN del_header;
+    MILTER_EDIT_HEADER_FN ins_header;
+    MILTER_EDIT_RCPT_FN add_rcpt;
+    MILTER_EDIT_RCPT_FN del_rcpt;
+    MILTER_EDIT_BODY_FN repl_body;
+} MILTERS;
+
+#define milter_create(milter_names, conn_timeout, cmd_timeout, msg_timeout, \
+			protocol, def_action, conn_macros, helo_macros, \
+			mail_macros, rcpt_macros, data_macros, eoh_macros, \
+			eod_macros, unk_macros) \
+	milter_new(milter_names, conn_timeout, cmd_timeout, msg_timeout, \
+		    protocol, def_action, milter_macros_create(conn_macros, \
+		    helo_macros, mail_macros, rcpt_macros, data_macros, \
+		    eoh_macros, eod_macros, unk_macros))
+
+extern MILTERS *milter_new(const char *, int, int, int, const char *,
+			           const char *, MILTER_MACROS *);
 extern void milter_macro_callback(MILTERS *, MILTER_MAC_LOOKUP_FN, void *);
 extern void milter_edit_callback(MILTERS *milters, MILTER_ADD_HEADER_FN,
 		               MILTER_EDIT_HEADER_FN, MILTER_EDIT_HEADER_FN,
@@ -127,6 +160,7 @@ extern void milter_free(MILTERS *);
 #define S8_MAC_CLIENT_ADDR	"{client_addr}"
 #define S8_MAC_CLIENT_CONN	"{client_connections}"
 #define S8_MAC_CLIENT_NAME	"{client_name}"
+#define S8_MAC_CLIENT_PORT	"{client_port}"
 #define S8_MAC_CLIENT_PTR	"{client_ptr}"
 #define S8_MAC_CLIENT_RES	"{client_resolve}"
 

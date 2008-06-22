@@ -1,4 +1,4 @@
-/*	$NetBSD: master_proto.h,v 1.1.1.4 2005/08/18 21:07:41 rpaulo Exp $	*/
+/*	$NetBSD: master_proto.h,v 1.1.1.5 2008/06/22 14:02:48 christos Exp $	*/
 
 /*++
 /* NAME
@@ -17,7 +17,7 @@
 #define MASTER_XPORT_NAME_UNIX	"unix"	/* local IPC */
 #define MASTER_XPORT_NAME_FIFO	"fifo"	/* local IPC */
 #define MASTER_XPORT_NAME_INET	"inet"	/* non-local IPC */
-/*#define MASTER_XPORT_NAME_PASS	"pass"	/* local IPC */
+#define MASTER_XPORT_NAME_PASS	"pass"	/* local IPC */
 
  /*
   * Format of a status message sent by a child process to the process
