@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.7 2008/06/22 00:14:06 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.8 2008/06/22 09:42:56 ad Exp $	*/
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
@@ -12,17 +12,15 @@
  */
 static __inline isc_int32_t
 isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
-        isc_int32_t prev = val;
-	atomic_add_32((volatile uint32_t *)p, (uint32_t)val);
-	return prev;
+	return (isc_int32_t)atomic_add_32_nv((volatile uint32_t *)p,
+	    (uint32_t)val) - val;
 }
 
 #ifdef ISC_PLATFORM_HAVEXADDQ
 static __inline isc_int64_t
 isc_atomic_xaddq(isc_int64_t *p, isc_int64_t val) {
-        isc_int64_t prev = val;
-	atomic_add_64((volatile uint64_t *)p, (uint64_t)val);
-        return prev;
+	return (isc_int64_t)atomic_add_64((volatile uint64_t *)p,
+	    (uint64_t)val) - val;
 }
 #endif
 
