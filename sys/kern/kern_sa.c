@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.19 2008/06/08 14:54:57 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.20 2008/06/22 18:09:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.19 2008/06/08 14:54:57 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.20 2008/06/22 18:09:00 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2249,10 +2249,12 @@ sa_unblock_userret(struct lwp *l)
 		vp_lwp->l_flag |= LW_SA_UPCALL;
 		if (vp_lwp->l_flag & LW_SA_YIELD)
 			break;
+#if 0
 		if (vp_lwp->l_slptime > 1) {
 			void updatepri(struct lwp *);
 			updatepri(vp_lwp);
 		}
+#endif
 		vp_lwp->l_slptime = 0;
 		if (vp_lwp->l_flag & LW_INMEM) {
 			if (vp_lwp->l_cpu == curcpu())
