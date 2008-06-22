@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_scan_plain.c,v 1.1.1.5 2007/05/19 16:28:43 heas Exp $	*/
+/*	$NetBSD: attr_scan_plain.c,v 1.1.1.6 2008/06/22 14:03:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -364,8 +364,8 @@ int     attr_vscan_plain(VSTREAM *fp, int flags, va_list ap)
 		    && strcmp(wanted_name, STR(name_buf)) == 0))
 		break;
 	    if ((flags & ATTR_FLAG_EXTRA) != 0) {
-		msg_warn("unexpected attribute %s in input from %s",
-			 STR(name_buf), VSTREAM_PATH(fp));
+		msg_warn("unexpected attribute %s from %s (expecting: %s)",
+			 STR(name_buf), VSTREAM_PATH(fp), wanted_name);
 		return (conversions);
 	    }
 

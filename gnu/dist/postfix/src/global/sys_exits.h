@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_exits.h,v 1.1.1.3 2006/07/19 01:17:29 rpaulo Exp $	*/
+/*	$NetBSD: sys_exits.h,v 1.1.1.4 2008/06/22 14:02:42 christos Exp $	*/
 
 #ifndef _SYS_EXITS_H_INCLUDED_
 #define _SYS_EXITS_H_INCLUDED_
@@ -23,7 +23,7 @@ typedef struct {
 } SYS_EXITS_DETAIL;
 
 extern const char *sys_exits_strerror(int);
-extern SYS_EXITS_DETAIL *sys_exits_detail(int);
+extern const SYS_EXITS_DETAIL *sys_exits_detail(int);
 extern int sys_exits_softerror(int);
 
 #define SYS_EXITS_CODE(n) ((n) >= EX__BASE && (n) <= EX__MAX)

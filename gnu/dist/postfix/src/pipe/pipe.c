@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.c,v 1.1.1.10 2007/05/19 16:28:25 heas Exp $	*/
+/*	$NetBSD: pipe.c,v 1.1.1.11 2008/06/22 14:03:01 christos Exp $	*/
 
 /*++
 /* NAME
@@ -25,9 +25,11 @@
 /* SINGLE-RECIPIENT DELIVERY
 /* .ad
 /* .fi
-/*	Some external commands cannot handle more than one recipient
-/*	per delivery request. Examples of such transports are pagers
-/*	or fax machines.
+/*	Some destinations cannot handle more than one recipient per
+/*	delivery request. Examples are pagers or fax machines.
+/*	In addition, multi-recipient delivery is undesirable when
+/*	prepending a \fBDelivered-to:\fR or \fBX-Original-To:\fR
+/*	message header.
 /*
 /*	To prevent Postfix from sending multiple recipients per delivery
 /*	request, specify
@@ -65,7 +67,7 @@
 /*	\fB\er\en\fR or \fB\en\fR. The usual C-style backslash escape
 /*	sequences are recognized: \fB\ea \eb \ef \en \er \et \ev
 /*	\e\fIddd\fR (up to three octal digits) and \fB\e\e\fR.
-/* .IP "\fBflags=BDFORhqu.>\fR (optional)"
+/* .IP "\fBflags=BDFORXhqu.>\fR (optional)"
 /*	Optional message processing flags. By default, a message is
 /*	copied unchanged.
 /* .RS
@@ -76,7 +78,14 @@
 /* .IP \fBD\fR
 /*	Prepend a "\fBDelivered-To: \fIrecipient\fR" message header with the
 /*	envelope recipient address. Note: for this to work, the
-/*	\fItransport\fB_destination_recipient_limit\fR must be 1.
+/*	\fItransport\fB_destination_recipient_limit\fR must be 1
+/*	(see SINGLE-RECIPIENT DELIVERY above for details).
+/* .sp
+/*	The \fBD\fR flag also enforces loop detection (Postfix 2.5 and later):
+/*	if a message already contains a \fBDelivered-To:\fR header
+/*	with the same recipient address, then the message is
+/*	returned as undeliverable. The address comparison is case
+/*	insensitive.
 /* .sp
 /*	This feature is available as of Postfix 2.0.
 /* .IP \fBF\fR
@@ -86,19 +95,31 @@
 /* .IP \fBO\fR
 /*	Prepend an "\fBX-Original-To: \fIrecipient\fR" message header
 /*	with the recipient address as given to Postfix. Note: for this to
-/*	work, the \fItransport\fB_destination_recipient_limit\fR must be 1.
+/*	work, the \fItransport\fB_destination_recipient_limit\fR must be 1
+/*	(see SINGLE-RECIPIENT DELIVERY above for details).
 /* .sp
 /*	This feature is available as of Postfix 2.0.
 /* .IP \fBR\fR
 /*	Prepend a \fBReturn-Path:\fR message header with the envelope sender
 /*	address.
+/* .IP \fBX\fR
+/*	Indicate that the external command performs final delivery.
+/*	This flag affects the status reported in "success" DSN
+/*	(delivery status notification) messages, and changes it
+/*	from "relayed" into "delivered".
+/* .sp
+/*	This feature is available as of Postfix 2.5.
 /* .IP \fBh\fR
-/*	Fold the command-line \fB$recipient\fR domain name and \fB$nexthop\fR
-/*	host name to lower case.
+/*	Fold the command-line \fB$original_recipient\fR and
+/*	\fB$recipient\fR address domain part
+/*	(text to the right of the right-most \fB@\fR character) to
+/*	lower case; fold the entire command-line \fB$domain\fR and
+/*	\fB$nexthop\fR host or domain information to lower case.
 /*	This is recommended for delivery via \fBUUCP\fR.
 /* .IP \fBq\fR
 /*	Quote white space and other special characters in the command-line
-/*	\fB$sender\fR and \fB$recipient\fR address localparts (text to the
+/*	\fB$sender\fR, \fB$original_recipient\fR and \fB$recipient\fR
+/*	address localparts (text to the
 /*	left of the right-most \fB@\fR character), according to an 8-bit
 /*	transparent version of RFC 822.
 /*	This is recommended for delivery via \fBUUCP\fR or \fBBSMTP\fR.
@@ -110,7 +131,8 @@
 /*	address information from the \fB$user\fR, \fB$extension\fR or
 /*	\fB$mailbox\fR command-line macros.
 /* .IP \fBu\fR
-/*	Fold the command-line \fB$recipient\fR address localpart (text to
+/*	Fold the command-line \fB$original_recipient\fR and
+/*	\fB$recipient\fR address localpart (text to
 /*	the left of the right-most \fB@\fR character) to lower case.
 /*	This is recommended for delivery via \fBUUCP\fR.
 /* .IP \fB.\fR
@@ -151,10 +173,10 @@
 /*	    command -f $sender -- $recipient (\fIgood\fR)
 /* .fi
 /* .IP
-/*	This feature is available with Postfix 2.3 and later.
+/*	This feature is available as of Postfix 2.3.
 /* .IP "\fBsize\fR=\fIsize_limit\fR (optional)"
-/*	Messages greater in size than this limit (in bytes) will
-/*	be returned to the sender as undeliverable.
+/*	Don't deliver messages that exceed this size limit (in
+/*	bytes); return them to the sender instead.
 /* .IP "\fBuser\fR=\fIusername\fR (required)"
 /* .IP "\fBuser\fR=\fIusername\fR:\fIgroupname\fR"
 /*	Execute the external command with the rights of the
@@ -189,10 +211,22 @@
 /*	This macro expands to the remote client hostname.
 /* .sp
 /*	This is available in Postfix 2.2 and later.
+/* .IP \fB${\fBclient_port\fR}\fR
+/*	This macro expands to the remote client TCP port number.
+/* .sp
+/*	This is available in Postfix 2.5 and later.
 /* .IP \fB${\fBclient_protocol\fR}\fR
 /*	This macro expands to the remote client protocol.
 /* .sp
 /*	This is available in Postfix 2.2 and later.
+/* .IP \fB${\fBdomain\fR}\fR
+/*	This macro expands to the domain portion of the recipient
+/*	address.  For example, with an address \fIuser+foo@domain\fR
+/*	the domain is \fIdomain\fR.
+/* .sp
+/*	This information is modified by the \fBh\fR flag for case folding.
+/* .sp
+/*	This is available in Postfix 2.5 and later.
 /* .IP \fB${\fBextension\fR}\fR
 /*	This macro expands to the extension part of a recipient address.
 /*	For example, with an address \fIuser+foo@domain\fR the extension is
@@ -215,6 +249,18 @@
 /*	This macro expands to the next-hop hostname.
 /* .sp
 /*	This information is modified by the \fBh\fR flag for case folding.
+/* .IP \fB${\fBoriginal_recipient\fR}\fR
+/*	This macro expands to the complete recipient address before any
+/*	address rewriting or aliasing.
+/* .sp
+/*	A command-line argument that contains
+/*	\fB${\fBoriginal_recipient\fR}\fR expands to as many
+/*	command-line arguments as there are recipients.
+/* .sp
+/*	This information is modified by the \fBhqu\fR flags for quoting
+/*	and case folding.
+/* .sp
+/*	This feature is available in Postfix 2.5 and later.
 /* .IP \fB${\fBrecipient\fR}\fR
 /*	This macro expands to the complete recipient address.
 /* .sp
@@ -231,7 +277,7 @@
 /*	This is available in Postfix 2.2 and later.
 /* .IP \fB${\fBsasl_sender\fR}\fR
 /*	This macro expands to the SASL sender name (i.e. the original
-/*	submitter as per RFC 2554) used during the reception of the message.
+/*	submitter as per RFC 4954) used during the reception of the message.
 /* .sp
 /*	This is available in Postfix 2.2 and later.
 /* .IP \fB${\fBsasl_username\fR}\fR
@@ -422,6 +468,8 @@
 #include <dsn_util.h>
 #include <dsn_buf.h>
 #include <sys_exits.h>
+#include <delivered_hdr.h>
+#include <fold_addr.h>
 
 /* Single server skeleton. */
 
@@ -439,13 +487,16 @@
 #define PIPE_DICT_TABLE		"pipe_command"	/* table name */
 #define PIPE_DICT_NEXTHOP	"nexthop"	/* key */
 #define PIPE_DICT_RCPT		"recipient"	/* key */
+#define PIPE_DICT_ORIG_RCPT	"original_recipient"	/* key */
 #define PIPE_DICT_SENDER	"sender"/* key */
 #define PIPE_DICT_USER		"user"	/* key */
 #define PIPE_DICT_EXTENSION	"extension"	/* key */
 #define PIPE_DICT_MAILBOX	"mailbox"	/* key */
+#define PIPE_DICT_DOMAIN	"domain"/* key */
 #define PIPE_DICT_SIZE		"size"	/* key */
 #define PIPE_DICT_CLIENT_ADDR	"client_address"	/* key */
 #define PIPE_DICT_CLIENT_NAME	"client_hostname"	/* key */
+#define PIPE_DICT_CLIENT_PORT	"client_port"	/* key */
 #define PIPE_DICT_CLIENT_PROTO	"client_protocol"	/* key */
 #define PIPE_DICT_CLIENT_HELO	"client_helo"	/* key */
 #define PIPE_DICT_SASL_METHOD	"sasl_method"	/* key */
@@ -460,16 +511,22 @@
 #define PIPE_FLAG_USER		(1<<1)
 #define PIPE_FLAG_EXTENSION	(1<<2)
 #define PIPE_FLAG_MAILBOX	(1<<3)
+#define PIPE_FLAG_DOMAIN	(1<<4)
+#define PIPE_FLAG_ORIG_RCPT	(1<<5)
 
  /*
   * Additional flags. These are colocated with mail_copy() flags. Allow some
   * space for extension of the mail_copy() interface.
   */
-#define PIPE_OPT_FOLD_USER	(1<<16)
-#define PIPE_OPT_FOLD_HOST	(1<<17)
-#define PIPE_OPT_QUOTE_LOCAL	(1<<18)
+#define PIPE_OPT_FOLD_BASE	(16)
+#define PIPE_OPT_FOLD_USER	(FOLD_ADDR_USER << PIPE_OPT_FOLD_BASE)
+#define PIPE_OPT_FOLD_HOST	(FOLD_ADDR_HOST << PIPE_OPT_FOLD_BASE)
+#define PIPE_OPT_QUOTE_LOCAL	(1 << (PIPE_OPT_FOLD_BASE + 2))
+#define PIPE_OPT_FINAL_DELIVERY	(1 << (PIPE_OPT_FOLD_BASE + 3))
 
-#define PIPE_OPT_FOLD_FLAGS	(PIPE_OPT_FOLD_USER | PIPE_OPT_FOLD_HOST)
+#define PIPE_OPT_FOLD_ALL	(FOLD_ADDR_ALL << PIPE_OPT_FOLD_BASE)
+#define PIPE_OPT_FOLD_FLAGS(f) \
+	(((f) & PIPE_OPT_FOLD_ALL) >> PIPE_OPT_FOLD_BASE)
 
  /*
   * Tunable parameters. Values are taken from the config file, after
@@ -529,13 +586,16 @@ static int parse_callback(int type, VSTRING *buf, char *context)
     static struct cmd_flags cmd_flags[] = {
 	PIPE_DICT_NEXTHOP, 0,
 	PIPE_DICT_RCPT, PIPE_FLAG_RCPT,
+	PIPE_DICT_ORIG_RCPT, PIPE_FLAG_ORIG_RCPT,
 	PIPE_DICT_SENDER, 0,
 	PIPE_DICT_USER, PIPE_FLAG_USER,
 	PIPE_DICT_EXTENSION, PIPE_FLAG_EXTENSION,
 	PIPE_DICT_MAILBOX, PIPE_FLAG_MAILBOX,
+	PIPE_DICT_DOMAIN, PIPE_FLAG_DOMAIN,
 	PIPE_DICT_SIZE, 0,
 	PIPE_DICT_CLIENT_ADDR, 0,
 	PIPE_DICT_CLIENT_NAME, 0,
+	PIPE_DICT_CLIENT_PORT, 0,
 	PIPE_DICT_CLIENT_PROTO, 0,
 	PIPE_DICT_CLIENT_HELO, 0,
 	PIPE_DICT_SASL_METHOD, 0,
@@ -568,7 +628,6 @@ static int parse_callback(int type, VSTRING *buf, char *context)
 
 static void morph_recipient(VSTRING *buf, const char *address, int flags)
 {
-    char   *cp;
 
     /*
      * Quote the recipient address as appropriate.
@@ -581,23 +640,8 @@ static void morph_recipient(VSTRING *buf, const char *address, int flags)
     /*
      * Fold the recipient address as appropriate.
      */
-    switch (flags & PIPE_OPT_FOLD_FLAGS) {
-    case PIPE_OPT_FOLD_HOST:
-	if ((cp = strrchr(STR(buf), '@')) != 0)
-	    lowercase(cp + 1);
-	break;
-    case PIPE_OPT_FOLD_USER:
-	if ((cp = strrchr(STR(buf), '@')) != 0) {
-	    *cp = 0;
-	    lowercase(STR(buf));
-	    *cp = '@';
-	    break;
-	}
-	/* FALLTHROUGH */
-    case PIPE_OPT_FOLD_USER | PIPE_OPT_FOLD_HOST:
-	lowercase(STR(buf));
-	break;
-    }
+    if (flags & PIPE_OPT_FOLD_ALL)
+	fold_addr(STR(buf), PIPE_OPT_FOLD_FLAGS(flags));
 }
 
 /* expand_argv - expand macros in the argument vector */
@@ -611,6 +655,7 @@ static ARGV *expand_argv(const char *service, char **argv,
     PIPE_STATE state;
     int     i;
     char   *ext;
+    char   *dom;
 
     /*
      * This appears to be simple operation (replace $name by its expansion).
@@ -648,6 +693,14 @@ static ARGV *expand_argv(const char *service, char **argv,
 		}
 
 		/*
+		 * This argument contains $original_recipient.
+		 */
+		if (state.expand_flag & PIPE_FLAG_ORIG_RCPT) {
+		    morph_recipient(buf, rcpt_list->info[i].orig_addr, flags);
+		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_ORIG_RCPT, STR(buf));
+		}
+
+		/*
 		 * This argument contains $user. Extract the plain user name.
 		 * Either anything to the left of the extension delimiter or,
 		 * in absence of the latter, anything to the left of the
@@ -661,7 +714,7 @@ static ARGV *expand_argv(const char *service, char **argv,
 		 */
 		if (state.expand_flag & PIPE_FLAG_USER) {
 		    morph_recipient(buf, rcpt_list->info[i].address,
-				    flags & PIPE_OPT_FOLD_FLAGS);
+				    flags & PIPE_OPT_FOLD_ALL);
 		    if (split_at_right(STR(buf), '@') == 0)
 			msg_warn("no @ in recipient address: %s",
 				 rcpt_list->info[i].address);
@@ -679,7 +732,7 @@ static ARGV *expand_argv(const char *service, char **argv,
 		 */
 		if (state.expand_flag & PIPE_FLAG_EXTENSION) {
 		    morph_recipient(buf, rcpt_list->info[i].address,
-				    flags & PIPE_OPT_FOLD_FLAGS);
+				    flags & PIPE_OPT_FOLD_ALL);
 		    if (split_at_right(STR(buf), '@') == 0)
 			msg_warn("no @ in recipient address: %s",
 				 rcpt_list->info[i].address);
@@ -695,11 +748,27 @@ static ARGV *expand_argv(const char *service, char **argv,
 		 */
 		if (state.expand_flag & PIPE_FLAG_MAILBOX) {
 		    morph_recipient(buf, rcpt_list->info[i].address,
-				    flags & PIPE_OPT_FOLD_FLAGS);
+				    flags & PIPE_OPT_FOLD_ALL);
 		    if (split_at_right(STR(buf), '@') == 0)
 			msg_warn("no @ in recipient address: %s",
 				 rcpt_list->info[i].address);
 		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_MAILBOX, STR(buf));
+		}
+
+		/*
+		 * This argument contains $domain. Extract the domain name:
+		 * anything to the right of the rightmost @.
+		 */
+		if (state.expand_flag & PIPE_FLAG_DOMAIN) {
+		    morph_recipient(buf, rcpt_list->info[i].address,
+				    flags & PIPE_OPT_FOLD_ALL);
+		    dom = split_at_right(STR(buf), '@');
+		    if (dom == 0) {
+			msg_warn("no @ in recipient address: %s",
+				 rcpt_list->info[i].address);
+			dom = "";		/* insert null arg */
+		    }
+		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_DOMAIN, dom);
 		}
 
 		/*
@@ -724,7 +793,7 @@ static void get_service_params(PIPE_PARAMS *config, char *service)
      * Figure out the command time limit for this transport.
      */
     config->time_limit =
-	get_mail_conf_time2(service, "_time_limit", var_command_maxtime, 's', 1, 0);
+	get_mail_conf_time2(service, _MAXTIME, var_command_maxtime, 's', 1, 0);
 
     /*
      * Give the poor tester a clue of what is going on.
@@ -783,6 +852,9 @@ static void get_service_attr(PIPE_ATTR *attr, char **argv)
 		    break;
 		case 'R':
 		    attr->flags |= MAIL_COPY_RETURN_PATH;
+		    break;
+		case 'X':
+		    attr->flags |= PIPE_OPT_FINAL_DELIVERY;
 		    break;
 		case '.':
 		    attr->flags |= MAIL_COPY_DOT;
@@ -850,7 +922,7 @@ static void get_service_attr(PIPE_ATTR *attr, char **argv)
 	/*
 	 * null_sender=string
 	 */
-	else if (strncasecmp("null_sender=", *argv, sizeof("eol=") - 1) == 0) {
+	else if (strncasecmp("null_sender=", *argv, sizeof("null_sender=") - 1) == 0) {
 	    vstring_strcpy(attr->null_sender, *argv + sizeof("null_sender=") - 1);
 	}
 
@@ -896,6 +968,9 @@ static void get_service_attr(PIPE_ATTR *attr, char **argv)
     if (attr->gid == var_owner_gid)
 	msg_fatal("user= command-line attribute specifies mail system owner %s group id %ld",
 		  var_mail_owner, (long) attr->gid);
+    if (attr->gid == var_sgid_gid)
+	msg_fatal("user= command-line attribute specifies mail system %s group id %ld",
+		  var_sgid_group, (long) attr->gid);
 
     /*
      * Give the poor tester a clue of what is going on.
@@ -909,7 +984,7 @@ static void get_service_attr(PIPE_ATTR *attr, char **argv)
 /* eval_command_status - do something with command completion status */
 
 static int eval_command_status(int command_status, char *service,
-			             DELIVER_REQUEST *request, VSTREAM *src,
+			          DELIVER_REQUEST *request, PIPE_ATTR *attr,
 			               DSN_BUF *why)
 {
     RECIPIENT *rcpt;
@@ -923,7 +998,8 @@ static int eval_command_status(int command_status, char *service,
      */
     switch (command_status) {
     case PIPE_STAT_OK:
-	dsb_update(why, "2.0.0", "relayed", DSB_SKIP_RMTA, DSB_SKIP_REPLY,
+	dsb_update(why, "2.0.0", (attr->flags & PIPE_OPT_FINAL_DELIVERY) ?
+		   "delivered" : "relayed", DSB_SKIP_RMTA, DSB_SKIP_REPLY,
 		   "delivered via %s service", service);
 	(void) DSN_FROM_DSN_BUF(why);
 	for (n = 0; n < request->rcpt_list.len; n++) {
@@ -932,7 +1008,7 @@ static int eval_command_status(int command_status, char *service,
 			  request->queue_id, &request->msg_stats, rcpt,
 			  service, &why->dsn);
 	    if (status == 0 && (request->flags & DEL_REQ_FLAG_SUCCESS))
-		deliver_completed(src, rcpt->offset);
+		deliver_completed(request->fp, rcpt->offset);
 	    result |= status;
 	}
 	break;
@@ -947,7 +1023,7 @@ static int eval_command_status(int command_status, char *service,
 				       &request->msg_stats, rcpt,
 				       service, &why->dsn);
 		if (status == 0)
-		    deliver_completed(src, rcpt->offset);
+		    deliver_completed(request->fp, rcpt->offset);
 		result |= status;
 	    }
 	} else {
@@ -1017,7 +1093,7 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
     if ((attr.flags & MAIL_COPY_DELIVERED) && (rcpt_list->len > 1)) {
 	dsb_simple(why, "4.3.5", "mail system configuration error");
 	deliver_status = eval_command_status(PIPE_STAT_DEFER, service,
-					     request, request->fp, why);
+					     request, &attr, why);
 	msg_warn("pipe flag `D' requires %s_destination_recipient_limit = 1",
 		 service);
 	DELIVER_MSG_CLEANUP();
@@ -1030,7 +1106,7 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
     if ((attr.flags & MAIL_COPY_ORIG_RCPT) && (rcpt_list->len > 1)) {
 	dsb_simple(why, "4.3.5", "mail system configuration error");
 	deliver_status = eval_command_status(PIPE_STAT_DEFER, service,
-					     request, request->fp, why);
+					     request, &attr, why);
 	msg_warn("pipe flag `O' requires %s_destination_recipient_limit = 1",
 		 service);
 	DELIVER_MSG_CLEANUP();
@@ -1046,7 +1122,7 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
 		     myname, (long) attr.size_limit, request->data_size);
 	dsb_simple(why, "5.2.3", "message too large");
 	deliver_status = eval_command_status(PIPE_STAT_BOUNCE, service,
-					     request, request->fp, why);
+					     request, &attr, why);
 	DELIVER_MSG_CLEANUP();
 	return (deliver_status);
     }
@@ -1073,6 +1149,33 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
 	}
 	DELIVER_MSG_CLEANUP();
 	return (deliver_status);
+    }
+
+    /*
+     * Report mail delivery loops. By definition, this requires
+     * single-recipient delivery. Don't silently lose recipients.
+     */
+    if (attr.flags & MAIL_COPY_DELIVERED) {
+	DELIVERED_HDR_INFO *info;
+	RECIPIENT *rcpt;
+	int     loop_found;
+
+	if (request->rcpt_list.len > 1)
+	    msg_panic("%s: delivered-to enabled with multi-recipient request",
+		      myname);
+	info = delivered_hdr_init(request->fp, request->data_offset,
+				  FOLD_ADDR_ALL);
+	rcpt = request->rcpt_list.info;
+	loop_found = delivered_hdr_find(info, rcpt->address);
+	delivered_hdr_free(info);
+	if (loop_found) {
+	    dsb_simple(why, "5.4.6", "mail forwarding loop for %s",
+		       rcpt->address);
+	    deliver_status = eval_command_status(PIPE_STAT_BOUNCE, service,
+						 request, &attr, why);
+	    DELIVER_MSG_CLEANUP();
+	    return (deliver_status);
+	}
     }
 
     /*
@@ -1108,6 +1211,8 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
 		request->client_helo);
     dict_update(PIPE_DICT_TABLE, PIPE_DICT_CLIENT_NAME,
 		request->client_name);
+    dict_update(PIPE_DICT_TABLE, PIPE_DICT_CLIENT_PORT,
+		request->client_port);
     dict_update(PIPE_DICT_TABLE, PIPE_DICT_CLIENT_PROTO,
 		request->client_proto);
     dict_update(PIPE_DICT_TABLE, PIPE_DICT_SASL_METHOD,
@@ -1122,7 +1227,7 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
 				     rcpt_list, attr.flags)) == 0) {
 	dsb_simple(why, "4.3.5", "mail system configuration error");
 	deliver_status = eval_command_status(PIPE_STAT_DEFER, service,
-					     request, request->fp, why);
+					     request, &attr, why);
 	DELIVER_MSG_CLEANUP();
 	return (deliver_status);
     }
@@ -1145,7 +1250,7 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
     argv_free(export_env);
 
     deliver_status = eval_command_status(command_status, service, request,
-					 request->fp, why);
+					 &attr, why);
 
     /*
      * Clean up.
@@ -1208,7 +1313,7 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_COMMAND_MAXTIME, DEF_COMMAND_MAXTIME, &var_command_maxtime, 1, 0,
 	0,
     };

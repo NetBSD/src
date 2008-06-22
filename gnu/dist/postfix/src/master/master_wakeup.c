@@ -1,4 +1,4 @@
-/*	$NetBSD: master_wakeup.c,v 1.1.1.5 2006/07/19 01:17:32 rpaulo Exp $	*/
+/*	$NetBSD: master_wakeup.c,v 1.1.1.6 2008/06/22 14:02:49 christos Exp $	*/
 
 /*++
 /* NAME
@@ -38,6 +38,7 @@
 /*	inet_trigger(3), internet-domain client
 /*	unix_trigger(3), unix-domain client
 /*	fifo_trigger(3), fifo client
+/*	upass_trigger(3), file descriptor passing client
 /* LICENSE
 /* .ad
 /* .fi
@@ -108,8 +109,7 @@ static void master_wakeup_timer_event(int unused_event, char *context)
 	    break;
 #ifdef MASTER_SERV_TYPE_PASS
 	case MASTER_SERV_TYPE_PASS:
-	    /* Can't send data to a service that expects descriptors. */
-	    status = 0;
+	    status = PASS_TRIGGER(serv->name, &wakeup, sizeof(wakeup), BRIEFLY);
 	    break;
 #endif
 

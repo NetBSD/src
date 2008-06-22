@@ -1,9 +1,9 @@
 SHELL	= /bin/sh
-SRCS	= alias.c command.c delivered.c dotforward.c file.c forward.c \
+SRCS	= alias.c command.c dotforward.c file.c forward.c \
 	include.c indirect.c local.c mailbox.c recipient.c resolve.c token.c \
 	deliver_attr.c maildir.c biff_notify.c unknown.c \
 	local_expand.c
-OBJS	= alias.o command.o delivered.o dotforward.o file.o forward.o \
+OBJS	= alias.o command.o dotforward.o file.o forward.o \
 	include.o indirect.o local.o mailbox.o recipient.o resolve.o token.o \
 	deliver_attr.o maildir.o biff_notify.o unknown.o \
 	local_expand.o
@@ -71,10 +71,12 @@ alias.o: ../../include/bounce.h
 alias.o: ../../include/canon_addr.h
 alias.o: ../../include/defer.h
 alias.o: ../../include/deliver_request.h
+alias.o: ../../include/delivered_hdr.h
 alias.o: ../../include/dict.h
 alias.o: ../../include/dsn.h
 alias.o: ../../include/dsn_buf.h
 alias.o: ../../include/dsn_mask.h
+alias.o: ../../include/fold_addr.h
 alias.o: ../../include/htable.h
 alias.o: ../../include/mail_params.h
 alias.o: ../../include/maps.h
@@ -105,10 +107,12 @@ command.o: ../../include/been_here.h
 command.o: ../../include/bounce.h
 command.o: ../../include/defer.h
 command.o: ../../include/deliver_request.h
+command.o: ../../include/delivered_hdr.h
 command.o: ../../include/dict.h
 command.o: ../../include/dsn.h
 command.o: ../../include/dsn_buf.h
 command.o: ../../include/dsn_util.h
+command.o: ../../include/fold_addr.h
 command.o: ../../include/htable.h
 command.o: ../../include/mac_parse.h
 command.o: ../../include/mail_copy.h
@@ -132,9 +136,11 @@ deliver_attr.o: ../../include/argv.h
 deliver_attr.o: ../../include/attr.h
 deliver_attr.o: ../../include/been_here.h
 deliver_attr.o: ../../include/deliver_request.h
+deliver_attr.o: ../../include/delivered_hdr.h
 deliver_attr.o: ../../include/dict.h
 deliver_attr.o: ../../include/dsn.h
 deliver_attr.o: ../../include/dsn_buf.h
+deliver_attr.o: ../../include/fold_addr.h
 deliver_attr.o: ../../include/htable.h
 deliver_attr.o: ../../include/maps.h
 deliver_attr.o: ../../include/mbox_conf.h
@@ -149,45 +155,18 @@ deliver_attr.o: ../../include/vstream.h
 deliver_attr.o: ../../include/vstring.h
 deliver_attr.o: deliver_attr.c
 deliver_attr.o: local.h
-delivered.o: ../../include/argv.h
-delivered.o: ../../include/attr.h
-delivered.o: ../../include/been_here.h
-delivered.o: ../../include/deliver_request.h
-delivered.o: ../../include/dict.h
-delivered.o: ../../include/dsn.h
-delivered.o: ../../include/dsn_buf.h
-delivered.o: ../../include/header_opts.h
-delivered.o: ../../include/htable.h
-delivered.o: ../../include/is_header.h
-delivered.o: ../../include/maps.h
-delivered.o: ../../include/mbox_conf.h
-delivered.o: ../../include/msg.h
-delivered.o: ../../include/msg_stats.h
-delivered.o: ../../include/quote_822_local.h
-delivered.o: ../../include/quote_flags.h
-delivered.o: ../../include/rec_type.h
-delivered.o: ../../include/recipient_list.h
-delivered.o: ../../include/record.h
-delivered.o: ../../include/resolve_clnt.h
-delivered.o: ../../include/stringops.h
-delivered.o: ../../include/sys_defs.h
-delivered.o: ../../include/tok822.h
-delivered.o: ../../include/vbuf.h
-delivered.o: ../../include/vstream.h
-delivered.o: ../../include/vstring.h
-delivered.o: ../../include/vstring_vstream.h
-delivered.o: delivered.c
-delivered.o: local.h
 dotforward.o: ../../include/argv.h
 dotforward.o: ../../include/attr.h
 dotforward.o: ../../include/been_here.h
 dotforward.o: ../../include/bounce.h
 dotforward.o: ../../include/deliver_request.h
+dotforward.o: ../../include/delivered_hdr.h
 dotforward.o: ../../include/dict.h
 dotforward.o: ../../include/dsn.h
 dotforward.o: ../../include/dsn_buf.h
 dotforward.o: ../../include/dsn_mask.h
 dotforward.o: ../../include/ext_prop.h
+dotforward.o: ../../include/fold_addr.h
 dotforward.o: ../../include/htable.h
 dotforward.o: ../../include/iostuff.h
 dotforward.o: ../../include/lstat_as.h
@@ -221,10 +200,12 @@ file.o: ../../include/bounce.h
 file.o: ../../include/defer.h
 file.o: ../../include/deliver_flock.h
 file.o: ../../include/deliver_request.h
+file.o: ../../include/delivered_hdr.h
 file.o: ../../include/dict.h
 file.o: ../../include/dsn.h
 file.o: ../../include/dsn_buf.h
 file.o: ../../include/dsn_util.h
+file.o: ../../include/fold_addr.h
 file.o: ../../include/htable.h
 file.o: ../../include/mail_copy.h
 file.o: ../../include/mail_params.h
@@ -252,10 +233,12 @@ forward.o: ../../include/been_here.h
 forward.o: ../../include/bounce.h
 forward.o: ../../include/cleanup_user.h
 forward.o: ../../include/deliver_request.h
+forward.o: ../../include/delivered_hdr.h
 forward.o: ../../include/dict.h
 forward.o: ../../include/dsn.h
 forward.o: ../../include/dsn_buf.h
 forward.o: ../../include/dsn_mask.h
+forward.o: ../../include/fold_addr.h
 forward.o: ../../include/htable.h
 forward.o: ../../include/iostuff.h
 forward.o: ../../include/mail_date.h
@@ -287,10 +270,12 @@ include.o: ../../include/been_here.h
 include.o: ../../include/bounce.h
 include.o: ../../include/defer.h
 include.o: ../../include/deliver_request.h
+include.o: ../../include/delivered_hdr.h
 include.o: ../../include/dict.h
 include.o: ../../include/dsn.h
 include.o: ../../include/dsn_buf.h
 include.o: ../../include/ext_prop.h
+include.o: ../../include/fold_addr.h
 include.o: ../../include/htable.h
 include.o: ../../include/iostuff.h
 include.o: ../../include/mail_params.h
@@ -318,9 +303,11 @@ indirect.o: ../../include/been_here.h
 indirect.o: ../../include/bounce.h
 indirect.o: ../../include/defer.h
 indirect.o: ../../include/deliver_request.h
+indirect.o: ../../include/delivered_hdr.h
 indirect.o: ../../include/dict.h
 indirect.o: ../../include/dsn.h
 indirect.o: ../../include/dsn_buf.h
+indirect.o: ../../include/fold_addr.h
 indirect.o: ../../include/htable.h
 indirect.o: ../../include/mail_params.h
 indirect.o: ../../include/maps.h
@@ -342,11 +329,13 @@ local.o: ../../include/attr.h
 local.o: ../../include/been_here.h
 local.o: ../../include/deliver_completed.h
 local.o: ../../include/deliver_request.h
+local.o: ../../include/delivered_hdr.h
 local.o: ../../include/dict.h
 local.o: ../../include/dsn.h
 local.o: ../../include/dsn_buf.h
 local.o: ../../include/ext_prop.h
 local.o: ../../include/flush_clnt.h
+local.o: ../../include/fold_addr.h
 local.o: ../../include/htable.h
 local.o: ../../include/iostuff.h
 local.o: ../../include/mail_addr.h
@@ -374,9 +363,11 @@ local_expand.o: ../../include/argv.h
 local_expand.o: ../../include/attr.h
 local_expand.o: ../../include/been_here.h
 local_expand.o: ../../include/deliver_request.h
+local_expand.o: ../../include/delivered_hdr.h
 local_expand.o: ../../include/dict.h
 local_expand.o: ../../include/dsn.h
 local_expand.o: ../../include/dsn_buf.h
+local_expand.o: ../../include/fold_addr.h
 local_expand.o: ../../include/htable.h
 local_expand.o: ../../include/mac_expand.h
 local_expand.o: ../../include/mac_parse.h
@@ -400,10 +391,12 @@ mailbox.o: ../../include/bounce.h
 mailbox.o: ../../include/defer.h
 mailbox.o: ../../include/deliver_pass.h
 mailbox.o: ../../include/deliver_request.h
+mailbox.o: ../../include/delivered_hdr.h
 mailbox.o: ../../include/dict.h
 mailbox.o: ../../include/dsn.h
 mailbox.o: ../../include/dsn_buf.h
 mailbox.o: ../../include/dsn_util.h
+mailbox.o: ../../include/fold_addr.h
 mailbox.o: ../../include/htable.h
 mailbox.o: ../../include/iostuff.h
 mailbox.o: ../../include/mail_copy.h
@@ -436,10 +429,12 @@ maildir.o: ../../include/been_here.h
 maildir.o: ../../include/bounce.h
 maildir.o: ../../include/defer.h
 maildir.o: ../../include/deliver_request.h
+maildir.o: ../../include/delivered_hdr.h
 maildir.o: ../../include/dict.h
 maildir.o: ../../include/dsn.h
 maildir.o: ../../include/dsn_buf.h
 maildir.o: ../../include/dsn_util.h
+maildir.o: ../../include/fold_addr.h
 maildir.o: ../../include/get_hostname.h
 maildir.o: ../../include/htable.h
 maildir.o: ../../include/mail_copy.h
@@ -472,10 +467,12 @@ recipient.o: ../../include/bounce.h
 recipient.o: ../../include/canon_addr.h
 recipient.o: ../../include/defer.h
 recipient.o: ../../include/deliver_request.h
+recipient.o: ../../include/delivered_hdr.h
 recipient.o: ../../include/dict.h
 recipient.o: ../../include/dsn.h
 recipient.o: ../../include/dsn_buf.h
 recipient.o: ../../include/ext_prop.h
+recipient.o: ../../include/fold_addr.h
 recipient.o: ../../include/htable.h
 recipient.o: ../../include/mail_params.h
 recipient.o: ../../include/maps.h
@@ -504,9 +501,11 @@ resolve.o: ../../include/been_here.h
 resolve.o: ../../include/bounce.h
 resolve.o: ../../include/defer.h
 resolve.o: ../../include/deliver_request.h
+resolve.o: ../../include/delivered_hdr.h
 resolve.o: ../../include/dict.h
 resolve.o: ../../include/dsn.h
 resolve.o: ../../include/dsn_buf.h
+resolve.o: ../../include/fold_addr.h
 resolve.o: ../../include/htable.h
 resolve.o: ../../include/iostuff.h
 resolve.o: ../../include/mail_params.h
@@ -531,9 +530,11 @@ token.o: ../../include/been_here.h
 token.o: ../../include/bounce.h
 token.o: ../../include/defer.h
 token.o: ../../include/deliver_request.h
+token.o: ../../include/delivered_hdr.h
 token.o: ../../include/dict.h
 token.o: ../../include/dsn.h
 token.o: ../../include/dsn_buf.h
+token.o: ../../include/fold_addr.h
 token.o: ../../include/htable.h
 token.o: ../../include/mail_params.h
 token.o: ../../include/maps.h
@@ -559,9 +560,11 @@ unknown.o: ../../include/been_here.h
 unknown.o: ../../include/bounce.h
 unknown.o: ../../include/deliver_pass.h
 unknown.o: ../../include/deliver_request.h
+unknown.o: ../../include/delivered_hdr.h
 unknown.o: ../../include/dict.h
 unknown.o: ../../include/dsn.h
 unknown.o: ../../include/dsn_buf.h
+unknown.o: ../../include/fold_addr.h
 unknown.o: ../../include/htable.h
 unknown.o: ../../include/iostuff.h
 unknown.o: ../../include/mail_addr.h

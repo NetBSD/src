@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_connect.c,v 1.1.1.4 2006/07/19 01:17:56 rpaulo Exp $	*/
+/*	$NetBSD: unix_connect.c,v 1.1.1.5 2008/06/22 14:04:10 christos Exp $	*/
 
 /*++
 /* NAME
@@ -81,7 +81,7 @@ int     unix_connect(const char *addr, int block_mode, int timeout)
      * Create a client socket.
      */
     if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
-	msg_fatal("socket: %m");
+	return (-1);
 
     /*
      * Timed connect.

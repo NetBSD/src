@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.1.1.6 2007/08/02 08:05:19 heas Exp $	*/
+/*	$NetBSD: milter8.c,v 1.1.1.7 2008/06/22 14:02:52 christos Exp $	*/
 
 /*++
 /* NAME
@@ -62,53 +62,47 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <stddef.h>			/* offsetof() */
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>			/* INT_MAX */
 
 #ifndef SHUT_RDWR
 #define SHUT_RDWR	2
 #endif
 
-/* Sendmail 8 Milter protocol. */
+/* Utility library. */
 
-#ifdef USE_LIBMILTER_INCLUDES
+#include <msg.h>
+#include <mymalloc.h>
+#include <split_at.h>
+#include <connect.h>
+#include <argv.h>
+#include <name_mask.h>
+#include <name_code.h>
+#include <stringops.h>
 
- /*
-  * Use the include files that match the installed libmilter library. This
-  * requires that the libmilter files are installed before Postfix can be
-  * built with milter support, and requires that Postfix is rebuilt whenever
-  * protocol version in these files changes. The other option (below) is to
-  * use our own protocol definitions.
-  */
-#include <libmilter/mfapi.h>
-#include <libmilter/mfdef.h>
+/* Global library. */
 
- /*
-  * Compatibility for missing definitions or for names that have changed over
-  * time.
-  */
-#ifndef SMFIF_CHGBODY
-#define SMFIF_CHGBODY	SMFIF_MODBODY
-#endif
-#ifndef SMFIF_CHGHDRS
-#define SMFIF_CHGHDRS	SMFIF_MODHDRS
-#endif
-#if defined(SMFIC_UNKNOWN) && !defined(SMFIP_NOUNKNOWN)
-#define SMFIP_NOUNKNOWN 	(1L<<8)	/* MTA should not send unknown cmd */
-#endif
-#if defined(SMFIC_DATA) && !defined(SMFIP_NODATA)
-#define SMFIP_NODATA		(1L<<9)	/* MTA should not send DATA */
-#endif
+#include <mail_params.h>
+#include <mail_proto.h>
+#include <rec_type.h>
+#include <record.h>
+#include <mime_state.h>
+#include <is_header.h>
 
-#else
+/* Postfix Milter library. */
+
+#include <milter.h>
+
+/* Application-specific. */
 
  /*
   * Use our own protocol definitions, so that Postfix can be built even when
   * libmilter is not installed. This means that we must specify the libmilter
-  * protocol version in main.cf. The other option (above) is to compile
-  * Postfix with the installed libmilter include files and to support only
-  * that protocol version.
+  * protocol version in main.cf, and that we must send only the commands that
+  * are supported for that protocol version.
   */
 
  /*
@@ -128,6 +122,28 @@
 #define SMFIC_RCPT		'R'	/* RCPT to */
 #define SMFIC_DATA		'T'	/* DATA */
 #define SMFIC_UNKNOWN		'U'	/* Any unknown command */
+ /* Introduced with Sendmail 8.14. */
+#define SMFIC_QUIT_NC		'K'	/* Quit + new connection */
+
+static const NAME_CODE smfic_table[] = {
+    "SMFIC_ABORT", SMFIC_ABORT,
+    "SMFIC_BODY", SMFIC_BODY,
+    "SMFIC_CONNECT", SMFIC_CONNECT,
+    "SMFIC_MACRO", SMFIC_MACRO,
+    "SMFIC_BODYEOB", SMFIC_BODYEOB,
+    "SMFIC_HELO", SMFIC_HELO,
+    "SMFIC_HEADER", SMFIC_HEADER,
+    "SMFIC_MAIL", SMFIC_MAIL,
+    "SMFIC_EOH", SMFIC_EOH,
+    "SMFIC_OPTNEG", SMFIC_OPTNEG,
+    "SMFIC_QUIT", SMFIC_QUIT,
+    "SMFIC_RCPT", SMFIC_RCPT,
+    "SMFIC_DATA", SMFIC_DATA,
+    "SMFIC_UNKNOWN", SMFIC_UNKNOWN,
+    /* Introduced with Sendmail 8.14. */
+    "SMFIC_QUIT_NC", SMFIC_QUIT_NC,
+    0, 0,
+};
 
  /*
   * Responses from filter to MTA.
@@ -148,24 +164,104 @@
 #define SMFIR_INSHEADER		'i'	/* insert header */
 #define SMFIR_REPLYCODE		'y'	/* reply code etc */
 #define SMFIR_QUARANTINE	'q'	/* quarantine */
+ /* Introduced with Sendmail 8.14. */
+#define SMFIR_SKIP		's'	/* skip further events of this type */
+#define SMFIR_CHGFROM		'e'	/* change sender (incl. ESMTP args) */
+#define SMFIR_ADDRCPT_PAR	'2'	/* add recipient (incl. ESMTP args) */
+#define SMFIR_SETSYMLIST	'l'	/* set list of symbols (macros) */
+
+static const NAME_CODE smfir_table[] = {
+    "SMFIR_ADDRCPT", SMFIR_ADDRCPT,
+    "SMFIR_DELRCPT", SMFIR_DELRCPT,
+    "SMFIR_ACCEPT", SMFIR_ACCEPT,
+    "SMFIR_REPLBODY", SMFIR_REPLBODY,
+    "SMFIR_CONTINUE", SMFIR_CONTINUE,
+    "SMFIR_DISCARD", SMFIR_DISCARD,
+    "SMFIR_CONN_FAIL", SMFIR_CONN_FAIL,
+    "SMFIR_CHGHEADER", SMFIR_CHGHEADER,
+    "SMFIR_PROGRESS", SMFIR_PROGRESS,
+    "SMFIR_REJECT", SMFIR_REJECT,
+    "SMFIR_TEMPFAIL", SMFIR_TEMPFAIL,
+    "SMFIR_SHUTDOWN", SMFIR_SHUTDOWN,
+    "SMFIR_ADDHEADER", SMFIR_ADDHEADER,
+    "SMFIR_INSHEADER", SMFIR_INSHEADER,
+    "SMFIR_REPLYCODE", SMFIR_REPLYCODE,
+    "SMFIR_QUARANTINE", SMFIR_QUARANTINE,
+    /* Introduced with Sendmail 8.14. */
+    "SMFIR_SKIP", SMFIR_SKIP,
+    "SMFIR_CHGFROM", SMFIR_CHGFROM,
+    "SMFIR_ADDRCPT_PAR", SMFIR_ADDRCPT_PAR,
+    "SMFIR_SETSYMLIST", SMFIR_SETSYMLIST,
+    0, 0,
+};
 
  /*
   * Commands that the filter does not want to receive, and replies that the
-  * filter will not send.
+  * filter will not send. Plus some other random stuff.
   */
-#define SMFIP_NOCONNECT		(1L<<0)	/* MTA should not send connect info */
-#define SMFIP_NOHELO		(1L<<1)	/* MTA should not send HELO info */
-#define SMFIP_NOMAIL		(1L<<2)	/* MTA should not send MAIL info */
-#define SMFIP_NORCPT		(1L<<3)	/* MTA should not send RCPT info */
-#define SMFIP_NOBODY		(1L<<4)	/* MTA should not send body */
-#define SMFIP_NOHDRS		(1L<<5)	/* MTA should not send headers */
-#define SMFIP_NOEOH		(1L<<6)	/* MTA should not send EOH */
-#define SMFIP_NOHREPL		(1L<<7)	/* filter will not reply per header */
-#define SMFIP_NOUNKNOWN 	(1L<<8)	/* MTA should not send unknown cmd */
-#define SMFIP_NODATA		(1L<<9)	/* MTA should not send DATA */
+#define SMFIP_NOCONNECT		(1L<<0)	/* filter does not want connect info */
+#define SMFIP_NOHELO		(1L<<1)	/* filter does not want HELO info */
+#define SMFIP_NOMAIL		(1L<<2)	/* filter does not want MAIL info */
+#define SMFIP_NORCPT		(1L<<3)	/* filter does not want RCPT info */
+#define SMFIP_NOBODY		(1L<<4)	/* filter does not want body */
+#define SMFIP_NOHDRS		(1L<<5)	/* filter does not want headers */
+#define SMFIP_NOEOH		(1L<<6)	/* filter does not want EOH */
+#define SMFIP_NR_HDR		(1L<<7)	/* filter won't reply for header */
+#define SMFIP_NOHREPL		SMFIP_NR_HDR
+#define SMFIP_NOUNKNOWN 	(1L<<8)	/* filter does not want unknown cmd */
+#define SMFIP_NODATA		(1L<<9)	/* filter does not want DATA */
+ /* Introduced with Sendmail 8.14. */
+#define SMFIP_SKIP		(1L<<10)/* MTA supports SMFIS_SKIP */
+#define SMFIP_RCPT_REJ		(1L<<11)/* filter wants rejected RCPTs */
+#define SMFIP_NR_CONN		(1L<<12)/* filter won't reply for connect */
+#define SMFIP_NR_HELO		(1L<<13)/* filter won't reply for HELO */
+#define SMFIP_NR_MAIL		(1L<<14)/* filter won't reply for MAIL */
+#define SMFIP_NR_RCPT		(1L<<15)/* filter won't reply for RCPT */
+#define SMFIP_NR_DATA		(1L<<16)/* filter won't reply for DATA */
+#define SMFIP_NR_UNKN		(1L<<17)/* filter won't reply for UNKNOWN */
+#define SMFIP_NR_EOH		(1L<<18)/* filter won't reply for eoh */
+#define SMFIP_NR_BODY		(1L<<19)/* filter won't reply for body chunk */
+#define SMFIP_HDR_LEADSPC	(1L<<20)/* header value has leading space */
+
+#define SMFIP_NOSEND_MASK \
+	(SMFIP_NOCONNECT | SMFIP_NOHELO | SMFIP_NOMAIL | SMFIP_NORCPT \
+	| SMFIP_NOBODY | SMFIP_NOHDRS | SMFIP_NOEOH | SMFIP_NOUNKNOWN \
+	| SMFIP_NODATA)
+
+#define SMFIP_NOREPLY_MASK \
+	(SMFIP_NR_CONN | SMFIP_NR_HELO | SMFIP_NR_MAIL | SMFIP_NR_RCPT \
+	| SMFIP_NR_DATA | SMFIP_NR_UNKN | SMFIP_NR_HDR | SMFIP_NR_EOH | \
+	SMFIP_NR_BODY)
+
+static const NAME_MASK smfip_table[] = {
+    "SMFIP_NOCONNECT", SMFIP_NOCONNECT,
+    "SMFIP_NOHELO", SMFIP_NOHELO,
+    "SMFIP_NOMAIL", SMFIP_NOMAIL,
+    "SMFIP_NORCPT", SMFIP_NORCPT,
+    "SMFIP_NOBODY", SMFIP_NOBODY,
+    "SMFIP_NOHDRS", SMFIP_NOHDRS,
+    "SMFIP_NOEOH", SMFIP_NOEOH,
+    "SMFIP_NR_HDR", SMFIP_NR_HDR,
+    "SMFIP_NOUNKNOWN", SMFIP_NOUNKNOWN,
+    "SMFIP_NODATA", SMFIP_NODATA,
+    /* Introduced with Sendmail 8.14. */
+    "SMFIP_SKIP", SMFIP_SKIP,
+    "SMFIP_RCPT_REJ", SMFIP_RCPT_REJ,
+    "SMFIP_NR_CONN", SMFIP_NR_CONN,
+    "SMFIP_NR_HELO", SMFIP_NR_HELO,
+    "SMFIP_NR_MAIL", SMFIP_NR_MAIL,
+    "SMFIP_NR_RCPT", SMFIP_NR_RCPT,
+    "SMFIP_NR_DATA", SMFIP_NR_DATA,
+    "SMFIP_NR_UNKN", SMFIP_NR_UNKN,
+    "SMFIP_NR_EOH", SMFIP_NR_EOH,
+    "SMFIP_NR_BODY", SMFIP_NR_BODY,
+    "SMFIP_HDR_LEADSPC", SMFIP_HDR_LEADSPC,
+    0, 0,
+};
 
  /*
-  * Modifications that the filter may request at the end of the message body.
+  * Options that the filter may send at initial handshake time, and message
+  * modifications that the filter may request at the end of the message body.
   */
 #define SMFIF_ADDHDRS		(1L<<0)	/* filter may add headers */
 #define SMFIF_CHGBODY		(1L<<1)	/* filter may replace body */
@@ -173,6 +269,24 @@
 #define SMFIF_DELRCPT		(1L<<3)	/* filter may delete recipients */
 #define SMFIF_CHGHDRS		(1L<<4)	/* filter may change/delete headers */
 #define SMFIF_QUARANTINE 	(1L<<5)	/* filter may quarantine envelope */
+ /* Introduced with Sendmail 8.14. */
+#define SMFIF_CHGFROM		(1L<<6)	/* filter may replace sender */
+#define SMFIF_ADDRCPT_PAR	(1L<<7)	/* filter may add recipients + args */
+#define SMFIF_SETSYMLIST	(1L<<8)	/* filter may send macro names */
+
+static const NAME_MASK smfif_table[] = {
+    "SMFIF_ADDHDRS", SMFIF_ADDHDRS,
+    "SMFIF_CHGBODY", SMFIF_CHGBODY,
+    "SMFIF_ADDRCPT", SMFIF_ADDRCPT,
+    "SMFIF_DELRCPT", SMFIF_DELRCPT,
+    "SMFIF_CHGHDRS", SMFIF_CHGHDRS,
+    "SMFIF_QUARANTINE", SMFIF_QUARANTINE,
+    /* Introduced with Sendmail 8.14. */
+    "SMFIF_CHGFROM", SMFIF_CHGFROM,
+    "SMFIF_ADDRCPT_PAR", SMFIF_ADDRCPT_PAR,
+    "SMFIF_SETSYMLIST", SMFIF_SETSYMLIST,
+    0, 0,
+};
 
  /*
   * Network protocol families, used when sending CONNECT information.
@@ -183,37 +297,49 @@
 #define SMFIA_INET6		'6'	/* inet6 */
 
  /*
-  * How much buffer space is available for receiving body content.
+  * External macro class numbers, to identify the optional macro name lists
+  * that may be sent after the initial negotiation header.
+  */
+#define SMFIM_CONNECT	0		/* macros for connect */
+#define SMFIM_HELO	1		/* macros for HELO */
+#define SMFIM_ENVFROM	2		/* macros for MAIL */
+#define SMFIM_ENVRCPT	3		/* macros for RCPT */
+#define SMFIM_DATA	4		/* macros for DATA */
+#define SMFIM_EOM	5		/* macros for end-of-message */
+#define SMFIM_EOH	6		/* macros for end-of-header */
+
+static const NAME_CODE smfim_table[] = {
+    "SMFIM_CONNECT", SMFIM_CONNECT,
+    "SMFIM_HELO", SMFIM_HELO,
+    "SMFIM_ENVFROM", SMFIM_ENVFROM,
+    "SMFIM_ENVRCPT", SMFIM_ENVRCPT,
+    "SMFIM_DATA", SMFIM_DATA,
+    "SMFIM_EOM", SMFIM_EOM,
+    "SMFIM_EOH", SMFIM_EOH,
+    0, 0,
+};
+
+ /*
+  * Mapping from external macro class numbers to our internal MILTER_MACROS
+  * structure members, without using a switch statement.
+  */
+static const size_t milter8_macro_offsets[] = {
+    offsetof(MILTER_MACROS, conn_macros),	/* SMFIM_CONNECT */
+    offsetof(MILTER_MACROS, helo_macros),	/* SMFIM_HELO */
+    offsetof(MILTER_MACROS, mail_macros),	/* SMFIM_ENVFROM */
+    offsetof(MILTER_MACROS, rcpt_macros),	/* SMFIM_ENVRCPT */
+    offsetof(MILTER_MACROS, data_macros),	/* SMFIM_DATA */
+    offsetof(MILTER_MACROS, eod_macros),/* Note: SMFIM_EOM < SMFIM_EOH */
+    offsetof(MILTER_MACROS, eoh_macros),/* Note: SMFIM_EOH > SMFIM_EOM */
+};
+
+#define MILTER8_MACRO_PTR(__macros, __class) \
+	((char **) (((char *) (__macros)) + milter8_macro_offsets[(__class)]))
+
+ /*
+  * How much buffer space is available for sending body content.
   */
 #define MILTER_CHUNK_SIZE	65535	/* body chunk size */
-
-#endif
-
-/* Utility library. */
-
-#include <msg.h>
-#include <mymalloc.h>
-#include <split_at.h>
-#include <connect.h>
-#include <argv.h>
-#include <name_mask.h>
-#include <name_code.h>
-#include <stringops.h>
-
-/* Global library. */
-
-#include <mail_params.h>		/* var_line_limit */
-#include <mail_proto.h>
-#include <rec_type.h>
-#include <record.h>
-#include <mime_state.h>
-#include <is_header.h>
-
-/* Postfix Milter library. */
-
-#include <milter.h>
-
-/* Application-specific. */
 
 /*#define msg_verbose 2*/
 
@@ -230,9 +356,7 @@ typedef struct {
     int     version;			/* application protocol version */
     int     rq_mask;			/* application requests (SMFIF_*) */
     int     ev_mask;			/* application events (SMFIP_*) */
-#ifndef USE_LIBMILTER_INCLUDES
     int     np_mask;			/* events outside my protocol version */
-#endif
     VSTRING *buf;			/* I/O buffer */
     VSTRING *body;			/* I/O buffer */
     VSTREAM *fp;			/* stream or null (closed) */
@@ -243,6 +367,7 @@ typedef struct {
      */
     int     state;			/* MILTER8_STAT_mumble */
     char   *def_reply;			/* error response or null */
+    int     skip_event_type;		/* skip operations of this type */
 } MILTER8;
 
  /*
@@ -279,27 +404,36 @@ typedef struct {
 #define MILTER8_DATA_NSHORT	4	/* network short */
 #define MILTER8_DATA_ARGV	5	/* array of null-terminated strings */
 #define MILTER8_DATA_OCTET	6	/* byte */
+#define MILTER8_DATA_MORE	7	/* more arguments in next call */
 
  /*
   * We don't accept insane amounts of data.
   */
-#define XXX_MAX_DATA	(MILTER_CHUNK_SIZE * 2)
+#define XXX_MAX_DATA	(INT_MAX / 2)
 #define XXX_TIMEOUT	10
 
-#ifndef USE_LIBMILTER_INCLUDES
-
  /*
-  * If we're not using Sendmail's libmilter include files, then we implement
-  * the protocol up to and including version 4, and configure in main.cf what
-  * protocol version we will use. However, we must send only events that are
-  * defined for the specified protocol version, otherwise libmilter will
-  * disconnect.
+  * We implement the protocol up to and including version 6, and configure in
+  * main.cf what protocol version we will use. The version is the first data
+  * item in the SMFIC_OPTNEG packet.
   * 
-  * The following events are supported by all milter protocol implementations.
+  * We must send only events that are defined for the specified protocol
+  * version. Libmilter may disconnect when we send unexpected events.
+  * 
+  * The following events are supported in all our milter protocol versions.
   */
-#define MILTER8_V1_PROTO_MASK \
+#define MILTER8_V2_PROTO_MASK \
 	(SMFIP_NOCONNECT | SMFIP_NOHELO | SMFIP_NOMAIL | SMFIP_NORCPT | \
 	SMFIP_NOBODY | SMFIP_NOHDRS | SMFIP_NOEOH)
+
+ /*
+  * Events supported by later versions.
+  */
+#define MILTER8_V3_PROTO_MASK	(MILTER8_V2_PROTO_MASK | SMFIP_NOUNKNOWN)
+#define MILTER8_V4_PROTO_MASK	(MILTER8_V3_PROTO_MASK | SMFIP_NODATA)
+#define MILTER8_V6_PROTO_MASK \
+	(MILTER8_V4_PROTO_MASK | SMFIP_SKIP /* | SMFIP_RCPT_REJ */ \
+	| SMFIP_NOREPLY_MASK | SMFIP_HDR_LEADSPC)
 
  /*
   * What events we can send to the milter application. The milter8_protocol
@@ -309,11 +443,15 @@ typedef struct {
   * 
   * This looks unclean because the user can specify multiple protocol versions,
   * but that is taken care of by the table that follows this one.
+  * 
+  * XXX Is this still needed? Sendmail 8.14 provides a proper way to negotiate
+  * what replies the mail filter will send.
   */
-static NAME_CODE milter8_event_masks[] = {
-    "2", MILTER8_V1_PROTO_MASK,
-    "3", MILTER8_V1_PROTO_MASK | SMFIP_NOUNKNOWN,
-    "4", MILTER8_V1_PROTO_MASK | SMFIP_NOUNKNOWN | SMFIP_NODATA,
+static const NAME_CODE milter8_event_masks[] = {
+    "2", MILTER8_V2_PROTO_MASK,
+    "3", MILTER8_V3_PROTO_MASK,
+    "4", MILTER8_V4_PROTO_MASK,
+    "6", MILTER8_V6_PROTO_MASK,
     "no_header_reply", SMFIP_NOHREPL,
     0, -1,
 };
@@ -324,102 +462,13 @@ static NAME_CODE milter8_event_masks[] = {
   * protocol extensions such as "no_header_reply", and require that exactly
   * one version number is specified.
   */
-static NAME_CODE milter8_versions[] = {
+static const NAME_CODE milter8_versions[] = {
     "2", 2,
     "3", 3,
     "4", 4,
+    "6", 6,
     "no_header_reply", 0,
     0, -1,
-};
-
-#endif
-
- /*
-  * Tables to map the above symbolic constants to printable strings. We use
-  * NAME_CODE for commands and replies, and NAME_MASK for bit mask values.
-  */
-static NAME_CODE smfic_table[] = {
-    "SMFIC_ABORT", SMFIC_ABORT,
-    "SMFIC_BODY", SMFIC_BODY,
-    "SMFIC_CONNECT", SMFIC_CONNECT,
-    "SMFIC_MACRO", SMFIC_MACRO,
-    "SMFIC_BODYEOB", SMFIC_BODYEOB,
-    "SMFIC_HELO", SMFIC_HELO,
-    "SMFIC_HEADER", SMFIC_HEADER,
-    "SMFIC_MAIL", SMFIC_MAIL,
-    "SMFIC_EOH", SMFIC_EOH,
-    "SMFIC_OPTNEG", SMFIC_OPTNEG,
-    "SMFIC_QUIT", SMFIC_QUIT,
-    "SMFIC_RCPT", SMFIC_RCPT,
-#ifdef SMFIC_DATA
-    "SMFIC_DATA", SMFIC_DATA,
-#endif
-#ifdef SMFIC_UNKNOWN
-    "SMFIC_UNKNOWN", SMFIC_UNKNOWN,
-#endif
-    0, 0,
-};
-
-static NAME_CODE smfir_table[] = {
-    "SMFIR_ADDRCPT", SMFIR_ADDRCPT,
-    "SMFIR_DELRCPT", SMFIR_DELRCPT,
-    "SMFIR_ACCEPT", SMFIR_ACCEPT,
-    "SMFIR_REPLBODY", SMFIR_REPLBODY,
-    "SMFIR_CONTINUE", SMFIR_CONTINUE,
-    "SMFIR_DISCARD", SMFIR_DISCARD,
-#ifdef SMFIR_CONN_FAIL
-    "SMFIR_CONN_FAIL", SMFIR_CONN_FAIL,
-#endif
-#ifdef SMFIR_CHGHEADER
-    "SMFIR_CHGHEADER", SMFIR_CHGHEADER,
-#endif
-    "SMFIR_PROGRESS", SMFIR_PROGRESS,
-    "SMFIR_REJECT", SMFIR_REJECT,
-    "SMFIR_TEMPFAIL", SMFIR_TEMPFAIL,
-#ifdef SMFIR_SHUTDOWN
-    "SMFIR_SHUTDOWN", SMFIR_SHUTDOWN,
-#endif
-    "SMFIR_ADDHEADER", SMFIR_ADDHEADER,
-#ifdef SMFIR_INSHEADER
-    "SMFIR_INSHEADER", SMFIR_INSHEADER,
-#endif
-    "SMFIR_REPLYCODE", SMFIR_REPLYCODE,
-#ifdef SMFIR_QUARANTINE
-    "SMFIR_QUARANTINE", SMFIR_QUARANTINE,
-#endif
-    0, 0,
-};
-
-static NAME_MASK smfip_table[] = {
-    "SMFIP_NOCONNECT", SMFIP_NOCONNECT,
-    "SMFIP_NOHELO", SMFIP_NOHELO,
-    "SMFIP_NOMAIL", SMFIP_NOMAIL,
-    "SMFIP_NORCPT", SMFIP_NORCPT,
-    "SMFIP_NOBODY", SMFIP_NOBODY,
-    "SMFIP_NOHDRS", SMFIP_NOHDRS,
-    "SMFIP_NOEOH", SMFIP_NOEOH,
-#ifdef SMFIP_NOHREPL
-    "SMFIP_NOHREPL", SMFIP_NOHREPL,
-#endif
-#ifdef SMFIP_NOUNKNOWN
-    "SMFIP_NOUNKNOWN", SMFIP_NOUNKNOWN,
-#endif
-#ifdef SMFIP_NODATA
-    "SMFIP_NODATA", SMFIP_NODATA,
-#endif
-    0, 0,
-};
-
-static NAME_MASK smfif_table[] = {
-    "SMFIF_ADDHDRS", SMFIF_ADDHDRS,
-    "SMFIF_CHGBODY", SMFIF_CHGBODY,
-    "SMFIF_ADDRCPT", SMFIF_ADDRCPT,
-    "SMFIF_DELRCPT", SMFIF_DELRCPT,
-    "SMFIF_CHGHDRS", SMFIF_CHGHDRS,
-#ifdef SMFIF_QUARANTINE
-    "SMFIF_QUARANTINE", SMFIF_QUARANTINE,
-#endif
-    0, 0,
 };
 
 /* SLMs. */
@@ -535,8 +584,8 @@ static int milter8_read_resp(MILTER8 *milter, int event, unsigned char *command,
 		 milter->m.name, (long) pkt_len);
 	return (milter8_comm_error(milter));
     } else if (pkt_len > XXX_MAX_DATA) {
-	msg_warn("milter %s: unreasonable packet length: %ld",
-		 milter->m.name, (long) pkt_len);
+	msg_warn("milter %s: unreasonable packet length: %ld > %ld",
+		 milter->m.name, (long) pkt_len, (long) XXX_MAX_DATA);
 	return (milter8_comm_error(milter));
     }
 
@@ -559,26 +608,27 @@ static int milter8_read_resp(MILTER8 *milter, int event, unsigned char *command,
     }
 }
 
+static int milter8_read_data(MILTER8 *milter, ssize_t *data_len,...);
+
 /* vmilter8_read_data - read command data */
 
-static int vmilter8_read_data(MILTER8 *milter, ssize_t data_len, va_list ap)
+static int vmilter8_read_data(MILTER8 *milter, ssize_t *data_len, va_list ap)
 {
     const char *myname = "milter8_read_data";
     int     arg_type;
-    int     data_left;
     UINT32_TYPE net_long;
     UINT32_TYPE *host_long_ptr;
     VSTRING *buf;
     int     ch;
 
-    for (data_left = data_len; (arg_type = va_arg(ap, int)) > 0; /* void */ ) {
+    while ((arg_type = va_arg(ap, int)) > 0 && arg_type != MILTER8_DATA_MORE) {
 	switch (arg_type) {
 
 	    /*
 	     * Host order long.
 	     */
 	case MILTER8_DATA_HLONG:
-	    if (data_left < UINT32_SIZE) {
+	    if (*data_len < UINT32_SIZE) {
 		msg_warn("milter %s: input packet too short for network long",
 			 milter->m.name);
 		return (milter8_comm_error(milter));
@@ -590,7 +640,7 @@ static int vmilter8_read_data(MILTER8 *milter, ssize_t data_len, va_list ap)
 			 milter->m.name);
 		return (milter8_comm_error(milter));
 	    }
-	    data_left -= UINT32_SIZE;
+	    *data_len -= UINT32_SIZE;
 	    *host_long_ptr = ntohl(net_long);
 	    break;
 
@@ -598,27 +648,27 @@ static int vmilter8_read_data(MILTER8 *milter, ssize_t data_len, va_list ap)
 	     * Raw on-the-wire format, without explicit null terminator.
 	     */
 	case MILTER8_DATA_BUFFER:
-	    if (data_left < 0) {
+	    if (*data_len < 0) {
 		msg_warn("milter %s: no data in input packet", milter->m.name);
 		return (milter8_comm_error(milter));
 	    }
 	    buf = va_arg(ap, VSTRING *);
 	    VSTRING_RESET(buf);
-	    VSTRING_SPACE(buf, data_left);
-	    if (vstream_fread(milter->fp, (char *) STR(buf), data_left)
-		!= data_left) {
+	    VSTRING_SPACE(buf, *data_len);
+	    if (vstream_fread(milter->fp, (char *) STR(buf), *data_len)
+		!= *data_len) {
 		msg_warn("milter %s: EOF while reading data: %m", milter->m.name);
 		return (milter8_comm_error(milter));
 	    }
-	    VSTRING_AT_OFFSET(buf, data_left);
-	    data_left = 0;
+	    VSTRING_AT_OFFSET(buf, *data_len);
+	    *data_len = 0;
 	    break;
 
 	    /*
 	     * Pointer to null-terminated string.
 	     */
 	case MILTER8_DATA_STRING:
-	    if (data_left < 1) {
+	    if (*data_len < 1) {
 		msg_warn("milter %s: packet too short for string",
 			 milter->m.name);
 		return (milter8_comm_error(milter));
@@ -631,11 +681,11 @@ static int vmilter8_read_data(MILTER8 *milter, ssize_t data_len, va_list ap)
 			     myname, milter->m.name);
 		    return (milter8_comm_error(milter));
 		}
-		data_left -= 1;
+		*data_len -= 1;
 		if (ch == 0)
 		    break;
 		VSTRING_ADDCH(buf, ch);
-		if (data_left <= 0) {
+		if (*data_len <= 0) {
 		    msg_warn("%s: milter %s: missing string null termimator",
 			     myname, milter->m.name);
 		    return (milter8_comm_error(milter));
@@ -656,19 +706,19 @@ static int vmilter8_read_data(MILTER8 *milter, ssize_t data_len, va_list ap)
      * Sanity checks. We may have excess data when the sender is confused. We
      * may have a negative count when we're confused ourselves.
      */
-    if (data_left > 0) {
-	msg_warn("%s: left-over data %ld bytes", myname, (long) data_left);
+    if (arg_type != MILTER8_DATA_MORE && *data_len > 0) {
+	msg_warn("%s: left-over data %ld bytes", myname, (long) *data_len);
 	return (milter8_comm_error(milter));
     }
-    if (data_left < 0)
+    if (*data_len < 0)
 	msg_panic("%s: bad left-over data count %ld",
-		  myname, (long) data_left);
+		  myname, (long) *data_len);
     return (0);
 }
 
 /* milter8_read_data - read command data */
 
-static int milter8_read_data(MILTER8 *milter, ssize_t data_len,...)
+static int milter8_read_data(MILTER8 *milter, ssize_t *data_len,...)
 {
     va_list ap;
     int     ret;
@@ -915,7 +965,6 @@ static const char *milter8_event(MILTER8 *milter, int event,
     /*
      * Skip this event if it doesn't exist in the protocol that I announced.
      */
-#ifndef USE_LIBMILTER_INCLUDES
     if ((skip_event_flag & milter->np_mask) != 0) {
 	if (msg_verbose)
 	    msg_info("skipping non-protocol event %s for milter %s",
@@ -923,12 +972,28 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		     smfic_name : "(unknown MTA event)", milter->m.name);
 	return (milter->def_reply);
     }
-#endif
+
+    /*
+     * Skip further events of this type if the filter told us so.
+     */
+    if (milter->skip_event_type != 0) {
+	if (event == milter->skip_event_type) {
+	    if (msg_verbose)
+		msg_info("skipping event %s after SMFIR_SKIP from milter %s",
+		     (smfic_name = str_name_code(smfic_table, event)) != 0 ?
+			 smfic_name : "(unknown MTA event)", milter->m.name);
+	    return (milter->def_reply);
+	} else {
+	    milter->skip_event_type = 0;
+	}
+    }
 
     /*
      * Send the macros for this event, even when we're not reporting the
      * event itself. This does not introduce a performance problem because
      * we're sending macros and event parameters in one VSTREAM transaction.
+     * 
+     * XXX Is this still necessary?
      */
     if (msg_verbose) {
 	VSTRING *buf = vstring_alloc(100);
@@ -990,7 +1055,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
      */
     if (skip_reply) {
 	if (msg_verbose)
-	    msg_info("skipping reply %s for milter %s",
+	    msg_info("skipping reply for event %s from milter %s",
 		     (smfic_name = str_name_code(smfic_table, event)) != 0 ?
 		     smfic_name : "(unknown MTA event)", milter->m.name);
 	return (milter->def_reply);
@@ -1031,6 +1096,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	char   *cp;
 	char   *rp;
 	char    ch;
+	char   *next;
 
 	if (milter8_read_resp(milter, event, &cmd, &data_size) != 0)
 	    MILTER8_EVENT_BREAK(milter->def_reply);
@@ -1160,7 +1226,6 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	     * Decision: disconnect. This decision is final (i.e. Sendmail 8
 	     * changes receiver state).
 	     */
-#ifdef SMFIR_SHUTDOWN
 	case SMFIR_SHUTDOWN:
 	    if (data_size != 0)
 		break;
@@ -1169,7 +1234,6 @@ static const char *milter8_event(MILTER8 *milter, int event,
 #endif
 	    milter->state = MILTER8_STAT_REJECT_CON;
 	    MILTER8_EVENT_BREAK(milter8_def_reply(milter, "S"));
-#endif
 
 	    /*
 	     * Decision: "ddd d.d+.d+ text". This decision is final (i.e.
@@ -1182,7 +1246,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	     * by '%', and remove single (i.e. invalid) '%' characters.
 	     */
 	case SMFIR_REPLYCODE:
-	    if (milter8_read_data(milter, data_size,
+	    if (milter8_read_data(milter, &data_size,
 				  MILTER8_DATA_BUFFER, milter->buf,
 				  MILTER8_DATA_END) != 0)
 		MILTER8_EVENT_BREAK(milter->def_reply);
@@ -1205,6 +1269,18 @@ static const char *milter8_event(MILTER8 *milter, int event,
 			break;
 		}
 	    }
+	    if (var_soft_bounce) {
+		for (cp = STR(milter->buf); /* void */ ; cp = next) {
+		    if (cp[0] == '5') {
+			cp[0] = '4';
+			if (cp[4] == '5')
+			    cp[4] = '4';
+		    }
+		    if ((next = strstr(cp, "\r\n")) == 0)
+			break;
+		    next += 2;
+		}
+	    }
 	    if (IN_CONNECT_EVENT(event)) {
 #ifdef LIBMILTER_AUTO_DISCONNECT
 		milter8_close_stream(milter);
@@ -1220,15 +1296,22 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	     * transition in the receiver state (reply, reject, tempfail,
 	     * accept, discard).
 	     */
-#ifdef SMFIR_QUARANTINE
 	case SMFIR_QUARANTINE:
 	    /* XXX What to do with the "reason" text? */
-	    if (milter8_read_data(milter, data_size,
+	    if (milter8_read_data(milter, &data_size,
 				  MILTER8_DATA_BUFFER, milter->buf,
 				  MILTER8_DATA_END) != 0)
 		MILTER8_EVENT_BREAK(milter->def_reply);
 	    MILTER8_EVENT_BREAK("H");
-#endif
+
+	    /*
+	     * Decision: skip further events of this type.
+	     */
+	case SMFIR_SKIP:
+	    if (data_size != 0)
+		break;
+	    milter->skip_event_type = event;
+	    MILTER8_EVENT_BREAK(milter->def_reply);
 
 	    /*
 	     * Modification request or error.
@@ -1237,13 +1320,14 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	    if (event == SMFIC_BODYEOB) {
 		switch (cmd) {
 
+#define MILTER8_HDR_SPACE(m) (((m)->ev_mask & SMFIP_HDR_LEADSPC) ? "" : " ")
+
 		    /*
 		     * Modification request: replace, insert or delete
 		     * header. Index 1 means the first instance.
 		     */
-#ifdef SMFIR_CHGHEADER
 		case SMFIR_CHGHEADER:
-		    if (milter8_read_data(milter, data_size,
+		    if (milter8_read_data(milter, &data_size,
 					  MILTER8_DATA_HLONG, &index,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_STRING, milter->body,
@@ -1271,19 +1355,19 @@ static const char *milter8_event(MILTER8 *milter, int event,
 			edit_resp = parent->upd_header(parent->chg_context,
 						       (ssize_t) index,
 						       STR(milter->buf),
+						  MILTER8_HDR_SPACE(milter),
 						       STR(milter->body));
 		    else
 			edit_resp = parent->del_header(parent->chg_context,
 						       (ssize_t) index,
 						       STR(milter->buf));
 		    continue;
-#endif
 
 		    /*
 		     * Modification request: append header.
 		     */
 		case SMFIR_ADDHEADER:
-		    if (milter8_read_data(milter, data_size,
+		    if (milter8_read_data(milter, &data_size,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_STRING, milter->body,
 					  MILTER8_DATA_END) != 0)
@@ -1293,6 +1377,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 			continue;
 		    edit_resp = parent->add_header(parent->chg_context,
 						   STR(milter->buf),
+						   MILTER8_HDR_SPACE(milter),
 						   STR(milter->body));
 		    continue;
 
@@ -1302,9 +1387,8 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		     * indexing for consistency with header change
 		     * operations.
 		     */
-#ifdef SMFIR_INSHEADER
 		case SMFIR_INSHEADER:
-		    if (milter8_read_data(milter, data_size,
+		    if (milter8_read_data(milter, &data_size,
 					  MILTER8_DATA_HLONG, &index,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_STRING, milter->body,
@@ -1322,15 +1406,15 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		    edit_resp = parent->ins_header(parent->chg_context,
 						   (ssize_t) index + 1,
 						   STR(milter->buf),
+						   MILTER8_HDR_SPACE(milter),
 						   STR(milter->body));
 		    continue;
-#endif
 
 		    /*
 		     * Modification request: append recipient.
 		     */
 		case SMFIR_ADDRCPT:
-		    if (milter8_read_data(milter, data_size,
+		    if (milter8_read_data(milter, &data_size,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_END) != 0)
 			MILTER8_EVENT_BREAK(milter->def_reply);
@@ -1345,7 +1429,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		     * Modification request: delete (expansion of) recipient.
 		     */
 		case SMFIR_DELRCPT:
-		    if (milter8_read_data(milter, data_size,
+		    if (milter8_read_data(milter, &data_size,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_END) != 0)
 			MILTER8_EVENT_BREAK(milter->def_reply);
@@ -1368,7 +1452,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 			milter8_conf_error(milter);
 			MILTER8_EVENT_BREAK(milter->def_reply);
 		    }
-		    if (milter8_read_data(milter, data_size,
+		    if (milter8_read_data(milter, &data_size,
 					  MILTER8_DATA_BUFFER, milter->body,
 					  MILTER8_DATA_END) != 0)
 			MILTER8_EVENT_BREAK(milter->def_reply);
@@ -1455,36 +1539,18 @@ static void milter8_connect(MILTER8 *milter)
     const UINT32_TYPE my_actions = (SMFIF_ADDHDRS | SMFIF_ADDRCPT
 				    | SMFIF_DELRCPT | SMFIF_CHGHDRS
 				    | SMFIF_CHGBODY
-#ifdef SMFIF_QUARANTINE
 				    | SMFIF_QUARANTINE
+#if 0
+				    | SMFIF_CHGFROM
+				    | SMFIF_ADDRCPT_PAR
 #endif
+				    | SMFIF_SETSYMLIST
     );
-
-#ifdef USE_LIBMILTER_INCLUDES
-    const UINT32_TYPE my_version = SMFI_VERSION;
-    const UINT32_TYPE my_events = (SMFIP_NOCONNECT | SMFIP_NOHELO
-				   | SMFIP_NOMAIL | SMFIP_NORCPT
-				   | SMFIP_NOBODY | SMFIP_NOHDRS
-				   | SMFIP_NOEOH
-#ifdef SMFIP_NOHREPL
-				   | SMFIP_NOHREPL
-#endif
-#ifdef SMFIP_NOUNKNOWN
-				   | SMFIP_NOUNKNOWN
-#endif
-#ifdef SMFIP_NODATA
-				   | SMFIP_NODATA
-#endif
-    );
-
-#else
     UINT32_TYPE my_version = 0;
     UINT32_TYPE my_events = 0;
     char   *saved_version;
     char   *cp;
     char   *name;
-
-#endif
 
     /*
      * Sanity check.
@@ -1492,8 +1558,6 @@ static void milter8_connect(MILTER8 *milter)
     if (milter->fp != 0)
 	msg_panic("%s: milter %s: socket is not closed",
 		  myname, milter->m.name);
-
-#ifndef USE_LIBMILTER_INCLUDES
 
     /*
      * For user friendliness reasons the milter_protocol configuration
@@ -1536,19 +1600,14 @@ static void milter8_connect(MILTER8 *milter)
     }
 
     /*
-     * Don't send events that aren't defined for my protocol version. This is
-     * somewhat tricky: unlike the other SMFIP_mumble bits, the SMFIP_NOHREPL
-     * bit specifies something that the milter application won't send. We
-     * must not inadvertently turn this bit on, because the MTA would get out
-     * of sync with the application.
+     * Don't send events that aren't defined for my protocol version.
      */
-    milter->np_mask = ~(my_events | SMFIP_NOHREPL);
+    milter->np_mask = (SMFIP_NOSEND_MASK & ~my_events);
     if (msg_verbose)
 	msg_info("%s: non-protocol events for protocol version %d: %s",
 		 myname, my_version,
 		 str_name_mask_opt(milter->buf, "non-protocol event mask",
 			   smfip_table, milter->np_mask, NAME_MASK_NUMBER));
-#endif
 
     /*
      * Parse the Milter application endpoint.
@@ -1618,57 +1677,101 @@ static void milter8_connect(MILTER8 *milter)
 			  MILTER8_DATA_END) != 0) {
 	msg_warn("milter %s: write error in initial handshake",
 		 milter->m.name);
+	/* milter8_write_cmd() called milter8_comm_error() */
+	return;
     }
 
     /*
      * Receive the filter's response and verify that we are compatible.
      */
-    else if (milter8_read_resp(milter, SMFIC_OPTNEG, &cmd, &data_len) != 0) {
+    if (milter8_read_resp(milter, SMFIC_OPTNEG, &cmd, &data_len) != 0) {
 	msg_warn("milter %s: read error in initial handshake", milter->m.name);
 	/* milter8_read_resp() called milter8_comm_error() */
-    } else if (cmd != SMFIC_OPTNEG) {
+	return;
+    }
+    if (cmd != SMFIC_OPTNEG) {
 	msg_warn("milter %s: unexpected reply \"%c\" in initial handshake",
 		 milter->m.name, cmd);
 	(void) milter8_comm_error(milter);
-    } else if (milter8_read_data(milter, data_len,
-				 MILTER8_DATA_HLONG, &milter->version,
-				 MILTER8_DATA_HLONG, &milter->rq_mask,
-				 MILTER8_DATA_HLONG, &milter->ev_mask,
-				 MILTER8_DATA_END) != 0) {
+	return;
+    }
+    if (milter8_read_data(milter, &data_len,
+			  MILTER8_DATA_HLONG, &milter->version,
+			  MILTER8_DATA_HLONG, &milter->rq_mask,
+			  MILTER8_DATA_HLONG, &milter->ev_mask,
+			  MILTER8_DATA_MORE) != 0) {
 	msg_warn("milter %s: read error in initial handshake", milter->m.name);
 	/* milter8_read_data() called milter8_comm_error() */
-    } else if (milter->version > my_version) {
+	return;
+    }
+    if (milter->version > my_version) {
 	msg_warn("milter %s: protocol version %d conflict"
 		 " with MTA protocol version %d",
 		 milter->m.name, milter->version, my_version);
 	(void) milter8_comm_error(milter);
-    } else if ((milter->rq_mask & my_actions) != milter->rq_mask) {
+	return;
+    }
+    if ((milter->rq_mask & my_actions) != milter->rq_mask) {
 	msg_warn("milter %s: request mask 0x%x conflict"
 		 " with MTA request mask 0x%lx",
 		 milter->m.name, milter->rq_mask, (long) my_actions);
 	(void) milter8_comm_error(milter);
+	return;
     }
 
     /*
-     * Successful negotiations completed.
+     * Initial negotiations completed.
      */
-    else {
-	if (msg_verbose) {
-	    if ((milter->ev_mask & my_events) != milter->ev_mask)
-		msg_info("milter %s: event mask 0x%x includes features not"
-			 " offered in MTA event mask 0x%lx",
-			 milter->m.name, milter->ev_mask, (long) my_events);
-	    msg_info("%s: milter %s version %d",
-		     myname, milter->m.name, milter->version);
-	    msg_info("%s: events %s", myname,
-		     str_name_mask_opt(milter->buf, "event mask",
+    if (msg_verbose) {
+	if ((milter->ev_mask & my_events) != milter->ev_mask)
+	    msg_info("milter %s: event mask 0x%x includes features not"
+		     " offered in MTA event mask 0x%lx",
+		     milter->m.name, milter->ev_mask, (long) my_events);
+	msg_info("%s: milter %s version %d",
+		 myname, milter->m.name, milter->version);
+	msg_info("%s: events %s", myname,
+		 str_name_mask_opt(milter->buf, "event mask",
 			   smfip_table, milter->ev_mask, NAME_MASK_NUMBER));
-	    msg_info("%s: requests %s", myname,
-		     str_name_mask_opt(milter->buf, "request mask",
+	msg_info("%s: requests %s", myname,
+		 str_name_mask_opt(milter->buf, "request mask",
 			   smfif_table, milter->rq_mask, NAME_MASK_NUMBER));
+    }
+    milter->state = MILTER8_STAT_READY;
+    milter8_def_reply(milter, 0);
+    milter->skip_event_type = 0;
+
+    /*
+     * Secondary negotiations: override lists of macro names.
+     */
+    if (data_len > 0) {
+	VSTRING *buf = vstring_alloc(100);
+	UINT32_TYPE mac_type;
+	const char *smfim_name;
+	char  **mac_value_ptr;
+
+	milter->m.macros = milter_macros_alloc(MILTER_MACROS_ALLOC_EMPTY);
+
+	while (data_len > 0
+	       && milter8_read_data(milter, &data_len,
+				    MILTER8_DATA_HLONG, &mac_type,
+				    MILTER8_DATA_STRING, buf,
+				    MILTER8_DATA_MORE) == 0) {
+	    smfim_name = str_name_code(smfim_table, mac_type);
+	    if (smfim_name == 0) {
+		msg_warn("milter %s: ignoring unknown macro type %u",
+			 milter->m.name, (unsigned) mac_type);
+	    } else {
+		if (msg_verbose)
+		    msg_info("override %s macro list with \"%s\"",
+			     smfim_name, STR(buf));
+		mac_value_ptr = MILTER8_MACRO_PTR(milter->m.macros, mac_type);
+		myfree(*mac_value_ptr);
+		*mac_value_ptr = mystrdup(STR(buf));
+	    }
 	}
-	milter->state = MILTER8_STAT_READY;
-	milter8_def_reply(milter, 0);
+	/* milter8_read_data() calls milter8_comm_error() after error. */
+	vstring_free(buf);
+	/* At this point the filter state is either READY or ERROR. */
     }
 }
 
@@ -1684,6 +1787,18 @@ static const char *milter8_conn_event(MILTER *m,
     const char *myname = "milter8_conn_event";
     MILTER8 *milter = (MILTER8 *) m;
     int     port;
+    int     skip_reply;
+    const char *sm_name;
+    char   *ptr = 0;
+    const char *resp;
+
+    /*
+     * Need a global definition for "unknown" host name or address that is
+     * shared by smtpd, cleanup and libmilter.
+     */
+#define XXX_UNKNOWN	"unknown"
+#define STR_EQ(x,y)	(strcmp((x), (y)) == 0)
+#define STR_NE(x,y)	(strcmp((x), (y)) != 0)
 
     /*
      * XXX Sendmail 8 libmilter closes the MTA-to-filter socket when it finds
@@ -1715,40 +1830,52 @@ static const char *milter8_conn_event(MILTER *m,
 	    port = 0;
 	}
 	milter->state = MILTER8_STAT_ENVELOPE;
+	skip_reply = ((milter->ev_mask & SMFIP_NR_CONN) != 0);
+	/* Transform unknown hostname from Postfix to Sendmail form. */
+	sm_name = (STR_NE(client_name, XXX_UNKNOWN) ? client_name :
+		   STR_EQ(client_addr, XXX_UNKNOWN) ? client_name :
+		   (ptr = concatenate("[", client_addr, "]", (char *) 0)));
 	switch (addr_family) {
 	case AF_INET:
-	    return (milter8_event(milter, SMFIC_CONNECT, SMFIP_NOCONNECT,
-				  DONT_SKIP_REPLY, macros,
-				  MILTER8_DATA_STRING, client_name,
-				  MILTER8_DATA_OCTET, SMFIA_INET,
-				  MILTER8_DATA_NSHORT, htons(port),
-				  MILTER8_DATA_STRING, client_addr,
-				  MILTER8_DATA_END));
+	    resp = milter8_event(milter, SMFIC_CONNECT, SMFIP_NOCONNECT,
+				 skip_reply, macros,
+				 MILTER8_DATA_STRING, sm_name,
+				 MILTER8_DATA_OCTET, SMFIA_INET,
+				 MILTER8_DATA_NSHORT, htons(port),
+				 MILTER8_DATA_STRING, client_addr,
+				 MILTER8_DATA_END);
+	    break;
 #ifdef HAS_IPV6
 	case AF_INET6:
-	    return (milter8_event(milter, SMFIC_CONNECT, SMFIP_NOCONNECT,
-				  DONT_SKIP_REPLY, macros,
-				  MILTER8_DATA_STRING, client_name,
-				  MILTER8_DATA_OCTET, SMFIA_INET6,
-				  MILTER8_DATA_NSHORT, htons(port),
-				  MILTER8_DATA_STRING, client_addr,
-				  MILTER8_DATA_END));
+	    resp = milter8_event(milter, SMFIC_CONNECT, SMFIP_NOCONNECT,
+				 skip_reply, macros,
+				 MILTER8_DATA_STRING, sm_name,
+				 MILTER8_DATA_OCTET, SMFIA_INET6,
+				 MILTER8_DATA_NSHORT, htons(port),
+				 MILTER8_DATA_STRING, client_addr,
+				 MILTER8_DATA_END);
+	    break;
 #endif
 	case AF_UNIX:
-	    return (milter8_event(milter, SMFIC_CONNECT, SMFIP_NOCONNECT,
-				  DONT_SKIP_REPLY, macros,
-				  MILTER8_DATA_STRING, client_name,
-				  MILTER8_DATA_OCTET, SMFIA_UNIX,
-				  MILTER8_DATA_NSHORT, htons(0),
-				  MILTER8_DATA_STRING, client_addr,
-				  MILTER8_DATA_END));
+	    resp = milter8_event(milter, SMFIC_CONNECT, SMFIP_NOCONNECT,
+				 skip_reply, macros,
+				 MILTER8_DATA_STRING, sm_name,
+				 MILTER8_DATA_OCTET, SMFIA_UNIX,
+				 MILTER8_DATA_NSHORT, htons(0),
+				 MILTER8_DATA_STRING, client_addr,
+				 MILTER8_DATA_END);
+	    break;
 	default:
-	    return (milter8_event(milter, SMFIC_CONNECT, SMFIP_NOCONNECT,
-				  DONT_SKIP_REPLY, macros,
-				  MILTER8_DATA_STRING, client_name,
-				  MILTER8_DATA_OCTET, SMFIA_UNKNOWN,
-				  MILTER8_DATA_END));
+	    resp = milter8_event(milter, SMFIC_CONNECT, SMFIP_NOCONNECT,
+				 skip_reply, macros,
+				 MILTER8_DATA_STRING, sm_name,
+				 MILTER8_DATA_OCTET, SMFIA_UNKNOWN,
+				 MILTER8_DATA_END);
+	    break;
 	}
+	if (ptr != 0)
+	    myfree(ptr);
+	return (resp);
     default:
 	msg_panic("%s: milter %s: bad state %d",
 		  myname, milter->m.name, milter->state);
@@ -1763,6 +1890,7 @@ static const char *milter8_helo_event(MILTER *m, const char *helo_name,
 {
     const char *myname = "milter8_helo_event";
     MILTER8 *milter = (MILTER8 *) m;
+    int     skip_reply;
 
     /*
      * Report the event.
@@ -1780,8 +1908,9 @@ static const char *milter8_helo_event(MILTER *m, const char *helo_name,
 	if (msg_verbose)
 	    msg_info("%s: milter %s: helo %s",
 		     myname, milter->m.name, helo_name);
+	skip_reply = ((milter->ev_mask & SMFIP_NR_HELO) != 0);
 	return (milter8_event(milter, SMFIC_HELO, SMFIP_NOHELO,
-			      DONT_SKIP_REPLY, macros,
+			      skip_reply, macros,
 			      MILTER8_DATA_STRING, helo_name,
 			      MILTER8_DATA_END));
     default:
@@ -1798,6 +1927,7 @@ static const char *milter8_mail_event(MILTER *m, const char **argv,
     const char *myname = "milter8_mail_event";
     MILTER8 *milter = (MILTER8 *) m;
     const char **cpp;
+    int     skip_reply;
 
     /*
      * Report the event.
@@ -1819,8 +1949,9 @@ static const char *milter8_mail_event(MILTER *m, const char **argv,
 		     myname, milter->m.name, STR(buf));
 	    vstring_free(buf);
 	}
+	skip_reply = ((milter->ev_mask & SMFIP_NR_MAIL) != 0);
 	return (milter8_event(milter, SMFIC_MAIL, SMFIP_NOMAIL,
-			      DONT_SKIP_REPLY, macros,
+			      skip_reply, macros,
 			      MILTER8_DATA_ARGV, argv,
 			      MILTER8_DATA_END));
     default:
@@ -1837,6 +1968,7 @@ static const char *milter8_rcpt_event(MILTER *m, const char **argv,
     const char *myname = "milter8_rcpt_event";
     MILTER8 *milter = (MILTER8 *) m;
     const char **cpp;
+    int     skip_reply;
 
     /*
      * Report the event.
@@ -1859,8 +1991,9 @@ static const char *milter8_rcpt_event(MILTER *m, const char **argv,
 		     myname, milter->m.name, STR(buf));
 	    vstring_free(buf);
 	}
+	skip_reply = ((milter->ev_mask & SMFIP_NR_RCPT) != 0);
 	return (milter8_event(milter, SMFIC_RCPT, SMFIP_NORCPT,
-			      DONT_SKIP_REPLY, macros,
+			      skip_reply, macros,
 			      MILTER8_DATA_ARGV, argv,
 			      MILTER8_DATA_END));
     default:
@@ -1871,12 +2004,11 @@ static const char *milter8_rcpt_event(MILTER *m, const char **argv,
 
 /* milter8_data_event - report DATA command to Sendmail 8 milter */
 
-#ifdef SMFIC_DATA
-
 static const char *milter8_data_event(MILTER *m, ARGV *macros)
 {
     const char *myname = "milter8_data_event";
     MILTER8 *milter = (MILTER8 *) m;
+    int     skip_reply;
 
     /*
      * Report the event.
@@ -1892,8 +2024,9 @@ static const char *milter8_data_event(MILTER *m, ARGV *macros)
     case MILTER8_STAT_ENVELOPE:
 	if (msg_verbose)
 	    msg_info("%s: milter %s: data command", myname, milter->m.name);
+	skip_reply = ((milter->ev_mask & SMFIP_NR_DATA) != 0);
 	return (milter8_event(milter, SMFIC_DATA, SMFIP_NODATA,
-			      DONT_SKIP_REPLY, macros,
+			      skip_reply, macros,
 			      MILTER8_DATA_END));
     default:
 	msg_panic("%s: milter %s: bad state %d",
@@ -1901,19 +2034,14 @@ static const char *milter8_data_event(MILTER *m, ARGV *macros)
     }
 }
 
-#else
-#define milter8_data_event	0
-#endif
-
 /* milter8_unknown_event - report unknown SMTP command to Sendmail 8 milter */
-
-#ifdef SMFIC_UNKNOWN
 
 static const char *milter8_unknown_event(MILTER *m, const char *command,
 					         ARGV *macros)
 {
     const char *myname = "milter8_unknown_event";
     MILTER8 *milter = (MILTER8 *) m;
+    int     skip_reply;
 
     /*
      * Report the event.
@@ -1931,8 +2059,9 @@ static const char *milter8_unknown_event(MILTER *m, const char *command,
 	    msg_info("%s: milter %s: unknown command: %s",
 		     myname, milter->m.name, command);
 	/* XXX Sendmail doesn't send macros (checked with 8.6.13). */
+	skip_reply = ((milter->ev_mask & SMFIP_NR_UNKN) != 0);
 	return (milter8_event(milter, SMFIC_UNKNOWN, SMFIP_NOUNKNOWN,
-			      DONT_SKIP_REPLY, macros,
+			      skip_reply, macros,
 			      MILTER8_DATA_STRING, command,
 			      MILTER8_DATA_END));
     default:
@@ -1940,10 +2069,6 @@ static const char *milter8_unknown_event(MILTER *m, const char *command,
 		  myname, milter->m.name, milter->state);
     }
 }
-
-#else
-#define milter8_unknown_event	0
-#endif
 
 /* milter8_other_event - reply for other event */
 
@@ -2047,7 +2172,8 @@ static void milter8_disc_event(MILTER *m)
   */
 typedef struct {
     MILTER8 *milter;			/* milter client */
-    ARGV   *macros;			/* end-of-body macros */
+    ARGV   *eoh_macros;			/* end-of-header macros */
+    ARGV   *eod_macros;			/* end-of-body macros */
     int     first_header;		/* first header */
     int     first_body;			/* first body line */
     const char *resp;			/* milter application response */
@@ -2056,7 +2182,7 @@ typedef struct {
 /* milter8_header - milter8_message call-back for message header */
 
 static void milter8_header(void *ptr, int unused_header_class,
-			           HEADER_OPTS *header_info,
+			           const HEADER_OPTS *header_info,
 			           VSTRING *buf, off_t unused_offset)
 {
     const char *myname = "milter8_header";
@@ -2114,17 +2240,13 @@ static void milter8_header(void *ptr, int unused_header_class,
     if (*cp != ':')
 	msg_panic("%s: header label not followed by ':'", myname);
     *cp++ = 0;
-    /* XXX Sendmail 8.13.6 eats one space (not tab) after colon. */
-    if (*cp == ' ')
+    /* XXX Sendmail by default eats one space (not tab) after the colon. */
+    if ((milter->ev_mask & SMFIP_HDR_LEADSPC) == 0 && *cp == ' ')
 	cp++;
-#ifdef SMFIP_NOHREPL
     skip_reply = ((milter->ev_mask & SMFIP_NOHREPL) != 0);
-#else
-    skip_reply = DONT_SKIP_REPLY;
-#endif
     msg_ctx->resp =
 	milter8_event(milter, SMFIC_HEADER, SMFIP_NOHDRS,
-		      skip_reply, msg_ctx->macros,
+		      skip_reply, msg_ctx->eoh_macros,
 		      MILTER8_DATA_STRING, STR(buf),
 		      MILTER8_DATA_STRING, cp,
 		      MILTER8_DATA_END);
@@ -2137,14 +2259,16 @@ static void milter8_eoh(void *ptr)
     const char *myname = "milter8_eoh";
     MILTER_MSG_CONTEXT *msg_ctx = (MILTER_MSG_CONTEXT *) ptr;
     MILTER8 *milter = msg_ctx->milter;
+    int     skip_reply;
 
     if (MILTER8_MESSAGE_DONE(milter, msg_ctx))
 	return;
     if (msg_verbose)
 	msg_info("%s: eoh milter %s", myname, milter->m.name);
+    skip_reply = ((milter->ev_mask & SMFIP_NR_EOH) != 0);
     msg_ctx->resp =
 	milter8_event(milter, SMFIC_EOH, SMFIP_NOEOH,
-		      DONT_SKIP_REPLY, msg_ctx->macros,
+		      skip_reply, msg_ctx->eoh_macros,
 		      MILTER8_DATA_END);
 }
 
@@ -2161,6 +2285,7 @@ static void milter8_body(void *ptr, int rec_type,
     const char *bp = buf;
     ssize_t space;
     ssize_t count;
+    int     skip_reply;
 
     if (MILTER8_MESSAGE_DONE(milter, msg_ctx))
 	return;
@@ -2188,6 +2313,7 @@ static void milter8_body(void *ptr, int rec_type,
      */
     if (msg_verbose > 1)
 	msg_info("%s: body milter %s: %.100s", myname, milter->m.name, buf);
+    skip_reply = ((milter->ev_mask & SMFIP_NR_BODY) != 0);
     /* To append \r\n, simply redirect input to another buffer. */
     if (rec_type == REC_TYPE_NORM && todo == 0) {
 	bp = "\r\n";
@@ -2208,7 +2334,7 @@ static void milter8_body(void *ptr, int rec_type,
 	if (LEN(milter->body) == MILTER_CHUNK_SIZE) {
 	    msg_ctx->resp =
 		milter8_event(milter, SMFIC_BODY, SMFIP_NOBODY,
-			      DONT_SKIP_REPLY, msg_ctx->macros,
+			      skip_reply, msg_ctx->eod_macros,
 			      MILTER8_DATA_BUFFER, milter->body,
 			      MILTER8_DATA_END);
 	    if (MILTER8_MESSAGE_DONE(milter, msg_ctx))
@@ -2231,6 +2357,7 @@ static void milter8_eob(void *ptr)
     const char *myname = "milter8_eob";
     MILTER_MSG_CONTEXT *msg_ctx = (MILTER_MSG_CONTEXT *) ptr;
     MILTER8 *milter = msg_ctx->milter;
+    int     skip_reply;
 
     if (MILTER8_MESSAGE_DONE(milter, msg_ctx))
 	return;
@@ -2249,9 +2376,10 @@ static void milter8_eob(void *ptr)
      * have different macro lists.
      */
     if (LEN(milter->body) > 0) {
+	skip_reply = ((milter->ev_mask & SMFIP_NR_BODY) != 0);
 	msg_ctx->resp =
 	    milter8_event(milter, SMFIC_BODY, SMFIP_NOBODY,
-			  DONT_SKIP_REPLY, msg_ctx->macros,
+			  skip_reply, msg_ctx->eod_macros,
 			  MILTER8_DATA_BUFFER, milter->body,
 			  MILTER8_DATA_END);
 	if (MILTER8_MESSAGE_DONE(milter, msg_ctx))
@@ -2259,7 +2387,7 @@ static void milter8_eob(void *ptr)
     }
     msg_ctx->resp =
 	milter8_event(msg_ctx->milter, SMFIC_BODYEOB, 0,
-		      DONT_SKIP_REPLY, msg_ctx->macros,
+		      DONT_SKIP_REPLY, msg_ctx->eod_macros,
 		      MILTER8_DATA_END);
 }
 
@@ -2267,13 +2395,14 @@ static void milter8_eob(void *ptr)
 
 static const char *milter8_message(MILTER *m, VSTREAM *qfile,
 				           off_t data_offset,
-				           ARGV *macros)
+				           ARGV *eoh_macros,
+				           ARGV *eod_macros)
 {
     const char *myname = "milter8_message";
     MILTER8 *milter = (MILTER8 *) m;
     MIME_STATE *mime_state;
     int     rec_type;
-    MIME_STATE_DETAIL *detail;
+    const MIME_STATE_DETAIL *detail;
     int     mime_errs = 0;
     MILTER_MSG_CONTEXT msg_ctx;
     VSTRING *buf;
@@ -2294,7 +2423,8 @@ static const char *milter8_message(MILTER *m, VSTREAM *qfile,
 	    return ("450 4.3.0 Queue file write error");
 	}
 	msg_ctx.milter = milter;
-	msg_ctx.macros = macros;
+	msg_ctx.eoh_macros = eoh_macros;
+	msg_ctx.eod_macros = eod_macros;
 	msg_ctx.first_header = 1;
 	msg_ctx.first_body = 1;
 	msg_ctx.resp = 0;
@@ -2375,6 +2505,7 @@ static const char *milter8_message(MILTER *m, VSTREAM *qfile,
 #define MAIL_ATTR_MILT_CMD	"milter_cmd_timeout"
 #define MAIL_ATTR_MILT_MSG	"milter_msg_timeout"
 #define MAIL_ATTR_MILT_ACT	"milter_action"
+#define MAIL_ATTR_MILT_MAC	"milter_macro_list"
 
 /* milter8_active - report if this milter still wants events */
 
@@ -2397,20 +2528,27 @@ static int milter8_send(MILTER *m, VSTREAM *stream)
     if (msg_verbose)
 	msg_info("%s: milter %s", myname, milter->m.name);
 
-    if (attr_print(stream, ATTR_FLAG_NONE,
+    if (attr_print(stream, ATTR_FLAG_MORE,
 		   ATTR_TYPE_STR, MAIL_ATTR_MILT_NAME, milter->m.name,
 		   ATTR_TYPE_INT, MAIL_ATTR_MILT_VERS, milter->version,
 		   ATTR_TYPE_INT, MAIL_ATTR_MILT_ACTS, milter->rq_mask,
 		   ATTR_TYPE_INT, MAIL_ATTR_MILT_EVTS, milter->ev_mask,
-#ifndef USE_LIBMILTER_INCLUDES
 		   ATTR_TYPE_INT, MAIL_ATTR_MILT_NPTS, milter->np_mask,
-#endif
 		   ATTR_TYPE_INT, MAIL_ATTR_MILT_STAT, milter->state,
 		   ATTR_TYPE_INT, MAIL_ATTR_MILT_CONN, milter->conn_timeout,
 		   ATTR_TYPE_INT, MAIL_ATTR_MILT_CMD, milter->cmd_timeout,
 		   ATTR_TYPE_INT, MAIL_ATTR_MILT_MSG, milter->msg_timeout,
 		   ATTR_TYPE_STR, MAIL_ATTR_MILT_ACT, milter->def_action,
+		   ATTR_TYPE_INT, MAIL_ATTR_MILT_MAC, milter->m.macros != 0,
 		   ATTR_TYPE_END) != 0
+	|| (milter->m.macros != 0
+	    && attr_print(stream, ATTR_FLAG_NONE,
+			  ATTR_TYPE_FUNC, milter_macros_print,
+			  (void *) milter->m.macros,
+			  ATTR_TYPE_END) != 0)
+	|| (milter->m.macros == 0
+	    && attr_print(stream, ATTR_FLAG_NONE,
+			  ATTR_TYPE_END) != 0)
 	|| vstream_fflush(stream) != 0) {
 	return (-1);
 #ifdef CANT_WRITE_BEFORE_SENDING_FD
@@ -2453,42 +2591,57 @@ MILTER *milter8_receive(VSTREAM *stream, MILTERS *parent)
     int     cmd_timeout;
     int     msg_timeout;
     int     fd;
+    int     has_macros;
+    MILTER_MACROS *macros = 0;
+
+#define FREE_MACROS_AND_RETURN(x) do { \
+	if (macros) \
+	    milter_macros_free(macros); \
+	return (x); \
+    } while (0)
 
     if (name_buf == 0) {
 	name_buf = vstring_alloc(10);
 	act_buf = vstring_alloc(10);
     }
-    if (attr_scan(stream, ATTR_FLAG_STRICT,
+    if (attr_scan(stream, ATTR_FLAG_STRICT | ATTR_FLAG_MORE,
 		  ATTR_TYPE_STR, MAIL_ATTR_MILT_NAME, name_buf,
 		  ATTR_TYPE_INT, MAIL_ATTR_MILT_VERS, &version,
 		  ATTR_TYPE_INT, MAIL_ATTR_MILT_ACTS, &rq_mask,
 		  ATTR_TYPE_INT, MAIL_ATTR_MILT_EVTS, &ev_mask,
-#ifndef USE_LIBMILTER_INCLUDES
 		  ATTR_TYPE_INT, MAIL_ATTR_MILT_NPTS, &np_mask,
-#endif
 		  ATTR_TYPE_INT, MAIL_ATTR_MILT_STAT, &state,
 		  ATTR_TYPE_INT, MAIL_ATTR_MILT_CONN, &conn_timeout,
 		  ATTR_TYPE_INT, MAIL_ATTR_MILT_CMD, &cmd_timeout,
 		  ATTR_TYPE_INT, MAIL_ATTR_MILT_MSG, &msg_timeout,
 		  ATTR_TYPE_STR, MAIL_ATTR_MILT_ACT, act_buf,
-		  ATTR_TYPE_END) < 9) {
-	return (0);
+		  ATTR_TYPE_INT, MAIL_ATTR_MILT_MAC, &has_macros,
+		  ATTR_TYPE_END) < 10
+	|| (has_macros != 0
+	    && attr_scan(stream, ATTR_FLAG_STRICT,
+			 ATTR_TYPE_FUNC, milter_macros_scan,
+			 (void *) (macros =
+			     milter_macros_alloc(MILTER_MACROS_ALLOC_ZERO)),
+			 ATTR_TYPE_END) < 1)
+	|| (has_macros == 0
+	    && attr_scan(stream, ATTR_FLAG_STRICT,
+			 ATTR_TYPE_END) < 0)) {
+	FREE_MACROS_AND_RETURN(0);
 #ifdef CANT_WRITE_BEFORE_SENDING_FD
     } else if (attr_print(stream, ATTR_FLAG_NONE,
 			  ATTR_TYPE_STR, MAIL_ATTR_DUMMY, "",
 			  ATTR_TYPE_END) != 0
 	       || vstream_fflush(stream) != 0) {
-	return (0);
+	FREE_MACROS_AND_RETURN(0);
 #endif
     } else if ((fd = LOCAL_RECV_FD(vstream_fileno(stream))) < 0) {
-	return (0);
-#ifdef MUST_READ_AFTER_SENDING_FD
-    } else if (attr_print(stream, ATTR_FLAG_NONE,
-			  ATTR_TYPE_STR, MAIL_ATTR_DUMMY, "",
-			  ATTR_TYPE_END) != 0) {
-	return (0);
-#endif
+	FREE_MACROS_AND_RETURN(0);
     } else {
+#ifdef MUST_READ_AFTER_SENDING_FD
+	(void) attr_print(stream, ATTR_FLAG_NONE,
+			  ATTR_TYPE_STR, MAIL_ATTR_DUMMY, "",
+			  ATTR_TYPE_END);
+#endif
 #define NO_PROTOCOL	((char *) 0)
 
 	if (msg_verbose)
@@ -2497,15 +2650,14 @@ MILTER *milter8_receive(VSTREAM *stream, MILTERS *parent)
 	milter = milter8_alloc(STR(name_buf), conn_timeout, cmd_timeout,
 			    msg_timeout, NO_PROTOCOL, STR(act_buf), parent);
 	milter->fp = vstream_fdopen(fd, O_RDWR);
+	milter->m.macros = macros;
 	vstream_control(milter->fp, VSTREAM_CTL_DOUBLE, VSTREAM_CTL_END);
 	/* Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE. */
 	vstream_tweak_sock(milter->fp);
 	milter->version = version;
 	milter->rq_mask = rq_mask;
 	milter->ev_mask = ev_mask;
-#ifndef USE_LIBMILTER_INCLUDES
 	milter->np_mask = np_mask;
-#endif
 	milter->state = state;
 	return (&milter->m);
     }
@@ -2529,6 +2681,8 @@ static void milter8_free(MILTER *m)
     myfree(milter->def_action);
     if (milter->def_reply)
 	myfree(milter->def_reply);
+    if (milter->m.macros)
+	milter_macros_free(milter->m.macros);
     myfree((char *) milter);
 }
 
@@ -2549,6 +2703,7 @@ static MILTER8 *milter8_alloc(const char *name, int conn_timeout,
     milter->m.name = mystrdup(name);
     milter->m.next = 0;
     milter->m.parent = parent;
+    milter->m.macros = 0;
     milter->m.conn_event = milter8_conn_event;
     milter->m.helo_event = milter8_helo_event;
     milter->m.mail_event = milter8_mail_event;
@@ -2575,6 +2730,7 @@ static MILTER8 *milter8_alloc(const char *name, int conn_timeout,
     milter->protocol = (protocol ? mystrdup(protocol) : 0);
     milter->def_action = mystrdup(def_action);
     milter->def_reply = 0;
+    milter->skip_event_type = 0;
 
     return (milter);
 }
