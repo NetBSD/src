@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.8 2008/06/21 13:12:33 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.9 2008/06/22 18:15:33 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.8 2008/06/21 13:12:33 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.9 2008/06/22 18:15:33 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1344,6 +1344,7 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	udf_set_regid(&fe->imp_id, context.impl_name);
 	udf_add_impl_regid(&fe->imp_id);
 	fe->unique_id = udf_rw64(context.unique_id);
+	fe->l_ea = udf_rw32(0);
 
 	/* create extended attribute to record our creation time */
 	ft_extattr = calloc(1, UDF_FILETIMES_ATTR_LEN(1));
