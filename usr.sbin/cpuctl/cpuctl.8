@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpuctl.8,v 1.4 2008/05/05 17:54:14 ad Exp $
+.\"	$NetBSD: cpuctl.8,v 1.5 2008/06/22 13:53:59 ad Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,6 +77,9 @@ Set the specified CPU on line, making it available to run unbound LWPs.
 .It Pa /dev/cpuctl
 control device
 .El
+.Sh SEE ALSO
+.Xr psrset 8 ,
+.Xr schedctl 8
 .Sh HISTORY
 The
 .Nm
