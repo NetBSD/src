@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_bool.c,v 1.1.1.3 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: mail_conf_bool.c,v 1.1.1.3.26.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -21,10 +21,10 @@
 /*	int	value;
 /*
 /*	void	get_mail_conf_bool_table(table)
-/*	CONFIG_BOOL_TABLE *table;
+/*	const CONFIG_BOOL_TABLE *table;
 /*
 /*	void	get_mail_conf_bool_fn_table(table)
-/*	CONFIG_BOOL_TABLE *table;
+/*	const CONFIG_BOOL_TABLE *table;
 /* DESCRIPTION
 /*	This module implements configuration parameter support for
 /*	boolean values. The internal representation is zero (false)
@@ -136,7 +136,7 @@ void    set_mail_conf_bool(const char *name, int value)
 
 /* get_mail_conf_bool_table - look up table of booleans */
 
-void    get_mail_conf_bool_table(CONFIG_BOOL_TABLE *table)
+void    get_mail_conf_bool_table(const CONFIG_BOOL_TABLE *table)
 {
     while (table->name) {
 	table->target[0] = get_mail_conf_bool(table->name, table->defval);
@@ -146,7 +146,7 @@ void    get_mail_conf_bool_table(CONFIG_BOOL_TABLE *table)
 
 /* get_mail_conf_bool_fn_table - look up booleans, defaults are functions */
 
-void    get_mail_conf_bool_fn_table(CONFIG_BOOL_FN_TABLE *table)
+void    get_mail_conf_bool_fn_table(const CONFIG_BOOL_FN_TABLE *table)
 {
     while (table->name) {
 	table->target[0] = get_mail_conf_bool_fn(table->name, table->defval);

@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.h,v 1.3 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.3.18.1 2008/06/23 04:27:02 wrstuden Exp $	*/
 /* $OpenBSD: buffer.h,v 1.16 2006/08/03 03:34:41 deraadt Exp $ */
 
 /*
@@ -16,6 +16,9 @@
 
 #ifndef BUFFER_H
 #define BUFFER_H
+
+/* move the following to a more appropriate place and name */
+#define BUFFER_MAX_LEN_HPN          0x4000000  /* 64MB */
 
 typedef struct {
 	u_char	*buf;		/* Buffer for data. */

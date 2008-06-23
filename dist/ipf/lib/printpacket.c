@@ -1,11 +1,11 @@
-/*	$NetBSD: printpacket.c,v 1.1.1.4 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: printpacket.c,v 1.1.1.4.12.1 2008/06/23 04:28:46 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2000-2005 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printpacket.c,v 1.12.4.4 2006/09/30 21:44:43 darrenr Exp
+ * Id: printpacket.c,v 1.12.4.5 2007/09/09 22:15:30 darrenr Exp
  */
 
 #include "ipf.h"
@@ -56,7 +56,7 @@ struct ip *ip;
 	printf("ip #%d %d(%d) %d", ntohs(ip->ip_id), ntohs(ip->ip_len),
 	       IP_HL(ip) << 2, ip->ip_p);
 	if (off & IP_OFFMASK)
-		printf(" @%d", off << 3);
+		printf(" @%d", (off & IP_OFFMASK) << 3);
 	printf(" %s", inet_ntoa(ip->ip_src));
 	if (!(off & IP_OFFMASK))
 		if (ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP)

@@ -1,7 +1,11 @@
-/*	$NetBSD: ibus_3max.c,v 1.10 2002/10/02 04:15:08 thorpej Exp $	*/
+/*	$NetBSD: ibus_3max.c,v 1.10.114.1 2008/06/23 04:30:37 wrstuden Exp $	*/
 
-/*
- * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tohru Nishimura.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.10 2002/10/02 04:15:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.10.114.1 2008/06/23 04:30:37 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: twareg.h,v 1.8 2008/05/07 17:47:20 joerg Exp $ */
+/*	$NetBSD: twareg.h,v 1.8.2.1 2008/06/23 04:31:12 wrstuden Exp $ */
 /*	$wasabi: twareg.h,v 1.14 2006/07/28 18:29:51 wrstuden Exp $ */
 
 /*-
@@ -102,6 +102,18 @@
 	} while (0)
 #endif
 
+#define TWA_WRITE_9650_COMMAND_QUEUE_HIGH(sc, val)			\
+	do {								\
+		TWA_WRITE_REGISTER(sc, TWA_COMMAND_QUEUE_OFFSET_HIGH,	\
+				(uint32_t)(((uint64_t)val)>>32));	\
+	} while (0)
+
+#define TWA_WRITE_9650_COMMAND_QUEUE_LOW(sc, val)			\
+	do {								\
+		TWA_WRITE_REGISTER(sc, TWA_COMMAND_QUEUE_OFFSET_LOW,	\
+				(uint32_t)(val));			\
+	} while (0)
+
 /* Control register bit definitions. */
 #define TWA_CONTROL_ISSUE_HOST_INTERRUPT	0x00000020
 #define TWA_CONTROL_DISABLE_INTERRUPTS		0x00000040
@@ -190,6 +202,8 @@
 /* Misc defines. */
 #define TWA_ALIGNMENT			0x4
 #define TWA_MAX_UNITS			16
+#define TWA_9650_MAX_UNITS		32
+#define TWA_9690_MAX_UNITS		32
 #define TWA_INIT_MESSAGE_CREDITS	0x100
 #define TWA_SHUTDOWN_MESSAGE_CREDITS	0x001
 #define TWA_64BIT_SG_ADDRESSES		0x00000001

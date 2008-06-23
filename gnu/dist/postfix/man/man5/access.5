@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.5,v 1.1.1.15 2007/05/19 16:27:48 heas Exp $
+.\"	$NetBSD: access.5,v 1.1.1.15.12.1 2008/06/23 04:29:07 wrstuden Exp $
 .\"
 .TH ACCESS 5 
 .ad
@@ -218,6 +218,13 @@ This feature is available in Postfix 2.1 and later.
 .IP \fIrestriction...\fR
 Apply the named UCE restriction(s) (\fBpermit\fR, \fBreject\fR,
 \fBreject_unauth_destination\fR, and so on).
+.IP "\fBBCC \fIuser@domain\fR"
+Send one copy of the message to the specified recipient.
+.sp
+If multiple BCC actions are specified within the same SMTP
+MAIL transaction, only the last action will be used.
+.sp
+This feature is not part of the stable Postfix release.
 .IP "\fBDISCARD \fIoptional text...\fR
 Claim successful delivery and silently discard the message.
 Log the optional text if specified, otherwise log a generic

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.24 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: pfil.c,v 1.24.76.1 2008/06/23 04:31:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.24 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.24.76.1 2008/06/23 04:31:58 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>

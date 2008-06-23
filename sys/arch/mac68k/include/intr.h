@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.29 2008/01/26 15:25:44 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.29.12.1 2008/06/23 04:30:30 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -36,12 +36,6 @@
 
 /* spl0 requires checking for software interrupts */
 
-/*
- * This array contains the appropriate PSL_S|PSL_IPL? values
- * to raise interrupt priority to the requested level.
- */
-extern unsigned short mac68k_ipls[];
-
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
 #define	IPL_SOFTBIO	2
@@ -51,6 +45,12 @@ extern unsigned short mac68k_ipls[];
 #define	IPL_SCHED	6
 #define	IPL_HIGH	7
 #define	NIPL		8
+
+/*
+ * This array contains the appropriate PSL_S|PSL_IPL? values
+ * to raise interrupt priority to the requested level.
+ */
+extern uint16_t ipl2psl_table[NIPL];
 
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	splzs()		splserial()
@@ -67,21 +67,21 @@ extern unsigned short mac68k_ipls[];
 
 typedef int ipl_t;
 typedef struct {
-	uint16_t _ipl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._ipl = ipl};
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
 }
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return _splraise(mac68k_ipls[icookie._ipl]);
+	return _splraise(icookie._psl);
 }
 
 #include <sys/spl.h>

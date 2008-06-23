@@ -247,4 +247,8 @@ or backward compatibility.
 
 It does mean, however, that a pointer record can easily exceed the
 length of a header record. This is why we go through the trouble
-of record relocation and dummy records.
+of record relocation and dummy records. 
+
+In Postfix 2.4 we fixed this by adding padding to short message
+header records so that we can always write a pointer record over a
+message header.  This immensly simplifies the code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsmgr.c,v 1.1.1.3 2007/05/19 16:28:41 heas Exp $	*/
+/*	$NetBSD: tlsmgr.c,v 1.1.1.3.12.1 2008/06/23 04:29:25 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -42,6 +42,14 @@
 /*	At process startup it connects to the entropy source and
 /*	exchange file, and creates or truncates the optional TLS
 /*	session cache files.
+/*
+/*	With Postfix version 2.5 and later, the \fBtlsmgr\fR(8) no
+/*	longer uses root privileges when opening cache files. These
+/*	files should now be stored under the Postfix-owned
+/*	\fBdata_directory\fR.  As a migration aid, an attempt to
+/*	open a cache file under a non-Postfix directory is redirected
+/*	to the Postfix-owned \fBdata_directory\fR, and a warning
+/*	is logged.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to the syslog daemon.
 /* BUGS
@@ -94,7 +102,7 @@
 /*	The number of bytes that \fBtlsmgr\fR(8) reads from $tls_random_source
 /*	when (re)seeding the in-memory pseudo random number generator (PRNG)
 /*	pool.
-/* .IP "\fBtls_random_exchange_name (${config_directory}/prng_exch)\fR"
+/* .IP "\fBtls_random_exchange_name (see 'postconf -d' output)\fR"
 /*	Name of the pseudo random number generator (PRNG) state file
 /*	that is maintained by \fBtlsmgr\fR(8).
 /* .IP "\fBtls_random_prng_update_period (3600s)\fR"
@@ -111,6 +119,9 @@
 /* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 /*	The default location of the Postfix main.cf and master.cf
 /*	configuration files.
+/* .IP "\fBdata_directory (see 'postconf -d' output)\fR"
+/*	The directory with Postfix-writable data files (for example:
+/*	caches, pseudo-random numbers).
 /* .IP "\fBdaemon_timeout (18000s)\fR"
 /*	How much time a Postfix daemon process may take to handle a
 /*	request before it is terminated by a built-in watchdog timer.
@@ -189,6 +200,8 @@
 #include <vstring.h>
 #include <vstring_vstream.h>
 #include <attr.h>
+#include <set_eugid.h>
+#include <htable.h>
 
 /* Global library. */
 
@@ -197,6 +210,7 @@
 #include <mail_version.h>
 #include <tls_mgr.h>
 #include <mail_proto.h>
+#include <data_redirect.h>
 
 /* Master process interface. */
 
@@ -216,7 +230,6 @@
   * Tunables.
   */
 char   *var_tls_rand_source;
-int     var_tls_daemon_rand_bytes;
 int     var_tls_rand_bytes;
 int     var_tls_reseed_period;
 int     var_tls_prng_exch_period;
@@ -267,12 +280,12 @@ static TLS_PRNG_SRC *rand_source_file;
   * State for TLS session caches.
   */
 typedef struct {
-    char   *cache_label;
-    TLS_SCACHE *cache_info;
-    int     cache_active;
-    char  **cache_db;
-    int    *cache_loglevel;
-    int    *cache_timeout;
+    char   *cache_label;		/* cache short-hand name */
+    TLS_SCACHE *cache_info;		/* cache handle */
+    int     cache_active;		/* cache status */
+    char  **cache_db;			/* main.cf parameter value */
+    int    *cache_loglevel;		/* main.cf parameter value */
+    int    *cache_timeout;		/* main.cf parameter value */
 } TLSMGR_SCACHE;
 
 TLSMGR_SCACHE cache_table[] = {
@@ -739,6 +752,9 @@ static void tlsmgr_pre_init(char *unused_name, char **unused_argv)
     char   *path;
     struct timeval tv;
     TLSMGR_SCACHE *ent;
+    VSTRING *redirect;
+    HTABLE *dup_filter;
+    const char *dup_label;
 
     /*
      * If nothing else works then at least this will get us a few bits of
@@ -798,26 +814,54 @@ static void tlsmgr_pre_init(char *unused_name, char **unused_argv)
     }
 
     /*
-     * Open the PRNG exchange file while privileged. Start the exchange file
-     * read/update pseudo thread after dropping privileges.
+     * Security: don't create root-owned files that contain untrusted data.
+     * And don't create Postfix-owned files in root-owned directories,
+     * either. We want a correct relationship between (file/directory)
+     * ownership and (file/directory) content.
+     */
+    SAVE_AND_SET_EUGID(var_owner_uid, var_owner_gid);
+    redirect = vstring_alloc(100);
+
+    /*
+     * Open the PRNG exchange file before going to jail, but don't use root
+     * privileges. Start the exchange file read/update pseudo thread after
+     * dropping privileges.
      */
     if (*var_tls_rand_exch_name) {
-	rand_exch = tls_prng_exch_open(var_tls_rand_exch_name);
+	rand_exch =
+	    tls_prng_exch_open(data_redirect_file(redirect,
+						  var_tls_rand_exch_name));
 	if (rand_exch == 0)
 	    msg_fatal("cannot open PRNG exchange file %s: %m",
 		      var_tls_rand_exch_name);
     }
 
     /*
-     * Open the session cache files and discard old information while
-     * privileged. Start the cache maintenance pseudo threads after dropping
-     * privileges.
+     * Open the session cache files and discard old information before going
+     * to jail, but don't use root privilege. Start the cache maintenance
+     * pseudo threads after dropping privileges.
      */
-    for (ent = cache_table; ent->cache_label; ++ent)
-	if (**ent->cache_db)
+    dup_filter = htable_create(sizeof(cache_table) / sizeof(cache_table[0]));
+    for (ent = cache_table; ent->cache_label; ++ent) {
+	if (**ent->cache_db) {
+	    if ((dup_label = htable_find(dup_filter, *ent->cache_db)) != 0)
+		msg_fatal("do not use the same TLS cache file %s for %s and %s",
+			  *ent->cache_db, dup_label, ent->cache_label);
+	    htable_enter(dup_filter, *ent->cache_db, ent->cache_label);
 	    ent->cache_info =
-		tls_scache_open(*ent->cache_db, ent->cache_label,
-			    *ent->cache_loglevel >= 2, *ent->cache_timeout);
+		tls_scache_open(data_redirect_map(redirect, *ent->cache_db),
+				ent->cache_label,
+				*ent->cache_loglevel >= 2,
+				*ent->cache_timeout);
+	}
+    }
+    htable_free(dup_filter, (void (*) (char *)) 0);
+
+    /*
+     * Clean up and restore privilege.
+     */
+    vstring_free(redirect);
+    RESTORE_SAVED_EUGID();
 }
 
 /* tlsmgr_post_init - post-jail initialization */
@@ -885,7 +929,7 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_STR_TABLE str_table[] = {
+    static const CONFIG_STR_TABLE str_table[] = {
 	VAR_TLS_RAND_SOURCE, DEF_TLS_RAND_SOURCE, &var_tls_rand_source, 0, 0,
 	VAR_TLS_RAND_EXCH_NAME, DEF_TLS_RAND_EXCH_NAME, &var_tls_rand_exch_name, 0, 0,
 	VAR_SMTPD_TLS_SCACHE_DB, DEF_SMTPD_TLS_SCACHE_DB, &var_smtpd_tls_scache_db, 0, 0,
@@ -893,7 +937,7 @@ int     main(int argc, char **argv)
 	VAR_LMTP_TLS_SCACHE_DB, DEF_LMTP_TLS_SCACHE_DB, &var_lmtp_tls_scache_db, 0, 0,
 	0,
     };
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_TLS_RESEED_PERIOD, DEF_TLS_RESEED_PERIOD, &var_tls_reseed_period, 1, 0,
 	VAR_TLS_PRNG_UPD_PERIOD, DEF_TLS_PRNG_UPD_PERIOD, &var_tls_prng_exch_period, 1, 0,
 	VAR_SMTPD_TLS_SCACHTIME, DEF_SMTPD_TLS_SCACHTIME, &var_smtpd_tls_scache_timeout, 0, 0,
@@ -901,7 +945,7 @@ int     main(int argc, char **argv)
 	VAR_LMTP_TLS_SCACHTIME, DEF_LMTP_TLS_SCACHTIME, &var_lmtp_tls_scache_timeout, 0, 0,
 	0,
     };
-    static CONFIG_INT_TABLE int_table[] = {
+    static const CONFIG_INT_TABLE int_table[] = {
 	VAR_TLS_RAND_BYTES, DEF_TLS_RAND_BYTES, &var_tls_rand_bytes, 1, 0,
 	VAR_SMTPD_TLS_LOGLEVEL, DEF_SMTPD_TLS_LOGLEVEL, &var_smtpd_tls_loglevel, 0, 0,
 	VAR_SMTP_TLS_LOGLEVEL, DEF_SMTP_TLS_LOGLEVEL, &var_smtp_tls_loglevel, 0, 0,

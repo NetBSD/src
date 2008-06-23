@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.595 2008/05/01 15:39:43 jmmv Exp $
+#	$NetBSD: 3RDPARTY,v 1.595.2.1 2008/06/23 04:29:01 wrstuden Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -26,7 +26,7 @@
 
 Package:	acpica
 Version:	20080321
-Current Vers:	20080321
+Current Vers:	20080514
 Maintainer:	INTEL
 Archive Site:	http://www.acpica.org/downloads/unix_source_code.php
 Home Page:	http://www.acpica.org/
@@ -91,8 +91,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
-Version:	libc/includes: 9.4.1, bind: 9.4.1-P1
-Current Vers:	9.4.1-P1
+Version:	libc/includes: 9.5.0, bind: 9.5.0
+Current Vers:	9.5.0
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/sw/bind/
@@ -102,6 +102,7 @@ License:	BSD-like (2-clause)
 Notes:
 First bind2netbsd script to import into src/dist/bind.
 The Makefiles in src/usr.sbin/bind are not handled by the script.
+Build bind to generate the include files.
 Then binclude4netbsd script to import into src/usr.sbin/bind/include.
 Then include4netbsd script to import into src/include.
 Then libc4netbsd script to update the resolver in libc.
@@ -182,7 +183,7 @@ Notes:
 
 Package:	cvs
 Version:	1.11.22
-Current Vers:	1.11.22/1.12.13
+Current Vers:	1.11.23/1.12.13
 Maintainer:	cvshome
 Archive Site:	http://ftp.gnu.org/non-gnu/cvs/
 Home Page:	http://cvs.nongnu.org/
@@ -216,7 +217,7 @@ src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
 Version:	3.0.3
-Current Vers:	3.0.5
+Current Vers:	3.0.7/3.1.1/4.0.0
 Maintainer:	mellon
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Home Page:	http://www.isc.org/sw/dhcp/
@@ -229,6 +230,16 @@ License:	BSD (3-clause)
 Notes:
 No changes for NetBSD integration - just import the new distribution on
 top of the current tree.
+
+Package:	dhcpcd
+Version:	4.0.0-beta5
+Current Vers:	4.0.0-beta5
+Maintainer:	joerg
+Home Page:	http://roy.marples.name/dhcpcd/
+License:	BSD (2-clause)
+Notes:
+Please submit all changes to the author.
+The distribution doesn't include the Linux specific bits.
 
 Package:	diffutils
 Version:	2.8.1
@@ -259,7 +270,7 @@ Only double-precision addressed at this time.
 
 Package:	file
 Version:	4.21
-Current Vers:	4.23
+Current Vers:	4.24
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:
@@ -392,7 +403,7 @@ License:	BSD (3-clause)
 Notes:
 
 Package:	ipf
-Version:	4.1.23
+Version:	4.1.29
 Current Vers:	4.1.29
 Maintainer:	Darren Reed
 Archive Site:	http://coombs.anu.edu.au/~avalon/
@@ -402,6 +413,7 @@ Responsible:	darrenr, mike, martti
 License:	BSD-based, see src/dist/ipf/IPFILTER.LICENSE
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
+See also dist/ipf/README.NetBSD
 
 Package:	ipsec-tools
 Version:	(ipsec-tools head is NetBSD-current head)
@@ -470,8 +482,8 @@ does not detect NetBSD has a sigset_t due to a bad test; this is fixed
 by hand in defines.h.)
 
 Package:	libarchive
-Version:	2.2.6
-Current Ves.:	2.2.6
+Version:	2.5.4b
+Current Ves.:	2.5.4b
 Maintainer:	kientzle@freebsd.org
 Archive Site:	http://people.freebsd.org/~kientzle/libarchive/
 Home Page: 	http://people.freebsd.org/~kientzle/libarchive/
@@ -497,8 +509,8 @@ might be worthwhile to import at some future date, but for now we should
 leave it alone.  (garbled 1/4/2001)
 
 Package:	libevent
-Version:	1.0c
-Current Vers:	1.3e
+Version:	1.4.4-stable
+Current Vers:	1.4.4-stable
 Maintainer:	Niels Provos <provos@citi.umich.edu>
 Archive Site:	http://www.monkey.org/~provos/libevent/
 Home Page:	http://www.monkey.org/~provos/libevent/
@@ -544,8 +556,8 @@ Notes:
 Delete the otherOS directory before importing.
 
 Package:	nawk
-Version:	2005-04-24
-Current Vers:	2005-04-24
+Version:	2007-05-01
+Current Vers:	2007-05-01
 Maintainer:	Brian Kernighan <bwk@bell-labs.com> (Lucent Technologies)
 Archive Site:	http://cm.bell-labs.com/who/bwk/
 Home Page:	http://cm.bell-labs.com/who/bwk/
@@ -596,6 +608,19 @@ We have lots of local bug fixes, and the point of importing 1.81.x would
 be to get multibyte characters support. For now this means waiting for
 additions in our libcurses.
 
+Package:	OpenLDAP
+Version:	2.4.9
+Current Vers:	2.4.9
+Maintainer:	OpenLDAP Foundation
+Archive Site:	http://www.openldap.org/
+Home Page:	http://www.openldap.org/
+Mailing List:
+Responsible:	lukem
+License:	BSD (3-clause)
+Notes:
+Imported into src/external/bsd/openldap/dist/
+Next import will need $ Id removal..
+
 Package:	OpenPAM
 Version:	20071221
 Current Vers:	20071221
@@ -607,6 +632,18 @@ Responsible:	christos
 License:	BSD (3-clause)
 Notes:
 Next import will need $ Id removal..
+
+Package:	HPN-SSH
+Version:	5.0p1 13 v3
+Current Vers:	5.0p1 13 v3
+Maintainer:	www.psc.edu
+Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.0p1-hpn13v3.diff.gz
+Home Page:	http://www.psc.edu/networking/projects/hpn-ssh/
+Mailing List:
+Responsible:	christos
+License:	
+Notes:
+Patch applied after OpenSSH import.
 
 Package:	OpenSSH
 Version:	5.0
@@ -631,11 +668,12 @@ markus is very cooperative about it):
 - uidswap.c changed order of set{e,}{u,g}id so that it works on NetBSD
 - added moduli from portable openssh
 - added USE_PAM patches and auth_pam.[ch] from portable openssh
+- add the HPN patch 
 - always bump major when importing to avoid api problems.
 
 Package:	OpenSSL
-Version:	0.9.8e
-Current Vers:	0.9.8g
+Version:	SNAP-20080509
+Current Vers:	0.9.8h
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Home Page:	http://www.openssl.org/
@@ -672,8 +710,8 @@ License:	Public domain
 pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
 Package:	PF (openbsd packet filter)
-Version:	OpenBSD 3.7
-Current Vers:	OpenBSD 3.9-current
+Version:	OpenBSD 4.2
+Current Vers:	OpenBSD 4.3-current
 Maintainer:	The OpenBSD Project
 Archive Site:	ftp://ftp.openbsd.org/
 Home Page:	http://www.openbsd.org/faq/pf/
@@ -712,8 +750,8 @@ formating in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	postfix
-Version:	2.4.5
-Current Vers:	2.5.0
+Version:	2.5.2
+Current Vers:	2.5.2
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
@@ -890,7 +928,7 @@ Notes:
 
 Package:	tz
 Version:	tzcode2004a / tzdata2007h
-Current Vers:	tzcode2007h / tzdata2007h
+Current Vers:	tzcode2008a / tzdata2008c
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:

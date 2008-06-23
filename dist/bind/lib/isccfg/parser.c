@@ -1,10 +1,10 @@
-/*	$NetBSD: parser.c,v 1.1.1.5 2007/01/27 21:09:16 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.1.1.5.12.1 2008/06/23 04:28:37 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parser.c,v 1.112.18.11 2006/02/28 03:10:49 marka Exp */
+/* Id: parser.c,v 1.127 2007/10/12 04:17:18 each Exp */
 
 /*! \file */
 
@@ -1109,6 +1109,29 @@ const cfg_listelt_t *
 cfg_list_next(const cfg_listelt_t *elt) {
 	REQUIRE(elt != NULL);
 	return (ISC_LIST_NEXT(elt, link));
+}
+
+/*
+ * Return the length of a list object.  If obj is NULL or is not
+ * a list, return 0.
+ */
+unsigned int
+cfg_list_length(const cfg_obj_t *obj, isc_boolean_t recurse) {
+	const cfg_listelt_t *elt;
+	unsigned int count = 0;
+
+	if (obj == NULL || !cfg_obj_islist(obj))
+		return (0U);
+	for (elt = cfg_list_first(obj);
+	     elt != NULL;
+	     elt = cfg_list_next(elt)) {
+		if (recurse && cfg_obj_islist(elt->obj)) {
+			count += cfg_list_length(elt->obj, recurse);
+		} else {
+			count++;
+		}
+	}
+	return (count);
 }
 
 const cfg_obj_t *

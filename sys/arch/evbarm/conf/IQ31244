@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.38 2008/01/19 13:11:13 chris Exp $
+#	$NetBSD: IQ31244,v 1.38.12.1 2008/06/23 04:30:18 wrstuden Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -79,6 +79,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

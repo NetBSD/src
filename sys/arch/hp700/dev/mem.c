@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 2007/12/06 17:00:32 ad Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.18.1 2008/06/23 04:30:22 wrstuden Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15 2007/12/06 17:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.18.1 2008/06/23 04:30:22 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ viper_setintrwnd(uint32_t mask)
 {
 	struct mem_softc *sc;
 
-	sc = mem_cd.cd_devs[0];
+	sc = device_lookup_private(&mem_cd,0);
 
 	if (sc->sc_vp)
 		sc->sc_vp->vi_intrwd;
@@ -276,7 +276,7 @@ viper_eisa_en(void)
 	struct mem_softc *sc;
 	int pagezero_cookie;
 
-	sc = mem_cd.cd_devs[0];
+	sc = device_lookup_private(&mem_cd, 0);
 
 	pagezero_cookie = hp700_pagezero_map();
 	if (sc->sc_vp)

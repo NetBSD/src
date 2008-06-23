@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.35 2008/03/27 10:06:31 skrll Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.35.6.1 2008/06/23 04:31:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -177,6 +177,7 @@ struct siop_common_softc {
 #define SF_CHIP_GEBUG	0x00080000 /* SCSI gross error bug */
 #define SF_CHIP_AAIP	0x00100000 /* Always generate AIP regardless of SNCTL4*/
 #define SF_CHIP_BE	0x00200000 /* big-endian */
+#define SF_CHIP_USEPCIC	0x00400000 /* use PCI clock */
 
 #define SF_PCI_RL	0x01000000 /* PCI read line */
 #define SF_PCI_RM	0x02000000 /* PCI read multiple */

@@ -1,4 +1,8 @@
-# $NetBSD: md.amd64,v 1.16 2008/05/01 21:51:20 xtraeme Exp $
+# $NetBSD: md.amd64,v 1.16.2.1 2008/06/23 04:28:54 wrstuden Exp $
+./@MODULEDIR@/drm				base-kernel-modules
+./@MODULEDIR@/drm/drm.kmod			base-kernel-modules
+./@MODULEDIR@/i915drm				base-kernel-modules
+./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./usr/bin/fdformat				base-util-bin

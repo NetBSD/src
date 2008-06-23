@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.28 2008/05/06 11:07:24 yamt Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.28.2.1 2008/06/23 04:30:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.28 2008/05/06 11:07:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.28.2.1 2008/06/23 04:30:58 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -300,6 +300,7 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
 	bp->b_flags = bflags;
 	bp->b_proc = curproc;
 	bp->b_data = tbuf;
+	SET(bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 
 	VOP_STRATEGY(vp, bp);
 	error = biowait(bp);

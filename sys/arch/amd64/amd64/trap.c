@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47.2.2 2008/06/22 18:12:01 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.47.2.3 2008/06/23 04:30:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47.2.2 2008/06/22 18:12:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47.2.3 2008/06/23 04:30:05 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,7 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47.2.2 2008/06/22 18:12:01 wrstuden Exp $
 #include <x86/tprof.h>
 #endif /* NTPROF > 0 */
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/fpu.h>
 #include <machine/psl.h>
@@ -195,8 +194,6 @@ trap(struct trapframe *frame)
 	ksiginfo_t ksi;
 	bool pfail;
 
-	uvmexp.traps++;
-
 	if (__predict_true(l != NULL)) {
 		pcb = &l->l_addr->u_pcb;
 		p = l->l_proc;
@@ -229,6 +226,15 @@ trap(struct trapframe *frame)
 
 	default:
 	we_re_toast:
+		if (frame->tf_trapno < trap_types)
+			printf("fatal %s", trap_type[frame->tf_trapno]);
+		else
+			printf("unknown trap %ld", (u_long)frame->tf_trapno);
+		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
+		       " %lx cpl %x rsp %lx\n",
+		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
+		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
 #ifdef KGDB
 		if (kgdb_trap(type, frame))
 			return;
@@ -247,16 +253,6 @@ trap(struct trapframe *frame)
 		if (kdb_trap(type, 0, frame))
 			return;
 #endif
-		if (frame->tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame->tf_trapno]);
-		else
-			printf("unknown trap %ld", (u_long)frame->tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
-		       " %lx cpl %x rsp %lx\n",
-		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
-		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
-
 		panic("trap");
 		/*NOTREACHED*/
 
@@ -376,6 +372,9 @@ copyfault:
 		}
 		goto trapsignal;
 
+	case T_ARITHTRAP|T_USER:
+	case T_XMM|T_USER:
+		/* Already handled by fputrap(), fall through. */
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
 		if (l->l_flag & LP_OWEUPC) {
@@ -419,11 +418,6 @@ copyfault:
 		}
 		goto trapsignal;
 
-	case T_ARITHTRAP|T_USER:
-	case T_XMM|T_USER:
-		fputrap(frame);
-		goto out;
-
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (l == NULL)
 			goto we_re_toast;
@@ -431,8 +425,12 @@ copyfault:
 		 * fusuintrfailure is used by [fs]uswintr() to prevent
 		 * page faulting from inside the profiling interrupt.
 		 */
-		if (pcb->pcb_onfault == fusuintrfailure)
+		if (pcb->pcb_onfault == fusuintrfailure) {
 			goto copyefault;
+		}
+		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
+			goto we_re_toast;
+		}
 
 		cr2 = rcr2();
 		goto faultcommon;

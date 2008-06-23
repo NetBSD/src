@@ -1,4 +1,4 @@
-/*	$NetBSD: scache.c,v 1.1.1.4 2007/05/19 16:28:32 heas Exp $	*/
+/*	$NetBSD: scache.c,v 1.1.1.4.12.1 2008/06/23 04:29:22 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -541,7 +541,7 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_SCACHE_TTL_LIM, DEF_SCACHE_TTL_LIM, &var_scache_ttl_lim, 1, 0,
 	VAR_SCACHE_STAT_TIME, DEF_SCACHE_STAT_TIME, &var_scache_stat_time, 1, 0,
 	0,

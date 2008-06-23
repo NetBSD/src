@@ -1,11 +1,11 @@
-/*	$NetBSD: printfr.c,v 1.1.1.7 2007/05/15 22:26:09 martin Exp $	*/
+/*	$NetBSD: printfr.c,v 1.1.1.7.12.1 2008/06/23 04:28:46 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2000-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printfr.c,v 1.43.2.18 2007/05/07 06:55:38 darrenr Exp
+ * Id: printfr.c,v 1.43.2.20 2008/03/07 21:40:12 darrenr Exp
  */
 
 #include "ipf.h"
@@ -173,7 +173,7 @@ ioctlfunc_t	iocfunc;
 		putchar(' ');
 	}
 
-	if (*fp->fr_dif.fd_ifname || (fp->fr_flags & FR_DUP))
+	if (*fp->fr_dif.fd_ifname && (fp->fr_flags & FR_DUP))
 		print_toif("dup-to", &fp->fr_dif);
 	if (*fp->fr_tif.fd_ifname)
 		print_toif("to", &fp->fr_tif);

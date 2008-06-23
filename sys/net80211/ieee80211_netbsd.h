@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.14 2008/02/13 16:04:03 skrll Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.14.12.1 2008/06/23 04:31:58 wrstuden Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -254,11 +254,6 @@ struct ieee80211_michael_event {
 #define	__offsetof	offsetof
 #define	ticks	hardclock_ticks
 #define	ovbcopy(__src, __dst, __n)	((void)memmove(__dst, __src, __n))
-
-#define TAILQ_FOREACH_SAFE(var, head, field, nextvar)			\
-	for (var = TAILQ_FIRST(head);					\
-	     var != NULL && (nextvar = TAILQ_NEXT(var, field), 1);	\
-	     var = nextvar)
 
 void	if_printf(struct ifnet *, const char *, ...);
 void	m_align(struct mbuf *, int);

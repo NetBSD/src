@@ -31,7 +31,10 @@ while(<>) {
 	$block .= $_;
     } while(($_ = <>) && /\S/);
 
-    $block =~ s/\n\./\n\\\&./g;
+    # How the %!#$^@ do I get a backslash substituted into a string?
+    # Even \134 comes out as \e. What brain damage is this?
+    #$block =~ s/\n\./\n\\\&./g;
+    $block =~ s/\n\./\n\134\&./g;
     if ($block =~ /<H2>/) {
 	$block =~ s/<H2><a[^>]+>([^<]+)<\/a><\/H2>/\n.SH \1\n/g;
 	$block =~ tr/a-z/A-Z/;
@@ -66,11 +69,13 @@ while(<>) {
     $block =~ s/\s*<\/dt>/"/g;
     $block =~ s/<tt>\s*//g;
     $block =~ s/\s*<\/tt>//g;
-    $block =~ s/<blockquote>/\n.na\n.nf\n.in +4\n/g;
-    $block =~ s/<\/blockquote>/\n.in -4\n.fi\n.ad\n/g;
+    $block =~ s/<blockquote>/\n.sp\n.in +4\n/g;
+    $block =~ s/<\/blockquote>/\n.in -4\n/g;
     $block =~ s/\n<br>/\n.br\n/g;
     $block =~ s/<br>\s*/\n.br\n/g;
+    $block =~ s/&le;/<=/g;
     $block =~ s/&lt;/</g;
+    $block =~ s/&ge;/>=/g;
     $block =~ s/&gt;/>/g;
     $block =~ s/&amp;/\&/g;
     $block =~ s/\s+\n/\n/g;

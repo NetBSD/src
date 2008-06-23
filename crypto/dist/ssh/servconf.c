@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.40 2008/04/06 23:38:19 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.40.4.1 2008/06/23 04:27:02 wrstuden Exp $	*/
 /* $OpenBSD: servconf.c,v 1.177 2008/02/10 10:54:28 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.40 2008/04/06 23:38:19 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.40.4.1 2008/06/23 04:27:02 wrstuden Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -138,11 +138,20 @@ initialize_server_options(ServerOptions *options)
 	options->num_permitted_opens = -1;
 	options->adm_forced_command = NULL;
 	options->chroot_directory = NULL;
+	options->none_enabled = -1;
+	options->tcp_rcv_buf_poll = -1;
+	options->hpn_disabled = -1;
+	options->hpn_buffer_size = -1;
 }
 
 void
 fill_default_server_options(ServerOptions *options)
 {
+	/* needed for hpn socket tests */
+	int sock;
+	int socksize;
+	socklen_t socksizelen = sizeof(int);
+
 	/* Portable-specific options */
 	if (options->use_pam == -1)
 		options->use_pam = 0;
@@ -276,6 +285,42 @@ fill_default_server_options(ServerOptions *options)
 	if (options->permit_tun == -1)
 		options->permit_tun = SSH_TUNMODE_NO;
 
+	if (options->hpn_disabled == -1) 
+		options->hpn_disabled = 0;
+
+	if (options->hpn_buffer_size == -1) {
+		/* option not explicitly set. Now we have to figure out */
+		/* what value to use */
+		if (options->hpn_disabled == 1) {
+			options->hpn_buffer_size = CHAN_SES_WINDOW_DEFAULT;
+		} else {
+			/* get the current RCV size and set it to that */
+			/*create a socket but don't connect it */
+			/* we use that the get the rcv socket size */
+			sock = socket(AF_INET, SOCK_STREAM, 0);
+			getsockopt(sock, SOL_SOCKET, SO_RCVBUF, 
+				   &socksize, &socksizelen);
+			close(sock);
+			options->hpn_buffer_size = socksize;
+			debug ("HPN Buffer Size: %d", options->hpn_buffer_size);
+			
+		} 
+	} else {
+		/* we have to do this incase the user sets both values in a contradictory */
+		/* manner. hpn_disabled overrrides hpn_buffer_size*/
+		if (options->hpn_disabled <= 0) {
+			if (options->hpn_buffer_size == 0)
+				options->hpn_buffer_size = 1;
+			/* limit the maximum buffer to 64MB */
+			if (options->hpn_buffer_size > 64*1024) {
+				options->hpn_buffer_size = 64*1024*1024;
+			} else {
+				options->hpn_buffer_size *= 1024;
+			}
+		} else
+			options->hpn_buffer_size = CHAN_TCP_WINDOW_DEFAULT;
+	}
+
 	/* Turn privilege separation on by default */
 	if (use_privsep == -1)
 		use_privsep = 1;
@@ -318,7 +363,8 @@ typedef enum {
 	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2,
 	sGssAuthentication, sGssCleanupCreds, sAcceptEnv, sPermitTunnel,
 	sMatch, sPermitOpen, sForceCommand, sChrootDirectory,
-	sUsePrivilegeSeparation,
+	sUsePrivilegeSeparation, sNoneEnabled, sTcpRcvBufPoll, 
+	sHPNDisabled, sHPNBufferSize,
 	sIgnoreRootRhosts, sDeprecated, sUnsupported
 } ServerOpCodes;
 
@@ -428,6 +474,10 @@ static struct {
 	{ "permitopen", sPermitOpen, SSHCFG_ALL },
 	{ "forcecommand", sForceCommand, SSHCFG_ALL },
 	{ "chrootdirectory", sChrootDirectory, SSHCFG_ALL },
+	{ "noneenabled", sNoneEnabled },
+	{ "hpndisabled", sHPNDisabled },
+	{ "hpnbuffersize", sHPNBufferSize },
+	{ "tcprcvbufpoll", sTcpRcvBufPoll },
 	{ NULL, sBadOption, 0 }
 };
 
@@ -443,6 +493,7 @@ parse_token(const char *cp, const char *filename,
 
 	for (i = 0; keywords[i].name; i++)
 		if (strcasecmp(cp, keywords[i].name) == 0) {
+		        debug ("Config token is %s", keywords[i].name);
 			*flags = keywords[i].flags;
 			return keywords[i].opcode;
 		}
@@ -858,6 +909,22 @@ parse_flag:
 	case sIgnoreRootRhosts:
 		intptr = &options->ignore_root_rhosts;
 		goto parse_flag;
+
+	case sNoneEnabled:
+		intptr = &options->none_enabled;
+		goto parse_flag;
+
+	case sTcpRcvBufPoll:
+		intptr = &options->tcp_rcv_buf_poll;
+		goto parse_flag;
+
+	case sHPNDisabled:
+		intptr = &options->hpn_disabled;
+		goto parse_flag;
+
+	case sHPNBufferSize:
+		intptr = &options->hpn_buffer_size;
+		goto parse_int;
 
 	case sIgnoreUserKnownHosts:
 		intptr = &options->ignore_user_known_hosts;

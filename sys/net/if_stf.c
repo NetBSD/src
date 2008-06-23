@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.65 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.65.12.1 2008/06/23 04:31:58 wrstuden Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.65 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.65.12.1 2008/06/23 04:31:58 wrstuden Exp $");
 
 #include "opt_inet.h"
 
@@ -195,11 +195,9 @@ stf_clone_create(struct if_clone *ifc, int unit)
 		return (EEXIST);
 	}
 
-	sc = malloc(sizeof(struct stf_softc), M_DEVBUF, M_WAIT);
-	memset(sc, 0, sizeof(struct stf_softc));
+	sc = malloc(sizeof(struct stf_softc), M_DEVBUF, M_WAIT|M_ZERO);
 
-	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
-	    ifc->ifc_name, unit);
+	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 
 	sc->encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV6,
 	    stf_encapcheck, &in_stf_protosw, sc);

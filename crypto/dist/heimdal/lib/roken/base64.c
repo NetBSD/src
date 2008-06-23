@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: base64.c 15506 2005-06-23 10:47:57Z lha $"
-        "$NetBSD: base64.c,v 1.2 2008/03/22 08:37:20 mlelstv Exp $");
+        "$NetBSD: base64.c,v 1.2.4.1 2008/06/23 04:26:46 wrstuden Exp $");
 #endif
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +53,7 @@ pos(char c)
     return -1;
 }
 
+/* coverity[+alloc : arg-*2] */
 int ROKEN_LIB_FUNCTION
 base64_encode(const void *data, int size, char **str)
 {

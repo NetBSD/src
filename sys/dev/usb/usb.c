@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.113 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: usb.c,v 1.113.2.1 2008/06/23 04:31:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.113 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.113.2.1 2008/06/23 04:31:37 wrstuden Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -283,7 +283,6 @@ usb_doattach(device_t self)
 
 static const char *taskq_names[] = USB_TASKQ_NAMES;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 void
 usb_create_event_thread(device_t self)
 {
@@ -435,7 +434,6 @@ usbctlprint(void *aux, const char *pnp)
 
 	return (UNCONF);
 }
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 int
 usbopen(dev_t dev, int flag, int mode, struct lwp *l)
@@ -945,9 +943,12 @@ usb_activate(device_t self, enum devact act)
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (dev != NULL && dev->cdesc != NULL && dev->subdevs != NULL) {
-			for (i = 0; dev->subdevs[i]; i++)
+		if (dev != NULL && dev->cdesc != NULL && dev->subdevlen > 0) {
+			for (i = 0; i < dev->subdevlen; i++) {
+				if (!dev->subdevs[i])
+					continue;
 				rv |= config_deactivate(dev->subdevs[i]);
+			}
 		}
 		break;
 	}
@@ -957,22 +958,16 @@ usb_activate(device_t self, enum devact act)
 void
 usb_childdet(device_t self, device_t child)
 {
-	int i, last = -1;
+	int i;
 	struct usb_softc *sc = device_private(self);
 	struct usbd_device *dev;
 
-	if ((dev = sc->sc_port.device) == NULL || dev->subdevs == NULL)
+	if ((dev = sc->sc_port.device) == NULL || dev->subdevlen == 0)
 		return;
 
-	for (i = 0; dev->subdevs[i] != NULL; i++)
-		last = i;
-
-	for (i = 0; dev->subdevs[i] != NULL; i++) {
-		if (dev->subdevs[i] == child) {
-			dev->subdevs[i] = dev->subdevs[last];
-			dev->subdevs[last] = NULL;
-		}
-	}
+	for (i = 0; i < dev->subdevlen; i++)
+		if (dev->subdevs[i] == child)
+			dev->subdevs[i] = NULL;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: geodecntr.c,v 1.7 2008/05/05 11:49:40 xtraeme Exp $	*/
+/*	$NetBSD: geodecntr.c,v 1.7.2.1 2008/06/23 04:30:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodecntr.c,v 1.7 2008/05/05 11:49:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodecntr.c,v 1.7.2.1 2008/06/23 04:30:27 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,8 @@ geodecntr_attach(device_t parent, device_t self, void *aux)
 {
 	struct geodecntr_softc *sc = device_private(self);
 
-	aprint_normal(": AMD Geode SC1100 27Mhz Counter\n");
+	aprint_naive("\n");
+	aprint_normal(": AMD Geode SC1100 27MHz Counter\n");
 
 	sc->sc_gcb_dev = device_private(parent);
 

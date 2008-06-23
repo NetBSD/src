@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.10 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.10.2.1 2008/06/23 04:30:51 wrstuden Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.10 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.10.2.1 2008/06/23 04:30:51 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	if (error)
 		return (error);
 
-	for (pg = mlistp->tqh_first; pg != NULL; pg = pg->pageq.tqe_next) {
+	for (pg = mlistp->tqh_first; pg != NULL; pg = pg->pageq.queue.tqe_next) {
 		pa = VM_PAGE_TO_PHYS(pg);
 		mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
 		xpmap_phys_to_machine_mapping[
@@ -157,14 +157,14 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	s = splvm();
 	/* Map the new extent in place of the old pages */
 	for (pg = mlistp->tqh_first, i = 0; pg != NULL; pg = pgnext, i++) {
-		pgnext = pg->pageq.tqe_next;
+		pgnext = pg->pageq.queue.tqe_next;
 		pa = VM_PAGE_TO_PHYS(pg);
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn+i;
 		xpq_queue_machphys_update((mfn+i) << PAGE_SHIFT, pa);
 		/* while here, give extra pages back to UVM */
 		if (i >= npagesreq) {
-			TAILQ_REMOVE(mlistp, pg, pageq);
+			TAILQ_REMOVE(mlistp, pg, pageq.queue);
 			uvm_pagefree(pg);
 		}
 
@@ -186,14 +186,14 @@ failed:
 	 */
 	/* give back remaining pages to UVM */
 	for (; pg != NULL; pg = pgnext) {
-		pgnext = pg->pageq.tqe_next;
-		TAILQ_REMOVE(mlistp, pg, pageq);
+		pgnext = pg->pageq.queue.tqe_next;
+		TAILQ_REMOVE(mlistp, pg, pageq.queue);
 		uvm_pagefree(pg);
 	}
 	/* remplace the pages that we already gave to Xen */
 	s = splvm();
 	for (pg = mlistp->tqh_first; pg != NULL; pg = pgnext) {
-		pgnext = pg->pageq.tqe_next;
+		pgnext = pg->pageq.queue.tqe_next;
 #ifdef XEN3
 		res.extent_start = &mfn;
 		res.nr_extents = 1;
@@ -218,7 +218,7 @@ failed:
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
 		xpq_queue_machphys_update((mfn) << PAGE_SHIFT, pa);
-		TAILQ_REMOVE(mlistp, pg, pageq);
+		TAILQ_REMOVE(mlistp, pg, pageq.queue);
 		uvm_pagefree(pg);
 	}
 	/* Flush updates through and flush the TLB */
@@ -274,11 +274,11 @@ again:
 	if (curaddr < low || curaddr >= high)
 		goto badaddr;
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
+	m = m->pageq.queue.tqe_next;
 	if ((segs[curseg].ds_addr & (alignment - 1)) != 0)
 		goto dorealloc;
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	for (; m != NULL; m = m->pageq.queue.tqe_next) {
 		curaddr = _BUS_VM_PAGE_TO_BUS(m);
 		if (curaddr < low || curaddr >= high)
 			goto badaddr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: master_ent.c,v 1.14 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: master_ent.c,v 1.14.20.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -96,6 +96,7 @@
 #include <mail_params.h>
 #include <own_inet_addr.h>
 #include <wildcard_inet_addr.h>
+#include <mail_conf.h>
 
 /* Local stuff. */
 
@@ -513,6 +514,14 @@ MASTER_SERV *get_master_ent()
 	argv_add(serv->args, "-u", (char *) 0);
     if (chroot)
 	argv_add(serv->args, "-c", (char *) 0);
+    if ((serv->flags & MASTER_FLAG_LOCAL_ONLY) == 0) {
+	argv_add(serv->args, "-o", "stress=" CONFIG_BOOL_YES, (char *) 0);
+	serv->stress_param_val =
+	    serv->args->argv[serv->args->argc - 1] + sizeof("stress=") - 1;
+	serv->stress_param_val[0] = 0;
+    } else
+	serv->stress_param_val = 0;
+    serv->stress_expire_time = 0;
     if (serv->listen_fd_count > 1)
 	argv_add(serv->args, "-s",
 	    vstring_str(vstring_sprintf(junk, "%d", serv->listen_fd_count)),

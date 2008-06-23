@@ -190,6 +190,10 @@ SOURCE=..\include\dns\forward.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\dns\iptable.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\dns\journal.h
 # End Source File
 # Begin Source File
@@ -478,6 +482,10 @@ SOURCE=..\forward.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\iptable.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\journal.c
 # End Source File
 # Begin Source File
@@ -683,6 +691,10 @@ SOURCE=..\gssapi_link.c
 # Begin Source File
 
 SOURCE=..\gssapictx.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\spnego.c
 # End Source File
 # Begin Source File
 

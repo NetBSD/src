@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.136 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.136.2.1 2008/06/23 04:31:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.136 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.136.2.1 2008/06/23 04:31:05 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2850,8 +2850,7 @@ shortcut:
 			if (NCRDMA_ISINTR(sc))
 				goto again;
 			microtime(&cur);
-		} while (cur.tv_sec <= wait.tv_sec &&
-			 cur.tv_usec <= wait.tv_usec);
+		} while (timercmp(&cur, &wait, <=));
 	}
 	goto out;
 }

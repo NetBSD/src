@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.96 2008/02/29 22:45:36 njoly Exp $	*/
+/*	$NetBSD: kdump.c,v 1.96.4.1 2008/06/23 04:32:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.96 2008/02/29 22:45:36 njoly Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.96.4.1 2008/06/23 04:32:11 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -508,7 +508,8 @@ ktrsyscall(struct ktr_syscall *ktr)
 
 		} else if (strcmp(sys_name, "ptrace") == 0 && argcount >= 1) {
 			putchar('(');
-			if (strcmp(emul->name, "linux") == 0) {
+			if (strcmp(emul->name, "linux") == 0 ||
+			    strcmp(emul->name, "linux32") == 0) {
 				if ((long)*ap >= 0 && *ap <
 				    sizeof(linux_ptrace_ops) /
 				    sizeof(linux_ptrace_ops[0]))

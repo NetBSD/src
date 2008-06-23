@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2008/02/12 17:30:57 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.12.1 2008/06/23 04:30:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -123,22 +123,56 @@ findroot(void)
 #define	BUILTIN_ETHERNET_P(pa)						\
 	((pa)->pa_bus == 0 && (pa)->pa_device == 2 && (pa)->pa_function == 0)
 
+#define	BUILTIN_VIDEO_P(pa)						\
+	((pa)->pa_bus == 0 && (pa)->pa_device == 4 && (pa)->pa_function == 0)
+
 void
 device_register(device_t dev, void *aux)
 {
 	device_t pdev;
+	prop_dictionary_t dict;
 
 	if ((pdev = device_parent(dev)) != NULL && device_is_a(pdev, "pci")) {
 		struct pci_attach_args *pa = aux;
 
+		dict = device_properties(dev);
 		if (BUILTIN_ETHERNET_P(pa)) {
-			if (! prop_dictionary_set_bool(device_properties(dev),
+			if (! prop_dictionary_set_bool(dict,
 						       "am79c970-no-eeprom",
 						       true)) {
 				printf("WARNING: unable to set "
 				       "am79c970-no-eeprom property for %s\n",
 				       dev->dv_xname);
 			}
+		}
+
+		if (BUILTIN_VIDEO_P(pa)) {
+			if (! prop_dictionary_set_uint32(dict,  "width", 1024)) {
+				printf("WARNING: unable to set "
+				       "width property for %s\n",
+				       dev->dv_xname);
+			}
+			if (! prop_dictionary_set_uint32(dict,  "height", 768)) {
+				printf("WARNING: unable to set "
+				       "height property for %s\n",
+				       dev->dv_xname);
+			}
+			if (! prop_dictionary_set_uint32(dict,  "depth", 8)) {
+				printf("WARNING: unable to set "
+				       "depth property for %s\n",
+				       dev->dv_xname);
+			}
+			if (! prop_dictionary_set_uint32(dict,  "address", 0)) {
+				printf("WARNING: unable to set "
+				       "address property for %s\n",
+				       dev->dv_xname);
+			}
+			if (! prop_dictionary_set_bool(dict,  "is_console", true)) {
+				printf("WARNING: unable to set "
+				       "address property for %s\n",
+				       dev->dv_xname);
+			}
+
 		}
 	}
 }

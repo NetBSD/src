@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.19 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.19.2.1 2008/06/23 04:30:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19.2.1 2008/06/23 04:30:50 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ isa_intr_establish(
 			printf("isa_intr_establish: no MP mapping found\n");
 	}
 #endif
-	return intr_establish(irq, pic, pin, type, level, ih_fun, ih_arg);
+	return intr_establish(irq, pic, pin, type, level, ih_fun, ih_arg, false);
 }
 
 /*

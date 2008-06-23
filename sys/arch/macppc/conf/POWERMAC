@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.58 2007/10/17 19:55:17 garbled Exp $
+#	$NetBSD: POWERMAC,v 1.58.22.1 2008/06/23 04:30:31 wrstuden Exp $
 #
 # POWERMAC config file
 #
@@ -31,7 +31,8 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0,
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

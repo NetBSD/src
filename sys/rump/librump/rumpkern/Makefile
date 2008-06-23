@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2008/05/04 12:52:58 ad Exp $
+#	$NetBSD: Makefile,v 1.33.2.1 2008/06/23 04:32:02 wrstuden Exp $
 #
 
 .include <bsd.own.mk>
@@ -34,7 +34,7 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 	bufq_readprio.c
 
 # src/lib/libkern
-SRCS+=	__assert.c scanc.c skpc.c
+SRCS+=	__assert.c scanc.c skpc.c rb.c
 
 SRCS+=	rumpvnode_if.c rump_syscalls.c
 
@@ -44,7 +44,6 @@ OBJS+=	${RUMPUSEROBJDIR}/rumpuser.o ${RUMPUSEROBJDIR}/rumpuser_pth.o
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/common/include	\
 		-I${NETBSDSRCDIR}/sys/rump/librump/rumpuser		\
 		-I${.CURDIR}/opt -DMAXUSERS=32
-CPPFLAGS+=	-DRUMP_WITHOUT_THREADS
 
 CFLAGS+=	-Wno-pointer-sign
 

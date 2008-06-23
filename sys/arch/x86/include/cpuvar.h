@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.24 2008/04/28 20:23:40 martin Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.24.2.1 2008/06/23 04:30:50 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -97,9 +97,10 @@ struct cpu_attach_args {
 extern uint32_t cpus_running;
 #endif
 
-int x86_ipi(int,int,int);
+int x86_ipi(int, int, int);
 void x86_self_ipi(int);
 int x86_ipi_init(int);
+int x86_ipi_startup(int, int);
 void x86_errata(void);
 
 void identifycpu(struct cpu_info *);
@@ -107,6 +108,13 @@ void identifycpu_cpuids(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_tss(struct cpu_info *);
 void cpu_init_first(void);
+
+void x86_cpu_idle_init(void);
+void x86_cpu_idle_halt(void);
+void x86_cpu_idle_mwait(void);
+#ifdef XEN
+void x86_cpu_idle_xen(void);
+#endif
 
 #ifdef INTEL_CORETEMP
 void coretemp_register(struct cpu_info *);

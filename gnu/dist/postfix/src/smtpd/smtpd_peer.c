@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_peer.c,v 1.16 2007/08/02 08:26:19 heas Exp $	*/
+/*	$NetBSD: smtpd_peer.c,v 1.16.10.1 2008/06/23 04:29:23 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -27,7 +27,7 @@
 /*	The verified client hostname. This name is represented by
 /*	the string "unknown" when 1) the address->name lookup failed,
 /*	2) the name->address mapping fails, or 3) the name->address
-/*	does not produce the client IP address.
+/*	mapping does not produce the client IP address.
 /* .IP reverse_name
 /*	The unverified client hostname as found with address->name
 /*	lookup; it is not verified for consistency with the client
@@ -43,7 +43,7 @@
 /* .IP addr
 /*	Printable representation of the client address.
 /* .IP namaddr
-/*	String of the form: "name[addr]".
+/*	String of the form: "name[addr]:port".
 /* .IP rfc_addr
 /*      String of the form "ipv4addr" or "ipv6:ipv6addr" for use
 /*	in Received: message headers.
@@ -172,6 +172,7 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 	state->addr_family = AF_UNSPEC;
 	state->name_status = SMTPD_PEER_CODE_PERM;
 	state->reverse_name_status = SMTPD_PEER_CODE_PERM;
+	state->port = mystrdup(CLIENT_PORT_UNKNOWN);
     }
 
     /*
@@ -190,6 +191,7 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 		 )) {
 	MAI_HOSTNAME_STR client_name;
 	MAI_HOSTADDR_STR client_addr;
+	MAI_SERVPORT_STR client_port;
 	int     aierr;
 	char   *colonp;
 
@@ -219,9 +221,10 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 	 * Convert the client address to printable form.
 	 */
 	if ((aierr = sockaddr_to_hostaddr(sa, sa_length, &client_addr,
-					  (MAI_SERVPORT_STR *) 0, 0)) != 0)
-	    msg_fatal("%s: cannot convert client address to string: %s",
+					  &client_port, 0)) != 0)
+	    msg_fatal("%s: cannot convert client address/port to string: %s",
 		      myname, MAI_STRERROR(aierr));
+	state->port = mystrdup(client_port.buf);
 
 	/*
 	 * We convert IPv4-in-IPv6 address to 'true' IPv4 address early on,
@@ -366,13 +369,14 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 	state->addr_family = AF_UNSPEC;
 	state->name_status = SMTPD_PEER_CODE_OK;
 	state->reverse_name_status = SMTPD_PEER_CODE_OK;
+	state->port = mystrdup("0");		/* XXX bogus. */
     }
 
     /*
-     * Do the name[addr] formatting for pretty reports.
+     * Do the name[addr]:port formatting for pretty reports.
      */
-    state->namaddr =
-	concatenate(state->name, "[", state->addr, "]", (char *) 0);
+    state->namaddr = SMTPD_BUILD_NAMADDRPORT(state->name, state->addr,
+					     state->port);
 }
 
 /* smtpd_peer_reset - destroy peer information */
@@ -384,4 +388,5 @@ void    smtpd_peer_reset(SMTPD_STATE *state)
     myfree(state->addr);
     myfree(state->namaddr);
     myfree(state->rfc_addr);
+    myfree(state->port);
 }

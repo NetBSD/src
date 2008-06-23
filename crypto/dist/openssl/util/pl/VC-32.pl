@@ -9,7 +9,7 @@ $crypto="libeay32";
 $o='\\';
 $cp='$(PERL) util/copy.pl';
 $mkdir='$(PERL) util/mkdir-p.pl';
-$rm='del';
+$rm='del /Q';
 
 $zlib_lib="zlib1.lib";
 
@@ -28,12 +28,28 @@ if ($FLAVOR =~ /WIN64/)
     # per 0.9.8 release remaining warnings were explicitly examined and
     # considered safe to ignore.
     # 
-    $base_cflags=' /W3 /Gs0 /GF /Gy /nologo -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DOPENSSL_SYSNAME_WIN32 -DOPENSSL_SYSNAME_WINNT -DUNICODE -D_UNICODE';
-    $base_cflags.=' -D_CRT_SECURE_NO_DEPRECATE';	# shut up VC8
-    $base_cflags.=' -D_CRT_NONSTDC_NO_DEPRECATE';	# shut up VC8
-    $opt_cflags=' /MD /Ox';
-    $dbg_cflags=' /MDd /Od -DDEBUG -D_DEBUG';
+    $base_cflags= " $mf_cflag";
+    my $f = $shlib?' /MD':' /MT';
+    $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
+    $opt_cflags=$f.' /Ox';
+    $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
+
+    *::perlasm_compile_target = sub {
+	my ($target,$source,$bname)=@_;
+	my $ret;
+
+	$bname =~ s/(.*)\.[^\.]$/$1/;
+	$ret=<<___;
+\$(TMP_D)$o$bname.asm: $source
+	set ASM=\$(ASM)
+	\$(PERL) $source \$\@
+
+$target: \$(TMP_D)$o$bname.asm
+	\$(ASM) $afile\$\@ \$(TMP_D)$o$bname.asm
+
+___
+	}
     }
 elsif ($FLAVOR =~ /CE/)
     {
@@ -83,19 +99,21 @@ elsif ($FLAVOR =~ /CE/)
     }
 
     $cc='$(CC)';
-    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -I$(WCECOMPAT)/include -DOPENSSL_SMALL_FOOTPRINT';
+    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -DOPENSSL_SMALL_FOOTPRINT';
     $base_cflags.=" $wcecdefs";
+    $base_cflags.=' -I$(WCECOMPAT)/include'		if (defined($ENV{'WCECOMPAT'}));
+    $base_cflags.=' -I$(PORTSDK_LIBPATH)/../../include'	if (defined($ENV{'PORTSDK_LIBPATH'}));
     $opt_cflags=' /MC /O1i';	# optimize for space, but with intrinsics...
     $dbg_clfags=' /MC /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /opt:ref $wcelflag";
     }
 else	# Win32
     {
-    $base_cflags=' /W3 /WX /Gs0 /GF /Gy /nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
-    $base_cflags.=' -D_CRT_SECURE_NO_DEPRECATE';	# shut up VC8
-    $base_cflags.=' -D_CRT_NONSTDC_NO_DEPRECATE';	# shut up VC8
-    $opt_cflags=' /MD /Ox /O2 /Ob2';
-    $dbg_cflags=' /MDd /Od -DDEBUG -D_DEBUG';
+    $base_cflags= " $mf_cflag";
+    my $f = $shlib?' /MD':' /MT';
+    $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
+    $opt_cflags=$f.' /Ox /O2 /Ob2';
+    $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
     }
 $mlflags='';
@@ -116,6 +134,7 @@ else
 	}
 
 $obj='.obj';
+$asm_suffix='.asm';
 $ofile="/Fo";
 
 # EXE linking stuff
@@ -125,26 +144,23 @@ $efile="/out:";
 $exep='.exe';
 if ($no_sock)		{ $ex_libs=''; }
 elsif ($FLAVOR =~ /CE/)	{ $ex_libs='winsock.lib'; }
-else			{ $ex_libs='wsock32.lib'; }
+else			{ $ex_libs='ws2_32.lib'; }
 
 if ($FLAVOR =~ /CE/)
 	{
-	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib';
+	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib'	if (defined($ENV{'WCECOMPAT'}));
+	$ex_libs.=' $(PORTSDK_LIBPATH)/portlib.lib'	if (defined($ENV{'PORTSDK_LIBPATH'}));
 	$ex_libs.=' /nodefaultlib:oldnames.lib coredll.lib corelibc.lib' if ($ENV{'TARGETCPU'} eq "X86");
 	}
 else
 	{
 	$ex_libs.=' gdi32.lib advapi32.lib user32.lib';
 	$ex_libs.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
+	# WIN32 UNICODE build gets linked with unicows.lib for
+	# backward compatibility with Win9x.
+	$ex_libs="unicows.lib $ex_libs" if ($FLAVOR =~ /WIN32/ and $cflags =~ /\-DUNICODE/);
 	}
 
-# As native NT API is pure UNICODE, our WIN-NT build defaults to UNICODE,
-# but gets linked with unicows.lib to ensure backward compatibility.
-if ($FLAVOR =~ /NT/)
-	{
-	$cflags.=" -DOPENSSL_SYSNAME_WINNT -DUNICODE -D_UNICODE";
-	$ex_libs="unicows.lib $ex_libs";
-	}
 # static library stuff
 $mklib='lib';
 $ranlib='';
@@ -155,13 +171,32 @@ $lfile='/out:';
 
 $shlib_ex_obj="";
 $app_ex_obj="setargv.obj" if ($FLAVOR !~ /CE/);
-if ($nasm) {
-	$asm='nasmw -f win32';
+if ($FLAVOR =~ /WIN64A/) {
+	if (`nasm -v` =~ /NASM version ([0-9]+\.[0-9]+)/ && $1 >= 2.0) {
+		$asm='nasm -f win64';
+		$asm.=' -g' if $debug;
+		$afile='-o ';
+	} else {
+		$asm='ml64 /c /Cp /Cx';
+		$asm.=" /Zi" if $debug;
+		$afile='/Fo';
+	}
+} elsif ($FLAVOR =~ /WIN64I/) {
+	$asm='ias';
+	$asm.=" -d debug" if $debug;
+	$afile="-o ";
+} elsif ($nasm) {
+	my $ver=`nasm -v 2>NUL`;
+	my $vew=`nasmw -v 2>NUL`;
+	# pick newest version
+	$asm=($ver gt $vew?"nasm":"nasmw")." -f win32";
+	$asmtype="win32n";
 	$afile='-o ';
 } else {
 	$asm='ml /Cp /coff /c /Cx';
 	$asm.=" /Zi" if $debug;
 	$afile='/Fo';
+	$asmtype="win32";
 }
 
 $bn_asm_obj='';
@@ -173,31 +208,24 @@ $bf_enc_src='';
 
 if (!$no_asm)
 	{
-	$bn_asm_obj='crypto\bn\asm\bn_win32.obj';
-	$bn_asm_src='crypto\bn\asm\bn_win32.asm';
-	$des_enc_obj='crypto\des\asm\d_win32.obj crypto\des\asm\y_win32.obj';
-	$des_enc_src='crypto\des\asm\d_win32.asm crypto\des\asm\y_win32.asm';
-	$bf_enc_obj='crypto\bf\asm\b_win32.obj';
-	$bf_enc_src='crypto\bf\asm\b_win32.asm';
-	$cast_enc_obj='crypto\cast\asm\c_win32.obj';
-	$cast_enc_src='crypto\cast\asm\c_win32.asm';
-	$rc4_enc_obj='crypto\rc4\asm\r4_win32.obj';
-	$rc4_enc_src='crypto\rc4\asm\r4_win32.asm';
-	$rc5_enc_obj='crypto\rc5\asm\r5_win32.obj';
-	$rc5_enc_src='crypto\rc5\asm\r5_win32.asm';
-	$md5_asm_obj='crypto\md5\asm\m5_win32.obj';
-	$md5_asm_src='crypto\md5\asm\m5_win32.asm';
-	$sha1_asm_obj='crypto\sha\asm\s1_win32.obj';
-	$sha1_asm_src='crypto\sha\asm\s1_win32.asm';
-	$rmd160_asm_obj='crypto\ripemd\asm\rm_win32.obj';
-	$rmd160_asm_src='crypto\ripemd\asm\rm_win32.asm';
-	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DRMD160_ASM";
+	win32_import_asm($mf_bn_asm, "bn", \$bn_asm_obj, \$bn_asm_src);
+	win32_import_asm($mf_aes_asm, "aes", \$aes_asm_obj, \$aes_asm_src);
+	win32_import_asm($mf_des_asm, "des", \$des_enc_obj, \$des_enc_src);
+	win32_import_asm($mf_bf_asm, "bf", \$bf_enc_obj, \$bf_enc_src);
+	win32_import_asm($mf_cast_asm, "cast", \$cast_enc_obj, \$cast_enc_src);
+	win32_import_asm($mf_rc4_asm, "rc4", \$rc4_enc_obj, \$rc4_enc_src);
+	win32_import_asm($mf_rc5_asm, "rc5", \$rc5_enc_obj, \$rc5_enc_src);
+	win32_import_asm($mf_md5_asm, "md5", \$md5_asm_obj, \$md5_asm_src);
+	win32_import_asm($mf_sha_asm, "sha", \$sha1_asm_obj, \$sha1_asm_src);
+	win32_import_asm($mf_rmd_asm, "ripemd", \$rmd160_asm_obj, \$rmd160_asm_src);
+	win32_import_asm($mf_wp_asm, "whrlpool", \$whirlpool_asm_obj, \$whirlpool_asm_src);
+	win32_import_asm($mf_cpuid_asm, "", \$cpuid_asm_obj, \$cpuid_asm_src);
+	$perl_asm = 1;
 	}
 
 if ($shlib && $FLAVOR !~ /CE/)
 	{
 	$mlflags.=" $lflags /dll";
-#	$cflags =~ s| /MD| /MT|;
 	$lib_cflag=" -D_WINDLL";
 	$out_def="out32dll";
 	$tmp_def="tmp32dll";
@@ -229,6 +257,7 @@ ___
 elsif ($shlib && $FLAVOR =~ /CE/)
 	{
 	$mlflags.=" $lflags /dll";
+	$lflags.=' /entry:mainCRTstartup' if(defined($ENV{'PORTSDK_LIBPATH'}));
 	$lib_cflag=" -D_WINDLL -D_DLL";
 	$out_def='out32dll_$(TARGETCPU)';
 	$tmp_def='tmp32dll_$(TARGETCPU)';
@@ -265,17 +294,19 @@ sub do_lib_rule
 			}
 		elsif ($FLAVOR =~ /CE/)
 			{
-			$ex.=' winsock.lib $(WCECOMPAT)/lib/wcecompatex.lib';
+			$ex.=' winsock.lib';
+			$ex.=' $(WCECOMPAT)/lib/wcecompatex.lib' if (defined($ENV{'WCECOMPAT'}));
+			$ex.=' $(PORTSDK_LIBPATH)/portlib.lib'	 if (defined($ENV{'PORTSDK_LIBPATH'}));
 			}
 		else
 			{
 			$ex.=' unicows.lib' if ($FLAVOR =~ /NT/);
-			$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
+			$ex.=' ws2_32.lib gdi32.lib advapi32.lib user32.lib';
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 			}
 		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
-        $ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;2\n\n";
+        $ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;2\n\n";
 		}
 	$ret.="\n";
 	return($ret);
@@ -291,8 +322,35 @@ sub do_link_rule
 	$ret.="$target: $files $dep_libs\n";
 	$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
 	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
-    $ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;1\n\n";
+    $ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n";
 	return($ret);
 	}
+
+sub win32_import_asm
+	{
+	my ($mf_var, $asm_name, $oref, $sref) = @_;
+	my $asm_dir;
+	if ($asm_name eq "")
+		{
+		$asm_dir = "crypto\\";
+		}
+	else
+		{
+		$asm_dir = "crypto\\$asm_name\\asm\\";
+		}
+
+	$$oref = "";
+	$mf_var =~ s/\.o$/.obj/g;
+
+	foreach (split(/ /, $mf_var))
+		{
+		$$oref .= $asm_dir . $_ . " ";
+		}
+	$$oref =~ s/ $//;
+	$$sref = $$oref;
+	$$sref =~ s/\.obj/.asm/g;
+
+	}
+
 
 1;

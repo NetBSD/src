@@ -1,11 +1,8 @@
-/*	$NetBSD: tsc.c,v 1.15 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: tsc.c,v 1.15.2.1 2008/06/23 04:30:51 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * re-implementation of TSC for MP systems merging cc_microtime and
- * TSC for timecounters by Frank Kardel
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,7 +72,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.15 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.15.2.1 2008/06/23 04:30:51 wrstuden Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386

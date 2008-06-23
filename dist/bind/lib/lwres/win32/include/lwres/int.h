@@ -1,10 +1,10 @@
-/*	$NetBSD: int.h,v 1.1.1.4 2007/01/27 21:09:22 christos Exp $	*/
+/*	$NetBSD: int.h,v 1.1.1.4.12.1 2008/06/23 04:28:44 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: int.h,v 1.2 2004/03/05 05:13:35 marka Exp */
+/* Id: int.h,v 1.4 2007/06/19 23:47:23 tbox Exp */
 
 #ifndef LWRES_INT_H
 #define LWRES_INT_H 1

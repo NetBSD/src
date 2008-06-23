@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.117 2007/12/07 20:34:05 ad Exp $	 */
+/*	$NetBSD: rtld.c,v 1.117.8.1 2008/06/23 04:29:56 wrstuden Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.117 2007/12/07 20:34:05 ad Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.117.8.1 2008/06/23 04:29:56 wrstuden Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -681,6 +681,8 @@ _rtld_unload_object(Obj_Entry *root, bool do_fini_funcs)
 #ifdef RTLD_DEBUG
 				dbg(("unloading \"%s\"", obj->path));
 #endif
+				if (obj->ehdr != MAP_FAILED)
+					munmap(obj->ehdr, _rtld_pagesz);
 				munmap(obj->mapbase, obj->mapsize);
 				_rtld_objlist_remove(&_rtld_list_global, obj);
 				_rtld_linkmap_delete(obj);

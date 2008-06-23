@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.32 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.32.2.1 2008/06/23 04:30:38 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32.2.1 2008/06/23 04:30:38 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -618,7 +618,7 @@ _bus_dmamem_free(t, segs, nsegs)
 			+ segs[curseg].ds_len);
 		    addr += PAGE_SIZE) {
 			m = PHYS_TO_VM_PAGE(addr);
-			TAILQ_INSERT_TAIL(&mlist, m, pageq);
+			TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
 		}
 	}
 
@@ -776,9 +776,9 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	lastaddr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_addr = PHYS_TO_BUS_MEM(t, lastaddr);
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
+	m = m->pageq.queue.tqe_next;
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	for (; m != NULL; m = m->pageq.queue.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {

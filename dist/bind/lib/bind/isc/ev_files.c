@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_files.c,v 1.1.1.4 2007/01/27 21:09:03 christos Exp $	*/
+/*	$NetBSD: ev_files.c,v 1.1.1.4.12.1 2008/06/23 04:28:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_files.c,v 1.5.18.3 2005/07/28 07:38:09 marka Exp";
+static const char rcsid[] = "Id: ev_files.c,v 1.8 2005/07/28 06:51:48 marka Exp";
 #endif
 
 #include "port_before.h"

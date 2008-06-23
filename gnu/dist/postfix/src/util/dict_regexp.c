@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_regexp.c,v 1.1.1.10 2007/05/19 16:28:45 heas Exp $	*/
+/*	$NetBSD: dict_regexp.c,v 1.1.1.10.12.1 2008/06/23 04:29:26 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -685,9 +685,12 @@ static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
 	    return (0);
 	while (*p && ISSPACE(*p))
 	    ++p;
-	if (*p)
-	    msg_warn("regexp map %s, line %d: ignoring extra text after IF",
-		     mapname, lineno);
+	if (*p) {
+	    msg_warn("regexp map %s, line %d: ignoring extra text after"
+		     " IF statement: \"%s\"", mapname, lineno, p);
+	    msg_warn("regexp map %s, line %d: do not prepend whitespace"
+		     " to statements between IF and ENDIF", mapname, lineno);
+	}
 	if ((expr = dict_regexp_compile_pat(mapname, lineno, &pattern)) == 0)
 	    return (0);
 	if_rule = (DICT_REGEXP_IF_RULE *)

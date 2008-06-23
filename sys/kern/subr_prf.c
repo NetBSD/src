@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.120 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.120.4.1 2008/06/23 04:31:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.120 2008/04/27 11:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.120.4.1 2008/06/23 04:31:51 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
-#include "opt_multiprocessor.h"
 #include "opt_dump.h"
 
 #include <sys/param.h>
@@ -190,7 +189,6 @@ panic(const char *fmt, ...)
 	oci = atomic_cas_ptr((void *)&paniccpu, NULL, ci);
 	if (oci != NULL && oci != ci) {
 		/* Give interrupts a chance to try and prevent deadlock. */
-		spl0();
 		for (;;) {
 			DELAY(10);
 		}
@@ -880,6 +878,21 @@ aprint_debug_ifnet(struct ifnet *ifp, const char *fmt, ...)
 	va_start(ap, fmt);
 	aprint_debug_internal(ifp->if_xname, fmt, ap);
 	va_end(ap);
+}
+
+void
+printf_tolog(const char *fmt, ...)
+{
+	va_list ap;
+	int s;
+
+	KPRINTF_MUTEX_ENTER(s);
+
+	va_start(ap, fmt);
+	(void)kprintf(fmt, TOLOG, NULL, NULL, ap);
+	va_end(ap);
+
+	KPRINTF_MUTEX_EXIT(s);
 }
 
 /*

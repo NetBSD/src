@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.1.1.10 2007/05/19 16:28:08 heas Exp $	*/
+/*	$NetBSD: flush.c,v 1.1.1.10.12.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -151,6 +151,7 @@
 
 #include <sys_defs.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <utime.h>
@@ -579,6 +580,11 @@ static int flush_send_path(const char *path, int how)
 	msg_fatal("%s: truncate fast flush logfile %s: %m", myname, path);
 
     /*
+     * Workaround for noatime mounts. Use futimes() if available.
+     */
+    (void) utimes(VSTREAM_PATH(log), (struct timeval *) 0);
+
+    /*
      * Request delivery and clean up.
      */
     if (myflock(vstream_fileno(log), INTERNAL_LOCK, MYFLOCK_OP_NONE) < 0)
@@ -816,7 +822,7 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_FFLUSH_REFRESH, DEF_FFLUSH_REFRESH, &var_fflush_refresh, 1, 0,
 	VAR_FFLUSH_PURGE, DEF_FFLUSH_PURGE, &var_fflush_purge, 1, 0,
 	0,

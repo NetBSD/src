@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.57.4.2 2008/05/14 01:35:11 wrstuden Exp $
+	$NetBSD: syscalls.master,v 1.57.4.3 2008/06/23 04:30:57 wrstuden Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -41,6 +41,7 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>

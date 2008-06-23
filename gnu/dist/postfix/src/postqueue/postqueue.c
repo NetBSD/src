@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.1.1.11 2007/05/19 16:28:27 heas Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.1.1.11.12.1 2008/06/23 04:29:19 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -253,7 +253,7 @@
 char   *var_flush_acl;
 char   *var_showq_acl;
 
-static CONFIG_STR_TABLE str_table[] = {
+static const CONFIG_STR_TABLE str_table[] = {
     VAR_FLUSH_ACL, DEF_FLUSH_ACL, &var_flush_acl, 0, 0,
     VAR_SHOWQ_ACL, DEF_SHOWQ_ACL, &var_showq_acl, 0, 0,
     0,

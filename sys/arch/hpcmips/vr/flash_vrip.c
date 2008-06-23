@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.6 2008/04/28 20:23:22 martin Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.6.2.1 2008/06/23 04:30:25 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.6 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.6.2.1 2008/06/23 04:30:25 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -312,7 +312,8 @@ flashopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct flash_softc	*sc;
 
-	if ((sc = device_lookup(&flash_cd, minor(dev))) == NULL)
+	sc = device_lookup_private(&flash_cd, minor(dev));
+	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_status & FLASH_ST_BUSY)
 		return EBUSY;
@@ -325,7 +326,7 @@ flashclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct flash_softc	*sc;
 
-	sc = device_lookup(&flash_cd, minor(dev));
+	sc = device_lookup_private(&flash_cd, minor(dev));
 	sc->sc_status &= ~FLASH_ST_BUSY;
 	return 0;
 }
@@ -341,7 +342,7 @@ flashread(dev_t dev, struct uio *uio, int flag)
 	int			count;
 	int			error;
 
-	sc = device_lookup(&flash_cd, minor(dev));
+	sc = device_lookup_private(&flash_cd, minor(dev));
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -370,7 +371,7 @@ flashwrite(dev_t dev, struct uio *uio, int flag)
 	int			stat;
 	int			error;
 
-	sc = device_lookup(&flash_cd, minor(dev));
+	sc = device_lookup_private(&flash_cd, minor(dev));
 
 	if (sc->sc_size < uio->uio_offset + uio->uio_resid)
 		return ENOSPC;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.92 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.92.2.1 2008/06/23 04:31:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.92 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.92.2.1 2008/06/23 04:31:52 wrstuden Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -120,8 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.92 2008/04/28 20:24:05 martin Exp
  *   domains.
  */
 
-static POOL_INIT(socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL,
-    IPL_SOFTNET);
+static pool_cache_t socket_cache;
 
 u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
 static u_long sb_max_adj;	/* adjusted sb_max */
@@ -215,6 +214,14 @@ soisdisconnected(struct socket *so)
 	sorwakeup(so);
 }
 
+void
+soinit2(void)
+{
+
+	socket_cache = pool_cache_init(sizeof(struct socket), 0, 0, 0,
+	    "socket", NULL, IPL_SOFTNET, NULL, NULL, NULL);
+}
+
 /*
  * When an attempt at a new connection is noted on a socket
  * which accepts connections, sonewconn is called.  If the
@@ -250,6 +257,8 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_send = head->so_send;
 	so->so_receive = head->so_receive;
 	so->so_uidinfo = head->so_uidinfo;
+	so->so_egid = head->so_egid;
+	so->so_cpid = head->so_cpid;
 #ifdef MBUFTRACE
 	so->so_mowner = head->so_mowner;
 	so->so_rcv.sb_mowner = head->so_rcv.sb_mowner;
@@ -284,7 +293,7 @@ soget(bool waitok)
 {
 	struct socket *so;
 
-	so = pool_get(&socket_pool, (waitok ? PR_WAITOK : PR_NOWAIT));
+	so = pool_cache_get(socket_cache, (waitok ? PR_WAITOK : PR_NOWAIT));
 	if (__predict_false(so == NULL))
 		return (NULL);
 	memset(so, 0, sizeof(*so));
@@ -313,7 +322,7 @@ soput(struct socket *so)
 	cv_destroy(&so->so_cv);
 	cv_destroy(&so->so_rcv.sb_cv);
 	cv_destroy(&so->so_snd.sb_cv);
-	pool_put(&socket_pool, so);
+	pool_cache_put(socket_cache, so);
 }
 
 void
@@ -444,6 +453,23 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
 }
 
 /*
+ * Reset a socket's lock pointer.  Wake all threads waiting on the
+ * socket's condition variables so that they can restart their waits
+ * using the new lock.  The existing lock must be held.
+ */
+void
+solockreset(struct socket *so, kmutex_t *lock)
+{
+
+	KASSERT(solocked(so));
+
+	so->so_lock = lock;
+	cv_broadcast(&so->so_snd.sb_cv);
+	cv_broadcast(&so->so_rcv.sb_cv);
+	cv_broadcast(&so->so_cv);
+}
+
+/*
  * Socket buffer (struct sockbuf) utility routines.
  *
  * Each socket contains two socket buffers: one for sending data and
@@ -546,16 +572,13 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
-	if (so) {
-		if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
-			maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
-		else
-			maxcc = RLIM_INFINITY;
-		uidinfo = so->so_uidinfo;
-	} else {
-		uidinfo = uid_find(0);	/* XXX: nothing better */
+
+	if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
+		maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
+	else
 		maxcc = RLIM_INFINITY;
-	}
+
+	uidinfo = so->so_uidinfo;
 	if (!chgsbsize(uidinfo, &sb->sb_hiwat, cc, maxcc))
 		return 0;
 	sb->sb_mbmax = min(cc * 2, sb_max);

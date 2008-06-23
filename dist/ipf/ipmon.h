@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.h,v 1.1.1.2 2006/04/04 16:08:46 martti Exp $	*/
+/*	$NetBSD: ipmon.h,v 1.1.1.2.20.1 2008/06/23 04:28:45 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ipmon.h,v 2.8.2.1 2006/03/21 16:13:31 darrenr Exp
+ * Id: ipmon.h,v 2.8.2.2 2007/10/26 12:15:14 darrenr Exp
  */
 
 
@@ -28,9 +28,9 @@ typedef	struct	ipmon_action	{
 	int	ac_second;
 	int	ac_result;
 	u_32_t	ac_sip;
-	u_32_t	ac_smsk;	
+	u_32_t	ac_smsk;
 	u_32_t	ac_dip;
-	u_32_t	ac_dmsk;	
+	u_32_t	ac_dmsk;
 	u_short	ac_sport;
 	u_short	ac_dport;
 	char	*ac_exec;	/* execute argument */

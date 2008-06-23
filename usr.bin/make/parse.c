@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.145 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.145.6.1 2008/06/23 04:32:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.145 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.145.6.1 2008/06/23 04:32:11 wrstuden Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.145 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.145.6.1 2008/06/23 04:32:11 wrstuden Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2193,6 +2193,7 @@ ParseGetLine(int flags, int *length)
 		if (len <= 0) {
 		    /* We need a bigger buffer to hold this line */
 		    tp = erealloc(cf->P_str, cf->P_buflen + IFILE_BUFLEN);
+		    cf->P_ptr = cf->P_ptr - cf->P_str + tp;
 		    cf->P_end = cf->P_end - cf->P_str + tp;
 		    ptr = ptr - cf->P_str + tp;
 		    line = line - cf->P_str + tp;

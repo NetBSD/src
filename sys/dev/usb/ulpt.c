@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.80 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.80.2.1 2008/06/23 04:31:37 wrstuden Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.80 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.80.2.1 2008/06/23 04:31:37 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,9 +227,11 @@ USB_ATTACH(ulpt)
 	int i, altno;
 	usbd_desc_iter_t iter;
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
+	aprint_normal_dev(self, "%s, iclass %d/%d\n",
 	       devinfop, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
 
@@ -256,8 +258,8 @@ USB_ATTACH(ulpt)
 		DPRINTFN(1, ("ulpt_attach: set altno = %d\n", altno));
 		err = usbd_set_interface(iface, altno);
 		if (err) {
-			printf("%s: setting alternate interface failed\n",
-			       USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self,
+			    "setting alternate interface failed\n");
 			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -271,8 +273,7 @@ USB_ATTACH(ulpt)
 	for (i = 0; i < epcount; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self, "couldn't get ep %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -284,8 +285,7 @@ USB_ATTACH(ulpt)
 		}
 	}
 	if (sc->sc_out == -1) {
-		printf("%s: could not find bulk out endpoint\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "could not find bulk out endpoint\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -295,7 +295,7 @@ USB_ATTACH(ulpt)
 		sc->sc_in = -1;
 	}
 
-	printf("%s: using %s-directional mode\n", USBDEVNAME(sc->sc_dev),
+	aprint_normal_dev(self, "using %s-directional mode\n",
 	       sc->sc_in >= 0 ? "bi" : "uni");
 
 	sc->sc_iface = iface;
@@ -359,7 +359,7 @@ USB_ATTACH(ulpt)
 int
 ulpt_activate(device_ptr_t self, enum devact act)
 {
-	struct ulpt_softc *sc = (struct ulpt_softc *)self;
+	struct ulpt_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

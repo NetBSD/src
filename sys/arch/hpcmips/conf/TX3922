@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.82 2008/01/30 13:49:09 tsutsui Exp $
+#	$NetBSD: TX3922,v 1.82.12.1 2008/06/23 04:30:23 wrstuden Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -37,6 +37,7 @@ options 	COMPAT_43
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #options 	SCSIVERBOSE	# human readable SCSI error messages

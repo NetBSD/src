@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.107 2008/04/28 20:24:10 martin Exp $ */
+/*     $NetBSD: buf.h,v 1.107.2.1 2008/06/23 04:32:02 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,8 @@ extern kmutex_t buffer_lock;
  *
  * Field markings and the corresponding locks:
  *
- * b	owner (thread that holds BB_BUSY) and/or thread calling biodone()
+ * b	thread of execution that holds BC_BUSY, does not correspond
+ *	  directly to any particular LWP
  * c	bufcache_lock
  * l	b_objlock
  *
@@ -244,6 +245,9 @@ do {									\
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 #define B_METAONLY	0x04	/* Return indirect block buffer. */
 
+/* Flags to bread(), breadn() and breada(). */
+#define B_MODIFY	0x01	/* Hint: caller might modify buffer */
+
 #ifdef _KERNEL
 
 #define	BIO_GETPRIO(bp)		((bp)->b_prio)
@@ -285,11 +289,11 @@ void	bdirty(buf_t *);
 void	bdwrite(buf_t *);
 void	biodone(buf_t *);
 int	biowait(buf_t *);
-int	bread(struct vnode *, daddr_t, int, struct kauth_cred *, buf_t **);
+int	bread(struct vnode *, daddr_t, int, struct kauth_cred *, int, buf_t **);
 int	breada(struct vnode *, daddr_t, int, daddr_t, int, struct kauth_cred *,
-	       buf_t **);
+	       int, buf_t **);
 int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
-	       struct kauth_cred *, buf_t **);
+	       struct kauth_cred *, int, buf_t **);
 void	brelsel(buf_t *, int);
 void	brelse(buf_t *, int);
 void	bremfree(buf_t *);

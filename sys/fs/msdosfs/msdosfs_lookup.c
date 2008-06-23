@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.15 2007/11/26 19:01:46 pooka Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.15.20.1 2008/06/23 04:31:47 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.15 2007/11/26 19:01:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.15.20.1 2008/06/23 04:31:47 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ msdosfs_lookup(v)
 			return (error);
 		}
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
-		    &bp);
+		    0, &bp);
 		if (error) {
 			brelse(bp, 0);
 			return (error);
@@ -629,7 +629,7 @@ createde(dep, ddep, depp, cnp)
 	if (dirclust != MSDOSFSROOT)
 		clusoffset &= pmp->pm_crbomask;
 	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
-	    &bp)) != 0) {
+	    B_MODIFY, &bp)) != 0) {
 		brelse(bp, 0);
 		goto err_norollback;
 	}
@@ -667,7 +667,7 @@ createde(dep, ddep, depp, cnp)
 					goto rollback;
 
 				error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
-				    blsize, NOCRED, &bp);
+				    blsize, NOCRED, B_MODIFY, &bp);
 				if (error) {
 					brelse(bp, 0);
 					goto rollback;
@@ -720,7 +720,7 @@ createde(dep, ddep, depp, cnp)
 	if (rberror)
 		goto err_norollback;
 	if ((rberror = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
-	    &bp)) != 0) {
+	    B_MODIFY, &bp)) != 0) {
 		brelse(bp, 0);
 		goto err_norollback;
 	}
@@ -748,7 +748,7 @@ createde(dep, ddep, depp, cnp)
 				goto err_norollback;
 
 			rberror = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
-			    blsize, NOCRED, &bp);
+			    blsize, NOCRED, B_MODIFY, &bp);
 			if (rberror) {
 				brelse(bp, 0);
 				goto err_norollback;
@@ -798,7 +798,7 @@ dosdirempty(dep)
 			return (0);
 		}
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
-		    &bp);
+		    0, &bp);
 		if (error) {
 			brelse(bp, 0);
 			return (0);
@@ -892,7 +892,7 @@ doscheckpath(source, target)
 		}
 		scn = dep->de_StartCluster;
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, cntobn(pmp, scn)),
-			      pmp->pm_bpcluster, NOCRED, &bp);
+			      pmp->pm_bpcluster, NOCRED, 0, &bp);
 		if (error)
 			break;
 
@@ -959,7 +959,7 @@ readep(pmp, dirclust, diroffset, bpp, epp)
 		blsize = de_bn2off(pmp, pmp->pm_rootdirsize) & pmp->pm_crbomask;
 	bn = detobn(pmp, dirclust, diroffset);
 	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
-	    bpp)) != 0) {
+	    0, bpp)) != 0) {
 		brelse(*bpp, 0);
 		*bpp = NULL;
 		return (error);
@@ -1019,7 +1019,7 @@ removede(pdep, dep)
 		if (error)
 			return error;
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
-		    &bp);
+		    B_MODIFY, &bp);
 		if (error) {
 			brelse(bp, 0);
 			return error;
@@ -1096,7 +1096,7 @@ uniqdosname(dep, cnp, cp)
 				return error;
 			}
 			error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
-			    NOCRED, &bp);
+			    NOCRED, 0, &bp);
 			if (error) {
 				brelse(bp, 0);
 				return error;
@@ -1148,7 +1148,7 @@ findwin95(dep)
 		if (pcbmap(dep, cn, &bn, 0, &blsize))
 			return 0;
 		if (bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize, NOCRED,
-		    &bp)) {
+		    0, &bp)) {
 			brelse(bp, 0);
 			return 0;
 		}

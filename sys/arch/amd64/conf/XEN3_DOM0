@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.16 2008/05/01 20:18:18 cegger Exp $
+# $NetBSD: XEN3_DOM0,v 1.16.2.1 2008/06/23 04:30:08 wrstuden Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -115,7 +115,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -213,10 +213,14 @@ ioapic*		at mainbus? apid ?
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
+acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz*		at acpi?		# ACPI Thermal Zone
+aiboost*	at acpi?		# ASUS AI Booster Hardware monitor
 hpqlb*		at acpi?		# HP Quick Launch Buttons
+pckbc*		at acpi?		# PC keyboard controller
+pcppi*		at acpi?		# AT-style speaker sound
 
 # PCI bus support
 pci*		at hypervisor? bus ?

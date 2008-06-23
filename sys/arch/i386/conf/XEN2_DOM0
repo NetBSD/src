@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.43 2008/03/29 00:40:02 cube Exp $
+# $NetBSD: XEN2_DOM0,v 1.43.6.1 2008/06/23 04:30:26 wrstuden Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -130,7 +130,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

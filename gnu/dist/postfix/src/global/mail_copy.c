@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_copy.c,v 1.1.1.7 2006/07/19 01:17:24 rpaulo Exp $	*/
+/*	$NetBSD: mail_copy.c,v 1.1.1.7.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -51,6 +51,7 @@
 /* .IP MAIL_COPY_DELIVERED
 /*	Prepend a Delivered-To: header with the name of the
 /*	\fIdelivered\fR attribute.
+/*	The address is quoted according to RFC822 rules.
 /* .IP MAIL_COPY_ORIG_RCPT
 /*	Prepend an X-Original-To: header with the original
 /*	envelope recipient address.

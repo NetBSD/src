@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.50 2008/04/28 20:24:01 martin Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.50.2.1 2008/06/23 04:31:38 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,18 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.50 2008/04/28 20:24:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.50.2.1 2008/06/23 04:31:38 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/proc.h>
 #include <sys/device.h>
-#elif defined(__FreeBSD__)
-#include <sys/bus.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>

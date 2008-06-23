@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.98 2005/12/11 12:16:26 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.98.80.1 2008/06/23 04:30:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98 2005/12/11 12:16:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98.80.1 2008/06/23 04:30:09 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,7 +374,7 @@ findroot(void)
 {
 	struct disk *dkp;
 	struct partition *pp;
-	struct device **devs;
+	device_t *devs;
 	int i, maj, unit;
 	const struct bdevsw *bdp;
 
@@ -392,15 +392,15 @@ findroot(void)
 #ifdef DEBUG_KERNEL_START
 			printf("probing for sd%d\n", unit);
 #endif
-			if (sd_cd.cd_devs[unit] == NULL)
+			if (device_lookup(&sd_cd,unit) == NULL)
 				continue;
 
 			/*
 			 * Find the disk corresponding to the current
 			 * device.
 			 */
-			devs = (struct device **)sd_cd.cd_devs;
-			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
+			devs = (device_t *)sd_cd.cd_devs;
+			if ((dkp = disk_find(device_xname(device_lookup(&sd_cd, unit)))) == NULL)
 				continue;
 
 			if (dkp->dk_driver == NULL ||
@@ -448,8 +448,8 @@ findroot(void)
 			 * Find the disk structure corresponding to the
 			 * current device.
 			 */
-			devs = (struct device **)genericconf[i]->cd_devs;
-			if ((dkp = disk_find(devs[unit]->dv_xname)) == NULL)
+			devs = (device_t *)genericconf[i]->cd_devs;
+			if ((dkp = disk_find(device_xname(devs[unit]))) == NULL)
 				continue;
 
 			if (dkp->dk_driver == NULL ||

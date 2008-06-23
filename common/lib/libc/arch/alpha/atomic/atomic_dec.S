@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec.S,v 1.3 2008/04/28 20:22:51 martin Exp $	*/
+/*	$NetBSD: atomic_dec.S,v 1.3.2.1 2008/06/23 04:26:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-LEAF_NOPROFILE(_atomic_dec_32, 1)
+LEAF(_atomic_dec_32, 1)
 1:	ldl_l	t1, 0(a0)
 	subl	t1, 1, t2
 	stl_c	t2, 0(a0)
@@ -45,7 +45,7 @@ ATOMIC_OP_ALIAS(atomic_dec_32,_atomic_dec_32)
 ATOMIC_OP_ALIAS(atomic_dec_uint,_atomic_dec_32)
 STRONG_ALIAS(_atomic_dec_uint,_atomic_dec_32)
 
-LEAF_NOPROFILE(_atomic_dec_32_nv, 1)
+LEAF(_atomic_dec_32_nv, 1)
 1:	ldl_l	t1, 0(a0)
 	subl	t1, 1, t2
 	mov	t2, v0
@@ -58,7 +58,7 @@ ATOMIC_OP_ALIAS(atomic_dec_32_nv,_atomic_dec_32_nv)
 ATOMIC_OP_ALIAS(atomic_dec_uint_nv,_atomic_dec_32_nv)
 STRONG_ALIAS(_atomic_dec_uint_nv,_atomic_dec_32_nv)
 
-LEAF_NOPROFILE(_atomic_dec_64, 1)
+LEAF(_atomic_dec_64, 1)
 1:	ldq_l	t1, 0(a0)
 	subq	t1, 1, t2
 	stq_c	t2, 0(a0)
@@ -72,7 +72,7 @@ STRONG_ALIAS(_atomic_dec_ulong,_atomic_dec_64)
 ATOMIC_OP_ALIAS(atomic_dec_ptr,_atomic_dec_64)
 STRONG_ALIAS(_atomic_dec_ptr,_atomic_dec_64)
 
-LEAF_NOPROFILE(_atomic_dec_64_nv, 1)
+LEAF(_atomic_dec_64_nv, 1)
 1:	ldq_l	t1, 0(a0)
 	subq	t1, 1, t2
 	mov	t2, v0

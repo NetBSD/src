@@ -1,10 +1,10 @@
-/*	$NetBSD: spf_99.c,v 1.1.1.1 2007/01/27 21:07:27 christos Exp $	*/
+/*	$NetBSD: spf_99.c,v 1.1.1.1.16.1 2008/06/23 04:28:19 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: spf_99.c,v 1.1.2.2 2005/07/16 00:40:54 marka Exp */
+/* Id: spf_99.c,v 1.4 2007/06/19 23:47:17 tbox Exp */
 
 /* Reviewed: Thu Mar 16 15:40:00 PST 2000 by bwelling */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.77 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.77.2.1 2008/06/23 04:31:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.77 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.77.2.1 2008/06/23 04:31:57 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.77 2008/05/05 17:11:17 ad Exp $");
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
+
+MODULE(MODULE_CLASS_VFS, umapfs, NULL);
 
 VFS_PROTOS(umapfs);
 
@@ -267,7 +270,7 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	mutex_destroy(&amp->umapm_hashlock);
 	hashdone(amp->umapm_node_hashtbl, HASH_LIST, amp->umapm_node_hash);
 	free(amp, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 	return (0);
 }
 
@@ -326,4 +329,17 @@ struct vfsops umapfs_vfsops = {
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
 };
-VFS_ATTACH(umapfs_vfsops);
+
+static int
+umapfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&umapfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&umapfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

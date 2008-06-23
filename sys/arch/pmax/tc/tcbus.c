@@ -1,7 +1,11 @@
-/*	$NetBSD: tcbus.c,v 1.20 2006/07/31 00:19:05 ad Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.20.64.1 2008/06/23 04:30:37 wrstuden Exp $	*/
 
-/*
- * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tohru Nishimura.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.20 2006/07/31 00:19:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.20.64.1 2008/06/23 04:30:37 wrstuden Exp $");
 
 /*
  * Which system models were configured?

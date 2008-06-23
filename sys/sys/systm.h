@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.223 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.223.2.1 2008/06/23 04:32:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -196,6 +196,9 @@ void	aprint_debug_ifnet(struct ifnet *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 
 int	aprint_get_error_count(void);
+
+void	printf_tolog(const char *, ...)
+    __attribute__((__format__(__printf__,1,2)));
 
 void	printf_nolog(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
@@ -471,8 +474,8 @@ do {						\
 } while (/* CONSTCOND */ 0)
 #define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (p))
 #else
-#define	KERNEL_LOCK(count, lwp)		/* nothing */
-#define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
+#define	KERNEL_LOCK(count, lwp)		do {(void)(count); (void)(lwp);} while (/* CONSTCOND */ 0) /*NOP*/
+#define	KERNEL_UNLOCK(all, lwp, ptr)	do {(void)(all); (void)(lwp); (void)(ptr);} while (/* CONSTCOND */ 0) /*NOP*/
 #endif
 
 #define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)

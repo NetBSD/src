@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.10 2008/05/04 21:43:01 jmcneill Exp $ */
+/* $NetBSD: drm_vm.c,v 1.10.2.1 2008/06/23 04:31:01 wrstuden Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.10 2008/05/04 21:43:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.10.2.1 2008/06/23 04:31:01 wrstuden Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -40,7 +40,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	drm_local_map_t *map;
 	drm_file_t *priv;
 	drm_map_type_t type;
-	paddr_t phys;
+	/* paddr_t phys; */
 	uintptr_t roffset;
 
 	DRM_LOCK();
@@ -63,6 +63,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 			unsigned long page = offset >> PAGE_SHIFT;
 			unsigned long pphys = dma->pagelist[page];
 
+/* XXX fixme */
 #ifdef macppc
 			return pphys;
 #else
@@ -86,12 +87,19 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	roffset = DRM_NETBSD_HANDLE2ADDR(offset);
 	TAILQ_FOREACH(map, &dev->maplist, link) {
 		if (map->type == _DRM_SHM) {
-			if (roffset >= (uintptr_t)map->handle && roffset < (uintptr_t)map->handle + map->size)
+			if ((roffset >= (uintptr_t)map->handle) && 
+			    (roffset < (uintptr_t)map->handle + map->size)) {
+				DRM_DEBUG("found _DRM_SHM map for offset (%lx)\n", (long)roffset);
 				break;
+			}  
 		} else {
-			if (offset >= map->offset && offset < map->offset + map->size)
+			if ((offset >= map->cookie) && 
+		    	    (offset < map->cookie + map->size)) {
+			DRM_DEBUG("found cookie (%lx) for offset (%lx)", map->cookie, (long)offset);
+			offset -= map->cookie;
 				break;
 		}
+	}
 	}
 
 	if (map == NULL) {
@@ -111,26 +119,27 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	case _DRM_FRAME_BUFFER:
 	case _DRM_REGISTERS:
 	case _DRM_AGP:
-		phys = offset;
+		return atop(offset + map->offset);
 		break;
+	/* All _DRM_CONSISTENT and _DRM_SHM mappings have a 0 offset */
 	case _DRM_CONSISTENT:
-		phys = vtophys((paddr_t)map->handle + (offset - map->offset));
+		return bus_dmamem_mmap(dev->pa.pa_dmat, map->dmah->mem->dd_segs,
+			map->dmah->mem->dd_nsegs, 0, prot, BUS_DMA_NOWAIT|
+			BUS_DMA_NOCACHE);
+	case _DRM_SHM:
+		return bus_dmamem_mmap(dev->pa.pa_dmat, map->mem->dd_segs,
+			map->mem->dd_nsegs, 0, prot, BUS_DMA_NOWAIT);
 		break;
 	case _DRM_SCATTER_GATHER:
-		phys = vtophys(offset);
-		break;
-	case _DRM_SHM:
-		phys = vtophys(DRM_NETBSD_HANDLE2ADDR(offset));
+		return bus_dmamem_mmap(dev->pa.pa_dmat, 
+			dev->sg->mem->dd_segs, dev->sg->mem->dd_nsegs, 
+			map->offset - dev->sg->handle + offset, prot,
+			BUS_DMA_NOWAIT|BUS_DMA_NOCACHE);
 		break;
 	default:
 		DRM_ERROR("bad map type %d\n", type);
-		return -1;	/* This should never happen. */
+		break;
 	}
 
-#ifdef macppc
-	return phys;
-#else
-	return atop(phys);
-#endif
+		return -1;	/* This should never happen. */
 }
-

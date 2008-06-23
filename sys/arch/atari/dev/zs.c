@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.56 2008/04/29 06:53:01 martin Exp $	*/
+/*	$NetBSD: zs.c,v 1.56.2.1 2008/06/23 04:30:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.56 2008/04/29 06:53:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.56.2.1 2008/06/23 04:30:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,7 +373,8 @@ struct lwp	*l;
 		 int			zs = unit >> 1;
 		 int			error, s;
 
-	if(zs >= zs_cd.cd_ndevs || (zi = zs_cd.cd_devs[zs]) == NULL)
+	zi = device_lookup_private(&zs_cd, zs);
+	if (zi == NULL)
 		return (ENXIO);
 	cs = &zi->zi_cs[unit & 1];
 
@@ -471,7 +472,7 @@ struct lwp	*l;
 		 struct zs_softc	*zi;
 		 int			unit = ZS_UNIT(dev);
 
-	zi = zs_cd.cd_devs[unit >> 1];
+	zi = device_lookup_private(&zs_cd, unit >> 1);
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
 
@@ -504,7 +505,7 @@ int		flags;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zs_cd.cd_devs[unit >> 1];
+	zi   = device_lookup_private(&zs_cd, unit >> 1);
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
@@ -523,7 +524,7 @@ int		flags;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zs_cd.cd_devs[unit >> 1];
+	zi   = device_lookup_private(&zs_cd, unit >> 1);
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
@@ -542,7 +543,7 @@ struct lwp	*l;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zs_cd.cd_devs[unit >> 1];
+	zi   = device_lookup_private(&zs_cd, unit >> 1);
 	cs   = &zi->zi_cs[unit & 1];
 	tp   = cs->cs_ttyp;
  
@@ -558,7 +559,7 @@ dev_t	dev;
 		 int			unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = zs_cd.cd_devs[unit >> 1];
+	zi   = device_lookup_private(&zs_cd, unit >> 1);
 	cs   = &zi->zi_cs[unit & 1];
 	return(cs->cs_ttyp);
 }
@@ -861,7 +862,7 @@ int		flag;
 struct lwp	*l;
 {
 		 int			unit = ZS_UNIT(dev);
-		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = device_lookup_private(&zs_cd, unit >> 1);
 	register struct tty		*tp = zi->zi_cs[unit & 1].cs_ttyp;
 	register int			error, s;
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
@@ -984,7 +985,7 @@ register struct tty *tp;
 	register struct zs_chanstate	*cs;
 	register int			s, nch;
 		 int			unit = ZS_UNIT(tp->t_dev);
-		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = device_lookup_private(&zs_cd, unit >> 1);
 
 	cs = &zi->zi_cs[unit & 1];
 	s  = spltty();
@@ -1038,7 +1039,7 @@ register struct tty	*tp;
 {
 	register struct zs_chanstate	*cs;
 	register int			s, unit = ZS_UNIT(tp->t_dev);
-		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = device_lookup_private(&zs_cd, unit >> 1);
 
 	cs = &zi->zi_cs[unit & 1];
 	s  = splzs();
@@ -1097,7 +1098,7 @@ register struct tty	*tp;
 register struct termios	*t;
 {
 		 int			unit = ZS_UNIT(tp->t_dev);
-		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
+		 struct zs_softc	*zi = device_lookup_private(&zs_cd, unit >> 1);
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
 		 int			cdiv = 0,	/* XXX gcc4 -Wuninitialized */
 					clkm = 0,	/* XXX gcc4 -Wuninitialized */

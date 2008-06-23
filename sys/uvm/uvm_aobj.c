@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.100 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.100.2.1 2008/06/23 04:32:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.100 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.100.2.1 2008/06/23 04:32:06 wrstuden Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -588,6 +588,14 @@ uao_init(void)
 void
 uao_reference(struct uvm_object *uobj)
 {
+
+	/*
+ 	 * kernel_object already has plenty of references, leave it alone.
+ 	 */
+
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
+		return;
+
 	mutex_enter(&uobj->vmobjlock);
 	uao_reference_locked(uobj);
 	mutex_exit(&uobj->vmobjlock);
@@ -629,6 +637,14 @@ uao_reference_locked(struct uvm_object *uobj)
 void
 uao_detach(struct uvm_object *uobj)
 {
+
+	/*
+ 	 * detaching from kernel_object is a noop.
+ 	 */
+
+	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
+		return;
+
 	mutex_enter(&uobj->vmobjlock);
 	uao_detach_locked(uobj);
 }
@@ -808,7 +824,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	 */
 
 	if (by_list) {
-		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
+		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq.queue);
 		nextpg = TAILQ_FIRST(&uobj->memq);
 		uvm_lwp_hold(curlwp);
 	} else {
@@ -822,7 +838,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			pg = nextpg;
 			if (pg == &endmp)
 				break;
-			nextpg = TAILQ_NEXT(pg, listq);
+			nextpg = TAILQ_NEXT(pg, listq.queue);
 			if (pg->offset < start || pg->offset >= stop)
 				continue;
 		} else {
@@ -841,16 +857,16 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 
 		if (pg->flags & PG_BUSY) {
 			if (by_list) {
-				TAILQ_INSERT_BEFORE(pg, &curmp, listq);
+				TAILQ_INSERT_BEFORE(pg, &curmp, listq.queue);
 			}
 			pg->flags |= PG_WANTED;
 			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
 			    "uao_put", 0);
 			mutex_enter(&uobj->vmobjlock);
 			if (by_list) {
-				nextpg = TAILQ_NEXT(&curmp, listq);
+				nextpg = TAILQ_NEXT(&curmp, listq.queue);
 				TAILQ_REMOVE(&uobj->memq, &curmp,
-				    listq);
+				    listq.queue);
 			} else
 				curoff -= PAGE_SIZE;
 			continue;
@@ -909,7 +925,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		}
 	}
 	if (by_list) {
-		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
+		TAILQ_REMOVE(&uobj->memq, &endmp, listq.queue);
 		uvm_lwp_rele(curlwp);
 	}
 	mutex_exit(&uobj->vmobjlock);

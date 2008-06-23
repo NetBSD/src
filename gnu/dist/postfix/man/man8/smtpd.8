@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.1.1.15 2007/05/19 16:27:53 heas Exp $
+.\"	$NetBSD: smtpd.8,v 1.1.1.15.12.1 2008/06/23 04:29:08 wrstuden Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -11,6 +11,8 @@ Postfix SMTP server
 .na
 .nf
 \fBsmtpd\fR [generic Postfix daemon options]
+
+\fBsendmail -bs\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -59,6 +61,8 @@ RFC 2920 (SMTP Pipelining)
 RFC 3207 (STARTTLS command)
 RFC 3461 (SMTP DSN Extension)
 RFC 3463 (Enhanced Status Codes)
+RFC 3848 (ESMTP Transmission Types)
+RFC 4954 (AUTH command)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -90,7 +94,7 @@ undesirable use.
 .fi
 .IP "\fBbroken_sasl_auth_clients (no)\fR"
 Enable inter-operability with SMTP clients that implement an obsolete
-version of the AUTH command (RFC 2554).
+version of the AUTH command (RFC 4954).
 .IP "\fBdisable_vrfy_command (no)\fR"
 Disable the SMTP VRFY command.
 .IP "\fBsmtpd_noop_commands (empty)\fR"
@@ -111,7 +115,8 @@ Request that the Postfix SMTP server rejects mail from unknown
 sender addresses, even when no explicit reject_unlisted_sender
 access restriction is specified.
 .IP "\fBsmtpd_sasl_exceptions_networks (empty)\fR"
-What SMTP clients Postfix will not offer AUTH support to.
+What remote SMTP clients the Postfix SMTP server will not offer
+AUTH support to.
 .PP
 Available in Postfix version 2.2 and later:
 .IP "\fBsmtpd_discard_ehlo_keyword_address_maps (empty)\fR"
@@ -230,6 +235,9 @@ filter) applications after the SMTP DATA command.
 .IP "\fBmilter_unknown_command_macros (see postconf -n output)\fR"
 The macros that are sent to version 3 or higher Milter (mail
 filter) applications after an unknown SMTP command.
+.IP "\fBmilter_end_of_header_macros (see postconf -n output)\fR"
+The macros that are sent to Milter (mail filter) applications
+after the end of the message header.
 .IP "\fBmilter_end_of_data_macros (see postconf -n output)\fR"
 The macros that are sent to Milter (mail filter) applications
 after the message end-of-data.
@@ -261,19 +269,21 @@ What SMTP clients are allowed to use the XFORWARD feature.
 .nf
 .ad
 .fi
-Postfix SASL support (RFC 2554) can be used to authenticate remote
+Postfix SASL support (RFC 4954) can be used to authenticate remote
 SMTP clients to the Postfix SMTP server, and to authenticate the
 Postfix SMTP client to a remote SMTP server.
 See the SASL_README document for details.
 .IP "\fBbroken_sasl_auth_clients (no)\fR"
 Enable inter-operability with SMTP clients that implement an obsolete
-version of the AUTH command (RFC 2554).
+version of the AUTH command (RFC 4954).
 .IP "\fBsmtpd_sasl_auth_enable (no)\fR"
 Enable SASL authentication in the Postfix SMTP server.
 .IP "\fBsmtpd_sasl_local_domain (empty)\fR"
-The name of the local SASL authentication realm.
+The name of the Postfix SMTP server's local SASL authentication
+realm.
 .IP "\fBsmtpd_sasl_security_options (noanonymous)\fR"
-SASL security options; as of Postfix 2.3 the list of available
+Postfix SMTP server SASL security options; as of Postfix 2.3
+the list of available
 features depends on the SASL server implementation that is selected
 with \fBsmtpd_sasl_type\fR.
 .IP "\fBsmtpd_sender_login_maps (empty)\fR"
@@ -282,19 +292,31 @@ Optional lookup table with the SASL login names that own sender
 .PP
 Available in Postfix version 2.1 and later:
 .IP "\fBsmtpd_sasl_exceptions_networks (empty)\fR"
-What SMTP clients Postfix will not offer AUTH support to.
+What remote SMTP clients the Postfix SMTP server will not offer
+AUTH support to.
+.PP
+Available in Postfix version 2.1 and 2.2:
+.IP "\fBsmtpd_sasl_application_name (smtpd)\fR"
+The application name that the Postfix SMTP server uses for SASL
+server initialization.
 .PP
 Available in Postfix version 2.3 and later:
 .IP "\fBsmtpd_sasl_authenticated_header (no)\fR"
 Report the SASL authenticated user name in the \fBsmtpd\fR(8) Received
 message header.
 .IP "\fBsmtpd_sasl_path (smtpd)\fR"
-Implementation-specific information that is passed through to
+Implementation-specific information that the Postfix SMTP server
+passes through to
 the SASL plug-in implementation that is selected with
 \fBsmtpd_sasl_type\fR.
 .IP "\fBsmtpd_sasl_type (cyrus)\fR"
 The SASL plug-in type that the Postfix SMTP server should use
 for authentication.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBcyrus_sasl_config_path (empty)\fR"
+Search path for Cyrus SASL application configuration files,
+currently used only to locate the $smtpd_sasl_path.conf file.
 .SH "STARTTLS SUPPORT CONTROLS"
 .na
 .nf
@@ -328,7 +350,7 @@ Ask a remote SMTP client for a client certificate.
 When TLS encryption is optional in the Postfix SMTP server, do
 not announce or accept SASL authentication over unencrypted
 connections.
-.IP "\fBsmtpd_tls_ccert_verifydepth (5)\fR"
+.IP "\fBsmtpd_tls_ccert_verifydepth (9)\fR"
 The verification depth for remote SMTP client certificates.
 .IP "\fBsmtpd_tls_cert_file (empty)\fR"
 File with the Postfix SMTP server RSA certificate in PEM format.
@@ -357,7 +379,7 @@ TLS encryption.
 Additional list of ciphers or cipher types to exclude from the
 SMTP server cipher list at mandatory TLS security levels.
 .IP "\fBsmtpd_tls_mandatory_protocols (SSLv3, TLSv1)\fR"
-The TLS protocols accepted by the Postfix SMTP server with
+The SSL/TLS protocols accepted by the Postfix SMTP server with
 mandatory TLS encryption.
 .IP "\fBsmtpd_tls_received_header (no)\fR"
 Request that the Postfix SMTP server produces Received:  message
@@ -365,7 +387,7 @@ headers that include information about the protocol and cipher used,
 as well as the client CommonName and client certificate issuer
 CommonName.
 .IP "\fBsmtpd_tls_req_ccert (no)\fR"
-With mandatory TLS encryption, require a remote SMTP client
+With mandatory TLS encryption, require a trusted remote SMTP client
 certificate in order to allow TLS connections to proceed.
 .IP "\fBsmtpd_tls_session_cache_database (empty)\fR"
 Name of the file containing the optional Postfix SMTP server
@@ -391,6 +413,12 @@ The OpenSSL cipherlist for "EXPORT" or higher grade ciphers.
 .IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
 The OpenSSL cipherlist for "NULL" grade ciphers that provide
 authentication without encryption.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBsmtpd_tls_fingerprint_digest (md5)\fR"
+The message digest algorithm used to construct client-certificate
+fingerprints for \fBcheck_ccert_access\fR and
+\fBpermit_tls_clientcerts\fR.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -739,10 +767,11 @@ of an address verification request in progress.
 .IP "\fBaddress_verify_poll_delay (3s)\fR"
 The delay between queries for the completion of an address
 verification request in progress.
-.IP "\fBaddress_verify_sender (postmaster)\fR"
-The sender address to use in address verification probes.
+.IP "\fBaddress_verify_sender ($double_bounce_sender)\fR"
+The sender address to use in address verification probes; prior
+to Postfix 2.5 the default was "postmaster".
 .IP "\fBunverified_sender_reject_code (450)\fR"
-The numerical Postfix SMTP server response code when a recipient
+The numerical Postfix SMTP server response code when a sender
 address is rejected by the reject_unverified_sender restriction.
 .IP "\fBunverified_recipient_reject_code (450)\fR"
 The numerical Postfix SMTP server response when a recipient address
@@ -865,6 +894,11 @@ Available in Postfix version 2.2 and later:
 .IP "\fBsmtpd_forbidden_commands (CONNECT, GET, POST)\fR"
 List of commands that causes the Postfix SMTP server to immediately
 terminate the session with a 221 code.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBsmtpd_client_port_logging (no)\fR"
+Enable logging of the remote SMTP client port in addition to
+the hostname and IP address.
 .SH "SEE ALSO"
 .na
 .nf
@@ -924,3 +958,7 @@ BTU Cottbus
 Allgemeine Elektrotechnik
 Universitaetsplatz 3-4
 D-03044 Cottbus, Germany
+
+Revised TLS support by:
+Victor Duchovni
+Morgan Stanley

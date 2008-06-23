@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.50 2008/03/22 03:23:27 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.50.6.1 2008/06/23 04:30:39 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.50 2008/03/22 03:23:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.50.6.1 2008/06/23 04:30:39 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -141,10 +141,10 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	int s;
 
 	switch (type) {
-	case EXPEVT_TRAPA:	/* trapa instruction */
-	case EXPEVT_BREAK:	/* UBC */
-	case -1:		/* keyboard interrupt */
+	case EXPEVT_TRAPA:	/* FALLTHROUGH */
+	case EXPEVT_BREAK:
 		break;
+
 	default:
 		if (!db_onpanic && db_recover == NULL)
 			return 0;
@@ -158,14 +158,16 @@ kdb_trap(int type, int code, db_regs_t *regs)
 		}
 	}
 
-	/* XXX Should switch to kdb's own stack here. */
+	/* XXX: Should switch to ddb's own stack here. */
 
 	ddb_regs = *regs;
 
 	s = splhigh();
 	db_active++;
 	cnpollc(true);
+
 	db_trap(type, code);
+
 	cnpollc(false);
 	db_active--;
 	splx(s);
@@ -227,12 +229,34 @@ db_set_single_step(db_regs_t *regs)
 {
 
 	_reg_write_2(SH_(BBRA), 0);		/* disable break */
-	_reg_write_4(SH_(BARA), 0);		/* break address */
-	_reg_write_1(SH_(BASRA), 0);		/* break ASID */
-	_reg_write_1(SH_(BAMRA), 0x07);		/* break always */
-	_reg_write_2(SH_(BRCR),  0x400);	/* break after each execution */
 
-	regs->tf_ubc = 0x0014;	/* will be written to BBRA */
+#ifdef SH3
+	if (CPU_IS_SH3) {
+		/* A: compare all address bits */
+		_reg_write_4(SH_(BAMRA), 0x00000000);
+
+		/* A: break after execution, ignore ASID */
+		_reg_write_4(SH_(BRCR), (UBC_CTL_A_AFTER_INSN
+					 | SH3_UBC_CTL_A_MASK_ASID));
+
+		/* will be written to BBRA before RTE */
+		regs->tf_ubc = UBC_CYCLE_INSN | UBC_CYCLE_READ
+			| SH3_UBC_CYCLE_CPU;
+	}
+#endif	/* SH3 */
+
+#ifdef SH4
+	if (CPU_IS_SH4) {
+		/* A: compare all address bits, ignore ASID */
+		_reg_write_1(SH_(BAMRA), SH4_UBC_MASK_NONE | SH4_UBC_MASK_ASID);
+
+		/* A: break after execution */
+		_reg_write_2(SH_(BRCR), UBC_CTL_A_AFTER_INSN);
+
+		/* will be written to BBRA before RTE */
+		regs->tf_ubc = UBC_CYCLE_INSN | UBC_CYCLE_READ;
+	}
+#endif	/* SH4 */
 }
 
 void
@@ -560,6 +584,7 @@ db_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 
 	SF(sr);
 	SF(pr);
+	SF(gbr);
 	SF(r8);
 	SF(r9);
 	SF(r10);
@@ -600,6 +625,7 @@ __db_print_tfstack(struct trapframe *tf, struct trapframe *tfbot)
 		TF(ssr);
 		TF(spc);
 		TF(pr);
+		TF(gbr);
 		TF(macl);
 		TF(mach);
 		TF(r0);
@@ -694,7 +720,7 @@ db_reset_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	     const char *modif)
 {
     _cpu_exception_suspend();
-    asm volatile ("trapa #0xc3");
+    __asm volatile("trapa %0" :: "i"(_SH_TRA_BREAK));
 
     /* NOTREACHED, but just in case ... */
     printf("Reset failed\n");

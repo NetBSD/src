@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.20 2008/03/06 00:46:04 mgrooms Exp $	*/
+/*	$NetBSD: admin.c,v 1.20.4.1 2008/06/23 04:26:46 wrstuden Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -113,6 +113,7 @@ admin_handler()
 			strerror(errno));
 		return -1;
 	}
+	close_on_exec(so2);
 
 	/* get buffer length */
 	while ((len = recv(so2, (char *)&com, sizeof(com), MSG_PEEK)) < 0) {
@@ -214,62 +215,72 @@ admin_process(so2, combuf)
 		break;
 
 	case ADMIN_SHOW_SA:
+		switch (com->ac_proto) {
+		case ADMIN_PROTO_ISAKMP:
+			buf = dumpph1();
+			if (buf == NULL)
+				ac_errno = ENOMEM;
+			break;
+		case ADMIN_PROTO_IPSEC:
+		case ADMIN_PROTO_AH:
+		case ADMIN_PROTO_ESP: {
+			u_int p;
+			p = admin2pfkey_proto(com->ac_proto);
+			if (p != -1) {
+				buf = pfkey_dump_sadb(p);
+				if (buf == NULL)
+					ac_errno = ENOMEM;
+			} else
+				ac_errno = EINVAL;
+			break;
+		}
+		case ADMIN_PROTO_INTERNAL:
+		default:
+			ac_errno = ENOTSUP;
+			break;
+		}
+		break;
+
+	case ADMIN_GET_SA_CERT: {
+		struct admin_com_indexes *ndx;
+		struct sockaddr *src, *dst;
+		struct ph1handle *iph1;
+
+		ndx = (struct admin_com_indexes *) ((caddr_t)com + sizeof(*com));
+		src = (struct sockaddr *) &ndx->src;
+		dst = (struct sockaddr *) &ndx->dst;
+
+		if (com->ac_proto != ADMIN_PROTO_ISAKMP) {
+			ac_errno = ENOTSUP;
+			break;
+		}
+
+		iph1 = getph1byaddrwop(src, dst);
+		if (iph1 == NULL) {
+			ac_errno = ENOENT;
+			break;
+		}
+
+		if (iph1->cert_p != NULL)
+			buf = vdup(&iph1->cert_p->cert);
+		break;
+	}
+
 	case ADMIN_FLUSH_SA:
 		switch (com->ac_proto) {
 		case ADMIN_PROTO_ISAKMP:
-			switch (com->ac_cmd) {
-			case ADMIN_SHOW_SA:
-				buf = dumpph1();
-				if (buf == NULL)
-					ac_errno = ENOMEM;
-				break;
-			case ADMIN_FLUSH_SA:
-				flushph1();
-				break;
-			default:
-				ac_errno = ENOTSUP;
-				break;
-			}
+			flushph1();
 			break;
 		case ADMIN_PROTO_IPSEC:
 		case ADMIN_PROTO_AH:
 		case ADMIN_PROTO_ESP:
-			switch (com->ac_cmd) {
-			case ADMIN_SHOW_SA: {
-				u_int p;
-				p = admin2pfkey_proto(com->ac_proto);
-				if (p != -1) {
-					buf = pfkey_dump_sadb(p);
-					if (buf == NULL)
-						ac_errno = ENOMEM;
-				} else
-					ac_errno = EINVAL;
-				break;
-			}
-			case ADMIN_FLUSH_SA:
-				pfkey_flush_sadb(com->ac_proto);
-				break;
-			default:
-				ac_errno = ENOTSUP;
-				break;
-			}
+			pfkey_flush_sadb(com->ac_proto);
 			break;
 		case ADMIN_PROTO_INTERNAL:
-			switch (com->ac_cmd) {
-			case ADMIN_SHOW_SA:
-				buf = NULL; /*XXX dumpph2(&error);*/
-				ac_errno = ENOTSUP;
-				break;
-			case ADMIN_FLUSH_SA:
-				/*XXX flushph2();*/
-				break;
-			default:
-				ac_errno = ENOTSUP;
-				break;
-			}
-			break;
+			/*XXX flushph2();*/
 		default:
 			ac_errno = ENOTSUP;
+			break;
 		}
 		break;
 
@@ -438,7 +449,7 @@ admin_process(so2, combuf)
 			if ((local = dupsaddr(src)) == NULL)
 				goto out1;
 
-			port = ntohs(getmyaddrsport(local));
+			port = getmyaddrsport(local);
 			if (set_port(local, port) == NULL)
 				goto out1;
 
@@ -690,6 +701,7 @@ admin_init()
 			"socket: %s\n", strerror(errno));
 		return -1;
 	}
+	close_on_exec(lcconf->sock_admin);
 
 	unlink(sunaddr.sun_path);
 	if (bind(lcconf->sock_admin, (struct sockaddr *)&sunaddr,

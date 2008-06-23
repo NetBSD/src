@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.17 2008/01/09 20:38:36 wiz Exp $ */
+/* $NetBSD: cpu.c,v 1.17.12.1 2008/06/23 04:30:39 wrstuden Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2008/01/09 20:38:36 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17.12.1 2008/06/23 04:30:39 wrstuden Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -117,11 +117,10 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	curcpu()->ci_cpu_freq = 50000000 * plldiv;
-	/* Compute the delay divisor and reciprocal. */
-	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / 1000000;
-	MIPS_SET_CI_RECIPROCAL(curcpu());
+	/* Compute the delay divisor. */
+	curcpu()->ci_divisor_delay = (curcpu()->ci_cpu_freq + 500000) / 1000000;
 	/* Compute clock cycles per hz */
-	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / hz;
+	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2 ) / hz;
 
 	printf(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
 	    curcpu()->ci_cpu_freq / 1000000,

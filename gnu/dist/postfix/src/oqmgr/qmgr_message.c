@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.1.1.7 2007/05/19 16:28:25 heas Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.1.1.7.12.1 2008/06/23 04:29:19 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -181,6 +181,7 @@ static QMGR_MESSAGE *qmgr_message_create(const char *queue_name,
     message->verp_delims = 0;
     message->client_name = 0;
     message->client_addr = 0;
+    message->client_port = 0;
     message->client_proto = 0;
     message->client_helo = 0;
     message->sasl_method = 0;
@@ -312,6 +313,7 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
     int     dsn_notify = 0;
     char   *dsn_orcpt = 0;
     int     n;
+    int     have_log_client_attr = 0;
 
     /*
      * Initialize. No early returns or we have a memory leak.
@@ -613,18 +615,24 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	     * client information. To support old queue files, we accept both
 	     * names for the purpose of logging; the new name overrides the
 	     * old one.
+	     * 
+	     * XXX Do not use the "legacy" client_name etc. attribute values for
+	     * initializing the logging attributes, when this file already
+	     * contains the "modern" log_client_name etc. logging attributes.
+	     * Otherwise, logging attributes that are not present in the
+	     * queue file would be set with information from the real client.
 	     */
 	    else if (strcmp(name, MAIL_ATTR_ACT_CLIENT_NAME) == 0) {
-		if (message->client_name == 0)
+		if (have_log_client_attr == 0 && message->client_name == 0)
 		    message->client_name = mystrdup(value);
 	    } else if (strcmp(name, MAIL_ATTR_ACT_CLIENT_ADDR) == 0) {
-		if (message->client_addr == 0)
+		if (have_log_client_attr == 0 && message->client_addr == 0)
 		    message->client_addr = mystrdup(value);
 	    } else if (strcmp(name, MAIL_ATTR_ACT_PROTO_NAME) == 0) {
-		if (message->client_proto == 0)
+		if (have_log_client_attr == 0 && message->client_proto == 0)
 		    message->client_proto = mystrdup(value);
 	    } else if (strcmp(name, MAIL_ATTR_ACT_HELO_NAME) == 0) {
-		if (message->client_helo == 0)
+		if (have_log_client_attr == 0 && message->client_helo == 0)
 		    message->client_helo = mystrdup(value);
 	    }
 	    /* Original client attributes. */
@@ -632,18 +640,27 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		if (message->client_name != 0)
 		    myfree(message->client_name);
 		message->client_name = mystrdup(value);
+		have_log_client_attr = 1;
 	    } else if (strcmp(name, MAIL_ATTR_LOG_CLIENT_ADDR) == 0) {
 		if (message->client_addr != 0)
 		    myfree(message->client_addr);
 		message->client_addr = mystrdup(value);
+		have_log_client_attr = 1;
+	    } else if (strcmp(name, MAIL_ATTR_LOG_CLIENT_PORT) == 0) {
+		if (message->client_port != 0)
+		    myfree(message->client_port);
+		message->client_port = mystrdup(value);
+		have_log_client_attr = 1;
 	    } else if (strcmp(name, MAIL_ATTR_LOG_PROTO_NAME) == 0) {
 		if (message->client_proto != 0)
 		    myfree(message->client_proto);
 		message->client_proto = mystrdup(value);
+		have_log_client_attr = 1;
 	    } else if (strcmp(name, MAIL_ATTR_LOG_HELO_NAME) == 0) {
 		if (message->client_helo != 0)
 		    myfree(message->client_helo);
 		message->client_helo = mystrdup(value);
+		have_log_client_attr = 1;
 	    } else if (strcmp(name, MAIL_ATTR_SASL_METHOD) == 0) {
 		if (message->sasl_method == 0)
 		    message->sasl_method = mystrdup(value);
@@ -737,6 +754,8 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	message->client_name = mystrdup("");
     if (message->client_addr == 0)
 	message->client_addr = mystrdup("");
+    if (message->client_port == 0)
+	message->client_port = mystrdup("");
     if (message->client_proto == 0)
 	message->client_proto = mystrdup("");
     if (message->client_helo == 0)
@@ -1006,22 +1025,6 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	}
 
 	/*
-	 * Bounce recipient addresses that start with `-'. External commands
-	 * may misinterpret such addresses as command-line options.
-	 * 
-	 * In theory I could say people should always carefully set up their
-	 * master.cf pipe mailer entries with `--' before the first
-	 * non-option argument, but mistakes will happen regardless.
-	 * 
-	 * Therefore the protection is put in place here, in the queue manager,
-	 * where it cannot be bypassed.
-	 */
-	if (var_allow_min_user == 0 && recipient->address[0] == '-') {
-	    QMGR_REDIRECT(&reply, MAIL_SERVICE_ERROR,
-			  "5.1.3 bad address syntax");
-	}
-
-	/*
 	 * Discard mail to the local double bounce address here, so this
 	 * system can run without a local delivery agent. They'd still have
 	 * to configure something for mail directed to the local postmaster,
@@ -1043,8 +1046,11 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 			"undeliverable postmaster notification discarded"));
 		if (status == 0) {
 		    deliver_completed(message->fp, recipient->offset);
+#if 0
+		    /* It's the default verification probe sender address. */
 		    msg_warn("%s: undeliverable postmaster notification discarded",
 			     message->queue_id);
+#endif
 		} else
 		    message->flags |= status;
 		continue;
@@ -1252,6 +1258,8 @@ void    qmgr_message_free(QMGR_MESSAGE *message)
 	myfree(message->client_name);
     if (message->client_addr)
 	myfree(message->client_addr);
+    if (message->client_port)
+	myfree(message->client_port);
     if (message->client_proto)
 	myfree(message->client_proto);
     if (message->client_helo)

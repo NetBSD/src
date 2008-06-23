@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_stream.c,v 1.1.1.9 2007/05/19 16:28:14 heas Exp $	*/
+/*	$NetBSD: mail_stream.c,v 1.1.1.9.12.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -165,12 +165,12 @@ void    mail_stream_cleanup(MAIL_STREAM *info)
 
 static int stamp_stream(VSTREAM *fp, time_t when)
 {
-    struct timeval tv;
+    struct timeval tv[2];
 
     if (when != 0) {
-	tv.tv_sec = when;
-	tv.tv_usec = 0;
-	return (futimesat(vstream_fileno(fp), (char *) 0, &tv));
+	tv[0].tv_sec = tv[1].tv_sec = when;
+	tv[0].tv_usec = tv[1].tv_usec = 0;
+	return (futimesat(vstream_fileno(fp), (char *) 0, tv));
     } else {
 	return (futimesat(vstream_fileno(fp), (char *) 0, (struct timeval *) 0));
     }
@@ -183,12 +183,12 @@ static int stamp_stream(VSTREAM *fp, time_t when)
 
 static int stamp_stream(VSTREAM *fp, time_t when)
 {
-    struct timeval tv;
+    struct timeval tv[2];
 
     if (when != 0) {
-	tv.tv_sec = when;
-	tv.tv_usec = 0;
-	return (futimes(vstream_fileno(fp), &tv));
+	tv[0].tv_sec = tv[1].tv_sec = when;
+	tv[0].tv_usec = tv[1].tv_usec = 0;
+	return (futimes(vstream_fileno(fp), tv));
     } else {
 	return (futimes(vstream_fileno(fp), (struct timeval *) 0));
     }

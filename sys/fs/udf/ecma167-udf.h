@@ -1,7 +1,7 @@
-/* $NetBSD: ecma167-udf.h,v 1.7 2007/12/25 18:33:44 perry Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.7.12.1 2008/06/23 04:31:49 wrstuden Exp $ */
 
 /*-
- * Copyright (c) 2003, 2004, 2005, 2006 Reinoud Zandijk <reinoud@netbsd.org>
+ * Copyright (c) 2003, 2004, 2005, 2006, 2008 Reinoud Zandijk
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
  * All rights reserved.
  *
@@ -101,7 +101,7 @@ enum {
 	TAGID_FSD =		256,
 	TAGID_FID =		257,
 	TAGID_ALLOCEXTENT = 	258,
-	TAGID_INDIRECT_ENTRY =	259,
+	TAGID_INDIRECTENTRY =	259,
 	TAGID_ICB_TERM =	260,
 	TAGID_FENTRY =		261,
 	TAGID_EXTATTR_HDR =	262,
@@ -209,6 +209,7 @@ union icb {
 #define UDF_EXT_REDIRECT               (3<<30)
 #define UDF_EXT_FLAGS(len) ((len) & (3<<30))
 #define UDF_EXT_LEN(len)   ((len) & ((1<<30)-1))
+#define UDF_EXT_MAXLEN     ((1<<30)-1)
 
 
 /* Character set spec [1/7.2.1] */
@@ -216,6 +217,21 @@ struct charspec {
 	uint8_t		type;
 	uint8_t		inf[63];
 } __packed;
+
+
+struct pathcomp {
+	uint8_t		type;
+	uint8_t		l_ci;
+	uint16_t	comp_filever;
+	uint8_t		ident[256];
+} __packed;
+#define	UDF_PATH_COMP_SIZE 4
+#define UDF_PATH_COMP_RESERVED		0
+#define UDF_PATH_COMP_ROOT		1
+#define UDF_PATH_COMP_MOUNTROOT		2
+#define UDF_PATH_COMP_PARENTDIR		3
+#define UDF_PATH_COMP_CURDIR		4
+#define UDF_PATH_COMP_NAME		5
 
 
 /* Timestamp [1/7.3] */
@@ -629,7 +645,7 @@ struct fileid_desc {
 	uint8_t			l_fi;	/* Length of file identifier area */
 	struct long_ad		icb;
 	uint16_t		l_iu;	/* Length of implementation use area */
-	uint8_t			data[1];
+	uint8_t			data[0];
 } __packed;
 #define	UDF_FID_SIZE	38
 #define	UDF_FILE_CHAR_VIS	(1 << 0) /* Invisible */
@@ -684,6 +700,11 @@ struct filetimes_extattr_entry {
 	struct timestamp	times[1];	/* in order of assending bits */
 } __packed;
 #define UDF_FILETIMES_ATTR_NO	5
+#define UDF_FILETIMES_FILE_CREATION	1
+#define UDF_FILETIMES_FILE_DELETION	4
+#define UDF_FILETIMES_FILE_EFFECTIVE	8
+#define UDF_FILETIMES_FILE_BACKUPED	16
+#define UDF_FILETIMES_ATTR_LEN(no)	(16 + (no)*sizeof(struct timestamp))
 
 
 /* Device Specification Extended Attribute [4/4.10.7] */
@@ -764,6 +785,7 @@ struct extfile_entry {
 	uint32_t		l_ad;	/* Length of allocation descriptors */
 	uint8_t			data[1];
 } __packed;
+#define	UDF_EXTFENTRY_SIZE	216
 
 
 /* Indirect entry [ecma 48.7] */
@@ -774,7 +796,7 @@ struct indirect_entry {
 } __packed;
 
 
-/* Allocation extent descritor [ecma 48.5] */
+/* Allocation extent descriptor [ecma 48.5] */
 struct alloc_ext_entry {
 	struct desc_tag		tag;
 	uint32_t		prev_entry;
@@ -804,14 +826,6 @@ union dscrptr {
 	struct space_bitmap_desc sbd;
 	struct space_entry_desc	 sed;
 } __packed;
-
-
-/* Useful defines */
-
-#define	GETICB(ad_type, fentry, offset)	\
-	(struct ad_type *)&fentry->data[offset]
-
-#define	GETICBLEN(ad_type, icb)	((struct ad_type *)(icb))->len
 
 
 #endif /* !_FS_UDF_ECMA167_UDF_H_ */

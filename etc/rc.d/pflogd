@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: pflogd,v 1.2 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: pflogd,v 1.2.30.1 2008/06/23 04:29:04 wrstuden Exp $
 #
 
 # PROVIDE: pflogd
@@ -12,8 +12,17 @@ $_rc_subr_loaded . /etc/rc.subr
 name="pflogd"
 rcvar=$name
 command="/sbin/${name}"
-start_precmd="/sbin/ifconfig pflog0 up"
+start_precmd="pflogd_precmd"
 pidfile="/var/run/${name}.pid"
+
+pflogd_precmd()
+{
+	if ! ifconfig pflog0 >/dev/null 2>&1; then
+		ifconfig pflog0 create
+	fi
+
+	ifconfig pflog0 up
+}
 
 load_rc_config $name
 run_rc_command "$1"

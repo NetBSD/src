@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.30 2008/04/06 23:38:20 christos Exp $
+#	$NetBSD: sshd_config,v 1.30.4.1 2008/06/23 04:27:03 wrstuden Exp $
 #	$OpenBSD: sshd_config,v 1.77 2008/02/08 23:24:07 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -101,6 +101,20 @@ UsePam yes
 
 # override default of no subsystems
 Subsystem	sftp	/usr/libexec/sftp-server
+
+# the following are HPN related configuration options
+# tcp receive buffer polling. disable in non autotuning kernels
+#TcpRcvBufPoll yes
+ 
+# allow the use of the none cipher
+#NoneEnabled no
+
+# disable hpn performance boosts. 
+#HPNDisabled no
+
+# buffer size for hpn to non-hpn connections
+#HPNBufferSize 2048
+
 
 # Example of overriding settings on a per-user basis
 #Match User anoncvs

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.3 2006/07/13 20:03:34 uwe Exp $	*/
+/*	$NetBSD: net.c,v 1.3.64.1 2008/06/23 04:30:43 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -92,8 +92,6 @@ net_open(struct of_dev *op)
 			error = errno;
 			goto bad;
 		}
-		if ((error = net_mountroot()) != 0)
-			goto bad;
 	}
 	open_count++;
 bad:
@@ -162,6 +160,30 @@ net_mountroot_bootp(void)
 		printf(", gateway: %s", inet_ntoa(gateip));
 	printf("\n");
 
+	return (0);
+}
+
+int
+net_tftp_bootp(int **sock)
+{
+
+	bootp(netdev_sock);
+
+	if (myip.s_addr == 0)
+		return(ENOENT);
+
+	printf("Using BOOTP protocol: ");
+	printf("ip address: %s", inet_ntoa(myip));
+
+	if (hostname[0])
+		printf(", hostname: %s", hostname);
+	if (netmask)
+		printf(", netmask: %s", intoa(netmask));
+	if (gateip.s_addr)
+		printf(", gateway: %s", inet_ntoa(gateip));
+	printf("\n");
+
+	*sock = &netdev_sock;
 	return (0);
 }
 

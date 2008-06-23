@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.10 2006/02/01 22:19:34 dyoung Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.10.20.1 2008/06/23 04:32:13 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -294,6 +294,9 @@ typedef struct _iso9660_disk {
 	u_char omit_trailing_period;
 
 	/* BOOT INFORMATION HERE */
+	int has_generic_bootimage; /* Default to 0 */
+	char *generic_bootimage;
+
 	int is_bootable;/* Default to 0 */
 	int boot_catalog_sector;
 	boot_volume_descriptor *boot_descriptor;
@@ -325,6 +328,8 @@ void			cd9660_time_8426(unsigned char *, time_t);
 void			cd9660_time_915(unsigned char *, time_t);
 
 /*** Boot Functions ***/
+int	cd9660_write_generic_bootimage(FILE *);
+int	cd9660_add_generic_bootimage(const char *);
 int	cd9660_write_boot(FILE *);
 int	cd9660_add_boot_disk(const char *);
 int	cd9660_eltorito_add_boot_option(const char *, const char *);

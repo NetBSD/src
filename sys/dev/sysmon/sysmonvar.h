@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.26 2008/04/04 10:10:20 hannken Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.26.6.1 2008/06/23 04:31:30 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -77,6 +77,7 @@ struct sysmon_envsys {
 #define SME_INIT_REFRESH        0x00000008      /* call sme_refresh() after
 						   interrupts are enabled in
 						   the autoconf(9) process. */
+#define SME_POLL_ONLY           0x00000010      /* only poll sme_refresh */
 
 	void *sme_cookie;		/* for ENVSYS back-end */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_filt.c,v 1.1.1.1 2006/07/19 01:17:29 rpaulo Exp $	*/
+/*	$NetBSD: int_filt.c,v 1.1.1.1.22.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -55,7 +55,7 @@
 
 int     int_filt_flags(int class)
 {
-    static NAME_MASK table[] = {
+    static const NAME_MASK table[] = {
 	"notify", INT_FILT_NOTIFY,
 	"bounce", INT_FILT_BOUNCE,
 	0,

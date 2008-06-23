@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.95 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.95.6.1 2008/06/23 04:32:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.95 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.95.6.1 2008/06/23 04:32:05 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.95 2008/03/27 19:06:52 ad Exp $");
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -117,7 +118,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 	}							/* XXX */
 	error = bread(ip->i_devvp,
 		      fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-		      (int)fs->fs_bsize, NOCRED, &bp);
+		      (int)fs->fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
@@ -558,7 +559,11 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 * explicitly instead of letting bread do everything for us.
 	 */
 	vp = ITOV(ip);
-	bp = getblk(vp, lbn, (int)fs->fs_bsize, 0, 0);
+	error = ffs_getblk(vp, lbn, FFS_NOBLK, fs->fs_bsize, false, &bp);
+	if (error) {
+		*countp = 0;
+		return error;
+	}
 	if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 		/* Braces must be here in case trace evaluates to nothing. */
 		trace(TR_BREADHIT, pack(vp, fs->fs_bsize), lbn);
@@ -566,12 +571,15 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		trace(TR_BREADMISS, pack(vp, fs->fs_bsize), lbn);
 		curlwp->l_ru.ru_inblock++;	/* pay for read */
 		bp->b_flags |= B_READ;
+		bp->b_flags &= ~B_COWDONE;	/* we change blkno below */
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("ffs_indirtrunc: bad buffer size");
 		bp->b_blkno = dbn;
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 		VOP_STRATEGY(vp, bp);
 		error = biowait(bp);
+		if (error == 0)
+			error = fscow_run(bp, true);
 	}
 	if (error) {
 		brelse(bp, 0);

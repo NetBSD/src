@@ -56,6 +56,59 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
+/* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
  * Portions of the attached software ("Contribution") are developed by 
@@ -67,6 +120,32 @@
  * ECC cipher suite support in OpenSSL originally written by
  * Vipul Gupta and Sumit Gupta of Sun Microsystems Laboratories.
  *
+ */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
  */
 
 #ifndef HEADER_TLS1_H 
@@ -96,13 +175,128 @@ extern "C" {
 #define TLS1_AD_INTERNAL_ERROR		80	/* fatal */
 #define TLS1_AD_USER_CANCELLED		90
 #define TLS1_AD_NO_RENEGOTIATION	100
+/* codes 110-114 are from RFC3546 */
+#define TLS1_AD_UNSUPPORTED_EXTENSION	110
+#define TLS1_AD_CERTIFICATE_UNOBTAINABLE 111
+#define TLS1_AD_UNRECOGNIZED_NAME 	112
+#define TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE 113
+#define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 114
+#define TLS1_AD_UNKNOWN_PSK_IDENTITY	115	/* fatal */
 
-/* Additional TLS ciphersuites from draft-ietf-tls-56-bit-ciphersuites-00.txt
+/* ExtensionType values from RFC3546 / RFC4366 */
+#define TLSEXT_TYPE_server_name			0
+#define TLSEXT_TYPE_max_fragment_length		1
+#define TLSEXT_TYPE_client_certificate_url	2
+#define TLSEXT_TYPE_trusted_ca_keys		3
+#define TLSEXT_TYPE_truncated_hmac		4
+#define TLSEXT_TYPE_status_request		5
+/* ExtensionType values from RFC4492 */
+#define TLSEXT_TYPE_elliptic_curves		10
+#define TLSEXT_TYPE_ec_point_formats		11
+#define TLSEXT_TYPE_session_ticket		35
+/* ExtensionType value from draft-rescorla-tls-opaque-prf-input-00.txt */
+#if 0 /* will have to be provided externally for now ,
+       * i.e. build with -DTLSEXT_TYPE_opaque_prf_input=38183
+       * using whatever extension number you'd like to try */
+# define TLSEXT_TYPE_opaque_prf_input		?? */
+#endif
+
+/* NameType value from RFC 3546 */
+#define TLSEXT_NAMETYPE_host_name 0
+/* status request value from RFC 3546 */
+#define TLSEXT_STATUSTYPE_ocsp 1
+
+/* ECPointFormat values from draft-ietf-tls-ecc-12 */
+#define TLSEXT_ECPOINTFORMAT_first			0
+#define TLSEXT_ECPOINTFORMAT_uncompressed		0
+#define TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime	1
+#define TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2	2
+#define TLSEXT_ECPOINTFORMAT_last			2
+
+#ifndef OPENSSL_NO_TLSEXT
+
+#define TLSEXT_MAXLEN_host_name 255
+
+const char *SSL_get_servername(const SSL *s, const int type) ;
+int SSL_get_servername_type(const SSL *s) ;
+
+#define SSL_set_tlsext_host_name(s,name) \
+SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
+
+#define SSL_set_tlsext_debug_callback(ssl, cb) \
+SSL_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_CB,(void (*)(void))cb)
+
+#define SSL_set_tlsext_debug_arg(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_ARG,0, (void *)arg)
+
+#define SSL_set_tlsext_status_type(ssl, type) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE,type, NULL)
+
+#define SSL_get_tlsext_status_exts(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS,0, (void *)arg)
+
+#define SSL_set_tlsext_status_exts(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS,0, (void *)arg)
+
+#define SSL_get_tlsext_status_ids(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS,0, (void *)arg)
+
+#define SSL_set_tlsext_status_ids(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS,0, (void *)arg)
+
+#define SSL_get_tlsext_status_ocsp_resp(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP,0, (void *)arg)
+
+#define SSL_set_tlsext_status_ocsp_resp(ssl, arg, arglen) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP,arglen, (void *)arg)
+
+#define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
+SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)
+
+#define SSL_TLSEXT_ERR_OK 0
+#define SSL_TLSEXT_ERR_ALERT_WARNING 1
+#define SSL_TLSEXT_ERR_ALERT_FATAL 2
+#define SSL_TLSEXT_ERR_NOACK 3
+
+#define SSL_CTX_set_tlsext_servername_arg(ctx, arg) \
+SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
+
+#define SSL_CTX_get_tlsext_ticket_keys(ctx, keys, keylen) \
+	SSL_CTX_ctrl((ctx),SSL_CTRL_GET_TLXEXT_TICKET_KEYS,(keylen),(keys))
+#define SSL_CTX_set_tlsext_ticket_keys(ctx, keys, keylen) \
+	SSL_CTX_ctrl((ctx),SSL_CTRL_SET_TLXEXT_TICKET_KEYS,(keylen),(keys))
+
+#define SSL_CTX_set_tlsext_status_cb(ssl, cb) \
+SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB,(void (*)(void))cb)
+
+#define SSL_CTX_set_tlsext_status_arg(ssl, arg) \
+SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)arg)
+
+#define SSL_set_tlsext_opaque_prf_input(s, src, len) \
+SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT, len, src)
+#define SSL_CTX_set_tlsext_opaque_prf_input_callback(ctx, cb) \
+SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB, (void (*)(void))cb)
+#define SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(ctx, arg) \
+SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG, 0, arg)
+
+#define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
+SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
+
+#endif
+
+/* PSK ciphersuites from 4279 */
+#define TLS1_CK_PSK_WITH_RC4_128_SHA                    0x0300008A
+#define TLS1_CK_PSK_WITH_3DES_EDE_CBC_SHA               0x0300008B
+#define TLS1_CK_PSK_WITH_AES_128_CBC_SHA                0x0300008C
+#define TLS1_CK_PSK_WITH_AES_256_CBC_SHA                0x0300008D
+
+/* Additional TLS ciphersuites from expired Internet Draft
+ * draft-ietf-tls-56-bit-ciphersuites-01.txt
  * (available if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES is defined, see
  * s3_lib.c).  We actually treat them like SSL 3.0 ciphers, which we probably
- * shouldn't. */
-#define TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5		0x03000060
-#define TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5	0x03000061
+ * shouldn't.  Note that the first two are actually not in the IDs. */
+#define TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5		0x03000060 /* not in ID */
+#define TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5	0x03000061 /* not in ID */
 #define TLS1_CK_RSA_EXPORT1024_WITH_DES_CBC_SHA		0x03000062
 #define TLS1_CK_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA	0x03000063
 #define TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_SHA		0x03000064
@@ -139,6 +333,14 @@ extern "C" {
 #define TLS1_CK_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA	0x03000087
 #define TLS1_CK_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA	0x03000088
 #define TLS1_CK_ADH_WITH_CAMELLIA_256_CBC_SHA		0x03000089
+
+/* SEED ciphersuites from RFC4162 */
+#define TLS1_CK_RSA_WITH_SEED_SHA                       0x03000096
+#define TLS1_CK_DH_DSS_WITH_SEED_SHA                    0x03000097
+#define TLS1_CK_DH_RSA_WITH_SEED_SHA                    0x03000098
+#define TLS1_CK_DHE_DSS_WITH_SEED_SHA                   0x03000099
+#define TLS1_CK_DHE_RSA_WITH_SEED_SHA                   0x0300009A
+#define TLS1_CK_ADH_WITH_SEED_SHA                	0x0300009B
 
 /* ECC ciphersuites from draft-ietf-tls-ecc-12.txt with changes soon to be in draft 13 */
 #define TLS1_CK_ECDH_ECDSA_WITH_NULL_SHA                0x0300C001
@@ -232,7 +434,13 @@ extern "C" {
 #define TLS1_TXT_ECDH_anon_WITH_AES_128_CBC_SHA         "AECDH-AES128-SHA"
 #define TLS1_TXT_ECDH_anon_WITH_AES_256_CBC_SHA         "AECDH-AES256-SHA"
 
-/* Camellia ciphersuites form RFC4132 */
+/* PSK ciphersuites from RFC 4279 */
+#define TLS1_TXT_PSK_WITH_RC4_128_SHA			"PSK-RC4-SHA"
+#define TLS1_TXT_PSK_WITH_3DES_EDE_CBC_SHA		"PSK-3DES-EDE-CBC-SHA"
+#define TLS1_TXT_PSK_WITH_AES_128_CBC_SHA		"PSK-AES128-CBC-SHA"
+#define TLS1_TXT_PSK_WITH_AES_256_CBC_SHA		"PSK-AES256-CBC-SHA"
+
+/* Camellia ciphersuites from RFC4132 */
 #define TLS1_TXT_RSA_WITH_CAMELLIA_128_CBC_SHA		"CAMELLIA128-SHA"
 #define TLS1_TXT_DH_DSS_WITH_CAMELLIA_128_CBC_SHA	"DH-DSS-CAMELLIA128-SHA"
 #define TLS1_TXT_DH_RSA_WITH_CAMELLIA_128_CBC_SHA	"DH-RSA-CAMELLIA128-SHA"
@@ -246,6 +454,14 @@ extern "C" {
 #define TLS1_TXT_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA	"DHE-DSS-CAMELLIA256-SHA"
 #define TLS1_TXT_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA	"DHE-RSA-CAMELLIA256-SHA"
 #define TLS1_TXT_ADH_WITH_CAMELLIA_256_CBC_SHA		"ADH-CAMELLIA256-SHA"
+
+/* SEED ciphersuites from RFC4162 */
+#define TLS1_TXT_RSA_WITH_SEED_SHA                      "SEED-SHA"
+#define TLS1_TXT_DH_DSS_WITH_SEED_SHA                   "DH-DSS-SEED-SHA"
+#define TLS1_TXT_DH_RSA_WITH_SEED_SHA                   "DH-RSA-SEED-SHA"
+#define TLS1_TXT_DHE_DSS_WITH_SEED_SHA                  "DHE-DSS-SEED-SHA"
+#define TLS1_TXT_DHE_RSA_WITH_SEED_SHA                  "DHE-RSA-SEED-SHA"
+#define TLS1_TXT_ADH_WITH_SEED_SHA                      "ADH-SEED-SHA"
 
 
 #define TLS_CT_RSA_SIGN			1
@@ -300,6 +516,3 @@ extern "C" {
 }
 #endif
 #endif
-
-
-

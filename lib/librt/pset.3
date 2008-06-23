@@ -1,4 +1,4 @@
-.\"	$NetBSD: pset.3,v 1.4 2008/05/05 14:46:40 ad Exp $
+.\"	$NetBSD: pset.3,v 1.4.2.1 2008/06/23 04:29:54 wrstuden Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 5, 2008
+.Dd June 16, 2008
 .Dt PSET 3
 .Os
 .Sh NAME
@@ -151,11 +151,42 @@ However, for example, the process may have many threads, which could be
 bound to different processor sets.
 In such a case it is unspecified which thread will be used to return
 the information.
+.Pp
+Processor sets might be used together with the thread affinity, see
+.Xr affinity 3 .
+In such case, the affinity mask takes precedence over the assignment
+to processor sets.
 .Sh RETURN VALUES
 Upon successful completion these functions return 0.
 Otherwise, \-1 is returned and
 .Va errno
 is set to indicate the error.
+.Sh EXAMPLES
+An example of code fragment, which assigns the CPU whose ID is 0,
+for current process:
+.Bd -literal
+	psetid_t psid;
+	cpuid_t ci = 0;
+
+	if (pset_create(\*[Am]psid) \*[Lt] 0)
+		err(EXIT_FAILURE, "pset_create");
+
+	/* Assign CPU 0 to the processor-set */
+	if (pset_assign(psid, ci, NULL) \*[Lt] 0)
+		err(EXIT_FAILURE, "pset_assign");
+
+	/* Bind the current process to the processor-set */
+	if (pset_bind(psid, P_PID, P_MYID, NULL) \*[Lt] 0)
+		err(EXIT_FAILURE, "pset_bind");
+
+	/*
+	 * At this point, CPU 0 runs only the current process.
+	 */
+	perform_work();
+
+	if (pset_destroy(psid) \*[Lt] 0)
+		err(EXIT_FAILURE, "pset_destroy")
+.Ed
 .Sh ERRORS
 The
 .Fn pset_create
@@ -216,6 +247,8 @@ Another operation is performing on the processor set.
 The calling process is not the super-user.
 .El
 .Sh SEE ALSO
+.Xr affinity 3 ,
+.Xr cpuset 3 ,
 .Xr sched 3 ,
 .Xr schedctl 8
 .Sh STANDARDS

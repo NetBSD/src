@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.7 2006/01/29 21:42:41 dsl Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.7.78.1 2008/06/23 04:30:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.7 2006/01/29 21:42:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.7.78.1 2008/06/23 04:30:12 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,6 +142,19 @@ int	sr;
 		MFP2->mf_imrb |= iinfo_p->imask;
 	}
 	return 1;
+}
+
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+		 int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		return 0;
+	default:
+		return ENODEV;
+	}
 }
 
 void *

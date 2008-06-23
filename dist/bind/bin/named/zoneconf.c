@@ -1,10 +1,10 @@
-/*	$NetBSD: zoneconf.c,v 1.1.1.4 2007/01/27 21:03:40 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.1.1.4.12.1 2008/06/23 04:27:23 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zoneconf.c,v 1.110.18.23 2006/05/16 03:39:57 marka Exp */
+/* Id: zoneconf.c,v 1.139.56.3 2008/05/21 23:26:11 each Exp */
 
 /*% */
 
@@ -36,6 +36,7 @@
 #include <dns/name.h>
 #include <dns/rdatatype.h>
 #include <dns/ssu.h>
+#include <dns/stats.h>
 #include <dns/view.h>
 #include <dns/zone.h>
 
@@ -62,7 +63,7 @@
 static isc_result_t
 configure_zone_acl(const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
 		   const cfg_obj_t *config, const char *aclname,
-		   cfg_aclconfctx_t *actx, dns_zone_t *zone, 
+		   cfg_aclconfctx_t *actx, dns_zone_t *zone,
 		   void (*setzacl)(dns_zone_t *, dns_acl_t *),
 		   void (*clearzacl)(dns_zone_t *))
 {
@@ -92,7 +93,7 @@ configure_zone_acl(const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
 	}
 
 	result = cfg_acl_fromconfig(aclobj, config, ns_g_lctx, actx,
-				    dns_zone_getmctx(zone), &dacl);
+				    dns_zone_getmctx(zone), 0, &dacl);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	(*setzacl)(zone, dacl);
@@ -160,6 +161,14 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone) {
 			mtype = DNS_SSUMATCHTYPE_SELFSUB;
 		else if (strcasecmp(str, "selfwild") == 0)
 			mtype = DNS_SSUMATCHTYPE_SELFWILD;
+		else if (strcasecmp(str, "ms-self") == 0)
+			mtype = DNS_SSUMATCHTYPE_SELFMS;
+		else if (strcasecmp(str, "krb5-self") == 0)
+			mtype = DNS_SSUMATCHTYPE_SELFKRB5;
+		else if (strcasecmp(str, "ms-subdomain") == 0)
+			mtype = DNS_SSUMATCHTYPE_SUBDOMAINMS;
+		else if (strcasecmp(str, "krb5-subdomain") == 0)
+			mtype = DNS_SSUMATCHTYPE_SUBDOMAINKRB5;
 		else
 			INSIST(0);
 
@@ -266,11 +275,11 @@ strtoargvsub(isc_mem_t *mctx, char *s, unsigned int *argcp,
 	     char ***argvp, unsigned int n)
 {
 	isc_result_t result;
-	
+
 	/* Discard leading whitespace. */
 	while (*s == ' ' || *s == '\t')
 		s++;
-	
+
 	if (*s == '\0') {
 		/* We have reached the end of the string. */
 		*argcp = n;
@@ -355,6 +364,8 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	isc_boolean_t warn = ISC_FALSE, ignore = ISC_FALSE;
 	isc_boolean_t ixfrdiff;
 	dns_masterformat_t masterformat;
+	dns_stats_t *zoneqrystats;
+	isc_boolean_t zonestats_on;
 
 	i = 0;
 	if (zconfig != NULL) {
@@ -482,7 +493,15 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	obj = NULL;
 	result = ns_config_get(maps, "zone-statistics", &obj);
 	INSIST(result == ISC_R_SUCCESS);
-	RETERR(dns_zone_setstatistics(zone, cfg_obj_asboolean(obj)));
+	zonestats_on = cfg_obj_asboolean(obj);
+	zoneqrystats = NULL;
+	if (zonestats_on) {
+		RETERR(dns_generalstats_create(mctx, &zoneqrystats,
+					       dns_nsstatscounter_max));
+	}
+	dns_zone_setrequeststats(zone, zoneqrystats);
+	if (zoneqrystats != NULL)
+		dns_stats_detach(&zoneqrystats);
 
 	/*
 	 * Configure master functionality.  This applies
@@ -537,6 +556,12 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		INSIST(result == ISC_R_SUCCESS);
 		RETERR(dns_zone_setnotifysrc6(zone, cfg_obj_assockaddr(obj)));
 		ns_add_reserved_dispatch(ns_g_server, cfg_obj_assockaddr(obj));
+
+		obj = NULL;
+		result = ns_config_get(maps, "notify-to-soa", &obj);
+		INSIST(result == ISC_R_SUCCESS);
+		dns_zone_setoption(zone, DNS_ZONEOPT_NOTIFYTOSOA,
+				   cfg_obj_asboolean(obj));
 
 		dns_zone_setisself(zone, ns_client_isself, NULL);
 
@@ -616,7 +641,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		obj = NULL;
 		result = ns_config_get(maps, "check-sibling", &obj);
 		INSIST(result == ISC_R_SUCCESS);
-		dns_zone_setoption(zone, DNS_ZONEOPT_CHECKSIBLING, 
+		dns_zone_setoption(zone, DNS_ZONEOPT_CHECKSIBLING,
 				   cfg_obj_asboolean(obj));
 
 		obj = NULL;
@@ -635,7 +660,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 					  "allow-update", ac, zone,
 					  dns_zone_setupdateacl,
 					  dns_zone_clearupdateacl));
-		
+
 		updateacl = dns_zone_getupdateacl(zone);
 		if (updateacl != NULL  && dns_acl_isinsecure(updateacl))
 			isc_log_write(ns_g_lctx, DNS_LOGCATEGORY_SECURITY,
@@ -643,7 +668,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 				      "zone '%s' allows updates by IP "
 				      "address, which is insecure",
 				      zname);
-		
+
 		RETERR(configure_zone_ssutable(zoptions, zone));
 
 		obj = NULL;
@@ -691,7 +716,7 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		obj = NULL;
 		result = ns_config_get(maps, "check-integrity", &obj);
 		INSIST(obj != NULL);
-		dns_zone_setoption(zone, DNS_ZONEOPT_CHECKINTEGRITY, 
+		dns_zone_setoption(zone, DNS_ZONEOPT_CHECKINTEGRITY,
 				   cfg_obj_asboolean(obj));
 
 		obj = NULL;
@@ -727,50 +752,8 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		obj = NULL;
 		result = ns_config_get(maps, "update-check-ksk", &obj);
 		INSIST(result == ISC_R_SUCCESS);
-		dns_zone_setoption(zone, DNS_ZONEOPT_UPDATECHECKKSK, 
+		dns_zone_setoption(zone, DNS_ZONEOPT_UPDATECHECKKSK,
 				   cfg_obj_asboolean(obj));
-	}
-
-	/*
-	 * Configure update-related options.  These apply to
-	 * primary masters only.
-	 */
-	if (ztype == dns_zone_master) {
-		dns_acl_t *updateacl;
-		RETERR(configure_zone_acl(zconfig, vconfig, config,
-					  "allow-update", ac, zone,
-					  dns_zone_setupdateacl,
-					  dns_zone_clearupdateacl));
-		
-		updateacl = dns_zone_getupdateacl(zone);
-		if (updateacl != NULL  && dns_acl_isinsecure(updateacl))
-			isc_log_write(ns_g_lctx, DNS_LOGCATEGORY_SECURITY,
-				      NS_LOGMODULE_SERVER, ISC_LOG_WARNING,
-				      "zone '%s' allows updates by IP "
-				      "address, which is insecure",
-				      zname);
-		
-		RETERR(configure_zone_ssutable(zoptions, zone));
-
-		obj = NULL;
-		result = ns_config_get(maps, "sig-validity-interval", &obj);
-		INSIST(result == ISC_R_SUCCESS);
-		dns_zone_setsigvalidityinterval(zone,
-						cfg_obj_asuint32(obj) * 86400);
-
-		obj = NULL;
-		result = ns_config_get(maps, "key-directory", &obj);
-		if (result == ISC_R_SUCCESS) {
-			filename = cfg_obj_asstring(obj);
-			if (!isc_file_isabsolute(filename)) {
-				cfg_obj_log(obj, ns_g_lctx, ISC_LOG_ERROR,
-					    "key-directory '%s' "
-					    "is not absolute", filename);
-				return (ISC_R_FAILURE);
-			}
-			RETERR(dns_zone_setkeydirectory(zone, filename));
-		}
-
 	} else if (ztype == dns_zone_slave) {
 		RETERR(configure_zone_acl(zconfig, vconfig, config,
 					  "allow-update-forwarding", ac, zone,
@@ -878,6 +861,10 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			alt = cfg_obj_asboolean(obj);
 		dns_zone_setoption(zone, DNS_ZONEOPT_USEALTXFRSRC, alt);
 
+		obj = NULL;
+		(void)ns_config_get(maps, "try-tcp-refresh", &obj);
+		dns_zone_setoption(zone, DNS_ZONEOPT_TRYTCPREFRESH,
+				   cfg_obj_asboolean(obj));
 		break;
 
 	default:

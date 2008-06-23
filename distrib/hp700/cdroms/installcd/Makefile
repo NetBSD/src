@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2007/03/06 21:57:02 bouyer Exp $
+#	$NetBSD: Makefile,v 1.1.18.1 2008/06/23 04:28:54 wrstuden Exp $
+
+.include "${.CURDIR}/../Makefile.cdrom"
+
 CDBASE=		hp700cd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 

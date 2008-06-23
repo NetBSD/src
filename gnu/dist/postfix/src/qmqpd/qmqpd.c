@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd.c,v 1.1.1.9 2007/05/19 16:28:32 heas Exp $	*/
+/*	$NetBSD: qmqpd.c,v 1.1.1.9.12.1 2008/06/23 04:29:22 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -108,6 +108,9 @@
 /*	The process name of a Postfix command or daemon process.
 /* .IP "\fBqmqpd_authorized_clients (empty)\fR"
 /*	What clients are allowed to connect to the QMQP server port.
+/* .IP "\fBqmqpd_client_port_logging (no)\fR"
+/*	Enable logging of the remote QMQP client port in addition to
+/*	the hostname and IP address.
 /* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 /*	The location of the Postfix top-level queue directory.
 /* .IP "\fBsyslog_facility (mail)\fR"
@@ -202,6 +205,7 @@ int     var_qmqpd_err_sleep;
 char   *var_filter_xport;
 char   *var_qmqpd_clients;
 char   *var_input_transp;
+bool    var_qmqpd_client_port_log;
 
  /*
   * Silly little macros.
@@ -324,6 +328,9 @@ static void qmqpd_write_attributes(QMQPD_STATE *state)
     if (IS_AVAIL_CLIENT_ADDR(state->addr))
 	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
 		    MAIL_ATTR_LOG_CLIENT_ADDR, state->rfc_addr);
+    if (IS_AVAIL_CLIENT_PORT(state->port))
+	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		    MAIL_ATTR_LOG_CLIENT_PORT, state->port);
     if (IS_AVAIL_CLIENT_NAMADDR(state->namaddr))
 	rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
 		    MAIL_ATTR_LOG_ORIGIN, state->namaddr);
@@ -337,6 +344,8 @@ static void qmqpd_write_attributes(QMQPD_STATE *state)
 		MAIL_ATTR_ACT_CLIENT_NAME, state->name);
     rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
 		MAIL_ATTR_ACT_CLIENT_ADDR, state->rfc_addr);
+    rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%s",
+		MAIL_ATTR_ACT_CLIENT_PORT, state->port);
     rec_fprintf(state->cleanup, REC_TYPE_ATTR, "%s=%u",
 		MAIL_ATTR_ACT_CLIENT_AF, state->addr_family);
 }
@@ -768,15 +777,19 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_QMTPD_TMOUT, DEF_QMTPD_TMOUT, &var_qmqpd_timeout, 1, 0,
 	VAR_QMTPD_ERR_SLEEP, DEF_QMTPD_ERR_SLEEP, &var_qmqpd_err_sleep, 0, 0,
 	0,
     };
-    static CONFIG_STR_TABLE str_table[] = {
+    static const CONFIG_STR_TABLE str_table[] = {
 	VAR_FILTER_XPORT, DEF_FILTER_XPORT, &var_filter_xport, 0, 0,
 	VAR_QMQPD_CLIENTS, DEF_QMQPD_CLIENTS, &var_qmqpd_clients, 0, 0,
 	VAR_INPUT_TRANSP, DEF_INPUT_TRANSP, &var_input_transp, 0, 0,
+	0,
+    };
+    static const CONFIG_BOOL_TABLE bool_table[] = {
+	VAR_QMQPD_CLIENT_PORT_LOG, DEF_QMQPD_CLIENT_PORT_LOG, &var_qmqpd_client_port_log,
 	0,
     };
 
@@ -791,6 +804,7 @@ int     main(int argc, char **argv)
     single_server_main(argc, argv, qmqpd_service,
 		       MAIL_SERVER_TIME_TABLE, time_table,
 		       MAIL_SERVER_STR_TABLE, str_table,
+		       MAIL_SERVER_BOOL_TABLE, bool_table,
 		       MAIL_SERVER_PRE_INIT, pre_jail_init,
 		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
 		       MAIL_SERVER_POST_INIT, post_jail_init,

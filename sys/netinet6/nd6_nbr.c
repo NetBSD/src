@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.86 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.86.4.1 2008/06/23 04:31:59 wrstuden Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.86 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.86.4.1 2008/06/23 04:31:59 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -910,8 +910,7 @@ nd6_na_output(
 	/*
 	 * Select a source whose scope is the same as that of the dest.
 	 */
-	src = in6_selectsrc(satosin6(dst), NULL, NULL, &ro, NULL, NULL,
-	    &error);
+	src = in6_selectsrc(satosin6(dst), NULL, NULL, &ro, NULL, NULL, &error);
 	if (src == NULL) {
 		nd6log((LOG_DEBUG, "nd6_na_output: source can't be "
 		    "determined: dst=%s, error=%d\n",
@@ -969,7 +968,7 @@ nd6_na_output(
 	nd_na->nd_na_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(struct ip6_hdr), icmp6len);
 
-	ip6_output(m, NULL, NULL, 0, &im6o, (struct socket *)NULL, NULL);
+	ip6_output(m, NULL, NULL, 0, &im6o, NULL, NULL);
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert);

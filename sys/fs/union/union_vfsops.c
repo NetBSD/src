@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.53 2008/04/29 18:18:08 ad Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.53.2.1 2008/06/23 04:31:50 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.53 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.53.2.1 2008/06/23 04:31:50 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,11 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.53 2008/04/29 18:18:08 ad Exp $")
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/union/union.h>
+
+MODULE(MODULE_CLASS_VFS, union, NULL);
 
 VFS_PROTOS(union);
 
@@ -143,6 +146,9 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		error = EOPNOTSUPP;
 		goto bad;
 	}
+
+	printf("WARNING: the union file system is experimental and "
+	    "may be unstable\n");
 
 	lowerrootvp = mp->mnt_vnodecovered;
 	VREF(lowerrootvp);
@@ -366,7 +372,7 @@ union_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the union_mount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 	return (0);
 }
 
@@ -545,4 +551,17 @@ struct vfsops union_vfsops = {
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
 };
-VFS_ATTACH(union_vfsops);
+
+static int
+union_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&union_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&union_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

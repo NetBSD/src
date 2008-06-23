@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.9 2008/04/29 06:53:02 martin Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.9.2.1 2008/06/23 04:30:18 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -15,6 +15,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -302,7 +305,8 @@ lcdclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 paddr_t
 lcdmmap(dev_t dev, off_t offset, int size)
 {
-	struct pxa2x0_lcd_softc *sc = device_lookup(&lcd_cd, minor(dev));
+	struct pxa2x0_lcd_softc *sc =
+		device_lookup_private(&lcd_cd, minor(dev));
 	struct pxa2x0_lcd_screen *scr = sc->active;
 
 	return bus_dmamem_mmap( &pxa2x0_bus_dma_tag, scr->segs, scr->nsegs,

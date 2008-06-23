@@ -1,4 +1,4 @@
-.\"	$NetBSD: trivial-rewrite.8,v 1.1.1.12 2007/05/19 16:27:51 heas Exp $
+.\"	$NetBSD: trivial-rewrite.8,v 1.1.1.12.12.1 2008/06/23 04:29:08 wrstuden Exp $
 .\"
 .TH TRIVIAL-REWRITE 8 
 .ad
@@ -110,6 +110,11 @@ invalid.
 .IP "\fBresolve_numeric_domain (no)\fR"
 Resolve "user@ipaddress" as "user@[ipaddress]", instead of
 rejecting the address as invalid.
+.PP
+Available with Postfix version 2.5 and later:
+.IP "\fBallow_min_user (no)\fR"
+Allow a sender or recipient address to have `-' as the first
+character.
 .SH "ADDRESS REWRITING CONTROLS"
 .na
 .nf
@@ -174,6 +179,11 @@ Available in Postfix version 2.3 and later:
 .IP "\fBsender_dependent_relayhost_maps (empty)\fR"
 A sender-dependent override for the global relayhost parameter
 setting.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBempty_address_relayhost_maps_lookup_key (<>)\fR"
+The sender_dependent_relayhost_maps search string that will be
+used instead of the null sender address.
 .SH "ADDRESS VERIFICATION CONTROLS"
 .na
 .nf
@@ -206,7 +216,7 @@ Overrides the transport_maps parameter setting for address verification
 probes.
 .PP
 Available in Postfix version 2.3 and later:
-.IP "\fBaddress_verify_sender_dependent_relayhost_maps (empty)\fR"
+.IP "\fBaddress_verify_sender_dependent_relayhost_maps ($sender_dependent_relayhost_maps)\fR"
 Overrides the sender_dependent_relayhost_maps parameter setting for address
 verification probes.
 .SH "MISCELLANEOUS CONTROLS"

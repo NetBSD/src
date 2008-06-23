@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.8 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: fxp.c,v 1.8.2.1 2008/06/23 04:30:38 wrstuden Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -129,6 +129,7 @@ struct local {
 	unsigned eeprom_addr;
 };
 
+int fxp_match(unsigned, void *);
 void *fxp_init(unsigned, void *);
 int fxp_send(void *, char *, unsigned);
 int fxp_recv(void *, char *, unsigned, unsigned);
@@ -172,6 +173,20 @@ static uint8_t fxp_cb_config_template[] = {
 static struct fxp_cb_config store_cbc;
 static struct fxp_cb_ias store_cbi;
 
+int
+fxp_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x8086, 0x1209):
+	case PCI_DEVICE(0x8086, 0x1229):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 fxp_init(unsigned tag, void *data)
 {
@@ -181,11 +196,6 @@ fxp_init(unsigned tag, void *data)
 	struct fxp_cb_ias *cb_ias = &store_cbi;
 	struct rxdesc *rfa;
 	unsigned v, i;
-
-	v = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_DEVICE(0x8086, 0x1209) != v
-	    && PCI_DEVICE(0x8086, 0x1229) != v)
-		return NULL;
 
 	sc = ALLOC(struct local, sizeof(struct txdesc)); /* desc alignment */
 	memset(sc, 0, sizeof(struct local));

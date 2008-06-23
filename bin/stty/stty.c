@@ -1,4 +1,4 @@
-/* $NetBSD: stty.c,v 1.19 2003/08/07 09:05:42 agc Exp $ */
+/* $NetBSD: stty.c,v 1.19.32.1 2008/06/23 04:26:44 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: stty.c,v 1.19 2003/08/07 09:05:42 agc Exp $");
+__RCSID("$NetBSD: stty.c,v 1.19.32.1 2008/06/23 04:26:44 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: stty.c,v 1.19 2003/08/07 09:05:42 agc Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,6 +68,7 @@ main(int argc, char *argv[])
 	int ch;
 
 	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
 
 	fmt = STTY_NOTSET;
 	i.fd = STDIN_FILENO;

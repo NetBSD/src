@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.6 2008/05/06 18:58:47 dyoung Exp $	*/
+/*	$NetBSD: vlan.c,v 1.6.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.6 2008/05/06 18:58:47 dyoung Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.6.2.1 2008/06/23 04:29:57 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -51,61 +51,62 @@ __RCSID("$NetBSD: vlan.c,v 1.6 2008/05/06 18:58:47 dyoung Exp $");
 
 #include "env.h"
 #include "extern.h"
+#include "util.h"
 #include "vlan.h"
 
-struct pinteger vlan = PINTEGER_INITIALIZER1(&vlan, "vlan", 0, USHRT_MAX, 10,
-    setvlan, "vlan", &command_root.pb_parser);
+struct pinteger vlantag = PINTEGER_INITIALIZER1(&vlantag, "VLAN tag",
+    0, USHRT_MAX, 10, setvlan, "vlantag", &command_root.pb_parser);
 
 struct piface vlanif = PIFACE_INITIALIZER(&vlanif, "vlanif", setvlanif,
     "vlanif", &command_root.pb_parser);
 
+static const struct kwinst vlankw[] = {
+	  {.k_word = "vlan", .k_nextparser = &vlantag.pi_parser}
+	, {.k_word = "vlanif", .k_act = "vlantag",
+	   .k_nextparser = &vlanif.pif_parser}
+	, {.k_word = "-vlanif", .k_key = "vlanif", .k_type = KW_T_STR,
+	   .k_str = "", .k_exec = setvlanif}
+};
+
+struct pkw vlan = PKW_INITIALIZER(&vlan, "vlan", NULL, NULL,
+    vlankw, __arraycount(vlankw), NULL);
+
 static int
-checkifname(const char *ifname)
+checkifname(prop_dictionary_t env)
 {
+	const char *ifname;
+
+	if ((ifname = getifname(env)) == NULL)
+		return 1;
 
 	return strncmp(ifname, "vlan", 4) != 0 ||
 	    !isdigit((unsigned char)ifname[4]);
 }
 
 static int
-getvlan(prop_dictionary_t env, struct ifreq *ifr, struct vlanreq *vlr,
-    bool quiet)
+getvlan(prop_dictionary_t env, struct vlanreq *vlr, bool quiet)
 {
-	int s;
-	const char *ifname;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
-
-	memset(ifr, 0, sizeof(*ifr));
 	memset(vlr, 0, sizeof(*vlr));
 
-	if (checkifname(ifname)) {
+	if (checkifname(env)) {
 		if (quiet)
 			return -1;
 		errx(EXIT_FAILURE, "valid only with vlan(4) interfaces");
 	}
 
-	estrlcpy(ifr->ifr_name, ifname, sizeof(ifr->ifr_name));
-	ifr->ifr_data = vlr;
-
-	if (ioctl(s, SIOCGETVLAN, ifr) == -1)
+	if (indirect_ioctl(env, SIOCGETVLAN, vlr) == -1)
 		return -1;
 
-	return s;
+	return 0;
 }
 
 int
 setvlan(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct vlanreq vlr;
-	int s;
 	int64_t tag;
-	struct ifreq ifr;
 
-	if ((s = getvlan(env, &ifr, &vlr, false)) == -1)
+	if (getvlan(env, &vlr, false) == -1)
 		err(EXIT_FAILURE, "%s: getvlan", __func__);
 
 	if (!prop_dictionary_get_int64(env, "vlantag", &tag)) {
@@ -115,7 +116,7 @@ setvlan(prop_dictionary_t env, prop_dictionary_t xenv)
 
 	vlr.vlr_tag = tag;
 
-	if (ioctl(s, SIOCSETVLAN, &ifr) == -1)
+	if (indirect_ioctl(env, SIOCSETVLAN, &vlr) == -1)
 		err(EXIT_FAILURE, "SIOCSETVLAN");
 	return 0;
 }
@@ -124,12 +125,10 @@ int
 setvlanif(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct vlanreq vlr;
-	int s;
 	const char *parent;
 	int64_t tag;
-	struct ifreq ifr;
 
-	if ((s = getvlan(env, &ifr, &vlr, false)) == -1)
+	if (getvlan(env, &vlr, false) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
 	if (!prop_dictionary_get_int64(env, "vlantag", &tag)) {
@@ -145,7 +144,7 @@ setvlanif(prop_dictionary_t env, prop_dictionary_t xenv)
 	if (strcmp(parent, "") != 0)
 		vlr.vlr_tag = (unsigned short)tag;
 
-	if (ioctl(s, SIOCSETVLAN, &ifr) == -1)
+	if (indirect_ioctl(env, SIOCSETVLAN, &vlr) == -1)
 		err(EXIT_FAILURE, "SIOCSETVLAN");
 	return 0;
 }
@@ -154,10 +153,8 @@ void
 vlan_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct vlanreq vlr;
-	int s;
-	struct ifreq ifr;
 
-	if ((s = getvlan(env, &ifr, &vlr, true)) == -1)
+	if (getvlan(env, &vlr, true) == -1)
 		return;
 
 	if (vlr.vlr_tag || vlr.vlr_parent[0] != '\0')

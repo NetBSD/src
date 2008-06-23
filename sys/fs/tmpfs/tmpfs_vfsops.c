@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.40 2008/04/29 18:18:08 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.40.2.1 2008/06/23 04:31:49 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.40 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.40.2.1 2008/06/23 04:31:49 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,9 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.40 2008/04/29 18:18:08 ad Exp $")
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <fs/tmpfs/tmpfs.h>
+
+MODULE(MODULE_CLASS_VFS, tmpfs, NULL);
 
 /* --------------------------------------------------------------------- */
 
@@ -444,4 +447,17 @@ struct vfsops tmpfs_vfsops = {
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
 };
-VFS_ATTACH(tmpfs_vfsops);
+
+static int
+tmpfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&tmpfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&tmpfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

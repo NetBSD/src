@@ -1,10 +1,10 @@
-/*	$NetBSD: zone.h,v 1.1.1.4 2007/01/27 21:07:43 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.1.1.4.12.1 2008/06/23 04:28:16 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.h,v 1.126.18.19 2006/08/01 03:45:21 marka Exp */
+/* Id: zone.h,v 1.153.56.3 2008/04/03 06:10:21 marka Exp */
 
 #ifndef DNS_ZONE_H
 #define DNS_ZONE_H 1
 
-/*! \file */
+/*! \file dns/zone.h */
 
 /***
  ***	Imports
@@ -68,6 +68,8 @@ typedef enum {
 #define DNS_ZONEOPT_WARNSRVCNAME  0x00200000U	/*%< warn on SRV CNAME check */
 #define DNS_ZONEOPT_IGNORESRVCNAME 0x00400000U	/*%< ignore SRV CNAME check */
 #define DNS_ZONEOPT_UPDATECHECKKSK 0x00800000U	/*%< check dnskey KSK flag */
+#define DNS_ZONEOPT_TRYTCPREFRESH 0x01000000U	/*%< try tcp refresh on udp failure */
+#define DNS_ZONEOPT_NOTIFYTOSOA	  0x02000000U	/*%< Notify the SOA MNAME */
 
 #ifndef NOMINUM_PUBLIC
 /*
@@ -142,6 +144,15 @@ dns_rdataclass_t
 dns_zone_getclass(dns_zone_t *zone);
 /*%<
  *	Returns the current zone class.
+ *
+ * Requires:
+ *\li	'zone' to be a valid zone.
+ */
+
+isc_uint32_t
+dns_zone_getserial(dns_zone_t *zone);
+/*%<
+ *	Returns the current serial number of the zone.
  *
  * Requires:
  *\li	'zone' to be a valid zone.
@@ -703,6 +714,16 @@ dns_zone_setqueryacl(dns_zone_t *zone, dns_acl_t *acl);
  */
 
 void
+dns_zone_setqueryonacl(dns_zone_t *zone, dns_acl_t *acl);
+/*%<
+ *	Sets the query-on acl list for the zone.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ *\li	'acl' to be a valid acl.
+ */
+
+void
 dns_zone_setupdateacl(dns_zone_t *zone, dns_acl_t *acl);
 /*%<
  *	Sets the update acl list for the zone.
@@ -749,6 +770,19 @@ dns_acl_t *
 dns_zone_getqueryacl(dns_zone_t *zone);
 /*%<
  * 	Returns the current query acl or NULL.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ *
+ * Returns:
+ *\li	acl a pointer to the acl.
+ *\li	NULL
+ */
+
+dns_acl_t *
+dns_zone_getqueryonacl(dns_zone_t *zone);
+/*%<
+ * 	Returns the current query-on acl or NULL.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -828,6 +862,15 @@ void
 dns_zone_clearqueryacl(dns_zone_t *zone);
 /*%<
  *	Clear the current query acl.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+void
+dns_zone_clearqueryonacl(dns_zone_t *zone);
+/*%<
+ *	Clear the current query-on acl.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -1161,7 +1204,7 @@ dns_zone_setnotifytype(dns_zone_t *zone, dns_notifytype_t notifytype);
 
 isc_result_t
 dns_zone_forwardupdate(dns_zone_t *zone, dns_message_t *msg,
-                       dns_updatecallback_t callback, void *callback_arg);
+		       dns_updatecallback_t callback, void *callback_arg);
 /*%<
  * Forward 'msg' to each master in turn until we get an answer or we
  * have exausted the list of masters. 'callback' will be called with
@@ -1196,6 +1239,8 @@ dns_zone_next(dns_zone_t *zone, dns_zone_t **next);
  *\li	'next' points to a valid zone (result ISC_R_SUCCESS) or to NULL
  *	(result ISC_R_NOMORE).
  */
+
+
 
 isc_result_t
 dns_zone_first(dns_zonemgr_t *zmgr, dns_zone_t **first);
@@ -1365,7 +1410,7 @@ dns_zonemgr_getttransfersperns(dns_zonemgr_t *zmgr);
 void
 dns_zonemgr_setiolimit(dns_zonemgr_t *zmgr, isc_uint32_t iolimit);
 /*%<
- *	Set the number of simultaneous file descriptors available for 
+ *	Set the number of simultaneous file descriptors available for
  *	reading and writing masterfiles.
  *
  * Requires:
@@ -1376,7 +1421,7 @@ dns_zonemgr_setiolimit(dns_zonemgr_t *zmgr, isc_uint32_t iolimit);
 isc_uint32_t
 dns_zonemgr_getiolimit(dns_zonemgr_t *zmgr);
 /*%<
- *	Get the number of simultaneous file descriptors available for 
+ *	Get the number of simultaneous file descriptors available for
  *	reading and writing masterfiles.
  *
  * Requires:
@@ -1412,6 +1457,18 @@ dns_zonemgr_getcount(dns_zonemgr_t *zmgr, int state);
  */
 
 void
+dns_zonemgr_unreachableadd(dns_zonemgr_t *zmgr, isc_sockaddr_t *remote,
+			   isc_sockaddr_t *local, isc_time_t *now);
+/*%<
+ *	Add the pair of addresses to the unreachable cache.
+ *
+ * Requires:
+ *\li	'zmgr' to be a valid zone manager.
+ *\li	'remote' to be a valid sockaddr.
+ *\li	'local' to be a valid sockaddr.
+ */
+
+void
 dns_zone_forcereload(dns_zone_t *zone);
 /*%<
  *      Force a reload of specified zone.
@@ -1432,22 +1489,55 @@ dns_zone_isforced(dns_zone_t *zone);
 isc_result_t
 dns_zone_setstatistics(dns_zone_t *zone, isc_boolean_t on);
 /*%<
- *      Make the zone keep or not keep an array of statistics
- * 	counter.
- *
- * Requires:
- *   \li   zone be a valid zone.
+ * This function is obsoleted by dns_zone_setrequeststats().
  */
 
 isc_uint64_t *
 dns_zone_getstatscounters(dns_zone_t *zone);
 /*%<
+ * This function is obsoleted by dns_zone_getrequeststats().
+ */
+
+void
+dns_zone_setstats(dns_zone_t *zone, dns_stats_t *stats);
+/*%<
+ * Set a general zone-maintenance statistics set 'stats' for 'zone'.  This
+ * function is expected to be called only on zone creation (when necessary).
+ * Once installed, it cannot be removed or replaced.  Also, there is no
+ * interface to get the installed stats from the zone; the caller must keep the
+ * stats to reference (e.g. dump) it later.
+ *
  * Requires:
- *      zone be a valid zone.
+ * \li	'zone' to be a valid zone and does not have a statistics set already
+ *	installed.
+ *
+ *\li	stats is a valid statistics supporting zone statistics counters
+ *	(see dns/stats.h).
+ */
+
+void
+dns_zone_setrequeststats(dns_zone_t *zone, dns_stats_t *stats);
+/*%<
+ * Set an additional statistics set to zone.  It is attached in the zone
+ * but is not counted in the zone module; only the caller updates the counters.
+ *
+ * Requires:
+ * \li	'zone' to be a valid zone.
+ *
+ *\li	stats is a valid statistics.
+ */
+
+dns_stats_t *
+dns_zone_getrequeststats(dns_zone_t *zone);
+/*%<
+ * Get the additional statistics for zone, if one is installed.
+ *
+ * Requires:
+ * \li	'zone' to be a valid zone.
  *
  * Returns:
- * \li     A pointer to the zone's array of statistics counters,
- *	or NULL if it has none.
+ * \li	when available, a pointer to the statistics set installed in zone;
+ *	otherwise NULL.
  */
 
 void
@@ -1486,7 +1576,7 @@ void
 dns_zone_name(dns_zone_t *zone, char *buf, size_t len);
 /*%<
  * Return the name of the zone with class and view.
- * 
+ *
  * Requires:
  *\li	'zone' to be valid.
  *\li	'buf' to be non NULL.

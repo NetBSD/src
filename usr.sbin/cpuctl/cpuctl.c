@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.5 2008/05/05 17:54:14 ad Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.5.2.1 2008/06/23 04:32:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.5 2008/05/05 17:54:14 ad Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.5.2.1 2008/06/23 04:32:12 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -155,11 +155,12 @@ cpu_identify(char **argv)
 
 	np = sysconf(_SC_NPROCESSORS_CONF);
 	if (np != 0) {
-		cpuset = calloc(sizeof(cpuset_t), 0);
+		cpuset = cpuset_create();
 		if (cpuset == NULL)
-			err(EXIT_FAILURE, "malloc");
-		CPU_SET(id, cpuset);
-		if (_sched_setaffinity(0, 0, sizeof(cpuset_t), cpuset) < 0) {
+			err(EXIT_FAILURE, "cpuset_create");
+		cpuset_zero(cpuset);
+		cpuset_set(id, cpuset);
+		if (_sched_setaffinity(0, 0, cpuset_size(cpuset), cpuset) < 0) {
 			if (errno == EPERM) {
 				printf("Cannot bind to target CPU.  Output "
 				    "may not accurately describe the target.\n"
@@ -168,6 +169,7 @@ cpu_identify(char **argv)
 				err(EXIT_FAILURE, "_sched_setaffinity");
 			}
 		}
+		cpuset_destroy(cpuset);
 	}
 	identifycpu(name);
 }
@@ -197,8 +199,8 @@ cpu_list(char **argv)
 	if (ioctl(fd, IOC_CPU_GETCOUNT, &cnt) < 0)
 		err(EXIT_FAILURE, "IOC_CPU_GETCOUNT");
 
-	printf("No   ID     Unbound LWPs Interrupts     Last change\n");
- 	printf("---- ------ ------------ -------------- ----------------------------\n");
+	printf("Num  HwId Unbound LWPs Interrupts     Last change\n");
+ 	printf("---- ---- ------------ -------------- ----------------------------\n");
 
 	for (i = 0; i < cnt; i++) {
 		cs.cs_id = i;
@@ -214,7 +216,7 @@ cpu_list(char **argv)
 			intr = "intr";
 		else
 			intr = "nointr";
-		printf("%-4d %-7x %-12s %-12s   %s", i, cs.cs_id, state,
+		printf("%-4d %-4x %-12s %-12s   %s", i, cs.cs_id, state,
 		   intr, asctime(localtime(&cs.cs_lastmod)));
 	}
 }

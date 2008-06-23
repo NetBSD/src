@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.17.12.2 2008/05/14 01:35:02 wrstuden Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.17.12.3 2008/06/23 04:30:52 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.17.12.2 2008/05/14 01:35:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.17.12.3 2008/06/23 04:30:52 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mount.h>		/* needed for next include! */
+#include <sys/mount.h>		/* needed for syscallargs.h */
+#include <sys/sched.h>		/* needed for syscallargs.h */
 #include <sys/syscallargs.h>
 
 #include <sys/swap.h>

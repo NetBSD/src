@@ -58,7 +58,7 @@ open(POSTCONF, $protofile) || die " cannot open $protofile: $!\n";
 
 while(<POSTCONF>) {
 
-    next if /^#/;
+    next if /^#/ && $text eq "";
     next unless ($name || /\S/);
 
     if (/^%(PARAM|CLASS)/) {

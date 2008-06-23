@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ifconfig.sh,v 1.46.18.3 2004/10/05 03:18:21 marka Exp
+# Id: ifconfig.sh,v 1.51.128.2 2008/03/03 23:46:26 tbox Exp
 
 #
 # Set up interface aliases for bind9 system tests.
@@ -85,6 +85,9 @@ case "$1" in
 		    *-unknown-netbsd*)
 			ifconfig lo0 10.53.0.$ns alias netmask 255.255.255.0
 			;;
+		    *-unknown-openbsd*)
+			ifconfig lo0 10.53.0.$ns alias netmask 255.255.255.0
+			;;
 		    *-*-bsdi[3-5].*)
 			ifconfig lo0 add 10.53.0.$ns netmask 255.255.255.0
 			;;
@@ -143,6 +146,9 @@ case "$1" in
 			ifconfig lo0 10.53.0.$ns delete
 			;;
 		    *-unknown-netbsd*)
+			ifconfig lo0 10.53.0.$ns delete
+			;;
+		    *-unknown-openbsd*)
 			ifconfig lo0 10.53.0.$ns delete
 			;;
 		    *-*-bsdi[3-5].*)

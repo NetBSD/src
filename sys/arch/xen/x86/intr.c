@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2008/01/11 20:00:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.12.1 2008/06/23 04:30:51 wrstuden Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -209,7 +209,8 @@ cpu_intr_init(struct cpu_info *ci)
 #if NPCI > 0 || NISA > 0
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin,
-    int type, int level, int (*handler)(void *) , void *arg)
+    int type, int level, int (*handler)(void *) , void *arg,
+    bool known_mpsafe)
 {
 	struct pintrhand *ih;
 	int evtchn;
@@ -433,7 +434,7 @@ intr_printconfig(void)
 	CPU_INFO_ITERATOR cii;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		printf("cpu%d: interrupt masks:\n", ci->ci_apicid);
+		printf("%s: interrupt masks:\n", device_xname(ci->ci_dev));
 		for (i = 0; i < NIPL; i++)
 			printf("IPL %d mask %lx unmask %lx\n", i,
 			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
@@ -441,8 +442,8 @@ intr_printconfig(void)
 			isp = ci->ci_isources[i];
 			if (isp == NULL)
 				continue;
-			printf("cpu%u source %d is pin %d from pic %s maxlevel %d\n",
-			    ci->ci_apicid, i, isp->is_pin,
+			printf("%s source %d is pin %d from pic %s maxlevel %d\n",
+			    device_xname(ci->ci_dev), i, isp->is_pin,
 			    isp->is_pic->pic_name, isp->is_maxlevel);
 			for (ih = isp->is_handlers; ih != NULL;
 			     ih = ih->ih_next)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.48 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.48.2.1 2008/06/23 04:29:54 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -29,8 +29,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * To track threads waiting for mutexes to be released, we use lockless
+ * lists built on atomic operations and memory barriers.
+ *
+ * A simple spinlock would be faster and make the code easier to
+ * follow, but spinlocks are problematic in userspace.  If a thread is
+ * preempted by the kernel while holding a spinlock, any other thread
+ * attempting to acquire that spinlock will needlessly busy wait.
+ *
+ * There is no good way to know that the holding thread is no longer
+ * running, nor to request a wake-up once it has begun running again. 
+ * Of more concern, threads in the SCHED_FIFO class do not have a
+ * limited time quantum and so could spin forever, preventing the
+ * thread holding the spinlock from getting CPU time: it would never
+ * be released.
+ */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.48 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.48.2.1 2008/06/23 04:29:54 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -43,8 +60,6 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.48 2008/04/28 20:23:01 martin Exp $");
 
 #include "pthread.h"
 #include "pthread_int.h"
-
-#define	pt_nextwaiter			pt_sleep.ptqe_next
 
 #define	MUTEX_WAITERS_BIT		((uintptr_t)0x01)
 #define	MUTEX_RECURSIVE_BIT		((uintptr_t)0x02)
@@ -238,12 +253,12 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 
 		/*
 		 * Nope, still held.  Add thread to the list of waiters.
-		 * Issue a memory barrier to ensure sleeponq/nextwaiter
+		 * Issue a memory barrier to ensure mutexwait/mutexnext
 		 * are visible before we enter the waiters list.
 		 */
-		self->pt_sleeponq = 1;
+		self->pt_mutexwait = 1;
 		for (waiters = ptm->ptm_waiters;; waiters = next) {
-			self->pt_nextwaiter = waiters;
+			self->pt_mutexnext = waiters;
 			membar_producer();
 			next = atomic_cas_ptr(&ptm->ptm_waiters, waiters, self);
 			if (next == waiters)
@@ -263,7 +278,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 		 * then sleep in _lwp_park() until we have been awoken. 
 		 *
 		 * Issue a memory barrier to ensure that we are reading
-		 * the value of ptm_owner/pt_sleeponq after we have entered
+		 * the value of ptm_owner/pt_mutexwait after we have entered
 		 * the waiters list (the CAS itself must be atomic).
 		 */
 		membar_consumer();
@@ -297,14 +312,16 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 		 * We may have been awoken by the current thread above,
 		 * or will be awoken by the current holder of the mutex.
 		 * The key requirement is that we must not proceed until
-		 * told that we are no longer waiting (via pt_sleeponq
+		 * told that we are no longer waiting (via pt_mutexwait
 		 * being set to zero).  Otherwise it is unsafe to re-enter
 		 * the thread onto the waiters list.
 		 */
-		while (self->pt_sleeponq) {
+		while (self->pt_mutexwait) {
 			self->pt_blocking++;
-			(void)_lwp_park(NULL, 0,
-			    __UNVOLATILE(&ptm->ptm_waiters), NULL);
+			(void)_lwp_park(NULL, self->pt_unpark,
+			    __UNVOLATILE(&ptm->ptm_waiters),
+			    __UNVOLATILE(&ptm->ptm_waiters));
+			self->pt_unpark = 0;
 			self->pt_blocking--;
 			membar_sync();
 		}
@@ -434,8 +451,6 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 		 */
 		if (self->pt_willpark && self->pt_unpark == 0) {
 			self->pt_unpark = self->pt_waiters[0];
-			self->pt_unparkhint =
-			    __UNVOLATILE(&ptm->ptm_waiters);
 		} else {
 			(void)_lwp_unpark(self->pt_waiters[0],
 			    __UNVOLATILE(&ptm->ptm_waiters));
@@ -466,18 +481,18 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 		/*
 		 * Pull waiters from the queue and add to our list.
 		 * Use a memory barrier to ensure that we safely
-		 * read the value of pt_nextwaiter before 'thread'
-		 * sees pt_sleeponq being cleared.
+		 * read the value of pt_mutexnext before 'thread'
+		 * sees pt_mutexwait being cleared.
 		 */
 		for (n = self->pt_nwaiters, self->pt_nwaiters = 0;
 		    n < pthread__unpark_max && thread != NULL;
 		    thread = next) {
-		    	next = thread->pt_nextwaiter;
+		    	next = thread->pt_mutexnext;
 		    	if (thread != self) {
 				self->pt_waiters[n++] = thread->pt_lid;
 				membar_sync();
 			}
-			thread->pt_sleeponq = 0;
+			thread->pt_mutexwait = 0;
 			/* No longer safe to touch 'thread' */
 		}
 
@@ -492,8 +507,6 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 			 */
 			if (self->pt_willpark && self->pt_unpark == 0) {
 				self->pt_unpark = self->pt_waiters[0];
-				self->pt_unparkhint =
-				    __UNVOLATILE(&ptm->ptm_waiters);
 				return;
 			}
 			rv = (ssize_t)_lwp_unpark(self->pt_waiters[0],
@@ -591,16 +604,20 @@ pthread_once(pthread_once_t *once_control, void (*routine)(void))
 	return 0;
 }
 
-int
-pthread__mutex_deferwake(pthread_t thread, pthread_mutex_t *ptm)
+void
+pthread__mutex_deferwake(pthread_t self, pthread_mutex_t *ptm)
 {
 
-	if (MUTEX_OWNER(ptm->ptm_owner) != (uintptr_t)thread)
-		return 0;
-	atomic_or_ulong((volatile unsigned long *)
-	    (uintptr_t)&ptm->ptm_owner,
-	    (unsigned long)MUTEX_DEFERRED_BIT);
-	return 1;	
+	if (__predict_false(ptm == NULL ||
+	    MUTEX_OWNER(ptm->ptm_owner) != (uintptr_t)self)) {
+	    	(void)_lwp_unpark_all(self->pt_waiters, self->pt_nwaiters,
+	    	    __UNVOLATILE(&ptm->ptm_waiters));
+	    	self->pt_nwaiters = 0;
+	} else {
+		atomic_or_ulong((volatile unsigned long *)
+		    (uintptr_t)&ptm->ptm_owner,
+		    (unsigned long)MUTEX_DEFERRED_BIT);
+	}
 }
 
 int

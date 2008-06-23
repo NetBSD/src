@@ -1,4 +1,10 @@
-# $NetBSD: md.i386,v 1.122 2008/05/01 21:51:20 xtraeme Exp $
+# $NetBSD: md.i386,v 1.122.2.1 2008/06/23 04:28:54 wrstuden Exp $
+./@MODULEDIR@/drm				base-kernel-modules
+./@MODULEDIR@/drm/drm.kmod			base-kernel-modules
+./@MODULEDIR@/i915drm				base-kernel-modules
+./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules
+./@MODULEDIR@/radeondrm				base-kernel-modules
+./@MODULEDIR@/radeondrm/radeondrm.kmod		base-kernel-modules
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete

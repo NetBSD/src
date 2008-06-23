@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.59 2008/04/29 15:57:56 martin Exp $ */
+/*	$NetBSD: intr.c,v 1.59.2.1 2008/06/23 04:30:46 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.59 2008/04/29 15:57:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.59.2.1 2008/06/23 04:30:46 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -163,12 +163,9 @@ intr_biglock_wrapper(void *vp)
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(int level, struct intrhand *ih)
+intr_establish(int level, bool mpsafe, struct intrhand *ih)
 {
 	struct intrhand *q = NULL;
-#ifdef MULTIPROCESSOR
-	bool mpsafe = (level != IPL_VM);
-#endif
 	int s;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.81 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: uhid.c,v 1.81.2.1 2008/06/23 04:31:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.81 2008/04/28 20:23:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.81.2.1 2008/06/23 04:31:37 wrstuden Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -123,8 +123,7 @@ Static int uhid_do_ioctl(struct uhid_softc*, u_long, void *, int, struct lwp *);
 USB_DECLARE_DRIVER(uhid);
 
 int
-uhid_match(struct device *parent, struct cfdata *match,
-    void *aux)
+uhid_match(device_t parent, cfdata_t match, void *aux)
 {
 #ifdef UHID_DEBUG
 	struct uhidev_attach_arg *uha = aux;
@@ -139,13 +138,14 @@ uhid_match(struct device *parent, struct cfdata *match,
 }
 
 void
-uhid_attach(struct device *parent, struct device *self, void *aux)
+uhid_attach(device_t parent, device_t self, void *aux)
 {
-	struct uhid_softc *sc = (struct uhid_softc *)self;
+	struct uhid_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
 	int size, repid;
 	void *desc;
 
+	sc->sc_hdev.sc_dev = self;
 	selinit(&sc->sc_rsel);
 	sc->sc_hdev.sc_intr = uhid_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
@@ -159,7 +159,8 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_osize = hid_report_size(desc, size, hid_output,  repid);
 	sc->sc_fsize = hid_report_size(desc, size, hid_feature, repid);
 
-	printf(": input=%d, output=%d, feature=%d\n",
+	aprint_naive("\n");
+	aprint_normal(": input=%d, output=%d, feature=%d\n",
 	       sc->sc_isize, sc->sc_osize, sc->sc_fsize);
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -171,7 +172,7 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 int
 uhid_activate(device_ptr_t self, enum devact act)
 {
-	struct uhid_softc *sc = (struct uhid_softc *)self;
+	struct uhid_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -185,9 +186,9 @@ uhid_activate(device_ptr_t self, enum devact act)
 }
 
 int
-uhid_detach(struct device *self, int flags)
+uhid_detach(device_t self, int flags)
 {
-	struct uhid_softc *sc = (struct uhid_softc *)self;
+	struct uhid_softc *sc = device_private(self);
 	int s;
 	int maj, mn;
 

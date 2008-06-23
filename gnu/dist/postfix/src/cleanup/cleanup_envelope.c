@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_envelope.c,v 1.11 2007/08/02 08:26:18 heas Exp $	*/
+/*	$NetBSD: cleanup_envelope.c,v 1.11.10.1 2008/06/23 04:29:09 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -148,6 +148,14 @@ static void cleanup_envelope_process(CLEANUP_STATE *state, int type,
 	return;
     }
 #endif
+
+    /*
+     * XXX We instantiate a MILTERS structure even when the filter count is
+     * zero (for example, all filters are in ACCEPT state, or the SMTP server
+     * sends a dummy MILTERS structure without any filters), otherwise the
+     * cleanup server would apply the non_smtpd_milters setting
+     * inappropriately.
+     */
     if (type == REC_TYPE_MILT_COUNT) {
 	/* Not part of queue file format. */
 	if ((milter_count = atoi(buf)) >= 0)

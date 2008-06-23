@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_up.S,v 1.1 2008/04/30 00:17:34 ad Exp $	*/
+/*	$NetBSD: atomic_cas_up.S,v 1.1.2.1 2008/06/23 04:26:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 	.set	noat
 	.set	noreorder
 
-LEAF_NOPROFILE(_atomic_cas_up)
+LEAF(_atomic_cas_up)
 	.hidden	_C_LABEL(_atomic_cas_up)
 RAS_START_ASM_HIDDEN(_atomic_cas)
 	lw	t0, (a0)

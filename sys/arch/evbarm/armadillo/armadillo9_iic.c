@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_iic.c,v 1.4 2007/12/06 17:00:32 ad Exp $	*/
+/*	$NetBSD: armadillo9_iic.c,v 1.4.18.1 2008/06/23 04:30:17 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.4 2007/12/06 17:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.4.18.1 2008/06/23 04:30:17 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,6 +226,10 @@ uint32_t
 armadillo9iic_bb_read_bits(void *cookie)
 {
 	struct armadillo9iic_softc *sc = cookie;
+	uint32_t bits = 0;
 
-	return epgpio_read(sc->sc_gpio, sc->sc_port, sc->sc_sda) << sc->sc_sda;
+	bits |= epgpio_read(sc->sc_gpio, sc->sc_port, sc->sc_sda) << sc->sc_sda;
+	bits |= epgpio_read(sc->sc_gpio, sc->sc_port, sc->sc_scl) << sc->sc_scl;
+
+	return bits;
 }

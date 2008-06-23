@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2006/07/19 02:04:44 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.12.20.1 2008/06/23 04:29:29 wrstuden Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -20,11 +20,12 @@ BINDIR= ${PFIX_SBINDIR}
 PSRCS=	postconf.c
 GENSRCS=bool_table.h bool_vars.h int_table.h int_vars.h str_table.h \
 	str_vars.h time_table.h time_vars.h raw_table.h raw_vars.h
+AUTOSRCS=auto_table.h auto_vars.h
 
-SRCS=	${PSRCS} ${GENSRCS}
-DPSRCS=	${GENSRCS}
+SRCS=	${PSRCS} ${GENSRCS} ${AUTOSRCS}
+DPSRCS=	${GENSRCS} ${AUTOSRCS}
 
-CLEANFILES+= ${GENSRCS}
+CLEANFILES+= ${GENSRCS} ${AUTOSRCS}
 
 CPPFLAGS+= -I.
 
@@ -40,5 +41,8 @@ postconf-hdrs.stamp: ${DIST}/../global/mail_params.h ${DIST}/../global/mail_para
 	rm -f ${.TARGET}
 	awk -f ${DIST}/extract.awk ${DIST}/../*/*.c
 	touch ${.TARGET}
+
+auto_table.h auto_vars.h: ${DIST}/auto.awk
+	awk -f ${DIST}/auto.awk
 
 .include <bsd.prog.mk>

@@ -1,3 +1,42 @@
+2008-06-18  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/admin.h
+	  src/racoon/admin.c
+	  src/racoon/racoonctl.c
+	  src/racoon/racoonctl.8 : acquire peer certificate via admin port
+
+2008-06-18  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/misc.c
+	  src/racoon/misc.h
+	  src/racoon/admin.c
+	  src/racoon/grabmyaddr.c
+	  src/racoon/isakmp.c : avoid inherited file descriptor issues
+
+2008-06-18  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/grabmyaddr.c
+	  src/racoon/ipsec_doi.c
+	  src/racoon/isakmp.c
+	  src/racoon/isakmp_cfg.c
+	  src/racoon/isakmp_inf.c
+	  src/racoon/privsep.c
+	  src/racoon/remoteconf.c
+	  src/racoon/admin.c : network port value manipulation cleanup
+
+2008-06-18  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/admin.c
+	  src/racoon/racoonctl.c : admin port code cleanup
+
+2008-06-18  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/pfkey.c : correct a phase2 status event
+
+2008-05-08  Emmanuel Dreyfus  <manu@netbsd.org>
+        From Christian Hohnstaedt <christian@hohnstaedt.de>:
+	* configure.ac: allow out of tree building
+
 2008-04-25  Yvan Vanhullebus  <vanhu@netasq.com>
 	Track:4, from Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/isakmp_inf.c: extract ports information from

@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.12 2008/05/05 11:49:40 xtraeme Exp $	*/
+/*	$NetBSD: geode.c,v 1.12.2.1 2008/06/23 04:30:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.12 2008/05/05 11:49:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.12.2.1 2008/06/23 04:30:27 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ geode_gcb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	if (bus_space_map(sc->sc_iot, (bus_addr_t)cba, SC1100_GCB_SIZE, 0,
 	    &sc->sc_ioh) != 0) {
-		aprint_error_dev(self, "unable to map registers\n");
+		aprint_error(": unable to map registers\n");
 		return;
 	}
 
@@ -123,6 +123,7 @@ geode_gcb_attach(device_t parent, device_t self, void *aux)
 
 	rev = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SC1100_GCB_REV_B);
 
+	aprint_naive("\n");
 	aprint_normal(": AMD Geode GCB (rev. 0x%02x)\n", rev);
 
 	while (config_found(self, NULL, NULL) != NULL)

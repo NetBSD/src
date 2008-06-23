@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 2006/04/05 15:07:17 tsutsui Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9.68.1 2008/06/23 04:30:17 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2006/04/05 15:07:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9.68.1 2008/06/23 04:30:17 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,23 +38,23 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2006/04/05 15:07:17 tsutsui Exp $");
 
 #include "ioconf.h"
 
-int	cpu_match(struct device *, struct cfdata *, void *);
-void	cpu_attach(struct device *, struct device *, void *);
+int	cpu_match(device_t, cfdata_t, void *);
+void	cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof (struct device),
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 int
-cpu_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 void
-cpu_attach(struct device *parent, struct device *dev, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
 
-	printf(": ");
+	aprint_normal(": ");
 	cpu_identify();
 }

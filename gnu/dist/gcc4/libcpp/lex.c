@@ -657,6 +657,8 @@ save_comment (cpp_reader *pfile, cpp_token *token, const unsigned char *from,
 {
   unsigned char *buffer;
   unsigned int len, clen;
+  int convert_to_c = (pfile->state.in_directive || pfile->state.collecting_args)
+    && type == '/';
 
   len = pfile->buffer->cur - from + 1; /* + 1 for the initial '/'.  */
 
@@ -671,7 +673,7 @@ save_comment (cpp_reader *pfile, cpp_token *token, const unsigned char *from,
 
      Note that the only time we encounter a directive here is
      when we are saving comments in a "#define".  */
-  clen = (pfile->state.in_directive && type == '/') ? len + 2 : len;
+  clen = convert_to_c ? len + 2 : len;
 
   buffer = _cpp_unaligned_alloc (pfile, clen);
 
@@ -683,7 +685,7 @@ save_comment (cpp_reader *pfile, cpp_token *token, const unsigned char *from,
   memcpy (buffer + 1, from, len - 1);
 
   /* Finish conversion to a C comment, if necessary.  */
-  if (pfile->state.in_directive && type == '/')
+  if (convert_to_c)
     {
       buffer[1] = '*';
       buffer[clen - 2] = '*';

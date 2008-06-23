@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpuctl.8,v 1.4 2008/05/05 17:54:14 ad Exp $
+.\"	$NetBSD: cpuctl.8,v 1.4.2.1 2008/06/23 04:32:12 wrstuden Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 5, 2008
+.Dd June 22, 2008
 .Dt CPUCTL 8
 .Os
 .Sh NAME
 .Nm cpuctl
-.Nd a program to control CPUs
+.Nd program to control CPUs
 .Sh SYNOPSIS
 .Nm cpuctl
 .Ar command
@@ -43,20 +43,17 @@ The
 command can be used to control and inspect the state of CPUs in the system.
 .Pp
 The first argument,
-.Ar command , 
+.Ar command ,
 specifies the action to take.
 Valid commands are:
-.Bl -tag -width xx
+.Bl -tag -width XofflineXcpunoX
 .It identify Ar cpu
-.Pp
 Output information on the specified CPU's features and capabilities.
 Not available on all architectures.
 .It list
-.Pp
 For each CPU in the system, display the current state and time of the last
 state change.
 .It offline Ar cpuno
-.Pp
 Set the specified CPU off line.
 .Pp
 Unbound LWPs (lightweight processes) will not be executed on the CPU
@@ -68,15 +65,16 @@ away from individual CPUs.
 .Pp
 At least one CPU in the system must remain on line.
 .It online Ar cpuno
-.Pp
 Set the specified CPU on line, making it available to run unbound LWPs.
 .El
-.Pp
 .Sh FILES
 .Bl -tag -width /dev/cpuctl -compact
 .It Pa /dev/cpuctl
 control device
 .El
+.Sh SEE ALSO
+.Xr psrset 8 ,
+.Xr schedctl 8
 .Sh HISTORY
 The
 .Nm

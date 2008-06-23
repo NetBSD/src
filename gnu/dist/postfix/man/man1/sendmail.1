@@ -1,4 +1,4 @@
-.\"	$NetBSD: sendmail.1,v 1.1.1.11 2007/05/19 16:27:48 heas Exp $
+.\"	$NetBSD: sendmail.1,v 1.1.1.11.12.1 2008/06/23 04:29:07 wrstuden Exp $
 .\"
 .TH SENDMAIL 1 
 .ad
@@ -310,8 +310,9 @@ The delay between attempts to fork() a child process.
 .IP "\fBhopcount_limit (50)\fR"
 The maximal number of Received:  message headers that is allowed
 in the primary message headers.
-.IP "\fBqueue_run_delay (version dependent)\fR"
-The time between deferred queue scans by the queue manager.
+.IP "\fBqueue_run_delay (300s)\fR"
+The time between deferred queue scans by the queue manager;
+prior to Postfix 2.4 the default value was 1000s.
 .SH "FAST FLUSH CONTROLS"
 .na
 .nf

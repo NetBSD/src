@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.21 2008/04/28 20:23:08 martin Exp $	 */
+/* $NetBSD: pass6.c,v 1.21.2.1 2008/06/23 04:29:57 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ufs_daddr_t ndaddr, int size)
 		break;
 	default:
 		ap = &a[num - 1];
-		if (bread(vp, ap->in_lbn, fs->lfs_bsize, NULL, &bp))
+		if (bread(vp, ap->in_lbn, fs->lfs_bsize, NULL, 0, &bp))
 			errx(1, "lfs_updatemeta: bread bno %" PRId64,
 			    ap->in_lbn);
 
@@ -338,14 +338,14 @@ account_indir(struct uvnode *vp, struct ufs1_dinode *dp, daddr_t ilbn, daddr_t d
 		lbn = -ilbn;
 	else
 		lbn = ilbn + 1;
-	bread(fs->lfs_devvp, fsbtodb(fs, daddr), fs->lfs_bsize, NULL, &bp);
+	bread(fs->lfs_devvp, fsbtodb(fs, daddr), fs->lfs_bsize, NULL, 0, &bp);
 	buf = emalloc(fs->lfs_bsize);
 	memcpy(buf, bp->b_data, fs->lfs_bsize);
 	brelse(bp, 0);
 
 	obuf = emalloc(fs->lfs_bsize);
 	if (vp) {
-		bread(vp, ilbn, fs->lfs_bsize, NULL, &bp);
+		bread(vp, ilbn, fs->lfs_bsize, NULL, 0, &bp);
 		memcpy(obuf, bp->b_data, fs->lfs_bsize);
 		brelse(bp, 0);
 	} else
@@ -614,7 +614,7 @@ pass6(void)
 		}
 		
 		/* Read in summary block */
-		bread(devvp, fsbtodb(fs, daddr), fs->lfs_sumsize, NULL, &bp);
+		bread(devvp, fsbtodb(fs, daddr), fs->lfs_sumsize, NULL, 0, &bp);
 		sp = (SEGSUM *)bp->b_data;
 		if (debug)
 			pwarn("sum at 0x%x: ninos=%d nfinfo=%d\n",
@@ -654,7 +654,7 @@ pass6(void)
 			fs->lfs_bfree -= btofsb(fs, fs->lfs_ibsize);
 			sbdirty();
 			bread(devvp, fsbtodb(fs, ibdaddr), fs->lfs_ibsize,
-			      NOCRED, &ibp);
+			      NOCRED, 0, &ibp);
 			memcpy(ibbuf, ibp->b_data, fs->lfs_ibsize);
 			brelse(ibp, 0);
 
@@ -841,7 +841,7 @@ pass6(void)
 		}
 		
 		/* Read in summary block */
-		bread(devvp, fsbtodb(fs, daddr), fs->lfs_sumsize, NULL, &bp);
+		bread(devvp, fsbtodb(fs, daddr), fs->lfs_sumsize, NULL, 0, &bp);
 		sp = (SEGSUM *)bp->b_data;
 		bc = check_summary(fs, sp, daddr, debug, devvp, pass6harvest);
 		if (bc == 0) {

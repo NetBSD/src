@@ -77,6 +77,7 @@
 extern "C" {
 #endif
 
+#if 0
 /* Outer object */
 typedef struct x509_hash_dir_st
 	{
@@ -85,6 +86,7 @@ typedef struct x509_hash_dir_st
 	int *dirs_type;
 	int num_dirs_alloced;
 	} X509_HASH_DIR_CTX;
+#endif
 
 typedef struct x509_file_st
 	{
@@ -198,6 +200,8 @@ struct x509_store_st
 	int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x); /* retrieve CRL */
 	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl); /* Check CRL validity */
 	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x); /* Check certificate against CRL */
+	STACK_OF(X509) * (*lookup_certs)(X509_STORE_CTX *ctx, X509_NAME *nm);
+	STACK_OF(X509_CRL) * (*lookup_crls)(X509_STORE_CTX *ctx, X509_NAME *nm);
 	int (*cleanup)(X509_STORE_CTX *ctx);
 
 	CRYPTO_EX_DATA ex_data;
@@ -246,6 +250,8 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl); /* Check CRL validity */
 	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x); /* Check certificate against CRL */
 	int (*check_policy)(X509_STORE_CTX *ctx);
+	STACK_OF(X509) * (*lookup_certs)(X509_STORE_CTX *ctx, X509_NAME *nm);
+	STACK_OF(X509_CRL) * (*lookup_crls)(X509_STORE_CTX *ctx, X509_NAME *nm);
 	int (*cleanup)(X509_STORE_CTX *ctx);
 
 	/* The following is built up */
@@ -330,8 +336,10 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_INVALID_EXTENSION			41
 #define		X509_V_ERR_INVALID_POLICY_EXTENSION		42
 #define		X509_V_ERR_NO_EXPLICIT_POLICY			43
+#define		X509_V_ERR_DIFFERENT_CRL_SCOPE			44
+#define		X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE	45
 
-#define		X509_V_ERR_UNNESTED_RESOURCE			44
+#define		X509_V_ERR_UNNESTED_RESOURCE			46
 
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
@@ -384,6 +392,8 @@ void X509_OBJECT_free_contents(X509_OBJECT *a);
 X509_STORE *X509_STORE_new(void );
 void X509_STORE_free(X509_STORE *v);
 
+STACK_OF(X509)* X509_STORE_get1_certs(X509_STORE_CTX *st, X509_NAME *nm);
+STACK_OF(X509_CRL)* X509_STORE_get1_crls(X509_STORE_CTX *st, X509_NAME *nm);
 int X509_STORE_set_flags(X509_STORE *ctx, unsigned long flags);
 int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
 int X509_STORE_set_trust(X509_STORE *ctx, int trust);

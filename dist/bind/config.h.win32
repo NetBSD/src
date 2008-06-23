@@ -1,8 +1,8 @@
 /*
- * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.win32,v 1.8.18.6 2006/09/27 00:29:46 marka Exp */
+/* Id: config.h.win32,v 1.16.130.2 2008/04/02 23:46:28 tbox Exp */
 
 /*
  * win32 configuration file
@@ -123,9 +123,7 @@
 /* Define if you have DH_generate_parameters(). */
 #define HAVE_DH_GENERATE_PARAMETERS
 
-#define ISC_PLATFORM_NEEDSTRLCAT
-
-#define ISC_PLATFORM_NEEDSTRLCPY
+#define WANT_IPV6
 
 #define S_IFMT   _S_IFMT         /* file type mask */
 #define S_IFDIR  _S_IFDIR        /* directory */
@@ -146,7 +144,7 @@
 
 /* open() under unix allows setting of read/write permissions
  * at the owner, group and other levels.  These don't exist in NT
- * We'll just map them all to the NT equivalent 
+ * We'll just map them all to the NT equivalent
  */
 
 #define S_IRUSR _S_IREAD	/* Owner read permission */
@@ -196,7 +194,7 @@ typedef long off_t;
  */
 #include <versions.h>
 
-/* We actually are using the CryptAPI and not a device */ 
+/* We actually are using the CryptAPI and not a device */
 #define PATH_RANDOMDEV		"CryptAPI"
 
 #include <stddef.h>

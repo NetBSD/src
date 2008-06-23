@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.79 2008/04/08 12:07:26 cegger Exp $	*/
+/*	$NetBSD: midway.c,v 1.79.6.1 2008/06/23 04:31:05 wrstuden Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.79 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.79.6.1 2008/06/23 04:31:05 wrstuden Exp $");
 
 #include "opt_natm.h"
 
@@ -1153,7 +1153,7 @@ void *data;
 
 {
 #ifdef MISSING_IF_SOFTC
-    struct en_softc *sc = (struct en_softc *) en_cd.cd_devs[ifp->if_unit];
+    struct en_softc *sc = (struct en_softc *)device_lookup_private(&en_cd, ifp->if_unit);
 #else
     struct en_softc *sc = (struct en_softc *) ifp->if_softc;
 #endif
@@ -1689,7 +1689,7 @@ struct ifnet *ifp;
 
 {
 #ifdef MISSING_IF_SOFTC
-    struct en_softc *sc = (struct en_softc *) en_cd.cd_devs[ifp->if_unit];
+    struct en_softc *sc = (struct en_softc *)device_lookup_private(&en_cd, ifp->if_unit);
 #else
     struct en_softc *sc = (struct en_softc *) ifp->if_softc;
 #endif
@@ -3424,7 +3424,7 @@ int unit, level;
   for (lcv = 0 ; lcv < en_cd.cd_ndevs ; lcv++) {
     char sbuf[256];
 
-    sc = device_lookup(&en_cd, lcv);
+    sc = device_lookup_private(&en_cd, lcv);
     if (sc == NULL) continue;
     if (unit != -1 && unit != lcv)
       continue;
@@ -3590,7 +3590,7 @@ int unit, addr, len;
   struct en_softc *sc;
   u_int32_t reg;
 
-  sc = device_lookup(&en_cd, unit);
+  sc = device_lookup_private(&en_cd, unit);
   if (sc == NULL) {
     printf("invalid unit number: %d\n", unit);
     return(0);

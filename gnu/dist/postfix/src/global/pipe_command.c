@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.c,v 1.1.1.12 2006/12/21 02:32:24 rpaulo Exp $	*/
+/*	$NetBSD: pipe_command.c,v 1.1.1.12.12.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -403,7 +403,7 @@ int     pipe_command(VSTREAM *src, DSN_BUF *why,...)
     char  **cpp;
     ARGV   *argv;
     DSN_SPLIT dp;
-    SYS_EXITS_DETAIL *sp;
+    const SYS_EXITS_DETAIL *sp;
 
     /*
      * Process the variadic argument list. This also does sanity checks on

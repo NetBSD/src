@@ -19,6 +19,9 @@ rem BuildSetup.bat
 rem This script sets up the files necessary ready to build BIND 9.
 rem This requires perl to be installed on the system.
 
+rem Get and update for the latest build of the openssl library
+perl updateopenssl.pl
+
 rem Set up the configuration file
 cd ..
 copy config.h.win32 config.h
@@ -30,10 +33,6 @@ perl makeversion.pl
 rem Generate header files for lib/dns
 
 call dnsheadergen.bat
-
-echo Ensure that the OpenSSL sources are at the same level in
-echo the directory tree and is named openssl-0.9.8d or libdns
-echo will not build. 
 
 rem Make sure that the Build directories are there.
 
@@ -52,10 +51,22 @@ copy ..\doc\arm\Bv9ARM.pdf ..\Build\Release
 copy ..\CHANGES ..\Build\Release
 copy ..\FAQ ..\Build\Release
 
-echo Copying the OpenSSL DLL.
+echo Copying the standalone manual pages.
 
-copy ..\..\openssl-0.9.8d\out32dll\libeay32.dll ..\Build\Release\
-copy ..\..\openssl-0.9.8d\out32dll\libeay32.dll ..\Build\Debug\
+copy ..\bin\named\named.html ..\Build\Release
+copy ..\bin\rndc\*.html ..\Build\Release
+copy ..\bin\dig\*.html ..\Build\Release
+copy ..\bin\nsupdate\*.html ..\Build\Release
+copy ..\bin\check\*.html ..\Build\Release
+copy ..\bin\dnssec\dnssec-keygen.html ..\Build\Release
+copy ..\bin\dnssec\dnssec-signzone.html ..\Build\Release
+
+echo Copying the migration notes.
+
+copy ..\doc\misc\migration ..\Build\Release
+copy ..\doc\misc\migration-4to9 ..\Build\Release
+
+call BuildOpenSSL.bat
 
 rem
 rem set vcredist here so that it is correctly expanded in the if body 
@@ -86,5 +97,11 @@ copy /Y "%FrameworkSDKDir%\%vcredist%" ..\Build\Debug\
 	echo "**** Warning FrameworkSDKDir not defined ****"
 	echo "****         Run vsvars32.bat            ****"
 )
+
+echo Running Message Compiler
+
+cd ..\lib\win32\bindevt
+mc bindevt.mc
+cd ..\..\..\win32utils
 
 rem Done

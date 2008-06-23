@@ -1,4 +1,4 @@
-/*	$NetBSD: dsb_scan.c,v 1.1.1.1 2006/07/19 01:17:23 rpaulo Exp $	*/
+/*	$NetBSD: dsb_scan.c,v 1.1.1.1.22.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -18,7 +18,7 @@
 /*	specified attribute scan routine. dsb_scan() is meant
 /*	to be passed as a call-back to attr_scan(), thusly:
 /*
-/*	... ATTR_SCAN_FUNC, dsb_scan, (void *) &dsbuf, ...
+/*	... ATTR_TYPE_FUNC, dsb_scan, (void *) &dsbuf, ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE

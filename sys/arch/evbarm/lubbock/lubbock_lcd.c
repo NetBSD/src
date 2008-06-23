@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.7 2007/03/04 05:59:45 christos Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.7.46.1 2008/06/23 04:30:18 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.7 2007/03/04 05:59:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.7.46.1 2008/06/23 04:30:18 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,8 @@ lcdclose( dev_t dev, int fflag, int devtype, struct lwp *l )
 paddr_t
 lcdmmap( dev_t dev, off_t offset, int size )
 {
-	struct pxa2x0_lcd_softc *sc = device_lookup(&lcd_cd, minor(dev));
+	struct pxa2x0_lcd_softc *sc =
+		device_lookup_private(&lcd_cd, minor(dev));
 	struct pxa2x0_lcd_screen *scr = sc->active;
 
 	return bus_dmamem_mmap( &pxa2x0_bus_dma_tag, scr->segs, scr->nsegs,
