@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.26 2008/06/23 00:56:08 dyoung Exp $	*/
+/*	$NetBSD: pfil.c,v 1.27 2008/06/23 03:13:12 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.26 2008/06/23 00:56:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.27 2008/06/23 03:13:12 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -94,8 +94,7 @@ pfil_head_register(struct pfil_head *ph)
 {
 	struct pfil_head *lph;
 
-	for (lph = LIST_FIRST(&pfil_head_list); lph != NULL;
-	     lph = LIST_NEXT(lph, ph_list)) {
+	LIST_FOREACH(lph, &pfil_head_list, ph_list) {
 		if (ph->ph_type == lph->ph_type &&
 		    ph->ph_un.phu_val == lph->ph_un.phu_val)
 			return EEXIST;
@@ -131,10 +130,8 @@ pfil_head_get(int type, u_long val)
 {
 	struct pfil_head *ph;
 
-	for (ph = LIST_FIRST(&pfil_head_list); ph != NULL;
-	     ph = LIST_NEXT(ph, ph_list)) {
-		if (ph->ph_type == type &&
-		    ph->ph_un.phu_val == val)
+	LIST_FOREACH(ph, &pfil_head_list, ph_list) {
+		if (ph->ph_type == type && ph->ph_un.phu_val == val)
 			break;
 	}
 
