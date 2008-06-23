@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.33 2006/10/07 17:27:57 elad Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.34 2008/06/23 04:55:27 dholland Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -762,7 +762,6 @@ autoifprobe(void)
 		if (!argv[n])
 			err(1, "strdup");
 		n++;
-		argv[n] = NULL;
 	}
 
 	if (n) {
