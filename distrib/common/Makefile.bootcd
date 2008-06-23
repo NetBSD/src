@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.13 2007/11/23 16:19:28 sborrill Exp $
+#	$NetBSD: Makefile.bootcd,v 1.14 2008/06/23 02:16:53 matt Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -111,14 +111,14 @@ prepare:
 copy-releasedir:
 	${RM} -f ${RELEASEDIR}/${CDROMS_RELEASEDIR}/${CDBASE}.iso
 	if ${CDRELEASE}; then 						\
-		if [ ! -d ${RELEASEDIR}/${MACHINE} ]; then 		\
-			echo "Missing ${RELEASEDIR}/${MACHINE}, aborting"; \
+		if [ ! -d ${RELEASEDIR}/${RELEASEMACHINEDIR} ]; then 		\
+			echo "Missing ${RELEASEDIR}/${RELEASEMACHINEDIR}, aborting"; \
 			exit 1; 					\
 		fi; 							\
 		${MKDIR} cdrom/${MACHINE}; 				\
 		curdir=$$(pwd);						\
 		release_destdir=$$(pwd)/cdrom/${MACHINE}; 		\
-		cd ${RELEASEDIR}/${MACHINE}; 				\
+		cd ${RELEASEDIR}/${RELEASEMACHINEDIR}; 				\
 		echo Copying $$(pwd) to $$release_destdir ...; 		\
 		${TOOL_PAX} 						\
 			-rw -pe -v 					\

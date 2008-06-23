@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2007/05/05 15:00:43 isaki Exp $
+#	$NetBSD: Makefile,v 1.7 2008/06/23 02:16:54 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -21,7 +21,7 @@ realall: ${UUDECODE_FILES}
 release:
 .for archive in ${ARCHIVES}
 	${RELEASE_INSTALL} ${MEMBER_${archive}} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 .endfor
 
 .include <bsd.files.mk>

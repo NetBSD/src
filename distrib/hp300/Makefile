@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2007/03/06 21:57:01 bouyer Exp $
+#	$NetBSD: Makefile,v 1.18 2008/06/23 02:16:53 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,7 +8,7 @@ TARGETS+=	release
 
 release: check_RELEASEDIR .WAIT HP-IB.geometry
 	${RELEASE_INSTALL} ${.CURDIR}/HP-IB.geometry \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 
 iso_image:
 	${MAKEDIRTARGET} cdroms iso_image
