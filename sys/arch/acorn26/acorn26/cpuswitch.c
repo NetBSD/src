@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.15 2007/11/29 14:30:32 ad Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.16 2008/06/23 17:58:17 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.15 2007/11/29 14:30:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.16 2008/06/23 17:58:17 matt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -55,14 +55,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.15 2007/11/29 14:30:32 ad Exp $");
 #include <machine/frame.h>
 #include <machine/machdep.h>
 
-struct pcb *curpcb;
-
 /*
  * Switch to the indicated lwp.
  */
 lwp_t *
 cpu_switchto(lwp_t *old, lwp_t *new, bool returning)
 {
+	struct cpu_info * const ci = curcpu();
 	struct proc *p2;
 
 	/*
@@ -74,7 +73,7 @@ cpu_switchto(lwp_t *old, lwp_t *new, bool returning)
 #endif
 
 	curlwp = new;
-	curpcb = &curlwp->l_addr->u_pcb;
+	ci->ci_curpcb = &curlwp->l_addr->u_pcb;
 
 	if ((new->l_flag & LW_SYSTEM) == 0) {
 		/* Check for Restartable Atomic Sequences. */

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.13 2007/10/17 19:52:52 garbled Exp $ */
+/* $NetBSD: locore.S,v 1.14 2008/06/23 17:58:17 matt Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -185,7 +185,7 @@ pull_trapframe:
 	movs	pc, lr			
 
 Lastpending:
-	.word	_C_LABEL(astpending)
+	.word	_C_LABEL(cpu_info_store) + CI_ASTPENDING
 	.global	reset_entry
 reset_entry:
 	mov	ip, sp
@@ -462,4 +462,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.13 2007/10/17 19:52:52 garbled Exp $")
+RCSID("$NetBSD: locore.S,v 1.14 2008/06/23 17:58:17 matt Exp $")
