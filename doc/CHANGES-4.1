@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.62 2008/06/08 20:10:48 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.63 2008/06/23 06:38:45 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1136,4 +1136,16 @@ sys/arch/m68k/m68k/pmap_motorola.c		1.22
 	fix some obvious locking problems. Fix panic reported in
 	http://mail-index.netbsd.org/tech-kern/2006/12/12/0000.html
 	[hauke, ticket #1158]
+
+src/gnu/dist/binutils/bfd/tekhex.c		1.2
+
+	Fix for PR #33551 (a.k.a CVE-2006-2362)
+	Back port from the binutils CVS tree.
+	Buffer overflow in getsym in tekhex.c in libbfd in Free Software
+	Foundation GNU Binutils before 20060423, as used by GNU strings,
+	allows context-dependent attackers to cause a denial of service
+	(application crash) and possibly execute arbitrary code via a file
+	with a crafted Tektronix Hex Format (TekHex) record in which the
+	length character is not a valid hexadecimal character.
+	[adrianp, ticket #1160]
 
