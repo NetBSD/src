@@ -1,10 +1,10 @@
-/*	$NetBSD: result.h,v 1.1.1.5 2007/01/27 21:07:38 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.5.12.1 2008/06/23 04:28:16 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.h,v 1.104.10.6 2005/06/17 02:04:32 marka Exp */
+/* Id: result.h,v 1.114 2007/06/19 23:47:17 tbox Exp */
 
 #ifndef DNS_RESULT_H
 #define DNS_RESULT_H 1
 
-/*! \file */
+/*! \file dns/result.h */
 
 #include <isc/lang.h>
 #include <isc/resultclass.h>

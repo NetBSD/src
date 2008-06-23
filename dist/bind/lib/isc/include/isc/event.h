@@ -1,10 +1,10 @@
-/*	$NetBSD: event.h,v 1.1.1.4 2007/01/27 21:07:53 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.4.12.1 2008/06/23 04:28:26 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: event.h,v 1.27.18.3 2005/04/29 00:16:54 marka Exp */
+/* Id: event.h,v 1.34 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_EVENT_H
 #define ISC_EVENT_H 1
 
-/*! \file */
+/*! \file isc/event.h */
 
 #include <isc/lang.h>
 #include <isc/types.h>

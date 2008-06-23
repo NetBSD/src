@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.15 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.15.2.1 2008/06/23 04:30:47 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.15 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.15.2.1 2008/06/23 04:30:47 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -89,7 +89,7 @@ static int ne_neptune_intr(void *);
 
 #define ne_neptune_softc ne2000_softc
 
-CFATTACH_DECL(ne_neptune, sizeof(struct ne_neptune_softc),
+CFATTACH_DECL_NEW(ne_neptune, sizeof(struct ne_neptune_softc),
     ne_neptune_match, ne_neptune_attach, NULL, NULL);
 
 int

@@ -1,10 +1,10 @@
-/*	$NetBSD: parseint.h,v 1.1.1.2 2007/01/27 21:07:55 christos Exp $	*/
+/*	$NetBSD: parseint.h,v 1.1.1.2.12.1 2008/06/23 04:28:27 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parseint.h,v 1.3.18.2 2005/04/29 00:17:00 marka Exp */
+/* Id: parseint.h,v 1.9 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_PARSEINT_H
 #define ISC_PARSEINT_H 1
@@ -25,7 +25,7 @@
 #include <isc/lang.h>
 #include <isc/types.h>
 
-/*! \file
+/*! \file isc/parseint.h
  * \brief Parse integers, in a saner way than atoi() or strtoul() do.
  */
 

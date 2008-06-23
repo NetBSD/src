@@ -1,8 +1,10 @@
-#	$NetBSD: master.cf,v 1.15 2007/05/19 17:49:39 heas Exp $
+#	$NetBSD: master.cf,v 1.15.12.1 2008/06/23 04:29:06 wrstuden Exp $
 #
 #
 # Postfix master process configuration file.  For details on the format
 # of the file, see the master(5) manual page (command: "man 5 master").
+#
+# Do not forget to execute "postfix reload" after editing this file.
 #
 # ==========================================================================
 # service type  private unpriv  chroot  wakeup  maxproc command + args
@@ -10,13 +12,15 @@
 # ==========================================================================
 #smtp      inet  n       -       n       -       -       smtpd
 #submission inet n       -       n       -       -       smtpd
-#  -o smtpd_enforce_tls=yes
+#  -o smtpd_tls_security_level=encrypt
 #  -o smtpd_sasl_auth_enable=yes
 #  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+#  -o milter_macro_daemon_name=ORIGINATING
 #smtps     inet  n       -       n       -       -       smtpd
 #  -o smtpd_tls_wrappermode=yes
 #  -o smtpd_sasl_auth_enable=yes
 #  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+#  -o milter_macro_daemon_name=ORIGINATING
 #628      inet  n       -       n       -       -       qmqpd
 pickup    fifo  n       -       n       60      1       pickup
 cleanup   unix  n       -       n       -       0       cleanup
@@ -30,10 +34,11 @@ trace     unix  -       -       n       -       0       bounce
 verify    unix  -       -       n       -       1       verify
 flush     unix  n       -       n       1000?   0       flush
 proxymap  unix  -       -       n       -       -       proxymap
+proxywrite unix -       -       n       -       1       proxymap
 smtp      unix  -       -       n       -       -       smtp
 # When relaying mail as backup MX, disable fallback_relay to avoid MX loops
 relay     unix  -       -       n       -       -       smtp
-	-o fallback_relay=
+	-o smtp_fallback_relay=
 #       -o smtp_helo_timeout=5 -o smtp_connect_timeout=5
 showq     unix  n       -       n       -       -       showq
 error     unix  -       -       n       -       -       error
@@ -43,7 +48,7 @@ local     unix  -       n       n       -       -       local
 virtual   unix  -       n       n       -       -       virtual
 lmtp      unix  -       -       n       -       -       lmtp
 anvil     unix  -       -       n       -       1       anvil
-scache	  unix	-	-	n	-	1	scache
+scache    unix  -       -       n       -       1       scache
 #
 # ====================================================================
 # Interfaces to non-Postfix software. Be sure to examine the manual

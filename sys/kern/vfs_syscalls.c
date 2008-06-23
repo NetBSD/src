@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.359.2.2 2008/05/14 01:35:14 wrstuden Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.359.2.3 2008/06/23 04:31:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359.2.2 2008/05/14 01:35:14 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359.2.3 2008/06/23 04:31:52 wrstuden Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359.2.2 2008/05/14 01:35:14 wrstu
 #include <sys/verified_exec.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
@@ -284,16 +285,23 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 		fstypename[0] = 'f';
 #endif
 
-	if ((*vfsops = vfs_getopsbyname(fstypename)) == NULL)
-		return ENODEV;
-	return 0;
+	if ((*vfsops = vfs_getopsbyname(fstypename)) != NULL)
+		return 0;
+
+	/* If we can autoload a vfs module, try again */
+	(void)module_load(fstype, 0, NULL, MODULE_CLASS_VFS, true);
+
+	if ((*vfsops = vfs_getopsbyname(fstypename)) != NULL)
+		return 0;
+
+	return ENODEV;
 }
 
 static int
 mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
     const char *path, int flags, void *data, size_t *data_len, u_int recurse)
 {
-	struct mount *mp = NULL;
+	struct mount *mp;
 	struct vnode *vp = *vpp;
 	struct vattr va;
 	int error;
@@ -494,18 +502,22 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	 * A lookup in VFS_MOUNT might result in an attempt to
 	 * lock this vnode again, so make the lock recursive.
 	 */
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	recurse = vn_setrecurse(vp);
-  
 	if (vfsops == NULL) {
-		if (flags & (MNT_GETARGS | MNT_UPDATE))
+		if (flags & (MNT_GETARGS | MNT_UPDATE)) {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			recurse = vn_setrecurse(vp);
 			vfsops = vp->v_mount->mnt_op;
-		else {
+		} else {
 			/* 'type' is userspace */
 			error = mount_get_vfsops(type, &vfsops);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			recurse = vn_setrecurse(vp);
 			if (error != 0)
 				goto done;
 		}
+	} else {
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		recurse = vn_setrecurse(vp);
 	}
 
 	if (data != NULL && data_seg == UIO_USERSPACE) {
@@ -891,6 +903,7 @@ done:
 	if (cwdi->cwdi_rdir != NULL) {
 		size_t len;
 		char *bp;
+		char c;
 		char *path = PNBUF_GET();
 
 		bp = path + MAXPATHLEN;
@@ -910,8 +923,9 @@ done:
 		 * rest we cannot see, so we don't allow viewing the
 		 * data.
 		 */
-		if (strncmp(bp, sp->f_mntonname, len) == 0) {
-			strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
+		if (strncmp(bp, sp->f_mntonname, len) == 0 &&
+		    ((c = sp->f_mntonname[len]) == '/' || c == '\0')) {
+			(void)strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
 			    sizeof(sp->f_mntonname));
 			if (sp->f_mntonname[0] == '\0')
 				(void)strlcpy(sp->f_mntonname, "/",
@@ -1036,6 +1050,7 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 			error = dostatvfs(mp, sb, l, flags, 0);
 			if (error) {
 				vfs_unbusy(mp, false, &nmp);
+				error = 0;
 				continue;
 			}
 			error = copyfn(sb, sfsp, entry_sz);
@@ -1059,8 +1074,11 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 		    sb, l, flags, 1);
 		if (error != 0)
 			goto out;
-		if (sfsp)
+		if (sfsp) {
 			error = copyfn(sb, sfsp, entry_sz);
+			if (error != 0)
+				goto out;
+		}
 		count++;
 	}
 	if (sfsp && count > maxcount)
@@ -3003,41 +3021,52 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	struct vattr vattr;
 	struct nameidata nd;
 	int error;
+	bool vanull, setbirthtime;
+	struct timespec ts[2];
 
-	VATTR_NULL(&vattr);
 	if (tptr == NULL) {
-		nanotime(&vattr.va_atime);
-		vattr.va_mtime = vattr.va_atime;
-		vattr.va_vaflags |= VA_UTIMES_NULL;
+		vanull = true;
+		nanotime(&ts[0]);
+		ts[1] = ts[0];
 	} else {
 		struct timeval tv[2];
 
+		vanull = false;
 		if (seg != UIO_SYSSPACE) {
 			error = copyin(tptr, &tv, sizeof (tv));
 			if (error != 0)
 				return error;
 			tptr = tv;
 		}
-		TIMEVAL_TO_TIMESPEC(tptr, &vattr.va_atime);
-		TIMEVAL_TO_TIMESPEC(tptr + 1, &vattr.va_mtime);
+		TIMEVAL_TO_TIMESPEC(&tptr[0], &ts[0]);
+		TIMEVAL_TO_TIMESPEC(&tptr[1], &ts[1]);
 	}
 
 	if (vp == NULL) {
 		NDINIT(&nd, LOOKUP, flag | TRYEMULROOT, UIO_USERSPACE, path);
 		if ((error = namei(&nd)) != 0)
-			return (error);
+			return error;
 		vp = nd.ni_vp;
 	} else
 		nd.ni_vp = NULL;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	setbirthtime = (VOP_GETATTR(vp, &vattr, l->l_cred) == 0 &&
+	    timespeccmp(&ts[1], &vattr.va_birthtime, <));
+	VATTR_NULL(&vattr);
+	vattr.va_atime = ts[0];
+	vattr.va_mtime = ts[1];
+	if (setbirthtime)
+		vattr.va_birthtime = ts[1];
+	if (vanull)
+		vattr.va_flags |= VA_UTIMES_NULL;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	VOP_UNLOCK(vp, 0);
 
 	if (nd.ni_vp != NULL)
 		vrele(nd.ni_vp);
 
-	return (error);
+	return error;
 }
 
 /*

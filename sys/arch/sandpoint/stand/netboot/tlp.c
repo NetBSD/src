@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.15 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: tlp.c,v 1.15.2.1 2008/06/23 04:30:39 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,35 +57,40 @@ void *tlp_init(unsigned, void *);
 int tlp_send(void *, char *, unsigned);
 int tlp_recv(void *, char *, unsigned, unsigned);
 
+struct desc {
+	uint32_t xd0, xd1, xd2, xd3;
+};
 #define T0_OWN		(1U<<31)	/* desc is ready to tx */
 #define T0_ES		(1U<<15)	/* Tx error summary */
 #define T1_LS		(1U<<30)	/* last segment */
 #define T1_FS		(1U<<29)	/* first segment */
 #define T1_SET		(1U<<27)	/* "setup packet" */
 #define T1_TER		(1U<<25)	/* end of ring mark */
+#define T1_TCH		(1U<<24)	/* TDES3 points the next desc */
 #define T1_TBS_MASK	0x7ff		/* segment size 10:0 */
 #define R0_OWN		(1U<<31)	/* desc is empty */
 #define R0_FS		(1U<<30)	/* first desc of frame */
 #define R0_LS		(1U<<8)		/* last desc of frame */
 #define R0_ES		(1U<<15)	/* Rx error summary */
 #define R1_RER		(1U<<25)	/* end of ring mark */
+#define R1_RCH		(1U<<24)	/* RDES3 points the next desc */
 #define R0_FLMASK	0x3fff0000	/* frame length 29:16 */
 #define R1_RBS_MASK	0x7ff		/* segment size 10:0 */
 
-struct desc {
-	uint32_t xd0, xd1, xd2, xd3;
-};
-
-#define TLP_BMR		0x000		/* 0: bus mode */
+#define TLP_BMR		0x00		/* 0: bus mode */
 #define  BMR_RST	01
-#define TLP_TPD		0x008		/* 1: instruct Tx to start */
-#define TLP_RPD		0x010		/* 2: instruct Rx to start */
-#define TLP_RRBA	0x018		/* 3: Rx descriptor base */
-#define TLP_TRBA	0x020		/* 4: Tx descriptor base */
-#define TLP_STS		0x028		/* 5: status */
+#define  BMR_CAL8	0x00004000	/* 32B cache alignment */
+#define  BMR_CAL16	0x00008000	/* 64B */
+#define  BMR_CAL32	0x0000c000	/* 128B */
+#define  BMR_CAL	0x0000c000
+#define TLP_TPD		0x08		/* 1: instruct Tx to start */
+#define TLP_RPD		0x10		/* 2: instruct Rx to start */
+#define TLP_RRBA	0x18		/* 3: Rx descriptor base */
+#define TLP_TRBA	0x20		/* 4: Tx descriptor base */
+#define TLP_STS		0x28		/* 5: status */
 #define  STS_TS		0x00700000	/* Tx status */
 #define  STS_RS		0x000e0000	/* Rx status */
-#define TLP_OMR		0x030		/* 6: operation mode */
+#define TLP_OMR		0x30		/* 6: operation mode */
 #define  OMR_SDP	(1U<<25)	/* always ON */
 #define  OMR_PS		(1U<<18)	/* port select */
 #define  OMR_PM		(1U<< 6)	/* promiscuous */
@@ -93,7 +98,7 @@ struct desc {
 #define  OMR_REN	(1U<< 1)	/* instruct start/stop Rx */
 #define  OMR_FD		(1U<< 9)	/* FDX */
 #define TLP_IEN		0x38		/* 7: interrupt enable mask */
-#define TLP_APROM	0x048		/* 9: SEEPROM and MII management */
+#define TLP_APROM	0x48		/* 9: SEEPROM and MII management */
 #define  SROM_RD	(1U <<14)	/* read operation */
 #define  SROM_WR	(1U <<13)	/* write openration */
 #define  SROM_SR	(1U <<11)	/* SEEPROM select */
@@ -118,6 +123,19 @@ static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 static void mii_dealan(struct local *, unsigned);
 
+int
+tlp_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x1011, 0x0009):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 tlp_init(unsigned tag, void *data)
 {
@@ -126,11 +144,6 @@ tlp_init(unsigned tag, void *data)
 	struct desc *txd, *rxd;
 	uint8_t *en;
 	uint32_t *p;
-
-	val = pcicfgread(tag, PCI_ID_REG);
-	/* genuine DE500 */
-	if (PCI_DEVICE(0x1011, 0x0009) != val)
-		return NULL;
 	
 	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
@@ -139,6 +152,16 @@ tlp_init(unsigned tag, void *data)
 	val = CSR_READ(l, TLP_BMR);
 	CSR_WRITE(l, TLP_BMR, val | BMR_RST);
 	DELAY(1000);
+	val &= ~BMR_CAL;
+	switch (pcicfgread(tag, 0x0c) & 0xff) {
+	case 32:
+		val |= BMR_CAL32; break;
+	case 16:
+		val |= BMR_CAL16; break;
+	case 8:
+	default:
+		val |= BMR_CAL8; break;
+	}
 	CSR_WRITE(l, TLP_BMR, val);
 	DELAY(1000);
 	(void)CSR_READ(l, TLP_BMR);
@@ -164,20 +187,20 @@ tlp_init(unsigned tag, void *data)
 	txd = &l->txd;
 	rxd = &l->rxd[0];
 	rxd[0].xd0 = htole32(R0_OWN);
-	rxd[0].xd1 = htole32(FRAMESIZE);
+	rxd[0].xd1 = htole32(R1_RCH | FRAMESIZE);
 	rxd[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
 	rxd[0].xd3 = htole32(VTOPHYS(&rxd[1]));
 	rxd[1].xd0 = htole32(R0_OWN);
 	rxd[1].xd1 = htole32(R1_RER | FRAMESIZE);
 	rxd[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
-	rxd[1].xd3 = htole32(VTOPHYS(&rxd[0]));
+	/* R1_RER neglects xd3 */
 	l->rx = 0;
 
 	/* "setup frame" to have own station address */
 	txd = &l->txd;
 	txd->xd3 = htole32(VTOPHYS(txd));
 	txd->xd2 = htole32(VTOPHYS(l->txstore));
-	txd->xd1 = htole32(T1_SET | T1_TER | sizeof(l->txstore));
+	txd->xd1 = htole32(T1_SET | sizeof(l->txstore));
 	txd->xd0 = htole32(T0_OWN);
 	p = (uint32_t *)l->txstore;
 	p[0] = htole32(en[1] << 8 | en[0]);
@@ -206,20 +229,21 @@ int
 tlp_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *txd;
-	unsigned loop;
+	volatile struct desc *txd;
+	unsigned txstat, loop;
 
+	/* send a single frame with no T1_TER|T1_TCH designation */
 	wbinv(buf, len);
 	txd = &l->txd;
-	txd->xd3 = htole32(VTOPHYS(txd));
 	txd->xd2 = htole32(VTOPHYS(buf));
-	txd->xd1 = htole32(T1_FS | T1_LS | T1_TER | (len & T1_TBS_MASK));
+	txd->xd1 = htole32(T1_FS | T1_LS | (len & T1_TBS_MASK));
 	txd->xd0 = htole32(T0_OWN);
 	wbinv(txd, sizeof(struct desc));
 	CSR_WRITE(l, TLP_TPD, 01);
 	loop = 100;
 	do {
-		if ((le32toh(txd->xd0) & T0_OWN) == 0)
+		txstat = le32toh(txd->xd0);
+		if ((txstat & T0_OWN) == 0)
 			goto done;
 		DELAY(10);
 		inv(txd, sizeof(struct desc));
@@ -234,7 +258,7 @@ int
 tlp_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *rxd;
+	volatile struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

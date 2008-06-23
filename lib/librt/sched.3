@@ -1,4 +1,4 @@
-.\"	$NetBSD: sched.3,v 1.2 2008/04/30 13:10:52 martin Exp $
+.\"	$NetBSD: sched.3,v 1.2.2.1 2008/06/23 04:29:54 wrstuden Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 10, 2008
+.Dd June 16, 2008
 .Dt SCHED 3
 .Os
 .Sh NAME
@@ -225,6 +225,8 @@ and value of
 is not zero.
 .El
 .Sh SEE ALSO
+.Xr affinity 3 ,
+.Xr cpuset 3 ,
 .Xr pset 3 ,
 .Xr schedctl 8
 .Sh STANDARDS
@@ -234,6 +236,3 @@ standard.
 .Sh HISTORY
 The scheduling functions appeared in
 .Nx 5.0 .
-.Sh BUGS
-Currently, these functions are valid and work correctly only with the
-SCHED_M2 thread scheduler implementation.

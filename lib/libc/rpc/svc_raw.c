@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.20 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.20.2.1 2008/06/23 04:29:32 wrstuden Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_raw.c 1.25 89/01/31 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_raw.c,v 1.20 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: svc_raw.c,v 1.20.2.1 2008/06/23 04:29:32 wrstuden Exp $");
 #endif
 #endif
 
@@ -121,6 +121,8 @@ svc_raw_create()
 	mutex_unlock(&svcraw_lock);
 	return (&srp->server);
 out:
+	if (srp != NULL)
+		free(srp);
 	mutex_unlock(&svcraw_lock);
 	return (NULL);
 }

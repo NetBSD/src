@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.11 2008/04/13 21:45:19 christos Exp $	*/
+/*	$NetBSD: privsep.c,v 1.11.4.1 2008/06/23 04:26:46 wrstuden Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -608,24 +608,7 @@ privsep_init(void)
 				goto out;
 			}
 
-			switch (bind_args.addr->sa_family) {
-			case AF_INET:
-				port = ntohs(((struct sockaddr_in *)
-					      bind_args.addr)->sin_port);
-				break;
-			case AF_INET6:
-				port = ntohs(((struct sockaddr_in6 *)
-					      bind_args.addr)->sin6_port);
-				break;
-			default:
-				plog(LLV_ERROR, LOCATION, NULL,
-				     "privsep_bind: "
-				     "unauthorized address family (%d)\n",
-				     bind_args.addr->sa_family);
-				close(bind_args.s);
-				goto out;
-			}
-
+			port = extract_port(bind_args.addr);
 			if (port != PORT_ISAKMP && port != PORT_ISAKMP_NATT &&
 			    port != lcconf->port_isakmp &&
 			    port != lcconf->port_isakmp_natt) {
@@ -885,8 +868,10 @@ privsep_init(void)
 
 		/* This frees reply */
 		if (privsep_send(privsep_sock[0], 
-		    reply, reply->hdr.ac_len) != 0)
+		    reply, reply->hdr.ac_len) != 0) {
+			racoon_free(reply);
 			goto out;
+		}
 
 		racoon_free(combuf);
 	}
@@ -1178,12 +1163,13 @@ privsep_socket(domain, type, protocol)
 	msg->bufs.buflen[0] = sizeof(socket_args);
 	memcpy(data, &socket_args, msg->bufs.buflen[0]);
 
+	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		goto out;
 
 	/* Get the privileged socket descriptor from the privileged process. */
 	if ((s = rec_fd(privsep_sock[1])) == -1)
-		goto out;
+		return -1;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
 		goto out;
@@ -1251,12 +1237,13 @@ privsep_bind(s, addr, addrlen)
 	msg->bufs.buflen[1] = addrlen;
 	memcpy(data, addr, addrlen);
 
+	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		goto out;
 
 	/* Send the socket descriptor to the privileged process. */
 	if (send_fd(privsep_sock[1], s) < 0)
-		goto out;
+		return -1;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
 		goto out;
@@ -1330,11 +1317,12 @@ privsep_setsockopt(s, level, optname, optval, optlen)
 	msg->bufs.buflen[1] = optlen;
 	memcpy(data, optval, optlen);
 
+	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		goto out;
 
 	if (send_fd(privsep_sock[1], s) < 0)
-		goto out;
+		return -1;
 
 	if (privsep_recv(privsep_sock[1], &msg, &len) != 0) {
 	    plog(LLV_ERROR, LOCATION, NULL,
@@ -1386,6 +1374,7 @@ privsep_xauth_login_system(usr, pwd)
 	msg->bufs.buflen[1] = strlen(pwd) + 1;
 	memcpy(data, pwd, msg->bufs.buflen[1]);
 	
+	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		return -1;
 
@@ -1448,6 +1437,7 @@ privsep_accounting_system(port, raddr, usr, inout)
 	data += msg->bufs.buflen[2];
 	memcpy(data, &inout, msg->bufs.buflen[3]);
 
+	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		return -1;
 
@@ -1692,6 +1682,7 @@ privsep_accounting_pam(port, inout)
 	*inout_data = inout;
 	*pool_size_data = isakmp_cfg_config.pool_size;
 
+	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		return -1;
 
@@ -1762,6 +1753,7 @@ privsep_xauth_login_pam(port, raddr, usr, pwd)
 	data += msg->bufs.buflen[3];
 	memcpy(data, pwd, msg->bufs.buflen[4]);
 
+	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		return -1;
 
@@ -1814,6 +1806,7 @@ privsep_cleanup_pam(port)
 	data += msg->bufs.buflen[0];
 	memcpy(data, &isakmp_cfg_config.pool_size, msg->bufs.buflen[1]);
 
+	/* frees msg */
 	if (privsep_send(privsep_sock[1], msg, len) != 0)
 		return;
 

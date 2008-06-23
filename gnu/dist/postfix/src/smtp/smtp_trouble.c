@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_trouble.c,v 1.1.1.7 2006/07/19 01:17:44 rpaulo Exp $	*/
+/*	$NetBSD: smtp_trouble.c,v 1.1.1.7.20.1 2008/06/23 04:29:23 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -246,7 +246,8 @@ static int smtp_bulk_fail(SMTP_STATE *state, int throttle_queue)
 	    SMTP_RCPT_DROP(state, rcpt);
 	    state->status |= status;
 	}
-	if (throttle_queue && soft_error && request->hop_status == 0)
+	if ((state->misc_flags & SMTP_MISC_FLAG_COMPLETE_SESSION) == 0
+	    && throttle_queue && soft_error && request->hop_status == 0)
 	    request->hop_status = DSN_COPY(&why->dsn);
     }
 

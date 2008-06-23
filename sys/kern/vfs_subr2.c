@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.24 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.24.2.1 2008/06/23 04:31:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.24 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.24.2.1 2008/06/23 04:31:52 wrstuden Exp $");
 
 #include "opt_ddb.h"
 
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.24 2008/05/06 18:43:44 ad Exp $");
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/atomic.h>
+#include <sys/namei.h>
 
 #include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -483,6 +484,7 @@ bgetvp(struct vnode *vp, struct buf *bp)
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	vholdl(vp);
 	bp->b_vp = vp;
@@ -511,6 +513,7 @@ brelvp(struct buf *bp)
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/*
 	 * Delete from old vnode list, if on one.
@@ -862,10 +865,7 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 		if (cwdi->cwdi_rdir != NULL) {
 			size_t len;
 			char *bp;
-			char *path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
-
-			if (!path) /* XXX can't happen with M_WAITOK */
-				return ENOMEM;
+			char *path = PNBUF_GET();
 
 			bp = path + MAXPATHLEN;
 			*--bp = '\0';
@@ -874,7 +874,7 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 			    path, MAXPATHLEN / 2, 0, l);
 			rw_exit(&cwdi->cwdi_lock);
 			if (error) {
-				free(path, M_TEMP);
+				PNBUF_PUT(path);
 				return error;
 			}
 
@@ -882,7 +882,7 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 			if (len > sizeof(sfs->f_mntonname) - 1)
 				len = sizeof(sfs->f_mntonname) - 1;
 			(void)strncpy(sfs->f_mntonname, bp, len);
-			free(path, M_TEMP);
+			PNBUF_PUT(path);
 
 			if (len < sizeof(sfs->f_mntonname) - 1) {
 				error = (*fun)(onp, &sfs->f_mntonname[len],

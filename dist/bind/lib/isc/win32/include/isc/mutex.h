@@ -1,10 +1,10 @@
-/*	$NetBSD: mutex.h,v 1.1.1.4 2007/01/27 21:08:11 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.1.4.12.1 2008/06/23 04:28:36 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mutex.h,v 1.17 2004/03/05 05:12:05 marka Exp */
+/* Id: mutex.h,v 1.19 2007/06/19 23:47:20 tbox Exp */
 
 #ifndef ISC_MUTEX_H
 #define ISC_MUTEX_H 1

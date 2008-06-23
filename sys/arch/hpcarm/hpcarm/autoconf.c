@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2008/02/12 17:30:57 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.12.1 2008/06/23 04:30:22 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2008/02/12 17:30:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.12.1 2008/06/23 04:30:22 wrstuden Exp $");
 
 #include "opt_md.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2008/02/12 17:30:57 joerg Exp $");
 #include <machine/bootconfig.h>
 #include <machine/config_hook.h>
 #include <machine/intr.h>
+#include <arm/arm32/machdep.h>
 
 #include "sacom.h"
 
@@ -162,13 +163,8 @@ cpu_configure(void)
 		panic("configure: mainbus not configured");
 
 	/* Debugging information */
-#ifdef DEBUG
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
-	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY],
-	    imask[IPL_VM]);
-	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
-	    imask[IPL_AUDIO], imask[IPL_CLOCK], imask[IPL_HIGH],
-	    imask[IPL_SERIAL]);
+#ifdef 	DIAGNOSTIC
+	dump_spl_masks();
 #endif
 
 	/* Time to start taking interrupts so lets open the flood gates .... */

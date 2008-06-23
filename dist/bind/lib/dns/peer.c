@@ -1,10 +1,10 @@
-/*	$NetBSD: peer.c,v 1.1.1.4 2007/01/27 21:06:56 christos Exp $	*/
+/*	$NetBSD: peer.c,v 1.1.1.4.12.1 2008/06/23 04:28:05 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: peer.c,v 1.19.18.8 2006/02/28 03:10:48 marka Exp */
+/* Id: peer.c,v 1.29.128.2 2008/04/03 06:08:27 tbox Exp */
 
 /*! \file */
 
@@ -44,6 +44,7 @@
 #define SUPPORT_EDNS_BIT		5
 #define SERVER_UDPSIZE_BIT		6
 #define SERVER_MAXUDP_BIT		7
+#define REQUEST_NSID_BIT                8
 
 static void
 peerlist_delete(dns_peerlist_t **list);
@@ -148,7 +149,7 @@ dns_peerlist_addpeer(dns_peerlist_t *peers, dns_peer_t *peer) {
 		ISC_LIST_INSERTBEFORE(peers->elements, p, peer, next);
 	else
 		ISC_LIST_APPEND(peers->elements, peer, next);
-		
+
 }
 
 isc_result_t
@@ -215,7 +216,7 @@ dns_peer_new(isc_mem_t *mem, isc_netaddr_t *addr, dns_peer_t **peerptr) {
 isc_result_t
 dns_peer_newprefix(isc_mem_t *mem, isc_netaddr_t *addr, unsigned int prefixlen,
 		   dns_peer_t **peerptr)
-{ 
+{
 	dns_peer_t *peer;
 
 	REQUIRE(peerptr != NULL);
@@ -418,6 +419,32 @@ dns_peer_getsupportedns(dns_peer_t *peer, isc_boolean_t *retval) {
 }
 
 isc_result_t
+dns_peer_setrequestnsid(dns_peer_t *peer, isc_boolean_t newval) {
+	isc_boolean_t existed;
+
+	REQUIRE(DNS_PEER_VALID(peer));
+
+	existed = DNS_BIT_CHECK(REQUEST_NSID_BIT, &peer->bitflags);
+
+	peer->request_nsid = newval;
+	DNS_BIT_SET(REQUEST_NSID_BIT, &peer->bitflags);
+
+	return (existed ? ISC_R_EXISTS : ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_peer_getrequestnsid(dns_peer_t *peer, isc_boolean_t *retval) {
+	REQUIRE(DNS_PEER_VALID(peer));
+	REQUIRE(retval != NULL);
+
+	if (DNS_BIT_CHECK(REQUEST_NSID_BIT, &peer->bitflags)) {
+		*retval = peer->request_nsid;
+		return (ISC_R_SUCCESS);
+	} else
+		return (ISC_R_NOTFOUND);
+}
+
+isc_result_t
 dns_peer_settransfers(dns_peer_t *peer, isc_uint32_t newval) {
 	isc_boolean_t existed;
 
@@ -546,7 +573,7 @@ dns_peer_settransfersource(dns_peer_t *peer,
 	}
 	if (transfer_source != NULL) {
 		peer->transfer_source = isc_mem_get(peer->mem,
-					        sizeof(*peer->transfer_source));
+						sizeof(*peer->transfer_source));
 		if (peer->transfer_source == NULL)
 			return (ISC_R_NOMEMORY);
 
@@ -579,7 +606,7 @@ dns_peer_setnotifysource(dns_peer_t *peer,
 	}
 	if (notify_source != NULL) {
 		peer->notify_source = isc_mem_get(peer->mem,
-					        sizeof(*peer->notify_source));
+						sizeof(*peer->notify_source));
 		if (peer->notify_source == NULL)
 			return (ISC_R_NOMEMORY);
 
@@ -610,7 +637,7 @@ dns_peer_setquerysource(dns_peer_t *peer, const isc_sockaddr_t *query_source) {
 	}
 	if (query_source != NULL) {
 		peer->query_source = isc_mem_get(peer->mem,
-					        sizeof(*peer->query_source));
+						sizeof(*peer->query_source));
 		if (peer->query_source == NULL)
 			return (ISC_R_NOMEMORY);
 
@@ -651,11 +678,11 @@ dns_peer_getudpsize(dns_peer_t *peer, isc_uint16_t *udpsize) {
 	REQUIRE(udpsize != NULL);
 
 	if (DNS_BIT_CHECK(SERVER_UDPSIZE_BIT, &peer->bitflags)) {
-                *udpsize = peer->udpsize;
-                return (ISC_R_SUCCESS);
-        } else {
-                return (ISC_R_NOTFOUND);
-        }
+		*udpsize = peer->udpsize;
+		return (ISC_R_SUCCESS);
+	} else {
+		return (ISC_R_NOTFOUND);
+	}
 }
 
 isc_result_t
@@ -679,9 +706,9 @@ dns_peer_getmaxudp(dns_peer_t *peer, isc_uint16_t *maxudp) {
 	REQUIRE(maxudp != NULL);
 
 	if (DNS_BIT_CHECK(SERVER_MAXUDP_BIT, &peer->bitflags)) {
-                *maxudp = peer->maxudp;
-                return (ISC_R_SUCCESS);
-        } else {
-                return (ISC_R_NOTFOUND);
-        }
+		*maxudp = peer->maxudp;
+		return (ISC_R_SUCCESS);
+	} else {
+		return (ISC_R_NOTFOUND);
+	}
 }

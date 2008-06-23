@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.80 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: fd.c,v 1.80.2.1 2008/06/23 04:30:47 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80.2.1 2008/06/23 04:30:47 wrstuden Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -619,13 +619,16 @@ void
 fdstrategy(struct buf *bp)
 {
 	struct fd_softc *fd;
-	int unit = FDUNIT(bp->b_dev);
 	int sz;
 	int s;
 
-	if (unit >= fd_cd.cd_ndevs ||
-	    (fd = fd_cd.cd_devs[unit]) == 0 ||
-	    bp->b_blkno < 0 ||
+	fd = device_lookup_private(&fd_cd, FDUNIT(bp->b_dev));
+	if (fd == NULL) {
+		bp->b_error = EINVAL;
+		goto done;
+	}
+
+	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
 		DPRINTF(("fdstrategy: unit=%d, blkno=%" PRId64 ", "
 			 "bcount=%d\n", unit,
@@ -852,10 +855,8 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	struct fdc_softc *fdc;
 
 	unit = FDUNIT(dev);
-	if (unit >= fd_cd.cd_ndevs)
-		return ENXIO;
-	fd = fd_cd.cd_devs[unit];
-	if (fd == 0)
+	fd = device_lookup_private(&fd_cd, unit);
+	if (fd == NULL)
 		return ENXIO;
 	type = fd_dev_to_type(fd, dev);
 	if (type == NULL)
@@ -865,7 +866,7 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	    fd->sc_type != type)
 		return EBUSY;
 
-	fdc = (void *)device_parent(&fd->sc_dev);
+	fdc = device_private(device_parent(&fd->sc_dev));
 	if ((fd->sc_flags & FD_OPEN) == 0) {
 		/* Lock eject button */
 		bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdout,
@@ -894,8 +895,8 @@ int
 fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = FDUNIT(dev);
-	struct fd_softc *fd = fd_cd.cd_devs[unit];
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
+	struct fd_softc *fd = device_lookup_private(&fd_cd, unit);
+	struct fdc_softc *fdc = device_private(device_parent(&fd->sc_dev));
 
 	DPRINTF(("fdclose %d\n", unit));
 
@@ -1497,9 +1498,8 @@ fdcretry(struct fdc_softc *fdc)
 int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
-	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
-	int unit = FDUNIT(dev);
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
+	struct fdc_softc *fdc = device_private(device_parent(&fd->sc_dev));
 	int part = DISKPART(dev);
 	struct disklabel buffer;
 	int error;
@@ -1568,7 +1568,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 		/* FALLTHROUGH */
 	case ODIOCEJECT:
-		fd_do_eject(fdc, unit);
+		fd_do_eject(fdc, FDUNIT(dev));
 		return 0;
 
 	default:

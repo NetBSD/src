@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.147 2008/04/29 14:35:21 rmind Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.147.2.1 2008/06/23 04:31:51 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,10 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.147 2008/04/29 14:35:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.147.2.1 2008/06/23 04:31:51 wrstuden Exp $");
 
-#include "opt_multiprocessor.h"
 #include "opt_ddb.h"
+#include "drvctl.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.147 2008/04/29 14:35:21 rmind Ex
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/devmon.h>
+#include <sys/cpu.h>
 
 #include <sys/disk.h>
 
@@ -220,7 +222,9 @@ static int alldevs_nread = 0;
 static int alldevs_nwrite = 0;
 static lwp_t *alldevs_writer = NULL;
 
-volatile int config_pending;		/* semaphore for mountroot */
+static int config_pending;		/* semaphore for mountroot */
+static kmutex_t config_misc_lock;
+static kcondvar_t config_misc_cv;
 
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
@@ -354,6 +358,9 @@ config_init(void)
 	mutex_init(&alldevs_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&alldevs_cv, "alldevs");
 
+	mutex_init(&config_misc_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&config_misc_cv, "cfgmisc");
+
 	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
 		if (config_cfdriver_attach(cfdriver_list_initial[i]) != 0)
@@ -406,11 +413,16 @@ void
 configure(void)
 {
 	extern void ssp_init(void);
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	int i, s;
 
 	/* Initialize data structures. */
 	config_init();
 	pmf_init();
+#if NDRVCTL > 0
+	drvctl_init();
+#endif
 
 #ifdef USERCONF
 	if (boothowto & RB_USERCONF)
@@ -445,6 +457,9 @@ configure(void)
 	splx(s);
 
 	/* Boot the secondary processors. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		uvm_cpu_attach(ci);
+	}
 	mp_online = true;
 #if defined(MULTIPROCESSOR)
 	cpu_boot_secondary_processors();
@@ -468,6 +483,34 @@ configure(void)
 
 	/* Lock the kernel on behalf of lwp0. */
 	KERNEL_LOCK(1, NULL);
+}
+
+/*
+ * Announce device attach/detach to userland listeners.
+ */
+static void
+devmon_report_device(device_t dev, bool isattach)
+{
+#if NDRVCTL > 0
+	prop_dictionary_t ev;
+	const char *parent;
+	const char *what;
+	device_t pdev = device_parent(dev);
+
+	ev = prop_dictionary_create();
+	if (ev == NULL)
+		return;
+
+	what = (isattach ? "device-attach" : "device-detach");
+	parent = (pdev == NULL ? "root" : device_xname(pdev));
+	if (!prop_dictionary_set_cstring(ev, "device", device_xname(dev)) ||
+	    !prop_dictionary_set_cstring(ev, "parent", parent)) {
+		prop_object_release(ev);
+		return;
+	}
+
+	devmon_insert(what, ev);
+#endif
 }
 
 /*
@@ -643,6 +686,7 @@ config_stdsubmatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	ci = cfiattr_lookup(cf->cf_pspec->cfp_iattr, parent->dv_cfdriver);
 	KASSERT(ci);
 	nlocs = ci->ci_loclen;
+	KASSERT(!nlocs || locs);
 	for (i = 0; i < nlocs; i++) {
 		cl = &ci->ci_locdesc[i];
 		/* !cld_defaultstr means no default value */
@@ -1057,7 +1101,7 @@ static void
 config_makeroom(int n, struct cfdriver *cd)
 {
 	int old, new;
-	void **nsp;
+	device_t *nsp;
 
 	if (n < cd->cd_ndevs)
 		return;
@@ -1073,14 +1117,14 @@ config_makeroom(int n, struct cfdriver *cd)
 	while (new <= n)
 		new *= 2;
 	cd->cd_ndevs = new;
-	nsp = malloc(new * sizeof(void *), M_DEVBUF,
+	nsp = malloc(new * sizeof(device_t), M_DEVBUF,
 	    cold ? M_NOWAIT : M_WAITOK);
 	if (nsp == NULL)
 		panic("config_attach: %sing dev array",
 		    old != 0 ? "expand" : "creat");
-	memset(nsp + old, 0, (new - old) * sizeof(void *));
+	memset(nsp + old, 0, (new - old) * sizeof(device_t));
 	if (old != 0) {
-		memcpy(nsp, cd->cd_devs, old * sizeof(void *));
+		memcpy(nsp, cd->cd_devs, old * sizeof(device_t));
 		free(cd->cd_devs, M_DEVBUF);
 	}
 	cd->cd_devs = nsp;
@@ -1233,6 +1277,11 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	dev->dv_properties = prop_dictionary_create();
 	KASSERT(dev->dv_properties != NULL);
 
+	prop_dictionary_set_cstring_nocopy(dev->dv_properties,
+	    "device-driver", dev->dv_cfdriver->cd_name);
+	prop_dictionary_set_uint16(dev->dv_properties,
+	    "device-unit", dev->dv_unit);
+
 	return (dev);
 }
 
@@ -1331,6 +1380,9 @@ config_attach_loc(device_t parent, cfdata_t cf,
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
+
+	/* Let userland know */
+	devmon_report_device(dev, true);
 
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
 	if (splash_progress_state)
@@ -1463,6 +1515,9 @@ config_detach(device_t dev, int flags)
 	/*
 	 * The device has now been successfully detached.
 	 */
+
+	/* Let userland know */
+	devmon_report_device(dev, false);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1673,7 +1728,9 @@ void
 config_pending_incr(void)
 {
 
+	mutex_enter(&config_misc_lock);
 	config_pending++;
+	mutex_exit(&config_misc_lock);
 }
 
 void
@@ -1684,9 +1741,11 @@ config_pending_decr(void)
 	if (config_pending == 0)
 		panic("config_pending_decr: config_pending == 0");
 #endif
+	mutex_enter(&config_misc_lock);
 	config_pending--;
 	if (config_pending == 0)
-		wakeup(&config_pending);
+		cv_broadcast(&config_misc_cv);
+	mutex_exit(&config_misc_lock);
 }
 
 /*
@@ -1735,8 +1794,10 @@ config_finalize(void)
 	 * Now that device driver threads have been created, wait for
 	 * them to finish any deferred autoconfiguration.
 	 */
-	while (config_pending)
-		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
+	mutex_enter(&config_misc_lock);
+	while (config_pending != 0)
+		cv_wait(&config_misc_cv, &config_misc_lock);
+	mutex_exit(&config_misc_lock);
 
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
@@ -1777,7 +1838,7 @@ config_finalize(void)
  *
  *	Look up a device instance for a given driver.
  */
-void *
+device_t
 device_lookup(cfdriver_t cd, int unit)
 {
 
@@ -2055,8 +2116,6 @@ device_pmf_driver_deregister(device_t dev)
 	dev->dv_driver_suspend = NULL;
 	dev->dv_driver_resume = NULL;
 
-	dev->dv_pmf_private = NULL;
-
 	mutex_enter(&pp->pp_mtx);
 	dev->dv_flags &= ~DVF_POWER_HANDLERS;
 	while (pp->pp_nlock > 0 || pp->pp_nwait > 0) {
@@ -2070,6 +2129,7 @@ device_pmf_driver_deregister(device_t dev)
 		cv_wait(&pp->pp_cv, &pp->pp_mtx);
 		pmflock_debug(dev, __func__, __LINE__);
 	}
+	dev->dv_pmf_private = NULL;
 	mutex_exit(&pp->pp_mtx);
 
 	cv_destroy(&pp->pp_cv);
@@ -2149,8 +2209,8 @@ device_pmf_lock1(device_t dev PMF_FN_ARGS)
 {
 	pmf_private_t *pp = device_pmf_private(dev);
 
-	while (pp->pp_nlock > 0 && pp->pp_holder != curlwp &&
-	       device_pmf_is_registered(dev)) {
+	while (device_pmf_is_registered(dev) &&
+	    pp->pp_nlock > 0 && pp->pp_holder != curlwp) {
 		pp->pp_nwait++;
 		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
 		cv_wait(&pp->pp_cv, &pp->pp_mtx);

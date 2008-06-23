@@ -363,9 +363,10 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               The maximal number of  Received:   message  headers
               that is allowed in the primary message headers.
 
-       <b><a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (version dependent)</b>
+       <b><a href="postconf.5.html#queue_run_delay">queue_run_delay</a> (300s)</b>
               The  time between <a href="QSHAPE_README.html#deferred_queue">deferred queue</a> scans by the queue
-              manager.
+              manager; prior to Postfix 2.4 the default value was
+              1000s.
 
 <b>FAST FLUSH CONTROLS</b>
        The <a href="ETRN_README.html">ETRN_README</a> file describes configuration and operation
@@ -373,37 +374,37 @@ SENDMAIL(1)                                                        SENDMAIL(1)
 
        <b><a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a> ($<a href="postconf.5.html#relay_domains">relay_domains</a>)</b>
               Optional list of destinations that are eligible for
-              per-destination logfiles with mail that  is  queued
+              per-destination  logfiles  with mail that is queued
               to those destinations.
 
 <b>VERP CONTROLS</b>
        The <a href="VERP_README.html">VERP_README</a> file describes configuration and operation
-       details of Postfix support for  variable  envelope  return
+       details  of  Postfix  support for variable envelope return
        path addresses.
 
        <b><a href="postconf.5.html#default_verp_delimiters">default_verp_delimiters</a> (+=)</b>
               The two default VERP delimiter characters.
 
        <b><a href="postconf.5.html#verp_delimiter_filter">verp_delimiter_filter</a> (-=+)</b>
-              The  characters  Postfix  accepts as VERP delimiter
-              characters on the Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command  line
+              The characters Postfix accepts  as  VERP  delimiter
+              characters  on the Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command line
               and in SMTP commands.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#alias_database">alias_database</a> (see 'postconf -d' output)</b>
-              The  alias databases for <a href="local.8.html"><b>local</b>(8)</a> delivery that are
+              The alias databases for <a href="local.8.html"><b>local</b>(8)</a> delivery that  are
               updated with "<b>newaliases</b>" or with "<b>sendmail -bi</b>".
 
        <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
-              The location of  all  postfix  administrative  com-
+              The  location  of  all  postfix administrative com-
               mands.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_directory">daemon_directory</a> (see 'postconf -d' output)</b>
-              The directory with  Postfix  support  programs  and
+              The  directory  with  Postfix  support programs and
               daemon programs.
 
        <b><a href="postconf.5.html#default_database_type">default_database_type</a> (see 'postconf -d' output)</b>
@@ -411,16 +412,16 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               <a href="postalias.1.html"><b>postalias</b>(1)</a> and <a href="postmap.1.html"><b>postmap</b>(1)</a> commands.
 
        <b><a href="postconf.5.html#delay_warning_time">delay_warning_time</a> (0h)</b>
-              The time after which the sender receives  the  mes-
+              The  time  after which the sender receives the mes-
               sage headers of mail that is still queued.
 
        <b><a href="postconf.5.html#enable_errors_to">enable_errors_to</a> (no)</b>
-              Report  mail  delivery errors to the address speci-
-              fied  with  the  non-standard  Errors-To:   message
-              header,  instead  of  the  envelope  sender address
-              (this feature is removed with Postfix version  2.2,
-              is  turned off by default with Postfix version 2.1,
-              and is always turned on  with  older  Postfix  ver-
+              Report mail delivery errors to the  address  speci-
+              fied   with  the  non-standard  Errors-To:  message
+              header, instead  of  the  envelope  sender  address
+              (this  feature is removed with Postfix version 2.2,
+              is turned off by default with Postfix version  2.1,
+              and  is  always  turned  on with older Postfix ver-
               sions).
 
        <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
@@ -428,21 +429,21 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               and most Postfix daemon processes.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> (empty)</b>
-              Don't  rewrite  message headers from remote clients
+              Don't rewrite message headers from  remote  clients
               at all when this parameter is empty; otherwise, re-
-              write  message  headers  and  append  the specified
+              write message  headers  and  append  the  specified
               domain name to incomplete addresses.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>FILES</b>
@@ -467,7 +468,7 @@ SENDMAIL(1)                                                        SENDMAIL(1)
        <a href="VERP_README.html">VERP_README</a>, Postfix VERP howto
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

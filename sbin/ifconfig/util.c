@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.2 2008/05/06 16:09:18 dyoung Exp $	*/
+/*	$NetBSD: util.c,v 1.2.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
 
 /*-
- * Copyright (c)2008 David Young.  All rights reserved.
+ * Copyright (c) 2008 David Young.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,10 +33,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 #include <netinet/in.h>		/* XXX */
 
+#include "env.h"
 #include "util.h"
 
 int
@@ -175,6 +179,9 @@ prefixlen_to_mask(int af, int plen)
 		return NULL;
 	}
 
+	if (plen == 0)
+		plen = addrlen * NBBY;
+
 	memset(addr, 0xff, (plen + NBBY - 1) / NBBY);
 
 	nbit = plen % NBBY;
@@ -187,4 +194,33 @@ prefixlen_to_mask(int af, int plen)
 	memcpy(&pfx->pfx_addr, &u.sa, u.sa.sa_len);
 
 	return pfx;
+}
+
+int
+direct_ioctl(prop_dictionary_t env, unsigned long cmd, void *data)
+{
+	const char *ifname;
+	int s;
+
+	if ((s = getsock(AF_UNSPEC)) == -1)
+		err(EXIT_FAILURE, "getsock");
+
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "getifname");
+
+	estrlcpy(data, ifname, IFNAMSIZ);
+
+	return ioctl(s, cmd, data);
+}
+
+int
+indirect_ioctl(prop_dictionary_t env, unsigned long cmd, void *data)
+{
+	struct ifreq ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
+
+	ifr.ifr_data = data;
+
+	return direct_ioctl(env, cmd, &ifr);
 }

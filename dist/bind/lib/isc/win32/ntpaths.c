@@ -1,10 +1,10 @@
-/*	$NetBSD: ntpaths.c,v 1.1.1.4 2007/01/27 21:08:09 christos Exp $	*/
+/*	$NetBSD: ntpaths.c,v 1.1.1.4.12.1 2008/06/23 04:28:32 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ntpaths.c,v 1.9 2004/03/05 05:11:58 marka Exp */
+/* Id: ntpaths.c,v 1.11 2007/06/18 23:47:49 tbox Exp */
 
 /*
  * This module fetches the required path information that is specific
@@ -65,9 +65,8 @@ isc_ntpaths_init() {
 		if (RegQueryValueEx(hKey, "InstallDir", NULL, NULL,
 			(LPBYTE)namedBase, &baseLen) != ERROR_SUCCESS)
 			keyFound = FALSE;
+		RegCloseKey(hKey);
 	}
-	
-	RegCloseKey(hKey);
 
 	GetSystemDirectory(systemDir, MAX_PATH);
 

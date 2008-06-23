@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/matching.c,v 1.11 2007/03/11 10:36:42 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/matching.c,v 1.12 2008/03/18 06:18:49 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -157,7 +157,7 @@ excluded(struct bsdtar *bsdtar, const char *pathname)
 			 */
 			if (match->matches == 0) {
 				match->matches++;
-				matching->inclusions_unmatched_count++;
+				matching->inclusions_unmatched_count--;
 				return (0);
 			}
 			/*
@@ -255,6 +255,29 @@ unmatched_inclusions(struct bsdtar *bsdtar)
 	matching = bsdtar->matching;
 	if (matching == NULL)
 		return (0);
+	return (matching->inclusions_unmatched_count);
+}
+
+
+int
+unmatched_inclusions_warn(struct bsdtar *bsdtar, const char *msg)
+{
+	struct matching *matching;
+	struct match *p;
+
+	matching = bsdtar->matching;
+	if (matching == NULL)
+		return (0);
+
+	p = matching->inclusions;
+	while (p != NULL) {
+		if (p->matches == 0) {
+			bsdtar->return_value = 1;
+			bsdtar_warnc(bsdtar, 0, "%s: %s",
+			    p->pattern, msg);
+		}
+		p = p->next;
+	}
 	return (matching->inclusions_unmatched_count);
 }
 

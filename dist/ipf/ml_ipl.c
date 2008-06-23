@@ -1,4 +1,4 @@
-/*	$NetBSD: ml_ipl.c,v 1.5 2007/06/04 12:38:58 martti Exp $	*/
+/*	$NetBSD: ml_ipl.c,v 1.5.12.1 2008/06/23 04:28:45 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -124,7 +124,7 @@ struct	vdstat	*vds;
 		return ipl_attach(vdi);
 	case VDUNLOAD:
 		return unload(vdp, vdi);
-		
+
 	case VDSTAT:
 		return 0;
 

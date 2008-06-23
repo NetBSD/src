@@ -1,4 +1,4 @@
-/*	$NetBSD: evsignal.h,v 1.2 2003/06/13 04:11:31 itojun Exp $	*/
+/*	$NetBSD: evsignal.h,v 1.2.32.1 2008/06/23 04:29:53 wrstuden Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -32,11 +32,26 @@
 #ifndef _EVSIGNAL_H_
 #define _EVSIGNAL_H_
 
-void evsignal_init(sigset_t *);
-void evsignal_process(void);
-int evsignal_recalc(sigset_t *);
-int evsignal_deliver(sigset_t *);
-int evsignal_add(sigset_t *, struct event *);
-int evsignal_del(sigset_t *, struct event *);
+typedef void (*ev_sighandler_t)(int);
+
+struct evsignal_info {
+	struct event_list signalqueue;
+	struct event ev_signal;
+	int ev_signal_pair[2];
+	int ev_signal_added;
+	volatile sig_atomic_t evsignal_caught;
+	sig_atomic_t evsigcaught[NSIG];
+#ifdef HAVE_SIGACTION
+	struct sigaction **sh_old;
+#else
+	ev_sighandler_t **sh_old;
+#endif
+	int sh_old_max;
+};
+void evsignal_init(struct event_base *);
+void evsignal_process(struct event_base *);
+int evsignal_add(struct event *);
+int evsignal_del(struct event *);
+void evsignal_dealloc(struct event_base *);
 
 #endif /* _EVSIGNAL_H_ */

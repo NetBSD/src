@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.86 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: rd.c,v 1.86.2.1 2008/06/23 04:30:21 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.86 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.86.2.1 2008/06/23 04:30:21 wrstuden Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -563,8 +563,7 @@ rdreset(struct rd_softc *sc)
 static int
 rdgetinfo(dev_t dev)
 {
-	int unit = rdunit(dev);
-	struct rd_softc *sc = device_private(rd_cd.cd_devs[unit]);
+	struct rd_softc *sc = device_lookup_private(&rd_cd, rdunit(dev));
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	struct partition *pi;
 	const char *msg;
@@ -597,13 +596,14 @@ rdgetinfo(dev_t dev)
 static int
 rdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	int unit = rdunit(dev);
 	struct rd_softc *sc;
 	int error, mask, part;
 
-	if (unit >= rd_cd.cd_ndevs ||
-	    (sc = device_private(rd_cd.cd_devs[unit])) == NULL ||
-	    (sc->sc_flags & RDF_ALIVE) == 0)
+	sc = device_lookup_private(&rd_cd, rdunit(dev));
+	if (sc == NULL)
+		return ENXIO;
+
+	if ((sc->sc_flags & RDF_ALIVE) == 0)
 		return ENXIO;
 
 	/*
@@ -653,8 +653,7 @@ rdopen(dev_t dev, int flags, int mode, struct lwp *l)
 static int
 rdclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = rdunit(dev);
-	struct rd_softc *sc = device_private(rd_cd.cd_devs[unit]);
+	struct rd_softc *sc = device_lookup_private(&rd_cd, rdunit(dev));
 	struct disk *dk = &sc->sc_dkdev;
 	int mask, s;
 
@@ -688,8 +687,7 @@ rdclose(dev_t dev, int flag, int mode, struct lwp *l)
 static void
 rdstrategy(struct buf *bp)
 {
-	int unit = rdunit(bp->b_dev);
-	struct rd_softc *sc = device_private(rd_cd.cd_devs[unit]);
+	struct rd_softc *sc = device_lookup_private(&rd_cd, rdunit(bp->b_dev));
 	struct partition *pinfo;
 	daddr_t bn;
 	int sz, s;
@@ -1016,7 +1014,7 @@ rdstatus(struct rd_softc *sc)
 static int
 rderror(int unit)
 {
-	struct rd_softc *sc = device_private(rd_cd.cd_devs[unit]);
+	struct rd_softc *sc = device_lookup_private(&rd_cd,unit);
 	struct rd_stat *sp;
 	struct buf *bp;
 	daddr_t hwbn, pbn;
@@ -1143,8 +1141,7 @@ rdwrite(dev_t dev, struct uio *uio, int flags)
 static int
 rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	int unit = rdunit(dev);
-	struct rd_softc *sc = device_private(rd_cd.cd_devs[unit]);
+	struct rd_softc *sc = device_lookup_private(&rd_cd, rdunit(dev));
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
 
@@ -1232,14 +1229,15 @@ rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 int
 rdsize(dev_t dev)
 {
-	int unit = rdunit(dev);
 	struct rd_softc *sc;
 	int psize, didopen = 0;
 
-	if (unit >= rd_cd.cd_ndevs ||
-	    (sc = device_private(rd_cd.cd_devs[unit])) == NULL ||
-	    (sc->sc_flags & RDF_ALIVE) == 0)
-		return -1;
+	sc = device_lookup_private(&rd_cd, rdunit(dev));
+	if (sc == NULL)
+		return ENXIO;
+
+	if ((sc->sc_flags & RDF_ALIVE) == 0)
+		return ENXIO;
 
 	/*
 	 * We get called very early on (via swapconf)
@@ -1305,9 +1303,11 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	part = rdpart(dev);
 
 	/* Make sure dump device is ok. */
-	if (unit >= rd_cd.cd_ndevs ||
-	    (sc = device_private(rd_cd.cd_devs[unit])) == NULL ||
-	    (sc->sc_flags & RDF_ALIVE) == 0)
+	sc = device_lookup_private(&rd_cd, rdunit(dev));
+	if (sc == NULL)
+		return ENXIO;
+
+	if ((sc->sc_flags & RDF_ALIVE) == 0)
 		return ENXIO;
 
 	ctlr = device_unit(device_parent(sc->sc_dev));

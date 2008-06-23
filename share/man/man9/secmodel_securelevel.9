@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel_securelevel.9,v 1.2 2007/12/31 15:31:44 ad Exp $
+.\" $NetBSD: secmodel_securelevel.9,v 1.2.10.1 2008/06/23 04:30:03 wrstuden Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -27,15 +27,15 @@
 .\"
 .Dd November 21, 2007
 .Dt SECMODEL_BSD44 9
-.Os 
+.Os
 .Sh NAME
 .Nm secmodel_bsd44
 .Nd traditional
-.Nx 
+.Nx
 security model (based on
 .Bx 4.4 )
 .Sh DESCRIPTION
-The securelevel mechanism is intended to allow protecting the persistance
+The securelevel mechanism is intended to allow protecting the persistence
 of code and data on the system, or a subset thereof, from modification, even
 by the super-user, by providing convenient means of
 .Dq locking down
@@ -181,7 +181,7 @@ the TCB.
 .Sh SEE ALSO
 .Xr kauth 9 ,
 .Xr secmodel 9 ,
-.Xr secmodel_bsd44
+.Xr secmodel_bsd44 9
 .Sh AUTHORS
 .An Elad Efrat Aq elad@NetBSD.org
 .Sh BUGS

@@ -1,4 +1,4 @@
-/*	$NetBSD: printstate.c,v 1.4 2007/05/15 22:52:21 martin Exp $	*/
+/*	$NetBSD: printstate.c,v 1.4.12.1 2008/06/23 04:28:46 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.
@@ -35,8 +35,8 @@ u_long now;
 			sp->is_send, sp->is_dend,
 			sp->is_maxswin, sp->is_swinscale,
 			sp->is_maxdwin, sp->is_dwinscale);
-		PRINTF("\tcmsk %04x smsk %04x isc %p s0 %08x/%08x\n",
-			sp->is_smsk[0], sp->is_smsk[1], sp->is_isc,
+		PRINTF("\tcmsk %04x smsk %04x s0 %08x/%08x\n",
+			sp->is_smsk[0], sp->is_smsk[1],
 			sp->is_s0[0], sp->is_s0[1]);
 		PRINTF("\tFWD:ISN inc %x sumd %x\n",
 			sp->is_isninc[0], sp->is_sumd[0]);

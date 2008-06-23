@@ -32,7 +32,7 @@ AC_DEFUN(AC_TYPE_SOCKLEN_T,
   ac_cv_type_socklen_t=no)
 ])
   if test $ac_cv_type_socklen_t != yes; then
-    AC_DEFINE(socklen_t, int)
+    AC_DEFINE(socklen_t, int, [Define to `int' if `socklen_t' does not exist.])
   fi
 ])
 
@@ -47,18 +47,22 @@ AC_DEFUN(AC_SA_LEN,
   ac_cv_sa_len=no)
 ])
   if test $ac_cv_sa_len = yes; then
-    AC_DEFINE(HAVE_SA_LEN)
+    AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if `struct sockaddr' has element `sa_len'.])
   fi
 ])
 
+AC_CONFIG_HEADERS(config.h)
 AC_SEARCH_LIBS(res_mkquery, resolv bind)
+AC_SEARCH_LIBS(__res_mkquery, resolv bind)
 AC_CHECK_LIB(socket, socket)
 AC_CHECK_LIB(nsl, inet_ntoa)
 AC_CHECK_FUNCS(gethostbyname2)
 AC_CHECK_FUNC(getaddrinfo,
-    AC_DEFINE(HAVE_GETADDRINFO), AC_LIBOBJ(getaddrinfo))
+    AC_DEFINE(HAVE_GETADDRINFO, 1, [Define to 1 if you have the `getaddrinfo' function.]),
+    [AC_LIBOBJ(getaddrinfo)])
 AC_CHECK_FUNC(getnameinfo,
-    AC_DEFINE(HAVE_GETNAMEINFO), AC_LIBOBJ(getnameinfo))
+    AC_DEFINE(HAVE_GETNAMEINFO, 1, [Define to 1 if you have the `getnameinfo' function.]),
+    [AC_LIBOBJ(getnameinfo)])
 
 AC_TYPE_SOCKLEN_T
 AC_SA_LEN

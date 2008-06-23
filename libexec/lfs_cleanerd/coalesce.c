@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.15 2008/04/28 20:23:04 martin Exp $  */
+/*      $NetBSD: coalesce.c,v 1.15.2.1 2008/06/23 04:29:56 wrstuden Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ get_dinode(struct clfs *fs, ino_t ino)
 	if (daddr == 0x0)
 		return NULL;
 
-	bread(fs->clfs_devvp, daddr, fs->lfs_ibsize, NOCRED, &bp);
+	bread(fs->clfs_devvp, daddr, fs->lfs_ibsize, NOCRED, 0, &bp);
 	for (dip = (struct ufs1_dinode *)bp->b_data;
 	     dip < (struct ufs1_dinode *)(bp->b_data + fs->lfs_ibsize); dip++)
 		if (dip->di_inumber == ino) {
@@ -293,7 +293,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	bps = segtod(fs, 1);
 	for (tbip = bip; tbip < bip + nb; tbip += bps) {
 		do {
-			bread(fs->lfs_ivnode, 0, fs->lfs_bsize, NOCRED, &bp);
+			bread(fs->lfs_ivnode, 0, fs->lfs_bsize, NOCRED, 0, &bp);
 			cip = *(CLEANERINFO *)bp->b_data;
 			brelse(bp, B_INVAL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.15 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: errata.c,v 1.15.2.1 2008/06/23 04:30:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.15 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.15.2.1 2008/06/23 04:30:50 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ typedef struct errata {
 typedef enum cpurev {
 	BH_E4, CH_CG, CH_D0, DH_CG, DH_D0, DH_E3, DH_E6, JH_E1,
 	JH_E6, SH_B0, SH_B3, SH_C0, SH_CG, SH_D0, SH_E4, SH_E5,
+	DR_BA, DR_B2, DR_B3,
 	OINK
 } cpurev_t;
 
@@ -83,6 +84,7 @@ static const u_int cpurevs[] = {
 	SH_CG, 0x0000f4a, SH_CG, 0x0000f5a, SH_CG, 0x0000f7a,
 	SH_D0, 0x0010f40, SH_D0, 0x0010f50, SH_D0, 0x0010f70,
 	SH_E4, 0x0020f51, SH_E4, 0x0020f71, SH_E5, 0x0020f42,
+	DR_BA, 0x0100f2a, DR_B2, 0x0100f22, DR_B3, 0x0100f23,
 	OINK
 };
 
@@ -120,6 +122,14 @@ static const uint8_t x86_errata_set8[] = {
 	DH_D0, DH_D0, DH_E3, DH_E3, DH_E6, DH_E6, JH_E1, JH_E6,
 	JH_E6, SH_B0, SH_B3, SH_C0, SH_C0, SH_CG, SH_CG, SH_CG, 
 	SH_D0, SH_D0, SH_D0, SH_E4, SH_E4, SH_E5, OINK
+};
+
+static const uint8_t x86_errata_set9[] = {
+	DR_BA, DR_B2, OINK
+};
+
+static const uint8_t x86_errata_set10[] = {
+	DR_BA, DR_B2, DR_B3, OINK
 };
 
 static bool x86_errata_setmsr(struct cpu_info *, errata_t *);
@@ -223,6 +233,41 @@ static errata_t errata[] = {
 		122, FALSE, MSR_HWCR, x86_errata_set4,
 		x86_errata_setmsr, HWCR_FFDIS
 	},
+	/*
+	 * 254: Internal Resource Livelock Involving Cached TLB Reload
+	 */
+	{
+		254, FALSE, MSR_BU_CFG, x86_errata_set9,
+		x86_errata_testmsr, BU_CFG_ERRATA_254
+	},
+	/*
+	 * 261: Processor May Stall Entering Stop-Grant Due to Pending Data
+	 * Cache Scrub
+	 */
+	{
+		261, FALSE, MSR_DC_CFG, x86_errata_set10,
+		x86_errata_testmsr, DC_CFG_ERRATA_261
+	},
+	/*
+	 * 298: L2 Eviction May Occur During Processor Operation To Set
+	 * Accessed or Dirty Bit
+	 */
+	{
+		298, FALSE, MSR_HWCR, x86_errata_set9,
+		x86_errata_testmsr, HWCR_TLBCACHEDIS
+	},
+	{
+		298, FALSE, MSR_BU_CFG, x86_errata_set9,
+		x86_errata_testmsr, BU_CFG_ERRATA_298
+	},
+	/*
+	 * 309: Processor Core May Execute Incorrect Instructions on
+	 * Concurrent L2 and Northbridge Response
+	 */
+	{
+		309, FALSE, MSR_BU_CFG, x86_errata_set9,
+		x86_errata_testmsr, BU_CFG_ERRATA_309
+	},
 };
 
 static bool 
@@ -301,14 +346,14 @@ x86_errata(void)
 		else if ((*e->e_act)(ci, e) == FALSE)
 			continue;
 
-		aprint_debug_dev(ci->ci_dev, "erratum %d present\n",
+		aprint_verbose_dev(ci->ci_dev, "erratum %d present\n",
 		    e->e_num);
 		upgrade = 1;
 	}
 
 	if (upgrade && !again) {
 		again = 1;
-		aprint_normal_dev(ci->ci_dev, "WARNING: AMD errata present, BIOS upgrade "
+		aprint_normal_dev(ci->ci_dev, "WARNING: errata present, BIOS upgrade "
 		    "may be\n");
 		aprint_normal_dev(ci->ci_dev, "WARNING: necessary to ensure reliable "
 		    "operation\n");

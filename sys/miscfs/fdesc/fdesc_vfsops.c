@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.74 2008/04/29 18:18:08 ad Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.74.2.1 2008/06/23 04:31:56 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.74 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.74.2.1 2008/06/23 04:31:56 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -60,9 +60,12 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.74 2008/04/29 18:18:08 ad Exp $")
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/fdesc/fdesc.h>
+
+MODULE(MODULE_CLASS_VFS, fdesc, NULL);
 
 VFS_PROTOS(fdesc);
 
@@ -136,7 +139,7 @@ fdesc_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the fdescmount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 
 	return (0);
 }
@@ -285,4 +288,17 @@ struct vfsops fdesc_vfsops = {
 	0,
 	{ NULL, NULL},
 };
-VFS_ATTACH(fdesc_vfsops);
+
+static int
+fdesc_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&fdesc_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&fdesc_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

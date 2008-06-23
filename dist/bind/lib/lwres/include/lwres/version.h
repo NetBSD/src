@@ -1,10 +1,10 @@
-/*	$NetBSD: version.h,v 1.1.1.2 2007/01/27 21:09:31 christos Exp $	*/
+/*	$NetBSD: version.h,v 1.1.1.2.12.1 2008/06/23 04:28:41 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,9 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: version.h,v 1.3.18.2 2005/04/29 00:17:23 marka Exp */
+/* Id: version.h,v 1.9 2007/06/19 23:47:23 tbox Exp */
 
-/*! \file */
+/*! \file lwres/version.h */
 
 #include <lwres/platform.h>
 

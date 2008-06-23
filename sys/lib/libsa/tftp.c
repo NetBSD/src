@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.25 2008/03/25 21:23:51 christos Exp $	 */
+/*	$NetBSD: tftp.c,v 1.25.6.1 2008/06/23 04:31:56 wrstuden Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -96,6 +96,7 @@ static int tftp_getnextblock __P((struct tftp_handle *));
 #ifndef TFTP_NOTERMINATE
 static void tftp_terminate __P((struct tftp_handle *));
 #endif
+static ssize_t tftp_size_of_file __P((struct tftp_handle *tftpfile));
 
 static ssize_t
 recvtftp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
@@ -376,6 +377,42 @@ tftp_write(struct open_file *f, void *start, size_t size, size_t *resid)
 	return EROFS;
 }
 
+static ssize_t 
+tftp_size_of_file(struct tftp_handle *tftpfile)
+{
+	ssize_t filesize;
+
+	if (tftpfile->currblock > 1) {	/* move to start of file */
+#ifndef TFTP_NOTERMINATE
+		tftp_terminate(tftpfile);
+#endif
+		tftp_makereq(tftpfile);	/* no error check, it worked
+		      			 * for open */
+	}
+
+	/* start with the size of block 1 */
+	filesize = tftpfile->validsize;
+
+	/* and keep adding the sizes till we hit the last block */
+	while (!tftpfile->islastblock) {
+		int res;
+
+		res = tftp_getnextblock(tftpfile);
+		if (res) {	/* no answer */
+#ifdef DEBUG
+			printf("tftp: read error (block %d)\n",
+					tftpfile->currblock);
+#endif
+			return -1;
+		}
+		filesize += tftpfile->validsize;
+	}
+#ifdef DEBUG
+	printf("tftp_size_of_file: file is %d bytes\n", filesize);
+#endif
+	return filesize;
+}
+
 int
 tftp_stat(struct open_file *f, struct stat *sb)
 {
@@ -386,7 +423,7 @@ tftp_stat(struct open_file *f, struct stat *sb)
 	sb->st_nlink = 1;
 	sb->st_uid = 0;
 	sb->st_gid = 0;
-	sb->st_size = -1;
+	sb->st_size = tftp_size_of_file(tftpfile);
 	return 0;
 }
 

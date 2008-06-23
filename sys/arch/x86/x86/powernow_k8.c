@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.22 2008/04/28 20:23:40 martin Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.22.2.1 2008/06/23 04:30:51 wrstuden Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -59,7 +59,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.22 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.22.2.1 2008/06/23 04:30:51 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -292,37 +292,38 @@ k8pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 
 	for (p = (uint8_t *)ISA_HOLE_VADDR(BIOS_START);
 	    p < (uint8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p += 16) {
-		if (memcmp(p, "AMDK7PNOW!", 10) == 0) {
-			DPRINTF(("%s: inside the for loop\n", __func__));
-			psb = (struct powernow_psb_s *)p;
-			if (psb->version != 0x14) {
-				DPRINTF(("%s: psb->version != 0x14\n",
+		if (memcmp(p, "AMDK7PNOW!", 10) != 0)
+			continue;
+
+		DPRINTF(("%s: inside the for loop\n", __func__));
+		psb = (struct powernow_psb_s *)p;
+		if (psb->version != 0x14) {
+			DPRINTF(("%s: psb->version != 0x14\n",
+			    __func__));
+			return 0;
+		}
+
+		cstate->vst = psb->ttime;
+		cstate->rvo = PN8_PSB_TO_RVO(psb->reserved);
+		cstate->irt = PN8_PSB_TO_IRT(psb->reserved);
+		cstate->mvs = PN8_PSB_TO_MVS(psb->reserved);
+		cstate->low = PN8_PSB_TO_BATT(psb->reserved);
+		p+= sizeof(struct powernow_psb_s);
+
+		for(i = 0; i < psb->n_pst; ++i) {
+			pst = (struct powernow_pst_s *) p;
+
+			cstate->pll = pst->pll;
+			cstate->n_states = pst->n_states;
+			if (cpusig == pst->signature &&
+			    pst->fid == fid && pst->vid == vid) {
+				DPRINTF(("%s: cpusig = signature\n",
 				    __func__));
-				return 0;
+				return (k8pnow_decode_pst(cstate,
+				    p+= sizeof(struct powernow_pst_s)));
 			}
-
-			cstate->vst = psb->ttime;
-			cstate->rvo = PN8_PSB_TO_RVO(psb->reserved);
-			cstate->irt = PN8_PSB_TO_IRT(psb->reserved);
-			cstate->mvs = PN8_PSB_TO_MVS(psb->reserved);
-			cstate->low = PN8_PSB_TO_BATT(psb->reserved);
-			p+= sizeof(struct powernow_psb_s);
-
-			for(i = 0; i < psb->n_pst; ++i) {
-				pst = (struct powernow_pst_s *) p;
-
-				cstate->pll = pst->pll;
-				cstate->n_states = pst->n_states;
-				if (cpusig == pst->signature &&
-				    pst->fid == fid && pst->vid == vid) {
-					DPRINTF(("%s: cpusig = signature\n",
-					    __func__));
-					return (k8pnow_decode_pst(cstate,
-					    p+= sizeof(struct powernow_pst_s)));
-				}
-				p += sizeof(struct powernow_pst_s) +
-				    2 * cstate->n_states;
-			}
+			p += sizeof(struct powernow_pst_s) +
+			    2 * cstate->n_states;
 		}
 	}
 

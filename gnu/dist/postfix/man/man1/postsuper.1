@@ -1,4 +1,4 @@
-.\"	$NetBSD: postsuper.1,v 1.1.1.10 2007/05/19 16:27:48 heas Exp $
+.\"	$NetBSD: postsuper.1,v 1.1.1.10.12.1 2008/06/23 04:29:07 wrstuden Exp $
 .\"
 .TH POSTSUPER 1 
 .ad
@@ -96,6 +96,8 @@ Note: while mail is "on hold" it will not expire when its
 time in the queue exceeds the \fBmaximal_queue_lifetime\fR
 or \fBbounce_queue_lifetime\fR setting. It becomes subject to
 expiration after it is released from "hold".
+.sp
+This feature is available in Postfix 2.0 and later.
 .IP "\fB-H \fIqueue_id\fR"
 Release mail that was put "on hold".
 Move one message with the named queue ID from the named
@@ -111,6 +113,8 @@ or \fB$bounce_queue_lifetime\fR, or longer.
 Specify "\fB-H ALL\fR" to release all mail that is "on hold".
 As a safety measure, the word \fBALL\fR must be specified in upper
 case.
+.sp
+This feature is available in Postfix 2.0 and later.
 .IP \fB-p\fR
 Purge old temporary files that are left over after system or
 software crashes.
@@ -156,6 +160,8 @@ Warning: Postfix queue IDs are reused.
 There is a very small possibility that \fBpostsuper\fR(1) requeues
 the wrong message file when it is executed while the Postfix mail
 system is running, but no harm should be done.
+.sp
+This feature is available in Postfix 1.1 and later.
 .IP \fB-s\fR
 Structure check and structure repair.  This should be done once
 before Postfix startup.

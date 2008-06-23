@@ -1,4 +1,4 @@
-.\"	$NetBSD: qmqpd.8,v 1.1.1.6 2007/05/19 16:27:52 heas Exp $
+.\"	$NetBSD: qmqpd.8,v 1.1.1.6.12.1 2008/06/23 04:29:08 wrstuden Exp $
 .\"
 .TH QMQPD 8 
 .ad
@@ -132,6 +132,9 @@ The process ID of a Postfix command or daemon process.
 The process name of a Postfix command or daemon process.
 .IP "\fBqmqpd_authorized_clients (empty)\fR"
 What clients are allowed to connect to the QMQP server port.
+.IP "\fBqmqpd_client_port_logging (no)\fR"
+Enable logging of the remote QMQP client port in addition to
+the hostname and IP address.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
 The location of the Postfix top-level queue directory.
 .IP "\fBsyslog_facility (mail)\fR"

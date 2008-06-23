@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1.1.4 2007/01/27 21:09:06 christos Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.1.1.4.12.1 2008/06/23 04:27:54 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -72,7 +72,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
-static const char rcsid[] = "Id: inet_addr.c,v 1.4.18.1 2005/04/27 05:00:52 sra Exp";
+static const char rcsid[] = "Id: inet_addr.c,v 1.5 2005/04/27 04:56:19 sra Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2005/08/23 12:12:56 peter Exp $
+#	$NetBSD: Makefile,v 1.7.20.1 2008/06/23 04:32:13 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ SUBDIR=		authpf
 SUBDIR+=	ftp-proxy
 SUBDIR+=	pfctl
 SUBDIR+=	pflogd
+SUBDIR+=	tftp-proxy
 
 SUBDIR+=	man
 

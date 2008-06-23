@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.41 2008/04/10 19:13:37 cegger Exp $ */
+/* $NetBSD: if_lmc.c,v 1.41.6.1 2008/06/23 04:31:11 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -142,7 +142,7 @@
 
 #if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.41 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.41.6.1 2008/06/23 04:31:11 wrstuden Exp $");
 # include <sys/param.h>	/* OS version */
 /* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */
@@ -7420,10 +7420,10 @@ int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
         {  /* for each pci bus... */
         int devnum, maxdevs;
         struct pci_attach_args pa;
-        struct device *parent = pci_cd.cd_devs[i];
+        device_t parent = device_lookup(&pci_cd, i);
         /* This is ugly: only way to get pci_chipset_tag. */
         struct pci_sc { struct device dev; pci_chipset_tag_t pc; };
-        struct pci_sc *pci_sc = pci_cd.cd_devs[i];
+        struct pci_sc *pci_sc = device_lookup_private(&pci_cd, i);
 
         if (parent == NULL) continue; /* no pci bus */
         pa.pa_pc   = pci_sc->pc;
@@ -7459,7 +7459,7 @@ int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
       {
       for (i=lmc_cd.cd_ndevs-1; i>=0; i--)
         {
-        struct device *dev = lmc_cd.cd_devs[i];
+        device_t dev = device_lookup(&lmc_cd, i);
         if (dev == NULL) continue;
         if ((error = config_detach(dev, 0)))
           printf("%s: config_detach(): error %d\n",

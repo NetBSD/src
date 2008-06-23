@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.45 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: frag6.c,v 1.45.4.1 2008/06/23 04:31:58 wrstuden Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.45 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.45.4.1 2008/06/23 04:31:58 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,7 +729,6 @@ void
 frag6_drain(void)
 {
 
-	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 	if (ip6q_lock_try() != 0) {
 		while (ip6q.ip6q_next != &ip6q) {
@@ -740,5 +739,4 @@ frag6_drain(void)
 		IP6Q_UNLOCK();
 	}
 	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
 }

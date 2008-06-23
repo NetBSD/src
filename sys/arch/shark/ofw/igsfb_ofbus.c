@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.7 2007/10/28 18:01:55 jmmv Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.7.22.1 2008/06/23 04:30:40 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.7 2007/10/28 18:01:55 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.7.22.1 2008/06/23 04:30:40 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

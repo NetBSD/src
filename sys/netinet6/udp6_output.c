@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.35 2008/04/15 04:43:25 thorpej Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.35.6.1 2008/06/23 04:31:59 wrstuden Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.35 2008/04/15 04:43:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.35.6.1 2008/06/23 04:31:59 wrstuden Exp $");
 
 #include "opt_inet.h"
 
@@ -239,7 +239,7 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 		if (!IN6_IS_ADDR_V4MAPPED(faddr)) {
 			laddr = in6_selectsrc(sin6, optp,
 			    in6p->in6p_moptions,
-			    (struct route *)&in6p->in6p_route,
+			    &in6p->in6p_route,
 			    &in6p->in6p_laddr, &oifp, &error);
 			if (oifp && scope_ambiguous &&
 			    (error = in6_setscope(&sin6->sin6_addr,
@@ -256,13 +256,13 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 			if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
 				struct sockaddr_in *sinp, sin_dst;
 
-				bzero(&sin_dst, sizeof(sin_dst));
+				memset(&sin_dst, 0, sizeof(sin_dst));
 				sin_dst.sin_family = AF_INET;
 				sin_dst.sin_len = sizeof(sin_dst);
-				bcopy(&faddr->s6_addr[12], &sin_dst.sin_addr,
+				memcpy(&sin_dst.sin_addr, &faddr->s6_addr[12],
 				      sizeof(sin_dst.sin_addr));
 				sinp = in_selectsrc(&sin_dst,
-						    (struct route *)&in6p->in6p_route,
+						    &in6p->in6p_route,
 						    in6p->in6p_socket->so_options,
 						    NULL, &error);
 				if (sinp == NULL) {
@@ -270,10 +270,10 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 						error = EADDRNOTAVAIL;
 					goto release;
 				}
-				bzero(&laddr_mapped, sizeof(laddr_mapped));
+				memset(&laddr_mapped, 0, sizeof(laddr_mapped));
 				laddr_mapped.s6_addr16[5] = 0xffff; /* ugly */
-				bcopy(&sinp->sin_addr,
-				      &laddr_mapped.s6_addr[12],
+				memcpy(&laddr_mapped.s6_addr[12],
+				      &sinp->sin_addr,
 				      sizeof(sinp->sin_addr));
 				laddr = &laddr_mapped;
 			} else
@@ -376,15 +376,15 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 
 		ip = mtod(m, struct ip *);
 		ui = (struct udpiphdr *)ip;
-		bzero(ui->ui_x1, sizeof ui->ui_x1);
+		memset(ui->ui_x1, 0, sizeof(ui->ui_x1));
 		ui->ui_pr = IPPROTO_UDP;
 		ui->ui_len = htons(plen);
-		bcopy(&laddr->s6_addr[12], &ui->ui_src, sizeof(ui->ui_src));
+		memcpy(&ui->ui_src, &laddr->s6_addr[12], sizeof(ui->ui_src));
 		ui->ui_ulen = ui->ui_len;
 
 		flags = (in6p->in6p_socket->so_options &
 			 (SO_DONTROUTE | SO_BROADCAST));
-		bcopy(&faddr->s6_addr[12], &ui->ui_dst, sizeof(ui->ui_dst));
+		memcpy(&ui->ui_dst, &faddr->s6_addr[12], sizeof(ui->ui_dst));
 
 		udp6->uh_sum = in_cksum(m, hlen + plen);
 		if (udp6->uh_sum == 0)

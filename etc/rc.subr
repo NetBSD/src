@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.71 2008/04/30 13:10:49 martin Exp $
+# $NetBSD: rc.subr,v 1.71.2.1 2008/06/23 04:29:01 wrstuden Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -304,6 +304,9 @@ wait_for_pids()
 #				NOTE:	$flags from the parent environment
 #					can be used to override this.
 #
+#	${name}_env	n	Additional environment variable settings
+#				for running ${command}
+#
 #	${name}_nice	n	Nice level to run ${command} at.
 #
 #	${name}_user	n	User to run ${command} as, using su(1) if not
@@ -449,7 +452,8 @@ run_rc_command()
 	fi
 	eval _chdir=\$${name}_chdir	_chroot=\$${name}_chroot \
 	    _nice=\$${name}_nice	_user=\$${name}_user \
-	    _group=\$${name}_group	_groups=\$${name}_groups
+	    _group=\$${name}_group	_groups=\$${name}_groups \
+	    _env=\"\$${name}_env\"
 
 	if [ -n "$_user" ]; then	# unset $_user if running as that user
 		if [ "$_user" = "$(id -un)" ]; then
@@ -556,12 +560,14 @@ run_rc_command()
 			echo "Starting ${name}."
 			if [ -n "$_chroot" ]; then
 				_doit="\
+${_env:+env $_env }\
 ${_nice:+nice -n $_nice }\
 chroot ${_user:+-u $_user }${_group:+-g $_group }${_groups:+-G $_groups }\
 $_chroot $command $rc_flags $command_args"
 			else
 				_doit="\
 ${_chdir:+cd $_chdir; }\
+${_env:+env $_env }\
 ${_nice:+nice -n $_nice }\
 $command $rc_flags $command_args"
 				if [ -n "$_user" ]; then

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.98 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: ata.c,v 1.98.6.1 2008/06/23 04:30:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.98 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.98.6.1 2008/06/23 04:30:58 wrstuden Exp $");
 
 #include "opt_ata.h"
 
@@ -1411,10 +1411,10 @@ atabusopen(dev_t dev, int flag, int fmt,
     struct lwp *l)
 {
 	struct atabus_softc *sc;
-	int error, unit = minor(dev);
+	int error;
 
-	if (unit >= atabus_cd.cd_ndevs ||
-	    (sc = device_private(atabus_cd.cd_devs[unit])) == NULL)
+	sc = device_lookup_private(&atabus_cd, minor(dev));
+	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_flags & ATABUSCF_OPEN)
@@ -1434,7 +1434,7 @@ atabusclose(dev_t dev, int flag, int fmt,
     struct lwp *l)
 {
 	struct atabus_softc *sc =
-	    device_private(atabus_cd.cd_devs[minor(dev)]);
+	    device_lookup_private(&atabus_cd, minor(dev));
 
 	ata_delref(sc->sc_chan);
 
@@ -1448,7 +1448,7 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct atabus_softc *sc =
-	    device_private(atabus_cd.cd_devs[minor(dev)]);
+	    device_lookup_private(&atabus_cd, minor(dev));
 	struct ata_channel *chp = sc->sc_chan;
 	int min_drive, max_drive, drive;
 	int error;

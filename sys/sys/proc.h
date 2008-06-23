@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.276.2.2 2008/05/22 06:29:10 wrstuden Exp $	*/
+/*	$NetBSD: proc.h,v 1.276.2.3 2008/06/23 04:32:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -291,6 +291,7 @@ struct proc {
 	sigstore_t	p_sigstore;	/* p: process-wide signal state */
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
+	pid_t		p_ppid;		/* :: cached parent pid */
 
 /*
  * End area that is zeroed on creation
@@ -314,6 +315,7 @@ struct proc {
 	size_t 		p_psnargv;	/* :: offset of ps_nargvstr in above */
 	size_t 		p_psenv;	/* :: offset of ps_envstr in above */
 	size_t 		p_psnenv;	/* :: offset of ps_nenvstr in above */
+	u_int		p_pax;		/* :: PAX flags */
 
 /*
  * End area that is copied on creation
@@ -392,6 +394,7 @@ struct proc {
  * from process context only.
  */
 #define	PL_CONTROLT	0x00000002 /* Has a controlling terminal */
+#define	PL_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
 #define	PL_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.59 2008/04/30 14:07:14 ad Exp $ */
+/* $NetBSD: wsmouse.c,v 1.59.2.1 2008/06/23 04:31:43 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.59 2008/04/30 14:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.59.2.1 2008/06/23 04:31:43 wrstuden Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -561,12 +561,11 @@ wsmouseopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct wsmouse_softc *sc;
 	struct wseventvar *evar;
-	int error, unit;
+	int error;
 
-	unit = minor(dev);
-	if (unit >= wsmouse_cd.cd_ndevs ||	/* make sure it was attached */
-	    (sc = device_private(wsmouse_cd.cd_devs[unit])) == NULL)
-		return (ENXIO);
+	sc = device_lookup_private(&wsmouse_cd, minor(dev));
+	if (sc == NULL)
+		return ENXIO;
 
 #if NWSMUX > 0
 	DPRINTF(("wsmouseopen: %s mux=%p p=%p\n", device_xname(sc->sc_base.me_dv),
@@ -602,7 +601,7 @@ wsmouseclose(dev_t dev, int flags, int mode,
     struct lwp *l)
 {
 	struct wsmouse_softc *sc =
-	    device_private(wsmouse_cd.cd_devs[minor(dev)]);
+	    device_lookup_private(&wsmouse_cd, minor(dev));
 	struct wseventvar *evar = sc->sc_base.me_evp;
 
 	if (evar == NULL)
@@ -638,7 +637,7 @@ int
 wsmouseread(dev_t dev, struct uio *uio, int flags)
 {
 	struct wsmouse_softc *sc =
-	    device_private(wsmouse_cd.cd_devs[minor(dev)]);
+	    device_lookup_private(&wsmouse_cd, minor(dev));
 	int error;
 
 	if (sc->sc_dying)
@@ -663,7 +662,7 @@ wsmouseread(dev_t dev, struct uio *uio, int flags)
 int
 wsmouseioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	return (wsmousedoioctl(wsmouse_cd.cd_devs[minor(dev)],
+	return (wsmousedoioctl(device_lookup(&wsmouse_cd, minor(dev)),
 			       cmd, data, flag, l));
 }
 
@@ -764,7 +763,7 @@ int
 wsmousepoll(dev_t dev, int events, struct lwp *l)
 {
 	struct wsmouse_softc *sc =
-	    device_private(wsmouse_cd.cd_devs[minor(dev)]);
+	    device_lookup_private(&wsmouse_cd, minor(dev));
 
 	if (sc->sc_base.me_evp == NULL)
 		return (POLLERR);
@@ -775,7 +774,7 @@ int
 wsmousekqfilter(dev_t dev, struct knote *kn)
 {
 	struct wsmouse_softc *sc =
-	    device_private(wsmouse_cd.cd_devs[minor(dev)]);
+	    device_lookup_private(&wsmouse_cd, minor(dev));
 
 	if (sc->sc_base.me_evp == NULL)
 		return (1);
@@ -810,9 +809,9 @@ wsmouse_add_mux(int unit, struct wsmux_softc *muxsc)
 {
 	struct wsmouse_softc *sc;
 
-	if (unit < 0 || unit >= wsmouse_cd.cd_ndevs ||
-	    (sc = device_private(wsmouse_cd.cd_devs[unit])) == NULL)
-		return (ENXIO);
+	sc = device_lookup_private(&wsmouse_cd, unit);
+	if (sc == NULL)
+		return ENXIO;
 
 	if (sc->sc_base.me_parent != NULL || sc->sc_base.me_evp != NULL)
 		return (EBUSY);

@@ -267,7 +267,7 @@ without the ".db" suffix.  </dd>
 
 <dd> A read-optimized structure with no support for incremental updates.
 Database files are created with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command.
-The lookup table name as used in "cdb:table" is the database file name
+The lookup table name as used in "<a href="CDB_README.html">cdb</a>:table" is the database file name
 without the ".cdb" suffix.  This feature is available with Postfix 2.2
 and later. </dd>
 
@@ -365,8 +365,8 @@ example, the lookup table "static:foobar" always returns the string
 described in <a href="tcp_table.5.html">tcp_table(5)</a>. The lookup table name is "<a href="tcp_table.5.html">tcp</a>:host:port"
 where "host" specifies a symbolic hostname or a numeric IP address,
 and "port" specifies a symbolic service name or a numeric port
-number. This protocol is not available up to and including Postfix
-version 2.4.  </dd>
+number. This protocol is not available in the stable Postfix release.
+</dd>
 
 <dt> <b>unix</b> (read-only) </dt>
 

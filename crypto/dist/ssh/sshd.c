@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.43 2008/04/06 23:38:20 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.43.4.1 2008/06/23 04:27:02 wrstuden Exp $	*/
 /* $OpenBSD: sshd.c,v 1.355 2008/02/14 13:10:31 mbalmer Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.43 2008/04/06 23:38:20 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.43.4.1 2008/06/23 04:27:02 wrstuden Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -123,6 +123,9 @@ int deny_severity = LOG_WARNING;
 #define REEXEC_STARTUP_PIPE_FD		(STDERR_FILENO + 2)
 #define REEXEC_CONFIG_PASS_FD		(STDERR_FILENO + 3)
 #define REEXEC_MIN_FREE_FD		(STDERR_FILENO + 4)
+
+int myflag = 0;
+
 
 extern char *__progname;
 
@@ -405,7 +408,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		major = PROTOCOL_MAJOR_1;
 		minor = PROTOCOL_MINOR_1;
 	}
-	snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n", major, minor, SSH_VERSION);
+	snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n", major, minor, SSH_RELEASE);
 	server_version_string = xstrdup(buf);
 
 	/* Send our protocol version identification. */
@@ -455,6 +458,9 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		cleanup_exit(255);
 	}
 	debug("Client protocol version %d.%d; client software version %.100s",
+	    remote_major, remote_minor, remote_version);
+	logit("SSH: Server;Ltype: Version;Remote: %s-%d;Protocol: %d.%d;Client: %.100s",
+	      get_remote_ipaddr(), get_remote_port(),
 	    remote_major, remote_minor, remote_version);
 
 	compat_datafellows(remote_version);
@@ -930,6 +936,8 @@ server_listen(void)
 	int ret, listen_sock, on = 1;
 	struct addrinfo *ai;
 	char ntop[NI_MAXHOST], strport[NI_MAXSERV];
+	int socksize;
+	socklen_t socksizelen = sizeof(int);
 
 	for (ai = options.listen_addrs; ai; ai = ai->ai_next) {
 		if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
@@ -965,6 +973,11 @@ server_listen(void)
 			error("setsockopt SO_REUSEADDR: %s", strerror(errno));
 
 		debug("Bind to port %s on %s.", strport, ntop);
+
+		getsockopt(listen_sock, SOL_SOCKET, SO_RCVBUF, 
+				   &socksize, &socksizelen);
+		debug("Server TCP RWIN socket size: %d", socksize);
+		debug("HPN Buffer Size: %d", options.hpn_buffer_size);
 
 		/* Bind the socket to the desired port. */
 		if (bind(listen_sock, ai->ai_addr, ai->ai_addrlen) < 0) {
@@ -2010,9 +2023,15 @@ do_ssh2_kex(void)
 {
 	Kex *kex;
 
+	myflag++;
+	debug ("MYFLAG IS %d", myflag);
 	if (options.ciphers != NULL) {
 		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
 		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
+	} else if (options.none_enabled == 1) {
+		debug ("WARNING: None cipher enabled");
+		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
+		myproposal[PROPOSAL_ENC_ALGS_STOC] = KEX_ENCRYPT_INCLUDE_NONE;
 	}
 	myproposal[PROPOSAL_ENC_ALGS_CTOS] =
 	    compat_cipher_proposal(myproposal[PROPOSAL_ENC_ALGS_CTOS]);

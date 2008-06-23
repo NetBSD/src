@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.23 2008/02/03 06:19:06 xtraeme Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.23.12.1 2008/06/23 04:30:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -354,6 +354,7 @@
  * These require a 'passcode' for access.  See cpufunc.h.
  */
 #define	MSR_HWCR	0xc0010015
+#define		HWCR_TLBCACHEDIS	0x00000008
 #define		HWCR_FFDIS		0x00000040
 
 #define	MSR_NB_CFG	0xc001001f
@@ -369,8 +370,12 @@
 #define	MSR_DC_CFG	0xc0011022
 #define		DC_CFG_DIS_CNV_WC_SSO	0x00000004
 #define		DC_CFG_DIS_SMC_CHK_BUF	0x00000400
+#define		DC_CFG_ERRATA_261	0x01000000
 
 #define	MSR_BU_CFG	0xc0011023
+#define		BU_CFG_ERRATA_298	0x0000000000000002ULL
+#define		BU_CFG_ERRATA_254	0x0000000000200000ULL
+#define		BU_CFG_ERRATA_309	0x0000000000800000ULL
 #define		BU_CFG_THRL2IDXCMPDIS	0x0000080000000000ULL
 #define		BU_CFG_WBPFSMCCHKDIS	0x0000200000000000ULL
 #define		BU_CFG_WBENHWSBDIS	0x0001000000000000ULL

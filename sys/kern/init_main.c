@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.355.2.2 2008/05/14 01:35:12 wrstuden Exp $	*/
+/*	$NetBSD: init_main.c,v 1.355.2.3 2008/06/23 04:31:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355.2.2 2008/05/14 01:35:12 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355.2.3 2008/06/23 04:31:50 wrstuden Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -160,6 +160,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355.2.2 2008/05/14 01:35:12 wrstuden
 #include <sys/msgbuf.h>
 #include <sys/module.h>
 #include <sys/event.h>
+#include <sys/lockf.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -239,7 +240,7 @@ int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
 
-volatile int start_init_exec;		/* semaphore for start_init() */
+int	start_init_exec;		/* semaphore for start_init() */
 
 static void check_console(struct lwp *l);
 static void start_init(void *);
@@ -435,14 +436,16 @@ main(void)
 	/*
 	 * If maximum number of vnodes in namei vnode cache is not explicitly
 	 * defined in kernel config, adjust the number such as we use roughly
-	 * 1.0% of memory for vnode cache (but not less than NVNODE vnodes).
+	 * 10% of memory for vnodes and associated data structures in the
+	 * assumed worst case.  Do not provide fewer than NVNODE vnodes.
 	 */
 	usevnodes =
-	    calc_cache_size(kernel_map, 1, VNODE_VA_MAXPCT) / sizeof(vnode_t);
+	    calc_cache_size(kernel_map, 10, VNODE_VA_MAXPCT) / VNODE_COST;
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
 	vfsinit();
+	lf_init();
 
 	/* Initialize fstrans. */
 	fstrans_init();
@@ -491,6 +494,9 @@ main(void)
 
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
+
+	/* Initialize interfaces. */
+	ifinit1();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
@@ -581,7 +587,6 @@ main(void)
 	 * storage to the VM system.
 	 */
 	module_init_class(MODULE_CLASS_ANY);
-	module_jettison();
 
 	/*
 	 * Finalize configuration now that all real devices have been
@@ -690,8 +695,10 @@ main(void)
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
 	 */
+	mutex_enter(proc_lock);
 	start_init_exec = 1;
-	wakeup(&start_init_exec);
+	cv_broadcast(&lbolt);
+	mutex_exit(proc_lock);
 
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
@@ -755,8 +762,10 @@ start_init(void *arg)
 	/*
 	 * Wait for main() to tell us that it's safe to exec.
 	 */
+	mutex_enter(proc_lock);
 	while (start_init_exec == 0)
-		(void) tsleep(&start_init_exec, PWAIT, "initexec", 0);
+		cv_wait(&lbolt, proc_lock);
+	mutex_exit(proc_lock);
 
 	/*
 	 * This is not the right way to do this.  We really should

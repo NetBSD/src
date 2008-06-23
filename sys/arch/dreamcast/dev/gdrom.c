@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.24 2007/10/17 19:54:10 garbled Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.24.22.1 2008/06/23 04:30:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.24 2007/10/17 19:54:10 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.24.22.1 2008/06/23 04:30:17 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,10 +412,8 @@ gdromopen(dev_t dev, int flags, int devtype, struct lwp *l)
 #endif
 
 	unit = DISKUNIT(dev);
-	if (unit >= gdrom_cd.cd_ndevs)
-		return ENXIO;
 
-	sc = gdrom_cd.cd_devs[unit];
+	sc = device_lookup_private(&gdrom_cd, unit);
 	if (sc == NULL)
 		return ENXIO;
 
@@ -459,7 +457,7 @@ gdromclose(dev_t dev, int flags, int devtype, struct lwp *l)
 	printf("GDROM: close\n");
 #endif
 	unit = DISKUNIT(dev);
-	sc = gdrom_cd.cd_devs[unit];
+	sc = device_lookup_private(&gdrom_cd, unit);
 
 	sc->is_open = 0;
 
@@ -476,7 +474,7 @@ gdromstrategy(struct buf *bp)
 #endif
 	
 	unit = DISKUNIT(bp->b_dev);
-	sc = gdrom_cd.cd_devs[unit];
+	sc = device_lookup_private(&gdrom_cd, unit);
 
 	if (bp->b_bcount == 0)
 		goto done;
@@ -516,7 +514,7 @@ gdromioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 
 	unit = DISKUNIT(dev);
-	sc = gdrom_cd.cd_devs[unit];
+	sc = device_lookup_private(&gdrom_cd, unit);
 
 	switch (cmd) {
 	case CDIOREADMSADDR: {

@@ -1,10 +1,10 @@
-/*	$NetBSD: buffer.c,v 1.1.1.4 2007/01/27 21:07:50 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.4.12.1 2008/06/23 04:28:22 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: buffer.c,v 1.40.18.2 2005/04/29 00:16:44 marka Exp */
+/* Id: buffer.c,v 1.47 2007/06/19 23:47:17 tbox Exp */
 
 /*! \file */
 
@@ -39,6 +39,35 @@ isc__buffer_init(isc_buffer_t *b, const void *base, unsigned int length) {
 	REQUIRE(b != NULL);
 
 	ISC__BUFFER_INIT(b, base, length);
+}
+
+void
+isc__buffer_initnull(isc_buffer_t *b) {
+	/*
+	 * Initialize a new buffer which has no backing store.  This can
+	 * later be grown as needed and swapped in place.
+	 */
+
+	ISC__BUFFER_INIT(b, NULL, 0);
+}
+
+void
+isc_buffer_reinit(isc_buffer_t *b, void *base, unsigned int length) {
+	/*
+	 * Re-initialize the buffer enough to reconfigure the base of the
+	 * buffer.  We will swap in the new buffer, after copying any
+	 * data we contain into the new buffer and adjusting all of our
+	 * internal pointers.
+	 *
+	 * The buffer must not be smaller than the length of the original
+	 * buffer.
+	 */
+	REQUIRE(b->length <= length);
+	REQUIRE(base != NULL);
+
+	(void)memmove(base, b->base, b->length);
+	b->base = base;
+	b->length = length;
 }
 
 void
@@ -318,6 +347,45 @@ isc__buffer_putuint32(isc_buffer_t *b, isc_uint32_t val) {
 	REQUIRE(b->used + 4 <= b->length);
 
 	ISC__BUFFER_PUTUINT32(b, val);
+}
+
+isc_uint64_t
+isc_buffer_getuint48(isc_buffer_t *b) {
+	unsigned char *cp;
+	isc_uint64_t result;
+
+	/*
+	 * Read an unsigned 48-bit integer in network byte order from 'b',
+	 * convert it to host byte order, and return it.
+	 */
+
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(b->used - b->current >= 6);
+
+	cp = isc_buffer_current(b);
+	b->current += 6;
+	result = ((isc_int64_t)(cp[0])) << 40;
+	result |= ((isc_int64_t)(cp[1])) << 32;
+	result |= ((isc_int64_t)(cp[2])) << 24;
+	result |= ((isc_int64_t)(cp[3])) << 16;
+	result |= ((isc_int64_t)(cp[4])) << 8;
+	result |= ((isc_int64_t)(cp[5]));
+
+	return (result);
+}
+
+void
+isc__buffer_putuint48(isc_buffer_t *b, isc_uint64_t val) {
+	isc_uint16_t valhi;
+	isc_uint32_t vallo;
+
+	REQUIRE(ISC_BUFFER_VALID(b));
+	REQUIRE(b->used + 6 <= b->length);
+
+	valhi = (isc_uint16_t)(val >> 32);
+	vallo = (isc_uint32_t)(val & 0xFFFFFFFF);
+	ISC__BUFFER_PUTUINT16(b, valhi);
+	ISC__BUFFER_PUTUINT32(b, vallo);
 }
 
 void

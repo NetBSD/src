@@ -134,21 +134,25 @@ QMQPD(8)                                                              QMQPD(8)
               What clients are allowed to  connect  to  the  QMQP
               server port.
 
+       <b>qmqpd_client_port_logging (no)</b>
+              Enable  logging  of  the remote QMQP client port in
+              addition to the hostname and IP address.
+
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The  location of the Postfix top-level queue direc-
+              The location of the Postfix top-level queue  direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
        <b><a href="postconf.5.html#verp_delimiter_filter">verp_delimiter_filter</a> (-=+)</b>
-              The characters Postfix accepts  as  VERP  delimiter
-              characters  on the Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command line
+              The  characters  Postfix  accepts as VERP delimiter
+              characters on the Postfix <a href="sendmail.1.html"><b>sendmail</b>(1)</a> command  line
               and in SMTP commands.
 
 <b>SEE ALSO</b>
@@ -161,7 +165,7 @@ QMQPD(8)                                                              QMQPD(8)
        <a href="QMQP_README.html">QMQP_README</a>, Postfix ezmlm-idx howto.
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>HISTORY</b>

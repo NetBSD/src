@@ -246,7 +246,7 @@ To find out what database types your Postfix system supports, use the "ppooss
         in tcp_table(5). The lookup table name is "tcp:host:port" where "host"
         specifies a symbolic hostname or a numeric IP address, and "port"
         specifies a symbolic service name or a numeric port number. This
-        protocol is not available up to and including Postfix version 2.4.
+        protocol is not available in the stable Postfix release.
     uunniixx (read-only)
         A limited way to query the UNIX authentication database. The following
         tables are implemented:

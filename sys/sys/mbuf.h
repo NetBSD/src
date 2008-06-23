@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.141 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.141.2.1 2008/06/23 04:32:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -323,19 +323,19 @@ MBUF_DEFINE(_mbuf_dummy, 1, 1);
 MBUF_DEFINE(mbuf, MHLEN, MLEN);
 
 /* mbuf flags */
-#define	M_EXT		0x0001	/* has associated external storage */
-#define	M_PKTHDR	0x0002	/* start of record */
-#define	M_EOR		0x0004	/* end of record */
-#define	M_PROTO1	0x0008	/* protocol-specific */
+#define	M_EXT		0x00001	/* has associated external storage */
+#define	M_PKTHDR	0x00002	/* start of record */
+#define	M_EOR		0x00004	/* end of record */
+#define	M_PROTO1	0x00008	/* protocol-specific */
 
 /* mbuf pkthdr flags, also in m_flags */
-#define M_AUTHIPHDR	0x0010	/* data origin authentication for IP header */
-#define M_DECRYPTED	0x0020	/* confidentiality */
-#define M_LOOP		0x0040	/* for Mbuf statistics */
-#define M_AUTHIPDGM     0x0080  /* data origin authentication */
-#define	M_BCAST		0x0100	/* send/received as link-level broadcast */
-#define	M_MCAST		0x0200	/* send/received as link-level multicast */
-#define	M_CANFASTFWD	0x0400	/* used by filters to indicate packet can
+#define M_AUTHIPHDR	0x00010	/* data origin authentication for IP header */
+#define M_DECRYPTED	0x00020	/* confidentiality */
+#define M_LOOP		0x00040	/* for Mbuf statistics */
+#define M_AUTHIPDGM     0x00080  /* data origin authentication */
+#define	M_BCAST		0x00100	/* send/received as link-level broadcast */
+#define	M_MCAST		0x00200	/* send/received as link-level multicast */
+#define	M_CANFASTFWD	0x00400	/* used by filters to indicate packet can
 				   be fast-forwarded */
 #define	M_ANYCAST6	0x00800	/* received as IPv6 anycast */
 #define	M_LINK0		0x01000	/* link layer specific flag */
@@ -345,6 +345,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_LINK4		0x10000	/* link layer specific flag */
 #define	M_LINK5		0x20000	/* link layer specific flag */
 #define	M_LINK6		0x40000	/* link layer specific flag */
+#define	M_LINK7		0x80000	/* link layer specific flag */
 
 /* additional flags for M_EXT mbufs */
 #define	M_EXT_FLAGS	0xff000000
@@ -359,6 +360,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define M_FLAGS_BITS \
     "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10AUTHIPDGM" \
     "\11BCAST\12MCAST\13CANFASTFWD\14ANYCAST6\15LINK0\16LINK1\17LINK2\20LINK3" \
+    "\21LINK4\22LINK5\23LINK6\24LINK7" \
     "\31EXT_CLUSTER\32EXT_PAGES\33EXT_ROMAP\34EXT_RW"
 
 /* flags copied when copying m_pkthdr */
@@ -864,11 +866,8 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_VLAN				1  /* VLAN ID */
 #define PACKET_TAG_ENCAP			2  /* encapsulation data */
 #define PACKET_TAG_ESP				3  /* ESP information */
-#define PACKET_TAG_PF_GENERATED			11 /* PF generated, pass always */
-#define PACKET_TAG_PF_ROUTED			12 /* PF routed, no route loops */
-#define PACKET_TAG_PF_FRAGCACHE			13 /* PF fragment cached */
-#define PACKET_TAG_PF_QID			14 /* PF queue id */
-#define PACKET_TAG_PF_TAG			15 /* PF tags */
+#define PACKET_TAG_PF				11 /* packet filter */
+#define PACKET_TAG_ALTQ_QID			12 /* ALTQ queue id */
 
 #define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		16
 #define PACKET_TAG_IPSEC_IN_DONE		17
@@ -880,7 +879,6 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define	PACKET_TAG_IPSEC_SOCKET			22 /* IPSEC socket ref */
 #define	PACKET_TAG_IPSEC_HISTORY		23 /* IPSEC history */
 
-#define	PACKET_TAG_PF_TRANSLATE_LOCALHOST	24 /* translated to localhost */
 #define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two uint16_t */
 
 #define	PACKET_TAG_INET6			26 /* IPv6 info */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.52 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: machfb.c,v 1.52.6.1 2008/06/23 04:31:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.52 2008/04/10 19:13:37 cegger Exp $");
+	"$NetBSD: machfb.c,v 1.52.6.1 2008/06/23 04:31:11 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1806,23 +1806,22 @@ int
 machfb_fbopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct mach64_softc *sc;
-	int unit = minor(dev);
 	
-	sc = machfb_cd.cd_devs[unit];
+	sc = device_lookup_private(&machfb_cd, minor(dev));
+	if (sc == NULL)
+		return ENXIO;
 	sc->sc_locked = 1;
 	
 #ifdef DEBUG_MACHFB	
-	printf("machfb_fbopen(%d)\n", unit);
+	printf("machfb_fbopen(%d)\n", minor(dev));
 #endif
-	if (unit > machfb_cd.cd_ndevs || machfb_cd.cd_devs[unit] == NULL)
-		return ENXIO;
 	return 0;
 }
 
 int
 machfb_fbclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct mach64_softc *sc = machfb_cd.cd_devs[minor(dev)];
+	struct mach64_softc *sc = device_lookup_private(&machfb_cd, minor(dev));
 
 #ifdef DEBUG_MACHFB
 	printf("machfb_fbclose()\n");
@@ -1836,7 +1835,7 @@ machfb_fbclose(dev_t dev, int flags, int mode, struct lwp *l)
 int
 machfb_fbioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct mach64_softc *sc = machfb_cd.cd_devs[minor(dev)];
+	struct mach64_softc *sc = device_lookup_private(&machfb_cd, minor(dev));
 
 #ifdef DEBUG_MACHFB
 	printf("machfb_fbioctl(%d, %lx)\n", minor(dev), cmd);
@@ -1936,7 +1935,7 @@ machfb_fbioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 paddr_t
 machfb_fbmmap(dev_t dev, off_t off, int prot)
 {
-	struct mach64_softc *sc = machfb_cd.cd_devs[minor(dev)];
+	struct mach64_softc *sc = device_lookup_private(&machfb_cd, minor(dev));
 	
 	if (sc != NULL)
 		return mach64_mmap(&sc->vd, NULL, off, prot);

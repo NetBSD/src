@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.12 2008/05/04 15:26:29 xtraeme Exp $	*/
+/*	$NetBSD: x1226.c,v 1.12.2.1 2008/06/23 04:31:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.12 2008/05/04 15:26:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.12.2.1 2008/06/23 04:31:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ xrtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xrtc_softc *sc;
 
-	if ((sc = device_lookup(&xrtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&xrtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	/* XXX: Locking */
@@ -146,7 +146,7 @@ xrtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct xrtc_softc *sc;
 
-	if ((sc = device_lookup(&xrtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&xrtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	sc->sc_open = 0;
@@ -161,7 +161,7 @@ xrtc_read(dev_t dev, struct uio *uio, int flags)
 	u_int8_t ch, cmdbuf[2];
 	int addr, error;
 
-	if ((sc = device_lookup(&xrtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&xrtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= X1226_NVRAM_SIZE)
@@ -202,7 +202,7 @@ xrtc_write(dev_t dev, struct uio *uio, int flags)
 	u_int8_t cmdbuf[3];
 	int addr, error;
 
-	if ((sc = device_lookup(&xrtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&xrtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= X1226_NVRAM_SIZE)

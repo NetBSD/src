@@ -1,9 +1,9 @@
-/*	$NetBSD: acache.h,v 1.1.1.1 2007/01/27 21:07:32 christos Exp $	*/
+/*	$NetBSD: acache.h,v 1.1.1.1.16.1 2008/06/23 04:28:15 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: acache.h,v 1.3.2.4 2006/05/03 00:07:49 marka Exp */
+/* Id: acache.h,v 1.8 2007/06/19 23:47:16 tbox Exp */
 
 #ifndef DNS_ACACHE_H
 #define DNS_ACACHE_H 1

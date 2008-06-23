@@ -464,3 +464,27 @@ const char *DSO_get_loaded_filename(DSO *dso)
 		}
 	return(dso->loaded_filename);
 	}
+
+int DSO_pathbyaddr(void *addr,char *path,int sz)
+	{
+	DSO_METHOD *meth = default_DSO_meth;
+	if (meth == NULL) meth = DSO_METHOD_openssl();
+	if (meth->pathbyaddr == NULL)
+		{
+		DSOerr(DSO_F_DSO_PATHBYADDR,DSO_R_UNSUPPORTED);
+		return -1;
+		}
+	return (*meth->pathbyaddr)(addr,path,sz);
+	}
+
+void *DSO_global_lookup(const char *name)
+	{
+	DSO_METHOD *meth = default_DSO_meth;
+	if (meth == NULL) meth = DSO_METHOD_openssl();
+	if (meth->globallookup == NULL)
+		{
+		DSOerr(DSO_F_DSO_GLOBAL_LOOKUP,DSO_R_UNSUPPORTED);
+		return NULL;
+		}
+	return (*meth->globallookup)(name);
+	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.45 2008/02/24 05:16:46 dholland Exp $	*/
+/*	$NetBSD: rcp.c,v 1.45.4.1 2008/06/23 04:26:44 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.45 2008/02/24 05:16:46 dholland Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.45.4.1 2008/06/23 04:26:44 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: rcp.c,v 1.45 2008/02/24 05:16:46 dholland Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
@@ -96,6 +97,9 @@ main(int argc, char *argv[])
 	int ch, fflag, tflag;
 	char *targ;
 	const char *shell;
+
+	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
 
 	fflag = tflag = 0;
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1)

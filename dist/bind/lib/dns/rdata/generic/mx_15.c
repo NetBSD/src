@@ -1,10 +1,10 @@
-/*	$NetBSD: mx_15.c,v 1.1.1.4 2007/01/27 21:07:25 christos Exp $	*/
+/*	$NetBSD: mx_15.c,v 1.1.1.4.12.1 2008/06/23 04:28:18 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mx_15.c,v 1.52.18.2 2005/05/20 01:10:11 marka Exp */
+/* Id: mx_15.c,v 1.56 2007/06/19 23:47:17 tbox Exp */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 

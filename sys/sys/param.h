@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.317 2008/04/28 22:44:18 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.317.2.1 2008/06/23 04:32:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499006200	/* NetBSD 4.99.62 */
+#define	__NetBSD_Version__	499006600	/* NetBSD 4.99.66 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -142,6 +142,7 @@
 #ifndef BUFCACHE_VA_MAXPCT
 #define	BUFCACHE_VA_MAXPCT	20
 #endif
+#define	VNODE_COST	2048			/* assumed space in bytes */
 #endif /* _KERNEL */
 
 /* Signals. */

@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.25 2008/04/30 14:07:13 ad Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.25.2.1 2008/06/23 04:31:01 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.25 2008/04/30 14:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.25.2.1 2008/06/23 04:31:01 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -260,7 +260,7 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 	    &regs->r_bt, &regs->r_bh, &adr, &regs->r_sz) == 0) {
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %" PRIuMAX " bytes mem space\n",
-		     device_xname(self), __func__, (long long)regs->r_sz));
+		     device_xname(self), __func__, (uintmax_t)regs->r_sz));
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
@@ -272,7 +272,7 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 	    0, &regs->r_bt, &regs->r_bh, &adr, &regs->r_sz) == 0) {
 		RTW_DPRINTF(RTW_DEBUG_ATTACH,
 		    ("%s: %s mapped %" PRIuMAX " bytes I/O space\n",
-		     device_xname(self), __func__, (long long)regs->r_sz));
+		     device_xname(self), __func__, (uintmax_t)regs->r_sz));
 #if rbus
 #else
 		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);

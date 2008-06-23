@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.34 2008/04/28 20:24:03 martin Exp $ */
+/* $NetBSD: kern_tc.c,v 1.34.2.1 2008/06/23 04:31:51 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.34 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.34.2.1 2008/06/23 04:31:51 wrstuden Exp $");
 
 #include "opt_ntp.h"
 
@@ -124,8 +124,9 @@ static struct bintime timebasebin;
 
 static int timestepwarnings;
 
-extern kmutex_t time_lock;
 kmutex_t timecounter_lock;
+static u_int timecounter_mods;
+static u_int timecounter_bad;
 
 #ifdef __FreeBSD__
 SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
@@ -164,7 +165,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 		return (error);
 
 	if (!cold)
-		mutex_enter(&time_lock);
+		mutex_spin_enter(&timecounter_lock);
 	error = EINVAL;
 	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
 		if (strcmp(newname, newtc->tc_name) != 0)
@@ -177,7 +178,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 		break;
 	}
 	if (!cold)
-		mutex_exit(&time_lock);
+		mutex_spin_exit(&timecounter_lock);
 	return error;
 }
 
@@ -185,23 +186,24 @@ static int
 sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 {
 	char buf[MAX_TCNAMELEN+48];
-	char *where = oldp;
+	char *where;
 	const char *spc;
 	struct timecounter *tc;
 	size_t needed, left, slen;
-	int error;
+	int error, mods;
 
 	if (newp != NULL)
 		return (EPERM);
 	if (namelen != 0)
 		return (EINVAL);
 
+	mutex_spin_enter(&timecounter_lock);
+ retry:
 	spc = "";
 	error = 0;
 	needed = 0;
 	left = *oldlenp;
-
-	mutex_enter(&time_lock);
+	where = oldp;
 	for (tc = timecounters; error == 0 && tc != NULL; tc = tc->tc_next) {
 		if (where == NULL) {
 			needed += sizeof(buf);  /* be conservative */
@@ -211,16 +213,20 @@ sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 					tc->tc_frequency);
 			if (left < slen + 1)
 				break;
-			/* XXX use sysctl_copyout? (from sysctl_hw_disknames) */
-			/* XXX copyout with held lock. */
+		 	mods = timecounter_mods;
+			mutex_spin_exit(&timecounter_lock);
 			error = copyout(buf, where, slen + 1);
+			mutex_spin_enter(&timecounter_lock);
+			if (mods != timecounter_mods) {
+				goto retry;
+			}
 			spc = " ";
 			where += slen;
 			needed += slen;
 			left -= slen;
 		}
 	}
-	mutex_exit(&time_lock);
+	mutex_spin_exit(&timecounter_lock);
 
 	*oldlenp = needed;
 	return (error);
@@ -473,10 +479,10 @@ tc_init(struct timecounter *tc)
 		    tc->tc_quality);
 	}
 
-	mutex_enter(&time_lock);
 	mutex_spin_enter(&timecounter_lock);
 	tc->tc_next = timecounters;
 	timecounters = tc;
+	timecounter_mods++;
 	/*
 	 * Never automatically use a timecounter with negative quality.
 	 * Even though we run on the dummy counter, switching here may be
@@ -491,34 +497,17 @@ tc_init(struct timecounter *tc)
 		tc_windup();
 	}
 	mutex_spin_exit(&timecounter_lock);
-	mutex_exit(&time_lock);
 }
 
 /*
- * Stop using a timecounter and remove it from the timecounters list.
+ * Pick a new timecounter due to the existing counter going bad.
  */
-int
-tc_detach(struct timecounter *target)
+static void
+tc_pick(void)
 {
 	struct timecounter *best, *tc;
-	struct timecounter **tcp = NULL;
-	int rc = 0;
 
-	mutex_enter(&time_lock);
-	for (tcp = &timecounters, tc = timecounters;
-	     tc != NULL;
-	     tcp = &tc->tc_next, tc = tc->tc_next) {
-		if (tc == target)
-			break;
-	}
-	if (tc == NULL) {
-		rc = ESRCH;
-		goto out;
-	}
-	*tcp = tc->tc_next;
-
-	if (timecounter != target)
-		goto out;
+	KASSERT(mutex_owned(&timecounter_lock));
 
 	for (best = tc = timecounters; tc != NULL; tc = tc->tc_next) {
 		if (tc->tc_quality > best->tc_quality)
@@ -528,14 +517,52 @@ tc_detach(struct timecounter *target)
 		else if (tc->tc_frequency > best->tc_frequency)
 			best = tc;
 	}
-	mutex_spin_enter(&timecounter_lock);
 	(void)best->tc_get_timecount(best);
 	(void)best->tc_get_timecount(best);
 	timecounter = best;
-	tc_windup();
+}
+
+/*
+ * A timecounter has gone bad, arrange to pick a new one at the next
+ * clock tick.
+ */
+void
+tc_gonebad(struct timecounter *tc)
+{
+
+	tc->tc_quality = -100;
+	membar_producer();
+	atomic_inc_uint(&timecounter_bad);
+}
+
+/*
+ * Stop using a timecounter and remove it from the timecounters list.
+ */
+int
+tc_detach(struct timecounter *target)
+{
+	struct timecounter *tc;
+	struct timecounter **tcp = NULL;
+	int rc = 0;
+
+	mutex_spin_enter(&timecounter_lock);
+	for (tcp = &timecounters, tc = timecounters;
+	     tc != NULL;
+	     tcp = &tc->tc_next, tc = tc->tc_next) {
+		if (tc == target)
+			break;
+	}
+	if (tc == NULL) {
+		rc = ESRCH;
+	} else {
+		*tcp = tc->tc_next;
+		if (timecounter == target) {
+			tc_pick();
+			tc_windup();
+		}
+		timecounter_mods++;
+	}
 	mutex_spin_exit(&timecounter_lock);
-out:
-	mutex_exit(&time_lock);
 	return rc;
 }
 
@@ -921,6 +948,13 @@ tc_ticktock(void)
 		return;
 	count = 0;
 	mutex_spin_enter(&timecounter_lock);
+	if (timecounter_bad != 0) {
+		/* An existing timecounter has gone bad, pick a new one. */
+		(void)atomic_swap_uint(&timecounter_bad, 0);
+		if (timecounter->tc_quality < 0) {
+			tc_pick();
+		}
+	}
 	tc_windup();
 	mutex_spin_exit(&timecounter_lock);
 }

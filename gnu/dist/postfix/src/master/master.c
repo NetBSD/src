@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.1.1.9 2007/05/19 16:28:21 heas Exp $	*/
+/*	$NetBSD: master.c,v 1.1.1.9.12.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -135,6 +135,7 @@
 /*	/etc/postfix/main.cf, global configuration file.
 /*	/etc/postfix/master.cf, master server configuration file.
 /*	/var/spool/postfix/pid/master.pid, master lock file.
+/*	/var/lib/postfix/master.lock, master lock file.
 /* SEE ALSO
 /*	qmgr(8), queue manager
 /*	verify(8), address verification
@@ -179,6 +180,8 @@
 #include <clean_env.h>
 #include <argv.h>
 #include <safe.h>
+#include <set_eugid.h>
+#include <set_ugid.h>
 
 /* Global library. */
 
@@ -218,7 +221,9 @@ MAIL_VERSION_STAMP_DECLARE;
 int     main(int argc, char **argv)
 {
     static VSTREAM *lock_fp;
+    static VSTREAM *data_lock_fp;
     VSTRING *lock_path;
+    VSTRING *data_lock_path;
     off_t   inherited_limit;
     int     debug_me = 0;
     int     ch;
@@ -392,6 +397,7 @@ int     main(int argc, char **argv)
      * isn't locked.
      */
     lock_path = vstring_alloc(10);
+    data_lock_path = vstring_alloc(10);
     why = vstring_alloc(10);
 
     vstring_sprintf(lock_path, "%s/%s.pid", DEF_PID_DIR, var_procname);
@@ -409,8 +415,29 @@ int     main(int argc, char **argv)
 	msg_fatal("cannot update lock file %s: %m", vstring_str(lock_path));
     close_on_exec(vstream_fileno(lock_fp), CLOSE_ON_EXEC);
 
+    /*
+     * Lock down the Postfix-writable data directory.
+     */
+    vstring_sprintf(data_lock_path, "%s/%s.lock", var_data_dir, var_procname);
+    set_eugid(var_owner_uid, var_owner_gid);
+    data_lock_fp =
+	open_lock(vstring_str(data_lock_path), O_RDWR | O_CREAT, 0644, why);
+    set_ugid(getuid(), getgid());
+    if (data_lock_fp == 0)
+	msg_fatal("open lock file %s: %s",
+		  vstring_str(data_lock_path), vstring_str(why));
+    vstream_fprintf(data_lock_fp, "%*lu\n", (int) sizeof(unsigned long) * 4,
+		    (unsigned long) var_pid);
+    if (vstream_fflush(data_lock_fp))
+	msg_fatal("cannot update lock file %s: %m", vstring_str(data_lock_path));
+    close_on_exec(vstream_fileno(data_lock_fp), CLOSE_ON_EXEC);
+
+    /*
+     * Clean up.
+     */
     vstring_free(why);
     vstring_free(lock_path);
+    vstring_free(data_lock_path);
 
     /*
      * Optionally start the debugger on ourself.
@@ -440,6 +467,9 @@ int     main(int argc, char **argv)
     for (;;) {
 #ifdef HAS_VOLATILE_LOCKS
 	if (myflock(vstream_fileno(lock_fp), INTERNAL_LOCK,
+		    MYFLOCK_OP_EXCLUSIVE) < 0)
+	    msg_fatal("refresh exclusive lock: %m");
+	if (myflock(vstream_fileno(data_lock_fp), INTERNAL_LOCK,
 		    MYFLOCK_OP_EXCLUSIVE) < 0)
 	    msg_fatal("refresh exclusive lock: %m");
 #endif

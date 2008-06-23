@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.41 2008/05/05 11:42:45 jmcneill Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.41.2.1 2008/06/23 04:31:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.41 2008/05/05 11:42:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.41.2.1 2008/06/23 04:31:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,15 +79,18 @@ struct vga_pci_softc {
 #ifdef VGA_POST
 	struct vga_post *sc_posth;
 #endif
+
+	struct pci_attach_args sc_paa;
 };
 
 static int	vga_pci_match(struct device *, struct cfdata *, void *);
 static void	vga_pci_attach(struct device *, struct device *, void *);
+static int	vga_pci_rescan(struct device *, const char *, const int *);
 static int	vga_pci_lookup_quirks(struct pci_attach_args *);
 static bool	vga_pci_resume(device_t dv PMF_FN_PROTO);
 
-CFATTACH_DECL_NEW(vga_pci, sizeof(struct vga_pci_softc),
-    vga_pci_match, vga_pci_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(vga_pci, sizeof(struct vga_pci_softc),
+    vga_pci_match, vga_pci_attach, NULL, NULL, vga_pci_rescan, NULL);
 
 static int	vga_pci_ioctl(void *, u_long, void *, int, struct lwp *);
 static paddr_t	vga_pci_mmap(void *, off_t, int);
@@ -184,6 +187,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dev = self;
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
+	psc->sc_paa = *pa;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_naive("\n");
@@ -244,6 +248,16 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (!pmf_device_register(self, NULL, vga_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	config_found_ia(self, "drm", aux, vga_drm_print);
+}
+
+static int
+vga_pci_rescan(struct device *self, const char *ifattr, const int *locators)
+{
+	struct vga_pci_softc *psc = device_private(self);
+
+	config_found_ia(self, "drm", &psc->sc_paa, vga_drm_print);
+
+	return 0;
 }
 
 static bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.94.2.2 2008/05/14 19:54:12 wrstuden Exp $	*/
+/*	$NetBSD: lwp.h,v 1.94.2.3 2008/06/23 04:32:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -85,6 +85,8 @@ struct lwp {
 	u_int		l_holdcnt;	/* l: if non-zero, don't swap */
 	u_int		l_rticks;	/* l: Saved start time of run */
 	u_int		l_rticksum;	/* l: Sum of ticks spent running */
+	u_int		l_slpticks;	/* l: Saved start time of sleep */
+	u_int		l_slpticksum;	/* l: Sum of ticks spent sleeping */
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
 	int		l_kpriority;	/* !: has kernel priority boost */
@@ -271,7 +273,7 @@ void	lwp_startup(lwp_t *, lwp_t *);
 int	lwp_locked(lwp_t *, kmutex_t *);
 void	lwp_setlock(lwp_t *, kmutex_t *);
 void	lwp_unlock_to(lwp_t *, kmutex_t *);
-void	lwp_lock_retry(lwp_t *, kmutex_t *);
+kmutex_t *lwp_lock_retry(lwp_t *, kmutex_t *);
 void	lwp_relock(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
@@ -448,7 +450,8 @@ CURCPU_IDLE_P(void)
 
 /*
  * Disable and re-enable preemption.  Only for low-level kernel
- * use.  Code outside kern/ should use kpreempt_disable() and
+ * use.  Device drivers and anything that could potentially be
+ * compiled as a module should use kpreempt_disable() and
  * kpreempt_enable().
  */
 static inline void
@@ -482,8 +485,8 @@ KPREEMPT_ENABLE(lwp_t *l)
 #endif /* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */
-
 #define LWP_DETACHED    0x00000040
 #define LWP_SUSPENDED   0x00000080
+#define	LWP_VFORK	0x80000000
 
 #endif	/* !_SYS_LWP_H_ */

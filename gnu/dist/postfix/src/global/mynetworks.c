@@ -1,4 +1,4 @@
-/*	$NetBSD: mynetworks.c,v 1.7 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: mynetworks.c,v 1.7.20.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -75,7 +75,7 @@
 #define MASK_STYLE_SUBNET	(1 << 1)
 #define MASK_STYLE_HOST		(1 << 2)
 
-static NAME_MASK mask_styles[] = {
+static const NAME_MASK mask_styles[] = {
     MYNETWORKS_STYLE_CLASS, MASK_STYLE_CLASS,
     MYNETWORKS_STYLE_SUBNET, MASK_STYLE_SUBNET,
     MYNETWORKS_STYLE_HOST, MASK_STYLE_HOST,

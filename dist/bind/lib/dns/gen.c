@@ -1,10 +1,10 @@
-/*	$NetBSD: gen.c,v 1.1.1.4 2007/01/27 21:06:44 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.1.1.4.12.1 2008/06/23 04:28:05 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gen.c,v 1.73.18.6 2006/10/02 06:36:43 marka Exp */
+/* Id: gen.c,v 1.81 2007/06/19 23:47:16 tbox Exp */
 
 /*! \file */
 

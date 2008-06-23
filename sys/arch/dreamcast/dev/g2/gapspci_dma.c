@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.15 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.15.2.1 2008/06/23 04:30:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.15 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.15.2.1 2008/06/23 04:30:17 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,9 +516,9 @@ gaps_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	curseg = 0;
 	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = TAILQ_NEXT(m, pageq);
+	m = TAILQ_NEXT(m, pageq.queue);
 
-	for (; m != NULL; m = TAILQ_NEXT(m, pageq)) {
+	for (; m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 		if (curaddr == (lastaddr + PAGE_SIZE))
 			segs[curseg].ds_len += PAGE_SIZE;
@@ -552,7 +552,7 @@ gaps_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 		     addr < segs[curseg].ds_addr + segs[curseg].ds_len;
 		     addr += PAGE_SIZE) {
 			m = PHYS_TO_VM_PAGE(addr);
-			TAILQ_INSERT_TAIL(&mlist, m, pageq);
+			TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
 		}
 	}
 

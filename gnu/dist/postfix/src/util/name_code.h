@@ -1,4 +1,4 @@
-/*	$NetBSD: name_code.h,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: name_code.h,v 1.1.1.2.26.1 2008/06/23 04:29:26 wrstuden Exp $	*/
 
 #ifndef _NAME_CODE_H_INCLUDED_
 #define _NAME_CODE_H_INCLUDED_
@@ -24,8 +24,8 @@ typedef struct {
 #define NAME_CODE_FLAG_NONE		0
 #define NAME_CODE_FLAG_STRICT_CASE	(1<<0)
 
-extern int name_code(NAME_CODE *, int, const char *);
-extern const char *str_name_code(NAME_CODE *, int);
+extern int name_code(const NAME_CODE *, int, const char *);
+extern const char *str_name_code(const NAME_CODE *, int);
 
 /* LICENSE
 /* .ad

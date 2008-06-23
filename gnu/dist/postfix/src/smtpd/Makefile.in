@@ -298,6 +298,7 @@ smtpd_dsn_fix.o: ../../include/sys_defs.h
 smtpd_dsn_fix.o: smtpd_dsn_fix.c
 smtpd_dsn_fix.o: smtpd_dsn_fix.h
 smtpd_milter.o: ../../include/argv.h
+smtpd_milter.o: ../../include/attr.h
 smtpd_milter.o: ../../include/mail_params.h
 smtpd_milter.o: ../../include/mail_stream.h
 smtpd_milter.o: ../../include/milter.h
@@ -365,6 +366,7 @@ smtpd_proxy.o: smtpd.h
 smtpd_proxy.o: smtpd_proxy.c
 smtpd_proxy.o: smtpd_proxy.h
 smtpd_sasl_glue.o: ../../include/argv.h
+smtpd_sasl_glue.o: ../../include/attr.h
 smtpd_sasl_glue.o: ../../include/mail_params.h
 smtpd_sasl_glue.o: ../../include/mail_stream.h
 smtpd_sasl_glue.o: ../../include/milter.h

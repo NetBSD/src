@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.197 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.197.2.1 2008/06/23 04:31:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.197 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.197.2.1 2008/06/23 04:31:52 wrstuden Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.197 2008/05/05 17:11:17 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
 
@@ -516,10 +517,6 @@ buf_lotsfree(void)
 {
 	int try, thresh;
 
-	/* Always allocate if doing copy on write */
-	if (curlwp->l_pflag & LP_UFSCOW)
-		return 1;
-
 	/* Always allocate if less than the low water mark. */
 	if (bufmem < bufmem_lowater)
 		return 1;
@@ -705,15 +702,19 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
  */
 int
 bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
-    buf_t **bpp)
+    int flags, buf_t **bpp)
 {
 	buf_t *bp;
+	int error;
 
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
 
 	/* Wait for the read to complete, and return result. */
-	return (biowait(bp));
+	error = biowait(bp);
+	if (error == 0 && (flags & B_MODIFY) != 0)
+		error = fscow_run(bp, true);
+	return error;
 }
 
 /*
@@ -722,10 +723,10 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
  */
 int
 breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
-    int *rasizes, int nrablks, kauth_cred_t cred, buf_t **bpp)
+    int *rasizes, int nrablks, kauth_cred_t cred, int flags, buf_t **bpp)
 {
 	buf_t *bp;
-	int i;
+	int error, i;
 
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
 
@@ -746,7 +747,10 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 	mutex_exit(&bufcache_lock);
 
 	/* Otherwise, we had to start a read for it; wait until it's valid. */
-	return (biowait(bp));
+	error = biowait(bp);
+	if (error == 0 && (flags & B_MODIFY) != 0)
+		error = fscow_run(bp, true);
+	return error;
 }
 
 /*
@@ -756,10 +760,11 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
  */
 int
 breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno,
-    int rabsize, kauth_cred_t cred, buf_t **bpp)
+    int rabsize, kauth_cred_t cred, int flags, buf_t **bpp)
 {
 
-	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));
+	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1,
+	    cred, flags, bpp));
 }
 
 /*
@@ -773,6 +778,7 @@ bwrite(buf_t *bp)
 	struct mount *mp;
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	vp = bp->b_vp;
 	if (vp != NULL) {
@@ -878,7 +884,10 @@ void
 bdwrite(buf_t *bp)
 {
 
+	KASSERT(bp->b_vp == NULL || bp->b_vp->v_tag != VT_UFS ||
+	    ISSET(bp->b_flags, B_COWDONE));
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
+	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/* If this is a tape block, write the block now. */
 	if (bdev_type(bp->b_dev) == D_TAPE) {
@@ -929,6 +938,7 @@ bawrite(buf_t *bp)
  * Call with the buffer interlock held.
  *
  * Note: called only from biodone() through ffs softdep's io_complete()
+ * Note2: smbfs also learned about bdirty().
  */
 void
 bdirty(buf_t *bp)
@@ -960,7 +970,9 @@ brelsel(buf_t *bp, int set)
 	struct vnode *vp;
 
 	KASSERT(mutex_owned(&bufcache_lock));
-
+	KASSERT(!cv_has_waiters(&bp->b_done));
+	KASSERT(bp->b_refcnt > 0);
+	
 	SET(bp->b_cflags, set);
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
@@ -970,10 +982,8 @@ brelsel(buf_t *bp, int set)
 	cv_signal(&needbuffer_cv);
 
 	/* Wake up any proceeses waiting for _this_ buffer to become */
-	if (ISSET(bp->b_cflags, BC_WANTED) != 0) {
+	if (ISSET(bp->b_cflags, BC_WANTED))
 		CLR(bp->b_cflags, BC_WANTED|BC_AGE);
-		cv_broadcast(&bp->b_busy);
-	}
 
 	/*
 	 * Determine which queue the buffer should be on, then put it there.
@@ -1067,6 +1077,7 @@ already_queued:
 	/* Unlock the buffer. */
 	CLR(bp->b_cflags, BC_AGE|BC_BUSY|BC_NOCACHE);
 	CLR(bp->b_flags, B_ASYNC);
+	cv_broadcast(&bp->b_busy);
 
 	if (bp->b_bufsize <= 0)
 		brele(bp);
@@ -1132,6 +1143,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 			mutex_exit(&bufcache_lock);
 			return (NULL);
 		}
+		KASSERT(!cv_has_waiters(&bp->b_done));
 #ifdef DIAGNOSTIC
 		if (ISSET(bp->b_oflags, BO_DONE|BO_DELWRI) &&
 		    bp->b_bcount < size && vp->v_type != VBLK)
@@ -1289,10 +1301,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		if (bp != NULL) {
 			memset((char *)bp, 0, sizeof(*bp));
 			buf_init(bp);
-			bp->b_dev = NODEV;
-			bp->b_vnbufs.le_next = NOLIST;
-			bp->b_cflags = BC_BUSY;
-			bp->b_refcnt = 1;
+			SET(bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 			mutex_enter(&bufcache_lock);
 #if defined(DIAGNOSTIC)
 			bp->b_freelistindex = -1;
@@ -1304,7 +1313,11 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE].bq_queue)) != NULL ||
 	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU].bq_queue)) != NULL) {
+	    	KASSERT(!ISSET(bp->b_cflags, BC_BUSY));
 		bremfree(bp);
+
+		/* Buffer is no longer on free lists. */
+		SET(bp->b_cflags, BC_BUSY);
 	} else {
 		/*
 		 * XXX: !from_bufq should be removed.
@@ -1337,8 +1350,9 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		goto start;
 	}
 
-	/* Buffer is no longer on free lists. */
-	SET(bp->b_cflags, BC_BUSY);
+	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
+	KASSERT(bp->b_refcnt > 0);
+    	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/*
 	 * If buffer was a delayed write, start it and return NULL
@@ -1439,6 +1453,9 @@ int
 biowait(buf_t *bp)
 {
 
+	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
+	KASSERT(bp->b_refcnt > 0);
+
 	mutex_enter(bp->b_objlock);
 	while (!ISSET(bp->b_oflags, BO_DONE | BO_DELWRI))
 		cv_wait(&bp->b_done, bp->b_objlock);
@@ -1504,6 +1521,7 @@ biodone2(buf_t *bp)
 
 	if ((callout = bp->b_iodone) != NULL) {
 		/* Note callout done, then call out. */
+		KASSERT(!cv_has_waiters(&bp->b_done));
 		KERNEL_LOCK(1, NULL);		/* XXXSMP */
 		bp->b_iodone = NULL;
 		mutex_exit(bp->b_objlock);
@@ -1511,6 +1529,7 @@ biodone2(buf_t *bp)
 		KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 	} else if (ISSET(bp->b_flags, B_ASYNC)) {
 		/* If async, release. */
+		KASSERT(!cv_has_waiters(&bp->b_done));
 		mutex_exit(bp->b_objlock);
 		brelse(bp, 0);
 	} else {
@@ -1603,8 +1622,7 @@ buf_syncwait(void)
 		if (nbusy_prev == 0)
 			nbusy_prev = nbusy;
 		printf("%d ", nbusy);
-		tsleep(&nbusy, PRIBIO, "bflush",
-		    (iter == 0) ? 1 : hz / 25 * iter);
+		kpause("bflush", false, (iter == 0) ? 1 : hz / 25 * iter, NULL);
 		if (nbusy >= nbusy_prev) /* we didn't flush anything */
 			iter++;
 		else
@@ -2004,6 +2022,9 @@ buf_init(buf_t *bp)
 	bp->b_oflags = 0;
 	bp->b_objlock = &buffer_lock;
 	bp->b_iodone = NULL;
+	bp->b_refcnt = 1;
+	bp->b_dev = NODEV;
+	bp->b_vnbufs.le_next = NOLIST;
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 }
 

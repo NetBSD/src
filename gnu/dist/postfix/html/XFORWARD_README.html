@@ -19,7 +19,10 @@
 
 <h2>Purpose of the XFORWARD extension to SMTP</h2>
 
-<p> The XFORWARD command targets the following problem: </p>
+<p> When an SMTP server announces support for the XFORWARD command,
+an SMTP client may send information that overrides one or more
+client-related logging attributes.  The XFORWARD command targets
+the following problem: </p>
 
 <ul>
 
@@ -41,7 +44,7 @@ It is not implemented by passing additional parameters via the MAIL
 FROM command, because doing so would require extending the MAIL
 FROM command length limit by another 600 or more characters beyond
 the space that is already needed to support other extensions such
-as AUTH. </p>
+as AUTH and DSN. </p>
 
 <h2>XFORWARD Command syntax</h2>
 
@@ -54,9 +57,8 @@ attributes that the XFORWARD implementation supports. </p>
 
 <p> The client may send the XFORWARD request at any time except in
 the middle of a mail delivery transaction (i.e.  between MAIL and
-DOT).  The command may be pipelined when the server supports 
-ESMTP command pipelining.
-</p>
+RSET or DOT).  The command may be pipelined when the server supports
+ESMTP command pipelining.  </p>
 
 <p> The syntax of XFORWARD requests is described below.  Upper case
 and quoted strings specify terminals, lowercase strings specify
@@ -69,7 +71,7 @@ names are shown in upper case, they are in fact case insensitive.
     xforward-command = XFORWARD 1*( SP attribute-name"="attribute-value )
 </p>
 <p>
-    attribute-name = ( NAME | ADDR | PROTO | HELO | SOURCE )
+    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO | SOURCE )
 </p>
 <p>
     attribute-value = xtext
@@ -78,7 +80,7 @@ names are shown in upper case, they are in fact case insensitive.
 
 <ul>
 
-    <li> <p> Attribute values are xtext encoded as per <a href="http://www.faqs.org/rfcs/rfc1891.html">RFC 1891</a>.
+    <li> <p> Attribute values are xtext encoded as per <a href="http://tools.ietf.org/html/rfc1891">RFC 1891</a>.
     </p>
 
     <li> <p> The NAME attribute specifies the up-stream hostname,
@@ -89,6 +91,10 @@ names are shown in upper case, they are in fact case insensitive.
     address, or [UNAVAILABLE] when the information is unavailable.
     Address information is not enclosed with []. The address may
     be a non-IP address. </p>
+
+    <li> <p> The PORT attribute specifies an up-stream client TCP
+    port number in decimal, or [UNAVAILABLE] when the information
+    is unavailable.  </p>
 
     <li> <p> The PROTO attribute specifies the mail protocol for
     receiving mail from the up-stream host. This may be an SMTP or
@@ -139,7 +145,7 @@ unencoded information. </p>
 server stores the specified attribute values, and erases the
 attributes whose value was specified as [UNAVAILABLE]. All XFORWARD
 attributes are reset to the real client information after the MAIL
-FROM command completes. </p>
+FROM transaction completes (i.e. after RSET or DOT). </p>
 
 <h2> XFORWARD Server reply codes </h2>
 
@@ -206,13 +212,13 @@ must be restricted to authorized clients. </p>
 
 <p> SMTP connection caching makes it possible to deliver multiple
 messages within the same SMTP session. The XFORWARD attributes are
-reset after the MAIL FROM command completes, so there is no risk
-of information leakage. </p>
+reset after the MAIL FROM transaction completes (after RSET or DOT),
+so there is no risk of information leakage. </p>
 
 <h2> References </h2>
 
 <p> Moore, K, "SMTP Service Extension for Delivery Status Notifications",
-<a href="http://www.faqs.org/rfcs/rfc1891.html">RFC 1891</a>, January 1996. </p>
+<a href="http://tools.ietf.org/html/rfc1891">RFC 1891</a>, January 1996. </p>
 
 </body>
 

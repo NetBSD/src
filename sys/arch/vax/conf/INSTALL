@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.48 2008/03/11 05:43:17 matt Exp $
+#	$NetBSD: INSTALL,v 1.48.6.1 2008/06/23 04:30:47 wrstuden Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -96,6 +96,7 @@ options 	COMPAT_14
 options 	COMPAT_15
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_ULTRIX
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

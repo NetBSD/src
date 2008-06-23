@@ -1,10 +1,10 @@
-/*	$NetBSD: db.c,v 1.1.1.4 2007/01/27 21:06:41 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.1.1.4.12.1 2008/06/23 04:28:05 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.c,v 1.74.18.6 2005/10/13 02:12:24 marka Exp */
+/* Id: db.c,v 1.83.128.2 2008/04/03 06:20:34 tbox Exp */
 
 /*! \file */
 
@@ -97,7 +97,7 @@ static inline dns_dbimplementation_t *
 impfind(const char *name) {
 	dns_dbimplementation_t *imp;
 
-	for (imp = ISC_LIST_HEAD(implementations); 
+	for (imp = ISC_LIST_HEAD(implementations);
 	     imp != NULL;
 	     imp = ISC_LIST_NEXT(imp, link))
 		if (strcasecmp(name, imp->name) == 0)
@@ -529,6 +529,30 @@ dns_db_detachnode(dns_db_t *db, dns_dbnode_t **nodep) {
 	ENSURE(*nodep == NULL);
 }
 
+void
+dns_db_transfernode(dns_db_t *db, dns_dbnode_t **sourcep,
+		    dns_dbnode_t **targetp)
+{
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(targetp != NULL && *targetp == NULL);
+	/*
+	 * This doesn't check the implementation magic.  If we find that
+	 * we need such checks in future then this will be done in the
+	 * method.
+	 */
+	REQUIRE(sourcep != NULL && *sourcep != NULL);
+
+	UNUSED(db);
+
+	if (db->methods->transfernode == NULL) {
+		*targetp = *sourcep;
+		*sourcep = NULL;
+	} else
+		(db->methods->transfernode)(db, sourcep, targetp);
+
+	ENSURE(*sourcep == NULL);
+}
+
 isc_result_t
 dns_db_expirenode(dns_db_t *db, dns_dbnode_t *node, isc_stdtime_t now) {
 
@@ -689,7 +713,7 @@ dns_db_deleterdataset(dns_db_t *db, dns_dbnode_t *node,
 					      type, covers));
 }
 
-void 
+void
 dns_db_overmem(dns_db_t *db, isc_boolean_t overmem) {
 
 	REQUIRE(DNS_DB_VALID(db));
@@ -715,11 +739,11 @@ dns_db_getsoaserial(dns_db_t *db, dns_dbversion_t *ver, isc_uint32_t *serialp)
 	dns_rdataset_init(&rdataset);
 	result = dns_db_findrdataset(db, node, ver, dns_rdatatype_soa, 0,
 				     (isc_stdtime_t)0, &rdataset, NULL);
- 	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS)
 		goto freenode;
 
 	result = dns_rdataset_first(&rdataset);
- 	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS)
 		goto freerdataset;
 	dns_rdataset_current(&rdataset, &rdata);
 	result = dns_rdataset_next(&rdataset);
@@ -772,7 +796,7 @@ dns_db_register(const char *name, dns_dbcreatefunc_t create, void *driverarg,
 		RWUNLOCK(&implock, isc_rwlocktype_write);
 		return (ISC_R_EXISTS);
 	}
-	
+
 	imp = isc_mem_get(mctx, sizeof(dns_dbimplementation_t));
 	if (imp == NULL) {
 		RWUNLOCK(&implock, isc_rwlocktype_write);
@@ -808,6 +832,16 @@ dns_db_unregister(dns_dbimplementation_t **dbimp) {
 	isc_mem_put(mctx, imp, sizeof(dns_dbimplementation_t));
 	isc_mem_detach(&mctx);
 	RWUNLOCK(&implock, isc_rwlocktype_write);
+}
+
+dns_stats_t *
+dns_db_getrrsetstats(dns_db_t *db) {
+	REQUIRE(DNS_DB_VALID(db));
+
+	if (db->methods->getrrsetstats != NULL)
+		return ((db->methods->getrrsetstats)(db));
+
+	return (NULL);
 }
 
 isc_result_t

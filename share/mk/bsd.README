@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.207 2008/05/03 14:48:31 lukem Exp $
+#	$NetBSD: bsd.README,v 1.207.2.1 2008/06/23 04:30:03 wrstuden Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -180,12 +180,16 @@ MKINFO		If "no", don't build or install Info documentation from
 MKIPFILTER	If "no", don't build or install the IP Filter programs and LKM.
 		Default: yes
 
-MKISCSI		If "no", don't build or install iscsi library or applications
+MKISCSI		If "no", don't build or install iSCSI library or applications
 		(depends on libpthread.)
 		Default: yes
 
 MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
+		Default: yes
+
+MKLDAP		If "no", disables building of LDAP infrastructure
+		(libraries and support programs).
 		Default: yes
 
 MKLINKLIB	If "no", act as "MKLINT=no MKPICINSTALL=no MKPROFILE=no".
@@ -325,6 +329,10 @@ USE_KERBEROS	If "no", disables building Kerberos v5
 		support into various system utilities/libraries that
 		support it.  If ${MKKERBEROS} is "no", USE_KERBEROS
 		will also be forced to "no".
+
+USE_LDAP	If "no", disables building LDAP support into various
+		system utilities/libraries that support it.
+		If ${MKLDAP} is "no", USE_LDAP will also be forced to "no".
 
 USE_PAM		If "no", disables building PAM authentication support
 		into various system utilities/libraries that support it.
@@ -1068,6 +1076,9 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
 		LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 		LIBL?=		${DESTDIR}/usr/lib/libl.a
+		LIBLBER?=	${DESTDIR}/usr/lib/liblber.a
+		LIBLDAP?=	${DESTDIR}/usr/lib/libldap.a
+		LIBLDAP_R?=	${DESTDIR}/usr/lib/libldap_r.a
 		LIBM?=		${DESTDIR}/usr/lib/libm.a
 		LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
 		LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a

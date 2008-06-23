@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.7 2007/11/12 18:44:43 ad Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.7.20.1 2008/06/23 04:30:05 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.7 2007/11/12 18:44:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.7.20.1 2008/06/23 04:30:05 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,12 +172,12 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 		"model name\t: %s\n"
 		"stepping\t: ",
 		xcpu,
-		cpu_vendorname,
+		(char *)ci->ci_vendor,
 		cpuid_level >= 0 ?
 		    ((ci->ci_signature >> 8) & 15) : cpu_class + 3,
 		cpuid_level >= 0 ?
 		    ((ci->ci_signature >> 4) & 15) : 0,
-		cpu_model
+		cpu_brand_string
 	    );
 
 	left -= l;
@@ -196,11 +196,11 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 		return 0;
 
 		
-	if (ci->ci_tsc_freq != 0) {
+	if (ci->ci_data.cpu_cc_freq != 0) {
 		uint64_t freq, fraq;
 
-		freq = (ci->ci_tsc_freq + 4999) / 1000000;
-		fraq = ((ci->ci_tsc_freq + 4999) / 10000) % 100;
+		freq = (ci->ci_data.cpu_cc_freq + 4999) / 1000000;
+		fraq = ((ci->ci_data.cpu_cc_freq + 4999) / 10000) % 100;
 		l = snprintf(p, left, "cpu MHz\t\t: %ld.%ld\n",
 		    freq, fraq);
 	} else
@@ -214,7 +214,7 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	l = snprintf(p, left,
 		"fdiv_bug\t: %s\n"
 		"fpu\t\t: %s\n"
-		"fpu_exception:\t: %s\n"
+		"fpu_exception\t: %s\n"
 		"cpuid level\t: %d\n"
 		"wp\t\t: %s\n"
 		"flags\t\t: %s\n",

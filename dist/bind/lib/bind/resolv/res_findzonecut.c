@@ -1,7 +1,7 @@
-/*	$NetBSD: res_findzonecut.c,v 1.1.1.4 2007/01/27 21:09:14 christos Exp $	*/
+/*	$NetBSD: res_findzonecut.c,v 1.1.1.4.12.1 2008/06/23 04:28:04 wrstuden Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: res_findzonecut.c,v 1.7.18.3 2005/10/11 00:25:11 marka Exp";
+static const char rcsid[] = "Id: res_findzonecut.c,v 1.10 2005/10/11 00:10:16 marka Exp";
 #endif /* not lint */
 
 /*

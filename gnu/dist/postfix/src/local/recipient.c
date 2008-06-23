@@ -1,4 +1,4 @@
-/*	$NetBSD: recipient.c,v 1.1.1.5 2006/07/19 01:17:31 rpaulo Exp $	*/
+/*	$NetBSD: recipient.c,v 1.1.1.5.20.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -231,7 +231,7 @@ int     deliver_recipient(LOCAL_STATE state, USER_ATTR usr_attr)
      * need for VERP specific bouncing code, at the cost of complicating the
      * normal bounce sending procedure, but would simplify the code below.
      */
-    if (delivered_find(state.loop_info, state.msg_attr.rcpt.address)) {
+    if (delivered_hdr_find(state.loop_info, state.msg_attr.rcpt.address)) {
 	VSTRING *canon_owner = 0;
 
 	if (var_ownreq_special) {

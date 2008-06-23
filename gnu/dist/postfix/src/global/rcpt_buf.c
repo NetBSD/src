@@ -1,4 +1,4 @@
-/*	$NetBSD: rcpt_buf.c,v 1.1.1.1 2006/07/19 01:17:28 rpaulo Exp $	*/
+/*	$NetBSD: rcpt_buf.c,v 1.1.1.1.22.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -43,7 +43,7 @@
 /*	using the specified attribute scan routine. rcpb_scan()
 /*	is meant to be passed as a call-back to attr_scan(), thusly:
 /*
-/*	... ATTR_SCAN_FUNC, rcpb_scan, (void *) rcpt_buf, ...
+/*	... ATTR_TYPE_FUNC, rcpb_scan, (void *) rcpt_buf, ...
 /*
 /*	rcpb_create(), rcpb_reset() and rcpb_free() create, wipe
 /*	and destroy recipient buffer instances.

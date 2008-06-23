@@ -4,9 +4,6 @@
 /* OpenSSL was configured with the following options: */
 #ifndef OPENSSL_DOING_MAKEDEPEND
 
-#ifndef OPENSSL_NO_CAMELLIA
-# define OPENSSL_NO_CAMELLIA
-#endif
 #ifndef OPENSSL_NO_GMP
 # define OPENSSL_NO_GMP
 #endif
@@ -26,6 +23,18 @@
 #else
 #ifndef OPENSSL_THREADS
 #define OPENSSL_THREADS
+#endif
+#ifndef OPENSSL_NO_HW_PADLOCK
+#define OPENSSL_NO_HW_PADLOCK
+#endif
+#ifndef OPENSSL_NO_GOST
+#define OPENSSL_NO_GOST
+#endif
+#ifndef OPENSSL_NO_SEED
+#define OPENSSL_NO_SEED
+#endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+#define OPENSSL_NO_WHIRLPOOL
 #endif
 #endif
 

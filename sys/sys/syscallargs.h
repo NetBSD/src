@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.194.4.3 2008/05/28 16:28:34 wrstuden Exp $ */
+/* $NetBSD: syscallargs.h,v 1.194.4.4 2008/06/23 04:32:03 wrstuden Exp $ */
 
 /*
  * System call argument lists.
@@ -1846,7 +1846,7 @@ struct sys__sched_setaffinity_args {
 	syscallarg(pid_t) pid;
 	syscallarg(lwpid_t) lid;
 	syscallarg(size_t) size;
-	syscallarg(void *) cpuset;
+	syscallarg(const cpuset_t *) cpuset;
 };
 check_syscall_args(sys__sched_setaffinity)
 
@@ -1854,7 +1854,7 @@ struct sys__sched_getaffinity_args {
 	syscallarg(pid_t) pid;
 	syscallarg(lwpid_t) lid;
 	syscallarg(size_t) size;
-	syscallarg(void *) cpuset;
+	syscallarg(cpuset_t *) cpuset;
 };
 check_syscall_args(sys__sched_getaffinity)
 

@@ -17,6 +17,10 @@ service.
 
 BBuuiillddiinngg PPoossttffiixx wwiitthh MMyySSQQLL ssuuppppoorrtt
 
+These instructions assume that you build Postfix from source code as described
+in the INSTALL document. Some modification may be required if you build Postfix
+from a vendor-specific source package.
+
 Note: to use mysql with Debian GNU/Linux's Postfix, all you need is to install
 the postfix-mysql package and you're done. There is no need to recompile
 Postfix.

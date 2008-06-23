@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.135 2008/04/28 20:23:58 martin Exp $ */
+/*	$NetBSD: ehci.c,v 1.135.2.1 2008/06/23 04:31:36 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.135 2008/04/28 20:23:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.135.2.1 2008/06/23 04:31:36 wrstuden Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -363,7 +363,7 @@ ehci_init(ehci_softc_t *sc)
 
 	sc->sc_bus.usbrev = USBREV_2_0;
 
-	usb_setup_reserve(sc, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
+	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
 
 	/* Reset the controller */
@@ -1827,7 +1827,19 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			EOWRITE4(sc, port, v &~ EHCI_PS_PE);
 			break;
 		case UHF_PORT_SUSPEND:
-			EOWRITE4(sc, port, v &~ EHCI_PS_SUSP);
+			if (!(v & EHCI_PS_SUSP)) /* not suspended */
+				break;
+			v &= ~EHCI_PS_SUSP;
+			EOWRITE4(sc, port, v | EHCI_PS_FPR);
+			/* see USB2 spec ch. 7.1.7.7 */
+			usb_delay_ms(&sc->sc_bus, 20);
+			EOWRITE4(sc, port, v);
+			usb_delay_ms(&sc->sc_bus, 2);
+#ifdef DEBUG
+			v = EOREAD4(sc, port);
+			if (v & (EHCI_PS_FPR | EHCI_PS_SUSP))
+				printf("ehci: resume failed: %x\n", v);
+#endif
 			break;
 		case UHF_PORT_POWER:
 			if (sc->sc_hasppc)

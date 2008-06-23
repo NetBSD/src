@@ -1,4 +1,4 @@
-/*	$NetBSD: local.c,v 1.1.1.11 2007/05/19 16:28:20 heas Exp $	*/
+/*	$NetBSD: local.c,v 1.1.1.11.12.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -212,6 +212,9 @@
 /* .IP \fBLOCAL\fR
 /*	The entire recipient address localpart (text to the left of the
 /*	rightmost @ character).
+/* .IP \fBORIGINAL_RECIPIENT\fR
+/*	The entire recipient address, before any address rewriting
+/*	or aliasing (Postfix 2.5 and later).
 /* .IP \fBRECIPIENT\fR
 /*	The entire recipient address.
 /* .IP \fBSENDER\fR
@@ -695,7 +698,8 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
     state.msg_attr.request = rqst;
     RESET_OWNER_ATTR(state.msg_attr, state.level);
     RESET_USER_ATTR(usr_attr, state.level);
-    state.loop_info = delivered_init(state.msg_attr);	/* delivered-to */
+    state.loop_info = delivered_hdr_init(rqst->fp, rqst->data_offset,
+					 FOLD_ADDR_ALL);
     state.request = rqst;
 
     /*
@@ -719,7 +723,7 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
     /*
      * Clean up.
      */
-    delivered_free(state.loop_info);
+    delivered_hdr_free(state.loop_info);
     deliver_attr_free(&state.msg_attr);
 
     return (msg_stat);
@@ -755,19 +759,19 @@ static void local_service(VSTREAM *stream, char *service, char **argv)
 
 static void local_mask_init(void)
 {
-    static NAME_MASK file_mask[] = {
+    static const NAME_MASK file_mask[] = {
 	"alias", EXPAND_TYPE_ALIAS,
 	"forward", EXPAND_TYPE_FWD,
 	"include", EXPAND_TYPE_INCL,
 	0,
     };
-    static NAME_MASK command_mask[] = {
+    static const NAME_MASK command_mask[] = {
 	"alias", EXPAND_TYPE_ALIAS,
 	"forward", EXPAND_TYPE_FWD,
 	"include", EXPAND_TYPE_INCL,
 	0,
     };
-    static NAME_MASK deliver_mask[] = {
+    static const NAME_MASK deliver_mask[] = {
 	"command", DELIVER_HDR_CMD,
 	"file", DELIVER_HDR_FILE,
 	"forward", DELIVER_HDR_FWD,
@@ -854,16 +858,16 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_COMMAND_MAXTIME, DEF_COMMAND_MAXTIME, &var_command_maxtime, 1, 0,
 	0,
     };
-    static CONFIG_INT_TABLE int_table[] = {
+    static const CONFIG_INT_TABLE int_table[] = {
 	VAR_DUP_FILTER_LIMIT, DEF_DUP_FILTER_LIMIT, &var_dup_filter_limit, 0, 0,
 	VAR_MAILBOX_LIMIT, DEF_MAILBOX_LIMIT, &var_mailbox_limit, 0, 0,
 	0,
     };
-    static CONFIG_STR_TABLE str_table[] = {
+    static const CONFIG_STR_TABLE str_table[] = {
 	VAR_ALIAS_MAPS, DEF_ALIAS_MAPS, &var_alias_maps, 0, 0,
 	VAR_HOME_MAILBOX, DEF_HOME_MAILBOX, &var_home_mailbox, 0, 0,
 	VAR_ALLOW_COMMANDS, DEF_ALLOW_COMMANDS, &var_allow_commands, 0, 0,
@@ -883,7 +887,7 @@ int     main(int argc, char **argv)
 	VAR_MAILBOX_CMD_MAPS, DEF_MAILBOX_CMD_MAPS, &var_mailbox_cmd_maps, 0, 0,
 	0,
     };
-    static CONFIG_BOOL_TABLE bool_table[] = {
+    static const CONFIG_BOOL_TABLE bool_table[] = {
 	VAR_BIFF, DEF_BIFF, &var_biff,
 	VAR_EXP_OWN_ALIAS, DEF_EXP_OWN_ALIAS, &var_exp_own_alias,
 	VAR_STAT_HOME_DIR, DEF_STAT_HOME_DIR, &var_stat_home_dir,
@@ -893,7 +897,7 @@ int     main(int argc, char **argv)
     };
 
     /* Suppress $name expansion upon loading. */
-    static CONFIG_RAW_TABLE raw_table[] = {
+    static const CONFIG_RAW_TABLE raw_table[] = {
 	VAR_EXEC_DIRECTORY, DEF_EXEC_DIRECTORY, &var_exec_directory, 0, 0,
 	VAR_FORWARD_PATH, DEF_FORWARD_PATH, &var_forward_path, 0, 0,
 	VAR_MAILBOX_COMMAND, DEF_MAILBOX_COMMAND, &var_mailbox_command, 0, 0,

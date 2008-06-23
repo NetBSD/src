@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.4 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.4.2.1 2008/06/23 04:31:36 wrstuden Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -130,7 +130,7 @@ struct	ubsa_softc {
 	u_char			sc_lsr;		/* Local status register */
 	u_char			sc_msr;		/* ubsa status register */
 
-	device_ptr_t		sc_subdevs[UBSA_MAXCONN]; /* ucom device */
+	device_t		sc_subdevs[UBSA_MAXCONN]; /* ucom device */
 	int			sc_numif;	/* number of interfaces */
 
 	u_char			sc_dying;	/* disconnecting */

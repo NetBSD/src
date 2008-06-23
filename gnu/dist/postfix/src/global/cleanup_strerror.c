@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_strerror.c,v 1.1.1.4 2006/07/19 01:17:21 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_strerror.c,v 1.1.1.4.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -20,7 +20,7 @@
 /*	const char *cleanup_strerror(code)
 /*	int	code;
 /*
-/*	CLEANUP_STAT_DETAIL *cleanup_stat_detail(code)
+/*	const CLEANUP_STAT_DETAIL *cleanup_stat_detail(code)
 /*	int	code;
 /* DESCRIPTION
 /*	cleanup_strerror() maps a status code returned by the \fIcleanup\fR
@@ -60,7 +60,7 @@
   * multiple errors, to it is important to list the most severe errors first,
   * because cleanup_strerror() can report only one error.
   */
-static CLEANUP_STAT_DETAIL cleanup_stat_map[] = {
+static const CLEANUP_STAT_DETAIL cleanup_stat_map[] = {
     CLEANUP_STAT_DEFER, 451, "4.7.1", "service unavailable",
     CLEANUP_STAT_PROXY, 451, "4.3.0", "queue file write error",
     CLEANUP_STAT_BAD, 451, "4.3.0", "internal protocol error",
@@ -93,7 +93,7 @@ const char *cleanup_strerror(unsigned status)
 
 /* cleanup_stat_detail - map status code to table entry with assorted data */
 
-CLEANUP_STAT_DETAIL *cleanup_stat_detail(unsigned status)
+const CLEANUP_STAT_DETAIL *cleanup_stat_detail(unsigned status)
 {
     unsigned i;
 

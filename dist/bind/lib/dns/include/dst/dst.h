@@ -1,10 +1,10 @@
-/*	$NetBSD: dst.h,v 1.1.1.2 2007/01/27 21:07:43 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.1.1.2.14.1 2008/06/23 04:28:16 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,16 +17,18 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dst.h,v 1.1.6.5 2006/01/27 23:57:44 marka Exp */
+/* Id: dst.h,v 1.9 2007/06/19 23:47:17 tbox Exp */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
 
-/*! \file */
+/*! \file dst/dst.h */
 
 #include <isc/lang.h>
 
 #include <dns/types.h>
+
+#include <dst/gssapi.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -400,16 +402,28 @@ dst_key_privatefrombuffer(dst_key_t *key, isc_buffer_t *buffer);
  *\li	If successful, key will contain a valid private key.
  */
 
+gss_ctx_id_t
+dst_key_getgssctx(const dst_key_t *key);
+/*%<
+ * Returns the opaque key data.
+ * Be cautions when using this value unless you know what you are doing.
+ *
+ * Requires:
+ *\li	"key" is not NULL.
+ *
+ * Returns:
+ *\li	gssctx key data, possibly NULL.
+ */
 
 isc_result_t
-dst_key_fromgssapi(dns_name_t *name, void *opaque, isc_mem_t *mctx,
-		                   dst_key_t **keyp);
+dst_key_fromgssapi(dns_name_t *name, gss_ctx_id_t gssctx, isc_mem_t *mctx,
+		   dst_key_t **keyp);
 /*%<
  * Converts a GSSAPI opaque context id into a DST key.
  *
  * Requires:
  *\li	"name" is a valid absolute dns name.
- *\li	"opaque" is a GSSAPI context id.
+ *\li	"gssctx" is a GSSAPI context id.
  *\li	"mctx" is a valid memory context.
  *\li	"keyp" is not NULL and "*keyp" is NULL.
  *

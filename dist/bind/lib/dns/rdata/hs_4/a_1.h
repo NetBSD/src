@@ -1,10 +1,10 @@
-/*	$NetBSD: a_1.h,v 1.1.1.4 2007/01/27 21:07:22 christos Exp $	*/
+/*	$NetBSD: a_1.h,v 1.1.1.4.12.1 2008/06/23 04:28:21 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -21,7 +21,7 @@
 #ifndef HS_4_A_1_H
 #define HS_4_A_1_H 1
 
-/* Id: a_1.h,v 1.8.18.2 2005/04/29 00:16:41 marka Exp */
+/* Id: a_1.h,v 1.12 2007/06/19 23:47:17 tbox Exp */
 
 typedef struct dns_rdata_hs_a {
 	dns_rdatacommon_t	common;

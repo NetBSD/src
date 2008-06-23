@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.30 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: uirda.c,v 1.30.2.1 2008/06/23 04:31:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.30 2008/04/28 20:23:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.30.2.1 2008/06/23 04:31:37 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,13 +142,13 @@ Static const struct usb_devno uirda_devs[] = {
 };
 #define uirda_lookup(v, p) (usb_lookup(uirda_devs, v, p))
 
-int uirda_match(device_t, struct cfdata *, void *);
+int uirda_match(device_t, cfdata_t, void *);
 void uirda_attach(device_t, device_t, void *);
 void uirda_childdet(device_t, device_t);
 int uirda_detach(device_t, int);
 int uirda_activate(device_t, enum devact);
 extern struct cfdriver uirda_cd;
-CFATTACH_DECL2(uirda, sizeof(struct uirda_softc), uirda_match,
+CFATTACH_DECL2_NEW(uirda, sizeof(struct uirda_softc), uirda_match,
     uirda_attach, uirda_detach, uirda_activate, NULL, uirda_childdet);
 
 USB_MATCH(uirda)
@@ -182,9 +182,11 @@ USB_ATTACH(uirda)
 
 	DPRINTFN(10,("uirda_attach: sc=%p\n", sc));
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = dev;
@@ -201,8 +203,7 @@ USB_ATTACH(uirda)
 	for (i = 0; i < epcount; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self, "couldn't get ep %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -214,7 +215,7 @@ USB_ATTACH(uirda)
 		}
 	}
 	if (sc->sc_rd_addr == -1 || sc->sc_wr_addr == -1) {
-		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "missing endpoint\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -225,12 +226,12 @@ USB_ATTACH(uirda)
 	/* Get the IrDA descriptor */
 	err = usbd_get_class_desc(sc->sc_udev, UDESC_IRDA, 0,
 		USB_IRDA_DESCRIPTOR_SIZE, &sc->sc_irdadesc);
-	printf("error %d reading class desc\n", err);
+	aprint_error_dev(self, "error %d reading class desc\n", err);
 	if (err) {
 		err = usbd_get_desc(sc->sc_udev, UDESC_IRDA, 0,
 		  USB_IRDA_DESCRIPTOR_SIZE, &sc->sc_irdadesc);
 	}
-	printf("error %d reading desc\n", err);
+	aprint_error_dev(self, "error %d reading desc\n", err);
 	if (err) {
 		/* maybe it's embedded in the config desc? */
 		usbd_desc_iter_t iter;
@@ -242,8 +243,8 @@ USB_ATTACH(uirda)
 				break;
 		}
 		if (d == NULL) {
-			printf("%s: Cannot get IrDA descriptor\n",
-			       USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self,
+			    "Cannot get IrDA descriptor\n");
 			USB_ATTACH_ERROR_RETURN;
 		}
 		memcpy(&sc->sc_irdadesc, d, USB_IRDA_DESCRIPTOR_SIZE);
@@ -263,8 +264,8 @@ USB_ATTACH(uirda)
 		 sc->sc_irdadesc.bMaxUnicastList));
 
 	specrev = UGETW(sc->sc_irdadesc.bcdSpecRevision);
-	printf("%s: USB-IrDA protocol version %x.%02x\n",
-	       USBDEVNAME(sc->sc_dev), specrev >> 8, specrev & 0xff);
+	aprint_normal_dev(self, "USB-IrDA protocol version %x.%02x\n",
+	    specrev >> 8, specrev & 0xff);
 
 	DPRINTFN(10, ("uirda_attach: %p\n", sc->sc_udev));
 
@@ -779,8 +780,8 @@ uirda_set_params(void *h, struct irda_params *p)
 			  USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
 			  UIRDA_WR_TIMEOUT, sc->sc_wr_buf, &n, "uirdast");
 		if (err) {
-			printf("%s: set failed, err=%d\n",
-			    USBDEVNAME(sc->sc_dev), err);
+			aprint_error_dev(sc->sc_dev, "set failed, err=%d\n",
+			    err);
 			usbd_clear_endpoint_stall(sc->sc_wr_pipe);
 		}
 		mutex_exit(&sc->sc_wr_buf_lk);

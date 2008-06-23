@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.6 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.6.2.1 2008/06/23 04:31:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.6 2008/04/28 20:23:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.6.2.1 2008/06/23 04:31:37 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,13 +165,13 @@ Static const struct uhmodem_type uhmodem_devs[] = {
 };
 #define uhmodem_lookup(v, p) ((const struct uhmodem_type *)usb_lookup(uhmodem_devs, v, p))
 
-int uhmodem_match(device_t, struct cfdata *, void *);
+int uhmodem_match(device_t, cfdata_t, void *);
 void uhmodem_attach(device_t, device_t, void *);
 void uhmodem_childdet(device_t, device_t);
 int uhmodem_detach(device_t, int);
 int uhmodem_activate(device_t, enum devact);
 extern struct cfdriver uhmodem_cd;
-CFATTACH_DECL2(uhmodem, sizeof(struct uhmodem_softc), uhmodem_match,
+CFATTACH_DECL2_NEW(uhmodem, sizeof(struct uhmodem_softc), uhmodem_match,
     uhmodem_attach, uhmodem_detach, uhmodem_activate, NULL, uhmodem_childdet);
 
 USB_MATCH(uhmodem)
@@ -194,7 +194,6 @@ USB_ATTACH(uhmodem)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	const char *devname = USBDEVNAME(sc->sc_ubsa.sc_dev);
 	usbd_status err;
 	struct ucom_attach_args uca;
 	int i;
@@ -203,9 +202,10 @@ USB_ATTACH(uhmodem)
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
+	sc->sc_ubsa.sc_dev = self;
         sc->sc_ubsa.sc_udev = dev;
 	sc->sc_ubsa.sc_config_index = UBSA_DEFAULT_CONFIG_INDEX;
 	sc->sc_ubsa.sc_numif = 1; /* defaut device has one interface */
@@ -214,13 +214,13 @@ USB_ATTACH(uhmodem)
 	if ((uaa->ifaceno == 0) && (uaa->class != 255)) {
 		err = e220_modechange_request(dev);
 		if (err) {
-			printf("%s: failed to change mode: %s\n", 
-				devname, usbd_errstr(err));
+			aprint_error_dev(self, "failed to change mode: %s\n", 
+				usbd_errstr(err));
 			sc->sc_ubsa.sc_dying = 1;
 			goto error;
 		}
-		printf("%s: mass storage only mode, reattach to enable modem\n",
-			devname);
+		aprint_error_dev(self,
+		    "mass storage only mode, reattach to enable modem\n");
 		sc->sc_ubsa.sc_dying = 1;
 		goto error;
 	}
@@ -242,8 +242,8 @@ USB_ATTACH(uhmodem)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, sc->sc_ubsa.sc_config_index, 1);
 	if (err) {
-		printf("%s: failed to set configuration: %s\n",
-		    devname, usbd_errstr(err));
+		aprint_error_dev(self, "failed to set configuration: %s\n",
+		    usbd_errstr(err));
 		sc->sc_ubsa.sc_dying = 1;
 		goto error;
 	}
@@ -251,8 +251,8 @@ USB_ATTACH(uhmodem)
 	/* get the config descriptor */
 	cdesc = usbd_get_config_descriptor(sc->sc_ubsa.sc_udev);
 	if (cdesc == NULL) {
-		printf("%s: failed to get configuration descriptor\n",
-		    devname);
+		aprint_error_dev(self,
+		    "failed to get configuration descriptor\n");
 		sc->sc_ubsa.sc_dying = 1;
 		goto error;
 	}
@@ -284,8 +284,9 @@ USB_ATTACH(uhmodem)
 			ed = usbd_interface2endpoint_descriptor(
 				sc->sc_ubsa.sc_iface[i], j);
 			if (ed == NULL) {
-				printf("%s: no endpoint descriptor for %d (interface: %d)\n",
-			    		devname, j, i);
+				aprint_error_dev(self,
+				    "no endpoint descriptor for %d "
+				    "(interface: %d)\n", j, i);
 				break;
 			}
 
@@ -303,7 +304,8 @@ USB_ATTACH(uhmodem)
 		} /* end of Endpoint loop */
 
 		if (sc->sc_ubsa.sc_intr_number == -1) {
-			printf("%s: HUAWEI E220 need to re-attach to enable modem function\n", devname);
+			aprint_error_dev(self, "HUAWEI E220 need to re-attach "
+			    "to enable modem function\n");
 			if (i == 0) {
 				/* could not get intr for main tty */
 				sc->sc_ubsa.sc_dying = 1;
@@ -312,13 +314,15 @@ USB_ATTACH(uhmodem)
 				break;
 		}
 		if (uca.bulkin == -1) {
-			printf("%s: Could not find data bulk in\n", devname);
+			aprint_error_dev(self,
+			    "Could not find data bulk in\n");
 			sc->sc_ubsa.sc_dying = 1;
 			goto error;
 		}
 
 		if (uca.bulkout == -1) {
-			printf("%s: Could not find data bulk out\n", devname);
+			aprint_error_dev(self,
+			    "Could not find data bulk out\n");
 			sc->sc_ubsa.sc_dying = 1;
 			goto error;
 		}
@@ -357,7 +361,7 @@ USB_ATTACH(uhmodem)
 		/* issue endpoint halt to each interface */
 		err = uhmodem_endpointhalt(&sc->sc_ubsa, i);
 		if (err) 
-			printf("%s: endpointhalt fail\n", __func__);
+			aprint_error("%s: endpointhalt fail\n", __func__);
 		else
 			usbd_delay_ms(sc->sc_ubsa.sc_udev, 50);
 	} /* end of Interface loop */
@@ -447,14 +451,14 @@ uhmodem_open(void *addr, int portno)
 
 	err = uhmodem_endpointhalt(sc, 0);
 	if (err) 
-		printf("%s: endpointhalt fail\n", __func__);
+		aprint_error("%s: endpointhalt fail\n", __func__);
 	else
 		usbd_delay_ms(sc->sc_udev, 50);
 
 	if (sc->sc_devflags & A2502) {
 		err = a2502_init(sc->sc_udev);
 		if (err)
-			printf("%s: a2502init fail\n", __func__);
+			aprint_error("%s: a2502init fail\n", __func__);
 		else
 			usbd_delay_ms(sc->sc_udev, 50);
 	}
@@ -462,7 +466,7 @@ uhmodem_open(void *addr, int portno)
 	if (sc->sc_devflags & E220) {
 		err = e220_init(sc->sc_udev);
 		if (err)
-			printf("%s: e220init fail\n", __func__);
+			aprint_error("%s: e220init fail\n", __func__);
 		else
 			usbd_delay_ms(sc->sc_udev, 50);
 	}
@@ -481,8 +485,8 @@ uhmodem_open(void *addr, int portno)
 		    ubsa_intr,
 		    UBSA_INTR_INTERVAL);
 		if (err) {
-			printf("%s: cannot open interrupt pipe (addr %d)\n",
-			    USBDEVNAME(sc->sc_dev),
+			aprint_error_dev(sc->sc_dev,
+			    "cannot open interrupt pipe (addr %d)\n",
 			    sc->sc_intr_number);
 			return (EIO);
 		}

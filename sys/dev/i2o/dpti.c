@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.37 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: dpti.c,v 1.37.2.1 2008/06/23 04:31:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.37 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.37.2.1 2008/06/23 04:31:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.37 2008/04/28 20:23:48 martin Exp $");
 #include <sys/bus.h>
 #ifdef __i386__
 #include <machine/pio.h>
+#include <machine/cputypes.h>
 #endif
 
 #include <dev/i2o/i2o.h>
@@ -216,7 +217,7 @@ dptiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct ioctl_pt *pt;
 	int i, size, rv, linux;
 
-	sc = device_lookup(&dpti_cd, minor(dev));
+	sc = device_lookup_private(&dpti_cd, minor(dev));
 	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 	rv = 0;
 

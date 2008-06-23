@@ -134,9 +134,9 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
               and  use  quotes  to  protect  white space from the
               shell. Command names are case-insensitive.
 
-       <b>-r</b> <i>command,command,...</i>
-              Reject the specified commands  with  a  soft  (4xx)
-              error code.  This option implies <b>-p</b>.
+       <b>-Q</b> <i>command,command,...</i>
+              Send a 421 reply and disconnect after receiving one
+              of the specified commands.
 
               Examples of commands are CONNECT, HELO, EHLO, LHLO,
               MAIL, RCPT, VRFY, DATA, ., RSET,  NOOP,  and  QUIT.
@@ -144,39 +144,49 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
               and use quotes to  protect  white  space  from  the
               shell. Command names are case-insensitive.
 
+       <b>-r</b> <i>command,command,...</i>
+              Reject  the  specified  commands  with a soft (4xx)
+              error code.  This option implies <b>-p</b>.
+
+              Examples of commands are CONNECT, HELO, EHLO, LHLO,
+              MAIL,  RCPT,  VRFY,  DATA, ., RSET, NOOP, and QUIT.
+              Separate command names by white  space  or  commas,
+              and  use  quotes  to  protect  white space from the
+              shell. Command names are case-insensitive.
+
        <b>-R</b> <i>root-directory</i>
-              Change  the process root directory to the specified
-              location.  This option requires  super-user  privi-
+              Change the process root directory to the  specified
+              location.   This  option requires super-user privi-
               leges. See also the <b>-u</b> option.
 
        <b>-s</b> <i>command,command,...</i>
               Log the named commands to syslogd.
 
               Examples of commands are CONNECT, HELO, EHLO, LHLO,
-              MAIL, RCPT, VRFY, DATA, ., RSET,  NOOP,  and  QUIT.
-              Separate  command  names  by white space or commas,
-              and use quotes to  protect  white  space  from  the
+              MAIL,  RCPT,  VRFY,  DATA, ., RSET, NOOP, and QUIT.
+              Separate command names by white  space  or  commas,
+              and  use  quotes  to  protect  white space from the
               shell. Command names are case-insensitive.
 
        <b>-S start-string</b>
-              An  optional  string that is prepended to each mes-
-              sage that is written to a dump file (see  the  dump
-              file  format  description  below).  The following C
+              An optional string that is prepended to  each  mes-
+              sage  that  is written to a dump file (see the dump
+              file format description  below).  The  following  C
               escape  sequences  are  supported:  \a  (bell),  \b
-              (backslace),  \f (formfeed), \n (newline), \r (car-
-              riage return), \t (horizontal  tab),  \v  (vertical
-              tab),  \<i>ddd</i>  (up to three octal digits) and \\ (the
+              (backslace), \f (formfeed), \n (newline), \r  (car-
+              riage  return),  \t  (horizontal tab), \v (vertical
+              tab), \<i>ddd</i> (up to three octal digits) and  \\  (the
               backslash character).
 
        <b>-t</b> <i>timeout</i> (default: 100)
               Limit the time for receiving a command or sending a
-              response.   The time limit is specified in seconds.
+              response.  The time limit is specified in  seconds.
 
        <b>-u</b> <i>username</i>
               Switch to the specified user privileges after open-
-              ing  the network socket and optionally changing the
-              process root directory.  This  option  is  required
-              when  the  process runs with super-user privileges.
+              ing the network socket and optionally changing  the
+              process  root  directory.  This  option is required
+              when the process runs with  super-user  privileges.
               See also the <b>-R</b> option.
 
        <b>-v</b>     Show the SMTP conversations.
@@ -185,8 +195,17 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
               Wait <i>delay</i> seconds before responding to a DATA com-
               mand.
 
+       <b>-W</b> <i>command:delay[:odds]</i>
+              Wait <i>delay</i> seconds before  responding  to  <i>command</i>.
+              If  <i>odds</i>  is  also specified (a number between 1-99
+              inclusive), wait for a random  multiple  of  <i>delay</i>.
+              The  random  multiplier  is  equal to the number of
+              times the program needs to roll a dice with a range
+              of  0..99  inclusive,  before  the  dice produces a
+              result greater than or equal to <i>odds</i>.
+
        [<b>inet:</b>][<i>host</i>]:<i>port</i>
-              Listen  on  network  interface  <i>host</i>  (default: any
+              Listen on  network  interface  <i>host</i>  (default:  any
               interface) TCP port <i>port</i>. Both <i>host</i> and <i>port</i> may be
               specified in numeric or symbolic form.
 
@@ -194,79 +213,79 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
               Listen on the UNIX-domain socket at <i>pathname</i>.
 
        <i>backlog</i>
-              The  maximum  length  the  queue of pending connec-
+              The maximum length the  queue  of  pending  connec-
               tions, as defined by the <b>listen</b>(2) system call.
 
 <b>DUMP FILE FORMAT</b>
-       Each dumped message contains a  sequence  of  text  lines,
-       terminated  with  the  newline  character. The sequence of
+       Each  dumped  message  contains  a sequence of text lines,
+       terminated with the newline  character.  The  sequence  of
        information is as follows:
 
        <b>o</b>      The optional string specified with the <b>-S</b> option.
 
-       <b>o</b>      The  <b>smtp-sink</b>  generated  headers  as   documented
+       <b>o</b>      The   <b>smtp-sink</b>  generated  headers  as  documented
               below.
 
-       <b>o</b>      The  message  header  and body as received from the
+       <b>o</b>      The message header and body as  received  from  the
               SMTP client.
 
        <b>o</b>      An empty line.
 
-       The format of the <b>smtp-sink</b> generated headers is  as  fol-
+       The  format  of the <b>smtp-sink</b> generated headers is as fol-
        lows:
 
        <b>X-Client-Addr:</b> <i>text</i>
               The client IP address without enclosing []. An IPv6
-              address is prefixed with "ipv6:".  This  record  is
+              address  is  prefixed  with "ipv6:". This record is
               always present.
 
        <b>X-Client-Proto:</b> <i>text</i>
-              The  client  protocol:  SMTP,  ESMTP  or LMTP. This
+              The client protocol:  SMTP,  ESMTP  or  LMTP.  This
               record is always present.
 
        <b>X-Helo-Args:</b> <i>text</i>
-              The arguments of the  last  HELO  or  EHLO  command
-              before  this mail delivery transaction. This record
-              is present only if the client sent  a  recognizable
+              The  arguments  of  the  last  HELO or EHLO command
+              before this mail delivery transaction. This  record
+              is  present  only if the client sent a recognizable
               HELO or EHLO command before the DATA command.
 
        <b>X-Mail-Args:</b> <i>text</i>
               The arguments of the MAIL command that started this
-              mail delivery transaction. This record  is  present
+              mail  delivery  transaction. This record is present
               exactly once.
 
        <b>X-Rcpt-Args:</b> <i>text</i>
-              The  arguments  of an RCPT command within this mail
-              delivery transaction. There is one record for  each
-              RCPT  command, and they are in the order as sent by
+              The arguments of an RCPT command within  this  mail
+              delivery  transaction. There is one record for each
+              RCPT command, and they are in the order as sent  by
               the client.
 
        <b>Received:</b> <i>text</i>
-              A message header for compatibility with  mail  pro-
-              cessing  software. This three-line header marks the
-              end of the headers provided by  <b>smtp-sink</b>,  and  is
+              A  message  header for compatibility with mail pro-
+              cessing software. This three-line header marks  the
+              end  of  the  headers provided by <b>smtp-sink</b>, and is
               formatted as follows:
 
               <b>from</b> <i>helo</i> <b>([</b><i>addr</i><b>])</b>
                      The HELO or EHLO command argument and client
                      IP address.  If the client did not send HELO
-                     or  EHLO,  the  client  IP  address  is used
+                     or EHLO,  the  client  IP  address  is  used
                      instead.
 
               <b>by</b> <i>host</i> <b>(smtp-sink) with</b> <i>proto</i> <b>id</b> <i>random</i><b>;</b>
-                     The hostname specified with the  <b>-h</b>  option,
-                     the   client  protocol  (see  <b>X-Client-Proto</b>
+                     The  hostname  specified with the <b>-h</b> option,
+                     the  client  protocol  (see   <b>X-Client-Proto</b>
                      above), and the pseudo-random portion of the
                      per-message capture file name.
 
               <i>time-stamp</i>
-                     A time stamp as defined in <a href="http://www.faqs.org/rfcs/rfc2822.html">RFC 2822</a>.
+                     A time stamp as defined in <a href="http://tools.ietf.org/html/rfc2822">RFC 2822</a>.
 
 <b>SEE ALSO</b>
        <a href="smtp-source.1.html">smtp-source(1)</a>, SMTP/LMTP message generator
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

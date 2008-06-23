@@ -439,12 +439,12 @@ static int parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
 
 static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 	{
-	ASN1_TYPE *ret = NULL, *typ = NULL;
+	ASN1_TYPE *ret = NULL;
 	STACK_OF(ASN1_TYPE) *sk = NULL;
 	STACK_OF(CONF_VALUE) *sect = NULL;
-	unsigned char *der = NULL, *p;
+	unsigned char *der = NULL;
 	int derlen;
-	int i, is_set;
+	int i;
 	sk = sk_ASN1_TYPE_new_null();
 	if (section)
 		{
@@ -455,28 +455,19 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 			goto bad;
 		for (i = 0; i < sk_CONF_VALUE_num(sect); i++)
 			{
-			typ = ASN1_generate_v3(sk_CONF_VALUE_value(sect, i)->value, cnf);
+			ASN1_TYPE *typ = ASN1_generate_v3(sk_CONF_VALUE_value(sect, i)->value, cnf);
 			if (!typ)
 				goto bad;
 			sk_ASN1_TYPE_push(sk, typ);
-			typ = NULL;
 			}
 		}
 
 	/* Now we has a STACK of the components, convert to the correct form */
 
 	if (utype == V_ASN1_SET)
-		is_set = 1;
+		derlen = i2d_ASN1_SET_ANY(sk, &der);
 	else
-		is_set = 0;
-
-
-	derlen = i2d_ASN1_SET_OF_ASN1_TYPE(sk, NULL, i2d_ASN1_TYPE, utype,
-					   V_ASN1_UNIVERSAL, is_set);
-	der = OPENSSL_malloc(derlen);
-	p = der;
-	i2d_ASN1_SET_OF_ASN1_TYPE(sk, &p, i2d_ASN1_TYPE, utype,
-				  V_ASN1_UNIVERSAL, is_set);
+		derlen = i2d_ASN1_SEQUENCE_ANY(sk, &der);
 
 	if (!(ret = ASN1_TYPE_new()))
 		goto bad;
@@ -498,8 +489,6 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 
 	if (sk)
 		sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
-	if (typ)
-		ASN1_TYPE_free(typ);
 	if (sect)
 		X509V3_section_free(cnf, sect);
 
@@ -549,7 +538,7 @@ static int append_exp(tag_exp_arg *arg, int exp_tag, int exp_class, int exp_cons
 static int asn1_str2tag(const char *tagstr, int len)
 	{
 	unsigned int i;
-	static struct tag_name_st *tntmp, tnst [] = {
+	static const struct tag_name_st *tntmp, tnst [] = {
 		ASN1_GEN_STR("BOOL", V_ASN1_BOOLEAN),
 		ASN1_GEN_STR("BOOLEAN", V_ASN1_BOOLEAN),
 		ASN1_GEN_STR("NULL", V_ASN1_NULL),
@@ -584,6 +573,8 @@ static int asn1_str2tag(const char *tagstr, int len)
 		ASN1_GEN_STR("TELETEXSTRING", V_ASN1_T61STRING),
 		ASN1_GEN_STR("GeneralString", V_ASN1_GENERALSTRING),
 		ASN1_GEN_STR("GENSTR", V_ASN1_GENERALSTRING),
+		ASN1_GEN_STR("NUMERIC", V_ASN1_NUMERICSTRING),
+		ASN1_GEN_STR("NUMERICSTRING", V_ASN1_NUMERICSTRING),
 
 		/* Special cases */
 		ASN1_GEN_STR("SEQUENCE", V_ASN1_SEQUENCE),
@@ -729,6 +720,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 		case V_ASN1_VISIBLESTRING:
 		case V_ASN1_UNIVERSALSTRING:
 		case V_ASN1_GENERALSTRING:
+		case V_ASN1_NUMERICSTRING:
 
 		if (format == ASN1_GEN_FORMAT_ASCII)
 			format = MBSTRING_ASC;

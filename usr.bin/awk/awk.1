@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.16 2005/08/17 00:58:19 uebayasi Exp $
+.\"	$NetBSD: awk.1,v 1.16.22.1 2008/06/23 04:32:10 wrstuden Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd June 5, 2004
+.Dd May 25, 2008
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -258,9 +258,11 @@ The input/output statements are as follows:
 .It Fn close expr
 Closes the file or pipe
 .Ar expr .
+Returns zero on success; otherwise nonzero.
 .It Fn fflush expr
 Flushes any buffered output for the file or pipe
 .Ar expr .
+Returns zero on success; otherwise nonzero.
 .It Ic getline Bq Va var
 Set
 .Va var

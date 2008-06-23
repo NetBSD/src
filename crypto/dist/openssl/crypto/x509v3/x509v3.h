@@ -222,22 +222,22 @@ union {
 } name;
 } DIST_POINT_NAME;
 
-typedef struct DIST_POINT_st {
+struct DIST_POINT_st {
 DIST_POINT_NAME	*distpoint;
 ASN1_BIT_STRING *reasons;
 GENERAL_NAMES *CRLissuer;
-} DIST_POINT;
+};
 
 typedef STACK_OF(DIST_POINT) CRL_DIST_POINTS;
 
 DECLARE_STACK_OF(DIST_POINT)
 DECLARE_ASN1_SET_OF(DIST_POINT)
 
-typedef struct AUTHORITY_KEYID_st {
+struct AUTHORITY_KEYID_st {
 ASN1_OCTET_STRING *keyid;
 GENERAL_NAMES *issuer;
 ASN1_INTEGER *serial;
-} AUTHORITY_KEYID;
+};
 
 /* Strong extranet structures */
 
@@ -329,6 +329,31 @@ typedef struct PROXY_CERT_INFO_EXTENSION_st
 DECLARE_ASN1_FUNCTIONS(PROXY_POLICY)
 DECLARE_ASN1_FUNCTIONS(PROXY_CERT_INFO_EXTENSION)
 
+struct ISSUING_DIST_POINT_st
+	{
+	DIST_POINT_NAME *distpoint;
+	int onlyuser;
+	int onlyCA;
+	ASN1_BIT_STRING *onlysomereasons;
+	int indirectCRL;
+	int onlyattr;
+	};
+
+/* Values in idp_flags field */
+/* IDP present */
+#define	IDP_PRESENT	0x1
+/* IDP values inconsistent */
+#define IDP_INVALID	0x2
+/* onlyuser true */
+#define	IDP_ONLYUSER	0x4
+/* onlyCA true */
+#define	IDP_ONLYCA	0x8
+/* onlyattr true */
+#define IDP_ONLYATTR	0x10
+/* indirectCRL true */
+#define IDP_INDIRECT	0x20
+/* onlysomereasons present */
+#define IDP_REASONS	0x40
 
 #define X509V3_conf_err(val) ERR_add_error_data(6, "section:", val->section, \
 ",name:", val->name, ",value:", val->value);
@@ -422,9 +447,10 @@ typedef struct x509_purpose_st {
 #define X509_PURPOSE_CRL_SIGN		6
 #define X509_PURPOSE_ANY		7
 #define X509_PURPOSE_OCSP_HELPER	8
+#define X509_PURPOSE_TIMESTAMP_SIGN	9
 
 #define X509_PURPOSE_MIN		1
-#define X509_PURPOSE_MAX		8
+#define X509_PURPOSE_MAX		9
 
 /* Flags for X509V3_EXT_print() */
 
@@ -469,6 +495,9 @@ DECLARE_ASN1_FUNCTIONS(AUTHORITY_KEYID)
 DECLARE_ASN1_FUNCTIONS(PKEY_USAGE_PERIOD)
 
 DECLARE_ASN1_FUNCTIONS(GENERAL_NAME)
+GENERAL_NAME *GENERAL_NAME_dup(GENERAL_NAME *a);
+int GENERAL_NAME_cmp(GENERAL_NAME *a, GENERAL_NAME *b);
+
 
 
 ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
@@ -489,6 +518,13 @@ GENERAL_NAMES *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method,
 
 DECLARE_ASN1_FUNCTIONS(OTHERNAME)
 DECLARE_ASN1_FUNCTIONS(EDIPARTYNAME)
+int OTHERNAME_cmp(OTHERNAME *a, OTHERNAME *b);
+void GENERAL_NAME_set0_value(GENERAL_NAME *a, int type, void *value);
+void *GENERAL_NAME_get0_value(GENERAL_NAME *a, int *ptype);
+int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
+				ASN1_OBJECT *oid, ASN1_TYPE *value);
+int GENERAL_NAME_get0_otherName(GENERAL_NAME *gen, 
+				ASN1_OBJECT **poid, ASN1_TYPE **pvalue);
 
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *ia5);
 ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
@@ -505,6 +541,7 @@ DECLARE_ASN1_FUNCTIONS(NOTICEREF)
 DECLARE_ASN1_FUNCTIONS(CRL_DIST_POINTS)
 DECLARE_ASN1_FUNCTIONS(DIST_POINT)
 DECLARE_ASN1_FUNCTIONS(DIST_POINT_NAME)
+DECLARE_ASN1_FUNCTIONS(ISSUING_DIST_POINT)
 
 DECLARE_ASN1_FUNCTIONS(ACCESS_DESCRIPTION)
 DECLARE_ASN1_FUNCTIONS(AUTHORITY_INFO_ACCESS)
@@ -521,6 +558,10 @@ DECLARE_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
 
 DECLARE_ASN1_ALLOC_FUNCTIONS(POLICY_CONSTRAINTS)
 DECLARE_ASN1_ITEM(POLICY_CONSTRAINTS)
+
+GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
+				X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+				int gen_type, char *value, int is_nc);
 
 #ifdef HEADER_CONF_H
 GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
@@ -585,8 +626,8 @@ void *X509V3_get_d2i(STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx);
 X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
 int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value, int crit, unsigned long flags);
 
-char *hex_to_string(unsigned char *buffer, long len);
-unsigned char *string_to_hex(char *str, long *len);
+char *hex_to_string(const unsigned char *buffer, long len);
+unsigned char *string_to_hex(const char *str, long *len);
 int name_cmp(const char *name, const char *cmp);
 
 void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
@@ -601,6 +642,7 @@ int X509_check_purpose(X509 *x, int id, int ca);
 int X509_supported_extension(X509_EXTENSION *ex);
 int X509_PURPOSE_set(int *p, int purpose);
 int X509_check_issued(X509 *issuer, X509 *subject);
+int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid);
 int X509_PURPOSE_get_count(void);
 X509_PURPOSE * X509_PURPOSE_get0(int idx);
 int X509_PURPOSE_get_by_sname(char *sname);
@@ -617,6 +659,7 @@ int X509_PURPOSE_get_id(X509_PURPOSE *);
 STACK *X509_get1_email(X509 *x);
 STACK *X509_REQ_get1_email(X509_REQ *x);
 void X509_email_free(STACK *sk);
+STACK *X509_get1_ocsp(X509 *x);
 
 ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc);
 ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc);
@@ -625,6 +668,7 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 						unsigned long chtype);
 
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
+DECLARE_STACK_OF(X509_POLICY_NODE)
 
 #ifndef OPENSSL_NO_RFC3779
 
@@ -784,8 +828,9 @@ void ERR_load_X509V3_strings(void);
 /* Error codes for the X509V3 functions. */
 
 /* Function codes. */
-#define X509V3_F_ASIDENTIFIERCHOICE_CANONIZE		 156
-#define X509V3_F_ASIDENTIFIERCHOICE_IS_CANONICAL	 157
+#define X509V3_F_A2I_GENERAL_NAME			 164
+#define X509V3_F_ASIDENTIFIERCHOICE_CANONIZE		 161
+#define X509V3_F_ASIDENTIFIERCHOICE_IS_CANONICAL	 162
 #define X509V3_F_COPY_EMAIL				 122
 #define X509V3_F_COPY_ISSUER				 123
 #define X509V3_F_DO_DIRNAME				 144
@@ -793,6 +838,7 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_F_DO_EXT_I2D				 135
 #define X509V3_F_DO_EXT_NCONF				 151
 #define X509V3_F_DO_I2V_NAME_CONSTRAINTS		 148
+#define X509V3_F_GNAMES_FROM_SECTNAME			 156
 #define X509V3_F_HEX_TO_STRING				 111
 #define X509V3_F_I2S_ASN1_ENUMERATED			 121
 #define X509V3_F_I2S_ASN1_IA5STRING			 149
@@ -809,13 +855,14 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_F_S2I_ASN1_OCTET_STRING			 112
 #define X509V3_F_S2I_ASN1_SKEY_ID			 114
 #define X509V3_F_S2I_SKEY_ID				 115
+#define X509V3_F_SET_DIST_POINT_NAME			 158
 #define X509V3_F_STRING_TO_HEX				 113
 #define X509V3_F_SXNET_ADD_ID_ASC			 125
 #define X509V3_F_SXNET_ADD_ID_INTEGER			 126
 #define X509V3_F_SXNET_ADD_ID_ULONG			 127
 #define X509V3_F_SXNET_GET_ID_ASC			 128
 #define X509V3_F_SXNET_GET_ID_ULONG			 129
-#define X509V3_F_V2I_ASIDENTIFIERS			 158
+#define X509V3_F_V2I_ASIDENTIFIERS			 163
 #define X509V3_F_V2I_ASN1_BIT_STRING			 101
 #define X509V3_F_V2I_AUTHORITY_INFO_ACCESS		 139
 #define X509V3_F_V2I_AUTHORITY_KEYID			 119
@@ -824,6 +871,7 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_F_V2I_EXTENDED_KEY_USAGE			 103
 #define X509V3_F_V2I_GENERAL_NAMES			 118
 #define X509V3_F_V2I_GENERAL_NAME_EX			 117
+#define X509V3_F_V2I_IDP				 157
 #define X509V3_F_V2I_IPADDRBLOCKS			 159
 #define X509V3_F_V2I_ISSUER_ALT				 153
 #define X509V3_F_V2I_NAME_CONSTRAINTS			 147
@@ -852,6 +900,7 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_R_BN_DEC2BN_ERROR			 100
 #define X509V3_R_BN_TO_ASN1_INTEGER_ERROR		 101
 #define X509V3_R_DIRNAME_ERROR				 149
+#define X509V3_R_DISTPOINT_ALREADY_SET			 160
 #define X509V3_R_DUPLICATE_ZONE_ID			 133
 #define X509V3_R_ERROR_CONVERTING_ZONE			 131
 #define X509V3_R_ERROR_CREATING_EXTENSION		 144
@@ -865,12 +914,13 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_R_ILLEGAL_EMPTY_EXTENSION		 151
 #define X509V3_R_ILLEGAL_HEX_DIGIT			 113
 #define X509V3_R_INCORRECT_POLICY_SYNTAX_TAG		 152
-#define X509V3_R_INVALID_ASNUMBER			 160
-#define X509V3_R_INVALID_ASRANGE			 161
+#define X509V3_R_INVAID_MULTIPLE_RDNS			 161
+#define X509V3_R_INVALID_ASNUMBER			 162
+#define X509V3_R_INVALID_ASRANGE			 163
 #define X509V3_R_INVALID_BOOLEAN_STRING			 104
 #define X509V3_R_INVALID_EXTENSION_STRING		 105
-#define X509V3_R_INVALID_INHERITANCE			 162
-#define X509V3_R_INVALID_IPADDRESS			 163
+#define X509V3_R_INVALID_INHERITANCE			 165
+#define X509V3_R_INVALID_IPADDRESS			 166
 #define X509V3_R_INVALID_NAME				 106
 #define X509V3_R_INVALID_NULL_ARGUMENT			 107
 #define X509V3_R_INVALID_NULL_NAME			 108
@@ -911,6 +961,7 @@ void ERR_load_X509V3_strings(void);
 #define X509V3_R_UNKNOWN_EXTENSION_NAME			 130
 #define X509V3_R_UNKNOWN_OPTION				 120
 #define X509V3_R_UNSUPPORTED_OPTION			 117
+#define X509V3_R_UNSUPPORTED_TYPE			 167
 #define X509V3_R_USER_TOO_LONG				 132
 
 #ifdef  __cplusplus

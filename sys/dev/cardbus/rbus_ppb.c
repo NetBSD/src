@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.22 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.22.2.1 2008/06/23 04:31:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.22 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.22.2.1 2008/06/23 04:31:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.22 2008/04/28 20:23:47 martin Exp $")
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <i386/pci/pci_addr_fixup.h>
-#include <i386/pci/pci_bus_fixup.h>
+#include <x86/pci/pci_addr_fixup.h>
+#include <x86/pci/pci_bus_fixup.h>
 #include <i386/pci/pci_intr_fixup.h>
 #include <i386/pci/pcibios.h>
 

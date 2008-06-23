@@ -130,6 +130,7 @@ master_ent.o: ../../include/host_port.h
 master_ent.o: ../../include/inet_addr_host.h
 master_ent.o: ../../include/inet_addr_list.h
 master_ent.o: ../../include/iostuff.h
+master_ent.o: ../../include/mail_conf.h
 master_ent.o: ../../include/mail_params.h
 master_ent.o: ../../include/mail_proto.h
 master_ent.o: ../../include/msg.h
@@ -189,6 +190,7 @@ master_sig.o: master_sig.c
 master_spawn.o: ../../include/argv.h
 master_spawn.o: ../../include/binhash.h
 master_spawn.o: ../../include/events.h
+master_spawn.o: ../../include/mail_conf.h
 master_spawn.o: ../../include/msg.h
 master_spawn.o: ../../include/mymalloc.h
 master_spawn.o: ../../include/sys_defs.h

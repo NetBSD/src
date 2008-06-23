@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.9 2007/10/17 19:57:12 garbled Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.9.22.1 2008/06/23 04:30:42 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -70,7 +70,7 @@ struct cg14_cursor {		/* cg14 hardware cursor status */
  * per-cg14 variables/state
  */
 struct cgfourteen_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 #ifdef RASTERCONSOLE
 	struct fbdevice	sc_rcfb;	/* sc_fb variant for rcons */

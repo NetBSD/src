@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.13 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: getent.c,v 1.13.2.1 2008/06/23 04:32:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.13 2008/04/28 20:24:13 martin Exp $");
+__RCSID("$NetBSD: getent.c,v 1.13.2.1 2008/06/23 04:32:11 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -42,9 +42,11 @@ __RCSID("$NetBSD: getent.c,v 1.13 2008/04/28 20:24:13 martin Exp $");
 #include <grp.h>
 #include <limits.h>
 #include <netdb.h>
+#include <netgroup.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -70,6 +72,7 @@ static int	gettytab(int, char *[]);
 static int	ethers(int, char *[]);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
+static int	netgroup(int, char *[]);
 static int	networks(int, char *[]);
 static int	passwd(int, char *[]);
 static int	printcap(int, char *[]);
@@ -95,6 +98,7 @@ static struct getentdb {
 	{	"gettytab",	gettytab,	},
 	{	"group",	group,		},
 	{	"hosts",	hosts,		},
+	{	"netgroup",	netgroup,	},
 	{	"networks",	networks,	},
 	{	"passwd",	passwd,		},
 	{	"princap",	printcap,	},
@@ -322,6 +326,47 @@ hosts(int argc, char *argv[])
 	return rv;
 }
 
+		/*
+		 * netgroup
+		 */
+static int
+netgroup(int argc, char *argv[])
+{
+	int		rv, i;
+	bool		first;
+	const char	*host, *user, *domain;
+
+	assert(argc > 1);
+	assert(argv != NULL);
+
+#define NETGROUPPRINT(s)	(((s) != NULL) ? (s) : "")
+
+	rv = RV_OK;
+	if (argc == 2) {
+		warnx("Enumeration not supported on netgroup");
+		rv = RV_NOENUM;
+	} else {
+		for (i = 2; i < argc; i++) {
+			setnetgrent(argv[i]);
+			first = true;
+			while (getnetgrent(&host, &user, &domain) != 0) {
+				if (first) {
+					first = false;
+					(void)fputs(argv[i], stdout);
+				}
+				(void)printf(" (%s,%s,%s)",
+				    NETGROUPPRINT(host),
+				    NETGROUPPRINT(user),
+				    NETGROUPPRINT(domain));
+			}
+			if (!first)
+				(void)putchar('\n');
+			endnetgrent();
+		}
+	}
+
+	return rv;
+}
 
 		/*
 		 * networks

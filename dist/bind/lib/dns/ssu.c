@@ -1,10 +1,10 @@
-/*	$NetBSD: ssu.c,v 1.1.1.4 2007/01/27 21:07:12 christos Exp $	*/
+/*	$NetBSD: ssu.c,v 1.1.1.4.12.1 2008/06/23 04:28:06 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -19,7 +19,7 @@
 
 /*! \file */
 /*
- * Id: ssu.c,v 1.24.18.4 2006/02/16 23:51:32 marka Exp
+ * Id: ssu.c,v 1.31 2007/06/19 23:47:16 tbox Exp
  * Principal Author: Brian Wellington
  */
 
@@ -34,6 +34,8 @@
 #include <dns/fixedname.h>
 #include <dns/name.h>
 #include <dns/ssu.h>
+
+#include <dst/gssapi.h>
 
 #define SSUTABLEMAGIC		ISC_MAGIC('S', 'S', 'U', 'T')
 #define VALID_SSUTABLE(table)	ISC_MAGIC_VALID(table, SSUTABLEMAGIC)
@@ -263,34 +265,52 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 
 	if (signer == NULL)
 		return (ISC_FALSE);
-	rule = ISC_LIST_HEAD(table->rules);
-		rule = ISC_LIST_NEXT(rule, link);
+
 	for (rule = ISC_LIST_HEAD(table->rules);
 	     rule != NULL;
 	     rule = ISC_LIST_NEXT(rule, link))
 	{
-		if (dns_name_iswildcard(rule->identity)) {
-			if (!dns_name_matcheswildcard(signer, rule->identity))
-				continue;
-		} else if (!dns_name_equal(signer, rule->identity))
-				continue;
+		switch (rule->matchtype) {
+		case DNS_SSUMATCHTYPE_NAME:
+		case DNS_SSUMATCHTYPE_SUBDOMAIN:
+		case DNS_SSUMATCHTYPE_WILDCARD:
+		case DNS_SSUMATCHTYPE_SELF:
+		case DNS_SSUMATCHTYPE_SELFSUB:
+		case DNS_SSUMATCHTYPE_SELFWILD:
+			if (dns_name_iswildcard(rule->identity)) {
+				if (!dns_name_matcheswildcard(signer,
+							      rule->identity))
+					continue;
+			}
+			else {
+				if (!dns_name_equal(signer, rule->identity))
+					continue;
+			}
+			break;
+		}
 
-		if (rule->matchtype == DNS_SSUMATCHTYPE_NAME) {
+		switch (rule->matchtype) {
+		case DNS_SSUMATCHTYPE_NAME:
 			if (!dns_name_equal(name, rule->name))
 				continue;
-		} else if (rule->matchtype == DNS_SSUMATCHTYPE_SUBDOMAIN) {
+			break;
+		case DNS_SSUMATCHTYPE_SUBDOMAIN:
 			if (!dns_name_issubdomain(name, rule->name))
 				continue;
-		} else if (rule->matchtype == DNS_SSUMATCHTYPE_WILDCARD) {
+			break;
+		case DNS_SSUMATCHTYPE_WILDCARD:
 			if (!dns_name_matcheswildcard(name, rule->name))
 				continue;
-		} else if (rule->matchtype == DNS_SSUMATCHTYPE_SELF) {
+			break;
+		case DNS_SSUMATCHTYPE_SELF:
 			if (!dns_name_equal(signer, name))
 				continue;
-		} else if (rule->matchtype == DNS_SSUMATCHTYPE_SELFSUB) {
+			break;
+		case DNS_SSUMATCHTYPE_SELFSUB:
 			if (!dns_name_issubdomain(name, signer))
 				continue;
-		} else if (rule->matchtype == DNS_SSUMATCHTYPE_SELFWILD) {
+			break;
+		case DNS_SSUMATCHTYPE_SELFWILD:
 			dns_fixedname_init(&fixed);
 			wildcard = dns_fixedname_name(&fixed);
 			result = dns_name_concatenate(dns_wildcardname, signer,
@@ -299,6 +319,31 @@ dns_ssutable_checkrules(dns_ssutable_t *table, dns_name_t *signer,
 				continue;
 			if (!dns_name_matcheswildcard(name, wildcard))
 				continue;
+			break;
+		case DNS_SSUMATCHTYPE_SELFKRB5:
+			if (!dst_gssapi_identitymatchesrealmkrb5(signer, name,
+							       rule->identity))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_SELFMS:
+			if (!dst_gssapi_identitymatchesrealmms(signer, name,
+							      rule->identity))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_SUBDOMAINKRB5:
+			if (!dns_name_issubdomain(name, rule->name))
+				continue;
+			if (!dst_gssapi_identitymatchesrealmkrb5(signer, NULL,
+							       rule->identity))
+				continue;
+			break;
+		case DNS_SSUMATCHTYPE_SUBDOMAINMS:
+			if (!dns_name_issubdomain(name, rule->name))
+				continue;
+			if (!dst_gssapi_identitymatchesrealmms(signer, NULL,
+							       rule->identity))
+				continue;
+			break;
 		}
 
 		if (rule->ntypes == 0) {

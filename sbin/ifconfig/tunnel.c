@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.11 2008/05/06 17:29:04 dyoung Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.11.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.11 2008/05/06 17:29:04 dyoung Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.11.2.1 2008/06/23 04:29:57 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -68,20 +68,21 @@ struct paddr tundst = PADDR_INITIALIZER(&tundst, "tundst", settunnel,
 struct paddr tunsrc = PADDR_INITIALIZER(&tunsrc, "tunsrc", NULL,
     "tunsrc", NULL, NULL, NULL, &tundst.pa_parser);
 
+static const struct kwinst tunnelkw[] = {
+	  {.k_word = "deletetunnel", .k_exec = deletetunnel,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "tunnel", .k_nextparser = &tunsrc.pa_parser}
+};
+
+struct pkw tunnel = PKW_INITIALIZER(&tunnel, "tunnel", NULL, NULL,
+    tunnelkw, __arraycount(tunnelkw), NULL);
+
 int
 settunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	const struct paddr_prefix *srcpfx, *dstpfx;
 	struct if_laddrreq req;
-	int s;
 	prop_data_t srcdata, dstdata;
-	const char *ifname;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
 
 	srcdata = (prop_data_t)prop_dictionary_get(env, "tunsrc");
 	dstdata = (prop_data_t)prop_dictionary_get(env, "tundst");
@@ -100,7 +101,6 @@ settunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 		    "source and destination address families do not match");
 
 	memset(&req, 0, sizeof(req));
-	estrlcpy(req.iflr_name, ifname, sizeof(req.iflr_name));
 	memcpy(&req.addr, &srcpfx->pfx_addr,
 	    MIN(sizeof(req.addr), srcpfx->pfx_addr.sa_len));
 	memcpy(&req.dstaddr, &dstpfx->pfx_addr,
@@ -132,7 +132,7 @@ settunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 	}
 #endif /* INET6 */
 
-	if (ioctl(s, SIOCSLIFPHYADDR, &req) == -1)
+	if (direct_ioctl(env, SIOCSLIFPHYADDR, &req) == -1)
 		warn("SIOCSLIFPHYADDR");
 	return 0;
 }
@@ -140,20 +140,7 @@ settunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 int
 deletetunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	int s;
-	struct ifreq ifr;
-	const char *ifname;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
-
-	memset(&ifr, 0, sizeof(ifr));
-
-	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCDIFPHYADDR, &ifr) == -1)
+	if (indirect_ioctl(env, SIOCDIFPHYADDR, NULL) == -1)
 		err(EXIT_FAILURE, "SIOCDIFPHYADDR");
 	return 0;
 }
@@ -168,20 +155,11 @@ tunnel_status(prop_dictionary_t env, prop_dictionary_t oenv)
 	const int niflag = NI_NUMERICHOST|NI_NUMERICSERV;
 	struct if_laddrreq req;
 	const struct afswtch *lafp;
-	int s;
-	const char *ifname;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
 
 	psrcaddr[0] = pdstaddr[0] = '\0';
 
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
-
 	memset(&req, 0, sizeof(req));
-	estrlcpy(req.iflr_name, ifname, IFNAMSIZ);
-	if (ioctl(s, SIOCGLIFPHYADDR, &req) == -1)
+	if (direct_ioctl(env, SIOCGLIFPHYADDR, &req) == -1)
 		return;
 	lafp = lookup_af_bynum(req.addr.ss_family);
 #ifdef INET6

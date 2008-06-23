@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.48 2008/01/02 11:48:57 ad Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.48.12.1 2008/06/23 04:31:52 wrstuden Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -258,8 +258,7 @@ __KERNEL_RCSID(0, \"\$NetBSD\$\");
 "
 
 echo '
-#include "opt_vnode_lockdebug.h"
-#include "opt_multiprocessor.h"'
+#include "opt_vnode_lockdebug.h"'
 echo '
 #include <sys/param.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.58 2008/05/02 23:13:05 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.58.2.1 2008/06/23 04:29:04 wrstuden Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -26,6 +26,7 @@ BUILD_KERNELS+=	INSTALL_XEN3PAE_DOMU
 INSTALLATION_DIRS+=	installation/misc
 INSTALLATION_DIRS+=	installation/cdrom
 INSTALLATION_DIRS+=	installation/floppy
+INSTALLATION_DIRS+=	installation/miniroot
 
 # i386 specific distrib stuff
 snap_md_post:
@@ -34,4 +35,5 @@ snap_md_post:
 	cd ${KERNSRCDIR}/arch/i386/stand/misc && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom '*.iso'
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/floppy '*.fs'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot '*.*'
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*.*'

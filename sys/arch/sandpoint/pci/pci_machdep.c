@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.15 2007/11/19 14:36:14 nisimura Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.15.20.1 2008/06/23 04:30:38 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.15 2007/11/19 14:36:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.15.20.1 2008/06/23 04:30:38 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -360,6 +360,19 @@ pci_intr_evcnt(void *v, pci_intr_handle_t ih)
 
 	/* XXX for now, no evcnt parent reported */
 	return NULL;
+}
+
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+		 int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		return 0;
+	default:
+		return ENODEV;
+	}
 }
 
 void *

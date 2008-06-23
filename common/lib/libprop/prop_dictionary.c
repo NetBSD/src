@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.28 2008/05/07 10:16:41 tron Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.28.2.1 2008/06/23 04:26:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -113,6 +113,14 @@ static bool	_prop_dictionary_equals(prop_object_t, prop_object_t,
 				        void **, void **,
 					prop_object_t *, prop_object_t *);
 static void	_prop_dictionary_equals_finish(prop_object_t, prop_object_t);
+static prop_object_iterator_t _prop_dictionary_iterator_locked(
+				prop_dictionary_t);
+static prop_object_t _prop_dictionary_iterator_next_object_locked(void *);
+static prop_object_t _prop_dictionary_get_keysym(prop_dictionary_t,
+						 prop_dictionary_keysym_t,
+						 bool);
+static prop_object_t _prop_dictionary_get(prop_dictionary_t, const char *,
+					  bool);
 
 static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_type		=	PROP_TYPE_DICTIONARY,
@@ -260,6 +268,7 @@ _prop_dict_keysym_alloc(const char *key)
 	prop_dictionary_keysym_t opdk, pdk;
 	const struct rb_node *n;
 	size_t size;
+	bool rv;
 
 	/*
 	 * Check to see if this already exists in the tree.  If it does,
@@ -317,7 +326,8 @@ _prop_dict_keysym_alloc(const char *key)
 		_prop_dict_keysym_put(pdk);
 		return (opdk);
 	}
-	_prop_rb_tree_insert_node(&_prop_dict_keysym_tree, &pdk->pdk_link);
+	rv = _prop_rb_tree_insert_node(&_prop_dict_keysym_tree, &pdk->pdk_link);
+	_PROP_ASSERT(rv == true);
 	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 	return (pdk);
 }
@@ -399,7 +409,6 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	bool rv = false;
 
 	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
-	_PROP_RWLOCK_OWNED(pd->pd_rwlock);
 
 	if (pd->pd_count == 0) {
 		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
@@ -410,15 +419,16 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	    _prop_object_externalize_append_char(ctx, '\n') == false)
 		goto out;
 
-	pi = prop_dictionary_iterator(pd);
+	pi = _prop_dictionary_iterator_locked(pd);
 	if (pi == NULL)
 		goto out;
 	
 	ctx->poec_depth++;
 	_PROP_ASSERT(ctx->poec_depth != 0);
 
-	while ((pdk = prop_object_iterator_next(pi)) != NULL) {
-		po = prop_dictionary_get_keysym(pd, pdk);
+	while ((pdk = _prop_dictionary_iterator_next_object_locked(pi))
+	    != NULL) {
+		po = _prop_dictionary_get_keysym(pd, pdk, true);
 		if (po == NULL ||
 		    _prop_object_externalize_start_tag(ctx, "key") == false ||
 		    _prop_object_externalize_append_encoded_cstring(ctx,
@@ -566,16 +576,13 @@ _prop_dictionary_expand(prop_dictionary_t pd, unsigned int capacity)
 }
 
 static prop_object_t
-_prop_dictionary_iterator_next_object(void *v)
+_prop_dictionary_iterator_next_object_locked(void *v)
 {
 	struct _prop_dictionary_iterator *pdi = v;
 	prop_dictionary_t pd = pdi->pdi_base.pi_obj;
 	prop_dictionary_keysym_t pdk = NULL;
-	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
-	acquired = _PROP_RWLOCK_TRYRDLOCK(pd->pd_rwlock);
-	_PROP_RWLOCK_OWNED(pd->pd_rwlock);
 
 	if (pd->pd_version != pdi->pdi_base.pi_version)
 		goto out;	/* dictionary changed during iteration */
@@ -589,29 +596,45 @@ _prop_dictionary_iterator_next_object(void *v)
 	pdi->pdi_index++;
 
  out:
-	if (acquired) {
-		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
-	}
 	return (pdk);
+}
+
+static prop_object_t
+_prop_dictionary_iterator_next_object(void *v)
+{
+	struct _prop_dictionary_iterator *pdi = v;
+	prop_dictionary_t pd __unused = pdi->pdi_base.pi_obj;
+	prop_dictionary_keysym_t pdk;
+
+	_PROP_ASSERT(prop_object_is_dictionary(pd));
+
+	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+	pdk = _prop_dictionary_iterator_next_object_locked(pdi);
+	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
+	return (pdk);
+}
+
+static void
+_prop_dictionary_iterator_reset_locked(void *v)
+{
+	struct _prop_dictionary_iterator *pdi = v;
+	prop_dictionary_t pd = pdi->pdi_base.pi_obj;
+
+	_PROP_ASSERT(prop_object_is_dictionary(pd));
+
+	pdi->pdi_index = 0;
+	pdi->pdi_base.pi_version = pd->pd_version;
 }
 
 static void
 _prop_dictionary_iterator_reset(void *v)
 {
 	struct _prop_dictionary_iterator *pdi = v;
-	prop_dictionary_t pd = pdi->pdi_base.pi_obj;
-	bool acquired;
+	prop_dictionary_t pd __unused = pdi->pdi_base.pi_obj;
 
-	_PROP_ASSERT(prop_object_is_dictionary(pd));
-	acquired = _PROP_RWLOCK_TRYRDLOCK(pd->pd_rwlock);
-	_PROP_RWLOCK_OWNED(pd->pd_rwlock);
-
-	pdi->pdi_index = 0;
-	pdi->pdi_base.pi_version = pd->pd_version;
-
-	if (acquired) {
-		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
-	}
+	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+	_prop_dictionary_iterator_reset_locked(pdi);
+	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
 }
 
 /*
@@ -751,13 +774,8 @@ prop_dictionary_ensure_capacity(prop_dictionary_t pd, unsigned int capacity)
 	return (rv);
 }
 
-/*
- * prop_dictionary_iterator --
- *	Return an iterator for the dictionary.  The dictionary is retained by
- *	the iterator.
- */
-prop_object_iterator_t
-prop_dictionary_iterator(prop_dictionary_t pd)
+static prop_object_iterator_t
+_prop_dictionary_iterator_locked(prop_dictionary_t pd)
 {
 	struct _prop_dictionary_iterator *pdi;
 
@@ -771,11 +789,25 @@ prop_dictionary_iterator(prop_dictionary_t pd)
 	pdi->pdi_base.pi_reset = _prop_dictionary_iterator_reset;
 	prop_object_retain(pd);
 	pdi->pdi_base.pi_obj = pd;
-	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
-	_prop_dictionary_iterator_reset(pdi);
-	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
+	_prop_dictionary_iterator_reset_locked(pdi);
 
 	return (&pdi->pdi_base);
+}
+
+/*
+ * prop_dictionary_iterator --
+ *	Return an iterator for the dictionary.  The dictionary is retained by
+ *	the iterator.
+ */
+prop_object_iterator_t
+prop_dictionary_iterator(prop_dictionary_t pd)
+{
+	prop_object_iterator_t pi;
+
+	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+	pi = _prop_dictionary_iterator_locked(pd);
+	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
+	return (pi);
 }
 
 /*
@@ -848,12 +880,8 @@ _prop_dict_lookup(prop_dictionary_t pd, const char *key,
 	return (NULL);
 }
 
-/*
- * prop_dictionary_get --
- *	Return the object stored with specified key.
- */
-prop_object_t
-prop_dictionary_get(prop_dictionary_t pd, const char *key)
+static prop_object_t
+_prop_dictionary_get(prop_dictionary_t pd, const char *key, bool locked)
 {
 	const struct _prop_dict_entry *pde;
 	prop_object_t po = NULL;
@@ -861,14 +889,42 @@ prop_dictionary_get(prop_dictionary_t pd, const char *key)
 	if (! prop_object_is_dictionary(pd))
 		return (NULL);
 
-	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+	if (!locked)
+		_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
 	pde = _prop_dict_lookup(pd, key, NULL);
 	if (pde != NULL) {
 		_PROP_ASSERT(pde->pde_objref != NULL);
 		po = pde->pde_objref;
 	}
+	if (!locked)
+		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
+	return (po);
+}
+/*
+ * prop_dictionary_get --
+ *	Return the object stored with specified key.
+ */
+prop_object_t
+prop_dictionary_get(prop_dictionary_t pd, const char *key)
+{
+	prop_object_t po;
+
+	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+	po = _prop_dictionary_get(pd, key, true);
 	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
 	return (po);
+}
+
+static prop_object_t
+_prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk,
+    bool locked)
+{
+
+	if (! (prop_object_is_dictionary(pd) &&
+	       prop_object_is_dictionary_keysym(pdk)))
+		return (NULL);
+
+	return (_prop_dictionary_get(pd, pdk->pdk_key, locked));
 }
 
 /*
@@ -879,11 +935,7 @@ prop_object_t
 prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
 {
 
-	if (! (prop_object_is_dictionary(pd) &&
-	       prop_object_is_dictionary_keysym(pdk)))
-		return (NULL);
-
-	return (prop_dictionary_get(pd, pdk->pdk_key));
+	return (_prop_dictionary_get_keysym(pd, pdk, false));
 }
 
 /*

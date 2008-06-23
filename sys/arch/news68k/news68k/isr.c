@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.17 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: isr.c,v 1.17.2.1 2008/06/23 04:30:37 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17 2008/04/28 20:23:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.17.2.1 2008/06/23 04:30:37 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,13 +269,6 @@ isrdispatch_vectored(int pc, int evec, void *frame)
 	idepth--;
 }
 
-bool
-cpu_intr_p(void)
-{
-
-	return idepth != 0;
-}
-
 void
 isrlink_custom(int level, void *handler)
 {
@@ -304,19 +297,13 @@ get_vector_entry(int entry)
 	return (void *)vectab[entry];
 }
 
-static const int ipl2psl_table[] = {
-	[IPL_NONE] = PSL_IPL0,
-	[IPL_SOFTBIO] = PSL_IPL2,
-	[IPL_SOFTCLOCK] = PSL_IPL2,
-	[IPL_SOFTNET] = PSL_IPL2,
-	[IPL_SOFTSERIAL] = PSL_IPL2,
-	[IPL_VM] = PSL_IPL5,
-	[IPL_SCHED] = PSL_IPL7,
+const uint16_t ipl2psl_table[NIPL] = {
+	[IPL_NONE]       = PSL_S | PSL_IPL0,
+	[IPL_SOFTCLOCK]  = PSL_S | PSL_IPL2,
+	[IPL_SOFTBIO]    = PSL_S | PSL_IPL2,
+	[IPL_SOFTNET]    = PSL_S | PSL_IPL2,
+	[IPL_SOFTSERIAL] = PSL_S | PSL_IPL2,
+	[IPL_VM]         = PSL_S | PSL_IPL5,
+	[IPL_SCHED]      = PSL_S | PSL_IPL7,
+	[IPL_HIGH]       = PSL_S | PSL_IPL7,
 };
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
-}

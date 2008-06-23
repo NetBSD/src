@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.17 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.17.2.1 2008/06/23 04:31:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,15 +30,11 @@
  */
 
 /*
- * Kernel condition variable implementation, modeled after those found in
- * Solaris, a description of which can be found in:
- *
- *	Solaris Internals: Core Kernel Architecture, Jim Mauro and
- *	    Richard McDougall.
+ * Kernel condition variable implementation.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.17 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.17.2.1 2008/06/23 04:31:50 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,8 +42,18 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.17 2008/04/28 20:24:02 martin Exp
 #include <sys/systm.h>
 #include <sys/condvar.h>
 #include <sys/sleepq.h>
+#include <sys/lockdebug.h>
+#include <sys/cpu.h>
+
+#include <uvm/uvm_extern.h>
+
+#define	CV_SLEEPQ(cv)	((sleepq_t *)(cv)->cv_opaque)
+#define	CV_DEBUG_P(cv)	((cv)->cv_wmesg != nodebug)
+#define	CV_RA		((uintptr_t)__builtin_return_address(0))
 
 static u_int	cv_unsleep(lwp_t *, bool);
+static void	cv_wakeup_one(kcondvar_t *);
+static void	cv_wakeup_all(kcondvar_t *);
 
 static syncobj_t cv_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
@@ -57,7 +63,14 @@ static syncobj_t cv_syncobj = {
 	syncobj_noowner,
 };
 
+lockops_t cv_lockops = {
+	"Condition variable",
+	LOCKOPS_CV,
+	NULL
+};
+
 static const char deadcv[] = "deadcv";
+static const char nodebug[] = "nodebug";
 
 /*
  * cv_init:
@@ -67,11 +80,19 @@ static const char deadcv[] = "deadcv";
 void
 cv_init(kcondvar_t *cv, const char *wmesg)
 {
+#ifdef LOCKDEBUG
+	bool dodebug;
 
+	dodebug = LOCKDEBUG_ALLOC(cv, &cv_lockops,
+	    (uintptr_t)__builtin_return_address(0));
+	if (!dodebug) {
+		/* XXX This will break vfs_lockf. */
+		wmesg = nodebug;
+	}
+#endif
 	KASSERT(wmesg != NULL);
-
 	cv->cv_wmesg = wmesg;
-	cv->cv_waiters = 0;
+	sleepq_init(CV_SLEEPQ(cv));
 }
 
 /*
@@ -83,10 +104,10 @@ void
 cv_destroy(kcondvar_t *cv)
 {
 
+	LOCKDEBUG_FREE(CV_DEBUG_P(cv), cv);
 #ifdef DIAGNOSTIC
 	KASSERT(cv_is_valid(cv));
 	cv->cv_wmesg = deadcv;
-	cv->cv_waiters = -3;
 #endif
 }
 
@@ -96,23 +117,25 @@ cv_destroy(kcondvar_t *cv)
  *	Look up and lock the sleep queue corresponding to the given
  *	condition variable, and increment the number of waiters.
  */
-static inline sleepq_t *
+static inline void
 cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 {
 	sleepq_t *sq;
+	kmutex_t *mp;
 
 	KASSERT(cv_is_valid(cv));
+	KASSERT(!cpu_intr_p());
 	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
-	l->l_cv_signalled = 0;
+	LOCKDEBUG_LOCKED(CV_DEBUG_P(cv), cv, mtx, CV_RA, 0);
+
 	l->l_kpriority = true;
-	sq = sleeptab_lookup(&sleeptab, cv);
-	cv->cv_waiters++;
-	sleepq_enter(sq, l);
+	mp = sleepq_hashlock(cv);
+	sq = CV_SLEEPQ(cv);
+	sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, cv, cv->cv_wmesg, &cv_syncobj);
 	mutex_exit(mtx);
-
-	return sq;
+	KASSERT(cv_has_waiters(cv));
 }
 
 /*
@@ -130,9 +153,10 @@ cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
 {
 
 	mutex_enter(mtx);
-	if (__predict_false(error != 0) && l->l_cv_signalled != 0)
+	if (__predict_false(error != 0))
 		cv_signal(cv);
 
+	LOCKDEBUG_UNLOCKED(CV_DEBUG_P(cv), cv, CV_RA, 0);
 	KASSERT(cv_is_valid(cv));
 
 	return error;
@@ -153,12 +177,11 @@ cv_unsleep(lwp_t *l, bool cleanup)
 
 	cv = (kcondvar_t *)(uintptr_t)l->l_wchan;
 
-	KASSERT(l->l_wchan != NULL);
-	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
+	KASSERT(l->l_wchan == (wchan_t)cv);
+	KASSERT(l->l_sleepq == CV_SLEEPQ(cv));
 	KASSERT(cv_is_valid(cv));
-	KASSERT(cv->cv_waiters > 0);
+	KASSERT(cv_has_waiters(cv));
 
-	cv->cv_waiters--;
 	return sleepq_unsleep(l, cleanup);
 }
 
@@ -171,16 +194,10 @@ void
 cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 {
 	lwp_t *l = curlwp;
-	sleepq_t *sq;
 
 	KASSERT(mutex_owned(mtx));
 
-	if (sleepq_dontsleep(l)) {
-		(void)sleepq_abort(mtx, 0);
-		return;
-	}
-
-	sq = cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l);
 	(void)sleepq_block(0, false);
 	(void)cv_exit(cv, mtx, l, 0);
 }
@@ -197,15 +214,11 @@ int
 cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 {
 	lwp_t *l = curlwp;
-	sleepq_t *sq;
 	int error;
 
 	KASSERT(mutex_owned(mtx));
 
-	if (sleepq_dontsleep(l))
-		return sleepq_abort(mtx, 0);
-
-	sq = cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l);
 	error = sleepq_block(0, true);
 	return cv_exit(cv, mtx, l, error);
 }
@@ -221,15 +234,11 @@ int
 cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 {
 	lwp_t *l = curlwp;
-	sleepq_t *sq;
 	int error;
 
 	KASSERT(mutex_owned(mtx));
 
-	if (sleepq_dontsleep(l))
-		return sleepq_abort(mtx, 0);
-
-	sq = cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l);
 	error = sleepq_block(timo, false);
 	return cv_exit(cv, mtx, l, error);
 }
@@ -247,15 +256,11 @@ int
 cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 {
 	lwp_t *l = curlwp;
-	sleepq_t *sq;
 	int error;
 
 	KASSERT(mutex_owned(mtx));
 
-	if (sleepq_dontsleep(l))
-		return sleepq_abort(mtx, 0);
-
-	sq = cv_enter(cv, mtx, l);
+	cv_enter(cv, mtx, l);
 	error = sleepq_block(timo, true);
 	return cv_exit(cv, mtx, l, error);
 }
@@ -269,27 +274,43 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 void
 cv_signal(kcondvar_t *cv)
 {
-	lwp_t *l;
+
+	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
+	KASSERT(cv_is_valid(cv));
+
+	if (__predict_false(!TAILQ_EMPTY(CV_SLEEPQ(cv))))
+		cv_wakeup_one(cv);
+}
+
+static void __noinline
+cv_wakeup_one(kcondvar_t *cv)
+{
 	sleepq_t *sq;
+	kmutex_t *mp;
+	int swapin;
+	lwp_t *l;
 
 	KASSERT(cv_is_valid(cv));
 
-	if (cv->cv_waiters == 0)
+	mp = sleepq_hashlock(cv);
+	sq = CV_SLEEPQ(cv);
+	l = TAILQ_FIRST(sq);
+	if (l == NULL) {
+		mutex_spin_exit(mp);
 		return;
+	}
+	KASSERT(l->l_sleepq == sq);
+	KASSERT(l->l_mutex == mp);
+	KASSERT(l->l_wchan == cv);
+	swapin = sleepq_remove(sq, l);
+	mutex_spin_exit(mp);
 
 	/*
-	 * cv->cv_waiters may be stale and have dropped to zero, but
-	 * while holding the interlock (the mutex passed to cv_wait()
-	 * and similar) we will see non-zero values when it matters.
+	 * If there are newly awakend threads that need to be swapped in,
+	 * then kick the swapper into action.
 	 */
-
-	sq = sleeptab_lookup(&sleeptab, cv);
-	if (cv->cv_waiters != 0) {
-		cv->cv_waiters--;
-		l = sleepq_wake(sq, cv, 1);
-		l->l_cv_signalled = 1;
-	} else
-		sleepq_unlock(sq);
+	if (swapin)
+		uvm_kick_scheduler();
 
 	KASSERT(cv_is_valid(cv));
 }
@@ -303,20 +324,42 @@ cv_signal(kcondvar_t *cv)
 void
 cv_broadcast(kcondvar_t *cv)
 {
+
+	/* LOCKDEBUG_WAKEUP(CV_DEBUG_P(cv), cv, CV_RA); */
+	KASSERT(cv_is_valid(cv));
+
+	if (__predict_false(!TAILQ_EMPTY(CV_SLEEPQ(cv))))  
+		cv_wakeup_all(cv);
+}
+
+static void __noinline
+cv_wakeup_all(kcondvar_t *cv)
+{
 	sleepq_t *sq;
-	u_int cnt;
+	kmutex_t *mp;
+	int swapin;
+	lwp_t *l, *next;
 
 	KASSERT(cv_is_valid(cv));
 
-	if (cv->cv_waiters == 0)
-		return;
+	mp = sleepq_hashlock(cv);
+	swapin = 0;
+	sq = CV_SLEEPQ(cv);
+	for (l = TAILQ_FIRST(sq); l != NULL; l = next) {
+		KASSERT(l->l_sleepq == sq);
+		KASSERT(l->l_mutex == mp);
+		KASSERT(l->l_wchan == cv);
+		next = TAILQ_NEXT(l, l_sleepchain);
+		swapin |= sleepq_remove(sq, l);
+	}
+	mutex_spin_exit(mp);
 
-	sq = sleeptab_lookup(&sleeptab, cv);
-	if ((cnt = cv->cv_waiters) != 0) {
-		cv->cv_waiters = 0;
-		sleepq_wake(sq, cv, cnt);
-	} else
-		sleepq_unlock(sq);
+	/*
+	 * If there are newly awakend threads that need to be swapped in,
+	 * then kick the swapper into action.
+	 */
+	if (swapin)
+		uvm_kick_scheduler();
 
 	KASSERT(cv_is_valid(cv));
 }
@@ -331,15 +374,9 @@ cv_broadcast(kcondvar_t *cv)
 void
 cv_wakeup(kcondvar_t *cv)
 {
-	sleepq_t *sq;
 
-	KASSERT(cv_is_valid(cv));
-
-	sq = sleeptab_lookup(&sleeptab, cv);
-	cv->cv_waiters = 0;
-	sleepq_wake(sq, cv, (u_int)-1);
-
-	KASSERT(cv_is_valid(cv));
+	cv_wakeup_all(cv);
+	wakeup(cv);
 }
 
 /*
@@ -352,8 +389,7 @@ bool
 cv_has_waiters(kcondvar_t *cv)
 {
 
-	/* No need to interlock here */
-	return cv->cv_waiters != 0;
+	return !TAILQ_EMPTY(CV_SLEEPQ(cv));
 }
 
 /*
@@ -366,11 +402,5 @@ bool
 cv_is_valid(kcondvar_t *cv)
 {
 
-	if (cv->cv_wmesg == deadcv || cv->cv_wmesg == NULL)
-		return false;
-	if ((cv->cv_waiters & 0xff000000) != 0) {
-		/* Arbitrary: invalid number of waiters. */
-		return false;
-	}
-	return cv->cv_waiters >= 0;
+	return cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL;
 }

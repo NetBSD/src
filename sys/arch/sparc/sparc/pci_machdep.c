@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.13 2006/07/02 10:14:15 jdc Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.13.64.1 2008/06/23 04:30:43 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 2006/07/02 10:14:15 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13.64.1 2008/06/23 04:30:43 wrstuden Exp $");
 
 #if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
@@ -412,6 +412,18 @@ pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	return NULL;
 }
 
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+		 int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		return 0;
+	default:
+		return ENODEV;
+	}
+}
 
 void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,

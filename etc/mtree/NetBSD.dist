@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.364 2008/05/02 23:12:01 ad Exp $
+#	$NetBSD: NetBSD.dist,v 1.364.2.1 2008/06/23 04:29:04 wrstuden Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -37,6 +37,7 @@
 ./etc/mail
 ./etc/mtree
 ./etc/namedb
+./etc/openldap
 ./etc/openssl
 ./etc/openssl/certs
 ./etc/openssl/misc
@@ -51,8 +52,6 @@
 ./etc/skel
 ./etc/sliphome
 ./etc/ssh
-./kernel
-./kernel/modules
 ./lib
 ./libdata
 ./libdata/firmware
@@ -60,6 +59,7 @@
 ./libdata/firmware/rum
 ./libdata/firmware/zyd
 ./libexec
+./libexec/dhcpcd-hooks
 ./mnt
 ./rescue
 ./root
@@ -1056,6 +1056,8 @@
 ./usr/share/nls/pl
 ./usr/share/nls/sk
 ./usr/share/nls/sv
+./usr/share/nvi
+./usr/share/nvi/catalog
 ./usr/share/tabset
 ./usr/share/tmac
 ./usr/share/tmac/mdoc
@@ -1119,6 +1121,7 @@
 ./var/at/spool			mode=0700
 ./var/backups
 ./var/chroot
+./var/chroot/ftp-proxy		mode=0755
 ./var/chroot/named
 ./var/chroot/named/dev
 ./var/chroot/named/etc
@@ -1136,6 +1139,7 @@
 ./var/chroot/ntpd/var/run	mode=0775 gname=ntpd
 ./var/chroot/pflogd		mode=0755
 ./var/chroot/sshd		mode=0755
+./var/chroot/tftp-proxy		mode=0755
 ./var/crash			mode=0770
 ./var/cron
 ./var/cron/tabs			mode=0700

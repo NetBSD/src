@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.17 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.17.2.1 2008/06/23 04:26:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -244,6 +244,7 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 {
 	prop_number_t opn, pn;
 	struct rb_node *n;
+	bool rv;
 
 	/*
 	 * Check to see if this already exists in the tree.  If it does,
@@ -290,7 +291,8 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 		_PROP_POOL_PUT(_prop_number_pool, pn);
 		return (opn);
 	}
-	_prop_rb_tree_insert_node(&_prop_number_tree, &pn->pn_link);
+	rv = _prop_rb_tree_insert_node(&_prop_number_tree, &pn->pn_link);
+	_PROP_ASSERT(rv == true);
 	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
 	return (pn);
 }

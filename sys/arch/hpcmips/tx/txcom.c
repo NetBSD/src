@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.39 2008/04/28 20:23:22 martin Exp $ */
+/*	$NetBSD: txcom.c,v 1.39.2.1 2008/06/23 04:30:25 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.39 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.39.2.1 2008/06/23 04:30:25 wrstuden Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -776,12 +776,13 @@ txcom_txsoft(void *arg)
 int
 txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc;
 	struct txcom_chip *chip;
 	struct tty *tp;
 	int s, err = ENXIO;
 
-	if (!sc)
+	sc = device_lookup_private(&txcom_cd, minor(dev));
+	if (sc == NULL)
 		return err;
 
 	chip = sc->sc_chip;
@@ -873,7 +874,7 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 txcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = device_lookup_private(&txcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -898,7 +899,7 @@ txcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 txcomread(dev_t dev, struct uio *uio, int flag)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = device_lookup_private(&txcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
@@ -907,7 +908,7 @@ txcomread(dev_t dev, struct uio *uio, int flag)
 int
 txcomwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = device_lookup_private(&txcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
@@ -916,7 +917,7 @@ txcomwrite(dev_t dev, struct uio *uio, int flag)
 int
 txcompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = device_lookup_private(&txcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -925,7 +926,7 @@ txcompoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 txcomtty(dev_t dev)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = device_lookup_private(&txcom_cd, minor(dev));
 	
 	return sc->sc_tty;
 }
@@ -933,7 +934,7 @@ txcomtty(dev_t dev)
 int
 txcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct txcom_softc *sc = device_lookup_private(&txcom_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 	int s, err;
 
@@ -995,8 +996,10 @@ txcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 void
 txcomstop(struct tty *tp, int flag)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(tp->t_dev)];
+	struct txcom_softc *sc;
 	int s;
+
+	sc = device_lookup_private(&txcom_cd, minor(tp->t_dev));
 
 	s = spltty();
 
@@ -1014,11 +1017,16 @@ txcomstop(struct tty *tp, int flag)
 void
 txcomstart(struct tty *tp)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(tp->t_dev)];
-	struct txcom_chip *chip = sc->sc_chip;
-	tx_chipset_tag_t tc = chip->sc_tc;
-	int slot = chip->sc_slot;
+	struct txcom_softc *sc;
+	struct txcom_chip *chip;
+	tx_chipset_tag_t tc;
+	int slot;
 	int s;
+
+	sc = device_lookup_private(&txcom_cd, minor(tp->t_dev));
+	chip = sc->sc_chip;
+	tc = chip->sc_tc;
+	slot = chip->sc_slot;
 
 	s = spltty();
 	
@@ -1050,12 +1058,13 @@ txcomstart(struct tty *tp)
 int
 txcomparam(struct tty *tp, struct termios *t)
 {
-	struct txcom_softc *sc = txcom_cd.cd_devs[minor(tp->t_dev)];
+	struct txcom_softc *sc;
 	struct txcom_chip *chip;
 	int ospeed;
 	int s;
 	
-	if (!sc)
+	sc = device_lookup_private(&txcom_cd, minor(tp->t_dev));
+	if (sc == NULL)
 		return ENXIO;
 	
 	ospeed = t->c_ospeed;

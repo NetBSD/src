@@ -1,4 +1,4 @@
-.\"	$NetBSD: postfix.1,v 1.1.1.10 2007/05/19 16:27:47 heas Exp $
+.\"	$NetBSD: postfix.1,v 1.1.1.10.12.1 2008/06/23 04:29:07 wrstuden Exp $
 .\"
 .TH POSTFIX 1 
 .ad
@@ -53,6 +53,8 @@ poor delivery performance of all other mail.
 .IP \fBreload\fR
 Re-read configuration files. Running processes terminate at their
 earliest convenience.
+.IP \fBstatus\fR
+Indicate if the Postfix mail system is currently running.
 .IP "\fBset-permissions\fR \fB[\fIname\fR=\fIvalue ...\fB]\fR
 Set the ownership and permissions of Postfix related files and
 directories, as specified in the \fBpostfix-files\fR file.
@@ -141,6 +143,11 @@ Where the Postfix manual pages are installed.
 .IP "\fBreadme_directory (see 'postconf -d' output)\fR"
 The location of Postfix README files that describe how to build,
 configure or operate a specific Postfix subsystem or feature.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBdata_directory (see 'postconf -d' output)\fR"
+The directory with Postfix-writable data files (for example:
+caches, pseudo-random numbers).
 .PP
 Other configuration parameters:
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"

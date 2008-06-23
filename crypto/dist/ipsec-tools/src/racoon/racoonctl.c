@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.10 2008/03/06 00:46:04 mgrooms Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.10.4.1 2008/06/23 04:26:46 wrstuden Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -93,6 +93,7 @@ static int handle_recv __P((vchar_t *));
 static vchar_t *f_reload __P((int, char **));
 static vchar_t *f_getsched __P((int, char **));
 static vchar_t *f_getsa __P((int, char **));
+static vchar_t *f_getsacert __P((int, char **));
 static vchar_t *f_flushsa __P((int, char **));
 static vchar_t *f_deletesa __P((int, char **));
 static vchar_t *f_exchangesa __P((int, char **));
@@ -105,32 +106,33 @@ static vchar_t *f_logoutusr __P((int, char **));
 
 struct cmd_tag {
 	vchar_t *(*func) __P((int, char **));
-	int cmd;
 	char *str;
 } cmdtab[] = {
-	{ f_reload,	ADMIN_RELOAD_CONF,	"reload-config" },
-	{ f_reload,	ADMIN_RELOAD_CONF,	"rc" },
-	{ f_getsched,	ADMIN_SHOW_SCHED,	"show-schedule" },
-	{ f_getsched,	ADMIN_SHOW_SCHED,	"sc" },
-	{ f_getsa,	ADMIN_SHOW_SA,		"show-sa" },
-	{ f_getsa,	ADMIN_SHOW_SA,		"ss" },
-	{ f_flushsa,	ADMIN_FLUSH_SA,		"flush-sa" },
-	{ f_flushsa,	ADMIN_FLUSH_SA,		"fs" },
-	{ f_deletesa,	ADMIN_DELETE_SA,	"delete-sa" },
-	{ f_deletesa,	ADMIN_DELETE_SA,	"ds" },
-	{ f_exchangesa,	ADMIN_ESTABLISH_SA,	"establish-sa" },
-	{ f_exchangesa,	ADMIN_ESTABLISH_SA,	"es" },
-	{ f_vpnc,	ADMIN_ESTABLISH_SA,	"vpn-connect" },
-	{ f_vpnc,	ADMIN_ESTABLISH_SA,	"vc" },
-	{ f_vpnd,	ADMIN_DELETE_ALL_SA_DST,"vpn-disconnect" },
-	{ f_vpnd,	ADMIN_DELETE_ALL_SA_DST,"vd" },
-	{ f_getevt,	ADMIN_SHOW_EVT,		"show-event" },
-	{ f_getevt,	ADMIN_SHOW_EVT,		"se" },
+	{ f_reload,	"reload-config" },
+	{ f_reload,	"rc" },
+	{ f_getsched,	"show-schedule" },
+	{ f_getsched,	"sc" },
+	{ f_getsa,	"show-sa" },
+	{ f_getsa,	"ss" },
+	{ f_getsacert,	"get-cert" },
+	{ f_getsacert,	"gc" },
+	{ f_flushsa,	"flush-sa" },
+	{ f_flushsa,	"fs" },
+	{ f_deletesa,	"delete-sa" },
+	{ f_deletesa,	"ds" },
+	{ f_exchangesa,	"establish-sa" },
+	{ f_exchangesa,	"es" },
+	{ f_vpnc,	"vpn-connect" },
+	{ f_vpnc,	"vc" },
+	{ f_vpnd,	"vpn-disconnect" },
+	{ f_vpnd,	"vd" },
+	{ f_getevt,	"show-event" },
+	{ f_getevt,	"se" },
 #ifdef ENABLE_HYBRID
-	{ f_logoutusr,	ADMIN_LOGOUT_USER,	"logout-user" },
-	{ f_logoutusr,	ADMIN_LOGOUT_USER,	"lu" },
+	{ f_logoutusr,	"logout-user" },
+	{ f_logoutusr,	"lu" },
 #endif
-	{ NULL, 0, NULL },
+	{ NULL, NULL },
 };
 
 struct evtmsg {
@@ -156,6 +158,7 @@ struct evtmsg {
 	{ EVT_PHASE2_NO_RESPONSE,	"Phase 2 error: no response" },
 };
 
+static vchar_t *get_proto_and_index __P((int, char **, u_int16_t *));
 static int get_proto __P((char *));
 static vchar_t *get_index __P((int, char **));
 static int get_family __P((char *));
@@ -413,6 +416,30 @@ f_getsa(ac, av)
 }
 
 static vchar_t *
+f_getsacert(ac, av)
+	int ac;
+	char **av;
+{
+	vchar_t *buf, *index;
+	struct admin_com_indexes *com;
+
+	index = get_index(ac, av);
+	if (index == NULL)
+		return NULL;
+
+	com = (struct admin_com_indexes *) index->v;
+	buf = make_request(ADMIN_GET_SA_CERT, ADMIN_PROTO_ISAKMP, index->l);
+	if (buf == NULL)
+		errx(1, "Cannot allocate buffer");
+
+	memcpy(buf->v+sizeof(struct admin_com), index->v, index->l);
+
+	vfree(index);
+
+	return buf;
+}
+
+static vchar_t *
 f_flushsa(ac, av)
 	int ac;
 	char **av;
@@ -485,34 +512,11 @@ f_deleteallsadst(ac, av)
 	char **av;
 {
 	vchar_t *buf, *index;
-	int proto;
+	u_int16_t proto;
 
-	/* need protocol */
-	if (ac < 1)
-		errx(1, "insufficient arguments");
-	proto = get_proto(*av);
-	if (proto == -1)
-		errx(1, "unknown protocol %s", *av);
-
-	/* get index(es) */
-	av++;
-	ac--;
-	switch (proto) {
-	case ADMIN_PROTO_ISAKMP:
-		index = get_index(ac, av);
-		if (index == NULL)
-			return NULL;
-		break;
-	case ADMIN_PROTO_AH:
-	case ADMIN_PROTO_ESP:
-		index = get_index(ac, av);
-		if (index == NULL)
-			return NULL;
-		break;
-	default:
-		errno = EPROTONOSUPPORT;
+	index = get_proto_and_index(ac, av, &proto);
+	if (index == NULL)
 		return NULL;
-	}
 
 	buf = make_request(ADMIN_DELETE_ALL_SA_DST, proto, index->l);
 	if (buf == NULL)
@@ -533,7 +537,7 @@ f_exchangesa(ac, av)
 	char **av;
 {
 	vchar_t *buf, *index;
-	int proto;
+	u_int16_t proto;
 	int cmd = ADMIN_ESTABLISH_SA;
 	size_t com_len = 0;
 	char *id = NULL;
@@ -566,34 +570,23 @@ f_exchangesa(ac, av)
 		ac--;
 	}
 
-	/* need protocol */
-	if (ac < 1)
-		errx(1, "insufficient arguments");
-	if ((proto = get_proto(*av)) == -1)
-		errx(1, "unknown protocol %s", *av);
-
-	/* get index(es) */
-	av++;
-	ac--;
-	switch (proto) {
-	case ADMIN_PROTO_ISAKMP:
-		index = get_index(ac, av);
-		if (index == NULL)
-			return NULL;
-		if (wait)
-			evt_quit_event = EVT_PHASE1_MODE_CFG;
-		break;
-	case ADMIN_PROTO_AH:
-	case ADMIN_PROTO_ESP:
-		index = get_index(ac, av);
-		if (index == NULL)
-			return NULL;
-		if (wait)
-			evt_quit_event = EVT_PHASE2_UP;
-		break;
-	default:
-		errno = EPROTONOSUPPORT;
+	index = get_proto_and_index(ac, av, &proto);
+	if (index == NULL)
 		return NULL;
+
+	if (wait) {
+		switch (proto) {
+		case ADMIN_PROTO_ISAKMP:
+			evt_quit_event = EVT_PHASE1_MODE_CFG;
+			break;
+		case ADMIN_PROTO_AH:
+		case ADMIN_PROTO_ESP:
+			evt_quit_event = EVT_PHASE2_UP;
+			break;
+		default:
+			errno = EPROTONOSUPPORT;
+			return NULL;
+		}
 	}
 
 	com_len += index->l;
@@ -656,7 +649,7 @@ f_vpnc(ac, av)
 	}
 
 	if (ac < 1)
-		errx(1, "VPN gateway required");	
+		errx(1, "VPN gateway required");
 	if (ac > 1)
 		warnx("Extra arguments");
 
@@ -701,7 +694,7 @@ f_vpnd(ac, av)
 	char *idx;
 
 	if (ac < 1)
-		errx(1, "VPN gateway required");	
+		errx(1, "VPN gateway required");
 	if (ac > 1)
 		warnx("Extra arguments");
 
@@ -741,6 +734,36 @@ f_logoutusr(ac, av)
 }
 #endif /* ENABLE_HYBRID */
 
+static vchar_t *
+get_proto_and_index(ac, av, proto)
+	int ac;
+	char **av;
+	u_int16_t *proto;
+{
+	vchar_t *index = NULL;
+
+	/* need protocol */
+	if (ac < 1)
+		errx(1, "insufficient arguments");
+	*proto = get_proto(*av);
+	if (*proto == (u_int16_t) -1)
+		errx(1, "unknown protocol %s", *av);
+
+	/* get index(es) */
+	av++;
+	ac--;
+	switch (*proto) {
+	case ADMIN_PROTO_ISAKMP:
+	case ADMIN_PROTO_AH:
+	case ADMIN_PROTO_ESP:
+		index = get_index(ac, av);
+		break;
+	default:
+		errno = EPROTONOSUPPORT;
+		break;
+	}
+	return index;
+}
 
 static int
 get_proto(str)
@@ -1411,6 +1434,10 @@ handle_recv(combuf)
 		}
 		break;
 	}
+
+	case ADMIN_GET_SA_CERT:
+		fwrite(buf, len, 1, stdout);
+		break;
 
 	case ADMIN_SHOW_SA:
 	   {

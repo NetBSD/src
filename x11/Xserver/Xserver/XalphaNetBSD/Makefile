@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/18 05:35:04 rtr Exp $
+#	$NetBSD: Makefile,v 1.1.34.1 2008/06/23 04:32:13 wrstuden Exp $
+
+NOMAN=	# defined (must come before bsd.own.mk)
 
 .include <bsd.own.mk>
 
 PROG=	XalphaNetBSD
 BINMODE=4711
-MKMAN=	no
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/alpha
 

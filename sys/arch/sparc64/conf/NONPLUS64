@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.24 2006/09/27 21:42:06 manu Exp $
+# 	$NetBSD: NONPLUS64,v 1.24.58.1 2008/06/23 04:30:43 wrstuden Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.24 $"
+#ident		"NONPLUS64-$Revision: 1.24.58.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -122,6 +122,7 @@ options 	COMPAT_15	# NetBSD 1.5 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	COMPAT_SVR4_32	# 32-bit SVR4 binaries

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_user.h,v 1.1.1.6 2006/07/19 01:17:21 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_user.h,v 1.1.1.6.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 #ifndef _CLEANUP_USER_H_INCLUDED_
 #define _CLEANUP_USER_H_INCLUDED_
@@ -24,6 +24,7 @@
 #define CLEANUP_FLAG_BCC_OK	(1<<4)	/* Ok to add auto-BCC addresses */
 #define CLEANUP_FLAG_MAP_OK	(1<<5)	/* Ok to map addresses */
 #define CLEANUP_FLAG_MILTER	(1<<6)	/* Enable Milter applications */
+#define CLEANUP_FLAG_SMTP_REPLY	(1<<7)	/* Enable SMTP reply */
 
 #define CLEANUP_FLAG_FILTER_ALL	(CLEANUP_FLAG_FILTER | CLEANUP_FLAG_MILTER)
  /*
@@ -86,7 +87,7 @@ typedef struct {
 } CLEANUP_STAT_DETAIL;
 
 extern const char *cleanup_strerror(unsigned);
-extern CLEANUP_STAT_DETAIL *cleanup_stat_detail(unsigned);
+extern const CLEANUP_STAT_DETAIL *cleanup_stat_detail(unsigned);
 extern const char *cleanup_strflags(unsigned);
 
 /* LICENSE

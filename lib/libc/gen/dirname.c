@@ -1,4 +1,4 @@
-/*	$NetBSD: dirname.c,v 1.9 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: dirname.c,v 1.9.2.1 2008/06/23 04:29:31 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dirname.c,v 1.9 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: dirname.c,v 1.9.2.1 2008/06/23 04:29:31 wrstuden Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
@@ -45,7 +45,7 @@ __weak_alias(dirname,_dirname)
 
 #if !HAVE_DIRNAME
 char *
-dirname(const char *path)
+dirname(char *path)
 {
 	static char singledot[] = ".";
 	static char result[PATH_MAX];

@@ -1,5 +1,5 @@
-/*	$NetBSD: pf_print_state.c,v 1.3 2005/07/01 12:43:50 peter Exp $	*/
-/*	$OpenBSD: pf_print_state.c,v 1.40 2004/12/10 22:13:26 henning Exp $	*/
+/*	$NetBSD: pf_print_state.c,v 1.3.22.1 2008/06/23 04:28:53 wrstuden Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.45 2007/05/31 04:13:37 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -36,9 +36,6 @@
 #include <net/if.h>
 #define TCPSTATES
 #include <netinet/tcp_fsm.h>
-#ifdef __NetBSD__
-#include <netinet/in.h>
-#endif
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -100,6 +97,9 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 	case PF_ADDR_NOROUTE:
 		printf("no-route");
 		return;
+	case PF_ADDR_URPFFAILED:
+		printf("urpf-failed");
+		return;
 	case PF_ADDR_RTLABEL:
 		printf("route \"%s\"", addr->v.rtlabelname);
 		return;
@@ -152,7 +152,7 @@ print_name(struct pf_addr *addr, sa_family_t af)
 }
 
 void
-print_host(struct pf_state_host *h, sa_family_t af, int opts)
+print_host(struct pfsync_state_host *h, sa_family_t af, int opts)
 {
 	u_int16_t p = ntohs(h->port);
 
@@ -181,7 +181,7 @@ print_host(struct pf_state_host *h, sa_family_t af, int opts)
 }
 
 void
-print_seq(struct pf_state_peer *p)
+print_seq(struct pfsync_state_peer *p)
 {
 	if (p->seqdiff)
 		printf("[%u + %u](+%u)", p->seqlo, p->seqhi - p->seqlo,
@@ -191,9 +191,9 @@ print_seq(struct pf_state_peer *p)
 }
 
 void
-print_state(struct pf_state *s, int opts)
+print_state(struct pfsync_state *s, int opts)
 {
-	struct pf_state_peer *src, *dst;
+	struct pfsync_state_peer *src, *dst;
 	struct protoent *p;
 	int min, sec;
 
@@ -204,7 +204,7 @@ print_state(struct pf_state *s, int opts)
 		src = &s->dst;
 		dst = &s->src;
 	}
-	printf("%s ", s->u.ifname);
+	printf("%s ", s->ifname);
 	if ((p = getprotobynumber(s->proto)) != NULL)
 		printf("%s ", p->p_name);
 	else
@@ -278,26 +278,26 @@ print_state(struct pf_state *s, int opts)
 		min = s->expire % 60;
 		s->expire /= 60;
 		printf(", expires in %.2u:%.2u:%.2u", s->expire, min, sec);
-		printf(", %u:%u pkts, %u:%u bytes",
-		    s->packets[0], s->packets[1], s->bytes[0], s->bytes[1]);
-		if (s->anchor.nr != -1)
-			printf(", anchor %u", s->anchor.nr);
-		if (s->rule.nr != -1)
-			printf(", rule %u", s->rule.nr);
-		if (s->src_node != NULL)
+		printf(", %llu:%llu pkts, %llu:%llu bytes",
+		    (unsigned long long int)pf_state_counter_from_pfsync(s->packets[0]),
+		    (unsigned long long int)pf_state_counter_from_pfsync(s->packets[1]),
+		    (unsigned long long int)pf_state_counter_from_pfsync(s->bytes[0]),
+		    (unsigned long long int)pf_state_counter_from_pfsync(s->bytes[1]));
+		if (s->anchor != -1)
+			printf(", anchor %u", s->anchor);
+		if (s->rule != -1)
+			printf(", rule %u", s->rule);
+		if (s->sync_flags & PFSYNC_FLAG_SRCNODE)
 			printf(", source-track");
-		if (s->nat_src_node != NULL)
+		if (s->sync_flags & PFSYNC_FLAG_NATSRCNODE)
 			printf(", sticky-address");
 		printf("\n");
 	}
 	if (opts & PF_OPT_VERBOSE2) {
-#ifdef __OpenBSD__
-		printf("   id: %016llx creatorid: %08x\n",
-		    betoh64(s->id), ntohl(s->creatorid));
-#else
-		printf("   id: %016llx creatorid: %08x\n",
-		    (unsigned long long)be64toh(s->id), ntohl(s->creatorid));
-#endif
+		printf("   id: %016llx creatorid: %08x%s\n",
+		    (unsigned long long int)pf_state_counter_from_pfsync(s->id),
+		    ntohl(s->creatorid),
+		    ((s->sync_flags & PFSTATE_NOSYNC) ? " (no-sync)" : ""));
 	}
 }
 

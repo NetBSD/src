@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.84 2008/03/16 20:50:00 dholland Exp $
+$NetBSD: acronyms.comp,v 1.84.6.1 2008/06/23 04:30:03 wrstuden Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -332,7 +332,9 @@ TCQ	tagged command queueing
 TDD	test driven development
 TFT	thin film transistor
 TFTP	trivial file transfer protocol
+TIAS	try it and see
 TIFF	tagged image file format
+TITS	try it to see
 TLA	top level aggregator
 TLB	transition lookaside buffer
 TLD	top level domain

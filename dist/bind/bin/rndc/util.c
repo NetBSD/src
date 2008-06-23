@@ -1,10 +1,10 @@
-/*	$NetBSD: util.c,v 1.1.1.4 2007/01/27 21:05:05 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.1.1.4.12.1 2008/06/23 04:27:28 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: util.c,v 1.3.18.2 2005/04/29 00:15:40 marka Exp */
+/* Id: util.c,v 1.7 2007/06/19 23:46:59 tbox Exp */
 
 /*! \file */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.115 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: acpi.c,v 1.115.2.1 2008/06/23 04:30:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.115 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.115.2.1 2008/06/23 04:30:58 wrstuden Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -150,6 +150,25 @@ struct acpi_softc *acpi_softc;
 static kmutex_t acpi_slock;
 static int acpi_locked;
 extern kmutex_t acpi_interrupt_list_mtx;
+
+/*
+ * Ignored HIDs
+ */
+static const char * const acpi_ignored_ids[] = {
+#if defined(i386) || defined(x86_64)
+	"PNP0000",	/* AT interrupt controller is handled internally */
+	"PNP0200",	/* AT DMA controller is handled internally */
+	"PNP0A??",	/* Busses aren't enumerated with ACPI yet */
+	"PNP0B00",	/* AT RTC is handled internally */
+	"PNP0C01",	/* No "System Board" driver */
+	"PNP0C02",	/* No "PnP motherboard register resources" driver */
+	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
+#endif
+#if defined(x86_64)
+	"PNP0C04",	/* FPU is handled internally */
+#endif
+	NULL
+};
 
 /*
  * sysctl-related information
@@ -387,16 +406,13 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	ACPI_STATUS rv;
 	ACPI_TABLE_HEADER *rsdt;
 
-	aprint_naive(": Advanced Configuration and Power Interface\n");
-	aprint_normal(": Advanced Configuration and Power Interface\n");
+	aprint_naive("\n");
+	aprint_normal(": Intel ACPICA %08x\n", ACPI_CA_VERSION);
 
 	if (acpi_softc != NULL)
 		panic("acpi_attach: ACPI has already been attached");
 
 	sysmon_power_settype("acpi");
-
-	aprint_verbose_dev(self,
-	    "using Intel ACPI CA subsystem version %08x\n", ACPI_CA_VERSION);
 
 	rsdt = acpi_map_rsdt();
 	if (rsdt) {
@@ -618,6 +634,19 @@ acpi_build_tree(struct acpi_softc *sc)
 			    (ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
 				continue;
 
+			/*
+			 * Handled internally
+			 */
+			if (ad->ad_devinfo->Type == ACPI_TYPE_PROCESSOR ||
+			    ad->ad_devinfo->Type == ACPI_TYPE_POWER)
+				continue;
+
+			/*
+			 * Skip ignored HIDs
+			 */
+			if (acpi_match_hid(ad->ad_devinfo, acpi_ignored_ids))
+				continue;
+
 			ad->ad_device = config_found_ia(sc->sc_dev,
 			    "acpinodebus", &aa, acpi_print);
 		}
@@ -752,7 +781,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 				aprint_normal("       UID %s\n",
 				    ad->ad_devinfo->UniqueId.Value);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_ADR)
-				aprint_normal("       ADR 0x%016qx\n",
+				aprint_normal("       ADR 0x%016" PRIx64 "\n",
 				    ad->ad_devinfo->Address);
 			if (ad->ad_devinfo->Valid & ACPI_VALID_STA)
 				aprint_normal("       STA 0x%08x\n",

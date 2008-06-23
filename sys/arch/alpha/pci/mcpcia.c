@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.21 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: mcpcia.c,v 1.21.2.1 2008/06/23 04:30:04 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.21 2008/04/28 20:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.21.2.1 2008/06/23 04:30:04 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ mcpcia_config_cleanup()
 	 * Turn on Hard, Soft error interrupts. Maybe i2c too.
 	 */
 	for (i = 0; i < mcpcia_cd.cd_ndevs; i++) {
-		if ((mcp = mcpcia_cd.cd_devs[i]) == NULL)
+		if ((mcp = device_lookup_private(&mcpcia_cd, i)) == NULL)
 			continue;
 		
 		ccp = mcp->mcpcia_cc;

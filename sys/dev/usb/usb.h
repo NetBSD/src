@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.79 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: usb.h,v 1.79.2.1 2008/06/23 04:31:37 wrstuden Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -38,14 +38,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/ioctl.h>
-#endif
-#if defined(__FreeBSD__)
-/* These two defines are used by usbd to autoload the usb kld */
-#define USB_KLD		"usb"           /* name of usb module */
-#define USB_UHUB	"usb/uhub"      /* root hub */
-#endif
 
 #if defined(_KERNEL)
 #include <dev/usb/usb_port.h>
@@ -402,6 +395,11 @@ typedef struct {
 #define  UISUBCLASS_AUDIOCONTROL	1
 #define  UISUBCLASS_AUDIOSTREAM		2
 #define  UISUBCLASS_MIDISTREAM		3
+
+#define UICLASS_VIDEO		0x0E
+#define  UISUBCLASS_VIDEOCONTROL	1
+#define  UISUBCLASS_VIDEOSTREAMING	2
+#define  UISUBCLASS_VIDEOCOLLECTION	3
 
 #define UICLASS_CDC		0x02 /* communication */
 #define	 UISUBCLASS_DIRECT_LINE_CONTROL_MODEL	1

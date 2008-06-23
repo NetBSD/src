@@ -1,7 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2008/02/27 15:39:21 joerg Exp $
+# $NetBSD: Makefile,v 1.1.8.1 2008/06/23 04:26:44 wrstuden Exp $
 
 PROG=	bsdtar
-SRCS=	bsdtar.c getdate.y matching.c read.c tree.c util.c write.c
+SRCS=	bsdtar.c getdate.y matching.c read.c siginfo.c subst.c \
+	tree.c util.c write.c
 
 USE_FORT?=	yes # complex string handling
 

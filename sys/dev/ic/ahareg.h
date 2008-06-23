@@ -1,7 +1,7 @@
-/*	$NetBSD: ahareg.h,v 1.14 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: ahareg.h,v 1.14.2.1 2008/06/23 04:31:04 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 1997-99 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

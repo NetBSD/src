@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.13 2007/03/30 20:23:04 ghen Exp $	*/
+/*	$NetBSD: res_init.c,v 1.13.12.1 2008/06/23 04:29:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -74,9 +74,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #ifdef notdef
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
-static const char rcsid[] = "Id: res_init.c,v 1.16.18.5 2006/08/30 23:23:13 marka Exp";
+static const char rcsid[] = "Id: res_init.c,v 1.23 2007/07/09 01:43:23 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.13 2007/03/30 20:23:04 ghen Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.13.12.1 2008/06/23 04:29:32 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,6 +120,7 @@ __weak_alias(res_setservers,__res_setservers)
 
 #include "res_private.h"
 
+#define RESOLVSORT
 /*% Options.  Should all be left alone. */
 #ifndef DEBUG
 #define DEBUG
@@ -131,9 +132,11 @@ __weak_alias(res_setservers,__res_setservers)
 
 static void res_setoptions __P((res_state, const char *, const char *));
 
+#ifdef RESOLVSORT
 static const char sort_mask[] = "/&";
 #define ISSORTMASK(ch) (strchr(sort_mask, ch) != NULL)
 static u_int32_t net_mask __P((struct in_addr));
+#endif
 
 #if !defined(isascii)	/*%< XXX - could be a function */
 # define isascii(c) (!(c & 0200))
@@ -181,10 +184,16 @@ __res_vinit(res_state statp, int preinit) {
 	int nserv = 0;    /*%< number of nameserver records read from file */
 	int haveenv = 0;
 	int havesearch = 0;
+#ifdef RESOLVSORT
 	int nsort = 0;
 	char *net;
+#endif
 	int dots;
 	union res_sockaddr_union u[2];
+
+	int maxns = MAXNS;
+
+	RES_SET_H_ERRNO(statp, 0);
 
 	if (!preinit) {
 		statp->retrans = RES_TIMEOUT;
@@ -235,9 +244,25 @@ __res_vinit(res_state statp, int preinit) {
 		statp->_u._ext.ext->nsaddrs[0].sin = statp->nsaddr;
 		strcpy(statp->_u._ext.ext->nsuffix, "ip6.arpa");
 		strcpy(statp->_u._ext.ext->nsuffix2, "ip6.int");
-	} else
-		return (-1);
+	} else {
+		/*
+		 * Historically res_init() rarely, if at all, failed.
+		 * Examples and applications exist which do not check
+		 * our return code.  Furthermore several applications
+		 * simply call us to get the systems domainname.  So
+		 * rather then immediately fail here we store the
+		 * failure, which is returned later, in h_errno.  And
+		 * prevent the collection of 'nameserver' information
+		 * by setting maxns to 0.  Thus applications that fail
+		 * to check our return code wont be able to make
+		 * queries anyhow.
+		 */
+		RES_SET_H_ERRNO(statp, NETDB_INTERNAL);
+		maxns = 0;
+	}
+#ifdef RESOLVSORT
 	statp->nsort = 0;
+#endif
 	res_setservers(statp, u, nserv);
 
 #ifdef	SOLARIS2
@@ -255,9 +280,8 @@ __res_vinit(res_state statp, int preinit) {
 				buf[0] = '.';
 			cp = strchr(buf, '.');
 			cp = (cp == NULL) ? buf : (cp + 1);
-			if (strlen(cp) >= sizeof(statp->defdname))
-				goto freedata; 
-			strcpy(statp->defdname, cp);
+			(void)strlcpy(statp->defdname, cp,
+			    sizeof(statp->defdname));
 		}
 	}
 #endif	/* SOLARIS2 */
@@ -363,7 +387,7 @@ __res_vinit(res_state statp, int preinit) {
 		    continue;
 		}
 		/* read nameservers to query */
-		if (MATCH(buf, "nameserver") && nserv < MAXNS) {
+		if (MATCH(buf, "nameserver") && nserv < maxns) {
 		    struct addrinfo hints, *ai;
 		    char sbuf[NI_MAXSERV];
 		    const size_t minsiz =
@@ -397,6 +421,7 @@ __res_vinit(res_state statp, int preinit) {
 		    }
 		    continue;
 		}
+#ifdef RESOLVSORT
 		if (MATCH(buf, "sortlist")) {
 		    struct in_addr a;
 
@@ -439,6 +464,7 @@ __res_vinit(res_state statp, int preinit) {
 		    }
 		    continue;
 		}
+#endif
 		if (MATCH(buf, "options")) {
 		    res_setoptions(statp, buf + sizeof("options") - 1, "conf");
 		    continue;
@@ -446,7 +472,9 @@ __res_vinit(res_state statp, int preinit) {
 	    }
 	    if (nserv > 0) 
 		statp->nscount = nserv;
+#ifdef RESOLVSORT
 	    statp->nsort = nsort;
+#endif
 	    (void) fclose(fp);
 	}
 /*
@@ -495,16 +523,8 @@ __res_vinit(res_state statp, int preinit) {
 	if ((cp = getenv("RES_OPTIONS")) != NULL)
 		res_setoptions(statp, cp, "env");
 	statp->options |= RES_INIT;
-	return (0);
 
-#ifdef	SOLARIS2
- freedata:
-	if (statp->_u._ext.ext != NULL) {
-		free(statp->_u._ext.ext);
-		statp->_u._ext.ext = NULL;
-	}
-	return (-1);
-#endif
+	return (statp->res_h_errno);
 }
 
 static void
@@ -636,6 +656,7 @@ res_setoptions(res_state statp, const char *options, const char *source)
 	}
 }
 
+#ifdef RESOLVSORT
 /* XXX - should really support CIDR which means explicit masks always. */
 static u_int32_t
 net_mask(in)		/*!< XXX - should really use system's version of this  */
@@ -649,6 +670,7 @@ net_mask(in)		/*!< XXX - should really use system's version of this  */
 		return (htonl(IN_CLASSB_NET));
 	return (htonl(IN_CLASSC_NET));
 }
+#endif
 
 u_int
 res_randomid(void) {
@@ -727,10 +749,8 @@ res_setservers(res_state statp, const union res_sockaddr_union *set, int cnt) {
 			if (size <= sizeof(statp->nsaddr_list[nserv]))
 				memcpy(&statp->nsaddr_list[nserv],
 					&set->sin, size);
-#ifdef notdef
 			else
 				statp->nsaddr_list[nserv].sin_family = 0;
-#endif
 			nserv++;
 			break;
 

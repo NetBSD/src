@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.32 2007/10/08 18:01:27 ad Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.32.24.1 2008/06/23 04:32:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.32 2007/10/08 18:01:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.32.24.1 2008/06/23 04:32:04 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -135,7 +135,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 
 			if (bpp != NULL) {
 				error = bread(vp, bn, fs->e2fs_bsize, NOCRED,
-					      &bp);
+					      B_MODIFY, &bp);
 				if (error) {
 					brelse(bp, 0);
 					return (error);
@@ -214,7 +214,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 	 */
 	for (i = 1;;) {
 		error = bread(vp,
-		    indirs[i].in_lbn, (int)fs->e2fs_bsize, NOCRED, &bp);
+		    indirs[i].in_lbn, (int)fs->e2fs_bsize, NOCRED, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
 			goto fail;
@@ -300,7 +300,7 @@ ext2fs_balloc(struct inode *ip, daddr_t bn, int size,
 	if (bpp != NULL) {
 		if (flags & B_CLRBUF) {
 			error = bread(vp, lbn, (int)fs->e2fs_bsize, NOCRED,
-				      &nbp);
+				      B_MODIFY, &nbp);
 			if (error) {
 				brelse(nbp, 0);
 				goto fail;
@@ -328,7 +328,7 @@ fail:
 			int r;
 
 			r = bread(vp, indirs[unwindidx].in_lbn,
-			    (int)fs->e2fs_bsize, NOCRED, &bp);
+			    (int)fs->e2fs_bsize, NOCRED, B_MODIFY, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
 				brelse(bp, 0);

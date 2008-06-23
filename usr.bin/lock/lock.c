@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.28 2008/03/30 15:30:15 lukem Exp $	*/
+/*	$NetBSD: lock.c,v 1.28.4.1 2008/06/23 04:32:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.28 2008/03/30 15:30:15 lukem Exp $");
+__RCSID("$NetBSD: lock.c,v 1.28.4.1 2008/06/23 04:32:11 wrstuden Exp $");
 #endif /* not lint */
 
 /*
@@ -265,6 +265,7 @@ main(int argc, char **argv)
 			hi(0);
 			goto tryagain;
 		}
+#ifndef USE_PAM
 		if (usemine) {
 			s[strlen(s) - 1] = '\0';
 #ifdef SKEY
@@ -276,8 +277,10 @@ main(int argc, char **argv)
 			if (!strcmp(mypw, crypt(s, mypw)))
 				break;
 		}
-		else if (!strcmp(s, s1))
-			break;
+		else
+#endif
+			if (!strcmp(s, s1))
+				break;
 		(void)printf("\a\n");
  tryagain:
 		if (tcsetattr(STDIN_FILENO, TCSADRAIN, &ntty) == -1

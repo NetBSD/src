@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.5 2007/01/27 21:03:24 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.5.12.1 2008/06/23 04:27:22 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,14 +17,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.47.18.28 2006/05/03 01:46:40 marka Exp */
+/* Id: config.c,v 1.82.38.4 2008/05/01 18:32:31 jinmei Exp */
 
 /*! \file */
 
 #include <config.h>
 
 #include <stdlib.h>
-#include <string.h>
 
 #include <isc/buffer.h>
 #include <isc/log.h>
@@ -33,6 +32,7 @@
 #include <isc/region.h>
 #include <isc/result.h>
 #include <isc/sockaddr.h>
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include <isccfg/namedconf.h>
@@ -101,12 +101,15 @@ options {\n\
 	use-ixfr true;\n\
 	edns-udp-size 4096;\n\
 	max-udp-size 4096;\n\
+	request-nsid false;\n\
 \n\
 	/* view */\n\
 	allow-notify {none;};\n\
 	allow-update-forwarding {none;};\n\
 	allow-query-cache { localnets; localhost; };\n\
+	allow-query-cache-on { any; };\n\
 	allow-recursion { localnets; localhost; };\n\
+	allow-recursion-on { any; };\n\
 #	allow-v6-synthesis <obsolete>;\n\
 #	sortlist <none>\n\
 #	topology <none>\n\
@@ -123,20 +126,20 @@ options {\n\
 	query-source-v6 address *;\n\
 	notify-source *;\n\
 	notify-source-v6 *;\n\
-	cleaning-interval 60;\n\
+	cleaning-interval 0;  /* now meaningless */\n\
 	min-roots 2;\n\
 	lame-ttl 600;\n\
 	max-ncache-ttl 10800; /* 3 hours */\n\
 	max-cache-ttl 604800; /* 1 week */\n\
 	transfer-format many-answers;\n\
-	max-cache-size 0;\n\
+#	max-cache-size default; /* set default in server.c */\n\
 	check-names master fail;\n\
 	check-names slave warn;\n\
 	check-names response ignore;\n\
 	check-mx warn;\n\
 	acache-enable no;\n\
 	acache-cleaning-interval 60;\n\
-	max-acache-size 0;\n\
+	max-acache-size 16M;\n\
 	dnssec-enable yes;\n\
 	dnssec-validation no; /* Make yes for 9.5. */ \n\
 	dnssec-accept-expired no;\n\
@@ -147,10 +150,12 @@ options {\n\
 
 "	/* zone */\n\
 	allow-query {any;};\n\
+	allow-query-on {any;};\n\
 	allow-transfer {any;};\n\
 	notify yes;\n\
 #	also-notify <none>\n\
 	notify-delay 5;\n\
+	notify-to-soa no;\n\
 	dialup no;\n\
 #	forward <none>\n\
 #	forwarders <none>\n\
@@ -180,11 +185,12 @@ options {\n\
 	check-srv-cname warn;\n\
 	zero-no-soa-ttl yes;\n\
 	update-check-ksk yes;\n\
+	try-tcp-refresh yes; /* BIND 8 compat */\n\
 };\n\
 "
 
 "#\n\
-#  Zones in the \"_bind\" view are NOT counted is the count of zones.\n\
+#  Zones in the \"_bind\" view are NOT counted in the count of zones.\n\
 #\n\
 view \"_bind\" chaos {\n\
 	recursion no;\n\
@@ -404,7 +410,7 @@ ns_config_putiplist(isc_mem_t *mctx, isc_sockaddr_t **addrsp,
 
 static isc_result_t
 get_masters_def(const cfg_obj_t *cctx, const char *name,
-	        const cfg_obj_t **ret)
+		const cfg_obj_t **ret)
 {
 	isc_result_t result;
 	const cfg_obj_t *masters = NULL;
@@ -522,7 +528,7 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 			tresult = get_masters_def(config, listname, &list);
 			if (tresult == ISC_R_NOTFOUND) {
 				cfg_obj_log(addr, ns_g_lctx, ISC_LOG_ERROR,
-                                    "masters \"%s\" not found", listname);
+				    "masters \"%s\" not found", listname);
 
 				result = tresult;
 				goto cleanup;
@@ -600,7 +606,7 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 		if (keys[i] == NULL)
 			goto cleanup;
 		dns_name_init(keys[i], NULL);
-		
+
 		keystr = cfg_obj_asstring(key);
 		isc_buffer_init(&b, keystr, strlen(keystr));
 		isc_buffer_add(&b, strlen(keystr));
@@ -656,7 +662,7 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 		isc_mem_put(mctx, lists, listcount * sizeof(*lists));
 	if (stack != NULL)
 		isc_mem_put(mctx, stack, stackcount * sizeof(*stack));
-	
+
 	INSIST(keycount == addrcount);
 
 	*addrsp = addrs;

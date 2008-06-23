@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.283.2.3 2008/05/27 05:22:33 wrstuden Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.283.2.4 2008/06/23 04:31:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,10 +66,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283.2.3 2008/05/27 05:22:33 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283.2.4 2008/06/23 04:31:51 wrstuden Exp $");
 
 #include "opt_ptrace.h"
-#include "opt_multiprocessor.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -1553,9 +1552,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-#ifdef MULTIPROCESSOR
 	int biglocks;
-#endif
 
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat == LSONPROC);
@@ -1706,14 +1703,14 @@ issignal(struct lwp *l)
 		if (signo == 0) {
 			sp = &l->l_sigpend;
 			ss = sp->sp_set;
-			if ((p->p_sflag & PS_PPWAIT) != 0)
+			if ((p->p_lflag & PL_PPWAIT) != 0)
 				sigminusset(&stopsigmask, &ss);
 			sigminusset(&l->l_sigmask, &ss);
 
 			if ((signo = firstsig(&ss)) == 0) {
 				sp = &p->p_sigpend;
 				ss = sp->sp_set;
-				if ((p->p_sflag & PS_PPWAIT) != 0)
+				if ((p->p_lflag & PL_PPWAIT) != 0)
 					sigminusset(&stopsigmask, &ss);
 				sigminusset(&l->l_sigmask, &ss);
 
@@ -1747,7 +1744,7 @@ issignal(struct lwp *l)
 		 * for us, don't hang as we could deadlock.
 		 */
 		if ((p->p_slflag & PSL_TRACED) != 0 &&
-		    (p->p_sflag & PS_PPWAIT) == 0 && signo != SIGKILL) {
+		    (p->p_lflag & PL_PPWAIT) == 0 && signo != SIGKILL) {
 			/* Take the signal. */
 			(void)sigget(sp, NULL, signo, NULL);
 			p->p_xstat = signo;

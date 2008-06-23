@@ -1,10 +1,10 @@
-/*	$NetBSD: lwaddr.c,v 1.1.1.4 2007/01/27 21:03:25 christos Exp $	*/
+/*	$NetBSD: lwaddr.c,v 1.1.1.4.12.1 2008/06/23 04:27:22 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwaddr.c,v 1.4.18.2 2005/04/29 00:15:23 marka Exp */
+/* Id: lwaddr.c,v 1.8.130.2 2008/01/11 23:46:27 tbox Exp */
 
 /*! \file */
 
@@ -83,7 +83,7 @@ lwaddr_lwresaddr_fromnetaddr(lwres_addr_t *la, isc_netaddr_t *na) {
 	} else {
 		la->family = LWRES_ADDRTYPE_V6;
 		la->length = 16;
-		memcpy(la->address, &na->type.in, 16);
+		memcpy(la->address, &na->type.in6, 16);
 	}
 	return (ISC_R_SUCCESS);
 }

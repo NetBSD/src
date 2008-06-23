@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.634.2.3 2008/06/22 18:12:02 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.634.2.4 2008/06/23 04:30:26 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.634.2.3 2008/06/22 18:12:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.634.2.4 2008/06/23 04:30:26 wrstuden Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -905,6 +905,7 @@ int	waittime = -1;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	int s;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -923,15 +924,18 @@ cpu_reboot(int howto, char *bootstr)
 			resettodr();
 	}
 
-	/* Disable interrupts. */
-	splhigh();
-
 	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
+		s = splhigh();
 		dumpsys();
+		splx(s);
+	}
 
 haltsys:
 	doshutdownhooks();
+
+	/* Disable interrupts. */
+	(void)splhigh();
 
 #ifdef MULTIPROCESSOR
 	x86_broadcast_ipi(X86_IPI_HALT);
@@ -1424,14 +1428,13 @@ init386(paddr_t first_avail)
 	extern u_char biostramp_image[];
 #endif
 
-
 #ifdef XEN
 	XENPRINTK(("HYPERVISOR_shared_info %p (%x)\n", HYPERVISOR_shared_info,
 	    xen_start_info.shared_info));
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
-	cpu_probe_features(&cpu_info_primary);
+	cpu_probe(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
 	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;

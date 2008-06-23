@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.c,v 1.1.1.9 2007/05/19 16:28:41 heas Exp $	*/
+/*	$NetBSD: spawn.c,v 1.1.1.9.12.1 2008/06/23 04:29:25 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -200,7 +200,7 @@ static void get_service_attr(SPAWN_ATTR *attr, char *service, char **argv)
      * Figure out the command time limit for this transport.
      */
     attr->time_limit =
-	get_mail_conf_time2(service, "_time_limit", var_command_maxtime, 's', 1, 0);
+	get_mail_conf_time2(service, _MAXTIME, var_command_maxtime, 's', 1, 0);
 
     /*
      * Iterate over the command-line attribute list.
@@ -348,7 +348,7 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_COMMAND_MAXTIME, DEF_COMMAND_MAXTIME, &var_command_maxtime, 1, 0,
 	0,
     };

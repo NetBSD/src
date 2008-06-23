@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82 2007/12/25 22:47:03 he Exp $
+# $NetBSD: GENERIC,v 1.82.12.1 2008/06/23 04:30:17 wrstuden Exp $
 #
 # GENERIC machine description file
 # 
@@ -51,7 +51,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB			# remote debugger
 #options 	"KGDB_DEVNAME=\"scif\"",KGDB_DEVRATE=57600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=280000
+options 	SYMTAB_SPACE=290000
 #options 	SYSCALL_DEBUG
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
@@ -59,7 +59,8 @@ options 	SYMTAB_SPACE=280000
 # Compatibility options
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0,
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

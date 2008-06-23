@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.6 2008/03/04 18:23:44 cube Exp $ */
+/* $NetBSD: pad.c,v 1.6.6.1 2008/06/23 04:31:10 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Jared D. McNeill.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -33,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.6 2008/03/04 18:23:44 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.6.6.1 2008/06/23 04:31:10 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,7 +117,6 @@ static const struct audio_format pad_formats[PAD_NFORMATS] = {
 
 extern void	padattach(int);
 
-static pad_softc_t *	pad_find_softc(dev_t);
 static int		pad_add_block(pad_softc_t *, uint8_t *, int);
 static int		pad_get_block(pad_softc_t *, pad_block_t *, int);
 
@@ -182,18 +175,6 @@ padattach(int n)
 	}
 
 	return;
-}
-
-static pad_softc_t *
-pad_find_softc(dev_t dev)
-{
-	int unit;
-
-	unit = PADUNIT(dev);
-	if (unit >= pad_cd.cd_ndevs)
-		return NULL;
-
-	return pad_cd.cd_devs[unit];
 }
 
 static int
@@ -316,7 +297,7 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	pad_softc_t *sc;
 
-	sc = pad_find_softc(dev);
+	sc = device_lookup_private(&pad_cd, PADUNIT(dev));
 	if (sc == NULL)
 		return ENODEV;
 
@@ -333,7 +314,7 @@ pad_close(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	pad_softc_t *sc;
 
-	sc = pad_find_softc(dev);
+	sc = device_lookup_private(&pad_cd, PADUNIT(dev));
 	if (sc == NULL)
 		return ENODEV;
 
@@ -352,7 +333,7 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 	void *intrarg;
 	int err;
 
-	sc = pad_find_softc(dev);
+	sc = device_lookup_private(&pad_cd, PADUNIT(dev));
 	if (sc == NULL)
 		return ENODEV;
 

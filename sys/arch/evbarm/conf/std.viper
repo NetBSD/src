@@ -1,4 +1,4 @@
-#	$NetBSD: std.viper,v 1.4 2008/01/27 12:37:12 chris Exp $
+#	$NetBSD: std.viper,v 1.4.12.1 2008/06/23 04:30:18 wrstuden Exp $
 #
 # Arcom Viper standard kernel options
 #
@@ -14,6 +14,7 @@ options 	EXEC_SCRIPT
 
 options 	ARM32
 
+options 	KERNEL_BASE_EXT=0xc0000000
 makeoptions	LOADADDRESS="0xc0200000"
 makeoptions	BOARDTYPE="viper"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.viper"

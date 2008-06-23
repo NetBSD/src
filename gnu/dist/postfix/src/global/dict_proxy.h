@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_proxy.h,v 1.1.1.2 2004/05/31 00:24:30 heas Exp $	*/
+/*	$NetBSD: dict_proxy.h,v 1.1.1.2.26.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 #ifndef _DICT_PROXY_H_INCLUDED_
 #define _DICT_PROXY_H_INCLUDED_
@@ -30,6 +30,8 @@ extern DICT *dict_proxy_open(const char *, int, int);
   */
 #define PROXY_REQ_OPEN		"open"
 #define PROXY_REQ_LOOKUP	"lookup"
+#define PROXY_REQ_UPDATE	"update"
+#define PROXY_REQ_DELETE	"delete"
 
 #define PROXY_STAT_OK		0	/* operation succeeded */
 #define PROXY_STAT_NOKEY	1	/* requested key not found */

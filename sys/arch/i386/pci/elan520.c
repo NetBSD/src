@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.33 2008/05/01 22:59:37 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.33.2.1 2008/06/23 04:30:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.33 2008/05/01 22:59:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.33.2.1 2008/06/23 04:30:27 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.33 2008/05/01 22:59:37 dyoung Exp $");
 #include <sys/gpio.h>
 #include <sys/mutex.h>
 #include <sys/wdog.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -413,8 +414,8 @@ elanpar_intr(void *arg)
 		wpvstr = "unknown";
 		break;
 	}
-	aprint_error_dev(sc->sc_par,
-	    "%s violated write-protect window %u\n", wpvstr, win);
+	printf_tolog("%s: %s violated write-protect window %u\n",
+	    device_xname(sc->sc_par), wpvstr, win);
 	elansc_print_par(sc->sc_par, win, par);
 	return 0;
 }
@@ -472,8 +473,9 @@ elanpex_intr(void *arg)
 	tgtirq = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_HBTGTIRQSTA);
 
 	if ((pciarbsta & MMCR_PCIARBSTA_GNT_TO_STA) != 0) {
-		aprint_error_dev(sc->sc_pex,
-		    "grant time-out, GNT%" __PRIuBITS "# asserted\n",
+		printf_tolog(
+		    "%s: grant time-out, GNT%" __PRIuBITS "# asserted\n",
+		    device_xname(sc->sc_pex),
 		    __SHIFTOUT(pciarbsta, MMCR_PCIARBSTA_GNT_TO_ID));
 		bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_PCIARBSTA,
 		    MMCR_PCIARBSTA_GNT_TO_STA);
@@ -485,9 +487,9 @@ elanpex_intr(void *arg)
 	for (i = 0; i < __arraycount(mmsg); i++) {
 		if ((mstirq & mmsg[i].bit) == 0)
 			continue;
-		aprint_error_dev(sc->sc_pex,
-		    "%s %08" PRIx32 " master %s\n",
-		    cmd[mstcmd].string, mstaddr, mmsg[i].msg);
+		printf_tolog("%s: %s %08" PRIx32 " master %s\n",
+		    device_xname(sc->sc_pex), cmd[mstcmd].string, mstaddr,
+		    mmsg[i].msg);
 
 		mstack |= mmsg[i].bit;
 		if (!cmd[mstcmd].nonfatal)
@@ -499,8 +501,8 @@ elanpex_intr(void *arg)
 	for (i = 0; i < __arraycount(tmsg); i++) {
 		if ((tgtirq & tmsg[i].bit) == 0)
 			continue;
-		aprint_error_dev(sc->sc_pex, "%1x target %s\n", tgtid,
-		    tmsg[i].msg);
+		printf_tolog("%s: %1x target %s\n", device_xname(sc->sc_pex),
+		    tgtid, tmsg[i].msg);
 		tgtack |= tmsg[i].bit;
 	}
 
@@ -530,6 +532,9 @@ elansc_print_par(device_t dev, int i, uint32_t par)
 {
 	uint32_t addr, sz, unit;
 	const char *tgtstr;
+
+	if ((boothowto & AB_DEBUG) == 0)
+		return;
 
 	switch (par & MMCR_PAR_TARGET) {
 	default:
@@ -572,9 +577,9 @@ elansc_print_par(device_t dev, int i, uint32_t par)
 		addr = __SHIFTOUT(par, MMCR_PAR_4KB_ST_ADR);
 	}
 
-	aprint_debug_dev(dev,
-	    "PAR[%d] %08" PRIx32 " tgt %s attr %1" __PRIxBITS
-	    " start %08" PRIx32 " size %" PRIu32 "\n",
+	printf_tolog(
+	    "%s: PAR[%d] %08" PRIx32 " tgt %s attr %1" __PRIxBITS
+	    " start %08" PRIx32 " size %" PRIu32 "\n", device_xname(dev),
 	    i, par, tgtstr, __SHIFTOUT(par, MMCR_PAR_ATTR),
 	    addr * unit, (sz + 1) * unit);
 }
@@ -911,7 +916,7 @@ elansc_intr_establish(device_t dev, int (*handler)(void *), void *arg)
 		    ELAN_IRQ);
 		return NULL;
 	} else if ((ih = intr_establish(ELAN_IRQ, pic, ELAN_IRQ,
-	    IST_LEVEL, IPL_HIGH, handler, arg)) == NULL) {
+	    IST_LEVEL, IPL_HIGH, handler, arg, false)) == NULL) {
 		aprint_error_dev(dev,
 		    "could not establish interrupt\n");
 		return NULL;
@@ -996,6 +1001,9 @@ elanpex_intr_establish(device_t self, struct elansc_softc *sc)
 	if (elansc_pcinmi) {
 		sc->sc_eih = nmi_establish(elanpex_intr, sc);
 
+		/* Activate NMI instead of maskable interrupts for
+		 * all PCI exceptions:
+		 */
 		mstirq |= MMCR_HBMSTIRQCTL_M_RTRTO_IRQ_SEL;
 		mstirq |= MMCR_HBMSTIRQCTL_M_TABRT_IRQ_SEL;
 		mstirq |= MMCR_HBMSTIRQCTL_M_MABRT_IRQ_SEL;

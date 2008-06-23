@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2004-2007 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2008 Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003 Internet Software Consortium.
  - 
  - Permission to use, copy, modify, and distribute this software for any
@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: Bv9ARM.ch07.html,v 1.75.18.54.10.1 2007/07/09 02:25:51 marka Exp -->
+<!-- Id: Bv9ARM.ch07.html,v 1.152.18.9 2008/05/06 01:41:46 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -46,10 +46,10 @@
 <p><b>Table of Contents</b></p>
 <dl>
 <dt><span class="sect1"><a href="Bv9ARM.ch07.html#Access_Control_Lists">Access Control Lists</a></span></dt>
-<dt><span class="sect1"><a href="Bv9ARM.ch07.html#id2592492"><span><strong class="command">chroot</strong></span> and <span><strong class="command">setuid</strong></span></a></span></dt>
+<dt><span class="sect1"><a href="Bv9ARM.ch07.html#id2596516"><span><strong class="command">Chroot</strong></span> and <span><strong class="command">Setuid</strong></span></a></span></dt>
 <dd><dl>
-<dt><span class="sect2"><a href="Bv9ARM.ch07.html#id2592569">The <span><strong class="command">chroot</strong></span> Environment</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch07.html#id2592629">Using the <span><strong class="command">setuid</strong></span> Function</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch07.html#id2596593">The <span><strong class="command">chroot</strong></span> Environment</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch07.html#id2596652">Using the <span><strong class="command">setuid</strong></span> Function</a></span></dt>
 </dl></dd>
 <dt><span class="sect1"><a href="Bv9ARM.ch07.html#dynamic_update_security">Dynamic Update Security</a></span></dt>
 </dl>
@@ -60,7 +60,8 @@
 <p>
           Access Control Lists (ACLs), are address match lists that
           you can set up and nickname for future use in <span><strong class="command">allow-notify</strong></span>,
-          <span><strong class="command">allow-query</strong></span>, <span><strong class="command">allow-recursion</strong></span>,
+          <span><strong class="command">allow-query</strong></span>, <span><strong class="command">allow-query-on</strong></span>,
+          <span><strong class="command">allow-recursion</strong></span>, <span><strong class="command">allow-recursion-on</strong></span>,
           <span><strong class="command">blackhole</strong></span>, <span><strong class="command">allow-transfer</strong></span>,
           etc.
         </p>
@@ -118,7 +119,7 @@ zone "example.com" {
 </div>
 <div class="sect1" lang="en">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2592492"></a><span><strong class="command">chroot</strong></span> and <span><strong class="command">setuid</strong></span>
+<a name="id2596516"></a><span><strong class="command">Chroot</strong></span> and <span><strong class="command">Setuid</strong></span>
 </h2></div></div></div>
 <p>
           On UNIX servers, it is possible to run <acronym class="acronym">BIND</acronym> in a <span class="emphasis"><em>chrooted</em></span> environment
@@ -142,7 +143,7 @@ zone "example.com" {
         </p>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2592569"></a>The <span><strong class="command">chroot</strong></span> Environment</h3></div></div></div>
+<a name="id2596593"></a>The <span><strong class="command">chroot</strong></span> Environment</h3></div></div></div>
 <p>
             In order for a <span><strong class="command">chroot</strong></span> environment
             to
@@ -157,7 +158,7 @@ zone "example.com" {
             for this.
           </p>
 <p>
-            Unlike with earlier versions of BIND, you will typically
+            Unlike with earlier versions of BIND, you typically will
             <span class="emphasis"><em>not</em></span> need to compile <span><strong class="command">named</strong></span>
             statically nor install shared libraries under the new root.
             However, depending on your operating system, you may need
@@ -170,7 +171,7 @@ zone "example.com" {
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2592629"></a>Using the <span><strong class="command">setuid</strong></span> Function</h3></div></div></div>
+<a name="id2596652"></a>Using the <span><strong class="command">setuid</strong></span> Function</h3></div></div></div>
 <p>
             Prior to running the <span><strong class="command">named</strong></span> daemon,
             use

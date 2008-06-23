@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp.8,v 1.1.1.15 2007/08/02 08:04:51 heas Exp $
+.\"	$NetBSD: smtp.8,v 1.1.1.15.10.1 2008/06/23 04:29:08 wrstuden Exp $
 .\"
 .TH SMTP 8 
 .ad
@@ -110,6 +110,7 @@ RFC 2920 (SMTP Pipelining)
 RFC 3207 (STARTTLS command)
 RFC 3461 (SMTP DSN Extension)
 RFC 3463 (Enhanced Status Codes)
+RFC 4954 (AUTH command)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -234,6 +235,18 @@ Available in Postfix version 2.4.4 and later:
 When authenticating to a remote SMTP or LMTP server with the
 default setting "no", send no SASL authoriZation ID (authzid); send
 only the SASL authentiCation ID (authcid) plus the authcid's password.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBsmtp_header_checks (empty)\fR"
+Restricted \fBheader_checks\fR(5) tables for the Postfix SMTP client.
+.IP "\fBsmtp_mime_header_checks (empty)\fR"
+Restricted \fBmime_header_checks\fR(5) tables for the Postfix SMTP
+client.
+.IP "\fBsmtp_nested_header_checks (empty)\fR"
+Restricted \fBnested_header_checks\fR(5) tables for the Postfix SMTP
+client.
+.IP "\fBsmtp_body_checks (empty)\fR"
+Restricted \fBbody_checks\fR(5) tables for the Postfix SMTP client.
 .SH "MIME PROCESSING CONTROLS"
 .na
 .nf
@@ -267,7 +280,8 @@ Optional SMTP client lookup tables with one username:password entry
 per remote hostname or domain, or sender address when sender-dependent
 authentication is enabled.
 .IP "\fBsmtp_sasl_security_options (noplaintext, noanonymous)\fR"
-SASL security options; as of Postfix 2.3 the list of available
+Postfix SMTP client SASL security options; as of Postfix 2.3
+the list of available
 features depends on the SASL client implementation that is selected
 with \fBsmtp_sasl_type\fR.
 .PP
@@ -283,12 +297,26 @@ available only with SASL authentication, and disables SMTP connection
 caching to ensure that mail from different senders will use the
 appropriate credentials.
 .IP "\fBsmtp_sasl_path (empty)\fR"
-Implementation-specific information that is passed through to
+Implementation-specific information that the Postfix SMTP client
+passes through to
 the SASL plug-in implementation that is selected with
 \fBsmtp_sasl_type\fR.
 .IP "\fBsmtp_sasl_type (cyrus)\fR"
 The SASL plug-in type that the Postfix SMTP client should use
 for authentication.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBsmtp_sasl_auth_cache_name (empty)\fR"
+An optional table to prevent repeated SASL authentication
+failures with the same remote SMTP server hostname, username and
+password.
+.IP "\fBsmtp_sasl_auth_cache_time (90d)\fR"
+The maximal age of an smtp_sasl_auth_cache_name entry before it
+is removed.
+.IP "\fBsmtp_sasl_auth_soft_bounce (yes)\fR"
+When a remote SMTP server rejects a SASL authentication request
+with a 535 reply code, defer mail delivery instead of returning
+mail as undeliverable.
 .SH "STARTTLS SUPPORT CONTROLS"
 .na
 .nf
@@ -342,9 +370,9 @@ Optional lookup tables with the Postfix SMTP client TLS security
 policy by next-hop destination; when a non-empty value is specified,
 this overrides the obsolete smtp_tls_per_site parameter.
 .IP "\fBsmtp_tls_mandatory_protocols (SSLv3, TLSv1)\fR"
-List of TLS protocols that the Postfix SMTP client will use
-with mandatory TLS encryption.
-.IP "\fBsmtp_tls_scert_verifydepth (5)\fR"
+List of SSL/TLS protocols that the Postfix SMTP client will use with
+mandatory TLS encryption.
+.IP "\fBsmtp_tls_scert_verifydepth (9)\fR"
 The verification depth for remote SMTP server certificates.
 .IP "\fBsmtp_tls_secure_cert_match (nexthop, dot-nexthop)\fR"
 The server certificate peername verification method for the
@@ -379,6 +407,15 @@ Available in Postfix version 2.4 and later:
 The SASL authentication security options that the Postfix SMTP
 client uses for TLS encrypted SMTP sessions with a verified server
 certificate.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBsmtp_tls_fingerprint_cert_match (empty)\fR"
+List of acceptable remote SMTP server certificate fingerprints
+for the "fingerprint" TLS security level (\fBsmtp_tls_security_level\fR =
+fingerprint).
+.IP "\fBsmtp_tls_fingerprint_digest (md5)\fR"
+The message digest algorithm used to construct remote SMTP server
+certificate fingerprints.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -577,6 +614,9 @@ found or that are unreachable.
 .SH "SEE ALSO"
 .na
 .nf
+generic(5), output address rewriting
+header_checks(5), message header content inspection
+body_checks(5), body parts content inspection
 qmgr(8), queue manager
 bounce(8), delivery status reports
 scache(8), connection cache server
@@ -623,13 +663,13 @@ Till Franke
 SuSE Rhein/Main AG
 65760 Eschborn, Germany
 
-Connection caching in cooperation with:
-Victor Duchovni
-Morgan Stanley
-
 TLS support originally by:
 Lutz Jaenicke
 BTU Cottbus
 Allgemeine Elektrotechnik
 Universitaetsplatz 3-4
 D-03044 Cottbus, Germany
+
+Revised TLS and SMTP connection cache support by:
+Victor Duchovni
+Morgan Stanley

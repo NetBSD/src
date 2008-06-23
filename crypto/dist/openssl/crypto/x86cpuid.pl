@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
-push(@INC,"perlasm");
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+push(@INC, "${dir}perlasm", "perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],"x86cpuid");
@@ -19,13 +20,40 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&pop	("eax");
 	&xor	("ecx","eax");
 	&bt	("ecx",21);
-	&jnc	(&label("nocpuid"));
+	&jnc	(&label("done"));
+	&xor	("eax","eax");
+	&cpuid	();
+	&xor	("eax","eax");
+	&cmp	("ebx",0x756e6547);	# "Genu"
+	&setne	(&LB("eax"));
+	&mov	("ebp","eax");
+	&cmp	("edx",0x49656e69);	# "ineI"
+	&setne	(&LB("eax"));
+	&or	("ebp","eax");
+	&cmp	("ecx",0x6c65746e);	# "ntel"
+	&setne	(&LB("eax"));
+	&or	("ebp","eax");
 	&mov	("eax",1);
 	&cpuid	();
-&set_label("nocpuid");
+	&cmp	("ebp",0);
+	&jne	(&label("notP4"));
+	&and	(&HB("eax"),15);	# familiy ID
+	&cmp	(&HB("eax"),15);	# P4?
+	&jne	(&label("notP4"));
+	&or	("edx",1<<20);		# use reserved bit to engage RC4_CHAR
+&set_label("notP4");
+	&bt	("edx",28);		# test hyper-threading bit
+	&jnc	(&label("done"));
+	&shr	("ebx",16);
+	&cmp	(&LB("ebx"),1);		# see if cache is shared(*)
+	&ja	(&label("done"));
+	&and	("edx",0xefffffff);	# clear hyper-threading bit if not
+&set_label("done");
 	&mov	("eax","edx");
 	&mov	("edx","ecx");
 &function_end("OPENSSL_ia32_cpuid");
+# (*)	on Core2 this value is set to 2 denoting the fact that L2
+#	cache is shared between cores.
 
 &external_label("OPENSSL_ia32cap_P");
 
@@ -191,6 +219,37 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&ret	();
 	}
 &function_end_B("OPENSSL_indirect_call");
+
+&function_begin_B("OPENSSL_cleanse");
+	&mov	("edx",&wparam(0));
+	&mov	("ecx",&wparam(1));
+	&xor	("eax","eax");
+	&cmp	("ecx",7);
+	&jae	(&label("lot"));
+&set_label("little");
+	&mov	(&BP(0,"edx"),"al");
+	&sub	("ecx",1);
+	&lea	("edx",&DWP(1,"edx"));
+	&jnz	(&label("little"));
+	&ret	();
+
+&set_label("lot",16);
+	&test	("edx",3);
+	&jz	(&label("aligned"));
+	&mov	(&BP(0,"edx"),"al");
+	&lea	("ecx",&DWP(-1,"ecx"));
+	&lea	("edx",&DWP(1,"edx"));
+	&jmp	(&label("lot"));
+&set_label("aligned");
+	&mov	(&DWP(0,"edx"),"eax");
+	&lea	("ecx",&DWP(-4,"ecx"));
+	&test	("ecx",-4);
+	&lea	("edx",&DWP(4,"edx"));
+	&jnz	(&label("aligned"));
+	&cmp	("ecx",0);
+	&jne	(&label("little"));
+	&ret	();
+&function_end_B("OPENSSL_cleanse");
 
 &initseg("OPENSSL_cpuid_setup");
 

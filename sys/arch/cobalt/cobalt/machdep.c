@@ -1,8 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.95 2008/03/22 18:46:49 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.6.1 2008/06/23 04:30:17 wrstuden Exp $	*/
 
-/*
- * Copyright (c) 2006 Izumi Tsutsui.
- * All rights reserved.
+/*-
+ * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,8 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -53,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2008/03/22 18:46:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.6.1 2008/06/23 04:30:17 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -256,7 +253,6 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/* all models have Rm5200, which is CPU_MIPS_DOUBLE_COUNT */
 	curcpu()->ci_cycles_per_hz /= 2;
 	curcpu()->ci_divisor_delay /= 2;
-	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	physmem = btoc(memsize - MIPS_KSEG0_START);
 

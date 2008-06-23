@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.178 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.178.2.1 2008/06/23 04:32:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -278,13 +278,14 @@ int	fsname##_extattrctl(struct mount *, int, struct vnode *, int,	\
 		const char *);						\
 int	fsname##_suspendctl(struct mount *, int)
 
-#define	VFS_ATTACH(vfs)		__link_set_add_data(vfsops, vfs)
-
 struct vfs_hooks {
 	void	(*vh_unmount)(struct mount *);
+	LIST_ENTRY(vfs_hooks) vfs_hooks_list;
 };
-#define	VFS_HOOKS_ATTACH(hooks)	__link_set_add_data(vfs_hooks, hooks)
 
+void	vfs_hooks_init(void);
+int	vfs_hooks_attach(struct vfs_hooks *);
+int	vfs_hooks_detach(struct vfs_hooks *);
 void	vfs_hooks_unmount(struct mount *);
 
 #endif /* _KERNEL */

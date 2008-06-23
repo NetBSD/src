@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.3.80.1 2008/06/23 04:30:22 wrstuden Exp $	*/
 
 /*	$OpenBSD: conf.c,v 1.12 2000/05/30 22:02:28 mickey Exp $	*/
 
@@ -49,8 +49,8 @@ struct fs_ops file_system[] = {
 int nfsys = NENTS(file_system);
 
 struct devsw devsw[] = {
-	{ "ct",	iodcstrategy, ctopen, ctclose, noioctl },
 	{ "dk",	iodcstrategy, dkopen, dkclose, noioctl },
+	{ "ct",	iodcstrategy, ctopen, ctclose, noioctl },
 	{ "lf", iodcstrategy, lfopen, lfclose, noioctl }
 };
 int	ndevs = NENTS(devsw);

@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.18 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: segwrite.c,v 1.18.2.1 2008/06/23 04:29:57 wrstuden Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -472,7 +472,7 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 		break;
 	default:
 		ap = &a[num - 1];
-		if (bread(vp, ap->in_lbn, fs->lfs_bsize, NULL, &bp))
+		if (bread(vp, ap->in_lbn, fs->lfs_bsize, NULL, 0, &bp))
 			errx(1, "lfs_updatemeta: bread bno %" PRId64,
 			    ap->in_lbn);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.1.1.7 2006/07/19 01:17:30 rpaulo Exp $	*/
+/*	$NetBSD: local.h,v 1.1.1.7.20.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -27,6 +27,7 @@
 #include <maps.h>
 #include <dsn_buf.h>
 #include <dsn.h>
+#include <delivered_hdr.h>
 
  /*
   * User attributes: these control the privileges for delivery to external
@@ -109,7 +110,7 @@ typedef struct LOCAL_STATE {
     int     level;			/* nesting level, for logging */
     DELIVER_ATTR msg_attr;		/* message attributes */
     BH_TABLE *dup_filter;		/* internal duplicate filter */
-    HTABLE *loop_info;			/* external loop filter */
+    DELIVERED_HDR_INFO *loop_info;	/* external loop filter */
     DELIVER_REQUEST *request;		/* as from queue manager */
 } LOCAL_STATE;
 
@@ -204,14 +205,6 @@ extern int local_mbox_lock_mask;
 #define DELIVER_HDR_FWD		(1<<2)
 
 extern int local_deliver_hdr_mask;
-
- /*
-  * delivered.c
-  */
-extern HTABLE *delivered_init(DELIVER_ATTR);
-extern int delivered_find(HTABLE *, const char *);
-
-#define delivered_free(t) htable_free((t), (void (*) (char *)) 0)
 
  /*
   * forward.c

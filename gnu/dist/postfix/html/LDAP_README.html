@@ -55,6 +55,11 @@ it to each. </p>
 
 <h2><a name="build">Building Postfix with LDAP support</a></h2>
 
+<p> These instructions assume that you build Postfix from source
+code as described in the <a href="INSTALL.html">INSTALL</a> document. Some modification may   
+be required if you build Postfix from a vendor-specific source
+package.  </p>
+
 <p> Note 1: Postfix no longer supports the LDAP version 1 interface.
 </p>
 
@@ -165,7 +170,7 @@ server listening at port 389 on ldap.example.com. It will bind anonymously,
 search for any directory entries whose mailacceptinggeneralid
 attribute is "ldapuser", read the "maildrop" attributes of those
 found, and build a list of their maildrops, which will be treated
-as <a href="http://www.faqs.org/rfcs/rfc822.html">RFC822</a> addresses to which the message will be delivered. </p>
+as <a href="http://tools.ietf.org/html/rfc822">RFC822</a> addresses to which the message will be delivered. </p>
 
 <h2><a name="example_virtual">Example: virtual domains/addresses</a></h2>
 
@@ -555,10 +560,10 @@ contents, please include the applicable bits of some directory entries. </p>
 
 <li>Prabhat K Singh: Wrote the initial Postfix LDAP lookups and connection caching.
 
-<li>Keith Stevenson: <a href="http://www.faqs.org/rfcs/rfc2254.html">RFC 2254</a> escaping in queries.
+<li>Keith Stevenson: <a href="http://tools.ietf.org/html/rfc2254">RFC 2254</a> escaping in queries.
 
 <li>Samuel Tardieu: Noticed that searches could include wildcards, prompting
-                the work on <a href="http://www.faqs.org/rfcs/rfc2254.html">RFC 2254</a> escaping in queries. Spotted a bug
+                the work on <a href="http://tools.ietf.org/html/rfc2254">RFC 2254</a> escaping in queries. Spotted a bug
                 in binding.
 
 <li>Sami Haahtinen: Referral chasing and v3 support.

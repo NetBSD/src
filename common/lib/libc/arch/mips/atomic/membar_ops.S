@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.2 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.2.2.1 2008/06/23 04:26:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 	.text
 
-LEAF_NOPROFILE(_membar_sync)
+LEAF(_membar_sync)
 	SYNC
 	j	ra
 	  nop

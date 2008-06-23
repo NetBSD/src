@@ -1,10 +1,10 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.1.1.2 2007/01/27 21:06:55 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.1.1.2.14.1 2008/06/23 04:28:05 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -19,7 +19,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: opensslrsa_link.c,v 1.1.6.11 2006/11/07 21:28:49 marka Exp
+ * Id: opensslrsa_link.c,v 1.16 2007/06/19 23:47:16 tbox Exp
  */
 #ifdef OPENSSL
 
@@ -52,7 +52,7 @@
 #ifdef WIN32
 #if !((OPENSSL_VERSION_NUMBER >= 0x009070cfL && \
        OPENSSL_VERSION_NUMBER < 0x00908000L) || \
-      OPENSSL_VERSION_NUMBER >= 0x0090804fL)
+      OPENSSL_VERSION_NUMBER >= 0x0090804fL) 
 #error Please upgrade OpenSSL to 0.9.8d/0.9.7l or greater.
 #endif
 #endif
@@ -114,7 +114,7 @@ opensslrsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 		if (md5ctx == NULL)
 			return (ISC_R_NOMEMORY);
 		isc_md5_init(md5ctx);
-		dctx->opaque = md5ctx;
+		dctx->ctxdata.md5ctx = md5ctx;
 	} else {
 		isc_sha1_t *sha1ctx;
 
@@ -122,7 +122,7 @@ opensslrsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 		if (sha1ctx == NULL)
 			return (ISC_R_NOMEMORY);
 		isc_sha1_init(sha1ctx);
-		dctx->opaque = sha1ctx;
+		dctx->ctxdata.sha1ctx = sha1ctx;
 	}
 
 	return (ISC_R_SUCCESS);
@@ -134,21 +134,22 @@ opensslrsa_destroyctx(dst_context_t *dctx) {
 		dctx->key->key_alg == DST_ALG_RSASHA1);
 
 	if (dctx->key->key_alg == DST_ALG_RSAMD5) {
-		isc_md5_t *md5ctx = dctx->opaque;
+		isc_md5_t *md5ctx = dctx->ctxdata.md5ctx;
 
 		if (md5ctx != NULL) {
 			isc_md5_invalidate(md5ctx);
 			isc_mem_put(dctx->mctx, md5ctx, sizeof(isc_md5_t));
+			dctx->ctxdata.md5ctx = NULL;
 		}
 	} else {
-		isc_sha1_t *sha1ctx = dctx->opaque;
+		isc_sha1_t *sha1ctx = dctx->ctxdata.sha1ctx;
 
 		if (sha1ctx != NULL) {
 			isc_sha1_invalidate(sha1ctx);
 			isc_mem_put(dctx->mctx, sha1ctx, sizeof(isc_sha1_t));
+			dctx->ctxdata.sha1ctx = NULL;
 		}
 	}
-	dctx->opaque = NULL;
 }
 
 static isc_result_t
@@ -157,10 +158,10 @@ opensslrsa_adddata(dst_context_t *dctx, const isc_region_t *data) {
 		dctx->key->key_alg == DST_ALG_RSASHA1);
 
 	if (dctx->key->key_alg == DST_ALG_RSAMD5) {
-		isc_md5_t *md5ctx = dctx->opaque;
+		isc_md5_t *md5ctx = dctx->ctxdata.md5ctx;
 		isc_md5_update(md5ctx, data->base, data->length);
 	} else {
-		isc_sha1_t *sha1ctx = dctx->opaque;
+		isc_sha1_t *sha1ctx = dctx->ctxdata.sha1ctx;
 		isc_sha1_update(sha1ctx, data->base, data->length);
 	}
 	return (ISC_R_SUCCESS);
@@ -169,7 +170,7 @@ opensslrsa_adddata(dst_context_t *dctx, const isc_region_t *data) {
 static isc_result_t
 opensslrsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	dst_key_t *key = dctx->key;
-	RSA *rsa = key->opaque;
+	RSA *rsa = key->keydata.rsa;
 	isc_region_t r;
 	/* note: ISC_SHA1_DIGESTLENGTH > ISC_MD5_DIGESTLENGTH */
 	unsigned char digest[ISC_SHA1_DIGESTLENGTH];
@@ -191,12 +192,12 @@ opensslrsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 		return (ISC_R_NOSPACE);
 
 	if (dctx->key->key_alg == DST_ALG_RSAMD5) {
-		isc_md5_t *md5ctx = dctx->opaque;
+		isc_md5_t *md5ctx = dctx->ctxdata.md5ctx;
 		isc_md5_final(md5ctx, digest);
 		type = NID_md5;
 		digestlen = ISC_MD5_DIGESTLENGTH;
 	} else {
-		isc_sha1_t *sha1ctx = dctx->opaque;
+		isc_sha1_t *sha1ctx = dctx->ctxdata.sha1ctx;
 		isc_sha1_final(sha1ctx, digest);
 		type = NID_sha1;
 		digestlen = ISC_SHA1_DIGESTLENGTH;
@@ -221,7 +222,7 @@ opensslrsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 static isc_result_t
 opensslrsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 	dst_key_t *key = dctx->key;
-	RSA *rsa = key->opaque;
+	RSA *rsa = key->keydata.rsa;
 	/* note: ISC_SHA1_DIGESTLENGTH > ISC_MD5_DIGESTLENGTH */
 	unsigned char digest[ISC_SHA1_DIGESTLENGTH];
 	int status = 0;
@@ -232,12 +233,12 @@ opensslrsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
 		dctx->key->key_alg == DST_ALG_RSASHA1);
 
 	if (dctx->key->key_alg == DST_ALG_RSAMD5) {
-		isc_md5_t *md5ctx = dctx->opaque;
+		isc_md5_t *md5ctx = dctx->ctxdata.md5ctx;
 		isc_md5_final(md5ctx, digest);
 		type = NID_md5;
 		digestlen = ISC_MD5_DIGESTLENGTH;
 	} else {
-		isc_sha1_t *sha1ctx = dctx->opaque;
+		isc_sha1_t *sha1ctx = dctx->ctxdata.sha1ctx;
 		isc_sha1_final(sha1ctx, digest);
 		type = NID_sha1;
 		digestlen = ISC_SHA1_DIGESTLENGTH;
@@ -259,8 +260,8 @@ opensslrsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	int status;
 	RSA *rsa1, *rsa2;
 
-	rsa1 = (RSA *) key1->opaque;
-	rsa2 = (RSA *) key2->opaque;
+	rsa1 = key1->keydata.rsa;
+	rsa2 = key2->keydata.rsa;
 
 	if (rsa1 == NULL && rsa2 == NULL)
 		return (ISC_TRUE);
@@ -311,7 +312,7 @@ opensslrsa_generate(dst_key_t *key, int exp) {
 	if (RSA_generate_key_ex(rsa, key->key_size, e, &cb)) {
 		BN_free(e);
 		SET_FLAGS(rsa);
-		key->opaque = rsa;
+		key->keydata.rsa = rsa;
 		return (ISC_R_SUCCESS);
 	}
 
@@ -333,7 +334,7 @@ err:
 	if (rsa == NULL)
 	       return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
 	SET_FLAGS(rsa);
-	key->opaque = rsa;
+	key->keydata.rsa = rsa;
 
 	return (ISC_R_SUCCESS);
 #endif
@@ -341,15 +342,15 @@ err:
 
 static isc_boolean_t
 opensslrsa_isprivate(const dst_key_t *key) {
-	RSA *rsa = (RSA *) key->opaque;
+	RSA *rsa = (RSA *) key->keydata.rsa;
 	return (ISC_TF(rsa != NULL && rsa->d != NULL));
 }
 
 static void
 opensslrsa_destroy(dst_key_t *key) {
-	RSA *rsa = key->opaque;
+	RSA *rsa = key->keydata.rsa;
 	RSA_free(rsa);
-	key->opaque = NULL;
+	key->keydata.rsa = NULL;
 }
 
 
@@ -360,9 +361,9 @@ opensslrsa_todns(const dst_key_t *key, isc_buffer_t *data) {
 	unsigned int e_bytes;
 	unsigned int mod_bytes;
 
-	REQUIRE(key->opaque != NULL);
+	REQUIRE(key->keydata.rsa != NULL);
 
-	rsa = (RSA *) key->opaque;
+	rsa = key->keydata.rsa;
 
 	isc_buffer_availableregion(data, &r);
 
@@ -439,7 +440,7 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 	isc_buffer_forward(data, r.length);
 
-	key->opaque = (void *) rsa;
+	key->keydata.rsa = rsa;
 
 	return (ISC_R_SUCCESS);
 }
@@ -453,10 +454,10 @@ opensslrsa_tofile(const dst_key_t *key, const char *directory) {
 	unsigned char *bufs[8];
 	isc_result_t result;
 
-	if (key->opaque == NULL)
+	if (key->keydata.rsa == NULL)
 		return (DST_R_NULLKEY);
 
-	rsa = (RSA *) key->opaque;
+	rsa = key->keydata.rsa;
 
 	for (i = 0; i < 8; i++) {
 		bufs[i] = isc_mem_get(key->mctx, BN_num_bytes(rsa->n));
@@ -545,7 +546,7 @@ opensslrsa_parse(dst_key_t *key, isc_lex_t *lexer) {
 	if (rsa == NULL)
 		DST_RET(ISC_R_NOMEMORY);
 	SET_FLAGS(rsa);
-	key->opaque = rsa;
+	key->keydata.rsa = rsa;
 
 	for (i = 0; i < priv.nelements; i++) {
 		BIGNUM *bn;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.72 2008/05/03 05:56:44 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.72.2.1 2008/06/23 04:30:26 wrstuden Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.72 2008/05/03 05:56:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.72.2.1 2008/06/23 04:30:26 wrstuden Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -204,6 +204,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.72 2008/05/03 05:56:44 yamt Exp $");
 	.data
 
 	.globl	_C_LABEL(cpu)
+	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
 	.globl	_C_LABEL(atdevbase)
@@ -236,6 +237,7 @@ _C_LABEL(lapic_tpr):
 #endif
 
 _C_LABEL(cpu):		.long	0	# are we 80486, Pentium, or..
+_C_LABEL(cpuid_level):	.long	0
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
@@ -309,7 +311,7 @@ _C_LABEL(Multiboot_Header):
 	movw	%ax,%fs
 	movw	%ax,%gs
 	decl	%eax
-	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+	movl	%eax,RELOC(cpuid_level)
 
 	/* Find out our CPU type. */
 
@@ -469,7 +471,7 @@ trycyrix486:
 try586:	/* Use the `cpuid' instruction. */
 	xorl	%eax,%eax
 	cpuid
-	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+	movl	%eax,RELOC(cpuid_level)
 
 2:
 	/*
@@ -748,11 +750,11 @@ start:
 	movw	%ax,%fs
 	movw	%ax,%gs
 	decl	%eax
-	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+	movl	%eax,RELOC(cpuid_level)
 
 	xorl	%eax,%eax
 	cpuid
-	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+	movl	%eax,RELOC(cpuid_level)
 
 	call	xen_pmap_bootstrap
 	/*
@@ -925,10 +927,11 @@ ENTRY(cpu_switchto)
 #if defined(DIAGNOSTIC) && !defined(XEN)
 	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
 	jbe	0f
+	pushl	CPUVAR(ILEVEL)
 	pushl	$.Lstr
 	call	_C_LABEL(panic)
-	addl	$4,%esp
-.Lstr:	.string	"cpu_switcho: switching above IPL_SCHED\0"
+	addl	$8,%esp
+.Lstr:	.string	"cpu_switchto: switching above IPL_SCHED (%d)\0"
 0:
 #endif
 
@@ -1224,18 +1227,21 @@ END(npx586bug1)
 #endif /* NNPX > 0 */
 
 /*
- * void sse2_zero_page(void *pg)
+ * void sse2_idlezero_page(void *pg)
  *
- * Zero a page without polluting the cache.
+ * Zero a page without polluting the cache.  Preemption must be
+ * disabled by the caller. Abort if a preemption is pending.
  */
-ENTRY(sse2_zero_page)
+ENTRY(sse2_idlezero_page)
 	pushl	%ebp
 	movl	%esp,%ebp
 	movl	8(%esp), %edx
-	movl	$PAGE_SIZE, %ecx
+	movl	$(PAGE_SIZE/32), %ecx
 	xorl	%eax, %eax
 	.align	16
 1:
+	cmpl	$0, CPUVAR(RESCHED)
+	jnz	2f
 	movnti	%eax, 0(%edx)
 	movnti	%eax, 4(%edx)
 	movnti	%eax, 8(%edx)
@@ -1244,45 +1250,15 @@ ENTRY(sse2_zero_page)
 	movnti	%eax, 20(%edx)
 	movnti	%eax, 24(%edx)
 	movnti	%eax, 28(%edx)
-	subl	$32, %ecx
-	leal	32(%edx), %edx
+	addl	$32, %edx
+	decl	%ecx
 	jnz	1b
 	sfence
+	incl	%eax
 	pop	%ebp
 	ret
-END(sse2_zero_page)
-
-/*
- * void sse2_copy_page(void *src, void *dst)
- *
- * Copy a page without polluting the cache.
- */
-ENTRY(sse2_copy_page)
-	pushl	%ebp
-	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
-	movl	20(%esp), %esi
-	movl	24(%esp), %edi
-	movl	$PAGE_SIZE, %ebp
-	.align	16
-1:
-	movl	0(%esi), %eax
-	movl	4(%esi), %ebx
-	movl	8(%esi), %ecx
-	movl	12(%esi), %edx
-	movnti	%eax, 0(%edi)
-	movnti	%ebx, 4(%edi)
-	movnti	%ecx, 8(%edi)
-	movnti	%edx, 12(%edi)
-	subl	$16, %ebp
-	leal	16(%esi), %esi
-	leal	16(%edi), %edi
-	jnz	1b
+2:
 	sfence
-	popl	%edi
-	popl	%esi
-	popl	%ebx
 	popl	%ebp
 	ret
-END(sse2_copy_page)
+END(sse2_idlezero_page)

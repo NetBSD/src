@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu_counter.h,v 1.2 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.2.2.1 2008/06/23 04:30:50 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,29 +32,13 @@
 #ifndef _X86_CPU_COUNTER_H_
 #define _X86_CPU_COUNTER_H_
 
-/*
- * x86 common functions for CPU counter.
- */
+#ifdef _KERNEL
 
-static __inline uint64_t
-cpu_counter(void)
-{
+uint64_t	cpu_counter(void);
+uint32_t	cpu_counter32(void);
+uint64_t	cpu_frequency(struct cpu_info *);
+int		cpu_hascounter(void);
 
-	return rdtsc();
-}
-
-static __inline uint32_t
-cpu_counter32(void)
-{
-
-	return rdtsc() & 0xffffffffUL;
-}
-
-static __inline uint64_t
-cpu_frequency(struct cpu_info *ci)
-{
-
-	return ci->ci_tsc_freq;
-}
+#endif	/* _KERNEL */
 
 #endif /* !_X86_CPU_COUNTER_H_ */

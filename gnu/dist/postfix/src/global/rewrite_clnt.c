@@ -1,4 +1,4 @@
-/*	$NetBSD: rewrite_clnt.c,v 1.1.1.10 2006/12/21 02:32:29 rpaulo Exp $	*/
+/*	$NetBSD: rewrite_clnt.c,v 1.1.1.10.12.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -74,6 +74,7 @@
   */
 CLNT_STREAM *rewrite_clnt_stream = 0;
 
+static time_t last_expire;
 static VSTRING *last_rule;
 static VSTRING *last_addr;
 static VSTRING *last_result;
@@ -109,7 +110,8 @@ VSTRING *rewrite_clnt(const char *rule, const char *addr, VSTRING *result)
     /*
      * Peek at the cache.
      */
-    if (strcmp(addr, STR(last_addr)) == 0
+    if (time((time_t *) 0) < last_expire
+	&& strcmp(addr, STR(last_addr)) == 0
 	&& strcmp(rule, STR(last_rule)) == 0) {
 	vstring_strcpy(result, STR(last_result));
 	if (msg_verbose)
@@ -165,6 +167,7 @@ VSTRING *rewrite_clnt(const char *rule, const char *addr, VSTRING *result)
     vstring_strcpy(last_rule, rule);
     vstring_strcpy(last_addr, addr);
     vstring_strcpy(last_result, STR(result));
+    last_expire = time((time_t *) 0) + 30;	/* XXX make configurable */
 
     return (result);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2005/12/11 12:18:06 christos Exp $
+#	$NetBSD: Makefile,v 1.45.80.1 2008/06/23 04:30:31 wrstuden Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -34,7 +34,7 @@ BINMODE=	444
 
 .if !defined(TOOL_MACPPCFIXCOFF)
 TOOL_MACPPCFIXCOFFDIR!=	cd ${.CURDIR}/../fixcoff && ${PRINTOBJDIR}
-TOOL_MACPPCFIXCOFF=	${FIXCOFFDIR}/fixcoff
+TOOL_MACPPCFIXCOFF=	${TOOL_MACPPCFIXCOFFDIR}/fixcoff
 .endif
 .endif
 

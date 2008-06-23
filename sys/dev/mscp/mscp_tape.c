@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.33 2008/04/08 20:10:44 cegger Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.33.6.1 2008/06/23 04:31:10 wrstuden Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.33 2008/04/08 20:10:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.33.6.1 2008/06/23 04:31:10 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -219,10 +219,8 @@ mtopen(dev, flag, fmt, l)
 	 * Make sure this is a reasonable open request.
 	 */
 	unit = mtunit(dev);
-	if (unit >= mt_cd.cd_ndevs)
-		return ENXIO;
-	mt = mt_cd.cd_devs[unit];
-	if (mt == 0)
+	mt = device_lookup_private(&mt_cd, unit);
+	if (!mt)
 		return ENXIO;
 
 	if (mt->mt_inuse)
@@ -245,7 +243,7 @@ mtclose(dev, flags, fmt, l)
 	struct	lwp *l;
 {
 	int unit = mtunit(dev);
-	struct mt_softc *mt = mt_cd.cd_devs[unit];
+	struct mt_softc *mt = device_lookup_private(&mt_cd, unit);
 
 	/*
 	 * If we just have finished a writing, write EOT marks.
@@ -275,7 +273,7 @@ mtstrategy(bp)
 	 * Make sure this is a reasonable drive to use.
 	 */
 	unit = mtunit(bp->b_dev);
-	if (unit > mt_cd.cd_ndevs || (mt = mt_cd.cd_devs[unit]) == NULL) {
+	if ((mt = device_lookup_private(&mt_cd, unit)) == NULL) {
 		bp->b_error = ENXIO;
 		biodone(bp);
 		return;
@@ -324,7 +322,7 @@ mtfillin(bp, mp)
 	struct mscp *mp;
 {
 	int unit = mtunit(bp->b_dev);
-	struct mt_softc *mt = mt_cd.cd_devs[unit];
+	struct mt_softc *mt = device_lookup_private(&mt_cd, unit);
 
 	mp->mscp_unit = mt->mt_hwunit;
 	if (mt->mt_serex == 2) {
@@ -439,7 +437,7 @@ mtioctl(dev, cmd, data, flag, l)
 	struct lwp *l;
 {
 	int unit = mtunit(dev);
-	struct mt_softc *mt = mt_cd.cd_devs[unit];
+	struct mt_softc *mt = device_lookup_private(&mt_cd, unit);
 	struct mtop *mtop;
 	int error = 0;
 

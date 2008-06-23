@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.12 2007/12/09 20:28:09 jmcneill Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.12.16.1 2008/06/23 04:31:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -62,27 +62,23 @@ struct ipw_soft_buf {
 
 struct ipw_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
-	uint8_t		wr_flags;
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_antsignal;
-};
+} __packed;
 
 #define IPW_RX_RADIOTAP_PRESENT						\
-	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
-	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	((1 << IEEE80211_RADIOTAP_CHANNEL) |				\
 	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
 
 struct ipw_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
-	uint8_t		wt_flags;
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
-};
+} __packed;
 
 #define IPW_TX_RADIOTAP_PRESENT						\
-	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
-	 (1 << IEEE80211_RADIOTAP_CHANNEL))
+	((1 << IEEE80211_RADIOTAP_CHANNEL))
 
 struct ipw_softc {
 	struct device			sc_dev;

@@ -1,4 +1,4 @@
-#	$NetBSD: rc4.inc,v 1.6 2007/12/09 22:44:20 adrianp Exp $
+#	$NetBSD: rc4.inc,v 1.6.8.1 2008/06/23 04:29:36 wrstuden Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,8 +7,9 @@
 
 .PATH:	${OPENSSLSRC}/crypto/rc4
 
-
+.ifndef(RC4_SRCS)
 RC4_SRCS = rc4_skey.c rc4_enc.c 
+.endif
 SRCS += ${RC4_SRCS}
 
 .for cryptosrc in ${RC4_SRCS}

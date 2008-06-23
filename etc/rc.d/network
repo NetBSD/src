@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.51 2007/02/10 19:40:58 reed Exp $
+# $NetBSD: network,v 1.51.16.1 2008/06/23 04:29:04 wrstuden Exp $
 #
 
 # PROVIDE: network
@@ -200,7 +200,10 @@ network_start()
 					ipf -y >/dev/null
 				fi
 			fi
-			if [ -n "$args" ]; then
+			if [ "$args" = "dhcp" ]; then
+				echo -n " $int"
+				dhcpcd -n ${dhcpcd_flags} $int
+			elif [ -n "$args" ]; then
 				echo -n " $int"
 				ifconfig $int $args
 			elif [ -f /etc/ifconfig.$int ]; then
@@ -212,6 +215,10 @@ network_start()
 						;;
 					"!"*)
 						eval ${args#*!}
+						;;
+					dhcp)
+						dhcpcd -n ${dhcpcd_flags} \
+						    $int
 						;;
 					*)
 						eval ifconfig $int $args
@@ -385,6 +392,7 @@ network_stop()
 			eval args=\$ifconfig_$int
 			if [ -n "$args" ] || [ -f /etc/ifconfig.$int ]; then
 				echo -n " $int"
+				dhcpcd -k $int 2> /dev/null
 				ifconfig $int down
 				if ifconfig $int destroy 2>/dev/null && \
 				   checkyesno ipfilter; then

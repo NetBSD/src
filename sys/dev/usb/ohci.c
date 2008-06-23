@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.192 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: ohci.c,v 1.192.2.1 2008/06/23 04:31:36 wrstuden Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.192 2008/04/28 20:23:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.192.2.1 2008/06/23 04:31:36 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,7 +694,7 @@ ohci_init(ohci_softc_t *sc)
 	SIMPLEQ_INIT(&sc->sc_free_xfers);
 
 #ifdef __NetBSD__
-	usb_setup_reserve(sc, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
+	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
 #endif
 
@@ -1038,6 +1038,7 @@ ohci_resume(device_t dv PMF_FN_ARGS)
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 	sc->sc_control = sc->sc_intre = 0;
 	sc->sc_bus.use_polling--;
+	splx(s);
 
 	return true;
 }

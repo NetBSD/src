@@ -1,4 +1,4 @@
-/* $NetBSD: drm_scatter.c,v 1.4 2007/12/15 00:39:26 perry Exp $ */
+/* $NetBSD: drm_scatter.c,v 1.4.12.1 2008/06/23 04:31:01 wrstuden Exp $ */
 
 /* drm_scatter.h -- IOCTLs to manage scatter/gather memory -*- linux-c -*-
  * Created: Mon Dec 18 23:20:54 2000 by gareth@valinux.com */
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.4 2007/12/15 00:39:26 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.4.12.1 2008/06/23 04:31:01 wrstuden Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_scatter.c,v 1.3 2006/05/17 06:29:36 anholt Exp $");
 */
@@ -41,22 +41,26 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_scatter.c,v 1.3 2006/05/17 06:29:36 anho
 
 #define DEBUG_SCATTER 0
 
-void drm_sg_cleanup(drm_sg_mem_t *entry)
+void
+drm_sg_cleanup(drm_sg_mem_t *entry)
 {
-	free((void *)entry->handle, M_DRM);
+	if (entry) {
+		if (entry->mem)
+			drm_dmamem_free(entry->mem);
+		if (entry->busaddr)
 	free(entry->busaddr, M_DRM);
 	free(entry, M_DRM);
 }
+}
 
-int drm_sg_alloc(DRM_IOCTL_ARGS)
+int
+drm_sg_alloc(DRM_IOCTL_ARGS)
 {
 	DRM_DEVICE;
-	drm_scatter_gather_t request;
 	drm_sg_mem_t *entry;
+	drm_scatter_gather_t request;
 	unsigned long pages;
 	int i;
-
-	DRM_DEBUG( "%s\n", __func__ );
 
 	if ( dev->sg )
 		return EINVAL;
@@ -80,16 +84,22 @@ int drm_sg_alloc(DRM_IOCTL_ARGS)
 		return ENOMEM;
 	}
 
-	entry->handle = (long)malloc(pages << PAGE_SHIFT, M_DRM,
-	    M_WAITOK | M_ZERO);
-	if (entry->handle == 0) {
+	if ((entry->mem = drm_dmamem_pgalloc(dev, pages)) == NULL) {
 		drm_sg_cleanup(entry);
 		return ENOMEM;
 	}
 
-	for (i = 0; i < pages; i++) {
-		entry->busaddr[i] = vtophys(entry->handle + i * PAGE_SIZE);
+	entry->handle = (unsigned long)entry->mem->dd_kva;
+
+	if (pages != entry->mem->dd_dmam->dm_nsegs) {
+		DRM_DEBUG("pages (%ld) != nsegs (%i)\n", pages,
+			entry->mem->dd_dmam->dm_nsegs);
+		drm_sg_cleanup(entry);
+		return ENOMEM;
 	}
+
+	for (i = 0; i < pages; i++) 
+		entry->busaddr[i] = entry->mem->dd_dmam->dm_segs[i].ds_addr;
 
 	DRM_DEBUG( "sg alloc handle  = %08lx\n", entry->handle );
 
@@ -112,19 +122,20 @@ int drm_sg_alloc(DRM_IOCTL_ARGS)
 	return 0;
 }
 
-int drm_sg_free(DRM_IOCTL_ARGS)
+int
+drm_sg_free(DRM_IOCTL_ARGS)
 {
 	DRM_DEVICE;
 	drm_scatter_gather_t request;
 	drm_sg_mem_t *entry;
 
-	DRM_COPY_FROM_USER_IOCTL( request, (drm_scatter_gather_t *)data,
-			     sizeof(request) );
-
 	DRM_LOCK();
 	entry = dev->sg;
 	dev->sg = NULL;
 	DRM_UNLOCK();
+
+	DRM_COPY_FROM_USER_IOCTL( request, (drm_scatter_gather_t *)data,
+			     sizeof(request) );
 
 	if ( !entry || entry->handle != request.handle )
 		return EINVAL;

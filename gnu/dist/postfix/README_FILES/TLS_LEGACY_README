@@ -375,7 +375,11 @@ is high.
 Example:
 
     /etc/postfix/main.cf:
-        smtpd_tls_session_cache_database = btree:/etc/postfix/smtpd_scache
+        smtpd_tls_session_cache_database = btree:/var/lib/postfix/smtpd_scache
+
+As of version 2.5, Postfix will no longer maintain this file in a directory
+with non-Postfix ownership. As a migration aid, attempts to open such files are
+redirected to the Postfix-owned $data_directory, and a warning is logged.
 
 Cached Postfix SMTP server session information expires after a certain amount
 of time. Postfix/TLS does not use the OpenSSL default of 300s, but a longer
@@ -627,7 +631,11 @@ client is allowed to negotiate per unit time.
 Example:
 
     /etc/postfix/main.cf:
-        smtp_tls_session_cache_database = btree:/etc/postfix/smtp_scache
+        smtp_tls_session_cache_database = btree:/var/lib/postfix/smtp_scache
+
+As of version 2.5, Postfix will no longer maintain this file in a directory
+with non-Postfix ownership. As a migration aid, attempts to open such files are
+redirected to the Postfix-owned $data_directory, and a warning is logged.
 
 Cached Postfix SMTP client session information expires after a certain amount
 of time. Postfix/TLS does not use the OpenSSL default of 300s, but a longer

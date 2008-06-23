@@ -2,7 +2,7 @@ Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2001, 2002  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
-Id: win32-build.txt,v 1.8.18.3 2005/11/01 05:50:31 marka Exp
+Id: win32-build.txt,v 1.11 2005/11/01 05:49:15 marka Exp
 
        BIND 9.4 for Win32 Source Build Instructions.  28-May-2005
 

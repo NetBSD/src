@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.20 2007/12/17 14:11:12 joerg Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.20.12.1 2008/06/23 04:30:50 wrstuden Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.20 2007/12/17 14:11:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.20.12.1 2008/06/23 04:30:50 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ sci_override:
 	 * XXX probably, IPL_BIO is enough.
 	 */
 	ih = intr_establish(irq, pic, pin, trigger, IPL_TTY,
-	    (int (*)(void *)) ServiceRoutine, Context);
+	    (int (*)(void *)) ServiceRoutine, Context, false);
 	if (ih == NULL)
 		return (AE_NO_MEMORY);
 	*cookiep = ih;

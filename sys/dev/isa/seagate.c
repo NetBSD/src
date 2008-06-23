@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.64 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: seagate.c,v 1.64.6.1 2008/06/23 04:31:09 wrstuden Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.64 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.64.6.1 2008/06/23 04:31:09 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -718,7 +718,7 @@ sea_main()
 loop:
 	done = 1;
 	for (unit = 0; unit < sea_cd.cd_ndevs; unit++) {
-		sea = device_lookup(&sea_cd, unit);
+		sea = device_lookup_private(&sea_cd, unit);
 		if (!sea)
 			continue;
 		s = splbio();

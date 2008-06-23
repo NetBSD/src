@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.498 2008/04/28 20:24:00 martin Exp $
+$NetBSD: usbdevs,v 1.498.2.1 2008/06/23 04:31:37 wrstuden Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -327,6 +327,7 @@ vendor AUDIOTECHNICA	0x0909	Audio-Technica
 vendor TRUMPION		0x090a	Trumpion Microelectronics
 vendor ALATION		0x0910	Alation Systems
 vendor CONCORDCAMERA	0x0919	Concord Camera
+vendor GARMIN		0x091e	Garmin
 vendor GOHUBS		0x0921	GoHubs
 vendor BIOMETRIC	0x0929	American Biometric Company
 vendor TOSHIBA		0x0930	Toshiba
@@ -444,6 +445,7 @@ vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor PHISON		0x13fe	Phison Electronics Corp.
 vendor NOVATEL2		0x1410	Novatel
+vendor OMNIVISION2	0x1415	OmniVision Technologies, Inc.
 vendor WISTRONNEWEB	0x1435	Wistron NeWeb
 vendor HUAWEI3COM	0x1472	Huawei-3Com
 vendor SILICOM		0x1485	Silicom
@@ -1091,6 +1093,9 @@ product GIGASET RT2573		0x0722	RT2573
 /* G.Mate, Inc products */
 product GMATE YP3X00		0x1001	YP3X00 PDA
 
+/* Garmin products */
+product GARMIN FORERUNNER305	0x0003	Forerunner 305
+
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
 
@@ -1663,6 +1668,7 @@ product OLYMPUS C700		0x0105	C-700 Ultra Zoom
 /* OmniVision Technologies, Inc. products */
 product OMNIVISION OV511	0x0511	OV511 Camera
 product OMNIVISION OV511PLUS	0xa511	OV511+ Camera
+product OMNIVISION2 PSEYE	0x2000	Sony PLAYSTATION(R) Eye
 
 /* OnSpec Electronic, Inc. */
 product ONSPEC MD2		0x0103	disk
@@ -1861,7 +1867,9 @@ product REALTEK RTL8150L	0x8150	RTL8150L USB-Ethernet Bridge
 product REALTEK RTL8151		0x8151	RTL8151 PNA
 
 /* Research In Motion */
-product RIM BLACKBERRY		0x0001	BlackBerry
+product RIM BLACKBERRY			0x0001	BlackBerry
+product RIM BLACKBERRY_PEARL_DUAL	0x0004	BlackBerry Pearl Dual
+product RIM BLACKBERRY_PEARL		0x0006	BlackBerry Pearl
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB

@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.10 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: rge.c,v 1.10.2.1 2008/06/23 04:30:39 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@ void *rge_init(unsigned, void *);
 int rge_send(void *, char *, unsigned);
 int rge_recv(void *, char *, unsigned, unsigned);
 
+struct desc {
+	uint32_t xd0, xd1, xd2, xd3;
+};
 #define T0_OWN		0x80000000	/* loaded for HW to send */
 #define T0_EOR		0x40000000	/* end of ring */
 #define T0_FS		0x20000000	/* first descriptor */
@@ -89,10 +92,6 @@ int rge_recv(void *, char *, unsigned, unsigned);
 #define R0_FRMASK	0x00003fff	/* 13:0 frame length */
 #define R1_TAVA		0x00010000	/* VTAG exists */
 #define R1_VTAG		0x0000ffff	/* TAG value */
-
-struct desc {
-	uint32_t xd0, xd1, xd2, xd3;
-};
 
 #define RGE_IDR0	0x00		/* MAC address [0] */
 #define RGE_IDR1	0x01		/* MAC address [1] */
@@ -151,6 +150,19 @@ static int mii_read(struct local *, int, int);
 static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 static void mii_dealan(struct local *, unsigned);
+
+int
+rge_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x10ec, 0x8169):
+		return 1;
+	}
+	return 0;
+}
 
 void *
 rge_init(unsigned tag, void *data)
@@ -227,7 +239,7 @@ int
 rge_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *txd;
+	volatile struct desc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
@@ -254,7 +266,7 @@ int
 rge_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *rxd;
+	volatile struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

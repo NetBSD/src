@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.217 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: uhci.c,v 1.217.2.1 2008/06/23 04:31:36 wrstuden Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.217 2008/04/28 20:23:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.217.2.1 2008/06/23 04:31:36 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,12 +424,14 @@ uhci_init(uhci_softc_t *sc)
 		uhci_dumpregs(sc);
 #endif
 
+	sc->sc_suspend = PWR_RESUME;
+
 	UWRITE2(sc, UHCI_INTR, 0);		/* disable interrupts */
 	uhci_globalreset(sc);			/* reset the controller */
 	uhci_reset(sc);
 
 #ifdef __NetBSD__
-	usb_setup_reserve(sc, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
+	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
 #endif
 
@@ -491,7 +493,7 @@ uhci_init(uhci_softc_t *sc)
 	clsqh = uhci_alloc_sqh(sc);
 	if (clsqh == NULL)
 		return (USBD_NOMEM);
-	clsqh->hlink = bsqh;
+	clsqh->hlink = chsqh;
 	clsqh->qh.qh_hlink = htole32(chsqh->physaddr | UHCI_PTR_QH);
 	clsqh->elink = NULL;
 	clsqh->qh.qh_elink = htole32(UHCI_PTR_T);
@@ -745,6 +747,7 @@ uhci_resume(device_t dv PMF_FN_ARGS)
 		uhci_dumpregs(sc);
 #endif
 
+	sc->sc_suspend = PWR_RESUME;
 	splx(s);
 
 	return true;
@@ -768,7 +771,9 @@ uhci_suspend(device_t dv PMF_FN_ARGS)
 	if (sc->sc_intr_xfer != NULL)
 		usb_uncallout(sc->sc_poll_handle, uhci_poll_hub,
 		    sc->sc_intr_xfer);
+	sc->sc_suspend = PWR_SUSPEND;
 	sc->sc_bus.use_polling++;
+
 	uhci_run(sc, 0); /* stop the controller */
 	cmd &= ~UHCI_CMD_RS;
 
@@ -2702,7 +2707,8 @@ uhci_device_intr_done(usbd_xfer_handle xfer)
 		DPRINTFN(5,("uhci_device_intr_done: requeing\n"));
 
 		/* This alloc cannot fail since we freed the chain above. */
-		uhci_alloc_std_chain(upipe, sc, xfer->length, 1, xfer->flags,
+		uhci_alloc_std_chain(upipe, sc, xfer->length,
+				     upipe->u.intr.isread, xfer->flags,
 				     &xfer->dmabuf, &data, &dataend);
 		dataend->td.td_status |= htole32(UHCI_TD_IOC);
 
@@ -3057,7 +3063,7 @@ uhci_portreset(uhci_softc_t *sc, int index)
 		    index, UREAD2(sc, port)));
 
 	x = URWMASK(UREAD2(sc, port));
-	UWRITE2(sc, port, x & ~UHCI_PORTSC_PR);
+	UWRITE2(sc, port, x & ~(UHCI_PORTSC_PR | UHCI_PORTSC_SUSP));
 
 	delay(100);
 
@@ -3306,7 +3312,13 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 			break;
 		case UHF_PORT_SUSPEND:
 			x = URWMASK(UREAD2(sc, port));
+			if (!(x & UHCI_PORTSC_SUSP)) /* not suspended */
+				break;
+			UWRITE2(sc, port, x | UHCI_PORTSC_RD);
+			/* see USB2 spec ch. 7.1.7.7 */
+			usb_delay_ms(&sc->sc_bus, 20);
 			UWRITE2(sc, port, x & ~UHCI_PORTSC_SUSP);
+			/* 10ms resume delay must be provided by caller */
 			break;
 		case UHF_PORT_RESET:
 			x = URWMASK(UREAD2(sc, port));

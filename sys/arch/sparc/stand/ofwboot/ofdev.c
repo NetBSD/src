@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.18 2007/10/17 19:57:16 garbled Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.18.22.1 2008/06/23 04:30:43 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,7 @@
 #include <lib/libsa/cd9660.h>
 #ifdef NETBOOT
 #include <lib/libsa/nfs.h>
+#include <lib/libsa/tftp.h>
 #endif
 #include <lib/libkern/libkern.h>
 
@@ -201,6 +202,7 @@ static struct fs_ops file_system_cd9660 = FS_OPS(cd9660);
 #endif
 #ifdef NETBOOT
 static struct fs_ops file_system_nfs = FS_OPS(nfs);
+static struct fs_ops file_system_tftp = FS_OPS(tftp);
 #endif
 
 struct fs_ops file_system[3];
@@ -530,13 +532,28 @@ open_again:
 	}
 #ifdef NETBOOT
 	if (!strcmp(b.buf, "network")) {
-		ofdev.type = OFDEV_NET;
-		of->f_dev = ofdevsw;
-		of->f_devdata = &ofdev;
-		bcopy(&file_system_nfs, file_system, sizeof file_system[0]);
-		nfsys = 1;
 		if (error = net_open(&ofdev))
 			goto bad;
+
+		ofdev.type = OFDEV_NET;
+		of->f_dev = ofdevsw;
+		of->f_devdata = NULL;
+
+		if (!strncmp(*file,"/tftp:",6)) {
+			*file += 6;
+			bcopy(&file_system_tftp, &file_system[0], sizeof file_system[0]);
+			if (net_tftp_bootp(&of->f_devdata)) {
+				net_close(&ofdev);
+				goto bad;
+			}
+		} else {
+			bcopy(&file_system_nfs, &file_system[0], sizeof file_system[0]);
+			if (error = net_mountroot()) {
+				net_close(&ofdev);
+				goto bad;
+			}
+		}
+		nfsys = 1;
 		return 0;
 	}
 #endif

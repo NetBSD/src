@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_iic.c,v 1.5 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: nslu2_iic.c,v 1.5.2.1 2008/06/23 04:30:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -49,9 +49,7 @@ struct slugiic_softc {
 	struct i2c_controller sc_ic;
 	struct i2c_bitbang_ops sc_ibo;
 	kmutex_t sc_lock;
-#ifdef DIAGNOSTIC
 	uint32_t sc_dirout;
-#endif
 };
 
 static int
@@ -120,42 +118,70 @@ slugiic_write_byte(void *arg, uint8_t v, int flags)
 static void
 slugiic_set_dir(void *arg, uint32_t bits)
 {
-#ifdef DIAGNOSTIC
 	struct slugiic_softc *sc = arg;
+	uint32_t reg;
+	int s;
+
+	if (sc->sc_dirout == bits)
+		return;
+
+	s = splhigh();
 
 	sc->sc_dirout = bits;
-#endif
+
+	if (sc->sc_dirout) {
+		/* SDA is output; enable SDA output if SDA OUTR is low */
+		reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
+		if ((reg & GPIO_I2C_SDA_BIT) == 0) {
+			reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOER);
+			reg |= GPIO_I2C_SDA_BIT;
+			GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, reg);
+		}
+	} else {
+		/* SDA is input; disable SDA output */
+		reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOER);
+		reg &= ~GPIO_I2C_SDA_BIT;
+		GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, reg);
+	}
+
+	splx(s);
 }
 
 static void
 slugiic_set_bits(void *arg, uint32_t bits)
 {
-	uint32_t reg;
-	int s;
-
-#ifdef DIAGNOSTIC
 	struct slugiic_softc *sc = arg;
-	if (sc->sc_dirout == 0 && (bits & GPIO_I2C_SDA_BIT) == 0) {
-		printf("slugiic_set_bits: SDA low in input mode!\n");
-		bits |= GPIO_I2C_SDA_BIT;
-	}
-#endif
+	uint32_t oer, outr;
+	int s;
 
 	s = splhigh();
 
-	reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
-	reg &= ~(GPIO_I2C_SDA_BIT | GPIO_I2C_SCL_BIT);
-	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOUTR, reg | bits);
-
 	/*
-	 * Enable output only if the SDA/SCL lines are to be driven low.
-	 * Otherwise switch to input and allow the pullup resistors
-	 * to hold them high.
+	 * Enable SCL output if the SCL line is to be driven low.
+	 * Enable SDA output if the SDA line is to be driven low and
+	 * SDA direction is output.
+	 * Otherwise switch them to input even if directions are output
+	 * so that we can emulate open collector output with the pullup
+	 * resistors.
+	 * If lines are to be set to high, disable OER first then set OUTR.
+	 * If lines are to be set to low, set OUTR first then enable OER.
 	 */
-	reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOER);
-	reg &= ~(GPIO_I2C_SDA_BIT | GPIO_I2C_SCL_BIT);
-	reg |= bits & (GPIO_I2C_SDA_BIT | GPIO_I2C_SCL_BIT);
-	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, reg);
+	oer = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOER);
+	if ((bits & GPIO_I2C_SCL_BIT) != 0)
+		oer &= ~GPIO_I2C_SCL_BIT;
+	if ((bits & GPIO_I2C_SDA_BIT) != 0)
+		oer &= ~GPIO_I2C_SDA_BIT;
+	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, oer);
+
+	outr = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
+	outr &= ~(GPIO_I2C_SDA_BIT | GPIO_I2C_SCL_BIT);
+	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOUTR, outr | bits);
+
+	if ((bits & GPIO_I2C_SCL_BIT) == 0)
+		oer |= GPIO_I2C_SCL_BIT;
+	if ((bits & GPIO_I2C_SDA_BIT) == 0 && sc->sc_dirout)
+		oer |= GPIO_I2C_SDA_BIT;
+	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, oer);
 
 	splx(s);
 }
@@ -164,12 +190,6 @@ static uint32_t
 slugiic_read_bits(void *arg)
 {
 	uint32_t reg;
-
-#ifdef DIAGNOSTIC
-	struct slugiic_softc *sc = arg;
-	if (sc->sc_dirout)
-		printf("slugiic_read_bits: Read in output mode\n");
-#endif
 
 	reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPINR);
 	return (reg & (GPIO_I2C_SDA_BIT | GPIO_I2C_SCL_BIT));
@@ -230,9 +250,7 @@ slugiic_attach(struct device *parent, struct device *self, void *arg)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
-#ifdef DIAGNOSTIC
 	sc->sc_dirout = 0;
-#endif
 
 	/*
 	 * Defer until ixp425_softc has been initialised

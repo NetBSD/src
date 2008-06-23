@@ -78,8 +78,7 @@ if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;1
 MT_SPECIAL_RETURN=0
 MT_SPECIAL_SWITCH=
 _VC_MANIFEST_EMBED_EXE= \
-if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).
-auto.manifest $(MT_SPECIAL_SWITCH) & \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
 if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
 rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
 link $** /out:$@ $(LFLAGS)
@@ -135,6 +134,7 @@ CLEAN :
 	-@erase "$(INTDIR)\hex.obj"
 	-@erase "$(INTDIR)\hmacmd5.obj"
 	-@erase "$(INTDIR)\hmacsha.obj"
+	-@erase "$(INTDIR)\httpd.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\inet_ntop.obj"
 	-@erase "$(INTDIR)\inet_pton.obj"
@@ -241,6 +241,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\hex.obj" \
 	"$(INTDIR)\hmacmd5.obj" \
 	"$(INTDIR)\hmacsha.obj" \
+	"$(INTDIR)\httpd.obj" \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\inet_ntop.obj" \
 	"$(INTDIR)\inet_pton.obj" \
@@ -333,6 +334,8 @@ CLEAN :
 	-@erase "$(INTDIR)\hmacmd5.sbr"
 	-@erase "$(INTDIR)\hmacsha.obj"
 	-@erase "$(INTDIR)\hmacsha.sbr"
+	-@erase "$(INTDIR)\httpd.obj"
+	-@erase "$(INTDIR)\httpd.sbr"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\inet_aton.sbr"
 	-@erase "$(INTDIR)\inet_ntop.obj"
@@ -486,6 +489,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\hex.sbr" \
 	"$(INTDIR)\hmacmd5.sbr" \
 	"$(INTDIR)\hmacsha.sbr" \
+	"$(INTDIR)\httpd.sbr" \
 	"$(INTDIR)\inet_aton.sbr" \
 	"$(INTDIR)\inet_ntop.sbr" \
 	"$(INTDIR)\inet_pton.sbr" \
@@ -566,6 +570,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\hex.obj" \
 	"$(INTDIR)\hmacmd5.obj" \
 	"$(INTDIR)\hmacsha.obj" \
+	"$(INTDIR)\httpd.obj" \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\inet_ntop.obj" \
 	"$(INTDIR)\inet_pton.obj" \
@@ -1281,6 +1286,24 @@ SOURCE=..\hmacsha.c
 
 !ENDIF 
 
+SOURCE=..\httpd.c
+
+!IF  "$(CFG)" == "libisc - Win32 Release"
+
+
+"$(INTDIR)\httpd.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - Win32 Debug"
+
+
+"$(INTDIR)\httpd.obj"	"$(INTDIR)\httpd.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
 SOURCE=..\inet_aton.c
 
 !IF  "$(CFG)" == "libisc - Win32 Release"
@@ -1564,6 +1587,24 @@ SOURCE=..\quota.c
 
 
 "$(INTDIR)\quota.obj"	"$(INTDIR)\quota.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\radix.c
+
+!IF  "$(CFG)" == "libisc - Win32 Release"
+
+
+"$(INTDIR)\radix.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - Win32 Debug"
+
+
+"$(INTDIR)\radix.obj"	"$(INTDIR)\radix.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

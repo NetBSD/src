@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.9 2008/05/03 06:11:19 yamt Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.9.2.1 2008/06/23 04:30:26 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.9 2008/05/03 06:11:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.9.2.1 2008/06/23 04:30:26 wrstuden Exp $");
 
 #include "opt_xen.h"
 
@@ -89,13 +89,13 @@ ENTRY(rcr4)
 	ret
 END(rcr4)
 
-NENTRY(x86_read_flags)
+ENTRY(x86_read_flags)
 	pushfl
 	popl	%eax
 	ret
 END(x86_read_flags)
 
-NENTRY(x86_write_flags)
+ENTRY(x86_write_flags)
 	movl	4(%esp), %eax
 	pushl	%eax
 	popfl
@@ -141,10 +141,18 @@ ENTRY(wrmsr_locked)
 	ret
 END(wrmsr_locked)
 
-ENTRY(rdtsc)
+ENTRY(cpu_counter)
 	rdtsc
+	addl	CPUVAR(CC_SKEW), %eax
+	adcl	CPUVAR(CC_SKEW+4), %edx
 	ret
-END(rdtsc)
+END(cpu_counter)
+
+ENTRY(cpu_counter32)
+	rdtsc
+	addl	CPUVAR(CC_SKEW), %eax
+	ret
+END(cpu_counter32)
 
 ENTRY(rdpmc)
 	movl	4(%esp), %ecx
@@ -152,7 +160,7 @@ ENTRY(rdpmc)
 	ret
 END(rdpmc)
 
-NENTRY(breakpoint)
+ENTRY(breakpoint)
 	pushl	%ebp
 	movl	%esp, %ebp
 	int	$0x03		/* paranoid, not 'int3' */
@@ -160,21 +168,21 @@ NENTRY(breakpoint)
 	ret
 END(breakpoint)
 
-NENTRY(x86_atomic_testset_ul)
+ENTRY(x86_atomic_testset_ul)
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax
 	xchgl	%eax, (%ecx)
 	ret
 END(x86_atomic_testset_ul)
 
-NENTRY(x86_atomic_testset_i)
+ENTRY(x86_atomic_testset_i)
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax
 	xchgl	%eax, (%ecx)
 	ret
 END(x86_atomic_testset_i)
 
-NENTRY(x86_atomic_testset_b)
+ENTRY(x86_atomic_testset_b)
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax
 	xchgb	%al, (%ecx)
@@ -182,7 +190,7 @@ NENTRY(x86_atomic_testset_b)
 	ret
 END(x86_atomic_testset_b)
 
-NENTRY(x86_atomic_setbits_l)
+ENTRY(x86_atomic_setbits_l)
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax
 	lock
@@ -190,7 +198,7 @@ NENTRY(x86_atomic_setbits_l)
 	ret
 END(x86_atomic_setbits_l)
 
-NENTRY(x86_atomic_clearbits_l)
+ENTRY(x86_atomic_clearbits_l)
 	movl	4(%esp), %ecx
 	movl	8(%esp), %eax
 	notl	%eax
@@ -199,17 +207,17 @@ NENTRY(x86_atomic_clearbits_l)
 	ret
 END(x86_atomic_clearbits_l)
 
-NENTRY(x86_curcpu)
+ENTRY(x86_curcpu)
 	movl	%fs:(CPU_INFO_SELF), %eax
 	ret
 END(x86_curcpu)
 
-NENTRY(x86_curlwp)
+ENTRY(x86_curlwp)
 	movl	%fs:(CPU_INFO_CURLWP), %eax
 	ret
 END(x86_curlwp)
 
-NENTRY(cpu_set_curpri)
+ENTRY(cpu_set_curpri)
 	movl	4(%esp), %eax
 	movl	%eax, %fs:(CPU_INFO_CURPRIORITY)
 	ret
@@ -232,7 +240,7 @@ END(__byte_swap_u16_variable)
  *
  * Flush instruction pipelines by doing an intersegment (far) return.
  */
-NENTRY(x86_flush)
+ENTRY(x86_flush)
 	popl	%eax
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
 	pushl	%eax
@@ -240,7 +248,7 @@ NENTRY(x86_flush)
 END(x86_flush)
 
 /* Waits - set up stack frame. */
-NENTRY(x86_hlt)
+ENTRY(x86_hlt)
 	pushl	%ebp
 	movl	%esp, %ebp
 	hlt
@@ -249,7 +257,7 @@ NENTRY(x86_hlt)
 END(x86_hlt)
 
 /* Waits - set up stack frame. */
-NENTRY(x86_stihlt)
+ENTRY(x86_stihlt)
 	pushl	%ebp
 	movl	%esp, %ebp
 	sti
@@ -258,7 +266,7 @@ NENTRY(x86_stihlt)
 	ret
 END(x86_stihlt)
 
-NENTRY(x86_monitor)
+ENTRY(x86_monitor)
 	movl	4(%esp), %eax
 	movl	8(%esp), %ecx
 	movl	12(%esp), %edx
@@ -267,7 +275,7 @@ NENTRY(x86_monitor)
 END(x86_monitor)
 
 /* Waits - set up stack frame. */
-NENTRY(x86_mwait)  
+ENTRY(x86_mwait)  
 	pushl	%ebp
 	movl	%esp, %ebp
 	movl	8(%ebp), %eax
@@ -277,7 +285,7 @@ NENTRY(x86_mwait)
 	ret
 END(x86_mwait)  
 
-NENTRY(x86_pause)
+ENTRY(x86_pause)
 	pause
 	ret
 END(x86_pause)
@@ -356,12 +364,12 @@ ENTRY(fwait)
 	ret
 END(fwait)
 
-NENTRY(clts)
+ENTRY(clts)
 	clts
 	ret
 END(clts)
 
-NENTRY(stts)
+ENTRY(stts)
 	movl	%cr0, %eax
 	orl	$CR0_TS, %eax
 	movl	%eax, %cr0

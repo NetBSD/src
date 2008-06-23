@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_need_resched.9,v 1.6 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: cpu_need_resched.9,v 1.6.2.1 2008/06/23 04:30:03 wrstuden Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,8 +49,7 @@ This event may occur if a higher priority LWP appears on the run
 queue or if the current LWP has exceeded its time slice.
 .Pp
 If
-.Dv
-RESCHED_IMMED
+.Dv RESCHED_IMMED
 flag is specified in
 .Fa flags ,
 machine-dependent code should make a context switch happen as soon as possible.
@@ -76,5 +75,5 @@ Send an inter processor interrupt to wake up
 .Fn cpu_idle .
 .El
 .Sh SEE ALSO
-.Xr scheduler 9 ,
+.Xr sched_4bsd 9 ,
 .Xr userret 9

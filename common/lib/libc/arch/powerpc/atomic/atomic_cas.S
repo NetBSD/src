@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.5 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.5.2.1 2008/06/23 04:26:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_cas_32)
+ENTRY(_atomic_cas_32)
 1:	lwarx	%r10,0,%r3
 	cmpw	%r10,%r4
 	bne-	2f

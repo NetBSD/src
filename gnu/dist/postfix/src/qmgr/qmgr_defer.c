@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_defer.c,v 1.1.1.6 2007/05/19 16:28:29 heas Exp $	*/
+/*	$NetBSD: qmgr_defer.c,v 1.1.1.6.12.1 2008/06/23 04:29:22 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -61,7 +61,7 @@
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*
-/*	Scheduler enhancements:
+/*	Preemptive scheduler enhancements:
 /*	Patrik Rak
 /*	Modra 6
 /*	155 00, Prague, Czech Republic

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.111 2008/04/28 20:23:56 martin Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.111.2.1 2008/06/23 04:31:25 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.111 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.111.2.1 2008/06/23 04:31:25 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -214,6 +214,8 @@ wdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 	bus_size_t offset;
 	int i;
 	int error;
+
+	aprint_naive("\n");
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_pf = pa->pf;

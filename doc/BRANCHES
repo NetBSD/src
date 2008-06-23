@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.250 2008/04/27 12:53:25 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.250.4.1 2008/06/23 04:29:01 wrstuden Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -505,7 +505,26 @@ Notes:		This branch is based off of the netbsd-4 branch!
 		include not allocating memory while preparing to tsleep(),
 		reducing inappropriate upcall delivery (hopefully also
 		eliminating the need to mlock stacks), and being
-		able to pthread_kill() running threads.
+		able to pthread_kill() running threads. At this date,
+		most goals have been achieved. This branch also includes
+		fixes to gdb to support working with threaded apps.
+
+Branch:  	wrstuden-revivesa
+Description:	Fix a number of issues present with Scheduler Activations.
+Status: 	Active
+Start Date:	10 May 2008
+End Date:
+Base Tag:	wrstuden-revivesa-base
+Maintainer:	Bill Stouder-Studenmund <wrstuden@NetBSD.org>
+Scope:		src, though all the interesting stuff is in the kernel
+Notes:		This branch is intended to revive Scheduler Activations
+		in -current in the 5.0 era. This branch's main goal is
+		to re-add syscall compatability so that SA-based libpthread
+		programs can run with a -current kernel. 1:1 threading will
+		remain the NetBSD-default. This branch will re-add necessary
+		upcall support, and will also serve as a chance to clean
+		out cruft that had accumulated in the implementation over
+		time.
 
 Branch:		yamt-kmem
 Description:	
@@ -529,21 +548,10 @@ Description:	make nfs client mp-safe
 Status:		Active
 Start Date:	Sun Apr 27 2008
 End Date:	
-Base Tag:	yamt-nfs-mp-base
+Base Tag:	yamt-nfs-mp-base2
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
-
-Branch:		yamt-pf42
-Description:	import newer pf from OpenBSD 4.2
-Status:		Active
-Start Date:	Sat Apr 19 2008
-End Date:	
-Base Tag:	yamt-pf42-base
-Maintainer:	Peter Postma <peter@NetBSD.org>,
-		YAMAMOTO Takashi <yamt@NetBSD.org>
-Scope:		src
-Notes:		see sys/dist/pf/net/TODO
 
 Branch:		reinoud-bufcleanup
 Description:	implement and evaluate struct buf usage cleanup strategies.
@@ -577,6 +585,27 @@ Maintainer:	Reinoud Zandijk <reinoud@NetBSD.org>
 Scope:		src/sys and src/common
 Notes:		Used as experiment sandbox and if successful hopefully one day
 		to be integrated.
+
+Branch:		simonb-wapbl
+Description:	Wasabi's journaling filesystem support
+Status:		Active
+Start Date:	Tue Jun 10 2008
+End Date:
+Base Tag:	simonb-wapbl-base
+Maintainer:	Simon Burge <simonb@NetBSD.org>
+Scope:		src/distrib/sets/lists/comp src/distrib/utils/sysinst
+		src/include
+		src/sbin/fsck_ffs src/sbin/fsdb src/sbin/mount_ffs
+		src/sys
+Notes:		Still has a number of issues:
+		 - Can't log the root filesystem (or any FS if /dev isn't an
+		   ffs) or update existing mounts from non-logged to logged.
+		   See kern/38057 - a fix for the PR has been committed but
+		   at this stage it doesn't play well with WAPBL.
+		 - Log must currently live at end of partition.
+		 - No log locators.
+		 - Some heavy workload performance issues on SMP machines.
+		 - Some stability issues on SMP machines.
 
 Branch:		thorpej-atomic
 Description:	Implementation of an atomic memory operations API modeled
@@ -1443,6 +1472,17 @@ Base Tag:	yamt-pdpolicy-base9
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
+
+Branch:		yamt-pf42
+Description:	import newer pf from OpenBSD 4.2
+Status:		Terminated; merged to -current
+Start Date:	Sat Apr 19 2008
+End Date:	Wed Jun 18 2008
+Base Tag:	yamt-pf42-base4
+Maintainer:	Peter Postma <peter@NetBSD.org>,
+		YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src
+Notes:		see sys/dist/pf/net/TODO
 
 Branch:		yamt-readahead
 Description:	play with file readahead

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_pton.c,v 1.4 2007/03/30 20:23:03 ghen Exp $	*/
+/*	$NetBSD: inet_cidr_pton.c,v 1.4.12.1 2008/06/23 04:29:31 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.5.18.1 2005/04/27 05:00:53 sra Exp";
+static const char rcsid[] = "Id: inet_cidr_pton.c,v 1.6 2005/04/27 04:56:19 sra Exp";
 #else
-__RCSID("$NetBSD: inet_cidr_pton.c,v 1.4 2007/03/30 20:23:03 ghen Exp $");
+__RCSID("$NetBSD: inet_cidr_pton.c,v 1.4.12.1 2008/06/23 04:29:31 wrstuden Exp $");
 #endif
 #endif
 

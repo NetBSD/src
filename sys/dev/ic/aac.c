@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.39 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: aac.c,v 1.39.2.1 2008/06/23 04:31:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.39 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.39.2.1 2008/06/23 04:31:04 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,7 +862,7 @@ aac_shutdown(void *cookie)
 	u_int32_t i;
 
 	for (i = 0; i < aac_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup(&aac_cd, i)) == NULL)
+		if ((sc = device_lookup_private(&aac_cd, i)) == NULL)
 			continue;
 		if ((sc->sc_flags & AAC_ONLINE) == 0)
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.14 2008/05/04 21:35:12 rumble Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.14.2.1 2008/06/23 04:31:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,16 +28,12 @@
 
 /*
  * Kernel module support.
- *
- * XXX Deps for loadable modules don't work, because we must load the
- * module in order to find out which modules it requires.  Linking may
- * fail because of missing symbols.
  */
 
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.14 2008/05/04 21:35:12 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.14.2.1 2008/06/23 04:31:50 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.14 2008/05/04 21:35:12 rumble Exp 
 #include <sys/kobj.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
-#include <sys/syscall.h>
-#include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -61,6 +56,7 @@ struct vm_map *lkm_map;
 struct modlist	module_list = TAILQ_HEAD_INITIALIZER(module_list);
 struct modlist	module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
 static module_t	*module_active;
+static char	module_base[64];
 u_int		module_count;
 kmutex_t	module_lock;
 
@@ -70,7 +66,7 @@ __link_set_add_rodata(modules, module_dummy);
 
 static module_t	*module_lookup(const char *);
 static int	module_do_load(const char *, bool, int, prop_dictionary_t,
-		    module_t **);
+		    module_t **, modclass_t class, bool);
 static int	module_do_unload(const char *);
 static void	module_error(const char *, ...);
 static int	module_do_builtin(const char *, module_t **);
@@ -108,6 +104,15 @@ module_init(void)
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
 #ifdef MODULAR	/* XXX */
 	module_init_md();
+#endif
+
+#if __NetBSD_Version__ / 1000000 % 100 == 99	/* -current */
+	snprintf(module_base, sizeof(module_base), "/stand/%s/%s/modules",
+	    machine, osrelease);
+#else						/* release */
+	snprintf(module_base, sizeof(module_base), "/stand/%s/%d.%d/modules",
+	    machine, __NetBSD_Version__ / 100000000,
+	    __NetBSD_Version__ / 1000000 % 100);
 #endif
 }
 
@@ -148,7 +153,8 @@ module_init_class(modclass_t class)
 			if (class != MODULE_CLASS_ANY &&
 			    class != mi->mi_class)
 				continue;
-			module_do_load(mi->mi_name, false, 0, NULL, NULL);
+			module_do_load(mi->mi_name, false, 0, NULL, NULL,
+			    class, true);
 			break;
 		}
 	} while (mod != NULL);
@@ -156,15 +162,23 @@ module_init_class(modclass_t class)
 }
 
 /*
- * module_jettison:
+ * module_compatible:
  *
- *	Return memory used by pre-loaded modules to the freelist.
+ *	Return true if the two supplied kernel versions are said to
+ *	have the same binary interface for kernel code.  The entire
+ *	version is signficant for the development tree (-current),
+ *	major and minor versions are significant for official
+ *	releases of the system.
  */
-void
-module_jettison(void)
+static bool
+module_compatible(int v1, int v2)
 {
 
-	/* XXX nothing yet */
+#if __NetBSD_Version__ / 1000000 % 100 == 99	/* -current */
+	return v1 == v2;
+#else						/* release */
+	return abs(v1 - v2) < 10000;
+#endif
 }
 
 /*
@@ -173,12 +187,21 @@ module_jettison(void)
  *	Load a single module from the file system.
  */
 int
-module_load(const char *filename, int flags, prop_dictionary_t props)
+module_load(const char *filename, int flags, prop_dictionary_t props,
+	    modclass_t class, bool autoload)
 {
 	int error;
 
+	/* Authorize. */
+	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
+	    0, (void *)(uintptr_t)MODCTL_LOAD, NULL, NULL);
+	if (error != 0) {
+		return error;
+	}
+
 	mutex_enter(&module_lock);
-	error = module_do_load(filename, false, flags, props, NULL);
+	error = module_do_load(filename, false, flags, props, NULL, class,
+	    autoload);
 	mutex_exit(&module_lock);
 
 	return error;
@@ -193,6 +216,13 @@ int
 module_unload(const char *name)
 {
 	int error;
+
+	/* Authorize. */
+	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
+	    0, (void *)(uintptr_t)MODCTL_UNLOAD, NULL, NULL);
+	if (error != 0) {
+		return error;
+	}
 
 	mutex_enter(&module_lock);
 	error = module_do_unload(name);
@@ -385,7 +415,8 @@ module_do_builtin(const char *name, module_t **modp)
  */
 static int
 module_do_load(const char *filename, bool isdep, int flags,
-    prop_dictionary_t props, module_t **modp)
+	       prop_dictionary_t props, module_t **modp, modclass_t class,
+	       bool autoload)
 {
 	static TAILQ_HEAD(,module) pending = TAILQ_HEAD_INITIALIZER(pending);
 	static int depth;
@@ -397,7 +428,6 @@ module_do_load(const char *filename, bool isdep, int flags,
 	int error;
 	size_t len;
 	u_int i;
-	bool closed = false;
 
 	KASSERT(mutex_owned(&module_lock));
 
@@ -433,16 +463,9 @@ module_do_load(const char *filename, bool isdep, int flags,
 			depth--;
 			return ENOMEM;
 		}
-		error = kobj_open_file(&mod->mod_kobj, filename);
+		error = kobj_load_file(&mod->mod_kobj, filename, module_base,
+		    autoload);
 		if (error != 0) {
-			kmem_free(mod, sizeof(*mod));
-			depth--;
-			module_error("unable to open object file");
-			return error;
-		}
-		error = kobj_load(mod->mod_kobj);
-		if (error != 0) {
-			kobj_close(mod->mod_kobj);
 			kmem_free(mod, sizeof(*mod));
 			depth--;
 			module_error("unable to load kernel object");
@@ -463,6 +486,20 @@ module_do_load(const char *filename, bool isdep, int flags,
 	if (strlen(mi->mi_name) >= MAXMODNAME) {
 		error = EINVAL;
 		module_error("module name too long");
+		goto fail;
+	}
+	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
+		error = EPROGMISMATCH;
+		module_error("module built for different version of system");
+		goto fail;
+	}
+
+	/*
+	 * If a specific kind of module was requested, ensure that we have
+	 * a match.
+	 */
+	if (class != MODULE_CLASS_ANY && class != mi->mi_class) {
+		error = ENOENT;
 		goto fail;
 	}
 
@@ -502,24 +539,6 @@ module_do_load(const char *filename, bool isdep, int flags,
 	}
 
 	/*
-	 * Pass proper name to kobj.  This will register the module
-	 * with the ksyms framework.
-	 */
-	error = kobj_set_name(mod->mod_kobj, mi->mi_name);
-	if (error != 0) {
-		module_error("unable to set name");
-		goto fail;
-	}
-
-	/*
-	 * Close the kobj before handling dependencies since we're done
-	 * with it and don't want to open an already locked file if a
-	 * circular dependency exists.
-	 */
-	kobj_close(mod->mod_kobj);
-	closed = true;
-
-	/*
 	 * Now try to load any requisite modules.
 	 */
 	if (mi->mi_required != NULL) {
@@ -549,15 +568,23 @@ module_do_load(const char *filename, bool isdep, int flags,
 				goto fail;
 			}
 			error = module_do_load(buf, true, flags, NULL,
-			    &mod->mod_required[mod->mod_nrequired++]);
+			    &mod->mod_required[mod->mod_nrequired++],
+			    MODULE_CLASS_ANY, true);
 			if (error != 0 && error != EEXIST)
 				goto fail;
 		}
 	}
 
 	/*
-	 * We loaded all needed modules successfully: initialize.
+	 * We loaded all needed modules successfully: perform global
+	 * relocations and initialize.
 	 */
+	error = kobj_affix(mod->mod_kobj, mi->mi_name);
+	if (error != 0) {
+		module_error("unable to affix module");
+		goto fail2;
+	}
+
 	KASSERT(module_active == NULL);
 	module_active = mod;
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
@@ -572,8 +599,6 @@ module_do_load(const char *filename, bool isdep, int flags,
 	 * list and add references to its requisite modules.
 	 */
 	module_count++;
-	if (!closed)
-		kobj_close(mod->mod_kobj);
 	TAILQ_REMOVE(&pending, mod, mod_chain);
 	TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
 	for (i = 0; i < mod->mod_nrequired; i++) {
@@ -587,10 +612,9 @@ module_do_load(const char *filename, bool isdep, int flags,
 	return 0;
 
  fail:
-	if (!closed)
-		kobj_close(mod->mod_kobj);
-	TAILQ_REMOVE(&pending, mod, mod_chain);
 	kobj_unload(mod->mod_kobj);
+ fail2:
+	TAILQ_REMOVE(&pending, mod, mod_chain);
 	kmem_free(mod, sizeof(*mod));
 	depth--;
 	return error;
@@ -655,23 +679,14 @@ module_prime(void *base, size_t size)
 	}
 	mod->mod_source = MODULE_SOURCE_BOOT;
 
-	error = kobj_open_mem(&mod->mod_kobj, base, size);
+	error = kobj_load_mem(&mod->mod_kobj, base, size);
 	if (error != 0) {
-		kmem_free(mod, sizeof(*mod));
-		module_error("unable to open object pushed by boot loader");
-		return error;
-	}
-
-	error = kobj_load(mod->mod_kobj);
-	if (error != 0) {
-		kobj_close(mod->mod_kobj);
 		kmem_free(mod, sizeof(*mod));
 		module_error("unable to load object pushed by boot loader");
 		return error;
 	}
 	error = module_fetch_info(mod);
 	if (error != 0) {
-		kobj_close(mod->mod_kobj);
 		kobj_unload(mod->mod_kobj);
 		kmem_free(mod, sizeof(*mod));
 		module_error("unable to load object pushed by boot loader");

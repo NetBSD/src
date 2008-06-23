@@ -1,4 +1,4 @@
-/*	$NetBSD: myproposal.h,v 1.5 2007/12/20 14:14:04 martin Exp $	*/
+/*	$NetBSD: myproposal.h,v 1.5.6.1 2008/06/23 04:27:02 wrstuden Exp $	*/
 /* $OpenBSD: myproposal.h,v 1.22 2007/06/07 19:37:34 pvalchev Exp $ */
 
 /*
@@ -35,6 +35,8 @@
 	"arcfour128,arcfour256,arcfour," \
 	"aes192-cbc,aes256-cbc,rijndael-cbc@lysator.liu.se," \
 	"aes128-ctr,aes192-ctr,aes256-ctr"
+#define KEX_ENCRYPT_INCLUDE_NONE KEX_DEFAULT_ENCRYPT \
+	",none"
 
 #ifdef UMAC_HAS_BEEN_UNBROKEN
 #define	KEX_DEFAULT_MAC \

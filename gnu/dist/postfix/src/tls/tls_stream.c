@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_stream.c,v 1.1.1.2 2006/07/19 01:17:40 rpaulo Exp $	*/
+/*	$NetBSD: tls_stream.c,v 1.1.1.2.20.1 2008/06/23 04:29:25 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -11,7 +11,7 @@
 /*
 /*	void	tls_stream_start(stream, context)
 /*	VSTREAM	*stream;
-/*	TLScontext_t *context;
+/*	TLS_SESS_STATE *context;
 /*
 /*	void	tls_stream_stop(stream)
 /*	VSTREAM	*stream;
@@ -74,9 +74,9 @@ static ssize_t tls_timed_read(int fd, void *buf, size_t len, int timeout,
 {
     const char *myname = "tls_timed_read";
     ssize_t ret;
-    TLScontext_t *TLScontext;
+    TLS_SESS_STATE *TLScontext;
 
-    TLScontext = (TLScontext_t *) context;
+    TLScontext = (TLS_SESS_STATE *) context;
     if (!TLScontext)
 	msg_panic("%s: no context", myname);
 
@@ -93,9 +93,9 @@ static ssize_t tls_timed_write(int fd, void *buf, size_t len, int timeout,
 			               void *context)
 {
     const char *myname = "tls_timed_write";
-    TLScontext_t *TLScontext;
+    TLS_SESS_STATE *TLScontext;
 
-    TLScontext = (TLScontext_t *) context;
+    TLScontext = (TLS_SESS_STATE *) context;
     if (!TLScontext)
 	msg_panic("%s: no context", myname);
 
@@ -107,7 +107,7 @@ static ssize_t tls_timed_write(int fd, void *buf, size_t len, int timeout,
 
 /* tls_stream_start - start VSTREAM over TLS */
 
-void    tls_stream_start(VSTREAM *stream, TLScontext_t *context)
+void    tls_stream_start(VSTREAM *stream, TLS_SESS_STATE *context)
 {
     vstream_control(stream,
 		    VSTREAM_CTL_READ_FN, tls_timed_read,

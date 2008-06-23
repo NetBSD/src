@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.106.4.2 2008/05/14 01:35:13 wrstuden Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.106.4.3 2008/06/23 04:31:51 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.106.4.2 2008/05/14 01:35:13 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.106.4.3 2008/06/23 04:31:51 wrstuden Exp $");
 
 #include "opt_compat_43.h"
 
@@ -85,9 +85,7 @@ sys_getpid_with_ppid(struct lwp *l, const void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 
 	retval[0] = p->p_pid;
-	mutex_enter(proc_lock);
-	retval[1] = p->p_pptr->p_pid;
-	mutex_exit(proc_lock);
+	retval[1] = p->p_ppid;
 	return (0);
 }
 
@@ -97,9 +95,7 @@ sys_getppid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
-	mutex_enter(proc_lock);
-	*retval = p->p_pptr->p_pid;
-	mutex_exit(proc_lock);
+	*retval = p->p_ppid;
 	return (0);
 }
 

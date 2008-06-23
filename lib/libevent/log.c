@@ -1,3 +1,4 @@
+/*	$NetBSD: log.c,v 1.1.20.1 2008/06/23 04:29:53 wrstuden Exp $	*/
 /*	$OpenBSD: err.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -40,7 +41,6 @@
 #include "config.h"
 
 #include <sys/types.h>
-#include <sys/tree.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>

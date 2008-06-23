@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.102 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.102.2.1 2008/06/23 04:32:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.102 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.102.2.1 2008/06/23 04:32:01 wrstuden Exp $");
 
 #include "opt_nfs.h"
 
@@ -314,8 +314,10 @@ nfs_reclaim(v)
 	 * large file handle structures that might be associated with
 	 * this nfs node.
 	 */
-	if (vp->v_type == VDIR && np->n_dircache)
+	if (vp->v_type == VDIR && np->n_dircache != NULL) {
+		nfs_invaldircache(vp, NFS_INVALDIRCACHE_FORCE);
 		hashdone(np->n_dircache, HASH_LIST, nfsdirhashmask);
+	}
 	KASSERT(np->n_dirgens == NULL);
 
 	if (np->n_fhsize > NFS_SMALLFH)

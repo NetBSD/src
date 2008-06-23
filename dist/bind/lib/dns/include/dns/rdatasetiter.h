@@ -1,10 +1,10 @@
-/*	$NetBSD: rdatasetiter.h,v 1.1.1.4 2007/01/27 21:07:43 christos Exp $	*/
+/*	$NetBSD: rdatasetiter.h,v 1.1.1.4.12.1 2008/06/23 04:28:16 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdatasetiter.h,v 1.15.18.2 2005/04/29 00:16:19 marka Exp */
+/* Id: rdatasetiter.h,v 1.21 2007/06/19 23:47:17 tbox Exp */
 
 #ifndef DNS_RDATASETITER_H
 #define DNS_RDATASETITER_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/rdatasetiter.h
  * \brief
  * The DNS Rdataset Iterator interface allows iteration of all of the
  * rdatasets at a node.

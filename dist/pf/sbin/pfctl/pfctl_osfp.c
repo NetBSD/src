@@ -1,5 +1,5 @@
-/*	$NetBSD: pfctl_osfp.c,v 1.6 2006/03/21 20:31:56 christos Exp $	*/
-/*	$OpenBSD: pfctl_osfp.c,v 1.12 2005/02/17 13:18:00 aaron Exp $ */
+/*	$NetBSD: pfctl_osfp.c,v 1.6.20.1 2008/06/23 04:28:53 wrstuden Exp $	*/
+/*	$OpenBSD: pfctl_osfp.c,v 1.15 2006/12/13 05:10:15 itojun Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -21,12 +21,12 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#ifdef __NetBSD__
-#include <netinet/in.h>
-#endif
-
 #include <net/if.h>
 #include <net/pfvar.h>
+
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -244,6 +244,10 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 		strlcpy(fp.fp_os.fp_subtype_nm, subtype,
 		    sizeof(fp.fp_os.fp_subtype_nm));
 
+		add_fingerprint(dev, opts, &fp);
+
+		fp.fp_flags |= (PF_OSFP_DF | PF_OSFP_INET6);
+		fp.fp_psize += sizeof(struct ip6_hdr) - sizeof(struct ip);
 		add_fingerprint(dev, opts, &fp);
 	}
 
@@ -769,7 +773,6 @@ sort_name_list(int opts, struct name_list *nml)
 			LIST_INSERT_AFTER(nmlast, nm, nm_entry);
 		nmlast = nm;
 	}
-	return;
 }
 
 /* parse the next integer in a formatted config file line */

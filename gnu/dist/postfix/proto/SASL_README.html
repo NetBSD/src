@@ -28,19 +28,23 @@ Dovecot provides an alternative that may be worth considering.
 
 <h2><a name="intro">How Postfix uses SASL authentication information</a></h2>
 
-<p> Postfix SASL support (RFC 2554) can be used to authenticate
+<p> Postfix SASL support (RFC 4954, formerly RFC 2554) can be used
+to authenticate
 remote SMTP clients to the Postfix SMTP server, and to authenticate
 the Postfix SMTP client to a remote SMTP server.  </p>
 
-<p> When receiving mail, Postfix logs the client-provided username,
+<p> When receiving mail, the Postfix SMTP server logs the client-provided
+username,
 authentication method, and sender address to the maillog file, and
 optionally grants mail access via the permit_sasl_authenticated
 UCE restriction. </p>
 
-<p> When sending mail, Postfix can look up the server hostname or
-destination domain (the address right-hand part) in a Postfix SASL password
+<p> When sending mail, the Postfix SMTP client can look up the
+remote SMTP server hostname or
+destination domain (the address right-hand part) in a SASL password
 table, and if a username/password is found, it will use that username
-and password to authenticate to the server.  And as of version 2.3,
+and password to authenticate to the remote SMTP server.  And as of
+version 2.3,
 Postfix can be configured to search its SASL password table by the
 sender email address. </p>
 
@@ -74,6 +78,9 @@ Postfix SMTP server</a></li>
 
 <li><a href="#client_sasl">Enabling SASL authentication in the
 Postfix SMTP client</a></li>
+
+<li><a href="#client_sasl_sender">Supporting multiple ISP accounts
+in the Postfix SMTP client</a></li>
 
 <li><a href="#credits">Credits</a>
 
@@ -112,6 +119,11 @@ Postfix versions. </p>
 
 <h2><a name="build_dovecot">Building Postfix with Dovecot SASL
 support</a></h2>
+
+<p> These instructions assume that you build Postfix from source
+code as described in the INSTALL document. Some modification may   
+be required if you build Postfix from a vendor-specific source
+package.  </p>
 
 <p> Support for the Dovecot version 1 SASL protocol is available
 in Postfix 2.3 and later.  At the time
@@ -169,6 +181,11 @@ authentication method, specify ``./configure --enable-login''. </p>
 
 <h2><a name="build_postfix">Building Postfix with Cyrus SASL support</a></h2>
 
+<p> These instructions assume that you build Postfix from source
+code as described in the INSTALL document. Some modification may   
+be required if you build Postfix from a vendor-specific source
+package.  </p>
+
 <p> The following
 assumes that the Cyrus SASL include files are in /usr/local/include,
 and that the Cyrus SASL libraries are in /usr/local/lib. </p>
@@ -224,7 +241,7 @@ otherwise ld.so will not find the SASL shared library: </p>
 <h2><a name="server_sasl">Enabling SASL authentication in the Postfix
 SMTP server</a></h2>
 
-<p> In order to enable SASL support in the SMTP server: </p>
+<p> In order to enable SASL support in the Postfix SMTP server: </p>
 
 <blockquote>
 <pre>
@@ -233,13 +250,16 @@ SMTP server</a></h2>
 </pre>
 </blockquote>
 
-<p> In order to allow mail relaying by authenticated clients: </p>
+<p> In order to allow mail relaying by authenticated remote SMTP
+clients: </p>
 
 <blockquote>
 <pre>
 /etc/postfix/main.cf:
     smtpd_recipient_restrictions = 
-        permit_mynetworks permit_sasl_authenticated ...
+        permit_mynetworks 
+        permit_sasl_authenticated 
+        reject_unauth_destination
 </pre>
 </blockquote>
 
@@ -277,7 +297,7 @@ Postfix SMTP server</a></h2>
 the Postfix side you need to specify the location of the
 Dovecot authentication daemon socket. We use a pathname relative
 to the Postfix queue directory, so that it will work whether or not
-Postfix runs chrooted: </p>
+the Postfix SMTP server runs chrooted: </p>
 
 <blockquote>
 <pre>
@@ -320,11 +340,13 @@ the Dovecot authentication server. </p>
 SMTP server</a></h2>
 
 <p> You need to configure how the Cyrus SASL library should
-authenticate a client's username and password. These settings must
+authenticate a remote SMTP client's username and password. These
+settings must
 be stored in a separate configuration file. </p>
 
 <p> The name of the configuration file (default: smtpd.conf) will
-be constructed from a value sent by Postfix to the Cyrus SASL
+be constructed from a value that the Postfix SMTP server sends to
+the Cyrus SASL
 library, which adds the suffix .conf. The value is configured using
 one of the following variables: </p>
 
@@ -362,7 +384,7 @@ file in /etc/sasl2. </p>
 </pre>
 
 <p> IMPORTANT: pwcheck establishes a UNIX domain socket in /var/pwcheck
-and waits for authentication requests. Postfix processes must have
+and waits for authentication requests. The Postfix SMTP server must have
 read+execute permission to this directory or authentication attempts
 will fail. </p>
 
@@ -391,8 +413,8 @@ can authenticate against PAM and various other sources. To use PAM,
 start saslauthd with "-a pam". </p>
 
 <p> IMPORTANT: saslauthd usually establishes a UNIX domain socket
-in /var/run/saslauthd and waits for authentication requests. Postfix
-processes must have read+execute permission to this directory or
+in /var/run/saslauthd and waits for authentication requests. The Postfix
+SMTP server must have read+execute permission to this directory or
 authentication attempts will fail. </p>
 
 <p> Note: The directory where saslauthd puts the socket is configurable.
@@ -427,7 +449,8 @@ software). On some poorly-supported systems the saslpasswd command needs
 to be run multiple times before it stops complaining.  The Postfix SMTP
 server needs read access to the sasldb file - you may have to play games
 with group access permissions.  With the OTP authentication mechanism,
-the SMTP server also needs WRITE access to /etc/sasldb2 or /etc/sasldb
+the Postfix SMTP server also needs WRITE access to /etc/sasldb2 or
+/etc/sasldb
 (or the back end SQL database, if used). </p>
 
 <p> IMPORTANT: To get sasldb running, make sure that you set the SASL
@@ -454,10 +477,10 @@ domain (realm) to a fully qualified domain name. </p>
 in sasldb with <i>sasldblistusers</i> (Cyrus SASL version 1.5.x) or
 <i>sasldblistusers2</i> (Cyrus SASL version 2.1.x). </p>
 
-<p> On the Postfix side, you can have only one realm per smtpd
+<p> On the Postfix side, you can have only one realm per smtpd(8)
 instance, and only the users belonging to that realm would be able to
 authenticate.  The Postfix variable smtpd_sasl_local_domain controls the
-realm used by smtpd: </p>
+realm used by smtpd(8): </p>
 
 <blockquote>
 <pre>
@@ -472,10 +495,11 @@ realm used by smtpd: </p>
 and saslauthd can only support the plaintext mechanisms PLAIN or
 LOGIN.  However, the Cyrus SASL library doesn't know this, and will
 happily advertise other authentication mechanisms that the SASL
-library implements, such as DIGEST-MD5. As a result, if an SMTP
+library implements, such as DIGEST-MD5. As a result, if a remote SMTP
 client chooses any mechanism other than PLAIN or LOGIN while pwcheck
 or saslauthd are used, authentication will fail. Thus you may need
-to limit the list of mechanisms advertised by Postfix. </p>
+to limit the list of mechanisms advertised by the Postfix SMTP
+server. </p>
 
 <ul> 
 
@@ -523,12 +547,15 @@ exercise.  It probably is not worth the trouble. </p>
 <h2><a name="server_test">Testing SASL authentication in the Postfix
 SMTP server</a></h2>
 
-<p> To test the server side, connect to the SMTP server, and you should
+<p> To test the server side, connect (for example, with telnet) to the
+Postfix SMTP server port and you should
 be able to have a conversation as shown below. Information sent by the
-client is shown in bold font. </p>
+client (that is, you) is shown in bold font. </p>
 
 <blockquote>
 <pre>
+$ <b>telnet server.example.com 25</b>
+. . .
 220 server.example.com ESMTP Postfix
 <b>EHLO client.example.com</b>
 250-server.example.com
@@ -585,20 +612,22 @@ directive is set to): </p>
 </pre>
 </blockquote>
 
-<p> then run the resulting sample server and client in separate
-terminals.  The sample applications send log messages to the syslog
+<p> then run the resulting sample Cyrus SASL server and client in
+separate terminals.  The sample applications send log messages to
+the syslog
 facility auth.  Check the log to fix the problem or run strace /
 ktrace / truss on the server to see what makes it unhappy. Repeat
 the previous step until you can successfully authenticate with the
-sample client. Only then get back to Postfix. </p>
+sample Cyrus SASL client. Only then get back to Postfix. </p>
 
 <h2><a name="client_sasl">Enabling SASL authentication in the
 Postfix SMTP client</a></h2>
 
 <p> Turn on client-side SASL authentication, and specify a table
 with per-host or per-destination username and password information.
-Postfix first searches the table for an entry with the server
-hostname; if no entry is found, then Postfix searches the table for
+The Postfix SMTP client first searches the table for an entry with
+the remote SMTP server hostname; if no entry is found, then the
+Postfix SMTP client searches the table for
 an entry with the next-hop destination.  Usually, that is the
 right-hand part of an email address, but it can also be the information
 that is specified with the relayhost parameter or with a transport(5)
@@ -610,41 +639,57 @@ table. </p>
     smtp_sasl_auth_enable = yes
     smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
     smtp_sasl_type = cyrus
+    relayhost = [mail.myisp.net]
+    # Alternative form:
+    # relayhost = [mail.myisp.net]:submission
 
 /etc/postfix/sasl_passwd:
-    foo.com                     username:password
-    bar.com                     username
     [mail.myisp.net]            username:password
     [mail.myisp.net]:submission username:password
 </pre>
 </blockquote>
 
-<p> The Postfix SASL client password file is opened before the SMTP
-server enters the optional chroot jail, so you can keep the file
-in /etc/postfix and set permissions read / write only for root to
-keep the username:password combinations away from other system
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> The "submission" destination port tells Postfix to send
+mail via TCP network port 587, which is normally reserved for email
+clients. The default is to send mail to the "smtp" destination port
+(TCP port 25), which is used for receiving mail across the internet.
+If you use an explicit destination port in main.cf, then you must
+use the same form also in the smtp_sasl_password_maps file.  </p>
+
+<li> <p> Postfix does not deliver mail via TCP port 465 (the obsolete
+"wrappermode" protocol). See TLS_README for a solution that uses the
+"stunnel" command. </p>
+
+<li> <p> The "[" and "]" prevent Postfix from looking up the MX
+(mail exchanger) records for the enclosed name.  If you use this
+form in main.cf, then you must use the same form also in the
+smtp_sasl_password_maps file. </p>
+
+<li> <p> The Postfix SMTP client opens the SASL client password
+file before entering the optional chroot jail, so you can keep the
+file in /etc/postfix and set permissions read / write only for root
+to keep the username:password combinations away from other system
 users. </p>
 
-<p> Postfix version 2.3 supports-per-sender SASL password
-information. To search the Postfix SASL password by sender 
-before it searches by destination, specify: </p>
+<li> <p> Specify <b>dbm</b> instead of <b>hash</b> if your system
+uses <b>dbm</b> files instead of <b>db</b> files. To find out what
+lookup tables Postfix supports, use the command "<b>postconf -m</b>".
+</p>
 
-<blockquote>
-<pre>
-/etc/postfix/main.cf:
-    smtp_sender_dependent_authentication = yes
-    smtp_sasl_auth_enable = yes
-    smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+<li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
+whenever you change the sasl_passwd table. </p>
 
-/etc/postfix/sasl_passwd:
-    user@example.com            username:password
-    bar.com                     username
-    [mail.myisp.net]            username:password
-    [mail.myisp.net]:submission username:password
-</pre>
-</blockquote>
+</ul>
 
-<p> Note: some SMTP servers support PLAIN or LOGIN authentication only.
+<p> Workarounds: </p>
+
+<ul>
+
+<li> <p> Some remote SMTP servers support PLAIN or LOGIN authentication only.
 By default, the Postfix SMTP client does not use authentication
 methods that send plaintext passwords, and defers delivery with
 the following error message:  "Authentication failed: cannot SASL
@@ -658,12 +703,10 @@ for example: </p>
 </pre>
 </blockquote>
 
-<p> Note: Some SMTP servers support authentication mechanisms that,
-although available on the client system, may not in practice work or
-possess the appropriate credentials to authenticate to the server. It
-is possible via the smtp_sasl_mechanism_filter parameter to further
-restrict the list of server mechanisms that the smtp(8) client will take
-into consideration:  </p>
+<li> <p> Some remote SMTP servers announce authentication mechanisms
+that don't actually work. It is possible via the smtp_sasl_mechanism_filter
+parameter to restrict the list of server mechanisms that the Postfix
+SMTP client will take into consideration:  </p>
 
 <blockquote>
 <pre>
@@ -672,13 +715,76 @@ into consideration:  </p>
 </pre>
 </blockquote>
 
-<p> In the above example, Postfix will decline to use mechanisms
+<p> In the above example, the Postfix SMTP client will decline to
+use mechanisms
 that require special infrastructure such as Kerberos or TLS. </p>
 
-<p> The Postfix SMTP client is backwards compatible with SMTP
+<li> <p> The Postfix SMTP client is backwards compatible with SMTP
 servers that use the non-standard "AUTH=method..." syntax in response
 to the EHLO command; there is no Postfix client configuration needed
 to work around it. </p>
+
+</ul>
+
+<h2><a name="client_sasl_sender">Supporting multiple ISP accounts
+in the Postfix SMTP client</a></h2>
+
+<p> Postfix version 2.3 supports multiple ISP accounts. This can
+be useful when one person uses the same machine for work and for
+personal use, or when people with different ISP accounts share the
+same Postfix server.  To make this possible, Postfix 2.3 supports
+per-sender SASL passwords and per-sender relay hosts. In the example
+below, Postfix will search the SASL password file by sender before
+it searches that same file by destination. Likewise, Postfix will
+search the per-sender relayhost file, and use the default relayhost
+only as a final resort.  </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    smtp_sender_dependent_authentication = yes
+    sender_dependent_relayhost_maps = hash:/etc/postfix/sender_relay
+    smtp_sasl_auth_enable = yes
+    smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+    relayhost = [mail.myisp.net]
+    # Alternative form:
+    # relayhost = [mail.myisp.net]:submission
+
+/etc/postfix/sasl_passwd:
+    # Per-sender authentication; see also /etc/postfix/sender_relay.
+    user1@example.com           username2:password2
+    user2@example.net           username2:password2
+    # Login information for the default relayhost.
+    [mail.myisp.net]            username:password
+    [mail.myisp.net]:submission username:password
+
+/etc/postfix/sender_relay:
+    # Per-sender provider; see also /etc/postfix/sasl_passwd.
+    user1@example.com           [mail.example.com]:submission
+    user2@example.net           [mail.example.net]
+</pre>
+</blockquote>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> If you are creative, then you can try to combine the two
+tables into one single MySQL database, and configure different
+Postfix queries to extract the appropriate information. </p>
+
+<li> <p> Specify <b>dbm</b> instead of <b>hash</b> if your system
+uses <b>dbm</b> files instead of <b>db</b> files. To find out what
+lookup tables Postfix supports, use the command "<b>postconf -m</b>".
+</p>
+
+<li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
+whenever you change the sasl_passwd table. </p>
+
+<li> <p> Execute the command "<b>postmap /etc/postfix/sender_relay</b>"
+whenever you change the sender_relay table. </p>
+
+</ul>
 
 <h2><a name="credits">Credits</a></h2>
 

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.9 2007/11/09 23:41:08 cube Exp $	*/
+/*	$NetBSD: scan.l,v 1.9.8.1 2008/06/23 04:32:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,6 +135,7 @@ defflag		return DEFFLAG;
 defopt		return DEFOPT;
 defparam	return DEFPARAM;
 defpseudo	return DEFPSEUDO;
+defpseudodev	return DEFPSEUDODEV;
 devclass	return DEVCLASS;
 device		return DEVICE;
 device-major	return DEVICE_MAJOR;

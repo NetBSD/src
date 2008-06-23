@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.28 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.28.2.1 2008/06/23 04:31:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.28 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.28.2.1 2008/06/23 04:31:02 wrstuden Exp $");
 
 #include "rnd.h"
 
@@ -464,7 +464,7 @@ ld_iop_flush(struct ld_softc *ld)
 	mf.msgtctx = im->im_tctx;
 	mf.flags = 1 << 16;			/* time multiplier */
 
-	/* Aincent disks will return an error here. */
+	/* Ancient disks will return an error here. */
 	rv = iop_msg_post(iop, im, &mf, LD_IOP_TIMEOUT * 2);
 	iop_msg_free(iop, im);
 	return (rv);

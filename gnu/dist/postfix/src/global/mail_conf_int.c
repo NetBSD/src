@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_int.c,v 1.1.1.3 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: mail_conf_int.c,v 1.1.1.3.26.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -25,10 +25,10 @@
 /*	int	value;
 /*
 /*	void	get_mail_conf_int_table(table)
-/*	CONFIG_INT_TABLE *table;
+/*	const CONFIG_INT_TABLE *table;
 /*
 /*	void	get_mail_conf_int_fn_table(table)
-/*	CONFIG_INT_TABLE *table;
+/*	const CONFIG_INT_TABLE *table;
 /* AUXILIARY FUNCTIONS
 /*	int	get_mail_conf_int2(name1, name2, defval, min, max);
 /*	const char *name1;
@@ -174,7 +174,7 @@ void    set_mail_conf_int(const char *name, int value)
 
 /* get_mail_conf_int_table - look up table of integers */
 
-void    get_mail_conf_int_table(CONFIG_INT_TABLE *table)
+void    get_mail_conf_int_table(const CONFIG_INT_TABLE *table)
 {
     while (table->name) {
 	table->target[0] = get_mail_conf_int(table->name, table->defval,
@@ -185,7 +185,7 @@ void    get_mail_conf_int_table(CONFIG_INT_TABLE *table)
 
 /* get_mail_conf_int_fn_table - look up integers, defaults are functions */
 
-void    get_mail_conf_int_fn_table(CONFIG_INT_FN_TABLE *table)
+void    get_mail_conf_int_fn_table(const CONFIG_INT_FN_TABLE *table)
 {
     while (table->name) {
 	table->target[0] = get_mail_conf_int_fn(table->name, table->defval,

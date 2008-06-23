@@ -1,10 +1,10 @@
-/*	$NetBSD: t_timers.c,v 1.1.1.5 2007/01/27 21:04:56 christos Exp $	*/
+/*	$NetBSD: t_timers.c,v 1.1.1.5.12.1 2008/06/23 04:27:43 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_timers.c,v 1.23.18.1 2004/06/21 06:45:18 marka Exp */
+/* Id: t_timers.c,v 1.26.128.2 2008/01/12 23:46:43 tbox Exp */
 
 #include <config.h>
 
@@ -258,7 +258,7 @@ t_timers_x(isc_timertype_t timertype, isc_time_t *expires,
 		return;
 	}
 
-	isc_mutex_lock(&Tx_mx);
+	isc_result = isc_mutex_lock(&Tx_mx);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_mutex_lock failed %s\n",
 		       isc_result_totext(isc_result));

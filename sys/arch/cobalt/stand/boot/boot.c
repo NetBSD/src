@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.15.2.1 2008/06/23 04:30:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -372,6 +372,8 @@ void
 print_banner(unsigned int memsize)
 {
 
+	lcd_banner();
+
 	printf("\n");
 	printf(">> %s " NETBSD_VERS " Bootloader, Revision %s [@%p]\n",
 			bootprog_name, bootprog_rev, (void*)&start);
@@ -427,6 +429,7 @@ main(unsigned int memsize)
 	bi_flags.bi_flags = 0x0;
 	bi_addr = bi_init();
 
+	lcd_init();
 	cobalt_id = read_board_id();
 	prominit(memsize);
 	if (cninit(&addr, &speed) != NULL)
@@ -456,6 +459,7 @@ main(unsigned int memsize)
 		strcat(bootpath, ":");
 		strcat(bootpath, kernel);
 
+		lcd_loadfile(bootpath);
 		printf("Loading: %s", bootpath);
 		if (howto)
 			printf(" (howto 0x%x)", howto);
@@ -486,6 +490,8 @@ main(unsigned int memsize)
 		(*entry)(memsize, BOOTINFO_MAGIC, bi_addr);
 	}
 
+	delay(20000);
+	lcd_failed();
 	(void)printf("Boot failed! Rebooting...\n");
 	return 0;
 }

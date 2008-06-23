@@ -1,4 +1,4 @@
-.\" $NetBSD: hpqlb.4,v 1.1 2008/05/01 20:18:19 cegger Exp $
+.\" $NetBSD: hpqlb.4,v 1.1.2.1 2008/06/23 04:30:00 wrstuden Exp $
 .\"
 .\" Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 01, 2008
+.Dd May 18, 2008
 .Dt HPQLB 4
 .Os
 .Sh NAME
@@ -33,14 +33,12 @@
 .Sh SYNOPSIS
 .Cd "hpqlb*    at acpi?"
 .Sh DESCRIPTION
-The
+Many
 .Tn HP
-Pavilion notebook computers come with hotkeys supported by this driver.
-These hotkeys generate keycodes apart some of them.
+notebook computers come with hotkeys.
 The
 .Nm
-driver provides support all hotkeys generating keycodes including the
-those on the HP Remote control device.
+driver provides support for all hotkeys generating keycodes.
 .Pp
 The following hotkeys which do not generate keycodes are:
 .Pp
@@ -52,19 +50,6 @@ Brightness Up
 .It
 Brightness Down
 .El
-.Pp
-Additionally on the remote control do not generate keycodes are:
-.Pp
-.Bl -bullet -compact -offset indent
-.It
-HP Quick button
-.It
-HP DVD button
-.It
-Windows button
-.El
-.Pp
-.El
 .Sh SEE ALSO
 .Xr acpi 4
 .Sh HISTORY
@@ -74,4 +59,7 @@ driver
 appeared in
 .Nx 5.0 .
 .Sh AUTHORS
-This driver was written for NetBSD by Christoph Egger.
+This driver was written for
+.Nx
+by
+.An Christoph Egger .

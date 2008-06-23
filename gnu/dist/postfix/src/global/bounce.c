@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.c,v 1.1.1.8 2006/07/19 01:17:21 rpaulo Exp $	*/
+/*	$NetBSD: bounce.c,v 1.1.1.8.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -85,6 +85,12 @@
 /* .IP BOUNCE_FLAG_CLEAN
 /*	Delete the bounce log in case of an error (as in: pretend
 /*	that we never even tried to bounce this message).
+/* .IP BOUNCE_FLAG_DELRCPT
+/*	When specified with a flush request, request that
+/*	recipients be deleted from the queue file.
+/*
+/*	Note: the bounce daemon ignores this request when the
+/*	recipient queue file offset is <= 0.
 /* .IP DEL_REQ_FLAG_MTA_VRFY
 /*	The message is an MTA-requested address verification probe.
 /*	Update the address verification database instead of bouncing

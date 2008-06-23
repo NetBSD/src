@@ -4,7 +4,7 @@
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
  */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -115,20 +115,20 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
-#include "kssl_lcl.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
+#include <openssl/bn.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
 
-static SSL_METHOD *dtls1_get_client_method(int ver);
+static const SSL_METHOD *dtls1_get_client_method(int ver);
 static int dtls1_get_hello_verify(SSL *s);
 
-static SSL_METHOD *dtls1_get_client_method(int ver)
+static const SSL_METHOD *dtls1_get_client_method(int ver)
 	{
 	if (ver == DTLS1_VERSION)
 		return(DTLSv1_client_method());
@@ -144,7 +144,7 @@ IMPLEMENT_dtls1_meth_func(DTLSv1_client_method,
 int dtls1_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
-	unsigned long Time=(unsigned long)time(NULL),l;
+	unsigned long Time=(unsigned long)time(NULL);
 	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
@@ -214,17 +214,21 @@ int dtls1_connect(SSL *s)
 
 			/* don't push the buffering BIO quite yet */
 
-			ssl3_init_finished_mac(s);
-
 			s->state=SSL3_ST_CW_CLNT_HELLO_A;
 			s->ctx->stats.sess_connect++;
 			s->init_num=0;
+			/* mark client_random uninitialized */
+			memset(s->s3->client_random,0,sizeof(s->s3->client_random));
 			break;
 
 		case SSL3_ST_CW_CLNT_HELLO_A:
 		case SSL3_ST_CW_CLNT_HELLO_B:
 
 			s->shutdown=0;
+
+			/* every DTLS ClientHello resets Finished MAC */
+			ssl3_init_finished_mac(s);
+
 			ret=dtls1_client_hello(s);
 			if (ret <= 0) goto end;
 
@@ -274,7 +278,7 @@ int dtls1_connect(SSL *s)
 		case SSL3_ST_CR_CERT_A:
 		case SSL3_ST_CR_CERT_B:
 			/* Check if it is anon DH */
-			if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL))
+			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
 				{
 				ret=ssl3_get_server_certificate(s);
 				if (ret <= 0) goto end;
@@ -335,7 +339,6 @@ int dtls1_connect(SSL *s)
 		case SSL3_ST_CW_KEY_EXCH_B:
 			ret=dtls1_send_client_key_exchange(s);
 			if (ret <= 0) goto end;
-			l=s->s3->tmp.new_cipher->algorithms;
 			/* EAY EAY EAY need to check for DH fix cert
 			 * sent back */
 			/* For TLS, cert_req is set to 2, so a cert chain
@@ -422,6 +425,8 @@ int dtls1_connect(SSL *s)
 				s->s3->tmp.next_state=SSL3_ST_CR_FINISHED_A;
 				}
 			s->init_num=0;
+			/* mark client_random uninitialized */
+			memset (s->s3->client_random,0,sizeof(s->s3->client_random));
 			break;
 
 		case SSL3_ST_CR_FINISHED_A:
@@ -544,9 +549,16 @@ int dtls1_client_hello(SSL *s)
 		/* else use the pre-loaded session */
 
 		p=s->s3->client_random;
-		Time=(unsigned long)time(NULL);			/* Time */
-		l2n(Time,p);
-		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-sizeof(Time));
+
+		/* if client_random is initialized, reuse it, we are
+		 * required to use same upon reply to HelloVerify */
+		for (i=0;p[i]=='\0' && i<sizeof(s->s3->client_random);i++) ;
+		if (i==sizeof(s->s3->client_random))
+			{
+			Time=(unsigned long)time(NULL);	/* Time */
+			l2n(Time,p);
+			RAND_pseudo_bytes(p,sizeof(s->s3->client_random)-4);
+			}
 
 		/* Do the message type and length last */
 		d=p= &(buf[DTLS1_HM_HEADER_LENGTH]);
@@ -684,7 +696,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 	{
 	unsigned char *p,*d;
 	int n;
-	unsigned long l;
+	unsigned long alg_k;
 #ifndef OPENSSL_NO_RSA
 	unsigned char *q;
 	EVP_PKEY *pkey=NULL;
@@ -697,13 +709,13 @@ int dtls1_send_client_key_exchange(SSL *s)
 		{
 		d=(unsigned char *)s->init_buf->data;
 		p= &(d[DTLS1_HM_HEADER_LENGTH]);
-
-		l=s->s3->tmp.new_cipher->algorithms;
+		
+		alg_k=s->s3->tmp.new_cipher->algorithm_mkey;
 
                 /* Fool emacs indentation */
                 if (0) {}
 #ifndef OPENSSL_NO_RSA
-		else if (l & SSL_kRSA)
+		else if (alg_k & SSL_kRSA)
 			{
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
@@ -732,7 +744,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 			s->session->master_key_length=sizeof tmp_buf;
 
 			q=p;
-			/* Fix buf for TLS and beyond */
+			/* Fix buf for TLS and [incidentally] DTLS */
 			if (s->version > SSL3_VERSION)
 				p+=2;
 			n=RSA_public_encrypt(sizeof tmp_buf,
@@ -747,7 +759,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 				goto err;
 				}
 
-			/* Fix buf for TLS and beyond */
+			/* Fix buf for TLS and [incidentally] DTLS */
 			if (s->version > SSL3_VERSION)
 				{
 				s2n(n,q);
@@ -762,7 +774,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 			}
 #endif
 #ifndef OPENSSL_NO_KRB5
-		else if (l & SSL_kKRB5)
+		else if (alg_k & SSL_kKRB5)
                         {
                         krb5_error_code	krb5rc;
                         KSSL_CTX	*kssl_ctx = s->kssl_ctx;
@@ -781,7 +793,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 
 #ifdef KSSL_DEBUG
                         printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
-                                l, SSL_kKRB5);
+                                alg_k, SSL_kKRB5);
 #endif	/* KSSL_DEBUG */
 
 			authp = NULL;
@@ -894,7 +906,7 @@ int dtls1_send_client_key_exchange(SSL *s)
                         }
 #endif
 #ifndef OPENSSL_NO_DH
-		else if (l & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+		else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 			{
 			DH *dh_srvr,*dh_clnt;
 
@@ -999,14 +1011,16 @@ int dtls1_send_client_verify(SSL *s)
 		p= &(d[DTLS1_HM_HEADER_LENGTH]);
 		pkey=s->cert->key->privatekey;
 
-		s->method->ssl3_enc->cert_verify_mac(s,&(s->s3->finish_dgst2),
+		s->method->ssl3_enc->cert_verify_mac(s,
+		NID_sha1,
 			&(data[MD5_DIGEST_LENGTH]));
 
 #ifndef OPENSSL_NO_RSA
 		if (pkey->type == EVP_PKEY_RSA)
 			{
 			s->method->ssl3_enc->cert_verify_mac(s,
-				&(s->s3->finish_dgst1),&(data[0]));
+				NID_md5,
+				&(data[0]));
 			if (RSA_sign(NID_md5_sha1, data,
 					 MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH,
 					&(p[2]), &u, pkey->pkey.rsa) <= 0 )

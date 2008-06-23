@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.79 2008/04/29 18:18:08 ad Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.79.2.1 2008/06/23 04:31:49 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.79 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.79.2.1 2008/06/23 04:31:49 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.79 2008/04/29 18:18:08 ad Exp $")
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 #include <sys/proc.h>
+#include <sys/module.h>
 
 #include <dev/putter/putter_sys.h>
 
@@ -53,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.79 2008/04/29 18:18:08 ad Exp $")
 #include <lib/libkern/libkern.h>
 
 #include <nfs/nfsproto.h> /* for fh sizes */
+
+MODULE(MODULE_CLASS_VFS, puffs, "putter");
 
 VFS_PROTOS(puffs_vfsop);
 
@@ -837,4 +840,17 @@ struct vfsops puffs_vfsops = {
 	0,				/* refcount	*/
 	{ NULL, NULL }
 };
-VFS_ATTACH(puffs_vfsops);
+
+static int
+puffs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&puffs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&puffs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.80 2008/04/29 14:06:31 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.80.2.1 2008/06/23 04:30:46 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -273,12 +273,6 @@ struct clockframe {
 			((vaddr_t)(framep)->t.tf_out[6] >		\
 				(vaddr_t)INTSTACK))))
 
-
-extern struct intrhand soft01intr, soft01net, soft01clock;
-
-void setsoftint(void);
-void setsoftnet(void);
-
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the sparc, request an ast to send us
@@ -315,7 +309,7 @@ struct intrhand {
 extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
-void	intr_establish(int level, struct intrhand *);
+void	intr_establish(int level, bool mpsafe, struct intrhand *);
 void	*sparc_softintr_establish(int, int (*)(void *), void *);
 void	sparc_softintr_schedule(void *);
 void	sparc_softintr_disestablish(void *);

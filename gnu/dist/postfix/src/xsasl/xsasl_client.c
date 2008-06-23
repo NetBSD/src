@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_client.c,v 1.1.1.1 2006/07/19 01:17:58 rpaulo Exp $	*/
+/*	$NetBSD: xsasl_client.c,v 1.1.1.1.22.1 2008/06/23 04:29:28 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -191,7 +191,7 @@ typedef struct {
     struct XSASL_CLIENT_IMPL *(*client_init) (const char *, const char *);
 } XSASL_CLIENT_IMPL_INFO;
 
-static XSASL_CLIENT_IMPL_INFO client_impl_info[] = {
+static const XSASL_CLIENT_IMPL_INFO client_impl_info[] = {
 #ifdef XSASL_TYPE_CYRUS
     XSASL_TYPE_CYRUS, xsasl_cyrus_client_init,
 #endif
@@ -203,7 +203,7 @@ static XSASL_CLIENT_IMPL_INFO client_impl_info[] = {
 XSASL_CLIENT_IMPL *xsasl_client_init(const char *client_type,
 				             const char *path_info)
 {
-    XSASL_CLIENT_IMPL_INFO *xp;
+    const XSASL_CLIENT_IMPL_INFO *xp;
 
     for (xp = client_impl_info; xp->client_type; xp++)
 	if (strcmp(client_type, xp->client_type) == 0)
@@ -216,7 +216,7 @@ XSASL_CLIENT_IMPL *xsasl_client_init(const char *client_type,
 
 ARGV   *xsasl_client_types(void)
 {
-    XSASL_CLIENT_IMPL_INFO *xp;
+    const XSASL_CLIENT_IMPL_INFO *xp;
     ARGV   *argv = argv_alloc(1);
 
     for (xp = client_impl_info; xp->client_type; xp++)

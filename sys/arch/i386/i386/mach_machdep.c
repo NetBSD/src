@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.23.2.2 2008/05/14 01:34:59 wrstuden Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.23.2.3 2008/06/23 04:30:26 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.23.2.2 2008/05/14 01:34:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.23.2.3 2008/06/23 04:30:26 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.23.2.2 2008/05/14 01:34:59 wrstud
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/cputypes.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
@@ -164,7 +165,7 @@ mach_host_basic_info(info)
 	info->memory_size = active + inactive;
 #undef cpu_type
 	info->cpu_type = MACHO_CPU_TYPE_I386;
-	switch (cpu_info_primary.ci_cpu_class) {
+	switch (cpu_class) {
 	case CPUCLASS_386:
 		info->cpu_subtype = MACHO_CPU_SUBTYPE_386;
 		break;
@@ -178,8 +179,7 @@ mach_host_basic_info(info)
 		info->cpu_subtype = MACHO_CPU_SUBTYPE_PENTPRO;
 		break;
 	default:
-		uprintf("Undefined CPU class %d",
-		    cpu_info_primary.ci_cpu_class);
+		uprintf("Undefined CPU class %d", cpu_class);
 		info->cpu_subtype = MACHO_CPU_SUBTYPE_I386_ALL;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.9 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.9.18.1 2008/06/23 04:27:02 wrstuden Exp $	*/
 /* $OpenBSD: buffer.c,v 1.31 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: buffer.c,v 1.9 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.9.18.1 2008/06/23 04:27:02 wrstuden Exp $");
 #include <sys/param.h>
 
 #include <stdio.h>
@@ -128,7 +128,9 @@ restart:
 
 	/* Increase the size of the buffer and retry. */
 	newlen = roundup(buffer->alloc + len, BUFFER_ALLOCSZ);
-	if (newlen > BUFFER_MAX_LEN)
+	/* need it to be slightly larger than the MAX LEN for this */
+	/* still investigating *why* but this works for now -cjr */
+	if (newlen > (BUFFER_MAX_LEN_HPN + BUFFER_MAX_LEN)) 
 		fatal("buffer_append_space: alloc %u not supported",
 		    newlen);
 	buffer->buf = xrealloc(buffer->buf, 1, newlen);

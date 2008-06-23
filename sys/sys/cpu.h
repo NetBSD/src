@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2008/04/30 12:44:27 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21.2.1 2008/06/23 04:32:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -60,6 +60,10 @@ void cpu_need_resched(struct cpu_info *, int);
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	\
     (void)cii, ci = curcpu(); ci != NULL; ci = NULL
+#endif
+
+#ifndef CPU_IS_PRIMARY
+#define	CPU_IS_PRIMARY(ci)	((void)ci, 1)
 #endif
 
 #ifdef __HAVE_MD_CPU_OFFLINE

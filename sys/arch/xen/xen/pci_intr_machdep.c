@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.4 2008/02/17 14:03:16 bouyer Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.4.12.1 2008/06/23 04:30:51 wrstuden Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.4 2008/02/17 14:03:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.4.12.1 2008/06/23 04:30:51 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -192,6 +192,19 @@ const struct evcnt*
 pci_intr_evcnt(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh)
 {
 	return NULL;
+}
+
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+		 int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		return 0;
+	default:
+		return ENODEV;
+	}
 }
 
 void *

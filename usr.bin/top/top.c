@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.26 2007/05/24 20:04:04 ad Exp $	*/
+/*	$NetBSD: top.c,v 1.26.12.1 2008/06/23 04:32:12 wrstuden Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -49,7 +49,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: top.c,v 1.26 2007/05/24 20:04:04 ad Exp $");
+__RCSID("$NetBSD: top.c,v 1.26.12.1 2008/06/23 04:32:12 wrstuden Exp $");
 #endif
 
 #include "os.h"
@@ -124,7 +124,7 @@ char *argv[];
     static char tempbuf2[50];
     int old_sigmask;		/* only used for BSD-style signals */
     int topn = Default_TOPN;
-    int delay = Default_DELAY;
+    double delay = Default_DELAY, t;
     int displays = 0;		/* indicates unspecified */
     time_t curr_time;
     char *(*get_userid) __P((int)) = username;
@@ -288,7 +288,8 @@ char *argv[];
 		break;
 
 	      case 's':
-		if ((delay = atoi(optarg)) < 0 || (delay == 0 && getuid() != 0))
+		delay = atof(optarg);
+		if (delay < 0.1 || (delay < 0.5 && getuid() != 0))
 		{
 		    fprintf(stderr,
 			"%s: warning: seconds delay should be positive -- using default\n",
@@ -640,7 +641,7 @@ Usage: %s [-bIinqSuv] [-d count] [-o field] [-s time] [-U username] [number]\n",
 		set[0].events = POLLIN;
 
 		/* wait for either input or the end of the delay period */
-		if (poll(set, 1, delay * 1000) > 0)
+		if (poll(set, 1, (int)(delay * 1000)) > 0)
 		{
 		    int newval;
 		    char *errmsg;
@@ -758,11 +759,12 @@ Usage: %s [-bIinqSuv] [-d count] [-o field] [-s time] [-U username] [number]\n",
 	    
 			    case CMD_delay:	/* new seconds delay */
 				new_message(MT_standout, "Seconds to delay: ");
-				if ((i = readline(tempbuf1, 8, Yes)) > -1)
+				if ((t = readline(tempbuf1, 8, Yes)) > -1)
 				{
-				    if ((delay = i) == 0 && getuid() != 0)
+				    delay = t;
+				    if (t < 0.1 || (t < 0.5 && getuid() != 0))
 				    {
-					delay = 1;
+					delay = 0.5;
 				    }
 				}
 				clear_message();

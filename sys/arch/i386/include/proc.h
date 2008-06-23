@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.35 2008/01/04 15:55:33 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.35.12.1 2008/06/23 04:30:26 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -44,10 +44,15 @@
 /*
  * Machine-dependent part of the lwp structure for i386.
  */
+struct pmap;
+struct vm_page;
+
 struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	volatile int md_astpending;	/* AST pending for this process */
+	struct pmap *md_gc_pmap;	/* pmap being garbage collected */
+	struct vm_page *md_gc_ptp;	/* pages from pmap g/c */
 };
 
 /* md_flags */

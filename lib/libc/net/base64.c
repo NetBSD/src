@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.10 2007/03/30 20:23:04 ghen Exp $	*/
+/*	$NetBSD: base64.c,v 1.10.12.1 2008/06/23 04:29:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -45,9 +45,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static const char rcsid[] = "Id: base64.c,v 1.3.18.1 2005/04/27 05:01:05 sra Exp";
+static const char rcsid[] = "Id: base64.c,v 1.4 2005/04/27 04:56:34 sra Exp";
 #else
-__RCSID("$NetBSD: base64.c,v 1.10 2007/03/30 20:23:04 ghen Exp $");
+__RCSID("$NetBSD: base64.c,v 1.10.12.1 2008/06/23 04:29:32 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

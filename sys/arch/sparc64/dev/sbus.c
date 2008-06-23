@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.79 2008/04/05 13:40:05 cegger Exp $ */
+/*	$NetBSD: sbus.c,v 1.79.6.1 2008/06/23 04:30:44 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.79 2008/04/05 13:40:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.79.6.1 2008/06/23 04:30:44 wrstuden Exp $");
 
 #include "opt_ddb.h"
 
@@ -178,7 +178,7 @@ sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 sbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct sbus_softc *sc = (struct sbus_softc *)self;
+	struct sbus_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	struct intrhand *ih;
 	int ipl;
@@ -274,7 +274,7 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 	ipl = 1;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
-	intr_establish(ipl, ih);
+	intr_establish(ipl, true, ih);
 	*(ih->ih_map) |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
 	
 	/*
@@ -459,7 +459,7 @@ void
 sbusreset(int sbus)
 {
 	register struct sbusdev *sd;
-	struct sbus_softc *sc = sbus_cd.cd_devs[sbus];
+	struct sbus_softc *sc = device_lookup_private(&sbus_cd, sbus);
 	struct device *dev;
 
 	printf("reset %s:", device_xname(&sc->sc_dev));
@@ -646,7 +646,7 @@ sbus_intr_establish(bus_space_tag_t t, int pri, int level,
 	ih->ih_arg = arg;
 	ih->ih_number = vec;
 	ih->ih_pil = (1<<ipl);
-	intr_establish(ipl, ih);
+	intr_establish(ipl, level != IPL_VM, ih);
 	return (ih);
 }
 

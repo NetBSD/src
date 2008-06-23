@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_version.h,v 1.1.1.30 2007/08/02 08:05:11 heas Exp $	*/
+/*	$NetBSD: mail_version.h,v 1.1.1.30.10.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 #ifndef _MAIL_VERSION_H_INCLUDED_
 #define _MAIL_VERSION_H_INCLUDED_
@@ -22,8 +22,8 @@
   * Patches change both the patchlevel and the release date. Snapshots have no
   * patchlevel; they change the release date only.
   */
-#define MAIL_RELEASE_DATE	"20070731"
-#define MAIL_VERSION_NUMBER	"2.4.5"
+#define MAIL_RELEASE_DATE	"20080507"
+#define MAIL_VERSION_NUMBER	"2.5.2"
 
 #ifdef SNAPSHOT
 # define MAIL_VERSION_DATE	"-" MAIL_RELEASE_DATE
@@ -58,6 +58,8 @@ extern char *var_mail_release;
   * - Is this installation mixing multiple Postfix versions?
   * 
   * - What Postfix version generated this core dump?
+  * 
+  * To find out: strings -f file... | grep mail_version=
   */
 #include <string.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.193 2008/05/06 21:58:05 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.193.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.193 2008/05/06 21:58:05 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.193.2.1 2008/06/23 04:29:57 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,10 +83,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.193 2008/05/06 21:58:05 dyoung Exp $");
 #include <net/if_ether.h>
 #include <netinet/in.h>		/* XXX */
 #include <netinet/in_var.h>	/* XXX */
-#include <net/agr/if_agrioctl.h>
  
-#include <net80211/ieee80211_ioctl.h>
-
 #include <netdb.h>
 
 #include <sys/protosw.h>
@@ -114,6 +111,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.193 2008/05/06 21:58:05 dyoung Exp $");
 #ifdef INET6
 #include "af_inet6.h"
 #endif /* INET6 */
+#include "af_link.h"
 
 #include "agr.h"
 #include "carp.h"
@@ -143,7 +141,7 @@ int	media_current;
 int	mediaopt_set;
 int	mediaopt_clear;
 
-void	check_ifflags_up(const char *);
+void	check_ifflags_up(prop_dictionary_t);
 
 int 	notealias(prop_dictionary_t, prop_dictionary_t);
 int 	notrailers(prop_dictionary_t, prop_dictionary_t);
@@ -181,25 +179,22 @@ void	init_current_media(prop_dictionary_t, prop_dictionary_t);
 /* Known address families */
 static const struct afswtch afs[] = {
 	  {.af_name = "inet", .af_af = AF_INET, .af_status = in_status,
-	   .af_addr_commit = commit_address}
+	   .af_addr_commit = in_commit_address}
 
+	, {.af_name = "link", .af_af = AF_LINK, .af_status = link_status,
+	   .af_addr_commit = link_commit_address}
 #ifdef INET6
 	, {.af_name = "inet6", .af_af = AF_INET6, .af_status = in6_status,
-	   .af_getaddr = in6_getaddr, .af_getprefix = in6_getprefix,
-	   .af_difaddr = SIOCDIFADDR_IN6, .af_aifaddr = SIOCAIFADDR_IN6,
-	/* Deleting the first address before setting new one is
-	 * not prefered way in this protocol.
-	 */
-	   .af_gifaddr = 0, .af_ridreq = &in6_ridreq, .af_addreq = &in6_addreq}
+	   .af_addr_commit = in6_commit_address}
 #endif
 
 #ifndef INET_ONLY	/* small version, for boot media */
 	, {.af_name = "atalk", .af_af = AF_APPLETALK, .af_status = at_status,
-	   .af_getaddr = at_getaddr, NULL, .af_difaddr = SIOCDIFADDR,
+	   .af_getaddr = at_getaddr, .af_difaddr = SIOCDIFADDR,
 	   .af_aifaddr = SIOCAIFADDR, .af_gifaddr = SIOCGIFADDR,
 	   .af_ridreq = &at_addreq, .af_addreq = &at_addreq}
 	, {.af_name = "iso", .af_af = AF_ISO, .af_status = iso_status,
-	   .af_getaddr = iso_getaddr, NULL, .af_difaddr = SIOCDIFADDR_ISO,
+	   .af_getaddr = iso_getaddr, .af_difaddr = SIOCDIFADDR_ISO,
 	   .af_aifaddr = SIOCAIFADDR_ISO, .af_gifaddr = SIOCGIFADDR_ISO,
 	   .af_ridreq = &iso_ridreq, .af_addreq = &iso_addreq}
 #endif	/* INET_ONLY */
@@ -207,24 +202,17 @@ static const struct afswtch afs[] = {
 	, {.af_name = NULL}	/* sentinel */
 };
 
-#define	IFKW(__word, __flag)					\
-{								\
-	.k_word = (__word), .k_neg = true, .k_type = KW_T_NUM,	\
-	.k_num = (__flag),					\
-	.k_negnum = -(__flag)					\
-}
-
-struct kwinst ifflagskw[] = {
+static const struct kwinst ifflagskw[] = {
 	  IFKW("arp", IFF_NOARP)
 	, IFKW("debug", IFF_DEBUG)
 	, IFKW("link0", IFF_LINK0)
 	, IFKW("link1", IFF_LINK1)
 	, IFKW("link2", IFF_LINK2)
-	, {.k_word = "down", .k_type = KW_T_NUM, .k_num = -IFF_UP}
-	, {.k_word = "up", .k_type = KW_T_NUM, .k_num = IFF_UP}
+	, {.k_word = "down", .k_type = KW_T_INT, .k_int = -IFF_UP}
+	, {.k_word = "up", .k_type = KW_T_INT, .k_int = IFF_UP}
 };
 
-struct kwinst ifcapskw[] = {
+static const struct kwinst ifcapskw[] = {
 	  IFKW("ip4csum-tx",	IFCAP_CSUM_IPv4_Tx)
 	, IFKW("ip4csum-rx",	IFCAP_CSUM_IPv4_Rx)
 	, IFKW("tcp4csum-tx",	IFCAP_CSUM_TCPv4_Tx)
@@ -247,8 +235,7 @@ struct kwinst ifcapskw[] = {
 extern struct pbranch command_root;
 extern struct pbranch opt_command;
 extern struct pbranch opt_family, opt_silent_family;
-extern struct pkw cloning, silent_family, family, ia6flags, ia6lifetime,
-    ieee80211bool, ifcaps, ifflags, lists, misc;
+extern struct pkw cloning, silent_family, family, ifcaps, ifflags, misc;
 
 struct pinteger parse_metric = PINTEGER_INITIALIZER(&parse_metric, "metric", 10,
     setifmetric, "metric", &command_root.pb_parser);
@@ -285,30 +272,16 @@ struct pstr mediaopt = PSTR_INITIALIZER(&mediaopt, "mediaopt",
 struct pstr media = PSTR_INITIALIZER(&media, "media",
     setmedia, "media", &command_root.pb_parser);
 
-struct kwinst misckw[] = {
-	  {.k_word = "agrport", .k_type = KW_T_NUM, .k_neg = true,
-	   .k_num = AGRCMD_ADDPORT, .k_negnum = AGRCMD_REMPORT,
-	   .k_exec = agrsetport}
+static const struct kwinst misckw[] = {
+	  {.k_word = "active", .k_key = "active", .k_type = KW_T_BOOL,
+	   .k_bool = true, .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "alias", .k_key = "alias", .k_deact = "alias",
 	   .k_type = KW_T_BOOL, .k_neg = true,
 	   .k_bool = true, .k_negbool = false,
 	   .k_exec = notealias, .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "bssid", .k_nextparser = &parse_bssid.ps_parser}
-	, {.k_word = "-bssid", .k_exec = unsetifbssid,
-	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "broadcast", .k_nextparser = &parse_broadcast.pa_parser}
-	, {.k_word = "chan", .k_nextparser = &parse_chan.pi_parser}
-	, {.k_word = "-chan", .k_key = "chan", .k_type = KW_T_NUM,
-	   .k_num = IEEE80211_CHAN_ANY, .k_exec = setifchan,
-	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "delete", .k_key = "alias", .k_deact = "alias",
 	   .k_type = KW_T_BOOL, .k_bool = false, .k_exec = notealias,
-	   .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "deletetunnel", .k_exec = deletetunnel,
-	   .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "frag", .k_nextparser = &parse_frag.pi_parser}
-	, {.k_word = "-frag", .k_key = "frag", .k_type = KW_T_NUM,
-	   .k_num = IEEE80211_FRAG_MAX, .k_exec = setiffrag,
 	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "instance", .k_key = "anymedia", .k_type = KW_T_BOOL,
 	   .k_bool = true, .k_act = "media", .k_deact = "mediainst",
@@ -316,7 +289,6 @@ struct kwinst misckw[] = {
 	, {.k_word = "inst", .k_key = "anymedia", .k_type = KW_T_BOOL,
 	   .k_bool = true, .k_act = "media", .k_deact = "mediainst",
 	   .k_nextparser = &mediainst.pi_parser}
-	, {.k_word = "list", .k_nextparser = &lists.pk_parser}
 	, {.k_word = "media", .k_key = "anymedia", .k_type = KW_T_BOOL,
 	   .k_bool = true, .k_deact = "media", .k_altdeact = "anymedia",
 	   .k_nextparser = &media.ps_parser}
@@ -332,64 +304,33 @@ struct kwinst misckw[] = {
 	, {.k_word = "metric", .k_nextparser = &parse_metric.pi_parser}
 	, {.k_word = "mtu", .k_nextparser = &parse_mtu.pi_parser}
 	, {.k_word = "netmask", .k_nextparser = &parse_netmask.pa_parser}
-	, {.k_word = "nwid", .k_nextparser = &parse_ssid.ps_parser}
-	, {.k_word = "nwkey", .k_nextparser = &parse_nwkey.ps_parser}
-	, {.k_word = "-nwkey", .k_exec = unsetifnwkey,
-	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "preference", .k_act = "address",
 	   .k_nextparser = &parse_preference.pi_parser}
 	, {.k_word = "prefixlen", .k_nextparser = &parse_prefixlen.pi_parser}
-	, {.k_word = "ssid", .k_nextparser = &parse_ssid.ps_parser}
-	, {.k_word = "powersavesleep",
-	   .k_nextparser = &parse_powersavesleep.pi_parser}
 	, {.k_word = "trailers", .k_neg = true,
 	   .k_exec = notrailers, .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "tunnel", .k_nextparser = &tunsrc.pa_parser}
-	, {.k_word = "vlan", .k_nextparser = &vlan.pi_parser}
-	, {.k_word = "vlanif", .k_act = "vlan",
-	   .k_nextparser = &vlanif.pif_parser}
-	, {.k_word = "-vlanif", .k_key = "vlanif", .k_type = KW_T_STR,
-	   .k_str = "", .k_exec = setvlanif}
-#ifndef INET_ONLY
-	, {.k_word = "phase", .k_nextparser = &phase.pi_parser}
-	, {.k_word = "range", .k_nextparser = &parse_range.ps_parser}
-	, {.k_word = "nsellength", .k_nextparser = &parse_nsellength.pi_parser}
-	, {.k_word = "snpaoffset", .k_nextparser = &parse_snpaoffset.pi_parser}
-	/* CARP */
-	, {.k_word = "advbase", .k_nextparser = &parse_advbase.pi_parser}
-	, {.k_word = "advskew", .k_nextparser = &parse_advskew.pi_parser}
-	, {.k_word = "carpdev", .k_nextparser = &carpdev.pif_parser}
-	, {.k_word = "-carpdev", .k_key = "carpdev", .k_type = KW_T_STR,
-	   .k_str = "", .k_exec = setcarpdev,
-	   .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "pass", .k_nextparser = &pass.ps_parser}
-	, {.k_word = "state", .k_nextparser = &carpstate.pk_parser}
-	, {.k_word = "vhid", .k_nextparser = &parse_vhid.pi_parser}
-#endif
-#ifdef INET6
-	, {.k_word = "eui64", .k_exec = setia6eui64,
-	   .k_nextparser = &command_root.pb_parser}
-#endif /*INET6*/
 };
 
 /* key: clonecmd */
-struct kwinst clonekw[] = {
-	{.k_word = "create", .k_type = KW_T_NUM, .k_num = SIOCIFCREATE,
+static const struct kwinst clonekw[] = {
+	{.k_word = "create", .k_type = KW_T_INT, .k_int = SIOCIFCREATE,
 	 .k_nextparser = &opt_silent_family.pb_parser},
-	{.k_word = "destroy", .k_type = KW_T_NUM, .k_num = SIOCIFDESTROY}
+	{.k_word = "destroy", .k_type = KW_T_INT, .k_int = SIOCIFDESTROY}
 };
 
-struct kwinst familykw[] = {
-	  {.k_word = "inet", .k_type = KW_T_NUM, .k_num = AF_INET,
+static const struct kwinst familykw[] = {
+	  {.k_word = "inet", .k_type = KW_T_INT, .k_int = AF_INET,
+	   .k_nextparser = NULL}
+	, {.k_word = "link", .k_type = KW_T_INT, .k_int = AF_LINK,
 	   .k_nextparser = NULL}
 #ifdef INET6
-	, {.k_word = "inet6", .k_type = KW_T_NUM, .k_num = AF_INET6,
+	, {.k_word = "inet6", .k_type = KW_T_INT, .k_int = AF_INET6,
 	   .k_nextparser = NULL}
 #endif
 #ifndef INET_ONLY	/* small version, for boot media */
-	, {.k_word = "atalk", .k_type = KW_T_NUM, .k_num = AF_APPLETALK,
+	, {.k_word = "atalk", .k_type = KW_T_INT, .k_int = AF_APPLETALK,
 	   .k_nextparser = NULL}
-	, {.k_word = "iso", .k_type = KW_T_NUM, .k_num = AF_ISO,
+	, {.k_word = "iso", .k_type = KW_T_INT, .k_int = AF_ISO,
 	   .k_nextparser = NULL}
 #endif	/* INET_ONLY */
 };
@@ -433,9 +374,18 @@ struct branch opt_clone_brs[] = {
 	, {.b_nextparser = &ifcaps.pk_parser}
 #ifdef INET6
 	, {.b_nextparser = &ia6flags.pk_parser}
-	, {.b_nextparser = &ia6lifetime.pk_parser}
+	, {.b_nextparser = &inet6.pk_parser}
 #endif /*INET6*/
 	, {.b_nextparser = &misc.pk_parser}
+	, {.b_nextparser = &tunnel.pk_parser}
+	, {.b_nextparser = &vlan.pk_parser}
+	, {.b_nextparser = &agr.pk_parser}
+#ifndef INET_ONLY
+	, {.b_nextparser = &carp.pk_parser}
+	, {.b_nextparser = &atalk.pk_parser}
+	, {.b_nextparser = &iso.pk_parser}
+#endif
+	, {.b_nextparser = &kw80211.pk_parser}
 	, {.b_nextparser = &address.pa_parser}
 	, {.b_nextparser = &dstormask.pa_parser}
 	, {.b_nextparser = &broadcast.pa_parser}
@@ -468,30 +418,6 @@ struct pkw family = PKW_INITIALIZER(&family, "family", NULL, "af",
 
 struct pkw silent_family = PKW_INITIALIZER(&silent_family, "silent family",
     NULL, "af", familykw, __arraycount(familykw), &command_root.pb_parser);
-
-#ifdef INET6
-struct kwinst ia6flagskw[] = {
-	  IFKW("anycast",	IN6_IFF_ANYCAST)
-	, IFKW("tentative",	IN6_IFF_TENTATIVE)
-	, IFKW("deprecated",	IN6_IFF_DEPRECATED)
-};
-
-struct pinteger pltime = PINTEGER_INITIALIZER(&pltime, "pltime", 0,
-    setia6pltime, "pltime", &command_root.pb_parser);
-
-struct pinteger vltime = PINTEGER_INITIALIZER(&vltime, "vltime", 0,
-    setia6vltime, "vltime", &command_root.pb_parser);
-
-struct kwinst ia6lifetimekw[] = {
-	  {.k_word = "pltime", .k_nextparser = &pltime.pi_parser}
-	, {.k_word = "vltime", .k_nextparser = &vltime.pi_parser}
-};
-
-struct pkw ia6flags = PKW_INITIALIZER(&ia6flags, "ia6flags", setia6flags,
-    "ia6flag", ia6flagskw, __arraycount(ia6flagskw), &command_root.pb_parser);
-struct pkw ia6lifetime = PKW_INITIALIZER(&ia6lifetime, "ia6lifetime", NULL,
-    NULL, ia6lifetimekw, __arraycount(ia6lifetimekw), NULL);
-#endif /*INET6*/
 
 struct pkw ifcaps = PKW_INITIALIZER(&ifcaps, "ifcaps", setifcaps,
     "ifcap", ifcapskw, __arraycount(ifcapskw), &command_root.pb_parser);
@@ -566,7 +492,7 @@ media_status_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static void
-do_setifcaps(int s, const char *ifname, prop_dictionary_t env)
+do_setifcaps(prop_dictionary_t env)
 {
 	struct ifcapreq ifcr;
 	prop_data_t d;
@@ -578,8 +504,7 @@ do_setifcaps(int s, const char *ifname, prop_dictionary_t env)
 	assert(sizeof(ifcr) == prop_data_size(d));
 
 	memcpy(&ifcr, prop_data_data_nocopy(d), sizeof(ifcr));
-	estrlcpy(ifcr.ifcr_name, ifname, sizeof(ifcr.ifcr_name));
-	if (ioctl(s, SIOCSIFCAP, &ifcr) == -1)
+	if (direct_ioctl(env, SIOCSIFCAP, &ifcr) == -1)
 		err(EXIT_FAILURE, "SIOCSIFCAP");
 }
 
@@ -779,10 +704,10 @@ main(int argc, char **argv)
 	}
 
 	do_setifpreference(env);
-	do_setifcaps(s, ifname, env);
+	do_setifcaps(env);
 
 	if (check_up_state == 1)
-		check_ifflags_up(ifname);
+		check_ifflags_up(env);
 
 	exit(EXIT_SUCCESS);
 }
@@ -914,24 +839,14 @@ list_cloners(prop_dictionary_t env, prop_dictionary_t oenv)
 static int
 clone_command(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	struct ifreq ifreq;
-	int s;
 	int64_t cmd;
-	const char *ifname;
 
 	if (!prop_dictionary_get_int64(env, "clonecmd", &cmd)) {
 		errno = ENOENT;
 		return -1;
 	}
 
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
-
-	/* We're called early... */
-	s = getsock(AF_INET);
-
-	estrlcpy(ifreq.ifr_name, ifname, sizeof(ifreq.ifr_name));
-	if (ioctl(s, (unsigned long)cmd, &ifreq) == -1) {
+	if (indirect_ioctl(env, (unsigned long)cmd, NULL) == -1) {
 		warn("%s", __func__);
 		return -1;
 	}
@@ -960,7 +875,7 @@ setifaddr(prop_dictionary_t env, prop_dictionary_t xenv)
 	assert(d != NULL);
 	pfx0 = prop_data_data_nocopy(d);
 
-	if (pfx0->pfx_len != 0) {
+	if (pfx0->pfx_len >= 0) {
 		pfx = prefixlen_to_mask(af, pfx0->pfx_len);
 		if (pfx == NULL)
 			err(EXIT_FAILURE, "prefixlen_to_mask");
@@ -1157,52 +1072,41 @@ setifdstormask(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 void
-check_ifflags_up(const char *ifname)
+check_ifflags_up(prop_dictionary_t env)
 {
-	struct ifreq ifreq;
-	int s;
+	struct ifreq ifr;
 
-	s = getsock(AF_UNSPEC);
-
-	estrlcpy(ifreq.ifr_name, ifname, sizeof(ifreq.ifr_name));
- 	if (ioctl(s, SIOCGIFFLAGS, &ifreq) == -1)
+ 	if (direct_ioctl(env, SIOCGIFFLAGS, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGIFFLAGS");
-	if (ifreq.ifr_flags & IFF_UP)
+	if (ifr.ifr_flags & IFF_UP)
 		return;
-	ifreq.ifr_flags |= IFF_UP;
-	if (ioctl(s, SIOCSIFFLAGS, &ifreq) == -1)
+	ifr.ifr_flags |= IFF_UP;
+	if (direct_ioctl(env, SIOCSIFFLAGS, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSIFFLAGS");
 }
 
 int
 setifflags(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	struct ifreq ifreq;
+	struct ifreq ifr;
 	int64_t ifflag;
-	int s;
 	bool rc;
-	const char *ifname;
-
-	s = getsock(AF_INET);
 
 	rc = prop_dictionary_get_int64(env, "ifflag", &ifflag);
 	assert(rc);
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
 
-	estrlcpy(ifreq.ifr_name, ifname, sizeof(ifreq.ifr_name));
- 	if (ioctl(s, SIOCGIFFLAGS, &ifreq) == -1)
+ 	if (direct_ioctl(env, SIOCGIFFLAGS, &ifr) == -1)
 		return -1;
 
 	if (ifflag < 0) {
 		ifflag = -ifflag;
 		if (ifflag == IFF_UP)
 			check_up_state = 0;
-		ifreq.ifr_flags &= ~ifflag;
+		ifr.ifr_flags &= ~ifflag;
 	} else
-		ifreq.ifr_flags |= ifflag;
+		ifr.ifr_flags |= ifflag;
 
-	if (ioctl(s, SIOCSIFFLAGS, &ifreq) == -1)
+	if (direct_ioctl(env, SIOCSIFFLAGS, &ifr) == -1)
 		return -1;
 
 	return 0; 
@@ -1211,18 +1115,10 @@ setifflags(prop_dictionary_t env, prop_dictionary_t xenv)
 static int
 getifcaps(prop_dictionary_t env, prop_dictionary_t oenv, struct ifcapreq *oifcr)
 {
-	const char *ifname;
 	bool rc;
-	int s;
 	struct ifcapreq ifcr;
 	const struct ifcapreq *tmpifcr;
 	prop_data_t capdata;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		return -1;
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
 
 	capdata = (prop_data_t)prop_dictionary_get(env, "ifcaps");
 
@@ -1232,8 +1128,7 @@ getifcaps(prop_dictionary_t env, prop_dictionary_t oenv, struct ifcapreq *oifcr)
 		return 0;
 	}
 
-	estrlcpy(ifcr.ifcr_name, ifname, sizeof(ifcr.ifcr_name));
-	(void)ioctl(s, SIOCGIFCAP, &ifcr);
+	(void)direct_ioctl(env, SIOCGIFCAP, &ifcr);
 	*oifcr = ifcr;
 
 	capdata = prop_data_create_data(&ifcr, sizeof(ifcr));
@@ -1286,22 +1181,13 @@ setifmetric(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ifreq ifr;
 	bool rc;
-	const char *ifname;
-	int s;
 	int64_t metric;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		return -1;
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
 
 	rc = prop_dictionary_get_int64(env, "metric", &metric);
 	assert(rc);
 
-	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_metric = metric;
-	if (ioctl(s, SIOCSIFMETRIC, &ifr) == -1)
+	if (direct_ioctl(env, SIOCSIFMETRIC, &ifr) == -1)
 		warn("SIOCSIFMETRIC");
 	return 0;
 }
@@ -1310,8 +1196,7 @@ static void
 do_setifpreference(prop_dictionary_t env)
 {
 	struct if_addrprefreq ifap;
-	int af, s;
-	const char *ifname;
+	int af;
 	const struct afswtch *afp;
 	prop_data_t d;
 	const struct paddr_prefix *pfx;
@@ -1333,15 +1218,9 @@ do_setifpreference(prop_dictionary_t env)
 
 	pfx = prop_data_data_nocopy(d);
 
-	s = getsock(AF_UNSPEC);
-
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
-
-	strlcpy(ifap.ifap_name, ifname, sizeof(ifap.ifap_name));
 	memcpy(&ifap.ifap_addr, &pfx->pfx_addr,
 	    MIN(sizeof(ifap.ifap_addr), pfx->pfx_addr.sa_len));
-	if (ioctl(s, SIOCSIFADDRPREF, &ifap) == -1)
+	if (direct_ioctl(env, SIOCSIFADDRPREF, &ifap) == -1)
 		warn("SIOCSIFADDRPREF");
 }
 
@@ -1350,22 +1229,13 @@ setifmtu(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	int64_t mtu;
 	bool rc;
-	const char *ifname;
 	struct ifreq ifr;
-	int s;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		return -1;
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
 
 	rc = prop_dictionary_get_int64(env, "mtu", &mtu);
 	assert(rc);
 
-	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_mtu = mtu;
-	if (ioctl(s, SIOCSIFMTU, &ifr) == -1)
+	if (direct_ioctl(env, SIOCSIFMTU, &ifr) == -1)
 		warn("SIOCSIFMTU");
 
 	return 0;
@@ -1381,15 +1251,11 @@ media_error(int type, const char *val, const char *opt)
 void
 init_current_media(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-	struct ifmediareq ifmr;
-	int s;
 	const char *ifname;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
+	struct ifmediareq ifmr;
 
 	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
+		err(EXIT_FAILURE, "getifname");
 
 	/*
 	 * If we have not yet done so, grab the currently-selected
@@ -1398,9 +1264,8 @@ init_current_media(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	if (prop_dictionary_get(env, "initmedia") == NULL) {
 		memset(&ifmr, 0, sizeof(ifmr));
-		estrlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 
-		if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
+		if (direct_ioctl(env, SIOCGIFMEDIA, &ifmr) == -1) {
 			/*
 			 * If we get E2BIG, the kernel is telling us
 			 * that there are more, so we can ignore it.
@@ -1425,11 +1290,6 @@ void
 process_media_commands(prop_dictionary_t env)
 {
 	struct ifreq ifr;
-	const char *ifname;
-	int s;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
 
 	if (prop_dictionary_get(env, "media") == NULL &&
 	    prop_dictionary_get(env, "mediaopt") == NULL &&
@@ -1439,9 +1299,6 @@ process_media_commands(prop_dictionary_t env)
 		return;
 	}
 
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
-
 	/*
 	 * Media already set up, and commands sanity-checked.  Set/clear
 	 * any options, and we're ready to go.
@@ -1450,10 +1307,9 @@ process_media_commands(prop_dictionary_t env)
 	media_current &= ~mediaopt_clear;
 
 	memset(&ifr, 0, sizeof(ifr));
-	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_media = media_current;
 
-	if (ioctl(s, SIOCSIFMEDIA, &ifr) == -1)
+	if (direct_ioctl(env, SIOCSIFMEDIA, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSIFMEDIA");
 }
 
@@ -1641,19 +1497,10 @@ int
 carrier(prop_dictionary_t env)
 {
 	struct ifmediareq ifmr;
-	int s;
-	const char *ifname;
 
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
+	memset(&ifmr, 0, sizeof(ifmr));
 
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
-
-	(void) memset(&ifmr, 0, sizeof(ifmr));
-	estrlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
-
-	if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
+	if (direct_ioctl(env, SIOCGIFMEDIA, &ifmr) == -1) {
 		/*
 		 * Interface doesn't support SIOC{G,S}IFMEDIA;
 		 * assume ok.
@@ -1705,6 +1552,7 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
 	} else
 		afp = lookup_af_bynum(af);
 
+	/* get out early if the family is unsupported by the kernel */
 	if ((s = getsock(af)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 

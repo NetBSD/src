@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.22 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.22.2.1 2008/06/23 04:30:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.22 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.22.2.1 2008/06/23 04:30:04 wrstuden Exp $");
 
 #include "opt_ddb.h"
 
@@ -423,7 +423,6 @@ algor_p5064_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 	/* XXX assume CPU_MIPS_DOUBLE_COUNT */
 	curcpu()->ci_cycles_per_hz /= 2;
 	curcpu()->ci_divisor_delay /= 2;
-	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	printf("Timer calibration: %lu cycles/sec [(%lu, %lu) * 16]\n",
 	    cps, ctrdiff[2], ctrdiff[3]);

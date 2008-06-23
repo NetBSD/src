@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.82 2008/01/21 11:36:46 ichiro Exp $
+#	$NetBSD: files.usb,v 1.82.12.1 2008/06/23 04:31:36 wrstuden Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -6,12 +6,13 @@
 
 defflag	USBVERBOSE
 
+define	usbroothubif { }
 define	usbdevif { [port = -1], [configuration = -1], [interface = -1],
 		   [vendor = -1], [product = -1], [release = -1] }
 define	usbifif { [port = -1], [configuration = -1], [interface = -1],
 		  [vendor = -1], [product = -1], [release = -1] }
 
-device	usb: usbdevif
+device	usb: usbroothubif
 attach	usb at usbus
 file	dev/usb/usb.c			usb			needs-flag
 file	dev/usb/usbdi.c			usb
@@ -22,6 +23,7 @@ file	dev/usb/usb_quirks.c		usb
 
 # Hub driver
 device	uhub: usbdevif, usbifif
+attach	uhub at usbroothubif with uroothub
 attach	uhub at usbdevif
 file	dev/usb/uhub.c			usb
 
@@ -134,6 +136,11 @@ file	dev/usb/ubt.c			ubt
 device	urio
 attach	urio at usbdevif
 file	dev/usb/urio.c			urio			needs-flag
+
+# BlackBerries
+device	uberry
+attach	uberry at usbdevif
+file	dev/usb/uberry.c			uberry
 
 # Handspring Visor
 device	uvisor: ucombus

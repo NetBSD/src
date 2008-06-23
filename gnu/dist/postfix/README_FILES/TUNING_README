@@ -155,7 +155,7 @@ will suffer grotesque delays if you do so. The limits are designed to protect
 the smtpd(8) server against abuse by out-of-control clients.
 
     smtpd_client_connection_count_limit (default: 50)
-        The maximum number of connections than an SMTP client may make
+        The maximum number of connections that an SMTP client may make
         simultaneously.
     smtpd_client_connection_rate_limit (default: no limit)
         The maximum number of connections that an SMTP client may make in the

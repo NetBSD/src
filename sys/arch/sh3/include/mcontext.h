@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6.2.1 2008/06/23 04:30:39 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 typedef int		__greg_t;
 typedef __greg_t	__gregset_t[_NGREG];
 
-#define	_REG_EXPEVT	0
+#define	_REG_GBR	0
 #define	_REG_PC		1
 #define	_REG_SR		2
 #define	_REG_MACL	3

@@ -1,4 +1,4 @@
-.\"     $NetBSD: KASSERT.9,v 1.4 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: KASSERT.9,v 1.4.2.1 2008/06/23 04:30:03 wrstuden Exp $
 .\"
 .\" Copyright (c) 2006 Igor Sobrado
 .\" All rights reserved.
@@ -14,6 +14,9 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -55,7 +58,7 @@ In a kernel that does not have this configuration option, the
 macro is defined to be a no-op.
 .Pp
 .Fn KDASSERT
-tests are included in only kernels that has been compiled with the
+tests are included only in kernels compiled with the
 .Dv DEBUG
 configuration option.
 .Fn KDASSERT

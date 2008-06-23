@@ -1,10 +1,10 @@
-/*	$NetBSD: opcode.h,v 1.1.1.2 2007/01/27 21:07:36 christos Exp $	*/
+/*	$NetBSD: opcode.h,v 1.1.1.2.12.1 2008/06/23 04:28:16 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: opcode.h,v 1.2.18.2 2005/04/29 00:16:16 marka Exp */
+/* Id: opcode.h,v 1.8 2007/06/19 23:47:17 tbox Exp */
 
 #ifndef DNS_OPCODE_H
 #define DNS_OPCODE_H 1
 
-/*! \file */
+/*! \file dns/opcode.h */
 
 #include <isc/lang.h>
 

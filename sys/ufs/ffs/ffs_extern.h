@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.64 2008/04/17 09:52:47 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.64.6.1 2008/06/23 04:32:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -65,6 +65,8 @@ struct cg;
 #if defined(_KERNEL)
 
 #include <sys/pool.h>
+
+#define FFS_NOBLK		((daddr_t)-1)
 
 #define	FFS_ITIMES(ip, acc, mod, cre) \
 	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
@@ -202,7 +204,10 @@ void	ffs_csumtotal_swap(struct csum_total *, struct csum_total *);
 void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 /* ffs_subr.c */
+#if defined(_KERNEL)
 void	ffs_load_inode(struct buf *, struct inode *, struct fs *, ino_t);
+int	ffs_getblk(struct vnode *, daddr_t, daddr_t, int, bool, buf_t **);
+#endif /* defined(_KERNEL) */
 int	ffs_freefile(struct fs *, struct vnode *, ino_t, int);
 void	ffs_fragacct(struct fs *, int, int32_t[], int, int);
 int	ffs_isblock(struct fs *, u_char *, int32_t);

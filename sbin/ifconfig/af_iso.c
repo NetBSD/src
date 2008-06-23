@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.c,v 1.9 2008/05/06 21:20:05 dyoung Exp $	*/
+/*	$NetBSD: af_iso.c,v 1.9.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_iso.c,v 1.9 2008/05/06 21:20:05 dyoung Exp $");
+__RCSID("$NetBSD: af_iso.c,v 1.9.2.1 2008/06/23 04:29:57 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -41,12 +41,6 @@ __RCSID("$NetBSD: af_iso.c,v 1.9 2008/05/06 21:20:05 dyoung Exp $");
 #include <sys/socket.h>
 
 #include <net/if.h> 
-
-#if 0	/* XXX done in af_iso.h */
-#define EON
-#include <netiso/iso.h> 
-#include <netiso/iso_var.h>
-#endif
 
 #include <err.h>
 #include <errno.h>
@@ -80,6 +74,14 @@ struct pinteger parse_snpaoffset = PINTEGER_INITIALIZER1(&snpaoffset,
 struct pinteger parse_nsellength = PINTEGER_INITIALIZER1(&nsellength,
     "nsellength", 0, UINT8_MAX, 10, setnsellength, "nsellength",
     &command_root.pb_parser);
+
+static const struct kwinst isokw[] = {
+	  {.k_word = "nsellength", .k_nextparser = &parse_nsellength.pi_parser}
+	, {.k_word = "snpaoffset", .k_nextparser = &parse_snpaoffset.pi_parser}
+};
+
+struct pkw iso = PKW_INITIALIZER(&iso, "ISO", NULL, NULL,
+    isokw, __arraycount(isokw), NULL);
 
 void
 iso_getaddr(const struct paddr_prefix *pfx, int which)

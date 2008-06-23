@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.19 2006/05/24 21:24:25 mrg Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.19.66.1 2008/06/23 04:30:31 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,6 +50,7 @@
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/nfs.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/lfs.h>
 #include <lib/libsa/ustarfs.h>
 
 #include "hfs.h"
@@ -157,13 +158,16 @@ static struct devsw of_devsw[1] = {
 };
 int ndevs = sizeof of_devsw / sizeof of_devsw[0];
 
-static struct fs_ops file_system_ufs = FS_OPS(ufs);
+static struct fs_ops file_system_ffsv1 = FS_OPS(ffsv1);
+static struct fs_ops file_system_ffsv2 = FS_OPS(ffsv2);
+static struct fs_ops file_system_lfsv1 = FS_OPS(lfsv1);
+static struct fs_ops file_system_lfsv2 = FS_OPS(lfsv2);
 static struct fs_ops file_system_hfs = FS_OPS(hfs);
 static struct fs_ops file_system_ustarfs = FS_OPS(ustarfs);
 static struct fs_ops file_system_cd9660 = FS_OPS(cd9660);
 static struct fs_ops file_system_nfs = FS_OPS(nfs);
 
-struct fs_ops file_system[4];
+struct fs_ops file_system[8];
 int nfsys;
 
 static struct of_dev ofdev = {
@@ -331,11 +335,14 @@ devopen(struct open_file *of, const char *name, char **file)
 
 		of->f_dev = of_devsw;
 		of->f_devdata = &ofdev;
-		file_system[0] = file_system_ufs;
-		file_system[1] = file_system_ustarfs;
-		file_system[2] = file_system_cd9660;
-		file_system[3] = file_system_hfs;
-		nfsys = 4;
+		file_system[0] = file_system_ffsv1;
+		file_system[1] = file_system_ffsv2;
+		file_system[2] = file_system_lfsv1;
+		file_system[3] = file_system_lfsv2;
+		file_system[4] = file_system_ustarfs;
+		file_system[5] = file_system_cd9660;
+		file_system[6] = file_system_hfs;
+		nfsys = 7;
 		return 0;
 	}
 	if (!strcmp(buf, "network")) {

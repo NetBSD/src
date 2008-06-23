@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.53 2008/01/02 11:49:15 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.53.12.1 2008/06/23 04:32:06 wrstuden Exp $	*/
 
 /*
  *
@@ -74,6 +74,19 @@
 struct workqueue;
 
 /*
+ * per-cpu data
+ */
+
+struct uvm_cpu {
+	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
+	int page_free_nextcolor;	/* next color to allocate from */
+	int page_idlezero_next;		/* which color to zero next */
+	bool page_idle_zero;		/* TRUE if we should try to zero
+					   pages in the idle loop */
+	int pages[PGFL_NQUEUES];	/* total of pages in page_free */
+};
+
+/*
  * uvm structure (vm global state: collected in one structure for ease
  * of reference...)
  */
@@ -83,10 +96,7 @@ struct uvm {
 
 		/* vm_page queues */
 	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
-	int page_free_nextcolor;	/* next color to allocate from */
 	bool page_init_done;		/* TRUE if uvm_page_init() finished */
-	bool page_idle_zero;		/* TRUE if we should try to zero
-					   pages in the idle loop */
 
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
@@ -94,11 +104,6 @@ struct uvm {
 
 		/* aiodone daemon */
 	struct workqueue *aiodone_queue;
-
-		/* page hash */
-	struct pglist *page_hash;	/* page hash table (vp/off->page) */
-	int page_nhash;			/* number of buckets */
-	int page_hashmask;		/* hash mask */
 
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
 	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
@@ -108,6 +113,9 @@ struct uvm {
 	kcondvar_t scheduler_cv;
 	bool scheduler_kicked;
 	int swapout_enabled;
+
+	/* per-cpu data */
+	struct uvm_cpu cpus[MAXCPUS];
 };
 
 /*

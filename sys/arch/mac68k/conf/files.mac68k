@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.121 2008/02/20 21:43:34 drochner Exp $
+#	$NetBSD: files.mac68k,v 1.121.12.1 2008/06/23 04:30:30 wrstuden Exp $
 
 # mac68k-specific configuration info
 
@@ -130,6 +130,10 @@ include	"dev/ata/files.ata"
 
 attach	wdc at obio with wdc_obio
 file	arch/mac68k/obio/wdc_obio.c	wdc_obio
+
+device	cpi { }
+attach	cpi at nubus
+file	arch/mac68k/nubus/cpi_nubus.c	cpi
 
 device	zsc { channel = -1 }
 attach	zsc at obio

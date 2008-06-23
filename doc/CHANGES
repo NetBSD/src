@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1052 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1052.2.1 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -521,3 +521,33 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		the ATF 0.5 just imported.  [jmmv 20080501]
 	hpqlb(4): Hotkey driver for HP notebooks. [cegger 20080501]
 	drm(4): Added amd64 support. [jmcneill 20080504]
+	openssl: Imported 20080509 current snapshot. [christos 20080509]
+	getent(1): Added support for "netgroup" database. [tron 20080514]
+	fs/udf: Added write support for the UDF file system. [reinoud 20080514]
+	event(3): Updated libevent to 1.4.4-stable. [peter 20080516]
+	ypserv(8): disabled libwrap address to hostname lookups to avoid
+		the chance of ypserv blocking for an extended period of
+		time due a long DNS timeout [chuck 20080516]
+	amd64: Added support for PCI_BUS_FIXUP and PCI_ADDR_FIXUP kernel
+		options. [jmcneill 20080517]
+	acpidalb(4): Direct Application Launch Buttons. [cegger 20080518]
+	wscons(4): Add support for the Colemak keyboard layout. [ghen 20080520]
+	ipf(8): Updated to version 4.1.29. [darrenr 20080520]
+	openldap: Import 2.4.9. [lukem 20080522]
+	postfix(1): Enable LDAP support for tables (see ldap_table(5))
+		[lukem 20080522]
+	amd(8): Enable LDAP support for amd maps. [lukem 20080522]
+	mac68k: Added support for Creative Systems Inc Hurdler CPI 
+		Nubus parallel printer card. [hauke 20080522]
+	siisata(4): A driver for Silicon Image SteelVine SATA-II controllers
+		(SiI3124, SiI3132, and SiI3531) [jnemeth 20080523]
+	kernel: Device attach and detach notifications are now exposed
+		via /dev/drvctl [jmcneill 20080525]
+	awk: Import 20070501 [christos 20080525]
+	uberry(4): A driver to allow RIM BlackBerries to charge from the USB
+		port [christos 20080525]
+	pf(4): Updated to OpenBSD 4.2 PF [yamt,peter,christos,joerg 20080618]
+	bind: Import 9.5.0 [christos 20080621]
+	psrset(8): Utility to control processor sets [ad 20080622]
+	postfix: Import 2.5.2 [christos 20080622]
+	ssh-hpn: Apply 5.0p1 13 v3 [christos 20080622]

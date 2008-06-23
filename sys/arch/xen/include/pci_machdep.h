@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.9 2008/04/16 18:41:48 cegger Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9.6.1 2008/06/23 04:30:51 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -126,6 +126,9 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 int		xen_pci_enumerate_bus(struct pci_softc *, const int *,
 		   int (*)(struct pci_attach_args *), struct pci_attach_args *);
+
+/* Extract Bus Number for a host bridge or -1 if unknown. */
+int             pchb_get_bus_number(pci_chipset_tag_t, pcitag_t);
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PCI Specification,

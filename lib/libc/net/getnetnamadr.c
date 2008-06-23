@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.37 2007/01/27 22:27:35 christos Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.37.12.1 2008/06/23 04:29:32 wrstuden Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.37 2007/01/27 22:27:35 christos Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.37.12.1 2008/06/23 04:29:32 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,29 +104,72 @@ static int   __ypcurrentlen;
 static	struct netent net_entry;
 static	char *net_aliases[MAXALIASES];
 
-static struct netent *getnetanswer(querybuf *, int, int);
-int	_files_getnetbyaddr(void *, void *, va_list);
-int	_files_getnetbyname(void *, void *, va_list);
-int	_dns_getnetbyaddr(void *, void *, va_list);
-int	_dns_getnetbyname(void *, void *, va_list);
+static int		parse_reversed_addr(const char *, in_addr_t *);
+static struct netent	*getnetanswer(querybuf *, int, int);
+static int		_files_getnetbyaddr(void *, void *, va_list);
+static int		_files_getnetbyname(void *, void *, va_list);
+static int		_dns_getnetbyaddr(void *, void *, va_list);
+static int		_dns_getnetbyname(void *, void *, va_list);
 #ifdef YP
-int	_yp_getnetbyaddr(void *, void *, va_list);
-int	_yp_getnetbyname(void *, void *, va_list);
-struct netent *_ypnetent(char *);
+static int		_yp_getnetbyaddr(void *, void *, va_list);
+static int		_yp_getnetbyname(void *, void *, va_list);
+static struct netent	*_ypnetent(char *);
 #endif
+
+/*
+ * parse_reversed_addr --
+ *	parse str, which should be of the form 'd.c.b.a.IN-ADDR.ARPA'
+ *	(a PTR as per RFC 1101) and convert into an in_addr_t of the
+ *	address 'a.b.c.d'.
+ *	returns 0 on success (storing in *result), or -1 on error.
+ */
+static int
+parse_reversed_addr(const char *str, in_addr_t *result)
+{
+	unsigned long	octet[4];
+	const char	*sp;
+	char		*ep;
+	int		octidx;
+
+	sp = str;
+				/* find the four octets 'd.b.c.a.' */
+	for (octidx = 0; octidx < 4; octidx++) {
+					/* ensure it's a number */
+		if (!isdigit((unsigned char)*sp))
+			return -1;
+		octet[octidx] = strtoul(sp, &ep, 10);
+					/* with a trailing '.' */
+		if (*ep != '.')
+			return -1;
+					/* and is 0 <= octet <= 255 */
+		if (octet[octidx] > 255)
+			return -1;
+		sp = ep + 1;
+	}
+				/* ensure trailer is correct */
+	if (strcasecmp(sp, "IN-ADDR.ARPA") != 0)
+		return -1;
+	*result = 0;
+				/* build result from octets in reverse */
+	for (octidx = 3; octidx >= 0; octidx--) {
+		*result <<= 8;
+		*result |= (octet[octidx] & 0xff);
+	}
+	return 0;
+}
 
 static struct netent *
 getnetanswer(querybuf *answer, int anslen, int net_i)
 {
-	HEADER *hp;
-	u_char *cp;
-	int n;
-	u_char *eom;
-	int type, class, ancount, qdcount, haveanswer, i, nchar;
-	char aux1[MAXDNAME], aux2[MAXDNAME], ans[MAXDNAME];
-	char *in, *st, *pauxt, *bp, **ap;
-	char *paux1 = &aux1[0], *paux2 = &aux2[0], *ep;
-	static	char netbuf[PACKETSZ];
+	static char	n_name[MAXDNAME];
+	static char	netbuf[PACKETSZ];
+
+	HEADER		*hp;
+	u_char		*cp;
+	int		n;
+	u_char		*eom;
+	int		type, class, ancount, qdcount, haveanswer;
+	char		*in, *bp, **ap, *ep;
 
 	_DIAGASSERT(answer != NULL);
 
@@ -170,13 +213,13 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 	*ap = NULL;
 	net_entry.n_aliases = net_aliases;
 	haveanswer = 0;
+	n_name[0] = '\0';
 	while (--ancount >= 0 && cp < eom) {
 		n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
 		if ((n < 0) || !res_dnok(bp))
 			break;
 		cp += n;
-		ans[0] = '\0';
-		(void)strlcpy(ans, bp, sizeof(ans));
+		(void)strlcpy(n_name, bp, sizeof(n_name));
 		GETSHORT(type, cp);
 		GETSHORT(class, cp);
 		cp += INT32SZ;		/* TTL */
@@ -187,7 +230,7 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 				cp += n;
 				return NULL;
 			}
-			cp += n; 
+			cp += n;
 			*ap++ = bp;
 			bp += strlen(bp) + 1;
 			net_entry.n_addrtype =
@@ -210,27 +253,9 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 				h_errno = HOST_NOT_FOUND;
 				return NULL;
 			}
-			net_entry.n_name = ans;
-			aux2[0] = '\0';
-			for (i = 0; i < 4; i++) {
-				for (st = in, nchar = 0;
-				     isdigit((unsigned char)*st);
-				     st++, nchar++)
-					;
-				if (*st != '.' || nchar == 0 || nchar > 3)
-					goto next_alias;
-				if (i != 0)
-					nchar++;
-				(void)strlcpy(paux1, in, (size_t)nchar);
-				paux1[nchar] = '\0';
-				pauxt = paux2;
-				paux2 = strcat(paux1, paux2);
-				paux1 = pauxt;
-				in = ++st;
-			}		  
-			if (strcasecmp(in, "IN-ADDR.ARPA") != 0)
+			net_entry.n_name = n_name;
+			if (parse_reversed_addr(in, &net_entry.n_net) == -1)
 				goto next_alias;
-			net_entry.n_net = inet_network(paux2);
 			break;
 		}
 		net_entry.n_aliases++;
@@ -247,50 +272,46 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 }
 
 /*ARGSUSED*/
-int
-_files_getnetbyaddr(void *rv, void *cb_data, va_list ap)
+static int
+_files_getnetbyaddr(void *cbrv, void *cbdata, va_list ap)
 {
-	struct netent *p;
-	uint32_t net;
-	int type;
+	struct netent	**retval = va_arg(ap, struct netent **);
+	uint32_t	  net	 = va_arg(ap, uint32_t);
+	int		  type	 = va_arg(ap, int);
 
-	_DIAGASSERT(rv != NULL);
-
-	net = va_arg(ap, uint32_t);
-	type = va_arg(ap, int);
+	struct netent	 *np;
 
 	setnetent(_net_stayopen);
-	while ((p = getnetent()) != NULL)
-		if (p->n_addrtype == type && p->n_net == net)
+	while ((np = getnetent()) != NULL)
+		if (np->n_addrtype == type && np->n_net == net)
 			break;
 	if (!_net_stayopen)
 		endnetent();
-	*((struct netent **)rv) = p;
-	if (p==NULL) {
+
+	if (np != NULL) {
+		*retval = np;
+		return NS_SUCCESS;
+	} else {
 		h_errno = HOST_NOT_FOUND;
 		return NS_NOTFOUND;
 	}
-	return NS_SUCCESS;
 }
 
 /*ARGSUSED*/
-int
-_dns_getnetbyaddr(void *rv, void *cb_data, va_list ap)
+static int
+_dns_getnetbyaddr(void *cbrv, void *cbdata, va_list ap)
 {
-	unsigned int netbr[4];
-	int nn, anslen;
-	querybuf *buf;
-	char qbuf[MAXDNAME];
-	uint32_t net2;
-	struct netent *np;
-	uint32_t net;
-	int type;
-	res_state res;
+	struct netent	**retval = va_arg(ap, struct netent **);
+	uint32_t	  net	 = va_arg(ap, uint32_t);
+	int		  type	 = va_arg(ap, int);
 
-	_DIAGASSERT(rv != NULL);
-
-	net = va_arg(ap, uint32_t);
-	type = va_arg(ap, int);
+	unsigned int	 netbr[4];
+	int		 nn, anslen;
+	querybuf	*buf;
+	char		 qbuf[MAXDNAME];
+	uint32_t	 net2;
+	struct netent	*np;
+	res_state	 res;
 
 	if (type != AF_INET)
 		return NS_UNAVAIL;
@@ -322,8 +343,10 @@ _dns_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 		return NS_NOTFOUND;
 	}
 	res = __res_get_state();
-	if (res == NULL)
+	if (res == NULL) {
+		free(buf);
 		return NS_NOTFOUND;
+	}
 	anslen = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
 	if (anslen < 0) {
 		free(buf);
@@ -346,19 +369,22 @@ _dns_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 			u_net >>= 8;
 		np->n_net = u_net;
 	}
-	*((struct netent **)rv) = np;
-	if (np == NULL) {
+
+	if (np != NULL) {
+		*retval = np;
+		return NS_SUCCESS;
+	} else {
 		h_errno = HOST_NOT_FOUND;
 		return NS_NOTFOUND;
 	}
-	return NS_SUCCESS;
 }
-
 
 struct netent *
 getnetbyaddr(uint32_t net, int net_type)
 {
-	struct netent *np;
+	int		 rv;
+	struct netent	*retval;
+
 	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_files_getnetbyaddr, NULL)
 		{ NSSRC_DNS, _dns_getnetbyaddr, NULL },	/* force -DHESIOD */
@@ -366,60 +392,62 @@ getnetbyaddr(uint32_t net, int net_type)
 		NS_NULL_CB
 	};
 
-	np = NULL;
+	retval = NULL;
 	h_errno = NETDB_INTERNAL;
-	if (nsdispatch(&np, dtab, NSDB_NETWORKS, "getnetbyaddr", __nsdefaultsrc,
-	    net, net_type) != NS_SUCCESS)
-		return NULL;
-	h_errno = NETDB_SUCCESS;
-	return np;
+	rv = nsdispatch(NULL, dtab, NSDB_NETWORKS, "getnetbyaddr",
+	    __nsdefaultsrc, &retval, net, net_type);
+	if (rv == NS_SUCCESS) {
+		h_errno = NETDB_SUCCESS;
+		return retval;
+	}
+	return NULL;
 }
 
 /*ARGSUSED*/
-int
-_files_getnetbyname(void *rv, void *cb_data, va_list ap)
+static int
+_files_getnetbyname(void *cbrv, void *cbdata, va_list ap)
 {
-	struct netent *p;
-	char **cp;
-	const char *name;
+	struct netent	**retval = va_arg(ap, struct netent **);
+	const char	 *name	 = va_arg(ap, const char *);
 
-	_DIAGASSERT(rv != NULL);
+	struct netent	 *np;
+	char		**cp;
 
-	name = va_arg(ap, const char *);
 	setnetent(_net_stayopen);
-	while ((p = getnetent()) != NULL) {
-		if (strcasecmp(p->n_name, name) == 0)
+	while ((np = getnetent()) != NULL) {
+		if (strcasecmp(np->n_name, name) == 0)
 			break;
-		for (cp = p->n_aliases; *cp != 0; cp++)
+		for (cp = np->n_aliases; *cp != 0; cp++)
 			if (strcasecmp(*cp, name) == 0)
 				goto found;
 	}
 found:
 	if (!_net_stayopen)
 		endnetent();
-	*((struct netent **)rv) = p;
-	if (p==NULL) {
+
+	if (np != NULL) {
+		*retval = np;
+		return NS_SUCCESS;
+	} else {
 		h_errno = HOST_NOT_FOUND;
 		return NS_NOTFOUND;
 	}
-	return NS_SUCCESS;
 }
 
 /*ARGSUSED*/
-int
-_dns_getnetbyname(void *rv, void *cb_data, va_list ap)
+static int
+_dns_getnetbyname(void *cbrv, void *cbdata, va_list ap)
 {
-	int anslen;
-	querybuf *buf;
-	char qbuf[MAXDNAME];
-	struct netent *np;
-	const char *net;
-	res_state res;
+	struct netent	**retval = va_arg(ap, struct netent **);
+	const char	 *name	 = va_arg(ap, const char *);
 
-	_DIAGASSERT(rv != NULL);
+	int		 anslen;
+	querybuf	*buf;
+	char		 qbuf[MAXDNAME];
+	struct netent	*np;
+	res_state	 res;
 
-	net = va_arg(ap, const char *);
-	strlcpy(&qbuf[0], net, sizeof(qbuf));
+	strlcpy(&qbuf[0], name, sizeof(qbuf));
 	buf = malloc(sizeof(*buf));
 	if (buf == NULL) {
 		h_errno = NETDB_INTERNAL;
@@ -444,18 +472,22 @@ _dns_getnetbyname(void *rv, void *cb_data, va_list ap)
 	__res_put_state(res);
 	np = getnetanswer(buf, anslen, BYNAME);
 	free(buf);
-	*((struct netent **)rv) = np;
-	if (np == NULL) {
+
+	if (np != NULL) {
+		*retval = np;
+		return NS_SUCCESS;
+	} else {
 		h_errno = HOST_NOT_FOUND;
 		return NS_NOTFOUND;
 	}
-	return NS_SUCCESS;
 }
 
 struct netent *
-getnetbyname(const char *net)
+getnetbyname(const char *name)
 {
-	struct netent *np;
+	int		 rv;
+	struct netent	*retval;
+
 	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_files_getnetbyname, NULL)
 		{ NSSRC_DNS, _dns_getnetbyname, NULL },	/* force -DHESIOD */
@@ -463,32 +495,33 @@ getnetbyname(const char *net)
 		NS_NULL_CB
 	};
 
-	_DIAGASSERT(net != NULL);
+	_DIAGASSERT(name != NULL);
 
-	np = NULL;
+	retval = NULL;
 	h_errno = NETDB_INTERNAL;
-	if (nsdispatch(&np, dtab, NSDB_NETWORKS, "getnetbyname", __nsdefaultsrc,
-	    net) != NS_SUCCESS)
-		return NULL;
-	h_errno = NETDB_SUCCESS;
-	return np;
+	rv = nsdispatch(NULL, dtab, NSDB_NETWORKS, "getnetbyname",
+	    __nsdefaultsrc, &retval, name);
+	if (rv == NS_SUCCESS) {
+		h_errno = NETDB_SUCCESS;
+		return retval;
+	}
+	return NULL;
 }
 
 #ifdef YP
 /*ARGSUSED*/
-int
-_yp_getnetbyaddr(void *rv, void *cb_data, va_list ap)
+static int
+_yp_getnetbyaddr(void *cbrv, void *cb_data, va_list ap)
 {
-	struct netent *np;
-	char qbuf[MAXDNAME];
-	unsigned int netbr[4];
-	uint32_t net, net2;
-	int type, r;
+	struct netent	**retval = va_arg(ap, struct netent **);
+	uint32_t	  net	 = va_arg(ap, uint32_t);
+	int		  type	 = va_arg(ap, int);
 
-	_DIAGASSERT(rv != NULL);
-
-	net = va_arg(ap, uint32_t);
-	type = va_arg(ap, int);
+	struct netent	*np;
+	char		 qbuf[MAXDNAME];
+	unsigned int	 netbr[4];
+	uint32_t	 net2;
+	int		 r;
 
 	if (type != AF_INET)
 		return NS_UNAVAIL;
@@ -526,26 +559,24 @@ _yp_getnetbyaddr(void *rv, void *cb_data, va_list ap)
 	if (r == 0)
 		np = _ypnetent(__ypcurrent);
 
-	*((struct netent **)rv) = np;
-	if (np == NULL) {
+	if (np != NULL) {
+		*retval = np;
+		return NS_SUCCESS;
+	} else {
 		h_errno = HOST_NOT_FOUND;
 		return NS_NOTFOUND;
 	}
-	return NS_SUCCESS;
-
 }
 
-int
 /*ARGSUSED*/
-_yp_getnetbyname(void *rv, void *cb_data, va_list ap)
+static int
+_yp_getnetbyname(void *cbrv, void *cbdata, va_list ap)
 {
-	struct netent *np;
-	const char *name;
-	int r;
+	struct netent	**retval = va_arg(ap, struct netent **);
+	const char	 *name	 = va_arg(ap, const char *);
 
-	_DIAGASSERT(rv != NULL);
-
-	name = va_arg(ap, const char *);
+	struct netent	*np;
+	int		 r;
 
 	if (!__ypdomain) {
 		if (_yp_check(&__ypdomain) == 0)
@@ -560,15 +591,16 @@ _yp_getnetbyname(void *rv, void *cb_data, va_list ap)
 	if (r == 0)
 		np = _ypnetent(__ypcurrent);
 
-	*((struct netent **)rv) = np;
-	if (np == NULL) {
+	if (np != NULL) {
+		*retval = np;
+		return NS_SUCCESS;
+	} else {
 		h_errno = HOST_NOT_FOUND;
 		return NS_NOTFOUND;
 	}
-	return NS_SUCCESS;
 }
 
-struct netent *
+static struct netent *
 _ypnetent(char *line)
 {
 	char *cp, *p, **q;

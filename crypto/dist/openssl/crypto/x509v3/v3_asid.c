@@ -707,7 +707,7 @@ static int v3_asid_validate_path_internal(X509_STORE_CTX *ctx,
 {
   ASIdOrRanges *child_as = NULL, *child_rdi = NULL;
   int i, ret = 1, inherit_as = 0, inherit_rdi = 0;
-  X509 *x = NULL;
+  X509 *x;
 
   assert(chain != NULL && sk_X509_num(chain) > 0);
   assert(ctx != NULL || ext != NULL);
@@ -720,6 +720,7 @@ static int v3_asid_validate_path_internal(X509_STORE_CTX *ctx,
    */
   if (ext != NULL) {
     i = -1;
+    x = NULL;
   } else {
     i = 0;
     x = sk_X509_value(chain, i);
@@ -799,6 +800,7 @@ static int v3_asid_validate_path_internal(X509_STORE_CTX *ctx,
   /*
    * Trust anchor can't inherit.
    */
+  assert(x != NULL);
   if (x->rfc3779_asid != NULL) {
     if (x->rfc3779_asid->asnum != NULL &&
 	x->rfc3779_asid->asnum->type == ASIdentifierChoice_inherit)

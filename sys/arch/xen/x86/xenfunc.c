@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.6 2008/04/30 00:16:30 cegger Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.6.2.1 2008/06/23 04:30:51 wrstuden Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.6 2008/04/30 00:16:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.6.2.1 2008/06/23 04:30:51 wrstuden Exp $");
 
 #include <sys/param.h>
 
@@ -68,13 +68,19 @@ invlpg(vaddr_t addr)
 void
 lldt(u_short sel)
 {
+	struct cpu_info *ci;
 
+	ci = curcpu();
+
+	if (ci->ci_curldt == sel)
+		return;
 	/* __PRINTK(("ldt %x\n", IDXSELN(sel))); */
 	if (sel == GSEL(GLDT_SEL, SEL_KPL))
 		xen_set_ldt((vaddr_t)ldt, NLDT);
 	else
-		xen_set_ldt(cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_base,
-		    cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_entries);
+		xen_set_ldt(ci->ci_gdt[IDXSELN(sel)].ld.ld_base,
+		    ci->ci_gdt[IDXSELN(sel)].ld.ld_entries);
+	ci->ci_curldt = sel;
 }
 #endif
 

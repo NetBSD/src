@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.63 2007/10/17 19:55:37 garbled Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.63.22.1 2008/06/23 04:30:32 wrstuden Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.63 2007/10/17 19:55:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.63.22.1 2008/06/23 04:30:32 wrstuden Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -542,9 +542,16 @@ db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 }
 
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("cp0",	db_cp0dump_cmd,		0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("cp0",	db_cp0dump_cmd,		0,
+		"Dump CP0 registers.",
+		NULL, NULL) },
+	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,
+		"Print the physical address for a given kernel virtual address",
+		"address", 
+		"   address:\tvirtual address to look up") },
+	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
+		"Print out TLB entries. (only works with options DEBUG)",
+		NULL, NULL) },
 	{ DDB_ADD_CMD(NULL,     NULL,               0,  NULL,NULL,NULL) }
 };
 #endif	/* !KGDB */

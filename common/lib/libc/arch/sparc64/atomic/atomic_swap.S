@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.5 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.5.2.1 2008/06/23 04:26:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_swap_32)
+ENTRY(_atomic_swap_32)
 	ld	[%o0], %o2
 1:	mov	%o1, %o3
 	cas	[%o0], %o2, %o3
@@ -46,7 +46,7 @@ ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
 
-ENTRY_NOPROFILE(_atomic_swap_64)
+ENTRY(_atomic_swap_64)
 	ldx	[%o0], %o2
 1:	mov	%o1, %o3
 	casx	[%o0], %o2, %o3

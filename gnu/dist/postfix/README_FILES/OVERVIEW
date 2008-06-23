@@ -120,7 +120,7 @@ unnumbered names inside shaded areas represent Postfix queues.
     is described in the QSHAPE_README and TUNING_README documents.
 
   * The trivial-rewrite(8) server resolves each recipient address according to
-    its local and remote address class, as defined in the ADDRESS_CLASS_README
+    its local or remote address class, as defined in the ADDRESS_CLASS_README
     document. Additional routing information can be specified with the optional
     transport(5) table. The trivial-rewrite(8) server optionally queries the
     relocated(5) table for recipients whose address has changed; mail for such
@@ -261,9 +261,10 @@ queues.
                                    ination
                                     logs
 
-  * The proxymap(8) servers provide read-only table lookup service to Postfix
-    processes. This overcomes chroot restrictions, and reduces the number of
-    open lookup tables by sharing one open table among multiple processes.
+  * The proxymap(8) servers provide read-only and read-write table lookup
+    service to Postfix processes. This overcomes chroot restrictions, reduces
+    the number of open lookup tables by sharing one open table among multiple
+    processes, and implements single-updater tables.
 
   * The scache(8) server maintains the connection cache for the Postfix smtp(8)
     client. When connection caching is enabled for selected destinations, the

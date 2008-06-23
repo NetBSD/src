@@ -1,10 +1,10 @@
-/*	$NetBSD: rt_21.c,v 1.1.1.4 2007/01/27 21:07:26 christos Exp $	*/
+/*	$NetBSD: rt_21.c,v 1.1.1.4.12.1 2008/06/23 04:28:19 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rt_21.c,v 1.41.18.3 2005/04/27 05:01:52 sra Exp */
+/* Id: rt_21.c,v 1.46 2007/06/19 23:47:17 tbox Exp */
 
 /* reviewed: Thu Mar 16 15:02:31 PST 2000 by brister */
 

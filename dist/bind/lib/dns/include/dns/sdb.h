@@ -1,10 +1,10 @@
-/*	$NetBSD: sdb.h,v 1.1.1.4 2007/01/27 21:07:41 christos Exp $	*/
+/*	$NetBSD: sdb.h,v 1.1.1.4.12.1 2008/06/23 04:28:16 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdb.h,v 1.15.18.2 2005/04/29 00:16:21 marka Exp */
+/* Id: sdb.h,v 1.21 2007/06/19 23:47:17 tbox Exp */
 
 #ifndef DNS_SDB_H
 #define DNS_SDB_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/sdb.h
  * \brief
  * Simple database API.
  */

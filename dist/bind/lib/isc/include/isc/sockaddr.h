@@ -1,10 +1,10 @@
-/*	$NetBSD: sockaddr.h,v 1.1.1.4 2007/01/27 21:07:56 christos Exp $	*/
+/*	$NetBSD: sockaddr.h,v 1.1.1.4.12.1 2008/06/23 04:28:27 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sockaddr.h,v 1.42.18.8 2006/03/02 00:37:22 marka Exp */
+/* Id: sockaddr.h,v 1.55 2007/06/18 23:47:44 tbox Exp */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
 
-/*! \file */
+/*! \file isc/sockaddr.h */
 
 #include <isc/lang.h>
 #include <isc/net.h>
@@ -86,6 +86,7 @@ isc_sockaddr_eqaddrprefix(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 /*%<
  * Return ISC_TRUE iff the most significant 'prefixlen' bits of the
  * socket addresses 'a' and 'b' are equal, ignoring the ports.
+ * If 'b''s scope is zero then 'a''s scope will be ignored.
  */
 
 unsigned int

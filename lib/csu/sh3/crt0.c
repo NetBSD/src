@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.2 2005/12/24 22:02:10 perry Exp $	*/
+/*	$NetBSD: crt0.c,v 1.2.20.1 2008/06/23 04:29:30 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -50,7 +50,7 @@ start:
 ");
 	
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.2 2005/12/24 22:02:10 perry Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.2.20.1 2008/06/23 04:29:30 wrstuden Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
@@ -71,11 +71,7 @@ __start(argc, argv, envp)
 
 #ifdef DYNAMIC
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
-#ifdef stupid_gcc
 	if (&_DYNAMIC)
-#else
-	if ( ({volatile caddr_t x = (caddr_t)&_DYNAMIC; x; }) )
-#endif
 		__load_rtld(&_DYNAMIC);
 #endif /* DYNAMIC */
 

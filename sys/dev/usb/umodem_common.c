@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.14 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.14.2.1 2008/06/23 04:31:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.14 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.14.2.1 2008/06/23 04:31:37 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,11 +116,12 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
 
+	sc->sc_dev = self;
 	sc->sc_udev = dev;
 	sc->sc_ctl_iface = uaa->iface;
 
 	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
-	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
+	aprint_normal_dev(self, "%s, iclass %d/%d\n",
 	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
 	sc->sc_ctl_iface_no = id->bInterfaceNumber;
@@ -130,15 +131,14 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	    umodem_get_caps(dev, &sc->sc_cm_cap, &sc->sc_acm_cap, id);
 
 	if (data_ifcno == -1) {
-		printf("%s: no pointer to data interface\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "no pointer to data interface\n");
 		goto bad;
 	}
 
-	printf("%s: data interface %d, has %sCM over data, has %sbreak\n",
-	       USBDEVNAME(sc->sc_dev), data_ifcno,
-	       sc->sc_cm_cap & USB_CDC_CM_OVER_DATA ? "" : "no ",
-	       sc->sc_acm_cap & USB_CDC_ACM_HAS_BREAK ? "" : "no ");
+	aprint_normal_dev(self,
+	    "data interface %d, has %sCM over data, has %sbreak\n",
+	    data_ifcno, sc->sc_cm_cap & USB_CDC_CM_OVER_DATA ? "" : "no ",
+	    sc->sc_acm_cap & USB_CDC_ACM_HAS_BREAK ? "" : "no ");
 
 	/* Get the data interface too. */
 	for (i = 0; i < uaa->nifaces; i++) {
@@ -151,7 +151,7 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 		}
 	}
 	if (sc->sc_data_iface == NULL) {
-		printf("%s: no data interface\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "no data interface\n");
 		goto bad;
 	}
 
@@ -165,8 +165,8 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_data_iface, i);
 		if (ed == NULL) {
-			printf("%s: no endpoint descriptor for %d\n",
-				USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self,
+			    "no endpoint descriptor for %d\n)", i);
 			goto bad;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -179,13 +179,11 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	}
 
 	if (uca->bulkin == -1) {
-		printf("%s: Could not find data bulk in\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk in\n");
 		goto bad;
 	}
 	if (uca->bulkout == -1) {
-		printf("%s: Could not find data bulk out\n",
-			USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk out\n");
 		goto bad;
 	}
 
@@ -199,8 +197,8 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 			else
 				err = 0;
 			if (err) {
-				printf("%s: could not set data multiplex mode\n",
-				       USBDEVNAME(sc->sc_dev));
+				aprint_error_dev(self,
+				    "could not set data multiplex mode\n");
 				goto bad;
 			}
 			sc->sc_cm_over_data = 1;
@@ -225,8 +223,8 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
-			printf("%s: status change notification available\n",
-			       USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self,
+			    "status change notification available\n");
 			sc->sc_ctl_notify = ed->bEndpointAddress;
 		}
 	}
@@ -352,7 +350,7 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 			sc->sc_msr |= UMSR_DSR;
 		if (ISSET(mstatus, UCDC_N_SERIAL_DCD))
 			sc->sc_msr |= UMSR_DCD;
-		ucom_status_change((struct ucom_softc *)sc->sc_subdev);
+		ucom_status_change(device_private(sc->sc_subdev));
 		break;
 	default:
 		DPRINTF(("%s: unknown notify message: %02x\n",

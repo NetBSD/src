@@ -1,10 +1,10 @@
-#	$NetBSD: WGT624V3,v 1.1 2007/02/17 23:26:03 jmcneill Exp $
+#	$NetBSD: WGT624V3,v 1.1.52.1 2008/06/23 04:30:19 wrstuden Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.1 $"
+#ident 		"AP30-$Revision: 1.1.52.1 $"
 
 maxusers	32
 
@@ -62,6 +62,7 @@ options 	SYMTAB_SPACE=150000	# size for embedded symbol table
 #options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
+#options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 #options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

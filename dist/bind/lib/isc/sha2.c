@@ -1,9 +1,9 @@
-/*	$NetBSD: sha2.c,v 1.1.1.1 2007/01/27 21:07:48 christos Exp $	*/
+/*	$NetBSD: sha2.c,v 1.1.1.1.16.1 2008/06/23 04:28:22 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2005, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sha2.c,v 1.2.2.12 2006/08/16 03:18:14 marka Exp */
+/* Id: sha2.c,v 1.13 2007/06/19 23:47:17 tbox Exp */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.c,v 1.2.2.2 2002/03/05 08:36:47 ume Exp $	*/
 /*	$KAME: sha2.c,v 1.8 2001/11/08 01:07:52 itojun Exp $	*/
@@ -74,7 +74,7 @@
  *
  * or define below:
  *
- *   #define ISC_SHA2_UNROLL_TRANSFORM
+ *   \#define ISC_SHA2_UNROLL_TRANSFORM
  *
  */
 
@@ -90,16 +90,16 @@
  * If your system does not define the above, then you can do so by
  * hand like this:
  *
- *   #define LITTLE_ENDIAN 1234
- *   #define BIG_ENDIAN    4321
+ *   \#define LITTLE_ENDIAN 1234
+ *   \#define BIG_ENDIAN    4321
  *
  * And for little-endian machines, add:
  *
- *   #define BYTE_ORDER LITTLE_ENDIAN 
+ *   \#define BYTE_ORDER LITTLE_ENDIAN 
  *
  * Or for big-endian machines:
  *
- *   #define BYTE_ORDER BIG_ENDIAN
+ *   \#define BYTE_ORDER BIG_ENDIAN
  *
  * The FreeBSD machine this was written on defines BYTE_ORDER
  * appropriately by including <sys/types.h> (which in turn includes

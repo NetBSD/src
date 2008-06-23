@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_open.c,v 1.1.1.8 2006/07/19 01:17:51 rpaulo Exp $	*/
+/*	$NetBSD: dict_open.c,v 1.1.1.8.20.1 2008/06/23 04:29:26 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -24,7 +24,7 @@
 /*	const char *key;
 /*	const char *value;
 /*
-/*	char	*dict_get(dict, key)
+/*	const char *dict_get(dict, key)
 /*	DICT	*dict;
 /*	const char *key;
 /*
@@ -139,6 +139,9 @@
 /*
 /*	dict_get() retrieves the value stored in the named dictionary
 /*	under the given key. A null pointer means the value was not found.
+/*	As with dict_lookup(), the result is owned by the lookup table
+/*	implementation. Make a copy if the result is to be modified,
+/*	or if the result is to survive multiple table lookups.
 /*
 /*	dict_put() stores the specified key and value into the named
 /*	dictionary.
@@ -214,7 +217,7 @@ typedef struct {
     struct DICT *(*open) (const char *, int, int);
 } DICT_OPEN_INFO;
 
-static DICT_OPEN_INFO dict_open_info[] = {
+static const DICT_OPEN_INFO dict_open_info[] = {
 #ifdef HAS_CDB
     DICT_TYPE_CDB, dict_cdb_open,
 #endif
@@ -260,7 +263,7 @@ static HTABLE *dict_open_hash;
 static void dict_open_init(void)
 {
     const char *myname = "dict_open_init";
-    DICT_OPEN_INFO *dp;
+    const DICT_OPEN_INFO *dp;
 
     if (dict_open_hash != 0)
 	msg_panic("%s: multiple initialization", myname);

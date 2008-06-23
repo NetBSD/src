@@ -1,4 +1,4 @@
-.\"	$NetBSD: error.8,v 1.1.1.7 2007/05/19 16:27:51 heas Exp $
+.\"	$NetBSD: error.8,v 1.1.1.7.12.1 2008/06/23 04:29:08 wrstuden Exp $
 .\"
 .TH ERROR 8 
 .ad
@@ -19,7 +19,8 @@ requests from
 the queue manager. Each request specifies a queue file, a sender
 address, the reason for non-delivery (specified as the
 next-hop destination), and recipient information.
-The reason may be prefixed with an RFC 3463-compatible detail code.
+The reason may be prefixed with an RFC 3463-compatible detail code;
+if none is specified a default 4.0.0 or 5.0.0 code is used instead.
 This program expects to be run from the \fBmaster\fR(8) process
 manager.
 

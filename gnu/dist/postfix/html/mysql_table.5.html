@@ -259,7 +259,15 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
               limit  is exceeded.  Setting the limit to 1 ensures
               that lookups do not return multiple values.
 
-       The following parameters can be used to fill in  a  SELECT
+<b>OBSOLETE QUERY INTERFACE</b>
+       This section describes an interface that is deprecated  as
+       of  Postfix  2.2. It is replaced by the more general <b>query</b>
+       interface described above.   If  the  <b>query</b>  parameter  is
+       defined,  the  legacy  parameters  described here ignored.
+       Please migrate to the new interface as the  legacy  inter-
+       face may be removed in a future release.
+
+       The  following  parameters can be used to fill in a SELECT
        template statement of the form:
 
            SELECT [<b>select_field</b>]
@@ -267,17 +275,10 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
            WHERE [<b>where_field</b>] = '%s'
                  [<b>additional_conditions</b>]
 
-       The  specifier %s is replaced by the search string, and is
+       The specifier %s is replaced by the search string, and  is
        escaped so if it contains single quotes or other odd char-
        acters, it will not cause a parse error, or worse, a secu-
        rity problem.
-
-       As of Postfix  2.2  this  interface  is  obsolete,  it  is
-       replaced  by  the  more  general <b>query</b> interface described
-       above.  If the <b>query</b>  parameter  is  defined,  the  legacy
-       parameters  are  ignored. Please migrate to the new inter-
-       face as the legacy interface may be removed  in  a  future
-       release.
 
        <b>select_field</b>
               The SQL "select" parameter. Example:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.25 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: cmds.c,v 1.25.2.1 2008/06/23 04:29:54 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.25 2008/04/28 20:23:03 martin Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.25.2.1 2008/06/23 04:29:54 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -879,7 +879,7 @@ discover_path(last_path, new_path)
 		nomorelink = 1;
 		
 		while ((cp = strstr(++cp, "/")) != NULL) {
-			sz1 = (u_long)cp - (u_long)tp;
+			sz1 = (unsigned long)cp - (unsigned long)tp;
 			if (sz1 > MAXPATHLEN)
 				goto bad;
 			*cp = 0;
@@ -917,7 +917,8 @@ discover_path(last_path, new_path)
 			} else {			
 				/* relative link */
 				for (cq = cp - 1; *cq != '/'; cq--);
-				if (strlen(tp) - ((u_long)cq - (u_long)cp)
+				if (strlen(tp) -
+				    ((unsigned long)cq - (unsigned long)cp)
 				    + 1 + sz2 > MAXPATHLEN)
 					goto bad;
 				(void)memmove(cq + 1 + sz2, 

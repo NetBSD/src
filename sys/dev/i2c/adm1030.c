@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030.c,v 1.13 2008/05/04 14:45:01 xtraeme Exp $	*/
+/*	$NetBSD: adm1030.c,v 1.13.2.1 2008/06/23 04:31:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -11,8 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.13 2008/05/04 14:45:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.13.2.1 2008/06/23 04:31:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +85,7 @@ adm1030c_readreg(struct adm1030c_softc *sc, uint8_t reg)
 {
 	uint8_t data = 0;
 	
-	iic_acquire_bus(sc->sc_i2c,0);
+	iic_acquire_bus(sc->sc_i2c, 0);
 	iic_exec(sc->sc_i2c, I2C_OP_READ, sc->address, &reg, 1,
 	    &data, 1, 0);
 	iic_release_bus(sc->sc_i2c, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.9 2007/12/11 04:55:01 lukem Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.9.14.1 2008/06/23 04:31:43 wrstuden Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.9 2007/12/11 04:55:01 lukem Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.9.14.1 2008/06/23 04:31:43 wrstuden Exp $");
 
 #define IPF_H323_PROXY
 
@@ -69,7 +69,7 @@ unsigned short *port;
 
 	if (datlen < 6)
 		return -1;
-	
+
 	*port = 0;
 	offset = *off;
 	dp = (u_char *)data;
@@ -131,7 +131,7 @@ ap_session_t *aps;
 {
 	int i;
 	ipnat_t *ipn;
-	
+
 	if (aps->aps_data) {
 		for (i = 0, ipn = aps->aps_data;
 		     i < (aps->aps_psiz / sizeof(ipnat_t));
@@ -165,14 +165,14 @@ nat_t *nat;
 {
 	int ipaddr, off, datlen;
 	unsigned short port;
-	void *data;
 	tcphdr_t *tcp;
+	void *data;
 	ip_t *ip;
 
 	ip = fin->fin_ip;
 	tcp = (tcphdr_t *)fin->fin_dp;
 	ipaddr = ip->ip_src.s_addr;
-	
+
 	data = (char *)tcp + (TCP_OFF(tcp) << 2);
 	datlen = fin->fin_dlen - (TCP_OFF(tcp) << 2);
 	if (find_port(ipaddr, data, datlen, &off, &port) == 0) {
@@ -190,7 +190,7 @@ nat_t *nat;
 		ipn = (ipnat_t *)&newarray[aps->aps_psiz];
 		bcopy((void *)nat->nat_ptr, (void *)ipn, sizeof(ipnat_t));
 		(void) strncpy(ipn->in_plabel, "h245", APR_LABELLEN);
-		
+
 		ipn->in_inip = nat->nat_inip.s_addr;
 		ipn->in_inmsk = 0xffffffff;
 		ipn->in_dport = htons(port);
@@ -245,8 +245,8 @@ nat_t *nat;
 {
 	int ipaddr, off, datlen;
 	tcphdr_t *tcp;
-	void *data;
 	u_short port;
+	void *data;
 	ip_t *ip;
 
 	aps = aps;	/* LINT */
@@ -266,15 +266,15 @@ nat_t *nat;
 		if (nat2 == NULL) {
 			struct ip newip;
 			struct udphdr udp;
-			
+
 			bcopy((void *)ip, (void *)&newip, sizeof(newip));
 			newip.ip_len = fin->fin_hlen + sizeof(udp);
 			newip.ip_p = IPPROTO_UDP;
 			newip.ip_src = nat->nat_inip;
-			
+
 			bzero((char *)&udp, sizeof(udp));
 			udp.uh_sport = port;
-			
+
 			memcpy(&fi, fin, sizeof(fi));
 			fi.fin_state = NULL;
 			fi.fin_nat = NULL;

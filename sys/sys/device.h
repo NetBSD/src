@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.109 2008/03/12 18:02:22 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.109.6.1 2008/06/23 04:32:02 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -325,7 +325,7 @@ struct cfattach __CONCAT(name,_ca) = {					\
 struct cfdriver {
 	LIST_ENTRY(cfdriver) cd_list;	/* link on allcfdrivers */
 	struct cfattachlist cd_attach;	/* list of all attachments */
-	void	**cd_devs;		/* devices found */
+	device_t *cd_devs;		/* devices found */
 	const char *cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
 	int	cd_ndevs;		/* size of cd_devs array */
@@ -388,12 +388,11 @@ extern device_t booted_device;		/* the device we booted from */
 extern device_t booted_wedge;		/* the wedge on that device */
 extern int booted_partition;		/* or the partition on that device */
 
-extern volatile int config_pending; 	/* semaphore for mountroot */
-
 struct vnode *opendisk(struct device *);
 int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
+void	drvctl_init(void);
 void	configure(void);
 
 int	config_cfdriver_attach(struct cfdriver *);
@@ -439,7 +438,7 @@ void	config_pending_decr(void);
 int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);
 
-void		*device_lookup(cfdriver_t, int);
+device_t	device_lookup(cfdriver_t, int);
 void		*device_lookup_private(cfdriver_t, int);
 #ifdef __HAVE_DEVICE_REGISTER
 void		device_register(device_t, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.7 2007/12/15 00:39:15 perry Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.7.12.1 2008/06/23 04:30:18 wrstuden Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -100,8 +100,8 @@
 #define GXIO_GPIRQ36_CD2	36
 
 
-static	int  	gxpcic_match(struct device *, struct cfdata *, void *);
-static	void  	gxpcic_attach(struct device *, struct device *, void *);
+static	int  	gxpcic_match(device_t, struct cfdata *, void *);
+static	void  	gxpcic_attach(device_t, device_t, void *);
 static	void	gxpcic_pcic_socket_setup(struct pxapcic_socket *);
 
 static	u_int	gxpcic_read(struct pxapcic_socket *, int);
@@ -137,7 +137,7 @@ static struct {
 
 
 static int
-gxpcic_match(struct device *parent, struct cfdata *cf, void *aux)
+gxpcic_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct pxa2x0_gpioconf *gpioconf;
 	u_int reg;
@@ -160,9 +160,9 @@ gxpcic_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-gxpcic_attach(struct device *parent, struct device *self, void *aux)
+gxpcic_attach(device_t parent, device_t self, void *aux)
 {
-	struct pxapcic_softc *sc = (struct pxapcic_softc *)self;
+	struct pxapcic_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = (struct pxaip_attach_args *)aux;
 	int nslot, i;
 

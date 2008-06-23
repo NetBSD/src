@@ -55,6 +55,32 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,14 +104,27 @@ typedef struct ssl_session_asn1_st
 	ASN1_INTEGER time;
 	ASN1_INTEGER timeout;
 	ASN1_INTEGER verify_result;
+#ifndef OPENSSL_NO_TLSEXT
+	ASN1_OCTET_STRING tlsext_hostname;
+	ASN1_INTEGER tlsext_tick_lifetime;
+	ASN1_OCTET_STRING tlsext_tick;
+#endif /* OPENSSL_NO_TLSEXT */
+#ifndef OPENSSL_NO_PSK
+	ASN1_OCTET_STRING psk_identity_hint;
+	ASN1_OCTET_STRING psk_identity;
+#endif /* OPENSSL_NO_PSK */
 	} SSL_SESSION_ASN1;
 
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
-	int v1=0,v2=0,v3=0,v4=0,v5=0;
+	int v1=0,v2=0,v3=0,v4=0,v5=0,v7=0,v8=0;
 	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2],ibuf5[LSIZE2];
+#ifndef OPENSSL_NO_TLSEXT
+	int v6=0,v9=0,v10=0;
+	unsigned char ibuf6[LSIZE2];
+#endif
 	long l;
 	SSL_SESSION_ASN1 a;
 	M_ASN1_I2D_vars(in);
@@ -153,7 +192,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		a.krb5_princ.data=in->krb5_client_princ;
 		}
 #endif /* OPENSSL_NO_KRB5 */
- 
+
 	if (in->time != 0L)
 		{
 		a.time.length=LSIZE2;
@@ -178,6 +217,47 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		ASN1_INTEGER_set(&a.verify_result,in->verify_result);
 		}
 
+#ifndef OPENSSL_NO_TLSEXT
+	if (in->tlsext_hostname)
+                {
+                a.tlsext_hostname.length=strlen(in->tlsext_hostname);
+                a.tlsext_hostname.type=V_ASN1_OCTET_STRING;
+                a.tlsext_hostname.data=(unsigned char *)in->tlsext_hostname;
+                }
+	if (in->tlsext_tick)
+                {
+                a.tlsext_tick.length= in->tlsext_ticklen;
+                a.tlsext_tick.type=V_ASN1_OCTET_STRING;
+                a.tlsext_tick.data=(unsigned char *)in->tlsext_tick;
+		/* If we have a ticket set session ID to empty because
+		 * it will be bogus. If liftime hint is -1 treat as a special
+		 * case because the session is being used as a container
+		 */
+		if (in->tlsext_ticklen && (in->tlsext_tick_lifetime_hint != -1))
+			a.session_id.length=0;
+                }
+	if (in->tlsext_tick_lifetime_hint > 0)
+		{
+		a.tlsext_tick_lifetime.length=LSIZE2;
+		a.tlsext_tick_lifetime.type=V_ASN1_INTEGER;
+		a.tlsext_tick_lifetime.data=ibuf6;
+		ASN1_INTEGER_set(&a.tlsext_tick_lifetime,in->tlsext_tick_lifetime_hint);
+		}
+#endif /* OPENSSL_NO_TLSEXT */
+#ifndef OPENSSL_NO_PSK
+	if (in->psk_identity_hint)
+		{
+		a.psk_identity_hint.length=strlen(in->psk_identity_hint);
+		a.psk_identity_hint.type=V_ASN1_OCTET_STRING;
+		a.psk_identity_hint.data=(unsigned char *)(in->psk_identity_hint);
+		}
+	if (in->psk_identity)
+		{
+		a.psk_identity.length=strlen(in->psk_identity);
+		a.psk_identity.type=V_ASN1_OCTET_STRING;
+		a.psk_identity.data=(unsigned char *)(in->psk_identity);
+		}
+#endif /* OPENSSL_NO_PSK */
 
 	M_ASN1_I2D_len(&(a.version),		i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(&(a.ssl_version),	i2d_ASN1_INTEGER);
@@ -199,6 +279,21 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	M_ASN1_I2D_len_EXP_opt(&a.session_id_context,i2d_ASN1_OCTET_STRING,4,v4);
 	if (in->verify_result != X509_V_OK)
 		M_ASN1_I2D_len_EXP_opt(&(a.verify_result),i2d_ASN1_INTEGER,5,v5);
+
+#ifndef OPENSSL_NO_TLSEXT
+	if (in->tlsext_tick_lifetime_hint > 0)
+      	 	M_ASN1_I2D_len_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER,9,v9);
+	if (in->tlsext_tick)
+        	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING,10,v10);
+	if (in->tlsext_hostname)
+        	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
+#endif /* OPENSSL_NO_TLSEXT */
+#ifndef OPENSSL_NO_PSK
+	if (in->psk_identity_hint)
+        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,7,v7);
+	if (in->psk_identity)
+        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,8,v8);
+#endif /* OPENSSL_NO_PSK */
 
 	M_ASN1_I2D_seq_total();
 
@@ -223,6 +318,22 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 			       v4);
 	if (in->verify_result != X509_V_OK)
 		M_ASN1_I2D_put_EXP_opt(&a.verify_result,i2d_ASN1_INTEGER,5,v5);
+#ifndef OPENSSL_NO_TLSEXT
+	if (in->tlsext_hostname)
+        	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
+#endif /* OPENSSL_NO_TLSEXT */
+#ifndef OPENSSL_NO_PSK
+	if (in->psk_identity_hint)
+		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,7,v7);
+	if (in->psk_identity)
+		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,8,v8);
+#endif /* OPENSSL_NO_PSK */
+#ifndef OPENSSL_NO_TLSEXT
+	if (in->tlsext_tick_lifetime_hint > 0)
+      	 	M_ASN1_I2D_put_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER,9,v9);
+	if (in->tlsext_tick)
+        	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING,10,v10);
+#endif /* OPENSSL_NO_TLSEXT */
 	M_ASN1_I2D_finish();
 	}
 
@@ -393,6 +504,75 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		}
 	else
 		ret->verify_result=X509_V_OK;
+
+#ifndef OPENSSL_NO_TLSEXT
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,6);
+	if (os.data)
+		{
+		ret->tlsext_hostname = BUF_strndup((char *)os.data, os.length);
+		OPENSSL_free(os.data);
+		os.data = NULL;
+		os.length = 0;
+		}
+	else
+		ret->tlsext_hostname=NULL;
+#endif /* OPENSSL_NO_TLSEXT */
+
+#ifndef OPENSSL_NO_PSK
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,7);
+	if (os.data)
+		{
+		ret->psk_identity_hint = BUF_strndup((char *)os.data, os.length);
+		OPENSSL_free(os.data);
+		os.data = NULL;
+		os.length = 0;
+		}
+	else
+		ret->psk_identity_hint=NULL;
+#endif /* OPENSSL_NO_PSK */
+
+#ifndef OPENSSL_NO_TLSEXT
+	ai.length=0;
+	M_ASN1_D2I_get_EXP_opt(aip,d2i_ASN1_INTEGER,9);
+	if (ai.data != NULL)
+		{
+		ret->tlsext_tick_lifetime_hint=ASN1_INTEGER_get(aip);
+		OPENSSL_free(ai.data); ai.data=NULL; ai.length=0;
+		}
+	else if (ret->tlsext_ticklen && ret->session_id_length)
+		ret->tlsext_tick_lifetime_hint = -1;
+	else
+		ret->tlsext_tick_lifetime_hint=0;
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,10);
+	if (os.data)
+		{
+		ret->tlsext_tick = os.data;
+		ret->tlsext_ticklen = os.length;
+		os.data = NULL;
+		os.length = 0;
+#if 0
+		/* There are two ways to detect a resumed ticket sesion.
+		 * One is to set a random session ID and then the server
+		 * must return a match in ServerHello. This allows the normal
+		 * client session ID matching to work.
+		 */ 
+		if (ret->session_id_length == 0)
+			{
+			ret->session_id_length=SSL3_MAX_SSL_SESSION_ID_LENGTH;
+			RAND_pseudo_bytes(ret->session_id,
+						ret->session_id_length);
+			}
+#endif
+		}
+	else
+		ret->tlsext_tick=NULL;
+#endif /* OPENSSL_NO_TLSEXT */
 
 	M_ASN1_D2I_Finish(a,SSL_SESSION_free,SSL_F_D2I_SSL_SESSION);
 	}

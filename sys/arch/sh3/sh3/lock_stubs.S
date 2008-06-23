@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.12 2008/02/10 13:32:14 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.12.12.1 2008/06/23 04:30:40 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007 Valeriy E. Ushakov
@@ -52,7 +52,7 @@
  *	    r7 - preserved, used to save pr (to avoid touching stack)
  *	     T - still reflects cas success status (to avoid another test)
  */
-NENTRY(_lock_cas)
+ENTRY(_lock_cas)
 ALTENTRY(_lock_cas_ras_start)
 	mov.l	@r4, r0
 	cmp/eq	r0, r5		! T = (*ptr == old)
@@ -86,7 +86,7 @@ STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
 /*
  * LINTSTUB: Func: void mutex_enter(kmutex_t *mtx);
  */
-NENTRY(mutex_enter)
+ENTRY(mutex_enter)
 	sts	pr, r7		! depend on _lock_cas not clobbering r7
 	mov.l	.L_curlwp, r6
 	mov	#0, r5
@@ -108,7 +108,7 @@ NENTRY(mutex_enter)
 /*
  * LINTSTUB: Func: void mutex_exit(kmutex_t *mtx);
  */
-NENTRY(mutex_exit)
+ENTRY(mutex_exit)
 	sts	pr, r7		! depend on _lock_cas not clobbering r7
 	mov.l	.L_curlwp, r5
 	mov	#0, r6

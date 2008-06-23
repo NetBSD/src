@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.68 2008/04/29 17:48:43 nakayama Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.68.2.1 2008/06/23 04:31:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.68 2008/04/29 17:48:43 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.68.2.1 2008/06/23 04:31:05 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.68 2008/04/29 17:48:43 nakayama Exp $
 #include <sys/bus.h>
 #include <sys/intr.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
@@ -106,8 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.68 2008/04/29 17:48:43 nakayama Exp $
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
-
-
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.221.2.3 2008/06/22 18:12:03 wrstuden Exp $ */
+/*	$NetBSD: machdep.c,v 1.221.2.4 2008/06/23 04:30:46 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221.2.3 2008/06/22 18:12:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221.2.4 2008/06/23 04:30:46 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -640,6 +640,11 @@ haltsys:
 
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+#ifdef MULTIPROCESSOR
+		printf("cpu%d: powered down\n\n", cpu_number());
+#else
+		printf("powered down\n\n");
+#endif
 		/* Let the OBP do the work. */
 		OF_poweroff();
 		printf("WARNING: powerdown failed!\n");
@@ -1286,7 +1291,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 			blast_dcache();
 			break;
 		}
-		TAILQ_FOREACH(pg, pglist, pageq) {
+		TAILQ_FOREACH(pg, pglist, pageq.queue) {
 			pa = VM_PAGE_TO_PHYS(pg);
 
 			/* 
@@ -1335,7 +1340,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			if ((pglist = map->dm_segs[i]._ds_mlist) == NULL)
 				/* Should not really happen. */
 				continue;
-			TAILQ_FOREACH(pg, pglist, pageq) {
+			TAILQ_FOREACH(pg, pglist, pageq.queue) {
 				paddr_t start;
 				psize_t size = PAGE_SIZE;
 
@@ -1409,7 +1414,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 * Simply keep a pointer around to the linked list, so
 	 * bus_dmamap_free() can return it.
 	 *
-	 * NOBODY SHOULD TOUCH THE pageq FIELDS WHILE THESE PAGES
+	 * NOBODY SHOULD TOUCH THE pageq.queue FIELDS WHILE THESE PAGES
 	 * ARE IN OUR CUSTODY.
 	 */
 	segs[0]._ds_mlist = pglist;
@@ -1770,7 +1775,7 @@ sparc_mainbus_intr_establish(bus_space_tag_t t, int pil, int level,
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	intr_establish(pil, ih);
+	intr_establish(pil, level != IPL_VM, ih);
 	return (ih);
 }
 

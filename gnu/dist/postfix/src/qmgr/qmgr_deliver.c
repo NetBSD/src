@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_deliver.c,v 1.1.1.11 2007/05/19 16:28:29 heas Exp $	*/
+/*	$NetBSD: qmgr_deliver.c,v 1.1.1.11.12.1 2008/06/23 04:29:22 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -42,7 +42,7 @@
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*
-/*	Scheduler enhancements:
+/*	Preemptive scheduler enhancements:
 /*	Patrik Rak
 /*	Modra 6
 /*	155 00, Prague, Czech Republic
@@ -172,13 +172,17 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
 	       ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, message->dsn_envid,
 	       ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, message->dsn_ret,
 	       ATTR_TYPE_FUNC, msg_stats_print, (void *) &stats,
+    /* XXX Should be encapsulated with ATTR_TYPE_FUNC. */
 	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_NAME, message->client_name,
 	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_ADDR, message->client_addr,
+	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_PORT, message->client_port,
 	     ATTR_TYPE_STR, MAIL_ATTR_LOG_PROTO_NAME, message->client_proto,
 	       ATTR_TYPE_STR, MAIL_ATTR_LOG_HELO_NAME, message->client_helo,
+    /* XXX Should be encapsulated with ATTR_TYPE_FUNC. */
 	       ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD, message->sasl_method,
 	     ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, message->sasl_username,
 	       ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, message->sasl_sender,
+    /* XXX Ditto if we want to pass TLS certificate info. */
 	     ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, message->rewrite_context,
 	       ATTR_TYPE_INT, MAIL_ATTR_RCPT_COUNT, list.len,
 	       ATTR_TYPE_END);
@@ -315,9 +319,11 @@ static void qmgr_deliver_update(int unused_event, char *context)
 	    if (VSTRING_LEN(dsb->reason) == 0)
 		vstring_strcpy(dsb->reason, "unknown error");
 	    vstring_prepend(dsb->reason, SUSPENDED, sizeof(SUSPENDED) - 1);
-	    qmgr_queue_throttle(queue, DSN_FROM_DSN_BUF(dsb));
-	    if (queue->window == 0)
-		qmgr_defer_todo(queue, &dsb->dsn);
+	    if (QMGR_QUEUE_READY(queue)) {
+		qmgr_queue_throttle(queue, DSN_FROM_DSN_BUF(dsb));
+		if (QMGR_QUEUE_THROTTLED(queue))
+		    qmgr_defer_todo(queue, &dsb->dsn);
+	    }
 	}
     }
 

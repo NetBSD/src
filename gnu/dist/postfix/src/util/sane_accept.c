@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_accept.c,v 1.1.1.7 2007/05/19 16:28:48 heas Exp $	*/
+/*	$NetBSD: sane_accept.c,v 1.1.1.7.12.1 2008/06/23 04:29:26 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -20,8 +20,8 @@
 /*	workarounds may be enabled that depend on the socket type.
 /* BUGS
 /*	Bizarre systems may have other harmless error results. Such
-/*	systems encourage programers to ignore error results, and
-/*	penalizes programmers who code defensively.
+/*	systems encourage programmers to ignore error results, and
+/*	penalize programmers who code defensively.
 /* LICENSE
 /* .ad
 /* .fi
@@ -108,8 +108,11 @@ int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
      * socket. Turning on keepalives will fix a blocking socket provided that
      * the kernel's keepalive timer expires before the Postfix watchdog
      * timer.
+     * 
+     * XXX Work around NAT induced damage by sending a keepalive before an idle
+     * connection is expired. This requires that the kernel keepalive timer
+     * is set to a short time, like 100s.
      */
-#if defined(BROKEN_READ_SELECT_ON_TCP_SOCKET) && defined(SO_KEEPALIVE)
     else if (sa && (sa->sa_family == AF_INET
 #ifdef HAS_IPV6
 		    || sa->sa_family == AF_INET6
@@ -120,6 +123,5 @@ int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
 	(void) setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE,
 			  (char *) &on, sizeof(on));
     }
-#endif
     return (fd);
 }

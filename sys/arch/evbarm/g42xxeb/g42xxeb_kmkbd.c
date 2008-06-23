@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.8 2008/04/29 06:53:01 martin Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.8.2.1 2008/06/23 04:30:18 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -15,6 +15,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -34,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.8 2008/04/29 06:53:01 martin Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.8.2.1 2008/06/23 04:30:18 wrstuden Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.65 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.65.2.1 2008/06/23 04:31:47 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.65 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.65.2.1 2008/06/23 04:31:47 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.65 2008/05/06 18:43:44 ad Exp $
 #include <sys/stat.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/bootsect.h>
@@ -83,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.65 2008/05/06 18:43:44 ad Exp $
 #include <fs/msdosfs/denode.h>
 #include <fs/msdosfs/msdosfsmount.h>
 #include <fs/msdosfs/fat.h>
+
+MODULE(MODULE_CLASS_VFS, msdosfs, NULL);
 
 #ifdef MSDOSFS_DEBUG
 #define DPRINTF(a) uprintf a
@@ -140,7 +143,20 @@ struct vfsops msdosfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(msdosfs_vfsops);
+
+static int
+msdosfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&msdosfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&msdosfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 static int
 update_mp(mp, argp)
@@ -498,7 +514,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 * Read the boot sector of the filesystem, and then check the
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
-	if ((error = bread(devvp, 0, secsize, NOCRED, &bp)) != 0)
+	if ((error = bread(devvp, 0, secsize, NOCRED, 0, &bp)) != 0)
 		goto error_exit;
 	bsp = (union bootsector *)bp->b_data;
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
@@ -729,7 +745,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 		 *	padded at the end or in the middle?
 		 */
 		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    pmp->pm_BytesPerSec, NOCRED, &bp)) != 0)
+		    pmp->pm_BytesPerSec, NOCRED, 0, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!memcmp(fp->fsisig1, "RRaA", 4)

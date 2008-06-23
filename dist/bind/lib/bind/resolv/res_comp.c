@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.1.1.4 2007/01/27 21:09:11 christos Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.1.1.4.12.1 2008/06/23 04:28:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -72,7 +72,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_comp.c,v 1.3.18.2 2005/07/28 07:38:11 marka Exp";
+static const char rcsid[] = "Id: res_comp.c,v 1.5 2005/07/28 06:51:50 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"

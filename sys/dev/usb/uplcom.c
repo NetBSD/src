@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.64 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.64.2.1 2008/06/23 04:31:37 wrstuden Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.64 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.64.2.1 2008/06/23 04:31:37 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,13 +225,13 @@ static const struct uplcom_type {
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
-int uplcom_match(device_t, struct cfdata *, void *);
+int uplcom_match(device_t, cfdata_t, void *);
 void uplcom_attach(device_t, device_t, void *);
 void uplcom_childdet(device_t, device_t);
 int uplcom_detach(device_t, int);
 int uplcom_activate(device_t, enum devact);
 extern struct cfdriver uplcom_cd;
-CFATTACH_DECL2(uplcom, sizeof(struct uplcom_softc), uplcom_match,
+CFATTACH_DECL2_NEW(uplcom, sizeof(struct uplcom_softc), uplcom_match,
     uplcom_attach, uplcom_detach, uplcom_activate, NULL, uplcom_childdet);
 
 USB_MATCH(uplcom)
@@ -250,14 +250,16 @@ USB_ATTACH(uplcom)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	const char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = device_xname(self);
 	usbd_status err;
 	int i;
 	struct ucom_attach_args uca;
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
         sc->sc_udev = dev;
@@ -272,7 +274,7 @@ USB_ATTACH(uplcom)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UPLCOM_CONFIG_INDEX, 1);
 	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
+		aprint_error("\n%s: failed to set configuration, err=%s\n",
 			devname, usbd_errstr(err));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
@@ -301,8 +303,8 @@ USB_ATTACH(uplcom)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UPLCOM_CONFIG_INDEX, 1);
 	if (err) {
-		printf("%s: failed to set configuration: %s\n",
-			devname, usbd_errstr(err));
+		aprint_error_dev(self, "failed to set configuration: %s\n",
+		    usbd_errstr(err));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -311,8 +313,8 @@ USB_ATTACH(uplcom)
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
 
 	if (cdesc == NULL) {
-		printf("%s: failed to get configuration descriptor\n",
-			USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self,
+		    "failed to get configuration descriptor\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -321,7 +323,7 @@ USB_ATTACH(uplcom)
 	err = usbd_device2interface_handle(dev, UPLCOM_IFACE_INDEX,
 							&sc->sc_iface);
 	if (err) {
-		printf("\n%s: failed to get interface, err=%s\n",
+		aprint_error("\n%s: failed to get interface, err=%s\n",
 			devname, usbd_errstr(err));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
@@ -335,8 +337,8 @@ USB_ATTACH(uplcom)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
-			printf("%s: no endpoint descriptor for %d\n",
-				USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self,
+			    "no endpoint descriptor for %d\n", i);
 			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -349,8 +351,7 @@ USB_ATTACH(uplcom)
 	}
 
 	if (sc->sc_intr_number== -1) {
-		printf("%s: Could not find interrupt in\n",
-			USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find interrupt in\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -374,7 +375,7 @@ USB_ATTACH(uplcom)
 		err = usbd_device2interface_handle(dev,
 				UPLCOM_SECOND_IFACE_INDEX, &sc->sc_iface);
 		if (err) {
-			printf("\n%s: failed to get second interface, err=%s\n",
+			aprint_error("\n%s: failed to get second interface, err=%s\n",
 							devname, usbd_errstr(err));
 			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
@@ -389,8 +390,8 @@ USB_ATTACH(uplcom)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
-			printf("%s: no endpoint descriptor for %d\n",
-				USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self,
+			    "no endpoint descriptor for %d\n", i);
 			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -405,15 +406,13 @@ USB_ATTACH(uplcom)
 	}
 
 	if (uca.bulkin == -1) {
-		printf("%s: Could not find data bulk in\n",
-			USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk in\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	if (uca.bulkout == -1) {
-		printf("%s: Could not find data bulk out\n",
-			USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Could not find data bulk out\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -434,8 +433,7 @@ USB_ATTACH(uplcom)
 	err = uplcom_reset(sc);
 
 	if (err) {
-		printf("%s: reset failed, %s\n", USBDEVNAME(sc->sc_dev),
-			usbd_errstr(err));
+		aprint_error_dev(self, "reset failed, %s\n", usbd_errstr(err));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -561,8 +559,9 @@ uplcom_pl2303x_init(struct uplcom_softc *sc)
 
 		err = usbd_do_request(sc->sc_udev, &req, 0);
 		if (err) {
-			printf("%s: uplcom_pl2303x_init failed: %s\n",
-				USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			aprint_error_dev(sc->sc_dev,
+			    "uplcom_pl2303x_init failed: %s\n",
+			    usbd_errstr(err));
 			return (EIO);
 		}
 	}
@@ -885,7 +884,7 @@ uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		sc->sc_msr |= UMSR_DSR;
 	if (ISSET(pstatus, RSAQ_STATUS_DCD))
 		sc->sc_msr |= UMSR_DCD;
-	ucom_status_change((struct ucom_softc *) sc->sc_subdev);
+	ucom_status_change(device_private(sc->sc_subdev));
 }
 
 void

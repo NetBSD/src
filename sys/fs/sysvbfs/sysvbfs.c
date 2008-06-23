@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.11 2008/04/29 18:18:08 ad Exp $	*/
+/*	$NetBSD: sysvbfs.c,v 1.11.2.1 2008/06/23 04:31:49 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,15 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.11 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.11.2.1 2008/06/23 04:31:49 wrstuden Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/module.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 #include <fs/sysvbfs/sysvbfs.h>
+
+MODULE(MODULE_CLASS_VFS, sysvbfs, NULL);
 
 /* External interfaces */
 
@@ -133,4 +136,17 @@ struct vfsops sysvbfs_vfsops = {
 	0,
 	{ NULL, NULL }
 };
-VFS_ATTACH(sysvbfs_vfsops);
+
+static int
+sysvbfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&sysvbfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&sysvbfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

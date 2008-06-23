@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.199 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.199.2.1 2008/06/23 04:32:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.199 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.199.2.1 2008/06/23 04:32:01 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.199 2008/05/06 18:43:44 ad Exp $");
 #include <sys/systm.h>
 #include <sys/timetc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -74,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.199 2008/05/06 18:43:44 ad Exp $");
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsdiskless.h>
 #include <nfs/nfs_var.h>
+
+MODULE(MODULE_CLASS_VFS, nfs, NULL);
 
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
@@ -126,7 +129,20 @@ struct vfsops nfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(nfs_vfsops);
+
+static int
+nfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&nfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&nfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;

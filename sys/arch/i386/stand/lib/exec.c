@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.25 2008/05/04 11:00:09 martin Exp $	 */
+/*	$NetBSD: exec.c,v 1.25.2.1 2008/06/23 04:30:27 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ bool kernel_loaded;
 static struct btinfo_modulelist *btinfo_modulelist;
 static size_t btinfo_modulelist_size;
 static uint32_t image_end;
+static char module_base[64] = "/";
 
 static void	module_init(void);
 
@@ -145,6 +146,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 	u_long		xmsmem;
 	physaddr_t	origaddr = loadaddr;
 #endif
+	char		*machine;
 
 #ifdef	DEBUG
 	printf("exec: file=%s loadaddr=0x%lx\n",
@@ -234,6 +236,31 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 
 	/* pull in any modules if necessary */
 	if (boot_modules_enabled) {
+		switch (netbsd_elf_class) {
+		case ELFCLASS32:
+			machine = "i386";
+			break;
+		case ELFCLASS64:
+			machine = "amd64";
+			break;
+		default:
+			machine = "generic";
+			break;
+		}
+		if (netbsd_version / 1000000 % 100 == 99) {
+			/* -current */
+			snprintf(module_base, sizeof(module_base),
+			    "/stand/%s/%d.%d.%d/modules", machine,
+			    netbsd_version / 100000000,
+			    netbsd_version / 1000000 % 100,
+			    netbsd_version / 100 % 100);
+		} else if (netbsd_version != 0) {
+			/* release */
+			snprintf(module_base, sizeof(module_base),
+			    "/stand/%s/%d.%d/modules", machine,
+			    netbsd_version / 100000000,
+			    netbsd_version / 1000000 % 100);
+		}
 		module_init();
 		if (btinfo_modulelist) {
 			BI_ADD(btinfo_modulelist, BTINFO_MODULELIST,
@@ -261,6 +288,39 @@ out:
 	return -1;
 }
 
+static const char *
+module_path(boot_module_t *bm)
+{
+	static char buf[256];
+	const char *name;
+
+	name = bm->bm_path;
+	if (name[0] == '/')
+		return name;
+	snprintf(buf, sizeof(buf), "%s/%s/%s.kmod", module_base, bm->bm_path,
+	    bm->bm_path);
+	return buf;
+}
+
+static int 
+module_open(boot_module_t *bm, int mode)
+{
+	int fd;
+	const char *path;
+		
+	/* check the expanded path first */
+	path = module_path(bm);
+	fd = open(path, mode);
+	if (fd == -1) {
+		printf("WARNING: couldn't open %s\n", path);
+		/* now attempt the raw path provided */
+		fd = open(bm->bm_path, mode);
+		if (fd == -1)
+			printf("WARNING: couldn't open %s\n", bm->bm_path);
+	}
+	return fd;
+}
+
 static void
 module_init(void)
 {
@@ -275,9 +335,8 @@ module_init(void)
 	/* First, see which modules are valid and calculate btinfo size */
 	len = sizeof(struct btinfo_modulelist);
 	for (bm = boot_modules; bm; bm = bm->bm_next) {
-		fd = open(bm->bm_path, 0);
+		fd = module_open(bm, 0);
 		if (fd == -1) {
-			printf("WARNING: couldn't open %s\n", bm->bm_path);
 			bm->bm_len = -1;
 			continue;
 		}
@@ -311,7 +370,7 @@ module_init(void)
 		if (bm->bm_len == -1)
 			continue;
 		printf("Loading %s ", bm->bm_path);
-		fd = open(bm->bm_path, 0);
+		fd = module_open(bm, 0);
 		if (fd == -1) {
 			printf("ERROR: couldn't open %s\n", bm->bm_path);
 			continue;

@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.7.4.3 2008/05/28 16:28:34 wrstuden Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.7.4.4 2008/06/23 04:32:02 wrstuden Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -28,6 +28,8 @@ ssize_t rump_sys_readlink(const char *, char *, size_t, int *);
 int rump_sys_rename(const char *, const char *, int *);
 int rump_sys_mkdir(const char *, mode_t, int *);
 int rump_sys_rmdir(const char *, int *);
+ssize_t rump_sys_pread(int, void *, size_t, int, off_t, int *);
+ssize_t rump_sys_pwrite(int, const void *, size_t, int, off_t, int *);
 int rump_sys_truncate(const char *, int, off_t, int *);
 int rump_sys_lchmod(const char *, mode_t, int *);
 int rump_sys_lchown(const char *, uid_t, gid_t, int *);

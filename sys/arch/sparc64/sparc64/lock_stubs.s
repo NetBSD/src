@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.7 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.7.2.1 2008/06/23 04:30:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
  */
 .align	32
-_ENTRY(_C_LABEL(_lock_cas))
+ENTRY(_lock_cas)
 	CASPTR	[%o0], %o1, %o2			! compare-and-swap
 	MB_MEM
 	xor	%o1, %o2, %o2			! expected == actual?
@@ -78,7 +78,7 @@ _ENTRY(_C_LABEL(_lock_cas))
  * void mutex_enter(kmutex_t *);
  */
 .align	32
-_ENTRY(_C_LABEL(mutex_enter))
+ENTRY(mutex_enter)
 	sethi	%hi(CURLWP), %o1
 	LDPTR	[%o1 + %lo(CURLWP)], %o1	! current thread
 	CASPTR	[%o0], %g0, %o1			! compare-and-swap
@@ -96,7 +96,7 @@ _ENTRY(_C_LABEL(mutex_enter))
  * XXX This should use a restartable sequence.  See mutex_vector_enter().
  */
 .align	32
-_ENTRY(_C_LABEL(mutex_exit))
+ENTRY(mutex_exit)
 	sethi	%hi(CURLWP), %o1
 	LDPTR	[%o1 + %lo(CURLWP)], %o1	! current thread
 	clr	%o2				! new value (0)

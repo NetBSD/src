@@ -1,10 +1,10 @@
-/*	$NetBSD: ratelimiter.h,v 1.1.1.4 2007/01/27 21:07:55 christos Exp $	*/
+/*	$NetBSD: ratelimiter.h,v 1.1.1.4.12.1 2008/06/23 04:28:27 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ratelimiter.h,v 1.15.18.2 2005/04/29 00:17:01 marka Exp */
+/* Id: ratelimiter.h,v 1.21 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_RATELIMITER_H
 #define ISC_RATELIMITER_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file isc/ratelimiter.h
  * \brief A rate limiter is a mechanism for dispatching events at a limited
  * rate.  This is intended to be used when sending zone maintenance
  * SOA queries, NOTIFY messages, etc.

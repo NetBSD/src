@@ -19,7 +19,10 @@
 
 <h2>Purpose of the XCLIENT extension to SMTP</h2>
 
-<p> The XCLIENT command targets the following problems: </p>
+<p> When an SMTP server announces support for the XCLIENT command,
+an SMTP client may send information that overrides one or more
+client-related session attributes. The XCLIENT command targets the
+following problems: </p>
 
 <ol>
 
@@ -77,7 +80,7 @@ names are shown in upper case, they are in fact case insensitive.
     xclient-command = XCLIENT 1*( SP attribute-name"="attribute-value )
 </p>
 <p>
-    attribute-name = ( NAME | ADDR | PROTO | HELO )
+    attribute-name = ( NAME | ADDR | PORT | PROTO | HELO )
 </p>
 <p>
     attribute-value = xtext
@@ -98,6 +101,10 @@ names are shown in upper case, they are in fact case insensitive.
     IPv4 network address, an IPv6 address prefixed with IPV6:, or
     [UNAVAILABLE] when the address information is unavailable.
     Address information is not enclosed with []. </p>
+
+    <li> <p> The PORT attribute specifies the SMTP client TCP port
+    number as a decimal number, or [UNAVAILABLE] when the information
+    is unavailable.  </p>
 
     <li> <p> The PROTO attribute specifies either SMTP or ESMTP.
     </p>
@@ -122,6 +129,9 @@ in upper case, lower case or mixed case. </p>
 xtext encode attribute values. Servers that wish to interoperate
 with these older implementations should be prepared to receive
 unencoded information. </p>
+
+<p> Note 4: Postfix implementations prior to version 2.5 do not
+implement the PORT attribute.  </p>
 
 <h2>XCLIENT Server response</h2>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.1.1.9 2007/05/19 16:28:33 heas Exp $	*/
+/*	$NetBSD: smtp.h,v 1.1.1.9.12.1 2008/06/23 04:29:22 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -32,6 +32,7 @@
 #include <maps.h>
 #include <tok822.h>
 #include <dsn_buf.h>
+#include <header_body_checks.h>
 
  /*
   * Postfix TLS library.
@@ -119,6 +120,7 @@ typedef struct SMTP_STATE {
 #define SMTP_FEATURE_DSN		(1<<15)	/* DSN supported */
 #define SMTP_FEATURE_PIX_NO_ESMTP	(1<<16)	/* PIX smtp fixup mode */
 #define SMTP_FEATURE_PIX_DELAY_DOTCRLF	(1<<17)	/* PIX smtp fixup mode */
+#define SMTP_FEATURE_XFORWARD_PORT	(1<<18)
 
  /*
   * Features that passivate under the endpoint.
@@ -141,7 +143,12 @@ typedef struct SMTP_STATE {
 #define SMTP_MISC_FLAG_FIRST_NEXTHOP	(1<<3)
 #define SMTP_MISC_FLAG_FINAL_NEXTHOP	(1<<4)
 #define SMTP_MISC_FLAG_FINAL_SERVER	(1<<5)
-#define SMTP_MISC_FLAG_CONN_CACHE	(1<<6)
+#define SMTP_MISC_FLAG_CONN_LOAD	(1<<6)
+#define SMTP_MISC_FLAG_CONN_STORE	(1<<7)
+#define SMTP_MISC_FLAG_COMPLETE_SESSION	(1<<8)
+
+#define SMTP_MISC_FLAG_CONN_CACHE_MASK \
+	(SMTP_MISC_FLAG_CONN_LOAD | SMTP_MISC_FLAG_CONN_STORE)
 
  /*
   * smtp.c
@@ -172,9 +179,12 @@ extern int smtp_ext_prop_mask;		/* address externsion propagation */
 
 #ifdef USE_TLS
 
-extern SSL_CTX *smtp_tls_ctx;		/* client-side TLS engine */
+extern TLS_APPL_STATE *smtp_tls_ctx;	/* client-side TLS engine */
 
 #endif
+
+extern HBC_CHECKS *smtp_header_checks;	/* limited header checks */
+extern HBC_CHECKS *smtp_body_checks;	/* limited body checks */
 
  /*
   * smtp_session.c
@@ -219,13 +229,14 @@ typedef struct SMTP_SESSION {
      * TLS related state, don't forget to initialize in session_tls_init()!
      */
 #ifdef USE_TLS
-    TLScontext_t *tls_context;		/* TLS session state */
+    TLS_SESS_STATE *tls_context;	/* TLS session state */
     char   *tls_nexthop;		/* Nexthop domain for cert checks */
     int     tls_level;			/* TLS enforcement level */
     int     tls_retry_plain;		/* Try plain when TLS handshake fails */
-    int     tls_protocols;		/* Acceptable SSL protocols (mask) */
-    char   *tls_cipherlist;		/* Acceptable SSL ciphers */
-    char   *tls_certmatch;		/* Certificate match patterns */
+    char   *tls_protocols;		/* Acceptable SSL protocols */
+    char   *tls_grade;			/* Cipher grade: "export", ... */
+    VSTRING *tls_exclusions;		/* Excluded SSL ciphers */
+    ARGV   *tls_matchargv;		/* Cert match patterns */
 #endif
 
     SMTP_STATE *state;			/* back link */
@@ -259,6 +270,8 @@ extern int smtp_helo(SMTP_STATE *);
 extern int smtp_xfer(SMTP_STATE *);
 extern int smtp_rset(SMTP_STATE *);
 extern int smtp_quit(SMTP_STATE *);
+
+extern HBC_CALL_BACKS smtp_hbc_callbacks[];
 
  /*
   * A connection is re-usable if session->expire_time is > 0 and the

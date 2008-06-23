@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.260 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.260.2.1 2008/06/23 04:32:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.260 2008/05/06 18:43:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.260.2.1 2008/06/23 04:32:05 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.260 2008/05/06 18:43:45 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -109,6 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.260 2008/05/06 18:43:45 ad Exp $");
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
+
+MODULE(MODULE_CLASS_VFS, lfs, NULL);
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static bool lfs_issequential_hole(const struct ufsmount *,
@@ -160,7 +163,6 @@ struct vfsops lfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(lfs_vfsops);
 
 const struct genfs_ops lfs_genfsops = {
 	.gop_size = lfs_gop_size,
@@ -177,6 +179,20 @@ static const struct ufs_ops lfs_ufsops = {
 	.uo_vfree = lfs_vfree,
 	.uo_balloc = lfs_balloc,
 };
+
+static int
+lfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&lfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&lfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 /*
  * XXX Same structure as FFS inodes?  Should we share a common pool?
@@ -555,7 +571,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	sb_addr = LFS_LABELPAD / secsize;
 	while (1) {
 		/* Read in the superblock. */
-		error = bread(devvp, sb_addr, LFS_SBPAD, cred, &bp);
+		error = bread(devvp, sb_addr, LFS_SBPAD, cred, 0, &bp);
 		if (error)
 			goto out;
 		dfs = (struct dlfs *)bp->b_data;
@@ -611,7 +627,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	    dfs->dlfs_sboffs[1] - LFS_LABELPAD / fsbsize > LFS_SBPAD / fsbsize)
 	{
 		error = bread(devvp, dfs->dlfs_sboffs[1] * (fsbsize / secsize),
-			LFS_SBPAD, cred, &abp);
+			LFS_SBPAD, cred, 0, &abp);
 		if (error)
 			goto out;
 		adfs = (struct dlfs *)abp->b_data;
@@ -857,6 +873,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (lfs_writer_daemon == 0 && kthread_create(PRI_BIO, 0, NULL,
 	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");
+
+	printf("WARNING: the log-structured file system is experimental and "
+	    "may be unstable\n");
 
 	return (0);
 
@@ -1162,7 +1181,7 @@ retry:
     again:
 	error = bread(ump->um_devvp, fsbtodb(fs, daddr),
 		(fs->lfs_version == 1 ? fs->lfs_bsize : fs->lfs_ibsize),
-		NOCRED, &bp);
+		NOCRED, 0, &bp);
 	if (error) {
 		/*
 		 * The inode does not contain anything useful, so it would
@@ -1961,7 +1980,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	rw_enter(&fs->lfs_iflock, RW_WRITER);
 	vn_lock(ivp, LK_EXCLUSIVE | LK_RETRY);
 	for (i = 0; i < ilast; i++) {
-		bread(ivp, i, fs->lfs_bsize, NOCRED, &bp);
+		bread(ivp, i, fs->lfs_bsize, NOCRED, 0, &bp);
 		brelse(bp, 0);
 	}
 
@@ -1991,9 +2010,11 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 			inc = -1;
 		}
 		for (i = start; i != end; i += inc) {
-			if (bread(ivp, i, fs->lfs_bsize, NOCRED, &bp) != 0)
+			if (bread(ivp, i, fs->lfs_bsize, NOCRED,
+			    B_MODIFY, &bp) != 0)
 				panic("resize: bread dst blk failed");
-			if (bread(ivp, i - noff, fs->lfs_bsize, NOCRED, &obp))
+			if (bread(ivp, i - noff, fs->lfs_bsize,
+			    NOCRED, 0, &obp))
 				panic("resize: bread src blk failed");
 			memcpy(bp->b_data, obp->b_data, fs->lfs_bsize);
 			VOP_BWRITE(bp);
@@ -2005,8 +2026,8 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	if (newnsegs > oldnsegs) {
 		for (i = oldnsegs; i < newnsegs; i++) {
 			if ((error = bread(ivp, i / fs->lfs_sepb +
-					   fs->lfs_cleansz,
-					   fs->lfs_bsize, NOCRED, &bp)) != 0)
+					   fs->lfs_cleansz, fs->lfs_bsize,
+					   NOCRED, B_MODIFY, &bp)) != 0)
 				panic("lfs: ifile read: %d", error);
 			while ((i + 1) % fs->lfs_sepb && i < newnsegs) {
 				sup = &((SEGUSE *)bp->b_data)[i % fs->lfs_sepb];
@@ -2067,7 +2088,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 		    NOCRED);
 
 	/* Update cleaner info so the cleaner can die */
-	bread(ivp, 0, fs->lfs_bsize, NOCRED, &bp);
+	bread(ivp, 0, fs->lfs_bsize, NOCRED, B_MODIFY, &bp);
 	((CLEANERINFO *)bp->b_data)->clean = fs->lfs_nclean;
 	((CLEANERINFO *)bp->b_data)->dirty = fs->lfs_nseg - fs->lfs_nclean;
 	VOP_BWRITE(bp);

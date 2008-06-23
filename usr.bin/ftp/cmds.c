@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.124 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: cmds.c,v 1.124.2.1 2008/06/23 04:32:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.124 2008/04/28 20:24:12 martin Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.124.2.1 2008/06/23 04:32:10 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -853,6 +853,8 @@ status(int argc, char *argv[])
 	fprintf(ttyout, "Use of PORT cmds: %s.\n", onoff(sendport));
 	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv4: %s%s.\n", onoff(epsv4),
 	    epsv4bad ? " (disabled for this connection)" : "");
+	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv6: %s%s.\n", onoff(epsv6),
+	    epsv6bad ? " (disabled for this connection)" : "");
 	fprintf(ttyout, "Command line editing: %s.\n",
 #ifdef NO_EDITCOMPLETE
 	    "support not compiled in"
@@ -2208,13 +2210,28 @@ setpassive(int argc, char *argv[])
 	code = passivemode;
 }
 
+
 void
 setepsv4(int argc, char *argv[])
 {
-
 	code = togglevar(argc, argv, &epsv4,
 	    verbose ? "EPSV/EPRT on IPv4" : NULL);
 	epsv4bad = 0;
+}
+
+void
+setepsv6(int argc, char *argv[])
+{
+	code = togglevar(argc, argv, &epsv6,
+	    verbose ? "EPSV/EPRT on IPv6" : NULL);
+	epsv6bad = 0;
+}
+
+void
+setepsv(int argc, char*argv[])
+{
+	setepsv4(argc,argv);
+	setepsv6(argc,argv);
 }
 
 void

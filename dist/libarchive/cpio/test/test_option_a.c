@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2003-2007 Tim Kientzle
+ * Copyright (c) 2003-2008 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,82 +23,137 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
+#include <utime.h>
 __FBSDID("$FreeBSD$");
 
+static struct {
+	const char *name;
+	time_t atime_sec;
+} files[] = {
+	{ "f0", 0 },
+	{ "f1", 0 },
+	{ "f2", 0 },
+	{ "f3", 0 },
+	{ "f4", 0 },
+	{ "f5", 0 }
+};
+
 /*
- * Create a file on disk and set the atime to a known value.
+ * Create a bunch of test files and record their atimes.
+ * For the atime preserve/change tests, the files must have
+ * atimes in the past.  We can accomplish this by explicitly invoking
+ * utime() on platforms that support it or by simply sleeping
+ * for a second after creating the files.  (Creating all of the files
+ * at once means we only need to sleep once.)
  */
 static void
-test_create(const char *filename)
+test_create(void)
 {
+	struct stat st;
+	struct utimbuf times;
+	static const int numfiles = sizeof(files) / sizeof(files[0]);
+	int i;
 	int fd;
-	struct timeval times[2];
 
-	fd = open(filename, O_CREAT | O_WRONLY, 0644);
-	assert(fd >= 0);
-	/*
-	 * Note: Have to write at least one byte to the file.
-	 * cpio doesn't bother reading the file if it's zero length,
-	 * so the atime never gets changed in that case, which
-	 * makes the tests below rather pointless.
-	 */
-	assertEqualInt(1, write(fd, "a", 1));
-	memset(times, 0, sizeof(times));
-	times[0].tv_sec = 1; /* atime = 1.000000002 */
-	times[0].tv_usec = 2;
-	times[1].tv_sec = 3; /* mtime = 3.000000004 */
-	times[1].tv_usec = 4;
-	assertEqualInt(0, futimes(fd, times));
-	close(fd);
+	for (i = 0; i < numfiles; ++i) {
+		fd = open(files[i].name, O_CREAT | O_WRONLY, 0644);
+		assert(fd >= 0);
+		/*
+		 * Note: Have to write at least one byte to the file.
+		 * cpio doesn't bother reading the file if it's zero length,
+		 * so the atime never gets changed in that case, which
+		 * makes the tests below rather pointless.
+		 */
+		assertEqualInt(1, write(fd, "a", 1));
+		close(fd);
+
+		/* If utime() isn't supported on your platform, just
+		 * #ifdef this section out.  Most of the test below is
+		 * still valid. */
+		memset(&times, 0, sizeof(times));
+		times.actime = 1;
+		times.modtime = 3;
+		assertEqualInt(0, utime(files[i].name, &times));
+
+		/* Record whatever atime the file ended up with. */
+		/* If utime() is available, this should be 1, but there's
+		 * no harm in being careful. */
+		assertEqualInt(0, stat(files[i].name, &st));
+		files[i].atime_sec = st.st_atime;
+	}
+
+	/* Wait until the atime on the last file is actually in the past. */
+	/* If utime() is supported above, there's no sleep here which
+	 * makes the test faster. */
+	while (files[numfiles - 1].atime_sec >= time(NULL))
+		sleep(1);
 }
 
 DEFINE_TEST(test_option_a)
 {
 	struct stat st;
 	int r;
+	int f;
+	char buff[64];
 
-	/* Sanity check; verify that test_create really works. */
-	test_create("f0");
+	/* Create all of the test files. */
+	test_create();
+
+	/* Sanity check; verify that atimes really do get modified. */
+	f = open(files[0].name, O_RDONLY);
+	assertEqualInt(1, read(f,buff, 1));
+	assertEqualInt(0, close(f));
 	assertEqualInt(0, stat("f0", &st));
-	failure("test_create function is supposed to create a file with atime == 1; if this doesn't work, test_option_a is entirely invalid.");
-	assertEqualInt(st.st_atime, 1);
+	if (st.st_atime == files[0].atime_sec) {
+		skipping("Cannot verify -a option\n"
+		    "      Your system appears to not support atime.");
+	}
+	else
+	{
+		/*
+		 * If this disk is mounted noatime, then we can't
+		 * verify correct operation without -a.
+		 */
 
-	/* Copy the file without -a; should change the atime. */
-	test_create("f1");
-	r = systemf("echo f1 | %s -pd --quiet copy-no-a > copy-no-a.out 2>copy-no-a.err", testprog);
-	assertEqualInt(r, 0);
-	assertEmptyFile("copy-no-a.err");
-	assertEmptyFile("copy-no-a.out");
-	assertEqualInt(0, stat("f1", &st));
-	failure("Copying file without -a should have changed atime.  Ignore this if your system does not record atimes.");
-	assert(st.st_atime != 1);
+		/* Copy the file without -a; should change the atime. */
+		r = systemf("echo %s | %s -pd copy-no-a > copy-no-a.out 2>copy-no-a.err", files[1].name, testprog);
+		assertEqualInt(r, 0);
+		assertEmptyFile("copy-no-a.err");
+		assertEmptyFile("copy-no-a.out");
+		assertEqualInt(0, stat(files[1].name, &st));
+		failure("Copying file without -a should have changed atime.");
+		assert(st.st_atime != files[1].atime_sec);
 
-	/* Archive the file without -a; should change the atime. */
-	test_create("f2");
-	r = systemf("echo f2 | %s -o --quiet > archive-no-a.out 2>archive-no-a.err", testprog);
-	assertEqualInt(r, 0);
-	assertEmptyFile("copy-no-a.err");
-	assertEqualInt(0, stat("f2", &st));
-	failure("Archiving file without -a should have changed atime.  Ignore this if your system does not record atimes.");
-	assert(st.st_atime != 1);
+		/* Archive the file without -a; should change the atime. */
+		r = systemf("echo %s | %s -o > archive-no-a.out 2>archive-no-a.err", files[2].name, testprog);
+		assertEqualInt(r, 0);
+		assertEmptyFile("copy-no-a.err");
+		assertEqualInt(0, stat(files[2].name, &st));
+		failure("Archiving file without -a should have changed atime.");
+		assert(st.st_atime != files[2].atime_sec);
+	}
+
+	/*
+	 * We can, of course, still verify that the atime is unchanged
+	 * when using the -a option.
+	 */
 
 	/* Copy the file with -a; should not change the atime. */
-	test_create("f3");
-	r = systemf("echo f3 | %s -pad --quiet copy-a > copy-a.out 2>copy-a.err", testprog);
+	r = systemf("echo %s | %s -pad copy-a > copy-a.out 2>copy-a.err",
+	    files[3].name, testprog);
 	assertEqualInt(r, 0);
 	assertEmptyFile("copy-a.err");
 	assertEmptyFile("copy-a.out");
-	assertEqualInt(0, stat("f3", &st));
+	assertEqualInt(0, stat(files[3].name, &st));
 	failure("Copying file with -a should not have changed atime.");
-	assertEqualInt(st.st_atime, 1);
+	assertEqualInt(st.st_atime, files[3].atime_sec);
 
-	/* Archive the file without -a; should change the atime. */
-	test_create("f4");
-	r = systemf("echo f4 | %s -oa --quiet > archive-a.out 2>archive-a.err", testprog);
+	/* Archive the file with -a; should not change the atime. */
+	r = systemf("echo %s | %s -oa > archive-a.out 2>archive-a.err",
+	    files[4].name, testprog);
 	assertEqualInt(r, 0);
 	assertEmptyFile("copy-a.err");
-	assertEqualInt(0, stat("f4", &st));
+	assertEqualInt(0, stat(files[4].name, &st));
 	failure("Archiving file with -a should not have changed atime.");
-	assertEqualInt(st.st_atime, 1);
-
+	assertEqualInt(st.st_atime, files[4].atime_sec);
 }

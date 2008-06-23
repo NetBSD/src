@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_error.h,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+/*	$NetBSD: mail_error.h,v 1.1.1.2.26.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 #ifndef _MAIL_ERROR_H_INCLUDED_
 #define _MAIL_ERROR_H_INCLUDED_
@@ -29,7 +29,7 @@
 #define MAIL_ERROR_2BOUNCE	(1<<5)
 #define MAIL_ERROR_DELAY	(1<<6)
 
-extern NAME_MASK mail_error_masks[];
+extern const NAME_MASK mail_error_masks[];
 
 /* LICENSE
 /* .ad

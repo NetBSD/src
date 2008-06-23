@@ -1,7 +1,7 @@
-/*	$NetBSD: parse.c,v 1.3 2008/05/06 21:13:20 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.3.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
 
 /*-
- * Copyright (c)2008 David Young.  All rights reserved.
+ * Copyright (c) 2008 David Young.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +37,7 @@
 #include <arpa/inet.h>
 #include <sys/param.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <netatalk/at.h>
 #include <netiso/iso.h>
 
@@ -143,6 +144,11 @@ pstr_match(const struct parser *p, const struct match *im, struct match *om,
 	uint8_t buf[128];
 	int len;
 
+	if (arg == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	len = (int)sizeof(buf);
 	if (get_string(arg, NULL, buf, &len) == NULL) {
 		errno = EINVAL;
@@ -174,7 +180,12 @@ pinteger_match(const struct parser *p, const struct match *im, struct match *om,
 	const struct pinteger *pi = (const struct pinteger *)p;
 	char *end;
 	int64_t val;
-	
+
+	if (arg == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	val = strtoimax(arg, &end, pi->pi_base);
 	if ((val == INTMAX_MIN || val == INTMAX_MAX) && errno == ERANGE)
 		return -1;
@@ -207,6 +218,76 @@ pinteger_match(const struct parser *p, const struct match *im, struct match *om,
 }
 
 static int
+parse_linkaddr(const char *addr, struct sockaddr_storage *ss)
+{
+	static const size_t maxlen =
+	    sizeof(*ss) - offsetof(struct sockaddr_dl, sdl_data[0]);
+	enum {
+		LLADDR_S_INITIAL = 0,
+		LLADDR_S_ONE_OCTET = 1,
+		LLADDR_S_TWO_OCTETS = 2,
+		LLADDR_S_COLON = 3
+	} state = LLADDR_S_INITIAL;
+	uint8_t octet = 0, val;
+	struct sockaddr_dl *sdl;
+	const char *p;
+	int i;
+
+	memset(ss, 0, sizeof(*ss));
+	ss->ss_family = AF_LINK;
+	sdl = (struct sockaddr_dl *)ss;
+
+	for (i = 0, p = addr; i < maxlen; p++) {
+		dbg_warnx("%s.%d: *p == %c, state %d", __func__, __LINE__, *p,
+		    state);
+		if (*p == '\0') {
+			dbg_warnx("%s.%d", __func__, __LINE__);
+			if (state != LLADDR_S_ONE_OCTET &&
+			    state != LLADDR_S_TWO_OCTETS)
+				return -1;
+			dbg_warnx("%s.%d", __func__, __LINE__);
+			sdl->sdl_data[i++] = octet;
+			sdl->sdl_len =
+			    offsetof(struct sockaddr_dl, sdl_data[i]);
+			sdl->sdl_alen = i;
+			return 0;
+		}
+		if (*p == ':') {
+			dbg_warnx("%s.%d", __func__, __LINE__);
+			if (state != LLADDR_S_ONE_OCTET &&
+			    state != LLADDR_S_TWO_OCTETS)
+				return -1;
+			dbg_warnx("%s.%d", __func__, __LINE__);
+			sdl->sdl_data[i++] = octet;
+			state = LLADDR_S_COLON;
+			continue;
+		}
+		if ('a' <= *p && *p <= 'f')
+			val = 10 + *p - 'a';
+		else if ('A' <= *p && *p <= 'F')
+			val = 10 + *p - 'A';
+		else if ('0' <= *p && *p <= '9')
+			val = *p - '0';
+		else
+			return -1;
+
+		dbg_warnx("%s.%d", __func__, __LINE__);
+		if (state == LLADDR_S_ONE_OCTET) {
+			state = LLADDR_S_TWO_OCTETS;
+			octet <<= 4;
+			octet |= val;
+		} else if (state != LLADDR_S_INITIAL && state != LLADDR_S_COLON)
+			return -1;
+		else {
+			state = LLADDR_S_ONE_OCTET;
+			octet = val;
+		}
+		dbg_warnx("%s.%d", __func__, __LINE__);
+	}
+	return -1;
+}
+
+static int
 paddr_match(const struct parser *p, const struct match *im, struct match *om,
     int argidx, const char *arg0)
 {
@@ -217,6 +298,7 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 		struct sockaddr_at sat;
 		struct sockaddr_iso siso;
 		struct sockaddr_in sin;
+		struct sockaddr_storage ss;
 	} u;
 	const struct paddr *pa = (const struct paddr *)p;
 	prop_data_t d;
@@ -228,11 +310,13 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 	struct addrinfo hints, *result = NULL;
 	char *arg, *end, *plen = NULL, *servname0;
 	const char *servname;
-	long prefixlen = 0;
+	long prefixlen = -1;
 	size_t len;
 
-	if (arg0 == NULL)
+	if (arg0 == NULL) {
+		errno = EINVAL;
 		return -1;
+	}
 
 	if (pa->pa_activator != NULL &&
 	    prop_dictionary_get(im->m_env, pa->pa_activator) == NULL)
@@ -296,17 +380,17 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 
 
 		if (plen == NULL)
-			prefixlen = 0;
+			prefixlen = -1;
 		else {
 			prefixlen = strtol(plen, &end, 10);
 			if (end != NULL && *end != '\0')
 				sa = NULL;
+			if (prefixlen < 0 || prefixlen >= UINT8_MAX) {
+				errno = ERANGE;
+				sa = NULL;
+			}
 		}
 
-		if (prefixlen < 0 || prefixlen >= UINT8_MAX) {
-			errno = ERANGE;
-			sa = NULL;
-		}
 		free(arg);
 		if (sa != NULL || af != AF_UNSPEC)
 			break;
@@ -321,15 +405,19 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 			u.sat.sat_addr.s_node = node;
 			sa = &u.sa;
 		}
-		if (af != AF_UNSPEC)
-			break;
-		/*FALLTHROUGH*/
+		break;
 	case AF_ISO:
 		u.siso.siso_len = sizeof(u.siso);
 		u.siso.siso_family = AF_ISO;
 		/* XXX iso_addr(3) matches ANYTHING! */
 		u.siso.siso_addr = *iso_addr(arg0);
 		sa = &u.sa;
+		break;
+	case AF_LINK:
+		if (parse_linkaddr(arg0, &u.ss) == -1)
+			sa = NULL;
+		else
+			sa = &u.sa;
 		break;
 	}
 
@@ -351,7 +439,7 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 	}
 #endif
 
-	pfx->pfx_len = (uint8_t)prefixlen;
+	pfx->pfx_len = (int16_t)prefixlen;
 	memcpy(&pfx->pfx_addr, sa, sa->sa_len);
 	af = sa->sa_family;
 
@@ -578,8 +666,14 @@ pkw_match(const struct parser *p, const struct match *im,
 		if (o == NULL)
 			goto err;
 		break;
-	case KW_T_NUM:
-		o = (prop_object_t)prop_number_create_integer(u->u_num);
+	case KW_T_INT:
+		o = (prop_object_t)prop_number_create_integer(u->u_sint);
+		if (o == NULL)
+			goto err;
+		break;
+	case KW_T_UINT:
+		o = (prop_object_t)prop_number_create_unsigned_integer(
+		    u->u_uint);
 		if (o == NULL)
 			goto err;
 		break;

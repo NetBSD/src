@@ -1,4 +1,4 @@
-/*	$NetBSD: iclockmod.c,v 1.11 2008/04/16 16:06:51 cegger Exp $ */
+/*	$NetBSD: iclockmod.c,v 1.11.6.1 2008/06/23 04:30:50 wrstuden Exp $ */
 /*      $OpenBSD: p4tcc.c,v 1.13 2006/12/20 17:50:40 gwk Exp $ */
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.11 2008/04/16 16:06:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iclockmod.c,v 1.11.6.1 2008/06/23 04:30:50 wrstuden Exp $");
 
 #include "opt_intel_odcm.h"
 
@@ -200,7 +200,7 @@ clockmod_init_main(void)
 	/* Get current value */
 	clockmod_level = clockmod_getstate();
 
-	aprint_normal_dev(curcpu()->ci_dev, "Intel(R) On Demand Clock Modulation (state %s)\n",
+	aprint_verbose_dev(curcpu()->ci_dev, "Intel(R) On Demand Clock Modulation (state %s)\n",
 	    clockmod_level == (ODCM_MAXSTATES - 1) ?
 	    "disabled" : "enabled");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_bio_ops.c,v 1.1.1.1 2005/08/18 21:11:02 rpaulo Exp $	*/
+/*	$NetBSD: tls_bio_ops.c,v 1.1.1.1.22.1 2008/06/23 04:29:25 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -12,31 +12,31 @@
 /*	int tls_bio_connect(fd, timeout, context)
 /*	int	fd;
 /*	int	timeout;
-/*	TLScontext_t *context;
+/*	TLS_SESS_STATE *context;
 /*
 /*	int tls_bio_accept(fd, timeout, context)
 /*	int	fd;
 /*	int	timeout;
-/*	TLScontext_t *context;
+/*	TLS_SESS_STATE *context;
 /*
 /*	int tls_bio_shutdown(fd, timeout, context)
 /*	int	fd;
 /*	int	timeout;
-/*	TLScontext_t *context;
+/*	TLS_SESS_STATE *context;
 /*
 /*	int tls_bio_read(fd, buf, len, timeout, context)
 /*	int	fd;
 /*	void	*buf;
 /*	int	len;
 /*	int	timeout;
-/*	TLScontext_t *context;
+/*	TLS_SESS_STATE *context;
 /*
 /*	int tls_bio_write(fd, buf, len, timeout, context)
 /*	int	fd;
 /*	void	*buf;
 /*	int	len;
 /*	int	timeout;
-/*	TLScontext_t *context;
+/*	TLS_SESS_STATE *context;
 /* DESCRIPTION
 /*	This layer synchronizes the TLS network buffers with the network
 /*	while performing TLS handshake or input/output operations.
@@ -142,6 +142,9 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Victor Duchovni
+/*	Morgan Stanley
 /*--*/
 
 /* System library. */
@@ -243,7 +246,7 @@ static int network_biopair_interop(int fd, int timeout, BIO *network_bio)
 
 /* tls_bio - perform SSL input/output operation with extreme prejudice */
 
-int     tls_bio(int fd, int timeout, TLScontext_t *TLScontext,
+int     tls_bio(int fd, int timeout, TLS_SESS_STATE *TLScontext,
 		        int (*hsfunc) (SSL *),
 		        int (*rfunc) (SSL *, void *, int),
 		        int (*wfunc) (SSL *, const void *, int),
@@ -299,7 +302,7 @@ int     tls_bio(int fd, int timeout, TLScontext_t *TLScontext,
 	 */
 	if (err == SSL_ERROR_SSL) {
 	    if (ERR_peek_error() == 0x0407006AL) {
-		pfixtls_print_errors();
+		tls_print_errors();
 		msg_info("OpenSSL <= 0.9.5a workaround called: certificate errors ignored");
 		err = SSL_get_error(TLScontext->con, status);
 	    }

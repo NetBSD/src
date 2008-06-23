@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.38 2008/05/03 05:57:04 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.38.2.1 2008/06/23 04:30:26 wrstuden Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.38 2008/05/03 05:57:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.38.2.1 2008/06/23 04:30:26 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -919,6 +919,7 @@ IDTVEC(trap0e)
 	pushl	%eax
 	movl	%esp,%eax
 	addl	$4,%eax
+	incl	CPUVAR(NTRAP)
 	pushl	%eax
 	call	_C_LABEL(trap)
 	addl	$8,%esp
@@ -940,6 +941,7 @@ trap0e_checkast:
 5:	CLEAR_ASTPENDING(%eax)
 	STI(%eax)
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
+	incl	CPUVAR(NTRAP)
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
@@ -1095,6 +1097,7 @@ calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
+	incl	CPUVAR(NTRAP)
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
@@ -1115,6 +1118,7 @@ calltrap:
 5:	CLEAR_ASTPENDING(%eax)
 	STI(%eax)
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
+	incl	CPUVAR(NTRAP)
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp

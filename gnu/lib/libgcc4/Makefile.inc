@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2008/02/09 02:37:21 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.8.6.1 2008/06/23 04:29:28 wrstuden Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -13,7 +13,7 @@ GCCARCHXX=	${NETBSDSRCDIR}/gnu/lib/libstdc++-v3_4/arch/${MACHINE_ARCH}
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCHLIBGCC}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
-CPPFLAGS+=	-I${G_EXTRA_HEADERS:H:u}
+CPPFLAGS+=	-I${G_EXTRA_HEADERS:M/*:H:u}
 CPPFLAGS+=	-I${DIST}/gcc/cp -I${DIST}/gcc/config -I${GCCARCHXX} -I.
 
 # This is copied from gcc/mklibgcc.in:$lib2funcs

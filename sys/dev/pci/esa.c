@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.48 2008/03/27 12:04:43 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.48.6.1 2008/06/23 04:31:11 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.48 2008/03/27 12:04:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.48.6.1 2008/06/23 04:31:11 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -853,11 +853,14 @@ esa_intr(void *hdl)
 		aprint_normal_dev(sc->sc_dev, "hardware volume interrupt\n");
 		event = bus_space_read_1(iot, ioh, ESA_HW_VOL_COUNTER_MASTER);
 		switch(event) {
-		case 0x99:
-		case 0xaa:
-		case 0x66:
-		case 0x88:
-			aprint_normal_dev(sc->sc_dev, "esa_intr: FIXME\n");
+		case 0xaa:	/* volume up */
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_UP);
+			break;
+		case 0x66:	/* volume down */
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
+			break;
+		case 0x88:	/* mute */
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_TOGGLE);
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,
@@ -1048,7 +1051,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, esa_intr, self);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, esa_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
@@ -1101,7 +1104,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 
 
 	/* Attach AC97 host interface */
-	sc->host_if.arg = self;
+	sc->host_if.arg = sc;
 	sc->host_if.attach = esa_attach_codec;
 	sc->host_if.read = esa_read_codec;
 	sc->host_if.write = esa_write_codec;

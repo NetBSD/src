@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.4 2008/05/05 00:14:11 jmcneill Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.4.2.1 2008/06/23 04:30:58 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.4 2008/05/05 00:14:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.4.2.1 2008/06/23 04:30:58 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -187,6 +187,9 @@ asus_init(device_t self)
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(self, "couldn't evaluate INIT: %s\n",
 		    AcpiFormatException(rv));
+
+	if (ret.Pointer)
+		AcpiOsFree(ret.Pointer);
 }
 
 static bool

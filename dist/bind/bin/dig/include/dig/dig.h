@@ -1,10 +1,10 @@
-/*	$NetBSD: dig.h,v 1.2 2008/02/20 18:24:22 matt Exp $	*/
+/*	$NetBSD: dig.h,v 1.2.6.1 2008/06/23 04:27:22 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dig.h,v 1.82.18.19 2006/12/07 06:08:02 marka Exp */
+/* Id: dig.h,v 1.105.130.2 2008/04/03 06:08:26 tbox Exp */
 
 #ifndef DIG_H
 #define DIG_H
@@ -104,7 +104,7 @@ typedef struct dig_searchlist dig_searchlist_t;
 /*% The dig_lookup structure */
 struct dig_lookup {
 	isc_boolean_t
-	        pending, /*%< Pending a successful answer */
+		pending, /*%< Pending a successful answer */
 		waiting_connect,
 		doing_xfr,
 		ns_search_only, /*%< dig +nssearch, host -C */
@@ -131,27 +131,28 @@ struct dig_lookup {
 		need_search,
 		done_as_is,
 		besteffort,
-		dnssec;
+		dnssec,
+		nsid;   /*% Name Server ID (RFC 5001) */
 #ifdef DIG_SIGCHASE
 isc_boolean_t	sigchase;
 #if DIG_SIGCHASE_TD
- 	isc_boolean_t do_topdown,
-	        trace_root_sigchase,
-	        rdtype_sigchaseset,
-	        rdclass_sigchaseset;
+	isc_boolean_t do_topdown,
+		trace_root_sigchase,
+		rdtype_sigchaseset,
+		rdclass_sigchaseset;
 	/* Name we are going to validate RRset */
-  	char textnamesigchase[MXNAME];
+	char textnamesigchase[MXNAME];
 #endif
 #endif
-	
+
 	char textname[MXNAME]; /*% Name we're going to be looking up */
 	char cmdline[MXNAME];
 	dns_rdatatype_t rdtype;
 	dns_rdatatype_t qrdtype;
 #if DIG_SIGCHASE_TD
-        dns_rdatatype_t rdtype_sigchase;
-        dns_rdatatype_t qrdtype_sigchase;
-        dns_rdataclass_t rdclass_sigchase;
+	dns_rdatatype_t rdtype_sigchase;
+	dns_rdatatype_t qrdtype_sigchase;
+	dns_rdataclass_t rdclass_sigchase;
 #endif
 	dns_rdataclass_t rdclass;
 	isc_boolean_t rdtypeset;
@@ -233,7 +234,7 @@ struct dig_searchlist {
 };
 #ifdef DIG_SIGCHASE
 struct dig_message {
-	        dns_message_t *msg;
+		dns_message_t *msg;
 		ISC_LINK(dig_message_t) link;
 };
 #endif
@@ -251,7 +252,7 @@ extern dig_searchlistlist_t search_list;
 extern unsigned int extrabytes;
 
 extern isc_boolean_t check_ra, have_ipv4, have_ipv6, specified_source,
-        usesearch, showsearch, qr;
+	usesearch, showsearch, qr;
 extern in_port_t port;
 extern unsigned int timeout;
 extern isc_mem_t *mctx;
@@ -279,6 +280,9 @@ extern isc_boolean_t debugging, memdebugging;
 extern const char *progname;
 extern int tries;
 extern int fatalexit;
+#ifdef WITH_IDN
+extern int idnoptions;
+#endif
 
 /*
  * Routines in dighost.c.
@@ -301,6 +305,9 @@ check_result(isc_result_t result, const char *msg);
 
 void
 setup_lookup(dig_lookup_t *lookup);
+
+void
+destroy_lookup(dig_lookup_t *lookup);
 
 void
 do_lookup(dig_lookup_t *lookup);

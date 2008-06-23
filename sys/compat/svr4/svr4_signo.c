@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_signo.c,v 1.2 2008/04/28 20:23:45 martin Exp $	 */
+/*	$NetBSD: svr4_signo.c,v 1.2.2.1 2008/06/23 04:30:57 wrstuden Exp $	 */
 
 /*-
- * Copyright (c) 2002. The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signo.c,v 1.2 2008/04/28 20:23:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signo.c,v 1.2.2.1 2008/06/23 04:30:57 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>

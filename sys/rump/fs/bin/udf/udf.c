@@ -1,4 +1,4 @@
-/*	$NetBSD: udf.c,v 1.2 2007/08/14 15:56:16 pooka Exp $	*/
+/*	$NetBSD: udf.c,v 1.2.36.1 2008/06/23 04:32:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 	args.version = UDFMNT_VERSION;
 	args.fspec = argv[0];
 
-	rv = p2k_run_fs(MOUNT_UDF, argv[0], argv[1], mntflags | MNT_RDONLY, 
+	rv = p2k_run_fs(MOUNT_UDF, argv[0], argv[1], mntflags, 
 		&args, sizeof(args), pflags);
 	if (rv)
 		err(1, "mount");

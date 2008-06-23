@@ -1,4 +1,4 @@
-/* $NetBSD: pwd.c,v 1.19 2003/10/30 13:52:23 dsl Exp $ */
+/* $NetBSD: pwd.c,v 1.19.32.1 2008/06/23 04:26:44 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.19 2003/10/30 13:52:23 dsl Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.19.32.1 2008/06/23 04:26:44 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: pwd.c,v 1.19 2003/10/30 13:52:23 dsl Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,6 +73,8 @@ main(int argc, char *argv[])
 	const char *p;
 
 	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
+
 	lFlag = 0;
 	while ((ch = getopt(argc, argv, "LP")) != -1) {
 		switch (ch) {

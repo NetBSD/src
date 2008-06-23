@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.12 2007/12/15 00:39:23 perry Exp $	*/
+/*	$NetBSD: bmd.c,v 1.12.12.1 2008/06/23 04:30:47 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.12 2007/12/15 00:39:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.12.12.1 2008/06/23 04:30:47 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,15 +202,11 @@ bmd_attach(struct device *parent, struct device *self, void *aux)
 int
 bmdopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
-	int unit = BMD_UNIT(dev);
 	struct bmd_softc *sc;
 
 	DPRINTF(("%s%d\n", __func__, unit));
 
-	if (unit >= bmd_cd.cd_ndevs)
-		return ENXIO;
-
-	sc = bmd_cd.cd_devs[unit];
+	sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -231,10 +227,9 @@ bmdopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 int
 bmdclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 {
-	int unit = BMD_UNIT(dev);
-	struct bmd_softc *sc = bmd_cd.cd_devs[unit];
+	struct bmd_softc *sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev));
 
-	DPRINTF(("%s%d\n", __func__, unit));
+	DPRINTF(("%s%d\n", __func__, BMD_UNIT(dev)));
 
 	switch (devtype) {
 	case S_IFCHR:
@@ -262,7 +257,7 @@ bmdstrategy(struct buf *bp)
 		goto done;
 	}
 
-	sc = bmd_cd.cd_devs[unit];
+	sc = device_lookup_private(&bmd_cd, BMD_UNIT(bp->b_dev));
 	if (sc == NULL) {
 		bp->b_error = ENXIO;
 		goto done;
@@ -322,17 +317,13 @@ bmdstrategy(struct buf *bp)
 int
 bmdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	int unit = BMD_UNIT(dev);
 	struct bmd_softc *sc;
 	struct disklabel dl;
 	int error;
 
-	DPRINTF(("%s%d %ld\n", __func__, unit, cmd));
+	DPRINTF(("%s%d %ld\n", __func__, BMD_UNIT(dev), cmd));
 
-	if (unit >= bmd_cd.cd_ndevs)
-		return ENXIO;
-
-	sc = bmd_cd.cd_devs[unit];
+	sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -368,15 +359,11 @@ bmddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 int
 bmdsize(dev_t dev)
 {
-	int unit = BMD_UNIT(dev);
 	struct bmd_softc *sc;
 
-	DPRINTF(("%s%d ", __func__, unit));
+	DPRINTF(("%s%d ", __func__, BMD_UNIT(dev)));
 
-	if (unit >= bmd_cd.cd_ndevs)
-		return 0;
-
-	sc = bmd_cd.cd_devs[unit];
+	sc = device_lookup_private(&bmd_cd, BMD_UNIT(dev));
 	if (sc == NULL)
 		return 0;
 

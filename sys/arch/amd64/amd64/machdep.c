@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.92.2.3 2008/06/22 18:12:01 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.2.4 2008/06/23 04:30:05 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
+ * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -77,7 +77,6 @@
  *
  */
 
-
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -113,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.3 2008/06/22 18:12:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.4 2008/06/23 04:30:05 wrstuden Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -182,6 +181,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.3 2008/06/22 18:12:01 wrstuden Ex
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
 
+#include <x86/cputypes.h>
 #include <x86/cpu_msr.h>
 #include <x86/cpuvar.h>
 
@@ -232,6 +232,8 @@ int	cpureset_delay = CPURESET_DELAY;
 #else
 int     cpureset_delay = 2000; /* default to 2s */
 #endif
+
+int	cpu_class = CPUCLASS_686;
 
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
@@ -362,7 +364,7 @@ cpu_startup(void)
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
-	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, VM_MAP_PAGEABLE);
+	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, 0);
 	lkm_map_store.pmap = pmap_kernel();
 	lkm_map = &lkm_map_store;
 
@@ -671,6 +673,7 @@ struct pcb dumppcb;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	int s;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -688,15 +691,20 @@ cpu_reboot(int howto, char *bootstr)
 		resettodr();
 	}
 
-	/* Disable interrupts. */
-	splhigh();
 
 	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
+		/* Disable interrupts. */
+		s = splhigh();
 		dumpsys();
+		splx(s);
+	}
 
 haltsys:
 	doshutdownhooks();
+
+	/* Disable interrupts. */
+	(void)splhigh();
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
@@ -1304,14 +1312,15 @@ init_x86_64(paddr_t first_avail)
 	struct btinfo_memmap *bim;
 	uint64_t addr, size, io_end, new_physmem;
 #endif
+	cpu_probe(&cpu_info_primary);
 #else /* XEN */
+	cpu_probe(&cpu_info_primary);
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
 	first_bt_vaddr = (vaddr_t) (first_avail + KERNBASE + PAGE_SIZE * 2);
 	__PRINTK(("first_bt_vaddr 0x%lx\n", first_bt_vaddr));
-	cpu_probe_features(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 	/* not on Xen... */
 	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);

@@ -69,6 +69,8 @@ a delegated SMTPD access policy request:
     encryption_cipher=DHE-RSA-AES256-SHA
     encryption_keysize=256
     etrn_domain=
+    PPoossttffiixx vveerrssiioonn 22..55 aanndd llaatteerr::
+    stress=
     [empty line]
 
 Notes:
@@ -128,6 +130,9 @@ Notes:
 
   * The "etrn_domain" attribute is defined only in the context of the ETRN
     command, and specifies the ETRN command parameter.
+
+  * The "stress" attribute is either empty or "yes". See the STRESS_README
+    document for further information.
 
 The following is specific to SMTPD delegated policy requests:
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.49 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.49.2.1 2008/06/23 04:31:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.49 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.49.2.1 2008/06/23 04:31:11 wrstuden Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.49 2008/04/28 20:23:55 martin Exp $");
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
@@ -858,6 +859,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 
 	LIST_INIT(&sc_if->sk_jfree_listhead);
 	LIST_INIT(&sc_if->sk_jinuse_listhead);
+	mutex_init(&sc_if->sk_jpool_mtx, MUTEX_DEFAULT, IPL_NET);
 
 	/*
 	 * Now divide it up into 9K pieces and save the addresses
@@ -912,13 +914,17 @@ sk_jalloc(struct sk_if_softc *sc_if)
 {
 	struct sk_jpool_entry   *entry;
 
+	mutex_enter(&sc_if->sk_jpool_mtx);
 	entry = LIST_FIRST(&sc_if->sk_jfree_listhead);
 
-	if (entry == NULL)
+	if (entry == NULL) {
+		mutex_exit(&sc_if->sk_jpool_mtx);
 		return NULL;
+	}
 
 	LIST_REMOVE(entry, jpool_entries);
 	LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead, entry, jpool_entries);
+	mutex_exit(&sc_if->sk_jpool_mtx);
 	return sc_if->sk_cdata.sk_jslots[entry->slot];
 }
 
@@ -930,7 +936,7 @@ sk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	struct sk_jpool_entry *entry;
 	struct sk_if_softc *sc;
-	int i, s;
+	int i;
 
 	/* Extract the softc struct pointer. */
 	sc = (struct sk_if_softc *)arg;
@@ -946,17 +952,17 @@ sk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	if ((i < 0) || (i >= SK_JSLOTS))
 		panic("sk_jfree: asked to free buffer that we don't manage!");
 
-	s = splvm();
+	mutex_enter(&sc->sk_jpool_mtx);
 	entry = LIST_FIRST(&sc->sk_jinuse_listhead);
 	if (entry == NULL)
 		panic("sk_jfree: buffer not in use!");
 	entry->slot = i;
 	LIST_REMOVE(entry, jpool_entries);
 	LIST_INSERT_HEAD(&sc->sk_jfree_listhead, entry, jpool_entries);
+	mutex_exit(&sc->sk_jpool_mtx);
 
 	if (__predict_true(m != NULL))
 		pool_cache_put(mb_cache, m);
-	splx(s);
 }
 
 /*

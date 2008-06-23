@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.106 2008/01/21 23:36:26 pooka Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.106.14.1 2008/06/23 04:32:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106 2008/01/21 23:36:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.14.1 2008/06/23 04:32:05 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106 2008/01/21 23:36:26 pooka Exp $"
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <ufs/ufs/quota.h>
@@ -276,7 +277,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	 * Allocate the extra space in the buffer.
 	 */
 	if (bpp != NULL &&
-	    (error = bread(ITOV(ip), lbprev, osize, NOCRED, &bp)) != 0) {
+	    (error = bread(ITOV(ip), lbprev, osize, NOCRED, 0, &bp)) != 0) {
 		brelse(bp, 0);
 		return (error);
 	}
@@ -303,6 +304,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 			allocbuf(bp, nsize, 1);
 			memset((char *)bp->b_data + osize, 0, nsize - osize);
 			mutex_enter(bp->b_objlock);
+			KASSERT(!cv_has_waiters(&bp->b_done));
 			bp->b_oflags |= BO_DONE;
 			mutex_exit(bp->b_objlock);
 			*bpp = bp;
@@ -385,6 +387,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 			allocbuf(bp, nsize, 1);
 			memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
 			mutex_enter(bp->b_objlock);
+			KASSERT(!cv_has_waiters(&bp->b_done));
 			bp->b_oflags |= BO_DONE;
 			mutex_exit(bp->b_objlock);
 			*bpp = bp;
@@ -512,7 +515,8 @@ ffs_reallocblks(void *v)
 		soff = start_lbn;
 	} else {
 		idp = &start_ap[start_lvl - 1];
-		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &sbp)) {
+		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize,
+		    NOCRED, B_MODIFY, &sbp)) {
 			brelse(sbp, 0);
 			return (ENOSPC);
 		}
@@ -535,7 +539,8 @@ ffs_reallocblks(void *v)
 			panic("ffs_reallocblk: start == end");
 #endif
 		ssize = len - (idp->in_off + 1);
-		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &ebp))
+		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize,
+		    NOCRED, B_MODIFY, &ebp))
 			goto fail;
 		ebap = (int32_t *)ebp->b_data;	/* XXX ondisk32 */
 	}
@@ -742,7 +747,7 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 		    (unsigned long long)ipref);
 #if 0
 		error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
-		    (int)fs->fs_bsize, NOCRED, &bp);
+		    (int)fs->fs_bsize, NOCRED, 0, &bp);
 #endif
 
 #endif
@@ -1097,7 +1102,7 @@ ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
 	}
 	mutex_exit(&ump->um_lock);
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp);
+		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
 	if (error)
 		goto fail;
 	cgp = (struct cg *)bp->b_data;
@@ -1174,7 +1179,7 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 		return (0);
 	mutex_exit(&ump->um_lock);
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp);
+		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
 	if (error)
 		goto fail;
 	cgp = (struct cg *)bp->b_data;
@@ -1367,7 +1372,7 @@ ffs_clusteralloc(struct inode *ip, int cg, daddr_t bpref, int len)
 		return (0);
 	mutex_exit(&ump->um_lock);
 	if (bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)), (int)fs->fs_cgsize,
-	    NOCRED, &bp))
+	    NOCRED, 0, &bp))
 		goto fail;
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, UFS_FSNEEDSWAP(fs)))
@@ -1492,7 +1497,7 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 		return (0);
 	mutex_exit(&ump->um_lock);
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp);
+		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
 	if (error)
 		goto fail;
 	cgp = (struct cg *)bp->b_data;
@@ -1545,12 +1550,13 @@ gotit:
 	if (fs->fs_magic == FS_UFS2_MAGIC &&
 	    ipref + INOPB(fs) > initediblk &&
 	    initediblk < ufs_rw32(cgp->cg_niblk, needswap)) {
-		ibp = getblk(ip->i_devvp, fsbtodb(fs,
+		if (ffs_getblk(ip->i_devvp, fsbtodb(fs,
 		    ino_to_fsba(fs, cg * fs->fs_ipg + initediblk)),
-		    (int)fs->fs_bsize, 0, 0);
-		    memset(ibp->b_data, 0, fs->fs_bsize);
-		    dp2 = (struct ufs2_dinode *)(ibp->b_data);
-		    for (i = 0; i < INOPB(fs); i++) {
+		    FFS_NOBLK, fs->fs_bsize, false, &ibp) != 0)
+			goto fail;
+		memset(ibp->b_data, 0, fs->fs_bsize);
+		dp2 = (struct ufs2_dinode *)(ibp->b_data);
+		for (i = 0; i < INOPB(fs); i++) {
 			/*
 			 * Don't bother to swap, it's supposed to be
 			 * random, after all.
@@ -1637,7 +1643,8 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 		ffs_fserr(fs, inum, "bad block");
 		return;
 	}
-	error = bread(devvp, cgblkno, (int)fs->fs_cgsize, NOCRED, &bp);
+	error = bread(devvp, cgblkno, (int)fs->fs_cgsize,
+	    NOCRED, B_MODIFY, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return;
@@ -1765,7 +1772,7 @@ ffs_checkblk(struct inode *ip, daddr_t bno, long size)
 	if (bno >= fs->fs_size)
 		panic("checkblk: bad block %d", bno);
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, dtog(fs, bno))),
-		(int)fs->fs_cgsize, NOCRED, &bp);
+		(int)fs->fs_cgsize, NOCRED, 0, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return 0;
@@ -1839,7 +1846,8 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
 		    dev, (unsigned long long)ino, fs->fs_fsmnt);
-	error = bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, &bp);
+	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
+	    NOCRED, B_MODIFY, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
@@ -1901,7 +1909,7 @@ ffs_checkfreefile(struct fs *fs, struct vnode *devvp, ino_t ino)
 		cgbno = fsbtodb(fs, cgtod(fs, cg));
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		return 1;
-	if (bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, &bp)) {
+	if (bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, 0, &bp)) {
 		brelse(bp, 0);
 		return 1;
 	}

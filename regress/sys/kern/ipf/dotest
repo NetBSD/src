@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dotest,v 1.4 2006/04/04 16:17:19 martti Exp $
+# $NetBSD: dotest,v 1.4.20.1 2008/06/23 04:29:56 wrstuden Exp $
 #
 TESTDIR=$1
 shift
@@ -21,7 +21,13 @@ else
 	fi
 fi
 if [ "$tuning" != "" ] ; then
-	tuning="-T $tuning"
+	case $tuning in
+	-*)
+		;;
+	*)
+		tuning="-T $tuning"
+		;;
+	esac
 fi
 echo "${thistest}...";
 /bin/cp /dev/null results/${thistest}

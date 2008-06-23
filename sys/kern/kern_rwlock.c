@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.23 2008/05/06 17:11:45 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.23.2.1 2008/06/23 04:31:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,9 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.23 2008/05/06 17:11:45 ad Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.23.2.1 2008/06/23 04:31:51 wrstuden Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -67,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.23 2008/05/06 17:11:45 ad Exp $");
 	LOCKDEBUG_WANTLOCK(RW_DEBUG_P(rw), (rw),			\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER, t);
 #define	RW_LOCKED(rw, op)						\
-	LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw),				\
+	LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw), NULL,			\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_UNLOCKED(rw, op)						\
 	LOCKDEBUG_UNLOCKED(RW_DEBUG_P(rw), (rw),			\
@@ -151,7 +149,7 @@ __strong_alias(rw_tryenter,rw_vector_tryenter);
 
 lockops_t rwlock_lockops = {
 	"Reader / writer lock",
-	1,
+	LOCKOPS_SLEEP,
 	rw_dump
 };
 
@@ -184,10 +182,7 @@ rw_dump(volatile void *cookie)
  *	generates a lot of machine code in the DIAGNOSTIC case, so
  *	we ask the compiler to not inline it.
  */
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline))
-#endif
-static void
+static void __noinline
 rw_abort(krwlock_t *rw, const char *func, const char *msg)
 {
 

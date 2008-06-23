@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb_impl.h,v 1.5 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_rb_impl.h,v 1.5.2.1 2008/06/23 04:26:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ struct rb_tree {
 };
 
 void	_prop_rb_tree_init(struct rb_tree *, const struct rb_tree_ops *);
-void	_prop_rb_tree_insert_node(struct rb_tree *, struct rb_node *);
+bool	_prop_rb_tree_insert_node(struct rb_tree *, struct rb_node *);
 struct rb_node	*
 	_prop_rb_tree_find(struct rb_tree *, const void *);
 void	_prop_rb_tree_remove_node(struct rb_tree *, struct rb_node *);

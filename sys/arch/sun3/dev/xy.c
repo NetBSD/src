@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.67 2008/02/06 12:13:47 elad Exp $	*/
+/*	$NetBSD: xy.c,v 1.67.12.1 2008/06/23 04:30:47 wrstuden Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.67 2008/02/06 12:13:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.67.12.1 2008/06/23 04:30:47 wrstuden Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -694,7 +694,7 @@ done:
 int 
 xyclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct xy_softc *xy = xy_cd.cd_devs[DISKUNIT(dev)];
+	struct xy_softc *xy = device_lookup_private(&xy_cd, DISKUNIT(dev));
 	int     part = DISKPART(dev);
 
 	/* clear mask bits */
@@ -726,7 +726,7 @@ xydump(dev_t dev, daddr_t blkno, void *va, size_t sz)
 		return ENXIO;
 	part = DISKPART(dev);
 
-	xy = xy_cd.cd_devs[unit];
+	xy = device_lookup_private(&xy_cd, unit);
 
 	printf("%s%c: crash dump not supported (yet)\n", xy->sc_dev.dv_xname,
 	    'a' + part);
@@ -801,7 +801,8 @@ xyioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
 
 	unit = DISKUNIT(dev);
 
-	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
+	xy = device_lookup_private(&xy_cd, unit);
+	if (xy == NULL)
 		return (ENXIO);
 
 	/* switch on ioctl type */
@@ -893,7 +894,8 @@ xyopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	/* first, could it be a valid target? */
 	unit = DISKUNIT(dev);
-	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
+	xy = device_lookup_private(&xy_cd, unit);
+	if (xy == NULL)
 		return (ENXIO);
 	part = DISKPART(dev);
 	err = 0;
@@ -970,7 +972,8 @@ xysize(dev_t dev)
 
 	/* valid unit? */
 	unit = DISKUNIT(dev);
-	if (unit >= xy_cd.cd_ndevs || (xysc = xy_cd.cd_devs[unit]) == NULL)
+	xysc = device_lookup_private(&xy_cd, unit);
+	if (xysc == NULL)
 		return (-1);
 
 	part = DISKPART(dev);
@@ -1005,7 +1008,8 @@ xystrategy(struct buf *bp)
 
 	/* check for live device */
 
-	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == 0 ||
+	xy = device_lookup_private(&xy_cd, unit);
+	if (xy == NULL ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xy->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;

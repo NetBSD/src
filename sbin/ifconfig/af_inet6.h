@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.h,v 1.4 2008/05/06 16:15:17 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.h,v 1.4.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,6 +38,8 @@
 extern struct in6_ifreq    in6_ridreq;
 extern struct in6_aliasreq in6_addreq;
 
+extern struct pkw ia6flags, inet6;
+
 int	setia6flags(prop_dictionary_t, prop_dictionary_t);
 int	setia6pltime(prop_dictionary_t, prop_dictionary_t);
 int	setia6vltime(prop_dictionary_t, prop_dictionary_t);
@@ -46,9 +48,9 @@ int	setia6eui64(prop_dictionary_t, prop_dictionary_t);
 void	in6_fillscopeid(struct sockaddr_in6 *sin6);
 void	in6_status(prop_dictionary_t, prop_dictionary_t, bool);
 void	in6_getaddr(const struct paddr_prefix *, int);
-void	in6_getprefix(int, int);
 void	in6_init(void);
 int	setia6eui64_impl(prop_dictionary_t, struct in6_aliasreq *);
 int	setia6vltime_impl(prop_dictionary_t, struct in6_aliasreq *);
 int	setia6pltime_impl(prop_dictionary_t, struct in6_aliasreq *);
 int	setia6flags_impl(prop_dictionary_t, struct in6_aliasreq *);
+void	in6_commit_address(prop_dictionary_t, prop_dictionary_t);

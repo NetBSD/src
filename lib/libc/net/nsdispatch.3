@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.27 2008/04/30 13:10:50 martin Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.27.2.1 2008/06/23 04:29:32 wrstuden Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2004, 2005, 2008
 .\" The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 19, 2008
+.Dd May 8, 2008
 .Dt NSDISPATCH 3
 .Os
 .Sh NAME
@@ -691,24 +691,46 @@ should be set to 1 for a successful match and 0 otherwise.
 .El
 .\"
 .Ss Methods for networks database
-.Sy NOTE:
-The method APIs for this database will be changing in the near future.
 .Bl -tag -width 3n
 .It Sy getnetbyaddr
+.Ft "struct netent **retval" ,
 .Ft "uint32_t net" ,
 .Ft "int type"
 .Pp
-Returns
+.Fa *retval
+should be set to a pointer to an internal static
 .Ft "struct netent"
-via
-.Ft "void *cbrv" .
-.It Sy getnetbyname
-.Ft "const char *net"
+on success,
+.Dv NULL otherwise.
 .Pp
-Returns
+.Xr getnetbyaddr 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+.Dv NULL
+otherwise.
+.It Sy getnetbyname
+.Ft "struct netent **retval" ,
+.Ft "const char *name"
+.Pp
+.Fa *retval
+should be set to a pointer to an internal static
 .Ft "struct netent"
-via
-.Ft "void *cbrv" .
+on success,
+.Dv NULL otherwise.
+.Pp
+.Xr getnetbyname 3
+returns
+.Fa *retval
+if
+.Fn nsdispatch
+returns
+.Dv NS_SUCCESS ,
+.Dv NULL
+otherwise.
 .El
 .\"
 .Ss Methods for passwd and passwd_compat databases

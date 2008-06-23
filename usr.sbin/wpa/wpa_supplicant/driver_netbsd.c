@@ -1,4 +1,4 @@
-/*	$NetBSD: driver_netbsd.c,v 1.5 2008/01/26 21:50:22 christos Exp $	*/
+/*	$NetBSD: driver_netbsd.c,v 1.5.6.1 2008/06/23 04:32:13 wrstuden Exp $	*/
 
 /*
  * WPA Supplicant - driver interaction with BSD net80211 layer
@@ -516,15 +516,17 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 		switch (ifan->ifan_what) {
 		case IFAN_DEPARTURE:
 			event.interface_status.ievent = EVENT_INTERFACE_REMOVED;
+			break;
 		default:
-			return;
+			event.interface_status.ievent = EVENT_INTERFACE_ADDED;
+			break;
 		}
-		wpa_printf(MSG_DEBUG, "RTM_IFANNOUNCE: Interface '%s' %s",
+		wpa_printf(MSG_DEBUG, "RTM_IFANNOUNCE: Interface '%s' %s (%d)",
 			   event.interface_status.ifname,
 			   ifan->ifan_what == IFAN_DEPARTURE ?
-				"removed" : "added");
+				"removed" : "added", ifan->ifan_what);
 		wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
-		break;
+		return;
 	case RTM_IEEE80211:
 		ifan = (struct if_announcemsghdr *) rtm;
 		if (ifan->ifan_index != drv->ifindex)
@@ -532,15 +534,23 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 		switch (ifan->ifan_what) {
 		case RTM_IEEE80211_ASSOC:
 		case RTM_IEEE80211_REASSOC:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: (re)assoc (%d)",
+			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_ASSOC, NULL);
 			break;
 		case RTM_IEEE80211_DISASSOC:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: disassoc (%d)",
+			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_DISASSOC, NULL);
 			break;
 		case RTM_IEEE80211_SCAN:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: scan result (%d)",
+			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_SCAN_RESULTS, NULL);
 			break;
 		case RTM_IEEE80211_REPLAY:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: replay (%d)",
+			    ifan->ifan_what);
 			/* ignore */
 			break;
 		case RTM_IEEE80211_MICHAEL:
@@ -556,6 +566,10 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 			wpa_supplicant_event(ctx, EVENT_MICHAEL_MIC_FAILURE,
 				&event);
 			break;
+		default:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: ??? (%d)",
+			    ifan->ifan_what);
+			break;
 		}
 		break;
 	case RTM_IFINFO:
@@ -570,8 +584,7 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' DOWN",
 				   event.interface_status.ifname);
 			wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
-		}
-		if ((ifm->ifm_flags & IFF_UP) != 0 &&
+		} else if ((ifm->ifm_flags & IFF_UP) != 0 &&
 		    (drv->flags & IFF_UP) == 0) {
 			strlcpy(event.interface_status.ifname, drv->ifname,
 				sizeof(event.interface_status.ifname));
@@ -579,8 +592,18 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' UP",
 				   event.interface_status.ifname);
 			wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
+		} else {
+			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' "
+			    "if=%x drv=%x", event.interface_status.ifname,
+			    ifm->ifm_flags, drv->flags);
 		}
 		drv->flags = ifm->ifm_flags;
+		break;
+	case RTM_LOSING:
+		wpa_printf(MSG_DEBUG, "RTM_LOSING: %d", rtm->rtm_type);
+		break;
+	default:
+		wpa_printf(MSG_DEBUG, "RTM_???: %d", rtm->rtm_type);
 		break;
 	}
 }

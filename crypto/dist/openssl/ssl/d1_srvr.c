@@ -4,7 +4,7 @@
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
  */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -121,14 +121,15 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/md5.h>
+#include <openssl/bn.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
 
-static SSL_METHOD *dtls1_get_server_method(int ver);
+static const SSL_METHOD *dtls1_get_server_method(int ver);
 static int dtls1_send_hello_verify_request(SSL *s);
 
-static SSL_METHOD *dtls1_get_server_method(int ver)
+static const SSL_METHOD *dtls1_get_server_method(int ver)
 	{
 	if (ver == DTLS1_VERSION)
 		return(DTLSv1_server_method());
@@ -144,9 +145,10 @@ IMPLEMENT_dtls1_meth_func(DTLSv1_server_method,
 int dtls1_accept(SSL *s)
 	{
 	BUF_MEM *buf;
-	unsigned long l,Time=(unsigned long)time(NULL);
+	unsigned long Time=(unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	long num1;
+	unsigned long alg_k;
 	int ret= -1;
 	int new_state,state,skip=0;
 
@@ -236,11 +238,11 @@ int dtls1_accept(SSL *s)
 				s->state=SSL3_ST_SW_HELLO_REQ_A;
 				}
 
-            if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
-                s->d1->send_cookie = 1;
-            else
-                s->d1->send_cookie = 0;
-
+			if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
+				s->d1->send_cookie = 1;
+			else
+				s->d1->send_cookie = 0;
+			
 			break;
 
 		case SSL3_ST_SW_HELLO_REQ_A:
@@ -269,7 +271,7 @@ int dtls1_accept(SSL *s)
 			if (ret <= 0) goto end;
 			s->new_session = 2;
 
-			if ( s->d1->send_cookie)
+			if (s->d1->send_cookie)
 				s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A;
 			else
 				s->state = SSL3_ST_SW_SRVR_HELLO_A;
@@ -285,6 +287,9 @@ int dtls1_accept(SSL *s)
 			s->d1->send_cookie = 0;
 			s->state=SSL3_ST_SW_FLUSH;
 			s->s3->tmp.next_state=SSL3_ST_SR_CLNT_HELLO_A;
+
+			/* HelloVerifyRequest resets Finished MAC */
+			ssl3_init_finished_mac(s);
 			break;
 			
 		case SSL3_ST_SW_SRVR_HELLO_A:
@@ -302,7 +307,7 @@ int dtls1_accept(SSL *s)
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
 			/* Check if it is anon DH */
-			if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL))
+			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
 				{
 				ret=dtls1_send_server_certificate(s);
 				if (ret <= 0) goto end;
@@ -315,13 +320,13 @@ int dtls1_accept(SSL *s)
 
 		case SSL3_ST_SW_KEY_EXCH_A:
 		case SSL3_ST_SW_KEY_EXCH_B:
-			l=s->s3->tmp.new_cipher->algorithms;
+			alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
 			/* clear this, it may get reset by
 			 * send_server_key_exchange */
 			if ((s->options & SSL_OP_EPHEMERAL_RSA)
 #ifndef OPENSSL_NO_KRB5
-				&& !(l & SSL_KRB5)
+				&& !(alg_k & SSL_kKRB5)
 #endif /* OPENSSL_NO_KRB5 */
 				)
 				/* option SSL_OP_EPHEMERAL_RSA sends temporary RSA key
@@ -332,11 +337,11 @@ int dtls1_accept(SSL *s)
 			else
 				s->s3->tmp.use_rsa_tmp=0;
 
-			/* only send if a DH key exchange, fortezza or
+			/* only send if a DH key exchange or
 			 * RSA but we have a sign only certificate */
 			if (s->s3->tmp.use_rsa_tmp
-			    || (l & (SSL_DH|SSL_kFZA))
-			    || ((l & SSL_kRSA)
+			    || (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+			    || ((alg_k & SSL_kRSA)
 				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
 				    || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)
 					&& EVP_PKEY_size(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey)*8 > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)
@@ -366,12 +371,12 @@ int dtls1_accept(SSL *s)
 				/* never request cert in anonymous ciphersuites
 				 * (see section "Certificate request" in SSL 3 drafts
 				 * and in RFC 2246): */
-				((s->s3->tmp.new_cipher->algorithms & SSL_aNULL) &&
+				((s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) &&
 				 /* ... except when the application insists on verification
 				  * (against the specs, but s3_clnt.c accepts this for SSL 3) */
 				 !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) ||
-                                 /* never request cert in Kerberos ciphersuites */
-                                (s->s3->tmp.new_cipher->algorithms & SSL_aKRB5))
+				 /* never request cert in Kerberos ciphersuites */
+				(s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
 				{
 				/* no cert request */
 				skip=1;
@@ -444,10 +449,10 @@ int dtls1_accept(SSL *s)
 			/* We need to get hashes here so if there is
 			 * a client cert, it can be verified */ 
 			s->method->ssl3_enc->cert_verify_mac(s,
-				&(s->s3->finish_dgst1),
+				NID_md5,
 				&(s->s3->tmp.cert_verify_md[0]));
 			s->method->ssl3_enc->cert_verify_mac(s,
-				&(s->s3->finish_dgst2),
+				NID_sha1,
 				&(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]));
 
 			break;
@@ -623,17 +628,17 @@ int dtls1_send_hello_verify_request(SSL *s)
 		*(p++) = s->version >> 8;
 		*(p++) = s->version & 0xFF;
 
-		*(p++) = (unsigned char) s->d1->cookie_len;
-        if ( s->ctx->app_gen_cookie_cb != NULL &&
-            s->ctx->app_gen_cookie_cb(s, s->d1->cookie, 
-                &(s->d1->cookie_len)) == 0)
-            {
+		if (s->ctx->app_gen_cookie_cb != NULL &&
+		    s->ctx->app_gen_cookie_cb(s, s->d1->cookie, 
+			&(s->d1->cookie_len)) == 0)
+			{
 			SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,ERR_R_INTERNAL_ERROR);
-            return 0;
-            }
-        /* else the cookie is assumed to have 
-         * been initialized by the application */
+			return 0;
+			}
+		/* else the cookie is assumed to have 
+		 * been initialized by the application */
 
+		*(p++) = (unsigned char) s->d1->cookie_len;
 		memcpy(p, s->d1->cookie, s->d1->cookie_len);
 		p += s->d1->cookie_len;
 		msg_len = p - msg;
@@ -783,7 +788,7 @@ int dtls1_send_server_key_exchange(SSL *s)
 	EVP_MD_CTX_init(&md_ctx);
 	if (s->state == SSL3_ST_SW_KEY_EXCH_A)
 		{
-		type=s->s3->tmp.new_cipher->algorithms & SSL_MKEY_MASK;
+		type=s->s3->tmp.new_cipher->algorithm_mkey;
 		cert=s->cert;
 
 		buf=s->init_buf;
@@ -888,7 +893,7 @@ int dtls1_send_server_key_exchange(SSL *s)
 			n+=2+nr[i];
 			}
 
-		if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL))
+		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
 			{
 			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher))
 				== NULL)
@@ -1009,6 +1014,7 @@ int dtls1_send_certificate_request(SSL *s)
 	STACK_OF(X509_NAME) *sk=NULL;
 	X509_NAME *name;
 	BUF_MEM *buf;
+	unsigned int msg_len;
 
 	if (s->state == SSL3_ST_SW_CERT_REQ_A)
 		{
@@ -1086,6 +1092,10 @@ int dtls1_send_certificate_request(SSL *s)
 #endif
 
 		/* XDTLS:  set message header ? */
+		msg_len = s->init_num - DTLS1_HM_HEADER_LENGTH;
+		dtls1_set_message_header(s, (void *)s->init_buf->data,
+			SSL3_MT_CERTIFICATE_REQUEST, msg_len, 0, msg_len);
+
 		/* buffer the message to handle re-xmits */
 		dtls1_buffer_message(s, 0);
 
@@ -1106,14 +1116,15 @@ int dtls1_send_server_certificate(SSL *s)
 	if (s->state == SSL3_ST_SW_CERT_A)
 		{
 		x=ssl_get_server_send_cert(s);
-		if (x == NULL &&
-                        /* VRS: allow null cert if auth == KRB5 */
-                        (s->s3->tmp.new_cipher->algorithms
-                                & (SSL_MKEY_MASK|SSL_AUTH_MASK))
-                        != (SSL_aKRB5|SSL_kKRB5))
+		if (x == NULL)
 			{
-			SSLerr(SSL_F_DTLS1_SEND_SERVER_CERTIFICATE,ERR_R_INTERNAL_ERROR);
-			return(0);
+			/* VRS: allow null cert if auth == KRB5 */
+			if ((s->s3->tmp.new_cipher->algorithm_mkey != SSL_kKRB5) ||
+			    (s->s3->tmp.new_cipher->algorithm_auth != SSL_aKRB5))
+				{
+				SSLerr(SSL_F_DTLS1_SEND_SERVER_CERTIFICATE,ERR_R_INTERNAL_ERROR);
+				return(0);
+				}
 			}
 
 		l=dtls1_output_cert_chain(s,x);

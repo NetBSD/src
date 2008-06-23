@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.20 2008/04/28 23:00:22 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.20.2.1 2008/06/23 04:31:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.20 2008/04/28 23:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.20.2.1 2008/06/23 04:31:51 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -758,10 +758,10 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * the LWP locked, at this point no external agents will want to
 	 * modify the interrupt LWP's state.
 	 */
-	timing = (softint_timing ? LW_TIMEINTR : 0);
+	timing = (softint_timing ? LP_TIMEINTR : 0);
 	l->l_switchto = pinned;
 	l->l_stat = LSONPROC;
-	l->l_flag |= (LW_RUNNING | timing);
+	l->l_pflag |= (LP_RUNNING | timing);
 
 	/*
 	 * Dispatch the interrupt.  If softints are being timed, charge
@@ -773,7 +773,7 @@ softint_dispatch(lwp_t *pinned, int s)
 	if (timing) {
 		binuptime(&now);
 		updatertime(l, &now);
-		l->l_flag &= ~LW_TIMEINTR;
+		l->l_pflag &= ~LP_TIMEINTR;
 	}
 
 	/*
@@ -787,7 +787,7 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * That's not be a problem: we are lowering to level 's' which will
 	 * prevent softint_dispatch() from being reentered at level 's',
 	 * until the priority is finally dropped to IPL_NONE on entry to
-	 * the idle loop.
+	 * the LWP chosen by lwp_exit_switchaway().
 	 */
 	l->l_stat = LSIDL;
 	if (l->l_switchto == NULL) {
@@ -797,7 +797,7 @@ softint_dispatch(lwp_t *pinned, int s)
 		/* NOTREACHED */
 	}
 	l->l_switchto = NULL;
-	l->l_flag &= ~LW_RUNNING;
+	l->l_pflag &= ~LP_RUNNING;
 }
 
 #endif	/* !__HAVE_FAST_SOFTINTS */

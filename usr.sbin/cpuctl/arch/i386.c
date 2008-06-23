@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.1 2008/05/05 17:54:14 ad Exp $	*/
+/*	$NetBSD: i386.c,v 1.1.2.1 2008/06/23 04:32:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.1 2008/05/05 17:54:14 ad Exp $");
+__RCSID("$NetBSD: i386.c,v 1.1.2.1 2008/06/23 04:32:12 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,158 +77,17 @@ __RCSID("$NetBSD: i386.c,v 1.1 2008/05/05 17:54:14 ad Exp $");
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
+#include <x86/cacheinfo.h>
 
 #include "../cpuctl.h"
+
+/* Size of buffer for printing humanized numbers */
+#define HUMAN_BUFSIZE 5
 
 #define       x86_cpuid(a,b)  x86_cpuid2((a),0,(b))
 
 void	x86_cpuid2(uint32_t, uint32_t, uint32_t *);
 void	x86_identify(void);
-
-struct x86_cache_info {
-	uint8_t		cai_index;
-	uint8_t		cai_desc;
-	uint8_t		cai_associativity;
-	u_int		cai_totalsize; /* #entries for TLB, bytes for cache */
-	u_int		cai_linesize;	/* or page size for TLB */
-	const char	*cai_string;
-};
-
-#define	CAI_ITLB	0		/* Instruction TLB (4K pages) */
-#define	CAI_ITLB2	1		/* Instruction TLB (2/4M pages) */
-#define	CAI_DTLB	2		/* Data TLB (4K pages) */
-#define	CAI_DTLB2	3		/* Data TLB (2/4M pages) */
-#define	CAI_ICACHE	4		/* Instruction cache */
-#define	CAI_DCACHE	5		/* Data cache */
-#define	CAI_L2CACHE	6		/* Level 2 cache */
-
-#define	CAI_COUNT	7
-
-/*
- * AMD Cache Info:
- *
- *	Athlon, Duron:
- *
- *		Function 8000.0005 L1 TLB/Cache Information
- *		EAX -- L1 TLB 2/4MB pages
- *		EBX -- L1 TLB 4K pages
- *		ECX -- L1 D-cache
- *		EDX -- L1 I-cache
- *
- *		Function 8000.0006 L2 TLB/Cache Information
- *		EAX -- L2 TLB 2/4MB pages
- *		EBX -- L2 TLB 4K pages
- *		ECX -- L2 Unified cache
- *		EDX -- reserved
- *
- *	K5, K6:
- *
- *		Function 8000.0005 L1 TLB/Cache Information
- *		EAX -- reserved
- *		EBX -- TLB 4K pages
- *		ECX -- L1 D-cache
- *		EDX -- L1 I-cache
- *
- *	K6-III:
- *
- *		Function 8000.0006 L2 Cache Information
- *		EAX -- reserved
- *		EBX -- reserved
- *		ECX -- L2 Unified cache
- *		EDX -- reserved
- */
-
-/* L1 TLB 2/4MB pages */
-#define	AMD_L1_EAX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
-#define	AMD_L1_EAX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
-#define	AMD_L1_EAX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
-#define	AMD_L1_EAX_ITLB_ENTRIES(x)	( (x)        & 0xff)
-
-/* L1 TLB 4K pages */
-#define	AMD_L1_EBX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
-#define	AMD_L1_EBX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
-#define	AMD_L1_EBX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
-#define	AMD_L1_EBX_ITLB_ENTRIES(x)	( (x)        & 0xff)
-
-/* L1 Data Cache */
-#define	AMD_L1_ECX_DC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	AMD_L1_ECX_DC_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	AMD_L1_ECX_DC_LPT(x)		 (((x) >> 8)  & 0xff)
-#define	AMD_L1_ECX_DC_LS(x)		 ( (x)        & 0xff)
-
-/* L1 Instruction Cache */
-#define	AMD_L1_EDX_IC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	AMD_L1_EDX_IC_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	AMD_L1_EDX_IC_LPT(x)		 (((x) >> 8)  & 0xff)
-#define	AMD_L1_EDX_IC_LS(x)		 ( (x)        & 0xff)
-
-/* Note for L2 TLB -- if the upper 16 bits are 0, it is a unified TLB */
-
-/* L2 TLB 2/4MB pages */
-#define	AMD_L2_EAX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
-#define	AMD_L2_EAX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff)
-#define	AMD_L2_EAX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
-#define	AMD_L2_EAX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
-
-/* L2 TLB 4K pages */
-#define	AMD_L2_EBX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
-#define	AMD_L2_EBX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff)
-#define	AMD_L2_EBX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
-#define	AMD_L2_EBX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
-
-/* L2 Cache */
-#define	AMD_L2_ECX_C_SIZE(x)		((((x) >> 16) & 0xffff) * 1024)
-#define	AMD_L2_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
-#define	AMD_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
-#define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
-
-/*
- * VIA Cache Info:
- *
- *	Nehemiah (at least)
- *
- *		Function 8000.0005 L1 TLB/Cache Information
- *		EAX -- reserved
- *		EBX -- L1 TLB 4K pages
- *		ECX -- L1 D-cache
- *		EDX -- L1 I-cache
- *
- *		Function 8000.0006 L2 Cache Information
- *		EAX -- reserved
- *		EBX -- reserved
- *		ECX -- L2 Unified cache
- *		EDX -- reserved
- */
-
-/* L1 TLB 4K pages */
-#define	VIA_L1_EBX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
-#define	VIA_L1_EBX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
-#define	VIA_L1_EBX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
-#define	VIA_L1_EBX_ITLB_ENTRIES(x)	( (x)        & 0xff)
-
-/* L1 Data Cache */
-#define	VIA_L1_ECX_DC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	VIA_L1_ECX_DC_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	VIA_L1_ECX_DC_LPT(x)		 (((x) >> 8)  & 0xff)
-#define	VIA_L1_ECX_DC_LS(x)		 ( (x)        & 0xff)
-
-/* L1 Instruction Cache */
-#define	VIA_L1_EDX_IC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	VIA_L1_EDX_IC_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	VIA_L1_EDX_IC_LPT(x)		 (((x) >> 8)  & 0xff)
-#define	VIA_L1_EDX_IC_LS(x)		 ( (x)        & 0xff)
-
-/* L2 Cache (pre-Nehemiah) */
-#define	VIA_L2_ECX_C_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	VIA_L2_ECX_C_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	VIA_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xff)
-#define	VIA_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
-
-/* L2 Cache (Nehemiah and newer) */
-#define	VIA_L2N_ECX_C_SIZE(x)		((((x) >> 16) & 0xffff) * 1024)
-#define	VIA_L2N_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
-#define	VIA_L2N_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
-#define	VIA_L2N_ECX_C_LS(x)		 ( (x)        & 0xff)
 
 struct cpu_info {
 	const char	*ci_dev;
@@ -275,50 +134,7 @@ struct cpu_cpuid_nameclass {
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
-static const struct x86_cache_info intel_cpuid_cache_info[] = {
-	{ CAI_ITLB, 	0x01,	 4, 32,        4 * 1024, NULL },
-	{ CAI_ITLB,     0xb0,    4,128,        4 * 1024, NULL },
-	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024, NULL },
-	{ CAI_DTLB, 	0x03,    4, 64,        4 * 1024, NULL },
-	{ CAI_DTLB,     0xb3,    4,128,        4 * 1024, NULL },
-	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024, NULL },
-	{ CAI_ITLB,     0x50, 0xff, 64,        4 * 1024, "4K/4M: 64 entries" },
-	{ CAI_ITLB,     0x51, 0xff, 64,        4 * 1024, "4K/4M: 128 entries" },
-	{ CAI_ITLB,     0x52, 0xff, 64,        4 * 1024, "4K/4M: 256 entries" },
-	{ CAI_DTLB,     0x5b, 0xff, 64,        4 * 1024, "4K/4M: 64 entries" },
-	{ CAI_DTLB,     0x5c, 0xff, 64,        4 * 1024, "4K/4M: 128 entries" },
-	{ CAI_DTLB,     0x5d, 0xff, 64,        4 * 1024, "4K/4M: 256 entries" },
-	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32, NULL },
-	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32, NULL },
-	{ CAI_ICACHE,   0x30,  8,       32 * 1024, 64, NULL },
-	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32, NULL },
-	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x40,  0,               0,  0, "not present" },
-	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x43,  4,      512 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x49, 16, 4 * 1024 * 1024, 64, NULL },
-	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64, NULL },
-	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64, NULL },
-	{ CAI_DCACHE,   0x2c,  8,       32 * 1024, 64, NULL },
-	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64, NULL },
-	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache"},
-	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache"},
-	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64, "32K uOp cache"},
-	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x7d,  8, 2 * 1024 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x86,  4,      512 * 1024, 64, NULL },
-	{ 0,               0,  0,	        0,  0, NULL },
-};
+static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
 /*
  * Map Brand ID from cpuid instruction to brand name.
@@ -377,6 +193,7 @@ static const struct x86_cache_info *cache_info_lookup(
 static void cyrix6x86_cpu_setup(struct cpu_info *);
 static void winchip_cpu_setup(struct cpu_info *);
 static void amd_family5_setup(struct cpu_info *);
+static void powernow_probe(struct cpu_info *);
 
 /*
  * Info for CTL_HW
@@ -983,7 +800,8 @@ amd_amd64_name(struct cpu_info *ci)
 	extfamily = CPUID2EXTFAMILY(ci->ci_signature);
 	extmodel  = CPUID2EXTMODEL(ci->ci_signature);
 
-	if (extfamily == 0x00) {
+	switch (extfamily) {
+	case 0x00:
 		switch (model) {
 		case 0x1:
 			switch (extmodel) {
@@ -1093,6 +911,17 @@ amd_amd64_name(struct cpu_info *ci)
 		default:
 			ret = "Unknown AMD64 CPU";
 		}
+		break;
+	case 0x01:
+		switch (model) {
+			case 0x02:
+				ret = "Family 10h";
+				break;
+			default:
+				ret = "Unknown AMD64 CPU";
+				break;
+		}
+		break;
 	}
 
 	return ret;
@@ -1197,7 +1026,7 @@ cpu_probe_features(struct cpu_info *ci)
 	if (ci->ci_cpuid_level < 1)
 		return;
 
-	xmax = sizeof(__arraycount(i386_cpuid_cpus));
+	xmax = __arraycount(i386_cpuid_cpus);
 	for (i = 0; i < xmax; i++) {
 		if (!strncmp((char *)ci->ci_vendor,
 		    i386_cpuid_cpus[i].cpu_id, 12)) {
@@ -1258,7 +1087,7 @@ amd_family6_probe(struct cpu_info *ci)
 	if (*cpu_brand_string == '\0')
 		return;
 	
-	for (i = 1; i < sizeof(__arraycount(amd_brand)); i++)
+	for (i = 1; i < __arraycount(amd_brand); i++)
 		if ((p = strstr(cpu_brand_string, amd_brand[i])) != NULL) {
 			ci->ci_brand_id = i;
 			strlcpy(amd_brand_name, p, sizeof(amd_brand_name));
@@ -1583,28 +1412,18 @@ identifycpu(const char *cpuname)
 		coretemp_register(ci);
 #endif
 
-#if defined(POWERNOW_K7) || defined(POWERNOW_K8)
-	if (cpu_vendor == CPUVENDOR_AMD && powernow_probe(ci)) {
-		switch (CPUID2FAMILY(ci->ci_signature)) {
-#ifdef POWERNOW_K7
-		case 6:
-			k7_powernow_init();
-			break;
-#endif
-#ifdef POWERNOW_K8
-		case 15:
-			k8_powernow_init();
-			break;
-#endif
-		default:
-			break;
-		}
+	if (cpu_vendor == CPUVENDOR_AMD) {
+		powernow_probe(ci);
 	}
-#endif /* POWERNOW_K7 || POWERNOW_K8 */
 
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
+
+	aprint_normal_dev(ci->ci_dev, "family %02x model %02x "
+	    "extfamily %02x extmodel %02x\n", CPUID2FAMILY(ci->ci_signature),
+	    CPUID2MODEL(ci->ci_signature), CPUID2EXTFAMILY(ci->ci_signature),
+	    CPUID2EXTMODEL(ci->ci_signature));
 }
 
 static const char *
@@ -1612,6 +1431,7 @@ print_cache_config(struct cpu_info *ci, int cache_tag, const char *name,
     const char *sep)
 {
 	struct x86_cache_info *cai = &ci->ci_cinfo[cache_tag];
+	char human_num[HUMAN_BUFSIZE];
 
 	if (cai->cai_totalsize == 0)
 		return sep;
@@ -1626,8 +1446,9 @@ print_cache_config(struct cpu_info *ci, int cache_tag, const char *name,
 	if (cai->cai_string != NULL) {
 		aprint_verbose("%s ", cai->cai_string);
 	} else {
-		aprint_verbose("%dkB %dB/line ", cai->cai_totalsize / 1024,
-		    cai->cai_linesize);
+		(void)humanize_number(human_num, sizeof(human_num),
+			cai->cai_totalsize, "B", HN_AUTOSCALE, HN_NOSPACE);
+		aprint_verbose("%s %dB/line ", human_num, cai->cai_linesize);
 	}
 	switch (cai->cai_associativity) {
 	case    0:
@@ -1651,6 +1472,7 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
     const char *sep)
 {
 	struct x86_cache_info *cai = &ci->ci_cinfo[cache_tag];
+	char human_num[HUMAN_BUFSIZE];
 
 	if (cai->cai_totalsize == 0)
 		return sep;
@@ -1665,8 +1487,10 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
 	if (cai->cai_string != NULL) {
 		aprint_verbose("%s", cai->cai_string);
 	} else {
-		aprint_verbose("%d %dB entries ", cai->cai_totalsize,
-		    cai->cai_linesize);
+		(void)humanize_number(human_num, sizeof(human_num),
+			cai->cai_linesize, "B", HN_AUTOSCALE, HN_NOSPACE);
+		aprint_verbose("%d %s entries ", cai->cai_totalsize,
+		    human_num);
 		switch (cai->cai_associativity) {
 		case 0:
 			aprint_verbose("disabled");
@@ -1698,16 +1522,11 @@ cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
 	return (NULL);
 }
 
+static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = 
+    AMD_L2CACHE_INFO;
 
-static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = {
-	{ 0, 0x01,    1, 0, 0, NULL },
-	{ 0, 0x02,    2, 0, 0, NULL },
-	{ 0, 0x04,    4, 0, 0, NULL },
-	{ 0, 0x06,    8, 0, 0, NULL },
-	{ 0, 0x08,   16, 0, 0, NULL },
-	{ 0, 0x0f, 0xff, 0, 0, NULL },
-	{ 0, 0x00,    0, 0, 0, NULL },
-};
+static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = 
+    AMD_L3CACHE_INFO;
 
 static void
 amd_cpu_cacheinfo(struct cpu_info *ci)
@@ -1807,6 +1626,23 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = cp->cai_associativity;
 	else
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	/*
+	 * Determine L3 cache info on AMD Family 10h processors
+	 */
+	if (family == 0x10) {
+		cai = &ci->ci_cinfo[CAI_L3CACHE];
+		cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
+		cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
+		cai->cai_linesize = AMD_L3_EDX_C_LS(descs[3]);
+
+		cp = cache_info_lookup(amd_cpuid_l3cache_assoc_info,
+		    cai->cai_associativity);
+		if (cp != NULL)
+			cai->cai_associativity = cp->cai_associativity;
+		else
+			cai->cai_associativity = 0;	/* XXX Unkn/Rsvd */
+	}
 }
 
 static void
@@ -1916,4 +1752,30 @@ x86_print_cacheinfo(struct cpu_info *ci)
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
+	if (ci->ci_cinfo[CAI_L3CACHE].cai_totalsize != 0) {
+		sep = print_cache_config(ci, CAI_L3CACHE, "L3 cache", NULL);
+		if (sep != NULL)
+			aprint_verbose("\n");
+	}
+}
+
+static void
+powernow_probe(struct cpu_info *ci)
+{
+	uint32_t regs[4];
+	char line[256];
+
+	x86_cpuid(0x80000000, regs);
+
+	/* We need CPUID(0x80000007) */
+	if (regs[0] < 0x80000007)
+		return;
+	x86_cpuid(0x80000007, regs);
+
+
+				  
+	bitmask_snprintf(regs[3], "\20\11TscInv\10HwPState\7Clk100MHz"
+	    "\6STC\5TM\4TTP\3VID\2FID\1TS", line, sizeof(line));
+	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
+	    line);
 }

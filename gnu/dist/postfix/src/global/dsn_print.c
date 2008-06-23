@@ -1,4 +1,4 @@
-/*	$NetBSD: dsn_print.c,v 1.1.1.1 2006/07/19 01:17:23 rpaulo Exp $	*/
+/*	$NetBSD: dsn_print.c,v 1.1.1.1.22.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -18,7 +18,7 @@
 /*	the specified attribute print routine. dsn_print() is meant
 /*	to be passed as a call-back to attr_print(), thusly:
 /*
-/*	... ATTR_PRINT_FUNC, dsn_print, (void *) dsn, ...
+/*	... ATTR_TYPE_FUNC, dsn_print, (void *) dsn, ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE

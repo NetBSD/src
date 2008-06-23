@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.24 2008/04/30 13:10:52 martin Exp $
+.\" $NetBSD: cgdconfig.8,v 1.24.2.1 2008/06/23 04:29:57 wrstuden Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 23, 2007
+.Dd May 10, 2008
 .Dt CGDCONFIG 8
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd configuration utility for the cryptographic disk driver
 .Sh SYNOPSIS
 .Nm
-.Op Fl nv
+.Op Fl npv
 .Op Fl V Ar vmeth
 .Ar cgd dev
 .Op Ar paramsfile
@@ -105,6 +105,15 @@ When generating a
 .Ar paramsfile ,
 store it in
 .Ar outfile .
+.It Fl p
+Read all passphrases from stdin rather than
+.Pa /dev/tty .
+Passphrases are separated by newlines.
+Users of this flag must be able to predict the order in which passphrases
+are prompted.
+If this flag is specified then verification errors will cause the device
+in question to be unconfigured rather than prompting for the passphrase
+again.
 .It Fl s
 Read the key from stdin.
 .It Fl U
@@ -166,6 +175,10 @@ Note, however, that some or all of the bits used to generate the
 key may be obtained from a pseudo-random number generator,
 which may not be as secure as the entropy based hard-random
 number generator.
+.It shell_cmd
+This method executes a shell command via
+.Xr popen 3
+and reads the key from stdout.
 .El
 .Ss Verification Method
 The verification method is how
@@ -283,6 +296,9 @@ The keygen statement's statement block may contain the following statements:
 .It key Ar string
 The key.
 Only used for the storedkey key generation method.
+.It cmd Ar string
+The command to execute.
+Only used for the shell_cmd key generation method.
 .It iterations Ar integer
 The number of iterations.
 Only used for pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2.

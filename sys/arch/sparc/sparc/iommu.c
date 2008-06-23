@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.89 2007/10/17 19:57:14 garbled Exp $ */
+/*	$NetBSD: iommu.c,v 1.89.22.1 2008/06/23 04:30:43 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.89 2007/10/17 19:57:14 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.89.22.1 2008/06/23 04:30:43 wrstuden Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -233,7 +233,7 @@ iommu_attach(struct device *parent, struct device *self, void *aux)
 	iopte_table_pa = VM_PAGE_TO_PHYS(m);
 
 	/* Map the pages */
-	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	for (; m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
 		paddr_t pa = VM_PAGE_TO_PHYS(m);
 		pmap_kenter_pa(va, pa | PMAP_NC, VM_PROT_READ | VM_PROT_WRITE);
 		va += PAGE_SIZE;
@@ -678,7 +678,7 @@ iommu_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 
 	/* Map physical pages into IOMMU */
 	mlist = segs[0]._ds_mlist;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
 		if (sgsize == 0)
 			panic("iommu_dmamap_load_raw: size botch");
 		pa = VM_PAGE_TO_PHYS(m);
@@ -778,7 +778,7 @@ iommu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * kernel virtual address space.
 	 */
 	mlist = segs[0]._ds_mlist;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
 
 		if (size == 0)
 			panic("iommu_dmamem_map: size botch");

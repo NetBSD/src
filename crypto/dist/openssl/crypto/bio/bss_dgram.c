@@ -82,7 +82,7 @@ static int dgram_new(BIO *h);
 static int dgram_free(BIO *data);
 static int dgram_clear(BIO *bio);
 
-int BIO_dgram_should_retry(int s);
+static int BIO_dgram_should_retry(int s);
 
 static BIO_METHOD methods_dgramp=
 	{
@@ -208,9 +208,13 @@ static int dgram_write(BIO *b, const char *in, int inl)
 	clear_socket_error();
 
     if ( data->connected )
-        ret=send(b->num,in,inl,0);
+        ret=writesocket(b->num,in,inl);
     else
+#if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
+        ret=sendto(b->num, (char *)in, inl, 0, &data->peer, sizeof(data->peer));
+#else
         ret=sendto(b->num, in, inl, 0, &data->peer, sizeof(data->peer));
+#endif
 
 	BIO_clear_retry_flags(b);
 	if (ret <= 0)
@@ -341,6 +345,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 
         memcpy(&(data->peer), to, sizeof(struct sockaddr));
         break;
+#if defined(SO_RCVTIMEO)
 	case BIO_CTRL_DGRAM_SET_RECV_TIMEOUT:
 		if ( setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, ptr,
 			sizeof(struct timeval)) < 0)
@@ -351,6 +356,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ptr, (void *)&ret) < 0)
 			{ perror("getsockopt"); ret = -1; }
 		break;
+#endif
+#if defined(SO_SNDTIMEO)
 	case BIO_CTRL_DGRAM_SET_SEND_TIMEOUT:
 		if ( setsockopt(b->num, SOL_SOCKET, SO_SNDTIMEO, ptr,
 			sizeof(struct timeval)) < 0)
@@ -361,6 +368,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ptr, (void *)&ret) < 0)
 			{ perror("getsockopt"); ret = -1; }
 		break;
+#endif
 	case BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP:
 		/* fall-through */
 	case BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP:
@@ -399,7 +407,7 @@ static int dgram_puts(BIO *bp, const char *str)
 	return(ret);
 	}
 
-int BIO_dgram_should_retry(int i)
+static int BIO_dgram_should_retry(int i)
 	{
 	int err;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.52 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.52.6.1 2008/06/23 04:31:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.52 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.52.6.1 2008/06/23 04:31:10 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,9 +190,9 @@ agp_i965_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc, int reg)
 }
 
 int
-agp_i810_attach(struct device *parent, struct device *self, void *aux)
+agp_i810_attach(device_t parent, device_t self, void *aux)
 {
-	struct agp_softc *sc = (void *)self;
+	struct agp_softc *sc = device_private(self);
 	struct agp_i810_softc *isc;
 	struct agp_gatt *gatt;
 	int error, apbase;
@@ -423,8 +423,8 @@ static int agp_i810_init(struct agp_softc *sc)
 		}
 
 		if (isc->stolen > 0) {
-			aprint_error(": detected %dk stolen memory\n%s",
-			    isc->stolen * 4, device_xname(&sc->as_dev));
+			aprint_normal(": detected %dk stolen memory\n%s",
+			    isc->stolen * 4, device_xname(sc->as_dev));
 		}
 
 		/* GATT address is already in there, make sure it's enabled */
@@ -512,8 +512,8 @@ static int agp_i810_init(struct agp_softc *sc)
 			return EINVAL;
 		}
 		if (isc->stolen > 0) {
-			aprint_error(": detected %dk stolen memory\n%s",
-			    isc->stolen * 4, device_xname(&sc->as_dev));
+			aprint_normal(": detected %dk stolen memory\n%s",
+			    isc->stolen * 4, device_xname(sc->as_dev));
 		}
 
 		/* GATT address is already in there, make sure it's enabled */
@@ -622,7 +622,7 @@ agp_i810_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 		 */
 		if (aperture != (32 * 1024 * 1024) &&
 		    aperture != (64 * 1024 * 1024)) {
-			aprint_error_dev(&sc->as_dev, "bad aperture size %d\n",
+			aprint_error_dev(sc->as_dev, "bad aperture size %d\n",
 			    aperture);
 			return EINVAL;
 		}
@@ -642,7 +642,7 @@ agp_i810_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 	case CHIP_I830:
 		if (aperture != (64 * 1024 * 1024) &&
 		    aperture != (128 * 1024 * 1024)) {
-			aprint_error_dev(&sc->as_dev, "bad aperture size %d\n",
+			aprint_error_dev(sc->as_dev, "bad aperture size %d\n",
 			    aperture);
 			return EINVAL;
 		}
@@ -661,14 +661,14 @@ agp_i810_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 	case CHIP_I855:
 	case CHIP_I915:
 		if (aperture != agp_i810_get_aperture(sc)) {
-			aprint_error_dev(&sc->as_dev, "bad aperture size %d\n",
+			aprint_error_dev(sc->as_dev, "bad aperture size %d\n",
 			    aperture);
 			return EINVAL;
 		}
 		break;
 	case CHIP_I965:
 		if (aperture != 512 * 1024 * 1024) {
-			aprint_error_dev(&sc->as_dev, "bad aperture size %d\n",
+			aprint_error_dev(sc->as_dev, "bad aperture size %d\n",
 			    aperture);
 			return EINVAL;
 		}
@@ -686,7 +686,7 @@ agp_i810_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 	if (offset < 0 || offset >= (isc->gatt->ag_entries << AGP_PAGE_SHIFT)) {
 #ifdef AGP_DEBUG
 		printf("%s: failed: offset 0x%08x, shift %d, entries %d\n",
-		    device_xname(&sc->as_dev), (int)offset, AGP_PAGE_SHIFT,
+		    device_xname(sc->as_dev), (int)offset, AGP_PAGE_SHIFT,
 		    isc->gatt->ag_entries);
 #endif
 		return EINVAL;
@@ -696,7 +696,7 @@ agp_i810_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 		if ((offset >> AGP_PAGE_SHIFT) < isc->stolen) {
 #ifdef AGP_DEBUG
 			printf("%s: trying to bind into stolen memory",
-			    device_xname(&sc->as_dev));
+			    device_xname(sc->as_dev));
 #endif
 			return EINVAL;
 		}
@@ -718,7 +718,7 @@ agp_i810_unbind_page(struct agp_softc *sc, off_t offset)
 		if ((offset >> AGP_PAGE_SHIFT) < isc->stolen) {
 #ifdef AGP_DEBUG
 			printf("%s: trying to unbind from stolen memory",
-			    device_xname(&sc->as_dev));
+			    device_xname(sc->as_dev));
 #endif
 			return EINVAL;
 		}

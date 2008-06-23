@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.146 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.146.2.1 2008/06/23 04:32:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.146 2008/04/28 20:24:13 martin Exp $");
+__RCSID("$NetBSD: util.c,v 1.146.2.1 2008/06/23 04:32:11 wrstuden Exp $");
 #endif /* not lint */
 
 /*
@@ -303,6 +303,7 @@ cleanuppeer(void)
 		anonftp = 0;
 	data = -1;
 	epsv4bad = 0;
+	epsv6bad = 0;
 	if (username)
 		free(username);
 	username = NULL;

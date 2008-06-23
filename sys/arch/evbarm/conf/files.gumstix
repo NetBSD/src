@@ -1,4 +1,4 @@
-#	$NetBSD: files.gumstix,v 1.10 2008/03/17 09:30:02 kiyohara Exp $
+#	$NetBSD: files.gumstix,v 1.10.6.1 2008/06/23 04:30:18 wrstuden Exp $
 #
 # Gumstix. Inc. Gumstix boards configuration info
 #
@@ -7,8 +7,6 @@ file	arch/evbarm/gumstix/gumstix_machdep.c
 
 # CPU support and integrated peripherals
 include "arch/arm/xscale/files.pxa2x0"
-
-#include "dev/sdmmc/files.sdmmc"
 
 # gumstix devices
 device	gxio {[addr = -1], [gpirq = -1]}
