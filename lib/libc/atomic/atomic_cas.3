@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_inc.3,v 1.3 2008/04/30 13:10:46 martin Exp $
+.\"	$NetBSD: atomic_cas.3,v 1.1 2008/06/23 10:22:40 ad Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,57 +28,52 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd April 11, 2007
-.Dt ATOMIC_INC 3
+.Dt ATOMIC_CAS 3
 .Os
 .Sh NAME
-.Nm atomic_inc ,
-.Nm atomic_inc_32 ,
-.Nm atomic_inc_uint ,
-.Nm atomic_inc_ulong ,
-.Nm atomic_inc_ptr ,
-.Nm atomic_inc_64 ,
-.Nm atomic_inc_32_nv ,
-.Nm atomic_inc_uint_nv ,
-.Nm atomic_inc_ulong_nv ,
-.Nm atomic_inc_ptr_nv ,
-.Nm atomic_inc_64_nv
-.Nd atomic increment operations
+.Nm atomic_cas ,
+.Nm atomic_cas_32 ,
+.Nm atomic_cas_uint ,
+.Nm atomic_cas_ulong ,
+.Nm atomic_cas_ptr ,
+.Nm atomic_cas_64
+.Nd atomic compare-and-swap operations
 .\" .Sh LIBRARY
 .\" .Lb libc
 .Sh SYNOPSIS
 .In sys/atomic.h
-.Ft void
-.Fn atomic_inc_32 "volatile uint32_t *ptr"
-.Ft void
-.Fn atomic_inc_uint "volatile unsigned int *ptr"
-.Ft void
-.Fn atomic_inc_ulong "volatile unsigned long *ptr"
-.Ft void
-.Fn atomic_inc_ptr "volatile void *ptr"
-.Ft void
-.Fn atomic_inc_64 "volatile uint64_t *ptr"
 .Ft uint32_t
-.Fn atomic_inc_32_nv "volatile uint32_t *ptr"
+.Fn atomic_cas_32 "volatile uint32_t *ptr" "uint32_t old" "uint32_t new"
 .Ft unsigned int
-.Fn atomic_inc_uint_nv "volatile unsigned int *ptr"
+.Fn atomic_cas_uint "volatile unsigned int *ptr" "unsigned int old" \
+    "unsigned int new"
 .Ft unsigned long
-.Fn atomic_inc_ulong_nv "volatile unsigned long *ptr"
+.Fn atomic_cas_ulong "volatile unsigned long *ptr" "unsigned long old" \
+    "unsigned long new"
 .Ft void *
-.Fn atomic_inc_ptr_nv "volatile void *ptr"
+.Fn atomic_cas_ptr "volatile void *ptr" "void *old" "void *new"
 .Ft uint64_t
-.Fn atomic_inc_64_nv "volatile uint64_t *ptr"
+.Fn atomic_cas_64 "volatile uint64_t *ptr" "uint64_t old" "uint64_t new"
 .Sh DESCRIPTION
 The
-.Nm atomic_inc
-family of functions increment
-.Pq by one
-the variable referenced by
+.Nm atomic_cas
+family of functions perform a compare-and-swap operation in an atomic fashion.
+The value of the variable referenced by
 .Fa ptr
-in an atomic fashion.
+is compared against
+.Fa old .
+If the values are equal,
+.Fa new
+is stored in the variable referenced by
+.Fa ptr .
 .Pp
-The
-.Fn *_nv
-variants of these functions return the new value.
+The old value of the variable referenced by
+.Fa ptr
+is always returned regardless of whether or not the new value was stored.
+Applications can test for success of the operation by comparing the
+return value to the value passed as
+.Fa old ;
+if they are equal then the new value was stored.
 .Pp
 The 64-bit variants of these functions are available only on platforms
 that can support atomic 64-bit memory access.
@@ -90,6 +85,6 @@ is defined.
 .Xr atomic_ops 3
 .Sh HISTORY
 The
-.Nm atomic_inc
+.Nm atomic_cas
 functions first appeared in
 .Nx 5.0 .

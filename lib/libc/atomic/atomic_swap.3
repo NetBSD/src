@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_add.3,v 1.3 2008/04/30 13:10:46 martin Exp $
+.\"	$NetBSD: atomic_swap.3,v 1.1 2008/06/23 10:22:40 ad Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,57 +28,39 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd April 11, 2007
-.Dt ATOMIC_ADD 3
+.Dt ATOMIC_SWAP 3
 .Os
 .Sh NAME
-.Nm atomic_add ,
-.Nm atomic_add_32 ,
-.Nm atomic_add_int ,
-.Nm atomic_add_long ,
-.Nm atomic_add_ptr ,
-.Nm atomic_add_64 ,
-.Nm atomic_add_32_nv ,
-.Nm atomic_add_int_nv ,
-.Nm atomic_add_long_nv ,
-.Nm atomic_add_ptr_nv ,
-.Nm atomic_add_64_nv
-.Nd atomic add operations
+.Nm atomic_swap ,
+.Nm atomic_swap_32 ,
+.Nm atomic_swap_uint ,
+.Nm atomic_swap_ulong ,
+.Nm atomic_swap_ptr ,
+.Nm atomic_swap_64
+.Nd atomic swap operations
 .\" .Sh LIBRARY
 .\" .Lb libc
 .Sh SYNOPSIS
 .In sys/atomic.h
-.Ft void
-.Fn atomic_add_32 "volatile uint32_t *ptr" "int32_t delta"
-.Ft void
-.Fn atomic_add_int "volatile unsigned int *ptr" "int delta"
-.Ft void
-.Fn atomic_add_long "volatile unsigned long *ptr" "long delta"
-.Ft void
-.Fn atomic_add_ptr "volatile void *ptr" "ssize_t delta"
-.Ft void
-.Fn atomic_add_64 "volatile uint64_t *ptr" "int64_t delta"
 .Ft uint32_t
-.Fn atomic_add_32_nv "volatile uint32_t *ptr" "int32_t delta"
+.Fn atomic_swap_32 "volatile uint32_t *ptr" "uint32_t new"
 .Ft unsigned int
-.Fn atomic_add_int_nv "volatile unsigned int *ptr" "int delta"
+.Fn atomic_swap_uint "volatile unsigned int *ptr" "unsigned int new"
 .Ft unsigned long
-.Fn atomic_add_long_nv "volatile unsigned long *ptr" "long delta"
+.Fn atomic_swap_ulong "volatile unsigned long *ptr" "unsigned long new"
 .Ft void *
-.Fn atomic_add_ptr_nv "volatile void *ptr" "ssize_t delta"
+.Fn atomic_swap_ptr "volatile void *ptr" "void *new"
 .Ft uint64_t
-.Fn atomic_add_64_nv "volatile uint64_t *ptr" "int64_t delta"
+.Fn atomic_swap_64 "volatile uint64_t *ptr" "uint64_t new"
 .Sh DESCRIPTION
 The
-.Nm atomic_add
-family of functions add a signed value
-.Fa delta
-to the variable referenced by
+.Nm atomic_swap
+family of functions perform a swap operation in an atomic fashion.
+The value of the variable referenced by
 .Fa ptr
-in an atomic fashion.
-.Pp
-The
-.Fn *_nv
-variants of these functions return the new value.
+is replaced by
+.Fa new
+and the old value returned.
 .Pp
 The 64-bit variants of these functions are available only on platforms
 that can support atomic 64-bit memory access.
@@ -90,6 +72,6 @@ is defined.
 .Xr atomic_ops 3
 .Sh HISTORY
 The
-.Nm atomic_add
+.Nm atomic_swap
 functions first appeared in
 .Nx 5.0 .
