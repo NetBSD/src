@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.6 2008/06/21 18:59:24 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.7 2008/06/23 17:54:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -3383,7 +3383,6 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	zone = NULL;
 	need_wildcardproof = ISC_FALSE;
 	empty_wild = ISC_FALSE;
-	is_zone = ISC_FALSE;
 	options = 0;
 	resuming = ISC_FALSE;
 	is_zone = ISC_FALSE;
