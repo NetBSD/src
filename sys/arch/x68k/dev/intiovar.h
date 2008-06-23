@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.9 2007/10/17 19:58:02 garbled Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.10 2008/06/23 08:33:38 isaki Exp $	*/
 
 /*
  *
@@ -82,6 +82,8 @@ int intio_map_free_region(struct device *, struct intio_attach_args *);
 typedef int (*intio_intr_handler_t)(void *);
 
 int intio_intr_establish(int, const char *, intio_intr_handler_t, void *);
+int intio_intr_establish_ext(int, const char *, const char *,
+	intio_intr_handler_t, void *);
 int intio_intr_disestablish(int, void *);
 int intio_intr(struct frame *);
 

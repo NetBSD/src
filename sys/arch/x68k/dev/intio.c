@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.35 2008/05/10 11:49:37 martin Exp $	*/
+/*	$NetBSD: intio.c,v 1.36 2008/06/23 08:33:38 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.35 2008/05/10 11:49:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.36 2008/06/23 08:33:38 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ static int intio_attached;
 static struct intio_interrupt_vector {
 	intio_intr_handler_t	iiv_handler;
 	void			*iiv_arg;
-	int			iiv_intrcntoff;
+	struct evcnt		*iiv_evcnt;
 } iiv[256] = {{0,},};
 
 /* used in console initialization */
@@ -140,8 +140,6 @@ extern int x68k_realconfig;
 int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
 static struct cfdata *cfdata_intiobus = NULL;
 
-/* other static functions */
-static int scan_intrnames(const char *);
 #ifdef DEBUG
 int intio_debug = 0;
 #endif
@@ -344,39 +342,31 @@ int
 intio_intr_establish(int vector, const char *name, intio_intr_handler_t handler,
     void *arg)
 {
+
+	return intio_intr_establish_ext(vector, name, "intr", handler, arg);
+}
+
+int
+intio_intr_establish_ext(int vector, const char *name1, const char *name2,
+	intio_intr_handler_t handler, void *arg)
+{
+	struct evcnt *evcnt;
+
 	if (vector < 16)
 		panic("Invalid interrupt vector");
 	if (iiv[vector].iiv_handler)
 		return EBUSY;
+
+	evcnt = malloc(sizeof(*evcnt), M_DEVBUF, M_NOWAIT);
+	if (evcnt == NULL)
+		return ENOMEM;
+	evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR, NULL, name1, name2);
+
 	iiv[vector].iiv_handler = handler;
 	iiv[vector].iiv_arg = arg;
-	iiv[vector].iiv_intrcntoff = scan_intrnames(name);
+	iiv[vector].iiv_evcnt = evcnt;
 
 	return 0;
-}
-
-static int
-scan_intrnames(const char *name)
-{
-	extern char intrnames[];
-	extern char eintrnames[];
-	int r = 0;
-	char *p = &intrnames[0];
-
-	for (;;) {
-		if (*p == 0) {	/* new intr */
-			if (p + strlen(name) >= eintrnames)
-				panic("Interrupt statics buffer overrun.");
-			strcpy(p, name);
-			break;
-		}
-		if (strcmp(p, name) == 0)
-			break;
-		r++;
-		while (*p++ != 0);
-	}
-
-	return r;
 }
 
 int
@@ -386,6 +376,8 @@ intio_intr_disestablish(int vector, void *arg)
 		return EINVAL;
 	iiv[vector].iiv_handler = 0;
 	iiv[vector].iiv_arg = 0;
+	evcnt_detach(iiv[vector].iiv_evcnt);
+	free(iiv[vector].iiv_evcnt, M_DEVBUF);
 
 	return 0;
 }
@@ -394,7 +386,6 @@ int
 intio_intr(struct frame *frame)
 {
 	int vector = frame->f_vector / 4;
-	extern int intrcnt[];
 
 #if 0				/* this is not correct now */
 	/* CAUTION: HERE WE ARE IN SPLHIGH() */
@@ -406,7 +397,7 @@ intio_intr(struct frame *frame)
 		return 0;
 	}
 
-	intrcnt[iiv[vector].iiv_intrcntoff]++;
+	iiv[vector].iiv_evcnt->ev_count++;
 
 	return (*(iiv[vector].iiv_handler))(iiv[vector].iiv_arg);
 }

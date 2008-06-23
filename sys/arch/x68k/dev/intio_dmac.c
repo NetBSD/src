@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.28 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.29 2008/06/23 08:33:38 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.28 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.29 2008/06/23 08:33:38 isaki Exp $");
 
 #include "opt_m680x0.h"
 
@@ -162,7 +162,6 @@ dmac_alloc_channel(struct device *self, int ch, const char *name, int normalv,
 	struct intio_softc *intio = (void *)self;
 	struct dmac_softc *sc = (void *)intio->sc_dmac;
 	struct dmac_channel_stat *chan = &sc->sc_channels[ch];
-	char intrname[16];
 #ifdef DMAC_ARRAYCHAIN
 	int r, dummy;
 #endif
@@ -231,13 +230,8 @@ dmac_alloc_channel(struct device *self, int ch, const char *name, int normalv,
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_NIVR, normalv);
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_EIVR, errorv);
 
-	strcpy(intrname, name);
-	strcat(intrname, "dma");
-	intio_intr_establish(normalv, intrname, dmac_done, chan);
-
-	strcpy(intrname, name);
-	strcat(intrname, "dmaerr");
-	intio_intr_establish(errorv, intrname, dmac_error, chan);
+	intio_intr_establish_ext(normalv, name, "dma", dmac_done, chan);
+	intio_intr_establish_ext(errorv, name, "dmaerr", dmac_error, chan);
 
 	return chan;
 }
