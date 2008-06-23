@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.30 2008/05/25 17:05:28 ad Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.31 2008/06/23 11:00:53 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.30 2008/05/25 17:05:28 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.31 2008/06/23 11:00:53 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -145,8 +145,6 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 	pthread_mutex_t *interlock;
 	pthread_t self;
 	int error;
-	
-	self = pthread__self();
 
 #ifdef ERRORCHECK
 	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
@@ -175,6 +173,7 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 			continue;
 		}
 
+		self = pthread__self();
 		if ((owner & RW_THREAD) == (uintptr_t)self)
 			return EDEADLK;
 
@@ -443,9 +442,9 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 	 * bits, we can use a subtract to clear them, which makes
 	 * the read-release and write-release path similar.
 	 */
-	self = pthread__self();
 	owner = (uintptr_t)ptr->ptr_owner;
 	if ((owner & RW_WRITE_LOCKED) != 0) {
+		self = pthread__self();
 		decr = (uintptr_t)self | RW_WRITE_LOCKED;
 		if ((owner & RW_THREAD) != (uintptr_t)self) {
 			return EPERM;
@@ -491,6 +490,7 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 		 * Give the lock away.  SUSv3 dictates that we must give
 		 * preference to writers.
 		 */
+		self = pthread__self();
 		if ((thread = PTQ_FIRST(&ptr->ptr_wblocked)) != NULL) {
 			new = (uintptr_t)thread | RW_WRITE_LOCKED;
 
