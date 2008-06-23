@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/04/26 14:49:43 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2008/06/23 02:16:53 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,11 +18,11 @@ UUDECODE_FILES_RENAME_${HPCBOOT}= ${HPCBOOT}
 
 release: ${UUDECODE_FILES}
 	${INSTALL} -c -m ${NONBINMODE} \
-		${PBSDBOOT1} ${RELEASEDIR}/${MACHINE}/installation
+		${PBSDBOOT1} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 	${INSTALL} -c -m ${NONBINMODE} \
-		${PBSDBOOT} ${RELEASEDIR}/${MACHINE}/installation
+		${PBSDBOOT} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 	${INSTALL} -c -m ${NONBINMODE} \
-		${HPCBOOT} ${RELEASEDIR}/${MACHINE}/installation
+		${HPCBOOT} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
 .include <bsd.files.mk>
 .include <bsd.obj.mk>
