@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/01/09 07:24:29 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.3 2008/06/23 02:16:53 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -26,6 +26,6 @@ CLEANFILES+=	${BOOT_RAMDISK}.tmp ${BOOT_RAMDISK}.coff ${BOOT_RAMDISK}.gz
 
 release::	check_RELEASEDIR .WAIT ${BOOT_RAMDISK}.gz
 	${RELEASE_INSTALL} ${BOOT_RAMDISK}.gz \
-	    ${RELEASEDIR}/${MACHINE}/${BOOT_RELEASEDIR}
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${BOOT_RELEASEDIR}
 
 .include <bsd.prog.mk>

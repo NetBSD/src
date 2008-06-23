@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/02/02 09:18:00 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.6 2008/06/23 02:16:53 matt Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,7 +9,7 @@ SUBDIR=		ramdisk .WAIT instkernel .WAIT cdroms
 TARGETS+=	release
 
 release: check_RELEASEDIR .WAIT ${BOOT}
-	${RELEASE_INSTALL} ${BOOT} ${RELEASEDIR}/${MACHINE}/installation
+	${RELEASE_INSTALL} ${BOOT} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
 iso_image:
 	${MAKEDIRTARGET} cdroms iso_image
