@@ -1,10 +1,10 @@
-/*	$NetBSD: sdlz.c,v 1.1.1.2 2007/03/30 19:21:43 ghen Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.1.1.2.16.1 2008/06/23 04:28:06 wrstuden Exp $	*/
 
 /*
- * Portions Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2008  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -52,7 +52,7 @@
  * USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdlz.c,v 1.2.2.9 2007/02/14 23:45:43 marka Exp */
+/* Id: sdlz.c,v 1.14.94.3 2008/04/03 10:51:01 marka Exp */
 
 /*! \file */
 
@@ -168,6 +168,10 @@ typedef struct sdlz_rdatasetiter {
 
 static int dummy;
 
+#ifdef __COVERITY__
+#define MAYBE_LOCK(imp) LOCK(&imp->driverlock)
+#define MAYBE_UNLOCK(imp) UNLOCK(&imp->driverlock)
+#else
 #define MAYBE_LOCK(imp) \
 	do { \
 		unsigned int flags = imp->flags; \
@@ -181,6 +185,7 @@ static int dummy;
 		if ((flags & DNS_SDLZFLAG_THREADSAFE) == 0) \
 			UNLOCK(&imp->driverlock); \
 	} while (0)
+#endif
 
 /*
  * Forward references.  Try to keep these to a minimum.
@@ -1048,6 +1053,8 @@ static dns_dbmethods_t sdlzdb_methods = {
 	overmem,
 	settask,
 	NULL,
+	NULL,
+	NULL
 };
 
 /*
@@ -1324,7 +1331,7 @@ dns_sdlzallowzonexfr(void *driverarg, void *dbdata, isc_mem_t *mctx,
 		return (result);
 	isc_buffer_putuint8(&b2, 0);
 
-        /* make sure strings are always lowercase */
+	/* make sure strings are always lowercase */
 	dns_sdlz_tolower(namestr);
 	dns_sdlz_tolower(clientstr);
 
@@ -1437,7 +1444,7 @@ dns_sdlzfindzone(void *driverarg, void *dbdata, isc_mem_t *mctx,
 		return (result);
 	isc_buffer_putuint8(&b, 0);
 
-        /* make sure strings are always lowercase */
+	/* make sure strings are always lowercase */
 	dns_sdlz_tolower(namestr);
 
 	/* Call SDLZ driver's find zone method */
@@ -1568,7 +1575,7 @@ dns_sdlz_putrr(dns_sdlzlookup_t *lookup, const char *type, dns_ttl_t ttl,
 	return (ISC_R_SUCCESS);
 
  failure:
- 	if (rdatabuf != NULL)
+	if (rdatabuf != NULL)
 		isc_buffer_free(&rdatabuf);
 	if (lex != NULL)
 		isc_lex_destroy(&lex);

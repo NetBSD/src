@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_state.h,v 1.1.1.3 2006/07/19 01:17:26 rpaulo Exp $	*/
+/*	$NetBSD: mime_state.h,v 1.1.1.3.20.1 2008/06/23 04:29:16 wrstuden Exp $	*/
 
 #ifndef _MIME_STATE_H_INCLUDED_
 #define _MIME_STATE_H_INCLUDED_
@@ -27,7 +27,7 @@
   * External interface. All MIME_STATE structure members are private.
   */
 typedef struct MIME_STATE MIME_STATE;
-typedef void (*MIME_STATE_HEAD_OUT) (void *, int, HEADER_OPTS *, VSTRING *, off_t);
+typedef void (*MIME_STATE_HEAD_OUT) (void *, int, const HEADER_OPTS *, VSTRING *, off_t);
 typedef void (*MIME_STATE_BODY_OUT) (void *, int, const char *, ssize_t, off_t);
 typedef void (*MIME_STATE_ANY_END) (void *);
 typedef void (*MIME_STATE_ERR_PRINT) (void *, int, const char *, ssize_t);
@@ -71,16 +71,18 @@ typedef struct {
 #define MIME_ERR_8BIT_IN_7BIT_BODY	(1<<3)
 #define MIME_ERR_ENCODING_DOMAIN	(1<<4)
 
-extern MIME_STATE_DETAIL *mime_state_detail(int);
+extern const MIME_STATE_DETAIL *mime_state_detail(int);
 extern const char *mime_state_error(int);
 
  /*
-  * Header classes. Look at the header_opts argument to find out if something
-  * is a MIME header in a primary or nested section.
+  * With header classes, look at the header_opts argument to recognize MIME
+  * headers in primary or nested sections.
   */
+#define MIME_HDR_FIRST		(1)	/* first class */
 #define MIME_HDR_PRIMARY	(1)	/* initial headers */
 #define MIME_HDR_MULTIPART	(2)	/* headers after multipart boundary */
 #define MIME_HDR_NESTED		(3)	/* attached message initial headers */
+#define MIME_HDR_LAST		(3)	/* last class */
 
 /* LICENSE
 /* .ad

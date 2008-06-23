@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.63 2008/05/01 15:41:16 jmmv Exp $
+# $NetBSD: shl.mi,v 1.63.2.1 2008/06/23 04:28:55 wrstuden Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -50,6 +50,9 @@
 ./usr/lib/libkrb_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libkstream_pic.a			comp-c-piclib		obsolete
 ./usr/lib/libkvm_pic.a				comp-c-piclib
+./usr/lib/liblber_pic.a				comp-ldap-piclib	ldap
+./usr/lib/libldap_pic.a				comp-ldap-piclib	ldap
+./usr/lib/libldap_r_pic.a			comp-ldap-piclib	ldap
 ./usr/lib/liblwres_pic.a			comp-bind-piclib
 ./usr/lib/libm_pic.a				comp-c-piclib
 ./usr/lib/libmagic_pic.a			comp-c-piclib

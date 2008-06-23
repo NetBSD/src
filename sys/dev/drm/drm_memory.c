@@ -1,4 +1,4 @@
-/* $NetBSD: drm_memory.c,v 1.10 2008/05/06 01:45:47 bjs Exp $ */
+/* $NetBSD: drm_memory.c,v 1.10.2.1 2008/06/23 04:31:01 wrstuden Exp $ */
 
 /* drm_memory.h -- Memory management wrappers for DRM -*- linux-c -*-
  * Created: Thu Feb  4 14:00:34 1999 by faith@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.10 2008/05/06 01:45:47 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.10.2.1 2008/06/23 04:31:01 wrstuden Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -44,28 +44,37 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anhol
 #ifdef DRM_NO_AGP
 #define NAGP_I810 0
 #else
+#if defined(_KERNEL_OPT)
 #include "agp_i810.h"
+#else
+#define NAGP_I810 1	/* XXX */
+#endif
 #if NAGP_I810 > 0 /* XXX hack to borrow agp's register mapping */
 #include <dev/pci/agpvar.h>
 #endif
 #endif
 
+#if !defined(_MODULE)
 MALLOC_DEFINE(M_DRM, "drm", "DRM Data Structures");
+#endif
 
-void drm_mem_init(void)
+void drm_mem_init(struct drm_device *dev)
 {
-/*
-	malloc_type_attach(M_DRM);
-*/
+
+	dev->ex = extent_create("drm", 0x00000000, 0x40000000, 
+		M_DRM, NULL, 0, EX_NOWAIT);
+	if (dev->ex == NULL)
+		DRM_DEBUG("could not create extent map!\n");
 }
 
-void drm_mem_uninit(void)
+void drm_mem_uninit(struct drm_device *dev)
 {
+	extent_destroy(dev->ex);
 }
 
 void *drm_alloc(size_t size, int area)
 {
-	return malloc(size, M_DRM, M_NOWAIT);
+	return malloc(1 * size, M_DRM, M_NOWAIT);
 }
 
 void *drm_calloc(size_t nmemb, size_t size, int area)

@@ -1,10 +1,11 @@
-# 	$NetBSD: Makefile,v 1.12 2008/01/20 13:43:37 yamt Exp $
+# 	$NetBSD: Makefile,v 1.12.12.1 2008/06/23 04:30:50 wrstuden Exp $
 
 INCSDIR=/usr/include/x86
 
 INCS=	aout_machdep.h \
 	bootinfo.h bus.h \
 	cacheinfo.h \
+	cpu.h \
 	cputypes.h \
 	cpuvar.h \
 	float.h \

@@ -1,11 +1,24 @@
-/*	$NetBSD: openssldsa_link.c,v 1.1.1.2 2007/01/27 21:06:45 christos Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.1.1.2.14.1 2008/06/23 04:28:05 wrstuden Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -18,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: openssldsa_link.c,v 1.1.6.8 2007/01/08 03:03:48 marka Exp */
+/* Id: openssldsa_link.c,v 1.11 2007/08/28 07:20:42 tbox Exp */
 
 #ifdef OPENSSL
 
@@ -49,24 +62,24 @@ openssldsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 
 	sha1ctx = isc_mem_get(dctx->mctx, sizeof(isc_sha1_t));
 	isc_sha1_init(sha1ctx);
-	dctx->opaque = sha1ctx;
+	dctx->ctxdata.sha1ctx = sha1ctx;
 	return (ISC_R_SUCCESS);
 }
 
 static void
 openssldsa_destroyctx(dst_context_t *dctx) {
-	isc_sha1_t *sha1ctx = dctx->opaque;
+	isc_sha1_t *sha1ctx = dctx->ctxdata.sha1ctx;
 
 	if (sha1ctx != NULL) {
 		isc_sha1_invalidate(sha1ctx);
 		isc_mem_put(dctx->mctx, sha1ctx, sizeof(isc_sha1_t));
-		dctx->opaque = NULL;
+		dctx->ctxdata.sha1ctx = NULL;
 	}
 }
 
 static isc_result_t
 openssldsa_adddata(dst_context_t *dctx, const isc_region_t *data) {
-	isc_sha1_t *sha1ctx = dctx->opaque;
+	isc_sha1_t *sha1ctx = dctx->ctxdata.sha1ctx;
 
 	isc_sha1_update(sha1ctx, data->base, data->length);
 	return (ISC_R_SUCCESS);
@@ -83,9 +96,9 @@ BN_bn2bin_fixed(BIGNUM *bn, unsigned char *buf, int size) {
 
 static isc_result_t
 openssldsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
-	isc_sha1_t *sha1ctx = dctx->opaque;
+	isc_sha1_t *sha1ctx = dctx->ctxdata.sha1ctx;
 	dst_key_t *key = dctx->key;
-	DSA *dsa = key->opaque;
+	DSA *dsa = key->keydata.dsa;
 	DSA_SIG *dsasig;
 	isc_region_t r;
 	unsigned char digest[ISC_SHA1_DIGESTLENGTH];
@@ -113,9 +126,9 @@ openssldsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 
 static isc_result_t
 openssldsa_verify(dst_context_t *dctx, const isc_region_t *sig) {
-	isc_sha1_t *sha1ctx = dctx->opaque;
+	isc_sha1_t *sha1ctx = dctx->ctxdata.sha1ctx;
 	dst_key_t *key = dctx->key;
-	DSA *dsa = key->opaque;
+	DSA *dsa = key->keydata.dsa;
 	DSA_SIG *dsasig;
 	int status = 0;
 	unsigned char digest[ISC_SHA1_DIGESTLENGTH];
@@ -146,8 +159,8 @@ openssldsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	int status;
 	DSA *dsa1, *dsa2;
 
-	dsa1 = (DSA *) key1->opaque;
-	dsa2 = (DSA *) key2->opaque;
+	dsa1 = key1->keydata.dsa;
+	dsa2 = key2->keydata.dsa;
 
 	if (dsa1 == NULL && dsa2 == NULL)
 		return (ISC_TRUE);
@@ -215,22 +228,22 @@ openssldsa_generate(dst_key_t *key, int unused) {
 	}
 	dsa->flags &= ~DSA_FLAG_CACHE_MONT_P;
 
-	key->opaque = dsa;
+	key->keydata.dsa = dsa;
 
 	return (ISC_R_SUCCESS);
 }
 
 static isc_boolean_t
 openssldsa_isprivate(const dst_key_t *key) {
-	DSA *dsa = (DSA *) key->opaque;
+	DSA *dsa = key->keydata.dsa;
 	return (ISC_TF(dsa != NULL && dsa->priv_key != NULL));
 }
 
 static void
 openssldsa_destroy(dst_key_t *key) {
-	DSA *dsa = key->opaque;
+	DSA *dsa = key->keydata.dsa;
 	DSA_free(dsa);
-	key->opaque = NULL;
+	key->keydata.dsa = NULL;
 }
 
 
@@ -241,9 +254,9 @@ openssldsa_todns(const dst_key_t *key, isc_buffer_t *data) {
 	int dnslen;
 	unsigned int t, p_bytes;
 
-	REQUIRE(key->opaque != NULL);
+	REQUIRE(key->keydata.dsa != NULL);
 
-	dsa = (DSA *) key->opaque;
+	dsa = key->keydata.dsa;
 
 	isc_buffer_availableregion(data, &r);
 
@@ -317,7 +330,7 @@ openssldsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 	isc_buffer_forward(data, 1 + ISC_SHA1_DIGESTLENGTH + 3 * p_bytes);
 
-	key->opaque = (void *) dsa;
+	key->keydata.dsa = dsa;
 
 	return (ISC_R_SUCCESS);
 }
@@ -330,10 +343,10 @@ openssldsa_tofile(const dst_key_t *key, const char *directory) {
 	dst_private_t priv;
 	unsigned char bufs[5][128];
 
-	if (key->opaque == NULL)
+	if (key->keydata.dsa == NULL)
 		return (DST_R_NULLKEY);
 
-	dsa = (DSA *) key->opaque;
+	dsa = key->keydata.dsa;
 
 	priv.elements[cnt].tag = TAG_DSA_PRIME;
 	priv.elements[cnt].length = BN_num_bytes(dsa->p);
@@ -387,7 +400,7 @@ openssldsa_parse(dst_key_t *key, isc_lex_t *lexer) {
 	if (dsa == NULL)
 		DST_RET(ISC_R_NOMEMORY);
 	dsa->flags &= ~DSA_FLAG_CACHE_MONT_P;
-	key->opaque = dsa;
+	key->keydata.dsa = dsa;
 
 	for (i=0; i < priv.nelements; i++) {
 		BIGNUM *bn;

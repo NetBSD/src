@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.22 2007/05/19 17:49:51 heas Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.22.12.1 2008/06/23 04:29:26 wrstuden Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -26,7 +26,7 @@
   * 4.4BSD and close derivatives.
   */
 #if defined(FREEBSD2) || defined(FREEBSD3) || defined(FREEBSD4) \
-    || defined(FREEBSD5) || defined(FREEBSD6) \
+    || defined(FREEBSD5) || defined(FREEBSD6) || defined(FREEBSD7) \
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
     || defined(OPENBSD2) || defined(OPENBSD3) || defined(OPENBSD4) \
     || defined(NETBSD1) || defined(NETBSD2) || defined(NETBSD3) \
@@ -75,15 +75,24 @@
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
 #endif
 
+#ifdef FREEBSD2
+#define getsid(p) getpgrp()
+#ifndef CMSG_SPACE
+#define CMSG_SPACE(len) (CMSG_ALIGN(sizeof(struct cmsghdr)) + CMSG_ALIGN(len))
+#endif
+#ifndef CMSG_LEN
+#define CMSG_LEN(len) (CMSG_ALIGN(sizeof(struct cmsghdr)) + (len))
+#endif
+#ifndef CMSG_ALIGN
+#define CMSG_ALIGN(n) ALIGN(n)
+#endif
+#endif					/* FREEBSD2 */
+
 #ifdef BSDI4
 /* #define HAS_IPV6 find out interface lookup method */
 #endif
 
 /* __FreeBSD_version version is major+minor */
-
-#if __FreeBSD_version >= 200000
-#define HAS_DUPLEX_PIPE
-#endif
 
 #if __FreeBSD_version >= 220000
 #define HAS_DEV_URANDOM			/* introduced in 2.1.5 */
@@ -97,6 +106,10 @@
 #if __FreeBSD_version >= 400000
 #define SOCKADDR_SIZE	socklen_t
 #define SOCKOPT_SIZE	socklen_t
+#endif
+
+#if __FreeBSD_version >= 420000
+#define HAS_DUPLEX_PIPE			/* 4.1 breaks with kqueue(2) */
 #endif
 
 /* OpenBSD version is year+month */
@@ -713,8 +726,13 @@ extern int initgroups(const char *, int);
 #endif
 #ifndef NO_IPV6
 # define HAS_IPV6
+#if defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2,4)
+/* Really 2.3.3 or later, but there's no __GLIBC_MICRO version macro. */
+# define HAVE_GETIFADDRS
+#else
 # define HAS_PROCNET_IFINET6
 # define _PATH_PROCNET_IFINET6 "/proc/net/if_inet6"
+#endif
 #endif
 #include <linux/version.h>
 #if !defined(KERNEL_VERSION) 
@@ -1283,6 +1301,12 @@ extern int inet_pton(int, const char *, void *);
 #define LOCAL_TRIGGER	unix_trigger
 #define LOCAL_SEND_FD	unix_send_fd
 #define LOCAL_RECV_FD	unix_recv_fd
+#endif
+
+#ifndef PASS_LISTEN
+#define PASS_LISTEN	upass_listen
+#define PASS_ACCEPT	upass_accept
+#define PASS_TRIGGER	upass_trigger
 #endif
 
 #if !defined (HAVE_SYS_NDIR_H) && !defined (HAVE_SYS_DIR_H) \

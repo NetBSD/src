@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.78 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.78.2.1 2008/06/23 04:32:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -248,6 +248,8 @@ GLOBAL	int	retry_connect;	/* seconds between retrying connection */
 GLOBAL	char   *tmpdir;		/* temporary directory */
 GLOBAL	int	epsv4;		/* use EPSV/EPRT on IPv4 connections */
 GLOBAL	int	epsv4bad;	/* EPSV doesn't work on the current server */
+GLOBAL	int	epsv6;		/* use EPSV/EPRT on IPv6 connections */
+GLOBAL	int	epsv6bad;	/* EPSV doesn't work on the current server */
 GLOBAL	int	editing;	/* command line editing enabled */
 GLOBAL	int	features[FEAT_max];	/* remote FEATures supported */
 

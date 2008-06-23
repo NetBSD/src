@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex_destroy.3,v 1.3 2008/05/04 19:43:05 martin Exp $
+.\" $NetBSD: pthread_mutex_destroy.3,v 1.3.2.1 2008/06/23 04:29:54 wrstuden Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,13 +77,13 @@ indicate the error.
 .Fn pthread_mutex_destroy
 may fail if:
 .Bl -tag -width Er
+.It Bq Er EBUSY
+.Fa Mutex
+is locked by another thread.
 .It Bq Er EINVAL
 The value specified by
 .Fa mutex
 is invalid.
-.It Bq Er EBUSY
-.Fa Mutex
-is locked by another thread.
 .El
 .Sh SEE ALSO
 .Xr pthread_mutex_init 3 ,

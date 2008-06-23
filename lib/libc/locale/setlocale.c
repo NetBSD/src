@@ -1,7 +1,7 @@
-/*	$NetBSD: setlocale.c,v 1.52 2007/09/29 07:55:45 tnozaki Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.52.8.1 2008/06/23 04:29:32 wrstuden Exp $	*/
 
 /*
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 2008
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.52 2007/09/29 07:55:45 tnozaki Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.52.8.1 2008/06/23 04:29:32 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,10 @@ __RCSID("$NetBSD: setlocale.c,v 1.52 2007/09/29 07:55:45 tnozaki Exp $");
 #else
 #include "ctypeio.h"
 #endif
-#include "timeio.h"
+#include "lcmessages.h"
+#include "lcmonetary.h"
+#include "lcnumeric.h"
+#include "lctime.h"
 
 #ifdef CITRUS
 #include <citrus/citrus_namespace.h>
@@ -128,7 +131,8 @@ __setlocale(category, locale)
 	const char *env, *r;
 
 	if (issetugid() ||
-	    (!_PathLocale && !(_PathLocale = getenv("PATH_LOCALE"))))
+	    ((!_PathLocale && !(_PathLocale = getenv("PATH_LOCALE"))) ||
+	     !*_PathLocale))
 		_PathLocale = _PATH_LOCALE;
 
 	if (category < 0 || category >= _LC_LAST)
@@ -265,14 +269,29 @@ revert_to_default(category)
 		break;
 	case LC_TIME:
 		if (_CurrentTimeLocale != &_DefaultTimeLocale) {
-			free((void *)_CurrentTimeLocale);
+			free(__UNCONST(_CurrentTimeLocale));
 			_CurrentTimeLocale = &_DefaultTimeLocale;
 		}
 		break;
 	case LC_MESSAGES:
+		if (_CurrentMessagesLocale != &_DefaultMessagesLocale) {
+			free(__UNCONST(_CurrentMessagesLocale));
+			_CurrentMessagesLocale = &_DefaultMessagesLocale;
+		}
+		break;
 	case LC_COLLATE:
+		break;
 	case LC_MONETARY:
+		if (_CurrentMonetaryLocale != &_DefaultMonetaryLocale) {
+			free(__UNCONST(_CurrentMonetaryLocale));
+			_CurrentMonetaryLocale = &_DefaultMonetaryLocale;
+		}
+		break;
 	case LC_NUMERIC:
+		if (_CurrentNumericLocale != &_DefaultNumericLocale) {
+			free(__UNCONST(_CurrentNumericLocale));
+			_CurrentNumericLocale = &_DefaultNumericLocale;
+		}
 		break;
 	}
 }
@@ -293,6 +312,7 @@ load_locale_sub(category, locname, isspecial)
 	int isspecial;
 {
 	char name[PATH_MAX];
+	int len;
 
 	/* check for the default locales */
 	if (!strcmp(new_categories[category], "C") ||
@@ -309,8 +329,10 @@ load_locale_sub(category, locname, isspecial)
 	if (strchr(locname, '/') != NULL)
 		return -1;
 
-	(void)snprintf(name, sizeof(name), "%s/%s/%s",
+	len = snprintf(name, sizeof(name), "%s/%s/%s",
 		       _PathLocale, locname, categories[category]);
+	if (len < 0 || len >= sizeof(name))
+		return -1;
 
 	switch (category) {
 	case LC_CTYPE:
@@ -324,21 +346,31 @@ load_locale_sub(category, locname, isspecial)
 		break;
 
 	case LC_MESSAGES:
+		len += snprintf(name + len, sizeof(name) - len, "/%s",
+				categories[category]);
+		if (len >= sizeof(name))
+			return -1;
+		if (!__loadmessages(name))
+#ifdef notyet
+			return -1;
+#else
 		/*
 		 * XXX we don't have LC_MESSAGES support yet,
 		 * but catopen may use the value of LC_MESSAGES category.
 		 * so return successfully if locale directory is present.
 		 */
-		(void)snprintf(name, sizeof(name), "%s/%s",
-			_PathLocale, locname);
 		/* local */
 		{
 			struct stat st;
+
+			(void)snprintf(name, sizeof(name), "%s/%s",
+				_PathLocale, locname);
 			if (stat(name, &st) < 0)
 				return -1;
 			if (!S_ISDIR(st.st_mode))
 				return -1;
 		}
+#endif
 		break;
 
 	case LC_TIME:
@@ -346,9 +378,15 @@ load_locale_sub(category, locname, isspecial)
 			return -1;
 		break;
 	case LC_COLLATE:
-	case LC_MONETARY:
-	case LC_NUMERIC:
 		return -1;
+	case LC_MONETARY:
+		if (!__loadmonetary(name))
+			return -1;
+		break;
+	case LC_NUMERIC:
+		if (!__loadnumeric(name))
+			return -1;
+		break;
 	}
 
 	return 0;

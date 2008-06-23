@@ -1,10 +1,11 @@
-/*	$NetBSD: dbus_service.h,v 1.1.1.1 2007/01/27 21:06:19 christos Exp $	*/
+/*	$NetBSD: dbus_service.h,v 1.1.1.1.16.1 2008/06/23 04:27:43 wrstuden Exp $	*/
 
 /*  D-BUS Service Utilities
  *  
  *  Provides utilities for construction of D-BUS "Services"  
  *
  *  Copyright(C) Jason Vas Dias, Red Hat Inc., 2005
+ *  Modified by Adam Tkac, Red Hat Inc., 2007
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@
 
 #include <stdint.h>
 #include <stdarg.h>
+#include <isc/types.h>
 
 typedef struct dbcs_s* DBUS_SVC;
 
@@ -126,9 +128,10 @@ typedef dbus_svc_HandlerResult
 
 #define SHUTDOWN 255
 
-extern  DBUS_SVC dbus_svc_init
+extern isc_result_t dbus_svc_init
 ( dbus_svc_DBUS_TYPE bus, 
   char *name,                         /* name to register with D-BUS */
+  DBUS_SVC *dbus,                     /* dbus handle */
   dbus_svc_WatchHandler wh,           /* optional handler for watch events */
   dbus_svc_ErrorHandler eh,           /* optional error log message handler */
   dbus_svc_ErrorHandler dh,           /* optional debug / info log message handler */

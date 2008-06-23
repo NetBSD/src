@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_socketpair.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: sane_socketpair.c,v 1.1.1.2.26.1 2008/06/23 04:29:26 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -18,8 +18,8 @@
 /*	skips over silly error results such as EINTR.
 /* BUGS
 /*	Bizarre systems may have other harmless error results. Such
-/*	systems encourage programers to ignore error results, and
-/*	penalizes programmers who code defensively.
+/*	systems encourage programmers to ignore error results, and
+/*	penalize programmers who code defensively.
 /* LICENSE
 /* .ad
 /* .fi

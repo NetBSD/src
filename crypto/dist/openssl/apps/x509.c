@@ -114,6 +114,7 @@ static const char *x509_usage[]={
 " -alias          - output certificate alias\n",
 " -noout          - no certificate output\n",
 " -ocspid         - print OCSP hash values for the subject name and public key\n",
+" -ocspurl        - print OCSP Responder URL(s)\n",
 " -trustout       - output a \"trusted\" certificate\n",
 " -clrtrust       - clear all trusted purposes\n",
 " -clrreject      - clear all rejected purposes\n",
@@ -179,6 +180,7 @@ int MAIN(int argc, char **argv)
 	int next_serial=0;
 	int subject_hash=0,issuer_hash=0,ocspid=0;
 	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0,email=0;
+	int ocsp_uri=0;
 	int trustout=0,clrtrust=0,clrreject=0,aliasout=0,clrext=0;
 	int C=0;
 	int x509req=0,days=DEF_DAYS,modulus=0,pubkey=0;
@@ -188,7 +190,7 @@ int MAIN(int argc, char **argv)
 	X509_REQ *rq=NULL;
 	int fingerprint=0;
 	char buf[256];
-	const EVP_MD *md_alg,*digest=EVP_sha1();
+	const EVP_MD *md_alg,*digest=NULL;
 	CONF *extconf = NULL;
 	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
 	int need_rand = 0;
@@ -378,6 +380,8 @@ int MAIN(int argc, char **argv)
 			C= ++num;
 		else if (strcmp(*argv,"-email") == 0)
 			email= ++num;
+		else if (strcmp(*argv,"-ocsp_uri") == 0)
+			ocsp_uri= ++num;
 		else if (strcmp(*argv,"-serial") == 0)
 			serial= ++num;
 		else if (strcmp(*argv,"-next_serial") == 0)
@@ -731,11 +735,14 @@ bad:
 				ASN1_INTEGER_free(ser);
 				BIO_puts(out, "\n");
 				}
-			else if (email == i) 
+			else if ((email == i) || (ocsp_uri == i))
 				{
 				int j;
 				STACK *emlst;
-				emlst = X509_get1_email(x);
+				if (email == i)
+					emlst = X509_get1_email(x);
+				else
+					emlst = X509_get1_ocsp(x);
 				for (j = 0; j < sk_num(emlst); j++)
 					BIO_printf(STDout, "%s\n", sk_value(emlst, j));
 				X509_email_free(emlst);
@@ -885,14 +892,18 @@ bad:
 				int j;
 				unsigned int n;
 				unsigned char md[EVP_MAX_MD_SIZE];
+				const EVP_MD *fdig = digest;
 
-				if (!X509_digest(x,digest,md,&n))
+				if (!fdig)
+					fdig = EVP_sha1();
+
+				if (!X509_digest(x,fdig,md,&n))
 					{
 					BIO_printf(bio_err,"out of memory\n");
 					goto end;
 					}
 				BIO_printf(STDout,"%s Fingerprint=",
-						OBJ_nid2sn(EVP_MD_type(digest)));
+						OBJ_nid2sn(EVP_MD_type(fdig)));
 				for (j=0; j<(int)n; j++)
 					{
 					BIO_printf(STDout,"%02X%c",md[j],
@@ -912,14 +923,6 @@ bad:
 						passin, e, "Private key");
 					if (Upkey == NULL) goto end;
 					}
-#ifndef OPENSSL_NO_DSA
-		                if (Upkey->type == EVP_PKEY_DSA)
-		                        digest=EVP_dss1();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-				if (Upkey->type == EVP_PKEY_EC)
-					digest=EVP_ecdsa();
-#endif
 
 				assert(need_rand);
 				if (!sign(x,Upkey,days,clrext,digest,
@@ -936,14 +939,6 @@ bad:
 						"CA Private Key");
 					if (CApkey == NULL) goto end;
 					}
-#ifndef OPENSSL_NO_DSA
-		                if (CApkey->type == EVP_PKEY_DSA)
-		                        digest=EVP_dss1();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-				if (CApkey->type == EVP_PKEY_EC)
-					digest = EVP_ecdsa();
-#endif
 				
 				assert(need_rand);
 				if (!x509_certify(ctx,CAfile,digest,x,xca,
@@ -970,15 +965,6 @@ bad:
 					}
 
 				BIO_printf(bio_err,"Generating certificate request\n");
-
-#ifndef OPENSSL_NO_DSA
-		                if (pk->type == EVP_PKEY_DSA)
-		                        digest=EVP_dss1();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-				if (pk->type == EVP_PKEY_EC)
-					digest=EVP_ecdsa();
-#endif
 
 				rq=X509_to_X509_REQ(x,pk,digest);
 				EVP_PKEY_free(pk);
@@ -1033,16 +1019,15 @@ bad:
 		}
 	else if (outformat == FORMAT_NETSCAPE)
 		{
-		ASN1_HEADER ah;
-		ASN1_OCTET_STRING os;
+		NETSCAPE_X509 nx;
+		ASN1_OCTET_STRING hdr;
 
-		os.data=(unsigned char *)NETSCAPE_CERT_HDR;
-		os.length=strlen(NETSCAPE_CERT_HDR);
-		ah.header= &os;
-		ah.data=(char *)x;
-		ah.meth=X509_asn1_meth();
+		hdr.data=(unsigned char *)NETSCAPE_CERT_HDR;
+		hdr.length=strlen(NETSCAPE_CERT_HDR);
+		nx.header= &hdr;
+		nx.cert=x;
 
-		i=ASN1_i2d_bio_of(ASN1_HEADER,i2d_ASN1_HEADER,out,&ah);
+		i=ASN1_item_i2d_bio(ASN1_ITEM_rptr(NETSCAPE_X509),out,&nx);
 		}
 	else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");

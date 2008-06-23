@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.101 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.101.4.1 2008/06/23 04:31:58 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.101 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.101.4.1 2008/06/23 04:31:58 wrstuden Exp $");
 
 #include "opt_inet.h"
 
@@ -161,10 +161,8 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	if (req == PRU_ATTACH) {
 		sosetlock(so);
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
-		if ((so->so_pcb = rp) != NULL)
-			memset(so->so_pcb, 0, sizeof(*rp));
-
+		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
+		so->so_pcb = rp;
 	}
 	if (req == PRU_DETACH && rp)
 		rt_adjustcount(rp->rcb_proto.sp_protocol, -1);
@@ -307,7 +305,7 @@ route_output(struct mbuf *m, ...)
                 /* XXX This will mask dst with netmask before
                  * searching.  It did not used to do that.  --dyoung
 		 */
-		error = rtrequest(RTM_GET, dst, gate, netmask, 0, &rt);
+		error = rtrequest1(RTM_GET, &info, &rt);
 		if (error != 0)
 			senderr(error);
 		if (rtm->rtm_type != RTM_GET) {/* XXX: too grotty */
@@ -367,7 +365,7 @@ route_output(struct mbuf *m, ...)
 				R_Malloc(new_rtm, struct rt_msghdr *, len);
 				if (new_rtm == NULL)
 					senderr(ENOBUFS);
-				Bcopy(rtm, new_rtm, rtm->rtm_msglen);
+				memmove(new_rtm, rtm, rtm->rtm_msglen);
 				Free(rtm); rtm = new_rtm;
 			}
 			(void)rt_msg2(rtm->rtm_type, &info, (void *)rtm,
@@ -585,6 +583,8 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 	}
 	m->m_pkthdr.rcvif = NULL;
 	m_copyback(m, 0, datalen, data);
+	if (len > datalen)
+		(void)memset(mtod(m, char *) + datalen, 0, len - datalen);
 	rtm = mtod(m, struct rt_msghdr *);
 	for (i = 0; i < RTAX_MAX; i++) {
 		if ((sa = rtinfo->rti_info[i]) == NULL)
@@ -836,6 +836,10 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 				continue;
 			mtod(m, struct rt_msghdr *)->rtm_addrs = info.rti_addrs;
 		}
+#ifdef DIAGNOSTIC
+		if (m == NULL)
+			panic("%s: called with wrong command", __func__);
+#endif
 		route_enqueue(m, sa ? sa->sa_family : 0);
 	}
 }

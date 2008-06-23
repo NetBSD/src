@@ -1,7 +1,7 @@
-/*	$NetBSD: i82489reg.h,v 1.5 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.5.2.1 2008/06/23 04:30:50 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,7 @@
  */
 
 #define	LAPIC_ID		0x020		/* ID. RW */
-#	define LAPIC_ID_MASK		0x0f000000
+#	define LAPIC_ID_MASK		0xff000000
 #	define LAPIC_ID_SHIFT		24
 
 #define LAPIC_VERS		0x030		/* Version. R */
@@ -108,8 +108,6 @@
 
 
 #define LAPIC_ICRHI	0x310			/* Int. cmd. RW */
-#	define LAPIC_ID_MASK		0x0f000000
-#	define LAPIC_ID_SHIFT		24
 
 #define LAPIC_LVTT	0x320			/* Loc.vec.(timer) RW */
 #	define LAPIC_LVTT_VEC_MASK	0x000000ff
@@ -144,3 +142,13 @@
 #define LAPIC_BASE		0xfee00000
 
 #define LAPIC_IRQ_MASK(i)	(1 << ((i) + 1))
+
+/*
+ * Model specific registers
+ */
+
+#define	LAPIC_MSR	0x001b
+#	define	LAPIC_MSR_BSP		0x00000100	/* boot processor */
+#	define	LAPIC_MSR_ENABLE	0x00000800	/* software enable */
+#	define	LAPIC_MSR_ADDR		0xfffff000	/* physical address */
+

@@ -24,10 +24,14 @@ information from main.cf into the plug_in:
     smtp_sasl_path, smtp_sasl_security_options
     lmtp_sasl_path, lmtp_sasl_security_options
 
-The parameter values are passed to the plug-in without any
-interpretation. The following restrictions are imposed by the main.cf
-file parser: parameter values never contain newlines, and they never
-start or end with whitespace characters.
+As usual, newline characters are removed from multi-line parameter
+values, and $name is expanded recursively.  The parameter values
+are passed to the plug-in without any further processing. The
+following restrictions are imposed by the main.cf file parser:
+
+- parameter values never contain newlines,
+
+- parameter values never start or end with whitespace characters.
 
 The _path parameter value is passed only once during process
 initialization (i.e. it is a class variable). The path typically

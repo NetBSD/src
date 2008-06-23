@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.187 2008/05/02 13:02:31 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.187.2.1 2008/06/23 04:31:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.187 2008/05/02 13:02:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.187.2.1 2008/06/23 04:31:51 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -467,14 +467,6 @@ doshutdownhooks(void)
 {
 	struct hook_desc *dp;
 
-	if (panicstr != NULL) {
-		/*
-		 * Do as few things as possible after a panic.
-		 * We don't know the state the system is in.
-		 */
-		return;
-	}
-
 	while ((dp = LIST_FIRST(&shutdownhook_list)) != NULL) {
 		LIST_REMOVE(dp, hk_list);
 		(*dp->hk_fn)(dp->hk_arg);
@@ -725,14 +717,12 @@ isswap(struct device *dv)
 #include "md.h"
 
 #if NMD > 0
-static struct device fakemdrootdev[NMD];
 extern struct cfdriver md_cd;
-#endif
-
 #ifdef MEMORY_DISK_IS_ROOT
 int md_is_root = 1;
 #else
 int md_is_root = 0;
+#endif
 #endif
 
 /*
@@ -774,17 +764,11 @@ setroot(struct device *bootdv, int bootpartition)
 
 #if NMD > 0
 	if (md_is_root) {
-		int i;
-		for (i = 0; i < NMD; i++) {
-			fakemdrootdev[i].dv_class  = DV_DISK;
-			fakemdrootdev[i].dv_cfdata = NULL;
-			fakemdrootdev[i].dv_cfdriver = &md_cd;
-			fakemdrootdev[i].dv_unit   = i;
-			fakemdrootdev[i].dv_parent = NULL;
-			snprintf(fakemdrootdev[i].dv_xname,
-			    sizeof(fakemdrootdev[i].dv_xname), "md%d", i);
-		}
-		bootdv = &fakemdrootdev[0];
+		/*
+		 * XXX there should be "root on md0" in the config file,
+		 * but it isn't always
+		 */
+		bootdv = md_cd.cd_devs[0];
 		bootpartition = 0;
 	}
 #endif
@@ -960,7 +944,10 @@ setroot(struct device *bootdv, int bootpartition)
 		 */
 		rootdv = bootdv;
 
-		majdev = devsw_name2blk(device_xname(bootdv), NULL, 0);
+		if (bootdv)
+			majdev = devsw_name2blk(device_xname(bootdv), NULL, 0);
+		else
+			majdev = -1;
 		if (majdev >= 0) {
 			/*
 			 * Root is on a disk.  `bootpartition' is root,
@@ -1117,16 +1104,6 @@ finddevice(const char *name)
 	if ((wname = getwedgename(name, strlen(name))) != NULL)
 		return dkwedge_find_by_wname(wname);
 
-#if NMD > 0
-	if (md_is_root) {
-		int j;
-		for (j = 0; j < NMD; j++) {
-			if (strcmp(name, fakemdrootdev[j].dv_xname) == 0)
-				return &fakemdrootdev[j];
-		}
-	}
-#endif
-
 	return device_find_by_xname(name);
 }
 
@@ -1137,14 +1114,6 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
-#if NMD > 0
-		if (isdump == 0 && md_is_root) {
-			int i;
-			for (i = 0; i < NMD; i++)
-				printf(" %s[a-%c]", fakemdrootdev[i].dv_xname,
-				    'a' + MAXPARTITIONS - 1);
-		}
-#endif
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (DEV_USES_PARTITIONS(dv))
 				printf(" %s[a-%c]", device_xname(dv),
@@ -1209,18 +1178,6 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 		*cp = '\0';
 	} else
 		part = defpart;
-
-#if NMD > 0
-	if (md_is_root) {
-		int i;
-		for (i = 0; i < NMD; i++) {
-			if (strcmp(str, fakemdrootdev[i].dv_xname) == 0) {
-				dv = &fakemdrootdev[i];
-				goto gotdisk;
-			}
-		}
-	}
-#endif
 
 	dv = finddevice(str);
 	if (dv != NULL) {

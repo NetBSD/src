@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1068 2008/05/01 22:09:29 xtraeme Exp $
+# $NetBSD: mi,v 1.1068.2.1 2008/06/23 04:29:00 wrstuden Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -227,6 +227,14 @@
 ./usr/share/man/cat1/ld.aout_so.0		man-shlib-catman	.cat
 ./usr/share/man/cat1/ld.elf_so.0		man-shlib-catman	.cat
 ./usr/share/man/cat1/ld.so.0			man-shlib-catman	.cat
+./usr/share/man/cat1/ldapadd.0			man-ldap-catman		ldap,.cat
+./usr/share/man/cat1/ldapcompare.0		man-ldap-catman		ldap,.cat
+./usr/share/man/cat1/ldapdelete.0		man-ldap-catman		ldap,.cat
+./usr/share/man/cat1/ldapmodify.0		man-ldap-catman		ldap,.cat
+./usr/share/man/cat1/ldapmodrdn.0		man-ldap-catman		ldap,.cat
+./usr/share/man/cat1/ldappasswd.0		man-ldap-catman		ldap,.cat
+./usr/share/man/cat1/ldapsearch.0		man-ldap-catman		ldap,.cat
+./usr/share/man/cat1/ldapwhoami.0		man-ldap-catman		ldap,.cat
 ./usr/share/man/cat1/ldd.0			man-util-catman		.cat
 ./usr/share/man/cat1/leave.0			man-util-catman		.cat
 ./usr/share/man/cat1/less.0			man-util-catman		.cat
@@ -291,14 +299,18 @@
 ./usr/share/man/cat1/msguniq.0			man-locale-catman	.cat
 ./usr/share/man/cat1/mt.0			man-util-catman		.cat
 ./usr/share/man/cat1/mv.0			man-util-catman		.cat
+./usr/share/man/cat1/nbsvtool.0			man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/netgroup.0			man-nis-catman		.cat
 ./usr/share/man/cat1/netstat.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/newaliases.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat1/newgrp.0			man-util-catman		.cat
+./usr/share/man/cat1/nex.0			man-util-catman		.cat
 ./usr/share/man/cat1/nfsstat.0			man-nfsclient-catman	.cat
 ./usr/share/man/cat1/nice.0			man-util-catman		.cat
 ./usr/share/man/cat1/nl.0			man-util-catman		.cat
 ./usr/share/man/cat1/nohup.0			man-util-catman		.cat
+./usr/share/man/cat1/nvi.0			man-util-catman		.cat
+./usr/share/man/cat1/nview.0			man-util-catman		.cat
 ./usr/share/man/cat1/od.0			man-util-catman		.cat
 ./usr/share/man/cat1/omshell.0			man-dhcpd-catman	.cat
 ./usr/share/man/cat1/openssl.0			man-crypto-catman	crypto,.cat
@@ -590,6 +602,7 @@
 ./usr/share/man/cat4/acpiacad.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpibat.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpibut.0			man-sys-catman		.cat
+./usr/share/man/cat4/acpidalb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpiec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpilid.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpitz.0			man-sys-catman		.cat
@@ -1106,6 +1119,7 @@
 ./usr/share/man/cat4/mac68k/adb.0		man-obsolete		obsolete
 ./usr/share/man/cat4/mac68k/ae.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/autoconf.0		man-sys-catman		.cat
+./usr/share/man/cat4/mac68k/cpi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/iwm.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/kmem.0		man-sys-catman		.cat
@@ -1346,6 +1360,7 @@
 ./usr/share/man/cat4/shb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/shpcic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/si.0			man-sys-catman		.cat
+./usr/share/man/cat4/siisata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/siop.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sisdrm.0			man-sys-catman		.cat
@@ -1479,6 +1494,7 @@
 ./usr/share/man/cat4/txp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uaudio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uax.0			man-obsolete		obsolete
+./usr/share/man/cat4/uberry.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ubsa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ubsec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ubt.0			man-sys-catman		.cat
@@ -1659,6 +1675,7 @@
 ./usr/share/man/cat5/dhclient.leases.0		man-dhclient-catman	.cat
 ./usr/share/man/cat5/dhcp-eval.0		man-dhclient-catman	.cat
 ./usr/share/man/cat5/dhcp-options.0		man-dhcpd-catman	.cat
+./usr/share/man/cat5/dhcpcd.conf.0		man-dhcpcd-catman	.cat
 ./usr/share/man/cat5/dhcpd.conf.0		man-dhcpd-catman	.cat
 ./usr/share/man/cat5/dhcpd.leases.0		man-dhcpd-catman	.cat
 ./usr/share/man/cat5/dir.0			man-c-catman		.cat
@@ -1718,6 +1735,7 @@
 ./usr/share/man/cat5/lastlog.0			man-sys-catman		.cat
 ./usr/share/man/cat5/lastlogx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ld.so.conf.0		man-sys-catman		.cat
+./usr/share/man/cat5/ldap_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/link.0			man-sys-catman		.cat
 ./usr/share/man/cat5/lkm.conf.0			man-sys-catman		.cat
 ./usr/share/man/cat5/locale.alias.0		man-sys-catman		.cat
@@ -1957,6 +1975,8 @@
 ./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dhclient-script.0		man-dhclient-catman	.cat
 ./usr/share/man/cat8/dhclient.0			man-dhclient-catman	.cat
+./usr/share/man/cat8/dhcpcd-run-hooks.0		man-dhcpcd-catman	.cat
+./usr/share/man/cat8/dhcpcd.0			man-dhcpcd-catman	.cat
 ./usr/share/man/cat8/dhcpd.0			man-dhcpd-catman	.cat
 ./usr/share/man/cat8/dhcrelay.0			man-dhcpd-catman	.cat
 ./usr/share/man/cat8/discard.0			man-postfix-catman	postfix,.cat
@@ -2172,6 +2192,7 @@
 ./usr/share/man/cat8/mknod.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/mld6query.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/mlxctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/mmcformat.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mmeye/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mmeye/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/modload.0			man-sysutil-catman	.cat
@@ -2245,6 +2266,7 @@
 ./usr/share/man/cat8/newfs_lfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_msdos.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_sysvbfs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/newfs_udf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newlfs.0			man-obsolete		obsolete
 ./usr/share/man/cat8/news68k/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/news68k/makedev.0		man-obsolete		obsolete
@@ -2341,6 +2363,7 @@
 ./usr/share/man/cat8/prep/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/prep/mkbootimage.0	man-sys-catman		.cat
 ./usr/share/man/cat8/proxymap.0			man-postfix-catman	postfix,.cat
+./usr/share/man/cat8/psrset.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pstat.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pvcsif.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/pvctxctl.0			man-netutil-catman	.cat
@@ -2499,6 +2522,7 @@
 ./usr/share/man/cat8/tcpdrop.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/tcpdump.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/telnetd.0			man-netutil-catman	.cat
+./usr/share/man/cat8/tftp-proxy.0		man-pf-catman		pf,.cat
 ./usr/share/man/cat8/tftpd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/timed.0			man-timed-catman	.cat
 ./usr/share/man/cat8/timedc.0			man-timed-catman	.cat
@@ -2776,6 +2800,14 @@
 ./usr/share/man/man1/ld.aout_so.1		man-shlib-man		.man
 ./usr/share/man/man1/ld.elf_so.1		man-shlib-man		.man
 ./usr/share/man/man1/ld.so.1			man-shlib-man		.man
+./usr/share/man/man1/ldapadd.1			man-ldap-man		ldap,.man
+./usr/share/man/man1/ldapcompare.1		man-ldap-man		ldap,.man
+./usr/share/man/man1/ldapdelete.1		man-ldap-man		ldap,.man
+./usr/share/man/man1/ldapmodify.1		man-ldap-man		ldap,.man
+./usr/share/man/man1/ldapmodrdn.1		man-ldap-man		ldap,.man
+./usr/share/man/man1/ldappasswd.1		man-ldap-man		ldap,.man
+./usr/share/man/man1/ldapsearch.1		man-ldap-man		ldap,.man
+./usr/share/man/man1/ldapwhoami.1		man-ldap-man		ldap,.man
 ./usr/share/man/man1/ldd.1			man-util-man		.man
 ./usr/share/man/man1/leave.1			man-util-man		.man
 ./usr/share/man/man1/less.1			man-util-man		.man
@@ -2840,14 +2872,18 @@
 ./usr/share/man/man1/msguniq.1			man-locale-man		.man
 ./usr/share/man/man1/mt.1			man-util-man		.man
 ./usr/share/man/man1/mv.1			man-util-man		.man
+./usr/share/man/man1/nbsvtool.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/netgroup.1			man-nis-man		.man
 ./usr/share/man/man1/netstat.1			man-netutil-man		.man
 ./usr/share/man/man1/newaliases.1		man-postfix-man		postfix,.man
 ./usr/share/man/man1/newgrp.1			man-util-man		.man
+./usr/share/man/man1/nex.1			man-util-man		.man
 ./usr/share/man/man1/nfsstat.1			man-nfsclient-man	.man
 ./usr/share/man/man1/nice.1			man-util-man		.man
 ./usr/share/man/man1/nl.1			man-util-man		.man
 ./usr/share/man/man1/nohup.1			man-util-man		.man
+./usr/share/man/man1/nvi.1			man-util-man		.man
+./usr/share/man/man1/nview.1			man-util-man		.man
 ./usr/share/man/man1/od.1			man-util-man		.man
 ./usr/share/man/man1/omshell.1			man-dhcpd-man		.man
 ./usr/share/man/man1/openssl.1			man-crypto-man		crypto,.man
@@ -3139,6 +3175,7 @@
 ./usr/share/man/man4/acpiacad.4			man-sys-man		.man
 ./usr/share/man/man4/acpibat.4			man-sys-man		.man
 ./usr/share/man/man4/acpibut.4			man-sys-man		.man
+./usr/share/man/man4/acpidalb.4			man-sys-man		.man
 ./usr/share/man/man4/acpiec.4			man-sys-man		.man
 ./usr/share/man/man4/acpilid.4			man-sys-man		.man
 ./usr/share/man/man4/acpitz.4			man-sys-man		.man
@@ -3655,6 +3692,7 @@
 ./usr/share/man/man4/mac68k/adb.4		man-obsolete		obsolete
 ./usr/share/man/man4/mac68k/ae.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/autoconf.4		man-sys-man		.man
+./usr/share/man/man4/mac68k/cpi.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/intro.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/iwm.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/kmem.4		man-sys-man		.man
@@ -3895,6 +3933,7 @@
 ./usr/share/man/man4/shb.4			man-sys-man		.man
 ./usr/share/man/man4/shpcic.4			man-sys-man		.man
 ./usr/share/man/man4/si.4			man-sys-man		.man
+./usr/share/man/man4/siisata.4			man-sys-man		.man
 ./usr/share/man/man4/siop.4			man-sys-man		.man
 ./usr/share/man/man4/sip.4			man-sys-man		.man
 ./usr/share/man/man4/sisdrm.4			man-sys-man		.man
@@ -4028,6 +4067,7 @@
 ./usr/share/man/man4/txp.4			man-sys-man		.man
 ./usr/share/man/man4/uaudio.4			man-sys-man		.man
 ./usr/share/man/man4/uax.4			man-obsolete		obsolete
+./usr/share/man/man4/uberry.4			man-sys-man		.man
 ./usr/share/man/man4/ubsa.4			man-sys-man		.man
 ./usr/share/man/man4/ubsec.4			man-sys-man		.man
 ./usr/share/man/man4/ubt.4			man-sys-man		.man
@@ -4208,6 +4248,7 @@
 ./usr/share/man/man5/dhclient.leases.5		man-dhclient-man	.man
 ./usr/share/man/man5/dhcp-eval.5		man-dhclient-man	.man
 ./usr/share/man/man5/dhcp-options.5		man-dhcpd-man		.man
+./usr/share/man/man5/dhcpcd.conf.5		man-dhcpcd-man		.man
 ./usr/share/man/man5/dhcpd.conf.5		man-dhcpd-man		.man
 ./usr/share/man/man5/dhcpd.leases.5		man-dhcpd-man		.man
 ./usr/share/man/man5/dir.5			man-c-man		.man
@@ -4267,6 +4308,7 @@
 ./usr/share/man/man5/lastlog.5			man-sys-man		.man
 ./usr/share/man/man5/lastlogx.5			man-sys-man		.man
 ./usr/share/man/man5/ld.so.conf.5		man-sys-man		.man
+./usr/share/man/man5/ldap_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/link.5			man-sys-man		.man
 ./usr/share/man/man5/lkm.conf.5			man-sys-man		.man
 ./usr/share/man/man5/locale.alias.5		man-sys-man		.man
@@ -4505,6 +4547,8 @@
 ./usr/share/man/man8/dev_mkdb.8			man-sysutil-man		.man
 ./usr/share/man/man8/dhclient-script.8		man-dhclient-man	.man
 ./usr/share/man/man8/dhclient.8			man-dhclient-man	.man
+./usr/share/man/man8/dhcpcd-run-hooks.8		man-dhcpcd-man		.man
+./usr/share/man/man8/dhcpcd.8			man-dhcpcd-man		.man
 ./usr/share/man/man8/dhcpd.8			man-dhcpd-man		.man
 ./usr/share/man/man8/dhcrelay.8			man-dhcpd-man		.man
 ./usr/share/man/man8/discard.8			man-postfix-man		postfix,.man
@@ -4721,6 +4765,7 @@
 ./usr/share/man/man8/mknod.8			man-sysutil-man		.man
 ./usr/share/man/man8/mld6query.8		man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/mlxctl.8			man-sysutil-man		.man
+./usr/share/man/man8/mmcformat.8		man-sysutil-man		.man
 ./usr/share/man/man8/mmeye/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mmeye/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/modload.8			man-sysutil-man		.man
@@ -4794,6 +4839,7 @@
 ./usr/share/man/man8/newfs_lfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_msdos.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_sysvbfs.8		man-sysutil-man		.man
+./usr/share/man/man8/newfs_udf.8		man-sysutil-man		.man
 ./usr/share/man/man8/newlfs.8			man-obsolete		obsolete
 ./usr/share/man/man8/news68k/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/news68k/makedev.8		man-obsolete		obsolete
@@ -4890,6 +4936,7 @@
 ./usr/share/man/man8/prep/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/prep/mkbootimage.8	man-sys-man		.man
 ./usr/share/man/man8/proxymap.8			man-postfix-man		postfix,.man
+./usr/share/man/man8/psrset.8			man-sysutil-man		.man
 ./usr/share/man/man8/pstat.8			man-sysutil-man		.man
 ./usr/share/man/man8/pvcsif.8			man-netutil-man		.man
 ./usr/share/man/man8/pvctxctl.8			man-netutil-man		.man
@@ -5048,6 +5095,7 @@
 ./usr/share/man/man8/tcpdrop.8			man-netutil-man		.man
 ./usr/share/man/man8/tcpdump.8			man-netutil-man		.man
 ./usr/share/man/man8/telnetd.8			man-netutil-man		.man
+./usr/share/man/man8/tftp-proxy.8		man-pf-man		pf,.man
 ./usr/share/man/man8/tftpd.8			man-netutil-man		.man
 ./usr/share/man/man8/timed.8			man-timed-man		.man
 ./usr/share/man/man8/timedc.8			man-timed-man		.man

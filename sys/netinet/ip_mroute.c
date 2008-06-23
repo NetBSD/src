@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.112 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.112.2.1 2008/06/23 04:31:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.112 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.112.2.1 2008/06/23 04:31:58 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -945,7 +945,7 @@ add_vif(struct mbuf *m)
 		/* Enable promiscuous reception of all IP multicasts. */
 		sockaddr_in_init(&sin, &zeroin_addr, 0);
 		ifreq_setaddr(SIOCADDMULTI, &ifr, sintosa(&sin));
-		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (void *)&ifr);
+		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr);
 		if (error)
 			return (error);
 	}
@@ -1030,7 +1030,7 @@ reset_vif(struct vif *vifp)
 		sockaddr_in_init(&sin, &zeroin_addr, 0);
 		ifreq_setaddr(SIOCDELMULTI, &ifr, sintosa(&sin));
 		ifp = vifp->v_ifp;
-		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)&ifr);
+		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, &ifr);
 	}
 	bzero((void *)vifp, sizeof(*vifp));
 }
@@ -1419,6 +1419,11 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 
 		return (1);
 	}
+
+	/*
+	 * Clear any in-bound checksum flags for this packet.
+	 */
+	m->m_pkthdr.csum_flags = 0;
 
 #ifdef RSVP_ISI
 	if (imo && ((vifi = imo->imo_multicast_vif) < numvifs)) {

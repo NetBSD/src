@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.7.4.3 2008/05/28 16:28:34 wrstuden Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.7.4.4 2008/06/23 04:32:02 wrstuden Exp $ */
 
 /*
  * System call marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.7.4.3 2008/05/28 16:28:34 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.7.4.4 2008/06/23 04:32:02 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -288,6 +288,38 @@ rump_sys_rmdir(const char * path, int *error)
 	SPARG(&arg, path) = path;
 
 	*error = sys_rmdir(curlwp, &arg, &retval);
+	return retval;
+}
+
+ssize_t
+rump_sys_pread(int fd, void * buf, size_t nbyte, int pad, off_t offset, int *error)
+{
+	register_t retval;
+	struct sys_pread_args arg;
+
+	SPARG(&arg, fd) = fd;
+	SPARG(&arg, buf) = buf;
+	SPARG(&arg, nbyte) = nbyte;
+	SPARG(&arg, pad) = pad;
+	SPARG(&arg, offset) = offset;
+
+	*error = sys_pread(curlwp, &arg, &retval);
+	return retval;
+}
+
+ssize_t
+rump_sys_pwrite(int fd, const void * buf, size_t nbyte, int pad, off_t offset, int *error)
+{
+	register_t retval;
+	struct sys_pwrite_args arg;
+
+	SPARG(&arg, fd) = fd;
+	SPARG(&arg, buf) = buf;
+	SPARG(&arg, nbyte) = nbyte;
+	SPARG(&arg, pad) = pad;
+	SPARG(&arg, offset) = offset;
+
+	*error = sys_pwrite(curlwp, &arg, &retval);
 	return retval;
 }
 

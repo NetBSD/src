@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.224 2008/04/28 20:23:56 martin Exp $
+$NetBSD: pcmciadevs,v 1.224.2.1 2008/06/23 04:31:25 wrstuden Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -334,7 +334,12 @@ product NEXTCOM NEXTHAWK	0x0001 Next Hawk Ethernet
 product NOKIA C020_WLAN		0x20c0 Nokia C020 WLAN Card
 
 /* Olicom Products */
+product OLICOM OC2220		0x0101 GoCard Ethernet
 product OLICOM TR		0x2132 GoCard Token Ring 16/4
+product OLICOM OC2231		0x3122 GoCard Combo Eth/Modem 288
+product OLICOM OC3231		0x3132 GoCard Token Ring 16/4/Modem 288
+product OLICOM OC2232		0x3222 GoCard Combo Eth/Modem 336
+product OLICOM OC3232		0x3232 GoCard Token Ring 16/4/Modem 336
 
 /* Ositech Products */
 product OSITECH TRUMPCARD_SOD	0x0008 Ositech Seven of Diamonds Ethernet Card
@@ -472,6 +477,7 @@ product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX
 product COREGA FETHER_PCC_TXD	{ "corega&spK.K.", "corega&spFEther&spPCC-TXD", NULL, NULL } Corega FEther PCC-TXD
 product COREGA FETHER_PCC_TXF	{ "corega", "FEther&spPCC-TXF", NULL, NULL } Corega FEther PCC-TXF
 product COREGA FETHER_II_PCC_TXD	{ "corega&spK.K.", "corega&spFEtherII&spPCC-TXD", NULL, NULL } Corega FEtherII PCC-TXD
+product COREGA LAPCCTXD		{ "corega&spK.K.", "(CG-LAPCCTXD)", "(HardwareFirmwareVer.)", NULL } Corega LAPCCTXD
 product COREGA WIRELESS_LAN_PCC_11	{ "corega&spK.K.", "Wireless&spLAN&spPCC-11", NULL, NULL } Corega Wireless LAN PCC-11
 product COREGA WIRELESS_LAN_PCCA_11	{ "corega&spK.K.", "Wireless&spLAN&spPCCA-11", NULL, NULL } Corega Wireless LAN PCCA-11
 product COREGA WIRELESS_LAN_PCCB_11	{ "corega_K.K.", "Wireless_LAN_PCCB-11", NULL, NULL } Corega Wireless LAN PCCB-11

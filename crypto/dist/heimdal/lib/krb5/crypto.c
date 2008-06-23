@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 __RCSID("$Heimdal: crypto.c 22200 2007-12-07 13:48:01Z lha $"
-        "$NetBSD: crypto.c,v 1.14 2008/03/22 08:37:13 mlelstv Exp $");
+        "$NetBSD: crypto.c,v 1.14.4.1 2008/06/23 04:26:46 wrstuden Exp $");
 
 #undef CRYPTO_DEBUG
 #ifdef CRYPTO_DEBUG
@@ -837,6 +837,7 @@ _find_keytype(krb5_keytype type)
 }
 
 
+/* coverity[+alloc : arg-*3] */
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_salttype_to_string (krb5_context context,
 			 krb5_enctype etype,

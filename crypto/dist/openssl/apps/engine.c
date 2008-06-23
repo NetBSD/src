@@ -148,11 +148,6 @@ static int util_flags(BIO *bio_out, unsigned int flags, const char *indent)
 
 	if(flags & ENGINE_CMD_FLAG_NUMERIC)
 		{
-		if(started)
-			{
-			BIO_printf(bio_out, "|");
-			err = 1;
-			}
 		BIO_printf(bio_out, "NUMERIC");
 		started = 1;
 		}
@@ -454,6 +449,7 @@ skip_arg_loop:
 				const int *nids;
 				ENGINE_CIPHERS_PTR fn_c;
 				ENGINE_DIGESTS_PTR fn_d;
+				ENGINE_PKEY_METHS_PTR fn_pk;
 
 				if (ENGINE_get_RSA(e) != NULL
 					&& !append_buf(&cap_buf, "RSA",
@@ -492,6 +488,15 @@ skip_ciphers:
 						goto end;
 
 skip_digests:
+				fn_pk = ENGINE_get_pkey_meths(e);
+				if(!fn_pk) goto skip_pmeths;
+				n = fn_pk(e, NULL, &nids, 0);
+				for(k=0 ; k < n ; ++k)
+					if(!append_buf(&cap_buf,
+						       OBJ_nid2sn(nids[k]),
+						       &cap_size, 256))
+						goto end;
+skip_pmeths:
 				if (cap_buf && (*cap_buf != '\0'))
 					BIO_printf(bio_out, " [%s]\n", cap_buf);
 

@@ -235,7 +235,7 @@ int BN_num_bits_word(BN_ULONG l)
 		else
 #endif
 			{
-#if defined(SIXTEEN_BIT) || defined(THIRTY_TWO_BIT) || defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
+#if defined(THIRTY_TWO_BIT) || defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG)
 			if (l & 0xff00L)
 				return(bits[(int)(l>>8)]+8);
 			else	
@@ -763,7 +763,7 @@ int BN_is_bit_set(const BIGNUM *a, int n)
 	i=n/BN_BITS2;
 	j=n%BN_BITS2;
 	if (a->top <= i) return 0;
-	return((a->d[i]&(((BN_ULONG)1)<<j))?1:0);
+	return(((a->d[i])>>j)&((BN_ULONG)1));
 	}
 
 int BN_mask_bits(BIGNUM *a, int n)

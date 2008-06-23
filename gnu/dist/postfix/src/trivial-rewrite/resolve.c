@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.11 2007/05/19 16:28:41 heas Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.11.12.1 2008/06/23 04:29:25 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -509,8 +509,9 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 	     * With off-host delivery, sender-dependent or global relayhost
 	     * override the recipient domain.
 	     */
-	    if (rp->snd_relay_info && *sender
-		&& (relay = mail_addr_find(rp->snd_relay_info, sender,
+	    if (rp->snd_relay_info
+		&& (relay = mail_addr_find(rp->snd_relay_info, *sender ?
+					   sender : var_null_relay_maps_key,
 					   (char **) 0)) != 0)
 		vstring_strcpy(nexthop, relay);
 	    else if (*RES_PARAM_VALUE(rp->relayhost))
@@ -629,6 +630,22 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 	    *flags |= RESOLVE_FLAG_FAIL;
 	    FREE_MEMORY_AND_RETURN;
 	}
+    }
+
+    /*
+     * Bounce recipient addresses that start with `-'. External commands may
+     * misinterpret such addresses as command-line options.
+     * 
+     * In theory I could say people should always carefully set up their
+     * master.cf pipe mailer entries with `--' before the first non-option
+     * argument, but mistakes will happen regardless.
+     * 
+     * Therefore the protection is put in place here, where it cannot be
+     * bypassed.
+     */
+    if (var_allow_min_user == 0 && STR(nextrcpt)[0] == '-') {
+	*flags |= RESOLVE_FLAG_ERROR;
+	FREE_MEMORY_AND_RETURN;
     }
 
     /*

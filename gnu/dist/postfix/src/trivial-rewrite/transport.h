@@ -1,4 +1,4 @@
-/*	$NetBSD: transport.h,v 1.1.1.4 2004/05/31 00:24:54 heas Exp $	*/
+/*	$NetBSD: transport.h,v 1.1.1.4.26.1 2008/06/23 04:29:25 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -9,6 +9,11 @@
 /*	#include "transport.h"
 /* DESCRIPTION
 /* .nf
+
+ /*
+  * System library.
+  */
+#include <time.h>
 
  /*
   * Utility library.
@@ -28,6 +33,7 @@ typedef struct TRANSPORT_INFO {
     VSTRING *wildcard_channel;
     VSTRING *wildcard_nexthop;
     int     transport_errno;
+    time_t  expire;
 } TRANSPORT_INFO;
 
 extern TRANSPORT_INFO *transport_pre_init(const char *, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.69 2007/10/06 20:14:41 martin Exp $	*/
+/*	$NetBSD: refresh.c,v 1.69.8.1 2008/06/23 04:29:52 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.69 2007/10/06 20:14:41 martin Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.69.8.1 2008/06/23 04:29:52 wrstuden Exp $");
 #endif
 #endif				/* not lint */
 
@@ -581,7 +581,7 @@ doupdate(void)
 
 	if (_cursesi_screen->curwin)
 		domvcur(_cursesi_screen->ly, _cursesi_screen->lx,
-			(int) win->cury, (int) win->curx);
+			win->cury, win->curx);
 	else {
 		if (win->flags & __LEAVEOK) {
 			curscr->cury = _cursesi_screen->ly;

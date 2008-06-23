@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.16.80.1 2008/06/23 04:30:13 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,13 @@
  */
 
 #include <lib/libsa/stand.h>
-#include <loadfile.h>
+#include <lib/libsa/loadfile.h>
+#include <lib/libkern/libkern.h>
 #include <sys/boot_flag.h>
 #include <sys/reboot.h>
 #include <machine/bootinfo.h>
+#include <machine/cpu.h>
+
 #include "boot.h"
 
 char *names[] = {
@@ -56,7 +59,8 @@ struct btinfo_clock btinfo_clock;
 
 extern char bootprog_name[], bootprog_rev[], bootprog_maker[], bootprog_date[];
 
-void exec_kernel __P((char *, void *));
+void main(void);
+void exec_kernel(char *, void *);
 
 void
 main()
@@ -135,20 +139,16 @@ main()
  * Exec kernel
  */
 void
-exec_kernel(name, bootinfo)
-	char *name;
-	void *bootinfo;
+exec_kernel(char *name, void *bootinfo)
 {
 	int howto = 0;
 	char c, *ptr;
 	u_long marks[MARK_MAX];
 #ifdef DBMONITOR
 	int go_monitor;
-	extern int db_monitor __P((void));
-#endif /* DBMONITOR */
-	extern int tgets __P((char *buf));
 
 ret:
+#endif /* DBMONITOR */
 	printf("\nBoot: ");
 	memset(namebuf, 0, sizeof (namebuf));
 	(void)tgets(namebuf);
@@ -194,7 +194,7 @@ next:
 		}
 #endif /* DBMONITOR */
 
-		printf("start=0x%x\n\n", marks[MARK_ENTRY]);
+		printf("start=0x%lx\n\n", marks[MARK_ENTRY]);
 		delay(1000);
 		__syncicache((void *)marks[MARK_ENTRY],
 			(u_int)marks[MARK_SYM] - (u_int)marks[MARK_ENTRY]);

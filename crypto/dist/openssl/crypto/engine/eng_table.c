@@ -76,6 +76,14 @@ struct st_engine_table
 	LHASH piles;
 	}; /* ENGINE_TABLE */
 
+
+typedef struct st_engine_pile_doall
+	{
+	engine_table_doall_cb *cb;
+	void *arg;
+	} ENGINE_PILE_DOALL;
+	
+
 /* Global flags (ENGINE_TABLE_FLAG_***). */
 static unsigned int table_flags = 0;
 
@@ -135,7 +143,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 			{
 			fnd = OPENSSL_malloc(sizeof(ENGINE_PILE));
 			if(!fnd) goto end;
-			fnd->uptodate = 0;
+			fnd->uptodate = 1;
 			fnd->nid = *nids;
 			fnd->sk = sk_ENGINE_new_null();
 			if(!fnd->sk)
@@ -147,12 +155,12 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 			lh_insert(&(*table)->piles, fnd);
 			}
 		/* A registration shouldn't add duplciate entries */
-		sk_ENGINE_delete_ptr(fnd->sk, e);
+		(void)sk_ENGINE_delete_ptr(fnd->sk, e);
 		/* if 'setdefault', this ENGINE goes to the head of the list */
 		if(!sk_ENGINE_push(fnd->sk, e))
 			goto end;
 		/* "touch" this ENGINE_PILE */
-		fnd->uptodate = 1;
+		fnd->uptodate = 0;
 		if(setdefault)
 			{
 			if(!engine_unlocked_init(e))
@@ -164,6 +172,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 			if(fnd->funct)
 				engine_unlocked_finish(fnd->funct, 0);
 			fnd->funct = e;
+			fnd->uptodate = 1;
 			}
 		nids++;
 		}
@@ -178,9 +187,8 @@ static void int_unregister_cb(ENGINE_PILE *pile, ENGINE *e)
 	/* Iterate the 'c->sk' stack removing any occurance of 'e' */
 	while((n = sk_ENGINE_find(pile->sk, e)) >= 0)
 		{
-		sk_ENGINE_delete(pile->sk, n);
-		/* "touch" this ENGINE_CIPHER */
-		pile->uptodate = 1;
+		(void)sk_ENGINE_delete(pile->sk, n);
+		pile->uptodate = 0;
 		}
 	if(pile->funct == e)
 		{
@@ -312,4 +320,22 @@ end:
 	 * context, so clear our error state. */
 	ERR_clear_error();
 	return ret;
+	}
+
+/* Table enumeration */
+
+static void int_doall_cb(ENGINE_PILE *pile, ENGINE_PILE_DOALL *dall)
+	{
+	dall->cb(pile->nid, pile->sk, pile->funct, dall->arg);
+	}
+
+static IMPLEMENT_LHASH_DOALL_ARG_FN(int_doall_cb,ENGINE_PILE *,ENGINE_PILE_DOALL *)
+void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
+								void *arg)
+	{
+	ENGINE_PILE_DOALL dall;
+	dall.cb = cb;
+	dall.arg = arg;
+	lh_doall_arg(&table->piles,
+			LHASH_DOALL_ARG_FN(int_doall_cb), &dall);
 	}

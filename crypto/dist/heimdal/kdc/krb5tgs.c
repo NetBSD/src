@@ -34,7 +34,7 @@
 #include "kdc_locl.h"
 
 __RCSID("$Heimdal: krb5tgs.c 22071 2007-11-14 20:04:50Z lha $"
-        "$NetBSD: krb5tgs.c,v 1.1 2008/03/22 08:37:03 mlelstv Exp $");
+        "$NetBSD: krb5tgs.c,v 1.1.4.1 2008/06/23 04:26:46 wrstuden Exp $");
 
 /*
  * return the realm of a krbtgt-ticket or NULL
@@ -1697,6 +1697,7 @@ server_lookup:
 		    break;
 	    if(i == b->etype.len) {
 		krb5_clear_error_string(context);
+		krb5_free_principal(context, client_principal);
 		return KRB5KDC_ERR_ETYPE_NOSUPP;
 	    }
 	    etype = b->etype.val[i];

@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.h,v 1.18 2008/04/06 23:38:19 christos Exp $	*/
+/*	$NetBSD: readconf.h,v 1.18.4.1 2008/06/23 04:27:02 wrstuden Exp $	*/
 /* $OpenBSD: readconf.h,v 1.72 2008/01/19 23:09:49 djm Exp $ */
 
 /*
@@ -66,6 +66,11 @@ typedef struct {
 	int     compression_level;	/* Compression level 1 (fast) to 9
 					 * (best). */
 	int     tcp_keep_alive;	/* Set SO_KEEPALIVE. */
+        int     tcp_rcv_buf; /* user switch to set tcp recv buffer */
+	int	tcp_rcv_buf_poll; /* Option to poll recv buf every window transfer */
+	int 	hpn_disabled; 	 /* Switch to disable HPN buffer management */
+	int	hpn_buffer_size; /* User definable size for HPN buffer window */
+
 	LogLevel log_level;	/* Level for logging. */
 
 	int     port;		/* Port to connect. */
@@ -111,6 +116,8 @@ typedef struct {
 
 	int	enable_ssh_keysign;
 	int64_t rekey_limit;
+	int     none_switch;    /* Use none cipher */
+	int     none_enabled;   /* Allow none to be used */
 	int	no_host_authentication_for_localhost;
 	int	identities_only;
 	int	server_alive_interval;

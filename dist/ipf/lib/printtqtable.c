@@ -1,4 +1,4 @@
-/*	$NetBSD: printtqtable.c,v 1.1.1.1 2007/05/15 22:26:09 martin Exp $	*/
+/*	$NetBSD: printtqtable.c,v 1.1.1.1.16.1 2008/06/23 04:28:46 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2007 by Darren Reed.
@@ -9,7 +9,6 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "ipf.h"
-#include "ipl.h"
 
 
 void printtqtable(table)

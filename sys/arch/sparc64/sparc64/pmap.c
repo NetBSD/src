@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.217 2008/04/13 15:01:55 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.217.6.1 2008/06/23 04:30:46 wrstuden Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217 2008/04/13 15:01:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217.6.1 2008/06/23 04:30:46 wrstuden Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1239,7 +1239,7 @@ pmap_init()
 		panic("pmap_init: no memory");
 
 	/* Map the pages */
-	TAILQ_FOREACH(pg, &pglist, pageq) {
+	TAILQ_FOREACH(pg, &pglist, pageq.queue) {
 		pa = VM_PAGE_TO_PHYS(pg);
 		pmap_zero_page(pa);
 		data = TSB_DATA(0 /* global */,
@@ -1345,8 +1345,7 @@ pmap_create()
 	memset(pm, 0, sizeof *pm);
 	DPRINTF(PDB_CREATE, ("pmap_create(): created %p\n", pm));
 
-	pm->pm_refs = 1;
-	TAILQ_INIT(&pm->pm_obj.memq);
+	UVM_OBJ_INIT(&pm->pm_obj, NULL, 1);
 	if (pm != pmap_kernel()) {
 		while (!pmap_get_page(&pm->pm_physaddr)) {
 			uvm_wait("pmap_create");
@@ -1398,12 +1397,13 @@ pmap_destroy(pm)
 
 	/* we could be a little smarter and leave pages zeroed */
 	for (pg = TAILQ_FIRST(&pm->pm_obj.memq); pg != NULL; pg = nextpg) {
-		nextpg = TAILQ_NEXT(pg, listq);
-		TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq);
+		nextpg = TAILQ_NEXT(pg, listq.queue);
+		TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
 		KASSERT(pg->mdpage.mdpg_pvh.pv_pmap == NULL);
 		uvm_pagefree(pg);
 	}
 	pmap_free_page((paddr_t)(u_long)pm->pm_segs);
+	UVM_OBJ_DESTROY(&pm->pm_obj);
 	pool_cache_put(&pmap_cache, pm);
 }
 
@@ -1478,7 +1478,7 @@ pmap_collect(pm)
 				     ASI_PHYS_CACHED, 0);
 				pa = (paddr_t)(u_long)ptbl;
 				pg = PHYS_TO_VM_PAGE(pa);
-				TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq);
+				TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
 				pmap_free_page(pa);
 			}
 		}
@@ -1487,7 +1487,7 @@ pmap_collect(pm)
 			     ASI_PHYS_CACHED, 0);
 			pa = (paddr_t)(u_long)pdir;
 			pg = PHYS_TO_VM_PAGE(pa);
-			TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq);
+			TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
 			pmap_free_page(pa);
 		}
 	}
@@ -1835,7 +1835,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		ptpg = PHYS_TO_VM_PAGE(ptp);
 		if (ptpg) {
 			ptpg->offset = (uint64_t)va & (0xfffffLL << 23);
-			TAILQ_INSERT_TAIL(&pm->pm_obj.memq, ptpg, listq);
+			TAILQ_INSERT_TAIL(&pm->pm_obj.memq, ptpg, listq.queue);
 		} else {
 			KASSERT(pm == pmap_kernel());
 		}
@@ -1847,7 +1847,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		ptpg = PHYS_TO_VM_PAGE(ptp);
 		if (ptpg) {
 			ptpg->offset = (((uint64_t)va >> 43) & 0x3ffLL) << 13;
-			TAILQ_INSERT_TAIL(&pm->pm_obj.memq, ptpg, listq);
+			TAILQ_INSERT_TAIL(&pm->pm_obj.memq, ptpg, listq.queue);
 		} else {
 			KASSERT(pm == pmap_kernel());
 		}

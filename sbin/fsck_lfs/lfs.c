@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.28 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: lfs.c,v 1.28.2.1 2008/06/23 04:29:57 wrstuden Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -365,7 +365,8 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 
 	/* Load inode block and find inode */
 	if (daddr > 0) {
-		bread(fs->lfs_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize, NULL, &bp);
+		bread(fs->lfs_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize,
+		    NULL, 0, &bp);
 		bp->b_flags |= B_AGE;
 		dip = lfs_ifind(fs, ino, bp);
 		if (dip == NULL) {
@@ -476,7 +477,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		} else if (debug) {
 			printf("No -b flag given, not attempting to verify checkpoint\n");
 		}
-		error = bread(devvp, sblkno, LFS_SBPAD, NOCRED, &bp);
+		error = bread(devvp, sblkno, LFS_SBPAD, NOCRED, 0, &bp);
 		fs = ecalloc(1, sizeof(*fs));
 		fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 		fs->lfs_devvp = devvp;
@@ -485,7 +486,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	
 		if (tryalt) {
 			error = bread(devvp, fsbtodb(fs, fs->lfs_sboffs[1]),
-		    	LFS_SBPAD, NOCRED, &bp);
+		    	LFS_SBPAD, NOCRED, 0, &bp);
 			altfs = ecalloc(1, sizeof(*altfs));
 			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 			altfs->lfs_devvp = devvp;
@@ -592,7 +593,8 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ufs_daddr_t goal, int debug)
 		}
 
 		/* Read in summary block */
-		bread(devvp, fsbtodb(osb, daddr), osb->lfs_sumsize, NULL, &bp);
+		bread(devvp, fsbtodb(osb, daddr), osb->lfs_sumsize,
+		    NULL, 0, &bp);
 		sp = (SEGSUM *)bp->b_data;
 
 		/*
@@ -787,7 +789,8 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 			break;
 		}
 		while (j < howmany(sp->ss_ninos, INOPB(fs)) && *idp == daddr) {
-			bread(devvp, fsbtodb(fs, daddr), fs->lfs_ibsize, NOCRED, &bp);
+			bread(devvp, fsbtodb(fs, daddr), fs->lfs_ibsize,
+			    NOCRED, 0, &bp);
 			datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
 			brelse(bp, 0);
 
@@ -802,7 +805,8 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 				len = (k == fp->fi_nblocks - 1 ?
 				       fp->fi_lastlength
 				       : fs->lfs_bsize);
-				bread(devvp, fsbtodb(fs, daddr), len, NOCRED, &bp);
+				bread(devvp, fsbtodb(fs, daddr), len,
+				    NOCRED, 0, &bp);
 				datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
 				brelse(bp, 0);
 				daddr += btofsb(fs, len);
@@ -1042,7 +1046,8 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 		} else {
 			if (nsize <= osize) {
 				/* No need to extend */
-				if (bpp && (error = bread(vp, lbn, osize, NOCRED, &bp)))
+				if (bpp && (error = bread(vp, lbn, osize,
+				    NOCRED, 0, &bp)))
 					return error;
 			} else {
 				/* Extend existing block */
@@ -1150,7 +1155,7 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 		    default:
 			idp = &indirs[num - 1];
 			if (bread(vp, idp->in_lbn, fs->lfs_bsize, NOCRED,
-				  &ibp))
+				  0, &ibp))
 				panic("lfs_balloc: bread bno %lld",
 				    (long long)idp->in_lbn);
 			/* XXX ondisk32 */
@@ -1201,7 +1206,7 @@ lfs_fragextend(struct uvnode *vp, int osize, int nsize, daddr_t lbn,
 	 * appropriate things and making sure it all goes to disk.
 	 * Don't bother to read in that case.
 	 */
-	if (bpp && (error = bread(vp, lbn, osize, NOCRED, bpp))) {
+	if (bpp && (error = bread(vp, lbn, osize, NOCRED, 0, bpp))) {
 		brelse(*bpp, 0);
 		goto out;
 	}

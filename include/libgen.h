@@ -1,4 +1,4 @@
-/*	$NetBSD: libgen.h,v 1.4 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: libgen.h,v 1.4.2.1 2008/06/23 04:29:29 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-char	*basename(const char *);
-char	*dirname(const char *);
+char	*basename(char *);
+char	*dirname(char *);
 __END_DECLS
 
 #endif /* !_LIBGEN_H_ */

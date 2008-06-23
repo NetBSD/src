@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.145 2008/02/29 20:35:23 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.145.6.1 2008/06/23 04:32:06 wrstuden Exp $	*/
 
 /*
  *
@@ -326,6 +326,8 @@ struct uvmexp {
 				   aborted */
 	int colorhit;		/* pagealloc where we got optimal color */
 	int colormiss;		/* pagealloc where we didn't */
+	int cpuhit;		/* pagealloc where we allocated locally */
+	int cpumiss;		/* pagealloc where we didn't */
 
 	/* fault subcounters.  XXX: should be 64-bit counters */
 	int fltnoram;	/* number of times fault was out of ram */
@@ -393,8 +395,8 @@ struct uvmexp_sysctl {
 	int64_t	swpgonly;
 	int64_t	nswget;
 	int64_t	unused1; /* used to be nanon */
-	int64_t	unused2; /* used to be nanonneeded */
-	int64_t	unused3; /* used to be nfreeanon */
+	int64_t cpuhit;
+	int64_t cpumiss;
 	int64_t	faults;
 	int64_t	traps;
 	int64_t	intrs;

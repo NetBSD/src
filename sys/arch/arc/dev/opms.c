@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.17 2008/03/01 14:16:49 rmind Exp $	*/
+/*	$NetBSD: opms.c,v 1.17.6.1 2008/06/23 04:30:09 wrstuden Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.17 2008/03/01 14:16:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.17.6.1 2008/06/23 04:30:09 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,12 +207,9 @@ opms_common_attach(struct opms_softc *sc, bus_space_tag_t opms_iot,
 int
 opmsopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = PMSUNIT(dev);
 	struct opms_softc *sc;
 
-	if (unit >= opms_cd.cd_ndevs)
-		return ENXIO;
-	sc = opms_cd.cd_devs[unit];
+	sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
 	if (!sc)
 		return ENXIO;
 
@@ -245,7 +242,7 @@ opmsopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 opmsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
 
 	/* Disable interrupts. */
 	pms_dev_cmd(PMS_DEV_DISABLE);
@@ -262,7 +259,7 @@ opmsclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 opmsread(dev_t dev, struct uio *uio, int flag)
 {
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
 	int s;
 	int error = 0;
 	size_t length;
@@ -308,7 +305,7 @@ opmsread(dev_t dev, struct uio *uio, int flag)
 int
 opmsioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
 	struct mouseinfo info;
 	int s;
 	int error;
@@ -430,7 +427,7 @@ opmsintr(void *arg)
 int
 opmspoll(dev_t dev, int events, struct lwp *l)
 {
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
 	int revents = 0;
 	int s = spltty();
 
@@ -471,7 +468,7 @@ static const struct filterops opmsread_filtops =
 int
 opmskqfilter(dev_t dev, struct knote *kn)
 {
-	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
 	struct klist *klist;
 	int s;
 

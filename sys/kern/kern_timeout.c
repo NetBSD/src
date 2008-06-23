@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.39 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.39.2.1 2008/06/23 04:31:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.39 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.39.2.1 2008/06/23 04:31:51 wrstuden Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -250,7 +250,7 @@ callout_init_cpu(struct cpu_info *ci)
 			panic("callout_init_cpu (2)");
 	}
 
-	sleepq_init(&cc->cc_sleepq, &cc->cc_lock);
+	sleepq_init(&cc->cc_sleepq);
 
 	snprintf(cc->cc_name1, sizeof(cc->cc_name1), "late/%u",
 	    cpu_index(ci));
@@ -495,10 +495,9 @@ callout_halt(callout_t *cs, void *interlock)
 			cc->cc_nwait++;
 			cc->cc_ev_block.ev_count++;
 			l->l_kpriority = true;
-			sleepq_enter(&cc->cc_sleepq, l);
+			sleepq_enter(&cc->cc_sleepq, l, &cc->cc_lock);
 			sleepq_enqueue(&cc->cc_sleepq, cc, "callout",
 			    &sleep_syncobj);
-			KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 			sleepq_block(0, false);
 		}
 		lock = callout_lock(c);
@@ -740,7 +739,7 @@ callout_softclock(void *v)
 		if ((count = cc->cc_nwait) != 0) {
 			cc->cc_nwait = 0;
 			/* sleepq_wake() drops the lock. */
-			sleepq_wake(&cc->cc_sleepq, cc, count);
+			sleepq_wake(&cc->cc_sleepq, cc, count, &cc->cc_lock);
 			mutex_spin_enter(&cc->cc_lock);
 		}
 	}

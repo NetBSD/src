@@ -111,7 +111,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	ASN1_INTEGER *bs;
 	EVP_PKEY *pkey=NULL;
 	const char *neg;
-	ASN1_STRING *str=NULL;
 
 	if((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
 			mlch = '\n';
@@ -215,34 +214,10 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 			ERR_print_errors(bp);
 			}
 		else
-#ifndef OPENSSL_NO_RSA
-		if (pkey->type == EVP_PKEY_RSA)
 			{
-			BIO_printf(bp,"%12sRSA Public Key: (%d bit)\n","",
-			BN_num_bits(pkey->pkey.rsa->n));
-			RSA_print(bp,pkey->pkey.rsa,16);
+			EVP_PKEY_print_public(bp, pkey, 16, NULL);
+			EVP_PKEY_free(pkey);
 			}
-		else
-#endif
-#ifndef OPENSSL_NO_DSA
-		if (pkey->type == EVP_PKEY_DSA)
-			{
-			BIO_printf(bp,"%12sDSA Public Key:\n","");
-			DSA_print(bp,pkey->pkey.dsa,16);
-			}
-		else
-#endif
-#ifndef OPENSSL_NO_EC
-		if (pkey->type == EVP_PKEY_EC)
-			{
-			BIO_printf(bp, "%12sEC Public Key:\n","");
-			EC_KEY_print(bp, pkey->pkey.ec, 16);
-			}
-		else
-#endif
-			BIO_printf(bp,"%12sUnknown Public Key:\n","");
-
-		EVP_PKEY_free(pkey);
 		}
 
 	if (!(cflag & X509_FLAG_NO_EXTENSIONS))
@@ -259,7 +234,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		}
 	ret=1;
 err:
-	if (str != NULL) ASN1_STRING_free(str);
 	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}
@@ -329,14 +303,15 @@ int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
 	return 1;
 }
 
-int ASN1_STRING_print(BIO *bp, ASN1_STRING *v)
+int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
 	{
 	int i,n;
-	char buf[80],*p;;
+	char buf[80];
+	const char *p;
 
 	if (v == NULL) return(0);
 	n=0;
-	p=(char *)v->data;
+	p=(const char *)v->data;
 	for (i=0; i<v->length; i++)
 		{
 		if ((p[i] > '~') || ((p[i] < ' ') &&
@@ -358,7 +333,7 @@ int ASN1_STRING_print(BIO *bp, ASN1_STRING *v)
 	return(1);
 	}
 
-int ASN1_TIME_print(BIO *bp, ASN1_TIME *tm)
+int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
 {
 	if(tm->type == V_ASN1_UTCTIME) return ASN1_UTCTIME_print(bp, tm);
 	if(tm->type == V_ASN1_GENERALIZEDTIME)
@@ -373,12 +348,14 @@ static const char *mon[12]=
     "Jul","Aug","Sep","Oct","Nov","Dec"
     };
 
-int ASN1_GENERALIZEDTIME_print(BIO *bp, ASN1_GENERALIZEDTIME *tm)
+int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
 	{
 	char *v;
 	int gmt=0;
 	int i;
 	int y=0,M=0,d=0,h=0,m=0,s=0;
+	char *f = NULL;
+	int f_len = 0;
 
 	i=tm->length;
 	v=(char *)tm->data;
@@ -395,10 +372,21 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, ASN1_GENERALIZEDTIME *tm)
 	m=  (v[10]-'0')*10+(v[11]-'0');
 	if (	(v[12] >= '0') && (v[12] <= '9') &&
 		(v[13] >= '0') && (v[13] <= '9'))
+		{
 		s=  (v[12]-'0')*10+(v[13]-'0');
+		/* Check for fractions of seconds. */
+		if (v[14] == '.')
+			{
+			int l = tm->length;
+			f = &v[14];	/* The decimal point. */
+			f_len = 1;
+			while (14 + f_len < l && f[f_len] >= '0' && f[f_len] <= '9')
+				++f_len;
+			}
+		}
 
-	if (BIO_printf(bp,"%s %2d %02d:%02d:%02d %d%s",
-		mon[M-1],d,h,m,s,y,(gmt)?" GMT":"") <= 0)
+	if (BIO_printf(bp,"%s %2d %02d:%02d:%02d%.*s %d%s",
+		mon[M-1],d,h,m,s,f_len,f,y,(gmt)?" GMT":"") <= 0)
 		return(0);
 	else
 		return(1);
@@ -407,15 +395,15 @@ err:
 	return(0);
 	}
 
-int ASN1_UTCTIME_print(BIO *bp, ASN1_UTCTIME *tm)
+int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 	{
-	char *v;
+	const char *v;
 	int gmt=0;
 	int i;
 	int y=0,M=0,d=0,h=0,m=0,s=0;
 
 	i=tm->length;
-	v=(char *)tm->data;
+	v=(const char *)tm->data;
 
 	if (i < 10) goto err;
 	if (v[i-1] == 'Z') gmt=1;
@@ -449,13 +437,13 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 
 	l=80-2-obase;
 
-	b=s=X509_NAME_oneline(name,NULL,0);
-	if (!*s)
+	b=X509_NAME_oneline(name,NULL,0);
+	if (!*b)
 		{
 		OPENSSL_free(b);
 		return 1;
 		}
-	s++; /* skip the first slash */
+	s=b+1; /* skip the first slash */
 
 	c=s;
 	for (;;)
@@ -480,8 +468,7 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 			{
 			i=s-c;
 			if (BIO_write(bp,c,i) != i) goto err;
-			c+=i;
-			c++;
+			c=s+1;	/* skip following slash */
 			if (*s != '\0')
 				{
 				if (BIO_write(bp,", ",2) != 2) goto err;

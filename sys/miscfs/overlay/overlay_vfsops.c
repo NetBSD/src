@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.50 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.50.2.1 2008/06/23 04:31:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.50 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.50.2.1 2008/06/23 04:31:57 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.50 2008/05/05 17:11:17 ad Exp $
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <miscfs/overlay/overlay.h>
 #include <miscfs/genfs/layer_extern.h>
+
+MODULE(MODULE_CLASS_VFS, overlay, NULL);
 
 VFS_PROTOS(ov);
 
@@ -232,7 +235,7 @@ ov_unmount(struct mount *mp, int mntflags)
 	mutex_destroy(&omp->ovm_hashlock);
 	hashdone(omp->ovm_node_hashtbl, HASH_LIST, omp->ovm_node_hash);
 	free(omp, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 	return 0;
 }
 
@@ -284,4 +287,17 @@ struct vfsops overlay_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(overlay_vfsops);
+
+static int
+overlay_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&overlay_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&overlay_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

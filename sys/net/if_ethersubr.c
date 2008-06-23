@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.164 2008/03/15 05:07:34 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.164.6.1 2008/06/23 04:31:57 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.164 2008/03/15 05:07:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.164.6.1 2008/06/23 04:31:57 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -256,18 +256,18 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 				senderr(EHOSTUNREACH);
 		}
 		if ((rt->rt_flags & RTF_GATEWAY) && dst->sa_family != AF_NS) {
-			if (rt->rt_gwroute == 0)
+			if (rt->rt_gwroute == NULL)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
 			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
-				if ((rt = rt->rt_gwroute) == 0)
+				if ((rt = rt->rt_gwroute) == NULL)
 					senderr(EHOSTUNREACH);
 				/* the "G" test below also prevents rt == rt0 */
 				if ((rt->rt_flags & RTF_GATEWAY) ||
 				    (rt->rt_ifp != ifp)) {
 					rt->rt_refcnt--;
-					rt0->rt_gwroute = 0;
+					rt0->rt_gwroute = NULL;
 					senderr(EHOSTUNREACH);
 				}
 			}
@@ -323,7 +323,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 #endif
 #ifdef INET6
 	case AF_INET6:
-		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst, sizeof(edst))){
+		if (!nd6_storelladdr(ifp, rt, m, dst, edst, sizeof(edst))){
 			/* something bad happened */
 			return (0);
 		}
@@ -920,7 +920,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 					goto dropanyway;
 				}
 
-				if (Bcmp(&(l->llc_snap_org_code)[0],
+				if (memcmp(&(l->llc_snap_org_code)[0],
 				    at_org_code, sizeof(at_org_code)) == 0 &&
 				    ntohs(l->llc_snap_ether_type) ==
 				    ETHERTYPE_ATALK) {
@@ -931,7 +931,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 					break;
 				}
 
-				if (Bcmp(&(l->llc_snap_org_code)[0],
+				if (memcmp(&(l->llc_snap_org_code)[0],
 				    aarp_org_code,
 				    sizeof(aarp_org_code)) == 0 &&
 				    ntohs(l->llc_snap_ether_type) ==
@@ -1043,7 +1043,6 @@ ether_sprintf(const u_char *ap)
 {
 	static char etherbuf[3 * ETHER_ADDR_LEN];
 	return ether_snprintf(etherbuf, sizeof(etherbuf), ap);
-	return etherbuf;
 }
 
 char *
@@ -1450,19 +1449,6 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
-		case AF_LINK:
-		    {
-			const struct sockaddr_dl *sdl = satocsdl(ifa->ifa_addr);
-
-			if (sdl->sdl_type != IFT_ETHER ||
-			    sdl->sdl_alen != ifp->if_addrlen)
-				return EINVAL;
-
-			if_set_sadl(ifp, CLLADDR(sdl), ifp->if_addrlen);
-
-			/* Set new address. */
-			return (*ifp->if_init)(ifp);
-		    }
 #ifdef INET
 		case AF_INET:
 			if ((ifp->if_flags & IFF_RUNNING) == 0 &&

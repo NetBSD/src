@@ -1,9 +1,9 @@
-/*	$NetBSD: sha2.h,v 1.1.1.1 2007/01/27 21:07:56 christos Exp $	*/
+/*	$NetBSD: sha2.h,v 1.1.1.1.16.1 2008/06/23 04:28:27 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2005, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005-2007  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sha2.h,v 1.2.2.6 2006/08/16 03:18:14 marka Exp */
+/* Id: sha2.h,v 1.9 2007/06/19 23:47:18 tbox Exp */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.h,v 1.1.2.1 2001/07/03 11:01:36 ume Exp $	*/
 /*	$KAME: sha2.h,v 1.3 2001/03/12 08:27:48 itojun Exp $	*/

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.54 2008/05/02 18:11:05 martin Exp $
+#	$NetBSD: genassym.cf,v 1.54.2.1 2008/06/23 04:30:43 wrstuden Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -127,8 +127,6 @@ define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 define	PMAP_CTX	offsetof(struct pmap, pm_ctx)
 define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
 define	PMAP_CPUSET	offsetof(struct pmap, pm_cpuset)
-
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # interrupt/fault metering
 define	V_INTR		offsetof(struct uvmexp, intrs)

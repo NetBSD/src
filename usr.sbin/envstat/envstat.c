@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.65 2008/04/29 21:46:17 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.65.2.1 2008/06/23 04:32:12 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.65 2008/04/29 21:46:17 xtraeme Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.65.2.1 2008/06/23 04:32:12 wrstuden Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -83,7 +83,6 @@ typedef struct envsys_sensor_stats {
 	int32_t	min;
 	int32_t avg;
 	char	desc[ENVSYS_DESCLEN];
-	bool	queued;
 } *sensor_stats_t;
 
 /* Device properties */
@@ -316,31 +315,30 @@ send_dictionary(FILE *cf, int fd)
 }
 
 static sensor_stats_t
-find_stats_sensor(const char *desc)
+find_stats_sensor(const char *desc, bool alloc)
 {
-	sensor_stats_t stats = NULL;
-	bool found = false;
+	sensor_stats_t stats;
 
 	/* 
 	 * If we matched a sensor by its description return it, otherwise
 	 * allocate a new one.
 	 */
-	SIMPLEQ_FOREACH(stats, &sensor_stats_list, entries) {
-		if (strcmp(stats->desc, desc) == 0) {
-			found = true;
-			break;
-		}
-	}
+	SIMPLEQ_FOREACH(stats, &sensor_stats_list, entries)
+		if (strcmp(stats->desc, desc) == 0)
+			return stats;
 
-	if (found == false) {
+	if (alloc) {
 		/* 
 		 * don't bother with return value, the caller will check
 		 * if it's NULL or not.
 		 */
 		stats = calloc(1, sizeof(*stats));
-	}
+		(void)strlcpy(stats->desc, desc, sizeof(stats->desc));
+		SIMPLEQ_INSERT_TAIL(&sensor_stats_list, stats, entries);
+		return stats;
+	} else
+		return NULL;
 
-	return stats;
 }
 
 static int
@@ -598,7 +596,7 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 				continue;
 
 			/* find or allocate a new statistics sensor */
-			stats = find_stats_sensor(sensor->desc);
+			stats = find_stats_sensor(sensor->desc, true);
 			if (stats == NULL) {
 				free(sensor);
 				prop_object_iterator_release(iter);
@@ -622,15 +620,6 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 				stats->avg =
 				    (sensor->cur_value + stats->max +
 				    stats->min) / 3;
-
-			/* add the statistics sensor into the queue */
-			if (!stats->queued) {
-				(void)strlcpy(stats->desc, sensor->desc,
-				    sizeof(stats->desc));
-				stats->queued = true;
-				SIMPLEQ_INSERT_TAIL(&sensor_stats_list,
-				    stats, entries);
-			}
 		}
 	}
 
@@ -774,11 +763,11 @@ print_sensors(void)
 
 		/* find out the statistics sensor */
 		if (statistics) {
-			stats = find_stats_sensor(sensor->desc);
-			if (stats == NULL)
-				;
-			else if (stats && !stats->queued)
-				free(stats);
+			stats = find_stats_sensor(sensor->desc, false);
+			if (stats == NULL) {
+				/* No statistics for this sensor */
+				continue;
+			}
 		}
 
 		/*

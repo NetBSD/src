@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.11 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.11.2.1 2008/06/23 04:26:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ prop_data_create_data(const void *v, size_t size)
 	void *nv;
 
 	pd = _prop_data_alloc();
-	if (pd != NULL) {
+	if (pd != NULL && size != 0) {
 		nv = _PROP_MALLOC(size, M_PROP_DATA);
 		if (nv == NULL) {
 			prop_object_release(pd);

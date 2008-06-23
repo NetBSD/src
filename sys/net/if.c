@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.222 2008/04/29 18:42:26 ad Exp $	*/
+/*	$NetBSD: if.c,v 1.222.2.1 2008/06/23 04:31:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.222 2008/04/29 18:42:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.222.2.1 2008/06/23 04:31:57 wrstuden Exp $");
 
 #include "opt_inet.h"
 
@@ -177,12 +177,35 @@ ifinit(void)
 
 	callout_init(&if_slowtimo_ch, 0);
 	if_slowtimo(NULL);
+}
+
+/*
+ * XXX Initialization before configure().
+ * XXX hack to get pfil_add_hook working in autoconf.
+ */
+void
+ifinit1(void)
+{
+
 #ifdef PFIL_HOOKS
 	if_pfil.ph_type = PFIL_TYPE_IFNET;
 	if_pfil.ph_ifnet = NULL;
 	if (pfil_head_register(&if_pfil) != 0)
 		printf("WARNING: unable to register pfil hook\n");
 #endif
+}
+
+struct ifnet *
+if_alloc(u_char type)
+{
+	return malloc(sizeof(struct ifnet), M_DEVBUF, M_WAITOK|M_ZERO);
+}
+
+void
+if_initname(struct ifnet *ifp, const char *name, int unit)
+{
+	(void)snprintf(ifp->if_xname, sizeof(ifp->if_xname),
+	    "%s%d", name, unit);
 }
 
 /*
@@ -266,6 +289,7 @@ if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen)
 	sdl = satosdl(ifa->ifa_addr);
 
 	(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lla, ifp->if_addrlen);
+	/* TBD routing socket */
 }
 
 struct ifaddr *
@@ -298,6 +322,18 @@ if_dl_create(const struct ifnet *ifp, const struct sockaddr_dl **sdlp)
 	return ifa;
 }
 
+static void
+if_sadl_setrefs(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	const struct sockaddr_dl *sdl;
+	ifnet_addrs[ifp->if_index] = ifa;
+	IFAREF(ifa);
+	ifp->if_dl = ifa;
+	IFAREF(ifa);
+	sdl = satosdl(ifa->ifa_addr);
+	ifp->if_sadl = sdl;
+}
+
 /*
  * Allocate the link level name for the specified interface.  This
  * is an attachment helper.  It must be called after ifp->if_addrlen
@@ -320,12 +356,40 @@ if_alloc_sadl(struct ifnet *ifp)
 
 	ifa = if_dl_create(ifp, &sdl);
 
-	ifnet_addrs[ifp->if_index] = ifa;
-	IFAREF(ifa);
 	ifa_insert(ifp, ifa);
-	ifp->if_dl = ifa;
-	IFAREF(ifa);
-	ifp->if_sadl = sdl;
+	if_sadl_setrefs(ifp, ifa);
+}
+
+static void
+if_deactivate_sadl(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+
+	KASSERT(ifp->if_dl != NULL);
+
+	ifa = ifp->if_dl;
+
+	ifp->if_sadl = NULL;
+
+	ifnet_addrs[ifp->if_index] = NULL;
+	IFAFREE(ifa);
+	ifp->if_dl = NULL;
+	IFAFREE(ifa);
+}
+
+void
+if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa,
+    const struct sockaddr_dl *sdl)
+{
+	int s;
+
+	s = splnet();
+
+	if_deactivate_sadl(ifp);
+
+	if_sadl_setrefs(ifp, ifa);
+	splx(s);
+	rt_ifmsg(ifp);
 }
 
 /*
@@ -353,12 +417,7 @@ if_free_sadl(struct ifnet *ifp)
 	rtinit(ifa, RTM_DELETE, 0);
 	ifa_remove(ifp, ifa);
 
-	ifp->if_sadl = NULL;
-
-	ifnet_addrs[ifp->if_index] = NULL;
-	IFAFREE(ifa);
-	ifp->if_dl = NULL;
-	IFAFREE(ifa);
+	if_deactivate_sadl(ifp);
 	splx(s);
 }
 
@@ -1161,8 +1220,8 @@ link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	const struct sockaddr *dst;
 	struct ifnet *ifp;
 
-	if (cmd != RTM_ADD || ((ifa = rt->rt_ifa) == NULL) ||
-	    ((ifp = ifa->ifa_ifp) == NULL) || ((dst = rt_getkey(rt)) == NULL))
+	if (cmd != RTM_ADD || (ifa = rt->rt_ifa) == NULL ||
+	    (ifp = ifa->ifa_ifp) == NULL || (dst = rt_getkey(rt)) == NULL)
 		return;
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
 		rt_replace_ifa(rt, ifa);
@@ -1484,7 +1543,7 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 		return ENETRESET;
 	default:
-		return EOPNOTSUPP;
+		return ENOTTY;
 	}
 	return 0;
 }
@@ -1626,7 +1685,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	default:
 		error = ifioctl_common(ifp, cmd, data);
-		if (error != EOPNOTSUPP)
+		if (error != ENOTTY)
 			break;
 		if (so->so_proto == NULL)
 			return EOPNOTSUPP;

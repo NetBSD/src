@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.11 2008/05/03 06:11:19 yamt Exp $	*/
+/*	$NetBSD: i386func.S,v 1.11.2.1 2008/06/23 04:30:26 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.11 2008/05/03 06:11:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.11.2.1 2008/06/23 04:30:26 wrstuden Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -51,6 +51,11 @@ END(invlpg)
 
 ENTRY(lldt)
 	movl	4(%esp), %eax
+	cmpl	%eax, CPUVAR(CURLDT)
+	jne	1f
+	ret
+1:
+	movl	%eax, CPUVAR(CURLDT)
 	lldt	%ax
 	ret
 END(lldt)
@@ -142,12 +147,12 @@ ENTRY(wbinvd)
 	ret
 END(wbinvd)
 
-NENTRY(x86_disable_intr)
+ENTRY(x86_disable_intr)
 	cli
 	ret
 END(x86_disable_intr)
 
-NENTRY(x86_enable_intr)
+ENTRY(x86_enable_intr)
 	sti
 	ret
 END(x86_enable_intr)
@@ -180,35 +185,15 @@ ENTRY(lgdt)
 END(lgdt)
 
 ENTRY(tsc_get_timecount)
-	jmp	_C_LABEL(tsc_slow_timecount)
-	pushl	%edi
-	pushl	%esi
-	movl	CPUVAR(CURLWP), %esi
+	movl	CPUVAR(CURLWP), %ecx
 1:
-	movl	L_NCSW(%esi), %ecx	/* gen = l_ncsw */
-	movl	L_CPU(%esi), %edi
-	addl	$CPU_INFO_CC, %edi
-	cmpl	$0, CC_DENOM(%edi)	/* if (first time) */
-	jz	2f			/*    return tsc_slow_timecount() */
-	addl	CC_GEN(%edi), %ecx	/* gen += cc_gen */
-	movl	CC_DELTA+4(%edi), %eax	/* if (cc_delta > 0xffffffff || */
-	orl	CC_DENOM+4(%edi), %eax	/*     cc_denom > 0xffffffff) */
-	jnz	2f			/*    return tsc_slow_timecount() */
-	rdtsc				/* cc = cpu_counter32(); */
-	subl	CC_CC(%edi), %eax	/* cc -= cc_cc; (can wrap) */
-	mull	CC_DELTA(%edi)		/* rcc = (cc * cc_delta) */
-	divl	CC_DENOM(%edi)		/*     / cc_denom */
-	addl	CC_VAL(%edi), %eax	/*     + cc_val; */
-	subl	CC_GEN(%edi), %ecx	/* if (gen != cc_gen + */
-	cmpl	L_NCSW(%esi), %ecx	/*     l_ncsw) */
-	jne	3f			/*    continue; */
-	popl	%esi			/* return rcc; */
-	popl	%edi
+	pushl	L_NCSW(%ecx)
+	rdtsc
+	addl	CPUVAR(CC_SKEW), %eax
+	popl	%edx
+	cmpl	%edx, L_NCSW(%ecx)
+	jne	2f
 	ret
 2:
-	popl	%esi
-	popl	%edi
-	jmp	_C_LABEL(tsc_slow_timecount)
-3:
 	jmp	1b
 END(tsc_get_timecount)

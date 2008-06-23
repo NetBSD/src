@@ -1,4 +1,4 @@
-/*	$NetBSD: ras.h,v 1.12 2008/04/29 20:50:42 scw Exp $	*/
+/*	$NetBSD: ras.h,v 1.12.2.1 2008/06/23 04:32:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004, 2007 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ __END_DECLS
 
 #define	RAS_END_ASM_HIDDEN(name)					\
 	.globl _C_LABEL(__CONCAT(name,_ras_end));			\
-	.hidden _C_LABEL(__CONCAT(name,_ras_start));			\
+	.hidden _C_LABEL(__CONCAT(name,_ras_end));			\
 	_C_LABEL(__CONCAT(name,_ras_end)):
 #endif /* __ASSEMBLER__ */
 

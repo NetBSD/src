@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.2 2008/04/27 18:58:46 matt Exp $
+#	$NetBSD: IMX31LITE,v 1.2.2.1 2008/06/23 04:30:18 wrstuden Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -77,6 +77,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

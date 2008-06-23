@@ -1,10 +1,10 @@
-/*	$NetBSD: name.h,v 1.1.1.5 2007/01/27 21:07:36 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.1.1.5.12.1 2008/06/23 04:28:16 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: name.h,v 1.107.18.15 2006/03/02 00:37:21 marka Exp */
+/* Id: name.h,v 1.126 2007/06/19 23:47:17 tbox Exp */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/name.h
  * \brief
  * Provides facilities for manipulating DNS names and labels, including
  * conversions to and from wire format and text format.
@@ -133,6 +133,7 @@ struct dns_name {
 #define DNS_NAMEATTR_READONLY		0x0002
 #define DNS_NAMEATTR_DYNAMIC		0x0004
 #define DNS_NAMEATTR_DYNOFFSETS		0x0008
+#define DNS_NAMEATTR_NOCOMPRESS		0x0010
 /*
  * Attributes below 0x0100 reserved for name.c usage.
  */

@@ -1,10 +1,10 @@
-/*	$NetBSD: builtin.c,v 1.1.1.2 2007/01/27 21:03:22 christos Exp $	*/
+/*	$NetBSD: builtin.c,v 1.1.1.2.12.1 2008/06/23 04:27:22 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: builtin.c,v 1.5.18.5 2005/08/23 04:12:38 marka Exp */
+/* Id: builtin.c,v 1.12 2007/06/19 23:46:59 tbox Exp */
 
 /*! \file
  * \brief

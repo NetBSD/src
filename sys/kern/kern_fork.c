@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.163.2.2 2008/05/14 01:35:12 wrstuden Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.163.2.3 2008/06/23 04:31:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,10 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.163.2.2 2008/05/14 01:35:12 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.163.2.3 2008/06/23 04:31:50 wrstuden Exp $");
 
 #include "opt_ktrace.h"
-#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +232,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		if (ratecheck(&lasttfm, &fork_tfmrate))
 			tablefull("proc", "increase kern.maxproc or NPROC");
 		if (forkfsleep)
-			(void)tsleep(&nprocs, PUSER, "forkmx", forkfsleep);
+			kpause("forkmx", false, forkfsleep, NULL);
 		return (EAGAIN);
 	}
 
@@ -246,7 +245,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		(void)chgproccnt(uid, -1);
 		atomic_dec_uint(&nprocs);
 		if (forkfsleep)
-			(void)tsleep(&nprocs, PUSER, "forkulim", forkfsleep);
+			kpause("forkulim", false, forkfsleep, NULL);
 		return (EAGAIN);
 	}
 
@@ -365,11 +364,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_limit = p1_lim;
 	}
 
-	p2->p_sflag = ((flags & FORK_PPWAIT) ? PS_PPWAIT : 0);
-	p2->p_lflag = 0;
+	p2->p_lflag = ((flags & FORK_PPWAIT) ? PL_PPWAIT : 0);
+	p2->p_sflag = 0;
 	p2->p_slflag = 0;
 	parent = (flags & FORK_NOWAIT) ? initproc : p1;
 	p2->p_pptr = parent;
+	p2->p_ppid = parent->p_pid;
 	LIST_INIT(&p2->p_children);
 
 	p2->p_aio = NULL;
@@ -429,8 +429,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Finish creating the child process.
 	 * It will return through a different path later.
 	 */
-	lwp_create(l1, p2, uaddr, inmem, 0, stack, stacksize,
-	    (func != NULL) ? func : child_return, arg, &l2,
+	lwp_create(l1, p2, uaddr, inmem, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
+	    stack, stacksize, (func != NULL) ? func : child_return, arg, &l2,
 	    l1->l_class);
 
 	/*
@@ -492,10 +492,19 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	tmp = (p2->p_userret != NULL ? LW_WUSERRET : 0);
 	mutex_enter(p2->p_lock);
 
+	/*
+	 * Start profiling.
+	 */
+	if ((p2->p_stflag & PST_PROFIL) != 0) {
+		mutex_spin_enter(&p2->p_stmutex);
+		startprofclock(p2);
+		mutex_spin_exit(&p2->p_stmutex);
+	}
+
 	getmicrotime(&p2->p_stats->p_start);
 	p2->p_acflag = AFORK;
+	lwp_lock(l2);
 	if (p2->p_sflag & PS_STOPFORK) {
-		lwp_lock(l2);
 		p2->p_nrlwps = 0;
 		p2->p_stat = SSTOP;
 		p2->p_waited = 0;
@@ -506,35 +515,23 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	} else {
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
-		lwp_lock(l2);
 		l2->l_stat = LSRUN;
 		l2->l_flag |= tmp;
 		sched_enqueue(l2, false);
 		lwp_unlock(l2);
 	}
 
-	mutex_exit(proc_lock);
-
-	/*
-	 * Start profiling.
-	 */
-	if ((p2->p_stflag & PST_PROFIL) != 0) {
-		mutex_spin_enter(&p2->p_stmutex);
-		startprofclock(p2);
-		mutex_spin_exit(&p2->p_stmutex);
-	}
-
+	mutex_exit(p2->p_lock);
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
-	 * child to exec or exit, set PS_PPWAIT on child, and sleep on our
+	 * child to exec or exit, set PL_PPWAIT on child, and sleep on our
 	 * proc (in case of exit).
 	 */
-	if (flags & FORK_PPWAIT)
-		while (p2->p_sflag & PS_PPWAIT)
-			cv_wait(&p1->p_waitcv, p2->p_lock);
+	while (p2->p_lflag & PL_PPWAIT)
+		cv_wait(&p1->p_waitcv, proc_lock);
 
-	mutex_exit(p2->p_lock);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Return child pid to parent process,

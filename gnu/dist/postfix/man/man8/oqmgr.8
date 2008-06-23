@@ -1,4 +1,4 @@
-.\"	$NetBSD: oqmgr.8,v 1.1.1.5 2007/05/19 16:27:52 heas Exp $
+.\"	$NetBSD: oqmgr.8,v 1.1.1.5.12.1 2008/06/23 04:29:08 wrstuden Exp $
 .\"
 .TH OQMGR 8 
 .ad
@@ -181,8 +181,10 @@ In the text below, \fItransport\fR is the first field in a
 .nf
 .ad
 .fi
+Available before Postfix version 2.5:
 .IP "\fBallow_min_user (no)\fR"
-Allow a recipient address to have `-' as the first character.
+Allow a sender or recipient address to have `-' as the first
+character.
 .SH "ACTIVE QUEUE CONTROLS"
 .na
 .nf
@@ -212,8 +214,34 @@ to the same destination.
 .IP "\fBdefault_destination_concurrency_limit (20)\fR"
 The default maximal number of parallel deliveries to the same
 destination.
-.IP \fItransport\fB_destination_concurrency_limit\fR
+.IP "\fItransport\fB_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
 Idem, for delivery via the named message \fItransport\fR.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fItransport\fB_initial_destination_concurrency ($initial_destination_concurrency)\fR"
+Initial concurrency for delivery via the named message
+\fItransport\fR.
+.IP "\fBdefault_destination_concurrency_failed_cohort_limit (1)\fR"
+How many pseudo-cohorts must suffer connection or handshake
+failure before a specific destination is considered unavailable
+(and further delivery is suspended).
+.IP "\fItransport\fB_destination_concurrency_failed_cohort_limit ($default_destination_concurrency_failed_cohort_limit)\fR"
+Idem, for delivery via the named message \fItransport\fR.
+.IP "\fBdefault_destination_concurrency_negative_feedback (1)\fR"
+The per-destination amount of delivery concurrency negative
+feedback, after a delivery completes with a connection or handshake
+failure.
+.IP "\fItransport\fB_destination_concurrency_negative_feedback ($default_destination_concurrency_negative_feedback)\fR"
+Idem, for delivery via the named message \fItransport\fR.
+.IP "\fBdefault_destination_concurrency_positive_feedback (1)\fR"
+The per-destination amount of delivery concurrency positive
+feedback, after a delivery completes without connection or handshake
+failure.
+.IP "\fItransport\fB_destination_concurrency_positive_feedback ($default_destination_concurrency_positive_feedback)\fR"
+Idem, for delivery via the named message \fItransport\fR.
+.IP "\fBdestination_concurrency_feedback_debug (no)\fR"
+Make the queue manager's feedback algorithm verbose for performance
+analysis purposes.
 .SH "RECIPIENT SCHEDULING CONTROLS"
 .na
 .nf
@@ -228,15 +256,17 @@ Idem, for delivery via the named message \fItransport\fR.
 .nf
 .ad
 .fi
-.IP "\fBminimal_backoff_time (version dependent)\fR"
-The minimal time between attempts to deliver a deferred message.
+.IP "\fBminimal_backoff_time (300s)\fR"
+The minimal time between attempts to deliver a deferred message;
+prior to Postfix 2.4 the default value was 1000s.
 .IP "\fBmaximal_backoff_time (4000s)\fR"
 The maximal time between attempts to deliver a deferred message.
 .IP "\fBmaximal_queue_lifetime (5d)\fR"
 The maximal time a message is queued before it is sent back as
 undeliverable.
-.IP "\fBqueue_run_delay (version dependent)\fR"
-The time between deferred queue scans by the queue manager.
+.IP "\fBqueue_run_delay (300s)\fR"
+The time between deferred queue scans by the queue manager;
+prior to Postfix 2.4 the default value was 1000s.
 .IP "\fBtransport_retry_time (60s)\fR"
 The time between attempts by the Postfix queue manager to contact
 a malfunctioning message delivery transport.
@@ -245,6 +275,14 @@ Available in Postfix version 2.1 and later:
 .IP "\fBbounce_queue_lifetime (5d)\fR"
 The maximal time a bounce message is queued before it is considered
 undeliverable.
+.PP
+Available in Postfix version 2.5 and later:
+.IP "\fBdefault_destination_rate_delay (0s)\fR"
+The default amount of delay that is inserted between individual
+deliveries to the same destination; with per-destination recipient
+limit > 1, a destination is a domain, otherwise it is a recipient.
+.IP "\fItransport\fB_destination_rate_delay $default_destination_rate_delay
+Idem, for delivery via the named message \fItransport\fR.
 .SH MISCELLANEOUS CONTROLS
 .ad
 .fi

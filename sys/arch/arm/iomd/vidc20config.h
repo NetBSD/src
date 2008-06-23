@@ -1,8 +1,7 @@
-/* $NetBSD: vidc20config.h,v 1.6 2008/04/28 20:23:14 martin Exp $ */
+/* $NetBSD: vidc20config.h,v 1.6.2.1 2008/06/23 04:30:10 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
- * Copyright (c) 2001 Reinoud Zandijk
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.h,v 1.1.1.5 2007/05/19 16:28:24 heas Exp $	*/
+/*	$NetBSD: qmgr.h,v 1.1.1.5.12.1 2008/06/23 04:29:19 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -40,6 +40,7 @@ typedef struct QMGR_TRANSPORT_LIST QMGR_TRANSPORT_LIST;
 typedef struct QMGR_QUEUE_LIST QMGR_QUEUE_LIST;
 typedef struct QMGR_ENTRY_LIST QMGR_ENTRY_LIST;
 typedef struct QMGR_SCAN QMGR_SCAN;
+typedef struct QMGR_FEEDBACK QMGR_FEEDBACK;
 
  /*
   * Hairy macros to update doubly-linked lists.
@@ -104,6 +105,42 @@ extern struct HTABLE *qmgr_transport_byname;	/* transport by name */
 extern QMGR_TRANSPORT_LIST qmgr_transport_list;	/* transports, round robin */
 
  /*
+  * Delivery agents provide feedback, as hints that Postfix should expend
+  * more or fewer resources on a specific destination domain. The main.cf
+  * file specifies how feedback affects delivery concurrency: add/subtract a
+  * constant, a ratio of constants, or a constant divided by the delivery
+  * concurrency; and it specifies how much feedback must accumulate between
+  * concurrency updates.
+  */
+struct QMGR_FEEDBACK {
+    int     hysteresis;			/* to pass, need to be this tall */
+    double  base;			/* pre-computed from main.cf */
+    int     index;			/* none, window, sqrt(window) */
+};
+
+#define QMGR_FEEDBACK_IDX_NONE		0	/* no window dependence */
+#define QMGR_FEEDBACK_IDX_WIN		1	/* 1/window dependence */
+#if 0
+#define QMGR_FEEDBACK_IDX_SQRT_WIN	2	/* 1/sqrt(window) dependence */
+#endif
+
+#ifdef QMGR_FEEDBACK_IDX_SQRT_WIN
+#include <math.h>
+#endif
+
+extern void qmgr_feedback_init(QMGR_FEEDBACK *, const char *, const char *, const char *, const char *);
+
+#ifndef QMGR_FEEDBACK_IDX_SQRT_WIN
+#define QMGR_FEEDBACK_VAL(fb, win) \
+    ((fb).index == QMGR_FEEDBACK_IDX_NONE ? (fb).base : (fb).base / (win))
+#else
+#define QMGR_FEEDBACK_VAL(fb, win) \
+    ((fb).index == QMGR_FEEDBACK_IDX_NONE ? (fb).base : \
+    (fb).index == QMGR_FEEDBACK_IDX_WIN ? (fb).base / (win) : \
+    (fb).base / sqrt(win))
+#endif
+
+ /*
   * Each transport (local, smtp-out, bounce) can have one queue per next hop
   * name. Queues are looked up by next hop name (when we have resolved a
   * message destination), or round-robin wise (when we want to deliver
@@ -125,6 +162,10 @@ struct QMGR_TRANSPORT {
     QMGR_QUEUE_LIST queue_list;		/* queues, round robin order */
     QMGR_TRANSPORT_LIST peers;		/* linkage */
     DSN    *dsn;			/* why unavailable */
+    QMGR_FEEDBACK pos_feedback;		/* positive feedback control */
+    QMGR_FEEDBACK neg_feedback;		/* negative feedback control */
+    int     fail_cohort_limit;		/* flow shutdown control */
+    int     rate_delay;			/* suspend per delivery */
 };
 
 #define QMGR_TRANSPORT_STAT_DEAD	(1<<1)
@@ -161,6 +202,9 @@ struct QMGR_QUEUE {
     int     todo_refcount;		/* queue entries (todo list) */
     int     busy_refcount;		/* queue entries (busy list) */
     int     window;			/* slow open algorithm */
+    double  success;			/* accumulated positive feedback */
+    double  failure;			/* accumulated negative feedback */
+    double  fail_cohorts;		/* pseudo-cohort failure count */
     QMGR_TRANSPORT *transport;		/* transport linkage */
     QMGR_ENTRY_LIST todo;		/* todo queue entries */
     QMGR_ENTRY_LIST busy;		/* messages on the wire */
@@ -180,8 +224,36 @@ extern void qmgr_queue_done(QMGR_QUEUE *);
 extern void qmgr_queue_throttle(QMGR_QUEUE *, DSN *);
 extern void qmgr_queue_unthrottle(QMGR_QUEUE *);
 extern QMGR_QUEUE *qmgr_queue_find(QMGR_TRANSPORT *, const char *);
+extern void qmgr_queue_suspend(QMGR_QUEUE *, int);
 
-#define QMGR_QUEUE_THROTTLED(q) ((q)->window <= 0)
+ /*
+  * Exclusive queue states. Originally there were only two: "throttled" and
+  * "not throttled". It was natural to encode these in the queue window size.
+  * After 10 years it's not practical to rip out all the working code and
+  * change representations, so we just clean up the names a little.
+  * 
+  * Note: only the "ready" state can reach every state (including itself);
+  * non-ready states can reach only the "ready" state. Other transitions are
+  * forbidden, because they would result in dangling event handlers.
+  */
+#define QMGR_QUEUE_STAT_THROTTLED	0	/* back-off timer */
+#define QMGR_QUEUE_STAT_SUSPENDED	-1	/* voluntary delay timer */
+#define QMGR_QUEUE_STAT_SAVED		-2	/* delayed cleanup timer */
+#define QMGR_QUEUE_STAT_BAD		-3	/* can't happen */
+
+#define QMGR_QUEUE_READY(q)	((q)->window > 0)
+#define QMGR_QUEUE_THROTTLED(q)	((q)->window == QMGR_QUEUE_STAT_THROTTLED)
+#define QMGR_QUEUE_SUSPENDED(q)	((q)->window == QMGR_QUEUE_STAT_SUSPENDED)
+#define QMGR_QUEUE_SAVED(q)	((q)->window == QMGR_QUEUE_STAT_SAVED)
+#define QMGR_QUEUE_BAD(q)	((q)->window <= QMGR_QUEUE_STAT_BAD)
+
+#define QMGR_QUEUE_STATUS(q) ( \
+	    QMGR_QUEUE_READY(q) ? "ready" : \
+	    QMGR_QUEUE_THROTTLED(q) ? "throttled" : \
+	    QMGR_QUEUE_SUSPENDED(q) ? "suspended" : \
+	    QMGR_QUEUE_SAVED(q) ? "saved" : \
+	    "invalid queue status" \
+	)
 
  /*
   * Structure of one next-hop queue entry. In order to save some copying
@@ -237,6 +309,7 @@ struct QMGR_MESSAGE {
     long    rcpt_offset;		/* more recipients here */
     char   *client_name;		/* client hostname */
     char   *client_addr;		/* client address */
+    char   *client_port;		/* client port */
     char   *client_proto;		/* client protocol */
     char   *client_helo;		/* helo parameter */
     char   *sasl_method;		/* SASL method */

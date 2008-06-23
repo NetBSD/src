@@ -1,10 +1,10 @@
-/*	$NetBSD: log.c,v 1.1.1.4 2007/01/27 21:03:25 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.4.12.1 2008/06/23 04:27:22 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.c,v 1.37.18.6 2006/06/09 00:54:08 marka Exp */
+/* Id: log.c,v 1.46 2007/06/19 23:46:59 tbox Exp */
 
 /*! \file */
 
@@ -35,7 +35,7 @@
 
 /*%
  * When adding a new category, be sure to add the appropriate
- * #define to <named/log.h> and to update the list in
+ * \#define to <named/log.h> and to update the list in
  * bin/check/check-tool.c.
  */
 static isc_logcategory_t categories[] = {
@@ -51,7 +51,7 @@ static isc_logcategory_t categories[] = {
 
 /*%
  * When adding a new module, be sure to add the appropriate
- * #define to <dns/log.h>.
+ * \#define to <dns/log.h>.
  */
 static isc_logmodule_t modules[] = {
 	{ "main",	 		0 },

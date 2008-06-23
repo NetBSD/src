@@ -47,7 +47,7 @@ DEFINE_TEST(test_option_ell)
 	assertEqualInt(0, stat("f", &st));
 
 	/* Copy the file to the "copy" dir. */
-	r = systemf("echo f | %s -pd --quiet copy >copy.out 2>copy.err",
+	r = systemf("echo f | %s -pd copy >copy.out 2>copy.err",
 	    testprog);
 	assertEqualInt(r, 0);
 
@@ -56,7 +56,7 @@ DEFINE_TEST(test_option_ell)
 	assert(st2.st_ino != st.st_ino);
 
 	/* Copy the file to the "link" dir with the -l option. */
-	r = systemf("echo f | %s -pld --quiet link >link.out 2>link.err",
+	r = systemf("echo f | %s -pld link >link.out 2>link.err",
 	    testprog);
 	assertEqualInt(r, 0);
 

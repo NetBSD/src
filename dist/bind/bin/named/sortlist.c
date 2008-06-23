@@ -1,10 +1,10 @@
-/*	$NetBSD: sortlist.c,v 1.1.1.4 2007/01/27 21:03:35 christos Exp $	*/
+/*	$NetBSD: sortlist.c,v 1.1.1.4.12.1 2008/06/23 04:27:23 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sortlist.c,v 1.9.18.4 2006/03/02 00:37:21 marka Exp */
+/* Id: sortlist.c,v 1.17 2007/09/14 01:46:05 marka Exp */
 
 /*! \file */
 
@@ -53,15 +53,19 @@ ns_sortlist_setup(dns_acl_t *acl, isc_netaddr_t *clientaddr,
 		const dns_aclelement_t *matched_elt = NULL;
 
 		if (e->type == dns_aclelementtype_nestedacl) {
-			dns_acl_t *inner = e->u.nestedacl;
+			dns_acl_t *inner = e->nestedacl;
 
-			if (inner->length < 1 || inner->length > 2)
+			if (inner->length == 0)
+				try_elt = e;
+			else if (inner->length > 2)
 				goto dont_sort;
-			if (inner->elements[0].negative)
+			else if (inner->elements[0].negative)
 				goto dont_sort;
-			try_elt = &inner->elements[0];
-			if (inner->length == 2)
-				order_elt = &inner->elements[1];
+			else {
+				try_elt = &inner->elements[0];
+				if (inner->length == 2)
+					order_elt = &inner->elements[1];
+			}
 		} else {
 			/*
 			 * BIND 8 allows bare elements at the top level
@@ -76,7 +80,7 @@ ns_sortlist_setup(dns_acl_t *acl, isc_netaddr_t *clientaddr,
 			if (order_elt != NULL) {
 				if (order_elt->type ==
 				    dns_aclelementtype_nestedacl) {
-					*argp = order_elt->u.nestedacl;
+					*argp = order_elt->nestedacl;
 					return (NS_SORTLISTTYPE_2ELEMENT);
 				} else if (order_elt->type ==
 					   dns_aclelementtype_localhost &&

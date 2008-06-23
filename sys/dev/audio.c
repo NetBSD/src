@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.239 2008/04/24 15:35:27 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.239.4.1 2008/06/23 04:30:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.239 2008/04/24 15:35:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.239.4.1 2008/06/23 04:30:57 wrstuden Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1005,7 +1005,7 @@ audioopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -1043,7 +1043,7 @@ audioclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 
 	device_active(sc->dev, DVA_SYSTEM);
 
@@ -1074,7 +1074,7 @@ audioread(dev_t dev, struct uio *uio, int ioflag)
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -1106,7 +1106,7 @@ audiowrite(dev_t dev, struct uio *uio, int ioflag)
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -1138,7 +1138,7 @@ audioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct audio_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc->sc_dying)
 		return EIO;
 
@@ -1168,7 +1168,7 @@ audiopoll(dev_t dev, int events, struct lwp *l)
 	struct audio_softc *sc;
 	int revents;
 
- 	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+ 	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc->sc_dying)
 		return POLLHUP;
 
@@ -1197,7 +1197,7 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	struct audio_softc *sc;
 	int rv;
 
-	sc = audio_cd.cd_devs[AUDIOUNIT(dev)];
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc->sc_dying)
 		return 1;
 
@@ -1225,7 +1225,7 @@ audiommap(dev_t dev, off_t off, int prot)
 	struct audio_softc *sc;
 	paddr_t error;
 
-	sc = device_private(device_lookup(&audio_cd, AUDIOUNIT(dev)));
+	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc->sc_dying)
 		return -1;
 
@@ -1284,7 +1284,6 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 	rp->stamp_last = 0;
 	rp->fstamp = 0;
 	rp->drops = 0;
-	rp->pause = false;
 	rp->copying = false;
 	rp->needfill = false;
 	rp->mmapped = false;
@@ -1702,7 +1701,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
 		while ((used = audio_stream_get_used(sc->sc_rustream)) <= 0) {
-			if (!sc->sc_rbus) {
+			if (!sc->sc_rbus && !sc->sc_rr.pause) {
 				error = audiostartr(sc);
 				if (error) {
 					splx(s);
@@ -1759,11 +1758,13 @@ audio_clear(struct audio_softc *sc)
 		audio_wakeup(&sc->sc_rchan);
 		sc->hw_if->halt_input(sc->hw_hdl);
 		sc->sc_rbus = false;
+		sc->sc_rr.pause = false;
 	}
 	if (sc->sc_pbus) {
 		audio_wakeup(&sc->sc_wchan);
 		sc->hw_if->halt_output(sc->hw_hdl);
 		sc->sc_pbus = false;
+		sc->sc_pr.pause = false;
 	}
 	splx(s);
 }
@@ -2313,7 +2314,8 @@ audio_poll(struct audio_softc *sc, int events, struct lwp *l)
 		 * mark.
 		 */
 		if ((!sc->sc_full_duplex && (sc->sc_mode & AUMODE_RECORD)) ||
-		    used <= sc->sc_pr.usedlow)
+		    (!(sc->sc_mode & AUMODE_PLAY_ALL) && sc->sc_playdrop > 0) ||
+		    (used <= sc->sc_pr.usedlow))
 			revents |= events & (POLLOUT | POLLWRNORM);
 	}
 
@@ -2468,13 +2470,13 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 					   cb->s.bufsize);
 			s = splaudio();
 			sc->sc_pustream = &cb->s;
-			if (!sc->sc_pbus)
+			if (!sc->sc_pbus && !sc->sc_pr.pause)
 				(void)audiostartp(sc);
 			splx(s);
 		} else {
 			s = splaudio();
 			sc->sc_rustream = &cb->s;
-			if (!sc->sc_rbus)
+			if (!sc->sc_rbus && !sc->sc_rr.pause)
 				(void)audiostartr(sc);
 			splx(s);
 		}
@@ -2960,10 +2962,12 @@ audio_set_defaults(struct audio_softc *sc, u_int mode)
 	ai.record.encoding    = sc->sc_rparams.encoding;
 	ai.record.channels    = sc->sc_rparams.channels;
 	ai.record.precision   = sc->sc_rparams.precision;
+	ai.record.pause	      = false;
 	ai.play.sample_rate   = sc->sc_pparams.sample_rate;
 	ai.play.encoding      = sc->sc_pparams.encoding;
 	ai.play.channels      = sc->sc_pparams.channels;
 	ai.play.precision     = sc->sc_pparams.precision;
+	ai.play.pause         = false;
 	ai.mode		      = mode;
 
 	return audiosetinfo(sc, &ai);
@@ -4050,9 +4054,9 @@ audio_resume(device_t dv PMF_FN_ARGS)
 	if (sc->sc_lastinfovalid)
 		audiosetinfo(sc, &sc->sc_lastinfo);
 	audio_mixer_restore(sc);
-	if (sc->sc_pbus == true)
+	if ((sc->sc_pbus == true) && !sc->sc_pr.pause)
 		audiostartp(sc);
-	if (sc->sc_rbus == true)
+	if ((sc->sc_rbus == true) && !sc->sc_rr.pause)
 		audiostartr(sc);
 	splx(s);
 
@@ -4063,34 +4067,51 @@ static void
 audio_volume_down(device_t dv)
 {
 	struct audio_softc *sc = device_private(dv);
-	u_int gain, newgain;
+	mixer_devinfo_t mi;
+	int newgain;
+	u_int gain;
 	u_char balance;
 	int s;
 
-	s = splaudio();
-	au_get_gain(sc, &sc->sc_outports, &gain, &balance);
-	newgain = gain - 32;
-	if (newgain > 255)
-		newgain = 0;
-	au_set_gain(sc, &sc->sc_outports, newgain, balance);
-	splx(s);
+	if (sc->sc_outports.index == -1 && sc->sc_outports.master != -1) {
+		mi.index = sc->sc_outports.master;
+		mi.un.v.delta = 0;
+		if (sc->hw_if->query_devinfo(sc->hw_hdl, &mi) != 0)
+			return;
+
+		s = splaudio();
+		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+		newgain = gain - mi.un.v.delta;
+		if (newgain < AUDIO_MIN_GAIN)
+			newgain = AUDIO_MIN_GAIN;
+		au_set_gain(sc, &sc->sc_outports, newgain, balance);
+		splx(s);
+	}
 }
 
 static void
 audio_volume_up(device_t dv)
 {
 	struct audio_softc *sc = device_private(dv);
+	mixer_devinfo_t mi;
 	u_int gain, newgain;
 	u_char balance;
 	int s;
 
-	s = splaudio();
-	au_get_gain(sc, &sc->sc_outports, &gain, &balance);
-	newgain = gain + 32;
-	if (newgain > 255)
-		newgain = 255;
-	au_set_gain(sc, &sc->sc_outports, newgain, balance);
-	splx(s);
+	if (sc->sc_outports.index == -1 && sc->sc_outports.master != -1) {
+		mi.index = sc->sc_outports.master;
+		mi.un.v.delta = 0;
+		if (sc->hw_if->query_devinfo(sc->hw_hdl, &mi) != 0)
+			return;
+
+		s = splaudio();
+		au_get_gain(sc, &sc->sc_outports, &gain, &balance);
+		newgain = gain + mi.un.v.delta;
+		if (newgain > AUDIO_MAX_GAIN)
+			newgain = AUDIO_MAX_GAIN;
+		au_set_gain(sc, &sc->sc_outports, newgain, balance);
+		splx(s);
+	}
 }
 
 static void

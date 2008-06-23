@@ -1,10 +1,10 @@
-/*	$NetBSD: tsigconf.c,v 1.1.1.4 2007/01/27 21:03:35 christos Exp $	*/
+/*	$NetBSD: tsigconf.c,v 1.1.1.4.12.1 2008/06/23 04:27:23 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tsigconf.c,v 1.22.18.6 2006/02/28 03:10:47 marka Exp */
+/* Id: tsigconf.c,v 1.30 2007/06/19 23:46:59 tbox Exp */
 
 /*! \file */
 

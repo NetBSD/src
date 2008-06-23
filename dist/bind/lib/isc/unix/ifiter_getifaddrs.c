@@ -1,10 +1,10 @@
-/*	$NetBSD: ifiter_getifaddrs.c,v 1.1.1.2 2007/01/27 21:07:58 christos Exp $	*/
+/*	$NetBSD: ifiter_getifaddrs.c,v 1.1.1.2.12.1 2008/06/23 04:28:31 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ifiter_getifaddrs.c,v 1.4.18.2 2005/04/29 00:17:08 marka Exp */
+/* Id: ifiter_getifaddrs.c,v 1.9 2007/06/18 23:47:48 tbox Exp */
 
 /*! \file
  * \brief
@@ -113,7 +113,9 @@ internal_current(isc_interfaceiter_t *iter) {
 
 	INSIST(ifa != NULL);
 	INSIST(ifa->ifa_name != NULL);
-	INSIST(ifa->ifa_addr != NULL);
+
+	if (ifa->ifa_addr == NULL)
+		return (ISC_R_IGNORE);
 
 	family = ifa->ifa_addr->sa_family;
 	if (family != AF_INET && family != AF_INET6)

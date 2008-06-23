@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.14 2007/08/06 03:04:08 macallan Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.14.28.1 2008/06/23 04:31:30 wrstuden Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.14 2007/08/06 03:04:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.14.28.1 2008/06/23 04:31:30 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -255,6 +255,77 @@ const keysym_t wssun_keydesctab_uk[] = {
     KC(0x7c),		KS_backslash,	KS_bar,
 };
 
+static const keysym_t wssun_keydesctab_us_dvorak[] = {
+/*  pos      command			normal		shifted */
+    KC(0x28),				KS_bracketleft,	KS_braceleft,
+    KC(0x29),				KS_bracketright,KS_braceright,
+    KC(0x36),				KS_apostrophe,	KS_quotedbl,
+    KC(0x37),				KS_comma,	KS_less,
+    KC(0x38),				KS_period,	KS_greater,
+    KC(0x39),				KS_p,
+    KC(0x3a),				KS_y,
+    KC(0x3b),				KS_f,
+    KC(0x3c),				KS_g,
+    KC(0x3d),				KS_c,
+    KC(0x3e),				KS_r,
+    KC(0x3f),				KS_l,
+    KC(0x40),				KS_slash,	KS_question,
+    KC(0x41),				KS_equal,	KS_plus,
+    KC(0x4d), KS_Cmd_Debugger,		KS_a,
+    KC(0x4e),				KS_o,
+    KC(0x4f),				KS_e,
+    KC(0x50),				KS_u,
+    KC(0x51),				KS_i,
+    KC(0x52),				KS_d,
+    KC(0x53),				KS_h,
+    KC(0x54),				KS_t,
+    KC(0x55),				KS_n,
+    KC(0x56),				KS_s,
+    KC(0x57),				KS_minus,	KS_underscore,
+    KC(0x64),				KS_semicolon,	KS_colon,
+    KC(0x65),				KS_q,
+    KC(0x66),				KS_j,
+    KC(0x67),				KS_k,
+    KC(0x68),				KS_x,
+    KC(0x69),				KS_b,
+    KC(0x6a),				KS_m,
+    KC(0x6b),				KS_w,
+    KC(0x6c),				KS_v,
+    KC(0x6d),				KS_z,
+};
+
+static const keysym_t wssun_keydesctab_us_colemak [] = {
+/*  pos      command			normal		shifted */
+    KC(0x36),				KS_q,
+    KC(0x37),				KS_w,
+    KC(0x38),				KS_f,
+    KC(0x39),				KS_p,
+    KC(0x3a),				KS_g,
+    KC(0x3b),				KS_j,
+    KC(0x3c),				KS_l,
+    KC(0x3d),				KS_u,
+    KC(0x3e),				KS_y,
+    KC(0x3f),				KS_semicolon,	KS_colon,
+    KC(0x4d), KS_Cmd_Debugger,		KS_a,
+    KC(0x4e),				KS_r,
+    KC(0x4f),				KS_s,
+    KC(0x50),				KS_t,
+    KC(0x51),				KS_d,
+    KC(0x52),				KS_h,
+    KC(0x53),				KS_n,
+    KC(0x54),				KS_e,
+    KC(0x55),				KS_i,
+    KC(0x56),				KS_o,
+    KC(0x64),				KS_z,
+    KC(0x65),				KS_x,
+    KC(0x66),				KS_c,
+    KC(0x67),				KS_v,
+    KC(0x68),				KS_b,
+    KC(0x69),				KS_k,
+    KC(0x6a),				KS_m,
+    KC(0x77),				KS_Delete,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 /* KBD_NULLMAP generates a entry for machine native variant.
@@ -268,5 +339,7 @@ const struct wscons_keydesc wssun_keydesctab[] = {
 	KBD_MAP(KB_DE,			KB_US,	wssun_keydesctab_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	wssun_keydesctab_de_nodead),
 	KBD_MAP(KB_UK,			KB_US,	wssun_keydesctab_uk),
+	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	wssun_keydesctab_us_dvorak),
+	KBD_MAP(KB_US | KB_COLEMAK,	KB_US,	wssun_keydesctab_us_colemak),
 	{ 0, 0, 0, 0 }
 };

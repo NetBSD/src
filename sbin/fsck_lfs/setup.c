@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.35 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: setup.c,v 1.35.2.1 2008/06/23 04:29:57 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ setup(const char *dev)
 		while (tdaddr < idaddr) {
 			bread(fs->lfs_devvp, fsbtodb(fs, tdaddr),
 			      fs->lfs_sumsize,
-			      NULL, &bp);
+			      NULL, 0, &bp);
 			sp = (SEGSUM *)bp->b_data;
 			if (sp->ss_sumsum != cksum(&sp->ss_datasum,
 						   fs->lfs_sumsize -
@@ -416,7 +416,7 @@ setup(const char *dev)
 	if (debug)
 		pwarn("maxino    = %llu\n", (unsigned long long)maxino);
 	for (i = 0; i < VTOI(ivp)->i_ffs1_size; i += fs->lfs_bsize) {
-		bread(ivp, i >> fs->lfs_bshift, fs->lfs_bsize, NOCRED, &bp);
+		bread(ivp, i >> fs->lfs_bshift, fs->lfs_bsize, NOCRED, 0, &bp);
 		/* XXX check B_ERROR */
 		brelse(bp, 0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.75 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.75.2.1 2008/06/23 04:31:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.75 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.75.2.1 2008/06/23 04:31:57 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,12 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.75 2008/05/05 17:11:17 ad Exp $");
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 
 #include <miscfs/nullfs/null.h>
 #include <miscfs/genfs/layer_extern.h>
+
+MODULE(MODULE_CLASS_VFS, nullfs, NULL);
 
 VFS_PROTOS(nullfs);
 
@@ -304,4 +307,17 @@ struct vfsops nullfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(nullfs_vfsops);
+
+static int
+nullfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&nullfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&nullfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

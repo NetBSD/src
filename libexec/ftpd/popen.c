@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.32 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: popen.c,v 1.32.2.1 2008/06/23 04:29:54 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: popen.c,v 1.32 2008/04/28 20:23:03 martin Exp $");
+__RCSID("$NetBSD: popen.c,v 1.32.2.1 2008/06/23 04:29:54 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ ftpd_popen(char *argv[], const char *ptype, int stderrfd)
 	if (!pids) {
 		if ((fds = getdtablesize()) <= 0)
 			return (NULL);
-		if ((pids = (int *)malloc((u_int)(fds * sizeof(int)))) == NULL)
+		if ((pids = (int *)malloc((unsigned int)(fds * sizeof(int)))) == NULL)
 			return (NULL);
 		memset(pids, 0, fds * sizeof(int));
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.78 2008/02/29 14:42:33 jmmv Exp $
+#	$NetBSD: GENERIC,v 1.78.6.1 2008/06/23 04:30:40 wrstuden Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.78 $"
+#ident		"GENERIC-$Revision: 1.78.6.1 $"
 
 # estimated number of users
 maxusers	32
@@ -118,6 +118,7 @@ options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_LINUX	# Linux compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

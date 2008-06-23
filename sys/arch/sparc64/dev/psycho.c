@@ -1,8 +1,33 @@
-/*	$NetBSD: psycho.c,v 1.85 2008/04/05 13:40:05 cegger Exp $	*/
+/*	$NetBSD: psycho.c,v 1.85.6.1 2008/06/23 04:30:43 wrstuden Exp $	*/
+
+/*
+ * Copyright (c) 1999, 2000 Matthew R. Green
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
- * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.85 2008/04/05 13:40:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.85.6.1 2008/06/23 04:30:43 wrstuden Exp $");
 
 #include "opt_ddb.h"
 
@@ -386,8 +411,7 @@ found:
 	 */
 	for (n = 0; n < psycho_cd.cd_ndevs; n++) {
 
-		struct psycho_softc *asc =
-			(struct psycho_softc *)psycho_cd.cd_devs[n];
+		struct psycho_softc *asc = device_lookup_private(&psycho_cd, n);
 
 		if (asc == NULL || asc == sc)
 			/* This entry is not there or it is me */
@@ -672,7 +696,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 	ih->ih_fun = handler;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
-	intr_establish(ipl, ih);
+	intr_establish(ipl, ipl != IPL_VM, ih);
 	*(ih->ih_map) |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
 }
 
@@ -1298,7 +1322,7 @@ found:
 	    "; installing handler %p arg %p with ino %u pil %u\n",
 	    handler, arg, (u_int)ino, (u_int)ih->ih_pil));
 
-	intr_establish(ih->ih_pil, ih);
+	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
 	/*
 	 * Enable the interrupt now we have the handler installed.

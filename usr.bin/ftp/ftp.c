@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.155 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: ftp.c,v 1.155.2.1 2008/06/23 04:32:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.155 2008/04/28 20:24:13 martin Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.155.2.1 2008/06/23 04:32:11 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -1265,23 +1265,33 @@ initconn(void)
 			break;
 #ifdef INET6
 		case AF_INET6:
-			pasvcmd = "EPSV";
-			overbose = verbose;
-			if (ftp_debug == 0)
-				verbose = -1;
-			result = command("EPSV");
-			verbose = overbose;
-			if (verbose > 0 &&
-			    (result == COMPLETE || !connected))
-				fprintf(ttyout, "%s\n", reply_string);
-			if (!connected)
-				return (1);
-			/* this code is to be friendly with broken BSDI ftpd */
-			if (code / 10 == 22 && code != 229) {
-				fputs(
-"wrong server: return code must be 229\n",
-					ttyout);
-				result = COMPLETE + 1;
+			if (epsv6 && !epsv6bad) {
+				pasvcmd = "EPSV";
+				overbose = verbose;
+				if (ftp_debug == 0)
+					verbose = -1;
+				result = command("EPSV");
+				verbose = overbose;
+				if (verbose > 0 &&
+				    (result == COMPLETE || !connected))
+					fprintf(ttyout, "%s\n", reply_string);
+				if (!connected)
+					return (1);
+				/*
+				 * this code is to be friendly with
+				 * broken BSDI ftpd
+				 */
+				if (code / 10 == 22 && code != 229) {
+					fputs(
+						"wrong server: return code must be 229\n",
+						ttyout);
+					result = COMPLETE + 1;
+				}
+				if (result != COMPLETE) {
+					epsv6bad = 1;
+					DPRINTF("disabling epsv6 for this "
+					    "connection\n");
+				}
 			}
 			if (result != COMPLETE) {
 				pasvcmd = "LPSV";
@@ -1532,6 +1542,10 @@ initconn(void)
 			/* FALLTHROUGH */
 #ifdef INET6
 		case AF_INET6:
+			if (!epsv6 || epsv6bad) {
+				result = COMPLETE + 1;
+				break;
+			}
 #endif
 			af = (data_addr.su_family == AF_INET) ? 1 : 2;
 			tmp = data_addr;

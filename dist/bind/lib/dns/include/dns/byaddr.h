@@ -1,10 +1,10 @@
-/*	$NetBSD: byaddr.h,v 1.1.1.4 2007/01/27 21:07:32 christos Exp $	*/
+/*	$NetBSD: byaddr.h,v 1.1.1.4.12.1 2008/06/23 04:28:15 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: byaddr.h,v 1.16.18.2 2005/04/29 00:16:09 marka Exp */
+/* Id: byaddr.h,v 1.22 2007/06/19 23:47:16 tbox Exp */
 
 #ifndef DNS_BYADDR_H
 #define DNS_BYADDR_H 1
@@ -26,7 +26,7 @@
  ***** Module Info
  *****/
 
-/*! \file
+/*! \file dns/byaddr.h
  * \brief
  * The byaddr module provides reverse lookup services for IPv4 and IPv6
  * addresses.
@@ -123,8 +123,8 @@ dns_byaddr_cancel(dns_byaddr_t *byaddr);
  *
  * Notes:
  *
- *\li	If 'byaddr' has not completed, post its #BYADDRDONE event with a
- *	result code of #ISC_R_CANCELED.
+ *\li	If 'byaddr' has not completed, post its #DNS_EVENT_BYADDRDONE
+ *	event with a result code of #ISC_R_CANCELED.
  *
  * Requires:
  *
@@ -140,8 +140,8 @@ dns_byaddr_destroy(dns_byaddr_t **byaddrp);
  *
  *\li	'*byaddrp' is a valid byaddr.
  *
- *\li	The caller has received the BYADDRDONE event (either because the
- *	byaddr completed or because dns_byaddr_cancel() was called).
+ *\li	The caller has received the #DNS_EVENT_BYADDRDONE event (either because
+ *	the byaddr completed or because dns_byaddr_cancel() was called).
  *
  * Ensures:
  *

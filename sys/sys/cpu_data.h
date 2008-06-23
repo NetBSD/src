@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.24 2008/05/06 18:40:57 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.24.2.1 2008/06/23 04:32:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -84,14 +84,18 @@ struct cpu_data {
 	u_int		cpu_lkdebug_recurse;	/* LOCKDEBUG recursion */
 	u_int		cpu_softints;		/* pending (slow) softints */
 	u_int		cpu_nsyscall;		/* syscall counter */
+	u_int		cpu_ntrap;		/* trap counter */
 	u_int		cpu_nswtch;		/* context switch counter */
+	void		*cpu_uvm;		/* uvm per-cpu data */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
 	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
 	struct selcpu	*cpu_selcpu;		/* per-CPU select() info */
-	void		*cpu_cachelock;		/* per-cpu vfs_cache lock */
+	void		*cpu_nch;		/* per-cpu vfs_cache data */
 	_TAILQ_HEAD(,struct lockdebug,volatile) cpu_ld_locks;/* !: lockdebug */
 	__cpu_simple_lock_t cpu_ld_lock;	/* lockdebug */
+	uint64_t	cpu_cc_freq;		/* cycle counter frequency */
+	int64_t		cpu_cc_skew;		/* counter skew vs cpu0 */
 };
 
 /* compat definitions */

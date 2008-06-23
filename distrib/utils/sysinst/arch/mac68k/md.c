@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.51 2008/01/28 02:47:15 rumble Exp $ */
+/*	$NetBSD: md.c,v 1.51.10.1 2008/06/23 04:29:00 wrstuden Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -498,7 +498,13 @@ sortmerge(void)
     for (i=0,j=0;i<map.in_use_cnt;i++) {
         map.blk[i].pmSig = APPLE_PART_MAP_ENTRY_MAGIC;
         map.blk[i].pmMapBlkCnt = map.in_use_cnt;
-        if (whichType(&map.blk[i]) && (j < MAXPARTITIONS)) {
+	/*
+	 * Since MAXPARTITIONS == 8 for mac68k, and we do not display
+	 * the c partition, we only need 7 partition slots on the screen.
+	 * If/when MAXPARTITIONS is changed, the "Edit Disk Partition Map"
+	 * needs to be a scrollable view of the partition table.
+	 */
+        if (whichType(&map.blk[i]) && (j < MAXPARTITIONS - 1)) {
 		map.mblk[j++] = i;
 		map.usable_cnt += 1;
 	}

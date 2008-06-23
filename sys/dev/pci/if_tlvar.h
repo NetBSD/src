@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.12 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.12.76.1 2008/06/23 04:31:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@ struct tl_product_desc {
 };
 
 struct tl_softc {
-	struct device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	bus_space_tag_t tl_bustag;
 	bus_space_handle_t tl_bushandle; /* CSR region handle */
 	bus_dma_tag_t tl_dmatag;

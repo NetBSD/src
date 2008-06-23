@@ -1,10 +1,10 @@
-/*	$NetBSD: tkeyconf.c,v 1.1.1.5 2007/01/27 21:03:35 christos Exp $	*/
+/*	$NetBSD: tkeyconf.c,v 1.1.1.5.12.1 2008/06/23 04:27:23 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tkeyconf.c,v 1.20.18.6 2006/03/02 00:37:21 marka Exp */
+/* Id: tkeyconf.c,v 1.29 2007/06/19 23:46:59 tbox Exp */
 
 /*! \file */
 
@@ -44,6 +44,13 @@
 		goto failure; \
 	} while (0)
 
+#include<named/log.h>
+#define LOG(msg) \
+	isc_log_write(ns_g_lctx, \
+	NS_LOGCATEGORY_GENERAL, \
+	NS_LOGMODULE_SERVER, \
+	ISC_LOG_ERROR, \
+	"%s", msg)
 
 isc_result_t
 ns_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
@@ -102,6 +109,7 @@ ns_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
 	result = cfg_map_get(options, "tkey-gssapi-credential", &obj);
 	if (result == ISC_R_SUCCESS) {
 		s = cfg_obj_asstring(obj);
+
 		isc_buffer_init(&b, s, strlen(s));
 		isc_buffer_add(&b, strlen(s));
 		dns_fixedname_init(&fname);

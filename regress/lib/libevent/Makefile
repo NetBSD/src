@@ -1,12 +1,15 @@
-#       $NetBSD: Makefile,v 1.3 2003/06/13 18:53:00 provos Exp $
+#       $NetBSD: Makefile,v 1.3.32.1 2008/06/23 04:29:56 wrstuden Exp $
 
-NOMAN=		# defined
+NOMAN=	# defined
 
-PROG=		eventtest
-DPADD+=		${LIBEVENT}
-LDADD+=		-levent
+CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../../lib/libevent
 
-.PATH:		${.CURDIR}/..
+SRCS=	regress.c regress.gen.c regress_dns.c regress_http.c regress_rpc.c
+PROG=	eventtest
+DPADD+=	${LIBEVENT}
+LDADD+=	-levent
+
+.PATH:	${.CURDIR}/..
 
 regress: eventtest
 	@echo Testing libevent

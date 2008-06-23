@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.212.4.3 2008/05/28 16:28:34 wrstuden Exp $ */
+/* $NetBSD: syscall.h,v 1.212.4.4 2008/06/23 04:32:03 wrstuden Exp $ */
 
 /*
  * System call numbers.
@@ -1022,10 +1022,10 @@
 /* syscall: "_sched_getparam" ret: "int" args: "pid_t" "lwpid_t" "int *" "struct sched_param *" */
 #define	SYS__sched_getparam	347
 
-/* syscall: "_sched_setaffinity" ret: "int" args: "pid_t" "lwpid_t" "size_t" "void *" */
+/* syscall: "_sched_setaffinity" ret: "int" args: "pid_t" "lwpid_t" "size_t" "const cpuset_t *" */
 #define	SYS__sched_setaffinity	348
 
-/* syscall: "_sched_getaffinity" ret: "int" args: "pid_t" "lwpid_t" "size_t" "void *" */
+/* syscall: "_sched_getaffinity" ret: "int" args: "pid_t" "lwpid_t" "size_t" "cpuset_t *" */
 #define	SYS__sched_getaffinity	349
 
 /* syscall: "sched_yield" ret: "int" args: */

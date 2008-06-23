@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.56.2.2 2008/05/14 01:35:14 wrstuden Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.56.2.3 2008/06/23 04:31:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.56.2.2 2008/05/14 01:35:14 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.56.2.3 2008/06/23 04:31:52 wrstuden Exp $");
 
 #define SYSVMSG
 
@@ -851,6 +851,7 @@ restart:
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
 		cv_broadcast(&msq->msq_cv);
 		MSG_PRINTF(("mtype (%ld) < 1\n", msghdr->msg_type));
+		error = EINVAL;
 		goto unlock;
 	}
 

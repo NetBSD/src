@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.159 2007/12/14 17:26:19 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.159.6.1 2008/06/23 04:29:31 wrstuden Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -51,7 +51,7 @@ COPTS.execlp.c = -Wno-stack-protector
 .include "${ARCHDIR}/gen/Makefile.inc"
 
 MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 confstr.3 \
-	ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 \
+	cpuset.3 ctermid.3 ctype.3 daemon.3 devname.3 directory.3 dirname.3 \
 	endutxent.3 err.3 exec.3 extattr.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 \
 	ftok.3 fts.3 ftw.3 \
@@ -76,6 +76,9 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 confstr.3 \
 	wordexp.3
 
 MLINKS+=bswap.3 bswap16.3 bswap.3 bswap32.3 bswap.3 bswap64.3
+MLINKS+=cpuset.3 cpuset_create.3 cpuset.3 cpuset_destroy.3 \
+	cpuset.3 cpuset_zero.3 cpuset.3 cpuset_set.3 cpuset.3 cpuset_clr.3 \
+	cpuset.3 cpuset_isset.3 cpuset.3 cpuset_size.3
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 readdir_r.3 directory.3 \
 	rewinddir.3 directory.3 seekdir.3 directory.3 telldir.3

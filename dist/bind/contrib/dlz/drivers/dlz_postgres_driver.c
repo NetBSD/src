@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_postgres_driver.c,v 1.1.1.1 2007/01/27 21:05:11 christos Exp $	*/
+/*	$NetBSD: dlz_postgres_driver.c,v 1.1.1.1.16.1 2008/06/23 04:27:44 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -299,10 +299,12 @@ postgres_get_resultset(const char *zone, const char *record,
 
 	REQUIRE(*rs == NULL);
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d Getting DBI", dlz_thread_num);
+#endif
 
 	/* get db instance / connection */
 #ifdef ISC_PLATFORM_USETHREADS
@@ -320,10 +322,12 @@ postgres_get_resultset(const char *zone, const char *record,
 
 #endif /* ISC_PLATFORM_USETHREADS */
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d Got DBI - checking query", dlz_thread_num);
+#endif
 
 	/* if DBI is null, can't do anything else */
 	if (dbi == NULL) {
@@ -393,10 +397,12 @@ postgres_get_resultset(const char *zone, const char *record,
 		goto cleanup;
 	}
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d checked query", dlz_thread_num);
+#endif
 
 	/*
 	 * was a zone string passed?  If so, make it safe for use in
@@ -412,10 +418,12 @@ postgres_get_resultset(const char *zone, const char *record,
 		dbi->zone = NULL;
 	}
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d did zone", dlz_thread_num);
+#endif
 
 	/*
 	 * was a record string passed?  If so, make it safe for use in
@@ -432,10 +440,12 @@ postgres_get_resultset(const char *zone, const char *record,
 	}
 
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d did record", dlz_thread_num);
+#endif
 
 	/*
 	 * was a client string passed?  If so, make it safe for use in
@@ -451,10 +461,12 @@ postgres_get_resultset(const char *zone, const char *record,
 		dbi->client = NULL;
 	}
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 	DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d did client", dlz_thread_num);
+#endif
 
 	/*
 	 * what type of query are we going to run?
@@ -488,10 +500,12 @@ postgres_get_resultset(const char *zone, const char *record,
 		goto cleanup;
 	}
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d built query", dlz_thread_num);
+#endif
 
 	/* if the querystring is null, Bummer, outta RAM.  UPGRADE TIME!!!   */
 	if (querystring  == NULL) {
@@ -499,10 +513,12 @@ postgres_get_resultset(const char *zone, const char *record,
 		goto cleanup;
 	}
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d query is '%s'", dlz_thread_num, querystring);
+#endif
 
 	/*
 	 * output the full query string during debug so we can see
@@ -514,11 +530,13 @@ postgres_get_resultset(const char *zone, const char *record,
 
 	/* attempt query up to 3 times. */
 	for (j=0; j < 3; j++) {
+#if 0
 		/* temporary logging message */
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 			      "%d executing query for %d time",
 			      dlz_thread_num, j);
+#endif
 		/* try to get result set */
 		*rs = PQexec((PGconn *)dbi->dbconn, querystring );
 		result = ISC_R_SUCCESS;
@@ -527,11 +545,13 @@ postgres_get_resultset(const char *zone, const char *record,
 		 * attempts.
 		 */
 		for (i=0; *rs == NULL && i < 3; i++) {
+#if 0
 			/* temporary logging message */
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 				      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 				      "%d resetting connection",
 				      dlz_thread_num);
+#endif
 			result = ISC_R_FAILURE;
 			PQreset((PGconn *) dbi->dbconn);
 			/* connection ok, break inner loop */
@@ -540,17 +560,21 @@ postgres_get_resultset(const char *zone, const char *record,
 		}
 		/* result set ok, break outter loop */
 		if (PQresultStatus(*rs) == PGRES_TUPLES_OK) {
+#if 0
 			/* temporary logging message */
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 				      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 				      "%d rs ok", dlz_thread_num);
+#endif
 			break;
 		} else {
 			/* we got a result set object, but it's not right. */
+#if 0
 			/* temporary logging message */
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 				      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 				      "%d clearing rs", dlz_thread_num);
+#endif
 			PQclear(*rs);	/* get rid of it */
 			/* in case this was the last attempt */
 			result = ISC_R_FAILURE;
@@ -560,10 +584,12 @@ postgres_get_resultset(const char *zone, const char *record,
  cleanup:
 	/* it's always good to cleanup after yourself */
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d cleaning up", dlz_thread_num);
+#endif
 
 	/* if we couldn't even allocate DBI, just return NULL */
 	if (dbi == NULL)
@@ -583,10 +609,12 @@ postgres_get_resultset(const char *zone, const char *record,
 
 #ifdef ISC_PLATFORM_USETHREADS
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d unlocking mutex", dlz_thread_num);
+#endif
 
 	/* release the lock so another thread can use this dbi */
 	isc_mutex_unlock(&dbi->instance_lock);
@@ -597,10 +625,12 @@ postgres_get_resultset(const char *zone, const char *record,
 	if (querystring  != NULL)
 		isc_mem_free(ns_g_mctx, querystring );
 
+#if 0
 	/* temporary logging message */
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 		      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
 		      "%d returning", dlz_thread_num);
+#endif
 
 	/* return result */
 	return result;

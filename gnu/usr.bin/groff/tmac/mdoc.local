@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.40 2008/04/30 13:10:50 martin Exp $
+.\" $NetBSD: mdoc.local,v 1.40.2.1 2008/06/23 04:29:28 wrstuden Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,6 +59,7 @@
 .ds doc-operating-system-NetBSD-5.0    5.0
 .ds doc-operating-system-FreeBSD-6.1   6.1
 .ds doc-operating-system-FreeBSD-6.3   6.3
+.ds doc-operating-system-FreeBSD-7.0   7.0
 .\" Platforms not yet in groff distribution
 .ds doc-volume-as-amigappc              amigappc
 .ds doc-volume-as-evbsh5                evbsh5
@@ -73,4 +74,4 @@
 .ds doc-str-Lb-libpuffs         puffs Convenience Library (libpuffs, \-lpuffs)
 .ds doc-str-Lb-librefuse        File System in Userspace Convenience Library (librefuse, \-lfuse)
 .ds doc-str-Lb-libsdp           Bluetooth Service Discovery Protocol library (libsdp, \-libsdp)
-.ds doc-str-Lb-libssp		Buffer Overflow Protection Library (libssp, \-lssp)
+.ds doc-str-Lb-libssp           Buffer Overflow Protection Library (libssp, \-lssp)

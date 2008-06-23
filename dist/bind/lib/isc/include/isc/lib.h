@@ -1,10 +1,10 @@
-/*	$NetBSD: lib.h,v 1.1.1.4 2007/01/27 21:07:53 christos Exp $	*/
+/*	$NetBSD: lib.h,v 1.1.1.4.12.1 2008/06/23 04:28:27 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lib.h,v 1.8.18.2 2005/04/29 00:16:58 marka Exp */
+/* Id: lib.h,v 1.14 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_LIB_H
 #define ISC_LIB_H 1
 
-/*! \file */
+/*! \file isc/lib.h */
 
 #include <isc/types.h>
 #include <isc/lang.h>

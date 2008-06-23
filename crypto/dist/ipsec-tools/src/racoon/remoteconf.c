@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.10 2007/07/18 12:07:52 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.10.12.1 2008/06/23 04:26:46 wrstuden Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -116,25 +116,9 @@ getrmconf_strict(remote, allow_anon)
 	 * In an ideal world, we would be able to have remote conf with
 	 * port, and the port could be a wildcard. That test could be used.
 	 */
-	switch (remote->sa_family) {
-	case AF_INET:
-		if (((struct sockaddr_in *)remote)->sin_port != IPSEC_PORT_ANY)
-			withport = 1;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		if (((struct sockaddr_in6 *)remote)->sin6_port != IPSEC_PORT_ANY)
-			withport = 1;
-		break;
-#endif
-	case AF_UNSPEC:
-		break;
-
-	default:
-		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid family: %d\n", remote->sa_family);
-		exit(1);
-	}
+	if (remote->sa_family != AF_UNSPEC &&
+	    extract_port(remote) != IPSEC_PORT_ANY)
+		withport = 1;
 #endif /* ENABLE_NATT */
 
 	if (remote->sa_family == AF_UNSPEC)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pcre.c,v 1.1.1.9 2007/05/19 16:28:45 heas Exp $	*/
+/*	$NetBSD: dict_pcre.c,v 1.1.1.9.12.1 2008/06/23 04:29:26 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -182,7 +182,7 @@ static int dict_pcre_expand(int type, VSTRING *buf, char *ptr)
 	    if (ret == PCRE_ERROR_NOSUBSTRING)
 		return (MAC_PARSE_UNDEF);
 	    else
-		msg_fatal("regexp %s, line %d: pcre_get_substring error: %d",
+		msg_fatal("pcre map %s, line %d: pcre_get_substring error: %d",
 			dict_pcre->dict.name, match_rule->rule.lineno, ret);
 	}
 	if (*pp == 0) {
@@ -673,7 +673,7 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 	    msg_panic("pcre map %s, line %d: pcre_fullinfo failed",
 		      mapname, lineno);
 	if (prescan_context.max_sub > actual_sub) {
-	    msg_warn("regexp map %s, line %d: out of range replacement index \"%d\": "
+	    msg_warn("pcre map %s, line %d: out of range replacement index \"%d\": "
 		     "skipping this rule", mapname, lineno,
 		     (int) prescan_context.max_sub);
 	    if (engine.pattern)
@@ -724,9 +724,12 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 	 */
 	while (*p && ISSPACE(*p))
 	    ++p;
-	if (*p)
-	    msg_warn("pcre map %s, line %d: ignoring extra text after IF",
-		     mapname, lineno);
+	if (*p) {
+	    msg_warn("pcre map %s, line %d: ignoring extra text after "
+		     "IF statement: \"%s\"", mapname, lineno, p);
+	    msg_warn("pcre map %s, line %d: do not prepend whitespace"
+		     " to statements between IF and ENDIF", mapname, lineno);
+	}
 
 	/*
 	 * Compile the pattern.
@@ -784,7 +787,7 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
      * Unrecognized input.
      */
     else {
-	msg_warn("regexp map %s, line %d: ignoring unrecognized request",
+	msg_warn("pcre map %s, line %d: ignoring unrecognized request",
 		 mapname, lineno);
 	return (0);
     }

@@ -4,11 +4,7 @@ PPoossttffiixx BBaacckkssccaatttteerr HHoowwttoo
 
 OOvveerrvviieeww
 
-This document describes features that require Postfix version 2.0 or later. The
-examples use Perl Compatible Regular Expressions (Postfix pcre: tables), but
-also provide a translation to POSIX regular expressions (Postfix regexp:
-tables). PCRE is preferred primarily because the implementation is often
-faster.
+This document describes features that require Postfix version 2.0 or later.
 
 Topics covered in this document:
 
@@ -20,6 +16,11 @@ Topics covered in this document:
       o Blocking backscatter mail with forged sender information
       o Blocking backscatter mail with other forged information
       o Blocking backscatter mail from virus scanners
+
+The examples use Perl Compatible Regular Expressions (Postfix pcre: tables),
+but also provide a translation to POSIX regular expressions (Postfix regexp:
+tables). PCRE is preferred primarily because the implementation is often
+faster.
 
 WWhhaatt iiss bbaacckkssccaatttteerr mmaaiill??
 

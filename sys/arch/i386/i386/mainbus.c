@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.76 2008/04/29 19:19:29 ad Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.76.2.1 2008/06/23 04:30:26 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.76 2008/04/29 19:19:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.76.2.1 2008/06/23 04:30:26 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,9 +92,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.76 2008/04/29 19:19:29 ad Exp $");
 
 #if NPCI > 0
 #if defined(PCI_BUS_FIXUP)
-#include <arch/i386/pci/pci_bus_fixup.h>
+#include <arch/x86/pci/pci_bus_fixup.h>
 #if defined(PCI_ADDR_FIXUP)
-#include <arch/i386/pci/pci_addr_fixup.h>
+#include <arch/x86/pci/pci_addr_fixup.h>
 #endif
 #endif
 #endif

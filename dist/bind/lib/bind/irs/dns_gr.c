@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_gr.c,v 1.1.1.4 2007/01/27 21:08:52 christos Exp $	*/
+/*	$NetBSD: dns_gr.c,v 1.1.1.4.12.1 2008/06/23 04:27:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns_gr.c,v 1.3.18.1 2005/04/27 05:00:54 sra Exp";
+static const char rcsid[] = "Id: dns_gr.c,v 1.4 2005/04/27 04:56:21 sra Exp";
 #endif
 
 /*! \file

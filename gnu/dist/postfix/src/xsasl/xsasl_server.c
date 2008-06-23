@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_server.c,v 1.1.1.1 2006/07/19 01:17:58 rpaulo Exp $	*/
+/*	$NetBSD: xsasl_server.c,v 1.1.1.1.22.1 2008/06/23 04:29:28 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -197,7 +197,7 @@ typedef struct {
     struct XSASL_SERVER_IMPL *(*server_init) (const char *, const char *);
 } XSASL_SERVER_IMPL_INFO;
 
-static XSASL_SERVER_IMPL_INFO server_impl_info[] = {
+static const XSASL_SERVER_IMPL_INFO server_impl_info[] = {
 #ifdef XSASL_TYPE_CYRUS
     {XSASL_TYPE_CYRUS, xsasl_cyrus_server_init},
 #endif
@@ -212,7 +212,7 @@ static XSASL_SERVER_IMPL_INFO server_impl_info[] = {
 XSASL_SERVER_IMPL *xsasl_server_init(const char *server_type,
 				             const char *path_info)
 {
-    XSASL_SERVER_IMPL_INFO *xp;
+    const XSASL_SERVER_IMPL_INFO *xp;
 
     for (xp = server_impl_info; xp->server_type; xp++)
 	if (strcmp(server_type, xp->server_type) == 0)
@@ -225,7 +225,7 @@ XSASL_SERVER_IMPL *xsasl_server_init(const char *server_type,
 
 ARGV   *xsasl_server_types(void)
 {
-    XSASL_SERVER_IMPL_INFO *xp;
+    const XSASL_SERVER_IMPL_INFO *xp;
     ARGV   *argv = argv_alloc(1);
 
     for (xp = server_impl_info; xp->server_type; xp++)

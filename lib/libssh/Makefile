@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 2007/12/20 14:14:04 martin Exp $
+#	$NetBSD: Makefile,v 1.12.6.1 2008/06/23 04:29:54 wrstuden Exp $
 
 .include <bsd.own.mk>
 
 LIB=	ssh
 SRCS=	authfd.c authfile.c bufaux.c bufbn.c buffer.c canohost.c channels.c \
-	cipher.c cipher-3des1.c cipher-ctr.c cipher-bf1.c cleanup.c \
-	compat.c compress.c crc32.c deattack.c dns.c fatal.c \
+	cipher.c cipher-3des1.c cipher-ctr.c cipher-ctr-mt.c cipher-bf1.c \
+	cleanup.c compat.c compress.c crc32.c deattack.c dns.c fatal.c \
 	hostfile.c log.c match.c md-sha256.c nchan.c packet.c readpass.c \
 	rsa.c strtonum.c ttymodes.c xmalloc.c atomicio.c \
 	key.c dispatch.c kex.c mac.c uuencode.c misc.c \
@@ -26,7 +26,8 @@ CPPFLAGS+=	-I${SSHDIST}
 
 LIBDPLIBS+=	crypto	${.CURDIR}/../libcrypto \
 		crypt	${.CURDIR}/../libcrypt \
-		z	${.CURDIR}/../libz
+		z	${.CURDIR}/../libz \
+		pthread	${.CURDIR}/../libpthread
 
 .if ${HAVE_GCC} == 4
 .for f in dns channels hostfile

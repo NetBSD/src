@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec.S,v 1.3 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_dec.S,v 1.3.2.1 2008/06/23 04:26:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_dec_64)
+ENTRY(_atomic_dec_64)
 1:	ldarx	r10,0,r3
 	addi	r10,r10,-1
 	stdcx.	r10,0,r3
@@ -47,7 +47,7 @@ STRONG_ALIAS(_atomic_dec_ulong,_atomic_dec_64)
 ATOMIC_OP_ALIAS(atomic_dec_ptr,_atomic_dec_64)
 STRONG_ALIAS(_atomic_dec_ptr,_atomic_dec_64)
 
-ENTRY_NOPROFILE(_atomic_dec_64_nv)
+ENTRY(_atomic_dec_64_nv)
 1:	ldarx	r10,0,r3
 	addi	r10,r10,-1
 	stdcx.	r10,0,r3

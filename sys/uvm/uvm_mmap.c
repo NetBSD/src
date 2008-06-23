@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.122.6.2 2008/05/14 01:35:18 wrstuden Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.122.6.3 2008/06/23 04:32:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.122.6.2 2008/05/14 01:35:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.122.6.3 2008/06/23 04:32:06 wrstuden Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1163,9 +1163,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			 * then mark it as text.
 			 */
 			if (prot & PROT_EXEC) {
-				mutex_enter(&vp->v_interlock);
 				vn_markexec(vp);
-				mutex_exit(&vp->v_interlock);
 			}
 		} else {
 			int i = maxprot;
@@ -1193,24 +1191,23 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		 * Set vnode flags to indicate the new kinds of mapping.
 		 * We take the vnode lock in exclusive mode here to serialize
 		 * with direct I/O.
+		 *
+		 * Safe to check for these flag values without a lock, as
+		 * long as a reference to the vnode is held.
 		 */
-
-		mutex_enter(&vp->v_interlock);
 		needwritemap = (vp->v_iflag & VI_WRMAP) == 0 &&
 			(flags & MAP_SHARED) != 0 &&
 			(maxprot & VM_PROT_WRITE) != 0;
-		if ((vp->v_iflag & VI_MAPPED) == 0 || needwritemap) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
-			mutex_enter(&vp->v_interlock);
-			vp->v_iflag |= VI_MAPPED;
+		if ((vp->v_vflag & VV_MAPPED) == 0 || needwritemap) {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			vp->v_vflag |= VV_MAPPED;
 			if (needwritemap) {
+				mutex_enter(&vp->v_interlock);
 				vp->v_iflag |= VI_WRMAP;
+				mutex_exit(&vp->v_interlock);
 			}
-			mutex_exit(&vp->v_interlock);
 			VOP_UNLOCK(vp, 0);
-		} else
-			mutex_exit(&vp->v_interlock);
+		}
 	}
 
 	uvmflag = UVM_MAPFLAG(prot, maxprot,
@@ -1238,8 +1235,8 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 
 		return (0);
 	}
-	vm_map_lock(map);
 	if ((flags & MAP_WIRED) != 0 || (map->flags & VM_MAP_WIREFUTURE) != 0) {
+		vm_map_lock(map);
 		if (atop(size) + uvmexp.wired > uvmexp.wiredmax ||
 		    (locklimit != 0 &&
 		     size + ptoa(pmap_wired_count(vm_map_pmap(map))) >
@@ -1261,7 +1258,6 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		}
 		return (0);
 	}
-	vm_map_unlock(map);
 	return 0;
 }
 

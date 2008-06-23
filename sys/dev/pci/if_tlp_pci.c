@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.105 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.105.2.1 2008/06/23 04:31:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.105 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.105.2.1 2008/06/23 04:31:11 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ tlp_pci_check_slaved(struct tulip_pci_softc *psc, int shared, int slaved)
 	 * bus marked as shared.  That should be our master.
 	 */
 	for (i = 0; i < tlp_cd.cd_ndevs; i++) {
-		if ((cur = tlp_cd.cd_devs[i]) == NULL)
+		if ((cur = device_lookup_private(&tlp_cd, i)) == NULL)
 			continue;
 		if (device_parent(&cur->sc_tulip.sc_dev) !=
 		    device_parent(&sc->sc_dev))

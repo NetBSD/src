@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.1.1.5 2007/05/19 16:28:23 heas Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.1.1.5.12.1 2008/06/23 04:29:19 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -155,8 +155,10 @@
 /* COMPATIBILITY CONTROLS
 /* .ad
 /* .fi
+/*	Available before Postfix version 2.5:
 /* .IP "\fBallow_min_user (no)\fR"
-/*	Allow a recipient address to have `-' as the first character.
+/*	Allow a sender or recipient address to have `-' as the first
+/*	character.
 /* ACTIVE QUEUE CONTROLS
 /* .ad
 /* .fi
@@ -182,8 +184,34 @@
 /* .IP "\fBdefault_destination_concurrency_limit (20)\fR"
 /*	The default maximal number of parallel deliveries to the same
 /*	destination.
-/* .IP \fItransport\fB_destination_concurrency_limit\fR
+/* .IP "\fItransport\fB_destination_concurrency_limit ($default_destination_concurrency_limit)\fR"
 /*	Idem, for delivery via the named message \fItransport\fR.
+/* .PP
+/*	Available in Postfix version 2.5 and later:
+/* .IP "\fItransport\fB_initial_destination_concurrency ($initial_destination_concurrency)\fR"
+/*	Initial concurrency for delivery via the named message
+/*	\fItransport\fR.
+/* .IP "\fBdefault_destination_concurrency_failed_cohort_limit (1)\fR"
+/*	How many pseudo-cohorts must suffer connection or handshake
+/*	failure before a specific destination is considered unavailable
+/*	(and further delivery is suspended).
+/* .IP "\fItransport\fB_destination_concurrency_failed_cohort_limit ($default_destination_concurrency_failed_cohort_limit)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBdefault_destination_concurrency_negative_feedback (1)\fR"
+/*	The per-destination amount of delivery concurrency negative
+/*	feedback, after a delivery completes with a connection or handshake
+/*	failure.
+/* .IP "\fItransport\fB_destination_concurrency_negative_feedback ($default_destination_concurrency_negative_feedback)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBdefault_destination_concurrency_positive_feedback (1)\fR"
+/*	The per-destination amount of delivery concurrency positive
+/*	feedback, after a delivery completes without connection or handshake
+/*	failure.
+/* .IP "\fItransport\fB_destination_concurrency_positive_feedback ($default_destination_concurrency_positive_feedback)\fR"
+/*	Idem, for delivery via the named message \fItransport\fR.
+/* .IP "\fBdestination_concurrency_feedback_debug (no)\fR"
+/*	Make the queue manager's feedback algorithm verbose for performance
+/*	analysis purposes.
 /* RECIPIENT SCHEDULING CONTROLS
 /* .ad
 /* .fi
@@ -194,15 +222,17 @@
 /* OTHER RESOURCE AND RATE CONTROLS
 /* .ad
 /* .fi
-/* .IP "\fBminimal_backoff_time (version dependent)\fR"
-/*	The minimal time between attempts to deliver a deferred message.
+/* .IP "\fBminimal_backoff_time (300s)\fR"
+/*	The minimal time between attempts to deliver a deferred message;
+/*	prior to Postfix 2.4 the default value was 1000s.
 /* .IP "\fBmaximal_backoff_time (4000s)\fR"
 /*	The maximal time between attempts to deliver a deferred message.
 /* .IP "\fBmaximal_queue_lifetime (5d)\fR"
 /*	The maximal time a message is queued before it is sent back as
 /*	undeliverable.
-/* .IP "\fBqueue_run_delay (version dependent)\fR"
-/*	The time between deferred queue scans by the queue manager.
+/* .IP "\fBqueue_run_delay (300s)\fR"
+/*	The time between deferred queue scans by the queue manager;
+/*	prior to Postfix 2.4 the default value was 1000s.
 /* .IP "\fBtransport_retry_time (60s)\fR"
 /*	The time between attempts by the Postfix queue manager to contact
 /*	a malfunctioning message delivery transport.
@@ -211,6 +241,14 @@
 /* .IP "\fBbounce_queue_lifetime (5d)\fR"
 /*	The maximal time a bounce message is queued before it is considered
 /*	undeliverable.
+/* .PP
+/*	Available in Postfix version 2.5 and later:
+/* .IP "\fBdefault_destination_rate_delay (0s)\fR"
+/*	The default amount of delay that is inserted between individual
+/*	deliveries to the same destination; with per-destination recipient
+/*	limit > 1, a destination is a domain, otherwise it is a recipient.
+/* .IP "\fItransport\fB_destination_rate_delay $default_destination_rate_delay
+/*	Idem, for delivery via the named message \fItransport\fR.
 /* .SH MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -325,13 +363,17 @@ int     var_transport_retry_time;
 int     var_dest_con_limit;
 int     var_dest_rcpt_limit;
 char   *var_defer_xports;
-bool    var_allow_min_user;
 int     var_qmgr_fudge;
 int     var_local_rcpt_lim;		/* XXX */
 int     var_local_con_lim;		/* XXX */
 int     var_proc_limit;
 bool    var_verp_bounce_off;
 int     var_qmgr_clog_warn_time;
+char   *var_conc_pos_feedback;
+char   *var_conc_neg_feedback;
+int     var_conc_cohort_limit;
+int     var_conc_feedback_debug;
+int     var_dest_rate_delay;
 
 static QMGR_SCAN *qmgr_scans[2];
 
@@ -557,11 +599,13 @@ MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
-    static CONFIG_STR_TABLE str_table[] = {
+    static const CONFIG_STR_TABLE str_table[] = {
 	VAR_DEFER_XPORTS, DEF_DEFER_XPORTS, &var_defer_xports, 0, 0,
+	VAR_CONC_POS_FDBACK, DEF_CONC_POS_FDBACK, &var_conc_pos_feedback, 1, 0,
+	VAR_CONC_NEG_FDBACK, DEF_CONC_NEG_FDBACK, &var_conc_neg_feedback, 1, 0,
 	0,
     };
-    static CONFIG_TIME_TABLE time_table[] = {
+    static const CONFIG_TIME_TABLE time_table[] = {
 	VAR_QUEUE_RUN_DELAY, DEF_QUEUE_RUN_DELAY, &var_queue_run_delay, 1, 0,
 	VAR_MIN_BACKOFF_TIME, DEF_MIN_BACKOFF_TIME, &var_min_backoff_time, 1, 0,
 	VAR_MAX_BACKOFF_TIME, DEF_MAX_BACKOFF_TIME, &var_max_backoff_time, 1, 0,
@@ -569,9 +613,10 @@ int     main(int argc, char **argv)
 	VAR_DSN_QUEUE_TIME, DEF_DSN_QUEUE_TIME, &var_dsn_queue_time, 0, 8640000,
 	VAR_XPORT_RETRY_TIME, DEF_XPORT_RETRY_TIME, &var_transport_retry_time, 1, 0,
 	VAR_QMGR_CLOG_WARN_TIME, DEF_QMGR_CLOG_WARN_TIME, &var_qmgr_clog_warn_time, 0, 0,
+	VAR_DEST_RATE_DELAY, DEF_DEST_RATE_DELAY, &var_dest_rate_delay, 0, 0,
 	0,
     };
-    static CONFIG_INT_TABLE int_table[] = {
+    static const CONFIG_INT_TABLE int_table[] = {
 	VAR_QMGR_ACT_LIMIT, DEF_QMGR_ACT_LIMIT, &var_qmgr_active_limit, 1, 0,
 	VAR_QMGR_RCPT_LIMIT, DEF_QMGR_RCPT_LIMIT, &var_qmgr_rcpt_limit, 1, 0,
 	VAR_INIT_DEST_CON, DEF_INIT_DEST_CON, &var_init_dest_concurrency, 1, 0,
@@ -581,11 +626,12 @@ int     main(int argc, char **argv)
 	VAR_LOCAL_RCPT_LIMIT, DEF_LOCAL_RCPT_LIMIT, &var_local_rcpt_lim, 0, 0,
 	VAR_LOCAL_CON_LIMIT, DEF_LOCAL_CON_LIMIT, &var_local_con_lim, 0, 0,
 	VAR_PROC_LIMIT, DEF_PROC_LIMIT, &var_proc_limit, 1, 0,
+	VAR_CONC_COHORT_LIM, DEF_CONC_COHORT_LIM, &var_conc_cohort_limit, 0, 0,
 	0,
     };
-    static CONFIG_BOOL_TABLE bool_table[] = {
-	VAR_ALLOW_MIN_USER, DEF_ALLOW_MIN_USER, &var_allow_min_user,
+    static const CONFIG_BOOL_TABLE bool_table[] = {
 	VAR_VERP_BOUNCE_OFF, DEF_VERP_BOUNCE_OFF, &var_verp_bounce_off,
+	VAR_CONC_FDBACK_DEBUG, DEF_CONC_FDBACK_DEBUG, &var_conc_feedback_debug,
 	0,
     };
 

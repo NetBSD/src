@@ -181,9 +181,9 @@ $ WRITE H_FILE ""
 $ WRITE H_FILE "#ifndef OPENSSL_SYS_VMS"
 $ WRITE H_FILE "# define OPENSSL_SYS_VMS"
 $ WRITE H_FILE "#endif"
-$ CONFIG_LOGICALS := NO_ASM,NO_RSA,NO_DSA,NO_DH,NO_MD2,NO_MD5,NO_RIPEMD,-
+$ CONFIG_LOGICALS := NO_ASM,NO_RSA,NO_DSA,NO_DH,NO_MD2,NO_MD5,NO_RIPEMD,WHRLPOOL,-
 	NO_SHA,NO_SHA0,NO_SHA1,NO_DES/NO_MDC2;NO_MDC2,NO_RC2,NO_RC4,NO_RC5,-
-	NO_IDEA,NO_BF,NO_CAST,NO_CAMELLIA,NO_HMAC,NO_SSL2
+	NO_IDEA,NO_BF,NO_CAST,NO_CAMELLIA,NO_SEED,NO_HMAC,NO_SSL2
 $ CONFIG_LOG_I = 0
 $ CONFIG_LOG_LOOP:
 $   CONFIG_LOG_E1 = F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS)
@@ -317,7 +317,12 @@ $   WRITE H_FILE "#define THIRTY_TWO_BIT"
 $   WRITE H_FILE "#undef SIXTEEN_BIT"
 $   WRITE H_FILE "#undef EIGHT_BIT"
 $   WRITE H_FILE "#endif"
-$
+$!
+$   WRITE H_FILE "#if defined(HEADER_SHA_H)"
+$   WRITE H_FILE "#undef OPENSSL_NO_SHA512"
+$   WRITE H_FILE "#define OPENSSL_NO_SHA512"
+$   WRITE H_FILE "#endif"
+$!
 $   WRITE H_FILE "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $   WRITE H_FILE "#define OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $!
@@ -423,14 +428,13 @@ $! Copy All The ".H" Files From The [.CRYPTO] Directory Tree.
 $!
 $ SDIRS := ,-
    OBJECTS,-
-   MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
-   DES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,-
+   MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,-
+   DES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,-
    BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,-
    EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,-
-   STORE,PQUEUE
-$ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,-
-		ossl_typ.h
+   STORE,CMS,PQUEUE,TS
+$ EXHEADER_ := crypto.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,ossl_typ.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
 $ EXHEADER_MD2 := md2.h
 $ EXHEADER_MD4 := md4.h
@@ -439,6 +443,7 @@ $ EXHEADER_SHA := sha.h
 $ EXHEADER_MDC2 := mdc2.h
 $ EXHEADER_HMAC := hmac.h
 $ EXHEADER_RIPEMD := ripemd.h
+$ EXHEADER_WHRLPOOL := whrlpool.h
 $ EXHEADER_DES := des.h,des_old.h
 $ EXHEADER_RC2 := rc2.h
 $ EXHEADER_RC4 := rc4.h
@@ -447,6 +452,7 @@ $ EXHEADER_IDEA := idea.h
 $ EXHEADER_BF := blowfish.h
 $ EXHEADER_CAST := cast.h
 $ EXHEADER_CAMELLIA := camellia.h
+$ EXHEADER_SEED := seed.h
 $ EXHEADER_BN := bn.h
 $ EXHEADER_EC := ec.h
 $ EXHEADER_RSA := rsa.h
@@ -478,7 +484,9 @@ $ EXHEADER_UI := ui.h,ui_compat.h
 $ EXHEADER_KRB5 := krb5_asn.h
 $!EXHEADER_STORE := store.h,str_compat.h
 $ EXHEADER_STORE := store.h
-$ EXHEADER_PQUEUE := pqueue.h,pq_compat.h
+$ EXHEADER_CMS := cms.h
+$ EXHEADER_PQUEUE := pqueue.h
+$ EXHEADER_TS := ts.h
 $
 $ I = 0
 $ LOOP_SDIRS: 

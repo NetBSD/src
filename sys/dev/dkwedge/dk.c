@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.39 2008/05/03 08:23:41 plunky Exp $	*/
+/*	$NetBSD: dk.c,v 1.39.2.1 2008/06/23 04:31:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.39 2008/05/03 08:23:41 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.39.2.1 2008/06/23 04:31:01 wrstuden Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -851,20 +851,24 @@ int
 dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
     void *tbuf, size_t len)
 {
-	struct buf b;
+	struct buf *bp;
+	int result;
 
-	buf_init(&b);
+	bp = getiobuf(vp, true);
 
-	b.b_vp = vp;
-	b.b_dev = vp->v_rdev;
-	b.b_blkno = blkno;
-	b.b_bcount = b.b_resid = len;
-	b.b_flags = B_READ;
-	b.b_proc = curproc;
-	b.b_data = tbuf;
+	bp->b_dev = vp->v_rdev;
+	bp->b_blkno = blkno;
+	bp->b_bcount = len;
+	bp->b_resid = len;
+	bp->b_flags = B_READ;
+	bp->b_data = tbuf;
+	SET(bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 
-	VOP_STRATEGY(vp, &b);
-	return (biowait(&b));
+	VOP_STRATEGY(vp, bp);
+	result = biowait(bp);
+	putiobuf(bp);
+
+	return result;
 }
 
 /*

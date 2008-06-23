@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.745 2008/05/02 23:12:00 ad Exp $
+# $NetBSD: mi,v 1.745.2.1 2008/06/23 04:28:54 wrstuden Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -96,6 +96,7 @@
 ./etc/mtree/set.base				base-sys-root
 ./etc/namedb					base-bind-root
 ./etc/obsolete					base-obsolete		obsolete
+./etc/openldap					base-ldap-root
 ./etc/openssl					base-crypto-root
 ./etc/openssl/certs				base-crypto-root
 ./etc/openssl/misc				base-crypto-root
@@ -113,8 +114,6 @@
 ./etc/ssh					base-sys-root
 ./etc/systrace					base-util-root		obsolete
 ./etc/uucp					base-obsolete		obsolete
-./kernel					base-sys-root
-./kernel/modules				base-sys-root
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
@@ -133,6 +132,13 @@
 ./libdata/firmware/zyd/zyd-zd1211		base-sys-root
 ./libdata/firmware/zyd/zyd-zd1211b		base-sys-root
 ./libexec					base-sys-root
+./libexec/dhcpcd-hooks				base-dhcpcd-root
+./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
+./libexec/dhcpcd-hooks/10-resolv.conf		base-dhcpcd-root
+./libexec/dhcpcd-hooks/14-lookup-hostname	base-dhcpcd-root
+./libexec/dhcpcd-hooks/15-hostname		base-dhcpcd-root
+./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
+./libexec/dhcpcd-run-hooks			base-dhcpcd-root
 ./libexec/lfs_cleanerd				base-sysutil-bin
 ./mnt						base-sys-root
 ./rescue					base-sys-root
@@ -149,6 +155,7 @@
 ./sbin/clri					base-sysutil-root
 ./sbin/dhclient					base-dhclient-root
 ./sbin/dhclient-script				base-dhclient-root
+./sbin/dhcpcd					base-dhcpcd-root
 ./sbin/disklabel				base-sysutil-root
 ./sbin/dkctl					base-sysutil-root
 ./sbin/dkscan_bsdlabel				base-sysutil-root
@@ -216,6 +223,7 @@
 ./sbin/newfs_lfs				base-sysutil-root
 ./sbin/newfs_msdos				base-sysutil-root
 ./sbin/newfs_sysvbfs				base-sysutil-root
+./sbin/newfs_udf				base-sysutil-root
 ./sbin/newlfs					base-obsolete		obsolete
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
@@ -547,6 +555,15 @@
 ./usr/bin/lastcomm				base-util-bin
 # needed by modload for now
 ./usr/bin/ld					comp-util-bin		bfd
+./usr/bin/ldapadd				base-ldap-bin		ldap
+./usr/bin/ldapcompare				base-ldap-bin		ldap
+./usr/bin/ldapdelete				base-ldap-bin		ldap
+./usr/bin/ldapexop				base-ldap-bin		ldap
+./usr/bin/ldapmodify				base-ldap-bin		ldap
+./usr/bin/ldapmodrdn				base-ldap-bin		ldap
+./usr/bin/ldappasswd				base-ldap-bin		ldap
+./usr/bin/ldapsearch				base-ldap-bin		ldap
+./usr/bin/ldapwhoami				base-ldap-bin		ldap
 # This is also used by pkgsrc, and should stay in base-util-bin
 ./usr/bin/ldd					base-util-bin
 ./usr/bin/leave					base-util-bin
@@ -590,17 +607,21 @@
 ./usr/bin/more					base-util-bin
 ./usr/bin/mset					base-tn3270-bin
 ./usr/bin/msgs					base-util-bin
+./usr/bin/nbsvtool				base-crypto-bin		crypto
 ./usr/bin/netgroup				base-nis-bin
 ./usr/bin/netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
+./usr/bin/nex					base-util-bin
 ./usr/bin/nfsstat				base-nfsclient-bin
 ./usr/bin/nice					base-util-bin
 ./usr/bin/nl					base-util-bin
 ./usr/bin/nohup					base-util-bin
 ./usr/bin/nslookup				base-netutil-bin
 ./usr/bin/nsupdate				base-netutil-bin
+./usr/bin/nvi					base-util-bin
+./usr/bin/nview					base-util-bin
 ./usr/bin/od					base-util-bin
 ./usr/bin/openssl				base-crypto-bin		crypto
 ./usr/bin/page					base-util-bin
@@ -949,7 +970,7 @@
 ./usr/libexec/cpp0				base-obsolete		obsolete
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
 ./usr/libexec/fingerd				base-netutil-bin
-./usr/libexec/ftp-proxy				base-pf-bin		pf
+./usr/libexec/ftp-proxy				base-pf-bin		obsolete
 ./usr/libexec/ftpd				base-netutil-bin
 ./usr/libexec/getNAME				base-man-bin
 ./usr/libexec/getty				base-sysutil-bin
@@ -1023,6 +1044,7 @@
 ./usr/libexec/spellprog				base-util-bin
 ./usr/libexec/ssh-keysign			base-secsh-bin		crypto
 ./usr/libexec/telnetd				base-netutil-bin
+./usr/libexec/tftp-proxy			base-pf-bin		pf
 ./usr/libexec/tftpd				base-netutil-bin
 ./usr/libexec/utmp_update			base-sysutil-bin
 ./usr/libexec/uucp				base-obsolete		obsolete
@@ -1093,6 +1115,7 @@
 ./usr/sbin/flush				base-obsolete		obsolete
 ./usr/sbin/fsinfo				base-sysutil-bin
 ./usr/sbin/fssconfig				base-sysutil-bin
+./usr/sbin/ftp-proxy				base-pf-bin		pf
 ./usr/sbin/fusermount				base-miscfs-bin		puffs
 ./usr/sbin/fwctl				base-sysutil-bin
 ./usr/sbin/g711conv				base-obsolete		obsolete
@@ -1169,6 +1192,7 @@
 ./usr/sbin/mknetid				base-nis-bin		yp
 ./usr/sbin/mld6query				base-netutil-bin	use_inet6
 ./usr/sbin/mlxctl				base-sysutil-bin
+./usr/sbin/mmcformat				base-sysutil-bin
 ./usr/sbin/mopa.out				base-obsolete		obsolete
 ./usr/sbin/mopchk				base-bootserver-bin
 ./usr/sbin/mopcopy				base-bootserver-bin
@@ -1191,6 +1215,7 @@
 ./usr/sbin/named-bootconf			base-obsolete		obsolete
 ./usr/sbin/named-checkconf			base-bind-bin
 ./usr/sbin/named-checkzone			base-bind-bin
+./usr/sbin/named-compilezone			base-bind-bin
 ./usr/sbin/named.reload				base-obsolete		obsolete
 ./usr/sbin/named.restart			base-obsolete		obsolete
 ./usr/sbin/ncdcs				base-sysutil-root
@@ -1244,6 +1269,7 @@
 ./usr/sbin/pppoectl				base-obsolete		obsolete
 ./usr/sbin/pppstats				base-ppp-bin
 ./usr/sbin/praliases				base-obsolete		obsolete
+./usr/sbin/psrset				base-sysutil-bin
 ./usr/sbin/pstat				base-sysutil-bin
 ./usr/sbin/pvcsif				base-netutil-bin
 ./usr/sbin/pvctxctl				base-netutil-bin
@@ -3037,6 +3063,15 @@
 ./usr/share/nls/sk/libc.cat			base-locale-sk		nls
 ./usr/share/nls/sv				base-locale-sv
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
+./usr/share/nvi					base-util-share
+./usr/share/nvi/catalog				base-util-share
+./usr/share/nvi/catalog/dutch			base-util-share		share
+./usr/share/nvi/catalog/english			base-util-share		share
+./usr/share/nvi/catalog/french			base-util-share		share
+./usr/share/nvi/catalog/german			base-util-share		share
+./usr/share/nvi/catalog/ru_RU.KOI8-R		base-util-share		share
+./usr/share/nvi/catalog/spanish			base-util-share		share
+./usr/share/nvi/catalog/swedish			base-util-share		share
 ./usr/share/sushi				base-obsolete	obsolete
 ./usr/share/sushi/help				base-obsolete	obsolete
 ./usr/share/sushi/index				base-obsolete	obsolete
@@ -4060,6 +4095,7 @@
 ./var/at/spool					base-cron-root
 ./var/backups					base-sys-root
 ./var/chroot					base-sys-root
+./var/chroot/ftp-proxy				base-sys-root
 ./var/chroot/named				base-bind-root
 ./var/chroot/named/dev				base-bind-root
 ./var/chroot/named/etc				base-bind-root
@@ -4079,6 +4115,7 @@
 ./var/chroot/pfspamd				base-obsolete		obsolete
 ./var/chroot/spamd				base-obsolete		obsolete
 ./var/chroot/sshd				base-sys-root
+./var/chroot/tftp-proxy				base-sys-root
 ./var/crash					base-sys-root
 ./var/cron					base-cron-root
 ./var/cron/tabs					base-cron-root

@@ -1,6 +1,6 @@
 /* crypto/bn/bn_blind.c */
 /* ====================================================================
- * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -121,8 +121,13 @@ struct bn_blinding_st
 	BIGNUM *Ai;
 	BIGNUM *e;
 	BIGNUM *mod; /* just a reference */
+/* FIXME: should really try to remove these, but the deprecated APIs that are
+ * using them would need to be fudged somehow. */
+#ifndef OPENSSL_NO_DEPRECATED
 	unsigned long thread_id; /* added in OpenSSL 0.9.6j and 0.9.7b;
 				  * used only by crypto/rsa/rsa_eay.c, rsa_lib.c */
+#endif
+	CRYPTO_THREADID tid;
 	unsigned int  counter;
 	unsigned long flags;
 	BN_MONT_CTX *m_ctx;
@@ -151,7 +156,12 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 		{
 		if ((ret->Ai = BN_dup(Ai)) == NULL) goto err;
 		}
-	ret->mod = mod;
+
+	/* save a copy of mod in the BN_BLINDING structure */
+	if ((ret->mod = BN_dup(mod)) == NULL) goto err;
+	if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
+		BN_set_flags(ret->mod, BN_FLG_CONSTTIME);
+
 	ret->counter = BN_BLINDING_COUNTER;
 	return(ret);
 err:
@@ -167,6 +177,7 @@ void BN_BLINDING_free(BN_BLINDING *r)
 	if (r->A  != NULL) BN_free(r->A );
 	if (r->Ai != NULL) BN_free(r->Ai);
 	if (r->e  != NULL) BN_free(r->e );
+	if (r->mod != NULL) BN_free(r->mod); 
 	OPENSSL_free(r);
 	}
 
@@ -257,6 +268,7 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *ct
 	return(ret);
 	}
 
+#ifndef OPENSSL_NO_DEPRECATED
 unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *b)
 	{
 	return b->thread_id;
@@ -265,6 +277,17 @@ unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *b)
 void BN_BLINDING_set_thread_id(BN_BLINDING *b, unsigned long n)
 	{
 	b->thread_id = n;
+	}
+#endif
+
+void BN_BLINDING_set_thread(BN_BLINDING *b)
+	{
+	CRYPTO_THREADID_set(&b->tid);
+	}
+
+int BN_BLINDING_cmp_thread(const BN_BLINDING *b, const CRYPTO_THREADID *tid)
+	{
+	return CRYPTO_THREADID_cmp(&b->tid, tid);
 	}
 
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *b)

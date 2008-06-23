@@ -1,4 +1,4 @@
-/* $NetBSD: carp.h,v 1.3 2008/05/06 17:29:04 dyoung Exp $ */
+/* $NetBSD: carp.h,v 1.3.2.1 2008/06/23 04:29:57 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,9 +29,9 @@
  * SUCH DAMAGE.
  */
 
-extern struct pinteger parse_advbase, parse_advskew, parse_vhid;
 extern struct piface carpdev;
-extern struct pkw carpstate;
+extern struct pinteger parse_advbase, parse_advskew, parse_vhid;
+extern struct pkw carp, carpstate;
 extern struct pstr pass;
 
 void	carp_status(prop_dictionary_t, prop_dictionary_t);

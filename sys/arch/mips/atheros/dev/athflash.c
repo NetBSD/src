@@ -1,4 +1,4 @@
-/* $NetBSD: athflash.c,v 1.2 2008/04/28 20:23:28 martin Exp $ */
+/* $NetBSD: athflash.c,v 1.2.2.1 2008/06/23 04:30:31 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.2 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athflash.c,v 1.2.2.1 2008/06/23 04:30:31 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -256,7 +256,8 @@ flashopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct flash_softc	*sc;
 
-	if ((sc = device_lookup(&athflash_cd, minor(dev))) == NULL)
+	sc = device_lookup_private(&athflash_cd, minor(dev));
+	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_status & FLASH_ST_BUSY)
 		return EBUSY;
@@ -269,7 +270,7 @@ flashclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct flash_softc	*sc;
 
-	sc = device_lookup(&athflash_cd, minor(dev));
+	sc = device_lookup_private(&athflash_cd, minor(dev));
 	sc->sc_status &= ~FLASH_ST_BUSY;
 	return 0;
 }
@@ -285,7 +286,7 @@ flashread(dev_t dev, struct uio *uio, int flag)
 	int			count;
 	int			error;
 
-	sc = device_lookup(&athflash_cd, minor(dev));
+	sc = device_lookup_private(&athflash_cd, minor(dev));
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -314,7 +315,7 @@ flashwrite(dev_t dev, struct uio *uio, int flag)
 	int			stat;
 	int			error;
 
-	sc = device_lookup(&athflash_cd, minor(dev));
+	sc = device_lookup_private(&athflash_cd, minor(dev));
 
 	if (sc->sc_size < uio->uio_offset + uio->uio_resid)
 		return ENOSPC;

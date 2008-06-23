@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.11 2008/03/07 08:44:51 martin Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.11.6.1 2008/06/23 04:32:06 wrstuden Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.11 2008/03/07 08:44:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.11.6.1 2008/06/23 04:32:06 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -193,7 +193,7 @@ uvmpdpol_selectvictim(void)
 		if (pg == NULL) {
 			break;
 		}
-		ss->ss_nextpg = TAILQ_NEXT(pg, pageq);
+		ss->ss_nextpg = TAILQ_NEXT(pg, pageq.queue);
 
 		uvmexp.pdscans++;
 
@@ -257,7 +257,7 @@ uvmpdpol_balancequeue(int swap_shortage)
 	for (p = TAILQ_FIRST(&pdpol_state.s_activeq);
 	     p != NULL && (inactive_shortage > 0 || swap_shortage > 0);
 	     p = nextpg) {
-		nextpg = TAILQ_NEXT(p, pageq);
+		nextpg = TAILQ_NEXT(p, pageq.queue);
 
 		/*
 		 * if there's a shortage of swap slots, try to free it.
@@ -288,7 +288,7 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
 	if (pg->pqflags & PQ_ACTIVE) {
-		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq);
+		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq.queue);
 		pg->pqflags &= ~PQ_ACTIVE;
 		KASSERT(pdpol_state.s_active > 0);
 		pdpol_state.s_active--;
@@ -296,7 +296,7 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
 		pmap_clear_reference(pg);
-		TAILQ_INSERT_TAIL(&pdpol_state.s_inactiveq, pg, pageq);
+		TAILQ_INSERT_TAIL(&pdpol_state.s_inactiveq, pg, pageq.queue);
 		pg->pqflags |= PQ_INACTIVE;
 		pdpol_state.s_inactive++;
 	}
@@ -307,7 +307,7 @@ uvmpdpol_pageactivate(struct vm_page *pg)
 {
 
 	uvmpdpol_pagedequeue(pg);
-	TAILQ_INSERT_TAIL(&pdpol_state.s_activeq, pg, pageq);
+	TAILQ_INSERT_TAIL(&pdpol_state.s_activeq, pg, pageq.queue);
 	pg->pqflags |= PQ_ACTIVE;
 	pdpol_state.s_active++;
 }
@@ -318,13 +318,13 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 
 	if (pg->pqflags & PQ_ACTIVE) {
 		KASSERT(mutex_owned(&uvm_pageqlock));
-		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq);
+		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq.queue);
 		pg->pqflags &= ~PQ_ACTIVE;
 		KASSERT(pdpol_state.s_active > 0);
 		pdpol_state.s_active--;
 	} else if (pg->pqflags & PQ_INACTIVE) {
 		KASSERT(mutex_owned(&uvm_pageqlock));
-		TAILQ_REMOVE(&pdpol_state.s_inactiveq, pg, pageq);
+		TAILQ_REMOVE(&pdpol_state.s_inactiveq, pg, pageq.queue);
 		pg->pqflags &= ~PQ_INACTIVE;
 		KASSERT(pdpol_state.s_inactive > 0);
 		pdpol_state.s_inactive--;

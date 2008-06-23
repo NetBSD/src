@@ -55,6 +55,32 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #include <stdio.h>
 #include "ssl_locl.h"
@@ -127,6 +153,8 @@ case SSL3_ST_CR_KEY_EXCH_A:	str="SSLv3 read server key exchange A"; break;
 case SSL3_ST_CR_KEY_EXCH_B:	str="SSLv3 read server key exchange B"; break;
 case SSL3_ST_CR_CERT_REQ_A:	str="SSLv3 read server certificate request A"; break;
 case SSL3_ST_CR_CERT_REQ_B:	str="SSLv3 read server certificate request B"; break;
+case SSL3_ST_CR_SESSION_TICKET_A: str="SSLv3 read server session ticket A";break;
+case SSL3_ST_CR_SESSION_TICKET_B: str="SSLv3 read server session ticket B";break;
 case SSL3_ST_CR_SRVR_DONE_A:	str="SSLv3 read server done A"; break;
 case SSL3_ST_CR_SRVR_DONE_B:	str="SSLv3 read server done B"; break;
 case SSL3_ST_CW_CERT_A:		str="SSLv3 write client certificate A"; break;
@@ -172,6 +200,8 @@ case SSL3_ST_SW_KEY_EXCH_A:	str="SSLv3 write key exchange A"; break;
 case SSL3_ST_SW_KEY_EXCH_B:	str="SSLv3 write key exchange B"; break;
 case SSL3_ST_SW_CERT_REQ_A:	str="SSLv3 write certificate request A"; break;
 case SSL3_ST_SW_CERT_REQ_B:	str="SSLv3 write certificate request B"; break;
+case SSL3_ST_SW_SESSION_TICKET_A: str="SSLv3 write session ticket A"; break;
+case SSL3_ST_SW_SESSION_TICKET_B: str="SSLv3 write session ticket B"; break;
 case SSL3_ST_SW_SRVR_DONE_A:	str="SSLv3 write server done A"; break;
 case SSL3_ST_SW_SRVR_DONE_B:	str="SSLv3 write server done B"; break;
 case SSL3_ST_SR_CERT_A:		str="SSLv3 read client certificate A"; break;
@@ -399,6 +429,12 @@ const char *SSL_alert_desc_string(int value)
 	case TLS1_AD_INTERNAL_ERROR:		str="IE"; break;
 	case TLS1_AD_USER_CANCELLED:		str="US"; break;
 	case TLS1_AD_NO_RENEGOTIATION:		str="NR"; break;
+	case TLS1_AD_UNSUPPORTED_EXTENSION:	str="UE"; break;
+	case TLS1_AD_CERTIFICATE_UNOBTAINABLE:	str="CO"; break;
+	case TLS1_AD_UNRECOGNIZED_NAME:		str="UN"; break;
+	case TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE: str="BR"; break;
+	case TLS1_AD_BAD_CERTIFICATE_HASH_VALUE: str="BH"; break;
+	case TLS1_AD_UNKNOWN_PSK_IDENTITY:	str="UP"; break;
 	default:				str="UK"; break;
 		}
 	return(str);
@@ -481,6 +517,24 @@ const char *SSL_alert_desc_string_long(int value)
 		break;
 	case TLS1_AD_NO_RENEGOTIATION:
 		str="no renegotiation";
+		break;
+	case TLS1_AD_UNSUPPORTED_EXTENSION:
+		str="unsupported extension";
+		break;
+	case TLS1_AD_CERTIFICATE_UNOBTAINABLE:
+		str="certificate unobtainable";
+		break;
+	case TLS1_AD_UNRECOGNIZED_NAME:
+		str="unrecognized name";
+		break;
+	case TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE:
+		str="bad certificate status response";
+		break;
+	case TLS1_AD_BAD_CERTIFICATE_HASH_VALUE:
+		str="bad certificate hash value";
+		break;
+	case TLS1_AD_UNKNOWN_PSK_IDENTITY:
+		str="unknown PSK identity";
 		break;
 	default: str="unknown"; break;
 		}

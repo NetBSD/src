@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.4 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.4.2.1 2008/06/23 04:26:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_swap_32)
+ENTRY(_atomic_swap_32)
 1:	lwarx	%r10,0,%r3
 	stwcx.	%r4,0,%r3
 	bne-	1b

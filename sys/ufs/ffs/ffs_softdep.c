@@ -1,4 +1,30 @@
-/*	$NetBSD: ffs_softdep.c,v 1.111 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.111.2.1 2008/06/23 04:32:05 wrstuden Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.111 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.111.2.1 2008/06/23 04:32:05 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -48,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.111 2008/05/05 17:11:17 ad Exp $")
 #include <sys/vnode.h>
 #include <sys/inttypes.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -1196,7 +1223,7 @@ softdep_mount(devvp, mp, fs, cred)
 	bzero(&cstotal, sizeof cstotal);
 	for (cyl = 0; cyl < fs->fs_ncg; cyl++) {
 		if ((error = bread(devvp, fsbtodb(fs, cgtod(fs, cyl)),
-		    fs->fs_cgsize, cred, &bp)) != 0) {
+		    fs->fs_cgsize, cred, 0, &bp)) != 0) {
 			brelse(bp, 0);
 			return (error);
 		}
@@ -1805,6 +1832,7 @@ setup_allocindir_phase2(bp, ip, aip)
 			VOP_BMAP(bp->b_vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
 		}
+		/* No need for ffs_getblk().  This buffer will be released. */
 		newindirdep->ir_savebp =
 		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, 0);
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
@@ -1916,7 +1944,7 @@ softdep_setup_freeblocks(
 	 */
 	if ((error = bread(ip->i_devvp,
 	    fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-	    (int)fs->fs_bsize, NOCRED, &bp)) != 0)
+	    (int)fs->fs_bsize, NOCRED, B_MODIFY, &bp)) != 0)
 		softdep_error("softdep_setup_freeblocks", error);
 	if (ip->i_ump->um_fstype == UFS1) {
 #ifdef FFS_EI
@@ -2452,7 +2480,7 @@ indir_trunc(freeblks, dbn, level, lbn, countp)
 	} else {
 		softdep_trackbufs(1, false);
 		mutex_exit(&bufcache_lock);
-		error = bread(devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
+		error = bread(devvp, dbn, (int)fs->fs_bsize, NOCRED, 0, &bp);
 		if (error)
 			return (error);
 	}
@@ -2945,6 +2973,21 @@ newdirrem(bp, dp, ip, isrmdir, prevdirremp)
 	dirrem->dm_state |= COMPLETE;
 	free_diradd(dap);
 	return (dirrem);
+}
+
+void
+softdep_pace_dirrem(void)
+{
+	int limit;
+
+	limit = max_softdeps >> 1;
+	if (num_dirrem <= limit)
+		return;
+
+	mutex_enter(&bufcache_lock);
+	if (num_dirrem > limit)
+		(void)cv_timedwait(&proc_wait_cv, &bufcache_lock, tickdelay);
+	mutex_exit(&bufcache_lock);
 }
 
 /*
@@ -4670,7 +4713,7 @@ softdep_fsync(vp, f)
 		 * Flush directory page containing the inode's name.
 		 */
 		error = bread(pvp, lbn, blksize(fs, VTOI(pvp), lbn),
-		    lp->l_cred, &bp);
+		    lp->l_cred, 0, &bp);
 		if (error == 0)
 			error = VOP_BWRITE(bp);
 		vput(pvp);
@@ -5250,7 +5293,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		mutex_exit(&bufcache_lock);
 		if ((error = bread(ump->um_devvp,
 		    fsbtodb(ump->um_fs, ino_to_fsba(ump->um_fs, inum)),
-		    (int)ump->um_fs->fs_bsize, NOCRED, &bp)) != 0)
+		    (int)ump->um_fs->fs_bsize, NOCRED, 0, &bp)) != 0)
 			break;
 		if ((error = VOP_BWRITE(bp)) != 0)
 			break;

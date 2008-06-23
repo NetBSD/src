@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.8 2006/08/01 00:04:16 rpaulo Exp $	*/
+/*	$NetBSD: smtp_sasl_glue.c,v 1.1.1.8.20.1 2008/06/23 04:29:23 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -126,6 +126,7 @@
   */
 #include "smtp.h"
 #include "smtp_sasl.h"
+#include "smtp_sasl_auth_cache.h"
 
 #ifdef USE_SASL_AUTH
 
@@ -143,6 +144,14 @@ STRING_LIST *smtp_sasl_mechs;
   * SASL implementation handle.
   */
 static XSASL_CLIENT_IMPL *smtp_sasl_impl;
+
+ /*
+  * The 535 SASL authentication failure cache.
+  */
+#ifdef HAVE_SASL_AUTH_CACHE
+static SMTP_SASL_AUTH_CACHE *smtp_sasl_auth_cache;
+
+#endif
 
 /* smtp_sasl_passwd_lookup - password lookup routine */
 
@@ -229,6 +238,20 @@ void    smtp_sasl_initialize(void)
     if (*var_smtp_sasl_mechs)
 	smtp_sasl_mechs = string_list_init(MATCH_FLAG_NONE,
 					   var_smtp_sasl_mechs);
+
+    /*
+     * Initialize the 535 SASL authentication failure cache.
+     */
+    if (*var_smtp_sasl_auth_cache_name) {
+#ifdef HAVE_SASL_AUTH_CACHE
+	smtp_sasl_auth_cache =
+	    smtp_sasl_auth_cache_init(var_smtp_sasl_auth_cache_name,
+				      var_smtp_sasl_auth_cache_time);
+#else
+	msg_warn("not compiled with TLS support -- "
+		 "ignoring the " VAR_SMTP_SASL_AUTH_CACHE_NAME " setting");
+#endif
+    }
 }
 
 /* smtp_sasl_connect - per-session client initialization */
@@ -270,6 +293,7 @@ int     smtp_sasl_authenticate(SMTP_SESSION *session, DSN_BUF *why)
     const char *mechanism;
     int     result;
     char   *line;
+    int     steps = 0;
 
     /*
      * Sanity check.
@@ -279,7 +303,26 @@ int     smtp_sasl_authenticate(SMTP_SESSION *session, DSN_BUF *why)
 
     if (msg_verbose)
 	msg_info("%s: %s: SASL mechanisms %s",
-		 myname, session->namaddr, session->sasl_mechanism_list);
+		 myname, session->namaddrport, session->sasl_mechanism_list);
+
+    /*
+     * Avoid repeated login failures after a recent 535 error.
+     */
+#ifdef HAVE_SASL_AUTH_CACHE
+    if (smtp_sasl_auth_cache
+	&& smtp_sasl_auth_cache_find(smtp_sasl_auth_cache, session)) {
+	char   *resp_dsn = smtp_sasl_auth_cache_dsn(smtp_sasl_auth_cache);
+	char   *resp_str = smtp_sasl_auth_cache_text(smtp_sasl_auth_cache);
+
+	if (var_smtp_sasl_auth_soft_bounce && resp_dsn[0] == '5')
+	    resp_dsn[0] = '4';
+	dsb_update(why, resp_dsn, DSB_DEF_ACTION, DSB_MTYPE_DNS,
+		   session->host, var_procname, resp_str,
+		   "SASL [CACHED] authentication failed; server %s said: %s",
+		   session->host, resp_str);
+	return (0);
+    }
+#endif
 
     /*
      * Start the client side authentication protocol.
@@ -317,6 +360,16 @@ int     smtp_sasl_authenticate(SMTP_SESSION *session, DSN_BUF *why)
     while ((resp = smtp_chat_resp(session))->code / 100 == 3) {
 
 	/*
+	 * Sanity check.
+	 */
+	if (++steps > 100) {
+	    dsb_simple(why, "4.3.0", "SASL authentication failed; "
+		       "authentication protocol loop with server %s",
+		       session->namaddr);
+	    return (-1);
+	}
+
+	/*
 	 * Process a server challenge.
 	 */
 	line = resp->str;
@@ -342,6 +395,13 @@ int     smtp_sasl_authenticate(SMTP_SESSION *session, DSN_BUF *why)
      * We completed the authentication protocol.
      */
     if (resp->code / 100 != 2) {
+#ifdef HAVE_SASL_AUTH_CACHE
+	/* Update the 535 authentication failure cache. */
+	if (smtp_sasl_auth_cache && resp->code == 535)
+	    smtp_sasl_auth_cache_store(smtp_sasl_auth_cache, session, resp);
+#endif
+	if (var_smtp_sasl_auth_soft_bounce && resp->code / 100 == 5)
+	    STR(resp->dsn_buf)[0] = '4';
 	dsb_update(why, resp->dsn, DSB_DEF_ACTION,
 		   DSB_MTYPE_DNS, session->host,
 		   var_procname, resp->str,

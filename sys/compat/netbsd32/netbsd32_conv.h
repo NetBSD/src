@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.17 2007/12/04 18:40:19 dsl Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.17.18.1 2008/06/23 04:30:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -460,8 +458,6 @@ netbsd32_to_msqid_ds(ds32p, dsp)
 {
 
 	netbsd32_to_ipc_perm(&ds32p->msg_perm, &dsp->msg_perm);
-	netbsd32_to_msg(NETBSD32PTR64(ds32p->_msg_first), dsp->_msg_first);
-	netbsd32_to_msg(NETBSD32PTR64(ds32p->_msg_last), dsp->_msg_last);
 	dsp->_msg_cbytes = (u_long)ds32p->_msg_cbytes;
 	dsp->msg_qnum = (u_long)ds32p->msg_qnum;
 	dsp->msg_qbytes = (u_long)ds32p->msg_qbytes;
@@ -479,8 +475,6 @@ netbsd32_from_msqid_ds(dsp, ds32p)
 {
 
 	netbsd32_from_ipc_perm(&dsp->msg_perm, &ds32p->msg_perm);
-	netbsd32_from_msg(dsp->_msg_first, NETBSD32PTR64(ds32p->_msg_first));
-	netbsd32_from_msg(dsp->_msg_last, NETBSD32PTR64(ds32p->_msg_last));
 	ds32p->_msg_cbytes = (netbsd32_u_long)dsp->_msg_cbytes;
 	ds32p->msg_qnum = (netbsd32_u_long)dsp->msg_qnum;
 	ds32p->msg_qbytes = (netbsd32_u_long)dsp->msg_qbytes;

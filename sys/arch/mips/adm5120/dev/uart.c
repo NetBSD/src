@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.4 2008/01/09 08:15:53 elad Exp $ */
+/* $NetBSD: uart.c,v 1.4.12.1 2008/06/23 04:30:31 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.4 2008/01/09 08:15:53 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.4.12.1 2008/06/23 04:30:31 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,7 +198,7 @@ uart_cnpollc(dev_t dev, int on)
 int
 uart_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct uart_softc *sc = device_lookup(&uart_cd, minor(dev));
+	struct uart_softc *sc = device_lookup_private(&uart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 	int s, error = 0;
 
@@ -230,7 +230,7 @@ uart_open(dev_t dev, int flag, int mode, struct lwp *l)
 int
 uart_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct uart_softc *sc = device_lookup(&uart_cd, minor(dev));
+	struct uart_softc *sc = device_lookup_private(&uart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -242,7 +242,7 @@ uart_close(dev_t dev, int flag, int mode, struct lwp *l)
 int
 uart_read(dev_t dev, struct uio *uio, int flag)
 {
-	struct uart_softc *sc = device_lookup(&uart_cd, minor(dev));
+	struct uart_softc *sc = device_lookup_private(&uart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
@@ -251,7 +251,7 @@ uart_read(dev_t dev, struct uio *uio, int flag)
 int
 uart_write(dev_t dev, struct uio *uio, int flag)
 {
-	struct uart_softc *sc = device_lookup(&uart_cd, minor(dev));
+	struct uart_softc *sc = device_lookup_private(&uart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
@@ -260,7 +260,7 @@ uart_write(dev_t dev, struct uio *uio, int flag)
 int
 uart_poll(dev_t dev, int events, struct lwp *l)
 {
-	struct uart_softc *sc = device_lookup(&uart_cd, minor(dev));
+	struct uart_softc *sc = device_lookup_private(&uart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -269,7 +269,7 @@ uart_poll(dev_t dev, int events, struct lwp *l)
 int
 uart_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct uart_softc *sc = device_lookup(&uart_cd, minor(dev));
+	struct uart_softc *sc = device_lookup_private(&uart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -287,10 +287,9 @@ uart_param(struct tty *tp, struct termios *t)
 }
 
 struct tty*
-uart_tty(dev)
-	dev_t dev;
+uart_tty(dev_t dev)
 {
-	struct uart_softc *sc = device_lookup(&uart_cd, minor(dev));
+	struct uart_softc *sc = device_lookup_private(&uart_cd, minor(dev));
 
 	return sc->sc_tty;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.32 2008/04/06 23:38:20 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.32.4.1 2008/06/23 04:27:02 wrstuden Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.165 2008/01/19 23:09:49 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.32 2008/04/06 23:38:20 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.32.4.1 2008/06/23 04:27:02 wrstuden Exp $");
 
 #include <sys/queue.h>
 
@@ -78,6 +78,12 @@ __RCSID("$NetBSD: sshconnect2.c,v 1.32 2008/04/06 23:38:20 christos Exp $");
 extern char *client_version_string;
 extern char *server_version_string;
 extern Options options;
+extern Kex *xxx_kex;
+
+/* tty_flag is set in ssh.c. use this in ssh_userauth2 */
+/* if it is set then prevent the switch to the null cipher */
+
+extern int tty_flag;
 
 /*
  * SSH2 key exchange
@@ -337,6 +343,28 @@ ssh_userauth2(const char *local_user, const char *server_user, char *host,
 	pubkey_cleanup(&authctxt);
 	dispatch_range(SSH2_MSG_USERAUTH_MIN, SSH2_MSG_USERAUTH_MAX, NULL);
 
+	/* if the user wants to use the none cipher do it */
+	/* post authentication and only if the right conditions are met */
+	/* both of the NONE commands must be true and there must be no */
+	/* tty allocated */
+	if ((options.none_switch == 1) && (options.none_enabled == 1)) 
+	{
+		if (!tty_flag) /* no null on tty sessions */
+		{
+			debug("Requesting none rekeying...");
+			myproposal[PROPOSAL_ENC_ALGS_STOC] = "none";
+			myproposal[PROPOSAL_ENC_ALGS_CTOS] = "none";
+			kex_prop2buf(&xxx_kex->my,myproposal);
+			packet_request_rekeying();
+			fprintf(stderr, "WARNING: ENABLED NONE CIPHER\n");
+		}
+		else
+		{
+			/* requested NONE cipher when in a tty */
+			debug("Cannot switch to NONE cipher with tty allocated");
+			fprintf(stderr, "NONE cipher switch disabled when a TTY is allocated\n");
+		}
+	}
 	debug("Authentication succeeded (%s).", authctxt.method->name);
 }
 

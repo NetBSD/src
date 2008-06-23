@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.12 2008/05/04 15:26:29 xtraeme Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.12.2.1 2008/06/23 04:31:01 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.12 2008/05/04 15:26:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.12.2.1 2008/06/23 04:31:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ strtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct strtc_softc *sc;
 
-	if ((sc = device_lookup(&strtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&strtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	/* XXX: Locking */
@@ -138,7 +138,7 @@ strtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct strtc_softc *sc;
 
-	if ((sc = device_lookup(&strtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&strtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	sc->sc_open = 0;
@@ -153,7 +153,7 @@ strtc_read(dev_t dev, struct uio *uio, int flags)
 	u_int8_t ch, cmdbuf[1];
 	int a, error;
 
-	if ((sc = device_lookup(&strtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&strtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= M41ST84_USER_RAM_SIZE)
@@ -192,7 +192,7 @@ strtc_write(dev_t dev, struct uio *uio, int flags)
 	u_int8_t cmdbuf[2];
 	int a, error;
 
-	if ((sc = device_lookup(&strtc_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&strtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= M41ST84_USER_RAM_SIZE)

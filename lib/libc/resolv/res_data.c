@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.10 2007/03/30 20:23:04 ghen Exp $	*/
+/*	$NetBSD: res_data.c,v 1.10.12.1 2008/06/23 04:29:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,9 +20,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #ifdef notdef
-static const char rcsid[] = "Id: res_data.c,v 1.3.18.1 2005/04/27 05:01:10 sra Exp";
+static const char rcsid[] = "Id: res_data.c,v 1.5 2007/09/14 05:32:25 marka Exp";
 #else
-__RCSID("$NetBSD: res_data.c,v 1.10 2007/03/30 20:23:04 ghen Exp $");
+__RCSID("$NetBSD: res_data.c,v 1.10.12.1 2008/06/23 04:29:32 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

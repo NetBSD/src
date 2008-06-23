@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.2.1 2008/06/23 04:30:21 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2008/04/28 20:23:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.1 2008/06/23 04:30:21 wrstuden Exp $");
 
 #include "opt_ddb.h"
 
@@ -153,7 +153,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		curcpu()->ci_cycles_per_hz /= 2;
 		curcpu()->ci_divisor_delay /= 2;
 	}
-	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	/* Load memory to UVM */
 	for (i = 1; i < mem_cluster_cnt; i++) {

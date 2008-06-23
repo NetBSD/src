@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.227 2008/04/10 13:52:45 tsutsui Exp $
+#	$NetBSD: bsd.prog.mk,v 1.227.4.1 2008/06/23 04:30:03 wrstuden Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -92,7 +92,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	crypt crypto crypto_idea crypto_mdc2 crypto_rc5 \
 	curses dbm des edit event \
 	form fl g2c gcc gnumalloc gssapi hdb heimntlm hx509 intl ipsec \
-	kadm5clnt kadm5srv kafs krb5 kvm l \
+	kadm5clnt kadm5srv kafs krb5 kvm l lber ldap ldap_r \
 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
 	puffs radius resolv rmt roken rpcsvc rt sdp skey sl ss ssh ssl termcap \
 	usbhid util wrap y z bind9 dns lwres isccfg isccc isc

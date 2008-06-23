@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_timer.c,v 1.14 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: clnp_timer.c,v 1.14.4.1 2008/06/23 04:32:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_timer.c,v 1.14 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_timer.c,v 1.14.4.1 2008/06/23 04:32:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -179,11 +179,9 @@ clnp_drain(void)
 {
 	struct clnp_fragl *cfh;
 
-	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 	cfh = clnp_frags;
 	while (cfh != NULL)
 		cfh = clnp_freefrags(cfh);
 	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
 }

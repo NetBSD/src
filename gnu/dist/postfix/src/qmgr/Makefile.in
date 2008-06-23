@@ -2,11 +2,13 @@ SHELL	= /bin/sh
 SRCS	= qmgr.c qmgr_active.c qmgr_transport.c qmgr_queue.c qmgr_entry.c \
 	qmgr_message.c qmgr_deliver.c qmgr_move.c \
 	qmgr_job.c qmgr_peer.c \
-	qmgr_defer.c qmgr_enable.c qmgr_scan.c qmgr_bounce.c qmgr_error.c
+	qmgr_defer.c qmgr_enable.c qmgr_scan.c qmgr_bounce.c qmgr_error.c \
+	qmgr_feedback.c
 OBJS	= qmgr.o qmgr_active.o qmgr_transport.o qmgr_queue.o qmgr_entry.o \
 	qmgr_message.o qmgr_deliver.o qmgr_move.o \
 	qmgr_job.o qmgr_peer.o \
-	qmgr_defer.o qmgr_enable.o qmgr_scan.o qmgr_bounce.o qmgr_error.o
+	qmgr_defer.o qmgr_enable.o qmgr_scan.o qmgr_bounce.o qmgr_error.o \
+	qmgr_feedback.o
 HDRS	= qmgr.h
 TESTSRC	=
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
@@ -209,6 +211,21 @@ qmgr_error.o: ../../include/vstream.h
 qmgr_error.o: ../../include/vstring.h
 qmgr_error.o: qmgr.h
 qmgr_error.o: qmgr_error.c
+qmgr_feedback.o: ../../include/dsn.h
+qmgr_feedback.o: ../../include/mail_conf.h
+qmgr_feedback.o: ../../include/mail_params.h
+qmgr_feedback.o: ../../include/msg.h
+qmgr_feedback.o: ../../include/mymalloc.h
+qmgr_feedback.o: ../../include/name_code.h
+qmgr_feedback.o: ../../include/recipient_list.h
+qmgr_feedback.o: ../../include/scan_dir.h
+qmgr_feedback.o: ../../include/stringops.h
+qmgr_feedback.o: ../../include/sys_defs.h
+qmgr_feedback.o: ../../include/vbuf.h
+qmgr_feedback.o: ../../include/vstream.h
+qmgr_feedback.o: ../../include/vstring.h
+qmgr_feedback.o: qmgr.h
+qmgr_feedback.o: qmgr_feedback.c
 qmgr_job.o: ../../include/dsn.h
 qmgr_job.o: ../../include/htable.h
 qmgr_job.o: ../../include/msg.h
@@ -284,10 +301,13 @@ qmgr_peer.o: ../../include/vbuf.h
 qmgr_peer.o: ../../include/vstream.h
 qmgr_peer.o: qmgr.h
 qmgr_peer.o: qmgr_peer.c
+qmgr_queue.o: ../../include/attr.h
 qmgr_queue.o: ../../include/dsn.h
 qmgr_queue.o: ../../include/events.h
 qmgr_queue.o: ../../include/htable.h
+qmgr_queue.o: ../../include/iostuff.h
 qmgr_queue.o: ../../include/mail_params.h
+qmgr_queue.o: ../../include/mail_proto.h
 qmgr_queue.o: ../../include/msg.h
 qmgr_queue.o: ../../include/mymalloc.h
 qmgr_queue.o: ../../include/recipient_list.h

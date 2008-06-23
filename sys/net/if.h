@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.135 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: if.h,v 1.135.2.1 2008/06/23 04:31:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -292,6 +292,12 @@ struct ifnet {				/* and the entries */
 	struct	mowner *if_mowner;	/* who owns mbufs for this interface */
 
 	void	*if_agrprivate;		/* used only when #if NAGR > 0 */
+
+	/*
+	 * pf specific data, used only when #if NPF > 0.
+	 */
+	void	*if_pf_kif;		/* pf interface abstraction */
+	void	*if_pf_groups;		/* pf interface groups */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -463,7 +469,7 @@ struct ifaddr {
 	uint32_t	*ifa_seqno;
 	int16_t	ifa_preference;	/* preference level for this address */
 };
-#define	IFA_ROUTE	RTF_UP /* 0x01 *//* route installed */
+#define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
 
 /*
  * Message format for use in obtaining information about interfaces
@@ -636,6 +642,7 @@ struct if_laddrreq {
 	char iflr_name[IFNAMSIZ];
 	unsigned int flags;
 #define IFLR_PREFIX	0x8000	/* in: prefix given  out: kernel fills id */
+#define IFLR_ACTIVE	0x4000	/* in/out: link-layer address activation */
 	unsigned int prefixlen;		/* in/out */
 	struct sockaddr_storage addr;	/* in/out */
 	struct sockaddr_storage dstaddr; /* out */
@@ -814,7 +821,11 @@ void    ether_input(struct ifnet *, struct mbuf *);
 
 int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
 
+struct ifnet *if_alloc(u_char);
+void if_initname(struct ifnet *, const char *, int);
 struct ifaddr *if_dl_create(const struct ifnet *, const struct sockaddr_dl **);
+void if_activate_sadl(struct ifnet *, struct ifaddr *,
+    const struct sockaddr_dl *);
 void	if_set_sadl(struct ifnet *, const void *, u_char);
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);
@@ -830,6 +841,7 @@ void	if_slowtimo(void *);
 void	if_up(struct ifnet *);
 int	ifconf(u_long, void *);
 void	ifinit(void);
+void	ifinit1(void);
 int	ifioctl(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);

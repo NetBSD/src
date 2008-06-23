@@ -84,11 +84,6 @@ long dtls1_default_timeout(void)
 	return(60*60*2);
 	}
 
-IMPLEMENT_dtls1_meth_func(dtlsv1_base_method,
-			ssl_undefined_function,
-			ssl_undefined_function,
-			ssl_bad_method)
-
 int dtls1_new(SSL *s)
 	{
 	DTLS1_STATE *d1;
@@ -98,16 +93,6 @@ int dtls1_new(SSL *s)
 	memset(d1,0, sizeof *d1);
 
 	/* d1->handshake_epoch=0; */
-#if defined(OPENSSL_SYS_VMS) || defined(VMS_TEST)
-	d1->bitmap.length=64;
-#else
-	d1->bitmap.length=sizeof(d1->bitmap.map) * 8;
-#endif
-	pq_64bit_init(&(d1->bitmap.map));
-	pq_64bit_init(&(d1->bitmap.max_seq_num));
-	
-	pq_64bit_init(&(d1->next_bitmap.map));
-	pq_64bit_init(&(d1->next_bitmap.max_seq_num));
 
 	d1->unprocessed_rcds.q=pqueue_new();
 	d1->processed_rcds.q=pqueue_new();
@@ -174,12 +159,6 @@ void dtls1_free(SSL *s)
         }
 	pqueue_free(s->d1->sent_messages);
 
-	pq_64bit_free(&(s->d1->bitmap.map));
-	pq_64bit_free(&(s->d1->bitmap.max_seq_num));
-
-	pq_64bit_free(&(s->d1->next_bitmap.map));
-	pq_64bit_free(&(s->d1->next_bitmap.max_seq_num));
-
 	OPENSSL_free(s->d1);
 	}
 
@@ -187,4 +166,24 @@ void dtls1_clear(SSL *s)
 	{
 	ssl3_clear(s);
 	s->version=DTLS1_VERSION;
+	}
+
+/*
+ * As it's impossible to use stream ciphers in "datagram" mode, this
+ * simple filter is designed to disengage them in DTLS. Unfortunately
+ * there is no universal way to identify stream SSL_CIPHER, so we have
+ * to explicitly list their SSL_* codes. Currently RC4 is the only one
+ * available, but if new ones emerge, they will have to be added...
+ */
+SSL_CIPHER *dtls1_get_cipher(unsigned int u)
+	{
+	SSL_CIPHER *ciph = ssl3_get_cipher(u);
+
+	if (ciph != NULL)
+		{
+		if (ciph->algorithm_enc == SSL_RC4)
+			return NULL;
+		}
+
+	return ciph;
 	}

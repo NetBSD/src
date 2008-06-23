@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.19 2008/04/30 13:10:57 martin Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.19.2.1 2008/06/23 04:30:01 wrstuden Exp $
 .\"
 .\" Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 6, 2007
+.Dd May 25, 2008
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -437,6 +437,10 @@ to before running
 Only supported after
 .Pa /usr
 is mounted.
+.It Sy ${name}_env
+List of additional or modified environment variables to set
+when starting
+.Sy command .
 .It Sy ${name}_flags
 Arguments to call
 .Sy command

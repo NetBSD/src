@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_state.c,v 1.1.1.9 2006/08/01 00:04:21 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_state.c,v 1.1.1.9.20.1 2008/06/23 04:29:23 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -125,6 +125,7 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
     state->proxy_xforward_features = 0;
     state->saved_filter = 0;
     state->saved_redirect = 0;
+    state->saved_bcc = 0;
     state->saved_flags = 0;
 #ifdef DELAY_ACTION
     state->saved_delay = 0;

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.42 2008/02/23 05:48:13 matt Exp $
+#	$NetBSD: genassym.cf,v 1.42.6.1 2008/06/23 04:30:47 wrstuden Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -89,8 +89,6 @@ define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)
 define	BADADDR		offsetof(struct cpu_dep, cpu_badaddr)
 
 define	KERNBASE	KERNBASE
-
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 define	UVME_INTRS	offsetof(struct uvmexp, intrs)
 define	UVME_SOFTS	offsetof(struct uvmexp, softs)

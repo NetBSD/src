@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.79 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: awi.c,v 1.79.2.1 2008/06/23 04:31:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.79 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.79.2.1 2008/06/23 04:31:04 wrstuden Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -209,29 +209,6 @@ struct awi_chanset awi_chanset[] = {
     { AWI_PHY_TYPE_DS, AWI_REG_DOMAIN_EU,  1, 13,  3 },
     { 0, 0, 0, 0, 0 }
 };
-
-#ifdef __FreeBSD__
-devclass_t awi_devclass;
-
-#if __FreeBSD_version < 500043
-static char *ether_sprintf(u_int8_t *);
-
-static char *
-ether_sprintf(u_int8_t *enaddr)
-{
-	static char strbuf[18];
-
-	sprintf(strbuf, "%6D", enaddr, ":");
-	return strbuf;
-}
-#endif
-
-#define	IFQ_PURGE(ifq)		IF_DRAIN(ifq)
-#define IF_POLL(ifq, m)		((m) = (ifq)->ifq_head)
-#define IFQ_POLL(ifq, m)	IF_POLL((ifq), (m))
-#define IFQ_DEQUEUE(ifq, m)	IF_DEQUEUE((ifq), (m))
-
-#endif
 
 #ifdef AWI_DEBUG
 int awi_debug = 0;

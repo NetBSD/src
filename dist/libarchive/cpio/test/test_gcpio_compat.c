@@ -27,7 +27,7 @@ __FBSDID("$FreeBSD$");
 
 
 static void
-unpack_test(const char *from, const char *options)
+unpack_test(const char *from, const char *options, const char *se)
 {
 	struct stat st, st2;
 	char buff[128];
@@ -41,14 +41,14 @@ unpack_test(const char *from, const char *options)
 	 * Use cpio to unpack the sample archive
 	 */
 	extract_reference_file(from);
-	r = systemf("%s -i --quiet %s < %s >unpack.out 2>unpack.err",
+	r = systemf("%s -i %s < %s >unpack.out 2>unpack.err",
 	    testprog, options, from);
-	failure("Error invoking %s -i --quiet %s < %s",
+	failure("Error invoking %s -i %s < %s",
 	    testprog, options, from);
 	assertEqualInt(r, 0);
 
 	/* Verify that nothing went to stderr. */
-	assertEmptyFile("unpack.err");
+	assertFileContents(se, strlen(se), "unpack.err");
 
 	/*
 	 * Verify unpacked files.
@@ -118,10 +118,10 @@ DEFINE_TEST(test_gcpio_compat)
 	oldumask = umask(0);
 
 	/* Dearchive sample files with a variety of options. */
-	unpack_test("test_gcpio_compat_ref.bin", "");
-	unpack_test("test_gcpio_compat_ref.crc", "");
-	unpack_test("test_gcpio_compat_ref.newc", "");
-	unpack_test("test_gcpio_compat_ref.ustar", "");
+	unpack_test("test_gcpio_compat_ref.bin", "", "1 block\n");
+	unpack_test("test_gcpio_compat_ref.crc", "", "2 blocks\n");
+	unpack_test("test_gcpio_compat_ref.newc", "", "2 blocks\n");
+	unpack_test("test_gcpio_compat_ref.ustar", "", "7 blocks\n");
 
 	umask(oldumask);
 }

@@ -93,19 +93,19 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
        respectively.
 
        <b>/</b><i>pattern</i><b>/</b><i>flags action</i>
-              When <i>pattern</i> matches the input string, execute  the
-              corresponding  <i>action</i>. See below for a list of pos-
-              sible actions.
+              When /<i>pattern</i>/ matches the  input  string,  execute
+              the  corresponding  <i>action</i>. See below for a list of
+              possible actions.
 
        <b>!/</b><i>pattern</i><b>/</b><i>flags action</i>
-              When <i>pattern</i> does <b>not</b> match the input string,  exe-
-              cute the corresponding <i>action</i>.
+              When /<i>pattern</i>/ does <b>not</b>  match  the  input  string,
+              execute the corresponding <i>action</i>.
 
        <b>if /</b><i>pattern</i><b>/</b><i>flags</i>
 
        <b>endif</b>  Match the input string against the patterns between
               <b>if</b> and <b>endif</b>, if and only if the same input  string
-              also matches <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
+              also matches /<i>pattern</i>/. The <b>if</b>..<b>endif</b> can nest.
 
               Note:  do not prepend whitespace to patterns inside
               <b>if</b>..<b>endif</b>.
@@ -114,7 +114,7 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
 
        <b>endif</b>  Match the input string against the patterns between
               <b>if</b>  and <b>endif</b>, if and only if the same input string
-              does <b>not</b> match <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
+              does <b>not</b> match /<i>pattern</i>/. The <b>if</b>..<b>endif</b> can nest.
 
        blank lines and comments
               Empty lines and whitespace-only lines are  ignored,
@@ -292,26 +292,31 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
               a pattern before applying more drastic actions.
 
 <b>BUGS</b>
-       Many  people  overlook  the main limitations of header and
+       Empty lines never match, because some map types mis-behave
+       when given a zero-length search string.   This  limitation
+       may  be  removed for regular expression tables in a future
+       release.
+
+       Many people overlook the main limitations  of  header  and
        <a href="postconf.5.html#body_checks">body_checks</a> rules.
 
-       <b>o</b>      These rules operate on one logical  message  header
+       <b>o</b>      These  rules  operate on one logical message header
               or one body line at a time. A decision made for one
               line is not carried over to the next line.
 
-       <b>o</b>      If text in the message body is encoded  (<a href="http://www.faqs.org/rfcs/rfc2045.html">RFC  2045</a>)
+       <b>o</b>      If  text  in the message body is encoded (<a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a>)
               then the rules need to be specified for the encoded
               form.
 
-       <b>o</b>      Likewise, when message  headers  are  encoded  (<a href="http://www.faqs.org/rfcs/rfc2047.html">RFC</a>
-              <a href="http://www.faqs.org/rfcs/rfc2047.html">2047</a>)  then  the rules need to be specified for the
+       <b>o</b>      Likewise,  when  message  headers  are encoded (<a href="http://tools.ietf.org/html/rfc2047">RFC</a>
+              <a href="http://tools.ietf.org/html/rfc2047">2047</a>) then the rules need to be specified  for  the
               encoded form.
 
-       Message headers added by the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon itself  are
+       Message  headers added by the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon itself are
        excluded from inspection. Examples of such message headers
        are <b>From:</b>, <b>To:</b>, <b>Message-ID:</b>, <b>Date:</b>.
 
-       Message headers deleted by the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon  will  be
+       Message  headers  deleted by the <a href="cleanup.8.html"><b>cleanup</b>(8)</a> daemon will be
        examined before they are deleted. Examples are: <b>Bcc:, Con-</b>
        <b>tent-Length:</b>, <b>Return-Path:</b>.
 
@@ -319,11 +324,11 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
        <b><a href="postconf.5.html#body_checks">body_checks</a></b>
               Lookup tables with content filter rules for message
               body lines.  These filters see one physical line at
-              a time, in chunks  of  at  most  <b>$<a href="postconf.5.html#line_length_limit">line_length_limit</a></b>
+              a  time,  in  chunks  of at most <b>$<a href="postconf.5.html#line_length_limit">line_length_limit</a></b>
               bytes.
 
        <b><a href="postconf.5.html#body_checks_size_limit">body_checks_size_limit</a></b>
-              The  amount  of  content  per  message body segment
+              The amount of  content  per  message  body  segment
               (attachment) that is subjected to <b>$<a href="postconf.5.html#body_checks">body_checks</a></b> fil-
               tering.
 
@@ -333,32 +338,32 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
 
        <b><a href="postconf.5.html#nested_header_checks">nested_header_checks</a></b> (default: <b>$<a href="postconf.5.html#header_checks">header_checks</a></b>)
               Lookup tables with content filter rules for message
-              header lines: respectively, these  are  applied  to
-              the  initial  message  headers  (not including MIME
-              headers), to the MIME headers anywhere in the  mes-
-              sage,  and  to the initial headers of attached mes-
+              header  lines:  respectively,  these are applied to
+              the initial message  headers  (not  including  MIME
+              headers),  to the MIME headers anywhere in the mes-
+              sage, and to the initial headers of  attached  mes-
               sages.
 
-              Note: these filters see one logical message  header
-              at  a time, even when a message header spans multi-
-              ple lines. Message headers  that  are  longer  than
+              Note:  these filters see one logical message header
+              at a time, even when a message header spans  multi-
+              ple  lines.  Message  headers  that are longer than
               <b>$<a href="postconf.5.html#header_size_limit">header_size_limit</a></b> characters are truncated.
 
        <b><a href="postconf.5.html#disable_mime_input_processing">disable_mime_input_processing</a></b>
-              While  receiving mail, give no special treatment to
-              MIME related message headers; all  text  after  the
+              While receiving mail, give no special treatment  to
+              MIME  related  message  headers; all text after the
               initial message headers is considered to be part of
-              the message body. This means that <b><a href="postconf.5.html#header_checks">header_checks</a></b>  is
-              applied  to  all  the  initial message headers, and
+              the  message body. This means that <b><a href="postconf.5.html#header_checks">header_checks</a></b> is
+              applied to all the  initial  message  headers,  and
               that <b><a href="postconf.5.html#body_checks">body_checks</a></b> is applied to the remainder of the
               message.
 
-              Note:  when  used  in this manner, <b><a href="postconf.5.html#body_checks">body_checks</a></b> will
-              process a multi-line message header one line  at  a
+              Note: when used in this  manner,  <b><a href="postconf.5.html#body_checks">body_checks</a></b>  will
+              process  a  multi-line message header one line at a
               time.
 
 <b>EXAMPLES</b>
-       Header  pattern  to  block  attachments with bad file name
+       Header pattern to block attachments  with  bad  file  name
        extensions.
 
        /etc/postfix/<a href="postconf.5.html">main.cf</a>:
@@ -386,8 +391,8 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
        <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table management
        <a href="postsuper.1.html">postsuper(1)</a>, Postfix janitor
        <a href="postcat.1.html">postcat(1)</a>, show Postfix queue file contents
-       <a href="http://www.faqs.org/rfcs/rfc2045.html">RFC 2045</a>, base64 and quoted-printable encoding rules
-       <a href="http://www.faqs.org/rfcs/rfc2047.html">RFC 2047</a>, message header encoding for non-ASCII text
+       <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a>, base64 and quoted-printable encoding rules
+       <a href="http://tools.ietf.org/html/rfc2047">RFC 2047</a>, message header encoding for non-ASCII text
 
 <b>README FILES</b>
        <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
@@ -396,7 +401,7 @@ HEADER_CHECKS(5)                                              HEADER_CHECKS(5)
        <a href="BACKSCATTER_README.html">BACKSCATTER_README</a>, blocking returned forged mail
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

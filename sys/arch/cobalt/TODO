@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.6 2008/02/02 15:28:07 tsutsui Exp $
+$NetBSD: TODO,v 1.6.12.1 2008/06/23 04:30:17 wrstuden Exp $
 
 Things yet to do:
 
@@ -7,8 +7,6 @@ Things yet to do:
 - Add kloader(8) support, so that we could load a RAMDISK root install kernel
   from any device which is supported by kernel
   (should be trivial, but needs rethink how to pass bootinfo)
-- Configure PCI interrupts properly for boards which have PCI bridges or
-  multiple functions (i.e. boards which use multiple interrupts)
+- Configure PCI interrupts properly for boards which have PCI bridges
 - Handle more GT64x11 interrupts (PCI timeout etc.)
 - Add console support with com(4) at puc(4) so that QUBE2700 could have console
-- Add "optional" zs(4) support for QUBE2700

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 2007/12/11 16:51:14 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.2.14.1 2008/06/23 04:30:29 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2007/12/11 16:51:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2.14.1 2008/06/23 04:30:29 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,15 +191,7 @@ extintr_establish(int irq, int level, int (*ih_fun)(void *), void *ih_arg)
 	ih->ih_enable = 1;
 	ih->ih_level = level;
 	ih->ih_irq = irq - 5;
-	if (irq != 5) {
-		name = extintr_names[irq - 5];
-	} else if (level == IPL_BIO) {
-		name = "ehci";
-	} else if (level == IPL_NET) {
-		name = "rtk";
-	} else {
-		name = "unknown";
-	}
+	name = extintr_names[irq - 5];
 	evcnt_attach_dynamic(&ih->ih_evcnt, EVCNT_TYPE_INTR,
 	    NULL, "ext", name);
 	*p = ih;

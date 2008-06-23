@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.200.4.3 2008/05/28 15:51:19 wrstuden Exp $
+	$NetBSD: syscalls.master,v 1.200.4.4 2008/06/23 04:31:51 wrstuden Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -53,6 +53,7 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 
 %%
@@ -353,9 +354,9 @@
 171	EXCL		1.0 shmsys
 #endif
 172	UNIMPL
-173	STD 		{ ssize_t sys_pread(int fd, void *buf, \
+173	STD 	 RUMP	{ ssize_t sys_pread(int fd, void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
-174	STD 		{ ssize_t sys_pwrite(int fd, const void *buf, \
+174	STD 	 RUMP	{ ssize_t sys_pwrite(int fd, const void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
 ; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
 175	COMPAT_30 	 { int sys_ntp_gettime(struct ntptimeval30 *ntvp); }
@@ -707,9 +708,9 @@
 347	STD 		{ int sys__sched_getparam(pid_t pid, lwpid_t lid, \
 			    int *policy, struct sched_param *params); }
 348	STD 		{ int sys__sched_setaffinity(pid_t pid, lwpid_t lid, \
-			    size_t size, void *cpuset); }
+			    size_t size, const cpuset_t *cpuset); }
 349	STD 		{ int sys__sched_getaffinity(pid_t pid, lwpid_t lid, \
-			    size_t size, void *cpuset); }
+			    size_t size, cpuset_t *cpuset); }
 350	STD 		{ int sys_sched_yield(void); }
 351	UNIMPL
 352	UNIMPL

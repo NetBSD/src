@@ -27,7 +27,8 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	sys_exits.c timed_ipc.c tok822_find.c tok822_node.c tok822_parse.c \
 	tok822_resolve.c tok822_rewrite.c tok822_tree.c trace.c \
 	user_acl.c valid_mailhost_addr.c verify.c verify_clnt.c \
-	verp_sender.c wildcard_inet_addr.c xtext.c
+	verp_sender.c wildcard_inet_addr.c xtext.c delivered_hdr.c \
+	fold_addr.c header_body_checks.c mkmap_proxy.c data_redirect.c
 OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	canon_addr.o cfg_parser.o cleanup_strerror.o cleanup_strflags.o \
 	clnt_stream.o conv_time.o db_common.o debug_peer.o debug_process.o \
@@ -56,7 +57,8 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	sys_exits.o timed_ipc.o tok822_find.o tok822_node.o tok822_parse.o \
 	tok822_resolve.o tok822_rewrite.o tok822_tree.o trace.o \
 	user_acl.o valid_mailhost_addr.o verify.o verify_clnt.o \
-	verp_sender.o wildcard_inet_addr.o xtext.o
+	verp_sender.o wildcard_inet_addr.o xtext.o delivered_hdr.o \
+	fold_addr.o header_body_checks.o mkmap_proxy.o data_redirect.o
 HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	canon_addr.h cfg_parser.h cleanup_user.h clnt_stream.h config.h \
 	conv_time.h db_common.h debug_peer.h debug_process.h defer.h \
@@ -79,7 +81,8 @@ HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	rewrite_clnt.h scache.h sent.h smtp_stream.h split_addr.h \
 	string_list.h strip_addr.h sys_exits.h timed_ipc.h tok822.h \
 	trace.h user_acl.h valid_mailhost_addr.h verify.h verify_clnt.h \
-	verp_sender.h wildcard_inet_addr.h xtext.h
+	verp_sender.h wildcard_inet_addr.h xtext.h delivered_hdr.h \
+	fold_addr.h header_body_checks.h data_redirect.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -91,7 +94,8 @@ TESTPROG= domain_list dot_lockfile mail_addr_crunch mail_addr_find \
 	resolve_local rewrite_clnt stream2rec string_list tok822_parse \
 	quote_821_local mail_conf_time mime_state strip_addr \
 	verify_clnt xtext anvil_clnt scache ehlo_mask \
-	valid_mailhost_addr own_inet_addr
+	valid_mailhost_addr own_inet_addr header_body_checks \
+	data_redirect
 
 LIBS	= ../../lib/libutil.a
 LIB_DIR	= ../../lib
@@ -268,12 +272,22 @@ valid_mailhost_addr: valid_mailhost_addr.c $(LIB) $(LIBS)
 own_inet_addr: own_inet_addr.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
+header_body_checks: header_body_checks.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
+data_redirect: data_redirect.c $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+
 tests: tok822_test mime_tests strip_addr_test tok822_limit_test \
 	xtext_test scache_multi_test ehlo_mask_test \
-	namadr_list_test mail_conf_time_test
+	namadr_list_test mail_conf_time_test header_body_checks_tests
 
 mime_tests: mime_test mime_nest mime_8bit mime_dom mime_trunc mime_cvt \
 	mime_cvt2 mime_cvt3 mime_garb1 mime_garb2 mime_garb3 mime_garb4
+
+header_body_checks_tests: header_body_checks_null_test \
+	header_body_checks_warn_test header_body_checks_prepend_test \
+	header_body_checks_ignore_test header_body_checks_replace_test
 
 root_tests: rewrite_clnt_test resolve_clnt_test
 
@@ -412,6 +426,56 @@ mail_conf_time_test: mail_conf_time mail_conf_time.ref
 	./mail_conf_time >mail_conf_time.tmp
 	diff mail_conf_time.ref mail_conf_time.tmp
 	rm -f mail_conf_time.tmp
+
+header_body_checks_null_test: header_body_checks header_body_checks_null.ref
+	./header_body_checks "" "" "" "" \
+		<mime_test.in >header_body_checks_null.tmp 2>&1
+	cmp header_body_checks_null.ref header_body_checks_null.tmp
+	./header_body_checks static:dunno static:dunno static:dunno static:dunno \
+		<mime_test.in >header_body_checks_null.tmp 2>&1
+	cmp header_body_checks_null.ref header_body_checks_null.tmp
+	./header_body_checks static:ok static:ok static:ok static:ok \
+		<mime_test.in >header_body_checks_null.tmp 2>&1
+	cmp header_body_checks_null.ref header_body_checks_null.tmp
+	rm -f header_body_checks_null.tmp
+
+header_body_checks_warn_test: header_body_checks header_body_checks_warn.ref
+	./header_body_checks static:warn static:warn static:warn static:warn \
+		<mime_test.in >header_body_checks_warn.tmp 2>&1
+	cmp header_body_checks_warn.ref header_body_checks_warn.tmp
+	rm -f header_body_checks_warn.tmp
+
+header_body_checks_prepend_test: header_body_checks header_body_checks_prepend.ref
+	echo /./ prepend header: head >header_body_checks_head
+	echo /./ prepend header: mime >header_body_checks_mime
+	echo /./ prepend header: nest >header_body_checks_nest
+	echo /./ prepend body >header_body_checks_body
+	./header_body_checks regexp:header_body_checks_head regexp:header_body_checks_mime \
+		regexp:header_body_checks_nest regexp:header_body_checks_body \
+		<mime_test.in >header_body_checks_prepend.tmp 2>&1
+	cmp header_body_checks_prepend.ref header_body_checks_prepend.tmp
+	rm -f header_body_checks_prepend.tmp header_body_checks_head header_body_checks_mime header_body_checks_nest header_body_checks_body
+
+# Note: the IGNORE action will not strip empty lines. Postfix maps
+# currently never see null query strings because some map types raise
+# errors. We can eliminate this restriction by allowing individual
+# map types to advertise whether they can handle null queries.
+header_body_checks_ignore_test: header_body_checks header_body_checks_ignore.ref
+	./header_body_checks static:ignore static:ignore static:ignore static:ignore \
+		<mime_test.in >header_body_checks_ignore.tmp 2>&1
+	cmp header_body_checks_ignore.ref header_body_checks_ignore.tmp
+	rm -f header_body_checks_ignore.tmp header_body_checks_head header_body_checks_mime header_body_checks_nest header_body_checks_body
+
+header_body_checks_replace_test: header_body_checks header_body_checks_replace.ref
+	echo /./ replace header: head >header_body_checks_head
+	echo /./ replace header: mime >header_body_checks_mime
+	echo /./ replace header: nest >header_body_checks_nest
+	echo /./ replace body >header_body_checks_body
+	./header_body_checks regexp:header_body_checks_head regexp:header_body_checks_mime \
+		regexp:header_body_checks_nest regexp:header_body_checks_body \
+		<mime_test.in >header_body_checks_replace.tmp 2>&1
+	cmp header_body_checks_replace.ref header_body_checks_replace.tmp
+	rm -f header_body_checks_replace.tmp header_body_checks_head header_body_checks_mime header_body_checks_nest header_body_checks_body
 
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
@@ -576,6 +640,23 @@ conv_time.o: ../../include/msg.h
 conv_time.o: ../../include/sys_defs.h
 conv_time.o: conv_time.c
 conv_time.o: conv_time.h
+data_redirect.o: ../../include/argv.h
+data_redirect.o: ../../include/dict.h
+data_redirect.o: ../../include/dict_cdb.h
+data_redirect.o: ../../include/dict_db.h
+data_redirect.o: ../../include/dict_dbm.h
+data_redirect.o: ../../include/msg.h
+data_redirect.o: ../../include/name_code.h
+data_redirect.o: ../../include/split_at.h
+data_redirect.o: ../../include/stringops.h
+data_redirect.o: ../../include/sys_defs.h
+data_redirect.o: ../../include/vbuf.h
+data_redirect.o: ../../include/vstream.h
+data_redirect.o: ../../include/vstring.h
+data_redirect.o: data_redirect.c
+data_redirect.o: data_redirect.h
+data_redirect.o: dict_proxy.h
+data_redirect.o: mail_params.h
 db_common.o: ../../include/argv.h
 db_common.o: ../../include/dict.h
 db_common.o: ../../include/match_list.h
@@ -688,6 +769,24 @@ deliver_request.o: mail_queue.h
 deliver_request.o: msg_stats.h
 deliver_request.o: rcpt_buf.h
 deliver_request.o: recipient_list.h
+delivered_hdr.o: ../../include/htable.h
+delivered_hdr.o: ../../include/msg.h
+delivered_hdr.o: ../../include/mymalloc.h
+delivered_hdr.o: ../../include/stringops.h
+delivered_hdr.o: ../../include/sys_defs.h
+delivered_hdr.o: ../../include/vbuf.h
+delivered_hdr.o: ../../include/vstream.h
+delivered_hdr.o: ../../include/vstring.h
+delivered_hdr.o: ../../include/vstring_vstream.h
+delivered_hdr.o: delivered_hdr.c
+delivered_hdr.o: delivered_hdr.h
+delivered_hdr.o: fold_addr.h
+delivered_hdr.o: header_opts.h
+delivered_hdr.o: is_header.h
+delivered_hdr.o: quote_822_local.h
+delivered_hdr.o: quote_flags.h
+delivered_hdr.o: rec_type.h
+delivered_hdr.o: record.h
 dict_ldap.o: ../../include/argv.h
 dict_ldap.o: ../../include/binhash.h
 dict_ldap.o: ../../include/dict.h
@@ -866,6 +965,29 @@ flush_clnt.o: mail_flush.h
 flush_clnt.o: mail_params.h
 flush_clnt.o: mail_proto.h
 flush_clnt.o: match_parent_style.h
+fold_addr.o: ../../include/stringops.h
+fold_addr.o: ../../include/sys_defs.h
+fold_addr.o: ../../include/vbuf.h
+fold_addr.o: ../../include/vstring.h
+fold_addr.o: fold_addr.c
+fold_addr.o: fold_addr.h
+header_body_checks.o: ../../include/argv.h
+header_body_checks.o: ../../include/dict.h
+header_body_checks.o: ../../include/msg.h
+header_body_checks.o: ../../include/mymalloc.h
+header_body_checks.o: ../../include/sys_defs.h
+header_body_checks.o: ../../include/vbuf.h
+header_body_checks.o: ../../include/vstream.h
+header_body_checks.o: ../../include/vstring.h
+header_body_checks.o: cleanup_user.h
+header_body_checks.o: dsn_util.h
+header_body_checks.o: header_body_checks.c
+header_body_checks.o: header_body_checks.h
+header_body_checks.o: header_opts.h
+header_body_checks.o: is_header.h
+header_body_checks.o: maps.h
+header_body_checks.o: mime_state.h
+header_body_checks.o: rec_type.h
 header_opts.o: ../../include/htable.h
 header_opts.o: ../../include/msg.h
 header_opts.o: ../../include/stringops.h
@@ -1026,7 +1148,10 @@ mail_conf_raw.o: mail_conf.h
 mail_conf_raw.o: mail_conf_raw.c
 mail_conf_str.o: ../../include/msg.h
 mail_conf_str.o: ../../include/mymalloc.h
+mail_conf_str.o: ../../include/stringops.h
 mail_conf_str.o: ../../include/sys_defs.h
+mail_conf_str.o: ../../include/vbuf.h
+mail_conf_str.o: ../../include/vstring.h
 mail_conf_str.o: mail_conf.h
 mail_conf_str.o: mail_conf_str.c
 mail_conf_time.o: ../../include/argv.h
@@ -1130,13 +1255,16 @@ mail_params.o: ../../include/iostuff.h
 mail_params.o: ../../include/msg.h
 mail_params.o: ../../include/msg_syslog.h
 mail_params.o: ../../include/myaddrinfo.h
+mail_params.o: ../../include/mymalloc.h
 mail_params.o: ../../include/safe.h
+mail_params.o: ../../include/safe_open.h
 mail_params.o: ../../include/stringops.h
 mail_params.o: ../../include/sys_defs.h
 mail_params.o: ../../include/valid_hostname.h
 mail_params.o: ../../include/vbuf.h
 mail_params.o: ../../include/vstream.h
 mail_params.o: ../../include/vstring.h
+mail_params.o: ../../include/vstring_vstream.h
 mail_params.o: mail_conf.h
 mail_params.o: mail_params.c
 mail_params.o: mail_params.h
@@ -1344,8 +1472,19 @@ mkmap_open.o: ../../include/sys_defs.h
 mkmap_open.o: ../../include/vbuf.h
 mkmap_open.o: ../../include/vstream.h
 mkmap_open.o: ../../include/vstring.h
+mkmap_open.o: dict_proxy.h
 mkmap_open.o: mkmap.h
 mkmap_open.o: mkmap_open.c
+mkmap_proxy.o: ../../include/argv.h
+mkmap_proxy.o: ../../include/dict.h
+mkmap_proxy.o: ../../include/mymalloc.h
+mkmap_proxy.o: ../../include/sys_defs.h
+mkmap_proxy.o: ../../include/vbuf.h
+mkmap_proxy.o: ../../include/vstream.h
+mkmap_proxy.o: ../../include/vstring.h
+mkmap_proxy.o: dict_proxy.h
+mkmap_proxy.o: mkmap.h
+mkmap_proxy.o: mkmap_proxy.c
 mkmap_sdbm.o: ../../include/argv.h
 mkmap_sdbm.o: ../../include/dict.h
 mkmap_sdbm.o: ../../include/dict_sdbm.h

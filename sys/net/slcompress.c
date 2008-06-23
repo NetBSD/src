@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.33 2008/02/20 17:05:53 matt Exp $   */
+/*	$NetBSD: slcompress.c,v 1.33.12.1 2008/06/23 04:31:58 wrstuden Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.33 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.33.12.1 2008/06/23 04:31:58 wrstuden Exp $");
 
 #include "opt_inet.h"
 #ifdef INET
@@ -72,7 +72,7 @@ sl_compress_init(struct slcompress *comp)
 	u_int i;
 	struct cstate *tstate = comp->tstate;
 
-	memset((char *)comp, 0, sizeof(*comp));
+	memset(comp, 0, sizeof(*comp));
 	for (i = MAX_STATES - 1; i > 0; --i) {
 		tstate[i].cs_id = i;
 		tstate[i].cs_next = &tstate[i - 1];
@@ -98,11 +98,11 @@ sl_compress_setup(struct slcompress *comp, int max_state)
 
 	if (max_state == -1) {
 		max_state = MAX_STATES - 1;
-		memset((char *)comp, 0, sizeof(*comp));
+		memset(comp, 0, sizeof(*comp));
 	} else {
 		/* Don't reset statistics */
-		memset((char *)comp->tstate, 0, sizeof(comp->tstate));
-		memset((char *)comp->rstate, 0, sizeof(comp->rstate));
+		memset(comp->tstate, 0, sizeof(comp->tstate));
+		memset(comp->rstate, 0, sizeof(comp->rstate));
 	}
 	for (i = max_state; i > 0; --i) {
 		tstate[i].cs_id = i;

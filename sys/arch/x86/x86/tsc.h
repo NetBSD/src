@@ -1,7 +1,7 @@
-/* $NetBSD: tsc.h,v 1.3 2008/04/28 20:23:40 martin Exp $ */
+/*	$NetBSD: tsc.h,v 1.3.2.1 2008/06/23 04:30:51 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * initialization of timecounter interface
- */
-void init_TSC(void);
-void init_TSC_tc(void);
+void	tsc_tc_init(void);
+void	tsc_sync_ap(struct cpu_info *);
+void	tsc_sync_bp(struct cpu_info *);
+void	tsc_sync_drift(int64_t);

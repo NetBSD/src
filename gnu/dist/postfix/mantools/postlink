@@ -123,6 +123,7 @@ while (<>) {
     s;\bcommand_time_limit\b;<a href="postconf.5.html#command_time_limit">$&</a>;g;
     s;\bconfig_direc[-</bB>]*\n*[ <bB>]*tory\b;<a href="postconf.5.html#config_directory">$&</a>;g;
     s;\bcon[-</bB>]*\n*[ <bB>]*tent_filter\b;<a href="postconf.5.html#content_filter">$&</a>;g;
+    s;\bdata_directory\b;<a href="postconf.5.html#data_directory">$&</a>;g;
     s;\bdae[-</bB>]*\n*[ <bB>]*mon_directory\b;<a href="postconf.5.html#daemon_directory">$&</a>;g;
     s;\bdaemon_timeout\b;<a href="postconf.5.html#daemon_timeout">$&</a>;g;
     s;\bdebug_peer_level\b;<a href="postconf.5.html#debug_peer_level">$&</a>;g;
@@ -131,15 +132,15 @@ while (<>) {
     s;\bdefault_deliv[-</Bb>]*\n* *[<Bb>]*ery_slot_cost\b;<a href="postconf.5.html#default_delivery_slot_cost">$&</a>;g;
     s;\bdefault_deliv[-</Bb>]*\n* *[<Bb>]*ery_slot_discount\b;<a href="postconf.5.html#default_delivery_slot_discount">$&</a>;g;
     s;\bdefault_deliv[-</Bb>]*\n* *[<Bb>]*ery_slot_loan\b;<a href="postconf.5.html#default_delivery_slot_loan">$&</a>;g;
-    s;\bdefault_destina[-</Bb>]*\n* *[<Bb>]*tion_concurrency_limit\b;<a href="postconf.5.html#default_destination_concurrency_limit">$&</a>;g;
+    s;\bdefault_destina[-</Bb>]*\n* *[<Bb>]*tion_concur[-</Bb>]*\n* *[<Bb>]*rency_limit\b;<a href="postconf.5.html#default_destination_concurrency_limit">$&</a>;g;
     s;\bdefault_destina[-</Bb>]*\n* *[<Bb>]*tion_recip[-</bB>]*\n* *[<bB>]*ient_limit\b;<a href="postconf.5.html#default_destination_recipient_limit">$&</a>;g;
-    s;\bdefault_extra_recip[-</bB>]*\n* *[<bB>]*ient_limit\b;<a href="postconf.5.html#default_extra_recipient_limit">$&</a>;g;
+    s;\bdefault_extra_recipi[-</bB>]*\n* *[<bB>]*ent_limit\b;<a href="postconf.5.html#default_extra_recipient_limit">$&</a>;g;
     s;\bdefault_minimum_deliv[-</Bb>]*\n* *[<Bb>]*ery_slots\b;<a href="postconf.5.html#default_minimum_delivery_slots">$&</a>;g;
     s;\bdefault_privs\b;<a href="postconf.5.html#default_privs">$&</a>;g;
     s;\bdefault_process_limit\b;<a href="postconf.5.html#default_process_limit">$&</a>;g;
     s;\bdefault_rbl_reply\b;<a href="postconf.5.html#default_rbl_reply">$&</a>;g;
-    s;\bdefault_recipient_refill_limit\b;<a href="postconf.5.html#default_recipient_refill_limit">$&</a>;g;
-    s;\bdefault_recipient_refill_delay\b;<a href="postconf.5.html#default_recipient_refill_delay">$&</a>;g;
+    s;\bdefault_recipi[-</bB>]*\n* *[<bB>]*ent_refill_limit\b;<a href="postconf.5.html#default_recipient_refill_limit">$&</a>;g;
+    s;\bdefault_recipi[-</bB>]*\n* *[<bB>]*ent_refill_delay\b;<a href="postconf.5.html#default_recipient_refill_delay">$&</a>;g;
     s;\bdefault_recip[-</bB>]*\n* *[<bB>]*ient_limit\b;<a href="postconf.5.html#default_recipient_limit">$&</a>;g;
     s;\bdefault_transport\b;<a href="postconf.5.html#default_transport">$&</a>;g;
     s;\bdefault_verp_delimiters\b;<a href="postconf.5.html#default_verp_delimiters">$&</a>;g;
@@ -151,6 +152,7 @@ while (<>) {
     s;\bdelay_warn[-</bB>]*\n*[ <bB>]*ing_time\b;<a href="postconf.5.html#delay_warning_time">$&</a>;g;
     s;\bdeliver_lock_attempts\b;<a href="postconf.5.html#deliver_lock_attempts">$&</a>;g;
     s;\bdeliver_lock_delay\b;<a href="postconf.5.html#deliver_lock_delay">$&</a>;g;
+    s;\bdetect_8bit_encoding_header\b;<a href="postconf.5.html#detect_8bit_encoding_header">$&</a>;g;
     s;\bdisable_dns_lookups\b;<a href="postconf.5.html#disable_dns_lookups">$&</a>;g;
     s;\bdisable_mime_input_processing\b;<a href="postconf.5.html#disable_mime_input_processing">$&</a>;g;
     s;\bdisable_mime_output_conversion\b;<a href="postconf.5.html#disable_mime_output_conversion">$&</a>;g;
@@ -193,7 +195,7 @@ while (<>) {
     s;\bin_flow_delay\b;<a href="postconf.5.html#in_flow_delay">$&</a>;g;
     s;\binet_inter[-</bB>]*\n*[ <bB>]*faces\b;<a href="postconf.5.html#inet_interfaces">$&</a>;g;
     s;\binet_protocols\b;<a href="postconf.5.html#inet_protocols">$&</a>;g;
-    s;\binitial_destination_concurrency\b;<a href="postconf.5.html#initial_destination_concurrency">$&</a>;g;
+    s;\binitial_desti[-</bB>]*\n*[ <bB>]*nation_concurrency\b;<a href="postconf.5.html#initial_destination_concurrency">$&</a>;g;
     s;\binvalid_hostname_reject_code\b;<a href="postconf.5.html#invalid_hostname_reject_code">$&</a>;g;
     s;\bipc_idle\b;<a href="postconf.5.html#ipc_idle">$&</a>;g;
     s;\bipc_timeout\b;<a href="postconf.5.html#ipc_timeout">$&</a>;g;
@@ -214,6 +216,7 @@ while (<>) {
     s;\blmtp_tls_policy_maps\b;<a href="postconf.5.html#lmtp_tls_policy_maps">$&</a>;g;
     s;\blmtp_tls_secure_cert_match\b;<a href="postconf.5.html#lmtp_tls_secure_cert_match">$&</a>;g;
     s;\blmtp_tls_security_level\b;<a href="postconf.5.html#lmtp_tls_security_level">$&</a>;g;
+    s;\blmtp_tls_fingerprint_cert_match\b;<a href="postconf.5.html#lmtp_tls_fingerprint_cert_match">$&</a>;g;
     s;\blmtp_tls_verify_cert_match\b;<a href="postconf.5.html#lmtp_tls_verify_cert_match">$&</a>;g;
     s;\blmtp_tls_per_site\b;<a href="postconf.5.html#lmtp_tls_per_site">$&</a>;g;
     s;\blmtp_tls_cert_file\b;<a href="postconf.5.html#lmtp_tls_cert_file">$&</a>;g;
@@ -222,6 +225,7 @@ while (<>) {
     s;\blmtp_tls_dkey_file\b;<a href="postconf.5.html#lmtp_tls_dkey_file">$&</a>;g;
     s;\blmtp_tls_CAfile\b;<a href="postconf.5.html#lmtp_tls_CAfile">$&</a>;g;
     s;\blmtp_tls_CApath\b;<a href="postconf.5.html#lmtp_tls_CApath">$&</a>;g;
+    s;\blmtp_tls_fingerprint_digest\b;<a href="postconf.5.html#lmtp_tls_fingerprint_digest">$&</a>;g;
     s;\blmtp_tls_mandatory_ciphers\b;<a href="postconf.5.html#lmtp_tls_mandatory_ciphers">$&</a>;g;
     s;\blmtp_tls_exclude_ciphers\b;<a href="postconf.5.html#lmtp_tls_exclude_ciphers">$&</a>;g;
     s;\blmtp_tls_mandatory_exclude_ciphers\b;<a href="postconf.5.html#lmtp_tls_mandatory_exclude_ciphers">$&</a>;g;
@@ -260,7 +264,10 @@ while (<>) {
     s;\blmtp_quit_timeout\b;<a href="postconf.5.html#lmtp_quit_timeout">$&</a>;g;
     s;\blmtp_rcpt_timeout\b;<a href="postconf.5.html#lmtp_rcpt_timeout">$&</a>;g;
     s;\blmtp_rset_timeout\b;<a href="postconf.5.html#lmtp_rset_timeout">$&</a>;g;
+    s;\blmtp_sasl_auth_cache_name\b;<a href="postconf.5.html#lmtp_sasl_auth_cache_name">$&</a>;g;
+    s;\blmtp_sasl_auth_cache_time\b;<a href="postconf.5.html#lmtp_sasl_auth_cache_time">$&</a>;g;
     s;\blmtp_sasl_auth_enable\b;<a href="postconf.5.html#lmtp_sasl_auth_enable">$&</a>;g;
+    s;\blmtp_sasl_auth_soft_bounce\b;<a href="postconf.5.html#lmtp_sasl_auth_soft_bounce">$&</a>;g;
     s;\blmtp_sasl_password_maps\b;<a href="postconf.5.html#lmtp_sasl_password_maps">$&</a>;g;
     s;\blmtp_sasl_security_options\b;<a href="postconf.5.html#lmtp_sasl_security_options">$&</a>;g;
     s;\blmtp_sasl_type\b;<a href="postconf.5.html#lmtp_sasl_type">$&</a>;g;
@@ -327,12 +334,20 @@ while (<>) {
     s;\bpropagate_unmatched_extensions\b;<a href="postconf.5.html#propagate_unmatched_extensions">$&</a>;g;
     s;\bproxy_inter[-</bB>]*\n* *[<bB>]*faces\b;<a href="postconf.5.html#proxy_interfaces">$&</a>;g;
     s;\bproxy_read_maps\b;<a href="postconf.5.html#proxy_read_maps">$&</a>;g;
+    s;\bproxy_write_maps\b;<a href="postconf.5.html#proxy_write_maps">$&</a>;g;
     s;\bqmgr_clog_warn_time\b;<a href="postconf.5.html#qmgr_clog_warn_time">$&</a>;g;
     s;\bqmgr_fudge_factor\b;<a href="postconf.5.html#qmgr_fudge_factor">$&</a>;g;
     s;\bqmgr_message_active_limit\b;<a href="postconf.5.html#qmgr_message_active_limit">$&</a>;g;
     s;\bqmgr_message_recip[-</bB>]*\n* *[<bB>]*ient_limit\b;<a href="postconf.5.html#qmgr_message_recipient_limit">$&</a>;g;
     s;\bqmgr_message_recip[-</bB>]*\n* *[<bB>]*ient_minimum\b;<a href="postconf.5.html#qmgr_message_recipient_minimum">$&</a>;g;
     s;\bqmqpd_authorized_clients\b;<a href="postconf.5.html#qmqpd_authorized_clients">$&</a>;g;
+
+    s;\bdefault_destination_concur[-</Bb>]*\n* *[<Bb>]*rency_negative_feedback\b;<a href="postconf.5.html#default_destination_concurrency_negative_feedback">$&</a>;g;
+    s;\bdefault_destination_concur[-</Bb>]*\n* *[<Bb>]*rency_positive_feedback\b;<a href="postconf.5.html#default_destination_concurrency_positive_feedback">$&</a>;g;
+    s;\bdefault_destination_con[-</Bb>]*\n* *[<Bb>]*currency_failed_cohort_limit\b;<a href="postconf.5.html#default_destination_concurrency_failed_cohort_limit">$&</a>;g;
+    s;\bdestination_concurrency_feedback_debug\b;<a href="postconf.5.html#destination_concurrency_feedback_debug">$&</a>;g;
+    s;\bdefault_destina[-</Bb>]*\n* *[<Bb>]*tion_rate_delay\b;<a href="postconf.5.html#default_destination_rate_delay">$&</a>;g;
+
     s;\bqmqpd_error_delay\b;<a href="postconf.5.html#qmqpd_error_delay">$&</a>;g;
     s;\bqmqpd_timeout\b;<a href="postconf.5.html#qmqpd_timeout">$&</a>;g;
     s;\bqueue_directory\b;<a href="postconf.5.html#queue_directory">$&</a>;g;
@@ -370,6 +385,7 @@ while (<>) {
     s;\bsender_canonical_classes\b;<a href="postconf.5.html#sender_canonical_classes">$&</a>;g;
     s;\bsender_canonical_maps\b;<a href="postconf.5.html#sender_canonical_maps">$&</a>;g;
     s;\bsender_dependent_relay[-</bB>]*\n*[ <bB>]*host_maps\b;<a href="postconf.5.html#sender_dependent_relayhost_maps">$&</a>;g;
+    s;\bempty_address_relayhost_maps_lookup_key\b;<a href="postconf.5.html#empty_address_relayhost_maps_lookup_key">$&</a>;g;
     s;\bsendmail_path\b;<a href="postconf.5.html#sendmail_path">$&</a>;g;
     s;\bservice_throttle_time\b;<a href="postconf.5.html#service_throttle_time">$&</a>;g;
     s;\bsetgid_group\b;<a href="postconf.5.html#setgid_group">$&</a>;g;
@@ -428,7 +444,10 @@ while (<>) {
     s;\bsmtp_randomize_addresses\b;<a href="postconf.5.html#smtp_randomize_addresses">$&</a>;g;
     s;\bsmtp_rcpt_timeout\b;<a href="postconf.5.html#smtp_rcpt_timeout">$&</a>;g;
     s;\bsmtp_rset_timeout\b;<a href="postconf.5.html#smtp_rset_timeout">$&</a>;g;
+    s;\bsmtp_sasl_auth_cache_name\b;<a href="postconf.5.html#smtp_sasl_auth_cache_name">$&</a>;g;
+    s;\bsmtp_sasl_auth_cache_time\b;<a href="postconf.5.html#smtp_sasl_auth_cache_time">$&</a>;g;
     s;\bsmtp_sasl_auth_enable\b;<a href="postconf.5.html#smtp_sasl_auth_enable">$&</a>;g;
+    s;\bsmtp_sasl_auth_soft_bounce\b;<a href="postconf.5.html#smtp_sasl_auth_soft_bounce">$&</a>;g;
     s;\bsmtp_sasl_mechanism_filter\b;<a href="postconf.5.html#smtp_sasl_mechanism_filter">$&</a>;g;
     s;\bsmtp_sasl_pass[-</Bb>]*\n* *[<Bb>]*word_maps\b;<a href="postconf.5.html#smtp_sasl_password_maps">$&</a>;g;
     s;\bsmtp_sasl_path\b;<a href="postconf.5.html#smtp_sasl_path">$&</a>;g;
@@ -446,6 +465,7 @@ while (<>) {
     s;\bsmtpd_client_event_limit_exceptions\b;<a href="postconf.5.html#smtpd_client_event_limit_exceptions">$&</a>;g;
     s;\bsmtpd_client_connection_rate_limit\b;<a href="postconf.5.html#smtpd_client_connection_rate_limit">$&</a>;g;
     s;\bsmtpd_client_message_rate_limit\b;<a href="postconf.5.html#smtpd_client_message_rate_limit">$&</a>;g;
+    s;\bsmtpd_client_port_logging\b;<a href="postconf.5.html#smtpd_client_port_logging">$&</a>;g;
     s;\bsmtpd_client_recipient_rate_limit\b;<a href="postconf.5.html#smtpd_client_recipient_rate_limit">$&</a>;g;
     s;\bsmtpd_client_new_tls_session_rate_limit\b;<a href="postconf.5.html#smtpd_client_new_tls_session_rate_limit">$&</a>;g;
     s;\bsmtpd_client_restrictions\b;<a href="postconf.5.html#smtpd_client_restrictions">$&</a>;g;
@@ -481,6 +501,7 @@ while (<>) {
     s;\bsmtpd_reject_unlisted_sender\b;<a href="postconf.5.html#smtpd_reject_unlisted_sender">$&</a>;g;
     s;\bsmtpd_restriction_classes\b;<a href="postconf.5.html#smtpd_restriction_classes">$&</a>;g;
     s;\bsmtpd_sasl_path\b;<a href="postconf.5.html#smtpd_sasl_path">$&</a>;g;
+    s;\bcyrus_sasl_config_path\b;<a href="postconf.5.html#cyrus_sasl_config_path">$&</a>;g;
     s;\bsmtpd_sasl_auth_enable\b;<a href="postconf.5.html#smtpd_sasl_auth_enable">$&</a>;g;
     s;\bsmtpd_sasl_authenticated_header\b;<a href="postconf.5.html#smtpd_sasl_authenticated_header">$&</a>;g;
     s;\bsmtpd_sasl_exceptions_networks\b;<a href="postconf.5.html#smtpd_sasl_exceptions_networks">$&</a>;g;
@@ -540,6 +561,7 @@ while (<>) {
     s;\bsmtp_tls_CAfile\b;<a href="postconf.5.html#smtp_tls_CAfile">$&</a>;g;
     s;\bsmtp_tls_CApath\b;<a href="postconf.5.html#smtp_tls_CApath">$&</a>;g;
     s;\bsmtp_tls_cert_file\b;<a href="postconf.5.html#smtp_tls_cert_file">$&</a>;g;
+    s;\bsmtp_tls_fingerprint_digest\b;<a href="postconf.5.html#smtp_tls_fingerprint_digest">$&</a>;g;
     s;\bsmtp_tls_mandatory_ciphers\b;<a href="postconf.5.html#smtp_tls_mandatory_ciphers">$&</a>;g;
     s;\bsmtp_tls_cipherlist\b;<a href="postconf.5.html#smtp_tls_cipherlist">$&</a>;g;
     s;\bsmtp_tls_exclude_ciphers\b;<a href="postconf.5.html#smtp_tls_exclude_ciphers">$&</a>;g;
@@ -553,6 +575,7 @@ while (<>) {
     s;\bsmtp_tls_per_site\b;<a href="postconf.5.html#smtp_tls_per_site">$&</a>;g;
     s;\bsmtp_tls_policy_maps\b;<a href="postconf.5.html#smtp_tls_policy_maps">$&</a>;g;
     s;\bsmtp_tls_mandatory_protocols\b;<a href="postconf.5.html#smtp_tls_mandatory_protocols">$&</a>;g;
+    s;\bsmtp_tls_fingerprint_cert_match\b;<a href="postconf.5.html#smtp_tls_fingerprint_cert_match">$&</a>;g;
     s;\bsmtp_tls_verify_cert_match\b;<a href="postconf.5.html#smtp_tls_verify_cert_match">$&</a>;g;
     s;\bsmtp_tls_secure_cert_match\b;<a href="postconf.5.html#smtp_tls_secure_cert_match">$&</a>;g;
     s;\bsmtp_tls_scert_verifydepth\b;<a href="postconf.5.html#smtp_tls_scert_verifydepth">$&</a>;g;
@@ -560,6 +583,10 @@ while (<>) {
     s;\bsmtp_tls_session_cache_database\b;<a href="postconf.5.html#smtp_tls_session_cache_database">$&</a>;g;
     s;\bsmtp_tls_session_cache_timeout\b;<a href="postconf.5.html#smtp_tls_session_cache_timeout">$&</a>;g;
     s;\bsmtp_use_tls\b;<a href="postconf.5.html#smtp_use_tls">$&</a>;g;
+    s;\bsmtp_header_checks\b;<a href="postconf.5.html#smtp_header_checks">$&</a>;g;
+    s;\bsmtp_mime_header_checks\b;<a href="postconf.5.html#smtp_mime_header_checks">$&</a>;g;
+    s;\bsmtp_nested_header_checks\b;<a href="postconf.5.html#smtp_nested_header_checks">$&</a>;g;
+    s;\bsmtp_body_checks\b;<a href="postconf.5.html#smtp_body_checks">$&</a>;g;
     s;\bsmtpd_enforce_tls\b;<a href="postconf.5.html#smtpd_enforce_tls">$&</a>;g;
     s;\bsmtpd_sasl_tls_security_options\b;<a href="postconf.5.html#smtpd_sasl_tls_security_options">$&</a>;g;
     s;\bsmtpd_sasl_type\b;<a href="postconf.5.html#smtpd_sasl_type">$&</a>;g;
@@ -572,6 +599,7 @@ while (<>) {
     s;\bsmtpd_tls_cert_file\b;<a href="postconf.5.html#smtpd_tls_cert_file">$&</a>;g;
     s;\bsmtpd_tls_cipherlist\b;<a href="postconf.5.html#smtpd_tls_cipherlist">$&</a>;g;
     s;\bsmtpd_tls_exclude_ciphers\b;<a href="postconf.5.html#smtpd_tls_exclude_ciphers">$&</a>;g;
+    s;\bsmtpd_tls_fingerprint_digest\b;<a href="postconf.5.html#smtpd_tls_fingerprint_digest">$&</a>;g;
     s;\bsmtpd_tls_mandatory_ciphers\b;<a href="postconf.5.html#smtpd_tls_mandatory_ciphers">$&</a>;g;
     s;\bsmtpd_tls_mandatory_exclude_ciphers\b;<a href="postconf.5.html#smtpd_tls_mandatory_exclude_ciphers">$&</a>;g;
     s;\bsmtpd_tls_dcert_file\b;<a href="postconf.5.html#smtpd_tls_dcert_file">$&</a>;g;
@@ -603,6 +631,25 @@ while (<>) {
     s;\btls_null_cipherlist\b;<a href="postconf.5.html#tls_null_cipherlist">$&</a>;g;
  
     s;\bfrozen_delivered_to\b;<a href="postconf.5.html#frozen_delivered_to">$&</a>;g;
+
+    # Transport-dependent magical parameters.
+
+    s;(<i>transport</i>)(<b>)?(_destination_concurrency_failed_cohort_limit)\b;$2<a href="postconf.5.html#transport_destination_concurrency_failed_cohort_limit">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_destination_concurrency_negative_feedback)\b;$2<a href="postconf.5.html#transport_destination_concurrency_positive_feedback">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_destination_concurrency_positive_feedback)\b;$2<a href="postconf.5.html#transport_destination_concurrency_positive_feedback">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_delivery_slot_cost)\b;$2<a href="postconf.5.html#transport_delivery_slot_cost">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_delivery_slot_discount)\b;$2<a href="postconf.5.html#transport_delivery_slot_discount">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_delivery_slot_loan)\b;$2<a href="postconf.5.html#transport_delivery_slot_loan">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_destination_concurrency_limit)\b;$2<a href="postconf.5.html#transport_destination_concurrency_limit">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_destination_recipient_limit)\b;$2<a href="postconf.5.html#transport_destination_recipient_limit">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_extra_recipient_limit)\b;$2<a href="postconf.5.html#transport_extra_recipient_limit">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_initial_destination_concurrency)\b;$2<a href="postconf.5.html#transport_initial_destination_concurrency">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_minimum_delivery_slots)\b;$2<a href="postconf.5.html#transport_minimum_delivery_slots">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_recipient_limit)\b;$2<a href="postconf.5.html#transport_recipient_limit">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_recipient_refill_delay)\b;$2<a href="postconf.5.html#transport_recipient_refill_delay">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_recipient_refill_limit)\b;$2<a href="postconf.5.html#transport_recipient_refill_limit">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_time_limit)\b;$2<a href="postconf.5.html#transport_time_limit">$1$3</a>;g;
+    s;(<i>transport</i>)(<b>)?(_destination_rate_delay)\b;$2<a href="postconf.5.html#transport_destination_rate_delay">$1$3</a>;g;
 
     # Undo hyperlinks of manual pages with the same name as parameters.
 
@@ -732,6 +779,7 @@ while (<>) {
     s;\breject_invalid_hostname\b;<a href="postconf.5.html#reject_invalid_helo_hostname">$&</a>;g;
     s;\breject_non_fqdn_helo_hostname\b;<a href="postconf.5.html#reject_non_fqdn_helo_hostname">$&</a>;g;
     s;\breject_non_fqdn_hostname\b;<a href="postconf.5.html#reject_non_fqdn_helo_hostname">$&</a>;g;
+    s;\breject_rhsbl_helo\b;<a href="postconf.5.html#reject_rhsbl_helo">$&</a>;g;
     s;\breject_unknown_helo_hostname\b;<a href="postconf.5.html#reject_unknown_helo_hostname">$&</a>;g;
     s;\breject_unknown_hostname\b;<a href="postconf.5.html#reject_unknown_helo_hostname">$&</a>;g;
 
@@ -781,12 +829,13 @@ while (<>) {
     s;\bmilter_data_macros\b;<a href="postconf.5.html#milter_data_macros">$&</a>;g;
     s;\bmilter_unknown_command_macros\b;<a href="postconf.5.html#milter_unknown_command_macros">$&</a>;g;
     s;\bmilter_end_of_data_macros\b;<a href="postconf.5.html#milter_end_of_data_macros">$&</a>;g;
+    s;\bmilter_end_of_header_macros\b;<a href="postconf.5.html#milter_end_of_header_macros">$&</a>;g;
 
     # Hyperlink URLs and RFC documents
 
     s/(http:\/\/[^ ,"\(\)]*[^ ,"\(\):;!?.])/<a href="$1">$1<\/a>/;
     s/(ftp:\/\/[^ ,"\(\)]*[^ ,"\(\):;!?.])/<a href="$1">$1<\/a>/;
-    s/\bRFC\s*([1-9]\d*)/<a href="http:\/\/www.faqs.org\/rfcs\/rfc$1.html">$&<\/a>/;
+    s/\bRFC\s*([1-9]\d*)/<a href="http:\/\/tools.ietf.org\/html\/rfc$1">$&<\/a>/;
 
     # Split README/RFC/parameter/restriction hyperlinks that span line breaks
 
@@ -795,6 +844,7 @@ while (<>) {
     # Glue manual/parameter/restriction hyperlinks without line breaks.
 
     s/(<a href="[^"]*">)([<bB>]*[-a-zA-Z0-9._]*[<bB>]*)<\/a>\1/$1$2/g;
+    # One more time:
     s/(<a href="[^"]*">)([<bB>]*[-a-zA-Z0-9._]*[<bB>]*)<\/a>\1/$1$2/g;
 
     # Hyperlink phrases not in headers.
@@ -830,6 +880,7 @@ while (<>) {
 
     # Hyperlink map types.
 
+    s/\b(cdb):/<a href="CDB_README.html">$1<\/a>:/g;
     s/\b(cidr):/<a href="cidr_table.5.html">$1<\/a>:/g;
     s/\b(pcre):/<a href="pcre_table.5.html">$1<\/a>:/g;
     s/\b(proxy):/<a href="proxymap.8.html">$1<\/a>:/g;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.45 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: rump.c,v 1.45.2.1 2008/06/23 04:32:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,6 +54,7 @@ kauth_cred_t rump_cred = RUMPCRED_SUSER;
 struct cpu_info rump_cpu;
 struct filedesc rump_filedesc0;
 struct proclist allproc;
+char machine[] = "rump";
 
 kmutex_t rump_giantlock;
 
@@ -101,9 +102,7 @@ rump_init()
 		desiredvnodes = 1<<16;
 	}
 
-	rump_cpu.ci_data.cpu_cachelock = mutex_obj_alloc(MUTEX_DEFAULT,
-	    IPL_NONE);
-
+	cache_cpu_init(&rump_cpu);
 	rw_init(&rump_cwdi.cwdi_lock);
 	l = &lwp0;
 	p = &proc0;

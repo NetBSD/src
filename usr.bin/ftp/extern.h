@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.74 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: extern.h,v 1.74.2.1 2008/06/23 04:32:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
@@ -201,6 +201,8 @@ void	setcr(int, char **);
 void	setdebug(int, char **);
 void	setedit(int, char **);
 void	setepsv4(int, char **);
+void	setepsv6(int, char **);
+void	setepsv(int, char **);
 void	setform(int, char **);
 void	setftmode(int, char **);
 void	setgate(int, char **);

@@ -1,10 +1,10 @@
-/*	$NetBSD: ntservice.c,v 1.1.1.4 2007/01/27 21:03:41 christos Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.1.1.4.12.1 2008/06/23 04:27:28 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ntservice.c,v 1.8 2004/03/05 04:58:08 marka Exp */
+/* Id: ntservice.c,v 1.12 2007/06/19 23:46:59 tbox Exp */
 
 #include <config.h>
 #include <stdio.h>
@@ -223,7 +223,7 @@ void GetArgs(int *argc, char ***argv, char ***envp)
     
 	/*
 	 * Set the app type to Console (check CRT/SRC/INTERNAL.H:
-	 * #define _CONSOLE_APP 1)
+	 * \#define _CONSOLE_APP 1)
 	 */
 	__set_app_type(1);
 	

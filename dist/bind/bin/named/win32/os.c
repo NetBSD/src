@@ -1,10 +1,10 @@
-/*	$NetBSD: os.c,v 1.1.1.4 2007/01/27 21:03:43 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.4.12.1 2008/06/23 04:27:28 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.20.18.4 2005/06/22 22:05:43 marka Exp */
+/* Id: os.c,v 1.25.128.3 2008/01/17 23:46:36 tbox Exp */
 
 #include <config.h>
 #include <stdarg.h>
@@ -53,7 +53,7 @@ static int devnullfd = -1;
 
 static BOOL Initialized = FALSE;
 
-static char *version_error = 
+static char *version_error =
 	"named requires Windows 2000 Service Pack 2 or later to run correctly";
 
 void
@@ -85,7 +85,7 @@ version_check(const char *progname) {
 	if(isc_win32os_versioncheck(5, 0, 2, 0) < 0)
 		if (ntservice_isservice())
 			NTReportError(progname, version_error);
-		else 
+		else
 			fprintf(stderr, "%s\n", version_error);
 }
 
@@ -105,7 +105,16 @@ void
 ns_os_init(const char *progname) {
 	ns_paths_init();
 	setup_syslog(progname);
-	ntservice_init();
+	/*
+	 * XXXMPA. We may need to split ntservice_init() in two and
+	 * just mark as running in ns_os_started().  If we do that
+	 * this is where the first part of ntservice_init() should be
+	 * called from.
+	 *
+	 * XXX970 Remove comment if no problems by 9.7.0.
+	 *
+	 * ntservice_init();
+	 */
 	version_check(progname);
 }
 
@@ -287,4 +296,5 @@ ns_os_tzset(void) {
 
 void
 ns_os_started(void) {
+	ntservice_init();
 }

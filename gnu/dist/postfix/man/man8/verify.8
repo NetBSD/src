@@ -1,4 +1,4 @@
-.\"	$NetBSD: verify.8,v 1.1.1.3 2005/08/18 21:04:26 rpaulo Exp $
+.\"	$NetBSD: verify.8,v 1.1.1.3.20.1 2008/06/23 04:29:08 wrstuden Exp $
 .\"
 .TH VERIFY 8 
 .ad
@@ -54,6 +54,14 @@ The address verification server can be coerced to store
 unlimited amounts of garbage. Limiting the cache size
 trades one problem (disk space exhaustion) for another
 one (poor response time to client requests).
+
+With Postfix version 2.5 and later, the \fBverify\fR(8)
+server no longer uses root privileges when opening the
+\fBaddress_verify_map\fR cache file. The file should now
+be stored under the Postfix-owned \fBdata_directory\fR.  As
+a migration aid, an attempt to open a cache file under a
+non-Postfix directory is redirected to the Postfix-owned
+\fBdata_directory\fR, and a warning is logged.
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -90,8 +98,9 @@ The text below provides only a parameter summary. See
 .IP "\fBaddress_verify_map (empty)\fR"
 Optional lookup table for persistent address verification status
 storage.
-.IP "\fBaddress_verify_sender (postmaster)\fR"
-The sender address to use in address verification probes.
+.IP "\fBaddress_verify_sender ($double_bounce_sender)\fR"
+The sender address to use in address verification probes; prior
+to Postfix 2.5 the default was "postmaster".
 .IP "\fBaddress_verify_positive_expire_time (31d)\fR"
 The time after which a successful probe expires from the address
 verification cache.

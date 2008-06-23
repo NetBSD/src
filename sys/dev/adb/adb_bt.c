@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bt.c,v 1.4 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: adb_bt.c,v 1.4.2.1 2008/06/23 04:30:58 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.4 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.4.2.1 2008/06/23 04:30:58 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,21 +35,11 @@ __KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.4 2008/04/29 06:53:02 martin Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wskbdvar.h>
-#include <dev/wscons/wsksymdef.h>
-#include <dev/wscons/wsksymvar.h>
-#include <dev/wscons/wsmousevar.h>
-
-#include <dev/sysmon/sysmonvar.h>
-#include <dev/sysmon/sysmon_taskq.h>
-
 #include <machine/autoconf.h>
-#include <machine/keyboard.h>
 #include <machine/adbsys.h>
+#include <machine/keyboard.h>
 
 #include <dev/adb/adbvar.h>
-#include <dev/adb/adb_keymap.h>
 
 #include "opt_wsdisplay_compat.h"
 #include "adbdebug.h"
@@ -76,15 +66,9 @@ struct adbbt_softc {
 	device_t sc_dev;
 	struct adb_device *sc_adbdev;
 	struct adb_bus_accessops *sc_ops;
-	device_t sc_wskbddev;
 	int sc_msg_len;
 	int sc_event;
-	int sc_poll;
-	int sc_polled_chars;
-	int sc_rawkbd;
 	uint8_t sc_buffer[16];
-	uint8_t sc_pollbuf[16];
-	uint8_t sc_trans[16];
 	uint8_t sc_us;
 };	
 
@@ -94,25 +78,7 @@ CFATTACH_DECL_NEW(adbbt, sizeof(struct adbbt_softc),
 
 extern struct cfdriver adbbt_cd;
 
-static int adbbt_enable(void *, int);
-static void adbbt_set_leds(void *, int);
-static int adbbt_ioctl(void *, u_long, void *, int, struct lwp *);
 static void adbbt_handler(void *, int, uint8_t *);
-
-struct wskbd_accessops adbbt_accessops = {
-	adbbt_enable,
-	adbbt_set_leds,
-	adbbt_ioctl,
-};
-
-struct wskbd_mapdata adbbt_keymapdata = {
-	akbd_keydesctab,
-#ifdef AKBD_LAYOUT
-	AKBD_LAYOUT,
-#else
-	KB_US,
-#endif
-};
 
 static int
 adbbt_match(device_t parent, cfdata_t cf, void *aux)
@@ -131,7 +97,6 @@ adbbt_attach(device_t parent, device_t self, void *aux)
 {
 	struct adbbt_softc *sc = device_private(self);
 	struct adb_attach_args *aaa = aux;
-	struct wskbddev_attach_args a;
 
 	sc->sc_dev = self;
 	sc->sc_ops = aaa->ops;
@@ -141,30 +106,15 @@ adbbt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_us = ADBTALK(sc->sc_adbdev->current_addr, 0);
 
 	sc->sc_msg_len = 0;
-	sc->sc_rawkbd = 0;
-	sc->sc_trans[6]  = 96;	/* F5  */  
-	sc->sc_trans[7]  = 118;	/* F4  */
-	sc->sc_trans[8]  = 99;	/* F3  */
-	sc->sc_trans[9]  = 120;	/* F2  */
-	sc->sc_trans[10] = 122;	/* F1  */
-	sc->sc_trans[11] = 111;	/* F12 */
 
 	printf(" addr %d: button device\n", sc->sc_adbdev->current_addr);
-
-	a.console = 0;
-	a.keymap = &adbbt_keymapdata;
-	a.accessops = &adbbt_accessops;
-	a.accesscookie = sc;
-
-	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &a, wskbddevprint);
 }
 
 static void
 adbbt_handler(void *cookie, int len, uint8_t *data)
 {
-	struct adbbt_softc *sc = cookie;
-	int type;
-	uint8_t k, keyval, scancode;
+	/* struct adbbt_softc *sc = cookie; */
+	uint8_t k, scancode;
 
 #ifdef ADBBT_DEBUG
 	int i;
@@ -175,63 +125,31 @@ adbbt_handler(void *cookie, int len, uint8_t *data)
 	printf("\n");
 #endif
 	k = data[2];
-	keyval = ADBK_KEYVAL(k);
-	if ((keyval < 6) || (keyval > 0x0c))
+	scancode = ADBK_KEYVAL(k);
+	if ((scancode < 6) || (scancode > 0x0c))
 		return;
-	scancode = sc->sc_trans[keyval];
 
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	if (sc->sc_rawkbd) {
-		char cbuf[2];
-		int s;
+	if (ADBK_PRESS(k)) {
 
-		cbuf[0] = scancode | (k & 0x80);
-
-		s = spltty();
-		wskbd_rawinput(sc->sc_wskbddev, cbuf, 1);
-		splx(s);
-	} else {
-#endif
-
-	/* normal event */
-	type = ADBK_PRESS(k) ? 
-	    WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
-	wskbd_input(sc->sc_wskbddev, type, scancode);
-#ifdef WSDISPLAY_COMPAT_RAWKBD
+		switch (scancode) {
+			case BT_VOL_UP:
+				pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_UP);
+				break;
+			case BT_VOL_DOWN:
+				pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
+				break;
+			case BT_VOL_MUTE:
+				pmf_event_inject(NULL, 
+				    PMFE_AUDIO_VOLUME_TOGGLE);
+				break;
+			case BT_BRT_UP:
+				pmf_event_inject(NULL, 
+				    PMFE_DISPLAY_BRIGHTNESS_UP);
+				break;
+			case BT_BRT_DOWN:
+				pmf_event_inject(NULL, 
+				    PMFE_DISPLAY_BRIGHTNESS_DOWN);
+				break;
+		}
 	}
-#endif
-}
-
-static void
-adbbt_set_leds(void *cookie, int leds)
-{
-	/* we have no LEDs */
-}
-
-static int
-adbbt_enable(void *v, int on)
-{
-	return 0;
-}
-
-static int
-adbbt_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
-{
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	struct adbbt_softc *sc = (struct adbbt_softc *) v;
-#endif
-
-	switch (cmd) {
-
-	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_ADB;
-		return 0;
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	case WSKBDIO_SETMODE:
-		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		return 0;
-#endif
-	}
-
-	return EPASSTHROUGH;
 }

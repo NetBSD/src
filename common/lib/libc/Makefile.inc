@@ -1,7 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.8 2008/01/22 12:34:58 nakayama Exp $
+# $NetBSD: Makefile.inc,v 1.8.6.1 2008/06/23 04:26:44 wrstuden Exp $
 
 COMMON_DIR:=${.PARSEDIR}
-COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string
+COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string sys
 COMMON_CODEDIRS+=hash/sha1 hash/sha2 hash/rmd160
 
 .if defined(LIBKERN_ARCH) && !empty(LIBKERN_ARCH) && \

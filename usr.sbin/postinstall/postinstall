@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.61 2008/05/03 09:44:45 apb Exp $
+# $NetBSD: postinstall,v 1.61.2.1 2008/06/23 04:32:13 wrstuden Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -823,7 +823,10 @@ do_pf()
 			# ${dir} is set by find_file_in_dirlist()
 	populate_dir ${op} true \
 	    ${dir} ${DEST_DIR}/etc 644 \
-	    pf.conf pf.os
+	    pf.conf
+	failed=$(( ${failed} + $? ))
+
+	compare_dir ${op} ${dir} ${DEST_DIR}/etc 444 pf.os
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
@@ -873,7 +876,7 @@ do_rc()
 		bootconf.sh bootparams btattach btconfig btdevctl bthcid \
 		ccd cgd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
-		fsck ftpd \
+		fsck ftp_proxy ftpd \
 		hostapd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd \

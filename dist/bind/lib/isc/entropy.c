@@ -1,10 +1,10 @@
-/*	$NetBSD: entropy.c,v 1.1.1.4 2007/01/27 21:07:50 christos Exp $	*/
+/*	$NetBSD: entropy.c,v 1.1.1.4.12.1 2008/06/23 04:28:22 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: entropy.c,v 1.11.18.3 2005/07/12 01:22:28 marka Exp */
+/* Id: entropy.c,v 1.18 2007/06/19 23:47:17 tbox Exp */
 
 /*! \file
  * \brief
@@ -1102,6 +1102,17 @@ isc_entropy_stats(isc_entropy_t *ent, FILE *out) {
 	LOCK(&ent->lock);
 	dumpstats(ent, out);
 	UNLOCK(&ent->lock);
+}
+
+unsigned int
+isc_entropy_status(isc_entropy_t *ent) {
+	unsigned int estimate;
+
+	LOCK(&ent->lock);
+	estimate = ent->pool.entropy;
+	UNLOCK(&ent->lock);
+
+	return estimate;
 }
 
 void

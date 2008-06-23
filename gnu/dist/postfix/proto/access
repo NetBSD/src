@@ -194,6 +194,13 @@
 # .IP \fIrestriction...\fR
 #	Apply the named UCE restriction(s) (\fBpermit\fR, \fBreject\fR,
 #	\fBreject_unauth_destination\fR, and so on).
+# .IP "\fBBCC \fIuser@domain\fR"
+#	Send one copy of the message to the specified recipient.
+# .sp
+#	If multiple BCC actions are specified within the same SMTP
+#	MAIL transaction, only the last action will be used.
+# .sp
+#	This feature is not part of the stable Postfix release.
 # \" .IP "\fBDELAY \fItime\fR"
 # \"	Place the message into the deferred queue, and delay the
 # \"	initial delivery attempt by \fItime\fR. The time value may

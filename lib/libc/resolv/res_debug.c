@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.9 2007/03/30 20:23:04 ghen Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.9.12.1 2008/06/23 04:29:32 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -99,9 +99,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #ifdef notdef
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_debug.c,v 1.10.18.5 2005/07/28 07:38:11 marka Exp";
+static const char rcsid[] = "Id: res_debug.c,v 1.15.574.1 2008/04/03 02:12:21 marka Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.9 2007/03/30 20:23:04 ghen Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.9.12.1 2008/06/23 04:29:32 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -134,8 +134,6 @@ __RCSID("$NetBSD: res_debug.c,v 1.9 2007/03/30 20:23:04 ghen Exp $");
 #else
 # define SPRINTF(x) sprintf x
 #endif
-
-static const char *precsize_ntoa(u_int32_t);
 
 extern const char *_res_opcodes[];
 extern const char *_res_sectioncodes[];
@@ -209,10 +207,56 @@ do_section(const res_state statp,
 				p_type(ns_rr_type(rr)),
 				p_class(ns_rr_class(rr)));
 		else if (section == ns_s_ar && ns_rr_type(rr) == ns_t_opt) {
+			u_int16_t optcode, optlen, rdatalen = ns_rr_rdlen(rr);
 			u_int32_t ttl = ns_rr_ttl(rr);
+
 			fprintf(file,
 				"; EDNS: version: %u, udp=%u, flags=%04x\n",
 				(ttl>>16)&0xff, ns_rr_class(rr), ttl&0xffff);
+
+			while (rdatalen >= 4) {
+				const u_char *cp = ns_rr_rdata(rr);
+				int i;
+
+				GETSHORT(optcode, cp);
+				GETSHORT(optlen, cp);
+
+				if (optcode == NS_OPT_NSID) {
+					fputs("; NSID: ", file);
+					if (optlen == 0) {
+						fputs("; NSID\n", file);
+					} else {
+						fputs("; NSID: ", file);
+						for (i = 0; i < optlen; i++)
+							fprintf(file, "%02x ",
+								cp[i]);
+						fputs(" (",file);
+						for (i = 0; i < optlen; i++)
+							fprintf(file, "%c",
+								isprint(cp[i])?
+								cp[i] : '.');
+						fputs(")\n", file);
+					}
+				} else {
+					if (optlen == 0) {
+						fprintf(file, "; OPT=%u\n",
+							optcode);
+					} else {
+						fprintf(file, "; OPT=%u: ",
+							optcode);
+						for (i = 0; i < optlen; i++)
+							fprintf(file, "%02x ",
+								cp[i]);
+						fputs(" (",file);
+						for (i = 0; i < optlen; i++)
+							fprintf(file, "%c",
+								isprint(cp[i]) ?
+									cp[i] : '.');
+						fputs(")\n", file);
+					}
+				}
+				rdatalen -= 4 + optlen;
+			}
 		} else {
 			n = ns_sprintrr(handle, &rr, NULL, NULL,
 					buf, (u_int)buflen);
@@ -637,6 +681,7 @@ p_option(u_long option) {
 	case RES_USE_INET6:	return "inet6";
 #ifdef RES_USE_EDNS0	/*%< KAME extension */
 	case RES_USE_EDNS0:	return "edns0";
+	case RES_NSID:		return "nsid";
 #endif
 #ifdef RES_USE_DNAME
 	case RES_USE_DNAME:	return "dname";
@@ -714,8 +759,7 @@ static unsigned int poweroften[10] = {1, 10, 100, 1000, 10000, 100000,
 
 /*% takes an XeY precision/size value, returns a string representation. */
 static const char *
-precsize_ntoa(prec)
-	u_int32_t prec;
+precsize_ntoa(u_int32_t prec)
 {
 	char *retbuf = precsize_ntoa_retbuf;
 	unsigned long val;

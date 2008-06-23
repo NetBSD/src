@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.84 2008/04/29 18:18:08 ad Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.84.2.1 2008/06/23 04:31:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.84 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.84.2.1 2008/06/23 04:31:57 wrstuden Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -57,10 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.84 2008/04/29 18:18:08 ad Exp $"
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
+
+MODULE(MODULE_CLASS_VFS, kernfs, NULL);
 
 MALLOC_JUSTDEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
 
@@ -289,4 +292,17 @@ struct vfsops kernfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(kernfs_vfsops);
+
+static int
+kernfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&kernfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&kernfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

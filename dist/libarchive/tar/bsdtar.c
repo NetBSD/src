@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.86 2008/03/15 05:08:21 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.90 2008/05/19 18:38:01 cperciva Exp $");
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -118,7 +118,7 @@ static void		 version(void);
  * non-option.  Otherwise, GNU getopt() permutes the arguments and
  * screws up -C processing.
  */
-static const char *tar_opts = "+Bb:C:cf:HhI:jkLlmnOoPprtT:UuvW:wX:xyZz";
+static const char *tar_opts = "+Bb:C:cf:HhI:jkLlmnOoPprts:ST:UuvW:wX:xyZz";
 
 /*
  * Most of these long options are deliberately not documented.  They
@@ -142,6 +142,7 @@ enum {
 	OPTION_FORMAT,
 	OPTION_HELP,
 	OPTION_INCLUDE,
+	OPTION_KEEP_NEWER_FILES,
 	OPTION_NEWER_CTIME,
 	OPTION_NEWER_CTIME_THAN,
 	OPTION_NEWER_MTIME,
@@ -150,6 +151,7 @@ enum {
 	OPTION_NO_SAME_OWNER,
 	OPTION_NO_SAME_PERMISSIONS,
 	OPTION_NULL,
+	OPTION_NUMERIC_OWNER,
 	OPTION_ONE_FILE_SYSTEM,
 	OPTION_POSIX,
 	OPTION_STRIP_COMPONENTS,
@@ -190,6 +192,7 @@ static const struct option tar_longopts[] = {
 	{ "include",            required_argument, NULL, OPTION_INCLUDE },
 	{ "interactive",        no_argument,       NULL, 'w' },
 	{ "insecure",           no_argument,       NULL, 'P' },
+	{ "keep-newer-files",   no_argument,       NULL, OPTION_KEEP_NEWER_FILES },
 	{ "keep-old-files",     no_argument,       NULL, 'k' },
 	{ "list",               no_argument,       NULL, 't' },
 	{ "modification-time",  no_argument,       NULL, 'm' },
@@ -205,6 +208,7 @@ static const struct option tar_longopts[] = {
 	{ "no-same-owner",	no_argument,	   NULL, OPTION_NO_SAME_OWNER },
 	{ "no-same-permissions",no_argument,	   NULL, OPTION_NO_SAME_PERMISSIONS },
 	{ "null",		no_argument,	   NULL, OPTION_NULL },
+	{ "numeric-owner",	no_argument,	   NULL, OPTION_NUMERIC_OWNER },
 	{ "one-file-system",	no_argument,	   NULL, OPTION_ONE_FILE_SYSTEM },
 	{ "posix",		no_argument,	   NULL, OPTION_POSIX },
 	{ "preserve-permissions", no_argument,     NULL, 'p' },
@@ -392,6 +396,9 @@ main(int argc, char **argv)
 		case 'k': /* GNU tar */
 			bsdtar->extract_flags |= ARCHIVE_EXTRACT_NO_OVERWRITE;
 			break;
+		case OPTION_KEEP_NEWER_FILES: /* GNU tar */
+			bsdtar->extract_flags |= ARCHIVE_EXTRACT_NO_OVERWRITE_NEWER;
+			break;
 		case 'L': /* BSD convention */
 			bsdtar->symlink_mode = 'L';
 			break;
@@ -455,6 +462,9 @@ main(int argc, char **argv)
 		case OPTION_NULL: /* GNU tar */
 			bsdtar->option_null++;
 			break;
+		case OPTION_NUMERIC_OWNER: /* GNU tar */
+			bsdtar->option_numeric_owner++;
+			break;
 		case 'O': /* GNU tar */
 			bsdtar->option_stdout = 1;
 			break;
@@ -493,6 +503,17 @@ main(int argc, char **argv)
 			break;
 		case 'r': /* SUSv2 */
 			set_mode(bsdtar, opt);
+			break;
+		case 'S': /* NetBSD pax-as-tar */
+			bsdtar->extract_flags |= ARCHIVE_EXTRACT_SPARSE;
+			break;
+		case 's': /* NetBSD pax-as-tar */
+#if HAVE_REGEX_H
+			add_substitution(bsdtar, optarg);
+#else
+			bsdtar_warnc(bsdtar, 0, "-s is not supported by this version of bsdtar");
+			usage(bsdtar);
+#endif
 			break;
 		case OPTION_STRIP_COMPONENTS: /* GNU tar 1.15 */
 			bsdtar->strip_components = atoi(optarg);
@@ -638,7 +659,7 @@ main(int argc, char **argv)
 		only_mode(bsdtar, buff, "cxt");
 	}
 	if (bsdtar->create_format != NULL)
-		only_mode(bsdtar, "--format", "c");
+		only_mode(bsdtar, "--format", "cru");
 	if (bsdtar->symlink_mode != '\0') {
 		strcpy(buff, "-?");
 		buff[1] = bsdtar->symlink_mode;
@@ -669,6 +690,10 @@ main(int argc, char **argv)
 	}
 
 	cleanup_exclusions(bsdtar);
+#if HAVE_REGEX_H
+	cleanup_substitution(bsdtar);
+#endif
+
 	if (bsdtar->return_value != 0)
 		bsdtar_warnc(bsdtar, 0,
 		    "Error exit delayed from previous errors.");
@@ -721,8 +746,8 @@ rewrite_argv(struct bsdtar *bsdtar, int *argc, char **src_argv,
 	const char *p;
 	char *src, *dest;
 
-	if (src_argv[0] == NULL ||
-	    src_argv[1] == NULL || src_argv[1][0] == '-')
+	if (src_argv[0] == NULL || src_argv[1] == NULL ||
+	    src_argv[1][0] == '-' || src_argv[1][0] == '\0')
 		return (src_argv);
 
 	*argc += strlen(src_argv[1]) - 1;
@@ -788,7 +813,7 @@ version(void)
 	printf("bsdtar %s - %s\n",
 	    BSDTAR_VERSION_STRING,
 	    archive_version());
-	exit(1);
+	exit(0);
 }
 
 static const char *long_help_msg =

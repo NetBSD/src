@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.41 2008/04/28 20:23:04 martin Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.41.2.1 2008/06/23 04:29:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.41 2008/04/28 20:23:04 martin Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.41.2.1 2008/06/23 04:29:56 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -113,6 +113,7 @@ static char * const default_manpath[] = {
 
 static const char	*sectionext = "0123456789ln";
 static const char	*whatisdb   = _PATH_WHATIS;
+static const char	*whatisdb_new = _PATH_WHATIS ".new";
 static int		dowarn      = 0;
 
 #define	ISALPHA(c)	isalpha((unsigned char)(c))
@@ -327,15 +328,19 @@ makewhatis(char * const * manpath)
 	if (chdir(manpath[0]) == -1)
 		err(EXIT_FAILURE, "Cannot change dir to `%s'", manpath[0]);
 
-	(void)unlink(whatisdb);
-	if ((out = fopen(whatisdb, "w")) == NULL)
-		err(EXIT_FAILURE, "Cannot open `%s'", whatisdb);
+	(void)unlink(whatisdb_new);
+	if ((out = fopen(whatisdb_new, "w")) == NULL)
+		err(EXIT_FAILURE, "Cannot open `%s'", whatisdb_new);
 
 	dumpwhatis(out, dest);
 	if (fchmod(fileno(out), S_IRUSR|S_IRGRP|S_IROTH) == -1)
-		err(EXIT_FAILURE, "Cannot chmod `%s'", whatisdb);
+		err(EXIT_FAILURE, "Cannot chmod `%s'", whatisdb_new);
 	if (fclose(out) != 0)
-		err(EXIT_FAILURE, "Cannot close `%s'", whatisdb);
+		err(EXIT_FAILURE, "Cannot close `%s'", whatisdb_new);
+
+	if (rename(whatisdb_new, whatisdb) == -1)
+		err(EXIT_FAILURE, "Could not rename `%s' to `%s'",
+		    whatisdb_new, whatisdb);
 
 	return EXIT_SUCCESS;
 }

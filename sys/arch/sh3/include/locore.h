@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.17 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: locore.h,v 1.17.2.1 2008/06/23 04:30:39 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 	sts.l	pr,	@-r14	/* tf_pr  */				;\
 	sts.l	mach,	@-r14	/* tf_mach*/				;\
 	sts.l	macl,	@-r14	/* tf_macl*/				;\
+	stc.l	gbr,	@-r14	/* tf_gbr */				;\
 	mov.l	r2,	@-r14	/* tf_ssr */				;\
 	stc.l	spc,	@-r14	/* tf_spc */				;\
 	add	#-8,	r14	/* skip tf_ubc, tf_expevt */		;\
@@ -122,10 +123,9 @@
 	add	#TF_SIZE, r0						;\
 	ldc	r0,	r6_bank	/* roll up frame pointer */		;\
 	add	#8,	r14	/* skip tf_expevt, tf_ubc */		;\
-	mov.l	@r14+,	r0	/* tf_spc */				;\
-	ldc	r0,	spc						;\
-	mov.l	@r14+,	r0	/* tf_ssr */				;\
-	ldc	r0,	ssr						;\
+	ldc.l	@r14+,	spc	/* tf_spc */				;\
+	ldc.l	@r14+,	ssr	/* tf_ssr */				;\
+	ldc.l	@r14+,	gbr	/* tf_gbr */				;\
 	lds.l	@r14+,	macl	/* tf_macl*/				;\
 	lds.l	@r14+,	mach	/* tf_mach*/				;\
 	lds.l	@r14+,	pr	/* tf_pr  */				;\

@@ -66,7 +66,7 @@ DEFINE_TEST(test_format_newc)
 	int fd, list;
 	int r;
 	int devmajor, devminor, ino, gid;
-	time_t t, now;
+	time_t t, t2, now;
 	char *p, *e;
 	size_t s;
 	mode_t oldmask;
@@ -106,13 +106,13 @@ DEFINE_TEST(test_format_newc)
 
 	/* Use the cpio program to create an archive. */
 	close(list);
-	r = systemf("%s -o --format=newc --quiet <list >newc.out 2>newc.err",
+	r = systemf("%s -o --format=newc <list >newc.out 2>newc.err",
 	    testprog);
 	if (!assertEqualInt(r, 0))
 		return;
 
 	/* Verify that nothing went to stderr. */
-	assertEmptyFile("newc.err");
+	assertFileContents("2 blocks\n", 9, "newc.err");
 
 	/* Verify that stdout is a well-formed cpio file in "newc" format. */
 	p = slurpfile(&s, "newc.out");
@@ -159,7 +159,9 @@ DEFINE_TEST(test_format_newc)
 	assertEqualInt(from_hex(e + 22, 8), getuid()); /* uid */
 	assertEqualInt(gid, from_hex(e + 30, 8)); /* gid */
 	assertEqualMem(e + 38, "00000001", 8); /* nlink */
-	assertEqualInt(t, from_hex(e + 46, 8)); /* mtime */
+	t2 = from_hex(e + 46, 8); /* mtime */
+	failure("First entry created at t=0x%08x this entry created at t2=0x%08x", t, t2);
+	assert(t2 == t || t2 == t + 1); /* Almost same as first entry. */
 	assertEqualMem(e + 54, "00000005", 8); /* File size */
 	assertEqualInt(devmajor, from_hex(e + 62, 8)); /* devmajor */
 	assertEqualInt(devminor, from_hex(e + 70, 8)); /* devminor */
@@ -179,7 +181,9 @@ DEFINE_TEST(test_format_newc)
 	assertEqualInt(from_hex(e + 22, 8), getuid()); /* uid */
 	assertEqualInt(gid, from_hex(e + 30, 8)); /* gid */
 	assertEqualMem(e + 38, "00000002", 8); /* nlink */
-	assertEqualInt(t, from_hex(e + 46, 8)); /* mtime */
+	t2 = from_hex(e + 46, 8); /* mtime */
+	failure("First entry created at t=0x%08x this entry created at t2=0x%08x", t, t2);
+	assert(t2 == t || t2 == t + 1); /* Almost same as first entry. */
 	assertEqualMem(e + 54, "00000000", 8); /* File size */
 	assertEqualInt(devmajor, from_hex(e + 62, 8)); /* devmajor */
 	assertEqualInt(devminor, from_hex(e + 70, 8)); /* devminor */
@@ -203,7 +207,9 @@ DEFINE_TEST(test_format_newc)
 	assertEqualInt(from_hex(e + 22, 8), getuid()); /* uid */
 	assertEqualInt(gid, from_hex(e + 30, 8)); /* gid */
 	assertEqualMem(e + 38, "00000003", 8); /* nlink */
-	assertEqualInt(t, from_hex(e + 46, 8)); /* mtime */
+	t2 = from_hex(e + 46, 8); /* mtime */
+	failure("First entry created at t=0x%08x this entry created at t2=0x%08x", t, t2);
+	assert(t2 == t || t2 == t + 1); /* Almost same as first entry. */
 	assertEqualInt(10, from_hex(e + 54, 8)); /* File size */
 	assertEqualInt(devmajor, from_hex(e + 62, 8)); /* devmajor */
 	assertEqualInt(devminor, from_hex(e + 70, 8)); /* devminor */

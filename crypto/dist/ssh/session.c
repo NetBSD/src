@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.47 2008/04/06 23:38:19 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.47.4.1 2008/06/23 04:27:02 wrstuden Exp $	*/
 /* $OpenBSD: session.c,v 1.233 2008/03/26 21:28:14 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.47 2008/04/06 23:38:19 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.47.4.1 2008/06/23 04:27:02 wrstuden Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -209,6 +209,7 @@ auth_input_request_forwarding(struct passwd * pw)
 		packet_disconnect("listen: %.100s", strerror(errno));
 
 	/* Allocate a channel for the authentication agent socket. */
+	/* this shouldn't matter if its hpn or not - cjr */
 	nc = channel_new("auth socket",
 	    SSH_CHANNEL_AUTH_SOCKET, sock, sock, -1,
 	    CHAN_X11_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT,
@@ -346,7 +347,8 @@ do_authenticated1(Authctxt *authctxt)
 			}
 			debug("Received TCP/IP port forwarding request.");
 			if (channel_input_port_forward_request(s->pw->pw_uid == 0,
-			    options.gateway_ports) < 0) {
+			      options.gateway_ports, options.hpn_disabled,
+                              options.hpn_buffer_size) < 0) {
 				debug("Port forwarding failed.");
 				break;
 			}
@@ -1969,11 +1971,18 @@ session_set_fds(Session *s, int fdin, int fdout, int fderr)
 	 */
 	if (s->chanid == -1)
 		fatal("no channel for session %d", s->self);
+	if(options.hpn_disabled) 
 	channel_set_fds(s->chanid,
 	    fdout, fdin, fderr,
 	    fderr == -1 ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
 	    1,
 	    CHAN_SES_WINDOW_DEFAULT);
+	else
+		channel_set_fds(s->chanid,
+		    fdout, fdin, fderr,
+		    fderr == -1 ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
+		    1,
+		    options.hpn_buffer_size);
 }
 
 /*
@@ -2314,7 +2323,8 @@ session_setup_x11fwd(Session *s)
 	}
 	if (x11_create_display_inet(options.x11_display_offset,
 	    options.x11_use_localhost, s->single_connection,
-	    &s->display_number, &s->x11_chanids) == -1) {
+	    &s->display_number, &s->x11_chanids, 
+	    options.hpn_disabled, options.hpn_buffer_size) == -1) {
 		debug("x11_create_display_inet failed.");
 		return 0;
 	}

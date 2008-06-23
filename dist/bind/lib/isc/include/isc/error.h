@@ -1,10 +1,10 @@
-/*	$NetBSD: error.h,v 1.1.1.4 2007/01/27 21:07:53 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.1.1.4.12.1 2008/06/23 04:28:26 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: error.h,v 1.14.18.2 2005/04/29 00:16:54 marka Exp */
+/* Id: error.h,v 1.20 2007/06/19 23:47:18 tbox Exp */
 
 #ifndef ISC_ERROR_H
 #define ISC_ERROR_H 1
 
-/*! \file */
+/*! \file isc/error.h */
 
 #include <stdarg.h>
 

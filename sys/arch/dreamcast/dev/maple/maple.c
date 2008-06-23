@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.36 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: maple.c,v 1.36.2.1 2008/06/23 04:30:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.36 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.36.2.1 2008/06/23 04:30:17 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -385,7 +385,7 @@ maple_free_dma(paddr_t paddr, size_t size)
 	TAILQ_INIT(&mlist);
 	for (addr = paddr; addr < paddr + size; addr += PAGE_SIZE) {
 		m = PHYS_TO_VM_PAGE(addr);
-		TAILQ_INSERT_TAIL(&mlist, m, pageq);
+		TAILQ_INSERT_TAIL(&mlist, m, pageq.queue);
 	}
 	uvm_pglistfree(&mlist);
 }
@@ -1602,7 +1602,7 @@ mapleopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct maple_softc *sc;
 
-	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+	sc = device_lookup_private(&maple_cd, MAPLEBUSUNIT(dev));
 	if (sc == NULL)			/* make sure it was attached */
 		return ENXIO;
 
@@ -1625,7 +1625,7 @@ mapleclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct maple_softc *sc;
 
-	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+	sc = device_lookup_private(&maple_cd, MAPLEBUSUNIT(dev));
 
 	sc->sc_port_units_open[MAPLEPORT(dev)] &= ~(1 << MAPLESUBUNIT(dev));
 
@@ -1658,7 +1658,7 @@ mapleioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct maple_softc *sc;
 	struct maple_unit *u;
 
-	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+	sc = device_lookup_private(&maple_cd, MAPLEBUSUNIT(dev));
 	u = &sc->sc_unit[MAPLEPORT(dev)][MAPLESUBUNIT(dev)];
 
 	return maple_unit_ioctl(&sc->sc_dev, u, cmd, data, flag, l);

@@ -1,10 +1,10 @@
-/*	$NetBSD: compress_test.c,v 1.1.1.4 2007/01/27 21:04:01 christos Exp $	*/
+/*	$NetBSD: compress_test.c,v 1.1.1.4.12.1 2008/06/23 04:27:29 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: compress_test.c,v 1.27.18.4 2006/02/26 23:49:49 marka Exp */
+/* Id: compress_test.c,v 1.34 2007/06/18 23:47:26 tbox Exp */
 
 /*! \file */
 
@@ -43,11 +43,6 @@ unsigned char plain[] = "\003yyy\003foo\0\003bar\003yyy\003foo\0\003"
 /*
  * Result concatenate (plain1, plain2, plain2, plain3).
  */
-unsigned char bit1[] = "\101\010b";
-unsigned char bit2[] = "\101\014b\260";
-unsigned char bit3[] = "\101\020b\264";
-unsigned char bit[] = "\101\010b\0\101\014b\260\0\101\014b\260\0\101\020b\264";
-
 int raw = 0;
 int verbose = 0;
 
@@ -93,25 +88,6 @@ main(int argc, char *argv[]) {
 	test(DNS_COMPRESS_GLOBAL14, &name1, &name2, &name3, plain,
 	     sizeof(plain));
 	test(DNS_COMPRESS_ALL, &name1, &name2, &name3, plain, sizeof(plain));
-
-	dns_name_init(&name1, NULL);
-	region.base = bit1;
-	region.length = sizeof(bit1);
-	dns_name_fromregion(&name1, &region);
-
-	dns_name_init(&name2, NULL);
-	region.base = bit2;
-	region.length = sizeof(bit2);
-	dns_name_fromregion(&name2, &region);
-
-	dns_name_init(&name3, NULL);
-	region.base = bit3;
-	region.length = sizeof(bit3);
-	dns_name_fromregion(&name3, &region);
-
-	test(DNS_COMPRESS_NONE, &name1, &name2, &name3, bit, sizeof(bit));
-	test(DNS_COMPRESS_GLOBAL14, &name1, &name2, &name3, bit, sizeof(bit));
-	test(DNS_COMPRESS_ALL, &name1, &name2, &name3, bit, sizeof(bit));
 
 	return (0);
 }

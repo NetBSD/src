@@ -1,10 +1,16 @@
-/* $NetBSD: globals.h,v 1.6 2008/04/08 23:59:03 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.6.6.1 2008/06/23 04:30:38 wrstuden Exp $ */
 
 /* clock feed */
 #ifndef TICKS_PER_SEC
 #define TICKS_PER_SEC   (100000000 / 4)          /* 100MHz front bus */
 #endif
 #define NS_PER_TICK     (1000000000 / TICKS_PER_SEC)
+
+/* brd type */
+#define BRD_SANDPOINTX2		2
+#define BRD_SANDPOINTX3		3
+#define BRD_ENCOREPP1		10
+#define BRD_UNKNOWN		-1
 
 /* PPC processor ctl */
 void __syncicache(void *, size_t);
@@ -19,12 +25,16 @@ void iohtole32(unsigned, unsigned);
 unsigned iole32toh(unsigned);
 unsigned iole16toh(unsigned);
 
+/* far call would never return */
+void run(void *, void *, void *, void *, void *);
+
 /* micro second precision delay */
 void delay(unsigned);
 
 /* PCI stuff */
 void  pcisetup(void);
-unsigned  pcimaketag(int, int, int);
+void  pcifixup(void);
+unsigned pcimaketag(int, int, int);
 void  pcidecomposetag(unsigned, int *, int *, int *);
 int   pcifinddev(unsigned, unsigned, unsigned *);
 int   pcilookup(unsigned, unsigned [][2], int);

@@ -201,6 +201,8 @@ Parameters whose defaults can be specified in this way are:
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |DEF_DAEMON_DIR   |daemon_directory |/usr/libexec/postfix|
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |DEF_DATA_DIR     |data_directory   |/var/lib/postfix    |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |DEF_MAILQ_PATH   |mailq_path       |/usr/bin/mailq      |
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |DEF_HTML_DIR     |html_directory   |no                  |
@@ -215,6 +217,9 @@ Parameters whose defaults can be specified in this way are:
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
     |DEF_SENDMAIL_PATH|sendmail_path    |/usr/sbin/sendmail  |
     |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+Note: the data_directory parameter (for caches and pseudo-random numbers) was
+introduced with Postfix version 2.5.
 
 44..55 -- SSuuppppoorrtt ffoorr tthhoouussaannddss ooff pprroocceesssseess
 
@@ -486,7 +491,7 @@ or, if you feel nostalgic, use the Postfix sendmail command:
     # sendmail -bd -qwhatever
 
 and watch your maillog file for any error messages. The pathname is /var/log/
-maillog, /var/log/mail, /var/log/syslog, or someting else. Typically, the
+maillog, /var/log/mail, /var/log/syslog, or something else. Typically, the
 pathname is defined in the /etc/syslog.conf file.
 
     % egrep '(reject|warning|error|fatal|panic):' /some/log/file

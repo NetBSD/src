@@ -1,3 +1,4 @@
+DEFINE_TEST(test_0)
 DEFINE_TEST(test_basic)
 DEFINE_TEST(test_format_newc)
 DEFINE_TEST(test_gcpio_compat)

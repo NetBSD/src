@@ -1,4 +1,4 @@
-/*	$NetBSD: defer.c,v 1.1.1.7 2006/07/19 01:17:22 rpaulo Exp $	*/
+/*	$NetBSD: defer.c,v 1.1.1.7.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -66,6 +66,12 @@
 /* .IP BOUNCE_FLAG_CLEAN
 /*	Delete the defer log in case of an error (as in: pretend
 /*	that we never even tried to defer this message).
+/* .IP BOUNCE_FLAG_DELRCPT
+/*	When specified with a flush request, request that
+/*	recipients be deleted from the queue file.
+/*
+/*	Note: the bounce daemon ignores this request when the
+/*	recipient queue file offset is <= 0.
 /* .IP DEL_REQ_FLAG_MTA_VRFY
 /*	The message is an MTA-requested address verification probe.
 /*	Update the address verification database instead of deferring

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125.12.2 2008/06/22 18:12:03 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.125.12.3 2008/06/23 04:30:38 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.12.2 2008/06/22 18:12:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.12.3 2008/06/23 04:30:38 wrstuden Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -130,7 +130,6 @@ trap(struct trapframe *frame)
 				va &= ADDR_PIDX | ADDR_POFF;
 				va |= pcb->pcb_umapsr << ADDR_SR_SHFT;
 				map = &p->p_vmspace->vm_map;
-				/* KERNEL_LOCK(1, l); */
 #ifdef PPC_OEA64
 				if ((frame->dsisr & DSISR_NOTFOUND) &&
 				    vm_map_pmap(map)->pm_ste_evictions > 0 &&

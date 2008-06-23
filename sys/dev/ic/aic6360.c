@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.94 2008/04/08 12:07:25 cegger Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.94.6.1 2008/06/23 04:31:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.94 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.94.6.1 2008/06/23 04:31:04 wrstuden Exp $");
 
 #include "opt_ddb.h"
 
@@ -2168,7 +2168,7 @@ aic_print_active_acb(void)
 {
 	extern struct cfdriver aic_cd;
 	struct aic_acb *acb;
-	struct aic_softc *sc = aic_cd.cd_devs[0];
+	struct aic_softc *sc = device_lookup_private(&aic_cd, 0);
 
 	printf("ready list:\n");
 	for (acb = sc->ready_list.tqh_first; acb != NULL;

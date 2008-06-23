@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.12 2008/03/22 17:20:31 plunky Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.12.6.1 2008/06/23 04:30:58 wrstuden Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.12 2008/03/22 17:20:31 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.12.6.1 2008/06/23 04:30:58 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -396,7 +396,7 @@ bcspopen(dev_t device __unused, struct tty *tp)
 
 	cfdata = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	for (unit = 0; unit < bcsp_cd.cd_ndevs; unit++)
-		if (bcsp_cd.cd_devs[unit] == NULL)
+		if (device_lookup(&bcsp_cd, unit) == NULL)
 			break;
 	cfdata->cf_name = name;
 	cfdata->cf_atname = name;

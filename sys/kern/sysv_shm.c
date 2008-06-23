@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.107.2.2 2008/05/14 01:35:14 wrstuden Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.107.2.3 2008/06/23 04:31:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.107.2.2 2008/05/14 01:35:14 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.107.2.3 2008/06/23 04:31:52 wrstuden Exp $");
 
 #define SYSVSHM
 
@@ -268,15 +268,13 @@ shm_memlock(struct lwp *l, struct shmid_ds *shmseg, int shmid, int cmd)
 		if (cmd == SHM_LOCK &&
 		    (shmseg->shm_perm.mode & SHMSEG_WIRED) == 0) {
 			/* Wire the object and map, then tag it */
-			error = uobj_wirepages(shmseg->_shm_internal, 0,
-			    round_page(shmseg->shm_segsz));
+			error = uobj_wirepages(shmseg->_shm_internal, 0, size);
 			if (error)
 				return EIO;
 			error = uvm_map_pageable(&p->p_vmspace->vm_map,
 			    shmmap_se->va, shmmap_se->va + size, false, 0);
 			if (error) {
-				uobj_unwirepages(shmseg->_shm_internal, 0,
-				    round_page(shmseg->shm_segsz));
+				uobj_unwirepages(shmseg->_shm_internal, 0, size);
 				if (error == EFAULT)
 					error = ENOMEM;
 				return error;
@@ -286,8 +284,7 @@ shm_memlock(struct lwp *l, struct shmid_ds *shmseg, int shmid, int cmd)
 		} else if (cmd == SHM_UNLOCK &&
 		    (shmseg->shm_perm.mode & SHMSEG_WIRED) != 0) {
 			/* Unwire the object and map, then untag it */
-			uobj_unwirepages(shmseg->_shm_internal, 0,
-			    round_page(shmseg->shm_segsz));
+			uobj_unwirepages(shmseg->_shm_internal, 0, size);
 			error = uvm_map_pageable(&p->p_vmspace->vm_map,
 			    shmmap_se->va, shmmap_se->va + size, true, 0);
 			if (error)
@@ -428,7 +425,7 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 			goto err;
 		}
 	} else {
-		/* This is just a hint to uvm_mmap() about where to put it. */
+		/* This is just a hint to uvm_map() about where to put it. */
 		attach_va = p->p_emul->e_vm_default_addr(p,
 		    (vaddr_t)vm->vm_daddr, size);
 	}
@@ -727,9 +724,9 @@ sys_shmget(struct lwp *l, const struct sys_shmget_args *uap, register_t *retval)
 	shmseg->_shm_internal = uao_create(size, 0);
 	if (lockmem) {
 		/* Wire the pages and tag it */
-		error = uobj_wirepages(shmseg->_shm_internal, 0,
-		    round_page(shmseg->shm_segsz));
+		error = uobj_wirepages(shmseg->_shm_internal, 0, size);
 		if (error) {
+			uao_detach(shmseg->_shm_internal);
 			mutex_enter(&shm_lock);
 			shm_free_segment(segnum);
 			shm_realloc_disable--;
@@ -873,9 +870,9 @@ shmrealloc(int newshmni)
 {
 	vaddr_t v;
 	struct shmid_ds *oldshmsegs, *newshmsegs;
-	kcondvar_t *newshm_cv;
+	kcondvar_t *newshm_cv, *oldshm_cv;
 	size_t sz;
-	int i, lsegid;
+	int i, lsegid, oldshmni;
 
 	if (newshmni < 1)
 		return EINVAL;
@@ -924,9 +921,7 @@ shmrealloc(int newshmni)
 	}
 
 	oldshmsegs = shmsegs;
-	sz = ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)) +
-	    ALIGN(shminfo.shmmni * sizeof(kcondvar_t));
-
+	oldshmni = shminfo.shmmni;
 	shminfo.shmmni = newshmni;
 	shmsegs = newshmsegs;
 	shm_cv = newshm_cv;
@@ -936,7 +931,16 @@ shmrealloc(int newshmni)
 	cv_broadcast(&shm_realloc_cv);
 	mutex_exit(&shm_lock);
 
+	/* Release now unused resources. */
+	oldshm_cv = (void *)(ALIGN(oldshmsegs) +
+	    oldshmni * sizeof(struct shmid_ds));
+	for (i = 0; i < oldshmni; i++)
+		cv_destroy(&oldshm_cv[i]);
+
+	sz = ALIGN(oldshmni * sizeof(struct shmid_ds)) +
+	    ALIGN(oldshmni * sizeof(kcondvar_t));
 	uvm_km_free(kernel_map, (vaddr_t)oldshmsegs, sz, UVM_KMF_WIRED);
+
 	return 0;
 }
 

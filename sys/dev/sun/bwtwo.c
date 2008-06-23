@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.17 2008/04/28 20:23:58 martin Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.17.2.1 2008/06/23 04:31:30 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.17 2008/04/28 20:23:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.17.2.1 2008/06/23 04:31:30 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ bwtwoopen(dev, flags, mode, l)
 {
 	int unit = minor(dev);
 
-	if (unit >= bwtwo_cd.cd_ndevs || bwtwo_cd.cd_devs[unit] == NULL)
+	if (device_lookup(&bwtwo_cd, unit) == NULL)
 		return (ENXIO);
 
 	return (0);
@@ -229,7 +229,7 @@ bwtwoioctl(dev, cmd, data, flags, l)
 	int flags;
 	struct lwp *l;
 {
-	struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bwtwo_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
 
 	switch (cmd) {
 
@@ -255,7 +255,7 @@ static void
 bwtwounblank(dev)
 	struct device *dev;
 {
-	struct bwtwo_softc *sc = (struct bwtwo_softc *)dev;
+	struct bwtwo_softc *sc = device_private(dev);
 
 	sc->sc_set_video(sc, 1);
 }
@@ -270,7 +270,7 @@ bwtwommap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bwtwo_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
 
 	if (off & PGOFSET)
 		panic("bwtwommap");
