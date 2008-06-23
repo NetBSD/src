@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69 2008/06/16 10:31:03 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.70 2008/06/23 14:47:51 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2008/06/16 10:31:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2008/06/23 14:47:51 reinoud Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2335,18 +2335,18 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 	}
 
 	if ((uintptr_t) pmap1 < (uintptr_t) pmap2) {
-		mutex_enter(&pmap1->pm_obj.vmobjlock);
-		mutex_enter(&pmap2->pm_obj.vmobjlock);
+		mutex_enter(&pmap1->pm_lock);
+		mutex_enter(&pmap2->pm_lock);
 	} else {
-		mutex_enter(&pmap2->pm_obj.vmobjlock);
-		mutex_enter(&pmap1->pm_obj.vmobjlock);
+		mutex_enter(&pmap2->pm_lock);
+		mutex_enter(&pmap1->pm_lock);
 	}
 
  	/* Copy the LDT, if necessary. */
  	if (pmap1->pm_flags & PMF_USER_LDT) {
 		if (len != pmap1->pm_ldt_len * sizeof(union descriptor)) {
-			mutex_exit(&pmap2->pm_obj.vmobjlock);
-			mutex_exit(&pmap1->pm_obj.vmobjlock);
+			mutex_exit(&pmap2->pm_lock);
+			mutex_exit(&pmap1->pm_lock);
 			if (len != -1) {
 				ldt_free(sel);
 				uvm_km_free(kernel_map, (vaddr_t)new_ldt,
@@ -2363,8 +2363,8 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 		len = -1;
 	}
 
-	mutex_exit(&pmap2->pm_obj.vmobjlock);
-	mutex_exit(&pmap1->pm_obj.vmobjlock);
+	mutex_exit(&pmap2->pm_lock);
+	mutex_exit(&pmap1->pm_lock);
 
 	if (len != -1) {
 		ldt_free(sel);
