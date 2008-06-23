@@ -1,0 +1,11 @@
+#	$NetBSD: Makefile.cdrom,v 1.1.6.2 2008/06/23 05:02:08 wrstuden Exp $
+
+BOOTFILE=		cdboot.lif
+
+CDMAKEFSOPTIONS=	generic-bootimage=cdrom/${BOOTFILE}
+CDINSTKERNEL=		../../kernel
+CDKERNELS=		netbsd-RAMDISK	netbsd	# from ../instkernel
+
+prepare_md_post:
+	${RM} -f cdrom/${BOOTFILE}
+	${TOOL_HP700MKBOOT} ${DESTDIR}/usr/mdec/cdboot cdrom/${BOOTFILE}
