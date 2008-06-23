@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2008/06/22 15:43:40 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2008/06/23 14:52:11 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -26,8 +26,7 @@ CPPFLAGS+=	-I${SSHDIST}
 
 LIBDPLIBS+=	crypto	${.CURDIR}/../libcrypto \
 		crypt	${.CURDIR}/../libcrypt \
-		z	${.CURDIR}/../libz \
-		pthread	${.CURDIR}/../libpthread
+		z	${.CURDIR}/../libz
 
 .if ${HAVE_GCC} == 4
 .for f in dns channels hostfile
