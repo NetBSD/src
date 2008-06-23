@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.32 2008/05/11 06:27:19 jdc Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.33 2008/06/23 06:38:25 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -327,4 +327,16 @@ gnu/dist/gcc4/gcc/hwint.h			1.2
 	of native sh3 gcc on 64-bit build machines.
 	PR#34549.
 	[uwe, ticket #1139]
+
+src/gnu/dist/binutils/bfd/tekhex.c		1.2
+
+	Fix for PR #33551 (a.k.a CVE-2006-2362)
+	Back port from the binutils CVS tree.
+	Buffer overflow in getsym in tekhex.c in libbfd in Free Software
+	Foundation GNU Binutils before 20060423, as used by GNU strings, 
+	allows context-dependent attackers to cause a denial of service 
+	(application crash) and possibly execute arbitrary code via a file
+	with a crafted Tektronix Hex Format (TekHex) record in which the 
+	length character is not a valid hexadecimal character.
+	[adrianp, ticket #1160]
 
