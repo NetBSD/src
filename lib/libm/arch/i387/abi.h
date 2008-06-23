@@ -1,4 +1,4 @@
-/*	$NetBSD: abi.h,v 1.4 2008/06/23 00:14:46 christos Exp $	*/
+/*	$NetBSD: abi.h,v 1.5 2008/06/23 10:24:13 drochner Exp $	*/
 
 /*
  * Written by Frank van der Linden (fvdl@wasabisystems.com)
@@ -16,9 +16,9 @@
 
 #ifdef __x86_64__
 
-#define ARG_DOUBLE_ONE_HALF	-4(%rsp)
 #define ARG_DOUBLE_ONE		-8(%rsp)
-#define ARG_DOUBLE_TWO_HALF	-12(%rsp)
+#define ARG_DOUBLE_ONE_LSW	-8(%rsp)
+#define ARG_DOUBLE_ONE_MSW	-4(%rsp)
 #define ARG_DOUBLE_TWO		-16(%rsp)
 #define ARG_FLOAT_ONE		-4(%rsp)
 #define ARG_FLOAT_TWO		-8(%rsp)
@@ -50,9 +50,9 @@
 #else
 
 #define ARG_DOUBLE_ONE		4(%esp)
-#define ARG_DOUBLE_ONE_HALF	8(%esp)
+#define ARG_DOUBLE_ONE_LSW	4(%esp)
+#define ARG_DOUBLE_ONE_MSW	8(%esp)
 #define ARG_DOUBLE_TWO		12(%esp)
-#define ARG_DOUBLE_TWO_HALF	16(%esp)
 #define ARG_FLOAT_ONE		4(%esp)
 #define ARG_FLOAT_TWO		8(%esp)
 

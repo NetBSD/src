@@ -1,4 +1,4 @@
-/*	$NetBSD: e_exp.S,v 1.13 2008/06/23 00:12:04 christos Exp $	*/
+/*	$NetBSD: e_exp.S,v 1.14 2008/06/23 10:24:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
@@ -39,7 +39,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: e_exp.S,v 1.13 2008/06/23 00:12:04 christos Exp $")
+RCSID("$NetBSD: e_exp.S,v 1.14 2008/06/23 10:24:13 drochner Exp $")
 #if 0
 RCSID("$FreeBSD: src/lib/msun/i387/e_exp.S,v 1.8.2.1 2000/07/10 09:16:28 obrien Exp $")
 #endif
@@ -51,7 +51,7 @@ ENTRY(__ieee754_exp)
 	 * If x is +-Inf, then the subtraction would give Inf-Inf = NaN.
 	 * Avoid this.  Also avoid it if x is NaN for convenience.
 	 */
-	movl	ARG_DOUBLE_ONE_HALF, %eax
+	movl	ARG_DOUBLE_ONE_MSW, %eax
 	andl	$0x7fffffff, %eax
 	cmpl	$0x7ff00000, %eax
 	jae	x_Inf_or_NaN
@@ -63,13 +63,15 @@ ENTRY(__ieee754_exp)
 	 * possible fraction) and that the precision is as high as possible.
 	 * We may as well mask interrupts if we switch the mode.
 	 */
-	fstcw	ARG_DOUBLE_ONE
-	movl	ARG_DOUBLE_ONE, %eax
-	andl	$0x0300, %eax
+#define CWSTORE_SAV ARG_DOUBLE_ONE_LSW /* XXX overwrites the argument */
+#define CWSTORE_TMP ARG_DOUBLE_ONE_MSW
+	fstcw	CWSTORE_SAV
+	movl	CWSTORE_SAV, %eax
+	andl	$0x0f00, %eax
 	cmpl	$0x0300, %eax		/* RC == 0 && PC == 3? */
 	je	1f			/* jump if mode is good */
-	movl	$0x137f, ARG_DOUBLE_ONE_HALF
-	fldcw	ARG_DOUBLE_ONE_HALF
+	movl	$0x137f, CWSTORE_TMP
+	fldcw	CWSTORE_TMP
 1:
 	fldl2e
 	fmulp				/* x * log2(e) */
@@ -83,7 +85,7 @@ ENTRY(__ieee754_exp)
 	fscale				/* e^x */
 	fstp	%st(1)
 	je	1f
-	fldcw	ARG_DOUBLE_ONE
+	fldcw	CWSTORE_SAV
 1:
 	XMM_DOUBLE_EPILOGUE
 	ret
@@ -92,9 +94,9 @@ x_Inf_or_NaN:
 	 * Return 0 if x is -Inf.  Otherwise just return x, although the
 	 * C version would return (x + x) (Real Indefinite) if x is a NaN.
 	 */
-	cmpl	$0xfff00000, ARG_DOUBLE_ONE_HALF
+	cmpl	$0xfff00000, ARG_DOUBLE_ONE_MSW
 	jne	x_not_minus_Inf
-	cmpl	$0, ARG_DOUBLE_ONE
+	cmpl	$0, ARG_DOUBLE_ONE_LSW
 	jne	x_not_minus_Inf
 	fldz
 	XMM_DOUBLE_EPILOGUE
