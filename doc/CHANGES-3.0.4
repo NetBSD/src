@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.25 2008/05/13 06:27:43 jdc Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.26 2008/06/23 10:44:44 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -299,4 +299,18 @@ crypto/dist/openssl/crypto/bn/bn_mont.c		1.2 (via patch)
 	multiplication, which might allow local users to conduct a
 	side-channel attack and retrieve RSA private keys.
 	[adrianp, ticket #1931]
+
+gnu/dist/binutils/bfd/tekhex.c			1.2 via patch
+
+	Fix for PR #33551 (a.k.a CVE-2006-2362)
+
+	Back port from the binutils CVS tree
+
+	Buffer overflow in getsym in tekhex.c in libbfd in Free Software
+	Foundation GNU Binutils before 20060423, as used by GNU strings, allows
+	context-dependent attackers to cause a denial of service (application
+	crash) and possibly execute arbitrary code via a file with a crafted
+	Tektronix Hex Format (TekHex) record in which the length character is
+	not a valid hexadecimal character.
+	[adrianp, ticket #1941]
 
