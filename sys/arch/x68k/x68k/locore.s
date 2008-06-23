@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.83 2008/06/23 07:36:12 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.84 2008/06/23 08:33:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1315,11 +1315,9 @@ GLOBAL(intrnames)
 	.asciz	"clock"
 	.asciz	"pow"
 	.asciz	"com"
-	.space	200
 GLOBAL(eintrnames)
 	.even
 
 GLOBAL(intrcnt)
 	.long	0,0,0,0,0,0,0,0,0,0,0
-	.space	50
 GLOBAL(eintrcnt)
