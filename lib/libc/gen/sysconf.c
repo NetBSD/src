@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.29 2008/04/09 18:37:04 njoly Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.30 2008/06/24 14:06:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.29 2008/04/09 18:37:04 njoly Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.30 2008/06/24 14:06:55 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -369,7 +369,28 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 		    NULL, NULL, NULL, SYSCTL_VERSION))
 			return -1;
 		break;
-
+	case _SC_THREAD_DESTRUCTOR_ITERATIONS:
+		return _POSIX_THREAD_DESTRUCTOR_ITERATIONS;
+	case _SC_THREAD_KEYS_MAX:
+		return _POSIX_THREAD_KEYS_MAX;
+	case _SC_THREAD_STACK_MIN:
+		return _getpagesize();
+	case _SC_THREAD_THREADS_MAX:
+		if (sysctlgetmibinfo("kern.maxproc", &mib[0], &mib_len,
+		    NULL, NULL, NULL, SYSCTL_VERSION))	/* XXX */
+			return -1;
+		goto yesno;
+	case _SC_THREAD_ATTR_STACKADDR:
+		return _POSIX_THREAD_ATTR_STACKADDR;
+	case _SC_THREAD_ATTR_STACKSIZE:
+		return _POSIX_THREAD_ATTR_STACKSIZE;
+	case _SC_THREAD_SAFE_FUNCTIONS:
+		return _POSIX_THREAD_SAFE_FUNCTIONS;
+	case _SC_THREAD_PRIORITY_SCHEDULING:
+	case _SC_THREAD_PRIO_INHERIT:
+	case _SC_THREAD_PRIO_PROTECT:
+	case _SC_THREAD_PROCESS_SHARED:
+		return 0;
 	default:
 		errno = EINVAL;
 		return (-1);
