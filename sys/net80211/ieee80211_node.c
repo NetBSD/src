@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.60 2007/12/20 20:56:18 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.61 2008/06/24 10:33:08 gmcgarry Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.60 2007/12/20 20:56:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.61 2008/06/24 10:33:08 gmcgarry Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1546,15 +1546,18 @@ ieee80211_find_node_with_channel(struct ieee80211_node_table *nt,
 		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) &&
 		    ni->ni_chan == chan) {
 			ieee80211_ref_node(ni);		/* mark referenced */
-			IEEE80211_DPRINTF(nt->nt_ic, IEEE80211_MSG_NODE,
 #ifdef IEEE80211_DEBUG_REFCNT
+			IEEE80211_DPRINTF(nt->nt_ic, IEEE80211_MSG_NODE,
 			    "%s (%s:%u) %p<%s> refcnt %d\n", __func__,
 			    func, line,
-#else
-			    "%s %p<%s> refcnt %d\n", __func__,
-#endif
 			    ni, ether_sprintf(ni->ni_macaddr),
 			    ieee80211_node_refcnt(ni));
+#else
+			IEEE80211_DPRINTF(nt->nt_ic, IEEE80211_MSG_NODE,
+			    "%s %p<%s> refcnt %d\n", __func__,
+			    ni, ether_sprintf(ni->ni_macaddr),
+			    ieee80211_node_refcnt(ni));
+#endif
 			break;
 		}
 	}
@@ -1647,15 +1650,18 @@ ieee80211_find_node_with_ssid(struct ieee80211_node_table *nt,
 	}
 	if (ni != NULL) {
 		ieee80211_ref_node(ni);	/* mark referenced */
-		IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
 #ifdef IEEE80211_DEBUG_REFCNT
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
 		    "%s (%s:%u) %p<%s> refcnt %d\n", __func__,
 		    func, line,
-#else
-		    "%s %p<%s> refcnt %d\n", __func__,
-#endif
 		     ni, ether_sprintf(ni->ni_macaddr),
 		     ieee80211_node_refcnt(ni));
+#else
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
+		    "%s %p<%s> refcnt %d\n", __func__,
+		     ni, ether_sprintf(ni->ni_macaddr),
+		     ieee80211_node_refcnt(ni));
+#endif
 	}
 	IEEE80211_NODE_UNLOCK(nt);
 	return ni;
