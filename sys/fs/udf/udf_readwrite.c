@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.2 2008/06/24 15:32:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.2 2008/06/24 15:32:52 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -132,7 +132,7 @@ udf_fixup_internal_extattr(uint8_t *blob, uint32_t lb_num)
 	struct file_entry      *fe;
 	struct extfile_entry   *efe;
 	struct extattrhdr_desc *eahdr;
-	int l_ea, error;
+	int l_ea;
 
 	/* get information from fe/efe */
 	tag = (struct desc_tag *) blob;
@@ -159,6 +159,7 @@ udf_fixup_internal_extattr(uint8_t *blob, uint32_t lb_num)
 	if (l_ea == 0)
 		return;
 
+#if 0
 	/* check extended attribute tag */
 	/* TODO XXX what to do when we encounter an error here? */
 	error = udf_check_tag(eahdr);
@@ -169,13 +170,14 @@ udf_fixup_internal_extattr(uint8_t *blob, uint32_t lb_num)
 	error = udf_check_tag_payload(eahdr, sizeof(struct extattrhdr_desc));
 	if (error)
 		return; /* for now */
+#endif
 
 	DPRINTF(EXTATTR, ("node fixup: found %d bytes of extended attributes\n",
 		l_ea));
 
 	/* fixup eahdr tag */
 	eahdr->tag.tag_loc = udf_rw32(lb_num);
-	udf_validate_tag_sum((union dscrptr *) eahdr);
+	udf_validate_tag_and_crc_sums((union dscrptr *) eahdr);
 }
 
 
