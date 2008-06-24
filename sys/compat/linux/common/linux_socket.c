@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.95 2008/06/11 13:02:00 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.96 2008/06/24 11:18:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.95 2008/06/11 13:02:00 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.96 2008/06/24 11:18:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -887,7 +887,7 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 		struct socket *so;
 		int error, family;
 
-		/* getsock() will use the descriptor for us */
+		/* fd_getsock() will use the descriptor for us */
 	    	if ((error = fd_getsock(SCARG(&bsa, s), &so)) != 0)
 		    	return error;
 		family = so->so_proto->pr_domain->dom_family;
@@ -1212,7 +1212,7 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 		struct socket *so;
 		int state, prflags, nbio;
 
-		/* getsock() will use the descriptor for us */
+		/* fd_getsock() will use the descriptor for us */
 	    	if (fd_getsock(SCARG(uap, s), &so) != 0)
 		    	return EISCONN;
 
@@ -1345,7 +1345,7 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 	if (bdom == AF_UNSPEC) {
 		struct socket *so;
 
-		/* getsock() will use the descriptor for us */
+		/* fd_getsock() will use the descriptor for us */
 		if ((error = fd_getsock(s, &so)) != 0)
 			goto bad;
 
