@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.28 2008/06/11 05:33:44 dyoung Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.29 2008/06/24 19:44:52 drochner Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.28 2008/06/11 05:33:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.29 2008/06/24 19:44:52 drochner Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -104,7 +104,7 @@ struct ath_cardbus_softc {
 
 	pcireg_t sc_bar_val;		/* value of the BAR */
 
-	int	sc_intrline;		/* interrupt line */
+	cardbus_intr_line_t sc_intrline; /* interrupt line */
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
@@ -143,7 +143,7 @@ ath_cardbus_resume(device_t self PMF_FN_ARGS)
 
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(self,
-		    "unable to establish interrupt at %d\n", csc->sc_intrline);
+		    "unable to establish interrupt\n");
 		return false;
 	}
 
