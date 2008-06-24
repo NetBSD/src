@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.36 2008/06/24 10:37:19 gmcgarry Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.37 2008/06/24 11:20:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.36 2008/06/24 10:37:19 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.37 2008/06/24 11:20:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,7 @@ nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
 	if (error)
 		return error;
 	if (auio.uio_resid > 0) {
-		SMBSDEBUG("short reply\n");
+		SMBSDEBUG(("short reply\n"));
 		return EPIPE;
 	}
 	len = ntohl(len);
