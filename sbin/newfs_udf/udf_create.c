@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.10 2008/06/22 18:18:02 reinoud Exp $ */
+/* $NetBSD: udf_create.c,v 1.11 2008/06/24 15:37:42 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.10 2008/06/22 18:18:02 reinoud Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.11 2008/06/24 15:37:42 reinoud Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1264,7 +1264,6 @@ udf_extattr_append_internal(union dscrptr *dscr, struct extattr_entry *extattr)
 		assert(udf_rw32(implext->iu_l) == 4);	/* [UDF 3.3.4.5] */
 		spos = (uint16_t *) implext->data;
 		*spos = udf_rw16(udf_ea_cksum((uint8_t *) implext));
-
 	}
 
 	/* application use extended attributes */
@@ -1300,6 +1299,9 @@ udf_extattr_append_internal(union dscrptr *dscr, struct extattr_entry *extattr)
 	/* store offsets */
 	extattrhdr->impl_attr_loc = udf_rw32(impl_attr_loc);
 	extattrhdr->appl_attr_loc = udf_rw32(appl_attr_loc);
+
+	/* make sure the header sums stays correct */
+	udf_validate_tag_and_crc_sums((union dscrptr *) extattrhdr);
 }
 
 
@@ -1347,10 +1349,11 @@ udf_create_new_fe(struct file_entry **fep, int file_type,
 	fe->l_ea = udf_rw32(0);
 
 	/* create extended attribute to record our creation time */
-	ft_extattr = calloc(1, UDF_FILETIMES_ATTR_LEN(1));
+	ft_extattr = calloc(1, UDF_FILETIMES_ATTR_SIZE(1));
 	ft_extattr->hdr.type = udf_rw32(UDF_FILETIMES_ATTR_NO);
 	ft_extattr->hdr.subtype = 1;	/* [4/48.10.5] */
-	ft_extattr->hdr.a_l = UDF_FILETIMES_ATTR_LEN(1);
+	ft_extattr->hdr.a_l = udf_rw32(UDF_FILETIMES_ATTR_SIZE(1));
+	ft_extattr->d_l     = udf_rw32(UDF_TIMESTAMP_SIZE); /* one item */
 	ft_extattr->existence = UDF_FILETIMES_FILE_CREATION;
 	ft_extattr->times[0]  = birthtime;
 
