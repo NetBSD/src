@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 2008/06/23 14:47:51 reinoud Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2008/06/24 10:00:26 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2008/06/23 14:47:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2008/06/24 10:00:26 gmcgarry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3089,11 +3089,13 @@ pmap_map_ptp(struct vm_page *ptp)
 	id = cpu_number();
 	ptppte = PTESLEW(ptp_pte, id);
 	ptpva = VASLEW(ptpp, id);
-	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
 #if !defined(XEN)
-	    PG_RW |
-#endif
+	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
+	    PG_RW | PG_U | PG_k);
+#else
+	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
 	    PG_U | PG_k);
+#endif
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)ptpva);
 
