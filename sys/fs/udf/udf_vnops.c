@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.22 2008/06/24 15:42:07 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.23 2008/06/24 15:57:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.22 2008/06/24 15:42:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.23 2008/06/24 15:57:13 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1756,13 +1756,15 @@ udf_readlink(void *v)
 		l_ci = pathcomp.l_ci;
 		switch (pathcomp.type) {
 		case UDF_PATH_COMP_ROOT :
-			if (l_ci || (targetlen < 1) || !first) {
+			/* XXX should check for l_ci; bugcompatible now */
+			if ((targetlen < 1) || !first) {
 				error = EINVAL;
 				break;
 			}
 			*targetpos++ = '/'; targetlen--;
 			break;
 		case UDF_PATH_COMP_MOUNTROOT :
+			/* XXX what should it be if l_ci > 0 ? [4/48.16.1.2] */
 			if (l_ci || (targetlen < mntonnamelen+1) || !first) {
 				error = EINVAL;
 				break;
@@ -1775,7 +1777,8 @@ udf_readlink(void *v)
 			}
 			break;
 		case UDF_PATH_COMP_PARENTDIR :
-			if (l_ci || (targetlen < 3)) {
+			/* XXX should check for l_ci; bugcompatible now */
+			if (targetlen < 3) {
 				error = EINVAL;
 				break;
 			}
@@ -1784,7 +1787,8 @@ udf_readlink(void *v)
 			*targetpos++ = '/'; targetlen--;
 			break;
 		case UDF_PATH_COMP_CURDIR :
-			if (l_ci || (targetlen < 2)) {
+			/* XXX should check for l_ci; bugcompatible now */
+			if (targetlen < 2) {
 				error = EINVAL;
 				break;
 			}
