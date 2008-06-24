@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.108.12.1 2008/05/10 23:49:08 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.108.12.2 2008/06/24 02:07:36 wrstuden Exp $
 
 .include <bsd.sys.mk>
 
@@ -24,8 +24,8 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h atomic.h audioio.h \
 	namei.h null.h \
 	param.h pipe.h pmc.h poll.h pool.h power.h proc.h \
 	protosw.h pset.h ptrace.h queue.h \
-	ras.h reboot.h radioio.h resource.h resourcevar.h rmd160.h rnd.h rwlock.h \
-	sa.h savar.h \
+	ras.h rb.h reboot.h radioio.h resource.h resourcevar.h rmd160.h rnd.h \
+	rwlock.h sa.h savar.h \
 	scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h sha2.h \
 	shm.h siginfo.h signal.h signalvar.h sigtypes.h simplelock.h \
 	sleepq.h socket.h \
