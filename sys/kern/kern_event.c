@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.59 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.60 2008/06/24 10:27:35 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.59 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.60 2008/06/24 10:27:35 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -721,10 +721,10 @@ kevent_put_events(void *private, struct kevent *events,
 }
 
 static const struct kevent_ops kevent_native_ops = {
-	keo_private: NULL,
-	keo_fetch_timeout: copyin,
-	keo_fetch_changes: kevent_fetch_changes,
-	keo_put_events: kevent_put_events,
+	.keo_private = NULL,
+	.keo_fetch_timeout = copyin,
+	.keo_fetch_changes = kevent_fetch_changes,
+	.keo_put_events = kevent_put_events,
 };
 
 int
