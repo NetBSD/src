@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.h,v 1.1.1.4.12.1 2008/06/23 04:28:27 wrstuden Exp $	*/
+/*	$NetBSD: sha1.h,v 1.1.1.4.12.2 2008/06/24 01:55:16 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -20,11 +20,11 @@
 #ifndef ISC_SHA1_H
 #define ISC_SHA1_H 1
 
-/* Id: sha1.h,v 1.9.18.5 2006/08/16 03:18:14 marka Exp */
+/* Id: sha1.h,v 1.17 2007/06/19 23:47:18 tbox Exp */
 
-/*	$NetBSD: sha1.h,v 1.1.1.4.12.1 2008/06/23 04:28:27 wrstuden Exp $	*/
+/*	$NetBSD: sha1.h,v 1.1.1.4.12.2 2008/06/24 01:55:16 wrstuden Exp $	*/
 
-/*! \file
+/*! \file isc/sha1.h
  * \brief SHA-1 in C
  * \author By Steve Reid <steve@edmweb.com>
  * \note 100% Public Domain
