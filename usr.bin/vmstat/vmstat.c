@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.159 2008/06/04 12:47:47 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.160 2008/06/24 12:47:23 he Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.159 2008/06/04 12:47:47 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.160 2008/06/24 12:47:23 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -1133,9 +1133,9 @@ domem(void)
 	}
 
 	(void)printf(
-	    "\nMemory statistics by type                           Type  Kern\n");
+	    "\nMemory statistics by type                                Type  Kern\n");
 	(void)printf(
-"         Type  InUse MemUse HighUse  Limit  Requests Limit Limit Size(s)\n");
+"           Type InUse  MemUse HighUse   Limit   Requests Limit Limit Size(s)\n");
 	for (kread(namelist, X_KMEMSTAT, &ksp, sizeof(ksp));
 	     ksp != NULL; ksp = ks.ks_next) {
 		deref_kptr(ksp, &ks, sizeof(ks), "malloc type");
@@ -1143,7 +1143,7 @@ domem(void)
 			continue;
 		deref_kptr(ks.ks_shortdesc, memname,
 		    sizeof(memname), "malloc type name");
-		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%10ld%5u%6u",
+		(void)printf("%15s %5ld %6ldK %6ldK %6ldK %10ld %5u %5u",
 		    memname,
 		    ks.ks_inuse, howmany(ks.ks_memuse, KILO),
 		    howmany(ks.ks_maxused, KILO),
@@ -1154,7 +1154,7 @@ domem(void)
 			if ((ks.ks_size & j) == 0)
 				continue;
 			if (first)
-				(void)printf("  %d", j);
+				(void)printf(" %d", j);
 			else
 				(void)printf(",%d", j);
 			first = 0;
