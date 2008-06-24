@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.276.2.3 2008/06/23 04:32:02 wrstuden Exp $	*/
+/*	$NetBSD: proc.h,v 1.276.2.4 2008/06/24 02:07:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -364,7 +364,6 @@ struct proc {
  * process context only.
  */
 #define	PS_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
-#define	PS_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
 #define	PS_SA		0x00000400 /* Process using scheduler activations */
 #define	PS_WCORE	0x00001000 /* Process needs to dump core */
 #define	PS_WEXIT	0x00002000 /* Working on exiting */
