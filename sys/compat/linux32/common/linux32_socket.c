@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.6 2008/06/19 16:09:25 christos Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.7 2008/06/24 09:00:04 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.6 2008/06/19 16:09:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.7 2008/06/24 09:00:04 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,10 +53,15 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.6 2008/06/19 16:09:25 christos 
 #include <machine/types.h>
 
 #include <net/if.h>
+#include <net/route.h>
+
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_ioctl.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/sys/sockio.h>
@@ -424,7 +429,7 @@ linux32_ioctl_socket(struct lwp *l, const struct linux32_sys_ioctl_args *uap, re
 
 	switch (com) {
 	case LINUX_SIOCGIFCONF:
-		SCARG(&ia, com) = OOSIOCGIFCONF;
+		SCARG(&ia, com) = OOSIOCGIFCONF32;
 		break;
 	case LINUX_SIOCGIFFLAGS:
 		SCARG(&ia, com) = OSIOCGIFFLAGS;
