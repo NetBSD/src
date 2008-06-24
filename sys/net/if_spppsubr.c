@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.109 2008/02/20 17:05:53 matt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.110 2008/06/24 10:32:14 gmcgarry Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.109 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.110 2008/06/24 10:32:14 gmcgarry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -371,7 +371,7 @@ static const char *sppp_lcp_opt_name(u_char opt);
 static const char *sppp_phase_name(int phase);
 static const char *sppp_proto_name(u_short proto);
 static const char *sppp_state_name(int state);
-static int sppp_params(struct sppp *sp, int cmd, void *data);
+static int sppp_params(struct sppp *sp, u_long cmd, void *data);
 #ifdef INET
 static void sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst,
 			      uint32_t *srcmask);
@@ -5102,7 +5102,7 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
  * Permissions have already been checked.
  */
 static int
-sppp_params(struct sppp *sp, int cmd, void *data)
+sppp_params(struct sppp *sp, u_long cmd, void *data)
 {
 	switch (cmd) {
 	case SPPPGETAUTHCFG:
