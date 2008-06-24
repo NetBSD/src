@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.65 2008/06/07 16:32:38 freza Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.66 2008/06/24 10:17:00 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.65 2008/06/07 16:32:38 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.66 2008/06/24 10:17:00 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -4079,7 +4079,9 @@ atihdmi_init_dacgroup(codec_t *this)
 	static const convgroupset_t dacs = {
 		-1, 1,
 		{{1, {0x02}}}};	/* digital */
-	static const convgroupset_t adcs = {-1, 0, {}}; /* no recording */
+	static const convgroupset_t adcs = {
+		-1, 0,
+		{{0, {0x00}}}}; /* no recording */
 
 	this->dacs = dacs;
 	this->adcs = adcs;
