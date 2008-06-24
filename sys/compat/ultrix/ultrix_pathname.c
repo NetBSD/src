@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.34 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.35 2008/06/24 11:18:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.34 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.35 2008/06/24 11:18:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ ultrix_sys_fstatfs(struct lwp *l, const struct ultrix_sys_fstatfs_args *uap, reg
 	struct statvfs *sp;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return error;
 	mp = ((struct vnode *)fp->f_data)->v_mount;

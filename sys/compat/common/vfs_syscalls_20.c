@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.30 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.31 2008/06/24 11:18:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.30 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.31 2008/06/24 11:18:15 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -180,8 +180,8 @@ compat_20_sys_fstatfs(struct lwp *l, const struct compat_20_sys_fstatfs_args *ua
 	struct statvfs *sbuf;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);

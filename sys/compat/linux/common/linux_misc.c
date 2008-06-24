@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.200 2008/06/24 10:04:10 gmcgarry Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.201 2008/06/24 11:18:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.200 2008/06/24 10:04:10 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.201 2008/06/24 11:18:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -690,8 +690,8 @@ linux_sys_getdents(struct lwp *l, const struct linux_sys_getdents_args *uap, reg
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {

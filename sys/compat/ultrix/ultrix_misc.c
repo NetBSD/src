@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.112 2008/04/23 23:34:11 christos Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.113 2008/06/24 11:18:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.112 2008/04/23 23:34:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.113 2008/06/24 11:18:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -357,7 +357,7 @@ ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *ua
 	SCARG(&ap, val) = SCARG(uap, val);
 	SCARG(&ap, valsize) = SCARG(uap, valsize);
 
-	/* getsock() will use the descriptor for us */
+	/* fd_getsock() will use the descriptor for us */
 	if ((error = fd_getsock(SCARG(&ap, s), &so))  != 0)
 		return error;
 #define	SO_DONTLINGER (~SO_LINGER)
