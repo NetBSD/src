@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.39 2008/05/29 12:25:12 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.40 2008/06/24 14:11:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -482,10 +482,16 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
 	extern int hz;
 	int rv, error;
-
+	struct timespec time;
+	
 	if (mtx)
 		mutex_exit(mtx);
-	rv = rumpuser_usleep(timeo * (1000000 / hz), &error);
+
+	time.tv_sec = timeo / hz;
+	time.tv_nsec = (timeo % hz) * (1000000000 / hz);
+
+	rv = rumpuser_nanosleep(&time, NULL, &error);
+	
 	if (mtx)
 		mutex_enter(mtx);
 

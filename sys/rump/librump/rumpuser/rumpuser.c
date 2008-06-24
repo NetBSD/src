@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.14 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.15 2008/06/24 14:11:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -58,6 +58,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "rumpuser.h"
@@ -92,6 +93,14 @@ rumpuser_usleep(unsigned long sec, int *error)
 {
 
 	DOCALL(int, (usleep(sec)));
+}
+
+int
+rumpuser_nanosleep(const struct timespec *rqtp, struct timespec *rmtp, 
+		   int *error)
+{
+
+	DOCALL(int, (nanosleep(rqtp, rmtp)));
 }
 
 void *
