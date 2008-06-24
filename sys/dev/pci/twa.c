@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.25 2008/06/08 14:02:25 joerg Exp $ */
+/*	$NetBSD: twa.c,v 1.26 2008/06/24 10:20:41 gmcgarry Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.25 2008/06/08 14:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.26 2008/06/24 10:20:41 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1021,7 +1021,7 @@ twa_request_bus_scan(struct twa_softc *sc)
 }
 
 
-#ifdef	DIAGNOSTIC
+#ifdef DIAGNOSTIC
 static inline void
 twa_check_busy_q(struct twa_request *tr)
 {
@@ -1129,9 +1129,9 @@ twa_drain_response_queue(struct twa_softc *sc)
 			return(1);
 		if (status_reg & TWA_STATUS_RESPONSE_QUEUE_EMPTY)
 			return(0); /* no more response queue entries */
-		rq = (union twa_response_queue)twa_inl(sc,
-		    TWA_RESPONSE_QUEUE_OFFSET);
+		rq.u.response_id = twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
 	}
+
 }
 
 /*
@@ -1147,7 +1147,6 @@ twa_drain_response_queue_large(struct twa_softc *sc, uint32_t timeout)
 {
         uint32_t        start_time = 0, end_time;
         uint32_t        response = 0;
-
         if (sc->sc_product_id == PCI_PRODUCT_3WARE_9550 ||
             sc->sc_product_id == PCI_PRODUCT_3WARE_9650 ) {
                start_time = 0;
@@ -1166,6 +1165,7 @@ twa_drain_response_queue_large(struct twa_softc *sc, uint32_t timeout)
        }
        return (0);
 }
+
 
 static void
 twa_drain_busy_queue(struct twa_softc *sc)
@@ -1301,7 +1301,7 @@ out:
 }
 
 
-#ifdef		DIAGNOSTIC
+#ifdef DIAGNOSTIC
 static void
 twa_check_response_q(struct twa_request *tr, int clear)
 {
@@ -1352,8 +1352,7 @@ twa_done(struct twa_softc *sc)
 		if (status_reg & TWA_STATUS_RESPONSE_QUEUE_EMPTY)
 			break;
 		/* Response queue is not empty. */
-		rq = (union twa_response_queue)twa_inl(sc,
-			TWA_RESPONSE_QUEUE_OFFSET);
+		rq.u.response_id = twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
 		tr = sc->sc_twa_request + rq.u.response_id;
 #ifdef		DIAGNOSTIC
 		twa_check_response_q(tr, 0);
