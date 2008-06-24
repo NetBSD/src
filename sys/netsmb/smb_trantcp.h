@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.h,v 1.5 2005/12/11 00:06:21 elad Exp $	*/
+/*	$NetBSD: smb_trantcp.h,v 1.6 2008/06/24 10:37:19 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -43,10 +43,9 @@
 #ifdef _KERNEL
 
 #ifdef NB_DEBUG
-#define NBDEBUG(format, args...)	 printf("%s(%d): "format,	\
-					    __func__ , __LINE__ ,## args)
+#define NBDEBUG(x)	aprint_debug x
 #else
-#define NBDEBUG(format, args...)
+#define NBDEBUG(x)	/* nothing */
 #endif
 
 enum nbstate {
