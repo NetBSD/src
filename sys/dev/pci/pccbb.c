@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.170 2008/06/24 17:32:09 drochner Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.171 2008/06/24 19:44:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.170 2008/06/24 17:32:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.171 2008/06/24 19:44:51 drochner Exp $");
 
 /*
 #define CBB_DEBUG
@@ -145,12 +145,12 @@ static int pccbb_io_close(cardbus_chipset_tag_t, int);
 static int pccbb_mem_open(cardbus_chipset_tag_t, int, u_int32_t, u_int32_t);
 static int pccbb_mem_close(cardbus_chipset_tag_t, int);
 #endif /* !rbus */
-static void *pccbb_intr_establish(struct pccbb_softc *, int irq,
-    int level, int (*ih) (void *), void *sc);
+static void *pccbb_intr_establish(struct pccbb_softc *,
+    cardbus_intr_line_t irq, int level, int (*ih) (void *), void *sc);
 static void pccbb_intr_disestablish(struct pccbb_softc *, void *ih);
 
-static void *pccbb_cb_intr_establish(cardbus_chipset_tag_t, int irq,
-    int level, int (*ih) (void *), void *sc);
+static void *pccbb_cb_intr_establish(cardbus_chipset_tag_t,
+    cardbus_intr_line_t irq, int level, int (*ih) (void *), void *sc);
 static void pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct, void *ih);
 
 static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int);
@@ -688,7 +688,7 @@ pccbb_pci_callback(device_t self)
 		cba.cba_bus = (busreg >> 8) & 0x0ff;
 		cba.cba_cc = (void *)sc;
 		cba.cba_cf = &pccbb_funcs;
-		cba.cba_intrline = sc->sc_pa.pa_intrline;
+		cba.cba_intrline = 0; /* XXX dummy */
 
 #if rbus
 		cba.cba_rbus_iot = sc->sc_rbus_iot;
@@ -1794,8 +1794,8 @@ pccbb_mem_close(cardbus_chipset_tag_t ct, int win)
  *   The arguments irq and level are not used.
  */
 static void *
-pccbb_cb_intr_establish(cardbus_chipset_tag_t ct, int irq, int level,
-    int (*func)(void *), void *arg)
+pccbb_cb_intr_establish(cardbus_chipset_tag_t ct, cardbus_intr_line_t irq,
+    int level, int (*func)(void *), void *arg)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 
@@ -1854,8 +1854,8 @@ pccbb_intr_route(struct pccbb_softc *sc)
  *   The arguments irq is not used because pccbb selects intr vector.
  */
 static void *
-pccbb_intr_establish(struct pccbb_softc *sc, int irq, int level,
-    int (*func)(void *), void *arg)
+pccbb_intr_establish(struct pccbb_softc *sc, cardbus_intr_line_t irq,
+    int level, int (*func)(void *), void *arg)
 {
 	struct pccbb_intrhand_list *pil, *newpil;
 

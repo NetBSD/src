@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.29 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.30 2008/06/24 19:44:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.29 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.30 2008/06/24 19:44:52 drochner Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -160,7 +160,6 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		printf("%s: couldn't establish interrupt\n", devname);
 		return;
 	}
-	printf("%s: interrupting at %d\n", devname, ca->ca_intrline);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = cardbus_findvendor(ca->ca_id);
