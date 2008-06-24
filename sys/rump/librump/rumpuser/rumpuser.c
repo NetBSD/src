@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.15 2008/06/24 14:11:45 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.16 2008/06/24 14:14:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -86,13 +86,6 @@ rumpuser_lstat(const char *path, struct stat *sb, int *error)
 {
 
 	DOCALL(int, (lstat(path, sb)));
-}
-
-int
-rumpuser_usleep(unsigned long sec, int *error)
-{
-
-	DOCALL(int, (usleep(sec)));
 }
 
 int
