@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.20 2008/06/18 21:23:32 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.21 2008/06/24 15:35:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.20 2008/06/18 21:23:32 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.21 2008/06/24 15:35:57 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -796,12 +796,13 @@ udf_getattr(void *v)
 	struct udf_mount *ump = udf_node->ump;
 	struct file_entry    *fe  = udf_node->fe;
 	struct extfile_entry *efe = udf_node->efe;
+	struct filetimes_extattr_entry *ft_extattr;
 	struct device_extattr_entry *devattr;
 	struct vattr *vap = ap->a_vap;
 	struct timestamp *atime, *mtime, *attrtime, *creatime;
 	uint64_t filesize, blkssize;
 	uint32_t nlink;
-	uint32_t offset, l_a;
+	uint32_t offset, a_l;
 	uint8_t *filedata;
 	uid_t uid;
 	gid_t gid;
@@ -822,8 +823,20 @@ udf_getattr(void *v)
 		atime    = &fe->atime;
 		mtime    = &fe->mtime;
 		attrtime = &fe->attrtime;
-		creatime = mtime;
 		filedata = fe->data;
+
+		/* initial guess */
+		creatime = mtime;
+
+		/* check our extended attribute if present */
+		error = udf_extattr_search_intern(udf_node,
+			UDF_FILETIMES_ATTR_NO, "", &offset, &a_l);
+		if (!error) {
+			ft_extattr = (struct filetimes_extattr_entry *)
+				(filedata + offset);
+			if (ft_extattr->existence & UDF_FILETIMES_FILE_CREATION)
+				creatime = &ft_extattr->times[0];
+		}
 	} else {
 		assert(udf_node->efe);
 		nlink    = udf_rw16(efe->link_cnt);
@@ -880,7 +893,7 @@ udf_getattr(void *v)
 	if ((vap->va_type == VBLK) || (vap->va_type == VCHR)) {
 		error = udf_extattr_search_intern(udf_node,
 				UDF_DEVICESPEC_ATTR_NO, "",
-				&offset, &l_a);
+				&offset, &a_l);
 		/* if error, deny access */
 		if (error || (filedata == NULL)) {
 			vap->va_mode = 0;	/* or v_type = VNON?  */
