@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.20 2008/06/22 18:09:00 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.21 2008/06/24 05:49:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.20 2008/06/22 18:09:00 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.21 2008/06/24 05:49:52 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,10 +266,12 @@ sa_newsavp(struct proc *p)
 	vp->savp_lwp = NULL;
 	vp->savp_faultaddr = 0;
 	vp->savp_ofaultaddr = 0;
+	vp->savp_woken_count = 0;
+	vp->savp_lwpcache_count = 0;
 	vp->savp_sleeper_upcall = sau;
 	mutex_init(&vp->savp_mutex, MUTEX_DEFAULT, IPL_SCHED);
-	sleepq_init(&vp->savp_lwpcache, &vp->savp_mutex);
-	sleepq_init(&vp->savp_woken, &vp->savp_mutex);
+	sleepq_init(&vp->savp_lwpcache);
+	sleepq_init(&vp->savp_woken);
 
 	mutex_enter(p->p_lock);
 	/* find first free savp_id and add vp to sorted slist */
@@ -1400,7 +1402,7 @@ sa_switch(struct lwp *l)
 		/*
 		 * Case 0: we're blocking in sa_yield
 		 */
-		if (vp->savp_woken.sq_waiters == 0 && p->p_timerpend == 0) {
+		if (vp->savp_woken_count == 0 && p->p_timerpend == 0) {
 			l->l_flag |= LW_SA_IDLE;
 			mutex_exit(&vp->savp_mutex);
 			mi_switch(l);
@@ -1584,7 +1586,7 @@ sa_switchcall(void *arg)
 	l2->l_flag &= ~LW_SA;
 	lwp_unlock(l2);
 
-	if (vp->savp_lwpcache.sq_waiters == 0) {
+	if (vp->savp_lwpcache_count == 0) {
 		/* Allocate the next cache LWP */
 		DPRINTFN(6,("sa_switchcall(%d.%d) allocating LWP\n",
 		    p->p_pid, l2->l_lid));
@@ -1733,7 +1735,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
         l->l_stat = LSSUSPENDED;
         l->l_sleeperr = 0;
          
-        sq->sq_waiters++;
+        vp->savp_lwpcache_count++;
         sleepq_insert(sq, l, &sa_sobj);
 }
 
@@ -1749,11 +1751,11 @@ sa_getcachelwp(struct proc *p, struct sadata_vp *vp)
 	sleepq_t	*sq = &vp->savp_lwpcache;
 
 	KASSERT(mutex_owned(&vp->savp_mutex));
-	KASSERT(sq->sq_waiters > 0);
+	KASSERT(vp->savp_lwpcache_count > 0);
 
-	sq->sq_waiters--;
-	l= TAILQ_FIRST(&sq->sq_queue);
-	TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
+	vp->savp_lwpcache_count--;
+	l= TAILQ_FIRST(sq);
+	TAILQ_REMOVE(sq, l, l_sleepchain);
 
 	l->l_syncobj = &sched_syncobj;
 	l->l_wchan = NULL;
@@ -1814,7 +1816,7 @@ sa_upcall_userret(struct lwp *l)
 	mutex_enter(&vp->savp_mutex);
 	sast = NULL;
 	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) &&
-	    vp->savp_woken.sq_waiters != 0) {
+	    vp->savp_woken_count != 0) {
 		mutex_exit(&vp->savp_mutex);
 		sast = sa_getstack(sa);
 		if (sast == NULL) {
@@ -1827,16 +1829,16 @@ sa_upcall_userret(struct lwp *l)
 		mutex_enter(&vp->savp_mutex);
 	}
 	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) &&
-	    vp->savp_woken.sq_waiters != 0 && sast != NULL) {
+	    vp->savp_woken_count != 0 && sast != NULL) {
 		/*
 		 * Invoke an "unblocked" upcall. We create a message
 		 * with the first unblock listed here, and then
 		 * string along a number of other unblocked stacks when
 		 * we deliver the call.
 		 */
-		l2 = TAILQ_FIRST(&vp->savp_woken.sq_queue);
-		TAILQ_REMOVE(&vp->savp_woken.sq_queue, l2, l_runq);
-		vp->savp_woken.sq_waiters--;
+		l2 = TAILQ_FIRST(&vp->savp_woken);
+		TAILQ_REMOVE(&vp->savp_woken, l2, l_runq);
+		vp->savp_woken_count--;
 		mutex_exit(&vp->savp_mutex);
 
 		DPRINTFN(9,("sa_upcall_userret(%d.%d) using stack %p\n",
@@ -1867,7 +1869,7 @@ sa_upcall_userret(struct lwp *l)
 		sq = &vp->savp_lwpcache;
 		l2->l_wchan = sq;
 		l2->l_wmesg = sa_lwpcache_wmesg;
-       		sq->sq_waiters++;
+       		vp->savp_lwpcache_count++;
        		sleepq_insert(sq, l2, &sa_sobj);
 			/* uvm_lwp_hold from sa_unblock_userret */
 	} else if (sast)
@@ -1885,7 +1887,7 @@ sa_upcall_userret(struct lwp *l)
 
 	lwp_lock(l);
 
-	if (vp->savp_woken.sq_waiters != 0) {
+	if (vp->savp_woken_count != 0) {
 		l->l_flag &= ~LW_SA_UPCALL;
 	}
 
@@ -1979,7 +1981,7 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 	}
 	if (sau->sau_type == SA_UPCALL_UNBLOCKED) {
 		mutex_enter(&vp->savp_mutex);
-		nevents += vp->savp_woken.sq_waiters;
+		nevents += vp->savp_woken_count;
 		mutex_exit(&vp->savp_mutex);
 		/* XXX WRS Need to limit # unblocks we copy out at once! */
 	}
@@ -2034,11 +2036,11 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 			/* Lock vp and all savp_woken lwps */
 			mutex_enter(&vp->savp_mutex);
 			sq = &vp->savp_woken;
-			KASSERT(sq->sq_waiters > 0);
-			l2 = TAILQ_FIRST(&sq->sq_queue);
+			KASSERT(vp->savp_woken_count > 0);
+			l2 = TAILQ_FIRST(sq);
 			KASSERT(l2 != NULL);
-			TAILQ_REMOVE(&sq->sq_queue, l2, l_sleepchain);
-			sq->sq_waiters--;
+			TAILQ_REMOVE(sq, l2, l_sleepchain);
+			vp->savp_woken_count--;
 
 			DPRINTFN(8,
 			    ("sa_makeupcalls(%d.%d) unblocking extra %d\n",
@@ -2057,7 +2059,7 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 			sq = &vp->savp_lwpcache;
 			l2->l_wchan = sq;
 			l2->l_wmesg = sa_lwpcache_wmesg;
-        		sq->sq_waiters++;
+        		vp->savp_lwpcache_count++;
        	 		sleepq_insert(sq, l2, &sa_sobj);
 				/* uvm_lwp_hold from sa_unblock_userret */
 			mutex_exit(&vp->savp_mutex);
@@ -2283,7 +2285,7 @@ sa_unblock_userret(struct lwp *l)
 	 * We now don't unlock savp_mutex since it now is l's mutex,
 	 * and it will be released in mi_switch().
 	 */
-	sleepq_enter(&vp->savp_woken, l);
+	sleepq_enter(&vp->savp_woken, l, &vp->savp_mutex);
 	sleepq_enqueue(&vp->savp_woken, &vp->savp_woken, sa_lwpwoken_wmesg,
 			&sa_sobj);
 	l->l_stat = LSSUSPENDED;
@@ -2341,9 +2343,9 @@ debug_print_sa(struct proc *p)
 				    (vp->savp_lwp->l_flag & LW_SA_IDLE ?
 					"idle" : "yielding") : "");
 			printf("SAs: %d cached LWPs\n",
-					vp->savp_lwpcache.sq_waiters);
+					vp->savp_lwpcache_count);
 			printf("SAs: %d woken LWPs\n",
-					vp->savp_woken.sq_waiters);
+					vp->savp_woken_count);
 		}
 	}
 
