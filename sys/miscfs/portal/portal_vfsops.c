@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.74 2008/05/13 08:31:13 simonb Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.75 2008/06/24 11:18:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.74 2008/05/13 08:31:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.75 2008/06/24 11:18:14 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -124,8 +124,12 @@ portal_mount(
 		return (EOPNOTSUPP);
 
 	/* getsock() will use the descriptor for us */
-	if ((error = getsock(args->pa_socket, &fp)) != 0)
-		return (error);
+	if ((fp = fd_getfile(args->pa_socket)) == NULL)
+		return (EBADF);
+	if (fp->f_type != DTYPE_SOCKET) {
+		fd_putfile(args->pa_socket);
+		return (ENOTSOCK);
+	}
 	so = (struct socket *) fp->f_data;
 	if (so->so_proto->pr_domain->dom_family != AF_LOCAL) {
 		fd_putfile(args->pa_socket);
