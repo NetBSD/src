@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.40 2008/04/06 07:54:17 cegger Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.41 2008/06/24 17:32:09 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.40 2008/04/06 07:54:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.41 2008/06/24 17:32:09 drochner Exp $");
 
 #include "opt_cardslot.h"
 
@@ -108,15 +108,13 @@ cardslotattach(struct device *parent, struct device *self,
 	struct cardbus_softc *csc = NULL;
 	struct pcmcia_softc *psc = NULL;
 
-	sc->sc_slot = device_unit(&sc->sc_dev);
 	sc->sc_cb_softc = NULL;
 	sc->sc_16_softc = NULL;
 	SIMPLEQ_INIT(&sc->sc_events);
 	sc->sc_th_enable = 0;
 
 	aprint_naive("\n");
-	aprint_normal(" slot %d flags %x\n", sc->sc_slot,
-	       device_cfdata(&sc->sc_dev)->cf_flags);
+	aprint_normal("\n");
 
 	DPRINTF(("%s attaching CardBus bus...\n", device_xname(&sc->sc_dev)));
 	if (cba != NULL) {
@@ -148,9 +146,9 @@ cardslotattach(struct device *parent, struct device *self,
 	if (csc != NULL || psc != NULL) {
 		config_pending_incr();
 		if (kthread_create(PRI_NONE, 0, NULL, cardslot_event_thread,
-		    sc, &sc->sc_event_thread, "%s", device_xname(&sc->sc_dev))) {
-			aprint_error_dev(&sc->sc_dev, "unable to create thread for slot %d\n",
-			    sc->sc_slot);
+		    sc, &sc->sc_event_thread, "%s", device_xname(self))) {
+			aprint_error_dev(&sc->sc_dev,
+					 "unable to create thread\n");
 			panic("cardslotattach");
 		}
 		sc->sc_th_enable = 1;
