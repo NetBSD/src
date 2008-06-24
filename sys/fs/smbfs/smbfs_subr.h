@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.17 2008/06/24 10:23:48 gmcgarry Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.18 2008/06/24 17:04:11 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -42,8 +42,10 @@ MALLOC_DECLARE(M_SMBFSDATA);
 #define SMBFSERR(format, ...) printf("%s: "format, __func__, __VA_ARGS__)
 
 #ifdef SMB_VNODE_DEBUG
+#define SMBVDEBUG0(format) printf("%s: "format, __func__);
 #define SMBVDEBUG(format, ...) printf("%s: "format, __func__, __VA_ARGS__)
 #else
+#define SMBVDEBUG0(format)
 #define SMBVDEBUG(format, ...)
 #endif
 
