@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.93 2008/06/24 17:32:09 drochner Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.94 2008/06/24 19:44:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.93 2008/06/24 17:32:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.94 2008/06/24 19:44:52 drochner Exp $");
 
 #include "opt_cardbus.h"
 
@@ -723,7 +723,7 @@ cardbus_childdetached(device_t self, device_t child)
  */
 void *
 cardbus_intr_establish(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbus_intr_handle_t irq, int level, int (*func)(void *), void *arg)
+    cardbus_intr_line_t irq, int level, int (*func)(void *), void *arg)
 {
 
 	DPRINTF(("- cardbus_intr_establish: irq %d\n", irq));

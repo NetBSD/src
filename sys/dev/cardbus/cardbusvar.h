@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.40 2008/06/24 17:32:09 drochner Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.41 2008/06/24 19:44:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -45,8 +45,6 @@ struct {
 } cardbus_chipset_tag;
 
 typedef struct cardbus_chipset_tag *cardbus_chipset_tag_t;
-typedef int cardbus_intr_handle_t;
-
 
 #if rbus
 /*
@@ -91,8 +89,8 @@ typedef struct cardbus_functions {
 	    int, bus_addr_t *, bus_space_handle_t *);
 	int (*cardbus_space_free)(cardbus_chipset_tag_t, rbus_tag_t,
 	    bus_space_handle_t, bus_size_t);
-	void *(*cardbus_intr_establish)(cardbus_chipset_tag_t, int, int,
-	    int (*)(void *), void *);
+	void *(*cardbus_intr_establish)(cardbus_chipset_tag_t,
+	    cardbus_intr_line_t, int, int (*)(void *), void *);
 	void (*cardbus_intr_disestablish)(cardbus_chipset_tag_t, void *);
 	int (*cardbus_ctrl)(cardbus_chipset_tag_t, int);
 	int (*cardbus_power)(cardbus_chipset_tag_t, int);
@@ -140,7 +138,7 @@ struct cbslot_attach_args {
 
 	cardbus_chipset_tag_t cba_cc;	/* cardbus chipset */
 	cardbus_function_tag_t cba_cf; /* cardbus functions */
-	int cba_intrline;		/* interrupt line */
+	cardbus_intr_line_t cba_intrline; /* interrupt line */
 
 #if rbus
 	rbus_tag_t cba_rbus_iot;	/* CardBus i/o rbus tag */
@@ -171,7 +169,7 @@ struct cardbus_softc {
 	struct device sc_dev;		/* fundamental device structure */
 
 	int sc_bus;			/* cardbus bus number */
-	int sc_intrline;		/* CardBus intrline */
+	cardbus_intr_line_t sc_intrline; /* CardBus intrline */
 
 	bus_space_tag_t sc_iot;		/* CardBus I/O space tag */
 	bus_space_tag_t sc_memt;	/* CardBus MEM space tag */
@@ -315,7 +313,7 @@ struct cardbus_attach_args {
 int cardbus_attach_card(struct cardbus_softc *);
 void cardbus_detach_card(struct cardbus_softc *);
 void *cardbus_intr_establish(cardbus_chipset_tag_t, cardbus_function_tag_t,
-    cardbus_intr_handle_t, int, int (*) (void *), void *arg);
+    cardbus_intr_line_t, int, int (*) (void *), void *arg);
 void cardbus_intr_disestablish(cardbus_chipset_tag_t,
     cardbus_function_tag_t, void *);
 
