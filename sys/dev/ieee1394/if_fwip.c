@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.14 2008/03/29 16:22:53 kiyohara Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.15 2008/06/24 10:13:51 gmcgarry Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.14 2008/03/29 16:22:53 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.15 2008/06/24 10:13:51 gmcgarry Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
@@ -109,11 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.14 2008/03/29 16:22:53 kiyohara Exp $"
 #if defined(__FreeBSD__)
 #define FWIPDEBUG	if (fwipdebug) if_printf
 #elif defined(__NetBSD__)
-#define FWIPDEBUG(ifp, fmt, ...)		\
-	if (fwipdebug) {			\
-		printf("%s: ", (ifp)->if_xname);\
-		printf((fmt) , ##__VA_ARGS__);	\
-	}
+#define FWIPDEBUG	if (fwipdebug) aprint_debug_ifnet
 #endif
 #define TX_MAX_QUEUE	(FWMAXQUEUE - 1)
 
