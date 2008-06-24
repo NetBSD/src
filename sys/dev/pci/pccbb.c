@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.169 2008/05/27 21:32:47 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.170 2008/06/24 17:32:09 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.169 2008/05/27 21:32:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.170 2008/06/24 17:32:09 drochner Exp $");
 
 /*
 #define CBB_DEBUG
@@ -682,7 +682,6 @@ pccbb_pci_callback(device_t self)
 		pcireg_t bhlc = pci_conf_read(pc, sc->sc_tag, PCI_BHLC_REG);
 
 		/* initialize cbslot_attach */
-		cba.cba_busname = "cardbus";
 		cba.cba_iot = sc->sc_iot;
 		cba.cba_memt = sc->sc_memt;
 		cba.cba_dmat = sc->sc_dmat;
@@ -722,7 +721,8 @@ pccbb_pci_callback(device_t self)
 
 	pccbb_intrinit(sc);
 
-	if (NULL != (csc = (void *)config_found(self, &caa, cbbprint))) {
+	if (NULL != (csc = (void *)config_found_ia(self, "pcmciaslot", &caa,
+						   cbbprint))) {
 		DPRINTF(("%s: found cardslot\n", __func__));
 		sc->sc_csc = csc;
 	}
