@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.237.2.3 2008/06/23 04:30:26 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.237.2.4 2008/06/24 04:15:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.237.2.3 2008/06/23 04:30:26 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.237.2.4 2008/06/24 04:15:50 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -95,17 +95,17 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.237.2.3 2008/06/23 04:30:26 wrstuden Exp 
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/kauth.h>
-
+#include <sys/cpu.h>
 #include <sys/ucontext.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+
 #include <uvm/uvm_extern.h>
 
 #if NTPROF > 0
 #include <x86/tprof.h>
 #endif /* NTPROF > 0 */
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>

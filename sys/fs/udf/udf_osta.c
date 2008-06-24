@@ -1,7 +1,9 @@
-/* $NetBSD: udf_osta.c,v 1.5.14.1 2008/06/23 04:31:50 wrstuden Exp $ */
+/* $NetBSD: udf_osta.c,v 1.5.14.2 2008/06/24 04:15:51 wrstuden Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.5.14.1 2008/06/23 04:31:50 wrstuden Exp $");
+#ifndef lint
+__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.5.14.2 2008/06/24 04:15:51 wrstuden Exp $");
+#endif /* not lint */
 
 /*
  * Various routines from the OSTA 2.01 specs.  Copyrights are included with

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113.6.3 2008/06/23 04:30:47 wrstuden Exp $     */
+/*	$NetBSD: trap.c,v 1.113.6.4 2008/06/24 04:15:51 wrstuden Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.6.3 2008/06/23 04:30:47 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.6.4 2008/06/24 04:15:51 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -219,19 +219,14 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
-		if (usermode) {
-			KERNEL_LOCK(1, l);
-			if (l->l_flag & LW_SA) {
-				l->l_savp->savp_faultaddr = (vaddr_t)frame->code;
-				l->l_pflag |= LP_SA_PAGEFAULT;
-			}
-		} else
-			KERNEL_LOCK(1, NULL);
+		if ((usermode) && (l->l_flag & LW_SA)) {
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->code;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
 
 		rv = uvm_fault(map, addr, ftype);
 		if (rv != 0) {
 			if (!usermode) {
-				KERNEL_UNLOCK_ONE(NULL);
 				FAULTCHK;
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
@@ -257,9 +252,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		}
 		if (usermode) {
 			l->l_pflag &= ~LP_SA_PAGEFAULT;
-			KERNEL_UNLOCK_LAST(l);
-		} else
-			KERNEL_UNLOCK_ONE(NULL);
+		}
 		break;
 
 	case T_BPTFLT|T_USER:
