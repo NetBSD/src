@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.21 2008/03/14 15:09:11 cube Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.22 2008/06/24 19:44:52 drochner Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.21 2008/03/14 15:09:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.22 2008/06/24 19:44:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,9 +314,6 @@ com_cardbus_enable(struct com_softc *sc)
 		    "couldn't establish interrupt\n");
 		return 1;
 	}
-
-	aprint_normal_dev(DEVICET(csc), "interrupting at irq %d\n",
-	    psc->sc_intrline);
 
 	return 0;
 }
