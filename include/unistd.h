@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.117 2008/06/25 11:10:25 ad Exp $	*/
+/*	$NetBSD: unistd.h,v 1.118 2008/06/25 11:45:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -196,6 +196,7 @@ int	 fsync(int);
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_REENTRANT) || defined(_NETBSD_SOURCE)
 int	 ttyname_r(int, char *, size_t);
+int	 pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
 #endif
 
 /*
