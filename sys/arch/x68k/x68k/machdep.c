@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.148 2008/06/23 01:49:31 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149 2008/06/25 07:54:47 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.148 2008/06/23 01:49:31 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 2008/06/25 07:54:47 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -911,8 +911,8 @@ intrhand(int sr)
 
 const uint16_t ipl2psl_table[NIPL] = {
 	[IPL_NONE]       = PSL_S | PSL_IPL0,
-	[IPL_SOFTBIO]    = PSL_S | PSL_IPL1,
 	[IPL_SOFTCLOCK]  = PSL_S | PSL_IPL1,
+	[IPL_SOFTBIO]    = PSL_S | PSL_IPL1,
 	[IPL_SOFTNET]    = PSL_S | PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_S | PSL_IPL1,
 	[IPL_VM]         = PSL_S | PSL_IPL5,
