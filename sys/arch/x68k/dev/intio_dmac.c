@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.30 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.31 2008/06/25 13:30:24 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.30 2008/06/25 08:14:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.31 2008/06/25 13:30:24 isaki Exp $");
 
 #include "opt_m680x0.h"
 
@@ -141,7 +141,7 @@ dmac_init_channels(struct dmac_softc *sc)
 	for (i=0; i<DMAC_NCHAN; i++) {
 		sc->sc_channels[i].ch_channel = i;
 		sc->sc_channels[i].ch_name[0] = 0;
-		sc->sc_channels[i].ch_softc = sc->sc_dev;
+		sc->sc_channels[i].ch_softc = sc;
 		bus_space_subregion(sc->sc_bst, sc->sc_bht,
 				    DMAC_CHAN_SIZE*i, DMAC_CHAN_SIZE,
 				    &sc->sc_channels[i].ch_bht);
@@ -241,11 +241,11 @@ dmac_alloc_channel(device_t self, int ch, const char *name, int normalv,
 }
 
 int
-dmac_free_channel(struct device *self, int ch, void *channel)
+dmac_free_channel(device_t self, int ch, void *channel)
 {
-	struct intio_softc *intio = (void *)self;
-	struct dmac_softc *sc = (void *)intio->sc_dmac;
-	struct dmac_channel_stat *chan = &sc->sc_channels[ch];
+	struct intio_softc *intio = device_private(self);
+	struct dmac_softc *dmac = device_private(intio->sc_dmac);
+	struct dmac_channel_stat *chan = &dmac->sc_channels[ch];
 
 	DPRINTF(3, ("dmac_free_channel, %d\n", ch));
 	DPRINTF(3, ("dmamap=%p\n", (void *)chan->ch_xfer.dx_dmamap));
@@ -288,9 +288,8 @@ dmac_alloc_xfer(struct dmac_channel_stat *chan, bus_dma_tag_t dmat,
 }
 
 int
-dmac_load_xfer(struct device *self, struct dmac_dma_xfer *xf)
+dmac_load_xfer(struct dmac_softc *dmac, struct dmac_dma_xfer *xf)
 {
-	struct dmac_softc *sc = (void *)self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
 
 	DPRINTF(3, ("dmac_load_xfer\n"));
@@ -304,11 +303,11 @@ dmac_load_xfer(struct device *self, struct dmac_dma_xfer *xf)
 		xf->dx_nextsize = ~0;
 	}
 
-	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
-	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_SCR, xf->dx_scr);
-	bus_space_write_1(sc->sc_bst, chan->ch_bht,
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_SCR, xf->dx_scr);
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht,
 			  DMAC_REG_OCR, (xf->dx_ocr | chan->ch_ocr));
-	bus_space_write_4(sc->sc_bst, chan->ch_bht,
+	bus_space_write_4(dmac->sc_bst, chan->ch_bht,
 			  DMAC_REG_DAR, (int) xf->dx_device);
 
 	return 0;
@@ -319,7 +318,7 @@ dmac_prepare_xfer(struct dmac_channel_stat *chan, bus_dma_tag_t dmat,
     bus_dmamap_t dmamap, int dir, int scr, void *dar)
 {
 	struct dmac_dma_xfer *xf;
-	struct dmac_softc *sc = (struct dmac_softc *)chan->ch_softc;
+	struct dmac_softc *dmac = chan->ch_softc;
 
 	xf = dmac_alloc_xfer(chan, dmat, dmamap);
 
@@ -327,7 +326,7 @@ dmac_prepare_xfer(struct dmac_channel_stat *chan, bus_dma_tag_t dmat,
 	xf->dx_scr = scr & (DMAC_SCR_MAC_MASK|DMAC_SCR_DAC_MASK);
 	xf->dx_device = dar;
 
-	dmac_load_xfer(sc->sc_dev, xf);
+	dmac_load_xfer(dmac, xf);
 
 	return xf;
 }
@@ -340,16 +339,15 @@ static struct dmac_channel_stat *debugchan = 0;
  * Do the actual transfer.
  */
 int
-dmac_start_xfer(struct device *self, struct dmac_dma_xfer *xf)
+dmac_start_xfer(struct dmac_softc *dmac, struct dmac_dma_xfer *xf)
 {
-	return dmac_start_xfer_offset(self, xf, 0, 0);
+	return dmac_start_xfer_offset(dmac, xf, 0, 0);
 }
 
 int
-dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
+dmac_start_xfer_offset(struct dmac_softc *dmac, struct dmac_dma_xfer *xf,
     u_int offset, u_int size)
 {
-	struct dmac_softc *sc = (void *)self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
 	struct x68k_bus_dmamap *dmamap = xf->dx_dmamap;
 	int go = DMAC_CCR_STR|DMAC_CCR_INT;
@@ -398,11 +396,11 @@ dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
 			go |=  DMAC_CCR_CNT;
 			xf->dx_nextoff += size;
 		} else {
-			bus_space_write_4(sc->sc_bst, chan->ch_bht,
+			bus_space_write_4(dmac->sc_bst, chan->ch_bht,
 					  DMAC_REG_MAR,
 					  (int) dmamap->dm_segs[0].ds_addr
 					  + offset);
-			bus_space_write_2(sc->sc_bst, chan->ch_bht,
+			bus_space_write_2(dmac->sc_bst, chan->ch_bht,
 					  DMAC_REG_MTCR, (int) size);
 			xf->dx_nextoff = offset;
 			xf->dx_nextsize = size;
@@ -413,16 +411,16 @@ dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
 	} else {
 #ifdef DMAC_ARRAYCHAIN
 		c = dmac_program_arraychain(self, xf, offset, size);
-		bus_space_write_4(sc->sc_bst, chan->ch_bht,
+		bus_space_write_4(dmac->sc_bst, chan->ch_bht,
 				  DMAC_REG_BAR, (int) chan->ch_seg[0].ds_addr);
-		bus_space_write_2(sc->sc_bst, chan->ch_bht,
+		bus_space_write_2(dmac->sc_bst, chan->ch_bht,
 				  DMAC_REG_BTCR, c);
 #else
 		panic("DMAC: unexpected use of arraychaining mode");
 #endif
 	}
 
-	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
 
 	/* START!! */
 	DDUMPREGS(3, ("first start\n"));
@@ -435,12 +433,12 @@ dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
 			     sizeof(struct dmac_sg_array) * c);
 #endif
 #endif
-	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CCR, go);
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CCR, go);
 
 	if (xf->dx_nextoff != ~0) {
-		bus_space_write_4(sc->sc_bst, chan->ch_bht,
+		bus_space_write_4(dmac->sc_bst, chan->ch_bht,
 				  DMAC_REG_BAR, xf->dx_nextoff);
-		bus_space_write_2(sc->sc_bst, chan->ch_bht,
+		bus_space_write_2(dmac->sc_bst, chan->ch_bht,
 				  DMAC_REG_BTCR, xf->dx_nextsize);
 	}
 
@@ -449,7 +447,7 @@ dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
 
 #ifdef DMAC_ARRAYCHAIN
 static int
-dmac_program_arraychain(struct device *self, struct dmac_dma_xfer *xf,
+dmac_program_arraychain(device_t self, struct dmac_dma_xfer *xf,
     u_int offset, u_int size)
 {
 	struct dmac_channel_stat *chan = xf->dx_channel;
@@ -485,7 +483,7 @@ static int
 dmac_done(void *arg)
 {
 	struct dmac_channel_stat *chan = arg;
-	struct dmac_softc *sc = (void *)chan->ch_softc;
+	struct dmac_softc *sc = chan->ch_softc;
 #ifdef DMAC_ARRAYCHAIN
 	struct dmac_dma_xfer *xf = &chan->ch_xfer;
 	struct x68k_bus_dmamap *map = xf->dx_dmamap;
@@ -531,7 +529,7 @@ static int
 dmac_error(void *arg)
 {
 	struct dmac_channel_stat *chan = arg;
-	struct dmac_softc *sc = (void *)chan->ch_softc;
+	struct dmac_softc *sc = chan->ch_softc;
 
 	printf("DMAC transfer error CSR=%02x, CER=%02x\n",
 		bus_space_read_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR),
@@ -549,14 +547,13 @@ dmac_error(void *arg)
 }
 
 int
-dmac_abort_xfer(struct device *self, struct dmac_dma_xfer *xf)
+dmac_abort_xfer(struct dmac_softc *dmac, struct dmac_dma_xfer *xf)
 {
-	struct dmac_softc *sc = (void *)self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
 
-	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CCR,
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CCR,
 			  DMAC_CCR_INT | DMAC_CCR_HLT);
-	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
 	xf->dx_nextoff = xf->dx_nextsize = -1;
 
 	return 0;
@@ -571,7 +568,7 @@ dmac_dump_regs(void)
 
 	if ((chan == 0) || (dmacdebug & 0xf0))
 		return 0;
-	sc = (void *)chan->ch_softc;
+	sc = chan->ch_softc;
 
 	printf("DMAC channel %d registers\n", chan->ch_channel);
 	printf("CSR=%02x, CER=%02x, DCR=%02x, OCR=%02x, SCR=%02x, "

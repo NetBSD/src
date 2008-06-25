@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacvar.h,v 1.9 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: dmacvar.h,v 1.10 2008/06/25 13:30:24 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ struct dmac_channel_stat {
 	struct dmac_dma_xfer	ch_xfer;
 	struct dmac_sg_array	*ch_map; /* transfer map for arraychain mode */
 	bus_dma_segment_t	ch_seg[1];
-	device_t		ch_softc; /* device softc link */
+	struct dmac_softc	*ch_softc; /* device softc link */
 };
 
 /*
@@ -106,11 +106,12 @@ int dmac_free_channel(device_t, int, void *);
 		/* ch, channel */
 struct dmac_dma_xfer *dmac_alloc_xfer(struct dmac_channel_stat *,
 	bus_dma_tag_t, bus_dmamap_t);
-int dmac_load_xfer(device_t, struct dmac_dma_xfer *);
+int dmac_load_xfer(struct dmac_softc *, struct dmac_dma_xfer *);
 
-int dmac_start_xfer(device_t, struct dmac_dma_xfer *);
-int dmac_start_xfer_offset(device_t, struct dmac_dma_xfer *, u_int, u_int);
-int dmac_abort_xfer(device_t, struct dmac_dma_xfer *);
+int dmac_start_xfer(struct dmac_softc *, struct dmac_dma_xfer *);
+int dmac_start_xfer_offset(struct dmac_softc *, struct dmac_dma_xfer *,
+	u_int, u_int);
+int dmac_abort_xfer(struct dmac_softc *, struct dmac_dma_xfer *);
 /* Compatibility function: alloc, fill defaults, load */
 struct dmac_dma_xfer *dmac_prepare_xfer(struct dmac_channel_stat *,
 	bus_dma_tag_t, bus_dmamap_t, int, int, void *);
