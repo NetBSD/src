@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.756 2008/06/23 07:25:16 jnemeth Exp $
+# $NetBSD: mi,v 1.757 2008/06/25 05:57:16 dogcow Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4130,6 +4130,7 @@
 ./var/db/obsolete/misc				base-sys-root
 ./var/db/obsolete/tests				base-sys-root
 ./var/db/obsolete/text				base-sys-root
+./var/db/postfix				base-postfix-root
 ./var/db/xdm					base-sys-root
 ./var/empty					base-obsolete		obsolete
 ./var/games					base-games-root
@@ -4140,8 +4141,6 @@
 ./var/games/sail				base-games-root
 ./var/games/save				base-obsolete		obsolete
 ./var/heimdal					base-krb5-root
-./var/lib					base-sys-root
-./var/lib/postfix				base-postfix-root
 ./var/log					base-sys-root
 ./var/log/rdist					base-netutil-root
 ./var/mail					base-mail-root
