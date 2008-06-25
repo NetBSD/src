@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1165 2008/06/23 10:22:40 ad Exp $
+#	$NetBSD: mi,v 1.1166 2008/06/25 11:10:25 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3607,6 +3607,7 @@
 ./usr/share/man/cat2/getgroups.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getitimer.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getlogin.0			comp-c-catman		.cat
+./usr/share/man/cat2/getlogin_r.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getpeername.0		comp-c-catman		.cat
 ./usr/share/man/cat2/getpgid.0			comp-c-catman		.cat
 ./usr/share/man/cat2/getpgrp.0			comp-c-catman		.cat
@@ -8967,6 +8968,7 @@
 ./usr/share/man/man2/getgroups.2		comp-c-man		.man
 ./usr/share/man/man2/getitimer.2		comp-c-man		.man
 ./usr/share/man/man2/getlogin.2			comp-c-man		.man
+./usr/share/man/man2/getlogin_r.2		comp-c-man		.man
 ./usr/share/man/man2/getpeername.2		comp-c-man		.man
 ./usr/share/man/man2/getpgid.2			comp-c-man		.man
 ./usr/share/man/man2/getpgrp.2			comp-c-man		.man
