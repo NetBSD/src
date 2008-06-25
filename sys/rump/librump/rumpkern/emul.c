@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.40 2008/06/24 14:11:44 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.41 2008/06/25 13:16:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -567,4 +567,11 @@ const char *
 device_xname(device_t dv)
 {
 	return "bogus0";
+}
+
+void
+assert_sleepable(void)
+{
+
+	/* always sleepable, although we should improve this */
 }
