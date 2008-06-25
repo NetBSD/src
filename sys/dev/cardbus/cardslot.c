@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.42 2008/06/25 11:42:32 drochner Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.43 2008/06/25 15:29:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.42 2008/06/25 11:42:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.43 2008/06/25 15:29:23 drochner Exp $");
 
 #include "opt_cardslot.h"
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.42 2008/06/25 11:42:32 drochner Exp $
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>
-#include <dev/ic/i82365var.h>
 
 #include "locators.h"
 
@@ -137,11 +136,6 @@ cardslotattach(struct device *parent, struct device *self,
 			/* pcmcia 16-bit bus found */
 			DPRINTF(("%s: found 16-bit pcmcia bus\n", __func__));
 			sc->sc_16_softc = psc;
-			/*
-			 * XXX:
-			 * dirty.  This code should be removed to achieve MI.
-			 */
-			caa->caa_ph->pcmcia = (struct device *)psc;
 		}
 	}
 
