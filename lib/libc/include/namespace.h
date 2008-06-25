@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.131 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: namespace.h,v 1.132 2008/06/25 11:10:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -281,6 +281,7 @@
 #define getifaddrs		_getifaddrs
 #define getloadavg		_getloadavg
 #define getlogin		_getlogin
+#define getlogin_r		_getlogin_r
 #define getmntinfo		_getmntinfo
 #define getmode			_getmode
 #define getnameinfo		_getnameinfo
