@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.18 2007/03/11 08:09:25 isaki Exp $	*/
+/*	$NetBSD: opm.c,v 1.19 2008/06/25 08:14:59 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.18 2007/03/11 08:09:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.19 2008/06/25 08:14:59 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.18 2007/03/11 08:09:25 isaki Exp $");
 #include <arch/x68k/dev/intiovar.h>
 
 struct opm_softc {
-	struct device		sc_dev;
-
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bht;
 	u_int8_t		sc_regs[0x100];
@@ -61,14 +59,14 @@ struct opm_softc {
 
 struct opm_softc	*opm0;	/* XXX */
 
-static int opm_match(struct device *, struct cfdata *, void *);
-static void opm_attach(struct device *, struct device *, void *);
+static int opm_match(device_t, cfdata_t, void *);
+static void opm_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(opm, sizeof(struct opm_softc),
+CFATTACH_DECL_NEW(opm, sizeof(struct opm_softc),
     opm_match, opm_attach, NULL, NULL);
 
 static int
-opm_match(struct device *parent, struct cfdata *cf, void *aux)
+opm_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -85,13 +83,13 @@ opm_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-opm_attach(struct device *parent, struct device *self, void *aux)
+opm_attach(device_t parent, device_t self, void *aux)
 {
-	struct opm_softc *sc = (struct opm_softc *)self;
+	struct opm_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 	int r;
 
-	printf("\n");
+	aprint_normal("\n");
 	ia->ia_size = 0x2000;
 	r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
@@ -110,7 +108,7 @@ opm_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* XXX device_unit() abuse */
-	if (device_unit(&sc->sc_dev) == 0)
+	if (device_unit(self) == 0)
 		opm0 = sc;	/* XXX */
 
 	return;
