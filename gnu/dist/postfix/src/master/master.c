@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.1.1.10 2008/06/22 14:02:47 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.2 2008/06/25 01:32:38 christos Exp $	*/
 
 /*++
 /* NAME
@@ -135,7 +135,7 @@
 /*	/etc/postfix/main.cf, global configuration file.
 /*	/etc/postfix/master.cf, master server configuration file.
 /*	/var/spool/postfix/pid/master.pid, master lock file.
-/*	/var/lib/postfix/master.lock, master lock file.
+/*	/var/db/postfix/master.lock, master lock file.
 /* SEE ALSO
 /*	qmgr(8), queue manager
 /*	verify(8), address verification
