@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.12 2008/06/24 17:32:09 drochner Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.13 2008/06/25 11:42:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -64,7 +64,7 @@ struct cardslot_attach_args {
  * PCMCIA (including CardBus and 16-bit card) slot.
  */
 struct cardslot_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	int sc_status;		/* the status of slot */
 
@@ -106,8 +106,6 @@ struct cardslot_event {
 	int ce_type;
 };
 
-typedef struct cardslot_softc *cardslot_t;
-
 /* ce_type */
 #define	CARDSLOT_EVENT_INSERTION_16	0
 #define	CARDSLOT_EVENT_REMOVAL_16	1
@@ -117,6 +115,6 @@ typedef struct cardslot_softc *cardslot_t;
 
 #define IS_CARDSLOT_INSERT_REMOVE_EV(x) (0 <= (x) && (x) <= 3)
 
-void cardslot_event_throw(cardslot_t, int);
+void cardslot_event_throw(struct cardslot_softc *, int);
 
 #endif /* !_DEV_CARDBUS_CARDSLOTVAR_H_ */
