@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.83 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.84 2008/06/25 12:56:40 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.83 2008/06/25 08:14:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84 2008/06/25 12:56:40 isaki Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -409,6 +409,8 @@ fdcattach(device_t parent, device_t self, void *aux)
 	struct intio_attach_args *ia = aux;
 	struct fdc_attach_args fa;
 
+	fdc->sc_dev = self;
+
 	iot = ia->ia_bst;
 
 	aprint_normal("\n");
@@ -567,6 +569,7 @@ fdattach(device_t parent, device_t self, void *aux)
 	callout_init(&fd->sc_motoron_ch, 0);
 	callout_init(&fd->sc_motoroff_ch, 0);
 
+	fd->sc_dev = self;
 	fd->sc_flags = 0;
 
 	if (type)
