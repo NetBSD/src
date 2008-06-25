@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.23 2006/03/22 00:05:01 christos Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.24 2008/06/25 11:47:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.23 2006/03/22 00:05:01 christos Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.24 2008/06/25 11:47:29 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,25 +78,25 @@ ttyname_r(int fd, char *buf, size_t len)
 	_DIAGASSERT(fd != -1);
 
 	if (len <= DEVSZ) {
-		errno = ERANGE;
-		return -1;
+		return ERANGE;
 	}
 
 	/* If it is a pty, deal with it quickly */
 	if (ioctl(fd, TIOCPTSNAME, &ptm) != -1) {
 		if (strlcpy(buf, ptm.sn, len) >= len) {
-			errno = ERANGE;
-			return -1;
+			return ERANGE;
 		}
 		return 0;
 	}
 	/* Must be a terminal. */
 	if (tcgetattr(fd, &ttyb) == -1)
-		return -1;
+		return errno;
 
 	/* Must be a character device. */
-	if (fstat(fd, &sb) || !S_ISCHR(sb.st_mode))
-		return -1;
+	if (fstat(fd, &sb))
+		return errno;
+	if (!S_ISCHR(sb.st_mode))
+		return ENOTTY;
 
 	(void)memcpy(buf, _PATH_DEV, DEVSZ);
 	if ((db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL)) != NULL) {
@@ -107,8 +107,7 @@ ttyname_r(int fd, char *buf, size_t len)
 		key.size = sizeof(bkey);
 		if (!(db->get)(db, &key, &data, 0)) {
 			if (len - DEVSZ <= data.size) {
-				errno = ERANGE;
-				return -1;
+				return ERANGE;
 			}
 			(void)memcpy(buf + DEVSZ, data.data, data.size);
 			(void)(db->close)(db);
@@ -116,7 +115,9 @@ ttyname_r(int fd, char *buf, size_t len)
 		}
 		(void)(db->close)(db);
 	}
-	return oldttyname(&sb, buf, len);
+	if (oldttyname(&sb, buf, len) == -1)
+		return errno;
+	return 0;
 }
 
 static int
@@ -165,5 +166,12 @@ char *
 ttyname(int fd)
 {
 	static char buf[MAXPATHLEN];
-	return ttyname_r(fd, buf, sizeof(buf)) == -1 ? NULL : buf;
+	int rv;
+	
+	rv = ttyname_r(fd, buf, sizeof(buf));
+	if (rv != 0) {
+		errno = rv;
+		return NULL;
+	}
+	return buf;
 }
