@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.36 2008/06/23 08:33:38 isaki Exp $	*/
+/*	$NetBSD: intio.c,v 1.37 2008/06/25 08:14:59 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.36 2008/06/23 08:33:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.37 2008/06/25 08:14:59 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,14 +115,13 @@ struct x68k_bus_dma intio_bus_dma = {
 /*
  * autoconf stuff
  */
-static int intio_match(struct device *, struct cfdata *, void *);
-static void intio_attach(struct device *, struct device *, void *);
-static int intio_search(struct device *, struct cfdata *cf,
-			const int *, void *);
+static int intio_match(device_t, cfdata_t, void *);
+static void intio_attach(device_t, device_t, void *);
+static int intio_search(device_t, cfdata_t, const int *, void *);
 static int intio_print(void *, const char *);
 static void intio_alloc_system_ports(struct intio_softc*);
 
-CFATTACH_DECL(intio, sizeof(struct intio_softc),
+CFATTACH_DECL_NEW(intio, sizeof(struct intio_softc),
     intio_match, intio_attach, NULL, NULL);
 
 extern struct cfdriver intio_cd;
@@ -138,14 +137,14 @@ static struct intio_interrupt_vector {
 /* used in console initialization */
 extern int x68k_realconfig;
 int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
-static struct cfdata *cfdata_intiobus = NULL;
+static cfdata_t cfdata_intiobus = NULL;
 
 #ifdef DEBUG
 int intio_debug = 0;
 #endif
 
 static int
-intio_match(struct device *parent, struct cfdata *cf, void *aux)
+intio_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp(aux, intio_cd.cd_name) != 0)
@@ -173,9 +172,9 @@ static struct intio_attach_args initial_ia = {
 };
 
 static void
-intio_attach(struct device *parent, struct device *self, void *aux)
+intio_attach(device_t parent, device_t self, void *aux)
 {
-	struct intio_softc *sc = (struct intio_softc *)self;
+	struct intio_softc *sc = device_private(self);
 	struct intio_attach_args ia;
 
 	if (self == NULL) {
@@ -186,7 +185,7 @@ intio_attach(struct device *parent, struct device *self, void *aux)
 
 	intio_attached = 1;
 
-	printf(" mapped at %8p\n", intiobase);
+	aprint_normal(" mapped at %8p\n", intiobase);
 
 	sc->sc_map = extent_create("intiomap",
 				  PHYS_INTIODEV,
@@ -208,11 +207,10 @@ intio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-intio_search(struct device *parent, struct cfdata *cf,
-	     const int *ldesc, void *aux)
+intio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
+	struct intio_softc *sc = device_private(parent);
 	struct intio_attach_args *ia = aux;
-	struct intio_softc *sc = (struct intio_softc *)parent;
 
 	ia->ia_bst = sc->sc_bst;
 	ia->ia_dmat = sc->sc_dmat;
@@ -252,10 +250,10 @@ intio_print(void *aux, const char *name)
  */
 
 int
-intio_map_allocate_region(struct device *parent, struct intio_attach_args *ia,
+intio_map_allocate_region(device_t parent, struct intio_attach_args *ia,
     enum intio_map_flag flag)
 {
-	struct intio_softc *sc = (struct intio_softc *)parent;
+	struct intio_softc *sc = device_private(parent);
 	struct extent *map = sc->sc_map;
 	int r;
 
@@ -274,9 +272,9 @@ intio_map_allocate_region(struct device *parent, struct intio_attach_args *ia,
 }
 
 int
-intio_map_free_region(struct device *parent, struct intio_attach_args *ia)
+intio_map_free_region(device_t parent, struct intio_attach_args *ia)
 {
-	struct intio_softc *sc = (struct intio_softc*) parent;
+	struct intio_softc *sc = device_private(parent);
 	struct extent *map = sc->sc_map;
 
 	extent_free(map, ia->ia_addr, ia->ia_size, 0);

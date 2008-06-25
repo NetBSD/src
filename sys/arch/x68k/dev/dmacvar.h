@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacvar.h,v 1.8 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: dmacvar.h,v 1.9 2008/06/25 08:14:59 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,14 +78,14 @@ struct dmac_channel_stat {
 	struct dmac_dma_xfer	ch_xfer;
 	struct dmac_sg_array	*ch_map; /* transfer map for arraychain mode */
 	bus_dma_segment_t	ch_seg[1];
-	struct device		*ch_softc; /* device softc link */
+	device_t		ch_softc; /* device softc link */
 };
 
 /*
  * DMAC softc
  */
 struct dmac_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bht;
@@ -99,19 +99,18 @@ struct dmac_softc {
 #define DMAC_MAXSEGSZ	0xff00
 #define DMAC_BOUNDARY	0
 
-struct dmac_channel_stat *dmac_alloc_channel(struct device *, int, const char *,
+struct dmac_channel_stat *dmac_alloc_channel(device_t, int, const char *,
 	int, dmac_intr_handler_t, void *, int, dmac_intr_handler_t, void *);
 		/* ch, name, normalv, normal, errorv, error */
-int dmac_free_channel(struct device *, int, void *);
+int dmac_free_channel(device_t, int, void *);
 		/* ch, channel */
 struct dmac_dma_xfer *dmac_alloc_xfer(struct dmac_channel_stat *,
 	bus_dma_tag_t, bus_dmamap_t);
-int dmac_load_xfer(struct device *, struct dmac_dma_xfer *);
+int dmac_load_xfer(device_t, struct dmac_dma_xfer *);
 
-int dmac_start_xfer(struct device *, struct dmac_dma_xfer *);
-int dmac_start_xfer_offset(struct device *, struct dmac_dma_xfer *,
-	u_int, u_int);
-int dmac_abort_xfer(struct device *, struct dmac_dma_xfer *);
+int dmac_start_xfer(device_t, struct dmac_dma_xfer *);
+int dmac_start_xfer_offset(device_t, struct dmac_dma_xfer *, u_int, u_int);
+int dmac_abort_xfer(device_t, struct dmac_dma_xfer *);
 /* Compatibility function: alloc, fill defaults, load */
 struct dmac_dma_xfer *dmac_prepare_xfer(struct dmac_channel_stat *,
 	bus_dma_tag_t, bus_dmamap_t, int, int, void *);
