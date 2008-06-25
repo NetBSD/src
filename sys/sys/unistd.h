@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.41 2008/06/24 14:06:55 ad Exp $	*/
+/*	$NetBSD: unistd.h,v 1.42 2008/06/25 11:46:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -226,6 +226,7 @@
 #define	_SC_THREAD_PRIO_PROTECT		65
 #define	_SC_THREAD_PROCESS_SHARED	66
 #define	_SC_THREAD_SAFE_FUNCTIONS	67
+#define	_SC_TTY_NAME_MAX		68
 
 #ifdef _NETBSD_SOURCE
 /* Commonly provided sysconf() extensions */
