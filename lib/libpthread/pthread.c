@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.101 2008/05/25 17:05:28 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.102 2008/06/25 11:06:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.101 2008/05/25 17:05:28 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.102 2008/06/25 11:06:34 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -594,6 +594,7 @@ pthread_join(pthread_t thread, void **valptr)
 		}
 
 	}
+	pthread__testcancel(self);
 	if (valptr != NULL)
 		*valptr = thread->pt_exitval;
 	/* pthread__reap() will drop the lock. */
