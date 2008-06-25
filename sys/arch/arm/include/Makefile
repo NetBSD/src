@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.37 2008/06/23 17:43:21 matt Exp $
+#	$NetBSD: Makefile,v 1.38 2008/06/25 03:33:39 matt Exp $
 
-SUBDIR=	arm26 arm32
 INCSDIR= /usr/include/arm
 
 INCS=	ansi.h aout_machdep.h armreg.h asm.h atomic.h \
