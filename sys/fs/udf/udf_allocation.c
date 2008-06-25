@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.2 2008/05/20 21:31:52 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.3 2008/06/25 10:03:14 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.2 2008/05/20 21:31:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.3 2008/06/25 10:03:14 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1227,15 +1227,15 @@ udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb,
 
 	/* if offset too big, we go to the allocation extensions */
 	offset = slot * adlen;
-	extnr  = 0;
-	while (offset > max_l_ad) {
+	extnr  = -1;
+	while (offset >= max_l_ad) {
+		extnr++;
 		offset -= max_l_ad;
 		ext  = udf_node->ext[extnr];
 		dscr_size  = sizeof(struct alloc_ext_entry) -1;
 		l_ad = udf_rw32(ext->l_ad);
 		max_l_ad = lb_size - dscr_size;
-		data_pos = (uint8_t *) ext + dscr_size + l_ea;
-		extnr++;
+		data_pos = (uint8_t *) ext + dscr_size;
 		if (extnr > udf_node->num_extensions) {
 			l_ad = 0;	/* force EOF */
 			break;

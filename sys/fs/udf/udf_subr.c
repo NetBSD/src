@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.51 2008/06/24 15:35:57 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.52 2008/06/25 10:03:14 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.51 2008/06/24 15:35:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.52 2008/06/25 10:03:14 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -4708,13 +4708,18 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	slot    = 0;
 	for (;;) {
 		udf_get_adslot(udf_node, slot, &icb_loc, &eof);
+		DPRINTF(ADWLK, ("slot %d, eof = %d, flags = %d, len = %d, "
+			"lb_num = %d, part = %d\n", slot, eof,
+			UDF_EXT_FLAGS(udf_rw32(icb_loc.len)),
+			UDF_EXT_LEN(udf_rw32(icb_loc.len)),
+			udf_rw32(icb_loc.loc.lb_num),
+			udf_rw16(icb_loc.loc.part_num)));
 		if (eof)
 			break;
+		slot++;
 
-		if (UDF_EXT_FLAGS(udf_rw32(icb_loc.len)) != UDF_EXT_REDIRECT) {
-			slot++;
+		if (UDF_EXT_FLAGS(udf_rw32(icb_loc.len)) != UDF_EXT_REDIRECT)
 			continue;
-		}
 
 		DPRINTF(NODE, ("\tgot redirect extent\n"));
 		if (udf_node->num_extensions >= UDF_MAX_ALLOC_EXTENTS) {
@@ -4726,13 +4731,15 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		}
 
 		/* length can only be *one* lb : UDF 2.50/2.3.7.1 */
-		if (udf_rw32(icb_loc.len) != lb_size) {
+		if (UDF_EXT_LEN(udf_rw32(icb_loc.len)) != lb_size) {
 			DPRINTF(ALLOC, ("udf_get_node: bad allocation "
 					"extension size in udf_node\n"));
 			error = EINVAL;
 			break;
 		}
 
+		DPRINTF(NODE, ("read allocation extent at lb_num %d\n",
+			UDF_EXT_LEN(udf_rw32(icb_loc.loc.lb_num))));
 		/* load in allocation extent */
 		error = udf_read_logvol_dscr(ump, &icb_loc, &dscr);
 		if (error || (dscr == NULL))
@@ -4869,6 +4876,7 @@ int
 udf_dispose_node(struct udf_node *udf_node)
 {
 	struct vnode *vp;
+	int extnr;
 
 	DPRINTF(NODE, ("udf_dispose_node called on node %p\n", udf_node));
 	if (!udf_node) {
@@ -4906,10 +4914,18 @@ udf_dispose_node(struct udf_node *udf_node)
 	vp->v_data = NULL;
 
 	/* free associated memory and the node itself */
+	for (extnr = 0; extnr < udf_node->num_extensions; extnr++) {
+		udf_free_logvol_dscr(udf_node->ump, &udf_node->ext_loc[extnr],
+			udf_node->ext[extnr]);
+		udf_node->ext[extnr] = (void *) 0xdeadcccc;
+	}
+
 	if (udf_node->fe)
-		udf_free_logvol_dscr(udf_node->ump, &udf_node->loc, udf_node->fe);
+		udf_free_logvol_dscr(udf_node->ump, &udf_node->loc,
+			udf_node->fe);
 	if (udf_node->efe)
-		udf_free_logvol_dscr(udf_node->ump, &udf_node->loc, udf_node->efe);
+		udf_free_logvol_dscr(udf_node->ump, &udf_node->loc,
+			udf_node->efe);
 
 	udf_node->fe  = (void *) 0xdeadaaaa;
 	udf_node->efe = (void *) 0xdeadbbbb;
