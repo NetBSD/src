@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.189 2008/06/25 11:10:25 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.190 2008/06/25 11:19:28 ad Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -253,7 +253,7 @@ MLINKS+=getcontext.2 setcontext.2
 MLINKS+=getgid.2 getegid.2
 MLINKS+=getitimer.2 setitimer.2
 MLINKS+=getlogin.2 setlogin.2
-MLINKS+=getlogin_r.2 setlogin_r.2
+MLINKS+=getlogin.2 getlogin_r.2
 MLINKS+=getpgrp.2 getpgid.2
 MLINKS+=getpid.2 getppid.2
 MLINKS+=getpriority.2 setpriority.2
