@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.285 2008/06/16 09:51:14 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.286 2008/06/25 11:05:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.285 2008/06/16 09:51:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.286 2008/06/25 11:05:46 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -116,6 +116,8 @@ static pool_cache_t sigacts_cache; /* memory pool for sigacts structures */
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
 static callout_t proc_stop_ch;
+static pool_cache_t siginfo_cache;
+static pool_cache_t ksiginfo_cache;
 
 static struct pool_allocator sigactspool_allocator = {
         .pa_alloc = sigacts_poolpage_alloc,
@@ -133,11 +135,6 @@ static	const char logcoredump[] =
 static	const char lognocoredump[] =
     "pid %d (%s), uid %d: exited on signal %d (core not dumped, err = %d)\n";
 
-POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo",
-    NULL, IPL_VM);
-
 /*
  * signal_init:
  *
@@ -152,6 +149,12 @@ signal_init(void)
 	sigacts_cache = pool_cache_init(sizeof(struct sigacts), 0, 0, 0,
 	    "sigacts", sizeof(struct sigacts) > PAGE_SIZE ?
 	    &sigactspool_allocator : NULL, IPL_NONE, NULL, NULL, NULL);
+
+	siginfo_cache = pool_cache_init(sizeof(siginfo_t), 0, 0, 0,
+	    "siginfo", NULL, IPL_NONE, NULL, NULL, NULL);
+
+	ksiginfo_cache = pool_cache_init(sizeof(ksiginfo_t), 0, 0, 0,
+	    "ksiginfo", NULL, IPL_VM, NULL, NULL, NULL);
 
 	exechook_establish(ksiginfo_exechook, NULL);
 
@@ -421,7 +424,7 @@ ksiginfo_alloc(struct proc *p, ksiginfo_t *ok, int flags)
 			return ok;
 	}
 
-	kp = pool_get(&ksiginfo_pool, flags);
+	kp = pool_cache_get(ksiginfo_cache, flags);
 	if (kp == NULL) {
 #ifdef DIAGNOSTIC
 		printf("Out of memory allocating ksiginfo for pid %d\n",
@@ -453,7 +456,7 @@ ksiginfo_free(ksiginfo_t *kp)
 
 	if ((kp->ksi_flags & (KSI_QUEUED | KSI_FROMPOOL)) != KSI_FROMPOOL)
 		return;
-	pool_put(&ksiginfo_pool, kp);
+	pool_cache_put(ksiginfo_cache, kp);
 }
 
 /*
@@ -471,7 +474,7 @@ ksiginfo_queue_drain0(ksiginfoq_t *kq)
 	while (!CIRCLEQ_EMPTY(kq)) {
 		ksi = CIRCLEQ_FIRST(kq);
 		CIRCLEQ_REMOVE(kq, ksi, ksi_list);
-		pool_put(&ksiginfo_pool, ksi);
+		pool_cache_put(ksiginfo_cache, ksi);
 	}
 }
 
@@ -670,7 +673,7 @@ siginfo_t *
 siginfo_alloc(int flags)
 {
 
-	return pool_get(&siginfo_pool, flags);
+	return pool_cache_get(siginfo_cache, flags);
 }
 
 /*
@@ -682,7 +685,7 @@ void
 siginfo_free(void *arg)
 {
 
-	pool_put(&siginfo_pool, arg);
+	pool_cache_put(siginfo_cache, arg);
 }
 
 void
