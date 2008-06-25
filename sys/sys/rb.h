@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.5 2008/06/25 03:06:25 christos Exp $ */
+/* $NetBSD: rb.h,v 1.6 2008/06/25 04:56:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,22 +40,20 @@
 #include <sys/endian.h>
 
 struct rb_node {
-	struct rb_node *rb_nodes[3];
+	struct rb_node *rb_nodes[2];
 #define	RB_DIR_LEFT	0
 #define	RB_DIR_RIGHT	1
 #define	RB_DIR_OTHER	1
-#define	RB_DIR_PARENT	2
 #define	rb_left		rb_nodes[RB_DIR_LEFT]
 #define	rb_right	rb_nodes[RB_DIR_RIGHT]
-#define	rb_parent	rb_nodes[RB_DIR_PARENT]
+	struct rb_node *rb_parent;
 
 #define	__RB_SHIFT	((sizeof(unsigned long) - 4) << 3)
 #define	RB_FLAG_POSITION	(0x80000000UL << __RB_SHIFT)
 #define	RB_FLAG_ROOT		(0x40000000UL << __RB_SHIFT)
 #define	RB_FLAG_RED		(0x20000000UL << __RB_SHIFT)
 #define	RB_FLAG_SENTINEL	(0x10000000UL << __RB_SHIFT)
-#define	RB_FLAG_MOVED		(0x08000000UL << __RB_SHIFT)
-#define	RB_FLAG_MASK		(0xf8000000UL << __RB_SHIFT)
+#define	RB_FLAG_MASK		(0xf0000000UL << __RB_SHIFT)
 	unsigned long rb_info;
 
 #define	RB_SENTINEL_P(rb) \
@@ -75,14 +73,6 @@ struct rb_node {
 #define	RB_POSITION_P(rb)	(((rb)->rb_info & RB_FLAG_POSITION) != 0)
 #define	RB_RED_P(rb) 		(((rb)->rb_info & RB_FLAG_RED) != 0)
 #define	RB_BLACK_P(rb) 		(((rb)->rb_info & RB_FLAG_RED) == 0)
-#define	RB_MOVED_P(rb) 		(((rb)->rb_info & RB_FLAG_MOVED) != 0)
-#ifdef RBSMALL
-#define	RB_MARK_UNMOVED(rb)	((void)0)
-#define	RB_MARK_MOVED(rb)	((void)0)
-#else
-#define	RB_MARK_UNMOVED(rb) 	((void)((rb)->rb_info &= ~RB_FLAG_MOVED))
-#define	RB_MARK_MOVED(rb) 	((void)((rb)->rb_info |= RB_FLAG_MOVED))
-#endif
 #define	RB_MARK_RED(rb) 	((void)((rb)->rb_info |= RB_FLAG_RED))
 #define	RB_MARK_BLACK(rb) 	((void)((rb)->rb_info &= ~RB_FLAG_RED))
 #define	RB_INVERT_COLOR(rb) 	((void)((rb)->rb_info & RB_FLAG_RED) ? \
