@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.30 2008/06/24 14:06:55 ad Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.31 2008/06/25 11:09:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.30 2008/06/24 14:06:55 ad Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.31 2008/06/25 11:09:20 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -390,7 +390,7 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 	case _SC_THREAD_PRIO_INHERIT:
 	case _SC_THREAD_PRIO_PROTECT:
 	case _SC_THREAD_PROCESS_SHARED:
-		return 0;
+		return -1;
 	default:
 		errno = EINVAL;
 		return (-1);
