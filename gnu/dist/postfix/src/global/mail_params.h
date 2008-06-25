@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.16 2008/06/22 14:38:41 christos Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.17 2008/06/25 01:32:38 christos Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -267,7 +267,7 @@ extern char *var_pid_dir;
   */
 #define VAR_DATA_DIR		"data_directory"
 #ifndef DEF_DATA_DIR
-#define DEF_DATA_DIR		"/var/lib/postfix"
+#define DEF_DATA_DIR		"/var/db/postfix"
 #endif
 extern char *var_data_dir;
 

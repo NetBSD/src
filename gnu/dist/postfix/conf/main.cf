@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.15 2008/06/22 14:38:41 christos Exp $
+#	$NetBSD: main.cf,v 1.16 2008/06/25 01:32:37 christos Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -47,7 +47,7 @@ daemon_directory = /usr/libexec/postfix
 # data files (caches, random numbers). This directory must be owned
 # by the mail_owner account (see below).
 #
-data_directory = /var/lib/postfix
+data_directory = /var/db/postfix
 
 # QUEUE AND PROCESS OWNERSHIP
 #
