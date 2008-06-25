@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.3 2008/06/25 10:03:14 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.4 2008/06/25 10:46:35 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.3 2008/06/25 10:03:14 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.4 2008/06/25 10:46:35 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -492,6 +492,12 @@ udf_translate_file_extent(struct udf_node *udf_node,
 	slot    = 0;
 	for (;;) {
 		udf_get_adslot(udf_node, slot, &s_ad, &eof);
+		DPRINTF(ADWLK, ("slot %d, eof = %d, flags = %d, len = %d, "
+			"lb_num = %d, part = %d\n", slot, eof,
+			UDF_EXT_FLAGS(udf_rw32(s_ad.len)),
+			UDF_EXT_LEN(udf_rw32(s_ad.len)),
+			udf_rw32(s_ad.loc.lb_num),
+			udf_rw16(s_ad.loc.part_num)));
 		if (eof) {
 			DPRINTF(TRANSLATE,
 				("Translate file extent "
@@ -521,6 +527,12 @@ udf_translate_file_extent(struct udf_node *udf_node,
 
 	for (;;) {
 		udf_get_adslot(udf_node, slot, &s_ad, &eof);
+		DPRINTF(ADWLK, ("slot %d, eof = %d, flags = %d, len = %d, "
+			"lb_num = %d, part = %d\n", slot, eof,
+			UDF_EXT_FLAGS(udf_rw32(s_ad.len)),
+			UDF_EXT_LEN(udf_rw32(s_ad.len)),
+			udf_rw32(s_ad.loc.lb_num),
+			udf_rw16(s_ad.loc.part_num)));
 		if (eof) {
 			DPRINTF(TRANSLATE,
 				("Translate file extent "
@@ -550,7 +562,7 @@ udf_translate_file_extent(struct udf_node *udf_node,
 		 */
 	
 		overlap = MIN(overlap, num_lb);
-		while (overlap) {
+		while (overlap && (flags != UDF_EXT_REDIRECT)) {
 			switch (flags) {
 			case UDF_EXT_FREE :
 			case UDF_EXT_ALLOCATED_BUT_NOT_USED :
@@ -578,9 +590,12 @@ udf_translate_file_extent(struct udf_node *udf_node,
 					overlap--; num_lb--; translen--;
 				}
 				break;
-			default: /* UDF_EXT_REDIRECT */
-				/* ignore, not a mapping */
-				break;
+			default:
+				DPRINTF(TRANSLATE,
+					("Translate file extent "
+					 "failed: bad flags %x\n", flags));
+				UDF_UNLOCK_NODE(udf_node, 0);
+				return EINVAL;
 			}
 		}
 		if (num_lb == 0)
