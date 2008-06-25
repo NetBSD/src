@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.18 2008/06/25 03:06:25 christos Exp $ */
+/* $NetBSD: rb.c,v 1.19 2008/06/25 04:56:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -212,7 +212,6 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	 */
 	self->rb_parent = parent;
 	RB_SET_POSITION(self, position);
-	RB_MARK_MOVED(self);
 	if (__predict_false(parent == (struct rb_node *) &rbt->rbt_root)) {
 		RB_MARK_ROOT(self);
 		RB_MARK_BLACK(self);		/* root is always black */
@@ -229,7 +228,6 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 		 * parent is a minmax node and we on their min/max side,
 		 * we must be the new min/max node.
 		 */
-		RB_MARK_MOVED(parent);
 		if (parent == rbt->rbt_minmax[position])
 			rbt->rbt_minmax[position] = self;
 #endif /* !RBSMALL */
@@ -316,9 +314,6 @@ rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father,
 	 */
 	new_father->rb_parent = grandpa;
 	new_child->rb_parent = new_father;
-	if (!RB_ROOT_P(old_father))
-		RB_MARK_MOVED(grandpa);
-	RB_MARK_MOVED(new_father);
 
 	/*
 	 * Exchange properties between new_father and new_child.  The only
@@ -329,7 +324,6 @@ rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father,
 	RB_COPY_PROPERTIES(new_father, old_father);
 	RB_COPY_PROPERTIES(new_child, &tmp);
 	RB_SET_POSITION(new_child, other);
-	RB_MARK_MOVED(new_child);
 
 	/*
 	 * Make sure to reparent the new child to ourself.
@@ -337,7 +331,6 @@ rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father,
 	if (!RB_SENTINEL_P(new_child->rb_nodes[which])) {
 		new_child->rb_nodes[which]->rb_parent = new_child;
 		RB_SET_POSITION(new_child->rb_nodes[which], which);
-		RB_MARK_MOVED(new_child->rb_nodes[which]);
 	}
 
 	KASSERT(rb_tree_check_node(rbt, new_father, NULL, false));
@@ -488,7 +481,6 @@ rb_tree_prune_node(struct rb_tree *rbt, struct rb_node *self, bool rebalance)
 	}
 	RB_MARK_SENTINEL(self);	/* so remove_node will fail */
 #endif
-	RB_MARK_MOVED(father);
 
 	/*
 	 * Rebalance if requested.
@@ -560,7 +552,6 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
 			 */
 			standin_son->rb_parent = standin_father;
 			RB_SET_POSITION(standin_son, standin_which);
-			RB_MARK_MOVED(standin_son);
 		}
 	}
 
@@ -597,7 +588,6 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
 		 */
 		standin->rb_nodes[standin_other] = self->rb_nodes[standin_other];
 		standin->rb_nodes[standin_other]->rb_parent = standin;
-		RB_MARK_MOVED(standin->rb_nodes[standin_other]);
 		KASSERT(RB_POSITION_P(self->rb_nodes[standin_other]) == standin_other);
 		/*
 		 * Use standin_other because we need to preserve standin_which
@@ -613,7 +603,6 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
 	KASSERT(standin->rb_nodes[standin_other] != self->rb_nodes[standin_other]);
 	standin->rb_nodes[standin_other] = self->rb_nodes[standin_other];
 	standin->rb_nodes[standin_other]->rb_parent = standin;
-	RB_MARK_MOVED(standin->rb_nodes[standin_other]);
 
 	/*
 	 * Now copy the result of self to standin and then replace
@@ -622,7 +611,6 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
 	RB_COPY_PROPERTIES(standin, self);
 	standin->rb_parent = self->rb_parent;
 	standin->rb_parent->rb_nodes[RB_POSITION_P(standin)] = standin;
-	RB_MARK_MOVED(standin);
 
 	/*
 	 * Remove ourselves from the node list, decrement the count,
@@ -679,9 +667,6 @@ rb_tree_prune_blackred_branch(struct rb_tree *rbt, struct rb_node *self,
 	father->rb_nodes[RB_POSITION_P(self)] = son;
 	son->rb_parent = father;
 	RB_COPY_PROPERTIES(son, self);
-	RB_MARK_MOVED(son);
-	if (__predict_false(!RB_ROOT_P(son)))
-		RB_MARK_MOVED(father);
 
 	/*
 	 * Remove ourselves from the node list, decrement the count,
