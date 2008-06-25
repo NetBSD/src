@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.63 2008/06/06 20:34:24 joerg Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.64 2008/06/25 18:05:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.63 2008/06/06 20:34:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.64 2008/06/25 18:05:17 joerg Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -751,7 +751,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		dev = ACPI_HIWORD(ptrp->Address);
 
 		mpi = &mp_intrs[mpacpi_intr_index];
-		mpi->bus_pin = (dev << 2) | ptrp->Pin;
+		mpi->bus_pin = (dev << 2) | (ptrp->Pin & 3);
 		mpi->bus = mpb;
 		mpi->type = MPS_INTTYPE_INT;
 
