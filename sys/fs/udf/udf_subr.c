@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.53 2008/06/25 15:59:24 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.54 2008/06/25 16:06:29 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.53 2008/06/25 15:59:24 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.54 2008/06/25 16:06:29 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2935,7 +2935,7 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 		}
 	} else {
 		/* mounting read/write */
-		if (error)
+/*		if (error) */
 			error = EROFS;
 	}
 	DPRINTFIF(VOLUMES, error, ("udf mount: failed to read "
