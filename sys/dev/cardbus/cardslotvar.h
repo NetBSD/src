@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.13 2008/06/25 11:42:32 drochner Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.14 2008/06/25 15:29:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -50,12 +50,6 @@ struct cardslot_attach_args {
 
 	/* for 16-bit pcmcia */
 	struct pcmciabus_attach_args *caa_16_attach;
-
-	/*
-	 * XXX: for 16-bit pcmcia.  dirty!  This should be removed to
-         * achieve MI.
-	 */
-	struct pcic_handle *caa_ph;
 };
 
 

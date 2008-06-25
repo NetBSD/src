@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.172 2008/06/25 11:42:32 drochner Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.173 2008/06/25 15:29:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.172 2008/06/25 11:42:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.173 2008/06/25 15:29:23 drochner Exp $");
 
 /*
 #define CBB_DEBUG
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.172 2008/06/25 11:42:32 drochner Exp $")
 #include <dev/pcmcia/pcmciavar.h>
 
 #include <dev/ic/i82365reg.h>
-#include <dev/ic/i82365var.h>
 #include <dev/pci/pccbbvar.h>
 
 #ifndef __NetBSD_Version__
@@ -115,10 +114,11 @@ static int pccbbintr_function(struct pccbb_softc *);
 
 static int pccbb_detect_card(struct pccbb_softc *);
 
-static void pccbb_pcmcia_write(struct pcic_handle *, int, u_int8_t);
-static u_int8_t pccbb_pcmcia_read(struct pcic_handle *, int);
-#define Pcic_read(ph, reg) ((ph)->ph_read((ph), (reg)))
-#define Pcic_write(ph, reg, val) ((ph)->ph_write((ph), (reg), (val)))
+static void pccbb_pcmcia_write(struct pccbb_softc *, int, u_int8_t);
+static u_int8_t pccbb_pcmcia_read(struct pccbb_softc *, int);
+#define Pcic_read(ph, reg) pccbb_pcmcia_read((ph)->ph_parent, (reg))
+#define Pcic_write(ph, reg, val) pccbb_pcmcia_write((ph)->ph_parent, \
+						    (reg), (val))
 
 STATIC int cb_reset(struct pccbb_softc *);
 STATIC int cb_detect_voltage(struct pccbb_softc *);
@@ -717,7 +717,6 @@ pccbb_pci_callback(device_t self)
 	else
 		caa.caa_cb_attach = &cba;
 	caa.caa_16_attach = &paa;
-	caa.caa_ph = &sc->sc_pcmcia_h;
 
 	pccbb_intrinit(sc);
 
@@ -1001,14 +1000,7 @@ pccbb_pcmcia_attach_setup(struct pccbb_softc *sc,
 
 	/* initialize pcmcia part in pccbb_softc */
 	ph->ph_parent = sc;
-	ph->sock = sc->sc_function;
-	ph->flags = 0;
-	ph->shutdown = 0;
-	ph->ih_irq = sc->sc_pa.pa_intrline;
-	ph->ph_bus_t = sc->sc_base_memt;
-	ph->ph_bus_h = sc->sc_base_memh;
-	ph->ph_read = pccbb_pcmcia_read;
-	ph->ph_write = pccbb_pcmcia_write;
+	/* rest of ph is zero-initialized */
 	sc->sc_pct = &pccbb_pcmcia_funcs;
 
 	/*
@@ -1037,7 +1029,7 @@ pccbb_pcmcia_attach_setup(struct pccbb_softc *sc,
 	paa->iobase = 0;	       /* I don't use them */
 	paa->iosize = 0;
 #if rbus
-	rb = ((struct pccbb_softc *)(ph->ph_parent))->sc_rbus_iot;
+	rb = sc->sc_rbus_iot;
 	paa->iobase = rb->rb_start + rb->rb_offset;
 	paa->iosize = rb->rb_end - rb->rb_start;
 #endif
@@ -1246,22 +1238,22 @@ pci113x_insert(void *arg)
 
 #define PCCBB_PCMCIA_OFFSET 0x800
 static u_int8_t
-pccbb_pcmcia_read(struct pcic_handle *ph, int reg)
+pccbb_pcmcia_read(struct pccbb_softc *sc, int reg)
 {
-	bus_space_barrier(ph->ph_bus_t, ph->ph_bus_h,
+	bus_space_barrier(sc->sc_base_memt, sc->sc_base_memh,
 	    PCCBB_PCMCIA_OFFSET + reg, 1, BUS_SPACE_BARRIER_READ);
 
-	return bus_space_read_1(ph->ph_bus_t, ph->ph_bus_h,
+	return bus_space_read_1(sc->sc_base_memt, sc->sc_base_memh,
 	    PCCBB_PCMCIA_OFFSET + reg);
 }
 
 static void
-pccbb_pcmcia_write(struct pcic_handle *ph, int reg, u_int8_t val)
+pccbb_pcmcia_write(struct pccbb_softc *sc, int reg, u_int8_t val)
 {
-	bus_space_write_1(ph->ph_bus_t, ph->ph_bus_h, PCCBB_PCMCIA_OFFSET + reg,
-	    val);
+	bus_space_write_1(sc->sc_base_memt, sc->sc_base_memh,
+			  PCCBB_PCMCIA_OFFSET + reg, val);
 
-	bus_space_barrier(ph->ph_bus_t, ph->ph_bus_h,
+	bus_space_barrier(sc->sc_base_memt, sc->sc_base_memh,
 	    PCCBB_PCMCIA_OFFSET + reg, 1, BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -2109,10 +2101,10 @@ pccbb_pcmcia_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 	 * Allocate some arbitrary I/O space.
 	 */
 
-	iot = ((struct pccbb_softc *)(ph->ph_parent))->sc_iot;
+	iot = ph->ph_parent->sc_iot;
 
 #if rbus
-	rb = ((struct pccbb_softc *)(ph->ph_parent))->sc_rbus_iot;
+	rb = ph->ph_parent->sc_rbus_iot;
 	if (rbus_space_alloc(rb, start, size, mask, align, 0, &ioaddr, &ioh)) {
 		return 1;
 	}
@@ -2206,7 +2198,7 @@ pccbb_pcmcia_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 
 	/* Sanity check I/O handle. */
 
-	if (((struct pccbb_softc *)ph->ph_parent)->sc_iot != pcihp->iot) {
+	if (ph->ph_parent->sc_iot != pcihp->iot) {
 		panic("pccbb_pcmcia_io_map iot is bogus");
 	}
 
@@ -2558,7 +2550,7 @@ pccbb_pcmcia_socket_settype(pcmcia_chipset_handle_t pch, int type)
 	Pcic_write(ph, PCIC_INTR, intr);
 
 	DPRINTF(("%s: pccbb_pcmcia_socket_settype %02x type %s %02x\n",
-	    device_xname(((struct pccbb_softc *)ph->ph_parent)->sc_dev),
+	    device_xname(ph->ph_parent->sc_dev),
 	    ph->sock, ((type == PCMCIA_IFTYPE_IO) ? "io" : "mem"), intr));
 }
 
@@ -2741,8 +2733,7 @@ pccbb_pcmcia_do_mem_map(struct pcic_handle *ph, int win)
 	Pcic_write(ph, regbase_win + PCIC_SMM_START_LOW, start_low);
 	Pcic_write(ph, regbase_win + PCIC_SMM_START_HIGH, start_high);
 
-	if (((struct pccbb_softc *)ph->
-	    ph_parent)->sc_pcmcia_flags & PCCBB_PCMCIA_MEM_32) {
+	if (ph->ph_parent->sc_pcmcia_flags & PCCBB_PCMCIA_MEM_32) {
 		Pcic_write(ph, 0x40 + win, mem_window);
 	}
 
@@ -2777,15 +2768,13 @@ pccbb_pcmcia_do_mem_map(struct pcic_handle *ph, int win)
 		r4 = Pcic_read(ph, regbase_win + PCIC_SMM_STOP_HIGH);
 		r5 = Pcic_read(ph, regbase_win + PCIC_CMA_LOW);
 		r6 = Pcic_read(ph, regbase_win + PCIC_CMA_HIGH);
-		if (((struct pccbb_softc *)(ph->
-		    ph_parent))->sc_pcmcia_flags & PCCBB_PCMCIA_MEM_32) {
+		if (ph->ph_parent->sc_pcmcia_flags & PCCBB_PCMCIA_MEM_32) {
 			r7 = Pcic_read(ph, 0x40 + win);
 		}
 
 		printf("pccbb_pcmcia_do_mem_map window %d: %02x%02x %02x%02x "
 		    "%02x%02x", win, r1, r2, r3, r4, r5, r6);
-		if (((struct pccbb_softc *)(ph->
-		    ph_parent))->sc_pcmcia_flags & PCCBB_PCMCIA_MEM_32) {
+		if (ph->ph_parent->sc_pcmcia_flags & PCCBB_PCMCIA_MEM_32) {
 			printf(" %02x", r7);
 		}
 		printf("\n");
@@ -2832,7 +2821,7 @@ pccbb_pcmcia_mem_map(pcmcia_chipset_handle_t pch, int kind,
 
 	/* XXX this is pretty gross */
 
-	if (((struct pccbb_softc *)ph->ph_parent)->sc_memt != pcmhp->memt) {
+	if (ph->ph_parent->sc_memt != pcmhp->memt) {
 		panic("pccbb_pcmcia_mem_map memt is bogus");
 	}
 

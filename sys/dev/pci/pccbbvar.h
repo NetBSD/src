@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.35 2008/06/25 11:42:32 drochner Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.36 2008/06/25 15:29:23 drochner Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -32,7 +32,6 @@
 /* require sys/queue.h */
 /* require sys/callout.h */
 /* require dev/ic/i82365reg.h */
-/* require dev/ic/i82365var.h */
 
 #ifndef _DEV_PCI_PCCBBVAR_H_
 #define	_DEV_PCI_PCCBBVAR_H_
@@ -66,6 +65,26 @@ struct pccbb_win_chain {
 #define	PCCBB_MEM_CACHABLE	1
 
 TAILQ_HEAD(pccbb_win_chain_head, pccbb_win_chain);
+
+struct pccbb_softc; /* forward */
+struct pcic_handle {
+	struct pccbb_softc *ph_parent;
+
+	/* extracted from i82365var.h */
+	int     memalloc;
+	struct {
+		bus_addr_t      addr;
+		bus_size_t      size;
+		long            offset;
+		int             kind;
+	} mem[PCIC_MEM_WINS];
+	int	ioalloc;
+	struct {
+		bus_addr_t      addr;
+		bus_size_t      size;
+		int             width;
+	} io[PCIC_IO_WINS];
+};
 
 struct pccbb_softc {
 	device_t sc_dev;
