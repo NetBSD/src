@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.34 2008/05/27 21:32:47 dyoung Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.35 2008/06/25 11:42:32 drochner Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -54,38 +54,7 @@
 #define	CB_TI1420	10	/* TI PCI1420 */
 #define	CB_O2MICRO	11	/* O2 Micro 67xx/68xx/69xx */
 
-struct pccbb_softc;
 struct pccbb_intrhand_list;
-
-
-struct cbb_pcic_handle {
-	device_t ph_parent;
-	bus_space_tag_t ph_base_t;
-	bus_space_handle_t ph_base_h;
-	u_int8_t (*ph_read)(struct cbb_pcic_handle *, int);
-	void (*ph_write)(struct cbb_pcic_handle *, int, u_int8_t);
-	int sock;
-
-	int vendor;
-	int flags;
-	int memalloc;
-	struct {
-		bus_addr_t addr;
-		bus_size_t size;
-		long offset;
-		int kind;
-	} mem[PCIC_MEM_WINS];
-	int ioalloc;
-	struct {
-		bus_addr_t addr;
-		bus_size_t size;
-		int width;
-	} io[PCIC_IO_WINS];
-	int ih_irq;
-	device_t pcmcia;
-
-	int shutdown;
-};
 
 struct pccbb_win_chain {
 	bus_addr_t wc_start;		/* Caution: region [start, end], */
@@ -99,7 +68,7 @@ struct pccbb_win_chain {
 TAILQ_HEAD(pccbb_win_chain_head, pccbb_win_chain);
 
 struct pccbb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_tag_t sc_memt;
 	bus_dma_tag_t sc_dmat;
