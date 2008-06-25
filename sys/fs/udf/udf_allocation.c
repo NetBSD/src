@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.4 2008/06/25 10:46:35 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.5 2008/06/25 15:28:29 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.4 2008/06/25 10:46:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.5 2008/06/25 15:28:29 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -384,6 +384,13 @@ translate_again:
 		for (;;) {
 			udf_get_adslot(ump->metadata_node,
 				slot, &s_icb_loc, &eof);
+			DPRINTF(ADWLK, ("slot %d, eof = %d, flags = %d, "
+				"len = %d, lb_num = %d, part = %d\n",
+				slot, eof,
+				UDF_EXT_FLAGS(udf_rw32(s_icb_loc.len)),
+				UDF_EXT_LEN(udf_rw32(s_icb_loc.len)),
+				udf_rw32(s_icb_loc.loc.lb_num),
+				udf_rw16(s_icb_loc.loc.part_num)));
 			if (eof) {
 				DPRINTF(TRANSLATE,
 					("Meta partition translation "
@@ -395,12 +402,16 @@ translate_again:
 			flags = UDF_EXT_FLAGS(len);
 			len   = UDF_EXT_LEN(len);
 
+			if (flags == UDF_EXT_REDIRECT) {
+				slot++;
+				continue;
+			}
+
 			end_foffset = foffset + len;
 
 			if (end_foffset > lb_num * lb_size)
 				break;	/* found */
-			if (flags != UDF_EXT_REDIRECT)
-				foffset = end_foffset;
+			foffset = end_foffset;
 			slot++;
 		}
 		/* found overlapping slot */
@@ -1267,7 +1278,7 @@ udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb,
 	if (addr_type == UDF_ICB_SHORT_ALLOC) {
 		short_ad = (struct short_ad *) (data_pos + offset);
 		icb->len          = short_ad->len;
-		icb->loc.part_num = udf_rw16(0);	/* ignore */
+		icb->loc.part_num = udf_node->loc.loc.part_num;
 		icb->loc.lb_num   = short_ad->lb_num;
 	} else if (addr_type == UDF_ICB_LONG_ALLOC) {
 		long_ad = (struct long_ad *) (data_pos + offset);
