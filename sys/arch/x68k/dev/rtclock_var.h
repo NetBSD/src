@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock_var.h,v 1.9 2007/03/04 03:25:33 isaki Exp $	*/
+/*	$NetBSD: rtclock_var.h,v 1.10 2008/06/25 08:14:59 isaki Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -38,8 +38,6 @@
 #define _RTCLOCKVAR_H_
 
 struct rtc_softc {
-	struct device		sc_dev;
-
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bht;
 	struct todr_chip_handle	sc_todr;

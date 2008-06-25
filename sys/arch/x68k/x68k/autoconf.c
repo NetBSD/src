@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 2008/02/12 18:29:22 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56 2008/06/25 08:14:59 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55 2008/02/12 18:29:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2008/06/25 08:14:59 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55 2008/02/12 18:29:22 joerg Exp $");
 
 void configure(void);
 static void findroot(void);
-void mbattach(struct device *, struct device *, void *);
-int mbmatch(struct device *, struct cfdata *, void *);
+int mbmatch(device_t, cfdata_t, void *);
+void mbattach(device_t, device_t, void *);
 int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
 
 static struct device *scsi_find(dev_t);
@@ -272,13 +272,13 @@ scsi_find(dev_t bdev)
 /*
  * mainbus driver
  */
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mbmatch, mbattach, NULL, NULL);
 
 static int mb_attached;
 
 int
-mbmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+mbmatch(device_t parent, cfdata_t cf, void *auxp)
 {
 
 	if (mb_attached)
@@ -291,12 +291,12 @@ mbmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * "find" all the things that should be there.
  */
 void
-mbattach(struct device *pdp, struct device *dp, void *auxp)
+mbattach(device_t parent, device_t dp, void *auxp)
 {
 
 	mb_attached = 1;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	config_found(dp, __UNCONST("intio")  , NULL);
 	config_found(dp, __UNCONST("grfbus") , NULL);

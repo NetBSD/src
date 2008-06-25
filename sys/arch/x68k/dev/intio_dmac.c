@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.29 2008/06/23 08:33:38 isaki Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.30 2008/06/25 08:14:59 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.29 2008/06/23 08:33:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.30 2008/06/25 08:14:59 isaki Exp $");
 
 #include "opt_m680x0.h"
 
@@ -61,7 +61,7 @@ int dmacdebug = 0;
 
 static void dmac_init_channels(struct dmac_softc *);
 #ifdef DMAC_ARRAYCHAIN
-static int dmac_program_arraychain(struct device *, struct dmac_dma_xfer *,
+static int dmac_program_arraychain(device_t, struct dmac_dma_xfer *,
 	u_int, u_int);
 #endif
 static int dmac_done(void *);
@@ -74,16 +74,16 @@ static int dmac_dump_regs(void);
 /*
  * autoconf stuff
  */
-static int dmac_match(struct device *, struct cfdata *, void *);
-static void dmac_attach(struct device *, struct device *, void *);
+static int dmac_match(device_t, cfdata_t, void *);
+static void dmac_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(dmac, sizeof(struct dmac_softc),
+CFATTACH_DECL_NEW(dmac, sizeof(struct dmac_softc),
     dmac_match, dmac_attach, NULL, NULL);
 
 static int dmac_attached;
 
 static int
-dmac_match(struct device *parent, struct cfdata *cf, void *aux)
+dmac_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -105,12 +105,14 @@ dmac_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-dmac_attach(struct device *parent, struct device *self, void *aux)
+dmac_attach(device_t parent, device_t self, void *aux)
 {
-	struct dmac_softc *sc = (struct dmac_softc *)self;
+	struct dmac_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
+	struct intio_softc *intio;
 	int r;
 
+	sc->sc_dev = self;
 	dmac_attached = 1;
 
 	ia->ia_size = DMAC_CHAN_SIZE * DMAC_NCHAN;
@@ -120,12 +122,14 @@ dmac_attach(struct device *parent, struct device *self, void *aux)
 		panic("IO map for DMAC corruption??");
 #endif
 
-	((struct intio_softc*) parent)->sc_dmac = self;
+	intio = device_private(parent);
+	intio->sc_dmac = self;
 	sc->sc_bst = ia->ia_bst;
 	bus_space_map(sc->sc_bst, ia->ia_addr, ia->ia_size, 0, &sc->sc_bht);
 	dmac_init_channels(sc);
 
-	printf(": HD63450 DMAC\n%s: 4 channels available.\n", self->dv_xname);
+	aprint_normal(": HD63450 DMAC\n");
+	aprint_normal_dev(self, "4 channels available.\n");
 }
 
 static void
@@ -137,7 +141,7 @@ dmac_init_channels(struct dmac_softc *sc)
 	for (i=0; i<DMAC_NCHAN; i++) {
 		sc->sc_channels[i].ch_channel = i;
 		sc->sc_channels[i].ch_name[0] = 0;
-		sc->sc_channels[i].ch_softc = &sc->sc_dev;
+		sc->sc_channels[i].ch_softc = sc->sc_dev;
 		bus_space_subregion(sc->sc_bst, sc->sc_bht,
 				    DMAC_CHAN_SIZE*i, DMAC_CHAN_SIZE,
 				    &sc->sc_channels[i].ch_bht);
@@ -155,19 +159,19 @@ dmac_init_channels(struct dmac_softc *sc)
  * Channel initialization/deinitialization per user device.
  */
 struct dmac_channel_stat *
-dmac_alloc_channel(struct device *self, int ch, const char *name, int normalv,
+dmac_alloc_channel(device_t self, int ch, const char *name, int normalv,
     dmac_intr_handler_t normal, void *normalarg, int errorv,
     dmac_intr_handler_t error, void *errorarg)
 {
-	struct intio_softc *intio = (void *)self;
-	struct dmac_softc *sc = (void *)intio->sc_dmac;
+	struct intio_softc *intio = device_private(self);
+	struct dmac_softc *sc = device_private(intio->sc_dmac);
 	struct dmac_channel_stat *chan = &sc->sc_channels[ch];
 #ifdef DMAC_ARRAYCHAIN
 	int r, dummy;
 #endif
 
-	printf("%s: allocating ch %d for %s.\n",
-		sc->sc_dev.dv_xname, ch, name);
+	aprint_normal_dev(sc->sc_dev, "allocating ch %d for %s.\n",
+		ch, name);
 	DPRINTF(3, ("dmamap=%p\n", (void *)chan->ch_xfer.dx_dmamap));
 #ifdef DIAGNOSTIC
 	if (ch < 0 || ch >= DMAC_NCHAN)
@@ -323,7 +327,7 @@ dmac_prepare_xfer(struct dmac_channel_stat *chan, bus_dma_tag_t dmat,
 	xf->dx_scr = scr & (DMAC_SCR_MAC_MASK|DMAC_SCR_DAC_MASK);
 	xf->dx_device = dar;
 
-	dmac_load_xfer(&sc->sc_dev, xf);
+	dmac_load_xfer(sc->sc_dev, xf);
 
 	return xf;
 }
@@ -505,7 +509,7 @@ dmac_done(void *arg)
 #ifdef DMAC_ARRAYCHAIN
 	/* Continue transfer */
 	DPRINTF(3, ("reprograming\n"));
-	c = dmac_program_arraychain(&sc->sc_dev, xf, 0, map->dm_mapsize);
+	c = dmac_program_arraychain(sc->sc_dev, xf, 0, map->dm_mapsize);
 
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
 	bus_space_write_4(sc->sc_bst, chan->ch_bht,
