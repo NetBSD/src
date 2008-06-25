@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.8 2007/03/04 06:01:07 christos Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.9 2008/06/25 08:14:59 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -77,7 +77,7 @@ struct vs_dma {
 #define DMAADDR(dma)	((dma)->vd_map->dm_segs[0].ds_addr)
 
 struct vs_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;

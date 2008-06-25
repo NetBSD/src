@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.10 2008/06/23 08:33:38 isaki Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.11 2008/06/25 08:14:59 isaki Exp $	*/
 
 /*
  *
@@ -64,20 +64,19 @@ struct intio_attach_args {
 };
 
 struct intio_softc {
-	struct device	sc_dev;
 	bus_space_tag_t	sc_bst;
 	bus_dma_tag_t	sc_dmat;
 	struct extent	*sc_map;
-	struct device	*sc_dmac;
+	device_t	sc_dmac;
 };
 
 enum intio_map_flag {
 	INTIO_MAP_ALLOCATE = 0,
 	INTIO_MAP_TESTONLY = 1
 };
-int intio_map_allocate_region(struct device *, struct intio_attach_args *,
+int intio_map_allocate_region(device_t, struct intio_attach_args *,
 	enum intio_map_flag);
-int intio_map_free_region(struct device *, struct intio_attach_args *);
+int intio_map_free_region(device_t, struct intio_attach_args *);
 
 typedef int (*intio_intr_handler_t)(void *);
 
