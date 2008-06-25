@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.41 2008/06/24 17:32:09 drochner Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.42 2008/06/25 11:42:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.41 2008/06/24 17:32:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.42 2008/06/25 11:42:32 drochner Exp $");
 
 #include "opt_cardslot.h"
 
@@ -76,7 +76,7 @@ static int cardslot_16_print(void *, const char *);
 static int cardslot_16_submatch(struct device *, struct cfdata *,
 				     const int *, void *);
 
-CFATTACH_DECL(cardslot, sizeof(struct cardslot_softc),
+CFATTACH_DECL_NEW(cardslot, sizeof(struct cardslot_softc),
     cardslotmatch, cardslotattach, cardslotdetach, NULL);
 
 STATIC int
@@ -108,6 +108,8 @@ cardslotattach(struct device *parent, struct device *self,
 	struct cardbus_softc *csc = NULL;
 	struct pcmcia_softc *psc = NULL;
 
+	sc->sc_dev = self;
+
 	sc->sc_cb_softc = NULL;
 	sc->sc_16_softc = NULL;
 	SIMPLEQ_INIT(&sc->sc_events);
@@ -116,14 +118,14 @@ cardslotattach(struct device *parent, struct device *self,
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	DPRINTF(("%s attaching CardBus bus...\n", device_xname(&sc->sc_dev)));
+	DPRINTF(("%s attaching CardBus bus...\n", device_xname(self)));
 	if (cba != NULL) {
-		csc = (void *)config_found_ia(self, "cbbus", cba,
-					      cardslot_cb_print);
+		csc = device_private(config_found_ia(self, "cbbus", cba,
+				     cardslot_cb_print));
 		if (csc) {
 			/* cardbus found */
 			DPRINTF(("%s: found cardbus on %s\n", __func__,
-				 device_xname(&sc->sc_dev)));
+				 device_xname(self)));
 			sc->sc_cb_softc = csc;
 		}
 	}
@@ -147,7 +149,7 @@ cardslotattach(struct device *parent, struct device *self,
 		config_pending_incr();
 		if (kthread_create(PRI_NONE, 0, NULL, cardslot_event_thread,
 		    sc, &sc->sc_event_thread, "%s", device_xname(self))) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 					 "unable to create thread\n");
 			panic("cardslotattach");
 		}
@@ -359,7 +361,8 @@ cardslot_event_thread(arg)
 					    CARDSLOT_STATUS_NOTWORK);
 				}
 			} else {
-				panic("no cardbus on %s", device_xname(&sc->sc_dev));
+				panic("no cardbus on %s",
+				      device_xname(sc->sc_dev));
 			}
 
 			break;
@@ -387,7 +390,8 @@ cardslot_event_thread(arg)
 					    CARDSLOT_STATUS_WORKING);
 				}
 			} else {
-				panic("no 16-bit pcmcia on %s", device_xname(&sc->sc_dev));
+				panic("no 16-bit pcmcia on %s",
+				      device_xname(sc->sc_dev));
 			}
 
 			break;

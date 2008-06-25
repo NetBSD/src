@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.41 2008/06/24 19:44:52 drochner Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.42 2008/06/25 11:42:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -166,7 +166,7 @@ struct cardbus_devfunc;
  * struct cardbus_softc is the softc for cardbus card.
  */
 struct cardbus_softc {
-	struct device sc_dev;		/* fundamental device structure */
+	device_t sc_dev;		/* fundamental device structure */
 
 	int sc_bus;			/* cardbus bus number */
 	cardbus_intr_line_t sc_intrline; /* CardBus intrline */
