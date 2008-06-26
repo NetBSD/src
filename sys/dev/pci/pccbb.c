@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.174 2008/06/26 12:33:17 drochner Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.175 2008/06/26 17:22:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.174 2008/06/26 12:33:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.175 2008/06/26 17:22:23 drochner Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2384,13 +2384,8 @@ pccbb_pcmcia_delay(struct pcic_handle *ph, int timo, const char *wmesg)
 		panic("pccbb_pcmcia_delay: called with timeout %d", timo);
 	if (!curlwp)
 		panic("pccbb_pcmcia_delay: called in interrupt context");
-#if 0
-	if (!ph->event_thread)
-		panic("pccbb_pcmcia_delay: no event thread");
 #endif
-#endif
-	DPRINTF(("pccbb_pcmcia_delay: \"%s\" %p, sleep %d ms\n",
-	    wmesg, ph->event_thread, timo));
+	DPRINTF(("pccbb_pcmcia_delay: \"%s\", sleep %d ms\n", wmesg, timo));
 	tsleep(pccbb_pcmcia_delay, PWAIT, wmesg, roundup(timo * hz, 1000) / 1000);
 }
 
@@ -2549,9 +2544,9 @@ pccbb_pcmcia_socket_settype(pcmcia_chipset_handle_t pch, int type)
 		intr |= PCIC_INTR_CARDTYPE_MEM;
 	Pcic_write(ph, PCIC_INTR, intr);
 
-	DPRINTF(("%s: pccbb_pcmcia_socket_settype %02x type %s %02x\n",
+	DPRINTF(("%s: pccbb_pcmcia_socket_settype type %s %02x\n",
 	    device_xname(ph->ph_parent->sc_dev),
-	    ph->sock, ((type == PCMCIA_IFTYPE_IO) ? "io" : "mem"), intr));
+	    ((type == PCMCIA_IFTYPE_IO) ? "io" : "mem"), intr));
 }
 
 /*
