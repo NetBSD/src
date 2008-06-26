@@ -1,4 +1,6 @@
-# $NetBSD: md.amd64,v 1.18 2008/05/20 19:01:35 ad Exp $
+# $NetBSD: md.amd64,v 1.19 2008/06/26 16:10:35 kent Exp $
+./@MODULEDIR@/azalia				base-kernel-modules
+./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules
 ./@MODULEDIR@/drm				base-kernel-modules
 ./@MODULEDIR@/drm/drm.kmod			base-kernel-modules
 ./@MODULEDIR@/i915drm				base-kernel-modules
