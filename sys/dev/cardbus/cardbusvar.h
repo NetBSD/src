@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.42 2008/06/25 11:42:32 drochner Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.43 2008/06/26 12:33:17 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -83,7 +83,7 @@ typedef struct cardbus_chipset_tag *cardbus_chipset_tag_t;
  *	void (*cardbus_conf_write)(cardbus_chipset_tag_t ct,
  *	    cardbustag_t tag, int offs, cardbusreg_t val);
  */
-typedef struct cardbus_functions {
+typedef const struct cardbus_functions {
 	int (*cardbus_space_alloc)(cardbus_chipset_tag_t, rbus_tag_t,
 	    bus_addr_t, bus_size_t, bus_addr_t, bus_size_t,
 	    int, bus_addr_t *, bus_space_handle_t *);
@@ -105,7 +105,7 @@ typedef struct cardbus_functions {
 
 #else
 
-typedef struct cardbus_functions {
+typedef const struct cardbus_functions {
 	int (*cardbus_ctrl)(cardbus_chipset_tag_t, int);
 	int (*cardbus_power)(cardbus_chipset_tag_t, int);
 	int (*cardbus_mem_open)(cardbus_chipset_tag_t, int, u_int32_t,

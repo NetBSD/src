@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.14 2007/10/19 12:01:06 ad Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.15 2008/06/26 12:33:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -40,7 +40,7 @@ struct pcmcia_io_handle;
 
 /* interfaces for pcmcia to call the chipset */
 
-typedef struct pcmcia_chip_functions *pcmcia_chipset_tag_t;
+typedef const struct pcmcia_chip_functions *pcmcia_chipset_tag_t;
 typedef void *pcmcia_chipset_handle_t;
 typedef int pcmcia_mem_handle_t;
 
