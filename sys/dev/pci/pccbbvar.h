@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.36 2008/06/25 15:29:23 drochner Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.37 2008/06/26 20:57:10 drochner Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -68,8 +68,6 @@ TAILQ_HEAD(pccbb_win_chain_head, pccbb_win_chain);
 
 struct pccbb_softc; /* forward */
 struct pcic_handle {
-	struct pccbb_softc *ph_parent;
-
 	/* extracted from i82365var.h */
 	int     memalloc;
 	struct {
@@ -105,7 +103,6 @@ struct pccbb_softc {
 
 	void *sc_ih;			/* interrupt handler */
 	struct pci_attach_args sc_pa;	/* copy of our attach args */
-	int sc_function;
 	u_int32_t sc_flags;
 #define	CBB_CARDEXIST	0x01
 #define	CBB_INSERTING	0x01000000
@@ -131,13 +128,10 @@ struct pccbb_softc {
 
 	/* pcmcia stuff */
 	struct pcic_handle sc_pcmcia_h;
-	pcmcia_chipset_tag_t sc_pct;
 	int sc_pcmcia_flags;
 #define	PCCBB_PCMCIA_IO_RELOC	0x01	/* IO addr relocatable stuff exists */
 #define	PCCBB_PCMCIA_MEM_32	0x02	/* 32-bit memory address ready */
 
-	struct proc *sc_event_thread;
-	SIMPLEQ_HEAD(, pcic_event) sc_events;
 	volatile int sc_pwrcycle;
 
 	/* interrupt handler list on the bridge */
