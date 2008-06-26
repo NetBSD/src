@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.5 2008/06/25 15:28:29 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.6 2008/06/26 13:28:45 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.5 2008/06/25 15:28:29 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.6 2008/06/26 13:28:45 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -260,10 +260,13 @@ udf_node_sanity_check(struct udf_node *udf_node,
 			flags = UDF_EXT_FLAGS(len);
 			len   = UDF_EXT_LEN(len);
 		}
-		KASSERT(flags != UDF_EXT_REDIRECT);	/* not implemented yet */
-		*cnt_inflen += len;
-		if (flags == UDF_EXT_ALLOCATED) {
-			*cnt_logblksrec += (len + lb_size -1) / lb_size;
+		if (flags != UDF_EXT_REDIRECT) {
+			*cnt_inflen += len;
+			if (flags == UDF_EXT_ALLOCATED) {
+				*cnt_logblksrec += (len + lb_size -1) / lb_size;
+			}
+		} else {
+			KASSERT(len == lb_size);
 		}
 		whole_lb = ((len % lb_size) == 0);
 	}
