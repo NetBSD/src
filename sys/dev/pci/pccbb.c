@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.173 2008/06/25 15:29:23 drochner Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.174 2008/06/26 12:33:17 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.173 2008/06/25 15:29:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.174 2008/06/26 12:33:17 drochner Exp $");
 
 /*
 #define CBB_DEBUG
@@ -228,7 +228,7 @@ static void cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag,
 CFATTACH_DECL_NEW(cbb_pci, sizeof(struct pccbb_softc),
     pcicbbmatch, pccbbattach, pccbbdetach, NULL);
 
-static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
+static const struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 	pccbb_pcmcia_mem_alloc,
 	pccbb_pcmcia_mem_free,
 	pccbb_pcmcia_mem_map,
@@ -246,7 +246,7 @@ static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 };
 
 #if rbus
-static struct cardbus_functions pccbb_funcs = {
+static const struct cardbus_functions pccbb_funcs = {
 	pccbb_rbus_cb_space_alloc,
 	pccbb_rbus_cb_space_free,
 	pccbb_cb_intr_establish,
@@ -259,7 +259,7 @@ static struct cardbus_functions pccbb_funcs = {
 	pccbb_conf_write,
 };
 #else
-static struct cardbus_functions pccbb_funcs = {
+static const struct cardbus_functions pccbb_funcs = {
 	pccbb_ctrl,
 	pccbb_power_ct,
 	pccbb_mem_open,
