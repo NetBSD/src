@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbuf.c,v 1.7 2006/10/16 03:38:08 christos Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.8 2008/06/27 02:09:49 gmcgarry Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -45,8 +45,7 @@ __RCSID("$NetBSD: mbuf.c,v 1.7 2006/10/16 03:38:08 christos Exp $");
 
 #include <netsmb/smb_lib.h>
 
-#define MBERROR(format, args...) printf("%s(%d): "format, __FUNCTION__ , \
-				    __LINE__ ,## args)
+#define MBERROR(x)	printf x
 
 static int
 m_get(size_t len, struct mbuf **mpp)
@@ -444,7 +443,7 @@ mb_get_mem(struct mbdata *mbp, char * target, size_t size)
 	
 	while (size > 0) {
 		if (m == NULL) {
-			MBERROR("incomplete copy\n");
+			MBERROR(("incomplete copy\n"));
 			return EBADRPC;
 		}
 		count = mb_left(m, mbp->mb_pos);
