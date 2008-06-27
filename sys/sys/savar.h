@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.24.2.9 2008/06/27 01:29:48 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.24.2.10 2008/06/27 03:52:32 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@ struct sadata_upcall {
 #define	SA_UPCALL_DEFER_INTERRUPTED	0x2000
 #define	SA_UPCALL_DEFER			(SA_UPCALL_DEFER_EVENT | \
 					 SA_UPCALL_DEFER_INTERRUPTED)
+#define	SA_UPCALL_LOCKED_EVENT		0x4000
+#define	SA_UPCALL_LOCKED_INTERRUPTED	0x8000
 
 struct sastack {
 	stack_t			sast_stack;
