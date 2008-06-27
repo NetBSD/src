@@ -1,4 +1,4 @@
-/* $NetBSD: mt.c,v 1.44 2008/06/27 01:42:44 gmcgarry Exp $ */
+/* $NetBSD: mt.c,v 1.45 2008/06/27 08:17:43 dogcow Exp $ */
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.44 2008/06/27 01:42:44 gmcgarry Exp $");
+__RCSID("$NetBSD: mt.c,v 1.45 2008/06/27 08:17:43 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ main(int argc, char *argv[])
 		break;
 
 	default:
-		errx(1, "internal error: unknown request %d", comp->c_spcl);
+		errx(1, "internal error: unknown request %ld", comp->c_spcl);
 	}
 
 	exit(0);
