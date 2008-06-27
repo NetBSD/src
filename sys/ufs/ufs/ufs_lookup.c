@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.98.2.4 2008/06/27 04:19:17 simonb Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.98.2.5 2008/06/27 04:20:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.98.2.4 2008/06/27 04:19:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.98.2.5 2008/06/27 04:20:05 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1347,8 +1347,8 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp,
 	const int bsize = 1 << bshift;
 	off_t eof;
 
-	blks = kmem_alloc((1+dirrablks) * sizeof(daddr_t), KM_SLEEP);
-	blksizes = kmem_alloc((1+dirrablks) * sizeof(int), KM_SLEEP);
+	blks = kmem_alloc((1 + dirrablks) * sizeof(daddr_t), KM_SLEEP);
+	blksizes = kmem_alloc((1 + dirrablks) * sizeof(int), KM_SLEEP);
 	ip = VTOI(vp);
 	KASSERT(vp->v_size == ip->i_size);
 	GOP_SIZE(vp, vp->v_size, &eof, 0);
@@ -1384,7 +1384,7 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp,
 	*bpp = bp;
 
  out:
-	kmem_free(blks, (1+dirrablks) * sizeof(daddr_t));
-	kmem_free(blksizes, (1+dirrablks) * sizeof(int));
+	kmem_free(blks, (1 + dirrablks) * sizeof(daddr_t));
+	kmem_free(blksizes, (1 + dirrablks) * sizeof(int));
 	return error;
 }
