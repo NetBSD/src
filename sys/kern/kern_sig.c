@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.283.2.4 2008/06/23 04:31:51 wrstuden Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.283.2.5 2008/06/27 01:34:26 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283.2.4 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283.2.5 2008/06/27 01:34:26 wrstuden Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -720,6 +720,39 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &ucp->uc_mcontext, &ucp->uc_flags);
 	mutex_enter(p->p_lock);
+}
+
+/*
+ * getucontext_sa:
+ *      Get a ucontext_t for use in SA upcall generation.
+ * Teweaked version of getucontext(). We 1) do not take p_lock, 2) 
+ * fudge things with uc_link (which is usually NULL for libpthread
+ * code), and 3) we report an empty signal mask.
+ */
+void
+getucontext_sa(struct lwp *l, ucontext_t *ucp)
+{
+	ucp->uc_flags = 0;
+	ucp->uc_link = l->l_ctxlink;
+
+	sigemptyset(&ucp->uc_sigmask);
+	ucp->uc_flags |= _UC_SIGMASK;
+
+	/*
+	 * The (unsupplied) definition of the `current execution stack'
+	 * in the System V Interface Definition appears to allow returning
+	 * the main context stack.
+	 */
+	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
+		ucp->uc_stack.ss_sp = (void *)l->l_proc->p_stackbase;
+		ucp->uc_stack.ss_size = ctob(l->l_proc->p_vmspace->vm_ssize);
+		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
+	} else {
+		/* Simply copy alternate signal execution stack. */
+		ucp->uc_stack = l->l_sigstk;
+	}
+	ucp->uc_flags |= _UC_STACK;
+	cpu_getmcontext(l, &ucp->uc_mcontext, &ucp->uc_flags);
 }
 
 int

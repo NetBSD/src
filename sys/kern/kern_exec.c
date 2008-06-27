@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.272.4.4 2008/06/24 02:14:43 wrstuden Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.272.4.5 2008/06/27 01:34:26 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.4.4 2008/06/24 02:14:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.4.5 2008/06/27 01:34:26 wrstuden Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -150,7 +150,7 @@ static const struct sa_emul saemul_netbsd = {
 	NULL,
 	NULL,
 	cpu_upcall,
-	(void (*)(struct lwp *, void *))getucontext,
+	(void (*)(struct lwp *, void *))getucontext_sa,
 	sa_ucsp
 };
 
