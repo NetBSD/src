@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.1.2.4 2008/06/27 13:08:13 simonb Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.1.2.5 2008/06/27 13:20:01 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.1.2.4 2008/06/27 13:08:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.1.2.5 2008/06/27 13:20:01 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -105,6 +105,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.1.2.4 2008/06/27 13:08:13 simonb Exp
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>
+
+/* XXX following lifted from ufs_lookup.c */
+#define	FSFMT(vp)	(((vp)->v_mount->mnt_iflag & IMNT_DTYPE) == 0)
 
 /*
  * A virgin directory (no blushing please).
@@ -557,45 +560,80 @@ wapbl_ufs_rename(void *v)
 		(((saved_f_offset >= saved_t_offset) &&
 			(saved_f_offset < saved_t_offset + saved_t_count)) ||
 		((saved_f_offset - saved_f_count >= saved_t_offset) &&
-			(saved_f_offset - saved_f_count < saved_t_offset + saved_t_count)))) {
+			(saved_f_offset - saved_f_count <
+			 saved_t_offset + saved_t_count)))) {
 		struct buf *bp;
 		struct direct *ep;
-		int loc, maxloc;
+		struct ufsmount *ump = fdp->i_ump;
+		doff_t endsearch;	/* offset to end directory search */
+		int dirblksiz = ump->um_dirblksiz;
+		const int needswap = UFS_MPNEEDSWAP(ump);
+		u_long bmask;
+		int namlen, entryoffsetinblock;
 		char *dirbuf;
-#ifdef FFS_EI
-		int needswap = UFS_MPNEEDSWAP(VFSTOUFS(fdvp->v_mount));
-#endif
+
+		bmask = fdvp->v_mount->mnt_stat.f_iosize - 1;
+
 		/*
 		 * the fcnp entry will be somewhere between the start of
 		 * compaction and the original location.
 		 */
-		error = ufs_blkatoff(fdvp, (off_t)saved_t_offset, &dirbuf, &bp,
+		fdp->i_offset = saved_t_offset;
+		error = ufs_blkatoff(fdvp, (off_t)fdp->i_offset, &dirbuf, &bp,
 		    false);
 		if (error)
 			goto bad;
+
 		/*
 		 * keep existing fdp->i_count in case
 		 * compaction started at the same location as the fcnp entry.
 		 */
-		loc = 0;
-		maxloc = saved_f_offset + saved_f_reclen - saved_t_offset;
-		for (loc = 0; loc < maxloc;
-		    loc += ufs_rw16(ep->d_reclen, needswap)) {
-			ep = (struct direct *)(dirbuf + loc);
+		endsearch = saved_f_offset + saved_f_reclen;
+		entryoffsetinblock = 0;
+		while (fdp->i_offset < endsearch) {
+			int reclen;
+
+			/*
+			 * If necessary, get the next directory block.
+			 */
+			if ((fdp->i_offset & bmask) == 0) {
+				if (bp != NULL)
+					brelse(bp, 0);
+				error = ufs_blkatoff(fdvp, (off_t)fdp->i_offset,
+				    &dirbuf, &bp, false);
+				if (error)
+					goto bad;
+				entryoffsetinblock = 0;
+			}
+
+			KASSERT(bp != NULL);
+			ep = (struct direct *)(dirbuf + entryoffsetinblock);
+			reclen = ufs_rw16(ep->d_reclen, needswap);
+
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+			if (FSFMT(fdvp) && needswap == 0)
+				namlen = ep->d_type;
+			else
+				namlen = ep->d_namlen;
+#else
+			if (FSFMT(fdvp) && needswap != 0)
+				namlen = ep->d_type;
+			else
+				namlen = ep->d_namlen;
+#endif
 			if ((ep->d_ino != 0) &&
 			    (ufs_rw32(ep->d_ino, needswap) != WINO) &&
-			    (ep->d_namlen == fcnp->cn_namelen) &&
-			    memcmp(ep->d_name, fcnp->cn_nameptr,
-			           ep->d_namlen) == 0) {
-				fdp->i_offset = saved_t_offset + loc;
-				fdp->i_reclen = ufs_rw16(ep->d_reclen,
-							  needswap);
+			    (namlen == fcnp->cn_namelen) &&
+			    memcmp(ep->d_name, fcnp->cn_nameptr, namlen) == 0) {
+				fdp->i_reclen = reclen;
 				break;
 			}
-			fdp->i_count = ufs_rw16(ep->d_reclen, needswap);
+			fdp->i_offset += reclen;
+			fdp->i_count = reclen;
+			entryoffsetinblock += reclen;
 		}
 
-		KASSERT(loc < maxloc);
+		KASSERT(fdp->i_offset <= endsearch);
 
 		/*
 		 * If fdp->i_offset points to start of a directory block,
