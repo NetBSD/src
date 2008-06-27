@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.98.2.5 2008/06/27 04:20:05 simonb Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.98.2.6 2008/06/27 13:14:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.98.2.5 2008/06/27 04:20:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.98.2.6 2008/06/27 13:14:12 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -694,7 +694,7 @@ ufs_dirbadentry(struct vnode *dp, struct direct *ep, int entryoffsetinblock)
 	    namlen > FFS_MAXNAMLEN) {
 		/*return (1); */
 		printf("First bad, reclen=%#x, DIRSIZ=%lu, namlen=%d, "
-			"flags=%#x entryoffsetinblock=%d, dirblksiz = %d\n",
+			"flags=%#x, entryoffsetinblock=%d, dirblksiz = %d\n",
 			ufs_rw16(ep->d_reclen, needswap),
 			(u_long)DIRSIZ(FSFMT(dp), ep, needswap),
 			namlen, dp->v_mount->mnt_flag, entryoffsetinblock,
