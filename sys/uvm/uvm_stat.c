@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.30.58.1 2008/06/27 15:11:55 simonb Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.30.58.2 2008/06/27 15:52:16 simonb Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.30.58.1 2008/06/27 15:11:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.30.58.2 2008/06/27 15:52:16 simonb Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -84,14 +84,14 @@ uvmhist_dump(struct uvm_history *l)
 {
 	int lcv, s;
 
-	s = 0;	//XXXXXXXXXXXXXXXXXXXXXXX s = splhigh();
+	s = splhigh();
 	lcv = l->f;
 	do {
 		if (l->e[lcv].fmt)
 			uvmhist_print(&l->e[lcv]);
 		lcv = (lcv + 1) % l->n;
 	} while (lcv != l->f);
-	//XXXXXXXXXXXXXXXXXXXXXXX splx(s);
+	splx(s);
 }
 
 /*
@@ -105,7 +105,7 @@ uvmhist_dump_histories(struct uvm_history *hists[])
 	int	s, lcv, hi;
 
 	/* so we don't get corrupted lists! */
-	s = 0;	//XXXXXXXXXXXXXXXXXXXXXXX s = splhigh();
+	s = splhigh();
 
 	/* find the first of each list */
 	for (lcv = 0; hists[lcv]; lcv++)
@@ -160,7 +160,7 @@ restart:
 		if (cur[hi] == hists[hi]->f)
 			cur[hi] = -1;
 	}
-	//XXXXXXXXXXXXXXXXXXXXXXX splx(s);
+	splx(s);
 }
 
 /*
