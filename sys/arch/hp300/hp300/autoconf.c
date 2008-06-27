@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.90 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.90.4.1 2008/06/27 15:11:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.90 2008/04/28 20:23:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.90.4.1 2008/06/27 15:11:16 simonb Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -339,8 +339,6 @@ cpu_configure(void)
 
 	/* Configuration is finished, turn on interrupts. */
 	(void)spl0();
-
-	intr_printlevels();
 }
 
 /**********************************************************************

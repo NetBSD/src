@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.7 2006/08/28 15:15:50 bjh21 Exp $ */
+/* $NetBSD: copyinout.S,v 1.7.64.1 2008/06/27 15:11:16 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.7 2006/08/28 15:15:50 bjh21 Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.7.64.1 2008/06/27 15:11:16 simonb Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
@@ -98,4 +98,4 @@ Lfusufault:
 	mov	pc, ip
 
 Lcurlwp:
-	.word	_C_LABEL(curlwp)
+	.word	_C_LABEL(cpu_info_store) + CI_CURLWP

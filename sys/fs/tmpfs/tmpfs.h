@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.33 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.33.4.1 2008/06/27 15:11:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -366,13 +366,14 @@ int	tmpfs_chflags(struct vnode *, int, kauth_cred_t, struct lwp *);
 int	tmpfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct lwp *);
 int	tmpfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t, struct lwp *);
 int	tmpfs_chsize(struct vnode *, u_quad_t, kauth_cred_t, struct lwp *);
-int	tmpfs_chtimes(struct vnode *, struct timespec *, struct timespec *,
-	    int, kauth_cred_t, struct lwp *);
+int	tmpfs_chtimes(struct vnode *, const struct timespec *,
+    const struct timespec *, const struct timespec *, int, kauth_cred_t,
+    struct lwp *);
 void	tmpfs_itimes(struct vnode *, const struct timespec *,
-	    const struct timespec *);
+	    const struct timespec *, const struct timespec *);
 
 void	tmpfs_update(struct vnode *, const struct timespec *,
-	    const struct timespec *, int);
+	    const struct timespec *, const struct timespec *, int);
 int	tmpfs_truncate(struct vnode *, off_t);
 
 /* --------------------------------------------------------------------- */

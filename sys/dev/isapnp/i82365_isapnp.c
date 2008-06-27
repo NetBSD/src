@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.25 2008/04/08 20:09:27 cegger Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.25.8.1 2008/06/27 15:11:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.25 2008/04/08 20:09:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.25.8.1 2008/06/27 15:11:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ void	pcic_isapnp_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(pcic_isapnp, sizeof(struct pcic_isa_softc),
     pcic_isapnp_match, pcic_isapnp_attach, NULL, NULL);
 
-static struct pcmcia_chip_functions pcic_isa_functions = {
+static const struct pcmcia_chip_functions pcic_isa_functions = {
 	pcic_chip_mem_alloc,
 	pcic_chip_mem_free,
 	pcic_chip_mem_map,

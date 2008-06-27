@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.18.4.1 2008/06/27 15:11:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,13 +36,14 @@
 #include <machine/psl.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	IPL_SOFTBIO	1	/* block software interrupts */
+#define	IPL_SOFTCLOCK	1	/* clock software interrupts */
+#define	IPL_SOFTBIO	2	/* block software interrupts */
 #define	IPL_SOFTNET	3	/* network software interrupts */
 #define	IPL_SOFTSERIAL	4	/* serial software interrupts */
 #define	IPL_VM		5
 #define	IPL_SCHED	6
-#define	IPL_HIGH	6
+#define	IPL_HIGH	7
+#define	NIPL		8
 
 #ifdef _KERNEL
 #define spl0()			_spl0()
@@ -56,12 +57,19 @@
 
 #ifndef _LOCORE
 
+extern const uint16_t ipl2psl_table[NIPL];
+
 typedef int ipl_t;
 typedef struct {
 	uint16_t _psl;
 } ipl_cookie_t;
 
-ipl_cookie_t makeiplcookie(ipl_t);
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
+}
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)

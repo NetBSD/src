@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.14 2008/05/25 15:56:57 chs Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.14.2.1 2008/06/27 15:11:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -363,7 +363,7 @@ ENTRY(x86_cpuid2)
 	movq	%r8, %rbx
 	ret
 
-ENTRY(getss)
+ENTRY(x86_getss)
 	movl	%ss, %eax
 	ret
 

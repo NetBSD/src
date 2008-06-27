@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.58.2.1 2008/06/18 16:33:51 simonb Exp $	*/
+/*	$NetBSD: sched.h,v 1.58.2.2 2008/06/27 15:11:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -89,32 +89,44 @@ struct sched_param {
 #define	SCHED_FIFO	1
 #define	SCHED_RR	2
 
+__BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
 /*
  * Interface of CPU-sets.
  */
 typedef struct _cpuset cpuset_t;
+typedef struct _kcpuset kcpuset_t;	/* XXX: lwp.h included from userland */
+
+#ifdef _KERNEL
+
+
+kcpuset_t *kcpuset_create(void);
+void	kcpuset_destroy(kcpuset_t *);
+void	kcpuset_copy(kcpuset_t *, const kcpuset_t *);
+void	kcpuset_use(kcpuset_t *);
+void	kcpuset_unuse(kcpuset_t *, kcpuset_t **);
+int	kcpuset_copyin(const cpuset_t *, kcpuset_t *, size_t);
+int	kcpuset_copyout(const kcpuset_t *, cpuset_t *, size_t);
+void	kcpuset_zero(kcpuset_t *);
+int	kcpuset_isset(cpuid_t, const kcpuset_t *);
+
+#else
 
 #define	cpuset_create()		_cpuset_create()
 #define	cpuset_destroy(c)	_cpuset_destroy(c)
 #define	cpuset_size(c)		_cpuset_size(c)
 #define	cpuset_zero(c)		_cpuset_zero(c)
-#define	cpuset_isset(i, c)	_cpuset_isset(c, i)
-#define	cpuset_set(i, c)	_cpuset_set(c, i)
-#define	cpuset_clr(i, c)	_cpuset_clr(c, i)
+#define	cpuset_isset(i, c)	_cpuset_isset(i, c)
+#define	cpuset_set(i, c)	_cpuset_set(i, c)
+#define	cpuset_clr(i, c)	_cpuset_clr(i, c)
 
 cpuset_t *_cpuset_create(void);
 void	_cpuset_destroy(cpuset_t *);
 void	_cpuset_zero(cpuset_t *);
-int	_cpuset_set(cpuset_t *, cpuid_t);
-int	_cpuset_clr(cpuset_t *, cpuid_t);
-int	_cpuset_isset(const cpuset_t *, cpuid_t);
+int	_cpuset_set(cpuid_t, cpuset_t *);
+int	_cpuset_clr(cpuid_t, cpuset_t *);
+int	_cpuset_isset(cpuid_t, const cpuset_t *);
 size_t	_cpuset_size(const cpuset_t *);
-#ifdef _KERNEL
-void	kcpuset_copy(cpuset_t *, const cpuset_t *);
-void	kcpuset_use(cpuset_t *);
-void	kcpuset_unuse(cpuset_t *, cpuset_t **);
-size_t	kcpuset_nused(const cpuset_t *);
 #endif
 
 /*
@@ -124,6 +136,7 @@ int	_sched_getaffinity(pid_t, lwpid_t, size_t, cpuset_t *);
 int	_sched_setaffinity(pid_t, lwpid_t, size_t, const cpuset_t *);
 int	_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);
 int	_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
+__END_DECLS
 
 /*
  * CPU states.
@@ -157,7 +170,7 @@ struct schedstate_percpu {
 	struct lwp	*spc_migrating;	/* (: migrating LWP */
 	pri_t		spc_curpriority;/* m: usrpri of curlwp */
 	pri_t		spc_maxpriority;/* m: highest priority queued */
-	psetid_t	spc_psid;	/* (: processor-set ID */
+	psetid_t	spc_psid;	/* c: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */
 
 	/* For the most part, this set of data is CPU-private. */

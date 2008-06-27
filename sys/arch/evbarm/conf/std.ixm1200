@@ -1,4 +1,4 @@
-#	$NetBSD: std.ixm1200,v 1.11 2008/05/09 00:08:37 matt Exp $
+#	$NetBSD: std.ixm1200,v 1.11.2.1 2008/06/27 15:11:16 simonb Exp $
 #
 # standard NetBSD/evbarm for IXM1200 options
 
@@ -18,7 +18,7 @@ options 	ARM32
 
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
-options 	KERNEL_EXT_BASE=0xc0000000
+options 	KERNEL_BASE_EXT=0xc0000000
 makeoptions	LOADADDRESS="0xC0200000"
 makeoptions	BOARDTYPE="ixm1200"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.ixm1200"

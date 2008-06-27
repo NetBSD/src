@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.16 2008/05/30 11:26:21 jmcneill Exp $ */
+/* $NetBSD: drm_drv.c,v 1.16.2.1 2008/06/27 15:11:21 simonb Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.16 2008/05/30 11:26:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.16.2.1 2008/06/27 15:11:21 simonb Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -451,7 +451,7 @@ static int drm_load(drm_device_t *dev)
 
 	TAILQ_INIT(&dev->maplist);
 
-	drm_mem_init();
+	drm_mem_init(dev);
 	drm_sysctl_init(dev);
 	TAILQ_INIT(&dev->files);
 
@@ -552,7 +552,7 @@ static void drm_unload(drm_device_t *dev)
 	if (dev->driver.unload != NULL)
 		dev->driver.unload(dev);
 
-	drm_mem_uninit();
+	drm_mem_uninit(dev);
 	DRM_SPINUNINIT(&dev->dev_lock);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.906.2.2 2008/06/18 16:33:03 simonb Exp $
+#	$NetBSD: files,v 1.906.2.3 2008/06/27 15:11:20 simonb Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1071,8 +1071,8 @@ define	fwbus	{ }			# IEEE 1394 attachment
 define	vmebus	{ }			# VME bus attachment
 define	acpibus	{ }			# ACPI "bus" attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
-define	cbbus	{[slot = -1]}		# CardBus attachment
-define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
+define	cbbus	{ }			# CardBus attachment
+define	pcmciaslot { }			# PCMCIA slot itself
 
 # We need the USB bus controllers here so different busses can
 # use them in an 'attach-with'.

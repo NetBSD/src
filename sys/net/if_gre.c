@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.135.2.1 2008/06/18 16:33:50 simonb Exp $ */
+/*	$NetBSD: if_gre.c,v 1.135.2.2 2008/06/27 15:11:48 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.135.2.1 2008/06/18 16:33:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.135.2.2 2008/06/27 15:11:48 simonb Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -1139,8 +1139,12 @@ gre_ssock(struct ifnet *ifp, struct gre_soparm *sp, int fd)
 	struct socket *so;
 	struct sockaddr_storage dst, src;
 
-	if ((error = getsock(fd, &fp)) != 0)
-		return error;
+	if ((fp = fd_getfile(fd)) == NULL)
+		return EBADF;
+	if (fp->f_type != DTYPE_SOCKET) {
+		fd_putfile(fd);
+		return ENOTSOCK;
+	}
 
 	GRE_DPRINTF(sc, "\n");
 

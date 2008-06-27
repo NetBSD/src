@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.44 2008/04/14 21:20:41 cegger Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.44.8.1 2008/06/27 15:11:21 simonb Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.44 2008/04/14 21:20:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.44.8.1 2008/06/27 15:11:21 simonb Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -95,7 +95,7 @@ struct ex_cardbus_softc {
 	struct ex_softc sc_softc;
 
 	cardbus_devfunc_t sc_ct;
-	int sc_intrline;
+	cardbus_intr_line_t sc_intrline;
 	uint8_t sc_cardbus_flags;
 #define EX_REATTACH		0x01
 #define EX_ABSENT		0x02
@@ -362,7 +362,6 @@ ex_cardbus_enable(struct ex_softc *sc)
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
 		return (1);
 	}
-	aprint_normal_dev(sc->sc_dev, "interrupting at %d\n", csc->sc_intrline);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.30.4.1 2008/06/18 16:32:49 simonb Exp $ */
+/*	$NetBSD: syscall.c,v 1.30.4.2 2008/06/27 15:11:18 simonb Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,9 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30.4.1 2008/06/18 16:32:49 simonb Exp $");
-
-#define NEW_FPSTATE
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30.4.2 2008/06/27 15:11:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.16 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.16.8.1 2008/06/27 15:11:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);
-int rumpuser_usleep(unsigned long, int *);
+int rumpuser_nanosleep(const struct timespec *, struct timespec *, int *);
 
 #define rumpuser_malloc(a,b) _rumpuser_malloc(a,b,__func__,__LINE__);
 #define rumpuser_realloc(a,b,c) _rumpuser_realloc(a,b,c,__func__,__LINE__);

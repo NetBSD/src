@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.32.16.1 2008/06/18 16:33:34 simonb Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.32.16.2 2008/06/27 15:11:28 simonb Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.32.16.1 2008/06/18 16:33:34 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.32.16.2 2008/06/27 15:11:28 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -173,7 +173,9 @@ const struct cdevsw pf_cdevsw = {
 };
 
 static int pfil4_wrapper(void *, struct mbuf **, struct ifnet *, int);
+#ifdef INET6
 static int pfil6_wrapper(void *, struct mbuf **, struct ifnet *, int);
+#endif /* INET6 */
 
 static int pf_pfil_attach(void);
 static int pf_pfil_detach(void);

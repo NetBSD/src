@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.47 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.47.4.1 2008/06/27 15:11:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.47 2008/04/28 20:23:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.47.4.1 2008/06/27 15:11:19 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,8 +243,8 @@ linux_sys_getdents64(struct lwp *l, const struct linux_sys_getdents64_args *uap,
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {

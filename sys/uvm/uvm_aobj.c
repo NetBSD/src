@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.102 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.102.2.1 2008/06/27 15:11:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.102 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.102.2.1 2008/06/27 15:11:55 simonb Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -144,6 +144,8 @@ LIST_HEAD(uao_swhash, uao_swhash_elt);
 POOL_INIT(uao_swhash_elt_pool, sizeof(struct uao_swhash_elt), 0, 0, 0,
     "uaoeltpl", NULL, IPL_VM);
 
+static struct pool_cache uvm_aobj_cache;
+
 /*
  * uvm_aobj: the actual anon-backed uvm_object
  *
@@ -169,9 +171,6 @@ struct uvm_aobj {
 /*
  * uvm_aobj_pool: pool of uvm_aobj structures
  */
-POOL_INIT(uvm_aobj_pool, sizeof(struct uvm_aobj), 0, 0, 0, "aobjpl",
-    &pool_allocator_nointr, IPL_NONE);
-
 MALLOC_DEFINE(M_UVMAOBJ, "UVM aobj", "UVM aobj and related structures");
 
 /*
@@ -449,7 +448,7 @@ uao_free(struct uvm_aobj *aobj)
 	 */
 
 	UVM_OBJ_DESTROY(&aobj->u_obj);
-	pool_put(&uvm_aobj_pool, aobj);
+	pool_cache_put(&uvm_aobj_cache, aobj);
 
 	/*
 	 * adjust the counter of pages only in swap for all
@@ -503,7 +502,7 @@ uao_create(vsize_t size, int flags)
 		kobj_alloced = UAO_FLAG_KERNSWAP;
 		refs = 0xdeadbeaf; /* XXX: gcc */
 	} else {
-		aobj = pool_get(&uvm_aobj_pool, PR_WAITOK);
+		aobj = pool_cache_get(&uvm_aobj_cache, PR_WAITOK);
 		aobj->u_pages = pages;
 		aobj->u_flags = 0;
 		refs = 1;
@@ -576,6 +575,8 @@ uao_init(void)
 	uao_initialized = true;
 	LIST_INIT(&uao_list);
 	mutex_init(&uao_list_lock, MUTEX_DEFAULT, IPL_NONE);
+	pool_cache_bootstrap(&uvm_aobj_cache, sizeof(struct uvm_aobj), 0, 0,
+	    0, "aobj", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*

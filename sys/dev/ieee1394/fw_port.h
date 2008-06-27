@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.29 2008/04/08 06:13:30 cegger Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.29.8.1 2008/06/27 15:11:21 simonb Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -1318,7 +1318,7 @@ typedef struct scsipi_inquiry_data sbp_scsi_inquiry_data;
  * additional queue macros for NetBSD
  */
 #define STAILQ_LAST(head, type, field) \
-	(STAILQ_EMPTY((head)) ? NULL : \
+	(STAILQ_EMPTY((head)) ? (struct type *)NULL : \
 	(struct type *) \
 	((char *)(head)->stqh_last - (size_t)&((struct type *)0)->field))
 #define STAILQ_FOREACH_SAFE(var, head, field, _var)	\

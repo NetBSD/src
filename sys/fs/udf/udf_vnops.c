@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.19 2008/05/19 20:12:36 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.19.2.1 2008/06/27 15:11:38 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.19 2008/05/19 20:12:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.19.2.1 2008/06/27 15:11:38 simonb Exp $");
 #endif /* not lint */
 
 
@@ -119,7 +119,7 @@ udf_inactive(void *v)
 
 	/* write out its node */
 	if (udf_node->i_flags & (IN_CHANGE | IN_UPDATE | IN_MODIFIED))
-		udf_update(vp, NULL, NULL, 0);
+		udf_update(vp, NULL, NULL, NULL, 0);
 	VOP_UNLOCK(vp, 0);
 
 	return 0;
@@ -148,7 +148,7 @@ udf_reclaim(void *v)
 	}
 
 	/* update note for closure */
-	udf_update(vp, NULL, NULL, UPDATE_CLOSE);
+	udf_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
 
 	/* async check to see if all node descriptors are written out */
 	while ((volatile int) udf_node->outstanding_nodedscr > 0) {
@@ -253,7 +253,7 @@ udf_read(void *v)
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		udf_node->i_flags |= IN_ACCESS;
 		if ((ioflag & IO_SYNC) == IO_SYNC)
-			error = udf_update(vp, NULL, NULL, UPDATE_WAIT);
+			error = udf_update(vp, NULL, NULL, NULL, UPDATE_WAIT);
 	}
 
 	return error;
@@ -381,7 +381,7 @@ udf_write(void *v)
 	} else {
 		/* if we write and we're synchronous, update node */
 		if ((resid > uio->uio_resid) && ((ioflag & IO_SYNC) == IO_SYNC))
-			error = udf_update(vp, NULL, NULL, UPDATE_WAIT);
+			error = udf_update(vp, NULL, NULL, NULL, UPDATE_WAIT);
 	}
 
 	return error;
@@ -796,12 +796,13 @@ udf_getattr(void *v)
 	struct udf_mount *ump = udf_node->ump;
 	struct file_entry    *fe  = udf_node->fe;
 	struct extfile_entry *efe = udf_node->efe;
+	struct filetimes_extattr_entry *ft_extattr;
 	struct device_extattr_entry *devattr;
 	struct vattr *vap = ap->a_vap;
 	struct timestamp *atime, *mtime, *attrtime, *creatime;
 	uint64_t filesize, blkssize;
 	uint32_t nlink;
-	uint32_t offset, l_a;
+	uint32_t offset, a_l;
 	uint8_t *filedata;
 	uid_t uid;
 	gid_t gid;
@@ -822,8 +823,20 @@ udf_getattr(void *v)
 		atime    = &fe->atime;
 		mtime    = &fe->mtime;
 		attrtime = &fe->attrtime;
-		creatime = mtime;
 		filedata = fe->data;
+
+		/* initial guess */
+		creatime = mtime;
+
+		/* check our extended attribute if present */
+		error = udf_extattr_search_intern(udf_node,
+			UDF_FILETIMES_ATTR_NO, "", &offset, &a_l);
+		if (!error) {
+			ft_extattr = (struct filetimes_extattr_entry *)
+				(filedata + offset);
+			if (ft_extattr->existence & UDF_FILETIMES_FILE_CREATION)
+				creatime = &ft_extattr->times[0];
+		}
 	} else {
 		assert(udf_node->efe);
 		nlink    = udf_rw16(efe->link_cnt);
@@ -880,7 +893,7 @@ udf_getattr(void *v)
 	if ((vap->va_type == VBLK) || (vap->va_type == VCHR)) {
 		error = udf_extattr_search_intern(udf_node,
 				UDF_DEVICESPEC_ATTR_NO, "",
-				&offset, &l_a);
+				&offset, &a_l);
 		/* if error, deny access */
 		if (error || (filedata == NULL)) {
 			vap->va_mode = 0;	/* or v_type = VNON?  */
@@ -1062,7 +1075,7 @@ udf_chsize(struct vnode *vp, u_quad_t newsize, kauth_cred_t cred)
 		/* mark change */
 		udf_node->i_flags |= IN_CHANGE | IN_MODIFY;
 		VN_KNOTE(vp, NOTE_ATTRIB | (extended ? NOTE_EXTEND : 0));
-		udf_update(vp, NULL, NULL, 0);
+		udf_update(vp, NULL, NULL, NULL, 0);
 	}
 
 	return error;
@@ -1125,23 +1138,10 @@ udf_chtimes(struct vnode *vp,
 	if (atime->tv_sec != VNOVAL)
 		if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
 			udf_node->i_flags |= IN_ACCESS;
-	if (mtime->tv_sec != VNOVAL)
+	if ((mtime->tv_sec != VNOVAL) || (birthtime->tv_sec != VNOVAL))
 		udf_node->i_flags |= IN_CHANGE | IN_UPDATE;
 
-	/* we need to take care of birthtime here */
-	if (birthtime->tv_sec != VNOVAL) {
-		if (udf_node->efe) {
-			/* in udf its [c]reation time */
-			udf_timespec_to_timestamp(birthtime,
-				&udf_node->efe->ctime);
-		} else {
-			/* set extended times attribute */
-			printf("UDF: Can't set birthtime on file entry yet\n");
-			/* TODO setting birthtime on file entry */
-		}
-	}
-
-	return udf_update(vp, atime, mtime, 0);
+	return udf_update(vp, atime, mtime, birthtime, 0);
 }
 
 
@@ -1171,12 +1171,12 @@ udf_setattr(void *v)
 	    vap->va_fileid != VNOVAL ||
 	    vap->va_blocksize != VNOVAL ||
 #ifdef notyet
-	    /* check is debated */
+	    /* checks are debated */
 	    vap->va_ctime.tv_sec != VNOVAL ||
 	    vap->va_ctime.tv_nsec != VNOVAL ||
-#endif
 	    vap->va_birthtime.tv_sec != VNOVAL ||
 	    vap->va_birthtime.tv_nsec != VNOVAL ||
+#endif
 	    vap->va_gen != VNOVAL ||
 	    vap->va_rdev != VNOVAL ||
 	    vap->va_bytes != VNOVAL)
@@ -1317,9 +1317,8 @@ udf_close(void *v)
 	udf_node = udf_node;	/* shut up gcc */
 
 	mutex_enter(&vp->v_interlock);
-		if (vp->v_usecount > 1) {
+		if (vp->v_usecount > 1)
 			udf_itimes(udf_node, NULL, NULL, NULL);
-		}
 	mutex_exit(&vp->v_interlock);
 
 	return 0;
@@ -1757,13 +1756,15 @@ udf_readlink(void *v)
 		l_ci = pathcomp.l_ci;
 		switch (pathcomp.type) {
 		case UDF_PATH_COMP_ROOT :
-			if (l_ci || (targetlen < 1) || !first) {
+			/* XXX should check for l_ci; bugcompatible now */
+			if ((targetlen < 1) || !first) {
 				error = EINVAL;
 				break;
 			}
 			*targetpos++ = '/'; targetlen--;
 			break;
 		case UDF_PATH_COMP_MOUNTROOT :
+			/* XXX what should it be if l_ci > 0 ? [4/48.16.1.2] */
 			if (l_ci || (targetlen < mntonnamelen+1) || !first) {
 				error = EINVAL;
 				break;
@@ -1776,7 +1777,8 @@ udf_readlink(void *v)
 			}
 			break;
 		case UDF_PATH_COMP_PARENTDIR :
-			if (l_ci || (targetlen < 3)) {
+			/* XXX should check for l_ci; bugcompatible now */
+			if (targetlen < 3) {
 				error = EINVAL;
 				break;
 			}
@@ -1785,7 +1787,8 @@ udf_readlink(void *v)
 			*targetpos++ = '/'; targetlen--;
 			break;
 		case UDF_PATH_COMP_CURDIR :
-			if (l_ci || (targetlen < 2)) {
+			/* XXX should check for l_ci; bugcompatible now */
+			if (targetlen < 2) {
 				error = EINVAL;
 				break;
 			}
@@ -1793,6 +1796,10 @@ udf_readlink(void *v)
 			*targetpos++ = '/'; targetlen--;
 			break;
 		case UDF_PATH_COMP_NAME :
+			if (l_ci == 0) {
+				error = EINVAL;
+				break;
+			}
 			memset(tmpname, 0, PATH_MAX);
 			memcpy(&pathcomp, pathpos, len + l_ci);
 			udf_to_unix_name(tmpname, MAXPATHLEN,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.37 2008/04/28 20:23:27 martin Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.37.4.1 2008/06/27 15:11:17 simonb Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.37 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.37.4.1 2008/06/27 15:11:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,21 +272,26 @@ void	pmap_collect_pv(void);
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized &&			\
 				 vm_physseg_find(atop((pa)), NULL) != -1)
 
-#define	pa_to_pvh(pa)							\
-({									\
-	int bank_, pg_ = 0;	/* XXX gcc4 -Wuninitialized */		\
-									\
-	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
-	&vm_physmem[bank_].pmseg.pvent[pg_];				\
-})
+static inline struct pv_entry *pa_to_pvh(paddr_t pa);
+static inline char *pa_to_attribute(paddr_t pa);
 
-#define	pa_to_attribute(pa)						\
-({									\
-	int bank_, pg_ = 0;	/* XXX gcc4 -Wuninitialized */		\
-									\
-	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
-	&vm_physmem[bank_].pmseg.attrs[pg_];				\
-})
+static inline struct pv_entry *
+pa_to_pvh(paddr_t pa)
+{
+	int bank, pg = 0;	/* XXX gcc4 -Wuninitialized */
+
+	bank = vm_physseg_find(atop((pa)), &pg);
+	return &vm_physmem[bank].pmseg.pvent[pg];
+}
+
+static inline char *
+pa_to_attribute(paddr_t pa)
+{
+	int bank, pg = 0;	/* XXX gcc4 -Wuninitialized */
+
+	bank = vm_physseg_find(atop((pa)), &pg);
+	return &vm_physmem[bank].pmseg.attrs[pg];
+}
 
 /*
  * Internal routines
