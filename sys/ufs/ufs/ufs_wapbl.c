@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.1.2.3 2008/06/12 08:39:22 martin Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.1.2.4 2008/06/27 13:08:13 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.1.2.3 2008/06/12 08:39:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.1.2.4 2008/06/27 13:08:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -594,7 +594,17 @@ wapbl_ufs_rename(void *v)
 			}
 			fdp->i_count = ufs_rw16(ep->d_reclen, needswap);
 		}
+
 		KASSERT(loc < maxloc);
+
+		/*
+		 * If fdp->i_offset points to start of a directory block,
+		 * set fdp->i_count so ufs_dirremove() doesn't compact over
+		 * a directory block boundary.
+		 */
+		if ((fdp->i_offset & (dirblksiz - 1)) == 0)
+			fdp->i_count = 0;
+
 		brelse(bp, 0);
 	}
 
