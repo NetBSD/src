@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.42 2008/06/12 22:44:47 cegger Exp $ */
+/* $NetBSD: if_lmc.c,v 1.43 2008/06/27 00:53:41 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -142,7 +142,7 @@
 
 #if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.42 2008/06/12 22:44:47 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.43 2008/06/27 00:53:41 gmcgarry Exp $");
 # include <sys/param.h>	/* OS version */
 /* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */
@@ -7167,7 +7167,7 @@ nbsd_attach(struct device *parent, struct device *self, void *aux)
     }
 
   /* Initialize the top-half and bottom-half locks. */
-  __cpu_simple_lock_init(&sc->top_lock);
+  mutex_init(&sc->top_lock, MUTEX_DEFAULT, IPL_VM);
   __cpu_simple_lock_init(&sc->bottom_lock);
 
   /* Initialize the driver. */
@@ -7190,6 +7190,9 @@ nbsd_detach(struct device *self, int flags)
     pci_intr_disestablish(sc->pa_pc, sc->irq_cookie);
   if (sc->csr_handle)
     bus_space_unmap(sc->csr_tag, sc->csr_handle, TLP_CSR_SIZE);
+
+  /* Destroy locks. */
+  mutex_destroy(&sc->top_lock);
 
   return 0;
   }
