@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.188 2008/04/30 13:10:46 martin Exp $
+#	$NetBSD: build.sh,v 1.189 2008/06/27 21:38:36 dyoung Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -464,6 +464,27 @@ unsetmakeenv()
 	makeenv="${makeenv} $1"
 }
 
+# Convert possibly-relative paths to absolute paths by prepending
+# ${TOP} if necessary.  Also delete trailing "/", if any.
+resolvepaths()
+{
+	_OPTARG=
+	for oa in ${OPTARG}; do
+		case "${oa}" in
+		/)
+			;;
+		/*)
+			oa="${oa%/}"
+			;;
+		*)
+			oa="${TOP}/${oa%/}"
+			;;
+		esac
+		_OPTARG="${_OPTARG} ${oa}"
+	done
+	OPTARG="${_OPTARG}"
+}
+
 # Convert possibly-relative path to absolute path by prepending
 # ${TOP} if necessary.  Also delete trailing "/", if any.
 resolvepath()
@@ -605,7 +626,7 @@ parseoptions()
 			;;
 
 		-C)
-			eval ${optargcmd}; resolvepath
+			eval ${optargcmd}; resolvepaths
 			iso_dir=${OPTARG}
 			;;
 
@@ -1120,7 +1141,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.188 2008/04/30 13:10:46 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.189 2008/06/27 21:38:36 dyoung Exp $
 # with these arguments: ${_args}
 #
 
@@ -1317,7 +1338,7 @@ main()
 
 		iso-image|iso-image-source)
 			${runcmd} "${makewrapper}" ${parallel} \
-			    CDEXTRA=$iso_dir ${op} ||
+			    CDEXTRA="$iso_dir" ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
 			;;
