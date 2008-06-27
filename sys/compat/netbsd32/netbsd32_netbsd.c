@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.143.6.2 2008/06/23 04:30:55 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.143.6.3 2008/06/27 01:34:26 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.143.6.2 2008/06/23 04:30:55 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.143.6.3 2008/06/27 01:34:26 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -124,7 +124,7 @@ const struct sa_emul saemul_netbsd32 = {
 	netbsd32_sacopyout,  
 	netbsd32_upcallconv,
 	netbsd32_cpu_upcall,
-	(void (*)(struct lwp *, void *))getucontext32,
+	(void (*)(struct lwp *, void *))getucontext32_sa,
 	netbsd32_sa_ucsp
 }; 
 
