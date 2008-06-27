@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.24.2.8 2008/06/08 14:54:58 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.24.2.9 2008/06/27 01:29:48 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -121,6 +121,8 @@ struct sadata_vp {
 	struct sadata_upcall	*savp_sleeper_upcall;
 					/* !: cached upcall data */
 	SIMPLEQ_HEAD(, sadata_upcall)	savp_upcalls; /* ?: pending upcalls */
+	int		savp_woken_count;    /* m: count of woken lwps */
+	int		savp_lwpcache_count; /* m: count of cached lwps */
 };
 
 /*
