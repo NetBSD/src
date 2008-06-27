@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.23 2008/06/27 01:53:46 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.24 2008/06/27 03:52:32 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.23 2008/06/27 01:53:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.24 2008/06/27 03:52:32 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ static inline int sa_pagefault(struct lwp *, ucontext_t *);
 
 static void sa_upcall0(struct sadata_upcall *, int, struct lwp *, struct lwp *,
     size_t, void *, void (*)(void *));
-static void sa_upcall_getstate(union sau_state *, struct lwp *);
+static void sa_upcall_getstate(union sau_state *, struct lwp *, int);
 
 #define SA_DEBUG
 
@@ -1168,6 +1168,9 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	struct sastack *sast;
 	int f, error;
 
+	KASSERT((type & (SA_UPCALL_LOCKED_EVENT | SA_UPCALL_LOCKED_INTERRUPTED))
+		== 0);
+
 	/* XXX prevent recursive upcalls if we sleep for memory */
 	SA_LWP_STATE_LOCK(l, f);
 	sau = sadata_upcall_alloc(1);
@@ -1226,12 +1229,14 @@ sa_upcall0(struct sadata_upcall *sau, int type, struct lwp *event,
 		sau->sau_event.ss_deferred.ss_lwp = event;
 		sau->sau_flags |= SAU_FLAG_DEFERRED_EVENT;
 	} else
-		sa_upcall_getstate(&sau->sau_event, event);
+		sa_upcall_getstate(&sau->sau_event, event,
+			type & SA_UPCALL_LOCKED_EVENT);
 	if (type & SA_UPCALL_DEFER_INTERRUPTED) {
 		sau->sau_interrupted.ss_deferred.ss_lwp = interrupted;
 		sau->sau_flags |= SAU_FLAG_DEFERRED_INTERRUPTED;
 	} else
-		sa_upcall_getstate(&sau->sau_interrupted, interrupted);
+		sa_upcall_getstate(&sau->sau_interrupted, interrupted,
+			type & SA_UPCALL_LOCKED_INTERRUPTED);
 
 	sau->sau_type = type & SA_UPCALL_TYPE_MASK;
 	sau->sau_argsize = argsize;
@@ -1256,25 +1261,29 @@ sa_ucsp(void *arg)
  * sa_upcall_getstate
  *	Fill in the given sau_state with info for the passed-in
  * lwp, and update the lwp accordingly.
- *	We set LW_SA_SWITCHING on the target lwp, and lock it during
- * this call. l must be unlocked (if not NULL), and locking it must not
- * cause deadlock.
+ *	We set LW_SA_SWITCHING on the target lwp, and so we have to hold
+ * l's lock in this call. l must be already locked, or it must be unlocked
+ * and locking it must not cause deadlock.
  */
 static void
-sa_upcall_getstate(union sau_state *ss, struct lwp *l)
+sa_upcall_getstate(union sau_state *ss, struct lwp *l, int isLocked)
 {
 	uint8_t *sp;
 	size_t ucsize;
 
 	if (l) {
-		lwp_lock(l);
+		if (isLocked == 0)
+			lwp_lock(l);
 		l->l_flag |= LW_SA_SWITCHING;
-		lwp_unlock(l);
+		if (isLocked == 0)
+			lwp_unlock(l);
 		(*l->l_proc->p_emul->e_sa->sae_getucontext)(l,
 		    (void *)&ss->ss_captured.ss_ctx);
-		lwp_lock(l);
+		if (isLocked == 0)
+			lwp_lock(l);
 		l->l_flag &= ~LW_SA_SWITCHING;
-		lwp_unlock(l);
+		if (isLocked == 0)
+			lwp_unlock(l);
 		sp = (*l->l_proc->p_emul->e_sa->sae_ucsp)
 		    (&ss->ss_captured.ss_ctx);
 		/* XXX COMPAT_NETBSD32: _UC_UCONTEXT_ALIGN */
@@ -1468,7 +1477,8 @@ panic("Oops! Don't have a sleeper!\n");
 		}
 
 		cpu_setfunc(l2, sa_switchcall, sau);
-		sa_upcall0(sau, SA_UPCALL_BLOCKED, l, NULL, 0, NULL, NULL);
+		sa_upcall0(sau, SA_UPCALL_BLOCKED | SA_UPCALL_LOCKED_EVENT, l,
+			NULL, 0, NULL, NULL);
 
 		/*
 		 * Perform the double/upcall pagefault check.
@@ -1725,6 +1735,15 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	    p->p_pid, curlwp->l_lid, l->l_lid));
 
 	/*
+	 * Hand-rolled call of the form:
+	 * sleepq_enter(&vp->savp_woken, l, &vp->savp_mutex);
+	 * adapted to take into account the fact that (1) l and the mutex
+	 * we want to lend it are both locked, and also that we don't have
+	 * any other locks.
+	 */
+	l->l_mutex = &vp->savp_mutex;
+
+	/*
 	 * XXXWRS: Following is a hand-rolled call of the form:
 	 * sleepq_enqueue(sq, (void *)sq, "lwpcache", sa_sobj); but
 	 * hand-done since l might not be curlwp. Also, we go into LSSUSPENDED,
@@ -1944,10 +1963,10 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 
 	if (sau->sau_flags & SAU_FLAG_DEFERRED_EVENT)
 		sa_upcall_getstate(&sau->sau_event,
-		    sau->sau_event.ss_deferred.ss_lwp);
+		    sau->sau_event.ss_deferred.ss_lwp, 0);
 	if (sau->sau_flags & SAU_FLAG_DEFERRED_INTERRUPTED)
 		sa_upcall_getstate(&sau->sau_interrupted,
-		    sau->sau_interrupted.ss_deferred.ss_lwp);
+		    sau->sau_interrupted.ss_deferred.ss_lwp, 0);
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	stack = sau->sau_stack.ss_sp;
@@ -2056,7 +2075,7 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 			 * Since l2 was on savp_woken, we locked it when
 			 * we locked savp_mutex
 			 */
-			sa_upcall_getstate(e_ss, l2);
+			sa_upcall_getstate(e_ss, l2, 1);
 			l2->l_flag &= ~LW_SA_BLOCKING;
 
 			/* Now return l2 to the cache. Mutex already set */
