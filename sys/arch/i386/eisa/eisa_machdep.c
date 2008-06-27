@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.31 2008/05/30 19:03:10 ad Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.32 2008/06/27 11:12:06 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.31 2008/05/30 19:03:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.32 2008/06/27 11:12:06 cegger Exp $");
 
 #include "ioapic.h"
 
@@ -117,7 +117,7 @@ struct x86_bus_dma_tag eisa_bus_dma_tag = {
 };
 
 void
-eisa_attach_hook(struct device *parent, struct device *self,
+eisa_attach_hook(device_t parent, device_t self,
     struct eisabus_attach_args *eba)
 {
 	extern int eisa_has_been_seen; 
