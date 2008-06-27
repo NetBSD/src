@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.98.2.1 2008/06/10 14:51:23 simonb Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.98.2.2 2008/06/27 04:06:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.98.2.1 2008/06/10 14:51:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.98.2.2 2008/06/27 04:06:09 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -160,7 +160,7 @@ ufs_lookup(void *v)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
-	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+	    (nameiop == DELETE || nameiop == RENAME))
 		return (EROFS);
 
 	/*
