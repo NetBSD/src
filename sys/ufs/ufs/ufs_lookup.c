@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.98.2.3 2008/06/27 04:08:23 simonb Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.98.2.4 2008/06/27 04:19:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.98.2.3 2008/06/27 04:08:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.98.2.4 2008/06/27 04:19:17 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1003,7 +1003,6 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		error = VOP_BWRITE(bp);
 	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
-	UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
 	/*
 	 * If all went well, and the directory can be shortened, proceed
 	 * with the truncation. Note that we have to unlock the inode for
@@ -1022,6 +1021,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		if (DOINGSOFTDEP(dvp) && (tvp != NULL))
 			vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 	}
+	UFS_WAPBL_UPDATE(dvp, NULL, NULL, UPDATE_DIROP);
 	return (error);
 }
 
