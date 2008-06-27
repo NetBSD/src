@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.5 2007/12/20 23:02:58 dsl Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.5.14.1 2008/06/27 15:11:19 simonb Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.5 2007/12/20 23:02:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.5.14.1 2008/06/27 15:11:19 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,20 +46,38 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.5 2007/12/20 23:02:58 dsl Exp $
 #include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/swap.h>
+#include <sys/file.h>
+#include <sys/vnode.h>
+#include <sys/filedesc.h>
 
 #include <machine/types.h>
+
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
+#include <net/route.h>
+
+#include <netinet/in.h>
+#include <netinet/ip_mroute.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_ioctl.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
+#include <compat/sys/socket.h>
+#include <compat/sys/sockio.h>
+
+#include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_oldolduname.h>
+#include <compat/linux/common/linux_ioctl.h>
+#include <compat/linux/common/linux_sockio.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
@@ -67,7 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.5 2007/12/20 23:02:58 dsl Exp $
 #include <compat/linux32/common/linux32_machdep.h>
 #include <compat/linux32/common/linux32_sysctl.h>
 #include <compat/linux32/common/linux32_socketcall.h>
+#include <compat/linux32/common/linux32_sockio.h>
+#include <compat/linux32/common/linux32_ioctl.h>
 #include <compat/linux32/linux32_syscallargs.h>
+
+int linux32_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 
 int
 linux32_sys_socketpair(struct lwp *l, const struct linux32_sys_socketpair_args *uap, register_t *retval)
@@ -359,4 +381,221 @@ linux32_sys_recv(struct lwp *l, const struct linux32_sys_recv_args *uap, registe
 	SCARG(&ua, fromlenaddr) = NULL;
 
 	return sys_recvfrom(l, &ua, retval);
+}
+
+int
+linux32_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
+    void *data)
+{
+	struct linux32_ifreq lreq;
+	file_t *fp;
+	struct ifaddr *ifa;
+	struct ifnet *ifp;
+	struct sockaddr_dl *sadl;
+	int error, found;
+	int index, ifnum;
+
+	/*
+	 * We can't emulate this ioctl by calling sys_ioctl() to run
+	 * SIOCGIFCONF, because the user buffer is not of the right
+	 * type to take those results.  We can't use kernel buffers to
+	 * receive the results, as the implementation of sys_ioctl()
+	 * and ifconf() [which implements SIOCGIFCONF] use
+	 * copyin()/copyout() which will fail on kernel addresses.
+	 *
+	 * So, we must duplicate code from sys_ioctl() and ifconf().  Ugh.
+	 */
+
+	if ((fp = fd_getfile(fd)) == NULL)
+		return (EBADF);
+
+	KERNEL_LOCK(1, NULL);
+
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
+		error = EBADF;
+		goto out;
+	}
+
+	error = copyin(data, &lreq, sizeof(lreq));
+	if (error)
+		goto out;
+	lreq.ifr_name[LINUX32_IFNAMSIZ-1] = '\0';		/* just in case */
+
+	/*
+	 * Try real interface name first, then fake "ethX"
+	 */
+	found = 0;
+	IFNET_FOREACH(ifp) {
+		if (found)
+			break;
+		if (strcmp(lreq.ifr_name, ifp->if_xname))
+			/* not this interface */
+			continue;
+		found=1;
+		if (IFADDR_EMPTY(ifp)) {
+			error = ENODEV;
+			goto out;
+		}
+		IFADDR_FOREACH(ifa, ifp) {
+			sadl = satosdl(ifa->ifa_addr);
+			/* only return ethernet addresses */
+			/* XXX what about FDDI, etc. ? */
+			if (sadl->sdl_family != AF_LINK ||
+			    sadl->sdl_type != IFT_ETHER)
+				continue;
+			memcpy(&lreq.ifr_hwaddr.sa_data, CLLADDR(sadl),
+			       MIN(sadl->sdl_alen,
+				   sizeof(lreq.ifr_hwaddr.sa_data)));
+			lreq.ifr_hwaddr.sa_family =
+				sadl->sdl_family;
+			error = copyout(&lreq, data, sizeof(lreq));
+			goto out;
+		}
+	}
+
+	if (strncmp(lreq.ifr_name, "eth", 3) == 0) {
+		for (ifnum = 0, index = 3;
+		     lreq.ifr_name[index] != '\0' && index < LINUX32_IFNAMSIZ;
+		     index++) {
+			ifnum *= 10;
+			ifnum += lreq.ifr_name[index] - '0';
+		}
+
+		error = EINVAL;			/* in case we don't find one */
+		found = 0;
+		IFNET_FOREACH(ifp) {
+			if (found)
+				break;
+			memcpy(lreq.ifr_name, ifp->if_xname,
+			       MIN(LINUX32_IFNAMSIZ, IFNAMSIZ));
+			IFADDR_FOREACH(ifa, ifp) {
+				sadl = satosdl(ifa->ifa_addr);
+				/* only return ethernet addresses */
+				/* XXX what about FDDI, etc. ? */
+				if (sadl->sdl_family != AF_LINK ||
+				    sadl->sdl_type != IFT_ETHER)
+					continue;
+				if (ifnum--)
+					/* not the reqested iface */
+					continue;
+				memcpy(&lreq.ifr_hwaddr.sa_data,
+				       CLLADDR(sadl),
+				       MIN(sadl->sdl_alen,
+					   sizeof(lreq.ifr_hwaddr.sa_data)));
+				lreq.ifr_hwaddr.sa_family =
+					sadl->sdl_family;
+				error = copyout(&lreq, data, sizeof(lreq));
+				found = 1;
+				break;
+			}
+		}
+	} else {
+		/* unknown interface, not even an "eth*" name */
+		error = ENODEV;
+	}
+
+out:
+	KERNEL_UNLOCK_ONE(NULL);
+	fd_putfile(fd);
+	return error;
+}
+
+int
+linux32_ioctl_socket(struct lwp *l, const struct linux32_sys_ioctl_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(u_long) com;
+		syscallarg(void *) data;
+	} */
+	u_long com;
+	int error = 0, isdev = 0, dosys = 1;
+	struct netbsd32_ioctl_args ia;
+	file_t *fp;
+	struct vnode *vp;
+	int (*ioctlf)(file_t *, u_long, void *);
+	struct ioctl_pt pt;
+
+	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
+		return (EBADF);
+
+	if (fp->f_type == DTYPE_VNODE) {
+		vp = (struct vnode *)fp->f_data;
+		isdev = vp->v_type == VCHR;
+	}
+
+	/*
+	 * Don't try to interpret socket ioctl calls that are done
+	 * on a device filedescriptor, just pass them through, to
+	 * emulate Linux behaviour. Use PTIOCLINUX so that the
+	 * device will only handle these if it's prepared to do
+	 * so, to avoid unexpected things from happening.
+	 */
+	if (isdev) {
+		dosys = 0;
+		ioctlf = fp->f_ops->fo_ioctl;
+		pt.com = SCARG(uap, com);
+		pt.data = (void *)NETBSD32PTR64(SCARG(uap, data));
+		error = ioctlf(fp, PTIOCLINUX, &pt);
+		/*
+		 * XXX hack: if the function returns EJUSTRETURN,
+		 * it has stuffed a sysctl return value in pt.data.
+		 */
+		if (error == EJUSTRETURN) {
+			retval[0] = (register_t)pt.data;
+			error = 0;
+		}
+		goto out;
+	}
+
+	com = SCARG(uap, com);
+	retval[0] = 0;
+
+	switch (com) {
+	case LINUX_SIOCGIFCONF:
+		SCARG(&ia, com) = OOSIOCGIFCONF32;
+		break;
+	case LINUX_SIOCGIFFLAGS:
+		SCARG(&ia, com) = OSIOCGIFFLAGS;
+		break;
+	case LINUX_SIOCSIFFLAGS:
+		SCARG(&ia, com) = OSIOCSIFFLAGS;
+		break;
+	case LINUX_SIOCGIFADDR:
+		SCARG(&ia, com) = OOSIOCGIFADDR;
+		break;
+	case LINUX_SIOCGIFDSTADDR:
+		SCARG(&ia, com) = OOSIOCGIFDSTADDR;
+		break;
+	case LINUX_SIOCGIFBRDADDR:
+		SCARG(&ia, com) = OOSIOCGIFBRDADDR;
+		break;
+	case LINUX_SIOCGIFNETMASK:
+		SCARG(&ia, com) = OOSIOCGIFNETMASK;
+		break;
+	case LINUX_SIOCADDMULTI:
+		SCARG(&ia, com) = OSIOCADDMULTI;
+		break;
+	case LINUX_SIOCDELMULTI:
+		SCARG(&ia, com) = OSIOCDELMULTI;
+		break;
+	case LINUX_SIOCGIFHWADDR:
+		error = linux32_getifhwaddr(l, retval, SCARG(uap, fd),
+		    SCARG_P32(uap, data));
+		dosys = 0;
+		break;
+	default:
+		error = EINVAL;
+	}
+
+ out:
+ 	fd_putfile(SCARG(uap, fd));
+
+	if (error == 0 && dosys) {
+		SCARG(&ia, fd) = SCARG(uap, fd);
+		SCARG(&ia, data) = SCARG(uap, data);
+		error = netbsd32_ioctl(curlwp, &ia, retval);
+	}
+
+	return error;
 }

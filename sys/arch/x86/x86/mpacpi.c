@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.63 2008/06/06 20:34:24 joerg Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.63.2.1 2008/06/27 15:11:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.63 2008/06/06 20:34:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.63.2.1 2008/06/27 15:11:18 simonb Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -751,7 +751,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		dev = ACPI_HIWORD(ptrp->Address);
 
 		mpi = &mp_intrs[mpacpi_intr_index];
-		mpi->bus_pin = (dev << 2) | ptrp->Pin;
+		mpi->bus_pin = (dev << 2) | (ptrp->Pin & 3);
 		mpi->bus = mpb;
 		mpi->type = MPS_INTTYPE_INT;
 
@@ -772,7 +772,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		if (ptrp->Source[0] != 0) {
 			if (mp_verbose > 1)
 				printf("pciroute: dev %d INT%c on lnkdev %s\n",
-				    dev, 'A' + ptrp->Pin, ptrp->Source);
+				    dev, 'A' + (ptrp->Pin & 3), ptrp->Source);
 			mpi->global_int = -1;
 			mpi->sourceindex = ptrp->SourceIndex;
 			if (AcpiGetHandle(ACPI_ROOT_OBJECT, ptrp->Source,
@@ -785,7 +785,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 			mpi->ioapic_pin = -1;
 			mpi->linkdev = acpi_pci_link_devbyhandle(linkdev);
 			acpi_pci_link_add_reference(mpi->linkdev, 0,
-			    mpr->mpr_bus, dev, ptrp->Pin);
+			    mpr->mpr_bus, dev, ptrp->Pin & 3);
 			mpi->ioapic = NULL;
 			mpi->flags = MPS_INTPO_ACTLO | (MPS_INTTR_LEVEL << 2);
 			if (mp_verbose > 1)
@@ -793,7 +793,8 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		} else {
 			if (mp_verbose > 1)
 				printf("pciroute: dev %d INT%c on globint %d\n",
-				    dev, 'A' + ptrp->Pin, ptrp->SourceIndex);
+				    dev, 'A' + (ptrp->Pin & 3),
+				    ptrp->SourceIndex);
 			mpi->sourceindex = 0;
 			mpi->global_int = ptrp->SourceIndex;
 			pic = intr_findpic(ptrp->SourceIndex);

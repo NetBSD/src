@@ -1,4 +1,4 @@
-/* $NetBSD: drm_irq.c,v 1.12 2008/05/19 00:17:39 bjs Exp $ */
+/* $NetBSD: drm_irq.c,v 1.12.2.1 2008/06/27 15:11:21 simonb Exp $ */
 
 /* drm_irq.c -- IRQ IOCTL and function support
  * Created: Fri Oct 18 2003 by anholt@FreeBSD.org
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.12 2008/05/19 00:17:39 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.12.2.1 2008/06/27 15:11:21 simonb Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_irq.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -68,9 +68,9 @@ drm_irq_handler_wrap(DRM_IRQ_ARGS)
 	irqreturn_t ret;
 	drm_device_t *dev = (drm_device_t *)arg;
 
-	DRM_SPINLOCK(&dev->irq_lock);
+	mutex_spin_enter(&dev->irq_lock);
 	ret = dev->driver.irq_handler(arg);
-	DRM_SPINUNLOCK(&dev->irq_lock);
+	mutex_spin_exit(&dev->irq_lock);
 	return ret;
 }
 
@@ -94,7 +94,7 @@ int drm_irq_install(drm_device_t *dev)
 
 	dev->context_flag = 0;
 
-	DRM_SPININIT(&dev->irq_lock, "DRM IRQ lock");
+	mutex_init(&dev->irq_lock, MUTEX_SPIN, IPL_VM);
 
 				/* Before installing handler */
 
@@ -124,7 +124,7 @@ int drm_irq_install(drm_device_t *dev)
 err:
 	DRM_LOCK();
 	dev->irq_enabled = 0;
-	DRM_SPINUNINIT(&dev->irq_lock);
+	mutex_destroy(&dev->irq_lock);
 	DRM_UNLOCK();
 	return retcode;
 }
@@ -141,7 +141,7 @@ int drm_irq_uninstall(drm_device_t *dev)
 	dev->driver.irq_uninstall(dev);
 
 	pci_intr_disestablish(dev->pa.pa_pc, dev->irqh);
-	DRM_SPINUNINIT(&dev->irq_lock);
+	mutex_destroy(&dev->irq_lock);
 
 	return 0;
 }
@@ -209,9 +209,9 @@ int drm_wait_vblank(DRM_IOCTL_ARGS)
 
 		vblwait.reply.sequence = atomic_read(&dev->vbl_received);
 		
-		DRM_SPINLOCK(&dev->irq_lock);
+		mutex_spin_enter(&dev->irq_lock);
 		TAILQ_INSERT_HEAD(&dev->vbl_sig_list, vbl_sig, link);
-		DRM_SPINUNLOCK(&dev->irq_lock);
+		mutex_spin_exit(&dev->irq_lock);
 		ret = 0;
 #endif
 		ret = EINVAL;

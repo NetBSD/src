@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.147 2008/04/09 15:21:02 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.147.8.1 2008/06/27 15:11:18 simonb Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,9 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2008/04/09 15:21:02 nakayama Exp $");
-
-#define NEW_FPSTATE
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147.8.1 2008/06/27 15:11:18 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -518,17 +516,6 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 		 * the FPU.
 		 */
 		if (type == T_FPDISABLED) {
-extern void db_printf(const char * , ...);
-#ifndef NEW_FPSTATE
-			if (fplwp != NULL) {	/* someone else had it */
-				savefpstate(fplwp->l_md.md_fpstate);
-				fplwp = NULL;
-				/* Enable the FPU */
-/*				loadfpstate(initfpstate);*/
-			}
-			tf->tf_tstate |= (PSTATE_PEF << TSTATE_PSTATE_SHIFT);
-			return;
-#else
 			struct lwp *newfplwp;
 
 			/* New scheme */
@@ -557,9 +544,8 @@ extern void db_printf(const char * , ...);
 					fplwp = NULL;
 			}
 			/* Enable the FPU */
-			tf->tf_tstate |= (PSTATE_PEF << TSTATE_PSTATE_SHIFT);
+			tf->tf_tstate |= TSTATE_PEF;
 			return;
-#endif
 		}
 		goto dopanic;
 	}
@@ -710,7 +696,7 @@ badtrap:
 			fplwp = l;		/* now we do have it */
 			rstintr();
 		}
-		tf->tf_tstate |= (PSTATE_PEF << TSTATE_PSTATE_SHIFT);
+		tf->tf_tstate |= TSTATE_PEF;
 		break;
 	}
 
@@ -1098,7 +1084,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	} else {
 		access_type = (sfsr & SFSR_W) ? VM_PROT_WRITE : VM_PROT_READ;
 	}
-	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+	if (tstate & TSTATE_PRIV) {
 		extern char Lfsbail[];
 
 		/*
@@ -1185,7 +1171,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		 * address.  Any other page fault in kernel, die; if user
 		 * fault, deliver SIGSEGV.
 		 */
-		if (tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) {
+		if (tstate & TSTATE_PRIV) {
 kfault:
 			onfault = l->l_addr ?
 			    (long)l->l_addr->u_pcb.pcb_onfault : 0;
@@ -1357,7 +1343,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 	}
 #endif
 
-	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
+	if (tstate & TSTATE_PRIV) {
 		if (!onfault) {
 			extern int trap_trace_dis;
 			char buf[768];
@@ -1481,7 +1467,7 @@ text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	/* Now munch on protections... */
 
 	access_type = VM_PROT_EXECUTE;
-	if (tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) {
+	if (tstate & TSTATE_PRIV) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		(void) splhigh();
@@ -1632,7 +1618,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		       type, sfsr, pc, afsr, afva, tf);
 		trap_trace_dis--; /* Reenable traptrace for printf */
 
-		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT))
+		if (tstate & TSTATE_PRIV)
 			panic("text_access_error: kernel memory error");
 
 		/* User fault -- Berr */
@@ -1665,7 +1651,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	/* Now munch on protections... */
 
 	access_type = VM_PROT_EXECUTE;
-	if (tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) {
+	if (tstate & TSTATE_PRIV) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1; /* Disable traptrace for printf */
 		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);

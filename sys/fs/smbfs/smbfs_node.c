@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.38 2008/01/26 14:25:38 ad Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.38.14.1 2008/06/27 15:11:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.38 2008/01/26 14:25:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.38.14.1 2008/06/27 15:11:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,8 +228,7 @@ smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
  * Free smbnode, and give vnode back to system
  */
 int
-smbfs_reclaim(v)
-     void *v;
+smbfs_reclaim(void *v)
 {
         struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -256,7 +255,7 @@ smbfs_reclaim(v)
 
 	cache_purge(vp);
 	if (smp->sm_root == np) {
-		SMBVDEBUG("root vnode\n");
+		SMBVDEBUG0("root vnode\n");
 		smp->sm_root = NULL;
 	}
 	genfs_node_destroy(vp);

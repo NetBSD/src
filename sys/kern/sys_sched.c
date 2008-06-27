@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.22.2.1 2008/06/18 16:33:35 simonb Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.22.2.2 2008/06/27 15:11:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.22.2.1 2008/06/18 16:33:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.22.2.2 2008/06/27 15:11:39 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -293,28 +293,14 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 
 /* Allocate the CPU set, and get it from userspace */
 static int
-gencpuset(cpuset_t **dset, const cpuset_t *sset, size_t size)
+genkcpuset(kcpuset_t **dset, const cpuset_t *sset, size_t size)
 {
 	int error;
 
-	*dset = cpuset_create();
-	if (size != cpuset_size(*dset)) {
-		error = EINVAL;
-		goto out;
-	}
-
-	error = copyin(sset, *dset, size);
-	if (error)
-		goto out;
-
-	if (kcpuset_nused(*dset) != 1) {
-		error = EINVAL;
-		goto out;
-	}
-
-	return 0;
-out:
-	kcpuset_unuse(*dset, NULL);
+	*dset = kcpuset_create();
+	error = kcpuset_copyin(sset, *dset, size);
+	if (error != 0)
+		kcpuset_unuse(*dset, NULL);
 	return error;
 }
 
@@ -331,7 +317,7 @@ sys__sched_setaffinity(struct lwp *l,
 		syscallarg(size_t) size;
 		syscallarg(const cpuset_t *) cpuset;
 	} */
-	cpuset_t *cpuset, *cpulst = NULL;
+	kcpuset_t *cpuset, *cpulst = NULL;
 	struct cpu_info *ci = NULL;
 	struct proc *p;
 	struct lwp *t;
@@ -340,12 +326,12 @@ sys__sched_setaffinity(struct lwp *l,
 	u_int lcnt;
 	int error;
 
-	if ((error = gencpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size))))
+	if ((error = genkcpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size))))
 		return error;
 
 	/* Look for a CPU in the set */
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		error = cpuset_isset(cpu_index(ci), cpuset);
+		error = kcpuset_isset(cpu_index(ci), cpuset);
 		if (error) {
 			if (error == -1) {
 				error = E2BIG;
@@ -426,7 +412,7 @@ sys__sched_setaffinity(struct lwp *l,
 out:
 	if (cpuset != NULL)
 		kcpuset_unuse(cpuset, &cpulst);
-	cpuset_destroy(cpulst);
+	kcpuset_destroy(cpulst);
 	return error;
 }
 
@@ -444,10 +430,10 @@ sys__sched_getaffinity(struct lwp *l,
 		syscallarg(cpuset_t *) cpuset;
 	} */
 	struct lwp *t;
-	cpuset_t *cpuset;
+	kcpuset_t *cpuset;
 	int error;
 
-	if ((error = gencpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size))))
+	if ((error = genkcpuset(&cpuset, SCARG(uap, cpuset), SCARG(uap, size))))
 		return error;
 
 	/* Locks the LWP */
@@ -468,11 +454,11 @@ sys__sched_getaffinity(struct lwp *l,
 		KASSERT(t->l_affinity != NULL);
 		kcpuset_copy(cpuset, t->l_affinity);
 	} else
-		cpuset_zero(cpuset);
+		kcpuset_zero(cpuset);
 	lwp_unlock(t);
 	mutex_exit(t->l_proc->p_lock);
 
-	error = copyout(cpuset, SCARG(uap, cpuset), cpuset_size(cpuset));
+	error = kcpuset_copyout(cpuset, SCARG(uap, cpuset), SCARG(uap, size));
 out:
 	kcpuset_unuse(cpuset, NULL);
 	return error;

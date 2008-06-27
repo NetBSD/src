@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.31 2008/04/24 18:39:25 ad Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.31.6.1 2008/06/27 15:11:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.31 2008/04/24 18:39:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.31.6.1 2008/06/27 15:11:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ smb_maperror(int eclass, int eno)
 		    case ERRinvnid:
 			return ENETRESET;
 		    case ERRinvnetname:
-			SMBERROR("NetBIOS name is invalid\n");
+			SMBERROR(("NetBIOS name is invalid\n"));
 			return EAUTH;
 		    case ERRbadtype:	/* reserved and returned */
 			return EIO;
@@ -301,7 +301,7 @@ smb_maperror(int eclass, int eno)
 		}
 		break;
 	}
-	SMBERROR("Unmapped error %d:%d\n", eclass, eno);
+	SMBERROR(("Unmapped error %d:%d\n", eclass, eno));
 	return EBADRPC;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.25.2.2 2008/06/18 16:33:35 simonb Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.25.2.3 2008/06/27 15:11:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.25.2.2 2008/06/18 16:33:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.25.2.3 2008/06/27 15:11:39 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -554,7 +554,6 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 	KASSERT(bp->b_objlock == &vp->v_interlock);
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT((bp->b_cflags & BC_BUSY) != 0);
-	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	/*
 	 * Delete from old vnode list, if on one.
@@ -1254,9 +1253,12 @@ void
 vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 {
 	char sbuf[256];
+	int cnt, cols;
+	struct vnode *vp;
 
-	(*pr)("vnodecovered = %p syncer = %p data = %p\n",
-			mp->mnt_vnodecovered, mp->mnt_syncer, mp->mnt_data);
+	(*pr)("vnodecovered = %p syncer = %p\n",
+			mp->mnt_vnodecovered, mp->mnt_syncer);
+	(*pr)("data = %p\n", mp->mnt_data);
 
 	(*pr)("fs_bshift %d dev_bshift = %d\n",
 			mp->mnt_fs_bshift, mp->mnt_dev_bshift);
@@ -1306,30 +1308,28 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("\tmntonname = %s\n", mp->mnt_stat.f_mntonname);
 	(*pr)("\tmntfromname = %s\n", mp->mnt_stat.f_mntfromname);
 
-	{
-		int cnt = 0;
-		struct vnode *vp;
-		(*pr)("locked vnodes =");
-		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-			if (VOP_ISLOCKED(vp)) {
-				if ((++cnt % 6) == 0) {
-					(*pr)(" %p,\n\t", vp);
-				} else {
-					(*pr)(" %p,", vp);
-				}
+	cols = sizeof(void *) > 4 ? 3 : 6;
+
+	cnt = 0;
+	(*pr)("locked vnodes =");
+	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		if (VOP_ISLOCKED(vp)) {
+			if ((++cnt % cols) == 0) {
+				(*pr)(" %p,\n\t", vp);
+			} else {
+				(*pr)(" %p,", vp);
 			}
 		}
-		(*pr)("\n");
 	}
+	(*pr)("\n");
 
 	if (full) {
-		int cnt = 0;
-		struct vnode *vp;
+		cnt = 0;
 		(*pr)("all vnodes =");
 		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (!TAILQ_NEXT(vp, v_mntvnodes)) {
 				(*pr)(" %p", vp);
-			} else if ((++cnt % 6) == 0) {
+			} else if ((++cnt % cols) == 0) {
 				(*pr)(" %p,\n\t", vp);
 			} else {
 				(*pr)(" %p,", vp);

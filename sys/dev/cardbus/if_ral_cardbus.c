@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.12 2008/04/29 22:21:45 scw Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.12.4.1 2008/06/27 15:11:21 simonb Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.12 2008/04/29 22:21:45 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.12.4.1 2008/06/27 15:11:21 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -90,7 +90,7 @@ struct ral_cardbus_softc {
 	void			*sc_ih;
 	bus_size_t		sc_mapsize;
 	pcireg_t		sc_bar_val;
-	int			sc_intrline;
+	cardbus_intr_line_t	sc_intrline;
 };
 
 int	ral_cardbus_match(struct device *, struct cfdata *, void *);
@@ -169,8 +169,6 @@ ral_cardbus_attach(struct device *parent, struct device *self,
 	/* set up the PCI configuration registers */
 	ral_cardbus_setup(csc);
 
-	printf(": irq %d\n", csc->sc_intrline);
-
 	(*csc->sc_opns->attach)(sc, CARDBUS_PRODUCT(ca->ca_id));
 
 	Cardbus_function_disable(ct);
@@ -221,8 +219,8 @@ ral_cardbus_enable(struct rt2560_softc *sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
 	    csc->sc_opns->intr, sc);
 	if (csc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "could not establish interrupt at %d\n",
-		    csc->sc_intrline);
+		aprint_error_dev(&sc->sc_dev,
+				 "could not establish interrupt\n");
 		Cardbus_function_disable(ct);
 		return 1;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.54 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.54.2.1 2008/06/27 15:11:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.54 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.54.2.1 2008/06/27 15:11:19 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,7 +458,7 @@ netbsd32_futimes(struct lwp *l, const struct netbsd32_futimes_args *uap, registe
 	if (error != 0)
 		return error;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
@@ -479,7 +479,7 @@ netbsd32_sys___getdents30(struct lwp *l, const struct netbsd32_sys___getdents30_
 	file_t *fp;
 	int error, done;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {

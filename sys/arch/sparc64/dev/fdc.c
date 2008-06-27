@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.22.4.1 2008/06/18 16:32:49 simonb Exp $	*/
+/*	$NetBSD: fdc.c,v 1.22.4.2 2008/06/27 15:11:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.22.4.1 2008/06/18 16:32:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.22.4.2 2008/06/27 15:11:17 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1308,7 +1308,7 @@ fdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 int
 fdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	struct fd_softc *fd = device_lookup_private(&fd_cd,FDUNIT(dev));
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 	int pmask = (1 << DISKPART(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
@@ -2312,7 +2312,7 @@ int
 fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 {
 	int rv = 0;
-	struct fd_softc *fd = device_lookup_private(&fd_cd,FDUNIT(dev));
+	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
@@ -2526,7 +2526,7 @@ fd_read_md_image(size_t	*sizep, void **addrp)
 	}
 	(void)fdclose(dev, 0, S_IFCHR, NULL);
 	*sizep = offset;
-	fd_do_eject(device_lookup_private(&fd_cd,FDUNIT(dev)));
+	fd_do_eject(device_lookup_private(&fd_cd, FDUNIT(dev)));
 	return 0;
 }
 #endif /* MEMORY_DISK_HOOKS */

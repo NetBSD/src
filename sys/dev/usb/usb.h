@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.80 2008/05/26 18:00:33 drochner Exp $	*/
+/*	$NetBSD: usb.h,v 1.80.2.1 2008/06/27 15:11:28 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -395,6 +395,11 @@ typedef struct {
 #define  UISUBCLASS_AUDIOCONTROL	1
 #define  UISUBCLASS_AUDIOSTREAM		2
 #define  UISUBCLASS_MIDISTREAM		3
+
+#define UICLASS_VIDEO		0x0E
+#define  UISUBCLASS_VIDEOCONTROL	1
+#define  UISUBCLASS_VIDEOSTREAMING	2
+#define  UISUBCLASS_VIDEOCOLLECTION	3
 
 #define UICLASS_CDC		0x02 /* communication */
 #define	 UISUBCLASS_DIRECT_LINE_CONTROL_MODEL	1

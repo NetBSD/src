@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.365.2.2 2008/06/18 16:33:35 simonb Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.365.2.3 2008/06/27 15:11:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.365.2.2 2008/06/18 16:33:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.365.2.3 2008/06/27 15:11:39 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3666,31 +3666,4 @@ sys_revoke(struct lwp *l, const struct sys_revoke_args *uap, register_t *retval)
 	error = dorevoke(vp, l->l_cred);
 	vrele(vp);
 	return (error);
-}
-
-/*
- * Convert a user file descriptor to a kernel file entry.
- */
-int
-getvnode(int fd, file_t **fpp)
-{
-	struct vnode *vp;
-	file_t *fp;
-
-	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
-
-	if (fp->f_type != DTYPE_VNODE) {
-		fd_putfile(fd);
-		return (EINVAL);
-	}
-
-	vp = fp->f_data;
-	if (vp->v_type == VBAD) {
-		fd_putfile(fd);
-		return (EBADF);
-	}
-
-	*fpp = fp;
-	return (0);
 }

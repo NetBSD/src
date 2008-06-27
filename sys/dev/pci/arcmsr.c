@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.20 2008/04/03 13:59:00 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.20.10.1 2008/06/27 15:11:21 simonb Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.20 2008/04/03 13:59:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.20.10.1 2008/06/27 15:11:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -67,8 +67,8 @@ int arcdebug = 0;
 #define DNPRINTF(n, p...)	do { if ((n) & arcdebug) printf(p); } while (0)
 
 #else
-#define DPRINTF(p...)		/* p */
-#define DNPRINTF(n, p...)	/* n, p */
+#define DPRINTF(p, ...)		/* p */
+#define DNPRINTF(n, p, ...)	/* n, p */
 #endif
 
 /* 

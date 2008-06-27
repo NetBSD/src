@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.14 2007/03/04 06:03:36 christos Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.14.44.1 2008/06/27 15:11:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.14 2007/03/04 06:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.14.44.1 2008/06/27 15:11:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,11 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.14 2007/03/04 06:03:36 christos Ex
 
 #include <netsmb/mchain.h>
 
-#define MBERROR(format, args...) printf("%s(%d): "format, __func__ , \
-				    __LINE__ ,## args)
-
-#define MBPANIC(format, args...) printf("%s(%d): "format, __func__ , \
-				    __LINE__ ,## args)
+#define MBERROR(x)	aprint_error x
+#define MBPANIC(x)	aprint_error x
 
 #ifdef __NetBSD__
 static struct mbuf *
@@ -528,7 +525,7 @@ md_get_mem(struct mdchain *mdp, void *targetv, int size, int type)
 	while (size > 0) {
 		if (m == NULL) {
 #ifdef MCHAIN_DEBUG
-			MBERROR("incomplete copy\n");
+			MBERROR(("incomplete copy\n"));
 #endif
 			return EBADRPC;
 		}

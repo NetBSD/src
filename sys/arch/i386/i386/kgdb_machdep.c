@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.17 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.17.4.1 2008/06/27 15:11:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.17 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.17.4.1 2008/06/27 15:11:17 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -189,7 +189,7 @@ kgdb_getregs(regs, gdb_regs)
 		 */
 		gdb_regs[ 4] = (kgdb_reg_t)&regs->tf_esp; /* kernel stack
 							     pointer */
-		__asm volatile("movw %%ss,%w0" : "=r" (gdb_regs[11]));
+		gdb_regs[11] = x86_getss();
 	}
 }
 

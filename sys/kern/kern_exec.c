@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.274.2.1 2008/06/18 16:33:35 simonb Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.274.2.2 2008/06/27 15:11:38 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.274.2.1 2008/06/18 16:33:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.274.2.2 2008/06/27 15:11:38 simonb Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -527,7 +527,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			cp = tmpfap->fa_arg;
 			while (*cp)
 				*dp++ = *cp++;
-			dp++;
+			*dp++ = '\0';
 
 			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
 			tmpfap++; argc++;
@@ -944,13 +944,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	doexechooks(p);
 
-	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
-
-	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-
-	/* notify others that we exec'd */
-	KNOTE(&p->p_klist, NOTE_EXEC);
-
 	/* setup new registers and do misc. setup. */
 	(*pack.ep_esch->es_emul->e_setregs)(l, &pack, (u_long) stack);
 	if (pack.ep_esch->es_setregs)
@@ -961,6 +954,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		DPRINTF(("execve: map sigcode failed %d\n", error));
 		goto exec_abort;
 	}
+
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
+
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
+
+	/* notify others that we exec'd */
+	KNOTE(&p->p_klist, NOTE_EXEC);
 
 	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 
