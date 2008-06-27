@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.32.46.1 2008/06/27 15:11:20 simonb Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.32.46.2 2008/06/27 15:52:15 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.32.46.1 2008/06/27 15:11:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.32.46.2 2008/06/27 15:52:15 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,8 +139,8 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				do {
 					for (i = 0; i < size; i++) {
 						value =
- 						    db_get_value(addr + bytes,
-							1, false);
+ 						    db_get_value(addr+bytes, 1,
+							false);
 						db_printf(
 						    DB_EXPR_T_IS_QUAD ? "%02qx":
 						    "%02lx", value);
@@ -150,9 +150,8 @@ db_examine(db_addr_t addr, char *fmt, int count)
 					}
 				} while ((bytes != 16) && count--);
 				/* True up the columns before continuing */
-				for (i = 3; i >= (bytes / 4); i--)
-					db_printf("         ");
-				db_printf("   ");
+				for (i = 4; i >= (bytes / 4); i--)
+					db_printf ("\t");
 				/* Print chars,  use . for non-printable's. */
 				while (bytes--) {
 					value = db_get_value(addr, 1, false);

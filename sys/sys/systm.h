@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.226.2.1 2008/06/27 15:11:55 simonb Exp $	*/
+/*	$NetBSD: systm.h,v 1.226.2.2 2008/06/27 15:52:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -205,8 +205,6 @@ void	printf_nolog(const char *, ...)
 
 void	printf(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
-void	printf_unlocked(const char *, ...)		/* XXXXXXXXXXXXXXXXX */
-    __attribute__((__format__(__printf__,1,2)));	/* XXXXXXXXXXXXXXXXX */
 int	sprintf(char *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 int	snprintf(char *, size_t, const char *, ...)

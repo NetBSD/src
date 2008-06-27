@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.25.2.3 2008/06/27 15:11:39 simonb Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.25.2.4 2008/06/27 15:52:15 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.25.2.3 2008/06/27 15:11:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.25.2.4 2008/06/27 15:52:15 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -1253,12 +1253,9 @@ void
 vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 {
 	char sbuf[256];
-	int cnt, cols;
-	struct vnode *vp;
 
-	(*pr)("vnodecovered = %p syncer = %p\n",
-			mp->mnt_vnodecovered, mp->mnt_syncer);
-	(*pr)("data = %p\n", mp->mnt_data);
+	(*pr)("vnodecovered = %p syncer = %p data = %p\n",
+			mp->mnt_vnodecovered, mp->mnt_syncer, mp->mnt_data);
 
 	(*pr)("fs_bshift %d dev_bshift = %d\n",
 			mp->mnt_fs_bshift, mp->mnt_dev_bshift);
@@ -1308,28 +1305,30 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("\tmntonname = %s\n", mp->mnt_stat.f_mntonname);
 	(*pr)("\tmntfromname = %s\n", mp->mnt_stat.f_mntfromname);
 
-	cols = sizeof(void *) > 4 ? 3 : 6;
-
-	cnt = 0;
-	(*pr)("locked vnodes =");
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		if (VOP_ISLOCKED(vp)) {
-			if ((++cnt % cols) == 0) {
-				(*pr)(" %p,\n\t", vp);
-			} else {
-				(*pr)(" %p,", vp);
+	{
+		int cnt = 0;
+		struct vnode *vp;
+		(*pr)("locked vnodes =");
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+			if (VOP_ISLOCKED(vp)) {
+				if ((++cnt % 6) == 0) {
+					(*pr)(" %p,\n\t", vp);
+				} else {
+					(*pr)(" %p,", vp);
+				}
 			}
 		}
+		(*pr)("\n");
 	}
-	(*pr)("\n");
 
 	if (full) {
-		cnt = 0;
+		int cnt = 0;
+		struct vnode *vp;
 		(*pr)("all vnodes =");
 		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (!TAILQ_NEXT(vp, v_mntvnodes)) {
 				(*pr)(" %p", vp);
-			} else if ((++cnt % cols) == 0) {
+			} else if ((++cnt % 6) == 0) {
 				(*pr)(" %p,\n\t", vp);
 			} else {
 				(*pr)(" %p,", vp);
