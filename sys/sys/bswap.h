@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.12 2006/05/22 16:28:27 drochner Exp $      */
+/*      $NetBSD: bswap.h,v 1.13 2008/06/27 22:19:43 mlelstv Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -50,14 +50,16 @@ __END_DECLS
 	  (((x) & 0x00000000000000ffull) << 56)))
 
 #define	__byte_swap_u32_constant(x) \
+	((uint32_t) \
 	((((x) & 0xff000000) >> 24) | \
 	 (((x) & 0x00ff0000) >>  8) | \
 	 (((x) & 0x0000ff00) <<  8) | \
-	 (((x) & 0x000000ff) << 24))
+	 (((x) & 0x000000ff) << 24)))
 
 #define	__byte_swap_u16_constant(x) \
+	((uint16_t) \
 	((((x) & 0xff00) >> 8) | \
-	 (((x) & 0x00ff) << 8))
+	 (((x) & 0x00ff) << 8)))
 
 #define	bswap64(x) \
 	(__builtin_constant_p((x)) ? \
