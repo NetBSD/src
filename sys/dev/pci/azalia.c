@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.63 2008/06/08 08:47:05 cegger Exp $	*/
+/*	$NetBSD: azalia.c,v 1.63.2.1 2008/06/27 15:11:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.63 2008/06/08 08:47:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.63.2.1 2008/06/27 15:11:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -951,19 +951,23 @@ static void
 azalia_rirb_intr(azalia_t *az)
 {
 	const rirb_entry_t *rirb;
-	uint16_t wp;
+	uint16_t wp, newrp;
 
 	wp = AZ_READ_2(az, RIRBWP) & HDA_RIRBWP_RIRBWP;
 	if (az->rirb_rp == wp)
 		return;		/* interrupted but no data in RIRB */
+	/* Copy the first sequence of unsolicited reponses in the RIRB to
+	 * unsolq.  Don't consume non-unsolicited responses. */
 	rirb = (rirb_entry_t*)az->rirb_dma.addr;
 	while (az->rirb_rp != wp) {
-		if (++az->rirb_rp >= az->rirb_size)
-			az->rirb_rp = 0;
-		if (rirb[az->rirb_rp].resp_ex & RIRB_RESP_UNSOL) {
-			az->unsolq[az->unsolq_wp].resp = rirb[az->rirb_rp].resp;
-			az->unsolq[az->unsolq_wp++].resp_ex = rirb[az->rirb_rp].resp_ex;
+		newrp = az->rirb_rp + 1;
+		if (newrp >= az->rirb_size)
+			newrp = 0;
+		if (rirb[newrp].resp_ex & RIRB_RESP_UNSOL) {
+			az->unsolq[az->unsolq_wp].resp = rirb[newrp].resp;
+			az->unsolq[az->unsolq_wp++].resp_ex = rirb[newrp].resp_ex;
 			az->unsolq_wp %= UNSOLQ_SIZE;
+			az->rirb_rp = newrp;
 		} else {
 			break;
 		}
@@ -2003,8 +2007,8 @@ azalia_stream_start(stream_t *this, void *start, void *end, int blk,
 	bdlist_entry_t *bdlist;
 	bus_addr_t dmaaddr;
 	int err, index;
-	uint16_t ctl;
-	uint8_t ctl2, intctl;
+	uint32_t intctl;
+	uint8_t ctl, ctl2;
 
 	DPRINTF(("%s: start=%p end=%p\n", __func__, start, end));
 	if (this->bdlist.addr == NULL)
@@ -2050,13 +2054,13 @@ azalia_stream_start(stream_t *this, void *start, void *end, int blk,
 	if (err)
 		return EINVAL;
 
-	intctl = AZ_READ_1(this->az, INTCTL);
+	intctl = AZ_READ_4(this->az, INTCTL);
 	intctl |= this->intr_bit;
-	AZ_WRITE_1(this->az, INTCTL, intctl);
+	AZ_WRITE_4(this->az, INTCTL, intctl);
 
-	ctl = STR_READ_2(this, CTL);
+	ctl = STR_READ_1(this, CTL);
 	ctl |= ctl | HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN;
-	STR_WRITE_2(this, CTL, ctl);
+	STR_WRITE_1(this, CTL, ctl);
 	return 0;
 }
 
@@ -2070,7 +2074,7 @@ azalia_stream_halt(stream_t *this)
 	ctl = STR_READ_2(this, CTL);
 	ctl &= ~(HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE | HDA_SD_CTL_RUN);
 	STR_WRITE_2(this, CTL, ctl);
-	AZ_WRITE_1(this->az, INTCTL, AZ_READ_1(this->az, INTCTL) & ~this->intr_bit);
+	AZ_WRITE_4(this->az, INTCTL, AZ_READ_4(this->az, INTCTL) & ~this->intr_bit);
 	azalia_codec_disconnect_stream
 	    (&this->az->codecs[this->az->codecno], this->dir);
 	return 0;
@@ -2452,7 +2456,7 @@ static struct cfdata azalia_cfdata[] = {
 static int
 azalia_modcmd(modcmd_t cmd, void *arg)
 {
-	int err;
+	int err, s;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -2464,7 +2468,9 @@ azalia_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&azalia_cd);
 			return err;
 		}
+		s = splaudio();
 		err = config_cfdata_attach(azalia_cfdata, 1);
+		splx(s);
 		if (err) {
 			config_cfattach_detach("azalia", &azalia_ca);
 			config_cfdriver_detach(&azalia_cd);

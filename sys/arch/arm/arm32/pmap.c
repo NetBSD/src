@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.176.2.1 2008/06/18 16:32:38 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.176.2.2 2008/06/27 15:11:16 simonb Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176.2.1 2008/06/18 16:32:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176.2.2 2008/06/27 15:11:16 simonb Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3881,6 +3881,14 @@ pmap_activate(struct lwp *l)
 void
 pmap_deactivate(struct lwp *l)
 {
+
+	/*
+	 * If the process is exiting, make sure pmap_activate() does
+	 * a full MMU context-switch and cache flush, which we might
+	 * otherwise skip. See PR port-arm/38950.
+	 */
+	if (l->l_proc->p_sflag & PS_WEXIT)
+		pmap_previous_active_lwp = NULL;
 
 	l->l_proc->p_vmspace->vm_map.pmap->pm_activated = false;
 }

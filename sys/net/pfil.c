@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.25 2008/05/29 14:51:27 mrg Exp $	*/
+/*	$NetBSD: pfil.c,v 1.25.2.1 2008/06/27 15:11:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.25 2008/05/29 14:51:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.25.2.1 2008/06/27 15:11:48 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -94,8 +94,7 @@ pfil_head_register(struct pfil_head *ph)
 {
 	struct pfil_head *lph;
 
-	for (lph = LIST_FIRST(&pfil_head_list); lph != NULL;
-	     lph = LIST_NEXT(lph, ph_list)) {
+	LIST_FOREACH(lph, &pfil_head_list, ph_list) {
 		if (ph->ph_type == lph->ph_type &&
 		    ph->ph_un.phu_val == lph->ph_un.phu_val)
 			return EEXIST;
@@ -131,10 +130,8 @@ pfil_head_get(int type, u_long val)
 {
 	struct pfil_head *ph;
 
-	for (ph = LIST_FIRST(&pfil_head_list); ph != NULL;
-	     ph = LIST_NEXT(ph, ph_list)) {
-		if (ph->ph_type == type &&
-		    ph->ph_un.phu_val == val)
+	LIST_FOREACH(ph, &pfil_head_list, ph_list) {
+		if (ph->ph_type == type && ph->ph_un.phu_val == val)
 			break;
 	}
 
@@ -206,10 +203,8 @@ pfil_list_add(pfil_list_t *list,
 	/*
 	 * First make sure the hook is not already there.
 	 */
-	for (pfh = TAILQ_FIRST(list); pfh != NULL;
-	     pfh = TAILQ_NEXT(pfh, pfil_link)) {
-		if (pfh->pfil_func == func &&
-		    pfh->pfil_arg == arg)
+	TAILQ_FOREACH(pfh, list, pfil_link) {
+		if (pfh->pfil_func == func && pfh->pfil_arg == arg)
 			return EEXIST;
 	}
 
@@ -265,8 +260,7 @@ pfil_list_remove(pfil_list_t *list,
 {
 	struct packet_filter_hook *pfh;
 
-	for (pfh = TAILQ_FIRST(list); pfh != NULL;
-	     pfh = TAILQ_NEXT(pfh, pfil_link)) {
+	TAILQ_FOREACH(pfh, list, pfil_link) {
 		if (pfh->pfil_func == func && pfh->pfil_arg == arg) {
 			TAILQ_REMOVE(list, pfh, pfil_link);
 			free(pfh, M_IFADDR);

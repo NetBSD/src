@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.15 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.15.4.1 2008/06/27 15:11:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.15 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.15.4.1 2008/06/27 15:11:39 simonb Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -534,7 +534,6 @@ sigpending1(struct lwp *l, sigset_t *ss)
 	mutex_enter(p->p_lock);
 	*ss = l->l_sigpend.sp_set;
 	sigplusset(&p->p_sigpend.sp_set, ss);
-	sigminusset(&l->l_sigmask, ss);
 	mutex_exit(p->p_lock);
 }
 

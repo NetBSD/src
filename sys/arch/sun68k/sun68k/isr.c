@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.21.4.1 2008/06/18 16:32:54 simonb Exp $	*/
+/*	$NetBSD: isr.c,v 1.21.4.2 2008/06/27 15:11:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.21.4.1 2008/06/18 16:32:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.21.4.2 2008/06/27 15:11:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,13 +228,6 @@ isr_add_vectored(isr_func_t func, void *arg, int level, int vec)
 	vh->func = func;
 	vh->arg = arg;
 	set_vector_entry(vec, (void *)_isr_vectored);
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return idepth != 0;
 }
 
 /*

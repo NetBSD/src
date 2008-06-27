@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.27.4.1 2008/06/27 15:11:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.4.1 2008/06/27 15:11:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ int	intr_debug = 0;
  * IIfx/Q700/900/950/etc. where the interrupt controller may be reprogrammed
  * to interrupt on different levels as listed in locore.s
  */
-u_short mac68k_ipls[NIPL];
+uint16_t ipl2psl_table[NIPL];
 int idepth;
 volatile int ssir;
 
@@ -106,31 +106,31 @@ intr_init(void)
 	const char	*inames;
 	char		*g_inames;
 
-	mac68k_ipls[IPL_NONE]       = 0;
-	mac68k_ipls[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1;
-	mac68k_ipls[IPL_SOFTNET]    = PSL_S|PSL_IPL1;
-	mac68k_ipls[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1;
-	mac68k_ipls[IPL_SOFTBIO]    = PSL_S|PSL_IPL1;
-	mac68k_ipls[IPL_HIGH]       = PSL_S|PSL_IPL7;
+	ipl2psl_table[IPL_NONE]       = 0;
+	ipl2psl_table[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1;
+	ipl2psl_table[IPL_SOFTNET]    = PSL_S|PSL_IPL1;
+	ipl2psl_table[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1;
+	ipl2psl_table[IPL_SOFTBIO]    = PSL_S|PSL_IPL1;
+	ipl2psl_table[IPL_HIGH]       = PSL_S|PSL_IPL7;
 
 	g_inames = (char *) &intrnames;
 	if (mac68k_machine.aux_interrupts) {
 		inames = AUX_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
-		mac68k_ipls[IPL_VM]        = (PSL_S | PSL_IPL6);
-		mac68k_ipls[IPL_SCHED]     = (PSL_S | PSL_IPL6);
+		ipl2psl_table[IPL_VM]        = (PSL_S | PSL_IPL6);
+		ipl2psl_table[IPL_SCHED]     = (PSL_S | PSL_IPL6);
 	} else {
 		inames = STD_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
-		mac68k_ipls[IPL_VM]        = (PSL_S | PSL_IPL2);
-		mac68k_ipls[IPL_SCHED]     = (PSL_S | PSL_IPL3);
+		ipl2psl_table[IPL_VM]        = (PSL_S | PSL_IPL2);
+		ipl2psl_table[IPL_SCHED]     = (PSL_S | PSL_IPL3);
 
 		if (current_mac_model->class == MACH_CLASSAV) {
 			inames = AV_INAMES;
-			mac68k_ipls[IPL_VM]    = (PSL_S | PSL_IPL4);
-			mac68k_ipls[IPL_SCHED] = (PSL_S | PSL_IPL4);
+			ipl2psl_table[IPL_VM]    = (PSL_S | PSL_IPL4);
+			ipl2psl_table[IPL_SCHED] = (PSL_S | PSL_IPL4);
 		}
 	}
 
@@ -157,11 +157,11 @@ intr_computeipl(void)
 	 * Enforce the following relationship, as defined in spl(9):
 	 * `bio <= net <= tty <= vm <= statclock <= clock <= sched <= serial'
 	 */
-	if (mac68k_ipls[IPL_VM] > mac68k_ipls[IPL_SCHED])
-		mac68k_ipls[IPL_SCHED] = mac68k_ipls[IPL_VM];
+	if (ipl2psl_table[IPL_VM] > ipl2psl_table[IPL_SCHED])
+		ipl2psl_table[IPL_SCHED] = ipl2psl_table[IPL_VM];
 
-	if (mac68k_ipls[IPL_SCHED] > mac68k_ipls[IPL_HIGH])
-		mac68k_ipls[IPL_HIGH] = mac68k_ipls[IPL_SCHED];
+	if (ipl2psl_table[IPL_SCHED] > ipl2psl_table[IPL_HIGH])
+		ipl2psl_table[IPL_HIGH] = ipl2psl_table[IPL_SCHED];
 }
 
 /*

@@ -1,7 +1,7 @@
-/*	$NetBSD: scsiromvar.h,v 1.5.82.1 2008/06/27 15:11:18 simonb Exp $	*/
+/* $NetBSD: linux32_sockio.h,v 1.1.2.2 2008/06/27 15:11:19 simonb Exp $ */
 
-/*-
- * Copyright (c) 1998 NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2008 Nicolas Joly
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,14 +12,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
@@ -32,17 +26,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * SCSI BIOS ROM.
- * Used to probe the board.
- */
+#ifndef _LINUX32_SOCKIO_H
+#define _LINUX32_SOCKIO_H
 
-struct scsirom_softc {
-	enum {
-		INTERNAL = 0,	/* onboard */
-		EXTERNAL = 1,	/* optional */
-	} 		sc_which;
-	paddr_t		sc_addr;
+#define	LINUX32_IFNAMSIZ	16
+
+struct linux32_ifmap {
+	netbsd32_u_long mem_start;
+	netbsd32_u_long mem_end;
+	unsigned short base_addr;
+	unsigned char irq;
+	unsigned char dma;
+	unsigned char port;
+}; 
+
+struct linux32_ifreq {
+	union {
+		char ifrn_name[LINUX32_IFNAMSIZ];
+	} ifr_ifrn;
+	union {
+		struct osockaddr ifru_hwaddr;
+		struct linux32_ifmap ifru_map;
+	} ifr_ifru;
+#define ifr_name	ifr_ifrn.ifrn_name	/* interface name       */
+#define ifr_hwaddr	ifr_ifru.ifru_hwaddr	/* MAC address          */
+#define ifr_map		ifr_ifru.ifru_map	/* device map           */
 };
 
-int scsirom_find_rom(int);
+#endif /* !_LINUX32_SOCKIO_H */

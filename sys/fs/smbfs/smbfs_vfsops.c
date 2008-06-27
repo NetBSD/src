@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.81 2008/05/10 02:26:09 rumble Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.81.2.1 2008/06/27 15:11:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.81 2008/05/10 02:26:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.81.2.1 2008/06/27 15:11:28 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -352,14 +352,14 @@ smbfs_init(void)
 	pool_init(&smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0,
 	    "smbfsnopl", &pool_allocator_nointr, IPL_NONE);
 
-	SMBVDEBUG("init.\n");
+	SMBVDEBUG0("init.\n");
 }
 
 void
 smbfs_reinit(void)
 {
 
-	SMBVDEBUG("reinit.\n");
+	SMBVDEBUG0("reinit.\n");
 }
 
 void
@@ -372,7 +372,7 @@ smbfs_done(void)
 	malloc_type_detach(M_SMBNODENAME);
 	malloc_type_detach(M_SMBFSDATA);
 
-	SMBVDEBUG("done.\n");
+	SMBVDEBUG0("done.\n");
 }
 
 /*

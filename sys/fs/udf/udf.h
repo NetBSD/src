@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.12 2008/05/15 14:22:40 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.12.2.1 2008/06/27 15:11:38 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -135,7 +135,7 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
 #define UDF_PMAPS		5	/* overkill */
 #define UDF_LVDINT_SEGMENTS	100	/* big overkill */
 #define UDF_LVINT_LOSSAGE	4	/* lose 2 openings */
-#define UDF_MAX_ALLOC_EXTENTS	10	/* overkill */
+#define UDF_MAX_ALLOC_EXTENTS	50	/* overkill */
 
 
 /* constants */

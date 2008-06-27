@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.64 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.64.4.1 2008/06/27 15:11:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.64 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.64.4.1 2008/06/27 15:11:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,7 @@ smbfs_getattr(v)
 	if ((error = smbfs_attr_cachelookup(vp, va)) == 0)
 		return (0);
 
-	SMBVDEBUG("not in the cache\n");
+	SMBVDEBUG0("not in the cache\n");
 	smb_makescred(&scred, curlwp, ap->a_cred);
 	oldsize = np->n_size;
 	error = smbfs_smb_lookup(np, NULL, 0, &fattr, &scred);
@@ -392,7 +392,7 @@ smbfs_setattr(v)
 	u_quad_t tsize = 0;
 	int isreadonly, doclose, error = 0;
 
-	SMBVDEBUG("\n");
+	SMBVDEBUG0("\n");
 	if (vap->va_flags != VNOVAL)
 		return EOPNOTSUPP;
 	isreadonly = (vp->v_mount->mnt_flag & MNT_RDONLY);
@@ -945,7 +945,7 @@ smbfs_strategy(v)
 	struct lwp *l;
 	int error = 0;
 
-	SMBVDEBUG("\n");
+	SMBVDEBUG0("\n");
 	if ((bp->b_flags & (B_PHYS|B_ASYNC)) == (B_PHYS|B_ASYNC))
 		panic("smbfs physio/async");
 	if (bp->b_flags & B_ASYNC) {

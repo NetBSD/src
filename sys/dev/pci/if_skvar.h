@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.13 2008/04/28 20:23:55 martin Exp $ */
+/* $NetBSD: if_skvar.h,v 1.13.4.1 2008/06/27 15:11:22 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -232,6 +232,7 @@ struct sk_if_softc {
 	struct sk_softc		*sk_softc;	/* parent controller */
 	int			sk_tx_bmu;	/* TX BMU register */
 	int			sk_if_flags;
+	kmutex_t		sk_jpool_mtx;
 	LIST_HEAD(__sk_jfreehead, sk_jpool_entry)	sk_jfree_listhead;
 	LIST_HEAD(__sk_jinusehead, sk_jpool_entry)	sk_jinuse_listhead;
 	SIMPLEQ_HEAD(__sk_txmaphead, sk_txmap_entry) sk_txmap_head;

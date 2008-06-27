@@ -1,4 +1,4 @@
-/* $NetBSD: midictl.c,v 1.5 2008/04/28 20:23:47 martin Exp $ */
+/* $NetBSD: midictl.c,v 1.5.4.1 2008/06/27 15:11:20 simonb Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.5 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midictl.c,v 1.5.4.1 2008/06/27 15:11:20 simonb Exp $");
 
 /*
  * See midictl.h for an overview of the purpose and use of this module.
@@ -532,7 +532,7 @@ struct midictl_store {
 };
 
 static uint32_t store_idx(uint32_t lgcapacity,
-			  uint64_t table[static 1<<lgcapacity],
+			  uint64_t *table,
                           uint64_t key, uint64_t mask);
 static void store_rehash(midictl_store *s);
 
@@ -637,7 +637,7 @@ store_update(midictl_store *s, class c, uint_fast8_t chan,
 }
 
 static uint32_t
-store_idx(uint32_t lgcapacity, uint64_t table[static 1<<lgcapacity],
+store_idx(uint32_t lgcapacity, uint64_t *table,
           uint64_t key, uint64_t mask)
 {
 	uint32_t val;

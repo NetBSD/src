@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.25 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.25.2.1 2008/06/27 15:11:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.25 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.25.2.1 2008/06/27 15:11:19 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ compat_20_netbsd32_fstatfs(struct lwp *l, const struct compat_20_netbsd32_fstatf
 	struct netbsd32_statfs s32;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;

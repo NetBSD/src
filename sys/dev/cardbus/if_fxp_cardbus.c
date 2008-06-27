@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.31 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.31.4.1 2008/06/27 15:11:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.31 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.31.4.1 2008/06/27 15:11:21 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -236,9 +236,6 @@ fxp_cardbus_enable(struct fxp_softc * sc)
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return 1;
 	}
-
-	printf("%s: interrupting at %d\n", device_xname(&sc->sc_dev),
-	    psc->sc_intrline);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.15 2008/04/08 12:07:25 cegger Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.15.8.1 2008/06/27 15:11:21 simonb Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.15 2008/04/08 12:07:25 cegger Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.15.8.1 2008/06/27 15:11:21 simonb Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.15 2008/04/08 12:07:25 cegger Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.15.8.1 2008/06/27 15:11:21 simonb Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -74,6 +74,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/ic/aic7xxx_cam.h>
 
 /****************************** Platform Macros *******************************/
 #define	SIM_IS_SCSIBUS_B(ahd, sim)	\
@@ -563,6 +564,6 @@ ahd_platform_flushwork(struct ahd_softc *ahd)
 
 /************************ Misc Function Declarations **************************/
 void	ahd_done(struct ahd_softc *, struct scb *);
-void	ahd_send_async(struct ahd_softc *, char , u_int, u_int, u_int, void *);
+void	ahd_send_async(struct ahd_softc *, char, u_int, u_int, ac_code, void *);
 
 #endif  /* _AIC79XX_NETBSD_H_ */

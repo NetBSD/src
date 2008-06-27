@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.114.4.1 2008/06/18 16:33:35 simonb Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.114.4.2 2008/06/27 15:11:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.114.4.1 2008/06/18 16:33:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.114.4.2 2008/06/27 15:11:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1291,7 +1291,8 @@ unp_internalize(struct mbuf **controlp)
 
 	/* Sanity check the control message header. */
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
-	    cm->cmsg_len != control->m_len)
+	    cm->cmsg_len > control->m_len ||
+	    cm->cmsg_len < CMSG_ALIGN(sizeof(*cm)))
 		return (EINVAL);
 
 	/*

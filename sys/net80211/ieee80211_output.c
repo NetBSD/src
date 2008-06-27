@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.47 2007/03/04 06:03:19 christos Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.47.44.1 2008/06/27 15:11:48 simonb Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.47 2007/03/04 06:03:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.47.44.1 2008/06/27 15:11:48 simonb Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -716,7 +716,9 @@ ieee80211_compute_duration1(int len, int use_ack, uint32_t icflags, int rate,
 	int ack, bitlen, data_dur, remainder;
 
 	/* RTS reserves medium for SIFS | CTS | SIFS | (DATA) | SIFS | ACK
-	 * DATA reserves medium for SIFS | ACK
+	 * DATA reserves medium for SIFS | ACK,
+	 *
+	 * (XXX or SIFS | ACK | SIFS | DATA | SIFS | ACK, if more fragments)
 	 *
 	 * XXXMYC: no ACK on multicast/broadcast or control packets
 	 */

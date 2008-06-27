@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.25 2007/10/17 19:56:40 garbled Exp $	*/
+/*	$NetBSD: ansi.h,v 1.25.26.1 2008/06/27 15:11:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -64,6 +64,8 @@
 #define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
 #if __GNUC_PREREQ__(3, 0)
 #define	_BSD_VA_LIST_		__builtin_va_list /* GCC builtin type */
+#elif defined(__PCC__)
+#define _BSD_VA_LIST_		char *		/* va_list */
 #else
 #define	_BSD_VA_LIST_		__va_list	/* va_list */
 typedef struct {

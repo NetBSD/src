@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18.14.1 2008/06/18 16:32:54 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.18.14.2 2008/06/27 15:11:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -58,6 +58,14 @@
 #ifdef _KERNEL
 
 extern int idepth;
+
+static inline bool    
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
+}       
+        
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;

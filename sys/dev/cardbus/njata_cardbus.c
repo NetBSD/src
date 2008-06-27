@@ -1,4 +1,4 @@
-/*	$Id: njata_cardbus.c,v 1.6 2008/03/18 20:46:36 cube Exp $	*/
+/*	$Id: njata_cardbus.c,v 1.6.8.1 2008/06/27 15:11:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.6 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.6.8.1 2008/06/27 15:11:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ struct njata32_cardbus_softc {
 
 	/* CardBus-specific goo */
 	cardbus_devfunc_t	sc_ct;		/* our CardBus devfuncs */
-	int			sc_intrline;	/* our interrupt line */
+	cardbus_intr_line_t	sc_intrline;	/* our interrupt line */
 	cardbustag_t		sc_tag;
 
 	bus_space_handle_t	sc_regmaph;
@@ -221,12 +221,10 @@ njata_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
 	    njata32_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: unable to establish interrupt at %d\n",
-		    NJATA32NAME(sc), ca->ca_intrline);
+		aprint_error("%s: unable to establish interrupt\n",
+		    NJATA32NAME(sc));
 		return;
 	}
-	aprint_normal("%s: interrupting at %d\n", NJATA32NAME(sc),
-	    ca->ca_intrline);
 
 	/* attach */
 	njata32_attach(sc);

@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.11.8.1 2008/06/18 16:33:18 simonb Exp $
+ * $NetBSD: if_lmc.h,v 1.11.8.2 2008/06/27 15:11:22 simonb Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1055,10 +1055,9 @@ typedef int intr_return_t;
 # define WRITE_CSR(sc, csr, val) bus_space_write_4((sc)->csr_tag, (sc)->csr_handle, csr, val)
 # define NAME_UNIT		device_xname(&sc->dev)
 # define BOOT_VERBOSE		(boothowto & AB_VERBOSE)
-# define TOP_LOCK(sc)		({ while (__cpu_simple_lock_try(&(sc)->top_lock)==0) \
-				 tsleep((sc), PCATCH|PZERO, DEVICE_NAME, 1); 0; })
-# define TOP_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->top_lock)
-# define TOP_UNLOCK(sc)		__cpu_simple_unlock  (&(sc)->top_lock)
+# define TOP_LOCK(sc)		(mutex_spin_enter(&(sc)->top_lock), 0)
+# define TOP_TRYLOCK(sc)	mutex_tryenter(&(sc)->top_lock)
+# define TOP_UNLOCK(sc)		mutex_spin_exit(&(sc)->top_lock)
 # define BOTTOM_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->bottom_lock)
 # define BOTTOM_UNLOCK(sc)	__cpu_simple_unlock  (&(sc)->bottom_lock)
 # define CHECK_CAP		kauth_authorize_generic(curlwp->l_cred, KAUTH_GENERIC_ISSUSER, NULL)
@@ -1290,7 +1289,11 @@ struct softc
   void *irq_cookie;
   void *sdh_cookie;
   struct mbuf *tx_mbuf;			/* hang mbuf here while building dma descs */
+#if defined(__NetBSD__)
+  kmutex_t top_lock;			/* lock card->watchdog vs ioctls           */
+#else
   __cpu_simple_lock_t top_lock;		/* lock card->watchdog vs ioctls           */
+#endif
   __cpu_simple_lock_t bottom_lock;	/* lock buf queues & descriptor rings   */
 #endif					/* __NetBSD__ || __OpenBSD__ */
 

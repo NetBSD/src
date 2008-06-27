@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.18 2008/04/28 20:24:06 martin Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.18.4.1 2008/06/27 15:11:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.18 2008/04/28 20:24:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.18.4.1 2008/06/27 15:11:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,7 @@ sys_extattr_set_fd(struct lwp *l, const struct sys_extattr_set_fd_args *uap, reg
 	if (error)
 		return (error);
 
-	error = getvnode(SCARG(uap, fd), &fp);
+	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
 	vp = (struct vnode *) fp->f_data;
@@ -485,7 +485,7 @@ sys_extattr_get_fd(struct lwp *l, const struct sys_extattr_get_fd_args *uap, reg
 	if (error)
 		return (error);
 
-	error = getvnode(SCARG(uap, fd), &fp);
+	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
 	vp = (struct vnode *) fp->f_data;
@@ -577,7 +577,7 @@ sys_extattr_delete_fd(struct lwp *l, const struct sys_extattr_delete_fd_args *ua
 	if (error)
 		return (error);
 
-	error = getvnode(SCARG(uap, fd), &fp);
+	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
 	vp = (struct vnode *) fp->f_data;
@@ -659,7 +659,7 @@ sys_extattr_list_fd(struct lwp *l, const struct sys_extattr_list_fd_args *uap, r
 	struct vnode *vp;
 	int error;
 
-	error = getvnode(SCARG(uap, fd), &fp);
+	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
 	vp = (struct vnode *) fp->f_data;
@@ -809,7 +809,7 @@ sys_fsetxattr(struct lwp *l, const struct sys_fsetxattr_args *uap, register_t *r
 	if (error)
 		return (error);
 
-	error = getvnode(SCARG(uap, fd), &fp);
+	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
 	vp = (struct vnode *) fp->f_data;
@@ -902,7 +902,7 @@ sys_fgetxattr(struct lwp *l, const struct sys_fgetxattr_args *uap, register_t *r
 	if (error)
 		return (error);
 
-	error = getvnode(SCARG(uap, fd), &fp);
+	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
 	vp = (struct vnode *) fp->f_data;
@@ -972,7 +972,7 @@ sys_flistxattr(struct lwp *l, const struct sys_flistxattr_args *uap, register_t 
 	struct vnode *vp;
 	int error;
 
-	error = getvnode(SCARG(uap, fd), &fp);
+	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
 	vp = (struct vnode *) fp->f_data;
@@ -1057,7 +1057,7 @@ sys_fremovexattr(struct lwp *l, const struct sys_fremovexattr_args *uap, registe
 	if (error)
 		return (error);
 
-	error = getvnode(SCARG(uap, fd), &fp);
+	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
 	vp = (struct vnode *) fp->f_data;

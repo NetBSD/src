@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.103 2008/04/24 18:39:22 ad Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.103.6.1 2008/06/27 15:11:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.103 2008/04/24 18:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.103.6.1 2008/06/27 15:11:19 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,8 +387,8 @@ ibcs2_sys_getdents(struct lwp *l, const struct ibcs2_sys_getdents_args *uap, reg
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
@@ -517,8 +517,8 @@ ibcs2_sys_read(struct lwp *l, const struct ibcs2_sys_read_args *uap, register_t 
 	off_t off;			/* true file offset */
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0) {
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0) {
 		if (error == EINVAL)
 			return sys_read(l, (const void *)uap, retval);
 		else

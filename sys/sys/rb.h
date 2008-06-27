@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.4 2008/06/06 22:23:45 joerg Exp $ */
+/* $NetBSD: rb.h,v 1.4.2.1 2008/06/27 15:11:55 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,68 +47,50 @@ struct rb_node {
 #define	rb_left		rb_nodes[RB_DIR_LEFT]
 #define	rb_right	rb_nodes[RB_DIR_RIGHT]
 	struct rb_node *rb_parent;
-#ifndef lint
-	struct rb_properties {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		unsigned long int s_data : 8 * sizeof(unsigned long int) - 5;
-		unsigned long int s_moved : 1;
-		unsigned long int s_root : 1;
-		unsigned long int s_color : 1;
-		unsigned long int s_sentinel : 1;
-		unsigned long int s_position : 1;
-#endif
-#if BYTE_ORDER == BIG_ENDIAN
-		unsigned long int s_position : 1;
-		unsigned long int s_sentinel : 1;
-		unsigned long int s_color : 1;
-		unsigned long int s_root : 1;
-		unsigned long int s_moved : 1;
-		unsigned long int s_data : 8 * sizeof(unsigned long int) - 5;
-#endif
-	} rb_info;
-#define	rb_moved			rb_info.s_moved
-#define	rb_root				rb_info.s_root
-#define	rb_position			rb_info.s_position
-#define	rb_color			rb_info.s_color
-#define	rb_sentinel			rb_info.s_sentinel
-#define	rb_data				rb_info.s_data
-#define	RB_SENTINEL_P(rb)		((rb)->rb_sentinel + 0)
-#define	RB_LEFT_SENTINEL_P(rb)		((rb)->rb_left->rb_sentinel + 0)
-#define	RB_RIGHT_SENTINEL_P(rb)		((rb)->rb_right->rb_sentinel + 0)
-#define	RB_PARENT_SENTINEL_P(rb)	((rb)->rb_parent->rb_sentinel + 0)
-#define	RB_CHILDLESS_P(rb)		(RB_LEFT_SENTINEL_P(rb) \
-					 && RB_RIGHT_SENTINEL_P(rb))
-#define	RB_TWOCHILDREN_P(rb)		(!RB_LEFT_SENTINEL_P(rb) \
-					 && !RB_RIGHT_SENTINEL_P(rb))
-#define	RB_ROOT_P(rb)			((rb)->rb_root != false)
-#define	RB_RED_P(rb)			((rb)->rb_color + 0)
-#define	RB_BLACK_P(rb)			(!(rb)->rb_color)
-#define	RB_MOVED_P(rb)			((rb)->rb_moved + 0)
-#ifdef RBSMALL
-#define	RB_MARK_UNMOVED(rb)		((void)0)
-#define	RB_MARK_MOVED(rb)		((void)0)
-#else
-#define	RB_MARK_UNMOVED(rb)		((void)((rb)->rb_moved = 0))
-#define	RB_MARK_MOVED(rb)		((void)((rb)->rb_moved = 1))
-#endif
-#define	RB_MARK_RED(rb)			((void)((rb)->rb_color = 1))
-#define	RB_MARK_BLACK(rb)		((void)((rb)->rb_color = 0))
-#define	RB_INVERT_COLOR(rb)		((void)((rb)->rb_color ^= 1))
-#define	RB_MARK_ROOT(rb)		((void)((rb)->rb_root = 1))
-#define	RB_MARK_NONROOT(rb)		((void)((rb)->rb_root = 0))
-#define	RB_ZERO_PROPERTIES(rb)		((void)((rb)->rb_sentinel = 0, \
-						(rb)->rb_color = 0, \
-						(rb)->rb_position = 0, \
-						(rb)->rb_root = 0, \
-						(rb)->rb_moved = 0))
-#define	RB_COPY_PROPERTIES(dst, src)	\
-		((void)((dst)->rb_color = (src)->rb_color, \
-			(dst)->rb_position = (src)->rb_position, \
-			(dst)->rb_root = (src)->rb_root, \
-			(dst)->rb_moved = (src)->rb_moved))
+
+#define	__RB_SHIFT	((sizeof(unsigned long) - 4) << 3)
+#define	RB_FLAG_POSITION	(0x80000000UL << __RB_SHIFT)
+#define	RB_FLAG_ROOT		(0x40000000UL << __RB_SHIFT)
+#define	RB_FLAG_RED		(0x20000000UL << __RB_SHIFT)
+#define	RB_FLAG_SENTINEL	(0x10000000UL << __RB_SHIFT)
+#define	RB_FLAG_MASK		(0xf0000000UL << __RB_SHIFT)
+	unsigned long rb_info;
+
+#define	RB_SENTINEL_P(rb) \
+    (((rb)->rb_info & RB_FLAG_SENTINEL) != 0)
+#define	RB_LEFT_SENTINEL_P(rb) \
+    (((rb)->rb_left->rb_info & RB_FLAG_SENTINEL) != 0)
+#define	RB_RIGHT_SENTINEL_P(rb) \
+    (((rb)->rb_right->rb_info & RB_FLAG_SENTINEL) != 0)
+#define	RB_PARENT_SENTINEL_P(rb) \
+    (((rb)->rb_parent->rb_info & RB_FLAG_SENTINEL) != 0)
+#define	RB_CHILDLESS_P(rb) \
+    (RB_LEFT_SENTINEL_P(rb) && RB_RIGHT_SENTINEL_P(rb))
+#define	RB_TWOCHILDREN_P(rb) \
+    (!RB_LEFT_SENTINEL_P(rb) && !RB_RIGHT_SENTINEL_P(rb))
+
+#define	RB_ROOT_P(rb) 		(((rb)->rb_info & RB_FLAG_ROOT) != 0)
+#define	RB_POSITION_P(rb)	(((rb)->rb_info & RB_FLAG_POSITION) != 0)
+#define	RB_RED_P(rb) 		(((rb)->rb_info & RB_FLAG_RED) != 0)
+#define	RB_BLACK_P(rb) 		(((rb)->rb_info & RB_FLAG_RED) == 0)
+#define	RB_MARK_RED(rb) 	((void)((rb)->rb_info |= RB_FLAG_RED))
+#define	RB_MARK_BLACK(rb) 	((void)((rb)->rb_info &= ~RB_FLAG_RED))
+#define	RB_INVERT_COLOR(rb) 	((void)((rb)->rb_info & RB_FLAG_RED) ? \
+    ((rb)->rb_info &= ~RB_FLAG_RED) : ((rb)->rb_info |= RB_FLAG_RED))
+#define	RB_MARK_ROOT(rb) 	((void)((rb)->rb_info |= RB_FLAG_ROOT))
+#define	RB_MARK_NONROOT(rb)	((void)((rb)->rb_info &= ~RB_FLAG_ROOT))
+#define	RB_MARK_SENTINEL(rb) 	((void)((rb)->rb_info |= RB_FLAG_SENTINEL))
+#define	RB_MARK_NONSENTINEL(rb)	((void)((rb)->rb_info &= ~RB_FLAG_SENTINEL))
+#define	RB_SET_POSITION(rb, position) \
+    ((void)((position) ? ((rb)->rb_info |= RB_FLAG_POSITION) : \
+    ((rb)->rb_info &= ~RB_FLAG_POSITION)))
+#define	RB_MARK_NONSENTINEL(rb)	((void)((rb)->rb_info &= ~RB_FLAG_SENTINEL))
+#define	RB_ZERO_PROPERTIES(rb)	((void)((rb)->rb_info &= ~RB_FLAG_MASK))
+#define	RB_COPY_PROPERTIES(dst, src) \
+    ((void)((dst)->rb_info = ((dst)->rb_info & ~RB_FLAG_MASK) | \
+    ((src)->rb_info & RB_FLAG_MASK)))
 #ifdef RBDEBUG
 	TAILQ_ENTRY(rb_node) rb_link;
-#endif
 #endif
 };
 
@@ -121,11 +103,11 @@ TAILQ_HEAD(rb_node_qh, rb_node);
 #define	RB_TAILQ_INSERT_BEFORE(a, b, c)		TAILQ_INSERT_BEFORE(a, b, c)
 #define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	TAILQ_INSERT_AFTER(a, b, c, d)
 #else
-#define	RB_TAILQ_REMOVE(a, b, c)		do { } while (0)
-#define	RB_TAILQ_INIT(a)			do { } while (0)
-#define	RB_TAILQ_INSERT_HEAD(a, b, c)		do { } while (0)
-#define	RB_TAILQ_INSERT_BEFORE(a, b, c)		do { } while (0)
-#define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	do { } while (0)
+#define	RB_TAILQ_REMOVE(a, b, c)		do { } while (/*CONSTCOND*/0)
+#define	RB_TAILQ_INIT(a)			do { } while (/*CONSTCOND*/0)
+#define	RB_TAILQ_INSERT_HEAD(a, b, c)		do { } while (/*CONSTCOND*/0)
+#define	RB_TAILQ_INSERT_BEFORE(a, b, c)		do { } while (/*CONSTCOND*/0)
+#define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	do { } while (/*CONSTCOND*/0)
 #endif /* RBDEBUG */
 
 typedef signed int (*const rb_compare_nodes_fn)(const struct rb_node *,

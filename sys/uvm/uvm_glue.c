@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.131.2.1 2008/06/18 16:33:59 simonb Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.131.2.2 2008/06/27 15:11:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.131.2.1 2008/06/18 16:33:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.131.2.2 2008/06/27 15:11:55 simonb Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -607,6 +607,8 @@ swappable(struct lwp *l)
 	if ((l->l_pflag & LP_RUNNING) != 0)
 		return false;
 	if (l->l_holdcnt != 0)
+		return false;
+	if (l->l_class != SCHED_OTHER)
 		return false;
 	if (l->l_syncobj == &rw_syncobj || l->l_syncobj == &mutex_syncobj)
 		return false;
