@@ -1,4 +1,4 @@
-/* $NetBSD: mt.c,v 1.43 2006/10/16 00:09:20 christos Exp $ */
+/* $NetBSD: mt.c,v 1.44 2008/06/27 01:42:44 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.43 2006/10/16 00:09:20 christos Exp $");
+__RCSID("$NetBSD: mt.c,v 1.44 2008/06/27 01:42:44 gmcgarry Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: mt.c,v 1.43 2006/10/16 00:09:20 christos Exp $");
 struct commands {
 	const char *c_name;		/* command */
 	size_t c_namelen;		/* command len */
-	int c_spcl;			/* ioctl request */
+	u_long c_spcl;			/* ioctl request */
 	int c_code;			/* ioctl code for MTIOCTOP command */
 	int c_ronly;			/* open tape read-only */
 	int c_mincount;			/* min allowed count value */
