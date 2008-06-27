@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.94.2.4 2008/06/24 02:07:36 wrstuden Exp $	*/
+/*	$NetBSD: lwp.h,v 1.94.2.5 2008/06/27 01:53:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -200,6 +200,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
 #define	LW_INMEM	0x00000004 /* Loaded into memory. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
+#define	LW_SA_SWITCHING	0x00000100 /* SA LWP in context switch */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
 #define	LW_SA		0x00000400 /* Scheduler activations LWP */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
@@ -226,7 +227,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
-#define	LP_SA_SWITCHING	0x00000100 /* SA LWP in context switch */
 #define	LP_SA_PAGEFAULT	0x00000200 /* SA LWP in pagefault handler */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_RUNNING	0x20000000 /* Active on a CPU */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.221.2.4 2008/06/23 04:30:46 wrstuden Exp $ */
+/*	$NetBSD: machdep.c,v 1.221.2.5 2008/06/27 01:53:46 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221.2.4 2008/06/23 04:30:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221.2.5 2008/06/27 01:53:46 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1817,7 +1817,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
 	write_user_windows();
-	if ((l->l_pflag & LP_SA_SWITCHING) == 0 && rwindow_save(l)) {
+	if ((l->l_flag & LW_SA_SWITCHING) == 0 && rwindow_save(l)) {
 		mutex_enter(l->l_proc->p_lock);
 		sigexit(l, SIGILL);
 	}
