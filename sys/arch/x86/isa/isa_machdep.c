@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.21 2008/06/27 08:59:36 cegger Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.22 2008/06/27 11:03:14 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.21 2008/06/27 08:59:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.22 2008/06/27 11:03:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 }
 
 void
-isa_attach_hook(struct device *parent, struct device *self,
+isa_attach_hook(device_t parent, device_t self,
     struct isabus_attach_args *iba)
 {
 	extern struct x86_isa_chipset x86_isa_chipset;
