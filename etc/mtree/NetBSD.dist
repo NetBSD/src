@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.372 2008/06/25 01:36:03 christos Exp $
+#	$NetBSD: NetBSD.dist,v 1.373 2008/06/27 14:29:30 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1146,7 +1146,7 @@
 ./var/db
 ./var/db/ns
 ./var/db/obsolete
-./var/db/postfix
+./var/db/postfix		uname=postfix gname=postfix mode=0755
 ./var/db/xdm
 ./var/games			uname=games gname=games mode=0775
 ./var/games/hackdir		uname=games gname=games mode=0775
