@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.22 2008/06/27 01:27:02 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.23 2008/06/27 01:53:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.22 2008/06/27 01:27:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.23 2008/06/27 01:53:46 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1256,8 +1256,9 @@ sa_ucsp(void *arg)
  * sa_upcall_getstate
  *	Fill in the given sau_state with info for the passed-in
  * lwp, and update the lwp accordingly.
- *	We set LP_SA_SWITCHING on the target lwp. Our use of l_flag requires
- * that l be locked if it is not NULL.
+ *	We set LW_SA_SWITCHING on the target lwp, and lock it during
+ * this call. l must be unlocked (if not NULL), and locking it must not
+ * cause deadlock.
  */
 static void
 sa_upcall_getstate(union sau_state *ss, struct lwp *l)
@@ -1266,10 +1267,14 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 	size_t ucsize;
 
 	if (l) {
-		l->l_pflag |= LP_SA_SWITCHING;
+		lwp_lock(l);
+		l->l_flag |= LW_SA_SWITCHING;
+		lwp_unlock(l);
 		(*l->l_proc->p_emul->e_sa->sae_getucontext)(l,
 		    (void *)&ss->ss_captured.ss_ctx);
-		l->l_pflag &= ~LP_SA_SWITCHING;
+		lwp_lock(l);
+		l->l_flag &= ~LW_SA_SWITCHING;
+		lwp_unlock(l);
 		sp = (*l->l_proc->p_emul->e_sa->sae_ucsp)
 		    (&ss->ss_captured.ss_ctx);
 		/* XXX COMPAT_NETBSD32: _UC_UCONTEXT_ALIGN */
