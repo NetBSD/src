@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.84 2008/04/07 12:24:52 yamt Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.84.6.1 2008/06/27 13:47:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -242,6 +242,8 @@ int	 posix_memalign(void **, size_t, size_t);
 #if defined(alloca) && (alloca == __builtin_alloca) && \
 	defined(__GNUC__) && (__GNUC__ < 2)
 void	*alloca(int);     /* built-in for gcc */
+#elif defined(__PCC__)
+#define alloca(size) __builtin_alloca(size)
 #else
 void	*alloca(size_t);
 #endif /* __GNUC__ */
