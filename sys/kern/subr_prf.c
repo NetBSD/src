@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.123.2.1 2008/06/27 15:11:39 simonb Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.123.2.2 2008/06/27 15:52:15 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.123.2.1 2008/06/27 15:11:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.123.2.2 2008/06/27 15:52:15 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -938,15 +938,6 @@ printf(const char *fmt, ...)
 	if (!panicstr)
 		logwakeup();
 }
-void	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-printf_unlocked(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	kprintf(fmt, TOCONS, NULL, NULL, ap);
-	va_end(ap);
-}	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
 /*
  * vprintf: print a message to the console and the log [already have

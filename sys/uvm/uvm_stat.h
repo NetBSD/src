@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.43.2.1 2008/06/27 15:11:55 simonb Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.43.2.2 2008/06/27 15:52:16 simonb Exp $	*/
 
 /*
  *
@@ -72,7 +72,7 @@ struct uvm_history {
 	LIST_ENTRY(uvm_history) list;	/* link on list of all histories */
 	int n;				/* number of entries */
 	int f; 				/* next free one */
-	int enabled;			/* this history is enabled */
+	int unused;			/* old location of lock */
 	struct uvm_history_ent *e;	/* the malloc'd entries */
 	kmutex_t l;			/* lock on this history */
 };
@@ -121,7 +121,6 @@ do { \
 	(NAME).namelen = strlen(__STRING(NAME)); \
 	(NAME).n = (N); \
 	(NAME).f = 0; \
-	(NAME).enabled = 0; \
 	mutex_init(&(NAME).l, MUTEX_SPIN, IPL_HIGH); \
 	(NAME).e = (struct uvm_history_ent *) \
 		malloc(sizeof(struct uvm_history_ent) * (N), M_TEMP, \
@@ -136,21 +135,10 @@ do { \
 	(NAME).namelen = strlen(__STRING(NAME)); \
 	(NAME).n = sizeof(BUF) / sizeof(struct uvm_history_ent); \
 	(NAME).f = 0; \
-	(NAME).enabled = 0; \
 	mutex_init(&(NAME).l, MUTEX_SPIN, IPL_HIGH); \
 	(NAME).e = (struct uvm_history_ent *) (BUF); \
 	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (NAME).n); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
-} while (/*CONSTCOND*/ 0)
-
-#define	UVMHIST_ENABLE(NAME) \
-do { \
-	(NAME).enabled = 1; \
-} while (/*CONSTCOND*/ 0)
-
-#define	UVMHIST_DISABLE(NAME) \
-do { \
-	(NAME).enabled = 0; \
 } while (/*CONSTCOND*/ 0)
 
 #if defined(UVMHIST_PRINT)
@@ -168,47 +156,40 @@ do { \
 
 #define UVMHIST_LOG(NAME,FMT,A,B,C,D) \
 do { \
-	if ((NAME).enabled) { \
-		int _i_; \
-		mutex_enter(&(NAME).l); \
-		_i_ = (NAME).f; \
-		(NAME).f = (_i_ + 1 < (NAME).n) ? _i_ + 1 : 0; \
-		mutex_exit(&(NAME).l); \
-		if (!cold) \
-			microtime(&(NAME).e[_i_].tv); \
-		(NAME).e[_i_].cpunum = cpu_number(); \
-		(NAME).e[_i_].fmt = (FMT); \
-		(NAME).e[_i_].fmtlen = strlen(FMT); \
-		(NAME).e[_i_].fn = _uvmhist_name; \
-		(NAME).e[_i_].fnlen = strlen(_uvmhist_name); \
-		(NAME).e[_i_].call = _uvmhist_call; \
-		(NAME).e[_i_].v[0] = (u_long)(A); \
-		(NAME).e[_i_].v[1] = (u_long)(B); \
-		(NAME).e[_i_].v[2] = (u_long)(C); \
-		(NAME).e[_i_].v[3] = (u_long)(D); \
-		UVMHIST_PRINTNOW(&((NAME).e[_i_])); \
-	} \
-} while (/*CONSTCOND*/ 0)
-
-#define UVMHIST_ENTER(NAME) \
-do { \
-	if ((NAME).enabled) { \
-		mutex_enter(&(NAME).l); \
-		_uvmhist_call = _uvmhist_cnt++; \
-		mutex_exit(&(NAME).l); \
-	} \
+	int _i_; \
+	mutex_enter(&(NAME).l); \
+	_i_ = (NAME).f; \
+	(NAME).f = (_i_ + 1 < (NAME).n) ? _i_ + 1 : 0; \
+	mutex_exit(&(NAME).l); \
+	if (!cold) \
+		microtime(&(NAME).e[_i_].tv); \
+	(NAME).e[_i_].cpunum = cpu_number(); \
+	(NAME).e[_i_].fmt = (FMT); \
+	(NAME).e[_i_].fmtlen = strlen(FMT); \
+	(NAME).e[_i_].fn = _uvmhist_name; \
+	(NAME).e[_i_].fnlen = strlen(_uvmhist_name); \
+	(NAME).e[_i_].call = _uvmhist_call; \
+	(NAME).e[_i_].v[0] = (u_long)(A); \
+	(NAME).e[_i_].v[1] = (u_long)(B); \
+	(NAME).e[_i_].v[2] = (u_long)(C); \
+	(NAME).e[_i_].v[3] = (u_long)(D); \
+	UVMHIST_PRINTNOW(&((NAME).e[_i_])); \
 } while (/*CONSTCOND*/ 0)
 
 #define UVMHIST_CALLED(NAME) \
 do { \
-	UVMHIST_ENTER(NAME); \
+	{ \
+		mutex_enter(&(NAME).l); \
+		_uvmhist_call = _uvmhist_cnt++; \
+		mutex_exit(&(NAME).l); \
+	} \
 	UVMHIST_LOG(NAME,"called!", 0, 0, 0, 0); \
 } while (/*CONSTCOND*/ 0)
 
 #define UVMHIST_FUNC(FNAME) \
 	static int _uvmhist_cnt = 0; \
 	static const char *const _uvmhist_name = FNAME; \
-	int _uvmhist_call = 0;
+	int _uvmhist_call;
 
 static __inline void uvmhist_print(struct uvm_history_ent *);
 
@@ -216,17 +197,10 @@ static __inline void
 uvmhist_print(e)
 	struct uvm_history_ent *e;
 {
-#if 0	/* XXXX */
 	printf("%06ld.%06ld ", e->tv.tv_sec, e->tv.tv_usec);
 	printf("%s#%ld@%d: ", e->fn, e->call, e->cpunum);
 	printf(e->fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 	printf("\n");
-#else	/* XXXX */
-	printf_unlocked("%06ld.%06ld ", e->tv.tv_sec, e->tv.tv_usec);
-	printf_unlocked("%s#%ld@%d: ", e->fn, e->call, e->cpunum);
-	printf_unlocked(e->fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
-	printf_unlocked("\n");
-#endif	/* XXXX */
 }
 #endif /* UVMHIST */
 
