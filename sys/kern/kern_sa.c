@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.24 2008/06/27 03:52:32 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.25 2008/06/27 14:59:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.24 2008/06/27 03:52:32 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.25 2008/06/27 14:59:46 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,12 +421,13 @@ sa_release(struct proc *p)
 	}
 	mutex_exit(p->p_lock);
 
-	while ((vp = SLIST_FIRST(&p->p_sa->sa_vps)) != NULL) {
-		SLIST_REMOVE_HEAD(&p->p_sa->sa_vps, savp_next);
+	while ((vp = SLIST_FIRST(&sa->sa_vps)) != NULL) {
+		SLIST_REMOVE_HEAD(&sa->sa_vps, savp_next);
 		if (vp->savp_sleeper_upcall) {
 			sadata_upcall_free(vp->savp_sleeper_upcall);
 			vp->savp_sleeper_upcall = NULL;
 		}
+		mutex_destroy(&vp->savp_mutex);
 		pool_put(&savp_pool, vp);
 	}
 
