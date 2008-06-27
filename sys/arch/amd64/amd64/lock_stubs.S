@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.19 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.20 2008/06/27 18:16:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -96,20 +96,18 @@ ENTRY(mutex_exit)
  * Acquire a spin mutex and post a load fence.
  */
 ENTRY(mutex_spin_enter)
-#if defined(FULL)
-	movl	$0x0100, %eax			/* new + expected value */
-#endif
+	movl	$1, %eax
 	movl	CPUVAR(ILEVEL), %esi
 	movzbl	MTX_IPL(%rdi), %ecx		/* new SPL */
 	cmpl	%ecx, %esi			/* higher? */
 	cmovgl	%esi, %ecx
 	movl	%ecx, CPUVAR(ILEVEL)		/* splraiseipl() */
-	subl	$1, CPUVAR(MTX_COUNT)		/* decl doesnt set CF */
+	subl	%eax, CPUVAR(MTX_COUNT)		/* decl doesnt set CF */
 	cmovncl	CPUVAR(MTX_OLDSPL), %esi
 	movl	%esi, CPUVAR(MTX_OLDSPL)
 #if defined(FULL)
-	LOCK(11)
-	cmpxchgb %ah, MTX_LOCK(%rdi)		/* lock */
+	xchgb	%al, MTX_LOCK(%rdi)		/* lock */
+	testb	%al, %al
 	jnz	1f
 #endif
 	ret
@@ -325,8 +323,5 @@ LABEL(x86_lockpatch)
 	.quad	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4
 	.quad	.Lpatch5, .Lpatch6, .Lpatch7, .Lpatch8
 	.quad	.Lpatch9
-#ifdef FULL
-	.quad	.Lpatch11
-#endif
 	.quad	0
 #endif
