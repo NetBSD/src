@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.21 2008/06/24 05:49:52 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.22 2008/06/27 01:27:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.21 2008/06/24 05:49:52 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.22 2008/06/27 01:27:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +272,7 @@ sa_newsavp(struct proc *p)
 	mutex_init(&vp->savp_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	sleepq_init(&vp->savp_lwpcache);
 	sleepq_init(&vp->savp_woken);
+	SIMPLEQ_INIT(&vp->savp_upcalls);
 
 	mutex_enter(p->p_lock);
 	/* find first free savp_id and add vp to sorted slist */
@@ -1028,7 +1029,6 @@ sa_yield(struct lwp *l)
 		/* KERNEL_UNLOCK(l); in upcallret() */
 		lwp_unlock(l);
 		upcallret(l);
-		KERNEL_LOCK(1, l);	/* XXXSMP */
 		return;
 	}
 
@@ -1047,7 +1047,6 @@ sa_yield(struct lwp *l)
 
 		/* KERNEL_UNLOCK(l); in upcallret() */
 		upcallret(l);
-		KERNEL_LOCK(1, l); /* XXX SMP */
 
 		lwp_lock(l);
 	} while (l->l_flag & LW_SA_YIELD);
