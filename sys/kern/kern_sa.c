@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.25 2008/06/27 14:59:46 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.26 2008/06/28 21:06:30 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.25 2008/06/27 14:59:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.26 2008/06/28 21:06:30 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,6 +347,7 @@ dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
 	if (p->p_sa == NULL) {
 		/* Allocate scheduler activations data structure */
 		sa = pool_get(&sadata_pool, PR_WAITOK);
+		memset(sa, 0, sizeof(*sa));
 
 		/* WRS: not sure if need SCHED. need to audit lockers */
 		mutex_init(&sa->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
@@ -359,7 +360,6 @@ dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
 		}
 
 		/* Initialize. */
-		memset(sa, 0, sizeof(*sa));
 		sa->sa_flag = flags & SA_FLAG_ALL;
 		sa->sa_maxconcurrency = 1;
 		sa->sa_concurrency = 1;
@@ -446,6 +446,8 @@ sa_release(struct proc *p)
  *
  * WRS: I think this routine needs the SA_LWP_STATE_LOCK() dance, either
  * here or in its caller.
+ *
+ * Must be called with sa_mutex locked.
  */
 static int
 sa_fetchstackgen(struct sastack *sast, struct sadata *sa, unsigned int *gen)
@@ -1207,12 +1209,12 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 
 	sa_upcall0(sau, type, event, interrupted, argsize, arg, func);
 	sau->sau_stack = sast->sast_stack;
-	mutex_enter(&sa->sa_mutex);
+	mutex_enter(&vp->savp_mutex);
 	SIMPLEQ_INSERT_TAIL(&vp->savp_upcalls, sau, sau_next);
 	lwp_lock(l);
 	l->l_flag |= LW_SA_UPCALL;
 	lwp_unlock(l);
-	mutex_exit(&sa->sa_mutex);
+	mutex_exit(&vp->savp_mutex);
 
 	return (0);
 }
@@ -1609,15 +1611,15 @@ sa_switchcall(void *arg)
 	}
 
 	if (sau) {
-		mutex_enter(&sa->sa_mutex);
-		l = vp->savp_blocker;
 		sast = sa_getstack(p->p_sa);
+		mutex_enter(&vp->savp_mutex);
+		l = vp->savp_blocker;
 		if (sast) {
 			sau->sau_stack = sast->sast_stack;
 			SIMPLEQ_INSERT_TAIL(&vp->savp_upcalls, sau, sau_next);
 			lwp_lock(l2);
 			l2->l_flag |= LW_SA_UPCALL;
-			mutex_exit(&sa->sa_mutex);
+			mutex_exit(&vp->savp_mutex);
 		} else {
 			/*
 			 * Oops! We're in trouble. The app hasn't
@@ -1635,6 +1637,7 @@ sa_switchcall(void *arg)
 				vp->savp_sleeper_upcall = sau;
 			else
 				sadata_upcall_free(sau);
+			mutex_exit(&vp->savp_mutex);
 			uvm_lwp_hold(l2);
 			mutex_enter(p->p_lock);	/* XXXAD */
 			sa_putcachelwp(p, l2); /* sets LW_SA */
@@ -1649,7 +1652,8 @@ sa_switchcall(void *arg)
 			/* mostly NOTREACHED */
 			lwp_lock(l2);
 		}
-	}
+	} else
+		lwp_lock(l2);
 
 	l2->l_flag |= LW_SA;
 	lwp_unlock(l2);
