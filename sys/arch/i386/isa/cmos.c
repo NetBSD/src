@@ -1,4 +1,4 @@
-/*	$NetBSD: cmos.c,v 1.3 2008/05/31 07:30:45 taca Exp $	*/
+/*	$NetBSD: cmos.c,v 1.4 2008/06/28 14:56:22 ad Exp $	*/
 
 /*
  * Copyright (C) 2003 JONE System Co., Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.3 2008/05/31 07:30:45 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.4 2008/06/28 14:56:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ const struct cdevsw cmos_cdevsw = {
 void
 cmosattach(int n)
 {
-	printf("cmos: attached.\n");
+
 }
 
 int
