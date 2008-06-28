@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.49 2008/06/23 11:01:19 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.50 2008/06/28 10:37:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.49 2008/06/23 11:01:19 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.50 2008/06/28 10:37:20 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -212,6 +212,7 @@ pthread__cond_wake_one(pthread_cond_t *cond)
 	}
 	signaled = PTQ_FIRST(&cond->ptc_waiters);
 	if (__predict_false(signaled == NULL)) {
+		cond->ptc_mutex = NULL;
 		pthread__spinunlock(self, &cond->ptc_lock);
 		return 0;
 	}
