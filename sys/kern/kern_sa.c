@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.26 2008/06/28 21:06:30 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.27 2008/06/28 21:35:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.26 2008/06/28 21:06:30 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.27 2008/06/28 21:35:03 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -780,7 +780,6 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 	KASSERT(mutex_owned(&sa->sa_mutex));
 
 	addedconcurrency = 0;
-	mutex_enter(&sa->sa_mutex);
 	while (sa->sa_maxconcurrency < concurrency) {
 		sa->sa_maxconcurrency++;
 		sa->sa_concurrency++;
@@ -809,22 +808,22 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			vp->savp_lwp = l2;
 			cpu_setfunc(l2, sa_switchcall, NULL);
 			lwp_unlock(l2);
-			mutex_exit(p->p_lock);
+			mutex_exit(&sa->sa_mutex);
 			error = sa_upcall(l2, SA_UPCALL_NEWPROC, NULL, NULL,
 			    0, NULL, NULL);
 			if (error) {
 				/* Free new savp */
-				mutex_enter(p->p_lock);
+				mutex_enter(&sa->sa_mutex);
 				SLIST_REMOVE(&sa->sa_vps, vp,
 				    sadata_vp, savp_next);
-				mutex_exit(p->p_lock);
+				mutex_exit(&sa->sa_mutex);
 				if (vp->savp_sleeper_upcall) {
 					sadata_upcall_free(
 					    vp->savp_sleeper_upcall);
 					vp->savp_sleeper_upcall = NULL;
 				}
 				pool_put(&savp_pool, vp);
-				mutex_enter(p->p_lock);
+				mutex_enter(&sa->sa_mutex);
 				lwp_lock(l2);
 			}
 		} else
@@ -835,9 +834,9 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			l2->l_savp = l->l_savp;
 			uvm_lwp_hold(l2);
 			lwp_unlock(l2);
-			mutex_enter(p->p_lock);
+			mutex_enter(&l->l_savp->savp_mutex);
 			sa_putcachelwp(p, l2);
-			mutex_exit(p->p_lock);
+			mutex_exit(&l->l_savp->savp_mutex);
 			/* reset concurrency */
 			sa->sa_maxconcurrency--;
 			sa->sa_concurrency--;
@@ -1611,7 +1610,9 @@ sa_switchcall(void *arg)
 	}
 
 	if (sau) {
+		mutex_enter(&sa->sa_mutex);
 		sast = sa_getstack(p->p_sa);
+		mutex_exit(&sa->sa_mutex);
 		mutex_enter(&vp->savp_mutex);
 		l = vp->savp_blocker;
 		if (sast) {
@@ -1637,20 +1638,20 @@ sa_switchcall(void *arg)
 				vp->savp_sleeper_upcall = sau;
 			else
 				sadata_upcall_free(sau);
-			mutex_exit(&vp->savp_mutex);
 			uvm_lwp_hold(l2);
-			mutex_enter(p->p_lock);	/* XXXAD */
 			sa_putcachelwp(p, l2); /* sets LW_SA */
+			mutex_exit(&vp->savp_mutex);
 			lwp_lock(l);
 			vp->savp_lwp = l;
 			l->l_flag &= ~LW_SA_BLOCKING;
 			lwp_unlock(l);
-			p->p_nrlwps--;
-			mutex_exit(p->p_lock);
+			//mutex_enter(p->p_lock);	/* XXXAD */
+			//p->p_nrlwps--;
+			//mutex_exit(p->p_lock);
 			lwp_lock(l2);
 			mi_switch(l2);
 			/* mostly NOTREACHED */
-			lwp_lock(l2);
+			lwp_exit(l2);
 		}
 	} else
 		lwp_lock(l2);
@@ -1846,7 +1847,9 @@ sa_upcall_userret(struct lwp *l)
 	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) &&
 	    vp->savp_woken_count != 0) {
 		mutex_exit(&vp->savp_mutex);
+		mutex_enter(&sa->sa_mutex);
 		sast = sa_getstack(sa);
+		mutex_exit(&sa->sa_mutex);
 		if (sast == NULL) {
 			lwp_lock(l);
 			SA_LWP_STATE_UNLOCK(l, f);
