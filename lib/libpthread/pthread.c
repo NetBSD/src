@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.103 2008/06/28 10:29:37 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.104 2008/06/28 10:36:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.103 2008/06/28 10:29:37 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.104 2008/06/28 10:36:12 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -416,7 +416,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 	flag = LWP_DETACHED;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0 ||
-	    (attr->pta_flags & PT_FLAG_EXPLICIT_SCHED) != 0)
+	    (nattr.pta_flags & PT_FLAG_EXPLICIT_SCHED) != 0)
 		flag |= LWP_SUSPENDED;
 	ret = _lwp_create(&newthread->pt_uc, flag, &newthread->pt_lid);
 	if (ret != 0) {
@@ -428,7 +428,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		return ret;
 	}
 
-	if ((attr->pta_flags & PT_FLAG_EXPLICIT_SCHED) != 0) {
+	if ((nattr.pta_flags & PT_FLAG_EXPLICIT_SCHED) != 0) {
 		if (p != NULL) {
 			(void)pthread_setschedparam(newthread, p->ptap_policy,
 			    &p->ptap_sp);
