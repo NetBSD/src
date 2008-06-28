@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.261 2008/06/19 03:38:44 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.262 2008/06/28 03:30:24 simonb Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -605,7 +605,6 @@ Notes:		Still has a number of issues:
 		 - Log must currently live at end of partition.
 		 - No log locators.
 		 - Some heavy workload performance issues on SMP machines.
-		 - Some stability issues on SMP machines.
 
 Branch:		thorpej-atomic
 Description:	Implementation of an atomic memory operations API modeled
