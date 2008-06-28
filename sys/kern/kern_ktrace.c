@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.144.2.5 2008/06/23 04:31:50 wrstuden Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.144.2.6 2008/06/28 22:38:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.144.2.5 2008/06/23 04:31:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.144.2.6 2008/06/28 22:38:44 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -986,7 +986,7 @@ ktr_saupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
 	struct sa_t **sapp;
 	int i;
 
-	if (ktrenter(l))
+	if (!KTRPOINT(l->l_proc, KTR_SAUPCALL))
 		return;
 
 	len = sizeof(struct ktr_saupcall);
