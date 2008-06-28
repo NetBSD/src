@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_sebuf.c,v 1.15 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: if_ie_sebuf.c,v 1.16 2008/06/28 12:13:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_sebuf.c,v 1.15 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_sebuf.c,v 1.16 2008/06/28 12:13:38 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -83,34 +83,35 @@ static void *wmemset(void *, int, size_t);
  * New-style autoconfig attachment
  */
 
-static int  ie_sebuf_match(struct device *, struct cfdata *, void *);
-static void ie_sebuf_attach(struct device *, struct device *, void *);
+static int  ie_sebuf_match(device_t, cfdata_t, void *);
+static void ie_sebuf_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ie_sebuf, sizeof(struct ie_softc),
+CFATTACH_DECL_NEW(ie_sebuf, sizeof(struct ie_softc),
     ie_sebuf_match, ie_sebuf_attach, NULL, NULL);
 
 static int 
-ie_sebuf_match(struct device *parent, struct cfdata *cf, void *args)
+ie_sebuf_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct sebuf_attach_args *aa = args;
 
 	/* Match by name. */
 	if (strcmp(aa->name, "ie"))
-		return (0);
+		return 0;
 
 	/* Anyting else to check? */
 
-	return (1);
+	return 1;
 }
 
 static void 
-ie_sebuf_attach(struct device *parent, struct device *self, void *args)
+ie_sebuf_attach(device_t parent, device_t self, void *args)
 {
-	struct ie_softc *sc = (void *) self;
+	struct ie_softc *sc = device_private(self);
 	struct sebuf_attach_args *aa = args;
 	volatile struct ie_regs *regs;
 	int     off;
 
+	sc->sc_dev = self;
 	sc->hard_type = IE_VME3E;
 	sc->reset_586 = ie_sebuf_reset;
 	sc->chan_attn = ie_sebuf_attend;
@@ -120,7 +121,7 @@ ie_sebuf_attach(struct device *parent, struct device *self, void *args)
 
 	/* Control regs mapped by parent. */
 	sc->sc_reg = aa->regs;
-	regs = (struct ie_regs *) sc->sc_reg;
+	regs = (struct ie_regs *)sc->sc_reg;
 
 	/*
 	 * On this hardware, the i82586 address zero
@@ -171,8 +172,7 @@ ie_sebuf_attach(struct device *parent, struct device *self, void *args)
 
 	/* Install interrupt handler. */
 	regs->ie_ivec = aa->ca.ca_intvec;
-	isr_add_vectored(ie_intr, (void *)sc,
-		aa->ca.ca_intpri, aa->ca.ca_intvec);
+	isr_add_vectored(ie_intr, sc, aa->ca.ca_intpri, aa->ca.ca_intvec);
 
 	/* Set the ethernet address. */
 	idprom_etheraddr(sc->sc_addr);
@@ -186,7 +186,7 @@ ie_sebuf_attach(struct device *parent, struct device *self, void *args)
 void 
 ie_sebuf_attend(struct ie_softc *sc)
 {
-	volatile struct ie_regs *regs = (struct ie_regs *) sc->sc_reg;
+	volatile struct ie_regs *regs = (struct ie_regs *)sc->sc_reg;
 
 	regs->ie_csr |= IE_CSR_ATTEN;	/* flag! */
 	regs->ie_csr &= ~IE_CSR_ATTEN;	/* down. */
@@ -199,7 +199,7 @@ ie_sebuf_attend(struct ie_softc *sc)
 void 
 ie_sebuf_reset(struct ie_softc *sc)
 {
-	volatile struct ie_regs *regs = (struct ie_regs *) sc->sc_reg;
+	volatile struct ie_regs *regs = (struct ie_regs *)sc->sc_reg;
 	regs->ie_csr = IE_CSR_RESET;
 	delay(20);
 	regs->ie_csr = (IE_CSR_NOLOOP | IE_CSR_IENAB);
@@ -212,6 +212,7 @@ ie_sebuf_reset(struct ie_softc *sc)
 void 
 ie_sebuf_run(struct ie_softc *sc)
 {
+
 	/* do it all in reset */
 }
 
@@ -224,61 +225,61 @@ ie_sebuf_run(struct ie_softc *sc)
 static void *
 wmemset(void *vb, int val, size_t l)
 {
-	u_char *b = vb;
-	u_char *be = b + l;
-	u_short *sp;
+	uint8_t *b = vb;
+	uint8_t *be = b + l;
+	uint16_t *sp;
 
 	if (l == 0)
-		return (vb);
+		return vb;
 
 	/* front, */
-	if ((u_long)b & 1)
+	if ((uint32_t)b & 1)
 		*b++ = val;
 
 	/* back, */
-	if (b != be && ((u_long)be & 1) != 0) {
+	if (b != be && ((uint32_t)be & 1) != 0) {
 		be--;
 		*be = val;
 	}
 
 	/* and middle. */
-	sp = (u_short *)b;
-	while (sp != (u_short *)be)
+	sp = (uint16_t *)b;
+	while (sp != (uint16_t *)be)
 		*sp++ = val;
 
-	return (vb);
+	return vb;
 }
 
 static void *
 wmemcpy(void *dst, const void *src, size_t l)
 {
-	const u_char *b1e, *b1 = src;
-	u_char *b2 = dst;
-	const u_short *sp;
+	const uint8_t *b1e, *b1 = src;
+	uint8_t *b2 = dst;
+	const uint16_t *sp;
 	int bstore = 0;
 
 	if (l == 0)
-		return (dst);
+		return dst;
 
 	/* front, */
-	if ((u_long)b1 & 1) {
+	if ((uint32_t)b1 & 1) {
 		*b2++ = *b1++;
 		l--;
 	}
 
 	/* middle, */
-	sp = (const u_short *)b1;
+	sp = (const uint16_t *)b1;
 	b1e = b1 + l;
 	if (l & 1)
 		b1e--;
-	bstore = (u_long)b2 & 1;
+	bstore = (uint32_t)b2 & 1;
 
-	while (sp < (const u_short *)b1e) {
+	while (sp < (const uint16_t *)b1e) {
 		if (bstore) {
 			b2[1] = *sp & 0xff;
 			b2[0] = *sp >> 8;
 		} else
-			*((short *)b2) = *sp;
+			*((uint16_t *)b2) = *sp;
 		sp++;
 		b2 += 2;
 	}
@@ -287,5 +288,5 @@ wmemcpy(void *dst, const void *src, size_t l)
 	if (l & 1)
 		*b2 = *b1e;
 
-	return (dst);
+	return dst;
 }
