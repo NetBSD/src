@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.11 2008/04/28 20:24:08 martin Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.12 2008/06/28 15:50:20 rumble Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.11 2008/04/28 20:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.12 2008/06/28 15:50:20 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -84,7 +84,22 @@ load(lkmtp, cmd)
 	int cmd;
 {
 
-	sysctl_vfs_union_setup(&_union_log);
+	sysctl_createv(&_union_log, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(&_union_log, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "union",
+		       SYSCTL_DESCR("Union file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 15, CTL_EOL);
+	/*
+	 * XXX the "15" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "15" is the order as taken from sys/mount.h
+	 */
 	return (0);
 }
 
