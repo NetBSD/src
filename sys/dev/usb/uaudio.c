@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.113 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.114 2008/06/28 09:14:56 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.113 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.114 2008/06/28 09:14:56 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.113 2008/05/24 16:40:58 cube Exp $");
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+#include <sys/module.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -3066,3 +3067,75 @@ uaudio_set_speed(struct uaudio_softc *sc, int endpt, u_int speed)
 
 	return usbd_do_request(sc->sc_udev, &req, data);
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, uaudio, NULL);
+
+static const struct cfiattrdata audiobuscf_iattrdata = {
+	"audiobus", 0, { { NULL, NULL, 0 }, }
+};
+static const struct cfiattrdata * const uaudio_attrs[] = {
+	&audiobuscf_iattrdata, NULL
+};
+CFDRIVER_DECL(uaudio, DV_DULL, uaudio_attrs);
+extern struct cfattach uaudio_ca;
+static int uaudioloc[6/*USBIFIFCF_NLOCS*/] = {
+	-1/*USBIFIFCF_PORT_DEFAULT*/,
+	-1/*USBIFIFCF_CONFIGURATION_DEFAULT*/,
+	-1/*USBIFIFCF_INTERFACE_DEFAULT*/,
+	-1/*USBIFIFCF_VENDOR_DEFAULT*/,
+	-1/*USBIFIFCF_PRODUCT_DEFAULT*/,
+	-1/*USBIFIFCF_RELEASE_DEFAULT*/};
+static struct cfparent uhubparent = {
+	"usbifif", NULL, DVUNIT_ANY
+};
+static struct cfdata uaudio_cfdata[] = {
+	{
+		.cf_name = "uaudio",
+		.cf_atname = "uaudio",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = uaudioloc,
+		.cf_flags = 0,
+		.cf_pspec = &uhubparent,
+	},
+	{ NULL }
+};
+
+static int
+uaudio_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&uaudio_cd);
+		if (err) {
+			return err;
+		}
+		err = config_cfattach_attach("uaudio", &uaudio_ca);
+		if (err) {
+			config_cfdriver_detach(&uaudio_cd);
+			return err;
+		}
+		err = config_cfdata_attach(uaudio_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("uaudio", &uaudio_ca);
+			config_cfdriver_detach(&uaudio_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdata_detach(uaudio_cfdata);
+		if (err)
+			return err;
+		config_cfattach_detach("uaudio", &uaudio_ca);
+		config_cfdriver_detach(&uaudio_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif
