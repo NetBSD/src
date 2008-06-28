@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.6 2008/06/26 13:28:45 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.7 2008/06/28 14:47:11 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.6 2008/06/26 13:28:45 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.7 2008/06/28 14:47:11 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2119,6 +2119,11 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 			efe->tag.desc_crc_len = udf_rw32(crclen);
 		}
 		error = 0;
+
+		/* clear the space in the descriptor */
+		KASSERT(old_size > new_size);
+		memset(data_pos + new_size, 0, old_size - new_size);
+
 		/* TODO zero appened space in buffer! */
 		/* using uvm_vnp_zerorange(vp, old_size, old_size - new_size); ? */
 
