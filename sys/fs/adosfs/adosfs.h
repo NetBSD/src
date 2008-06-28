@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.8 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.9 2008/06/28 01:34:05 rumble Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -178,8 +178,5 @@ int adosfs_lookup __P((void *));
 
 extern int (**adosfs_vnodeop_p) __P((void *));
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_adosfs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
 #endif /* _ADOSFS_ADOSFS_H_ */

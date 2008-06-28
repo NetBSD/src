@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.13 2008/06/25 15:27:14 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.14 2008/06/28 01:34:05 rumble Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -72,14 +72,6 @@ extern int udf_verbose;
 
 /* initial value of udf_verbose */
 #define UDF_DEBUGGING		0
-
-
-#ifdef DEBUG
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
-#endif /* SYSCTL_SETUP_PROTO */
-#endif
-
 
 #ifdef DEBUG
 #define DPRINTF(name, arg) { \

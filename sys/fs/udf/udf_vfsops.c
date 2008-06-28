@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.38 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.39 2008/06/28 01:34:05 rumble Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.38 2008/05/14 16:49:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.39 2008/06/28 01:34:05 rumble Exp $");
 #endif /* not lint */
 
 
@@ -83,6 +83,7 @@ struct pool udf_node_pool;
 /* supported functions predefined */
 VFS_PROTOS(udf);
 
+static struct sysctllog *udf_sysctl_log;
 
 /* internal functions */
 static int udf_mountfs(struct vnode *, struct mount *, struct lwp *, struct udf_args *);
@@ -166,19 +167,59 @@ udf_done(void)
 	malloc_type_detach(M_UDFTEMP);
 }
 
+/*
+ * If running a DEBUG kernel, provide an easy way to set the debug flags when
+ * running into a problem.
+ */
+#define UDF_VERBOSE_SYSCTLOPT 1
 
 static int
 udf_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&udf_vfsops);
+		error = vfs_attach(&udf_vfsops);
+		if (error != 0)
+			break;
+		/*
+		 * XXX the "24" below could be dynamic, thereby eliminating one
+		 * more instance of the "number to vfs" mapping problem, but
+		 * "24" is the order as taken from sys/mount.h
+		 */
+		sysctl_createv(&udf_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&udf_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "udf",
+			       SYSCTL_DESCR("OSTA Universal File System"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 24, CTL_EOL);
+#ifdef DEBUG
+		sysctl_createv(&udf_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "verbose",
+			       SYSCTL_DESCR("Bitmask for filesystem debugging"),
+			       NULL, 0, &udf_verbose, 0,
+			       CTL_VFS, 24, UDF_VERBOSE_SYSCTLOPT, CTL_EOL);
+#endif
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&udf_vfsops);
+		error = vfs_detach(&udf_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&udf_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }
 
 /* --------------------------------------------------------------------- */
@@ -899,42 +940,3 @@ udf_snapshot(struct mount *mp, struct vnode *vp,
 }
 
 /* --------------------------------------------------------------------- */
-
-/*
- * If running a DEBUG kernel, provide an easy way to set the debug flags when
- * running into a problem.
- */
-
-#ifdef DEBUG
-#define UDF_VERBOSE_SYSCTLOPT 1
-
-SYSCTL_SETUP(sysctl_vfs_udf_setup, "sysctl vfs.udf subtree setup")
-{
-	/*
-	 * XXX the "24" below could be dynamic, thereby eliminating one
-	 * more instance of the "number to vfs" mapping problem, but
-	 * "24" is the order as taken from sys/mount.h
-	 */
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "udf",
-		       SYSCTL_DESCR("OSTA Universal File System"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 24, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "verbose",
-		       SYSCTL_DESCR("Bitmask for filesystem debugging"),
-		       NULL, 0, &udf_verbose, 0,
-		       CTL_VFS, 24, UDF_VERBOSE_SYSCTLOPT, CTL_EOL);
-}
-
-#endif /* DEBUG */
-
