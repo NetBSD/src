@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.65 2008/06/28 12:13:38 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.66 2008/06/28 12:15:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.65 2008/06/28 12:13:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.66 2008/06/28 12:15:43 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -1068,10 +1068,15 @@ fdchwintr(void *arg)
 			break;
 
 		if ((msr & NE7_NDM) == 0) {
+			/* Execution phase finished, get result. */
 			fdcresult(fdc);
 			fdc->sc_istate = ISTATE_DONE;
 			FD_SET_SWINTR();
-			log(LOG_ERR, "fdc: overrun: tc = %d\n", fdc->sc_tc);
+#ifdef FD_DEBUG
+			if (fdc_debug)
+				log(LOG_ERR, "fdc: overrun: tc = %d\n",
+				    fdc->sc_tc);
+#endif
 			break;
 		}
 
@@ -1083,12 +1088,9 @@ fdchwintr(void *arg)
 		if (--fdc->sc_tc == 0) {
 			fdc->sc_fcr |= FCR_TC;
 			FCR_REG_SYNC();
-			fdc->sc_istate = ISTATE_DONE;
 			delay(10);
 			fdc->sc_fcr &= ~FCR_TC;
 			FCR_REG_SYNC();
-			fdcresult(fdc);
-			FD_SET_SWINTR();
 			break;
 		}
 	}
@@ -1806,9 +1808,9 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 	if (bp == NULL)
 		return ENOBUFS;
 
-	memset((void *)bp, 0, sizeof(struct buf));
-	bp->b_flags = B_PHYS | B_FORMAT;
+	bp->b_vp = NULL;
 	bp->b_cflags = BC_BUSY;
+	bp->b_flags = B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
 
@@ -1832,21 +1834,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 	fdstrategy(bp);
 
 	/* ...and wait for it to complete */
-	/* XXX dodgy */
-	mutex_enter(bp->b_objlock);
-	while (!(bp->b_oflags & BO_DONE)) {
-		rv = cv_timedwait(&bp->b_done, bp->b_objlock, 20 * hz);
-		if (rv == EWOULDBLOCK)
-			break;
-	}
-	mutex_exit(bp->b_objlock);
-
-	if (rv == EWOULDBLOCK) {
-		/* timed out */
-		rv = EIO;
-		biodone(bp);
-	} else if (bp->b_error != 0)
-		rv = bp->b_error;
+	rv = biowait(bp);
 	putiobuf(bp);
 	return rv;
 }
