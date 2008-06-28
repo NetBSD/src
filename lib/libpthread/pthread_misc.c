@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.9 2008/06/24 13:45:07 ad Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.10 2008/06/28 16:50:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.9 2008/06/24 13:45:07 ad Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.10 2008/06/28 16:50:43 ad Exp $");
 
 #include <errno.h>
 #include <string.h>
@@ -150,6 +150,7 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 	return 0;
 }
 
+#ifndef lint
 int
 nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 {
@@ -160,6 +161,7 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	 */
 	return  _sys_nanosleep(rqtp, rmtp);
 }
+#endif
 
 int
 pthread__sched_yield(void)
