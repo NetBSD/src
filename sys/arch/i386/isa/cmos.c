@@ -1,4 +1,4 @@
-/*	$NetBSD: cmos.c,v 1.5 2008/06/28 15:03:27 ad Exp $	*/
+/*	$NetBSD: cmos.c,v 1.6 2008/06/28 15:09:49 ad Exp $	*/
 
 /*
  * Copyright (C) 2003 JONE System Co., Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.5 2008/06/28 15:03:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.6 2008/06/28 15:09:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,13 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.5 2008/06/28 15:03:27 ad Exp $");
 
 #define	CMOS_SIZE	NVRAM_BIOSSPEC
 
-struct cmos_softc {			/* driver status information */
-	int	sc_open;
-	uint8_t	sc_buf[CMOS_SIZE];
-} cmos_softc;
-
-int cmos_debug = 0;
-
 void cmosattach(int);
 dev_type_open(cmos_open);
 dev_type_read(cmos_read);
@@ -112,6 +105,7 @@ const struct cdevsw cmos_cdevsw = {
 };
 
 static kmutex_t cmos_lock;
+static uint8_t cmos_buf[CMOS_SIZE];
 
 void
 cmosattach(int n)
@@ -129,31 +123,29 @@ cmos_open(dev_t dev, int flags, int ifmt, struct lwp *l)
 }
 
 static void
-cmos_fetch(struct cmos_softc *sc)
+cmos_fetch(void)
 {
 	int i, s;
 	uint8_t *p;
 
-	p = sc->sc_buf;
-
+	p = cmos_buf;
 	s = splclock();
 	for (i = 0; i < CMOS_SIZE; i++)
-		*p++ = mc146818_read(sc, i);
+		*p++ = mc146818_read(NULL, i);
 	splx(s);
 }
 
 int
 cmos_read(dev_t dev, struct uio *uio, int ioflag)
 {
-	struct cmos_softc *sc = &cmos_softc;
 	int error;
 
 	if (uio->uio_offset + uio->uio_resid > CMOS_SIZE)
 		return EINVAL;
 
 	mutex_enter(&cmos_lock);
-	cmos_fetch(sc);
-	error = uiomove(sc->sc_buf, CMOS_SIZE, uio);
+	cmos_fetch();
+	error = uiomove(cmos_buf + uio->uio_offset, uio->uio_resid, uio);
 	mutex_exit(&cmos_lock);
 
 	return error;
@@ -162,20 +154,19 @@ cmos_read(dev_t dev, struct uio *uio, int ioflag)
 int
 cmos_write(dev_t dev, struct uio *uio, int ioflag)
 {
-	struct cmos_softc *sc = &cmos_softc;
 	int error = 0, i, s;
 
 	if (uio->uio_offset + uio->uio_resid > CMOS_SIZE)
 		return EINVAL;
 
 	mutex_enter(&cmos_lock);
-	cmos_fetch(sc);
-	error = uiomove(sc->sc_buf, CMOS_SIZE, uio);
+	cmos_fetch();
+	error = uiomove(cmos_buf + uio->uio_offset, uio->uio_resid, uio);
 	if (error == 0) {
-		cmos_sum(sc->sc_buf, NVRAM_DISKETTE, NVRAM_SUM, NVRAM_SUM);
+		cmos_sum(cmos_buf, NVRAM_DISKETTE, NVRAM_SUM, NVRAM_SUM);
 		s = splclock();
 		for (i = NVRAM_DISKETTE; i < CMOS_SIZE; i++)
-			mc146818_write(sc, i, sc->sc_buf[i]);
+			mc146818_write(NULL, i, cmos_buf[i]);
 		splx(s);
 	}
 	mutex_exit(&cmos_lock);
