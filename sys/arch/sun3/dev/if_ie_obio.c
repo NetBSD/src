@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.24 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.25 2008/06/28 12:13:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.24 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.25 2008/06/28 12:13:38 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -72,34 +72,35 @@ static void ie_obrun(struct ie_softc *);
  * New-style autoconfig attachment
  */
 
-static int  ie_obio_match(struct device *, struct cfdata *, void *);
-static void ie_obio_attach(struct device *, struct device *, void *);
+static int  ie_obio_match(device_t, cfdata_t, void *);
+static void ie_obio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ie_obio, sizeof(struct ie_softc),
+CFATTACH_DECL_NEW(ie_obio, sizeof(struct ie_softc),
     ie_obio_match, ie_obio_attach, NULL, NULL);
 
 static int 
-ie_obio_match(struct device *parent, struct cfdata *cf, void *args)
+ie_obio_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
 
 	/* Make sure there is something there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
-		return (0);
+		return 0;
 
 	/* Default interrupt priority. */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 3;
 
-	return (1);
+	return 1;
 }
 
 void 
-ie_obio_attach(struct device *parent, struct device *self, void *args)
+ie_obio_attach(device_t parent, device_t self, void *args)
 {
-	struct ie_softc *sc = (void *) self;
+	struct ie_softc *sc = device_private(self);
 	struct confargs *ca = args;
 
+	sc->sc_dev = self;
 	sc->hard_type = IE_OBIO;
 	sc->reset_586 = ie_obreset;
 	sc->chan_attn = ie_obattend;
@@ -109,7 +110,7 @@ ie_obio_attach(struct device *parent, struct device *self, void *args)
 
 	/* Map in the control registers. */
 	sc->sc_reg = bus_mapin(ca->ca_bustype,
-		ca->ca_paddr, sizeof(struct ieob));
+	    ca->ca_paddr, sizeof(struct ieob));
 
 	/*
 	 * The on-board "ie" is wired-up such that its
@@ -148,7 +149,7 @@ ie_obio_attach(struct device *parent, struct device *self, void *args)
 	sc->buf_area_sz = sc->sc_msize;
 
 	/* Install interrupt handler. */
-	isr_add_autovect(ie_intr, (void *)sc, ca->ca_intpri);
+	isr_add_autovect(ie_intr, sc, ca->ca_intpri);
 
 	/* Set the ethernet address. */
 	idprom_etheraddr(sc->sc_addr);
@@ -166,7 +167,7 @@ ie_obio_attach(struct device *parent, struct device *self, void *args)
 void 
 ie_obattend(struct ie_softc *sc)
 {
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
+	volatile struct ieob *ieo = (struct ieob *)sc->sc_reg;
 
 	ieo->obctrl |= IEOB_ATTEN;	/* flag! */
 	ieo->obctrl &= ~IEOB_ATTEN;	/* down. */
@@ -179,7 +180,7 @@ ie_obattend(struct ie_softc *sc)
 void 
 ie_obreset(struct ie_softc *sc)
 {
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
+	volatile struct ieob *ieo = (struct ieob *)sc->sc_reg;
 	ieo->obctrl = 0;
 	delay(20);
 	ieo->obctrl = (IEOB_NORSET | IEOB_ONAIR | IEOB_IENAB);
@@ -192,6 +193,6 @@ ie_obreset(struct ie_softc *sc)
 void 
 ie_obrun(struct ie_softc *sc)
 {
+
 	/* do it all in reset */
 }
-
