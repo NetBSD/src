@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.9 2008/05/04 12:52:58 ad Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.10 2008/06/28 09:36:29 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -66,6 +66,12 @@ sysctl_createv(struct sysctllog **log, int cflags,
 {
 
 	return 0;
+}
+
+void
+sysctl_teardown(struct sysctllog **log)
+{
+
 }
 
 int
