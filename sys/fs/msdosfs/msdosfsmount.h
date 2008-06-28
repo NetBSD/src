@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.14 2007/09/24 00:42:14 rumble Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.15 2008/06/28 01:34:05 rumble Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -245,8 +245,5 @@ void msdosfs_init(void);
 void msdosfs_reinit(void);
 void msdosfs_done(void);
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_msdosfs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
 #endif /* _MSDOSFS_MSDOSFSMOUNT_H_ */

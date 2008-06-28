@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.18 2005/12/11 12:24:50 christos Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.19 2008/06/28 01:34:06 rumble Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,4 @@ extern int fdesc_allocvp(fdntype, int, struct mount *, struct vnode **);
 extern int (**fdesc_vnodeop_p)(void *);
 extern struct vfsops fdesc_vfsops;
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_fdesc_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */

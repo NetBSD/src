@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.54 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.55 2008/06/28 01:34:05 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.54 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.55 2008/06/28 01:34:05 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -102,6 +102,8 @@ MALLOC_JUSTDEFINE(M_FILECOREMNT,
     "filecore mount", "Filecore FS mount structures");
 MALLOC_JUSTDEFINE(M_FILECORETMP,
     "filecore temp", "Filecore FS temporary structures");
+
+static struct sysctllog *filecore_sysctl_log;
 
 extern const struct vnodeopv_desc filecore_vnodeop_opv_desc;
 
@@ -145,15 +147,42 @@ static const struct genfs_ops filecore_genfsops = {
 static int
 filecorefs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&filecore_vfsops);
+		error = vfs_attach(&filecore_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&filecore_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&filecore_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "filecore",
+			       SYSCTL_DESCR("Acorn FILECORE file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 19, CTL_EOL);
+		/*
+		 * XXX the "19" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "19" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&filecore_vfsops);
+		error = vfs_detach(&filecore_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&filecore_sysctl_log);	
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }
 
 /*
@@ -702,25 +731,4 @@ filecore_vptofh(vp, fhp, fh_size)
 	ifh.ifid_ino = ip->i_number;
 	memcpy(fhp, &ifh, sizeof(ifh));
        	return 0;
-}
-
-SYSCTL_SETUP(sysctl_vfs_filecore_setup, "sysctl vfs.filecore subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "filecore",
-		       SYSCTL_DESCR("Acorn FILECORE file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 19, CTL_EOL);
-	/*
-	 * XXX the "19" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "19" is the order as taken from sys/mount.h
-	 */
 }

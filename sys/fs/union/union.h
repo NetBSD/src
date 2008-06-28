@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.17 2008/01/02 11:48:47 ad Exp $	*/
+/*	$NetBSD: union.h,v 1.18 2008/06/28 01:34:05 rumble Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -168,8 +168,5 @@ void union_init(void);
 void union_done(void);
 int union_freevp(struct vnode *);
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_union_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
 #endif /* _MISCFS_UNION_H_ */
