@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.28 2008/06/29 03:38:01 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.29 2008/06/29 05:26:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.28 2008/06/29 03:38:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.29 2008/06/29 05:26:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1846,8 +1846,9 @@ sa_upcall_userret(struct lwp *l)
 	SA_LWP_STATE_LOCK(l, f);
 	lwp_unlock(l);
 
-	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
-	    l->l_flag));
+	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) empty %d, woken %d\n",
+	    p->p_pid, l->l_lid, l->l_flag, SIMPLEQ_EMPTY(&vp->savp_upcalls),
+	    vp->savp_woken_count));
 
 	KASSERT((l->l_flag & LW_SA_BLOCKING) == 0);
 
@@ -2073,6 +2074,9 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 		else {			/* extra sas */
 			KASSERT(sau->sau_type == SA_UPCALL_UNBLOCKED);
 
+			if (e_ss == NULL) {
+				e_ss = kmem_alloc(sizeof(*e_ss), KM_SLEEP);
+			}
 			/* Lock vp and all savp_woken lwps */
 			mutex_enter(&vp->savp_mutex);
 			sq = &vp->savp_woken;
@@ -2085,9 +2089,6 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 			DPRINTFN(8,
 			    ("sa_makeupcalls(%d.%d) unblocking extra %d\n",
 			    p->p_pid, l->l_lid, l2->l_lid));
-			if (e_ss == NULL) {
-				e_ss = kmem_alloc(sizeof(*e_ss), KM_SLEEP);
-			}
 			/*
 			 * Since l2 was on savp_woken, we locked it when
 			 * we locked savp_mutex
@@ -2306,9 +2307,14 @@ sa_unblock_userret(struct lwp *l)
 			if (vp_lwp->l_cpu == curcpu())
 				l2 = vp_lwp;
 			else {
-				spc_lock(vp_lwp->l_cpu);
+				/*
+				 * don't need to spc_lock the other cpu
+				 * as runable lwps have the cpu as their
+				 * mutex.
+				 */
+				/* spc_lock(vp_lwp->l_cpu); */
 				cpu_need_resched(vp_lwp->l_cpu, 0);
-				spc_unlock(vp_lwp->l_cpu);
+				/* spc_unlock(vp_lwp->l_cpu); */
 			}
 		} else
 			swapper = 1;
@@ -2332,6 +2338,8 @@ sa_unblock_userret(struct lwp *l)
 	sleepq_enter(&vp->savp_woken, l, &vp->savp_mutex);
 	sleepq_enqueue(&vp->savp_woken, &vp->savp_woken, sa_lwpwoken_wmesg,
 			&sa_sobj);
+	l->l_flag |= LW_SINTR;
+	vp->savp_woken_count++;
 	//l->l_stat = LSSUSPENDED;
 	mi_switch(l);
 
