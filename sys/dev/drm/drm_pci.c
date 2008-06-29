@@ -1,4 +1,4 @@
-/* $NetBSD: drm_pci.c,v 1.12 2008/06/20 05:53:46 bjs Exp $ */
+/* $NetBSD: drm_pci.c,v 1.13 2008/06/29 12:49:08 jmcneill Exp $ */
 
 /*
  * Copyright 2003 Eric Anholt.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.12 2008/06/20 05:53:46 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.13 2008/06/29 12:49:08 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_pci.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -35,23 +35,55 @@ drm_dma_handle_t *
 drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 {
 	drm_dma_handle_t *h;
+	int error, nsegs;
+
+
+	/* Need power-of-two alignment, so fail the allocation if it isn't. */
+	if ((align & (align - 1)) != 0) {
+		DRM_ERROR("drm_pci_alloc with non-power-of-two alignment %d\n",
+		    (int)align);
+		return NULL;
+	}
 
 	h = malloc(sizeof(drm_dma_handle_t), M_DRM, M_ZERO | M_NOWAIT);
 
 	if (h == NULL)
 		return NULL;
-
-	h->mem = drm_dmamem_pgalloc(dev, round_page(size) >> PAGE_SHIFT);
-	if (h->mem == NULL) {
-	free(h, M_DRM);
-	return NULL;
+	if ((error = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
+	    h->segs, 1, &nsegs, BUS_DMA_NOWAIT)) != 0) {
+		printf("drm: Unable to allocate DMA, error %d\n", error);
+		goto fail;
 	}
-
-	h->busaddr = DRM_DMAMEM_BUSADDR(h->mem);
-	h->vaddr = DRM_DMAMEM_KERNADDR(h->mem);
-	h->size = h->mem->dd_dmam->dm_mapsize;
+	if ((error = bus_dmamem_map(dev->pa.pa_dmat, h->segs, nsegs, size, 
+	     &h->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+		printf("drm: Unable to map DMA, error %d\n", error);
+	     	goto free;
+	}
+	if ((error = bus_dmamap_create(dev->pa.pa_dmat, size, 1, size, 0,
+	     BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &h->map)) != 0) {
+		printf("drm: Unable to create DMA map, error %d\n", error);
+		goto unmap;
+	}
+	if ((error = bus_dmamap_load(dev->pa.pa_dmat, h->map, h->addr, size,
+	     NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("drm: Unable to load DMA map, error %d\n", error);
+		goto destroy;
+	}
+	h->busaddr = DRM_PCI_DMAADDR(h);
+	h->vaddr = h->addr;
+	h->size = size;
 
 	return h;
+
+destroy:
+	bus_dmamap_destroy(dev->pa.pa_dmat, h->map);
+unmap:
+	bus_dmamem_unmap(dev->pa.pa_dmat, h->addr, size);
+free:
+	bus_dmamem_free(dev->pa.pa_dmat, h->segs, 1);
+fail:
+	free(h, M_DRM);
+	return NULL;
 	
 }
 
@@ -64,7 +96,10 @@ drm_pci_free(drm_device_t *dev, drm_dma_handle_t *h)
 {
 	if (h == NULL)
 		return;
+	bus_dmamap_unload(dev->pa.pa_dmat, h->map);
+	bus_dmamap_destroy(dev->pa.pa_dmat, h->map);
+	bus_dmamem_unmap(dev->pa.pa_dmat, h->addr, h->size);
+	bus_dmamem_free(dev->pa.pa_dmat, h->segs, 1);
 
-	drm_dmamem_free(h->mem);
 	free(h, M_DRM);
 }
