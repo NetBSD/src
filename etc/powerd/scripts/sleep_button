@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: sleep_button,v 1.3.18.1 2008/06/02 13:21:20 mjf Exp $
+#	$NetBSD: sleep_button,v 1.3.18.2 2008/06/29 08:38:43 mjf Exp $
 #
 # Generic script for sleep button events.
 #
@@ -10,6 +10,8 @@
 
 case "${2}" in
 pressed)
+	/etc/rc.d/btdevctl stop
+	/etc/rc.d/btconfig stop
 	/etc/rc.d/ntpd stop
 	/etc/rc.d/dhclient stop
 	/etc/rc.d/network stop
@@ -31,6 +33,8 @@ pressed)
 	/etc/rc.d/dhclient start
 	/etc/rc.d/ntpdate start
 	/etc/rc.d/ntpd start
+	/etc/rc.d/btconfig start
+	/etc/rc.d/btdevctl start
 	;;
 released)
 	# Note that we don't really need to handle a released event here,

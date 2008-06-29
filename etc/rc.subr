@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.70.6.1 2008/06/02 13:21:20 mjf Exp $
+# $NetBSD: rc.subr,v 1.70.6.2 2008/06/29 08:38:43 mjf Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -173,7 +173,7 @@ check_process()
 #	If interpreter != ".", read the first line of procname, remove the
 #	leading #!, normalise whitespace, append procname, and attempt to
 #	match that against each command, either as is, or with extra words
-#	at the end.  As an alternative, to deal with interpreted deaemons
+#	at the end.  As an alternative, to deal with interpreted daemons
 #	using perl, the basename of the interpreter plus a colon is also
 #	tried as the prefix to procname.
 #

@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.1.4.2 2008/06/02 13:21:23 mjf Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.1.4.3 2008/06/29 08:41:57 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -50,6 +50,7 @@
 #include <fattr.h>
 #include <time.h>
 #include <assert.h>
+#include <err.h>
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -452,18 +453,37 @@ static int
 udf_write_dscr_virt(union dscrptr *dscr, uint32_t location, uint32_t vpart,
 	uint32_t sects)
 {
+	struct file_entry *fe;
+	struct extfile_entry *efe;
+	struct extattrhdr_desc *extattrhdr;
 	uint32_t phys;
 	uint8_t *bpos;
 	int error, cnt;
 
+	extattrhdr = NULL;
+	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
+		fe = (struct file_entry *) dscr;
+		if (udf_rw32(fe->l_ea) > 0)
+			extattrhdr = (struct extattrhdr_desc *) fe->data;
+	}
+	if (udf_rw16(dscr->tag.id) == TAGID_EXTFENTRY) {
+		efe = (struct extfile_entry *) dscr;
+		if (udf_rw32(efe->l_ea) > 0)
+			extattrhdr = (struct extattrhdr_desc *) efe->data;
+	}
+	if (extattrhdr) {
+		extattrhdr->tag.tag_loc = udf_rw32(location);
+		udf_validate_tag_and_crc_sums((union dscrptr *) extattrhdr);
+	}
+
 	dscr->tag.tag_loc = udf_rw32(location);
-	(void) udf_validate_tag_and_crc_sums(dscr);
+	udf_validate_tag_and_crc_sums(dscr);
 
 	for (cnt = 0; cnt < sects; cnt++) {
 		bpos  = (uint8_t *) dscr;
 		bpos += context.sector_size * cnt;
 
-		/* NOTE liniar mapping assumed in the ranges used */
+		/* NOTE linear mapping assumed in the ranges used */
 		/* XXX 1:1 translation */
 		phys = layout.part_start_lba + location + cnt;
 
@@ -1276,6 +1296,62 @@ udf_do_newfs(void)
 
 /* --------------------------------------------------------------------- */
 
+/* version can be specified as 0xabc or a.bc */
+static int
+parse_udfversion(const char *pos, uint32_t *version) {
+	int hex = 0;
+	char c1, c2, c3, c4;
+
+	*version = 0;
+	if (*pos == '0') {
+		pos++;
+		/* expect hex format */
+		hex = 1;
+		if (*pos++ != 'x')
+			return 1;
+	}
+
+	c1 = *pos++;
+	if (c1 < '0' || c1 > '9')
+		return 1;
+	c1 -= '0';
+
+	c2 = *pos++;
+	if (!hex) {
+		if (c2 != '.')
+			return 1;
+		c2 = *pos++;
+	}
+	if (c2 < '0' || c2 > '9')
+		return 1;
+	c2 -= '0';
+
+	c3 = *pos++;
+	if (c3 < '0' || c3 > '9')
+		return 1;
+	c3 -= '0';
+
+	c4 = *pos++;
+	if (c4 != 0)
+		return 1;
+
+	*version = c1 * 0x100 + c2 * 0x10 + c3;
+	return 0;
+}
+
+
+static int
+a_udf_version(const char *s, const char *id_type)
+{
+	uint32_t version;
+
+	if (parse_udfversion(s, &version))
+		errx(1, "unknown %s id %s; specify as hex or float", id_type, s);
+	return version;
+}
+
+/* --------------------------------------------------------------------- */
+
 static void
 usage(void)
 {
@@ -1338,12 +1414,12 @@ main(int argc, char **argv)
 			req_disable |= FORMAT_META;
 			break;
 		case 'v' :
-			context.min_udf = a_num(optarg, "min_udf");
+			context.min_udf = a_udf_version(optarg, "min_udf");
 			if (context.min_udf > context.max_udf)
 				context.max_udf = context.min_udf;
 			break;
 		case 'V' :
-			context.max_udf = a_num(optarg, "max_udf");
+			context.max_udf = a_udf_version(optarg, "max_udf");
 			if (context.min_udf > context.max_udf)
 				context.min_udf = context.max_udf;
 			break;
