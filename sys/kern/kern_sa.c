@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.27 2008/06/28 21:35:03 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.28 2008/06/29 03:38:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.27 2008/06/28 21:35:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.28 2008/06/29 03:38:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,6 +374,7 @@ dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
 		sigplusset(&l->l_sigmask, &sa->sa_sigmask);
 		sigemptyset(&l->l_sigmask);
 		SLIST_INIT(&sa->sa_vps);
+		cv_init(&sa->sa_cv, "sawait");
 		membar_producer();
 		p->p_sa = sa;
 		KASSERT(l->l_savp == NULL);
@@ -431,6 +432,7 @@ sa_release(struct proc *p)
 		pool_put(&savp_pool, vp);
 	}
 
+	cv_destroy(&sa->sa_cv);
 	mutex_destroy(&sa->sa_mutex);
 	pool_put(&sadata_pool, sa);
 
@@ -933,8 +935,8 @@ sys_sa_setconcurrency(struct lwp *l, const struct sys_sa_setconcurrency_args *ua
 			/* error = */ sa_upcall(l2, SA_UPCALL_NEWPROC, NULL,
 			    NULL, 0, NULL, NULL);
 			lwp_lock(l2);
-			/* setrunnable() will unlock the LWP */
-			setrunnable(vp->savp_lwp);
+			/* lwp_unsleep() will unlock the LWP */
+			lwp_unsleep(vp->savp_lwp, true);
 			KASSERT((l2->l_flag & LW_SINTR) == 0);
 			(*retval)++;
 			mutex_enter(&sa->sa_mutex);
@@ -968,6 +970,8 @@ sys_sa_yield(struct lwp *l, const void *v, register_t *retval)
 		return (EINVAL);
 	}
 
+	mutex_exit(p->p_lock);
+
 	sa_yield(l);
 
 	return (EJUSTRETURN);
@@ -991,7 +995,6 @@ sa_yield(struct lwp *l)
 
 	if (vp->savp_lwp != l) {
 		lwp_unlock(l);
-		mutex_exit(p->p_lock);
 
 		/*
 		 * We lost the VP on our way here, this happens for
@@ -1003,8 +1006,6 @@ sa_yield(struct lwp *l)
 		KASSERT(l->l_flag & LW_SA_BLOCKING);
 		return;
 	}
-
-	mutex_exit(p->p_lock);
 
 	/*
 	 * If we're the last running LWP, stick around to receive
@@ -1041,9 +1042,11 @@ sa_yield(struct lwp *l)
 
 		mutex_enter(&sa->sa_mutex);
 		sa->sa_concurrency--;
-		ret = tsleep(l, PUSER | PCATCH, "sawait", 0);
+		ret = cv_wait_sig(&sa->sa_cv, &sa->sa_mutex);
 		sa->sa_concurrency++;
 		mutex_exit(&sa->sa_mutex);
+		DPRINTFN(1,("sa_yield(%d.%d) woke\n",
+			     p->p_pid, l->l_lid));
 
 		KASSERT(vp->savp_lwp == l || p->p_sflag & PS_WEXIT);
 
@@ -1055,6 +1058,8 @@ sa_yield(struct lwp *l)
 
 	DPRINTFN(1,("sa_yield(%d.%d) returned, ret %d\n",
 		     p->p_pid, l->l_lid, ret));
+
+	lwp_unlock(l);
 }
 
 
@@ -1417,7 +1422,11 @@ sa_switch(struct lwp *l)
 		/*
 		 * Case 0: we're blocking in sa_yield
 		 */
+		DPRINTFN(4,("sa_switch(%d.%d) yield, count %d timerpend %d\n",
+		    p->p_pid, l->l_lid, vp->savp_woken_count, p->p_timerpend));
 		if (vp->savp_woken_count == 0 && p->p_timerpend == 0) {
+			DPRINTFN(4,("sa_switch(%d.%d) setting idle\n",
+			    p->p_pid, l->l_lid));
 			l->l_flag |= LW_SA_IDLE;
 			mutex_exit(&vp->savp_mutex);
 			mi_switch(l);
@@ -1918,7 +1927,7 @@ sa_upcall_userret(struct lwp *l)
 
 	lwp_lock(l);
 
-	if (vp->savp_woken_count != 0) {
+	if (vp->savp_woken_count == 0) {
 		l->l_flag &= ~LW_SA_UPCALL;
 	}
 
@@ -2234,9 +2243,9 @@ sa_unblock_userret(struct lwp *l)
 #endif
 
 	DPRINTFN(3,(
-	    "sa_unblock_userret(%d.%d) put on wokenq: vp_lwp %d state %d\n",
+	    "sa_unblock_userret(%d.%d) put on wokenq: vp_lwp %d state %d flags %x\n",
 		     l->l_proc->p_pid, l->l_lid, vp_lwp->l_lid,
-		     vp_lwp->l_stat));
+		     vp_lwp->l_stat, vp_lwp->l_flag));
 
 	lwp_lock(vp_lwp);
 
@@ -2262,10 +2271,14 @@ sa_unblock_userret(struct lwp *l)
 		break;
 	case LSSLEEP:
 		if (vp_lwp->l_flag & LW_SA_IDLE) {
-			vp_lwp->l_flag &= ~LW_SA_IDLE;
+			vp_lwp->l_flag &= ~(LW_SA_IDLE|LW_SA_YIELD|LW_SINTR);
 			vp_lwp->l_flag |= LW_SA_UPCALL;
-			/* setrunnable() will unlock the LWP */
-			setrunnable(vp_lwp);
+			/* lwp_unsleep() will unlock the LWP */
+			lwp_unsleep(vp_lwp, true);
+			DPRINTFN(3,(
+			    "sa_unblock_userret(%d.%d) woke vp: %d state %d\n",
+			     l->l_proc->p_pid, l->l_lid, vp_lwp->l_lid,
+			     vp_lwp->l_stat));
 			vp_lwp = NULL;
 			break;
 		}
@@ -2319,7 +2332,7 @@ sa_unblock_userret(struct lwp *l)
 	sleepq_enter(&vp->savp_woken, l, &vp->savp_mutex);
 	sleepq_enqueue(&vp->savp_woken, &vp->savp_woken, sa_lwpwoken_wmesg,
 			&sa_sobj);
-	l->l_stat = LSSUSPENDED;
+	//l->l_stat = LSSUSPENDED;
 	mi_switch(l);
 
 	/*
