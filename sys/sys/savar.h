@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.24.2.10 2008/06/27 03:52:32 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.24.2.11 2008/06/29 03:38:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ struct sadata {
 	int		sa_nstacks;		/* m: number of upcall stacks */
 	sigset_t	sa_sigmask;		/* p: process-wide masked sigs*/
 	SLIST_HEAD(, sadata_vp)	sa_vps;		/* m: virtual processors */
+	kcondvar_t	sa_cv;			/* m: condvar for sa_yield */
 };
 
 #define SA_FLAG_ALL	SA_FLAG_PREEMPT
