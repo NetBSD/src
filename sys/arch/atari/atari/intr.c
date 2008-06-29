@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13.14.1 2008/06/02 13:21:56 mjf Exp $	*/
+/*	$NetBSD: intr.c,v 1.13.14.2 2008/06/29 09:32:54 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.14.1 2008/06/02 13:21:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.14.2 2008/06/29 09:32:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,20 +326,13 @@ cpu_intr_p(void)
 	return idepth != 0;
 }
 
-static const int ipl2psl_table[] = {
-	[IPL_NONE]       = PSL_IPL0,
-	[IPL_SOFTCLOCK]  = PSL_IPL1,
-	[IPL_SOFTBIO]    = PSL_IPL1,
-	[IPL_SOFTNET]    = PSL_IPL1,
-	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_VM]         = PSL_IPL4,
-	[IPL_SCHED]      = PSL_IPL6,
-	[IPL_HIGH]       = PSL_IPL7,
+const uint16_t ipl2psl_table[NIPL] = {
+	[IPL_NONE]       = PSL_S | PSL_IPL0,
+	[IPL_SOFTCLOCK]  = PSL_S | PSL_IPL1,
+	[IPL_SOFTBIO]    = PSL_S | PSL_IPL1,
+	[IPL_SOFTNET]    = PSL_S | PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_S | PSL_IPL1,
+	[IPL_VM]         = PSL_S | PSL_IPL4,
+	[IPL_SCHED]      = PSL_S | PSL_IPL6,
+	[IPL_HIGH]       = PSL_S | PSL_IPL7,
 };
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
-}

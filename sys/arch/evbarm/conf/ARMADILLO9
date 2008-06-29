@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.18.6.1 2008/06/02 13:22:00 mjf Exp $
+#	$NetBSD: ARMADILLO9,v 1.18.6.2 2008/06/29 09:32:55 mjf Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -158,7 +158,7 @@ ohci0		at epsoc? addr 0x80020000 size 0x1000 intr 56
 # On-chip Raster (not yet)
 #vga0		at epsoc? addr 0x80030000 size 0x10000 intr ??
 # On-chip PCMCIA controller
-eppcic0		at epsoc? addr 0x80080020 size 0x24 intr 49
+eppcic0		at epsoc? addr 0x80080000 size 0x44
 # On-chip IDE (not yet)
 #wdc0		at epsoc? addr 0x800a0000 size 0x38 intr ??
 

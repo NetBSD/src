@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.2.2.2 2008/06/02 13:24:06 mjf Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.2.2.3 2008/06/29 09:33:13 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.2.2.2 2008/06/02 13:24:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.2.2.3 2008/06/29 09:33:13 mjf Exp $");
 #endif /* not lint */
 
 
@@ -260,10 +260,13 @@ udf_node_sanity_check(struct udf_node *udf_node,
 			flags = UDF_EXT_FLAGS(len);
 			len   = UDF_EXT_LEN(len);
 		}
-		KASSERT(flags != UDF_EXT_REDIRECT);	/* not implemented yet */
-		*cnt_inflen += len;
-		if (flags == UDF_EXT_ALLOCATED) {
-			*cnt_logblksrec += (len + lb_size -1) / lb_size;
+		if (flags != UDF_EXT_REDIRECT) {
+			*cnt_inflen += len;
+			if (flags == UDF_EXT_ALLOCATED) {
+				*cnt_logblksrec += (len + lb_size -1) / lb_size;
+			}
+		} else {
+			KASSERT(len == lb_size);
 		}
 		whole_lb = ((len % lb_size) == 0);
 	}
@@ -384,6 +387,13 @@ translate_again:
 		for (;;) {
 			udf_get_adslot(ump->metadata_node,
 				slot, &s_icb_loc, &eof);
+			DPRINTF(ADWLK, ("slot %d, eof = %d, flags = %d, "
+				"len = %d, lb_num = %d, part = %d\n",
+				slot, eof,
+				UDF_EXT_FLAGS(udf_rw32(s_icb_loc.len)),
+				UDF_EXT_LEN(udf_rw32(s_icb_loc.len)),
+				udf_rw32(s_icb_loc.loc.lb_num),
+				udf_rw16(s_icb_loc.loc.part_num)));
 			if (eof) {
 				DPRINTF(TRANSLATE,
 					("Meta partition translation "
@@ -395,12 +405,16 @@ translate_again:
 			flags = UDF_EXT_FLAGS(len);
 			len   = UDF_EXT_LEN(len);
 
+			if (flags == UDF_EXT_REDIRECT) {
+				slot++;
+				continue;
+			}
+
 			end_foffset = foffset + len;
 
 			if (end_foffset > lb_num * lb_size)
 				break;	/* found */
-			if (flags != UDF_EXT_REDIRECT)
-				foffset = end_foffset;
+			foffset = end_foffset;
 			slot++;
 		}
 		/* found overlapping slot */
@@ -492,6 +506,12 @@ udf_translate_file_extent(struct udf_node *udf_node,
 	slot    = 0;
 	for (;;) {
 		udf_get_adslot(udf_node, slot, &s_ad, &eof);
+		DPRINTF(ADWLK, ("slot %d, eof = %d, flags = %d, len = %d, "
+			"lb_num = %d, part = %d\n", slot, eof,
+			UDF_EXT_FLAGS(udf_rw32(s_ad.len)),
+			UDF_EXT_LEN(udf_rw32(s_ad.len)),
+			udf_rw32(s_ad.loc.lb_num),
+			udf_rw16(s_ad.loc.part_num)));
 		if (eof) {
 			DPRINTF(TRANSLATE,
 				("Translate file extent "
@@ -521,6 +541,12 @@ udf_translate_file_extent(struct udf_node *udf_node,
 
 	for (;;) {
 		udf_get_adslot(udf_node, slot, &s_ad, &eof);
+		DPRINTF(ADWLK, ("slot %d, eof = %d, flags = %d, len = %d, "
+			"lb_num = %d, part = %d\n", slot, eof,
+			UDF_EXT_FLAGS(udf_rw32(s_ad.len)),
+			UDF_EXT_LEN(udf_rw32(s_ad.len)),
+			udf_rw32(s_ad.loc.lb_num),
+			udf_rw16(s_ad.loc.part_num)));
 		if (eof) {
 			DPRINTF(TRANSLATE,
 				("Translate file extent "
@@ -550,7 +576,7 @@ udf_translate_file_extent(struct udf_node *udf_node,
 		 */
 	
 		overlap = MIN(overlap, num_lb);
-		while (overlap) {
+		while (overlap && (flags != UDF_EXT_REDIRECT)) {
 			switch (flags) {
 			case UDF_EXT_FREE :
 			case UDF_EXT_ALLOCATED_BUT_NOT_USED :
@@ -578,9 +604,12 @@ udf_translate_file_extent(struct udf_node *udf_node,
 					overlap--; num_lb--; translen--;
 				}
 				break;
-			default: /* UDF_EXT_REDIRECT */
-				/* ignore, not a mapping */
-				break;
+			default:
+				DPRINTF(TRANSLATE,
+					("Translate file extent "
+					 "failed: bad flags %x\n", flags));
+				UDF_UNLOCK_NODE(udf_node, 0);
+				return EINVAL;
 			}
 		}
 		if (num_lb == 0)
@@ -1227,15 +1256,15 @@ udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb,
 
 	/* if offset too big, we go to the allocation extensions */
 	offset = slot * adlen;
-	extnr  = 0;
-	while (offset > max_l_ad) {
+	extnr  = -1;
+	while (offset >= max_l_ad) {
+		extnr++;
 		offset -= max_l_ad;
 		ext  = udf_node->ext[extnr];
 		dscr_size  = sizeof(struct alloc_ext_entry) -1;
 		l_ad = udf_rw32(ext->l_ad);
 		max_l_ad = lb_size - dscr_size;
-		data_pos = (uint8_t *) ext + dscr_size + l_ea;
-		extnr++;
+		data_pos = (uint8_t *) ext + dscr_size;
 		if (extnr > udf_node->num_extensions) {
 			l_ad = 0;	/* force EOF */
 			break;
@@ -1252,7 +1281,7 @@ udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb,
 	if (addr_type == UDF_ICB_SHORT_ALLOC) {
 		short_ad = (struct short_ad *) (data_pos + offset);
 		icb->len          = short_ad->len;
-		icb->loc.part_num = udf_rw16(0);	/* ignore */
+		icb->loc.part_num = udf_node->loc.loc.part_num;
 		icb->loc.lb_num   = short_ad->lb_num;
 	} else if (addr_type == UDF_ICB_LONG_ALLOC) {
 		long_ad = (struct long_ad *) (data_pos + offset);
@@ -2090,6 +2119,11 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 			efe->tag.desc_crc_len = udf_rw32(crclen);
 		}
 		error = 0;
+
+		/* clear the space in the descriptor */
+		KASSERT(old_size > new_size);
+		memset(data_pos + new_size, 0, old_size - new_size);
+
 		/* TODO zero appened space in buffer! */
 		/* using uvm_vnp_zerorange(vp, old_size, old_size - new_size); ? */
 

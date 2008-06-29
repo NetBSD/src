@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.h,v 1.1.104.1 2008/06/02 13:22:44 mjf Exp $	*/
+/*	$NetBSD: rbus_machdep.h,v 1.1.104.2 2008/06/29 09:33:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -31,8 +31,7 @@
 struct pci_attach_args;
 rbus_tag_t rbus_pccbb_parent_io(struct pci_attach_args *);
 rbus_tag_t rbus_pccbb_parent_mem(struct pci_attach_args *);
-void pccbb_attach_hook(struct device *, struct device *,
-		       struct pci_attach_args *);
+void pccbb_attach_hook(device_t, device_t, struct pci_attach_args *);
 #define __HAVE_PCCBB_ATTACH_HOOK
 
 int md_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,

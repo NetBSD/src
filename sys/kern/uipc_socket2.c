@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.89.6.2 2008/06/02 13:24:13 mjf Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.89.6.3 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.89.6.2 2008/06/02 13:24:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.89.6.3 2008/06/29 09:33:14 mjf Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -257,6 +257,8 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_send = head->so_send;
 	so->so_receive = head->so_receive;
 	so->so_uidinfo = head->so_uidinfo;
+	so->so_egid = head->so_egid;
+	so->so_cpid = head->so_cpid;
 #ifdef MBUFTRACE
 	so->so_mowner = head->so_mowner;
 	so->so_rcv.sb_mowner = head->so_rcv.sb_mowner;
@@ -448,6 +450,23 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
 		fownsignal(so->so_pgid, SIGIO, code, band, so);
 	if (sb->sb_flags & SB_UPCALL)
 		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
+}
+
+/*
+ * Reset a socket's lock pointer.  Wake all threads waiting on the
+ * socket's condition variables so that they can restart their waits
+ * using the new lock.  The existing lock must be held.
+ */
+void
+solockreset(struct socket *so, kmutex_t *lock)
+{
+
+	KASSERT(solocked(so));
+
+	so->so_lock = lock;
+	cv_broadcast(&so->so_snd.sb_cv);
+	cv_broadcast(&so->so_rcv.sb_cv);
+	cv_broadcast(&so->so_cv);
 }
 
 /*

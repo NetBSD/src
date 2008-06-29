@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.37.6.2 2008/06/02 13:23:06 mjf Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.37.6.3 2008/06/29 09:33:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.37.6.2 2008/06/02 13:23:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.37.6.3 2008/06/29 09:33:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,6 +490,8 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		IOCTL_STRUCT_CONV_TO(SIOCPHASE2, ifreq);
 #endif
 
+	case OOSIOCGIFCONF32:
+		IOCTL_STRUCT_CONV_TO(OOSIOCGIFCONF, ifconf);
 	case OSIOCGIFCONF32:
 		IOCTL_STRUCT_CONV_TO(OSIOCGIFCONF, ifconf);
 	case SIOCGIFCONF32:

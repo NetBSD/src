@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.172.6.2 2008/06/02 13:24:07 mjf Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.172.6.3 2008/06/29 09:33:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.172.6.2 2008/06/02 13:24:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.172.6.3 2008/06/29 09:33:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1732,7 +1732,7 @@ fd_checkstd(void)
  * 'pgid' is set to -pg_id.
  */
 int
-fsetown(pid_t *pgid, int cmd, const void *data)
+fsetown(pid_t *pgid, u_long cmd, const void *data)
 {
 	int id = *(const int *)data;
 	int error;
@@ -1762,7 +1762,7 @@ fsetown(pid_t *pgid, int cmd, const void *data)
  * needs the sign removed before use.
  */
 int
-fgetown(pid_t pgid, int cmd, void *data)
+fgetown(pid_t pgid, u_long cmd, void *data)
 {
 
 	switch (cmd) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.17.28.1 2008/06/02 13:23:37 mjf Exp $	*/
+/*	$NetBSD: azalia.h,v 1.17.28.2 2008/06/29 09:33:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -551,7 +551,7 @@ typedef struct codec_t {
 	int (*get_port)(struct codec_t *, mixer_ctrl_t *);
 	int (*unsol_event)(struct codec_t *, int);
 
-	struct azalia_t *az;
+	device_t dev; 		/* parent azalia(4) instance */
 	uint32_t vid;		/* codec vendor/device ID */
 	uint32_t subid;		/* PCI subvendor/device ID */
 	const char *name;

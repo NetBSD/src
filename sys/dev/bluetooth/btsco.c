@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.18.14.2 2008/06/02 13:23:14 mjf Exp $	*/
+/*	$NetBSD: btsco.c,v 1.18.14.3 2008/06/29 09:33:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.18.14.2 2008/06/02 13:23:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.18.14.3 2008/06/29 09:33:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1123,6 +1123,7 @@ btsco_intr(void *arg)
 	sc->sc_tx_block = NULL;
 	sc->sc_tx_size = 0;
 
+	mutex_enter(bt_lock);
 	while (size > 0) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
@@ -1149,6 +1150,7 @@ btsco_intr(void *arg)
 		block += mlen;
 		size -= mlen;
 	}
+	mutex_exit(bt_lock);
 }
 
 /*

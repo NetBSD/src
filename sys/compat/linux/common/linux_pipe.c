@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.61.6.1 2008/06/02 13:23:03 mjf Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.61.6.2 2008/06/29 09:33:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.61.6.1 2008/06/02 13:23:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.61.6.2 2008/06/29 09:33:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.61.6.1 2008/06/02 13:23:03 mjf Exp 
 #include <sys/mman.h>
 #include <sys/mount.h>
 
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

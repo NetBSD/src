@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2007/12/03 15:33:26 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.9.14.1 2008/06/29 09:32:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -99,7 +99,7 @@
 #define splsoftbio()	splraise1()
 #define splsoftnet()	splraise1()
 #define splsoftserial()	splraise1()
-#define splvm()		_splraise(ipl2spl_table[IPL_VM])
+#define splvm()		splraise4()
 #define splsched()	spl6()
 #define splhigh()	spl7()
 
@@ -118,25 +118,25 @@ int	spl0 __P((void));
 #define	IPL_HIGH	7
 #define	NIPL		8
 
-extern int ipl2spl_table[NIPL];
+extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
-	uint16_t _ipl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._ipl = ipl};
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
 }
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return _splraise(ipl2spl_table[icookie._ipl]);
+	return _splraise(icookie._psl);
 }
 
 #include <m68k/softintr.h>

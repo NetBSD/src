@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.70.6.1 2008/06/05 19:14:38 mjf Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.70.6.2 2008/06/29 09:33:21 mjf Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.70.6.1 2008/06/05 19:14:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.70.6.2 2008/06/29 09:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1093,9 +1093,7 @@ void
 uvm_loan_init(void)
 {
 
-	mutex_init(&uvm_loanzero_object.vmobjlock, MUTEX_DEFAULT, IPL_NONE);
-	TAILQ_INIT(&uvm_loanzero_object.memq);
-	uvm_loanzero_object.pgops = &ulz_pager;
+	UVM_OBJ_INIT(&uvm_loanzero_object, &ulz_pager, 0);
 
 	UVMHIST_INIT(loanhist, 300);
 }

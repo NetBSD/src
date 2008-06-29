@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.22 2007/03/04 05:59:52 christos Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.22.40.1 2008/06/29 09:32:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.22 2007/03/04 05:59:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.22.40.1 2008/06/29 09:32:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -706,7 +706,7 @@ sed1356_set_contrast(struct sed1356_softc *sc, int val)
 void
 sed1356_toggle_lcdlight(void)
 {
-	struct sed1356_softc *sc = sed_cd.cd_devs[0];
+	struct sed1356_softc *sc = device_lookup_private(&sed_cd, 0);
 
 	if (sc->sc_powerstate & PWRSTAT_VIDEOOFF)
 		sc->sc_powerstate &= ~PWRSTAT_VIDEOOFF;

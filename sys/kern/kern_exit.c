@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.199.6.3 2008/06/05 19:14:36 mjf Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.199.6.4 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.199.6.3 2008/06/05 19:14:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.199.6.4 2008/06/29 09:33:14 mjf Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -216,7 +216,7 @@ exit1(struct lwp *l, int rv)
 	/*
 	 * If we have been asked to stop on exit, do so now.
 	 */
-	if (p->p_sflag & PS_STOPEXIT) {
+	if (__predict_false(p->p_sflag & PS_STOPEXIT)) {
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		sigclearall(p, &contsigmask, &kq);
 		p->p_waited = 0;
@@ -228,8 +228,18 @@ exit1(struct lwp *l, int rv)
 		mutex_exit(p->p_lock);
 		mi_switch(l);
 		KERNEL_LOCK(l->l_biglocks, l);
-	} else
-		mutex_exit(p->p_lock);
+		mutex_enter(p->p_lock);
+	}
+
+	/*
+	 * Bin any remaining signals and mark the process as dying so it will
+	 * not be found for, e.g. signals. 
+	 */
+	sigfillset(&p->p_sigctx.ps_sigignore);
+	sigclearall(p, NULL, &kq);
+	p->p_stat = SDYING;
+	mutex_exit(p->p_lock);
+	ksiginfo_queue_drain(&kq);
 
 	/* Destroy any lwpctl info. */
 	if (p->p_lwpctl != NULL)
@@ -244,22 +254,8 @@ exit1(struct lwp *l, int rv)
 	 */
 	rw_enter(&p->p_reflock, RW_WRITER);
 
-	/*
-	 * Bin any remaining signals and mark the process as dying so it will
-	 * not be found for, e.g. signals. 
-	 */
-	mutex_enter(p->p_lock);
-	sigfillset(&p->p_sigctx.ps_sigignore);
-	sigclearall(p, NULL, &kq);
-	p->p_stat = SDYING;
-	mutex_exit(p->p_lock);
-	ksiginfo_queue_drain(&kq);
-
 	DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
 
-#ifdef PGINPROF
-	vmsizmon();
-#endif
 	timers_free(p, TIMERS_ALL);
 #if defined(__HAVE_RAS)
 	ras_purgeall();
@@ -312,17 +308,9 @@ exit1(struct lwp *l, int rv)
 	uvm_proc_exit(p);
 
 	/*
-	 * While we can still block, and mark the LWP as unswappable to
-	 * prevent conflicts with the with the swapper.  We also shouldn't
-	 * be swapped out, because we are about to exit and will release
-	 * memory.
-	 */
-	uvm_lwp_hold(l);
-
-	/*
 	 * Stop profiling.
 	 */
-	if ((p->p_stflag & PST_PROFIL) != 0) {
+	if (__predict_false((p->p_stflag & PST_PROFIL) != 0)) {
 		mutex_spin_enter(&p->p_stmutex);
 		stopprofclock(p);
 		mutex_spin_exit(&p->p_stmutex);
@@ -334,12 +322,10 @@ exit1(struct lwp *l, int rv)
 	 * the VM resources are released.
 	 */
 	mutex_enter(proc_lock);
-	mutex_enter(p->p_lock);
-	if (p->p_sflag & PS_PPWAIT) {
-		p->p_sflag &= ~PS_PPWAIT;
+	if (p->p_lflag & PL_PPWAIT) {
+		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 	}
-	mutex_exit(p->p_lock);
 
 	if (SESS_LEADER(p)) {
 		struct vnode *vprele = NULL, *vprevoke = NULL;
@@ -408,8 +394,6 @@ exit1(struct lwp *l, int rv)
 	 */
 	KNOTE(&p->p_klist, NOTE_EXIT);
 
-
-
 #if PERFCTRS
 	/*
 	 * Save final PMC information in parent process & clean up.
@@ -453,7 +437,7 @@ exit1(struct lwp *l, int rv)
 		 * triggered to reparent the process to its
 		 * original parent, so we must do this here.
 		 */
-		if (q->p_slflag & PSL_TRACED) {
+		if (__predict_false(q->p_slflag & PSL_TRACED)) {
 			mutex_enter(p->p_lock);
 			q->p_slflag &= ~(PSL_TRACED|PSL_FSTRACE|PSL_SYSCALL);
 			mutex_exit(p->p_lock);
@@ -496,7 +480,6 @@ exit1(struct lwp *l, int rv)
 	 * flag set, notify init instead (and hope it will handle
 	 * this situation).
 	 */
-	mutex_enter(q->p_lock);
 	if (q->p_flag & (PK_NOCLDWAIT|PK_CLDSIGIGN)) {
 		proc_reparent(p, initproc);
 		wakeinit = 1;
@@ -509,12 +492,11 @@ exit1(struct lwp *l, int rv)
 		if (LIST_FIRST(&q->p_children) == NULL)
 			cv_broadcast(&q->p_waitcv);
 	}
-	mutex_exit(q->p_lock);
 
 	/* Reload parent pointer, since p may have been reparented above */
 	q = p->p_pptr;
 
-	if ((p->p_slflag & PSL_FSTRACE) == 0 && p->p_exitsig != 0) {
+	if (__predict_false((p->p_slflag & PSL_FSTRACE) == 0 && p->p_exitsig != 0)) {
 		exit_psignal(p, q, &ksi);
 		kpsignal(q, &ksi, NULL);
 	}

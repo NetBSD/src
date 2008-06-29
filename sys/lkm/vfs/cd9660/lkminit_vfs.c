@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.5.6.1 2008/06/02 13:24:18 mjf Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.5.6.2 2008/06/29 09:33:15 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5.6.1 2008/06/02 13:24:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5.6.2 2008/06/29 09:33:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -84,7 +84,26 @@ load(lkmtp, cmd)
 	int cmd;
 {
 
-	sysctl_vfs_cd9660_setup(&_cd9660_log);
+	sysctl_createv(&_cd9660_log, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(&_cd9660_log, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT, CTLTYPE_NODE, "cd9660",
+		       SYSCTL_DESCR("ISO-9660 file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 14, CTL_EOL);
+	sysctl_createv(&_cd9660_log, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "utf8_joliet",
+		       SYSCTL_DESCR("Encode Joliet filenames to UTF-8"),
+		       NULL, 0, &cd9660_utf8_joliet, 0,
+		       CTL_VFS, 14, CD9660_UTF8_JOLIET, CTL_EOL);
+	/*
+	 * XXX the "14" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "14" is the order as taken from sys/mount.h
+	 */
 	return (0);
 }
 

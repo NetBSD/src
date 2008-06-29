@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.12.16.3 2008/04/06 09:58:50 mjf Exp $	*/
+/*	$NetBSD: bthub.c,v 1.12.16.4 2008/06/29 09:33:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.12.16.3 2008/04/06 09:58:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.12.16.4 2008/06/29 09:33:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -174,7 +174,7 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		if (unit == bthub_cd.cd_ndevs)
 			return ENXIO;
 
-		self = bthub_cd.cd_devs[unit];
+		self = device_lookup(&bthub_cd, unit);
 		if (self == NULL)
 			continue;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.44.6.1 2008/06/02 13:24:06 mjf Exp $ */
+/* $NetBSD: udf_subr.c,v 1.44.6.2 2008/06/29 09:33:13 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.6.1 2008/06/02 13:24:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.6.2 2008/06/29 09:33:13 mjf Exp $");
 #endif /* not lint */
 
 
@@ -1908,22 +1908,164 @@ udf_update_logvolname(struct udf_mount *ump, char *logvol_id)
 
 /* --------------------------------------------------------------------- */
 
+static void
+udf_inittag(struct udf_mount *ump, struct desc_tag *tag, int tagid,
+	uint32_t sector)
+{
+	assert(ump->logical_vol);
+
+	tag->id 		= udf_rw16(tagid);
+	tag->descriptor_ver	= ump->logical_vol->tag.descriptor_ver;
+	tag->cksum		= 0;
+	tag->reserved		= 0;
+	tag->serial_num		= ump->logical_vol->tag.serial_num;
+	tag->tag_loc            = udf_rw32(sector);
+}
+
+
+uint64_t
+udf_advance_uniqueid(struct udf_mount *ump)
+{
+	uint64_t unique_id;
+
+	mutex_enter(&ump->logvol_mutex);
+	unique_id = udf_rw64(ump->logvol_integrity->lvint_next_unique_id);
+	if (unique_id < 0x10)
+		unique_id = 0x10;
+	ump->logvol_integrity->lvint_next_unique_id = udf_rw64(unique_id + 1);
+	mutex_exit(&ump->logvol_mutex);
+
+	return unique_id;
+}
+
+
+static void
+udf_adjust_filecount(struct udf_node *udf_node, int sign)
+{
+	struct udf_mount *ump = udf_node->ump;
+	uint32_t num_dirs, num_files;
+	int udf_file_type;
+
+	/* get file type */
+	if (udf_node->fe) {
+		udf_file_type = udf_node->fe->icbtag.file_type;
+	} else {
+		udf_file_type = udf_node->efe->icbtag.file_type;
+	}
+
+	/* adjust file count */
+	mutex_enter(&ump->allocate_mutex);
+	if (udf_file_type == UDF_ICB_FILETYPE_DIRECTORY) {
+		num_dirs = udf_rw32(ump->logvol_info->num_directories);
+		ump->logvol_info->num_directories =
+			udf_rw32((num_dirs + sign));
+	} else {
+		num_files = udf_rw32(ump->logvol_info->num_files);
+		ump->logvol_info->num_files =
+			udf_rw32((num_files + sign));
+	}
+	mutex_exit(&ump->allocate_mutex);
+}
+
+
+void
+udf_osta_charset(struct charspec *charspec)
+{
+	bzero(charspec, sizeof(struct charspec));
+	charspec->type = 0;
+	strcpy((char *) charspec->inf, "OSTA Compressed Unicode");
+}
+
+
+/* first call udf_set_regid and then the suffix */
+void
+udf_set_regid(struct regid *regid, char const *name)
+{
+	bzero(regid, sizeof(struct regid));
+	regid->flags    = 0;		/* not dirty and not protected */
+	strcpy((char *) regid->id, name);
+}
+
+
+void
+udf_add_domain_regid(struct udf_mount *ump, struct regid *regid)
+{
+	uint16_t *ver;
+
+	ver  = (uint16_t *) regid->id_suffix;
+	*ver = ump->logvol_info->min_udf_readver;
+}
+
+
+void
+udf_add_udf_regid(struct udf_mount *ump, struct regid *regid)
+{
+	uint16_t *ver;
+
+	ver  = (uint16_t *) regid->id_suffix;
+	*ver = ump->logvol_info->min_udf_readver;
+
+	regid->id_suffix[2] = 4;	/* unix */
+	regid->id_suffix[3] = 8;	/* NetBSD */
+}
+
+
+void
+udf_add_impl_regid(struct udf_mount *ump, struct regid *regid)
+{
+	regid->id_suffix[0] = 4;	/* unix */
+	regid->id_suffix[1] = 8;	/* NetBSD */
+}
+
+
+void
+udf_add_app_regid(struct udf_mount *ump, struct regid *regid)
+{
+	regid->id_suffix[0] = APP_VERSION_MAIN;
+	regid->id_suffix[1] = APP_VERSION_SUB;
+}
+
+static int
+udf_create_parentfid(struct udf_mount *ump, struct fileid_desc *fid,
+	struct long_ad *parent, uint64_t unique_id)
+{
+	/* the size of an empty FID is 38 but needs to be a multiple of 4 */
+	int fidsize = 40;
+
+	udf_inittag(ump, &fid->tag, TAGID_FID, udf_rw32(parent->loc.lb_num));
+	fid->file_version_num = udf_rw16(1);	/* UDF 2.3.4.1 */
+	fid->file_char = UDF_FILE_CHAR_DIR | UDF_FILE_CHAR_PAR;
+	fid->icb = *parent;
+	fid->icb.longad_uniqueid = udf_rw32((uint32_t) unique_id);
+	fid->tag.desc_crc_len = fidsize - UDF_DESC_TAG_LENGTH;
+	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fid);
+
+	return fidsize;
+}
+
+/* --------------------------------------------------------------------- */
+
 /*
- * Etended attribute support. UDF knows of 3 places for extended attributes:
+ * Extended attribute support. UDF knows of 3 places for extended attributes:
  *
- * (a) inside the file's (e)fe in the length of the extended attriubute area
- * before the allocation desctriptors/filedata
+ * (a) inside the file's (e)fe in the length of the extended attribute area
+ * before the allocation descriptors/filedata
  *
  * (b) in a file referenced by (e)fe->ext_attr_icb and 
  *
  * (c) in the e(fe)'s associated stream directory that can hold various
-	struct part_desc *part;
  * sub-files. In the stream directory a few fixed named subfiles are reserved
  * for NT/Unix ACL's and OS/2 attributes.
  * 
  * NOTE: Extended attributes are read randomly but allways written
  * *atomicaly*. For ACL's this interface is propably different but not known
  * to me yet.
+ *
+ * Order of extended attributes in a space :
+ *   ECMA 167 EAs
+ *   Non block aligned Implementation Use EAs
+ *   Block aligned Implementation Use EAs
+ *   Application Use EAs
  */
 
 static int
@@ -2069,6 +2211,114 @@ next_attribute:
 	return ENOENT;
 }
 
+
+static void
+udf_extattr_insert_internal(struct udf_mount *ump, union dscrptr *dscr,
+	struct extattr_entry *extattr)
+{
+	struct file_entry      *fe;
+	struct extfile_entry   *efe;
+	struct extattrhdr_desc *extattrhdr;
+	struct impl_extattr_entry *implext;
+	uint32_t impl_attr_loc, appl_attr_loc, l_ea, a_l, exthdr_len;
+	uint32_t *l_eap, l_ad;
+	uint16_t *spos;
+	uint8_t *bpos, *data;
+
+	if (udf_rw16(dscr->tag.id) == TAGID_FENTRY) {
+		fe    = &dscr->fe;
+		data  = fe->data;
+		l_eap = &fe->l_ea;
+		l_ad  = udf_rw32(fe->l_ad);
+	} else if (udf_rw16(dscr->tag.id) == TAGID_EXTFENTRY) {
+		efe   = &dscr->efe;
+		data  = efe->data;
+		l_eap = &efe->l_ea;
+		l_ad  = udf_rw32(efe->l_ad);
+	} else {
+		panic("Bad tag passed to udf_extattr_insert_internal");
+	}
+
+	/* can't append already written to file descriptors yet */
+	assert(l_ad == 0);
+
+	/* should have a header! */
+	extattrhdr = (struct extattrhdr_desc *) data;
+	l_ea = udf_rw32(*l_eap);
+	if (l_ea == 0) {
+		/* create empty extended attribute header */
+		exthdr_len = sizeof(struct extattrhdr_desc);
+
+		udf_inittag(ump, &extattrhdr->tag, TAGID_EXTATTR_HDR,
+			/* loc */ 0);
+		extattrhdr->impl_attr_loc = udf_rw32(exthdr_len);
+		extattrhdr->appl_attr_loc = udf_rw32(exthdr_len);
+		extattrhdr->tag.desc_crc_len = udf_rw16(8);
+
+		/* record extended attribute header length */
+		l_ea = exthdr_len;
+		*l_eap = udf_rw32(l_ea);
+	}
+
+	/* extract locations */
+	impl_attr_loc = udf_rw32(extattrhdr->impl_attr_loc);
+	appl_attr_loc = udf_rw32(extattrhdr->appl_attr_loc);
+	if (impl_attr_loc == UDF_IMPL_ATTR_LOC_NOT_PRESENT)
+		impl_attr_loc = l_ea;
+	if (appl_attr_loc == UDF_IMPL_ATTR_LOC_NOT_PRESENT)
+		appl_attr_loc = l_ea;
+
+	/* Ecma 167 EAs */
+	if (udf_rw32(extattr->type) < 2048) {
+		assert(impl_attr_loc == l_ea);
+		assert(appl_attr_loc == l_ea);
+	}
+
+	/* implementation use extended attributes */
+	if (udf_rw32(extattr->type) == 2048) {
+		assert(appl_attr_loc == l_ea);
+
+		/* calculate and write extended attribute header checksum */
+		implext = (struct impl_extattr_entry *) extattr;
+		assert(udf_rw32(implext->iu_l) == 4);	/* [UDF 3.3.4.5] */
+		spos = (uint16_t *) implext->data;
+		*spos = udf_rw16(udf_ea_cksum((uint8_t *) implext));
+	}
+
+	/* application use extended attributes */
+	assert(udf_rw32(extattr->type) != 65536);
+	assert(appl_attr_loc == l_ea);
+
+	/* append the attribute at the end of the current space */
+	bpos = data + udf_rw32(*l_eap);
+	a_l  = udf_rw32(extattr->a_l);
+
+	/* update impl. attribute locations */
+	if (udf_rw32(extattr->type) < 2048) {
+		impl_attr_loc = l_ea + a_l;
+		appl_attr_loc = l_ea + a_l;
+	}
+	if (udf_rw32(extattr->type) == 2048) {
+		appl_attr_loc = l_ea + a_l;
+	}
+
+	/* copy and advance */
+	memcpy(bpos, extattr, a_l);
+	l_ea += a_l;
+	*l_eap = udf_rw32(l_ea);
+
+	/* do the `dance` again backwards */
+	if (udf_rw16(ump->logical_vol->tag.descriptor_ver) != 2) {
+		if (impl_attr_loc == l_ea)
+			impl_attr_loc = UDF_IMPL_ATTR_LOC_NOT_PRESENT;
+		if (appl_attr_loc == l_ea)
+			appl_attr_loc = UDF_APPL_ATTR_LOC_NOT_PRESENT;
+	}
+
+	/* store offsets */
+	extattrhdr->impl_attr_loc = udf_rw32(impl_attr_loc);
+	extattrhdr->appl_attr_loc = udf_rw32(appl_attr_loc);
+}
 
 
 /* --------------------------------------------------------------------- */
@@ -2685,8 +2935,8 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 		}
 	} else {
 		/* mounting read/write */
-		DPRINTF(VOLUMES, ("udf mount: read only file system\n"));
-		error = EROFS;
+/*		if (error) */
+			error = EROFS;
 	}
 	DPRINTFIF(VOLUMES, error, ("udf mount: failed to read "
 				   "metadata files\n"));
@@ -2993,143 +3243,6 @@ udf_deregister_node(struct udf_node *node)
 	LIST_REMOVE(node, sortchain);
 
 	mutex_exit(&ump->ihash_lock);
-}
-
-/* --------------------------------------------------------------------- */
-
-static void
-udf_inittag(struct udf_mount *ump, struct desc_tag *tag, int tagid,
-	uint32_t sector)
-{
-	assert(ump->logical_vol);
-
-	tag->id 		= udf_rw16(tagid);
-	tag->descriptor_ver	= ump->logical_vol->tag.descriptor_ver;
-	tag->cksum		= 0;
-	tag->reserved		= 0;
-	tag->serial_num		= ump->logical_vol->tag.serial_num;
-	tag->tag_loc            = udf_rw32(sector);
-}
-
-
-uint64_t
-udf_advance_uniqueid(struct udf_mount *ump)
-{
-	uint64_t unique_id;
-
-	mutex_enter(&ump->logvol_mutex);
-	unique_id = udf_rw64(ump->logvol_integrity->lvint_next_unique_id);
-	if (unique_id < 0x10)
-		unique_id = 0x10;
-	ump->logvol_integrity->lvint_next_unique_id = udf_rw64(unique_id + 1);
-	mutex_exit(&ump->logvol_mutex);
-
-	return unique_id;
-}
-
-
-static void
-udf_adjust_filecount(struct udf_node *udf_node, int sign)
-{
-	struct udf_mount *ump = udf_node->ump;
-	uint32_t num_dirs, num_files;
-	int udf_file_type;
-
-	/* get file type */
-	if (udf_node->fe) {
-		udf_file_type = udf_node->fe->icbtag.file_type;
-	} else {
-		udf_file_type = udf_node->efe->icbtag.file_type;
-	}
-
-	/* adjust file count */
-	mutex_enter(&ump->allocate_mutex);
-	if (udf_file_type == UDF_ICB_FILETYPE_DIRECTORY) {
-		num_dirs = udf_rw32(ump->logvol_info->num_directories);
-		ump->logvol_info->num_directories =
-			udf_rw32((num_dirs + sign));
-	} else {
-		num_files = udf_rw32(ump->logvol_info->num_files);
-		ump->logvol_info->num_files =
-			udf_rw32((num_files + sign));
-	}
-	mutex_exit(&ump->allocate_mutex);
-}
-
-
-void
-udf_osta_charset(struct charspec *charspec)
-{
-	bzero(charspec, sizeof(struct charspec));
-	charspec->type = 0;
-	strcpy((char *) charspec->inf, "OSTA Compressed Unicode");
-}
-
-
-/* first call udf_set_regid and then the suffix */
-void
-udf_set_regid(struct regid *regid, char const *name)
-{
-	bzero(regid, sizeof(struct regid));
-	regid->flags    = 0;		/* not dirty and not protected */
-	strcpy((char *) regid->id, name);
-}
-
-
-void
-udf_add_domain_regid(struct udf_mount *ump, struct regid *regid)
-{
-	uint16_t *ver;
-
-	ver  = (uint16_t *) regid->id_suffix;
-	*ver = ump->logvol_info->min_udf_readver;
-}
-
-
-void
-udf_add_udf_regid(struct udf_mount *ump, struct regid *regid)
-{
-	uint16_t *ver;
-
-	ver  = (uint16_t *) regid->id_suffix;
-	*ver = ump->logvol_info->min_udf_readver;
-
-	regid->id_suffix[2] = 4;	/* unix */
-	regid->id_suffix[3] = 8;	/* NetBSD */
-}
-
-
-void
-udf_add_impl_regid(struct udf_mount *ump, struct regid *regid)
-{
-	regid->id_suffix[0] = 4;	/* unix */
-	regid->id_suffix[1] = 8;	/* NetBSD */
-}
-
-
-void
-udf_add_app_regid(struct udf_mount *ump, struct regid *regid)
-{
-	regid->id_suffix[0] = APP_VERSION_MAIN;
-	regid->id_suffix[1] = APP_VERSION_SUB;
-}
-
-static int
-udf_create_parentfid(struct udf_mount *ump, struct fileid_desc *fid,
-	struct long_ad *parent, uint64_t unique_id)
-{
-	/* the size of an empty FID is 38 but needs to be a multiple of 4 */
-	int fidsize = 40;
-
-	udf_inittag(ump, &fid->tag, TAGID_FID, udf_rw32(parent->loc.lb_num));
-	fid->file_version_num = udf_rw16(1);	/* UDF 2.3.4.1 */
-	fid->file_char = UDF_FILE_CHAR_DIR | UDF_FILE_CHAR_PAR;
-	fid->icb = *parent;
-	fid->icb.longad_uniqueid = udf_rw32((uint32_t) unique_id);
-	fid->tag.desc_crc_len = fidsize - UDF_DESC_TAG_LENGTH;
-	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fid);
-
-	return fidsize;
 }
 
 /* --------------------------------------------------------------------- */
@@ -3827,9 +3940,11 @@ udf_create_new_fe(struct udf_mount *ump, struct file_entry *fe, int file_type,
 {
 	struct timespec now;
 	struct icb_tag *icb;
+	struct filetimes_extattr_entry *ft_extattr;
 	uint64_t unique_id;
 	uint32_t fidsize, lb_num;
-	int crclen;
+	uint8_t *bpos;
+	int crclen, attrlen;
 
 	lb_num = udf_rw32(node_icb->loc.lb_num);
 	udf_inittag(ump, &fe->tag, TAGID_FENTRY, lb_num);
@@ -3859,22 +3974,39 @@ udf_create_new_fe(struct udf_mount *ump, struct file_entry *fe, int file_type,
 
 	unique_id = udf_advance_uniqueid(ump);
 	fe->unique_id = udf_rw64(unique_id);
+	fe->l_ea = udf_rw32(0);
 
+	/* create extended attribute to record our creation time */
+	attrlen = UDF_FILETIMES_ATTR_SIZE(1);
+	ft_extattr = malloc(attrlen, M_UDFTEMP, M_WAITOK);
+	memset(ft_extattr, 0, attrlen);
+	ft_extattr->hdr.type = udf_rw32(UDF_FILETIMES_ATTR_NO);
+	ft_extattr->hdr.subtype = 1;	/* [4/48.10.5] */
+	ft_extattr->hdr.a_l = udf_rw32(UDF_FILETIMES_ATTR_SIZE(1));
+	ft_extattr->d_l     = udf_rw32(UDF_TIMESTAMP_SIZE); /* one item */
+	ft_extattr->existence = UDF_FILETIMES_FILE_CREATION;
+	udf_timespec_to_timestamp(&now, &ft_extattr->times[0]);
+
+	udf_extattr_insert_internal(ump, (union dscrptr *) fe,
+		(struct extattr_entry *) ft_extattr);
+	free(ft_extattr, M_UDFTEMP);
+
+	/* if its a directory, create '..' */
+	bpos = (uint8_t *) fe->data + udf_rw32(fe->l_ea);
 	fidsize = 0;
 	if (file_type == UDF_ICB_FILETYPE_DIRECTORY) {
 		fidsize = udf_create_parentfid(ump,
-			(struct fileid_desc *) fe->data, parent_icb,
+			(struct fileid_desc *) bpos, parent_icb,
 			parent_unique_id);
 	}
 
 	/* record fidlength information */
 	fe->inf_len = udf_rw64(fidsize);
-	fe->l_ea    = udf_rw32(0);
 	fe->l_ad    = udf_rw32(fidsize);
 	fe->logblks_rec = udf_rw64(0);		/* intern */
 
 	crclen  = sizeof(struct file_entry) - 1 - UDF_DESC_TAG_LENGTH;
-	crclen += fidsize;
+	crclen += udf_rw32(fe->l_ea) + fidsize;
 	fe->tag.desc_crc_len = udf_rw16(crclen);
 
 	(void) udf_validate_tag_and_crc_sums((union dscrptr *) fe);
@@ -3893,6 +4025,7 @@ udf_create_new_efe(struct udf_mount *ump, struct extfile_entry *efe,
 	struct icb_tag *icb;
 	uint64_t unique_id;
 	uint32_t fidsize, lb_num;
+	uint8_t *bpos;
 	int crclen;
 
 	lb_num = udf_rw32(node_icb->loc.lb_num);
@@ -3924,23 +4057,25 @@ udf_create_new_efe(struct udf_mount *ump, struct extfile_entry *efe,
 
 	unique_id = udf_advance_uniqueid(ump);
 	efe->unique_id = udf_rw64(unique_id);
+	efe->l_ea = udf_rw32(0);
 
+	/* if its a directory, create '..' */
+	bpos = (uint8_t *) efe->data + udf_rw32(efe->l_ea);
 	fidsize = 0;
 	if (file_type == UDF_ICB_FILETYPE_DIRECTORY) {
 		fidsize = udf_create_parentfid(ump,
-			(struct fileid_desc *) efe->data, parent_icb,
+			(struct fileid_desc *) bpos, parent_icb,
 			parent_unique_id);
 	}
 
 	/* record fidlength information */
 	efe->obj_size = udf_rw64(fidsize);
 	efe->inf_len  = udf_rw64(fidsize);
-	efe->l_ea     = udf_rw32(0);
 	efe->l_ad     = udf_rw32(fidsize);
 	efe->logblks_rec = udf_rw64(0);		/* intern */
 
 	crclen  = sizeof(struct extfile_entry) - 1 - UDF_DESC_TAG_LENGTH;
-	crclen += fidsize;
+	crclen += udf_rw32(efe->l_ea) + fidsize;
 	efe->tag.desc_crc_len = udf_rw16(crclen);
 
 	(void) udf_validate_tag_and_crc_sums((union dscrptr *) efe);
@@ -4329,7 +4464,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 
 	udf_node->i_flags |= IN_CHANGE | IN_MODIFY; /* | IN_CREATE? */
 	/* VN_KNOTE(udf_node,  ...) */
-	udf_update(udf_node->vnode, NULL, NULL, 0);
+	udf_update(udf_node->vnode, NULL, NULL, NULL, 0);
 
 	free(fid, M_TEMP);
 
@@ -4573,13 +4708,18 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	slot    = 0;
 	for (;;) {
 		udf_get_adslot(udf_node, slot, &icb_loc, &eof);
+		DPRINTF(ADWLK, ("slot %d, eof = %d, flags = %d, len = %d, "
+			"lb_num = %d, part = %d\n", slot, eof,
+			UDF_EXT_FLAGS(udf_rw32(icb_loc.len)),
+			UDF_EXT_LEN(udf_rw32(icb_loc.len)),
+			udf_rw32(icb_loc.loc.lb_num),
+			udf_rw16(icb_loc.loc.part_num)));
 		if (eof)
 			break;
+		slot++;
 
-		if (UDF_EXT_FLAGS(udf_rw32(icb_loc.len)) != UDF_EXT_REDIRECT) {
-			slot++;
+		if (UDF_EXT_FLAGS(udf_rw32(icb_loc.len)) != UDF_EXT_REDIRECT)
 			continue;
-		}
 
 		DPRINTF(NODE, ("\tgot redirect extent\n"));
 		if (udf_node->num_extensions >= UDF_MAX_ALLOC_EXTENTS) {
@@ -4591,13 +4731,15 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		}
 
 		/* length can only be *one* lb : UDF 2.50/2.3.7.1 */
-		if (udf_rw32(icb_loc.len) != lb_size) {
+		if (UDF_EXT_LEN(udf_rw32(icb_loc.len)) != lb_size) {
 			DPRINTF(ALLOC, ("udf_get_node: bad allocation "
 					"extension size in udf_node\n"));
 			error = EINVAL;
 			break;
 		}
 
+		DPRINTF(NODE, ("read allocation extent at lb_num %d\n",
+			UDF_EXT_LEN(udf_rw32(icb_loc.loc.lb_num))));
 		/* load in allocation extent */
 		error = udf_read_logvol_dscr(ump, &icb_loc, &dscr);
 		if (error || (dscr == NULL))
@@ -4734,6 +4876,7 @@ int
 udf_dispose_node(struct udf_node *udf_node)
 {
 	struct vnode *vp;
+	int extnr;
 
 	DPRINTF(NODE, ("udf_dispose_node called on node %p\n", udf_node));
 	if (!udf_node) {
@@ -4771,10 +4914,18 @@ udf_dispose_node(struct udf_node *udf_node)
 	vp->v_data = NULL;
 
 	/* free associated memory and the node itself */
+	for (extnr = 0; extnr < udf_node->num_extensions; extnr++) {
+		udf_free_logvol_dscr(udf_node->ump, &udf_node->ext_loc[extnr],
+			udf_node->ext[extnr]);
+		udf_node->ext[extnr] = (void *) 0xdeadcccc;
+	}
+
 	if (udf_node->fe)
-		udf_free_logvol_dscr(udf_node->ump, &udf_node->loc, udf_node->fe);
+		udf_free_logvol_dscr(udf_node->ump, &udf_node->loc,
+			udf_node->fe);
 	if (udf_node->efe)
-		udf_free_logvol_dscr(udf_node->ump, &udf_node->loc, udf_node->efe);
+		udf_free_logvol_dscr(udf_node->ump, &udf_node->loc,
+			udf_node->efe);
 
 	udf_node->fe  = (void *) 0xdeadaaaa;
 	udf_node->efe = (void *) 0xdeadbbbb;
@@ -5083,12 +5234,18 @@ udf_resize_node(struct udf_node *udf_node, uint64_t new_size, int *extended)
 
 void
 udf_itimes(struct udf_node *udf_node, struct timespec *acc,
-	struct timespec *mod, struct timespec *changed)
+	struct timespec *mod, struct timespec *birth)
 {
 	struct timespec now;
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
-	struct timestamp *atime, *mtime, *attrtime;
+	struct filetimes_extattr_entry *ft_extattr;
+	struct timestamp *atime, *mtime, *attrtime, *ctime;
+	struct timestamp  fe_ctime;
+	struct timespec   cur_birth;
+	uint32_t offset, a_l;
+	uint8_t *filedata;
+	int error;
 
 	/* protect against rogue values */
 	if (!udf_node)
@@ -5105,11 +5262,27 @@ udf_itimes(struct udf_node *udf_node, struct timespec *acc,
 		atime    = &fe->atime;
 		mtime    = &fe->mtime;
 		attrtime = &fe->attrtime;
+		filedata = fe->data;
+
+		/* initial save dummy setting */
+		ctime    = &fe_ctime;
+
+		/* check our extended attribute if present */
+		error = udf_extattr_search_intern(udf_node,
+			UDF_FILETIMES_ATTR_NO, "", &offset, &a_l);
+		if (!error) {
+			ft_extattr = (struct filetimes_extattr_entry *)
+				(filedata + offset);
+			if (ft_extattr->existence & UDF_FILETIMES_FILE_CREATION)
+				ctime = &ft_extattr->times[0];
+		}
+		/* TODO create the extended attribute if not found ? */
 	} else {
 		assert(udf_node->efe);
 		atime    = &efe->atime;
 		mtime    = &efe->mtime;
 		attrtime = &efe->attrtime;
+		ctime    = &efe->ctime;
 	}
 
 	vfs_timestamp(&now);
@@ -5126,14 +5299,25 @@ udf_itimes(struct udf_node *udf_node, struct timespec *acc,
 		if (mod == NULL)
 			mod = &now;
 		udf_timespec_to_timestamp(mod, mtime);
+
+		/* ensure birthtime is older than set modification! */
+		udf_timestamp_to_timespec(udf_node->ump, ctime, &cur_birth);
+		if ((cur_birth.tv_sec > mod->tv_sec) ||
+			  ((cur_birth.tv_sec == mod->tv_sec) &&
+			     (cur_birth.tv_nsec > mod->tv_nsec))) {
+			udf_timespec_to_timestamp(mod, ctime);
+		}
+	}
+
+	/* update birthtime if specified */
+	/* XXX we asume here that given birthtime is older than mod */
+	if (birth && (birth->tv_sec != VNOVAL)) {
+		udf_timespec_to_timestamp(birth, ctime);
 	}
 
 	/* set change time */
-	if (udf_node->i_flags & (IN_CHANGE | IN_MODIFY)) {
-		if (changed == NULL)
-			changed = &now;
-		udf_timespec_to_timestamp(changed, attrtime);
-	}
+	if (udf_node->i_flags & (IN_CHANGE | IN_MODIFY))
+		udf_timespec_to_timestamp(&now, attrtime);
 
 	/* notify updates to the node itself */
 	if (udf_node->i_flags & (IN_ACCESS | IN_MODIFY))
@@ -5149,7 +5333,7 @@ udf_itimes(struct udf_node *udf_node, struct timespec *acc,
 
 int
 udf_update(struct vnode *vp, struct timespec *acc,
-	struct timespec *mod, int updflags)
+	struct timespec *mod, struct timespec *birth, int updflags)
 {
 	struct udf_node  *udf_node = VTOI(vp);
 	struct udf_mount *ump = udf_node->ump;
@@ -5159,14 +5343,15 @@ udf_update(struct vnode *vp, struct timespec *acc,
 
 #ifdef DEBUG
 	char bits[128];
-	DPRINTF(CALL, ("udf_update(node, %p, %p, %d)\n", acc, mod, updflags));
+	DPRINTF(CALL, ("udf_update(node, %p, %p, %p, %d)\n", acc, mod, birth,
+		updflags));
 	bitmask_snprintf(udf_node->i_flags, IN_FLAGBITS, bits, sizeof(bits));
 	DPRINTF(CALL, ("\tnode flags %s\n", bits));
 	DPRINTF(CALL, ("\t\tmnt_async = %d\n", mnt_async));
 #endif
 
 	/* set our times */
-	udf_itimes(udf_node, acc, mod, NULL);
+	udf_itimes(udf_node, acc, mod, birth);
 
 	/* set our implementation id */
 	if (udf_node->fe) {

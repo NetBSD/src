@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.134.6.1 2008/06/02 13:24:21 mjf Exp $	*/
+/*	$NetBSD: if.h,v 1.134.6.2 2008/06/29 09:33:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -292,6 +292,12 @@ struct ifnet {				/* and the entries */
 	struct	mowner *if_mowner;	/* who owns mbufs for this interface */
 
 	void	*if_agrprivate;		/* used only when #if NAGR > 0 */
+
+	/*
+	 * pf specific data, used only when #if NPF > 0.
+	 */
+	void	*if_pf_kif;		/* pf interface abstraction */
+	void	*if_pf_groups;		/* pf interface groups */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -815,6 +821,8 @@ void    ether_input(struct ifnet *, struct mbuf *);
 
 int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
 
+struct ifnet *if_alloc(u_char);
+void if_initname(struct ifnet *, const char *, int);
 struct ifaddr *if_dl_create(const struct ifnet *, const struct sockaddr_dl **);
 void if_activate_sadl(struct ifnet *, struct ifaddr *,
     const struct sockaddr_dl *);
@@ -833,6 +841,7 @@ void	if_slowtimo(void *);
 void	if_up(struct ifnet *);
 int	ifconf(u_long, void *);
 void	ifinit(void);
+void	ifinit1(void);
 int	ifioctl(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);

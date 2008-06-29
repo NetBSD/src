@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.41.16.1 2008/04/03 12:42:38 mjf Exp $ */
+/*	$NetBSD: kdb.c,v 1.41.16.2 2008/06/29 09:33:05 mjf Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.41.16.1 2008/04/03 12:42:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.41.16.2 2008/06/29 09:33:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -310,12 +310,11 @@ kdbintr(void *arg)
  * and requeue outstanding I/O.
  */
 void
-kdbreset(ctlr)
-	int ctlr;
+kdbreset(int ctlr)
 {
 	struct kdb_softc *sc;
 
-	sc = kdb_cd.cd_devs[ctlr];
+	sc = device_lookup_private(&kdb_cd, ctlr);
 	printf(" kdb%d", ctlr);
 
 

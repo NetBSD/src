@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.190.6.4 2008/06/05 19:14:37 mjf Exp $	*/
+/*	$NetBSD: vnode.h,v 1.190.6.5 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -656,9 +656,6 @@ int	speedup_syncer(void);
 int	dorevoke(struct vnode *, kauth_cred_t);
 int	vlockmgr(struct vnlock *, int);
 int	vlockstatus(struct vnlock *);
-
-/* from vfs_syscalls.c - abused by compat code */
-int	getvnode(int, struct file **);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);

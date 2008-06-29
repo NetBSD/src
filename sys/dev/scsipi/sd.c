@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.269.6.4 2008/06/02 13:23:51 mjf Exp $	*/
+/*	$NetBSD: sd.c,v 1.269.6.5 2008/06/29 09:33:10 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.4 2008/06/02 13:23:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.5 2008/06/29 09:33:10 mjf Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -436,9 +436,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	int error;
 
 	unit = SDUNIT(dev);
-	if (unit >= sd_cd.cd_ndevs)
-		return (ENXIO);
-	sd = sd_cd.cd_devs[unit];
+	sd = device_lookup_private(&sd_cd, unit);
 	if (sd == NULL)
 		return (ENXIO);
 
@@ -617,7 +615,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(dev));
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = SDPART(dev);
@@ -673,7 +671,7 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static void
 sdstrategy(struct buf *bp)
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(bp->b_dev));
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct disklabel *lp;
 	daddr_t blkno;
@@ -977,7 +975,7 @@ sddone(struct scsipi_xfer *xs, int error)
 static void
 sdminphys(struct buf *bp)
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(bp->b_dev));
 	long xmax;
 
 	/*
@@ -1024,7 +1022,7 @@ sdwrite(dev_t dev, struct uio *uio, int ioflag)
 static int
 sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
+	struct sd_softc *sd = device_lookup_private(&sd_cd, SDUNIT(dev));
 	struct scsipi_periph *periph = sd->sc_periph;
 	int part = SDPART(dev);
 	int error = 0;
@@ -1473,9 +1471,7 @@ sdsize(dev_t dev)
 	int size;
 
 	unit = SDUNIT(dev);
-	if (unit >= sd_cd.cd_ndevs)
-		return (-1);
-	sd = sd_cd.cd_devs[unit];
+	sd = device_lookup_private(&sd_cd, unit);
 	if (sd == NULL)
 		return (-1);
 
@@ -1534,7 +1530,8 @@ sddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	part = SDPART(dev);
 
 	/* Check for acceptable drive number. */
-	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
+	sd = device_lookup_private(&sd_cd, unit);
+	if (sd == NULL)
 		return (ENXIO);
 
 	if (!device_is_active(&sd->sc_dev))

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.21.14.2 2008/06/02 13:23:14 mjf Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.21.14.3 2008/06/29 09:33:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.21.14.2 2008/06/02 13:23:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.21.14.3 2008/06/29 09:33:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,10 +113,11 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_sc.fc.dev = self;
+	sc->sc_sc.fc.dmat = ca->ca_dmat;
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
-	sc->sc_sc.fc.dmat = ca->ca_dmat;
 
 #if rbus
 #else

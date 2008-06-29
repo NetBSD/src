@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.6 2008/02/06 16:50:38 joerg Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.6.6.1 2008/06/29 09:33:09 mjf Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.17 2006/11/20 21:26:27 brad Exp $	*/
 
 /*-
@@ -191,11 +191,11 @@
 
 #else
 
-#define DBPRINT(level, format, args...)
-#define DBRUN(m, args...)
-#define DBRUNLV(level, args...)
-#define DBRUNCP(cp, args...)
-#define DBRUNIF(cond, args...)
+#define DBPRINT(level, format, ...)
+#define DBRUN(m, ...)
+#define DBRUNLV(level, ...)
+#define DBRUNCP(cp, ...)
+#define DBRUNIF(cond, ...)
 #define DB_RANDOMFALSE(defects)
 #define DB_OR_RANDOMFALSE(percent)
 #define DB_AND_RANDOMFALSE(percent)
@@ -663,7 +663,7 @@ struct flash_spec {
 /****************************************************************************/
 /* Convenience definitions.                                                 */
 /****************************************************************************/
-#define	BNX_PRINTF(sc, fmt, args...)	aprint_error_dev(sc->bnx_dev, fmt, ##args)
+#define	BNX_PRINTF(sc, fmt, ...)	aprint_error_dev(sc->bnx_dev, fmt, __VA_ARGS__)
 
 #define REG_WR(sc, reg, val)		bus_space_write_4(sc->bnx_btag, sc->bnx_bhandle, reg, val)
 #define REG_WR16(sc, reg, val)		bus_space_write_2(sc->bnx_btag, sc->bnx_bhandle, reg, val)

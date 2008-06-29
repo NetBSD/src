@@ -1,4 +1,4 @@
-/*	$NetBSD: cmos.c,v 1.2.8.1 2008/06/02 13:22:17 mjf Exp $	*/
+/*	$NetBSD: cmos.c,v 1.2.8.2 2008/06/29 09:32:58 mjf Exp $	*/
 
 /*
  * Copyright (C) 2003 JONE System Co., Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.2.8.1 2008/06/02 13:22:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.2.8.2 2008/06/29 09:32:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,128 +90,86 @@ __KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.2.8.1 2008/06/02 13:22:17 mjf Exp $");
 
 #define	CMOS_SIZE	NVRAM_BIOSSPEC
 
-struct cmos_softc {			/* driver status information */
-	int	sc_open;
-	uint8_t	sc_buf[CMOS_SIZE];
-} cmos_softc;
-
-#ifdef CMOS_DEBUG
-int cmos_debug = 0;
-#endif
-
 void cmosattach(int);
 dev_type_open(cmos_open);
-dev_type_close(cmos_close);
 dev_type_read(cmos_read);
 dev_type_write(cmos_write);
 
 static void cmos_sum(uint8_t *, int, int, int);
-#ifdef CMOS_DEBUG
-static void cmos_dump(uint8_t *);
-#endif
 
 const struct cdevsw cmos_cdevsw = {
-	.d_open = cmos_open, .d_close = cmos_close, .d_read = cmos_read,
+	.d_open = cmos_open, .d_close = nullclose, .d_read = cmos_read,
 	.d_write = cmos_write, .d_ioctl = noioctl,
 	.d_stop = nostop, .d_tty = notty, .d_poll = nopoll, .d_mmap = nommap,
-	.d_kqfilter = nokqfilter,
+	.d_kqfilter = nokqfilter, .d_flag = D_OTHER | D_MPSAFE
 };
+
+static kmutex_t cmos_lock;
+static uint8_t cmos_buf[CMOS_SIZE];
 
 void
 cmosattach(int n)
 {
-	printf("cmos: attached.\n");
+
+	mutex_init(&cmos_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 int
 cmos_open(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
-	struct cmos_softc *sc = &cmos_softc;
-	struct proc *p = l->l_proc;
-	int error;
 
-	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
-	    &p->p_acflag);
-
-	if (error != 0)
-		return error;
-
-	sc->sc_open = 1;
-#ifdef CMOS_DEBUG
-	printf("cmos: opened\n");
-#endif
-	return 0;
-}
-
-int
-cmos_close(dev_t dev, int flags, int ifmt, struct lwp *l)
-{
-	struct cmos_softc *sc = &cmos_softc;
-
-	sc->sc_open = 0;
-#ifdef CMOS_DEBUG
-	printf("cmos: closed\n");
-#endif
-	return 0;
+	return kauth_authorize_generic(kauth_cred_get(),
+	    KAUTH_GENERIC_ISSUSER, NULL);
 }
 
 static void
-cmos_fetch(struct cmos_softc *sc)
+cmos_fetch(void)
 {
 	int i, s;
 	uint8_t *p;
 
-	p = sc->sc_buf;
-
+	p = cmos_buf;
 	s = splclock();
 	for (i = 0; i < CMOS_SIZE; i++)
-		*p++ = mc146818_read(sc, i);
+		*p++ = mc146818_read(NULL, i);
 	splx(s);
 }
 
 int
 cmos_read(dev_t dev, struct uio *uio, int ioflag)
 {
-	struct cmos_softc *sc = &cmos_softc;
+	int error;
 
-	if (uio->uio_resid > CMOS_SIZE)
+	if (uio->uio_offset + uio->uio_resid > CMOS_SIZE)
 		return EINVAL;
 
-#ifdef CMOS_DEBUG
-	printf("cmos: try to read to %d\n", CMOS_SIZE);
-#endif
-	cmos_fetch(sc);
+	mutex_enter(&cmos_lock);
+	cmos_fetch();
+	error = uiomove(cmos_buf + uio->uio_offset, uio->uio_resid, uio);
+	mutex_exit(&cmos_lock);
 
-	return uiomove(sc->sc_buf, CMOS_SIZE, uio);
+	return error;
 }
 
 int
 cmos_write(dev_t dev, struct uio *uio, int ioflag)
 {
-	struct cmos_softc *sc = &cmos_softc;
 	int error = 0, i, s;
 
-	cmos_fetch(sc);
+	if (uio->uio_offset + uio->uio_resid > CMOS_SIZE)
+		return EINVAL;
 
-	error = uiomove(sc->sc_buf, CMOS_SIZE, uio);
-#ifdef CMOS_DEBUG
-	printf("write %d\n", l);
-	if (cmos_debug)
-		cmos_dump(sc->sc_buf);
-#endif
-	if (error)
-		return error;
-
-	cmos_sum(sc->sc_buf, NVRAM_DISKETTE, NVRAM_SUM, NVRAM_SUM);
-
-#ifdef CMOS_DEBUG
-	if (cmos_debug)
-		cmos_dump(sc->sc_buf);
-#endif
-	s = splclock();
-	for (i = NVRAM_DISKETTE; i < CMOS_SIZE; i++)
-		mc146818_write(sc, i, sc->sc_buf[i]);
-	splx(s);
+	mutex_enter(&cmos_lock);
+	cmos_fetch();
+	error = uiomove(cmos_buf + uio->uio_offset, uio->uio_resid, uio);
+	if (error == 0) {
+		cmos_sum(cmos_buf, NVRAM_DISKETTE, NVRAM_SUM, NVRAM_SUM);
+		s = splclock();
+		for (i = NVRAM_DISKETTE; i < CMOS_SIZE; i++)
+			mc146818_write(NULL, i, cmos_buf[i]);
+		splx(s);
+	}
+	mutex_exit(&cmos_lock);
 
 	return error;
 }
@@ -232,20 +190,3 @@ cmos_sum(uint8_t *p, int from, int to, int offset)
 	p[offset] = sum >> 8;
 	p[offset + 1] = sum & 0xff;
 }
-
-#ifdef CMOS_DEBUG
-static void
-cmos_dump(uint8_t *p)
-{
-	int i;
-
-	for (i = 0; i < CMOS_SIZE; i++) {
-		if (i % 16 == 0)
-			printf("%02x:", i);
-		printf(" %02x", p[i]);
-		if (i % 16 == 15)
-			printf("\n", buf);
-	}
-	printf("\n");
-}
-#endif

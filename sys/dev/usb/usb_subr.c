@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.150.6.2 2008/06/02 13:23:56 mjf Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.150.6.3 2008/06/29 09:33:11 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.150.6.2 2008/06/02 13:23:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.150.6.3 2008/06/29 09:33:11 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.150.6.2 2008/06/02 13:23:56 mjf Exp $
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
+
+#include "locators.h"
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
@@ -802,6 +804,8 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	usbd_status err;
 	device_ptr_t dv;
 	usbd_interface_handle *ifaces;
+	int dlocs[USBDEVIFCF_NLOCS];
+	int ilocs[USBIFIFCF_NLOCS];
 
 	uaa.device = dev;
 	uaa.usegeneric = 0;
@@ -813,9 +817,17 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	uaa.subclass = dd->bDeviceSubClass;
 	uaa.proto = dd->bDeviceProtocol;
 
+	dlocs[USBDEVIFCF_PORT] = uaa.port;
+	dlocs[USBDEVIFCF_VENDOR] = uaa.vendor;
+	dlocs[USBDEVIFCF_PRODUCT] = uaa.product;
+	dlocs[USBDEVIFCF_RELEASE] = uaa.release;
+	/* the rest is historical ballast */
+	dlocs[USBDEVIFCF_CONFIGURATION] = -1;
+	dlocs[USBDEVIFCF_INTERFACE] = -1;
+
 	/* First try with device specific drivers. */
 	DPRINTF(("usbd_probe_and_attach: trying device specific drivers\n"));
-	dv = config_found_sm_loc(parent, "usbdevif", NULL, &uaa, usbd_print,
+	dv = config_found_sm_loc(parent, "usbdevif", dlocs, &uaa, usbd_print,
 		config_stdsubmatch);
 	if (dv) {
 		dev->subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
@@ -833,6 +845,11 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	uiaa.vendor = UGETW(dd->idVendor);
 	uiaa.product = UGETW(dd->idProduct);
 	uiaa.release = UGETW(dd->bcdDevice);
+
+	ilocs[USBIFIFCF_PORT] = uiaa.port;
+	ilocs[USBIFIFCF_VENDOR] = uiaa.vendor;
+	ilocs[USBIFIFCF_PRODUCT] = uiaa.product;
+	ilocs[USBIFIFCF_RELEASE] = uiaa.release;
 
 	DPRINTF(("usbd_probe_and_attach: looping over %d configurations\n",
 		 dd->bNumConfigurations));
@@ -854,6 +871,8 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 		}
 		nifaces = dev->cdesc->bNumInterface;
 		uiaa.configno = dev->cdesc->bConfigurationValue;
+		ilocs[USBIFIFCF_CONFIGURATION] = uiaa.configno;
+
 		ifaces = malloc(nifaces * sizeof(*ifaces), M_USB, M_NOWAIT);
 		if (ifaces == NULL)
 			goto nomem;
@@ -879,7 +898,8 @@ nomem:
 			uiaa.subclass = ifaces[i]->idesc->bInterfaceSubClass;
 			uiaa.proto = ifaces[i]->idesc->bInterfaceProtocol;
 			uiaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
-			dv = config_found_sm_loc(parent, "usbifif", NULL, &uiaa,
+			ilocs[USBIFIFCF_INTERFACE] = uiaa.ifaceno;
+			dv = config_found_sm_loc(parent, "usbifif", ilocs, &uiaa,
 				usbd_ifprint, config_stdsubmatch);
 			if (dv != NULL) {
 				found++;
@@ -905,7 +925,7 @@ nomem:
 
 	/* Finally try the generic driver. */
 	uaa.usegeneric = 1;
-	dv = config_found_sm_loc(parent, "usbdevif", NULL, &uaa, usbd_print,
+	dv = config_found_sm_loc(parent, "usbdevif", dlocs, &uaa, usbd_print,
 		config_stdsubmatch);
 	if (dv != NULL) {
 		dev->subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
@@ -1010,31 +1030,6 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 		return (err);
 	}
 
-	/* Set the address.  Do this early; some devices need that. */
-	/* Try a few times in case the device is slow (i.e. outside specs) */
-	DPRINTFN(5,("usbd_new_device: setting device address=%d\n", addr));
-	for (i = 0; i < 15; i++) {
-		err = usbd_set_address(dev, addr);
-		if (!err)
-			break;
-		usbd_delay_ms(dev, 200);
-		if ((i & 3) == 3) {
-			DPRINTFN(-1,("usbd_new_device: set address %d "
-			    "failed - trying a port reset\n", addr));
-			usbd_reset_port(up->parent, port, &ps);
-		}
-	}
-	if (err) {
-		DPRINTFN(-1,("usb_new_device: set address %d failed\n", addr));
-		err = USBD_SET_ADDR_FAILED;
-		usbd_remove_device(dev, up);
-		return (err);
-	}
-	/* Allow device time to set new address */
-	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
-	dev->address = addr;	/* New device address now */
-	bus->devices[addr] = dev;
-
 	dd = &dev->ddesc;
 	/* Try a few times in case the device is slow (i.e. outside specs.) */
 	for (i = 0; i < 10; i++) {
@@ -1092,6 +1087,31 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 			      "failed\n", addr));
 		usbd_remove_device(dev, up);
 		return (err);
+	}
+
+	/* Set the address */
+	DPRINTFN(5, ("usbd_new_device: setting device address=%d\n", addr));
+	err = usbd_set_address(dev, addr);
+	if (err) {
+		DPRINTFN(-1, ("usbd_new_device: set address %d failed\n", addr));
+		err = USBD_SET_ADDR_FAILED;
+		usbd_remove_device(dev, up);
+		return err;
+	}
+
+	/* Allow device time to set new address */
+	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
+	dev->address = addr;	/* new device address now */
+	bus->devices[addr] = dev;
+
+	/* Re-establish the default pipe with the new address. */
+	usbd_kill_pipe(dev->default_pipe);
+	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
+	    &dev->default_pipe);
+	if (err) {
+		DPRINTFN(-1, ("usbd_new_device: setup default pipe failed\n"));
+		usbd_remove_device(dev, up);
+		return err;
 	}
 
 	/* Assume 100mA bus powered for now. Changed when configured. */

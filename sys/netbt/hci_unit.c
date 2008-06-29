@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.9.6.2 2008/06/02 13:24:23 mjf Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.9.6.3 2008/06/29 09:33:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.9.6.2 2008/06/02 13:24:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.9.6.3 2008/06/29 09:33:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -216,8 +216,14 @@ hci_disable(struct hci_unit *unit)
 	int acl;
 
 	if (unit->hci_bthub) {
-		config_detach(unit->hci_bthub, DETACH_FORCE);
+		device_t hub;
+
+		hub = unit->hci_bthub;
 		unit->hci_bthub = NULL;
+
+		mutex_exit(bt_lock);
+		config_detach(hub, DETACH_FORCE);
+		mutex_enter(bt_lock);
 	}
 
 	if (unit->hci_rxint) {

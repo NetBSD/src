@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.6.6.1 2008/04/03 12:43:10 mjf Exp $	*/
+/*	$NetBSD: auth.c,v 1.6.6.2 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -86,7 +86,7 @@ kauth_authorize_system(kauth_cred_t cred, kauth_action_t op,
 	enum kauth_system_req req, void *arg1, void *arg2, void *arg3)
 {
 
-	if (op != KAUTH_SYSTEM_CHSYSFLAGS)
+	if (op != KAUTH_SYSTEM_CHSYSFLAGS && op != KAUTH_SYSTEM_MKNOD)
 		panic("%s: op %d not implemented", __func__, op);
 
 	/* always allow */

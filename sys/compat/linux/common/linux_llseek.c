@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.31.6.1 2008/06/02 13:23:03 mjf Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.31.6.2 2008/06/29 09:33:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.31.6.1 2008/06/02 13:23:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.31.6.2 2008/06/29 09:33:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.31.6.1 2008/06/02 13:23:03 mjf Ex
 #include <sys/malloc.h>
 #include <sys/conf.h>
 
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

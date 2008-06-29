@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.48.6.1 2008/04/03 12:42:56 mjf Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.48.6.2 2008/06/29 09:33:11 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.48.6.1 2008/04/03 12:42:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.48.6.2 2008/06/29 09:33:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -681,9 +681,8 @@ sme_battery_check(void)
 {
 	struct sysmon_envsys *sme;
 	envsys_data_t *edata;
-	bool battery, batterycap, batterycharge;
-
-	battery = batterycap = batterycharge = false;
+	int batteriesfound = 0;
+	bool present, batterycap, batterycharge;
 
 	/*
 	 * Check for battery devices and its state.
@@ -692,10 +691,21 @@ sme_battery_check(void)
 		if (sme->sme_class != SME_CLASS_BATTERY)
 			continue;
 
+		present = true;
+		TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+			if (edata->units == ENVSYS_INDICATOR &&
+			    !edata->value_cur) {
+				present = false;
+				break;
+			}
+		}
+		if (!present)
+			continue;
 		/*
 		 * We've found a battery device...
 		 */
-		battery = true;
+		batteriesfound++;
+		batterycap = batterycharge = false;
 		TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
 			if (edata->units == ENVSYS_BATTERY_CAPACITY) {
 				batterycap = true;
@@ -707,9 +717,11 @@ sme_battery_check(void)
 					return false;
 			}
 		}
+		if (!batterycap || !batterycharge)
+			return false;
 	}
 
-	if (!battery || !batterycap || !batterycharge)
+	if (!batteriesfound)
 		return false;
 
 	/*

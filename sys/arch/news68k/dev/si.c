@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.20.40.1 2008/06/02 13:22:28 mjf Exp $	*/
+/*	$NetBSD: si.c,v 1.20.40.2 2008/06/29 09:32:59 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.20.40.1 2008/06/02 13:22:28 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.20.40.2 2008/06/29 09:32:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,8 +311,22 @@ si_dma_start(struct ncr5380_softc *ncr_sc)
 static void
 si_dma_poll(struct ncr5380_softc *ncr_sc)
 {
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
+	struct dma_regs *dmac = sc->sc_regs;
+	int i;
 
-	printf("si_dma_poll\n");
+#define POLL_TIMEOUT	100000
+
+	/* check DMAC interrupt status */
+	for (i = 0; i < POLL_TIMEOUT; i++) {
+		if ((dmac->stat & DC_ST_INT) != 0)
+			break;
+		delay(10);
+	}
+
+	if (i == POLL_TIMEOUT)
+		printf("%s: DMA polling timeout\n",
+		    device_xname(ncr_sc->sc_dev));
 }
 
 /*

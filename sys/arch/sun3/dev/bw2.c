@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.32 2007/03/12 12:03:18 tsutsui Exp $	*/
+/*	$NetBSD: bw2.c,v 1.32.38.1 2008/06/29 09:33:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.32 2007/03/12 12:03:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.32.38.1 2008/06/29 09:33:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.32 2007/03/12 12:03:18 tsutsui Exp $");
 #include <sun3/dev/bw2reg.h>
 #include <sun3/dev/p4reg.h>
 
+#include "ioconf.h"
+
 /* per-display variables */
 struct bw2_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	int 	sc_phys;		/* display RAM (phys addr) */
 	/* If using overlay plane of something, it is... */
@@ -82,13 +84,11 @@ struct bw2_softc {
 };
 
 /* autoconfiguration driver */
-static void	bw2attach(struct device *, struct device *, void *);
-static int	bw2match(struct device *, struct cfdata *, void *);
+static int	bw2match(device_t, cfdata_t, void *);
+static void	bw2attach(device_t, device_t, void *);
 
-CFATTACH_DECL(bwtwo, sizeof(struct bw2_softc),
+CFATTACH_DECL_NEW(bwtwo, sizeof(struct bw2_softc),
     bw2match, bw2attach, NULL, NULL);
-
-extern struct cfdriver bwtwo_cd;
 
 dev_type_open(bw2open);
 dev_type_ioctl(bw2ioctl);
@@ -111,7 +111,7 @@ static struct fbdriver bw2fbdriver = {
 	fb_noioctl, fb_noioctl, };
 
 static int 
-bw2match(struct device *parent, struct cfdata *cf, void *args)
+bw2match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
 	int mid, p4id, peekval;
@@ -119,7 +119,7 @@ bw2match(struct device *parent, struct cfdata *cf, void *args)
 
 	/* No default address support. */
 	if (ca->ca_paddr == -1)
-		return (0);
+		return 0;
 
 	/*
 	 * Slight hack here:  The low four bits of the
@@ -127,8 +127,8 @@ bw2match(struct device *parent, struct cfdata *cf, void *args)
 	 * that machine "implementation" only.
 	 */
 	mid = cf->cf_flags & IDM_IMPL_MASK;
-	if (mid && (mid != (cpu_machine_id & IDM_IMPL_MASK)))
-		return (0);
+	if (mid != 0 && (mid != (cpu_machine_id & IDM_IMPL_MASK)))
+		return 0;
 
 	/*
 	 * Make sure something is there, and if so,
@@ -136,11 +136,10 @@ bw2match(struct device *parent, struct cfdata *cf, void *args)
 	 */
 	p4reg = bus_tmapin(ca->ca_bustype, ca->ca_paddr);
 	peekval = peek_long(p4reg);
-	p4id = (peekval == -1) ?
-		P4_NOTFOUND : fb_pfour_id(p4reg);
+	p4id = (peekval == -1) ? P4_NOTFOUND : fb_pfour_id(p4reg);
 	bus_tmapout(p4reg);
 	if (peekval == -1)
-		return (0);
+		return 0;
 
 	/*
 	 * The config flag 0x40 if set means we should match
@@ -151,10 +150,10 @@ bw2match(struct device *parent, struct cfdata *cf, void *args)
 		switch (p4id) {
 		case P4_ID_COLOR8P1:
 		case P4_ID_COLOR24:
-			return (1);
+			return 1;
 		case P4_NOTFOUND:
 		default:
-			return (0);
+			return 0;
 		}
 	}
 
@@ -165,31 +164,33 @@ bw2match(struct device *parent, struct cfdata *cf, void *args)
 	switch (p4id) {
 	case P4_ID_BW:
 	case P4_NOTFOUND:
-		return (1);
+		return 1;
 	default:
 #ifdef	DEBUG
-		printf("bwtwo at 0x%lx match p4id=0x%x fails\n",
-			   ca->ca_paddr, p4id & 0xFF);
+		aprint_debug("bwtwo at 0x%lx match p4id=0x%x fails\n",
+		    ca->ca_paddr, p4id & 0xFF);
 #endif
 		break;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
 static void 
-bw2attach(struct device *parent, struct device *self, void *args)
+bw2attach(device_t parent, device_t self, void *args)
 {
-	struct bw2_softc *sc = (struct bw2_softc *)self;
+	struct bw2_softc *sc = device_private(self);
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
 	void *p4reg;
 	int p4id, tmp;
 	int pixeloffset;		/* offset to framebuffer */
+
+	sc->sc_dev = self;
 
 	fbt = &fb->fb_fbtype;
 	fbt->fb_type = FBTYPE_SUN2BW;
@@ -200,8 +201,8 @@ bw2attach(struct device *parent, struct device *self, void *args)
 	fbt->fb_size = BW2_FBSIZE;	/* default - see below */
 	fb->fb_driver = &bw2fbdriver;
 	fb->fb_private = sc;
-	fb->fb_name  = sc->sc_dev.dv_xname;
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
+	fb->fb_name  = device_xname(self);
+	fb->fb_flags = device_cfdata(self)->cf_flags;
 
 	/* Set up default pixel offset.  May be changed below. */
 	pixeloffset = 0;
@@ -224,9 +225,9 @@ bw2attach(struct device *parent, struct device *self, void *args)
 		break;
 
 	default:
-		printf("%s: bad p4id=0x%x\n", fb->fb_name, p4id);
+		aprint_error("%s: bad p4id=0x%x\n", fb->fb_name, p4id);
 		/* Must be some kinda color... */
-		/* fall through */
+		/* FALLTHROUGH */
 	case P4_ID_COLOR8P1:
 	case P4_ID_COLOR24:
 		sc->sc_ovtype = p4id;
@@ -244,7 +245,7 @@ bw2attach(struct device *parent, struct device *self, void *args)
 	if (fb->fb_pfour)
 		fb_pfour_setsize(fb);
 	/* XXX device_unit() abuse */
-	else if (device_unit(&sc->sc_dev) == 0)
+	else if (device_unit(self) == 0)
 		fb_eeprom_setsize(fb);
 	else {
 		/* Guess based on machine ID. */
@@ -275,7 +276,7 @@ bw2attach(struct device *parent, struct device *self, void *args)
 			break;
 		}
 	}
-	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
+	aprint_normal(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
 
 	/* Make sure video is on. */
 	tmp = 1;
@@ -288,19 +289,21 @@ bw2attach(struct device *parent, struct device *self, void *args)
 int 
 bw2open(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	struct bw2_softc *sc;
 	int unit = minor(dev);
 
-	if (unit >= bwtwo_cd.cd_ndevs || bwtwo_cd.cd_devs[unit] == NULL)
-		return (ENXIO);
-	return (0);
+	sc = device_lookup_private(&bwtwo_cd, unit);
+	if (sc == NULL)
+		return ENXIO;
+	return 0;
 }
 
 int 
 bw2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bw2_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
 
-	return (fbioctlfb(&sc->sc_fb, cmd, data));
+	return fbioctlfb(&sc->sc_fb, cmd, data);
 }
 
 /*
@@ -310,20 +313,20 @@ bw2ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 paddr_t 
 bw2mmap(dev_t dev, off_t off, int prot)
 {
-	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bw2_softc *sc = device_lookup_private(&bwtwo_cd, minor(dev));
 	int size = sc->sc_fb.fb_fbtype.fb_size;
 
 	if (off & PGOFSET)
-		panic("bw2mmap");
+		panic("%s: bad offset", __func__);
 
 	if ((off < 0) || (off >= size))
-		return (-1);
+		return -1;
 
 	/*
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour without it.
 	 */
-	return ((sc->sc_phys + off) | PMAP_NC);
+	return (sc->sc_phys + off) | PMAP_NC;
 }
 
 /* FBIOGVIDEO: */
@@ -334,7 +337,7 @@ bw2gvideo(struct fbdevice *fb, void *data)
 	int *on = data;
 
 	*on = sc->sc_video_on;
-	return (0);
+	return 0;
 }
 
 /* FBIOSVIDEO: */
@@ -345,7 +348,7 @@ bw2svideo(struct fbdevice *fb, void *data)
 	int *on = data;
 
 	if (sc->sc_video_on == *on)
-		return (0);
+		return 0;
 	sc->sc_video_on = *on;
 
 	if (fb->fb_pfour)
@@ -353,6 +356,5 @@ bw2svideo(struct fbdevice *fb, void *data)
 	else
 		enable_video(sc->sc_video_on);
 
-	return(0);
+	return 0;
 }
-

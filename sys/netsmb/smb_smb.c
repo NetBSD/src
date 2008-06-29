@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.28 2007/03/04 06:03:36 christos Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.28.36.1 2008/06/29 09:33:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.28 2007/03/04 06:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.28.36.1 2008/06/29 09:33:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 	}
 	smb_rq_bend(rqp);
 	error = smb_rq_simple(rqp);
-	SMBSDEBUG("%d\n", error);
+	SMBSDEBUG(("%d\n", error));
 	if (error)
 		goto bad;
 	smb_rq_getreply(rqp, &mdp);
@@ -145,13 +145,13 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 		if (error)
 			break;
 		if (dindex > 7) {
-			SMBERROR("Don't know how to talk with server %s (%d)\n", "xxx", dindex);
+			SMBERROR(("Don't know how to talk with server %s (%d)\n", "xxx", dindex));
 			error = EBADRPC;
 			break;
 		}
 		dp = smb_dialects + dindex;
 		sp->sv_proto = dp->d_id;
-		SMBSDEBUG("Dialect %s (%d, %d)\n", dp->d_name, dindex, wc);
+		SMBSDEBUG(("Dialect %s (%d, %d)\n", dp->d_name, dindex, wc));
 		error = EBADRPC;
 		if (dp->d_id >= SMB_DIALECT_NTLM0_12) {
 			u_int8_t tb;
@@ -172,7 +172,7 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 			md_get_uint8(mdp, &sblen);
 			if (sblen && (sp->sv_sm & SMB_SM_ENCRYPT)) {
 				if (sblen != SMB_MAXCHALLENGELEN) {
-					SMBERROR("Unexpected length of security blob (%d)\n", sblen);
+					SMBERROR(("Unexpected length of security blob (%d)\n", sblen));
 					break;
 				}
 				error = md_get_uint16(mdp, &bc);
@@ -191,7 +191,7 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 			    sp->sv_maxtx < 4096 &&
 			    (sp->sv_caps & SMB_CAP_NT_SMBS) == 0) {
 				vcp->obj.co_flags |= SMBV_WIN95;
-				SMBSDEBUG("Win95 detected\n");
+				SMBSDEBUG(("Win95 detected\n"));
 			}
 		} else if (dp->d_id > SMB_DIALECT_CORE) {
 			md_get_uint16le(mdp, &sp->sv_sm);
@@ -244,12 +244,12 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 		SMB_TRAN_GETPARAM(vcp, SMBTP_SNDSZ, &maxqsz);
 		vcp->vc_wxmax = min(smb_vc_maxwrite(vcp), maxqsz - 1024);
 		vcp->vc_txmax = min(sp->sv_maxtx, maxqsz);
-		SMBSDEBUG("TZ = %d\n", sp->sv_tz);
-		SMBSDEBUG("CAPS = %x\n", sp->sv_caps);
-		SMBSDEBUG("MAXMUX = %d\n", sp->sv_maxmux);
-		SMBSDEBUG("MAXVCS = %d\n", sp->sv_maxvcs);
-		SMBSDEBUG("MAXRAW = %d\n", sp->sv_maxraw);
-		SMBSDEBUG("MAXTX = %d\n", sp->sv_maxtx);
+		SMBSDEBUG(("TZ = %d\n", sp->sv_tz));
+		SMBSDEBUG(("CAPS = %x\n", sp->sv_caps));
+		SMBSDEBUG(("MAXMUX = %d\n", sp->sv_maxmux));
+		SMBSDEBUG(("MAXVCS = %d\n", sp->sv_maxvcs));
+		SMBSDEBUG(("MAXRAW = %d\n", sp->sv_maxraw));
+		SMBSDEBUG(("MAXTX = %d\n", sp->sv_maxtx));
 	}
 bad:
 	smb_rq_done(rqp);
@@ -380,7 +380,7 @@ again:
 	if (ntencpass)
 		free(ntencpass, M_SMBTEMP);
 	error = smb_rq_simple(rqp);
-	SMBSDEBUG("%d\n", error);
+	SMBSDEBUG(("%d\n", error));
 	if (error) {
 		if (error == EACCES)
 			error = EAUTH;
@@ -422,7 +422,7 @@ smb_smb_ssnclose(struct smb_vc *vcp, struct smb_cred *scred)
 	smb_rq_bstart(rqp);
 	smb_rq_bend(rqp);
 	error = smb_rq_simple(rqp);
-	SMBSDEBUG("%d\n", error);
+	SMBSDEBUG(("%d\n", error));
 	smb_rq_done(rqp);
 	return error;
 }
@@ -541,7 +541,7 @@ again:
 	smb_put_dstring(mbp, vcp, pp, caseopt);
 	smb_rq_bend(rqp);
 	error = smb_rq_simple(rqp);
-	SMBSDEBUG("%d\n", error);
+	SMBSDEBUG(("%d\n", error));
 	if (error)
 		goto bad;
 	ssp->ss_tid = rqp->sr_rptid;
@@ -576,7 +576,7 @@ smb_smb_treedisconnect(struct smb_share *ssp, struct smb_cred *scred)
 	smb_rq_bstart(rqp);
 	smb_rq_bend(rqp);
 	error = smb_rq_simple(rqp);
-	SMBSDEBUG("%d\n", error);
+	SMBSDEBUG(("%d\n", error));
 	smb_rq_done(rqp);
 	ssp->ss_tid = SMB_TID_UNKNOWN;
 	return error;
@@ -907,7 +907,7 @@ smb_smb_echo(struct smb_vc *vcp, struct smb_cred *scred)
 	mb_put_uint32le(mbp, 0);
 	smb_rq_bend(rqp);
 	error = smb_rq_simple(rqp);
-	SMBSDEBUG("%d\n", error);
+	SMBSDEBUG(("%d\n", error));
 	smb_rq_done(rqp);
 	return error;
 }

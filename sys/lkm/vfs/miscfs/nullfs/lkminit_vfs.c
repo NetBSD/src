@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.10.6.1 2008/06/02 13:24:19 mjf Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.10.6.2 2008/06/29 09:33:15 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.10.6.1 2008/06/02 13:24:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.10.6.2 2008/06/29 09:33:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -84,7 +84,22 @@ load(lkmtp, cmd)
 	int cmd;
 {
 
-	sysctl_vfs_null_setup(&_nullfs_log);
+	sysctl_createv(&_nullfs_log, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "vfs", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_VFS, CTL_EOL);
+	sysctl_createv(&_nullfs_log, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "null",
+	    SYSCTL_DESCR("Loopback file system"),
+	    NULL, 0, NULL, 0,
+	    CTL_VFS, 9, CTL_EOL);
+	/*
+	 * XXX the "9" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "9" is the order as taken from sys/mount.h
+	 */
 	return (0);
 }
 

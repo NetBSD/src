@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.13.6.1 2008/06/02 13:23:16 mjf Exp $ */
+/*	$NetBSD: ct.c,v 1.13.6.2 2008/06/29 09:33:06 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.13.6.1 2008/06/02 13:23:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.13.6.2 2008/06/29 09:33:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,15 +372,12 @@ ctattach(parent, self, aux)
 
 /*ARGSUSED*/
 int
-ctopen(dev, flag, type, l)
-	dev_t dev;
-	int flag, type;
-	struct lwp *l;
+ctopen(dev_t dev, int flag, int type, struct lwp *l)
 {
 	struct ct_softc *sc;
 	u_int8_t opt;
 
-	sc = device_lookup(&ct_cd, CTUNIT(dev));
+	sc = device_lookup_private(&ct_cd, CTUNIT(dev));
 	if (sc == NULL || (sc->sc_flags & CTF_ALIVE) == 0)
 		return (ENXIO);
 
@@ -404,14 +401,11 @@ ctopen(dev, flag, type, l)
 
 /*ARGSUSED*/
 int
-ctclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+ctclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct ct_softc *sc;
 
-	sc = device_lookup(&ct_cd, CTUNIT(dev));
+	sc = device_lookup_private(&ct_cd, CTUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -438,16 +432,13 @@ ctclose(dev, flag, fmt, l)
 }
 
 void
-ctcommand(dev, cmd, cnt)
-	dev_t dev;
-	int cmd;
-	int cnt;
+ctcommand(dev_t dev, int cmd, int cnt)
 {
 	struct ct_softc *sc;
 	struct buf *bp;
 	struct buf *nbp = 0;
 
-	sc = device_lookup(&ct_cd, CTUNIT(dev));
+	sc = device_lookup_private(&ct_cd, CTUNIT(dev));
 	bp = &sc->sc_bufstore;
 
 	DPRINTF(CDB_FOLLOW, ("ctcommand: called\n"));
@@ -497,8 +488,7 @@ ctcommand(dev, cmd, cnt)
 }
 
 void
-ctstrategy(bp)
-	struct buf *bp;
+ctstrategy(struct buf *bp)
 {
 	struct ct_softc *sc;
 	int s;
@@ -507,7 +497,7 @@ ctstrategy(bp)
 	    bp, bp->b_dev, bp->b_blkno, bp->b_bcount,
 	    (bp->b_flags & B_READ) ? 'R' : 'W'));
 
-	sc = device_lookup(&ct_cd, CTUNIT(bp->b_dev));
+	sc = device_lookup_private(&ct_cd, CTUNIT(bp->b_dev));
 
 	s = splbio();
 	BUFQ_PUT(sc->sc_tab, bp);

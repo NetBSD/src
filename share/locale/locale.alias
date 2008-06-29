@@ -1,4 +1,4 @@
-# $NetBSD: locale.alias,v 1.8.10.1 2008/06/02 13:21:24 mjf Exp $
+# $NetBSD: locale.alias,v 1.8.10.2 2008/06/29 08:51:19 mjf Exp $
 
 #
 # Locale aliases
@@ -129,3 +129,6 @@ zh_HK.Big5HKSCS			zh_HK.Big5-HKSCS
 # nb(Bokmal, Norwegian) == no(Norwegian)
 nb_NO.ISO8859-1			no_NO.ISO8859-1
 nb_NO.ISO8859-15		no_NO.ISO8859-15
+
+# XFree86 compatibility.
+ja_JP.ISO-2022-JP		ja_JP.ISO2022-JP

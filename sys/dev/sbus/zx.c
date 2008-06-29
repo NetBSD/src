@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.20.16.1 2008/06/02 13:23:50 mjf Exp $	*/
+/*	$NetBSD: zx.c,v 1.20.16.2 2008/06/29 09:33:10 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.20.16.1 2008/06/02 13:23:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.20.16.2 2008/06/29 09:33:10 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	volatile struct zx_command *zc;
 	int isconsole;
 
-	sc = (struct zx_softc *)self;
+	sc = device_private(self);
 	sa = args;
 	fb = &sc->sc_fb;
 	ri = &fb->fb_rinfo;
@@ -283,7 +283,7 @@ zxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct zx_softc *sc;
 
-	sc = (struct zx_softc *)device_lookup(&zx_cd, minor(dev));
+	sc = device_lookup_private(&zx_cd, minor(dev));
 
 	zx_reset(sc);
 	zx_cursor_blank(sc);
@@ -299,7 +299,7 @@ zxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	uint32_t curbits[2][32];
 	int rv, v, count, i;
 
-	sc = zx_cd.cd_devs[minor(dev)];
+	sc = device_lookup_private(&zx_cd, minor(dev));
 
 	switch (cmd) {
 	case FBIOGTYPE:
@@ -711,7 +711,7 @@ zx_blank(struct device *dv)
 	struct zx_softc *sc;
 	volatile struct zx_cross *zx;
 
-	sc = (struct zx_softc *)dv;
+	sc = device_private(dv);
 
 	if ((sc->sc_flags & ZX_BLANKED) != 0)
 		return;
@@ -728,7 +728,7 @@ zx_unblank(struct device *dv)
 	struct zx_softc *sc;
 	volatile struct zx_cross *zx;
 
-	sc = (struct zx_softc *)dv;
+	sc = device_private(dv);
 
 	if ((sc->sc_flags & ZX_BLANKED) == 0)
 		return;
@@ -745,7 +745,7 @@ zxmmap(dev_t dev, off_t off, int prot)
 	struct zx_softc *sc;
 	const struct zx_mmo *mm, *mmmax;
 
-	sc = device_lookup(&zx_cd, minor(dev));
+	sc = device_lookup_private(&zx_cd, minor(dev));
 	off = trunc_page(off);
 	mm = zx_mmo;
 	mmmax = mm + sizeof(zx_mmo) / sizeof(zx_mmo[0]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.94.6.1 2008/06/02 13:24:36 mjf Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.94.6.2 2008/06/29 09:33:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -267,10 +267,6 @@ int lfs_strategy (void *);
 int lfs_write	 (void *);
 int lfs_getpages (void *);
 int lfs_putpages (void *);
-
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_lfs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 
 extern int lfs_mount_type;
 extern int (**lfs_vnodeop_p)(void *);

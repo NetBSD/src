@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.40.40.3 2008/06/05 19:14:33 mjf Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.40.40.4 2008/06/29 09:32:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.40.40.3 2008/06/05 19:14:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.40.40.4 2008/06/29 09:32:56 mjf Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1653,7 +1653,7 @@ cpu_gethpa(int n)
 {
 	struct mainbus_softc *sc;
 
-	sc = mainbus_cd.cd_devs[0];
+	sc = device_lookup_private(&mainbus_cd, 0);
 
 	return sc->sc_hpa;
 }

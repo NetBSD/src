@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.132.6.2 2008/06/02 13:24:09 mjf Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.132.6.3 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.132.6.2 2008/06/02 13:24:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.132.6.3 2008/06/29 09:33:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -877,15 +877,16 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 	mutex_enter(ptmp->p_lock);
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_STOPFLAG,
 	    ptmp, KAUTH_ARG(f), NULL, NULL);
-	if (error)
-		return (error);
-	if (i)
-		ptmp->p_sflag |= f;
-	else
-		ptmp->p_sflag &= ~f;
+	if (!error) {
+		if (i) {
+			ptmp->p_sflag |= f;
+		} else {
+			ptmp->p_sflag &= ~f;
+		}
+	}
 	mutex_exit(ptmp->p_lock);
 
-	return (0);
+	return error;
 }
 
 /*

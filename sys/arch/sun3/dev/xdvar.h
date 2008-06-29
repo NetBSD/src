@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.10 2005/12/11 12:19:21 christos Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.10.74.1 2008/06/29 09:33:01 mjf Exp $	*/
 
 /*
  *
@@ -47,33 +47,33 @@
  */
 
 struct xd_iorq {
-  struct xd_iopb *iopb;             /* address of matching iopb */
-  struct xdc_softc *xdc;            /* who we are working with */
-  struct xd_softc *xd;              /* which disk */
-  int ttl;                          /* time to live */
-  int mode;                         /* current mode (state+other data) */
-  int tries;                        /* number of times we have tried it */
-  int errno;                        /* error number if we fail */
-  int lasterror;		    /* last error we got */
-  int blockno;                      /* starting block no for this xfer */
-  int sectcnt;                      /* number of sectors in xfer */
-  char *dbuf;                       /* KVA of data buffer (advances) */
-  char *dbufbase;                   /* base of dbuf */
-  struct buf *buf;                  /* for NORM */
+	struct xd_iopb *iopb;	/* address of matching iopb */
+	struct xdc_softc *xdc;	/* who we are working with */
+	struct xd_softc *xd;	/* which disk */
+	int ttl;		/* time to live */
+	int mode;		/* current mode (state+other data) */
+	int tries;		/* number of times we have tried it */
+	int errno;		/* error number if we fail */
+	int lasterror;		/* last error we got */
+	int blockno;		/* starting block no for this xfer */
+	int sectcnt;		/* number of sectors in xfer */
+	char *dbuf;		/* KVA of data buffer (advances) */
+	char *dbufbase;		/* base of dbuf */
+	struct buf *buf;	/* for NORM */
 };
 
 /*
  * state
  */
 
-#define XD_SUB_MASK 0xf0            /* mask bits for state */
-#define XD_SUB_FREE 0x00            /* free */
-#define XD_SUB_NORM 0x10            /* normal I/O request */
-#define XD_SUB_WAIT 0x20            /* normal I/O request in the
-                                             context of a process */
-#define XD_SUB_POLL 0x30            /* polled mode */
-#define XD_SUB_DONE 0x40            /* not active, but can't be free'd yet */
-#define XD_SUB_NOQ  0x50            /* don't queue, just submit (internal) */
+#define XD_SUB_MASK 0xf0	/* mask bits for state */
+#define XD_SUB_FREE 0x00	/* free */
+#define XD_SUB_NORM 0x10	/* normal I/O request */
+#define XD_SUB_WAIT 0x20	/* normal I/O request in the
+				   context of a process */
+#define XD_SUB_POLL 0x30	/* polled mode */
+#define XD_SUB_DONE 0x40	/* not active, but can't be free'd yet */
+#define XD_SUB_NOQ  0x50	/* don't queue, just submit (internal) */
 
 #define XD_STATE(X) ((X) & XD_SUB_MASK) /* extract state from mode */
 #define XD_NEWSTATE(OLD, NEW) (((OLD) & ~XD_SUB_MASK) |(NEW)) /* new state */
@@ -83,53 +83,53 @@ struct xd_iorq {
  * other mode data
  */
 
-#define XD_MODE_VERBO 0x08          /* print error messages */
-#define XD_MODE_B144  0x04          /* handling a bad144 sector */
+#define XD_MODE_VERBO 0x08	/* print error messages */
+#define XD_MODE_B144  0x04	/* handling a bad144 sector */
 
 
 /*
  * software timers and flags
  */
 
-#define XDC_SUBWAITLIM 4   /* max number of "done" IOPBs there can be
-				where we still allow a SUB_WAIT command */
-#define XDC_TICKCNT (5*hz) /* call xdc_tick on this interval (5 sec) */
-#define XDC_MAXTTL     2   /* max number of xd ticks to live */
-#define XDC_NOUNIT (-1)    /* for xdcmd: no unit number */
+#define XDC_SUBWAITLIM	4	/* max number of "done" IOPBs there can be
+				   where we still allow a SUB_WAIT command */
+#define XDC_TICKCNT	(5*hz)	/* call xdc_tick on this interval (5 sec) */
+#define XDC_MAXTTL	2	/* max number of xd ticks to live */
+#define XDC_NOUNIT	(-1)	/* for xdcmd: no unit number */
 
 /*
  * a "xd_softc" structure contains per-disk state info.
  */
 
 struct xd_softc {
-  struct device sc_dev;            /* device struct, reqd by autoconf */
-  struct disk sc_dk;               /* generic disk info */
-  struct xdc_softc *parent;        /* parent */
-  u_short flags;                   /* flags */
-  u_short state;                   /* device state */
-  int xd_drive;                    /* unit number */
-  /* geometry */
-  u_short ncyl, acyl, pcyl;        /* number of cyl's */
-  u_short sectpercyl;              /* nhead*nsect */
-  u_char nhead;                    /* number of heads */
-  u_char nsect;                    /* number of sectors per track */
-  u_char hw_spt;                   /* as above, but includes spare sectors */
-  struct dkbad dkb;                /* bad144 sectors */
+	device_t sc_dev;		/* device struct, reqd by autoconf */
+	struct disk sc_dk;		/* generic disk info */
+	struct xdc_softc *parent;	/* parent */
+	u_short flags;			/* flags */
+	u_short state;			/* device state */
+	int xd_drive;			/* unit number */
+	/* geometry */
+	u_short ncyl, acyl, pcyl;	/* number of cyl's */
+	u_short sectpercyl;		/* nhead*nsect */
+	u_char nhead;			/* number of heads */
+	u_char nsect;			/* number of sectors per track */
+	u_char hw_spt;		      /* as above, but includes spare sectors */
+	struct dkbad dkb;               /* bad144 sectors */
 };
 
 /*
  * flags
  */
 
-#define XD_WLABEL 0x0001           /* write label */
+#define XD_WLABEL 0x0001	/* write label */
 /*
  * state
  */
 
-#define XD_DRIVE_UNKNOWN 0         /* never talked to it */
-#define XD_DRIVE_ATTACHING 1       /* attach in progress */
-#define XD_DRIVE_NOLABEL 2         /* drive on-line, no label */
-#define XD_DRIVE_ONLINE  3         /* drive is on-line */
+#define XD_DRIVE_UNKNOWN	0	/* never talked to it */
+#define XD_DRIVE_ATTACHING	1	/* attach in progress */
+#define XD_DRIVE_NOLABEL	2	/* drive on-line, no label */
+#define XD_DRIVE_ONLINE		3	/* drive is on-line */
 
 /*
  * a "xdc_softc" structure contains per-disk-controller state info,
@@ -137,36 +137,36 @@ struct xd_softc {
  */
 
 struct xdc_softc {
-  struct device sc_dev;            /* device struct, reqd by autoconf */
-  struct evcnt sc_intrcnt;         /* event counter (for vmstat -i) */
+	device_t sc_dev;		/* device struct, reqd by autoconf */
+	struct evcnt sc_intrcnt;	/* event counter (for vmstat -i) */
 
-  struct callout sc_tick_ch;
+	struct callout sc_tick_ch;
 
-  struct xdc *xdc;                 /* vaddr of vme registers */
+	struct xdc *xdc;		/* vaddr of vme registers */
 
-  int bustype;                     /* from attach args */
-  int ipl;                         /* interrupt level */
-  int vector;                      /* interrupt vector */
+	int bustype;			/* from attach args */
+	int ipl;			/* interrupt level */
+	int vector;			/* interrupt vector */
 
-  struct xd_softc *sc_drives[XDC_MAXDEV];   /* drives on this controller */
+	struct xd_softc *sc_drives[XDC_MAXDEV]; /* drives on this controller */
 
-  struct xd_iorq *reqs;            /* i/o requests */
-  struct xd_iopb *iopbase;         /* iopb base addr (maps iopb->iorq) */
-  struct xd_iopb *dvmaiopb;        /* iopb base in DVMA space, not kvm */
-  struct bufq_state *sc_wq;	   /* queue'd IOPBs for this controller */
-  char freereq[XDC_MAXIOPB];       /* free list (stack) */
-  char waitq[XDC_MAXIOPB];         /* wait queue */
-  u_char nfree;                    /* number of iopbs free */
-  u_char nrun;                     /* number running */
-  u_char nwait;                    /* number of waiting iopbs */
-  u_char ndone;                    /* number of done IORQs */
-  u_char waithead;                 /* head of queue */
-  u_char waitend;                  /* end of queue */
+	struct xd_iorq *reqs;		/* i/o requests */
+	struct xd_iopb *iopbase;	/* iopb base addr (maps iopb->iorq) */
+	struct xd_iopb *dvmaiopb;	/* iopb base in DVMA space, not kvm */
+	struct bufq_state *sc_wq;	/* queue'd IOPBs for this controller */
+	char freereq[XDC_MAXIOPB];	/* free list (stack) */
+	char waitq[XDC_MAXIOPB];	/* wait queue */
+	u_char nfree;			/* number of iopbs free */
+	u_char nrun;			/* number running */
+	u_char nwait;			/* number of waiting iopbs */
+	u_char ndone;			/* number of done IORQs */
+	u_char waithead;		/* head of queue */
+	u_char waitend;			/* end of queue */
 };
 
 /*
  * reset blast modes
  */
 
-#define XD_RSET_NONE (-1)          /* restart all requests */
-#define XD_RSET_ALL  (-2)          /* don't restart anything */
+#define XD_RSET_NONE	(-1)	/* restart all requests */
+#define XD_RSET_ALL	(-2)	/* don't restart anything */

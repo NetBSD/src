@@ -1,20 +1,26 @@
-#	$NetBSD: files.pf,v 1.3 2005/12/11 12:24:51 christos Exp $
+#	$NetBSD: files.pf,v 1.3.70.1 2008/06/29 09:33:18 mjf Exp $
 
 defpseudo pf:		ifnet
 defpseudo pflog:	ifnet
 #defpseudo pfsync:	ifnet
 
-file	dist/pf/net/pf.c		pf		needs-flag
-file	dist/pf/net/pf_norm.c		pf
-file	dist/pf/net/pf_if.c		pf
-file	dist/pf/net/pf_ioctl.c		pf
-file	dist/pf/net/pf_table.c		pf
-file	dist/pf/net/pf_osfp.c		pf
 file	dist/pf/net/if_pflog.c		pflog		needs-flag
 #file	dist/pf/net/if_pfsync.c		pfsync		needs-flag
+
+file	dist/pf/net/pf.c		pf		needs-flag
+file	dist/pf/net/pf_if.c		pf
+file	dist/pf/net/pf_ioctl.c		pf
+file	dist/pf/net/pf_norm.c		pf
+file	dist/pf/net/pf_osfp.c		pf
+file	dist/pf/net/pf_ruleset.c	pf
+file	dist/pf/net/pf_table.c		pf
+
+file	dist/pf/net/if_compat.c		pf
+file	dist/pf/net/pf_mtag.c		pf
+file	dist/pf/netinet/tcp_rndiss.c	pf
 
 makeoptions	pf	CPPFLAGS+="-I$S/dist/pf"
 
 makeoptions	pf	"CWARNFLAGS.pf.c"+="-Wno-shadow"
-makeoptions	pf	"CWARNFLAGS.pf_norm.c"+="-Wno-shadow"
 makeoptions	pf	"CWARNFLAGS.pf_ioctl.c"+="-Wno-shadow"
+makeoptions	pf	"CWARNFLAGS.pf_norm.c"+="-Wno-shadow"

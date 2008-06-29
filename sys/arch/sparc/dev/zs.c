@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.108.14.2 2008/06/02 13:22:41 mjf Exp $	*/
+/*	$NetBSD: zs.c,v 1.108.14.3 2008/06/29 09:33:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.108.14.2 2008/06/02 13:22:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.108.14.3 2008/06/29 09:33:00 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -617,7 +617,7 @@ zshard(void *arg)
 	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
 		struct zs_chanstate *cs;
 
-		zsc = device_private(zs_cd.cd_devs[unit]);
+		zsc = device_lookup_private(&zs_cd, unit);
 		if (zsc == NULL)
 			continue;
 		rr3 = zsc_intr_hard(zsc);
@@ -665,7 +665,7 @@ zssoft(void *arg)
 	/* Make sure we call the tty layer at spltty. */
 	s = spltty();
 	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
-		zsc = device_private(zs_cd.cd_devs[unit]);
+		zsc = device_lookup_private(&zs_cd, unit);
 		if (zsc == NULL)
 			continue;
 		(void)zsc_intr_soft(zsc);

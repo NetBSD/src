@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.124.6.3 2008/06/05 19:14:36 mjf Exp $ */
+/*	$NetBSD: if_gre.c,v 1.124.6.4 2008/06/29 09:33:18 mjf Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.124.6.3 2008/06/05 19:14:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.124.6.4 2008/06/29 09:33:18 mjf Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -323,8 +323,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	cv_init(&sc->sc_condvar, "gre wait");
 	cv_init(&sc->sc_fp_condvar, "gre fp");
 
-	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
-	    ifc->ifc_name, unit);
+	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_type = IFT_TUNNEL;
 	sc->sc_if.if_addrlen = 0;
@@ -1140,8 +1139,12 @@ gre_ssock(struct ifnet *ifp, struct gre_soparm *sp, int fd)
 	struct socket *so;
 	struct sockaddr_storage dst, src;
 
-	if ((error = getsock(fd, &fp)) != 0)
-		return error;
+	if ((fp = fd_getfile(fd)) == NULL)
+		return EBADF;
+	if (fp->f_type != DTYPE_SOCKET) {
+		fd_putfile(fd);
+		return ENOTSOCK;
+	}
 
 	GRE_DPRINTF(sc, "\n");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.48.6.2 2008/06/02 13:24:33 mjf Exp $	*/
+/*	$NetBSD: sched.h,v 1.48.6.3 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -89,38 +89,54 @@ struct sched_param {
 #define	SCHED_FIFO	1
 #define	SCHED_RR	2
 
+__BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
+/*
+ * Interface of CPU-sets.
+ */
+typedef struct _cpuset cpuset_t;
+typedef struct _kcpuset kcpuset_t;	/* XXX: lwp.h included from userland */
 
-/* XXX: Size of the CPU set bitmap */
-#define	CPUSET_SHIFT	5
-#define	CPUSET_MASK	31
-#if MAXCPUS > 32
-#define	CPUSET_SIZE	(MAXCPUS >> CPUSET_SHIFT)
+#ifdef _KERNEL
+
+
+kcpuset_t *kcpuset_create(void);
+void	kcpuset_destroy(kcpuset_t *);
+void	kcpuset_copy(kcpuset_t *, const kcpuset_t *);
+void	kcpuset_use(kcpuset_t *);
+void	kcpuset_unuse(kcpuset_t *, kcpuset_t **);
+int	kcpuset_copyin(const cpuset_t *, kcpuset_t *, size_t);
+int	kcpuset_copyout(const kcpuset_t *, cpuset_t *, size_t);
+void	kcpuset_zero(kcpuset_t *);
+int	kcpuset_isset(cpuid_t, const kcpuset_t *);
+
 #else
-#define	CPUSET_SIZE	1
+
+#define	cpuset_create()		_cpuset_create()
+#define	cpuset_destroy(c)	_cpuset_destroy(c)
+#define	cpuset_size(c)		_cpuset_size(c)
+#define	cpuset_zero(c)		_cpuset_zero(c)
+#define	cpuset_isset(i, c)	_cpuset_isset(i, c)
+#define	cpuset_set(i, c)	_cpuset_set(i, c)
+#define	cpuset_clr(i, c)	_cpuset_clr(i, c)
+
+cpuset_t *_cpuset_create(void);
+void	_cpuset_destroy(cpuset_t *);
+void	_cpuset_zero(cpuset_t *);
+int	_cpuset_set(cpuid_t, cpuset_t *);
+int	_cpuset_clr(cpuid_t, cpuset_t *);
+int	_cpuset_isset(cpuid_t, const cpuset_t *);
+size_t	_cpuset_size(const cpuset_t *);
 #endif
 
-/* Bitmap of the CPUs */
-typedef struct {
-	uint32_t	bits[CPUSET_SIZE];
-} cpuset_t;
-
-#define	CPU_ZERO(c)	\
-	(memset(c, 0, sizeof(cpuset_t)))
-
-#define	CPU_ISSET(i, c)	\
-	((1 << (i & CPUSET_MASK)) & (c)->bits[i >> CPUSET_SHIFT])
-
-#define	CPU_SET(i, c)	\
-	((c)->bits[i >> CPUSET_SHIFT] |= 1 << (i & CPUSET_MASK))
-
-#define	CPU_CLR(i, c)	\
-	((c)->bits[i >> CPUSET_SHIFT] &= ~(1 << (i & CPUSET_MASK)))
-
-int	_sched_getaffinity(pid_t, lwpid_t, size_t, void *);
-int	_sched_setaffinity(pid_t, lwpid_t, size_t, void *);
+/*
+ * Internal affinity and scheduling calls.
+ */
+int	_sched_getaffinity(pid_t, lwpid_t, size_t, cpuset_t *);
+int	_sched_setaffinity(pid_t, lwpid_t, size_t, const cpuset_t *);
 int	_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);
 int	_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
+__END_DECLS
 
 /*
  * CPU states.
@@ -154,7 +170,7 @@ struct schedstate_percpu {
 	struct lwp	*spc_migrating;	/* (: migrating LWP */
 	pri_t		spc_curpriority;/* m: usrpri of curlwp */
 	pri_t		spc_maxpriority;/* m: highest priority queued */
-	psetid_t	spc_psid;	/* (: processor-set ID */
+	psetid_t	spc_psid;	/* c: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */
 
 	/* For the most part, this set of data is CPU-private. */

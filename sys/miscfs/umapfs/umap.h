@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.15 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: umap.h,v 1.15.58.1 2008/06/29 09:33:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,7 +108,4 @@ int     umap_bypass(void *);
 
 #define NUMAPNODECACHE	16
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_umap_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
