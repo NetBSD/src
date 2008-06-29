@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.29 2008/06/20 00:14:28 bjs Exp $ */
+/* $NetBSD: drmP.h,v 1.30 2008/06/29 12:49:08 jmcneill Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -59,7 +59,6 @@ typedef struct drm_file drm_file_t;
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
-#include <sys/extent.h>
 #include <sys/kernel.h>
 #ifdef __FreeBSD__
 #include <sys/module.h>
@@ -137,7 +136,6 @@ typedef struct drm_file drm_file_t;
 #include "drm.h"
 #include "drm_linux_list.h"
 #include "drm_atomic.h"
-#include "drm_netbsd.h"
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #if defined(_KERNEL_OPT)
@@ -240,17 +238,13 @@ MALLOC_DECLARE(M_DRM);
 #define DRM_STRUCTPROC		struct proc
 #define DRM_STRUCTCDEVPROC	struct lwp
 #define DRM_SPINTYPE		kmutex_t
-#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_NONE)
+#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_VM)
 #define DRM_SPINUNINIT(l)	mutex_destroy(l)
 #define DRM_SPINLOCK(l)		mutex_enter(l)
 #define DRM_SPINUNLOCK(u)	mutex_exit(u)
-#ifdef LOCKDEBUG
-#define DRM_SPINLOCK_ASSERT(l)	KASSERT(mutex_owned(l))
-#else
-#define DRM_SPINLOCK_ASSERT(l)	do {} while (0)
-#endif
-#define DRM_LOCK()		mutex_enter(&dev->dev_lock)
-#define DRM_UNLOCK() 		mutex_exit(&dev->dev_lock)
+#define DRM_SPINLOCK_ASSERT(l)	mutex_owned(l)
+#define DRM_LOCK()		DRM_SPINLOCK(&dev->dev_lock)
+#define DRM_UNLOCK() 		DRM_SPINUNLOCK(&dev->dev_lock)
 #define DRM_CURRENTPID		curproc->p_pid
 #define DRM_SYSCTL_HANDLER_ARGS	(SYSCTLFN_ARGS)
 #else
@@ -521,11 +515,11 @@ for ( ret = 0 ; !ret && !(condition) ; ) {			\
 #define DRM_WAIT_ON( ret, queue, timeout, condition )		\
 for ( ret = 0 ; !ret && !(condition) ; ) {			\
 	DRM_UNLOCK();						\
-	mutex_spin_enter(&dev->irq_lock);			\
+	mutex_enter(&dev->irq_lock);				\
 	if (!(condition))					\
 	   ret = mtsleep(&(queue), PZERO | PCATCH, 		\
 			 "drmwtq", (timeout), &dev->irq_lock);	\
-	mutex_spin_exit(&dev->irq_lock);			\
+	mutex_exit(&dev->irq_lock);				\
 	DRM_LOCK();						\
 }
 #else
@@ -620,10 +614,13 @@ typedef struct drm_freelist {
 typedef struct drm_dma_handle {
 	void *vaddr;
 	bus_addr_t busaddr;
-
+	bus_dma_tag_t dmat;
+	bus_dmamap_t map;
+	bus_dma_segment_t segs[1];
 	size_t size;
-	struct drm_dmamem	*mem;
+	void *addr;
 } drm_dma_handle_t;
+#define DRM_PCI_DMAADDR(p)   ((p)->map->dm_segs[0].ds_addr)
 
 typedef struct drm_buf_entry {
 	int		  buf_size;
@@ -705,11 +702,7 @@ typedef struct drm_sg_mem {
 	void            *virtual;
 	int             pages;
 	dma_addr_t	*busaddr;
-/*
- * Handle to PCI memory for GART table
- */
-	drm_dma_handle_t 	*dmah;
-	struct drm_dmamem 	*mem;
+	drm_dma_handle_t *dmah;	/* Handle to PCI memory for ATI PCIGART table */
 } drm_sg_mem_t;
 
 typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
@@ -733,8 +726,6 @@ typedef struct drm_local_map {
 #ifdef __NetBSD__
 	int		*cnt;
 	bus_size_t	mapsize;
-	u_long		cookie;   /* mmap cookie */
-	struct drm_dmamem *mem;
 #endif
 	TAILQ_ENTRY(drm_local_map) link;
 } drm_local_map_t;
@@ -943,10 +934,6 @@ struct drm_device {
 	void		  *dev_private;
 	unsigned int	  agp_buffer_token;
 	drm_local_map_t   *agp_buffer_map;
-
-#if defined(__NetBSD__)
-	struct extent	  *ex;	/* Extent map for mmap cookies */
-#endif
 };
 
 extern int	drm_debug_flag;
@@ -992,14 +979,8 @@ extern drm_file_t	*drm_find_file_by_proc(drm_device_t *dev,
 #endif /* __NetBSD__ || __OpenBSD__ */
 
 /* Memory management support (drm_memory.c) */
-
-/*
- * XXX The drm_mem_init/uninit functions originally took void arguments.
- *     However, these are sensible places to create/destroy the mmap cookie
- *     extent map, and so they now take a pointer to the "drm device".
- */
-void	drm_mem_init(struct drm_device *);
-void	drm_mem_uninit(struct drm_device *);
+void	drm_mem_init(void);
+void	drm_mem_uninit(void);
 void	*drm_alloc(size_t size, int area);
 void	*drm_calloc(size_t nmemb, size_t size, int area);
 void	*drm_realloc(void *oldpt, size_t oldsize, size_t size,
@@ -1173,12 +1154,9 @@ static __inline__ struct drm_local_map *drm_core_findmap(struct drm_device *dev,
 {
 	drm_local_map_t *map;
 
-	/* NOTE: this code must be remain in harmony with related code
-	 *  in drm_mmap(), drm_addmap_ioctl(), and/or drm_rmmap().
-	 */ 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (map->cookie == offset)
+		if (map->offset == offset)
 			return map;
 	}
 	return NULL;
