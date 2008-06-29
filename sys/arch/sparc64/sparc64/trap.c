@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.149 2008/06/29 07:41:53 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.150 2008/06/29 07:49:10 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2008/06/29 07:41:53 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.150 2008/06/29 07:49:10 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2008/06/29 07:41:53 nakayama Exp $");
 })
 #endif
 
+#ifdef TRAPSTATS
 /* trapstats */
 int protfix = 0;
 int udmiss = 0;	/* Number of normal/nucleus data/text miss/protection faults */
@@ -133,6 +134,7 @@ int rftucnt = 0;
 int rftuld = 0;
 int rftudone = 0;
 int rftkcnt[5] = { 0, 0, 0, 0, 0 };
+#endif
 
 #ifdef DEBUG
 #define RW_64		0x1
