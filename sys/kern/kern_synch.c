@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.241.2.3 2008/06/23 04:31:51 wrstuden Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.241.2.4 2008/06/29 03:30:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241.2.3 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241.2.4 2008/06/29 03:30:17 wrstuden Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -955,6 +955,9 @@ setrunnable(struct lwp *l)
 		panic("setrunnable: lwp %p state was %d", l, l->l_stat);
 	}
 
+	if (l->l_proc->p_sa)
+		sa_awaken(l);
+
 	/*
 	 * If the LWP was sleeping interruptably, then it's OK to start it
 	 * again.  If not, mark it as still sleeping.
@@ -965,9 +968,6 @@ setrunnable(struct lwp *l)
 		lwp_unsleep(l, true);
 		return;
 	}
-
-	if (l->l_proc->p_sa)
-		sa_awaken(l);
 
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
