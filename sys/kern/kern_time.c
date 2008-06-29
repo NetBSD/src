@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.146.2.4 2008/06/23 04:31:51 wrstuden Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.146.2.5 2008/06/29 03:28:40 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.4 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.5 2008/06/29 03:28:40 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -927,7 +927,6 @@ timerupcall(struct lwp *l)
 	if (l->l_savp->savp_lwp != l)
 		return ;
 
-	mutex_enter(&p->p_sa->sa_mutex);
 	mutex_enter(p->p_lock);
 
 	fired = pt->pts_fired;
@@ -959,7 +958,6 @@ timerupcall(struct lwp *l)
 		l->l_proc->p_timerpend = 0;
 
 	mutex_exit(p->p_lock);
-	mutex_exit(&p->p_sa->sa_mutex);
 }
 
 /*
@@ -1402,8 +1400,7 @@ timer_sa_intr(struct ptimer *pt, proc_t *p)
 			lwp_lock(vp->savp_lwp);
 			if (vp->savp_lwp->l_flag & LW_SA_IDLE) {
 				vp->savp_lwp->l_flag &= ~LW_SA_IDLE;
-				lwp_unlock(vp->savp_lwp);
-				wakeup(vp->savp_lwp);
+				lwp_unsleep(vp->savp_lwp, true);
 				break;
 			}
 			lwp_unlock(vp->savp_lwp);
