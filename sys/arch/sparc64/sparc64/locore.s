@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.280 2008/06/14 19:43:55 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.281 2008/06/29 07:31:55 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3641,6 +3641,7 @@ interrupt_vector:
 
 	btst	IRSR_BUSY, %g1
 	bz,pn	%icc, 3f		! spurious interrupt
+#ifdef MULTIPROCESSOR
 	 sethi	%hi(KERNBASE), %g1
 
 	cmp	%g7, %g1
@@ -3657,6 +3658,9 @@ interrupt_vector:
 
 	jmpl	%g7, %g0
 	 nop
+#else
+	 cmp	%g7, MAXINTNUM
+#endif
 
 Lsoftint_regular:
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
