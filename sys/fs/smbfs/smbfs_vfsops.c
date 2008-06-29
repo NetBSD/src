@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.83 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.84 2008/06/29 18:45:20 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.83 2008/06/28 01:34:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.84 2008/06/29 18:45:20 rumble Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -369,8 +369,6 @@ smbfs_reinit(void)
 void
 smbfs_done(void)
 {
-
-	pool_destroy(&smbfs_node_pool);
 
 	pool_destroy(&smbfs_node_pool);
 	malloc_type_detach(M_SMBNODENAME);
