@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.148 2008/06/26 15:17:06 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.149 2008/06/29 07:41:53 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.148 2008/06/26 15:17:06 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2008/06/29 07:41:53 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -173,12 +173,13 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
  * seems to imply that we should do this, and it does make sense.
  */
 __asm(".align 64");
-struct	fpstate64 initfpstate = {
+const struct fpstate64 initfpstate = {
 	.fs_regs =
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
-	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 }
+	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 },
+	.fs_qsize = 0
 };
 
 /*
@@ -669,7 +670,6 @@ badtrap:
 			/* NOTE: fpstate must be 64-bit aligned */
 			fs = malloc((sizeof *fs), M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
-			fs->fs_qsize = 0;
 			l->l_md.md_fpstate = fs;
 		}
 		/*
