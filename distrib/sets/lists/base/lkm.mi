@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.24 2008/06/28 16:11:35 rumble Exp $
+# $NetBSD: lkm.mi,v 1.25 2008/06/29 11:54:56 he Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -37,6 +37,8 @@
 ./@MODULEDIR@/msdosfs/msdosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/ntfs				base-kernel-modules
 ./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules
+./@MODULEDIR@/nullfs				base-kernel-modules
+./@MODULEDIR@/nullfs/nullfs.kmod		base-kernel-modules
 ./@MODULEDIR@/overlay				base-kernel-modules
 ./@MODULEDIR@/overlay/overlay.kmod		base-kernel-modules
 ./@MODULEDIR@/portal				base-kernel-modules
