@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.21.42.1 2008/06/02 13:22:38 mjf Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.21.42.2 2008/06/29 09:32:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.21.42.1 2008/06/02 13:22:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.21.42.2 2008/06/29 09:32:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ const struct db_variable db_regs[] = {
 	{ "r14",  (long *)&ddb_regs.tf_r14,  FCN_NULL },
 	{ "r15",  (long *)&ddb_regs.tf_r15,  FCN_NULL },
 	{ "pr",   (long *)&ddb_regs.tf_pr,   FCN_NULL },
-	{ "spc",  (long *)&ddb_regs.tf_spc,  FCN_NULL },
-	{ "ssr",  (long *)&ddb_regs.tf_ssr,  FCN_NULL },
+	{ "pc",   (long *)&ddb_regs.tf_spc,  FCN_NULL },
+	{ "sr",   (long *)&ddb_regs.tf_ssr,  FCN_NULL },
 	{ "mach", (long *)&ddb_regs.tf_mach, FCN_NULL },
 	{ "macl", (long *)&ddb_regs.tf_macl, FCN_NULL },
 };

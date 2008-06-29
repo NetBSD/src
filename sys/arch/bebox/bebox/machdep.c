@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92.6.1 2008/06/02 13:21:58 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.6.2 2008/06/29 09:32:55 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.6.1 2008/06/02 13:21:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.6.2 2008/06/29 09:32:55 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -207,7 +207,7 @@ cpu_startup()
 	{
 		int msr;
 
-		splhigh();
+		splraise(-1);
 		__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 		    : "=r"(msr) : "K"(PSL_EE));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.21.6.2 2008/06/02 13:24:09 mjf Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.21.6.3 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.21.6.2 2008/06/02 13:24:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.21.6.3 2008/06/29 09:33:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -269,6 +269,13 @@ sleepq_block(int timo, bool catch)
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
 		else if ((l->l_flag & LW_PENDSIG) != 0) {
+			/*
+			 * Acquiring p_lock may cause us to recurse
+			 * through the sleep path and back into this
+			 * routine, but is safe because LWPs sleeping
+			 * on locks are non-interruptable.  We will
+			 * not recurse again.
+			 */
 			mutex_enter(p->p_lock);
 			if ((sig = issignal(l)) != 0)
 				error = sleepq_sigtoerror(l, sig);
@@ -437,10 +444,25 @@ sleepq_changepri(lwp_t *l, pri_t pri)
 
 	opri = lwp_eprio(l);
 	l->l_priority = pri;
-	if (lwp_eprio(l) != opri) {
-		TAILQ_REMOVE(sq, l, l_sleepchain);
-		sleepq_insert(sq, l, l->l_syncobj);
+
+	if (lwp_eprio(l) == opri) {
+		return;
 	}
+	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0) {
+		return;
+	}
+
+	/*
+	 * Don't let the sleep queue become empty, even briefly.
+	 * cv_signal() and cv_broadcast() inspect it without the
+	 * sleep queue lock held and need to see a non-empty queue
+	 * head if there are waiters.
+	 */
+	if (TAILQ_FIRST(sq) == l && TAILQ_NEXT(l, l_sleepchain) == NULL) {
+		return;
+	}
+	TAILQ_REMOVE(sq, l, l_sleepchain);
+	sleepq_insert(sq, l, l->l_syncobj);
 }
 
 void
@@ -454,9 +476,22 @@ sleepq_lendpri(lwp_t *l, pri_t pri)
 	opri = lwp_eprio(l);
 	l->l_inheritedprio = pri;
 
-	if (lwp_eprio(l) != opri &&
-	    (l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
-		TAILQ_REMOVE(sq, l, l_sleepchain);
-		sleepq_insert(sq, l, l->l_syncobj);
+	if (lwp_eprio(l) == opri) {
+		return;
 	}
+	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0) {
+		return;
+	}
+
+	/*
+	 * Don't let the sleep queue become empty, even briefly.
+	 * cv_signal() and cv_broadcast() inspect it without the
+	 * sleep queue lock held and need to see a non-empty queue
+	 * head if there are waiters.
+	 */
+	if (TAILQ_FIRST(sq) == l && TAILQ_NEXT(l, l_sleepchain) == NULL) {
+		return;
+	}
+	TAILQ_REMOVE(sq, l, l_sleepchain);
+	sleepq_insert(sq, l, l->l_syncobj);
 }

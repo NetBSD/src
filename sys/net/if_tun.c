@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.103.6.2 2008/06/02 13:24:22 mjf Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.103.6.3 2008/06/29 09:33:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.103.6.2 2008/06/02 13:24:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.103.6.3 2008/06/29 09:33:19 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -167,8 +167,7 @@ tun_clone_create(struct if_clone *ifc, int unit)
 
 	if ((tp = tun_find_zunit(unit)) == NULL) {
 		/* Allocate a new instance */
-		tp = malloc(sizeof(struct tun_softc), M_DEVBUF, M_WAITOK);
-		(void)memset(tp, 0, sizeof(struct tun_softc));
+		tp = malloc(sizeof(*tp), M_DEVBUF, M_WAITOK|M_ZERO);
 
 		tp->tun_unit = unit;
 		simple_lock_init(&tp->tun_lock);
@@ -179,8 +178,7 @@ tun_clone_create(struct if_clone *ifc, int unit)
 		(void)memset(&tp->tun_if, 0, sizeof(struct ifnet));
 	}
 
-	(void)snprintf(tp->tun_if.if_xname, sizeof(tp->tun_if.if_xname),
-			"%s%d", ifc->ifc_name, unit);
+	if_initname(&tp->tun_if, ifc->ifc_name, unit);
 	tunattach0(tp);
 	tp->tun_flags |= TUN_INITED;
 	tp->tun_osih = softint_establish(SOFTINT_CLOCK, tun_o_softintr, tp);

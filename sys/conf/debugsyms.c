@@ -1,10 +1,10 @@
-/*	$NetBSD: debugsyms.c,v 1.1 2008/01/17 20:14:49 joerg Exp $	*/
+/*	$NetBSD: debugsyms.c,v 1.1.12.1 2008/06/29 09:33:04 mjf Exp $	*/
 /*
  * This file is in the public domain.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: debugsyms.c,v 1.1 2008/01/17 20:14:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: debugsyms.c,v 1.1.12.1 2008/06/29 09:33:04 mjf Exp $");
 
 #define	_CALLOUT_PRIVATE
 #define	__MUTEX_PRIVATE
@@ -23,3 +23,16 @@ __KERNEL_RCSID(0, "$NetBSD: debugsyms.c,v 1.1 2008/01/17 20:14:49 joerg Exp $");
 #include <sys/unpcb.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
+
+/*
+ * Without a dummy function referencing some of the types, gcc will
+ * not emit any debug information.
+ */
+proc_t	*_debugsym_dummyfunc(vnode_t *vp);
+
+proc_t *
+_debugsym_dummyfunc(vnode_t *vp)
+{
+
+	return ((lwp_t *)vp->v_mount)->l_proc;
+}

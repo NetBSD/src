@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.35.16.1 2008/06/02 13:23:15 mjf Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.35.16.2 2008/06/29 09:33:06 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.35.16.1 2008/06/02 13:23:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.35.16.2 2008/06/29 09:33:06 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -116,7 +116,7 @@ static pdq_softc_t *pdqs_eisa[16];
 
 #elif defined(__bsdi__)
 extern struct cfdriver feacd;
-#define	PDQ_EISA_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)feacd.cd_devs[unit])
+#define	PDQ_EISA_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)device_lookup_private(&feacd, unit))
 #define	DEFEA_INTRENABLE		0x28	/* edge interrupt */
 static const int pdq_eisa_irqs[4] = { IRQ9, IRQ10, IRQ11, IRQ15 };
 #define	DEFEA_DECODE_IRQ(n)		(pdq_eisa_irqs[(n)])

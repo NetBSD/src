@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.18.6.2 2008/06/02 13:24:31 mjf Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.18.6.3 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -459,9 +459,9 @@ ukfs_chdir(struct ukfs *ukfs, const char *path)
 	pthread_spin_unlock(&ukfs->ukfs_spin);
 	if (oldvp)
 		ukfs_ll_rele(oldvp);
-	postcall(ukfs);
 
  out:
+	postcall(ukfs);
 	if (rv) {
 		errno = rv;
 		return -1;

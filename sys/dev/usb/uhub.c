@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.95.6.1 2008/06/02 13:23:54 mjf Exp $	*/
+/*	$NetBSD: uhub.c,v 1.95.6.2 2008/06/29 09:33:11 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.95.6.1 2008/06/02 13:23:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.95.6.2 2008/06/29 09:33:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ struct uhub_softc {
 	u_int8_t		*sc_status;
 	size_t			sc_statuslen;
 	int			sc_explorepending;
+	int		sc_isehciroothub; /* see comment in uhub_intr() */
 
 	u_char			sc_running;
 };
@@ -233,6 +234,8 @@ USB_ATTACH(uhub)
 	sc->sc_status = malloc(sc->sc_statuslen, M_USBDEV, M_NOWAIT);
 	if (!sc->sc_status)
 		goto bad;
+	if (device_is_a(device_parent(device_parent(sc->sc_dev)), "ehci"))
+		sc->sc_isehciroothub = 1;
 
 	/* force initial scan */
 	memset(sc->sc_status, 0xff, sc->sc_statuslen);
@@ -336,6 +339,8 @@ USB_ATTACH(uhub)
  bad:
 	if (sc->sc_status)
 		free(sc->sc_status, M_USBDEV);
+	if (sc->sc_statusbuf)
+		free(sc->sc_statusbuf, M_USBDEV);
 	if (hub)
 		free(hub, M_USBDEV);
 	dev->hub = NULL;
@@ -362,6 +367,26 @@ uhub_explore(usbd_device_handle dev)
 	if (dev->depth > USB_HUB_MAX_DEPTH)
 		return (USBD_TOO_DEEP);
 
+	if (PORTSTAT_ISSET(sc, 0)) { /* hub status change */
+		usb_hub_status_t hs;
+
+		err = usbd_get_hub_status(dev, &hs);
+		if (err) {
+			DPRINTF(("%s: get hub status failed, err=%d\n",
+				 device_xname(sc->sc_dev), err));
+		} else {
+			/* just acknowledge */
+			status = UGETW(hs.wHubStatus);
+			change = UGETW(hs.wHubChange);
+			if (change & UHS_LOCAL_POWER)
+				usbd_clear_hub_feature(dev,
+						       UHF_C_HUB_LOCAL_POWER);
+			if (change & UHS_OVER_CURRENT)
+				usbd_clear_hub_feature(dev,
+						       UHF_C_HUB_OVER_CURRENT);
+		}
+	}
+
 	for (port = 1; port <= hd->bNbrPorts; port++) {
 		up = &dev->hub->ports[port-1];
 
@@ -381,6 +406,10 @@ uhub_explore(usbd_device_handle dev)
 			}
 			status = UGETW(up->status.wPortStatus);
 			change = UGETW(up->status.wPortChange);
+#if 0
+			printf("%s port %d: s/c=%x/%x\n",
+			       device_xname(sc->sc_dev), port, status, change);
+#endif
 		}
 		if (!change && !reconnect) {
 			/* No status change, just do recursive explore. */
@@ -514,6 +543,8 @@ uhub_explore(usbd_device_handle dev)
 		}
 	}
 	/* enable status change notifications again */
+	if (!sc->sc_isehciroothub)
+		memset(sc->sc_status, 0, sc->sc_statuslen);
 	sc->sc_explorepending = 0;
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -585,6 +616,8 @@ USB_DETACH(uhub)
 	sc->sc_hub->hub = NULL;
 	if (sc->sc_status)
 		free(sc->sc_status, M_USBDEV);
+	if (sc->sc_statusbuf)
+		free(sc->sc_statusbuf, M_USBDEV);
 
 	return (0);
 }
@@ -653,6 +686,6 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	 * of the ports we touched in the last run
 	 */
 	if (status == USBD_NORMAL_COMPLETION && sc->sc_explorepending &&
-	    device_is_a(device_parent(device_parent(sc->sc_dev)), "ehci"))
+	    sc->sc_isehciroothub)
 		usb_needs_explore(sc->sc_hub);
 }

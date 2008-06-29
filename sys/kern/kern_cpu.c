@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.21.6.4 2008/06/05 19:14:36 mjf Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.21.6.5 2008/06/29 09:33:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.21.6.4 2008/06/05 19:14:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.21.6.5 2008/06/29 09:33:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,9 +334,16 @@ cpu_setonline(struct cpu_info *ci, bool online)
 		if ((spc->spc_flags & SPCF_OFFLINE) != 0)
 			return 0;
 		nonline = 0;
+		/*
+		 * Ensure that at least one CPU within the processor set
+		 * stays online.  Revisit this later.
+		 */
 		for (CPU_INFO_FOREACH(cii, ci2)) {
-			nonline += ((ci2->ci_schedstate.spc_flags &
-			    SPCF_OFFLINE) == 0);
+			if ((ci2->ci_schedstate.spc_flags & SPCF_OFFLINE) != 0)
+				continue;
+			if (ci2->ci_schedstate.spc_psid != spc->spc_psid)
+				continue;
+			nonline++;
 		}
 		if (nonline == 1)
 			return EBUSY;

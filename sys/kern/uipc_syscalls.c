@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.127.6.2 2008/06/02 13:24:14 mjf Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.127.6.3 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.127.6.2 2008/06/02 13:24:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.127.6.3 2008/06/29 09:33:14 mjf Exp $");
 
 #include "opt_pipe.h"
 
@@ -1195,21 +1195,5 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 #endif
 		sa->sa_len = buflen;
 	}
-	return (0);
-}
-
-int
-getsock(int fdes, struct file **fpp)
-{
-	file_t		*fp;
-
-	if ((fp = fd_getfile(fdes)) == NULL)
-		return (EBADF);
-
-	if (fp->f_type != DTYPE_SOCKET) {
-		fd_putfile(fdes);
-		return (ENOTSOCK);
-	}
-	*fpp = fp;
 	return (0);
 }

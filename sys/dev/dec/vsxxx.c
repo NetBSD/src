@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxx.c,v 1.8.36.1 2008/06/02 13:23:14 mjf Exp $ */
+/* $NetBSD: vsxxx.c,v 1.8.36.2 2008/06/29 09:33:06 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.8.36.1 2008/06/02 13:23:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.8.36.2 2008/06/29 09:33:06 mjf Exp $");
 
 /*
  * Common machinary for VSXXX mice and tablet
@@ -118,10 +118,9 @@ vsxxx_ioctl(v, cmd, data, flag, p)
 }
 
 /* EXPORT */ void
-vsxxx_input(data)
-	int data;
+vsxxx_input(int data)
 {
-	struct vsxxx_softc *sc = (void *)vsms_cd.cd_devs[0];
+	struct vsxxx_softc *sc = device_lookup_private(&vsms_cd, 0);
 	int x, y;
 
 	if (data & VS_START_FRAME)

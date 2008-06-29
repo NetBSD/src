@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.18.16.2 2008/06/02 13:23:44 mjf Exp $ */
+/*	$NetBSD: twa.c,v 1.18.16.3 2008/06/29 09:33:09 mjf Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.18.16.2 2008/06/02 13:23:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.18.16.3 2008/06/29 09:33:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1138,8 +1138,7 @@ twa_drain_response_queue(struct twa_softc *sc)
 			return(1);
 		if (status_reg & TWA_STATUS_RESPONSE_QUEUE_EMPTY)
 			return(0); /* no more response queue entries */
-		rq = (union twa_response_queue)twa_inl(sc,
-		    TWA_RESPONSE_QUEUE_OFFSET);
+		rq.u.response_id = twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
 	}
 }
 
@@ -1361,8 +1360,7 @@ twa_done(struct twa_softc *sc)
 		if (status_reg & TWA_STATUS_RESPONSE_QUEUE_EMPTY)
 			break;
 		/* Response queue is not empty. */
-		rq = (union twa_response_queue)twa_inl(sc,
-			TWA_RESPONSE_QUEUE_OFFSET);
+		rq.u.response_id = twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
 		tr = sc->sc_twa_request + rq.u.response_id;
 #ifdef		DIAGNOSTIC
 		twa_check_response_q(tr, 0);
@@ -1562,10 +1560,12 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (pci_dma64_available(pa) && use_64bit)
+	if (pci_dma64_available(pa) && use_64bit) {
+		aprint_verbose_dev(self, "64bit DMA addressing active");
 		sc->twa_dma_tag = pa->pa_dmat64;
-	else
+	} else {
 		sc->twa_dma_tag = pa->pa_dmat;
+	}
 
  	sc->sc_product_id = PCI_PRODUCT(pa->pa_id);
 	/* Enable the device. */
@@ -1644,7 +1644,7 @@ twa_shutdown(void *arg)
 	int i, rv, unit;
 
 	for (i = 0; i < twa_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup(&twa_cd, i)) == NULL)
+		if ((sc = device_lookup_private(&twa_cd, i)) == NULL)
 			continue;
 
 		for (unit = 0; unit < sc->sc_nunits; unit++)
@@ -1924,7 +1924,7 @@ twaopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twa_softc *twa;
 
-	if ((twa = device_lookup(&twa_cd, minor(dev))) == NULL)
+	if ((twa = device_lookup_private(&twa_cd, minor(dev))) == NULL)
 		return (ENXIO);
 	if ((twa->twa_sc_flags & TWA_STATE_OPEN) != 0)
 		return (EBUSY);
@@ -1943,7 +1943,7 @@ twaclose(dev_t dev, int flag, int mode,
 {
 	struct twa_softc *twa;
 
-	twa = device_lookup(&twa_cd, minor(dev));
+	twa = device_lookup_private(&twa_cd, minor(dev));
 	twa->twa_sc_flags &= ~TWA_STATE_OPEN;
 	return (0);
 }
@@ -1973,7 +1973,7 @@ twaioctl(dev_t dev, u_long cmd, void *data, int flag,
 	int32_t			start_index;
 	int			s, error = 0;
 
-	sc = device_lookup(&twa_cd, minor(dev));
+	sc = device_lookup_private(&twa_cd, minor(dev));
 
 	switch (cmd) {
 	case TW_OSL_IOCTL_FIRMWARE_PASS_THROUGH:
@@ -2511,10 +2511,8 @@ twa_init_connection(struct twa_softc *sc, uint16_t message_credits,
    	init_connect->request_id = tr->tr_request_id;
 	init_connect->message_credits = message_credits;
 	init_connect->features = set_features;
-	if (TWA_64BIT_ADDRESSES) {
-		printf("64 bit addressing supported for scatter/gather list\n");
+	if (TWA_64BIT_ADDRESSES)
 		init_connect->features |= TWA_64BIT_SG_ADDRESSES;
-	}
 	if (set_features & TWA_EXTENDED_INIT_CONNECT) {
 		/*
 		 * Fill in the extra fields needed for

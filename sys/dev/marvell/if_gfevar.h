@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfevar.h,v 1.8 2007/03/04 06:02:14 christos Exp $	*/
+/*	$NetBSD: if_gfevar.h,v 1.8.36.1 2008/06/29 09:33:08 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -84,7 +84,7 @@ struct gfe_txqueue {
  */
 
 struct gfe_rxbuf {
-	uint8_t	rb_data[GE_RXBUF_SIZE];
+	uint8_t	rxb_data[GE_RXBUF_SIZE];
 };
 
 struct gfe_rxqueue {

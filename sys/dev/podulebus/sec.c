@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.9.16.1 2008/06/02 13:23:47 mjf Exp $ */
+/* $NetBSD: sec.c,v 1.9.16.2 2008/06/29 09:33:10 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.9.16.1 2008/06/02 13:23:47 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.9.16.2 2008/06/29 09:33:10 mjf Exp $");
 
 #include <sys/param.h>
 
@@ -521,9 +521,12 @@ extern struct cfdriver sec_cd;
 void sec_dumpall(void)
 {
 	int i;
+	struct sec_softc *sc;
 
-	for (i = 0; i < sec_cd.cd_ndevs; ++i)
-		if (sec_cd.cd_devs[i])
-			sec_dumpdma(sec_cd.cd_devs[i]);
+	for (i = 0; i < sec_cd.cd_ndevs; ++i) {
+		sc = device_lookup_private(&sec_cd, i);
+		if (sc != NULL)
+			sec_dumpdma(sc);
+	}
 }
 #endif

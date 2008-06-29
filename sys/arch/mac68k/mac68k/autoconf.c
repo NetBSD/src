@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.71.6.1 2008/06/29 09:32:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71.6.1 2008/06/29 09:32:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,6 @@ target_to_unit(u_long bus, u_long target, u_long lun)
 {
 	struct scsibus_softc	*scsi;
 	struct scsipi_periph	*periph;
-	struct device		*sc_dev;
 extern	struct cfdriver		scsibus_cd;
 
 	if (target < 0 || target > 7 || lun < 0 || lun > 7) {
@@ -175,17 +174,14 @@ extern	struct cfdriver		scsibus_cd;
 
 	if (bus == -1) {
 		for (bus = 0 ; bus < scsibus_cd.cd_ndevs ; bus++) {
-			if (scsibus_cd.cd_devs[bus]) {
-				scsi = (struct scsibus_softc *)
-						scsibus_cd.cd_devs[bus];
-				periph = scsipi_lookup_periph(scsi->sc_channel,
-				    target, lun);
-				if (periph != NULL) {
-					sc_dev = (struct device *)
-							periph->periph_dev;
-					return device_unit(sc_dev);
-				}
-			}
+			scsi = device_lookup_private(&scsibus_cd, bus);
+			if (!scsi)
+				continue;
+			periph = scsipi_lookup_periph(scsi->sc_channel,
+			    target, lun);
+			if (!periph)
+				continue;
+			return device_unit(periph->periph_dev);
 		}
 		return -1;
 	}
@@ -193,15 +189,14 @@ extern	struct cfdriver		scsibus_cd;
 		printf("scsi target to unit, bus (%ld) out of range.\n", bus);
 		return -1;
 	}
-	if (scsibus_cd.cd_devs[bus]) {
-		scsi = (struct scsibus_softc *) scsibus_cd.cd_devs[bus];
-		periph = scsipi_lookup_periph(scsi->sc_channel,
-		    target, lun);
-		if (periph != NULL) {
-			sc_dev = (struct device *) periph->periph_dev;
-			return device_unit(sc_dev);
-		}
-	}
-	return -1;
+	scsi = device_lookup_private(&scsibus_cd, bus);
+	if (!scsi)
+		return -1;
+
+	periph = scsipi_lookup_periph(scsi->sc_channel,
+	    target, lun);
+	if (!periph)
+		return -1;
+	return device_unit(periph->periph_dev);
 }
 #endif /* NSCSIBUS > 0 */

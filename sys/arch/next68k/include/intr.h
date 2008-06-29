@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2007/12/03 15:34:06 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.20.14.1 2008/06/29 09:32:59 mjf Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -61,17 +61,22 @@
 #define	IPL_SOFTSERIAL	4
 #define	IPL_VM		5
 #define	IPL_SCHED	6
-#define	IPL_HIGH	6
-#define	NIPL		7
+#define	IPL_HIGH	7
+#define	NIPL		8
+
+extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
 	uint16_t _psl;
 } ipl_cookie_t;
 
-extern const int ipl2psl_table[NIPL];
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
 
-ipl_cookie_t makeiplcookie(ipl_t);
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
+}
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)

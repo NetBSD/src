@@ -1,4 +1,4 @@
-/*	$NetBSD: cpi_nubus.c,v 1.2.2.2 2008/06/02 13:22:22 mjf Exp $	*/
+/*	$NetBSD: cpi_nubus.c,v 1.2.2.3 2008/06/29 09:32:58 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.2.2.2 2008/06/02 13:22:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.2.2.3 2008/06/29 09:32:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,6 @@ cpi_nubus_intr(void *arg)
 int
 cpi_open(dev_t device, int flag, int mode, struct lwp *l)
 {
-	int lpunit;
 	int err, ii, s;
         struct cpi_softc *sc;
 
@@ -359,14 +358,7 @@ cpi_open(dev_t device, int flag, int mode, struct lwp *l)
 		printf("\tcpi_open() called...\n");
 
 	/* Consistency checks: Valid unit number, softc, device state */
-	lpunit = CPI_UNIT(device);
-	if (lpunit >= cpi_cd.cd_ndevs) {
-		if (TRACE_OPEN)
-			printf("Tried to cpi_open() invalid unit (%d >= %d)\n",
-			    lpunit, cpi_cd.cd_ndevs);
-		return ENXIO;
-	}
-	sc = device_lookup(&cpi_cd, lpunit);
+	sc = device_lookup_private(&cpi_cd, CPI_UNIT(device));
 	if (NULL == sc) {
 		if (TRACE_OPEN)
 			printf("Tried to cpi_open() with NULL softc\n");
@@ -435,10 +427,8 @@ int
 cpi_close(dev_t device, int flag, int mode, struct lwp *l)
 {
         struct cpi_softc *sc;
-	int lpunit;
 	
-	lpunit = CPI_UNIT(device);
-	sc = device_lookup(&cpi_cd, lpunit);
+	sc = device_lookup_private(&cpi_cd, CPI_UNIT(device));
 
 	if (TRACE_CLOSE)
 		printf("\tcpi_close() called (%lu hard, %lu bytes to port)\n",
@@ -472,7 +462,7 @@ cpi_write(dev_t device, struct uio *uio, int flags)
 	if (TRACE_WRITE)
 		printf("\tcpi_write() called for %u bytes\n", uio->uio_resid);
 
-	sc = device_lookup(&cpi_cd, CPI_UNIT(device));
+	sc = device_lookup_private(&cpi_cd, CPI_UNIT(device));
 
 	/* Send data to printer, a line buffer full at a time */
 	while (uio->uio_resid > 0) {

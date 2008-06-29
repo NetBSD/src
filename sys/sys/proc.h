@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.270.6.3 2008/06/05 19:14:37 mjf Exp $	*/
+/*	$NetBSD: proc.h,v 1.270.6.4 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -357,7 +357,6 @@ struct proc {
  * process context only.
  */
 #define	PS_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
-#define	PS_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
 #define	PS_WCORE	0x00001000 /* Process needs to dump core */
 #define	PS_WEXIT	0x00002000 /* Working on exiting */
 #define	PS_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
@@ -385,6 +384,7 @@ struct proc {
  * from process context only.
  */
 #define	PL_CONTROLT	0x00000002 /* Has a controlling terminal */
+#define	PL_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
 #define	PL_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
 
 /*

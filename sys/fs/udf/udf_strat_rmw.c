@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.3.6.2 2008/06/02 13:24:06 mjf Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.3.6.3 2008/06/29 09:33:13 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.3.6.2 2008/06/02 13:24:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.3.6.3 2008/06/29 09:33:13 mjf Exp $");
 #endif /* not lint */
 
 
@@ -1068,7 +1068,7 @@ udf_issue_eccline(struct udf_eccline *eccline, int queued_on)
 		buf = eccline->buf;
 		buf_init(buf);
 		buf->b_flags    = B_READ | B_ASYNC;
-		buf->b_cflags   = BC_BUSY;	/* needed? */
+		SET(buf->b_cflags, BC_BUSY);	/* mark buffer busy */
 		buf->b_oflags   = 0;
 		buf->b_iodone   = udf_shedule_read_callback;
 		buf->b_data     = eccline->blob;
@@ -1116,7 +1116,7 @@ udf_issue_eccline(struct udf_eccline *eccline, int queued_on)
 		buf = eccline->buf;
 		buf_init(buf);
 		buf->b_flags    = B_WRITE | B_ASYNC;
-		buf->b_cflags   = BC_BUSY;	/* needed? */
+		SET(buf->b_cflags, BC_BUSY);	/* mark buffer busy */
 		buf->b_oflags   = 0;
 		buf->b_iodone   = udf_shedule_write_callback;
 		buf->b_data     = eccline->blob;

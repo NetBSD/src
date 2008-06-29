@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.39.6.2 2008/06/02 13:23:07 mjf Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.39.6.3 2008/06/29 09:33:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.39.6.2 2008/06/02 13:23:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.39.6.3 2008/06/29 09:33:04 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -117,7 +117,7 @@ osf1_sys_fstatfs(struct lwp *l, const struct osf1_sys_fstatfs_args *uap, registe
 	struct osf1_statfs osfs;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)))
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;

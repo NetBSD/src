@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.21.6.2 2008/06/05 19:14:37 mjf Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.21.6.3 2008/06/29 09:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.21.6.2 2008/06/05 19:14:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.21.6.3 2008/06/29 09:33:21 mjf Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -92,6 +92,8 @@ static TAILQ_HEAD(, dirhash) ufsdirhash_list;
 
 /* Protects: ufsdirhash_list, `dh_list' field, ufs_dirhashmem. */
 static kmutex_t ufsdirhash_lock;
+
+static struct sysctllog *ufsdirhash_sysctl_log;
 
 /*
  * Locking order:
@@ -163,6 +165,8 @@ ufsdirhash_build(struct inode *ip)
 		/* Try to free some space. */
 		if (ufsdirhash_recycle(memreqd) != 0)
 			return (-1);
+	        else
+		    	DIRHASHLIST_UNLOCK();
 	}
 
 	/*
@@ -176,6 +180,7 @@ ufsdirhash_build(struct inode *ip)
 	}
 	memset(dh, 0, sizeof(*dh));
 	mutex_init(&dh->dh_lock, MUTEX_DEFAULT, IPL_NONE);
+	DIRHASH_LOCK(dh);
 	dh->dh_hashsz = narrays * sizeof(dh->dh_hash[0]);
 	dh->dh_hash = kmem_zalloc(dh->dh_hashsz, KM_NOSLEEP);
 	dh->dh_blkfreesz = nblocks * sizeof(dh->dh_blkfree[0]);
@@ -245,6 +250,7 @@ ufsdirhash_build(struct inode *ip)
 	DIRHASHLIST_LOCK();
 	TAILQ_INSERT_TAIL(&ufsdirhash_list, dh, dh_list);
 	dh->dh_onlist = 1;
+	DIRHASH_UNLOCK(dh);
 	DIRHASHLIST_UNLOCK();
 	return (0);
 
@@ -1081,9 +1087,62 @@ ufsdirhash_recycle(int wanted)
 		DIRHASHLIST_LOCK();
 		ufs_dirhashmem -= mem;
 	}
-	DIRHASHLIST_LOCK();
 	/* Success. */
 	return (0);
+}
+
+static void
+ufsdirhash_sysctl_init(void)
+{
+	const struct sysctlnode *rnode, *cnode;
+
+	sysctl_createv(&ufsdirhash_sysctl_log, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+
+	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ufs",
+		       SYSCTL_DESCR("ufs"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "dirhash",
+		       SYSCTL_DESCR("dirhash"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "minblocks",
+		       SYSCTL_DESCR("minimum hashed directory size in blocks"),
+		       NULL, 0, &ufs_dirhashminblks, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxmem",
+		       SYSCTL_DESCR("maximum dirhash memory usage"),
+		       NULL, 0, &ufs_dirhashmaxmem, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "memused",
+		       SYSCTL_DESCR("current dirhash memory usage"),
+		       NULL, 0, &ufs_dirhashmem, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(&ufsdirhash_sysctl_log, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "docheck",
+		       SYSCTL_DESCR("enable extra sanity checks"),
+		       NULL, 0, &ufs_dirhashcheck, 0,
+		       CTL_CREATE, CTL_EOL);
 }
 
 void
@@ -1096,6 +1155,7 @@ ufsdirhash_init()
 	ufsdirhash_cache = pool_cache_init(sizeof(struct dirhash), 0,
 	    0, 0, "dirhash", NULL, IPL_NONE, NULL, NULL, NULL);
 	TAILQ_INIT(&ufsdirhash_list);
+	ufsdirhash_sysctl_init();
 }
 
 void
@@ -1106,57 +1166,5 @@ ufsdirhash_done(void)
 	pool_cache_destroy(ufsdirhashblk_cache);
 	pool_cache_destroy(ufsdirhash_cache);
 	mutex_destroy(&ufsdirhash_lock);
-}
-
-SYSCTL_SETUP(sysctl_vfs_ufs_setup, "sysctl vfs.ufs.dirhash subtree setup")
-{
-	const struct sysctlnode *rnode, *cnode;
-
-	sysctl_createv(clog, 0, NULL, &rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ufs",
-		       SYSCTL_DESCR("ufs"),
-		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &rnode,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "dirhash",
-		       SYSCTL_DESCR("dirhash"),
-		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &cnode,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "minblocks",
-		       SYSCTL_DESCR("minimum hashed directory size in blocks"),
-		       NULL, 0, &ufs_dirhashminblks, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &cnode,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxmem",
-		       SYSCTL_DESCR("maximum dirhash memory usage"),
-		       NULL, 0, &ufs_dirhashmaxmem, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &cnode,
-		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_INT, "memused",
-		       SYSCTL_DESCR("current dirhash memory usage"),
-		       NULL, 0, &ufs_dirhashmem, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, &cnode,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "docheck",
-		       SYSCTL_DESCR("enable extra sanity checks"),
-		       NULL, 0, &ufs_dirhashcheck, 0,
-		       CTL_CREATE, CTL_EOL);
+	sysctl_teardown(&ufsdirhash_sysctl_log);
 }

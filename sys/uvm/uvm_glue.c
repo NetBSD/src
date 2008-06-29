@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.117.6.3 2008/06/05 19:14:38 mjf Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.117.6.4 2008/06/29 09:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.117.6.3 2008/06/05 19:14:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.117.6.4 2008/06/29 09:33:21 mjf Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -386,11 +386,11 @@ uvm_proc_exit(struct proc *p)
 	/*
 	 * borrow proc0's address space.
 	 */
-	kpreempt_disable();
+	KPREEMPT_DISABLE(l);
 	pmap_deactivate(l);
 	p->p_vmspace = proc0.p_vmspace;
 	pmap_activate(l);
-	kpreempt_enable();
+	KPREEMPT_ENABLE(l);
 
 	uvmspace_free(ovm);
 }
@@ -608,7 +608,11 @@ swappable(struct lwp *l)
 		return false;
 	if (l->l_holdcnt != 0)
 		return false;
+	if (l->l_class != SCHED_OTHER)
+		return false;
 	if (l->l_syncobj == &rw_syncobj || l->l_syncobj == &mutex_syncobj)
+		return false;
+	if (l->l_proc->p_stat != SACTIVE && l->l_proc->p_stat != SSTOP)
 		return false;
 	return true;
 }
@@ -731,6 +735,8 @@ uvm_swapout_threads(void)
 static void
 uvm_swapout(struct lwp *l)
 {
+	struct vm_map *map;
+
 	KASSERT(mutex_owned(&l->l_swaplock));
 
 #ifdef DEBUG
@@ -767,7 +773,11 @@ uvm_swapout(struct lwp *l)
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
 	uarea_swapout(USER_TO_UAREA(l->l_addr));
-	pmap_collect(vm_map_pmap(&l->l_proc->p_vmspace->vm_map));
+	map = &l->l_proc->p_vmspace->vm_map;
+	if (vm_map_lock_try(map)) {
+		pmap_collect(vm_map_pmap(map));
+		vm_map_unlock(map);
+	}
 }
 
 /*

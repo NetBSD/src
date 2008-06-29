@@ -1,4 +1,4 @@
-/* $NetBSD: padvol.c,v 1.1.24.1 2008/06/02 13:23:36 mjf Exp $ */
+/* $NetBSD: padvol.c,v 1.1.24.2 2008/06/29 09:33:08 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: padvol.c,v 1.1.24.1 2008/06/02 13:23:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: padvol.c,v 1.1.24.2 2008/06/29 09:33:08 mjf Exp $");
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/select.h>
 #include <sys/condvar.h>
-#include <sys/mutex.h>
 #include <sys/kmem.h>
 #include <sys/device.h>
 

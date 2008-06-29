@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.33 2007/12/03 15:34:25 ad Exp $	*/
+/*	$NetBSD: kbd.c,v 1.33.14.1 2008/06/29 09:33:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33 2007/12/03 15:34:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33.14.1 2008/06/29 09:33:01 mjf Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33 2007/12/03 15:34:25 ad Exp $");
 #include <machine/vuid_event.h>
 
 struct kbd_softc {
-	struct device	sc_dev;
-
 	int sc_event_mode;	/* if true, collect events, else pass to ite */
 	struct evvar sc_events; /* event queue state */
 	void *sc_softintr_cookie;
@@ -79,10 +77,10 @@ void	kbd_setLED(void);
 int	kbd_send_command(int);
 
 
-static int kbdmatch(struct device *, struct cfdata *, void *);
-static void kbdattach(struct device *, struct device *, void *);
+static int kbdmatch(device_t, cfdata_t, void *);
+static void kbdattach(device_t, device_t, void *);
 
-CFATTACH_DECL(kbd, sizeof(struct kbd_softc),
+CFATTACH_DECL_NEW(kbd, sizeof(struct kbd_softc),
     kbdmatch, kbdattach, NULL, NULL);
 
 static int kbd_attached;
@@ -100,7 +98,7 @@ const struct cdevsw kbd_cdevsw = {
 };
 
 static int
-kbdmatch(struct device *parent, struct cfdata *cf, void *aux)
+kbdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp(aux, "kbd") != 0)
@@ -112,10 +110,10 @@ kbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-kbdattach(struct device *parent, struct device *self, void *aux)
+kbdattach(device_t parent, device_t self, void *aux)
 {
-	struct kbd_softc *sc = (void *)self;
-	struct mfp_softc *mfp = (void *)parent;
+	struct kbd_softc *sc = device_private(self);
+	struct mfp_softc *mfp = device_private(parent);
 	int s;
 
 	kbd_attached = 1;
@@ -132,7 +130,7 @@ kbdattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_events.ev_io = 0;
 	splx(s);
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 
@@ -167,7 +165,7 @@ kbdenable(int mode)	/* 1: interrupt, 0: poll */
 	kbd_setLED();
 
 	if (!(intio_get_sysport_keyctrl() & 8))
-		printf(" (no connected keyboard)");
+		aprint_normal(" (no connected keyboard)");
 }
 
 extern struct cfdriver kbd_cd;
@@ -176,11 +174,8 @@ int
 kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kbd_softc *k;
-	int unit = minor(dev);
 
-	if (unit >= kbd_cd.cd_ndevs)
-		return (ENXIO);
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = device_lookup_private(&kbd_cd, minor(dev));
 	if (k == NULL)
 		return (ENXIO);
 
@@ -195,7 +190,7 @@ kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+	struct kbd_softc *k = device_lookup_private(&kbd_cd, minor(dev));
 
 	/* Turn off event mode, dump the queue */
 	k->sc_event_mode = 0;
@@ -209,7 +204,7 @@ kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 int
 kbdread(dev_t dev, struct uio *uio, int flags)
 {
-	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+	struct kbd_softc *k = device_lookup_private(&kbd_cd, minor(dev));
 
 	return ev_read(&k->sc_events, uio, flags);
 }
@@ -224,7 +219,7 @@ void opm_bell_off(void);
 int
 kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
+	struct kbd_softc *k = device_lookup_private(&kbd_cd, minor(dev));
 	int cmd_data;
 
 	switch (cmd) {
@@ -298,7 +293,7 @@ kbdpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct kbd_softc *k;
 
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = device_lookup_private(&kbd_cd, minor(dev));
 	return (ev_poll(&k->sc_events, events, l));
 }
 
@@ -307,7 +302,7 @@ kbdkqfilter(dev_t dev, struct knote *kn)
 {
 	struct kbd_softc *k;
 
-	k = kbd_cd.cd_devs[minor(dev)];
+	k = device_lookup_private(&kbd_cd, minor(dev));
 	return (ev_kqfilter(&k->sc_events, kn));
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: std.lubbock,v 1.6.6.1 2008/06/02 13:22:01 mjf Exp $
+#	$NetBSD: std.lubbock,v 1.6.6.2 2008/06/29 09:32:56 mjf Exp $
 #
 # standard NetBSD/evbarm for LUBBOCK options
 
@@ -17,7 +17,7 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
-options 	KERNEL_EXT_BASE=0xc0000000
+options 	KERNEL_BASE_EXT=0xc0000000
 makeoptions	LOADADDRESS="0xc0200000"
 makeoptions	BOARDTYPE="lubbock"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.lubbock"

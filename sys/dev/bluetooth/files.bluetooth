@@ -1,4 +1,4 @@
-#	$NetBSD: files.bluetooth,v 1.12 2007/09/30 04:07:42 kiyohara Exp $
+#	$NetBSD: files.bluetooth,v 1.12.18.1 2008/06/29 09:33:05 mjf Exp $
 #
 # Config file for machine independent Bluetooth devices
 
@@ -33,9 +33,9 @@ attach btsco at bthub
 file dev/bluetooth/btsco.c		btsco
 
 # Bluetooth HCI UART (H4)
-defpseudo btuart: btbus, bluetooth, firmload
+defpseudodev btuart: btbus, bluetooth, firmload
 file dev/bluetooth/btuart.c		btuart
 
 # BlueCore Serial Protocol
-defpseudo bcsp: btbus, bluetooth
+defpseudodev bcsp: btbus, bluetooth
 file dev/bluetooth/bcsp.c		bcsp

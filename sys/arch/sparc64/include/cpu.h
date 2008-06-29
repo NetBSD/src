@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71.6.2 2008/06/02 13:22:43 mjf Exp $ */
+/*	$NetBSD: cpu.h,v 1.71.6.3 2008/06/29 09:33:00 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -272,12 +272,6 @@ struct clockframe {
 				(vaddr_t)EINTSTACK) &&			\
 			((vaddr_t)(framep)->t.tf_out[6] >		\
 				(vaddr_t)INTSTACK))))
-
-
-extern struct intrhand soft01intr, soft01net, soft01clock;
-
-void setsoftint(void);
-void setsoftnet(void);
 
 /*
  * Give a profiling tick to the current process when the user profiling

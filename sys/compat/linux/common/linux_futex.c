@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.10.6.2 2008/06/05 19:14:35 mjf Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.10.6.3 2008/06/29 09:33:03 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.10.6.2 2008/06/05 19:14:35 mjf Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.10.6.3 2008/06/29 09:33:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -71,6 +71,7 @@ static kmutex_t *futex_lock = NULL;
 
 #define FUTEX_LOCK	mutex_enter(futex_lock);
 #define FUTEX_UNLOCK	mutex_exit(futex_lock);
+#define FUTEX_OWNED	mutex_owned(futex_lock)
 
 #ifdef DEBUG_LINUX_FUTEX
 #define FUTEXPRINTF(a) printf a
@@ -142,9 +143,11 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		    SCARG(uap, uaddr), val, (long long)timeout.tv_sec,
 		    timeout.tv_nsec));
 
+		FUTEX_LOCK;
 		f = futex_get(SCARG(uap, uaddr));
 		ret = futex_sleep(f, timeout_hz);
 		futex_put(f);
+		FUTEX_UNLOCK;
 
 		FUTEXPRINTF(("FUTEX_WAIT %d.%d: uaddr = %p, "
 		    "ret = %d\n", l->l_proc->p_pid, l->l_lid, 
@@ -179,9 +182,13 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		FUTEXPRINTF(("FUTEX_WAKE %d.%d: uaddr = %p, val = %d\n",
 		    l->l_proc->p_pid, l->l_lid,
 		    SCARG(uap, uaddr), SCARG(uap, val)));
+
+		FUTEX_LOCK;
 		f = futex_get(SCARG(uap, uaddr));
 		*retval = futex_wake(f, SCARG(uap, val), NULL);
 		futex_put(f);
+		FUTEX_UNLOCK;
+
 		break;
 
 	case LINUX_FUTEX_CMP_REQUEUE:
@@ -194,21 +201,25 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		/* FALLTHROUGH */
 
 	case LINUX_FUTEX_REQUEUE:
+
+		FUTEX_LOCK;
 		f = futex_get(SCARG(uap, uaddr));
 		newf = futex_get(SCARG(uap, uaddr2));
 		*retval = futex_wake(f, SCARG(uap, val), newf);
 		futex_put(f);
 		futex_put(newf);
+		FUTEX_UNLOCK;
+
 		break;
 
 	case LINUX_FUTEX_FD:
 		FUTEXPRINTF(("linux_sys_futex: unimplemented op %d\n", 
 		    SCARG(uap, op)));
-		break;
+		return ENOSYS;
 	default:
 		FUTEXPRINTF(("linux_sys_futex: unknown op %d\n", 
 		    SCARG(uap, op)));
-		break;
+		return ENOSYS;
 	}
 	return 0;
 }
@@ -218,15 +229,14 @@ futex_get(void *uaddr)
 {
 	struct futex *f, *f2;
 
-	FUTEX_LOCK;
+	KASSERT(FUTEX_OWNED);
+
 	LIST_FOREACH(f, &futex_list, f_list) {
 		if (f->f_uaddr == uaddr) {
 			f->f_refcount++;
-			FUTEX_UNLOCK;
 			return f;
 		}
 	}
-	FUTEX_UNLOCK;
 
 	/* Not found, create it */
 	f2 = kmem_zalloc(sizeof(*f2), KM_SLEEP);
@@ -234,17 +244,7 @@ futex_get(void *uaddr)
 	f2->f_refcount = 1;
 	TAILQ_INIT(&f2->f_waiting_proc);
 
-	FUTEX_LOCK;
-	LIST_FOREACH(f, &futex_list, f_list) {
-		if (f->f_uaddr == uaddr) {
-			f->f_refcount++;
-			FUTEX_UNLOCK;
-			kmem_free(f2, sizeof(*f2));
-			return f;
-		}
-	}
 	LIST_INSERT_HEAD(&futex_list, f2, f_list);
-	FUTEX_UNLOCK;
 
 	return f2;
 }
@@ -252,14 +252,14 @@ futex_get(void *uaddr)
 static void 
 futex_put(struct futex *f)
 {
+	KASSERT(FUTEX_OWNED);
 
-	FUTEX_LOCK;
 	f->f_refcount--;
 	if (f->f_refcount == 0) {
+		KASSERT(TAILQ_EMPTY(&f->f_waiting_proc));
 		LIST_REMOVE(f, f_list);
 		kmem_free(f, sizeof(*f));
 	}
-	FUTEX_UNLOCK;
 
 	return;
 }
@@ -270,14 +270,14 @@ futex_sleep(struct futex *f, unsigned int timeout)
 	struct waiting_proc *wp;
 	int ret;
 
+	KASSERT(FUTEX_OWNED);
+
 	wp = kmem_zalloc(sizeof(*wp), KM_SLEEP);
 	cv_init(&wp->wp_futex_cv, "futex");
 
-	FUTEX_LOCK;
 	TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);
 	ret = cv_timedwait_sig(&wp->wp_futex_cv, futex_lock, timeout);
 	TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
-	FUTEX_UNLOCK;
 
 	if ((ret == 0) && (wp->wp_new_futex != NULL)) {
 		ret = futex_sleep(wp->wp_new_futex, timeout);
@@ -295,7 +295,8 @@ futex_wake(struct futex *f, int n, struct futex *newf)
 	struct waiting_proc *wp;
 	int count = 0; 
 
-	FUTEX_LOCK;
+	KASSERT(FUTEX_OWNED);
+
 	TAILQ_FOREACH(wp, &f->f_waiting_proc, wp_list) {
 		if (count <= n) {
 			cv_broadcast(&wp->wp_futex_cv);
@@ -308,7 +309,6 @@ futex_wake(struct futex *f, int n, struct futex *newf)
 			cv_broadcast(&wp->wp_futex_cv);
 		}
 	}
-	FUTEX_UNLOCK;
 
 	return count;
 }

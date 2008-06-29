@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.39.16.1 2008/06/02 13:23:33 mjf Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.39.16.2 2008/06/29 09:33:08 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.39.16.1 2008/06/02 13:23:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.39.16.2 2008/06/29 09:33:08 mjf Exp $");
 
 #include "rnd.h"
 
@@ -200,9 +200,12 @@ void
 edmcastrategy(bp)
 	struct buf *bp;
 {
-	struct ed_softc *ed = device_lookup(&ed_cd, DISKUNIT(bp->b_dev));
-	struct disklabel *lp = ed->sc_dk.dk_label;
+	struct ed_softc *ed;
+	struct disklabel *lp;
 	daddr_t blkno;
+
+	ed = device_lookup_private(&ed_cd, DISKUNIT(bp->b_dev));
+	lp = ed->sc_dk.dk_label;
 
 	ATADEBUG_PRINT(("edmcastrategy (%s)\n", device_xname(&ed->sc_dev)),
 	    DEBUG_XFERS);
@@ -284,7 +287,7 @@ edmcaopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	int part, error;
 
 	ATADEBUG_PRINT(("edopen\n"), DEBUG_FUNCS);
-	wd = device_lookup(&ed_cd, DISKUNIT(dev));
+	wd = device_lookup_private(&ed_cd, DISKUNIT(dev));
 	if (wd == NULL || (wd->sc_flags & EDF_INIT) == 0)
 		return (ENXIO);
 
@@ -355,7 +358,7 @@ edmcaopen(dev_t dev, int flag, int fmt, struct lwp *l)
 int
 edmcaclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct ed_softc *wd = device_lookup(&ed_cd, DISKUNIT(dev));
+	struct ed_softc *wd = device_lookup_private(&ed_cd, DISKUNIT(dev));
 	int part = DISKPART(dev);
 
 	ATADEBUG_PRINT(("edmcaclose\n"), DEBUG_FUNCS);
@@ -469,7 +472,7 @@ edmcaioctl(dev, xfer, addr, flag, l)
 	int flag;
 	struct lwp *l;
 {
-	struct ed_softc *ed = device_lookup(&ed_cd, DISKUNIT(dev));
+	struct ed_softc *ed = device_lookup_private(&ed_cd, DISKUNIT(dev));
 	int error;
 
 	ATADEBUG_PRINT(("edioctl\n"), DEBUG_FUNCS);
@@ -620,7 +623,7 @@ edmcasize(dev)
 
 	ATADEBUG_PRINT(("edsize\n"), DEBUG_FUNCS);
 
-	wd = device_lookup(&ed_cd, DISKUNIT(dev));
+	wd = device_lookup_private(&ed_cd, DISKUNIT(dev));
 	if (wd == NULL)
 		return (-1);
 
@@ -665,7 +668,7 @@ edmcadump(dev, blkno, va, size)
 		return EFAULT;
 	eddoingadump = 1;
 
-	ed = device_lookup(&ed_cd, DISKUNIT(dev));
+	ed = device_lookup_private(&ed_cd, DISKUNIT(dev));
 	if (ed == NULL)
 		return (ENXIO);
 

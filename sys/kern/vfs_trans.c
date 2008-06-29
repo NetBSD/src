@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.17.6.2 2008/06/02 13:24:15 mjf Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.17.6.3 2008/06/29 09:33:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.17.6.2 2008/06/02 13:24:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.17.6.3 2008/06/29 09:33:15 mjf Exp $");
 
 /*
  * File system transaction operations.
@@ -77,9 +77,7 @@ struct fstrans_mount_info {
 
 static specificdata_key_t lwp_data_key;
 static kmutex_t vfs_suspend_lock;	/* Serialize suspensions. */
-
-POOL_INIT(fstrans_pl, sizeof(struct fstrans_lwp_info), 0, 0, 0,
-    "fstrans", NULL, IPL_NONE);
+static pool_cache_t fstrans_cache;
 
 static void fstrans_lwp_dtor(void *);
 static struct fstrans_lwp_info *fstrans_get_lwp_info(struct mount *);
@@ -96,6 +94,8 @@ fstrans_init(void)
 	KASSERT(error == 0);
 
 	mutex_init(&vfs_suspend_lock, MUTEX_DEFAULT, IPL_NONE);
+	fstrans_cache = pool_cache_init(sizeof(struct fstrans_lwp_info), 0, 0,
+	    0, "fstrans", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -110,7 +110,7 @@ fstrans_lwp_dtor(void *arg)
 		KASSERT(fli->fli_trans_cnt == 0);
 		KASSERT(fli->fli_cow_cnt == 0);
 		fli_next = fli->fli_succ;
-		pool_put(&fstrans_pl, fli);
+		pool_cache_put(fstrans_cache, fli);
 	}
 }
 
@@ -175,7 +175,7 @@ fstrans_get_lwp_info(struct mount *mp)
 	}
 
 	if (new_fli == NULL) {
-		new_fli = pool_get(&fstrans_pl, PR_WAITOK);
+		new_fli = pool_cache_get(fstrans_cache, PR_WAITOK);
 		new_fli->fli_trans_cnt = 0;
 		new_fli->fli_cow_cnt = 0;
 		new_fli->fli_succ = lwp_getspecific(lwp_data_key);

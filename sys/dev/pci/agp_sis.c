@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_sis.c,v 1.12 2008/01/04 21:18:01 ad Exp $	*/
+/*	$NetBSD: agp_sis.c,v 1.12.6.1 2008/06/29 09:33:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.12 2008/01/04 21:18:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_sis.c,v 1.12.6.1 2008/06/29 09:33:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,9 @@ static struct agp_methods agp_sis_methods = {
 };
 
 int
-agp_sis_attach(struct device *parent, struct device *self, void *aux)
+agp_sis_attach(device_t parent, device_t self, void *aux)
 {
-	struct agp_softc *sc = (struct agp_softc *)self;
+	struct agp_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct agp_sis_softc *ssc;
 	struct agp_gatt *gatt;

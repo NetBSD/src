@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpckbd,v 1.8 2008/01/07 00:19:08 uwe Exp $
+#	$NetBSD: files.hpckbd,v 1.8.6.1 2008/06/29 09:33:06 mjf Exp $
 #	H/PC keyboard interface for wskbd
 
 device hpckbdif {}
@@ -17,7 +17,7 @@ file	dev/hpc/btnmgr.c		btnmgr
 defflag	opt_btnmgr.h		BTNMGRDEBUG
 defparam opt_btnmgr.h		BTNMGRDEBUG_CONF
 
-defpseudo hpf1275a: wskbddev
+defpseudodev hpf1275a: wskbddev
 file	dev/hpc/hpf1275a_tty.c		hpf1275a
 
 

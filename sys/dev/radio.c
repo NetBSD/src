@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.20.36.2 2008/04/06 09:58:50 mjf Exp $ */
+/* $NetBSD: radio.c,v 1.20.36.3 2008/06/29 09:33:05 mjf Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.20.36.2 2008/04/06 09:58:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.20.36.3 2008/06/29 09:33:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,8 @@ radioopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct radio_softc *sc;
 
 	unit = RADIOUNIT(dev);
-	if (unit >= radio_cd.cd_ndevs ||
-	    (sc = radio_cd.cd_devs[unit]) == NULL ||
-	     sc->hw_if == NULL)
+	sc = device_lookup_private(&radio_cd, unit);
+	if (sc == NULL || sc->hw_if == NULL)
 		return (ENXIO);
 
 	if (sc->hw_if->open != NULL)
@@ -115,7 +114,7 @@ radioclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct radio_softc *sc;
 
-	sc = radio_cd.cd_devs[RADIOUNIT(dev)];
+	sc = device_lookup_private(&radio_cd, RADIOUNIT(dev));
 
 	if (sc->hw_if->close != NULL)
 		return (sc->hw_if->close(sc->hw_hdl, flags, fmt, l->l_proc));
@@ -131,8 +130,8 @@ radioioctl(dev_t dev, u_long cmd, void *data, int flags,
 	int unit, error;
 
 	unit = RADIOUNIT(dev);
-	if (unit >= radio_cd.cd_ndevs ||
-	    (sc = radio_cd.cd_devs[unit]) == NULL || sc->hw_if == NULL)
+	sc = device_lookup_private(&radio_cd, unit);
+	if (sc == NULL || sc->hw_if == NULL)
 		return (ENXIO);
 
 	error = EOPNOTSUPP;

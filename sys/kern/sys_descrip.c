@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.1.6.3 2008/06/02 13:24:11 mjf Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.1.6.4 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.1.6.3 2008/06/02 13:24:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.1.6.4 2008/06/29 09:33:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,13 +309,11 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	filedesc_t *fdp;
 	file_t *fp;
 	fdfile_t *ff;
-	proc_t *p;
 	struct flock fl;
 
-	p = l->l_proc;
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
-	fdp = p->p_fd;
+	fdp = l->l_fd;
 	error = 0;
 
 	switch (cmd) {
@@ -364,7 +362,8 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	switch (cmd) {
 	case F_DUPFD:
 		newmin = (long)SCARG(uap, arg);
-		if ((u_int)newmin >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
+		if ((u_int)newmin >=
+		    l->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 		    (u_int)newmin >= maxfiles) {
 			fd_putfile(fd);
 			return EINVAL;

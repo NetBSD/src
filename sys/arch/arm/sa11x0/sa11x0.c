@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.21.60.1 2008/06/02 13:21:55 mjf Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.21.60.2 2008/06/29 09:32:54 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.21.60.1 2008/06/02 13:21:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.21.60.2 2008/06/29 09:32:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0.c,v 1.21.60.1 2008/06/02 13:21:55 mjf Exp $")
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
+#include <arm/arm32/psl.h>
+#include <arm/arm32/machdep.h>
 #include <arm/mainbus/mainbus.h>
 #include <arm/sa11x0/sa11x0_reg.h>
 #include <arm/sa11x0/sa11x0_var.h>
@@ -183,11 +185,9 @@ sa11x0_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR4_CLR, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_dmach, SADMAC_DCR5_CLR, 1);
 
-	/*
-	 * XXX this is probably a bad place, but intr bit shouldn't be
-	 * XXX enabled before intr mask is set.
-	 * XXX Having sane imask[] suffice??
-	 */
+	/* Make sure to init spl masks, note we set the mask to 0 above */
+	set_spl_masks();
+
 	SetCPSR(I32_bit, 0);
 
 	/*

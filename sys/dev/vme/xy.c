@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.78.6.1 2008/06/02 13:23:57 mjf Exp $	*/
+/*	$NetBSD: xy.c,v 1.78.6.2 2008/06/29 09:33:11 mjf Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.78.6.1 2008/06/02 13:23:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.78.6.2 2008/06/29 09:33:11 mjf Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -410,7 +410,7 @@ xycattach(parent, self, aux)
 	void   *aux;
 
 {
-	struct xyc_softc	*xyc = (void *) self;
+	struct xyc_softc	*xyc = device_private(self);
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
 	bus_space_tag_t		bt;
@@ -625,8 +625,8 @@ xyattach(parent, self, aux)
 	void   *aux;
 
 {
-	struct xy_softc *xy = (void *) self, *oxy;
-	struct xyc_softc *xyc = (void *) parent;
+	struct xy_softc *xy = device_private(self), *oxy;
+	struct xyc_softc *xyc = device_private(parent);
 	struct xyc_attach_args *xa = aux;
 	int     spt, mb, blk, lcv, fmode, s = 0, newstate;
 	struct dkbad *dkb;
@@ -858,7 +858,7 @@ xyclose(dev, flag, fmt, l)
 	struct lwp *l;
 
 {
-	struct xy_softc *xy = xy_cd.cd_devs[DISKUNIT(dev)];
+	struct xy_softc *xy = device_lookup_private(&xy_cd, DISKUNIT(dev));
 	int     part = DISKPART(dev);
 
 	/* clear mask bits */
@@ -890,11 +890,11 @@ xydump(dev, blkno, va, size)
 	struct xy_softc *xy;
 
 	unit = DISKUNIT(dev);
-	if (unit >= xy_cd.cd_ndevs)
-		return ENXIO;
 	part = DISKPART(dev);
 
-	xy = xy_cd.cd_devs[unit];
+	xy = device_lookup_private(&xy_cd, unit);
+	if (!xy)
+		return ENXIO;
 
 	printf("%s%c: crash dump not supported (yet)\n", device_xname(&xy->sc_dev),
 	    'a' + part);
@@ -979,7 +979,7 @@ xyioctl(dev, command, addr, flag, l)
 
 	unit = DISKUNIT(dev);
 
-	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
+	if ((xy = device_lookup_private(&xy_cd, unit)) == NULL)
 		return (ENXIO);
 
 	/* switch on ioctl type */
@@ -1105,7 +1105,7 @@ xyopen(dev, flag, fmt, l)
 	/* first, could it be a valid target? */
 
 	unit = DISKUNIT(dev);
-	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
+	if ((xy = device_lookup_private(&xy_cd, unit)) == NULL)
 		return (ENXIO);
 	part = DISKPART(dev);
 
@@ -1178,7 +1178,7 @@ xysize(dev)
 
 	/* valid unit? */
 	unit = DISKUNIT(dev);
-	if (unit >= xy_cd.cd_ndevs || (xysc = xy_cd.cd_devs[unit]) == NULL)
+	if ((xysc = device_lookup_private(&xy_cd, unit)) == NULL)
 		return (-1);
 
 	part = DISKPART(dev);
@@ -1217,7 +1217,7 @@ xystrategy(bp)
 
 	/* check for live device */
 
-	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == 0 ||
+	if (!(xy = device_lookup_private(&xy_cd, unit)) ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xy->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;

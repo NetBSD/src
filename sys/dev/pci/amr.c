@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.46.16.2 2008/06/02 13:23:36 mjf Exp $	*/
+/*	$NetBSD: amr.c,v 1.46.16.3 2008/06/29 09:33:08 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.46.16.2 2008/06/02 13:23:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.46.16.3 2008/06/29 09:33:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -743,7 +743,7 @@ amr_shutdown(void *cookie)
 	int i, rv, s;
 
 	for (i = 0; i < amr_cd.cd_ndevs; i++) {
-		if ((amr = device_lookup(&amr_cd, i)) == NULL)
+		if ((amr = device_lookup_private(&amr_cd, i)) == NULL)
 			continue;
 
 		if ((rv = amr_ccb_alloc(amr, &ac)) == 0) {
@@ -1312,7 +1312,7 @@ amropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct amr_softc *amr;
 	 
-	if ((amr = device_lookup(&amr_cd, minor(dev))) == NULL)
+	if ((amr = device_lookup_private(&amr_cd, minor(dev))) == NULL)
 		return (ENXIO);
 	if ((amr->amr_flags & AMRF_OPEN) != 0)
 		return (EBUSY);
@@ -1326,7 +1326,7 @@ amrclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct amr_softc *amr;
 
-	amr = device_lookup(&amr_cd, minor(dev));
+	amr = device_lookup_private(&amr_cd, minor(dev));
 	amr->amr_flags &= ~AMRF_OPEN;
 	return (0);
 }
@@ -1344,7 +1344,7 @@ amrioctl(dev_t dev, u_long cmd, void *data, int flag,
 	int error;
 	void *dp = NULL, *au_buffer;
 
-	amr = device_lookup(&amr_cd, minor(dev));
+	amr = device_lookup_private(&amr_cd, minor(dev));
 
 	/* This should be compatible with the FreeBSD interface */
 

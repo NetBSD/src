@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.4.16.1 2008/06/02 13:22:20 mjf Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.4.16.2 2008/06/29 09:32:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -48,4 +48,9 @@ void ibmnws_pci_get_chipset_tag(pci_chipset_tag_t pc);
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
+
+#define PCI_MODE1_ENABLE        0x80000000UL
+#define PCI_MODE1_ADDRESS_REG   (PREP_BUS_SPACE_IO + 0xcf8)
+#define PCI_MODE1_DATA_REG      (PREP_BUS_SPACE_IO + 0xcfc)
+
 #endif

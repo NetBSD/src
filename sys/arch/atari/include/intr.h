@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16.14.1 2008/06/02 13:21:57 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.14.2 2008/06/29 09:32:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2007 The NetBSD Foundation, Inc.
@@ -64,12 +64,19 @@
 #ifdef _KERNEL
 int spl0 __P((void));
 
+extern const uint16_t ipl2psl_table[NIPL];
+
 typedef int ipl_t;
 typedef struct {
 	uint16_t _psl;
 } ipl_cookie_t;
 
-ipl_cookie_t makeiplcookie(ipl_t);
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
+}
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)

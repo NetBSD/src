@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.65.6.2 2008/06/05 19:14:37 mjf Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.65.6.3 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.65.6.2 2008/06/05 19:14:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.65.6.3 2008/06/29 09:33:20 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2038,6 +2038,7 @@ readfsblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 	nbp->b_blkno = nbp->b_rawblkno = fsbtodb(fs, blkstofrags(fs, lbn));
 	nbp->b_proc = NULL;
 	nbp->b_dev = ip->i_devvp->v_rdev;
+	SET(nbp->b_cflags, BC_BUSY);	/* mark buffer busy */
 
 	bdev_strategy(nbp);
 

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44.36.1 2008/06/02 13:23:10 mjf Exp $
+	$NetBSD: syscalls.master,v 1.44.36.2 2008/06/29 09:33:04 mjf Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -40,6 +40,7 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
 
