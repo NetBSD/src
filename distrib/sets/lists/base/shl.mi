@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.417.6.2 2008/06/02 13:21:17 mjf Exp $
+# $NetBSD: shl.mi,v 1.417.6.3 2008/06/29 08:25:13 mjf Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -13,7 +13,7 @@
 #
 # Note:	libtermcap and libtermlib are hardlinked and share the same version.
 #
-./lib/libc.so.12.159				base-sys-shlib
+./lib/libc.so.12.161				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
 ./lib/libcrypto.so.4.1				base-crypto-shlib	crypto
 ./lib/libedit.so.2.11				base-sys-shlib
@@ -54,17 +54,17 @@
 ./usr/lib/libarchive.so.2.1			base-sys-shlib
 ./usr/lib/libasn1.so.7.0			base-krb5-shlib		kerberos
 ./usr/lib/libbfd.so.9.0				base-sys-shlib		bfd
-./usr/lib/libbind9.so.1.0			base-bind-shlib
+./usr/lib/libbind9.so.1.1			base-bind-shlib
 ./usr/lib/libbluetooth.so.3.0			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
-./usr/lib/libc.so.12.159			base-sys-shlib
+./usr/lib/libc.so.12.161			base-sys-shlib
 ./usr/lib/libcom_err.so.5.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.0.2			base-sys-shlib
 ./usr/lib/libcrypto.so.4.1			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.6.4			base-sys-shlib
 ./usr/lib/libdes.so.7.0				base-crypto-shlib	crypto
-./usr/lib/libdns.so.1.0				base-bind-shlib
+./usr/lib/libdns.so.1.1				base-bind-shlib
 ./usr/lib/libedit.so.2.11			base-sys-shlib
 ./usr/lib/libevent.so.2.0			base-sys-shlib
 ./usr/lib/libform.so.5.0			base-sys-shlib
@@ -77,9 +77,9 @@
 ./usr/lib/libhx509.so.2.0			base-krb5-shlib		kerberos
 ./usr/lib/libintl.so.0.0			base-sys-shlib
 ./usr/lib/libipsec.so.2.2			base-net-shlib
-./usr/lib/libisc.so.1.0				base-bind-shlib
-./usr/lib/libisccc.so.1.0			base-bind-shlib
-./usr/lib/libisccfg.so.1.0			base-bind-shlib
+./usr/lib/libisc.so.1.1				base-bind-shlib
+./usr/lib/libisccc.so.1.1			base-bind-shlib
+./usr/lib/libisccfg.so.1.1			base-bind-shlib
 ./usr/lib/libiscsi.so.0.0			base-iscsi-shlib	iscsi
 ./usr/lib/libkadm5clnt.so.10.0			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5srv.so.11.0			base-krb5-shlib		kerberos
@@ -89,7 +89,7 @@
 ./usr/lib/liblber.so.2.5			base-ldap-shlib		ldap
 ./usr/lib/libldap.so.2.5			base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.2.5			base-ldap-shlib		ldap
-./usr/lib/liblwres.so.1.0			base-bind-shlib
+./usr/lib/liblwres.so.1.1			base-bind-shlib
 ./usr/lib/libm.so.0.6				base-sys-shlib
 ./usr/lib/libmagic.so.1.0			base-sys-shlib
 ./usr/lib/libmenu.so.5.0			base-sys-shlib
@@ -114,7 +114,7 @@
 ./usr/lib/libskey.so.1.0			base-sys-shlib		skey
 ./usr/lib/libsl.so.3.0				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.5.0				base-krb5-shlib		kerberos
-./usr/lib/libssh.so.9.0				base-secsh-bin		crypto
+./usr/lib/libssh.so.10.0			base-secsh-bin		crypto
 ./usr/lib/libssl.so.6.0				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.6.0			base-sys-shlib		gcc=4
