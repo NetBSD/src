@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2006/07/23 13:33:53 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.24.20.1 2008/06/29 08:25:12 mjf Exp $
 #
 
 .include <bsd.own.mk>
@@ -18,11 +18,11 @@ NBFS=		${DESTDIR}/usr/mdec/nbfs,ffa
 all: ${ARCHIVE}
 
 release: check_RELEASEDIR .WAIT ${ARCHIVE}
-	${RELEASE_INSTALL} splug.bas ${RELEASEDIR}/${MACHINE}/installation/misc
+	${RELEASE_INSTALL} splug.bas ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 	${RELEASE_INSTALL} ${DISTRIBDIR}/notes/acorn32/prep.RISCOS \
-	    ${RELEASEDIR}/${MACHINE}/
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/
 	${RELEASE_INSTALL} ${ARCHIVE} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc/
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc/
 
 ${ARCHIVE}: tmp/BtNetBSD
 	TOOL_MKTEMP=${TOOL_MKTEMP}; export TOOL_MKTEMP; \

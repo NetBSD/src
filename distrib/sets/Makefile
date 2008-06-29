@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56.12.2 2008/06/02 13:21:17 mjf Exp $
+#	$NetBSD: Makefile,v 1.56.12.3 2008/06/29 08:25:13 mjf Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -209,16 +209,16 @@ REGPKG.update:= ${MKUPDATE:tl:Nno:C/..*/-u/}
 SYSPKGSETS?= all
 makesyspkgs: .PHONY check_DESTDIR check_RELEASEDIR \
 		sanitise_METALOG checkflist_if_DESTDIR
-	mkdir -p ${RELEASEDIR}/${MACHINE}/binary/syspkgs
+	mkdir -p ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/syspkgs
 	${SETSCMD} ${.CURDIR}/regpkgset \
 	    ${REGPKG.verbose} ${REGPKG.force} ${REGPKG.sloppy} \
 	    ${REGPKG.cache} ${REGPKG.update} \
 	    -d ${DESTDIR:S,^$,/,} ${METALOG.sanitised.unpriv} \
 	    -N ${NETBSDSRCDIR}/etc \
-	    -t ${RELEASEDIR}/${MACHINE}/binary/syspkgs ${SYSPKGSETS}
+	    -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/syspkgs ${SYSPKGSETS}
 
 makesyspkgsums: .PHONY check_RELEASEDIR
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/binary/syspkgs
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/syspkgs
 
 # Update the "deps" file.
 # XXX: Why is "deps" checked in to the source tree, instead of

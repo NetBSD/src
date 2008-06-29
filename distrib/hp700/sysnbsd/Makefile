@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/01/06 20:16:24 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.10.1 2008/06/29 08:25:12 mjf Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,6 +13,6 @@ LIF=	SYSNBSD
 release: check_RELEASEDIR 
 	${MKBOOT} ${DESTDIR}/usr/mdec/boot ${KERN} ${.OBJDIR}/${LIF}
 	${RELEASE_INSTALL} ${.OBJDIR}/${LIF} \
-	    ${RELEASEDIR}/${MACHINE}/installation
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
 .include <bsd.prog.mk>

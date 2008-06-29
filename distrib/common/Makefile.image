@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.29 2005/06/27 19:10:32 dbj Exp $
+#	$NetBSD: Makefile.image,v 1.29.20.1 2008/06/29 08:25:12 mjf Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -109,7 +109,7 @@ realall: ${IMAGE}
 .if defined(IMAGE_RELEASEDIR)
 release:: check_RELEASEDIR .WAIT ${IMAGE}.gz
 	${RELEASE_INSTALL} ${IMAGE}.gz \
-	    ${RELEASEDIR}/${MACHINE}/${IMAGE_RELEASEDIR}
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${IMAGE_RELEASEDIR}
 .endif
 
 CLEANFILES+=	${IMAGE} ${IMAGE}.gz ${IMAGE}.tmp
@@ -131,7 +131,7 @@ CLEANFILES+=	${IMAGETAR} ${IMAGETAR}.tmp
 .if defined(IMAGETAR_RELEASEDIR)
 release:: check_RELEASEDIR .WAIT ${IMAGETAR}
 	${RELEASE_INSTALL} ${IMAGETAR} \
-	    ${RELEASEDIR}/${MACHINE}/${IMAGETAR_RELEASEDIR}
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${IMAGETAR_RELEASEDIR}
 .endif
 
 .endif	# ! defined(IMAGETAR)					# }

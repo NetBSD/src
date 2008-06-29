@@ -1,4 +1,6 @@
-# $NetBSD: md.i386,v 1.121.6.1 2008/06/02 13:21:17 mjf Exp $
+# $NetBSD: md.i386,v 1.121.6.2 2008/06/29 08:25:13 mjf Exp $
+./@MODULEDIR@/azalia				base-kernel-modules
+./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules
 ./@MODULEDIR@/drm				base-kernel-modules
 ./@MODULEDIR@/drm/drm.kmod			base-kernel-modules
 ./@MODULEDIR@/i915drm				base-kernel-modules

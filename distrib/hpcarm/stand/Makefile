@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.6.2 2008/06/02 13:21:13 mjf Exp $
+#	$NetBSD: Makefile,v 1.1.6.3 2008/06/29 08:25:12 mjf Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,7 +15,7 @@ UUDECODE_FILES_RENAME_${HPCBOOT}= ${HPCBOOT}
 
 release:: check_RELEASEDIR .WAIT ${HPCBOOT}
 	${INSTALL} -c -m ${NONBINMODE} \
-		${HPCBOOT} ${RELEASEDIR}/${MACHINE}/installation
+		${HPCBOOT} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
 .include <bsd.files.mk>
 .include <bsd.obj.mk>

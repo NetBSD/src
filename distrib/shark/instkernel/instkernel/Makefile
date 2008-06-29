@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2007/03/10 17:57:41 jmmv Exp $
+#	$NetBSD: Makefile,v 1.15.12.1 2008/06/29 08:25:13 mjf Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,6 +19,6 @@ MDSET_POST= \
 .PHONY: release-aout-instkernel
 release-aout-instkernel:
 	${RELEASE_INSTALL} netbsd-INSTALL.aout.gz \
-	    ${RELEASEDIR}/${MACHINE}/installation/instkernel/netbsd.gz
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/instkernel/netbsd.gz
 
 .include <bsd.prog.mk>

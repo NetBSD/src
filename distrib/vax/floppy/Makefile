@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/07/10 10:34:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.12.32.1 2008/06/29 08:25:13 mjf Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -29,6 +29,6 @@ ${IMAGE}: ${IMAGEDEPENDS}
 
 release: check_RELEASEDIR .WAIT ${IMAGE}
 	${RELEASE_INSTALL} ${IMAGE} \
-	    ${RELEASEDIR}/${MACHINE}/installation/bootfs
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/bootfs
 
 .include <bsd.prog.mk>
