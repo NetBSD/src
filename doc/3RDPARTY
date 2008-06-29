@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.594.2.2 2008/06/02 13:21:19 mjf Exp $
+#	$NetBSD: 3RDPARTY,v 1.594.2.3 2008/06/29 08:35:32 mjf Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -91,8 +91,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
-Version:	libc/includes: 9.4.1, bind: 9.4.1-P1
-Current Vers:	9.4.1-P1
+Version:	libc/includes: 9.5.0, bind: 9.5.0
+Current Vers:	9.5.0
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/sw/bind/
@@ -102,6 +102,7 @@ License:	BSD-like (2-clause)
 Notes:
 First bind2netbsd script to import into src/dist/bind.
 The Makefiles in src/usr.sbin/bind are not handled by the script.
+Build bind to generate the include files.
 Then binclude4netbsd script to import into src/usr.sbin/bind/include.
 Then include4netbsd script to import into src/include.
 Then libc4netbsd script to update the resolver in libc.
@@ -632,6 +633,18 @@ License:	BSD (3-clause)
 Notes:
 Next import will need $ Id removal..
 
+Package:	HPN-SSH
+Version:	5.0p1 13 v3
+Current Vers:	5.0p1 13 v3
+Maintainer:	www.psc.edu
+Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.0p1-hpn13v3.diff.gz
+Home Page:	http://www.psc.edu/networking/projects/hpn-ssh/
+Mailing List:
+Responsible:	christos
+License:	
+Notes:
+Patch applied after OpenSSH import.
+
 Package:	OpenSSH
 Version:	5.0
 Current Vers:	5.0 / portable 5.0p1
@@ -655,6 +668,7 @@ markus is very cooperative about it):
 - uidswap.c changed order of set{e,}{u,g}id so that it works on NetBSD
 - added moduli from portable openssh
 - added USE_PAM patches and auth_pam.[ch] from portable openssh
+- add the HPN patch 
 - always bump major when importing to avoid api problems.
 
 Package:	OpenSSL
@@ -696,8 +710,8 @@ License:	Public domain
 pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
 Package:	PF (openbsd packet filter)
-Version:	OpenBSD 3.7
-Current Vers:	OpenBSD 3.9-current
+Version:	OpenBSD 4.2
+Current Vers:	OpenBSD 4.3-current
 Maintainer:	The OpenBSD Project
 Archive Site:	ftp://ftp.openbsd.org/
 Home Page:	http://www.openbsd.org/faq/pf/
@@ -736,8 +750,8 @@ formating in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	postfix
-Version:	2.4.5
-Current Vers:	2.5.0
+Version:	2.5.2
+Current Vers:	2.5.2
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/

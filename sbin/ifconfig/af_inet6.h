@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.h,v 1.2.20.1 2008/06/02 13:21:22 mjf Exp $	*/
+/*	$NetBSD: af_inet6.h,v 1.2.20.2 2008/06/29 08:41:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -48,7 +48,6 @@ int	setia6eui64(prop_dictionary_t, prop_dictionary_t);
 void	in6_fillscopeid(struct sockaddr_in6 *sin6);
 void	in6_status(prop_dictionary_t, prop_dictionary_t, bool);
 void	in6_getaddr(const struct paddr_prefix *, int);
-void	in6_getprefix(int, int);
 void	in6_init(void);
 int	setia6eui64_impl(prop_dictionary_t, struct in6_aliasreq *);
 int	setia6vltime_impl(prop_dictionary_t, struct in6_aliasreq *);
