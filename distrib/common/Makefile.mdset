@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.30.8.1 2008/06/02 13:21:12 mjf Exp $
+#	$NetBSD: Makefile.mdset,v 1.30.8.2 2008/06/29 08:25:12 mjf Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -162,7 +162,7 @@ realall: ${KERNELS}
 .if defined(MDSET_RELEASEDIR)
 release:: check_RELEASEDIR .WAIT ${KERNELS}
 	${RELEASE_INSTALL} ${KERNELS} ${KERNELSYMS} \
-	    ${RELEASEDIR}/${MACHINE}/${MDSET_RELEASEDIR}
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${MDSET_RELEASEDIR}
 .endif
 
 
