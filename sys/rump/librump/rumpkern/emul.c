@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.29.6.2 2008/06/02 13:24:31 mjf Exp $	*/
+/*	$NetBSD: emul.c,v 1.29.6.3 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -482,10 +482,16 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
 	extern int hz;
 	int rv, error;
-
+	struct timespec time;
+	
 	if (mtx)
 		mutex_exit(mtx);
-	rv = rumpuser_usleep(timeo * (1000000 / hz), &error);
+
+	time.tv_sec = timeo / hz;
+	time.tv_nsec = (timeo % hz) * (1000000000 / hz);
+
+	rv = rumpuser_nanosleep(&time, NULL, &error);
+	
 	if (mtx)
 		mutex_enter(mtx);
 
@@ -561,4 +567,11 @@ const char *
 device_xname(device_t dv)
 {
 	return "bogus0";
+}
+
+void
+assert_sleepable(void)
+{
+
+	/* always sleepable, although we should improve this */
 }

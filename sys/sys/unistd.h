@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.40 2008/01/15 03:37:12 rmind Exp $	*/
+/*	$NetBSD: unistd.h,v 1.40.6.1 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -92,6 +92,12 @@
 				/* threads */
 #define	_POSIX_THREADS		200112L
 				/* semaphores */
+#define	_POSIX_THREAD_SAFE_FUNCTIONS	200112L
+				/* _r functions */
+#define	_POSIX_THREAD_ATTR_STACKSIZE	200112L
+				/* pthread_attr functions for stack size */
+#define	_POSIX_THREAD_ATTR_STACKADDR	200112L
+				/* pthread_attr functions for stack address */
 #define	_POSIX_SEMAPHORES	0
 				/* barriers */
 #define	_POSIX_BARRIERS		200112L
@@ -209,6 +215,18 @@
 #define	_SC_MQ_OPEN_MAX		54
 #define	_SC_MQ_PRIO_MAX		55
 #define	_SC_PRIORITY_SCHEDULING	56
+#define	_SC_THREAD_DESTRUCTOR_ITERATIONS 57
+#define	_SC_THREAD_KEYS_MAX		58
+#define	_SC_THREAD_STACK_MIN		59
+#define	_SC_THREAD_THREADS_MAX		60
+#define	_SC_THREAD_ATTR_STACKADDR	61
+#define	_SC_THREAD_ATTR_STACKSIZE 	62
+#define	_SC_THREAD_PRIORITY_SCHEDULING	63
+#define	_SC_THREAD_PRIO_INHERIT 	64
+#define	_SC_THREAD_PRIO_PROTECT		65
+#define	_SC_THREAD_PROCESS_SHARED	66
+#define	_SC_THREAD_SAFE_FUNCTIONS	67
+#define	_SC_TTY_NAME_MAX		68
 
 #ifdef _NETBSD_SOURCE
 /* Commonly provided sysconf() extensions */

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.35 2007/10/17 19:58:03 garbled Exp $	*/
+/*	$NetBSD: par.c,v 1.35.16.1 2008/06/29 09:33:02 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.35 2007/10/17 19:58:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.35.16.1 2008/06/29 09:33:02 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: par.c,v 1.35 2007/10/17 19:58:03 garbled Exp $");
 #include <arch/x68k/dev/intiovar.h>
 
 struct	par_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
@@ -109,10 +109,10 @@ int	pardebug = 0;
 #endif
 #endif
 
-int parmatch(struct device *, struct cfdata *, void *);
-void parattach(struct device *, struct device *, void *);
+int parmatch(device_t, cfdata_t, void *);
+void parattach(device_t, device_t, void *);
 
-CFATTACH_DECL(par, sizeof(struct par_softc),
+CFATTACH_DECL_NEW(par, sizeof(struct par_softc),
     parmatch, parattach, NULL, NULL);
 
 extern struct cfdriver par_cd;
@@ -130,7 +130,7 @@ const struct cdevsw par_cdevsw = {
 };
 
 int
-parmatch(struct device *pdp, struct cfdata *cfp, void *aux)
+parmatch(device_t pdp, cfdata_t cfp, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -154,16 +154,17 @@ parmatch(struct device *pdp, struct cfdata *cfp, void *aux)
 }
 
 void
-parattach(struct device *pdp, struct device *dp, void *aux)
+parattach(device_t pdp, device_t dp, void *aux)
 {
-	struct par_softc *sc = (struct par_softc *)dp;
+	struct par_softc *sc = device_private(dp);
 	struct intio_attach_args *ia = aux;
 	int r;
 	
 	par_attached = 1;
 
+	sc->sc_dev = dp;
 	sc->sc_flags = PARF_ALIVE;
-	printf(": parallel port (write only, interrupt)\n");
+	aprint_normal(": parallel port (write only, interrupt)\n");
 	ia->ia_size = 0x2000;
 	r = intio_map_allocate_region(pdp, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
@@ -197,7 +198,7 @@ paropen(dev_t dev, int flags, int mode, struct lwp *l)
 	int unit = UNIT(dev);
 	struct par_softc *sc;
 	
-	sc = device_lookup(&par_cd, unit);
+	sc = device_lookup_private(&par_cd, unit);
 	if (sc == NULL || !(sc->sc_flags & PARF_ALIVE))
 		return(ENXIO);
 	if (sc->sc_flags & PARF_OPEN)
@@ -222,7 +223,7 @@ parclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	int s;
-	struct par_softc *sc = par_cd.cd_devs[unit];
+	struct par_softc *sc = device_lookup_private(&par_cd, unit);
 	
 	sc->sc_flags &= ~(PARF_OPEN|PARF_OWRITE);
 
@@ -241,7 +242,7 @@ parstart(void *arg)
 	struct par_softc *sc = arg;
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parstart(%x)\n", device_unit(&sc->sc_dev));
+		printf("parstart(%x)\n", device_unit(sc->sc_dev));
 #endif
 	sc->sc_flags &= ~PARF_DELAY;
 	wakeup(sc);
@@ -253,7 +254,7 @@ partimo(void *arg)
 	struct par_softc *sc = arg;
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("partimo(%x)\n", device_unit(&sc->sc_dev));
+		printf("partimo(%x)\n", device_unit(sc->sc_dev));
 #endif
 	sc->sc_flags &= ~(PARF_UIO|PARF_TIMO);
 	wakeup(sc);
@@ -274,7 +275,7 @@ int
 parrw(dev_t dev, struct uio *uio)
 {
 	int unit = UNIT(dev);
-	struct par_softc *sc = par_cd.cd_devs[unit];
+	struct par_softc *sc = device_lookup_private(&par_cd, unit);
 	int len=0xdeadbeef;	/* XXX: shutup gcc */
 	int s, cnt=0;
 	char *cp;
@@ -404,7 +405,7 @@ parrw(dev_t dev, struct uio *uio)
 int
 parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct par_softc *sc = par_cd.cd_devs[UNIT(dev)];
+	struct par_softc *sc = device_lookup_private(&par_cd, UNIT(dev));
 	struct parparam *pp, *upp;
 	int error = 0;
 	

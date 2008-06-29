@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.54.6.4 2008/06/02 13:23:11 mjf Exp $	*/
+/*	$NetBSD: ld.c,v 1.54.6.5 2008/06/29 09:33:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.54.6.4 2008/06/02 13:23:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.54.6.5 2008/06/29 09:33:04 mjf Exp $");
 
 #include "rnd.h"
 
@@ -295,7 +295,7 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	int error, unit, part;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup(&ld_cd, unit)) == NULL)
+	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
@@ -343,7 +343,7 @@ ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
-	sc = device_lookup(&ld_cd, unit);
+	sc = device_lookup_private(&ld_cd, unit);
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
 
@@ -398,7 +398,7 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
-	sc = device_lookup(&ld_cd, unit);
+	sc = device_lookup_private(&ld_cd, unit);
 
 	error = disk_ioctl(&sc->sc_dk, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
@@ -592,7 +592,7 @@ ldstrategy(struct buf *bp)
 	daddr_t blkno;
 	int s, part;
 
-	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
+	sc = device_lookup_private(&ld_cd, DISKUNIT(bp->b_dev));
 	part = DISKPART(bp->b_dev);
 
 	if ((sc->sc_flags & LDF_DETACH) != 0) {
@@ -737,7 +737,7 @@ ldsize(dev_t dev)
 	int part, unit, omask, size;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup(&ld_cd, unit)) == NULL)
+	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
 		return (ENODEV);
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
@@ -824,7 +824,7 @@ lddump(dev_t dev, daddr_t blkno, void *vav, size_t size)
 	static int dumping;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup(&ld_cd, unit)) == NULL)
+	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
@@ -879,7 +879,7 @@ ldminphys(struct buf *bp)
 {
 	struct ld_softc *sc;
 
-	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
+	sc = device_lookup_private(&ld_cd, DISKUNIT(bp->b_dev));
 
 	if (bp->b_bcount > sc->sc_maxxfer)
 		bp->b_bcount = sc->sc_maxxfer;

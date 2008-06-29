@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.64.16.1 2008/06/02 13:23:26 mjf Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.64.16.2 2008/06/29 09:33:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.64.16.1 2008/06/02 13:23:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.64.16.2 2008/06/29 09:33:07 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -702,7 +702,7 @@ esh_fpopen(dev_t dev, int oflags, int devtype,
 	int rseg;
 	int s;
 
-	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	sc = device_lookup_private(&esh_cd, ESHUNIT(dev));
 	if (sc == NULL || ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
@@ -916,7 +916,7 @@ esh_fpclose(dev_t dev, int fflag, int devtype,
 	int error = 0;
 	int s;
 
-	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	sc = device_lookup_private(&esh_cd, ESHUNIT(dev));
 	if (sc == NULL || ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
@@ -993,7 +993,7 @@ esh_fpread(dev_t dev, struct uio *uio, int ioflag)
 	printf("esh_fpread:  dev %x\n", dev);
 #endif
 
-	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	sc = device_lookup_private(&esh_cd, ESHUNIT(dev));
 	if (sc == NULL || ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
@@ -1152,7 +1152,7 @@ esh_fpwrite(dev_t dev, struct uio *uio, int ioflag)
 	printf("esh_fpwrite:  dev %x\n", dev);
 #endif
 
-	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	sc = device_lookup_private(&esh_cd, ESHUNIT(dev));
 	if (sc == NULL || ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
@@ -1301,7 +1301,7 @@ esh_fpstrategy(bp)
 		bp->b_bcount, bp->b_flags, bp->b_dev, unit, ulp);
 #endif
 
-	sc = device_lookup(&esh_cd, ESHUNIT(bp->b_dev));
+	sc = device_lookup_private(&esh_cd, ESHUNIT(bp->b_dev));
 
 	s = splnet();
 	if (sc == NULL || ulp == HIPPI_ULP_802) {

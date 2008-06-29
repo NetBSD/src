@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.12.6.1 2008/06/02 13:23:16 mjf Exp $ */
+/*	$NetBSD: mt.c,v 1.12.6.2 2008/06/29 09:33:06 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.12.6.1 2008/06/02 13:23:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.12.6.2 2008/06/29 09:33:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,16 +367,13 @@ getstats:
 }
 
 int
-mtopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mt_softc *sc;
 	int req_den;
 	int error;
 
-	sc = device_lookup(&mt_cd, MTUNIT(dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 	if (sc == NULL || (sc->sc_flags & MTF_EXISTS) == 0)
 		return (ENXIO);
 
@@ -473,14 +470,11 @@ errout:
 }
 
 int
-mtclose(dev, flag, fmt, l)
-	dev_t dev;
-	int flag, fmt;
-	struct lwp *l;
+mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct mt_softc *sc;
 
-	sc = device_lookup(&mt_cd, MTUNIT(dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -496,16 +490,13 @@ mtclose(dev, flag, fmt, l)
 }
 
 int
-mtcommand(dev, cmd, cnt)
-	dev_t dev;
-	int cmd;
-	int cnt;
+mtcommand(dev_t dev, int cmd, int cnt)
 {
 	struct mt_softc *sc;
 	struct buf *bp;
 	int error = 0;
 
-	sc = device_lookup(&mt_cd, MTUNIT(dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 	bp = &sc->sc_bufstore;
 
 	if (bp->b_cflags & BC_BUSY)
@@ -537,13 +528,12 @@ mtcommand(dev, cmd, cnt)
  * Only thing to check here is for legal record lengths (writes only).
  */
 void
-mtstrategy(bp)
-	struct buf *bp;
+mtstrategy(struct buf *bp)
 {
 	struct mt_softc *sc;
 	int s;
 
-	sc = device_lookup(&mt_cd, MTUNIT(bp->b_dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(bp->b_dev));
 
 	DPRINTF(MDB_ANY, ("%s strategy", device_xname(&sc->sc_dev)));
 
@@ -1010,28 +1000,22 @@ error:
 }
 
 int
-mtread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mtread(dev_t dev, struct uio *uio, int flags)
 {
 	struct mt_softc *sc;
 
-	sc = device_lookup(&mt_cd, MTUNIT(dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 
 	return (physio(mtstrategy, &sc->sc_bufstore,
 	    dev, B_READ, minphys, uio));
 }
 
 int
-mtwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mtwrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct mt_softc *sc;
 
-	sc = device_lookup(&mt_cd, MTUNIT(dev));
+	sc = device_lookup_private(&mt_cd, MTUNIT(dev));
 
 	return (physio(mtstrategy, &sc->sc_bufstore,
 	    dev, B_WRITE, minphys, uio));

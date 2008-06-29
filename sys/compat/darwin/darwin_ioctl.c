@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioctl.c,v 1.8.6.2 2008/06/02 13:22:57 mjf Exp $ */
+/*	$NetBSD: darwin_ioctl.c,v 1.8.6.3 2008/06/29 09:33:02 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.8.6.2 2008/06/02 13:22:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.8.6.3 2008/06/29 09:33:02 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +73,7 @@ darwin_sys_ioctl(struct lwp *l, const struct darwin_sys_ioctl_args *uap, registe
 		int *data = SCARG(uap, data);
 		int type;
 
-		/* getvnode() will use the descriptor for us */
+		/* fd_getvnode() will use the descriptor for us */
 		if ((error = fd_getvnode(SCARG(uap, fd), &fp)))
 			return (error);
 

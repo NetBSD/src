@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.38.6.2 2008/06/02 13:22:26 mjf Exp $	*/
+/*	$NetBSD: zs.c,v 1.38.6.3 2008/06/29 09:32:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.38.6.2 2008/06/02 13:22:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.38.6.3 2008/06/29 09:32:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ zshard_shared(void *arg)
 
 	rval = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = device_private(zsc_cd.cd_devs[unit]);
+		zsc = device_lookup_private(&zsc_cd, unit);
 		if (zsc != NULL && zsc_intr_hard(zsc)) {
 			if ((zsc->zsc_cs[0]->cs_softreq) ||
 			    (zsc->zsc_cs[1]->cs_softreq))

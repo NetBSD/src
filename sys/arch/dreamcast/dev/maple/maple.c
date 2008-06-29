@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.35.16.2 2008/06/05 19:14:33 mjf Exp $	*/
+/*	$NetBSD: maple.c,v 1.35.16.3 2008/06/29 09:32:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.35.16.2 2008/06/05 19:14:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.35.16.3 2008/06/29 09:32:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1602,7 +1602,7 @@ mapleopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct maple_softc *sc;
 
-	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+	sc = device_lookup_private(&maple_cd, MAPLEBUSUNIT(dev));
 	if (sc == NULL)			/* make sure it was attached */
 		return ENXIO;
 
@@ -1625,7 +1625,7 @@ mapleclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct maple_softc *sc;
 
-	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+	sc = device_lookup_private(&maple_cd, MAPLEBUSUNIT(dev));
 
 	sc->sc_port_units_open[MAPLEPORT(dev)] &= ~(1 << MAPLESUBUNIT(dev));
 
@@ -1658,7 +1658,7 @@ mapleioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct maple_softc *sc;
 	struct maple_unit *u;
 
-	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+	sc = device_lookup_private(&maple_cd, MAPLEBUSUNIT(dev));
 	u = &sc->sc_unit[MAPLEPORT(dev)][MAPLESUBUNIT(dev)];
 
 	return maple_unit_ioctl(&sc->sc_dev, u, cmd, data, flag, l);

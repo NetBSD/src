@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.38 2007/12/08 19:29:53 pooka Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.38.12.1 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -170,9 +170,6 @@ int ext2fs_makeinode(int, struct vnode *, struct vnode **,
 			  struct componentname *cnp);
 int ext2fs_reclaim(void *);
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_ext2fs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 __END_DECLS
 
 #define IS_EXT2_VNODE(vp)   (vp->v_tag == VT_EXT2FS)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.20 2008/01/19 18:10:13 he Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.20.6.1 2008/06/29 09:32:55 mjf Exp $
 
 MACHINE_ARCH=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -26,10 +26,14 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 	 "${OBJCOPY} -O a.out-arm-netbsd \
 		-R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident \
 		-R .debug_abbrev -R .debug_info -R .debug_line -R .debug_str \
+		-R .debug_frame -R .debug_loc -R .debug_pubnames \
+		-R .debug_aranges \
 		$@ $@.aout"; \
 	${OBJCOPY} -O a.out-arm-netbsd \
 		-R .ident -R .arm.atpcs -R .comment -R .note.netbsd.ident \
 		-R .debug_abbrev -R .debug_info -R .debug_line -R .debug_str \
+		-R .debug_frame -R .debug_loc -R .debug_pubnames \
+		-R .debug_aranges \
 		$@ $@.aout
 .endif
 .endif

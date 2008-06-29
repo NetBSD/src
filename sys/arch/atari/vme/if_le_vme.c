@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.22.74.1 2008/06/02 13:21:58 mjf Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.22.74.2 2008/06/29 09:32:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.22.74.1 2008/06/02 13:21:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.22.74.2 2008/06/29 09:32:55 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -324,7 +324,7 @@ le_intr(struct le_softc *lesc, int sr)
 	struct lance_softc	*sc = &lesc->sc_am7990.lsc;
 	uint16_t		csr0;
 
-	if ((sr & PSL_IPL) < (IPL_NET & PSL_IPL))
+	if ((sr & PSL_IPL) < (ipl2psl_table[IPL_NET] & PSL_IPL))
 		am7990_intr(sc);
 	else {
 		sc->sc_saved_csr0 = csr0 = lerdcsr(sc, LE_CSR0);

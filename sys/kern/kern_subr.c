@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.181.6.2 2008/06/02 13:24:09 mjf Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.181.6.3 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.181.6.2 2008/06/02 13:24:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.181.6.3 2008/06/29 09:33:14 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -717,14 +717,12 @@ isswap(struct device *dv)
 #include "md.h"
 
 #if NMD > 0
-static struct device fakemdrootdev[NMD];
 extern struct cfdriver md_cd;
-#endif
-
 #ifdef MEMORY_DISK_IS_ROOT
 int md_is_root = 1;
 #else
 int md_is_root = 0;
+#endif
 #endif
 
 /*
@@ -766,17 +764,11 @@ setroot(struct device *bootdv, int bootpartition)
 
 #if NMD > 0
 	if (md_is_root) {
-		int i;
-		for (i = 0; i < NMD; i++) {
-			fakemdrootdev[i].dv_class  = DV_DISK;
-			fakemdrootdev[i].dv_cfdata = NULL;
-			fakemdrootdev[i].dv_cfdriver = &md_cd;
-			fakemdrootdev[i].dv_unit   = i;
-			fakemdrootdev[i].dv_parent = NULL;
-			snprintf(fakemdrootdev[i].dv_xname,
-			    sizeof(fakemdrootdev[i].dv_xname), "md%d", i);
-		}
-		bootdv = &fakemdrootdev[0];
+		/*
+		 * XXX there should be "root on md0" in the config file,
+		 * but it isn't always
+		 */
+		bootdv = md_cd.cd_devs[0];
 		bootpartition = 0;
 	}
 #endif
@@ -1112,16 +1104,6 @@ finddevice(const char *name)
 	if ((wname = getwedgename(name, strlen(name))) != NULL)
 		return dkwedge_find_by_wname(wname);
 
-#if NMD > 0
-	if (md_is_root) {
-		int j;
-		for (j = 0; j < NMD; j++) {
-			if (strcmp(name, fakemdrootdev[j].dv_xname) == 0)
-				return &fakemdrootdev[j];
-		}
-	}
-#endif
-
 	return device_find_by_xname(name);
 }
 
@@ -1132,14 +1114,6 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
-#if NMD > 0
-		if (isdump == 0 && md_is_root) {
-			int i;
-			for (i = 0; i < NMD; i++)
-				printf(" %s[a-%c]", fakemdrootdev[i].dv_xname,
-				    'a' + MAXPARTITIONS - 1);
-		}
-#endif
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (DEV_USES_PARTITIONS(dv))
 				printf(" %s[a-%c]", device_xname(dv),
@@ -1204,18 +1178,6 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 		*cp = '\0';
 	} else
 		part = defpart;
-
-#if NMD > 0
-	if (md_is_root) {
-		int i;
-		for (i = 0; i < NMD; i++) {
-			if (strcmp(str, fakemdrootdev[i].dv_xname) == 0) {
-				dv = &fakemdrootdev[i];
-				goto gotdisk;
-			}
-		}
-	}
-#endif
 
 	dv = finddevice(str);
 	if (dv != NULL) {

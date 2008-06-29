@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.15.74.1 2008/06/02 13:22:47 mjf Exp $	*/
+/*	$NetBSD: iommu.c,v 1.15.74.2 2008/06/29 09:33:01 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.15.74.1 2008/06/02 13:22:47 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.15.74.2 2008/06/29 09:33:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,33 +51,33 @@ __KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.15.74.1 2008/06/02 13:22:47 mjf Exp $");
 
 #define IOMMU_SIZE	(IOMMU_NENT * sizeof(iommu_pde_t))
 
-static int  iommu_match(struct device *, struct cfdata *, void *);
-static void iommu_attach(struct device *, struct device *, void *);
+static int  iommu_match(device_t, cfdata_t, void *);
+static void iommu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(iommu, sizeof(struct device),
+CFATTACH_DECL_NEW(iommu, 0,
     iommu_match, iommu_attach, NULL, NULL);
 
 static iommu_pde_t *iommu_va;
 
 static int 
-iommu_match(struct device *parent, struct cfdata *cf, void *args)
+iommu_match(device_t parent, cfdata_t cf, void *args)
 {
 	/* This driver only supports one instance. */
 	if (iommu_va)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void 
-iommu_attach(struct device *parent, struct device *self, void *args)
+iommu_attach(device_t parent, device_t self, void *args)
 {
 	struct confargs *ca = args;
 
-	iommu_va = (iommu_pde_t *)
-		bus_mapin(ca->ca_bustype, ca->ca_paddr, IOMMU_SIZE);
+	iommu_va = (iommu_pde_t *)bus_mapin(ca->ca_bustype, ca->ca_paddr,
+	    IOMMU_SIZE);
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 void 
@@ -87,7 +87,7 @@ iommu_enter(uint32_t sa, uint32_t pa)
 
 #ifdef	DIAGNOSTIC
 	if (sa > (1<<24))
-		panic("iommu_enter: bad sa");
+		panic("%s: bad sa", __func__);
 #endif
 
 	/* Convert the slave address into a page index. */
@@ -107,7 +107,7 @@ iommu_remove(uint32_t sa, uint32_t len)
 
 #ifdef	DIAGNOSTIC
 	if (sa > (1<<24))
-		panic("iommu_enter: bad sa");
+		panic("%s: bad sa", __func__);
 #endif
 
 	pn = IOMMU_BTOP(sa);

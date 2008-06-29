@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.25.6.2 2008/06/02 13:22:56 mjf Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.25.6.3 2008/06/29 09:33:02 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.25.6.2 2008/06/02 13:22:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.25.6.3 2008/06/29 09:33:02 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,8 +223,8 @@ compat_30_sys_getdents(struct lwp *l, const struct compat_30_sys_getdents_args *
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return error;
 
 	if ((fp->f_flag & FREAD) == 0) {

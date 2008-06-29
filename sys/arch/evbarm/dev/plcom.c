@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.25.6.1 2008/06/02 13:22:01 mjf Exp $	*/
+/*	$NetBSD: plcom.c,v 1.25.6.2 2008/06/29 09:32:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.25.6.1 2008/06/02 13:22:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.25.6.2 2008/06/29 09:32:56 mjf Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -598,7 +598,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s, s2;
 	int error;
 
-	sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
+	sc = device_lookup_private(&plcom_cd, PLCOMUNIT(dev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, PLCOM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
 		return ENXIO;
@@ -745,7 +745,8 @@ bad:
 int
 plcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
+	struct plcom_softc *sc =
+		device_lookup_private(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -773,7 +774,8 @@ plcomclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 plcomread(dev_t dev, struct uio *uio, int flag)
 {
-	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
+	struct plcom_softc *sc =
+		device_lookup_private(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (PLCOM_ISALIVE(sc) == 0)
@@ -785,7 +787,8 @@ plcomread(dev_t dev, struct uio *uio, int flag)
 int
 plcomwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
+	struct plcom_softc *sc =
+		device_lookup_private(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (PLCOM_ISALIVE(sc) == 0)
@@ -797,7 +800,8 @@ plcomwrite(dev_t dev, struct uio *uio, int flag)
 int
 plcompoll(dev_t dev, int events, struct lwp *l)
 {
-	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
+	struct plcom_softc *sc =
+		device_lookup_private(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (PLCOM_ISALIVE(sc) == 0)
@@ -809,7 +813,8 @@ plcompoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 plcomtty(dev_t dev)
 {
-	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
+	struct plcom_softc *sc =
+		device_lookup_private(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return tp;
@@ -818,7 +823,8 @@ plcomtty(dev_t dev)
 int
 plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
+	struct plcom_softc *sc =
+		device_lookup_private(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
@@ -1146,7 +1152,8 @@ cflag2lcr(tcflag_t cflag)
 int
 plcomparam(struct tty *tp, struct termios *t)
 {
-	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(tp->t_dev));
+	struct plcom_softc *sc =
+		device_lookup_private(&plcom_cd, PLCOMUNIT(tp->t_dev));
 	int ospeed;
 	u_char lcr;
 	int s;
@@ -1359,7 +1366,8 @@ plcom_loadchannelregs(struct plcom_softc *sc)
 int
 plcomhwiflow(struct tty *tp, int block)
 {
-	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(tp->t_dev));
+	struct plcom_softc *sc =
+		device_lookup_private(&plcom_cd, PLCOMUNIT(tp->t_dev));
 	int s;
 
 	if (PLCOM_ISALIVE(sc) == 0)
@@ -1417,7 +1425,8 @@ plcom_hwiflow(struct plcom_softc *sc)
 void
 plcomstart(struct tty *tp)
 {
-	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(tp->t_dev));
+	struct plcom_softc *sc =
+		device_lookup_private(&plcom_cd, PLCOMUNIT(tp->t_dev));
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int s;
@@ -1481,7 +1490,8 @@ out:
 void
 plcomstop(struct tty *tp, int flag)
 {
-	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(tp->t_dev));
+	struct plcom_softc *sc =
+		device_lookup_private(&plcom_cd, PLCOMUNIT(tp->t_dev));
 	int s;
 
 	s = splserial();

@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.9.8.1 2008/06/02 13:23:17 mjf Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.9.8.2 2008/06/29 09:33:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.9.8.1 2008/06/02 13:23:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.9.8.2 2008/06/29 09:33:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ seeprom_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct seeprom_softc *sc;
 
-	if ((sc = device_lookup(&seeprom_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&seeprom_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	/* XXX: Locking */
@@ -201,7 +201,7 @@ seeprom_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct seeprom_softc *sc;
 
-	if ((sc = device_lookup(&seeprom_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&seeprom_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	sc->sc_open = 0;
@@ -217,7 +217,7 @@ seeprom_read(dev_t dev, struct uio *uio, int flags)
 	u_int8_t ch, cmdbuf[2];
 	int a, error;
 
-	if ((sc = device_lookup(&seeprom_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&seeprom_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= sc->sc_size)
@@ -271,7 +271,7 @@ seeprom_write(dev_t dev, struct uio *uio, int flags)
 	u_int8_t ch, cmdbuf[2];
 	int a, error;
 
-	if ((sc = device_lookup(&seeprom_cd, minor(dev))) == NULL)
+	if ((sc = device_lookup_private(&seeprom_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
 	if (uio->uio_offset >= sc->sc_size)

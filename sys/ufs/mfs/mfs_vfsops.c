@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.90.4.3 2008/06/02 13:24:37 mjf Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.90.4.4 2008/06/29 09:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.90.4.3 2008/06/02 13:24:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.90.4.4 2008/06/29 09:33:21 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,6 +77,8 @@ static int mfs_initcnt;
 
 extern int (**mfs_vnodeop_p)(void *);
 
+static struct sysctllog *mfs_sysctl_log;
+
 /*
  * mfs vfs operations.
  */
@@ -119,37 +121,43 @@ struct vfsops mfs_vfsops = {
 static int
 mfs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&mfs_vfsops);
+		error = vfs_attach(&mfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&mfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&mfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+			       CTLTYPE_NODE, "mfs",
+			       SYSCTL_DESCR("Memory based file system"),
+			       NULL, 1, NULL, 0,
+			       CTL_VFS, 3, CTL_EOL);
+		/*
+		 * XXX the "1" and the "3" above could be dynamic, thereby
+		 * eliminating one more instance of the "number to vfs"
+		 * mapping problem, but they are in order as taken from
+		 * sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&mfs_vfsops);
+		error = vfs_detach(&mfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&mfs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
-}
 
-SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "mfs",
-		       SYSCTL_DESCR("Memory based file system"),
-		       NULL, 1, NULL, 0,
-		       CTL_VFS, 3, CTL_EOL);
-	/*
-	 * XXX the "1" and the "3" above could be dynamic, thereby
-	 * eliminating one more instance of the "number to vfs"
-	 * mapping problem, but they are in order as taken from
-	 * sys/mount.h
-	 */
+	return (error);
 }
 
 /*

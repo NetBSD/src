@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.6.16.2 2008/06/02 13:23:14 mjf Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.6.16.3 2008/06/29 09:33:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.6.16.2 2008/06/02 13:23:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.6.16.3 2008/06/29 09:33:06 mjf Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -150,7 +150,6 @@ XXX	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
 		printf("%s: couldn't establish interrupt\n", devname);
 		return;
 	}
-	printf("%s: interrupting at %d\n", devname, ca->ca_intrline);
 
 	/* Set LEGSUP register to its default value. */
 	cardbus_conf_write(cc, cf, tag, PCI_LEGSUP, PCI_LEGSUP_USBPIRQDEN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.130.6.2 2008/06/02 13:24:30 mjf Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.130.6.3 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.130.6.2 2008/06/02 13:24:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.130.6.3 2008/06/29 09:33:20 mjf Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -198,7 +198,12 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 		if (error)
 			return (error);
 		/* getsock() will use the descriptor for us */
-		error = getsock(nfsdarg.sock, &fp);
+		if ((fp = fd_getfile(nfsdarg.sock)) == NULL)
+			return (EBADF);
+		if (fp->f_type != DTYPE_SOCKET) {
+			fd_putfile(nfsdarg.sock);
+			return (ENOTSOCK);
+		}
 		if (error)
 			return (error);
 		/*

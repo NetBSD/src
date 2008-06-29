@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.137.6.2 2008/06/02 13:23:08 mjf Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.137.6.3 2008/06/29 09:33:04 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.137.6.2 2008/06/02 13:23:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.137.6.3 2008/06/29 09:33:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,8 +220,8 @@ svr4_sys_getdents64(struct lwp *l, const struct svr4_sys_getdents64_args *uap, r
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -340,8 +340,8 @@ svr4_sys_getdents(struct lwp *l, const struct svr4_sys_getdents_args *uap, regis
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {

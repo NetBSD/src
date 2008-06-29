@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.10.18.1 2008/06/02 13:24:06 mjf Exp $ */
+/* $NetBSD: udf.h,v 1.10.18.2 2008/06/29 09:33:13 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -73,14 +73,6 @@ extern int udf_verbose;
 /* initial value of udf_verbose */
 #define UDF_DEBUGGING		0
 
-
-#ifdef DEBUG
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
-#endif /* SYSCTL_SETUP_PROTO */
-#endif
-
-
 #ifdef DEBUG
 #define DPRINTF(name, arg) { \
 		if (udf_verbose & UDF_DEBUG_##name) {\
@@ -135,7 +127,7 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
 #define UDF_PMAPS		5	/* overkill */
 #define UDF_LVDINT_SEGMENTS	100	/* big overkill */
 #define UDF_LVINT_LOSSAGE	4	/* lose 2 openings */
-#define UDF_MAX_ALLOC_EXTENTS	10	/* overkill */
+#define UDF_MAX_ALLOC_EXTENTS	50	/* overkill */
 
 
 /* constants */

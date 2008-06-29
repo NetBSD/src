@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.11.14.2 2008/06/02 13:23:24 mjf Exp $ */
+/* $NetBSD: mfi.c,v 1.11.14.3 2008/06/29 09:33:07 mjf Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.11.14.2 2008/06/02 13:23:24 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.11.14.3 2008/06/29 09:33:07 mjf Exp $");
 
 #include "bio.h"
 
@@ -329,7 +329,7 @@ mfi_freemem(struct mfi_softc *sc, struct mfi_mem *mm)
 static int
 mfi_transition_firmware(struct mfi_softc *sc)
 {
-	int32_t			fw_state, cur_state;
+	uint32_t		fw_state, cur_state;
 	int			max_wait, i;
 
 	fw_state = mfi_fw_state(sc) & MFI_STATE_MASK;

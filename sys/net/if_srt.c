@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.7 2008/02/07 01:22:02 dyoung Exp $ */
+/* $NetBSD: if_srt.c,v 1.7.6.1 2008/06/29 09:33:18 mjf Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.7 2008/02/07 01:22:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.7.6.1 2008/06/29 09:33:18 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -244,7 +244,7 @@ static int srt_clone_create(struct if_clone *cl, int unit)
  sc->rts = 0;
  sc->flags = 0;
  sc->kflags = 0;
- snprintf(&sc->intf.if_xname[0],sizeof(sc->intf.if_xname),"%s%d",cl->ifc_name,unit);
+ if_initname(&sc->intf,cl->ifc_name,unit);
  sc->intf.if_softc = sc;
  sc->intf.if_mtu = 65535;
  sc->intf.if_flags = IFF_POINTOPOINT;

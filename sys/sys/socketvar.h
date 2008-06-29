@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.102.6.2 2008/06/02 13:24:33 mjf Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.102.6.3 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -165,6 +165,8 @@ struct socket {
 					struct mbuf **, int *);
 	struct mowner	*so_mowner;	/* who owns mbufs for this socket */
 	struct uidinfo	*so_uidinfo;	/* who opened the socket */
+	gid_t		so_egid;	/* creator effective gid */
+	pid_t		so_cpid;	/* creator pid */
 };
 
 #define	SB_EMPTY_FIXUP(sb)						\
@@ -290,6 +292,7 @@ void	sbunlock(struct sockbuf *);
 int	sowait(struct socket *, int);
 void	solockretry(struct socket *, kmutex_t *);
 void	sosetlock(struct socket *);
+void	solockreset(struct socket *, kmutex_t *);
 
 int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);

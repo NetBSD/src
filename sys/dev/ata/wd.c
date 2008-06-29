@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.355.6.5 2008/06/02 13:23:13 mjf Exp $ */
+/*	$NetBSD: wd.c,v 1.355.6.6 2008/06/29 09:33:05 mjf Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.355.6.5 2008/06/02 13:23:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.355.6.6 2008/06/29 09:33:05 mjf Exp $");
 
 #include "opt_ata.h"
 
@@ -539,7 +539,7 @@ void
 wdstrategy(struct buf *bp)
 {
 	struct wd_softc *wd =
-	    device_private(device_lookup(&wd_cd, WDUNIT(bp->b_dev)));
+	    device_lookup_private(&wd_cd, WDUNIT(bp->b_dev));
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	daddr_t blkno;
 	int s;
@@ -659,7 +659,7 @@ wd_split_mod15_write(struct buf *bp)
 {
 	struct buf *obp = bp->b_private;
 	struct wd_softc *sc =
-	    device_private(wd_cd.cd_devs[DISKUNIT(obp->b_dev)]);
+	    device_lookup_private(&wd_cd, DISKUNIT(obp->b_dev));
 
 	if (__predict_false(bp->b_error != 0)) {
 		/*
@@ -942,7 +942,7 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	int part, error;
 
 	ATADEBUG_PRINT(("wdopen\n"), DEBUG_FUNCS);
-	wd = device_private(device_lookup(&wd_cd, WDUNIT(dev)));
+	wd = device_lookup_private(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
 		return (ENXIO);
 
@@ -1026,7 +1026,7 @@ int
 wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct wd_softc *wd =
-	    device_private(device_lookup(&wd_cd, WDUNIT(dev)));
+	    device_lookup_private(&wd_cd, WDUNIT(dev));
 	int part = WDPART(dev);
 
 	ATADEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
@@ -1198,7 +1198,7 @@ int
 wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 {
 	struct wd_softc *wd =
-	    device_private(device_lookup(&wd_cd, WDUNIT(dev)));
+	    device_lookup_private(&wd_cd, WDUNIT(dev));
 	int error = 0, s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
@@ -1585,7 +1585,7 @@ wdsize(dev_t dev)
 
 	ATADEBUG_PRINT(("wdsize\n"), DEBUG_FUNCS);
 
-	wd = device_private(device_lookup(&wd_cd, WDUNIT(dev)));
+	wd = device_lookup_private(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
 		return (-1);
 
@@ -1624,7 +1624,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		return EFAULT;
 	wddoingadump = 1;
 
-	wd = device_private(device_lookup(&wd_cd, WDUNIT(dev)));
+	wd = device_lookup_private(&wd_cd, WDUNIT(dev));
 	if (wd == NULL)
 		return (ENXIO);
 

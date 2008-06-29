@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.25.6.2 2008/06/02 13:23:14 mjf Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.25.6.3 2008/06/29 09:33:05 mjf Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.25.6.2 2008/06/02 13:23:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.25.6.3 2008/06/29 09:33:05 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -104,7 +104,7 @@ struct ath_cardbus_softc {
 
 	pcireg_t sc_bar_val;		/* value of the BAR */
 
-	int	sc_intrline;		/* interrupt line */
+	cardbus_intr_line_t sc_intrline; /* interrupt line */
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
@@ -137,22 +137,13 @@ ath_cardbus_resume(device_t self PMF_FN_ARGS)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 
-#if 1
-	ath_cardbus_setup(csc);
-#else
-	int rc;
-	rc = cardbus_set_powerstate(csc->sc_ct, csc->sc_tag, PCI_PWR_D0);
-	if (rc != 0)
-		aprint_debug("%s: cardbus_set_powerstate %d\n", __func__, rc);
-#endif
-
 	csc->sc_ih = cardbus_intr_establish(csc->sc_ct->ct_cc,
 	    csc->sc_ct->ct_cf, csc->sc_intrline, IPL_NET, ath_intr,
 	    &csc->sc_ath);
 
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(self,
-		    "unable to establish interrupt at %d\n", csc->sc_intrline);
+		    "unable to establish interrupt\n");
 		return false;
 	}
 

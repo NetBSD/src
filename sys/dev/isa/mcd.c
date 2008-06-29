@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.103.12.2 2008/06/02 13:23:32 mjf Exp $	*/
+/*	$NetBSD: mcd.c,v 1.103.12.3 2008/06/29 09:33:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.103.12.2 2008/06/02 13:23:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.103.12.3 2008/06/29 09:33:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,7 @@ mcdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	int error, part;
 	struct mcd_softc *sc;
 
-	sc = device_lookup(&mcd_cd, MCDUNIT(dev));
+	sc = device_lookup_private(&mcd_cd, MCDUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -406,7 +406,7 @@ bad3:
 int
 mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
+	struct mcd_softc *sc = device_lookup_private(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
 	
 	MCD_TRACE("close: partition=%d\n", part);
@@ -440,10 +440,13 @@ void
 mcdstrategy(bp)
 	struct buf *bp;
 {
-	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(bp->b_dev));
-	struct disklabel *lp = sc->sc_dk.dk_label;
+	struct mcd_softc *sc;
+	struct disklabel *lp;
 	daddr_t blkno;
 	int s;
+
+	sc = device_lookup_private(&mcd_cd, MCDUNIT(bp->b_dev));
+	lp = sc->sc_dk.dk_label;
 
 	/* Test validity. */
 	MCD_TRACE("strategy: buf=0x%p blkno=%d bcount=%d\n", bp,
@@ -566,7 +569,7 @@ mcdwrite(dev_t dev, struct uio *uio, int flags)
 int
 mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
+	struct mcd_softc *sc = device_lookup_private(&mcd_cd, MCDUNIT(dev));
 	int error;
 	int part;
 #ifdef __HAVE_OLD_DISKLABEL

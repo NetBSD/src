@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.43.12.2 2008/06/02 13:23:19 mjf Exp $	*/
+/*	$NetBSD: cac.c,v 1.43.12.3 2008/06/29 09:33:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.43.12.2 2008/06/02 13:23:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.43.12.3 2008/06/29 09:33:07 mjf Exp $");
 
 #include "bio.h"
 
@@ -231,7 +231,7 @@ cac_shutdown(void *cookie)
 	int i;
 
 	for (i = 0; i < cac_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup(&cac_cd, i)) == NULL)
+		if ((sc = device_lookup_private(&cac_cd, i)) == NULL)
 			continue;
 		memset(tbuf, 0, sizeof(tbuf));
 		tbuf[0] = 1;

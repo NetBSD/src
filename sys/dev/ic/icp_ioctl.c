@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.17.16.1 2008/06/02 13:23:23 mjf Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.17.16.2 2008/06/29 09:33:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.17.16.1 2008/06/02 13:23:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.17.16.2 2008/06/29 09:33:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ icpioctl(dev_t dev, u_long cmd, void *data, int flag,
 		if (error)
 			break;
 
-		icp = device_lookup(&icp_cd, ucmd->io_node);
+		icp = device_lookup_private(&icp_cd, ucmd->io_node);
 		if (icp == NULL) {
 			error = ENXIO;
 			break;
@@ -150,7 +150,7 @@ icpioctl(dev_t dev, u_long cmd, void *data, int flag,
 		struct icp_softc *icp;
 		gdt_ctrt_t *ctrt = (void *) data;
 
-		icp = device_lookup(&icp_cd, ctrt->io_node);
+		icp = device_lookup_private(&icp_cd, ctrt->io_node);
 		if (icp == NULL) {
 			error = ENXIO;
 			break;
@@ -207,7 +207,7 @@ icpioctl(dev_t dev, u_long cmd, void *data, int flag,
 		gdt_evt_str *e = &evt->dvr;
 		int s;
 
-		icp = device_lookup(&icp_cd, minor(dev));
+		icp = device_lookup_private(&icp_cd, minor(dev));
 
 		switch (evt->erase) {
 		case 0xff:
@@ -265,7 +265,7 @@ icpioctl(dev_t dev, u_long cmd, void *data, int flag,
 		struct icp_softc *icp;
 		gdt_rescan_t *rsc = (void *) data;
 
-		icp = device_lookup(&icp_cd, rsc->io_node);
+		icp = device_lookup_private(&icp_cd, rsc->io_node);
 		if (icp == NULL) {
 			error = ENXIO;
 			break;

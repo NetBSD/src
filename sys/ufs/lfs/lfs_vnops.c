@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.215.6.2 2008/06/05 19:14:37 mjf Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.215.6.3 2008/06/29 09:33:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.215.6.2 2008/06/05 19:14:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.215.6.3 2008/06/29 09:33:21 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1425,7 +1425,7 @@ lfs_fcntl(void *v)
 {
 	struct vop_fcntl_args /* {
 		struct vnode *a_vp;
-		u_long a_command;
+		u_int a_command;
 		void * a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
@@ -1466,7 +1466,7 @@ lfs_fcntl(void *v)
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsidx;
 
 	error = 0;
-	switch (ap->a_command) {
+	switch ((int)ap->a_command) {
 	    case LFCNSEGWAITALL:
 	    case LFCNSEGWAITALL_COMPAT:
 		fsidp = NULL;

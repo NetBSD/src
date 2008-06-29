@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.39.14.1 2008/06/02 13:23:48 mjf Exp $	*/
+/*	$NetBSD: dl.c,v 1.39.14.2 2008/06/29 09:33:10 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.39.14.1 2008/06/02 13:23:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.39.14.2 2008/06/29 09:33:10 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,9 +325,9 @@ dlopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	unit = minor(dev);
 
-	if (unit >= dl_cd.cd_ndevs || dl_cd.cd_devs[unit] == NULL)
+	sc = device_lookup_private(&dl_cd, unit);
+	if (!sc)
 		return ENXIO;
-	sc = dl_cd.cd_devs[unit];
 
 	tp = sc->sc_tty;
 	if (tp == NULL)
@@ -360,7 +360,7 @@ dlopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 dlclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = device_lookup_private(&dl_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -374,7 +374,7 @@ dlclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 dlread(dev_t dev, struct uio *uio, int flag)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = device_lookup_private(&dl_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
@@ -383,7 +383,7 @@ dlread(dev_t dev, struct uio *uio, int flag)
 int
 dlwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = device_lookup_private(&dl_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
@@ -392,7 +392,7 @@ dlwrite(dev_t dev, struct uio *uio, int flag)
 int
 dlpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = device_lookup_private(&dl_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -401,7 +401,7 @@ dlpoll(dev_t dev, int events, struct lwp *l)
 int
 dlioctl(dev_t dev, unsigned long cmd, void *data, int flag, struct lwp *l)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = device_lookup_private(&dl_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -438,7 +438,7 @@ dlioctl(dev_t dev, unsigned long cmd, void *data, int flag, struct lwp *l)
 struct tty *
 dltty(dev_t dev)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
+	struct dl_softc *sc = device_lookup_private(&dl_cd, minor(dev));
 
 	return sc->sc_tty;
 }
@@ -456,7 +456,7 @@ dlstop(struct tty *tp, int flag)
 static void
 dlstart(struct tty *tp)
 {
-	struct dl_softc *sc = dl_cd.cd_devs[minor(tp->t_dev)];
+	struct dl_softc *sc = device_lookup_private(&dl_cd, minor(tp->t_dev));
 	int s = spltty();
 
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))

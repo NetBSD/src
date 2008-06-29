@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.14.6.1 2008/06/02 13:24:19 mjf Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.14.6.2 2008/06/29 09:33:15 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.14.6.1 2008/06/02 13:24:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.14.6.2 2008/06/29 09:33:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -85,6 +85,8 @@ extern struct vfsops lfs_vfsops;
  */
 MOD_VFS("lfs", -1, &lfs_vfsops);
 
+extern void lfs_sysctl_setup(struct sysctllog *);
+
 /*
  * entry point
  */
@@ -123,7 +125,7 @@ lfs_load(lkmtp, cmd)
 		sysent[lfs_sysents[i].sysno] = lfs_sysents[i].sysent;
 	}
 
-	sysctl_vfs_lfs_setup(&_lfs_log);
+	lfs_sysctl_setup(_lfs_log);
 
 	return 0;
 }

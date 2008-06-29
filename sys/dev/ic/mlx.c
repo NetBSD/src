@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.53.16.1 2008/06/02 13:23:25 mjf Exp $	*/
+/*	$NetBSD: mlx.c,v 1.53.16.2 2008/06/29 09:33:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.53.16.1 2008/06/02 13:23:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.53.16.2 2008/06/29 09:33:07 mjf Exp $");
 
 #include "ld.h"
 
@@ -651,7 +651,7 @@ mlx_shutdown(void *cookie)
 	int i;
 
 	for (i = 0; i < mlx_cd.cd_ndevs; i++)
-		if ((mlx = device_lookup(&mlx_cd, i)) != NULL)
+		if ((mlx = device_lookup_private(&mlx_cd, i)) != NULL)
 			mlx_flush(mlx, 0);
 }
 
@@ -667,7 +667,7 @@ mlx_adjqparam(struct mlx_softc *mlx, int mpu, int slop)
 	int i;
 
 	for (i = 0; i < ld_cd.cd_ndevs; i++) {
-		if ((ld = device_lookup(&ld_cd, i)) == NULL)
+		if ((ld = device_lookup_private(&ld_cd, i)) == NULL)
 			continue;
 		if (device_parent(&ld->sc_dv) != &mlx->mlx_dv)
 			continue;
@@ -684,7 +684,7 @@ mlxopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mlx_softc *mlx;
 
-	if ((mlx = device_lookup(&mlx_cd, minor(dev))) == NULL)
+	if ((mlx = device_lookup_private(&mlx_cd, minor(dev))) == NULL)
 		return (ENXIO);
 	if ((mlx->mlx_flags & MLXF_INITOK) == 0)
 		return (ENXIO);
@@ -704,7 +704,7 @@ mlxclose(dev_t dev, int flag, int mode,
 {
 	struct mlx_softc *mlx;
 
-	mlx = device_lookup(&mlx_cd, minor(dev));
+	mlx = device_lookup_private(&mlx_cd, minor(dev));
 	mlx->mlx_flags &= ~MLXF_OPEN;
 	return (0);
 }
@@ -723,7 +723,7 @@ mlxioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct mlx_sysdrive *ms;
 	int i, rv, *arg, result;
 
-	mlx = device_lookup(&mlx_cd, minor(dev));
+	mlx = device_lookup_private(&mlx_cd, minor(dev));
 
 	rb = (struct mlx_rebuild_request *)data;
 	rs = (struct mlx_rebuild_status *)data;
@@ -942,7 +942,7 @@ mlx_periodic_thread(void *cookie)
 
 	for (;;) {
 		for (i = 0; i < mlx_cd.cd_ndevs; i++)
-			if ((mlx = device_lookup(&mlx_cd, i)) != NULL)
+			if ((mlx = device_lookup_private(&mlx_cd, i)) != NULL)
 				if (mlx->mlx_ci.ci_iftype > 1)
 					mlx_periodic(mlx);
 

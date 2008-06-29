@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.1.126.1 2008/06/02 13:21:59 mjf Exp $	*/
+/*	$NetBSD: isr.h,v 1.1.126.2 2008/06/29 09:32:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,4 +67,3 @@ void	isrinit __P((void));
 void	*isrlink __P((int (*)(void *), void *, int, int));
 void	isrunlink __P((void *));
 void	isrdispatch __P((int));
-void	isrprintlevels __P((void));

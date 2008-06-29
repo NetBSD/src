@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.16.12.1 2008/06/02 13:23:04 mjf Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.16.12.2 2008/06/29 09:33:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ struct linux_termios {
 #define LINUX_TIOCLINUX_KERNMSG		11
 #define LINUX_TIOCLINUX_CURCONS		12
 
-static speed_t linux_speeds[] = {
+static linux_speed_t linux_speeds[] = {
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800,
 	9600, 19200, 38400, 57600, 115200, 230400
 };
@@ -343,7 +343,7 @@ bsd_termios_to_linux_termio(bts, lt)
 	lt->c_lflag |= cvtto_linux_mask(bts->c_lflag, IEXTEN, LINUX_IEXTEN);
 
 	mask = LINUX_B9600;	/* XXX default value should this be 0? */
-	for (i = 0; i < sizeof (linux_speeds) / sizeof (speed_t); i++) {
+	for (i = 0; i < sizeof (linux_speeds) / sizeof (linux_speed_t); i++) {
 		if (bts->c_ospeed == linux_speeds[i]) {
 			mask = linux_spmasks[i];
 			break;
@@ -540,7 +540,7 @@ bsd_termios_to_linux_termios(bts, lts)
 	lts->c_lflag |= cvtto_linux_mask(bts->c_lflag, IEXTEN, LINUX_IEXTEN);
 
 	mask = LINUX_B9600;	/* XXX default value */
-	for (i = 0; i < sizeof (linux_speeds) / sizeof (speed_t); i++) {
+	for (i = 0; i < sizeof (linux_speeds) / sizeof (linux_speed_t); i++) {
 		if (bts->c_ospeed == linux_speeds[i]) {
 			mask = linux_spmasks[i];
 			break;

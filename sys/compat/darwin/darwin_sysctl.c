@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.56.6.1 2008/06/02 13:22:57 mjf Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.56.6.2 2008/06/29 09:33:02 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.56.6.1 2008/06/02 13:22:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.56.6.2 2008/06/29 09:33:02 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -849,7 +849,7 @@ native_to_darwin_pflag(int *dfp, struct proc *p)
 		df |= DARWIN_P_CONTROLT;
 	if (bsf & PS_NOCLDSTOP)
 		df |= DARWIN_P_NOCLDSTOP;
-	if (bsf & PS_PPWAIT)
+	if (p->p_lflag & PL_PPWAIT)
 		df |= DARWIN_P_PPWAIT;
 	if (bsf & PST_PROFIL)
 		df |= DARWIN_P_PROFIL;

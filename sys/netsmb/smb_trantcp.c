@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.31.28.2 2008/06/02 13:24:30 mjf Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.31.28.3 2008/06/29 09:33:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31.28.2 2008/06/02 13:24:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31.28.3 2008/06/29 09:33:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ nb_put_name(struct mbchain *mbp, struct sockaddr_nb *snb)
 	cp = snb->snb_name;
 	if (*cp == 0)
 		return EINVAL;
-	NBDEBUG("[%s]\n", cp);
+	NBDEBUG(("[%s]\n", cp));
 	for (;;) {
 		seglen = (*cp) + 1;
 		error = mb_put_mem(mbp, cp, seglen, MB_MSYSTEM);
@@ -251,14 +251,14 @@ nbssn_rq_request(struct nbpcb *nbp, struct lwp *l)
 		return error;
 	error = nbssn_rselect(nbp, &nb_timo, POLLIN, l);
 	if (error == EWOULDBLOCK) {	/* Timeout */
-		NBDEBUG("initial request timeout\n");
+		NBDEBUG(("initial request timeout\n"));
 		return ETIMEDOUT;
 	}
 	if (error)			/* restart or interrupt */
 		return error;
 	error = nbssn_recv(nbp, &m0, &rplen, &rpcode, l);
 	if (error) {
-		NBDEBUG("recv() error %d\n", error);
+		NBDEBUG(("recv() error %d\n", error));
 		return error;
 	}
 	/*
@@ -321,14 +321,14 @@ nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
 	if (error)
 		return error;
 	if (auio.uio_resid > 0) {
-		SMBSDEBUG("short reply\n");
+		SMBSDEBUG(("short reply\n"));
 		return EPIPE;
 	}
 	len = ntohl(len);
 	*rpcodep = (len >> 24) & 0xFF;
 	len &= 0x1ffff;
 	if (len > SMB_MAXPKTLEN) {
-		SMBERROR("packet too long (%d)\n", len);
+		SMBERROR(("packet too long (%d)\n", len));
 		return EFBIG;
 	}
 	*lenp = len;
@@ -364,7 +364,7 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 		if (so->so_state &
 		    (SS_ISDISCONNECTING | SS_ISDISCONNECTED | SS_CANTRCVMORE)) {
 			nbp->nbp_state = NBST_CLOSED;
-			NBDEBUG("session closed by peer\n");
+			NBDEBUG(("session closed by peer\n"));
 			return ECONNRESET;
 		}
 		if (error)
@@ -410,7 +410,7 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 				goto out;
 			/* short return guarantees unhappiness */
 			if (auio.uio_resid > 0) {
-				SMBERROR("packet is shorter than expected\n");
+				SMBERROR(("packet is shorter than expected\n"));
 				error = EPIPE;
 				goto out;
 			}
@@ -432,7 +432,7 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 		    rpcode == NB_SSN_MESSAGE)
 			break;
 		/* drop packet and try for another */
-		NBDEBUG("non-session packet %x\n", rpcode);
+		NBDEBUG(("non-session packet %x\n", rpcode));
 		if (m) {
 			m_freem(m);
 			m = NULL;
@@ -493,7 +493,7 @@ smb_nbst_bind(struct smb_vc *vcp, struct sockaddr *sap, struct lwp *l)
 	struct sockaddr_nb *snb;
 	int error, slen;
 
-	NBDEBUG("\n");
+	NBDEBUG(("\n"));
 	error = EINVAL;
 	do {
 		if (nbp->nbp_flags & NBF_LOCADDR)
@@ -527,7 +527,7 @@ smb_nbst_connect(struct smb_vc *vcp, struct sockaddr *sap, struct lwp *l)
 	struct sockaddr_nb *snb;
 	int error, slen;
 
-	NBDEBUG("\n");
+	NBDEBUG(("\n"));
 	if (nbp->nbp_tso != NULL)
 		return EISCONN;
 	if (nbp->nbp_laddr == NULL)

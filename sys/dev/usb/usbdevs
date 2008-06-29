@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.494.6.2 2008/06/02 13:23:56 mjf Exp $
+$NetBSD: usbdevs,v 1.494.6.3 2008/06/29 09:33:11 mjf Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -445,6 +445,7 @@ vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor PHISON		0x13fe	Phison Electronics Corp.
 vendor NOVATEL2		0x1410	Novatel
+vendor OMNIVISION2	0x1415	OmniVision Technologies, Inc.
 vendor WISTRONNEWEB	0x1435	Wistron NeWeb
 vendor HUAWEI3COM	0x1472	Huawei-3Com
 vendor SILICOM		0x1485	Silicom
@@ -1667,6 +1668,7 @@ product OLYMPUS C700		0x0105	C-700 Ultra Zoom
 /* OmniVision Technologies, Inc. products */
 product OMNIVISION OV511	0x0511	OV511 Camera
 product OMNIVISION OV511PLUS	0xa511	OV511+ Camera
+product OMNIVISION2 PSEYE	0x2000	Sony PLAYSTATION(R) Eye
 
 /* OnSpec Electronic, Inc. */
 product ONSPEC MD2		0x0103	disk

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.46.6.1 2008/06/02 13:24:06 mjf Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.46.6.2 2008/06/29 09:33:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.46.6.1 2008/06/02 13:24:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.46.6.2 2008/06/29 09:33:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1180,7 +1180,8 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred,
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
+tmpfs_chtimes(struct vnode *vp, const struct timespec *atime,
+    const struct timespec *mtime, const struct timespec *btime,
     int vaflags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
@@ -1213,7 +1214,10 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	if (mtime->tv_sec != VNOVAL && mtime->tv_nsec != VNOVAL)
 		node->tn_status |= TMPFS_NODE_MODIFIED;
 
-	tmpfs_update(vp, atime, mtime, 0);
+	if (btime->tv_sec == VNOVAL && btime->tv_nsec == VNOVAL)
+		btime = NULL;
+
+	tmpfs_update(vp, atime, mtime, btime, 0);
 	VN_KNOTE(vp, NOTE_ATTRIB);
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1226,9 +1230,9 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 /* Sync timestamps */
 void
 tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
-    const struct timespec *mod)
+    const struct timespec *mod, const struct timespec *birth)
 {
-	struct timespec now;
+	struct timespec now, *nowp = NULL;
 	struct tmpfs_node *node;
 
 	node = VP_TO_TMPFS_NODE(vp);
@@ -1237,19 +1241,30 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 	    TMPFS_NODE_CHANGED)) == 0)
 		return;
 
-	getnanotime(&now);
+	if (birth != NULL)
+		node->tn_birthtime = *birth;
+
 	if (node->tn_status & TMPFS_NODE_ACCESSED) {
-		if (acc == NULL)
-			acc = &now;
+		if (acc == NULL) {
+			if (nowp == NULL)
+				getnanotime(nowp = &now);
+			acc = nowp;
+		}
 		node->tn_atime = *acc;
 	}
 	if (node->tn_status & TMPFS_NODE_MODIFIED) {
-		if (mod == NULL)
-			mod = &now;
+		if (mod == NULL) {
+			if (nowp == NULL)
+				getnanotime(nowp = &now);
+			mod = nowp;
+		}
 		node->tn_mtime = *mod;
 	}
-	if (node->tn_status & TMPFS_NODE_CHANGED)
-		node->tn_ctime = now;
+	if (node->tn_status & TMPFS_NODE_CHANGED) {
+		if (nowp == NULL)
+			getnanotime(nowp = &now);
+		node->tn_ctime = *nowp;
+	}
 
 	node->tn_status &=
 	    ~(TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED | TMPFS_NODE_CHANGED);
@@ -1259,7 +1274,7 @@ tmpfs_itimes(struct vnode *vp, const struct timespec *acc,
 
 void
 tmpfs_update(struct vnode *vp, const struct timespec *acc,
-    const struct timespec *mod, int flags)
+    const struct timespec *mod, const struct timespec *birth, int flags)
 {
 
 	struct tmpfs_node *node;
@@ -1273,7 +1288,7 @@ tmpfs_update(struct vnode *vp, const struct timespec *acc,
 		; /* XXX Need to do anything special? */
 #endif
 
-	tmpfs_itimes(vp, acc, mod);
+	tmpfs_itimes(vp, acc, mod, birth);
 
 	KASSERT(VOP_ISLOCKED(vp));
 }
@@ -1305,7 +1320,7 @@ tmpfs_truncate(struct vnode *vp, off_t length)
 		node->tn_status |= TMPFS_NODE_CHANGED | TMPFS_NODE_MODIFIED;
 
 out:
-	tmpfs_update(vp, NULL, NULL, 0);
+	tmpfs_update(vp, NULL, NULL, NULL, 0);
 
 	return error;
 }

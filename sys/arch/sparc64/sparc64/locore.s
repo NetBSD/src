@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.266.6.2 2008/06/02 13:22:44 mjf Exp $	*/
+/*	$NetBSD: locore.s,v 1.266.6.3 2008/06/29 09:33:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3641,6 +3641,7 @@ interrupt_vector:
 
 	btst	IRSR_BUSY, %g1
 	bz,pn	%icc, 3f		! spurious interrupt
+#ifdef MULTIPROCESSOR
 	 sethi	%hi(KERNBASE), %g1
 
 	cmp	%g7, %g1
@@ -3657,6 +3658,9 @@ interrupt_vector:
 
 	jmpl	%g7, %g0
 	 nop
+#else
+	 cmp	%g7, MAXINTNUM
+#endif
 
 Lsoftint_regular:
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
@@ -9849,7 +9853,7 @@ ENTRY(loadfpstate)
 	bne,pn	%icc, 1f
 	 nop
 #endif
-	/* Unaligned -- needs to be done the long way
+	/* Unaligned -- needs to be done the long way */
 	membar	#Sync
 	ldd	[%o3 + (4*0)], %f0
 	ldd	[%o3 + (4*2)], %f2

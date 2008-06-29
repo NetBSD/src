@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.40.16.1 2008/06/02 13:22:22 mjf Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.40.16.2 2008/06/29 09:32:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.40.16.1 2008/06/02 13:22:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.40.16.2 2008/06/29 09:32:58 mjf Exp $");
 
 #ifdef _LKM
 #define IWMCF_DRIVE 0
@@ -641,7 +641,7 @@ fdopen(dev_t dev, int flags, int devType, struct lwp *l)
 	int fdType, fdUnit;
 	int ierr, err;
 #ifndef _LKM
-	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 	info = NULL;		/* XXX shut up egcs */
 	fd = NULL;		/* XXX shut up gcc3 */
@@ -775,7 +775,7 @@ fdclose(dev_t dev, int flags, int devType, struct lwp *l)
 	fd_softc_t *fd;
 	int partitionMask, fdUnit, fdType;
 #ifndef _LKM
-	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
 #endif
 
 	if (TRACE_CLOSE)
@@ -819,7 +819,7 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	int result, fdUnit, fdType;
 	fd_softc_t *fd;
 #ifndef _LKM
-	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
 #endif
 
 	if (TRACE_IOCTL)
@@ -982,7 +982,7 @@ fdstrategy(struct buf *bp)
 	diskPosition_t physDiskLoc;
 	fd_softc_t *fd;
 #ifndef _LKM
-	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
 #endif
 
 	err = 0;
@@ -1275,7 +1275,7 @@ fdstart_Read(fd_softc_t *fd)
 	diskPosition_t *pos;
 	sectorHdr_t *shdr;
 #ifndef _LKM
-	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 	
 	/* Initialize retry counters */
@@ -1391,7 +1391,7 @@ fdstart_Flush(fd_softc_t *fd)
 	diskPosition_t *pos;
 	sectorHdr_t *shdr;
 #ifndef _LKM
-	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 	dcnt = 0;
 	pos = &fd->pos;
@@ -1521,7 +1521,7 @@ fdstart_IOErr(fd_softc_t *fd)
 {
 	int state;
 #ifndef _LKM
-	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 	
 #ifdef DIAGNOSTIC
@@ -1887,7 +1887,7 @@ seek(fd_softc_t *fd, int style)
 	sectorHdr_t hdr;
 	char action[32];
 #ifndef _LKM
-	iwm_softc_t *iwm = iwm_cd.cd_devs[0];
+	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 
 	const char *stateDesc[] = {

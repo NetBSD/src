@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.8.16.1 2008/06/02 13:23:55 mjf Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.8.16.2 2008/06/29 09:33:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.8.16.1 2008/06/02 13:23:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.8.16.2 2008/06/29 09:33:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,9 +168,6 @@ ukyopon_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 	return (error);
 }
 
-#ifdef __strong_alias
-__strong_alias(ukyopon_activate,umodem_common_activate)
-#else
 int
 ukyopon_activate(device_ptr_t self, enum devact act)
 {
@@ -178,7 +175,6 @@ ukyopon_activate(device_ptr_t self, enum devact act)
 
 	return umodem_common_activate(&sc->sc_umodem, act);
 }
-#endif
 
 USB_DETACH(ukyopon)
 {

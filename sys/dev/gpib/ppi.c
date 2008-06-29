@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.10.28.1 2008/06/02 13:23:16 mjf Exp $	*/
+/*	$NetBSD: ppi.c,v 1.10.28.2 2008/06/29 09:33:06 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.10.28.1 2008/06/02 13:23:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.10.28.2 2008/06/29 09:33:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,17 +178,15 @@ ppiattach(parent, self, aux)
 }
 
 int
-ppiopen(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct lwp *l;
+ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	int unit = UNIT(dev);
 	struct ppi_softc *sc;
 
-	if (unit >= ppi_cd.cd_ndevs ||
-	    (sc = ppi_cd.cd_devs[unit]) == NULL ||
-	    (sc->sc_flags & PPIF_ALIVE) == 0)
+	sc = device_lookup_private(&ppi_cd, UNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
+
+	if (sc->sc_flags & PPIF_ALIVE) == 0)
 		return (ENXIO);
 
 	DPRINTF(PDB_FOLLOW, ("ppiopen(%x, %x): flags %x\n",
@@ -205,13 +203,11 @@ ppiopen(dev, flags, fmt, l)
 }
 
 int
-ppiclose(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct lwp *l;
+ppiclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	int unit = UNIT(dev);
-	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
+	struct ppi_softc *sc;
+
+	sc = device_lookup_private(&ppi_cd, UNIT(dev));
 
 	DPRINTF(PDB_FOLLOW, ("ppiclose(%x, %x): flags %x\n",
 		       dev, flags, sc->sc_flags));
@@ -245,8 +241,7 @@ ppicallback(v, action)
 }
 
 void
-ppistart(v)
-	void *v;
+ppistart(void *v)
 {
 	struct ppi_softc *sc = v;
 
@@ -257,8 +252,7 @@ ppistart(v)
 }
 
 void
-ppitimo(arg)
-	void *arg;
+ppitimo(void *arg)
 {
 	struct ppi_softc *sc = arg;
 
@@ -269,10 +263,7 @@ ppitimo(arg)
 }
 
 int
-ppiread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+ppiread(dev_t dev, struct uio *uio, int flags)
 {
 
 	DPRINTF(PDB_FOLLOW, ("ppiread(%x, %p)\n", dev, uio));
@@ -281,10 +272,7 @@ ppiread(dev, uio, flags)
 }
 
 int
-ppiwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+ppiwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	DPRINTF(PDB_FOLLOW, ("ppiwrite(%x, %p)\n", dev, uio));
@@ -293,12 +281,9 @@ ppiwrite(dev, uio, flags)
 }
 
 int
-ppirw(dev, uio)
-	dev_t dev;
-	struct uio *uio;
+ppirw(dev_t dev, struct uio *uio)
 {
-	int unit = UNIT(dev);
-	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
+	struct ppi_softc *sc = device_lookup_private(&ppi_cd, UNIT(dev));
 	int s1, s2, len, cnt;
 	char *cp;
 	int error = 0, gotdata = 0;
@@ -442,14 +427,9 @@ again:
 }
 
 int
-ppiioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+ppiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct ppi_softc *sc = ppi_cd.cd_devs[UNIT(dev)];
+	struct ppi_softc *sc = device_lookup_private(&ppi_cd, UNIT(dev));
 	struct ppiparam *pp, *upp;
 	int error = 0;
 
@@ -481,8 +461,7 @@ ppiioctl(dev, cmd, data, flag, l)
 }
 
 int
-ppihztoms(h)
-	int h;
+ppihztoms(int h)
 {
 	extern int hz;
 	int m = h;
@@ -493,8 +472,7 @@ ppihztoms(h)
 }
 
 int
-ppimstohz(m)
-	int m;
+ppimstohz(int m)
 {
 	extern int hz;
 	int h = m;

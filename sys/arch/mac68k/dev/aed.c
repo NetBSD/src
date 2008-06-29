@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.26.14.1 2008/04/03 12:42:20 mjf Exp $	*/
+/*	$NetBSD: aed.c,v 1.26.14.2 2008/06/29 09:32:58 mjf Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.26.14.1 2008/04/03 12:42:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.26.14.2 2008/06/29 09:32:58 mjf Exp $");
 
 #include "opt_adb.h"
 
@@ -415,7 +415,7 @@ aedopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct aed_softc *sc;
 	int s;
 
-	sc = device_lookup(&aed_cd, minor(dev));
+	sc = device_lookup_private(&aed_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 

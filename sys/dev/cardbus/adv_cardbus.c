@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.16.16.1 2008/06/02 13:23:14 mjf Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.16.16.2 2008/06/29 09:33:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.16.16.1 2008/06/02 13:23:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.16.16.2 2008/06/29 09:33:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ struct adv_cardbus_softc {
 
 	/* CardBus-specific goo. */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	int	sc_intrline;		/* our interrupt line */
+	cardbus_intr_line_t sc_intrline; /* our interrupt line */
 	cardbustag_t sc_tag;
 
 	int	sc_cbenable;		/* what CardBus access type to enable */
@@ -227,11 +227,10 @@ adv_cardbus_attach(struct device *parent, struct device *self,
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
 	    adv_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt at %d\n",
-		    ca->ca_intrline);
+		aprint_error_dev(&sc->sc_dev,
+				 "unable to establish interrupt\n");
 		return;
 	}
-	printf("%s: interrupting at %d\n", DEVNAME(sc), ca->ca_intrline);
 
 	/*
 	 * Attach.

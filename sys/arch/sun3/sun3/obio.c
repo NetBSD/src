@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.54.14.1 2008/06/02 13:22:46 mjf Exp $	*/
+/*	$NetBSD: obio.c,v 1.54.14.2 2008/06/29 09:33:01 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.54.14.1 2008/06/02 13:22:46 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.54.14.2 2008/06/29 09:33:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,19 +49,18 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.54.14.1 2008/06/02 13:22:46 mjf Exp $");
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/obio.h>
 
-static int	obio_match(struct device *, struct cfdata *, void *);
-static void	obio_attach(struct device *, struct device *, void *);
+static int	obio_match(device_t, cfdata_t, void *);
+static void	obio_attach(device_t, device_t, void *);
 static int	obio_print(void *, const char *);
-static int	obio_submatch(struct device *, struct cfdata *,
-			      const int *, void *);
+static int	obio_submatch(device_t, cfdata_t, const int *, void *);
 
 struct obio_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 };
 
-CFATTACH_DECL(obio, sizeof(struct obio_softc),
+CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 static int obio_attached;
@@ -89,7 +88,7 @@ static struct sun68k_bus_space_tag obio_space_tag = {
 static struct sun68k_bus_dma_tag obio_dma_tag;
 
 static int 
-obio_match(struct device *parent, struct cfdata *cf, void *aux)
+obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -115,16 +114,17 @@ obio_match(struct device *parent, struct cfdata *cf, void *aux)
 #define OBIO_END	0x200000
 
 static void 
-obio_attach(struct device *parent, struct device *self, void *aux)
+obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
-	struct obio_softc *sc = (void *)self;
+	struct obio_softc *sc = device_private(self);
 	struct confargs oba;
 	int addr;
 
 	obio_attached = 1;
+	sc->sc_dev = self;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
@@ -169,8 +169,7 @@ obio_print(void *args, const char *name)
 }
 
 int 
-obio_submatch(struct device *parent, struct cfdata *cf, const int *ldesc,
-    void *aux)
+obio_submatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct confargs *ca = aux;
 

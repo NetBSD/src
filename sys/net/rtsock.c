@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.98.6.2 2008/06/02 13:24:23 mjf Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.98.6.3 2008/06/29 09:33:19 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.98.6.2 2008/06/02 13:24:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.98.6.3 2008/06/29 09:33:19 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -161,10 +161,8 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	if (req == PRU_ATTACH) {
 		sosetlock(so);
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
-		if ((so->so_pcb = rp) != NULL)
-			memset(so->so_pcb, 0, sizeof(*rp));
-
+		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
+		so->so_pcb = rp;
 	}
 	if (req == PRU_DETACH && rp)
 		rt_adjustcount(rp->rcb_proto.sp_protocol, -1);

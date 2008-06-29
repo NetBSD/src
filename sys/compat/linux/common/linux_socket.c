@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.86.6.2 2008/06/02 13:23:03 mjf Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.86.6.3 2008/06/29 09:33:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.86.6.2 2008/06/02 13:23:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.86.6.3 2008/06/29 09:33:03 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -375,18 +375,23 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 		/* Some supported flag */
 		return EINVAL;
 
-	/* Read in and convert the sockaddr */
-	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, to),
-	    SCARG(uap, tolen));
-	if (error)
-		return (error);
-	msg.msg_flags = MSG_NAMEMBUF;
+	msg.msg_flags = 0;
+	msg.msg_name = NULL;
+	msg.msg_control = NULL;
 
-	msg.msg_name = nam;
-	msg.msg_namelen = SCARG(uap, tolen);
+	if (SCARG(uap, tolen)) {
+		/* Read in and convert the sockaddr */
+		error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, to),
+		    SCARG(uap, tolen));
+		if (error)
+			return (error);
+		msg.msg_flags |= MSG_NAMEMBUF;
+		msg.msg_name = nam;
+		msg.msg_namelen = SCARG(uap, tolen);
+	}
+
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
-	msg.msg_control = 0;
 	aiov.iov_base = __UNCONST(SCARG(uap, msg));
 	aiov.iov_len = SCARG(uap, len);
 
@@ -882,7 +887,7 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 		struct socket *so;
 		int error, family;
 
-		/* getsock() will use the descriptor for us */
+		/* fd_getsock() will use the descriptor for us */
 	    	if ((error = fd_getsock(SCARG(&bsa, s), &so)) != 0)
 		    	return error;
 		family = so->so_proto->pr_domain->dom_family;
@@ -1207,7 +1212,7 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 		struct socket *so;
 		int state, prflags, nbio;
 
-		/* getsock() will use the descriptor for us */
+		/* fd_getsock() will use the descriptor for us */
 	    	if (fd_getsock(SCARG(uap, s), &so) != 0)
 		    	return EISCONN;
 
@@ -1312,8 +1317,10 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 
 	m->m_len = salen;
 
-	if (salen == 0)
+	if (salen == 0) {
+		*mp = m;
 		return 0;
+	}
 
 	kosa = mtod(m, void *);
 	if ((error = copyin(osa, kosa, salen))) {
@@ -1338,7 +1345,7 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 	if (bdom == AF_UNSPEC) {
 		struct socket *so;
 
-		/* getsock() will use the descriptor for us */
+		/* fd_getsock() will use the descriptor for us */
 		if ((error = fd_getsock(s, &so)) != 0)
 			goto bad;
 

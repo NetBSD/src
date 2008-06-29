@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.35.6.2 2008/06/02 13:22:39 mjf Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.35.6.3 2008/06/29 09:32:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.35.6.2 2008/06/02 13:22:39 mjf Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.35.6.3 2008/06/29 09:32:59 mjf Exp $")
 
 
 /*
@@ -92,7 +92,7 @@ NENTRY(sh_vector_generic)
 	mov.l	.Lg_tlb_exception, r0
 	jsr	@r0
 	 mov	r14, r5			/* 2nd arg */
-	bra	2f
+	bra	.Lg_return_from_exception
 	 nop
 
 	/* general_exception(curlwp, tf, TEA); */
@@ -113,23 +113,34 @@ NENTRY(sh_vector_generic)
 	mov.l	.Lg_ast, r0
 	jsr	@r0
 	 mov	r14, r5
-#ifdef DDB	/* BBRA = tf->tf_ubc */
+
+#ifdef DDB
+	mov.l	@(TF_UBC, r14), r2
+	tst	r2, r2			! ddb single-step == 0?
+	bt	.Lg_return_from_exception
+
+	!! We are returning from DDB to do single step.  Channel A in
+	!! UBC is already rigged, we just need to enable it.
+	MOV	(BBRA, r3)
+	MOV	(BARA, r5)
 	__EXCEPTION_BLOCK(r0, r1)
-	mov.l	@(TF_UBC, r14), r0
-	MOV	(BBRA, r1)
-	mov.w	r0, @r1
+	mov.l	@(TF_SPC, r14), r4
+	mov.l	r4, @r5			! BARA = tf->tf_spc
+	mov.w	r2, @r3			! BBRA = tf->tf_ubc
 #endif /* DDB */
-2:	__EXCEPTION_RETURN
+.Lg_return_from_exception:
+	__EXCEPTION_RETURN
 
 	.align	5
-.Lg_curlwp:		.long	_C_LABEL(curlwp)
 REG_SYMBOL(EXPEVT)
-REG_SYMBOL(BBRA)
+.Lg_curlwp:		.long	_C_LABEL(curlwp)
 REG_SYMBOL(TEA)
+.Lg_TLB_PROT_ST:	.long	EXPEVT_TLB_PROT_ST
 .Lg_tlb_exception:	.long	_C_LABEL(tlb_exception)
 .Lg_general_exception:	.long	_C_LABEL(general_exception)
 .Lg_ast:		.long	_C_LABEL(ast)
-.Lg_TLB_PROT_ST:	.long	EXPEVT_TLB_PROT_ST
+REG_SYMBOL(BBRA)
+REG_SYMBOL(BARA)
 
 /* LINTSTUB: Var: char sh_vector_generic_end[1]; */
 VECTOR_END_MARKER(sh_vector_generic_end)

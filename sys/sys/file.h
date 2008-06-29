@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.63.6.1 2008/04/03 12:43:11 mjf Exp $	*/
+/*	$NetBSD: file.h,v 1.63.6.2 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -115,8 +115,8 @@ int	do_filereadv(int, const struct iovec *, int, off_t *,
 int	do_filewritev(int, const struct iovec *, int, off_t *,
 	    int, register_t *);
 
-int	fsetown(pid_t *, int, const void *);
-int	fgetown(pid_t, int, void *);
+int	fsetown(pid_t *, u_long, const void *);
+int	fgetown(pid_t, u_long, void *);
 void	fownsignal(pid_t, int, int, int, void *);
 
 /* Commonly used fileops */

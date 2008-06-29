@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.105.6.2 2008/06/02 13:24:14 mjf Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.105.6.3 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.105.6.2 2008/06/02 13:24:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.105.6.3 2008/06/29 09:33:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,8 +230,8 @@ unp_setpeerlocks(struct socket *so, struct socket *so2)
 	unp->unp_streamlock = NULL;
 	mutex_obj_hold(lock);
 	membar_exit();
-	so->so_lock = lock;
-	so2->so_lock = lock;
+	solockreset(so, lock);
+	solockreset(so2, lock);
 }
 
 /*
@@ -254,7 +254,7 @@ unp_resetlock(struct socket *so)
 	unp->unp_streamlock = olock;
 	mutex_obj_hold(nlock);
 	mutex_enter(nlock);
-	so->so_lock = nlock;
+	solockreset(so, nlock);
 	mutex_exit(olock);
 }
 
@@ -1291,7 +1291,8 @@ unp_internalize(struct mbuf **controlp)
 
 	/* Sanity check the control message header. */
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
-	    cm->cmsg_len != control->m_len)
+	    cm->cmsg_len > control->m_len ||
+	    cm->cmsg_len < CMSG_ALIGN(sizeof(*cm)))
 		return (EINVAL);
 
 	/*

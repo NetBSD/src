@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.6.14.2 2008/06/02 13:23:25 mjf Exp $ */
+/* $NetBSD: mfivar.h,v 1.6.14.3 2008/06/29 09:33:07 mjf Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -35,8 +35,8 @@ extern uint32_t			mfi_debug;
 #define	MFI_D_MEM		0x0040
 #define	MFI_D_CCB		0x0080
 #else
-#define DPRINTF(x...)
-#define DNPRINTF(n,x...)
+#define DPRINTF(x, ...)
+#define DNPRINTF(n, x, ...)
 #endif
 
 struct mfi_mem {

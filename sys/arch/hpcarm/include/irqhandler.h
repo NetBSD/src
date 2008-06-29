@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.7.74.1 2008/06/02 13:22:10 mjf Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.7.74.2 2008/06/29 09:32:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -73,7 +73,7 @@ typedef struct irqhandler {
 } irqhandler_t;
 
 #ifdef _KERNEL
-extern u_int irqmask[NIPL];
+extern u_int irqmasks[NIPL];
 extern irqhandler_t *irqhandlers[NIRQS];
 
 void irq_init(void);

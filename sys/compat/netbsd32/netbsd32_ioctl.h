@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.20.30.2 2008/06/02 13:23:07 mjf Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.20.30.3 2008/06/29 09:33:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -147,7 +147,7 @@ sys/scsiio.h:43:#define SCIOCCOMMAND	_IOWR('Q', 1, scsireq_t)
 
 /* from <net/if.h> */
 
-typedef int32_t netbsd32_ifreq_tp_t;
+typedef netbsd32_pointer_t netbsd32_ifreq_tp_t;
 /*
  * note that ifr_data is the only one that needs to be changed
  */
@@ -220,8 +220,9 @@ struct	netbsd32_ifconf {
 };
 #if 1
 /* from <sys/sockio.h> */
-#define	OSIOCGIFCONF32	_IOWR('i', 20, struct netbsd32_ifconf)	/* get ifnet list */
-#define	SIOCGIFCONF32	_IOWR('i', 36, struct netbsd32_ifconf)	/* get ifnet list */
+#define	OOSIOCGIFCONF32	_IOWR('i', 20, struct netbsd32_ifconf)	/* get ifnet list */
+#define	OSIOCGIFCONF32	_IOWR('i', 36, struct netbsd32_ifconf)	/* get ifnet list */
+#define	SIOCGIFCONF32	_IOWR('i', 38, struct netbsd32_ifconf)	/* get ifnet list */
 #endif
 
 /* from <net/if.h> */

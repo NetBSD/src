@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.34.6.1 2008/06/02 13:23:04 mjf Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.34.6.2 2008/06/29 09:33:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.34.6.1 2008/06/02 13:23:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.34.6.2 2008/06/29 09:33:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.34.6.1 2008/06/02 13:23:04 mjf Ex
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
+#include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
 

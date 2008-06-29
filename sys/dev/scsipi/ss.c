@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.72.26.3 2008/06/02 13:23:51 mjf Exp $	*/
+/*	$NetBSD: ss.c,v 1.72.26.4 2008/06/29 09:33:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72.26.3 2008/06/02 13:23:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72.26.4 2008/06/29 09:33:10 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,10 +262,8 @@ ssopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct scsipi_adapter *adapt;
 
 	unit = SSUNIT(dev);
-	if (unit >= ss_cd.cd_ndevs)
-		return (ENXIO);
-	ss = ss_cd.cd_devs[unit];
-	if (!ss)
+	ss = device_lookup_private(&ss_cd, unit);
+	if (ss == NULL)
 		return (ENXIO);
 
 	if (!device_is_active(&ss->sc_dev))
@@ -326,7 +324,7 @@ bad:
 static int
 ssclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
+	struct ss_softc *ss = device_lookup_private(&ss_cd, SSUNIT(dev));
 	struct scsipi_periph *periph = ss->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int error;
@@ -363,7 +361,7 @@ ssclose(dev_t dev, int flag, int mode, struct lwp *l)
 static void
 ssminphys(struct buf *bp)
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	struct ss_softc *ss = device_lookup_private(&ss_cd, SSUNIT(bp->b_dev));
 	struct scsipi_periph *periph = ss->sc_periph;
 
 	scsipi_adapter_minphys(periph->periph_channel, bp);
@@ -386,7 +384,7 @@ ssminphys(struct buf *bp)
 static int
 ssread(dev_t dev, struct uio *uio, int flag)
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
+	struct ss_softc *ss = device_lookup_private(&ss_cd, SSUNIT(dev));
 	int error;
 
 	if (!device_is_active(&ss->sc_dev))
@@ -413,7 +411,7 @@ ssread(dev_t dev, struct uio *uio, int flag)
 static void
 ssstrategy(struct buf *bp)
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	struct ss_softc *ss = device_lookup_private(&ss_cd, SSUNIT(bp->b_dev));
 	struct scsipi_periph *periph = ss->sc_periph;
 	int s;
 
@@ -548,7 +546,7 @@ ssdone(struct scsipi_xfer *xs, int error)
 int
 ssioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
+	struct ss_softc *ss = device_lookup_private(&ss_cd, SSUNIT(dev));
 	int error = 0;
 	struct scan_io *sio;
 

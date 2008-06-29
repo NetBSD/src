@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.86.14.2 2008/06/02 13:24:27 mjf Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.86.14.3 2008/06/29 09:33:19 mjf Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.86.14.2 2008/06/02 13:24:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.86.14.3 2008/06/29 09:33:19 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -373,7 +373,7 @@ ip6_mrouter_get(int cmd, struct socket *so, struct mbuf **m)
  * Handle ioctl commands to obtain information from the cache
  */
 int
-mrt6_ioctl(int cmd, void *data)
+mrt6_ioctl(u_long cmd, void *data)
 {
 
 	switch (cmd) {

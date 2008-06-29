@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.53 2007/11/19 18:51:37 ad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.53.14.1 2008/06/29 09:32:54 mjf Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.53 2007/11/19 18:51:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.53.14.1 2008/06/29 09:32:54 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -594,13 +594,10 @@ int
 pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct pc_softc *sc;
-	int unit = PCUNIT(dev);
 	struct tty *tp;
 
-	if (unit >= pc_cd.cd_ndevs)
-		return ENXIO;
-	sc = pc_cd.cd_devs[unit];
-	if (sc == 0)
+	sc = device_lookup_private(&pc_cd, PCUNIT(dev));
+	if (sc == NULL)
 		return ENXIO;
 
 	if (!sc->sc_tty) {
@@ -636,7 +633,7 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 pcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -650,7 +647,7 @@ pcclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 pcread(dev_t dev, struct uio *uio, int flag)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
@@ -659,7 +656,7 @@ pcread(dev_t dev, struct uio *uio, int flag)
 int
 pcwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
@@ -668,7 +665,7 @@ pcwrite(dev_t dev, struct uio *uio, int flag)
 int
 pcpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (*tp->t_linesw->l_poll)(tp, events, l);
@@ -677,7 +674,7 @@ pcpoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 pctty(dev_t dev)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return tp;
@@ -714,7 +711,7 @@ pcintr(void *arg)
 int
 pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 
@@ -897,8 +894,8 @@ pccnpollc(dev_t dev, int on)
 		 */
 		unit = PCUNIT(dev);
 		if (pc_cd.cd_ndevs > unit) {
-			sc = pc_cd.cd_devs[unit];
-			if (sc != 0) {
+			sc = device_lookup_private(&pc_cd, unit);
+			if (sc != NULL) {
 				s = spltty();
 				pcintr(sc);
 				splx(s);

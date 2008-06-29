@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.44.6.1 2008/04/03 12:42:32 mjf Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.44.6.2 2008/06/29 09:33:03 mjf Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.44.6.1 2008/04/03 12:42:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.44.6.2 2008/06/29 09:33:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,8 +168,8 @@ ibcs2_sys_fstatfs(struct lwp *l, const struct ibcs2_sys_fstatfs_args *uap, regis
 	struct statvfs *sp;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
@@ -220,8 +220,8 @@ ibcs2_sys_fstatvfs(struct lwp *l, const struct ibcs2_sys_fstatvfs_args *uap, reg
 	struct statvfs *sp;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;

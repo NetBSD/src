@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.83.6.1 2008/06/02 13:24:20 mjf Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.83.6.2 2008/06/29 09:33:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.83.6.1 2008/06/02 13:24:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.83.6.2 2008/06/29 09:33:16 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -72,6 +72,8 @@ dev_t rrootdev = NODEV;
 VFS_PROTOS(kernfs);
 
 void	kernfs_get_rrootdev(void);
+
+static struct sysctllog *kernfs_sysctl_log;
 
 void
 kernfs_init()
@@ -237,27 +239,6 @@ kernfs_vget(struct mount *mp, ino_t ino,
 	return (EOPNOTSUPP);
 }
 
-SYSCTL_SETUP(sysctl_vfs_kernfs_setup, "sysctl vfs.kern subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kernfs",
-		       SYSCTL_DESCR("/kern file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 11, CTL_EOL);
-	/*
-	 * XXX the "11" above could be dynamic, thereby eliminating one
-	 * more instance of the "number to vfs" mapping problem, but
-	 * "11" is the order as taken from sys/mount.h
-	 */
-}
-
 extern const struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
@@ -296,13 +277,40 @@ struct vfsops kernfs_vfsops = {
 static int
 kernfs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&kernfs_vfsops);
+		error = vfs_attach(&kernfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&kernfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&kernfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "kernfs",
+			       SYSCTL_DESCR("/kern file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 11, CTL_EOL);
+		/*
+		 * XXX the "11" above could be dynamic, thereby eliminating one
+		 * more instance of the "number to vfs" mapping problem, but
+		 * "11" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&kernfs_vfsops);
+		error = vfs_detach(&kernfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&kernfs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }

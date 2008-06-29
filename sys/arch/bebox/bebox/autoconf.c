@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19.6.1 2008/06/02 13:21:58 mjf Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.6.2 2008/06/29 09:32:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.6.1 2008/06/02 13:21:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.6.2 2008/06/29 09:32:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,18 @@ device_register(struct device *dev, void *aux)
 		prop_dictionary_set_uint32(dict, "height", 480);
 		prop_dictionary_set_uint32(dict, "depth", 8);
 		prop_dictionary_set_uint32(dict, "address", fbaddr);
+	}
+
+	if (device_is_a(dev, "siop") &&
+	    device_is_a(device_parent(dev), "pci")) {
+		prop_dictionary_t dict = device_properties(dev);
+		struct pci_attach_args *pa = aux;
+		int bus, device;
+
+		pci_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &device, NULL);
+		if (bus == 0 && device == 12)
+			/* Internal SCSI uses PCI clock as SCSI clock */
+			prop_dictionary_set_bool(dict, "use_pciclock", 1);
 	}
 #endif
 }

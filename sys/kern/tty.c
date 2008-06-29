@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.212.6.2 2008/06/02 13:24:13 mjf Exp $	*/
+/*	$NetBSD: tty.c,v 1.212.6.3 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.212.6.2 2008/06/02 13:24:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.212.6.3 2008/06/29 09:33:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,7 +862,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 		mutex_spin_enter(&tty_lock);
 		while (isbackground(curproc, tp) &&
-		    p->p_pgrp->pg_jobc && (p->p_sflag & PS_PPWAIT) == 0 &&
+		    p->p_pgrp->pg_jobc && (p->p_lflag & PL_PPWAIT) == 0 &&
 		    !sigismasked(l, SIGTTOU)) {
 			mutex_spin_exit(&tty_lock);
 
@@ -1679,7 +1679,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	 */
 	if (isbackground(p, tp)) {
 		if (sigismasked(curlwp, SIGTTIN) ||
-		    p->p_sflag & PS_PPWAIT || p->p_pgrp->pg_jobc == 0) {
+		    p->p_lflag & PL_PPWAIT || p->p_pgrp->pg_jobc == 0) {
 			mutex_spin_exit(&tty_lock);
 			return (EIO);
 		}
@@ -1947,7 +1947,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	 */
 	p = curproc;
 	if (isbackground(p, tp) &&
-	    ISSET(tp->t_lflag, TOSTOP) && (p->p_sflag & PS_PPWAIT) == 0 &&
+	    ISSET(tp->t_lflag, TOSTOP) && (p->p_lflag & PL_PPWAIT) == 0 &&
 	    !sigismasked(curlwp, SIGTTOU)) {
 		if (p->p_pgrp->pg_jobc == 0) {
 			error = EIO;

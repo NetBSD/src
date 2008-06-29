@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.108.6.2 2008/06/02 13:23:10 mjf Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.108.6.3 2008/06/29 09:33:04 mjf Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -70,6 +70,7 @@ CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
+CWARNFLAGS+=	-Wno-unreachable-code
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare

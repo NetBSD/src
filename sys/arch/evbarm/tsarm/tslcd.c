@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.9.40.1 2008/06/02 13:22:03 mjf Exp $ */
+/* $NetBSD: tslcd.c,v 1.9.40.2 2008/06/29 09:32:56 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.9.40.1 2008/06/02 13:22:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.9.40.2 2008/06/29 09:32:56 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,12 +257,9 @@ tslcd_readreg(hd, en, rs)
 }
 
 int
-tslcdopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+tslcdopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
+	struct tslcd_softc *sc = device_lookup_private(&tslcd_cd, minor(dev));
 
 	if (sc->sc_hlcd.sc_dev_ok == 0)
 		return hd44780_init(&sc->sc_hlcd);
@@ -271,32 +268,23 @@ tslcdopen(dev, flag, mode, l)
 }
 
 int
-tslcdclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+tslcdclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	return 0;
 }
 
 int
-tslcdread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+tslcdread(dev_t dev, struct uio *uio, int flag)
 {
 	return EIO;
 }
 
 int
-tslcdwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+tslcdwrite(dev_t dev, struct uio *uio, int flag)
 {
 	int error;
 	struct hd44780_io io;
-	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
+	struct tslcd_softc *sc = device_lookup_private(&tslcd_cd, minor(dev));
 
 	if (sc->sc_hlcd.sc_dev_ok == 0)
 		return EIO;
@@ -314,22 +302,14 @@ tslcdwrite(dev, uio, flag)
 }
 
 int
-tslcdioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+tslcdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct tslcd_softc *sc = device_lookup(&tslcd_cd, minor(dev));
+	struct tslcd_softc *sc = device_lookup_private(&tslcd_cd, minor(dev));
 	return hd44780_ioctl_subr(&sc->sc_hlcd, cmd, data);
 }
 
 int
-tslcdpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+tslcdpoll(dev_t dev, int events, struct lwp *l)
 {
 	return 0;
 }

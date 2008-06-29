@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.45.6.2 2008/06/02 13:24:32 mjf Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.45.6.3 2008/06/29 09:33:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -207,7 +207,6 @@ int	vnode_to_path(char *, size_t, struct vnode *, struct lwp *,
 
 void	ffree(file_t *);
 int	closef(file_t *);
-int	getsock(int, file_t **);
 file_t *fgetdummy(void);
 void	fputdummy(file_t *);
 

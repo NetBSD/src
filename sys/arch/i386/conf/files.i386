@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.333.6.2 2008/06/02 13:22:14 mjf Exp $
+#	$NetBSD: files.i386,v 1.333.6.3 2008/06/29 09:32:57 mjf Exp $
 #
 # new style config file for i386 architecture
 #
@@ -115,7 +115,7 @@ include	"dev/scsipi/files.scsipi"
 include	"dev/ata/files.ata"
 
 # Memory Disk for install floppy
-file	dev/md_root.c			memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks & md
 
 #
 # Machine-independent I2O drivers

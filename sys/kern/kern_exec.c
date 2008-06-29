@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.268.6.3 2008/06/05 19:14:36 mjf Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.268.6.4 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.268.6.3 2008/06/05 19:14:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.268.6.4 2008/06/29 09:33:14 mjf Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -527,7 +527,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			cp = tmpfap->fa_arg;
 			while (*cp)
 				*dp++ = *cp++;
-			dp++;
+			*dp++ = '\0';
 
 			kmem_free(tmpfap->fa_arg, tmpfap->fa_len);
 			tmpfap++; argc++;
@@ -848,15 +848,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	/*
-	 * It's OK to test PS_PPWAIT unlocked here, as other LWPs have
+	 * It's OK to test PL_PPWAIT unlocked here, as other LWPs have
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
-	if ((p->p_sflag & PS_PPWAIT) != 0) {
+	if ((p->p_lflag & PL_PPWAIT) != 0) {
 		mutex_enter(proc_lock);
-		mutex_enter(p->p_lock);
-		p->p_sflag &= ~PS_PPWAIT;
+		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
-		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 	}
 
@@ -946,13 +944,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	doexechooks(p);
 
-	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
-
-	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-
-	/* notify others that we exec'd */
-	KNOTE(&p->p_klist, NOTE_EXEC);
-
 	/* setup new registers and do misc. setup. */
 	(*pack.ep_esch->es_emul->e_setregs)(l, &pack, (u_long) stack);
 	if (pack.ep_esch->es_setregs)
@@ -963,6 +954,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		DPRINTF(("execve: map sigcode failed %d\n", error));
 		goto exec_abort;
 	}
+
+	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
+
+	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
+
+	/* notify others that we exec'd */
+	KNOTE(&p->p_klist, NOTE_EXEC);
 
 	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 
@@ -1071,12 +1069,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
 
- clrflg:
-	PNBUF_PUT(pathbuf);
-	rw_exit(&p->p_reflock);
 #ifdef LKM
 	rw_exit(&exec_lock);
 #endif
+
+ clrflg:
+	PNBUF_PUT(pathbuf);
+	rw_exit(&p->p_reflock);
 
 	return error;
 

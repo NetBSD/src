@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.8.16.1 2008/06/02 13:23:49 mjf Exp $ */
+/*	$NetBSD: agten.c,v 1.8.16.2 2008/06/29 09:33:10 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.8.16.1 2008/06/02 13:23:49 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.8.16.2 2008/06/29 09:33:10 mjf Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -914,10 +914,10 @@ agten_fb_unblank(device_t dev)
 static int
 agten_fb_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct agten_softc *sc = device_private(agten_cd.cd_devs[minor(dev)]);
-	int unit = minor(dev);
+	struct agten_softc *sc;
 
-	if (unit >= agten_cd.cd_ndevs || agten_cd.cd_devs[unit] == NULL)
+	sc = device_lookup_private(&agten_cd, minor(dev));
+	if (sc == NULL)
 		return (ENXIO);
 	if (sc->sc_fb_is_open)
 		return 0;
@@ -931,7 +931,9 @@ agten_fb_open(dev_t dev, int flags, int mode, struct lwp *l)
 static int
 agten_fb_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct agten_softc *sc = device_private(agten_cd.cd_devs[minor(dev)]);
+	struct agten_softc *sc;
+
+	sc = device_lookup_private(&agten_cd, minor(dev));
 
 	sc->sc_fb_is_open--;
 	if (sc->sc_fb_is_open < 0)
@@ -948,7 +950,7 @@ agten_fb_close(dev_t dev, int flags, int mode, struct lwp *l)
 static int
 agten_fb_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct agten_softc *sc = device_private(agten_cd.cd_devs[minor(dev)]);
+	struct agten_softc *sc = device_lookup_private(&agten_cd, minor(dev));
 	struct fbgattr *fba;
 	int error;
 
@@ -1043,7 +1045,7 @@ agten_fb_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 static paddr_t
 agten_fb_mmap(dev_t dev, off_t off, int prot)
 {
-	struct agten_softc *sc = device_private(agten_cd.cd_devs[minor(dev)]);
+	struct agten_softc *sc = device_lookup_private(&agten_cd, minor(dev));
 
 	/*
 	 * mappings are subject to change

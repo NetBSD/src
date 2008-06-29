@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.158.6.1 2008/04/03 12:42:34 mjf Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.158.6.2 2008/06/29 09:33:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.158.6.1 2008/04/03 12:42:34 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.158.6.2 2008/06/29 09:33:04 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -541,7 +541,7 @@ sunos_sys_setsockopt(struct lwp *l, const struct sunos_sys_setsockopt_args *uap,
 	int name = SCARG(uap, name);
 	int error;
 
-	/* getsock() will use the descriptor for us */
+	/* fd_getsock() will use the descriptor for us */
 	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
 		return (error);
 #define	SO_DONTLINGER (~SO_LINGER)
@@ -598,7 +598,7 @@ sunos_sys_socket_common(struct lwp *l, register_t *retval, int type)
 	struct socket *so;
 	int error, fd;
 
-	/* getsock() will use the descriptor for us */
+	/* fd_getsock() will use the descriptor for us */
 	fd = (int)*retval;
 	if ((error = fd_getsock(fd, &so)) == 0) {
 		if (type == SOCK_DGRAM)
@@ -853,7 +853,7 @@ sunos_sys_fstatfs(struct lwp *l, const struct sunos_sys_fstatfs_args *uap, regis
 	struct statvfs *sp;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;

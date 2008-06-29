@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2006/08/17 22:38:14 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.6.58.1 2008/06/29 09:32:54 mjf Exp $
 
-SUBDIR=	include include/arm26 include/arm32
+SUBDIR=	include .WAIT include/arm26 include/arm32
 
 # install footbridge headers.
 SUBDIR+= footbridge

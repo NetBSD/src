@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.36.14.1 2008/06/02 13:23:20 mjf Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.36.14.2 2008/06/29 09:33:07 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.36.14.1 2008/06/02 13:23:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.36.14.2 2008/06/29 09:33:07 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -491,10 +491,7 @@ clmpcc_shutdown(ch)
 }
 
 int
-clmpccopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+clmpccopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct clmpcc_softc *sc;
 	struct clmpcc_chan *ch;
@@ -502,7 +499,7 @@ clmpccopen(dev, flag, mode, l)
 	int oldch;
 	int error;
 
-	sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	sc = device_lookup_private(&clmpcc_cd, CLMPCCUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -595,13 +592,10 @@ bad:
 }
 
 int
-clmpccclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+clmpccclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct clmpcc_softc	*sc =
-		device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+		device_lookup_private(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan	*ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	struct tty		*tp = ch->ch_tty;
 	int s;
@@ -630,59 +624,44 @@ clmpccclose(dev, flag, mode, l)
 }
 
 int
-clmpccread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+clmpccread(dev_t dev, struct uio *uio, int flag)
 {
-	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	struct clmpcc_softc *sc = device_lookup_private(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-clmpccwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+clmpccwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	struct clmpcc_softc *sc = device_lookup_private(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-clmpccpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+clmpccpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	struct clmpcc_softc *sc = device_lookup_private(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
-clmpcctty(dev)
-	dev_t dev;
+clmpcctty(dev_t dev)
 {
-	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	struct clmpcc_softc *sc = device_lookup_private(&clmpcc_cd, CLMPCCUNIT(dev));
 
 	return (sc->sc_chans[CLMPCCCHAN(dev)].ch_tty);
 }
 
 int
-clmpccioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+clmpccioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	struct clmpcc_softc *sc = device_lookup_private(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 	int error;
@@ -838,12 +817,10 @@ clmpcc_modem_control(ch, bits, howto)
 }
 
 static int
-clmpcc_param(tp, t)
-	struct tty *tp;
-	struct termios *t;
+clmpcc_param(struct tty *tp, struct termios *t)
 {
 	struct clmpcc_softc *sc =
-	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
+	    device_lookup_private(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	u_char cor;
 	u_char oldch;
@@ -1031,11 +1008,10 @@ clmpcc_set_params(ch)
 }
 
 static void
-clmpcc_start(tp)
-	struct tty *tp;
+clmpcc_start(struct tty *tp)
 {
 	struct clmpcc_softc *sc =
-	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
+	    device_lookup_private(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	u_int oldch;
 	int s;
@@ -1071,12 +1047,10 @@ clmpcc_start(tp)
  * Stop output on a line.
  */
 void
-clmpccstop(tp, flag)
-	struct tty *tp;
-	int flag;
+clmpccstop(struct tty *tp, int flag)
 {
 	struct clmpcc_softc *sc =
-	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
+	    device_lookup_private(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	int s;
 

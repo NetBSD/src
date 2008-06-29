@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3.c,v 1.9.56.1 2008/06/02 13:22:29 mjf Exp $	*/
+/*	$NetBSD: dmac3.c,v 1.9.56.2 2008/06/29 09:32:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.9.56.1 2008/06/02 13:22:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.9.56.2 2008/06/29 09:32:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -115,7 +115,7 @@ dmac3_link(int ctlnum)
 	int unit;
 
 	for (unit = 0; unit < dmac_cd.cd_ndevs; unit++) {
-		sc = device_private(dmac_cd.cd_devs[unit]);
+		sc = device_lookup_private(&dmac_cd, unit);
 		if (sc == NULL)
 			continue;
 		if (sc->sc_ctlnum == ctlnum)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.34.10.1 2008/06/02 13:23:14 mjf Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.34.10.2 2008/06/29 09:33:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.34.10.1 2008/06/02 13:23:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.34.10.2 2008/06/29 09:33:05 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -136,7 +136,7 @@ struct rtk_cardbus_softc {
 	int sc_bar_reg;
 	pcireg_t sc_bar_val;
 	bus_size_t sc_mapsize;
-	int sc_intrline;
+	cardbus_intr_line_t sc_intrline;
 };
 
 CFATTACH_DECL_NEW(rtk_cardbus, sizeof(struct rtk_cardbus_softc),
@@ -387,12 +387,10 @@ rtk_cardbus_enable(struct rtk_softc *sc)
 	    IPL_NET, rtk_intr, sc);
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to establish interrupt at %d\n", csc->sc_intrline);
+		    "unable to establish interrupt\n");
 		Cardbus_function_disable(csc->sc_ct);
 		return 1;
 	}
-	aprint_normal_dev(sc->sc_dev, "interrupting at %d\n",
-	    csc->sc_intrline);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.74 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.74.6.1 2008/06/29 09:33:18 mjf Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.74 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.74.6.1 2008/06/29 09:33:18 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -134,11 +134,9 @@ gif_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gif_softc *sc;
 
-	sc = malloc(sizeof(struct gif_softc), M_DEVBUF, M_WAITOK);
-	memset(sc, 0, sizeof(struct gif_softc));
+	sc = malloc(sizeof(struct gif_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 
-	snprintf(sc->gif_if.if_xname, sizeof(sc->gif_if.if_xname), "%s%d",
-	    ifc->ifc_name, unit);
+	if_initname(&sc->gif_if, ifc->ifc_name, unit);
 
 	gifattach0(sc);
 

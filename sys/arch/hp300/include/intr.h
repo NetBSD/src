@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27.6.1 2008/06/02 13:22:07 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.27.6.2 2008/06/29 09:32:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -63,7 +63,15 @@
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
 extern int idepth;
-extern u_short hp300_ipl2psl[];
+
+static inline bool
+cpu_intr_p(void) 
+{
+ 
+	return idepth != 0;
+}
+
+extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
@@ -74,7 +82,7 @@ static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._psl = hp300_ipl2psl[ipl]};
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
 }
 
 static inline int
@@ -94,7 +102,7 @@ splraiseipl(ipl_cookie_t icookie)
 #define	splsoftclock()	splraise1()
 #define	splsoftnet()	splraise1()
 #define	splsoftserial()	splraise1()
-#define	splvm()		_splraise(hp300_ipl2psl[IPL_VM])
+#define	splvm()		splraise5()
 #define	splsched()	spl6()
 #define	splhigh()	spl7()
 
@@ -122,6 +130,5 @@ void	intr_init(void);
 void	*intr_establish(int (*)(void *), void *, int, int);
 void	intr_disestablish(void *);
 void	intr_dispatch(int);
-void	intr_printlevels(void);
 
 #endif /* _HP300_INTR_H_ */

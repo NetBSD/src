@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.245.6.3 2008/06/02 13:23:50 mjf Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.245.6.4 2008/06/29 09:33:10 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.245.6.3 2008/06/02 13:23:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.245.6.4 2008/06/29 09:33:10 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -979,8 +979,8 @@ scsibusopen(dev_t dev, int flag, int fmt,
 	struct scsibus_softc *sc;
 	int error, unit = minor(dev);
 
-	if (unit >= scsibus_cd.cd_ndevs ||
-	    (sc = scsibus_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup_private(&scsibus_cd, unit);
+	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_flags & SCSIBUSF_OPEN)
@@ -998,8 +998,9 @@ static int
 scsibusclose(dev_t dev, int flag, int fmt,
     struct lwp *l)
 {
-	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
+	struct scsibus_softc *sc;
 
+	sc = device_lookup_private(&scsibus_cd, minor(dev));
 	scsipi_adapter_delref(sc->sc_channel->chan_adapter);
 
 	sc->sc_flags &= ~SCSIBUSF_OPEN;
@@ -1010,9 +1011,12 @@ scsibusclose(dev_t dev, int flag, int fmt,
 static int
 scsibusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
-	struct scsipi_channel *chan = sc->sc_channel;
+	struct scsibus_softc *sc;
+	struct scsipi_channel *chan;
 	int error;
+
+	sc = device_lookup_private(&scsibus_cd, minor(dev));
+	chan = sc->sc_channel;
 
 	/*
 	 * Enforce write permission for ioctls that change the

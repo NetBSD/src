@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.222.6.2 2008/06/05 19:14:37 mjf Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.222.6.3 2008/06/29 09:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.222.6.2 2008/06/05 19:14:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.222.6.3 2008/06/29 09:33:21 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.222.6.2 2008/06/05 19:14:37 mjf Exp
 #include <ufs/ffs/ffs_extern.h>
 
 MODULE(MODULE_CLASS_VFS, ffs, NULL);
+
+static struct sysctllog *ffs_sysctl_log;
 
 /* how many times ffs_init() was called */
 int ffs_initcount = 0;
@@ -142,15 +144,76 @@ static const struct ufs_ops ffs_ufsops = {
 static int
 ffs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
+
+#if 0
+	extern int doasyncfree;
+#endif
+	extern int ffs_log_changeopt;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&ffs_vfsops);
+		error = vfs_attach(&ffs_vfsops);
+		if (error != 0)
+			break;
+
+		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "ffs",
+			       SYSCTL_DESCR("Berkeley Fast File System"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 1, CTL_EOL);
+
+		/*
+		 * @@@ should we even bother with these first three?
+		 */
+		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "doclusterread", NULL,
+			       sysctl_notavail, 0, NULL, 0,
+			       CTL_VFS, 1, FFS_CLUSTERREAD, CTL_EOL);
+		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "doclusterwrite", NULL,
+			       sysctl_notavail, 0, NULL, 0,
+			       CTL_VFS, 1, FFS_CLUSTERWRITE, CTL_EOL);
+		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "doreallocblks", NULL,
+			       sysctl_notavail, 0, NULL, 0,
+			       CTL_VFS, 1, FFS_REALLOCBLKS, CTL_EOL);
+#if 0
+		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "doasyncfree",
+			       SYSCTL_DESCR("Release dirty blocks asynchronously"),
+			       NULL, 0, &doasyncfree, 0,
+			       CTL_VFS, 1, FFS_ASYNCFREE, CTL_EOL);
+#endif
+		sysctl_createv(&ffs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "log_changeopt",
+			       SYSCTL_DESCR("Log changes in optimization strategy"),
+			       NULL, 0, &ffs_log_changeopt, 0,
+			       CTL_VFS, 1, FFS_LOG_CHANGEOPT, CTL_EOL);
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&ffs_vfsops);
+		error = vfs_detach(&ffs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&ffs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }
 
 pool_cache_t ffs_inode_cache;
@@ -1683,59 +1746,6 @@ ffs_done(void)
 	pool_cache_destroy(ffs_dinode2_cache);
 	pool_cache_destroy(ffs_dinode1_cache);
 	pool_cache_destroy(ffs_inode_cache);
-}
-
-SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")
-{
-#if 0
-	extern int doasyncfree;
-#endif
-	extern int ffs_log_changeopt;
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ffs",
-		       SYSCTL_DESCR("Berkeley Fast File System"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 1, CTL_EOL);
-
-	/*
-	 * @@@ should we even bother with these first three?
-	 */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "doclusterread", NULL,
-		       sysctl_notavail, 0, NULL, 0,
-		       CTL_VFS, 1, FFS_CLUSTERREAD, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "doclusterwrite", NULL,
-		       sysctl_notavail, 0, NULL, 0,
-		       CTL_VFS, 1, FFS_CLUSTERWRITE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "doreallocblks", NULL,
-		       sysctl_notavail, 0, NULL, 0,
-		       CTL_VFS, 1, FFS_REALLOCBLKS, CTL_EOL);
-#if 0
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "doasyncfree",
-		       SYSCTL_DESCR("Release dirty blocks asynchronously"),
-		       NULL, 0, &doasyncfree, 0,
-		       CTL_VFS, 1, FFS_ASYNCFREE, CTL_EOL);
-#endif
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "log_changeopt",
-		       SYSCTL_DESCR("Log changes in optimization strategy"),
-		       NULL, 0, &ffs_log_changeopt, 0,
-		       CTL_VFS, 1, FFS_LOG_CHANGEOPT, CTL_EOL);
 }
 
 /*

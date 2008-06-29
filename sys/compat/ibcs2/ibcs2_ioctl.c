@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.42.6.2 2008/06/02 13:22:58 mjf Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.42.6.3 2008/06/29 09:33:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.42.6.2 2008/06/02 13:22:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.42.6.3 2008/06/29 09:33:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ ibcs2_sys_ioctl(struct lwp *l, const struct ibcs2_sys_ioctl_args *uap, register_
 	SCARG(&bsd_ua, data) = SCARG(uap, data);
 
 	/* Handle the easy ones first */
-	switch (SCARG(uap, cmd)) {
+	switch ((unsigned long)SCARG(uap, cmd)) {
 	case IBCS2_TIOCGWINSZ:
 		SCARG(&bsd_ua, com) = TIOCGWINSZ;
 		return sys_ioctl(l, &bsd_ua, retval);
@@ -395,7 +395,7 @@ ibcs2_sys_ioctl(struct lwp *l, const struct ibcs2_sys_ioctl_args *uap, register_
 
 	ctl = fp->f_ops->fo_ioctl;
 
-	switch (SCARG(uap, cmd)) {
+	switch ((unsigned long)SCARG(uap, cmd)) {
 	case IBCS2_TCGETA:
 	case IBCS2_XCGETA:
 	case IBCS2_OXCGETA:

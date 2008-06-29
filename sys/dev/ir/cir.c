@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.17.36.4 2008/06/02 13:23:29 mjf Exp $	*/
+/*	$NetBSD: cir.c,v 1.17.36.5 2008/06/29 09:33:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17.36.4 2008/06/02 13:23:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17.36.5 2008/06/29 09:33:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ ciropen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct cir_softc *sc;
 	int error;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(&sc->sc_dev))
@@ -168,7 +168,7 @@ circlose(dev_t dev, int flag, int mode, struct lwp *l)
 	struct cir_softc *sc;
 	int error;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (sc->sc_methods->im_close != NULL)
@@ -185,7 +185,7 @@ cirread(dev_t dev, struct uio *uio, int flag)
 {
 	struct cir_softc *sc;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(&sc->sc_dev))
@@ -198,7 +198,7 @@ cirwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct cir_softc *sc;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(&sc->sc_dev))
@@ -212,7 +212,7 @@ cirioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct cir_softc *sc;
 	int error;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(&sc->sc_dev))
@@ -247,7 +247,7 @@ cirpoll(dev_t dev, int events, struct lwp *l)
 	int revents;
 	int s;
 
-	sc = device_lookup(&cir_cd, CIRUNIT(dev));
+	sc = device_lookup_private(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (POLLERR);
 	if (!device_is_active(&sc->sc_dev))

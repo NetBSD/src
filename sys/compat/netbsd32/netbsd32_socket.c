@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.30.6.2 2008/06/02 13:23:07 mjf Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.30.6.3 2008/06/29 09:33:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.30.6.2 2008/06/02 13:23:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.30.6.3 2008/06/29 09:33:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ recvit32(struct lwp *l, int s, struct netbsd32_msghdr *mp, struct iovec *iov, vo
 	struct iovec *ktriov = NULL;
 	p = l->l_proc;
 
-	/* getsock() will use the descriptor for us */
+	/* fd_getsock() will use the descriptor for us */
 	if ((error = fd_getsock(s, &so)) != 0)
 		return (error);
 	auio.uio_iov = iov;

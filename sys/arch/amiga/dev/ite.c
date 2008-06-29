@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.82.14.1 2008/06/02 13:21:50 mjf Exp $ */
+/*	$NetBSD: ite.c,v 1.82.14.2 2008/06/29 09:32:54 mjf Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82.14.1 2008/06/02 13:21:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.82.14.2 2008/06/29 09:32:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -273,7 +273,7 @@ struct ite_softc *
 getitesp(dev_t dev)
 {
 	if (amiga_realconfig && con_itesoftc.grf == NULL)
-		return(ite_cd.cd_devs[ITEUNIT(dev)]);
+		return(device_lookup_private(&ite_cd, ITEUNIT(dev)));
 
 	if (con_itesoftc.grf == NULL)
 		panic("no ite_softc for console");

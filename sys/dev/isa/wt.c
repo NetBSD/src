@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.78.16.2 2008/06/02 13:23:32 mjf Exp $	*/
+/*	$NetBSD: wt.c,v 1.78.16.3 2008/06/29 09:33:08 mjf Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.78.16.2 2008/06/02 13:23:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.78.16.3 2008/06/29 09:33:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,7 +387,7 @@ wtopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct wt_softc *sc;
 	int error;
 
-	sc = device_lookup(&wt_cd, unit);
+	sc = device_lookup_private(&wt_cd, unit);
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -468,7 +468,9 @@ static int
 wtclose(dev_t dev, int flags, int mode,
     struct lwp *l)
 {
-	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
+	struct wt_softc *sc;
+
+	sc = device_lookup_private(&wt_cd, minor(dev) & T_UNIT);
 
 	/* If rewind is pending, do nothing */
 	if (sc->flags & TPREW)
@@ -518,8 +520,10 @@ static int
 wtioctl(dev_t dev, unsigned long cmd, void *addr, int flag,
     struct lwp *l)
 {
-	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
+	struct wt_softc *sc;
 	int error, count, op;
+
+	sc = device_lookup_private(&wt_cd, minor(dev) & T_UNIT);
 
 	switch (cmd) {
 	default:
@@ -616,8 +620,10 @@ wtioctl(dev_t dev, unsigned long cmd, void *addr, int flag,
 static void
 wtstrategy(struct buf *bp)
 {
-	struct wt_softc *sc = device_lookup(&wt_cd, minor(bp->b_dev) & T_UNIT);
+	struct wt_softc *sc;
 	int s;
+
+	sc = device_lookup_private(&wt_cd, minor(bp->b_dev) & T_UNIT);
 
 	bp->b_resid = bp->b_bcount;
 

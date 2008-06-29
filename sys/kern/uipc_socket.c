@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.151.6.2 2008/06/02 13:24:13 mjf Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.151.6.3 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.151.6.2 2008/06/02 13:24:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.151.6.3 2008/06/29 09:33:14 mjf Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -500,6 +500,8 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l,
 #endif
 	uid = kauth_cred_geteuid(l->l_cred);
 	so->so_uidinfo = uid_find(uid);
+	so->so_egid = kauth_cred_getegid(l->l_cred);
+	so->so_cpid = l->l_proc->p_pid;
 	if (lockso != NULL) {
 		/* Caller wants us to share a lock. */
 		lock = lockso->so_lock;

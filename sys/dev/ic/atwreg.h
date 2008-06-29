@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.19.14.1 2008/06/02 13:23:19 mjf Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.19.14.2 2008/06/29 09:33:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -464,7 +464,16 @@
 #define ATW_BBPCTL_NEGEDGE_DO		__BIT(23)
 /* data-in on negative edge */
 #define ATW_BBPCTL_NEGEDGE_DI		__BIT(22)
-#define ATW_BBPCTL_CCA_ACTLO		__BIT(21)	/* CCA low when busy */
+#define ATW_BBPCTL_CCA_ACTLO		__BIT(21)	/* 1: CCA signal is low
+							 * when channel is busy,
+							 * CCA signal is high
+							 * when channel is
+							 * clear.
+							 * 0: vice-versa
+							 * 1 is suitable for
+							 * the embedded
+							 * RFMD RF3000.
+							 */
 #define ATW_BBPCTL_TYPE_MASK		__BITS(20, 18)	/* BBP type */
 /* start write; reset on completion */
 #define ATW_BBPCTL_WR			__BIT(17)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.45.6.1 2008/04/03 12:42:31 mjf Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.45.6.2 2008/06/29 09:33:02 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.45.6.1 2008/04/03 12:42:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.45.6.2 2008/06/29 09:33:02 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -353,8 +353,8 @@ compat_43_sys_getdirentries(struct lwp *l, const struct compat_43_sys_getdirentr
 	int error, eofflag, readcnt;
 	long loff;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;

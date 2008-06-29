@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.73.6.1 2008/06/02 13:24:19 mjf Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.73.6.2 2008/06/29 09:33:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.73.6.1 2008/06/02 13:24:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.73.6.2 2008/06/29 09:33:16 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.73.6.1 2008/06/02 13:24:19 mjf Ex
 MODULE(MODULE_CLASS_VFS, fdesc, NULL);
 
 VFS_PROTOS(fdesc);
+
+static struct sysctllog *fdesc_sysctl_log;
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
@@ -232,28 +234,6 @@ fdesc_vget(struct mount *mp, ino_t ino,
 	return (EOPNOTSUPP);
 }
 
-
-SYSCTL_SETUP(sysctl_vfs_fdesc_setup, "sysctl vfs.fdesc subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "fdesc",
-		       SYSCTL_DESCR("File-descriptor file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 7, CTL_EOL);
-	/*
-	 * XXX the "7" above could be dynamic, thereby eliminating one
-	 * more instance of the "number to vfs" mapping problem, but
-	 * "7" is the order as taken from sys/mount.h
-	 */
-}
-
 extern const struct vnodeopv_desc fdesc_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const fdesc_vnodeopv_descs[] = {
@@ -292,13 +272,40 @@ struct vfsops fdesc_vfsops = {
 static int
 fdesc_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&fdesc_vfsops);
+		error = vfs_attach(&fdesc_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&fdesc_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&fdesc_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "fdesc",
+			       SYSCTL_DESCR("File-descriptor file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 7, CTL_EOL);
+		/*
+		 * XXX the "7" above could be dynamic, thereby eliminating one
+		 * more instance of the "number to vfs" mapping problem, but
+		 * "7" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&fdesc_vfsops);
+		error = vfs_detach(&fdesc_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&fdesc_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }

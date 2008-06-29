@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.193.6.2 2008/06/02 13:23:03 mjf Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.193.6.3 2008/06/29 09:33:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.193.6.2 2008/06/02 13:23:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.193.6.3 2008/06/29 09:33:03 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -690,8 +690,8 @@ linux_sys_getdents(struct lwp *l, const struct linux_sys_getdents_args *uap, reg
 	off_t *cookiebuf = NULL, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -1119,7 +1119,7 @@ linux_sys_reboot(struct lwp *l, const struct linux_sys_reboot_args *uap, registe
 	    SCARG(uap, magic2) != LINUX_REBOOT_MAGIC2B)
 		return(EINVAL);
 
-	switch (SCARG(uap, cmd)) {
+	switch ((unsigned long)SCARG(uap, cmd)) {
 	case LINUX_REBOOT_CMD_RESTART:
 		SCARG(&sra, opt) = RB_AUTOBOOT;
 		break;

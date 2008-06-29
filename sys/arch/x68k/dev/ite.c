@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.53.14.1 2008/04/03 12:42:30 mjf Exp $	*/
+/*	$NetBSD: ite.c,v 1.53.14.2 2008/06/29 09:33:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.53.14.1 2008/04/03 12:42:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.53.14.2 2008/06/29 09:33:01 mjf Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -262,7 +262,7 @@ getitesp(dev_t dev)
 	extern int x68k_realconfig;
 
 	if (x68k_realconfig && con_itesoftc.grf == NULL)
-		return(ite_cd.cd_devs[UNIT(dev)]);
+		return device_lookup_private(&ite_cd, UNIT(dev));
 
 	if (con_itesoftc.grf == NULL)
 		panic("no ite_softc for console");

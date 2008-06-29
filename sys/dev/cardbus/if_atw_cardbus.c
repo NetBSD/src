@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.19.10.2 2008/06/02 13:23:14 mjf Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.19.10.3 2008/06/29 09:33:05 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.19.10.2 2008/06/02 13:23:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.19.10.3 2008/06/29 09:33:05 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -108,7 +108,7 @@ struct atw_cardbus_softc {
 	int	sc_bar_reg;		/* which BAR to use */
 	pcireg_t sc_bar_val;		/* value of the BAR */
 
-	int	sc_intrline;		/* interrupt line */
+	cardbus_intr_line_t sc_intrline; /* interrupt line */
 };
 
 int	atw_cardbus_match(struct device *, struct cfdata *, void *);
@@ -255,8 +255,6 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	printf("%s: interrupting at %d\n", device_xname(&sc->sc_dev),
-	    csc->sc_intrline);
 #if 0
 	/*
 	 * The CardBus cards will make it to store-and-forward mode as
@@ -342,8 +340,8 @@ atw_cardbus_enable(struct atw_softc *sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
 	    atw_intr, sc);
 	if (csc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt at %d\n",
-		    csc->sc_intrline);
+		aprint_error_dev(&sc->sc_dev,
+				 "unable to establish interrupt\n");
 		Cardbus_function_disable(csc->sc_ct);
 		return (1);
 	}

@@ -1,4 +1,4 @@
-# $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
+# $NetBSD: files.drm,v 1.2.34.1 2008/06/29 09:33:06 mjf Exp $
 
 # direct rendering modules
 define drmbase
@@ -15,6 +15,7 @@ file   dev/drm/drm_ioctl.c         drmbase
 file   dev/drm/drm_irq.c           drmbase
 file   dev/drm/drm_lock.c          drmbase
 file   dev/drm/drm_memory.c        drmbase
+file   dev/drm/drm_netbsd.c	   drmbase
 file   dev/drm/drm_pci.c           drmbase
 file   dev/drm/drm_scatter.c       drmbase
 file   dev/drm/drm_sysctl.c        drmbase

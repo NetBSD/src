@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.39.36.4 2008/06/02 13:23:29 mjf Exp $	*/
+/*	$NetBSD: irframe.c,v 1.39.36.5 2008/06/29 09:33:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.39.36.4 2008/06/02 13:23:29 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.39.36.5 2008/06/29 09:33:07 mjf Exp $");
 
 #include "irframe.h"
 
@@ -188,7 +188,7 @@ irframeopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct irframe_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&irframe_cd, IRFRAMEUNIT(dev)));
+	sc = device_lookup_private(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(sc->sc_dev))
@@ -214,7 +214,7 @@ irframeclose(dev_t dev, int flag, int mode, struct lwp *l)
 	struct irframe_softc *sc;
 	int error;
 
-	sc = device_private(device_lookup(&irframe_cd, IRFRAMEUNIT(dev)));
+	sc = device_lookup_private(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	sc->sc_open = 0;
@@ -230,7 +230,7 @@ irframeread(dev_t dev, struct uio *uio, int flag)
 {
 	struct irframe_softc *sc;
 
-	sc = device_private(device_lookup(&irframe_cd, IRFRAMEUNIT(dev)));
+	sc = device_lookup_private(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(sc->sc_dev) || !sc->sc_open)
@@ -250,7 +250,7 @@ irframewrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct irframe_softc *sc;
 
-	sc = device_private(device_lookup(&irframe_cd, IRFRAMEUNIT(dev)));
+	sc = device_lookup_private(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(sc->sc_dev) || !sc->sc_open)
@@ -344,7 +344,7 @@ irframeioctl(dev_t dev, u_long cmd, void *addr, int flag,
 	void *vaddr = addr;
 	int error;
 
-	sc = device_private(device_lookup(&irframe_cd, IRFRAMEUNIT(dev)));
+	sc = device_lookup_private(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if (!device_is_active(sc->sc_dev) || !sc->sc_open)
@@ -384,7 +384,7 @@ irframepoll(dev_t dev, int events, struct lwp *l)
 {
 	struct irframe_softc *sc;
 
-	sc = device_private(device_lookup(&irframe_cd, IRFRAMEUNIT(dev)));
+	sc = device_lookup_private(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (POLLHUP);
 	if (!device_is_active(sc->sc_dev) || !sc->sc_open)
@@ -398,7 +398,7 @@ irframekqfilter(dev_t dev, struct knote *kn)
 {
 	struct irframe_softc *sc;
 
-	sc = device_private(device_lookup(&irframe_cd, IRFRAMEUNIT(dev)));
+	sc = device_lookup_private(&irframe_cd, IRFRAMEUNIT(dev));
 	if (!device_is_active(sc->sc_dev) || !sc->sc_open)
 		return (1);
 

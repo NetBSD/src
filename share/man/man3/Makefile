@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.31 2007/08/29 13:43:18 pooka Exp $
+#	$NetBSD: Makefile,v 1.31.6.1 2008/06/29 08:51:20 mjf Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
-MAN=	_DIAGASSERT.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 gcq.3 \
-	intro.3 queue.3 stdarg.3 sysexits.3 tree.3 varargs.3
+MAN=	_DIAGASSERT.3 CMSG_DATA.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 \
+	gcq.3 intro.3 queue.3 stdarg.3 sysexits.3 tree.3 varargs.3
 
 USETBL=	# used by queue.3
 
@@ -192,6 +192,10 @@ MLINKS+=tree.3 RB_PROTOTYPE.3 tree.3 RB_GENERATE.3 \
 	tree.3 RB_LEFT.3 tree.3 RB_RIGHT.3 tree.3 RB_PARENT.3 \
 	tree.3 RB_INIT.3 tree.3 RB_INSERT.3 tree.3 RB_REMOVE.3 \
 	tree.3 RB_FOREACH.3
+MLINKS+=CMSG_DATA.3 CMSG_FIRSTHDR.3 \
+	CMSG_DATA.3 CMSG_LEN.3 \
+	CMSG_DATA.3 CMSG_NXTHDR.3 \
+	CMSG_DATA.3 CMSG_SPACE.3
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>

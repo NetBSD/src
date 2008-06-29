@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.51 2007/10/17 19:55:16 garbled Exp $	*/
+/*	$NetBSD: asc.c,v 1.51.16.1 2008/06/29 09:32:58 mjf Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.51 2007/10/17 19:55:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.51.16.1 2008/06/29 09:32:58 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -212,11 +212,9 @@ int
 ascopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct asc_softc *sc;
-	int unit;
 
-	unit = ASCUNIT(dev);
-	sc = asc_cd.cd_devs[unit];
-	if (unit >= asc_cd.cd_ndevs)
+	sc = device_lookup_private(&asc_cd, ASCUNIT(dev));
+	if (sc == NULL)
 		return (ENXIO);
 	if (sc->sc_open)
 		return (EBUSY);
@@ -230,7 +228,7 @@ ascclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct asc_softc *sc;
 
-	sc = asc_cd.cd_devs[ASCUNIT(dev)];
+	sc = device_lookup_private(&asc_cd, ASCUNIT(dev));
 	sc->sc_open = 0;
 
 	return (0);
@@ -255,7 +253,7 @@ ascioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int error;
 	int unit = ASCUNIT(dev);
 
-	sc = asc_cd.cd_devs[unit];
+	sc = device_lookup_private(&asc_cd, unit);
 	error = 0;
 
 	switch (cmd) {
@@ -269,11 +267,10 @@ ascioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 paddr_t
 ascmmap(dev_t dev, off_t off, int prot)
 {
-	int unit = ASCUNIT(dev);
 	struct asc_softc *sc;
 	paddr_t pa;
 
-	sc = asc_cd.cd_devs[unit];
+	sc = device_lookup_private(&asc_cd, ASCUNIT(dev));
 	if ((u_int)off < MAC68K_ASC_LEN) {
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_handle.base,
 		    &pa);

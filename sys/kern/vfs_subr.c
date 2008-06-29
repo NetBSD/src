@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.334.6.3 2008/06/05 19:14:36 mjf Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.334.6.4 2008/06/29 09:33:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.334.6.3 2008/06/05 19:14:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.334.6.4 2008/06/29 09:33:14 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -130,6 +130,7 @@ static vnodelst_t vnode_hold_list = TAILQ_HEAD_INITIALIZER(vnode_hold_list);
 static vnodelst_t vrele_list = TAILQ_HEAD_INITIALIZER(vrele_list);
 
 static int vrele_pending;
+static int vrele_gen;
 static kmutex_t	vrele_lock;
 static kcondvar_t vrele_cv;
 static lwp_t *vrele_lwp;
@@ -1038,6 +1039,8 @@ vrele_thread(void *cookie)
 	for (;;) {
 		mutex_enter(&vrele_lock);
 		while (TAILQ_EMPTY(&vrele_list)) {
+			vrele_gen++;
+			cv_broadcast(&vrele_cv);
 			cv_timedwait(&vrele_cv, &vrele_lock, hz);
 		}
 		vp = TAILQ_FIRST(&vrele_list);
@@ -1153,17 +1156,28 @@ int
 vflush(struct mount *mp, vnode_t *skipvp, int flags)
 {
 	vnode_t *vp, *mvp;
-	int busy = 0, when = 0;
+	int busy = 0, when = 0, gen;
+
+	/*
+	 * First, flush out any vnode references from vrele_list.
+	 */
+	mutex_enter(&vrele_lock);
+	gen = vrele_gen;
+	do {
+		cv_broadcast(&vrele_cv);
+		cv_wait(&vrele_cv, &vrele_lock);
+	} while (gen == vrele_gen);
+	mutex_exit(&vrele_lock);
 
 	/* Allocate a marker vnode. */
 	if ((mvp = vnalloc(mp)) == NULL)
 		return (ENOMEM);
 
-	mutex_enter(&mntvnode_lock);
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() are called
 	 */
+	mutex_enter(&mntvnode_lock);
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp != NULL;
 	    vp = vflushnext(mvp, &when)) {
 		vmark(mvp, vp);

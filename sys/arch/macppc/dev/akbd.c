@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.38 2007/10/17 19:55:17 garbled Exp $	*/
+/*	$NetBSD: akbd.c,v 1.38.16.1 2008/06/29 09:32:58 mjf Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.38 2007/10/17 19:55:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.38.16.1 2008/06/29 09:32:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -528,8 +528,7 @@ kbd_passup(sc,key)
 }
 
 int
-kbd_intr(arg)
-	void *arg;
+kbd_intr(void *arg)
 {
 	adb_event_t *event = arg;
 	int key;
@@ -537,7 +536,7 @@ kbd_intr(arg)
 	static int shift;
 #endif
 
-	struct akbd_softc *sc = akbd_cd.cd_devs[0];
+	struct akbd_softc *sc = device_lookup_private(&akbd_cd, 0);
 
 	key = event->u.k.key;
 

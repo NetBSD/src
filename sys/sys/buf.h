@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.106.6.1 2008/06/02 13:24:32 mjf Exp $ */
+/*     $NetBSD: buf.h,v 1.106.6.2 2008/06/29 09:33:20 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,8 @@ extern kmutex_t buffer_lock;
  *
  * Field markings and the corresponding locks:
  *
- * b	owner (thread that holds BB_BUSY) and/or thread calling biodone()
+ * b	thread of execution that holds BC_BUSY, does not correspond
+ *	  directly to any particular LWP
  * c	bufcache_lock
  * l	b_objlock
  *
