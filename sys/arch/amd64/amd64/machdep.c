@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2008/06/05 21:44:31 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 2008/06/29 21:00:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2008/06/05 21:44:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2008/06/29 21:00:08 bouyer Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -394,16 +394,15 @@ x86_64_switch_context(struct pcb *new)
 {
 	struct cpu_info *ci;
 	ci = curcpu();
-	if (/* XXX ! ci->ci_fpused */ 1) {
-		HYPERVISOR_fpu_taskswitch(0);
-		/* XXX ci->ci_fpused = 0; */
-	}
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
 		physop.u.set_iopl.iopl = new->pcb_iopl;
 		HYPERVISOR_physdev_op(&physop);
+	}
+	if (new->pcb_fpcpu != ci) {
+		HYPERVISOR_fpu_taskswitch(1);
 	}
 }
 
@@ -436,7 +435,7 @@ x86_64_proc0_tss_ldt_init(void)
 #else
 	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
-	HYPERVISOR_fpu_taskswitch(0);
+	HYPERVISOR_fpu_taskswitch(1);
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_rsp0);
 #endif /* XEN */
 }
