@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.2 2005/12/11 12:20:14 christos Exp $ */
+/*	$NetBSD: linux_termios.h,v 1.3 2008/06/29 08:50:09 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -140,9 +140,6 @@
 #define LINUX_VWERASE		14
 #define LINUX_VLNEXT		15
 #define LINUX_VEOL2		16
-
-typedef unsigned int linux_tcflag_t;
-typedef unsigned char linux_cc_t;
 
 #define LINUX_TCGETS		_LINUX_IO('T', 0x01)
 #define LINUX_TCSETS		_LINUX_IO('T', 0x02)
