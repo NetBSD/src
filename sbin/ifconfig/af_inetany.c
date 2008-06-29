@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.9.2.2 2008/06/02 13:21:22 mjf Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.9.2.3 2008/06/29 08:41:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.9.2.2 2008/06/02 13:21:22 mjf Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.9.2.3 2008/06/29 08:41:57 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -131,13 +131,8 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	case IFF_BROADCAST:
 		if (brd != NULL)
 			loadbuf(&param->brd, brd);
+		/*FALLTHROUGH*/
 	case 0:
-		if (mask != NULL)
-			loadbuf(&param->mask, mask);
-		else if (param->defmask.buf != NULL) {
-			memcpy(param->mask.buf, param->defmask.buf,
-			    MIN(param->mask.buflen, param->defmask.buflen));
-		}
 		break;
 	case IFF_POINTOPOINT:
 		if (dst == NULL) {
@@ -152,6 +147,12 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 		break;
 	case IFF_BROADCAST|IFF_POINTOPOINT:
 		errx(EXIT_FAILURE, "unsupported interface flags");
+	}
+	if (mask != NULL)
+		loadbuf(&param->mask, mask);
+	else if (param->defmask.buf != NULL) {
+		memcpy(param->mask.buf, param->defmask.buf,
+		    MIN(param->mask.buflen, param->defmask.buflen));
 	}
 	if (replace) {
 		if (ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == 0) {

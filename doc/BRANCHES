@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.250.2.2 2008/06/02 13:21:19 mjf Exp $
+#	$NetBSD: BRANCHES,v 1.250.2.3 2008/06/29 08:35:32 mjf Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -553,17 +553,6 @@ Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
 
-Branch:		yamt-pf42
-Description:	import newer pf from OpenBSD 4.2
-Status:		Active
-Start Date:	Sat Apr 19 2008
-End Date:	
-Base Tag:	yamt-pf42-base2
-Maintainer:	Peter Postma <peter@NetBSD.org>,
-		YAMAMOTO Takashi <yamt@NetBSD.org>
-Scope:		src
-Notes:		see sys/dist/pf/net/TODO
-
 Branch:		reinoud-bufcleanup
 Description:	implement and evaluate struct buf usage cleanup strategies.
 		Ideas currently in mind (preference for b):
@@ -596,6 +585,26 @@ Maintainer:	Reinoud Zandijk <reinoud@NetBSD.org>
 Scope:		src/sys and src/common
 Notes:		Used as experiment sandbox and if successful hopefully one day
 		to be integrated.
+
+Branch:		simonb-wapbl
+Description:	Wasabi's journaling filesystem support
+Status:		Active
+Start Date:	Tue Jun 10 2008
+End Date:
+Base Tag:	simonb-wapbl-base
+Maintainer:	Simon Burge <simonb@NetBSD.org>
+Scope:		src/distrib/sets/lists/comp src/distrib/utils/sysinst
+		src/include
+		src/sbin/fsck_ffs src/sbin/fsdb src/sbin/mount_ffs
+		src/sys
+Notes:		Still has a number of issues:
+		 - Can't log the root filesystem (or any FS if /dev isn't an
+		   ffs) or update existing mounts from non-logged to logged.
+		   See kern/38057 - a fix for the PR has been committed but
+		   at this stage it doesn't play well with WAPBL.
+		 - Log must currently live at end of partition.
+		 - No log locators.
+		 - Some heavy workload performance issues on SMP machines.
 
 Branch:		thorpej-atomic
 Description:	Implementation of an atomic memory operations API modeled
@@ -1462,6 +1471,17 @@ Base Tag:	yamt-pdpolicy-base9
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
+
+Branch:		yamt-pf42
+Description:	import newer pf from OpenBSD 4.2
+Status:		Terminated; merged to -current
+Start Date:	Sat Apr 19 2008
+End Date:	Wed Jun 18 2008
+Base Tag:	yamt-pf42-base4
+Maintainer:	Peter Postma <peter@NetBSD.org>,
+		YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src
+Notes:		see sys/dist/pf/net/TODO
 
 Branch:		yamt-readahead
 Description:	play with file readahead

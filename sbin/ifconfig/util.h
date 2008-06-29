@@ -8,7 +8,6 @@ struct afswtch {
 	short af_af;
 	void (*af_status)(prop_dictionary_t, prop_dictionary_t, bool);
 	void (*af_getaddr)(const struct paddr_prefix *, int);
-	void (*af_getprefix)(int, int);
 	void (*af_addr_commit)(prop_dictionary_t, prop_dictionary_t);
 	unsigned long af_difaddr;
 	unsigned long af_aifaddr;
