@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.19 2008/06/25 04:56:08 matt Exp $ */
+/* $NetBSD: rb.c,v 1.20 2008/06/30 16:36:18 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,11 @@
 #else
 #include <lib/libkern/libkern.h>
 #endif
+#ifdef RBTEST
+#include "rb.h"
+#else
 #include <sys/rb.h>
+#endif
 
 static void rb_tree_insert_rebalance(struct rb_tree *, struct rb_node *);
 static void rb_tree_removal_rebalance(struct rb_tree *, struct rb_node *,
@@ -56,23 +60,13 @@ static bool rb_tree_check_node(const struct rb_tree *, const struct rb_node *,
 #define	rb_tree_check_node(a, b, c, d)	true
 #endif
 
-/*
- * Rather than testing for the NULL everywhere, all terminal leaves are
- * pointed to this node (and that includes itself).  Note that by setting
- * it to be const, that on some architectures trying to write to it will
- * cause a fault.
- */
-static const struct rb_node sentinel_node = {
-	.rb_nodes[0] = __UNCONST(&sentinel_node),
-	.rb_nodes[1] = __UNCONST(&sentinel_node),
-	.rb_info = RB_FLAG_SENTINEL
-};
+#define	RB_SENTINEL_NODE	NULL
 
 void
 rb_tree_init(struct rb_tree *rbt, const struct rb_tree_ops *ops)
 {
 	rbt->rbt_ops = ops;
-	*((const struct rb_node **)&rbt->rbt_root) = &sentinel_node;
+	*((const struct rb_node **)&rbt->rbt_root) = RB_SENTINEL_NODE;
 	RB_TAILQ_INIT(&rbt->rbt_nodes);
 #ifndef RBSMALL
 	rbt->rbt_minmax[RB_DIR_LEFT] = rbt->rbt_root;	/* minimum node */
@@ -153,15 +147,13 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 
 	RBSTAT_INC(rbt->rbt_insertions);
 
-	RB_MARK_NONSENTINEL(self);		/* make sure this is zero */
-
 	tmp = rbt->rbt_root;
 	/*
 	 * This is a hack.  Because rbt->rbt_root is just a struct rb_node *,
 	 * just like rb_node->rb_nodes[RB_DIR_LEFT], we can use this fact to
 	 * avoid a lot of tests for root and know that even at root,
-	 * updating rb_node->rb_parent->rb_nodes[rb_node->rb_position] will
-	 * rbt->rbt_root.
+	 * updating RB_FATHER(rb_node)->rb_nodes[RB_POSITION(rb_node)] will
+	 * update rbt->rbt_root.
 	 */
 	parent = (struct rb_node *)&rbt->rbt_root;
 	position = RB_DIR_LEFT;
@@ -210,10 +202,9 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	/*
 	 * Initialize the node and insert as a leaf into the tree.
 	 */
-	self->rb_parent = parent;
+	RB_SET_FATHER(self, parent);
 	RB_SET_POSITION(self, position);
 	if (__predict_false(parent == (struct rb_node *) &rbt->rbt_root)) {
-		RB_MARK_ROOT(self);
 		RB_MARK_BLACK(self);		/* root is always black */
 #ifndef RBSMALL
 		rbt->rbt_minmax[RB_DIR_LEFT] = self;
@@ -235,7 +226,6 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 		 * All new nodes are colored red.  We only need to rebalance
 		 * if our parent is also red.
 		 */
-		RB_MARK_NONROOT(self);
 		RB_MARK_RED(self);
 		rebalance = RB_RED_P(parent);
 	}
@@ -243,22 +233,21 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	self->rb_left = parent->rb_nodes[position];
 	self->rb_right = parent->rb_nodes[position];
 	parent->rb_nodes[position] = self;
-	KASSERT(self->rb_left == &sentinel_node &&
-	    self->rb_right == &sentinel_node);
+	KASSERT(RB_CHILDLESS_P(self));
 
 	/*
 	 * Insert the new node into a sorted list for easy sequential access
 	 */
 	RBSTAT_INC(rbt->rbt_count);
 #ifdef RBDEBUG
-	if (RB_ROOT_P(self)) {
+	if (RB_ROOT_P(rbt, self)) {
 		RB_TAILQ_INSERT_HEAD(&rbt->rbt_nodes, self, rb_link);
 	} else if (position == RB_DIR_LEFT) {
-		KASSERT((*compare_nodes)(self, self->rb_parent) > 0);
-		RB_TAILQ_INSERT_BEFORE(self->rb_parent, self, rb_link);
+		KASSERT((*compare_nodes)(self, RB_FATHER(self)) > 0);
+		RB_TAILQ_INSERT_BEFORE(RB_FATHER(self), self, rb_link);
 	} else {
-		KASSERT((*compare_nodes)(self->rb_parent, self) > 0);
-		RB_TAILQ_INSERT_AFTER(&rbt->rbt_nodes, self->rb_parent,
+		KASSERT((*compare_nodes)(RB_FATHER(self), self) > 0);
+		RB_TAILQ_INSERT_AFTER(&rbt->rbt_nodes, RB_FATHER(self),
 		    self, rb_link);
 	}
 #endif
@@ -287,67 +276,73 @@ rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father,
 	const unsigned int which)
 {
 	const unsigned int other = which ^ RB_DIR_OTHER;
-	struct rb_node * const grandpa = old_father->rb_parent;
+	struct rb_node * const grandpa = RB_FATHER(old_father);
 	struct rb_node * const old_child = old_father->rb_nodes[which];
 	struct rb_node * const new_father = old_child;
 	struct rb_node * const new_child = old_father;
-	struct rb_node tmp;
 
 	KASSERT(which == RB_DIR_LEFT || which == RB_DIR_RIGHT);
 
 	KASSERT(!RB_SENTINEL_P(old_child));
-	KASSERT(old_child->rb_parent == old_father);
+	KASSERT(RB_FATHER(old_child) == old_father);
 
 	KASSERT(rb_tree_check_node(rbt, old_father, NULL, false));
 	KASSERT(rb_tree_check_node(rbt, old_child, NULL, false));
-	KASSERT(RB_ROOT_P(old_father) || rb_tree_check_node(rbt, grandpa, NULL, false));
+	KASSERT(RB_ROOT_P(rbt, old_father) || rb_tree_check_node(rbt, grandpa, NULL, false));
 
 	/*
 	 * Exchange descendant linkages.
 	 */
-	grandpa->rb_nodes[RB_POSITION_P(old_father)] = new_father;
+	grandpa->rb_nodes[RB_POSITION(old_father)] = new_father;
 	new_child->rb_nodes[which] = old_child->rb_nodes[other];
 	new_father->rb_nodes[other] = new_child;
 
 	/*
 	 * Update ancestor linkages
 	 */
-	new_father->rb_parent = grandpa;
-	new_child->rb_parent = new_father;
+	RB_SET_FATHER(new_father, grandpa);
+	RB_SET_FATHER(new_child, new_father);
 
 	/*
 	 * Exchange properties between new_father and new_child.  The only
 	 * change is that new_child's position is now on the other side.
 	 */
-	tmp.rb_info = 0;
-	RB_COPY_PROPERTIES(&tmp, old_child);
-	RB_COPY_PROPERTIES(new_father, old_father);
-	RB_COPY_PROPERTIES(new_child, &tmp);
+#if 0
+	{
+		struct rb_node tmp;
+		tmp.rb_info = 0;
+		RB_COPY_PROPERTIES(&tmp, old_child);
+		RB_COPY_PROPERTIES(new_father, old_father);
+		RB_COPY_PROPERTIES(new_child, &tmp);
+	}
+#else
+	RB_SWAP_PROPERTIES(new_father, new_child);
+#endif
 	RB_SET_POSITION(new_child, other);
 
 	/*
 	 * Make sure to reparent the new child to ourself.
 	 */
 	if (!RB_SENTINEL_P(new_child->rb_nodes[which])) {
-		new_child->rb_nodes[which]->rb_parent = new_child;
+		RB_SET_FATHER(new_child->rb_nodes[which], new_child);
 		RB_SET_POSITION(new_child->rb_nodes[which], which);
 	}
 
 	KASSERT(rb_tree_check_node(rbt, new_father, NULL, false));
 	KASSERT(rb_tree_check_node(rbt, new_child, NULL, false));
-	KASSERT(RB_ROOT_P(new_father) || rb_tree_check_node(rbt, grandpa, NULL, false));
+	KASSERT(RB_ROOT_P(rbt, new_father) || rb_tree_check_node(rbt, grandpa, NULL, false));
 }
 
 static void
 rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 {
-	struct rb_node * father = self->rb_parent;
-	struct rb_node * grandpa = father->rb_parent;
+	struct rb_node * father = RB_FATHER(self);
+	struct rb_node * grandpa = RB_FATHER(father);
 	struct rb_node * uncle;
 	unsigned int which;
 	unsigned int other;
 
-	KASSERT(!RB_ROOT_P(self));
+	KASSERT(!RB_ROOT_P(rbt, self));
 	KASSERT(RB_RED_P(self));
 	KASSERT(RB_RED_P(father));
 	RBSTAT_INC(rbt->rbt_insertion_rebalance_calls);
@@ -361,7 +356,7 @@ rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 		 * We are red and our parent is red, therefore we must have a
 		 * grandfather and he must be black.
 		 */
-		grandpa = father->rb_parent;
+		grandpa = RB_FATHER(father);
 		KASSERT(RB_BLACK_P(grandpa));
 		KASSERT(RB_DIR_RIGHT == 1 && RB_DIR_LEFT == 0);
 		which = (father == grandpa->rb_right);
@@ -380,7 +375,7 @@ rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 		 */
 		RB_MARK_BLACK(uncle);
 		RB_MARK_BLACK(father);
-		if (__predict_false(RB_ROOT_P(grandpa))) {
+		if (__predict_false(RB_ROOT_P(rbt, grandpa))) {
 			/*
 			 * If our grandpa is root, don't bother
 			 * setting him to red, just return.
@@ -390,7 +385,7 @@ rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 		}
 		RB_MARK_RED(grandpa);
 		self = grandpa;
-		father = self->rb_parent;
+		father = RB_FATHER(self);
 		KASSERT(RB_RED_P(self));
 		if (RB_BLACK_P(father)) {
 			/*
@@ -401,7 +396,7 @@ rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 		}
 	}
 
-	KASSERT(!RB_ROOT_P(self));
+	KASSERT(!RB_ROOT_P(rbt, self));
 	KASSERT(RB_RED_P(self));
 	KASSERT(RB_RED_P(father));
 	KASSERT(RB_BLACK_P(uncle));
@@ -417,11 +412,11 @@ rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 		 *   child.
 		 */
 		rb_tree_reparent_nodes(rbt, father, other);
-		KASSERT(father->rb_parent == self);
+		KASSERT(RB_FATHER(father) == self);
 		KASSERT(self->rb_nodes[which] == father);
-		KASSERT(self->rb_parent == grandpa);
+		KASSERT(RB_FATHER(self) == grandpa);
 		self = father;
-		father = self->rb_parent;
+		father = RB_FATHER(self);
 	}
 	KASSERT(RB_RED_P(self) && RB_RED_P(father));
 	KASSERT(grandpa->rb_nodes[which] == father);
@@ -432,8 +427,8 @@ rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 	 *   (former grandparent) will become red.
 	 */
 	rb_tree_reparent_nodes(rbt, grandpa, which);
-	KASSERT(self->rb_parent == father);
-	KASSERT(self->rb_parent->rb_nodes[RB_POSITION_P(self) ^ RB_DIR_OTHER] == grandpa);
+	KASSERT(RB_FATHER(self) == father);
+	KASSERT(RB_FATHER(self)->rb_nodes[RB_POSITION(self) ^ RB_DIR_OTHER] == grandpa);
 	KASSERT(RB_RED_P(self));
 	KASSERT(RB_BLACK_P(father));
 	KASSERT(RB_RED_P(grandpa));
@@ -447,10 +442,11 @@ rb_tree_insert_rebalance(struct rb_tree *rbt, struct rb_node *self)
 static void
 rb_tree_prune_node(struct rb_tree *rbt, struct rb_node *self, bool rebalance)
 {
-	const unsigned int which = RB_POSITION_P(self);
-	struct rb_node *father = self->rb_parent;
+	const unsigned int which = RB_POSITION(self);
+	struct rb_node *father = RB_FATHER(self);
+	const bool was_root = RB_ROOT_P(rbt, self);
 
-	KASSERT(rebalance || (RB_ROOT_P(self) || RB_RED_P(self)));
+	KASSERT(rebalance || (RB_ROOT_P(rbt, self) || RB_RED_P(self)));
 	KASSERT(!rebalance || RB_BLACK_P(self));
 	KASSERT(RB_CHILDLESS_P(self));
 	KASSERT(rb_tree_check_node(rbt, self, NULL, false));
@@ -468,18 +464,18 @@ rb_tree_prune_node(struct rb_tree *rbt, struct rb_node *self, bool rebalance)
 	RB_TAILQ_REMOVE(&rbt->rbt_nodes, self, rb_link);
 	RBSTAT_DEC(rbt->rbt_count);
 #ifndef RBSMALL
-	if (__predict_false(rbt->rbt_minmax[RB_POSITION_P(self)] == self)) {
-		rbt->rbt_minmax[RB_POSITION_P(self)] = father;
+	if (__predict_false(rbt->rbt_minmax[RB_POSITION(self)] == self)) {
+		rbt->rbt_minmax[RB_POSITION(self)] = father;
 		/*
 		 * When removing the root, rbt->rbt_minmax[RB_DIR_LEFT] is
 		 * updated automatically, but we also need to update 
 		 * rbt->rbt_minmax[RB_DIR_RIGHT];
 		 */
-		if (__predict_false(RB_ROOT_P(self))) {
+		if (__predict_false(was_root)) {
 			rbt->rbt_minmax[RB_DIR_RIGHT] = father;
 		}
 	}
-	RB_MARK_SENTINEL(self);	/* so remove_node will fail */
+	RB_SET_FATHER(self, NULL);
 #endif
 
 	/*
@@ -487,7 +483,7 @@ rb_tree_prune_node(struct rb_tree *rbt, struct rb_node *self, bool rebalance)
 	 */
 	if (rebalance)
 		rb_tree_removal_rebalance(rbt, father, which);
-	KASSERT(RB_ROOT_P(self) || rb_tree_check_node(rbt, father, NULL, true));
+	KASSERT(was_root || rb_tree_check_node(rbt, father, NULL, true));
 }
 
 /*
@@ -497,13 +493,13 @@ static void
 rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
 	struct rb_node *standin)
 {
-	const unsigned int standin_which = RB_POSITION_P(standin);
+	const unsigned int standin_which = RB_POSITION(standin);
 	unsigned int standin_other = standin_which ^ RB_DIR_OTHER;
 	struct rb_node *standin_son;
-	struct rb_node *standin_father = standin->rb_parent;
+	struct rb_node *standin_father = RB_FATHER(standin);
 	bool rebalance = RB_BLACK_P(standin);
 
-	if (standin->rb_parent == self) {
+	if (standin_father == self) {
 		/*
 		 * As a child of self, any childen would be opposite of
 		 * our parent.
@@ -544,13 +540,13 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
 		rebalance = false;
 
 		if (standin_father == self) {
-			KASSERT(RB_POSITION_P(standin_son) == standin_which);
+			KASSERT(RB_POSITION(standin_son) == standin_which);
 		} else {
-			KASSERT(RB_POSITION_P(standin_son) == standin_other);
+			KASSERT(RB_POSITION(standin_son) == standin_other);
 			/*
 			 * Change the son's parentage to point to his grandpa.
 			 */
-			standin_son->rb_parent = standin_father;
+			RB_SET_FATHER(standin_son, standin_father);
 			RB_SET_POSITION(standin_son, standin_which);
 		}
 	}
@@ -587,8 +583,8 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
 		 * Adopt the far son.
 		 */
 		standin->rb_nodes[standin_other] = self->rb_nodes[standin_other];
-		standin->rb_nodes[standin_other]->rb_parent = standin;
-		KASSERT(RB_POSITION_P(self->rb_nodes[standin_other]) == standin_other);
+		RB_SET_FATHER(standin->rb_nodes[standin_other], standin);
+		KASSERT(RB_POSITION(self->rb_nodes[standin_other]) == standin_other);
 		/*
 		 * Use standin_other because we need to preserve standin_which
 		 * for the removal_rebalance.
@@ -602,15 +598,15 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
 	 */
 	KASSERT(standin->rb_nodes[standin_other] != self->rb_nodes[standin_other]);
 	standin->rb_nodes[standin_other] = self->rb_nodes[standin_other];
-	standin->rb_nodes[standin_other]->rb_parent = standin;
+	RB_SET_FATHER(standin->rb_nodes[standin_other], standin);
 
 	/*
 	 * Now copy the result of self to standin and then replace
 	 * self with standin in the tree.
 	 */
 	RB_COPY_PROPERTIES(standin, self);
-	standin->rb_parent = self->rb_parent;
-	standin->rb_parent->rb_nodes[RB_POSITION_P(standin)] = standin;
+	RB_SET_FATHER(standin, RB_FATHER(self));
+	RB_FATHER(standin)->rb_nodes[RB_POSITION(standin)] = standin;
 
 	/*
 	 * Remove ourselves from the node list, decrement the count,
@@ -619,13 +615,13 @@ rb_tree_swap_prune_and_rebalance(struct rb_tree *rbt, struct rb_node *self,
 	RB_TAILQ_REMOVE(&rbt->rbt_nodes, self, rb_link);
 	RBSTAT_DEC(rbt->rbt_count);
 #ifndef RBSMALL
-	if (__predict_false(rbt->rbt_minmax[RB_POSITION_P(self)] == self))
-		rbt->rbt_minmax[RB_POSITION_P(self)] = self->rb_parent;
-	RB_MARK_SENTINEL(self);
+	if (__predict_false(rbt->rbt_minmax[RB_POSITION(self)] == self))
+		rbt->rbt_minmax[RB_POSITION(self)] = RB_FATHER(self);
+	RB_SET_FATHER(self, NULL);
 #endif
 
 	KASSERT(rb_tree_check_node(rbt, standin, NULL, false));
-	KASSERT(RB_PARENT_SENTINEL_P(standin)
+	KASSERT(RB_FATHER_SENTINEL_P(standin)
 		|| rb_tree_check_node(rbt, standin_father, NULL, false));
 	KASSERT(RB_LEFT_SENTINEL_P(standin)
 		|| rb_tree_check_node(rbt, standin->rb_left, NULL, false));
@@ -650,8 +646,9 @@ static void
 rb_tree_prune_blackred_branch(struct rb_tree *rbt, struct rb_node *self,
 	unsigned int which)
 {
-	struct rb_node *father = self->rb_parent;
+	struct rb_node *father = RB_FATHER(self);
 	struct rb_node *son = self->rb_nodes[which];
+	const bool was_root = RB_ROOT_P(rbt, self);
 
 	KASSERT(which == RB_DIR_LEFT || which == RB_DIR_RIGHT);
 	KASSERT(RB_BLACK_P(self) && RB_RED_P(son));
@@ -664,9 +661,9 @@ rb_tree_prune_blackred_branch(struct rb_tree *rbt, struct rb_node *self,
 	 * Remove ourselves from the tree and give our former child our
 	 * properties (position, color, root).
 	 */
-	father->rb_nodes[RB_POSITION_P(self)] = son;
-	son->rb_parent = father;
 	RB_COPY_PROPERTIES(son, self);
+	father->rb_nodes[RB_POSITION(son)] = son;
+	RB_SET_FATHER(son, father);
 
 	/*
 	 * Remove ourselves from the node list, decrement the count,
@@ -675,16 +672,16 @@ rb_tree_prune_blackred_branch(struct rb_tree *rbt, struct rb_node *self,
 	RB_TAILQ_REMOVE(&rbt->rbt_nodes, self, rb_link);
 	RBSTAT_DEC(rbt->rbt_count);
 #ifndef RBSMALL
-	if (__predict_false(RB_ROOT_P(self))) {
+	if (__predict_false(was_root)) {
 		KASSERT(rbt->rbt_minmax[which] == son);
 		rbt->rbt_minmax[which ^ RB_DIR_OTHER] = son;
-	} else if (rbt->rbt_minmax[RB_POSITION_P(self)] == self) {
-		rbt->rbt_minmax[RB_POSITION_P(self)] = son;
+	} else if (rbt->rbt_minmax[RB_POSITION(self)] == self) {
+		rbt->rbt_minmax[RB_POSITION(self)] = son;
 	}
-	RB_MARK_SENTINEL(self);
+	RB_SET_FATHER(self, NULL);
 #endif
 
-	KASSERT(RB_ROOT_P(self) || rb_tree_check_node(rbt, father, NULL, true));
+	KASSERT(was_root || rb_tree_check_node(rbt, father, NULL, true));
 	KASSERT(rb_tree_check_node(rbt, son, NULL, true));
 }
 /*
@@ -717,7 +714,7 @@ rb_tree_remove_node(struct rb_tree *rbt, struct rb_node *self)
 	 * |  s    -->  *    |
 	 */
 	if (RB_CHILDLESS_P(self)) {
-		const bool rebalance = RB_BLACK_P(self) && !RB_ROOT_P(self);
+		const bool rebalance = RB_BLACK_P(self) && !RB_ROOT_P(rbt, self);
 		rb_tree_prune_node(rbt, self, rebalance);
 		return;
 	}
@@ -744,7 +741,7 @@ rb_tree_remove_node(struct rb_tree *rbt, struct rb_node *self)
 	 * We invert these because we prefer to remove from the inside of
 	 * the tree.
 	 */
-	which = RB_POSITION_P(self) ^ RB_DIR_OTHER;
+	which = RB_POSITION(self) ^ RB_DIR_OTHER;
 
 	/*
 	 * Let's find the node closes to us opposite of our parent
@@ -810,12 +807,12 @@ rb_tree_removal_rebalance(struct rb_tree *rbt, struct rb_node *parent,
 				RB_MARK_RED(brother);
 				KASSERT(RB_BLACK_P(brother->rb_left));
 				KASSERT(RB_BLACK_P(brother->rb_right));
-				if (RB_ROOT_P(parent))
+				if (RB_ROOT_P(rbt, parent))
 					return;	/* root == parent == black */
 				KASSERT(rb_tree_check_node(rbt, brother, NULL, false));
 				KASSERT(rb_tree_check_node(rbt, parent, NULL, false));
-				which = RB_POSITION_P(parent);
-				parent = parent->rb_parent;
+				which = RB_POSITION(parent);
+				parent = RB_FATHER(parent);
 				continue;
 			}
 		}
@@ -867,7 +864,7 @@ rb_tree_removal_rebalance(struct rb_tree *rbt, struct rb_node *parent,
 				 */
 				KASSERT(RB_RED_P(brother->rb_nodes[which]));
 				rb_tree_reparent_nodes(rbt, brother, which);
-				KASSERT(brother->rb_parent == parent->rb_nodes[other]);
+				KASSERT(RB_FATHER(brother) == parent->rb_nodes[other]);
 				brother = parent->rb_nodes[other];
 				KASSERT(RB_RED_P(brother->rb_nodes[other]));
 			}
@@ -932,10 +929,10 @@ rb_tree_iterate(struct rb_tree *rbt, struct rb_node *self,
 	 * opposite direction until our parent is in direction we want to go.
 	 */
 	if (RB_SENTINEL_P(self->rb_nodes[direction])) {
-		while (!RB_ROOT_P(self)) {
-			if (other == RB_POSITION_P(self))
-				return self->rb_parent;
-			self = self->rb_parent;
+		while (!RB_ROOT_P(rbt, self)) {
+			if (other == RB_POSITION(self))
+				return RB_FATHER(self);
+			self = RB_FATHER(self);
 		}
 		return NULL;
 	}
@@ -979,10 +976,10 @@ rb_tree_iterate_const(const struct rb_tree *rbt, const struct rb_node *self,
 	 * opposite direction until our parent is in direction we want to go.
 	 */
 	if (RB_SENTINEL_P(self->rb_nodes[direction])) {
-		while (!RB_ROOT_P(self)) {
-			if (other == RB_POSITION_P(self))
-				return self->rb_parent;
-			self = self->rb_parent;
+		while (!RB_ROOT_P(rbt, self)) {
+			if (other == RB_POSITION(self))
+				return RB_FATHER(self);
+			self = RB_FATHER(self);
 		}
 		return NULL;
 	}
@@ -1019,28 +1016,27 @@ rb_tree_check_node(const struct rb_tree *rbt, const struct rb_node *self,
 	const struct rb_node *prev, bool red_check)
 {
 	rb_compare_nodes_fn compare_nodes = rbt->rbt_ops->rb_compare_nodes;
+
 	KASSERT(!RB_SENTINEL_P(self));
-	KASSERT(self->rb_left);
-	KASSERT(self->rb_right);
 	KASSERT(prev == NULL || (*compare_nodes)(prev, self) > 0);
 
 	/*
 	 * Verify our relationship to our parent.
 	 */
-	if (RB_ROOT_P(self)) {
+	if (RB_ROOT_P(rbt, self)) {
 		KASSERT(self == rbt->rbt_root);
-		KASSERT(RB_POSITION_P(self) == RB_DIR_LEFT);
-		KASSERT(self->rb_parent->rb_nodes[RB_DIR_LEFT] == self);
-		KASSERT(self->rb_parent == (const struct rb_node *) &rbt->rbt_root);
+		KASSERT(RB_POSITION(self) == RB_DIR_LEFT);
+		KASSERT(RB_FATHER(self)->rb_nodes[RB_DIR_LEFT] == self);
+		KASSERT(RB_FATHER(self) == (const struct rb_node *) &rbt->rbt_root);
 	} else {
 		KASSERT(self != rbt->rbt_root);
-		KASSERT(!RB_PARENT_SENTINEL_P(self));
-		if (RB_POSITION_P(self) == RB_DIR_LEFT) {
-			KASSERT((*compare_nodes)(self, self->rb_parent) > 0);
-			KASSERT(self->rb_parent->rb_nodes[RB_DIR_LEFT] == self);
+		KASSERT(!RB_FATHER_SENTINEL_P(self));
+		if (RB_POSITION(self) == RB_DIR_LEFT) {
+			KASSERT((*compare_nodes)(self, RB_FATHER(self)) > 0);
+			KASSERT(RB_FATHER(self)->rb_nodes[RB_DIR_LEFT] == self);
 		} else {
-			KASSERT((*compare_nodes)(self, self->rb_parent) < 0);
-			KASSERT(self->rb_parent->rb_nodes[RB_DIR_RIGHT] == self);
+			KASSERT((*compare_nodes)(self, RB_FATHER(self)) < 0);
+			KASSERT(RB_FATHER(self)->rb_nodes[RB_DIR_RIGHT] == self);
 		}
 	}
 
@@ -1063,13 +1059,13 @@ rb_tree_check_node(const struct rb_tree *rbt, const struct rb_node *self,
 	 * There can never be two adjacent red nodes. 
 	 */
 	if (red_check) {
-		KASSERT(!RB_ROOT_P(self) || RB_BLACK_P(self));
+		KASSERT(!RB_ROOT_P(rbt, self) || RB_BLACK_P(self));
 		(void) rb_tree_count_black(self);
 		if (RB_RED_P(self)) {
 			const struct rb_node *brother;
-			KASSERT(!RB_ROOT_P(self));
-			brother = self->rb_parent->rb_nodes[RB_POSITION_P(self) ^ RB_DIR_OTHER];
-			KASSERT(RB_BLACK_P(self->rb_parent));
+			KASSERT(!RB_ROOT_P(rbt, self));
+			brother = RB_FATHER(self)->rb_nodes[RB_POSITION(self) ^ RB_DIR_OTHER];
+			KASSERT(RB_BLACK_P(RB_FATHER(self)));
 			/* 
 			 * I'm red and have no children, then I must either
 			 * have no brother or my brother also be red and
@@ -1118,10 +1114,10 @@ rb_tree_check_node(const struct rb_tree *rbt, const struct rb_node *self,
 			 * black, my 2nd closet relative away from my parent
 			 * is either red or has a red parent or red children.
 			 */
-			if (!RB_ROOT_P(self)
+			if (!RB_ROOT_P(rbt, self)
 			    && RB_CHILDLESS_P(self)
-			    && RB_BLACK_P(self->rb_parent)) {
-				const unsigned int which = RB_POSITION_P(self);
+			    && RB_BLACK_P(RB_FATHER(self))) {
+				const unsigned int which = RB_POSITION(self);
 				const unsigned int other = which ^ RB_DIR_OTHER;
 				const struct rb_node *relative0, *relative;
 
@@ -1136,7 +1132,7 @@ rb_tree_check_node(const struct rb_tree *rbt, const struct rb_node *self,
 				KASSERT(RB_RED_P(relative)
 					|| RB_RED_P(relative->rb_left)
 					|| RB_RED_P(relative->rb_right)
-					|| RB_RED_P(relative->rb_parent));
+					|| RB_RED_P(RB_FATHER(relative)));
 #endif
 			}
 		}
@@ -1144,9 +1140,9 @@ rb_tree_check_node(const struct rb_tree *rbt, const struct rb_node *self,
 		 * A grandparent's children must be real nodes and not
 		 * sentinels.  First check out grandparent.
 		 */
-		KASSERT(RB_ROOT_P(self)
-			|| RB_ROOT_P(self->rb_parent)
-			|| RB_TWOCHILDREN_P(self->rb_parent->rb_parent));
+		KASSERT(RB_ROOT_P(rbt, self)
+			|| RB_ROOT_P(rbt, RB_FATHER(self))
+			|| RB_TWOCHILDREN_P(RB_FATHER(RB_FATHER(self))));
 		/*
 		 * If we are have grandchildren on our left, then
 		 * we must have a child on our right.
@@ -1221,7 +1217,7 @@ rb_tree_check(const struct rb_tree *rbt, bool red_check)
 #endif
 
 	KASSERT(rbt->rbt_root != NULL);
-	KASSERT(rbt->rbt_root->rb_position == RB_DIR_LEFT);
+	KASSERT(RB_LEFT_P(rbt->rbt_root));
 
 #if defined(RBSTATS) && !defined(RBSMALL)
 	KASSERT(rbt->rbt_count > 1
