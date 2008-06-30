@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.2 2008/06/30 20:14:09 matt Exp $ */
+/* $NetBSD: rb.c,v 1.3 2008/06/30 20:54:19 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #ifdef RBDEBUG
 #define	KASSERT(s)	assert(s)
 #else
-#define KASSERT(s)	(void) 0
+#define KASSERT(s)	do { } while (/*CONSTCOND*/ 0)
 #endif
 #else
 #include <lib/libkern/libkern.h>
@@ -183,7 +183,7 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	 * updating RB_FATHER(rb_node)->rb_nodes[RB_POSITION(rb_node)] will
 	 * update rbt->rbt_root.
 	 */
-	parent = (struct rb_node *)&rbt->rbt_root;
+	parent = (struct rb_node *)(void *)&rbt->rbt_root;
 	position = RB_DIR_LEFT;
 
 	/*
@@ -232,7 +232,7 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 	 */
 	RB_SET_FATHER(self, parent);
 	RB_SET_POSITION(self, position);
-	if (__predict_false(parent == (struct rb_node *) &rbt->rbt_root)) {
+	if (__predict_false(parent == (struct rb_node *)(void *)&rbt->rbt_root)) {
 		RB_MARK_BLACK(self);		/* root is always black */
 #ifndef RBSMALL
 		rbt->rbt_minmax[RB_DIR_LEFT] = self;
@@ -299,6 +299,7 @@ rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
  * removal since rotation almost always involves the exchanging of colors
  * as a separate step.
  */
+/*ARGSUSED*/
 static void
 rb_tree_reparent_nodes(struct rb_tree *rbt, struct rb_node *old_father,
 	const unsigned int which)
