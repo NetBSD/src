@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.7 2007/11/05 20:37:48 ad Exp $ */
+/*	$NetBSD: userret.h,v 1.8 2008/06/30 14:12:20 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -90,7 +90,6 @@ static __inline void share_fpu(struct lwp *, struct trapframe64 *);
 static __inline void
 share_fpu(struct lwp *l, struct trapframe64 *tf)
 {
-	if (!(tf->tf_tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) &&
-	    fplwp != l)
-		tf->tf_tstate &= ~(PSTATE_PEF << TSTATE_PSTATE_SHIFT);
+	if (!(tf->tf_tstate & TSTATE_PRIV) && fplwp != l)
+		tf->tf_tstate &= ~TSTATE_PEF;
 }
