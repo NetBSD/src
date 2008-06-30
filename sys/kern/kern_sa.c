@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.33 2008/06/30 20:38:41 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.34 2008/06/30 23:07:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.33 2008/06/30 20:38:41 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.34 2008/06/30 23:07:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ static inline int sast_compare(struct sastack *, struct sastack *);
 static int sa_increaseconcurrency(struct lwp *, int);
 #endif
 static void sa_switchcall(void *);
+static void sa_neverrun(void *);
 static int sa_newcachelwp(struct lwp *);
 static void sa_makeupcalls(struct lwp *, struct sadata_upcall *);
 
@@ -797,7 +798,7 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			return (addedconcurrency);
 		}
 		error = lwp_create(l, p, uaddr, inmem, 0, NULL, 0,
-		    child_return, NULL, &l2, l->l_class);
+		    sa_neverrun, NULL, &l2, l->l_class);
 		if (error) {
 			uvm_uarea_free(uaddr, curcpu());
 			return error;
@@ -1589,6 +1590,26 @@ panic("Oops! Don't have a sleeper!\n");
 }
 
 /*
+ * sa_neverrun
+ *
+ *	Routine for threads that have never run. Calls lwp_exit.
+ * New, never-run cache threads get pointed at this routine, which just runs
+ * and calls lwp_exit().
+ */
+static void
+sa_neverrun(void *arg)
+{
+	struct lwp *l;
+
+	l = curlwp;
+
+	DPRINTFN(1,("sa_neverrun(%d.%d %x) exiting\n", l->l_proc->p_pid,
+	    l->l_lid, l->l_flag));
+
+	lwp_exit(l);
+}
+
+/*
  * sa_switchcall
  *
  * We need to pass an upcall to userland. We are now
@@ -1713,7 +1734,7 @@ sa_newcachelwp(struct lwp *l)
 	}
 
 	error = lwp_create(l, p, uaddr, inmem, 0, NULL, 0,
-	    child_return, NULL, &l2, l->l_class);
+	    sa_neverrun, NULL, &l2, l->l_class);
 	if (error) {
 		uvm_uarea_free(uaddr, curcpu());
 		return error;
@@ -1723,6 +1744,9 @@ sa_newcachelwp(struct lwp *l)
 	 * newlwp helpfully puts it there. Unclear if newlwp should
 	 * be tweaked.
 	 */
+	mutex_enter(p->p_lock);
+	p->p_nrlwps++;
+	mutex_exit(p->p_lock);
 	uvm_lwp_hold(l2);
 	vp = l->l_savp;
 	mutex_enter(&vp->savp_mutex);
@@ -1759,7 +1783,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	p->p_nlwps--;
 	l->l_prflag |= LPR_DETACHED;
 #endif
-	l->l_flag |= LW_SA;
+	l->l_flag |= (LW_SA | LW_SINTR);
 	membar_producer();
 	DPRINTFN(5,("sa_putcachelwp(%d.%d) Adding LWP %d to cache\n",
 	    p->p_pid, curlwp->l_lid, l->l_lid));
