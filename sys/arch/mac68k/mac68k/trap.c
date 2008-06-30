@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133.4.3 2008/06/22 18:12:02 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.133.4.4 2008/06/30 04:55:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133.4.3 2008/06/22 18:12:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133.4.4 2008/06/30 04:55:55 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -586,7 +586,8 @@ copyfault:
 			map = kernel_map;
 		else {
 			map = vm ? &vm->vm_map : kernel_map;
-			if (l->l_flag & LW_SA) {
+			if ((l->l_flag & LW_SA)
+			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
 				l->l_savp->savp_faultaddr = (vaddr_t)v;
 				l->l_pflag |= LP_SA_PAGEFAULT;
 			}

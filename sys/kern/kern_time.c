@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.146.2.5 2008/06/29 03:28:40 wrstuden Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.146.2.6 2008/06/30 04:55:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.5 2008/06/29 03:28:40 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.6 2008/06/30 04:55:56 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -936,10 +936,8 @@ timerupcall(struct lwp *l)
 		int mask = 1 << --i;
 		int f;
 
-		lwp_lock(l);
-		f = l->l_flag & LW_SA;
-		l->l_flag &= ~LW_SA;
-		lwp_unlock(l);
+		f = ~l->l_pflag & LP_SA_NOBLOCK;
+		l->l_pflag |= LP_SA_NOBLOCK;
 		si = siginfo_alloc(PR_WAITOK);
 		si->_info = pt->pts_timers[i]->pt_info.ksi_info;
 		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
@@ -949,9 +947,7 @@ timerupcall(struct lwp *l)
 		} else
 			done |= mask;
 		fired &= ~mask;
-		lwp_lock(l);
-		l->l_flag |= f;
-		lwp_unlock(l);
+		l->l_pflag ^= f;
 	}
 	pt->pts_fired &= ~done;
 	if (pt->pts_fired == 0)

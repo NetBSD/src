@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.30 2008/06/30 02:36:46 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.31 2008/06/30 04:55:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.30 2008/06/30 02:36:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.31 2008/06/30 04:55:56 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,12 +126,12 @@ static const char *sa_lwpcache_wmesg = "lwpcache";
 static const char *sa_lwpwoken_wmesg = "lwpublk";
 
 #define SA_LWP_STATE_LOCK(l, f) do {				\
-	(f) = (l)->l_flag;     					\
-	(l)->l_flag &= ~LW_SA;					\
+	(f) = ~(l)->l_pflag & LP_SA_NOBLOCK;     		\
+	(l)->l_pflag |= LP_SA_NOBLOCK;				\
 } while (/*CONSTCOND*/ 0)
 
 #define SA_LWP_STATE_UNLOCK(l, f) do {				\
-	(l)->l_flag |= (f) & LW_SA;				\
+	(l)->l_pflag ^= (f);					\
 } while (/*CONSTCOND*/ 0)
 
 RB_PROTOTYPE(sasttree, sastack, sast_node, sast_compare);
@@ -519,7 +519,7 @@ sa_setstackfree(struct sastack *sast, struct sadata *sa)
  * with sa->sa_mutex held, and will release while checking for stack
  * availability.
  *
- * Caller should have cleared LW_SA for our thread. This is not the time
+ * Caller should have set LP_SA_NOBLOCK for our thread. This is not the time
  * to go generating upcalls as we aren't in a position to deliver another one.
  */
 static struct sastack *
@@ -1074,7 +1074,8 @@ int
 sys_sa_preempt(struct lwp *l, const struct sys_sa_preempt_args *uap,
     register_t *retval)
 {
-	struct sadata		*sa = l->l_proc->p_sa;
+	struct proc		*p = l->l_proc;
+	struct sadata		*sa = p->p_sa;
 	struct lwp		*t;
 	int			target, error;
 
@@ -1085,13 +1086,13 @@ sys_sa_preempt(struct lwp *l, const struct sys_sa_preempt_args *uap,
 	if (sa == NULL)
 		return (EINVAL);
 
-	if ((l->l_proc->p_sflag & PS_SA) == 0)
+	if ((p->p_sflag & PS_SA) == 0)
 		return (EINVAL);
 
 	if ((target = SCARG(uap, sa_id)) < 1)
 		return (EINVAL);
 
-	//SCHED_LOCK(s);
+	mutex_enter(p->p_lock);
 
 	LIST_FOREACH(t, &l->l_proc->p_lwps, l_sibling)
 		if (t->l_lid == target)
@@ -1103,7 +1104,7 @@ sys_sa_preempt(struct lwp *l, const struct sys_sa_preempt_args *uap,
 	}
 
 	/* XXX WRS We really need all of this locking documented */
-	//SCHED_UNLOCK(s);
+	mutex_exit(p->p_lock);
 
 	error = sa_upcall(l, SA_UPCALL_USER | SA_UPCALL_DEFER_EVENT, l, NULL,
 		0, NULL, NULL);
@@ -1113,7 +1114,7 @@ sys_sa_preempt(struct lwp *l, const struct sys_sa_preempt_args *uap,
 	return 0;
 
 exit_lock:
-	//SCHED_UNLOCK(s);
+	mutex_exit(p->p_lock);
 
 	return error;
 }
@@ -1710,10 +1711,10 @@ sa_newcachelwp(struct lwp *l)
 	 * be tweaked.
 	 */
 	uvm_lwp_hold(l2);
-	mutex_enter(p->p_lock);
+	mutex_enter(&sa->savp_mutex);
 	l2->l_savp = l->l_savp;
 	sa_putcachelwp(p, l2);
-	mutex_exit(p->p_lock);
+	mutex_exit(&sa->savp_mutex);
 
 	return 0;
 }
@@ -1744,7 +1745,6 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	p->p_nlwps--;
 	l->l_prflag |= LPR_DETACHED;
 #endif
-	l->l_stat = LSSUSPENDED;
 	l->l_flag |= LW_SA;
 	membar_producer();
 	DPRINTFN(5,("sa_putcachelwp(%d.%d) Adding LWP %d to cache\n",
@@ -1754,7 +1754,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	 * Hand-rolled call of the form:
 	 * sleepq_enter(&vp->savp_woken, l, &vp->savp_mutex);
 	 * adapted to take into account the fact that (1) l and the mutex
-	 * we want to lend it are both locked, and also that we don't have
+	 * we want to lend it are both locked, and (2) we don't have
 	 * any other locks.
 	 */
 	l->l_mutex = &vp->savp_mutex;
@@ -1762,8 +1762,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	/*
 	 * XXXWRS: Following is a hand-rolled call of the form:
 	 * sleepq_enqueue(sq, (void *)sq, "lwpcache", sa_sobj); but
-	 * hand-done since l might not be curlwp. Also, we go into LSSUSPENDED,
-	 * not LSSLEEP.
+	 * hand-done since l might not be curlwp.
 	 */
 
         l->l_syncobj = &sa_sobj;
@@ -1771,7 +1770,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
         l->l_sleepq = sq;
         l->l_wmesg = sa_lwpcache_wmesg;
         l->l_slptime = 0;
-        l->l_stat = LSSUSPENDED;
+        l->l_stat = LSSLEEP;
         l->l_sleeperr = 0;
          
         vp->savp_lwpcache_count++;
@@ -1843,9 +1842,7 @@ sa_upcall_userret(struct lwp *l)
 	sa = p->p_sa;
 	vp = l->l_savp;
 
-	lwp_lock(l);
 	SA_LWP_STATE_LOCK(l, f);
-	lwp_unlock(l);
 
 	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) empty %d, woken %d\n",
 	    p->p_pid, l->l_lid, l->l_flag, SIMPLEQ_EMPTY(&vp->savp_upcalls),
@@ -1933,9 +1930,10 @@ sa_upcall_userret(struct lwp *l)
 		l->l_flag &= ~LW_SA_UPCALL;
 	}
 
+	lwp_unlock(l);
+
 	SA_LWP_STATE_UNLOCK(l, f);
 
-	lwp_unlock(l);
 	return;
 }
 
@@ -1950,7 +1948,7 @@ sa_upcall_userret(struct lwp *l)
  * copy everything out. We assigned the stack for this upcall
  * when we enqueued it.
  *
- * SA_LWP_STATE should be locked (LW_SA temporarily disabled).
+ * SA_LWP_STATE should be locked (LP_SA_NOBLOCK set).
  *
  *	If the enqueued event was DEFERRED, this is the time when we set
  * up the upcall event's state.

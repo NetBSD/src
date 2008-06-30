@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.216.20.2 2008/06/22 18:12:03 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.216.20.3 2008/06/30 04:55:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.216.20.2 2008/06/22 18:12:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.216.20.3 2008/06/30 04:55:55 wrstuden Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -367,7 +367,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
 
-		if (l->l_flag & LW_SA) {
+		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
 			l->l_savp->savp_faultaddr = (vaddr_t)vaddr;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
