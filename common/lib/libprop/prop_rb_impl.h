@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb_impl.h,v 1.6 2008/06/17 21:29:47 thorpej Exp $	*/
+/*	$NetBSD: prop_rb_impl.h,v 1.7 2008/06/30 20:14:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,20 @@
 
 #ifndef _PROP_RB_IMPL_H_
 #define	_PROP_RB_IMPL_H_
+
+#ifdef __NetBSD__
+#include <sys/rb.h>
+
+/*
+ * Define local names for common rb_tree functions.
+ */
+#define	_prop_rb_tree_init		rb_tree_init
+#define	_prop_rb_tree_insert_node	rb_tree_insert_node
+#define	_prop_rb_tree_find		rb_tree_find_node
+#define	_prop_rb_tree_remove_node	rb_tree_remove_node
+#define	_prop_rb_tree_iterate		rb_tree_iterate
+
+#else	/* __NetBSD__ */
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -134,5 +148,7 @@ void	_prop_rb_tree_check(const struct rb_tree *, bool);
 #endif
 struct rb_node *
 	_prop_rb_tree_iterate(struct rb_tree *, struct rb_node *, unsigned int);
+
+#endif /* __NetBSD__ */
 
 #endif	/* _PROP_RB_IMPL_H_*/

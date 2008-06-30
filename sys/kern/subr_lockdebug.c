@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.36 2008/06/04 14:31:15 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.37 2008/06/30 20:14:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.36 2008/06/04 14:31:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.37 2008/06/30 20:14:09 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -103,7 +103,7 @@ static int	lockdebug_more(int);
 static void	lockdebug_init(void);
 
 static signed int
-ld_rb_compare_nodes(const struct rb_node *n1, const struct rb_node *n2)
+ld_rbto_compare_nodes(const struct rb_node *n1, const struct rb_node *n2)
 {
 	const lockdebug_t *ld1 = (const void *)n1;
 	const lockdebug_t *ld2 = (const void *)n2;
@@ -118,7 +118,7 @@ ld_rb_compare_nodes(const struct rb_node *n1, const struct rb_node *n2)
 }
 
 static signed int
-ld_rb_compare_key(const struct rb_node *n, const void *key)
+ld_rbto_compare_key(const struct rb_node *n, const void *key)
 {
 	const lockdebug_t *ld = (const void *)n;
 	const uintptr_t a = (uintptr_t)ld->ld_lock;
@@ -134,8 +134,8 @@ ld_rb_compare_key(const struct rb_node *n, const void *key)
 static struct rb_tree ld_rb_tree;
 
 static const struct rb_tree_ops ld_rb_tree_ops = {
-	.rb_compare_nodes = ld_rb_compare_nodes,
-	.rb_compare_key = ld_rb_compare_key,
+	.rbto_compare_nodes = ld_rbto_compare_nodes,
+	.rbto_compare_key = ld_rbto_compare_key,
 };
 
 static inline lockdebug_t *

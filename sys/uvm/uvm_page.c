@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.136 2008/06/17 02:30:57 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.137 2008/06/30 20:14:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.136 2008/06/17 02:30:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.137 2008/06/30 20:14:09 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -181,8 +181,8 @@ uvm_page_compare_key(const struct rb_node *n, const void *key)
 }
 
 const struct rb_tree_ops uvm_page_tree_ops = {
-	.rb_compare_nodes = uvm_page_compare_nodes,
-	.rb_compare_key = uvm_page_compare_key,
+	.rbto_compare_nodes = uvm_page_compare_nodes,
+	.rbto_compare_key = uvm_page_compare_key,
 };
 
 /*
