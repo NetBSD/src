@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.229.2.4 2008/06/12 08:39:22 martin Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.229.2.5 2008/06/30 03:59:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.229.2.4 2008/06/12 08:39:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.229.2.5 2008/06/30 03:59:22 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -535,6 +535,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 					return error;
 				}
 				wapbl_replay_stop(mp->mnt_wapbl_replay);
+				fs->fs_clean = FS_WASCLEAN;
 			}
 #endif /* WAPBL */
 			if (fs->fs_snapinum[0] != 0)
@@ -1003,6 +1004,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			if (error)
 				goto out;
 			wapbl_replay_stop(mp->mnt_wapbl_replay);
+			fs->fs_clean = FS_WASCLEAN;
 		} else {
 			/* XXX fsmnt may be stale */
 			printf("%s: replaying log to memory\n", fs->fs_fsmnt);
