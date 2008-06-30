@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.2 2008/06/24 15:32:52 reinoud Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.3 2008/06/30 00:51:01 perry Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.2 2008/06/24 15:32:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.3 2008/06/30 00:51:01 perry Exp $");
 #endif /* not lint */
 
 
@@ -152,7 +152,7 @@ udf_fixup_internal_extattr(uint8_t *blob, uint32_t lb_num)
 	case TAGID_EXTATTR_HDR :
 		return;
 	default:
-		panic("%s: passed bad tag\n", __FUNCTION__);
+		panic("%s: passed bad tag\n", __func__);
 	}
 
 	/* something recorded here? (why am i called?) */
@@ -230,7 +230,7 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 		has_fids = 0;
 		break;
 	default:
-		panic("%s: passed bad tag\n", __FUNCTION__);
+		panic("%s: passed bad tag\n", __func__);
 		break;
 	}
 

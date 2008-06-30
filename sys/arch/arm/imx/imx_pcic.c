@@ -1,4 +1,4 @@
-/*	$Id: imx_pcic.c,v 1.2 2008/04/27 18:58:44 matt Exp $	*/
+/*	$Id: imx_pcic.c,v 1.3 2008/06/30 00:46:41 perry Exp $	*/
 
 /*
  * IMX CF interface to pcic/pcmcia
@@ -6,7 +6,7 @@
  * Sun Apr  1 21:42:37 PDT 2007
  */
 
-/*	$NetBSD: imx_pcic.c,v 1.2 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: imx_pcic.c,v 1.3 2008/06/30 00:46:41 perry Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.2 2008/04/27 18:58:44 matt Exp $");
+__KERNEL_RCSID(0, "$Id: imx_pcic.c,v 1.3 2008/06/30 00:46:41 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,17 +147,17 @@ imx_pcic_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
 	int error;
 	bus_addr_t pa;
  
-printf("%s: card_addr %lx\n", __FUNCTION__, card_addr);
+printf("%s: card_addr %lx\n", __func__, card_addr);
 	pa = trunc_page(card_addr);
 	*offsetp = card_addr - pa;
-printf("%s: offset %lx\n", __FUNCTION__, *offsetp);
+printf("%s: offset %lx\n", __func__, *offsetp);
 	size = round_page(card_addr + size) - pa;
 	pmh->realsize = size;
 
 	pa += IMX_PCIC_SOCKET_BASE;
 	pa += IMX_PCIC_SOCKET_OFFSET * so->socket;
-printf("%s: pa %lx\n", __FUNCTION__, pa);
-printf("%s: kind %x\n", __FUNCTION__, kind);
+printf("%s: pa %lx\n", __func__, pa);
+printf("%s: kind %x\n", __func__, kind);
 
 	switch (kind & ~PCMCIA_WIDTH_MEM_MASK) {
 	case PCMCIA_MEM_ATTR:   
@@ -170,7 +170,7 @@ printf("%s: kind %x\n", __FUNCTION__, kind);
 		panic("imx_pcic_mem_map: bogus kind");
 	}
 
-printf("%s: pa %lx\n", __FUNCTION__, pa);
+printf("%s: pa %lx\n", __func__, pa);
 Debugger();
 	error = bus_space_map(so->sc->sc_iot, pa, size, 0, &pmh->memh);
 	if (error)
@@ -306,7 +306,7 @@ imx_pcic_socket_enable(pcmcia_chipset_handle_t pch)
 		delay(500);
 	}
 #else
-printf("%s: (stubbed)\n", __FUNCTION__);
+printf("%s: (stubbed)\n", __func__);
 #endif	/* NOTYET */
 }
 
@@ -406,7 +406,7 @@ imx_pcic_attach_common(struct imx_pcic_softc *sc,
 		paa.paa_busname = "pcmcia";
 		paa.pct = (pcmcia_chipset_tag_t)&imx_pcic_pcmcia_functions;
 		paa.pch = (pcmcia_chipset_handle_t)so;
-printf("%s: sc_pa %lx\n", __FUNCTION__, sc->sc_pa);
+printf("%s: sc_pa %lx\n", __func__, sc->sc_pa);
 		paa.iobase = sc->sc_pa;
 		paa.iosize = 0x2000;
 
@@ -426,7 +426,7 @@ printf("%s: sc_pa %lx\n", __FUNCTION__, sc->sc_pa);
 		so->irqpin = sc->sc_irqpin[s[i]];
 #else
 		so->irqpin = sc->sc_irqpin[s[i]];
-printf("%s: slot %d, irqpin %d\n",  __FUNCTION__, s[i], sc->sc_irqpin[s[i]]);
+printf("%s: slot %d, irqpin %d\n",  __func__, s[i], sc->sc_irqpin[s[i]]);
 #endif	/* NOTYET */
 
 		if (kthread_create(PRI_NONE, 0, NULL,
