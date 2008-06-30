@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.202.2.2 2008/06/18 16:33:35 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.202.2.3 2008/06/30 06:59:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.202.2.2 2008/06/18 16:33:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.202.2.3 2008/06/30 06:59:25 simonb Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -928,14 +928,14 @@ bdwrite(buf_t *bp)
 		}
 	}
 
-        /*
+	/*
 	 * If the block hasn't been seen before:
-	 *      (1) Mark it as having been seen,
-	 *      (2) Charge for the write,
-	 *      (3) Make sure it's on its vnode's correct block list.
+	 *	(1) Mark it as having been seen,
+	 *	(2) Charge for the write,
+	 *	(3) Make sure it's on its vnode's correct block list.
 	 */
 	KASSERT(bp->b_vp == NULL || bp->b_objlock == &bp->b_vp->v_interlock);
-	
+
 	if (!ISSET(bp->b_oflags, BO_DELWRI)) {
 		mutex_enter(&bufcache_lock);
 		mutex_enter(bp->b_objlock);
