@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.46.12.3 2008/06/23 04:30:39 wrstuden Exp $	*/
+/*	$NetBSD: exception.c,v 1.46.12.4 2008/06/30 04:55:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46.12.3 2008/06/23 04:30:39 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46.12.4 2008/06/30 04:55:55 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -378,7 +378,8 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		return;
 	}
 
-	if ((map != kernel_map) && (l->l_flag & LW_SA)) {
+	if ((map != kernel_map) && (l->l_flag & LW_SA)
+	    && (~l->l_pflag & LP_SA_NOBLOCK)) {
 		l->l_savp->savp_faultaddr = (vaddr_t)va;
 		l->l_pflag |= LP_SA_PAGEFAULT;
 	}

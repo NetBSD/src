@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.28.2.2 2008/06/23 04:31:51 wrstuden Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.28.2.3 2008/06/30 04:55:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.28.2.2 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.28.2.3 2008/06/30 04:55:56 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -256,7 +256,7 @@ sleepq_block(int timo, bool catch)
 		if (timo)
 			callout_schedule(&l->l_timeout_ch, timo);
 
-		if ((l->l_flag & LW_SA) != 0)
+		if (((l->l_flag & LW_SA) != 0) && (~l->l_pflag & LP_SA_NOBLOCK))
 			sa_switch(l);
 		else
 			mi_switch(l);

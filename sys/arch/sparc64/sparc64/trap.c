@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.147.6.3 2008/06/22 18:12:03 wrstuden Exp $ */
+/*	$NetBSD: trap.c,v 1.147.6.4 2008/06/30 04:55:55 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147.6.3 2008/06/22 18:12:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147.6.4 2008/06/30 04:55:55 wrstuden Exp $");
 
 #define NEW_FPSTATE
 
@@ -1150,7 +1150,13 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		}
 	} else {
 		l->l_md.md_tf = tf;
-		if (l->l_flag & LW_SA) {
+		/*
+		 * WRS: Can drop LP_SA_NOBLOCK test iff can only get
+		 * here from a usermode-initiated access. LP_SA_NOBLOCK
+		 * should never be set there - it's kernel-only.
+		 */
+		if ((l->l_flag & LW_SA)
+		    && (~l->l_pflag & LP_SA_NOBLOCK)) {
 			l->l_savp->savp_faultaddr = addr;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}

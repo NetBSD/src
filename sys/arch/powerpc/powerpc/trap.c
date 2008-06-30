@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125.12.3 2008/06/23 04:30:38 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.125.12.4 2008/06/30 04:55:55 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.12.3 2008/06/23 04:30:38 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.12.4 2008/06/30 04:55:55 wrstuden Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -145,7 +145,8 @@ trap(struct trapframe *frame)
 					    trunc_page(va), false)) {
 					return;
 				}
-				if (l->l_flag & LW_SA) {
+				if ((l->l_flag & LW_SA)
+				    && (~l->l_pflag & LP_SA_NOBLOCK)) {
 					l->l_savp->savp_faultaddr = va;
 					l->l_pflag |= LP_SA_PAGEFAULT;
 				}

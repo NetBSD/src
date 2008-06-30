@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.94.2.5 2008/06/27 01:53:46 wrstuden Exp $	*/
+/*	$NetBSD: lwp.h,v 1.94.2.6 2008/06/30 04:55:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -228,6 +228,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
 #define	LP_SA_PAGEFAULT	0x00000200 /* SA LWP in pagefault handler */
+#define	LP_SA_NOBLOCK	0x00000400 /* SA don't upcall on block */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_RUNNING	0x20000000 /* Active on a CPU */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */

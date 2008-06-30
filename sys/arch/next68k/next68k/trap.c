@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73.4.3 2008/06/22 18:12:03 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.73.4.4 2008/06/30 04:55:55 wrstuden Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73.4.3 2008/06/22 18:12:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73.4.4 2008/06/30 04:55:55 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -592,7 +592,8 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 			map = kernel_map;
 		else {
 			map = vm ? &vm->vm_map : kernel_map;
-			if (l->l_flag & LW_SA) {
+			if ((l->l_flag & LW_SA)
+			    && (~l->l_pflag & LP_SA_NOBLOCK)) {
 				l->l_savp->savp_faultaddr = (vaddr_t)v;
 				l->l_pflag |= LP_SA_PAGEFAULT;
 			}

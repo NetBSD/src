@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119.4.3 2008/06/22 18:12:01 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.119.4.4 2008/06/30 04:55:54 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119.4.3 2008/06/22 18:12:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119.4.4 2008/06/30 04:55:54 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,7 @@ trapmmufault(type, code, v, fp, l, sticks)
 		map = kernel_map;
 	else {
 		map = &vm->vm_map;
-		if (l->l_flag & LW_SA) {
+		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
 			l->l_savp->savp_faultaddr = (vaddr_t)v;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
