@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.31 2008/06/30 04:55:56 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.32 2008/06/30 06:44:59 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.31 2008/06/30 04:55:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.32 2008/06/30 06:44:59 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.31 2008/06/30 04:55:56 wrstuden E
 #include <sys/proc.h>
 #include <sys/types.h>
 #include <sys/ucontext.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -1444,6 +1445,9 @@ sa_switch(struct lwp *l)
 	}
 
 	if (vp->savp_lwp == l) {
+		struct schedstate_percpu *spc;
+		struct cpu_info *ci;
+
 		/*
 		 * Case 1: we're blocking for the first time; generate
 		 * a SA_BLOCKED upcall and allocate resources for the
@@ -1531,23 +1535,31 @@ panic("Oops! Don't have a sleeper!\n");
 		DPRINTFN(8,("sa_switch(%d.%d) blocked upcall %d\n",
 			     p->p_pid, l->l_lid, l2->l_lid));
 
-		/*
-		 * Since l2 was on the sleep queue, we locked it
-		 * when we locked savp_mutex above.
-		 */
 		l->l_flag |= LW_SA_BLOCKING;
-		l2->l_priority = MAXPRI_USER; /* XXX WRS needs thought, used to be l_usrpri */
-		l2->l_stat = LSRUN;
 		vp->savp_blocker = l;
 		vp->savp_lwp = l2;
 		/*
-		 * I think we want sched_enqueue(.., true) as we are about
-		 * to switch away. This would be a silly point to
-		 * be preempted.
+		 * Since l2 was on the sleep queue, we locked it
+		 * when we locked savp_mutex above. Now set it
+		 * running. This is the second-part of sleepq_remove().
 		 */
-		sched_enqueue(l2, false);
+		l2->l_priority = MAXPRI_USER; /* XXX WRS needs thought, used to be l_usrpri */
+		/* Look for a CPU to wake up */
+		l2->l_cpu = sched_takecpu(l2);
+		ci = l2->l_cpu;
+		spc = &ci->ci_schedstate;
+
+		spc_lock(ci);
+		lwp_setlock(l, spc->spc_mutex);
+		sched_setrunnable(l2);
+		l2->l_stat = LSRUN;
+		l->l_slptime = 0;
+		sched_enqueue(l2, true);
+		spc_unlock(ci);
+
 		/* Remove the artificial hold-count */
 		uvm_lwp_rele(l2);
+
 		KASSERT(l2 != l);
 	} else if (vp->savp_lwp != NULL) {
 
@@ -1686,6 +1698,7 @@ sa_newcachelwp(struct lwp *l)
 {
 	struct proc *p;
 	struct lwp *l2;
+	struct sadata_vp *vp;
 	vaddr_t uaddr;
 	boolean_t inmem;
 	int error;
@@ -1711,10 +1724,11 @@ sa_newcachelwp(struct lwp *l)
 	 * be tweaked.
 	 */
 	uvm_lwp_hold(l2);
-	mutex_enter(&sa->savp_mutex);
-	l2->l_savp = l->l_savp;
+	vp = l->l_savp;
+	mutex_enter(&vp->savp_mutex);
+	l2->l_savp = vp;
 	sa_putcachelwp(p, l2);
-	mutex_exit(&sa->savp_mutex);
+	mutex_exit(&vp->savp_mutex);
 
 	return 0;
 }
@@ -1793,17 +1807,26 @@ sa_getcachelwp(struct proc *p, struct sadata_vp *vp)
 
 	vp->savp_lwpcache_count--;
 	l= TAILQ_FIRST(sq);
-	TAILQ_REMOVE(sq, l, l_sleepchain);
 
+	/*
+	 * Now we have a hand-unrolled version of part of sleepq_remove.
+	 * The main issue is we do NOT want to make the lwp runnable yet
+	 * since we need to set up the upcall first (we know our caller(s)).
+	 */
+
+	TAILQ_REMOVE(sq, l, l_sleepchain);
 	l->l_syncobj = &sched_syncobj;
 	l->l_wchan = NULL;
 	l->l_sleepq = NULL;
 	l->l_flag &= ~LW_SINTR;
 
+	/* Update sleep time delta, call the wake-up handler of scheduler */
+	l->l_slpticksum += (hardclock_ticks - l->l_slpticks);
+	sched_wakeup(l);
+
 #if 0 /* Not now, for now leave lwps in lwp list */
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
 #endif
-	l->l_prflag &= ~LPR_DETACHED;
 	DPRINTFN(5,("sa_getcachelwp(%d.%d) Got LWP %d from cache.\n",
 		p->p_pid, curlwp->l_lid, l->l_lid));
 	return l;
