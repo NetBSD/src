@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.29 2008/06/29 05:26:02 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.30 2008/06/30 02:36:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.29 2008/06/29 05:26:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.30 2008/06/30 02:36:46 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,8 +432,8 @@ sa_release(struct proc *p)
 		pool_put(&savp_pool, vp);
 	}
 
-	cv_destroy(&sa->sa_cv);
 	mutex_destroy(&sa->sa_mutex);
+	cv_destroy(&sa->sa_cv);
 	pool_put(&sadata_pool, sa);
 
 	mutex_enter(p->p_lock);
@@ -824,10 +824,11 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 					    vp->savp_sleeper_upcall);
 					vp->savp_sleeper_upcall = NULL;
 				}
+				mutex_destroy(&vp->savp_mutex);
 				pool_put(&savp_pool, vp);
-				mutex_enter(&sa->sa_mutex);
-				lwp_lock(l2);
 			}
+			mutex_enter(&sa->sa_mutex);
+			lwp_lock(l2);
 		} else
 			error = ENOMEM;
 
