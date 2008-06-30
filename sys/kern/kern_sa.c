@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.32 2008/06/30 06:44:59 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.33 2008/06/30 20:38:41 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.32 2008/06/30 06:44:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.33 2008/06/30 20:38:41 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1550,10 +1550,10 @@ panic("Oops! Don't have a sleeper!\n");
 		spc = &ci->ci_schedstate;
 
 		spc_lock(ci);
-		lwp_setlock(l, spc->spc_mutex);
+		lwp_setlock(l2, spc->spc_mutex);
 		sched_setrunnable(l2);
 		l2->l_stat = LSRUN;
-		l->l_slptime = 0;
+		l2->l_slptime = 0;
 		sched_enqueue(l2, true);
 		spc_unlock(ci);
 
