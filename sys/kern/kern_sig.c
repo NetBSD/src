@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.283.2.5 2008/06/27 01:34:26 wrstuden Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.283.2.6 2008/06/30 04:55:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283.2.5 2008/06/27 01:34:26 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283.2.6 2008/06/30 04:55:56 wrstuden Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -1482,10 +1482,9 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 	KASSERT(mutex_owned(p->p_lock));
 
 	if (p->p_sflag & PS_SA) {
-		lwp_lock(l);
-		f = l->l_flag & LW_SA;
-		l->l_flag &= ~LW_SA;
-		lwp_unlock(l);
+		/* f indicates if we should clear LP_SA_NOBLOCK */
+		f = ~l->l_pflag & LP_SA_NOBLOCK;
+		l->l_pflag |= LP_SA_NOBLOCK;
 
 		mutex_exit(p->p_lock);
 		/* XXXUPSXXX What if not on sa_vp? */
@@ -1519,9 +1518,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 				 */;
 #endif
 		}
-		lwp_lock(l);
-		l->l_flag |= f;
-		lwp_unlock(l);
+		l->l_pflag ^= f;
 		mutex_enter(p->p_lock);
 		return;
 	}

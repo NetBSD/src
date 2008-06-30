@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48.12.2 2008/06/22 18:12:03 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.48.12.3 2008/06/30 04:55:55 wrstuden Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48.12.2 2008/06/22 18:12:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48.12.3 2008/06/30 04:55:55 wrstuden Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -188,7 +188,8 @@ trap(struct trapframe *frame)
 				map = kernel_map;
 			} else {
 				map = &p->p_vmspace->vm_map;
-				if (l->l_flag & LW_SA) {
+				if ((l->l_flag & LW_SA)
+				    && (~l->l_pflag & LP_SA_NOBLOCK)) {
 					l->l_savp->savp_faultaddr = va;
 					l->l_pflag |= LP_SA_PAGEFAULT;
 				}

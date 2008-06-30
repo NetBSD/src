@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.67.2.2 2008/06/23 04:30:09 wrstuden Exp $	*/
+/*	$NetBSD: fault.c,v 1.67.2.3 2008/06/30 04:55:55 wrstuden Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.67.2.2 2008/06/23 04:30:09 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.67.2.3 2008/06/30 04:55:55 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,7 +379,7 @@ data_abort_handler(trapframe_t *tf)
 		}
 	} else {
 		map = &l->l_proc->p_vmspace->vm_map;
-		if (l->l_flag & LW_SA) {
+		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
 			l->l_savp->savp_faultaddr = (vaddr_t)far;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
