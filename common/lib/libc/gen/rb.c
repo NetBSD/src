@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.20 2008/06/30 16:36:18 matt Exp $ */
+/* $NetBSD: rb.c,v 1.1 2008/06/30 19:04:00 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/types.h>
+#include <sys/types.h>
 #include <stddef.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -42,6 +43,33 @@
 #else
 #include <lib/libkern/libkern.h>
 #endif
+
+#ifdef _LIBC
+__weak_alias(rb_tree_init, _rb_tree_init)
+__weak_alias(rb_tree_find_node, _rb_tree_find_node)
+__weak_alias(rb_tree_find_node_geq, _rb_tree_find_node_geq)
+__weak_alias(rb_tree_find_node_leq, _rb_tree_find_node_leq)
+__weak_alias(rb_tree_insert_node, _rb_tree_insert_node)
+__weak_alias(rb_tree_remove_node, _rb_tree_remove_node)
+__weak_alias(rb_tree_iterate, _rb_tree_iterate)
+#ifdef RBDEBUG
+__weak_alias(rb_tree_check, _rb_tree_check)
+__weak_alias(rb_tree_depths, _rb_tree_depths)
+#endif
+
+#define	rb_tree_init		_rb_tree_init
+#define	rb_tree_find_node	_rb_tree_find_node
+#define	rb_tree_find_node_geq	_rb_tree_find_node_geq
+#define	rb_tree_find_node_leq	_rb_tree_find_node_leq
+#define	rb_tree_insert_node	_rb_tree_insert_node
+#define	rb_tree_remove_node	_rb_tree_remove_node
+#define	rb_tree_iterate		_rb_tree_iterate
+#ifdef RBDEBUG
+#define	rb_tree_check		_rb_tree_check
+#define	rb_tree_depths		_rb_tree_depths
+#endif
+#endif
+
 #ifdef RBTEST
 #include "rb.h"
 #else
