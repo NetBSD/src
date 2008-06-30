@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.4.2.1 2008/06/27 15:11:55 simonb Exp $ */
+/* $NetBSD: rb.h,v 1.4.2.2 2008/06/30 23:02:40 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,60 +35,63 @@
 #include <sys/types.h>
 #else
 #include <stdbool.h>
+#include <inttypes.h>
 #endif
 #include <sys/queue.h>
 #include <sys/endian.h>
 
 struct rb_node {
 	struct rb_node *rb_nodes[2];
-#define	RB_DIR_LEFT	0
-#define	RB_DIR_RIGHT	1
-#define	RB_DIR_OTHER	1
-#define	rb_left		rb_nodes[RB_DIR_LEFT]
-#define	rb_right	rb_nodes[RB_DIR_RIGHT]
-	struct rb_node *rb_parent;
+#define	RB_DIR_LEFT		0
+#define	RB_DIR_RIGHT		1
+#define	RB_DIR_OTHER		1
+#define	rb_left			rb_nodes[RB_DIR_LEFT]
+#define	rb_right		rb_nodes[RB_DIR_RIGHT]
 
-#define	__RB_SHIFT	((sizeof(unsigned long) - 4) << 3)
-#define	RB_FLAG_POSITION	(0x80000000UL << __RB_SHIFT)
-#define	RB_FLAG_ROOT		(0x40000000UL << __RB_SHIFT)
-#define	RB_FLAG_RED		(0x20000000UL << __RB_SHIFT)
-#define	RB_FLAG_SENTINEL	(0x10000000UL << __RB_SHIFT)
-#define	RB_FLAG_MASK		(0xf0000000UL << __RB_SHIFT)
-	unsigned long rb_info;
+	/*
+	 * rb_info contains the two flags and the parent back pointer.
+	 * We put the two flags in the low two bits since we know that
+	 * rb_node will have an alignment of 4 or 8 bytes.
+	 */
+	uintptr_t rb_info;
+#define	RB_FLAG_POSITION	0x2
+#define	RB_FLAG_RED		0x1
+#define	RB_FLAG_MASK		(RB_FLAG_POSITION|RB_FLAG_RED)
+#define	RB_FATHER(rb) \
+    ((struct rb_node *)((rb)->rb_info & ~RB_FLAG_MASK))
+#define	RB_SET_FATHER(rb, father) \
+    ((void)((rb)->rb_info = (uintptr_t)(father)|((rb)->rb_info & RB_FLAG_MASK)))
 
-#define	RB_SENTINEL_P(rb) \
-    (((rb)->rb_info & RB_FLAG_SENTINEL) != 0)
-#define	RB_LEFT_SENTINEL_P(rb) \
-    (((rb)->rb_left->rb_info & RB_FLAG_SENTINEL) != 0)
-#define	RB_RIGHT_SENTINEL_P(rb) \
-    (((rb)->rb_right->rb_info & RB_FLAG_SENTINEL) != 0)
-#define	RB_PARENT_SENTINEL_P(rb) \
-    (((rb)->rb_parent->rb_info & RB_FLAG_SENTINEL) != 0)
+#define	RB_SENTINEL_P(rb)	((rb) == NULL)
+#define	RB_LEFT_SENTINEL_P(rb)	RB_SENTINEL_P((rb)->rb_left)
+#define	RB_RIGHT_SENTINEL_P(rb)	RB_SENTINEL_P((rb)->rb_right)
+#define	RB_FATHER_SENTINEL_P(rb) RB_SENTINEL_P(RB_FATHER((rb)))
 #define	RB_CHILDLESS_P(rb) \
-    (RB_LEFT_SENTINEL_P(rb) && RB_RIGHT_SENTINEL_P(rb))
+    (RB_SENTINEL_P(rb) || (RB_LEFT_SENTINEL_P(rb) && RB_RIGHT_SENTINEL_P(rb)))
 #define	RB_TWOCHILDREN_P(rb) \
-    (!RB_LEFT_SENTINEL_P(rb) && !RB_RIGHT_SENTINEL_P(rb))
+    (!RB_SENTINEL_P(rb) && !RB_LEFT_SENTINEL_P(rb) && !RB_RIGHT_SENTINEL_P(rb))
 
-#define	RB_ROOT_P(rb) 		(((rb)->rb_info & RB_FLAG_ROOT) != 0)
-#define	RB_POSITION_P(rb)	(((rb)->rb_info & RB_FLAG_POSITION) != 0)
-#define	RB_RED_P(rb) 		(((rb)->rb_info & RB_FLAG_RED) != 0)
-#define	RB_BLACK_P(rb) 		(((rb)->rb_info & RB_FLAG_RED) == 0)
+#define	RB_POSITION(rb)	\
+    (((rb)->rb_info & RB_FLAG_POSITION) ? RB_DIR_RIGHT : RB_DIR_LEFT)
+#define	RB_RIGHT_P(rb)		(RB_POSITION(rb) == RB_DIR_RIGHT)
+#define	RB_LEFT_P(rb)		(RB_POSITION(rb) == RB_DIR_LEFT)
+#define	RB_RED_P(rb) 		(!RB_SENTINEL_P(rb) && ((rb)->rb_info & RB_FLAG_RED) != 0)
+#define	RB_BLACK_P(rb) 		(RB_SENTINEL_P(rb) || ((rb)->rb_info & RB_FLAG_RED) == 0)
 #define	RB_MARK_RED(rb) 	((void)((rb)->rb_info |= RB_FLAG_RED))
 #define	RB_MARK_BLACK(rb) 	((void)((rb)->rb_info &= ~RB_FLAG_RED))
-#define	RB_INVERT_COLOR(rb) 	((void)((rb)->rb_info & RB_FLAG_RED) ? \
-    ((rb)->rb_info &= ~RB_FLAG_RED) : ((rb)->rb_info |= RB_FLAG_RED))
-#define	RB_MARK_ROOT(rb) 	((void)((rb)->rb_info |= RB_FLAG_ROOT))
-#define	RB_MARK_NONROOT(rb)	((void)((rb)->rb_info &= ~RB_FLAG_ROOT))
-#define	RB_MARK_SENTINEL(rb) 	((void)((rb)->rb_info |= RB_FLAG_SENTINEL))
-#define	RB_MARK_NONSENTINEL(rb)	((void)((rb)->rb_info &= ~RB_FLAG_SENTINEL))
+#define	RB_INVERT_COLOR(rb) 	((void)((rb)->rb_info ^= RB_FLAG_RED))
+#define	RB_ROOT_P(rbt, rb)	((rbt)->rbt_root == (rb))
 #define	RB_SET_POSITION(rb, position) \
     ((void)((position) ? ((rb)->rb_info |= RB_FLAG_POSITION) : \
     ((rb)->rb_info &= ~RB_FLAG_POSITION)))
-#define	RB_MARK_NONSENTINEL(rb)	((void)((rb)->rb_info &= ~RB_FLAG_SENTINEL))
 #define	RB_ZERO_PROPERTIES(rb)	((void)((rb)->rb_info &= ~RB_FLAG_MASK))
 #define	RB_COPY_PROPERTIES(dst, src) \
-    ((void)((dst)->rb_info = ((dst)->rb_info & ~RB_FLAG_MASK) | \
-    ((src)->rb_info & RB_FLAG_MASK)))
+    ((void)((dst)->rb_info ^= ((dst)->rb_info ^ (src)->rb_info) & RB_FLAG_MASK))
+#define RB_SWAP_PROPERTIES(a, b) do { \
+    uintptr_t xorinfo = ((a)->rb_info ^ (b)->rb_info) & RB_FLAG_MASK; \
+    (a)->rb_info ^= xorinfo; \
+    (b)->rb_info ^= xorinfo; \
+  } while (/*CONSTCOND*/ 0)
 #ifdef RBDEBUG
 	TAILQ_ENTRY(rb_node) rb_link;
 #endif
@@ -110,14 +113,14 @@ TAILQ_HEAD(rb_node_qh, rb_node);
 #define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	do { } while (/*CONSTCOND*/0)
 #endif /* RBDEBUG */
 
-typedef signed int (*const rb_compare_nodes_fn)(const struct rb_node *,
+typedef signed int (*const rbto_compare_nodes_fn)(const struct rb_node *,
     const struct rb_node *);
-typedef signed int (*const rb_compare_key_fn)(const struct rb_node *,
+typedef signed int (*const rbto_compare_key_fn)(const struct rb_node *,
     const void *);
 
 struct rb_tree_ops {
-	rb_compare_nodes_fn rb_compare_nodes;
-	rb_compare_key_fn rb_compare_key;
+	rbto_compare_nodes_fn rbto_compare_nodes;
+	rbto_compare_key_fn rbto_compare_key;
 };
 
 struct rb_tree {
@@ -144,8 +147,8 @@ struct rb_tree {
 #define	RBSTAT_INC(v)	((void)((v)++))
 #define	RBSTAT_DEC(v)	((void)((v)--))
 #else
-#define	RBSTAT_INC(v)	do { } while (0)
-#define	RBSTAT_DEC(v)	do { } while (0)
+#define	RBSTAT_INC(v)	do { } while (/*CONSTCOND*/0)
+#define	RBSTAT_DEC(v)	do { } while (/*CONSTCOND*/0)
 #endif
 
 void	rb_tree_init(struct rb_tree *, const struct rb_tree_ops *);
