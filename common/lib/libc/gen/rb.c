@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.1 2008/06/30 19:04:00 matt Exp $ */
+/* $NetBSD: rb.c,v 1.2 2008/06/30 20:14:09 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ rb_tree_init(struct rb_tree *rbt, const struct rb_tree_ops *ops)
 struct rb_node *
 rb_tree_find_node(struct rb_tree *rbt, const void *key)
 {
-	rb_compare_key_fn compare_key = rbt->rbt_ops->rb_compare_key;
+	rbto_compare_key_fn compare_key = rbt->rbt_ops->rbto_compare_key;
 	struct rb_node *parent = rbt->rbt_root;
 
 	while (!RB_SENTINEL_P(parent)) {
@@ -130,7 +130,7 @@ rb_tree_find_node(struct rb_tree *rbt, const void *key)
 struct rb_node *
 rb_tree_find_node_geq(struct rb_tree *rbt, const void *key)
 {
-	rb_compare_key_fn compare_key = rbt->rbt_ops->rb_compare_key;
+	rbto_compare_key_fn compare_key = rbt->rbt_ops->rbto_compare_key;
 	struct rb_node *parent = rbt->rbt_root;
 	struct rb_node *last = NULL;
 
@@ -149,7 +149,7 @@ rb_tree_find_node_geq(struct rb_tree *rbt, const void *key)
 struct rb_node *
 rb_tree_find_node_leq(struct rb_tree *rbt, const void *key)
 {
-	rb_compare_key_fn compare_key = rbt->rbt_ops->rb_compare_key;
+	rbto_compare_key_fn compare_key = rbt->rbt_ops->rbto_compare_key;
 	struct rb_node *parent = rbt->rbt_root;
 	struct rb_node *last = NULL;
 
@@ -168,7 +168,7 @@ rb_tree_find_node_leq(struct rb_tree *rbt, const void *key)
 bool
 rb_tree_insert_node(struct rb_tree *rbt, struct rb_node *self)
 {
-	rb_compare_nodes_fn compare_nodes = rbt->rbt_ops->rb_compare_nodes;
+	rbto_compare_nodes_fn compare_nodes = rbt->rbt_ops->rbto_compare_nodes;
 	struct rb_node *parent, *tmp;
 	unsigned int position;
 	bool rebalance;
@@ -1043,7 +1043,7 @@ static bool
 rb_tree_check_node(const struct rb_tree *rbt, const struct rb_node *self,
 	const struct rb_node *prev, bool red_check)
 {
-	rb_compare_nodes_fn compare_nodes = rbt->rbt_ops->rb_compare_nodes;
+	rbto_compare_nodes_fn compare_nodes = rbt->rbt_ops->rbto_compare_nodes;
 
 	KASSERT(!RB_SENTINEL_P(self));
 	KASSERT(prev == NULL || (*compare_nodes)(prev, self) > 0);

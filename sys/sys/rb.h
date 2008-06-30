@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.7 2008/06/30 16:36:18 matt Exp $ */
+/* $NetBSD: rb.h,v 1.8 2008/06/30 20:14:09 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,14 +113,14 @@ TAILQ_HEAD(rb_node_qh, rb_node);
 #define	RB_TAILQ_INSERT_AFTER(a, b, c, d)	do { } while (/*CONSTCOND*/0)
 #endif /* RBDEBUG */
 
-typedef signed int (*const rb_compare_nodes_fn)(const struct rb_node *,
+typedef signed int (*const rbto_compare_nodes_fn)(const struct rb_node *,
     const struct rb_node *);
-typedef signed int (*const rb_compare_key_fn)(const struct rb_node *,
+typedef signed int (*const rbto_compare_key_fn)(const struct rb_node *,
     const void *);
 
 struct rb_tree_ops {
-	rb_compare_nodes_fn rb_compare_nodes;
-	rb_compare_key_fn rb_compare_key;
+	rbto_compare_nodes_fn rbto_compare_nodes;
+	rbto_compare_key_fn rbto_compare_key;
 };
 
 struct rb_tree {
