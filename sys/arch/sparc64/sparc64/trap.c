@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.150 2008/06/29 07:49:10 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.151 2008/06/30 14:16:13 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.150 2008/06/29 07:49:10 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2008/06/30 14:16:13 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -765,7 +765,7 @@ badtrap:
 		savefpstate(l->l_md.md_fpstate);
 		fplwp = NULL;
 		rstintr();
-		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
+		/* tf->tf_tstate &= ~TSTATE_PEF */ /* share_fpu will do this */
 		if (l->l_md.md_fpstate->fs_qsize == 0) {
 			error = copyin((void *)pc,
 			    &l->l_md.md_fpstate->fs_queue[0].fq_instr,
