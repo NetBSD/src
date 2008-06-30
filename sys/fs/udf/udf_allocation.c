@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.7 2008/06/28 14:47:11 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.8 2008/06/30 16:43:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.7 2008/06/28 14:47:11 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.8 2008/06/30 16:43:13 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -268,6 +268,8 @@ udf_node_sanity_check(struct udf_node *udf_node,
 		} else {
 			KASSERT(len == lb_size);
 		}
+
+		/* check whole lb */
 		whole_lb = ((len % lb_size) == 0);
 	}
 	/* rest should be zero (ad_off > l_ad < max_l_ad - adlen) */
@@ -1611,7 +1613,7 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 	foffset = restart_foffset;
 
 	skip_len = till - foffset;	/* relative to start of slot */
-	slot_offset = from - foffset;
+	slot_offset = from - foffset;	/* offset in first encounted slot */
 	for (;;) {
 		udf_get_adslot(udf_node, slot, &s_ad, &eof);
 		if (eof)
@@ -1627,31 +1629,38 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 			continue;
 		}
 
-		DPRINTF(ALLOC, ("\t4i: got slot %d, skip_len %d, vp %d, "
-				"lb %d, len %d, flags %d\n",
-			slot, skip_len, udf_rw16(s_ad.loc.part_num),
+		DPRINTF(ALLOC, ("\t4i: got slot %d, slot_offset %d, "
+				"skip_len %d, "
+				"vp %d, lb %d, len %d, flags %d\n",
+			slot, slot_offset, skip_len,
+			udf_rw16(s_ad.loc.part_num),
 			udf_rw32(s_ad.loc.lb_num),
 			UDF_EXT_LEN(udf_rw32(s_ad.len)),
 			UDF_EXT_FLAGS(udf_rw32(s_ad.len)) >> 30));
 
 		skipped   = MIN(len, skip_len);
+		DPRINTF(ALLOC, ("\t4d: skipped %d\n", skipped));
+
+		/* we're in the first slot and need to skip its head */
 		if (flags != UDF_EXT_FREE) {
-			if (slot_offset) {
-				/* skip these blocks first */
-				num_lb = (slot_offset + lb_size-1) / lb_size;
-				len      -= slot_offset;
-				skip_len -= slot_offset;
-				foffset  += slot_offset;
-				lb_num   += num_lb;
-				skipped  -= slot_offset;
-				slot_offset = 0;
-			}
-			/* free space from current position till `skipped' */
+			/* skip these blocks first */
+			num_lb = (slot_offset + lb_size-1) / lb_size;
+			len      -= slot_offset;
+			skip_len -= slot_offset;
+			foffset  += slot_offset;
+			lb_num   += num_lb;
+			skipped  -= slot_offset;
+
+			/* free space till `skipped' */
 			num_lb = (skipped + lb_size-1) / lb_size;
 			udf_free_allocated_space(ump, lb_num,
 				udf_rw16(s_ad.loc.part_num), num_lb);
 			lb_num += num_lb;
 		}
+		/* we're by definition at the 2nd slot, so clear */
+		slot_offset = 0;
+
+		/* proceed */
 		len      -= skipped;
 		skip_len -= skipped;
 		foffset  += skipped;
@@ -1989,7 +1998,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 	}
 
 	/* if there is a rest piece in the accumulator, append it */
-	if (UDF_EXT_LEN(c_ad.len) > 0) {
+	if (UDF_EXT_LEN(udf_rw32(c_ad.len)) > 0) {
 		error = udf_append_adslot(udf_node, slot, &c_ad);
 		if (error)
 			goto errorout;
@@ -1997,7 +2006,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 	}
 
 	/* if there is a rest piece that didn't fit, append it */
-	if (UDF_EXT_LEN(s_ad.len) > 0) {
+	if (UDF_EXT_LEN(udf_rw32(s_ad.len)) > 0) {
 		error = udf_append_adslot(udf_node, slot, &s_ad);
 		if (error)
 			goto errorout;
