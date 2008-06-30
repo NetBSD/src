@@ -1,4 +1,4 @@
--/* $NetBSD: isp_target.c,v 1.31 2008/03/11 05:33:30 mjacob Exp $ */
+-/* $NetBSD: isp_target.c,v 1.32 2008/06/30 00:50:30 perry Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -65,7 +65,7 @@
 
 #ifdef	__NetBSD__
 #include <sys/cdefs.h> 
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.31 2008/03/11 05:33:30 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.32 2008/06/30 00:50:30 perry Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -1007,7 +1007,7 @@ isp_got_tmf_24xx(ispsoftc_t *isp, at7_entry_t *aep)
 	}
 	if (chan == isp->isp_nchan) {
 		isp_prt(isp, ISP_LOGWARN,
-		    "%s:  D_ID 0x%x not found on any channel", __FUNCTION__,  did);
+		    "%s:  D_ID 0x%x not found on any channel", __func__,  did);
 		/* just drop on the floor */
 		return;
 	}
@@ -1831,7 +1831,7 @@ isp_handle_24xx_inotify(ispsoftc_t *isp, in_fcentry_24xx_t *inot_24xx)
 		if (chan > isp->isp_nchan) {
 			isp_prt(isp, ISP_LOGINFO,
 			    "%s: bad channel %d for status 0x%x",
-			    __FUNCTION__, chan, inot_24xx->in_status);
+			    __func__, chan, inot_24xx->in_status);
 			isp_notify_ack(isp, inot_24xx);
 			return;
 		}
@@ -1840,7 +1840,7 @@ isp_handle_24xx_inotify(ispsoftc_t *isp, in_fcentry_24xx_t *inot_24xx)
 	}
 	isp_prt(isp, ISP_LOGTDEBUG0,
 	    "%s: Immediate Notify Channels %d..%d status=0x%x seqid=0x%x",
-	    __FUNCTION__, lochan, hichan-1, inot_24xx->in_status,
+	    __func__, lochan, hichan-1, inot_24xx->in_status,
 	   inot_24xx->in_rxid);
 	for (chan = lochan; chan < hichan; chan++) {
 		switch (inot_24xx->in_status) {
@@ -1857,7 +1857,7 @@ isp_handle_24xx_inotify(ispsoftc_t *isp, in_fcentry_24xx_t *inot_24xx)
 		default:
 			isp_prt(isp, ISP_LOGINFO,
 			    "%s: unhandled status (0x%x) for chan %d",
-			    __FUNCTION__, inot_24xx->in_status, chan);
+			    __func__, inot_24xx->in_status, chan);
 			isp_notify_ack(isp, inot_24xx);
 			break;
 		}
