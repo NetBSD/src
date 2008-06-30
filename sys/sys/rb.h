@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.8 2008/06/30 20:14:09 matt Exp $ */
+/* $NetBSD: rb.h,v 1.9 2008/06/30 20:54:19 matt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,8 +147,8 @@ struct rb_tree {
 #define	RBSTAT_INC(v)	((void)((v)++))
 #define	RBSTAT_DEC(v)	((void)((v)--))
 #else
-#define	RBSTAT_INC(v)	do { } while (0)
-#define	RBSTAT_DEC(v)	do { } while (0)
+#define	RBSTAT_INC(v)	do { } while (/*CONSTCOND*/0)
+#define	RBSTAT_DEC(v)	do { } while (/*CONSTCOND*/0)
 #endif
 
 void	rb_tree_init(struct rb_tree *, const struct rb_tree_ops *);
