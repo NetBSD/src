@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.15 2008/02/19 13:25:53 bouyer Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.16 2008/07/01 18:49:21 bouyer Exp $	*/
 
 /*
  *
@@ -42,6 +42,7 @@ void events_default_setup(void);
 void init_events(void);
 unsigned int evtchn_do_event(int, struct intrframe *);
 void call_evtchn_do_event(int, struct intrframe *);
+void call_xenevt_event(int);
 int event_set_handler(int, int (*func)(void *), void *, int, const char *);
 int event_remove_handler(int, int (*func)(void *), void *);
 
