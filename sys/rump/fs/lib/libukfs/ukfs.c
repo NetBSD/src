@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.28 2008/07/01 12:33:32 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.29 2008/07/01 13:09:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,9 +49,9 @@
 #include <unistd.h>
 #include <stdint.h>
 
+#include "ukfs.h"
 #include "rump.h"
 #include "rump_syscalls.h"
-#include "ukfs.h"
 
 #define UKFS_MODE_DEFAULT 0555
 
@@ -342,6 +342,13 @@ ukfs_mknod(struct ukfs *ukfs, const char *path, mode_t mode, dev_t dev)
 	STDCALL(ukfs, rump_sys_mknod(path, mode, dev, &rv));
 }
 
+int
+ukfs_mkfifo(struct ukfs *ukfs, const char *path, mode_t mode)
+{
+
+	STDCALL(ukfs, rump_sys_mkfifo(path, mode, &rv));
+}
+
 static int
 builddirs(struct ukfs *ukfs, const char *filename, mode_t mode)
 {
@@ -468,4 +475,60 @@ ukfs_chdir(struct ukfs *ukfs, const char *path)
 		return -1;
 	}
 	return 0;
+}
+
+int
+ukfs_stat(struct ukfs *ukfs, const char *filename, struct stat *file_stat)
+{
+
+	STDCALL(ukfs, rump_sys___stat30(filename, file_stat, &rv));
+}
+
+int
+ukfs_lstat(struct ukfs *ukfs, const char *filename, struct stat *file_stat)
+{
+
+	STDCALL(ukfs, rump_sys___lstat30(filename, file_stat, &rv));
+}
+
+int
+ukfs_chmod(struct ukfs *ukfs, const char *filename, mode_t mode)
+{
+
+	STDCALL(ukfs, rump_sys_chmod(filename, mode, &rv));
+}
+
+int
+ukfs_lchmod(struct ukfs *ukfs, const char *filename, mode_t mode)
+{
+
+	STDCALL(ukfs, rump_sys_lchmod(filename, mode, &rv));
+}
+
+int
+ukfs_chown(struct ukfs *ukfs, const char *filename, uid_t uid, gid_t gid)
+{
+
+	STDCALL(ukfs, rump_sys_chown(filename, uid, gid, &rv));
+}
+
+int
+ukfs_lchown(struct ukfs *ukfs, const char *filename, uid_t uid, gid_t gid)
+{
+
+	STDCALL(ukfs, rump_sys_lchown(filename, uid, gid, &rv));
+}
+
+int
+ukfs_chflags(struct ukfs *ukfs, const char *filename, u_long flags)
+{
+
+	STDCALL(ukfs, rump_sys_chflags(filename, flags, &rv));
+}
+
+int
+ukfs_lchflags(struct ukfs *ukfs, const char *filename, u_long flags)
+{
+
+	STDCALL(ukfs, rump_sys_lchflags(filename, flags, &rv));
 }
