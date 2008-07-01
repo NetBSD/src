@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.160 2008/05/04 07:22:15 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.161 2008/07/01 20:18:46 mlelstv Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.160 2008/05/04 07:22:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.161 2008/07/01 20:18:46 mlelstv Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -8245,11 +8245,13 @@ key_sa_routechange(dst)
 {
 	struct secashead *sah;
 	struct route *ro;
+	const struct sockaddr *sa;
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (dst->sa_len == rtcache_getdst(ro)->sa_len &&
-		    memcmp(dst, rtcache_getdst(ro), dst->sa_len) == 0)
+		sa = rtcache_getdst(ro);
+		if (sa != NULL && dst->sa_len == sa->sa_len &&
+		    memcmp(dst, sa, dst->sa_len) == 0)
 			rtcache_free(ro);
 	}
 
