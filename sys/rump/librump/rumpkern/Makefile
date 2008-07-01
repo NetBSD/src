@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2008/06/30 20:14:42 matt Exp $
+#	$NetBSD: Makefile,v 1.38 2008/07/01 12:33:32 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -65,8 +65,10 @@ rumpvnode_if.c: vnode_if.c
 	# clue how to make it work in a Makefile
 	sed ${VOPTORUMPVOP}";/sys\/vnode.h/{x;s/.*/${RVNH}/;x;G;n;}"	\
 	    < ${NETBSDSRCDIR}/sys/kern/vnode_if.c > rumpvnode_if.c
-	sed -n '/define/s/NAMEI_/RUMP_NAMEI_/p'				\
+	sed -n '/#define NAMEI_/s/NAMEI_/RUMP_NAMEI_/gp'		\
 	    < ${NETBSDSRCDIR}/sys/sys/namei.h > rumpdefs.h
+	sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp'	\
+	    < ${NETBSDSRCDIR}/sys/sys/fcntl.h >> rumpdefs.h
 	printf "#ifndef __VTYPE_DEFINED\n#define __VTYPE_DEFINED\n"	\
 	    >> rumpdefs.h
 	sed -n '/enum vtype.*{/p'					\
