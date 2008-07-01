@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.27 2008/06/24 14:16:37 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.28 2008/07/01 12:33:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,20 +33,21 @@
  * involving system calls.
  */
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/namei.h>
-#include <sys/uio.h>
+#ifdef __linux__
+#define _XOPEN_SOURCE 500
+#define _BSD_SOURCE
+#define _FILE_OFFSET_BITS 64
+#endif
 
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #include "rump.h"
 #include "rump_syscalls.h"
@@ -248,8 +249,8 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 	size_t resid;
 	int rv, eofflag;
 
-	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_LOOKUP, NAMEI_LOCKLEAF, dirname,
-	    NULL, &vp, NULL);
+	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_LOOKUP, RUMP_NAMEI_LOCKLEAF,
+	    dirname, NULL, &vp, NULL);
 	if (rv)
 		goto out;
 		
@@ -277,7 +278,7 @@ ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
 	ssize_t xfer = -1; /* XXXgcc */
 
 	precall(ukfs);
-	fd = rump_sys_open(filename, O_RDONLY, 0, &rv);
+	fd = rump_sys_open(filename, RUMP_O_RDONLY, 0, &rv);
 	if (rv)
 		goto out;
 
@@ -301,7 +302,7 @@ ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 	ssize_t xfer = -1; /* XXXgcc */
 
 	precall(ukfs);
-	fd = rump_sys_open(filename, O_WRONLY, 0, &rv);
+	fd = rump_sys_open(filename, RUMP_O_WRONLY, 0, &rv);
 	if (rv)
 		goto out;
 
@@ -323,7 +324,7 @@ ukfs_create(struct ukfs *ukfs, const char *filename, mode_t mode)
 	int rv, fd, dummy;
 
 	precall(ukfs);
-	fd = rump_sys_open(filename, O_WRONLY | O_CREAT, mode, &rv);
+	fd = rump_sys_open(filename, RUMP_O_WRONLY | RUMP_O_CREAT, mode, &rv);
 	rump_sys_close(fd, &dummy);
 
 	postcall(ukfs);

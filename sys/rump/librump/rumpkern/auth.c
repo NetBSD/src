@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.8 2008/06/23 12:58:12 pooka Exp $	*/
+/*	$NetBSD: auth.c,v 1.9 2008/07/01 12:33:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <sys/errno.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/proc.h>
 
 #include "rump.h"
 #include "rumpuser.h"
