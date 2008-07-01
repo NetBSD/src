@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.34 2008/06/30 23:07:12 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.35 2008/07/01 19:06:33 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.34 2008/06/30 23:07:12 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.35 2008/07/01 19:06:33 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1231,6 +1231,8 @@ static void
 sa_upcall0(struct sadata_upcall *sau, int type, struct lwp *event,
     struct lwp *interrupted, size_t argsize, void *arg, void (*func)(void *))
 {
+	DPRINTFN(12,("sa_upcall0: event %p interrupted %p type %x\n",
+	    event, interrupted, type));
 
 	KASSERT((event == NULL) || (event != interrupted));
 
@@ -1464,7 +1466,7 @@ sa_switch(struct lwp *l)
 			printf("sa_switch(%d.%d): no upcall data.\n",
 			    p->p_pid, l->l_lid);
 #endif
-panic("Oops! Don't have a sleeper!\n");
+			panic("Oops! Don't have a sleeper!\n");
 			/* XXXWRS Shouldn't we just kill the app here? */
 			mutex_exit(&vp->savp_mutex);
 			mi_switch(l);
@@ -1512,9 +1514,11 @@ panic("Oops! Don't have a sleeper!\n");
 		 */
 		if ((l->l_flag & LP_SA_PAGEFAULT) && sa_pagefault(l,
 			&sau->sau_event.ss_captured.ss_ctx) != 0) {
-			cpu_setfunc(l2, sa_switchcall, NULL);
+			cpu_setfunc(l2, sa_neverrun, NULL);
 			sa_putcachelwp(p, l2); /* uvm_lwp_hold from sa_getcachelwp */
 			mutex_exit(&vp->savp_mutex);
+			DPRINTFN(4,("sa_switch(%d.%d) Pagefault\n",
+			    p->p_pid, l->l_lid));
 			mi_switch(l);
 			/*
 			 * WRS Not sure how vp->savp_sleeper_upcall != NULL
@@ -1634,6 +1638,7 @@ sa_switchcall(void *arg)
 	sa = p->p_sa;
 
 	lwp_lock(l2);
+	KASSERT(vp->savp_lwp == l2);
 	if (l2->l_flag & LW_WEXIT) {
 		lwp_unlock(l2);
 		sadata_upcall_free(sau);
@@ -2385,6 +2390,7 @@ sa_unblock_userret(struct lwp *l)
 	sleepq_enqueue(&vp->savp_woken, &vp->savp_woken, sa_lwpwoken_wmesg,
 			&sa_sobj);
 	l->l_flag |= LW_SINTR;
+	uvm_lwp_hold(l);
 	vp->savp_woken_count++;
 	//l->l_stat = LSSUSPENDED;
 	mi_switch(l);
