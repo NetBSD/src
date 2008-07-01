@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.9 2008/03/12 14:49:19 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.10 2008/07/01 13:09:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,6 +63,7 @@ ssize_t		ukfs_readlink(struct ukfs *, const char *, char *, size_t);
 int		ukfs_create(struct ukfs *, const char *, mode_t);
 int		ukfs_mkdir(struct ukfs *, const char *, mode_t, bool);
 int		ukfs_mknod(struct ukfs *, const char *, mode_t, dev_t);
+int		ukfs_mkfifo(struct ukfs *, const char *, mode_t);
 int		ukfs_symlink(struct ukfs *, const char *, const char *);
 
 int		ukfs_remove(struct ukfs *, const char *);
@@ -72,6 +73,16 @@ int		ukfs_link(struct ukfs *, const char *, const char *);
 int		ukfs_rename(struct ukfs *, const char *, const char *);
 
 int		ukfs_chdir(struct ukfs *, const char *);
+
+int		ukfs_stat(struct ukfs *, const char *, struct stat *);
+int		ukfs_lstat(struct ukfs *, const char *, struct stat *);
+
+int		ukfs_chmod(struct ukfs *, const char *, mode_t);
+int		ukfs_lchmod(struct ukfs *, const char *, mode_t);
+int		ukfs_chown(struct ukfs *, const char *, uid_t, gid_t);
+int		ukfs_lchown(struct ukfs *, const char *, uid_t, gid_t);
+int		ukfs_chflags(struct ukfs *, const char *, u_long);
+int		ukfs_lchflags(struct ukfs *, const char *, u_long);
 
 struct mount	*ukfs_getmp(struct ukfs *);
 struct vnode	*ukfs_getrvp(struct ukfs *);
