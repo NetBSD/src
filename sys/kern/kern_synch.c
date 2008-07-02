@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.248 2008/05/31 21:26:01 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.249 2008/07/02 19:38:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.248 2008/05/31 21:26:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.249 2008/07/02 19:38:37 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1163,17 +1163,20 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
 void
 sched_pstats(void *arg)
 {
+	const int clkhz = (stathz != 0 ? stathz : hz);
 	struct rlimit *rlim;
 	struct lwp *l;
 	struct proc *p;
-	int sig, clkhz;
 	long runtm;
+	fixpt_t lpctcpu;
+	u_int lcpticks;
+	int sig;
 
 	sched_pstats_ticks++;
 
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
-		if ((p->p_flag & PK_MARKER) != 0)
+		if (__predict_false((p->p_flag & PK_MARKER) != 0))
 			continue;
 
 		/*
@@ -1182,10 +1185,9 @@ sched_pstats(void *arg)
 		 * (remember them?) overflow takes 45 days.
 		 */
 		mutex_enter(p->p_lock);
-		mutex_spin_enter(&p->p_stmutex);
 		runtm = p->p_rtime.sec;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if ((l->l_flag & LW_IDLE) != 0)
+			if (__predict_false((l->l_flag & LW_IDLE) != 0))
 				continue;
 			lwp_lock(l);
 			runtm += l->l_rtime.sec;
@@ -1193,27 +1195,26 @@ sched_pstats(void *arg)
 			sched_lwp_stats(l);
 			lwp_unlock(l);
 
-			/*
-			 * p_pctcpu is only for ps.
-			 */
 			l->l_pctcpu = (l->l_pctcpu * ccpu) >> FSHIFT;
-			if (l->l_slptime < 1) {
-				clkhz = stathz != 0 ? stathz : hz;
+			if (l->l_slptime != 0)
+				continue;
+
+			lpctcpu = l->l_pctcpu;
+			lcpticks = atomic_swap_uint(&l->l_cpticks, 0);
 #if	(FSHIFT >= CCPU_SHIFT)
-				l->l_pctcpu += (clkhz == 100) ?
-				    ((fixpt_t)l->l_cpticks) <<
-				        (FSHIFT - CCPU_SHIFT) :
-				    100 * (((fixpt_t) p->p_cpticks)
-				        << (FSHIFT - CCPU_SHIFT)) / clkhz;
+			lpctcpu += (clkhz == 100) ?
+			    ((fixpt_t)lcpticks) <<
+			        (FSHIFT - CCPU_SHIFT) :
+			    100 * (((fixpt_t) p->p_cpticks)
+			        << (FSHIFT - CCPU_SHIFT)) / clkhz;
 #else
-				l->l_pctcpu += ((FSCALE - ccpu) *
-				    (l->l_cpticks * FSCALE / clkhz)) >> FSHIFT;
+			lpctcpu += ((FSCALE - ccpu) *
+			    (lcpticks * FSCALE / clkhz)) >> FSHIFT;
 #endif
-				l->l_cpticks = 0;
-			}
+			l->l_pctcpu = lpctcpu;
 		}
+		/* Calculating p_pctcpu only for ps(1) */
 		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
-		mutex_spin_exit(&p->p_stmutex);
 
 		/*
 		 * Check if the process exceeds its CPU resource allocation.
@@ -1221,7 +1222,7 @@ sched_pstats(void *arg)
 		 */
 		rlim = &p->p_rlimit[RLIMIT_CPU];
 		sig = 0;
-		if (runtm >= rlim->rlim_cur) {
+		if (__predict_false(runtm >= rlim->rlim_cur)) {
 			if (runtm >= rlim->rlim_max)
 				sig = SIGKILL;
 			else {
@@ -1231,7 +1232,7 @@ sched_pstats(void *arg)
 			}
 		}
 		mutex_exit(p->p_lock);
-		if (sig)
+		if (__predict_false(sig))
 			psignal(p, sig);
 	}
 	mutex_exit(proc_lock);
