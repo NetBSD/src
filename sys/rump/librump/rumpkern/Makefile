@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2008/07/01 12:33:32 pooka Exp $
+#	$NetBSD: Makefile,v 1.39 2008/07/02 23:03:35 he Exp $
 #
 
 .include <bsd.own.mk>
@@ -58,7 +58,15 @@ VOPTORUMPVOP="-e s/vop/rump_vop/g;/VOPARG/!s/VOP/RUMP_VOP/g;/vfs_op_desc/,\$$d"
 VOPTORUMPVOP+="-e s/vm_prot_t/int/g"
 VOPTORUMPVOP+="-e s/voff_t/off_t/g;/sys\/buf\.h/s/.*/struct buf;/"
 RVNH=\#include \"rump.h\"
-rumpvnode_if.c: vnode_if.c
+rumpdefs.h rumpnode_if.h rumpvnode_if.c: vnode_if.c \
+		${NETBSDSRCDIR}/sys/sys/vnode_if.h \
+		${NETBSDSRCDIR}/sys/kern/vnode_if.c \
+		${NETBSDSRCDIR}/sys/sys/namei.h \
+		${NETBSDSRCDIR}/sys/sys/fcntl.h \
+		${NETBSDSRCDIR}/sys/sys/vnode.h \
+		${NETBSDSRCDIR}/sys/sys/errno.h \
+		${.CURDIR}/Makefile
+	echo Regenerating rumpdefs.h rumpnode_if.h and rumpnode_if.c
 	sed ${VOPTORUMPVOP}";s/SYS_VNODE_IF_H/SYS_RUMPVNODE_IF_H/g"	\
 	    < ${NETBSDSRCDIR}/sys/sys/vnode_if.h > rumpvnode_if.h
 	# XXX: some creative kludging to simulate 'a\' (I have no
