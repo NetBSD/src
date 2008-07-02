@@ -1,4 +1,4 @@
-/* $NetBSD: drm_auth.c,v 1.4.8.1 2008/06/29 09:33:06 mjf Exp $ */
+/* $NetBSD: drm_auth.c,v 1.4.8.2 2008/07/02 19:08:19 mjf Exp $ */
 
 /* drm_auth.h -- IOCTLs for authentication -*- linux-c -*-
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_auth.c,v 1.4.8.1 2008/06/29 09:33:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_auth.c,v 1.4.8.2 2008/07/02 19:08:19 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_auth.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -79,6 +79,7 @@ static int drm_add_magic(drm_device_t *dev, drm_file_t *priv, drm_magic_t magic)
 	entry->priv  = priv;
 	entry->next  = NULL;
 
+	DRM_LOCK();
 	if (dev->magiclist[hash].tail) {
 		dev->magiclist[hash].tail->next = entry;
 		dev->magiclist[hash].tail	= entry;
@@ -86,6 +87,7 @@ static int drm_add_magic(drm_device_t *dev, drm_file_t *priv, drm_magic_t magic)
 		dev->magiclist[hash].head	= entry;
 		dev->magiclist[hash].tail	= entry;
 	}
+	DRM_UNLOCK();
 
 	return 0;
 }

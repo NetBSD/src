@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.199.6.2 2008/06/02 13:21:49 mjf Exp $
+# $NetBSD: GENERIC,v 1.199.6.3 2008/07/02 19:08:15 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.199.6.2 $"
+#ident 		"GENERIC-$Revision: 1.199.6.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -87,9 +87,10 @@ options 	POWERNOW_K8
 #options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# expensive kernel consistency checks
-#options 	DEBUG		# expensive debugging checks/support
+options 	DIAGNOSTIC	# expensive kernel consistency checks
+options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options		LOCKDEBUG
 
 #
 # Because gcc omits the frame pointer for any -O level, the line below
@@ -132,7 +133,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 # File systems
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
-file-system 	LFS		# log-structured file system
+#file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 file-system 	NTFS		# Windows/NT file system (experimental)

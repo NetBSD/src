@@ -1,4 +1,4 @@
-/* $Id: imxuart.c,v 1.1.20.1 2008/06/02 13:21:54 mjf Exp $ */
+/* $Id: imxuart.c,v 1.1.20.2 2008/07/02 19:08:15 mjf Exp $ */
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -24,7 +24,7 @@
 
 
 
-#define __TRACE	imxuart_puts(&imxuart_softc, __FUNCTION__ )
+#define __TRACE	imxuart_puts(&imxuart_softc, __func__ )
 
 extern struct bus_space imx31_bs_tag;
 

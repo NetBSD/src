@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_filio.c,v 1.13.6.2 2008/06/02 13:23:09 mjf Exp $	 */
+/*	$NetBSD: svr4_32_filio.c,v 1.13.6.3 2008/07/02 19:08:19 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.13.6.2 2008/06/02 13:23:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.13.6.3 2008/07/02 19:08:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -77,12 +77,12 @@ svr4_32_fil_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_long 
 
 	switch (cmd) {
 	case SVR4_FIOCLEX:
-		ff->ff_exclose = 1;
-		fdp->fd_exclose = 1;
+		ff->ff_exclose = true;
+		fdp->fd_exclose = true;
 		break;
 
 	case SVR4_FIONCLEX:
-		ff->ff_exclose = 0;
+		ff->ff_exclose = false;
 		break;
 
 	case SVR4_FIOGETOWN:

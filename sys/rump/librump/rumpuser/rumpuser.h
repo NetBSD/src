@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.15.6.2 2008/06/29 09:33:20 mjf Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.15.6.3 2008/07/02 19:08:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,9 +30,7 @@
 #ifndef _SYS_RUMPUSER_H_
 #define _SYS_RUMPUSER_H_
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/proc.h>
+struct stat;
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);
@@ -107,6 +105,8 @@ void rumpuser_cv_wait(struct rumpuser_cv *, struct rumpuser_mtx *);
 int  rumpuser_cv_timedwait(struct rumpuser_cv *, struct rumpuser_mtx *, int);
 void rumpuser_cv_signal(struct rumpuser_cv *);
 void rumpuser_cv_broadcast(struct rumpuser_cv *);
+
+struct lwp;
 
 void rumpuser_set_curlwp(struct lwp *);
 struct lwp *rumpuser_get_curlwp(void);

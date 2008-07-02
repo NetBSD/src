@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.1.18.1 2008/06/02 13:22:03 mjf Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.1.18.2 2008/07/02 19:08:16 mjf Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.1.18.1 2008/06/02 13:22:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.1.18.2 2008/07/02 19:08:16 mjf Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -755,7 +755,7 @@ setup_real_page_tables(void)
 	pt_index = 0;
 	kernel_l1pt.pv_pa = 0;
 	kernel_l1pt.pv_va = 0;
-printf("%s: physical_freestart %#lx\n", __FUNCTION__, physical_freestart);
+printf("%s: physical_freestart %#lx\n", __func__, physical_freestart);
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
@@ -768,8 +768,8 @@ printf("%s: physical_freestart %#lx\n", __FUNCTION__, physical_freestart);
 		}
 	}
 pt_index=0;
-printf("%s: kernel_l1pt: %#lx:%#lx\n", __FUNCTION__, kernel_l1pt.pv_va, kernel_l1pt.pv_pa);
-printf("%s: kernel_pt_table:\n", __FUNCTION__);
+printf("%s: kernel_l1pt: %#lx:%#lx\n", __func__, kernel_l1pt.pv_va, kernel_l1pt.pv_pa);
+printf("%s: kernel_pt_table:\n", __func__);
 for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
 printf("\t%#lx:%#lx\n", kernel_pt_table[pt_index].pv_va, kernel_pt_table[pt_index].pv_pa);
 ++pt_index;

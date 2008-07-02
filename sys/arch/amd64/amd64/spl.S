@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.17.6.1 2008/06/02 13:21:48 mjf Exp $	*/
+/*	$NetBSD: spl.S,v 1.17.6.2 2008/07/02 19:08:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -347,4 +347,11 @@ NENTRY(call_evtchn_do_event)
 	call    _C_LABEL(evtchn_do_event)
 	decl	CPUVAR(IDEPTH)
 	ret
-#endif
+#ifdef DOM0OPS
+NENTRY(call_xenevt_event)
+	incl	CPUVAR(IDEPTH)
+	call    _C_LABEL(xenevt_event)
+	decl	CPUVAR(IDEPTH)
+	ret
+#endif /* DOM0OPS */
+#endif /* XEN */
