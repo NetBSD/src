@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.11 2008/05/12 20:59:13 dyoung Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.12 2008/07/02 07:44:14 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.11 2008/05/12 20:59:13 dyoung Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.12 2008/07/02 07:44:14 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -56,26 +56,34 @@ __RCSID("$NetBSD: af_inet.c,v 1.11 2008/05/12 20:59:13 dyoung Exp $");
 
 #include "env.h"
 #include "extern.h"
-#include "af_inet.h"
 #include "af_inetany.h"
 
+static void in_constructor(void) __attribute__((constructor));
+static void in_status(prop_dictionary_t, prop_dictionary_t, bool);
+static void in_commit_address(prop_dictionary_t, prop_dictionary_t);
 static void in_alias(const char *, prop_dictionary_t, prop_dictionary_t,
     struct in_aliasreq *);
 static void in_preference(const char *, const struct sockaddr *);
+
+static struct afswtch af = {
+	.af_name = "inet", .af_af = AF_INET, .af_status = in_status,
+	.af_addr_commit = in_commit_address
+};
 
 static void
 in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
     struct in_aliasreq *creq)
 {
 	struct ifreq ifr;
-	int alias, s;
+	bool alias;
+	int s;
 	unsigned short flags;
 	struct in_aliasreq in_addreq;
 
 	if (lflag)
 		return;
 
-	alias = 1;
+	alias = true;
 
 	/* Get the non-alias address for this interface. */
 	if ((s = getsock(AF_INET)) == -1) {
@@ -92,7 +100,7 @@ in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 	}
 	/* If creq and ifr are the same address, this is not an alias. */
 	if (memcmp(&ifr.ifr_addr, &creq->ifra_addr, sizeof(ifr.ifr_addr)) == 0)
-		alias = 0;
+		alias = false;
 	in_addreq = *creq;
 	if (ioctl(s, SIOCGIFALIAS, &in_addreq) == -1) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
@@ -152,7 +160,7 @@ in_preference(const char *ifname, const struct sockaddr *sa)
 	printf(" preference %" PRId16, preference);
 }
 
-void
+static void
 in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct ifaddrs *ifap, *ifa;
@@ -198,7 +206,7 @@ in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	freeifaddrs(ifap);
 }
 
-void
+static void
 in_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ifreq in_ifr;
@@ -225,4 +233,10 @@ in_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 	memset(&in_ifr, 0, sizeof(in_ifr));
 	memset(&in_ifra, 0, sizeof(in_ifra));
 	commit_address(env, oenv, &inparam);
+}
+
+static void
+in_constructor(void)
+{
+	register_family(&af);
 }

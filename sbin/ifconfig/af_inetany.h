@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.h,v 1.3 2008/05/12 22:01:32 dyoung Exp $	*/
+/*	$NetBSD: af_inetany.h,v 1.4 2008/07/02 07:44:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -50,9 +50,10 @@ struct afparam {
 		unsigned long cmd;
 		const char *desc;
 	} aifaddr, difaddr, gifaddr;
-	int (*pre_aifaddr)(prop_dictionary_t, struct afparam *);
+	int (*pre_aifaddr)(prop_dictionary_t, const struct afparam *);
 };
 
-void	commit_address(prop_dictionary_t, prop_dictionary_t, struct afparam *);
+void	commit_address(prop_dictionary_t, prop_dictionary_t,
+    const struct afparam *);
 
 #endif /* _IFCONFIG_AF_INETANY_H */

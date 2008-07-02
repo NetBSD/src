@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.5 2008/05/12 21:53:49 dyoung Exp $	*/
+/*	$NetBSD: env.c,v 1.6 2008/07/02 07:44:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -24,6 +24,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: env.c,v 1.6 2008/07/02 07:44:14 dyoung Exp $");
+#endif /* not lint */
 
 #include <errno.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: af_link.c,v 1.2 2008/05/13 18:10:17 dyoung Exp $	*/
+/*	$NetBSD: af_link.c,v 1.3 2008/07/02 07:44:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_link.c,v 1.2 2008/05/13 18:10:17 dyoung Exp $");
+__RCSID("$NetBSD: af_link.c,v 1.3 2008/07/02 07:44:14 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -49,10 +49,29 @@ __RCSID("$NetBSD: af_link.c,v 1.2 2008/05/13 18:10:17 dyoung Exp $");
 
 #include "env.h"
 #include "extern.h"
-#include "af_link.h"
 #include "af_inetany.h"
 
-void
+static void link_status(prop_dictionary_t, prop_dictionary_t, bool);
+static void link_commit_address(prop_dictionary_t, prop_dictionary_t);
+
+static const struct kwinst linkkw[] = {
+	  {.k_word = "active", .k_key = "active", .k_type = KW_T_BOOL,
+	   .k_bool = true, .k_nextparser = &command_root.pb_parser}
+};
+
+struct pkw link = PKW_INITIALIZER(&link, "link", NULL, NULL,
+    linkkw, __arraycount(linkkw), NULL);
+
+static struct afswtch af = {
+	.af_name = "link", .af_af = AF_LINK, .af_status = link_status,
+	.af_addr_commit = link_commit_address
+};
+
+static cmdloop_branch_t branch;
+
+static void link_constructor(void) __attribute__((constructor));
+
+static void
 link_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	const char *delim, *ifname;
@@ -108,7 +127,7 @@ link_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 }
 
 static int
-link_pre_aifaddr(prop_dictionary_t env, struct afparam *param)
+link_pre_aifaddr(prop_dictionary_t env, const struct afparam *param)
 {
 	bool active;
 	struct if_laddrreq *iflr = param->req.buf;
@@ -119,7 +138,7 @@ link_pre_aifaddr(prop_dictionary_t env, struct afparam *param)
 	return 0;
 }
 
-void
+static void
 link_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct if_laddrreq dgreq = {
@@ -151,4 +170,12 @@ link_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 		, .pre_aifaddr = link_pre_aifaddr
 	};
 	commit_address(env, oenv, &linkparam);
+}
+
+static void
+link_constructor(void)
+{
+	register_family(&af);
+	cmdloop_branch_init(&branch, &link.pk_parser);
+	register_cmdloop_branch(&branch);
 }
