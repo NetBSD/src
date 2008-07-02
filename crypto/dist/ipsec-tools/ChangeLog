@@ -1,3 +1,7 @@
+2008-07-02  Yvan Vanhullebus  <vanhu@netasq.com>
+	Track:266, from Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/isakmp_inf.c: fixed some %d to %zu (size_t values)
+
 2008-06-18  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/grabmyaddr.c
