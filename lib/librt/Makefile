@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2008/03/10 19:00:21 rmind Exp $
+#	$NetBSD: Makefile,v 1.8 2008/07/02 20:05:16 rmind Exp $
 #
 
 WARNS=	2
 
 LIB=	rt
 SRCS=	sem.c
-SRCS+=	sched.c
+SRCS+=	pset.c
 
 MAN+=	aio_cancel.3 aio_error.3 aio_fsync.3 aio_read.3 aio_return.3 \
 	aio_suspend.3 aio_write.3 lio_listio.3 \
