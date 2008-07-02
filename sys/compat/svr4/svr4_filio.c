@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.c,v 1.21 2008/04/28 20:23:45 martin Exp $	 */
+/*	$NetBSD: svr4_filio.c,v 1.22 2008/07/02 16:45:20 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.21 2008/04/28 20:23:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.22 2008/07/02 16:45:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -76,12 +76,12 @@ svr4_fil_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_long cmd
 	ff = fdp->fd_ofiles[fd];
 	switch (cmd) {
 	case SVR4_FIOCLEX:
-		ff->ff_exclose = 1;
-		fdp->fd_exclose = 1;
+		ff->ff_exclose = true;
+		fdp->fd_exclose = true;
 		break;
 
 	case SVR4_FIONCLEX:
-		ff->ff_exclose = 0;
+		ff->ff_exclose = false;
 		break;
 
 	case SVR4_FIOGETOWN:
