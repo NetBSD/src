@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.138 2008/07/02 14:47:35 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.139 2008/07/02 17:47:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.138 2008/07/02 14:47:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.139 2008/07/02 17:47:53 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1593,10 +1593,10 @@ uvm_pageidlezero(void)
 	firstbucket = ucpu->page_free_nextcolor;
 	nextbucket = firstbucket;
 	do {
-		if (sched_curcpu_runnable_p()) {
-			break;
-		}
 		for (free_list = 0; free_list < VM_NFREELIST; free_list++) {
+			if (sched_curcpu_runnable_p()) {
+				goto quit;
+			}
 			pgfl = &ucpu->page_free[free_list];
 			gpgfl = &uvm.page_free[free_list];
 			while ((pg = LIST_FIRST(&pgfl->pgfl_buckets[
