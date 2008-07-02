@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.51 2008/07/02 16:45:20 matt Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.52 2008/07/02 17:06:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -90,11 +90,18 @@
 #define	NDFDFILE	3		/* first 3 descriptors are free */
 
 /*
- * locks:
+ * Process-private descriptor reference, one for each descriptor slot
+ * in use.  Locks:
  *
  * :	unlocked
- * d	filedesc::fd_lock
- * f	fdfile::ff_lock, but stable if reference held
+ * d	filedesc_t::fd_lock
+ * f	fdfile_t::ff_lock, may be stable if reference held
+ *
+ * Note that ff_exclose and ff_allocated are likely to be byte sized
+ * (bool).  In general adjacent sub-word sized fields must be locked
+ * the same way, but in this case it's ok: ff_exclose can only be
+ * modified while the descriptor slot is live, and ff_allocated when
+ * it's invalid.
  */
 typedef struct fdfile {
 	kmutex_t	ff_lock;	/* :: lock on structure */
