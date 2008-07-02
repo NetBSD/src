@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.50 2008/07/02 10:30:09 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.51 2008/07/02 16:45:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -98,8 +98,8 @@
  */
 typedef struct fdfile {
 	kmutex_t	ff_lock;	/* :: lock on structure */
-	u_int		ff_exclose;	/* :: close on exec flag */
-	u_int		ff_allocated;	/* d: descriptor slot is allocated */
+	bool		ff_exclose;	/* :: close on exec flag */
+	bool		ff_allocated;	/* d: descriptor slot is allocated */
 	u_int		ff_refcnt;	/* f: reference count on structure */
 	struct file	*ff_file;	/* f: pointer to file if open */
 	SLIST_HEAD(,knote) ff_knlist;	/* f: knotes attached to this fd */
@@ -133,7 +133,7 @@ typedef struct filedesc {
 #define fd_startzero	fd_freefile	/* area to zero on return to cache */
 	int		fd_freefile;	/* approx. next free file */
 	int		fd_nused;	/* number of slots in use */
-	int		fd_exclose;	/* non-zero if >0 fd with EXCLOSE */
+	bool		fd_exclose;	/* non-zero if >0 fd with EXCLOSE */
 	/*
 	 * These arrays are used when the number of open files is
 	 * <= NDFILE, and are then pointed to by the pointers above.
@@ -191,7 +191,7 @@ int	fd_close(unsigned);
 void	fd_used(filedesc_t *, unsigned);
 void	fd_unused(filedesc_t *, unsigned);
 bool	fd_isused(filedesc_t *, unsigned);
-int	fd_dup(file_t *, int, int *, int);
+int	fd_dup(file_t *, int, int *, bool);
 int	fd_dup2(file_t *, unsigned);
 int	fd_clone(file_t *, unsigned, int, const struct fileops *, void *);
 
