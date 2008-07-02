@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.56 2008/03/27 18:44:21 ad Exp $	*/
+/*	$NetBSD: param.c,v 1.57 2008/07/02 17:28:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.56 2008/03/27 18:44:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.57 2008/07/02 17:28:57 ad Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -102,6 +102,10 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.56 2008/03/27 18:44:21 ad Exp $");
 #define	MAXFILES	(3 * (NPROC + MAXUSERS) + 80)
 #endif
 
+#ifndef MAXEXEC
+#define	MAXEXEC		16
+#endif
+
 int	hz = HZ;
 int	tick = 1000000 / HZ;
 /* can adjust 240ms in 60s */
@@ -111,6 +115,7 @@ int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
 u_int	maxfiles = MAXFILES;
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
+int	maxexec = MAXEXEC;	/* max number of concurrent exec() calls */
 
 #ifdef MULTIPROCESSOR
 u_int	maxcpus = MAXCPUS;

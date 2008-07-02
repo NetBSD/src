@@ -1,4 +1,30 @@
-/*	$NetBSD: kern_exec.c,v 1.276 2008/06/24 18:04:52 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.277 2008/07/02 17:28:57 ad Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.276 2008/06/24 18:04:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.277 2008/07/02 17:28:57 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -200,6 +226,29 @@ static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
 
 static kmutex_t sigobject_lock;
+
+static void *
+exec_pool_alloc(struct pool *pp, int flags)
+{
+
+	return (void *)uvm_km_alloc(kernel_map, NCARGS, 0,
+	    UVM_KMF_PAGEABLE | UVM_KMF_WAITVA);
+}
+
+static void
+exec_pool_free(struct pool *pp, void *addr)
+{
+
+	uvm_km_free(kernel_map, (vaddr_t)addr, NCARGS, UVM_KMF_PAGEABLE);
+}
+
+static struct pool exec_pool;
+
+static struct pool_allocator exec_palloc = {
+	.pa_alloc = exec_pool_alloc,
+	.pa_free = exec_pool_free,
+	.pa_pagesz = NCARGS
+};
 
 /*
  * check exec:
@@ -509,12 +558,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
 
 	/* allocate an argument buffer */
-	argp = (char *) uvm_km_alloc(exec_map, NCARGS, 0,
-	    UVM_KMF_PAGEABLE|UVM_KMF_WAITVA);
-#ifdef DIAGNOSTIC
-	if (argp == NULL)
-		panic("execve: argp == NULL");
-#endif
+	argp = pool_get(&exec_pool, PR_WAITOK);
+	KASSERT(argp != NULL);
 	dp = argp;
 	argc = 0;
 
@@ -955,7 +1000,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto exec_abort;
 	}
 
-	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
+	pool_put(&exec_pool, argp);
 
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 
@@ -1060,7 +1105,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred);
 	vput(pack.ep_vp);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
+	pool_put(&exec_pool, argp);
 
  freehdr:
 	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
@@ -1096,7 +1141,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (pack.ep_emul_arg)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
+	pool_put(&exec_pool, argp);
 	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 	if (pack.ep_emul_root != NULL)
 		vrele(pack.ep_emul_root);
@@ -1409,6 +1454,9 @@ exec_init(int init_boot)
 		/* do one-time initializations */
 		rw_init(&exec_lock);
 		mutex_init(&sigobject_lock, MUTEX_DEFAULT, IPL_NONE);
+		pool_init(&exec_pool, NCARGS, 0, 0, PR_NOALIGN|PR_NOTOUCH,
+		    "execargs", &exec_palloc, IPL_NONE);
+		pool_sethardlimit(&exec_pool, maxexec, "should not happen", 0);
 
 		/* register compiled-in emulations */
 		for(i=0; i < nexecs_builtin; i++) {
@@ -1490,6 +1538,10 @@ exec_init(int init_boot)
 	/* do one-time initializations */
 	nexecs = nexecs_builtin;
 	execsw = kmem_alloc(nexecs * sizeof(struct execsw *), KM_SLEEP);
+
+	pool_init(&exec_pool, NCARGS, 0, 0, PR_NOALIGN|PR_NOTOUCH,
+	    "execargs", &exec_palloc, IPL_NONE);
+	pool_sethardlimit(&exec_pool, maxexec, "should not happen", 0);
 
 	/*
 	 * Fill in execsw[] and figure out the maximum size of an exec header.
