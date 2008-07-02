@@ -1,7 +1,6 @@
-/*	$NetBSD: magma.c,v 1.47 2008/06/11 21:25:31 drochner Exp $	*/
-/*
- * magma.c
- *
+/*	$NetBSD: magma.c,v 1.48 2008/07/02 10:16:20 plunky Exp $	*/
+
+/*-
  * Copyright (c) 1998 Iain Hibbert
  * All rights reserved.
  *
@@ -13,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Iain Hibbert
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +23,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 /*
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.47 2008/06/11 21:25:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.48 2008/07/02 10:16:20 plunky Exp $");
 
 #if 0
 #define MAGMA_DEBUG
