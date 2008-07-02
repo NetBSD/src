@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.119 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.120 2008/07/02 16:45:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.119 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.120 2008/07/02 16:45:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,12 +545,12 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	ff = fdp->fd_ofiles[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
 	case FIONCLEX:
-		ff->ff_exclose = 0;
+		ff->ff_exclose = false;
 		goto out;
 
 	case FIOCLEX:
-		ff->ff_exclose = 1;
-		fdp->fd_exclose = 1;
+		ff->ff_exclose = true;
+		fdp->fd_exclose = true;
 		goto out;
 	}
 
