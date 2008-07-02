@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.249 2008/07/02 19:38:37 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.250 2008/07/02 19:44:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.249 2008/07/02 19:38:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.250 2008/07/02 19:44:10 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.249 2008/07/02 19:38:37 rmind Exp $
 static u_int	sched_unsleep(struct lwp *, bool);
 static void	sched_changepri(struct lwp *, pri_t);
 static void	sched_lendpri(struct lwp *, pri_t);
+static void	resched_cpu(struct lwp *);
 
 syncobj_t sleep_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
@@ -1066,30 +1067,12 @@ sched_unsleep(struct lwp *l, bool cleanup)
 	panic("sched_unsleep");
 }
 
-void
+static void
 resched_cpu(struct lwp *l)
 {
-	struct cpu_info *ci;
+	struct cpu_info *ci = ci = l->l_cpu;
 
-	/*
-	 * XXXSMP
-	 * Since l->l_cpu persists across a context switch,
-	 * this gives us *very weak* processor affinity, in
-	 * that we notify the CPU on which the process last
-	 * ran that it should try to switch.
-	 *
-	 * This does not guarantee that the process will run on
-	 * that processor next, because another processor might
-	 * grab it the next time it performs a context switch.
-	 *
-	 * This also does not handle the case where its last
-	 * CPU is running a higher-priority process, but every
-	 * other CPU is running a lower-priority process.  There
-	 * are ways to handle this situation, but they're not
-	 * currently very pretty, and we also need to weigh the
-	 * cost of moving a process from one CPU to another.
-	 */
-	ci = l->l_cpu;
+	KASSERT(lwp_locked(l, NULL));
 	if (lwp_eprio(l) > ci->ci_schedstate.spc_curpriority)
 		cpu_need_resched(ci, 0);
 }
@@ -1135,22 +1118,8 @@ syncobj_noowner(wchan_t wchan)
 	return NULL;
 }
 
-/* decay 95% of `p_pctcpu' in 60 seconds; see CCPU_SHIFT before changing */
-fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
-
-/*
- * If `ccpu' is not equal to `exp(-1/20)' and you still want to use the
- * faster/more-accurate formula, you'll have to estimate CCPU_SHIFT below
- * and possibly adjust FSHIFT in "param.h" so that (FSHIFT >= CCPU_SHIFT).
- *
- * To estimate CCPU_SHIFT for exp(-1/20), the following formula was used:
- *	1 - exp(-1/20) ~= 0.0487 ~= 0.0488 == 1 (fixed pt, *11* bits).
- *
- * If you dont want to bother with the faster/more-accurate formula, you
- * can set CCPU_SHIFT to (FSHIFT + 1) which will use a slower/less-accurate
- * (more general) method of calculating the %age of CPU used by a process.
- */
-#define	CCPU_SHIFT	(FSHIFT + 1)
+/* Decay 95% of proc::p_pctcpu in 60 seconds, ccpu = exp(-1/20) */
+const fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;
 
 /*
  * sched_pstats:
@@ -1180,9 +1149,8 @@ sched_pstats(void *arg)
 			continue;
 
 		/*
-		 * Increment time in/out of memory and sleep time (if
-		 * sleeping).  We ignore overflow; with 16-bit int's
-		 * (remember them?) overflow takes 45 days.
+		 * Increment time in/out of memory and sleep
+		 * time (if sleeping), ignore overflow.
 		 */
 		mutex_enter(p->p_lock);
 		runtm = p->p_rtime.sec;
@@ -1201,16 +1169,8 @@ sched_pstats(void *arg)
 
 			lpctcpu = l->l_pctcpu;
 			lcpticks = atomic_swap_uint(&l->l_cpticks, 0);
-#if	(FSHIFT >= CCPU_SHIFT)
-			lpctcpu += (clkhz == 100) ?
-			    ((fixpt_t)lcpticks) <<
-			        (FSHIFT - CCPU_SHIFT) :
-			    100 * (((fixpt_t) p->p_cpticks)
-			        << (FSHIFT - CCPU_SHIFT)) / clkhz;
-#else
 			lpctcpu += ((FSCALE - ccpu) *
 			    (lcpticks * FSCALE / clkhz)) >> FSHIFT;
-#endif
 			l->l_pctcpu = lpctcpu;
 		}
 		/* Calculating p_pctcpu only for ps(1) */
