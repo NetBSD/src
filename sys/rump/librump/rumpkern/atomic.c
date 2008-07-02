@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.c,v 1.3 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: atomic.c,v 1.4 2008/07/02 21:18:14 he Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/mutex.h>
 
 #include "rump.h"
 #include "rumpuser.h"
