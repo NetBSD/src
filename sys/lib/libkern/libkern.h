@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.79 2008/03/25 23:24:38 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.80 2008/07/02 14:39:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -191,6 +191,10 @@ tolower(int ch)
 #define DIAGNOSTIC
 #endif
 #endif
+
+#define	CTASSERT(x)		_CTASSERT(x, __LINE__)
+#define	_CTASSERT(x, y)		__CTASSERT(x, y)
+#define	__CTASSERT(x, y)	typedef char __ctassert ## y[(x) ? 1 : -1];
 
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
