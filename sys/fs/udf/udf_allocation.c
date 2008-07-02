@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.8 2008/06/30 16:43:13 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.9 2008/07/02 13:25:33 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.8 2008/06/30 16:43:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.9 2008/07/02 13:25:33 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -180,6 +180,78 @@ udf_node_dump(struct udf_node *udf_node) {
 #define udf_node_dump(a)
 #endif
 
+
+static void
+udf_assert_allocated(struct udf_mount *ump, uint16_t vpart_num,
+	uint32_t lb_num, uint32_t num_lb)
+{
+	struct udf_bitmap *bitmap;
+	struct part_desc *pdesc;
+	uint32_t ptov;
+	uint32_t bitval;
+	uint8_t *bpos;
+	int bit;
+	int phys_part;
+	int ok;
+
+	DPRINTF(ALLOC, ("udf_assert_allocated: check virt lbnum %d "
+			  "part %d + %d sect\n", lb_num, vpart_num, num_lb));
+
+	/* get partition backing up this vpart_num */
+	pdesc = ump->partitions[ump->vtop[vpart_num]];
+
+	switch (ump->vtop_tp[vpart_num]) {
+	case UDF_VTOP_TYPE_PHYS :
+	case UDF_VTOP_TYPE_SPARABLE :
+		/* free space to freed or unallocated space bitmap */
+		ptov      = udf_rw32(pdesc->start_loc);
+		phys_part = ump->vtop[vpart_num];
+
+		/* use unallocated bitmap */
+		bitmap = &ump->part_unalloc_bits[phys_part];
+
+		/* if no bitmaps are defined, bail out */
+		if (bitmap->bits == NULL)
+			break;
+
+		/* check bits */
+		KASSERT(bitmap->bits);
+		ok = 1;
+		bpos = bitmap->bits + lb_num/8;
+		bit  = lb_num % 8;
+		while (num_lb > 0) {
+			bitval = (1 << bit);
+			DPRINTF(PARANOIA, ("XXX : check %d, %p, bit %d\n",
+				lb_num, bpos, bit));
+			KASSERT(bitmap->bits + lb_num/8 == bpos);
+			if (*bpos & bitval) {
+				printf("\tlb_num %d is NOT marked busy\n",
+					lb_num);
+				ok = 0;
+			}
+			lb_num++; num_lb--;
+			bit = (bit + 1) % 8;
+			if (bit == 0)
+				bpos++;
+		}
+		if (!ok) {
+			/* KASSERT(0); */
+		}
+
+		break;
+	case UDF_VTOP_TYPE_VIRT :
+		/* TODO check space */
+		KASSERT(num_lb == 1);
+		break;
+	case UDF_VTOP_TYPE_META :
+		/* TODO check space in the metadata bitmap */
+	default:
+		/* not implemented */
+		break;
+	}
+}
+
+
 static void
 udf_node_sanity_check(struct udf_node *udf_node,
 		uint64_t *cnt_inflen, uint64_t *cnt_logblksrec) {
@@ -192,11 +264,10 @@ udf_node_sanity_check(struct udf_node *udf_node,
 	uint32_t icbflags, addr_type, max_l_ad;
 	uint32_t len, lb_num;
 	uint8_t  *data_pos;
-	int part_num;
+	uint16_t part_num;
 	int adlen, ad_off, dscr_size, l_ea, l_ad, lb_size, flags, whole_lb;
 
-	/* only lock mutex; we're not changing and its a debug checking func */
-	mutex_enter(&udf_node->node_mutex);
+//	KASSERT(mutex_owned(&udf_node->ump->allocate_mutex));
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
 
@@ -231,7 +302,6 @@ udf_node_sanity_check(struct udf_node *udf_node,
 		KASSERT(l_ad <= max_l_ad);
 		KASSERT(l_ad == inflen);
 		*cnt_inflen = inflen;
-		mutex_exit(&udf_node->node_mutex);
 		return;
 	}
 
@@ -249,7 +319,7 @@ udf_node_sanity_check(struct udf_node *udf_node,
 			short_ad = (struct short_ad *) (data_pos + ad_off);
 			len      = udf_rw32(short_ad->len);
 			lb_num   = udf_rw32(short_ad->lb_num); 
-			part_num = -1;
+			part_num = udf_rw16(udf_node->loc.loc.part_num);
 			flags = UDF_EXT_FLAGS(len);
 			len   = UDF_EXT_LEN(len);
 		} else {
@@ -268,6 +338,10 @@ udf_node_sanity_check(struct udf_node *udf_node,
 		} else {
 			KASSERT(len == lb_size);
 		}
+		/* check allocation */
+		if (flags == UDF_EXT_ALLOCATED)
+			udf_assert_allocated(udf_node->ump, part_num, lb_num,
+				(len + lb_size - 1) / lb_size);
 
 		/* check whole lb */
 		whole_lb = ((len % lb_size) == 0);
@@ -277,7 +351,7 @@ udf_node_sanity_check(struct udf_node *udf_node,
 	KASSERT(*cnt_inflen == inflen);
 	KASSERT(*cnt_logblksrec == logblksrec);
 
-	mutex_exit(&udf_node->node_mutex);
+//	KASSERT(mutex_owned(&udf_node->ump->allocate_mutex));
 	if (0)
 		udf_node_dump(udf_node);
 }
@@ -719,11 +793,13 @@ udf_bitmap_allocate(struct udf_bitmap *bitmap, int ismetadata,
 
 			/* use first bit not set */
 			bpos  = bitmap->bits + offset/8;
-			bit = ffs(*bpos);
+			bit = ffs(*bpos);	/* returns 0 or 1..8 */
 			if (bit == 0) {
 				offset += 8;
 				continue;
 			}
+			DPRINTF(PARANOIA, ("XXX : allocate %d, %p, bit %d\n",
+				offset + bit -1, bpos, bit-1));
 			*bpos &= ~(1 << (bit-1));
 			lb_num = offset + bit-1;
 			*lmappos++ = lb_num;
@@ -756,6 +832,8 @@ udf_bitmap_free(struct udf_bitmap *bitmap, uint32_t lb_num, uint32_t num_lb)
 	while ((bit != 0) && (num_lb > 0)) {
 		bitval = (1 << bit);
 		KASSERT((*bpos & bitval) == 0);
+		DPRINTF(PARANOIA, ("XXX : free %d, %p, %d\n",
+			offset, bpos, bit));
 		*bpos |= bitval;
 		offset++; num_lb--;
 		bit = (bit + 1) % 8;
@@ -768,6 +846,7 @@ udf_bitmap_free(struct udf_bitmap *bitmap, uint32_t lb_num, uint32_t num_lb)
 	bpos = bitmap->bits + offset / 8;
 	while (num_lb >= 8) {
 		KASSERT((*bpos == 0));
+		DPRINTF(PARANOIA, ("XXX : free %d + 8, %p\n", offset, bpos));
 		*bpos = 255;
 		offset += 8; num_lb -= 8;
 		bpos++;
@@ -779,6 +858,8 @@ udf_bitmap_free(struct udf_bitmap *bitmap, uint32_t lb_num, uint32_t num_lb)
 	while (num_lb > 0) {
 		bitval = (1 << bit);
 		KASSERT((*bpos & bitval) == 0);
+		DPRINTF(PARANOIA, ("XXX : free %d, %p, %d\n",
+			offset, bpos, bit));
 		*bpos |= bitval;
 		offset++; num_lb--;
 		bit = (bit + 1) % 8;
@@ -1125,7 +1206,7 @@ udf_ads_merge(uint32_t lb_size, struct long_ad *a1, struct long_ad *a2)
 		if (a1_lbnum * lb_size + a1_len != a2_lbnum * lb_size)
 			return 1;
 	}
-	
+
 	/* merge as most from a2 if possible */
 	merge_len = MIN(a2_len, max_len - a1_len);
 	a1_len   += merge_len;
@@ -1348,6 +1429,17 @@ udf_append_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb) {
 		adlen = sizeof(struct long_ad);
 	}
 
+	/* clean up given long_ad */
+#ifdef DIAGNOSTIC
+	if (UDF_EXT_FLAGS(udf_rw32(icb->len)) == UDF_EXT_FREE) {
+		if ((udf_rw16(icb->loc.part_num) != 0) ||
+		    (udf_rw32(icb->loc.lb_num) != 0))
+			printf("UDF: warning, cleaning long_ad marked free\n");
+		icb->loc.part_num = udf_rw16(0);
+		icb->loc.lb_num   = udf_rw32(0);
+	}
+#endif
+
 	/* if offset too big, we go to the allocation extensions */
 	offset = slot * adlen;
 	extnr  = 0;
@@ -1454,8 +1546,7 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 	uint64_t orig_inflen, orig_lbrec, new_inflen, new_lbrec;
 	uint32_t num_lb, len, flags, lb_num;
 	uint32_t run_start;
-	uint32_t slot_offset;
-	uint32_t skip_len, skipped;
+	uint32_t slot_offset, replace_len, replace;
 	int addr_type, icbflags;
 	int udf_c_type = buf->b_udf_c_type;
 	int lb_size, run_length, eof;
@@ -1463,7 +1554,6 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 	int error;
 
 	DPRINTF(ALLOC, ("udf_record_allocation_in_node\n"));
-	udf_node_sanity_check(udf_node, &orig_inflen, &orig_lbrec);
 
 	/* sanity check ... should be panic ? */
 	if ((udf_c_type != UDF_C_USERDATA) && (udf_c_type != UDF_C_FIDS))
@@ -1473,6 +1563,7 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 
 	/* do the job */
 	UDF_LOCK_NODE(udf_node, 0);	/* XXX can deadlock ? */
+	udf_node_sanity_check(udf_node, &orig_inflen, &orig_lbrec);
 
 	fe  = udf_node->fe;
 	efe = udf_node->efe;
@@ -1490,7 +1581,7 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 
 	num_lb = (till - from + lb_size -1) / lb_size;
 
-	DPRINTF(ALLOC, ("record allocation from = %"PRIu64" + %d\n", from, buf->b_bcount));
+	DPRINTF(ALLOC, ("record allocation from %"PRIu64" + %d\n", from, buf->b_bcount));
 
 	icbflags  = udf_rw16(icbtag->flags);
 	addr_type = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
@@ -1609,11 +1700,13 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 	}
 
 	/* 4) pop replaced length */
-	slot = restart_slot;
+	slot    = restart_slot;
 	foffset = restart_foffset;
 
-	skip_len = till - foffset;	/* relative to start of slot */
+	replace_len = till - foffset;	/* total amount of bytes to pop */
 	slot_offset = from - foffset;	/* offset in first encounted slot */
+	KASSERT((slot_offset % lb_size) == 0);
+
 	for (;;) {
 		udf_get_adslot(udf_node, slot, &s_ad, &eof);
 		if (eof)
@@ -1630,47 +1723,52 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 		}
 
 		DPRINTF(ALLOC, ("\t4i: got slot %d, slot_offset %d, "
-				"skip_len %d, "
+				"replace_len %d, "
 				"vp %d, lb %d, len %d, flags %d\n",
-			slot, slot_offset, skip_len,
+			slot, slot_offset, replace_len,
 			udf_rw16(s_ad.loc.part_num),
 			udf_rw32(s_ad.loc.lb_num),
 			UDF_EXT_LEN(udf_rw32(s_ad.len)),
 			UDF_EXT_FLAGS(udf_rw32(s_ad.len)) >> 30));
 
-		skipped   = MIN(len, skip_len);
-		DPRINTF(ALLOC, ("\t4d: skipped %d\n", skipped));
+		/* adjust for slot offset */
+		if (slot_offset) {
+			DPRINTF(ALLOC, ("\t4s: skipping %d\n", slot_offset));
+			lb_num += slot_offset / lb_size;
+			len    -= slot_offset;
+			foffset += slot_offset;
+			replace_len -= slot_offset;
 
-		/* we're in the first slot and need to skip its head */
-		if (flags != UDF_EXT_FREE) {
-			/* skip these blocks first */
-			num_lb = (slot_offset + lb_size-1) / lb_size;
-			len      -= slot_offset;
-			skip_len -= slot_offset;
-			foffset  += slot_offset;
-			lb_num   += num_lb;
-			skipped  -= slot_offset;
-
-			/* free space till `skipped' */
-			num_lb = (skipped + lb_size-1) / lb_size;
-			udf_free_allocated_space(ump, lb_num,
-				udf_rw16(s_ad.loc.part_num), num_lb);
-			lb_num += num_lb;
+			/* mark adjusted */
+			slot_offset = 0;
 		}
-		/* we're by definition at the 2nd slot, so clear */
-		slot_offset = 0;
 
-		/* proceed */
-		len      -= skipped;
-		skip_len -= skipped;
-		foffset  += skipped;
+		/* advance for (the rest of) this slot */
+		replace = MIN(len, replace_len);
+		DPRINTF(ALLOC, ("\t4d: replacing %d\n", replace));
 
+		/* advance for this slot */
+		if (replace) {
+			num_lb = (replace + lb_size - 1) / lb_size;
+			if (flags != UDF_EXT_FREE) {
+				udf_free_allocated_space(ump, lb_num,
+					udf_rw16(s_ad.loc.part_num), num_lb);
+			}
+			lb_num      += num_lb;
+			len         -= replace;
+			foffset     += replace;
+			replace_len -= replace;
+		}
+
+		/* do we have a slot tail ? */
 		if (len) {
-			KASSERT(skipped % lb_size == 0);
+			KASSERT(foffset % lb_size == 0);
 
 			/* we arrived at our point, push remainder */
 			s_ad.len        = udf_rw32(len | flags);
 			s_ad.loc.lb_num = udf_rw32(lb_num);
+			if (flags == UDF_EXT_FREE)
+				s_ad.loc.lb_num = udf_rw32(0);
 			node_ad_cpy[cpy_slot++] = s_ad;
 			foffset += len;
 			slot++;
@@ -1683,6 +1781,7 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 				UDF_EXT_FLAGS(udf_rw32(s_ad.len)) >> 30));
 			break;
 		}
+
 		slot++;
 	}
 
@@ -1777,9 +1876,8 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 
 out:
 	/* the node's descriptors should now be sane */
-	UDF_UNLOCK_NODE(udf_node, 0);
-
 	udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
+	UDF_UNLOCK_NODE(udf_node, 0);
 
 	KASSERT(orig_inflen == new_inflen);
 	KASSERT(new_lbrec >= orig_lbrec);
@@ -1811,9 +1909,10 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 	int eof, error;
 
 	DPRINTF(ALLOC, ("udf_grow_node\n"));
-	udf_node_sanity_check(udf_node, &orig_inflen, &orig_lbrec);
 
 	UDF_LOCK_NODE(udf_node, 0);
+	udf_node_sanity_check(udf_node, &orig_inflen, &orig_lbrec);
+
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
 	max_len = ((UDF_EXT_MAXLEN / lb_size) * lb_size);
 
@@ -1876,10 +1975,11 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 			uvm_vnp_zerorange(vp, old_size, new_size - old_size);
 #endif
 	
+			udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
+
 			/* unlock */
 			UDF_UNLOCK_NODE(udf_node, 0);
 
-			udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
 			KASSERT(new_inflen == orig_inflen + size_diff);
 			KASSERT(new_lbrec == orig_lbrec);
 			KASSERT(new_lbrec == 0);
@@ -2038,9 +2138,10 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 errorout:
 	if (evacuated_data)
 		free(evacuated_data, M_UDFTEMP);
-	UDF_UNLOCK_NODE(udf_node, 0);
 
 	udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
+	UDF_UNLOCK_NODE(udf_node, 0);
+
 	KASSERT(new_inflen == orig_inflen + size_diff);
 	KASSERT(new_lbrec == orig_lbrec);
 
@@ -2073,9 +2174,10 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 	int eof, error;
 
 	DPRINTF(ALLOC, ("udf_shrink_node\n"));
-	udf_node_sanity_check(udf_node, &orig_inflen, &orig_lbrec);
 
 	UDF_LOCK_NODE(udf_node, 0);
+	udf_node_sanity_check(udf_node, &orig_inflen, &orig_lbrec);
+
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
 	max_len = ((UDF_EXT_MAXLEN / lb_size) * lb_size);
 
@@ -2138,9 +2240,10 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 
 		/* set new size for uvm */
 		uvm_vnp_setsize(vp, new_size);
-		UDF_UNLOCK_NODE(udf_node, 0);
 
 		udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
+		UDF_UNLOCK_NODE(udf_node, 0);
+
 		KASSERT(new_inflen == orig_inflen - size_diff);
 		KASSERT(new_lbrec == orig_lbrec);
 		KASSERT(new_lbrec == 0);
@@ -2291,9 +2394,10 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 			uvm_vnp_setsize(vp, new_size);
 
 			free(node_ad_cpy, M_UDFMNT);
+			udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
+
 			UDF_UNLOCK_NODE(udf_node, 0);
 
-			udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
 			KASSERT(new_inflen == orig_inflen - size_diff);
 			KASSERT(new_inflen == 0);
 			KASSERT(new_lbrec == 0);
@@ -2370,9 +2474,10 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 
 errorout:
 	free(node_ad_cpy, M_UDFMNT);
-	UDF_UNLOCK_NODE(udf_node, 0);
 
 	udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
+	UDF_UNLOCK_NODE(udf_node, 0);
+
 	KASSERT(new_inflen == orig_inflen - size_diff);
 
 	return error;
