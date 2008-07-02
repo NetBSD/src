@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.28 2008/06/18 06:47:25 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.29 2008/07/02 14:46:27 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -169,7 +169,7 @@ isakmp_info_recv(iph1, msg0)
 	if (msg->l < sizeof(*isakmp) + sizeof(*gen)) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 			"ignore information because the "
-			"message is way too short - %d byte(s).\n",
+			"message is way too short - %zu byte(s).\n",
 			(int)msg->l);
 		goto end;
 	}
@@ -197,7 +197,7 @@ isakmp_info_recv(iph1, msg0)
 		if (msg->l < sizeof(*isakmp) + ntohs(gen->len) + sizeof(*nd)) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 				"ignore information because the "
-				"message is too short - %d byte(s).\n",
+				"message is too short - %zu byte(s).\n",
 				(int)msg->l);
 			goto end;
 		}
