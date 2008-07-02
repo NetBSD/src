@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.140 2008/05/13 09:16:11 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.141 2008/07/02 19:49:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.140 2008/05/13 09:16:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.141 2008/07/02 19:49:58 rmind Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -364,7 +364,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	 * this; memory access will be fine, but register access will
 	 * be weird.
 	 */
-	lt = proc_representative_lwp(t, NULL, 1);
+	lt = LIST_FIRST(&t->p_lwps);
+	KASSERT(lt != NULL);
 	lwp_addref(lt);
 
 	/*
