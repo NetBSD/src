@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.1.6.4 2008/06/29 09:33:14 mjf Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.1.6.5 2008/07/02 19:08:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.1.6.4 2008/06/29 09:33:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.1.6.5 2008/07/02 19:08:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 	if ((fp = fd_getfile(old)) == NULL) {
 		return EBADF;
 	}
-	error = fd_dup(fp, 0, &new, 0);
+	error = fd_dup(fp, 0, &new, false);
 	fd_putfile(old);
 	*retval = new;
 	return error;
@@ -368,7 +368,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 			fd_putfile(fd);
 			return EINVAL;
 		}
-		error = fd_dup(fp, newmin, &i, 0);
+		error = fd_dup(fp, newmin, &i, false);
 		*retval = i;
 		break;
 
@@ -378,10 +378,10 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 
 	case F_SETFD:
 		if ((long)SCARG(uap, arg) & 1) {
-			ff->ff_exclose = 1;
-			fdp->fd_exclose = 1;
+			ff->ff_exclose = true;
+			fdp->fd_exclose = true;
 		} else {
-			ff->ff_exclose = 0;
+			ff->ff_exclose = false;
 		}
 		break;
 

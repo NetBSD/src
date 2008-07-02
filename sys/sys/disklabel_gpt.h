@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_gpt.h,v 1.4.6.1 2008/04/03 12:43:11 mjf Exp $	*/
+/*	$NetBSD: disklabel_gpt.h,v 1.4.6.2 2008/07/02 19:08:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -147,6 +147,8 @@ struct gpt_ent {
 
 #define	GPT_ENT_TYPE_APPLE_HFS		\
 	{0x48465300,0x0000,0x11aa,0xaa,0x11,{0x00,0x30,0x65,0x43,0xec,0xac}}
+#define	GPT_ENT_TYPE_APPLE_UFS		\
+	{0x55465300,0x0000,0x11aa,0xaa,0x11,{0x00,0x30,0x65,0x43,0xec,0xac}}
 
 /*
  * Used by GRUB 2.

@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.6.6.1 2008/06/02 13:22:54 mjf Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.6.6.2 2008/07/02 19:08:19 mjf Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6.6.1 2008/06/02 13:22:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6.6.2 2008/07/02 19:08:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ do_hypervisor_callback(struct intrframe *regs)
 						/* fast path */
 						int oipl = ci->ci_ilevel;
 						ci->ci_ilevel = IPL_HIGH;
-						xenevt_event(port);
+						call_xenevt_event(port);
 						ci->ci_ilevel = oipl;
 					} else {
 						/* set pending event */

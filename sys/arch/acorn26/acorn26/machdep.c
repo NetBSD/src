@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.22 2007/10/25 09:43:24 he Exp $ */
+/* $NetBSD: machdep.c,v 1.22.16.1 2008/07/02 19:08:15 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2007/10/25 09:43:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.16.1 2008/07/02 19:08:15 mjf Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -62,7 +62,6 @@ struct cpu_info cpu_info_store;
 /* For reading NVRAM during bootstrap. */
 i2c_tag_t acorn26_i2c_tag;
 
-struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 struct vm_map *mb_map = NULL; /* and ever more shall be so */
 
@@ -159,13 +158,6 @@ cpu_startup()
 
 	/* Various boilerplate memory allocations. */
 	minaddr = 0;
-
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.6.6.2 2008/06/29 09:33:20 mjf Exp $	*/
+/*	$NetBSD: auth.c,v 1.6.6.3 2008/07/02 19:08:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <sys/errno.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/proc.h>
 
 #include "rump.h"
 #include "rumpuser.h"

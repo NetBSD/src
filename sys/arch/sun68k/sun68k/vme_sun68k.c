@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.12.40.1 2008/06/02 13:22:47 mjf Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.12.40.2 2008/07/02 19:08:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.12.40.1 2008/06/02 13:22:47 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.12.40.2 2008/07/02 19:08:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -57,15 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.12.40.1 2008/06/02 13:22:47 mjf Exp
 #include <sun68k/sun68k/vme_sun68k.h>
 
 struct sun68kvme_softc {
-	struct device	 sc_dev;	/* base device */
+	device_t	 sc_dev;	/* base device */
 	bus_space_tag_t	 sc_bustag;
 	bus_dma_tag_t	 sc_dmatag;
 };
 struct  sun68kvme_softc *sun68kvme_sc;/*XXX*/
 
 /* autoconfiguration driver */
-static int	sun68kvme_match(struct device *, struct cfdata *, void *);
-static void	sun68kvme_attach(struct device *, struct device *, void *);
+static int	sun68kvme_match(device_t, cfdata_t, void *);
+static void	sun68kvme_attach(device_t, device_t, void *);
 
 static int	sun68k_vme_probe(void *, vme_addr_t, vme_size_t, vme_am_t,
 	vme_datasize_t,
@@ -95,7 +95,7 @@ static int	sun68k_vme_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
 
 paddr_t sun68k_vme_mmap_cookie(vme_addr_t, vme_am_t, bus_space_handle_t *);
 
-CFATTACH_DECL(sun68kvme, sizeof(struct sun68kvme_softc),
+CFATTACH_DECL_NEW(sun68kvme, sizeof(struct sun68kvme_softc),
     sun68kvme_match, sun68kvme_attach, NULL, NULL);
 
 static int sun68kvme_attached;
@@ -130,37 +130,38 @@ extern int cpu_has_vme;
  * Probe the VME bus.
  */
 int 
-sun68kvme_match(struct device *parent, struct cfdata *cf, void *aux)
+sun68kvme_match(device_t parent, cfdata_t cf, void *aux)
 {
         struct mainbus_attach_args *ma = aux;
 
 	if (sun68kvme_attached)
 		return 0;
 
-        return (cpu_has_vme &&
-		(ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0));
+        return cpu_has_vme &&
+	    (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 /*
  * Attach the VME bus.
  */
 void 
-sun68kvme_attach(struct device *parent, struct device *self, void *aux)
+sun68kvme_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	struct sun68kvme_softc *sc = (struct sun68kvme_softc *)self;
+	struct sun68kvme_softc *sc = device_private(self);
 	struct vmebus_attach_args vba;
 
 	sun68kvme_attached = 1;
 
 	sun68kvme_sc = sc;
 
+	sc->sc_dev = self;
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
 
-	sun68k_vme_chipset_tag.cookie = self;
+	sun68k_vme_chipset_tag.cookie = sc;
 	sun68k_vme_dma_tag = *ma->ma_dmatag;
-	sun68k_vme_dma_tag._cookie = self;
+	sun68k_vme_dma_tag._cookie = sc;
 	sun68k_vme_dma_tag._dmamap_load = sun68k_vme_dmamap_load;
 	sun68k_vme_dma_tag._dmamap_load_raw = sun68k_vme_dmamap_load_raw;
 
@@ -168,7 +169,7 @@ sun68kvme_attach(struct device *parent, struct device *self, void *aux)
 	vba.va_bdt = &sun68k_vme_dma_tag;
 	vba.va_slaveconfig = 0;
 
-	printf("\n");
+	aprint_normal("\n");
 	(void)config_found(self, &vba, 0);
 }
 
@@ -181,7 +182,7 @@ sun68k_vme_probe(void *cookie, vme_addr_t addr, vme_size_t len, vme_am_t mod,
     vme_datasize_t datasize,
     int (*callback)(void *, bus_space_tag_t, bus_space_handle_t), void *arg)
 {
-	struct sun68kvme_softc *sc = (struct sun68kvme_softc *)cookie;
+	struct sun68kvme_softc *sc = cookie;
 	bus_type_t iospace;
 	bus_addr_t paddr;
 	bus_space_handle_t handle;
@@ -193,9 +194,9 @@ sun68k_vme_probe(void *cookie, vme_addr_t addr, vme_size_t len, vme_am_t mod,
 	error = vmebus_translate(mod, addr, &iospace, &paddr);
 	if (error == 0)
 		error = bus_space_map2(sc->sc_bustag, iospace, paddr, len, 
-			0, 0, &handle);
+		    0, 0, &handle);
 	if (error)
-		return (error);
+		return error;
 
 	/* Probe the space. */
 	size = (datasize == VME_D8 ? 1 : (datasize == VME_D16 ? 2 : 4));
@@ -211,7 +212,7 @@ sun68k_vme_probe(void *cookie, vme_addr_t addr, vme_size_t len, vme_am_t mod,
 	/* Unmap the space. */
 	bus_space_unmap(sc->sc_bustag, handle, len);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -222,17 +223,17 @@ sun68k_vme_map(void *cookie, vme_addr_t addr, vme_size_t size, vme_am_t mod,
     vme_datasize_t datasize, vme_swap_t swap, bus_space_tag_t *tp,
     bus_space_handle_t *hp, vme_mapresc_t *rp)
 {
-	struct sun68kvme_softc *sc = (struct sun68kvme_softc *)cookie;
+	struct sun68kvme_softc *sc = cookie;
 	bus_type_t iospace;
 	bus_addr_t paddr;
 	int error;
 
 	error = vmebus_translate(mod, addr, &iospace, &paddr);
 	if (error != 0)
-		return (error);
+		return error;
 
 	*tp = sc->sc_bustag;
-	return (bus_space_map2(sc->sc_bustag, iospace, paddr, size, 0, 0, hp));
+	return bus_space_map2(sc->sc_bustag, iospace, paddr, size, 0, 0, hp);
 }
 
 /*
@@ -248,9 +249,9 @@ sun68k_vme_mmap_cookie(vme_addr_t addr, vme_am_t mod, bus_space_handle_t *hp)
 
 	error = vmebus_translate(mod, addr, &iospace, &paddr);
 	if (error != 0)
-		return (error);
+		return error;
 
-	return (bus_space_mmap2(sc->sc_bustag, iospace, paddr, 0, 0, 0));
+	return bus_space_mmap2(sc->sc_bustag, iospace, paddr, 0, 0, 0);
 }
 
 struct sun68k_vme_intr_handle {
@@ -268,12 +269,12 @@ sun68k_vme_intr_map(void *cookie, int level, int vec, vme_intr_handle_t *ihp)
 {
 	struct sun68k_vme_intr_handle *svih;
 
-	svih = (vme_intr_handle_t)
-	    malloc(sizeof(struct sun68k_vme_intr_handle), M_DEVBUF, M_NOWAIT);
+	svih = malloc(sizeof(struct sun68k_vme_intr_handle),
+	    M_DEVBUF, M_NOWAIT);
 	svih->pri = level;
 	svih->vec = vec;
 	*ihp = svih;
-	return (0);
+	return 0;
 }
 
 const struct evcnt *
@@ -292,27 +293,28 @@ sun68k_vme_intr_establish(void *cookie, vme_intr_handle_t vih, int pri,
     int (*func)(void *), void *arg)
 {
 	struct sun68k_vme_intr_handle *svih =
-			(struct sun68k_vme_intr_handle *)vih;
+	    (struct sun68k_vme_intr_handle *)vih;
 
 	/* Install interrupt handler. */
-	isr_add_vectored(func, (void *)arg,
-		svih->pri, svih->vec);
+	isr_add_vectored(func, arg, svih->pri, svih->vec);
 
-	return (NULL);
+	return NULL;
 }
 
 void
 sun68k_vme_unmap(void *cookie, vme_mapresc_t resc)
 {
+
 	/* Not implemented */
-	panic("sun68k_vme_unmap");
+	panic("%s: not implemented", __func__);
 }
 
 void 
 sun68k_vme_intr_disestablish(void *cookie, void *a)
 {
+
 	/* Not implemented */
-	panic("sun68k_vme_intr_disestablish");
+	panic("%s: not implemented", __func__);
 }
 
 /*
@@ -322,7 +324,8 @@ sun68k_vme_intr_disestablish(void *cookie, void *a)
 static void 
 sun68k_vct_dmamap_destroy(void *cookie, bus_dmamap_t map)
 {
-	struct sun68kvme_softc *sc = (struct sun68kvme_softc *)cookie;
+	struct sun68kvme_softc *sc = cookie;
+
 	bus_dmamap_destroy(sc->sc_dmatag, map);
 }
 
@@ -331,11 +334,11 @@ sun68k_vct_dmamap_create(void *cookie, vme_size_t size, vme_am_t am,
     vme_datasize_t datasize, vme_swap_t swap, int nsegments,
     vme_size_t maxsegsz, vme_addr_t boundary, int flags, bus_dmamap_t *dmamp)
 {
-	struct sun68kvme_softc *sc = (struct sun68kvme_softc *)cookie;
+	struct sun68kvme_softc *sc = cookie;
 
 	/* Allocate a base map through parent bus ops */
-	return (bus_dmamap_create(sc->sc_dmatag, size, nsegments, maxsegsz,
-				  boundary, flags, dmamp));
+	return bus_dmamap_create(sc->sc_dmatag, size, nsegments, maxsegsz,
+	    boundary, flags, dmamp);
 }
 
 int 
@@ -347,7 +350,7 @@ sun68k_vme_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
 	if (error == 0)
 		map->dm_segs[0].ds_addr &= DVMA_VME_SLAVE_MASK;
-	return (error);
+	return error;
 }
 
 int 
@@ -359,6 +362,5 @@ sun68k_vme_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	error = _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags);
 	if (error == 0)  
 		map->dm_segs[0].ds_addr &= DVMA_VME_SLAVE_MASK;
-	return (error);
+	return error;
 }
-

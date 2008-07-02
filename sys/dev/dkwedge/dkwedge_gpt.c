@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.7.6.1 2008/06/02 13:23:15 mjf Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.7.6.2 2008/07/02 19:08:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.7.6.1 2008/06/02 13:23:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.7.6.2 2008/07/02 19:08:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ static const struct {
 	{ GPT_ENT_TYPE_FREEBSD_SWAP,		DKW_PTYPE_SWAP },
 	{ GPT_ENT_TYPE_NETBSD_FFS,		DKW_PTYPE_FFS },
 	{ GPT_ENT_TYPE_FREEBSD_UFS,		DKW_PTYPE_FFS },
+	{ GPT_ENT_TYPE_APPLE_UFS,		DKW_PTYPE_FFS },
 	{ GPT_ENT_TYPE_NETBSD_LFS,		DKW_PTYPE_LFS },
 	{ GPT_ENT_TYPE_NETBSD_RAIDFRAME,	DKW_PTYPE_RAIDFRAME },
 	{ GPT_ENT_TYPE_NETBSD_CCD,		DKW_PTYPE_CCD },

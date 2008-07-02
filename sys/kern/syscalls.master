@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.189.6.3 2008/06/29 09:33:14 mjf Exp $
+	$NetBSD: syscalls.master,v 1.189.6.4 2008/07/02 19:08:20 mjf Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -122,9 +122,9 @@
 			    unsigned int *alen); }
 32	STD		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
 			    unsigned int *alen); }
-33	STD 	 RUMP	{ int sys_access(const char *path, int flags); }
+33	STD 		{ int sys_access(const char *path, int flags); }
 34	STD 	 RUMP	{ int sys_chflags(const char *path, u_long flags); }
-35	STD 	 RUMP	{ int sys_fchflags(int fd, u_long flags); }
+35	STD 		{ int sys_fchflags(int fd, u_long flags); }
 36	STD 	 RUMP	{ void sys_sync(void); }
 37	STD 		{ int sys_kill(int pid, int signum); }
 38	COMPAT_43 	{ int sys_stat(const char *path, struct stat43 *ub); } \
@@ -271,7 +271,7 @@
 			    otruncate
 130	COMPAT_43 	{ int sys_ftruncate(int fd, long length); } oftruncate
 131	STD 		{ int sys_flock(int fd, int how); }
-132	STD 		{ int sys_mkfifo(const char *path, mode_t mode); }
+132	STD 	 RUMP	{ int sys_mkfifo(const char *path, mode_t mode); }
 133	STD 		{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    unsigned int tolen); }
@@ -637,7 +637,7 @@
 #else
 303	EXCL		__shmctl13
 #endif
-304	STD 		{ int sys_lchflags(const char *path, u_long flags); }
+304	STD 	 RUMP	{ int sys_lchflags(const char *path, u_long flags); }
 305	STD 		{ int sys_issetugid(void); }
 306	STD 		{ int sys_utrace(const char *label, void *addr, \
 				size_t len); }
@@ -787,9 +787,9 @@
 			    const char *name); }
 386	STD 		{ int sys_fremovexattr(int fd, \
 			    const char *name); }
-387	STD 		{ int sys___stat30(const char *path, struct stat *ub); }
+387	STD 	 RUMP	{ int sys___stat30(const char *path, struct stat *ub); }
 388	STD 		{ int sys___fstat30(int fd, struct stat *sb); }
-389	STD 		{ int sys___lstat30(const char *path, struct stat *ub); }
+389	STD 	 RUMP	{ int sys___lstat30(const char *path, struct stat *ub); }
 390	STD 		{ int sys___getdents30(int fd, char *buf, size_t count); }
 391	IGNORED		old posix_fadvise
 392	COMPAT_30 	{ int sys___fhstat30(const struct compat_30_fhandle \

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.22.6.1 2008/06/02 13:21:48 mjf Exp $	*/
+/*	$NetBSD: fpu.c,v 1.22.6.2 2008/07/02 19:08:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.22.6.1 2008/06/02 13:21:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.22.6.2 2008/07/02 19:08:15 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -101,6 +101,12 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.22.6.1 2008/06/02 13:21:48 mjf Exp $");
 #include <dev/isa/isavar.h>
 #endif
 
+#ifdef XEN
+#define clts() HYPERVISOR_fpu_taskswitch(0)
+#define stts() HYPERVISOR_fpu_taskswitch(1)
+#endif
+
+
 /*
  * We do lazy initialization and switching using the TS bit in cr0 and the
  * MDP_USEDFPU bit in mdproc.
@@ -122,6 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.22.6.1 2008/06/02 13:21:48 mjf Exp $");
 void fpudna(struct cpu_info *);
 static int x86fpflags_to_ksiginfo(uint32_t);
 
+#ifndef XEN
 /*
  * Init the FPU.
  */
@@ -132,6 +139,7 @@ fpuinit(struct cpu_info *ci)
 	fninit();
 	lcr0(rcr0() | (CR0_TS));
 }
+#endif
 
 /*
  * Record the FPU state and reinitialize it all except for the control word.
@@ -239,6 +247,20 @@ fpudna(struct cpu_info *ci)
 	 * Initialize the FPU state to clear any exceptions.  If someone else
 	 * was using the FPU, save their state.
 	 */
+#ifdef XEN
+	/*
+	 * it seems we can get there on Xen even if we didn't switch lwp.
+	 * in this case do nothing
+	 */
+	if (ci->ci_fpcurlwp == l) {
+		KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == ci);
+		splx(s);
+		l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+		clts();
+		kpreempt_enable();
+		return;
+	}
+#endif
 	KDASSERT(ci->ci_fpcurlwp != l);
 	if (ci->ci_fpcurlwp != 0)
 		fpusave_cpu(true);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.51.18.3 2008/06/29 09:33:04 mjf Exp $	*/
+/*	$NetBSD: md.c,v 1.51.18.4 2008/07/02 19:08:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.51.18.3 2008/06/29 09:33:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.51.18.4 2008/07/02 19:08:19 mjf Exp $");
 
 #include "opt_md.h"
 
@@ -174,17 +174,17 @@ md_attach(device_t parent, device_t self,
 
 	cmaj = cdevsw_lookup_major(&md_cdevsw);
 	bmaj = bdevsw_lookup_major(&md_bdevsw);
-	unit = device_unit(&sc->sc_dev);
+	unit = device_unit(self);
 
-	device_register_name(MAKEDISKDEV(cmaj, unit, 0), &sc->sc_dev, true,
-	    DEV_DISK, "r%sa", device_xname(&sc->sc_dev));
-	device_register_name(MAKEDISKDEV(cmaj, unit, 3), &sc->sc_dev, true,
-	    DEV_DISK, "r%sd", device_xname(&sc->sc_dev));
+	device_register_name(MAKEDISKDEV(cmaj, unit, 0), self, true,
+	    DEV_DISK, "r%sa", device_xname(self));
+	device_register_name(MAKEDISKDEV(cmaj, unit, 3), self, true,
+	    DEV_DISK, "r%sd", device_xname(self));
 
-	device_register_name(MAKEDISKDEV(bmaj, unit, 0), &sc->sc_dev, false,
-	    DEV_DISK, "%sa", device_xname(&sc->sc_dev));
-	device_register_name(MAKEDISKDEV(bmaj, unit, 3), &sc->sc_dev, false,
-	    DEV_DISK, "%sd", device_xname(&sc->sc_dev));
+	device_register_name(MAKEDISKDEV(bmaj, unit, 0), self, false,
+	    DEV_DISK, "%sa", device_xname(self));
+	device_register_name(MAKEDISKDEV(bmaj, unit, 3), self, false,
+	    DEV_DISK, "%sd", device_xname(self));
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");

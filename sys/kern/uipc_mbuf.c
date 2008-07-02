@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.124.6.2 2008/06/02 13:24:13 mjf Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.124.6.3 2008/07/02 19:08:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.124.6.2 2008/06/02 13:24:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.124.6.3 2008/07/02 19:08:20 mjf Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -160,8 +160,8 @@ void
 mbinit(void)
 {
 
-	KASSERT(sizeof(struct _m_ext) <= MHLEN);
-	KASSERT(sizeof(struct mbuf) == MSIZE);
+	CTASSERT(sizeof(struct _m_ext) <= MHLEN);
+	CTASSERT(sizeof(struct mbuf) == MSIZE);
 
 	mclpool_allocator.pa_backingmap = mb_map;
 
@@ -281,8 +281,8 @@ mowner_convert_to_user(struct mowner *mo, struct mowner_user *mo_user)
 {
 
 	memset(mo_user, 0, sizeof(*mo_user));
-	KASSERT(sizeof(mo_user->mo_name) == sizeof(mo->mo_name));
-	KASSERT(sizeof(mo_user->mo_descr) == sizeof(mo->mo_descr));
+	CTASSERT(sizeof(mo_user->mo_name) == sizeof(mo->mo_name));
+	CTASSERT(sizeof(mo_user->mo_descr) == sizeof(mo->mo_descr));
 	memcpy(mo_user->mo_name, mo->mo_name, sizeof(mo->mo_name));
 	memcpy(mo_user->mo_descr, mo->mo_descr, sizeof(mo->mo_descr));
 	percpu_foreach(mo->mo_counters, mowner_conver_to_user_cb, mo_user);
