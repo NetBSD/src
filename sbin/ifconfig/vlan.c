@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.9 2008/05/16 20:53:35 dyoung Exp $	*/
+/*	$NetBSD: vlan.c,v 1.10 2008/07/02 07:44:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.9 2008/05/16 20:53:35 dyoung Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.10 2008/07/02 07:44:15 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -52,7 +52,15 @@ __RCSID("$NetBSD: vlan.c,v 1.9 2008/05/16 20:53:35 dyoung Exp $");
 #include "env.h"
 #include "extern.h"
 #include "util.h"
-#include "vlan.h"
+
+static status_func_t status;
+static cmdloop_branch_t branch;
+
+static void vlan_constructor(void) __attribute__((constructor));
+static void vlan_status(prop_dictionary_t, prop_dictionary_t);
+
+static int setvlan(prop_dictionary_t, prop_dictionary_t);
+static int setvlanif(prop_dictionary_t, prop_dictionary_t);
 
 struct pinteger vlantag = PINTEGER_INITIALIZER1(&vlantag, "VLAN tag",
     0, USHRT_MAX, 10, setvlan, "vlantag", &command_root.pb_parser);
@@ -149,7 +157,7 @@ setvlanif(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-void
+static void
 vlan_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct vlanreq vlr;
@@ -161,4 +169,13 @@ vlan_status(prop_dictionary_t env, prop_dictionary_t oenv)
 		printf("\tvlan: %d parent: %s\n",
 		    vlr.vlr_tag, vlr.vlr_parent[0] == '\0' ?
 		    "<none>" : vlr.vlr_parent);
+}
+
+static void
+vlan_constructor(void)
+{
+	cmdloop_branch_init(&branch, &vlan.pk_parser);
+	register_cmdloop_branch(&branch);
+	status_func_init(&status, vlan_status);
+	register_status(&status);
 }

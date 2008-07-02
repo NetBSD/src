@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.12 2008/05/11 23:28:40 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.13 2008/07/02 07:44:14 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,11 +29,9 @@
  * SUCH DAMAGE.
  */
 
-#ifndef INET_ONLY
-
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.12 2008/05/11 23:28:40 dyoung Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.13 2008/07/02 07:44:14 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -52,17 +50,27 @@ __RCSID("$NetBSD: af_atalk.c,v 1.12 2008/05/11 23:28:40 dyoung Exp $");
 #include <util.h>
 
 #include "env.h"
+#include "af_inetany.h"
 #include "parse.h"
 #include "extern.h"
-#include "af_atalk.h"
 
-struct ifaliasreq at_addreq __attribute__((aligned(4)));
-static struct netrange at_nr;	/* AppleTalk net range */
+#ifndef satocsat
+#define	satocsat(__sa) ((const struct sockaddr_at *)(__sa))
+#endif
 
+static void at_status(prop_dictionary_t, prop_dictionary_t, bool);
+static void at_commit_address(prop_dictionary_t, prop_dictionary_t);
+
+static void at_constructor(void) __attribute__((constructor));
+
+static struct afswtch ataf = {
+	.af_name = "atalk", .af_af = AF_APPLETALK, .af_status = at_status,
+	.af_addr_commit = at_commit_address
+};
 struct pinteger phase = PINTEGER_INITIALIZER1(&phase, "phase",
-    1, 2, 10, setatphase, "phase", &command_root.pb_parser);
+    1, 2, 10, NULL, "phase", &command_root.pb_parser);
 
-struct pstr parse_range = PSTR_INITIALIZER(&range, "range", setatrange, "range",
+struct pstr parse_range = PSTR_INITIALIZER(&range, "range", NULL, "range",
     &command_root.pb_parser);
 
 static const struct kwinst atalkkw[] = {
@@ -73,17 +81,9 @@ static const struct kwinst atalkkw[] = {
 struct pkw atalk = PKW_INITIALIZER(&atalk, "AppleTalk", NULL, NULL,
     atalkkw, __arraycount(atalkkw), NULL);
 
-void
-at_getaddr(const struct paddr_prefix *pfx, int which)
-{
-	if (which == MASK)
-		errx(EXIT_FAILURE, "AppleTalk does not use netmasks");
+static cmdloop_branch_t branch;
 
-	memcpy(&at_addreq.ifra_addr, &pfx->pfx_addr,
-	    MIN(sizeof(at_addreq.ifra_addr), pfx->pfx_addr.sa_len));
-}
-
-static int
+static void
 setatrange_impl(prop_dictionary_t env, prop_dictionary_t xenv,
     struct netrange *nr)
 {
@@ -91,7 +91,7 @@ setatrange_impl(prop_dictionary_t env, prop_dictionary_t xenv,
 	u_short	first = 123, last = 123;
 
 	if (getargstr(env, "range", range, sizeof(range)) == -1)
-		return -1;
+		return;
 
 	if (sscanf(range, "%hu-%hu", &first, &last) != 2 ||
 	    first == 0 || last == 0 || first > last)
@@ -99,63 +99,75 @@ setatrange_impl(prop_dictionary_t env, prop_dictionary_t xenv,
 		    first, last);
 	nr->nr_firstnet = htons(first);
 	nr->nr_lastnet = htons(last);
-	return 0;
 }
 
-int
-setatrange(prop_dictionary_t env, prop_dictionary_t xenv)
+static void
+at_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-	return setatrange_impl(env, xenv, &at_nr);
-}
+	struct ifreq ifr;
+	struct ifaliasreq ifra __attribute__((aligned(4)));
+	struct afparam atparam = {
+		  .req = BUFPARAM(ifra)
+		, .dgreq = BUFPARAM(ifr)
+		, .name = {
+			  {.buf = ifr.ifr_name,
+			   .buflen = sizeof(ifr.ifr_name)}
+			, {.buf = ifra.ifra_name,
+			   .buflen = sizeof(ifra.ifra_name)}
+		  }
+		, .dgaddr = BUFPARAM(ifr.ifr_addr)
+		, .addr = BUFPARAM(ifra.ifra_addr)
+		, .dst = BUFPARAM(ifra.ifra_dstaddr)
+		, .brd = BUFPARAM(ifra.ifra_broadaddr)
+		, .mask = BUFPARAM(ifra.ifra_mask)
+		, .aifaddr = IFADDR_PARAM(SIOCAIFADDR)
+		, .difaddr = IFADDR_PARAM(SIOCDIFADDR)
+		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR)
+		, .defmask = {.buf = NULL, .buflen = 0}
+	};
+	struct netrange nr = {.nr_phase = 2};	/* AppleTalk net range */
+	prop_data_t d;
+	const struct paddr_prefix *addr;
+	struct sockaddr_at sat;
 
-void
-at_commit_address(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-}
+	if ((d = (prop_data_t)prop_dictionary_get(env, "address")) == NULL)
+		return;
 
-static int
-setatphase_impl(prop_dictionary_t env, prop_dictionary_t xenv,
-    struct netrange *nr)
-{
-	if (!prop_dictionary_get_uint8(env, "phase", &nr->nr_phase)) {
-		errno = ENOENT;
-		return -1;
-	}
-	return 0;
-}
+	addr = prop_data_data_nocopy(d);
 
-int
-setatphase(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	return setatphase_impl(env, xenv, &at_nr);
-}
+	memcpy(&sat, &addr->pfx_addr, MIN(sizeof(sat), addr->pfx_addr.sa_len));
 
-void
-checkatrange(struct sockaddr *sa)
-{
-	struct sockaddr_at *sat = (struct sockaddr_at *) sa;
+	(void)prop_dictionary_get_uint8(env, "phase", &nr.nr_phase);
+	/* Default range of one */
+	nr.nr_firstnet = nr.nr_lastnet = sat.sat_addr.s_net;
+	setatrange_impl(env, oenv, &nr);
 
-	if (at_nr.nr_phase == 0)
-		at_nr.nr_phase = 2;	/* Default phase 2 */
-	if (at_nr.nr_firstnet == 0)
-		at_nr.nr_firstnet =	/* Default range of one */
-		at_nr.nr_lastnet = sat->sat_addr.s_net;
-	printf("\tatalk %d.%d range %d-%d phase %d\n",
-	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
-	    ntohs(at_nr.nr_firstnet), ntohs(at_nr.nr_lastnet), at_nr.nr_phase);
-	if (ntohs(at_nr.nr_firstnet) > ntohs(sat->sat_addr.s_net) ||
-	    ntohs(at_nr.nr_lastnet) < ntohs(sat->sat_addr.s_net))
+	if (ntohs(nr.nr_firstnet) > ntohs(sat.sat_addr.s_net) ||
+	    ntohs(nr.nr_lastnet) < ntohs(sat.sat_addr.s_net))
 		errx(EXIT_FAILURE, "AppleTalk address is not in range");
-	*((struct netrange *)&sat->sat_zero) = at_nr;
+	*((struct netrange *)&sat.sat_zero) = nr;
+
+	memset(&ifr, 0, sizeof(ifr));
+	memset(&ifra, 0, sizeof(ifra));
+	commit_address(env, oenv, &atparam);
 }
 
-void
+static void
+sat_print(const char *prefix, const struct sockaddr *sa)
+{
+	const struct sockaddr_at *sat = satocsat(sa);
+
+	printf("%s%d.%d", prefix, ntohs(sat->sat_addr.s_net),
+	    sat->sat_addr.s_node);
+}
+
+static void
 at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct sockaddr_at *sat;
 	struct netrange *nr;
 	struct ifreq ifr;
-	int af, s;
+	int s;
 	const char *ifname;
 	unsigned short flags;
 
@@ -167,27 +179,22 @@ at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
 		err(EXIT_FAILURE, "%s: getifinfo", __func__);
 
-	if ((af = getaf(env)) == -1)
-		af = AF_APPLETALK;
-	else if (af != AF_APPLETALK)
-		return;
-
 	memset(&ifr, 0, sizeof(ifr));
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	ifr.ifr_addr.sa_family = af;
-	if (ioctl(s, SIOCGIFADDR, &ifr) == -1) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
-			if (!force)
-				return;
-			(void) memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-		} else
-			warn("SIOCGIFADDR");
-	}
+	ifr.ifr_addr.sa_family = AF_APPLETALK;
+	if (ioctl(s, SIOCGIFADDR, &ifr) != -1)
+		;
+	else if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
+		if (!force)
+			return;
+		memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
+	} else
+		warn("SIOCGIFADDR");
 	sat = (struct sockaddr_at *)&ifr.ifr_addr;
 
 	nr = (struct netrange *)&sat->sat_zero;
-	printf("\tatalk %d.%d range %d-%d phase %d",
-	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
+	sat_print("\tatalk ", &ifr.ifr_addr);
+	printf(" range %d-%d phase %d",
 	    ntohs(nr->nr_firstnet), ntohs(nr->nr_lastnet), nr->nr_phase);
 
 	if (flags & IFF_POINTOPOINT) {
@@ -198,17 +205,19 @@ at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 			else
 				warn("SIOCGIFDSTADDR");
 		}
-		sat = (struct sockaddr_at *)&ifr.ifr_dstaddr;
-		printf("--> %d.%d",
-		    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node);
+		sat_print(" --> ", &ifr.ifr_dstaddr);
 	}
 	if (flags & IFF_BROADCAST) {
 		/* note RTAX_BRD overlap with IFF_POINTOPOINT */
-		sat = (struct sockaddr_at *)&ifr.ifr_broadaddr;
-		printf(" broadcast %d.%d", ntohs(sat->sat_addr.s_net),
-		    sat->sat_addr.s_node);
+		sat_print(" broadcast ", &ifr.ifr_broadaddr);
 	}
 	printf("\n");
 }
 
-#endif /* ! INET_ONLY */
+static void
+at_constructor(void)
+{
+	register_family(&ataf);
+	cmdloop_branch_init(&branch, &atalk.pk_parser);
+	register_cmdloop_branch(&branch);
+}
