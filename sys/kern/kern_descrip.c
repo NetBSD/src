@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.181 2008/07/02 14:47:34 matt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.182 2008/07/02 16:45:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.181 2008/07/02 14:47:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.182 2008/07/02 16:45:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,7 +570,7 @@ fd_close(unsigned fd)
 	 */
 	fp = ff->ff_file;
 	ff->ff_file = NULL;
-	ff->ff_exclose = 0;
+	ff->ff_exclose = false;
 
 	/*
 	 * We expect the caller to hold a descriptor reference - drop it.
@@ -645,7 +645,7 @@ fd_close(unsigned fd)
  * Duplicate a file descriptor.
  */
 int
-fd_dup(file_t *fp, int minfd, int *newp, int exclose)
+fd_dup(file_t *fp, int minfd, int *newp, bool exclose)
 {
 	proc_t *p;
 	int error;
@@ -1422,7 +1422,7 @@ fd_copy(void)
 		}
 		ff2->ff_file = fp;
 		ff2->ff_exclose = ff->ff_exclose;
-		ff2->ff_allocated = 1;
+		ff2->ff_allocated = true;
 		mutex_exit(&ff->ff_lock);
 		if (i > newlast) {
 			newlast = i;
@@ -1641,7 +1641,7 @@ fd_closeexec(void)
 	if (!fdp->fd_exclose) {
 		return;
 	}
-	fdp->fd_exclose = 0;
+	fdp->fd_exclose = false;
 
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
 		if ((ff = fdp->fd_ofiles[fd]) == NULL) {
