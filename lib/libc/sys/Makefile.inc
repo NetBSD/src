@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.190 2008/06/25 11:19:28 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.191 2008/07/02 20:05:16 rmind Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -26,7 +26,7 @@ CLEANFILES+=	${_LSRC:MLintSys*.c}
 .endif
 
 # glue to offer userland wrappers for some syscalls
-SRCS+=	posix_fadvise.c posix_madvise.c sigtimedwait.c sigwait.c \
+SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigtimedwait.c sigwait.c \
 	sigwaitinfo.c statvfs.c swapon.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.3 2008/02/09 17:07:54 yamt Exp $	*/
+/*	$NetBSD: sched.c,v 1.1 2008/07/02 20:05:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sched.c,v 1.3 2008/02/09 17:07:54 yamt Exp $");
+__RCSID("$NetBSD: sched.c,v 1.1 2008/07/02 20:05:16 rmind Exp $");
 
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sched.h>
 #include <sys/param.h>
-#include <sys/pset.h>
 #include <sys/types.h>
 
 /* All LWPs in the process */
@@ -120,21 +119,11 @@ sched_get_priority_min(int policy)
 }
 
 int
+/*ARGSUSED*/
 sched_rr_get_interval(pid_t pid, struct timespec *interval)
 {
 
 	interval->tv_sec = 0;
 	interval->tv_nsec = sysconf(_SC_SCHED_RT_TS) * 1000;
 	return 0;
-}
-
-/*
- * Processor-sets.
- */
-
-int
-pset_bind(psetid_t psid, idtype_t idtype, id_t id, psetid_t *opsid)
-{
-
-	return _pset_bind(idtype, id, P_ALL_LWPS, psid, opsid);
 }
