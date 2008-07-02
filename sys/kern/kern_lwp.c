@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.120 2008/07/02 19:49:58 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.121 2008/07/02 19:53:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.120 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.121 2008/07/02 19:53:12 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -945,15 +945,21 @@ void
 lwp_migrate(lwp_t *l, struct cpu_info *tci)
 {
 	struct schedstate_percpu *tspc;
+	int lstat = l->l_stat;
+
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(tci != NULL);
 
+	/* If LWP is still on the CPU, it must be handled like LSONPROC */
+	if ((l->l_pflag & LP_RUNNING) != 0) {
+		lstat = LSONPROC;
+	}
+
 	/*
-	 * If LWP is still on the CPU, it must be handled like on LSONPROC.
 	 * The destination CPU could be changed while previous migration
 	 * was not finished.
 	 */
-	if ((l->l_pflag & LP_RUNNING) != 0 || l->l_target_cpu != NULL) {
+	if (l->l_target_cpu != NULL) {
 		l->l_target_cpu = tci;
 		lwp_unlock(l);
 		return;
@@ -967,7 +973,7 @@ lwp_migrate(lwp_t *l, struct cpu_info *tci)
 
 	KASSERT(l->l_target_cpu == NULL);
 	tspc = &tci->ci_schedstate;
-	switch (l->l_stat) {
+	switch (lstat) {
 	case LSRUN:
 		if (l->l_flag & LW_INMEM) {
 			l->l_target_cpu = tci;
