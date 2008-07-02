@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.180 2008/06/24 10:26:26 gmcgarry Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.181 2008/07/02 14:47:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.180 2008/06/24 10:26:26 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.181 2008/07/02 14:47:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1237,7 +1237,7 @@ filedesc_ctor(void *arg, void *obj, int flag)
 	fdp->fd_lastfile = -1;
 	fdp->fd_lastkqfile = -1;
 
-	KASSERT(sizeof(fdp->fd_dfdfile[0]) >= sizeof(fdfile_t));
+	CTASSERT(sizeof(fdp->fd_dfdfile[0]) >= sizeof(fdfile_t));
 	for (i = 0; i < NDFDFILE; i++) {
 		fdfile_ctor(NULL, fdp->fd_dfdfile[i], PR_WAITOK);
 	}
