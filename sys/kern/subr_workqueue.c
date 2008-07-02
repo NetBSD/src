@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.24 2008/03/27 18:30:15 ad Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.25 2008/07/02 14:47:34 matt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.24 2008/03/27 18:30:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.25 2008/07/02 14:47:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -232,7 +232,7 @@ workqueue_create(struct workqueue **wqp, const char *name,
 	void *ptr;
 	int error = 0;
 
-	KASSERT(sizeof(work_impl_t) <= sizeof(struct work));
+	CTASSERT(sizeof(work_impl_t) <= sizeof(struct work));
 
 	ptr = kmem_zalloc(workqueue_size(flags), KM_SLEEP);
 	wq = (void *)roundup2((intptr_t)ptr, coherency_unit);

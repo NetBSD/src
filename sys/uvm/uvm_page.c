@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.137 2008/06/30 20:14:09 matt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.138 2008/07/02 14:47:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.137 2008/06/30 20:14:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.138 2008/07/02 14:47:35 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -335,7 +335,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	paddr_t paddr;
 
 	KASSERT(ncpu <= 1);
-	KASSERT(sizeof(pagearray->offset) >= sizeof(struct uvm_cpu *));
+	CTASSERT(sizeof(pagearray->offset) >= sizeof(struct uvm_cpu *));
 
 	/*
 	 * init the page queues and page queue locks, except the free
