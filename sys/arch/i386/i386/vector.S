@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.40 2008/06/27 00:41:39 gmcgarry Exp $	*/
+/*	$NetBSD: vector.S,v 1.41 2008/07/02 19:18:52 drochner Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.40 2008/06/27 00:41:39 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.41 2008/07/02 19:18:52 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -110,17 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.40 2008/06/27 00:41:39 gmcgarry Exp $")
  */
 
 #define MY_COUNT _C_LABEL(uvmexp)
-
-/* XXX See comment in locore.s */
-#ifdef __ELF__
-#define	XINTR(name,num)		Xintr_/**/name/**/num
-#define	XSTRAY(name,num)	Xstray_/**/name/**/num
-#define XINTR_TSS(irq_num)	Xintr_tss_ ## irq_num
-#else
-#define	XINTR(name,num)		_Xintr_/**/name/**/num
-#define	XSTRAY(name,num)	_Xstray_/**/name/**/num
-#define XINTR_TSS(irq_num)	Xintr_tss_/**/irq_num
-#endif
 
 /*
  * Store address of TSS in %eax, given a selector in %eax.
