@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.60 2008/06/16 12:25:54 ad Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.61 2008/07/02 19:49:58 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.60 2008/06/16 12:25:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.61 2008/07/02 19:49:58 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -728,7 +728,8 @@ darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 	struct darwin_eproc *de;
 
 	printf("fillkproc: pid %d\n", p->p_pid);
-	l = proc_representative_lwp(p, NULL, 1);
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
 	(void)memset(dkp, 0, sizeof(*dkp));
 
 	dep = (struct darwin_extern_proc *)&dkp->kp_proc;
@@ -840,8 +841,12 @@ native_to_darwin_pflag(int *dfp, struct proc *p)
 	int bf = p->p_flag;
 	int bsf = p->p_sflag;
 	int bslf = p->p_slflag;
-	struct lwp *l = proc_representative_lwp(p, NULL, 1);
-	int lf = l->l_flag;
+	struct lwp *l;
+	int lf;
+
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
+	lf = l->l_flag;
 
 	if (bf & PK_ADVLOCK)
 		df |= DARWIN_P_ADVLOCK;
