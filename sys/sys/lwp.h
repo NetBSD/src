@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.102 2008/06/22 00:06:36 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.103 2008/07/02 19:38:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
  * l:	*l_mutex
  * p:	l_proc->p_lock
  * s:	spc_mutex, which may or may not be referenced by l_mutex
- * t:	l_proc->p_stmutex
  * S:	l_selcpu->sc_lock
  * (:	unlocked, stable
  * !:	unlocked, may only be reliably accessed by the LWP itself
@@ -96,8 +95,8 @@ struct lwp {
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
 	uint64_t	l_ncsw;		/* l: total context switches */
 	uint64_t	l_nivcsw;	/* l: involuntary context switches */
-	int		l_cpticks;	/* t: Ticks of CPU time */
-	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
+	u_int		l_cpticks;	/* (: Ticks of CPU time */
+	fixpt_t		l_pctcpu;	/* p: %cpu during l_swtime */
 	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
 	psetid_t	l_psid;		/* l: assigned processor-set ID */
 	struct cpu_info *l_target_cpu;	/* l: target CPU to migrate */
