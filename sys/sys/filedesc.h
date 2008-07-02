@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.49 2008/06/24 11:21:46 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.50 2008/07/02 10:30:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -93,18 +93,17 @@
  * locks:
  *
  * :	unlocked
- * a	update using atomic ops
  * d	filedesc::fd_lock
  * f	fdfile::ff_lock, but stable if reference held
  */
 typedef struct fdfile {
 	kmutex_t	ff_lock;	/* :: lock on structure */
+	u_int		ff_exclose;	/* :: close on exec flag */
+	u_int		ff_allocated;	/* d: descriptor slot is allocated */
+	u_int		ff_refcnt;	/* f: reference count on structure */
 	struct file	*ff_file;	/* f: pointer to file if open */
 	SLIST_HEAD(,knote) ff_knlist;	/* f: knotes attached to this fd */
 	kcondvar_t	ff_closing;	/* f: notifier for close */
-	u_int		ff_refcnt;	/* f: reference count on structure */
-	u_int		ff_exclose;	/* :: close on exec flag */
-	u_int		ff_allocated;	/* d: descriptor slot is allocated */
 } fdfile_t;
 
 /* Reference count */
