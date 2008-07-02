@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.80 2008/07/02 14:39:20 matt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.81 2008/07/02 15:25:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -199,12 +199,18 @@ tolower(int ch)
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
 #ifdef lint
-#define	KASSERT(e)	/* NOTHING */
+#define	KASSERTMSG(e, msg)	/* NOTHING */
+#define	KASSERT(e)		/* NOTHING */
 #else /* !lint */
-#define	KASSERT(e)	((void)0)
+#define	KASSERTMSG(e, msg)	((void)0)
+#define	KASSERT(e)		((void)0)
 #endif /* !lint */
 #else /* DIAGNOSTIC */
 #define _DIAGASSERT(a)	assert(a)
+#define	KASSERTMSG(e, msg) do {		\
+	if (__predict_false((e)))	\
+		panic msg;		\
+	} while (/*CONSTCOND*/ 0)
 #ifdef __STDC__
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __kernassert("diagnostic ", __FILE__, __LINE__, #e))
