@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.8 2008/05/19 18:00:31 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.9 2008/07/02 07:44:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -24,6 +24,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: parse.c,v 1.9 2008/07/02 07:44:15 dyoung Exp $");
+#endif /* not lint */
 
 #include <err.h>
 #include <errno.h>
@@ -743,6 +748,19 @@ piface_create(const char *name, parser_exec_t pexec, const char *defkey,
 }
 
 int
+pbranch_addbranch(struct pbranch *pb, struct parser *p)
+{
+	struct branch *b;
+
+	if ((b = malloc(sizeof(*b))) == NULL)
+		return -1;
+	b->b_nextparser = p;
+	SIMPLEQ_INSERT_HEAD(&pb->pb_branches, b, b_next);
+	pb->pb_parser.p_initialized = false;
+	return parser_init(&pb->pb_parser);
+}
+
+int
 pbranch_setbranches(struct pbranch *pb, const struct branch *brs, size_t nbr)
 {
 	struct branch *b;
@@ -780,11 +798,12 @@ pbranch_init(struct parser *p)
 	struct pbranch *pb = (struct pbranch *)p;
 	struct parser *np;
 
-	if (pb->pb_nbrinit == 0 || !SIMPLEQ_EMPTY(&pb->pb_branches))
-		return 0;
-
-	if (pbranch_setbranches(pb, pb->pb_brinit, pb->pb_nbrinit) == -1)
+	if (pb->pb_nbrinit == 0)
+		;
+	else if (pbranch_setbranches(pb, pb->pb_brinit, pb->pb_nbrinit) == -1)
 		return -1;
+
+	pb->pb_nbrinit = 0;
 
 	SIMPLEQ_FOREACH(b, &pb->pb_branches, b_next) {
 		np = b->b_nextparser;
@@ -840,6 +859,8 @@ pkw_setwords(struct pkw *pk, parser_exec_t defexec, const char *defkey,
 	int i;
 
 	for (i = 0; i < nkw; i++) {
+		if (kws[i].k_word == NULL)
+			continue;
 		if ((k = malloc(sizeof(*k))) == NULL)
 			goto post_pk_err;
 		*k = kws[i];
@@ -868,11 +889,14 @@ pkw_init(struct parser *p)
 	struct pkw *pk = (struct pkw *)p;
 	struct parser *np;
 
-	if (pk->pk_nkwinit == 0 || !SIMPLEQ_EMPTY(&pk->pk_keywords))
-		return 0;
-	if (pkw_setwords(pk, pk->pk_execinit, pk->pk_keyinit, pk->pk_kwinit,
-	    pk->pk_nkwinit, pk->pk_nextinit) == -1)
+	if (pk->pk_nkwinit == 0)
+		;
+	else if (pkw_setwords(pk, pk->pk_execinit, pk->pk_keyinit,
+	    pk->pk_kwinit, pk->pk_nkwinit, pk->pk_nextinit) == -1)
 		return -1;
+
+	pk->pk_nkwinit = 0;
+
 	SIMPLEQ_FOREACH(k, &pk->pk_keywords, k_next) {
 		np = k->k_nextparser;
 		if (np != NULL && parser_init(np) == -1)
@@ -962,4 +986,15 @@ matches_exec(const struct match *matches, prop_dictionary_t xenv, size_t nmatch)
 			break;
 	}
 	return rc;
+}
+
+int
+parser_init(struct parser *p)
+{
+	if (p->p_initialized)
+		return 0;
+	p->p_initialized = true;
+	if (p->p_methods->pm_init == NULL)
+		return 0;
+	return (*p->p_methods->pm_init)(p);
 }

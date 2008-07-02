@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.19 2008/05/19 18:00:31 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.20 2008/07/02 07:44:14 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.19 2008/05/19 18:00:31 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.20 2008/07/02 07:44:14 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,11 +59,13 @@ __RCSID("$NetBSD: ieee80211.c,v 1.19 2008/05/19 18:00:31 dyoung Exp $");
 #include <util.h>
 
 #include "extern.h"
-#include "ieee80211.h"
 #include "parse.h"
 #include "env.h"
 #include "util.h"
 
+static void ieee80211_statistics(prop_dictionary_t);
+static void ieee80211_status(prop_dictionary_t, prop_dictionary_t);
+static void ieee80211_constructor(void) __attribute__((constructor));
 static int set80211(prop_dictionary_t env, uint16_t, int16_t, int16_t,
     u_int8_t *);
 static u_int ieee80211_mhz2ieee(u_int, u_int);
@@ -75,6 +77,20 @@ static void scan_and_wait(prop_dictionary_t);
 static void list_scan(prop_dictionary_t);
 static int mappsb(u_int , u_int);
 static int mapgsm(u_int , u_int);
+
+static int sethidessid(prop_dictionary_t, prop_dictionary_t);
+static int setapbridge(prop_dictionary_t, prop_dictionary_t);
+static int setifssid(prop_dictionary_t, prop_dictionary_t);
+static int setifnwkey(prop_dictionary_t, prop_dictionary_t);
+static int unsetifnwkey(prop_dictionary_t, prop_dictionary_t);
+static int unsetifbssid(prop_dictionary_t, prop_dictionary_t);
+static int setifbssid(prop_dictionary_t, prop_dictionary_t);
+static int setifchan(prop_dictionary_t, prop_dictionary_t);
+static int setiffrag(prop_dictionary_t, prop_dictionary_t);
+static int setifpowersave(prop_dictionary_t, prop_dictionary_t);
+static int setifpowersavesleep(prop_dictionary_t, prop_dictionary_t);
+static int setifrts(prop_dictionary_t, prop_dictionary_t);
+static int scan_exec(prop_dictionary_t, prop_dictionary_t);
 
 static void printies(const u_int8_t *, int, int);
 static void printie(const char* , const uint8_t *, size_t , int);
@@ -94,7 +110,9 @@ static int iswmeinfo(const u_int8_t *);
 static int iswmeparam(const u_int8_t *);
 static const char * iename(int);
 
-extern int vflag;
+extern struct pinteger parse_chan, parse_frag, parse_rts;
+extern struct pstr parse_bssid, parse_ssid, parse_nwkey;
+extern struct pinteger parse_powersavesleep;
 
 static const struct kwinst ieee80211boolkw[] = {
 	  {.k_word = "hidessid", .k_key = "hidessid", .k_neg = true,
@@ -132,6 +150,10 @@ static const struct kwinst kw80211kw[] = {
 	, {.k_word = "nwkey", .k_nextparser = &parse_nwkey.ps_parser}
 	, {.k_word = "-nwkey", .k_exec = unsetifnwkey,
 	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "rts", .k_nextparser = &parse_rts.pi_parser}
+	, {.k_word = "-rts", .k_key = "rts", .k_type = KW_T_INT,
+	   .k_int = IEEE80211_RTS_MAX, .k_exec = setifrts,
+	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "ssid", .k_nextparser = &parse_ssid.ps_parser}
 	, {.k_word = "powersavesleep",
 	   .k_nextparser = &parse_powersavesleep.pi_parser}
@@ -146,6 +168,10 @@ struct pkw ieee80211bool = PKW_INITIALIZER(&ieee80211bool, "ieee80211 boolean",
 
 struct pinteger parse_chan = PINTEGER_INITIALIZER1(&parse_chan, "chan",
     0, UINT16_MAX, 10, setifchan, "chan", &command_root.pb_parser);
+
+struct pinteger parse_rts = PINTEGER_INITIALIZER1(&parse_rts, "rts",
+    IEEE80211_RTS_MIN, IEEE80211_RTS_MAX, 10,
+    setifrts, "rts", &command_root.pb_parser);
 
 struct pinteger parse_frag = PINTEGER_INITIALIZER1(&parse_frag, "frag",
     IEEE80211_FRAG_MIN, IEEE80211_FRAG_MAX, 10,
@@ -183,7 +209,7 @@ set80211(prop_dictionary_t env, uint16_t type, int16_t val, int16_t len,
 	return 0;
 }
 
-int
+static int
 sethidessid(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	bool on, rc;
@@ -193,7 +219,7 @@ sethidessid(prop_dictionary_t env, prop_dictionary_t xenv)
 	return set80211(env, IEEE80211_IOC_HIDESSID, on ? 1 : 0, 0, NULL);
 }
 
-int
+static int
 setapbridge(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	bool on, rc;
@@ -221,7 +247,7 @@ get80211opmode(prop_dictionary_t env)
 	return IEEE80211_M_STA;
 }
 
-int
+static int
 setifssid(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ieee80211_nwid nwid;
@@ -237,7 +263,7 @@ setifssid(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-int
+static int
 unsetifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ieee80211_bssid bssid;
@@ -249,7 +275,7 @@ unsetifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-int
+static int
 setifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	char buf[24];
@@ -272,7 +298,20 @@ setifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-int
+static int
+setifrts(prop_dictionary_t env, prop_dictionary_t xenv)
+{
+	bool rc;
+	int16_t val;
+
+	rc = prop_dictionary_get_int16(env, "rts", &val);
+	assert(rc);
+	if (set80211(env, IEEE80211_IOC_RTSTHRESHOLD, val, 0, NULL) == -1)
+		err(EXIT_FAILURE, "IEEE80211_IOC_RTSTHRESHOLD");
+	return 0;
+}
+
+static int
 setiffrag(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	bool rc;
@@ -285,7 +324,7 @@ setiffrag(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-int
+static int
 setifchan(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	bool rc;
@@ -298,7 +337,7 @@ setifchan(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-int
+static int
 setifnwkey(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	const char *val;
@@ -364,7 +403,7 @@ setifnwkey(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-int
+static int
 unsetifnwkey(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ieee80211_nwkey nwkey;
@@ -382,7 +421,7 @@ unsetifnwkey(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-int
+static int
 setifpowersave(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ieee80211_power power;
@@ -402,7 +441,7 @@ setifpowersave(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-int
+static int
 setifpowersavesleep(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ieee80211_power power;
@@ -421,7 +460,7 @@ setifpowersavesleep(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-int
+static int
 scan_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	scan_and_wait(env);
@@ -429,7 +468,7 @@ scan_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-void
+static void
 ieee80211_statistics(prop_dictionary_t env)
 {
 	struct ieee80211_stats stats;
@@ -536,7 +575,7 @@ ieee80211_statistics(prop_dictionary_t env)
 	STAT_PRINT(is_rx_badbintval, "rx frame w/ bogus bintval");
 }
 
-void
+static void
 ieee80211_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int i, nwkey_verbose;
@@ -581,6 +620,14 @@ ieee80211_status(prop_dictionary_t env, prop_dictionary_t oenv)
 				printf(" -apbridge");
 		}
         }
+
+	ireq.i_type = IEEE80211_IOC_RTSTHRESHOLD;
+	if (direct_ioctl(env, SIOCG80211, &ireq) == -1)
+		;
+	else if (ireq.i_val < IEEE80211_RTS_MAX)
+		printf(" rts %d", ireq.i_val);
+	else if (vflag)
+		printf(" -rts");
 
 	ireq.i_type = IEEE80211_IOC_FRAGTHRESHOLD;
 	if (direct_ioctl(env, SIOCG80211, &ireq) == -1)
@@ -1033,44 +1080,45 @@ rsn_keymgmt(const u_int8_t *sel)
 static void
 printrsnie(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
 {
+	const char *sep;
+	int n;
+
 	printf("%s", tag);
-	if (vflag) {
-		const char *sep;
-		int n;
+	if (!vflag)
+		return;
 
-		ie += 2, ielen -= 2;
+	ie += 2, ielen -= 2;
 
-		printf("<v%u", LE_READ_2(ie));
-		ie += 2, ielen -= 2;
+	printf("<v%u", LE_READ_2(ie));
+	ie += 2, ielen -= 2;
 
-		printf(" mc:%s", rsn_cipher(ie));
+	printf(" mc:%s", rsn_cipher(ie));
+	ie += 4, ielen -= 4;
+
+	/* unicast ciphers */
+	n = LE_READ_2(ie);
+	ie += 2, ielen -= 2;
+	sep = " uc:";
+	for (; n > 0; n--) {
+		printf("%s%s", sep, rsn_cipher(ie));
 		ie += 4, ielen -= 4;
-
-		/* unicast ciphers */
-		n = LE_READ_2(ie);
-		ie += 2, ielen -= 2;
-		sep = " uc:";
-		for (; n > 0; n--) {
-			printf("%s%s", sep, rsn_cipher(ie));
-			ie += 4, ielen -= 4;
-			sep = "+";
-		}
-
-		/* key management algorithms */
-		n = LE_READ_2(ie);
-		ie += 2, ielen -= 2;
-		sep = " km:";
-		for (; n > 0; n--) {
-			printf("%s%s", sep, rsn_keymgmt(ie));
-			ie += 4, ielen -= 4;
-			sep = "+";
-		}
-
-		if (ielen > 2)		/* optional capabilities */
-			printf(", caps 0x%x", LE_READ_2(ie));
-		/* XXXPMKID */
-		printf(">");
+		sep = "+";
 	}
+
+	/* key management algorithms */
+	n = LE_READ_2(ie);
+	ie += 2, ielen -= 2;
+	sep = " km:";
+	for (; n > 0; n--) {
+		printf("%s%s", sep, rsn_keymgmt(ie));
+		ie += 4, ielen -= 4;
+		sep = "+";
+	}
+
+	if (ielen > 2)		/* optional capabilities */
+		printf(", caps 0x%x", LE_READ_2(ie));
+	/* XXXPMKID */
+	printf(">");
 }
 
 /*
@@ -1282,4 +1330,21 @@ static int
 mappsb(u_int isrfreq, u_int isrflags)
 {
 	return 37 + ((isrfreq * 10) + ((isrfreq % 5) == 2 ? 5 : 0) - 49400) / 5;
+}
+
+static status_func_t status;
+static statistics_func_t statistics;
+static cmdloop_branch_t branch[2];
+
+static void
+ieee80211_constructor(void)
+{
+	cmdloop_branch_init(&branch[0], &ieee80211bool.pk_parser);
+	cmdloop_branch_init(&branch[1], &kw80211.pk_parser);
+	register_cmdloop_branch(&branch[0]);
+	register_cmdloop_branch(&branch[1]);
+	status_func_init(&status, ieee80211_status);
+	statistics_func_init(&statistics, ieee80211_statistics);
+	register_status(&status);
+	register_statistics(&statistics);
 }

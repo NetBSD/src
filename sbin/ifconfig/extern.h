@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2008/07/02 07:44:14 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -28,6 +28,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  */
+#ifndef	_IFCONFIG_EXTERN_H
+#define	_IFCONFIG_EXTERN_H
+
+#include <prop/proplib.h>
 #include "util.h"
 
 #define	RIDADDR 0  
@@ -35,8 +39,39 @@
 #define	MASK    2
 #define	DSTADDR 3
 
-extern int lflag;
-extern int zflag;
-#ifdef INET6
-extern int Lflag;
-#endif /* INET6 */
+typedef void (*status_cb_t)(prop_dictionary_t, prop_dictionary_t);
+typedef void (*statistics_cb_t)(prop_dictionary_t);
+
+struct statistics_func {
+	SIMPLEQ_ENTRY(statistics_func)	f_next;
+	statistics_cb_t			f_func;
+};
+
+struct status_func {
+	SIMPLEQ_ENTRY(status_func)	f_next;
+	status_cb_t			f_func;
+};
+
+struct cmdloop_branch {
+	SIMPLEQ_ENTRY(cmdloop_branch)	b_next;
+	struct parser			*b_parser;
+};
+
+
+typedef struct statistics_func statistics_func_t;
+typedef struct status_func status_func_t;
+typedef struct cmdloop_branch cmdloop_branch_t;
+
+void cmdloop_branch_init(cmdloop_branch_t *, struct parser *);
+int register_family(struct afswtch *);
+int register_cmdloop_branch(cmdloop_branch_t *);
+void statistics_func_init(statistics_func_t *, statistics_cb_t);
+void status_func_init(status_func_t *, status_cb_t);
+int register_statistics(statistics_func_t *);
+int register_status(status_func_t *);
+int register_flag(int);
+bool get_flag(int);
+
+extern bool lflag, vflag, zflag;
+
+#endif	/* _IFCONFIG_EXTERN_H */

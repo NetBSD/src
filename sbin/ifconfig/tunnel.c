@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.13 2008/05/07 23:55:07 dyoung Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.14 2008/07/02 07:44:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.13 2008/05/07 23:55:07 dyoung Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.14 2008/07/02 07:44:15 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -53,14 +53,18 @@ __RCSID("$NetBSD: tunnel.c,v 1.13 2008/05/07 23:55:07 dyoung Exp $");
 #include <stdio.h>
 #include <util.h>
 
-#include "parse.h"
 #include "env.h"
+#include "extern.h"
+#include "parse.h"
 #include "util.h"
-#include "tunnel.h"
 
-#ifdef INET6
-#include "af_inet6.h"
-#endif
+static status_func_t status;
+static cmdloop_branch_t branch;
+
+static void tunnel_constructor(void) __attribute__((constructor));
+static int settunnel(prop_dictionary_t, prop_dictionary_t);
+static int deletetunnel(prop_dictionary_t, prop_dictionary_t);
+static void tunnel_status(prop_dictionary_t, prop_dictionary_t);
 
 struct paddr tundst = PADDR_INITIALIZER(&tundst, "tundst", settunnel,
     "tundst", NULL, NULL, NULL, &command_root.pb_parser);
@@ -77,7 +81,7 @@ static const struct kwinst tunnelkw[] = {
 struct pkw tunnel = PKW_INITIALIZER(&tunnel, "tunnel", NULL, NULL,
     tunnelkw, __arraycount(tunnelkw), NULL);
 
-int
+static int
 settunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	const struct paddr_prefix *srcpfx, *dstpfx;
@@ -116,16 +120,16 @@ settunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 			errx(EXIT_FAILURE, "scope mismatch");
 			/* NOTREACHED */
 		}
+		if (IN6_IS_ADDR_MULTICAST(&d->sin6_addr) ||
+		    IN6_IS_ADDR_MULTICAST(&s6->sin6_addr))
+			errx(EXIT_FAILURE, "tunnel src/dst is multicast");
 		/* embed scopeid */
 		if (s6->sin6_scope_id &&
-		    (IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&s6->sin6_addr))) {
+		    IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr)) {
 			*(u_int16_t *)&s6->sin6_addr.s6_addr[2] =
 			    htons(s6->sin6_scope_id);
 		}
-		if (d->sin6_scope_id &&
-		    (IN6_IS_ADDR_LINKLOCAL(&d->sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&d->sin6_addr))) {
+		if (d->sin6_scope_id && IN6_IS_ADDR_LINKLOCAL(&d->sin6_addr)) {
 			*(u_int16_t *)&d->sin6_addr.s6_addr[2] =
 			    htons(d->sin6_scope_id);
 		}
@@ -137,7 +141,7 @@ settunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-int
+static int
 deletetunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	if (indirect_ioctl(env, SIOCDIFPHYADDR, NULL) == -1)
@@ -145,7 +149,7 @@ deletetunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-void
+static void
 tunnel_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	char dstserv[sizeof(",65535")];
@@ -154,14 +158,14 @@ tunnel_status(prop_dictionary_t env, prop_dictionary_t oenv)
 	char pdstaddr[NI_MAXHOST];
 	const int niflag = NI_NUMERICHOST|NI_NUMERICSERV;
 	struct if_laddrreq req;
-	const struct afswtch *lafp;
+	const struct afswtch *afp;
 
 	psrcaddr[0] = pdstaddr[0] = '\0';
 
 	memset(&req, 0, sizeof(req));
 	if (direct_ioctl(env, SIOCGLIFPHYADDR, &req) == -1)
 		return;
-	lafp = lookup_af_bynum(req.addr.ss_family);
+	afp = lookup_af_bynum(req.addr.ss_family);
 #ifdef INET6
 	if (req.addr.ss_family == AF_INET6)
 		in6_fillscopeid((struct sockaddr_in6 *)&req.addr);
@@ -181,6 +185,15 @@ tunnel_status(prop_dictionary_t env, prop_dictionary_t oenv)
 	srcserv[0] = (strcmp(&srcserv[1], "0") == 0) ? '\0' : ',';
 	dstserv[0] = (strcmp(&dstserv[1], "0") == 0) ? '\0' : ',';
 
-	printf("\ttunnel %s %s%s --> %s%s\n", lafp ? lafp->af_name : "???",
+	printf("\ttunnel %s %s%s --> %s%s\n", afp ? afp->af_name : "???",
 	    psrcaddr, srcserv, pdstaddr, dstserv);
+}
+
+static void
+tunnel_constructor(void)
+{
+	cmdloop_branch_init(&branch, &tunnel.pk_parser);
+	register_cmdloop_branch(&branch);
+	status_func_init(&status, tunnel_status);
+	register_status(&status);
 }
