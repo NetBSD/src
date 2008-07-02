@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2002/03/24 15:47:06 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2008/07/02 17:28:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -93,6 +93,7 @@
 void	delay __P((unsigned));
 #define DELAY(x)	delay(x)
 #endif
+#define	MAXEXEC		1
 #endif
 
 #include <arm/param.h>

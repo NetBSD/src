@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2007/03/16 18:39:21 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2008/07/02 17:28:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -122,6 +122,8 @@
  * For now, we make it absurdly small, perhaps it can grow later.
  */
 #define	UBC_NWINS	32
+
+#define	MAXEXEC		1
 
 #endif	/* _KERNEL */
 
