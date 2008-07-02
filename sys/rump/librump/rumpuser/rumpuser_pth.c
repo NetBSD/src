@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.11.6.1 2008/04/03 12:43:11 mjf Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.11.6.2 2008/07/02 19:08:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,8 +28,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/lwp.h>
+#ifdef __linux__
+#define _XOPEN_SOURCE 500
+#define _BSD_SOURCE
+#define _FILE_OFFSET_BITS 64
+#endif
 
 #include <assert.h>
 #include <errno.h>
@@ -37,6 +40,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "rumpuser.h"
 

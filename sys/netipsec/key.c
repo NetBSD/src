@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.51.12.1 2008/06/02 13:24:28 mjf Exp $	*/
+/*	$NetBSD: key.c,v 1.51.12.2 2008/07/02 19:08:20 mjf Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.51.12.1 2008/06/02 13:24:28 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.51.12.2 2008/07/02 19:08:20 mjf Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7826,11 +7826,13 @@ key_sa_routechange(struct sockaddr *dst)
 {
 	struct secashead *sah;
 	struct route *ro;
+	const struct sockaddr *sa;
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (dst->sa_len == rtcache_getdst(ro)->sa_len &&
-		    memcmp(dst, rtcache_getdst(ro), dst->sa_len) == 0)
+		sa = rtcache_getdst(ro);
+		if (sa != NULL && dst->sa_len == sa->sa_len &&
+		    memcmp(dst, sa, dst->sa_len) == 0)
 			rtcache_free(ro);
 	}
 

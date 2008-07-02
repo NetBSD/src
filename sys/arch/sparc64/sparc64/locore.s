@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.266.6.3 2008/06/29 09:33:00 mjf Exp $	*/
+/*	$NetBSD: locore.s,v 1.266.6.4 2008/07/02 19:08:18 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -703,8 +703,8 @@ _C_LABEL(trapbase):
 	UTRAP(0x019); UTRAP(0x01a); UTRAP(0x01b); UTRAP(0x01c); UTRAP(0x01d)
 	UTRAP(0x01e); UTRAP(0x01f)
 	TRAP(T_FPDISABLED)		! 020 = fp instr, but EF bit off in psr
-	VTRAP(T_FP_IEEE_754, fp_exception)	! 021 = ieee 754 exception
-	VTRAP(T_FP_OTHER, fp_exception)		! 022 = other fp exception
+	TRAP(T_FP_IEEE_754)		! 021 = ieee 754 exception
+	TRAP(T_FP_OTHER)		! 022 = other fp exception
 	TRAP(T_TAGOF)			! 023 = tag overflow
 	TRACEWIN			! DEBUG -- 4 insns
 	rdpr %cleanwin, %o7		! 024-027 = clean window trap
@@ -958,8 +958,8 @@ ktextfault:
 	UTRAP(0x019); UTRAP(0x01a); UTRAP(0x01b); UTRAP(0x01c); UTRAP(0x01d)
 	UTRAP(0x01e); UTRAP(0x01f)
 	TRAP(T_FPDISABLED)		! 020 = fp instr, but EF bit off in psr
-	VTRAP(T_FP_IEEE_754, fp_exception) ! 021 = ieee 754 exception
-	VTRAP(T_FP_OTHER, fp_exception)	! 022 = other fp exception
+	TRAP(T_FP_IEEE_754)		! 021 = ieee 754 exception
+	TRAP(T_FP_OTHER)		! 022 = other fp exception
 	TRAP(T_TAGOF)			! 023 = tag overflow
 	TRACEWIN			! DEBUG
 	clr	%l0
@@ -2960,30 +2960,6 @@ text_error:
 	ba	text_recover
 	 nop
 	NOTREACHED
-
-/*
- * fp_exception has to check to see if we are trying to save
- * the FP state, and if so, continue to save the FP state.
- *
- * We do not even bother checking to see if we were in kernel mode,
- * since users have no access to the special_fp_store instruction.
- *
- * This whole idea was stolen from Sprite.
- */
-/*
- * XXX I don't think this is at all relevant for V9.
- */
-fp_exception:
-	rdpr	%tpc, %g1
-	set	special_fp_store, %g4	! see if we came from the special one
-	cmp	%g1, %g4		! pc == special_fp_store?
-	bne	slowtrap		! no, go handle per usual
-	 sethi	%hi(savefpcont), %g4	! yes, "return" to the special code
-	or	%lo(savefpcont), %g4, %g4
-	wrpr	%g0, %g4, %tnpc
-	 done
-	NOTREACHED
-
 
 /*
  * We're here because we took an alignment fault in NUCLEUS context.
@@ -9665,8 +9641,7 @@ ENTRY(clearfpstate)
 /*
  * savefpstate(f) struct fpstate *f;
  *
- * Store the current FPU state.  The first `st %fsr' may cause a trap;
- * our trap handler knows how to recover (by `returning' to savefpcont).
+ * Store the current FPU state.
  *
  * Since the kernel may need to use the FPU and we have problems atomically
  * testing and enabling the FPU, we leave here with the FPRS_FEF bit set.
@@ -9680,32 +9655,15 @@ ENTRY(savefpstate)
 	wr	%g0, FPRS_FEF, %fprs
 	or	%o1, PSTATE_PEF, %o1
 	wrpr	%o1, 0, %pstate
-	/* do some setup work while we wait for PSR_EF to turn on */
-	set	FSR_QNE, %o2		! QNE = 0x2000, too big for immediate
-	clr	%o3			! qsize = 0;
-special_fp_store:
-	/* This may need to be done w/rdpr/stx combo */
+
 	stx	%fsr, [%o0 + FS_FSR]	! f->fs_fsr = getfsr();
-	/*
-	 * Even if the preceding instruction did not trap, the queue
-	 * is not necessarily empty: this state save might be happening
-	 * because user code tried to store %fsr and took the FPU
-	 * from `exception pending' mode to `exception' mode.
-	 * So we still have to check the blasted QNE bit.
-	 * With any luck it will usually not be set.
-	 */
 	rd	%gsr, %o4		! Save %gsr
 	st	%o4, [%o0 + FS_GSR]
 
-	ldx	[%o0 + FS_FSR], %o4	! if (f->fs_fsr & QNE)
-	btst	%o2, %o4
-	bnz	Lfp_storeq		!	goto storeq;
-	 nop
-Lfp_finish:
 	add	%o0, FS_REGS, %o2
 	btst	BLOCK_ALIGN, %o2	! Needs to be re-executed
 	bnz,pn	%icc, 3f		! Check alignment
-	 st	%o3, [%o0 + FS_QSIZE]	! f->fs_qsize = qsize;
+	 st	%g0, [%o0 + FS_QSIZE]	! f->fs_qsize = 0;
 	btst	FPRS_DL, %o5		! Lower FPU clean?
 	bz,a,pt	%icc, 1f		! Then skip it
 	 add	%o2, 128, %o2		! Skip a block
@@ -9789,35 +9747,6 @@ Lfp_finish:
 	ta	1
 	retl
 	 nop
-	
-/*
- * Store the (now known nonempty) FP queue.
- * We have to reread the fsr each time in order to get the new QNE bit.
- *
- * UltraSPARCs don't have floating point queues.
- */
-Lfp_storeq:
-	add	%o0, FS_QUEUE, %o1	! q = &f->fs_queue[0];
-1:
-	rdpr	%fq, %o4
-	stx	%o4, [%o1 + %o3]	! q[qsize++] = fsr_qfront();
-	stx	%fsr, [%o0 + FS_FSR] 	! reread fsr
-	ldx	[%o0 + FS_FSR], %o4	! if fsr & QNE, loop
-	btst	%o2, %o4
-	bnz	1b
-	 inc	8, %o3
-	b	Lfp_finish		! set qsize and finish storing fregs
-	 srl	%o3, 3, %o3		! (but first fix qsize)
-
-/*
- * The fsr store trapped.  Do it again; this time it will not trap.
- * We could just have the trap handler return to the `st %fsr', but
- * if for some reason it *does* trap, that would lock us into a tight
- * loop.  This way we panic instead.  Whoopee.
- */
-savefpcont:
-	b	special_fp_store + 4	! continue
-	 stx	%fsr, [%o0 + FS_FSR]	! but first finish the %fsr store
 
 /*
  * Load FPU state.

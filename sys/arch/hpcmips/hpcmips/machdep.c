@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2007/10/17 19:54:29 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.16.1 2008/07/02 19:08:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2007/10/17 19:54:29 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.16.1 2008/07/02 19:08:16 mjf Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -218,7 +218,6 @@ static char kernel_path[] = KLOADER_KERNEL_PATH;
 #endif /* KLOADER */
 
 /* maps for VM objects */
-struct vm_map *exec_map;
 struct vm_map *mb_map;
 struct vm_map *phys_map;
 
@@ -573,12 +572,6 @@ cpu_startup()
 	}
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.128.6.4 2008/06/29 09:33:21 mjf Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.128.6.5 2008/07/02 19:08:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.128.6.4 2008/06/29 09:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.128.6.5 2008/07/02 19:08:21 mjf Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -181,8 +181,8 @@ uvm_page_compare_key(const struct rb_node *n, const void *key)
 }
 
 const struct rb_tree_ops uvm_page_tree_ops = {
-	.rb_compare_nodes = uvm_page_compare_nodes,
-	.rb_compare_key = uvm_page_compare_key,
+	.rbto_compare_nodes = uvm_page_compare_nodes,
+	.rbto_compare_key = uvm_page_compare_key,
 };
 
 /*
@@ -335,7 +335,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	paddr_t paddr;
 
 	KASSERT(ncpu <= 1);
-	KASSERT(sizeof(pagearray->offset) >= sizeof(struct uvm_cpu *));
+	CTASSERT(sizeof(pagearray->offset) >= sizeof(struct uvm_cpu *));
 
 	/*
 	 * init the page queues and page queue locks, except the free
@@ -1593,10 +1593,10 @@ uvm_pageidlezero(void)
 	firstbucket = ucpu->page_free_nextcolor;
 	nextbucket = firstbucket;
 	do {
-		if (sched_curcpu_runnable_p()) {
-			break;
-		}
 		for (free_list = 0; free_list < VM_NFREELIST; free_list++) {
+			if (sched_curcpu_runnable_p()) {
+				goto quit;
+			}
 			pgfl = &ucpu->page_free[free_list];
 			gpgfl = &uvm.page_free[free_list];
 			while ((pg = LIST_FIRST(&pgfl->pgfl_buckets[

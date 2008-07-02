@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.44.6.1 2008/06/02 13:22:32 mjf Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.44.6.2 2008/07/02 19:08:17 mjf Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44.6.1 2008/06/02 13:22:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44.6.2 2008/07/02 19:08:17 mjf Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44.6.1 2008/06/02 13:22:32 mjf Exp
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -778,13 +777,6 @@ oea_startup(const char *model)
 	}
  
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time. These
-	 * submaps will be allocated after the dead zone.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
