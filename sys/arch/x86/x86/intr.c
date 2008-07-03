@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.56 2008/07/03 14:02:25 drochner Exp $	*/
+/*	$NetBSD: intr.c,v 1.57 2008/07/03 15:44:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.56 2008/07/03 14:02:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.57 2008/07/03 15:44:19 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -845,7 +845,7 @@ intr_string(int ih)
 		pic = ioapic_find(APIC_IRQ_APIC(ih));
 		if (pic != NULL) {
 			sprintf(irqstr, "%s pin %d",
-			    device_xname(&pic->sc_dev), APIC_IRQ_PIN(ih));
+			    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih));
 		} else {
 			sprintf(irqstr, "apic %d int %d (irq %d)",
 			    APIC_IRQ_APIC(ih),

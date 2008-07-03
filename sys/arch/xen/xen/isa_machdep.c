@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.11 2008/07/03 14:02:25 drochner Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.12 2008/07/03 15:44:19 drochner Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 2008/07/03 14:02:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.12 2008/07/03 15:44:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 #if NIOAPIC > 0
 	if (pic)
 		snprintf(evname, sizeof(evname), "%s pin %d",
-		    device_xname(&pic->sc_dev), APIC_IRQ_PIN(ih.pirq));
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih.pirq));
 	else
 #endif
 		snprintf(evname, sizeof(evname), "irq%d", irq);

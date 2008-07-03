@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.10 2008/07/03 14:02:25 drochner Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.11 2008/07/03 15:44:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.10 2008/07/03 14:02:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.11 2008/07/03 15:44:19 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 #if NIOAPIC > 0
 	if (pic)
 		snprintf(evname, sizeof(evname), "%s pin %d",
-		    device_xname(&pic->sc_dev), APIC_IRQ_PIN(xenih.pirq));
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(xenih.pirq));
 	else
 #endif
 		snprintf(evname, sizeof(evname), "irq%d",
@@ -129,7 +129,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	    device_xname(dev), PCIIDE_CHANNEL_NAME(chan));
 #if NIOAPIC > 0
 	if (pic)
-		printf("%s pin %d", device_xname(&pic->sc_dev),
+		printf("%s pin %d", device_xname(pic->sc_dev),
 		       APIC_IRQ_PIN(xenih.pirq));
 	else
 #endif
