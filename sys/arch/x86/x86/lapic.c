@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.41 2008/05/21 01:15:16 ad Exp $	*/
+/*	$NetBSD: lapic.c,v 1.42 2008/07/03 14:02:25 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.41 2008/05/21 01:15:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.42 2008/07/03 14:02:25 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -79,9 +79,7 @@ static void lapic_hwunmask(struct pic *, int);
 static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
 
 struct pic local_pic = {
-	.pic_dev = {
-		.dv_xname = "lapic",
-	},
+	.pic_name = "lapic",
 	.pic_type = PIC_LAPIC,
 	.pic_lock = __SIMPLELOCK_UNLOCKED,
 	.pic_hwmask = lapic_hwmask,

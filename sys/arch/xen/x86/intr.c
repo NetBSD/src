@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2008/05/30 19:03:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2008/07/03 14:02:25 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -260,7 +260,7 @@ xen_intr_map(int *pirq, int type)
 	 */
 	static int xen_next_irq = 200;
 	struct ioapic_softc *ioapic = ioapic_find(APIC_IRQ_APIC(*pirq));
-	struct pic *pic = (struct pic *)ioapic;
+	struct pic *pic = &ioapic->sc_pic;
 	int pin = APIC_IRQ_PIN(*pirq);
 	physdev_op_t op;
 
@@ -298,11 +298,11 @@ struct pic *
 intr_findpic(int num)
 {
 #if NIOAPIC > 0
-	struct pic *pic;
+	struct ioapic_softc *pic;
 
-	pic = (struct pic *)ioapic_find_bybase(num);
+	pic = ioapic_find_bybase(num);
 	if (pic != NULL)
-		return pic;
+		return &pic->sc_pic;
 #endif
 	if (num < NUM_LEGACY_IRQS)
 		return &i8259_pic;
