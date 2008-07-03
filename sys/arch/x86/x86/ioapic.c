@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.36 2008/05/11 15:59:51 ad Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.37 2008/07/03 14:02:25 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.36 2008/05/11 15:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.37 2008/07/03 14:02:25 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -240,7 +240,7 @@ ioapic_print_redir (struct ioapic_softc *sc, const char *why, int pin)
 	uint32_t redirlo = ioapic_read(sc, IOAPIC_REDLO(pin));
 	uint32_t redirhi = ioapic_read(sc, IOAPIC_REDHI(pin));
 
-	apic_format_redir(device_xname(&sc->sc_pic.pic_dev), why, pin, redirhi,
+	apic_format_redir(device_xname(&sc->sc_dev), why, pin, redirhi,
 	    redirlo);
 }
 
@@ -268,6 +268,8 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	
 	sc->sc_flags = aaa->flags;
 	sc->sc_pic.pic_apicid = aaa->apic_id;
+	sc->sc_pic.pic_name = device_xname(self);
+	sc->sc_pic.pic_ioapic = sc;
 
 	aprint_naive("\n");
 
@@ -363,7 +365,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	 * mapping later ...
 	 */
 	if (apic_id != sc->sc_pic.pic_apicid) {
-		aprint_debug_dev(&sc->sc_pic.pic_dev, "misconfigured as apic %d\n", apic_id);
+		aprint_debug_dev(&sc->sc_dev, "misconfigured as apic %d\n", apic_id);
 
 		ioapic_write(sc,IOAPIC_ID,
 		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
@@ -372,10 +374,10 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
 		
 		if (apic_id != sc->sc_pic.pic_apicid) {
-			aprint_error_dev(&sc->sc_pic.pic_dev, "can't remap to apid %d\n",
+			aprint_error_dev(&sc->sc_dev, "can't remap to apid %d\n",
 			    sc->sc_pic.pic_apicid);
 		} else {
-			aprint_debug_dev(&sc->sc_pic.pic_dev, "remapped to apic %d\n",
+			aprint_debug_dev(&sc->sc_dev, "remapped to apic %d\n",
 			    sc->sc_pic.pic_apicid);
 		}
 	}
@@ -458,7 +460,7 @@ ioapic_enable(void)
 		return;
 
 	if (ioapics->sc_flags & IOAPIC_PICMODE) {
-		aprint_debug_dev(&ioapics->sc_pic.pic_dev, "writing to IMCR to disable pics\n");
+		aprint_debug_dev(&ioapics->sc_dev, "writing to IMCR to disable pics\n");
 		outb(IMCR_ADDR, IMCR_REGISTER);
 		outb(IMCR_DATA, IMCR_APIC);
 	}
@@ -473,7 +475,7 @@ ioapic_reenable(void)
 	if (ioapics == NULL)
 		return;
 
-	aprint_normal("%s reenabling\n", device_xname(&ioapics->sc_pic.pic_dev));
+	aprint_normal("%s reenabling\n", device_xname(&ioapics->sc_dev));
 
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
 		apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
@@ -496,7 +498,7 @@ void
 ioapic_hwmask(struct pic *pic, int pin)
 {
 	uint32_t redlo;
-	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
+	struct ioapic_softc *sc = pic->pic_ioapic;
 	u_long flags;
 
 	flags = ioapic_lock(sc);
@@ -510,7 +512,7 @@ void
 ioapic_hwunmask(struct pic *pic, int pin)
 {
 	uint32_t redlo;
-	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
+	struct ioapic_softc *sc = pic->pic_ioapic;
 	u_long flags;
 
 	flags = ioapic_lock(sc);
@@ -525,7 +527,7 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 		int idtvec, int type)
 
 {
-	struct ioapic_softc *sc = (struct ioapic_softc *)pic;
+	struct ioapic_softc *sc = pic->pic_ioapic;
 	struct ioapic_pin *pp;
 
 	pp = &sc->sc_pins[pin];
@@ -570,7 +572,7 @@ ioapic_dump_raw(void)
 	uint32_t reg;
 
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
-		printf("Register dump of %s\n", device_xname(&sc->sc_pic.pic_dev));
+		printf("Register dump of %s\n", device_xname(&sc->sc_dev));
 		i = 0;
 		do {
 			if (i % 0x08 == 0)
