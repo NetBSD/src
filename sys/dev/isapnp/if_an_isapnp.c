@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.18 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.19 2008/07/03 18:10:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.18 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.19 2008/07/03 18:10:08 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ struct an_isapnp_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-CFATTACH_DECL(an_isapnp, sizeof(struct an_isapnp_softc),
+CFATTACH_DECL_NEW(an_isapnp, sizeof(struct an_isapnp_softc),
     an_isapnp_match, an_isapnp_attach, NULL, NULL);
 
 int
@@ -108,6 +108,7 @@ an_isapnp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_dev = self;
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ipa->ipa_io[0].h;
 
