@@ -1,4 +1,4 @@
-/*	$NetBSD: sis_drv.c,v 1.3 2007/12/11 11:48:46 lukem Exp $	*/
+/*	$NetBSD: sis_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $	*/
 
 /* sis.c -- sis driver -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sis_drv.c,v 1.3 2007/12/11 11:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sis_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/sis_drv.c,v 1.7 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -117,13 +117,13 @@ static void
 sisdrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	drm_device_t *dev = device_private(self);
 
 	sis_configure(dev);
 	return drm_attach(self, pa, sis_pciidlist);
 }
 
-CFATTACH_DECL(sisdrm, sizeof(drm_device_t), sisdrm_probe, sisdrm_attach,
+CFATTACH_DECL_NEW(sisdrm, sizeof(drm_device_t), sisdrm_probe, sisdrm_attach,
 	drm_detach, drm_activate);
 
 #endif

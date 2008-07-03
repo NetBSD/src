@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_drv.c,v 1.3 2007/12/11 11:48:42 lukem Exp $	*/
+/*	$NetBSD: mga_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $	*/
 
 /* mga_drv.c -- Matrox G200/G400 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:56:22 1999 by jhartmann@precisioninsight.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.3 2007/12/11 11:48:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_drv.c,v 1.12 2006/05/17 06:36:28 anholt Exp $");
 */
@@ -188,13 +188,13 @@ static void
 mgadrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	drm_device_t *dev = device_private(self);
 
 	mga_configure(dev);
 	return drm_attach(self, pa, mga_pciidlist);
 }
 
-CFATTACH_DECL(mgadrm, sizeof(drm_device_t), mgadrm_probe, mgadrm_attach,
+CFATTACH_DECL_NEW(mgadrm, sizeof(drm_device_t), mgadrm_probe, mgadrm_attach,
 	drm_detach, drm_activate);
 
 #endif
