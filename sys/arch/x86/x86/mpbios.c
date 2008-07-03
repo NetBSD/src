@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.43 2008/04/30 23:25:49 ad Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.44 2008/07/03 14:02:25 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.43 2008/04/30 23:25:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.44 2008/07/03 14:02:25 drochner Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -1045,7 +1045,8 @@ static void
 mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 {
 	const struct mpbios_int *entry = (const struct mpbios_int *)ent;
-	struct ioapic_softc *sc = NULL, *sc2;
+	struct ioapic_softc *sc = NULL;
+	struct pic *sc2;
 
 	struct mp_intr_map *altmpi;
 	struct mp_bus *mpb;
@@ -1108,8 +1109,8 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 		 * number.
 		 */
 		if (pin >= sc->sc_apic_sz) {
-			sc2 = (struct ioapic_softc *)intr_findpic(pin);
-			if (sc2 != sc) {
+			sc2 = intr_findpic(pin);
+			if (sc2 && sc2->pic_ioapic != sc) {
 				printf("mpbios: bad pin %d for apic %d\n",
 				    pin, id);
 				return;
@@ -1128,7 +1129,7 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 			if ((altmpi->type != type) ||
 			    (altmpi->flags != flags)) {
 				printf("%s: conflicting map entries for pin %d\n",
-				    device_xname(&sc->sc_pic.pic_dev), pin);
+				    device_xname(&sc->sc_dev), pin);
 			}
 		} else {
 			sc->sc_pins[pin].ip_map = mpi;
@@ -1150,7 +1151,7 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 		char buf[256];
 
 		printf("%s: int%d attached to %s",
-		    sc ? device_xname(&sc->sc_pic.pic_dev) : "local apic",
+		    sc ? device_xname(&sc->sc_dev) : "local apic",
 		    pin, mpb->mb_name);
 
 		if (mpb->mb_idx != -1)
