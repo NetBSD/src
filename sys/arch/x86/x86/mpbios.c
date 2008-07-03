@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.44 2008/07/03 14:02:25 drochner Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.45 2008/07/03 15:44:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.44 2008/07/03 14:02:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.45 2008/07/03 15:44:19 drochner Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -1129,7 +1129,7 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 			if ((altmpi->type != type) ||
 			    (altmpi->flags != flags)) {
 				printf("%s: conflicting map entries for pin %d\n",
-				    device_xname(&sc->sc_dev), pin);
+				    device_xname(sc->sc_dev), pin);
 			}
 		} else {
 			sc->sc_pins[pin].ip_map = mpi;
@@ -1151,7 +1151,7 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 		char buf[256];
 
 		printf("%s: int%d attached to %s",
-		    sc ? device_xname(&sc->sc_dev) : "local apic",
+		    sc ? device_xname(sc->sc_dev) : "local apic",
 		    pin, mpb->mb_name);
 
 		if (mpb->mb_idx != -1)
