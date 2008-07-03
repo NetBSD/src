@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.86 2008/04/05 21:31:23 cegger Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.87 2008/07/03 19:07:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.86 2008/04/05 21:31:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.87 2008/07/03 19:07:43 drochner Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -87,7 +87,7 @@ int	pcmcia_rescan(struct device *, const char *, const int *);
 void	pcmcia_childdetached(struct device *, struct device *);
 int	pcmcia_print(void *, const char *);
 
-CFATTACH_DECL2(pcmcia, sizeof(struct pcmcia_softc),
+CFATTACH_DECL2_NEW(pcmcia, sizeof(struct pcmcia_softc),
     pcmcia_match, pcmcia_attach, pcmcia_detach, NULL,
     pcmcia_rescan, pcmcia_childdetached);
 
@@ -130,11 +130,12 @@ void
 pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
-	struct pcmcia_softc *sc = (struct pcmcia_softc *) self;
+	struct pcmcia_softc *sc = device_private(self);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	sc->dev = self;
 	sc->pct = paa->pct;
 	sc->pch = paa->pch;
 	sc->iobase = paa->iobase;
@@ -162,7 +163,7 @@ int
 pcmcia_card_attach(dev)
 	struct device *dev;
 {
-	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
+	struct pcmcia_softc *sc = device_private(dev);
 	struct pcmcia_function *pf;
 	int error;
 	static const int wildcard[PCMCIACF_NLOCS] = {
@@ -187,7 +188,7 @@ pcmcia_card_attach(dev)
 	if (sc->card.error ||
 	    SIMPLEQ_EMPTY(&sc->card.pf_head)) {
 		printf("%s: card appears to have bogus CIS\n",
-		    device_xname(&sc->dev));
+		    device_xname(sc->dev));
 		error = EIO;
 		goto done;
 	}
@@ -203,7 +204,7 @@ pcmcia_card_attach(dev)
 #ifdef DIAGNOSTIC
 		if (pf->child != NULL) {
 			printf("%s: %s still attached to function %d!\n",
-			    device_xname(&sc->dev), device_xname(pf->child),
+			    device_xname(sc->dev), device_xname(pf->child),
 			    pf->number);
 			panic("pcmcia_card_attach");
 		}
@@ -224,7 +225,7 @@ int
 pcmcia_rescan(struct device *self, const char *ifattr,
     const int *locators)
 {
-	struct pcmcia_softc *sc = (struct pcmcia_softc *)self;
+	struct pcmcia_softc *sc = device_private(self);
 	struct pcmcia_function *pf;
 	struct pcmcia_attach_args paa;
 	int locs[PCMCIACF_NLOCS];
@@ -266,7 +267,7 @@ pcmcia_card_detach(dev, flags)
 	struct device *dev;
 	int flags;		/* DETACH_* flags */
 {
-	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
+	struct pcmcia_softc *sc = device_private(dev);
 	struct pcmcia_function *pf;
 	int error;
 
@@ -281,10 +282,10 @@ pcmcia_card_detach(dev, flags)
 		if (pf->child == NULL)
 			continue;
 		DPRINTF(("%s: detaching %s (function %d)\n",
-		    device_xname(&sc->dev), device_xname(pf->child), pf->number));
+		    device_xname(sc->dev), device_xname(pf->child), pf->number));
 		if ((error = config_detach(pf->child, flags)) != 0) {
 			printf("%s: error %d detaching %s (function %d)\n",
-			    device_xname(&sc->dev), error, device_xname(pf->child),
+			    device_xname(sc->dev), error, device_xname(pf->child),
 			    pf->number);
 		}
 	}
@@ -301,7 +302,7 @@ pcmcia_card_detach(dev, flags)
 void
 pcmcia_childdetached(struct device *self, struct device *child)
 {
-	struct pcmcia_softc *sc = (struct pcmcia_softc *)self;
+	struct pcmcia_softc *sc = device_private(self);
 	struct pcmcia_function *pf;
 
 	SIMPLEQ_FOREACH(pf, &sc->card.pf_head, pf_list) {
@@ -323,7 +324,7 @@ void
 pcmcia_card_deactivate(dev)
 	struct device *dev;
 {
-	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
+	struct pcmcia_softc *sc = device_private(dev);
 	struct pcmcia_function *pf;
 
 	/*
@@ -337,7 +338,7 @@ pcmcia_card_deactivate(dev)
 		if (pf->child == NULL)
 			continue;
 		DPRINTF(("%s: deactivating %s (function %d)\n",
-		    device_xname(&sc->dev), device_xname(pf->child), pf->number));
+		    device_xname(sc->dev), device_xname(pf->child), pf->number));
 		config_deactivate(pf->child);
 	}
 }
@@ -449,7 +450,7 @@ pcmcia_socket_settype(dev, type)
 	struct device *dev;
 	int type;
 {
-	struct pcmcia_softc *sc = (void *)dev;
+	struct pcmcia_softc *sc = device_private(dev);
 
 	pcmcia_chip_socket_settype(sc->pct, sc->pch, type);
 }
@@ -474,11 +475,11 @@ void
 pcmcia_socket_enable(dev)
 	struct device *dev;
 {
-	struct pcmcia_softc *sc = (void *)dev;
+	struct pcmcia_softc *sc = device_private(dev);
 
 	if (sc->sc_enabled_count++ == 0)
 		pcmcia_chip_socket_enable(sc->pct, sc->pch);
-	DPRINTF(("%s: ++enabled_count = %d\n", device_xname(&sc->dev),
+	DPRINTF(("%s: ++enabled_count = %d\n", device_xname(sc->dev),
 		 sc->sc_enabled_count));
 }
 
@@ -486,11 +487,11 @@ void
 pcmcia_socket_disable(dev)
 	struct device *dev;
 {
-	struct pcmcia_softc *sc = (void *)dev;
+	struct pcmcia_softc *sc = device_private(dev);
 
 	if (--sc->sc_enabled_count == 0)
 		pcmcia_chip_socket_disable(sc->pct, sc->pch);
-	DPRINTF(("%s: --enabled_count = %d\n", device_xname(&sc->dev),
+	DPRINTF(("%s: --enabled_count = %d\n", device_xname(sc->dev),
 		 sc->sc_enabled_count));
 }
 
@@ -511,8 +512,8 @@ pcmcia_function_enable(pf)
 	 * Increase the reference count on the socket, enabling power, if
 	 * necessary.
 	 */
-	pcmcia_socket_enable(&sc->dev);
-	pcmcia_socket_settype(&sc->dev, pf->cfe->iftype);
+	pcmcia_socket_enable(sc->dev);
+	pcmcia_socket_settype(sc->dev, pf->cfe->iftype);
 
 	if (pf->pf_flags & PFF_ENABLED) {
 		/*
@@ -598,7 +599,7 @@ pcmcia_function_enable(pf)
 		SIMPLEQ_FOREACH(tmp, &sc->card.pf_head, pf_list) {
 			printf("%s: function %d CCR at %d offset %lx: "
 			       "%x %x %x %x, %x %x %x %x, %x\n",
-			       device_xname(&tmp->sc->dev), tmp->number,
+			       device_xname(tmp->sc->dev), tmp->number,
 			       tmp->pf_ccr_window,
 			       (unsigned long) tmp->pf_ccr_offset,
 			       pcmcia_ccr_read(tmp, 0),
@@ -630,7 +631,7 @@ bad:
 	 * necessary.
 	 */
 	printf("%s: couldn't map the CCR\n", device_xname(pf->child));
-	pcmcia_socket_disable(&sc->dev);
+	pcmcia_socket_disable(sc->dev);
 
 	return (error);
 }
@@ -689,7 +690,7 @@ out:
 	 * Decrement the reference count, and power down the socket, if
 	 * necessary.
 	 */
-	pcmcia_socket_disable(&sc->dev);
+	pcmcia_socket_disable(sc->dev);
 }
 
 int
