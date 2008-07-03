@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_mputmr.c,v 1.2 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: omap2430_mputmr.c,v 1.3 2008/07/03 06:19:18 matt Exp $	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.2 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.3 2008/07/03 06:19:18 matt Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -237,7 +237,7 @@ cpu_initclocks(void)
 
 	setclockrate(clock_sc, hz);
 	setclockrate(stat_sc, stathz);
-	setclockrate(ref_sc, hz);
+	setclockrate(ref_sc, 0);
 
 
 	/*
@@ -299,8 +299,19 @@ calc_timer_factors(int ints_per_sec, timer_factors *tf)
 {
 	uint32_t ptv_power;	/* PS */
 	uint32_t count_freq;
-	static const uint32_t us_per_sec = 1000000;
+	const uint32_t us_per_sec = 1000000;
 	
+	if (ints_per_sec == 0) {
+		/*
+		 * When ints_per_sec equal to zero there is mean full range
+		 * timer usage. Nevertheless autoreload mode is still enabled.
+		 */
+		tf->ptv = 0;
+		tf->reload = 0;
+		tf->counts_per_usec = OMAP_MPU_TIMER_CLOCK_FREQ / us_per_sec;
+		return;
+	}
+
 
 	tf->ptv = 8;
 	for (;;) {
