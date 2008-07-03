@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.9 2008/06/30 20:54:19 matt Exp $ */
+/* $NetBSD: rb.h,v 1.10 2008/07/03 17:41:54 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -96,6 +96,24 @@ struct rb_node {
 	TAILQ_ENTRY(rb_node) rb_link;
 #endif
 };
+
+#define RB_TREE_MIN(T) rb_tree_iterate((T), NULL, RB_DIR_LEFT)
+#define RB_TREE_MAX(T) rb_tree_iterate((T), NULL, RB_DIR_RIGHT)
+#define RB_TREE_FOREACH(N, T) \
+    for ((N) = RB_TREE_MIN(T); (N); \
+	(N) = rb_tree_iterate((T), (N), RB_DIR_RIGHT))
+#define RB_TREE_FOREACH_REVERSE(N, T) \
+    for ((N) = RB_TREE_MAX(T); (N); \
+	(N) = rb_tree_iterate((T), (N), RB_DIR_LEFT))
+
+ #endif	/* _SYS_RB_H_*/
+
+Regards,
+--
+Alex
+
+
+
 
 #ifdef RBDEBUG
 TAILQ_HEAD(rb_node_qh, rb_node);
