@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.14 2008/06/28 01:34:05 rumble Exp $ */
+/* $NetBSD: udf.h,v 1.15 2008/07/03 18:03:22 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -69,6 +69,7 @@ extern int udf_verbose;
 #define UDF_DEBUG_ECCLINE	0x040000
 #define UDF_DEBUG_SYNC		0x080000
 #define UDF_DEBUG_PARANOIA	0x100000
+#define UDF_DEBUG_NODEDUMP	0x200000
 
 /* initial value of udf_verbose */
 #define UDF_DEBUGGING		0
