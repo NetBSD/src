@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.49.14.1 2008/06/10 14:51:23 simonb Exp $	*/
+/*	$NetBSD: fs.h,v 1.49.14.2 2008/07/03 16:40:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -327,7 +327,12 @@ struct fs {
 	int32_t	 fs_old_cpc;		/* cyl per cycle in postbl */
 /* this area is otherwise allocated unless fs_old_flags & FS_FLAGS_UPDATED */
 	int32_t	 fs_maxbsize;		/* maximum blocking factor permitted */
-	int64_t	 fs_sparecon64[17];	/* old rotation block list head */
+	uint8_t	 fs_journal_version;	/* journal format version */
+	uint8_t	 fs_journal_location;	/* journal location type */
+	uint8_t	 fs_journal_reserved[2];/* reserved for future use */
+	uint32_t fs_journal_flags;	/* journal flags */
+	uint64_t fs_journallocs[4];	/* location info for journal */
+	int64_t	 fs_sparecon64[12];	/* reserved for future use */
 	int64_t	 fs_sblockloc;		/* byte offset of standard superblock */
 	struct	csum_total fs_cstotal;	/* cylinder summary information */
 	int64_t  fs_time;		/* last time written */
