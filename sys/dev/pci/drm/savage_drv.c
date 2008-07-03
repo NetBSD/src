@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_drv.c,v 1.3 2007/12/11 11:48:46 lukem Exp $	*/
+/*	$NetBSD: savage_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $	*/
 
 /* savage_drv.c -- Savage DRI driver
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.3 2007/12/11 11:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_drv.c,v 1.3 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -124,13 +124,13 @@ static void
 savagedrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	drm_device_t *dev = device_private(self);
 
 	savage_configure(dev);
 	return drm_attach(self, pa, savage_pciidlist);
 }
 
-CFATTACH_DECL(savagedrm, sizeof(drm_device_t), savagedrm_probe, savagedrm_attach,
+CFATTACH_DECL_NEW(savagedrm, sizeof(drm_device_t), savagedrm_probe, savagedrm_attach,
 	drm_detach, drm_activate);
 
 #endif

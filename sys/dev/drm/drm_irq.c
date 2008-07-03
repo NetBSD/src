@@ -1,4 +1,4 @@
-/* $NetBSD: drm_irq.c,v 1.14 2008/06/29 12:49:08 jmcneill Exp $ */
+/* $NetBSD: drm_irq.c,v 1.15 2008/07/03 17:36:44 drochner Exp $ */
 
 /* drm_irq.c -- IRQ IOCTL and function support
  * Created: Fri Oct 18 2003 by anholt@FreeBSD.org
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.14 2008/06/29 12:49:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.15 2008/07/03 17:36:44 drochner Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_irq.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -113,7 +113,7 @@ int drm_irq_install(drm_device_t *dev)
 		retcode = ENOENT;
 		goto err;
 	}
-	aprint_normal_dev(&dev->device, "interrupting at %s\n", istr);
+	aprint_normal_dev(dev->device, "interrupting at %s\n", istr);
 
 				/* After installing handler */
 	DRM_LOCK();
