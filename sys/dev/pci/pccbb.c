@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.177 2008/06/26 20:57:10 drochner Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.178 2008/07/03 13:37:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.177 2008/06/26 20:57:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.178 2008/07/03 13:37:34 drochner Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1893,8 +1893,21 @@ static cardbusreg_t
 pccbb_conf_read(cardbus_chipset_tag_t cc, cardbustag_t tag, int offset)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
+	pcitag_t brtag = sc->sc_tag;
+	cardbusreg_t reg;
 
-	return pci_conf_read(sc->sc_pc, tag, offset);
+	/*
+	 * clear cardbus master abort status; it is OK to write without
+	 * reading before because all bits are r/o or w1tc
+	 */
+	pci_conf_write(sc->sc_pc, brtag, PCI_CBB_SECSTATUS,
+		       CBB_SECSTATUS_CBMABORT);
+	reg = pci_conf_read(sc->sc_pc, tag, offset);
+	/* check cardbus master abort status */
+	if (pci_conf_read(sc->sc_pc, brtag, PCI_CBB_SECSTATUS)
+			  & CBB_SECSTATUS_CBMABORT)
+		return (0xffffffff);
+	return reg;
 }
 
 /*
