@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.6 2008/07/03 14:02:25 drochner Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.7 2008/07/03 15:44:19 drochner Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.6 2008/07/03 14:02:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7 2008/07/03 15:44:19 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,7 +179,7 @@ const char
 			return NULL;
 		}
 		snprintf(buf, 64, "%s pin %d, event channel %d",
-		    device_xname(&pic->sc_dev), APIC_IRQ_PIN(ih.pirq),
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih.pirq),
 		    ih.evtch);
 		return buf;
 	}
@@ -223,7 +223,7 @@ pci_intr_establish(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh,
 			return NULL;
 		}
 		snprintf(evname, sizeof(evname), "%s pin %d",
-		    device_xname(&pic->sc_dev), APIC_IRQ_PIN(intrh.pirq));
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(intrh.pirq));
 	} else
 #endif
 		snprintf(evname, sizeof(evname), "irq%d", intrh.pirq);
