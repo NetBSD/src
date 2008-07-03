@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.287 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.288 2008/07/03 15:35:28 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.287 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.288 2008/07/03 15:35:28 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3888,8 +3888,10 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 resetandabort:
 	(void)tcp_respond(NULL, m, m, th, (tcp_seq)0, th->th_ack, TH_RST);
 abort:
-	if (so != NULL)
+	if (so != NULL) {
+		(void) soqremque(so, 1);
 		(void) soabort(so);
+	}
 	s = splsoftnet();
 	syn_cache_put(sc);
 	splx(s);
