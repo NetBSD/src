@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.104 2008/07/02 19:44:10 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.105 2008/07/03 15:15:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -317,7 +317,6 @@ void lwp_whatis(uintptr_t, void (*)(const char *, ...));
 static inline void
 lwp_lock(lwp_t *l)
 {
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	kmutex_t *old;
 
 	mutex_spin_enter(old = l->l_mutex);
@@ -328,9 +327,6 @@ lwp_lock(lwp_t *l)
 	 */
 	if (__predict_false(l->l_mutex != old))
 		lwp_lock_retry(l, old);
-#else
-	mutex_spin_enter(l->l_mutex);
-#endif
 }
 
 /*
