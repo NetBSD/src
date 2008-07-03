@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.1.2.2 2008/06/12 08:39:22 martin Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.1.2.3 2008/07/03 16:40:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.1.2.2 2008/06/12 08:39:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.1.2.3 2008/07/03 16:40:26 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -242,6 +242,13 @@ ffs_wapbl_start(struct mount *mp)
 			if ((fs->fs_flags & FS_DOWAPBL) == 0) {
 				UFS_WAPBL_BEGIN(mp);
 				fs->fs_flags |= FS_DOWAPBL;
+				fs->fs_journal_version = UFS_WAPBL_VERSION;
+				fs->fs_journal_location =
+					UFS_WAPBL_JOURNALLOC_END_PARTITION;
+				fs->fs_journal_flags = 0;
+				fs->fs_journallocs[0] = off;
+				fs->fs_journallocs[1] = count;
+				fs->fs_journallocs[2] = blksize;
 				error = ffs_sbupdate(ump, MNT_WAIT);
 				KASSERT(error == 0);
 				UFS_WAPBL_END(mp);
@@ -250,6 +257,12 @@ ffs_wapbl_start(struct mount *mp)
 					ffs_wapbl_stop(mp, MNT_FORCE);
 					return error;
 				}
+			} else {
+				/*
+				 * The filesystem is was dirty and the
+				 * journal location will already be in
+				 * the superblock.  No need to update.
+				 */
 			}
 		} else if (fs->fs_flags & FS_DOWAPBL) {
 			fs->fs_fmod = 1;
@@ -304,7 +317,26 @@ ffs_wapbl_stop(struct mount *mp, int force)
 		if (error && force)
 			goto forceout;
 		KASSERT(fs->fs_flags & FS_DOWAPBL);
+
 		fs->fs_flags &= ~FS_DOWAPBL;
+
+#if 0 /* XXXX this may or may not apply depend on how log is allocated... */
+		/*
+		 * XXXX
+		 * Do we really want to clear out the wapbl type/locator
+		 * info here, so we always start from a clean slate on a
+		 * clean mount?  Or is there any use at all in keeping this
+		 * info around for the future?
+		 */
+		fs->fs_journal_version = 0;
+		fs->fs_journal_location = 0;
+		fs->fs_journal_flags = 0;
+		fs->fs_journallocs[0] = 0;
+		fs->fs_journallocs[1] = 0;
+		fs->fs_journallocs[2] = 0;
+		fs->fs_journallocs[3] = 0;
+#endif
+
 		error = ffs_sbupdate(ump, MNT_WAIT);
 		KASSERT(error == 0);
 		UFS_WAPBL_END(mp);
@@ -335,6 +367,18 @@ ffs_wapbl_replay_start(struct mount *mp, struct fs *fs, struct vnode *devvp)
 	size_t blksize;
 
 	error =  ffs_wapbl_log_position(mp, fs, devvp, &off, &count, &blksize);
+	/*
+	 * XXX
+	 * What to do if ffs_wapbl_log_position() and the superblock
+	 * disagree?
+	 */
+	KASSERT(fs->fs_journal_version == UFS_WAPBL_VERSION);
+	KASSERT(fs->fs_journal_location == UFS_WAPBL_JOURNALLOC_END_PARTITION);
+	KASSERT(fs->fs_journallocs[0] == off);
+	KASSERT(fs->fs_journallocs[1] == count);
+	KASSERT(fs->fs_journallocs[2] == blksize);
+	KASSERT(fs->fs_journallocs[3] == 0);
+
 	if (error)
 		return error;
 
