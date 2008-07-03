@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.4.1 2008/07/03 18:37:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -127,7 +127,6 @@ vaddr_t ia64_unwindtab;
 vsize_t ia64_unwindtablen;
 #endif
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -273,13 +272,6 @@ cpu_startup()
         }
 
  	minaddr = 0;
-
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio

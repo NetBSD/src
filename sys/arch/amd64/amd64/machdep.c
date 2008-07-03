@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2008/06/05 21:44:31 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.2.1 2008/07/03 18:37:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2008/06/05 21:44:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.2.1 2008/07/03 18:37:50 simonb Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -262,7 +262,6 @@ static struct vm_map lkm_map_store;
 extern struct vm_map *lkm_map;
 vaddr_t kern_end;
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -344,13 +343,6 @@ cpu_startup(void)
 	minaddr = 0;
 
 	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
-
-	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
@@ -394,16 +386,15 @@ x86_64_switch_context(struct pcb *new)
 {
 	struct cpu_info *ci;
 	ci = curcpu();
-	if (/* XXX ! ci->ci_fpused */ 1) {
-		HYPERVISOR_fpu_taskswitch(0);
-		/* XXX ci->ci_fpused = 0; */
-	}
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
 		physop.u.set_iopl.iopl = new->pcb_iopl;
 		HYPERVISOR_physdev_op(&physop);
+	}
+	if (new->pcb_fpcpu != ci) {
+		HYPERVISOR_fpu_taskswitch(1);
 	}
 }
 
@@ -436,7 +427,7 @@ x86_64_proc0_tss_ldt_init(void)
 #else
 	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
-	HYPERVISOR_fpu_taskswitch(0);
+	HYPERVISOR_fpu_taskswitch(1);
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_rsp0);
 #endif /* XEN */
 }

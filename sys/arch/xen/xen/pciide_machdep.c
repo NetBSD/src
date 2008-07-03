@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.9 2008/04/06 07:24:20 cegger Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.9.8.1 2008/07/03 18:37:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.9 2008/04/06 07:24:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.9.8.1 2008/07/03 18:37:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	char evname[8];
         struct xen_intr_handle xenih;
 #if NIOAPIC > 0
-	struct pic *pic = NULL;
+	struct ioapic_softc *pic = NULL;
 #endif
 	int evtch;
 
@@ -95,8 +95,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 		if (intr_find_mpmapping(mp_isa_bus, xenih.pirq, &xenih) == 0 ||
 		    intr_find_mpmapping(mp_eisa_bus, xenih.pirq, &xenih) == 0) {
 			if (!APIC_IRQ_ISLEGACY(xenih.pirq)) {
-				pic = (struct pic *)
-				    ioapic_find(APIC_IRQ_APIC(xenih.pirq));
+				pic = ioapic_find(APIC_IRQ_APIC(xenih.pirq));
 				if (pic == NULL) {
 					printf("pciide_machdep_compat_intr_establish: "
 					    "unknown apic %d\n",
@@ -115,7 +114,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 #if NIOAPIC > 0
 	if (pic)
 		snprintf(evname, sizeof(evname), "%s pin %d",
-		    pic->pic_name, APIC_IRQ_PIN(xenih.pirq));
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(xenih.pirq));
 	else
 #endif
 		snprintf(evname, sizeof(evname), "irq%d",
@@ -130,7 +129,8 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	    device_xname(dev), PCIIDE_CHANNEL_NAME(chan));
 #if NIOAPIC > 0
 	if (pic)
-		printf("%s pin %d", pic->pic_name, APIC_IRQ_PIN(xenih.pirq));
+		printf("%s pin %d", device_xname(pic->sc_dev),
+		       APIC_IRQ_PIN(xenih.pirq));
 	else
 #endif
 		printf("irq %d", ih->pirq);

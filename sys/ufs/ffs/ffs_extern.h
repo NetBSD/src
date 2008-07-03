@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.65.2.1 2008/06/10 14:51:23 simonb Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.65.2.2 2008/07/03 18:38:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -138,10 +138,6 @@ int	ffs_lock(void *);
 int	ffs_unlock(void *);
 int	ffs_islocked(void *);
 int	ffs_full_fsync(struct vnode *, int);
-
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 
 /*
  * Snapshot function prototypes.

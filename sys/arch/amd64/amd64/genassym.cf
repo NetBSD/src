@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.35 2008/06/04 11:30:25 ad Exp $
+#	$NetBSD: genassym.cf,v 1.35.2.1 2008/07/03 18:37:50 simonb Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -278,6 +278,7 @@ define	ACPI_SUSPEND_CR4	offsetof(struct cpu_info, ci_suspend_cr4)
 define	ACPI_SUSPEND_CR8	offsetof(struct cpu_info, ci_suspend_cr8)
 
 if NIOAPIC > 0
+define		PIC_IOAPIC		offsetof(struct pic, pic_ioapic)
 define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)
 define		IOAPIC_SC_DATA		offsetof(struct ioapic_softc, sc_data)
 define		PIC_LOCK		offsetof(struct pic, pic_lock)

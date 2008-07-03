@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.169 2008/04/28 20:24:08 martin Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.169.4.1 2008/07/03 18:38:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.169 2008/04/28 20:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.169.4.1 2008/07/03 18:38:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1069,7 +1069,8 @@ procfs_lookup(v)
 			int found;
 
 			mutex_enter(p->p_lock);
-			plwp = proc_representative_lwp(p, NULL, 1);
+			plwp = LIST_FIRST(&p->p_lwps);
+			KASSERT(plwp != NULL);
 			lwp_addref(plwp);
 			mutex_exit(p->p_lock);
 			found = cnp->cn_namelen == pt->pt_namlen &&
@@ -1302,7 +1303,8 @@ procfs_readdir(v)
 			if (pt->pt_valid) {
 				/* XXXSMP LWP can disappear */
 				mutex_enter(p->p_lock);
-				l = proc_representative_lwp(p, NULL, 1);
+				l = LIST_FIRST(&p->p_lwps);
+				KASSERT(l != NULL);
 				mutex_exit(p->p_lock);
 				if ((*pt->pt_valid)(l, vp->v_mount) == 0)
 					continue;

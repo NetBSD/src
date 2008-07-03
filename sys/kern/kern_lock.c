@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.144.2.1 2008/06/27 15:11:39 simonb Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.144.2.2 2008/07/03 18:38:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.144.2.1 2008/06/27 15:11:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.144.2.2 2008/07/03 18:38:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -118,7 +118,7 @@ void
 kernel_lock_init(void)
 {
 
-	KASSERT(CACHE_LINE_SIZE >= sizeof(__cpu_simple_lock_t));
+	CTASSERT(CACHE_LINE_SIZE >= sizeof(__cpu_simple_lock_t));
 	__cpu_simple_lock_init(kernel_lock);
 	kernel_lock_dodebug = LOCKDEBUG_ALLOC(kernel_lock, &_kernel_lock_ops,
 	    RETURN_ADDRESS);

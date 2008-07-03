@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35.2.3 2008/07/01 00:05:25 matt Exp $
+#	$NetBSD: Makefile,v 1.35.2.4 2008/07/03 18:38:24 simonb Exp $
 #
 
 .include <bsd.own.mk>
@@ -58,15 +58,25 @@ VOPTORUMPVOP="-e s/vop/rump_vop/g;/VOPARG/!s/VOP/RUMP_VOP/g;/vfs_op_desc/,\$$d"
 VOPTORUMPVOP+="-e s/vm_prot_t/int/g"
 VOPTORUMPVOP+="-e s/voff_t/off_t/g;/sys\/buf\.h/s/.*/struct buf;/"
 RVNH=\#include \"rump.h\"
-rumpvnode_if.c: vnode_if.c
+rumpdefs.h rumpnode_if.h rumpvnode_if.c: vnode_if.c \
+		${NETBSDSRCDIR}/sys/sys/vnode_if.h \
+		${NETBSDSRCDIR}/sys/kern/vnode_if.c \
+		${NETBSDSRCDIR}/sys/sys/namei.h \
+		${NETBSDSRCDIR}/sys/sys/fcntl.h \
+		${NETBSDSRCDIR}/sys/sys/vnode.h \
+		${NETBSDSRCDIR}/sys/sys/errno.h \
+		${.CURDIR}/Makefile
+	echo Regenerating rumpdefs.h rumpnode_if.h and rumpnode_if.c
 	sed ${VOPTORUMPVOP}";s/SYS_VNODE_IF_H/SYS_RUMPVNODE_IF_H/g"	\
 	    < ${NETBSDSRCDIR}/sys/sys/vnode_if.h > rumpvnode_if.h
 	# XXX: some creative kludging to simulate 'a\' (I have no
 	# clue how to make it work in a Makefile
 	sed ${VOPTORUMPVOP}";/sys\/vnode.h/{x;s/.*/${RVNH}/;x;G;n;}"	\
 	    < ${NETBSDSRCDIR}/sys/kern/vnode_if.c > rumpvnode_if.c
-	sed -n '/define/s/NAMEI_/RUMP_NAMEI_/p'				\
+	sed -n '/#define NAMEI_/s/NAMEI_/RUMP_NAMEI_/gp'		\
 	    < ${NETBSDSRCDIR}/sys/sys/namei.h > rumpdefs.h
+	sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp'	\
+	    < ${NETBSDSRCDIR}/sys/sys/fcntl.h >> rumpdefs.h
 	printf "#ifndef __VTYPE_DEFINED\n#define __VTYPE_DEFINED\n"	\
 	    >> rumpdefs.h
 	sed -n '/enum vtype.*{/p'					\

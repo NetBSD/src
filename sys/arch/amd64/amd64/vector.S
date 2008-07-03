@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.27 2008/06/01 21:24:15 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.27.2.1 2008/07/03 18:37:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@
 /*****************************************************************************/
 
 #ifndef	XEN
+#define PRE_TRAP
 #define	TRAP(a)		pushq $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushq $0 ; TRAP(a)
 #else
@@ -160,15 +161,14 @@ IDTVEC(trap05)
 IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
 IDTVEC(trap07)
+	PRE_TRAP;
 	pushq	$0			# dummy error code
 	pushq	$T_ASTFLT
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
-#ifdef XEN
   	STI(si)
-#endif
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	jmp	.Lalltraps_checkusr
@@ -188,6 +188,7 @@ IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
 IDTVEC(intrspurious)
 IDTVEC(trap0f)
+	PRE_TRAP;
 	pushq	$0			# dummy error code
 	pushq	$T_ASTFLT
 	INTRENTRY
@@ -196,6 +197,7 @@ IDTVEC(trap0f)
 #endif /* DIAGNOSTIC */
 	jmp	.Lalltraps_checkusr
 IDTVEC(trap10)
+	PRE_TRAP;
 	pushq	$0			# dummy error code
 	pushq	$T_ARITHTRAP
 .Ldo_fputrap:
@@ -216,6 +218,7 @@ IDTVEC(trap11)
 IDTVEC(trap12)
 	ZTRAP(T_MCA)
 IDTVEC(trap13)
+	PRE_TRAP;
 	pushq	$0			# dummy error code
 	pushq	$T_XMM
 	jmp	.Ldo_fputrap

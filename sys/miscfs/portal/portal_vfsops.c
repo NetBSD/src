@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.74.2.1 2008/06/27 15:11:48 simonb Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.74.2.2 2008/07/03 18:38:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.74.2.1 2008/06/27 15:11:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.74.2.2 2008/07/03 18:38:18 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.74.2.1 2008/06/27 15:11:48 simon
 MODULE(MODULE_CLASS_VFS, portal, NULL);
 
 VFS_PROTOS(portal);
+
+static struct sysctllog *portal_sysctl_log;
 
 void
 portal_init()
@@ -264,27 +266,6 @@ portal_vget(struct mount *mp, ino_t ino,
 	return (EOPNOTSUPP);
 }
 
-SYSCTL_SETUP(sysctl_vfs_portal_setup, "sysctl vfs.portal subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "portal",
-		       SYSCTL_DESCR("Portal daemon file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 8, CTL_EOL);
-	/*
-	 * XXX the "8" above could be dynamic, thereby eliminating one
-	 * more instance of the "number to vfs" mapping problem, but
-	 * "8" is the order as taken from sys/mount.h
-	 */
-}
-
 extern const struct vnodeopv_desc portal_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const portal_vnodeopv_descs[] = {
@@ -323,13 +304,40 @@ struct vfsops portal_vfsops = {
 static int
 portal_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&portal_vfsops);
+		error = vfs_attach(&portal_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&portal_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&portal_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "portal",
+			       SYSCTL_DESCR("Portal daemon file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 8, CTL_EOL);
+		/*
+		 * XXX the "8" above could be dynamic, thereby eliminating one
+		 * more instance of the "number to vfs" mapping problem, but
+		 * "8" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&portal_vfsops);
+		error = vfs_detach(&portal_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&portal_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }

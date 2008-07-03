@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.16.44.1 2008/06/27 15:11:28 simonb Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.16.44.2 2008/07/03 18:38:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -187,7 +187,4 @@ void  smb_time_unix2dos(struct timespec *tsp, int tzoff, u_int16_t *ddp,
 	     u_int16_t *dtp, u_int8_t *dhp);
 void smb_dos2unixtime (u_int dd, u_int dt, u_int dh, int tzoff, struct timespec *tsp);
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_samba_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 #endif /* !_FS_SMBFS_SMBFS_SUBR_H_ */

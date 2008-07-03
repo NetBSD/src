@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.20 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.20.2.1 2008/07/03 18:37:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.20 2008/05/25 15:56:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.20.2.1 2008/07/03 18:37:53 simonb Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -226,18 +226,18 @@ ENTRY(mutex_spin_enter)
 	movl	4(%esp), %edx
 	movb	CPUVAR(ILEVEL), %cl
 	movb	MTX_IPL(%edx), %ch
+	movl	$0x01, %eax
 	cmpb	%ch, %cl
 	jg	1f
 	movb	%ch, CPUVAR(ILEVEL)		/* splraiseipl() */
 1:
-	subl	$1, CPUVAR(MTX_COUNT)		/* decl does not set CF */
+	subl	%eax, CPUVAR(MTX_COUNT)		/* decl does not set CF */
 	jnc	2f
 	movb	%cl, CPUVAR(MTX_OLDSPL)
 2:
 #ifdef FULL
-	mov	$0x0100, %eax			/* new + expected value */
-	LOCK(11)
-	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
+	xchgb	%al, MTX_LOCK(%edx)		/* lock it */
+	testb	%al, %al
 	jnz	3f
 #endif
 	ret
@@ -370,8 +370,5 @@ LABEL(x86_lockpatch)
 	.long	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4
 	.long	.Lpatch5, .Lpatch6, .Lpatch7, .Lpatch12
 	.long	.Lpatch13
-#if defined(FULL) && !defined(__XEN__)
-	.long	.Lpatch11
-#endif
 	.long	0
 #endif

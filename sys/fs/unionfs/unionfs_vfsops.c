@@ -59,6 +59,8 @@ struct vfsops unionfs_vfsops;
 
 VFS_PROTOS(unionfs);
 
+static struct sysctllog *unionfs_sysctl_log;
+
 /*
  * Mount unionfs layer.
  */
@@ -501,27 +503,6 @@ unionfs_done(void)
 	vn_union_readdir_hook = NULL;
 }
 
-SYSCTL_SETUP(sysctl_vfs_unionfs_setup, "sysctl vfs.union subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "union",
-		       SYSCTL_DESCR("Union file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 15, CTL_EOL);
-	/*
-	 * XXX the "15" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "15" is the order as taken from sys/mount.h
-	 */
-}
-
 extern const struct vnodeopv_desc unionfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const unionfs_vnodeopv_descs[] = {
@@ -560,13 +541,40 @@ struct vfsops unionfs_vfsops = {
 static int
 unionfs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&unionfs_vfsops);
+		error = vfs_attach(&unionfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&unionfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&unionfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "union",
+			       SYSCTL_DESCR("Union file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 15, CTL_EOL);
+		/*
+		 * XXX the "15" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "15" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&unionfs_vfsops);
+		error = vfs_detach(&unionfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&unionfs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }

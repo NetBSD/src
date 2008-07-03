@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.6 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.6.78.1 2008/07/03 18:38:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -159,8 +159,5 @@ extern struct vfsops ptyfs_vfsops;
 
 int	ptyfs_root(struct mount *, struct vnode **);
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_ptyfs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */
 #endif /* _FS_PTYFS_PTYFS_H_ */

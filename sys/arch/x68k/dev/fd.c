@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.80.4.2 2008/06/27 15:11:18 simonb Exp $	*/
+/*	$NetBSD: fd.c,v 1.80.4.3 2008/07/03 18:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80.4.2 2008/06/27 15:11:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80.4.3 2008/07/03 18:37:56 simonb Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -621,10 +621,12 @@ void
 fdstrategy(struct buf *bp)
 {
 	struct fd_softc *fd;
+	int unit;
 	int sz;
 	int s;
 
-	fd = device_lookup_private(&fd_cd, FDUNIT(bp->b_dev));
+	unit = FDUNIT(bp->b_dev);
+	fd = device_lookup_private(&fd_cd, unit);
 	if (fd == NULL) {
 		bp->b_error = EINVAL;
 		goto done;
