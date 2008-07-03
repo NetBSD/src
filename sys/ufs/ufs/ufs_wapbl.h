@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.1.2.2 2008/06/12 08:39:22 martin Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.1.2.3 2008/07/03 16:40:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -36,6 +36,11 @@
 #if defined(_KERNEL_OPT)
 #include "opt_wapbl.h"
 #endif
+
+#define	UFS_WAPBL_VERSION			1
+
+#define	UFS_WAPBL_JOURNALLOC_END_PARTITION	1
+#define	UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM	2
 
 #if defined(WAPBL)
 
