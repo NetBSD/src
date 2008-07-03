@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.30 2008/06/29 12:49:08 jmcneill Exp $ */
+/* $NetBSD: drmP.h,v 1.31 2008/07/03 17:36:44 drochner Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -841,7 +841,7 @@ typedef struct {
  */
 struct drm_device {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	struct device		device;
+	struct device		*device;
 #endif
 
 	struct drm_driver_info driver;
