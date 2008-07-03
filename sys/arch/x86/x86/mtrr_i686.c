@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.17 2008/05/12 14:41:07 ad Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.17.2.1 2008/07/03 18:37:57 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.17 2008/05/12 14:41:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.17.2.1 2008/07/03 18:37:57 simonb Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -96,9 +96,11 @@ mtrr_raw[] = {
 	{ MSR_MTRRfix4K_F0000, 0 },
 	{ MSR_MTRRfix4K_F8000, 0 },
 	{ MSR_MTRRdefType, 0 },
+
 };
 
 static const int nmtrr_raw = sizeof(mtrr_raw)/sizeof(mtrr_raw[0]);
+static int i686_mtrr_vcnt = 0;
 
 static struct mtrr_state *mtrr_var_raw;
 static struct mtrr_state *mtrr_fixed_raw;
@@ -229,6 +231,8 @@ i686_mtrr_reload(int synch)
 	for (i = 0; i < nmtrr_raw; i++) {
 		uint64_t val = mtrr_raw[i].msrval;
 		uint32_t addr = mtrr_raw[i].msraddr;
+		if (addr == 0)
+			continue;
 		if (addr == MSR_MTRRdefType)
 			val &= ~MTRR_I686_ENABLE_MASK;
 		wrmsr(addr, val);
@@ -294,9 +298,23 @@ i686_mtrr_init_first(void)
 {
 	int i;
 
-	for (i = 0; i < nmtrr_raw; i++)
-		mtrr_raw[i].msrval = rdmsr(mtrr_raw[i].msraddr);
 	i686_mtrr_cap = rdmsr(MSR_MTRRcap);
+	i686_mtrr_vcnt = i686_mtrr_cap & MTRR_I686_CAP_VCNT_MASK;
+
+	if (i686_mtrr_vcnt > MTRR_I686_NVAR_MAX)
+		printf("\%s: FIXME: more than 8 mtrr's\n", __FILE__);
+	else if (i686_mtrr_vcnt < MTRR_I686_NVAR_MAX) {
+		for (i = MTRR_I686_NVAR_MAX - i686_mtrr_vcnt; i; i--) {
+			mtrr_raw[16 - (i*2)].msraddr = 0;
+			mtrr_raw[17 - (i*2)].msraddr = 0;
+		}
+	}
+
+	for (i = 0; i < nmtrr_raw; i++)
+		if (mtrr_raw[i].msraddr)
+			mtrr_raw[i].msrval = rdmsr(mtrr_raw[i].msraddr);
+		else
+			mtrr_raw[i].msrval = 0;
 #if 0
 	mtrr_dump("init mtrr");
 #endif
@@ -308,12 +326,12 @@ i686_mtrr_init_first(void)
 		panic("can't allocate fixed MTRR array");
 
 	mtrr_var = (struct mtrr *)
-	    malloc(MTRR_I686_NVAR * sizeof (struct mtrr), M_TEMP, M_NOWAIT);
+	    malloc(i686_mtrr_vcnt * sizeof (struct mtrr), M_TEMP, M_NOWAIT);
 	if (mtrr_var == NULL)
 		panic("can't allocate variable MTRR array");
 
 	mtrr_var_raw = &mtrr_raw[0];
-	mtrr_fixed_raw = &mtrr_raw[MTRR_I686_NVAR * 2];
+	mtrr_fixed_raw = &mtrr_raw[MTRR_I686_NVAR_MAX * 2];
 	mtrr_funcs = &i686_mtrr_funcs;
 
 	i686_raw2soft();
@@ -326,7 +344,7 @@ i686_raw2soft(void)
 	struct mtrr *mtrrp;
 	uint64_t base, mask;
 
-	for (i = 0; i < MTRR_I686_NVAR; i++) {
+	for (i = 0; i < i686_mtrr_vcnt; i++) {
 		mtrrp = &mtrr_var[i];
 		memset(mtrrp, 0, sizeof *mtrrp);
 		mask = mtrr_var_raw[i * 2 + 1].msrval;
@@ -391,7 +409,7 @@ i686_soft2raw(void)
 	uint64_t val;
 	struct mtrr *mtrrp;
 
-	for (i = 0; i < MTRR_I686_NVAR; i++) {
+	for (i = 0; i < i686_mtrr_vcnt; i++) {
 		mtrrp = &mtrr_var[i];
 		mtrr_var_raw[i * 2].msrval = mtrr_base_value(mtrrp);
 		mtrr_var_raw[i * 2 + 1].msrval = mtrr_mask_value(mtrrp);
@@ -588,7 +606,7 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 	low = mtrrp->base;
 	high = low + mtrrp->len;
 	freep = NULL;
-	for (i = 0; i < MTRR_I686_NVAR; i++) {
+	for (i = 0; i < i686_mtrr_vcnt; i++) {
 		if (!(mtrr_var[i].flags & MTRR_VALID)) {
 			freep = &mtrr_var[i];
 			continue;
@@ -631,7 +649,7 @@ i686_mtrr_clean(struct proc *p)
 			mtrr_fixed[i].flags &= ~MTRR_PRIVATE;
 	}
 
-	for (i = 0; i < MTRR_I686_NVAR; i++) {
+	for (i = 0; i < i686_mtrr_vcnt; i++) {
 		if ((mtrr_var[i].flags & MTRR_PRIVATE) &&
 		    (mtrr_var[i].owner == p->p_pid))
 			mtrr_var[i].flags &= ~(MTRR_PRIVATE | MTRR_VALID);
@@ -646,7 +664,7 @@ i686_mtrr_set(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 	int i, error;
 	struct mtrr mtrr;
 
-	if (*n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR)) {
+	if (*n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR_MAX)) {
 		*n = 0;
 		return EINVAL;
 	}
@@ -678,7 +696,7 @@ i686_mtrr_get(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 	int idx, i, error;
 
 	if (mtrrp == NULL) {
-		*n = MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR;
+		*n = MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR_MAX;
 		return 0;
 	}
 
@@ -698,7 +716,7 @@ i686_mtrr_get(struct mtrr *mtrrp, int *n, struct proc *p, int flags)
 		return error;
 	}
 
-	for (i = 0; i < MTRR_I686_NVAR && idx < *n; idx++, i++) {
+	for (i = 0; i < i686_mtrr_vcnt && idx < *n; idx++, i++) {
 		if (flags & MTRR_GETSET_USER) {
 			error = copyout(&mtrr_var[i], &mtrrp[idx],
 					sizeof *mtrrp);

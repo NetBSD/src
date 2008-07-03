@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.36 2008/05/21 17:19:44 drochner Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.36.2.1 2008/07/03 18:38:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.36 2008/05/21 17:19:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.36.2.1 2008/07/03 18:38:05 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,6 +285,13 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 	LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
 	splx(s);
 	DPRINTFN(5, ("usb_freemem: frag=%p\n", f));
+}
+
+void
+usb_syncmem(usb_dma_t *p, bus_addr_t offset, bus_size_t len, int ops)
+{
+	bus_dmamap_sync(p->block->tag, p->block->map, p->offs + offset,
+	    len, ops);
 }
 
 

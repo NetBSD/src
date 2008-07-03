@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.11 2008/01/09 20:15:40 degroote Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.11.14.1 2008/07/03 18:38:04 simonb Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -102,6 +102,7 @@ struct wpi_rx_ring {
 	struct wpi_rx_data	data[WPI_RX_RING_COUNT];
 	struct wpi_rbuf		rbuf[WPI_RBUF_COUNT];
 	SLIST_HEAD(, wpi_rbuf)	freelist;
+	kmutex_t		freelist_mtx;
 	int			nb_free_entries;
 	int			cur;
 };

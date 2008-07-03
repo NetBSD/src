@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.20.2.1 2008/06/27 15:11:18 simonb Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.20.2.2 2008/07/03 18:37:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.20.2.1 2008/06/27 15:11:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.20.2.2 2008/07/03 18:37:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,6 +227,7 @@ isa_intr_establish(
 	int pin;
 #if NIOAPIC > 0
 	int mpih;
+	struct ioapic_softc *ioapic;
 #endif
 
 	pin = irq;
@@ -238,14 +239,14 @@ isa_intr_establish(
 		    intr_find_mpmapping(mp_eisa_bus, irq, &mpih) == 0) {
 			if (!APIC_IRQ_ISLEGACY(mpih)) {
 				pin = APIC_IRQ_PIN(mpih);
-				pic = (struct pic *)
-				    ioapic_find(APIC_IRQ_APIC(mpih));
-				if (pic == NULL) {
+				ioapic = ioapic_find(APIC_IRQ_APIC(mpih));
+				if (ioapic == NULL) {
 					printf("isa_intr_establish: "
 					       "unknown apic %d\n",
 					    APIC_IRQ_APIC(mpih));
 					return NULL;
 				}
+				pic = &ioapic->sc_pic;
 			}
 		} else
 			printf("isa_intr_establish: no MP mapping found\n");

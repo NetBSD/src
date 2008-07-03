@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.7 2007/03/04 06:00:34 christos Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.7.48.1 2008/07/03 18:37:54 simonb Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.7 2007/03/04 06:00:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.7.48.1 2008/07/03 18:37:54 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -303,13 +303,6 @@ ibm4xx_cpu_startup(const char *model)
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
-
 	/*
 	 * Allocate a submap for physio
 	 */

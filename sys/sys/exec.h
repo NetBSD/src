@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.123 2008/01/20 10:15:50 dsl Exp $	*/
+/*	$NetBSD: exec.h,v 1.123.14.1 2008/07/03 18:38:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -279,6 +279,8 @@ void	new_vmcmd(struct exec_vmcmd_set *,
 typedef	int (*execve_fetch_element_t)(char * const *, size_t, char **);
 int	execve1(struct lwp *, const char *, char * const *, char * const *,
     execve_fetch_element_t);
+
+extern int	maxexec;
 
 #endif /* _KERNEL */
 

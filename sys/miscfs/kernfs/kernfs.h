@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.32 2006/12/28 05:49:05 alc Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.32.48.1 2008/07/03 18:38:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -194,9 +194,5 @@ kfstype kernfs_alloctype(int, const struct kernfs_fileop *);
 } while (/*CONSTCOND*/0)
 #define	KERNFS_ENTOPARENTDIR(dkt) &(dkt)->dkt_kt
 int kernfs_addentry(kernfs_parentdir_t *, kernfs_entry_t *);
-
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_kernfs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 
 #endif /* _KERNEL */

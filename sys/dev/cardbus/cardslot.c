@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.40.8.1 2008/06/27 15:11:20 simonb Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.40.8.2 2008/07/03 18:37:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.40.8.1 2008/06/27 15:11:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.40.8.2 2008/07/03 18:37:58 simonb Exp $");
 
 #include "opt_cardslot.h"
 
@@ -412,7 +412,7 @@ cardslot_event_thread(arg)
 			break;
 
 		case CARDSLOT_EVENT_REMOVAL_16:
-			DPRINTF(("%s: removal event\n", device_xname(&sc->sc_dev)));
+			DPRINTF(("%s: removal event\n", device_xname(sc->sc_dev)));
 			if (CARDSLOT_CARDTYPE(sc->sc_status) != CARDSLOT_STATUS_CARD_16) {
 				/* 16-bit card has not been inserted. */
 				break;

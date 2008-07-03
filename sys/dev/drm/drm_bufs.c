@@ -1,4 +1,4 @@
-/* $NetBSD: drm_bufs.c,v 1.7.4.1 2008/06/27 15:11:21 simonb Exp $ */
+/* $NetBSD: drm_bufs.c,v 1.7.4.2 2008/07/03 18:37:58 simonb Exp $ */
 
 /* drm_bufs.h -- Generic buffer template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.7.4.1 2008/06/27 15:11:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.7.4.2 2008/07/03 18:37:58 simonb Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_bufs.c,v 1.3 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -139,10 +139,8 @@ int drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 	 * initialization necessary.
 	 */
 	map = malloc(sizeof(*map), M_DRM, M_ZERO | M_NOWAIT);
-	if ( !map ) {
-		DRM_LOCK();
+	if ( !map )
 		return DRM_ERR(ENOMEM);
-	}
 
 	map->offset = offset;
 	map->size = size;
@@ -150,20 +148,6 @@ int drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 	map->flags = flags;
 	map->cnt = NULL;	/* cnt, mapsize added for NetBSD port */
 	map->mapsize = 0;
-	map->cookie = 0;
-
-	/* XXX We're not managing any actual address space here; we simply
-	 *     need to assign unique and sane cookies as to not offend
-	 *     the device pager.
-	 */
-	extent_alloc(dev->ex, map->size, PAGE_SIZE, 0, EX_FAST|EX_WAITOK,
-		&map->cookie);
-	if (map->cookie == 0) {
-		DRM_DEBUG("could not allocate entry for mmap cookie in extent map!\n");
-		free(map, M_DRM);
-		DRM_LOCK();
-		return DRM_ERR(ENOMEM);
-	}
 
 	switch ( map->type ) {
 	case _DRM_REGISTERS:
@@ -178,22 +162,20 @@ int drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 #endif
 		break;
 	case _DRM_SHM:
-		map->mem = drm_dmamem_pgalloc(dev, round_page(map->size) >> PAGE_SHIFT);
+		map->handle = malloc(map->size, M_DRM, M_NOWAIT);
 		DRM_DEBUG( "%lu %d %p\n",
 			   map->size, drm_order(map->size), map->handle );
-		if ( map->mem == NULL ) {
+		if ( !map->handle ) {
 			free(map, M_DRM);
-			DRM_LOCK();
 			return DRM_ERR(ENOMEM);
 		}
-		map->handle = map->mem->dd_kva;
-		map->offset = map->mem->dd_dmam->dm_segs[0].ds_addr;
+		map->offset = (unsigned long)map->handle;
 		if ( map->flags & _DRM_CONTAINS_LOCK ) {
 			/* Prevent a 2nd X Server from creating a 2nd lock */
 			DRM_LOCK();
 			if (dev->lock.hw_lock != NULL) {
 				DRM_UNLOCK();
-				drm_dmamem_free(map->mem);
+				free(map->handle, M_DRM);
 				free(map, M_DRM);
 				return DRM_ERR(EBUSY);
 			}
@@ -215,18 +197,15 @@ int drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 		}
 		if (!valid) {
 			free(map, M_DRM);
-			DRM_LOCK();
 			return DRM_ERR(EACCES);
 		}*/
 		break;
 	case _DRM_SCATTER_GATHER:
 		if (!dev->sg) {
 			free(map, M_DRM);
-			DRM_LOCK();
 			return DRM_ERR(EINVAL);
 		}
 		map->offset = map->offset + dev->sg->handle;
-		map->mem = dev->sg->mem;
 		break;
 	case _DRM_CONSISTENT:
 		/* Unfortunately, we don't get any alignment specification from
@@ -241,17 +220,14 @@ int drm_addmap(drm_device_t * dev, unsigned long offset, unsigned long size,
 		map->dmah = drm_pci_alloc(dev, map->size, align, 0xfffffffful);
 		if (map->dmah == NULL) {
 			free(map, M_DRM);
-			DRM_LOCK();
 			return DRM_ERR(ENOMEM);
 		}
 		map->handle = map->dmah->vaddr;
 		map->offset = map->dmah->busaddr;
-		map->mem = map->dmah->mem;
 		break;
 	default:
 		DRM_ERROR("Bad map type %d\n", map->type);
 		free(map, M_DRM);
-		DRM_LOCK();
 		return DRM_ERR(EINVAL);
 	}
 
@@ -298,11 +274,8 @@ int drm_addmap_ioctl(DRM_IOCTL_ARGS)
 	request.mtrr   = map->mtrr;
 	request.handle = map->handle;
 
-	/* NOTE: ensure this code harmonizes with drm_core_findmap(),
-	 *	 drm_mmap(), and/or drm_rmmap().
-	 */
 	if (request.type != _DRM_SHM) {
-		request.handle = (void *)map->cookie;
+		request.handle = (void *)request.offset;
 	} else {
 		request.handle = (void *)DRM_NETBSD_ADDR2HANDLE((uintptr_t)map->handle);
 	}
@@ -331,7 +304,7 @@ void drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
 #endif
 		break;
 	case _DRM_SHM:
-		drm_dmamem_free(map->mem);
+		free(map->handle, M_DRM);
 		break;
 	case _DRM_AGP:
 	case _DRM_SCATTER_GATHER:
@@ -340,8 +313,6 @@ void drm_rmmap(drm_device_t *dev, drm_local_map_t *map)
 		drm_pci_free(dev, map->dmah);
 		break;
 	}
-
-	extent_free(dev->ex, map->cookie, map->size, EX_WAITOK);
 
 	TAILQ_REMOVE(&dev->maplist, map, link);
 	free(map, M_DRM);
@@ -800,6 +771,7 @@ int drm_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
+	DRM_SPINLOCK(&dev->dma_lock);
 
 	if (request->count < 0 || request->count > 4096)
 		return DRM_ERR(EINVAL);
@@ -807,8 +779,6 @@ int drm_addbufs_agp(drm_device_t *dev, drm_buf_desc_t *request)
 	order = drm_order(request->size);
 	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
 		return DRM_ERR(EINVAL);
-
-	DRM_SPINLOCK(&dev->dma_lock);
 
 	/* No more allocations after first buffer-using ioctl. */
 	if (dev->buf_use != 0) {
@@ -832,6 +802,7 @@ int drm_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
+	DRM_SPINLOCK(&dev->dma_lock);
 
 	if (!DRM_SUSER(DRM_CURPROC))
 		return DRM_ERR(EACCES);
@@ -842,8 +813,6 @@ int drm_addbufs_sg(drm_device_t *dev, drm_buf_desc_t *request)
 	order = drm_order(request->size);
 	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
 		return DRM_ERR(EINVAL);
-
-	DRM_SPINLOCK(&dev->dma_lock);
 
 	/* No more allocations after first buffer-using ioctl. */
 	if (dev->buf_use != 0) {
@@ -867,6 +836,7 @@ int drm_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 {
 	int order, ret;
 
+	DRM_SPINLOCK(&dev->dma_lock);
 
 	if (!DRM_SUSER(DRM_CURPROC))
 		return DRM_ERR(EACCES);
@@ -877,8 +847,6 @@ int drm_addbufs_pci(drm_device_t *dev, drm_buf_desc_t *request)
 	order = drm_order(request->size);
 	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
 		return DRM_ERR(EINVAL);
-
-	DRM_SPINLOCK(&dev->dma_lock);
 
 	/* No more allocations after first buffer-using ioctl. */
 	if (dev->buf_use != 0) {
@@ -1084,9 +1052,8 @@ int drm_mapbufs(DRM_IOCTL_ARGS)
 			retcode = EINVAL;
 			goto done;
 		}
-		/* XXX using cookie, not actual offset here */
 		size = round_page(map->size);
-		foff = map->cookie;
+		foff = map->offset;
 	} else {
 		size = round_page(dma->byte_count),
 		foff = 0;

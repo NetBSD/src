@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.90 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.90.4.1 2008/07/03 18:38:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.90 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.90.4.1 2008/07/03 18:38:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,8 @@ procfs_rw(v)
 #undef	M2K
 
 	mutex_enter(p->p_lock);
-	l = proc_representative_lwp(p, NULL, 1);
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
 	lwp_addref(l);
 	mutex_exit(p->p_lock);
 

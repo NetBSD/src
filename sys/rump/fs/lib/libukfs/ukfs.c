@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.26.2.1 2008/06/27 15:11:55 simonb Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.26.2.2 2008/07/03 18:38:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,24 +33,25 @@
  * involving system calls.
  */
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/namei.h>
-#include <sys/uio.h>
+#ifdef __linux__
+#define _XOPEN_SOURCE 500
+#define _BSD_SOURCE
+#define _FILE_OFFSET_BITS 64
+#endif
 
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 
+#include "ukfs.h"
 #include "rump.h"
 #include "rump_syscalls.h"
-#include "ukfs.h"
 
 #define UKFS_MODE_DEFAULT 0555
 
@@ -248,8 +249,8 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 	size_t resid;
 	int rv, eofflag;
 
-	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_LOOKUP, NAMEI_LOCKLEAF, dirname,
-	    NULL, &vp, NULL);
+	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_LOOKUP, RUMP_NAMEI_LOCKLEAF,
+	    dirname, NULL, &vp, NULL);
 	if (rv)
 		goto out;
 		
@@ -277,7 +278,7 @@ ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
 	ssize_t xfer = -1; /* XXXgcc */
 
 	precall(ukfs);
-	fd = rump_sys_open(filename, O_RDONLY, 0, &rv);
+	fd = rump_sys_open(filename, RUMP_O_RDONLY, 0, &rv);
 	if (rv)
 		goto out;
 
@@ -301,7 +302,7 @@ ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 	ssize_t xfer = -1; /* XXXgcc */
 
 	precall(ukfs);
-	fd = rump_sys_open(filename, O_WRONLY, 0, &rv);
+	fd = rump_sys_open(filename, RUMP_O_WRONLY, 0, &rv);
 	if (rv)
 		goto out;
 
@@ -323,7 +324,7 @@ ukfs_create(struct ukfs *ukfs, const char *filename, mode_t mode)
 	int rv, fd, dummy;
 
 	precall(ukfs);
-	fd = rump_sys_open(filename, O_WRONLY | O_CREAT, mode, &rv);
+	fd = rump_sys_open(filename, RUMP_O_WRONLY | RUMP_O_CREAT, mode, &rv);
 	rump_sys_close(fd, &dummy);
 
 	postcall(ukfs);
@@ -339,6 +340,13 @@ ukfs_mknod(struct ukfs *ukfs, const char *path, mode_t mode, dev_t dev)
 {
 
 	STDCALL(ukfs, rump_sys_mknod(path, mode, dev, &rv));
+}
+
+int
+ukfs_mkfifo(struct ukfs *ukfs, const char *path, mode_t mode)
+{
+
+	STDCALL(ukfs, rump_sys_mkfifo(path, mode, &rv));
 }
 
 static int
@@ -467,4 +475,60 @@ ukfs_chdir(struct ukfs *ukfs, const char *path)
 		return -1;
 	}
 	return 0;
+}
+
+int
+ukfs_stat(struct ukfs *ukfs, const char *filename, struct stat *file_stat)
+{
+
+	STDCALL(ukfs, rump_sys___stat30(filename, file_stat, &rv));
+}
+
+int
+ukfs_lstat(struct ukfs *ukfs, const char *filename, struct stat *file_stat)
+{
+
+	STDCALL(ukfs, rump_sys___lstat30(filename, file_stat, &rv));
+}
+
+int
+ukfs_chmod(struct ukfs *ukfs, const char *filename, mode_t mode)
+{
+
+	STDCALL(ukfs, rump_sys_chmod(filename, mode, &rv));
+}
+
+int
+ukfs_lchmod(struct ukfs *ukfs, const char *filename, mode_t mode)
+{
+
+	STDCALL(ukfs, rump_sys_lchmod(filename, mode, &rv));
+}
+
+int
+ukfs_chown(struct ukfs *ukfs, const char *filename, uid_t uid, gid_t gid)
+{
+
+	STDCALL(ukfs, rump_sys_chown(filename, uid, gid, &rv));
+}
+
+int
+ukfs_lchown(struct ukfs *ukfs, const char *filename, uid_t uid, gid_t gid)
+{
+
+	STDCALL(ukfs, rump_sys_lchown(filename, uid, gid, &rv));
+}
+
+int
+ukfs_chflags(struct ukfs *ukfs, const char *filename, u_long flags)
+{
+
+	STDCALL(ukfs, rump_sys_chflags(filename, flags, &rv));
+}
+
+int
+ukfs_lchflags(struct ukfs *ukfs, const char *filename, u_long flags)
+{
+
+	STDCALL(ukfs, rump_sys_lchflags(filename, flags, &rv));
 }

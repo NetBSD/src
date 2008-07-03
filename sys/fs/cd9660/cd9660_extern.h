@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.23 2008/02/27 19:43:36 matt Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.23.8.1 2008/07/03 18:38:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -99,10 +99,6 @@ MALLOC_DECLARE(M_ISOFSMNT);
 
 extern struct pool cd9660_node_pool;
 extern int cd9660_utf8_joliet;
-
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_cd9660_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 
 int cd9660_mountroot(void);
 

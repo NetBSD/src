@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.67 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.67.2.1 2008/07/03 18:38:11 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.67 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.67.2.1 2008/07/03 18:38:11 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -109,6 +109,8 @@ MALLOC_JUSTDEFINE(M_MSDOSFSTMP, "MSDOSFS temp", "MSDOS FS temp. structures");
 
 #define ROOTNAME "root_device"
 
+static struct sysctllog *msdosfs_sysctl_log;
+
 extern const struct vnodeopv_desc msdosfs_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const msdosfs_vnodeopv_descs[] = {
@@ -147,15 +149,42 @@ struct vfsops msdosfs_vfsops = {
 static int
 msdosfs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&msdosfs_vfsops);
+		error = vfs_attach(&msdosfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&msdosfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&msdosfs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "msdosfs",
+			       SYSCTL_DESCR("MS-DOS file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 4, CTL_EOL);
+		/*
+		 * XXX the "4" above could be dynamic, thereby eliminating one
+		 * more instance of the "number to vfs" mapping problem, but
+		 * "4" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&msdosfs_vfsops);
+		error = vfs_detach(&msdosfs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&msdosfs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }
 
 static int
@@ -1075,25 +1104,4 @@ msdosfs_vget(struct mount *mp, ino_t ino,
 {
 
 	return (EOPNOTSUPP);
-}
-
-SYSCTL_SETUP(sysctl_vfs_msdosfs_setup, "sysctl vfs.msdosfs subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "msdosfs",
-		       SYSCTL_DESCR("MS-DOS file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 4, CTL_EOL);
-	/*
-	 * XXX the "4" above could be dynamic, thereby eliminating one
-	 * more instance of the "number to vfs" mapping problem, but
-	 * "4" is the order as taken from sys/mount.h
-	 */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.94.2.2 2008/06/27 15:11:19 simonb Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.94.2.3 2008/07/03 18:37:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.94.2.2 2008/06/27 15:11:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.94.2.3 2008/07/03 18:37:57 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -116,6 +116,7 @@ int linux_to_bsd_so_sockopt(int);
 int linux_to_bsd_ip_sockopt(int);
 int linux_to_bsd_tcp_sockopt(int);
 int linux_to_bsd_udp_sockopt(int);
+int linux_getifconf(struct lwp *, register_t *, void *);
 int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 static int linux_get_sa(struct lwp *, int, struct mbuf **,
 		const struct osockaddr *, unsigned int);
@@ -966,17 +967,63 @@ linux_sys_getsockopt(struct lwp *l, const struct linux_sys_getsockopt_args *uap,
 	return sys_getsockopt(l, &bga, retval);
 }
 
-#define IF_NAME_LEN 16
+int
+linux_getifconf(struct lwp *l, register_t *retval, void *data)
+{
+	struct linux_ifreq ifr, *ifrp;
+	struct ifconf *ifc = data;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
+	struct sockaddr *sa;
+	struct osockaddr *osa;
+	int space, error = 0;
+	const int sz = (int)sizeof(ifr);
+
+	ifrp = (struct linux_ifreq *)ifc->ifc_req;
+	if (ifrp == NULL)
+		space = 0;
+	else
+		space = ifc->ifc_len;
+
+	IFNET_FOREACH(ifp) {
+		(void)strncpy(ifr.ifr_name, ifp->if_xname,
+		    sizeof(ifr.ifr_name));
+		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
+			return ENAMETOOLONG;
+		if (IFADDR_EMPTY(ifp))
+			continue;
+		IFADDR_FOREACH(ifa, ifp) {
+			sa = ifa->ifa_addr;
+			if (sa->sa_family != AF_INET ||
+			    sa->sa_len > sizeof(*osa))
+				continue;
+			memcpy(&ifr.ifr_addr, sa, sa->sa_len);
+			osa = (struct osockaddr *)&ifr.ifr_addr;
+			osa->sa_family = sa->sa_family;
+			if (space >= sz) {
+				error = copyout(&ifr, ifrp, sz);
+				if (error != 0)
+					return error;
+				ifrp++;
+			}
+			space -= sz;
+		}
+	}
+
+	if (ifrp != NULL)
+		ifc->ifc_len -= space;
+	else
+		ifc->ifc_len = -space;
+
+	return 0;
+}
 
 int
 linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
     void *data)
 {
 	/* Not the full structure, just enough to map what we do here */
-	struct linux_ifreq {
-		char if_name[IF_NAME_LEN];
-		struct osockaddr hwaddr;
-	} lreq;
+	struct linux_ifreq lreq;
 	file_t *fp;
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
@@ -1008,7 +1055,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	error = copyin(data, &lreq, sizeof(lreq));
 	if (error)
 		goto out;
-	lreq.if_name[IF_NAME_LEN-1] = '\0';		/* just in case */
+	lreq.ifr_name[LINUX_IFNAMSIZ-1] = '\0';		/* just in case */
 
 	/*
 	 * Try real interface name first, then fake "ethX"
@@ -1017,7 +1064,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	IFNET_FOREACH(ifp) {
 		if (found)
 			break;
-		if (strcmp(lreq.if_name, ifp->if_xname))
+		if (strcmp(lreq.ifr_name, ifp->if_xname))
 			/* not this interface */
 			continue;
 		found=1;
@@ -1032,22 +1079,22 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 			if (sadl->sdl_family != AF_LINK ||
 			    sadl->sdl_type != IFT_ETHER)
 				continue;
-			memcpy(&lreq.hwaddr.sa_data, CLLADDR(sadl),
+			memcpy(&lreq.ifr_hwaddr.sa_data, CLLADDR(sadl),
 			       MIN(sadl->sdl_alen,
-				   sizeof(lreq.hwaddr.sa_data)));
-			lreq.hwaddr.sa_family =
+				   sizeof(lreq.ifr_hwaddr.sa_data)));
+			lreq.ifr_hwaddr.sa_family =
 				sadl->sdl_family;
 			error = copyout(&lreq, data, sizeof(lreq));
 			goto out;
 		}
 	}
 
-	if (strncmp(lreq.if_name, "eth", 3) == 0) {
+	if (strncmp(lreq.ifr_name, "eth", 3) == 0) {
 		for (ifnum = 0, index = 3;
-		     lreq.if_name[index] != '\0' && index < IF_NAME_LEN;
+		     lreq.ifr_name[index] != '\0' && index < LINUX_IFNAMSIZ;
 		     index++) {
 			ifnum *= 10;
-			ifnum += lreq.if_name[index] - '0';
+			ifnum += lreq.ifr_name[index] - '0';
 		}
 
 		error = EINVAL;			/* in case we don't find one */
@@ -1055,8 +1102,8 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		IFNET_FOREACH(ifp) {
 			if (found)
 				break;
-			memcpy(lreq.if_name, ifp->if_xname,
-			       MIN(IF_NAME_LEN, IFNAMSIZ));
+			memcpy(lreq.ifr_name, ifp->if_xname,
+			       MIN(LINUX_IFNAMSIZ, IFNAMSIZ));
 			IFADDR_FOREACH(ifa, ifp) {
 				sadl = satosdl(ifa->ifa_addr);
 				/* only return ethernet addresses */
@@ -1067,11 +1114,11 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 				if (ifnum--)
 					/* not the reqested iface */
 					continue;
-				memcpy(&lreq.hwaddr.sa_data,
+				memcpy(&lreq.ifr_hwaddr.sa_data,
 				       CLLADDR(sadl),
 				       MIN(sadl->sdl_alen,
-					   sizeof(lreq.hwaddr.sa_data)));
-				lreq.hwaddr.sa_family =
+					   sizeof(lreq.ifr_hwaddr.sa_data)));
+				lreq.ifr_hwaddr.sa_family =
 					sadl->sdl_family;
 				error = copyout(&lreq, data, sizeof(lreq));
 				found = 1;
@@ -1088,7 +1135,6 @@ out:
 	fd_putfile(fd);
 	return error;
 }
-#undef IF_NAME_LEN
 
 int
 linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
@@ -1143,7 +1189,8 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 
 	switch (com) {
 	case LINUX_SIOCGIFCONF:
-		SCARG(&ia, com) = OOSIOCGIFCONF;
+		error = linux_getifconf(l, retval, SCARG(uap, data));
+		dosys = 0;
 		break;
 	case LINUX_SIOCGIFFLAGS:
 		SCARG(&ia, com) = OSIOCGIFFLAGS;

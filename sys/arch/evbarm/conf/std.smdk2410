@@ -1,4 +1,4 @@
-#	$NetBSD: std.smdk2410,v 1.4 2008/01/27 12:37:12 chris Exp $
+#	$NetBSD: std.smdk2410,v 1.4.14.1 2008/07/03 18:37:52 simonb Exp $
 #
 # standard NetBSD/evbarm for SMDK2410 options
 
@@ -23,5 +23,6 @@ options	SSCOM_S3C2410
 makeoptions	BOARDTYPE="smdk2410"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.smdk2xx0"
 makeoptions	KERNEL_BASE_PHYS=0x30200000
+options 	KERNEL_BASE_EXT=0xc0000000
 
 options 	ARM_INTR_IMPL="<arch/arm/s3c2xx0/s3c2410_intr.h>"

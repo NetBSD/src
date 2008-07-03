@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.116.2.1 2008/06/18 16:33:35 simonb Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.116.2.2 2008/07/03 18:38:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.116.2.1 2008/06/18 16:33:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.116.2.2 2008/07/03 18:38:11 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -939,130 +939,27 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 }
 
 /*
- * Pick a LWP to represent the process for those operations which
- * want information about a "process" that is actually associated
- * with a LWP.
- *
- * If 'locking' is false, no locking or lock checks are performed.
- * This is intended for use by DDB.
- *
- * We don't bother locking the LWP here, since code that uses this
- * interface is broken by design and an exact match is not required.
- */
-struct lwp *
-proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
-{
-	struct lwp *l, *onproc, *running, *sleeping, *stopped, *suspended;
-	struct lwp *signalled;
-	int cnt;
-
-	if (locking) {
-		KASSERT(mutex_owned(p->p_lock));
-	}
-
-	/* Trivial case: only one LWP */
-	if (p->p_nlwps == 1) {
-		l = LIST_FIRST(&p->p_lwps);
-		if (nrlwps)
-			*nrlwps = (l->l_stat == LSONPROC || l->l_stat == LSRUN);
-		return l;
-	}
-
-	cnt = 0;
-	switch (p->p_stat) {
-	case SSTOP:
-	case SACTIVE:
-		/* Pick the most live LWP */
-		onproc = running = sleeping = stopped = suspended = NULL;
-		signalled = NULL;
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if ((l->l_flag & LW_IDLE) != 0) {
-				continue;
-			}
-			if (l->l_lid == p->p_sigctx.ps_lwp)
-				signalled = l;
-			switch (l->l_stat) {
-			case LSONPROC:
-				onproc = l;
-				cnt++;
-				break;
-			case LSRUN:
-				running = l;
-				cnt++;
-				break;
-			case LSSLEEP:
-				sleeping = l;
-				break;
-			case LSSTOP:
-				stopped = l;
-				break;
-			case LSSUSPENDED:
-				suspended = l;
-				break;
-			}
-		}
-		if (nrlwps)
-			*nrlwps = cnt;
-		if (signalled)
-			l = signalled;
-		else if (onproc)
-			l = onproc;
-		else if (running)
-			l = running;
-		else if (sleeping)
-			l = sleeping;
-		else if (stopped)
-			l = stopped;
-		else if (suspended)
-			l = suspended;
-		else
-			break;
-		return l;
-#ifdef DIAGNOSTIC
-	case SIDL:
-	case SZOMB:
-	case SDYING:
-	case SDEAD:
-		if (locking)
-			mutex_exit(p->p_lock);
-		/* We have more than one LWP and we're in SIDL?
-		 * How'd that happen?
-		 */
-		panic("Too many LWPs in idle/dying process %d (%s) stat = %d",
-		    p->p_pid, p->p_comm, p->p_stat);
-		break;
-	default:
-		if (locking)
-			mutex_exit(p->p_lock);
-		panic("Process %d (%s) in unknown state %d",
-		    p->p_pid, p->p_comm, p->p_stat);
-#endif
-	}
-
-	if (locking)
-		mutex_exit(p->p_lock);
-	panic("proc_representative_lwp: couldn't find a lwp for process"
-		" %d (%s)", p->p_pid, p->p_comm);
-	/* NOTREACHED */
-	return NULL;
-}
-
-/*
  * Migrate the LWP to the another CPU.  Unlocks the LWP.
  */
 void
 lwp_migrate(lwp_t *l, struct cpu_info *tci)
 {
 	struct schedstate_percpu *tspc;
+	int lstat = l->l_stat;
+
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(tci != NULL);
 
+	/* If LWP is still on the CPU, it must be handled like LSONPROC */
+	if ((l->l_pflag & LP_RUNNING) != 0) {
+		lstat = LSONPROC;
+	}
+
 	/*
-	 * If LWP is still on the CPU, it must be handled like on LSONPROC.
 	 * The destination CPU could be changed while previous migration
 	 * was not finished.
 	 */
-	if ((l->l_pflag & LP_RUNNING) != 0 || l->l_target_cpu != NULL) {
+	if (l->l_target_cpu != NULL) {
 		l->l_target_cpu = tci;
 		lwp_unlock(l);
 		return;
@@ -1076,7 +973,7 @@ lwp_migrate(lwp_t *l, struct cpu_info *tci)
 
 	KASSERT(l->l_target_cpu == NULL);
 	tspc = &tci->ci_schedstate;
-	switch (l->l_stat) {
+	switch (lstat) {
 	case LSRUN:
 		if (l->l_flag & LW_INMEM) {
 			l->l_target_cpu = tci;

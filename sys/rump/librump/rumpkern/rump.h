@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.27 2008/06/06 10:46:35 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.27.2.1 2008/07/03 18:38:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,16 +30,13 @@
 #ifndef _SYS_RUMP_H_
 #define _SYS_RUMP_H_
 
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/statvfs.h>
-
 struct mount;
 struct vnode;
 struct vattr;
 struct componentname;
 struct vfsops;
 struct fid;
+struct statvfs;
 
 #if !defined(_RUMPKERNEL) && !defined(__NetBSD__)
 struct kauth_cred;

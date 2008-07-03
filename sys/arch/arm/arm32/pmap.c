@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.176.2.2 2008/06/27 15:11:16 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.176.2.3 2008/07/03 18:37:51 simonb Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176.2.2 2008/06/27 15:11:16 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176.2.3 2008/07/03 18:37:51 simonb Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -1811,11 +1811,17 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 			tst_mask = pv->pv_va;
 			pv = pv->pv_next;
 		}
-		tst_mask &= arm_cache_prefer_mask;
-		for (; pv && !bad_alias; pv = pv->pv_next) {
-			/* if there's a bad alias, stop checking. */
-			if (tst_mask != (pv->pv_va & arm_cache_prefer_mask))
-				bad_alias = true;
+		/*
+		 * Only check for a bad alias if we have writable mappings.
+		 */
+		if (pg->mdpage.urw_mappings + pg->mdpage.krw_mappings > 0
+		    || (pg->mdpage.pvh_attrs & PVF_KENTRY)) {
+			tst_mask &= arm_cache_prefer_mask;
+			for (; pv && !bad_alias; pv = pv->pv_next) {
+				/* if there's a bad alias, stop checking. */
+				if (tst_mask != (pv->pv_va & arm_cache_prefer_mask))
+					bad_alias = true;
+			}
 		}
 		/* If no conflicting colors, set everything back to cached */
 		if (!bad_alias) {
@@ -1847,7 +1853,13 @@ pmap_vac_me_harder(struct vm_page *pg, pmap_t pm, vaddr_t va)
 			pg->mdpage.pvh_attrs |= PVF_COLORED
 			    | (va & arm_cache_prefer_mask);
 		return;
-	} else if (!((pg->mdpage.pvh_attrs ^ va) & arm_cache_prefer_mask)) {
+	} else if (!((pg->mdpage.pvh_attrs ^ va) & arm_cache_prefer_mask)
+		/*
+		 * If the VA matches the existing color or if all the mappings
+		 * are read-only, don't do anything.
+		 */
+		|| (pg->mdpage.urw_mappings + pg->mdpage.krw_mappings == 0
+		    && (pg->mdpage.pvh_attrs & PVF_KENTRY) == 0)) {
 		if (pm == NULL) {
 			pg->mdpage.pvh_attrs &= PAGE_SIZE - 1;
 			pg->mdpage.pvh_attrs |= va;
@@ -3073,8 +3085,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 				}
 			}
 			KASSERT(opg->mdpage.pvh_attrs & (PVF_COLORED|PVF_NC));
-			opg->mdpage.pvh_attrs &= ~PVF_KENTRY;
-			pmap_vac_me_harder(opg, NULL, 0);
+			if (L2_AP(AP_W) & opte) {
+				KASSERT(opg->mdpage.pvh_attrs & PVF_KENTRY);
+				opg->mdpage.pvh_attrs &= ~PVF_KENTRY;
+				pmap_vac_me_harder(opg, NULL, 0);
+			} else {
+				KASSERT(opg->mdpage.kro_mappings > 0);
+				opg->mdpage.kro_mappings--;
+			}
 			simple_unlock(&opg->mdpage.pvh_slock);
 		}
 #endif
@@ -3094,9 +3112,21 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #ifdef PMAP_CACHE_VIPT
 	if (pg) {
 		simple_lock(&pg->mdpage.pvh_slock);
-		KASSERT((pg->mdpage.pvh_attrs & PVF_KENTRY) == 0);
-		pg->mdpage.pvh_attrs |= PVF_KENTRY;
-		pmap_vac_me_harder(pg, NULL, va);
+		if (prot & VM_PROT_WRITE) {
+			/*
+			 * If they want a writeable page, make sure it
+			 * isn't already mapped in the kernel.
+			 */
+			KASSERT((pg->mdpage.pvh_attrs & PVF_KENTRY) == 0);
+			KASSERT(pg->mdpage.kro_mappings == 0);
+			pg->mdpage.pvh_attrs |= PVF_KENTRY;
+			pmap_vac_me_harder(pg, NULL, va);
+		} else {
+			KASSERT(pg->mdpage.krw_mappings == 0);
+			KASSERT(pg->mdpage.urw_mappings == 0);
+			KASSERT((pg->mdpage.pvh_attrs & PVF_NC) == 0);
+			pg->mdpage.kro_mappings++;
+		}
 		simple_unlock(&pg->mdpage.pvh_slock);
 	}
 #endif
@@ -3137,7 +3167,6 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			opg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
 			if (opg) {
 				simple_lock(&opg->mdpage.pvh_slock);
-				KASSERT(opg->mdpage.pvh_attrs & PVF_KENTRY);
 				if (PV_IS_EXEC_P(opg->mdpage.pvh_attrs)
 				    && !(opg->mdpage.pvh_attrs & PVF_NC)) {
 					if (opg->mdpage.pvh_list == NULL) {
@@ -3150,8 +3179,14 @@ pmap_kremove(vaddr_t va, vsize_t len)
 					}
 				}
 				KASSERT(opg->mdpage.pvh_attrs & (PVF_COLORED|PVF_NC));
-				opg->mdpage.pvh_attrs &= ~PVF_KENTRY;
-				pmap_vac_me_harder(opg, NULL, 0);
+				if (L2_AP(AP_W) & opte) {
+					KASSERT(opg->mdpage.pvh_attrs & PVF_KENTRY);
+					opg->mdpage.pvh_attrs &= ~PVF_KENTRY;
+					pmap_vac_me_harder(opg, NULL, 0);
+				} else {
+					KASSERT(opg->mdpage.kro_mappings > 0);
+					opg->mdpage.kro_mappings--;
+				}
 				simple_unlock(&opg->mdpage.pvh_slock);
 			}
 #endif
