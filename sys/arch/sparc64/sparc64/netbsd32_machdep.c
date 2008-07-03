@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.81 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.81.2.1 2008/07/03 18:37:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.81 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.81.2.1 2008/07/03 18:37:55 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -619,21 +619,21 @@ netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 
 #if 0
 int
-netbsd32_process_write_regs(struct proc *p, const struct reg *regs)
+netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 {
-	const struct reg32* regp = (const struct reg32*)regs;
 	struct trapframe64* tf = p->p_md.md_tf;
 	int i;
 
-	tf->tf_pc = regp->r_pc;
-	tf->tf_npc = regp->r_npc;
-	tf->tf_y = regp->r_pc;
+	tf->tf_pc = regs->r_pc;
+	tf->tf_npc = regs->r_npc;
+	tf->tf_y = regs->r_pc;
 	for (i = 0; i < 8; i++) {
-		tf->tf_global[i] = regp->r_global[i];
-		tf->tf_out[i] = regp->r_out[i];
+		tf->tf_global[i] = regs->r_global[i];
+		tf->tf_out[i] = regs->r_out[i];
 	}
 	/* We should also read in the ins and locals.  See signal stuff */
-	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(regp->r_psr);
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) |
+		PSRCC_TO_TSTATE(regs->r_psr);
 	return (0);
 }
 #endif
@@ -641,8 +641,8 @@ netbsd32_process_write_regs(struct proc *p, const struct reg *regs)
 int
 netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 {
-	extern struct fpstate64	initfpstate;
-	struct fpstate64	*statep = &initfpstate;
+	extern const struct fpstate64 initfpstate;
+	const struct fpstate64	*statep = &initfpstate;
 	int i;
 
 	if (l->l_md.md_fpstate)
@@ -656,22 +656,18 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 
 #if 0
 int
-netbsd32_process_write_fpregs(struct proc *p, const struct fpreg *regs)
+netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs)
 {
-	extern struct fpstate	initfpstate;
-	struct fpstate64	*statep = &initfpstate;
-	const struct fpreg32	*regp = (const struct fpreg32 *)regs;
+	struct fpstate64	*statep;
 	int i;
 
-	/* NOTE: struct fpreg == struct fpstate */
-	if (p->p_md.md_fpstate)
-		statep = p->p_md.md_fpstate;
-	for (i=0; i<32; i++)
-		statep->fs_regs[i] = regp->fr_regs[i];
-	statep->fs_fsr = regp->fr_fsr;
-	statep->fs_qsize = regp->fr_qsize;
-	for (i=0; i<regp->fr_qsize; i++)
-		statep->fs_queue[i] = regp->fr_queue[i];
+	statep = l->l_md.md_fpstate;
+	if (statep == NULL)
+		return EINVAL;
+	for (i = 0; i < 32; i++)
+		statep->fs_regs[i] = regs->fr_regs[i];
+	statep->fs_fsr = regs->fr_fsr;
+	statep->fs_qsize = 0;
 
 	return 0;
 }

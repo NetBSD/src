@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.37.6.1 2008/06/27 15:11:49 simonb Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.37.6.2 2008/07/03 18:38:20 simonb Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.37.6.1 2008/06/27 15:11:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.37.6.2 2008/07/03 18:38:20 simonb Exp $");
 
 /*
  * IPsec controller part.
@@ -988,7 +988,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 			spidx->ul_proto = nxt;
 			if (off + sizeof(struct icmp) > m->m_pkthdr.len)
 				return;
-			m_copydata(m, off, sizeof(icmph), (caddr_t)&icmph);
+			m_copydata(m, off, sizeof(icmph), &icmph);
 			((struct sockaddr_in *)&spidx->src)->sin_port =
 			    htons((uint16_t)icmph.icmp_type);
 			((struct sockaddr_in *)&spidx->dst)->sin_port =
@@ -1091,7 +1091,7 @@ ipsec6_get_ulp(struct mbuf *m, struct secpolicyindex *spidx,
 		spidx->ul_proto = nxt;
 		if (off + sizeof(struct icmp6_hdr) > m->m_pkthdr.len)
 			break;
-		m_copydata(m, off, sizeof(icmph), (caddr_t)&icmph);
+		m_copydata(m, off, sizeof(icmph), &icmph);
 		((struct sockaddr_in6 *)&spidx->src)->sin6_port =
 		    htons((uint16_t)icmph.icmp6_type);
 		((struct sockaddr_in6 *)&spidx->dst)->sin6_port =

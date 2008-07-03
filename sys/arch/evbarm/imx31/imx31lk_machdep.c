@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.2 2008/04/27 18:58:46 matt Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.2.4.1 2008/07/03 18:37:52 simonb Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.2 2008/04/27 18:58:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.2.4.1 2008/07/03 18:37:52 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -584,9 +584,9 @@ initarm(void *arg)
 
 
 printf("%s: etext %lx, _end %lx\n",
-	__FUNCTION__, (uintptr_t)etext, (uintptr_t)_end);
+	__func__, (uintptr_t)etext, (uintptr_t)_end);
 printf("%s: textsize %#lx, totalsize %#lx\n",
-	__FUNCTION__, textsize, totalsize);
+	__func__, textsize, totalsize);
 		
 		logical = 0x00100000;	/* offset of kernel in RAM */
 
@@ -845,7 +845,7 @@ consinit_test(void)
 	imxuart_softc_t *sc, softc;
 	extern int imxuart_puts(imxuart_softc_t *sc, const char *s);
 
-	printf("\n%s start\n", __FUNCTION__);
+	printf("\n%s start\n", __func__);
 	sc = &softc;
 	sc->sc_init_cnt = 0;
 	imxuart_init(sc, IMX_UART1_BASE);
@@ -853,7 +853,7 @@ consinit_test(void)
 	imxuart_init(sc,
 	    IMX31LITEKIT_UART1_VBASE|(IMX_UART1_BASE & ~_A(IMX_UART1_BASE)));
 	imxuart_puts(sc, "test2\r\n");
-	printf("%s done\n", __FUNCTION__);
+	printf("%s done\n", __func__);
 }
 
 #ifdef KGDB

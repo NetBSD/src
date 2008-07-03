@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.98.2.2 2008/06/27 15:11:55 simonb Exp $	*/
+/*	$NetBSD: lwp.h,v 1.98.2.3 2008/07/03 18:38:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
  * l:	*l_mutex
  * p:	l_proc->p_lock
  * s:	spc_mutex, which may or may not be referenced by l_mutex
- * t:	l_proc->p_stmutex
  * S:	l_selcpu->sc_lock
  * (:	unlocked, stable
  * !:	unlocked, may only be reliably accessed by the LWP itself
@@ -96,8 +95,8 @@ struct lwp {
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
 	uint64_t	l_ncsw;		/* l: total context switches */
 	uint64_t	l_nivcsw;	/* l: involuntary context switches */
-	int		l_cpticks;	/* t: Ticks of CPU time */
-	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
+	u_int		l_cpticks;	/* (: Ticks of CPU time */
+	fixpt_t		l_pctcpu;	/* p: %cpu during l_swtime */
 	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
 	psetid_t	l_psid;		/* l: assigned processor-set ID */
 	struct cpu_info *l_target_cpu;	/* l: target CPU to migrate */
@@ -282,7 +281,6 @@ void	startlwp(void *);
 void	upcallret(lwp_t *);
 void	lwp_exit(lwp_t *) __dead;
 void	lwp_exit_switchaway(lwp_t *);
-lwp_t *proc_representative_lwp(struct proc *, int *, int);
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
 void	lwp_update_creds(lwp_t *);
@@ -319,7 +317,6 @@ void lwp_whatis(uintptr_t, void (*)(const char *, ...));
 static inline void
 lwp_lock(lwp_t *l)
 {
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	kmutex_t *old;
 
 	mutex_spin_enter(old = l->l_mutex);
@@ -330,9 +327,6 @@ lwp_lock(lwp_t *l)
 	 */
 	if (__predict_false(l->l_mutex != old))
 		lwp_lock_retry(l, old);
-#else
-	mutex_spin_enter(l->l_mutex);
-#endif
 }
 
 /*

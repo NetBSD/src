@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4 2008/01/07 17:27:12 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.4.20.1 2008/07/03 18:37:56 simonb Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2008/01/07 17:27:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.20.1 2008/07/03 18:37:56 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,6 @@ int		usermode_x = IPL_NONE;
 /* XXX */
 int		physmem = MEMSIZE * 1024 / PAGE_SIZE;
 struct vm_map	*mb_map = NULL;
-struct vm_map	*exec_map = NULL;
 
 void	main(int argc, char *argv[]);
 

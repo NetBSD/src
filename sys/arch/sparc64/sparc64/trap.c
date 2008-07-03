@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.147.8.1 2008/06/27 15:11:18 simonb Exp $ */
+/*	$NetBSD: trap.c,v 1.147.8.2 2008/07/03 18:37:55 simonb Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147.8.1 2008/06/27 15:11:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147.8.2 2008/07/03 18:37:55 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147.8.1 2008/06/27 15:11:18 simonb Exp $"
 })
 #endif
 
+#ifdef TRAPSTATS
 /* trapstats */
 int protfix = 0;
 int udmiss = 0;	/* Number of normal/nucleus data/text miss/protection faults */
@@ -133,6 +134,7 @@ int rftucnt = 0;
 int rftuld = 0;
 int rftudone = 0;
 int rftkcnt[5] = { 0, 0, 0, 0, 0 };
+#endif
 
 #ifdef DEBUG
 #define RW_64		0x1
@@ -173,12 +175,13 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
  * seems to imply that we should do this, and it does make sense.
  */
 __asm(".align 64");
-struct	fpstate64 initfpstate = {
+const struct fpstate64 initfpstate = {
 	.fs_regs =
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
-	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 }
+	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 },
+	.fs_qsize = 0
 };
 
 /*
@@ -669,7 +672,6 @@ badtrap:
 			/* NOTE: fpstate must be 64-bit aligned */
 			fs = malloc((sizeof *fs), M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
-			fs->fs_qsize = 0;
 			l->l_md.md_fpstate = fs;
 		}
 		/*
@@ -763,7 +765,7 @@ badtrap:
 		savefpstate(l->l_md.md_fpstate);
 		fplwp = NULL;
 		rstintr();
-		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
+		/* tf->tf_tstate &= ~TSTATE_PEF */ /* share_fpu will do this */
 		if (l->l_md.md_fpstate->fs_qsize == 0) {
 			error = copyin((void *)pc,
 			    &l->l_md.md_fpstate->fs_queue[0].fq_instr,

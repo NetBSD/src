@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.14.8.1 2008/06/27 15:11:55 simonb Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.14.8.2 2008/07/03 18:38:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -45,11 +45,7 @@
 
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/queue.h>
-#include <sys/stat.h>
-#include <sys/time.h>
 
 #include <err.h>
 #include <errno.h>

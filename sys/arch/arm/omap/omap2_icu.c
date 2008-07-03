@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_icu.c,v 1.2 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: omap2_icu.c,v 1.2.4.1 2008/07/03 18:37:52 simonb Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -30,7 +30,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.2 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.2.4.1 2008/07/03 18:37:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -99,9 +99,6 @@ omap2icu_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irq_mask)
 	sc->sc_enabled_irqs[group] |= irq_mask;
 	INTC_WRITE(sc, group, INTC_MIR_CLEAR, irq_mask);
 
-	aprint_normal_dev(sc->sc_dev, "unblock: group %zd: mask=%#x\n",
-	    group >> 5, irq_mask);
-
 	/* Force INTC to recompute IRQ availability */
 	INTC_WRITE(sc, 0, INTC_CONTROL, INTC_CONTROL_NEWIRQAGR);
 }
@@ -111,9 +108,6 @@ omap2icu_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irq_mask)
 {
 	struct omap2icu_softc * const sc = PICTOSOFTC(pic);
 	const size_t group = irqbase / 32;
-
-	aprint_normal_dev(sc->sc_dev, "block: group %zd: mask=%#x\n",
-	    group >> 5, irq_mask);
 
 	INTC_WRITE(sc, group, INTC_MIR_SET, irq_mask);
 	sc->sc_enabled_irqs[group] &= ~irq_mask;
@@ -132,8 +126,6 @@ find_pending_irqs(struct omap2icu_softc *sc, size_t group)
 	if (pending == 0)
 		return 0;
 
-	aprint_normal_dev(sc->sc_dev, "group %zd: pending=%#x\n",
-	    group, pending);
 	return pic_mark_pending_sources(&sc->sc_pic, group * 32, pending);
 }
 

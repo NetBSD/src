@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.56 2008/04/28 20:23:44 martin Exp $ */
+/*	$NetBSD: mach_message.c,v 1.56.4.1 2008/07/03 18:37:57 simonb Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.56 2008/04/28 20:23:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.56.4.1 2008/07/03 18:37:57 simonb Exp $");
 
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
 #include "opt_compat_darwin.h"
@@ -676,7 +676,8 @@ mach_get_target_task(struct lwp *l, struct mach_port *mp)
 	switch (mp->mp_datatype) {
 	case MACH_MP_PROC:
 		tp = (struct proc *)mp->mp_data;
-		tl = proc_representative_lwp(tp, NULL, 1);
+		tl = LIST_FIRST(&tp->p_lwps);
+		KASSERT(tl != NULL);
 		break;
 
 	case MACH_MP_LWP:

@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.55 2008/03/11 05:34:02 matt Exp $    */
+/*      $NetBSD: param.h,v 1.55.8.1 2008/07/03 18:37:56 simonb Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -152,6 +152,7 @@ void	delay(int);
 #endif
 
 #define	DELAY(x) delay(x)
+#define	MAXEXEC	1
 #endif /* _KERNEL */
 
 #endif /* _VAX_PARAM_H_ */

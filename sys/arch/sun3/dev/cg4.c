@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.38 2008/06/08 17:30:08 tsutsui Exp $	*/
+/*	$NetBSD: cg4.c,v 1.38.2.1 2008/07/03 18:37:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.38 2008/06/08 17:30:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.38.2.1 2008/07/03 18:37:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,11 @@ __KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.38 2008/06/08 17:30:08 tsutsui Exp $");
 #include <sun3/dev/cg4reg.h>
 #include <sun3/dev/p4reg.h>
 
+#include "ioconf.h"
+
 union bt_cmap_u {
-	u_char  btcm_char[256 * 3];		/* raw data */
-	u_char  btcm_rgb[256][3];		/* 256 R/G/B entries */
+	uint8_t  btcm_char[256 * 3];		/* raw data */
+	uint8_t  btcm_rgb[256][3];		/* 256 R/G/B entries */
 	u_int   btcm_int[256 * 3 / 4];	/* the way the chip gets loaded */
 };
 
@@ -93,14 +95,14 @@ union bt_cmap_u {
 
 #define CMAP_SIZE 256
 struct soft_cmap {
-	u_char r[CMAP_SIZE];
-	u_char g[CMAP_SIZE];
-	u_char b[CMAP_SIZE];
+	uint8_t r[CMAP_SIZE];
+	uint8_t g[CMAP_SIZE];
+	uint8_t b[CMAP_SIZE];
 };
 
 /* per-display variables */
 struct cg4_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	int 	sc_cg4type;		/* A or B */
 	int 	sc_pa_overlay;		/* phys. addr. of overlay plane */
@@ -114,13 +116,11 @@ struct cg4_softc {
 };
 
 /* autoconfiguration driver */
-static void	cg4attach(struct device *, struct device *, void *);
-static int	cg4match(struct device *, struct cfdata *, void *);
+static int	cg4match(device_t, cfdata_t, void *);
+static void	cg4attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cgfour, sizeof(struct cg4_softc),
+CFATTACH_DECL_NEW(cgfour, sizeof(struct cg4_softc),
     cg4match, cg4attach, NULL, NULL);
-
-extern struct cfdriver cgfour_cd;
 
 dev_type_open(cg4open);
 dev_type_ioctl(cg4ioctl);
@@ -154,7 +154,7 @@ static struct fbdriver cg4_fbdriver = {
  * Match a cg4.
  */
 static int 
-cg4match(struct device *parent, struct cfdata *cf, void *args)
+cg4match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
 	int mid, p4id, peekval, tmp;
@@ -162,7 +162,7 @@ cg4match(struct device *parent, struct cfdata *cf, void *args)
 
 	/* No default address support. */
 	if (ca->ca_paddr == -1)
-		return (0);
+		return 0;
 
 	/*
 	 * Slight hack here:  The low four bits of the
@@ -171,7 +171,7 @@ cg4match(struct device *parent, struct cfdata *cf, void *args)
 	 */
 	mid = cf->cf_flags & IDM_IMPL_MASK;
 	if (mid && (mid != (cpu_machine_id & IDM_IMPL_MASK)))
-		return (0);
+		return 0;
 
 	/*
 	 * The config flag 0x10 if set means we are
@@ -181,16 +181,16 @@ cg4match(struct device *parent, struct cfdata *cf, void *args)
 #ifdef	_SUN3_
 		/* Type A: Check for AMD RAMDACs in control space. */
 		if (bus_peek(BUS_OBIO, CG4A_OBIO_CMAP, 1) == -1)
-			return (0);
+			return 0;
 		/* Check for the overlay plane. */
 		tmp = ca->ca_paddr + CG4A_OFF_OVERLAY;
 		if (bus_peek(ca->ca_bustype, tmp, 1) == -1)
-			return (0);
+			return 0;
 		/* OK, it looks like a Type A. */
-		return (1);
+		return 1;
 #else	/* SUN3 */
 		/* Only the Sun3/110 ever has a type A. */
-		return (0);
+		return 0;
 #endif	/* SUN3 */
 	}
 
@@ -209,10 +209,10 @@ cg4match(struct device *parent, struct cfdata *cf, void *args)
 			return (0);
 		if (p4id != P4_ID_COLOR8P1) {
 #ifdef	DEBUG
-			printf("cgfour at 0x%lx match p4id=0x%x fails\n",
-				   ca->ca_paddr, p4id & 0xFF);
+			aprint_debug("cgfour at 0x%lx match p4id=0x%x fails\n",
+			    ca->ca_paddr, p4id & 0xFF);
 #endif
-			return (0);
+			return 0;
 		}
 	}
 
@@ -221,25 +221,27 @@ cg4match(struct device *parent, struct cfdata *cf, void *args)
 	 */
 	tmp = ca->ca_paddr + CG4B_OFF_CMAP;
 	if (bus_peek(ca->ca_bustype, tmp, 4) == -1)
-		return (0);
+		return 0;
 	tmp = ca->ca_paddr + CG4B_OFF_OVERLAY;
 	if (bus_peek(ca->ca_bustype, tmp, 1) == -1)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
 static void 
-cg4attach(struct device *parent, struct device *self, void *args)
+cg4attach(device_t parent, device_t self, void *args)
 {
 	struct cg4_softc *sc = device_private(self);
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
 	int tmp;
+
+	sc->sc_dev = self;
 
 	fbt = &fb->fb_fbtype;
 	fbt->fb_type = FBTYPE_SUN4COLOR;
@@ -250,8 +252,8 @@ cg4attach(struct device *parent, struct device *self, void *args)
 	fbt->fb_size = CG4_MMAP_SIZE;
 	fb->fb_driver = &cg4_fbdriver;
 	fb->fb_private = sc;
-	fb->fb_name  = sc->sc_dev.dv_xname;
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
+	fb->fb_name  = device_xname(self);
+	fb->fb_flags = device_cfdata(self)->cf_flags;
 
 	/*
 	 * The config flag 0x10 if set means we are
@@ -297,7 +299,7 @@ cg4attach(struct device *parent, struct device *self, void *args)
 	if (fb->fb_pfour)
 		fb_pfour_setsize(fb);
 	/* XXX device_unit() abuse */
-	else if (device_unit(&sc->sc_dev) == 0)
+	else if (device_unit(self) == 0)
 		fb_eeprom_setsize(fb);
 	else {
 		/* Guess based on machine ID. */
@@ -307,7 +309,7 @@ cg4attach(struct device *parent, struct device *self, void *args)
 			break;
 		}
 	}
-	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
+	aprint_normal(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
 
 	/*
 	 * Make sure video is on.  This driver uses a
@@ -333,8 +335,8 @@ cg4open(dev_t dev, int flags, int mode, struct lwp *l)
 
 	sc = device_lookup_private(&cgfour_cd, unit);
 	if (sc == NULL)
-		return (ENXIO);
-	return (0);
+		return ENXIO;
+	return 0;
 }
 
 int 
@@ -342,7 +344,7 @@ cg4ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cg4_softc *sc = device_lookup_private(&cgfour_cd, minor(dev));
 
-	return (fbioctlfb(&sc->sc_fb, cmd, data));
+	return fbioctlfb(&sc->sc_fb, cmd, data);
 }
 
 /*
@@ -363,10 +365,10 @@ cg4mmap(dev_t dev, off_t off, int prot)
 	int physbase;
 
 	if (off & PGOFSET)
-		panic("cg4mmap");
+		panic("%s: bad offset", __func__);
 
 	if ((off < 0) || (off >= CG4_MMAP_SIZE))
-		return (-1);
+		return -1;
 
 	if (off < 0x40000) {
 		if (off < 0x20000) {
@@ -386,7 +388,7 @@ cg4mmap(dev_t dev, off_t off, int prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour without it.
 	 */
-	return ((physbase + off) | PMAP_NC);
+	return (physbase + off) | PMAP_NC;
 }
 
 /*
@@ -407,7 +409,7 @@ cg4gattr(struct fbdevice *fb, void *data)
 	fba->sattr.dev_specific[0] = -1;
 	fba->emu_types[0] = fb->fb_fbtype.fb_type;
 	fba->emu_types[1] = -1;
-	return (0);
+	return 0;
 }
 
 /* FBIOGVIDEO: */
@@ -418,7 +420,7 @@ cg4gvideo(struct fbdevice *fb, void *data)
 	int *on = data;
 
 	*on = sc->sc_video_on;
-	return (0);
+	return 0;
 }
 
 /* FBIOSVIDEO: */
@@ -429,11 +431,11 @@ cg4svideo(struct fbdevice *fb, void *data)
 	int *on = data;
 
 	if (sc->sc_video_on == *on)
-		return (0);
+		return 0;
 	sc->sc_video_on = *on;
 
 	(*sc->sc_ldcmap)(sc);
-	return (0);
+	return 0;
 }
 
 /*
@@ -452,18 +454,18 @@ cg4getcmap(struct fbdevice *fb, void *data)
 	start = fbcm->index;
 	count = fbcm->count;
 	if (start >= CMAP_SIZE || count > CMAP_SIZE - start)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((error = copyout(&cm->r[start], fbcm->red, count)) != 0)
-		return (error);
+		return error;
 
 	if ((error = copyout(&cm->g[start], fbcm->green, count)) != 0)
-		return (error);
+		return error;
 
 	if ((error = copyout(&cm->b[start], fbcm->blue, count)) != 0)
-		return (error);
+		return error;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -482,19 +484,19 @@ cg4putcmap(struct fbdevice *fb, void *data)
 	start = fbcm->index;
 	count = fbcm->count;
 	if (start >= CMAP_SIZE || count > CMAP_SIZE - start)
-		return (EINVAL);
+		return EINVAL;
 
 	if ((error = copyin(fbcm->red, &cm->r[start], count)) != 0)
-		return (error);
+		return error;
 
 	if ((error = copyin(fbcm->green, &cm->g[start], count)) != 0)
-		return (error);
+		return error;
 
 	if ((error = copyin(fbcm->blue, &cm->b[start], count)) != 0)
-		return (error);
+		return error;
 
 	(*sc->sc_ldcmap)(sc);
-	return (0);
+	return 0;
 }
 
 /****************************************************************
@@ -577,7 +579,7 @@ cg4b_init(struct cg4_softc *sc)
 	bt->bt_addr = 0x05050505;	/* select blink mask register */
 	bt->bt_ctrl = 0;        	/* all planes non-blinking */
 	bt->bt_addr = 0x06060606;	/* select command register */
-	bt->bt_ctrl = 0x43434343;	/* palette enabled, overlay planes enabled */
+	bt->bt_ctrl = 0x43434343; /* palette enabled, overlay planes enabled */
 	bt->bt_addr = 0x07070707;	/* select test register */
 	bt->bt_ctrl = 0;        	/* not test mode */
 
@@ -648,4 +650,3 @@ cg4b_ldcmap(struct cg4_softc *sc)
 	}
 #endif	/* SUN3 */
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_iic.c,v 1.6 2008/06/09 15:42:25 tsutsui Exp $	*/
+/*	$NetBSD: nslu2_iic.c,v 1.6.2.1 2008/07/03 18:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -134,13 +134,13 @@ slugiic_set_dir(void *arg, uint32_t bits)
 		reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
 		if ((reg & GPIO_I2C_SDA_BIT) == 0) {
 			reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOER);
-			reg |= GPIO_I2C_SDA_BIT;
+			reg &= ~GPIO_I2C_SDA_BIT;
 			GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, reg);
 		}
 	} else {
 		/* SDA is input; disable SDA output */
 		reg = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOER);
-		reg &= ~GPIO_I2C_SDA_BIT;
+		reg |= GPIO_I2C_SDA_BIT;
 		GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, reg);
 	}
 
@@ -168,9 +168,9 @@ slugiic_set_bits(void *arg, uint32_t bits)
 	 */
 	oer = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOER);
 	if ((bits & GPIO_I2C_SCL_BIT) != 0)
-		oer &= ~GPIO_I2C_SCL_BIT;
+		oer |= GPIO_I2C_SCL_BIT;
 	if ((bits & GPIO_I2C_SDA_BIT) != 0)
-		oer &= ~GPIO_I2C_SDA_BIT;
+		oer |= GPIO_I2C_SDA_BIT;
 	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, oer);
 
 	outr = GPIO_CONF_READ_4(ixp425_softc, IXP425_GPIO_GPOUTR);
@@ -178,9 +178,9 @@ slugiic_set_bits(void *arg, uint32_t bits)
 	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOUTR, outr | bits);
 
 	if ((bits & GPIO_I2C_SCL_BIT) == 0)
-		oer |= GPIO_I2C_SCL_BIT;
+		oer &= ~GPIO_I2C_SCL_BIT;
 	if ((bits & GPIO_I2C_SDA_BIT) == 0 && sc->sc_dirout)
-		oer |= GPIO_I2C_SDA_BIT;
+		oer &= ~GPIO_I2C_SDA_BIT;
 	GPIO_CONF_WRITE_4(ixp425_softc, IXP425_GPIO_GPOER, oer);
 
 	splx(s);

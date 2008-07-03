@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.25.2.4 2008/06/27 15:52:15 simonb Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.25.2.5 2008/07/03 18:38:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.25.2.4 2008/06/27 15:52:15 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.25.2.5 2008/07/03 18:38:12 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -312,7 +312,7 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, 0, 0);
 		if (error)
 		        return (error);
-		KASSERT(vp->v_numoutput == 0 && LIST_EMPTY(&vp->v_dirtyblkhd));
+		KASSERT(LIST_EMPTY(&vp->v_dirtyblkhd));
 	}
 
 	mutex_enter(&bufcache_lock);
