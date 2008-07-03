@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.32 2006/02/23 03:18:42 gdamore Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.33 2008/07/03 19:07:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -186,7 +186,7 @@ struct pcmcia_card {
 };
 
 struct pcmcia_softc {
-	struct device	dev;
+	device_t	dev;
 
 	/* this stuff is for the socket */
 	pcmcia_chipset_tag_t pct;
