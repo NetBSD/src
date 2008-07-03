@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.15 2008/07/03 18:03:22 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.16 2008/07/03 19:29:42 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -388,22 +388,23 @@ struct udf_node {
 
 
 /* misc. flags stored in i_flags (XXX needs cleaning up) */
-#define	IN_ACCESS	0x0001		/* Inode access time update request. */
-#define	IN_CHANGE	0x0002		/* Inode change time update request. */
+#define	IN_ACCESS	0x0001		/* Inode access time update request  */
+#define	IN_CHANGE	0x0002		/* Inode change time update request  */
 #define	IN_UPDATE	0x0004		/* Inode was written to; update mtime*/
-#define	IN_MODIFY	0x0008		/* Modification time update request. */
-#define	IN_MODIFIED	0x0010		/* node has been modified. */
-#define	IN_ACCESSED	0x0020		/* node has been accessed. */
+#define	IN_MODIFY	0x0008		/* Modification time update request  */
+#define	IN_MODIFIED	0x0010		/* node has been modified */
+#define	IN_ACCESSED	0x0020		/* node has been accessed */
 #define	IN_RENAME	0x0040		/* node is being renamed. XXX ?? */
-#define IN_DELETED	0x0080		/* node is unlinked, no FID reference */
-#define IN_LOCKED	0x0100		/* node is locked by condvar */
-#define IN_SYNCED	0x0200		/* node is being used by sync */
-#define IN_CALLBACK_ULK	0x0400		/* node will be unlocked by callback */
+#define	IN_DELETED	0x0080		/* node is unlinked, no FID reference*/
+#define	IN_LOCKED	0x0100		/* node is locked by condvar */
+#define	IN_SYNCED	0x0200		/* node is being used by sync */
+#define	IN_CALLBACK_ULK	0x0400		/* node will be unlocked by callback */
+#define	IN_NODE_REBUILD	0x0800		/* node is rebuild */
 
 
 #define IN_FLAGBITS \
 	"\10\1IN_ACCESS\2IN_CHANGE\3IN_UPDATE\4IN_MODIFY\5IN_MODIFIED" \
 	"\6IN_ACCESSED\7IN_RENAME\10IN_DELETED\11IN_LOCKED\12IN_SYNCED" \
-	"\13IN_CALLBACK_ULK"
+	"\13IN_CALLBACK_ULK\14IN_NODE_REBUILD"
 
 #endif /* !_FS_UDF_UDF_H_ */
