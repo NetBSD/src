@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.3 2008/06/30 00:51:01 perry Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.4 2008/07/03 18:01:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.3 2008/06/30 00:51:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.4 2008/07/03 18:01:08 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -558,6 +558,7 @@ udf_create_logvol_dscr(struct udf_mount *ump, struct udf_node *udf_node, struct 
 	struct udf_strat_args args;
 	int error;
 
+	KASSERT(strategy);
 	args.ump  = ump;
 	args.udf_node = udf_node;
 	args.icb  = icb;
@@ -577,6 +578,7 @@ udf_free_logvol_dscr(struct udf_mount *ump, struct long_ad *icb,
 	struct udf_strategy *strategy = ump->strategy;
 	struct udf_strat_args args;
 
+	KASSERT(strategy);
 	args.ump  = ump;
 	args.icb  = icb;
 	args.dscr = dscr;
@@ -593,6 +595,7 @@ udf_read_logvol_dscr(struct udf_mount *ump, struct long_ad *icb,
 	struct udf_strat_args args;
 	int error;
 
+	KASSERT(strategy);
 	args.ump  = ump;
 	args.icb  = icb;
 	args.dscr = NULL;
@@ -612,6 +615,7 @@ udf_write_logvol_dscr(struct udf_node *udf_node, union dscrptr *dscr,
 	struct udf_strat_args args;
 	int error;
 
+	KASSERT(strategy);
 	args.ump      = udf_node->ump;
 	args.udf_node = udf_node;
 	args.icb      = icb;
@@ -629,6 +633,7 @@ udf_discstrat_queuebuf(struct udf_mount *ump, struct buf *nestbuf)
 	struct udf_strategy *strategy = ump->strategy;
 	struct udf_strat_args args;
 
+	KASSERT(strategy);
 	args.ump = ump;
 	args.nestbuf = nestbuf;
 
@@ -642,6 +647,7 @@ udf_discstrat_init(struct udf_mount *ump)
 	struct udf_strategy *strategy = ump->strategy;
 	struct udf_strat_args args;
 
+	KASSERT(strategy);
 	args.ump = ump;
 	(strategy->discstrat_init)(&args);
 }
@@ -652,8 +658,11 @@ void udf_discstrat_finish(struct udf_mount *ump)
 	struct udf_strategy *strategy = ump->strategy;
 	struct udf_strat_args args;
 
-	args.ump = ump;
-	(strategy->discstrat_finish)(&args);
+	/* strategy might not have been set, so ignore if not set */
+	if (strategy) {
+		args.ump = ump;
+		(strategy->discstrat_finish)(&args);
+	}
 }
 
 /* --------------------------------------------------------------------- */
