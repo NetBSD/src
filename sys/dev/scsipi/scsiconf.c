@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.248 2008/06/08 18:18:34 tsutsui Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.249 2008/07/03 13:22:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.248 2008/06/08 18:18:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.249 2008/07/03 13:22:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -700,6 +700,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "UMAX    ", "UMAX S-12       ", "V2.1"}, PQUIRK_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "ULTIMA  ", "A6000C          ", ""},     PQUIRK_NOLUNS},
+	{{T_PROCESSOR, T_FIXED,
+	 "ESG-SHV",  "SCA HSBP M15",     ""},     PQUIRK_NOLUNS},
 	{{T_PROCESSOR, T_FIXED,
 	 "SYMBIOS",  "",                 ""},     PQUIRK_NOLUNS},
 	{{T_PROCESSOR, T_FIXED,
