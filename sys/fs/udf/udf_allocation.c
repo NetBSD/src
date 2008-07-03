@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.9 2008/07/02 13:25:33 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.10 2008/07/03 18:03:01 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.9 2008/07/02 13:25:33 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.10 2008/07/03 18:03:01 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -103,7 +103,7 @@ udf_node_dump(struct udf_node *udf_node) {
 	int part_num;
 	int adlen, ad_off, dscr_size, l_ea, l_ad, lb_size, flags;
 
-	if ((udf_verbose & UDF_DEBUG_ADWLK) == 0)
+	if ((udf_verbose & UDF_DEBUG_NODEDUMP) == 0)
 		return;
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
@@ -148,7 +148,7 @@ udf_node_dump(struct udf_node *udf_node) {
 	}
 
 	printf("\t\t");
-	for (ad_off = 0; ad_off < max_l_ad-adlen; ad_off += adlen) {
+	for (ad_off = 0; ad_off < l_ad; ad_off += adlen) {
 		if (addr_type == UDF_ICB_SHORT_ALLOC) {
 			short_ad = (struct short_ad *) (data_pos + ad_off);
 			len      = udf_rw32(short_ad->len);
@@ -169,7 +169,7 @@ udf_node_dump(struct udf_node *udf_node) {
 			printf("part %d, ", part_num);
 		printf("lb_num %d, len %d", lb_num, len);
 		if (flags)
-			printf(", flags %d", flags);
+			printf(", flags %d", flags>>30);
 		printf("] ");
 		if (ad_off + adlen == l_ad)
 			printf("\n\t\tl_ad END\n\t\t");
@@ -194,7 +194,7 @@ udf_assert_allocated(struct udf_mount *ump, uint16_t vpart_num,
 	int phys_part;
 	int ok;
 
-	DPRINTF(ALLOC, ("udf_assert_allocated: check virt lbnum %d "
+	DPRINTF(PARANOIA, ("udf_assert_allocated: check virt lbnum %d "
 			  "part %d + %d sect\n", lb_num, vpart_num, num_lb));
 
 	/* get partition backing up this vpart_num */
@@ -268,6 +268,9 @@ udf_node_sanity_check(struct udf_node *udf_node,
 	int adlen, ad_off, dscr_size, l_ea, l_ad, lb_size, flags, whole_lb;
 
 //	KASSERT(mutex_owned(&udf_node->ump->allocate_mutex));
+
+	if (1)
+		udf_node_dump(udf_node);
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
 
@@ -352,8 +355,6 @@ udf_node_sanity_check(struct udf_node *udf_node,
 	KASSERT(*cnt_logblksrec == logblksrec);
 
 //	KASSERT(mutex_owned(&udf_node->ump->allocate_mutex));
-	if (0)
-		udf_node_dump(udf_node);
 }
 #else
 #define udf_node_sanity_check(a, b, c)
@@ -1000,6 +1001,10 @@ udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num,
 
 	DPRINTF(ALLOC, ("udf_free_allocated_space: freeing virt lbnum %d "
 			  "part %d + %d sect\n", lb_num, vpart_num, num_lb));
+
+	/* no use freeing zero length */
+	if (num_lb == 0)
+		return;
 
 	mutex_enter(&ump->allocate_mutex);
 
@@ -1749,6 +1754,8 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 
 		/* advance for this slot */
 		if (replace) {
+			/* note: dont round DOWN on num_lb since we then
+			 * forget the last partial one */
 			num_lb = (replace + lb_size - 1) / lb_size;
 			if (flags != UDF_EXT_FREE) {
 				udf_free_allocated_space(ump, lb_num,
@@ -2309,8 +2316,9 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 		vpart_num = udf_rw16(s_ad.loc.part_num);
 
 		if (flags == UDF_EXT_ALLOCATED) {
+			/* note: round DOWN on num_lb */
 			lb_num += (slot_offset + lb_size -1) / lb_size;
-			num_lb  = (len - slot_offset + lb_size - 1) / lb_size;
+			num_lb  = (len - slot_offset) / lb_size;
 
 			udf_free_allocated_space(ump, lb_num, vpart_num, num_lb);
 		}
