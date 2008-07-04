@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.162 2008/07/04 13:28:08 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.163 2008/07/04 16:38:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.162 2008/07/04 13:28:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.163 2008/07/04 16:38:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2085,8 +2085,10 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 
 	if ((flags & PR_LARGECACHE) != 0) {
 		pc->pc_pcgsize = PCG_NOBJECTS_LARGE;
+		pc->pc_pcgpool = &pcg_large_pool;
 	} else {
 		pc->pc_pcgsize = PCG_NOBJECTS_NORMAL;
+		pc->pc_pcgpool = &pcg_normal_pool;
 	}
 
 	/* Allocate per-CPU caches. */
@@ -2480,9 +2482,9 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 				*pap = pcg->pcg_objects[pcg->pcg_avail].pcgo_pa;
 #if defined(DIAGNOSTIC)
 			pcg->pcg_objects[pcg->pcg_avail].pcgo_va = NULL;
-#endif /* defined(DIAGNOSTIC) */
-			KASSERT(pcg->pcg_avail <= pcg->pcg_size);
+			KASSERT(pcg->pcg_avail < pcg->pcg_size);
 			KASSERT(object != NULL);
+#endif
 			cc->cc_hits++;
 			splx(s);
 			FREECHECK_OUT(&pc->pc_freecheck, object);
@@ -2514,55 +2516,41 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 static bool __noinline
 pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 {
-	pcg_t *pcg, *cur, *empty;
+	pcg_t *pcg, *cur;
 	uint64_t ncsw;
 	pool_cache_t pc;
 
 	pc = cc->cc_cache;
 	cc->cc_misses++;
 
-	/*
-	 * If there appear to be no empty groups in the cache then
-	 * allocate one in advance.
-	 */
-	empty = NULL;
-	if (__predict_false(pc->pc_emptygroups == NULL)) {
-		if (__predict_false(pool_cache_disable)) {
-			empty = NULL;
-		} else if (pc->pc_pcgsize == PCG_NOBJECTS_LARGE) {
-			empty = pool_get(&pcg_large_pool, PR_NOWAIT);
-		} else {
-			empty = pool_get(&pcg_normal_pool, PR_NOWAIT);
-		}
-	}
-
 	/* Lock the cache. */
 	ncsw = curlwp->l_ncsw;
 	if (__predict_false(!mutex_tryenter(&pc->pc_lock))) {
 		mutex_enter(&pc->pc_lock);
 		pc->pc_contended++;
+
+		/*
+		 * If we context switched while locking, then our view of
+		 * the per-CPU data is invalid: retry.
+		 */
+		if (__predict_false(curlwp->l_ncsw != ncsw)) {
+			mutex_exit(&pc->pc_lock);
+			return true;
+		}
 	}
 
-	/*
-	 * If we speculatively allocated an empty group, link it into
-	 * the cache's list.
-	 */
-	if (empty != NULL) {
-		empty->pcg_avail = 0;
-		empty->pcg_size = pc->pc_pcgsize;
-		empty->pcg_next = pc->pc_emptygroups;
-		pc->pc_emptygroups = empty;
-		pc->pc_nempty++;
-		pc->pc_misses++;
-	}
-
-	/*
-	 * If we context switched while locking, then our view of the
-	 * per-CPU data is invalid: retry.
-	 */
-	if (__predict_false(curlwp->l_ncsw != ncsw)) {
-		mutex_exit(&pc->pc_lock);
-		return true;
+	/* If there are no empty groups in the cache then allocate one. */
+	if (__predict_false((pcg = pc->pc_emptygroups) == NULL)) {
+		if (__predict_true(!pool_cache_disable)) {
+			pcg = pool_get(pc->pc_pcgpool, PR_NOWAIT);
+		}
+		if (__predict_true(pcg != NULL)) {
+			pcg->pcg_avail = 0;
+			pcg->pcg_size = pc->pc_pcgsize;
+		}
+	} else {
+		pc->pc_emptygroups = pcg->pcg_next;
+		pc->pc_nempty--;
 	}
 
 	/*
@@ -2570,23 +2558,21 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 	 * to the cache.  Install the empty group to the local CPU
 	 * and return.
 	 */
-	if (__predict_true((pcg = pc->pc_emptygroups) != NULL)) {
+	if (pcg != NULL) {
 		KASSERT(pcg->pcg_avail == 0);
-		pc->pc_emptygroups = pcg->pcg_next;
 		if (__predict_false(cc->cc_previous == &pcg_dummy)) {
 			cc->cc_previous = pcg;
 		} else {
 			cur = cc->cc_current;
 			if (__predict_true(cur != &pcg_dummy)) {
-				KASSERT(cur->pcg_avail == pcg->pcg_size);
+				KASSERT(cur->pcg_avail == cur->pcg_size);
 				cur->pcg_next = pc->pc_fullgroups;
 				pc->pc_fullgroups = cur;
 				pc->pc_nfull++;
 			}
 			cc->cc_current = pcg;
 		}
-		pc->pc_hits += (empty == NULL);
-		pc->pc_nempty--;
+		pc->pc_hits++;
 		mutex_exit(&pc->pc_lock);
 		return true;
 	}
