@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.20 2008/07/04 04:49:36 cegger Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.21 2008/07/04 04:53:41 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.20 2008/07/04 04:49:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.21 2008/07/04 04:53:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.20 2008/07/04 04:49:36 cegger Exp
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
-int	an_isapnp_match(struct device *, struct cfdata *, void *);
-void	an_isapnp_attach(struct device *, struct device *, void *);
+int	an_isapnp_match(device_t, cfdata_t, void *);
+void	an_isapnp_attach(device_t, device_t, void *);
 
 struct an_isapnp_softc {
 	struct an_softc sc_an;			/* real "an" softc */
@@ -83,7 +83,7 @@ CFATTACH_DECL_NEW(an_isapnp, sizeof(struct an_isapnp_softc),
     an_isapnp_match, an_isapnp_attach, NULL, NULL);
 
 int
-an_isapnp_match(struct device *parent, struct cfdata *match,
+an_isapnp_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	int pri, variant;
@@ -95,7 +95,7 @@ an_isapnp_match(struct device *parent, struct cfdata *match,
 }
 
 void
-an_isapnp_attach(struct device *parent, struct device *self, void *aux)
+an_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct an_isapnp_softc *isc = device_private(self);
 	struct an_softc *sc = &isc->sc_an;
