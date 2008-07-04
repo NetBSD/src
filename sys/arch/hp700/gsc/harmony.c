@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.11 2008/07/04 11:14:19 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.12 2008/07/04 11:18:02 skrll Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -1069,7 +1069,7 @@ size_t
 harmony_round_buffersize(void *vsc, int direction, size_t size)
 {
 
-	return (size & (size_t)(-HARMONY_BUFSIZE));
+	return ((size + HARMONY_BUFSIZE - 1) & (size_t)(-HARMONY_BUFSIZE));
 }
 
 int
