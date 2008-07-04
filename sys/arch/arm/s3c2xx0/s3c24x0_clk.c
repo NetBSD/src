@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.9 2008/01/20 16:28:23 joerg Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.10 2008/07/04 11:59:45 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.9 2008/01/20 16:28:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.10 2008/07/04 11:59:45 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ cpu_initclocks(void)
 	    TCON_AUTORELOAD(3) | TCON_START(3) |
 	    TCON_AUTORELOAD(4) | TCON_START(4) );
 
-	s3c24x0_timecounter.tc_frequency = pclk;
+	s3c24x0_timecounter.tc_frequency = TIMER_FREQUENCY(pclk) / timer4_prescaler;
 	tc_init(&s3c24x0_timecounter);
 }
 
