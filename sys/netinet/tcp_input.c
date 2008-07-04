@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.288 2008/07/03 15:35:28 ad Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.289 2008/07/04 18:22:21 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.288 2008/07/03 15:35:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.289 2008/07/04 18:22:21 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1306,6 +1306,9 @@ findpcb:
 	}
 	if (tp->t_state == TCPS_CLOSED)
 		goto drop;
+
+	KASSERT(so->so_lock == softnet_lock);
+	KASSERT(solocked(so));
 
 	/*
 	 * Checksum extended TCP header and data.
