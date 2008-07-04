@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.33 2007/11/08 06:42:22 jdc Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.34 2008/07/04 16:52:10 tnozaki Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.33 2007/11/08 06:42:22 jdc Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.34 2008/07/04 16:52:10 tnozaki Exp $");
 #endif
 #endif				/* not lint */
 
@@ -110,6 +110,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 	int		n;
 	cchar_t		cc;
 	wchar_t		wc;
+	mbstate_t	st;
 #else
 	int		c;
 #endif
@@ -127,6 +128,9 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 	SYNCH_IN;
 	lp = win->lines[y];
 
+#ifdef HAVE_WCHAR
+	(void)mbrtowc(NULL, NULL, (size_t)0, &st);
+#endif
 	while (count > 0) {
 #ifndef HAVE_WCHAR
 		c = *bytes++;
@@ -147,15 +151,15 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 		 * then we eat the n characters used to make the wide char
 		 * from the string.
 		 */
-		n = mbtowc(&wc, bytes, count);
-		if (n == 0)
-			break;
-		else if (n < 0) { /* not a valid conversion just eat a char */
+		n = (int)mbrtowc(&wc, bytes, (size_t)count, &st);
+		if (n < 0) {
+			/* not a valid conversion just eat a char */
 			wc = *bytes;
 			n = 1;
+			(void)mbrtowc(NULL, NULL, (size_t)0, &st);
+		} else if (wc == 0) {
+			break;
 		}
-
-
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT,
 		 "ADDBYTES WIDE(0x%x [%s], %x) at (%d, %d), ate %d bytes\n",
