@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.163 2008/07/04 16:38:59 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.164 2008/07/04 16:41:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.163 2008/07/04 16:38:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.164 2008/07/04 16:41:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2524,8 +2524,8 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 	cc->cc_misses++;
 
 	/* Lock the cache. */
-	ncsw = curlwp->l_ncsw;
 	if (__predict_false(!mutex_tryenter(&pc->pc_lock))) {
+		ncsw = curlwp->l_ncsw;
 		mutex_enter(&pc->pc_lock);
 		pc->pc_contended++;
 
