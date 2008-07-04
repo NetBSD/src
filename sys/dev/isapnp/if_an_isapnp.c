@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.19 2008/07/03 18:10:08 drochner Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.20 2008/07/04 04:49:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.19 2008/07/03 18:10:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.20 2008/07/04 04:49:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ an_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		aprint_error_dev(&sc->sc_dev, "can't configure isapnp resources\n");
+		aprint_error_dev(self, "can't configure isapnp resources\n");
 		return;
 	}
 
@@ -112,7 +112,7 @@ an_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ipa->ipa_io[0].h;
 
-	printf("%s: %s %s\n", device_xname(&sc->sc_dev), ipa->ipa_devident,
+	printf("%s: %s %s\n", device_xname(self), ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
 	/* This interface is always enabled. */
@@ -122,12 +122,12 @@ an_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, an_intr, sc);
 	if (isc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
+		aprint_error_dev(self, "couldn't establish interrupt handler\n");
 		return;
 	}
 
 	if (an_attach(sc) != 0) {
-		aprint_error_dev(&sc->sc_dev, "failed to attach controller\n");
+		aprint_error_dev(self, "failed to attach controller\n");
 		isa_intr_disestablish(ipa->ipa_ic, isc->sc_ih);
 		isc->sc_ih = NULL;
 	}
