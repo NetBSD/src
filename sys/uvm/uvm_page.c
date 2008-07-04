@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.139 2008/07/02 17:47:53 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.140 2008/07/04 10:56:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.139 2008/07/02 17:47:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.140 2008/07/04 10:56:59 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -110,6 +110,11 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  * problems for either CPU caches or DMA latency.
  */
 bool vm_page_zero_enable = false;
+
+/*
+ * number of pages per-CPU to reserve for the kernel.
+ */
+int vm_page_reserve_kernel = 5;
 
 /*
  * local variables
@@ -462,7 +467,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	uvmexp.reserve_pagedaemon = 1;
-	uvmexp.reserve_kernel = 5;
+	uvmexp.reserve_kernel = vm_page_reserve_kernel;
 
 	/*
 	 * determine if we should zero pages in the idle loop.
@@ -954,6 +959,10 @@ uvm_cpu_attach(struct cpu_info *ci)
 		return;
 	}
 
+	/* Add more reserve pages for this CPU. */
+	uvmexp.reserve_kernel += vm_page_reserve_kernel;
+
+	/* Configure this CPU's free lists. */
 	bucketcount = uvmexp.ncolors * VM_NFREELIST;
 	bucketarray = malloc(bucketcount * sizeof(struct pgflbucket),
 	    M_VMPAGE, M_WAITOK);
