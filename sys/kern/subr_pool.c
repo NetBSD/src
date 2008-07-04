@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.161 2008/05/31 13:31:25 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.162 2008/07/04 13:28:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.161 2008/05/31 13:31:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.162 2008/07/04 13:28:08 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -179,13 +179,13 @@ static struct pool cache_cpu_pool;
 TAILQ_HEAD(,pool_cache) pool_cache_head =
     TAILQ_HEAD_INITIALIZER(pool_cache_head);
 
-int pool_cache_disable;
+int pool_cache_disable;		/* global disable for caching */
+static pcg_t pcg_dummy;		/* zero sized: always empty, yet always full */
 
-
-static pool_cache_cpu_t *pool_cache_put_slow(pool_cache_cpu_t *, int *,
-					     void *, paddr_t);
-static pool_cache_cpu_t *pool_cache_get_slow(pool_cache_cpu_t *, int *,
-					     void **, paddr_t *, int);
+static bool	pool_cache_put_slow(pool_cache_cpu_t *, int,
+				    void *);
+static bool	pool_cache_get_slow(pool_cache_cpu_t *, int,
+				    void **, paddr_t *, int);
 static void	pool_cache_cpu_init1(struct cpu_info *, pool_cache_t);
 static void	pool_cache_invalidate_groups(pool_cache_t, pcg_t *);
 static void	pool_cache_xcall(pool_cache_t);
@@ -2151,11 +2151,11 @@ pool_cache_destroy(pool_cache_t pc)
 	for (i = 0; i < MAXCPUS; i++) {
 		if ((cc = pc->pc_cpus[i]) == NULL)
 			continue;
-		if ((pcg = cc->cc_current) != NULL) {
+		if ((pcg = cc->cc_current) != &pcg_dummy) {
 			pcg->pcg_next = NULL;
 			pool_cache_invalidate_groups(pc, pcg);
 		}
-		if ((pcg = cc->cc_previous) != NULL) {
+		if ((pcg = cc->cc_previous) != &pcg_dummy) {
 			pcg->pcg_next = NULL;
 			pool_cache_invalidate_groups(pc, pcg);
 		}
@@ -2209,8 +2209,8 @@ pool_cache_cpu_init1(struct cpu_info *ci, pool_cache_t pc)
 	cc->cc_cpuindex = index;
 	cc->cc_hits = 0;
 	cc->cc_misses = 0;
-	cc->cc_current = NULL;
-	cc->cc_previous = NULL;
+	cc->cc_current = &pcg_dummy;
+	cc->cc_previous = &pcg_dummy;
 
 	pc->pc_cpus[index] = cc;
 }
@@ -2359,39 +2359,8 @@ pool_cache_sethardlimit(pool_cache_t pc, int n, const char *warnmess, int rateca
 	pool_sethardlimit(&pc->pc_pool, n, warnmess, ratecap);
 }
 
-static inline pool_cache_cpu_t *
-pool_cache_cpu_enter(pool_cache_t pc, int *s)
-{
-	pool_cache_cpu_t *cc;
-
-	/*
-	 * Prevent other users of the cache from accessing our
-	 * CPU-local data.  To avoid touching shared state, we
-	 * pull the neccessary information from CPU local data.
-	 */
-	KPREEMPT_DISABLE(curlwp);
-	cc = pc->pc_cpus[curcpu()->ci_index];
-	KASSERT(cc->cc_cache == pc);
-	if (cc->cc_ipl != IPL_NONE) {
-		*s = splraiseipl(cc->cc_iplcookie);
-	}
-
-	return cc;
-}
-
-static inline void
-pool_cache_cpu_exit(pool_cache_cpu_t *cc, int *s)
-{
-
-	/* No longer need exclusive access to the per-CPU data. */
-	if (cc->cc_ipl != IPL_NONE) {
-		splx(*s);
-	}
-	KPREEMPT_ENABLE(curlwp);
-}
-
-pool_cache_cpu_t * __noinline
-pool_cache_get_slow(pool_cache_cpu_t *cc, int *s, void **objectp,
+static bool __noinline
+pool_cache_get_slow(pool_cache_cpu_t *cc, int s, void **objectp,
 		    paddr_t *pap, int flags)
 {
 	pcg_t *pcg, *cur;
@@ -2406,7 +2375,7 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int *s, void **objectp,
 	 * Nothing was available locally.  Try and grab a group
 	 * from the cache.
 	 */
-	if (!mutex_tryenter(&pc->pc_lock)) {
+	if (__predict_false(!mutex_tryenter(&pc->pc_lock))) {
 		ncsw = curlwp->l_ncsw;
 		mutex_enter(&pc->pc_lock);
 		pc->pc_contended++;
@@ -2418,18 +2387,17 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int *s, void **objectp,
 		 */
 		if (curlwp->l_ncsw != ncsw) {
 			mutex_exit(&pc->pc_lock);
-			pool_cache_cpu_exit(cc, s);
-			return pool_cache_cpu_enter(pc, s);
+			return true;
 		}
 	}
 
-	if ((pcg = pc->pc_fullgroups) != NULL) {
+	if (__predict_true((pcg = pc->pc_fullgroups) != NULL)) {
 		/*
 		 * If there's a full group, release our empty
 		 * group back to the cache.  Install the full
 		 * group as cc_current and return.
 		 */
-		if ((cur = cc->cc_current) != NULL) {
+		if (__predict_true((cur = cc->cc_current) != &pcg_dummy)) {
 			KASSERT(cur->pcg_avail == 0);
 			cur->pcg_next = pc->pc_emptygroups;
 			pc->pc_emptygroups = cur;
@@ -2441,7 +2409,7 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int *s, void **objectp,
 		pc->pc_hits++;
 		pc->pc_nfull--;
 		mutex_exit(&pc->pc_lock);
-		return cc;
+		return true;
 	}
 
 	/*
@@ -2451,17 +2419,17 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int *s, void **objectp,
 	 */
 	pc->pc_misses++;
 	mutex_exit(&pc->pc_lock);
-	pool_cache_cpu_exit(cc, s);
+	splx(s);
 
 	object = pool_get(&pc->pc_pool, flags);
 	*objectp = object;
-	if (object == NULL)
-		return NULL;
+	if (__predict_false(object == NULL))
+		return false;
 
-	if ((*pc->pc_ctor)(pc->pc_arg, object, flags) != 0) {
+	if (__predict_false((*pc->pc_ctor)(pc->pc_arg, object, flags) != 0)) {
 		pool_put(&pc->pc_pool, object);
 		*objectp = NULL;
-		return NULL;
+		return false;
 	}
 
 	KASSERT((((vaddr_t)object + pc->pc_pool.pr_itemoffset) &
@@ -2476,7 +2444,7 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int *s, void **objectp,
 	}
 
 	FREECHECK_OUT(&pc->pc_freecheck, object);
-	return NULL;
+	return false;
 }
 
 /*
@@ -2499,13 +2467,16 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 	}
 #endif
 
-	cc = pool_cache_cpu_enter(pc, &s);
+	/* Lock out interrupts and disable preemption. */
+	s = splvm();
 	do {
 		/* Try and allocate an object from the current group. */
+		cc = pc->pc_cpus[curcpu()->ci_index];
+		KASSERT(cc->cc_cache == pc);
 	 	pcg = cc->cc_current;
-		if (pcg != NULL && pcg->pcg_avail > 0) {
+		if (__predict_true(pcg->pcg_avail > 0)) {
 			object = pcg->pcg_objects[--pcg->pcg_avail].pcgo_va;
-			if (pap != NULL)
+			if (__predict_false(pap != NULL))
 				*pap = pcg->pcg_objects[pcg->pcg_avail].pcgo_pa;
 #if defined(DIAGNOSTIC)
 			pcg->pcg_objects[pcg->pcg_avail].pcgo_va = NULL;
@@ -2513,7 +2484,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			KASSERT(pcg->pcg_avail <= pcg->pcg_size);
 			KASSERT(object != NULL);
 			cc->cc_hits++;
-			pool_cache_cpu_exit(cc, &s);
+			splx(s);
 			FREECHECK_OUT(&pc->pc_freecheck, object);
 			return object;
 		}
@@ -2523,7 +2494,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 		 * it with the current group and allocate from there.
 		 */
 		pcg = cc->cc_previous;
-		if (pcg != NULL && pcg->pcg_avail > 0) {
+		if (__predict_true(pcg->pcg_avail > 0)) {
 			cc->cc_previous = cc->cc_current;
 			cc->cc_current = pcg;
 			continue;
@@ -2532,59 +2503,81 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 		/*
 		 * Can't allocate from either group: try the slow path.
 		 * If get_slow() allocated an object for us, or if
-		 * no more objects are available, it will return NULL.
+		 * no more objects are available, it will return false.
 		 * Otherwise, we need to retry.
 		 */
-		cc = pool_cache_get_slow(cc, &s, &object, pap, flags);
-	} while (cc != NULL);
+	} while (pool_cache_get_slow(cc, s, &object, pap, flags));
 
 	return object;
 }
 
-pool_cache_cpu_t * __noinline
-pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
+static bool __noinline
+pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 {
-	pcg_t *pcg, *cur;
+	pcg_t *pcg, *cur, *empty;
 	uint64_t ncsw;
 	pool_cache_t pc;
-	u_int nobj;
 
 	pc = cc->cc_cache;
 	cc->cc_misses++;
 
 	/*
-	 * No free slots locally.  Try to grab an empty, unused 
-	 * group from the cache.
+	 * If there appear to be no empty groups in the cache then
+	 * allocate one in advance.
 	 */
-	if (!mutex_tryenter(&pc->pc_lock)) {
-		ncsw = curlwp->l_ncsw;
-		mutex_enter(&pc->pc_lock);
-		pc->pc_contended++;
-
-		/*
-		 * If we context switched while locking, then
-		 * our view of the per-CPU data is invalid:
-		 * retry.
-		 */
-		if (curlwp->l_ncsw != ncsw) {
-			mutex_exit(&pc->pc_lock);
-			pool_cache_cpu_exit(cc, s);
-			return pool_cache_cpu_enter(pc, s);
+	empty = NULL;
+	if (__predict_false(pc->pc_emptygroups == NULL)) {
+		if (__predict_false(pool_cache_disable)) {
+			empty = NULL;
+		} else if (pc->pc_pcgsize == PCG_NOBJECTS_LARGE) {
+			empty = pool_get(&pcg_large_pool, PR_NOWAIT);
+		} else {
+			empty = pool_get(&pcg_normal_pool, PR_NOWAIT);
 		}
 	}
 
-	if ((pcg = pc->pc_emptygroups) != NULL) {
-		/*
-		 * If there's a empty group, release our full
-		 * group back to the cache.  Install the empty
-		 * group and return.
-		 */
+	/* Lock the cache. */
+	ncsw = curlwp->l_ncsw;
+	if (__predict_false(!mutex_tryenter(&pc->pc_lock))) {
+		mutex_enter(&pc->pc_lock);
+		pc->pc_contended++;
+	}
+
+	/*
+	 * If we speculatively allocated an empty group, link it into
+	 * the cache's list.
+	 */
+	if (empty != NULL) {
+		empty->pcg_avail = 0;
+		empty->pcg_size = pc->pc_pcgsize;
+		empty->pcg_next = pc->pc_emptygroups;
+		pc->pc_emptygroups = empty;
+		pc->pc_nempty++;
+		pc->pc_misses++;
+	}
+
+	/*
+	 * If we context switched while locking, then our view of the
+	 * per-CPU data is invalid: retry.
+	 */
+	if (__predict_false(curlwp->l_ncsw != ncsw)) {
+		mutex_exit(&pc->pc_lock);
+		return true;
+	}
+
+	/*
+	 * If there's a empty group, release our full group back
+	 * to the cache.  Install the empty group to the local CPU
+	 * and return.
+	 */
+	if (__predict_true((pcg = pc->pc_emptygroups) != NULL)) {
 		KASSERT(pcg->pcg_avail == 0);
 		pc->pc_emptygroups = pcg->pcg_next;
-		if (cc->cc_previous == NULL) {
+		if (__predict_false(cc->cc_previous == &pcg_dummy)) {
 			cc->cc_previous = pcg;
 		} else {
-			if ((cur = cc->cc_current) != NULL) {
+			cur = cc->cc_current;
+			if (__predict_true(cur != &pcg_dummy)) {
 				KASSERT(cur->pcg_avail == pcg->pcg_size);
 				cur->pcg_next = pc->pc_fullgroups;
 				pc->pc_fullgroups = cur;
@@ -2592,50 +2585,23 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 			}
 			cc->cc_current = pcg;
 		}
-		pc->pc_hits++;
+		pc->pc_hits += (empty == NULL);
 		pc->pc_nempty--;
 		mutex_exit(&pc->pc_lock);
-		return cc;
+		return true;
 	}
 
 	/*
-	 * Nothing available locally or in cache.  Take the
-	 * slow path and try to allocate a new group that we
-	 * can release to.
+	 * Nothing available locally or in cache, and we didn't
+	 * allocate an empty group.  Take the slow path and destroy
+	 * the object here and now.
 	 */
 	pc->pc_misses++;
 	mutex_exit(&pc->pc_lock);
-	pool_cache_cpu_exit(cc, s);
+	splx(s);
+	pool_cache_destruct_object(pc, object);
 
-	/*
-	 * If we can't allocate a new group, just throw the
-	 * object away.
-	 */
-	nobj = pc->pc_pcgsize;
-	if (pool_cache_disable) {
-		pcg = NULL;
-	} else if (nobj == PCG_NOBJECTS_LARGE) {
-		pcg = pool_get(&pcg_large_pool, PR_NOWAIT);
-	} else {
-		pcg = pool_get(&pcg_normal_pool, PR_NOWAIT);
-	}
-	if (pcg == NULL) {
-		pool_cache_destruct_object(pc, object);
-		return NULL;
-	}
-	pcg->pcg_avail = 0;
-	pcg->pcg_size = nobj;
-
-	/*
-	 * Add the empty group to the cache and try again.
-	 */
-	mutex_enter(&pc->pc_lock);
-	pcg->pcg_next = pc->pc_emptygroups;
-	pc->pc_emptygroups = pcg;
-	pc->pc_nempty++;
-	mutex_exit(&pc->pc_lock);
-
-	return pool_cache_cpu_enter(pc, s);
+	return false;
 } 
 
 /*
@@ -2653,25 +2619,28 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 
 	FREECHECK_IN(&pc->pc_freecheck, object);
 
-	cc = pool_cache_cpu_enter(pc, &s);
+	/* Lock out interrupts and disable preemption. */
+	s = splvm();
 	do {
 		/* If the current group isn't full, release it there. */
+		cc = pc->pc_cpus[curcpu()->ci_index];
+		KASSERT(cc->cc_cache == pc);
 	 	pcg = cc->cc_current;
-		if (pcg != NULL && pcg->pcg_avail < pcg->pcg_size) {
+		if (__predict_true(pcg->pcg_avail < pcg->pcg_size)) {
 			pcg->pcg_objects[pcg->pcg_avail].pcgo_va = object;
 			pcg->pcg_objects[pcg->pcg_avail].pcgo_pa = pa;
 			pcg->pcg_avail++;
 			cc->cc_hits++;
-			pool_cache_cpu_exit(cc, &s);
+			splx(s);
 			return;
 		}
 
 		/*
-		 * That failed.  If the previous group is empty, swap
+		 * That failed.  If the previous group isn't full, swap
 		 * it with the current group and try again.
 		 */
 		pcg = cc->cc_previous;
-		if (pcg != NULL && pcg->pcg_avail == 0) {
+		if (__predict_true(pcg->pcg_avail < pcg->pcg_size)) {
 			cc->cc_previous = cc->cc_current;
 			cc->cc_current = pcg;
 			continue;
@@ -2680,10 +2649,9 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 		/*
 		 * Can't free to either group: try the slow path. 
 		 * If put_slow() releases the object for us, it
-		 * will return NULL.  Otherwise we need to retry.
+		 * will return false.  Otherwise we need to retry.
 		 */
-		cc = pool_cache_put_slow(cc, &s, object, pa);
-	} while (cc != NULL);
+	} while (pool_cache_put_slow(cc, s, object));
 }
 
 /*
@@ -2697,24 +2665,16 @@ pool_cache_xcall(pool_cache_t pc)
 {
 	pool_cache_cpu_t *cc;
 	pcg_t *prev, *cur, **list;
-	int s = 0; /* XXXgcc */
+	int s;
 
-	cc = pool_cache_cpu_enter(pc, &s);
-	cur = cc->cc_current;
-	cc->cc_current = NULL;
-	prev = cc->cc_previous;
-	cc->cc_previous = NULL;
-	pool_cache_cpu_exit(cc, &s);
-
-	/*
-	 * XXXSMP Go to splvm to prevent kernel_lock from being taken,
-	 * because locks at IPL_SOFTXXX are still spinlocks.  Does not
-	 * apply to IPL_SOFTBIO.  Cross-call threads do not take the
-	 * kernel_lock.
-	 */
 	s = splvm();
 	mutex_enter(&pc->pc_lock);
-	if (cur != NULL) {
+	cc = pc->pc_cpus[curcpu()->ci_index];
+	cur = cc->cc_current;
+	cc->cc_current = &pcg_dummy;
+	prev = cc->cc_previous;
+	cc->cc_previous = &pcg_dummy;
+	if (cur != &pcg_dummy) {
 		if (cur->pcg_avail == cur->pcg_size) {
 			list = &pc->pc_fullgroups;
 			pc->pc_nfull++;
@@ -2728,7 +2688,7 @@ pool_cache_xcall(pool_cache_t pc)
 		cur->pcg_next = *list;
 		*list = cur;
 	}
-	if (prev != NULL) {
+	if (prev != &pcg_dummy) {
 		if (prev->pcg_avail == prev->pcg_size) {
 			list = &pc->pc_fullgroups;
 			pc->pc_nfull++;
