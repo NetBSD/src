@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.25 2007/05/28 15:01:54 blymn Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.26 2008/07/04 15:51:35 tnozaki Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.25 2007/05/28 15:01:54 blymn Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.26 2008/07/04 15:51:35 tnozaki Exp $");
 #endif
 #endif				/* not lint */
 
@@ -402,16 +402,11 @@ dontcr:while (outline < destline) {
 			if (plodflg)	/* Avoid a complex calculation. */
 				plodcnt--;
 			else {
-#ifndef HAVE_WCHAR
-				i = curscr->lines[outline]->line[outcol].ch
-				    & __CHARTEXT;
 				if (curscr->lines[outline]->line[outcol].attr
-				    == curscr->wattr)
-					__cputchar(i);
+				    == curscr->wattr) {
+#ifndef HAVE_WCHAR
+					__cputchar(curscr->lines[outline]->line[outcol].ch & __CHARTEXT);
 #else
-				if ((curscr->lines[outline]->line[outcol].attr
-				    & WA_ATTRIBUTES)
-				    == curscr->wattr ) {
 					if (WCOL(curscr->lines[outline]->line[outcol]) > 0) {
 						__cputwchar(curscr->lines[outline]->line[outcol].ch);
 						__cursesi_putnsp(curscr->lines[outline]->line[outcol].nsp,
@@ -426,9 +421,8 @@ dontcr:while (outline < destline) {
 						    curscr->lines[outline]->line[outcol].ch);
 #endif /* DEBUG */
 					}
-				}
 #endif /* HAVE_WCHAR */
-				else
+				} else
 					goto nondes;
 			}
 		else
