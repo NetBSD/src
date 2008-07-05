@@ -1,10 +1,10 @@
-$NetBSD: README,v 1.1 2008/05/22 12:44:26 lukem Exp $
+$NetBSD: README,v 1.2 2008/07/05 23:52:33 minskim Exp $
 
 Organization of Sources:
 
 This directory hierarchy is using an organization that separates
 source for programs that we have obtained from external third
-parties (where NetBSD is the not the primary maintainer) from the
+parties (where NetBSD is not the primary maintainer) from the
 system source.
 
 The hierarchy is grouped by license, and then package per license,
