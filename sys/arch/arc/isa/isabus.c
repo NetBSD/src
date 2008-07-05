@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.43 2008/04/09 17:08:22 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.44 2008/07/05 08:46:25 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.43 2008/04/09 17:08:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.44 2008/07/05 08:46:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -160,20 +160,19 @@ static long isa_io_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 #define	IRQ_SLAVE	2
 
 /* Definition of the driver for autoconfig. */
-int	isabrprint(void *, const char *);
+static int isabrprint(void *, const char *);
 
 extern struct arc_bus_space arc_bus_io, arc_bus_mem;
 
-void	isabr_attach_hook(struct device *, struct device *,
-			struct isabus_attach_args *);
-const struct evcnt *isabr_intr_evcnt(isa_chipset_tag_t, int);
-void	*isabr_intr_establish(isa_chipset_tag_t, int, int, int,
-			int (*)(void *), void *);
-void	isabr_intr_disestablish(isa_chipset_tag_t, void*);
-uint32_t isabr_iointr(uint32_t, struct clockframe *);
-void	isabr_initicu(void);
-void	intr_calculatemasks(void);
-int	fakeintr(void *a);
+static void isabr_attach_hook(device_t , device_t,
+    struct isabus_attach_args *);
+static const struct evcnt *isabr_intr_evcnt(isa_chipset_tag_t, int);
+static void *isabr_intr_establish(isa_chipset_tag_t, int, int, int,
+    int (*)(void *), void *);
+static void isabr_intr_disestablish(isa_chipset_tag_t, void*);
+static void isabr_initicu(void);
+static void intr_calculatemasks(void);
+static int fakeintr(void *a);
 
 struct isabr_config *isabr_conf = NULL;
 uint32_t imask[_IPL_N];	/* XXX */
@@ -188,7 +187,7 @@ isabrattach(struct isabr_softc *sc)
 	if (isabr_conf == NULL)
 		panic("isabr_conf isn't initialized");
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Initialize interrupt controller */
 	isabr_initicu();
@@ -207,18 +206,18 @@ isabrattach(struct isabr_softc *sc)
 	iba.iba_memt = &arc_bus_mem;
 	iba.iba_dmat = &sc->sc_dmat;
 	iba.iba_ic = &sc->arc_isa_cs;
-	config_found_ia(&sc->sc_dev, "isabus", &iba, isabrprint);
+	config_found_ia(sc->sc_dev, "isabus", &iba, isabrprint);
 }
 
-int
+static int
 isabrprint(void *aux, const char *pnp)
 {
 
         if (pnp)
                 aprint_normal("isa at %s", pnp);
         aprint_verbose(" isa_io_base 0x%lx isa_mem_base 0x%lx",
-		arc_bus_io.bs_vbase, arc_bus_mem.bs_vbase);
-        return (UNCONF);
+	    arc_bus_io.bs_vbase, arc_bus_mem.bs_vbase);
+        return UNCONF;
 }
 
 
@@ -232,7 +231,8 @@ int	imen;
 int	intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct isa_intrhand *isa_intrhand[ICU_LEN];
 
-int fakeintr(void *a)
+static int
+fakeintr(void *a)
 {
 
 	return 0;
@@ -244,7 +244,7 @@ int fakeintr(void *a)
  * would be faster, but the code would be nastier, and we don't expect this to
  * happen very much anyway.
  */
-void
+static void
 intr_calculatemasks(void)
 {
 	int irq, level;
@@ -306,7 +306,7 @@ intr_calculatemasks(void)
 	}
 }
 
-void
+static void
 isabr_attach_hook(struct device *parent, struct device *self,
     struct isabus_attach_args *iba)
 {
@@ -314,7 +314,7 @@ isabr_attach_hook(struct device *parent, struct device *self,
 	/* Nothing to do. */
 }
 
-const struct evcnt *
+static const struct evcnt *
 isabr_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
 
@@ -325,7 +325,7 @@ isabr_intr_evcnt(isa_chipset_tag_t ic, int irq)
 /*
  *	Establish a ISA bus interrupt.
  */
-void *
+static void *
 isabr_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
     int (*ih_fun)(void *), void *ih_arg)
 {
@@ -391,7 +391,7 @@ isabr_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 	return ih;
 }
 
-void
+static void
 isabr_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 
@@ -454,7 +454,7 @@ isabr_iointr(uint32_t mask, struct clockframe *cf)
 /*
  * Initialize the Interrupt controller logic.
  */
-void
+static void
 isabr_initicu(void)
 {
 
