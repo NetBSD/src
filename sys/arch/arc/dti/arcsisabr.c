@@ -1,4 +1,4 @@
-/*	$NetBSD: arcsisabr.c,v 1.3 2006/06/24 03:50:38 tsutsui Exp $	*/
+/*	$NetBSD: arcsisabr.c,v 1.4 2008/07/05 08:46:25 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.3 2006/06/24 03:50:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.4 2008/07/05 08:46:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,14 +92,14 @@ __KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.3 2006/06/24 03:50:38 tsutsui Exp $"
 #include "ioconf.h"
 
 /* Definition of the driver for autoconfig. */
-int	arcsisabrmatch(struct device *, struct cfdata *, void *);
-void	arcsisabrattach(struct device *, struct device *, void *);
+static int	arcsisabrmatch(device_t, cfdata_t, void *);
+static void	arcsisabrattach(device_t, device_t, void *);
 
-CFATTACH_DECL(arcsisabr, sizeof(struct isabr_softc),
+CFATTACH_DECL_NEW(arcsisabr, sizeof(struct isabr_softc),
     arcsisabrmatch, arcsisabrattach, NULL, NULL);
 
-int
-arcsisabrmatch(struct device *parent, struct cfdata *match, void *aux)
+static int
+arcsisabrmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -110,11 +110,12 @@ arcsisabrmatch(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-void
-arcsisabrattach(struct device *parent, struct device *self, void *aux)
+static void
+arcsisabrattach(device_t parent, device_t self, void *aux)
 {
-	struct isabr_softc *sc = (struct isabr_softc *)self;
+	struct isabr_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	isadma_bounce_tag_init(&sc->sc_dmat);
 	(*platform->set_intr)(MIPS_INT_MASK_2, isabr_iointr, ARC_INTPRI_PCIISA);
 
