@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.47.8.1 2008/06/02 13:21:15 mjf Exp $
+.\"	$NetBSD: legal.common,v 1.47.8.2 2008/07/05 11:53:51 mjf Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -264,8 +264,6 @@ This product includes software developed by Herb Peyerl.
 .It
 This product includes software developed by Hubert Feyrer
 for the NetBSD Project.
-.It
-This product includes software developed by Iain Hibbert
 .It
 This product includes software developed by Ian F. Darwin and others.
 .It
