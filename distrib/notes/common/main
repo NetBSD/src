@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.400 2008/06/05 12:02:51 hans Exp $
+.\"	$NetBSD: main,v 1.401 2008/07/06 19:52:53 ahoka Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1953,6 +1953,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Iain Hibbert Ta Mt plunky@NetBSD.org
 .It Ta Kouichirou Hiratsuka Ta Mt hira@NetBSD.org
 .It Ta Michael L. Hitch Ta Mt mhitch@NetBSD.org
+.It Ta \('Ad\('am H\('oka Ta Mt ahoka@NetBSD.org
 .It Ta Jachym Holecek Ta Mt freza@NetBSD.org
 .It Ta David A. Holland Ta Mt dholland@NetBSD.org
 .It Ta Christian E. Hopps Ta Mt chopps@NetBSD.org
