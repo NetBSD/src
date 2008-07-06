@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.204.4.1 2006/11/06 17:23:04 tron Exp $	*/
+/*	$NetBSD: locore.s,v 1.204.4.2 2008/07/06 17:22:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -11337,7 +11337,7 @@ ENTRY(loadfpstate)
 	bne,pn	%icc, 1f
 	 nop
 #endif
-	/* Unaligned -- needs to be done the long way
+	/* Unaligned -- needs to be done the long way */
 	membar	#Sync
 	ldd	[%o3 + (4*0)], %f0
 	ldd	[%o3 + (4*2)], %f2
