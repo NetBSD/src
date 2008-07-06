@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.37 2008/07/06 04:47:01 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.38 2008/07/06 05:18:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.37 2008/07/06 04:47:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.38 2008/07/06 05:18:11 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1961,7 +1961,7 @@ sa_upcall_userret(struct lwp *l)
 		 * we deliver the call.
 		 */
 		l2 = TAILQ_FIRST(&vp->savp_woken);
-		TAILQ_REMOVE(&vp->savp_woken, l2, l_runq);
+		TAILQ_REMOVE(&vp->savp_woken, l2, l_sleepchain);
 		vp->savp_woken_count--;
 		mutex_exit(&vp->savp_mutex);
 
