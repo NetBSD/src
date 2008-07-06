@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.26 2008/06/23 10:44:44 ghen Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.27 2008/07/06 17:24:47 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -313,4 +313,10 @@ gnu/dist/binutils/bfd/tekhex.c			1.2 via patch
 	Tektronix Hex Format (TekHex) record in which the length character is
 	not a valid hexadecimal character.
 	[adrianp, ticket #1941]
+
+sys/arch/sparc64/sparc64/locore.s		1.280
+
+	Close unterminated comment.
+	Fix unexpected behavior in case of loadfpstate from unaligned buffer.
+	[nakayama, ticket #1940]
 
