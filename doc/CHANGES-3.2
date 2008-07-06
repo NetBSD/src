@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.137 2008/06/23 10:42:14 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.138 2008/07/06 17:23:10 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -4134,4 +4134,10 @@ Fix for PR #33551 (a.k.a CVE-2006-2362)
 	Tektronix Hex Format (TekHex) record in which the length character is
 	not a valid hexadecimal character.
 	[adrianp, ticket #1941]
+
+sys/arch/sparc64/sparc64/locore.s		1.280
+
+	Close unterminated comment.
+	Fix unexpected behavior in case of loadfpstate from unaligned buffer.
+	[nakayama, ticket #1940]
 
