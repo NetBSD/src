@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.63 2008/06/23 06:38:45 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.64 2008/07/06 17:38:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1148,4 +1148,23 @@ src/gnu/dist/binutils/bfd/tekhex.c		1.2
 	with a crafted Tektronix Hex Format (TekHex) record in which the
 	length character is not a valid hexadecimal character.
 	[adrianp, ticket #1160]
+
+sys/arch/sparc64/sparc64/locore.s		1.280
+
+	Close unterminated comment.
+	Fix unexpected behavior in case of loadfpstate from unaligned buffer.
+	[nakayama, ticket #1159]
+
+sys/dev/pci/auvia.c				1.66
+
+	VT8233+ uses a different register base for capturing,
+	tested by sborrill
+	[sborrill, ticket #1161]
+
+sys/dev/pci/azalia_codec.c			1.67
+
+	Commit patch from jmcneill@ to fix "No sound on Thinkpad azalia"
+	Definitely fixes a T60p, and hopefully will fix PR#37141
+	for an R61 also
+	[abs, ticket #1162]
 
