@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1166 2008/06/25 11:10:25 ad Exp $
+#	$NetBSD: mi,v 1.1167 2008/07/06 16:17:28 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3040,6 +3040,7 @@
 ./usr/libdata/debug/usr/sbin/fssconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ftp-proxy.debug	comp-pf-debug		pf,debug
 ./usr/libdata/debug/usr/sbin/fwctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/fusermount.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/getencstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/gpioctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/gspa.debug		comp-util-debug		debug
@@ -3103,6 +3104,10 @@
 ./usr/libdata/debug/usr/sbin/mopd.debug		comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/mopprobe.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/moptrace.debug	comp-bootserver-debug	debug
+./usr/libdata/debug/usr/sbin/mount_9p.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/mount_psshfs.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/mount_puffsportal.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/mount_sysctlfs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/mountd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/moused.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mrinfo.debug	comp-router-debug	debug
