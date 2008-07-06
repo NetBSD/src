@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.205 2008/06/17 19:14:14 mlelstv Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.206 2008/07/06 15:00:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.205 2008/06/17 19:14:14 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.206 2008/07/06 15:00:45 bouyer Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -167,7 +167,7 @@ static void binsheadfree(buf_t *, struct bqueue *);
 static void binstailfree(buf_t *, struct bqueue *);
 int count_lock_queue(void); /* XXX */
 #ifdef DEBUG
-static int checkfreelist(buf_t *, struct bqueue *);
+static int checkfreelist(buf_t *, struct bqueue *, int);
 #endif
 static void biointr(void *);
 static void biodone2(buf_t *);
@@ -285,7 +285,7 @@ buf_setwm(void)
 #ifdef DEBUG
 int debug_verify_freelist = 0;
 static int
-checkfreelist(buf_t *bp, struct bqueue *dp)
+checkfreelist(buf_t *bp, struct bqueue *dp, int ison)
 {
 	buf_t *b;
 
@@ -294,10 +294,10 @@ checkfreelist(buf_t *bp, struct bqueue *dp)
 
 	TAILQ_FOREACH(b, &dp->bq_queue, b_freelist) {
 		if (b == bp)
-			return 1;
+			return ison ? 1 : 0;
 	}
 
-	return 0;
+	return ison ? 0 : 1;
 }
 #endif
 
@@ -309,6 +309,7 @@ static void
 binsheadfree(buf_t *bp, struct bqueue *dp)
 {
 
+	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT(bp->b_freelistindex == -1);
 	TAILQ_INSERT_HEAD(&dp->bq_queue, bp, b_freelist);
 	dp->bq_bytes += bp->b_bufsize;
@@ -319,6 +320,7 @@ static void
 binstailfree(buf_t *bp, struct bqueue *dp)
 {
 
+	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT(bp->b_freelistindex == -1);
 	TAILQ_INSERT_TAIL(&dp->bq_queue, bp, b_freelist);
 	dp->bq_bytes += bp->b_bufsize;
@@ -335,7 +337,7 @@ bremfree(buf_t *bp)
 
 	KASSERT(bqidx != -1);
 	dp = &bufqueues[bqidx];
-	KDASSERT(checkfreelist(bp, dp));
+	KDASSERT(checkfreelist(bp, dp, 1));
 	KASSERT(dp->bq_bytes >= bp->b_bufsize);
 	TAILQ_REMOVE(&dp->bq_queue, bp, b_freelist);
 	dp->bq_bytes -= bp->b_bufsize;
@@ -1007,16 +1009,16 @@ brelsel(buf_t *bp, int set)
 		CLR(bp->b_cflags, BC_VFLUSH);
 		if (!ISSET(bp->b_cflags, BC_INVAL|BC_AGE) &&
 		    !ISSET(bp->b_flags, B_LOCKED) && bp->b_error == 0) {
-			KDASSERT(checkfreelist(bp, &bufqueues[BQ_LRU]));
+			KDASSERT(checkfreelist(bp, &bufqueues[BQ_LRU], 1));
 			goto already_queued;
 		} else {
 			bremfree(bp);
 		}
 	}
 
-	KDASSERT(checkfreelist(bp, &bufqueues[BQ_AGE]));
-	KDASSERT(checkfreelist(bp, &bufqueues[BQ_LRU]));
-	KDASSERT(checkfreelist(bp, &bufqueues[BQ_LOCKED]));
+	KDASSERT(checkfreelist(bp, &bufqueues[BQ_AGE], 0));
+	KDASSERT(checkfreelist(bp, &bufqueues[BQ_LRU], 0));
+	KDASSERT(checkfreelist(bp, &bufqueues[BQ_LOCKED], 0));
 
 	if ((bp->b_bufsize <= 0) || ISSET(bp->b_cflags, BC_INVAL)) {
 		/*
@@ -1313,7 +1315,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE].bq_queue)) != NULL ||
 	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU].bq_queue)) != NULL) {
-	    	KASSERT(!ISSET(bp->b_cflags, BC_BUSY));
+	    	KASSERT(!ISSET(bp->b_cflags, BC_BUSY) || ISSET(bp->b_cflags, BC_VFLUSH));
 		bremfree(bp);
 
 		/* Buffer is no longer on free lists. */
