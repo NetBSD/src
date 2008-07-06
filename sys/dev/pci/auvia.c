@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.58 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: auvia.c,v 1.58.2.1 2008/07/06 17:36:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.58 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.58.2.1 2008/07/06 17:36:31 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,8 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
 #define VIA8233_OFF_MP_SCRATCH		0x03
 #define VIA8233_OFF_MP_STOP		0x08
 
+#define VIA8233_WR_BASE			0x60
+
 #define	AUVIA_CODEC_CTL			0x80
 #define		AUVIA_CODEC_READ		0x00800000
 #define		AUVIA_CODEC_BUSY		0x01000000
@@ -317,6 +319,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT8233_AC97) {
 		sc->sc_flags |= AUVIA_FLAGS_VT8233;
 		sc->sc_play.sc_base = VIA8233_MP_BASE;
+		sc->sc_record.sc_base = VIA8233_WR_BASE;
 	}
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
