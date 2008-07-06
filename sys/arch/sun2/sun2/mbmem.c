@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.18 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.19 2008/07/06 13:29:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.18 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.19 2008/07/06 13:29:50 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,16 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.18 2008/04/28 20:23:37 martin Exp $");
 /* Does this machine have a Multibus? */
 extern int cpu_has_multibus;
  
-static int  mbmem_match(struct device *, struct cfdata *, void *);
-static void mbmem_attach(struct device *, struct device *, void *);
+static int  mbmem_match(device_t, cfdata_t, void *);
+static void mbmem_attach(device_t, device_t, void *);
 
 struct mbmem_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 	bus_space_tag_t	sc_bustag;	/* parent bus tag */
 	bus_dma_tag_t	sc_dmatag;	/* parent bus dma tag */
 };
 
-CFATTACH_DECL(mbmem, sizeof(struct mbmem_softc),
+CFATTACH_DECL_NEW(mbmem, sizeof(struct mbmem_softc),
     mbmem_match, mbmem_attach, NULL, NULL);
 
 static int mbmem_attached;
@@ -89,22 +89,22 @@ static struct sun68k_bus_space_tag mbmem_space_tag = {
 static struct sun68k_bus_dma_tag mbmem_dma_tag;
 
 static int 
-mbmem_match(struct device *parent, struct cfdata *cf, void *aux)
+mbmem_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	if (mbmem_attached)
 		return 0;
 
-	return (cpu_has_multibus &&
-		(ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0));
+	return cpu_has_multibus &&
+	    (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0);
 }
 
 static void 
-mbmem_attach(struct device *parent, struct device *self, void *aux)
+mbmem_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	struct mbmem_softc *sc = (struct mbmem_softc *)self;
+	struct mbmem_softc *sc = device_private(self);
 	struct mbmem_attach_args mbma;
 	const char *const *cpp;
 	static const char *const special[] = {
@@ -114,7 +114,8 @@ mbmem_attach(struct device *parent, struct device *self, void *aux)
 
 	mbmem_attached = 1;
 
-	printf("\n");
+	sc->sc_dev = self;
+	aprint_normal("\n");
 
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
@@ -157,10 +158,10 @@ _mbmem_bus_map(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr,
 	struct mbmem_softc *sc = t->cookie;
 
 	if ((paddr + size) > MBMEM_SIZE)
-		panic("_mbmem_bus_map: out of range");
+		panic("%s: out of range", __func__);
 
-	return (bus_space_map2(sc->sc_bustag, PMAP_MBMEM, paddr,
-				size, flags, vaddr, hp));
+	return bus_space_map2(sc->sc_bustag, PMAP_MBMEM, paddr,
+	    size, flags, vaddr, hp);
 }
 
 paddr_t
@@ -169,8 +170,8 @@ mbmem_bus_mmap(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr, off_t off,
 {
 	struct mbmem_softc *sc = t->cookie;
 
-	return (bus_space_mmap2(sc->sc_bustag, PMAP_MBMEM, paddr, off,
-				prot, flags));
+	return bus_space_mmap2(sc->sc_bustag, PMAP_MBMEM, paddr, off,
+	    prot, flags);
 }
 
 static int
@@ -182,7 +183,7 @@ mbmem_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
 	if (error == 0)
 		map->dm_segs[0].ds_addr &= DVMA_MBMEM_SLAVE_MASK;
-	return (error);
+	return error;
 }
 
 static int
@@ -194,5 +195,5 @@ mbmem_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	error = _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags);
 	if (error == 0)
 		map->dm_segs[0].ds_addr &= DVMA_MBMEM_SLAVE_MASK;
-	return (error);
+	return error;
 }
