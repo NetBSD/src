@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.36 2008/07/05 04:28:51 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.37 2008/07/06 04:47:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.36 2008/07/05 04:28:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.37 2008/07/06 04:47:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -951,7 +951,6 @@ sys_sa_setconcurrency(struct lwp *l, const struct sys_sa_setconcurrency_args *ua
 			lwp_unlock(l2);
 			DPRINTFN(11,("sys_sa_concurrency(%d.%d) NEWPROC vp %d\n",
 				     p->p_pid, l->l_lid, vp->savp_id));
-			cpu_setfunc(l2, sa_switchcall, NULL);
 			sa->sa_concurrency++;
 			mutex_exit(&sa->sa_mutex);
 			/* error = */ sa_upcall(l2, SA_UPCALL_NEWPROC, NULL,
@@ -1447,8 +1446,8 @@ sa_switch(struct lwp *l)
 		/*
 		 * Case 0: we're blocking in sa_yield
 		 */
-		DPRINTFN(4,("sa_switch(%d.%d) yield, count %d timerpend %d\n",
-		    p->p_pid, l->l_lid, vp->savp_woken_count, p->p_timerpend));
+		DPRINTFN(4,("sa_switch(%d.%d) yield, flags %x pflag %x\n",
+		    p->p_pid, l->l_lid, l->l_flag, l->l_pflag));
 		if (vp->savp_woken_count == 0 && p->p_timerpend == 0) {
 			DPRINTFN(4,("sa_switch(%d.%d) setting idle\n",
 			    p->p_pid, l->l_lid));
