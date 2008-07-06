@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.66 2008/06/24 10:17:00 gmcgarry Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.67 2008/07/06 00:14:00 abs Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.66 2008/06/24 10:17:00 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.67 2008/07/06 00:14:00 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -3128,6 +3128,12 @@ ad1981hd_mixer_init(codec_t *this)
 		mc.type = AUDIO_MIXER_ENUM;
 		mc.un.ord = 1;
 		generic_mixer_set(this, 0x09, MI_TARGET_PINDIR, &mc);
+		generic_mixer_set(this, 0x05, MI_TARGET_EAPD, &mc);
+		mc.type = AUDIO_MIXER_VALUE;
+		mc.un.value.num_channels = 2;
+		mc.un.value.level[0] = AUDIO_MAX_GAIN;
+		mc.un.value.level[1] = AUDIO_MAX_GAIN;
+		generic_mixer_set(this, 0x1a, MI_TARGET_VOLUME, &mc);
 	}
 	return 0;
 }
