@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd_rule.c,v 1.1.8.4 2008/04/14 16:23:57 mjf Exp $ */
+/* 	$NetBSD: devfsd_rule.c,v 1.1.8.5 2008/07/06 09:53:33 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ rule_parsefile(const char *filename)
 	if (dict == NULL) {
 		syslog(LOG_ERR, "%s: could not internalize dictionary\n", 
 		    filename);
+		errno = EINVAL;
 		return -1;
 	}
 
