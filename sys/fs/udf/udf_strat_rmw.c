@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.4 2008/06/17 14:14:05 reinoud Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.5 2008/07/07 18:45:27 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.4 2008/06/17 14:14:05 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.5 2008/07/07 18:45:27 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -505,7 +505,7 @@ udf_puteccline(struct udf_eccline *eccline)
 /* --------------------------------------------------------------------- */
 
 static int
-udf_create_logvol_dscr_rmw(struct udf_strat_args *args)
+udf_create_nodedscr_rmw(struct udf_strat_args *args)
 {
 	union dscrptr   **dscrptr  = &args->dscr;
 	struct udf_mount *ump      = args->ump;
@@ -545,7 +545,7 @@ udf_create_logvol_dscr_rmw(struct udf_strat_args *args)
 
 
 static void
-udf_free_logvol_dscr_rmw(struct udf_strat_args *args)
+udf_free_nodedscr_rmw(struct udf_strat_args *args)
 {
 	struct udf_mount *ump  = args->ump;
 	struct long_ad   *icb  = args->icb;
@@ -573,7 +573,7 @@ udf_free_logvol_dscr_rmw(struct udf_strat_args *args)
 
 
 static int
-udf_read_logvol_dscr_rmw(struct udf_strat_args *args)
+udf_read_nodedscr_rmw(struct udf_strat_args *args)
 {
 	union dscrptr   **dscrptr = &args->dscr;
 	struct udf_mount *ump = args->ump;
@@ -660,7 +660,7 @@ udf_read_logvol_dscr_rmw(struct udf_strat_args *args)
 
 
 static int
-udf_write_logvol_dscr_rmw(struct udf_strat_args *args)
+udf_write_nodedscr_rmw(struct udf_strat_args *args)
 {
 	union dscrptr    *dscrptr = args->dscr;
 	struct udf_mount *ump = args->ump;
@@ -681,6 +681,9 @@ udf_write_logvol_dscr_rmw(struct udf_strat_args *args)
 	if (error)
 		return error;
 
+	/* add reference to the vnode to prevent recycling */
+	vhold(udf_node->vnode);
+
 	/* get our eccline */
 	eccline = udf_geteccline(ump, sectornr, 0);
 	eccsect = sectornr - eccline->start_sector;
@@ -689,15 +692,13 @@ udf_write_logvol_dscr_rmw(struct udf_strat_args *args)
 
 	/* old callback still pending? */
 	if (eccline->bufs[eccsect]) {
-		DPRINTF(WRITE, ("udf_write_logvol_dscr_rmw: writing descriptor"
+		DPRINTF(WRITE, ("udf_write_nodedscr_rmw: writing descriptor"
 					" over buffer?\n"));
 		nestiobuf_done(eccline->bufs[eccsect],
 				eccline->bufs_len[eccsect],
 				0);
 		eccline->bufs[eccsect] = NULL;
 	}
-
-	UDF_LOCK_NODE(udf_node, IN_CALLBACK_ULK);
 
 	/* set sector number in the descriptor and validate */
 	dscrptr = (union dscrptr *)
@@ -715,9 +716,15 @@ udf_write_logvol_dscr_rmw(struct udf_strat_args *args)
 	eccline->dirty |= bit;
 
 	KASSERT(udf_tagsize(dscrptr, sector_size) <= sector_size);
-	UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
 
 	udf_puteccline(eccline);
+
+	holdrele(udf_node->vnode);
+	udf_node->outstanding_nodedscr--;
+	if (udf_node->outstanding_nodedscr == 0) {
+		UDF_UNLOCK_NODE(udf_node, udf_node->i_flags & IN_CALLBACK_ULK);
+		wakeup(&udf_node->outstanding_nodedscr);
+	}
 
 	/* XXX waitfor not used */
 	return 0;
@@ -1400,10 +1407,10 @@ udf_discstrat_finish_rmw(struct udf_strat_args *args)
 
 struct udf_strategy udf_strat_rmw =
 {
-	udf_create_logvol_dscr_rmw,
-	udf_free_logvol_dscr_rmw,
-	udf_read_logvol_dscr_rmw,
-	udf_write_logvol_dscr_rmw,
+	udf_create_nodedscr_rmw,
+	udf_free_nodedscr_rmw,
+	udf_read_nodedscr_rmw,
+	udf_write_nodedscr_rmw,
 	udf_queuebuf_rmw,
 	udf_discstrat_init_rmw,
 	udf_discstrat_finish_rmw
