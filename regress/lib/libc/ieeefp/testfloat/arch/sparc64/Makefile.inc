@@ -1,4 +1,0 @@
-#	$NetBSD: Makefile.inc,v 1.2 2004/06/30 03:26:27 jmc Exp $
-
-NOGCCERROR=1
-COPTS+= -DFLOAT128
