@@ -1,4 +1,4 @@
-/*	$NetBSD: via_dma.c,v 1.3 2007/12/15 00:39:34 perry Exp $	*/
+/*	$NetBSD: via_dma.c,v 1.4 2008/07/07 00:31:30 mrg Exp $	*/
 
 /* via_dma.c -- DMA support for the VIA Unichrome/Pro
  * 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.3 2007/12/15 00:39:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.4 2008/07/07 00:31:30 mrg Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/drm/drm.h>
@@ -173,13 +173,13 @@ static int via_initialize(drm_device_t * dev,
 
 	if (dev_priv->ring.virtual_start != NULL) {
 		DRM_ERROR("%s called again without calling cleanup\n",
-			  __func__);
+			  __FUNCTION__);
 		return DRM_ERR(EFAULT);
 	}
 
 	if (!dev->agp || !dev->agp->base) {
 		DRM_ERROR("%s called with no agp memory available\n", 
-			  __func__);
+			  __FUNCTION__);
 		return DRM_ERR(EFAULT);
 	}
 
@@ -267,7 +267,7 @@ static int via_dispatch_cmdbuffer(drm_device_t * dev, drm_via_cmdbuffer_t * cmd)
 
 	if (dev_priv->ring.virtual_start == NULL) {
 		DRM_ERROR("%s called without initializing AGP ring buffer.\n",
-			  __func__);
+			  __FUNCTION__);
 		return DRM_ERR(EFAULT);
 	}
 
@@ -670,7 +670,7 @@ static int via_cmdbuf_size(DRM_IOCTL_ARGS)
 
 	if (dev_priv->ring.virtual_start == NULL) {
 		DRM_ERROR("%s called without initializing AGP ring buffer.\n",
-			  __func__);
+			  __FUNCTION__);
 		return DRM_ERR(EFAULT);
 	}
 
