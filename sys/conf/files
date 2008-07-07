@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.909 2008/06/24 17:32:09 drochner Exp $
+#	$NetBSD: files,v 1.909.2.1 2008/07/07 14:45:53 haad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1256,6 +1256,8 @@ file	dev/putter/putter.c		putter
 defpseudo pud
 file	dev/pud/pud.c			pud
 file	dev/pud/pud_dev.c		pud
+
+include "dev/dm/files.dm"
 
 #
 # File systems
