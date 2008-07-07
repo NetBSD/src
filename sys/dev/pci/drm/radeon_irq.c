@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_irq.c,v 1.6 2008/05/19 00:15:44 bjs Exp $	*/
+/*	$NetBSD: radeon_irq.c,v 1.7 2008/07/07 00:31:30 mrg Exp $	*/
 
 /* radeon_irq.c -- IRQ handling for radeon -*- linux-c -*- */
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_irq.c,v 1.6 2008/05/19 00:15:44 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_irq.c,v 1.7 2008/07/07 00:31:30 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_irq.c,v 1.7 2005/11/28 23:13:54 anholt Exp $");
 */
@@ -143,7 +143,7 @@ int radeon_driver_vblank_wait(drm_device_t * dev, unsigned int *sequence)
 	int ret = 0;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -176,7 +176,7 @@ int radeon_irq_emit(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -202,7 +202,7 @@ int radeon_irq_wait(DRM_IOCTL_ARGS)
 	drm_radeon_irq_wait_t irqwait;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 

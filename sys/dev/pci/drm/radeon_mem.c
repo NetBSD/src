@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_mem.c,v 1.4 2007/12/15 00:39:34 perry Exp $	*/
+/*	$NetBSD: radeon_mem.c,v 1.5 2008/07/07 00:31:30 mrg Exp $	*/
 
 /* radeon_mem.c -- Simple GART/fb memory manager for radeon -*- linux-c -*- */
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_mem.c,v 1.4 2007/12/15 00:39:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_mem.c,v 1.5 2008/07/07 00:31:30 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_mem.c,v 1.8 2005/11/28 23:13:54 anholt Exp $");
 */
@@ -233,7 +233,7 @@ int radeon_mem_alloc(DRM_IOCTL_ARGS)
 	struct mem_block *block, **heap;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -271,7 +271,7 @@ int radeon_mem_free(DRM_IOCTL_ARGS)
 	struct mem_block *block, **heap;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -301,7 +301,7 @@ int radeon_mem_init_heap(DRM_IOCTL_ARGS)
 	struct mem_block **heap;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 
