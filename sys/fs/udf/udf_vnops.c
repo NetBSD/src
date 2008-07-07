@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.23 2008/06/24 15:57:13 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.24 2008/07/07 18:45:27 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.23 2008/06/24 15:57:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.24 2008/07/07 18:45:27 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2049,6 +2049,15 @@ udf_fsync(void *v)
 	/* flush data and wait for it when requested */
 	wait = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
 	vflushbuf(vp, wait);
+
+	if (udf_node == NULL) {
+		printf("udf_fsync() called on NULL udf_node!\n");
+		return 0;
+	}
+	if (vp->v_tag != VT_UDF) {
+		printf("udf_fsync() called on node not tagged as UDF node!\n");
+		return 0;
+	}
 
 	/* set our times */
 	udf_itimes(udf_node, NULL, NULL, NULL);
