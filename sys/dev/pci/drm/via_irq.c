@@ -1,4 +1,4 @@
-/*	$NetBSD: via_irq.c,v 1.5 2008/05/19 00:15:44 bjs Exp $	*/
+/*	$NetBSD: via_irq.c,v 1.6 2008/07/07 00:31:30 mrg Exp $	*/
 
 /* via_irq.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.5 2008/05/19 00:15:44 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.6 2008/07/07 00:31:30 mrg Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/drm/drm.h>
@@ -185,7 +185,7 @@ int via_driver_vblank_wait(drm_device_t * dev, unsigned int *sequence)
 
 	DRM_DEBUG("viadrv_vblank_wait\n");
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return -EINVAL;
 	}
 
@@ -215,15 +215,15 @@ via_driver_irq_wait(drm_device_t * dev, unsigned int irq, int force_sequence,
 	maskarray_t *masks;
 	int real_irq;
 
-	DRM_DEBUG("%s\n", __func__);
+	DRM_DEBUG("%s\n", __FUNCTION__);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 
 	if (irq >= drm_via_irq_num ) {
-		DRM_ERROR("%s Trying to wait on unknown irq %d\n", __func__,
+		DRM_ERROR("%s Trying to wait on unknown irq %d\n", __FUNCTION__,
 			  irq);
 		return DRM_ERR(EINVAL);
 	}
@@ -232,7 +232,7 @@ via_driver_irq_wait(drm_device_t * dev, unsigned int irq, int force_sequence,
 
 	if (real_irq < 0) {
 		DRM_ERROR("%s Video IRQ %d not available on this hardware.\n",
-			  __func__, irq);
+			  __FUNCTION__, irq);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -362,7 +362,7 @@ int via_wait_irq(DRM_IOCTL_ARGS)
 
 	DRM_COPY_FROM_USER_IOCTL(irqwait, argp, sizeof(irqwait));
 	if (irqwait.request.irq >= dev_priv->num_irqs) {
-		DRM_ERROR("%s Trying to wait on unknown irq %d\n", __func__, 
+		DRM_ERROR("%s Trying to wait on unknown irq %d\n", __FUNCTION__, 
 			  irqwait.request.irq);
 		return DRM_ERR(EINVAL);
 	}
@@ -381,7 +381,7 @@ int via_wait_irq(DRM_IOCTL_ARGS)
 
 	if (irqwait.request.type & VIA_IRQ_SIGNAL) {
 		DRM_ERROR("%s Signals on Via IRQs not implemented yet.\n", 
-			  __func__);
+			  __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 
