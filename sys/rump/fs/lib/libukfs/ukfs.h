@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.10 2008/07/01 13:09:44 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.11 2008/07/07 09:07:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -83,6 +83,11 @@ int		ukfs_chown(struct ukfs *, const char *, uid_t, gid_t);
 int		ukfs_lchown(struct ukfs *, const char *, uid_t, gid_t);
 int		ukfs_chflags(struct ukfs *, const char *, u_long);
 int		ukfs_lchflags(struct ukfs *, const char *, u_long);
+
+int		ukfs_utimes(struct ukfs *, const char *, 
+			    const struct timeval *);
+int		ukfs_lutimes(struct ukfs *, const char *, 
+			     const struct timeval *);
 
 struct mount	*ukfs_getmp(struct ukfs *);
 struct vnode	*ukfs_getrvp(struct ukfs *);
