@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.351 2008/06/23 11:23:39 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.352 2008/07/07 14:15:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.351 2008/06/23 11:23:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.352 2008/07/07 14:15:41 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1163,10 +1163,10 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 	 */
 	mutex_enter(&vrele_lock);
 	gen = vrele_gen;
-	do {
+	while (vrele_pending && gen == vrele_gen) {
 		cv_broadcast(&vrele_cv);
 		cv_wait(&vrele_cv, &vrele_lock);
-	} while (gen == vrele_gen);
+	}
 	mutex_exit(&vrele_lock);
 
 	/* Allocate a marker vnode. */
