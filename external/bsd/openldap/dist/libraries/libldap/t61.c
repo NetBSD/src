@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/t61.c,v 1.9.2.4 2008/06/02 17:20:13 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/t61.c,v 1.9.2.3 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2008 The OpenLDAP Foundation.
@@ -684,8 +684,6 @@ int ldap_utf8s_to_t61s( struct berval *src, struct berval *dst )
 			*d++ = 0x3f;
 			break;
 		}
-		i += j;
-		c += j;
 	}
 	*d = '\0';
 	return LDAP_SUCCESS;

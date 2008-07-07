@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.13 2008/05/20 00:10:40 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.12 2008/02/12 00:46:46 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -928,8 +928,6 @@ unhandled_option:;
 	 * because back-monitor db_open() needs it
 	 */
 	time( &starttime );
-
-	connections_init();
 
 	if ( slap_startup( NULL ) != 0 ) {
 		rc = 1;

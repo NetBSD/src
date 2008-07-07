@@ -1,5 +1,5 @@
 /* attr.c - backend routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.36.2.4 2008/05/27 20:26:12 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/attr.c,v 1.36.2.3 2008/02/11 23:26:45 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -292,7 +292,6 @@ bdb_attr_index_config(
 					b->ai_indexmask = b->ai_newmask;
 				b->ai_newmask = a->ai_newmask;
 				ch_free( a );
-				rc = 0;
 				continue;
 			}
 			fprintf( stderr,

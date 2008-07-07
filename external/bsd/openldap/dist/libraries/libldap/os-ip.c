@@ -1,5 +1,5 @@
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.8 2008/05/20 00:05:30 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.7 2008/04/15 00:00:36 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -36,9 +36,6 @@
 #ifdef HAVE_IO_H
 #include <io.h>
 #endif /* HAVE_IO_H */
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include "ldap-int.h"
 
@@ -113,9 +110,6 @@ ldap_int_socket(LDAP *ld, int family, int type )
 {
 	ber_socket_t s = socket(family, type, 0);
 	osip_debug(ld, "ldap_new_socket: %d\n",s,0,0);
-#ifdef FD_CLOEXEC
-	fcntl(s, F_SETFD, FD_CLOEXEC);
-#endif
 	return ( s );
 }
 

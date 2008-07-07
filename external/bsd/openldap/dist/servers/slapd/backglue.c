@@ -1,5 +1,5 @@
 /* backglue.c - backend glue */
-/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.12 2008/06/02 18:00:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/backglue.c,v 1.112.2.11 2008/04/14 21:15:02 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2008 The OpenLDAP Foundation.
@@ -1099,7 +1099,7 @@ glue_sub_attach()
 
 			/* If it's not already configured, set up the overlay */
 			if ( !SLAP_GLUE_INSTANCE( be )) {
-				rc = overlay_config( be, glue.on_bi.bi_type, -1, NULL, NULL);
+				rc = overlay_config( be, glue.on_bi.bi_type, -1, NULL );
 				if ( rc )
 					break;
 			}

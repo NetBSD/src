@@ -1,7 +1,7 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.239.2.18 2008/05/29 22:54:56 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.conf.5,v 1.239.2.15 2008/02/11 23:26:40 kurt Exp $
 .SH NAME
 slapd.conf \- configuration file for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -871,9 +871,7 @@ Specify an integer ID from 0 to 4095 for this server (limited
 to 3 hexadecimal digits).
 These IDs are
 required when using multimaster replication and each master must have a
-unique ID. Note that this requirement also applies to separate masters
-contributing to a glued set of databases.
-If the URL is provided, this directive may be specified
+unique ID. If the URL is provided, this directive may be specified
 multiple times, providing a complete list of participating servers
 and their IDs. The fully qualified hostname of each server should be
 used in the supplied URLs. The IDs are used in the "replica id" field
@@ -1399,6 +1397,67 @@ regular settings should be configured before any overlay settings.
 This option puts the database into "read-only" mode.  Any attempts to 
 modify the database will return an "unwilling to perform" error.  By
 default, readonly is off.
+.HP
+.hy 0
+.B replica uri=ldap[s]://<hostname>[:port]|host=<hostname>[:port] 
+.B [starttls=yes|critical]
+.B [suffix=<suffix> [...]]
+.B bindmethod=simple|sasl [binddn=<simple DN>] [credentials=<simple password>]
+.B [saslmech=<SASL mech>] [secprops=<properties>] [realm=<realm>]
+.B [authcId=<authentication ID>] [authzId=<authorization ID>]
+.B [attrs[!]=<attr list>]
+.RS
+Specify a replication site for this database.  Refer to the "OpenLDAP 
+Administrator's Guide" for detailed information on setting up a replicated
+.B slapd
+directory service. Zero or more
+.B suffix
+instances can be used to select the subtrees that will be replicated
+(defaults to all the database). 
+.B host
+is deprecated in favor of the
+.B uri
+option.
+.B uri
+allows the replica LDAP server to be specified as an LDAP URI. 
+A
+.B bindmethod
+of
+.B simple
+requires the options
+.B binddn 
+and
+.B credentials  
+and should only be used when adequate security services 
+(e.g TLS or IPSEC) are in place. A
+.B bindmethod 
+of
+.B sasl 
+requires the option
+.B saslmech. 
+Specific security properties (as with the
+.B sasl-secprops
+keyword above) for a SASL bind can be set with the
+.B secprops
+option. A non-default SASL realm can be set with the
+.B realm
+option.
+If the 
+.B mechanism
+will use Kerberos, a kerberos instance should be given in 
+.B authcId.
+An
+.B attr list
+can be given after the 
+.B attrs
+keyword to allow the selective replication of the listed attributes only;
+if the optional 
+.B !
+mark is used, the list is considered exclusive, i.e. the listed attributes
+are not replicated.
+If an objectClass is listed, all the related attributes
+are (are not) replicated.
+.RE
 .TP
 .B restrict <oplist>
 Specify a whitespace separated list of operations that are restricted.
@@ -1524,8 +1583,6 @@ in order to work over all of the glued databases. E.g.
 .B [sizelimit=<limit>]
 .B [timelimit=<limit>]
 .B [schemachecking=on|off]
-.B [network-timeout=<seconds>]
-.B [timeout=<seconds>]
 .B [bindmethod=simple|sasl]
 .B [binddn=<dn>]
 .B [saslmech=<mech>]
@@ -1636,17 +1693,6 @@ in terms of required/allowed attributes, and that naming attributes
 and distinguished values must be present.
 As a consequence, schema checking should be \fBoff\fP when partial
 replication is used.
-
-The
-.B network-timeout
-parameter sets how long the consumer will wait to establish a
-network connection to the provider. Once a connection is
-established, the
-.B timeout
-parameter determines how long the consumer will wait for the initial
-Bind request to complete. The defaults for these parameters come
-from 
-.BR ldap.conf (5).
 
 A
 .B bindmethod

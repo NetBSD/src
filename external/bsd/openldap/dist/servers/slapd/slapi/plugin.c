@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/plugin.c,v 1.43.2.6 2008/06/02 18:00:53 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/plugin.c,v 1.43.2.5 2008/02/11 23:26:49 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2002-2008 The OpenLDAP Foundation.
@@ -21,11 +21,10 @@
  */
 
 #include "portable.h"
-#include "ldap_pvt_thread.h"
-#include "slap.h"
-#include "config.h"
-#include "slapi.h"
-#include "lutil.h"
+#include <ldap_pvt_thread.h>
+#include <slap.h>
+#include <slapi.h>
+#include <lutil.h>
 
 /*
  * Note: if ltdl.h is not available, slapi should not be compiled
@@ -646,10 +645,8 @@ slapi_int_read_config(
 
 	/* automatically instantiate overlay if necessary */
 	if ( !slapi_over_is_inst( be ) ) {
-		ConfigReply cr = { 0 };
-		if ( slapi_over_config( be, &cr ) != 0 ) {
-			fprintf( stderr, "Failed to instantiate SLAPI overlay: "
-				"err=%d msg=\"%s\"\n", cr.err, cr.msg );
+		if ( slapi_over_config( be ) != 0 ) {
+			fprintf( stderr, "Failed to instantiate SLAPI overlay\n");
 			return -1;
 		}
 	}

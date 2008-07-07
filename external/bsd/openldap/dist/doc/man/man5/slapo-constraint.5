@@ -2,7 +2,7 @@
 .\" Copyright 2005-2006 Hewlett-Packard Company
 .\" Copyright 2006-2008 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-constraint.5,v 1.2.2.5 2008/05/27 19:59:47 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-constraint.5,v 1.2.2.4 2008/02/12 00:20:58 quanah Exp $
 .SH NAME
 slapo-constraint \- Attribute Constraint Overlay to slapd
 .SH SYNOPSIS
@@ -31,9 +31,7 @@ directive.
 Specifies the constraint which should apply to the attribute named as
 the first parameter.
 Two types of constraint are currently supported -
-.B regex ,
-.B size ,
-.B count ,
+.B regex
 and
 .BR uri .
 
@@ -47,12 +45,6 @@ type is an LDAP URI. The URI will be evaluated using an internal search.
 It must not include a hostname, and it must include a list of attributes
 to evaluate.
 
-The 
-.B size
-type can be used to enfore a limit on an attribute length, and the
-.B count
-type limits the count of an attribute.
-
 Any attempt to add or modify an attribute named as part of the
 constraint overlay specification which does not fit the 
 constraint listed will fail with a
@@ -62,8 +54,6 @@ LDAP_CONSTRAINT_VIOLATION error.
 .RS
 .nf
 overlay constraint
-constraint_attribute jpegPhoto size 131072
-constraint_attribute userPassword count 3
 constraint_attribute mail regex ^[:alnum:]+@mydomain.com$
 constraint_attribute title uri
   ldap:///dc=catalog,dc=example,dc=com?title?sub?(objectClass=titleCatalog)
