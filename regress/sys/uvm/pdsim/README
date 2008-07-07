@@ -1,8 +1,0 @@
-$NetBSD: README,v 1.1 2006/10/09 12:32:46 yamt Exp $
-
-this directory contains some random test programs for page replacement
-policies found in sys/uvm/uvm_pdpolicy*.
-
-TODO:
-	- write how to use.
-	- write a makefile.
