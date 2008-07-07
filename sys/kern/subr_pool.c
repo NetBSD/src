@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.164 2008/07/04 16:41:00 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.165 2008/07/07 12:27:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.164 2008/07/04 16:41:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.165 2008/07/07 12:27:19 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2471,7 +2471,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 
 	/* Lock out interrupts and disable preemption. */
 	s = splvm();
-	do {
+	while (/* CONSTCOND */ true) {
 		/* Try and allocate an object from the current group. */
 		cc = pc->pc_cpus[curcpu()->ci_index];
 		KASSERT(cc->cc_cache == pc);
@@ -2508,7 +2508,9 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 		 * no more objects are available, it will return false.
 		 * Otherwise, we need to retry.
 		 */
-	} while (pool_cache_get_slow(cc, s, &object, pap, flags));
+		if (!pool_cache_get_slow(cc, s, &object, pap, flags))
+			break;
+	}
 
 	return object;
 }
@@ -2607,7 +2609,7 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 
 	/* Lock out interrupts and disable preemption. */
 	s = splvm();
-	do {
+	while (/* CONSTCOND */ true) {
 		/* If the current group isn't full, release it there. */
 		cc = pc->pc_cpus[curcpu()->ci_index];
 		KASSERT(cc->cc_cache == pc);
@@ -2637,7 +2639,9 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 		 * If put_slow() releases the object for us, it
 		 * will return false.  Otherwise we need to retry.
 		 */
-	} while (pool_cache_put_slow(cc, s, object));
+		if (!pool_cache_put_slow(cc, s, object))
+			break;
+	}
 }
 
 /*
