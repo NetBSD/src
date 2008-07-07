@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.401 2008/07/06 19:52:53 ahoka Exp $
+.\"	$NetBSD: main,v 1.402 2008/07/07 23:57:25 bjs Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2072,6 +2072,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Steve Rumble Ta Mt rumble@NetBSD.org
 .It Ta Ilpo Ruotsalainen Ta Mt lonewolf@NetBSD.org
 .It Ta Heiko W. Rupp Ta Mt hwr@NetBSD.org
+.It Ta Blair J. Sadewitz Ta Mt bjs@NetBSD.org
 .It Ta David Sainty Ta Mt dsainty@NetBSD.org
 .It Ta SAITOH Masanobu Ta Mt msaitoh@NetBSD.org
 .It Ta Kazuki Sakamoto Ta Mt sakamoto@NetBSD.org
