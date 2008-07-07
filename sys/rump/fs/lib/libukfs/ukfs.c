@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.29 2008/07/01 13:09:44 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.30 2008/07/07 09:07:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -531,4 +531,19 @@ ukfs_lchflags(struct ukfs *ukfs, const char *filename, u_long flags)
 {
 
 	STDCALL(ukfs, rump_sys_lchflags(filename, flags, &rv));
+}
+
+int
+ukfs_utimes(struct ukfs *ukfs, const char *filename, const struct timeval *tptr)
+{
+
+	STDCALL(ukfs, rump_sys_utimes(filename, tptr, &rv));
+}
+
+int
+ukfs_lutimes(struct ukfs *ukfs, const char *filename, 
+	      const struct timeval *tptr)
+{
+
+	STDCALL(ukfs, rump_sys_lutimes(filename, tptr, &rv));
 }
