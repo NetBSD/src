@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.54 2008/06/25 16:06:29 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.55 2008/07/07 18:45:27 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.54 2008/06/25 16:06:29 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.55 2008/07/07 18:45:27 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1908,7 +1908,7 @@ udf_update_logvolname(struct udf_mount *ump, char *logvol_id)
 
 /* --------------------------------------------------------------------- */
 
-static void
+void
 udf_inittag(struct udf_mount *ump, struct desc_tag *tag, int tagid,
 	uint32_t sector)
 {
@@ -4834,13 +4834,12 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 /* --------------------------------------------------------------------- */
 
 
-/* TODO !!!!! writeout alloc_ext_entry's!!! */
 int
 udf_writeout_node(struct udf_node *udf_node, int waitfor)
 {
 	union dscrptr *dscr;
 	struct long_ad *loc;
-	int error;
+	int extnr, flags, error;
 
 	DPRINTF(NODE, ("udf_writeout_node called\n"));
 
@@ -4854,8 +4853,30 @@ udf_writeout_node(struct udf_node *udf_node, int waitfor)
 		return 0;
 	}
 
+	/* lock node */
+	flags = waitfor ? 0 : IN_CALLBACK_ULK;
+	UDF_LOCK_NODE(udf_node, flags);
+
+	/* at least one descriptor writeout */
+	udf_node->outstanding_nodedscr = 1;
+
 	/* we're going to write out the descriptor so clear the flags */
 	udf_node->i_flags &= ~(IN_MODIFIED | IN_ACCESSED);
+
+	/* if we were rebuild, write out the allocation extents */
+	if (udf_node->i_flags & IN_NODE_REBUILD) {
+		/* mark outstanding node dscriptors and issue them */
+		udf_node->outstanding_nodedscr += udf_node->num_extensions;
+		for (extnr = 0; extnr < udf_node->num_extensions; extnr++) {
+			loc = &udf_node->ext_loc[extnr];
+			dscr = (union dscrptr *) udf_node->ext[extnr];
+			error = udf_write_logvol_dscr(udf_node, dscr, loc, 0);
+			if (error)
+				return error;
+		}
+		/* mark allocation extents written out */
+		udf_node->i_flags &= ~(IN_NODE_REBUILD);
+	}
 
 	if (udf_node->fe) {
 		dscr = (union dscrptr *) udf_node->fe;
@@ -5141,7 +5162,7 @@ udf_free_descriptor_space(struct udf_node *udf_node, struct long_ad *loc, void *
 		return;
 
 	/* got a descriptor here */
-	len       = udf_rw32(loc->len);
+	len       = UDF_EXT_LEN(udf_rw32(loc->len));
 	lb_num    = udf_rw32(loc->loc.lb_num);
 	vpart_num = udf_rw16(loc->loc.part_num);
 

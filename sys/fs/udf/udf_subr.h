@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.7 2008/06/18 21:23:32 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.8 2008/07/07 18:45:27 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -96,7 +96,7 @@ int udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 int udf_translate_file_extent(struct udf_node *node,
 		uint32_t from, uint32_t num_lb, uint64_t *map);
 void udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb, int *eof);
-int udf_append_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb);
+int udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb);
 
 int udf_vat_read(struct udf_node *vat_node, uint8_t *blob, int size, uint32_t offset);
 int udf_vat_write(struct udf_node *vat_node, uint8_t *blob, int size, uint32_t offset);
@@ -140,6 +140,7 @@ void udf_discstrat_queuebuf(struct udf_mount *ump, struct buf *nestbuf);
 int udf_write_terminator(struct udf_mount *ump, uint32_t sector);
 
 /* structure creators */
+void udf_inittag(struct udf_mount *ump, struct desc_tag *tag, int tagid, uint32_t sector);
 void udf_set_regid(struct regid *regid, char const *name);
 void udf_add_domain_regid(struct udf_mount *ump, struct regid *regid);
 void udf_add_udf_regid(struct udf_mount *ump, struct regid *regid);
