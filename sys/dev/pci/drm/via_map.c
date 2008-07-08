@@ -1,4 +1,4 @@
-/*	$NetBSD: via_map.c,v 1.4 2008/07/07 00:31:30 mrg Exp $	*/
+/*	$NetBSD: via_map.c,v 1.5 2008/07/08 06:50:23 mrg Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -25,11 +25,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_map.c,v 1.4 2008/07/07 00:31:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_map.c,v 1.5 2008/07/08 06:50:23 mrg Exp $");
 
-#include <dev/drm/drmP.h>
-#include <dev/pci/drm/via_drm.h>
-#include <dev/pci/drm/via_drv.h>
+#include "drmP.h"
+#include "via_drm.h"
+#include "via_drv.h"
 
 static int via_do_init_map(drm_device_t * dev, drm_via_init_t * init)
 {

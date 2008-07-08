@@ -1,4 +1,4 @@
-/*	$NetBSD: r300_cmdbuf.c,v 1.5 2007/12/11 11:48:44 lukem Exp $	*/
+/*	$NetBSD: r300_cmdbuf.c,v 1.6 2008/07/08 06:50:23 mrg Exp $	*/
 
 /* r300_cmdbuf.c -- Command buffer emission for R300 -*- linux-c -*-
  *
@@ -34,16 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r300_cmdbuf.c,v 1.5 2007/12/11 11:48:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r300_cmdbuf.c,v 1.6 2008/07/08 06:50:23 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r300_cmdbuf.c,v 1.5 2006/05/17 06:36:28 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/radeon_drm.h>
-#include <dev/pci/drm/radeon_drv.h>
-#include <dev/pci/drm/r300_reg.h>
+#include "drmP.h"
+#include "drm.h"
+#include "radeon_drm.h"
+#include "radeon_drv.h"
+#include "r300_reg.h"
 
 #define R300_SIMULTANEOUS_CLIPRECTS		4
 

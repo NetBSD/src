@@ -1,4 +1,4 @@
-/*	$NetBSD: mach64_state.c,v 1.5 2008/07/07 00:31:30 mrg Exp $	*/
+/*	$NetBSD: mach64_state.c,v 1.6 2008/07/08 06:50:23 mrg Exp $	*/
 
 /* mach64_state.c -- State support for mach64 (Rage Pro) driver -*- linux-c -*-
  * Created: Sun Dec 03 19:20:26 2000 by gareth@valinux.com
@@ -33,15 +33,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach64_state.c,v 1.5 2008/07/07 00:31:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach64_state.c,v 1.6 2008/07/08 06:50:23 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_state.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/mach64_drm.h>
-#include <dev/pci/drm/mach64_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "mach64_drm.h"
+#include "mach64_drv.h"
 
 /* Interface history:
  *
