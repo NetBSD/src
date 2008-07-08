@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.37 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: umidi.c,v 1.38 2008/07/08 11:34:43 gmcgarry Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.37 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.38 2008/07/08 11:34:43 gmcgarry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -552,7 +552,7 @@ static usbd_status
 alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 {
 	usbd_status err;
-	struct umq_fixed_ep_desc *fp;
+	const struct umq_fixed_ep_desc *fp;
 	struct umidi_endpoint *ep;
 	usb_endpoint_descriptor_t *epd;
 	int i;
@@ -850,7 +850,7 @@ alloc_all_jacks(struct umidi_softc *sc)
 	int i, j;
 	struct umidi_endpoint *ep;
 	struct umidi_jack *jack;
-	unsigned char *cn_spec;
+	const unsigned char *cn_spec;
 	
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_SEQ_PER_EP))
 		sc->cblnums_global = 0;
@@ -1011,7 +1011,7 @@ assign_all_jacks_automatically(struct umidi_softc *sc)
 	usbd_status err;
 	int i;
 	struct umidi_jack *out, *in;
-	signed char *asg_spec;
+	const signed char *asg_spec;
 
 	err =
 	    alloc_all_mididevs(sc,
