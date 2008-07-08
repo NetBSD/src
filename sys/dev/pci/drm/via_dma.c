@@ -1,4 +1,4 @@
-/*	$NetBSD: via_dma.c,v 1.4 2008/07/07 00:31:30 mrg Exp $	*/
+/*	$NetBSD: via_dma.c,v 1.5 2008/07/08 06:50:23 mrg Exp $	*/
 
 /* via_dma.c -- DMA support for the VIA Unichrome/Pro
  * 
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.4 2008/07/07 00:31:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.5 2008/07/08 06:50:23 mrg Exp $");
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/via_drm.h>
-#include <dev/pci/drm/via_drv.h>
-#include <dev/pci/drm/via_3d_reg.h>
+#include "drmP.h"
+#include "drm.h"
+#include "via_drm.h"
+#include "via_drv.h"
+#include "via_3d_reg.h"
 
 #define SetReg2DAGP(nReg, nData) {				\
 	*((uint32_t *)(vb)) = ((nReg) >> 2) | HALCYON_HEADER1;	\

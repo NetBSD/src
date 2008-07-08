@@ -1,4 +1,4 @@
-/*	$NetBSD: via_irq.c,v 1.6 2008/07/07 00:31:30 mrg Exp $	*/
+/*	$NetBSD: via_irq.c,v 1.7 2008/07/08 06:50:23 mrg Exp $	*/
 
 /* via_irq.c
  *
@@ -38,13 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.6 2008/07/07 00:31:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_irq.c,v 1.7 2008/07/08 06:50:23 mrg Exp $");
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/via_drm.h>
-#include <dev/pci/drm/via_drv.h>
-#include <dev/pci/drm/via_dmablit.h>
+#include "drmP.h"
+#include "drm.h"
+#include "via_drm.h"
+#include "via_drv.h"
+#include "via_dmablit.h"
 
 #define VIA_REG_INTERRUPT       0x200
 
