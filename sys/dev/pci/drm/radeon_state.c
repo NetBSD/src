@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_state.c,v 1.8 2008/07/07 00:31:30 mrg Exp $	*/
+/*	$NetBSD: radeon_state.c,v 1.9 2008/07/08 06:50:23 mrg Exp $	*/
 
 /* radeon_state.c -- State support for Radeon -*- linux-c -*- */
 /*-
@@ -30,16 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_state.c,v 1.8 2008/07/07 00:31:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_state.c,v 1.9 2008/07/08 06:50:23 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_state.c,v 1.22 2006/09/07 23:04:47 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/drm/drm_sarea.h>
-#include <dev/pci/drm/radeon_drm.h>
-#include <dev/pci/drm/radeon_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "drm_sarea.h"
+#include "radeon_drm.h"
+#include "radeon_drv.h"
 
 /* ================================================================
  * Helper functions for client state checking and fixup

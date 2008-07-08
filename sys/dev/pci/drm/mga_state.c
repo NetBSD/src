@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_state.c,v 1.6 2008/07/07 00:31:30 mrg Exp $	*/
+/*	$NetBSD: mga_state.c,v 1.7 2008/07/08 06:50:23 mrg Exp $	*/
 
 /* mga_state.c -- State support for MGA G200/G400 -*- linux-c -*-
  * Created: Thu Jan 27 02:53:43 2000 by jhartmann@precisioninsight.com
@@ -36,15 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_state.c,v 1.6 2008/07/07 00:31:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_state.c,v 1.7 2008/07/08 06:50:23 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_state.c,v 1.11 2005/11/28 23:13:53 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/mga_drm.h>
-#include <dev/pci/drm/mga_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "mga_drm.h"
+#include "mga_drv.h"
 
 /* ================================================================
  * DMA hardware state programming functions

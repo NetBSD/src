@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_mem.c,v 1.5 2008/07/07 00:31:30 mrg Exp $	*/
+/*	$NetBSD: radeon_mem.c,v 1.6 2008/07/08 06:50:23 mrg Exp $	*/
 
 /* radeon_mem.c -- Simple GART/fb memory manager for radeon -*- linux-c -*- */
 /*-
@@ -32,15 +32,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_mem.c,v 1.5 2008/07/07 00:31:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_mem.c,v 1.6 2008/07/08 06:50:23 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_mem.c,v 1.8 2005/11/28 23:13:54 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/radeon_drm.h>
-#include <dev/pci/drm/radeon_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "radeon_drm.h"
+#include "radeon_drv.h"
 
 /* Very simple allocator for GART memory, working on a static range
  * already mapped into each client's address space.

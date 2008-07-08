@@ -1,4 +1,4 @@
-/*	$NetBSD: mach64_dma.c,v 1.5 2008/07/07 00:31:30 mrg Exp $	*/
+/*	$NetBSD: mach64_dma.c,v 1.6 2008/07/08 06:50:22 mrg Exp $	*/
 
 /* mach64_dma.c -- DMA support for mach64 (Rage Pro) driver -*- linux-c -*- */
 /**
@@ -37,15 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach64_dma.c,v 1.5 2008/07/07 00:31:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach64_dma.c,v 1.6 2008/07/08 06:50:22 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_dma.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/mach64_drm.h>
-#include <dev/pci/drm/mach64_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "mach64_drm.h"
+#include "mach64_drv.h"
 
 /*******************************************************************/
 /** \name Engine, FIFO control */

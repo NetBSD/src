@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_irq.c,v 1.7 2008/07/07 00:31:30 mrg Exp $	*/
+/*	$NetBSD: radeon_irq.c,v 1.8 2008/07/08 06:50:23 mrg Exp $	*/
 
 /* radeon_irq.c -- IRQ handling for radeon -*- linux-c -*- */
 /*-
@@ -33,15 +33,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_irq.c,v 1.7 2008/07/07 00:31:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_irq.c,v 1.8 2008/07/08 06:50:23 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_irq.c,v 1.7 2005/11/28 23:13:54 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/radeon_drm.h>
-#include <dev/pci/drm/radeon_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "radeon_drm.h"
+#include "radeon_drv.h"
 
 static __inline__ u32 radeon_acknowledge_irqs(drm_radeon_private_t * dev_priv,
 					      u32 mask)

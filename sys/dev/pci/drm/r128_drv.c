@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $	*/
+/*	$NetBSD: r128_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $	*/
 
 /* r128_drv.c -- ATI Rage 128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:47:27 1999 by faith@precisioninsight.com
@@ -34,16 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r128_drv.c,v 1.11 2005/12/20 22:44:36 jhb Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/r128_drm.h>
-#include <dev/pci/drm/r128_drv.h>
-#include <dev/pci/drm/drm_pciids.h>
+#include "drmP.h"
+#include "drm.h"
+#include "r128_drm.h"
+#include "r128_drv.h"
+#include "drm_pciids.h"
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t r128_pciidlist[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tdfx_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $	*/
+/*	$NetBSD: tdfx_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $	*/
 
 /* tdfx_drv.c -- tdfx driver -*- linux-c -*-
  * Created: Thu Oct  7 10:38:32 1999 by faith@precisioninsight.com
@@ -35,14 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdfx_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdfx_drv.c,v 1.5 2008/07/08 06:50:23 mrg Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/tdfx_drv.c,v 1.10 2005/12/20 22:44:36 jhb Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/pci/drm/drm_pciids.h>
-#include <dev/pci/drm/tdfx_drv.h>
+#include "drmP.h"
+#include "drm_pciids.h"
+#include "tdfx_drv.h"
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t tdfx_pciidlist[] = {
