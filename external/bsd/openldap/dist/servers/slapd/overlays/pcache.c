@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.16 2008/04/14 21:13:44 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.17 2008/07/08 21:09:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.
@@ -2015,6 +2015,10 @@ pcache_op_cleanup( Operation *op, SlapReply *rs ) {
 				case PC_SIZELIMIT:
 					qc->q_sizelimit = rs->sr_nentries;
 					break;
+
+				case PC_NEGATIVE:
+					break;
+
 				default:
 					assert( 0 );
 					break;

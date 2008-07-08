@@ -1,5 +1,5 @@
 /* result.c - sock backend result reading function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/result.c,v 1.3.2.1 2008/02/09 00:46:09 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-sock/result.c,v 1.3.2.2 2008/07/08 21:05:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2007-2008 The OpenLDAP Foundation.
@@ -77,7 +77,7 @@ sock_read_and_send_results(
 		}
 
 		len = strlen( line );
-		while ( bp + len - buf > bsize ) {
+		while ( bp + len + 1 - buf > bsize ) {
 			size_t offset = bp - buf;
 			bsize += BUFSIZ;
 			buf = (char *) ch_realloc( buf, bsize );
