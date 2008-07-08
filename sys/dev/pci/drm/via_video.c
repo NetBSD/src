@@ -1,4 +1,4 @@
-/*	$NetBSD: via_video.c,v 1.6 2008/07/07 00:31:30 mrg Exp $	*/
+/*	$NetBSD: via_video.c,v 1.7 2008/07/08 06:50:23 mrg Exp $	*/
 
 /*
  * Copyright 2005 Thomas Hellstrom. All Rights Reserved.
@@ -28,11 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_video.c,v 1.6 2008/07/07 00:31:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_video.c,v 1.7 2008/07/08 06:50:23 mrg Exp $");
 
-#include <dev/drm/drmP.h>
-#include <dev/pci/drm/via_drm.h>
-#include <dev/pci/drm/via_drv.h>
+#include "drmP.h"
+#include "via_drm.h"
+#include "via_drv.h"
 
 void via_init_futex(drm_via_private_t * dev_priv)
 {

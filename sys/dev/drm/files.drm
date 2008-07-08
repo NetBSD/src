@@ -1,4 +1,4 @@
-# $NetBSD: files.drm,v 1.4 2008/06/29 12:49:08 jmcneill Exp $
+# $NetBSD: files.drm,v 1.5 2008/07/08 06:50:22 mrg Exp $
 
 # direct rendering modules
 define drmbase
@@ -19,3 +19,5 @@ file   dev/drm/drm_pci.c           drmbase
 file   dev/drm/drm_scatter.c       drmbase
 file   dev/drm/drm_sysctl.c        drmbase
 file   dev/drm/drm_vm.c            drmbase
+
+makeoptions	drmbase		CPPFLAGS+="-I$S/dev/drm"
