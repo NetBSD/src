@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.148 2008/05/29 15:27:51 joerg Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.149 2008/07/08 20:53:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.148 2008/05/29 15:27:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.149 2008/07/08 20:53:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -590,9 +590,12 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	pt->pt_poverruns = 0;
 	pt->pt_entry = timerid;
 	pt->pt_queued = false;
-	pt->pt_active = 0;
 	timerclear(&pt->pt_time.it_value);
-	callout_init(&pt->pt_ch, 0);
+	if (id == CLOCK_REALTIME)
+		callout_init(&pt->pt_ch, 0);
+	else
+		pt->pt_active = 0;
+
 	pts->pts_timers[timerid] = pt;
 	mutex_spin_exit(&timer_lock);
 
@@ -623,13 +626,16 @@ sys_timer_delete(struct lwp *l, const struct sys_timer_delete_args *uap,
 		mutex_spin_exit(&timer_lock);
 		return (EINVAL);
 	}
-	if (pt->pt_active) {
-		ptn = LIST_NEXT(pt, pt_list);
-		LIST_REMOVE(pt, pt_list);
-		for ( ; ptn; ptn = LIST_NEXT(ptn, pt_list))
-			timeradd(&pt->pt_time.it_value, &ptn->pt_time.it_value,
-			    &ptn->pt_time.it_value);
-		pt->pt_active = 0;
+	if (pt->pt_type != CLOCK_REALTIME) {
+		if (pt->pt_active) {
+			ptn = LIST_NEXT(pt, pt_list);
+			LIST_REMOVE(pt, pt_list);
+			for ( ; ptn; ptn = LIST_NEXT(ptn, pt_list))
+				timeradd(&pt->pt_time.it_value,
+				    &ptn->pt_time.it_value,
+				    &ptn->pt_time.it_value);
+			pt->pt_active = 0;
+		}
 	}
 	itimerfree(pts, timerid);
 
@@ -1088,9 +1094,12 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		pt->pt_proc = p;
 		pt->pt_type = which;
 		pt->pt_entry = which;
-		pt->pt_active = 0;
 		pt->pt_queued = false;
-		callout_init(&pt->pt_ch, CALLOUT_MPSAFE);
+		if (pt->pt_type == CLOCK_REALTIME)
+			callout_init(&pt->pt_ch, CALLOUT_MPSAFE);
+		else
+			pt->pt_active = 0;
+
 		switch (which) {
 		case ITIMER_REAL:
 			pt->pt_ev.sigev_signo = SIGALRM;
@@ -1171,10 +1180,13 @@ timers_free(struct proc *p, int which)
 		timerclear(&tv);
 		for (ptn = LIST_FIRST(&pts->pts_virtual);
 		     ptn && ptn != pts->pts_timers[ITIMER_VIRTUAL];
-		     ptn = LIST_NEXT(ptn, pt_list))
+		     ptn = LIST_NEXT(ptn, pt_list)) {
+			KASSERT(ptn->pt_type != CLOCK_REALTIME);
 			timeradd(&tv, &ptn->pt_time.it_value, &tv);
+		}
 		LIST_FIRST(&pts->pts_virtual) = NULL;
 		if (ptn) {
+			KASSERT(ptn->pt_type != CLOCK_REALTIME);
 			timeradd(&tv, &ptn->pt_time.it_value,
 			    &ptn->pt_time.it_value);
 			LIST_INSERT_HEAD(&pts->pts_virtual, ptn, pt_list);
@@ -1182,10 +1194,13 @@ timers_free(struct proc *p, int which)
 		timerclear(&tv);
 		for (ptn = LIST_FIRST(&pts->pts_prof);
 		     ptn && ptn != pts->pts_timers[ITIMER_PROF];
-		     ptn = LIST_NEXT(ptn, pt_list))
+		     ptn = LIST_NEXT(ptn, pt_list)) {
+			KASSERT(ptn->pt_type != CLOCK_REALTIME);
 			timeradd(&tv, &ptn->pt_time.it_value, &tv);
+		}
 		LIST_FIRST(&pts->pts_prof) = NULL;
 		if (ptn) {
+			KASSERT(ptn->pt_type != CLOCK_REALTIME);
 			timeradd(&tv, &ptn->pt_time.it_value,
 			    &ptn->pt_time.it_value);
 			LIST_INSERT_HEAD(&pts->pts_prof, ptn, pt_list);
@@ -1221,7 +1236,8 @@ itimerfree(struct ptimers *pts, int index)
 	else if (pt->pt_queued)
 		TAILQ_REMOVE(&timer_queue, pt, pt_chain);
 	mutex_spin_exit(&timer_lock);
-	callout_destroy(&pt->pt_ch);
+	if (pt->pt_type == CLOCK_REALTIME)
+		callout_destroy(&pt->pt_ch);
 	pool_put(&ptimer_pool, pt);
 }
 
