@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.32 2008/01/22 11:49:54 he Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.33 2008/07/08 17:32:56 kiyohara Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.32 2008/01/22 11:49:54 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.33 2008/07/08 17:32:56 kiyohara Exp $");
 
 #include "bpfilter.h"
 
@@ -310,6 +310,8 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = oaa->opb_dmat;
 
 	printf(": 405GP EMAC\n");
+
+	callout_init(&sc->sc_callout, 0);
 
 	/*
 	 * Set up Mode Register 1 - set receive and transmit FIFOs to maximum
