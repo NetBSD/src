@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPEntry.cpp,v 1.5.8.4 2008/04/14 23:09:26 quanah Exp $
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPEntry.cpp,v 1.5.8.5 2008/07/08 19:31:00 quanah Exp $
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -86,6 +86,11 @@ const LDAPAttribute* LDAPEntry::getAttributeByName(const std::string& name) cons
 void LDAPEntry::addAttribute(const LDAPAttribute& attr)
 {
     m_attrs->addAttribute(attr);
+}
+
+void LDAPEntry::delAttribute(const std::string& type)
+{
+    m_attrs->delAttribute(type);
 }
 
 void LDAPEntry::replaceAttribute(const LDAPAttribute& attr)

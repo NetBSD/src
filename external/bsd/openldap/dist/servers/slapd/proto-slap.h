@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.24 2008/04/14 22:08:32 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/proto-slap.h,v 1.670.2.26 2008/07/08 19:25:38 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -435,7 +435,7 @@ LDAP_SLAPD_F (int) glue_sub_del( BackendDB *be );
  */
 LDAP_SLAPD_F (int) overlay_register LDAP_P(( slap_overinst *on ));
 LDAP_SLAPD_F (int) overlay_config LDAP_P(( BackendDB *be, const char *ov,
-	int idx, BackendInfo **res ));
+	int idx, BackendInfo **res, ConfigReply *cr ));
 LDAP_SLAPD_F (void) overlay_destroy_one LDAP_P((
 	BackendDB *be,
 	slap_overinst *on ));
@@ -469,7 +469,10 @@ LDAP_SLAPD_F (void) overlay_insert LDAP_P((
 	BackendDB *be, slap_overinst *on, slap_overinst ***prev, int idx ));
 LDAP_SLAPD_F (void) overlay_move LDAP_P((
 	BackendDB *be, slap_overinst *on, int idx ));
-
+#ifdef SLAP_CONFIG_DELETE
+LDAP_SLAPD_F (void) overlay_remove LDAP_P((
+	BackendDB *be, slap_overinst *on ));
+#endif /* SLAP_CONFIG_DELETE */
 /*
  * bconfig.c
  */
