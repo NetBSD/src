@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/sets.c,v 1.28.2.9 2008/04/14 19:20:45 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/sets.c,v 1.28.2.10 2008/07/08 20:36:58 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -200,6 +200,7 @@ slap_set_join(
 							cp->set_op->o_tmpfree( rset[ i ].bv_val, cp->set_op->o_tmpmemctx );
 							rset[ i ] = rset[ --rlast ];
 							BER_BVZERO( &rset[ rlast ] );
+							i--;
 						}
 						exists = 1;
 						break;
