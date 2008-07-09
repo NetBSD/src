@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.44 2008/05/26 10:31:22 nisimura Exp $	*/
+/*	$NetBSD: stic.c,v 1.45 2008/07/09 13:19:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.44 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.45 2008/07/09 13:19:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,7 @@ stic_reset(struct stic_info *si)
 }
 
 void
-stic_attach(struct device *self, struct stic_info *si, int console)
+stic_attach(device_t self, struct stic_info *si, int console)
 {
 	struct wsemuldisplaydev_attach_args waa;
 
