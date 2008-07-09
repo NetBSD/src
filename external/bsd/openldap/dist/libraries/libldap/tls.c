@@ -1,5 +1,5 @@
 /* tls.c - Handle tls/ssl using SSLeay, OpenSSL or GNUTLS. */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.133.2.9 2008/02/12 00:48:16 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/tls.c,v 1.133.2.11 2008/07/09 23:56:44 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -755,6 +755,7 @@ ldap_int_tls_init_ctx( struct ldapoptions *lo, int is_server )
 			crlfile,
 			GNUTLS_X509_FMT_PEM );
 		if ( rc < 0 ) goto error_exit;
+		rc = 0;
 	}
 	if ( is_server ) {
 		gnutls_dh_params_init (&((tls_ctx*) 
@@ -2794,7 +2795,7 @@ ldap_pvt_tls_get_strength( void *s )
 	gnutls_cipher_algorithm_t c;
 
 	c = gnutls_cipher_get( session->session );
-	return gnutls_cipher_get_key_size( c );
+	return gnutls_cipher_get_key_size( c ) * 8;
 #else
 	return 0;
 #endif
