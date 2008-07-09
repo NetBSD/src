@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.165 2008/07/07 12:27:19 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.166 2008/07/09 02:43:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.165 2008/07/07 12:27:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.166 2008/07/09 02:43:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -1253,10 +1253,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 
 	if (pp->pr_flags & PR_WANTED) {
 		pp->pr_flags &= ~PR_WANTED;
-		if (ph->ph_nmissing == 0)
-			pp->pr_nidle++;
 		cv_broadcast(&pp->pr_cv);
-		return;
 	}
 
 	/*
