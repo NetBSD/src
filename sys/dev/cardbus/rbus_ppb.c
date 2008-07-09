@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.23 2008/05/18 02:06:14 jmcneill Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.24 2008/07/09 16:27:12 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.23 2008/05/18 02:06:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.24 2008/07/09 16:27:12 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -647,13 +647,10 @@ rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
 }
 
 static void
-ppb_cardbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ppb_cardbus_attach(device_t parent, device_t self, void aux)
 {
 	struct ppb_cardbus_softc *csc = device_private(self);
-	struct cardbus_softc *parent_sc =
-	    device_private(device_parent(&csc->sc_dev));
+	struct cardbus_softc *parent_sc = device_private(parent);
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
@@ -671,7 +668,7 @@ ppb_cardbus_attach(parent, self, aux)
 	rv = 0;
 
 	/* shut up compiler */
-	csc->foo=parent_sc->sc_intrline;
+	csc->foo = parent_sc->sc_intrline;
 
 
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
@@ -802,8 +799,7 @@ ppb_cardbus_enable(struct ppb_softc * sc)
 {
 #if 0
 	struct ppb_cardbus_softc *csc = (struct fxp_cardbus_softc *) sc;
-	struct cardbus_softc *psc =
-	    (struct cardbus_softc *) device_parent(&sc->sc_dev);
+	struct cardbus_softc *psc = device_private(device_parent(&sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
@@ -831,8 +827,7 @@ void
 ppb_cardbus_disable(struct ppb_softc * sc)
 {
 #if 0
-	struct cardbus_softc *psc =
-	    (struct cardbus_softc *) device_parent(&sc->sc_dev);
+	struct cardbus_softc *psc = device_private(device_parent(&sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
