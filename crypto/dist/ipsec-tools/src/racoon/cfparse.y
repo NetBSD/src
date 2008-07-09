@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.18.4.4 2008/03/05 22:29:38 mgrooms Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.18.4.5 2008/07/09 12:22:03 tteras Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2519,11 +2519,6 @@ cfreparse()
 	flushrmconf();
 	flushsainfo();
 	clean_tmpalgtype();
-	yycf_init_buffer();
-
-	if (yycf_switch_buffer(lcconf->racoon_conf) != 0)
-		return -1;
-
 	return(cfparse());
 }
 
