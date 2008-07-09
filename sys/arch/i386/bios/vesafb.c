@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.30 2008/07/09 20:40:16 joerg Exp $ */
+/* $NetBSD: vesafb.c,v 1.31 2008/07/09 20:41:02 joerg Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.30 2008/07/09 20:40:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.31 2008/07/09 20:41:02 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ struct wsscreen_list vesafb_screenlist = {
 	_vesafb_scrlist
 };
 
-CFATTACH_DECL(vesafb, sizeof(struct vesafb_softc),
+CFATTACH_DECL_NEW(vesafb, sizeof(struct vesafb_softc),
     vesafb_match, vesafb_attach, NULL, NULL);
 
 static int
