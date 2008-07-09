@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.32 2008/06/24 19:44:52 drochner Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.33 2008/07/09 16:27:12 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.32 2008/06/24 19:44:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.33 2008/07/09 16:27:12 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -185,8 +185,7 @@ static void
 fxp_cardbus_setup(struct fxp_softc * sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) sc;
-	struct cardbus_softc *psc =
-	    (struct cardbus_softc *) device_parent(&sc->sc_dev);
+	struct cardbus_softc *psc = device_private(device_parent(&sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 	pcireg_t command;
@@ -219,8 +218,7 @@ static int
 fxp_cardbus_enable(struct fxp_softc * sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) sc;
-	struct cardbus_softc *psc =
-	    (struct cardbus_softc *) device_parent(&sc->sc_dev);
+	struct cardbus_softc *psc = device_private(device_parent(&sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
@@ -243,8 +241,7 @@ fxp_cardbus_enable(struct fxp_softc * sc)
 static void
 fxp_cardbus_disable(struct fxp_softc * sc)
 {
-	struct cardbus_softc *psc =
-	    (struct cardbus_softc *) device_parent(&sc->sc_dev);
+	struct cardbus_softc *psc = device_private(device_parent(&sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
