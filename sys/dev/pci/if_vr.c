@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.93 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.94 2008/07/09 16:06:02 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.93 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.94 2008/07/09 16:06:02 joerg Exp $");
 
 #include "rnd.h"
 
@@ -147,7 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.93 2008/04/28 20:23:55 martin Exp $");
 /*
  * Various supported device vendors/types and their names.
  */
-static struct vr_type {
+static const struct vr_type {
 	pci_vendor_id_t		vr_vid;
 	pci_product_id_t	vr_did;
 	const char		*vr_name;
@@ -1403,10 +1403,10 @@ static void	vr_shutdown(void *);
 CFATTACH_DECL(vr, sizeof (struct vr_softc),
     vr_probe, vr_attach, NULL, NULL);
 
-static struct vr_type *
+static const struct vr_type *
 vr_lookup(struct pci_attach_args *pa)
 {
-	struct vr_type *vrt;
+	const struct vr_type *vrt;
 
 	for (vrt = vr_devs; vrt->vr_name != NULL; vrt++) {
 		if (PCI_VENDOR(pa->pa_id) == vrt->vr_vid &&
@@ -1449,7 +1449,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	struct vr_softc *sc = device_private(self);
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	bus_dma_segment_t seg;
-	struct vr_type *vrt;
+	const struct vr_type *vrt;
 	uint32_t reg;
 	struct ifnet *ifp;
 	uint8_t eaddr[ETHER_ADDR_LEN], mac;
