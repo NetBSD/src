@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.180 2008/07/03 13:02:12 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.181 2008/07/09 23:22:15 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2008/07/03 13:02:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181 2008/07/09 23:22:15 scw Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2965,6 +2965,7 @@ pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 				for (cnt = 0;
 				     cnt < PMAP_REMOVE_CLEAN_LIST_SIZE; cnt++) {
 					*cleanlist[cnt].ptep = 0;
+					PTE_SYNC(cleanlist[cnt].ptep);
 				}
 				*ptep = 0;
 				PTE_SYNC(ptep);
