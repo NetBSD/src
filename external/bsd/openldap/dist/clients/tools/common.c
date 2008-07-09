@@ -1,5 +1,5 @@
 /* common.c - common routines for the ldap client tools */
-/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.7 2008/02/11 23:26:38 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.8 2008/07/09 00:29:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -93,6 +93,7 @@ char		*sasl_secprops = NULL;
 /* controls */
 int		assertctl;
 char		*assertion = NULL;
+struct berval	assertionvalue = BER_BVNULL;
 char		*authzid = NULL;
 /* support deprecated early version of proxyAuthz */
 #define LDAP_CONTROL_OBSOLETE_PROXY_AUTHZ	"2.16.840.1.113730.3.4.12"
@@ -1485,29 +1486,18 @@ tool_server_controls( LDAP *ld, LDAPControl *extra_c, int count )
 	}
 
 	if ( assertctl ) {
-		BerElementBuffer berbuf;
-		BerElement *ber = (BerElement *)&berbuf;
-		
-		if( assertion == NULL || *assertion == '\0' ) {
-			fprintf( stderr, "Assertion=<empty>\n" );
-			exit( EXIT_FAILURE );
-		}
-
-		ber_init2( ber, NULL, LBER_USE_DER );
-
-		err = ldap_pvt_put_filter( ber, assertion );
-		if( err < 0 ) {
-			fprintf( stderr, "assertion encode failed (%d)\n", err );
-			exit( EXIT_FAILURE );
-		}
-
-		err = ber_flatten2( ber, &c[i].ldctl_value, 0 );
-		if( err < 0 ) {
-			fprintf( stderr, "assertion flatten failed (%d)\n", err );
-			exit( EXIT_FAILURE );
+		if ( BER_BVISNULL( &assertionvalue ) ) {
+			err = ldap_create_assertion_control_value( ld,
+				assertion, &assertionvalue );
+			if ( err ) {
+				fprintf( stderr,
+					"Unable to create assertion value "
+					"\"%s\" (%d)\n", assertion, err );
+			}
 		}
 
 		c[i].ldctl_oid = LDAP_CONTROL_ASSERT;
+		c[i].ldctl_value = assertionvalue;
 		c[i].ldctl_iscritical = assertctl > 1;
 		ctrls[i] = &c[i];
 		i++;
