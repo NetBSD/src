@@ -1,3 +1,8 @@
+2008-07-09  Timo Teras  <timo.teras@iki.fi>
+	Track:269, from Chong Peng <chongpeng@gmail.com>:
+	* src/racoon/cfparse.y: remove parser initialization causing
+	  fd leak from cfreparse() since cfparse() initializes it anyway
+
 2008-07-02  Yvan Vanhullebus  <vanhu@netasq.com>
 	Track:266, from Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/isakmp_inf.c: fixed some %d to %zu (size_t values)
