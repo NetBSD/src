@@ -1,7 +1,7 @@
-/* 	$NetBSD: aapic.c,v 1.5 2008/07/09 21:03:42 joerg Exp $	*/
+/* 	$NetBSD: aapic.c,v 1.6 2008/07/09 21:07:25 joerg Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.5 2008/07/09 21:03:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.6 2008/07/09 21:07:25 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -20,10 +20,10 @@ __KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.5 2008/07/09 21:03:42 joerg Exp $");
 extern int nioapics;
 #endif
 
-static int	aapic_match __P((struct device *, struct cfdata *, void *));
-static void	aapic_attach __P((struct device *, struct device *, void *));
+static int	aapic_match(device_t, cfdata_t, void *));
+static void	aapic_attach(device_t, device_t, void *));
 
-CFATTACH_DECL(aapic, 0, aapic_match, aapic_attach, NULL, NULL);
+CFATTACH_DECL_NEW(aapic, 0, aapic_match, aapic_attach, NULL, NULL);
 
 static int
 aapic_match(device_t parent, cfdata_t match, void *aux)
