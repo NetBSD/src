@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.4 2008/07/03 18:01:08 reinoud Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.5 2008/07/09 18:10:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.4 2008/07/03 18:01:08 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.5 2008/07/09 18:10:57 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -187,6 +187,7 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 	struct desc_tag *tag;
 	struct file_entry *fe;
 	struct extfile_entry *efe;
+	struct alloc_ext_entry *ext;
 	uint32_t lb_size, lb_num;
 	uint32_t rfid_pos, max_rfid_pos;
 	int icbflags, addr_type, has_fids, l_ea;
@@ -198,6 +199,7 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 
 	/* NOTE this could also be done in write_internal */
 	/* start of a descriptor */
+	l_ea     = 0;
 	has_fids = 0;
 	max_rfid_pos = rfid_pos = lb_num = 0;	/* shut up gcc! */
 
@@ -224,10 +226,13 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 		lb_num = udf_rw32(efe->tag.tag_loc);
 		break;
 	case TAGID_INDIRECTENTRY :
-	case TAGID_ALLOCEXTENT :
 	case TAGID_EXTATTR_HDR :
-		l_ea     = 0;
-		has_fids = 0;
+		break;
+	case TAGID_ALLOCEXTENT :
+		/* force crclen to 8 for UDF version < 2.01 */
+		ext = (struct alloc_ext_entry *) tag;
+		if (udf_rw16(ump->logvol_info->min_udf_readver) <= 0x200)
+			ext->tag.desc_crc_len = udf_rw16(8);
 		break;
 	default:
 		panic("%s: passed bad tag\n", __func__);
