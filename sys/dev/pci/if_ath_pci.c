@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.30 2008/03/12 18:02:21 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.31 2008/07/09 19:47:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.30 2008/03/12 18:02:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.31 2008/07/09 19:47:24 joerg Exp $");
 #endif
 
 /*
@@ -95,10 +95,10 @@ struct ath_pci_softc {
 
 static void ath_pci_attach(device_t, device_t, void *);
 static int ath_pci_detach(device_t, int);
-static int ath_pci_match(device_t, struct cfdata *, void *);
+static int ath_pci_match(device_t, cfdata_t, void *);
 static int ath_pci_detach(device_t, int);
 
-CFATTACH_DECL(ath_pci,
+CFATTACH_DECL_NEW(ath_pci,
     sizeof(struct ath_pci_softc),
     ath_pci_match,
     ath_pci_attach,
@@ -208,6 +208,7 @@ ath_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t mem_type;
 	const char *intrstr = NULL;
 
+	sc->sc_dev = self;
 	psc->sc_pc = pc;
 
 	psc->sc_pcitag = pa->pa_tag;
