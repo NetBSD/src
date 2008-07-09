@@ -1,7 +1,7 @@
-/* 	$NetBSD: aapic.c,v 1.4 2005/12/11 12:19:47 christos Exp $	*/
+/* 	$NetBSD: aapic.c,v 1.5 2008/07/09 21:03:42 joerg Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.4 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.5 2008/07/09 21:03:42 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -23,18 +23,10 @@ extern int nioapics;
 static int	aapic_match __P((struct device *, struct cfdata *, void *));
 static void	aapic_attach __P((struct device *, struct device *, void *));
 
-struct aapic_softc {
-	struct device sc_dev;
-};
-
-CFATTACH_DECL(aapic, sizeof(struct aapic_softc),
-    aapic_match, aapic_attach, NULL, NULL);
+CFATTACH_DECL(aapic, 0, aapic_match, aapic_attach, NULL, NULL);
 
 static int
-aapic_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+aapic_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -46,9 +38,7 @@ aapic_match(parent, match, aux)
 }
 
 static void
-aapic_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+aapic_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
