@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.29 2008/04/28 20:23:58 martin Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.30 2008/07/09 13:19:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.29 2008/04/28 20:23:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.30 2008/07/09 13:19:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,11 +94,10 @@ static int	pxg_probe_sram(struct stic_info *);
 void	pxg_cnattach(tc_addr_t);
 
 struct pxg_softc {
-	struct	device pxg_dv;
 	struct	stic_info *pxg_si;
 };
 
-CFATTACH_DECL(pxg, sizeof(struct pxg_softc),
+CFATTACH_DECL_NEW(pxg, sizeof(struct pxg_softc),
     pxg_match, pxg_attach, NULL, NULL);
 
 static const char *pxg_types[] = {
@@ -110,7 +109,7 @@ static const char *pxg_types[] = {
 };
 
 static int
-pxg_match(struct device *parent, struct cfdata *match, void *aux)
+pxg_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct tc_attach_args *ta;
 	int i;
@@ -125,7 +124,7 @@ pxg_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-pxg_attach(struct device *parent, struct device *self, void *aux)
+pxg_attach(device_t parent, device_t self, void *aux)
 {
 	struct stic_info *si;
 	struct tc_attach_args *ta;

@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.76 2008/05/26 10:31:22 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.77 2008/07/09 13:19:33 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.76 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.77 2008/07/09 13:19:33 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,6 @@ struct hwcursor64 {
 };
 
 struct sfb_softc {
-	struct device sc_dev;
 	vaddr_t sc_vaddr;
 	size_t sc_size;
 	struct rasops_info *sc_ri;
@@ -140,10 +139,10 @@ struct sfb_softc {
 #define	HX_MAGIC_X	368
 #define	HX_MAGIC_Y	38
 
-static int  sfbmatch(struct device *, struct cfdata *, void *);
-static void sfbattach(struct device *, struct device *, void *);
+static int  sfbmatch(device_t, cfdata_t, void *);
+static void sfbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(sfb, sizeof(struct sfb_softc),
+CFATTACH_DECL_NEW(sfb, sizeof(struct sfb_softc),
     sfbmatch, sfbattach, NULL, NULL);
 
 static void sfb_common_init(struct rasops_info *);
@@ -247,7 +246,7 @@ static const u_int8_t shuffle[256] = {
 };
 
 static int
-sfbmatch(struct device *parent, struct cfdata *match, void *aux)
+sfbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -257,7 +256,7 @@ sfbmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sfbattach(struct device *parent, struct device *self, void *aux)
+sfbattach(device_t parent, device_t self, void *aux)
 {
 	struct sfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
