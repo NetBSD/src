@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.151 2008/06/30 14:16:13 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.152 2008/07/10 15:04:42 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2008/06/30 14:16:13 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.152 2008/07/10 15:04:42 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2008/06/30 14:16:13 nakayama Exp $");
 #include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
@@ -670,7 +669,7 @@ badtrap:
 
 		if (fs == NULL) {
 			/* NOTE: fpstate must be 64-bit aligned */
-			fs = malloc((sizeof *fs), M_SUBPROC, M_WAITOK);
+			fs = pool_cache_get(fpstate_cache, PR_WAITOK);
 			*fs = initfpstate;
 			l->l_md.md_fpstate = fs;
 		}
