@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; $Id: example.db,v 1.1.1.5 2008/06/21 18:34:40 christos Exp $
+; Id: example.db,v 1.10 2007/06/19 23:47:03 tbox Exp
 
 $TTL 300        ; 5 minutes
 @                 IN SOA  ns1.example. hostmaster.example. (
