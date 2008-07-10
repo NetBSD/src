@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.20 2008/07/09 13:18:41 joerg Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.21 2008/07/10 05:15:32 cegger Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.20 2008/07/09 13:18:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.21 2008/07/10 05:15:32 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -247,7 +247,7 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	 * to support IPv6.
 	 */
 	ifp = &sc->sc_ec.ec_if;
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = etherip_ioctl;
@@ -274,9 +274,9 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	 * etherip_sysctl_handler for details.
 	 */
 	error = sysctl_createv(NULL, 0, NULL, &node, CTLFLAG_READWRITE, 
-			       CTLTYPE_STRING, device_xname(&sc->sc_dev), NULL,
+			       CTLTYPE_STRING, device_xname(self), NULL,
 			       etherip_sysctl_handler, 0, sc, 18, CTL_NET,
-			       AF_LINK, etherip_node, device_unit(&sc->sc_dev),
+			       AF_LINK, etherip_node, device_unit(self),
 			       CTL_EOL);
 	if (error)
 		aprint_error_dev(self, "sysctl_createv returned %d, ignoring\n",
@@ -308,7 +308,7 @@ etherip_detach(device_t self, int flags)
 	 * CTL_EOL.
 	 */
 	error = sysctl_destroyv(NULL, CTL_NET, AF_LINK, etherip_node,
-				device_unit(&sc->sc_dev), CTL_EOL);
+				device_unit(self), CTL_EOL);
 	if (error)
 		aprint_error_dev(self, "sysctl_destroyv returned %d, ignoring\n",
 			     error);
