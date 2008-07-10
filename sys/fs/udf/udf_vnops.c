@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.25 2008/07/10 14:16:02 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.26 2008/07/10 15:29:51 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.25 2008/07/10 14:16:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.26 2008/07/10 15:29:51 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1864,7 +1864,7 @@ udf_rename(void *v)
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
 	struct udf_node *fnode, *fdnode, *tnode, *tdnode;
-	struct vattr vap;
+	struct vattr fvap, tvap;
 	int error;
 
 	DPRINTF(CALL, ("udf_rename called\n"));
@@ -1881,21 +1881,49 @@ udf_rename(void *v)
 	tnode  = (tvp == NULL) ? NULL : VTOI(tvp);
 	tdnode = VTOI(tdvp);
 
-	/* dont allow directories for now */
-	if (fvp->v_type == VDIR) {
-		error = EINVAL;
-		goto out_unlocked;
+	/* get info about the node to be moved */
+	error = VOP_GETATTR(fvp, &fvap, FSCRED);
+	KASSERT(error == 0);
+
+	/* check when to delete the old already existing entry */
+	if (tvp) {
+		/* get info about the node to be moved to */
+		error = VOP_GETATTR(fvp, &tvap, FSCRED);
+		KASSERT(error == 0);
+
+		/* if both dirs, make sure the destination is empty */
+		if (fvp->v_type == VDIR && tvp->v_type == VDIR) {
+			if (tvap.va_nlink > 2) {
+				error = ENOTEMPTY;
+				goto out;
+			}
+		}
+		/* if moving dir, make sure destination is dir too */
+		if (fvp->v_type == VDIR && tvp->v_type != VDIR) {
+			error = ENOTDIR;
+			goto out;
+		}
+		/* if we're moving a non-directory, make sure dest is no dir */
+		if (fvp->v_type != VDIR && tvp->v_type == VDIR) {
+			error = EISDIR;
+			goto out;
+		}
 	}
 
-	/* do we need to delete the old already existing entry? */
-	if (tvp)
+	/* dont allow renaming directories acros directory for now */
+	if (fdnode != tdnode) {
+		if (fvp->v_type == VDIR) {
+			error = EINVAL;
+			goto out_unlocked;
+		}
+	}
+
+	/* remove existing entry if present */
+	if (tvp) 
 		udf_dir_detach(tdnode->ump, tdnode, tnode, tcnp);
 
 	/* create new directory entry for the node */
-	error = VOP_GETATTR(fvp, &vap, FSCRED);
-	KASSERT(error == 0);
-
-	error = udf_dir_attach(tdnode->ump, tdnode, fnode, &vap, tcnp);
+	error = udf_dir_attach(tdnode->ump, tdnode, fnode, &fvap, tcnp);
 	if (error)
 		goto out_unlocked;
 
@@ -1904,8 +1932,8 @@ udf_rename(void *v)
 	if (error)
 		udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
 
-#if 0
 out:
+#if 0
         if (fdnode != tdnode)
                 VOP_UNLOCK(fdvp, 0);
 #endif
