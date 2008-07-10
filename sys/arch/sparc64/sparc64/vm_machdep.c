@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.80 2008/03/17 23:54:03 nakayama Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.81 2008/07/10 15:04:42 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80 2008/03/17 23:54:03 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.81 2008/07/10 15:04:42 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80 2008/03/17 23:54:03 nakayama Exp
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/core.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
@@ -233,8 +232,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	memcpy(npcb, opcb, sizeof(struct pcb));
        	if (l1->l_md.md_fpstate) {
        		fpusave_lwp(l1, true);
-		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate64),
-		    M_SUBPROC, M_WAITOK);
+		l2->l_md.md_fpstate = pool_cache_get(fpstate_cache, PR_WAITOK);
 		memcpy(l2->l_md.md_fpstate, l1->l_md.md_fpstate,
 		    sizeof(struct fpstate64));
 	} else
@@ -366,7 +364,7 @@ cpu_lwp_free2(struct lwp *l)
 	struct fpstate64 *fs;
 
 	if ((fs = l->l_md.md_fpstate) != NULL)
-		free(fs, M_SUBPROC);
+		pool_cache_put(fpstate_cache, fs);
 }
 
 #ifdef COREDUMP
