@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.26 2008/07/10 15:29:51 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.27 2008/07/10 17:38:31 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.26 2008/07/10 15:29:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.27 2008/07/10 17:38:31 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1127,11 +1127,11 @@ udf_chtimes(struct vnode *vp,
 	if (!issuperuser) {
 		if (euid != uid)
 			return EPERM;
-		if ((setattrflags & VA_UTIMES_NULL) == 0)
-			return error;
-		error = VOP_ACCESS(vp, VWRITE, cred);
-		if (error)
-			return error;
+		if ((setattrflags & VA_UTIMES_NULL) == 0) {
+			error = VOP_ACCESS(vp, VWRITE, cred);
+			if (error)
+				return error;
+		}
 	}
 
 	/* update node flags depending on what times are passed */
