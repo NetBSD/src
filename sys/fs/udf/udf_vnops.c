@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.24 2008/07/07 18:45:27 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.25 2008/07/10 14:16:02 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.24 2008/07/07 18:45:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.25 2008/07/10 14:16:02 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1887,11 +1887,11 @@ udf_rename(void *v)
 		goto out_unlocked;
 	}
 
-	/* do we need to delete the old entry? */
+	/* do we need to delete the old already existing entry? */
 	if (tvp)
 		udf_dir_detach(tdnode->ump, tdnode, tnode, tcnp);
 
-	/* create new directory entry */
+	/* create new directory entry for the node */
 	error = VOP_GETATTR(fvp, &vap, FSCRED);
 	KASSERT(error == 0);
 
@@ -1899,7 +1899,7 @@ udf_rename(void *v)
 	if (error)
 		goto out_unlocked;
 
-	/* unlink old directory entry */
+	/* unlink old directory entry for the node, if failing, unattach new */
 	error = udf_dir_detach(tdnode->ump, fdnode, fnode, fcnp);
 	if (error)
 		udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
