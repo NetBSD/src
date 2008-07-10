@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.11 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: intr.h,v 1.12 2008/07/10 16:07:30 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
 
-int spl0 __P((void));
+int spl0(void);
 
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
