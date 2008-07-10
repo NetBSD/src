@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.30 2008/07/09 19:47:24 joerg Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.31 2008/07/10 05:11:10 cegger Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.30 2008/07/09 19:47:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.31 2008/07/10 05:11:10 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -232,7 +232,7 @@ ath_cardbus_detach(device_t self, int flags)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
-		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
+		panic("%s: data structure lacks", device_xname(sc->sc_dev));
 #endif
 
 	rv = ath_detach(sc);
