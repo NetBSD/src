@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.55 2008/07/07 18:45:27 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.56 2008/07/10 16:41:00 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.55 2008/07/07 18:45:27 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.56 2008/07/10 16:41:00 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -4977,6 +4977,8 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	uint64_t lmapping, pmapping;
 	uint32_t lb_size, lb_num;
 	uint16_t vpart_num;
+	uid_t uid;
+	gid_t gid, parent_gid;
 	int fid_size, error;
 
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
@@ -5037,8 +5039,10 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	/* get parent's unique ID for refering '..' if its a directory */
 	if (dir_node->fe) {
 		parent_unique_id = udf_rw64(dir_node->fe->unique_id);
+		parent_gid       = (gid_t) udf_rw32(dir_node->fe->gid);
 	} else {
 		parent_unique_id = udf_rw64(dir_node->efe->unique_id);
+		parent_gid       = (gid_t) udf_rw32(dir_node->efe->gid);
 	}
 
 	/* get descriptor */
@@ -5067,7 +5071,9 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	udf_setaccessmode(udf_node, vap->va_mode);
 
 	/* set ownership */
-	udf_setownership(udf_node, vap->va_uid, vap->va_gid);
+	uid = kauth_cred_geteuid(cnp->cn_cred);
+	gid = parent_gid;
+	udf_setownership(udf_node, uid, gid);
 
 	error = udf_dir_attach(ump, dir_node, udf_node, vap, cnp);
 	if (error) {
