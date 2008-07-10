@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.114 2008/05/23 17:01:32 tsutsui Exp $
+.\"	$NetBSD: ddb.4,v 1.115 2008/07/10 12:43:03 blymn Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -686,6 +686,20 @@ event counters.
 If
 .Cm /f
 is specified, all event counters with a count of zero are printed as well.
+.It Xo
+.Ic show files
+.Ar address
+.Xc
+Display information about the vnodes of the files that are currently
+open by the process associated with the proc structure at
+.Ar address .
+This address can be found using the
+.Ic show all procs /a
+command.
+If the kernel is compiled with
+.Cd options LOCKDEBUG
+then details about the locking of the underlying uvm object will also
+be displayed.
 .It Xo
 .Ic show lock
 .Ar address
