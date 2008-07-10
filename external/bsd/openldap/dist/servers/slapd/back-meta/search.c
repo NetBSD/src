@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.11 2008/04/21 17:03:23 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/search.c,v 1.146.2.12 2008/07/10 00:28:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -1154,6 +1154,10 @@ really_bad:;
 				} else if ( rc == LDAP_RES_SEARCH_REFERENCE ) {
 					char		**references = NULL;
 					int		cnt;
+
+					if ( META_BACK_TGT_NOREFS( mi->mi_targets[ i ] ) ) {
+						continue;
+					}
 
 					if ( candidates[ i ].sr_type == REP_INTERMEDIATE ) {
 						/* don't retry any more... */

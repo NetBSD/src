@@ -2,7 +2,7 @@
 .\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.46.2.10 2008/04/14 22:46:48 quanah Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-meta.5,v 1.46.2.11 2008/07/10 00:28:39 quanah Exp $
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -126,6 +126,15 @@ propagated to the client.
 If the value is set to \fBreport\fP, the search is continuated to the end
 but, in case at least one target returned an error code, the first
 non-success error code is returned.
+
+.TP
+.B norefs <NO|yes>
+If
+.BR yes ,
+do not return search reference responses.
+By default, they are returned unless request is LDAPv2.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
 
 .TP
 .B protocol\-version {0,2,3}
