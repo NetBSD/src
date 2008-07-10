@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.283 2008/07/10 15:23:58 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.284 2008/07/10 15:38:40 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3663,7 +3663,7 @@ setup_sparcintr:
 	mov	%g5, %g7
 	CASPTR	[%g1] ASI_N, %g3, %g7
 	cmp	%g7, %g3		! Did it work?
-	bne,pn	%xcc, 1b		! No, try again
+	bne,pn	CCCR, 1b		! No, try again
 	 nop
 2:
 	mov	1, %g7
@@ -4127,7 +4127,7 @@ sparc_intr_retry:
 	membar	#LoadStore
 	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
 	cmp	%l7, %l2
-	bne,pn	%icc, 1b
+	bne,pn	CCCR, 1b
 	 nop
 2:
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
@@ -9747,7 +9747,7 @@ ENTRY(send_softint)
 	mov	%o2, %o4
 	CASPTR	[%o3] ASI_N, %o5, %o4
 	cmp	%o4, %o5		! Did it work?
-	bne,pn	%xcc, 2b		! No, try again
+	bne,pn	CCCR, 2b		! No, try again
 	 nop
 
 	mov	1, %o3			! Change from level to bitmask
