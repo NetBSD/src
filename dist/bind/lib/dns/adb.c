@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.5 2008/06/23 18:10:26 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.6 2008/07/10 21:18:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")

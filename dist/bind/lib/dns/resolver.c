@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.5 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.6 2008/07/10 21:18:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.c,v 1.355.12.15 2008/05/06 01:11:30 each Exp */
+/* Id: resolver.c,v 1.355.12.16 2008/05/27 22:36:11 each Exp */
 
 /*! \file */
 
@@ -1223,43 +1223,52 @@ fctx_query(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
 			if (result != ISC_R_SUCCESS)
 				goto cleanup_query;
 		} else {
-			int did = 0;
-			isc_uint32_t val;
+			isc_sockaddr_t localaddr;
+			unsigned int attrs, attrmask;
+			dns_dispatch_t *disp_base;
 
-			if (res->ndisps > 0) {
-				isc_random_get(&val);
-				did = val % res->ndisps;
-			}
+			attrs = 0;
+			attrs |= DNS_DISPATCHATTR_UDP;
+			attrs |= DNS_DISPATCHATTR_RANDOMPORT;
+
+			attrmask = 0;
+			attrmask |= DNS_DISPATCHATTR_UDP;
+			attrmask |= DNS_DISPATCHATTR_TCP;
+			attrmask |= DNS_DISPATCHATTR_IPV4;
+			attrmask |= DNS_DISPATCHATTR_IPV6;
+
 			switch (isc_sockaddr_pf(&addrinfo->sockaddr)) {
-			case PF_INET:
-				if (res->dispatchv4pool != NULL) {
-					RES_LOCK(&res->poollock,
-						 isc_rwlocktype_read);
-					dns_dispatch_attach(res->dispatchv4pool[did],
-							    &query->dispatch);
-					RES_UNLOCK(&res->poollock,
-						   isc_rwlocktype_read);
-				} else {
-					dns_dispatch_attach(res->dispatchv4,
-							    &query->dispatch);
-				}
+			case AF_INET:
+				disp_base = res->dispatchv4;
+				attrs |= DNS_DISPATCHATTR_IPV4;
 				break;
-			case PF_INET6:
-				if (res->dispatchv6pool != NULL) {
-					RES_LOCK(&res->poollock,
-						 isc_rwlocktype_read);
-					dns_dispatch_attach(res->dispatchv6pool[did],
-							    &query->dispatch);
-					RES_UNLOCK(&res->poollock,
-						   isc_rwlocktype_read);
-				} else {
-					dns_dispatch_attach(res->dispatchv6,
-							    &query->dispatch);
-				}
+			case AF_INET6:
+				disp_base = res->dispatchv6;
+				attrs |= DNS_DISPATCHATTR_IPV6;
 				break;
 			default:
 				result = ISC_R_NOTIMPLEMENTED;
 				goto cleanup_query;
+			}
+
+			result = dns_dispatch_getlocaladdress(disp_base,
+							      &localaddr);
+			if (result != ISC_R_SUCCESS)
+				goto cleanup_query;
+			if (isc_sockaddr_getport(&localaddr) == 0) {
+				result = dns_dispatch_getudp(res->dispatchmgr,
+							     res->socketmgr,
+							     res->taskmgr,
+							     &localaddr,
+							     4096, 1000, 32768,
+							     16411, 16433,
+							     attrs, attrmask,
+							     &query->dispatch);
+				if (result != ISC_R_SUCCESS)
+					goto cleanup_query;
+			} else {
+				dns_dispatch_attach(disp_base,
+						    &query->dispatch);
 			}
 		}
 		/*
