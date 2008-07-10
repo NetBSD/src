@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.1.1.7 2008/06/21 18:34:59 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.1.1.8 2008/07/10 14:17:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -3385,7 +3385,6 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	empty_wild = ISC_FALSE;
 	options = 0;
 	resuming = ISC_FALSE;
-	is_zone = ISC_FALSE;
 
 	if (event != NULL) {
 		/*
@@ -3395,6 +3394,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 
 		want_restart = ISC_FALSE;
 		authoritative = ISC_FALSE;
+		is_zone = ISC_FALSE;
 
 		qtype = event->qtype;
 		if (qtype == dns_rdatatype_rrsig || qtype == dns_rdatatype_sig)

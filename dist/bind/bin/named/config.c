@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.6 2008/06/21 18:35:12 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.7 2008/07/10 14:17:19 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.82.38.4 2008/05/01 18:32:31 jinmei Exp */
+/* Id: config.c,v 1.82.38.5 2008/05/28 21:00:24 each Exp */
 
 /*! \file */
 
@@ -141,7 +141,7 @@ options {\n\
 	acache-cleaning-interval 60;\n\
 	max-acache-size 16M;\n\
 	dnssec-enable yes;\n\
-	dnssec-validation no; /* Make yes for 9.5. */ \n\
+	dnssec-validation yes; \n\
 	dnssec-accept-expired no;\n\
 	clients-per-query 10;\n\
 	max-clients-per-query 100;\n\

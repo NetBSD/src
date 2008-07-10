@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.1.1.6 2008/06/21 18:31:57 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.1.1.7 2008/07/10 14:19:16 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -3129,9 +3129,7 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 		address_type = DNS_ADBFIND_INET6;
 		fetch = name->fetch_aaaa;
 		name->fetch_aaaa = NULL;
-	} else
-		fetch = NULL;
-
+	}
 	INSIST(address_type != 0);
 
 	dns_resolver_destroyfetch(&fetch->fetch);
