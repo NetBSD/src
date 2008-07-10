@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.76 2008/07/10 15:04:41 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.77 2008/07/10 15:23:58 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.76 2008/07/10 15:04:41 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.77 2008/07/10 15:23:58 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -184,7 +184,7 @@ cpu_reset_fpustate(void)
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
 
-	/* This needs to be 64-bit aligned */
+	/* This needs to be 64-byte aligned */
 	fpstate = ALIGNFPSTATE(&fps[1]);
 
 	/*
