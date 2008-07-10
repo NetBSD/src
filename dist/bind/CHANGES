@@ -1,3 +1,8 @@
+	--- 9.5.0-P1 released ---
+
+2375.   [security]      Fully randomize UDP query ports to improve
+			forgery resilience. [RT #17949]
+
 	--- 9.5.0 released ---
 
 2374.   [bug]           "blackhole" ACLs could cause named to segfault due

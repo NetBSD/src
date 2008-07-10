@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: $Id: Bv9ARM-book.xml,v 1.1.1.8 2008/06/21 18:26:33 christos Exp $ -->
+<!-- File: Id: Bv9ARM-book.xml,v 1.340.24.11 2008/05/28 21:00:24 each Exp -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -5641,7 +5641,7 @@ options {
                   Enable DNSSEC validation in named.
 		  Note <command>dnssec-enable</command> also needs to be
 		  set to <userinput>yes</userinput> to be effective.
-                  The default is <userinput>no</userinput>.
+                  The default is <userinput>yes</userinput>.
                 </para>
               </listitem>
             </varlistentry>
@@ -6243,11 +6243,17 @@ listen-on-v6 port 1234 { !2001:db8::/32; any; };
             a wildcard IP address (<command>INADDR_ANY</command>)
             will be used.
             If <command>port</command> is <command>*</command> or is omitted,
-            a pool of random unprivileged ports will be used.  See the
-	    <command>use-queryport-pool</command>,
-	    <command>queryport-pool-ports</command> and
-	    <command>queryport-pool-updateinterval</command> options below for how the pool
-	    is configured.
+	    a random unprivileged port number is picked up and will be
+            used for each query.
+	    Previously, the <command>use-queryport-pool</command> was provided
+	    to support a pool of such random ports, but this option is now
+	    obsolete because reusing the same ports in the pool is not
+            sufficiently secure.
+	    For the same reason, it is generally strongly discouraged to
+            specify a particular port for the
+	    <command>query-source</command> or
+	    <command>query-source-v6</command> options;
+	    it implicitly disables the use of randomized port numbers.
 	    The <command>avoid-v4-udp-ports</command>
             and <command>avoid-v6-udp-ports</command> options can be used
             to prevent named
@@ -6264,10 +6270,7 @@ query-source-v6 address * port *;
               <term><command>use-queryport-pool</command></term>
               <listitem>
                 <para>
-		  Enable the use of query port pools.  By default query port
-		  pools are enabled unless there is a explicit port defined
-		  in <command>query-source</command> or
-		  <command>query-source-v6</command>.
+		  This option is obsolete.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6276,7 +6279,7 @@ query-source-v6 address * port *;
               <term><command>queryport-pool-ports</command></term>
               <listitem>
                 <para>
-		  Specify how many pool ports to use.  The default is 8.
+		  This option is obsolete.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6285,9 +6288,7 @@ query-source-v6 address * port *;
               <term><command>queryport-pool-updateinterval</command></term>
               <listitem>
                 <para>
-		  Specify how often, in minutes, that the queryport pool
-		  should be recreated (new ports selected).  The default
-		  is 15 minutes.
+		  This option is obsolete.
 		</para>
 	      </listitem>
 	    </varlistentry>

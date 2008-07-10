@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- $Id: Bv9ARM.ch06.html,v 1.1.1.8 2008/06/21 18:26:43 christos Exp $ -->
+<!-- Id: Bv9ARM.ch06.html,v 1.168.18.11 2008/05/27 22:36:09 each Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -3218,11 +3218,17 @@ listen-on-v6 port 1234 { !2001:db8::/32; any; };
             a wildcard IP address (<span><strong class="command">INADDR_ANY</strong></span>)
             will be used.
             If <span><strong class="command">port</strong></span> is <span><strong class="command">*</strong></span> or is omitted,
-            a pool of random unprivileged ports will be used.  See the
-            <span><strong class="command">use-queryport-pool</strong></span>,
-            <span><strong class="command">queryport-pool-ports</strong></span> and
-            <span><strong class="command">queryport-pool-updateinterval</strong></span> options below for how the pool
-            is configured.
+	    a random unprivileged port number is picked up and will be
+            used for each query.
+	    Previously, the <command>use-queryport-pool</command> was provided
+	    to support a pool of such random ports, but this option is now
+	    obsolete because reusing the same ports in the pool is not
+            sufficiently secure.
+	    For the same reason, it is generally strongly discouraged to
+            specify a particular port for the
+	    <span><strong class="command">query-source</strong></span> or
+	    <span><strong class="command">query-source-v6</strong></span>
+            options; it implicitly disables the use of randomized port numbers.
             The <span><strong class="command">avoid-v4-udp-ports</strong></span>
             and <span><strong class="command">avoid-v6-udp-ports</strong></span> options can be used
             to prevent named
@@ -3235,20 +3241,15 @@ query-source-v6 address * port *;
 <div class="variablelist"><dl>
 <dt><span class="term"><span><strong class="command">use-queryport-pool</strong></span></span></dt>
 <dd><p>
-                  Enable the use of query port pools.  By default query port
-                  pools are enabled unless there is a explicit port defined
-                  in <span><strong class="command">query-source</strong></span> or
-                  <span><strong class="command">query-source-v6</strong></span>.
+		  This option is obsolete.
                 </p></dd>
 <dt><span class="term"><span><strong class="command">queryport-pool-ports</strong></span></span></dt>
 <dd><p>
-                  Specify how many pool ports to use.  The default is 8.
+		  This option is obsolete.
                 </p></dd>
 <dt><span class="term"><span><strong class="command">queryport-pool-updateinterval</strong></span></span></dt>
 <dd><p>
-                  Specify how often, in minutes, that the queryport pool
-                  should be recreated (new ports selected).  The default
-                  is 15 minutes.
+		  This option is obsolete.
                 </p></dd>
 </dl></div>
 <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1.1.7 2008/06/21 18:35:19 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.1.1.8 2008/07/10 14:17:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.c,v 1.495.10.10 2008/04/03 06:20:33 tbox Exp */
+/* Id: server.c,v 1.495.10.11 2008/05/27 22:36:09 each Exp */
 
 /*! \file */
 
@@ -598,6 +598,14 @@ get_view_querysource_dispatch(const cfg_obj_t **maps,
 		attrs |= DNS_DISPATCHATTR_IPV6;
 		break;
 	}
+
+	if (isc_sockaddr_getport(&sa) != 0) {
+		INSIST(obj != NULL);
+		cfg_obj_log(obj, ns_g_lctx, ISC_LOG_INFO,
+			    "using specific query-source port suppresses port "
+			    "randomization and can be insecure.");
+	}
+
 	attrmask = 0;
 	attrmask |= DNS_DISPATCHATTR_UDP;
 	attrmask |= DNS_DISPATCHATTR_TCP;
@@ -607,7 +615,7 @@ get_view_querysource_dispatch(const cfg_obj_t **maps,
 	disp = NULL;
 	result = dns_dispatch_getudp(ns_g_dispatchmgr, ns_g_socketmgr,
 				     ns_g_taskmgr, &sa, 4096,
-				     1000, 32768, 16411, 16433,
+				     1024, 32768, 16411, 16433,
 				     attrs, attrmask, &disp);
 	if (result != ISC_R_SUCCESS) {
 		isc_sockaddr_t any;
@@ -1017,7 +1025,6 @@ configure_view(dns_view_t *view, const cfg_obj_t *config,
 	isc_boolean_t rfc1918;
 	isc_boolean_t empty_zones_enable;
 	const cfg_obj_t *disablelist = NULL;
-	isc_uint32_t nqports, qports_updateinterval;
 	dns_stats_t *resstats = NULL;
 	dns_stats_t *resquerystats = NULL;
 
@@ -1331,53 +1338,6 @@ configure_view(dns_view_t *view, const cfg_obj_t *config,
 				      ns_g_socketmgr, ns_g_timermgr,
 				      resopts, ns_g_dispatchmgr,
 				      dispatch4, dispatch6));
-
-	/*
-	 * Query-port pool parameters.
-	 */
-	obj = NULL;
-	nqports = 8;
-	result = ns_config_get(maps, "queryport-pool-ports", &obj);
-	if (result == ISC_R_SUCCESS) {
-		if ((resopts & (DNS_RESOLVER_USEDISPATCHPOOL4 |
-				DNS_RESOLVER_USEDISPATCHPOOL6)) == 0) {
-			cfg_obj_log(obj, ns_g_lctx, ISC_LOG_ERROR,
-				    "queryport-pool-ports is effective only "
-				    "with 'use-queryport-pool yes' (ignored)");
-		} else
-			nqports = cfg_obj_asuint32(obj);
-	}
-
-	obj = NULL;
-	qports_updateinterval = 15;
-	result = ns_config_get(maps, "queryport-pool-updateinterval", &obj);
-	if (result == ISC_R_SUCCESS) {
-		if ((resopts & (DNS_RESOLVER_USEDISPATCHPOOL4 |
-				DNS_RESOLVER_USEDISPATCHPOOL6)) == 0) {
-			cfg_obj_log(obj, ns_g_lctx, ISC_LOG_ERROR,
-				    "queryport-pool-updateinterval is "
-				    "effective only with 'use-queryport-pool "
-				    "yes' (ignored)");
-		} else
-			qports_updateinterval = cfg_obj_asuint32(obj);
-	}
-
-	if ((resopts & (DNS_RESOLVER_USEDISPATCHPOOL4 |
-			DNS_RESOLVER_USEDISPATCHPOOL6)) != 0) {
-		CHECK(dns_resolver_createdispatchpool(view->resolver,
-						      nqports,
-						      qports_updateinterval
-						      * 60));
-	}
-
-	if (resstats == NULL) {
-		CHECK(dns_generalstats_create(mctx, &resstats,
-					      dns_resstatscounter_max));
-	}
-	dns_view_setresstats(view, resstats);
-	if (resquerystats == NULL)
-		CHECK(dns_rdatatypestats_create(mctx, &resquerystats));
-	dns_view_setresquerystats(view, resquerystats);
 
 	/*
 	 * Set the ADB cache size to 1/8th of the max-cache-size.
@@ -2654,8 +2614,6 @@ adjust_interfaces(ns_server_t *server, isc_mem_t *mctx) {
 	     view != NULL;
 	     view = ISC_LIST_NEXT(view, link)) {
 		dns_dispatch_t *dispatch6;
-		isc_boolean_t use_portpool = ISC_FALSE;
-		unsigned int resopts;
 
 		dispatch6 = dns_resolver_dispatchv6(view->resolver);
 		if (dispatch6 == NULL)
@@ -2663,19 +2621,16 @@ adjust_interfaces(ns_server_t *server, isc_mem_t *mctx) {
 		result = dns_dispatch_getlocaladdress(dispatch6, &addr);
 		if (result != ISC_R_SUCCESS)
 			goto fail;
-		resopts = dns_resolver_getoptions(view->resolver);
-		if ((resopts & (DNS_RESOLVER_USEDISPATCHPOOL4 |
-				DNS_RESOLVER_USEDISPATCHPOOL6)) != 0) {
-			/*
-			 * If the resolver uses a dynamic pool of query ports
-			 * with a specific source address, some of the current
-			 * and future ports may override an existing wildcard
-			 * IPv6 port.  So we need to allow wildcard match
-			 * in this case.
-			 */
-			use_portpool = ISC_TRUE;
-		}
-		result = add_listenelt(mctx, list, &addr, use_portpool);
+
+		/*
+		 * We always add non-wildcard address regardless of whether
+		 * the port is 'any' (the fourth arg is TRUE): if the port is
+		 * specific, we need to add it since it may conflict with a
+		 * listening interface; if it's zero, we'll dynamically open
+		 * query ports, and some of them may override an existing
+		 * wildcard IPv6 port.
+		 */
+		result = add_listenelt(mctx, list, &addr, ISC_TRUE);
 		if (result != ISC_R_SUCCESS)
 			goto fail;
 	}
