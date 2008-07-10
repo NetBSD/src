@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.116 2008/07/10 12:38:28 blymn Exp $	*/
+/*	$NetBSD: db_command.c,v 1.117 2008/07/10 12:42:24 blymn Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.116 2008/07/10 12:38:28 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.117 2008/07/10 12:42:24 blymn Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -233,6 +233,9 @@ static const struct db_command db_show_cmds[] = {
 	    "Print the struct buf at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("event",	db_event_print_cmd,	0,
 	    "Print all the non-zero evcnt(9) event counters.", "[/f]",NULL) },
+	{ DDB_ADD_CMD("files", db_show_files_cmd,	0,
+	    "Print the files open by process at address",
+	    "[/f] address", NULL) },
 	{ DDB_ADD_CMD("lock",	db_lock_print_cmd,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("malloc",	db_malloc_print_cmd,0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
