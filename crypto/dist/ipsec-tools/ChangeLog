@@ -1,3 +1,9 @@
+2008-07-11  Timo Teras  <timo.teras@iki.fi>
+	Track:259, original patch from Atis Elsts <the.kfx@gmail.com>:
+	* src/racoon/isakmp.c, src/racoon/isakmp_inf.c: fix double memfree
+	  by changing copy_ph1addresses() to not free ph1 on failure
+	  and remove misplaced remph1() calls causing memory corruption
+
 2008-07-09  Timo Teras  <timo.teras@iki.fi>
 	Track:269, from Chong Peng <chongpeng@gmail.com>:
 	* src/racoon/cfparse.y: remove parser initialization causing
