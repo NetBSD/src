@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.25 2008/06/26 03:32:17 kiyohara Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.26 2008/07/11 17:50:45 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.25 2008/06/26 03:32:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.26 2008/07/11 17:50:45 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,6 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting at %d\n", ca->ca_intrline);
 
 	/* XXX NULL should be replaced by some call to Cardbus coed */
 	if (fwohci_init(&sc->sc_sc, sc->sc_sc.fc.dev) != 0) {
