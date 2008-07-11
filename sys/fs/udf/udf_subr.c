@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.56 2008/07/10 16:41:00 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.57 2008/07/11 15:16:53 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.56 2008/07/10 16:41:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.57 2008/07/11 15:16:53 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -3853,7 +3853,7 @@ udf_setownership(struct udf_node *udf_node, uid_t uid, gid_t gid)
 /*
  * Directory read and manipulation functions.
  *
- * Note that if the file is found, the cached diroffset possition *before* the
+ * Note that if the file is found, the cached diroffset position *before* the
  * advance is remembered. Thus if the same filename is lookup again just after
  * this lookup its immediately found.
  */
