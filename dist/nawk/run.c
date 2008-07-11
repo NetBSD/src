@@ -323,18 +323,21 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 Cell *copycell(Cell *x)	/* make a copy of a cell in a temp */
 {
 	Cell *y;
-	int flags = CON|FLD|REC|DONTFREE;
+
 	/* copy is not constant or field */
 
 	y = gettemp();
+	y->tval = x->tval & ~(CON|FLD|REC);
+	printf("x=%x\n", x->tval);
 	y->csub = CCOPY;	/* prevents freeing until call is over */
 	y->nval = x->nval;	/* BUG? */
-	if (isstr(x) || x->ctype == OCELL) {
+	if (isstr(x) /* || x->ctype == OCELL */) {
 		y->sval = tostring(x->sval);
-		flags &= ~DONTFREE;
-	}
+		y->tval &= ~DONTFREE;
+	} else
+		y->tval |= DONTFREE;
 	y->fval = x->fval;
-	y->tval = x->tval & ~flags;
+	printf("%x\n", y->tval);
 	return y;
 }
 
