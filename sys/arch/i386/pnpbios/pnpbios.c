@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.63 2008/07/09 20:59:16 joerg Exp $ */
+/* $NetBSD: pnpbios.c,v 1.64 2008/07/11 11:58:37 cube Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.63 2008/07/09 20:59:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.64 2008/07/11 11:58:37 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,10 +778,10 @@ pnpbios_attachchild(struct pnpbios_softc *sc,
 	locs[PNPBIOSCF_INDEX] = aa->idx;
 
 	if (matchonly)
-		return (config_search_loc(config_stdsubmatch, (struct device *)sc,
+		return (config_search_loc(config_stdsubmatch, sc->sc_dev,
 					 "pnpbios", locs, aa) != NULL);
 	else 
-		return (config_found_sm_loc((struct device *)sc, "pnpbios",
+		return (config_found_sm_loc(sc->sc_dev, "pnpbios",
 			locs, aa, pnpbios_print, config_stdsubmatch)
 				!= NULL);
 }
