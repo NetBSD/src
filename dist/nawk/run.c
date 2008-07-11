@@ -328,7 +328,6 @@ Cell *copycell(Cell *x)	/* make a copy of a cell in a temp */
 
 	y = gettemp();
 	y->tval = x->tval & ~(CON|FLD|REC);
-	printf("x=%x\n", x->tval);
 	y->csub = CCOPY;	/* prevents freeing until call is over */
 	y->nval = x->nval;	/* BUG? */
 	if (isstr(x) /* || x->ctype == OCELL */) {
@@ -337,7 +336,6 @@ Cell *copycell(Cell *x)	/* make a copy of a cell in a temp */
 	} else
 		y->tval |= DONTFREE;
 	y->fval = x->fval;
-	printf("%x\n", y->tval);
 	return y;
 }
 
