@@ -28,7 +28,7 @@
  */
 
 /*
- * I want to say thank you to all people who helped me with this awesome project.
+ * I want to say thank you to all people who helped me with this project.
  */
 
 #include <sys/types.h>
@@ -151,7 +151,7 @@ int
 dmdestroy(void)
 {
 
-	(void)kmem_free(dm_sc,sizeof(struct dm_softc));
+	(void)kmem_free(dm_sc, sizeof(struct dm_softc));
 
 	return 0;
 }
@@ -205,12 +205,12 @@ dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	if ((dmv = dm_dev_lookup_minor(minor(dev))) != NULL) {
 		if (dmv->dm_dk == NULL)
-			dmgetdisklabel(dmv,dev);
+			dmgetdisklabel(dmv, dev);
 
 		dmv->ref_cnt++;
 		}
 
-	aprint_verbose("open routine called %d\n",minor(dev));
+	aprint_verbose("open routine called %d\n", minor(dev));
 
 	return 0;
 }
@@ -232,7 +232,6 @@ dmclose(dev_t dev, int flags, int mode, struct lwp *l)
 /*
  * Called after ioctl call on mapper/control or dm device.
  */
-
 static int
 dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 {
@@ -244,7 +243,7 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 	if (data == NULL)
 		return(EINVAL);
 
-	if (disk_ioctl_switch(dev,cmd,data) != 0) {
+	if (disk_ioctl_switch(dev, cmd, data) != 0) {
 		struct plistref *pref = (struct plistref *) data;
 
 		r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in);
@@ -272,7 +271,9 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 out:
 	return r;
 }
-
+/*
+ * Translate command sent from libdevmapper to func.
+ */
 static int
 dm_cmd_to_fun(prop_dictionary_t dm_dict){
 	int i,len,slen;
@@ -281,7 +282,8 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict){
 	
 	r = 0;
 		
-	(void)prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_COMMAND,&command);
+	(void)prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_COMMAND,
+	    &command);
 
 	len = strlen(command);
 		
@@ -291,8 +293,8 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict){
 		if (len != slen)
 			continue;
 
-		if ((strncmp(command,cmd_fn[i].cmd,slen)) == 0) {
-			aprint_verbose("ioctl command: %s\n",command);
+		if ((strncmp(command, cmd_fn[i].cmd, slen)) == 0) {
+			aprint_verbose("ioctl command: %s\n", command);
 			r = cmd_fn[i].fn(dm_dict);
 			break;
 		}
@@ -373,9 +375,11 @@ dm_ioctl_switch(u_long cmd)
 	 }
 
 	 return 0;
-
  }
 
+/*
+ * Do all IO operations on dm logical devices.
+ */
  static void
 dmstrategy(struct buf *bp)
 {
@@ -407,7 +411,8 @@ dmstrategy(struct buf *bp)
 
 	issued_len = 0;
 	
-	aprint_verbose("dmstrategy routine called %d--%d\n",minor(bp->b_dev),bp->b_bcount);
+	/*aprint_verbose("dmstrategy routine called %d--%d\n",
+	  minor(bp->b_dev),bp->b_bcount);*/
 	
 	if ( (dmv = dm_dev_lookup_minor(minor(bp->b_dev))) == NULL) {
 		bp->b_error = EIO;
@@ -431,7 +436,10 @@ dmstrategy(struct buf *bp)
 		
 		/* I need need number of bytes not blocks. */
 		table_start = table_en->start * DEV_BSIZE;
-		/* I have to sub 1 from table_en->length to prevent off by one error  */
+		/*
+		 * I have to sub 1 from table_en->length to prevent
+		 * off by one error
+		 */
 		table_end = table_start + (table_en->length)* DEV_BSIZE;
 		
 		start = MAX(table_start, buf_start);
@@ -439,11 +447,12 @@ dmstrategy(struct buf *bp)
 		end = MIN(table_end, buf_start + buf_len);
 
 		aprint_debug("----------------------------------------\n");
-		aprint_debug("table_start %010" PRIu64", table_end %010" PRIu64 "\n",table_start,
-		    table_end);
-		aprint_debug("buf_start %010" PRIu64", buf_len %010" PRIu64"\n",buf_start,buf_len);
-		aprint_debug("start-buf_start %010"PRIu64", end %010"PRIu64"\n",start - buf_start,
-		    end);
+		aprint_debug("table_start %010" PRIu64", table_end %010"
+		    PRIu64 "\n", table_start, table_end);
+		aprint_debug("buf_start %010" PRIu64", buf_len %010"
+		    PRIu64"\n", buf_start, buf_len);
+		aprint_debug("start-buf_start %010"PRIu64", end %010"
+		    PRIu64"\n", start - buf_start, end);
 		aprint_debug("end-start %010" PRIu64 "\n", end - start);
 		aprint_debug("\n----------------------------------------\n");
 
@@ -451,7 +460,8 @@ dmstrategy(struct buf *bp)
 			/* create nested buffer  */
 			nestbuf = getiobuf(NULL, true);
 
-			nestiobuf_setup(bp, nestbuf, start - buf_start, (end-start));
+			nestiobuf_setup(bp, nestbuf, start - buf_start,
+			    (end-start));
 
 			issued_len += end-start;
 			
@@ -466,7 +476,6 @@ dmstrategy(struct buf *bp)
 		nestiobuf_done(bp, buf_len - issued_len, EINVAL);
 	
 	return;
-
 }
 
 
@@ -499,7 +508,7 @@ dmsize(dev_t dev)
 	
 	length = 0;
 	
-	aprint_debug("dmsize routine called %d\n",minor(dev));
+	aprint_debug("dmsize routine called %d\n", minor(dev));
 	
 	if ( (dmv = dm_dev_lookup_minor(minor(dev))) == NULL)
 		return ENODEV;
@@ -513,7 +522,6 @@ dmsize(dev_t dev)
 	 */
 	SLIST_FOREACH(table_en, tbl, next)
 	    length += table_en->length;
-
 	
 	return length;
 }
@@ -543,12 +551,14 @@ dmgetdisklabel(struct dm_dev *dmv, dev_t dev)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(dev, dmstrategy, lp, dmv->dm_dk->dk_cpulabel);
+	errstring = readdisklabel(dev, dmstrategy, lp,
+	    dmv->dm_dk->dk_cpulabel);
 
 	/* if all went OK, we are passed a NULL error string */
 	if (errstring == NULL)
 		return;
 
-	aprint_debug("\t%s\t %u sectors \n",dmv->name,dmv->dm_dk->dk_label->d_secsize);
+	aprint_debug("\t%s\t %u sectors \n", dmv->name,
+	    dmv->dm_dk->dk_label->d_secsize);
 }
 

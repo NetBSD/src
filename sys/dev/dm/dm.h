@@ -118,14 +118,16 @@ struct dm_dev {
 
 	struct dm_pdevs pdevs;
 
-	int cur_active_table; /* Current active table is selected with this. */
+	/* Current active table is selected with this. */
+	int cur_active_table; 
 	struct dm_table tables[2];
 
 	struct dm_dev_head upcalls;
 
 	struct disk *dm_dk;
 
-	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
+	/* LIST of mirrored, snapshoted devices. */
+	TAILQ_ENTRY(dm_dev) next_upcall; 
 
         TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
 };

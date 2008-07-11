@@ -70,7 +70,7 @@ dm_pdev_lookup_name(const char *dm_pdev_name)
 		if (slen != dlen)
 			continue;
 		
-		if (strncmp(dm_pdev_name,dm_pdev->name,slen) == 0){
+		if (strncmp(dm_pdev_name, dm_pdev->name, slen) == 0){
 			mutex_exit(&dm_pdev_mutex);
 			return dm_pdev;
 		}
@@ -104,7 +104,8 @@ dm_pdev_insert(const char *dev_name)
 	error = dk_lookup(dev_name, curlwp, &dmp->pdev_vnode, UIO_SYSSPACE);
 
 	if (error) {
-		printf("dk_lookup on device: %s failed with error %d!\n", dev_name, error);
+		aprint_normal("dk_lookup on device: %s failed with error %d!\n",
+		    dev_name, error);
 
 		return NULL;
 	}
@@ -116,8 +117,6 @@ dm_pdev_insert(const char *dev_name)
 	SLIST_INSERT_HEAD(&dm_pdev_list, dmp, next_pdev);
 	
 	mutex_exit(&dm_pdev_mutex);
-
-	printf("return\n");
 
 	return dmp;
 }
@@ -145,11 +144,11 @@ dm_pdev_alloc(const char *name)
 {
 	struct dm_pdev *dmp;
 
-	if ((dmp = kmem_alloc(sizeof(struct dm_pdev)+strlen(name)+1,KM_NOSLEEP))
-	    == NULL)
+	if ((dmp = kmem_alloc(sizeof(struct dm_pdev)+strlen(name)+1,
+		    KM_NOSLEEP)) == NULL)
 		return NULL;
 
-	strlcpy(dmp->name,name,MAX_DEV_NAME);
+	strlcpy(dmp->name, name, MAX_DEV_NAME);
 	
 	dmp->ref_cnt = 0;
 	dmp->pdev_vnode = NULL;
@@ -167,9 +166,10 @@ dm_pdev_destroy(struct dm_pdev *dmp)
 	if (dmp == NULL)
 		return ENOENT;
 
-	if (dmp->pdev_vnode != NULL)
-		VOP_CLOSE(dmp->pdev_vnode,FREAD|FWRITE,FSCRED);
-	
+	if (dmp->pdev_vnode != NULL) {
+		VOP_CLOSE(dmp->pdev_vnode, FREAD|FWRITE, FSCRED);
+		vput(dmp->pdev_vnode);
+	}
 	kmem_free(dmp,sizeof(*dmp));
 
 	dmp = NULL;
@@ -196,17 +196,19 @@ dm_pdev_decr(struct dm_pdevs *head)
 	if (head == NULL)
 		return ENOENT;
 
-	
-	SLIST_FOREACH(dmp,head,next_pdev) {
+	SLIST_FOREACH(dmp, head, next_pdev) {
 
 		dmp->ref_cnt--;
 
-		SLIST_REMOVE(head,dmp,dm_pdev,next_pdev);
+		SLIST_REMOVE(head, dmp, dm_pdev, next_pdev);
 		
-		/* If this was last reference remove dmp from global list also. */
+		/*
+		 * If this was last reference remove dmp from
+		 * global list also.
+		 */
 		if (dmp->ref_cnt == 0) {
 			mutex_enter(&dm_pdev_mutex);
-			SLIST_REMOVE(&dm_pdev_list,dmp, dm_pdev,next_pdev); 
+			SLIST_REMOVE(&dm_pdev_list, dmp, dm_pdev, next_pdev); 
 			dm_pdev_destroy(dmp);
 			mutex_exit(&dm_pdev_mutex);
 		}

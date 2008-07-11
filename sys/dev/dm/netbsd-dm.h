@@ -210,7 +210,8 @@
 /* Status bits */
 #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
 #define DM_SUSPEND_FLAG		(1 << 1) /* In/Out */
-#define DM_EXISTS_FLAG          (1 << 2) /* In/Out */ /* XXX. This flag is undocumented. */ 
+/* XXX. This flag is undocumented. */ 
+#define DM_EXISTS_FLAG          (1 << 2) /* In/Out */ 
 #define DM_PERSISTENT_DEV_FLAG	(1 << 3) /* In */
 
 /*
@@ -262,8 +263,8 @@
 #define DM_BLOCK_MAJOR 2	
 
 /* libdm_netbsd.c */
-
-int nbsd_get_dm_major(uint32_t *, uint32_t *, int); /* Get dm device major/minor numbers */
+/* Get dm device major/minor numbers */
+int nbsd_get_dm_major(uint32_t *, uint32_t *, int); 
 
 int nbsd_dmi_add_cmd(const char *, prop_dictionary_t);
 int nbsd_dmi_add_version(const int [3], prop_dictionary_t);
