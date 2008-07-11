@@ -53,8 +53,8 @@ kmutex_t dm_dev_mutex;
 
 /*
  * Locking architecture, for now I use mutexes later we can convert them to
- * rw_locks. I use IPL_NONE for specifing IPL type for mutex. I will enter into
- * mutex everytime I'm working with dm_dev_list.
+ * rw_locks. I use IPL_NONE for specifing IPL type for mutex.
+ * I will enter into mutex everytime I'm working with dm_dev_list.
  */
 
 /*
@@ -67,7 +67,7 @@ dm_dev_lookup_minor(int dm_dev_minor)
 
 	mutex_enter(&dm_dev_mutex);
 	
-	TAILQ_FOREACH(dm_dev,&dm_dev_list,next_devlist){
+	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
 		if (dm_dev_minor == dm_dev->minor){
 			mutex_exit(&dm_dev_mutex);
 			return dm_dev;
@@ -96,14 +96,14 @@ dm_dev_lookup_name(const char *dm_dev_name)
 
 	mutex_enter(&dm_dev_mutex);
 	
-	TAILQ_FOREACH(dm_dev,&dm_dev_list,next_devlist){
+	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
 
 		dlen = strlen(dm_dev->name);
 
 		if(slen != dlen)
 			continue;
 		
-		if (strncmp(dm_dev_name,dm_dev->name,slen) == 0) {
+		if (strncmp(dm_dev_name, dm_dev->name, slen) == 0) {
 			mutex_exit(&dm_dev_mutex);
 			return dm_dev;
 		}	
@@ -127,8 +127,8 @@ dm_dev_lookup_uuid(const char *dm_dev_uuid)
 
 	mutex_enter(&dm_dev_mutex);
 	
-	TAILQ_FOREACH(dm_dev,&dm_dev_list,next_devlist)
-	    if (strncmp(dm_dev_uuid,dm_dev->uuid,strlen(dm_dev->uuid)) == 0){
+	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist)
+	    if (strncmp(dm_dev_uuid, dm_dev->uuid, strlen(dm_dev->uuid)) == 0){
 		    mutex_exit(&dm_dev_mutex);
 		    return dm_dev;
 	    }
@@ -185,7 +185,7 @@ dm_dev_rem(const char *dm_dev_name)
 	
 	mutex_enter(&dm_dev_mutex);
 	
-	TAILQ_REMOVE(&dm_dev_list,dm_dev,next_devlist);
+	TAILQ_REMOVE(&dm_dev_list, dm_dev, next_devlist);
 	
 	mutex_exit(&dm_dev_mutex);
 
@@ -204,11 +204,11 @@ dm_dev_alloc()
 {
 	struct dm_dev *dmv;
 	
-	if ((dmv = kmem_alloc(sizeof(struct dm_dev),KM_NOSLEEP)) == NULL)
+	if ((dmv = kmem_alloc(sizeof(struct dm_dev), KM_NOSLEEP)) == NULL)
 		return NULL;
 
-	if ((dmv->dm_dk = kmem_alloc(sizeof(struct disk),KM_NOSLEEP)) == NULL){
-		(void)kmem_free(dmv,sizeof(struct dm_dev));
+	if ((dmv->dm_dk = kmem_alloc(sizeof(struct disk), KM_NOSLEEP)) == NULL){
+		(void)kmem_free(dmv, sizeof(struct dm_dev));
 		return NULL;
 	}
 	
@@ -222,8 +222,8 @@ int
 dm_dev_free(struct dm_dev *dmv)
 {
 	if (dmv != NULL){
-		(void)kmem_free(dmv->dm_dk,sizeof(struct disk));
-		(void)kmem_free(dmv,sizeof(struct dm_dev));
+		(void)kmem_free(dmv->dm_dk, sizeof(struct disk));
+		(void)kmem_free(dmv, sizeof(struct dm_dev));
 	}
 	
 	return 0;
@@ -249,14 +249,14 @@ dm_dev_prop_list(void)
 	
 	mutex_enter(&dm_dev_mutex);
 	
-	TAILQ_FOREACH(dmd,&dm_dev_list,next_devlist) {
+	TAILQ_FOREACH(dmd, &dm_dev_list,next_devlist) {
 		dev_dict  = prop_dictionary_create();
 		
-		prop_dictionary_set_cstring(dev_dict,DM_DEV_NAME,dmd->name);
+		prop_dictionary_set_cstring(dev_dict, DM_DEV_NAME, dmd->name);
 		
-		prop_dictionary_set_uint32(dev_dict,DM_DEV_DEV,dmd->minor);
+		prop_dictionary_set_uint32(dev_dict, DM_DEV_DEV, dmd->minor);
 
-		prop_array_set(dev_array,j,dev_dict);
+		prop_array_set(dev_array, j, dev_dict);
 		
 		prop_object_release(dev_dict);
 		
@@ -274,8 +274,7 @@ dm_dev_prop_list(void)
 int
 dm_dev_init()
 {
-
-	mutex_init(&dm_dev_mutex,MUTEX_DEFAULT,IPL_NONE);
+	mutex_init(&dm_dev_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	return 0;
 }

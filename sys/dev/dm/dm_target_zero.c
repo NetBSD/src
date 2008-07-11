@@ -68,7 +68,7 @@ int
 dm_target_zero_strategy(struct dm_table_entry *table_en, struct buf *bp)
 {
 
-	printf("Zero target read function called %d!!\n",bp->b_bcount);
+	printf("Zero target read function called %d!!\n", bp->b_bcount);
 
 	memset(bp->b_data, 0, bp->b_bcount); 
 	bp->b_resid = 0; /* nestiobuf_done wants b_resid = 0 to be sure
