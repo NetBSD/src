@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.109 2008/06/04 17:46:21 ad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.110 2008/07/11 05:31:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.109 2008/06/04 17:46:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.110 2008/07/11 05:31:44 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -935,7 +935,7 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx,
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
 		if (lbn < NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
-			return (fs->fs_fpg * cg + fs->fs_frag);
+			return (cgbase(fs, cg) + fs->fs_frag);
 		}
 		/*
 		 * Find a cylinder with greater than average number of
@@ -951,11 +951,11 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx,
 		avgbfree = fs->fs_cstotal.cs_nbfree / fs->fs_ncg;
 		for (cg = startcg; cg < fs->fs_ncg; cg++)
 			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree) {
-				return (fs->fs_fpg * cg + fs->fs_frag);
+				return (cgbase(fs, cg) + fs->fs_frag);
 			}
 		for (cg = 0; cg < startcg; cg++)
 			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree) {
-				return (fs->fs_fpg * cg + fs->fs_frag);
+				return (cgbase(fs, cg) + fs->fs_frag);
 			}
 		return (0);
 	}
@@ -978,7 +978,7 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
 		if (lbn < NDADDR + NINDIR(fs)) {
 			cg = ino_to_cg(fs, ip->i_number);
-			return (fs->fs_fpg * cg + fs->fs_frag);
+			return (cgbase(fs, cg) + fs->fs_frag);
 		}
 		/*
 		 * Find a cylinder with greater than average number of
@@ -994,11 +994,11 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
 		avgbfree = fs->fs_cstotal.cs_nbfree / fs->fs_ncg;
 		for (cg = startcg; cg < fs->fs_ncg; cg++)
 			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree) {
-				return (fs->fs_fpg * cg + fs->fs_frag);
+				return (cgbase(fs, cg) + fs->fs_frag);
 			}
 		for (cg = 0; cg < startcg; cg++)
 			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree) {
-				return (fs->fs_fpg * cg + fs->fs_frag);
+				return (cgbase(fs, cg) + fs->fs_frag);
 			}
 		return (0);
 	}
