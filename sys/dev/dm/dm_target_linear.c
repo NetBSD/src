@@ -62,11 +62,12 @@ dm_target_linear_init(struct dm_dev *dmv, void **target_config,
 	struct target_linear_config *tlc;
 	struct dm_pdev *dmp;
 		
-	printf("Linear target init function called %s--%s!!\n",argv[0],argv[1]);
+	printf("Linear target init function called %s--%s!!\n",
+	    argv[0], argv[1]);
 	
 	dmp = dm_pdev_lookup_name(argv[0]);
 		
-	if ((tlc = kmem_alloc(sizeof(struct target_linear_config),KM_NOSLEEP))
+	if ((tlc = kmem_alloc(sizeof(struct target_linear_config), KM_NOSLEEP))
 	    == NULL)
 		return 1;
 
@@ -111,7 +112,7 @@ int
 dm_target_linear_destroy(struct dm_table_entry *table_en)
 {
 
-	kmem_free(table_en->target_config,sizeof(struct target_linear_config));
+	kmem_free(table_en->target_config, sizeof(struct target_linear_config));
 	
 	return 0;
 }

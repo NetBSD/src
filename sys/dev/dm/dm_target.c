@@ -62,13 +62,13 @@ dm_target_lookup_name(const char *dm_target_name)
 
 	mutex_enter(&dm_target_mutex);
 	
-	TAILQ_FOREACH (dm_target,&dm_target_list,dm_target_next) {
+	TAILQ_FOREACH (dm_target, &dm_target_list, dm_target_next) {
 		dlen = strlen(dm_target->name)+1;
 
 		if (dlen != slen)
 			continue;
 		
-		if (strncmp(dm_target_name,dm_target->name,slen) == 0){
+		if (strncmp(dm_target_name, dm_target->name, slen) == 0){
 			mutex_exit(&dm_target_mutex);
 			return dm_target;
 		}
@@ -134,11 +134,11 @@ dm_target_rem(char *dm_target_name)
 	mutex_enter(&dm_target_mutex);
 	
 	TAILQ_REMOVE(&dm_target_list,
-	    dm_target,dm_target_next);
+	    dm_target, dm_target_next);
 
 	mutex_exit(&dm_target_mutex);
 	
-	(void)kmem_free(dm_target,sizeof(struct dm_target));
+	(void)kmem_free(dm_target, sizeof(struct dm_target));
 
 	r = 0;
  out:
@@ -153,7 +153,8 @@ dm_target_alloc(const char *name)
 {
 	struct dm_target *dmt;
 	
-	if ((dmt = kmem_alloc(sizeof(struct dm_target)+strlen(name)+1,KM_NOSLEEP)) == NULL)
+	if ((dmt = kmem_alloc(sizeof(struct dm_target)+strlen(name)+1,
+		    KM_NOSLEEP)) == NULL)
 		return NULL;
 	
 	return dmt;
@@ -177,19 +178,20 @@ dm_target_prop_list(void)
 
 	mutex_enter(&dm_target_mutex);
 	
-	TAILQ_FOREACH (dm_target,&dm_target_list,dm_target_next) {
+	TAILQ_FOREACH (dm_target, &dm_target_list, dm_target_next){
 
 		target_dict  = prop_dictionary_create();
 		ver = prop_array_create();
 		
-		prop_dictionary_set_cstring(target_dict,DM_TARGETS_NAME,dm_target->name);
+		prop_dictionary_set_cstring(target_dict, DM_TARGETS_NAME,
+		    dm_target->name);
 
 		for (i=0;i<3;i++)
-			prop_array_set_uint32(ver,i,dm_target->version[i]);
+			prop_array_set_uint32(ver, i, dm_target->version[i]);
 
-		prop_dictionary_set(target_dict,DM_TARGETS_VERSION,ver);
+		prop_dictionary_set(target_dict, DM_TARGETS_VERSION, ver);
 
-		prop_array_set(target_array,j,target_dict);
+		prop_array_set(target_array, j, target_dict);
 		
 		prop_object_release(target_dict);
 
@@ -210,7 +212,7 @@ dm_target_init(void)
 
 	r = 0;
 
-	mutex_init(&dm_target_mutex,MUTEX_DEFAULT,IPL_NONE);
+	mutex_init(&dm_target_mutex, MUTEX_DEFAULT, IPL_NONE);
 	
 	dmt = dm_target_alloc("linear");
 	dmt3 = dm_target_alloc("striped");
@@ -221,7 +223,7 @@ dm_target_init(void)
 	dmt->version[0] = 1;
 	dmt->version[1] = 0;
 	dmt->version[2] = 2;
-	strncpy(dmt->name,"linear",DM_MAX_TYPE_NAME);
+	strncpy(dmt->name, "linear", DM_MAX_TYPE_NAME);
 	dmt->init=&dm_target_linear_init;
 	dmt->strategy=&dm_target_linear_strategy;
 	dmt->destroy=&dm_target_linear_destroy;
@@ -231,7 +233,7 @@ dm_target_init(void)
 	dmt3->version[0] = 1;
 	dmt3->version[1] = 0;
 	dmt3->version[2] = 3;
-	strncpy(dmt3->name,"striped",DM_MAX_TYPE_NAME);
+	strncpy(dmt3->name, "striped", DM_MAX_TYPE_NAME);
 	dmt->init=&dm_target_linear_init;
 	dmt->strategy=&dm_target_linear_strategy;
 	dmt->destroy=&dm_target_linear_destroy;
@@ -241,7 +243,7 @@ dm_target_init(void)
 	dmt4->version[0] = 1;
 	dmt4->version[1] = 0;
 	dmt4->version[2] = 3;
-	strncpy(dmt4->name,"mirror",DM_MAX_TYPE_NAME);
+	strncpy(dmt4->name, "mirror", DM_MAX_TYPE_NAME);
 	dmt4->init=NULL;
 	dmt4->strategy=NULL;
 	
@@ -250,7 +252,7 @@ dm_target_init(void)
 	dmt1->version[0] = 1;
 	dmt1->version[1] = 0;
 	dmt1->version[2] = 0;
-	strncpy(dmt1->name,"zero",DM_MAX_TYPE_NAME);
+	strncpy(dmt1->name, "zero", DM_MAX_TYPE_NAME);
 	dmt1->init=&dm_target_zero_init;
 	dmt1->strategy=&dm_target_zero_strategy;
 
@@ -259,7 +261,7 @@ dm_target_init(void)
 	dmt2->version[0] = 1;
 	dmt2->version[1] = 0;
 	dmt2->version[2] = 0;
-	strncpy(dmt2->name,"error",DM_MAX_TYPE_NAME);
+	strncpy(dmt2->name, "error", DM_MAX_TYPE_NAME);
 	dmt2->init=&dm_target_error_init;
 	dmt2->strategy=&dm_target_error_strategy;
 

@@ -85,7 +85,7 @@ dm_dbg_print_flags(int flags)
 		aprint_verbose("dbg_flags: DM_ACTIVE_PRESENT_FLAG set Out\n");
 
 	if (flags & DM_INACTIVE_PRESENT_FLAG)
-		aprint_verbose("dbg_flags:  DM_INACTIVE_PRESENT_FLAG set Out\n");
+		aprint_verbose("dbg_flags: DM_INACTIVE_PRESENT_FLAG set Out\n");
 
 	if (flags & DM_BUFFER_FULL_FLAG)
 		aprint_verbose("dbg_flags: DM_BUFFER_FULL_FLAG set Out\n");
@@ -102,7 +102,10 @@ dm_dbg_print_flags(int flags)
 	return 0;
 }
 
-/* Get version ioctl call I do it as default therefore this function is unused now. */
+/*
+ * Get version ioctl call I do it as default therefore this
+ * function is unused now.
+ */
 int
 dm_get_version_ioctl(prop_dictionary_t dm_dict)
 {
@@ -119,7 +122,6 @@ dm_get_version_ioctl(prop_dictionary_t dm_dict)
  * Get list of all available targets from global
  * target list and sent them back to libdevmapper.
  */
-
 int
 dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 {
@@ -132,13 +134,13 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 
 	aprint_verbose("dm_list_versions_ioctl called\n");
 
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flags);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	
 	dm_dbg_print_flags(flags);
 
 	target_list = dm_target_prop_list();
 
-	prop_dictionary_set(dm_dict,DM_IOCTL_CMD_DATA,target_list);
+	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, target_list);
 	
 	return r;
 }
@@ -160,9 +162,9 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 
 	/* Get needed values from dictionary. */
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_NAME,&name);
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_UUID,&uuid);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flags);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	
 	dm_dbg_print_flags(flags);
 
@@ -182,7 +184,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	memcpy(dmv->uuid,uuid,DM_UUID_LEN);*/
 	printf("%s\n",name);
 	if (name)
-		strlcpy(dmv->name,name,DM_NAME_LEN);
+		strlcpy(dmv->name, name, DM_NAME_LEN);
 
 	dmv->flags = flags;
 
@@ -204,9 +206,9 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	 * ioctl callbacks for tables and devices must acquire this lock.
      	 */
 
-	prop_dictionary_set_uint64(dm_dict,DM_IOCTL_DEV,dmv->minor);
+	prop_dictionary_set_uint64(dm_dict, DM_IOCTL_DEV, dmv->minor);
 	
-	mutex_init(&dmv->dev_mtx,MUTEX_DEFAULT,IPL_NONE);
+	mutex_init(&dmv->dev_mtx, MUTEX_DEFAULT, IPL_NONE);
    
 	/* Test readonly flag change anything only if it is not set*/
 	if (flags & DM_READONLY_FLAG)
@@ -247,13 +249,13 @@ dm_dev_list_ioctl(prop_dictionary_t dm_dict)
 
 	aprint_verbose("dm_dev_list called\n");
 
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flags);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	
 	dm_dbg_print_flags(flags);
 	
 	dev_list = dm_dev_prop_list();
 
-	prop_dictionary_set(dm_dict,DM_IOCTL_CMD_DATA,dev_list);
+	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, dev_list);
 	
 	return 0;
 }
@@ -280,12 +282,12 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 	
 	/* Get needed values from dictionary. */
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_UUID, &uuid);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flags);
-	cmd_array = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
+	cmd_array = prop_dictionary_get(dm_dict, DM_IOCTL_CMD_DATA);
 
-	prop_array_get_cstring_nocopy(cmd_array,0, &n_name);
+	prop_array_get_cstring_nocopy(cmd_array, 0, &n_name);
 	
 	if (strlen(n_name) + 1 > DM_NAME_LEN)
 		return EINVAL;
@@ -298,7 +300,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 	
 	/* Test readonly flag change anything only if it is not set*/
 	if (!(flags & DM_READONLY_FLAG))
-		strlcpy(dmv->name,n_name,DM_NAME_LEN);
+		strlcpy(dmv->name, n_name, DM_NAME_LEN);
 	
 	return 0;
 }
@@ -320,9 +322,9 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 	
 	/* Get needed values from dictionary. */
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_UUID, &uuid);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flags);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	
 	dm_dbg_print_flags(flags);
 	
@@ -368,9 +370,9 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 	name = NULL;
 	uuid = NULL;
 	
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_UUID, &uuid);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flags);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	
 	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
 	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL)) {
@@ -378,10 +380,10 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 		return 0;
 	}
 	
-	prop_dictionary_set_uint32(dm_dict,DM_IOCTL_OPEN,dmv->ref_cnt);
-	prop_dictionary_set_uint32(dm_dict,DM_IOCTL_FLAGS,dmv->flags);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->ref_cnt);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
 	
-	prop_dictionary_set_uint64(dm_dict,DM_IOCTL_DEV,dmv->minor);
+	prop_dictionary_set_uint64(dm_dict, DM_IOCTL_DEV, dmv->minor);
 	
 	return 0;
 }
@@ -428,11 +430,12 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 	name = NULL;
 	uuid = NULL;
 	
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_UUID, &uuid);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flags);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	
-	aprint_verbose("Clearing inactive table from device: %s--%s\n",name,uuid);
+	aprint_verbose("Clearing inactive table from device: %s--%s\n",
+	    name, uuid);
 	
 	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
 	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL)) {
@@ -479,10 +482,10 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	
 	i=0;
 
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_UUID, &uuid);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flags);
-	prop_dictionary_get_uint64(dm_dict,DM_IOCTL_DEV,&dev);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
+	prop_dictionary_get_uint64(dm_dict, DM_IOCTL_DEV, &dev);
 	
 	cmd_array = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA);
 
@@ -497,11 +500,11 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 		
 	SLIST_FOREACH(dmp, &dmv->pdevs, next_pdev){
 
-		if ((error = VOP_GETATTR(dmp->pdev_vnode, &va, curlwp->l_cred)) != 0)
+		if ((error = VOP_GETATTR(dmp->pdev_vnode, &va, curlwp->l_cred))
+		    != 0)
 			return (error);
 		
-		prop_array_set_uint64(cmd_array,i,
-		    (uint64_t)va.va_rdev);
+		prop_array_set_uint64(cmd_array, i, (uint64_t)va.va_rdev);
 
 		i++;
 	}
@@ -550,12 +553,12 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	xml = prop_dictionary_externalize(dm_dict);
 	printf("%s\n",xml);
 		
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_UUID, &uuid);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flags);
-	prop_dictionary_get_uint64(dm_dict,DM_IOCTL_DEV,&dev);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
+	prop_dictionary_get_uint64(dm_dict, DM_IOCTL_DEV, &dev);
 	
-	cmd_array = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA);
+	cmd_array = prop_dictionary_get(dm_dict, DM_IOCTL_CMD_DATA);
 	iter = prop_array_iterator(cmd_array);
 	
 	dm_dbg_print_flags(flags);	
@@ -581,17 +584,24 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	
 	while((target_dict = prop_object_iterator_next(iter)) != NULL){
 
-		prop_dictionary_get_cstring_nocopy(target_dict,DM_TABLE_TYPE, &type);
+		prop_dictionary_get_cstring_nocopy(target_dict,
+		    DM_TABLE_TYPE, &type);
 		
-		/* If we want to deny table with 2 or more different target we should do it here */
+		/*
+		 * If we want to deny table with 2 or more different
+		 * target we should do it here
+		 */
 		if ((target = dm_target_lookup_name(type)) == NULL)
 			return ENOENT;
 		
-		if ((table_en=kmem_alloc(sizeof(struct dm_table_entry),KM_NOSLEEP)) == NULL)
+		if ((table_en=kmem_alloc(sizeof(struct dm_table_entry),
+			    KM_NOSLEEP)) == NULL)
 			return ENOMEM;
 		
-		prop_dictionary_get_uint64(target_dict,DM_TABLE_START,&table_en->start);
-		prop_dictionary_get_uint64(target_dict,DM_TABLE_LENGTH,&table_en->length);
+		prop_dictionary_get_uint64(target_dict, DM_TABLE_START,
+		    &table_en->start);
+		prop_dictionary_get_uint64(target_dict, DM_TABLE_LENGTH,
+		    &table_en->length);
 
 		table_en->target=target;
 		table_en->dm_dev=dmv;
@@ -609,22 +619,22 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 
 			str_ptr = str; /* save pointer to start of string */
 			
-			aprint_verbose("trg_str: %s\n",str);
+			aprint_verbose("trg_str: %s\n", str);
 			
 		        dev_name = strsep(&str," ");
 
-			aprint_verbose("namei: %s, str: %s\n",dev_name,str);
+			aprint_verbose("namei: %s, str: %s\n", dev_name, str);
 						
 			if (!(flags & DM_READONLY_FLAG)){
 
-				printf("pdev_insert\n");
 				if ((dmp = dm_pdev_insert(dev_name)) == NULL){
-					kmem_free(table_en,sizeof(struct dm_table_entry));
+					kmem_free(table_en,
+					    sizeof(struct dm_table_entry));
 					return ENOENT;
 				}
 
 				/* insert pdev to device list  */
-				SLIST_INSERT_HEAD(&dmv->pdevs,dmp,next_pdev); 
+				SLIST_INSERT_HEAD(&dmv->pdevs, dmp, next_pdev);
 			}
 		}
 		
@@ -633,23 +643,24 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 
 			if (SLIST_EMPTY(tbl))
 				/* insert this table to head */
-				SLIST_INSERT_HEAD(tbl,table_en,next);
+				SLIST_INSERT_HEAD(tbl, table_en, next);
 			else
-				SLIST_INSERT_AFTER(last_table,table_en,next);
-			printf("prop_insert\n");
+				SLIST_INSERT_AFTER(last_table, table_en, next);
+
 			prop_dictionary_get_cstring(target_dict,
-			    DM_TABLE_PARAMS,(char **)&table_en->params);
+			    DM_TABLE_PARAMS, (char **)&table_en->params);
 
 			/*
 			 * XXX I have to calculate argc
 			 */
 			if (target->init != NULL)
-				target->init(dmv,&table_en->target_config,2,&str_ptr);
+				target->init(dmv, &table_en->target_config,
+				    2, &str_ptr);
 
 			last_table = table_en;
 			
 		} else {
-			kmem_free(table_en,sizeof(struct dm_table_entry));
+			kmem_free(table_en, sizeof(struct dm_table_entry));
 			dm_pdev_destroy(dmp);
 		}
 			
@@ -712,12 +723,12 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	rec_size = 0;
 	i=0;
 
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_NAME, &name);
-	prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_UUID, &uuid);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flags);
-	prop_dictionary_get_uint64(dm_dict,DM_IOCTL_DEV,&dev);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
+	prop_dictionary_get_uint64(dm_dict, DM_IOCTL_DEV, &dev);
 
-	cmd_array = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA);
+	cmd_array = prop_dictionary_get(dm_dict, DM_IOCTL_CMD_DATA);
 	
 	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
 	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL) &&
@@ -726,25 +737,32 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		return ENOENT;
 	}
 	
-	aprint_verbose("Status of device tables: %s--%d\n",name,dmv->cur_active_table);
+	aprint_verbose("Status of device tables: %s--%d\n",
+	    name, dmv->cur_active_table);
 	
 	tbl = &dmv->tables[dmv->cur_active_table];
 
 	SLIST_FOREACH(table_en,tbl,next)
 	{
 		target_dict = prop_dictionary_create();
-		aprint_verbose("%016" PRIu64 ", length %016" PRIu64 ", target %s\n",
-		    table_en->start,table_en->length,table_en->target->name);
+		aprint_verbose("%016" PRIu64 ", length %016" PRIu64
+		    ", target %s\n", table_en->start, table_en->length,
+		    table_en->target->name);
 
-		prop_dictionary_set_uint64(target_dict,DM_TABLE_START,table_en->start);
-		prop_dictionary_set_uint64(target_dict,DM_TABLE_LENGTH,table_en->length);
+		prop_dictionary_set_uint64(target_dict, DM_TABLE_START,
+		    table_en->start);
+		prop_dictionary_set_uint64(target_dict, DM_TABLE_LENGTH,
+		    table_en->length);
 
-		prop_dictionary_set_cstring(target_dict,DM_TABLE_TYPE,table_en->target->name);
-		prop_dictionary_set_cstring(target_dict,DM_TABLE_PARAMS,table_en->params);
+		prop_dictionary_set_cstring(target_dict, DM_TABLE_TYPE,
+		    table_en->target->name);
+		prop_dictionary_set_cstring(target_dict, DM_TABLE_PARAMS,
+		    table_en->params);
 		
-		prop_dictionary_set_int32(target_dict,DM_TABLE_STAT,dmv->cur_active_table);
+		prop_dictionary_set_int32(target_dict, DM_TABLE_STAT,
+		    dmv->cur_active_table);
 
-		prop_array_set(cmd_array,i,target_dict);
+		prop_array_set(cmd_array, i, target_dict);
 
 		prop_object_release(target_dict);
 
@@ -773,25 +791,27 @@ dm_check_version(prop_dictionary_t dm_dict)
 
 	r = 0;
 	
-	ver = prop_dictionary_get(dm_dict,DM_IOCTL_VERSION);
+	ver = prop_dictionary_get(dm_dict, DM_IOCTL_VERSION);
 	
 	for(i=0; i < 3; i++) 
-		prop_array_get_uint32(ver,i,&dm_version[i]);
+		prop_array_get_uint32(ver, i, &dm_version[i]);
 	
 
-	if (DM_VERSION_MAJOR != dm_version[0] || DM_VERSION_MINOR < dm_version[1])
+	if (DM_VERSION_MAJOR != dm_version[0] ||
+	    DM_VERSION_MINOR < dm_version[1])
 	{
 		aprint_verbose("libdevmapper/kernel version mismatch "
 		    "kernel: %d.%d.%d libdevmapper: %d.%d.%d\n",
-		    DM_VERSION_MAJOR,DM_VERSION_MINOR,DM_VERSION_PATCHLEVEL,
-		    dm_version[0],dm_version[1],dm_version[2]);
+		    DM_VERSION_MAJOR, DM_VERSION_MINOR, DM_VERSION_PATCHLEVEL,
+		    dm_version[0], dm_version[1], dm_version[2]);
+		
 		r = EIO;
 		goto out;
 	}
 
-	prop_array_set_uint32(ver,0,DM_VERSION_MAJOR);
-	prop_array_set_uint32(ver,1,DM_VERSION_MINOR);
-	prop_array_set_uint32(ver,2,DM_VERSION_PATCHLEVEL);
+	prop_array_set_uint32(ver, 0, DM_VERSION_MAJOR);
+	prop_array_set_uint32(ver, 1, DM_VERSION_MINOR);
+	prop_array_set_uint32(ver, 2, DM_VERSION_PATCHLEVEL);
 
 out:	
 	return r;

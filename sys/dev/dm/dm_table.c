@@ -47,18 +47,18 @@ dm_table_destroy(struct dm_table *head)
 	struct dm_table_entry *table_en;
 
 
-	SLIST_FOREACH(table_en,head,next){
+	SLIST_FOREACH(table_en, head, next){
 		
 		/* Remove target specific config data. */
 		if (table_en->target_config != NULL)
 			table_en->target->destroy(table_en); 
 
-		SLIST_REMOVE(head,table_en,dm_table_entry,next);
+		SLIST_REMOVE(head, table_en, dm_table_entry, next);
 		
 		if (table_en->params)
-			kmem_free(table_en->params,strlen(table_en->params));
+			kmem_free(table_en->params, strlen(table_en->params));
 		
-		kmem_free(table_en,sizeof(*table_en));
+		kmem_free(table_en, sizeof(*table_en));
 	}
 
 	return 0;
