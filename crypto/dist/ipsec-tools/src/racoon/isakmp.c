@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.20.6.10 2008/06/18 07:30:19 mgrooms Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.20.6.11 2008/07/11 08:08:41 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1038,7 +1038,6 @@ isakmp_ph1begin_i(rmconf, remote, local)
 #endif
 #ifdef ENABLE_HYBRID
 	if ((iph1->mode_cfg = isakmp_cfg_mkstate()) == NULL) {
-		remph1(iph1);
 		delph1(iph1);
 		return -1;
 	}
@@ -1055,7 +1054,6 @@ isakmp_ph1begin_i(rmconf, remote, local)
 
 	/* XXX copy remote address */
 	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0) {
-		remph1(iph1);
 		delph1(iph1);
 		return -1;
 	}
@@ -1157,7 +1155,6 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 #endif
 #ifdef ENABLE_HYBRID
 	if ((iph1->mode_cfg = isakmp_cfg_mkstate()) == NULL) {
-		remph1(iph1);
 		delph1(iph1);
 		return -1;
 	}
@@ -1179,7 +1176,6 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 
 	/* copy remote address */
 	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0) {
-		remph1(iph1);
 		delph1(iph1);
 		return -1;
 	}
@@ -2855,10 +2851,8 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 
 	/* address portion must be grabbed from real remote address "remote" */
 	iph1->remote = dupsaddr(remote);
-	if (iph1->remote == NULL) {
-		delph1(iph1);
+	if (iph1->remote == NULL)
 		return -1;
-	}
 
 	/*
 	 * if remote has no port # (in case of initiator - from ACQUIRE msg)
@@ -2878,10 +2872,8 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 		iph1->local = getlocaladdr(iph1->remote);
 	else
 		iph1->local = dupsaddr(local);
-	if (iph1->local == NULL) {
-		delph1(iph1);
+	if (iph1->local == NULL)
 		return -1;
-	}
 
 	if (extract_port(iph1->local) == 0)
 		set_port(iph1->local, PORT_ISAKMP);
