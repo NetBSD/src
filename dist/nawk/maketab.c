@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 	printf("{\n");
 	printf("	static char buf[100];\n\n");
 	printf("	if (n < FIRSTTOKEN || n > LASTTOKEN) {\n");
-	printf("		sprintf(buf, \"token %%d\", n);\n");
+	printf("		snprintf(buf, sizeof(buf), \"token %%d\", n);\n");
 	printf("		return buf;\n");
 	printf("	}\n");
 	printf("	return printname[n-FIRSTTOKEN];\n");
