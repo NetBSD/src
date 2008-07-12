@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.103 2008/05/16 13:16:25 tsutsui Exp $
+# $NetBSD: HACKS,v 1.104 2008/07/12 11:50:07 gmcgarry Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -407,6 +407,18 @@ port	vax
 		bollean_t being defined by <sys/types.h>.
 		Build failure and further details documented in
 		PR#32907.
+	kcah
+
+	hack	pcc 0.9.9 large string literals
+	cdat	8 July 2008
+	who	gmcgarry
+	file	sys/conf/param.c : 1.58
+	descr
+		Workaround for pcc 0.9.9 not handling large string literals
+		which causes kernels with 'options INCLUDE_CONFIG_FILE' to
+		fail compilation.
+		There is a proposal on the pcc mailing list to stuff config
+		file in ELF section.
 	kcah
 
 port	arm
