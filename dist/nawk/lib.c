@@ -78,7 +78,7 @@ void makefields(int n1, int n2)		/* create $n1..$n2 inclusive */
 		if (fldtab[i] == NULL)
 			FATAL("out of space in makefields %d", i);
 		*fldtab[i] = dollar1;
-		sprintf(temp, "%d", i);
+		snprintf(temp, sizeof(temp), "%d", i);
 		fldtab[i]->nval = tostring(temp);
 	}
 }
@@ -226,7 +226,7 @@ char *getargv(int n)	/* get ARGV[n] */
 	char *s, temp[50];
 	extern Array *ARGVtab;
 
-	sprintf(temp, "%d", n);
+	snprintf(temp, sizeof(temp), "%d", n);
 	x = setsymtab(temp, "", 0.0, STR, ARGVtab);
 	s = getsval(x);
 	   dprintf( ("getargv(%d) returns |%s|\n", n, s) );
