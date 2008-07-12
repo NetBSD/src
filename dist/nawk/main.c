@@ -54,6 +54,20 @@ int	curpfile = 0;	/* current filename */
 
 int	safe	= 0;	/* 1 => "safe" mode */
 
+static char *
+setfs(char *p)
+{
+#ifdef notdef
+	/* wart: t=>\t */
+	if (p[0] == 't' && p[1] == 0)
+		return "\t";
+	else
+#endif
+	if (p[0] != 0)
+		return p;
+	return NULL;
+}
+
 int main(int argc, char *argv[])
 {
 	const char *fs = NULL;
@@ -100,16 +114,11 @@ int main(int argc, char *argv[])
 			break;
 		case 'F':	/* set field separator */
 			if (argv[1][2] != 0) {	/* arg is -Fsomething */
-				if (argv[1][2] == 't' && argv[1][3] == 0)	/* wart: t=>\t */
-					fs = "\t";
-				else if (argv[1][2] != 0)
-					fs = &argv[1][2];
+				fs = setfs(argv[1] + 2);
 			} else {		/* arg is -F something */
 				argc--; argv++;
-				if (argc > 1 && argv[1][0] == 't' && argv[1][1] == 0)	/* wart: t=>\t */
-					fs = "\t";
-				else if (argc > 1 && argv[1][0] != 0)
-					fs = &argv[1][0];
+				if (argc > 1)
+					fs = setfs(argv[1]);
 			}
 			if (fs == NULL || *fs == '\0')
 				WARNING("field separator FS is empty");
