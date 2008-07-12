@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.209 2008/05/28 11:23:26 lukem Exp $
+#	$NetBSD: bsd.README,v 1.210 2008/07/12 12:15:43 gmcgarry Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -103,11 +103,18 @@ MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
 		    2	Describe what is occurring and echo the actual command
 
 
+MKATF		If "no", don't build libatf-c, libatf-c++ libraries associated
+		with the Automated Testing Framework (ATF).
+		Default: yes
+
 MKBFD		If "no", don't build libbfd, libiberty, or any of the things
 		that depend on them (binutils/gas/ld, gdb, dbsym, mdsetimage).
 		Default: yes
 
 MKCATPAGES	If "no", don't build or install the catman pages.
+		Default: yes
+
+MKCOMPLEX	If "no", don't build libm support for <complex.h>
 		Default: yes
 
 MKCRYPTO	If "no", no cryptography support will be built into the system,
@@ -237,6 +244,14 @@ MKOBJDIRS	If "no", don't create objdirs during a "make build".
 MKPAM		If "no", disables building of PAM authentication
 		infrastructure (libraries and support programs).
 		Default: yes
+
+MKPCC		If "no", don't build pcc(1) or any of the PCC-related
+		libraries (libpcc, libpccsoftfloat).
+		Default: no
+
+MKPCCCMDS	If "no", don't build pcc(1), but do build the PCC-related
+		libraries (libpcc, libpccsoftfloat).
+		Default: no
 
 MKPF		If "no", don't build or install the pf programs and LKM.
 		Default: yes
