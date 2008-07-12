@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.57 2008/07/02 17:28:57 ad Exp $	*/
+/*	$NetBSD: param.c,v 1.58 2008/07/12 11:50:07 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.57 2008/07/02 17:28:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.58 2008/07/12 11:50:07 gmcgarry Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -69,8 +69,13 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.57 2008/07/02 17:28:57 ad Exp $");
 #include <sys/msg.h>
 #endif
 
+/*
+ * PCC cannot handle the 80KB string literal.
+ */
+#if !defined(__PCC__)
 #define CONFIG_FILE
 #include "config_file.h"
+#endif
 
 /*
  * System parameter formulae.
