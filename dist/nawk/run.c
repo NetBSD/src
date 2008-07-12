@@ -845,7 +845,9 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		for (t = fmt; (*t++ = *s) != '\0'; s++) {
 			if (!adjbuf(&fmt, &fmtsz, MAXNUMSIZE+1+t-fmt, recsize, &t, "format3"))
 				FATAL("format item %.30s... ran format() out of memory", os);
-			if (isalpha((uschar)*s) && *s != 'l' && *s != 'h' && *s != 'L')
+			if (*s == 'l' || *s == 'h' || *s == 'L')
+				goto weird;
+			if (isalpha((uschar)*s))
 				break;	/* the ansi panoply */
 			if (*s == '*') {
 				if (a == NULL)
@@ -887,6 +889,7 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			flag = 'c';
 			break;
 		default:
+		weird:
 			WARNING("weird printf conversion %s", fmt);
 			flag = '?';
 			break;
