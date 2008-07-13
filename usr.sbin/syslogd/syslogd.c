@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.84 2006/11/13 20:24:00 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.85 2008/07/13 20:07:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.84 2006/11/13 20:24:00 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.85 2008/07/13 20:07:49 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -1378,17 +1378,12 @@ wallmsg(struct filed *f, struct iovec *iov, size_t iovcnt)
 	static int reenter;			/* avoid calling ourselves */
 	int i;
 	char *p;
-	static struct utmpentry *ohead = NULL;
 	struct utmpentry *ep;
 
 	if (reenter++)
 		return;
 
 	(void)getutentries(NULL, &ep);
-	if (ep != ohead) {
-		freeutentries(ohead);
-		ohead = ep;
-	}
 	/* NOSTRICT */
 	for (; ep; ep = ep->next) {
 		if (f->f_type == F_WALL) {

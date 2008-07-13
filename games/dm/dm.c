@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.24 2007/12/15 19:44:40 perry Exp $	*/
+/*	$NetBSD: dm.c,v 1.25 2008/07/13 20:07:48 dholland Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.24 2007/12/15 19:44:40 perry Exp $");
+__RCSID("$NetBSD: dm.c,v 1.25 2008/07/13 20:07:48 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,15 +247,10 @@ load(void)
 int
 users(void)
 {
-	static struct utmpentry *ohead = NULL;	
 	struct utmpentry *ep;
 	int nusers;
 
 	nusers = getutentries(NULL, &ep);
-	if (ep != ohead) {
-		freeutentries(ep);
-		ohead = ep;
-	}
 	return nusers;
 }
 
