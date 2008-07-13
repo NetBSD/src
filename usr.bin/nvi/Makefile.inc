@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2008/05/20 18:04:16 aymeric Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2008/07/13 03:44:41 christos Exp $
+
+.include <bsd.own.mk>
 
 DIST= ${NETBSDSRCDIR}/dist/nvi
 .PATH: ${DIST}

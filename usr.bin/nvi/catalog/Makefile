@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/06/05 21:16:15 aymeric Exp $
+#	$NetBSD: Makefile,v 1.3 2008/07/13 03:44:41 christos Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
@@ -14,6 +14,7 @@ VI_FILES=	${DIST}/cl/*.c ${DIST}/common/*.c \
 FILES=		${CATALOG}
 FILESDIR=	/usr/share/nvi/catalog
 
+MKMAN=		no
 HOSTPROG=	dump
 SRCS=		dump.c
 
