@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.108 2008/05/22 19:49:43 hauke Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.109 2008/07/13 15:22:39 apb Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -160,7 +160,7 @@
 #	dn*	UNIBUS DN11 and emulations (e.g. Able Quadracall)
 #
 # Pseudo terminals:
-#	ptm	pty multiplexor device.
+#	ptm	pty multiplexor device, and pts directory
 #	pty*	set of 16 master and slave pseudo terminals
 #	opty	first 16 ptys, to save inodes on install media
 #	ipty	first 2 ptys, for install media use only
@@ -1635,6 +1635,7 @@ ipty)
 	;;
 
 ptm)
+	makedir pts 755
 	mkdev ptmx c %ptm_chr% 0 666
 	mkdev ptm c %ptm_chr% 1 666
 	;;
