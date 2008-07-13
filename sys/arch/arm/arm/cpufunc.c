@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.84 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.85 2008/07/13 09:12:14 chris Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.84 2008/04/27 18:58:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.85 2008/07/13 09:12:14 chris Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2283,9 +2283,6 @@ arm10_setup(args)
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 
-	if (vector_page == ARM_VECTORS_HIGH)
-		cpuctrl |= CPU_CONTROL_VECRELOC;
-
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -2346,9 +2343,6 @@ arm11_setup(args)
 #ifdef __ARMEB__
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
-
-	if (vector_page == ARM_VECTORS_HIGH)
-		cpuctrl |= CPU_CONTROL_VECRELOC;
 
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
@@ -2477,9 +2471,6 @@ sa110_setup(args)
 #ifdef __ARMEB__
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
-
-	if (vector_page == ARM_VECTORS_HIGH)
-		cpuctrl |= CPU_CONTROL_VECRELOC;
 
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
