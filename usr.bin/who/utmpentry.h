@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.h,v 1.6 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: utmpentry.h,v 1.7 2008/07/13 20:07:49 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,5 +60,17 @@ struct utmpentry {
 extern int maxname, maxline, maxhost;
 extern int etype;
 
+/*
+ * getutentries provides a linked list of struct utmpentry and returns
+ * the number of entries. The first argument, if not null, names an 
+ * alternate utmp(x) file to look in.
+ *
+ * The memory returned by getutentries belongs to getutentries. The
+ * list returned (or elements of it) may be returned again later if
+ * utmp hasn't changed in the meantime.
+ *
+ * endutentries clears and frees the cached data.
+ */
+
 int getutentries(const char *, struct utmpentry **);
-void freeutentries(struct utmpentry *);
+void endutentries(void);
