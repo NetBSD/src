@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.206 2008/07/06 15:00:45 bouyer Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.207 2008/07/14 16:22:42 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.206 2008/07/06 15:00:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.207 2008/07/14 16:22:42 hannken Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -887,7 +887,7 @@ bdwrite(buf_t *bp)
 {
 
 	KASSERT(bp->b_vp == NULL || bp->b_vp->v_tag != VT_UFS ||
-	    ISSET(bp->b_flags, B_COWDONE));
+	    bp->b_vp->v_type == VBLK || ISSET(bp->b_flags, B_COWDONE));
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
 	KASSERT(!cv_has_waiters(&bp->b_done));
 
