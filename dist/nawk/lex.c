@@ -426,7 +426,7 @@ int string(void)
 
 			default:
 				WARNING("warning: escape sequence `\\%c' "
-				    "treated as plain `%c'", c, c)
+				    "treated as plain `%c'", c, c);
 				*bp++ = c;
 				break;
 			}
