@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.36 2008/07/11 08:02:06 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.37 2008/07/14 05:40:13 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -901,6 +901,8 @@ ph1_main(iph1, msg)
 				/* ignore */
 			}
 		}
+		if (iph1->initial_contact_received)
+			isakmp_info_recv_initialcontact(iph1, NULL);
 
 		log_ph1established(iph1);
 		plog(LLV_DEBUG, LOCATION, NULL, "===\n");
