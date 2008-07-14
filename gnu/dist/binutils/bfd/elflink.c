@@ -6424,7 +6424,6 @@ elf_link_output_extsym (struct elf_link_hash_entry *h, void *data)
     case bfd_link_hash_undefweak:
       input_sec = bfd_und_section_ptr;
       sym.st_shndx = SHN_UNDEF;
-      sym.st_size = 0;
       break;
 
     case bfd_link_hash_defined:
@@ -6526,6 +6525,9 @@ elf_link_output_extsym (struct elf_link_hash_entry *h, void *data)
 	bindtype = STB_WEAK;
       sym.st_info = ELF_ST_INFO (bindtype, ELF_ST_TYPE (sym.st_info));
     }
+
+   if (sym.st_shndx == SHN_UNDEF)
+     sym.st_size = 0;
 
   /* If a non-weak symbol with non-default visibility is not defined
      locally, it is a fatal error.  */
