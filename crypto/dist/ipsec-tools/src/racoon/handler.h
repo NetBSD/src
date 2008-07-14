@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.12 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: handler.h,v 1.13 2008/07/14 05:40:13 tteras Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -191,6 +191,7 @@ struct ph1handle {
 	struct isakmp_pl_hash *pl_hash;	/* pointer to hash payload */
 
 	time_t created;			/* timestamp for establish */
+	int initial_contact_received;	/* set if initial contact received */
 #ifdef ENABLE_STATS
 	struct timeval start;
 	struct timeval end;
