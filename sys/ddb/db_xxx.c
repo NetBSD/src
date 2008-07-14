@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.50 2008/07/10 13:28:23 blymn Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.51 2008/07/14 10:15:11 blymn Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.50 2008/07/10 13:28:23 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.51 2008/07/14 10:15:11 blymn Exp $");
 
 #include "opt_kgdb.h"
 
@@ -144,14 +144,18 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 		fp = ff->ff_file;
 
 		/* Only look at vnodes... */
-		if (fp->f_type == DTYPE_VNODE) {
-			vn = (struct vnode *) fp->f_data;
-			vfs_vnode_print(vn, full, db_printf);
+		if ((fp != NULL) && (fp->f_type == DTYPE_VNODE)) {
+			if (fp->f_data != NULL) {
+				vn = (struct vnode *) fp->f_data;
+				vfs_vnode_print(vn, full, db_printf);
 
 #ifdef LOCKDEBUG
-			lockdebug_lock_print(&(vn->v_uobj.vmobjlock),
-			     db_printf);
+				db_printf("\nv_uobj.vmobjlock lock details:\n");
+				lockdebug_lock_print(&(vn->v_uobj.vmobjlock),
+					     db_printf);
+				db_printf("\n");
 #endif
+			}
 		}
 	}
 }
