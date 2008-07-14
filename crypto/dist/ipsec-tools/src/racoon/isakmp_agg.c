@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_agg.c,v 1.10 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_agg.c,v 1.11 2008/07/14 05:40:13 tteras Exp $	*/
 
 /* Id: isakmp_agg.c,v 1.28 2006/04/06 16:46:08 manubsd Exp */
 
@@ -455,7 +455,9 @@ agg_i2recv(iph1, msg)
 #endif
 			break;
 		case ISAKMP_NPTYPE_N:
-			isakmp_check_notify(pa->ptr, iph1);
+			isakmp_log_notify(iph1,
+				(struct isakmp_pl_n *) pa->ptr,
+				"aggressive exchange");
 			break;
 #ifdef HAVE_GSSAPI
 		case ISAKMP_NPTYPE_GSS:
@@ -1428,7 +1430,9 @@ agg_r2recv(iph1, msg0)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_N:
-			isakmp_check_notify(pa->ptr, iph1);
+			isakmp_log_notify(iph1,
+				(struct isakmp_pl_n *) pa->ptr,
+				"aggressive exchange");
 			break;
 
 #ifdef ENABLE_NATT

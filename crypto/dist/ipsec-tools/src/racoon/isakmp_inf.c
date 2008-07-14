@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.30 2008/07/11 08:02:06 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.31 2008/07/14 05:40:13 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -111,7 +111,6 @@ static void isakmp_info_send_r_u __P((void *));
 #endif
 
 static void purge_isakmp_spi __P((int, isakmp_index *, size_t));
-static void info_recv_initialcontact __P((struct ph1handle *));
 
 /* %%%
  * Information Exchange
@@ -329,6 +328,67 @@ isakmp_info_recv(iph1, msg0)
 	return error;
 }
 
+
+/*
+ * log unhandled / unallowed Notification payload
+ */
+int
+isakmp_log_notify(iph1, notify, exchange)
+	struct ph1handle *iph1;
+	struct isakmp_pl_n *notify;
+	const char *exchange;
+{
+	u_int type;
+	vchar_t *ndata;
+	char *nraw, *nhex;
+	size_t l;
+
+	type = ntohs(notify->type);
+	if (ntohs(notify->h.len) < sizeof(*notify) + notify->spi_size) {
+		plog(LLV_ERROR, LOCATION, iph1->remote,
+			"invalid spi_size in %s notification in %s.\n",
+			s_isakmp_notify_msg(type), exchange);
+		return -1;
+	}
+
+	plog(LLV_ERROR, LOCATION, iph1->remote,
+		"notification %s received in %s.\n",
+		s_isakmp_notify_msg(type), exchange);
+
+	nraw = ((char*) notify) + sizeof(*notify) + notify->spi_size;
+	l = ntohs(notify->h.len) - sizeof(*notify) - notify->spi_size;
+	if (l > 0) {
+		if (type >= ISAKMP_NTYPE_MINERROR &&
+		    type <= ISAKMP_NTYPE_MAXERROR) {
+			ndata = vmalloc(l);
+			if (ndata != NULL) {
+				memcpy(ndata->v, nraw, ndata->l);
+				plog(LLV_ERROR, LOCATION, iph1->remote,
+					"error message: '%s'.\n",
+					binsanitize(ndata->v, ndata->l));
+				vfree(ndata);
+			} else {
+				plog(LLV_ERROR, LOCATION, iph1->remote,
+					"Cannot allocate memory\n");
+			}
+		} else {
+			nhex = val2str(nraw, l);
+			if (nhex != NULL) {
+				plog(LLV_ERROR, LOCATION, iph1->remote,
+					"notification payload: %s.\n",
+					nhex);
+				racoon_free(nhex);
+			} else {
+				plog(LLV_ERROR, LOCATION, iph1->remote,
+					"Cannot allocate memory\n");
+			}
+		}
+	}
+
+	return 0;
+}
+
+
 /*
  * handling of Notification payload
  */
@@ -340,14 +400,8 @@ isakmp_info_recv_n(iph1, notify, msgid, encrypted)
 	int encrypted;
 {
 	u_int type;
-	vchar_t *pbuf;
-	vchar_t *ndata;
-	char *nraw;
-	size_t l;
-	char *spi;
 
 	type = ntohs(notify->type);
-
 	switch (type) {
 	case ISAKMP_NTYPE_CONNECTED:
 	case ISAKMP_NTYPE_RESPONDER_LIFETIME:
@@ -359,8 +413,7 @@ isakmp_info_recv_n(iph1, notify, msgid, encrypted)
 		break;
 	case ISAKMP_NTYPE_INITIAL_CONTACT:
 		if (encrypted)
-			info_recv_initialcontact(iph1);
-			return 0;
+			return isakmp_info_recv_initialcontact(iph1, NULL);
 		break;
 #ifdef ENABLE_DPD
 	case ISAKMP_NTYPE_R_U_THERE:
@@ -374,76 +427,23 @@ isakmp_info_recv_n(iph1, notify, msgid, encrypted)
 				(struct isakmp_pl_ru *)notify, msgid);
 		break;
 #endif
-	default:
-	    {
-		/* XXX there is a potential of dos attack. */
-		if(type >= ISAKMP_NTYPE_MINERROR &&
-		   type <= ISAKMP_NTYPE_MAXERROR) {
-			if (msgid == 0) {
-				/* don't think this realy deletes ph1 ? */
-				plog(LLV_ERROR, LOCATION, iph1->remote,
-					"delete phase1 handle.\n");
-				return -1;
-			} else {
-				if (getph2bymsgid(iph1, msgid) == NULL) {
-					plog(LLV_ERROR, LOCATION, iph1->remote,
-						"fatal %s notify messsage, "
-						"phase1 should be deleted.\n",
-						s_isakmp_notify_msg(type));
-				} else {
-					plog(LLV_ERROR, LOCATION, iph1->remote,
-						"fatal %s notify messsage, "
-						"phase2 should be deleted.\n",
-						s_isakmp_notify_msg(type));
-				}
-			}
-		} else {
-			plog(LLV_ERROR, LOCATION, iph1->remote,
-				"unhandled notify message %s, "
-				"no phase2 handle found.\n",
-				s_isakmp_notify_msg(type));
-		}
-	    }
-	    break;
 	}
 
-	/* get spi if specified and allocate */
-	if(notify->spi_size > 0) {
-		if (ntohs(notify->h.len) < sizeof(*notify) + notify->spi_size) {
-			plog(LLV_ERROR, LOCATION, iph1->remote,
-				"invalid spi_size in notification payload.\n");
-			return -1;
-		}
-		spi = val2str((char *)(notify + 1), notify->spi_size);
+	/* If we receive a error notification we should delete the related
+	 * phase1 / phase2 handle, and send an event to racoonctl.
+	 * However, since phase1 error notifications are not encrypted and
+	 * can not be authenticated, it would allow a DoS attack possibility
+	 * to handle them.
+	 * Phase2 error notifications should be encrypted, so we could handle
+	 * those, but it needs implementing (the old code didn't implement
+	 * that either).
+	 * So we are good to just log the messages here.
+	 */
+	if (encrypted)
+		isakmp_log_notify(iph1, notify, "informational exchange");
+	else
+		isakmp_log_notify(iph1, notify, "unencrypted informational exchange");
 
-		plog(LLV_DEBUG, LOCATION, iph1->remote,
-			"notification message %d:%s, "
-			"doi=%d proto_id=%d spi=%s(size=%d).\n",
-			type, s_isakmp_notify_msg(type),
-			ntohl(notify->doi), notify->proto_id, spi, notify->spi_size);
-
-		racoon_free(spi);
-	}
-
-	/* Send the message data to the logs */
-	if(type >= ISAKMP_NTYPE_MINERROR &&
-	   type <= ISAKMP_NTYPE_MAXERROR) {
-		l = ntohs(notify->h.len) - sizeof(*notify) - notify->spi_size;
-		if (l > 0) {
-			nraw = (char*)notify;	
-			nraw += sizeof(*notify) + notify->spi_size;
-			if ((ndata = vmalloc(l)) != NULL) {
-				memcpy(ndata->v, nraw, ndata->l);
-				plog(LLV_ERROR, LOCATION, iph1->remote,
-				    "Message: '%s'.\n", 
-				    binsanitize(ndata->v, ndata->l));
-				vfree(ndata);
-			} else {
-				plog(LLV_ERROR, LOCATION, iph1->remote,
-				    "Cannot allocate memory\n");
-			}
-		}
-	}
 	return 0;
 }
 
@@ -1262,15 +1262,17 @@ purge_ipsec_spi(dst0, proto, spi, n)
 }
 
 /*
- * delete all phase2 sa relatived to the destination address.
+ * delete all phase2 sa relatived to the destination address
+ * (except the phase2 within which the INITIAL-CONTACT was received).
  * Don't delete Phase 1 handlers on INITIAL-CONTACT, and don't ignore
  * an INITIAL-CONTACT if we have contacted the peer.  This matches the
  * Sun IKE behavior, and makes rekeying work much better when the peer
  * restarts.
  */
-static void
-info_recv_initialcontact(iph1)
+int
+isakmp_info_recv_initialcontact(iph1, protectedph2)
 	struct ph1handle *iph1;
+	struct ph2handle *protectedph2;
 {
 	vchar_t *buf = NULL;
 	struct sadb_msg *msg, *next, *end;
@@ -1283,8 +1285,10 @@ info_recv_initialcontact(iph1)
 	char *loc, *rem;
 #endif
 
+	plog(LLV_INFO, LOCATION, iph1->remote, "received INITIAL-CONTACT\n");
+
 	if (f_local)
-		return;
+		return 0;
 
 #if 0
 	loc = racoon_strdup(saddrwop2str(iph1->local));
@@ -1333,7 +1337,7 @@ info_recv_initialcontact(iph1)
 
 	racoon_free(loc);
 	racoon_free(rem);
-	return;
+	return 0;
 
  the_hard_way:
 	racoon_free(loc);
@@ -1344,7 +1348,7 @@ info_recv_initialcontact(iph1)
 	if (buf == NULL) {
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"pfkey_dump_sadb returned nothing.\n");
-		return;
+		return 0;
 	}
 
 	msg = (struct sadb_msg *)buf->v;
@@ -1452,7 +1456,7 @@ info_recv_initialcontact(iph1)
 		 */
 		proto_id = pfkey2ipsecdoi_proto(msg->sadb_msg_satype);
 		iph2 = getph2bysaidx(src, dst, proto_id, sa->sadb_sa_spi);
-		if (iph2) {
+		if (iph2 && iph2 != protectedph2) {
 			delete_spd(iph2, 0);
 			unbindph12(iph2);
 			remph2(iph2);
@@ -1463,43 +1467,7 @@ info_recv_initialcontact(iph1)
 	}
 
 	vfree(buf);
-}
-
-void
-isakmp_check_notify(gen, iph1)
-	struct isakmp_gen *gen;		/* points to Notify payload */
-	struct ph1handle *iph1;
-{
-	struct isakmp_pl_n *notify = (struct isakmp_pl_n *)gen;
-
-	plog(LLV_DEBUG, LOCATION, iph1->remote,
-		"Notify Message received\n");
-
-	switch (ntohs(notify->type)) {
-	case ISAKMP_NTYPE_CONNECTED:
-	case ISAKMP_NTYPE_RESPONDER_LIFETIME:
-	case ISAKMP_NTYPE_REPLAY_STATUS:
-	case ISAKMP_NTYPE_HEARTBEAT:
-#ifdef ENABLE_HYBRID
-	case ISAKMP_NTYPE_UNITY_HEARTBEAT:
-#endif
-		plog(LLV_WARNING, LOCATION, iph1->remote,
-			"ignore %s notification.\n",
-			s_isakmp_notify_msg(ntohs(notify->type)));
-		break;
-	case ISAKMP_NTYPE_INITIAL_CONTACT:
-		plog(LLV_WARNING, LOCATION, iph1->remote,
-			"ignore INITIAL-CONTACT notification, "
-			"because it is only accepted after phase1.\n");
-		break;
-	default:
-		isakmp_info_send_n1(iph1, ISAKMP_NTYPE_INVALID_PAYLOAD_TYPE, NULL);
-		plog(LLV_ERROR, LOCATION, iph1->remote,
-			"received unknown notification type %s.\n",
-			s_isakmp_notify_msg(ntohs(notify->type)));
-	}
-
-	return;
+	return 0;
 }
 
 

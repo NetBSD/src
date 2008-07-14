@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_ident.c,v 1.7 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.8 2008/07/14 05:40:13 tteras Exp $	*/
 
 /* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
@@ -92,6 +92,7 @@
 
 static vchar_t *ident_ir2mx __P((struct ph1handle *));
 static vchar_t *ident_ir3mx __P((struct ph1handle *));
+static int ident_recv_n __P((struct ph1handle *, struct isakmp_gen *));
 
 /* %%%
  * begin Identity Protection Mode as initiator.
@@ -757,7 +758,7 @@ ident_i4recv(iph1, msg0)
 			(void)check_vendorid(pa->ptr);
 			break;
 		case ISAKMP_NPTYPE_N:
-			isakmp_check_notify(pa->ptr, iph1);
+			ident_recv_n(iph1, pa->ptr);
 			break;
 		default:
 			/* don't send information, see ident_r1recv() */
@@ -1455,7 +1456,7 @@ ident_r3recv(iph1, msg0)
 			(void)check_vendorid(pa->ptr);
 			break;
 		case ISAKMP_NPTYPE_N:
-			isakmp_check_notify(pa->ptr, iph1);
+			ident_recv_n(iph1, pa->ptr);
 			break;
 		default:
 			/* don't send information, see ident_r1recv() */
@@ -1955,3 +1956,28 @@ end:
 
 	return buf;
 }
+
+/*
+ * handle a notification payload inside identity exchange.
+ * called only when the packet has been verified to be encrypted.
+ */
+static int
+ident_recv_n(iph1, gen)
+	struct ph1handle *iph1;
+	struct isakmp_gen *gen;
+{
+	struct isakmp_pl_n *notify = (struct isakmp_pl_n *) gen;
+	u_int type;
+
+	type = ntohs(notify->type);
+	switch (type) {
+	case ISAKMP_NTYPE_INITIAL_CONTACT:
+		iph1->initial_contact_received = TRUE;
+		break;
+	default:
+		isakmp_log_notify(iph1, notify, "identity exchange");
+		break;
+	}
+	return 0;
+}
+
