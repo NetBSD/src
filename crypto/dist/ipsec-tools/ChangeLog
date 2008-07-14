@@ -9,6 +9,12 @@
 	  src/racoon/strnames.c : clean ups to notification payload handling,
           and handle INITIAL-CONTACT notification in last main mode exchange
 	  (delayed) and during quick mode exchanges (Track:264)
+	* src/racoon/handler.h
+	  src/racoon/ipsec_doi.c
+	  src/racoon/ipsec_doi.h
+	  src/racoon/isakmp_quick.c
+	  src/racoon/pfkey.c : handle RESPONDER-LIFETIME notification
+	  according to proposal check level (Track:265)
 
 2008-07-11  Timo Teras  <timo.teras@iki.fi>
 	Track:259, original patch from Atis Elsts <the.kfx@gmail.com>:

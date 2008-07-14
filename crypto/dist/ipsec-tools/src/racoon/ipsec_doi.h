@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.h,v 1.10 2007/12/04 19:52:30 mgrooms Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.11 2008/07/14 05:45:15 tteras Exp $	*/
 
 /* Id: ipsec_doi.h,v 1.15 2006/08/11 16:06:30 vanhu Exp */
 
@@ -244,6 +244,9 @@ extern int ipsecdoi_t2satrns __P((struct isakmp_pl_t *,
 extern int ipsecdoi_authalg2trnsid __P((int));
 extern int idtype2doi __P((int));
 extern int doi2idtype __P((int));
+
+extern int ipsecdoi_parse_responder_lifetime __P((struct isakmp_pl_n *notify,
+	u_int32_t *lifetime_sec, u_int32_t *liftime_kb));
 
 
 #endif /* _IPSEC_DOI_H */

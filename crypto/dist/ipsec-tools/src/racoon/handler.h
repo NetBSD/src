@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.13 2008/07/14 05:40:13 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.14 2008/07/14 05:45:15 tteras Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -294,6 +294,8 @@ struct ph2handle {
 	struct sainfo *sainfo;		/* place holder of sainfo */
 	struct saprop *proposal;	/* SA(s) proposal. */
 	struct saprop *approval;	/* SA(s) approved. */
+	u_int32_t lifetime_secs;	/* responder lifetime (seconds) */
+	u_int32_t lifetime_kb;		/* responder lifetime (kbytes) */
 	caddr_t spidx_gen;		/* policy from peer's proposal */
 
 	struct dhgroup *pfsgrp;		/* DH; prime number */
