@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.28 2008/06/18 06:11:38 mgrooms Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.29 2008/07/14 05:45:15 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.28 2008/06/18 06:11:38 mgrooms Exp $ */
+/* $Id: pfkey.c,v 1.29 2008/07/14 05:45:15 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1058,7 +1058,10 @@ pk_sendupdate(iph2)
 	/* fill in some needed for pfkey_send_update2 */
 	memset (&sa_args, 0, sizeof (sa_args));
 	sa_args.so = lcconf->sock_pfkey;
-	sa_args.l_addtime = iph2->approval->lifetime;
+	if (iph2->lifetime_secs)
+		sa_args.l_addtime = iph2->lifetime_secs;
+	else
+		sa_args.l_addtime = iph2->approval->lifetime;
 	sa_args.seq = iph2->seq; 
 	sa_args.wsize = 4;
 
@@ -1344,7 +1347,10 @@ pk_sendadd(iph2)
 	/* fill in some needed for pfkey_send_update2 */
 	memset (&sa_args, 0, sizeof (sa_args));
 	sa_args.so = lcconf->sock_pfkey;
-	sa_args.l_addtime = iph2->approval->lifetime;
+	if (iph2->lifetime_secs)
+		sa_args.l_addtime = iph2->lifetime_secs;
+	else
+		sa_args.l_addtime = iph2->approval->lifetime;
 	sa_args.seq = iph2->seq;
 	sa_args.wsize = 4;
 

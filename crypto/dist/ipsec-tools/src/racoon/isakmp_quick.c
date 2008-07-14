@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.18 2008/07/14 05:40:13 tteras Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.19 2008/07/14 05:45:15 tteras Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2482,15 +2482,55 @@ ph2_recv_n(iph2, gen)
 	struct ph2handle *iph2;
 	struct isakmp_gen *gen;
 {
+	struct ph1handle *iph1 = iph2->ph1;
 	struct isakmp_pl_n *notify = (struct isakmp_pl_n *) gen;
 	u_int type;
+	int check_level;
 
 	type = ntohs(notify->type);
 	switch (type) {
 	case ISAKMP_NTYPE_CONNECTED:
 		break;
 	case ISAKMP_NTYPE_INITIAL_CONTACT:
-		return isakmp_info_recv_initialcontact(iph2->ph1, iph2);
+		return isakmp_info_recv_initialcontact(iph1, iph2);
+	case ISAKMP_NTYPE_RESPONDER_LIFETIME:
+		ipsecdoi_parse_responder_lifetime(notify,
+			&iph2->lifetime_secs, &iph2->lifetime_kb);
+
+		if (iph1 != NULL && iph1->rmconf != NULL) {
+			check_level = iph1->rmconf->pcheck_level;
+		} else {
+			if (iph1 != NULL)
+				plog(LLV_DEBUG, LOCATION, NULL,
+					"No phase1 rmconf found !\n");
+			else
+				plog(LLV_DEBUG, LOCATION, NULL,
+					"No phase1 found !\n");
+			check_level = PROP_CHECK_EXACT;
+		}
+
+		switch (check_level) {
+		case PROP_CHECK_OBEY:
+			break;
+		case PROP_CHECK_STRICT:
+		case PROP_CHECK_CLAIM:
+			if (iph2->sainfo == NULL
+			 || iph2->sainfo->lifetime <= iph2->lifetime_secs) {
+				plog(LLV_WARNING, LOCATION, NULL,
+					"RESPONDER-LIFETIME: lifetime mismatch\n");
+				iph2->lifetime_secs = 0;
+			}
+			break;
+		case PROP_CHECK_EXACT:
+			if (iph2->sainfo == NULL
+			 || iph2->sainfo->lifetime != iph2->lifetime_secs) {
+				plog(LLV_WARNING, LOCATION, NULL,
+					"RESPONDER-LIFETIME: lifetime mismatch\n");
+				iph2->lifetime_secs = 0;
+			}
+			break;
+		}
+		break;
 	default:
 		isakmp_log_notify(iph2->ph1, notify, "phase2 exchange");
 		isakmp_info_send_n2(iph2, ISAKMP_NTYPE_INVALID_PAYLOAD_TYPE,
