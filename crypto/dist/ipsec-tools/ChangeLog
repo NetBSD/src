@@ -1,3 +1,15 @@
+2008-07-14  Timo Teras  <timo.teras@iki.fi>
+	* src/racoon/handler.h
+	  src/racoon/isakmp.c
+	  src/racoon/isakmp_agg.c
+	  src/racoon/isakmp_ident.c
+	  src/racoon/isakmp_inf.c
+	  src/racoon/isakmp_inf.h
+	  src/racoon/isakmp_quick.c
+	  src/racoon/strnames.c : clean ups to notification payload handling,
+          and handle INITIAL-CONTACT notification in last main mode exchange
+	  (delayed) and during quick mode exchanges (Track:264)
+
 2008-07-11  Timo Teras  <timo.teras@iki.fi>
 	Track:259, original patch from Atis Elsts <the.kfx@gmail.com>:
 	* src/racoon/isakmp.c, src/racoon/isakmp_inf.c: fix double memfree
