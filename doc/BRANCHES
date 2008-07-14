@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.263 2008/07/07 14:53:37 haad Exp $
+#	$NetBSD: BRANCHES,v 1.264 2008/07/14 08:49:15 simonb Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -617,6 +617,11 @@ Notes:		Still has a number of issues:
 		 - Log must currently live at end of partition.
 		 - No log locators.
 		 - Some heavy workload performance issues on SMP machines.
+		 - Removing large files (sparse only?) takes a long time.
+		   Eg, a file created with
+		      dd if=/dev/zero of=foox bs=1 count=1 seek=11261748520550
+		   takes 0:00.00 to remove on my test box without logging and
+		   0:22.25 to remove with logging.  No disk IO during this...
 
 Branch:		thorpej-atomic
 Description:	Implementation of an atomic memory operations API modeled
