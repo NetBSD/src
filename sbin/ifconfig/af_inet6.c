@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.22 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.23 2008/07/15 20:56:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.22 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.23 2008/07/15 20:56:13 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -73,6 +73,7 @@ static int setia6lifetime(prop_dictionary_t, int64_t, time_t *, uint32_t *);
 static void in6_delscopeid(struct sockaddr_in6 *sin6);
 static void in6_status(prop_dictionary_t, prop_dictionary_t, bool);
 
+static struct usage_func usage;
 static cmdloop_branch_t branch[2];
 
 static const struct kwinst ia6flagskw[] = {
@@ -480,11 +481,22 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static void
+in6_usage(prop_dictionary_t env)
+{
+	fprintf(stderr,
+	    "\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
+	    "\t[ tentative | -tentative ] [ pltime n ] [ vltime n ] "
+	    "[ eui64 ]\n");
+}
+
+static void
 in6_constructor(void)
 {
 	if (register_flag('L') != 0)
 		err(EXIT_FAILURE, __func__);
 	register_family(&in6af);
+	usage_func_init(&usage, in6_usage);
+	register_usage(&usage);
 	cmdloop_branch_init(&branch[0], &ia6flags.pk_parser);
 	cmdloop_branch_init(&branch[1], &inet6.pk_parser);
 	register_cmdloop_branch(&branch[0]);

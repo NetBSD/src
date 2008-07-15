@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.13 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: agr.c,v 1.14 2008/07/15 20:56:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.13 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: agr.c,v 1.14 2008/07/15 20:56:13 dyoung Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -174,13 +174,22 @@ again:
 }
 
 static status_func_t status;
+static usage_func_t usage;
 static cmdloop_branch_t branch;
+
+static void
+agr_usage(prop_dictionary_t env)
+{
+	fprintf(stderr, "\t[ agrport i ] [ -agrport i ]\n");
+}
 
 static void
 agr_constructor(void)
 {
-	register_status(&status);
 	status_func_init(&status, agr_status);
+	usage_func_init(&usage, agr_usage);
+	register_status(&status);
+	register_usage(&usage);
 	cmdloop_branch_init(&branch, &agr.pk_parser);
 	register_cmdloop_branch(&branch);
 }

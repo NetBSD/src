@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.208 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.209 2008/07/15 20:56:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: ifconfig.c,v 1.208 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.209 2008/07/15 20:56:13 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -239,6 +239,8 @@ struct paddr broadcast = PADDR_INITIALIZER(&broadcast,
 
 static SIMPLEQ_HEAD(, afswtch) aflist = SIMPLEQ_HEAD_INITIALIZER(aflist);
 
+static SIMPLEQ_HEAD(, usage_func) usage_funcs =
+    SIMPLEQ_HEAD_INITIALIZER(usage_funcs);
 static SIMPLEQ_HEAD(, status_func) status_funcs =
     SIMPLEQ_HEAD_INITIALIZER(status_funcs);
 static SIMPLEQ_HEAD(, statistics_func) statistics_funcs =
@@ -323,10 +325,16 @@ struct piface iface_start = PIFACE_INITIALIZER(&iface_start,
 struct piface iface_only = PIFACE_INITIALIZER(&iface_only, "iface",
     media_status_exec, "if", NULL);
 
-static int
-check_flag(char *flags, int flag)
+static bool
+flag_is_registered(const char *flags, int flag)
 {
-	if (flags != NULL && strchr(flags, flag) != NULL) {
+	return flags != NULL && strchr(flags, flag) != NULL;
+}
+
+static int
+check_flag(const char *flags, int flag)
+{
+	if (flag_is_registered(flags, flag)) {
 		errno = EEXIST;
 		return -1;
 	}
@@ -360,6 +368,12 @@ status_func_init(status_func_t *f, status_cb_t func)
 	f->f_func = func;
 }
 
+void
+usage_func_init(usage_func_t *f, usage_cb_t func)
+{
+	f->f_func = func;
+}
+
 int
 register_cmdloop_branch(cmdloop_branch_t *b)
 {
@@ -378,6 +392,13 @@ int
 register_status(status_func_t *f)
 {
 	SIMPLEQ_INSERT_TAIL(&status_funcs, f, f_next);
+	return 0;
+}
+
+int
+register_usage(usage_func_t *f)
+{
+	SIMPLEQ_INSERT_TAIL(&usage_funcs, f, f_next);
 	return 0;
 }
 
@@ -581,9 +602,7 @@ main(int argc, char **argv)
 			start = &opt_family_only.pb_parser;
 			break;
 
-#ifdef INET6
 		case 'L':
-#endif
 		case 'm':
 		case 'v':
 		case 'z':
@@ -619,10 +638,8 @@ main(int argc, char **argv)
 	 */
 	if ((lflag || Cflag) && (aflag || get_flag('m') || vflag || zflag))
 		usage();
-#ifdef INET6
 	if ((lflag || Cflag) && get_flag('L'))
 		usage();
-#endif
 	if (lflag && Cflag)
 		usage();
 
@@ -1269,35 +1286,34 @@ void
 usage(void)
 {
 	const char *progname = getprogname();
+	usage_func_t *usage_f;
+	prop_dictionary_t env;
 
-	fprintf(stderr,
-	    "usage: %s [-h] [-m] [-v] [-z] "
-#ifdef INET6
-		"[-L] "
-#endif
-		"interface\n"
+	if ((env = prop_dictionary_create()) == NULL)
+		err(EXIT_FAILURE, "%s: prop_dictionary_create", __func__);
+
+	fprintf(stderr, "usage: %s [-h] %s[-v] [-z] %sinterface\n"
 		"\t[ af [ address [ dest_addr ] ] [ netmask mask ] [ prefixlen n ]\n"
 		"\t\t[ alias | -alias ] ]\n"
-		"\t[ up ] [ down ] [ metric n ] [ mtu n ]\n"
-		"\t[ nwid network_id ] [ nwkey network_key | -nwkey ]\n"
-		"\t[ list scan ]\n"
-		"\t[ powersave | -powersave ] [ powersavesleep duration ]\n"
-		"\t[ hidessid | -hidessid ] [ apbridge | -apbridge ]\n"
-		"\t[ [ af ] tunnel src_addr dest_addr ] [ deletetunnel ]\n"
+		"\t[ up ] [ down ] [ metric n ] [ mtu n ]\n", progname,
+		flag_is_registered(gflags, 'm') ? "[-m] " : "",
+		flag_is_registered(gflags, 'L') ? "[-L] " : "");
+
+	SIMPLEQ_FOREACH(usage_f, &usage_funcs, f_next)
+		(*usage_f->f_func)(env);
+
+	fprintf(stderr,
 		"\t[ arp | -arp ]\n"
-		"\t[ media type ] [ mediaopt opts ] [ -mediaopt opts ] "
-		"[ instance minst ]\n"
 		"\t[ preference n ]\n"
-		"\t[ vlan n vlanif i ]\n"
-		"\t[ agrport i ] [ -agrport i ]\n"
-		"\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
-		"\t[ tentative | -tentative ] [ pltime n ] [ vltime n ] [ eui64 ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
-		"       %s -a [-b] [-h] [-m] [-d] [-u] [-v] [-z] [ af ]\n"
-		"       %s -l [-b] [-d] [-u] [-s]\n"
+		"       %s -a [-b] [-d] [-h] %s[-u] [-v] [-z] [ af ]\n"
+		"       %s -l [-b] [-d] [-s] [-u]\n"
 		"       %s -C\n"
 		"       %s interface create\n"
 		"       %s interface destroy\n",
-		progname, progname, progname, progname, progname, progname);
+		progname, flag_is_registered(gflags, 'm') ? "[-m] " : "",
+		progname, progname, progname, progname);
+
+	prop_object_release((prop_object_t)env);
 	exit(EXIT_FAILURE);
 }

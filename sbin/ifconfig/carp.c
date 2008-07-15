@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.10 2008/07/02 07:44:14 dyoung Exp $ */
+/* $NetBSD: carp.c,v 1.11 2008/07/15 20:56:13 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: carp.c,v 1.10 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: carp.c,v 1.11 2008/07/15 20:56:13 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: carp.c,v 1.10 2008/07/02 07:44:14 dyoung Exp $");
 #include "extern.h"
 
 static status_func_t status;
+static usage_func_t usage;
 static cmdloop_branch_t branch;
 
 static void carp_constructor(void) __attribute__((constructor));
@@ -274,10 +275,21 @@ setcarpdev(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static void
+carp_usage(prop_dictionary_t env)
+{
+	fprintf(stderr,
+	    "\t[ advbase n ] [ advskew n ] [ carpdev iface ] "
+	    "[ pass passphrase ] [ state state ] [ vhid n ]\n");
+
+}
+
+static void
 carp_constructor(void)
 {
 	cmdloop_branch_init(&branch, &carp.pk_parser);
 	register_cmdloop_branch(&branch);
 	status_func_init(&status, carp_status);
+	usage_func_init(&usage, carp_usage);
 	register_status(&status);
+	register_usage(&usage);
 }

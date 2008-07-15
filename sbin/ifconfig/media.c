@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.1 2008/07/02 07:44:15 dyoung Exp $");
+__RCSID("$NetBSD: media.c,v 1.2 2008/07/15 20:56:13 dyoung Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -43,6 +43,8 @@ static int unsetmediaopt(prop_dictionary_t, prop_dictionary_t);
 static int	media_current;
 static int	mediaopt_set;
 static int	mediaopt_clear;
+
+static struct usage_func usage;
 
 static const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
 
@@ -444,8 +446,18 @@ media_status(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static void
+media_usage(prop_dictionary_t env)
+{
+	fprintf(stderr,
+	    "\t[ media type ] [ mediaopt opts ] [ -mediaopt opts ] "
+	    "[ instance minst ]\n");
+}
+
+static void
 media_constructor(void)
 {
 	if (register_flag('m') != 0)
 		err(EXIT_FAILURE, __func__);
+	usage_func_init(&usage, media_usage);
+	register_usage(&usage);
 }
