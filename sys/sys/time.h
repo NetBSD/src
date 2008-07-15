@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.61 2008/03/16 13:19:55 yamt Exp $	*/
+/*	$NetBSD: time.h,v 1.62 2008/07/15 16:18:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -221,6 +221,7 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 			(vsp)->tv_nsec += 1000000000L;			\
 		}							\
 	} while (/* CONSTCOND */ 0)
+#define timespec2ns(x) (((uint64_t)(x)->tv_sec) * 1000000000L + (x)->tv_nsec)
 #endif /* _NETBSD_SOURCE */
 
 /*
