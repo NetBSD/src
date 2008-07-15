@@ -26,7 +26,7 @@
  * major numbers.
  */
 int
-nbsd_check_dev(int major,char *path)
+nbsd_check_dev(int major, const char *path)
 {
 
 	size_t val_len,i;
