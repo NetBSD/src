@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.27 2008/07/10 17:38:31 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.28 2008/07/15 15:49:05 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.27 2008/07/10 17:38:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.28 2008/07/15 15:49:05 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -694,15 +694,15 @@ udf_lookup(void *v)
 		/* special case 2 '..' */
 		DPRINTF(LOOKUP, ("\tlookup '..'\n"));
 
-		/* first unlock parent */
-		VOP_UNLOCK(dvp, 0);
-
 		/* get our node */
 		name    = "..";
 		namelen = 2;
 		found = udf_lookup_name_in_dir(dvp, name, namelen, &icb_loc);
 		if (!found)
 			error = ENOENT;
+
+		/* first unlock parent */
+		VOP_UNLOCK(dvp, 0);
 
 		if (error == 0) {
 			DPRINTF(LOOKUP, ("\tfound '..'\n"));
@@ -1881,6 +1881,13 @@ udf_rename(void *v)
 	tnode  = (tvp == NULL) ? NULL : VTOI(tvp);
 	tdnode = VTOI(tdvp);
 
+	/* lock our source dir */
+	if (fdnode != tdnode) {
+		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if (error != 0)
+			goto out_unlocked;
+	}
+
 	/* get info about the node to be moved */
 	error = VOP_GETATTR(fvp, &fvap, FSCRED);
 	KASSERT(error == 0);
@@ -1925,7 +1932,7 @@ udf_rename(void *v)
 	/* create new directory entry for the node */
 	error = udf_dir_attach(tdnode->ump, tdnode, fnode, &fvap, tcnp);
 	if (error)
-		goto out_unlocked;
+		goto out;
 
 	/* unlink old directory entry for the node, if failing, unattach new */
 	error = udf_dir_detach(tdnode->ump, fdnode, fnode, fcnp);
@@ -1933,10 +1940,8 @@ udf_rename(void *v)
 		udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
 
 out:
-#if 0
         if (fdnode != tdnode)
                 VOP_UNLOCK(fdvp, 0);
-#endif
 
 out_unlocked:
 	VOP_ABORTOP(tdvp, tcnp);
