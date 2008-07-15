@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.9 2008/07/02 07:44:15 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.10 2008/07/15 21:27:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse.c,v 1.9 2008/07/02 07:44:15 dyoung Exp $");
+__RCSID("$NetBSD: parse.c,v 1.10 2008/07/15 21:27:58 dyoung Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -963,7 +963,7 @@ out:
 }
 
 int
-matches_exec(const struct match *matches, prop_dictionary_t xenv, size_t nmatch)
+matches_exec(const struct match *matches, prop_dictionary_t oenv, size_t nmatch)
 {
 	int i, rc = 0;
 	const struct match *m;
@@ -979,8 +979,8 @@ matches_exec(const struct match *matches, prop_dictionary_t xenv, size_t nmatch)
 			continue;
 		dbg_warnx("%s.%d: m->m_parser->p_name %s", __func__, __LINE__,
 		    m->m_parser->p_name);
-		d = prop_dictionary_augment(m->m_env, xenv);
-		rc = (*pexec)(d, xenv);
+		d = prop_dictionary_augment(m->m_env, oenv);
+		rc = (*pexec)(d, oenv);
 		prop_object_release((prop_object_t)d);
 		if (rc == -1)
 			break;

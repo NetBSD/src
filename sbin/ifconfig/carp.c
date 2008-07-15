@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.11 2008/07/15 20:56:13 dyoung Exp $ */
+/* $NetBSD: carp.c,v 1.12 2008/07/15 21:27:58 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: carp.c,v 1.11 2008/07/15 20:56:13 dyoung Exp $");
+__RCSID("$NetBSD: carp.c,v 1.12 2008/07/15 21:27:58 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -152,7 +152,7 @@ carp_status(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 int
-setcarp_passwd(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarp_passwd(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	prop_data_t data;
@@ -175,7 +175,7 @@ setcarp_passwd(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 int
-setcarp_vhid(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarp_vhid(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	int64_t vhid;
@@ -194,7 +194,7 @@ setcarp_vhid(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 int
-setcarp_advskew(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarp_advskew(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	int64_t advskew;
@@ -214,7 +214,7 @@ setcarp_advskew(prop_dictionary_t env, prop_dictionary_t xenv)
 
 /* ARGSUSED */
 int
-setcarp_advbase(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarp_advbase(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	int64_t advbase;
@@ -234,7 +234,7 @@ setcarp_advbase(prop_dictionary_t env, prop_dictionary_t xenv)
 
 /* ARGSUSED */
 static int
-setcarp_state(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarp_state(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	int64_t carp_state;
@@ -254,7 +254,7 @@ setcarp_state(prop_dictionary_t env, prop_dictionary_t xenv)
 
 /* ARGSUSED */
 int
-setcarpdev(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarpdev(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	prop_data_t data;

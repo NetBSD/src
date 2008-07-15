@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.11 2008/07/15 20:56:13 dyoung Exp $	*/
+/*	$NetBSD: vlan.c,v 1.12 2008/07/15 21:27:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.11 2008/07/15 20:56:13 dyoung Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.12 2008/07/15 21:27:58 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -110,7 +110,7 @@ getvlan(prop_dictionary_t env, struct vlanreq *vlr, bool quiet)
 }
 
 int
-setvlan(prop_dictionary_t env, prop_dictionary_t xenv)
+setvlan(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct vlanreq vlr;
 	int64_t tag;
@@ -131,7 +131,7 @@ setvlan(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 int
-setvlanif(prop_dictionary_t env, prop_dictionary_t xenv)
+setvlanif(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct vlanreq vlr;
 	const char *parent;

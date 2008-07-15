@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.21 2008/07/15 20:56:13 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.22 2008/07/15 21:27:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.21 2008/07/15 20:56:13 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.22 2008/07/15 21:27:58 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -210,7 +210,7 @@ set80211(prop_dictionary_t env, uint16_t type, int16_t val, int16_t len,
 }
 
 static int
-sethidessid(prop_dictionary_t env, prop_dictionary_t xenv)
+sethidessid(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	bool on, rc;
 
@@ -220,7 +220,7 @@ sethidessid(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setapbridge(prop_dictionary_t env, prop_dictionary_t xenv)
+setapbridge(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	bool on, rc;
 
@@ -248,7 +248,7 @@ get80211opmode(prop_dictionary_t env)
 }
 
 static int
-setifssid(prop_dictionary_t env, prop_dictionary_t xenv)
+setifssid(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ieee80211_nwid nwid;
 	ssize_t len;
@@ -264,7 +264,7 @@ setifssid(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-unsetifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
+unsetifbssid(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ieee80211_bssid bssid;
 
@@ -276,7 +276,7 @@ unsetifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
+setifbssid(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	char buf[24];
 	struct ieee80211_bssid bssid;
@@ -299,7 +299,7 @@ setifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setifrts(prop_dictionary_t env, prop_dictionary_t xenv)
+setifrts(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	bool rc;
 	int16_t val;
@@ -312,7 +312,7 @@ setifrts(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setiffrag(prop_dictionary_t env, prop_dictionary_t xenv)
+setiffrag(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	bool rc;
 	int16_t val;
@@ -325,7 +325,7 @@ setiffrag(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setifchan(prop_dictionary_t env, prop_dictionary_t xenv)
+setifchan(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	bool rc;
 	struct ieee80211chanreq channel;
@@ -338,7 +338,7 @@ setifchan(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setifnwkey(prop_dictionary_t env, prop_dictionary_t xenv)
+setifnwkey(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *val;
 	char buf[256];
@@ -404,7 +404,7 @@ setifnwkey(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-unsetifnwkey(prop_dictionary_t env, prop_dictionary_t xenv)
+unsetifnwkey(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ieee80211_nwkey nwkey;
 	int i;
@@ -422,7 +422,7 @@ unsetifnwkey(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setifpowersave(prop_dictionary_t env, prop_dictionary_t xenv)
+setifpowersave(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ieee80211_power power;
 	bool on, rc;
@@ -442,7 +442,7 @@ setifpowersave(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setifpowersavesleep(prop_dictionary_t env, prop_dictionary_t xenv)
+setifpowersavesleep(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ieee80211_power power;
 	int64_t maxsleep;
@@ -461,7 +461,7 @@ setifpowersavesleep(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-scan_exec(prop_dictionary_t env, prop_dictionary_t xenv)
+scan_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	scan_and_wait(env);
 	list_scan(env);

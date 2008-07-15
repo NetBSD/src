@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.c,v 1.12 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: af_iso.c,v 1.13 2008/07/15 21:27:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_iso.c,v 1.12 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: af_iso.c,v 1.13 2008/07/15 21:27:58 dyoung Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -147,7 +147,7 @@ iso_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static int
-setnsellength(prop_dictionary_t env, prop_dictionary_t xenv)
+setnsellength(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int af;
 
