@@ -8,6 +8,6 @@
 
 
 /* lib/netbsd/netbsd.c  */
-int nbsd_check_dev(int, char *);
+int nbsd_check_dev(int, const char *);
 
 #endif
