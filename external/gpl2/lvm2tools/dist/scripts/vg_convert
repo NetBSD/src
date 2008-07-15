@@ -1,0 +1,18 @@
+#!/bin/sh -x
+
+# Original script used to convert a VG from LVM1 to LVM2 metadata format.
+# Superceded by 'vgconvert', but left here to show how to do it step-by-step.
+
+# Takes vgname as parameter.  No error checking.  Uses temp file 'lvmbackup'.
+
+echo "Please use the 'vgconvert' tool instead"
+exit 1
+
+./vgcfgbackup $1 || exit 1
+./vgcfgbackup --file lvmbackup $1 || exit 1
+
+CMDS=`./pvscan -u | sed -ne "s/.*PV \(.*\) with UUID \(.*\) VG $1 .*/.\/pvcreate -ff -y -M lvm2 --restorefile lvmbackup -u \2 \1 ; /p"`
+
+sh -x -c "$CMDS" || exit 1
+
+./vgcfgrestore --file lvmbackup -M lvm2 $1 || exit 1
