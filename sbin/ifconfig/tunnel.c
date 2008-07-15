@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.15 2008/07/15 20:56:13 dyoung Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.16 2008/07/15 21:27:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.15 2008/07/15 20:56:13 dyoung Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.16 2008/07/15 21:27:58 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -83,7 +83,7 @@ struct pkw tunnel = PKW_INITIALIZER(&tunnel, "tunnel", NULL, NULL,
     tunnelkw, __arraycount(tunnelkw), NULL);
 
 static int
-settunnel(prop_dictionary_t env, prop_dictionary_t xenv)
+settunnel(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const struct paddr_prefix *srcpfx, *dstpfx;
 	struct if_laddrreq req;
@@ -143,7 +143,7 @@ settunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-deletetunnel(prop_dictionary_t env, prop_dictionary_t xenv)
+deletetunnel(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	if (indirect_ioctl(env, SIOCDIFPHYADDR, NULL) == -1)
 		err(EXIT_FAILURE, "SIOCDIFPHYADDR");
