@@ -1,4 +1,4 @@
-.\" $NetBSD: nbsvtool.1,v 1.3 2008/07/15 11:17:44 dillo Exp $
+.\" $NetBSD: nbsvtool.1,v 1.4 2008/07/15 12:14:13 wiz Exp $
 .\"
 .\" Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,8 +57,7 @@ Supported commands:
 Sign
 .Ar file ,
 placing the signature in
-.Ar file
-.Pa .sp7 .
+.Ar file Ns Pa .sp7 .
 The options
 .Fl f
 and
@@ -67,15 +66,14 @@ are required for this command.
 .It verify Ar file Op Ar signature
 Verify signature for
 .Ar file .
-If 
+If
 .Ar signature
 is not specified,
-.Ar file
-.Pa .sp7
+.Ar file Ns Pa .sp7
 is used.
 .It verify-code Ar file Op Ar signature
 This is a short cut for verify with the option
-.Fl u 
+.Fl u
 code.
 .El
 .Pp
@@ -113,16 +111,15 @@ Print verbose information about the signing certificate.
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
-.Pp
 Create signature file
 .Pa hello.sp7
-for file 
+for file
 .Pa hello .
 The private key is found in file
 .Pa key ,
-the matching certificate is in 
+the matching certificate is in
 .Pa cert ,
-additional certificates from 
+additional certificates from
 .Pa cert-chain
 are included in the created signature.
 .Dl nbsvtool -k key -f cert -c cert-chain sign hello hello.sp7
@@ -141,7 +138,6 @@ of those certificates to the signing certificate.
 .Xr openssl_smime 1
 .\" XXX: pointer to X509 documentation, CA setup
 .Sh CAVEATS
-.Pp
 As there is currently no default trust anchor, you must explicilty
 specify one with
 .Fl a ,
