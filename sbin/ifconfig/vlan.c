@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.10 2008/07/02 07:44:15 dyoung Exp $	*/
+/*	$NetBSD: vlan.c,v 1.11 2008/07/15 20:56:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.10 2008/07/02 07:44:15 dyoung Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.11 2008/07/15 20:56:13 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: vlan.c,v 1.10 2008/07/02 07:44:15 dyoung Exp $");
 #include "util.h"
 
 static status_func_t status;
+static usage_func_t usage;
 static cmdloop_branch_t branch;
 
 static void vlan_constructor(void) __attribute__((constructor));
@@ -172,10 +173,18 @@ vlan_status(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static void
+vlan_usage(prop_dictionary_t env)
+{
+	fprintf(stderr, "\t[ vlan n vlanif i ]\n");
+}
+
+static void
 vlan_constructor(void)
 {
 	cmdloop_branch_init(&branch, &vlan.pk_parser);
 	register_cmdloop_branch(&branch);
 	status_func_init(&status, vlan_status);
+	usage_func_init(&usage, vlan_usage);
 	register_status(&status);
+	register_usage(&usage);
 }

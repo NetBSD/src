@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2008/07/15 20:56:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,12 +39,25 @@
 #define	MASK    2
 #define	DSTADDR 3
 
+typedef void (*usage_cb_t)(prop_dictionary_t);
 typedef void (*status_cb_t)(prop_dictionary_t, prop_dictionary_t);
 typedef void (*statistics_cb_t)(prop_dictionary_t);
+
+enum flag_type {
+	  FLAG_T_MOD = 0
+	, FLAG_T_CMD = 1
+};
+
+typedef enum flag_type flag_type_t;
 
 struct statistics_func {
 	SIMPLEQ_ENTRY(statistics_func)	f_next;
 	statistics_cb_t			f_func;
+};
+
+struct usage_func {
+	SIMPLEQ_ENTRY(usage_func)	f_next;
+	usage_cb_t			f_func;
 };
 
 struct status_func {
@@ -60,6 +73,7 @@ struct cmdloop_branch {
 
 typedef struct statistics_func statistics_func_t;
 typedef struct status_func status_func_t;
+typedef struct usage_func usage_func_t;
 typedef struct cmdloop_branch cmdloop_branch_t;
 
 void cmdloop_branch_init(cmdloop_branch_t *, struct parser *);
@@ -67,8 +81,10 @@ int register_family(struct afswtch *);
 int register_cmdloop_branch(cmdloop_branch_t *);
 void statistics_func_init(statistics_func_t *, statistics_cb_t);
 void status_func_init(status_func_t *, status_cb_t);
+void usage_func_init(usage_func_t *, usage_cb_t);
 int register_statistics(statistics_func_t *);
 int register_status(status_func_t *);
+int register_usage(usage_func_t *);
 int register_flag(int);
 bool get_flag(int);
 
