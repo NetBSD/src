@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2008/05/22 14:48:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.30 2008/07/15 18:10:50 perry Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -65,9 +65,9 @@ get_args.o get_args.d: build_version.h
 build_version.h: get_args.c
 	${_MKTARGET_CREATE}
 	echo '#define AMU_BUILD_VERSION	1' > ${.TARGET}
-	echo '#define BUILD_USER "'$$(whoami)'"' >> ${.TARGET}
-	echo '#define BUILD_HOST "'$$(hostname)'"' >> ${.TARGET}
-	echo '#define BUILD_DATE "'$$(date)'"' >> ${.TARGET}
+	echo '#define BUILD_USER "'unknown'"' >> ${.TARGET}
+	echo '#define BUILD_HOST "'unknown'"' >> ${.TARGET}
+	echo '#define BUILD_DATE "'unknown'"' >> ${.TARGET}
 
 
 .include <bsd.prog.mk>
