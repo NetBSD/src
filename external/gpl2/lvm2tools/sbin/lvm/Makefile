@@ -1,5 +1,6 @@
 USE_FORT ?= no
 MKLINT = no
+MKMAN = no
 
 .include "../../lvm2tools.mk"
 
