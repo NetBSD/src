@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.942 2008/05/25 15:59:21 chs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.943 2008/07/15 22:27:31 tonnerre Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.942 2008/05/25 15:58:48 chs Exp
+ *	NetBSD: pcidevs,v 1.943 2008/07/15 22:26:42 tonnerre Exp
  */
 
 /*
@@ -8944,6 +8944,10 @@ static const struct pci_product pci_products[] = {
 	    "82965PM Host Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80862A01,
+	    "80862A01 Mobile PCI Express Root Port",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IGD,
 	    "82965PM Integrated Graphics Device",
 	},
@@ -10978,6 +10982,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_8400M_GS,
 	    "GeForce 8400M GS",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_NVS140M,
+	    "Quadro NVS 140M",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA,
@@ -14252,4 +14260,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2963;
+const int pci_nproducts = 2965;
