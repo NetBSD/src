@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.5 2008/06/18 07:04:23 mgrooms Exp $	*/
+/*	$NetBSD: misc.h,v 1.6 2008/07/15 00:47:09 mgrooms Exp $	*/
 
 /* Id: misc.h,v 1.9 2006/04/06 14:00:06 manubsd Exp */
 
@@ -42,7 +42,7 @@
 #define LOCATION        debug_location(__FILE__, __LINE__, NULL)
 #endif
 
-extern int hexdump __P((void *, size_t));
+extern int racoon_hexdump __P((void *, size_t));
 extern char *bit2str __P((int, int));
 extern void *get_newbuf __P((void *, size_t));
 extern const char *debug_location __P((const char *, int, const char *));
