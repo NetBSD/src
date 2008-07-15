@@ -1,3 +1,10 @@
+2008-07-14  Matthew Grooms
+	* src/racoon/crypto_openssl.c
+	  src/racoon/eaytest.c
+	  src/racoon/misc.c
+	  src/racoon/misc.h
+	  src/racoon/racoonctl.c : fix conflict with freebsd8 hexdump()
+
 2008-07-11  Timo Teras  <timo.teras@iki.fi>
 	Track:259, original patch from Atis Elsts <the.kfx@gmail.com>:
 	* src/racoon/isakmp.c, src/racoon/isakmp_inf.c: fix double memfree
