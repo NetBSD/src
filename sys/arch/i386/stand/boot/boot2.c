@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.31 2008/05/21 01:51:34 ad Exp $	*/
+/*	$NetBSD: boot2.c,v 1.32 2008/07/15 21:29:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -88,8 +88,7 @@
 
 extern struct x86_boot_params boot_params;
 
-extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
-	bootprog_maker[];
+extern	const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 int errno;
 
@@ -273,10 +272,11 @@ print_banner(void)
 			printf("%s\n", bootconf.banner[n]);
 	} else {
 #endif /* !SMALL */
-		printf("\n");
-		printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-		printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
-		printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
+		printf("\n"
+		       ">> %s, Revision %s (from NetBSD %s)\n"
+		       ">> Memory: %d/%d k\n",
+		       bootprog_name, bootprog_rev, bootprog_kernrev,
+		       getbasemem(), getextmem());
 
 #ifndef SMALL
 	}
