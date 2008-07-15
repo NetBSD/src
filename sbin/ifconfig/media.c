@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.2 2008/07/15 20:56:13 dyoung Exp $");
+__RCSID("$NetBSD: media.c,v 1.3 2008/07/15 21:27:58 dyoung Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -164,13 +164,13 @@ process_media_commands(prop_dictionary_t env)
 }
 
 static int
-setmedia(prop_dictionary_t env, prop_dictionary_t xenv)
+setmedia(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int type, subtype, inst;
 	prop_data_t data;
 	char *val;
 
-	init_current_media(env, xenv);
+	init_current_media(env, oenv);
 
 	data = (prop_data_t)prop_dictionary_get(env, "media");
 	assert(data != NULL);
@@ -204,13 +204,13 @@ setmedia(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setmediaopt(prop_dictionary_t env, prop_dictionary_t xenv)
+setmediaopt(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	char *invalid;
 	prop_data_t data;
 	char *val;
 
-	init_current_media(env, xenv);
+	init_current_media(env, oenv);
 
 	data = (prop_data_t)prop_dictionary_get(env, "mediaopt");
 	assert(data != NULL);
@@ -232,12 +232,12 @@ setmediaopt(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-unsetmediaopt(prop_dictionary_t env, prop_dictionary_t xenv)
+unsetmediaopt(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	char *invalid, *val;
 	prop_data_t data;
 
-	init_current_media(env, xenv);
+	init_current_media(env, oenv);
 
 	data = (prop_data_t)prop_dictionary_get(env, "unmediaopt");
 	if (data == NULL) {
@@ -264,13 +264,13 @@ unsetmediaopt(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setmediainst(prop_dictionary_t env, prop_dictionary_t xenv)
+setmediainst(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int type, subtype, options;
 	int64_t inst;
 	bool rc;
 
-	init_current_media(env, xenv);
+	init_current_media(env, oenv);
 
 	rc = prop_dictionary_get_int64(env, "mediainst", &inst);
 	assert(rc);
@@ -289,13 +289,13 @@ setmediainst(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setmediamode(prop_dictionary_t env, prop_dictionary_t xenv)
+setmediamode(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int type, subtype, options, inst, mode;
 	prop_data_t data;
 	char *val;
 
-	init_current_media(env, xenv);
+	init_current_media(env, oenv);
 
 	data = (prop_data_t)prop_dictionary_get(env, "mediamode");
 	assert(data != NULL);
