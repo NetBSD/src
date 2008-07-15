@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.30 2008/07/07 09:07:18 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.31 2008/07/15 16:21:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -349,6 +349,8 @@ ukfs_mkfifo(struct ukfs *ukfs, const char *path, mode_t mode)
 	STDCALL(ukfs, rump_sys_mkfifo(path, mode, &rv));
 }
 
+#if 0
+/* XXX: provide this as an upper-layer service */
 static int
 builddirs(struct ukfs *ukfs, const char *filename, mode_t mode)
 {
@@ -385,16 +387,13 @@ builddirs(struct ukfs *ukfs, const char *filename, mode_t mode)
 	}
 	return 0;
 }
+#endif
 
 int
-ukfs_mkdir(struct ukfs *ukfs, const char *filename, mode_t mode, bool p)
+ukfs_mkdir(struct ukfs *ukfs, const char *filename, mode_t mode)
 {
 
-	if (p) {
-		return builddirs(ukfs, filename, mode);
-	} else {
-		STDCALL(ukfs, rump_sys_mkdir(filename, mode, &rv));
-	}
+	STDCALL(ukfs, rump_sys_mkdir(filename, mode, &rv));
 }
 
 int
