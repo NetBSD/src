@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 2008/07/05 23:52:33 minskim Exp $
+$NetBSD: README,v 1.3 2008/07/15 13:32:35 lukem Exp $
 
 Organization of Sources:
 
@@ -37,12 +37,27 @@ and is organized as follows:
 			"../dist/".
 
 This arrangement allows for packages to be easily disabled or
-excised as necessary.
+excised as necessary, either on a per-license or per-package basis.
 
 The licenses currently used are:
 
 	bsd	BSD (or equivalent) licensed software, possibly with
 		the "advertising clause".
+
+	gpl2	GNU Public License, version 2 (or earlier).
+
+If a package has components covered by different licenses
+(for example, GPL2 and the LGPL), use the <license> subdirectory
+for the more restrictive license.
+
+If a package allows the choice of a license to use, we'll
+generally use the less restrictive license.
+
+If in doubt about where a package should be located, please
+contact <core@NetBSD.org> for advice.
+
+
+Migration Strategy:
 
 
 Eventually src/dist (and associated framework in other base source
