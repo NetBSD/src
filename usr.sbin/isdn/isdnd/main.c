@@ -27,7 +27,7 @@
  *	i4b daemon - main program entry
  *	-------------------------------
  *
- *	$Id: main.c,v 1.9 2004/10/30 08:19:30 dsl Exp $ 
+ *	$Id: main.c,v 1.10 2008/07/15 17:51:38 perry Exp $ 
  *
  * $FreeBSD$
  *
@@ -76,7 +76,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "\n");
-	fprintf(stderr, "isdnd - i4b ISDN manager daemon, version %02d.%02d.%d, %s %s\n", VERSION, REL, STEP, __DATE__, __TIME__);
+	fprintf(stderr, "isdnd - i4b ISDN manager daemon, version %02d.%02d.%d\n", VERSION, REL, STEP);
 #ifdef DEBUG
 	fprintf(stderr, "  usage: isdnd [-c file] [-d level] [-F] [-f [-r dev] [-t termtype]]\n");
 #else
