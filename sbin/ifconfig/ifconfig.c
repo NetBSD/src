@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.209 2008/07/15 20:56:13 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.210 2008/07/15 21:19:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: ifconfig.c,v 1.209 2008/07/15 20:56:13 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.210 2008/07/15 21:19:24 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1282,7 +1282,7 @@ setifprefixlen(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-void
+static void
 usage(void)
 {
 	const char *progname = getprogname();
