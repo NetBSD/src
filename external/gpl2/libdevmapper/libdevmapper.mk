@@ -2,8 +2,8 @@
 
 LIBDM_VERSION=   1.02.27 
 
-LIBDM_SRCDIR=    ${NETBSDSRCDIR}/external/gnu/libdevmapper
-LIBDM_DISTDIR=   ${NETBSDSRCDIR}/external/gnu/libdevmapper/dist
+LIBDM_SRCDIR=    ${NETBSDSRCDIR}/external/gpl2/libdevmapper
+LIBDM_DISTDIR=   ${NETBSDSRCDIR}/external/gpl2/libdevmapper/dist
 
 LIBDM_PREFIX=    /usr
 
