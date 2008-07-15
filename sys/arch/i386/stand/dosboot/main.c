@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2005/12/11 12:17:48 christos Exp $	 */
+/*	$NetBSD: main.c,v 1.23 2008/07/15 21:29:37 perry Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -50,8 +50,7 @@ extern int exec_lynx(const char*, int);
 
 int errno;
 
-extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
-	bootprog_maker[];
+extern	char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 #define MAXDEVNAME 16
 
@@ -232,10 +231,11 @@ print_banner(void)
 	}
 #endif
 
-	printf("\n");
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
-	printf(">> Memory: %d/%d %sk\n", getbasemem(), extmem, s);
+	printf("\n"
+	       ">> %s, Revision %s (from NetBSD %s)\n"
+	       ">> Memory: %d/%d %sk\n",
+	       bootprog_name, bootprog_rev, bootprog_kernrev,
+	       getbasemem(), extmem, s);
 }
 
 void 
