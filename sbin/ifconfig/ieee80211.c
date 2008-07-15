@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.20 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.21 2008/07/15 20:56:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.20 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.21 2008/07/15 20:56:13 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1333,8 +1333,19 @@ mappsb(u_int isrfreq, u_int isrflags)
 }
 
 static status_func_t status;
+static usage_func_t usage;
 static statistics_func_t statistics;
 static cmdloop_branch_t branch[2];
+
+static void
+ieee80211_usage(prop_dictionary_t env)
+{
+	fprintf(stderr,
+	    "\t[ nwid network_id ] [ nwkey network_key | -nwkey ]\n"
+	    "\t[ list scan ]\n"
+	    "\t[ powersave | -powersave ] [ powersavesleep duration ]\n"
+	    "\t[ hidessid | -hidessid ] [ apbridge | -apbridge ]\n");
+}
 
 static void
 ieee80211_constructor(void)
@@ -1345,6 +1356,8 @@ ieee80211_constructor(void)
 	register_cmdloop_branch(&branch[1]);
 	status_func_init(&status, ieee80211_status);
 	statistics_func_init(&statistics, ieee80211_statistics);
+	usage_func_init(&usage, ieee80211_usage);
 	register_status(&status);
 	register_statistics(&statistics);
+	register_usage(&usage);
 }
