@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.14 2008/07/02 07:44:15 dyoung Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.15 2008/07/15 20:56:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.14 2008/07/02 07:44:15 dyoung Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.15 2008/07/15 20:56:13 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: tunnel.c,v 1.14 2008/07/02 07:44:15 dyoung Exp $");
 #include "util.h"
 
 static status_func_t status;
+static usage_func_t usage;
 static cmdloop_branch_t branch;
 
 static void tunnel_constructor(void) __attribute__((constructor));
@@ -190,10 +191,19 @@ tunnel_status(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static void
+tunnel_usage(prop_dictionary_t env)
+{
+	fprintf(stderr,
+	    "\t[ [ af ] tunnel src_addr dest_addr ] [ deletetunnel ]\n");
+}
+
+static void
 tunnel_constructor(void)
 {
 	cmdloop_branch_init(&branch, &tunnel.pk_parser);
 	register_cmdloop_branch(&branch);
 	status_func_init(&status, tunnel_status);
+	usage_func_init(&usage, tunnel_usage);
 	register_status(&status);
+	register_usage(&usage);
 }
