@@ -1,4 +1,7 @@
 2008-07-14  Matthew Grooms
+	* src/racoon/isakmp_cfg.c : fix hybrid enabled builds
+
+2008-07-14  Matthew Grooms
 	* src/racoon/crypto_openssl.c
 	  src/racoon/eaytest.c
 	  src/racoon/misc.c
