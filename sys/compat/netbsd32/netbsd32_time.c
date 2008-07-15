@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.33 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.34 2008/07/15 16:18:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.33 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.34 2008/07/15 16:18:08 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -418,9 +418,7 @@ netbsd32_nanosleep(struct lwp *l, const struct netbsd32_nanosleep_args *uap, reg
 	} */
 	static int nanowait;
 	struct netbsd32_timespec ts32;
-	struct timespec rqt;
-	struct timespec rmt;
-	struct timeval atv, utv, ctime;
+	struct timespec rqt, ctime, rmt;
 	int error, timo;
 
 	error = copyin(SCARG_P32(uap, rqtp), &ts32, sizeof(ts32));
@@ -428,13 +426,12 @@ netbsd32_nanosleep(struct lwp *l, const struct netbsd32_nanosleep_args *uap, reg
 		return (error);
 
 	netbsd32_to_timespec(&ts32, &rqt);
-	TIMESPEC_TO_TIMEVAL(&atv,&rqt);
-	if (itimerfix(&atv))
+	if (itimespecfix(&rqt))
 		return (EINVAL);
 
-	getmicrotime(&ctime);
-	timeradd(&atv,&ctime,&atv);
-	timo = hzto(&atv);
+	getnanotime(&ctime);
+	timespecadd(&rqt, &ctime, &rqt);
+	timo = tshzto(&rqt);
 	/*
 	 * Avoid inadvertantly sleeping forever
 	 */
@@ -450,13 +447,12 @@ netbsd32_nanosleep(struct lwp *l, const struct netbsd32_nanosleep_args *uap, reg
 	if (SCARG_P32(uap, rmtp)) {
 		int error1;
 
-		getmicrotime(&utv);
+		getnanotime(&rmt);
 
-		timersub(&atv, &utv, &utv);
-		if (utv.tv_sec < 0)
-			timerclear(&utv);
+		timespecsub(&rqt, &rmt, &rmt);
+		if (rmt.tv_sec < 0)
+			timespecclear(&rmt);
 
-		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
 		netbsd32_from_timespec(&rmt, &ts32);
 		error1 = copyout(&ts32, SCARG_P32(uap,rmtp), sizeof(ts32));
 		if (error1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.49 2008/06/12 23:06:14 cegger Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.50 2008/07/15 16:18:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.49 2008/06/12 23:06:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.50 2008/07/15 16:18:08 christos Exp $");
 
 #include "sequencer.h"
 
@@ -904,7 +904,7 @@ seq_timer_waitabs(struct sequencer_softc *sc, uint32_t divs)
 	DPRINTFN(4, ("seq_timer_waitabs: adjdivs=%d, sleep when=%ld.%06ld",
 	             divs, when.tv_sec, when.tv_usec));
 	ADDTIMEVAL(&when, &t->reftime); /* abstime for end */
-	ticks = hzto(&when);
+	ticks = tvhzto(&when);
 	DPRINTFN(4, (" when+start=%ld.%06ld, tick=%d\n",
 		     when.tv_sec, when.tv_usec, ticks));
 	if (ticks > 0) {
