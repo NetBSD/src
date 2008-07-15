@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.14 2008/07/15 20:56:13 dyoung Exp $	*/
+/*	$NetBSD: agr.c,v 1.15 2008/07/15 21:27:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.14 2008/07/15 20:56:13 dyoung Exp $");
+__RCSID("$NetBSD: agr.c,v 1.15 2008/07/15 21:27:58 dyoung Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -88,7 +88,7 @@ assertifname(prop_dictionary_t env)
 }
 
 int
-agrsetport(prop_dictionary_t env, prop_dictionary_t xenv)
+agrsetport(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	char buf[IFNAMSIZ];
 	struct agrreq ar;

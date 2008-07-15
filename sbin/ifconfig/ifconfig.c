@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.210 2008/07/15 21:19:24 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.211 2008/07/15 21:27:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: ifconfig.c,v 1.210 2008/07/15 21:19:24 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.211 2008/07/15 21:27:58 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -480,7 +480,7 @@ init_parser(void)
 }
 
 static int
-no_cmds_exec(prop_dictionary_t env, prop_dictionary_t xenv)
+no_cmds_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *ifname;
 	unsigned short ignore;
@@ -488,7 +488,7 @@ no_cmds_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 	/* ifname == NULL is ok.  It indicates 'ifconfig -a'. */
 	if ((ifname = getifname(env)) == NULL)
 		;
-	else if (getifflags(env, xenv, &ignore) == -1)
+	else if (getifflags(env, oenv, &ignore) == -1)
 		err(EXIT_FAILURE, "SIOCGIFFLAGS %s", ifname);
 
 	printall(ifname, env);
@@ -496,7 +496,7 @@ no_cmds_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-media_status_exec(prop_dictionary_t env, prop_dictionary_t xenv)
+media_status_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *ifname;
 	unsigned short ignore;
@@ -504,7 +504,7 @@ media_status_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 	/* ifname == NULL is ok.  It indicates 'ifconfig -a'. */
 	if ((ifname = getifname(env)) == NULL)
 		;
-	else if (getifflags(env, xenv, &ignore) == -1)
+	else if (getifflags(env, oenv, &ignore) == -1)
 		err(EXIT_FAILURE, "SIOCGIFFLAGS %s", ifname);
 
 	exit(carrier(env));
@@ -537,7 +537,7 @@ main(int argc, char **argv)
 	size_t nmatch;
 	struct parser *start;
 	int ch, narg = 0, rc;
-	prop_dictionary_t env, xenv;
+	prop_dictionary_t env, oenv;
 	const char *ifname;
 
 	memset(match, 0, sizeof(match));
@@ -649,10 +649,10 @@ main(int argc, char **argv)
 	if (rc != 0)
 		usage();
 
-	if ((xenv = prop_dictionary_create()) == NULL)
+	if ((oenv = prop_dictionary_create()) == NULL)
 		err(EXIT_FAILURE, "%s: prop_dictionary_create", __func__);
 
-	if (matches_exec(match, xenv, nmatch) == -1)
+	if (matches_exec(match, oenv, nmatch) == -1)
 		err(EXIT_FAILURE, "exec_matches");
 
 	argc -= narg;
@@ -660,9 +660,9 @@ main(int argc, char **argv)
 
 	env = (nmatch > 0) ? match[(int)nmatch - 1].m_env : NULL;
 	if (env == NULL)
-		env = xenv;
+		env = oenv;
 	else
-		env = prop_dictionary_augment(env, xenv);
+		env = prop_dictionary_augment(env, oenv);
 
 	/* Process any media commands that may have been issued. */
 	process_media_commands(env);
@@ -680,7 +680,7 @@ main(int argc, char **argv)
 		errx(EXIT_FAILURE, "%s: lookup_af_bynum", __func__);
 
 	assert(afp->af_addr_commit != NULL);
-	(*afp->af_addr_commit)(env, xenv);
+	(*afp->af_addr_commit)(env, oenv);
 
 	do_setifpreference(env);
 	do_setifcaps(env);
@@ -833,7 +833,7 @@ list_cloners(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static int
-clone_command(prop_dictionary_t env, prop_dictionary_t xenv)
+clone_command(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int64_t cmd;
 
@@ -851,7 +851,7 @@ clone_command(prop_dictionary_t env, prop_dictionary_t xenv)
 
 /*ARGSUSED*/
 static int
-setifaddr(prop_dictionary_t env, prop_dictionary_t xenv)
+setifaddr(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const struct paddr_prefix *pfx0;
 	struct paddr_prefix *pfx;
@@ -876,7 +876,7 @@ setifaddr(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-setifnetmask(prop_dictionary_t env, prop_dictionary_t xenv)
+setifnetmask(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const struct paddr_prefix *pfx;
 	prop_data_t d;
@@ -885,20 +885,20 @@ setifnetmask(prop_dictionary_t env, prop_dictionary_t xenv)
 	assert(d != NULL);
 	pfx = prop_data_data_nocopy(d);
 
-	if (!prop_dictionary_set(xenv, "netmask", (prop_object_t)d))
+	if (!prop_dictionary_set(oenv, "netmask", (prop_object_t)d))
 		return -1;
 
 	return 0;
 }
 
 static int
-setifbroadaddr(prop_dictionary_t env, prop_dictionary_t xenv)
+setifbroadaddr(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const struct paddr_prefix *pfx;
 	prop_data_t d;
 	unsigned short flags;
 
-	if (getifflags(env, xenv, &flags) == -1)
+	if (getifflags(env, oenv, &flags) == -1)
 		err(EXIT_FAILURE, "%s: getifflags", __func__);
 
 	if ((flags & IFF_BROADCAST) == 0)
@@ -908,7 +908,7 @@ setifbroadaddr(prop_dictionary_t env, prop_dictionary_t xenv)
 	assert(d != NULL);
 	pfx = prop_data_data_nocopy(d);
 
-	if (!prop_dictionary_set(xenv, "broadcast", (prop_object_t)d))
+	if (!prop_dictionary_set(oenv, "broadcast", (prop_object_t)d))
 		return -1;
 
 	return 0;
@@ -916,7 +916,7 @@ setifbroadaddr(prop_dictionary_t env, prop_dictionary_t xenv)
 
 /*ARGSUSED*/
 static int
-notrailers(prop_dictionary_t env, prop_dictionary_t xenv)
+notrailers(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	puts("Note: trailers are no longer sent, but always received");
 	return 0;
@@ -924,14 +924,14 @@ notrailers(prop_dictionary_t env, prop_dictionary_t xenv)
 
 /*ARGSUSED*/
 static int
-setifdstormask(prop_dictionary_t env, prop_dictionary_t xenv)
+setifdstormask(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *key;
 	const struct paddr_prefix *pfx;
 	prop_data_t d;
 	unsigned short flags;
 
-	if (getifflags(env, xenv, &flags) == -1)
+	if (getifflags(env, oenv, &flags) == -1)
 		err(EXIT_FAILURE, "%s: getifflags", __func__);
 
 	d = (prop_data_t)prop_dictionary_get(env, "dstormask");
@@ -944,14 +944,14 @@ setifdstormask(prop_dictionary_t env, prop_dictionary_t xenv)
 		key = "netmask";
 	}
 
-	if (!prop_dictionary_set(xenv, key, (prop_object_t)d))
+	if (!prop_dictionary_set(oenv, key, (prop_object_t)d))
 		return -1;
 
 	return 0;
 }
 
 static int
-setifflags(prop_dictionary_t env, prop_dictionary_t xenv)
+setifflags(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ifreq ifr;
 	int64_t ifflag;
@@ -1036,7 +1036,7 @@ setifcaps(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static int
-setifmetric(prop_dictionary_t env, prop_dictionary_t xenv)
+setifmetric(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ifreq ifr;
 	bool rc;
@@ -1076,7 +1076,7 @@ do_setifpreference(prop_dictionary_t env)
 }
 
 static int
-setifmtu(prop_dictionary_t env, prop_dictionary_t xenv)
+setifmtu(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int64_t mtu;
 	bool rc;
@@ -1252,7 +1252,7 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
 }
 
 static int
-setifprefixlen(prop_dictionary_t env, prop_dictionary_t xenv)
+setifprefixlen(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	bool rc;
 	int64_t plen;
@@ -1275,7 +1275,7 @@ setifprefixlen(prop_dictionary_t env, prop_dictionary_t xenv)
 	if (d == NULL)
 		err(EXIT_FAILURE, "%s: prop_data_create_data", __func__);
 
-	if (!prop_dictionary_set(xenv, "netmask", (prop_object_t)d))
+	if (!prop_dictionary_set(oenv, "netmask", (prop_object_t)d))
 		err(EXIT_FAILURE, "%s: prop_dictionary_set", __func__);
 
 	free(pfx);
