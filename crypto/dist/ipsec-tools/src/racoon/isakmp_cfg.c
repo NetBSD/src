@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.16 2008/06/18 06:47:25 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.17 2008/07/15 02:16:58 mgrooms Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1154,7 +1154,7 @@ isakmp_cfg_send(iph1, payload, np, flags, new_exchange)
 	if (set_port(iph2->dst, 0) == NULL ||
 	    set_port(iph2->src, 0) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-		     "invalid family: %d\n", iph2->remote->sa_family);
+		     "invalid family: %d\n", iph1->remote->sa_family);
 		delph2(iph2);
 		goto end;
 	}
