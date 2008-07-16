@@ -251,7 +251,7 @@
 #define TPUTS_PUTC_ARGTYPE int
 
 /* Define the system hardware platform */
-#define UNAME_HARDWARE "amd64"
+#define UNAME_HARDWARE "@MACHINE@"
 
 /* Include code that utilizes extensions */
 /* #undef WITH_EXT */
