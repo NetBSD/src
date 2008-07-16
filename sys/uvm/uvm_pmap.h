@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.22 2008/07/16 00:11:27 matt Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.23 2008/07/16 14:33:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -97,7 +97,9 @@ typedef struct pmap_statistics	*pmap_statistics_t;
  * Flags passed to pmap_kenter_pa().  Note the bottom 3 bits are VM_PROT_*
  * bits, used to indicate the access type.
  */
-#define	PMAP_KMPAGE	0x00000040	/* this is from the kmem allocator */
+#ifndef PMAP_KMPAGE
+#define	PMAP_KMPAGE	0x00000000	/* this is from the kmem allocator */
+#endif
 
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
