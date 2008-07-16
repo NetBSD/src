@@ -56,6 +56,7 @@ struct statics
     char **kernel_names;	/* optional */
     time_t boottime;		/* optional */
     int modemax;		/* optional */
+    int ncpu;			/* optional */
     struct {
 	unsigned int fullcmds : 1;
 	unsigned int idle : 1;
