@@ -1,4 +1,4 @@
-/*	$NetBSD: gai_strerror.c,v 1.1.1.3.4.1 2007/05/17 00:39:46 jdc Exp $	*/
+/*	$NetBSD: gai_strerror.c,v 1.1.1.3.4.2 2008/07/16 01:56:46 snj Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -70,8 +70,10 @@ gai_strerror(int ecode) {
                 if (pthread_mutex_lock(&lock) != 0)
 			goto unknown;
                 if (!once) {
-                        if (pthread_key_create(&key, free) != 0)
+                        if (pthread_key_create(&key, free) != 0) {
+				(void)pthread_mutex_unlock(&lock);
 				goto unknown;
+			}
 			once = 1;
 		}
                 if (pthread_mutex_unlock(&lock) != 0)

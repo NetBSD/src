@@ -1,10 +1,10 @@
-/*	$NetBSD: getipnode.c,v 1.1.1.3.4.1 2007/05/17 00:43:21 jdc Exp $	*/
+/*	$NetBSD: getipnode.c,v 1.1.1.3.4.2 2008/07/16 01:57:03 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: getipnode.c,v 1.37.18.3 2005/04/29 00:17:18 marka Exp */
+/* Id: getipnode.c,v 1.37.18.7 2007/08/28 07:20:06 tbox Exp */
 
 /*! \file */
 
@@ -673,13 +673,20 @@ scan_interfaces(int *have_v4, int *have_v6) {
 	int s, n;
 	size_t cpsize;
 
+#ifdef WIN32
+	InitSockets();
+#endif
 #if defined(SIOCGLIFCONF) && defined(SIOCGLIFADDR) && \
     !defined(IRIX_EMUL_IOCTL_SIOCGIFCONF) 
 	/*
 	 * Try to scan the interfaces using IPv6 ioctls().
 	 */
-	if (!scan_interfaces6(have_v4, have_v6))
+	if (!scan_interfaces6(have_v4, have_v6)) {
+#ifdef WIN32
+		DestroySockets();
+#endif
 		return (0);
+	}
 #endif
 
 	/*
@@ -804,13 +811,20 @@ scan_interfaces(int *have_v4, int *have_v6) {
 	}
 	if (buf != NULL)
 		free(buf);
+#ifdef WIN32
+	DestroySockets();
+#endif
 	close(s);
 	return (0);
+
  err_ret:
 	if (buf != NULL)
 		free(buf);
 	if (s != -1)
 		close(s);
+#ifdef WIN32
+	DestroySockets();
+#endif
 	return (-1);
 #endif
 }
