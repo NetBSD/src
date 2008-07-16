@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/07/16 01:51:56 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2008/07/16 11:30:36 christos Exp $
 
 .include <bsd.own.mk>
 PROG=	top
@@ -9,7 +9,7 @@ TOPDIR=${.CURDIR}/../../dist
 CPPFLAGS+=-I${.CURDIR} -I${TOPDIR} -I. -DORDER -DHAVE_STRERROR
 SRCS=	color.c commands.c display.c hash.c screen.c \
 	top.c username.c utils.c version.c m_netbsd.c
-DPSRCS+=sigdesc.h
+DPSRCS+=sigdesc.h config.h
 
 LDADD+=	-ltermcap -lm -lkvm
 DPADD+=	${LIBTERMCAP} ${LIBM} ${LIBKVM}
@@ -28,8 +28,6 @@ top.1: top.1.in
 		-e s/@MAN_SUPPLEMENT@// < $? > $@
 
 commands.c: sigdesc.h
-
-.BEGIN: config.h
 
 config.h: config.h.in
 	${TOOL_SED} -e s/@MACHINE@/${MACHINE}/ < $? > $@
