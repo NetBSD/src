@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.6 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.7 2008/07/16 11:45:56 kent Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -407,7 +407,6 @@ emitrules(FILE *fp)
 	struct files *fi;
 	const char *cp, *fpath;
 	int ch;
-	char buf[200];
 
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
@@ -425,17 +424,19 @@ emitrules(FILE *fp)
 				            fi->fi_base,
 				            filetype_prologue(&fi->fi_fit),
 				            fpath);
+ 			}
+		}
+		if (fi->fi_mkrule != NULL) {
+			fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
+		} else {
+			fputs("\t${NORMAL_", fp);
+			cp = strrchr(fpath, '.');
+			cp = cp == NULL ? fpath : cp + 1;
+			while ((ch = *cp++) != '\0') {
+				fputc(toupper(ch), fp);
 			}
+			fputs("}\n\n", fp);
 		}
-		if ((cp = fi->fi_mkrule) == NULL) {
-			cp = "NORMAL";
-			ch = fpath[strlen(fpath) - 1];
-			if (islower(ch))
-				ch = toupper(ch);
-			(void)snprintf(buf, sizeof(buf), "${%s_%c}", cp, ch);
-			cp = buf;
-		}
-		fprintf(fp, "\t%s\n\n", cp);
 	}
 }
 
