@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.32 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: ubt.c,v 1.33 2008/07/16 08:43:01 tonnerre Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.32 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.33 2008/07/16 08:43:01 tonnerre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -305,7 +305,6 @@ static void ubt_abortdealloc(struct ubt_softc *);
  */
 static const struct usb_devno ubt_ignore[] = {
 	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
-	{ 0, 0 }	/* end of list */
 };
 
 USB_MATCH(ubt)
