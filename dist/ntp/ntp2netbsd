@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ntp2netbsd,v 1.7 2008/04/30 13:10:47 martin Exp $
+#	$NetBSD: ntp2netbsd,v 1.8 2008/07/16 11:11:37 perry Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,6 +43,10 @@
 #         - not really - we have some changed defaults and the vax port has no ieee.h support.
 #           so do a careful diff and patch - Frank Kardel
 #	$ cp scripts/mkver /usr/src/usr.sbin/ntp/scripts
+#		Note you will have to edit mkver to remove date and
+#		build number information.
+#		Consult the old version on how this is done.
+#		This should possibly be automated in the future.
 #	$ cd ..
 #	$ rm -r src ntp-4.x.y
 #	$ cd /usr/src/usr.sbin/ntp
