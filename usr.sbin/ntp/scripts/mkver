@@ -17,6 +17,23 @@ case "-lcrypto" in
  *) ConfStr="${ConfStr}-?" ;;
 esac
 
+ifile="`dirname $0`/../importdate"
+
+if [ -f "$ifile" ]; then
+  ConfStr="$ConfStr "`cat "$ifile"`
+else
+  ConfStr="$ConfStr `LC_TIME=C TZ= date`"
+
+  if [ ! -f .version ]; then
+    echo 0 > .version
+  fi
+  RUN="`cat .version`"
+  RUN="`expr $RUN + 1`"
+  echo $RUN > .version
+
+  ConfStr="$ConfStr (${RUN})"
+fi
+
 echo "Version <${ConfStr}>";
 
 rm -f version.c
