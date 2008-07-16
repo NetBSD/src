@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.38 2007/01/24 10:36:33 abs Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.39 2008/07/16 17:26:25 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.38 2007/01/24 10:36:33 abs Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.39 2008/07/16 17:26:25 drochner Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -483,7 +483,7 @@ run(int cmd, const char *arg)
 
 	case CMD_DIGITAL:
 		if (digital == 0) {
-			int fpw;
+			int fpw, intv_usecs, hz_usecs;
 
 			fpw = atoi(arg);
 			if (fpw > 0)
@@ -491,6 +491,23 @@ run(int cmd, const char *arg)
 			else
 				da.fpw = 5;
 			da.read_errors = 0;
+
+			/* real rate: 75 frames per second */
+			intv_usecs = 13333 * da.fpw;
+			/*
+			 * interrupt earlier for safety, by a value which
+			 * doesn't hurt interactice response if we block
+			 * in the signal handler
+			 */
+			intv_usecs -= 50000;
+			hz_usecs = 1000000 / sysconf(_SC_CLK_TCK);
+			if (intv_usecs < hz_usecs) {
+				/* can't have a shorter interval, increase
+				   buffer size to compensate */
+				da.fpw += (hz_usecs - intv_usecs) / 13333;
+				intv_usecs = hz_usecs;
+			}
+
 			da.aubuf = malloc(da.fpw * CDDA_SIZE);
 			if (da.aubuf == NULL) {
 				warn("Not enough memory for audio buffers");
@@ -500,9 +517,10 @@ run(int cmd, const char *arg)
 				warn("Cannot open audio device");
 				return (1);
 			}
-			itv_timer.it_interval.tv_sec = itv_timer.it_value.tv_sec = da.fpw / 75;
+			itv_timer.it_interval.tv_sec = itv_timer.it_value.tv_sec =
+				intv_usecs / 1000000;
 			itv_timer.it_interval.tv_usec = itv_timer.it_value.tv_usec =
-			    (da.fpw * 6666) % 1000000;
+				intv_usecs % 1000000;
 			rv = setitimer(ITIMER_REAL, &itv_timer, NULL);
 			if (rv == 0) {
 				digital = 1;
@@ -837,7 +855,9 @@ sig_timer(int sig)
 	}
 	if (shuffle)
 		skip(0, 0);
+#if 0
 	sched_yield();
+#endif
 	setitimer(ITIMER_REAL, &itv_timer, NULL);
 }
 
@@ -932,7 +952,8 @@ print_status(const char *arg)
 	else
 		printf("shuffle play:\t%s\n", (shuffle != 0) ? "on" : "off");
 	if (digital)
-		printf("digital xfer:\tto %s (%d frames per wakeup, %ld.%03lds period)\n",
+		printf("digital xfer:\tto %s "
+		       "(%d frames per wakeup, %ld.%06lds period)\n",
 		    da.auname, da.fpw, itv_timer.it_interval.tv_sec,
 		    itv_timer.it_interval.tv_usec);
 	else
@@ -1346,7 +1367,7 @@ openaudio()
 		da.afd = -1;
 		return (0);
 	}
-	ai.mode = AUMODE_PLAY;
+	ai.mode = AUMODE_PLAY_ALL;
 	ai.play.sample_rate = 44100;
 	ai.play.channels = 2;
 	ai.play.precision = 16;
@@ -1387,7 +1408,7 @@ readaudio(afd, lba, blocks, data)
 	sc.datalen = CDDA_SIZE * blocks;
 	sc.senselen = sizeof(sc.sense);
 	sc.flags = SCCMD_READ;
-	sc.timeout = da.fpw * 15;
+	sc.timeout = 10000; /* 10s */
 	rc = ioctl(afd, SCIOCCOMMAND, &sc);
 	if (rc < 0 || sc.retsts != SCCMD_OK) {
 		if (da.read_errors < 10) {
