@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.206 2008/07/07 09:01:40 pooka Exp $
+	$NetBSD: syscalls.master,v 1.207 2008/07/16 15:42:54 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -215,7 +215,7 @@
 93	STD 		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
-95	STD 		{ int sys_fsync(int fd); }
+95	STD	RUMP 	{ int sys_fsync(int fd); }
 96	STD 		{ int sys_setpriority(int which, id_t who, int prio); }
 97	COMPAT_30	{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
