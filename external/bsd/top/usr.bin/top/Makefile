@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/07/16 11:30:36 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2008/07/16 14:29:11 christos Exp $
 
 .include <bsd.own.mk>
 PROG=	top
@@ -6,7 +6,7 @@ PROG=	top
 TOPDIR=${.CURDIR}/../../dist
 .PATH:	${TOPDIR} ${TOPDIR}/machine
 
-CPPFLAGS+=-I${.CURDIR} -I${TOPDIR} -I. -DORDER -DHAVE_STRERROR
+CPPFLAGS+=-I${.CURDIR} -I${TOPDIR} -I.
 SRCS=	color.c commands.c display.c hash.c screen.c \
 	top.c username.c utils.c version.c m_netbsd.c
 DPSRCS+=sigdesc.h config.h
