@@ -708,6 +708,13 @@ diff_per_second(unsigned int x, unsigned int y)
     return (y > x ? UINT_MAX - y + x + 1 : x - y) * 1000 / elapsed_msecs;
 }
 
+void
+double2tv(struct timeval *tv, double d)
+{
+    tv->tv_sec = (int)d;
+    tv->tv_usec = (d - tv->tv_sec) * 1000000;
+}
+
 static int debug_on = 0;
 
 #ifdef DEBUG

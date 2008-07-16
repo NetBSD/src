@@ -329,6 +329,7 @@ do_arguments(globalstate *gstate, int ac, char **av)
 
 {
     int i;
+    double f;
 
     /* this appears to keep getopt happy */
     optind = 1;
@@ -392,14 +393,14 @@ do_arguments(globalstate *gstate, int ac, char **av)
 	    break;
 
 	case 's':
-	    i = atoi(optarg);
-	    if (i < 0 || (i == 0 && getuid() != 0))
+	    f = atof(optarg);
+	    if (f < 0 || (f == 0 && getuid() != 0))
 	    {
 		message_error(" Bad seconds delay");
 	    }
 	    else
 	    {
-		gstate->delay = i;
+		gstate->delay = f;
 	    }
 	    break;
 
@@ -601,8 +602,7 @@ do_wait(globalstate *gstate)
 {
     struct timeval wait;
 
-    wait.tv_sec = gstate->delay;
-    wait.tv_usec = 0;
+    double2tv(&wait, gstate->delay);
     select(0, NULL, NULL, NULL, &wait);
 }
 
@@ -618,7 +618,8 @@ do_command(globalstate *gstate)
 
     /* calculate new refresh time */
     gstate->refresh = gstate->now;
-    gstate->refresh.tv_sec += gstate->delay;
+    double2tv(&now, gstate->delay);
+    timeradd(&now, &gstate->refresh, &gstate->refresh);
     time_get(&now);
 
     /* loop waiting for time to expire */
@@ -684,7 +685,7 @@ void
 do_minidisplay(globalstate *gstate)
 
 {
-    int real_delay;
+    double real_delay;
     struct system_info si;
 
     /* save the real delay and substitute 1 second */

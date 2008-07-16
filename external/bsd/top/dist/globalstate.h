@@ -46,7 +46,7 @@ typedef struct globalstate {
     int fulldraw;
     int topn;
     int max_topn;
-    int delay;
+    double delay;
     int displays;
     int order_index;
     int show_cpustates;

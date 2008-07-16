@@ -57,6 +57,7 @@ char *format_k(long);
 char *string_list(char **);
 void time_get(struct timeval *);
 void time_mark(struct timeval *);
+void double2tv(struct timeval *, double);
 unsigned int time_elapsed();
 unsigned int diff_per_second(unsigned int, unsigned int);
 void debug_set(int);

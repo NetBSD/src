@@ -620,15 +620,20 @@ int
 cmd_delay(globalstate *gstate)
 
 {
-    int newval;
+    double newval;
     char tmpbuf[20];
 
     message_prompt("Seconds to delay: ");
-    if ((newval = readline(tmpbuf, 8, Yes)) > -1)
+    if (readline(tmpbuf, 8, No) > 0)
     {
-	if ((gstate->delay = newval) == 0 && getuid() != 0)
+	newval = atof(tmpbuf);
+	if (newval == 0 && getuid() != 0)
 	{
 	    gstate->delay = 1;
+	}
+	else
+	{
+	    gstate->delay = newval;
 	}
     }
     return CMD_REFRESH;
