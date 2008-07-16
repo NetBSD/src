@@ -1,10 +1,10 @@
-/*	$NetBSD: rootns.c,v 1.1.1.3.4.1 2007/05/17 00:40:45 jdc Exp $	*/
+/*	$NetBSD: rootns.c,v 1.1.1.3.4.2 2008/07/16 01:56:48 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rootns.c,v 1.26.18.3 2005/04/27 05:01:26 sra Exp */
+/* Id: rootns.c,v 1.26.18.5 2007/10/31 03:02:45 tbox Exp */
 
 /*! \file */
 
@@ -74,7 +74,7 @@ static char root_ns[] =
 "I.ROOT-SERVERS.NET.     3600000 IN      A       192.36.148.17\n"
 "J.ROOT-SERVERS.NET.     3600000 IN      A       192.58.128.30\n"
 "K.ROOT-SERVERS.NET.     3600000 IN      A       193.0.14.129\n"
-"L.ROOT-SERVERS.NET.     3600000 IN      A       198.32.64.12\n"
+"L.ROOT-SERVERS.NET.     3600000 IN      A       199.7.83.42\n"
 "M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n";
 
 static isc_result_t

@@ -1,10 +1,10 @@
-/*	$NetBSD: host.c,v 1.1.1.3.4.1 2007/05/17 00:34:57 jdc Exp $	*/
+/*	$NetBSD: host.c,v 1.1.1.3.4.2 2008/07/16 01:56:32 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,12 +17,24 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: host.c,v 1.94.18.14 2006/05/23 04:40:42 marka Exp */
+/* Id: host.c,v 1.94.18.19 2007/08/28 07:19:55 tbox Exp */
 
 /*! \file */
 
 #include <config.h>
+#include <stdlib.h>
 #include <limits.h>
+
+#ifdef HAVE_LOCALE_H
+#include <locale.h>
+#endif
+
+#ifdef WITH_IDN
+#include <idn/result.h>
+#include <idn/log.h>
+#include <idn/resconf.h>
+#include <idn/api.h>
+#endif
 
 #include <isc/app.h>
 #include <isc/commandline.h>
@@ -416,8 +428,10 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	if (msg->rcode != 0) {
 		char namestr[DNS_NAME_FORMATSIZE];
 		dns_name_format(query->lookup->name, namestr, sizeof(namestr));
-		printf("Host %s not found: %d(%s)\n", namestr,
-		       msg->rcode, rcodetext[msg->rcode]);
+		printf("Host %s not found: %d(%s)\n",
+		       (msg->rcode != dns_rcode_nxdomain) ? namestr :
+		       query->lookup->textname, msg->rcode,
+		       rcodetext[msg->rcode]);
 		return (ISC_R_SUCCESS);
 	}
 
@@ -571,6 +585,7 @@ pre_parse_args(int argc, char **argv) {
 	while ((c = isc_commandline_parse(argc, argv, optstring)) != -1) {
 		switch (c) {
 		case 'm':
+			memdebugging = ISC_TRUE;
 			if (strcasecmp("trace", isc_commandline_argument) == 0)
 				isc_mem_debugging |= ISC_MEM_DEBUGTRACE;
 			else if (!strcasecmp("record",
@@ -666,6 +681,9 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			    lookup->rdtype != dns_rdatatype_axfr)
 				lookup->rdtype = rdtype;
 			lookup->rdtypeset = ISC_TRUE;
+#ifdef WITH_IDN
+			idnoptions = 0;
+#endif
 			if (rdtype == dns_rdatatype_axfr) {
 				/* -l -t any -v */
 				list_type = dns_rdatatype_any;
@@ -674,6 +692,13 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			} else if (rdtype == dns_rdatatype_ixfr) {
 				lookup->ixfr_serial = serial;
 				list_type = rdtype;
+#ifdef WITH_IDN
+			} else if (rdtype == dns_rdatatype_a ||
+				   rdtype == dns_rdatatype_aaaa ||
+				   rdtype == dns_rdatatype_mx) {
+				idnoptions = IDN_ASCCHECK;
+				list_type = rdtype;
+#endif
 			} else
 				list_type = rdtype;
 			list_addresses = ISC_FALSE;
@@ -816,6 +841,9 @@ main(int argc, char **argv) {
 	ISC_LIST_INIT(search_list);
 	
 	fatalexit = 1;
+#ifdef WITH_IDN
+	idnoptions = IDN_ASCCHECK;
+#endif
 
 	debug("main()");
 	progname = argv[0];

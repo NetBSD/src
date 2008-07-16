@@ -1,4 +1,4 @@
-/*	$NetBSD: dbus_mgr.c,v 1.1.1.1.2.2 2007/05/17 00:37:21 jdc Exp $	*/
+/*	$NetBSD: dbus_mgr.c,v 1.1.1.1.2.3 2008/07/16 01:56:35 snj Exp $	*/
 
 /* dbus_mgr.c
  *
@@ -6,6 +6,7 @@
  *  response to D-BUS dhcp events or commands.
  *
  *  Copyright(C) Jason Vas Dias, Red Hat Inc., 2005
+ *  Modified by Adam Tkac, Red Hat Inc., 2007
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -283,6 +284,7 @@ static isc_result_t
 dbus_mgr_init_dbus(ns_dbus_mgr_t * mgr)
 {
     char destination[]=DBUSMGR_DESTINATION;
+    isc_result_t result;
 
     if( mgr->sockets != 0L )
     {
@@ -298,14 +300,11 @@ dbus_mgr_init_dbus(ns_dbus_mgr_t * mgr)
 	mgr->dbus = 0L;
     }
 
-    mgr->dbus = 
-	dbus_svc_init
-	(   DBUS_PRIVATE_SYSTEM,
-	    destination,
-	    dbus_mgr_watch_handler,
-	    0L, 0L,
-	    mgr
-	);
+    result = dbus_svc_init(DBUS_PRIVATE_SYSTEM, destination, &mgr->dbus,
+					dbus_mgr_watch_handler, 0L, 0L, mgr);
+
+    if(result != ISC_R_SUCCESS)
+	goto cleanup;
 
     if( mgr->dbus == 0L )
     {

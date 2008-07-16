@@ -1,7 +1,7 @@
 <!--
  - Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  -
- - Permission to use, copy, modify, and distribute this software for any
+ - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  -
@@ -14,7 +14,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: isc-manpage.xsl.in,v 1.2.2.7 2007/01/27 00:22:48 marka Exp -->
+<!-- Id: isc-manpage.xsl.in,v 1.2.2.8 2007/08/28 07:20:03 tbox Exp -->
 
 <!-- ISC customizations for Docbook-XSL manual page generator. -->
 

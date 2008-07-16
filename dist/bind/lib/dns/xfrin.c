@@ -1,10 +1,10 @@
-/*	$NetBSD: xfrin.c,v 1.1.1.3.4.1 2007/05/17 00:40:49 jdc Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.1.1.3.4.2 2008/07/16 01:56:48 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrin.c,v 1.135.18.11 2006/07/19 00:58:01 marka Exp */
+/* Id: xfrin.c,v 1.135.18.16 2007/10/31 01:59:47 marka Exp */
 
 /*! \file */
 
@@ -724,6 +724,11 @@ xfrin_fail(dns_xfrin_ctx_t *xfr, isc_result_t result, const char *msg) {
 			result = DNS_R_BADIXFR;
 	}
 	xfrin_cancelio(xfr);
+	/*
+	 * Close the journal.
+	 */
+	if (xfr->ixfr.journal != NULL)
+		dns_journal_destroy(&xfr->ixfr.journal);
 	if (xfr->done != NULL) {
 		(xfr->done)(xfr->zone, result);
 		xfr->done = NULL;
@@ -1045,6 +1050,7 @@ xfrin_send_request(dns_xfrin_ctx_t *xfr) {
 
 	xfr->checkid = ISC_TRUE;
 	xfr->id++;
+	xfr->nmsg = 0;
 	msg->id = xfr->id;
 
 	CHECK(render(msg, xfr->mctx, &xfr->qbuffer));
@@ -1305,6 +1311,11 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 		xfr->state = XFRST_INITIALSOA;
 		CHECK(xfrin_send_request(xfr));
 	} else if (xfr->state == XFRST_END) {
+		/*
+		 * Close the journal.
+		 */
+		if (xfr->ixfr.journal != NULL)
+			dns_journal_destroy(&xfr->ixfr.journal);
 		/*
 		 * Inform the caller we succeeded.
 		 */

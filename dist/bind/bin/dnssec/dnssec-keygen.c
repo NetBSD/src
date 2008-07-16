@@ -1,11 +1,11 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.1.1.4.4.1 2007/05/17 00:35:02 jdc Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.1.1.4.4.2 2008/07/16 01:56:33 snj Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -18,7 +18,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-keygen.c,v 1.66.18.9 2007/01/18 00:06:11 marka Exp */
+/* Id: dnssec-keygen.c,v 1.66.18.10 2007/08/28 07:19:55 tbox Exp */
 
 /*! \file */
 

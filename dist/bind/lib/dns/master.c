@@ -1,10 +1,10 @@
-/*	$NetBSD: master.c,v 1.1.1.4.4.1 2007/05/17 00:40:38 jdc Exp $	*/
+/*	$NetBSD: master.c,v 1.1.1.4.4.2 2008/07/16 01:56:47 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master.c,v 1.148.18.13 2006/12/07 23:57:58 marka Exp */
+/* Id: master.c,v 1.148.18.18 2007/08/28 07:20:04 tbox Exp */
 
 /*! \file */
 
@@ -278,7 +278,8 @@ loadctx_destroy(dns_loadctx_t *lctx);
 
 #define MANYERRS(lctx, result) \
 		((result != ISC_R_SUCCESS) && \
-		((lctx)->options & DNS_MASTER_MANYERRORS) != 0)
+		 (result != ISC_R_IOERROR) && \
+		 ((lctx)->options & DNS_MASTER_MANYERRORS) != 0)
 
 #define SETRESULT(lctx, r) \
 		do { \
@@ -1476,7 +1477,7 @@ load_text(dns_loadctx_t *lctx) {
 		} else {
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
 					 "%s:%lu: isc_lex_gettoken() returned "
-					 "unexpeced token type (%d)",
+					 "unexpected token type (%d)",
 					 source, line, token.type);
 			result = ISC_R_UNEXPECTED;
 			if (MANYERRS(lctx, result)) {
@@ -2350,8 +2351,7 @@ dns_master_loadfile2(const char *master_file, dns_name_t *top,
 	INSIST(result != DNS_R_CONTINUE);
 
  cleanup:
-	if (lctx != NULL)
-		dns_loadctx_detach(&lctx);
+	dns_loadctx_detach(&lctx);
 	return (result);
 }
 
@@ -2398,8 +2398,7 @@ dns_master_loadfileinc2(const char *master_file, dns_name_t *top,
 	}
 
  cleanup:
-	if (lctx != NULL)
-		dns_loadctx_detach(&lctx);
+	dns_loadctx_detach(&lctx);
 	return (result);
 }
 
@@ -2493,8 +2492,7 @@ dns_master_loadbuffer(isc_buffer_t *buffer, dns_name_t *top,
 	INSIST(result != DNS_R_CONTINUE);
 
  cleanup:
-	if (lctx != NULL)
-		dns_loadctx_detach(&lctx);
+	dns_loadctx_detach(&lctx);
 	return (result);
 }
 
@@ -2530,8 +2528,7 @@ dns_master_loadbufferinc(isc_buffer_t *buffer, dns_name_t *top,
 	}
 
  cleanup:
-	if (lctx != NULL)
-		dns_loadctx_detach(&lctx);
+	dns_loadctx_detach(&lctx);
 	return (result);
 }
 
