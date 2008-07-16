@@ -1,10 +1,10 @@
-/*	$NetBSD: condition.h,v 1.1.1.3.4.1 2007/05/17 00:43:01 jdc Exp $	*/
+/*	$NetBSD: condition.h,v 1.1.1.3.4.2 2008/07/16 01:57:03 snj Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: condition.h,v 1.14 2004/03/05 05:12:05 marka Exp */
+/* Id: condition.h,v 1.14.18.3 2007/08/28 07:20:06 tbox Exp */
 
 #ifndef ISC_CONDITION_H
 #define ISC_CONDITION_H 1
@@ -26,11 +26,22 @@
 
 #include <isc/lang.h>
 #include <isc/mutex.h>
+#include <isc/thread.h>
 #include <isc/types.h>
+
+typedef struct isc_condition_thread isc_condition_thread_t;
+
+struct isc_condition_thread {
+	unsigned long				th;
+	HANDLE					handle[2];
+	ISC_LINK(isc_condition_thread_t)	link;
+
+};
 
 typedef struct isc_condition {
 	HANDLE 		events[2];
 	unsigned int	waiters;
+	ISC_LIST(isc_condition_thread_t) threadlist;
 } isc_condition_t;
 
 ISC_LANG_BEGINDECLS

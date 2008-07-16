@@ -1,4 +1,4 @@
-/*	$NetBSD: dbus_service.c,v 1.1.1.1.2.2 2007/05/17 00:37:22 jdc Exp $	*/
+/*	$NetBSD: dbus_service.c,v 1.1.1.1.2.3 2008/07/16 01:56:35 snj Exp $	*/
 
 /*  dbus_service.c
  *
@@ -7,6 +7,7 @@
  *  Provides MINIMAL utilities for construction of D-BUS "Services".
  *  
  *  Copyright(C) Jason Vas Dias, Red Hat Inc., 2005
+ *  Modified by Adam Tkac, Red Hat Inc., 2007
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,6 +53,7 @@ extern void tdestroy (void *__root, __free_fn_t __freefct);
 #include <dbus/dbus.h>
 
 #include <named/dbus_service.h>
+#include <isc/result.h>
 
 typedef struct dbcs_s
 {
@@ -916,38 +918,39 @@ dbus_svc_quit( DBusConnectionState *cs )
     cs->status = SHUTDOWN;
 }
 
-static DBusConnectionState *
+static isc_result_t
 connection_setup 
-(   DBusConnection *connection,  
+(   DBusConnection *connection,
+    DBUS_SVC *dbus,
     dbus_svc_WatchHandler wh, 
     dbus_svc_ErrorHandler eh, 
     dbus_svc_ErrorHandler dh,
     void *wh_arg
 )
 {
-    DBusConnectionState *cs = dbcs_new( connection );
+    *dbus = dbcs_new( connection );
     
-    if ( cs == 0L )
+    if ( *dbus == 0L )
     {
 	if(eh)(*(eh))("connection_setup: out of memory");
 	goto fail;
     }
-    cs->wh = wh;
-    cs->wh_arg = wh_arg;
-    cs->eh = eh;
-    cs->dh = dh;
+    (*dbus)->wh = wh;
+    (*dbus)->wh_arg = wh_arg;
+    (*dbus)->eh = eh;
+    (*dbus)->dh = dh;
 
     if (!dbus_connection_set_watch_functions 
-	 (    cs->connection,
+	 (    (*dbus)->connection,
 	      add_watch,
 	      remove_watch,
 	      toggle_watch,
-	      cs,
+	      *dbus,
 	      no_free
 	  )
        )
     {
-	if( cs->eh != 0L ) (*(cs->eh))("connection_setup: dbus_connection_set_watch_functions failed");
+	if( (*dbus)->eh != 0L ) (*((*dbus)->eh))("connection_setup: dbus_connection_set_watch_functions failed");
 	goto fail; 
     }
       
@@ -956,43 +959,44 @@ connection_setup
 	      add_timeout,
 	      remove_timeout,
 	      toggle_timeout,
-	      cs, 
+	      *dbus, 
 	      no_free
 	 )
        )
     {
-	if( cs->eh != 0L ) (*(cs->eh))("connection_setup: dbus_connection_set_timeout_functions failed");
+	if( (*dbus)->eh != 0L ) (*((*dbus)->eh))("connection_setup: dbus_connection_set_timeout_functions failed");
 	goto fail;
     }
 
     dbus_connection_set_dispatch_status_function 
     (   connection, 
 	dispatch_status, 
-	cs, 
+	*dbus, 
 	no_free
     ); 
 
     if (dbus_connection_get_dispatch_status (connection) != DBUS_DISPATCH_COMPLETE)
 	dbus_connection_ref(connection);    
     
-    return cs;
+    return ISC_R_SUCCESS;
   
  fail:
-    if( cs != 0L )
-	free(cs);
+    if( *dbus != 0L )
+	free(*dbus);
   
     dbus_connection_set_dispatch_status_function (connection, NULL, NULL, NULL);
     dbus_connection_set_watch_functions (connection, NULL, NULL, NULL, NULL, NULL);
     dbus_connection_set_timeout_functions (connection, NULL, NULL, NULL, NULL, NULL);
   
-    return 0L;
+    return ISC_R_FAILURE;
 }
 
-DBusConnectionState *
+isc_result_t
 dbus_svc_init
 (
     dbus_svc_DBUS_TYPE    bus,
     char                  *name, 
+    DBUS_SVC		  *dbus,
     dbus_svc_WatchHandler wh ,
     dbus_svc_ErrorHandler eh ,
     dbus_svc_ErrorHandler dh ,
@@ -1001,7 +1005,6 @@ dbus_svc_init
 {
     DBusConnection       *connection;
     DBusError            error;
-    DBusConnectionState  *cs;
     char *session_bus_address=0L;
 
     memset(&error,'\0',sizeof(DBusError));
@@ -1017,7 +1020,7 @@ dbus_svc_init
 	if ( (connection = dbus_connection_open_private("unix:path=/var/run/dbus/system_bus_socket", &error)) == 0L )
 	{
 	    if(eh)(*eh)("dbus_svc_init failed: %s %s",error.name, error.message);
-	    return ( 0L );
+	    return ISC_R_FAILURE;
 	}
 
 	if ( ! dbus_bus_register(connection,&error) )
@@ -1025,7 +1028,7 @@ dbus_svc_init
 	    if(eh)(*eh)("dbus_bus_register failed: %s %s", error.name, error.message);
 	    dbus_connection_close(connection);
 	    free(connection);
-	    return ( 0L );
+	    return ISC_R_FAILURE;
 	}
 	break;
 
@@ -1035,13 +1038,13 @@ dbus_svc_init
 	if ( session_bus_address == 0L )
 	{
 	    if(eh)(*eh)("dbus_svc_init failed: DBUS_SESSION_BUS_ADDRESS environment variable not set");
-	    return ( 0L );
+	    return ISC_R_FAILURE;
 	}
 
 	if ( (connection = dbus_connection_open_private(session_bus_address, &error)) == 0L )
 	{
 	    if(eh)(*eh)("dbus_svc_init failed: %s %s",error.name, error.message);
-	    return ( 0L );
+	    return ISC_R_FAILURE;
 	}
 
 	if ( ! dbus_bus_register(connection,&error) )
@@ -1049,7 +1052,7 @@ dbus_svc_init
 	    if(eh)(*eh)("dbus_bus_register failed: %s %s", error.name, error.message);
 	    dbus_connection_close(connection);
 	    free(connection);
-	    return ( 0L );
+	    return ISC_R_FAILURE;
 	}
 	break;
 
@@ -1059,27 +1062,27 @@ dbus_svc_init
 	if ( (connection = dbus_bus_get (bus, &error)) == 0L )
 	{
 	    if(eh)(*eh)("dbus_svc_init failed: %s %s",error.name, error.message);
-	    return ( 0L );
+	    return ISC_R_FAILURE;
 	}
 	break;
 
     default:
 	if(eh)(*eh)("dbus_svc_init failed: unknown bus type %d", bus);
-	return ( 0L );
+	return ISC_R_FAILURE;
     }
     
     dbus_connection_set_exit_on_disconnect(connection, FALSE);
 
-    if ( (cs = connection_setup(connection, wh, eh, dh, wh_arg)) == 0L )
+    if ( (connection_setup(connection, dbus, wh, eh, dh, wh_arg)) != ISC_R_SUCCESS)
     {
 	if(eh)(*eh)("dbus_svc_init failed: connection_setup failed");
-	return( 0L );
+	return ISC_R_FAILURE;
     }
 
     if( name == 0L )
-	return( cs );
+	return ISC_R_SUCCESS;
     
-    cs->unique_name = dbus_bus_get_unique_name(connection);
+    (*dbus)->unique_name = dbus_bus_get_unique_name(connection);
 
     switch
 	(   dbus_bus_request_name 
@@ -1104,19 +1107,19 @@ dbus_svc_init
 	if(eh)(*eh)("dbus_svc_init: dbus_bus_request_name failed: %s %s", error.name, error.message);
 	goto give_up;
     }
-    return ( cs );
+    return ISC_R_SUCCESS;
 
  give_up:
     dbus_connection_close( connection );
     dbus_connection_unref( connection );
-    if( cs )
+    if( *dbus )
     {
 	dbus_connection_set_dispatch_status_function (connection, NULL, NULL, NULL);
 	dbus_connection_set_watch_functions (connection, NULL, NULL, NULL, NULL, NULL);
 	dbus_connection_set_timeout_functions (connection, NULL, NULL, NULL, NULL, NULL);
-	free(cs);    
+	free(*dbus);    
     }
-    return ( 0L );
+    return ISC_R_FAILURE;
 }
 
 const char *dbus_svc_unique_name(DBusConnectionState *cs)

@@ -1,10 +1,10 @@
-/*	$NetBSD: check.c,v 1.1.1.3.4.1 2007/05/17 00:40:27 jdc Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.3.4.2 2008/07/16 01:56:47 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,14 +17,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check.c,v 1.44.18.31 2006/08/21 00:09:52 marka Exp */
+/* Id: check.c,v 1.44.18.35 2007/09/13 05:04:01 each Exp */
 
 /*! \file */
 
 #include <config.h>
 
 #include <stdlib.h>
-#include <string.h>
 
 #include <isc/buffer.h>
 #include <isc/log.h>
@@ -34,6 +33,7 @@
 #include <isc/region.h>
 #include <isc/result.h>
 #include <isc/sockaddr.h>
+#include <isc/string.h>
 #include <isc/symtab.h>
 #include <isc/util.h>
 
@@ -47,6 +47,10 @@
 #include <isccfg/cfg.h>
 
 #include <bind9/check.h>
+
+#ifndef DNS_RDATASET_FIXED
+#define DNS_RDATASET_FIXED 1
+#endif
 
 static void
 freekey(char *key, unsigned int type, isc_symvalue_t value, void *userarg) {
@@ -123,8 +127,12 @@ check_orderent(const cfg_obj_t *ent, isc_log_t *logctx) {
 	    cfg_obj_log(ent, logctx, ISC_LOG_ERROR,
 			"rrset-order: missing ordering");
 		result = ISC_R_FAILURE;
-	} else if (strcasecmp(cfg_obj_asstring(obj), "fixed") != 0 &&
-		   strcasecmp(cfg_obj_asstring(obj), "random") != 0 &&
+	} else if (strcasecmp(cfg_obj_asstring(obj), "fixed") == 0) {
+#if !DNS_RDATASET_FIXED
+		cfg_obj_log(obj, logctx, ISC_LOG_WARNING,
+			    "rrset-order: order 'fixed' not fully implemented");
+#endif
+	} else if (strcasecmp(cfg_obj_asstring(obj), "random") != 0 &&
 		   strcasecmp(cfg_obj_asstring(obj), "cyclic") != 0) {
 		cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
 			    "rrset-order: invalid order '%s'",
