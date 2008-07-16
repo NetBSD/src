@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/07/16 00:36:15 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2008/07/16 01:51:56 christos Exp $
 
 .include <bsd.own.mk>
 PROG=	top
@@ -18,7 +18,7 @@ sigdesc.h: ${TOPDIR}/sigconv.awk ${DESTDIR}/usr/include/sys/signal.h
 	${_MKTARGET_CREATE}
 	awk -f ${TOPDIR}/sigconv.awk ${DESTDIR}/usr/include/sys/signal.h > \
 	    ${.TARGET}
-CLEANFILES+= sigdesc.h top.1
+CLEANFILES+= sigdesc.h top.1 config.h
 
 top.1: top.1.in
 	${TOOL_SED} -e s/@DEFAULT_TOPN@/-1/ \
@@ -28,5 +28,10 @@ top.1: top.1.in
 		-e s/@MAN_SUPPLEMENT@// < $? > $@
 
 commands.c: sigdesc.h
+
+.BEGIN: config.h
+
+config.h: config.h.in
+	${TOOL_SED} -e s/@MACHINE@/${MACHINE}/ < $? > $@
 
 .include <bsd.prog.mk>
