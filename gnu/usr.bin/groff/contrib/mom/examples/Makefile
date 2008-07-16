@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2006/02/14 23:37:39 dyoung Exp $
+# $NetBSD: Makefile,v 1.6 2008/07/16 16:34:36 perry Exp $
 
 DIST_SUBDIR=	contrib/mom/examples
 
@@ -16,7 +16,8 @@ CLEANFILES+=		${PROCESSED_FILES}
 
 .for i in ${PROCESSED_FILES}
 $i: ${i:S/.ps/.mom/}
-	${TOOL_GROFF} -I${FILESDIR} -Tps -mom ${.ALLSRC} >${.TARGET}
+	${TOOL_GROFF} -I${FILESDIR} -Tps -mom ${.ALLSRC} | \
+		${TOOL_SED} 's/^\(%%CreationDate:\).*/\1 unknown/' >${.TARGET}
 .endfor
 
 dependall: ${PROCESSED_FILES}
