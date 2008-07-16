@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.11 2008/07/07 18:45:26 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.12 2008/07/16 09:36:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.11 2008/07/07 18:45:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.12 2008/07/16 09:36:08 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -87,7 +87,7 @@ static void udf_record_allocation_in_node(struct udf_mount *ump,
 
 /* --------------------------------------------------------------------- */
 
-#if 1
+#if 0
 #if 1
 static void
 udf_node_dump(struct udf_node *udf_node) {
@@ -327,7 +327,33 @@ udf_node_sanity_check(struct udf_node *udf_node,
 //	KASSERT(mutex_owned(&udf_node->ump->allocate_mutex));
 }
 #else
-#define udf_node_sanity_check(a, b, c)
+static void
+udf_node_sanity_check(struct udf_node *udf_node,
+		uint64_t *cnt_inflen, uint64_t *cnt_logblksrec) {
+	struct file_entry    *fe;
+	struct extfile_entry *efe;
+	struct icb_tag *icbtag;
+	uint64_t inflen, logblksrec;
+	int dscr_size, lb_size;
+
+	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
+
+	fe  = udf_node->fe;
+	efe = udf_node->efe;
+	if (fe) {
+		icbtag = &fe->icbtag;
+		inflen = udf_rw64(fe->inf_len);
+		dscr_size  = sizeof(struct file_entry) -1;
+		logblksrec = udf_rw64(fe->logblks_rec);
+	} else {
+		icbtag = &efe->icbtag;
+		inflen = udf_rw64(efe->inf_len);
+		dscr_size  = sizeof(struct extfile_entry) -1;
+		logblksrec = udf_rw64(efe->logblks_rec);
+	}
+	*cnt_logblksrec = logblksrec;
+	*cnt_inflen     = inflen;
+}
 #endif
 
 /* --------------------------------------------------------------------- */
