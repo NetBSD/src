@@ -1,3 +1,4 @@
-$NetBSD: version,v 1.1 2005/12/29 15:20:09 tsutsui Exp $
+$NetBSD: version,v 1.2 2008/07/16 14:45:17 tsutsui Exp $
 
 0.0:	Initial revision
+0.1:	Change boot messages to replace build date and maker with kernrev.
