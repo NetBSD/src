@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.613 2008/07/14 11:10:55 jmcneill Exp $
+#	$NetBSD: 3RDPARTY,v 1.614 2008/07/16 00:47:56 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -899,21 +899,15 @@ Use src/gnu/dist/texinfo/texinfo2netbsd for preparing the source tree
 for the import.
 
 Package:	top
-Version:	3.5beta12
-Current Vers:	3.6
+Version:	3.8beta1
+Current Vers:	3.8beta1
 Maintainer:	William LeFebvre <wnl@groupsys.com>
-Archive Site:	ftp://ftp.groupsys.com/pub/top/
+Archive Site:	http://www.unixtop.org/dist/top-3.8beta1.tar.gz
 Home Page:	http://www.unixtop.org/
 Mailing List:	top-spinners@ocee.groupsys.com
-Responsible:	simonb
+Responsible:	simonb, christos
 License:	BSD (2-clause)
 Notes:
-Remove all non-current NetBSD machine definitions and man page
-extensions in machine/ before importing.
-After importing, run:
-	./Configure <netbsd-module-name>
-	rm machine/*.desc Make.desc SYNOPSIS machine.c
-	cvs commit -m "Update ./Configure'd files." top.local.h top.1
 
 Package:	traceroute
 Version:	1.4a5

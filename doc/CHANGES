@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1075 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1076 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -551,3 +551,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	psrset(8): Utility to control processor sets [ad 20080622]
 	postfix: Import 2.5.2 [christos 20080622]
 	ssh-hpn: Apply 5.0p1 13 v3 [christos 20080622]
+	top(1): Import top 3.8beta1 [christos 20080715]
