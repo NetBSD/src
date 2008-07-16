@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pam_get_authtok.c,v 1.4 2008/01/27 01:23:00 christos Exp $
+ * $Id: pam_get_authtok.c,v 1.5 2008/07/16 18:20:17 drochner Exp $
  */
 
 #include <sys/param.h>
@@ -114,16 +114,21 @@ pam_get_authtok(pam_handle_t *pamh,
 	if (twice) {
 		r = pam_prompt(pamh, style, &resp2, "Retype %s", prompt);
 		if (r != PAM_SUCCESS) {
+			memset(resp, 0, strlen(resp));
 			FREE(resp);
 			RETURNC(r);
 		}
-		if (strcmp(resp, resp2) != 0)
+		if (strcmp(resp, resp2) != 0) {
+			memset(resp, 0, strlen(resp));
 			FREE(resp);
+		}
+		memset(resp2, 0, strlen(resp2));
 		FREE(resp2);
 	}
 	if (resp == NULL)
 		RETURNC(PAM_TRY_AGAIN);
 	r = pam_set_item(pamh, item, resp);
+	memset(resp, 0, strlen(resp));
 	FREE(resp);
 	if (r != PAM_SUCCESS)
 		RETURNC(r);
