@@ -1,10 +1,10 @@
-/*	$NetBSD: lwtest.c,v 1.1.1.3.4.1 2007/05/17 00:36:18 jdc Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:30 snj Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,15 +17,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwtest.c,v 1.26 2004/03/05 05:01:20 marka Exp */
+/* Id: lwtest.c,v 1.26.18.2 2007/09/13 23:46:26 tbox Exp */
 
 #include <config.h>
 
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <isc/net.h>
+#include <isc/string.h>
 
 #include <lwres/lwres.h>
 #include <lwres/netdb.h>

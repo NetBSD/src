@@ -1,10 +1,10 @@
-/*	$NetBSD: control.c,v 1.1.1.4.4.1 2007/05/17 00:35:08 jdc Exp $	*/
+/*	$NetBSD: control.c,v 1.1.1.4.4.1.2.1 2008/07/16 03:10:28 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,17 +17,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: control.c,v 1.20.10.8 2006/03/10 00:23:20 marka Exp */
+/* Id: control.c,v 1.20.10.10 2007/09/13 23:46:26 tbox Exp */
 
 /*! \file */
 
 #include <config.h>
 
-#include <string.h>
 
 #include <isc/app.h>
 #include <isc/event.h>
 #include <isc/mem.h>
+#include <isc/string.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 
