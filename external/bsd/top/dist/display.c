@@ -80,6 +80,7 @@ extern int overstrike;
 
 static int lmpid = -1;
 static int display_width = MAX_COLS;
+static int ncpu = 0;
 
 /* cursor positions of key points on the screen are maintained here */
 /* layout.h has static definitions, but we may change our minds on some
@@ -118,6 +119,7 @@ static char *screenbuf = NULL;
 static char *colorbuf = NULL;
 static char scratchbuf[MAX_COLS];
 static int bufsize = 0;
+static int multi = 0;
 
 /* lineindex tells us where the beginning of a line is in the buffer */
 #define lineindex(l) ((l)*MAX_COLS)
@@ -746,7 +748,42 @@ display_columns()
  */
 
 int
-display_init(struct statics *statics)
+display_setmulti(int m)
+{
+    int i;
+    if (m == multi)
+	return 0;
+    if ((multi = m) != 0) {
+	for (i = 1; i < ncpu; i++)
+	{
+	    /* adjust screen placements */
+	    y_kernel++;
+	    y_mem++;
+	    y_swap++;
+	    y_message++;
+	    y_header++;
+	    y_idlecursor++;
+	    y_procs++;
+	}
+	return (ncpu - 1);
+    } else {
+	for (i = 1; i < ncpu; i++)
+	{
+	    /* adjust screen placements */
+	    y_kernel--;
+	    y_mem--;
+	    y_swap--;
+	    y_message--;
+	    y_header--;
+	    y_idlecursor--;
+	    y_procs--;
+	}
+	return -(ncpu - 1);
+    }
+}
+
+int
+display_init(struct statics *statics, int percpuinfo)
 
 {
     register int top_lines;
@@ -758,6 +795,7 @@ display_init(struct statics *statics)
     /* certain things may influence the screen layout,
        so look at those first */
 
+    ncpu = statics->ncpu ? statics->ncpu : 1;
     /* a kernel line shifts parts of the display down */
     kernel_names = statics->kernel_names;
     if ((num_kernel = string_count(kernel_names)) > 0)
@@ -770,6 +808,8 @@ display_init(struct statics *statics)
 	y_idlecursor++;
 	y_procs++;
     }
+
+    (void)display_setmulti(percpuinfo);
 
     /* a swap line shifts parts of the display down one */
     swap_names = statics->swap_names;
@@ -795,7 +835,7 @@ display_init(struct statics *statics)
 
 	cpustate_names = statics->cpustate_names;
 	num_cpustates = string_count(cpustate_names);
-	lcpustates = (int *)calloc(num_cpustates, sizeof(int));
+	lcpustates = (int *)calloc(num_cpustates, sizeof(int) * ncpu);
 	cpustate_columns = (int *)calloc(num_cpustates, sizeof(int));
 	memory_names = statics->memory_names;
 	num_memory = string_count(memory_names);
@@ -1102,17 +1142,20 @@ u_procstates(int total, int *brkdn, int threads)
 /* cpustates_tag() calculates the correct tag to use to label the line */
 
 char *
-cpustates_tag()
+cpustates_tag(int c)
 
 {
     register char *use;
 
-    static char *short_tag = "CPU: ";
-    static char *long_tag = "CPU states: ";
+    static char fmttag[100];
+
+    char *short_tag = ncpu > 1 && multi ? "CPU%d: " : "CPU: ";
+    char *long_tag = ncpu > 1 && multi ? "CPU%d states: " : "CPU states: ";
 
     /* if length + strlen(long_tag) >= screen_width, then we have to
        use the shorter tag (we subtract 2 to account for ": ") */
-    if (cpustate_total_length + (int)strlen(long_tag) - 2 >= screen_width)
+    if (cpustate_total_length + (int)strlen(long_tag) - 2 - ((ncpu > 1) ? 1 : 0)
+	>= screen_width)
     {
 	use = short_tag;
     }
@@ -1121,9 +1164,11 @@ cpustates_tag()
 	use = long_tag;
     }
 
+    snprintf(fmttag, sizeof(fmttag), use, c);
+
     /* set x_cpustates accordingly then return result */
-    x_cpustates = strlen(use);
-    return(use);
+    x_cpustates = strlen(fmttag);
+    return(fmttag);
 }
 
 void
@@ -1138,43 +1183,54 @@ i_cpustates(int *states)
 #ifdef ENABLE_COLOR
     int *cidx = cpustate_cidx;
 #endif
+    int c, i;
 
-    /* initialize */
-    names = cpustate_names;
-    colp = cpustate_columns;
-
-    /* print tag */
-    display_write(0, y_cpustates, 0, 0, cpustates_tag());
-
-    /* now walk thru the names and print the line */
-    while ((thisname = *names++) != NULL)
+    if (multi == 0 && ncpu > 1)
     {
-	if (*thisname != '\0')
+	for (c = 1; c < ncpu; c++)
+	    for (i = 0; i < num_cpustates; i++)
+		states[i] += states[c * num_cpustates + i];
+	for (i = 0; i < num_cpustates; i++)
+	    states[i] /= ncpu;
+    }
+
+    for (c = 0; c < (multi ? ncpu : 1); c++)
+    {
+
+	/* print tag */
+	display_write(0, y_cpustates + c, 0, 0, cpustates_tag(c));
+	colp = cpustate_columns;
+
+	/* now walk thru the names and print the line */
+	for (i = 0, names = cpustate_names; ((thisname = *names++) != NULL);)
 	{
-	    /* retrieve the value and remember it */
-	    value = *states;
+	    if (*thisname != '\0')
+	    {
+		/* retrieve the value and remember it */
+		value = *states;
 
 #ifdef ENABLE_COLOR
-	    /* determine color number to use */
-	    color = color_test(*cidx++, value/10);
+		/* determine color number to use */
+		color = color_test(*cidx++, value/10);
 #endif
 
-	    /* if percentage is >= 1000, print it as 100% */
-	    display_fmt(x_cpustates + *colp, y_cpustates,
-			color, 0,
-			(value >= 1000 ? "%4.0f%% %s%s" : "%4.1f%% %s%s"),
-			((float)value)/10.,
-			thisname,
-			*names != NULL ? ", " : "");
+		/* if percentage is >= 1000, print it as 100% */
+		display_fmt(x_cpustates + *colp, y_cpustates + c,
+			    color, 0,
+			    (value >= 1000 ? "%4.0f%% %s%s" : "%4.1f%% %s%s"),
+			    ((float)value)/10.,
+			    thisname,
+			    *names != NULL ? ", " : "");
 
+	    }
+	    /* increment */
+	    colp++;
+	    states++;
 	}
-	/* increment */
-	colp++;
-	states++;
     }
 
     /* copy over values into "last" array */
-    memcpy(lcpustates, states, num_cpustates * sizeof(int));
+    memcpy(lcpustates, states, num_cpustates * sizeof(int) * ncpu);
 }
 
 void
@@ -1182,7 +1238,7 @@ u_cpustates(int *states)
 
 {
     int value;
-    char **names = cpustate_names;
+    char **names;
     char *thisname;
     int *lp;
     int *colp;
@@ -1190,44 +1246,57 @@ u_cpustates(int *states)
 #ifdef ENABLE_COLOR
     int *cidx = cpustate_cidx;
 #endif
+    int c, i;
 
     lp = lcpustates;
-    colp = cpustate_columns;
 
-    /* we could be much more optimal about this */
-    while ((thisname = *names++) != NULL)
+    if (multi == 0 && ncpu > 1)
     {
-	if (*thisname != '\0')
+	for (c = 1; c < ncpu; c++)
+	    for (i = 0; i < num_cpustates; i++)
+		states[i] += states[c * num_cpustates + i];
+	for (i = 0; i < num_cpustates; i++)
+	    states[i] /= ncpu;
+    }
+
+    for (c = 0; c < (multi ? ncpu : 1); c++)
+    {
+	colp = cpustate_columns;
+	/* we could be much more optimal about this */
+	for (names = cpustate_names; (thisname = *names++) != NULL;)
 	{
-	    /* did the value change since last time? */
-	    if (*lp != *states)
+	    if (*thisname != '\0')
 	    {
-		/* yes, change it */
-		/* retrieve value and remember it */
-		value = *states;
+		/* did the value change since last time? */
+		if (*lp != *states)
+		{
+		    /* yes, change it */
+		    /* retrieve value and remember it */
+		    value = *states;
 
 #ifdef ENABLE_COLOR
-		/* determine color number to use */
-		color = color_test(*cidx, value/10);
+		    /* determine color number to use */
+		    color = color_test(*cidx, value/10);
 #endif
 
-		/* if percentage is >= 1000, print it as 100% */
-		display_fmt(x_cpustates + *colp, y_cpustates, color, 0,
-			    (value >= 1000 ? "%4.0f" : "%4.1f"),
-			    ((double)value)/10.);
+		    /* if percentage is >= 1000, print it as 100% */
+		    display_fmt(x_cpustates + *colp, y_cpustates + c, color, 0,
+				(value >= 1000 ? "%4.0f" : "%4.1f"),
+				((double)value)/10.);
 
-		/* remember it for next time */
-		*lp = value;
+		    /* remember it for next time */
+		    *lp = value;
+		}
+#ifdef ENABLE_COLOR
+		cidx++;
+#endif
 	    }
-#ifdef ENABLE_COLOR
-	    cidx++;
-#endif
-	}
 
-	/* increment and move on */
-	lp++;
-	states++;
-	colp++;
+	    /* increment and move on */
+	    lp++;
+	    states++;
+	    colp++;
+	}
     }
 }
 
@@ -1235,26 +1304,29 @@ void
 z_cpustates()
 
 {
-    register int i = 0;
+    register int i, c;
     register char **names = cpustate_names;
     register char *thisname;
     register int *lp;
 
     /* print tag */
-    display_write(0, y_cpustates, 0, 0, cpustates_tag());
-
-    while ((thisname = *names++) != NULL)
+    for (c = 0; c < (multi ? ncpu : 1); c++)
     {
-	if (*thisname != '\0')
+	display_write(0, y_cpustates + c, 0, 0, cpustates_tag(c));
+
+	for (i = 0, names = cpustate_names; (thisname = *names++) != NULL;)
 	{
-	    display_fmt(-1, -1, 0, 0, "%s    %% %s", i++ == 0 ? "" : ", ",
-			thisname);
+	    if (*thisname != '\0')
+	    {
+		display_fmt(-1, -1, 0, 0, "%s    %% %s", i++ == 0 ? "" : ", ",
+			    thisname);
+	    }
 	}
     }
 
     /* fill the "last" array with all -1s, to insure correct updating */
     lp = lcpustates;
-    i = num_cpustates;
+    i = num_cpustates * ncpu;
     while (--i >= 0)
     {
 	*lp++ = -1;

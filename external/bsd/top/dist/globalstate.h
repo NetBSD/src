@@ -55,6 +55,7 @@ typedef struct globalstate {
     int use_color;
     int smart_terminal;
     int interactive;
+    int percpustates;
     char *header_text;
     char *order_name;    /* only used before call to machine_init */
     char *order_namelist;

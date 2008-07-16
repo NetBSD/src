@@ -11,7 +11,7 @@ top \- display and update information about the top cpu processes
 .SH SYNOPSIS
 .B top
 [
-.B \-CISTabcinqtuv
+.B \-1CISTabcinqtuv
 ] [
 .BI \-d count
 ] [
@@ -63,6 +63,9 @@ is redirected to a file, it acts as if it were being run on a dumb
 terminal.
 .SH OPTIONS
 .if \nL==0 Long options are not available on this system.
+.TP
+.B "\-1, \-\-percpustates"
+Display per-cpu states on a multi-processor machine.
 .TP
 .B "\-C, \-\-color"
 Turn off the use of color in the display.

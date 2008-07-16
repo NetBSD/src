@@ -40,8 +40,9 @@
 void display_clear();
 int display_resize();
 int display_lines();
+int display_setmulti(int m);
 int display_columns();
-int display_init(struct statics *statics);
+int display_init(struct statics *statics, int percpuinfo);
 void i_loadave(int mpid, double *avenrun);
 void u_loadave(int mpid, double *avenrun);
 void i_minibar(int (*formatter)(char *, int));
