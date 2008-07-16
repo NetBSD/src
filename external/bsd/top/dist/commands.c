@@ -501,6 +501,7 @@ renice_procs(char *str)
     if (procnum == -1 || prio < PRIO_MIN || prio > PRIO_MAX)
     {
 	message_error(" renice: bad priority value");
+	return;
     }
 #endif
 
@@ -508,6 +509,7 @@ renice_procs(char *str)
     if ((str = next_field(str)) == NULL)
     {
 	message_error(" remice: no processes specified");
+	return;
     }
 
 #ifdef HAVE_SETPRIORITY
@@ -900,6 +902,16 @@ cmd_threads(globalstate *gstate)
     return CMD_NA;
 }
 
+int
+cmd_percpustates(globalstate *gstate)
+{
+	gstate->percpustates = !gstate->percpustates;
+	gstate->fulldraw = Yes;
+	gstate->max_topn += display_setmulti(gstate->percpustates);
+	return CMD_REFRESH;
+}
+
+
 /* forward reference for cmd_help, as it needs to see the command_table */
 int cmd_help(globalstate *gstate);
 
@@ -909,6 +921,7 @@ command command_table[] = {
     { ' ', cmd_update, "update screen" },
     { '?', cmd_help, "help; show this text" },
     { 'h', cmd_help, NULL },
+    { '1', cmd_percpustates, "toggle the detail per cpu of cpustates" },
     { 'C', cmd_color, "toggle the use of color" },
     { 'H', cmd_threads, "toggle the display of individual threads" },
     { 't', cmd_threads, NULL },
