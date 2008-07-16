@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.3.4.1 2007/05/17 00:39:17 jdc Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:36 snj Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Header: /proj/cvs/prod/bind9/lib/bind/dst/dst_api.c,v 1.10.332.5 2006/03/10 00:20:08 marka Exp";
+static const char rcsid[] = "Header: /proj/cvs/prod/bind9/lib/bind/dst/dst_api.c,v 1.10.332.7 2007/09/26 04:41:47 each Exp";
 #endif
 
 /*
@@ -361,7 +361,7 @@ dst_read_key(const char *in_keyname, const u_int16_t in_id,
 					pubkey->dk_alg) == 0)
 		dg_key = dst_free_key(dg_key);
 
-	pubkey = dst_free_key(pubkey);
+	(void)dst_free_key(pubkey);
 	return (dg_key);
 }
 
@@ -436,6 +436,7 @@ dst_s_write_private_key(const DST_KEY *key)
 		if ((nn = fwrite(encoded_block, 1, len, fp)) != len) {
 			EREPORT(("dst_write_private_key(): Write failure on %s %d != %d errno=%d\n",
 				 file, len, nn, errno));
+			fclose(fp);
 			return (-5);
 		}
 		fclose(fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: queryperf.c,v 1.1.1.4.4.1 2007/05/17 00:37:36 jdc Exp $	*/
+/*	$NetBSD: queryperf.c,v 1.1.1.4.4.1.2.1 2008/07/16 03:10:31 snj Exp $	*/
 
 /*
  * Copyright (C) 2000, 2001  Nominum, Inc.
@@ -20,7 +20,7 @@
 /***
  ***	DNS Query Performance Testing Tool  (queryperf.c)
  ***
- ***	Version Id: queryperf.c,v 1.8.192.3 2005/10/29 00:21:12 jinmei Exp
+ ***	Version Id: queryperf.c,v 1.8.192.4 2007/09/05 07:44:57 marka Exp
  ***
  ***	Stephen Jacob <sj@nominum.com>
  ***/
@@ -41,8 +41,11 @@
 #include <math.h>
 #include <errno.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #ifndef HAVE_GETADDRINFO
 #include "missing/addrinfo.h"
+#endif
 #endif
 
 /*
@@ -219,7 +222,7 @@ void
 show_startup_info(void) {
 	printf("\n"
 "DNS Query Performance Testing Tool\n"
-"Version: Id: queryperf.c,v 1.8.192.3 2005/10/29 00:21:12 jinmei Exp\n"
+"Version: Id: queryperf.c,v 1.8.192.4 2007/09/05 07:44:57 marka Exp\n"
 "\n");
 }
 

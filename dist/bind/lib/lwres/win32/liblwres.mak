@@ -135,6 +135,7 @@ CLEAN :
 	-@erase "$(INTDIR)\lwres_noop.obj"
 	-@erase "$(INTDIR)\lwresutil.obj"
 	-@erase "$(INTDIR)\vc60.idb"
+	-@erase "$(INTDIR)\socket.obj"
 	-@erase "$(INTDIR)\version.obj"
 	-@erase "$(OUTDIR)\liblwres.exp"
 	-@erase "$(OUTDIR)\liblwres.lib"
@@ -174,6 +175,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\lwres_grbn.obj" \
 	"$(INTDIR)\lwres_noop.obj" \
 	"$(INTDIR)\lwresutil.obj" \
+	"$(INTDIR)\socket.obj" \
 	"$(INTDIR)\version.obj" \
 	"$(INTDIR)\lwconfig.obj"
 
@@ -237,6 +239,8 @@ CLEAN :
 	-@erase "$(INTDIR)\lwresutil.sbr"
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\vc60.pdb"
+	-@erase "$(INTDIR)\socket.obj"
+	-@erase "$(INTDIR)\socket.sbr"
 	-@erase "$(INTDIR)\version.obj"
 	-@erase "$(INTDIR)\version.sbr"
 	-@erase "$(OUTDIR)\liblwres.bsc"
@@ -274,6 +278,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\lwres_grbn.sbr" \
 	"$(INTDIR)\lwres_noop.sbr" \
 	"$(INTDIR)\lwresutil.sbr" \
+	"$(INTDIR)\socket.sbr" \
 	"$(INTDIR)\version.sbr" \
 	"$(INTDIR)\lwconfig.sbr"
 
@@ -306,6 +311,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\lwres_grbn.obj" \
 	"$(INTDIR)\lwres_noop.obj" \
 	"$(INTDIR)\lwresutil.obj" \
+	"$(INTDIR)\socket.obj" \
 	"$(INTDIR)\version.obj" \
 	"$(INTDIR)\lwconfig.obj"
 
@@ -710,6 +716,22 @@ SOURCE=..\lwresutil.c
 
 "$(INTDIR)\lwresutil.obj"	"$(INTDIR)\lwresutil.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=.\socket.c
+
+!IF  "$(CFG)" == "liblwres - Win32 Release"
+
+
+"$(INTDIR)\socket.obj" : $(SOURCE) "$(INTDIR)"
+
+
+!ELSEIF  "$(CFG)" == "liblwres - Win32 Debug"
+
+
+"$(INTDIR)\socket.obj"	"$(INTDIR)\socket.sbr" : $(SOURCE) "$(INTDIR)"
 
 
 !ENDIF 

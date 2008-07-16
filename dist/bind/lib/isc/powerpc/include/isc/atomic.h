@@ -1,9 +1,9 @@
-/*	$NetBSD: atomic.h,v 1.3.2.2 2007/05/17 00:42:43 jdc Exp $	*/
+/*	$NetBSD: atomic.h,v 1.3.2.2.2.1 2008/07/16 03:10:45 snj Exp $	*/
 
 /*
  * Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: atomic.h,v 1.1.6.5 2007/02/13 00:04:50 marka Exp */
+/* Id: atomic.h,v 1.1.6.6 2007/08/28 07:20:06 tbox Exp */
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
