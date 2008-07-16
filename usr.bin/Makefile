@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.165 2008/06/10 18:41:47 aymeric Exp $
+#	$NetBSD: Makefile,v 1.166 2008/07/16 00:43:04 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -25,7 +25,7 @@ SUBDIR= apply apropos asa at atf-compile atf-config atf-report atf-run \
 	renice rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh rup \
 	ruptime rusers rwall rwho script sdiff sdpquery sed seq shar shlock \
 	showmount shuffle sockstat soelim sort spell split stat su systat \
-	tail talk tcopy tee telnet tftp time tip tn3270 top touch tput \
+	tail talk tcopy tee telnet tftp time tip tn3270 touch tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
 	uniq units unvis usbhidaction usbhidctl users utoppya \
 	uudecode uuencode uuidgen vacation vgrind vi vis vmstat vndcompress w \
