@@ -300,6 +300,7 @@ release_signals(void *parm)
 
 #ifdef HAVE_GETOPT_LONG
 static struct option longopts[] = {
+    { "percpustates", no_argument, NULL, '1' },
     { "color", no_argument, NULL, 'C' },
     { "debug", no_argument, NULL, 'D' },
     { "system-procs", no_argument, NULL, 'S' },
@@ -333,13 +334,18 @@ do_arguments(globalstate *gstate, int ac, char **av)
     optind = 1;
 
 #ifdef HAVE_GETOPT_LONG
-    while ((i = getopt_long(ac, av, "CDSITabcinqtuvs:d:U:o:m:", longopts, NULL)) != -1)
+    while ((i = getopt_long(ac, av, "1CDSITabcinqtuvs:d:U:o:m:", longopts, NULL)) != -1)
 #else
-    while ((i = getopt(ac, av, "CDSITabcinqtuvs:d:U:o:m:")) != EOF)
+    while ((i = getopt(ac, av, "1CDSITabcinqtuvs:d:U:o:m:")) != EOF)
 #endif
     {
 	switch(i)
 	{
+	case '1':
+	    gstate->percpustates = !gstate->percpustates;
+	    gstate->fulldraw = Yes;
+	    gstate->max_topn += display_setmulti(gstate->percpustates);
+	    break;
 #ifdef ENABLE_COLOR
 	case 'C':
 	    gstate->use_color = !gstate->use_color;
@@ -755,10 +761,11 @@ main(int argc, char *argv[])
     gstate->fulldraw = Yes;
     gstate->use_color = Yes;
     gstate->interactive = Maybe;
+    gstate->percpustates = Yes;
 
     /* preset defaults for process selection */
     gstate->pselect.idle = Yes;
-    gstate->pselect.system = No;
+    gstate->pselect.system = Yes;
     gstate->pselect.fullcmd = No;
     gstate->pselect.command = NULL;
     gstate->pselect.uid = -1;
@@ -874,7 +881,7 @@ main(int argc, char *argv[])
     gstate->pselect.usernames = gstate->show_usernames;
 
     /* initialize display */
-    if ((gstate->max_topn = display_init(&statics)) == -1)
+    if ((gstate->max_topn = display_init(&statics, gstate->percpustates)) == -1)
     {
 	fprintf(stderr, "%s: can't allocate sufficient memory\n", myname);
 	exit(EX_OSERR);
