@@ -1,4 +1,4 @@
-/*	$NetBSD: irs_data.c,v 1.1.1.3.4.1 2007/05/17 00:39:55 jdc Exp $	*/
+/*	$NetBSD: irs_data.c,v 1.1.1.3.4.1.2.1 2008/07/16 03:10:36 snj Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irs_data.c,v 1.7.18.3 2006/03/10 00:20:08 marka Exp";
+static const char rcsid[] = "Id: irs_data.c,v 1.7.18.5 2007/08/27 03:34:24 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -134,8 +134,10 @@ net_data_init(const char *conf_file) {
 		if (pthread_mutex_lock(&keylock) != 0)
 			return (NULL);
 		if (!once) {
-			if (pthread_key_create(&key, net_data_destroy) != 0)
+			if (pthread_key_create(&key, net_data_destroy) != 0) {
+				(void)pthread_mutex_unlock(&keylock);
 				return (NULL);
+			}
 			once = 1;
 		}
 		if (pthread_mutex_unlock(&keylock) != 0)

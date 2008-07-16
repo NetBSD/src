@@ -164,7 +164,6 @@ dns_dispatch_detach
 dns_dispatch_getlocaladdress
 dns_dispatch_getsocket
 dns_dispatch_getudp
-dns_dispatch_hash
 dns_dispatch_importrecv
 dns_dispatch_removeresponse
 dns_dispatch_starttcp

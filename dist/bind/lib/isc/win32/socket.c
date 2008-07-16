@@ -1,10 +1,10 @@
-/*	$NetBSD: socket.c,v 1.1.1.4.4.1 2007/05/17 00:42:58 jdc Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.4.4.1.2.1 2008/07/16 03:10:45 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.30.18.17 2007/02/01 23:55:20 marka Exp */
+/* Id: socket.c,v 1.30.18.20 2007/08/28 07:20:06 tbox Exp */
 
 /* This code has been rewritten to take advantage of Windows Sockets
  * I/O Completion Ports and Events. I/O Completion Ports is ONLY
@@ -79,6 +79,7 @@
 #include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/net.h>
+#include <isc/once.h>
 #include <isc/os.h>
 #include <isc/platform.h>
 #include <isc/print.h>
@@ -656,10 +657,11 @@ socket_eventlist_add(event_change_t *evchange, sock_event_list *evlist,
 
 /*
  * Note that the eventLock is locked before calling this function.
- * All Events and associated sockets are closed here.
  */
 isc_boolean_t
-socket_eventlist_delete(event_change_t *evchange, sock_event_list *evlist) {
+socket_eventlist_delete(event_change_t *evchange, sock_event_list *evlist,
+		        isc_socketmgr_t *manager)
+{
 	int i;
 	WSAEVENT hEvent;
 	int iEvent = -1;
@@ -706,11 +708,15 @@ socket_eventlist_delete(event_change_t *evchange, sock_event_list *evlist) {
 	    evchange->sock->pending_send == 0 &&
 	    evchange->sock->pending_free) {
 		evchange->sock->pending_free = 0;
+		ISC_LIST_UNLINK(manager->socklist, evchange->sock, link);
 		dofree = ISC_TRUE;
 	}
 	UNLOCK(&evchange->sock->lock);
 	if (dofree)
 		free_socket(&evchange->sock);
+
+	if (ISC_LIST_EMPTY(manager->socklist))
+		SIGNAL(&manager->shutdown_ok);
 
 	evlist->max_event--;
 	evlist->total_events--;
@@ -750,7 +756,8 @@ process_eventlist(sock_event_list *evlist, isc_socketmgr_t *manager) {
 		next = ISC_LIST_NEXT(evchange, link);
 		del = ISC_FALSE;
 		if (evchange->action == EVENT_DELETE) {
-			del = socket_eventlist_delete(evchange, evlist);
+			del = socket_eventlist_delete(evchange, evlist,
+						      manager);
 
 			/*
 			 * Delete only if this thread's socket list was
@@ -906,10 +913,11 @@ socket_close(isc_socket_t *sock) {
 	}
 }
 
-/*
- * Initialize socket services
- */
-BOOL InitSockets() {
+static isc_once_t initialise_once = ISC_ONCE_INIT;
+static isc_boolean_t initialised = ISC_FALSE;
+
+static void
+initialise(void) {
 	WORD wVersionRequested;
 	WSADATA wsaData;
 	int err;
@@ -918,11 +926,26 @@ BOOL InitSockets() {
 	wVersionRequested = MAKEWORD(2, 0);
 
 	err = WSAStartup(wVersionRequested, &wsaData);
-	if ( err != 0 ) {
-		/* Tell the user that we could not find a usable Winsock DLL */
-		return(FALSE);
-	}
-	return(TRUE);
+	if (err != 0) {
+		char strbuf[ISC_STRERRORSIZE];
+		isc__strerror(err, strbuf, sizeof(strbuf));
+		FATAL_ERROR(__FILE__, __LINE__, "WSAStartup() %s: %s",
+			    isc_msgcat_get(isc_msgcat, ISC_MSGSET_GENERAL,
+					   ISC_MSG_FAILED, "failed"),
+			    strbuf);
+	} else
+		initialised = ISC_TRUE;
+}
+
+/*
+ * Initialize socket services
+ */
+void
+InitSockets(void) {
+	RUNTIME_CHECK(isc_once_do(&initialise_once,
+                                  initialise) == ISC_R_SUCCESS);
+	if (!initialised)
+		exit(1);
 }
 
 int
@@ -1727,8 +1750,8 @@ destroy_socket(isc_socket_t **sockp) {
 	    sock->pending_close != 0) {
 		dofree = ISC_FALSE;
 		sock->pending_free = 1;
-	}
-	ISC_LIST_UNLINK(manager->socklist, sock, link);
+	} else
+		ISC_LIST_UNLINK(manager->socklist, sock, link);
 	UNLOCK(&sock->lock);
 
 	if (ISC_LIST_EMPTY(manager->socklist))
@@ -2595,8 +2618,15 @@ SocketIoThread(LPVOID ThreadContext) {
 					dofree = ISC_TRUE;
 				}
 				UNLOCK(&sock->lock);
-				if (dofree)
+				if (dofree) {
+					LOCK(&manager->lock);
+					ISC_LIST_UNLINK(manager->socklist,
+							sock, link);
 					free_socket(&sock);
+					if (ISC_LIST_EMPTY(manager->socklist))
+						SIGNAL(&manager->shutdown_ok);
+					UNLOCK(&manager->lock);
+				}
 				if (lpo != NULL)
 					HeapFree(hHeapHandle, 0, lpo);
 				continue;
@@ -2776,6 +2806,8 @@ isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
 	manager = isc_mem_get(mctx, sizeof(*manager));
 	if (manager == NULL)
 		return (ISC_R_NOMEMORY);
+
+	InitSockets();
 
 	manager->magic = SOCKET_MANAGER_MAGIC;
 	manager->mctx = NULL;

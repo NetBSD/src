@@ -1,10 +1,10 @@
-/*	$NetBSD: dig.h,v 1.1.1.4.4.1 2007/05/17 00:34:59 jdc Exp $	*/
+/*	$NetBSD: dig.h,v 1.1.1.4.4.1.2.1 2008/07/16 03:10:28 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dig.h,v 1.82.18.19 2006/12/07 06:08:02 marka Exp */
+/* Id: dig.h,v 1.82.18.23 2007/08/28 07:19:55 tbox Exp */
 
 #ifndef DIG_H
 #define DIG_H
@@ -279,6 +279,9 @@ extern isc_boolean_t debugging, memdebugging;
 extern char *progname;
 extern int tries;
 extern int fatalexit;
+#ifdef WITH_IDN
+extern int idnoptions;
+#endif
 
 /*
  * Routines in dighost.c.
@@ -301,6 +304,9 @@ check_result(isc_result_t result, const char *msg);
 
 void
 setup_lookup(dig_lookup_t *lookup);
+
+void
+destroy_lookup(dig_lookup_t *lookup);
 
 void
 do_lookup(dig_lookup_t *lookup);

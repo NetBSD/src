@@ -1,10 +1,10 @@
-/*	$NetBSD: message.c,v 1.2.4.1 2007/05/17 00:40:39 jdc Exp $	*/
+/*	$NetBSD: message.c,v 1.2.4.1.2.1 2008/07/16 03:10:36 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.c,v 1.222.18.10 2006/03/02 23:19:20 marka Exp */
+/* Id: message.c,v 1.222.18.14 2007/08/28 07:20:04 tbox Exp */
 
 /*! \file */
 
@@ -1310,6 +1310,11 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			rdata->type = rdtype;
 			rdata->flags = DNS_RDATA_UPDATE;
 			result = ISC_R_SUCCESS;
+		} else if (rdclass == dns_rdataclass_none &&
+			   msg->opcode == dns_opcode_update &&
+			   sectionid == DNS_SECTION_UPDATE) {
+			result = getrdata(source, msg, dctx, msg->rdclass,
+					  rdtype, rdatalen, rdata);
 		} else
 			result = getrdata(source, msg, dctx, rdclass,
 					  rdtype, rdatalen, rdata);
@@ -3009,8 +3014,7 @@ dns_message_sectiontotext(dns_message_t *msg, dns_section_t section,
 		ADD_STRING(target, ";; ");
 		if (msg->opcode != dns_opcode_update) {
 			ADD_STRING(target, sectiontext[section]);
-		}
-		else {
+		} else {
 			ADD_STRING(target, updsectiontext[section]);
 		}
 		ADD_STRING(target, " SECTION:\n");
@@ -3132,7 +3136,12 @@ dns_message_totext(dns_message_t *msg, const dns_master_style_t *style,
 		ADD_STRING(target, ";; ->>HEADER<<- opcode: ");
 		ADD_STRING(target, opcodetext[msg->opcode]);
 		ADD_STRING(target, ", status: ");
-		ADD_STRING(target, rcodetext[msg->rcode]);
+		if (msg->rcode < (sizeof(rcodetext)/sizeof(rcodetext[0]))) {
+			ADD_STRING(target, rcodetext[msg->rcode]);
+		} else {
+			snprintf(buf, sizeof(buf), "%4u", msg->rcode);
+			ADD_STRING(target, buf);
+		}
 		ADD_STRING(target, ", id: ");
 		snprintf(buf, sizeof(buf), "%6u", msg->id);
 		ADD_STRING(target, buf);
