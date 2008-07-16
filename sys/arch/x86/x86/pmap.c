@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 2008/07/16 03:22:04 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73 2008/07/16 18:56:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2008/07/16 03:22:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2008/07/16 18:56:34 drochner Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1019,6 +1019,8 @@ void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pt_entry_t *pte, opte, npte;
+
+	KASSERT(!(prot & ~VM_PROT_ALL));
 
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		pte = vtopte(va);
