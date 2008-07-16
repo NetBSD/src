@@ -1,12 +1,10 @@
-	$NetBSD: TODO,v 1.1 2007/09/10 21:18:55 pooka Exp $
+	$NetBSD: TODO,v 1.2 2008/07/16 15:54:24 pooka Exp $
 
 * fix the build structure to work better on non-NetBSD
-* finish fs/bin/fsconsole
-  + figure out how to handle mount parameters in fs-independent
-    fashion (requires kernel changes)
-* compile more components directly out of the kernel source tree
-  + whole of vfs_subr?
-  + kern_lock?
-* support ltsleep + locking primitives which might need to sleep
-  (only lfs needs this currently)
-* support nfs
+* figure out how to handle mount parameters in fs-independent
+  fashion (requires kernel changes)
+* integrate build framework with config(1) to stop the need to
+  maintain a separate build infrastructure
+* make libraries dynamic, dlopen them instead of linking if possible
+  + makes a difference for e.g. "fsconsole"
+* support nfs (requires using the network stack in userspace)
