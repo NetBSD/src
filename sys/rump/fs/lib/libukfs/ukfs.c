@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.31 2008/07/15 16:21:19 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.32 2008/07/16 15:44:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -306,7 +306,11 @@ ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 	if (rv)
 		goto out;
 
+	/* write and commit */
 	xfer = rump_sys_pwrite(fd, buf, bufsize, 0, off, &rv);
+	if (rv == 0)
+		rump_sys_fsync(fd, &dummy);
+
 	rump_sys_close(fd, &dummy);
 
  out:
