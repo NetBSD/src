@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.8 2008/07/07 18:45:27 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.9 2008/07/17 19:10:22 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -150,7 +150,7 @@ void udf_add_app_regid(struct udf_mount *ump, struct regid *regid);
 /* directory operations and helpers */
 void udf_osta_charset(struct charspec *charspec);
 int udf_read_fid_stream(struct vnode *vp, uint64_t *offset, struct fileid_desc *fid, struct dirent *dirent);
-int udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen, struct long_ad *icb_loc);
+int udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen, struct long_ad *icb_loc, int *found);
 int udf_create_node(struct vnode *dvp, struct vnode **vpp, struct vattr *vap, struct componentname *cnp);
 void udf_delete_node(struct udf_node *udf_node);
 
