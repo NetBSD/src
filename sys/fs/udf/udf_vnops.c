@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.29 2008/07/17 11:00:29 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.30 2008/07/17 19:10:22 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.29 2008/07/17 11:00:29 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30 2008/07/17 19:10:22 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -697,7 +697,10 @@ udf_lookup(void *v)
 		/* get our node */
 		name    = "..";
 		namelen = 2;
-		found = udf_lookup_name_in_dir(dvp, name, namelen, &icb_loc);
+		error = udf_lookup_name_in_dir(dvp, name, namelen,
+				&icb_loc, &found);
+		if (error)
+			goto out;
 		if (!found)
 			error = ENOENT;
 
@@ -710,7 +713,8 @@ udf_lookup(void *v)
 			error = udf_get_node(ump, &icb_loc, &res_node);
 
 			if (!error) {
-			DPRINTF(LOOKUP, ("\tnode retrieved/created OK\n"));
+				DPRINTF(LOOKUP,
+					("\tnode retrieved/created OK\n"));
 				*vpp = res_node->vnode;
 			}
 		}
@@ -723,7 +727,10 @@ udf_lookup(void *v)
 		/* lookup filename in the directory; location icb_loc */
 		name    = cnp->cn_nameptr;
 		namelen = cnp->cn_namelen;
-		found = udf_lookup_name_in_dir(dvp, name, namelen, &icb_loc);
+		error = udf_lookup_name_in_dir(dvp, name, namelen,
+				&icb_loc, &found);
+		if (error)
+			goto out;
 		if (!found) {
 			DPRINTF(LOOKUP, ("\tNOT found\n"));
 			/*
@@ -767,6 +774,7 @@ udf_lookup(void *v)
 		}
 	}	
 
+out:
 	/*
 	 * Store result in the cache if requested. If we are creating a file,
 	 * the file might not be found and thus putting it into the namecache
