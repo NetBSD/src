@@ -277,11 +277,11 @@ static int _add_dev_node(const char *dev_name, uint32_t major, uint32_t minor,
 
 #ifdef __NetBSD__
 	char rpath[PATH_MAX];
-	uint32_t raw_major,raw_minor;
+	uint32_t raw_major;
 	dev_t rdev;
 	char raw_devname[DM_NAME_LEN+1]; /* r + other device name */
-       
-	nbsd_get_dm_major(&raw_major,&raw_minor,DM_CHAR_MAJOR);
+      
+	nbsd_get_dm_major(&raw_major,DM_CHAR_MAJOR);
 	rdev = MKDEV(raw_major,minor);
 
 	snprintf(raw_devname,sizeof(raw_devname),"r%s",dev_name);

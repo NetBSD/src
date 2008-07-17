@@ -159,7 +159,7 @@
 
 /* libdm_netbsd.c */
 
-int nbsd_get_dm_major(uint32_t *, uint32_t *, int); /* Get dm device major/minor numbers */
+int nbsd_get_dm_major(uint32_t *, int); /* Get dm device major numbers */
 
 int nbsd_dmi_add_cmd(const char *, prop_dictionary_t);
 int nbsd_dmi_add_version(const int [3], prop_dictionary_t);
