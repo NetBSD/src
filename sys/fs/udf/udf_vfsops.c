@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.39 2008/06/28 01:34:05 rumble Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.40 2008/07/17 19:10:22 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.39 2008/06/28 01:34:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.40 2008/07/17 19:10:22 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -141,26 +141,36 @@ udf_init(void)
 	malloc_type_attach(M_UDFVOLD);
 	malloc_type_attach(M_UDFTEMP);
 
-	/* init hashtables and pools */
+	/* init node pools */
 	size = sizeof(struct udf_node);
-	pool_init(&udf_node_pool, size, 0, 0, 0, "udf_node_pool", NULL,
-	    IPL_NONE);
+	pool_init(&udf_node_pool, size, 0, 0, 0,
+		"udf_node_pool", NULL, IPL_NONE);
+
+	/* init dirhash pools */
+	size = sizeof(struct udf_dirhash);
+	pool_init(&udf_dirhash_pool, size, 0, 0, 0,
+		"udf_dirhash_pool", NULL, IPL_NONE);
+
+	size = sizeof(struct udf_dirhash_entry);
+	pool_init(&udf_dirhash_entry_pool, size, 0, 0, 0,
+		"udf_dirhash_entry_pool", NULL, IPL_NONE);
 }
 
 
 void
 udf_reinit(void)
 {
-	/* recreate hashtables */
-	/* reinit pool? */
+	/* nothing to do */
 }
 
 
 void
 udf_done(void)
 {
-	/* remove hashtables and pools */
+	/* remove pools */
 	pool_destroy(&udf_node_pool);
+	pool_destroy(&udf_dirhash_pool);
+	pool_destroy(&udf_dirhash_entry_pool);
 
 	malloc_type_detach(M_UDFMNT);
 	malloc_type_detach(M_UDFVOLD);
