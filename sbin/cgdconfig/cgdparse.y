@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgdparse.y,v 1.4 2008/05/11 03:15:21 elric Exp $ */
+/* $NetBSD: cgdparse.y,v 1.5 2008/07/17 16:24:55 drochner Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,10 +32,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgdparse.y,v 1.4 2008/05/11 03:15:21 elric Exp $");
+__RCSID("$NetBSD: cgdparse.y,v 1.5 2008/07/17 16:24:55 drochner Exp $");
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "params.h"
 #include "utils.h"
