@@ -182,13 +182,13 @@ static int _process_config(struct cmd_context *cmd)
 		log_error("Device directory given in config file too long");
 		return 0;
 	}
-#ifdef _linux_
+#ifdef linux
 	if (*cmd->proc_dir && !dir_exists(cmd->proc_dir)) {
 		log_error("WARNING: proc dir %s not found - some checks will be bypassed",
 			  cmd->proc_dir);
 		cmd->proc_dir[0] = '\0';
 	}
-#elseif 
+#else
 	cmd->proc_dir[0] = '\0';
 #endif
 
