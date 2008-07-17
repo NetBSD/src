@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.28 2008/07/16 21:24:59 perry Exp $
+# $NetBSD: mi,v 1.29 2008/07/17 16:24:05 oster Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -453,7 +453,7 @@
 ./usr/share/man/cat7/groff_mdoc.0		text-groff-catman	.cat
 ./usr/share/man/cat7/groff_me.0			text-groff-catman	.cat
 ./usr/share/man/cat7/groff_mm.0			text-groff-catman	.cat
-./usr/share/man/cat7/groff_mom.0		text-groff-catman	.cat
+./usr/share/man/cat7/groff_mom.0		text-obsolete	obsolete
 ./usr/share/man/cat7/groff_mmse.0		text-groff-catman	.cat
 ./usr/share/man/cat7/groff_ms.0			text-groff-catman	.cat
 ./usr/share/man/cat7/groff_msafer.0		text-obsolete	obsolete
@@ -508,7 +508,7 @@
 ./usr/share/man/man7/groff_mdoc.7		text-groff-man		.man
 ./usr/share/man/man7/groff_me.7			text-groff-man		.man
 ./usr/share/man/man7/groff_mm.7			text-groff-man		.man
-./usr/share/man/man7/groff_mom.7		text-groff-man		.man
+./usr/share/man/man7/groff_mom.7		text-obsolete	obsolete
 ./usr/share/man/man7/groff_mmse.7		text-groff-man		.man
 ./usr/share/man/man7/groff_ms.7			text-groff-man		.man
 ./usr/share/man/man7/groff_msafer.7		text-obsolete		obsolete
@@ -593,10 +593,10 @@
 ./usr/share/tmac/mm/se_locale			text-groff-share	share
 ./usr/share/tmac/mm/se_ms.cov			text-groff-share	share
 ./usr/share/tmac/mmse.tmac			text-groff-share	share
-./usr/share/tmac/mom.tmac			text-groff-share	share
+./usr/share/tmac/mom.tmac			text-obsolete	obsolete
 ./usr/share/tmac/ms.tmac			text-groff-share	share
 ./usr/share/tmac/mse.tmac			text-groff-share	share
-./usr/share/tmac/om.tmac			text-groff-share	share
+./usr/share/tmac/om.tmac			text-obsolete	obsolete
 ./usr/share/tmac/papersize.tmac			text-groff-share	share
 ./usr/share/tmac/pic.tmac			text-groff-share	share
 ./usr/share/tmac/ps.tmac			text-groff-share	share
