@@ -61,8 +61,6 @@ TAILQ_HEAD(sysctl_ctx_list, sysctl_ctx_entry);
 
 #define device_get_nameunit(dev)	(dev)->dv_xname
 
-int tvtohz(struct timeval *tv);
-
 /* FreeBSD Loadable Kernel Module commands that have NetBSD counterparts */
 #define MOD_LOAD 	LKM_E_LOAD
 #define MOD_UNLOAD	LKM_E_UNLOAD
