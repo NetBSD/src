@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.57 2008/07/11 15:16:53 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.58 2008/07/17 15:37:59 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.57 2008/07/11 15:16:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.58 2008/07/17 15:37:59 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -3685,11 +3685,11 @@ udf_timespec_to_timestamp(struct timespec *timespec, struct timestamp *timestamp
 
 	(void) clock_secs_to_ymdhms(timespec->tv_sec, &ymdhms);
 
-	usec   = (timespec->tv_nsec + 500) / 1000;	/* round */
-	husec  =   usec / 100;
-	usec  -=  husec * 100;				/* only 0-99 in usec  */
-	csec   =  husec / 100;				/* only 0-99 in csec  */
-	husec -=   csec * 100;				/* only 0-99 in husec */
+	usec   = timespec->tv_nsec / 1000;
+	husec  =  usec / 100;
+	usec  -= husec * 100;				/* only 0-99 in usec  */
+	csec   = husec / 100;				/* only 0-99 in csec  */
+	husec -=  csec * 100;				/* only 0-99 in husec */
 
 	/* set method 1 for CUT/GMT */
 	timestamp->type_tz	= udf_rw16((1<<12) + 0);
