@@ -1,4 +1,4 @@
-/* 	$NetBSD: config_yacc.y,v 1.3 2007/11/16 08:01:38 xtraeme Exp $	*/
+/* 	$NetBSD: config_yacc.y,v 1.4 2008/07/17 16:24:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config_yacc.y,v 1.3 2007/11/16 08:01:38 xtraeme Exp $");
+__RCSID("$NetBSD: config_yacc.y,v 1.4 2008/07/17 16:24:55 drochner Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: config_yacc.y,v 1.3 2007/11/16 08:01:38 xtraeme Exp $");
 #include <err.h>
 #include <errno.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include <prop/proplib.h>
 
