@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.10 2008/04/14 22:46:48 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/config.c,v 1.74.2.13 2008/07/10 00:28:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -1089,7 +1089,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			}
 			cargv[ 2 ] = binddn;
 
-			rc = slap_idassert_parse_cf( fname, lineno, cargc, cargv, &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
+			rc = mi->mi_ldap_extra->idassert_parse_cf( fname, lineno, cargc, cargv, &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
 			if ( rc == 0 ) {
 				struct berval	bv;
 
@@ -1159,7 +1159,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			return 1;
 		}
 
-		return slap_idassert_parse_cf( fname, lineno, argc, argv, &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
+		return mi->mi_ldap_extra->idassert_parse_cf( fname, lineno, argc, argv, &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
 
 	/* idassert-authzFrom */
 	} else if ( strcasecmp( argv[ 0 ], "idassert-authzFrom" ) == 0 ) {
@@ -1188,7 +1188,7 @@ idassert-authzFrom	"dn:<rootdn>"
 			return 1;
 		}
 
-		return slap_idassert_authzfrom_parse_cf( fname, lineno, argv[ 1 ], &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
+		return mi->mi_ldap_extra->idassert_authzfrom_parse_cf( fname, lineno, argv[ 1 ], &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_idassert );
 
 	/* quarantine */
 	} else if ( strcasecmp( argv[ 0 ], "quarantine" ) == 0 ) {
@@ -1232,14 +1232,14 @@ idassert-authzFrom	"dn:<rootdn>"
 			ldap_pvt_thread_mutex_init( &mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_quarantine_mutex );
 		}
 
-		if ( slap_retry_info_parse( argv[ 1 ], ri, buf, sizeof( buf ) ) ) {
+		if ( mi->mi_ldap_extra->retry_info_parse( argv[ 1 ], ri, buf, sizeof( buf ) ) ) {
 			Debug( LDAP_DEBUG_ANY,
 				"%s line %d: %s.\n",
 				fname, lineno, buf );
 			return 1;
 		}
 
-		if ( mi->mi_ntargets ) {
+		if ( mi->mi_ntargets == 0 ) {
 			mi->mi_flags |= LDAP_BACK_F_QUARANTINE;
 
 		} else {
@@ -1451,6 +1451,36 @@ idassert-authzFrom	"dn:<rootdn>"
 	"%s: line %d: unsupported version \"%s\" in \"protocol-version <version>\"\n",
 				fname, lineno, argv[ 1 ] );
 			return 1;
+		}
+
+	/* do not return search references */
+	} else if ( strcasecmp( argv[ 0 ], "norefs" ) == 0 ) {
+		unsigned	*flagsp = mi->mi_ntargets ?
+				&mi->mi_targets[ mi->mi_ntargets - 1 ]->mt_flags
+				: &mi->mi_flags;
+
+		if ( argc != 2 ) {
+			Debug( LDAP_DEBUG_ANY,
+	"%s: line %d: \"norefs {TRUE|false}\" needs 1 argument.\n",
+				fname, lineno, 0 );
+			return( 1 );
+		}
+
+		/* this is the default; we add it because the default might change... */
+		switch ( check_true_false( argv[ 1 ] ) ) {
+		case 1:
+			*flagsp |= LDAP_BACK_F_NOREFS;
+			break;
+
+		case 0:
+			*flagsp &= ~LDAP_BACK_F_NOREFS;
+			break;
+
+		default:
+			Debug( LDAP_DEBUG_ANY,
+		"%s: line %d: \"norefs {TRUE|false}\": unknown argument \"%s\".\n",
+				fname, lineno, argv[ 1 ] );
+			return( 1 );
 		}
 
 	/* anything else */

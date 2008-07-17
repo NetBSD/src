@@ -1,9 +1,10 @@
-personal_ws-1.1 en 1598 
+personal_ws-1.1 en 1644 
 commonName
 bla
 Masarati
 subjectAltName
 api
+usnCreated
 BhY
 olcSyncrepl
 olcSyncRepl
@@ -63,6 +64,7 @@ reqcert
 CRP
 postread
 csn
+checkpass
 xvfB
 neverDerefaliases
 dns
@@ -136,15 +138,18 @@ Contribware
 directoryString
 database's
 iscritical
+qbuaQ
 gss
 ZKKuqbEKJfKSXhUbHG
 invalidAttributeSyntax
 subtree
 Kartik
 newparent
+DkMTwBl
 memcalloc
 ing
 filtertype
+XKqkdPOmY
 regcomp
 ldapmodify
 includedir
@@ -189,8 +194,8 @@ attrstyle
 directoryOperation
 creatorsName
 mem
-oldpasswdfile
 oldPasswdFile
+oldpasswdfile
 uniqueMember
 krb
 libpath
@@ -217,6 +222,7 @@ LDAPMatchingRule
 bool
 LRL
 CPPFLAGS
+yWpR
 schemadir
 desc
 lud
@@ -231,6 +237,7 @@ LVL
 oid
 msg
 attr
+TmkzUAb
 caseExactOrderingMatch
 Subbarao
 aeeiib
@@ -249,12 +256,14 @@ subdirectories
 OLP
 pwdPolicyChecker
 subst
+mux
 singleLevel
 cleartext
 numattrsets
 requestDN
 caseExactSubstringsMatch
 PKI
+NSS
 olcSyncProvConfig
 ple
 NTP
@@ -286,6 +295,7 @@ stringal
 retoidp
 sdf
 efgh
+PSH
 accesslog
 sed
 cond
@@ -295,6 +305,7 @@ conf
 ldapmodrdn
 sel
 bvec
+HtZhZS
 TBC
 stringbv
 Sep
@@ -333,6 +344,7 @@ tgz
 UDP
 freemods
 prepend
+nssov
 errText
 groupnaam
 UFl
@@ -371,11 +383,13 @@ str
 syncIdSet
 cron
 accesslevel
+czBJdDqS
 accessor's
 keyval
 alloc
 saslpasswd
 README
+QWGWZpj
 maxentries
 ttl
 undefinedAttributeType
@@ -393,6 +407,7 @@ sortKey
 UTF
 vlv
 TXN
+usn
 auditExtended
 usr
 txt
@@ -417,6 +432,7 @@ memberURL
 sudoers
 pwdMaxFailure
 pseudorootdn
+MezRroT
 GDBM
 LIBRELEASE
 DSAs
@@ -432,6 +448,7 @@ rwxrwxrwx
 al
 realself
 cd
+aQ
 ar
 olcDatabaseConfig
 de
@@ -447,6 +464,7 @@ dn
 fG
 DS
 fi
+EO
 allmail
 du
 eq
@@ -533,6 +551,7 @@ cacert
 notAllowedOnNonLeaf
 attrname
 olcTLSCipherSuite
+Xr
 x's
 xw
 octetStringMatch
@@ -586,6 +605,7 @@ errno
 errOp
 serverctrls
 recursivegroup
+BlpQmtczb
 integerMatch
 moduledir
 dynstyle
@@ -638,6 +658,7 @@ ietf
 olcSchemaConfig
 bitstrings
 bvalues
+hmev
 realdnattr
 attrpair
 affectsMultipleDSAs
@@ -668,10 +689,12 @@ pwdGraceAuthNLimit
 pwdGraceAuthnLimit
 hnPk
 userPassword
+userpassword
 noanonymous
 LIBVERSION
 symas
 dcedn
+glibc
 sublevel
 chroot
 posixGroup
@@ -681,6 +704,7 @@ ldaphost
 frontend
 someotherdomain
 proxying
+IMAP
 organisations
 rewriteMap
 monitoredInfo
@@ -688,6 +712,7 @@ modrdn
 ModRDN
 modrDN
 HREF
+DQTxCYEApdUtNXGgdUac
 inline
 multiproxy
 reqSizeLimit
@@ -721,6 +746,7 @@ Arial
 init
 runtime
 onelevel
+YtNFk
 impl
 Autoconf
 stderr
@@ -736,6 +762,7 @@ RELEASEDATE
 olcModuleList
 pwdSafeModify
 html
+GCmfuqEvm
 multimaster
 testrun
 rewriteEngine
@@ -751,8 +778,8 @@ POSIX
 pathname
 noSuchObject
 proxyOld
-berelement
 BerElement
+berelement
 sbiod
 plugin
 http
@@ -762,8 +789,8 @@ ldbm
 numericStringSubstringsMatch
 internet
 storages
-whoami
 WhoAmI
+whoami
 criticality
 addBlanks
 logins
@@ -772,6 +799,7 @@ dbnum
 operationsError
 homePhone
 testTwo
+BmIwN
 ldif
 entryAlreadyExists
 plaintext
@@ -880,6 +908,7 @@ RDBMSes
 XLDFLAGS
 caseExactMatch
 urldesc
+usnChanged
 liblutil
 olcObjectIdentifier
 subdir
@@ -903,6 +932,7 @@ concat
 realanonymous
 invalue
 refreshOnly
+pwcheck
 filesystem
 Naur
 unwillingToPerform
@@ -911,6 +941,7 @@ MyCompany
 mkdep
 idlcachesize
 irresponsive
+PasswordModify
 readOnly
 readonly
 CLDAP
@@ -924,6 +955,7 @@ negttl
 logevels
 AAQSkZJRgABAAAAAQABAAD
 strcast
+aUihad
 failover
 constraintViolation
 cacheable
@@ -967,6 +999,7 @@ slurpd
 basename
 groupOfUniqueNames
 DHAVE
+oPdklp
 ludp
 entryUUID
 ldapapiinfo
@@ -1013,12 +1046,14 @@ typeB
 nelems
 subord
 namingViolation
+PCOq
 inappropriateAuthentication
 mixin
 suders
 syntaxOID
 olcTLSCACertificateFile
 IGJlZ
+userPrincipalName
 TLSCipherSuite
 auditlog
 runningslapd
@@ -1036,6 +1071,7 @@ errObject
 XXLIBS
 reqAssertion
 PDUs
+nops
 baseObject
 bvecadd
 perl
@@ -1059,6 +1095,7 @@ searchResultEntry
 PIII
 olcDbShmKey
 substr
+testsaslauthd
 reqRespControls
 XXXXXXXXXX
 MANSECT
@@ -1081,8 +1118,10 @@ dcObject
 supportedControl
 addprinc
 logbase
+oMxg
 filterlist
 generalizedTimeMatch
+strongAuthRequired
 Google
 sessionlog
 balancer
@@ -1204,6 +1243,7 @@ lucyB
 entryUUIDs
 reqEntries
 sockbuf
+wrongpassword
 olcSaslSecprops
 olcSaslSecProps
 dnSubtreeMatch
@@ -1295,6 +1335,7 @@ logpurge
 SMTP
 srvtab
 ldapadd
+spasswd
 sprintf
 monitorCounterObject
 Instanstantiation
@@ -1326,6 +1367,7 @@ SSFs
 octetStringOrderingStringMatch
 auditCompare
 pEntry
+strongAuthNotSupported
 endblock
 LDAPAVA
 startup
@@ -1361,7 +1403,9 @@ monitorInfo
 argsfile
 attrvalue
 deallocate
+autogroup
 msgid
+ilOzQ
 modulepath
 logfile
 Supr
@@ -1513,6 +1557,7 @@ ABNF
 dnpattern
 perror
 MSSQL
+VUld
 SmVuc
 ACIs
 errmsgp
@@ -1522,12 +1567,12 @@ jpegPhoto
 supportedSASLMechanisms
 ACLs
 reqMethod
-authzId
-authzid
 authzID
+authzid
+authzId
 hasSubordintes
-proxyCache
 proxycache
+proxyCache
 slaptest
 olcLogLevel
 LDAPDN
@@ -1593,6 +1638,7 @@ ber
 slimit
 ali
 attributeoptions
+BfQ
 uidNumber
 CAs
 CA's

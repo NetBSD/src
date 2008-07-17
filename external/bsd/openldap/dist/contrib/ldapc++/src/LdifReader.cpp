@@ -1,3 +1,4 @@
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LdifReader.cpp,v 1.4.2.4 2008/07/09 21:45:42 quanah Exp $
 /*
  * Copyright 2008, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -195,14 +196,14 @@ LDAPEntry LdifReader::getEntryRecord()
         }
         else
         {
-            if ( curAl->getAttributeByName( i->first ) )
+            const LDAPAttribute* existing = curAl->getAttributeByName( i->first );
+            if ( existing )
             {
-                // Attribute exists already -> Syntax Error
-                std::ostringstream err;
-                err << "Line " << this->m_lineNumber 
-                    << ": Attribute \"" << i->first 
-                    << "\" specified multiple times.";
-                throw( std::runtime_error(err.str()) );
+                // Attribute exists already (handle gracefully)
+                curAl->addAttribute( curAttr );
+                curAttr = LDAPAttribute( *existing );
+                curAttr.addValue(i->second);
+                curAl->delAttribute( i->first );
             }
             else
             {

@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.125.2.7 2008/02/11 23:26:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.125.2.8 2008/05/27 20:08:37 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -631,6 +631,9 @@ ldap_free_connection( LDAP *ld, LDAPConn *lc, int force, int unbind )
 				} else {
 				    prevlc->lconn_next = tmplc->lconn_next;
 				}
+				if ( ld->ld_defconn == lc ) {
+					ld->ld_defconn = NULL;
+				}
 				break;
 			}
 			prevlc = tmplc;
@@ -675,6 +678,8 @@ ldap_free_connection( LDAP *ld, LDAPConn *lc, int force, int unbind )
 
 		if ( lc->lconn_sb != ld->ld_sb ) {
 			ber_sockbuf_free( lc->lconn_sb );
+		} else {
+			ber_int_sb_close( lc->lconn_sb );
 		}
 
 		if ( lc->lconn_rebind_queue != NULL) {

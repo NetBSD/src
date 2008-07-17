@@ -1,5 +1,5 @@
 /* schema_prep.c - load builtin schema */
-/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.6 2008/02/11 23:26:44 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/schema_prep.c,v 1.169.2.8 2008/07/09 23:43:08 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -690,7 +690,7 @@ static struct slap_schema_ad_map {
 		NULL, NULL,
 		NULL, NULL, NULL, NULL, NULL,
 		offsetof(struct slap_internal_schema, si_ad_monitorContext) },
-	{ "configContext", "( 1.3.6.1.4.1.4203.666.11.1.1 "
+	{ "configContext", "( 1.3.6.1.4.1.4203.1.12.2.1 "
 			"NAME 'configContext' "
 			"DESC 'config context' "
 			"SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 "
@@ -1019,6 +1019,7 @@ static AttributeType slap_at_undefined = {
 	NULL, /* syntax (will be set later to "octetString") */
 	NULL, /* schema check function */
 	NULL, /* oidmacro */
+	NULL, /* soidmacro */
 	SLAP_AT_ABSTRACT|SLAP_AT_FINAL,	/* mask */
 	{ NULL }, /* next */
 	NULL /* attribute description */
@@ -1036,6 +1037,7 @@ static AttributeType slap_at_proxied = {
 	NULL, /* syntax (will be set later to "octetString") */
 	NULL, /* schema check function */
 	NULL, /* oidmacro */
+	NULL, /* soidmacro */
 	SLAP_AT_ABSTRACT|SLAP_AT_FINAL,	/* mask */
 	{ NULL }, /* next */
 	NULL /* attribute description */

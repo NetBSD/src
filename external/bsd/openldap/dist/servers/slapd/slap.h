@@ -1,5 +1,5 @@
 /* slap.h - stand alone ldap server include file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.26 2008/04/24 08:13:39 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.29 2008/07/08 19:25:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -64,6 +64,7 @@ LDAP_BEGIN_DECL
 #define LDAP_SYNC_TIMESTAMP
 #define SLAP_CONTROL_X_SORTEDRESULTS
 #define SLAP_CONTROL_X_SESSION_TRACKING
+#define SLAP_CONFIG_DELETE
 #endif
 
 #define LDAP_DYNAMIC_OBJECTS
@@ -680,7 +681,8 @@ struct AttributeType {
 	Syntax				*sat_syntax;
 
 	AttributeTypeSchemaCheckFN	*sat_check;
-	char				*sat_oidmacro;
+	char				*sat_oidmacro;	/* attribute OID */
+	char				*sat_soidmacro;	/* syntax OID */
 
 #define SLAP_AT_NONE			0x0000U
 #define SLAP_AT_ABSTRACT		0x0100U /* cannot be instantiated */
@@ -1371,8 +1373,8 @@ typedef struct Access {
 #define ACL_PRIV_SET(m,p)		do { (m) |=  (p); } while(0)
 #define ACL_PRIV_CLR(m,p)		do { (m) &= ~(p); } while(0)
 
-#define ACL_INIT(m)			ACL_PRIV_ASSIGN(m, ACL_PRIV_NONE)
-#define ACL_INVALIDATE(m)		ACL_PRIV_ASSIGN(m, ACL_PRIV_INVALID)
+#define ACL_INIT(m)			ACL_PRIV_ASSIGN((m), ACL_PRIV_NONE)
+#define ACL_INVALIDATE(m)		ACL_PRIV_ASSIGN((m), ACL_PRIV_INVALID)
 
 #define ACL_GRANT(m,a)			ACL_PRIV_ISSET((m),ACL_ACCESS2PRIV(a))
 
@@ -2687,7 +2689,7 @@ typedef struct OperationBuffer {
 
 #define send_ldap_error( op, rs, err, text ) do { \
 		(rs)->sr_err = err; (rs)->sr_text = text; \
-		(op->o_conn->c_send_ldap_result)( op, rs ); \
+		((op)->o_conn->c_send_ldap_result)( op, rs ); \
 	} while (0)
 #define send_ldap_discon( op, rs, err, text ) do { \
 		(rs)->sr_err = err; (rs)->sr_text = text; \

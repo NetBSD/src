@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/admin/replication.sdf,v 1.32.2.15 2008/04/21 17:10:13 quanah Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/replication.sdf,v 1.32.2.16 2008/07/10 00:58:19 quanah Exp $
 # Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -49,80 +49,230 @@ Syncrepl
 The easiest way is to point an LDAP backend ({{SECT: Backends}} and {{slapd-ldap(8)}}) 
 to your slave directory and setup Syncrepl to point to your Master database.
 
-REFERENCE test045/048 for better explanation of above.
-
 If you imagine Syncrepl pulling down changes from the Master server, and then
 pushing those changes out to your slave servers via {{slapd-ldap(8)}}. This is 
-called proxy mode (elaborate/confirm?).
+called Syncrepl Proxy Mode. You can also use Syncrepl Multi-proxy mode:
 
-DIAGRAM HERE
+!import "push-based-complete.png"; align="center"; title="Syncrepl Proxy Mode"
+FT[align="Center"] Figure X.Y: Replacing slurpd
 
-BETTER EXAMPLE here from test045/048 for different push/multiproxy examples.
+The following example is for a self-contained push-based replication solution:
 
-Here's an example:
-
-
->	include		./schema/core.schema
->	include		./schema/cosine.schema
->	include		./schema/inetorgperson.schema
->	include		./schema/openldap.schema
->	include		./schema/nis.schema
+>	#######################################################################
+>	# Standard OpenLDAP Master/Provider
+>	#######################################################################
 >	
->	pidfile		/home/ghenry/openldap/ldap/tests/testrun/slapd.3.pid
->	argsfile	/home/ghenry/openldap/ldap/tests/testrun/slapd.3.args
+>	include     /usr/local/etc/openldap/schema/core.schema
+>	include     /usr/local/etc/openldap/schema/cosine.schema
+>	include     /usr/local/etc/openldap/schema/nis.schema
+>	include     /usr/local/etc/openldap/schema/inetorgperson.schema
 >	
->	modulepath	../servers/slapd/back-bdb/
->	moduleload	back_bdb.la
->	modulepath  ../servers/slapd/back-monitor/
->	moduleload  back_monitor.la
->	modulepath  ../servers/slapd/overlays/
+>	include     /usr/local/etc/openldap/slapd.acl
+>	
+>	modulepath  /usr/local/libexec/openldap
+>	moduleload  back_hdb.la
 >	moduleload  syncprov.la
->	modulepath  ../servers/slapd/back-ldap/
+>	moduleload  back_monitor.la
 >	moduleload  back_ldap.la
 >	
+>	pidfile     /usr/local/var/slapd.pid
+>	argsfile    /usr/local/var/slapd.args
+>	
+>	loglevel    sync stats
+>	
+>	database    hdb
+>	suffix      "dc=suretecsystems,dc=com"
+>	directory   /usr/local/var/openldap-data
+>	
+>	checkpoint      1024 5
+>	cachesize       10000
+>	idlcachesize    10000
+>	
+>	index       objectClass eq
+>	# rest of indexes
+>	index       default     sub
+>	
+>	rootdn		"cn=admin,dc=suretecsystems,dc=com"
+>	rootpw	  	testing	
+>	
+>	# syncprov specific indexing
+>	index entryCSN eq
+>	index entryUUID eq
+>	
+>	# syncrepl Provider for primary db
+>	overlay syncprov
+>	syncprov-checkpoint 1000 60
+>	
+>	# Let the replica DN have limitless searches
+>	limits dn.exact="cn=replicator,dc=suretecsystems,dc=com" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+>	
+>	database    monitor
+>	
+>	database    config
+>	rootpw	  	testing
+>	
+>	##############################################################################
+>	# Consumer Proxy that pulls in data via Syncrepl and pushes out via slapd-ldap
+>	##############################################################################
+>	
+>	database        ldap
+>	# ignore conflicts with other databases, as we need to push out to same suffix
+>	hidden		    on
+>	suffix          "dc=suretecsystems,dc=com"
+>	rootdn          "cn=slapd-ldap"
+>	uri             ldap://localhost:9012/
+>	
+>	lastmod         on
+>	        
 >	# We don't need any access to this DSA
->	restrict	all
+>	restrict        all
 >	
+>	acl-bind        bindmethod=simple
+>	                binddn="cn=replicator,dc=suretecsystems,dc=com"
+>	                credentials=testing
+>	
+>	syncrepl        rid=001
+>	                provider=ldap://localhost:9011/
+>	                binddn="cn=replicator,dc=suretecsystems,dc=com"
+>	                bindmethod=simple
+>	                credentials=testing
+>	                searchbase="dc=suretecsystems,dc=com"
+>	                type=refreshAndPersist
+>	                retry="5 5 300 5"
+>	
+>	overlay         syncprov
+
+A replica configuration for this type of setup could be:
+
 >	#######################################################################
->	# consumer proxy database definitions
+>	# Standard OpenLDAP Slave without Syncrepl
 >	#######################################################################
 >	
->	database	ldap
->	suffix		"dc=example,dc=com"
->	rootdn		"cn=Whoever"
->	uri		ldap://localhost:9012/
+>	include     /usr/local/etc/openldap/schema/core.schema
+>	include     /usr/local/etc/openldap/schema/cosine.schema
+>	include     /usr/local/etc/openldap/schema/nis.schema
+>	include     /usr/local/etc/openldap/schema/inetorgperson.schema
 >	
->	lastmod		on
+>	include     /usr/local/etc/openldap/slapd.acl
 >	
->	# HACK: use the RootDN of the monitor database as UpdateDN so ACLs apply
->	# without the need to write the UpdateDN before starting replication
->	acl-bind	bindmethod=simple
->			binddn="cn=Monitor"
->			credentials=monitor
+>	modulepath  /usr/local/libexec/openldap
+>	moduleload  back_hdb.la
+>	moduleload  syncprov.la
+>	moduleload  back_monitor.la
+>	moduleload  back_ldap.la
 >	
->	# HACK: use the RootDN of the monitor database as UpdateDN so ACLs apply
->	# without the need to write the UpdateDN before starting replication
->	syncrepl	rid=1
->			provider=ldap://localhost:9011/
->			binddn="cn=Manager,dc=example,dc=com"
->			bindmethod=simple
->			credentials=secret
->			searchbase="dc=example,dc=com"
->			filter="(objectClass=*)"
->			attrs="*,structuralObjectClass,entryUUID,entryCSN,creatorsName,createTimestamp,modifiersName,modifyTimestamp"
->			schemachecking=off
->			scope=sub
->			type=refreshAndPersist
->			retry="5 5 300 5"
+>	pidfile     /usr/local/var/slapd.pid
+>	argsfile    /usr/local/var/slapd.args
 >	
->	overlay		syncprov
+>	loglevel    sync stats
 >	
->	database	monitor
+>	database    hdb
+>	suffix      "dc=suretecsystems,dc=com"
+>	directory   /usr/local/var/openldap-slave/data
+>	
+>	checkpoint      1024 5
+>	cachesize       10000
+>	idlcachesize    10000
+>	
+>	index       objectClass eq
+>	# rest of indexes
+>	index       default     sub
+>	
+>	rootdn		"cn=admin,dc=suretecsystems,dc=com"
+>	rootpw	  	testing	
+>	
+>	# Let the replica DN have limitless searches
+>	limits dn.exact="cn=replicator,dc=suretecsystems,dc=com" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+>	
+>	updatedn "cn=replicator,dc=suretecsystems,dc=com"
+>	
+>	# Refer updates to the master
+>	updateref   ldap://localhost:9011
+>	
+>	database    monitor
+>	
+>	database    config
+>	rootpw	  	testing
 
-DETAILED EXPLANATION OF ABOVE LIKE IN OTHER SECTIONS (line numbers?)
+You can see we use the {{updatedn}} directive here and example ACLs ({{F:usr/local/etc/openldap/slapd.acl}}) for this could be:
+	
+>	# Give the replica DN unlimited read access.  This ACL may need to be
+>	# merged with other ACL statements.
+>	
+>	access to *
+>	     by dn.base="cn=replicator,dc=suretecsystems,dc=com" write
+>	     by * break
+>	
+>	access to dn.base=""
+>	        by * read
+>	
+>	access to dn.base="cn=Subschema"
+>	        by * read
+>	
+>	access to dn.subtree="cn=Monitor"
+>	    by dn.exact="uid=admin,dc=suretecsystems,dc=com" write
+>	    by users read
+>	    by * none
+>	
+>	access to *
+>	        by self write
+>	        by * read 
 
+In order to support more replicas, just add more {{database ldap}} sections and
+increment the {{syncrepl rid}} number accordingly.
 
-ANOTHER DIAGRAM HERE
+Note: You must populate the Master and Slave directories with the same data, 
+unlike when using normal Syncrepl
+
+If you do not have access to modify the master directory configuration you can
+configure a standalone ldap proxy, which might look like:
+
+!import "push-based-standalone.png"; align="center"; title="Syncrepl Standalone Proxy Mode"
+FT[align="Center"] Figure X.Y: Replacing slurpd with a standalone version
+
+The following configuration is an example of a standalone LDAP Proxy:
+
+>	include     /usr/local/etc/openldap/schema/core.schema
+>	include     /usr/local/etc/openldap/schema/cosine.schema
+>	include     /usr/local/etc/openldap/schema/nis.schema
+>	include     /usr/local/etc/openldap/schema/inetorgperson.schema
+>	
+>	include     /usr/local/etc/openldap/slapd.acl
+>	
+>	modulepath  /usr/local/libexec/openldap
+>	moduleload  syncprov.la
+>	moduleload  back_ldap.la
+>	
+>	##############################################################################
+>	# Consumer Proxy that pulls in data via Syncrepl and pushes out via slapd-ldap
+>	##############################################################################
+>	
+>	database        ldap
+>	# ignore conflicts with other databases, as we need to push out to same suffix
+>	hidden		    on
+>	suffix          "dc=suretecsystems,dc=com"
+>	rootdn          "cn=slapd-ldap"
+>	uri             ldap://localhost:9012/
+>	
+>	lastmod         on
+>	        
+>	# We don't need any access to this DSA
+>	restrict        all
+>	
+>	acl-bind        bindmethod=simple
+>	                binddn="cn=replicator,dc=suretecsystems,dc=com"
+>	                credentials=testing
+>	
+>	syncrepl        rid=001
+>	                provider=ldap://localhost:9011/
+>	                binddn="cn=replicator,dc=suretecsystems,dc=com"
+>	                bindmethod=simple
+>	                credentials=testing
+>	                searchbase="dc=suretecsystems,dc=com"
+>	                type=refreshAndPersist
+>	                retry="5 5 300 5"
+>	
+>	overlay         syncprov
 
 As you can see, you can let your imagination go wild using Syncrepl and 
 {{slapd-ldap(8)}} tailoring your replication to fit your specific network 

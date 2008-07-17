@@ -1,5 +1,5 @@
 /* search.c - ldap backend search function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.9 2008/02/11 23:26:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/search.c,v 1.201.2.11 2008/07/10 00:28:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -363,6 +363,11 @@ retry:
 			}
 
 		} else if ( rc == LDAP_RES_SEARCH_REFERENCE ) {
+			if ( LDAP_BACK_NOREFS( li ) ) {
+				ldap_msgfree( res );
+				continue;
+			}
+
 			do_retry = 0;
 			rc = ldap_parse_reference( lc->lc_ld, res,
 					&references, &rs->sr_ctrls, 1 );
@@ -773,8 +778,9 @@ ldap_back_entry_get(
 	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
 
 	ldapconn_t	*lc = NULL;
-	int		rc = 1,
+	int		rc,
 			do_not_cache;
+	ber_tag_t	tag;
 	struct berval	bdn;
 	LDAPMessage	*result = NULL,
 			*e = NULL;
@@ -788,12 +794,18 @@ ldap_back_entry_get(
 
 	/* Tell getconn this is a privileged op */
 	do_not_cache = op->o_do_not_cache;
+	tag = op->o_tag;
+	/* do not cache */
 	op->o_do_not_cache = 1;
-	if ( !ldap_back_dobind( &lc, op, &rs, LDAP_BACK_DONTSEND ) ) {
-		op->o_do_not_cache = do_not_cache;
+	/* ldap_back_entry_get() is an entry lookup, so it does not need
+	 * to know what the entry is being looked up for */
+	op->o_tag = LDAP_REQ_SEARCH;
+	rc = ldap_back_dobind( &lc, op, &rs, LDAP_BACK_DONTSEND );
+	op->o_do_not_cache = do_not_cache;
+	op->o_tag = tag;
+	if ( !rc ) {
 		return rs.sr_err;
 	}
-	op->o_do_not_cache = do_not_cache;
 
 	if ( at ) {
 		attrp = attr;

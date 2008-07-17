@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.147.2.22 2008/05/06 01:05:41 hyc Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/syncprov.c,v 1.147.2.34 2008/07/10 00:13:08 quanah Exp $ */
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
@@ -404,7 +404,6 @@ syncprov_findbase( Operation *op, fbase_cookie *fc )
 		slap_callback cb = {0};
 		Operation fop;
 		SlapReply frs = { REP_RESULT };
-		BackendInfo *bi;
 		int rc;
 
 		fc->fss->s_flags ^= PS_FIND_BASE;
@@ -412,11 +411,10 @@ syncprov_findbase( Operation *op, fbase_cookie *fc )
 
 		fop = *fc->fss->s_op;
 
+		fop.o_bd = fop.o_bd->bd_self;
 		fop.o_hdr = op->o_hdr;
-		fop.o_bd = op->o_bd;
 		fop.o_time = op->o_time;
 		fop.o_tincr = op->o_tincr;
-		bi = op->o_bd->bd_info;
 
 		cb.sc_response = findbase_cb;
 		cb.sc_private = fc;
@@ -434,8 +432,7 @@ syncprov_findbase( Operation *op, fbase_cookie *fc )
 		fop.ors_filter = &generic_filter;
 		fop.ors_filterstr = generic_filterstr;
 
-		rc = overlay_op_walk( &fop, &frs, op_search, on->on_info, on );
-		op->o_bd->bd_info = bi;
+		rc = fop.o_bd->be_search( &fop, &frs );
 	} else {
 		ldap_pvt_thread_mutex_unlock( &fc->fss->s_mutex );
 		fc->fbase = 1;
@@ -500,7 +497,8 @@ findmax_cb( Operation *op, SlapReply *rs )
 		Attribute *a = attr_find( rs->sr_entry->e_attrs,
 			slap_schema.si_ad_entryCSN );
 
-		if ( a && ber_bvcmp( &a->a_vals[0], maxcsn ) > 0 ) {
+		if ( a && ber_bvcmp( &a->a_vals[0], maxcsn ) > 0 &&
+			slap_parse_csn_sid( &a->a_vals[0] ) == slap_serverID ) {
 			maxcsn->bv_len = a->a_vals[0].bv_len;
 			strcpy( maxcsn->bv_val, a->a_vals[0].bv_val );
 		}
@@ -590,7 +588,7 @@ syncprov_findcsn( Operation *op, find_csn_t mode )
 	sync_control *srs = NULL;
 	struct slap_limits_set fc_limits;
 	int i, rc = LDAP_SUCCESS, findcsn_retry = 1;
-	int maxid = 0;
+	int maxid;
 
 	if ( mode != FIND_MAXCSN ) {
 		srs = op->o_controls[slap_cids.sc_LDAPsync];
@@ -616,14 +614,20 @@ again:
 	switch( mode ) {
 	case FIND_MAXCSN:
 		cf.f_choice = LDAP_FILTER_GE;
-		cf.f_av_value = si->si_ctxcsn[0];
-		/* If there are multiple CSNs, use the largest */
-		for ( i=1; i<si->si_numcsns; i++) {
-			if ( ber_bvcmp( &cf.f_av_value, &si->si_ctxcsn[i] ) < 0 ) {
-				cf.f_av_value = si->si_ctxcsn[i];
+		/* If there are multiple CSNs, use the one with our serverID */
+		for ( i=0; i<si->si_numcsns; i++) {
+			if ( slap_serverID == si->si_sids[i] ) {
 				maxid = i;
+				break;
 			}
 		}
+		if ( i == si->si_numcsns ) {
+			/* No match: this is multimaster, and none of the content in the DB
+			 * originated locally. Treat like no CSN.
+			 */
+			return LDAP_NO_SUCH_OBJECT;
+		}
+		cf.f_av_value = si->si_ctxcsn[maxid];
 		fop.ors_filterstr.bv_len = snprintf( buf, sizeof( buf ),
 			"(entryCSN>=%s)", cf.f_av_value.bv_val );
 		if ( fop.ors_filterstr.bv_len < 0 || fop.ors_filterstr.bv_len >= sizeof( buf ) ) {
@@ -1177,6 +1181,7 @@ syncprov_matchops( Operation *op, opcookie *opc, int saveit )
 		sprev = ss, ss=snext)
 	{
 		Operation op2;
+		Opheader oh;
 		syncmatches *sm;
 		int found = 0;
 
@@ -1224,8 +1229,14 @@ syncprov_matchops( Operation *op, opcookie *opc, int saveit )
 			}
 		}
 
-		if ( fc.fscope )
+		if ( fc.fscope ) {
 			op2 = *ss->s_op;
+			oh = *op->o_hdr;
+			oh.oh_conn = ss->s_op->o_conn;
+			oh.oh_connid = ss->s_op->o_connid;
+			op2.o_hdr = &oh;
+			op2.o_extra = op->o_extra;
+		}
 
 		/* check if current o_req_dn is in scope and matches filter */
 		if ( fc.fscope && test_filter( &op2, e, ss->s_op->ors_filter ) ==
@@ -1327,7 +1338,7 @@ syncprov_checkpoint( Operation *op, SlapReply *rs, slap_overinst *on )
 	mod.sml_nvalues = NULL;
 	mod.sml_desc = slap_schema.si_ad_contextCSN;
 	mod.sml_op = LDAP_MOD_REPLACE;
-	mod.sml_flags = 0;
+	mod.sml_flags = SLAP_MOD_INTERNAL;
 	mod.sml_next = NULL;
 
 	cb.sc_response = slap_null_cb;
@@ -1566,14 +1577,16 @@ syncprov_playlog( Operation *op, SlapReply *rs, sessionlog *sl,
 		if ( delcsn[0].bv_len ) {
 			slap_compose_sync_cookie( op, &cookie, delcsn, srs->sr_state.rid,
 				srs->sr_state.sid );
-		}
 
-		Debug( LDAP_DEBUG_SYNC, "syncprov_playlog: cookie=%s\n", cookie.bv_val, 0, 0 );
+			Debug( LDAP_DEBUG_SYNC, "syncprov_playlog: cookie=%s\n", cookie.bv_val, 0, 0 );
+		}
 
 		uuids[ndel].bv_val = NULL;
 		syncprov_sendinfo( op, rs, LDAP_TAG_SYNC_ID_SET,
 			delcsn[0].bv_len ? &cookie : NULL, 0, uuids, 1 );
-		op->o_tmpfree( cookie.bv_val, op->o_tmpmemctx );
+		if ( delcsn[0].bv_len ) {
+			op->o_tmpfree( cookie.bv_val, op->o_tmpmemctx );
+		}
 	}
 	op->o_tmpfree( uuids, op->o_tmpmemctx );
 }
@@ -1596,6 +1609,17 @@ syncprov_op_response( Operation *op, SlapReply *rs )
 		cbuf[0] = '\0';
 		ldap_pvt_thread_rdwr_wlock( &si->si_csn_rwlock );
 		slap_get_commit_csn( op, &maxcsn );
+		if ( BER_BVISNULL( &maxcsn ) && SLAP_GLUE_SUBORDINATE( op->o_bd )) {
+			/* syncrepl queues the CSN values in the db where
+			 * it is configured , not where the changes are made.
+			 * So look for a value in the glue db if we didn't
+			 * find any in this db.
+			 */
+			BackendDB *be = op->o_bd;
+			op->o_bd = select_backend( &be->be_nsuffix[0], 1);
+			slap_get_commit_csn( op, &maxcsn );
+			op->o_bd = be;
+		}
 		if ( !BER_BVISNULL( &maxcsn ) ) {
 			int i, sid;
 			strcpy( cbuf, maxcsn.bv_val );
@@ -1616,6 +1640,10 @@ syncprov_op_response( Operation *op, SlapReply *rs )
 					sizeof(int));
 				si->si_sids[i] = sid;
 			}
+		} else {
+			/* internal ops that aren't meant to be replicated */
+			ldap_pvt_thread_rdwr_wunlock( &si->si_csn_rwlock );
+			return SLAP_CB_CONTINUE;
 		}
 
 		/* Don't do any processing for consumer contextCSN updates */
@@ -1978,6 +2006,7 @@ syncprov_search_response( Operation *op, SlapReply *rs )
 {
 	searchstate *ss = op->o_callback->sc_private;
 	slap_overinst *on = ss->ss_on;
+	syncprov_info_t *si = (syncprov_info_t *)on->on_bi.bi_private;
 	sync_control *srs = op->o_controls[slap_cids.sc_LDAPsync];
 
 	if ( rs->sr_type == REP_SEARCH || rs->sr_type == REP_SEARCHREF ) {
@@ -2043,8 +2072,16 @@ syncprov_search_response( Operation *op, SlapReply *rs )
 		rs->sr_ctrls = op->o_tmpalloc( sizeof(LDAPControl *)*2,
 			op->o_tmpmemctx );
 		rs->sr_ctrls[1] = NULL;
-		rs->sr_err = syncprov_state_ctrl( op, rs, rs->sr_entry,
-			LDAP_SYNC_ADD, rs->sr_ctrls, 0, 0, NULL );
+		/* If we're in delta-sync mode, always send a cookie */
+		if ( si->si_nopres && si->si_usehint && a ) {
+			struct berval cookie;
+			slap_compose_sync_cookie( op, &cookie, a->a_nvals, srs->sr_state.rid, srs->sr_state.sid );
+			rs->sr_err = syncprov_state_ctrl( op, rs, rs->sr_entry,
+				LDAP_SYNC_ADD, rs->sr_ctrls, 0, 1, &cookie );
+		} else {
+			rs->sr_err = syncprov_state_ctrl( op, rs, rs->sr_entry,
+				LDAP_SYNC_ADD, rs->sr_ctrls, 0, 0, NULL );
+		}
 	} else if ( rs->sr_type == REP_RESULT && rs->sr_err == LDAP_SUCCESS ) {
 		struct berval cookie;
 
@@ -2083,7 +2120,7 @@ syncprov_search_response( Operation *op, SlapReply *rs )
 			if ( op->o_abandon ) {
 				ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
 				ldap_pvt_thread_mutex_unlock( &ss->ss_so->s_mutex );
-				syncprov_free_syncop( ss->ss_so );
+				/* syncprov_ab_cleanup will free this syncop */
 				return SLAPD_ABANDON;
 
 			} else {
@@ -2288,6 +2325,15 @@ no_change:		if ( !(op->o_sync_mode & SLAP_SYNC_PERSIST) ) {
 				send_ldap_error( op, rs, LDAP_SYNC_REFRESH_REQUIRED, "sync cookie is stale" );
 				return rs->sr_err;
 			}
+			if ( srs->sr_state.ctxcsn ) {
+				ber_bvarray_free_x( srs->sr_state.ctxcsn, op->o_tmpmemctx );
+				srs->sr_state.ctxcsn = NULL;
+			}
+			if ( srs->sr_state.sids ) {
+				slap_sl_free( srs->sr_state.sids, op->o_tmpmemctx );
+				srs->sr_state.sids = NULL;
+			}
+			srs->sr_state.numcsns = 0;
 		} else {
 			gotstate = 1;
 			/* If changed and doing Present lookup, send Present UUIDs */
@@ -2466,7 +2512,11 @@ static ConfigOCs spocs[] = {
 		"NAME 'olcSyncProvConfig' "
 		"DESC 'SyncRepl Provider configuration' "
 		"SUP olcOverlayConfig "
-		"MAY ( olcSpCheckpoint $ olcSpSessionlog $ olcSpNoPresent ) )",
+		"MAY ( olcSpCheckpoint "
+			"$ olcSpSessionlog "
+			"$ olcSpNoPresent "
+			"$ olcSpReloadHint "
+		") )",
 			Cft_Overlay, spcfg },
 	{ NULL, 0, NULL }
 };

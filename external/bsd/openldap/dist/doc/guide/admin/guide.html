@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">7 May 2008</ADDRESS>
+<ADDRESS CLASS="doc-modified">16 July 2008</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -269,29 +269,39 @@
 <A HREF="#Access Logging">11.1. Access Logging</A><UL>
 <A HREF="#Overview">11.1.1. Overview</A>
 <BR>
-<A HREF="#Access Logging Configuration">11.1.2. Access Logging Configuration</A></UL>
+<A HREF="#Access Logging Configuration">11.1.2. Access Logging Configuration</A>
+<BR>
+<A HREF="#Further Information">11.1.3. Further Information</A></UL>
 <BR>
 <A HREF="#Audit Logging">11.2. Audit Logging</A><UL>
 <A HREF="#Overview">11.2.1. Overview</A>
 <BR>
-<A HREF="#Audit Logging Configuration">11.2.2. Audit Logging Configuration</A></UL>
+<A HREF="#Audit Logging Configuration">11.2.2. Audit Logging Configuration</A>
+<BR>
+<A HREF="#Further Information">11.2.3. Further Information</A></UL>
 <BR>
 <A HREF="#Chaining">11.3. Chaining</A><UL>
 <A HREF="#Overview">11.3.1. Overview</A>
 <BR>
 <A HREF="#Chaining Configuration">11.3.2. Chaining Configuration</A>
 <BR>
-<A HREF="#Handling Chaining Errors">11.3.3. Handling Chaining Errors</A></UL>
+<A HREF="#Handling Chaining Errors">11.3.3. Handling Chaining Errors</A>
+<BR>
+<A HREF="#Further Information">11.3.4. Further Information</A></UL>
 <BR>
 <A HREF="#Constraints">11.4. Constraints</A><UL>
 <A HREF="#Overview">11.4.1. Overview</A>
 <BR>
-<A HREF="#Constraint Configuration">11.4.2. Constraint Configuration</A></UL>
+<A HREF="#Constraint Configuration">11.4.2. Constraint Configuration</A>
+<BR>
+<A HREF="#Further Information">11.4.3. Further Information</A></UL>
 <BR>
 <A HREF="#Dynamic Directory Services">11.5. Dynamic Directory Services</A><UL>
 <A HREF="#Overview">11.5.1. Overview</A>
 <BR>
-<A HREF="#Dynamic Directory Service Configuration">11.5.2. Dynamic Directory Service Configuration</A></UL>
+<A HREF="#Dynamic Directory Service Configuration">11.5.2. Dynamic Directory Service Configuration</A>
+<BR>
+<A HREF="#Further Information">11.5.3. Further Information</A></UL>
 <BR>
 <A HREF="#Dynamic Groups">11.6. Dynamic Groups</A><UL>
 <A HREF="#Overview">11.6.1. Overview</A>
@@ -301,57 +311,79 @@
 <A HREF="#Dynamic Lists">11.7. Dynamic Lists</A><UL>
 <A HREF="#Overview">11.7.1. Overview</A>
 <BR>
-<A HREF="#Dynamic List Configuration">11.7.2. Dynamic List Configuration</A></UL>
+<A HREF="#Dynamic List Configuration">11.7.2. Dynamic List Configuration</A>
+<BR>
+<A HREF="#Further Information">11.7.3. Further Information</A></UL>
 <BR>
 <A HREF="#Reverse Group Membership Maintenance">11.8. Reverse Group Membership Maintenance</A><UL>
 <A HREF="#Overview">11.8.1. Overview</A>
 <BR>
-<A HREF="#Member Of Configuration">11.8.2. Member Of Configuration</A></UL>
+<A HREF="#Member Of Configuration">11.8.2. Member Of Configuration</A>
+<BR>
+<A HREF="#Further Information">11.8.3. Further Information</A></UL>
 <BR>
 <A HREF="#The Proxy Cache Engine">11.9. The Proxy Cache Engine</A><UL>
 <A HREF="#Overview">11.9.1. Overview</A>
 <BR>
-<A HREF="#Proxy Cache Configuration">11.9.2. Proxy Cache Configuration</A></UL>
+<A HREF="#Proxy Cache Configuration">11.9.2. Proxy Cache Configuration</A>
+<BR>
+<A HREF="#Further Information">11.9.3. Further Information</A></UL>
 <BR>
 <A HREF="#Password Policies">11.10. Password Policies</A><UL>
 <A HREF="#Overview">11.10.1. Overview</A>
 <BR>
-<A HREF="#Password Policy Configuration">11.10.2. Password Policy Configuration</A></UL>
+<A HREF="#Password Policy Configuration">11.10.2. Password Policy Configuration</A>
+<BR>
+<A HREF="#Further Information">11.10.3. Further Information</A></UL>
 <BR>
 <A HREF="#Referential Integrity">11.11. Referential Integrity</A><UL>
 <A HREF="#Overview">11.11.1. Overview</A>
 <BR>
-<A HREF="#Referential Integrity Configuration">11.11.2. Referential Integrity Configuration</A></UL>
+<A HREF="#Referential Integrity Configuration">11.11.2. Referential Integrity Configuration</A>
+<BR>
+<A HREF="#Further Information">11.11.3. Further Information</A></UL>
 <BR>
 <A HREF="#Return Code">11.12. Return Code</A><UL>
 <A HREF="#Overview">11.12.1. Overview</A>
 <BR>
-<A HREF="#Return Code Configuration">11.12.2. Return Code Configuration</A></UL>
+<A HREF="#Return Code Configuration">11.12.2. Return Code Configuration</A>
+<BR>
+<A HREF="#Further Information">11.12.3. Further Information</A></UL>
 <BR>
 <A HREF="#Rewrite/Remap">11.13. Rewrite/Remap</A><UL>
 <A HREF="#Overview">11.13.1. Overview</A>
 <BR>
-<A HREF="#Rewrite/Remap Configuration">11.13.2. Rewrite/Remap Configuration</A></UL>
+<A HREF="#Rewrite/Remap Configuration">11.13.2. Rewrite/Remap Configuration</A>
+<BR>
+<A HREF="#Further Information">11.13.3. Further Information</A></UL>
 <BR>
 <A HREF="#Sync Provider">11.14. Sync Provider</A><UL>
 <A HREF="#Overview">11.14.1. Overview</A>
 <BR>
-<A HREF="#Sync Provider Configuration">11.14.2. Sync Provider Configuration</A></UL>
+<A HREF="#Sync Provider Configuration">11.14.2. Sync Provider Configuration</A>
+<BR>
+<A HREF="#Further Information">11.14.3. Further Information</A></UL>
 <BR>
 <A HREF="#Translucent Proxy">11.15. Translucent Proxy</A><UL>
 <A HREF="#Overview">11.15.1. Overview</A>
 <BR>
-<A HREF="#Translucent Proxy Configuration">11.15.2. Translucent Proxy Configuration</A></UL>
+<A HREF="#Translucent Proxy Configuration">11.15.2. Translucent Proxy Configuration</A>
+<BR>
+<A HREF="#Further Information">11.15.3. Further Information</A></UL>
 <BR>
 <A HREF="#Attribute Uniqueness">11.16. Attribute Uniqueness</A><UL>
 <A HREF="#Overview">11.16.1. Overview</A>
 <BR>
-<A HREF="#Attribute Uniqueness Configuration">11.16.2. Attribute Uniqueness Configuration</A></UL>
+<A HREF="#Attribute Uniqueness Configuration">11.16.2. Attribute Uniqueness Configuration</A>
+<BR>
+<A HREF="#Further Information">11.16.3. Further Information</A></UL>
 <BR>
 <A HREF="#Value Sorting">11.17. Value Sorting</A><UL>
 <A HREF="#Overview">11.17.1. Overview</A>
 <BR>
-<A HREF="#Value Sorting Configuration">11.17.2. Value Sorting Configuration</A></UL>
+<A HREF="#Value Sorting Configuration">11.17.2. Value Sorting Configuration</A>
+<BR>
+<A HREF="#Further Information">11.17.3. Further Information</A></UL>
 <BR>
 <A HREF="#Overlay Stacking">11.18. Overlay Stacking</A><UL>
 <A HREF="#Overview">11.18.1. Overview</A>
@@ -388,7 +420,29 @@
 <A HREF="#Authentication Methods">13.3. Authentication Methods</A><UL>
 <A HREF="#&quot;simple&quot; method">13.3.1. &quot;simple&quot; method</A>
 <BR>
-<A HREF="#SASL method">13.3.2. SASL method</A></UL></UL>
+<A HREF="#SASL method">13.3.2. SASL method</A></UL>
+<BR>
+<A HREF="#Password Storage">13.4. Password Storage</A><UL>
+<A HREF="#SSHA password storage scheme">13.4.1. SSHA password storage scheme</A>
+<BR>
+<A HREF="#CRYPT password storage scheme">13.4.2. CRYPT password storage scheme</A>
+<BR>
+<A HREF="#MD5 password storage scheme">13.4.3. MD5 password storage scheme</A>
+<BR>
+<A HREF="#SMD5 password storage scheme">13.4.4. SMD5 password storage scheme</A>
+<BR>
+<A HREF="#SHA password storage scheme">13.4.5. SHA password storage scheme</A>
+<BR>
+<A HREF="#SASL password storage scheme">13.4.6. SASL password storage scheme</A>
+<BR>
+<A HREF="#KERBEROS password storage scheme">13.4.7. KERBEROS password storage scheme</A></UL>
+<BR>
+<A HREF="#Pass-Through authentication">13.5. Pass-Through authentication</A><UL>
+<A HREF="#Configuring slapd to use an authentication provider">13.5.1. Configuring slapd to use an authentication provider</A>
+<BR>
+<A HREF="#Configuring saslauthd">13.5.2. Configuring saslauthd</A>
+<BR>
+<A HREF="#Testing pass-through authentication">13.5.3. Testing pass-through authentication</A></UL></UL>
 <BR>
 <A HREF="#Using SASL">14. Using SASL</A><UL>
 <A HREF="#SASL Security Considerations">14.1. SASL Security Considerations</A>
@@ -589,7 +643,9 @@
 <A HREF="#Upgrading from 2.3.x">B. Upgrading from 2.3.x</A><UL>
 <A HREF="#Monitor Backend">B.1. Monitor Backend</A>
 <BR>
-<A HREF="#{{B:cn=config}} olc* attributes">B.2. <B>cn=config</B> olc* attributes</A></UL>
+<A HREF="#{{B:cn=config}} olc* attributes">B.2. <B>cn=config</B> olc* attributes</A>
+<BR>
+<A HREF="#ACLs: searches require privileges on the search base">B.3. ACLs: searches require privileges on the search base</A></UL>
 <BR>
 <A HREF="#Common errors encountered when using OpenLDAP Software">C. Common errors encountered when using OpenLDAP Software</A><UL>
 <A HREF="#Common causes of LDAP errors">C.1. Common causes of LDAP errors</A><UL>
@@ -684,21 +740,29 @@
 <BR>
 <A HREF="#allop">F.2.3. allop</A>
 <BR>
-<A HREF="#comp_match">F.2.4. comp_match</A>
+<A HREF="#autogroup">F.2.4. autogroup</A>
 <BR>
-<A HREF="#denyop">F.2.5. denyop</A>
+<A HREF="#comp_match">F.2.5. comp_match</A>
 <BR>
-<A HREF="#dsaschema">F.2.6. dsaschema</A>
+<A HREF="#denyop">F.2.6. denyop</A>
 <BR>
-<A HREF="#lastmod">F.2.7. lastmod</A>
+<A HREF="#dsaschema">F.2.7. dsaschema</A>
 <BR>
-<A HREF="#passwd">F.2.8. passwd</A>
+<A HREF="#lastmod">F.2.8. lastmod</A>
 <BR>
-<A HREF="#proxyOld">F.2.9. proxyOld</A>
+<A HREF="#nops">F.2.9. nops</A>
 <BR>
-<A HREF="#smbk5pwd">F.2.10. smbk5pwd</A>
+<A HREF="#nssov">F.2.10. nssov</A>
 <BR>
-<A HREF="#trace">F.2.11. trace</A></UL>
+<A HREF="#passwd">F.2.11. passwd</A>
+<BR>
+<A HREF="#proxyOld">F.2.12. proxyOld</A>
+<BR>
+<A HREF="#smbk5pwd">F.2.13. smbk5pwd</A>
+<BR>
+<A HREF="#trace">F.2.14. trace</A>
+<BR>
+<A HREF="#usn">F.2.15. usn</A></UL>
 <BR>
 <A HREF="#Tools">F.3. Tools</A><UL>
 <A HREF="#Statistic Logging">F.3.1. Statistic Logging</A></UL>
@@ -810,7 +874,7 @@
 <A HREF="#OpenLDAP Software Copyright Notices">K. OpenLDAP Software Copyright Notices</A><UL>
 <A HREF="#OpenLDAP Copyright Notice">K.1. OpenLDAP Copyright Notice</A>
 <BR>
-<A HREF="#Additional Copyright Notice">K.2. Additional Copyright Notice</A>
+<A HREF="#Additional Copyright Notices">K.2. Additional Copyright Notices</A>
 <BR>
 <A HREF="#University of Michigan Copyright Notice">K.3. University of Michigan Copyright Notice</A></UL>
 <BR>
@@ -821,9 +885,10 @@
 <HR>
 <H1><A NAME="Preface">Preface</A></H1>
 <H2>Copyright</H2>
-<P>Copyright 1998-2007, The <A HREF="http://www.openldap.org/foundation/">OpenLDAP Foundation</A>, <EM>All Rights Reserved</EM>.</P>
+<P>Copyright 1998-2008, The <A HREF="http://www.openldap.org/foundation/">OpenLDAP Foundation</A>, <EM>All Rights Reserved</EM>.</P>
 <P>Copyright 1992-1996, Regents of the <A HREF="http://www.umich.edu/">University of Michigan</A>, <EM>All Rights Reserved</EM>.</P>
 <P>This document is considered a part of OpenLDAP Software.  This document is subject to terms of conditions set forth in <A HREF="#OpenLDAP Software Copyright Notices">OpenLDAP Software Copyright Notices</A> and the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>. Complete copies of the notices and associated license can be found in Appendix K and L, respectively.</P>
+<P>Portions of OpenLDAP Software and this document may be copyright by other parties and/or subject to additional restrictions.  Individual source files should be consulted for additional copyright notices.</P>
 <H2>Scope of this Document</H2>
 <P>This document provides a guide for installing OpenLDAP Software 2.4 (<A HREF="http://www.openldap.org/software/">http://www.openldap.org/software/</A>) on <TERM>UNIX</TERM> (and UNIX-like) systems.  The document is aimed at experienced system administrators with basic understanding of <TERM>LDAP</TERM>-based directory services.</P>
 <P>This document is meant to be used in conjunction with other OpenLDAP information resources provided with the software package and on the project's site (<A HREF="http://www.OpenLDAP.org/">http://www.OpenLDAP.org/</A>) on the <TERM>World Wide Web</TERM>.  The site makes available a number of resources.</P>
@@ -2580,7 +2645,7 @@ SQL Programmable backend
 <PRE>
     attrs=&lt;attribute&gt; val[.&lt;style&gt;]=&lt;regex&gt;
 </PRE>
-<P>There are two special <EM>pseudo</EM> attributes <TT>entry</TT> and <TT>children</TT>.  To read (and hence return) a target entry, the subject must have <TT>read</TT> access to the target's <EM>entry</EM> attribute.  To add or delete an entry, the subject must have <TT>write</TT> access to the entry's <TT>entry</TT> attribute AND must have <TT>write</TT> access to the entry's parent's <TT>children</TT> attribute.  To rename an entry, the subject must have <TT>write</TT> access to entry's <TT>entry</TT> attribute AND have <TT>write</TT> access to both the old parent's and new parent's <TT>children</TT> attributes.  The complete examples at the end of this section should help clear things up.</P>
+<P>There are two special <EM>pseudo</EM> attributes <TT>entry</TT> and <TT>children</TT>.  To read (and hence return) a target entry, the subject must have <TT>read</TT> access to the target's <EM>entry</EM> attribute.  To perform a search, the subject must have <TT>search</TT> access to the search base's <EM>entry</EM> attribute. To add or delete an entry, the subject must have <TT>write</TT> access to the entry's <TT>entry</TT> attribute AND must have <TT>write</TT> access to the entry's parent's <TT>children</TT> attribute.  To rename an entry, the subject must have <TT>write</TT> access to entry's <TT>entry</TT> attribute AND have <TT>write</TT> access to both the old parent's and new parent's <TT>children</TT> attributes.  The complete examples at the end of this section should help clear things up.</P>
 <P>Lastly, there is a special entry selector <TT>&quot;*&quot;</TT> that is used to select any entry.  It is used when no other <TT>&lt;what&gt;</TT> selector has been provided.  It's equivalent to &quot;<TT>dn=.*</TT>&quot;</P>
 <H3><A NAME="Who to grant access to">7.2.2. Who to grant access to</A></H3>
 <P>The &lt;who&gt; part identifies the entity or entities being granted access. Note that access is granted to &quot;entities&quot; not &quot;entries.&quot; The following table summarizes entity specifiers:</P>
@@ -2934,7 +2999,7 @@ needed to manage
 <PRE>
     attrs=&lt;attribute&gt; val[.&lt;style&gt;]=&lt;regex&gt;
 </PRE>
-<P>There are two special <EM>pseudo</EM> attributes <TT>entry</TT> and <TT>children</TT>.  To read (and hence return) a target entry, the subject must have <TT>read</TT> access to the target's <EM>entry</EM> attribute.  To add or delete an entry, the subject must have <TT>write</TT> access to the entry's <TT>entry</TT> attribute AND must have <TT>write</TT> access to the entry's parent's <TT>children</TT> attribute.  To rename an entry, the subject must have <TT>write</TT> access to entry's <TT>entry</TT> attribute AND have <TT>write</TT> access to both the old parent's and new parent's <TT>children</TT> attributes.  The complete examples at the end of this section should help clear things up.</P>
+<P>There are two special <EM>pseudo</EM> attributes <TT>entry</TT> and <TT>children</TT>.  To read (and hence return) a target entry, the subject must have <TT>read</TT> access to the target's <EM>entry</EM> attribute.  To perform a search, the subject must have <TT>search</TT> access to the search base's <EM>entry</EM> attribute. To add or delete an entry, the subject must have <TT>write</TT> access to the entry's <TT>entry</TT> attribute AND must have <TT>write</TT> access to the entry's parent's <TT>children</TT> attribute.  To rename an entry, the subject must have <TT>write</TT> access to entry's <TT>entry</TT> attribute AND have <TT>write</TT> access to both the old parent's and new parent's <TT>children</TT> attributes.  The complete examples at the end of this section should help clear things up.</P>
 <P>Lastly, there is a special entry selector <TT>&quot;*&quot;</TT> that is used to select any entry.  It is used when no other <TT>&lt;what&gt;</TT> selector has been provided.  It's equivalent to &quot;<TT>dn=.*</TT>&quot;</P>
 <H3><A NAME="Who to grant access to">7.3.2. Who to grant access to</A></H3>
 <P>The &lt;who&gt; part identifies the entity or entities being granted access. Note that access is granted to &quot;entities&quot; not &quot;entries.&quot; The following table summarizes entity specifiers:</P>
@@ -4098,8 +4163,23 @@ print entry parsing debugging
 <P>The LDAP backend to <EM>slapd</EM>(8) is not an actual database; instead it acts as a proxy to forward incoming requests to another LDAP server. While processing requests it will also chase referrals, so that referrals are fully processed instead of being returned to the <EM>slapd</EM> client.</P>
 <P>Sessions that explicitly <EM>Bind</EM> to the <EM>back-ldap</EM> database always create their own private connection to the remote LDAP server. Anonymous sessions will share a single anonymous connection to the remote server. For sessions bound through other mechanisms, all sessions with the same DN will share the same connection. This connection pooling strategy can enhance the proxy's efficiency by reducing the overhead of repeatedly making/breaking multiple connections.</P>
 <P>The ldap database can also act as an information service, i.e. the identity of locally authenticated clients is asserted to the remote server, possibly in some modified form. For this purpose, the proxy binds to the remote server with some administrative identity, and, if required, authorizes the asserted identity.</P>
+<P>It is heavily used by a lot of other <A HREF="#Backends">Backends</A> and <A HREF="#Overlays">Overlays</A>.</P>
 <H3><A NAME="back-ldap Configuration">10.2.2. back-ldap Configuration</A></H3>
-<P>LATER</P>
+<P>As previously mentioned, <EM>slapd-ldap(5)</EM> is used behind the scenes by many other <A HREF="#Backends">Backends</A> and <A HREF="#Overlays">Overlays</A>. Some of them merely provide a few configuration directive themselves, but have available to the administrator the whole of the <EM>slapd-ldap(5)</EM> options.</P>
+<P>For example, the <A HREF="#Translucent Proxy">Translucent Proxy</A>, which retrieves entries from a remote LDAP server that can be partially overridden by the defined database, has only four specific <EM>translucent-</EM> directives, but can be configured using any of the normal <EM>slapd-ldap(5)</EM> options. See {[slapo-translucent(5)}} for details.</P>
+<P>Other <A HREF="#Overlays">Overlays</A> allow you to tag directives in front of a normal <EM>slapd-ldap(5)</EM> directive. For example, the <EM>slapo-chain(5)</EM> overlay does this:</P>
+<P><EM>&quot;There are very few chain overlay specific directives; however, directives related to the instances of the ldap backend that may be implicitly instantiated by the overlay may assume a special meaning when used in conjunction with this overlay.  They are described in slapd-ldap(5), and they also need to be prefixed by chain-.&quot;</EM></P>
+<P>You may have also seen the <EM>slapd-ldap(5)</EM> backend used and described in the <A HREF="#Push Based">Push Based</A> <A HREF="#Replication">Replication</A> section of the guide.</P>
+<P>It should therefore be obvious that the <EM>slapd-ldap(5)</EM> backend is extremely flexible and heavily used throughout the OpenLDAP Suite.</P>
+<P>The following is a very simple example, but already the power of the <EM>slapd-ldap(5)</EM> backend is seen by use of a <EM>uri list</EM>:</P>
+<PRE>
+        database        ldap
+        suffix          &quot;dc=suretecsystems,dc=com&quot;
+        rootdn          &quot;cn=slapd-ldap&quot;
+        uri             ldap://localhost/ ldap://remotehost ldap://remotehost2
+</PRE>
+<P>The URI list is space or comma-separated. Whenever the server that responds is not the first one in the list, the list is rearranged and the responsive server is moved to the head, so that it will be first contacted the next time a connection needs be created.</P>
+<P>This feature can be used to provide a form of load balancing when using <A HREF="#MirrorMode replication">MirrorMode replication</A>.</P>
 <H3><A NAME="Further Information">10.2.3. Further Information</A></H3>
 <P><EM>slapd-ldap</EM>(5)</P>
 <H2><A NAME="LDIF">10.3. LDIF</A></H2>
@@ -4107,7 +4187,57 @@ print entry parsing debugging
 <P>The LDIF backend to <EM>slapd</EM>(8) is a basic storage backend that stores entries in text files in LDIF format, and exploits the filesystem to create the tree structure of the database. It is intended as a cheap, low performance easy to use backend.</P>
 <P>When using the <EM>cn=config</EM> dynamic configuration database with persistent storage, the configuration data is stored using this backend. See <EM>slapd-config</EM>(5) for more information</P>
 <H3><A NAME="back-ldif Configuration">10.3.2. back-ldif Configuration</A></H3>
-<P>LATER</P>
+<P>Like many other backends, the LDIF backend can be instantiated with very few configuration lines:</P>
+<PRE>
+        include ./schema/core.schema
+
+        database  ldif
+        directory &quot;./ldif&quot;
+        suffix    &quot;dc=suretecsystems,dc=com&quot;
+        rootdn    &quot;cn=LDIF,dc=suretecsystems,dc=com&quot;
+        rootpw    LDIF
+</PRE>
+<P>You'll notice that when compared to examples below, there is no:</P>
+<PRE>
+   moduleload  back_ldif.la
+</PRE>
+<P>directive. This is because <EM>back_ldif</EM> is always built in by default as it is used by <EM>slapd-config(5)</EM>, which again is built in by default.</P>
+<P>If we add the <EM>dcObject</EM> for <EM>dc=suretecsystems,dc=com</EM>, you can see how this is added behind the scenes on the file system:</P>
+<PRE>
+   dn: dc=suretecsystems,dc=com
+   objectClass: dcObject
+   objectClass: organization
+   dc: suretecsystems
+   o: Suretec Systems Ltd
+</PRE>
+<P>Now we add it to the directory:</P>
+<PRE>
+   ldapadd -x -H ldap://localhost:9011 -f suretec.ldif -D &quot;cn=LDIF,dc=suretecsystems,dc=com&quot; -w LDIF
+   adding new entry &quot;dc=suretecsystems,dc=com&quot;
+</PRE>
+<P>And inside <TT>./ldif</TT> we have:</P>
+<PRE>
+   ls ./ldif
+   dc=suretecsystems,dc=com.ldif
+</PRE>
+<P>which again contains:</P>
+<PRE>
+   cat ldif/dc\=suretecsystems\,dc\=com.ldif
+
+   dn: dc=suretecsystems
+   objectClass: dcObject
+   objectClass: organization
+   dc: suretecsystems
+   o: Suretec Systems Ltd.
+   structuralObjectClass: organization
+   entryUUID: 2134b714-e3a1-102c-9a15-f96ee263886d
+   creatorsName: cn=LDIF,dc=suretecsystems,dc=com
+   createTimestamp: 20080711142643Z
+   entryCSN: 20080711142643.661124Z#000000#000#000000
+   modifiersName: cn=LDIF,dc=suretecsystems,dc=com
+   modifyTimestamp: 20080711142643Z
+</PRE>
+<P>This is the complete format you would get when exporting your directory using <TT>slapcat</TT> etc.</P>
 <H3><A NAME="Further Information">10.3.3. Further Information</A></H3>
 <P><EM>slapd-ldif</EM>(5)</P>
 <H2><A NAME="Metadirectory">10.4. Metadirectory</A></H2>
@@ -4125,7 +4255,55 @@ print entry parsing debugging
 <P>To inspect all monitor information, issue a subtree search with base <EM>cn=Monitor</EM>, requesting that attributes &quot;+&quot; and &quot;*&quot; are returned. The monitor backend produces mostly operational attributes, and LDAP only returns operational attributes that are explicitly requested.  Requesting attribute &quot;+&quot; is an extension which requests all operational attributes.</P>
 <P>See the <A HREF="#Monitoring">Monitoring</A> section.</P>
 <H3><A NAME="back-monitor Configuration">10.5.2. back-monitor Configuration</A></H3>
-<P>LATER</P>
+<P>The monitor database can be instantiated only once, i.e. only one occurrence of &quot;database monitor&quot; can occur in the <EM>slapd.conf(5)</EM> file.  Also the suffix is automatically set to <EM>&quot;cn=Monitor&quot;</EM>.</P>
+<P>You can however set a <EM>rootdn</EM> and <EM>rootpw</EM>. The following is all that is needed to instantiate a monitor backend:</P>
+<PRE>
+        include ./schema/core.schema
+
+        modulepath  /usr/local/libexec/openldap
+        moduleload  back_monitor.la
+
+        database monitor
+        rootdn &quot;cn=monitoring,cn=Monitor&quot;
+        rootpw monitoring
+</PRE>
+<P>You can also apply Access Control to this database like any other database, for example:</P>
+<PRE>
+        access to dn.subtree=&quot;cn=Monitor&quot;
+             by dn.exact=&quot;uid=Admin,dc=my,dc=org&quot; write
+             by users read
+             by * none
+</PRE>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>The <TT>core.schema</TT> must be loaded for the monitor database to work.
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P>A small example of the data returned via <EM>ldapsearch</EM> would be:</P>
+<PRE>
+        ldapsearch -x -H ldap://localhost:9011 -b 'cn=Monitor'
+        # extended LDIF
+        #
+        # LDAPv3
+        # base &lt;cn=Monitor&gt; with scope subtree
+        # filter: (objectclass=*)
+        # requesting: ALL
+        #
+
+        # Monitor
+        dn: cn=Monitor
+        objectClass: monitorServer
+        cn: Monitor
+        description: This subtree contains monitoring/managing objects.
+        description: This object contains information about this server.
+        description: Most of the information is held in operational attributes, which
+         must be explicitly requested.
+
+        # Backends, Monitor
+        dn: cn=Backends,cn=Monitor
+        objectClass: monitorContainer
+        cn: Backends
+        description: This subsystem contains information about available backends.
+</PRE>
+<P>Please see the <A HREF="#Monitoring">Monitoring</A> section for complete examples of information available via this backend.</P>
 <H3><A NAME="Further Information">10.5.3. Further Information</A></H3>
 <P><EM>slapd-monitor</EM>(5)</P>
 <H2><A NAME="Null">10.6. Null</A></H2>
@@ -4139,15 +4317,76 @@ print entry parsing debugging
 <LI>The slapadd(8) and slapcat(8) tools are equally exciting.</UL>
 <P>Inspired by the <TT>/dev/null</TT> device.</P>
 <H3><A NAME="back-null Configuration">10.6.2. back-null Configuration</A></H3>
-<P>LATER</P>
+<P>This has to be one of the shortest configurations you'll ever do. In order to test this, your <TT>slapd.conf</TT> file would look like:</P>
+<PRE>
+        modulepath  /usr/local/libexec/openldap
+        moduleload  back_null.la
+        database null
+        suffix &quot;cn=Nothing&quot;
+        bind on
+</PRE>
+<P>The first two directives are only applicable if you've enabled module support and haven't &quot;built-in&quot; <EM>slapd-null(5)</EM> support (why would you?).</P>
+<P><EM>bind on</EM> means:</P>
+<P><EM>&quot;Allow binds as any DN in this backend's suffix, with any password. The default is &quot;off&quot;.&quot;</EM></P>
+<P>To test this backend with <EM>ldapsearch</EM>:</P>
+<PRE>
+        ldapsearch -x -H ldap://localhost:9011 -D &quot;uid=none,cn=Nothing&quot; -w testing -b 'cn=Nothing'
+        # extended LDIF
+        #
+        # LDAPv3
+        # base &lt;cn=Nothing&gt; with scope subtree
+        # filter: (objectclass=*)
+        # requesting: ALL
+        #
+
+        # search result
+        search: 2
+        result: 0 Success
+
+        # numResponses: 1
+</PRE>
 <H3><A NAME="Further Information">10.6.3. Further Information</A></H3>
 <P><EM>slapd-null</EM>(5)</P>
 <H2><A NAME="Passwd">10.7. Passwd</A></H2>
 <H3><A NAME="Overview">10.7.1. Overview</A></H3>
-<P>The PASSWD backend to <EM>slapd</EM>(8) serves up the user account information listed in the system <EM>passwd</EM>(5) file.</P>
+<P>The PASSWD backend to <EM>slapd</EM>(8) serves up the user account information listed in the system <EM>passwd</EM>(5) file (defaulting to <TT>/etc/passwd</TT>).</P>
 <P>This backend is provided for demonstration purposes only. The DN of each entry is &quot;uid=&lt;username&gt;,&lt;suffix&gt;&quot;.</P>
 <H3><A NAME="back-passwd Configuration">10.7.2. back-passwd Configuration</A></H3>
-<P>LATER</P>
+<P>The configuration using <TT>slapd.conf</TT> a slightly longer, but not much. For example:</P>
+<PRE>
+        include ./schema/core.schema
+
+        modulepath  /usr/local/libexec/openldap
+        moduleload  back_passwd.la
+
+        database passwd
+        suffix &quot;cn=passwd&quot;
+</PRE>
+<P>Again, testing this with <EM>ldapsearch</EM> would result in something like:</P>
+<PRE>
+        ldapsearch -x -H ldap://localhost:9011 -b 'cn=passwd'
+        # extended LDIF
+        #
+        # LDAPv3
+        # base &lt;cn=passwd&gt; with scope subtree
+        # filter: (objectclass=*)
+        # requesting: ALL
+        #
+
+        # passwd
+        dn: cn=passwd
+        cn: passwd
+        objectClass: organizationalUnit
+
+        # root, passwd
+        dn: uid=root,cn=passwd
+        objectClass: person
+        objectClass: uidObject
+        uid: root
+        cn: root
+        sn: root
+        description: root
+</PRE>
 <H3><A NAME="Further Information">10.7.3. Further Information</A></H3>
 <P><EM>slapd-passwd</EM>(5)</P>
 <H2><A NAME="Perl/Shell">10.8. Perl/Shell</A></H2>
@@ -4168,16 +4407,77 @@ print entry parsing debugging
 <P><EM>slapd-relay</EM>(5)</P>
 <H2><A NAME="SQL">10.10. SQL</A></H2>
 <H3><A NAME="Overview">10.10.1. Overview</A></H3>
-<P>The primary purpose of this <EM>slapd</EM>(8) backend is to PRESENT information stored in some RDBMS as an LDAP subtree without any programming (some SQL and maybe stored procedures can’t be considered programming, anyway ;).</P>
+<P>The primary purpose of this <EM>slapd</EM>(8) backend is to PRESENT information stored in some RDBMS as an LDAP subtree without any programming (some SQL and maybe stored procedures can't be considered programming, anyway ;).</P>
 <P>That is, for example, when you (some ISP) have account information you use in an RDBMS, and want to use modern solutions that expect such information in LDAP (to authenticate users, make email lookups etc.). Or you want to synchronize or distribute information between different sites/applications that use RDBMSes and/or LDAP. Or whatever else...</P>
 <P>It is <B>NOT</B> designed as a general-purpose backend that uses RDBMS instead of BerkeleyDB (as the standard BDB backend does), though it can be used as such with several limitations. Please see <A HREF="#LDAP vs RDBMS">LDAP vs RDBMS</A> for discussion.</P>
 <P>The idea is to use some meta-information to translate LDAP queries to SQL queries, leaving relational schema untouched, so that old applications can continue using it without any modifications. This allows SQL and LDAP applications to interoperate without replication, and exchange data as needed.</P>
-<P>The SQL backend is designed to be tunable to virtually any relational schema without having to change source (through that meta-information mentioned). Also, it uses ODBC to connect to RDBMSes, and is highly configurable for SQL dialects RDBMSes may use, so it may be used for integration and distribution of data on different RDBMSes, OSes, hosts etc., in other words, in highly heterogeneous environment.</P>
+<P>The SQL backend is designed to be tunable to virtually any relational schema without having to change source (through that meta-information mentioned). Also, it uses ODBC to connect to RDBMSes, and is highly configurable for SQL dialects RDBMSes may use, so it may be used for integration and distribution of data on different RDBMSes, OSes, hosts etc., in other words, in highly heterogeneous environments.</P>
 <P>This backend is experimental.</P>
 <H3><A NAME="back-sql Configuration">10.10.2. back-sql Configuration</A></H3>
-<P>LATER</P>
+<P>This backend has to be one of the most abused and complex backends there is. Therefore, we will go through a simple, small example that comes with the OpenLDAP source and can be found in <TT>servers/slapd/back-sql/rdbms_depend/README</TT></P>
+<P>For this example we will be using PostgreSQL.</P>
+<P>First, we add to <TT>/etc/odbc.ini</TT> a block of the form:</P>
+<PRE>
+        [example]                        &lt;===
+        Description         = Example for OpenLDAP's back-sql
+        Driver              = PostgreSQL
+        Trace               = No
+        Database            = example    &lt;===
+        Servername          = localhost
+        UserName            = manager    &lt;===
+        Password            = secret     &lt;===
+        Port                = 5432
+        ;Protocol            = 6.4
+        ReadOnly            = No
+        RowVersioning       = No
+        ShowSystemTables    = No
+        ShowOidColumn       = No
+        FakeOidIndex        = No
+        ConnSettings        =
+</PRE>
+<P>The relevant information for our test setup is highlighted with '&lt;===' on the right above.</P>
+<P>Next, we add to <TT>/etc/odbcinst.ini</TT> a block of the form:</P>
+<PRE>
+        [PostgreSQL]
+        Description     = ODBC for PostgreSQL
+        Driver          = /usr/lib/libodbcpsql.so
+        Setup           = /usr/lib/libodbcpsqlS.so
+        FileUsage       = 1
+</PRE>
+<P>We will presume you know how to create a database and user in PostgreSQL and how to set a password. Also, we'll presume you can populate the 'example' database you've just created with the following files, as found in <TT>servers/slapd/back-sql/rdbms_depend/pgsql </TT></P>
+<PRE>
+        backsql_create.sql, testdb_create.sql, testdb_data.sql, testdb_metadata.sql
+</PRE>
+<P>Lastly, run the test:</P>
+<PRE>
+        [root@localhost]# cd $SOURCES/tests
+        [root@localhost]# SLAPD_USE_SQL=pgsql ./run sql-test000
+</PRE>
+<P>Briefly, you should see something like (cut short for space):</P>
+<PRE>
+        Cleaning up test run directory leftover from previous run.
+        Running ./scripts/sql-test000-read...
+        running defines.sh
+        Starting slapd on TCP/IP port 9011...
+        Testing SQL backend read operations...
+        Waiting 5 seconds for slapd to start...
+        Testing correct bind... dn:cn=Mitya Kovalev,dc=example,dc=com
+        Testing incorrect bind (should fail)... ldap_bind: Invalid credentials (49)
+
+        ......
+
+        Filtering original ldif...
+        Comparing filter output...
+        &gt;&gt;&gt;&gt;&gt; Test succeeded
+</PRE>
+<P>The test is basically readonly; this can be performed by all RDBMSes (listed above).</P>
+<P>There is another test, sql-test900-write, which is currently enabled only for PostgreSQL and IBM db2.</P>
+<P>Using <TT>sql-test000</TT>, files in <TT>servers/slapd/back-sql/rdbms_depend/pgsql/</TT> and the man page, you should be set.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>This backend is experimental.
+<HR WIDTH="80%" ALIGN="Left"></P>
 <H3><A NAME="Further Information">10.10.3. Further Information</A></H3>
-<P><EM>slapd-sql</EM>(5)</P>
+<P><EM>slapd-sql</EM>(5) and <TT>servers/slapd/back-sql/rdbms_depend/README</TT></P>
 <P></P>
 <HR>
 <H1><A NAME="Overlays">11. Overlays</A></H1>
@@ -4296,7 +4596,8 @@ print entry parsing debugging
         # numResponses: 3
         # numEntries: 2
 </PRE>
-<P>For more information, please see <EM>slapo-accesslog(5)</EM> and the <A HREF="#delta-syncrepl replication">delta-syncrepl replication</A> section.</P>
+<H3><A NAME="Further Information">11.1.3. Further Information</A></H3>
+<P><EM>slapo-accesslog(5)</EM> and the <A HREF="#delta-syncrepl replication">delta-syncrepl replication</A> section.</P>
 <H2><A NAME="Audit Logging">11.2. Audit Logging</A></H2>
 <P>The Audit Logging overlay can be used to record all changes on a given backend database to a specified log file.</P>
 <H3><A NAME="Overview">11.2.1. Overview</A></H3>
@@ -4312,7 +4613,7 @@ print entry parsing debugging
        olcAuditlogFile: /tmp/auditlog.ldif
 </PRE>
 <P>In this example for testing, we are logging changes to <TT>/tmp/auditlog.ldif</TT></P>
-<P>A typical <TERM>LDIF</TERM> file created by <B>slapo-auditlog (5)</B> would look like:</P>
+<P>A typical <TERM>LDIF</TERM> file created by <B>slapo-auditlog(5)</B> would look like:</P>
 <PRE>
        # add 1196797576 dc=suretecsystems,dc=com cn=admin,dc=suretecsystems,dc=com
        dn: dc=suretecsystems,dc=com
@@ -4346,6 +4647,8 @@ print entry parsing debugging
        entryCSN: 20051123130912.000000Z#000002#000#000000
        # end add 1196797577
 </PRE>
+<H3><A NAME="Further Information">11.2.3. Further Information</A></H3>
+<P><EM>slapo-auditlog(5)</EM></P>
 <H2><A NAME="Chaining">11.3. Chaining</A></H2>
 <H3><A NAME="Overview">11.3.1. Overview</A></H3>
 <P>The chain overlay provides basic chaining capability to the underlying database.</P>
@@ -4405,6 +4708,8 @@ print entry parsing debugging
 <PRE>
         chain-return-error TRUE
 </PRE>
+<H3><A NAME="Further Information">11.3.4. Further Information</A></H3>
+<P><EM>slapo-chain(5)</EM></P>
 <H2><A NAME="Constraints">11.4. Constraints</A></H2>
 <H3><A NAME="Overview">11.4.1. Overview</A></H3>
 <P>This overlay enforces a regular expression constraint on all values of specified attributes during an LDAP modify request that contains add or modify commands. It is used to enforce a more rigorous syntax when the underlying attribute syntax is too general.</P>
@@ -4428,6 +4733,8 @@ print entry parsing debugging
        olcConstraintAttribute: mail regex ^[:alnum:]+@mydomain.com$
        olcConstraintAttribute: title uri ldap:///dc=catalog,dc=example,dc=com?title?sub?(objectClass=titleCatalog)
 </PRE>
+<H3><A NAME="Further Information">11.4.3. Further Information</A></H3>
+<P><EM>slapo-constraint(5)</EM></P>
 <H2><A NAME="Dynamic Directory Services">11.5. Dynamic Directory Services</A></H2>
 <H3><A NAME="Overview">11.5.1. Overview</A></H3>
 <P>The <EM>dds</EM> overlay to <EM>slapd</EM>(8) implements dynamic objects as per <A HREF="http://www.rfc-editor.org/rfc/rfc2589.txt">RFC2589</A>. The name <EM>dds</EM> stands for Dynamic Directory Services. It allows to define dynamic objects, characterized by the <EM>dynamicObject</EM> objectClass.</P>
@@ -4488,6 +4795,8 @@ print entry parsing debugging
        ldapexop -x -H ldap://ldaphost &quot;refresh&quot; &quot;cn=OpenLDAP Documentation Meeting,ou=Meetings,dc=example,dc=com&quot; &quot;120&quot; -D &quot;uid=ghenry,ou=People,dc=example,dc=com&quot; -W
 </PRE>
 <P>Any user can join the meeting, but not add another attendee, but they can refresh the meeting. The ACLs above are quite straight forward to understand.</P>
+<H3><A NAME="Further Information">11.5.3. Further Information</A></H3>
+<P><EM>slapo-dds(5)</EM></P>
 <H2><A NAME="Dynamic Groups">11.6. Dynamic Groups</A></H2>
 <H3><A NAME="Overview">11.6.1. Overview</A></H3>
 <P>This overlay extends the Compare operation to detect members of a dynamic group. This overlay is now deprecated as all of its functions are available using the <A HREF="#Dynamic Lists">Dynamic Lists</A> overlay.</P>
@@ -4542,6 +4851,8 @@ print entry parsing debugging
 <P><CENTER><IMG SRC="allusersgroup-en.png" ALIGN="center"></CENTER></P>
 <P ALIGN="Center">Figure X.Y: Dynamic Group for all users</P>
 <P>Note that a side effect of this scheme of dynamic groups is that the members need to be specified as full DNs. So, if you are planning in using this for <TT>posixGroup</TT>s, be sure to use RFC2307bis and some attribute which can hold distinguished names. The <TT>memberUid</TT> attribute used in the <TT>posixGroup</TT> object class can hold only names, not DNs, and is therefore not suitable for dynamic groups.</P>
+<H3><A NAME="Further Information">11.7.3. Further Information</A></H3>
+<P><EM>slapo-dynlist(5)</EM></P>
 <H2><A NAME="Reverse Group Membership Maintenance">11.8. Reverse Group Membership Maintenance</A></H2>
 <H3><A NAME="Overview">11.8.1. Overview</A></H3>
 <P>In some scenarios, it may be desirable for a client to be able to determine which groups an entry is a member of, without performing an additional search. Examples of this are applications using the <TERM>DIT</TERM> for access control based on group authorization.</P>
@@ -4603,6 +4914,8 @@ print entry parsing debugging
  memberOf: cn=testgroup,ou=Group,dc=example,dc=com
 </PRE>
 <P>Note that the <B>memberOf</B> attribute is an operational attribute, so it must be requested explicitly.</P>
+<H3><A NAME="Further Information">11.8.3. Further Information</A></H3>
+<P><EM>slapo-memberof(5)</EM></P>
 <H2><A NAME="The Proxy Cache Engine">11.9. The Proxy Cache Engine</A></H2>
 <P><TERM>LDAP</TERM> servers typically hold one or more subtrees of a <TERM>DIT</TERM>. Replica (or shadow) servers hold shadow copies of entries held by one or more master servers.  Changes are propagated from the master server to replica (slave) servers using LDAP Sync replication.  An LDAP cache is a special type of replica which holds entries corresponding to search filters instead of subtrees.</P>
 <H3><A NAME="Overview">11.9.1. Overview</A></H3>
@@ -4666,6 +4979,8 @@ print entry parsing debugging
         Attrs: mail telephoneNumber
 </PRE>
 <P>is not cacheable, because the filter does not match the template ( logical OR &quot;|&quot; condition instead of logical AND &quot;&amp;&quot; )</P>
+<H3><A NAME="Further Information">11.9.3. Further Information</A></H3>
+<P><EM>slapo-pcache(5)</EM></P>
 <H2><A NAME="Password Policies">11.10. Password Policies</A></H2>
 <H3><A NAME="Overview">11.10.1. Overview</A></H3>
 <P>This overlay follows the specifications contained in the draft RFC titled draft-behera-ldap-password-policy-09. While the draft itself is expired, it has been implemented in several directory servers, including slapd. Nonetheless, it is important to note that it is a draft, meaning that it is subject to change and is a work-in-progress.</P>
@@ -4743,6 +5058,8 @@ print entry parsing debugging
 <P>1. The pwdPolicySubentry in a user's object - If a user's object has a pwdPolicySubEntry attribute specifying the DN of a policy object, then the policy defined by that object is applied.</P>
 <P>2. Default password policy - If there is no specific pwdPolicySubentry set for an object, and the password policy module was configured with the DN of a default policy object and if that object exists, then the policy defined in that object is applied.</P>
 <P>Please see <EM>slapo-ppolicy(5)</EM> for complete explanations of features and discussion of &quot;Password Management Issues&quot; at <A HREF="http://www.connexitor.com/forums/viewtopic.php?f=6&amp;t=25">http://www.connexitor.com/forums/viewtopic.php?f=6&amp;t=25</A></P>
+<H3><A NAME="Further Information">11.10.3. Further Information</A></H3>
+<P><EM>slapo-ppolicy(5)</EM></P>
 <H2><A NAME="Referential Integrity">11.11. Referential Integrity</A></H2>
 <H3><A NAME="Overview">11.11.1. Overview</A></H3>
 <P>This overlay can be used with a backend database such as slapd-bdb(5) to maintain the cohesiveness of a schema which utilizes reference attributes.</P>
@@ -4771,31 +5088,84 @@ print entry parsing debugging
 <P ALIGN="Center">Figure X.Y: Maintaining referential integrity in groups</P>
 <P>Notice that if we rename (<TT>modrdn</TT>) the <TT>john</TT> entry to, say, <TT>jsmith</TT>, the refint overlay will also rename the reference in the <TT>member</TT> attribute, so the group membership stays correct.</P>
 <P>If we removed all users from the directory who are a member of this group, then the end result would be a single member in the group: <TT>cn=admin,dc=example,dc=com</TT>. This is the <TT>refint_nothing</TT> parameter kicking into action so that the schema is not violated.</P>
+<H3><A NAME="Further Information">11.11.3. Further Information</A></H3>
+<P><EM>slapo-refint(5)</EM></P>
 <H2><A NAME="Return Code">11.12. Return Code</A></H2>
 <H3><A NAME="Overview">11.12.1. Overview</A></H3>
-<P>This overlay is useful to test the behavior of clients when server-generated erroneous and/or unusual responses occur.</P>
+<P>This overlay is useful to test the behavior of clients when server-generated erroneous and/or unusual responses occur, for example; error codes, referrals, excessive response times and so on.</P>
+<P>This would be classed as a debugging tool whilst developing client software or additional Overlays.</P>
+<P>For detailed information, please see the <EM>slapo-retcode(5)</EM> man page.</P>
 <H3><A NAME="Return Code Configuration">11.12.2. Return Code Configuration</A></H3>
+<P>The retcode overlay utilizes the &quot;return code&quot; schema described in the man page. This schema is specifically designed for use with this overlay and is not intended to be used otherwise.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>The necessary schema is loaded automatically by the overlay.
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P>An example configuration might be:</P>
+<PRE>
+       overlay         retcode
+       retcode-parent  &quot;ou=RetCodes,dc=example,dc=com&quot;
+       include         ./retcode.conf
+
+       retcode-item    &quot;cn=Unsolicited&quot;                0x00 unsolicited=&quot;0&quot;
+       retcode-item    &quot;cn=Notice of Disconnect&quot;       0x00 unsolicited=&quot;1.3.6.1.4.1.1466.20036&quot;
+       retcode-item    &quot;cn=Pre-disconnect&quot;             0x34 flags=&quot;pre-disconnect&quot;
+       retcode-item    &quot;cn=Post-disconnect&quot;            0x34 flags=&quot;post-disconnect&quot;
+</PRE>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG><EM>retcode.conf</EM> can be found in the openldap source at: <TT>tests/data/retcode.conf</TT>
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P>An excerpt of a <TT>retcode.conf</TT> would be something like:</P>
+<PRE>
+       retcode-item    &quot;cn=success&quot;                            0x00
+
+       retcode-item    &quot;cn=success w/ delay&quot;                   0x00    sleeptime=2
+
+       retcode-item    &quot;cn=operationsError&quot;                    0x01
+       retcode-item    &quot;cn=protocolError&quot;                      0x02
+       retcode-item    &quot;cn=timeLimitExceeded&quot;                  0x03    op=search
+       retcode-item    &quot;cn=sizeLimitExceeded&quot;                  0x04    op=search
+       retcode-item    &quot;cn=compareFalse&quot;                       0x05    op=compare
+       retcode-item    &quot;cn=compareTrue&quot;                        0x06    op=compare
+       retcode-item    &quot;cn=authMethodNotSupported&quot;             0x07
+       retcode-item    &quot;cn=strongAuthNotSupported&quot;             0x07    text=&quot;same as authMethodNotSupported&quot;
+       retcode-item    &quot;cn=strongAuthRequired&quot;                 0x08
+       retcode-item    &quot;cn=strongerAuthRequired&quot;               0x08    text=&quot;same as strongAuthRequired&quot;
+</PRE>
+<P>Please see <TT>tests/data/retcode.conf</TT> for a complete <TT>retcode.conf</TT></P>
+<H3><A NAME="Further Information">11.12.3. Further Information</A></H3>
+<P><EM>slapo-retcode(5)</EM></P>
 <H2><A NAME="Rewrite/Remap">11.13. Rewrite/Remap</A></H2>
 <H3><A NAME="Overview">11.13.1. Overview</A></H3>
-<P>It performs basic DN/data rewrite and objectClass/attributeType mapping.</P>
+<P>It performs basic DN/data rewrite and objectClass/attributeType mapping. Its usage is mostly intended to provide virtual views of existing data either remotely, in conjunction with the proxy backend described in <EM>slapd-ldap(5)</EM>, or locally, in conjunction with the relay backend described in <EM>slapd-relay(5)</EM>.</P>
+<P>This overlay is extremely configurable and advanced, therefore recommended reading is the <EM>slapo-rwm(5)</EM> man page.</P>
 <H3><A NAME="Rewrite/Remap Configuration">11.13.2. Rewrite/Remap Configuration</A></H3>
+<H3><A NAME="Further Information">11.13.3. Further Information</A></H3>
+<P><EM>slapo-rwm(5)</EM></P>
 <H2><A NAME="Sync Provider">11.14. Sync Provider</A></H2>
 <H3><A NAME="Overview">11.14.1. Overview</A></H3>
 <P>This overlay implements the provider-side support for syncrepl replication, including persistent search functionality</P>
 <H3><A NAME="Sync Provider Configuration">11.14.2. Sync Provider Configuration</A></H3>
+<H3><A NAME="Further Information">11.14.3. Further Information</A></H3>
+<P><EM>slapo-syncprov(5)</EM></P>
 <H2><A NAME="Translucent Proxy">11.15. Translucent Proxy</A></H2>
 <H3><A NAME="Overview">11.15.1. Overview</A></H3>
 <P>This overlay can be used with a backend database such as slapd-bdb (5) to create a &quot;translucent proxy&quot;.</P>
 <P>Content of entries retrieved from a remote LDAP server can be partially overridden by the database.</P>
 <H3><A NAME="Translucent Proxy Configuration">11.15.2. Translucent Proxy Configuration</A></H3>
+<H3><A NAME="Further Information">11.15.3. Further Information</A></H3>
+<P><EM>slapo-translucent(5)</EM></P>
 <H2><A NAME="Attribute Uniqueness">11.16. Attribute Uniqueness</A></H2>
 <H3><A NAME="Overview">11.16.1. Overview</A></H3>
 <P>This overlay can be used with a backend database such as slapd-bdb (5) to enforce the uniqueness of some or all attributes within a subtree.</P>
 <H3><A NAME="Attribute Uniqueness Configuration">11.16.2. Attribute Uniqueness Configuration</A></H3>
+<H3><A NAME="Further Information">11.16.3. Further Information</A></H3>
+<P><EM>slapo-unique(5)</EM></P>
 <H2><A NAME="Value Sorting">11.17. Value Sorting</A></H2>
 <H3><A NAME="Overview">11.17.1. Overview</A></H3>
 <P>This overlay can be used to enforce a specific order for the values of an attribute when it is returned in a search.</P>
 <H3><A NAME="Value Sorting Configuration">11.17.2. Value Sorting Configuration</A></H3>
+<H3><A NAME="Further Information">11.17.3. Further Information</A></H3>
+<P><EM>slapo-valsort(5)</EM></P>
 <H2><A NAME="Overlay Stacking">11.18. Overlay Stacking</A></H2>
 <H3><A NAME="Overview">11.18.1. Overview</A></H3>
 <P>Overlays can be stacked, which means that more than one overlay can be instantiated for each database, or for the <TT>frontend</TT>. As a consequence, each overlays function is called, if defined, when overlay execution is invoked. Multiple overlays are executed in reverse order (as a stack) with respect to their definition in slapd.conf (5), or with respect to their ordering in the config database, as documented in slapd-config (5).</P>
@@ -5440,7 +5810,10 @@ object identifier
         slapd: 10.0.0.0/255.0.0.0 127.0.0.1 : ALLOW
         slapd: ALL : DENY
 </PRE>
-<P>allows only incoming connections from the private network <TT>10.0.0.0</TT> and localhost (<TT>127.0.0.1</TT>) to access the directory service. Note that IP addresses are used as <EM>slapd</EM>(8) is not normally configured to perform reverse lookups.</P>
+<P>allows only incoming connections from the private network <TT>10.0.0.0</TT> and localhost (<TT>127.0.0.1</TT>) to access the directory service.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>IP addresses are used as <EM>slapd</EM>(8) is not normally configured to perform reverse lookups.
+<HR WIDTH="80%" ALIGN="Left"></P>
 <P>It is noted that TCP wrappers require the connection to be accepted. As significant processing is required just to deny a connection, it is generally advised that IP firewall protection be used instead of TCP wrappers.</P>
 <P>See <EM>hosts_access</EM>(5) for more information on TCP wrapper rules.</P>
 <H2><A NAME="Data Integrity and Confidentiality Protection">13.2. Data Integrity and Confidentiality Protection</A></H2>
@@ -5463,7 +5836,10 @@ object identifier
 <LI>unauthenticated, and
 <LI>user/password authenticated.</UL>
 <P>Anonymous access is requested by providing no name and no password to the &quot;simple&quot; bind operation.  Unauthenticated access is requested by providing a name but no password.  Authenticated access is requested by providing a valid name and password.</P>
-<P>An anonymous bind results in an <EM>anonymous</EM> authorization association.  Anonymous bind mechanism is enabled by default, but can be disabled by specifying &quot;<TT>disallow bind_anon</TT>&quot; in <EM>slapd.conf</EM>(5).  Note that disabling the anonymous bind mechanism does not prevent anonymous access to the directory.  To require authentication to access the directory, one should instead specify &quot;<TT>require authc</TT>&quot;.</P>
+<P>An anonymous bind results in an <EM>anonymous</EM> authorization association.  Anonymous bind mechanism is enabled by default, but can be disabled by specifying &quot;<TT>disallow bind_anon</TT>&quot; in <EM>slapd.conf</EM>(5).</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>Disabling the anonymous bind mechanism does not prevent anonymous access to the directory. To require authentication to access the directory, one should instead specify &quot;<TT>require authc</TT>&quot;.
+<HR WIDTH="80%" ALIGN="Left"></P>
 <P>An unauthenticated bind also results in an <EM>anonymous</EM> authorization association.  Unauthenticated bind mechanism is disabled by default, but can be enabled by specifying &quot;<TT>allow bind_anon_cred</TT>&quot; in <EM>slapd.conf</EM>(5).  As a number of LDAP applications mistakenly generate unauthenticated bind request when authenticated access was intended (that is, they do not ensure a password was provided), this mechanism should generally remain disabled.</P>
 <P>A successful user/password authenticated bind results in a user authorization identity, the provided name, being associated with the session.  User/password authenticated bind is enabled by default. However, as this mechanism itself offers no eavesdropping protection (e.g., the password is set in the clear), it is recommended that it be used only in tightly controlled systems or when the LDAP session is protected by other means (e.g., TLS, <TERM>IPsec</TERM>). Where the administrator relies on TLS to protect the password, it is recommended that unprotected authentication be disabled.  This is done using the <TT>security</TT> directive's <TT>simple_bind</TT> option, which provides fine grain control over the level of confidential protection to require for <EM>simple</EM> user/password authentication. E.g., using <TT>security simple_bind=56</TT> would require <EM>simple</EM> binds to use encryption of DES equivalent or better.</P>
 <P>The user/password authenticated bind mechanism can be completely disabled by setting &quot;<TT>disallow bind_simple</TT>&quot;.</P>
@@ -5471,7 +5847,141 @@ object identifier
 <STRONG>Note: </STRONG>An unsuccessful bind always results in the session having an <EM>anonymous</EM> authorization association.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <H3><A NAME="SASL method">13.3.2. SASL method</A></H3>
-<P>The LDAP <TERM>SASL</TERM> method allows use of any SASL authentication mechanism.  The <A HREF="#Using SASL">Using SASL</A> discusses use of SASL.</P>
+<P>The LDAP <TERM>SASL</TERM> method allows the use of any SASL authentication mechanism. The <A HREF="#Using SASL">Using SASL</A> section discusses the use of SASL.</P>
+<H2><A NAME="Password Storage">13.4. Password Storage</A></H2>
+<P>LDAP passwords are normally stored in the <EM>userPassword</EM> attribute. <A HREF="http://www.rfc-editor.org/rfc/rfc4519.txt">RFC4519</A> specifies that passwords are not stored in encrypted (or hashed) form.  This allows a wide range of password-based authentication mechanisms, such as <TT>DIGEST-MD5</TT> to be used. This is also the most interoperable storage scheme.</P>
+<P>However, it may be desirable to store a hash of password instead. <EM>slapd</EM>(8) supports a variety of storage schemes for the administrator to choose from.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>Values of password attributes, regardless of storage scheme used, should be protected as if they were clear text.  Hashed passwords are subject to <EM>dictionary attacks</EM> and <EM>brute-force attacks</EM>.
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P>The <EM>userPassword</EM> attribute is allowed to have more than one value, and it is possible for each value to be stored in a different form. During authentication, <EM>slapd</EM> will iterate through the values until it finds one that matches the offered password or until it runs out of values to inspect.  The storage scheme is stored as a prefix on the value, so a hashed password using the Salted SHA1 (<TT>SSHA</TT>) scheme looks like:</P>
+<PRE>
+ userPassword: {SSHA}DkMTwBl+a/3DQTxCYEApdUtNXGgdUac3
+</PRE>
+<P>The advantage of hashed passwords is that an attacker which discovers the hash does not have direct access to the actual password. Unfortunately, as dictionary and brute force attacks are generally quite easy for attackers to successfully mount, this advantage is marginal at best (this is why all modern Unix systems use shadow password files).</P>
+<P>The disadvantages of hashed storage is that they are non-standard, may cause interoperability problem, and generally preclude the use of stronger than Simple (or SASL/PLAIN) password-based authentication mechanisms such as <TT>DIGEST-MD5</TT>.</P>
+<H3><A NAME="SSHA password storage scheme">13.4.1. SSHA password storage scheme</A></H3>
+<P>This is the salted version of the SHA scheme. It is believed to be the most secure password storage scheme supported by <EM>slapd</EM>.</P>
+<P>These values represent the same password:</P>
+<PRE>
+ userPassword: {SSHA}DkMTwBl+a/3DQTxCYEApdUtNXGgdUac3
+ userPassword: {SSHA}d0Q0626PSH9VUld7yWpR0k6BlpQmtczb
+</PRE>
+<H3><A NAME="CRYPT password storage scheme">13.4.2. CRYPT password storage scheme</A></H3>
+<P>This scheme uses the operating system's <EM>crypt(3)</EM> hash function. It normally produces the traditional Unix-style 13 character hash, but on systems with <TT>glibc2</TT> it can also generate the more secure 34-byte MD5 hash.</P>
+<PRE>
+ userPassword: {CRYPT}aUihad99hmev6
+ userPassword: {CRYPT}$1$czBJdDqS$TmkzUAb836oMxg/BmIwN.1
+</PRE>
+<P>The advantage of the CRYPT scheme is that passwords can be transferred to or from an existing Unix password file without having to know the cleartext form. Both forms of <EM>crypt</EM> include salt so they have some resistance to dictionary attacks.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>Since this scheme uses the operating system's <EM>crypt(3)</EM> hash function, it is therefore operating system specific.
+<HR WIDTH="80%" ALIGN="Left"></P>
+<H3><A NAME="MD5 password storage scheme">13.4.3. MD5 password storage scheme</A></H3>
+<P>This scheme simply takes the MD5 hash of the password and stores it in base64 encoded form:</P>
+<PRE>
+ userPassword: {MD5}Xr4ilOzQ4PCOq3aQ0qbuaQ==
+</PRE>
+<P>Although safer than cleartext storage, this is not a very secure scheme. The MD5 algorithm is fast, and because there is no salt the scheme is vulnerable to a dictionary attack.</P>
+<H3><A NAME="SMD5 password storage scheme">13.4.4. SMD5 password storage scheme</A></H3>
+<P>This improves on the basic MD5 scheme by adding salt (random data which means that there are many possible representations of a given plaintext password). For example, both of these values represent the same password:</P>
+<PRE>
+ userPassword: {SMD5}4QWGWZpj9GCmfuqEvm8HtZhZS6E=
+ userPassword: {SMD5}g2/J/7D5EO6+oPdklp5p8YtNFk4=
+</PRE>
+<H3><A NAME="SHA password storage scheme">13.4.5. SHA password storage scheme</A></H3>
+<P>Like the MD5 scheme, this simply feeds the password through an SHA hash process. SHA is thought to be more secure than MD5, but the lack of salt leaves the scheme exposed to dictionary attacks.</P>
+<PRE>
+ userPassword: {SHA}5en6G6MezRroT3XKqkdPOmY/BfQ=
+</PRE>
+<H3><A NAME="SASL password storage scheme">13.4.6. SASL password storage scheme</A></H3>
+<P>This is not really a password storage scheme at all. It uses the value of the <EM>userPassword</EM> attribute to delegate password verification to another process. See below for more information.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>This is not the same as using SASL to authenticate the LDAP session.
+<HR WIDTH="80%" ALIGN="Left"></P>
+<H3><A NAME="KERBEROS password storage scheme">13.4.7. KERBEROS password storage scheme</A></H3>
+<P>This is not really a password storage scheme at all. It uses the value of the <EM>userPassword</EM> attribute to delegate password verification to Kerberos.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>This is not the same as using Kerberos authentication of the LDAP session.
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P>This scheme could be said to defeat the advantages of Kerberos by causing the Kerberos password to be exposed to the <EM>slapd</EM> server (and possibly on the network as well).</P>
+<H2><A NAME="Pass-Through authentication">13.5. Pass-Through authentication</A></H2>
+<P>Since OpenLDAP 2.0 <EM>slapd</EM> has had the ability to delegate password verification to a separate process. This uses the <EM>sasl_checkpass(3)</EM> function so it can use any back-end server that Cyrus SASL supports for checking passwords. The choice is very wide, as one option is to use <EM>saslauthd(8)</EM> which in turn can use local files, Kerberos, an IMAP server, another LDAP server, or anything supported by the PAM mechanism.</P>
+<P>The server must be built with the <TT>--enable-spasswd</TT> configuration option to enable pass-through authentication.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>This is not the same as using a SASL mechanism to authenticate the LDAP session.
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P>Pass-Through authentication works only with plaintext passwords, as used in the &quot;simple bind&quot; and &quot;SASL PLAIN&quot; authentication mechanisms.}}</P>
+<P>Pass-Through authentication is selective: it only affects users whose <EM>userPassword</EM> attribute has a value marked with the &quot;{SASL}&quot; scheme. The format of the attribute is:</P>
+<PRE>
+ userPassword: {SASL}username@realm
+</PRE>
+<P>The <EM>username</EM> and <EM>realm</EM> are passed to the SASL authentication mechanism and are used to identify the account whose password is to be verified. This allows arbitrary mapping between entries in OpenLDAP and accounts known to the backend authentication service.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>There is no support for changing passwords in the backend via <EM>slapd</EM>.
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P>It would be wise to use access control to prevent users from changing their passwords through LDAP where they have pass-through authentication enabled.</P>
+<H3><A NAME="Configuring slapd to use an authentication provider">13.5.1. Configuring slapd to use an authentication provider</A></H3>
+<P>Where an entry has a &quot;{SASL}&quot; password value, OpenLDAP delegates the whole process of validating that entry's password to Cyrus SASL. All the configuration is therefore done in SASL config files.</P>
+<P>The first file to be considered is confusingly named <EM>slapd.conf</EM> and is typically found in the SASL library directory, often <TT>/usr/lib/sasl2/slapd.conf</TT> This file governs the use of SASL when talking LDAP to <EM>slapd</EM> as well as the use of SASL backends for pass-through authentication. See <TT>options.html</TT> in the <A HREF="http://asg.web.cmu.edu/sasl/sasl-library.html">Cyrus SASL</A> docs for full details. Here is a simple example for a server that will use <EM>saslauthd</EM> to verify passwords:</P>
+<PRE>
+ mech_list: plain
+ pwcheck_method: saslauthd
+ saslauthd_path: /var/run/sasl2/mux
+</PRE>
+<H3><A NAME="Configuring saslauthd">13.5.2. Configuring saslauthd</A></H3>
+<P><EM>saslauthd</EM> is capable of using many different authentication services: see <EM>saslauthd(8)</EM> for details. A common requirement is to delegate some or all authentication to another LDAP server. Here is a sample <TT>saslauthd.conf</TT> that uses Microsoft Active Directory (AD):</P>
+<PRE>
+ ldap_servers: ldap://dc1.example.com/ ldap://dc2.example.com/
+
+ ldap_search_base: cn=Users,DC=ad,DC=example,DC=com
+ ldap_filter: (userPrincipalName=%u)
+
+ ldap_bind_dn: cn=saslauthd,cn=Users,DC=ad,DC=example,DC=com
+ ldap_password: secret
+</PRE>
+<P>In this case, <EM>saslauthd</EM> is run with the <TT>ldap</TT> authentication mechanism and is set to combine the SASL realm with the login name:</P>
+<PRE>
+ saslauthd -a ldap -r
+</PRE>
+<P>This means that the &quot;username@realm&quot; string from the <EM>userPassword</EM> attribute ends up being used to search AD for &quot;userPrincipalName=username@realm&quot; - the password is then verified by attempting to bind to AD using the entry found by the search and the password supplied by the LDAP client.</P>
+<H3><A NAME="Testing pass-through authentication">13.5.3. Testing pass-through authentication</A></H3>
+<P>It is usually best to start with the back-end authentication provider and work through <EM>saslauthd</EM> and <EM>slapd</EM> towards the LDAP client.</P>
+<P>In the AD example above, first check that the DN and password that <EM>saslauthd</EM> will use when it connects to AD are valid:</P>
+<PRE>
+ ldapsearch -x -H ldap://dc1.example.com/ \
+      -D cn=saslauthd,cn=Users,DC=ad,DC=example,DC=com \
+      -w secret \
+      -b '' \
+      -s base
+</PRE>
+<P>Next check that a sample AD user can be found:</P>
+<PRE>
+ ldapsearch -x -H ldap://dc1.example.com/ \
+      -D cn=saslauthd,cn=Users,DC=ad,DC=example,DC=com \
+      -w secret \
+      -b cn=Users,DC=ad,DC=example,DC=com \
+      &quot;(userPrincipalName=user@ad.example.com)&quot;
+</PRE>
+<P>Check that the user can bind to AD:</P>
+<PRE>
+ ldapsearch -x -H ldap://dc1.example.com/ \
+      -D cn=user,cn=Users,DC=ad,DC=example,DC=com \
+      -w userpassword \
+      -b cn=user,cn=Users,DC=ad,DC=example,DC=com \
+      -s base \
+        &quot;(objectclass=*)&quot;
+</PRE>
+<P>If all that works then <EM>saslauthd</EM> should be able to do the same:</P>
+<PRE>
+ testsaslauthd -u user@ad.example.com -p userpassword
+ testsaslauthd -u user@ad.example.com -p wrongpassword
+</PRE>
+<P>Now put the magic token into an entry in OpenLDAP:</P>
+<PRE>
+ userPassword: {SASL}user@ad.example.com
+</PRE>
+<P>It should now be possible to bind to OpenLDAP using the DN of that entry and the password of the AD user.</P>
 <P></P>
 <HR>
 <H1><A NAME="Using SASL">14. Using SASL</A></H1>
@@ -5743,7 +6253,12 @@ object identifier
 <PRE>
         openssl ciphers -v ALL
 </PRE>
-<P>to obtain a verbose list of available cipher specifications. Besides the individual cipher names, the specifiers <TT>HIGH</TT>, <TT>MEDIUM</TT>, <TT>LOW</TT>, <TT>EXPORT</TT>, and <TT>EXPORT40</TT> may be helpful, along with <TT>TLSv1</TT>, <TT>SSLv3</TT>, and <TT>SSLv2</TT>.</P>
+<P>to obtain a verbose list of available cipher specifications.</P>
+<P>To obtain the list of ciphers in GNUtls use:</P>
+<PRE>
+        gnutls-cli -l
+</PRE>
+<P>Besides the individual cipher names, the specifiers <TT>HIGH</TT>, <TT>MEDIUM</TT>, <TT>LOW</TT>, <TT>EXPORT</TT>, and <TT>EXPORT40</TT> may be helpful, along with <TT>TLSv1</TT>, <TT>SSLv3</TT>, and <TT>SSLv2</TT>.</P>
 <H4><A NAME="TLSRandFile &lt;filename&gt;">15.2.1.6. TLSRandFile &lt;filename&gt;</A></H4>
 <P>This directive specifies the file to obtain random bits from when <TT>/dev/urandom</TT> is not available. If the system provides <TT>/dev/urandom</TT> then this option is not needed, otherwise a source of random data must be configured.  Some systems (e.g. Linux) provide <TT>/dev/urandom</TT> by default, while others (e.g. Solaris) require the installation of a patch to provide it, and others may not support it at all. In the latter case, EGD or PRNGD should be installed, and this directive should specify the name of the EGD/PRNGD socket. The environment variable <TT>RANDFILE</TT> can also be used to specify the filename. Also, in the absence of these options, the <TT>.rnd</TT> file in the slapd user's home directory may be used if it exists. To use the <TT>.rnd</TT> file, just create the file and copy a few hundred bytes of arbitrary data into the file. The file is only used to provide a seed for the pseudo-random number generator, and it doesn't need very much data to work.</P>
 <H4><A NAME="TLSEphemeralDHParamFile &lt;filename&gt;">15.2.1.7. TLSEphemeralDHParamFile &lt;filename&gt;</A></H4>
@@ -5842,71 +6357,222 @@ object identifier
 <LI>Data updates can be minimal or maximal</UL>
 <P><EM>How do I implement a pushed based replication system using Syncrepl?</EM></P>
 <P>The easiest way is to point an LDAP backend (<A HREF="#Backends">Backends</A> and <EM>slapd-ldap(8)</EM>) to your slave directory and setup Syncrepl to point to your Master database.</P>
-<P>REFERENCE test045/048 for better explanation of above.</P>
-<P>If you imagine Syncrepl pulling down changes from the Master server, and then pushing those changes out to your slave servers via <EM>slapd-ldap(8)</EM>. This is called proxy mode (elaborate/confirm?).</P>
-<P>DIAGRAM HERE</P>
-<P>BETTER EXAMPLE here from test045/048 for different push/multiproxy examples.</P>
-<P>Here's an example:</P>
+<P>If you imagine Syncrepl pulling down changes from the Master server, and then pushing those changes out to your slave servers via <EM>slapd-ldap(8)</EM>. This is called Syncrepl Proxy Mode. You can also use Syncrepl Multi-proxy mode:</P>
+<P><CENTER><IMG SRC="push-based-complete.png" ALIGN="center"></CENTER></P>
+<P ALIGN="Center">Figure X.Y: Replacing slurpd</P>
+<P>The following example is for a self-contained push-based replication solution:</P>
 <PRE>
-        include         ./schema/core.schema
-        include         ./schema/cosine.schema
-        include         ./schema/inetorgperson.schema
-        include         ./schema/openldap.schema
-        include         ./schema/nis.schema
+        #######################################################################
+        # Standard OpenLDAP Master/Provider
+        #######################################################################
 
-        pidfile         /home/ghenry/openldap/ldap/tests/testrun/slapd.3.pid
-        argsfile        /home/ghenry/openldap/ldap/tests/testrun/slapd.3.args
+        include     /usr/local/etc/openldap/schema/core.schema
+        include     /usr/local/etc/openldap/schema/cosine.schema
+        include     /usr/local/etc/openldap/schema/nis.schema
+        include     /usr/local/etc/openldap/schema/inetorgperson.schema
 
-        modulepath      ../servers/slapd/back-bdb/
-        moduleload      back_bdb.la
-        modulepath  ../servers/slapd/back-monitor/
-        moduleload  back_monitor.la
-        modulepath  ../servers/slapd/overlays/
+        include     /usr/local/etc/openldap/slapd.acl
+
+        modulepath  /usr/local/libexec/openldap
+        moduleload  back_hdb.la
         moduleload  syncprov.la
-        modulepath  ../servers/slapd/back-ldap/
+        moduleload  back_monitor.la
         moduleload  back_ldap.la
 
-        # We don't need any access to this DSA
-        restrict        all
+        pidfile     /usr/local/var/slapd.pid
+        argsfile    /usr/local/var/slapd.args
 
-        #######################################################################
-        # consumer proxy database definitions
-        #######################################################################
+        loglevel    sync stats
+
+        database    hdb
+        suffix      &quot;dc=suretecsystems,dc=com&quot;
+        directory   /usr/local/var/openldap-data
+
+        checkpoint      1024 5
+        cachesize       10000
+        idlcachesize    10000
+
+        index       objectClass eq
+        # rest of indexes
+        index       default     sub
+
+        rootdn          &quot;cn=admin,dc=suretecsystems,dc=com&quot;
+        rootpw          testing
+
+        # syncprov specific indexing
+        index entryCSN eq
+        index entryUUID eq
+
+        # syncrepl Provider for primary db
+        overlay syncprov
+        syncprov-checkpoint 1000 60
+
+        # Let the replica DN have limitless searches
+        limits dn.exact=&quot;cn=replicator,dc=suretecsystems,dc=com&quot; time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+
+        database    monitor
+
+        database    config
+        rootpw          testing
+
+        ##############################################################################
+        # Consumer Proxy that pulls in data via Syncrepl and pushes out via slapd-ldap
+        ##############################################################################
 
         database        ldap
-        suffix          &quot;dc=example,dc=com&quot;
-        rootdn          &quot;cn=Whoever&quot;
+        # ignore conflicts with other databases, as we need to push out to same suffix
+        hidden              on
+        suffix          &quot;dc=suretecsystems,dc=com&quot;
+        rootdn          &quot;cn=slapd-ldap&quot;
         uri             ldap://localhost:9012/
 
         lastmod         on
 
-        # HACK: use the RootDN of the monitor database as UpdateDN so ACLs apply
-        # without the need to write the UpdateDN before starting replication
-        acl-bind        bindmethod=simple
-                        binddn=&quot;cn=Monitor&quot;
-                        credentials=monitor
+        # We don't need any access to this DSA
+        restrict        all
 
-        # HACK: use the RootDN of the monitor database as UpdateDN so ACLs apply
-        # without the need to write the UpdateDN before starting replication
-        syncrepl        rid=1
+        acl-bind        bindmethod=simple
+                        binddn=&quot;cn=replicator,dc=suretecsystems,dc=com&quot;
+                        credentials=testing
+
+        syncrepl        rid=001
                         provider=ldap://localhost:9011/
-                        binddn=&quot;cn=Manager,dc=example,dc=com&quot;
+                        binddn=&quot;cn=replicator,dc=suretecsystems,dc=com&quot;
                         bindmethod=simple
-                        credentials=secret
-                        searchbase=&quot;dc=example,dc=com&quot;
-                        filter=&quot;(objectClass=*)&quot;
-                        attrs=&quot;*,structuralObjectClass,entryUUID,entryCSN,creatorsName,createTimestamp,modifiersName,modifyTimestamp&quot;
-                        schemachecking=off
-                        scope=sub
+                        credentials=testing
+                        searchbase=&quot;dc=suretecsystems,dc=com&quot;
                         type=refreshAndPersist
                         retry=&quot;5 5 300 5&quot;
 
         overlay         syncprov
-
-        database        monitor
 </PRE>
-<P>DETAILED EXPLANATION OF ABOVE LIKE IN OTHER SECTIONS (line numbers?)</P>
-<P>ANOTHER DIAGRAM HERE</P>
+<P>A replica configuration for this type of setup could be:</P>
+<PRE>
+        #######################################################################
+        # Standard OpenLDAP Slave without Syncrepl
+        #######################################################################
+
+        include     /usr/local/etc/openldap/schema/core.schema
+        include     /usr/local/etc/openldap/schema/cosine.schema
+        include     /usr/local/etc/openldap/schema/nis.schema
+        include     /usr/local/etc/openldap/schema/inetorgperson.schema
+
+        include     /usr/local/etc/openldap/slapd.acl
+
+        modulepath  /usr/local/libexec/openldap
+        moduleload  back_hdb.la
+        moduleload  syncprov.la
+        moduleload  back_monitor.la
+        moduleload  back_ldap.la
+
+        pidfile     /usr/local/var/slapd.pid
+        argsfile    /usr/local/var/slapd.args
+
+        loglevel    sync stats
+
+        database    hdb
+        suffix      &quot;dc=suretecsystems,dc=com&quot;
+        directory   /usr/local/var/openldap-slave/data
+
+        checkpoint      1024 5
+        cachesize       10000
+        idlcachesize    10000
+
+        index       objectClass eq
+        # rest of indexes
+        index       default     sub
+
+        rootdn          &quot;cn=admin,dc=suretecsystems,dc=com&quot;
+        rootpw          testing
+
+        # Let the replica DN have limitless searches
+        limits dn.exact=&quot;cn=replicator,dc=suretecsystems,dc=com&quot; time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+
+        updatedn &quot;cn=replicator,dc=suretecsystems,dc=com&quot;
+
+        # Refer updates to the master
+        updateref   ldap://localhost:9011
+
+        database    monitor
+
+        database    config
+        rootpw          testing
+</PRE>
+<P>You can see we use the <EM>updatedn</EM> directive here and example ACLs (<TT>usr/local/etc/openldap/slapd.acl</TT>) for this could be:</P>
+<PRE>
+        # Give the replica DN unlimited read access.  This ACL may need to be
+        # merged with other ACL statements.
+
+        access to *
+             by dn.base=&quot;cn=replicator,dc=suretecsystems,dc=com&quot; write
+             by * break
+
+        access to dn.base=&quot;&quot;
+                by * read
+
+        access to dn.base=&quot;cn=Subschema&quot;
+                by * read
+
+        access to dn.subtree=&quot;cn=Monitor&quot;
+            by dn.exact=&quot;uid=admin,dc=suretecsystems,dc=com&quot; write
+            by users read
+            by * none
+
+        access to *
+                by self write
+                by * read
+</PRE>
+<P>In order to support more replicas, just add more <EM>database ldap</EM> sections and increment the <EM>syncrepl rid</EM> number accordingly.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>You must populate the Master and Slave directories with the same data, unlike when using normal Syncrepl
+<HR WIDTH="80%" ALIGN="Left"></P>
+<P>If you do not have access to modify the master directory configuration you can configure a standalone ldap proxy, which might look like:</P>
+<P><CENTER><IMG SRC="push-based-standalone.png" ALIGN="center"></CENTER></P>
+<P ALIGN="Center">Figure X.Y: Replacing slurpd with a standalone version</P>
+<P>The following configuration is an example of a standalone LDAP Proxy:</P>
+<PRE>
+        include     /usr/local/etc/openldap/schema/core.schema
+        include     /usr/local/etc/openldap/schema/cosine.schema
+        include     /usr/local/etc/openldap/schema/nis.schema
+        include     /usr/local/etc/openldap/schema/inetorgperson.schema
+
+        include     /usr/local/etc/openldap/slapd.acl
+
+        modulepath  /usr/local/libexec/openldap
+        moduleload  syncprov.la
+        moduleload  back_ldap.la
+
+        ##############################################################################
+        # Consumer Proxy that pulls in data via Syncrepl and pushes out via slapd-ldap
+        ##############################################################################
+
+        database        ldap
+        # ignore conflicts with other databases, as we need to push out to same suffix
+        hidden              on
+        suffix          &quot;dc=suretecsystems,dc=com&quot;
+        rootdn          &quot;cn=slapd-ldap&quot;
+        uri             ldap://localhost:9012/
+
+        lastmod         on
+
+        # We don't need any access to this DSA
+        restrict        all
+
+        acl-bind        bindmethod=simple
+                        binddn=&quot;cn=replicator,dc=suretecsystems,dc=com&quot;
+                        credentials=testing
+
+        syncrepl        rid=001
+                        provider=ldap://localhost:9011/
+                        binddn=&quot;cn=replicator,dc=suretecsystems,dc=com&quot;
+                        bindmethod=simple
+                        credentials=testing
+                        searchbase=&quot;dc=suretecsystems,dc=com&quot;
+                        type=refreshAndPersist
+                        retry=&quot;5 5 300 5&quot;
+
+        overlay         syncprov
+</PRE>
 <P>As you can see, you can let your imagination go wild using Syncrepl and <EM>slapd-ldap(8)</EM> tailoring your replication to fit your specific network topology.</P>
 <H2><A NAME="Pull Based">17.2. Pull Based</A></H2>
 <H3><A NAME="LDAP Sync Replication">17.2.1. LDAP Sync Replication</A></H3>
@@ -7050,6 +7716,19 @@ Database objects of instances of this backend
 <PRE>
            olcReplicationInterval: value #0: &lt;olcReplicationInterval&gt; keyword is obsolete (ignored)
 </PRE>
+<H2><A NAME="ACLs: searches require privileges on the search base">B.3. ACLs: searches require privileges on the search base</A></H2>
+<P>Search operations now require &quot;search&quot; privileges on the &quot;entry&quot; pseudo-attribute of the search base. While upgrading from 2.3.x, make sure your ACLs grant such privileges to all desired search bases.</P>
+<P>For example, assuming you have the following ACL:</P>
+<PRE>
+           access to dn.sub=&quot;ou=people,dc=example,dc=com&quot; by * search
+</PRE>
+<P>Searches using a base of &quot;dc=example,dc=com&quot; will only be allowed if you add the following ACL:</P>
+<PRE>
+           access to dn.base=&quot;dc=example,dc=com&quot; attrs=entry by * search
+</PRE>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>The <EM>slapd.access</EM>(5) man page states that this requirement was introduced with OpenLDAP 2.3. However, it is the default behavior only since 2.4.
+<HR WIDTH="80%" ALIGN="Left"></P>
 <P>ADD MORE HERE</P>
 <P></P>
 <HR>
@@ -7615,18 +8294,36 @@ TCP Wrappers
 <H3><A NAME="ldaptcl">F.1.2. ldaptcl</A></H3>
 <P>Intro and discuss</P>
 <H2><A NAME="Overlays">F.2. Overlays</A></H2>
-<P>Intro and complete/expand correct names for below:</P>
 <H3><A NAME="acl">F.2.1. acl</A></H3>
+<P>Plugins that implement access rules.  Currently only posixGroup, which implements access control based on posixGroup membership.</P>
 <H3><A NAME="addpartial">F.2.2. addpartial</A></H3>
+<P>Treat Add requests as Modify requests if the entry exists.</P>
 <H3><A NAME="allop">F.2.3. allop</A></H3>
-<H3><A NAME="comp_match">F.2.4. comp_match</A></H3>
-<H3><A NAME="denyop">F.2.5. denyop</A></H3>
-<H3><A NAME="dsaschema">F.2.6. dsaschema</A></H3>
-<H3><A NAME="lastmod">F.2.7. lastmod</A></H3>
-<H3><A NAME="passwd">F.2.8. passwd</A></H3>
-<H3><A NAME="proxyOld">F.2.9. proxyOld</A></H3>
-<H3><A NAME="smbk5pwd">F.2.10. smbk5pwd</A></H3>
-<H3><A NAME="trace">F.2.11. trace</A></H3>
+<P>Return operational attributes for root DSE even when not requested, since some clients expect this.</P>
+<H3><A NAME="autogroup">F.2.4. autogroup</A></H3>
+<P>Automated updates of group memberships.</P>
+<H3><A NAME="comp_match">F.2.5. comp_match</A></H3>
+<P>Component Matching rules (RFC 3687).</P>
+<H3><A NAME="denyop">F.2.6. denyop</A></H3>
+<P>Deny selected operations, returning <EM>unwillingToPerform</EM>.</P>
+<H3><A NAME="dsaschema">F.2.7. dsaschema</A></H3>
+<P>Permit loading DSA-specific schema, including operational attrs.</P>
+<H3><A NAME="lastmod">F.2.8. lastmod</A></H3>
+<P>Track the time of the last write operation to a database.</P>
+<H3><A NAME="nops">F.2.9. nops</A></H3>
+<P>Remove null operations, e.g. changing a value to same as before.</P>
+<H3><A NAME="nssov">F.2.10. nssov</A></H3>
+<P>Handle NSS lookup requests through a local Unix Domain socket.</P>
+<H3><A NAME="passwd">F.2.11. passwd</A></H3>
+<P>Support additional password mechanisms.</P>
+<H3><A NAME="proxyOld">F.2.12. proxyOld</A></H3>
+<P>Proxy Authorization compatibility with obsolete internet-draft.</P>
+<H3><A NAME="smbk5pwd">F.2.13. smbk5pwd</A></H3>
+<P>Make the PasswordModify Extended Operation update Kerberos keys and Samba password hashes as well as <EM>userPassword</EM>.</P>
+<H3><A NAME="trace">F.2.14. trace</A></H3>
+<P>Trace overlay invocation.</P>
+<H3><A NAME="usn">F.2.15. usn</A></H3>
+<P>Maintain <EM>usnCreated</EM> and <EM>usnChanged</EM> attrs similar to Microsoft AD.</P>
 <H2><A NAME="Tools">F.3. Tools</A></H2>
 <P>Intro and discuss</P>
 <H3><A NAME="Statistic Logging">F.3.1. Statistic Logging</A></H3>
@@ -9782,10 +10479,10 @@ operates.
 <P>This work is derived from the University of Michigan LDAP v3.3 distribution.  Information concerning this software is available at &lt;<A HREF="http://www.umich.edu/~dirsvcs/ldap/ldap.html">http://www.umich.edu/~dirsvcs/ldap/ldap.html</A>&gt;.</P>
 <P>This work also contains materials derived from public sources.</P>
 <P>Additional information about OpenLDAP software can be obtained at &lt;<A HREF="http://www.OpenLDAP.org/">http://www.OpenLDAP.org/</A>&gt;.</P>
-<H2><A NAME="Additional Copyright Notice">K.2. Additional Copyright Notice</A></H2>
+<H2><A NAME="Additional Copyright Notices">K.2. Additional Copyright Notices</A></H2>
 <P>Portions Copyright 1998-2008 Kurt D. Zeilenga.<BR>Portions Copyright 1998-2006 Net Boolean Incorporated.<BR>Portions Copyright 2001-2006 IBM Corporation.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted only as authorized by the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>.</P>
-<P>Portions Copyright 1999-2007 Howard Y.H. Chu.<BR>Portions Copyright 1999-2007 Symas Corporation.<BR>Portions Copyright 1998-2003 Hallvard B. Furuseth.<BR>Portions Copyright 2007-2008 Gavin Henry<BR>Portions Copyright 2007-2008 Suretec Systems Limited.<BR><EM>All rights reserved.</EM></P>
+<P>Portions Copyright 1999-2007 Howard Y.H. Chu.<BR>Portions Copyright 1999-2007 Symas Corporation.<BR>Portions Copyright 1998-2003 Hallvard B. Furuseth.<BR>Portions Copyright 2007-2008 Gavin Henry.<BR>Portions Copyright 2007-2008 Suretec Systems Limited.<BR><EM>All rights reserved.</EM></P>
 <P>Redistribution and use in source and binary forms, with or without modification, are permitted provided that this notice is preserved. The names of the copyright holders may not be used to endorse or promote products derived from this software without their specific prior written permission.  This software is provided ``as is'' without express or implied warranty.</P>
 <H2><A NAME="University of Michigan Copyright Notice">K.3. University of Michigan Copyright Notice</A></H2>
 <P>Portions Copyright 1992-1996 Regents of the University of Michigan.<BR><EM>All rights reserved.</EM></P>

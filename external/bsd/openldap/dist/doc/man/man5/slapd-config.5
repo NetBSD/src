@@ -1,7 +1,7 @@
 .TH SLAPD-CONFIG 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-config.5,v 1.13.2.7 2008/02/11 23:26:39 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-config.5,v 1.13.2.9 2008/05/29 22:54:56 quanah Exp $
 .SH NAME
 slapd-config \- configuration backend to slapd
 .SH SYNOPSIS
@@ -720,7 +720,9 @@ size allowed.  0 disables security layers.  The default is 65536.
 .B olcServerID: <integer> [<URL>]
 Specify an integer ID from 0 to 4095 for this server. These IDs are
 required when using multimaster replication and each master must have a
-unique ID. If the URL is provided, this directive may be specified
+unique ID. Note that this requirement also applies to separate masters
+contributing to a glued set of databases.
+If the URL is provided, this directive may be specified
 multiple times, providing a complete list of participating servers
 and their IDs. The fully qualified hostname of each server should be
 used in the supplied URLs. The IDs are used in the "replica id" field
@@ -1585,6 +1587,8 @@ with the inner suffix must come first in the configuration file.
 .B [sizelimit=<limit>]
 .B [timelimit=<limit>]
 .B [schemachecking=on|off]
+.B [network-timeout=<seconds>]
+.B [timeout=<seconds>]
 .B [bindmethod=simple|sasl]
 .B [binddn=<dn>]
 .B [saslmech=<mech>]
@@ -1686,6 +1690,17 @@ The schema checking can be enforced at the LDAP Sync
 consumer site by turning on the
 .B schemachecking
 parameter. The default is off.
+
+The
+.B network-timeout
+parameter sets how long the consumer will wait to establish a
+network connection to the provider. Once a connection is
+established, the
+.B timeout
+parameter determines how long the consumer will wait for the initial
+Bind request to complete. The defaults for these parameters come
+from 
+.BR ldap.conf (5).
 
 A
 .B bindmethod

@@ -1,5 +1,5 @@
 /* result.c - shell backend result reading function */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/result.c,v 1.23.2.3 2008/02/11 23:26:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-shell/result.c,v 1.23.2.4 2008/07/08 21:06:12 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -80,7 +80,7 @@ read_and_send_results(
 		}
 
 		len = strlen( line );
-		while ( bp + len - buf > bsize ) {
+		while ( bp + len + 1 - buf > bsize ) {
 			size_t offset = bp - buf;
 			bsize += BUFSIZ;
 			buf = (char *) ch_realloc( buf, bsize );

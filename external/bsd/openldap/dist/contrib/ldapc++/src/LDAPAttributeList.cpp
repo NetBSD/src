@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAttributeList.cpp,v 1.7.6.3 2008/04/14 23:09:26 quanah Exp $
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAttributeList.cpp,v 1.7.6.4 2008/07/08 19:31:00 quanah Exp $
 /*
  * Copyright 2000-2007, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -140,6 +140,22 @@ void LDAPAttributeList::addAttribute(const LDAPAttribute& attr){
     }
 }
 
+void LDAPAttributeList::delAttribute(const std::string& type)
+{
+    DEBUG(LDAP_DEBUG_TRACE,"LDAPAttribute::replaceAttribute()" << endl);
+    DEBUG(LDAP_DEBUG_TRACE | LDAP_DEBUG_PARAMETER, "   type: " << type << endl);
+    LDAPAttributeList::iterator i;
+    for( i = m_attrs.begin(); i != m_attrs.end(); i++){
+	if(type.size() == i->getName().size()){
+	    if(equal(type.begin(), type.end(), i->getName().begin(),
+		    nocase_compare)){
+                m_attrs.erase(i);
+                break;
+            }
+        }
+    }
+}
+
 void LDAPAttributeList::replaceAttribute(const LDAPAttribute& attr)
 {
     DEBUG(LDAP_DEBUG_TRACE,"LDAPAttribute::replaceAttribute()" << endl);
@@ -147,15 +163,7 @@ void LDAPAttributeList::replaceAttribute(const LDAPAttribute& attr)
             "   attr:" << attr << endl);
     
     LDAPAttributeList::iterator i;
-    for( i = m_attrs.begin(); i != m_attrs.end(); i++){
-	if(attr.getName().size() == i->getName().size()){
-	    if(equal(attr.getName().begin(), attr.getName().end(), i->getName().begin(),
-		    nocase_compare)){
-                m_attrs.erase(i);
-                break;
-            }
-        }
-    }
+    this->delAttribute( attr.getName() );
     m_attrs.push_back(attr);
 }
 
