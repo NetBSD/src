@@ -11,7 +11,7 @@ verify basic functionality of the LDAP libraries and slapd.
 
 The test scripts depends on a number of tools commonly available on
 Unix (and Unix-like) systems.  While attempts have been made to make
-these scripts reasonable portable, they may not run properly on your
+these scripts reasonably portable, they may not run properly on your
 system.  You may have to adjust your path so that compatible versions
 of tools used are available to the scripts and/or you may have to
 install replacement tools.  Platform specific hints may be found at:

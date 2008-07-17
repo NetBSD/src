@@ -1,0 +1,652 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<!--
+   nss-ldapd.conf.5.xml - docbook manual page for nss-ldapd.conf
+
+   Copyright (C) 1997-2005 Luke Howard
+   Copyright (C) 2007, 2008 Arthur de Jong
+
+   This library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with this library; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+   02110-1301 USA
+-->
+
+<refentry id="nssldapdconf5">
+
+ <refentryinfo>
+  <author>
+   <firstname>Arthur</firstname>
+   <surname>de Jong</surname>
+  </author>
+ </refentryinfo>
+
+ <refmeta>
+  <refentrytitle>nss-ldapd.conf</refentrytitle>
+  <manvolnum>5</manvolnum>
+  <refmiscinfo class="version">Version 0.6.2</refmiscinfo>
+  <refmiscinfo class="manual">System Manager's Manual</refmiscinfo>
+  <refmiscinfo class="date">May 2008</refmiscinfo>
+ </refmeta>
+
+ <refnamediv id="name">
+  <refname>nss-ldapd.conf</refname>
+  <refpurpose>configuration file for LDAP nameservice provider</refpurpose>
+ </refnamediv>
+
+ <refsect1 id="description">
+  <title>Description</title>
+  <para>
+   The <emphasis>nss-ldapd</emphasis> module allows <acronym>LDAP</acronym>
+   directory servers to be used as a primary source of name service
+   information. (Name service information typically includes users, hosts,
+   groups, and other such data historically stored in flat files or
+   <acronym>NIS</acronym>.)
+  </para>
+  <para>
+    The file <filename>nss-ldapd.conf</filename> contains the
+    configuration information for running <command>nslcd</command> (see
+    <citerefentry><refentrytitle>nslcd</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
+    The file contains options, one on each line, defining the way
+    <acronym>NSS</acronym> lookups are mapped onto
+    <acronym>LDAP</acronym> lookups.
+  </para>
+ </refsect1>
+
+ <refsect1 id="options">
+  <title>Options</title>
+
+  <refsect2 id='runtime_options'>
+   <title>Runtime options</title>
+   <variablelist>
+
+    <varlistentry>
+     <term><option>threads</option> <emphasis remap="I">NUM</emphasis></term>
+     <listitem>
+      <para>
+       Specifies the number of threads to start that can handle requests
+       and perform <acronym>LDAP</acronym> queries.
+       The default is to start 5 threads.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </refsect2>
+
+  <refsect2 id='general_connection_options'>
+   <title>General connection options</title>
+   <variablelist>
+
+    <varlistentry>
+     <term><option>uri</option> <emphasis remap="I">URI</emphasis></term>
+     <listitem>
+      <para>
+       Specifies the <acronym>LDAP</acronym> <acronym>URI</acronym> of the
+       server to connect to.
+       The <acronym>URI</acronym> scheme may be <emphasis>ldap</emphasis>,
+       <emphasis>ldapi</emphasis> or <emphasis>ldaps</emphasis>, specifying
+       <acronym>LDAP</acronym> over <acronym>TCP</acronym>,
+       <acronym>ICP</acronym> or <acronym>SSL</acronym> respectively (if
+       supported by the <acronym>LDAP</acronym> library).
+       Alternatively, the value <emphasis remap="I">DNS</emphasis> may be
+       used to try to lookup the server using <acronym>DNS</acronym>
+       <acronym>SRV</acronym> records.
+      </para>
+      <para>
+       When using the ldapi scheme, %2f should be used to escape slashes
+       (e.g. ldapi://%2fvar%2frun%2fslapd%2fldapi/), although most of the
+       time this should not be needed.
+      </para>
+      <para>
+       This option may be specified multiple times. Normally, only the first
+       server will be used with the following servers as fall-back (see
+       <option>bind_timelimit</option> below).
+      </para>
+      <para>
+       If <acronym>LDAP</acronym> lookups are used for host name resolution,
+       any host names should be specified as an IP address or name that can be
+       resolved without using <acronym>LDAP</acronym>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>ldap_version</option> <emphasis remap="I">VERSION</emphasis></term>
+     <listitem>
+      <para>
+       Specifies the version of the <acronym>LDAP</acronym> protocol to use.
+       The default is to use the maximum version supported by the
+       <acronym>LDAP</acronym> library.</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>binddn</option> <emphasis remap="I">DN</emphasis></term>
+     <listitem>
+      <para>
+       Specifies the distinguished name with which to bind to the directory
+       server for lookups.
+       The default is to bind anonymously.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>bindpw</option> <emphasis remap="I">PASSWORD</emphasis></term>
+     <listitem>
+      <para>
+       Specifies the clear text credentials with which to bind.
+       This option is only applicable when used with <option>binddn</option> above.
+      </para>
+      <para>
+       When binding to the directory using <acronym>SASL</acronym> or other
+       authentication mechanisms apart from simple binds, this option is not
+       used.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </refsect2>
+
+<!-- DO NOT DOCUMENT FOR NOW BECAUSE IT'S NOT SUPPORTED
+  <refsect2 id='sasl_authentication_options'>
+   <title>SASL authentication options</title>
+   <variablelist>
+
+     <varlistentry>
+     <term><emphasis remap="B">sasl_authid &lt;authid&gt;</emphasis></term>
+     <listitem>
+   <para>Specifies the authorization identity to be used when performing SASL
+   authentication.</para>
+     </listitem>
+     </varlistentry>
+
+     <varlistentry>
+     <term><emphasis remap="B">sasl_secprops &lt;properties&gt;</emphasis></term>
+     <listitem>
+   <para>Specifies Cyrus SASL security properties. Allowed values are described
+   in the
+   <emphasis remap="B">ldap.conf(5)</emphasis>
+   manual page.</para>
+     </listitem>
+     </varlistentry>
+
+     <varlistentry>
+     <term><emphasis remap="B">use_sasl &lt;yes|no&gt;</emphasis></term>
+     <listitem>
+   <para>Specifies whether SASL authentication should be used.</para>
+     </listitem>
+     </varlistentry>
+
+   </variablelist>
+  </refsect2>
+-->
+
+  <refsect2 id='kerberos_authentication_options'>
+   <title>Kerberos authentication options</title>
+   <variablelist>
+
+    <varlistentry>
+     <term><option>krb5_ccname</option> <emphasis remap="I">NAME</emphasis></term>
+     <listitem>
+      <para>
+       Set the name for the GSS-API Kerberos credentials cache.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </refsect2>
+
+  <refsect2 id='search_mapping_options'>
+   <title>Search/mapping options</title>
+   <variablelist>
+
+    <varlistentry>
+     <term><option>base</option>
+           <optional><emphasis remap="I">MAP</emphasis></optional>
+           <emphasis remap="I">DN</emphasis></term>
+     <listitem>
+      <para>
+       Specifies the base distinguished name (<acronym>DN</acronym>)
+       to use as search base.
+       A global search base may be specified or a MAP-specific one.
+       If no MAP-specific search base is defined the global one is used.
+      </para>
+      <para>
+       If, instead of a <acronym>DN</acronym>, the value
+       <emphasis remap="I">DOMAIN</emphasis> is specified, the hosts
+       <acronym>DNS</acronym> domain is used to construct a basedn.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>scope</option>
+           <optional><emphasis remap="I">MAP</emphasis></optional>
+           sub<optional>tree</optional>|one<optional>level</optional>|base</term>
+     <listitem>
+      <para>
+       Specifies the search scope (subtree, one level or base object).
+       The default scope is subtree; base scope is almost never useful for
+       name service lookups.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>deref</option> never|searching|finding|always</term>
+     <listitem>
+      <para>
+       Specifies the policy for dereferencing aliases.
+       The default policy is to never dereference aliases.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>referrals</option> yes|no</term>
+     <listitem>
+      <para>
+       Specifies whether automatic referral chasing should be enabled.
+       The default behaviour is to chase referrals.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>filter</option>
+           <emphasis remap="I">MAP</emphasis>
+           <emphasis remap="I">FILTER</emphasis></term>
+     <listitem>
+      <para>
+       The <emphasis remap="I">FILTER</emphasis>
+       is an <acronym>LDAP</acronym> search filter to use for a
+       specific map.
+       The default filter is a basic search on the
+       objectClass for the map (e.g. <code>(objectClass=posixAccount)</code>).
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>map</option>
+           <emphasis remap="I">MAP</emphasis>
+           <emphasis remap="I">ATTRIBUTE</emphasis>
+           <emphasis remap="I">NEWATTRIBUTE</emphasis></term>
+     <listitem>
+      <para>
+       This option allows for custom attributes to be looked up instead of
+       the default RFC 2307 attributes.
+       The <emphasis remap="I">MAP</emphasis> may be one of
+       the supported maps below.
+       The <emphasis remap="I">ATTRIBUTE</emphasis> is the one as
+       used in <acronym>RFC</acronym> 2307 (e.g. <code>userPassword</code>,
+       <code>ipProtocolNumber</code> or <code>macAddress</code>).
+       The <emphasis remap="I">NEWATTRIBUTE</emphasis> may be any attribute
+       as it is available in the directory.
+<!--
+       If the <emphasis remap="I">NEWATTRIBUTE</emphasis> is presented in
+       quotes (") the specfied value will be used instead of looking up the
+       value in the directory.
+       Specifies a value to use for the specified attribute in preference
+       to that contained in the actual entry.
+-->
+      </para>
+     </listitem>
+    </varlistentry>
+
+<!--
+    <varlistentry>
+     <term><option>default</option>
+           <emphasis remap="I">MAP</emphasis>
+           <emphasis remap="I">ATTRIBUTE</emphasis>
+           "<emphasis remap="I">VALUE</emphasis>"</term>
+     <listitem>
+      <para>
+       Specifies the default value to use for entries that lack the
+       specified attribute.
+       Use the specified <emphasis remap="I">VALUE</emphasis> if the
+       lookup in the directory for the specified attribute would not return
+       any data.
+       Note that if the <acronym>LDAP</acronym> server returns an empty string
+       for the attribute an empty string is returned.
+      </para>
+     </listitem>
+    </varlistentry>
+-->
+
+   </variablelist>
+  </refsect2>
+
+  <refsect2 id='timing_reconnect_options'>
+   <title>Timing/reconnect options</title>
+   <variablelist>
+
+    <varlistentry>
+     <term><option>bind_timelimit</option> <emphasis remap="I">SECONDS</emphasis></term>
+     <listitem>
+      <para>
+       Specifies the time limit (in seconds) to use when connecting to the
+       directory server.
+       This is distinct from the time limit specified in
+       <option>timelimit</option> and affects the setup of the connection only.
+       Note that not all <acronym>LDAP</acronym> client libraries have support
+       for setting the connection time out.
+       The default <option>bind_timelimit</option> is 30 seconds.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>timelimit</option> <emphasis remap="I">SECONDS</emphasis></term>
+     <listitem>
+      <para>
+       Specifies the time limit (in seconds) to wait for a response from the
+       <acronym>LDAP</acronym> server.
+       A value of zero (0), which is the default, is to wait indefinitely for
+       searches to be completed.
+      </para>
+     </listitem>
+    </varlistentry>
+
+<!-- FIXME: change the defaults to 10 and 20 seconds respectively -->
+
+    <varlistentry>
+     <term><option>idle_timelimit</option> <emphasis remap="I">SECONDS</emphasis></term>
+     <listitem>
+      <para>
+       Specifies the period if inactivity (in seconds) after which the
+       connection to the <acronym>LDAP</acronym> server will be closed.
+       The default is not to time out connections.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>reconnect_sleeptime</option> <emphasis remap="I">SECONDS</emphasis></term>
+     <listitem>
+      <para>
+       Specifies the number of seconds to sleep when connecting to all
+       <acronym>LDAP</acronym> servers fails.
+       By default 1 second is waited between the first failure and the first
+       retry.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>reconnect_maxsleeptime</option> <emphasis remap="I">SECONDS</emphasis></term>
+     <listitem>
+      <para>
+       Specified the time after the last successful operation from which the
+       <acronym>LDAP</acronym> server is considered permanently unavailable.
+       Retries will be done only once in this time period.
+       The default value is 30 seconds.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+
+   <para>
+    Note that the reconnect logic as described above is the mechanism that
+    is used between <command>nslcd</command> and the <acronym>LDAP</acronym>
+    server. The mechanism between the <acronym>NSS</acronym> client library
+    and <command>nslcd</command> is simpler with a fixed compiled-in
+    time out of a 10 seconds for writing to <command>nslcd</command> and
+    a time out of 20 seconds for reading answers.
+    <command>nslcd</command> itself has a read time out of 0.5 seconds
+    and a write time out of 5 seconds.
+   </para>
+
+  </refsect2>
+
+  <refsect2 id='ssl_tls_options'>
+   <title><acronym>SSL</acronym>/<acronym>TLS</acronym> options</title>
+   <variablelist>
+
+    <varlistentry>
+     <term><emphasis remap="B">ssl &lt;on|off|start_tls&gt;</emphasis></term>
+     <listitem>
+      <para>Specifies whether to use <acronym>SSL</acronym>/<acronym>TLS</acronym> or not (the default is not to). If
+      <emphasis remap="B">start_tls</emphasis>
+      is specified then StartTLS is used rather than raw <acronym>LDAP</acronym> over <acronym>SSL</acronym>.
+      Not all <acronym>LDAP</acronym> client libraries support both <acronym>SSL</acronym>
+      and StartTLS, and all related configuration options.</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><emphasis remap="B">sslpath &lt;cert7_path&gt;</emphasis></term>
+     <listitem>
+      <para>For the Netscape and Mozilla
+      <acronym>LDAP</acronym>
+      client libraries only, this specifies the path to the X.509
+      certificate database.</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><emphasis remap="B">tls_checkpeer &lt;yes|no&gt;</emphasis></term>
+     <listitem>
+      <para>Specifies whether to require and verify the server certificate
+      or not, when using <acronym>SSL</acronym>/<acronym>TLS</acronym>
+      with the OpenLDAP client library.
+      The default is to use the default behaviour of the client
+      library; for OpenLDAP 2.0 and earlier it is "no", for OpenLDAP
+      2.1 and later it is "yes". At least one of
+      <emphasis remap="B">tls_cacertdir</emphasis>
+      and
+      <emphasis remap="B">tls_cacertfile</emphasis>
+      is required if peer verification is enabled.</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><emphasis remap="B">tls_cacertdir &lt;certificate_dir&gt;</emphasis></term>
+     <listitem>
+      <para>Specifies the directory containing X.509 certificates for peer
+      authentication.</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><emphasis remap="B">tls_cacertfile &lt;certificate_file&gt;</emphasis></term>
+     <listitem>
+      <para>Specifies the path to the X.509 certificate for peer authentication.</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><emphasis remap="B">tls_randfile &lt;entropy_file&gt;</emphasis></term>
+     <listitem>
+      <para>Specifies the path to an entropy source.</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><emphasis remap="B">tls_ciphers &lt;ciphers&gt;</emphasis></term>
+     <listitem>
+      <para>Specifies the ciphers to use for <acronym>TLS</acronym>.
+      See your <acronym>TLS</acronym> implementation's
+      documentation for further information.</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><emphasis remap="B">tls_cert &lt;certificate_file&gt;</emphasis></term>
+     <listitem>
+      <para>Specifies the path to the file containing the local certificate for
+      client <acronym>TLS</acronym> authentication.</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><emphasis remap="B">tls_key &lt;key_file&gt;</emphasis></term>
+     <listitem>
+      <para>Specifies the path to the file containing the private key for client
+      <acronym>TLS</acronym> authentication.</para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </refsect2>
+
+  <refsect2 id='other_options'>
+   <title>Other options</title>
+   <variablelist>
+
+<!-- do not document this option for now as support it is not finalized
+
+     <varlistentry>
+     <term><emphasis remap="B">restart &lt;yes|no&gt;</emphasis></term>
+     <listitem>
+   <para>Specifies whether the
+   <acronym>LDAP</acronym>
+   client library should restart the
+   <emphasis remap="B">select(2)</emphasis>
+   system call when interrupted. This feature is not supported by all
+   client libraries.</para>
+     </listitem>
+     </varlistentry>
+-->
+
+    <varlistentry>
+     <term><option>pagesize</option> <emphasis remap="I">NUMBER</emphasis></term>
+     <listitem>
+      <para>
+       Set this to a number greater than 0 to request paged results from
+       the <acronym>LDAP</acronym> server in accordance with RFC2696.
+       The default (0) is to not request paged results.
+      </para>
+      <para>
+       This is useful for <acronym>LDAP</acronym> servers that contain a
+       lot of entries (e.g. more than 500) and limit the number of entries
+       that are returned with one request.
+       For OpenLDAP servers you may need to set
+       <option>sizelimit size.prtotal=unlimited</option>
+       for allowing more entries to be returned over multiple pages.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </refsect2>
+
+ </refsect1>
+
+ <refsect1 id="maps">
+  <title>Supported maps</title>
+  <para>
+   The following maps are supported. They are referenced as
+   <emphasis remap="I">MAP</emphasis> in the options above.
+  </para>
+  <variablelist remap="TP">
+   <varlistentry>
+    <term>alias<optional>es</optional></term>
+    <listitem><para>
+     Mail aliases.
+     Note that most mail servers do not use the <acronym>NSS</acronym>
+     interface for requesting mail aliases and parse
+     <filename>/etc/aliases</filename> on their own.
+    </para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>ether<optional>s</optional></term>
+    <listitem><para>Ethernet numbers (mac addresses).</para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>group</term>
+    <listitem><para>Posix groups.</para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>host<optional>s</optional></term>
+    <listitem><para>Host names.</para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>netgroup</term>
+    <listitem><para>Host and user groups used for access control.</para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>network<optional>s</optional></term>
+    <listitem><para>Network numbers.</para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>passwd</term>
+    <listitem><para>Posix users.</para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>protocol<optional>s</optional></term>
+    <listitem><para>Protocol definitions (like in <filename>/etc/protocols</filename>).</para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>rpc</term>
+    <listitem><para>Remote procedure call names and numbers.</para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>service<optional>s</optional></term>
+    <listitem><para>Network service names and numbers.</para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>shadow</term>
+    <listitem><para>Shadow user password information.</para></listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 id="files">
+  <title>Files</title>
+  <variablelist remap="TP">
+   <varlistentry>
+    <term><filename>/etc/nss-ldapd.conf</filename></term>
+    <listitem><para>the main configuration file</para></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><filename>/etc/nsswitch.conf</filename></term>
+    <listitem><para>Name Service Switch configuration file</para></listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 id="see_also">
+  <title>See Also</title>
+  <para>
+   <citerefentry><refentrytitle>nslcd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+   <citerefentry><refentrytitle>nsswitch.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+  </para>
+ </refsect1>
+
+ <refsect1 id="author">
+  <title>Author</title>
+  <para>This manual was written by Arthur de Jong &lt;arthur@ch.tudelft.nl&gt;
+        and is based on the
+        <citerefentry><refentrytitle>nss_ldap</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+        manual developed by PADL Software Pty Ltd.</para>
+ </refsect1>
+
+ <refsect1 id="known_bugs">
+  <title>Known Bugs</title>
+  <para>
+   This manual page may be outdated and inaccurate and will be improved
+   in upcoming releases.
+   The features of <emphasis>nss-ldapd</emphasis> are still under
+   development so these options may change in a future release.
+  </para>
+ </refsect1>
+
+</refentry>

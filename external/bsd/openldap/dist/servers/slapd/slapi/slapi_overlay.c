@@ -1,5 +1,5 @@
 /* slapi_overlay.c - SLAPI overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_overlay.c,v 1.40.2.6 2008/02/11 23:26:49 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_overlay.c,v 1.40.2.7 2008/06/02 18:00:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2008 The OpenLDAP Foundation.
@@ -916,7 +916,7 @@ int slapi_over_is_inst( BackendDB *be )
 	return overlay_is_inst( be, SLAPI_OVERLAY_NAME );
 }
 
-int slapi_over_config( BackendDB *be )
+int slapi_over_config( BackendDB *be, ConfigReply *cr )
 {
 	if ( slapi_over_initialized == 0 ) {
 		int rc;
@@ -940,7 +940,7 @@ int slapi_over_config( BackendDB *be )
 		slapi_over_initialized = 1;
 	}
 
-	return overlay_config( be, SLAPI_OVERLAY_NAME, -1, NULL );
+	return overlay_config( be, SLAPI_OVERLAY_NAME, -1, NULL, cr );
 }
 
 #endif /* LDAP_SLAPI */

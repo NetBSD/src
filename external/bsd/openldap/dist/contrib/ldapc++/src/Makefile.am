@@ -1,7 +1,7 @@
-# $OpenLDAP: pkg/ldap/contrib/ldapc++/src/Makefile.am,v 1.10.2.5 2008/04/14 23:02:35 quanah Exp $
+# $OpenLDAP: pkg/ldap/contrib/ldapc++/src/Makefile.am,v 1.10.2.7 2008/07/09 22:18:57 quanah Exp $
 
 ###
-# Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2000-2008, OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 ##
 
@@ -84,16 +84,18 @@ include_HEADERS = LDAPAsynConnection.h \
 			SaslInteractionHandler.h \
 			StringList.h 
 
-noinst_HEADERS = LDAPAddRequest.h \
-                LDAPBindRequest.h \
-                LDAPCompareRequest.h \
-                LDAPDeleteRequest.h \
-                LDAPExtRequest.h \
-                LDAPModDNRequest.h \
-                LDAPModifyRequest.h \
-                LDAPRequest.h \
-                LDAPSearchRequest.h 
+noinst_HEADERS = ac/time.h \
+		debug.h \
+		LDAPAddRequest.h \
+		LDAPBindRequest.h \
+		LDAPCompareRequest.h \
+		LDAPDeleteRequest.h \
+		LDAPExtRequest.h \
+		LDAPModDNRequest.h \
+		LDAPModifyRequest.h \
+		LDAPRequest.h \
+		LDAPSearchRequest.h
 
 libldapcpp_la_LIBADD = -lldap -llber
-libldapcpp_la_LDFLAGS = -version-info 0:5:0
+libldapcpp_la_LDFLAGS = -version-info @OPENLDAP_CPP_API_VERSION@
 

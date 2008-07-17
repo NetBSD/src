@@ -1,5 +1,5 @@
 /* back-ldap.h - ldap backend header file */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.8 2008/02/12 00:25:47 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.10 2008/07/10 00:28:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -315,6 +315,8 @@ typedef struct ldapinfo_t {
 #define	LDAP_BACK_F_ST_RESPONSE		(0x00040000U)
 #endif /* SLAP_CONTROL_X_SESSION_TRACKING */
 
+#define LDAP_BACK_F_NOREFS		(0x00080000U)
+
 #define	LDAP_BACK_ISSET_F(ff,f)		( ( (ff) & (f) ) == (f) )
 #define	LDAP_BACK_ISMASK_F(ff,m,f)	( ( (ff) & (m) ) == (f) )
 
@@ -352,6 +354,8 @@ typedef struct ldapinfo_t {
 #define	LDAP_BACK_ST_REQUEST(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_ST_REQUEST)
 #define	LDAP_BACK_ST_RESPONSE(li)	LDAP_BACK_ISSET( (li), LDAP_BACK_F_ST_RESPONSE)
 #endif /* SLAP_CONTROL_X_SESSION_TRACKING */
+
+#define	LDAP_BACK_NOREFS(li)		LDAP_BACK_ISSET( (li), LDAP_BACK_F_NOREFS)
 
 	int			li_version;
 
@@ -428,6 +432,11 @@ typedef struct ldap_extra_t {
 	int (*proxy_authz_ctrl)( Operation *op, SlapReply *rs, struct berval *bound_ndn,
 		int version, slap_idassert_t *si, LDAPControl	*ctrl );
 	int (*controls_free)( Operation *op, SlapReply *rs, LDAPControl ***pctrls );
+	int (*idassert_authzfrom_parse_cf)( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
+	int (*idassert_parse_cf)( const char *fname, int lineno, int argc, char *argv[], slap_idassert_t *si );
+	void (*retry_info_destroy)( slap_retry_info_t *ri );
+	int (*retry_info_parse)( char *in, slap_retry_info_t *ri, char *buf, ber_len_t buflen );
+	int (*retry_info_unparse)( slap_retry_info_t *ri, struct berval *bvout );
 } ldap_extra_t;
 
 LDAP_END_DECL

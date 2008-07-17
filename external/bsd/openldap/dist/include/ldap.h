@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.9 2008/02/11 23:26:40 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/include/ldap.h,v 1.312.2.10 2008/07/09 00:29:57 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -2342,6 +2342,22 @@ ldap_parse_session_tracking_control LDAP_P((
 	struct berval *id ));
 
 #endif /* LDAP_CONTROL_X_SESSION_TRACKING */
+
+/*
+ * in assertion.c
+ */
+LDAP_F (int)
+ldap_create_assertion_control_value LDAP_P((
+	LDAP		*ld,
+	char		*assertion,
+	struct berval	*value ));
+
+LDAP_F( int )
+ldap_create_assertion_control LDAP_P((
+	LDAP		*ld,
+	char		*filter,
+	int		iscritical,
+	LDAPControl	**ctrlp ));
 
 LDAP_END_DECL
 #endif /* _LDAP_H */
