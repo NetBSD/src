@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.72 2008/07/16 21:34:16 christos Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.73 2008/07/17 19:23:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.72 2008/07/16 21:34:16 christos Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.73 2008/07/17 19:23:17 christos Exp $");
 #endif
 #endif
 
@@ -268,8 +268,8 @@ struct outdata {
 	u_char seq;		/* sequence number of this packet */
 	u_char ttl;		/* ttl packet left with */
 	struct tv32 {
-		int32_t tv_sec;
-		int32_t tv_usec;
+		int32_t tv32_sec;
+		int32_t tv32_usec;
 	} tv;			/* time packet left */
 };
 
@@ -1283,8 +1283,8 @@ again:
 	/* Payload */
 	outsetup.seq = seq;
 	outsetup.ttl = ttl;
-	outsetup.tv.tv_sec  = tp->tv_sec;
-	outsetup.tv.tv_usec  = tp->tv_usec;
+	outsetup.tv.tv32_sec = htonl(tp->tv_sec);
+	outsetup.tv.tv32_usec = htonl(tp->tv_usec);
 	memcpy(outmark,&outsetup,sizeof(outsetup));
 
 	if (useicmp)
