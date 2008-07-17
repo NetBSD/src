@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.228 2008/07/16 18:50:58 drochner Exp $ */
+/*	$NetBSD: autoconf.c,v 1.229 2008/07/17 14:39:26 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.228 2008/07/16 18:50:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.229 2008/07/17 14:39:26 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1767,7 +1767,7 @@ device_register(struct device *dev, void *aux)
 		struct scsipi_periph *periph = sa->sa_periph;
 		struct scsipi_channel *chan = periph->periph_channel;
 		struct scsibus_softc *sbsc =
-			devive_private(device_parent(dev));
+			device_private(device_parent(dev));
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
