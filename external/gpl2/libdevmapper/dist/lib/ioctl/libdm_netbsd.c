@@ -53,7 +53,7 @@ static int dm_dev_deps(prop_dictionary_t, struct dm_ioctl *);
 static int dm_table_status(prop_dictionary_t, struct dm_ioctl *);
 
 int
-nbsd_get_dm_major(uint32_t *major, uint32_t *minor, int type)
+nbsd_get_dm_major(uint32_t *major,  int type)
 {
 	size_t val_len,i;
 	struct kinfo_drivers *kd;
@@ -84,9 +84,6 @@ nbsd_get_dm_major(uint32_t *major, uint32_t *minor, int type)
 				if (type == DM_BLOCK_MAJOR)
 					*major = kd[i].d_bmajor;
 			
-			/* Minor number is predefined to 0. */
-			*minor = 0;
-
 			free(kd);
 
 			return 1;
@@ -131,8 +128,9 @@ nbsd_dm_dict_to_dmi(prop_dictionary_t dm_dict,const int cmd)
 	
 	name = NULL;
 	uuid = NULL;
+	minor = 0;
 	
-	nbsd_get_dm_major(&major,&minor,DM_BLOCK_MAJOR);
+	nbsd_get_dm_major(&major,DM_BLOCK_MAJOR);
 	
 	if (!(dmi = dm_malloc(DMI_SIZE)))
 		return NULL;
@@ -294,12 +292,13 @@ dm_list_devices(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
 	char *name;
 	size_t j,slen,rec_size;
 
-	nbsd_get_dm_major(&major,&minor,DM_BLOCK_MAJOR);
-	
 	odml = NULL;
 	name = NULL;
+	minor = 0;
 	j = 0;
-	
+
+	nbsd_get_dm_major(&major,DM_BLOCK_MAJOR);
+		
 	dml = (struct dm_name_list *)((uint8_t *)dmi + dmi->data_start);
 
 	if ((targets = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA))){

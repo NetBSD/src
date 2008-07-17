@@ -47,24 +47,26 @@ static int _version_checked = 0;
 static int _version_ok = 1;
 static unsigned _ioctl_buffer_double_factor = 0;
 
-/*
- * If ioctl call is added to this list 
- */
-
 /* *INDENT-OFF* */
+
+/*
+ * XXX Remove this structure and write another own one
+ * I don't understand why ioctl calls has different
+ * names then dm task type
+ */
 static struct cmd_data _cmd_data_v4[] = {
 	{"create",	DM_DEV_CREATE,		{4, 0, 0}},
-	{"reload",	DM_TABLE_LOAD,		{4, 0, 0}},
+	{"reload",	DM_TABLE_LOAD,		{4, 0, 0}}, /* DM_DEVICE_RELOAD */
 	{"remove",	DM_DEV_REMOVE,		{4, 0, 0}},
 	{"remove_all",	DM_REMOVE_ALL,		{4, 0, 0}},
 	{"suspend",	DM_DEV_SUSPEND,		{4, 0, 0}},
 	{"resume",	DM_DEV_SUSPEND,		{4, 0, 0}},
 	{"info",	DM_DEV_STATUS,		{4, 0, 0}},
-	{"deps",	DM_TABLE_DEPS,		{4, 0, 0}},
+	{"deps",	DM_TABLE_DEPS,		{4, 0, 0}}, /* DM_DEVICE_DEPS */
 	{"rename",	DM_DEV_RENAME,		{4, 0, 0}},
 	{"version",	DM_VERSION,		{4, 0, 0}},
 	{"status",	DM_TABLE_STATUS,	{4, 0, 0}},
-	{"table",	DM_TABLE_STATUS,	{4, 0, 0}},
+	{"table",	DM_TABLE_STATUS,	{4, 0, 0}}, /* DM_DEVICE_TABLE */
 	{"waitevent",	DM_DEV_WAIT,		{4, 0, 0}},
 	{"names",	DM_LIST_DEVICES,	{4, 0, 0}},
 	{"clear",	DM_TABLE_CLEAR,		{4, 0, 0}},
@@ -91,16 +93,16 @@ static struct cmd_data _cmd_data_v4[] = {
 static int _control_device_number(uint32_t *major, uint32_t *minor)
 {
 
-	nbsd_get_dm_major(major,minor,DM_CHAR_MAJOR);
+	nbsd_get_dm_major(major, DM_CHAR_MAJOR);
 	
 #ifdef __NETBSD_PUD__
 
 #define DM_MAJOR 377;
 
 	*major = DM_MAJOR;
-	*minor = 0;
 #endif	
-
+	*minor = 0;
+	
 	return 1;
 }
 
@@ -166,10 +168,17 @@ static int _create_control(const char *control, uint32_t major, uint32_t minor)
 	return 1;
 }
 
-/* Keep only for compatibility with linux version in NetBSD. */
+/* Check if major is device-mapper block device major number */
 int dm_is_dm_major(uint32_t major)
 {
-	return 1;
+	uint32_t dm_major;
+
+	nbsd_get_dm_major(&dm_major, DM_BLOCK_MAJOR);
+	
+	if (major == dm_major)
+		return 1;
+
+	return 0;
 }
 
 /* Open control device if doesn't exist create it. */
@@ -360,7 +369,6 @@ int dm_task_get_info(struct dm_task *dmt, struct dm_info *info)
 
 	memset(info, 0, sizeof(*info));
 
-
 	info->exists = dmt->dmi.v4->flags & DM_EXISTS_FLAG ? 1 : 0;
 	if (!info->exists)
 		return 1;
@@ -373,7 +381,8 @@ int dm_task_get_info(struct dm_task *dmt, struct dm_info *info)
 	info->target_count = dmt->dmi.v4->target_count;
 	info->open_count = dmt->dmi.v4->open_count;
 	info->event_nr = dmt->dmi.v4->event_nr;
-	info->major = MAJOR(dmt->dmi.v4->dev);
+	
+	nbsd_get_dm_major(&info->major, DM_BLOCK_MAJOR); /* get netbsd dm device major number */
 	info->minor = MINOR(dmt->dmi.v4->dev);
 
 	return 1;
@@ -543,7 +552,7 @@ static int _flatten(struct dm_task *dmt, unsigned repeat_count,
 	size_t len;
 	char type[DM_MAX_TYPE_NAME];
 	
-	uint32_t flags;
+	uint32_t major, flags;
 	int count = 0;
 	const int (*version)[3];
 	
@@ -558,6 +567,7 @@ static int _flatten(struct dm_task *dmt, unsigned repeat_count,
 		prop_dictionary_set_uint64(target_spec,DM_TABLE_START,t->start);
 		prop_dictionary_set_uint64(target_spec,DM_TABLE_LENGTH,t->length);
 
+		printf("_flatten table target type %s\n",t->type);
 		strlcpy(type,t->type,DM_MAX_TYPE_NAME);
 
 		prop_dictionary_set_cstring(target_spec,DM_TABLE_TYPE,type);
@@ -618,13 +628,20 @@ static int _flatten(struct dm_task *dmt, unsigned repeat_count,
 	nbsd_dmi_add_version((*version), dm_dict);
 	    
 	if (dmt->minor >= 0) {
-		if (dmt->major <= 0) {
-			log_error("Missing major number for persistent device.");
-			goto bad;
+		major = dmt->major;
+		
+		if (major <= 0) {
+			nbsd_get_dm_major(&major, DM_BLOCK_MAJOR);
+			log_error("Setting major/minor %d / %d numbers for persistent device.\n",
+			    major,dmt->minor);
+
+			dmt->major = major;
 		}
 		flags |= DM_PERSISTENT_DEV_FLAG;
+		
 		prop_dictionary_set_uint64(dm_dict,DM_IOCTL_DEV,
-		    MKDEV(dmt->major, dmt->minor));
+		    MKDEV(major, dmt->minor));
+		
 	}
 
 	/* Set values to dictionary. */
@@ -654,8 +671,6 @@ static int _flatten(struct dm_task *dmt, unsigned repeat_count,
 		prop_array_set_cstring(cmd_array,0,dmt->newname);
 	
 	return 0;
-bad:	
-	return -1;
 }
 
 static int _process_mapper_dir(struct dm_task *dmt)
@@ -817,7 +832,8 @@ static int _reload_with_suppression_v4(struct dm_task *dmt)
 	struct dm_task *task;
 	struct target *t1, *t2;
 	int r;
-
+	
+	printf("libdm _reload_with_suppression_v4 called %s\n",dmt->dev_name);
 	/* New task to get existing table information */
 	if (!(task = dm_task_create(DM_DEVICE_TABLE))) {
 		log_error("Failed to create device-mapper task struct");
@@ -906,6 +922,8 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 	prop_dictionary_set_cstring(dm_dict_in,DM_IOCTL_COMMAND,
 	    _cmd_data_v4[dmt->type].name);
 
+	printf("dmt type %s\n",_cmd_data_v4[dmt->type].name);
+	
 	/* Parse dmi from libdevmapper to dictionary */
 	_flatten(dmt, repeat_count, dm_dict_in);
 	
@@ -923,15 +941,37 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 	prop_dictionary_externalize_to_file(dm_dict_in,"/tmp/test_in");
 
 	/* Send dictionary to kernel and wait for reply. */
+
 	if (prop_dictionary_sendrecv_ioctl(dm_dict_in,_control_fd,
-		NETBSD_DM_IOCTL,&dm_dict_out) != 0)
+		NETBSD_DM_IOCTL,&dm_dict_out) != 0) {
+
+		if (errno == ENOENT &&
+		    ((dmt->type == DM_DEVICE_INFO) ||
+			(dmt->type == DM_DEVICE_MKNODES) ||
+			(dmt->type == DM_DEVICE_STATUS))) {
+
+			printf("_do_dm_ioctl errno = %d, flags = %d \n",errno, flags);
+
+			/*
+			 * Linux version doesn't fail when ENXIO is returned
+			 * for nonexisting device after info, deps, mknodes call.
+			 * It returns dmi sent to kernel with DM_EXISTS_FLAG = 0;
+			 */
+
+			dmi = nbsd_dm_dict_to_dmi(dm_dict_in,_cmd_data_v4[dmt->type].cmd);
+
+			dmi->flags &= ~DM_EXISTS_FLAG; 
+
+			goto out;
+		} else
 			return NULL;
+	}
 
 	prop_dictionary_externalize_to_file(dm_dict_out,"/tmp/test_out");
-
+	
 	/* Parse kernel dictionary to dmi structure and return it to libdevmapper. */
 	dmi = nbsd_dm_dict_to_dmi(dm_dict_out,_cmd_data_v4[dmt->type].cmd);
-	
+out:	
 	return dmi;
 }
 
@@ -973,7 +1013,7 @@ int dm_task_run(struct dm_task *dmt)
 repeat_ioctl:
 	if (!(dmi = _do_dm_ioctl(dmt, command, _ioctl_buffer_double_factor)))
 		return 0;
-
+	printf("dm_task_run ok\n");
 	if (dmi->flags & DM_BUFFER_FULL_FLAG) {
 		switch (dmt->type) {
 		case DM_DEVICE_LIST_VERSIONS:
@@ -1034,6 +1074,7 @@ repeat_ioctl:
 	/* Was structure reused? */
 	if (dmt->dmi.v4)
 		dm_free(dmt->dmi.v4);
+
 	dmt->dmi.v4 = dmi;
 	return 1;
 
