@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/admin/access-control.sdf,v 1.3.2.1 2008/04/14 20:35:10 quanah Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/access-control.sdf,v 1.3.2.2 2008/05/20 00:17:58 quanah Exp $
 # Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -137,7 +137,9 @@ attribute name and also using a value selector:
 There are two special {{pseudo}} attributes {{EX:entry}} and
 {{EX:children}}.  To read (and hence return) a target entry, the
 subject must have {{EX:read}} access to the target's {{entry}}
-attribute.  To add or delete an entry, the subject must have
+attribute.  To perform a search, the subject must have
+{{EX:search}} access to the search base's {{entry}} attribute.
+To add or delete an entry, the subject must have
 {{EX:write}} access to the entry's {{EX:entry}} attribute AND must
 have {{EX:write}} access to the entry's parent's {{EX:children}}
 attribute.  To rename an entry, the subject must have {{EX:write}}
@@ -552,7 +554,9 @@ attribute name and also using a value selector:
 There are two special {{pseudo}} attributes {{EX:entry}} and
 {{EX:children}}.  To read (and hence return) a target entry, the
 subject must have {{EX:read}} access to the target's {{entry}}
-attribute.  To add or delete an entry, the subject must have
+attribute.  To perform a search, the subject must have
+{{EX:search}} access to the search base's {{entry}} attribute.
+To add or delete an entry, the subject must have
 {{EX:write}} access to the entry's {{EX:entry}} attribute AND must
 have {{EX:write}} access to the entry's parent's {{EX:children}}
 attribute.  To rename an entry, the subject must have {{EX:write}}

@@ -1,5 +1,5 @@
 /* result.c - wait for an ldap result */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.10 2008/02/11 23:26:41 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/result.c,v 1.124.2.12 2008/07/09 23:16:48 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -351,18 +351,20 @@ wait4msg(
 #endif
 
 			if ( !lc_ready ) {
+				int err;
 				rc = ldap_int_select( ld, tvp );
-#ifdef LDAP_DEBUG
 				if ( rc == -1 ) {
+					err = sock_errno();
+#ifdef LDAP_DEBUG
 					Debug( LDAP_DEBUG_TRACE,
 						"ldap_int_select returned -1: errno %d\n",
-						sock_errno(), 0, 0 );
-				}
+						err, 0, 0 );
 #endif
+				}
 
 				if ( rc == 0 || ( rc == -1 && (
 					!LDAP_BOOL_GET(&ld->ld_options, LDAP_BOOL_RESTART)
-						|| sock_errno() != EINTR ) ) )
+						|| err != EINTR ) ) )
 				{
 					ld->ld_errno = (rc == -1 ? LDAP_SERVER_DOWN :
 						LDAP_TIMEOUT);
@@ -493,7 +495,7 @@ try_read1msg(
 	LDAPRequest	*lr, *tmplr, dummy_lr = { 0 };
 	LDAPConn	*lc;
 	BerElement	tmpber;
-	int		rc, refer_cnt, hadref, simple_request;
+	int		rc, refer_cnt, hadref, simple_request, err;
 	ber_int_t	lderr;
 
 #ifdef LDAP_CONNECTIONLESS
@@ -547,15 +549,16 @@ nextresp3:
 		break;
 
 	case LBER_DEFAULT:
+		err = sock_errno();
 #ifdef LDAP_DEBUG		   
 		Debug( LDAP_DEBUG_CONNS,
 			"ber_get_next failed.\n", 0, 0, 0 );
 #endif		   
 #ifdef EWOULDBLOCK			
-		if ( sock_errno() == EWOULDBLOCK ) return LDAP_MSG_X_KEEP_LOOKING;
+		if ( err == EWOULDBLOCK ) return LDAP_MSG_X_KEEP_LOOKING;
 #endif
 #ifdef EAGAIN
-		if ( sock_errno() == EAGAIN ) return LDAP_MSG_X_KEEP_LOOKING;
+		if ( err == EAGAIN ) return LDAP_MSG_X_KEEP_LOOKING;
 #endif
 		ld->ld_errno = LDAP_SERVER_DOWN;
 #ifdef LDAP_R_COMPILE
@@ -582,6 +585,11 @@ nextresp3:
 
 	/* id == 0 iff unsolicited notification message (RFC 4511) */
 
+	/* id < 0 is invalid, just toss it. FIXME: should we disconnect? */
+	if ( id < 0 ) {
+		goto retry_ber;
+	}
+	
 	/* if it's been abandoned, toss it */
 	if ( id > 0 ) {
 		if ( ldap_abandoned( ld, id, &idx ) ) {
@@ -602,8 +610,8 @@ nextresp3:
 			}
 
 			Debug( LDAP_DEBUG_ANY,
-				"abandoned/discarded ld %p msgid %ld message type %s\n",
-				(void *)ld, (long)id, ldap_int_msgtype2str( tag ) );
+				"abandoned/discarded ld %p msgid %d message type %s\n",
+				(void *)ld, id, ldap_int_msgtype2str( tag ) );
 
 retry_ber:
 			ber_free( ber, 1 );
@@ -629,8 +637,8 @@ retry_ber:
 			}
 
 			Debug( LDAP_DEBUG_ANY,
-				"no request for response on ld %p msgid %ld message type %s (tossing)\n",
-				(void *)ld, (long)id, msg );
+				"no request for response on ld %p msgid %d message type %s (tossing)\n",
+				(void *)ld, id, msg );
 
 			goto retry_ber;
 		}
@@ -652,8 +660,8 @@ nextresp2:
 	}
 
 	Debug( LDAP_DEBUG_TRACE,
-		"read1msg: ld %p msgid %ld message type %s\n",
-		(void *)ld, (long)lr->lr_msgid, ldap_int_msgtype2str( tag ) );
+		"read1msg: ld %p msgid %d message type %s\n",
+		(void *)ld, id, ldap_int_msgtype2str( tag ) );
 
 	if ( id == 0 ) {
 		/* unsolicited notification message (RFC 4511) */
@@ -900,8 +908,8 @@ nextresp2:
 			{
 				id = lr->lr_msgid;
 				tag = lr->lr_res_msgtype;
-				Debug( LDAP_DEBUG_TRACE, "request done: ld %p msgid %ld\n",
-					(void *)ld, (long) id, 0 );
+				Debug( LDAP_DEBUG_TRACE, "request done: ld %p msgid %d\n",
+					(void *)ld, id, 0 );
 				Debug( LDAP_DEBUG_TRACE,
 					"res_errno: %d, res_error: <%s>, "
 					"res_matched: <%s>\n",
@@ -1156,8 +1164,8 @@ nextresp2:
 		goto exit;
 	}
 
-	Debug( LDAP_DEBUG_TRACE, "adding response ld %p msgid %ld type %ld:\n",
-		(void *)ld, (long) newmsg->lm_msgid, (long) newmsg->lm_msgtype );
+	Debug( LDAP_DEBUG_TRACE, "adding response ld %p msgid %d type %ld:\n",
+		(void *)ld, newmsg->lm_msgid, (long) newmsg->lm_msgtype );
 
 	/* part of a search response - add to end of list of entries */
 	l->lm_chain_tail->lm_chain = newmsg;

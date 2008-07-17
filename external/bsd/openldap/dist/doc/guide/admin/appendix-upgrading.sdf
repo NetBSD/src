@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/admin/appendix-upgrading.sdf,v 1.1.2.4 2008/02/11 23:26:39 kurt Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/appendix-upgrading.sdf,v 1.1.2.5 2008/05/20 00:17:58 quanah Exp $
 # Copyright 2007-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -37,6 +37,22 @@ entries like below, just remove them from the relevant ldif file.
 
 >           olcReplicationInterval: value #0: <olcReplicationInterval> keyword is obsolete (ignored)
 
+H2: ACLs: searches require privileges on the search base
+
+Search operations now require "search" privileges on the "entry" pseudo-attribute of the search
+base. While upgrading from 2.3.x, make sure your ACLs grant such privileges to all desired search
+bases.
+
+For example, assuming you have the following ACL:
+
+>           access to dn.sub="ou=people,dc=example,dc=com" by * search
+
+Searches using a base of "dc=example,dc=com" will only be allowed if you add the following ACL:
+
+>           access to dn.base="dc=example,dc=com" attrs=entry by * search
+
+Note: The {{slapd.access}}(5) man page states that this requirement was introduced
+with OpenLDAP 2.3. However, it is the default behavior only since 2.4.
 
 
 

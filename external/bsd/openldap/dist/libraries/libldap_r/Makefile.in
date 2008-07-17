@@ -1,5 +1,5 @@
 # Makefile.in for LDAP -lldap
-# $OpenLDAP: pkg/ldap/libraries/libldap_r/Makefile.in,v 1.79.2.5 2008/02/11 23:26:41 kurt Exp $
+# $OpenLDAP: pkg/ldap/libraries/libldap_r/Makefile.in,v 1.79.2.6 2008/07/09 00:29:57 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2008 The OpenLDAP Foundation.
@@ -28,7 +28,8 @@ XXSRCS    = apitest.c test.c \
 	request.c os-ip.c url.c pagectrl.c sortctrl.c vlvctrl.c \
 	init.c options.c print.c string.c util-int.c schema.c \
 	charray.c tls.c os-local.c dnssrv.c utf-8.c utf-8-conv.c \
-	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c
+	turn.c ppolicy.c dds.c txn.c ldap_sync.c stctrl.c \
+	assertion.c
 SRCS	= threads.c rdwr.c rmutex.c tpool.c rq.c \
 	thr_posix.c thr_cthreads.c thr_thr.c thr_lwp.c thr_nt.c \
 	thr_pth.c thr_stub.c thr_debug.c
@@ -44,7 +45,8 @@ OBJS	= threads.lo rdwr.lo rmutex.lo tpool.lo  rq.lo \
 	request.lo os-ip.lo url.lo pagectrl.lo sortctrl.lo vlvctrl.lo \
 	init.lo options.lo print.lo string.lo util-int.lo schema.lo \
 	charray.lo tls.lo os-local.lo dnssrv.lo utf-8.lo utf-8-conv.lo \
-	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo
+	turn.lo ppolicy.lo dds.lo txn.lo ldap_sync.lo stctrl.lo \
+	assertion.lo
 
 LDAP_INCDIR= ../../include       
 LDAP_LIBDIR= ../../libraries

@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/admin/preface.sdf,v 1.25.2.5 2008/02/11 23:26:39 kurt Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/preface.sdf,v 1.25.2.6 2008/05/27 21:56:55 kurt Exp $
 # Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 # 
@@ -9,7 +9,7 @@ P1: Preface
 # document's copyright
 P2[notoc] Copyright
 
-Copyright 1998-2007, The {{ORG[expand]OLF}}, {{All Rights Reserved}}.
+Copyright 1998-2008, The {{ORG[expand]OLF}}, {{All Rights Reserved}}.
 
 Copyright 1992-1996, Regents of the {{ORG[expand]UM}}, {{All Rights Reserved}}.
 
@@ -19,6 +19,9 @@ Software Copyright Notices}} and the {{SECT:OpenLDAP Public License}}.
 Complete copies of the notices and associated license can be found
 in Appendix K and L, respectively.
 
+Portions of OpenLDAP Software and this document may be copyright
+by other parties and/or subject to additional restrictions.  Individual
+source files should be consulted for additional copyright notices.
 
 P2[notoc] Scope of this Document
 
