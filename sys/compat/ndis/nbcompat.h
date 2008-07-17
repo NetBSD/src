@@ -59,7 +59,7 @@ TAILQ_HEAD(sysctl_ctx_list, sysctl_ctx_entry);
 #endif
 #define I386_BUS_SPACE_IO	0
 
-#define device_get_nameunit(dev)	(dev)->dv_xname
+#define device_get_nameunit(dev)	device_xname(dev)
 
 /* FreeBSD Loadable Kernel Module commands that have NetBSD counterparts */
 #define MOD_LOAD 	LKM_E_LOAD
