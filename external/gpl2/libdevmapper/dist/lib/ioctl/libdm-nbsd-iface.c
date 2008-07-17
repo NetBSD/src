@@ -18,9 +18,11 @@
 #include "libdm-targets.h"
 #include "libdm-common.h"
 
+#include <sys/ioctl.h>
+#include <sys/sysctl.h>
+
 #include <fcntl.h>
 #include <dirent.h>
-#include <sys/ioctl.h>
 #include <limits.h>
 
 #include <netbsd/netbsd-dm.h>
@@ -95,12 +97,6 @@ static int _control_device_number(uint32_t *major, uint32_t *minor)
 
 	nbsd_get_dm_major(major, DM_CHAR_MAJOR);
 	
-#ifdef __NETBSD_PUD__
-
-#define DM_MAJOR 377;
-
-	*major = DM_MAJOR;
-#endif	
 	*minor = 0;
 	
 	return 1;
@@ -346,18 +342,65 @@ static int _unmarshal_status(struct dm_task *dmt, struct dm_ioctl *dmi)
 	return 1;
 }
 
+/*
+ * @dev_major is major number of char device
+ *
+ * I have to find it's block device number and lookup dev in
+ * device database to find device path.
+ *
+ */
+
 int dm_format_dev(char *buf, int bufsize, uint32_t dev_major,
 		  uint32_t dev_minor)
 {
 	int r;
+	uint32_t major;
+	char *name;
+	mode_t mode;
+	dev_t dev;
+	size_t val_len,i;
+	struct kinfo_drivers *kd;
+	
+	mode = 0;
 
 	if (bufsize < 8)
 		return 0;
 
-	r = snprintf(buf, (size_t) bufsize, "%u:%u", dev_major, dev_minor);
-	if (r < 0 || r > bufsize - 1)
+	if (sysctlbyname("kern.drivers",NULL,&val_len,NULL,0) < 0) {
+		printf("sysctlbyname failed");
 		return 0;
+	}
 
+	if ((kd = malloc (val_len)) == NULL){
+		printf("malloc kd info error\n");
+		return 0;
+	}
+
+	if (sysctlbyname("kern.drivers", kd, &val_len, NULL, 0) < 0) {
+		printf("sysctlbyname failed kd");
+		return 0;
+	}
+
+	for (i = 0, val_len /= sizeof(*kd); i < val_len; i++){
+		if (kd[i].d_cmajor == dev_major) {
+			major = kd[i].d_bmajor;
+			break;
+		}
+	}
+
+	dev = MKDEV(major,dev_minor);
+
+	mode |= S_IFBLK;
+	
+	name = devname(dev,mode);
+
+	r = snprintf(buf, (size_t) bufsize, "/dev/%s",name);
+
+	free(kd);
+	
+	if (r < 0 || r > bufsize - 1 || name == NULL)
+		return 0;
+	
 	return 1;
 }
 
@@ -567,7 +610,6 @@ static int _flatten(struct dm_task *dmt, unsigned repeat_count,
 		prop_dictionary_set_uint64(target_spec,DM_TABLE_START,t->start);
 		prop_dictionary_set_uint64(target_spec,DM_TABLE_LENGTH,t->length);
 
-		printf("_flatten table target type %s\n",t->type);
 		strlcpy(type,t->type,DM_MAX_TYPE_NAME);
 
 		prop_dictionary_set_cstring(target_spec,DM_TABLE_TYPE,type);
@@ -833,7 +875,6 @@ static int _reload_with_suppression_v4(struct dm_task *dmt)
 	struct target *t1, *t2;
 	int r;
 	
-	printf("libdm _reload_with_suppression_v4 called %s\n",dmt->dev_name);
 	/* New task to get existing table information */
 	if (!(task = dm_task_create(DM_DEVICE_TABLE))) {
 		log_error("Failed to create device-mapper task struct");
@@ -922,8 +963,6 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 	prop_dictionary_set_cstring(dm_dict_in,DM_IOCTL_COMMAND,
 	    _cmd_data_v4[dmt->type].name);
 
-	printf("dmt type %s\n",_cmd_data_v4[dmt->type].name);
-	
 	/* Parse dmi from libdevmapper to dictionary */
 	_flatten(dmt, repeat_count, dm_dict_in);
 	
@@ -939,9 +978,10 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 	prop_dictionary_set_uint32(dm_dict_in,DM_IOCTL_FLAGS,flags);
 	
 	prop_dictionary_externalize_to_file(dm_dict_in,"/tmp/test_in");
+	
+	printf("Ioctl type  %s\n",_cmd_data_v4[dmt->type].name);
 
 	/* Send dictionary to kernel and wait for reply. */
-
 	if (prop_dictionary_sendrecv_ioctl(dm_dict_in,_control_fd,
 		NETBSD_DM_IOCTL,&dm_dict_out) != 0) {
 
@@ -950,10 +990,8 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 			(dmt->type == DM_DEVICE_MKNODES) ||
 			(dmt->type == DM_DEVICE_STATUS))) {
 
-			printf("_do_dm_ioctl errno = %d, flags = %d \n",errno, flags);
-
 			/*
-			 * Linux version doesn't fail when ENXIO is returned
+			 * Linux version doesn't fail when ENOENT is returned
 			 * for nonexisting device after info, deps, mknodes call.
 			 * It returns dmi sent to kernel with DM_EXISTS_FLAG = 0;
 			 */
@@ -1013,7 +1051,7 @@ int dm_task_run(struct dm_task *dmt)
 repeat_ioctl:
 	if (!(dmi = _do_dm_ioctl(dmt, command, _ioctl_buffer_double_factor)))
 		return 0;
-	printf("dm_task_run ok\n");
+
 	if (dmi->flags & DM_BUFFER_FULL_FLAG) {
 		switch (dmt->type) {
 		case DM_DEVICE_LIST_VERSIONS:
