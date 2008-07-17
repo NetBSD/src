@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.17 2008/07/07 18:45:26 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.18 2008/07/17 19:10:22 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -64,13 +64,14 @@ extern int udf_verbose;
 #define UDF_DEBUG_EXTATTR	0x002000
 #define UDF_DEBUG_ALLOC		0x004000
 #define UDF_DEBUG_ADWLK		0x008000
-#define UDF_DEBUG_PARANOIDADWLK	0x010000
+#define UDF_DEBUG_DIRHASH	0x010000
 #define UDF_DEBUG_NOTIMPL	0x020000
 #define UDF_DEBUG_SHEDULE	0x040000
 #define UDF_DEBUG_ECCLINE	0x080000
 #define UDF_DEBUG_SYNC		0x100000
 #define UDF_DEBUG_PARANOIA	0x200000
-#define UDF_DEBUG_NODEDUMP	0x400000
+#define UDF_DEBUG_PARANOIDADWLK	0x400000
+#define UDF_DEBUG_NODEDUMP	0x800000
 
 /* initial value of udf_verbose */
 #define UDF_DEBUGGING		0
@@ -114,6 +115,10 @@ extern int udf_verbose;
 #define UDF_ECCBUF_HASHBITS	10
 #define UDF_ECCBUF_HASHSIZE	(1<<UDF_ECCBUF_HASHBITS)
 #define UDF_ECCBUF_HASHMASK	(UDF_ECCBUF_HASHSIZE -1)
+
+#define UDF_DIRHASH_HASHBITS	5
+#define UDF_DIRHASH_HASHSIZE	(1<<UDF_DIRHASH_HASHBITS)
+#define UDF_DIRHASH_HASHMASK	(UDF_DIRHASH_HASHSIZE -1)
 
 #define UDF_ECCLINE_MAXFREE	10			/* picked */
 #define UDF_ECCLINE_MAXBUSY	100			/* picked */
@@ -200,6 +205,8 @@ MALLOC_DECLARE(M_UDFVOLD);
 MALLOC_DECLARE(M_UDFTEMP);
 
 struct pool udf_node_pool;
+struct pool udf_dirhash_pool;
+struct pool udf_dirhash_entry_pool;
 struct udf_node;
 struct udf_strategy;
 
@@ -343,6 +350,23 @@ struct udf_mount {
 	void			*strategy_private;
 };
 
+
+/* dirent's d_namlen is to avoid useless costly fid->dirent translations */
+struct udf_dirhash_entry {
+	uint32_t		 hashvalue;
+	uint64_t		 offset;
+	uint32_t		 d_namlen;
+	uint32_t		 fid_size;
+	LIST_ENTRY(udf_dirhash_entry) next;
+};
+
+
+struct udf_dirhash {
+	LIST_HEAD(, udf_dirhash_entry) entries[UDF_DIRHASH_HASHSIZE];
+	LIST_HEAD(, udf_dirhash_entry) free_entries;
+};
+
+
 /*
  * UDF node describing a file/directory.
  *
@@ -370,7 +394,7 @@ struct udf_node {
 	int			 needs_indirect;	/* has missing indr. */
 	struct long_ad		 ext_loc[UDF_MAX_ALLOC_EXTENTS];
 
-	uint64_t		 last_diroffset;	/* speeding up lookup*/
+	struct udf_dirhash	*dir_hash;
 
 	/* misc */
 	uint32_t		 i_flags;		/* associated flags  */
@@ -389,23 +413,26 @@ struct udf_node {
 
 
 /* misc. flags stored in i_flags (XXX needs cleaning up) */
-#define	IN_ACCESS	0x0001		/* Inode access time update request  */
-#define	IN_CHANGE	0x0002		/* Inode change time update request  */
-#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime*/
-#define	IN_MODIFY	0x0008		/* Modification time update request  */
-#define	IN_MODIFIED	0x0010		/* node has been modified */
-#define	IN_ACCESSED	0x0020		/* node has been accessed */
-#define	IN_RENAME	0x0040		/* node is being renamed. XXX ?? */
-#define	IN_DELETED	0x0080		/* node is unlinked, no FID reference*/
-#define	IN_LOCKED	0x0100		/* node is locked by condvar */
-#define	IN_SYNCED	0x0200		/* node is being used by sync */
-#define	IN_CALLBACK_ULK	0x0400		/* node will be unlocked by callback */
-#define	IN_NODE_REBUILD	0x0800		/* node is rebuild */
+#define	IN_ACCESS		0x0001	/* Inode access time update request  */
+#define	IN_CHANGE		0x0002	/* Inode change time update request  */
+#define	IN_UPDATE		0x0004	/* Inode was written to; update mtime*/
+#define	IN_MODIFY		0x0008	/* Modification time update request  */
+#define	IN_MODIFIED		0x0010	/* node has been modified */
+#define	IN_ACCESSED		0x0020	/* node has been accessed */
+#define	IN_RENAME		0x0040	/* node is being renamed. XXX ?? */
+#define	IN_DELETED		0x0080	/* node is unlinked, no FID reference*/
+#define	IN_LOCKED		0x0100	/* node is locked by condvar */
+#define	IN_SYNCED		0x0200	/* node is being used by sync */
+#define	IN_CALLBACK_ULK		0x0400	/* node will be unlocked by callback */
+#define	IN_NODE_REBUILD		0x0800	/* node is rebuild */
+#define	IN_DIRHASH_COMPLETE	0x1000	/* dirhash is complete */
+#define	IN_DIRHASH_BROKEN	0x2000	/* dirhash is broken on readin */
 
 
 #define IN_FLAGBITS \
 	"\10\1IN_ACCESS\2IN_CHANGE\3IN_UPDATE\4IN_MODIFY\5IN_MODIFIED" \
 	"\6IN_ACCESSED\7IN_RENAME\10IN_DELETED\11IN_LOCKED\12IN_SYNCED" \
-	"\13IN_CALLBACK_ULK\14IN_NODE_REBUILD"
+	"\13IN_CALLBACK_ULK\14IN_NODE_REBUILD\15IN_DIRHASH_COMPLETE" \
+	"\16IN_DIRHASH_BROKEN"
 
 #endif /* !_FS_UDF_UDF_H_ */
