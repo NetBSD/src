@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2008/07/16 00:36:14 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2008/07/17 10:46:56 lukem Exp $
 
-SUBDIR=		usr.bin
+SUBDIR=		bin
 
 .include <bsd.subdir.mk>
