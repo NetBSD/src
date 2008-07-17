@@ -1,5 +1,5 @@
 /* result.c - routines to send ldap results, errors, and referrals */
-/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.13 2008/04/14 23:43:59 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.14 2008/05/28 16:28:18 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -627,10 +627,10 @@ slap_send_ldap_result( Operation *op, SlapReply *rs )
 		rs->sr_ref = NULL;
 	}
 
+abandon:
 	rs->sr_tag = slap_req2res( op->o_tag );
 	rs->sr_msgid = (rs->sr_tag != LBER_SEQUENCE) ? op->o_msgid : 0;
 
-abandon:
 	if ( rs->sr_flags & REP_REF_MUSTBEFREED ) {
 		if ( rs->sr_ref == NULL ) {
 			rs->sr_flags ^= REP_REF_MUSTBEFREED;
