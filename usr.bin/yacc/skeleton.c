@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.28 2008/07/18 09:57:15 dsl Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.29 2008/07/18 14:25:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: skeleton.c,v 1.28 2008/07/18 09:57:15 dsl Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.29 2008/07/18 14:25:37 drochner Exp $");
 #endif /* 0 */
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ const char * const banner[] =
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
     "#if defined(__NetBSD__) && defined(__IDSTRING)",
-    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.28 2008/07/18 09:57:15 dsl Exp $\");",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.29 2008/07/18 14:25:37 drochner Exp $\");",
     "#endif /* __NetBSD__ && __IDSTRING */",
     "#endif /* 0 */",
     "#endif /* lint */",
@@ -119,7 +119,7 @@ const char * const header[] =
     "short *yyssp;",
     "YYSTYPE *yyvsp;",
     "YYSTYPE yyval;",
-    "const YYSTYPE yyvalzero = { 0 };",
+    "static YYSTYPE yyvalzero;", /* no "const", must compile as C++ */
     "YYSTYPE yylval;",
     "short *yyss;",
     "short *yysslim;",
