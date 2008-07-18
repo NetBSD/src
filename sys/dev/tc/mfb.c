@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.51 2008/05/26 10:31:22 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.51.2.1 2008/07/18 16:37:43 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.51 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.51.2.1 2008/07/18 16:37:43 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,6 @@ struct hwcursor64 {
 };
 
 struct mfb_softc {
-	struct device sc_dev;
 	vaddr_t sc_vaddr;
 	size_t sc_size;
 	struct rasops_info *sc_ri;
@@ -124,10 +123,10 @@ struct mfb_softc {
 #define	MX_BT431_OFFSET	0x180000
 #define	MX_IREQ_OFFSET	0x080000	/* Interrupt req. control */
 
-static int  mfbmatch(struct device *, struct cfdata *, void *);
-static void mfbattach(struct device *, struct device *, void *);
+static int  mfbmatch(device_t, cfdata_t, void *);
+static void mfbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(mfb, sizeof(struct mfb_softc),
+CFATTACH_DECL_NEW(mfb, sizeof(struct mfb_softc),
     mfbmatch, mfbattach, NULL, NULL);
 
 static void mfb_common_init(struct rasops_info *);
@@ -212,7 +211,7 @@ static const u_int8_t flip[256] = {
 };
 
 static int
-mfbmatch(struct device *parent, struct cfdata *match, void *aux)
+mfbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -223,7 +222,7 @@ mfbmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mfbattach(struct device *parent, struct device *self, void *aux)
+mfbattach(device_t parent, device_t self, void *aux)
 {
 	struct mfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;

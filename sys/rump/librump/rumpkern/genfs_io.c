@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.10 2008/06/04 13:10:06 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.10.2.1 2008/07/18 16:37:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -310,7 +310,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		 */
 		KASSERT((pg->flags & PG_BUSY) == 0);
 
-		if (pg->flags & PG_CLEAN) {
+		/* If we can just dump the page, do so */
+		if (pg->flags & PG_CLEAN || flags & PGO_FREE) {
 			uvm_pagefree(pg);
 			continue;
 		}

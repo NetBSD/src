@@ -1,4 +1,4 @@
-/*	$NetBSD: ydsvar.h,v 1.9 2008/04/01 20:44:29 xtraeme Exp $	*/
+/*	$NetBSD: ydsvar.h,v 1.9.8.1 2008/07/18 16:37:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -45,7 +45,6 @@ struct yds_dma {
 };
 
 struct yds_codec_softc {
-	struct device sc_dev;		/* base device */
 	struct yds_softc *sc;
 	int id;
 	int status_data;
@@ -55,7 +54,7 @@ struct yds_codec_softc {
 };
 
 struct yds_softc {
-	struct device		sc_dev;		/* base device */
+	device_t		sc_dev;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 	pcireg_t		sc_id;

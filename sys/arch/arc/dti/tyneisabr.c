@@ -1,4 +1,4 @@
-/*	$NetBSD: tyneisabr.c,v 1.10 2006/06/24 03:50:38 tsutsui Exp $	*/
+/*	$NetBSD: tyneisabr.c,v 1.10.66.1 2008/07/18 16:37:26 simonb Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.10 2006/06/24 03:50:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.10.66.1 2008/07/18 16:37:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,15 +92,14 @@ __KERNEL_RCSID(0, "$NetBSD: tyneisabr.c,v 1.10 2006/06/24 03:50:38 tsutsui Exp $
 #include "ioconf.h"
 
 /* Definition of the driver for autoconfig. */
-int	tyneisabrmatch(struct device *, struct cfdata *, void *);
-void	tyneisabrattach(struct device *, struct device *, void *);
-uint32_t tyneisabr_iointr(uint32_t mask, struct clockframe *cf);
+static int	tyneisabrmatch(device_t, cfdata_t, void *);
+static void	tyneisabrattach(device_t, device_t, void *);
 
-CFATTACH_DECL(tyneisabr, sizeof(struct isabr_softc),
+CFATTACH_DECL_NEW(tyneisabr, sizeof(struct isabr_softc),
     tyneisabrmatch, tyneisabrattach, NULL, NULL);
 
-int
-tyneisabrmatch(struct device *parent, struct cfdata *match, void *aux)
+static int
+tyneisabrmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -111,10 +110,12 @@ tyneisabrmatch(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-void
-tyneisabrattach(struct device *parent, struct device *self, void *aux)
+static void
+tyneisabrattach(device_t parent, device_t self, void *aux)
 {
-	struct isabr_softc *sc = (struct isabr_softc *)self;
+	struct isabr_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
 
 	_bus_dma_tag_init(&sc->sc_dmat); /* XXX dedicated bounce mem */
 	(*platform->set_intr)(MIPS_INT_MASK_2, isabr_iointr, ARC_INTPRI_PCIISA);

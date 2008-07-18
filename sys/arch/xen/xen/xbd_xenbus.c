@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.27.4.1 2008/06/18 16:32:55 simonb Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.27.4.2 2008/07/18 16:37:31 simonb Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.27.4.1 2008/06/18 16:32:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.27.4.2 2008/07/18 16:37:31 simonb Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -791,7 +791,7 @@ xbd_map_align(struct xbd_req *req)
 	int s = splvm();
 
 	req->req_data = (void *)uvm_km_alloc(kmem_map, req->req_bp->b_bcount,
-	    PAGE_SIZE, UVM_KMF_WIRED);
+	    PAGE_SIZE, UVM_KMF_WIRED | UVM_KMF_NOWAIT);
 	splx(s);
 	if (__predict_false(req->req_data == NULL))
 		return ENOMEM;

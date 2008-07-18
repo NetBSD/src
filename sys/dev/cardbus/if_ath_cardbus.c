@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.27.8.2 2008/06/27 15:11:21 simonb Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.27.8.3 2008/07/18 16:37:32 simonb Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.27.8.2 2008/06/27 15:11:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.27.8.3 2008/07/18 16:37:32 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -109,11 +109,11 @@ struct ath_cardbus_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-int	ath_cardbus_match(device_t, struct cfdata *, void *);
+int	ath_cardbus_match(device_t, cfdata_t, void *);
 void	ath_cardbus_attach(device_t, device_t, void *);
 int	ath_cardbus_detach(device_t, int);
 
-CFATTACH_DECL(ath_cardbus, sizeof(struct ath_cardbus_softc),
+CFATTACH_DECL_NEW(ath_cardbus, sizeof(struct ath_cardbus_softc),
     ath_cardbus_match, ath_cardbus_attach, ath_cardbus_detach, NULL);
 
 void	ath_cardbus_setup(struct ath_cardbus_softc *);
@@ -173,6 +173,7 @@ ath_cardbus_attach(device_t parent, device_t self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	bus_addr_t adr;
 
+	sc->sc_dev = self;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
@@ -231,7 +232,7 @@ ath_cardbus_detach(device_t self, int flags)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
-		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
+		panic("%s: data structure lacks", device_xname(sc->sc_dev));
 #endif
 
 	rv = ath_detach(sc);

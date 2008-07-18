@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.7.2.1 2008/07/03 18:38:04 simonb Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.7.2.2 2008/07/18 16:37:35 simonb Exp $	*/
 
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.7.2.1 2008/07/03 18:38:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.7.2.2 2008/07/18 16:37:35 simonb Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_drv.c,v 1.14 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -41,11 +41,11 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_drv.c,v 1.14 2005/12/20 22:44:36 jhb 
 #include <sys/module.h>
 #endif
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/radeon_drm.h>
-#include <dev/pci/drm/radeon_drv.h>
-#include <dev/pci/drm/drm_pciids.h>
+#include "drmP.h"
+#include "drm.h"
+#include "radeon_drm.h"
+#include "radeon_drv.h"
+#include "drm_pciids.h"
 
 int radeon_no_wb;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ati_pcigart.c,v 1.4 2008/05/02 01:29:36 bjs Exp $	*/
+/*	$NetBSD: ati_pcigart.c,v 1.4.4.1 2008/07/18 16:37:34 simonb Exp $	*/
 
 /* ati_pcigart.h -- ATI PCI GART support -*- linux-c -*-
  * Created: Wed Dec 13 21:52:19 2000 by gareth@valinux.com
@@ -32,12 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ati_pcigart.c,v 1.4 2008/05/02 01:29:36 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ati_pcigart.c,v 1.4.4.1 2008/07/18 16:37:34 simonb Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/ati_pcigart.c,v 1.3 2005/11/28 23:13:52 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
+#include "drmP.h"
 
 #define ATI_PCIGART_PAGE_SIZE		4096	/* PCI GART page size */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.47.4.1 2008/06/18 16:32:48 simonb Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.47.4.2 2008/07/18 16:37:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.47.4.1 2008/06/18 16:32:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.47.4.2 2008/07/18 16:37:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1451,7 +1451,7 @@ tctrl_event_thread(void *v)
 	dv = device_find_by_xname("le0");
 	if (dv != NULL)
 		le = device_private(dv);
-	printf("found %s\n", sd->sc_dev.dv_xname);
+	printf("found %s\n", device_xname(sd->sc_dev));
 	rcount = sd->sc_dk.dk_stats->io_rxfer;
 	wcount = sd->sc_dk.dk_stats->io_wxfer;
 

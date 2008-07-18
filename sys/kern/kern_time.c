@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.148 2008/05/29 15:27:51 joerg Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.148.2.1 2008/07/18 16:37:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.148 2008/05/29 15:27:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.148.2.1 2008/07/18 16:37:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -590,9 +590,12 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	pt->pt_poverruns = 0;
 	pt->pt_entry = timerid;
 	pt->pt_queued = false;
-	pt->pt_active = 0;
-	timerclear(&pt->pt_time.it_value);
-	callout_init(&pt->pt_ch, 0);
+	timespecclear(&pt->pt_time.it_value);
+	if (id == CLOCK_REALTIME)
+		callout_init(&pt->pt_ch, 0);
+	else
+		pt->pt_active = 0;
+
 	pts->pts_timers[timerid] = pt;
 	mutex_spin_exit(&timer_lock);
 
@@ -623,13 +626,16 @@ sys_timer_delete(struct lwp *l, const struct sys_timer_delete_args *uap,
 		mutex_spin_exit(&timer_lock);
 		return (EINVAL);
 	}
-	if (pt->pt_active) {
-		ptn = LIST_NEXT(pt, pt_list);
-		LIST_REMOVE(pt, pt_list);
-		for ( ; ptn; ptn = LIST_NEXT(ptn, pt_list))
-			timeradd(&pt->pt_time.it_value, &ptn->pt_time.it_value,
-			    &ptn->pt_time.it_value);
-		pt->pt_active = 0;
+	if (pt->pt_type != CLOCK_REALTIME) {
+		if (pt->pt_active) {
+			ptn = LIST_NEXT(pt, pt_list);
+			LIST_REMOVE(pt, pt_list);
+			for ( ; ptn; ptn = LIST_NEXT(ptn, pt_list))
+				timespecadd(&pt->pt_time.it_value,
+				    &ptn->pt_time.it_value,
+				    &ptn->pt_time.it_value);
+			pt->pt_active = 0;
+		}
 	}
 	itimerfree(pts, timerid);
 
@@ -652,12 +658,12 @@ timer_settime(struct ptimer *pt)
 
 	if (pt->pt_type == CLOCK_REALTIME) {
 		callout_stop(&pt->pt_ch);
-		if (timerisset(&pt->pt_time.it_value)) {
+		if (timespecisset(&pt->pt_time.it_value)) {
 			/*
-			 * Don't need to check hzto() return value, here.
+			 * Don't need to check tshzto() return value, here.
 			 * callout_reset() does it for us.
 			 */
-			callout_reset(&pt->pt_ch, hzto(&pt->pt_time.it_value),
+			callout_reset(&pt->pt_ch, tshzto(&pt->pt_time.it_value),
 			    realtimerexpire, pt);
 		}
 	} else {
@@ -665,21 +671,21 @@ timer_settime(struct ptimer *pt)
 			ptn = LIST_NEXT(pt, pt_list);
 			LIST_REMOVE(pt, pt_list);
 			for ( ; ptn; ptn = LIST_NEXT(ptn, pt_list))
-				timeradd(&pt->pt_time.it_value,
+				timespecadd(&pt->pt_time.it_value,
 				    &ptn->pt_time.it_value,
 				    &ptn->pt_time.it_value);
 		}
-		if (timerisset(&pt->pt_time.it_value)) {
+		if (timespecisset(&pt->pt_time.it_value)) {
 			if (pt->pt_type == CLOCK_VIRTUAL)
 				ptl = &pt->pt_proc->p_timers->pts_virtual;
 			else
 				ptl = &pt->pt_proc->p_timers->pts_prof;
 
 			for (ptn = LIST_FIRST(ptl), pptn = NULL;
-			     ptn && timercmp(&pt->pt_time.it_value,
+			     ptn && timespeccmp(&pt->pt_time.it_value,
 				 &ptn->pt_time.it_value, >);
 			     pptn = ptn, ptn = LIST_NEXT(ptn, pt_list))
-				timersub(&pt->pt_time.it_value,
+				timespecsub(&pt->pt_time.it_value,
 				    &ptn->pt_time.it_value,
 				    &pt->pt_time.it_value);
 
@@ -689,7 +695,7 @@ timer_settime(struct ptimer *pt)
 				LIST_INSERT_HEAD(ptl, pt, pt_list);
 
 			for ( ; ptn ; ptn = LIST_NEXT(ptn, pt_list))
-				timersub(&ptn->pt_time.it_value,
+				timespecsub(&ptn->pt_time.it_value,
 				    &pt->pt_time.it_value,
 				    &ptn->pt_time.it_value);
 
@@ -700,14 +706,14 @@ timer_settime(struct ptimer *pt)
 }
 
 void
-timer_gettime(struct ptimer *pt, struct itimerval *aitv)
+timer_gettime(struct ptimer *pt, struct itimerspec *aits)
 {
-	struct timeval now;
+	struct timespec now;
 	struct ptimer *ptn;
 
 	KASSERT(mutex_owned(&timer_lock));
 
-	*aitv = pt->pt_time;
+	*aits = pt->pt_time;
 	if (pt->pt_type == CLOCK_REALTIME) {
 		/*
 		 * Convert from absolute to relative time in .it_value
@@ -716,13 +722,13 @@ timer_gettime(struct ptimer *pt, struct itimerval *aitv)
 		 * between current time and time for the timer to go
 		 * off.
 		 */
-		if (timerisset(&aitv->it_value)) {
-			getmicrotime(&now);
-			if (timercmp(&aitv->it_value, &now, <))
-				timerclear(&aitv->it_value);
+		if (timespecisset(&aits->it_value)) {
+			getnanotime(&now);
+			if (timespeccmp(&aits->it_value, &now, <))
+				timespecclear(&aits->it_value);
 			else
-				timersub(&aitv->it_value, &now,
-				    &aitv->it_value);
+				timespecsub(&aits->it_value, &now,
+				    &aits->it_value);
 		}
 	} else if (pt->pt_active) {
 		if (pt->pt_type == CLOCK_VIRTUAL)
@@ -730,11 +736,11 @@ timer_gettime(struct ptimer *pt, struct itimerval *aitv)
 		else
 			ptn = LIST_FIRST(&pt->pt_proc->p_timers->pts_prof);
 		for ( ; ptn && ptn != pt; ptn = LIST_NEXT(ptn, pt_list))
-			timeradd(&aitv->it_value,
-			    &ptn->pt_time.it_value, &aitv->it_value);
+			timespecadd(&aits->it_value,
+			    &ptn->pt_time.it_value, &aits->it_value);
 		KASSERT(ptn != NULL); /* pt should be findable on the list */
 	} else
-		timerclear(&aitv->it_value);
+		timespecclear(&aits->it_value);
 }
 
 
@@ -774,8 +780,8 @@ int
 dotimer_settime(int timerid, struct itimerspec *value,
     struct itimerspec *ovalue, int flags, struct proc *p)
 {
-	struct timeval now;
-	struct itimerval val, oval;
+	struct timespec now;
+	struct itimerspec val, oval;
 	struct ptimers *pts;
 	struct ptimer *pt;
 
@@ -783,15 +789,14 @@ dotimer_settime(int timerid, struct itimerspec *value,
 
 	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
 		return EINVAL;
-	TIMESPEC_TO_TIMEVAL(&val.it_value, &value->it_value);
-	TIMESPEC_TO_TIMEVAL(&val.it_interval, &value->it_interval);
-	if (itimerfix(&val.it_value) || itimerfix(&val.it_interval))
-		return (EINVAL);
+	val = *value;
+	if (itimespecfix(&val.it_value) || itimespecfix(&val.it_interval))
+		return EINVAL;
 
 	mutex_spin_enter(&timer_lock);
 	if ((pt = pts->pts_timers[timerid]) == NULL) {
 		mutex_spin_exit(&timer_lock);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	oval = pt->pt_time;
@@ -804,22 +809,22 @@ dotimer_settime(int timerid, struct itimerspec *value,
 	 * to zero, which would cancel the timer, or let it go
 	 * negative, which would confuse the comparison tests.
 	 */
-	if (timerisset(&pt->pt_time.it_value)) {
+	if (timespecisset(&pt->pt_time.it_value)) {
 		if (pt->pt_type == CLOCK_REALTIME) {
 			if ((flags & TIMER_ABSTIME) == 0) {
-				getmicrotime(&now);
-				timeradd(&pt->pt_time.it_value, &now,
+				getnanotime(&now);
+				timespecadd(&pt->pt_time.it_value, &now,
 				    &pt->pt_time.it_value);
 			}
 		} else {
 			if ((flags & TIMER_ABSTIME) != 0) {
-				getmicrotime(&now);
-				timersub(&pt->pt_time.it_value, &now,
+				getnanotime(&now);
+				timespecsub(&pt->pt_time.it_value, &now,
 				    &pt->pt_time.it_value);
-				if (!timerisset(&pt->pt_time.it_value) ||
+				if (!timespecisset(&pt->pt_time.it_value) ||
 				    pt->pt_time.it_value.tv_sec < 0) {
 					pt->pt_time.it_value.tv_sec = 0;
-					pt->pt_time.it_value.tv_usec = 1;
+					pt->pt_time.it_value.tv_nsec = 1;
 				}
 			}
 		}
@@ -828,10 +833,8 @@ dotimer_settime(int timerid, struct itimerspec *value,
 	timer_settime(pt);
 	mutex_spin_exit(&timer_lock);
 
-	if (ovalue) {
-		TIMEVAL_TO_TIMESPEC(&oval.it_value, &ovalue->it_value);
-		TIMEVAL_TO_TIMESPEC(&oval.it_interval, &ovalue->it_interval);
-	}
+	if (ovalue)
+		*ovalue = oval;
 
 	return (0);
 }
@@ -860,7 +863,6 @@ dotimer_gettime(int timerid, struct proc *p, struct itimerspec *its)
 {
 	struct ptimer *pt;
 	struct ptimers *pts;
-	struct itimerval aitv;
 
 	pts = p->p_timers;
 	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
@@ -870,11 +872,8 @@ dotimer_gettime(int timerid, struct proc *p, struct itimerspec *its)
 		mutex_spin_exit(&timer_lock);
 		return (EINVAL);
 	}
-	timer_gettime(pt, &aitv);
+	timer_gettime(pt, its);
 	mutex_spin_exit(&timer_lock);
-
-	TIMEVAL_TO_TIMESPEC(&aitv.it_interval, &its->it_interval);
-	TIMEVAL_TO_TIMESPEC(&aitv.it_value, &its->it_value);
 
 	return 0;
 }
@@ -924,7 +923,7 @@ void
 realtimerexpire(void *arg)
 {
 	uint64_t last_val, next_val, interval, now_ms;
-	struct timeval now, next;
+	struct timespec now, next;
 	struct ptimer *pt;
 	int backwards;
 
@@ -933,24 +932,22 @@ realtimerexpire(void *arg)
 	mutex_spin_enter(&timer_lock);
 	itimerfire(pt);
 
-	if (!timerisset(&pt->pt_time.it_interval)) {
-		timerclear(&pt->pt_time.it_value);
+	if (!timespecisset(&pt->pt_time.it_interval)) {
+		timespecclear(&pt->pt_time.it_value);
 		mutex_spin_exit(&timer_lock);
 		return;
 	}
 
-	getmicrotime(&now);
-	backwards = (timercmp(&pt->pt_time.it_value, &now, >));
-	timeradd(&pt->pt_time.it_value, &pt->pt_time.it_interval, &next);
+	getnanotime(&now);
+	backwards = (timespeccmp(&pt->pt_time.it_value, &now, >));
+	timespecadd(&pt->pt_time.it_value, &pt->pt_time.it_interval, &next);
 	/* Handle the easy case of non-overflown timers first. */
-	if (!backwards && timercmp(&next, &now, >)) {
+	if (!backwards && timespeccmp(&next, &now, >)) {
 		pt->pt_time.it_value = next;
 	} else {
-#define TV2MS(x) (((uint64_t)(x)->tv_sec) * 1000000 + (x)->tv_usec)
-		now_ms = TV2MS(&now);
-		last_val = TV2MS(&pt->pt_time.it_value);
-		interval = TV2MS(&pt->pt_time.it_interval);
-#undef TV2MS
+		now_ms = timespec2ns(&now);
+		last_val = timespec2ns(&pt->pt_time.it_value);
+		interval = timespec2ns(&pt->pt_time.it_interval);
 
 		next_val = now_ms +
 		    (now_ms - last_val + interval - 1) % interval;
@@ -960,15 +957,15 @@ realtimerexpire(void *arg)
 		else
 			pt->pt_overruns += (now_ms - last_val) / interval;
 
-		pt->pt_time.it_value.tv_sec = next_val / 1000000;
-		pt->pt_time.it_value.tv_usec = next_val % 1000000;
+		pt->pt_time.it_value.tv_sec = next_val / 1000000000;
+		pt->pt_time.it_value.tv_nsec = next_val % 1000000000;
 	}
 
 	/*
-	 * Don't need to check hzto() return value, here.
+	 * Don't need to check tshzto() return value, here.
 	 * callout_reset() does it for us.
 	 */
-	callout_reset(&pt->pt_ch, hzto(&pt->pt_time.it_value),
+	callout_reset(&pt->pt_ch, tshzto(&pt->pt_time.it_value),
 	    realtimerexpire, pt);
 	mutex_spin_exit(&timer_lock);
 }
@@ -998,6 +995,7 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 {
 	struct ptimers *pts;
 	struct ptimer *pt;
+	struct itimerspec its;
 
 	if ((u_int)which > ITIMER_PROF)
 		return (EINVAL);
@@ -1007,8 +1005,11 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 	if (pts == NULL || (pt = pts->pts_timers[which]) == NULL) {
 		timerclear(&itvp->it_value);
 		timerclear(&itvp->it_interval);
-	} else
-		timer_gettime(pt, itvp);
+	} else {
+		TIMEVAL_TO_TIMESPEC(&itvp->it_value, &its.it_value);
+		TIMEVAL_TO_TIMESPEC(&itvp->it_interval, &its.it_interval);
+		timer_gettime(pt, &its);
+	}
 	mutex_spin_exit(&timer_lock);	
 
 	return 0;
@@ -1053,7 +1054,7 @@ sys_setitimer(struct lwp *l, const struct sys_setitimer_args *uap,
 int
 dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 {
-	struct timeval now;
+	struct timespec now;
 	struct ptimers *pts;
 	struct ptimer *pt, *spare;
 
@@ -1088,9 +1089,12 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		pt->pt_proc = p;
 		pt->pt_type = which;
 		pt->pt_entry = which;
-		pt->pt_active = 0;
 		pt->pt_queued = false;
-		callout_init(&pt->pt_ch, CALLOUT_MPSAFE);
+		if (pt->pt_type == CLOCK_REALTIME)
+			callout_init(&pt->pt_ch, CALLOUT_MPSAFE);
+		else
+			pt->pt_active = 0;
+
 		switch (which) {
 		case ITIMER_REAL:
 			pt->pt_ev.sigev_signo = SIGALRM;
@@ -1104,13 +1108,15 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		}
 		pts->pts_timers[which] = pt;
 	}
-	pt->pt_time = *itvp;
 
-	if ((which == ITIMER_REAL) && timerisset(&pt->pt_time.it_value)) {
+	TIMEVAL_TO_TIMESPEC(&itvp->it_value, &pt->pt_time.it_value);
+	TIMEVAL_TO_TIMESPEC(&itvp->it_interval, &pt->pt_time.it_interval);
+
+	if ((which == ITIMER_REAL) && timespecisset(&pt->pt_time.it_value)) {
 		/* Convert to absolute time */
 		/* XXX need to wrap in splclock for timecounters case? */
-		getmicrotime(&now);
-		timeradd(&pt->pt_time.it_value, &now, &pt->pt_time.it_value);
+		getnanotime(&now);
+		timespecadd(&pt->pt_time.it_value, &now, &pt->pt_time.it_value);
 	}
 	timer_settime(pt);
 	mutex_spin_exit(&timer_lock);
@@ -1156,7 +1162,7 @@ timers_free(struct proc *p, int which)
 {
 	struct ptimers *pts;
 	struct ptimer *ptn;
-	struct timeval tv;
+	struct timespec ts;
 	int i;
 
 	if (p->p_timers == NULL)
@@ -1168,25 +1174,31 @@ timers_free(struct proc *p, int which)
 		p->p_timers = NULL;
 		i = 0;
 	} else {
-		timerclear(&tv);
+		timespecclear(&ts);
 		for (ptn = LIST_FIRST(&pts->pts_virtual);
 		     ptn && ptn != pts->pts_timers[ITIMER_VIRTUAL];
-		     ptn = LIST_NEXT(ptn, pt_list))
-			timeradd(&tv, &ptn->pt_time.it_value, &tv);
+		     ptn = LIST_NEXT(ptn, pt_list)) {
+			KASSERT(ptn->pt_type != CLOCK_REALTIME);
+			timespecadd(&ts, &ptn->pt_time.it_value, &ts);
+		}
 		LIST_FIRST(&pts->pts_virtual) = NULL;
 		if (ptn) {
-			timeradd(&tv, &ptn->pt_time.it_value,
+			KASSERT(ptn->pt_type != CLOCK_REALTIME);
+			timespecadd(&ts, &ptn->pt_time.it_value,
 			    &ptn->pt_time.it_value);
 			LIST_INSERT_HEAD(&pts->pts_virtual, ptn, pt_list);
 		}
-		timerclear(&tv);
+		timespecclear(&ts);
 		for (ptn = LIST_FIRST(&pts->pts_prof);
 		     ptn && ptn != pts->pts_timers[ITIMER_PROF];
-		     ptn = LIST_NEXT(ptn, pt_list))
-			timeradd(&tv, &ptn->pt_time.it_value, &tv);
+		     ptn = LIST_NEXT(ptn, pt_list)) {
+			KASSERT(ptn->pt_type != CLOCK_REALTIME);
+			timespecadd(&ts, &ptn->pt_time.it_value, &ts);
+		}
 		LIST_FIRST(&pts->pts_prof) = NULL;
 		if (ptn) {
-			timeradd(&tv, &ptn->pt_time.it_value,
+			KASSERT(ptn->pt_type != CLOCK_REALTIME);
+			timespecadd(&ts, &ptn->pt_time.it_value,
 			    &ptn->pt_time.it_value);
 			LIST_INSERT_HEAD(&pts->pts_prof, ptn, pt_list);
 		}
@@ -1221,7 +1233,8 @@ itimerfree(struct ptimers *pts, int index)
 	else if (pt->pt_queued)
 		TAILQ_REMOVE(&timer_queue, pt, pt_chain);
 	mutex_spin_exit(&timer_lock);
-	callout_destroy(&pt->pt_ch);
+	if (pt->pt_type == CLOCK_REALTIME)
+		callout_destroy(&pt->pt_ch);
 	pool_put(&ptimer_pool, pt);
 }
 
@@ -1238,36 +1251,37 @@ itimerfree(struct ptimers *pts, int index)
 static int
 itimerdecr(struct ptimer *pt, int usec)
 {
-	struct itimerval *itp;
+	struct itimerspec *itp;
+	int nsec = usec * 1000;
 
 	KASSERT(mutex_owned(&timer_lock));
 
 	itp = &pt->pt_time;
-	if (itp->it_value.tv_usec < usec) {
+	if (itp->it_value.tv_nsec < nsec) {
 		if (itp->it_value.tv_sec == 0) {
 			/* expired, and already in next interval */
-			usec -= itp->it_value.tv_usec;
+			nsec -= itp->it_value.tv_nsec;
 			goto expire;
 		}
-		itp->it_value.tv_usec += 1000000;
+		itp->it_value.tv_nsec += 1000000000;
 		itp->it_value.tv_sec--;
 	}
-	itp->it_value.tv_usec -= usec;
+	itp->it_value.tv_nsec -= usec;
 	usec = 0;
-	if (timerisset(&itp->it_value))
+	if (timespecisset(&itp->it_value))
 		return (1);
 	/* expired, exactly at end of interval */
 expire:
-	if (timerisset(&itp->it_interval)) {
+	if (timespecisset(&itp->it_interval)) {
 		itp->it_value = itp->it_interval;
-		itp->it_value.tv_usec -= usec;
-		if (itp->it_value.tv_usec < 0) {
-			itp->it_value.tv_usec += 1000000;
+		itp->it_value.tv_nsec -= nsec;
+		if (itp->it_value.tv_nsec < 0) {
+			itp->it_value.tv_nsec += 1000000000;
 			itp->it_value.tv_sec--;
 		}
 		timer_settime(pt);
 	} else
-		itp->it_value.tv_usec = 0;		/* sec is already 0 */
+		itp->it_value.tv_nsec = 0;		/* sec is already 0 */
 	return (0);
 }
 

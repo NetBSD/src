@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cp.c,v 1.8 2008/05/02 01:29:36 bjs Exp $	*/
+/*	$NetBSD: radeon_cp.c,v 1.8.4.1 2008/07/18 16:37:35 simonb Exp $	*/
 
 /* radeon_cp.c -- CP support for Radeon -*- linux-c -*- */
 /*-
@@ -31,16 +31,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cp.c,v 1.8 2008/05/02 01:29:36 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cp.c,v 1.8.4.1 2008/07/18 16:37:35 simonb Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_cp.c,v 1.19 2006/09/07 23:04:47 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/radeon_drm.h>
-#include <dev/pci/drm/radeon_drv.h>
-#include <dev/pci/drm/r300_reg.h>
+#include "drmP.h"
+#include "drm.h"
+#include "radeon_drm.h"
+#include "radeon_drv.h"
+#include "r300_reg.h"
 
 #define RADEON_FIFO_DEBUG	0
 
@@ -850,7 +850,7 @@ static u32 RADEON_READ_IGPGART(drm_radeon_private_t *dev_priv, int addr)
 #if RADEON_FIFO_DEBUG
 static void radeon_status(drm_radeon_private_t * dev_priv)
 {
-	printf("%s:\n", __func__);
+	printf("%s:\n", __FUNCTION__);
 	printf("RBBM_STATUS = 0x%08x\n",
 	       (unsigned int)RADEON_READ(RADEON_RBBM_STATUS));
 	printf("CP_RB_RTPR = 0x%08x\n",
@@ -1866,12 +1866,12 @@ int radeon_cp_start(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (dev_priv->cp_running) {
-		DRM_DEBUG("%s while CP running\n", __func__);
+		DRM_DEBUG("%s while CP running\n", __FUNCTION__);
 		return 0;
 	}
 	if (dev_priv->cp_mode == RADEON_CSQ_PRIDIS_INDDIS) {
 		DRM_DEBUG("%s called with bogus CP mode (%d)\n",
-			  __func__, dev_priv->cp_mode);
+			  __FUNCTION__, dev_priv->cp_mode);
 		return 0;
 	}
 
@@ -1987,7 +1987,7 @@ int radeon_cp_reset(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_DEBUG("%s called before init done\n", __func__);
+		DRM_DEBUG("%s called before init done\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 

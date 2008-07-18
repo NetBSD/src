@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.6.4.1 2008/07/18 16:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,8 +45,7 @@
 
 extern const char bootprog_name[];
 extern const char bootprog_rev[];
-extern const char bootprog_date[];
-extern const char bootprog_maker[];
+extern const char bootprog_kernrev[];
 
 struct cmd_batch_tab cmd_batch_tab[] = {
 	/* func    argc   argp... */
@@ -82,8 +81,8 @@ main(int a0, int v0, int v1)
 	console_init();
 
 	printf("\n");
-	printf("%s boot, Revision %s\n", bootprog_name, bootprog_rev);
-	printf("(%s, %s)\n", bootprog_date, bootprog_maker);
+	printf("%s boot, Revision %s (from NetBSD %s)\n",
+	    bootprog_name, bootprog_rev, bootprog_kernrev);
 
 
 	/* Inquire IPL activated device */
@@ -182,8 +181,8 @@ cmd_info(int argc, char *argp[], int interactive)
 	int i, size, total;
 	struct sbdinfo *sbd = SBD_INFO;
 
-	printf("\n>> %s boot, rev. %s [%s, %s] <<\n", bootprog_name,
-	    bootprog_rev, bootprog_date, bootprog_maker);
+	printf("\n>> %s boot, Revision %s (from NetBSD %s) <<\n",
+	    bootprog_name, bootprog_rev, bootprog_kernrev);
 
 	printf("IPL args: 0x%x 0x%x 0x%x\n", ipl_args.a0, ipl_args.v0,
 	    ipl_args.v1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.45.4.1 2008/06/18 16:33:03 simonb Exp $	*/
+/*	$NetBSD: fss.c,v 1.45.4.2 2008/07/18 16:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.45.4.1 2008/06/18 16:33:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.45.4.2 2008/07/18 16:37:31 simonb Exp $");
 
 #include "fss.h"
 
@@ -1013,8 +1013,6 @@ fss_bs_thread(void *arg)
 
 	scl = sc->sc_cache+sc->sc_cache_size;
 
-	nbp = getiobuf(NULL, true);
-
 	nfreed = nio = 1;		/* Dont sleep the first time */
 
 	FSS_LOCK(sc, s);
@@ -1030,7 +1028,6 @@ fss_bs_thread(void *arg)
 
 			FSS_UNLOCK(sc, s);
 
-			putiobuf(nbp);
 #ifdef FSS_STATISTICS
 			if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
 				printf("fss%d: cow called %" PRId64 " times,"
@@ -1142,7 +1139,7 @@ fss_bs_thread(void *arg)
 
 		FSS_UNLOCK(sc, s);
 
-		buf_init(nbp);
+		nbp = getiobuf(NULL, true);
 		nbp->b_flags = B_READ;
 		nbp->b_bcount = bp->b_bcount;
 		nbp->b_bufsize = bp->b_bcount;
@@ -1159,6 +1156,7 @@ fss_bs_thread(void *arg)
 			bp->b_resid = bp->b_bcount;
 			bp->b_error = nbp->b_error;
 			biodone(bp);
+			putiobuf(nbp);
 			FSS_LOCK(sc, s);
 			continue;
 		}
@@ -1168,6 +1166,7 @@ fss_bs_thread(void *arg)
 		ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
 		bp->b_resid = bp->b_bcount;
 		addr = bp->b_data;
+		putiobuf(nbp);
 
 		FSS_LOCK(sc, s);
 

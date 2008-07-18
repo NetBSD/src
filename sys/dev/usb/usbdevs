@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.500.2.1 2008/06/27 15:11:28 simonb Exp $
+$NetBSD: usbdevs,v 1.500.2.2 2008/07/18 16:37:44 simonb Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1832,6 +1832,7 @@ product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE
 /* Qcom products */
 product QCOM RT2573		0x6196	RT2573
 product QCOM RT2573_2		0x6229	RT2573
+product QCOM RT2573_3		0x6238	RT2573
 
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
@@ -1963,6 +1964,7 @@ product SHARP SL5600		0x8006	SL5600
 product SHARP C700		0x8007	C700
 product SHARP C750		0x9031	C750
 product SHARP WS007SH		0x9123	WS007SH
+product SHARP WS011SH		0x91ac	WS011SH
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
