@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.99.4.2 2008/06/12 08:39:22 martin Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.99.4.3 2008/07/18 14:48:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.99.4.2 2008/06/12 08:39:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.99.4.3 2008/07/18 14:48:02 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -294,7 +294,11 @@ ffs_fsync(void *v)
 	 */
 	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(vp) ||
 	    (vp->v_type != VREG)) {
-		error = ffs_full_fsync(vp, ap->a_flags);
+		int flags = ap->a_flags;
+
+		if (vp->v_type == VBLK)
+			flags |= FSYNC_VFS;
+		error = ffs_full_fsync(vp, flags);
 		goto out;
 	}
 
@@ -418,9 +422,8 @@ ffs_full_fsync(struct vnode *vp, int flags)
 	 * Flush all dirty data associated with a vnode.
 	 */
 
-	mp = NULL;
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
-		if ((flags & FSYNC_VFS) != 0)
+		if ((flags & FSYNC_VFS) != 0 && vp->v_specmountpoint != NULL)
 			mp = vp->v_specmountpoint;
 		else
 			mp = vp->v_mount;
@@ -430,19 +433,20 @@ ffs_full_fsync(struct vnode *vp, int flags)
 			PGO_FREE : 0));
 		if (error)
 			return error;
-	} else
+	} else {
+		mp = vp->v_mount;
 		mutex_exit(&vp->v_interlock);
+	}
 
 #ifdef WAPBL
-	mp = wapbl_vptomp(vp);	/* XXXXXX anti-kern/38057 hack */
 	if (mp && mp->mnt_wapbl) {
 		error = 0;
 		if (flags & FSYNC_DATAONLY)
 			return error;
 
-		if (VTOI(vp)->i_flag &
+		if (VTOI(vp) && (VTOI(vp)->i_flag &
 		    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY |
-				 IN_MODIFIED | IN_ACCESSED)) {
+				 IN_MODIFIED | IN_ACCESSED))) {
 			error = UFS_WAPBL_BEGIN(mp);
 			if (error)
 				return error;
@@ -569,8 +573,10 @@ loop:
 
 	if (error == 0 && flags & FSYNC_CACHE) {
 		int i = 0;
-		if ((flags & FSYNC_VFS) == 0)
+		if ((flags & FSYNC_VFS) == 0) {
+			KASSERT(VTOI(vp) != NULL);
 			vp = VTOI(vp)->i_devvp;
+		}
 		VOP_IOCTL(vp, DIOCCACHESYNC, &i, FWRITE, curlwp->l_cred);
 	}
 
