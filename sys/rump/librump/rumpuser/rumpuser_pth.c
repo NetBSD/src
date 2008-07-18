@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.13 2008/07/01 12:33:33 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.14 2008/07/18 16:19:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -328,6 +328,13 @@ rumpuser_cv_broadcast(struct rumpuser_cv *cv)
 {
 
 	NOFAIL_ERRNO(pthread_cond_broadcast(&cv->pthcv));
+}
+
+bool
+rumpuser_cv_has_waiters(struct rumpuser_cv *cv)
+{
+
+	return pthread_cond_has_waiters_np(&cv->pthcv);
 }
 
 /*
