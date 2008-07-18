@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.20 2008/07/01 12:33:32 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.21 2008/07/18 16:15:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -217,6 +217,7 @@ rump_specstrategy(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
 	struct rump_specpriv *sp;
+	int async;
 	off_t off;
 
 	assert(vp->v_type == VBLK);
@@ -241,7 +242,8 @@ rump_specstrategy(void *v)
 	 * Synchronous I/O is done directly in the context mainly to
 	 * avoid unnecessary scheduling with the I/O thread.
 	 */
-	if (bp->b_flags & B_ASYNC) {
+	async = bp->b_flags & B_ASYNC;
+	if (async) {
 #ifdef RUMP_WITHOUT_THREADS
 		goto syncfallback;
 #else
@@ -287,7 +289,8 @@ rump_specstrategy(void *v)
 			rumpuser_write_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		}
-		biowait(bp);
+		if (!async)
+			biowait(bp);
 	}
 
 	return 0;
