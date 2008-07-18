@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.12 2008/07/16 09:36:08 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.13 2008/07/18 16:21:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.12 2008/07/16 09:36:08 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.13 2008/07/18 16:21:12 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1402,7 +1402,7 @@ udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb,
 int
 udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 	struct udf_mount *ump = udf_node->ump;
-	union dscrptr          *dscr;
+	union dscrptr          *dscr, *extdscr;
 	struct file_entry      *fe;
 	struct extfile_entry   *efe;
 	struct alloc_ext_entry *ext;
@@ -1564,8 +1564,8 @@ udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 			l_icb.loc.part_num = udf_rw16(vpart_num);
 
 			/* create new aed descriptor */
-			udf_create_logvol_dscr(ump, udf_node, &l_icb,
-				(union dscrptr **) &ext);
+			udf_create_logvol_dscr(ump, udf_node, &l_icb, &extdscr);
+			ext = &extdscr->aee;
 
 			udf_inittag(ump, &ext->tag, TAGID_ALLOCEXTENT, lb_num);
 			dscr_size  = sizeof(struct alloc_ext_entry) -1;
