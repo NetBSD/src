@@ -1,4 +1,4 @@
-#	$NetBSD: aliases,v 1.20 2006/05/30 02:10:01 christos Exp $
+#	$NetBSD: aliases,v 1.21 2008/07/18 21:12:03 apb Exp $
 #
 #	from: @(#)aliases	8.2 (Berkeley) 3/5/94
 #
@@ -52,5 +52,5 @@ ftp:		root
 # don't enable this.
 # decode:	/dev/null
 
-# uncomment this for msgs:
+# uncomment this for msgs(1):
 # msgs: "|/usr/bin/msgs -s"
