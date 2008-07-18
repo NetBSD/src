@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.61 2008/07/18 13:39:41 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.62 2008/07/18 14:18:51 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.61 2008/07/18 13:39:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.62 2008/07/18 14:18:51 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -4063,18 +4063,13 @@ udf_dirhash_lookup(struct udf_node *dir_node, const char *d_name, int d_namlen,
 		KASSERT(dir_node->dir_hash);
 		dirh_e = *result;
 
-		/* retrieve information */
+		/* retrieve information to avoid recalculation and advance */
 		hashvalue = dirh_e->hashvalue;
-		d_namlen  = dirh_e->d_namlen;
-
-		/* advance */
 		dirh_e = LIST_NEXT(*result, next);
 	} else {
-		/* calculate our hash */
+		/* calculate our hash and lookup all entries in hashline */
 		hashvalue = udf_dirhash_hash(d_name, d_namlen);
 		hashline  = hashvalue & UDF_DIRHASH_HASHMASK;
-
-		/* lookup all entries that match */
 		dirh_e = LIST_FIRST(&dirh->entries[hashline]);
 	}
 
