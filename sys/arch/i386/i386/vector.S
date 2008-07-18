@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.39.2.2 2008/07/03 18:37:53 simonb Exp $	*/
+/*	$NetBSD: vector.S,v 1.39.2.3 2008/07/18 16:37:28 simonb Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.39.2.2 2008/07/03 18:37:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.39.2.3 2008/07/18 16:37:28 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1222,17 +1222,17 @@ NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
 /* LINTSTUB: Var: char resume_pop_ds[1]; */
 NENTRY(resume_pop_ds)
-	movl	%es,TF_ES(%esp)
+	movw	%es,TF_ES(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%es
 /* LINTSTUB: Var: char resume_pop_es[1]; */
 NENTRY(resume_pop_es)
-	movl	%fs,TF_FS(%esp)
+	movw	%fs,TF_FS(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%fs
 /* LINTSTUB: Var: char resume_pop_fs[1]; */
 NENTRY(resume_pop_fs)
-	movl	%gs,TF_GS(%esp)
+	movw	%gs,TF_GS(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%gs
 /* LINTSTUB: Var: char resume_pop_gs[1]; */

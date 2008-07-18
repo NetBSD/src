@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.81.2.1 2008/06/18 16:32:49 simonb Exp $ */
+/*	$NetBSD: cpu.h,v 1.81.2.2 2008/07/18 16:37:30 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -193,6 +193,7 @@ extern struct cpu_bootargs *cpu_args;
 
 extern int sparc_ncpus;
 extern struct cpu_info *cpus;
+extern struct pool_cache *fpstate_cache;
 
 #define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
 #define	cpu_number()	(curcpu()->ci_index)

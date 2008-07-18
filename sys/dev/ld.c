@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.58.4.3 2008/06/18 16:33:03 simonb Exp $	*/
+/*	$NetBSD: ld.c,v 1.58.4.4 2008/07/18 16:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.58.4.3 2008/06/18 16:33:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.58.4.4 2008/07/18 16:37:31 simonb Exp $");
 
 #include "rnd.h"
 
@@ -915,6 +915,6 @@ ld_set_properties(struct ld_softc *ld)
 static void
 ld_config_interrupts (struct device *d)
 {
-	struct ld_softc *sc = (struct ld_softc *)d;
+	struct ld_softc *sc = device_private(d);
 	dkwedge_discover(&sc->sc_dk);
 }

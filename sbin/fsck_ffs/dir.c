@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.50 2008/02/23 21:41:48 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.50.6.1 2008/07/18 16:28:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.50 2008/02/23 21:41:48 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.50.6.1 2008/07/18 16:28:48 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -270,7 +270,7 @@ fsck_readdir(struct inodesc *idesc)
 		if (fix)
 			dirty(bp);
 		else 
-			markclean=  0;
+			markclean = 0;
 		idesc->id_loc += dirblksiz;
 		idesc->id_filesize -= dirblksiz;
 		return (dp);
@@ -299,7 +299,7 @@ dpok:
 		if (fix)
 			dirty(bp);
 		else 
-			markclean=  0;
+			markclean = 0;
 	}
 	return (dp);
 }
@@ -438,7 +438,7 @@ adjust(struct inodesc *idesc, int lcnt)
 			DIP_SET(dp, nlink, iswap16(nlink - lcnt));
 			inodirty();
 		} else 
-			markclean=  0;
+			markclean = 0;
 	}
 }
 

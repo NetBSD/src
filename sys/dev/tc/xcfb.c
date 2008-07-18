@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.46 2008/05/26 10:31:22 nisimura Exp $ */
+/* $NetBSD: xcfb.c,v 1.46.2.1 2008/07/18 16:37:43 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.46 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.46.2.1 2008/07/18 16:37:43 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ struct hwcursor64 {
 #define	IMS332_WLOW	(IOASIC_SLOT_7_START + 0x20000)
 
 struct xcfb_softc {
-	struct device sc_dev;
 	vaddr_t sc_vaddr;
 	size_t sc_size;
 	struct rasops_info *sc_ri;
@@ -98,7 +97,7 @@ struct xcfb_softc {
 static int  xcfbmatch(struct device *, struct cfdata *, void *);
 static void xcfbattach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(xcfb, sizeof(struct xcfb_softc),
+CFATTACH_DECL_NEW(xcfb, sizeof(struct xcfb_softc),
     xcfbmatch, xcfbattach, NULL, NULL);
 
 static tc_addr_t xcfb_consaddr;
@@ -202,7 +201,7 @@ static const u_int8_t shuffle[256] = {
 };
 
 static int
-xcfbmatch(struct device *parent, struct cfdata *match, void *aux)
+xcfbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -213,7 +212,7 @@ xcfbmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-xcfbattach(struct device *parent, struct device *self, void *aux)
+xcfbattach(device_t parent, device_t self, void *aux)
 {
 	struct xcfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;

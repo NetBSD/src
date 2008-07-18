@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.63 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: pool.h,v 1.63.4.1 2008/07/18 16:37:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -225,6 +225,7 @@ struct pool_cache {
 	pcg_t		*pc_emptygroups;/* list of empty cache groups */
 	pcg_t		*pc_fullgroups;	/* list of full cache groups */
 	pcg_t		*pc_partgroups;	/* groups for reclamation */
+	struct pool	*pc_pcgpool;	/* Pool of cache groups */
 	int		pc_pcgsize;	/* Use large cache groups? */
 	int		pc_ncpu;	/* number cpus set up */
 	int		(*pc_ctor)(void *, void *, int);

@@ -1,4 +1,4 @@
-/* $NetBSD: via_drv.c,v 1.2.16.1 2008/07/03 18:38:04 simonb Exp $ */
+/* $NetBSD: via_drv.c,v 1.2.16.2 2008/07/18 16:37:35 simonb Exp $ */
 
 /* via_drv.c -- VIA unichrome driver -*- linux-c -*-
  * Created: Fri Aug 12 2005 by anholt@FreeBSD.org
@@ -33,13 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.2.16.1 2008/07/03 18:38:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.2.16.2 2008/07/18 16:37:35 simonb Exp $");
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/via_drm.h>
-#include <dev/pci/drm/via_drv.h>
-#include <dev/pci/drm/drm_pciids.h>
+#include "drmP.h"
+#include "drm.h"
+#include "via_drm.h"
+#include "via_drv.h"
+#include "drm_pciids.h"
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t via_pciidlist[] = {

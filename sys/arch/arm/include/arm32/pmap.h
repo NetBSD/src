@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.85 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.85.4.1 2008/07/18 16:37:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -236,6 +236,7 @@ extern pv_addr_t kernel_l1pt;
 #define	PVF_KNC		0x40		/* mapping is 'kernel' non-cacheable */
 #define	PVF_COLORED	0x80		/* page has or had a color */
 #define	PVF_KENTRY	0x0100		/* page entered via pmap_kenter_pa */
+#define	PVF_KMPAGE	0x0200		/* page is used for kmem */
 #define	PVF_NC		(PVF_UNC|PVF_KNC)
 
 /*

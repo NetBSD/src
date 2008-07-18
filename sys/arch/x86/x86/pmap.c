@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68.2.2 2008/06/27 15:11:18 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68.2.3 2008/07/18 16:37:31 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68.2.2 2008/06/27 15:11:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68.2.3 2008/07/18 16:37:31 simonb Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1019,6 +1019,8 @@ void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pt_entry_t *pte, opte, npte;
+
+	KASSERT(!(prot & ~VM_PROT_ALL));
 
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		pte = vtopte(va);
@@ -2962,7 +2964,7 @@ vaddr_t
 pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 {
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		pmap_kenter_pa(va, spa, prot);
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}

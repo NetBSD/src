@@ -1,4 +1,4 @@
-/*	$NetBSD: via_mm.c,v 1.2 2007/12/11 11:48:48 lukem Exp $	*/
+/*	$NetBSD: via_mm.c,v 1.2.16.1 2008/07/18 16:37:35 simonb Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -25,13 +25,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_mm.c,v 1.2 2007/12/11 11:48:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_mm.c,v 1.2.16.1 2008/07/18 16:37:35 simonb Exp $");
 
-#include <dev/drm/drmP.h>
-#include <dev/pci/drm/via_drm.h>
-#include <dev/pci/drm/via_drv.h>
-#include <dev/pci/drm/via_ds.h>
-#include <dev/pci/drm/via_mm.h>
+#include "drmP.h"
+#include "via_drm.h"
+#include "via_drv.h"
+#include "via_ds.h"
+#include "via_mm.h"
 
 #define MAX_CONTEXT 100
 

@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.28.2.2 2008/07/03 18:37:58 simonb Exp $ */
+/* $NetBSD: drmP.h,v 1.28.2.3 2008/07/18 16:37:32 simonb Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -482,7 +482,7 @@ do {									\
 	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ||		\
 	     dev->lock.filp != filp) {					\
 		DRM_ERROR("%s called without lock held\n",		\
-			   __func__);				\
+			   __FUNCTION__);				\
 		return EINVAL;						\
 	}								\
 } while (0)

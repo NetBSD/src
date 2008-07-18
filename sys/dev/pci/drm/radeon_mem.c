@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_mem.c,v 1.4 2007/12/15 00:39:34 perry Exp $	*/
+/*	$NetBSD: radeon_mem.c,v 1.4.14.1 2008/07/18 16:37:35 simonb Exp $	*/
 
 /* radeon_mem.c -- Simple GART/fb memory manager for radeon -*- linux-c -*- */
 /*-
@@ -32,15 +32,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_mem.c,v 1.4 2007/12/15 00:39:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_mem.c,v 1.4.14.1 2008/07/18 16:37:35 simonb Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_mem.c,v 1.8 2005/11/28 23:13:54 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/radeon_drm.h>
-#include <dev/pci/drm/radeon_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "radeon_drm.h"
+#include "radeon_drv.h"
 
 /* Very simple allocator for GART memory, working on a static range
  * already mapped into each client's address space.
@@ -233,7 +233,7 @@ int radeon_mem_alloc(DRM_IOCTL_ARGS)
 	struct mem_block *block, **heap;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -271,7 +271,7 @@ int radeon_mem_free(DRM_IOCTL_ARGS)
 	struct mem_block *block, **heap;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -301,7 +301,7 @@ int radeon_mem_init_heap(DRM_IOCTL_ARGS)
 	struct mem_block **heap;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __func__);
+		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
 		return DRM_ERR(EINVAL);
 	}
 

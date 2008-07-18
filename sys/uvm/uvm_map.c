@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.260 2008/06/06 14:01:32 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.260.2.1 2008/07/18 16:37:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.260 2008/06/06 14:01:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.260.2.1 2008/07/18 16:37:58 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1064,7 +1064,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	 * for pager_map, allocate the new entry first to avoid sleeping
 	 * for memory while we have the map locked.
 	 *
-	 * besides, because we allocates entries for in-kernel maps
+	 * Also, because we allocate entries for in-kernel maps
 	 * a bit differently (cf. uvm_kmapent_alloc/free), we need to
 	 * allocate them before locking the map.
 	 */
@@ -4516,7 +4516,8 @@ again:
 
 	va = args.uma_start;
 
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
 	pmap_update(vm_map_pmap(map));
 
 	ukh = (void *)va;

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.201.2.2 2008/07/03 18:38:12 simonb Exp $
+	$NetBSD: syscalls.master,v 1.201.2.3 2008/07/18 16:37:49 simonb Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -215,7 +215,7 @@
 93	STD 		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
-95	STD 		{ int sys_fsync(int fd); }
+95	STD	RUMP 	{ int sys_fsync(int fd); }
 96	STD 		{ int sys_setpriority(int which, id_t who, int prio); }
 97	COMPAT_30	{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
@@ -280,7 +280,7 @@
 			    int protocol, int *rsv); }
 136	STD 	 RUMP	{ int sys_mkdir(const char *path, mode_t mode); }
 137	STD 	 RUMP	{ int sys_rmdir(const char *path); }
-138	STD 		{ int sys_utimes(const char *path, \
+138	STD 	 RUMP	{ int sys_utimes(const char *path, \
 			    const struct timeval *tptr); }
 139	OBSOL		4.2 sigreturn
 140	STD 		{ int sys_adjtime(const struct timeval *delta, \
@@ -577,7 +577,7 @@
 274	STD 	 RUMP	{ int sys_lchmod(const char *path, mode_t mode); }
 275	STD 	 RUMP	{ int sys_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
-276	STD 		{ int sys_lutimes(const char *path, \
+276	STD 	 RUMP	{ int sys_lutimes(const char *path, \
 			    const struct timeval *tptr); }
 277	STD 		{ int sys___msync13(void *addr, size_t len, int flags); }
 278	COMPAT_30 	{ int sys___stat13(const char *path, struct stat13 *ub); }

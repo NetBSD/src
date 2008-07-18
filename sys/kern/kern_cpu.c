@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.32.2.1 2008/06/27 15:11:38 simonb Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.32.2.2 2008/07/18 16:37:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.32.2.1 2008/06/27 15:11:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.32.2.2 2008/07/18 16:37:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,19 +275,24 @@ cpu_xc_offline(struct cpu_info *ci)
 	mutex_enter(proc_lock);
 	spc_dlock(ci, mci);
 	LIST_FOREACH(l, &alllwp, l_list) {
-		lwp_lock(l);
-		if (l->l_cpu != ci || (l->l_pflag & LP_BOUND) != 0) {
-			lwp_unlock(l);
+		/*
+		 * Since runqueues are locked - LWPs cannot be enqueued (and
+		 * cannot change the state), thus is safe to perform the
+		 * checks without locking each LWP.
+		 */
+		if (l->l_cpu != ci || (l->l_pflag & LP_BOUND) != 0 ||
+		    l->l_stat != LSRUN)
 			continue;
-		}
-		if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
+		/* At this point, we are sure about the state of LWP */
+		KASSERT(lwp_locked(l, spc->spc_mutex));
+		if ((l->l_flag & LW_INMEM) != 0) {
 			sched_dequeue(l);
 			l->l_cpu = mci;
 			lwp_setlock(l, mspc->spc_mutex);
 			sched_enqueue(l, false);
-			lwp_unlock(l);
 		} else {
-			lwp_migrate(l, mci);
+			l->l_cpu = mci;
+			lwp_setlock(l, mspc->spc_mutex);
 		}
 	}
 	spc_dunlock(ci, mci);

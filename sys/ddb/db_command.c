@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.115 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.115.4.1 2008/07/18 16:37:31 simonb Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.115 2008/04/28 20:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.115.4.1 2008/07/18 16:37:31 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -131,7 +131,7 @@ db_addr_t	db_next;
   a) standard commands without subcommands -> reboot
   b) show commands which are subcommands of show command -> show aio_jobs
   c) if defined machine specific commands
-  
+
   ddb_add_cmd, ddb_rem_cmd use type (DDB_SHOW_CMD||DDB_BASE_CMD)argument to
   add them to representativ lists.
 */
@@ -233,6 +233,9 @@ static const struct db_command db_show_cmds[] = {
 	    "Print the struct buf at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("event",	db_event_print_cmd,	0,
 	    "Print all the non-zero evcnt(9) event counters.", "[/f]",NULL) },
+	{ DDB_ADD_CMD("files", db_show_files_cmd,	0,
+	    "Print the files open by process at address",
+	    "[/f] address", NULL) },
 	{ DDB_ADD_CMD("lock",	db_lock_print_cmd,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("malloc",	db_malloc_print_cmd,0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
@@ -519,13 +522,13 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 		}
 	}
 	return ENOENT;
-}		
+}
 
 /*This function is called from machine trap code.*/
 void
 db_command_loop(void)
 {
-  
+
 	label_t	db_jmpbuf;
 	label_t	*savejmp;
 
@@ -580,7 +583,7 @@ static int
 db_cmd_search(const char *name,const struct db_command *table,
     const struct db_command **cmdp)
 {
-  
+
 	const struct db_command	*cmd;
 	int result;
 
@@ -652,7 +655,7 @@ db_cmd_list(const struct db_cmd_tbl_en_head *list)
 		for (numcmds = 0; table[numcmds].name != NULL; numcmds++)
 			;
 		lines = (numcmds + columns - 1) / columns;
-	
+
 		for (i = 0; i < lines; i++) {
 			for (j = 0; j < columns; j++) {
 				p = table[j * lines + i].name;
@@ -739,16 +742,16 @@ db_command(const struct db_command **last_cmdp)
 	const struct db_command *command;
 	struct db_cmd_tbl_en *list_ent;
 	struct db_cmd_tbl_en_head *list;
-  
+
 	int		t;
 	int		result;
-	
+
 	char		modif[TOK_STRING_SIZE];
 	db_expr_t	addr, count;
 	bool		have_addr = false;
 
 	static db_expr_t last_count = 0;
-  
+
 	command = NULL;	/* XXX gcc */
 
 	t = db_read_token();
@@ -801,7 +804,7 @@ db_command(const struct db_command **last_cmdp)
 			if (t != tIDENT) {
 				/* if only show command is executed, print
 				   all subcommands */
-				db_cmd_list(list); 
+				db_cmd_list(list);
 				db_flush_lex();
 				return;
 			}
@@ -818,11 +821,11 @@ db_command(const struct db_command **last_cmdp)
 				db_cmd_list(list);
 				db_flush_lex();
 				return;
-			}	
+			}
 			break;
 		default:
 			db_printf("No such command\n");
-			db_flush_lex();                 
+			db_flush_lex();
 			return;
 		}
 
@@ -864,7 +867,7 @@ db_command(const struct db_command **last_cmdp)
 			 * command [/modifier] [addr] [,count]
 			 */
 			t = db_read_token(); /* get modifier */
-			if (t == tSLASH) { 
+			if (t == tSLASH) {
 				t = db_read_token();
 				if (t != tIDENT) {
 					db_printf("Bad modifier\n");
@@ -873,7 +876,7 @@ db_command(const struct db_command **last_cmdp)
 				}
 				/* save modifier */
 				strlcpy(modif, db_tok_string, sizeof(modif));
-		
+
 			} else {
 				db_unread_token(t);
 				modif[0] = '\0';
@@ -895,7 +898,7 @@ db_command(const struct db_command **last_cmdp)
 					db_flush_lex();
 					return;
 				}
-			} else { 
+			} else {
 				db_unread_token(t);
 				count = -1;
 			}
@@ -946,12 +949,12 @@ static void
 db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
-  
+
 	const struct db_cmd_tbl_en_head *list;
 	const struct db_cmd_tbl_en *list_ent;
 	const struct db_command *help = NULL;
 	int t, result;
-  
+
 	t = db_read_token();
 	/* is there another command after the "help"? */
 	if (t == tIDENT){
@@ -964,20 +967,20 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		case DDB_SHOW_CMD:
 			list=&db_show_cmd_list;
 			/* read the show subcommand */
-			t = db_read_token(); 
+			t = db_read_token();
 
 			if (t != tIDENT) {
 				/* no subcommand, print the list */
 				db_cmd_list(list);
 				db_flush_lex();
 				return;
-			}	
-			
+			}
+
 			break;
 		case DDB_MACH_CMD:
 			list=&db_mach_cmd_list;
 			/* read machine subcommand */
-			t = db_read_token(); 
+			t = db_read_token();
 
 			if (t != tIDENT) {
 				/* no subcommand - just print the list */
@@ -992,7 +995,7 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			db_flush_lex();
 			return;
 		}
- COMPAT_RET:		
+ COMPAT_RET:
 		TAILQ_FOREACH(list_ent,list,db_cmd_next){
 			result = db_cmd_search(db_tok_string, list_ent->db_cmd,
 					&help);
@@ -1008,7 +1011,7 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		if (help->cmd_descr != NULL)
 			db_printf(" Description: %s\n",help->cmd_descr);
-		
+
 		if (help->cmd_arg != NULL)
 			db_printf(" Arguments: %s\n",help->cmd_arg);
 
@@ -1041,11 +1044,11 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		} else {
 			db_skip_to_eol();
 		}
-		
+
 	} else /* t != tIDENT */
 		/* print base commands */
 		db_cmd_list(&db_base_cmd_list);
-		
+
 	return;
 }
 

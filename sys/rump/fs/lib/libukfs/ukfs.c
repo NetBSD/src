@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.26.2.2 2008/07/03 18:38:24 simonb Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.26.2.3 2008/07/18 16:37:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -155,12 +155,12 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 
 	rump_fakeblk_register(devpath);
 	rv = rump_mnt_mount(mp, mountpath, arg, &alen);
+	rump_fakeblk_deregister(devpath);
 	if (rv) {
 		warnx("VFS_MOUNT %d", rv);
 		goto out;
 	}
 	fs->ukfs_mp = mp;
-	rump_fakeblk_deregister(devpath);
 
 	rv = rump_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
 	fs->ukfs_cdir = ukfs_getrvp(fs);
@@ -306,7 +306,11 @@ ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 	if (rv)
 		goto out;
 
+	/* write and commit */
 	xfer = rump_sys_pwrite(fd, buf, bufsize, 0, off, &rv);
+	if (rv == 0)
+		rump_sys_fsync(fd, &dummy);
+
 	rump_sys_close(fd, &dummy);
 
  out:
@@ -349,6 +353,8 @@ ukfs_mkfifo(struct ukfs *ukfs, const char *path, mode_t mode)
 	STDCALL(ukfs, rump_sys_mkfifo(path, mode, &rv));
 }
 
+#if 0
+/* XXX: provide this as an upper-layer service */
 static int
 builddirs(struct ukfs *ukfs, const char *filename, mode_t mode)
 {
@@ -385,16 +391,13 @@ builddirs(struct ukfs *ukfs, const char *filename, mode_t mode)
 	}
 	return 0;
 }
+#endif
 
 int
-ukfs_mkdir(struct ukfs *ukfs, const char *filename, mode_t mode, bool p)
+ukfs_mkdir(struct ukfs *ukfs, const char *filename, mode_t mode)
 {
 
-	if (p) {
-		return builddirs(ukfs, filename, mode);
-	} else {
-		STDCALL(ukfs, rump_sys_mkdir(filename, mode, &rv));
-	}
+	STDCALL(ukfs, rump_sys_mkdir(filename, mode, &rv));
 }
 
 int
@@ -531,4 +534,19 @@ ukfs_lchflags(struct ukfs *ukfs, const char *filename, u_long flags)
 {
 
 	STDCALL(ukfs, rump_sys_lchflags(filename, flags, &rv));
+}
+
+int
+ukfs_utimes(struct ukfs *ukfs, const char *filename, const struct timeval *tptr)
+{
+
+	STDCALL(ukfs, rump_sys_utimes(filename, tptr, &rv));
+}
+
+int
+ukfs_lutimes(struct ukfs *ukfs, const char *filename, 
+	      const struct timeval *tptr)
+{
+
+	STDCALL(ukfs, rump_sys_lutimes(filename, tptr, &rv));
 }

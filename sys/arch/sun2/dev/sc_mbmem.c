@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_mbmem.c,v 1.12 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: sc_mbmem.c,v 1.12.4.1 2008/07/18 16:37:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.12 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.12.4.1 2008/07/18 16:37:30 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,11 +97,11 @@ __KERNEL_RCSID(0, "$NetBSD: sc_mbmem.c,v 1.12 2008/04/28 20:23:37 martin Exp $")
  * New-style autoconfig attachment
  */
 
-static int	sunsc_mbmem_match(struct device *, struct cfdata *, void *);
-static void	sunsc_mbmem_attach(struct device *, struct device *, void *);
+static int	sunsc_mbmem_match(device_t, cfdata_t, void *);
+static void	sunsc_mbmem_attach(device_t, device_t, void *);
 static int	sunsc_mbmem_intr(void *);
 
-CFATTACH_DECL(sc_mbmem, sizeof(struct sunscpal_softc),
+CFATTACH_DECL_NEW(sc_mbmem, sizeof(struct sunscpal_softc),
     sunsc_mbmem_match, sunsc_mbmem_attach, NULL, NULL);
 
 /*
@@ -110,46 +110,49 @@ CFATTACH_DECL(sc_mbmem, sizeof(struct sunscpal_softc),
 int sunsc_mbmem_options = 0x00;
 
 static int 
-sunsc_mbmem_match(struct device *parent, struct cfdata *cf, void *aux)
+sunsc_mbmem_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mbmem_attach_args *mbma = aux;
 	bus_space_handle_t bh;
-	int matched;
+	bool matched;
 
 	/* No default Multibus address. */
 	if (mbma->mbma_paddr == -1)
-		return (0);
+		return 0;
 
 	/* Make sure there is something there... */
 	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr, SCREG_BANK_SZ,
-			  0, &bh))
-		return (0);
-	matched = (bus_space_peek_2(mbma->mbma_bustag, bh, SCREG_ICR, NULL) == 0);
+	    0, &bh))
+		return 0;
+	matched =
+	    (bus_space_peek_2(mbma->mbma_bustag, bh, SCREG_ICR, NULL) == 0);
 	bus_space_unmap(mbma->mbma_bustag, bh, SCREG_BANK_SZ);
 	if (!matched)
-		return (0);
+		return 0;
 
 	/* Default interrupt priority. */
 	if (mbma->mbma_pri == -1)
 		mbma->mbma_pri = 2;
 
-	return (1);
+	return 1;
 }
 
 static void 
-sunsc_mbmem_attach(struct device *parent, struct device *self, void *args)
+sunsc_mbmem_attach(device_t parent, device_t self, void *args)
 {
-	struct sunscpal_softc *sc = (void *) self;
+	struct sunscpal_softc *sc = device_private(self);
 	struct cfdata *cf = device_cfdata(self);
 	struct mbmem_attach_args *mbma = args;
 	int i;
+
+	sc->sc_dev = self;
 
 	/* Map in the device. */
 	sc->sunscpal_regt = mbma->mbma_bustag;
 	sc->sunscpal_dmat = mbma->mbma_dmatag;
 	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr, SCREG_BANK_SZ,
-			  0, &sc->sunscpal_regh))
-		panic("sunsc_mbmem_attach: can't map");
+	    0, &sc->sunscpal_regh))
+		panic("%s: can't map", __func__);
 
 	/* Device register offsets. */
 	sc->sunscpal_data = SCREG_DATA;
@@ -162,15 +165,13 @@ sunsc_mbmem_attach(struct device *parent, struct device *self, void *args)
 	
 	/* Allocate DMA handles. */
 	i = SUNSCPAL_OPENINGS * sizeof(struct sunscpal_dma_handle);
-	sc->sc_dma_handles = (sunscpal_dma_handle_t)
-		malloc(i, M_DEVBUF, M_WAITOK);
+	sc->sc_dma_handles = malloc(i, M_DEVBUF, M_WAITOK);
 	if (sc->sc_dma_handles == NULL)
 		panic("sc: DMA handles malloc failed");
 	for (i = 0; i < SUNSCPAL_OPENINGS; i++)
 		if (bus_dmamap_create(sc->sunscpal_dmat, SUNSCPAL_MAX_DMA_LEN,
-				      1, SUNSCPAL_MAX_DMA_LEN,
-				      0, BUS_DMA_WAITOK, &sc->sc_dma_handles[i].
-dh_dmamap) != 0)
+		    1, SUNSCPAL_MAX_DMA_LEN,
+		    0, BUS_DMA_WAITOK, &sc->sc_dma_handles[i].dh_dmamap) != 0)
 			panic("sc: DMA map create failed");
 
 	/* Miscellaneous. */
@@ -179,10 +180,10 @@ dh_dmamap) != 0)
 
 	/* Attach interrupt handler. */
 	bus_intr_establish(mbma->mbma_bustag, mbma->mbma_pri, IPL_BIO, 0,
-			   sunsc_mbmem_intr, sc);
+	    sunsc_mbmem_intr, sc);
 
 	/* Do the common attach stuff. */
-	sunscpal_attach(sc, (cf->cf_flags ? cf->cf_flags : sunsc_mbmem_options));
+	sunscpal_attach(sc, cf->cf_flags ? cf->cf_flags : sunsc_mbmem_options);
 }
 
 static int
@@ -193,12 +194,12 @@ sunsc_mbmem_intr(void *arg)
 
 	claimed = sunscpal_intr(sc);
 #ifdef	DEBUG
-	if (!claimed) {
-		printf("sunsc_intr: spurious from SBC\n");
+	if (claimed == 0) {
+		printf("%s: spurious from SBC\n", __func__);
 	}
 #endif
 	/* Yes, we DID cause this interrupt. */
 	claimed = 1;
 
-	return (claimed);
+	return claimed;
 }

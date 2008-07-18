@@ -1,4 +1,4 @@
-/*	$NetBSD: mach64_drv.c,v 1.3.16.1 2008/07/03 18:38:04 simonb Exp $	*/
+/*	$NetBSD: mach64_drv.c,v 1.3.16.2 2008/07/18 16:37:34 simonb Exp $	*/
 
 /* mach64_drv.c -- ATI Rage 128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:47:27 1999 by faith@precisioninsight.com
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach64_drv.c,v 1.3.16.1 2008/07/03 18:38:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach64_drv.c,v 1.3.16.2 2008/07/18 16:37:34 simonb Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_drv.c,v 1.3 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -41,11 +41,11 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_drv.c,v 1.3 2005/12/20 22:44:36 jhb E
 
 #include <sys/types.h>
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/mach64_drm.h>
-#include <dev/pci/drm/mach64_drv.h>
-#include <dev/pci/drm/drm_pciids.h>
+#include "drmP.h"
+#include "drm.h"
+#include "mach64_drm.h"
+#include "mach64_drv.h"
+#include "drm_pciids.h"
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mach64_pciidlist[] = {

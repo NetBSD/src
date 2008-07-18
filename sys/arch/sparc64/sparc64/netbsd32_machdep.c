@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.81.2.1 2008/07/03 18:37:55 simonb Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.81.2.2 2008/07/18 16:37:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.81.2.1 2008/07/03 18:37:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.81.2.2 2008/07/18 16:37:30 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.81.2.1 2008/07/03 18:37:55 si
 
 #include <sys/param.h>
 #include <sys/exec.h>
-#include <sys/malloc.h>
 #include <sys/filedesc.h>
 #include <sys/file.h>
 #include <sys/proc.h>
@@ -136,7 +135,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
 		fpusave_lwp(l, false);
-		free((void *)fs, M_SUBPROC);
+		pool_cache_put(fpstate_cache, fs);
 		l->l_md.md_fpstate = NULL;
 	}
 	memset(tf, 0, sizeof *tf);
@@ -883,7 +882,7 @@ netbsd32_cpu_setmcontext(l, mcp, flags)
 		 * XXX immediately or just fault it in later?
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
-			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
+			fsp = pool_cache_get(fpstate_cache, PR_WAITOK);
 			l->l_md.md_fpstate = fsp;
 		} else {
 			/* Drop the live context on the floor. */
@@ -1199,7 +1198,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		 * by lazy FPU context switching); allocate it if necessary.
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
-			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
+			fsp = pool_cache_get(fpstate_cache, PR_WAITOK);
 			l->l_md.md_fpstate = fsp;
 		} else {
 			/* Drop the live context on the floor. */

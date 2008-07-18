@@ -1,20 +1,22 @@
-#	$NetBSD: files.pcidrm,v 1.1 2007/03/24 15:04:10 jmcneill Exp $
+#	$NetBSD: files.pcidrm,v 1.1.44.1 2008/07/18 16:37:34 simonb Exp $
 
-device	i915drm: drmbase
+define	drmpci
+
+device	i915drm: drmbase, drmpci
 attach	i915drm at drm
 file	dev/pci/drm/i915_drv.c		i915drm
 file	dev/pci/drm/i915_dma.c		i915drm
 file	dev/pci/drm/i915_irq.c		i915drm
 file	dev/pci/drm/i915_mem.c		i915drm
 
-device	mach64drm: drmbase
+device	mach64drm: drmbase, drmpci
 attach	mach64drm at drm
 file	dev/pci/drm/mach64_dma.c	mach64drm
 file	dev/pci/drm/mach64_drv.c	mach64drm
 file	dev/pci/drm/mach64_irq.c	mach64drm
 file	dev/pci/drm/mach64_state.c	mach64drm
 
-device	mgadrm: drmbase
+device	mgadrm: drmbase, drmpci
 attach	mgadrm at drm
 file	dev/pci/drm/mga_dma.c		mgadrm
 file	dev/pci/drm/mga_drv.c		mgadrm
@@ -22,7 +24,7 @@ file	dev/pci/drm/mga_irq.c		mgadrm
 file	dev/pci/drm/mga_state.c		mgadrm
 file	dev/pci/drm/mga_warp.c		mgadrm
 
-device	r128drm: drmbase
+device	r128drm: drmbase, drmpci
 attach	r128drm at drm
 file	dev/pci/drm/ati_pcigart.c	r128drm | radeondrm
 file	dev/pci/drm/r128_cce.c		r128drm
@@ -30,7 +32,7 @@ file	dev/pci/drm/r128_drv.c		r128drm
 file	dev/pci/drm/r128_irq.c		r128drm
 file	dev/pci/drm/r128_state.c	r128drm
 
-device	radeondrm: drmbase
+device	radeondrm: drmbase, drmpci
 attach	radeondrm at drm
 file	dev/pci/drm/r300_cmdbuf.c	radeondrm
 file	dev/pci/drm/radeon_cp.c		radeondrm
@@ -39,23 +41,23 @@ file	dev/pci/drm/radeon_irq.c	radeondrm
 file	dev/pci/drm/radeon_mem.c	radeondrm
 file	dev/pci/drm/radeon_state.c	radeondrm
 
-device	savagedrm: drmbase
+device	savagedrm: drmbase, drmpci
 attach	savagedrm at drm
 file	dev/pci/drm/savage_bci.c	savagedrm
 file	dev/pci/drm/savage_drv.c	savagedrm
 file	dev/pci/drm/savage_state.c	savagedrm
 
-device	sisdrm: drmbase
+device	sisdrm: drmbase, drmpci
 attach	sisdrm at drm
 file	dev/pci/drm/sis_drv.c		sisdrm
 file	dev/pci/drm/sis_ds.c		sisdrm
 file	dev/pci/drm/sis_mm.c		sisdrm
 
-device	tdfxdrm: drmbase
+device	tdfxdrm: drmbase, drmpci
 attach	tdfxdrm at drm
 file	dev/pci/drm/tdfx_drv.c		tdfxdrm
 
-device	viadrm: drmbase
+device	viadrm: drmbase, drmpci
 attach	viadrm at drm
 file	dev/pci/drm/via_drv.c		viadrm
 file	dev/pci/drm/via_dma.c		viadrm
@@ -65,3 +67,5 @@ file	dev/pci/drm/via_map.c		viadrm
 file	dev/pci/drm/via_mm.c		viadrm
 file	dev/pci/drm/via_verifier.c	viadrm
 file	dev/pci/drm/via_video.c		viadrm
+
+makeoptions	drmpci	CPPFLAGS+="-I$S/dev/pci/drm"

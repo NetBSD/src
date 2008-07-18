@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2008/05/11 11:42:03 chris Exp $	*/
+/*	$NetBSD: main.c,v 1.13.2.1 2008/07/18 16:37:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -53,8 +53,7 @@ extern struct x86_boot_params boot_params;
 int errno;
 int debug;
 
-extern char	bootprog_name[], bootprog_rev[], bootprog_date[],
-		bootprog_maker[];
+extern char	bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 int	main(void);
 
@@ -93,11 +92,9 @@ print_banner(void)
 	int ext = getextmem();
 
 	printf("\n"
-	       ">> %s, Revision %s\n"
-	       ">> (%s, %s)\n"
+	       ">> %s, Revision %s (from NetBSD %s)\n"
 	       ">> Memory: %d/%d k\n",
-	       bootprog_name, bootprog_rev,
-	       bootprog_maker, bootprog_date,
+	       bootprog_name, bootprog_rev, bootprog_kernrev,
 	       base, ext);
 }
 

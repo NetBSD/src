@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.38.2.1 2008/07/03 18:38:11 simonb Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.38.2.2 2008/07/18 16:37:48 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.38.2.1 2008/07/03 18:38:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.38.2.2 2008/07/18 16:37:48 simonb Exp $");
 #endif /* not lint */
 
 
@@ -141,26 +141,36 @@ udf_init(void)
 	malloc_type_attach(M_UDFVOLD);
 	malloc_type_attach(M_UDFTEMP);
 
-	/* init hashtables and pools */
+	/* init node pools */
 	size = sizeof(struct udf_node);
-	pool_init(&udf_node_pool, size, 0, 0, 0, "udf_node_pool", NULL,
-	    IPL_NONE);
+	pool_init(&udf_node_pool, size, 0, 0, 0,
+		"udf_node_pool", NULL, IPL_NONE);
+
+	/* init dirhash pools */
+	size = sizeof(struct udf_dirhash);
+	pool_init(&udf_dirhash_pool, size, 0, 0, 0,
+		"udf_dirhash_pool", NULL, IPL_NONE);
+
+	size = sizeof(struct udf_dirhash_entry);
+	pool_init(&udf_dirhash_entry_pool, size, 0, 0, 0,
+		"udf_dirhash_entry_pool", NULL, IPL_NONE);
 }
 
 
 void
 udf_reinit(void)
 {
-	/* recreate hashtables */
-	/* reinit pool? */
+	/* nothing to do */
 }
 
 
 void
 udf_done(void)
 {
-	/* remove hashtables and pools */
+	/* remove pools */
 	pool_destroy(&udf_node_pool);
+	pool_destroy(&udf_dirhash_pool);
+	pool_destroy(&udf_dirhash_entry_pool);
 
 	malloc_type_detach(M_UDFMNT);
 	malloc_type_detach(M_UDFVOLD);
@@ -374,9 +384,9 @@ udf_mount(struct mount *mp, const char *path,
 #ifndef UDF_READWRITE
 	/* force read-only for now */
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
-		printf("Enable kernel option UDF_READWRITE for writing\n");
-		vrele(devvp);
-		return EROFS;
+		printf( "Enable kernel/module option UDF_READWRITE for "
+			"writing, downgrading access to read-only\n");
+		mp->mnt_flag |= MNT_RDONLY;
 	}
 #endif
 
@@ -440,7 +450,7 @@ udf_mount(struct mount *mp, const char *path,
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 		if ((error = udf_open_logvol(VFSTOUDF(mp))) != 0) {
 			printf( "mount_udf: can't open logical volume for "
-				"writing,downgrading access to read-only\n");
+				"writing, downgrading access to read-only\n");
 			mp->mnt_flag |= MNT_RDONLY;
 			/* FIXME we can't return error now on open failure */
 			return 0;

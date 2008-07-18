@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.140.2.2 2008/07/03 18:38:11 simonb Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.140.2.3 2008/07/18 16:37:48 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.140.2.2 2008/07/03 18:38:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.140.2.3 2008/07/18 16:37:48 simonb Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -3068,6 +3068,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_stat = l->l_stat;
 	kl->l_lid = l->l_lid;
 	kl->l_flag = sysctl_map_flags(sysctl_lwpprflagmap, l->l_prflag);
+	kl->l_flag |= sysctl_map_flags(sysctl_lwpflagmap, l->l_flag);
 
 	kl->l_swtime = l->l_swtime;
 	kl->l_slptime = l->l_slptime;

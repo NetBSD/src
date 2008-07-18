@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.69.2.1 2008/06/18 16:33:58 simonb Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.69.2.2 2008/07/18 16:37:57 simonb Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.69.2.1 2008/06/18 16:33:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.69.2.2 2008/07/18 16:37:57 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -111,7 +111,6 @@ static int snapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
     struct fs *, ufs_lbn_t, int);
 static int mapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
     struct fs *, ufs_lbn_t, int);
-static int readvnblk(struct vnode *, void *, ufs2_daddr_t);
 #endif /* !defined(FFS_NO_SNAPSHOT) */
 
 static int ffs_blkaddr(struct vnode *, daddr_t, daddr_t *);
@@ -814,12 +813,11 @@ expunge_ufs1(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		    struct fs *, ufs_lbn_t, int),
     int expungetype)
 {
-	int i, error, ns, indiroff;
+	int i, error, ns;
 	ufs_lbn_t lbn, rlbn;
 	ufs2_daddr_t len, blkno, numblks, blksperindir;
 	struct ufs1_dinode *dip;
 	struct buf *bp;
-	void *bf;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
@@ -827,32 +825,26 @@ expunge_ufs1(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 	 * yet been copied, then allocate and fill the copy.
 	 */
 	lbn = fragstoblks(fs, ino_to_fsba(fs, cancelip->i_number));
-	blkno = 0;
-	if (lbn < NDADDR) {
-		blkno = db_get(VTOI(snapvp), lbn);
+	error = ffs_blkaddr(snapvp, lbn, &blkno);
+	if (error)
+		return error;
+	if (blkno != 0) {
+		error = bread(snapvp, lbn, fs->fs_bsize, KERNCRED,
+		    B_MODIFY, &bp);
 	} else {
 		error = ffs_balloc(snapvp, lblktosize(fs, (off_t)lbn),
-		   fs->fs_bsize, KERNCRED, B_METAONLY, &bp);
-		if (error)
-			return (error);
-		indiroff = (lbn - NDADDR) % NINDIR(fs);
-		blkno = idb_get(VTOI(snapvp), bp->b_data, indiroff);
-		brelse(bp, 0);
+		    fs->fs_bsize, KERNCRED, 0, &bp);
+		if (! error)
+			error = readfsblk(snapvp, bp->b_data, lbn);
 	}
-	bf = malloc(fs->fs_bsize, M_UFSMNT, M_WAITOK);
-	if (blkno != 0)
-		error = readvnblk(snapvp, bf, lbn);
-	else
-		error = readfsblk(snapvp, bf, lbn);
-	if (error) {
-		free(bf, M_UFSMNT);
+	if (error)
 		return error;
-	}
 	/*
 	 * Set a snapshot inode to be a zero length file, regular files
 	 * or unlinked snapshots to be completely unallocated.
 	 */
-	dip = (struct ufs1_dinode *)bf + ino_to_fsbo(fs, cancelip->i_number);
+	dip = (struct ufs1_dinode *)bp->b_data +
+	    ino_to_fsbo(fs, cancelip->i_number);
 	if (expungetype == BLK_NOCOPY || cancelip->i_ffs_effnlink == 0)
 		dip->di_mode = 0;
 	dip->di_size = 0;
@@ -860,10 +852,7 @@ expunge_ufs1(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 	dip->di_flags =
 	    ufs_rw32(ufs_rw32(dip->di_flags, ns) & ~SF_SNAPSHOT, ns);
 	bzero(&dip->di_db[0], (NDADDR + NIADDR) * sizeof(ufs1_daddr_t));
-	error = writevnblk(snapvp, bf, lbn);
-	free(bf, M_UFSMNT);
-	if (error)
-		return error;
+	bdwrite(bp);
 	/*
 	 * Now go through and expunge all the blocks in the file
 	 * using the function requested.
@@ -1082,12 +1071,11 @@ expunge_ufs2(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		    struct fs *, ufs_lbn_t, int),
     int expungetype)
 {
-	int i, error, ns, indiroff;
+	int i, error, ns;
 	ufs_lbn_t lbn, rlbn;
 	ufs2_daddr_t len, blkno, numblks, blksperindir;
 	struct ufs2_dinode *dip;
 	struct buf *bp;
-	void *bf;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
@@ -1095,32 +1083,26 @@ expunge_ufs2(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 	 * yet been copied, then allocate and fill the copy.
 	 */
 	lbn = fragstoblks(fs, ino_to_fsba(fs, cancelip->i_number));
-	blkno = 0;
-	if (lbn < NDADDR) {
-		blkno = db_get(VTOI(snapvp), lbn);
+	error = ffs_blkaddr(snapvp, lbn, &blkno);
+	if (error)
+		return error;
+	if (blkno != 0) {
+		error = bread(snapvp, lbn, fs->fs_bsize, KERNCRED,
+		    B_MODIFY, &bp);
 	} else {
 		error = ffs_balloc(snapvp, lblktosize(fs, (off_t)lbn),
-		   fs->fs_bsize, KERNCRED, B_METAONLY, &bp);
-		if (error)
-			return (error);
-		indiroff = (lbn - NDADDR) % NINDIR(fs);
-		blkno = idb_get(VTOI(snapvp), bp->b_data, indiroff);
-		brelse(bp, 0);
-	}
-	bf = malloc(fs->fs_bsize, M_UFSMNT, M_WAITOK);
-	if (blkno != 0)
-		error = readvnblk(snapvp, bf, lbn);
-	else
-		error = readfsblk(snapvp, bf, lbn);
-	if (error) {
-		free(bf, M_UFSMNT);
+		    fs->fs_bsize, KERNCRED, 0, &bp);
+		if (! error)
+			error = readfsblk(snapvp, bp->b_data, lbn);
+		}
+	if (error)
 		return error;
-	}
 	/*
 	 * Set a snapshot inode to be a zero length file, regular files
 	 * or unlinked snapshots to be completely unallocated.
 	 */
-	dip = (struct ufs2_dinode *)bf + ino_to_fsbo(fs, cancelip->i_number);
+	dip = (struct ufs2_dinode *)bp->b_data +
+	    ino_to_fsbo(fs, cancelip->i_number);
 	if (expungetype == BLK_NOCOPY || cancelip->i_ffs_effnlink == 0)
 		dip->di_mode = 0;
 	dip->di_size = 0;
@@ -1128,10 +1110,7 @@ expunge_ufs2(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 	dip->di_flags =
 	    ufs_rw32(ufs_rw32(dip->di_flags, ns) & ~SF_SNAPSHOT, ns);
 	bzero(&dip->di_db[0], (NDADDR + NIADDR) * sizeof(ufs2_daddr_t));
-	error = writevnblk(snapvp, bf, lbn);
-	free(bf, M_UFSMNT);
-	if (error)
-		return error;
+	bdwrite(bp);
 	/*
 	 * Now go through and expunge all the blocks in the file
 	 * using the function requested.
@@ -2048,41 +2027,6 @@ readfsblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 
 	return error;
 }
-
-#if !defined(FFS_NO_SNAPSHOT)
-/*
- * Read the specified block. Bypass UBC to prevent deadlocks.
- */
-static int
-readvnblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
-{
-	int error;
-	daddr_t bn;
-	off_t offset;
-	struct inode *ip = VTOI(vp);
-	struct fs *fs = ip->i_fs;
-
-	error = VOP_BMAP(vp, lbn, NULL, &bn, NULL);
-	if (error)
-		return error;
-
-	if (bn != (daddr_t)-1) {
-		offset = dbtob(bn);
-		mutex_enter(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, trunc_page(offset),
-		    round_page(offset+fs->fs_bsize),
-		    PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
-		if (error)
-			return error;
-
-		return readfsblk(vp, data, fragstoblks(fs, dbtofsb(fs, bn)));
-	}
-
-	bzero(data, fs->fs_bsize);
-
-	return 0;
-}
-#endif /* !defined(FFS_NO_SNAPSHOT) */
 
 /*
  * Write the specified block. Bypass UBC to prevent deadlocks.
