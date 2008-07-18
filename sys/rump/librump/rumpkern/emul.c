@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.41 2008/06/25 13:16:58 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.42 2008/07/18 16:18:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -113,6 +113,13 @@ log(int level, const char *fmt, ...)
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
+}
+
+void
+vlog(int level, const char *fmt, va_list ap)
+{
+
+	vprintf(fmt, ap);
 }
 
 void
