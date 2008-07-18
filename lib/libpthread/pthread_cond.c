@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.50 2008/06/28 10:37:20 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.51 2008/07/18 16:17:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.50 2008/06/28 10:37:20 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.51 2008/07/18 16:17:11 pooka Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -61,6 +61,10 @@ extern int pthread__started;
 
 static int pthread_cond_wait_nothread(pthread_t, pthread_mutex_t *,
     const struct timespec *);
+
+int	_pthread_cond_has_waiters_np(pthread_cond_t *);
+
+__weak_alias(pthread_cond_has_waiters_np,_pthread_cond_has_waiters_np);
 
 __strong_alias(__libc_cond_init,pthread_cond_init)
 __strong_alias(__libc_cond_signal,pthread_cond_signal)
@@ -299,6 +303,13 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	if (__predict_true(PTQ_EMPTY(&cond->ptc_waiters)))
 		return 0;
 	return pthread__cond_wake_all(cond);
+}
+
+int
+_pthread_cond_has_waiters_np(pthread_cond_t *cond)
+{
+
+	return !PTQ_EMPTY(&cond->ptc_waiters);
 }
 
 int

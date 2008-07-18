@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.31 2008/06/05 23:38:51 ad Exp $	*/
+/*	$NetBSD: pthread.h,v 1.32 2008/07/18 16:17:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -194,6 +194,8 @@ pthread_t pthread_mutex_owner_np(pthread_mutex_t *);
 int	pthread_rwlock_held_np(pthread_rwlock_t *);
 int	pthread_rwlock_wrheld_np(pthread_rwlock_t *);
 int	pthread_rwlock_rdheld_np(pthread_rwlock_t *);
+
+int	pthread_cond_has_waiters_np(pthread_cond_t *);
 #endif	/* _NETBSD_SOURCE */
 
 __END_DECLS
