@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.40 2008/07/17 19:10:22 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.41 2008/07/18 12:45:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.40 2008/07/17 19:10:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.41 2008/07/18 12:45:08 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -384,9 +384,9 @@ udf_mount(struct mount *mp, const char *path,
 #ifndef UDF_READWRITE
 	/* force read-only for now */
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
-		printf("Enable kernel option UDF_READWRITE for writing\n");
-		vrele(devvp);
-		return EROFS;
+		printf( "Enable kernel/module option UDF_READWRITE for "
+			"writing, downgrading access to read-only\n");
+		mp->mnt_flag |= MNT_RDONLY;
 	}
 #endif
 
@@ -450,7 +450,7 @@ udf_mount(struct mount *mp, const char *path,
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 		if ((error = udf_open_logvol(VFSTOUDF(mp))) != 0) {
 			printf( "mount_udf: can't open logical volume for "
-				"writing,downgrading access to read-only\n");
+				"writing, downgrading access to read-only\n");
 			mp->mnt_flag |= MNT_RDONLY;
 			/* FIXME we can't return error now on open failure */
 			return 0;
