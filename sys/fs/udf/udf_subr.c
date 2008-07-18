@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.62 2008/07/18 14:18:51 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.63 2008/07/18 15:55:32 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.62 2008/07/18 14:18:51 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.63 2008/07/18 15:55:32 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -3399,7 +3399,7 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
  * Callback from genfs to allocate len bytes at offset off; only called when
  * filling up gaps in the allocation.
  */
-/* XXX should be check if there is space enough in udf_gop_alloc? */
+/* XXX should we check if there is space enough in udf_gop_alloc? */
 static int
 udf_gop_alloc(struct vnode *vp, off_t off,
     off_t len, int flags, kauth_cred_t cred)
