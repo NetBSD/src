@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.22 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.22.4.1 2008/07/18 16:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ void		db_stack_trace_print(db_expr_t, bool, db_expr_t, const char *,
 
 /* ddb/db_xxx.c */
 void		db_kgdb_cmd(db_expr_t, bool, db_expr_t, const char *);
+void		db_show_files_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/kern_proc.c */
 void		db_kill_proc(db_expr_t, bool, db_expr_t, const char *);

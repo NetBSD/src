@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.11 2008/03/12 21:37:15 pooka Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.11.8.1 2008/07/18 16:37:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	if (rv == -1)
 		warn("remove1 %d", rv);
 
-	rv = ukfs_mkdir(fs, "/jonkka", 0777, false);
+	rv = ukfs_mkdir(fs, "/jonkka", 0777);
 	if (rv == -1)
 		warn("mkdir %s", strerror(errno));
 	rv = ukfs_chdir(fs, "/jonkka");

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.26 2008/05/31 13:31:25 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.26.2.1 2008/07/18 16:37:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.26 2008/05/31 13:31:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.26.2.1 2008/07/18 16:37:49 simonb Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -633,7 +633,7 @@ rw_downgrade(krwlock_t *rw)
 
 			new = RW_READ_INCR | RW_HAS_WAITERS | RW_WRITE_WANTED;
 			next = rw_cas(rw, owner, new);
-			turnstile_exit(ts);
+			turnstile_exit(rw);
 			if (__predict_true(next == owner))
 				break;
 		} else {
@@ -653,7 +653,7 @@ rw_downgrade(krwlock_t *rw)
 				turnstile_wakeup(ts, TS_READER_Q, rcnt, NULL);
 				break;
 			}
-			turnstile_exit(ts);
+			turnstile_exit(rw);
 		}
 	}
 

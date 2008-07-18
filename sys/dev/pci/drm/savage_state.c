@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_state.c,v 1.3 2007/12/11 11:48:46 lukem Exp $	*/
+/*	$NetBSD: savage_state.c,v 1.3.16.1 2008/07/18 16:37:35 simonb Exp $	*/
 
 /* savage_state.c -- State and drawing support for Savage
  *
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_state.c,v 1.3 2007/12/11 11:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: savage_state.c,v 1.3.16.1 2008/07/18 16:37:35 simonb Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_state.c,v 1.3 2006/04/09 20:45:45 anholt Exp $");
 */
-#include <dev/drm/drmP.h>
-#include <dev/pci/drm/savage_drm.h>
-#include <dev/pci/drm/savage_drv.h>
+#include "drmP.h"
+#include "savage_drm.h"
+#include "savage_drv.h"
 
 void savage_emit_clip_rect_s3d(drm_savage_private_t *dev_priv,
 			       const drm_clip_rect_t *pbox)

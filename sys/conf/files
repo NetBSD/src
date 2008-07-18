@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.906.2.3 2008/06/27 15:11:20 simonb Exp $
+#	$NetBSD: files,v 1.906.2.4 2008/07/18 16:37:31 simonb Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1476,7 +1476,6 @@ file	kern/vfs_init.c
 file	kern/vfs_lockf.c
 file	kern/vfs_lookup.c
 file	kern/vfs_subr.c
-file	kern/vfs_subr2.c
 file	kern/vfs_syscalls.c
 file	kern/vfs_trans.c
 file	kern/vfs_vnops.c

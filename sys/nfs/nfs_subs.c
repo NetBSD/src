@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.204 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.204.2.1 2008/07/18 16:37:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.204 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.204.2.1 2008/07/18 16:37:57 simonb Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1724,6 +1724,8 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	vap->va_rdev = (dev_t)rdev;
 	vap->va_mtime = mtime;
 	vap->va_ctime = ctime;
+	vap->va_birthtime.tv_sec = VNOVAL;
+	vap->va_birthtime.tv_nsec = VNOVAL;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	switch (vtyp) {
 	case VDIR:

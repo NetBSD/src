@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.116.2.2 2008/07/03 18:38:11 simonb Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.116.2.3 2008/07/18 16:37:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.116.2.2 2008/07/03 18:38:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.116.2.3 2008/07/18 16:37:49 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -649,9 +649,16 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 		/* Inherit a processor-set */
 		l2->l_psid = l1->l_psid;
 		/* Inherit an affinity */
-		if (l1->l_affinity) {
-			kcpuset_use(l1->l_affinity);
-			l2->l_affinity = l1->l_affinity;
+		if (l1->l_flag & LW_AFFINITY) {
+			proc_t *p = l1->l_proc;
+
+			mutex_enter(p->p_lock);
+			if (l1->l_flag & LW_AFFINITY) {
+				kcpuset_use(l1->l_affinity);
+				l2->l_affinity = l1->l_affinity;
+				l2->l_flag |= LW_AFFINITY;
+			}
+			mutex_exit(p->p_lock);
 		}
 		/* Look for a CPU to start */
 		l2->l_cpu = sched_takecpu(l2);
@@ -747,11 +754,6 @@ lwp_exit(struct lwp *l)
 	kauth_cred_free(l->l_cred);
 	callout_destroy(&l->l_timeout_ch);
 
-	if (l->l_affinity) {
-		kcpuset_unuse(l->l_affinity, NULL);
-		l->l_affinity = NULL;
-	}
-
 	/*
 	 * While we can still block, mark the LWP as unswappable to
 	 * prevent conflicts with the with the swapper.
@@ -805,12 +807,20 @@ lwp_exit(struct lwp *l)
 	l->l_stat = LSZOMB;
 	if (l->l_name != NULL)
 		strcpy(l->l_name, "(zombie)");
+	if (l->l_flag & LW_AFFINITY)
+		l->l_flag &= ~LW_AFFINITY;
 	lwp_unlock(l);
 	p->p_nrlwps--;
 	cv_broadcast(&p->p_lwpcv);
 	if (l->l_lwpctl != NULL)
 		l->l_lwpctl->lc_curcpu = LWPCTL_CPU_EXITED;
 	mutex_exit(p->p_lock);
+
+	/* Safe without lock since LWP is in zombie state */
+	if (l->l_affinity) {
+		kcpuset_unuse(l->l_affinity, NULL);
+		l->l_affinity = NULL;
+	}
 
 	/*
 	 * We can no longer block.  At this point, lwp_free() may already

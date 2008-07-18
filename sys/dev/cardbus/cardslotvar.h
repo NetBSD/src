@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.11.36.1 2008/06/27 15:11:20 simonb Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.11.36.2 2008/07/18 16:37:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -63,7 +63,7 @@ struct cardslot_softc {
 	int sc_status;		/* the status of slot */
 
 	struct cardbus_softc *sc_cb_softc;
-	struct pcmcia_softc *sc_16_softc;
+	device_t sc_16_softc;
 
 	struct lwp *sc_event_thread;
 	int sc_th_enable;	/* true if the thread is enabled */

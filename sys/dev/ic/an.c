@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.51 2008/04/08 12:07:25 cegger Exp $	*/
+/*	$NetBSD: an.c,v 1.51.8.1 2008/07/18 16:37:32 simonb Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.51 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.51.8.1 2008/07/18 16:37:32 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -185,7 +185,7 @@ an_attach(struct an_softc *sc)
 	/* Load factory config */
 	if (an_cmd(sc, AN_CMD_READCFG, 0) != 0) {
 		splx(s);
-		aprint_error_dev(&sc->sc_dev, "failed to load config data\n");
+		aprint_error_dev(sc->sc_dev, "failed to load config data\n");
 		return 1;
 	}
 
@@ -193,7 +193,7 @@ an_attach(struct an_softc *sc)
 	buflen = sizeof(sc->sc_config);
 	if (an_read_rid(sc, AN_RID_GENCONFIG, &sc->sc_config, &buflen) != 0) {
 		splx(s);
-		aprint_error_dev(&sc->sc_dev, "read config failed\n");
+		aprint_error_dev(sc->sc_dev, "read config failed\n");
 		return 1;
 	}
 
@@ -201,7 +201,7 @@ an_attach(struct an_softc *sc)
 	buflen = sizeof(sc->sc_caps);
 	if (an_read_rid(sc, AN_RID_CAPABILITIES, &sc->sc_caps, &buflen) != 0) {
 		splx(s);
-		aprint_error_dev(&sc->sc_dev, "read caps failed\n");
+		aprint_error_dev(sc->sc_dev, "read caps failed\n");
 		return 1;
 	}
 
@@ -248,11 +248,11 @@ an_attach(struct an_softc *sc)
 		buflen = sizeof(struct an_rid_wepkey);
 	}
 
-	aprint_normal_dev(&sc->sc_dev, "%s %s (firmware %s)\n",
+	aprint_normal_dev(sc->sc_dev, "%s %s (firmware %s)\n",
 	    sc->sc_caps.an_manufname, sc->sc_caps.an_prodname,
 	    sc->sc_caps.an_prodvers);
 
-	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS | IFF_SIMPLEX |
@@ -456,7 +456,7 @@ an_intr(void *arg)
 	u_int16_t status;
 
 	if (!sc->sc_enabled || sc->sc_invalid ||
-	    !device_is_active(&sc->sc_dev) ||
+	    !device_is_active(sc->sc_dev) ||
 	    (ifp->if_flags & IFF_RUNNING) == 0)
 		return 0;
 
@@ -634,7 +634,7 @@ an_init(struct ifnet *ifp)
 
 	/* Enable the MAC */
 	if (an_cmd(sc, AN_CMD_ENABLE, 0)) {
-		aprint_error_dev(&sc->sc_dev, "failed to enable MAC\n");
+		aprint_error_dev(sc->sc_dev, "failed to enable MAC\n");
 		an_stop(ifp, 1);
 		return ENXIO;
 	}
@@ -848,7 +848,7 @@ an_reset(struct an_softc *sc)
 	an_cmd(sc, AN_CMD_NOOP2, 0);
 
 	if (an_cmd(sc, AN_CMD_FORCE_SYNCLOSS, 0) == ETIMEDOUT) {
-		aprint_error_dev(&sc->sc_dev, "reset failed\n");
+		aprint_error_dev(sc->sc_dev, "reset failed\n");
 		return ETIMEDOUT;
 	}
 
@@ -882,7 +882,7 @@ an_ioctl(struct ifnet *ifp, u_long command, void *data)
 	struct an_softc *sc = ifp->if_softc;
 	int s, error = 0;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return ENXIO;
 
 	s = splnet();
@@ -1109,7 +1109,7 @@ an_set_nwkey_wep(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 	}
 	DPRINTF(("an_set_nwkey_wep: %s: %sold(%d:%d,%d,%d,%d) "
 	    "pers(%d:%d,%d,%d,%d) new(%d:%d,%d,%d,%d)\n",
-	    device_xname(&sc->sc_dev),
+	    device_xname(sc->sc_dev),
 	    ((nwkey->i_wepon & IEEE80211_NWKEY_PERSIST) ? "persist: " : ""),
 	    sc->sc_tx_key,
 	    sc->sc_wepkeys[0].an_wep_keylen, sc->sc_wepkeys[1].an_wep_keylen,
@@ -1492,7 +1492,7 @@ an_rx_intr(struct an_softc *sc)
 
 #ifdef AN_DEBUG
 	if (an_debug > 1)
-		an_dump_pkt(device_xname(&sc->sc_dev), m);
+		an_dump_pkt(device_xname(sc->sc_dev), m);
 #endif /* AN_DEBUG */
 
 	ni = ieee80211_find_rxnode(ic, wh);
@@ -1534,7 +1534,7 @@ an_tx_intr(struct an_softc *sc, int status)
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: tx mismatch: "
 			    "expected %x(%d), actual %x(%d)\n",
-			    device_xname(&sc->sc_dev),
+			    device_xname(sc->sc_dev),
 			    sc->sc_txd[sc->sc_txcur].d_fid, sc->sc_txcur,
 			    fid, cur);
 	}
@@ -1571,7 +1571,7 @@ an_cmd(struct an_softc *sc, int cmd, int val)
 	/* make sure that previous command completed */
 	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY) {
 		if (sc->sc_if.if_flags & IFF_DEBUG)
-			printf("%s: command 0x%x busy\n", device_xname(&sc->sc_dev),
+			printf("%s: command 0x%x busy\n", device_xname(sc->sc_dev),
 			    CSR_READ_2(sc, AN_COMMAND));
 		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
 	}
@@ -1604,14 +1604,14 @@ an_cmd(struct an_softc *sc, int cmd, int val)
 	if (i == AN_TIMEOUT) {
 		if (sc->sc_if.if_flags & IFF_DEBUG)
 			printf("%s: command 0x%x param 0x%x timeout\n",
-			    device_xname(&sc->sc_dev), cmd, val);
+			    device_xname(sc->sc_dev), cmd, val);
 		return ETIMEDOUT;
 	}
 	if (status & AN_STAT_CMD_RESULT) {
 		if (sc->sc_if.if_flags & IFF_DEBUG)
 			printf("%s: command 0x%x param 0x%x status 0x%x "
 			    "resp 0x%x 0x%x 0x%x\n",
-			    device_xname(&sc->sc_dev), cmd, val, status,
+			    device_xname(sc->sc_dev), cmd, val, status,
 			    CSR_READ_2(sc, AN_RESP0), CSR_READ_2(sc, AN_RESP1),
 			    CSR_READ_2(sc, AN_RESP2));
 		return EIO;
@@ -1652,14 +1652,14 @@ an_seek_bap(struct an_softc *sc, int id, int off)
 			break;
 		if (i == AN_TIMEOUT) {
 			printf("%s: timeout in an_seek_bap to 0x%x/0x%x\n",
-			    device_xname(&sc->sc_dev), id, off);
+			    device_xname(sc->sc_dev), id, off);
 			sc->sc_bap_off = AN_OFF_ERR;	/* invalidate */
 			return ETIMEDOUT;
 		}
 		DELAY(10);
 	}
 	if (status & AN_OFF_ERR) {
-		aprint_error_dev(&sc->sc_dev, "failed in an_seek_bap to 0x%x/0x%x\n",
+		aprint_error_dev(sc->sc_dev, "failed in an_seek_bap to 0x%x/0x%x\n",
 		    id, off);
 		sc->sc_bap_off = AN_OFF_ERR;	/* invalidate */
 		return EIO;
@@ -1750,7 +1750,7 @@ an_alloc_fid(struct an_softc *sc, int len, int *idp)
 	int i;
 
 	if (an_cmd(sc, AN_CMD_ALLOC_MEM, len)) {
-		aprint_error_dev(&sc->sc_dev, "failed to allocate %d bytes on NIC\n",
+		aprint_error_dev(sc->sc_dev, "failed to allocate %d bytes on NIC\n",
 		    len);
 		return ENOMEM;
 	}
@@ -1759,7 +1759,7 @@ an_alloc_fid(struct an_softc *sc, int len, int *idp)
 		if (CSR_READ_2(sc, AN_EVENT_STAT) & AN_EV_ALLOC)
 			break;
 		if (i == AN_TIMEOUT) {
-			printf("%s: timeout in alloc\n", device_xname(&sc->sc_dev));
+			printf("%s: timeout in alloc\n", device_xname(sc->sc_dev));
 			return ETIMEDOUT;
 		}
 		DELAY(10);
@@ -1788,7 +1788,7 @@ an_read_rid(struct an_softc *sc, int rid, void *buf, int *buflenp)
 
 	len = le16toh(len) - 2;
 	if (*buflenp < len) {
-		aprint_error_dev(&sc->sc_dev, "record buffer is too small, "
+		aprint_error_dev(sc->sc_dev, "record buffer is too small, "
 		    "rid=%x, size=%d, len=%d\n",
 		    rid, *buflenp, len);
 		return ENOSPC;
@@ -1854,7 +1854,7 @@ an_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		    ni->ni_esslen);
 		ni->ni_rates = ic->ic_sup_rates[IEEE80211_MODE_11B];	/*XXX*/
 		if (ic->ic_ifp->if_flags & IFF_DEBUG) {
-			printf("%s: ", device_xname(&sc->sc_dev));
+			printf("%s: ", device_xname(sc->sc_dev));
 			if (ic->ic_opmode == IEEE80211_M_STA)
 				printf("associated ");
 			else

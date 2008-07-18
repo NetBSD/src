@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.19 2008/03/14 16:43:27 tsutsui Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.19.8.1 2008/07/18 16:37:26 simonb Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.19 2008/03/14 16:43:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.19.8.1 2008/07/18 16:37:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,23 +54,21 @@ __KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.19 2008/03/14 16:43:27 tsutsui Exp $");
 void arc_sysreset(bus_addr_t, bus_size_t);
 
 struct jazzio_softc {
-	struct	device sc_dv;
+	device_t sc_dev;
 	struct	arc_bus_dma_tag sc_dmat;
 	struct	pica_dev *sc_devs;
 };
 
 /* Definition of the driver for autoconfig. */
-int	jazziomatch(struct device *, struct cfdata *, void *);
-void	jazzioattach(struct device *, struct device *, void *);
-int	jazzioprint(void *, const char *);
+static int	jazziomatch(device_t, cfdata_t, void *);
+static void	jazzioattach(device_t, device_t, void *);
+static int	jazzioprint(void *, const char *);
 
-CFATTACH_DECL(jazzio, sizeof(struct jazzio_softc),
+CFATTACH_DECL_NEW(jazzio, sizeof(struct jazzio_softc),
     jazziomatch, jazzioattach, NULL, NULL);
 
-void	jazzio_intr_establish(int, int (*)(void *), void *);
-void	jazzio_intr_disestablish(int);
-uint32_t jazzio_intr(uint32_t, struct clockframe *);
-int	jazzio_no_handler(void *);
+static uint32_t jazzio_intr(uint32_t, struct clockframe *);
+static int	jazzio_no_handler(void *);
 
 /*
  *  Interrupt dispatch table for jazz i/o bus.
@@ -82,18 +80,18 @@ struct jazzio_intrhand {
 	char		ih_evname[32];	/* event counter name */
 };
 
-struct jazzio_intrhand jazzio_intrtab[16];
+static struct jazzio_intrhand jazzio_intrtab[16];
 
 
 struct jazzio_config *jazzio_conf = NULL;
 struct pica_dev *jazzio_devconfig = NULL;
-int jazzio_found = 0;
 int jazzio_int_mask = 0;	/* jazz i/o interrupt enable mask */
-
 struct arc_bus_space jazzio_bus;
 
-int
-jazziomatch(struct device *parent, struct cfdata *match, void *aux)
+static int jazzio_found = 0;
+
+static int
+jazziomatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -104,12 +102,14 @@ jazziomatch(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-void
-jazzioattach(struct device *parent, struct device *self, void *aux)
+static void
+jazzioattach(device_t parent, device_t self, void *aux)
 {
-	struct jazzio_softc *sc = (struct jazzio_softc *)self;
+	struct jazzio_softc *sc = device_private(self);
 	struct jazzio_attach_args ja;
 	int i;
+
+	sc->sc_dev = self;
 
 	if (jazzio_conf == NULL)
 		panic("jazzio_conf isn't initialized");
@@ -118,13 +118,13 @@ jazzioattach(struct device *parent, struct device *self, void *aux)
 
 	jazzio_found = 1;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* keep our CPU device description handy */
 	sc->sc_devs = jazzio_devconfig;
 
 	/* initialize interrupt handler table */
-	for (i = 0; i < sizeof(jazzio_intrtab)/sizeof(jazzio_intrtab[0]); i++) {
+	for (i = 0; i < __arraycount(jazzio_intrtab); i++) {
 		jazzio_intrtab[i].ih_func = jazzio_no_handler;
 		jazzio_intrtab[i].ih_arg = NULL;
 	}
@@ -153,7 +153,7 @@ jazzioattach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-int
+static int
 jazzioprint(void *aux, const char *pnp)
 {
 	struct jazzio_attach_args *ja = aux;
@@ -171,8 +171,7 @@ jazzio_intr_establish(int intr, intr_handler_t handler, void *val)
 {
 	struct jazzio_intrhand *jirp;
 
-	if (intr < 0 ||
-	    intr >= sizeof(jazzio_intrtab)/sizeof(jazzio_intrtab[0]))
+	if (intr < 0 || intr >= __arraycount(jazzio_intrtab))
 		panic("jazzio intr %d out of range", intr);
 	jirp = &jazzio_intrtab[intr];
 	if (jirp->ih_func != jazzio_no_handler)
@@ -202,7 +201,7 @@ jazzio_intr_disestablish(int intr)
 	(*jazzio_conf->jc_set_iointr_mask)(jazzio_int_mask);
 }
 
-int
+static int
 jazzio_no_handler(void *arg)
 {
 

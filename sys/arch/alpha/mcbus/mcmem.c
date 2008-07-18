@@ -1,4 +1,4 @@
-/* $NetBSD: mcmem.c,v 1.4 2002/10/02 04:06:38 thorpej Exp $ */
+/* $NetBSD: mcmem.c,v 1.4.116.1 2008/07/18 16:37:26 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcmem.c,v 1.4 2002/10/02 04:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcmem.c,v 1.4.116.1 2008/07/18 16:37:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,16 +51,13 @@ __KERNEL_RCSID(0, "$NetBSD: mcmem.c,v 1.4 2002/10/02 04:06:38 thorpej Exp $");
 #include <alpha/mcbus/mcbusreg.h>
 #include <alpha/mcbus/mcbusvar.h>
 
-static int	mcmemmatch __P((struct device *, struct cfdata *, void *));
-static void	mcmemattach __P((struct device *, struct device *, void *));
-CFATTACH_DECL(mcmem, sizeof (struct device),
-    mcmemmatch, mcmemattach, NULL, NULL);
+static int	mcmemmatch(device_t, cfdata_t, void *);
+static void	mcmemattach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(mcmem, 0, mcmemmatch, mcmemattach, NULL, NULL);
 
 static int
-mcmemmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mcmemmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mcbus_dev_attach_args *ta = aux;
 	if (ta->ma_type == MCBUS_TYPE_MEM)
@@ -69,10 +66,8 @@ mcmemmatch(parent, cf, aux)
 }
 
 static void
-mcmemattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mcmemattach(device_t parent, device_t self, void *aux)
 {
-	printf("\n");
+	aprint_naive("\n");
+	aprint_verbose("\n");
 }

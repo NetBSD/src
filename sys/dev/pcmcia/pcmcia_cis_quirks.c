@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.31 2008/04/05 21:31:23 cegger Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.31.8.1 2008/07/18 16:37:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.31 2008/04/05 21:31:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.31.8.1 2008/07/18 16:37:43 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ match:
 		if (!wiped) {
 			if (pcmcia_verbose) {
 				printf("%s: using CIS quirks for ",
-				    device_xname(&sc->dev));
+				    device_xname(sc->dev));
 				for (j = 0; j < 4; j++) {
 					if (card->cis1_info[j] == NULL)
 						break;
