@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.365.2.3 2008/06/27 15:11:39 simonb Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.365.2.4 2008/07/18 14:48:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.365.2.3 2008/06/27 15:11:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.365.2.4 2008/07/18 14:48:55 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -215,9 +215,6 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_LOG | MNT_IGNORE);
-#if 1	/* XXXX "mount -u -o log" doesn't work on -current */
-	mp->mnt_flag &= ~MNT_LOG;
-#endif	/* XXXX */
 
 	error = VFS_MOUNT(mp, path, data, data_len);
 
