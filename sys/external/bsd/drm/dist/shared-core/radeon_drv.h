@@ -136,12 +136,6 @@ enum radeon_family {
 	CHIP_LAST,
 };
 
-enum radeon_cp_microcode_version {
-	UCODE_R100,
-	UCODE_R200,
-	UCODE_R300,
-};
-
 /*
  * Chip flags
  */
@@ -249,8 +243,6 @@ typedef struct drm_radeon_private {
 
 	int usec_timeout;
 
-	int microcode_version;
-
 	struct {
 		u32 boxes;
 		int freelist_timeouts;
@@ -321,6 +313,7 @@ typedef struct drm_radeon_private {
 
 	int num_gb_pipes;
 	int track_flush;
+	uint32_t chip_family; /* extract from flags */
 } drm_radeon_private_t;
 
 typedef struct drm_radeon_buf_priv {
