@@ -61,6 +61,9 @@ int drm_getunique(struct drm_device *dev, void *data,
 int drm_setunique(struct drm_device *dev, void *data,
 		  struct drm_file *file_priv)
 {
+#ifdef __NetBSD__
+	return EOPNOTSUPP;
+#else
 	drm_unique_t *u = data;
 	int domain, bus, slot, func, ret;
 	char *busid;
@@ -110,6 +113,7 @@ int drm_setunique(struct drm_device *dev, void *data,
 	DRM_UNLOCK();
 
 	return 0;
+#endif
 }
 
 
