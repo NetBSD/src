@@ -116,6 +116,7 @@ typedef struct drm_file drm_file_t;
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/atomic.h>
+#include <sys/workqueue.h>
 #include <uvm/uvm.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -966,13 +967,19 @@ struct drm_device {
 
 #ifdef __FreeBSD__
 	struct unrhdr	  *drw_unrhdr;
+#else
+	int               drw_no;
+#endif
 	/* RB tree of drawable infos */
 	RB_HEAD(drawable_tree, bsd_drm_drawable_info) drw_head;
 
-	/* XXXMRG */
+#ifdef __FreeBSD__
 	struct task	  locked_task;
-	void		  (*locked_task_call)(struct drm_device *dev);
 #endif
+#ifdef __NetBSD__
+	struct workqueue  *locked_task;
+#endif
+	void		  (*locked_task_call)(struct drm_device *dev);
 };
 
 extern int	drm_debug_flag;

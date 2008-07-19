@@ -33,9 +33,10 @@
 #include "drmP.h"
 #include "drm.h"
 
-/* XXXMRG */
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)
 static void drm_locked_task(void *context, int pending __unused);
+#elif defined(__NetBSD__)
+static void drm_locked_task(struct work *, void *);
 #endif
 
 int drm_irq_by_busid(struct drm_device *dev, void *data,
@@ -285,10 +286,16 @@ int drm_irq_install(struct drm_device *dev)
 	dev->driver.irq_postinstall(dev);
 	DRM_UNLOCK();
 
-/* XXXMRG */
 #ifdef __FreeBSD__
 	TASK_INIT(&dev->locked_task, 0, drm_locked_task, dev);
 #endif
+#ifdef __NetBSD__
+	retcode = workqueue_create(&dev->locked_task, "drmirq",
+	    drm_locked_task, dev, PRI_NONE, IPL_VM, 0);
+	if (retcode)
+		goto err;
+#endif
+
 	return 0;
 err:
 	DRM_LOCK();
@@ -330,6 +337,12 @@ int drm_irq_uninstall(struct drm_device *dev)
 	DRM_LOCK();
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	pci_intr_disestablish(&dev->pa.pa_pc, dev->irqh);
+#endif
+#if defined(__NetBSD__)
+	if (dev->locked_task) {
+		workqueue_destroy(dev->locked_task);
+		dev->locked_task = NULL;
+	}
 #endif
 	drm_vblank_cleanup(dev);
 
@@ -614,9 +627,12 @@ void drm_handle_vblank(struct drm_device *dev, int crtc)
 	drm_vbl_send_signals(dev, crtc);
 }
 
-/* XXXMRG */
+static void
 #if defined(__FreeBSD__)
-static void drm_locked_task(void *context, int pending __unused)
+drm_locked_task(void *context, int pending __unused)
+#elif defined(__NetBSD__)
+drm_locked_task(struct work *wk, void *context)
+#endif
 {
 	struct drm_device *dev = context;
 
@@ -655,7 +671,14 @@ void
 drm_locked_tasklet(struct drm_device *dev,
 		   void (*tasklet)(struct drm_device *dev))
 {
-	dev->locked_task_call = tasklet;
-	taskqueue_enqueue(taskqueue_swi, &dev->locked_task);
-}
+#if defined(__NetBSD__)
+	static struct work drm_tasklet_wk;
 #endif
+
+	dev->locked_task_call = tasklet;
+#if defined(__FreeBSD__)
+	taskqueue_enqueue(taskqueue_swi, &dev->locked_task);
+#elif defined(__NetBSD__)
+	workqueue_enqueue(dev->locked_task, &drm_tasklet_wk, NULL);
+#endif
+}
