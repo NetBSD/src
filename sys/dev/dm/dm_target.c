@@ -207,7 +207,7 @@ dm_target_prop_list(void)
 int
 dm_target_init(void)
 {
-	struct dm_target *dmt,*dmt1,*dmt2,*dmt3,*dmt4;
+	struct dm_target *dmt,*dmt1,*dmt2,*dmt3,*dmt4,*dmt5,*dmt6;
 	int r;
 
 	r = 0;
