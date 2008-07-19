@@ -320,7 +320,7 @@ enum {
 #else /* __FreeBSD__ */
 
 #define CDEV_MAJOR		34
-#define PAGE_ALIGN(addr)	(((addr) + PAGE_SIZE - 1) & PAGE_MASK)
+#define PAGE_ALIGN(addr)	ALIGN(addr)
 /* DRM_SUSER returns true if the user is superuser */
 #if defined(__NetBSD__)
 #define DRM_SUSER(p)		(kauth_cred_getsvuid((p)->p_cred) == 0)
