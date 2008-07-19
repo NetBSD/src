@@ -849,7 +849,10 @@ int drm_open(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTCDEVPROC *p)
 
 	dev = DRIVER_SOFTC(minor(kdev));
 
+#ifdef __NetBSD__
+	/* XXXNETBSD */
 	dev->kdev = kdev;
+#endif
 
 	DRM_DEBUG( "open_count = %d\n", dev->open_count );
 
