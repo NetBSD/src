@@ -357,12 +357,13 @@ drm_attach_common(struct drm_device *dev, struct pci_attach_args *pa, drm_pci_id
 	memcpy(&dev->pa, pa, sizeof(dev->pa));
 
 	dev->irq = pa->pa_intrline;
+	/* XXX this needs to be deal with for other platforms, e.g. alpha */
 	dev->pci_domain = 0;
 	dev->pci_bus = pa->pa_bus;
 	dev->pci_slot = pa->pa_device;
 	dev->pci_func = pa->pa_function;
 	dev->pci_vendor = PCI_VENDOR(pa->pa_id);
-	dev->pci_device = pa->pa_device;
+	dev->pci_device = PCI_PRODUCT(pa->pa_device);
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), idlist);
