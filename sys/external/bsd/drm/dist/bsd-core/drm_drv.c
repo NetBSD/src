@@ -697,6 +697,8 @@ static int drm_load(struct drm_device *dev)
 		DRM_ERROR("Couldn't allocate drawable number allocator\n");
 		goto error;
 	}
+#else
+	dev->drw_no = 0;
 #endif
 
 	DRM_INFO("Initialized %s %d.%d.%d %s\n",
