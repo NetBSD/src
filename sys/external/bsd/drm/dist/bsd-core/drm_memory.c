@@ -38,6 +38,21 @@
 
 #include "drmP.h"
 
+#if defined(__NetBSD__)
+# ifdef DRM_NO_AGP
+#  define NAGP_I810 0
+# else
+#  if defined(_KERNEL_OPT)
+#    include "agp_i810.h"
+#  else
+#   define NAGP_I810 1
+#  endif
+# endif
+# if NAGP_I810 > 0
+#  include <dev/pci/agpvar.h>
+# endif
+#endif
+
 #if !defined(_MODULE) || !defined(__NetBSD__)
 MALLOC_DEFINE(M_DRM, "drm", "DRM Data Structures");
 #endif
