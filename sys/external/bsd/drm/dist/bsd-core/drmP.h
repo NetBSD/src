@@ -245,7 +245,7 @@ MALLOC_DECLARE(M_DRM);
 #define DRM_CDEVPROC_REAL(l)	(l)->l_proc
 #define DRM_IOCTL_DATA		void *
 #define DRM_SPINTYPE		kmutex_t
-#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_VM)
+#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_NONE)
 #define DRM_SPINUNINIT(l)	mutex_destroy(l)
 #define DRM_SPINLOCK(l)		mutex_enter(l)
 #define DRM_SPINUNLOCK(u)	mutex_exit(u)
@@ -491,12 +491,13 @@ for ( ret = 0 ; !ret && !(condition) ; ) {			\
 	DRM_LOCK();						\
 }
 #elif defined(__NetBSD__)
+/* Returns -errno to shared code */
 #define DRM_WAIT_ON( ret, queue, timeout, condition )		\
 for ( ret = 0 ; !ret && !(condition) ; ) {			\
 	DRM_UNLOCK();						\
 	mutex_enter(&dev->irq_lock);				\
 	if (!(condition))					\
-	   ret = mtsleep(&(queue), PZERO | PCATCH, 		\
+	   ret = -mtsleep(&(queue), PZERO | PCATCH, 		\
 			 "drmwtq", (timeout), &dev->irq_lock);	\
 	mutex_exit(&dev->irq_lock);				\
 	DRM_LOCK();						\
