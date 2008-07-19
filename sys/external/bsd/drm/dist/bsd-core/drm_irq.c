@@ -102,9 +102,15 @@ static void vblank_disable_fn(void *arg)
 	}
 	callout_deactivate(&dev->vblank_disable_timer);
 
+	if (!dev->vblank_disable_allowed)
+		return;
+
 	for (i = 0; i < dev->num_crtcs; i++) {
 		if (atomic_read(&dev->vblank_refcount[i]) == 0 &&
 		    dev->vblank_enabled[i]) {
+			DRM_DEBUG("disabling vblank on crtc %d\n", i);
+			dev->last_vblank[i] =
+			    dev->driver.get_vblank_counter(dev, i);
 			dev->driver.disable_vblank(dev, i);
 			dev->vblank_enabled[i] = 0;
 		}
@@ -208,6 +214,8 @@ int drm_vblank_init(struct drm_device *dev, int num_crtcs)
 		atomic_set(&dev->_vblank_count[i], 0);
 		atomic_set(&dev->vblank_refcount[i], 0);
 	}
+
+	dev->vblank_disable_allowed = 0;
 
 	return 0;
 
@@ -384,7 +392,6 @@ u32 drm_vblank_count(struct drm_device *dev, int crtc)
 
 void drm_update_vblank_count(struct drm_device *dev, int crtc)
 {
-	unsigned long irqflags;
 	u32 cur_vblank, diff;
 
 	if (dev->vblank_suspend[crtc])
@@ -398,7 +405,6 @@ void drm_update_vblank_count(struct drm_device *dev, int crtc)
 	 * a long time.
 	 */
 	cur_vblank = dev->driver.get_vblank_counter(dev, crtc);
-	DRM_SPINLOCK_IRQSAVE(&dev->vbl_lock, irqflags);
 	if (cur_vblank < dev->last_vblank[crtc]) {
 		if (cur_vblank == dev->last_vblank[crtc] - 1) {
 			diff = 0;
@@ -414,7 +420,9 @@ void drm_update_vblank_count(struct drm_device *dev, int crtc)
 		diff = cur_vblank - dev->last_vblank[crtc];
 	}
 	dev->last_vblank[crtc] = cur_vblank;
-	DRM_SPINUNLOCK_IRQRESTORE(&dev->vbl_lock, irqflags);
+
+	DRM_DEBUG("enabling vblank interrupts on crtc %d, missed %d\n",
+	    crtc, diff);
 
 	atomic_add(diff, &dev->_vblank_count[crtc]);
 }
@@ -432,8 +440,10 @@ int drm_vblank_get(struct drm_device *dev, int crtc)
 		ret = dev->driver.enable_vblank(dev, crtc);
 		if (ret)
 			atomic_dec(&dev->vblank_refcount[crtc]);
-		else
+		else {
 			dev->vblank_enabled[crtc] = 1;
+			drm_update_vblank_count(dev, crtc);
+		}
 	}
 	DRM_SPINUNLOCK_IRQRESTORE(&dev->vbl_lock, irqflags);
 
@@ -460,6 +470,8 @@ int drm_modeset_ctl(struct drm_device *dev, void *data,
 		    struct drm_file *file_priv)
 {
 	struct drm_modeset_ctl *modeset = data;
+	unsigned long irqflags;
+	u32 new, diff;
 	int crtc, ret = 0;
 
 	crtc = modeset->crtc;
@@ -470,27 +482,28 @@ int drm_modeset_ctl(struct drm_device *dev, void *data,
 
 	switch (modeset->cmd) {
 	case _DRM_PRE_MODESET:
-		dev->vblank_premodeset[crtc] =
-		    dev->driver.get_vblank_counter(dev, crtc);
-		dev->vblank_suspend[crtc] = 1;
+		DRM_SPINLOCK_IRQSAVE(&dev->vbl_lock, irqflags);
+		dev->vblank_disable_allowed = 1;
+		if (!dev->vblank_enabled[crtc]) {
+			dev->vblank_premodeset[crtc] =
+				dev->driver.get_vblank_counter(dev, crtc);
+			dev->vblank_suspend[crtc] = 1;
+		}
+		DRM_SPINUNLOCK_IRQRESTORE(&dev->vbl_lock, irqflags);
 		break;
 	case _DRM_POST_MODESET:
-		if (dev->vblank_suspend[crtc]) {
-			u32 new = dev->driver.get_vblank_counter(dev, crtc);
-
-			/* Compensate for spurious wraparound */
-			if (new < dev->vblank_premodeset[crtc]) {
-				atomic_sub(dev->max_vblank_count + new -
-				    dev->vblank_premodeset[crtc],
-				    &dev->_vblank_count[crtc]);
-				DRM_DEBUG("vblank_premodeset[%d]=0x%x, new=0x%x"
-				    " => _vblank_count[%d]-=0x%x\n", crtc,
-				    dev->vblank_premodeset[crtc], new,
-				    crtc, dev->max_vblank_count + new -
-				    dev->vblank_premodeset[crtc]);
-			}
+		DRM_SPINLOCK_IRQSAVE(&dev->vbl_lock, irqflags);
+		dev->vblank_disable_allowed = 1;
+		new = dev->driver.get_vblank_counter(dev, crtc);
+		if (dev->vblank_suspend[crtc] && !dev->vblank_enabled[crtc]) {
+			if (new > dev->vblank_premodeset[crtc])
+			    diff = dev->vblank_premodeset[crtc] - new;
+			else
+			    diff = new;
+			atomic_add(diff, &dev->_vblank_count[crtc]);
 		}
 		dev->vblank_suspend[crtc] = 0;
+		DRM_SPINUNLOCK_IRQRESTORE(&dev->vbl_lock, irqflags);
 		break;
 	default:
 		ret = EINVAL;
@@ -524,7 +537,6 @@ int drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_pr
 	if (crtc >= dev->num_crtcs)
 		return EINVAL;
 
-	drm_update_vblank_count(dev, crtc);
 	seq = drm_vblank_count(dev, crtc);
 
 	switch (vblwait->request.type & _DRM_VBLANK_TYPES_MASK) {
@@ -622,7 +634,7 @@ void drm_vbl_send_signals(struct drm_device *dev, int crtc )
 
 void drm_handle_vblank(struct drm_device *dev, int crtc)
 {
-	drm_update_vblank_count(dev, crtc);
+	atomic_inc(&dev->_vblank_count[crtc]);
 	DRM_WAKEUP(&dev->vbl_queue[crtc]);
 	drm_vbl_send_signals(dev, crtc);
 }
@@ -636,35 +648,29 @@ drm_locked_task(struct work *wk, void *context)
 {
 	struct drm_device *dev = context;
 
-	DRM_LOCK();
-	for (;;) {
-		int ret;
+	DRM_SPINLOCK(&dev->tsk_lock);
 
-		if (drm_lock_take(&dev->lock.hw_lock->lock,
-		    DRM_KERNEL_CONTEXT))
-		{
-			dev->lock.file_priv = NULL; /* kernel owned */
-			dev->lock.lock_time = jiffies;
-			atomic_inc(&dev->counts[_DRM_STAT_LOCKS]);
-			break;  /* Got lock */
-		}
-
-		/* Contention */
-#if defined(__FreeBSD__) && __FreeBSD_version > 500000
-		ret = mtx_sleep((void *)&dev->lock.lock_queue, &dev->dev_lock,
-		    PZERO | PCATCH, "drmlk2", 0);
-#else
-		ret = tsleep((void *)&dev->lock.lock_queue, PZERO | PCATCH,
-		    "drmlk2", 0);
-#endif
-		if (ret != 0)
-			return;
+	DRM_LOCK(); /* XXX drm_lock_take() should do it's own locking */
+	if (dev->locked_task_call == NULL ||
+	    drm_lock_take(&dev->lock.hw_lock->lock, DRM_KERNEL_CONTEXT) == 0) {
+		DRM_UNLOCK();
+		DRM_SPINUNLOCK(&dev->tsk_lock);
+		return;
 	}
+
+	dev->lock.file_priv = NULL; /* kernel owned */
+	dev->lock.lock_time = jiffies;
+	atomic_inc(&dev->counts[_DRM_STAT_LOCKS]);
+
 	DRM_UNLOCK();
 
 	dev->locked_task_call(dev);
 
 	drm_lock_free(dev, &dev->lock.hw_lock->lock, DRM_KERNEL_CONTEXT);
+
+	dev->locked_task_call = NULL;
+
+	DRM_SPINUNLOCK(&dev->tsk_lock);
 }
 
 void
@@ -675,7 +681,14 @@ drm_locked_tasklet(struct drm_device *dev,
 	static struct work drm_tasklet_wk;
 #endif
 
+	DRM_SPINLOCK(&dev->tsk_lock);
+	if (dev->locked_task_call != NULL) {
+		DRM_SPINUNLOCK(&dev->tsk_lock);
+		return;
+	}
+
 	dev->locked_task_call = tasklet;
+	DRM_SPINUNLOCK(&dev->tsk_lock);
 #if defined(__FreeBSD__)
 	taskqueue_enqueue(taskqueue_swi, &dev->locked_task);
 #elif defined(__NetBSD__)

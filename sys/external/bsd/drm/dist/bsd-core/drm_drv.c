@@ -216,6 +216,7 @@ int drm_attach(device_t nbdev, drm_pci_id_list_t *idlist)
 	mtx_init(&dev->irq_lock, "drmirq", NULL, MTX_DEF);
 	mtx_init(&dev->vbl_lock, "drmvbl", NULL, MTX_DEF);
 	mtx_init(&dev->drw_lock, "drmdrw", NULL, MTX_DEF);
+	mtx_init(&dev->tsk_lock, "drmtsk", NULL, MTX_DEF);
 #endif
 
 	id_entry = drm_find_description(pci_get_vendor(dev->device),
