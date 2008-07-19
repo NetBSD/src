@@ -96,11 +96,32 @@ DRIVER_MODULE(sisdrm, pci, sis_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(sisdrm, drm, 1, 1, 1);
 
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__OpenBSD__)
 #ifdef _LKM
 CFDRIVER_DECL(sis, DV_TTY, NULL);
 #else
 CFATTACH_DECL(sis, sizeof(struct drm_device), drm_probe, drm_attach, drm_detach,
     drm_activate);
 #endif
+#elif defined(__NetBSD__)
+
+static int
+sisdrm_probe(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	return drm_probe(pa, sis_pciidlist);
+}
+
+static void
+sisdrm_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	drm_device_t *dev = device_private(self);
+
+	sis_configure(dev);
+	return drm_attach(self, pa, sis_pciidlist);
+}
+
+CFATTACH_DECL_NEW(sisdrm, sizeof(drm_device_t), sisdrm_probe, sisdrm_attach,
+	drm_detach, drm_activate);
 #endif

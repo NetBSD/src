@@ -115,11 +115,33 @@ DRIVER_MODULE(r128, pci, r128_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(r128, drm, 1, 1, 1);
 
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__OpenBSD__)
 #ifdef _LKM
 CFDRIVER_DECL(r128, DV_TTY, NULL);
 #else
 CFATTACH_DECL(r128, sizeof(struct drm_device), drm_probe, drm_attach,
     drm_detach, drm_activate);
 #endif
+#elif defined(__NetBSD__)
+
+static int
+r128drm_probe(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	return drm_probe(pa, r128_pciidlist);
+}
+
+static void
+r128drm_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	drm_device_t *dev = device_private(self);
+
+	r128_configure(dev);
+	return drm_attach(self, pa, r128_pciidlist);
+}
+
+CFATTACH_DECL_NEW(r128drm, sizeof(drm_device_t), r128drm_probe, r128drm_attach,
+	drm_detach, drm_activate);
+
 #endif

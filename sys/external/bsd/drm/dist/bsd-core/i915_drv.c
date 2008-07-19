@@ -40,6 +40,7 @@ static drm_pci_id_list_t i915_pciidlist[] = {
 	i915_PCI_IDS
 };
 
+#ifdef __FreeBSD__
 static int i915_suspend(device_t nbdev)
 {
 	struct drm_device *dev = device_get_softc(nbdev);
@@ -65,6 +66,7 @@ static int i915_resume(device_t nbdev)
 
 	return (bus_generic_resume(nbdev));
 }
+#endif
 
 static void i915_configure(struct drm_device *dev)
 {
@@ -122,8 +124,10 @@ static device_method_t i915_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe,		i915_probe),
 	DEVMETHOD(device_attach,	i915_attach),
+#ifdef __FreeBSD__
 	DEVMETHOD(device_suspend,	i915_suspend),
 	DEVMETHOD(device_resume,	i915_resume),
+#endif
 	DEVMETHOD(device_detach,	drm_detach),
 
 	{ 0, 0 }
@@ -147,6 +151,87 @@ DRIVER_MODULE(i915, agp, i915_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(i915, drm, 1, 1, 1);
 
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__OpenBSD__)
 CFDRIVER_DECL(i915, DV_TTY, NULL);
-#endif
+#elif defined(__NetBSD__)
+static int
+i915drm_probe(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	return drm_probe(pa, i915_pciidlist);
+}
+
+static void
+i915drm_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	drm_device_t *dev = (drm_device_t *)self;
+
+	i915_configure(dev);
+
+	pmf_device_register(self, NULL, NULL);
+
+	drm_attach(self, pa, i915_pciidlist);
+}
+
+CFATTACH_DECL(i915drm, sizeof(drm_device_t), i915drm_probe, i915drm_attach,
+	drm_detach, drm_activate);
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, i915drm, "drm");
+
+CFDRIVER_DECL(i915drm, DV_DULL, NULL);
+extern struct cfattach i915drm_ca;
+static int drmloc[] = { -1 };
+static struct cfparent drmparent = {
+	"drm", "vga", DVUNIT_ANY
+};
+static struct cfdata i915drm_cfdata[] = {
+	{
+		.cf_name = "i915drm",
+		.cf_atname = "i915drm",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = drmloc,
+		.cf_flags = 0,
+		.cf_pspec = &drmparent,
+	},
+	{ NULL }
+};
+
+static int
+i915drm_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&i915drm_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("i915drm", &i915drm_ca);
+		if (err) {
+			config_cfdriver_detach(&i915drm_cd);
+			return err;
+		}
+		err = config_cfdata_attach(i915drm_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("i915drm", &i915drm_ca);
+			config_cfdriver_detach(&i915drm_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdata_detach(i915drm_cfdata);
+		if (err)
+			return err;
+		config_cfattach_detach("i915drm", &i915drm_ca);
+		config_cfdriver_detach(&i915drm_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#endif /* _MODULE */
+#endif /* __FreeBSD__ */

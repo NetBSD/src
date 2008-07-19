@@ -952,7 +952,6 @@ static void radeon_cp_dispatch_clear(struct drm_device * dev,
 	if ((flags & (RADEON_DEPTH | RADEON_STENCIL))
 	    && (flags & RADEON_CLEAR_FASTZ)) {
 
-		int i;
 		int depthpixperline =
 		    dev_priv->depth_fmt ==
 		    RADEON_DEPTH_FORMAT_16BIT_INT_Z ? (dev_priv->depth_pitch /

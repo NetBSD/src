@@ -103,6 +103,27 @@ DRIVER_MODULE(savage, pci, savage_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(savage, drm, 1, 1, 1);
 
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__OpenBSD__)
 CFDRIVER_DECL(savage, DV_TTY, NULL);
+#elif defined(__NetBSD__)
+
+static int
+savagedrm_probe(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	return drm_probe(pa, savage_pciidlist);
+}
+
+static void
+savagedrm_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	drm_device_t *dev = device_private(self);
+
+	savage_configure(dev);
+	return drm_attach(self, pa, savage_pciidlist);
+}
+
+CFATTACH_DECL_NEW(savagedrm, sizeof(drm_device_t), savagedrm_probe, savagedrm_attach,
+	drm_detach, drm_activate);
 #endif

@@ -121,7 +121,7 @@ int drm_ati_pcigart_init(struct drm_device *dev,
 
 	memset(pci_gart, 0, max_pages * sizeof(u32));
 
-	KASSERT(PAGE_SIZE >= ATI_PCIGART_PAGE_SIZE, ("page size too small"));
+	DRM_KASSERT(PAGE_SIZE >= ATI_PCIGART_PAGE_SIZE, ("page size too small"));
 
 	for (i = 0; i < pages; i++) {
 		entry_addr = dev->sg->busaddr[i];

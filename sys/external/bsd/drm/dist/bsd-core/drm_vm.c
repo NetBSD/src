@@ -45,6 +45,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	vm_paddr_t phys;
 #else
 	paddr_t phys;
+	uintptr_t roffset;
 #endif
 
 	DRM_LOCK();
@@ -52,11 +53,11 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	DRM_UNLOCK();
 	if (priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
-		return EINVAL;
+		return -1;
 	}
 
 	if (!priv->authenticated)
-		return EACCES;
+		return -1;
 
 	if (dev->dma && offset >= 0 && offset < ptoa(dev->dma->page_count)) {
 		drm_device_dma_t *dma = dev->dma;
@@ -65,14 +66,18 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 
 		if (dma->pagelist != NULL) {
 			unsigned long page = offset >> PAGE_SHIFT;
-			unsigned long phys = dma->pagelist[page];
+			unsigned long physaddr = dma->pagelist[page];
 
 			DRM_SPINUNLOCK(&dev->dma_lock);
 #if defined(__FreeBSD__) && __FreeBSD_version >= 500102
-			*paddr = phys;
+			*paddr = physaddr;
 			return 0;
 #else
-			return atop(phys);
+#if defined(__NetBSD__) && defined(macppc)
+			return physaddr;
+#else
+			return atop(physaddr);
+#endif
 #endif
 		} else {
 			DRM_SPINUNLOCK(&dev->dma_lock);
@@ -88,9 +93,22 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 				   for performance, even if the list was a
 				   bit longer. */
 	DRM_LOCK();
+#ifdef __NetBSD__
+	roffset = DRM_NETBSD_HANDLE2ADDR(offset);
+#endif
 	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (offset >= map->offset && offset < map->offset + map->size)
+#ifdef __FreeBSD__
+		if (roffset >= map->offset && roffset < map->offset + map->size)
 			break;
+#elif defined(__NetBSD__)
+		if (map->type == _DRM_SHM) {
+			if (roffset >= (uintptr_t)map->handle && roffset < (uintptr_t)map->handle + map->size)
+				break;
+		} else {
+			if (offset >= map->offset && offset < map->offset + map->size)
+				break;
+		}
+#endif
 	}
 
 	if (map == NULL) {
@@ -113,10 +131,14 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		phys = offset;
 		break;
 	case _DRM_CONSISTENT:
-		phys = vtophys((char *)map->handle + (offset - map->offset));
+		phys = vtophys((vaddr_t)((char *)map->handle + (offset - map->offset)));
 		break;
-	case _DRM_SCATTER_GATHER:
 	case _DRM_SHM:
+#ifdef __NetBSD__
+		phys = vtophys(DRM_NETBSD_HANDLE2ADDR(offset));
+		break;
+#endif
+	case _DRM_SCATTER_GATHER:
 		phys = vtophys(offset);
 		break;
 	default:
@@ -128,7 +150,11 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	*paddr = phys;
 	return 0;
 #else
+#if defined(__NetBSD__) && defined(macppc)
+	return phys;
+#else
 	return atop(phys);
+#endif
 #endif
 }
 

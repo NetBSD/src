@@ -32,9 +32,9 @@
  * Implementation of the ioctls for setup of DRM mappings and DMA buffers.
  */
 
-#include "dev/pci/pcireg.h"
-
 #include "drmP.h"
+
+#include "dev/pci/pcireg.h"
 
 /*
  * Compute order.  Can be made faster.
@@ -58,6 +58,7 @@ int drm_order(unsigned long size)
  */
 static int drm_alloc_resource(struct drm_device *dev, int resource)
 {
+#ifdef __FreeBSD__
 	if (resource >= DRM_MAX_PCI_RESOURCE) {
 		DRM_ERROR("Resource %d too large\n", resource);
 		return 1;
@@ -79,6 +80,10 @@ static int drm_alloc_resource(struct drm_device *dev, int resource)
 		return 1;
 	}
 
+#elif defined(__NetBSD__)
+	/* XXX This space _not_ intentionally left blank! */
+#endif
+
 	return 0;
 }
 
@@ -88,7 +93,11 @@ unsigned long drm_get_resource_start(struct drm_device *dev,
 	if (drm_alloc_resource(dev, resource) != 0)
 		return 0;
 
+#ifdef __FreeBSD__
 	return rman_get_start(dev->pcir[resource]);
+#elif defined(__NetBSD__)
+	return dev->pci_map_data[resource].base;
+#endif
 }
 
 unsigned long drm_get_resource_len(struct drm_device *dev,
@@ -97,7 +106,11 @@ unsigned long drm_get_resource_len(struct drm_device *dev,
 	if (drm_alloc_resource(dev, resource) != 0)
 		return 0;
 
+#ifdef __FreeBSD__
 	return rman_get_size(dev->pcir[resource]);
+#elif defined(__NetBSD__)
+	return dev->pci_map_data[resource].size;
+#endif
 }
 
 int drm_addmap(struct drm_device * dev, unsigned long offset,
@@ -161,6 +174,10 @@ int drm_addmap(struct drm_device * dev, unsigned long offset,
 	map->size = size;
 	map->type = type;
 	map->flags = flags;
+#ifdef __NetBSD__
+	map->cnt = NULL;
+	map->mapsize = 0;
+#endif
 
 	switch ( map->type ) {
 	case _DRM_REGISTERS:
@@ -169,8 +186,10 @@ int drm_addmap(struct drm_device * dev, unsigned long offset,
 			break;
 		/* FALLTHROUGH */
 	case _DRM_FRAME_BUFFER:
+#ifndef DRM_NO_MTRR
 		if (drm_mtrr_add(map->offset, map->size, DRM_MTRR_WC) == 0)
 			map->mtrr = 1;
+#endif
 		break;
 	case _DRM_SHM:
 		map->handle = malloc(map->size, M_DRM, M_NOWAIT);
@@ -300,6 +319,10 @@ int drm_addmap_ioctl(struct drm_device *dev, void *data,
 
 	if (request->type != _DRM_SHM) {
 		request->handle = (void *)request->offset;
+#ifdef __NetBSD__
+	} else {
+		request->handle = (void *)DRM_NETBSD_ADDR2HANDLE((uintptr_t)map->handle);
+#endif
 	}
 
 	return 0;
@@ -313,17 +336,26 @@ void drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 
 	switch (map->type) {
 	case _DRM_REGISTERS:
+#ifdef __FreeBSD__
 		if (map->bsr == NULL)
+#endif
 			drm_ioremapfree(map);
 		/* FALLTHROUGH */
 	case _DRM_FRAME_BUFFER:
+#ifndef DRM_NO_MTRR
 		if (map->mtrr) {
 			int __unused retcode;
 			
+#ifdef __FreeBSD__
 			retcode = drm_mtrr_del(0, map->offset, map->size,
 			    DRM_MTRR_WC);
+#else
+			retcode = drm_mtrr_del(map->offset, map->size,
+			    DRM_MTRR_WC);
+#endif
 			DRM_DEBUG("mtrr_del = %d\n", retcode);
 		}
+#endif
 		break;
 	case _DRM_SHM:
 		free(map->handle, M_DRM);
@@ -339,10 +371,12 @@ void drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 		break;
 	}
 
+#ifdef __FreeBSD__
 	if (map->bsr != NULL) {
 		bus_release_resource(dev->device, SYS_RES_MEMORY, map->rid,
 		    map->bsr);
 	}
+#endif
 
 	free(map, M_DRM);
 }
@@ -578,8 +612,12 @@ static int drm_do_addbufs_pci(struct drm_device *dev, drm_buf_desc_t *request)
 
 	if (entry->buflist == NULL || entry->seglist == NULL || 
 	    temp_pagelist == NULL) {
-		free(entry->buflist, M_DRM);
-		free(entry->seglist, M_DRM);
+		if (temp_pagelist)
+			free(temp_pagelist, M_DRM);
+		if (entry->buflist)
+			free(entry->buflist, M_DRM);
+		if (entry->seglist)
+			free(entry->seglist, M_DRM);
 		return ENOMEM;
 	}
 	
@@ -1036,7 +1074,7 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct vnode *vn;
 	voff_t foff;
-	vsize_t size;
+	vsize_t size, rsize;
 	vaddr_t vaddr;
 #endif /* __NetBSD__ || __OpenBSD__ */
 
@@ -1044,7 +1082,7 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	int i;
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	if (!vfinddev(kdev, VCHR, &vn))
+	if (!vfinddev(dev->kdev, VCHR, &vn))
 		return 0;	/* FIXME: Shouldn't this be EINVAL or something? */
 #endif /* __NetBSD__ || __OpenBSD */
 
@@ -1086,12 +1124,22 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	    VM_PROT_ALL, MAP_SHARED, SLIST_FIRST(&dev->devnode->si_hlist),
 	    foff);
 #endif
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__NetBSD__)
+	/* XXXNETBSD */
+	vaddr = curlwp->l_proc->p_emul->e_vm_default_addr(curlwp->l_proc,
+	    (vaddr_t)vms->vm_daddr, size);
+	rsize = round_page(size);
+	DRM_DEBUG("mmap %lx/%ld\n", vaddr, rsize);
+	retcode = uvm_mmap(&vms->vm_map, &vaddr, rsize,
+	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
+	    &vn->v_uobj, foff, curproc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+#elif defined(__OpenBSD__)
 	vaddr = round_page((vaddr_t)vms->vm_daddr + MAXDSIZ);
 	retcode = uvm_mmap(&vms->vm_map, &vaddr, size,
 	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
-	    &vn->v_uobj, foff, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	    &vn->v_uobj, foff, curproc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 #endif /* __NetBSD__ || __OpenBSD */
+
 	if (retcode)
 		goto done;
 

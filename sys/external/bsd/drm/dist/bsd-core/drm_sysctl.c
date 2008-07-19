@@ -48,15 +48,22 @@ struct drm_sysctl_list {
 #define DRM_SYSCTL_ENTRIES (sizeof(drm_sysctl_list)/sizeof(drm_sysctl_list[0]))
 
 struct drm_sysctl_info {
+#if defined(__FreeBSD__)
 	struct sysctl_ctx_list ctx;
-	char		       name[2];
+#elif defined(__NetBSD__)
+	const struct sysctlnode *dri, *dri_card, *dri_debug;
+	const struct sysctlnode *dri_rest[DRM_SYSCTL_ENTRIES];
+#endif
+	char		       name[7];
 };
 
 int drm_sysctl_init(struct drm_device *dev)
 {
 	struct drm_sysctl_info *info;
+#if defined(__FreeBSD__)
 	struct sysctl_oid *oid;
 	struct sysctl_oid *top, *drioid;
+#endif
 	int		  i;
 
 	info = malloc(sizeof *info, M_DRM, M_WAITOK | M_ZERO);
@@ -64,6 +71,7 @@ int drm_sysctl_init(struct drm_device *dev)
 		return 1;
 	dev->sysctl = info;
 
+#if defined(__FreeBSD__)
 	/* Add the sysctl node for DRI if it doesn't already exist */
 	drioid = SYSCTL_ADD_NODE( &info->ctx, &sysctl__hw_children, OID_AUTO, "dri", CTLFLAG_RW, NULL, "DRI Graphics");
 	if (!drioid)
@@ -102,20 +110,74 @@ int drm_sysctl_init(struct drm_device *dev)
 	SYSCTL_ADD_INT(&info->ctx, SYSCTL_CHILDREN(top), OID_AUTO, "debug",
 	    CTLFLAG_RW, &drm_debug_flag, sizeof(drm_debug_flag),
 	    "Enable debugging output");
+#elif defined(__NetBSD__)
+	sysctl_createv(NULL, 0, NULL, &info->dri,
+			CTLFLAG_READWRITE, CTLTYPE_NODE,
+			"dri", SYSCTL_DESCR("DRI Graphics"), NULL, 0, NULL, 0,
+			CTL_HW, CTL_CREATE);
+	snprintf(info->name, 7, "card%d", dev->unit);
+	sysctl_createv(NULL, 0, NULL, &info->dri_card,
+			CTLFLAG_READWRITE, CTLTYPE_NODE,
+			info->name, NULL, NULL, 0, NULL, 0,
+			CTL_HW, info->dri->sysctl_num, CTL_CREATE);
+	for (i = 0; i < DRM_SYSCTL_ENTRIES; i++)
+		sysctl_createv(NULL, 0, NULL, &(info->dri_rest[i]),
+				CTLFLAG_READONLY, CTLTYPE_STRING,
+				drm_sysctl_list[i].name, NULL,
+				drm_sysctl_list[i].f, 0, dev,
+				sizeof(drm_device_t*),
+				CTL_HW,
+				info->dri->sysctl_num,
+				info->dri_card->sysctl_num, CTL_CREATE);
+	sysctl_createv(NULL, 0, NULL, &info->dri_debug,
+			CTLFLAG_READWRITE, CTLTYPE_INT,
+			"debug", SYSCTL_DESCR("Enable debugging output"),
+			NULL, 0,
+			&drm_debug_flag, sizeof(drm_debug_flag),
+			CTL_HW, info->dri->sysctl_num, CTL_CREATE);
+#endif
 
 	return 0;
 }
 
 int drm_sysctl_cleanup(struct drm_device *dev)
 {
+#if defined(__FreeBSD__)
 	int error;
+
 	error = sysctl_ctx_free( &dev->sysctl->ctx );
 
 	free(dev->sysctl, M_DRM);
 	dev->sysctl = NULL;
 
 	return error;
+#elif defined(__NetBSD__)
+	int i;
+
+	sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num,
+	                              dev->sysctl->dri_debug->sysctl_num,
+	                              CTL_DESTROY);
+	for (i = 0; i < DRM_SYSCTL_ENTRIES; i++)
+		sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num,
+	       	                              dev->sysctl->dri_card->sysctl_num,
+	       	                           dev->sysctl->dri_rest[i]->sysctl_num,
+		                              CTL_DESTROY);
+	sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num,
+	                              dev->sysctl->dri_card->sysctl_num,
+	                              CTL_DESTROY);
+	sysctl_destroyv(NULL, CTL_HW, dev->sysctl->dri->sysctl_num, CTL_DESTROY);
+
+	free(dev->sysctl, M_DRM);
+	dev->sysctl = NULL;
+
+	return 0;
+#endif
 }
+
+#ifdef __NetBSD__
+#define SYSCTL_OUT(x, y, z) \
+	(len+=z,(len<*oldlenp)?(strcat((char*)oldp, y),0):EOVERFLOW)
+#endif
 
 #define DRM_SYSCTL_PRINT(fmt, arg...)				\
 do {								\
@@ -127,12 +189,25 @@ do {								\
 
 static int drm_name_info DRM_SYSCTL_HANDLER_ARGS
 {
+#if defined(__FreeBSD__)
 	struct drm_device *dev = arg1;
+#elif defined(__NetBSD__)
+	drm_device_t *dev = rnode->sysctl_data;
+	int len = 0;
+#endif
 	char buf[128];
 	int retcode;
 	int hasunique = 0;
 
+#if defined(__FreeBSD__)
 	DRM_SYSCTL_PRINT("%s 0x%x", dev->driver.name, dev2udev(dev->devnode));
+#elif defined(__NetBSD__)
+	if (oldp == NULL)
+		return EINVAL;
+	*((char*)oldp) = '\0';
+
+	DRM_SYSCTL_PRINT("%s", dev->driver.name);
+#endif
 	
 	DRM_LOCK();
 	if (dev->unique) {
@@ -152,7 +227,12 @@ done:
 
 static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 {
+#if defined(__FreeBSD__)
 	struct drm_device *dev = arg1;
+#elif defined(__NetBSD__)
+	drm_device_t *dev = rnode->sysctl_data;
+	int len = 0;
+#endif
 	drm_local_map_t *map, *tempmaps;
 	const char   *types[] = { "FB", "REG", "SHM", "AGP", "SG" };
 	const char *type, *yesno;
@@ -187,7 +267,7 @@ static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 	for (i = 0; i < mapcount; i++) {
 		map = &tempmaps[i];
 
-		if (map->type < 0 || map->type > 4)
+		if ((int)map->type < 0 || map->type > 4)
 			type = "??";
 		else
 			type = types[map->type];
@@ -211,7 +291,12 @@ done:
 
 static int drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
 {
-	struct drm_device	 *dev = arg1;
+#if defined(__FreeBSD__)
+	struct drm_device *dev = arg1;
+#elif defined(__NetBSD__)
+	drm_device_t *dev = rnode->sysctl_data;
+	int len = 0;
+#endif
 	drm_device_dma_t *dma = dev->dma;
 	drm_device_dma_t tempdma;
 	int *templists;
@@ -267,7 +352,12 @@ done:
 
 static int drm_clients_info DRM_SYSCTL_HANDLER_ARGS
 {
+#if defined(__FreeBSD__)
 	struct drm_device *dev = arg1;
+#elif defined(__NetBSD__)
+	drm_device_t *dev = rnode->sysctl_data;
+	int len = 0;
+#endif
 	drm_file_t *priv, *tempprivs;
 	char buf[128];
 	int retcode;

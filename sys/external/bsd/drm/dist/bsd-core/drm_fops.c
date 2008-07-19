@@ -38,6 +38,33 @@
 
 drm_file_t *drm_find_file_by_proc(struct drm_device *dev, DRM_STRUCTPROC *p)
 {
+#if defined(__NetBSD__)
+	int restart = 1;
+	uid_t uid = kauth_cred_getsvuid(p->p_cred);
+	pid_t pid = p->p_pid;
+	drm_file_t *priv;
+
+	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
+
+	while (restart) {
+		restart = 0;
+		TAILQ_FOREACH(priv, &dev->files, link) {
+
+	/* if the process disappeared, free the resources 
+	 * NetBSD only calls drm_close once, so this frees
+	 * resources earlier.
+	 */
+			if (pfind(priv->pid) == NULL) {
+				/*drm_close_pid(dev, priv, priv->pid);*/
+				restart = 1;
+				break;
+			}
+			else
+			if (priv->pid == pid && priv->uid == uid)
+				return priv;
+		}
+	}
+#else
 #if __FreeBSD_version >= 500021
 	uid_t uid = p->td_ucred->cr_svuid;
 	pid_t pid = p->td_proc->p_pid;
@@ -52,12 +79,13 @@ drm_file_t *drm_find_file_by_proc(struct drm_device *dev, DRM_STRUCTPROC *p)
 	TAILQ_FOREACH(priv, &dev->files, link)
 		if (priv->pid == pid && priv->uid == uid)
 			return priv;
+#endif /* !__NetBSD__ */
 	return NULL;
 }
 
 /* drm_open_helper is called whenever a process opens /dev/drm. */
-int drm_open_helper(struct cdev *kdev, int flags, int fmt, DRM_STRUCTPROC *p,
-		    struct drm_device *dev)
+int drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
+		    drm_device_t *dev)
 {
 	int	     m = minor(kdev);
 	drm_file_t   *priv;
@@ -82,6 +110,9 @@ int drm_open_helper(struct cdev *kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 #if __FreeBSD_version >= 500000
 		priv->uid		= p->td_ucred->cr_svuid;
 		priv->pid		= p->td_proc->p_pid;
+#elif defined(__NetBSD__)
+		priv->uid		= kauth_cred_getsvuid(p->p_cred);
+		priv->pid		= p->p_pid;
 #else
 		priv->uid		= p->p_cred->p_svuid;
 		priv->pid		= p->p_pid;
@@ -120,12 +151,12 @@ int drm_open_helper(struct cdev *kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 /* The drm_read and drm_poll are stubs to prevent spurious errors
  * on older X Servers (4.3.0 and earlier) */
 
-int drm_read(struct cdev *kdev, struct uio *uio, int ioflag)
+int drm_read(DRM_CDEV kdev, struct uio *uio, int ioflag)
 {
 	return 0;
 }
 
-int drm_poll(struct cdev *kdev, int events, DRM_STRUCTPROC *p)
+int drm_poll(DRM_CDEV kdev, int events, DRM_STRUCTCDEVPROC *p)
 {
 	return 0;
 }

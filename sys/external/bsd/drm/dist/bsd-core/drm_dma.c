@@ -69,7 +69,8 @@ void drm_dma_takedown(struct drm_device *dev)
 			for (j = 0; j < dma->bufs[i].seg_count; j++) {
 				drm_pci_free(dev, dma->bufs[i].seglist[j]);
 			}
-			free(dma->bufs[i].seglist, M_DRM);
+			if (dma->bufs[i].seglist)
+				free(dma->bufs[i].seglist, M_DRM);
 		}
 
 	   	if (dma->bufs[i].buf_count) {
@@ -77,13 +78,17 @@ void drm_dma_takedown(struct drm_device *dev)
 				free(dma->bufs[i].buflist[j].dev_private,
 				    M_DRM);
 			}
-		   	free(dma->bufs[i].buflist, M_DRM);
+			if (dma->bufs[i].buflist)
+				free(dma->bufs[i].buflist, M_DRM);
 		}
 	}
 
-	free(dma->buflist, M_DRM);
-	free(dma->pagelist, M_DRM);
-	free(dev->dma, M_DRM);
+	if (dma->buflist)
+		free(dma->buflist, M_DRM);
+	if (dma->pagelist)
+		free(dma->pagelist, M_DRM);
+	if (dev->dma)
+		free(dev->dma, M_DRM);
 	dev->dma = NULL;
 	DRM_SPINUNINIT(&dev->dma_lock);
 }
