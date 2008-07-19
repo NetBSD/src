@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.185 2008/06/17 09:01:56 cegger Exp $	*/
+/*	$NetBSD: vnd.c,v 1.186 2008/07/19 13:58:08 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.185 2008/06/17 09:01:56 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.186 2008/07/19 13:58:08 kardel Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -873,6 +873,7 @@ vndiodone(struct buf *bp)
 	}
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
+	buf_destroy(bp);
 	VND_PUTXFER(vnd, vnx);
 	biodone(obp);
 }
