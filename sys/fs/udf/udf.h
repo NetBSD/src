@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.18 2008/07/17 19:10:22 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.19 2008/07/19 16:00:35 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -179,6 +179,11 @@ extern int udf_verbose;
 #define UDF_ALLOC_RELAXEDSEQUENTIAL  6  /* only nodes not seq.           */
 
 
+/* allocation descriptor styles */
+#define UDF_ALLOCDSCR_SHORT	     1	/* use short_ad allocation dscr. */
+#define UDF_ALLOCDSCR_LONG	     2	/* use long_ad  allocation dscr. */
+
+
 /* logical volume open/close actions */
 #define UDF_OPEN_SESSION	  0x01  /* if needed writeout VRS + VDS	     */
 #define UDF_CLOSE_SESSION	  0x02	/* close session after writing VAT   */
@@ -283,9 +288,11 @@ struct udf_mount {
 	int			 lvclose;		/* logvol actions    */
 
 	/* disc allocation / writing method */
-	int			 lvreadwrite;		/* bits */
-	int			 data_alloc;		/* all userdata */
-	int			 meta_alloc;		/* all metadata */
+	int			 lvreadwrite;		/* error handling    */
+	int			 data_alloc;		/* all userdata      */
+	int			 data_allocdscr;
+	int			 meta_alloc;		/* all metadata      */
+	int			 meta_allocdscr;
 	int			 data_part;
 	int			 metadata_part;
 	kmutex_t		 allocate_mutex;
