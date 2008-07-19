@@ -115,6 +115,26 @@ DRIVER_MODULE(mach64, pci, mach64_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(mach64, drm, 1, 1, 1);
 
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__OpenBSD__)
 CFDRIVER_DECL(mach64, DV_TTY, NULL);
+#elif defined(__NetBSD__)
+static int
+mach64drm_probe(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	return drm_probe(pa, mach64_pciidlist);
+}
+
+static void
+mach64drm_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	drm_device_t *dev = device_private(self);
+
+	mach64_configure(dev);
+	return drm_attach(self, pa, mach64_pciidlist);
+}
+
+CFATTACH_DECL_NEW(mach64drm, sizeof(drm_device_t), mach64drm_probe, mach64drm_attach,
+	drm_detach, drm_activate);
 #endif

@@ -35,6 +35,7 @@
 
 #include "drmP.h"
 
+#if defined(__FreeBSD__)
 struct bsd_drm_drawable_info {
 	struct drm_drawable_info info;
 	int handle;
@@ -151,3 +152,23 @@ int drm_update_draw(struct drm_device *dev, void *data,
 		return EINVAL;
 	}
 }
+#endif
+
+#if defined(__NetBSD__)
+int drm_adddraw(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	drm_draw_t draw;
+
+	draw.handle = 0;	/* NOOP */
+	DRM_DEBUG("%d\n", draw.handle);
+	
+	DRM_COPY_TO_USER(data, &draw, sizeof(draw));
+
+	return 0;
+}
+
+int drm_rmdraw(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	return 0;		/* NOOP */
+}
+#endif

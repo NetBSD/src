@@ -73,6 +73,8 @@ static int mga_driver_device_is_agp(struct drm_device * dev)
 	 */
 #if __FreeBSD_version >= 700010
 	bus = device_get_parent(device_get_parent(dev->device));
+#elif defined(__NetBSD__)
+	bus = device_parent(&dev->device);
 #else
 	bus = device_get_parent(dev->device);
 #endif
@@ -161,11 +163,32 @@ DRIVER_MODULE(mga, pci, mga_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(mga, drm, 1, 1, 1);
 
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__OpenBSD__)
 #ifdef _LKM
 CFDRIVER_DECL(mga, DV_TTY, NULL);
 #else
 CFATTACH_DECL(mga, sizeof(struct drm_device), drm_probe, drm_attach, drm_detach,
     drm_activate);
 #endif
+#elif defined(__NetBSD__)
+
+static int
+mgadrm_probe(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	return drm_probe(pa, mga_pciidlist);
+}
+
+static void
+mgadrm_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	drm_device_t *dev = device_private(self);
+
+	mga_configure(dev);
+	return drm_attach(self, pa, mga_pciidlist);
+}
+
+CFATTACH_DECL_NEW(mgadrm, sizeof(drm_device_t), mgadrm_probe, mgadrm_attach,
+	drm_detach, drm_activate);
 #endif
