@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.64 2008/07/19 16:00:35 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.65 2008/07/19 16:14:09 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.64 2008/07/19 16:00:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.65 2008/07/19 16:14:09 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1816,14 +1816,14 @@ udf_process_vds(struct udf_mount *ump) {
 	}
 
 	/* determine default allocation descriptors to use */
-	ump->data_allocdscr = UDF_ALLOCDSCR_SHORT;
-	ump->meta_allocdscr = UDF_ALLOCDSCR_SHORT;
+	ump->data_allocdscr = UDF_ICB_SHORT_ALLOC;
+	ump->meta_allocdscr = UDF_ICB_SHORT_ALLOC;
 	if (n_pm > 1) {
-		ump->data_allocdscr = UDF_ALLOCDSCR_LONG;
-		ump->meta_allocdscr = UDF_ALLOCDSCR_LONG;
+		ump->data_allocdscr = UDF_ICB_LONG_ALLOC;
+		ump->meta_allocdscr = UDF_ICB_LONG_ALLOC;
 		/* metadata partitions are forced to have short */
 		if (n_meta)
-			ump->meta_allocdscr = UDF_ALLOCDSCR_SHORT;
+			ump->meta_allocdscr = UDF_ICB_SHORT_ALLOC;
 	}
 
 	/* determine logical volume open/closure actions */

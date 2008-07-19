@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.19 2008/07/19 16:00:35 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.20 2008/07/19 16:14:09 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -177,11 +177,6 @@ extern int udf_verbose;
 #define UDF_ALLOC_METABITMAP         4  /* metadata bitmap               */
 #define UDF_ALLOC_METASEQUENTIAL     5  /* in chunks seq., nodes not seq */
 #define UDF_ALLOC_RELAXEDSEQUENTIAL  6  /* only nodes not seq.           */
-
-
-/* allocation descriptor styles */
-#define UDF_ALLOCDSCR_SHORT	     1	/* use short_ad allocation dscr. */
-#define UDF_ALLOCDSCR_LONG	     2	/* use long_ad  allocation dscr. */
 
 
 /* logical volume open/close actions */
