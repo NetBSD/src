@@ -776,7 +776,7 @@ do {								\
 #define DMAADVANCE( dev_priv, _discard )				\
 	do {								\
 		struct list_head *ptr;					\
-		int ret;						\
+		int myret;						\
 									\
 		if ( MACH64_VERBOSE ) {					\
 			DRM_INFO( "DMAADVANCE() in \n" );		\
@@ -789,9 +789,9 @@ do {								\
 		}							\
 		if (_buf->pending) {					\
 			/* This is a resued buffer, so we need to find it in the pending list */ \
-			if ((ret = mach64_find_pending_buf_entry(dev_priv, &_entry, _buf))) { \
+			if ((myret = mach64_find_pending_buf_entry(dev_priv, &_entry, _buf))) { \
 				DRM_ERROR( "DMAADVANCE(): couldn't find pending buf %d\n", _buf->idx );	\
-				return ret;				\
+				return myret;				\
 			}						\
 			if (_entry->discard) {				\
 				DRM_ERROR( "DMAADVANCE(): sending discarded pending buf %d\n", _buf->idx ); \
@@ -810,18 +810,18 @@ do {								\
 			list_add_tail(ptr, &dev_priv->pending);		\
 		}							\
 		_entry->discard = (_discard);				\
-		if ((ret = mach64_add_buf_to_ring( dev_priv, _entry ))) \
-			return ret;					\
+		if ((myret = mach64_add_buf_to_ring( dev_priv, _entry ))) \
+			return myret;					\
 	} while (0)
 
 #define DMADISCARDBUF()							\
 	do {								\
 		if (_entry == NULL) {					\
-			int ret;					\
-			if ((ret = mach64_find_pending_buf_entry(dev_priv, &_entry, _buf))) { \
+			int myret;					\
+			if ((myret = mach64_find_pending_buf_entry(dev_priv, &_entry, _buf))) { \
 				DRM_ERROR( "couldn't find pending buf %d\n", \
 					   _buf->idx );			\
-				return ret;				\
+				return myret;				\
 			}						\
 		}							\
 		_entry->discard = 1;					\
@@ -830,7 +830,7 @@ do {								\
 #define DMAADVANCEHOSTDATA( dev_priv )					\
 	do {								\
 		struct list_head *ptr;					\
-		int ret;						\
+		int myret;						\
 									\
 		if ( MACH64_VERBOSE ) {					\
 			DRM_INFO( "DMAADVANCEHOSTDATA() in \n" );	\
@@ -852,8 +852,8 @@ do {								\
 		_entry->buf->pending = 1;				\
 		list_add_tail(ptr, &dev_priv->pending);			\
 		_entry->discard = 1;					\
-		if ((ret = mach64_add_hostdata_buf_to_ring( dev_priv, _entry ))) \
-			return ret;					\
+		if ((myret = mach64_add_hostdata_buf_to_ring( dev_priv, _entry ))) \
+			return myret;					\
 	} while (0)
 
 #endif				/* __MACH64_DRV_H__ */
