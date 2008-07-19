@@ -105,11 +105,31 @@ extern devclass_t drm_devclass;
 DRIVER_MODULE(via, pci, via_driver, drm_devclass, 0, 0);
 MODULE_DEPEND(via, drm, 1, 1, 1);
 
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__OpenBSD__)
 #ifdef _LKM
 CFDRIVER_DECL(via, DV_TTY, NULL);
 #else
 CFATTACH_DECL(via, sizeof(struct drm_device), drm_probe, drm_attach, drm_detach,
     drm_activate);
 #endif
+#elif defined(__NetBSD__)
+static int
+viadrm_probe(struct device *parent, struct cfdata *match, void *opaque)
+{
+	struct pci_attach_args *pa = opaque;
+	return drm_probe(pa, via_pciidlist);
+}
+
+static void
+viadrm_attach(struct device *parent, struct device *self, void *opaque)
+{
+	struct pci_attach_args *pa = opaque;
+	drm_device_t *dev = device_private(self);
+
+	viadrm_configure(dev);
+	drm_attach(self, pa, via_pciidlist);
+}
+
+CFATTACH_DECL_NEW(viadrm, sizeof(drm_device_t), viadrm_probe, viadrm_attach,
+    drm_detach, drm_activate);
 #endif

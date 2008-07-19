@@ -97,11 +97,32 @@ DRIVER_MODULE(tdfx, pci, tdfx_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(tdfx, drm, 1, 1, 1);
 
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#elif defined(__OpenBSD__)
 #ifdef _LKM
 CFDRIVER_DECL(tdfx, DV_TTY, NULL);
 #else
 CFATTACH_DECL(tdfx, sizeof(struct drm_device), drm_probe, drm_attach,
     drm_detach, drm_activate);
 #endif
+#elif defined(__NetBSD__)
+
+static int
+tdfxdrm_probe(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	return drm_probe(pa, tdfx_pciidlist);
+}
+
+static void
+tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	drm_device_t *dev = device_private(self);
+
+	tdfx_configure(dev);
+	return drm_attach(self, pa, tdfx_pciidlist);
+}
+
+CFATTACH_DECL_NEW(tdfxdrm, sizeof(drm_device_t), tdfxdrm_probe, tdfxdrm_attach,
+	drm_detach, drm_activate);
 #endif
