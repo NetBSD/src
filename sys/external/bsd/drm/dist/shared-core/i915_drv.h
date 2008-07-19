@@ -105,6 +105,22 @@ typedef struct _drm_i915_vbl_swap {
 	int flip;
 } drm_i915_vbl_swap_t;
 
+#ifdef __linux__
+struct opregion_header;
+struct opregion_acpi;
+struct opregion_swsci;
+struct opregion_asle;
+
+struct intel_opregion {
+	struct opregion_header *header;
+	struct opregion_acpi *acpi;
+	struct opregion_swsci *swsci;
+	struct opregion_asle *asle;
+
+	int enabled;
+};
+#endif
+
 typedef struct drm_i915_private {
 	drm_local_map_t *sarea;
 	drm_local_map_t *mmio_map;
@@ -158,6 +174,11 @@ typedef struct drm_i915_private {
 	struct drm_buffer_object *sarea_bo;
 	struct drm_bo_kmap_obj sarea_kmap;
 #endif
+
+#ifdef __linux__
+	struct intel_opregion opregion;
+#endif
+
 	/* Register state */
 	u8 saveLBB;
 	u32 saveDSPACNTR;
@@ -340,6 +361,14 @@ void i915_flush_ttm(struct drm_ttm *ttm);
 int i915_execbuffer(struct drm_device *dev, void *data,
 				   struct drm_file *file_priv);
 
+#endif
+
+#ifdef __linux__
+/* i915_opregion.c */
+extern int intel_opregion_init(struct drm_device *dev);
+extern void intel_opregion_free(struct drm_device *dev);
+extern void opregion_asle_intr(struct drm_device *dev);
+extern void opregion_enable_asle(struct drm_device *dev);
 #endif
 
 #ifdef __linux__
@@ -613,6 +642,7 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 #define   I915_DISPLAY_PIPE_B_EVENT_INTERRUPT		(1<<4)
 #define   I915_DEBUG_INTERRUPT				(1<<2)
 #define   I915_USER_INTERRUPT				(1<<1)
+#define   I915_ASLE_INTERRUPT				(1<<0)
 #define EIR		0x020b0
 #define EMR		0x020b4
 #define ESR		0x020b8
@@ -1801,7 +1831,7 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 
 #define IS_I965GM(dev) ((dev)->pci_device == 0x2A02)
 
-#define IS_IGD_GM(dev) ((dev)->pci_device == 0x2A42)
+#define IS_GM45(dev) ((dev)->pci_device == 0x2A42)
 
 #define IS_G4X(dev) ((dev)->pci_device == 0x2E02 || \
 		     (dev)->pci_device == 0x2E12 || \
@@ -1815,8 +1845,8 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
 		      IS_I945GM(dev) || IS_I965G(dev) || IS_G33(dev))
 
 #define IS_MOBILE(dev) (IS_I830(dev) || IS_I85X(dev) || IS_I915GM(dev) || \
-			IS_I945GM(dev) || IS_I965GM(dev) || IS_IGD_GM(dev))
+			IS_I945GM(dev) || IS_I965GM(dev) || IS_GM45(dev))
 
-#define I915_NEED_GFX_HWS(dev) (IS_G33(dev) || IS_IGD_GM(dev) || IS_G4X(dev))
+#define I915_NEED_GFX_HWS(dev) (IS_G33(dev) || IS_GM45(dev) || IS_G4X(dev))
 
 #endif

@@ -25,7 +25,7 @@
 #ifndef __NOUVEAU_DRM_H__
 #define __NOUVEAU_DRM_H__
 
-#define NOUVEAU_DRM_HEADER_PATCHLEVEL 10
+#define NOUVEAU_DRM_HEADER_PATCHLEVEL 11
 
 struct drm_nouveau_channel_alloc {
 	uint32_t     fb_ctxdma_handle;
@@ -85,10 +85,12 @@ struct drm_nouveau_gpuobj_free {
 #define NOUVEAU_MEM_PINNED		0x00000040
 #define NOUVEAU_MEM_USER_BACKED		0x00000080
 #define NOUVEAU_MEM_MAPPED		0x00000100
-#define NOUVEAU_MEM_INSTANCE		0x00000200 /* internal */
-#define NOUVEAU_MEM_NOTIFIER            0x00000400 /* internal */
-#define NOUVEAU_MEM_NOVM		0x00000800 /* internal */
-#define NOUVEAU_MEM_USER		0x00001000 /* internal */
+#define NOUVEAU_MEM_TILE		0x00000200
+#define NOUVEAU_MEM_TILE_ZETA		0x00000400
+#define NOUVEAU_MEM_INSTANCE		0x01000000 /* internal */
+#define NOUVEAU_MEM_NOTIFIER            0x02000000 /* internal */
+#define NOUVEAU_MEM_NOVM		0x04000000 /* internal */
+#define NOUVEAU_MEM_USER		0x08000000 /* internal */
 #define NOUVEAU_MEM_INTERNAL (NOUVEAU_MEM_INSTANCE | \
 			      NOUVEAU_MEM_NOTIFIER | \
 			      NOUVEAU_MEM_NOVM | \
@@ -104,6 +106,13 @@ struct drm_nouveau_mem_alloc {
 
 struct drm_nouveau_mem_free {
 	uint64_t offset;
+	int flags;
+};
+
+struct drm_nouveau_mem_tile {
+	uint64_t offset;
+	uint64_t delta;
+	uint64_t size;
 	int flags;
 };
 
@@ -168,5 +177,6 @@ struct drm_nouveau_sarea {
 #define DRM_NOUVEAU_GPUOBJ_FREE        0x07
 #define DRM_NOUVEAU_MEM_ALLOC          0x08
 #define DRM_NOUVEAU_MEM_FREE           0x09
+#define DRM_NOUVEAU_MEM_TILE           0x0a
 
 #endif /* __NOUVEAU_DRM_H__ */

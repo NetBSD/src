@@ -594,7 +594,7 @@ nouveau_mem_alloc(struct drm_device *dev, int alignment, uint64_t size,
 	 * page size in the GPU VM.
 	 */
 	if (flags & NOUVEAU_MEM_FB && dev_priv->card_type >= NV_50) {
-		size = (size + (64 * 1024)) & ~((64 * 1024) - 1);
+		size = (size + 65535) & ~65535;
 		if (alignment < 16)
 			alignment = 16;
 	}
@@ -659,6 +659,7 @@ alloc_ok:
 		struct nouveau_gpuobj *pt = dev_priv->vm_vram_pt;
 		unsigned offset = block->start;
 		unsigned count = block->size / 65536;
+		unsigned tile = 0;
 
 		if (!pt) {
 			DRM_ERROR("vm alloc without vm pt\n");
@@ -666,11 +667,22 @@ alloc_ok:
 			return NULL;
 		}
 
+		/* The tiling stuff is *not* what NVIDIA does - but both the
+		 * 2D and 3D engines seem happy with this simpler method.
+		 * Should look into why NVIDIA do what they do at some point.
+		 */
+		if (flags & NOUVEAU_MEM_TILE) {
+			if (flags & NOUVEAU_MEM_TILE_ZETA)
+				tile = 0x00002800;
+			else
+				tile = 0x00007000;
+		}
+
 		while (count--) {
 			unsigned pte = offset / 65536;
 
 			INSTANCE_WR(pt, (pte * 2) + 0, offset | 1);
-			INSTANCE_WR(pt, (pte * 2) + 1, 0x00000000);
+			INSTANCE_WR(pt, (pte * 2) + 1, 0x00000000 | tile);
 			offset += 65536;
 		}
 	} else {
@@ -808,3 +820,53 @@ nouveau_ioctl_mem_free(struct drm_device *dev, void *data,
 	nouveau_mem_free(dev, block);
 	return 0;
 }
+
+int
+nouveau_ioctl_mem_tile(struct drm_device *dev, void *data,
+		       struct drm_file *file_priv)
+{
+	struct drm_nouveau_private *dev_priv = dev->dev_private;
+	struct drm_nouveau_mem_tile *memtile = data;
+	struct mem_block *block = NULL;
+
+	NOUVEAU_CHECK_INITIALISED_WITH_RETURN;
+
+	if (dev_priv->card_type < NV_50)
+		return -EINVAL;
+	
+	if (memtile->flags & NOUVEAU_MEM_FB) {
+		memtile->offset -= 512*1024*1024;
+		block = find_block(dev_priv->fb_heap, memtile->offset);
+	}
+
+	if (!block)
+		return -EINVAL;
+
+	if (block->file_priv != file_priv)
+		return -EPERM;
+
+	{
+		struct nouveau_gpuobj *pt = dev_priv->vm_vram_pt;
+		unsigned offset = block->start + memtile->delta;
+		unsigned count = memtile->size / 65536;
+		unsigned tile = 0;
+
+		if (memtile->flags & NOUVEAU_MEM_TILE) {
+			if (memtile->flags & NOUVEAU_MEM_TILE_ZETA)
+				tile = 0x00002800;
+			else
+				tile = 0x00007000;
+		}
+
+		while (count--) {
+			unsigned pte = offset / 65536;
+
+			INSTANCE_WR(pt, (pte * 2) + 0, offset | 1);
+			INSTANCE_WR(pt, (pte * 2) + 1, 0x00000000 | tile);
+			offset += 65536;
+		}
+	}
+
+	return 0;
+}
+
