@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.13 2008/07/18 16:21:12 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.14 2008/07/19 16:23:09 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.13 2008/07/18 16:21:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.14 2008/07/19 16:23:09 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2089,7 +2089,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 	uint8_t *data_pos, *evacuated_data;
 	int icbflags, addr_type;
 	int slot, cpy_slot;
-	int eof, error;
+	int isdir, eof, error;
 
 	DPRINTF(ALLOC, ("udf_grow_node\n"));
 
@@ -2189,10 +2189,11 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 			UDF_LOCK_NODE(udf_node, 0);
 		}
 
-		/* convert to a normal alloc */
-		/* XXX HOWTO selecting allocation method ? */
+		/* convert to a normal alloc and select type */
+		isdir = (vp->v_type == VDIR);
+
 		icbflags &= ~UDF_ICB_TAG_FLAGS_ALLOC_MASK;
-		icbflags |=  UDF_ICB_LONG_ALLOC;	/* XXX or SHORT_ALLOC */
+		icbflags |=  isdir ? ump->meta_allocdscr : ump->data_allocdscr;
 		icbtag->flags = udf_rw16(icbflags);
 
 		/* wipe old descriptor space */
