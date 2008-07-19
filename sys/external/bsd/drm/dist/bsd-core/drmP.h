@@ -739,6 +739,7 @@ struct drm_device {
 	struct mtx	  dev_lock;	/* protects everything else */
 #endif
 	DRM_SPINTYPE	  drw_lock;
+	DRM_SPINTYPE	  tsk_lock;
 
 				/* Usage Counters */
 	int		  open_count;	/* Outstanding files open	   */
@@ -786,6 +787,7 @@ struct drm_device {
 
 	atomic_t	  context_flag;	/* Context swapping flag	   */
 	int		  last_context;	/* Last current context		   */
+	int		  vblank_disable_allowed;
 	wait_queue_head_t *vbl_queue;	/* vblank wait queue */
 	atomic_t	  *_vblank_count;	/* number of VBLANK interrupts */
 						/* (driver must alloc the right number of counters) */
@@ -1086,6 +1088,8 @@ int	drm_sg_free(struct drm_device *dev, void *data,
 drm_dma_handle_t *drm_pci_alloc(struct drm_device *dev, size_t size,
 				size_t align, dma_addr_t maxaddr);
 void	drm_pci_free(struct drm_device *dev, drm_dma_handle_t *dmah);
+
+#define drm_core_ioremap_wc drm_core_ioremap
 
 /* Inline replacements for DRM_IOREMAP macros */
 static __inline__ void
