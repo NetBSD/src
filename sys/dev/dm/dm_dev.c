@@ -31,7 +31,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include <sys/disk.h>
+#include <sys/disklabel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
@@ -206,11 +206,6 @@ dm_dev_alloc()
 	
 	if ((dmv = kmem_alloc(sizeof(struct dm_dev), KM_NOSLEEP)) == NULL)
 		return NULL;
-
-	if ((dmv->dm_dk = kmem_alloc(sizeof(struct disk), KM_NOSLEEP)) == NULL){
-		(void)kmem_free(dmv, sizeof(struct dm_dev));
-		return NULL;
-	}
 	
 	return dmv;
 }
@@ -222,8 +217,9 @@ int
 dm_dev_free(struct dm_dev *dmv)
 {
 	if (dmv != NULL){
-		(void)kmem_free(dmv->dm_dk, sizeof(struct disk));
-		(void)kmem_free(dmv, sizeof(struct dm_dev));
+		if (dmv->dm_dklabel != NULL)
+			(void)kmem_free(dmv->dm_dklabel,sizeof(struct disklabel));
+		(void)kmem_free(dmv,sizeof(struct dm_dev));
 	}
 	
 	return 0;

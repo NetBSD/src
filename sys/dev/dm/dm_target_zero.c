@@ -56,6 +56,8 @@ dm_target_zero_init(struct dm_dev *dmv, void **target_config,
 
 	printf("Zero target init function called!!\n");
 
+	dmv->dev_type = DM_ZERO_DEV;
+	
 	*target_config = NULL;
 	
 	return 0;

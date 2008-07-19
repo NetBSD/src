@@ -28,7 +28,7 @@
  */
 
 /*
- * This file implements initial version of device-mapper error target.
+ * This file implements initial version of device-mapper snapshot target.
  */
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,25 +46,26 @@
 
 /* Init function called from dm_table_load_ioctl. */
 int
-dm_target_error_init(struct dm_dev *dmv, void **target_config,
+dm_target_snapshot_init(struct dm_dev *dmv, void **target_config,
 	       	int argc, const  char **argv)
 {
 
-	printf("Error target init function called!!\n");
+	printf("Snapshot target init function called!!\n");
 
 	*target_config = NULL;
 
-	dmv->dev_type = DM_ERROR_DEV;
+	
+	dmv->dev_type = DM_SNAPSHOT_DEV;
 	
 	return 0;
 }
 
 /* Strategy routine called from dm_strategy. */
 int
-dm_target_error_strategy(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_snapshot_strategy(struct dm_table_entry *table_en, struct buf *bp)
 {
 
-	printf("Error target read function called!!\n");
+	printf("Snapshot target read function called!!\n");
 
 	bp->b_error = EIO;
 	bp->b_resid = 0;
@@ -76,14 +77,14 @@ dm_target_error_strategy(struct dm_table_entry *table_en, struct buf *bp)
 
 /* Doesn't do anything here. */
 int
-dm_target_error_destroy(struct dm_table_entry *table_en)
+dm_target_snapshot_destroy(struct dm_table_entry *table_en)
 {
 	return 0;
 }
 
 /* Unsupported for this target. */
 int
-dm_target_error_upcall(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_snapshot_upcall(struct dm_table_entry *table_en, struct buf *bp)
 {
 	return 0;
 }
