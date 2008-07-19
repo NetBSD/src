@@ -9,3 +9,5 @@ all: drm_pciids.h
 
 drm_pciids.h: ${SHARED}/drm_pciids.txt
 	sh ../scripts/create_bsd_pci_lists.sh < ${SHARED}/drm_pciids.txt
+
+.include <bsd.subdir.mk>
