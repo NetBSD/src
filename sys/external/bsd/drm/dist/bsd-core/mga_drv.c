@@ -78,11 +78,13 @@ static int mga_driver_device_is_agp(struct drm_device * dev)
 #else
 	bus = device_get_parent(dev->device);
 #endif
+#ifndef __NetBSD__	/* XXXMRG */
 	if (pci_get_device(dev->device) == 0x0525 &&
 	    pci_get_vendor(bus) == 0x3388 &&
 	    pci_get_device(bus) == 0x0021)
 		return DRM_IS_NOT_AGP;
 	else
+#endif
 		return DRM_MIGHT_BE_AGP;
 }
 
