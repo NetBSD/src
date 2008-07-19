@@ -66,8 +66,11 @@ int dmdestroy(void);
 static int dm_cmd_to_fun(prop_dictionary_t);
 static int disk_ioctl_switch(dev_t, u_long, void *);
 static int dm_ioctl_switch(u_long);
-static void dmminphys(struct buf*);
-static void dmgetdisklabel(struct dm_dev*, dev_t); 
+static void dmminphys(struct buf *);
+static void dmgetdisklabel(struct dm_dev *, dev_t);
+/* Called to initialize disklabel values for readdisklabel. */
+static void dmgetdefaultdisklabel(struct dm_dev *, dev_t); 
+
 /* ***Variable-definitions*** */
 const struct bdevsw dm_bdevsw = {
 	dmopen, dmclose, dmstrategy, dmioctl, dmdump, dmsize,
@@ -203,15 +206,15 @@ dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	struct dm_dev *dmv;
 
+	aprint_verbose("open routine called %d\n",minor(dev));
+	
 	if ((dmv = dm_dev_lookup_minor(minor(dev))) != NULL) {
-		if (dmv->dm_dk == NULL)
+		if (dmv->dm_dklabel == NULL)
 			dmgetdisklabel(dmv, dev);
-
+		
 		dmv->ref_cnt++;
-		}
-
-	aprint_verbose("open routine called %d\n", minor(dev));
-
+	}
+	
 	return 0;
 }
 
@@ -358,7 +361,7 @@ dm_ioctl_switch(u_long cmd)
 	 }
 
 	 case DIOCGDINFO:
-		 *(struct disklabel *)data = *(dmv->dm_dk->dk_label);
+		 *(struct disklabel *)data = *(dmv->dm_dklabel);
 		 break;
 
 	 case DIOCGPART:	
@@ -543,22 +546,64 @@ dmminphys(struct buf *bp)
 static void
 dmgetdisklabel(struct dm_dev *dmv, dev_t dev)
 {
-	struct disklabel *lp = dmv->dm_dk->dk_label;
-	const char *errstring;
-
-	memset(dmv->dm_dk->dk_cpulabel, 0, sizeof(struct cpu_disklabel));
-
-	/*
-	 * Call the generic disklabel extraction routine
-	 */
-	errstring = readdisklabel(dev, dmstrategy, lp,
-	    dmv->dm_dk->dk_cpulabel);
-
-	/* if all went OK, we are passed a NULL error string */
-	if (errstring == NULL)
+	struct cpu_disklabel cpulp;
+	struct dm_pdev *dmp;
+	
+	if ((dmv->dm_dklabel = kmem_zalloc(sizeof(struct disklabel), KM_NOSLEEP))
+	    == NULL)
 		return;
 
-	aprint_debug("\t%s\t %u sectors \n", dmv->name,
-	    dmv->dm_dk->dk_label->d_secsize);
+	memset(&cpulp, 0, sizeof(cpulp));
+	
+	dmp = SLIST_FIRST(&dmv->pdevs);
+	
+	dmgetdefaultdisklabel(dmv, dev);
+	
+	return;
 }
 
+/*
+ * Initialize disklabel values, so we can use it for readdisklabel.
+ */
+static void
+dmgetdefaultdisklabel(struct dm_dev *dmv, dev_t dev)
+{
+	struct disklabel *lp = dmv->dm_dklabel;
+	struct partition *pp;
+	int dmp_size;
+
+	dmp_size = dmsize(dev);
+
+	/*
+	 * Size must be at least 2048 DEV_BSIZE blocks
+	 * (1M) in order to use this geometry.
+	 */
+		
+	lp->d_secperunit = dmp_size;
+	lp->d_secsize = DEV_BSIZE;
+	lp->d_nsectors = 32;
+	lp->d_ntracks = 64;
+	lp->d_ncylinders = dmp_size / (lp->d_nsectors * lp->d_ntracks);
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+
+	strncpy(lp->d_typename, "lvm", sizeof(lp->d_typename));
+	lp->d_type = DTYPE_DM;
+	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
+	lp->d_rpm = 3600;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
+
+	pp = &lp->d_partitions[RAW_PART];
+	/*
+	 * This is logical offset and therefore it can be 0
+	 * I will consider table offsets later in dmstrategy.
+	 */
+	pp->p_offset = 0; 
+	pp->p_size = lp->d_secperunit;
+	pp->p_fstype = FS_BSDFFS;  /* default value */
+	lp->d_npartitions = RAW_PART + 1;
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+}

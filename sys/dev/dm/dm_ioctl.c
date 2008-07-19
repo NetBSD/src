@@ -194,6 +194,9 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	dmv->event_nr = 0;
 	dmv->cur_active_table = 0;
 
+	dmv->dev_type = 0;
+	dmv->dm_dklabel = NULL;
+	
 	/* Initialize tables. */
 	SLIST_INIT(&dmv->tables[0]);
 	SLIST_INIT(&dmv->tables[1]);
@@ -450,6 +453,8 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 	if (!(flags & DM_READONLY_FLAG))
 			dm_table_destroy(tbl);
 
+	dmv->dev_type = 0;
+	
 	return 0;
 }
 

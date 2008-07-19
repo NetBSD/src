@@ -116,6 +116,16 @@ struct dm_dev {
 	uint32_t event_nr;
 	uint32_t ref_cnt;
 
+	uint32_t dev_type;
+
+#define DM_ZERO_DEV      (1 << 0)
+#define DM_ERROR_DEV     (1 << 1)	
+#define DM_LINEAR_DEV    (1 << 2)
+#define DM_MIRROR_DEV    (1 << 3)
+#define DM_STRIPE_DEV    (1 << 4)
+#define DM_SNAPSHOT_DEV  (1 << 5)
+#define DM_SPARE_DEV     (1 << 6)
+	
 	struct dm_pdevs pdevs;
 
 	/* Current active table is selected with this. */
@@ -124,10 +134,10 @@ struct dm_dev {
 
 	struct dm_dev_head upcalls;
 
-	struct disk *dm_dk;
+	
+	struct disklabel *dm_dklabel;
 
-	/* LIST of mirrored, snapshoted devices. */
-	TAILQ_ENTRY(dm_dev) next_upcall; 
+	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
 
         TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
 };
@@ -243,6 +253,12 @@ int dm_target_linear_init(struct dm_dev *, void**, int, const char **);
 int dm_target_linear_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_linear_destroy(struct dm_table_entry *);
 int dm_target_linear_upcall(struct dm_table_entry *, struct buf *);
+
+/* dm_target_snapshot.c */
+int dm_target_snapshot_init(struct dm_dev *, void**, int, const char **);
+int dm_target_snapshot_strategy(struct dm_table_entry *, struct buf *);
+int dm_target_snapshot_destroy(struct dm_table_entry *);
+int dm_target_snapshot_upcall(struct dm_table_entry *, struct buf *);
 
 /* dm_table.c  */
 int dm_table_destroy(struct dm_table *);

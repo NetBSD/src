@@ -31,12 +31,7 @@
 #include <sys/param.h>
 
 #include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/ioccom.h>
 #include <sys/kmem.h>
-#include <sys/lkm.h>
-
-#include <machine/int_fmtio.h>
 
 #include "dm.h"
 

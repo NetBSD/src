@@ -215,28 +215,56 @@ dm_target_init(void)
 	mutex_init(&dm_target_mutex, MUTEX_DEFAULT, IPL_NONE);
 	
 	dmt = dm_target_alloc("linear");
-	dmt3 = dm_target_alloc("striped");
 	dmt1 = dm_target_alloc("error");
 	dmt2 = dm_target_alloc("zero");
+	dmt3 = dm_target_alloc("striped");
 	dmt4 = dm_target_alloc("mirror");
+	dmt5 = dm_target_alloc("snapshot");
+	dmt6 = dm_target_alloc("snapshot-origin");
 	
 	dmt->version[0] = 1;
 	dmt->version[1] = 0;
 	dmt->version[2] = 2;
 	strncpy(dmt->name, "linear", DM_MAX_TYPE_NAME);
-	dmt->init=&dm_target_linear_init;
-	dmt->strategy=&dm_target_linear_strategy;
-	dmt->destroy=&dm_target_linear_destroy;
+	dmt->init = &dm_target_linear_init;
+	dmt->strategy = &dm_target_linear_strategy;
+	dmt->destroy = &dm_target_linear_destroy;
+	dmt->upcall = NULL;
 	
 	r = dm_target_insert(dmt);
+
+		
+	dmt1->version[0] = 1;
+	dmt1->version[1] = 0;
+	dmt1->version[2] = 0;
+	strncpy(dmt1->name, "zero", DM_MAX_TYPE_NAME);
+	dmt1->init = &dm_target_zero_init;
+	dmt1->strategy = &dm_target_zero_strategy;
+	dmt1->destroy = NULL; 
+	dmt1->upcall = NULL;
+	
+	r = dm_target_insert(dmt1);
+
+	dmt2->version[0] = 1;
+	dmt2->version[1] = 0;
+	dmt2->version[2] = 0;
+	strncpy(dmt2->name, "error", DM_MAX_TYPE_NAME);
+	dmt2->init = &dm_target_error_init;
+	dmt2->strategy = &dm_target_error_strategy;
+	dmt2->destroy = NULL; 
+	dmt2->upcall = NULL;
+	
+	r = dm_target_insert(dmt2);
 	
 	dmt3->version[0] = 1;
 	dmt3->version[1] = 0;
 	dmt3->version[2] = 3;
 	strncpy(dmt3->name, "striped", DM_MAX_TYPE_NAME);
-	dmt->init=&dm_target_linear_init;
-	dmt->strategy=&dm_target_linear_strategy;
-	dmt->destroy=&dm_target_linear_destroy;
+	dmt3->init = &dm_target_linear_init;
+	dmt3->strategy = &dm_target_linear_strategy;
+	dmt3->destroy = &dm_target_linear_destroy;
+	dmt3->destroy = NULL; 
+	dmt3->upcall = NULL;
 	
 	r = dm_target_insert(dmt3);
 
@@ -244,28 +272,34 @@ dm_target_init(void)
 	dmt4->version[1] = 0;
 	dmt4->version[2] = 3;
 	strncpy(dmt4->name, "mirror", DM_MAX_TYPE_NAME);
-	dmt4->init=NULL;
-	dmt4->strategy=NULL;
+	dmt4->init = NULL;
+	dmt4->strategy = NULL;
+	dmt4->destroy = NULL; 
+	dmt4->upcall = NULL;
 	
 	r = dm_target_insert(dmt4);
+
+	dmt5->version[0] = 1;
+	dmt5->version[1] = 0;
+	dmt5->version[2] = 5;
+	strncpy(dmt5->name, "snapshot", DM_MAX_TYPE_NAME);
+	dmt5->init = &dm_target_snapshot_init;
+	dmt5->strategy = &dm_target_snapshot_strategy;
+	dmt5->destroy = &dm_target_snapshot_destroy;
+	dmt5->upcall = &dm_target_snapshot_upcall;
 	
-	dmt1->version[0] = 1;
-	dmt1->version[1] = 0;
-	dmt1->version[2] = 0;
-	strncpy(dmt1->name, "zero", DM_MAX_TYPE_NAME);
-	dmt1->init=&dm_target_zero_init;
-	dmt1->strategy=&dm_target_zero_strategy;
+	r = dm_target_insert(dmt5);
+	
+	dmt6->version[0] = 1;
+	dmt6->version[1] = 0;
+	dmt6->version[2] = 5;
+	strncpy(dmt6->name, "snapshot-origin", DM_MAX_TYPE_NAME);
+	dmt6->init = &dm_target_snapshot_init;
+	dmt6->strategy = &dm_target_snapshot_strategy;
+	dmt6->destroy = &dm_target_snapshot_destroy;
+	dmt6->upcall = &dm_target_snapshot_upcall;
 
-	r = dm_target_insert(dmt1);
-
-	dmt2->version[0] = 1;
-	dmt2->version[1] = 0;
-	dmt2->version[2] = 0;
-	strncpy(dmt2->name, "error", DM_MAX_TYPE_NAME);
-	dmt2->init=&dm_target_error_init;
-	dmt2->strategy=&dm_target_error_strategy;
-
-	r = dm_target_insert(dmt2);
+	r = dm_target_insert(dmt6);
 	
 	return r;
 }

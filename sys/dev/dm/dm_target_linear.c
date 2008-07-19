@@ -81,6 +81,8 @@ dm_target_linear_init(struct dm_dev *dmv, void **target_config,
 		tlc->offset = atoi(argv[1]);
 
 	*target_config = tlc;    
+
+	dmv->dev_type = DM_LINEAR_DEV;
 	
 	return 0;
 }
