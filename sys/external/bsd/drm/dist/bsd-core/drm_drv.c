@@ -363,7 +363,7 @@ drm_attach_common(struct drm_device *dev, struct pci_attach_args *pa, drm_pci_id
 	dev->pci_slot = pa->pa_device;
 	dev->pci_func = pa->pa_function;
 	dev->pci_vendor = PCI_VENDOR(pa->pa_id);
-	dev->pci_device = PCI_PRODUCT(pa->pa_device);
+	dev->pci_device = PCI_PRODUCT(pa->pa_id);
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), idlist);
