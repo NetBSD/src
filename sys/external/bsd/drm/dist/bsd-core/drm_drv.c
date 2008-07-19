@@ -847,6 +847,8 @@ int drm_open(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTCDEVPROC *p)
 
 	dev = DRIVER_SOFTC(minor(kdev));
 
+	dev->kdev = kdev;
+
 	DRM_DEBUG( "open_count = %d\n", dev->open_count );
 
 	retcode = drm_open_helper(kdev, flags, fmt, DRM_CDEVPROC_REAL(p), dev);
@@ -1099,8 +1101,6 @@ int drm_ioctl(DRM_CDEV kdev, u_long cmd, DRM_IOCTL_DATA data, int flags,
 	    ((ioctl->flags & DRM_MASTER) && !file_priv->master))
 		return EACCES;
 
-/* XXXNETBSD */
-dev->kdev = kdev;
 	if (is_driver_ioctl) {
 		DRM_LOCK();
 		/* shared code returns -errno */
