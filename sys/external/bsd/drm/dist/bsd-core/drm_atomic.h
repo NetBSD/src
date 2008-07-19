@@ -62,7 +62,8 @@ typedef u_int32_t atomic_t;
 #include <sys/atomic.h>
 
 #define	atomic_set(p, v)		(*((volatile uint32_t *)p) = (v))
-#define	atomic_read(p)			(*((volatile uint32_t *)p))
+					/* XXXMRG */
+#define	atomic_read(p)			(*(/*(volatile uint32_t *)*/p))
 #define	atomic_inc(p)			atomic_inc_uint(p)
 #define	atomic_dec(p)			atomic_dec_uint(p)
 #define	atomic_add(v, p)		atomic_add_int(p, v)
