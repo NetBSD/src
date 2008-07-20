@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.33 2005/01/19 20:46:16 xtraeme Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.34 2008/07/20 01:20:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.33 2005/01/19 20:46:16 xtraeme Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.34 2008/07/20 01:20:23 lukem Exp $");
 #endif
 #endif /* not lint */
 

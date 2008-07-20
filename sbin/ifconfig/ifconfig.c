@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.211 2008/07/15 21:27:58 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.212 2008/07/20 01:20:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -61,9 +61,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: ifconfig.c,v 1.211 2008/07/15 21:27:58 dyoung Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\
+ The Regents of the University of California.  All rights reserved.");
+__RCSID("$NetBSD: ifconfig.c,v 1.212 2008/07/20 01:20:22 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

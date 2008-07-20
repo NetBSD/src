@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2004/07/06 16:43:18 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2008/07/20 01:20:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -42,11 +42,10 @@
 #include <fcntl.h>
 #include <sys/file.h>
 
-__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
-	    "The Regents of the University of California."
-	    "  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: main.c,v 1.39 2004/07/06 16:43:18 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.40 2008/07/20 01:20:23 lukem Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else

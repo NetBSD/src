@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.41 2007/12/15 19:44:48 perry Exp $	*/
+/*	$NetBSD: umount.c,v 1.42 2008/07/20 01:20:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.41 2007/12/15 19:44:48 perry Exp $");
+__RCSID("$NetBSD: umount.c,v 1.42 2008/07/20 01:20:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
