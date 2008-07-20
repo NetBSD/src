@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2008/07/16 20:06:20 pooka Exp $
+#	$NetBSD: Makefile,v 1.41 2008/07/20 16:14:22 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -58,7 +58,7 @@ VOPTORUMPVOP="-e s/vop/rump_vop/g;/VOPARG/!s/VOP/RUMP_VOP/g;/vfs_op_desc/,\$$d"
 VOPTORUMPVOP+="-e s/vm_prot_t/int/g"
 VOPTORUMPVOP+="-e s/voff_t/off_t/g;/sys\/buf\.h/s/.*/struct buf;/"
 RVNH=\#include \"rump.h\"
-rumpdefs.h rumpnode_if.h rumpvnode_if.c: vnode_if.c \
+rumpdefs.h rumpvnode_if.h rumpvnode_if.c: vnode_if.c \
 		${NETBSDSRCDIR}/sys/sys/vnode_if.h \
 		${NETBSDSRCDIR}/sys/kern/vnode_if.c \
 		${NETBSDSRCDIR}/sys/sys/namei.h \
