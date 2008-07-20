@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.21 2008/07/18 16:15:56 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.22 2008/07/20 16:18:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -173,7 +173,7 @@ rump_specfsync(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	assert(vp->v_type == VBLK);
+	KASSERT(vp->v_type == VBLK);
 	vflushbuf(vp, 1);
 
 	return 0;
@@ -220,7 +220,7 @@ rump_specstrategy(void *v)
 	int async;
 	off_t off;
 
-	assert(vp->v_type == VBLK);
+	KASSERT(vp->v_type == VBLK);
 	sp = vp->v_data;
 
 	off = bp->b_blkno << DEV_BSHIFT;
