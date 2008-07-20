@@ -428,6 +428,7 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 	mutex_init(&dev->irq_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&dev->vbl_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&dev->drw_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&dev->tsk_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	drm_attach_common(dev, pa, idlist);
 }
@@ -734,6 +735,7 @@ error:
 	DRM_SPINUNINIT(&dev->irq_lock);
 	DRM_SPINUNINIT(&dev->vbl_lock);
 	DRM_SPINUNINIT(&dev->drw_lock);
+	DRM_SPINUNINIT(&dev->tsk_lock);
 #endif
 	return retcode;
 }
