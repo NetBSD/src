@@ -1,4 +1,4 @@
-/* $NetBSD: chmod.c,v 1.33 2005/10/01 20:09:18 christos Exp $ */
+/* $NetBSD: chmod.c,v 1.34 2008/07/20 00:52:39 lukem Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -32,15 +32,15 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+"@(#) Copyright (c) 1989, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.33 2005/10/01 20:09:18 christos Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.34 2008/07/20 00:52:39 lukem Exp $");
 #endif
 #endif /* not lint */
 

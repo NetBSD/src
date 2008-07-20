@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.44 2007/10/05 07:22:23 lukem Exp $	*/
+/*	$NetBSD: pax.c,v 1.45 2008/07/20 00:52:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -39,12 +39,12 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.44 2007/10/05 07:22:23 lukem Exp $");
+__RCSID("$NetBSD: pax.c,v 1.45 2008/07/20 00:52:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
