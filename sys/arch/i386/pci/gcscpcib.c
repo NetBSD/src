@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib.c,v 1.5 2008/07/20 16:59:53 martin Exp $ */
+/* $NetBSD: gcscpcib.c,v 1.6 2008/07/20 22:57:19 martin Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  * AMD CS5535/CS5536 series LPC bridge also containing timer, watchdog and GPIO.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.5 2008/07/20 16:59:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.6 2008/07/20 22:57:19 martin Exp $");
 
 #include "gpio.h"
 
@@ -156,8 +156,8 @@ gcscpcib_attach(device_t parent, device_t self, void *aux)
 	int i, gpio;
 #endif
 
-	sc->sc_pc = pa->pa_pc;
-	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_pcib.sc_pc = pa->pa_pc;
+	sc->sc_pcib.sc_tag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_gpio_iot = pa->pa_iot;
 
