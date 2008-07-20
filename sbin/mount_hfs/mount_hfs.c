@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_hfs.c,v 1.6 2007/12/15 20:36:11 perry Exp $	*/
+/*	$NetBSD: mount_hfs.c,v 1.7 2008/07/20 01:20:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -60,12 +60,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 2005 Yevgeny Binder\n\
-	All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 2005 Yevgeny Binder.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_hfs.c,v 1.6 2007/12/15 20:36:11 perry Exp $");
+__RCSID("$NetBSD: mount_hfs.c,v 1.7 2008/07/20 01:20:22 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
