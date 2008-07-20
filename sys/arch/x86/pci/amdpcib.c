@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib.c,v 1.2 2008/03/21 12:29:38 xtraeme Exp $ */
+/* $NetBSD: amdpcib.c,v 1.3 2008/07/20 17:18:21 martin Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.2 2008/03/21 12:29:38 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.3 2008/07/20 17:18:21 martin Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -37,8 +37,11 @@ __KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.2 2008/03/21 12:29:38 xtraeme Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#include "pcibvar.h"
 
 struct amdpcib_softc {
+	/* we are calling pcibattach(), which assumes this starts like this: */
+	struct pcib_softc	sc_pcib;
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
 };
@@ -46,8 +49,6 @@ struct amdpcib_softc {
 static int	amdpcib_match(device_t, cfdata_t, void *);
 static void	amdpcib_attach(device_t, device_t, void *);
 static int	amdpcib_search(device_t, cfdata_t, const int *, void *);
-
-extern void	pcibattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL_NEW(amdpcib, sizeof(struct amdpcib_softc), amdpcib_match,
     amdpcib_attach, NULL, NULL);
