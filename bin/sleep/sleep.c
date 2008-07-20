@@ -1,4 +1,4 @@
-/* $NetBSD: sleep.c,v 1.21 2007/08/18 00:41:52 hubertf Exp $ */
+/* $NetBSD: sleep.c,v 1.22 2008/07/20 00:52:40 lukem Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.21 2007/08/18 00:41:52 hubertf Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.22 2008/07/20 00:52:40 lukem Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.15 2008/02/02 18:15:14 matt Exp $	*/
+/*	$NetBSD: primes.c,v 1.16 2008/07/20 01:03:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.15 2008/02/02 18:15:14 matt Exp $");
+__RCSID("$NetBSD: primes.c,v 1.16 2008/07/20 01:03:22 lukem Exp $");
 #endif
 #endif /* not lint */
 

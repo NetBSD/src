@@ -1,4 +1,4 @@
-/* $NetBSD: kill.c,v 1.24 2006/03/17 22:30:11 christos Exp $ */
+/* $NetBSD: kill.c,v 1.25 2008/07/20 00:52:40 lukem Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SHELL)
-__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.24 2006/03/17 22:30:11 christos Exp $");
+__RCSID("$NetBSD: kill.c,v 1.25 2008/07/20 00:52:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
