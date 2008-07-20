@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.26 2007/07/16 17:06:52 pooka Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.27 2008/07/20 01:20:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -38,15 +38,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
-        The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.26 2007/07/16 17:06:52 pooka Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.27 2008/07/20 01:20:22 lukem Exp $");
 #endif
 #endif /* not lint */
 

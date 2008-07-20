@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_overlay.c,v 1.11 2007/07/16 17:06:54 pooka Exp $	*/
+/*	$NetBSD: mount_overlay.c,v 1.12 2008/07/20 01:20:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_overlay.c,v 1.11 2007/07/16 17:06:54 pooka Exp $");
+__RCSID("$NetBSD: mount_overlay.c,v 1.12 2008/07/20 01:20:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
