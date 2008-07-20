@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.42 2007/03/04 05:59:39 christos Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.43 2008/07/20 16:23:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.42 2007/03/04 05:59:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.43 2008/07/20 16:23:38 tsutsui Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -138,14 +138,14 @@ struct scsi_dma {
 
 #define	set_scsi_dma(addr, val)	(void)(					\
 	{								\
-	u_char	*address = (u_char*)__UNVOLATILE(addr+1);		\
+	volatile u_char	*address = (volatile u_char *)addr+1;		\
 	u_long	nval	 = (u_long)val;					\
 	__asm("movepl	%0, %1@(0)": :"d" (nval), "a" (address));	\
 	})
 
 #define	get_scsi_dma(addr, res)	(					\
 	{								\
-	u_char	*address = (u_char*)__UNVOLATILE(addr+1);		\
+	volatile u_char	*address = (volatile u_char *)addr+1;		\
 	u_long	nval;							\
 	__asm("movepl	%1@(0), %0": "=d" (nval) : "a" (address));	\
 	res = (u_long)nval;						\
