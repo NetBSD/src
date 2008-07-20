@@ -318,6 +318,7 @@ static struct option longopts[] = {
     { "displays", required_argument, NULL, 'd' },
     { "user", required_argument, NULL, 'U' },
     { "sort-order", required_argument, NULL, 'o' },
+    { "pid", required_argument, NULL, 'p' },
     { "display-mode", required_argument, NULL, 'm' },
     { NULL, 0, NULL, 0 },
 };
@@ -335,9 +336,9 @@ do_arguments(globalstate *gstate, int ac, char **av)
     optind = 1;
 
 #ifdef HAVE_GETOPT_LONG
-    while ((i = getopt_long(ac, av, "1CDSITabcinqtuvs:d:U:o:m:", longopts, NULL)) != -1)
+    while ((i = getopt_long(ac, av, "1CDSITabcinp:qtuvs:d:U:o:m:", longopts, NULL)) != -1)
 #else
-    while ((i = getopt(ac, av, "1CDSITabcinqtuvs:d:U:o:m:")) != EOF)
+    while ((i = getopt(ac, av, "1CDSITabcinp:qtuvs:d:U:o:m:")) != EOF)
 #endif
     {
 	switch(i)
@@ -447,6 +448,10 @@ do_arguments(globalstate *gstate, int ac, char **av)
 	    gstate->pselect.threads = !gstate->pselect.threads;
 	    break;
 
+	case 'p':
+	    gstate->pselect.pid = atoi(optarg);
+	    break;
+
 	case 'q':		/* be quick about it */
 	    /* only allow this if user is really root */
 	    if (getuid() == 0)
@@ -463,7 +468,7 @@ do_arguments(globalstate *gstate, int ac, char **av)
 	default:
 	    fprintf(stderr, "\
 Top version %s\n\
-Usage: %s [-1ISTabcinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
+Usage: %s [-1ISTabcinqu] [-d x] [-s x] [-o field] [-U username] [-p pid] [number]\n",
 		    version_string(), myname);
 	    exit(EX_USAGE);
 	}
@@ -770,6 +775,7 @@ main(int argc, char *argv[])
     gstate->pselect.fullcmd = No;
     gstate->pselect.command = NULL;
     gstate->pselect.uid = -1;
+    gstate->pselect.pid = -1;
     gstate->pselect.mode = 0;
 
     /* use a large buffer for stdout */

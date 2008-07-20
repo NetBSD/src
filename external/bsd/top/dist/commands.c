@@ -811,6 +811,23 @@ cmd_renice(globalstate *gstate)
 #endif
 
 int
+cmd_pid(globalstate *gstate)
+
+{
+    char tmpbuf[MAX_COLS];
+
+    message_prompt_plain("select pid ");
+    gstate->pselect.pid = -1;
+    if (readline(tmpbuf, sizeof(tmpbuf), No) > 0)
+    {
+	int pid;
+	if (scanint(tmpbuf, &pid) == 0)
+	    gstate->pselect.pid = pid;
+    }
+    return CMD_OK;
+}
+
+int
 cmd_user(globalstate *gstate)
 
 {
@@ -948,6 +965,7 @@ command command_table[] = {
     { 'n', cmd_number, "change number of processes to display" },
     { '#', cmd_number, NULL },
     { 'o', cmd_order, "specify sort order (see below)" },
+    { 'p', cmd_pid, "select a single pid" },
     { 'q', (int (*)(globalstate *))cmd_quit, "quit" },
 #ifdef ENABLE_KILL
     { 'r', cmd_renice, "renice a process" },
