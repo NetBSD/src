@@ -463,7 +463,7 @@ do_arguments(globalstate *gstate, int ac, char **av)
 	default:
 	    fprintf(stderr, "\
 Top version %s\n\
-Usage: %s [-ISTabcinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
+Usage: %s [-1ISTabcinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 		    version_string(), myname);
 	    exit(EX_USAGE);
 	}
