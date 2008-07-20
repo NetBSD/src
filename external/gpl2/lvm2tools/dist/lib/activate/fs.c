@@ -126,7 +126,16 @@ static int _mk_link(const char *dev_dir, const char *vg_name,
 #ifdef __NetBSD__
 	/* Add support for creating links to BSD raw devices */
 	char raw_lv_path[PATH_MAX], raw_link_path[PATH_MAX];
+#endif	
 
+	if (dm_snprintf(vg_path, sizeof(vg_path), "%s%s",
+			 dev_dir, vg_name) == -1) {
+		log_error("Couldn't create path for volume group dir %s",
+			  vg_name);
+		return 0;
+	}
+
+#ifdef __NetBSD__
 	if (dm_snprintf(raw_lv_path, sizeof(raw_lv_path), "%s/r%s", vg_path,
 		lv_name) == -1) {
 		log_error("Couldn't create source pathname for "
@@ -162,13 +171,6 @@ static int _mk_link(const char *dev_dir, const char *vg_name,
 	}
 	
 #endif	
-	if (dm_snprintf(vg_path, sizeof(vg_path), "%s%s",
-			 dev_dir, vg_name) == -1) {
-		log_error("Couldn't create path for volume group dir %s",
-			  vg_name);
-		return 0;
-	}
-
 	if (dm_snprintf(lv_path, sizeof(lv_path), "%s/%s", vg_path,
 			 lv_name) == -1) {
 		log_error("Couldn't create source pathname for "
