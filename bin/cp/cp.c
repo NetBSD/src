@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.50 2008/05/26 22:45:33 dholland Exp $ */
+/* $NetBSD: cp.c,v 1.51 2008/07/20 00:52:39 lukem Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -35,15 +35,15 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+"@(#) Copyright (c) 1988, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.50 2008/05/26 22:45:33 dholland Exp $");
+__RCSID("$NetBSD: cp.c,v 1.51 2008/07/20 00:52:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
