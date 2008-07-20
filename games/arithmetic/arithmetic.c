@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.22 2007/12/15 19:44:38 perry Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.23 2008/07/20 01:03:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.22 2007/12/15 19:44:38 perry Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.23 2008/07/20 01:03:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
