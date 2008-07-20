@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2008/05/01 15:33:33 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2008/07/20 14:36:52 veego Exp $
 
 NOLINT=		# defined
 
@@ -71,6 +71,8 @@ INCS+=		atf-c.h
 INCSDIR_atf-c.h=/usr/include
 
 MAN=		# empty
+
+CLEANFILES+=	defs.h
 
 defs.h: defs.h.in
 	sed -e 's,@ATTRIBUTE_NORETURN@,__attribute__((noreturn)),g' \
