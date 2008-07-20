@@ -107,6 +107,7 @@ struct process_select
     char *command;	/* only this command (unless == NULL) */
     int mode;		/* select display mode (0 is default) */
     int threads;	/* show threads separately */
+    int pid;		/* show only this pid (unless pid == -1) */
 };
 
 /* routines defined by the machine dependent module */

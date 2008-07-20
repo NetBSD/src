@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.2 2008/07/16 00:36:15 christos Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.3 2008/07/20 18:52:07 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.2 2008/07/16 00:36:15 christos Exp $
+ * $Id: m_netbsd.c,v 1.3 2008/07/20 18:52:07 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.2 2008/07/16 00:36:15 christos Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.3 2008/07/20 18:52:07 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -175,6 +175,9 @@ char *ordernames[] = {
 	"size",
 	"state",
 	"time",
+	"pid",
+	"command",
+	"username",
 	NULL
 };
 
@@ -185,6 +188,9 @@ static int compare_res __P((struct proc **, struct proc **));
 static int compare_size __P((struct proc **, struct proc **));
 static int compare_state __P((struct proc **, struct proc **));
 static int compare_time __P((struct proc **, struct proc **));
+static int compare_pid __P((struct proc **, struct proc **));
+static int compare_command __P((struct proc **, struct proc **));
+static int compare_username __P((struct proc **, struct proc **));
 
 int (*proc_compares[]) __P((struct proc **, struct proc **)) = {
 	compare_cpu,
@@ -193,6 +199,9 @@ int (*proc_compares[]) __P((struct proc **, struct proc **)) = {
 	compare_size,
 	compare_state,
 	compare_time,
+	compare_pid,
+	compare_command,
+	compare_username,
 	NULL
 };
 
@@ -548,7 +557,6 @@ get_proc_info(struct system_info *si, struct process_select *sel,
 
 	procgen++;
 
-#if 0
 	if (sel->pid == -1) {
 		op = KERN_PROC_ALL;
 		arg = 0;
@@ -556,19 +564,12 @@ get_proc_info(struct system_info *si, struct process_select *sel,
 		op = KERN_PROC_PID;
 		arg = sel->pid;
 	}
-#else
-	op = KERN_PROC_ALL;
-	arg = 0;
-#endif
 
 	pbase = kvm_getproc2(kd, op, arg, sizeof(struct kinfo_proc2), &nproc);
 	if (pbase == NULL) {
-#if 0
 		if (sel->pid != -1) {
 			nproc = 0;
-		} else
-#endif
-		{
+		} else {
 			(void) fprintf(stderr, "top: Out of memory.\n");
 			quit(23);
 		}
@@ -1117,6 +1118,54 @@ compare_res(pp1, pp2)
 	return (result);
 }
 
+static int
+compare_pid(pp1, pp2)
+	struct proc **pp1, **pp2;
+{
+	if (threadmode) {
+		struct kinfo_lwp *p1 = *(struct kinfo_lwp **) pp1;
+		struct kinfo_lwp *p2 = *(struct kinfo_lwp **) pp2;
+
+		return p2->l_lid - p1->l_lid;
+	} else {
+		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
+		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
+		return p2->p_pid - p1->p_pid;
+
+	}
+}
+
+static int
+compare_command(pp1, pp2)
+	struct proc **pp1, **pp2;
+{
+	if (threadmode) {
+		struct kinfo_lwp *p1 = *(struct kinfo_lwp **) pp1;
+		struct kinfo_lwp *p2 = *(struct kinfo_lwp **) pp2;
+
+		return strcmp(p2->l_name, p1->l_name);
+	} else {
+		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
+		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
+		return strcmp(p2->p_comm, p1->p_comm);
+	}
+}
+
+static int
+compare_username(pp1, pp2)
+	struct proc **pp1, **pp2;
+{
+	if (threadmode) {
+		struct kinfo_lwp *p1 = *(struct kinfo_lwp **) pp1;
+		struct kinfo_lwp *p2 = *(struct kinfo_lwp **) pp2;
+
+		return strcmp(p2->l_name, p1->l_name);
+	} else {
+		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
+		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
+		return strcmp(p2->p_login, p1->p_login);
+	}
+}
 /* compare_size - the comparison function for sorting by total memory usage */
 
 static int

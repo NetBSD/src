@@ -19,6 +19,8 @@ top \- display and update information about the top cpu processes
 ] [
 .BI \-o field
 ] [
+.BI \-p pid
+] [
 .BI \-s time
 ] [
 .BI \-U username
@@ -157,6 +159,9 @@ the name of the column as seen in the output, but in lower case.  Likely
 values are \*(lqcpu\*(rq, \*(lqsize\*(rq, \*(lqres\*(rq, and \*(lqtime\*(rq,
 but may vary on different operating systems.  Note that
 not all operating systems support this option.
+.TP
+.B "\-p \fIpid\fP, \-\-pid=\fIpid\fP"
+Only display the specified pid.
 .TP
 .B "\-s \fItime\fP, \-\-delay=\fItime\fP"
 Set the delay between screen updates to
