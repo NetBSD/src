@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.37 2008/07/13 20:07:48 dholland Exp $	*/
+/*	$NetBSD: comsat.c,v 1.38 2008/07/20 01:09:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.37 2008/07/13 20:07:48 dholland Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.38 2008/07/20 01:09:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
