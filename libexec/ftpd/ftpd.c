@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.185 2008/06/09 00:33:39 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.186 2008/07/20 01:09:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -89,16 +89,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.185 2008/06/09 00:33:39 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.186 2008/07/20 01:09:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
