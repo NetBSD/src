@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.44 2008/07/20 16:28:24 tsutsui Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.45 2008/07/20 16:35:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.44 2008/07/20 16:28:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.45 2008/07/20 16:35:27 tsutsui Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -472,10 +472,11 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 	 */
 	if ((machineid & ATARI_TT) && ((u_long)byte_p & 3)
 	    && PH_IN(reqp->phase)) {
-		u_char	*p, *q;
+		u_char	*p;
+		volatile u_char *q;
 
 		p = ptov(reqp, (u_long *)((u_long)byte_p & ~3));
-		q = (u_char*)&(SCSI_DMA->s_dma_res);
+		q = SCSI_DMA->s_dma_res;
 		switch ((u_long)byte_p & 3) {
 			case 3: *p++ = *q++;
 			case 2: *p++ = *q++;
@@ -495,7 +496,7 @@ extern	int			*nofault;
 	label_t			faultbuf;
 	int			write;
 	u_long	 		count, t;
-	u_char			*data_p = (u_char*)(stio_addr+0x741);
+	volatile u_char		*data_p = (volatile u_char *)(stio_addr+0x741);
 
 	/*
 	 * Block SCSI interrupts while emulating DMA. They come
