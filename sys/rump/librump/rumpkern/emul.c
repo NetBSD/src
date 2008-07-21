@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.42 2008/07/18 16:18:04 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.43 2008/07/21 10:40:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -581,4 +581,19 @@ assert_sleepable(void)
 {
 
 	/* always sleepable, although we should improve this */
+}
+
+int
+devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
+	const struct cdevsw *cdev, int *cmajor)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
+{
+
+	panic("%s: not implemented", __func__);
 }
