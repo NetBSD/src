@@ -1,4 +1,4 @@
-/*	$NetBSD: mkastods.c,v 1.10 2007/03/10 00:22:57 hubertf Exp $	*/
+/*	$NetBSD: mkastods.c,v 1.11 2008/07/21 14:19:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,16 +33,15 @@
 #include <string.h>
 
 #if defined(__COPYRIGHT) && !defined(lint)
-__COPYRIGHT(
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1988\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mkastods.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkastods.c,v 1.10 2007/03/10 00:22:57 hubertf Exp $");
+__RCSID("$NetBSD: mkastods.c,v 1.11 2008/07/21 14:19:26 lukem Exp $");
 #endif
 #endif /* not lint */
 

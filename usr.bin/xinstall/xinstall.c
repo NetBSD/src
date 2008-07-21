@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.102 2007/06/28 19:05:56 joerg Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.103 2008/07/21 14:19:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,15 +38,15 @@
 
 #include <sys/cdefs.h>
 #if defined(__COPYRIGHT) && !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.102 2007/06/28 19:05:56 joerg Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.103 2008/07/21 14:19:28 lukem Exp $");
 #endif
 #endif /* not lint */
 

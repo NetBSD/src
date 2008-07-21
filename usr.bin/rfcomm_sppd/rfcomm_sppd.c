@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.8 2007/04/21 10:39:30 dsl Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.9 2008/07/21 14:19:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,11 +58,11 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert\n"
-	    "@(#) Copyright (c) 2006 Itronix, Inc.\n"
-	    "@(#) Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
-	    "All rights reserved.\n");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.8 2007/04/21 10:39:30 dsl Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert.\
+  Copyright (c) 2006 Itronix, Inc.\
+  Copyright (c) 2003 Maksim Yevmenkin m_evmenkin@yahoo.com.\
+  All rights reserved.");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.9 2008/07/21 14:19:25 lukem Exp $");
 
 #include <bluetooth.h>
 #include <ctype.h>
