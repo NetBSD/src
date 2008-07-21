@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.51 2007/06/24 23:25:13 christos Exp $	*/
+/*	$NetBSD: iostat.c,v 1.52 2008/07/21 13:36:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -63,15 +63,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
-        The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.51 2007/06/24 23:25:13 christos Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.52 2008/07/21 13:36:58 lukem Exp $");
 #endif
 #endif /* not lint */
 

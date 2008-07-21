@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2008/07/21 13:36:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.18 2008/04/28 20:24:15 martin Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1996\
+ The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: main.c,v 1.19 2008/07/21 13:36:58 lukem Exp $");
 #endif
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bthcid.c,v 1.3 2007/01/25 20:33:41 plunky Exp $	*/
+/*	$NetBSD: bthcid.c,v 1.4 2008/07/21 13:36:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,10 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
-	    "@(#) Copyright (c) 2001-2002 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
-	    "All rights reserved.\n");
-__RCSID("$NetBSD: bthcid.c,v 1.3 2007/01/25 20:33:41 plunky Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\
+  Copyright (c) 2001-2002 Maksim Yevmenkin m_evmenkin@yahoo.com.\
+  All rights reserved.");
+__RCSID("$NetBSD: bthcid.c,v 1.4 2008/07/21 13:36:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.73 2008/07/17 19:23:17 christos Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.74 2008/07/21 13:37:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -27,9 +27,9 @@
 static const char rcsid[] =
     "@(#)Header: traceroute.c,v 1.49 97/06/13 02:30:23 leres Exp  (LBL)";
 #else
-__COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
-The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.73 2008/07/17 19:23:17 christos Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\
+ The Regents of the University of California.  All rights reserved.");
+__RCSID("$NetBSD: traceroute.c,v 1.74 2008/07/21 13:37:00 lukem Exp $");
 #endif
 #endif
 

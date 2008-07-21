@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.56 2008/07/21 12:30:33 martin Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.57 2008/07/21 13:36:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -20,13 +20,12 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-    "@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1990\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.56 2008/07/21 12:30:33 martin Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.57 2008/07/21 13:36:59 lukem Exp $");
 #endif
 
 

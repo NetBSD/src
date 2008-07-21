@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.119 2008/02/27 19:12:56 reed Exp $ */
+/* $NetBSD: user.c,v 1.120 2008/07/21 13:37:00 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,9 +31,9 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1999 \
-	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.119 2008/02/27 19:12:56 reed Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1999\
+ The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: user.c,v 1.120 2008/07/21 13:37:00 lukem Exp $");
 #endif
 
 #include <sys/types.h>
