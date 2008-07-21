@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.36 2008/02/16 07:32:22 matt Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.37 2008/07/21 13:36:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,16 +32,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.36 2008/02/16 07:32:22 matt Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.37 2008/07/21 13:36:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
