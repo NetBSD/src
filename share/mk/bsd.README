@@ -1,9 +1,9 @@
-#	$NetBSD: bsd.README,v 1.212 2008/07/21 23:23:42 lukem Exp $
+#	$NetBSD: bsd.README,v 1.213 2008/07/21 23:39:55 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
-This is the README file for the new (as of 1993) make "include" files
-for the BSD source tree.  The files are installed in /usr/share/mk, and
-are, by convention, named with the suffix ".mk".
+This is the README file for the make "include" files for the NetBSD
+source tree.  The files are installed in /usr/share/mk, and are,
+by convention, named with the suffix ".mk".
 
 Note, this file is not intended to replace reading through the .mk
 files for anything tricky.
@@ -1442,7 +1442,10 @@ TOOL_ZIC		Time zone compiler.  [zic]
 
 Other variables of note (incomplete list):
 
-NOGCCERROR	If defined, prevents passing -Werror to GCC via ${CFLAGS}.
+NOGCCERROR	If defined, prevents passing certain ${CFLAGS} to GCC
+		that cause warnings to be fatal, such as:
+			-Werror -Wa,--fatal-warnings
+		(The latter being for as(1).)
 
 WARNS		Crank up GCC warning options; the distinct levels are:
 			WARNS=1
