@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.32 2008/06/05 12:43:52 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.32.2.1 2008/07/21 14:14:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -568,7 +568,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
 		mutex_enter(&uobj->vmobjlock);
 		rv = uobj->pgops->pgo_get(uobj, off, pgs, &npages, 0, 0, 0, 0);
-		assert(npages > 0);
+		KASSERT(npages > 0);
 
 		for (i = 0; i < npages; i++) {
 			uint8_t *start;
