@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.10.2.1 2008/07/18 16:37:57 simonb Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.10.2.2 2008/07/21 14:14:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -347,7 +347,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 		pg->flags |= PG_CLEAN;
 	}
-	assert(curoff > smallest);
+	KASSERT(curoff > smallest);
 
 	mutex_exit(&uobj->vmobjlock);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.16 2008/05/31 19:28:36 ad Exp $	*/
+/*	$NetBSD: locks.c,v 1.16.2.1 2008/07/21 14:14:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -254,6 +254,13 @@ cv_broadcast(kcondvar_t *cv)
 {
 
 	rumpuser_cv_broadcast(RUMPCV(cv));
+}
+
+bool
+cv_has_waiters(kcondvar_t *cv)
+{
+
+	return rumpuser_cv_has_waiters(RUMPCV(cv));
 }
 
 /* kernel biglock, only for vnode_if */
