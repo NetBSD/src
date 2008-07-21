@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.3 2008/07/20 18:52:07 christos Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.4 2008/07/21 19:29:36 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.3 2008/07/20 18:52:07 christos Exp $
+ * $Id: m_netbsd.c,v 1.4 2008/07/21 19:29:36 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.3 2008/07/20 18:52:07 christos Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.4 2008/07/21 19:29:36 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -710,6 +710,8 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 	memset((char *)process_states, 0, sizeof(process_states));
 	lrefp = lref;
 	for (lp = lbase, i = 0; i < nlwp; lp++, i++) {
+		if (sel->pid != -1 && sel->pid != lp->l_pid)
+			continue;
 
 		/*
 		 * Place pointers to each valid lwp structure in lref[].
@@ -1123,15 +1125,15 @@ compare_pid(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
 	if (threadmode) {
-		struct kinfo_lwp *p1 = *(struct kinfo_lwp **) pp1;
-		struct kinfo_lwp *p2 = *(struct kinfo_lwp **) pp2;
-
-		return p2->l_lid - p1->l_lid;
+		struct kinfo_lwp *l1 = *(struct kinfo_lwp **) pp1;
+		struct kinfo_lwp *l2 = *(struct kinfo_lwp **) pp2;
+		struct kinfo_proc2 *p1 = proc_from_thread(l1);
+		struct kinfo_proc2 *p2 = proc_from_thread(l2);
+		return p2->p_pid - p1->p_pid;
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
 		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
 		return p2->p_pid - p1->p_pid;
-
 	}
 }
 
@@ -1140,10 +1142,11 @@ compare_command(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
 	if (threadmode) {
-		struct kinfo_lwp *p1 = *(struct kinfo_lwp **) pp1;
-		struct kinfo_lwp *p2 = *(struct kinfo_lwp **) pp2;
-
-		return strcmp(p2->l_name, p1->l_name);
+		struct kinfo_lwp *l1 = *(struct kinfo_lwp **) pp1;
+		struct kinfo_lwp *l2 = *(struct kinfo_lwp **) pp2;
+		struct kinfo_proc2 *p1 = proc_from_thread(l1);
+		struct kinfo_proc2 *p2 = proc_from_thread(l2);
+		return strcmp(p2->p_comm, p1->p_comm);
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
 		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
@@ -1156,10 +1159,11 @@ compare_username(pp1, pp2)
 	struct proc **pp1, **pp2;
 {
 	if (threadmode) {
-		struct kinfo_lwp *p1 = *(struct kinfo_lwp **) pp1;
-		struct kinfo_lwp *p2 = *(struct kinfo_lwp **) pp2;
-
-		return strcmp(p2->l_name, p1->l_name);
+		struct kinfo_lwp *l1 = *(struct kinfo_lwp **) pp1;
+		struct kinfo_lwp *l2 = *(struct kinfo_lwp **) pp2;
+		struct kinfo_proc2 *p1 = proc_from_thread(l1);
+		struct kinfo_proc2 *p2 = proc_from_thread(l2);
+		return strcmp(p2->p_login, p1->p_login);
 	} else {
 		struct kinfo_proc2 *p1 = *(struct kinfo_proc2 **) pp1;
 		struct kinfo_proc2 *p2 = *(struct kinfo_proc2 **) pp2;
