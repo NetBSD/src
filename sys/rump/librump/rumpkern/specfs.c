@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.22 2008/07/20 16:18:14 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.23 2008/07/21 00:08:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -172,9 +172,16 @@ rump_specfsync(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp;
+	int error;
 
 	KASSERT(vp->v_type == VBLK);
-	vflushbuf(vp, 1);
+	if ((mp = vp->v_specmountpoint) != NULL) {
+		error = VFS_FSYNC(mp, vp, ap->a_flags | FSYNC_VFS);
+		if (error != EOPNOTSUPP)
+			return error;
+	}
+	vflushbuf(vp, (ap->a_flags & FSYNC_WAIT) != 0);
 
 	return 0;
 }
