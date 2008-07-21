@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.104 2008/07/12 11:50:07 gmcgarry Exp $
+# $NetBSD: HACKS,v 1.105 2008/07/21 10:00:51 agc Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -278,6 +278,19 @@ descr
 	GCC 4.1 warns on pointer sign comparision/assignments and lots of
 	code does not conform.  For now we use -Wno-pointer-sign and
 	-fno-strict-aliasing.
+kcah
+
+hack	cross-building hack on Darwin
+mdate	20 July 2008
+who	agc
+file	src/distrib/common/Makefile.mdset	: 1.33
+descr
+	Darwin has problems with getopt() when used in mdsetimage -v,
+	due to the difference between BSD and libiberty() getopt
+	implementations, more fully described in
+	http://mail-index.netbsd.org/current-users/2008/06/27/msg003242.html
+	and the subsequent thread.  For just now, we just have an ugly
+	workaround not to call mdsetimage with the -v argument on Darwin
 kcah
 
 port	vax
