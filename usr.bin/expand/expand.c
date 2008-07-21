@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.11 2007/12/15 19:44:50 perry Exp $	*/
+/*	$NetBSD: expand.c,v 1.12 2008/07/21 14:19:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: expand.c,v 1.11 2007/12/15 19:44:50 perry Exp $");
+__RCSID("$NetBSD: expand.c,v 1.12 2008/07/21 14:19:22 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>

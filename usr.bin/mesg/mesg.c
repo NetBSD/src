@@ -1,4 +1,4 @@
-/*	$NetBSD: mesg.c,v 1.7 2005/07/30 16:14:39 christos Exp $	*/
+/*	$NetBSD: mesg.c,v 1.8 2008/07/21 14:19:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -37,15 +37,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mesg.c	8.2 (Berkeley) 1/21/94";
 #endif
-__RCSID("$NetBSD: mesg.c,v 1.7 2005/07/30 16:14:39 christos Exp $");
+__RCSID("$NetBSD: mesg.c,v 1.8 2008/07/21 14:19:24 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

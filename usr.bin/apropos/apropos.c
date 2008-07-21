@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.28 2008/03/08 15:48:27 christos Exp $	*/
+/*	$NetBSD: apropos.c,v 1.29 2008/07/21 14:19:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -32,15 +32,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.28 2008/03/08 15:48:27 christos Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.29 2008/07/21 14:19:20 lukem Exp $");
 #endif
 #endif /* not lint */
 

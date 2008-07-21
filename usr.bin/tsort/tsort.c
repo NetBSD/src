@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.21 2005/07/19 23:18:31 christos Exp $	*/
+/*	$NetBSD: tsort.c,v 1.22 2008/07/21 14:19:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -38,12 +38,12 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tsort.c,v 1.21 2005/07/19 23:18:31 christos Exp $");
+__RCSID("$NetBSD: tsort.c,v 1.22 2008/07/21 14:19:27 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

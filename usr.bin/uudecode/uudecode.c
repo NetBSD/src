@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.22 2006/09/24 21:43:14 dbj Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.23 2008/07/21 14:19:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -35,12 +35,12 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.22 2006/09/24 21:43:14 dbj Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.23 2008/07/21 14:19:27 lukem Exp $");
 #endif /* not lint */
 
 /*

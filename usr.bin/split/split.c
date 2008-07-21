@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.23 2007/12/15 19:44:53 perry Exp $	*/
+/*	$NetBSD: split.c,v 1.24 2008/07/21 14:19:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.23 2007/12/15 19:44:53 perry Exp $");
+__RCSID("$NetBSD: split.c,v 1.24 2008/07/21 14:19:26 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

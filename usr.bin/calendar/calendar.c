@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.45 2008/04/09 17:47:53 christos Exp $	*/
+/*	$NetBSD: calendar.c,v 1.46 2008/07/21 14:19:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.45 2008/04/09 17:47:53 christos Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.46 2008/07/21 14:19:21 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

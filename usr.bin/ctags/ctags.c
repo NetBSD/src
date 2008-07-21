@@ -1,4 +1,4 @@
-/*	$NetBSD: ctags.c,v 1.11 2005/02/17 17:29:58 xtraeme Exp $	*/
+/*	$NetBSD: ctags.c,v 1.12 2008/07/21 14:19:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,15 +35,15 @@
 
 #include <sys/cdefs.h>
 #if defined(__COPYRIGHT) && !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-__RCSID("$NetBSD: ctags.c,v 1.11 2005/02/17 17:29:58 xtraeme Exp $");
+__RCSID("$NetBSD: ctags.c,v 1.12 2008/07/21 14:19:22 lukem Exp $");
 #endif /* not lint */
 
 #include <err.h>

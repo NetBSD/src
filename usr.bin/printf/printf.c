@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.32 2008/03/28 18:05:39 christos Exp $	*/
+/*	$NetBSD: printf.c,v 1.33 2008/07/21 14:19:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,8 +32,8 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if !defined(BUILTIN) && !defined(SHELL)
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif
 #endif
 
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.32 2008/03/28 18:05:39 christos Exp $");
+__RCSID("$NetBSD: printf.c,v 1.33 2008/07/21 14:19:24 lukem Exp $");
 #endif
 #endif /* not lint */
 

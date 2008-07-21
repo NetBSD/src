@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.28 2007/02/21 20:45:27 hubertf Exp $	*/
+/*	$NetBSD: join.c,v 1.29 2008/07/21 14:19:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -39,16 +39,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-    "@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1991\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.28 2007/02/21 20:45:27 hubertf Exp $");
+__RCSID("$NetBSD: join.c,v 1.29 2008/07/21 14:19:23 lukem Exp $");
 #endif
 #endif /* not lint */
 

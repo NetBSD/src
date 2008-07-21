@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.14 2007/12/15 19:44:53 perry Exp $	*/
+/*	$NetBSD: uniq.c,v 1.15 2008/07/21 14:19:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: uniq.c,v 1.14 2007/12/15 19:44:53 perry Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.15 2008/07/21 14:19:27 lukem Exp $");
 #endif /* not lint */
 
 #include <err.h>

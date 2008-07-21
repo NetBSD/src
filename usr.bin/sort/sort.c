@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.45 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: sort.c,v 1.46 2008/07/21 14:19:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -71,12 +71,12 @@
 #include "pathnames.h"
 
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.45 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: sort.c,v 1.46 2008/07/21 14:19:26 lukem Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
