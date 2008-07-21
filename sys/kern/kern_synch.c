@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.241.2.4 2008/06/29 03:30:17 wrstuden Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.241.2.5 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,10 +68,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241.2.4 2008/06/29 03:30:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241.2.5 2008/07/21 19:13:45 wrstuden Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
+#include "opt_sa.h"
 
 #define	__MUTEX_PRIVATE
 
@@ -270,6 +271,7 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 	return error;
 }
 
+#ifdef KERN_SA
 /*
  * sa_awaken:
  *
@@ -288,6 +290,7 @@ sa_awaken(struct lwp *l)
 	if (l == l->l_savp->savp_lwp && l->l_flag & LW_SA_YIELD)
 		l->l_flag &= ~LW_SA_IDLE;
 }
+#endif /* KERN_SA */
 
 /*
  * OBSOLETE INTERFACE
@@ -955,8 +958,10 @@ setrunnable(struct lwp *l)
 		panic("setrunnable: lwp %p state was %d", l, l->l_stat);
 	}
 
+#ifdef KERN_SA
 	if (l->l_proc->p_sa)
 		sa_awaken(l);
+#endif /* KERN_SA */
 
 	/*
 	 * If the LWP was sleeping interruptably, then it's OK to start it

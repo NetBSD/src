@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.110.2.4 2008/06/23 04:31:50 wrstuden Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.110.2.5 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,10 +206,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.110.2.4 2008/06/23 04:31:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.110.2.5 2008/07/21 19:13:45 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
+#include "opt_sa.h"
 
 #define _LWP_API_PRIVATE
 
@@ -1391,6 +1392,7 @@ lwp_userret(struct lwp *l)
 		}
 	}
 
+#ifdef KERN_SA
 	/*
 	 * Timer events are handled specially.  We only try once to deliver
 	 * pending timer upcalls; if if fails, we can try again on the next
@@ -1399,6 +1401,7 @@ lwp_userret(struct lwp *l)
 	 */
 	if (p->p_timerpend)
 		timerupcall(l);
+#endif /* KERN_SA */
 }
 
 /*

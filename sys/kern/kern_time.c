@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.146.2.7 2008/06/30 23:03:38 wrstuden Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.146.2.8 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.7 2008/06/30 23:03:38 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.8 2008/07/21 19:13:45 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -81,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.7 2008/06/30 23:03:38 wrstuden
 #include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "opt_sa.h"
 
 static void	timer_intr(void *);
 static void	itimerfire(struct ptimer *);
@@ -914,6 +916,7 @@ sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap,
 	return (0);
 }
 
+#ifdef KERN_SA
 /* Glue function that triggers an upcall; called from userret(). */
 void
 timerupcall(struct lwp *l)
@@ -955,6 +958,7 @@ timerupcall(struct lwp *l)
 
 	mutex_exit(p->p_lock);
 }
+#endif /* KERN_SA */
 
 /*
  * Real interval timer expired:
@@ -1360,6 +1364,7 @@ timer_tick(lwp_t *l, bool user)
 	mutex_spin_exit(&timer_lock);
 }
 
+#ifdef KERN_SA
 /*
  * timer_sa_intr:
  *
@@ -1412,6 +1417,7 @@ timer_sa_intr(struct ptimer *pt, proc_t *p)
 			pt->pt_overruns++;
 	}
 }
+#endif /* KERN_SA */
 
 static void
 timer_intr(void *cookie)
@@ -1431,10 +1437,12 @@ timer_intr(void *cookie)
 			continue;
 		}
 		p = pt->pt_proc;
+#ifdef KERN_SA
 		if (pt->pt_ev.sigev_notify == SIGEV_SA) {
 			timer_sa_intr(pt, p);
 			continue;
 		}
+#endif /* KERN_SA */
 		if (pt->pt_ev.sigev_notify != SIGEV_SIGNAL)
 			continue;
 		if (sigismember(&p->p_sigpend.sp_set, pt->pt_ev.sigev_signo)) {
