@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.38 2008/07/06 05:18:11 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.39 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,8 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.38 2008/07/06 05:18:11 wrstuden Exp $");
+#include "opt_sa.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.39 2008/07/21 19:13:45 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.38 2008/07/06 05:18:11 wrstuden E
 #include <sys/sleepq.h>
 
 #include <uvm/uvm_extern.h>
+
+/*
+ * Now handle building with SA diabled. We always compile this file,
+ * just if SA's disabled we merely build in stub routines for call
+ * entry points we still need.
+ */
+#ifdef KERN_SA
 
 /*
  * memory pool for sadata structures
@@ -2490,3 +2498,6 @@ debug_print_sa(struct proc *p)
 }
 
 #endif
+
+#else /* KERN_SA */
+#endif /* KERN_SA */

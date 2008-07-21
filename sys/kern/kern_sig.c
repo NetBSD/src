@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.283.2.6 2008/06/30 04:55:56 wrstuden Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.283.2.7 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,13 +66,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283.2.6 2008/06/30 04:55:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283.2.7 2008/07/21 19:13:45 wrstuden Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_pax.h"
+#include "opt_sa.h"
 
 #define	SIGPROP		/* include signal properties table */
 #include <sys/param.h>
@@ -697,9 +698,11 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	ucp->uc_flags = 0;
 	ucp->uc_link = l->l_ctxlink;
 
+#if KERN_SA
 	if (p->p_sa != NULL)
 		ucp->uc_sigmask = p->p_sa->sa_sigmask;
 	else
+#endif /* KERN_SA */
 		ucp->uc_sigmask = l->l_sigmask;
 	ucp->uc_flags |= _UC_SIGMASK;
 
@@ -1022,8 +1025,11 @@ sigismasked(struct lwp *l, int sig)
 	struct proc *p = l->l_proc;
 
 	return (sigismember(&p->p_sigctx.ps_sigignore, sig) ||
-	    sigismember(&l->l_sigmask, sig) ||
-	    ((p->p_sa != NULL) && sigismember(&p->p_sa->sa_sigmask, sig)));
+	    sigismember(&l->l_sigmask, sig)
+#if KERN_SA
+	    || ((p->p_sa != NULL) && sigismember(&p->p_sa->sa_sigmask, sig))
+#endif /* KERN_SA */
+	    );
 }
 
 /*
@@ -1067,9 +1073,11 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
 	/*
 	 * SIGCONT can be masked, but must always restart stopped LWPs.
 	 */
+#if KERN_SA
 	if (p->p_sa != NULL)
 		masked = sigismember(&p->p_sa->sa_sigmask, sig);
 	else
+#endif /* KERN_SA */
 		masked = sigismember(&l->l_sigmask, sig);
 	if (masked && ((prop & SA_CONT) == 0 || l->l_stat != LSSTOP)) {
 		lwp_unlock(l);
@@ -1227,11 +1235,13 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 {
 	int prop, lid, toall, signo = ksi->ksi_signo;
 	struct sigacts *sa;
-	struct sadata_vp *vp;
 	struct lwp *l;
 	ksiginfo_t *kp;
 	ksiginfoq_t kq;
 	sig_t action;
+#ifdef KERN_SA
+	struct sadata_vp *vp;
+#endif
 
 	KASSERT(!cpu_intr_p());
 	KASSERT(mutex_owned(proc_lock));
@@ -1434,6 +1444,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	/*
 	 * Try to find an LWP that can take the signal.
 	 */
+#if KERN_SA
 	if (p->p_sa != NULL) {
 		/*
 		 * In the SA case, we try to find an idle LWP that can take
@@ -1457,7 +1468,9 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 					break;
 			}
 		}
-	} else {
+	} else	/* Catch the brace below if we're defined */
+#endif /* KERN_SA */
+	    {
 		LIST_FOREACH(l, &p->p_lwps, l_sibling)
 			if (sigpost(l, action, prop, kp->ksi_signo, 0) && !toall)
 				break;
@@ -1475,12 +1488,15 @@ void
 kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct proc *p = l->l_proc;
+#ifdef KERN_SA
 	struct lwp *le, *li;
 	siginfo_t *si;
 	int f;
+#endif /* KERN_SA */
 
 	KASSERT(mutex_owned(p->p_lock));
 
+#ifdef KERN_SA
 	if (p->p_sflag & PS_SA) {
 		/* f indicates if we should clear LP_SA_NOBLOCK */
 		f = ~l->l_pflag & LP_SA_NOBLOCK;
@@ -1522,6 +1538,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 		mutex_enter(p->p_lock);
 		return;
 	}
+#endif /* KERN_SA */
 
 	(*p->p_emul->e_sendsig)(ksi, mask);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.28.2.3 2008/06/30 04:55:56 wrstuden Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.28.2.4 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.28.2.3 2008/06/30 04:55:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.28.2.4 2008/07/21 19:13:45 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.28.2.3 2008/06/30 04:55:56 wrstude
 #include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "opt_sa.h"
 
 int	sleepq_sigtoerror(lwp_t *, int);
 
@@ -147,8 +149,10 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 */
 	spc_lock(ci);
 	lwp_setlock(l, spc->spc_mutex);
+#ifdef KERN_SA
 	if (l->l_proc->p_sa != NULL)
 		sa_awaken(l);
+#endif /* KERN_SA */
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
@@ -256,9 +260,11 @@ sleepq_block(int timo, bool catch)
 		if (timo)
 			callout_schedule(&l->l_timeout_ch, timo);
 
+#ifdef KERN_SA
 		if (((l->l_flag & LW_SA) != 0) && (~l->l_pflag & LP_SA_NOBLOCK))
 			sa_switch(l);
 		else
+#endif
 			mi_switch(l);
 
 		/* The LWP and sleep queue are now unlocked. */
