@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.210 2008/07/12 12:15:43 gmcgarry Exp $
+#	$NetBSD: bsd.README,v 1.211 2008/07/21 12:12:57 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -778,8 +778,8 @@ USE_SHLIBDIR	If not "no", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
 		Default: no
 
-LIBISPRIVATE	If not "no", act as "MKDEBUGLIB=no MKLINT=no MKPIC=no MKPROFILE=no",
-		and don't install the (.a) library.
+LIBISPRIVATE	If not "no", act as "MKDEBUGLIB=no MKLINT=no MKPIC=no
+		MKPROFILE=no", and don't install the (.a) library.
 		This is useful for "build only" helper libraries.
 		Default: no
 
@@ -1254,7 +1254,8 @@ ARFLAGS		Options to ${AR}.  [rl]
 
 AS		Assembler.  [as]
 
-AFLAGS		Options to ${AS}.  []
+AFLAGS		Options to ${CC} when compiling or linking .s or .S
+		assembly source files.  []
 
 CC		C compiler.  [cc]
 
