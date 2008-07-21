@@ -1,3 +1,6 @@
+2008-07-21  Timo Teras  <timo.teras@iki.fi>
+	* src/racoon/cfparse.y : do not set default gss id if xauth is used
+
 2008-07-14  Matthew Grooms
 	* src/racoon/isakmp_cfg.c : fix hybrid enabled builds
 
