@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.19.14.1 2008/07/03 18:38:24 simonb Exp $	*/
+/*	$NetBSD: specfs.c,v 1.19.14.2 2008/07/21 14:14:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -172,9 +172,16 @@ rump_specfsync(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp;
+	int error;
 
-	assert(vp->v_type == VBLK);
-	vflushbuf(vp, 1);
+	KASSERT(vp->v_type == VBLK);
+	if ((mp = vp->v_specmountpoint) != NULL) {
+		error = VFS_FSYNC(mp, vp, ap->a_flags | FSYNC_VFS);
+		if (error != EOPNOTSUPP)
+			return error;
+	}
+	vflushbuf(vp, (ap->a_flags & FSYNC_WAIT) != 0);
 
 	return 0;
 }
@@ -217,9 +224,10 @@ rump_specstrategy(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
 	struct rump_specpriv *sp;
+	int async;
 	off_t off;
 
-	assert(vp->v_type == VBLK);
+	KASSERT(vp->v_type == VBLK);
 	sp = vp->v_data;
 
 	off = bp->b_blkno << DEV_BSHIFT;
@@ -241,7 +249,8 @@ rump_specstrategy(void *v)
 	 * Synchronous I/O is done directly in the context mainly to
 	 * avoid unnecessary scheduling with the I/O thread.
 	 */
-	if (bp->b_flags & B_ASYNC) {
+	async = bp->b_flags & B_ASYNC;
+	if (async) {
 #ifdef RUMP_WITHOUT_THREADS
 		goto syncfallback;
 #else
@@ -287,7 +296,8 @@ rump_specstrategy(void *v)
 			rumpuser_write_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		}
-		biowait(bp);
+		if (!async)
+			biowait(bp);
 	}
 
 	return 0;

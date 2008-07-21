@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.12.8.1 2008/07/03 18:38:24 simonb Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.12.8.2 2008/07/21 14:14:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -328,6 +328,13 @@ rumpuser_cv_broadcast(struct rumpuser_cv *cv)
 {
 
 	NOFAIL_ERRNO(pthread_cond_broadcast(&cv->pthcv));
+}
+
+int
+rumpuser_cv_has_waiters(struct rumpuser_cv *cv)
+{
+
+	return pthread_cond_has_waiters_np(&cv->pthcv);
 }
 
 /*
