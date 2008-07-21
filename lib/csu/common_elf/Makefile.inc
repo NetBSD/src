@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2007/12/01 11:06:36 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2008/07/21 15:34:58 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -31,29 +31,29 @@ COPTS+=		-fPIC
 realall: ${OBJS}
 
 crt0.o: crt0.c
-	@echo "${COMPILE.c} -DCRT0 ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} -DCRT0 ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} -DCRT0 ${.IMPSRC} -o ${.TARGET}.o
+	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	rm -f ${.TARGET}.o
 
 # dependant on crt0.o to pick up header dependencies
 gcrt0.o: ${.CURDIR}/crt0.c crt0.o
-	@echo "${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}"
-	@${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
-	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} -DMCRT0 ${.CURDIR}/crt0.c -o ${.TARGET}.o
+	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	rm -f ${.TARGET}.o
 
 crti.o: crti.c
-	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
+	${LD} -X -r -o ${.TARGET} ${.TARGET}.o
+	rm -f ${.TARGET}.o
 
 crtn.o: crtn.c
-	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${.IMPSRC} -o ${.TARGET}.o
+	${LD} -X -r -o ${.TARGET} ${.TARGET}.o
+	rm -f ${.TARGET}.o
 
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
