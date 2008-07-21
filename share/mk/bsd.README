@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.211 2008/07/21 12:12:57 lukem Exp $
+#	$NetBSD: bsd.README,v 1.212 2008/07/21 23:23:42 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -1028,8 +1028,8 @@ SYMLINKS	See <bsd.links.mk>
 MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
 		defined, "MAN=${PROG}.1" is assumed.
 
-PAXCTL_FLAGS	If defined then paxctl(1) is ran on binary after link
-		time, with the value of the variable as args to it.
+PAXCTL_FLAGS	If defined, run paxctl(1) on the program binarry after link
+		time, with the value of this variable as args to paxctl(1).
 
 PAXCTL_FLAGS.${PROG} Custom override for PAXCTL_FLAGS.
 
@@ -1442,7 +1442,9 @@ TOOL_ZIC		Time zone compiler.  [zic]
 
 Other variables of note (incomplete list):
 
-WARNS		Crank up gcc warning options; the distinct levels are:
+NOGCCERROR	If defined, prevents passing -Werror to GCC via ${CFLAGS}.
+
+WARNS		Crank up GCC warning options; the distinct levels are:
 			WARNS=1
 			WARNS=2
 			WARNS=3
