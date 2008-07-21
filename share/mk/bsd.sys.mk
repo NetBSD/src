@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.163 2008/04/30 21:15:33 garbled Exp $
+#	$NetBSD: bsd.sys.mk,v 1.164 2008/07/21 23:30:48 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -16,6 +16,10 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # differently in traditional and ansi environments' which is the warning
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare -Wno-traditional
+.if !defined(NOGCCERROR)
+# Set assembler warnings to be fatal
+CFLAGS+=	-Wa,--fatal-warnings
+.endif
 # Set linker warnings to be fatal
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
 # XXX on linking static libs
