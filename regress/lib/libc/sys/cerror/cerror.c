@@ -1,4 +1,4 @@
-/* $NetBSD: cerror.c,v 1.2 2003/07/26 19:38:47 salo Exp $ */
+/* $NetBSD: cerror.c,v 1.3 2008/07/21 14:33:31 lukem Exp $ */
 
 /*
  * Copyright (c) 2003 Christopher G. Demetriou
@@ -41,9 +41,9 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: cerror.c,v 1.2 2003/07/26 19:38:47 salo Exp $");
-__COPYRIGHT(
-"@(#) Copyright (c) 2003 Christopher G. Demetriou.  All rights reserved.\n");
+__RCSID("$NetBSD: cerror.c,v 1.3 2008/07/21 14:33:31 lukem Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2003\
+ Christopher G. Demetriou.  All rights reserved.");
 #endif /* not lint */
 
 #include <errno.h>
