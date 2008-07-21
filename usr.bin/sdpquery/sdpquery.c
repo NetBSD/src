@@ -1,4 +1,4 @@
-/*	$NetBSD: sdpquery.c,v 1.3 2007/03/30 21:25:00 plunky Exp $	*/
+/*	$NetBSD: sdpquery.c,v 1.4 2008/07/21 14:19:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
-	    "All rights reserved.\n");
-__RCSID("$NetBSD: sdpquery.c,v 1.3 2007/03/30 21:25:00 plunky Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
+__RCSID("$NetBSD: sdpquery.c,v 1.4 2008/07/21 14:19:26 lukem Exp $");
 
 #include <assert.h>
 #include <bluetooth.h>

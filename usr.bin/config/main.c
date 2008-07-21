@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2008/06/10 18:11:31 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2008/07/21 14:19:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,8 +52,8 @@
 #endif
 
 #ifndef lint
-COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+COPYRIGHT("@(#) Copyright (c) 1992, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #include <sys/types.h>

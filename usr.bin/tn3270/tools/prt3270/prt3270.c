@@ -1,4 +1,4 @@
-/*	$NetBSD: prt3270.c,v 1.10 2006/11/09 20:59:23 christos Exp $	*/
+/*	$NetBSD: prt3270.c,v 1.11 2008/07/21 14:19:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -32,9 +32,8 @@
 #ifndef HOST_TOOL
 #include <sys/cdefs.h>
 #if defined(__COPYRIGHT) && !defined(lint)
-__COPYRIGHT(
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1988\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 #endif
 
@@ -42,7 +41,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)prt3270.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: prt3270.c,v 1.10 2006/11/09 20:59:23 christos Exp $");
+__RCSID("$NetBSD: prt3270.c,v 1.11 2008/07/21 14:19:27 lukem Exp $");
 #endif
 #endif /* not lint */
 

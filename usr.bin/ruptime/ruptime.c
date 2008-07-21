@@ -1,4 +1,4 @@
-/*	$NetBSD: ruptime.c,v 1.12 2005/09/12 16:16:23 christos Exp $	*/
+/*	$NetBSD: ruptime.c,v 1.13 2008/07/21 14:19:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -31,13 +31,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	8.2 (Berkeley) 4/5/94";*/
-__RCSID("$NetBSD: ruptime.c,v 1.12 2005/09/12 16:16:23 christos Exp $");
+__RCSID("$NetBSD: ruptime.c,v 1.13 2008/07/21 14:19:25 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

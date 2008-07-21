@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.11 2003/08/07 11:13:09 agc Exp $	*/
+/*	$NetBSD: banner.c,v 1.12 2008/07/21 14:19:21 lukem Exp $	*/
 
 /*
  *	Changes for banner(1)
@@ -50,15 +50,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: banner.c,v 1.11 2003/08/07 11:13:09 agc Exp $");
+__RCSID("$NetBSD: banner.c,v 1.12 2008/07/21 14:19:21 lukem Exp $");
 #endif
 #endif /* not lint */
 

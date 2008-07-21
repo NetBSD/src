@@ -1,4 +1,4 @@
-/* $NetBSD: rwall.c,v 1.16 2005/08/09 23:41:38 christos Exp $ */
+/* $NetBSD: rwall.c,v 1.17 2008/07/21 14:19:25 lukem Exp $ */
 
 /*
  * Copyright (c) 1988, 1990 Regents of the University of California.
@@ -63,15 +63,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1988\
+ Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";
 #else
-__RCSID("$NetBSD: rwall.c,v 1.16 2005/08/09 23:41:38 christos Exp $");
+__RCSID("$NetBSD: rwall.c,v 1.17 2008/07/21 14:19:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
