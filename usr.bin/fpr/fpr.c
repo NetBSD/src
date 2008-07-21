@@ -1,4 +1,4 @@
-/*	$NetBSD: fpr.c,v 1.7 2003/10/16 06:50:17 itojun Exp $	*/
+/*	$NetBSD: fpr.c,v 1.8 2008/07/21 14:19:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif				/* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)fpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fpr.c,v 1.7 2003/10/16 06:50:17 itojun Exp $");
+__RCSID("$NetBSD: fpr.c,v 1.8 2008/07/21 14:19:22 lukem Exp $");
 #endif				/* not lint */
 
 #include <err.h>

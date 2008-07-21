@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.17 2006/12/14 17:09:43 christos Exp $	*/
+/*	$NetBSD: remote.c,v 1.18 2008/07/21 14:19:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,15 +32,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.17 2006/12/14 17:09:43 christos Exp $");
+__RCSID("$NetBSD: remote.c,v 1.18 2008/07/21 14:19:26 lukem Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
