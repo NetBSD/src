@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.18.4.6 2008/07/21 14:28:57 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.18.4.7 2008/07/21 20:45:32 tteras Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2413,7 +2413,7 @@ expand_isakmpspec(prop_no, trns_no, types,
 			memcpy(new->gssid->v, gssid, new->gssid->l);
 			racoon_free(gssid);
 #ifdef ENABLE_HYBRID
-		} else if (rmmconf->xauth == NULL) {
+		} else if (rmconf->xauth == NULL) {
 #else
 		} else {
 #endif
