@@ -1,5 +1,11 @@
 2008-07-21  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/cfparse.y : do not set default gss id if xauth is used
+	* src/racoon/isakmp_agg.c
+	  src/racoon/isakmp_base.c
+	  src/racoon/isakmp_ident.c
+	  src/racoon/vendorid.c
+	  src/racoon/vendorid.h : separate generic vendor id handling to
+	  a new function and use it
 
 2008-07-14  Matthew Grooms
 	* src/racoon/isakmp_cfg.c : fix hybrid enabled builds

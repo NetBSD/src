@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.8 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.9 2008/07/21 06:26:06 tteras Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
@@ -343,33 +343,7 @@ base_i2recv(iph1, msg)
 			break;
 		case ISAKMP_NPTYPE_VID:
 			vid_numeric = check_vendorid(pa->ptr);
-#ifdef ENABLE_NATT
-			if (iph1->rmconf->nat_traversal && natt_vendorid(vid_numeric))
-			  natt_handle_vendorid(iph1, vid_numeric);
-#endif
-#ifdef ENABLE_HYBRID
-			switch (vid_numeric) {
-			case VENDORID_XAUTH:
-				iph1->mode_cfg->flags |=
-				    ISAKMP_CFG_VENDORID_XAUTH;
-				break;
-
-			case VENDORID_UNITY:
-				iph1->mode_cfg->flags |=
-				    ISAKMP_CFG_VENDORID_UNITY;
-				break;
-
-			default:
-				break;
-			}
-#endif
-#ifdef ENABLE_DPD
-			if (vid_numeric == VENDORID_DPD && iph1->rmconf->dpd) {
-				iph1->dpd_support=1;
-				plog(LLV_DEBUG, LOCATION, NULL,
-					 "remote supports DPD\n");
-			}
-#endif
+			handle_vendorid(iph1, vid_numeric);
 			break;
 		default:
 			/* don't send information, see ident_r1recv() */
@@ -615,7 +589,7 @@ base_i3recv(iph1, msg)
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
 	int error = -1;
-	int ptype;
+	int ptype, vid_numeric;
 #ifdef ENABLE_NATT
 	vchar_t	*natd_received;
 	int natd_seq = 0, natd_verified;
@@ -654,7 +628,8 @@ base_i3recv(iph1, msg)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			(void)check_vendorid(pa->ptr);
+			vid_numeric = check_vendorid(pa->ptr);
+			handle_vendorid(iph1, vid_numeric);
 			break;
 
 #ifdef ENABLE_NATT
@@ -828,9 +803,6 @@ base_r1recv(iph1, msg)
 	}
 
 	/* validate the type of next payload */
-	/*
-	 * NOTE: XXX even if multiple VID, we'll silently ignore those.
-	 */
 	pbuf = isakmp_parse(msg);
 	if (pbuf == NULL)
 		goto end;
@@ -863,38 +835,12 @@ base_r1recv(iph1, msg)
 			break;
 		case ISAKMP_NPTYPE_VID:
 			vid_numeric = check_vendorid(pa->ptr);
-#ifdef ENABLE_NATT
-			if (iph1->rmconf->nat_traversal && natt_vendorid(vid_numeric))
-				natt_handle_vendorid(iph1, vid_numeric);
-#endif
+			handle_vendorid(iph1, vid_numeric);
 #ifdef ENABLE_FRAG
 			if ((vid_numeric == VENDORID_FRAG) &&
 			    (vendorid_frag_cap(pa->ptr) & VENDORID_FRAG_BASE))
 				iph1->frag = 1;
 #endif
-#ifdef ENABLE_HYBRID
-			switch (vid_numeric) {
-			case VENDORID_XAUTH:
-				iph1->mode_cfg->flags |=
-				    ISAKMP_CFG_VENDORID_XAUTH;
-				break;
-
-			case VENDORID_UNITY:
-				iph1->mode_cfg->flags |=
-				    ISAKMP_CFG_VENDORID_UNITY;
-				break;
-
-			default:
-				break;
-			}
-#endif
-#ifdef ENABLE_DPD
-			if (vid_numeric == VENDORID_DPD && iph1->rmconf->dpd) {
-				iph1->dpd_support=1;
-				plog(LLV_DEBUG, LOCATION, NULL,
-					 "remote supports DPD\n");
-			}
-#endif 
 			break;
 		default:
 			/* don't send information, see ident_r1recv() */
@@ -1130,7 +1076,7 @@ base_r2recv(iph1, msg)
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
 	int error = -1;
-	int ptype;
+	int ptype, vid_numeric;
 #ifdef ENABLE_NATT
 	int natd_seq = 0;
 #endif
@@ -1170,7 +1116,8 @@ base_r2recv(iph1, msg)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			(void)check_vendorid(pa->ptr);
+			vid_numeric = check_vendorid(pa->ptr);
+			handle_vendorid(iph1, vid_numeric);
 			break;
 
 #ifdef ENABLE_NATT
