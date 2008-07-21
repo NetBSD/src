@@ -1,4 +1,4 @@
-/* $NetBSD: hcreate.c,v 1.5 2004/04/23 02:48:12 simonb Exp $ */
+/* $NetBSD: hcreate.c,v 1.6 2008/07/21 12:05:43 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -48,12 +48,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: hcreate.c,v 1.5 2004/04/23 02:48:12 simonb Exp $");
+__RCSID("$NetBSD: hcreate.c,v 1.6 2008/07/21 12:05:43 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(lint)
-__COPYRIGHT(
-"@(#) Copyright (c) 2001 Christopher G. Demetriou.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 2001\
+ Christopher G. Demetriou.  All rights reserved.");
 #endif /* not lint */
 
 #include "namespace.h"
