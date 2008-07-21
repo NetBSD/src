@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.9.2.1 2008/05/28 06:33:58 wrstuden Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.9.2.2 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,10 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.9.2.1 2008/05/28 06:33:58 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.9.2.2 2008/07/21 19:13:45 wrstuden Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -116,10 +117,10 @@ __weak_alias(ktr_point,nullop);
 #endif	/* KTRACE */
 
 /*
- * Scheduler activations system calls.  These need to remain until libc's
- * major version is bumped.
+ * Scheduler activations system calls.  These need to remain, even when
+ * KERN_SA isn't defined, until libc's major version is bumped.
  */
-#if 0
+#if !defined(KERN_SA)
 __strong_alias(sys_sa_register,sys_nosys);
 __strong_alias(sys_sa_stacks,sys_nosys);
 __strong_alias(sys_sa_enable,sys_nosys);

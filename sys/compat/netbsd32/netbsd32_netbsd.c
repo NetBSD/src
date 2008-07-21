@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.143.6.3 2008/06/27 01:34:26 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.143.6.4 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.143.6.3 2008/06/27 01:34:26 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.143.6.4 2008/07/21 19:13:45 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.143.6.3 2008/06/27 01:34:26 wr
 #include "opt_nfsserver.h"
 #include "opt_syscall_debug.h"
 #include "opt_ptrace.h"
+#include "opt_sa.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -125,7 +126,11 @@ const struct sa_emul saemul_netbsd32 = {
 	netbsd32_upcallconv,
 	netbsd32_cpu_upcall,
 	(void (*)(struct lwp *, void *))getucontext32_sa,
+#ifdef KERN_SA
 	netbsd32_sa_ucsp
+#else
+	NULL
+#endif
 }; 
 
 const struct emul emul_netbsd32 = {

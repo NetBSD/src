@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.21.4.3 2008/06/23 04:31:51 wrstuden Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.21.4.4 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21.4.3 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21.4.4 2008/07/21 19:13:45 wrstuden Exp $");
 
 #include <sys/param.h>
 
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21.4.3 2008/06/23 04:31:51 wrstuden 
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/unistd.h>
+
+#include "opt_sa.h"
 
 /*
  * Convert user priority or the in-kernel priority or convert the current
@@ -474,9 +476,11 @@ sys_sched_yield(struct lwp *l, const void *v, register_t *retval)
 {
 
 	yield();
+#ifdef KERN_SA
 	if (l->l_flag & LW_SA) {
 		sa_preempt(l);
 	}
+#endif
 	return 0;
 }
 

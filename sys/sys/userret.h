@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.16.2.1 2008/05/23 04:30:03 wrstuden Exp $	*/
+/*	$NetBSD: userret.h,v 1.16.2.2 2008/07/21 19:13:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -68,6 +68,10 @@
 #include <sys/lockdebug.h>
 #include <sys/intr.h>
 
+#if defined(_KERNEL_OPT)
+#include "opt_sa.h"
+#endif
+
 /*
  * Define the MI code needed before returning to user mode, for
  * trap and syscall.
@@ -82,7 +86,11 @@ mi_userret(struct lwp *l)
 	struct cpu_info *ci;
 #endif
 
-#ifndef SA_NO_USERRET
+/*
+ * Skip either if SA_NO_USERRET defined or we're in the kernel and KERN_SA
+ * isn't defined.
+ */
+#if !defined(SA_NO_USERRET) && !(defined(_KERNEL_OPT) && !defined(KERN_SA))
 	/* Generate UNBLOCKED upcall if needed */
 	if (l->l_flag & LW_SA_BLOCKING) {
 		sa_unblock_userret(l);
@@ -111,7 +119,8 @@ mi_userret(struct lwp *l)
 	ci->ci_schedstate.spc_curpriority = l->l_priority;
 #endif
 
-#ifndef SA_NO_USERRET
+/* See comment above for logic */
+#if !defined(SA_NO_USERRET) && !(defined(_KERNEL_OPT) && !defined(KERN_SA))
 	if (l->l_flag & LW_SA_UPCALL)
 		sa_upcall_userret(l);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.272.4.5 2008/06/27 01:34:26 wrstuden Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.272.4.6 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,13 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.4.5 2008/06/27 01:34:26 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.4.6 2008/07/21 19:13:45 wrstuden Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
 #include "opt_compat_netbsd.h"
 #include "veriexec.h"
 #include "opt_pax.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +152,11 @@ static const struct sa_emul saemul_netbsd = {
 	NULL,
 	cpu_upcall,
 	(void (*)(struct lwp *, void *))getucontext_sa,
+#ifdef KERN_SA
 	sa_ucsp
+#else
+	NULL
+#endif
 };
 
 /* NetBSD emul struct */
@@ -671,9 +676,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	l->l_lid = 1;
 	p->p_nlwpid = 1;
 
+#ifdef KERN_SA
 	/* Release any SA state. */
 	if (p->p_sa)
 		sa_release(p);
+#endif /* KERN_SA */
 
 	/* Remove POSIX timers */
 	timers_free(p, TIMERS_POSIX);

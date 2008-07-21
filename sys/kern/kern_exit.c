@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.208.2.6 2008/06/30 04:55:56 wrstuden Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.208.2.7 2008/07/21 19:13:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,10 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.208.2.6 2008/06/30 04:55:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.208.2.7 2008/07/21 19:13:45 wrstuden Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
+#include "opt_sa.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -209,10 +210,12 @@ exit1(struct lwp *l, int rv)
 	 * here.
 	 */
 	sa = 0;
+#ifdef KERN_SA
 	if ((p->p_sa != NULL)) {
 		l->l_pflag |= LP_SA_NOBLOCK;
 		sa = 1;
 	}
+#endif
 
 	p->p_sflag |= PS_WEXIT;
 
@@ -922,8 +925,10 @@ proc_free(struct proc *p, struct rusage *ru)
 	p->p_xstat = 0;
 
 	/* Release any SA state. */
+#ifdef KERN_SA
 	if (p->p_sa)
 		sa_release(p);
+#endif
 
 	/*
 	 * At this point we are going to start freeing the final resources. 
