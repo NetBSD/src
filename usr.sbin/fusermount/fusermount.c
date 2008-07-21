@@ -1,5 +1,5 @@
 /*
- * Copyright © 2007 Alistair Crooks.  All rights reserved.
+ * Copyright (c) 2007 Alistair Crooks.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,9 +28,9 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__COPYRIGHT("@(#) Copyright © (c) 2007 \
-                The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: fusermount.c,v 1.2 2007/06/11 21:16:23 agc Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2007\
+ The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: fusermount.c,v 1.3 2008/07/21 13:36:58 lukem Exp $");
 #endif
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: unlink.c,v 1.3 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: unlink.c,v 1.4 2008/07/21 13:37:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,10 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1999\
-	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: unlink.c,v 1.3 2008/04/28 20:24:17 martin Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1999\
+ The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: unlink.c,v 1.4 2008/07/21 13:37:00 lukem Exp $");
 #endif
 
 #include <locale.h>
