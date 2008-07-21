@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.86 2008/07/16 00:19:57 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.87 2008/07/21 07:33:54 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -237,6 +237,7 @@ extern pv_addr_t kernel_l1pt;
 #define	PVF_COLORED	0x80		/* page has or had a color */
 #define	PVF_KENTRY	0x0100		/* page entered via pmap_kenter_pa */
 #define	PVF_KMPAGE	0x0200		/* page is used for kmem */
+#define	PVF_DIRTY	0x0400		/* page may have dirty cache lines */
 #define	PVF_NC		(PVF_UNC|PVF_KNC)
 
 /*
@@ -274,6 +275,9 @@ bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 
 #define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+#define	PMAP_KMPAGE	0x00000040	/* Make uvm tell us when it allocates
+					 a page to be used for kernel memory */
+
 
 #if ARM_MMU_V6 > 0
 #define	PMAP_PREFER(hint, vap, sz, td)	pmap_prefer((hint), (vap), (td))
