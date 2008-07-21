@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.26 2008/07/09 12:16:50 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.27 2008/07/21 06:24:29 tteras Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2434,7 +2434,11 @@ expand_isakmpspec(prop_no, trns_no, types,
 			}
 			memcpy(new->gssid->v, gssid, new->gssid->l);
 			racoon_free(gssid);
+#ifdef ENABLE_HYBRID
+		} else if (rmmconf->xauth == NULL) {
+#else
 		} else {
+#endif
 			/*
 			 * Allocate the default ID so that it gets put
 			 * into a GSS ID attribute during the Phase 1
