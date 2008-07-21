@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.33 2006/11/24 22:52:16 wiz Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.34 2008/07/21 13:36:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -60,12 +60,12 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 2000\n\
-	The NetBSD Foundation, Inc.  All rights reserved.\n\
-Copyright (c) 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 2000\
+ The NetBSD Foundation, Inc.  All rights reserved.\
+  Copyright (c) 1991, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.33 2006/11/24 22:52:16 wiz Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.34 2008/07/21 13:36:59 lukem Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
