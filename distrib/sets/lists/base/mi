@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.757 2008/06/25 05:57:16 dogcow Exp $
+# $NetBSD: mi,v 1.758 2008/07/22 21:07:59 dyoung Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -613,15 +613,15 @@
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
-./usr/bin/nex					base-util-bin
+./usr/bin/nex					base-util-bin		nvi
 ./usr/bin/nfsstat				base-nfsclient-bin
 ./usr/bin/nice					base-util-bin
 ./usr/bin/nl					base-util-bin
 ./usr/bin/nohup					base-util-bin
 ./usr/bin/nslookup				base-netutil-bin
 ./usr/bin/nsupdate				base-netutil-bin
-./usr/bin/nvi					base-util-bin
-./usr/bin/nview					base-util-bin
+./usr/bin/nvi					base-util-bin		nvi
+./usr/bin/nview					base-util-bin		nvi
 ./usr/bin/od					base-util-bin
 ./usr/bin/openssl				base-crypto-bin		crypto
 ./usr/bin/page					base-util-bin
@@ -3065,13 +3065,13 @@
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
 ./usr/share/nvi					base-util-share
 ./usr/share/nvi/catalog				base-util-share
-./usr/share/nvi/catalog/dutch			base-util-share		share
-./usr/share/nvi/catalog/english			base-util-share		share
-./usr/share/nvi/catalog/french			base-util-share		share
-./usr/share/nvi/catalog/german			base-util-share		share
-./usr/share/nvi/catalog/ru_RU.KOI8-R		base-util-share		share
-./usr/share/nvi/catalog/spanish			base-util-share		share
-./usr/share/nvi/catalog/swedish			base-util-share		share
+./usr/share/nvi/catalog/dutch			base-util-share		nvi,share
+./usr/share/nvi/catalog/english			base-util-share		nvi,share
+./usr/share/nvi/catalog/french			base-util-share		nvi,share
+./usr/share/nvi/catalog/german			base-util-share		nvi,share
+./usr/share/nvi/catalog/ru_RU.KOI8-R		base-util-share		nvi,share
+./usr/share/nvi/catalog/spanish			base-util-share		nvi,share
+./usr/share/nvi/catalog/swedish			base-util-share		nvi,share
 ./usr/share/sushi				base-obsolete	obsolete
 ./usr/share/sushi/help				base-obsolete	obsolete
 ./usr/share/sushi/index				base-obsolete	obsolete
