@@ -1,3 +1,8 @@
+---------------------------------------------
+
+	0.7.1 released
+
+
 2008-07-22  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Kohki Ohhira <ohhira@src.ricoh.co.jp>:
 	* src/racoon/proposal.c: fixed some memory leaks, when malloc
