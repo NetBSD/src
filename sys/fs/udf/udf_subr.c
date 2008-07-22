@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.66 2008/07/22 19:06:55 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.67 2008/07/22 21:39:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.66 2008/07/22 19:06:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.67 2008/07/22 21:39:08 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -3886,6 +3886,9 @@ udf_dirhash_purge(struct udf_dirhash *dirh)
 	uint32_t hashline;
 
 	if (dirh == NULL)
+		return;
+
+	if (dirh->size == 0)
 		return;
 
 	for (hashline = 0; hashline < UDF_DIRHASH_HASHSIZE; hashline++) {
