@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.213 2008/07/21 23:39:55 lukem Exp $
+#	$NetBSD: bsd.README,v 1.214 2008/07/22 08:01:54 wiz Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -72,7 +72,7 @@ MKxxx		Can be set to "no" to disable functionality, or
 		default to "no".
 		Due to make(1) implementation issues, if a temporary
 		command-line override of a mk.conf or <bsd.own.mk>
-		setting is required whilst still honouring a particular
+		setting is required whilst still honoring a particular
 		Makefile's setting of MKxxx, use
 			env MKxxx=value make
 		instead of
@@ -524,7 +524,7 @@ RELEASEMACHINE	Subdirectory or path component used for the following
 		Used when building a release.  [${MACHINE}]
 
 Additionally, the following variables may be set by <bsd.own.mk> or in a
-make configuration file to modify the behaviour of the system build
+make configuration file to modify the behavior of the system build
 process (default values are in brackets along with comments, if set by
 <bsd.own.mk>):
 
@@ -1028,7 +1028,7 @@ SYMLINKS	See <bsd.links.mk>
 MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
 		defined, "MAN=${PROG}.1" is assumed.
 
-PAXCTL_FLAGS	If defined, run paxctl(1) on the program binarry after link
+PAXCTL_FLAGS	If defined, run paxctl(1) on the program binary after link
 		time, with the value of this variable as args to paxctl(1).
 
 PAXCTL_FLAGS.${PROG} Custom override for PAXCTL_FLAGS.
