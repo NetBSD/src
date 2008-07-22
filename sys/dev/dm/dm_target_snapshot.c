@@ -46,8 +46,7 @@
 
 /* Init function called from dm_table_load_ioctl. */
 int
-dm_target_snapshot_init(struct dm_dev *dmv, void **target_config,
-	       	int argc, const  char **argv)
+dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *argv)
 {
 
 	printf("Snapshot target init function called!!\n");
