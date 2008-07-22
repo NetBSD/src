@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.83 2008/07/21 14:19:22 lukem Exp $	*/
+/*	$NetBSD: fstat.c,v 1.84 2008/07/22 22:58:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1988, 1993\
- The Regents of the University of California.  All rights reserved.");
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.83 2008/07/21 14:19:22 lukem Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.84 2008/07/22 22:58:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ static int	nfs_filestat(struct vnode *, struct filestat *);
 static const char *inet6_addrstr(struct in6_addr *);
 #endif
 static void	socktrans(struct socket *, int);
-static void	misctrans(void *, int, const char *);
+static void	misctrans(struct file *);
 static int	ufs_filestat(struct vnode *, struct filestat *);
 static void	usage(void) __dead;
 static const char   *vfilestat(struct vnode *, struct filestat *);
@@ -398,12 +398,12 @@ ftrans(fdfile_t *fp, int i)
 		if (checkfile == 0)
 			ptrans(&file, (struct pipe *)file.f_data, i);
 		break;
-	case DTYPE_KQUEUE:
 	case DTYPE_MISC:
+	case DTYPE_KQUEUE:
 	case DTYPE_CRYPTO:
 	case DTYPE_MQUEUE:
 		if (checkfile == 0)
-			misctrans((void *)file.f_data, i, dtypes[file.f_type]);
+			misctrans(&file);
 		break;
 	default:
 		dprintf("unknown file type %d for file %d of pid %d",
@@ -974,12 +974,11 @@ bad:
 }
 
 static void
-misctrans(void *kq, int i, const char *type)
+misctrans(struct file *file)
 {
 
-	PREFIX(i);
-	(void)printf("* %s %lx", type, (long)kq);
-	(void)printf("\n");
+	PREFIX(file->f_type);
+	pmisc(file, dtypes[file->f_type]);
 }
 
 /*
