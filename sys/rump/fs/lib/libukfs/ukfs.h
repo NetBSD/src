@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.12 2008/07/15 16:21:19 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.13 2008/07/22 20:02:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -91,6 +91,9 @@ int		ukfs_lutimes(struct ukfs *, const char *,
 
 struct mount	*ukfs_getmp(struct ukfs *);
 struct vnode	*ukfs_getrvp(struct ukfs *);
+
+/* Utilities */
+int		ukfs_util_builddirs(struct ukfs *, const char *, mode_t);
 
 #define UKFS_UIOINIT(uio, iov, buf, bufsize, offset, rw)		\
 do {									\
