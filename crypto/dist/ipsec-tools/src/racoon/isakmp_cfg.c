@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.17 2008/07/15 02:16:58 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.18 2008/07/22 01:30:02 mgrooms Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1491,24 +1491,6 @@ isakmp_cfg_accounting_radius(iph1, inout)
 	struct ph1handle *iph1;
 	int inout;
 {
-	/* For first time use, initialize Radius */
-	if (radius_acct_state == NULL) {
-		if ((radius_acct_state = rad_acct_open()) == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL,
-			    "Cannot init librradius\n");
-			return -1;
-		}
-
-		if (rad_config(radius_acct_state, NULL) != 0) {
-			 plog(LLV_ERROR, LOCATION, NULL,
-			     "Cannot open librarius config file: %s\n",
-			     rad_strerror(radius_acct_state));
-			  rad_close(radius_acct_state);
-			  radius_acct_state = NULL;
-			  return -1;
-		}
-	}
-
 	if (rad_create_request(radius_acct_state, 
 	    RAD_ACCOUNTING_REQUEST) != 0) {
 		plog(LLV_ERROR, LOCATION, NULL,

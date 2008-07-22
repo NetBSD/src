@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.h,v 1.5 2008/07/22 01:30:02 mgrooms Exp $	*/
 
 /*	$KAME$ */
 
@@ -112,13 +112,35 @@ int xauth_reply(struct ph1handle *, int, int, int);
 int xauth_rmconf_used(struct xauth_rmconf **);
 void xauth_rmconf_delete(struct xauth_rmconf **);
 
-#ifdef HAVE_LIBRADIUS
-int xauth_login_radius(struct ph1handle *, char *, char *);
-int xauth_radius_init(void);
-#endif
-
 #ifdef HAVE_LIBPAM
 int xauth_login_pam(int, struct sockaddr *, char *, char *);
+#endif
+
+#ifdef HAVE_LIBRADIUS
+
+#define RADIUS_MAX_SERVERS 5
+
+struct rad_serv {
+	vchar_t		*host;
+	int		port;
+	vchar_t		*secret;
+};
+
+struct xauth_rad_config {
+	struct rad_serv	auth_server_list[RADIUS_MAX_SERVERS];
+	int		auth_server_count;
+	struct rad_serv	acct_server_list[RADIUS_MAX_SERVERS];
+	int		acct_server_count;
+	int		timeout;
+	int		retries;
+};
+
+extern struct xauth_rad_config xauth_rad_config;
+
+int xauth_radius_init_conf(int free);
+int xauth_radius_init(void);
+int xauth_login_radius(struct ph1handle *, char *, char *);
+
 #endif
 
 #ifdef HAVE_LIBLDAP
@@ -148,8 +170,9 @@ struct xauth_ldap_config {
 
 extern struct xauth_ldap_config xauth_ldap_config;
 
-int xauth_ldap_init(void);
+int xauth_ldap_init_conf(void);
 int xauth_login_ldap(struct ph1handle *, char *, char *);
+
 #endif
 
 #endif /* _ISAKMP_XAUTH_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.28 2008/07/21 09:43:03 tron Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.29 2008/07/22 01:30:02 mgrooms Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -196,6 +196,8 @@ static int fix_lifebyte __P((u_long));
 	/* ldap config */
 %token LDAPCFG LDAP_HOST LDAP_PORT LDAP_PVER LDAP_BASE LDAP_BIND_DN LDAP_BIND_PW LDAP_SUBTREE
 %token LDAP_ATTR_USER LDAP_ATTR_ADDR LDAP_ATTR_MASK LDAP_ATTR_GROUP LDAP_ATTR_MEMBER
+	/* radius config */
+%token RADCFG RAD_AUTH RAD_ACCT RAD_TIMEOUT RAD_RETRIES
 	/* modecfg */
 %token MODECFG CFG_NET4 CFG_MASK4 CFG_DNS4 CFG_NBNS4 CFG_DEFAULT_DOMAIN
 %token CFG_AUTH_SOURCE CFG_AUTH_GROUPS CFG_SYSTEM CFG_RADIUS CFG_PAM CFG_LDAP CFG_LOCAL CFG_NONE
@@ -271,6 +273,7 @@ statement
 	|	padding_statement
 	|	listen_statement
 	|	ldapcfg_statement
+	|	radcfg_statement
 	|	modecfg_statement
 	|	timer_statement
 	|	sainfo_statement
@@ -504,6 +507,119 @@ ike_addrinfo_port
 ike_port
 	:	/* nothing */	{ $$ = PORT_ISAKMP; }
 	|	PORT		{ $$ = $1; }
+	;
+
+	/* radius configuration */
+radcfg_statement
+	:	RADCFG {
+#ifndef ENABLE_HYBRID
+			yyerror("racoon not configured with --enable-hybrid");
+			return -1;
+#endif
+#ifndef HAVE_LIBRADIUS
+			yyerror("racoon not configured with --with-libradius");
+			return -1;
+#endif
+			xauth_rad_config.timeout = 3;
+			xauth_rad_config.retries = 3;
+
+		} BOC radcfg_stmts EOC
+	;
+radcfg_stmts
+	:	/* nothing */
+	|	radcfg_stmts radcfg_stmt
+	;
+radcfg_stmt
+	:	RAD_AUTH QUOTEDSTRING QUOTEDSTRING
+		{
+#ifdef ENABLE_HYBRID
+#ifdef HAVE_LIBRADIUS
+			int i = xauth_rad_config.auth_server_count;
+			if (i == RADIUS_MAX_SERVERS) {
+				yyerror("maximum radius auth servers exceeded");
+				return -1;
+			}
+
+			xauth_rad_config.auth_server_list[i].host = vdup($2);
+			xauth_rad_config.auth_server_list[i].secret = vdup($3);
+			xauth_rad_config.auth_server_list[i].port = 0; // default port
+			xauth_rad_config.auth_server_count++;
+#endif
+#endif
+		}
+		EOS
+	|	RAD_AUTH QUOTEDSTRING NUMBER QUOTEDSTRING
+		{
+#ifdef ENABLE_HYBRID
+#ifdef HAVE_LIBRADIUS
+			int i = xauth_rad_config.auth_server_count;
+			if (i == RADIUS_MAX_SERVERS) {
+				yyerror("maximum radius auth servers exceeded");
+				return -1;
+			}
+
+			xauth_rad_config.auth_server_list[i].host = vdup($2);
+			xauth_rad_config.auth_server_list[i].secret = vdup($4);
+			xauth_rad_config.auth_server_list[i].port = $3;
+			xauth_rad_config.auth_server_count++;
+#endif
+#endif
+		}
+		EOS
+	|	RAD_ACCT QUOTEDSTRING QUOTEDSTRING
+		{
+#ifdef ENABLE_HYBRID
+#ifdef HAVE_LIBRADIUS
+			int i = xauth_rad_config.acct_server_count;
+			if (i == RADIUS_MAX_SERVERS) {
+				yyerror("maximum radius account servers exceeded");
+				return -1;
+			}
+
+			xauth_rad_config.acct_server_list[i].host = vdup($2);
+			xauth_rad_config.acct_server_list[i].secret = vdup($3);
+			xauth_rad_config.acct_server_list[i].port = 0; // default port
+			xauth_rad_config.acct_server_count++;
+#endif
+#endif
+		}
+		EOS
+	|	RAD_ACCT QUOTEDSTRING NUMBER QUOTEDSTRING
+		{
+#ifdef ENABLE_HYBRID
+#ifdef HAVE_LIBRADIUS
+			int i = xauth_rad_config.acct_server_count;
+			if (i == RADIUS_MAX_SERVERS) {
+				yyerror("maximum radius account servers exceeded");
+				return -1;
+			}
+
+			xauth_rad_config.acct_server_list[i].host = vdup($2);
+			xauth_rad_config.acct_server_list[i].secret = vdup($4);
+			xauth_rad_config.acct_server_list[i].port = $3;
+			xauth_rad_config.acct_server_count++;
+#endif
+#endif
+		}
+		EOS
+	|	RAD_TIMEOUT NUMBER
+		{
+#ifdef ENABLE_HYBRID
+#ifdef HAVE_LIBRADIUS
+			xauth_rad_config.timeout = $2;
+#endif
+#endif
+		}
+		EOS
+	|	RAD_RETRIES NUMBER
+		{
+#ifdef ENABLE_HYBRID
+#ifdef HAVE_LIBRADIUS
+			xauth_rad_config.retries = $2;
+#endif
+#endif
+		}
+		EOS
 	;
 
 	/* ldap configuration */

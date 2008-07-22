@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.14 2007/09/12 23:39:50 mgrooms Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.15 2008/07/22 01:30:02 mgrooms Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -213,6 +213,15 @@ hexstring	0x{hexdigit}+
 <S_LST>disabled		{ YYD; return(DISABLED); }
 <S_LST>strict_address	{ YYD; return(STRICT_ADDRESS); }
 <S_LST>{ecl}		{ BEGIN S_INI; return(EOC); }
+
+	/* radius config */
+<S_INI>radiuscfg	{ BEGIN S_LDAP; YYDB; return(RADCFG); }
+<S_LDAP>{bcl}		{ return(BOC); }
+<S_LDAP>auth		{ YYD; return(RAD_AUTH); }
+<S_LDAP>acct		{ YYD; return(RAD_ACCT); }
+<S_LDAP>timeout		{ YYD; return(RAD_TIMEOUT); }
+<S_LDAP>retries		{ YYD; return(RAD_RETRIES); }
+<S_LDAP>{ecl}		{ BEGIN S_INI; return(EOC); }
 
 	/* ldap config */
 <S_INI>ldapcfg		{ BEGIN S_LDAP; YYDB; return(LDAPCFG); }
