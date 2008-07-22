@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.33 2008/07/17 11:25:07 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.34 2008/07/22 20:02:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -353,46 +353,6 @@ ukfs_mkfifo(struct ukfs *ukfs, const char *path, mode_t mode)
 	STDCALL(ukfs, rump_sys_mkfifo(path, mode, &rv));
 }
 
-#if 0
-/* XXX: provide this as an upper-layer service */
-static int
-builddirs(struct ukfs *ukfs, const char *filename, mode_t mode)
-{
-	char *f1, *f2;
-	int rv;
-
-	f1 = f2 = strdup(filename);
-	if (!f1) {
-		errno = ENOMEM;
-		return -1;
-	}
-
-	for (;;) {
-		/* find next component */
-		f2 += strspn(f2, "/");
-		f2 += strcspn(f2, "/");
-		*f2 = '\0';
-
-		rv = ukfs_mkdir(ukfs, f1, 0777, false); 
-		if (rv == EEXIST)
-			rv = 0;
-		if (rv)
-			break;
-
-		if (!*f2)
-			break;
-		*f2 = '/';
-	}
-
-	free(f1);
-	if (rv) {
-		errno = rv;
-		return -1;
-	}
-	return 0;
-}
-#endif
-
 int
 ukfs_mkdir(struct ukfs *ukfs, const char *filename, mode_t mode)
 {
@@ -549,4 +509,46 @@ ukfs_lutimes(struct ukfs *ukfs, const char *filename,
 {
 
 	STDCALL(ukfs, rump_sys_lutimes(filename, tptr, &rv));
+}
+
+int
+ukfs_util_builddirs(struct ukfs *ukfs, const char *filename, mode_t mode)
+{
+	char *f1, *f2;
+	int rv;
+	mode_t mask;
+	bool end;
+
+	/*ukfs_umask((mask = ukfs_umask(0)));*/
+	umask((mask = umask(0)));
+
+	f1 = f2 = strdup(filename);
+	if (f1 == NULL) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	end = false;
+	for (;;) {
+		/* find next component */
+		f2 += strspn(f2, "/");
+		f2 += strcspn(f2, "/");
+		if (*f2 == '\0')
+			end = true;
+		else
+			*f2 = '\0';
+
+		rv = ukfs_mkdir(ukfs, f1, mode & ~mask); 
+		if (errno == EEXIST)
+			rv = 0;
+
+		if (rv == -1 || *f2 != '\0' || end)
+			break;
+
+		*f2 = '/';
+	}
+
+	free(f1);
+
+	return rv;
 }
