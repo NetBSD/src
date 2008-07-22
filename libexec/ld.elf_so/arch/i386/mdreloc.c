@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.23 2007/02/23 01:17:11 matt Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.24 2008/07/22 22:27:07 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.23 2007/02/23 01:17:11 matt Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.24 2008/07/22 22:27:07 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -164,16 +164,22 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	Elf_Addr new_value;
 	const Elf_Sym  *def;
 	const Obj_Entry *defobj;
+	const char *name;
 
 	assert(ELF_R_TYPE(rel->r_info) == R_TYPE(JMP_SLOT));
 
 	def = _rtld_find_symdef(ELF_R_SYM(rel->r_info), obj, &defobj, true);
 	if (def == NULL)
 		_rtld_die();
+	if (def == &_rtld_sym_zero)
+		name = obj->strtab +
+		    obj->symtab[ELF_R_SYM(rel->r_info)].st_name;
+	else
+		name = defobj->strtab + def->st_name;
 
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	rdbg(("bind now/fixup in %s --> old=%p new=%p",
-	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
+	    name, (void *)*where, (void *)new_value));
 	if (*where != new_value)
 		*where = new_value;
 
