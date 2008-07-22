@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.12.2.3 2008/07/18 16:37:48 simonb Exp $ */
+/* $NetBSD: udf.h,v 1.12.2.4 2008/07/22 05:44:02 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -283,9 +283,11 @@ struct udf_mount {
 	int			 lvclose;		/* logvol actions    */
 
 	/* disc allocation / writing method */
-	int			 lvreadwrite;		/* bits */
-	int			 data_alloc;		/* all userdata */
-	int			 meta_alloc;		/* all metadata */
+	int			 lvreadwrite;		/* error handling    */
+	int			 data_alloc;		/* all userdata      */
+	int			 data_allocdscr;
+	int			 meta_alloc;		/* all metadata      */
+	int			 meta_allocdscr;
 	int			 data_part;
 	int			 metadata_part;
 	kmutex_t		 allocate_mutex;
