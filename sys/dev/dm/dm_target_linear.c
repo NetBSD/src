@@ -46,39 +46,56 @@
 #include <sys/queue.h>
 #include <sys/vnode.h>
 
+#include <machine/int_fmtio.h>
+
 #include "dm.h"
 
 static uint64_t atoi(const char *);
 
 /*
  * Allocate target specific config data, and link them to table.
- * argv[0] is name,
- * argv[1] is physical data offset.
+ * This function is called only when, flags is not READONLY and
+ * therefore we can add things to pdev list.
+ * @argv[0] is name,
+ * @argv[1] is physical data offset.
  */
 int
-dm_target_linear_init(struct dm_dev *dmv, void **target_config, 
-		int argc, const char **argv)
+dm_target_linear_init(struct dm_dev *dmv, void **target_config, char *params)
 {
 	struct target_linear_config *tlc;
 	struct dm_pdev *dmp;
-		
+
+	char **ap, *argv[3];
+
+	/*
+	 * Parse a string, containing tokens delimited by white space,
+	 * into an argument vector
+	 */
+	for (ap = argv; ap < &argv[9] &&
+		 (*ap = strsep(&params, " \t")) != NULL;) {
+		if (**ap != '\0')
+			ap++;
+	}
+
+	/* Insert dmp to list */
+	if ((dmp = dm_pdev_insert(argv[0])) == NULL)
+		return ENOENT;
+	
+	/* Add dmp to device pdev list */
+	SLIST_INSERT_HEAD(&dmv->pdevs, dmp, next_pdev);
+	
 	printf("Linear target init function called %s--%s!!\n",
 	    argv[0], argv[1]);
 	
-	dmp = dm_pdev_lookup_name(argv[0]);
-		
 	if ((tlc = kmem_alloc(sizeof(struct target_linear_config), KM_NOSLEEP))
 	    == NULL)
 		return 1;
-
-	/* XXX howto convert char* to number ? tlc->offset = atoi(argv[1]); */
 
 	tlc->pdev = dmp;
 	tlc->offset = 0; 	/* default settings */
 	
 	/* Check user input if it is not leave offset as 0. */
-	if (isdigit((int)argv[1]))
-		tlc->offset = atoi(argv[1]);
+	tlc->offset = atoi(argv[1]);
 
 	*target_config = tlc;    
 
@@ -97,7 +114,8 @@ dm_target_linear_strategy(struct dm_table_entry *table_en, struct buf *bp)
 
 	tlc = table_en->target_config;
 	
-	printf("Linear target read function called!!\n");
+	printf("Linear target read function called %" PRIu64 "!!\n",
+	    tlc->offset);
 
 	bp->b_blkno += tlc->offset;
 	
