@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.166 2008/07/16 00:43:04 christos Exp $
+#	$NetBSD: Makefile,v 1.167 2008/07/22 21:07:58 dyoung Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -19,7 +19,6 @@ SUBDIR= apply apropos asa at atf-compile atf-config atf-report atf-run \
 	machine mail make man menuc mesg midiplay mixerctl mkcsmapper \
 	mkdep mkesdb mkfifo mklocale mkstr mktemp moduli msgc msgs \
 	netgroup netstat newgrp newsyslog nfsstat nice nl nohup \
-	nvi \
 	pagesize passwd paste patch pathchk pkill pmap pmc pr \
 	printenv printf progress pwhash qsubst quota radioctl rdist \
 	renice rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh rup \
@@ -43,6 +42,10 @@ SUBDIR+= hxtool verify_krb5_conf gss krb5-config
 
 .if (!(${MKMODULAR} != "no"))
 SUBDIR+= modstat
+.endif
+
+.if (${MKNVI} != "no")
+SUBDIR+= nvi
 .endif
 
 .if (${MKSKEY} != "no")
