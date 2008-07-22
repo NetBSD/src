@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.12 2008/03/06 04:29:20 manu Exp $	*/
+/*	$NetBSD: session.c,v 1.13 2008/07/22 01:30:02 mgrooms Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -77,6 +77,7 @@
 #include "evt.h"
 #include "cfparse_proto.h"
 #include "isakmp_var.h"
+#include "isakmp_xauth.h"
 #include "isakmp_xauth.h"
 #include "isakmp_cfg.h"
 #include "admin_var.h"
@@ -368,6 +369,9 @@ static void reload_conf(){
 	save_rmconf();
 	initrmconf();
 
+	/* free and init radius configuration */
+	xauth_radius_init_conf(1);
+
 	pfkey_reload();
 
 	save_params();
@@ -383,6 +387,9 @@ static void reload_conf(){
 	if (dump_config)
 		dumprmconf ();
 #endif
+
+	/* re-initialize radius state */
+	xauth_radius_init();
 
 	/* 
 	 * init_myaddr() ?
