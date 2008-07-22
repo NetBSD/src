@@ -1,3 +1,8 @@
+2008-07-22  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Kohki Ohhira <ohhira@src.ricoh.co.jp>:
+	* src/racoon/proposal.c: fixed some memory leaks, when malloc
+	  fails or when peer sends invalid proposals.
+
 2008-07-21  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/cfparse.y : do not set default gss id if xauth is used
 
