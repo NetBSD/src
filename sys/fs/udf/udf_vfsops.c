@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.38.2.2 2008/07/18 16:37:48 simonb Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.38.2.3 2008/07/22 05:44:03 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.38.2.2 2008/07/18 16:37:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.38.2.3 2008/07/22 05:44:03 simonb Exp $");
 #endif /* not lint */
 
 
@@ -634,6 +634,13 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	if ((1 << bshift) != sector_size) {
 		printf("UDF mount: "
 		       "hit NetBSD implementation fence on sector size\n");
+		return EIO;
+	}
+
+	/* temporary check to overcome sectorsize >= 8192 bytes panic */
+	if (sector_size >= 8192) {
+		printf("UDF mount: "
+			"hit implementation limit, sectorsize to big\n");
 		return EIO;
 	}
 

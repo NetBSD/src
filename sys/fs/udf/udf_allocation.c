@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.2.4.3 2008/07/18 16:37:48 simonb Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.2.4.4 2008/07/22 05:44:02 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.2.4.3 2008/07/18 16:37:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.2.4.4 2008/07/22 05:44:02 simonb Exp $");
 #endif /* not lint */
 
 
@@ -1402,7 +1402,7 @@ udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb,
 int
 udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 	struct udf_mount *ump = udf_node->ump;
-	union dscrptr          *dscr;
+	union dscrptr          *dscr, *extdscr;
 	struct file_entry      *fe;
 	struct extfile_entry   *efe;
 	struct alloc_ext_entry *ext;
@@ -1564,8 +1564,8 @@ udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
 			l_icb.loc.part_num = udf_rw16(vpart_num);
 
 			/* create new aed descriptor */
-			udf_create_logvol_dscr(ump, udf_node, &l_icb,
-				(union dscrptr **) &ext);
+			udf_create_logvol_dscr(ump, udf_node, &l_icb, &extdscr);
+			ext = &extdscr->aee;
 
 			udf_inittag(ump, &ext->tag, TAGID_ALLOCEXTENT, lb_num);
 			dscr_size  = sizeof(struct alloc_ext_entry) -1;
@@ -2089,7 +2089,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 	uint8_t *data_pos, *evacuated_data;
 	int icbflags, addr_type;
 	int slot, cpy_slot;
-	int eof, error;
+	int isdir, eof, error;
 
 	DPRINTF(ALLOC, ("udf_grow_node\n"));
 
@@ -2189,10 +2189,11 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 			UDF_LOCK_NODE(udf_node, 0);
 		}
 
-		/* convert to a normal alloc */
-		/* XXX HOWTO selecting allocation method ? */
+		/* convert to a normal alloc and select type */
+		isdir = (vp->v_type == VDIR);
+
 		icbflags &= ~UDF_ICB_TAG_FLAGS_ALLOC_MASK;
-		icbflags |=  UDF_ICB_LONG_ALLOC;	/* XXX or SHORT_ALLOC */
+		icbflags |=  isdir ? ump->meta_allocdscr : ump->data_allocdscr;
 		icbtag->flags = udf_rw16(icbflags);
 
 		/* wipe old descriptor space */
