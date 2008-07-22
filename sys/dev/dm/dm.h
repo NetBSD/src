@@ -184,7 +184,7 @@ struct target_snapshot_config {
 struct dm_target {
 	char name[DM_MAX_TYPE_NAME];
 	
-	int (*init)(struct dm_dev *, void **, int argc, const char **argv);
+	int (*init)(struct dm_dev *, void **, char *argv);
 	int (*destroy)(struct dm_table_entry *);
 	int (*strategy)(struct dm_table_entry *, struct buf *);
 	int (*upcall)(struct dm_table_entry *, struct buf *);
@@ -237,25 +237,25 @@ int dm_target_rem(char *);
 int dm_target_init(void);
 
 /* dm_target_zero.c */
-int dm_target_zero_init(struct dm_dev *, void**,  int, const char **);
+int dm_target_zero_init(struct dm_dev *, void**,  char *);
 int dm_target_zero_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_zero_destroy(struct dm_table_entry *);
 int dm_target_zero_upcall(struct dm_table_entry *, struct buf *);
 
 /* dm_target_error.c */
-int dm_target_error_init(struct dm_dev *, void**, int, const char **);
+int dm_target_error_init(struct dm_dev *, void**, char *);
 int dm_target_error_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_error_destroy(struct dm_table_entry *);
 int dm_target_error_upcall(struct dm_table_entry *, struct buf *);
 
 /* dm_target_linear.c */
-int dm_target_linear_init(struct dm_dev *, void**, int, const char **);
+int dm_target_linear_init(struct dm_dev *, void**, char *);
 int dm_target_linear_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_linear_destroy(struct dm_table_entry *);
 int dm_target_linear_upcall(struct dm_table_entry *, struct buf *);
 
 /* dm_target_snapshot.c */
-int dm_target_snapshot_init(struct dm_dev *, void**, int, const char **);
+int dm_target_snapshot_init(struct dm_dev *, void**, char *);
 int dm_target_snapshot_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_snapshot_destroy(struct dm_table_entry *);
 int dm_target_snapshot_upcall(struct dm_table_entry *, struct buf *);

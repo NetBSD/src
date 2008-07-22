@@ -538,13 +538,13 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	prop_array_t cmd_array;
 	prop_dictionary_t target_dict;
 	
-	const char *name, *uuid, *type, *str_ptr;
+	const char *name, *uuid, *type;
 
 	uint32_t flags;
 
 	uint64_t dev;
 	
-	char *dev_name,*str;
+	char *str;
 
 	flags = 0;
 	name = NULL;
@@ -552,7 +552,6 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	dmv = NULL;
 	dmp = NULL;
 	last_table = NULL;
-	str_ptr = NULL;
 
 	char *xml;
 	xml = prop_dictionary_externalize(dm_dict);
@@ -617,31 +616,8 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		 * table. String str points to this text.
 		 */
 
-		prop_dictionary_get_cstring_nocopy(target_dict,
-		    DM_TABLE_PARAMS, (const char**)&str);
-
-		if (strlen(str) != 0) {
-
-			str_ptr = str; /* save pointer to start of string */
-			
-			aprint_verbose("trg_str: %s\n", str);
-			
-		        dev_name = strsep(&str," ");
-
-			aprint_verbose("namei: %s, str: %s\n", dev_name, str);
-						
-			if (!(flags & DM_READONLY_FLAG)){
-
-				if ((dmp = dm_pdev_insert(dev_name)) == NULL){
-					kmem_free(table_en,
-					    sizeof(struct dm_table_entry));
-					return ENOENT;
-				}
-
-				/* insert pdev to device list  */
-				SLIST_INSERT_HEAD(&dmv->pdevs, dmp, next_pdev);
-			}
-		}
+		prop_dictionary_get_cstring(target_dict,
+		    DM_TABLE_PARAMS, (char**)&str);
 		
 		/* Test readonly flag change anything only if it is not set*/
 		if (!(flags & DM_READONLY_FLAG)){
@@ -656,11 +632,13 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			    DM_TABLE_PARAMS, (char **)&table_en->params);
 
 			/*
-			 * XXX I have to calculate argc
+			 * Params string is different for every target,
+			 * therfore I have to pass it to target init
+			 * routine and parse parameters there.
 			 */
-			if (target->init != NULL)
+			if (target->init != NULL && strlen(str) != 0)
 				target->init(dmv, &table_en->target_config,
-				    2, &str_ptr);
+				    str);
 
 			last_table = table_en;
 			
@@ -669,6 +647,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			dm_pdev_destroy(dmp);
 		}
 			
+		prop_object_release(str);
 	}
 	
 	dmv->cur_active_table = 1 - dmv->cur_active_table;
@@ -747,6 +726,11 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	
 	tbl = &dmv->tables[dmv->cur_active_table];
 
+	if (tbl != NULL)
+		DM_ADD_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
+	else
+		DM_REMOVE_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
+	
 	SLIST_FOREACH(table_en,tbl,next)
 	{
 		target_dict = prop_dictionary_create();
@@ -771,8 +755,6 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 
 		prop_object_release(target_dict);
 
-		DM_REMOVE_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
-				
 		i++;
 	}
 

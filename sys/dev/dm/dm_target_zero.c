@@ -50,8 +50,7 @@
  * target specific config area.
  */
 int
-dm_target_zero_init(struct dm_dev *dmv, void **target_config,
-	       	int argc, const char **argv)
+dm_target_zero_init(struct dm_dev *dmv, void **target_config, char *argv)
 {
 
 	printf("Zero target init function called!!\n");
