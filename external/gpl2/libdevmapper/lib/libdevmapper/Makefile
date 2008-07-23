@@ -1,33 +1,29 @@
-USE_FORT ?= no
-MKLINT = no
+#	$NetBSD: Makefile,v 1.1.2.2 2008/07/23 13:44:02 lukem Exp $
+
+USE_FORT?=	no
+NOLINT=		#defined
 
 .include "../../libdevmapper.mk"
 
-LIB = devmapper
+LIB=		devmapper
 
-CPPFLAGS+=      -I${LIBDM_DISTDIR}/lib -I${LIBDM_DISTDIR}/include\
+CPPFLAGS+=	-I${LIBDM_DISTDIR}/lib -I${LIBDM_DISTDIR}/include \
 		-I. -I${LIBDM_DISTDIR}/lib/ioctl
 
 
-CPPFLAGS+= 	-D__LIB_DEVMAPPER__ -DDM_DEVICE_UID=0 \
+CPPFLAGS+=	-D__LIB_DEVMAPPER__ -DDM_DEVICE_UID=0 \
 		-DDM_DEVICE_GID=0 -DDM_DEVICE_MODE=0600
 
-CFLAGS+= -I${LIBDM_DISTDIR}/lib -I${LIBDM_DISTDIR}/include\
-	 -I. -I${LIBDM_DISTDIR}/lib/ioctl
+LDADD+=		-lprop
 
-CFLAGS+= -DDEVICE_UID=0 -DDEVICE_GID=0
+SRCS+=		bitset.c hash.c libdm-common.c libdm-file.c libdm-deptree.c \
+		libdm-string.c libdm-report.c dbg_malloc.c pool.c matcher.c \
+		parse_rx.c ttree.c libdm-nbsd-iface.c libdm_netbsd.c
 
-LDADD+= -lprop
-
-SRCS+= bitset.c hash.c libdm-common.c libdm-file.c libdm-deptree.c \
-       libdm-string.c libdm-report.c dbg_malloc.c pool.c matcher.c \
-       parse_rx.c ttree.c libdm-nbsd-iface.c libdm_netbsd.c
-
-.PATH:  ${LIBDM_DISTDIR}/lib
-.PATH:  ${LIBDM_DISTDIR}/lib/datastruct
-.PATH:  ${LIBDM_DISTDIR}/lib/mm
-.PATH:  ${LIBDM_DISTDIR}/lib/regex
-.PATH:  ${LIBDM_DISTDIR}/lib/ioctl
+.PATH: ${LIBDM_DISTDIR}/lib
+.PATH: ${LIBDM_DISTDIR}/lib/datastruct
+.PATH: ${LIBDM_DISTDIR}/lib/mm
+.PATH: ${LIBDM_DISTDIR}/lib/regex
+.PATH: ${LIBDM_DISTDIR}/lib/ioctl
 
 .include <bsd.lib.mk>
-.include <bsd.subdir.mk>

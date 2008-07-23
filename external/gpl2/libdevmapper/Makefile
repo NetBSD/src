@@ -1,11 +1,12 @@
+#	$NetBSD: Makefile,v 1.1.2.2 2008/07/23 13:44:02 lukem Exp $
+
 .include "libdevmapper.mk"
 
-SUBDIR=         include
+SUBDIR=		include
 
-SUBDIR+=        lib .WAIT
+SUBDIR+=	lib .WAIT
 
-SUBDIR+=        sbin
+SUBDIR+=	sbin
 
 
-.include <bsd.hostprog.mk>
 .include <bsd.subdir.mk>
