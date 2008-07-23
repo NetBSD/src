@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.30 2008/07/21 20:19:28 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.31 2008/07/23 18:16:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.30 2008/07/21 20:19:28 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.31 2008/07/23 18:16:42 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -260,22 +260,16 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	Elf_Addr new_value;
 	const Elf_Sym  *def;
 	const Obj_Entry *defobj;
-	const char *name;
 
 	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
 
 	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
 	if (def == NULL)
 		return -1;
-	if (def == &_rtld_sym_zero)
-		name = obj->strtab +
-		    obj->symtab[ELF_R_SYM(rela->r_info)].st_name;
-	else
-		name = defobj->strtab + def->st_name;
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value +
 	    rela->r_addend);
 	rdbg(("bind now/fixup in %s --> old=%p new=%p", name,
-	    (void *)*where, (void *)new_value));
+	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
 	if (*where != new_value)
 		*where = new_value;
 
