@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.173 2008/05/31 13:24:57 freza Exp $
+$NetBSD: UPDATING,v 1.174 2008/07/23 00:29:35 lukem Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20080721:
+	Assembler warnings are now fatal if $WARNS>0 and $NOGCCERROR
+	isn't defined.
 
 20080531:
 	The ioctl number of DRVSUSPENDDEV command on /dev/drvctl changed 
@@ -38,6 +42,9 @@ Recent changes:
 	problem was committed to share/mk/bsd.kmodule.mk, revision 1.9.
 	If you already hit this problem, update the .mk file,
 	remove ${DESTDIR}/stand/<arch>, and re-run the build.
+
+20080303:
+	Linker warnings are now fatal if $WARNS>0.
 
 20080126:
 	The posix_fadvise system call has been changed from an assembly
