@@ -3,6 +3,13 @@
 	0.7.1 released
 
 
+2008-07-23  Timo Teras  <timo.teras@iki.fi>
+	* src/libipsec/Makefile.am
+	  src/racoon/Makefile.am
+	  src/setkey/Makefile.am : do not remove flex/bison generated files
+	  in distclean, also add the generated header file as BUILT_SOURCES
+	  and use the standard autotools rule for generating them
+
 2008-07-22  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Kohki Ohhira <ohhira@src.ricoh.co.jp>:
 	* src/racoon/proposal.c: fixed some memory leaks, when malloc
