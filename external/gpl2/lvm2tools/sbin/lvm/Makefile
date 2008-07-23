@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2008/07/23 13:44:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2008/07/23 14:27:03 lukem Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -26,15 +26,15 @@ CPPFLAGS+=	-I${LVM2TOOLS_DISTDIR}/lib -I${LVM2TOOLS_DISTDIR}/include \
 
 CPPFLAGS+=	-DLVM_SHARED_PATH=\"$(BINDIR)/lvm\"
 
-LDADD+=		-lprop
+LIBLVM_OBJDIR!=	cd ${LVM2TOOLS_SRCDIR}/lib/liblvm && ${PRINTOBJDIR}
+LDADD+=		-L${LIBLVM_OBJDIR} -llvm
+DPADD+=		${LIBLVM_OBJDIR}/liblvm.a
 
 LIBDM_OBJDIR!=	cd ${LIBDM_SRCDIR}/lib/libdevmapper && ${PRINTOBJDIR}
 LDADD+=		-L${LIBDM_OBJDIR} -ldevmapper
 DPADD+=		${LIBDM_OBJDIR}/libdevmapper.a
 
-LIBLVM_OBJDIR!=	cd ${LVM2TOOLS_SRCDIR}/lib/liblvm && ${PRINTOBJDIR}
-LDADD+=		-L${LIBLVM_OBJDIR} -llvm
-DPADD+=		${LIBLVM_OBJDIR}/liblvm.a
+LDADD+=		-lprop
 
 .PATH:	${LVM2TOOLS_DISTDIR}/tools
 .PATH:	${LVM2TOOLS_DISTDIR}/man
