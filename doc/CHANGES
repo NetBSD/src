@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1076 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1077 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -466,6 +466,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	mfi(4): Added support for LSI SAS1078 and Dell PERC 6, from OpenBSD.
 		[xtraeme 20080225]
 	cobalt: Add netboot support for 21041 on Qube 2700. [tsutsui 20080301]
+	share/mk: Set linker warnings to be fatal if $WARNS>0.  [lukem 20080303]
 	cobalt: Print startup and shutdown messages on LCD panel.
 		[tsutsui 20080304]
 	sparc64: SMP support now works on some models. [nakayama 20080314]
@@ -552,3 +553,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	postfix: Import 2.5.2 [christos 20080622]
 	ssh-hpn: Apply 5.0p1 13 v3 [christos 20080622]
 	top(1): Import top 3.8beta1 [christos 20080715]
+	share/mk: Set assembler warnings to be fatal if $WARNS>0.
+		[lukem 20080721]
