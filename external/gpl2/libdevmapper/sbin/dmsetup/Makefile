@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2008/07/23 13:44:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2008/07/23 14:27:03 lukem Exp $
 
 USE_FORT?=	no
 NOLINT=		#defined
@@ -17,11 +17,11 @@ CPPFLAGS+=      -I${LIBDM_DISTDIR}/lib -I${LIBDM_DISTDIR}/include \
 CPPFLAGS+=	-D__LIB_DEVMAPPER__ -DDM_DEVICE_UID=0 \
 		-DDM_DEVICE_GID=0 -DDM_DEVICE_MODE=0600
 
-LDADD+=		-lprop
-
 LIBDM_OBJDIR!=	cd ${LIBDM_SRCDIR}/lib/libdevmapper && ${PRINTOBJDIR}
 LDADD+=		-L${LIBDM_OBJDIR} -ldevmapper
 DPADD+=		${LIBDM_OBJDIR}/libdevmapper.a
+
+LDADD+=		-lprop
 
 .PATH:	${LIBDM_DISTDIR}/dmsetup
 .PATH:	${LIBDM_DISTDIR}/man
