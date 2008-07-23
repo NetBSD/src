@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.615 2008/07/19 07:37:52 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.616 2008/07/23 12:57:40 martin Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -233,7 +233,7 @@ top of the current tree.
 
 Package:	dhcpcd
 Version:	4.0.0-beta5
-Current Vers:	4.0.0-beta5
+Current Vers:	4.0.0-rc1
 Maintainer:	joerg
 Home Page:	http://roy.marples.name/dhcpcd/
 License:	BSD (2-clause)
