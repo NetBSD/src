@@ -14,7 +14,11 @@ INCLUDES = -I${srcdir}/../libipsec
 AM_CFLAGS = -D_GNU_SOURCE @GLIBC_BUGS@ -DSYSCONFDIR=\"${sysconfdir}\" \
 	-DADMINPORTDIR=\"${adminsockdir}\"
 AM_LDFLAGS = @EXTRA_CRYPTO@ -lcrypto
-AM_YFLAGS = -d
+AM_YFLAGS = -d ${$*_YFLAGS}
+AM_LFLAGS = ${$*_LFLAGS}
+
+prsa_par_YFLAGS = -p prsa
+prsa_tok_LFLAGS = -Pprsa -olex.yy.c
 
 MISSING_ALGOS = \
 	missing/crypto/sha2/sha2.c \
@@ -34,16 +38,14 @@ racoon_SOURCES = \
 	cftoken.l cfparse.y prsa_tok.l prsa_par.y 
 EXTRA_racoon_SOURCES = isakmp_xauth.c isakmp_cfg.c isakmp_unity.c throttle.c \
 	isakmp_frag.c nattraversal.c security.c $(MISSING_ALGOS)
-racoon_LDFLAGS = ../libipsec/libipsec.la
 racoon_LDADD = $(CRYPTOBJS) $(HYBRID_OBJS) $(NATT_OBJS) $(FRAG_OBJS) $(LEXLIB) \
-	 $(SECCTX_OBJS) vmbuf.o sockmisc.o misc.o
-racoon_DEPENDENCIES = ../libipsec/libipsec.la \
+	 $(SECCTX_OBJS) vmbuf.o sockmisc.o misc.o ../libipsec/libipsec.la
+racoon_DEPENDENCIES = \
 	$(CRYPTOBJS) $(HYBRID_OBJS) $(NATT_OBJS) $(FRAG_OBJS) $(SECCTX_OBJS) \
 	vmbuf.o sockmisc.o misc.o
 
 racoonctl_SOURCES = racoonctl.c str2val.c 
-racoonctl_LDFLAGS = libracoon.la ../libipsec/libipsec.la 
-racoonctl_DEPENDENCIES = ../libipsec/libipsec.la libracoon.la
+racoonctl_LDADD = libracoon.la ../libipsec/libipsec.la 
 
 libracoon_la_SOURCES = kmpstat.c vmbuf.c sockmisc.c misc.c
 
@@ -102,9 +104,6 @@ TESTS = eaytest
 
 install-exec-local:
 	${mkinstalldirs} $(DESTDIR)${adminsockdir}
-
-prsa_par.c: YFLAGS += -p prsa
-prsa_tok.c: LFLAGS += -Pprsa -olex.yy.c
 
 # special object rules
 crypto_openssl_test.o: crypto_openssl.c
