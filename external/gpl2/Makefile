@@ -1,5 +1,6 @@
 .include <bsd.own.mk>
 
-SUBDIR+= libdevmapper lvm2tools
+SUBDIR+= libdevmapper
+SUBDIR+= .WAIT lvm2tools
 
 .include <bsd.subdir.mk>
