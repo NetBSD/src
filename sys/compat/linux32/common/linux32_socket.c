@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.8 2008/06/27 12:38:25 njoly Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.9 2008/07/23 12:32:09 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.8 2008/06/27 12:38:25 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.9 2008/07/23 12:32:09 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.8 2008/06/27 12:38:25 njoly Exp
 #include <compat/linux32/common/linux32_ioctl.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
+int linux32_getifconf(struct lwp *, register_t *, void *);
 int linux32_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 
 int
@@ -384,6 +385,57 @@ linux32_sys_recv(struct lwp *l, const struct linux32_sys_recv_args *uap, registe
 }
 
 int
+linux32_getifconf(struct lwp *l, register_t *retval, void *data)
+{
+	struct linux32_ifreq ifr, *ifrp;
+	struct netbsd32_ifconf *ifc = data;
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
+	struct sockaddr *sa;
+	struct osockaddr *osa;
+	int space, error = 0;
+	const int sz = (int)sizeof(ifr);
+
+	ifrp = (struct linux32_ifreq *)NETBSD32PTR64(ifc->ifc_req);
+	if (ifrp == NULL)
+		space = 0;
+	else
+		space = ifc->ifc_len;
+
+	IFNET_FOREACH(ifp) {
+		(void)strncpy(ifr.ifr_name, ifp->if_xname,
+		    sizeof(ifr.ifr_name));
+		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
+			return ENAMETOOLONG;
+		if (IFADDR_EMPTY(ifp))
+			continue;
+		IFADDR_FOREACH(ifa, ifp) {
+			sa = ifa->ifa_addr;
+			if (sa->sa_family != AF_INET ||
+			    sa->sa_len > sizeof(*osa))
+				continue;
+			memcpy(&ifr.ifr_addr, sa, sa->sa_len);
+			osa = (struct osockaddr *)&ifr.ifr_addr;
+			osa->sa_family = sa->sa_family;
+			if (space >= sz) {
+				error = copyout(&ifr, ifrp, sz);
+				if (error != 0)
+					return error;
+				ifrp++;
+			}
+			space -= sz;
+		}
+	}
+
+	if (ifrp != NULL)
+		ifc->ifc_len -= space;
+	else
+		ifc->ifc_len = -space;
+
+	return 0;
+}
+
+int
 linux32_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
     void *data)
 {
@@ -553,7 +605,8 @@ linux32_ioctl_socket(struct lwp *l, const struct linux32_sys_ioctl_args *uap, re
 
 	switch (com) {
 	case LINUX_SIOCGIFCONF:
-		SCARG(&ia, com) = OOSIOCGIFCONF32;
+		error = linux32_getifconf(l, retval, SCARG_P32(uap, data));
+		dosys = 0;
 		break;
 	case LINUX_SIOCGIFFLAGS:
 		SCARG(&ia, com) = OSIOCGIFFLAGS;
