@@ -11,6 +11,8 @@ AM_CFLAGS = @GLIBC_BUGS@
 AM_YFLAGS = -d -p __libipsec
 AM_LFLAGS = -P__libipsec -olex.yy.c
 
+BUILT_SOURCES = policy_parse.h
+
 libipsec_la_SOURCES = \
   ipsec_dump_policy.c \
   ipsec_get_policylen.c \
@@ -26,7 +28,7 @@ libipsec_la_SOURCES = \
 libipsec_la_LDFLAGS = -version-info 0:1:0
 libipsec_la_LIBADD = $(LEXLIB)
 
-noinst_HEADERS = ipsec_strerror.h policy_parse.h
+noinst_HEADERS = ipsec_strerror.h
 
 #test_policy_SOURCES = test-policy.c
 #test_policy_LDFLAGS = libipsec.la
@@ -35,5 +37,3 @@ noinst_HEADERS = ipsec_strerror.h policy_parse.h
 #test_policy_priority_LDFLAGS = libipsec.la
 
 EXTRA_DIST = ${man3_MANS} test-policy.c
-
-DISTCLEANFILES = policy_parse.c policy_parse.h policy_token.c policy_token.h
