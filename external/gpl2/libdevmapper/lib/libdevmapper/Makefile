@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2008/07/23 13:44:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2008/07/23 13:50:39 lukem Exp $
 
+USE_SHLIBDIR=	yes
 USE_FORT?=	no
 NOLINT=		#defined
 
