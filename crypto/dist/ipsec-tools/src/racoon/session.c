@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.13 2008/07/22 01:30:02 mgrooms Exp $	*/
+/*	$NetBSD: session.c,v 1.14 2008/07/23 17:36:00 mgrooms Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -369,8 +369,10 @@ static void reload_conf(){
 	save_rmconf();
 	initrmconf();
 
+#ifdef HAVE_LIBRADIUS
 	/* free and init radius configuration */
 	xauth_radius_init_conf(1);
+#endif
 
 	pfkey_reload();
 
@@ -388,8 +390,10 @@ static void reload_conf(){
 		dumprmconf ();
 #endif
 
+#ifdef HAVE_LIBRADIUS
 	/* re-initialize radius state */
 	xauth_radius_init();
+#endif
 
 	/* 
 	 * init_myaddr() ?
