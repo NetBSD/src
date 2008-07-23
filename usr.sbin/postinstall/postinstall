@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.64 2008/07/13 15:34:16 dholland Exp $
+# $NetBSD: postinstall,v 1.65 2008/07/23 07:43:12 matt Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -774,6 +774,9 @@ do_named()
 	move_file ${op} \
 		${DEST_DIR}/etc/namedb/named.conf \
 		${DEST_DIR}/etc/named.conf
+
+	compare_dir ${op} ${SRC_DIR}/etc/namedb ${DEST_DIR}/etc/namedb 644 \
+		root.cache
 }
 
 #
