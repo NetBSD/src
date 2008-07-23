@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.1 2008/07/22 22:58:04 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.2 2008/07/23 11:59:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,17 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.1 2008/07/22 22:58:04 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.2 2008/07/23 11:59:43 christos Exp $");
 
+#include <stdbool.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/condvar.h>
+#include <sys/selinfo.h>
+#include <sys/filedesc.h>
+#define _KERNEL
+#include <sys/mqueue.h>
+#include <sys/eventvar.h>
+#undef _KERNEL
 #include <sys/proc.h>
 #define _KERNEL
 #include <sys/file.h>
-#ifdef notyet
-#include <sys/mqueue.h>
-#endif
 #undef _KERNEL
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -103,7 +108,6 @@ p_bpf(struct file *f)
 	return 0;
 }
 
-#ifdef notyet
 static int
 p_mqueue(struct file *f)
 {
@@ -116,7 +120,19 @@ p_mqueue(struct file *f)
 	(void)printf("* mqueue \"%s\"\n", mq.mq_name);
 	return 0;
 }
-#endif
+
+static int
+p_kqueue(struct file *f)
+{
+	struct kqueue kq;
+
+	if (!KVM_READ(f->f_data, &kq, sizeof (kq))) {
+		dprintf("can't read kqueue at %p for pid %d", f->f_data, Pid);
+		return 0;
+	}
+	(void)printf("* kqueue pending %d\n", kq.kq_count);
+	return 0;
+}
 
 int
 pmisc(struct file *f, const char *name)
@@ -136,15 +152,16 @@ pmisc(struct file *f, const char *name)
 	switch (i) {
 	case NL_BPF:
 		return p_bpf(f);
-#ifdef notyet
 	case NL_MQUEUE:
 		return p_mqueue(f);
-#endif
+	case NL_KQUEUE:
+		return p_kqueue(f);
 	case NL_TAP:
 		printf("* tap %lu\n", (unsigned long)(intptr_t)f->f_data);
 		return 0;
 	case NL_CRYPTO:
-	case NL_KQUEUE:
+		printf("* crypto %p\n", f->f_data);
+		return 0;
 	default:
 		printf("* %s %p\n", name, f->f_data);
 		return 0;
