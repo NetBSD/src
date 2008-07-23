@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.164 2008/07/21 23:30:48 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.165 2008/07/23 23:21:56 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -82,8 +82,10 @@ FFLAGS+=	-mieee
 .endif
 
 .if defined(MKPIE) && (${MKPIE} != "no")
+.if !defined(KERNEL_BUILD)
 CFLAGS+=	-fPIC
 LDFLAGS+=	-Wl,-pie -shared-libgcc
+.endif
 .endif
 
 .if ${MACHINE} == "sparc64" && ${MACHINE_ARCH} == "sparc"
