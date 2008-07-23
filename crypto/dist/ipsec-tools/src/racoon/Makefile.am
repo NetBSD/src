@@ -9,10 +9,12 @@ lib_LTLIBRARIES = libracoon.la
 
 adminsockdir=${localstatedir}/racoon
 
+BUILT_SOURCES = cfparse.h prsa_par.h
 INCLUDES = -I${srcdir}/../libipsec 
 AM_CFLAGS = -D_GNU_SOURCE @GLIBC_BUGS@ -DSYSCONFDIR=\"${sysconfdir}\" \
 	-DADMINPORTDIR=\"${adminsockdir}\"
 AM_LDFLAGS = @EXTRA_CRYPTO@ -lcrypto
+AM_YFLAGS = -d
 
 MISSING_ALGOS = \
 	missing/crypto/sha2/sha2.c \
@@ -98,46 +100,13 @@ EXTRA_DIST = \
    samples/roadwarrior/server/racoon.conf \
    samples/roadwarrior/server/racoon.conf-radius
 
-DISTCLEANFILES = cfparse.c cftoken.c prsa_tok.c prsa_par.c cfparse.h prsa_par.h
-
 TESTS = eaytest
 
 install-exec-local:
 	${mkinstalldirs} $(DESTDIR)${adminsockdir}
 
-# Config file parser
-cftoken.o: cftoken.c cfparse.h
-	$(COMPILE) -c -o $@ $<
-
-cfparse.o: cfparse.c
-	$(COMPILE) -c -o $@ $<
-
-cftoken.c: cftoken.l
-	$(LEX) -ocftoken.c $(srcdir)/cftoken.l
-
-cfparse.h: cfparse.c
-
-cfparse.c: $(srcdir)/cfparse.y
-	$(YACC) -bcfparse -d $(srcdir)/cfparse.y && \
-	mv cfparse.tab.c cfparse.c && \
-	mv cfparse.tab.h cfparse.h
-
-# Plain-RSA parser
-prsa_tok.o: prsa_tok.c prsa_par.h
-	$(COMPILE) -c -o $@ $<
-
-prsa_par.o: prsa_par.c
-	$(COMPILE) -c -o $@ $<
-
-prsa_tok.c: $(srcdir)/prsa_tok.l
-	$(LEX) -Pprsa -oprsa_tok.c $(srcdir)/prsa_tok.l
-
-prsa_par.h: prsa_par.c
-
-prsa_par.c: $(srcdir)/prsa_par.y
-	$(YACC) -bprsa_par -pprsa -d $(srcdir)/prsa_par.y && \
-	mv prsa_par.tab.c prsa_par.c && \
-	mv prsa_par.tab.h prsa_par.h
+prsa_par.c: YFLAGS += -p prsa
+prsa_tok.c: LFLAGS += -Pprsa -olex.yy.c
 
 # special object rules
 crypto_openssl_test.o: crypto_openssl.c
