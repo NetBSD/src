@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.29 2008/07/22 01:30:02 mgrooms Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.30 2008/07/23 17:36:00 mgrooms Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -520,9 +520,12 @@ radcfg_statement
 			yyerror("racoon not configured with --with-libradius");
 			return -1;
 #endif
+#ifdef ENABLE_HYBRID
+#ifdef HAVE_LIBRADIUS
 			xauth_rad_config.timeout = 3;
 			xauth_rad_config.retries = 3;
-
+#endif
+#endif
 		} BOC radcfg_stmts EOC
 	;
 radcfg_stmts
