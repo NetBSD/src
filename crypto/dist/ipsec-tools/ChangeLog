@@ -9,6 +9,7 @@
 	  src/setkey/Makefile.am : do not remove flex/bison generated files
 	  in distclean, also add the generated header file as BUILT_SOURCES
 	  and use the standard autotools rule for generating them
+	* src/racoon/Makefile.am : do not use GNU make specific extension 
 
 2008-07-22  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Kohki Ohhira <ohhira@src.ricoh.co.jp>:
