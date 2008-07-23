@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/05/22 13:57:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2008/07/23 00:21:19 lukem Exp $
 
 .include "openldap.mk"
 
@@ -14,7 +14,8 @@ SUBDIR+=	bin
 #	----------------
 #
 #	configure	run configure and create various files for target build.
-#	datfiles	rebuild the datfiles
+#	update-include	make configure, then update ./include/ appropriately
+#	update-man	make configure, then update ./man/ appropriately
 #
 
 #
