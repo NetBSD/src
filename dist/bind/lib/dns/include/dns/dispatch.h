@@ -1,10 +1,10 @@
-/*	$NetBSD: dispatch.h,v 1.1.1.1.4.2 2007/08/14 10:34:17 ghen Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.1.1.1.4.3 2008/07/24 22:18:03 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dispatch.h,v 1.45.2.2.4.2 2004/03/06 08:13:55 marka Exp */
+/* Id: dispatch.h,v 1.45.2.2.4.5.4.1 2008/05/22 21:11:16 each Exp */
 
 #ifndef DNS_DISPATCH_H
 #define DNS_DISPATCH_H 1
@@ -114,6 +114,9 @@ struct dns_dispatchevent {
  * _MAKEQUERY
  *	The dispatcher can be used to issue queries to other servers, and
  *	accept replies from them.
+ *
+ * _RANDOMPORT
+ *	Allocate UDP port randomly.
  */
 #define DNS_DISPATCHATTR_PRIVATE	0x00000001U
 #define DNS_DISPATCHATTR_TCP		0x00000002U
@@ -123,6 +126,7 @@ struct dns_dispatchevent {
 #define DNS_DISPATCHATTR_NOLISTEN	0x00000020U
 #define DNS_DISPATCHATTR_MAKEQUERY	0x00000040U
 #define DNS_DISPATCHATTR_CONNECTED	0x00000080U
+#define DNS_DISPATCHATTR_RANDOMPORT	0x00000100U
 
 isc_result_t
 dns_dispatchmgr_create(isc_mem_t *mctx, isc_entropy_t *entropy,

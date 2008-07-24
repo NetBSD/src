@@ -1,10 +1,10 @@
-/*	$NetBSD: cache.h,v 1.1.1.1.4.1 2007/02/10 19:20:55 tron Exp $	*/
+/*	$NetBSD: cache.h,v 1.1.1.1.4.2 2008/07/24 22:18:03 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cache.h,v 1.17.12.3 2004/03/08 09:04:34 marka Exp */
+/* Id: cache.h,v 1.17.12.8 2007/08/28 07:19:14 tbox Exp */
 
 #ifndef DNS_CACHE_H
 #define DNS_CACHE_H 1
@@ -153,7 +153,7 @@ dns_cache_attachdb(dns_cache_t *cache, dns_db_t **dbp);
 
 
 isc_result_t
-dns_cache_setfilename(dns_cache_t *cahce, char *filename);
+dns_cache_setfilename(dns_cache_t *cahce, const char *filename);
 /*
  * If 'filename' is non-NULL, make the cache persistent.
  * The cache's data will be stored in the given file.

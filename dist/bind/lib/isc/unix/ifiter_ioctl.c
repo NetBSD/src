@@ -1,10 +1,10 @@
-/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.2.4.1 2007/02/10 19:21:02 tron Exp $	*/
+/*	$NetBSD: ifiter_ioctl.c,v 1.1.1.2.4.2 2008/07/24 22:18:10 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ifiter_ioctl.c,v 1.19.2.5.2.17 2005/10/14 02:13:07 marka Exp */
+/* Id: ifiter_ioctl.c,v 1.19.2.5.2.21 2007/08/31 23:45:57 tbox Exp */
 
 /*
  * Obtain the list of network interfaces using the SIOCGLIFCONF ioctl.
@@ -531,7 +531,8 @@ internal_current4(isc_interfaceiter_t *iter) {
 #endif
 
 	REQUIRE(VALID_IFITER(iter));
-	REQUIRE (iter->pos < (unsigned int) iter->ifc.ifc_len);
+	REQUIRE(iter->ifc.ifc_len == 0 ||
+		iter->pos < (unsigned int) iter->ifc.ifc_len);
 
 #ifdef __linux
 	result = linux_if_inet6_current(iter);
@@ -539,6 +540,9 @@ internal_current4(isc_interfaceiter_t *iter) {
 		return (result);
 	iter->first = ISC_TRUE;
 #endif
+
+	if (iter->ifc.ifc_len == 0)
+		return (ISC_R_NOMORE);
 
 	ifrp = (struct ifreq *)((char *) iter->ifc.ifc_req + iter->pos);
 
@@ -902,7 +906,8 @@ internal_next4(isc_interfaceiter_t *iter) {
 	struct ifreq *ifrp;
 #endif
 
-	REQUIRE (iter->pos < (unsigned int) iter->ifc.ifc_len);
+	REQUIRE(iter->ifc.ifc_len == 0 ||
+	        iter->pos < (unsigned int) iter->ifc.ifc_len);
 
 #ifdef __linux
 	if (linux_if_inet6_next(iter) == ISC_R_SUCCESS)
@@ -910,6 +915,10 @@ internal_next4(isc_interfaceiter_t *iter) {
 	if (!iter->first)
 		return (ISC_R_SUCCESS);
 #endif
+
+	if (iter->ifc.ifc_len == 0)
+		return (ISC_R_NOMORE);
+
 #ifdef ISC_PLATFORM_HAVESALEN
 	ifrp = (struct ifreq *)((char *) iter->ifc.ifc_req + iter->pos);
 

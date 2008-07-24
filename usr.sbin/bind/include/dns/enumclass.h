@@ -1,7 +1,7 @@
-/*	$NetBSD: enumclass.h,v 1.2.4.1 2007/02/10 19:21:08 tron Exp $	*/
+/*	$NetBSD: enumclass.h,v 1.2.4.2 2008/07/24 22:18:16 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004-2005 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any

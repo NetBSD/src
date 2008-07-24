@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.1.1.1.4.1 2007/02/10 19:20:48 tron Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.1.1.1.4.2 2008/07/24 22:17:56 ghen Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -86,9 +86,9 @@ again:
 	}
 	if (!digit)
 		return (INADDR_NONE);
+	if (pp >= parts + 4 || val > 0xffU)
+		return (INADDR_NONE);
 	if (*cp == '.') {
-		if (pp >= parts + 4 || val > 0xffU)
-			return (INADDR_NONE);
 		*pp++ = val, cp++;
 		goto again;
 	}
