@@ -1,11 +1,11 @@
-/*	$NetBSD: openssldh_link.c,v 1.1.1.1.2.2 2006/07/13 22:02:18 tron Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.1.1.1.2.2.2.1 2008/07/24 22:24:24 ghen Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -20,7 +20,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssldh_link.c,v 1.1.4.1 2004/12/09 04:07:18 marka Exp
+ * Id: openssldh_link.c,v 1.1.4.7 2007/08/28 07:19:13 tbox Exp
  */
 
 #ifdef OPENSSL
@@ -142,6 +142,9 @@ openssldh_paramcompare(const dst_key_t *key1, const dst_key_t *key2) {
 
 static isc_result_t
 openssldh_generate(dst_key_t *key, int generator) {
+#if OPENSSL_VERSION_NUMBER > 0x00908000L
+        BN_GENCB cb;
+#endif
 	DH *dh = NULL;
 
 	if (generator == 0) {
@@ -164,9 +167,24 @@ openssldh_generate(dst_key_t *key, int generator) {
 			generator = 2;
 	}
 
-	if (generator != 0)
+	if (generator != 0) {
+#if OPENSSL_VERSION_NUMBER > 0x00908000L
+		dh = DH_new();
+		if (dh == NULL)
+			return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+
+		BN_GENCB_set_old(&cb, NULL, NULL);
+
+		if (!DH_generate_parameters_ex(dh, key->key_size, generator,
+					       &cb)) {
+			DH_free(dh);
+			return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+		}
+#else
 		dh = DH_generate_parameters(key->key_size, generator,
 					    NULL, NULL);
+#endif
+	}
 
 	if (dh == NULL)
 		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));

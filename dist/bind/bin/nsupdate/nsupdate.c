@@ -1,10 +1,10 @@
-/*	$NetBSD: nsupdate.c,v 1.9.2.1 2006/07/13 22:02:05 tron Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.9.2.1.2.1 2008/07/24 22:24:13 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsupdate.c,v 1.103.2.15.2.20 2005/03/17 03:58:26 marka Exp */
+/* Id: nsupdate.c,v 1.103.2.15.2.30 2008/01/17 23:45:27 tbox Exp */
 
 #include <config.h>
 
@@ -161,6 +161,9 @@ debug(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
 static void
 ddebug(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
 
+static void
+error(const char *format, ...) ISC_FORMAT_PRINTF(1, 2);
+
 #define STATUS_MORE	(isc_uint16_t)0
 #define STATUS_SEND	(isc_uint16_t)1
 #define STATUS_QUIT	(isc_uint16_t)2
@@ -192,6 +195,16 @@ fatal(const char *format, ...) {
 	va_end(args);
 	fprintf(stderr, "\n");
 	exit(1);
+}
+
+static void
+error(const char *format, ...) {
+	va_list args;
+
+	va_start(args, format);
+	vfprintf(stderr, format, args);
+	va_end(args);
+	fprintf(stderr, "\n");
 }
 
 static void
@@ -1027,7 +1040,7 @@ evaluate_key(char *cmdline) {
 	secret = isc_mem_allocate(mctx, secretlen);
 	if (secret == NULL)
 		fatal("out of memory");
-	
+
 	isc_buffer_init(&secretbuf, secret, secretlen);
 	result = isc_base64_decodestring(secretstr, &secretbuf);
 	if (result != ISC_R_SUCCESS) {
@@ -1093,8 +1106,8 @@ evaluate_class(char *cmdline) {
 	}
 
 	r.base = word;
-        r.length = strlen(word);
-        result = dns_rdataclass_fromtext(&rdclass, &r);
+	r.length = strlen(word);
+	result = dns_rdataclass_fromtext(&rdclass, &r);
 	if (result != ISC_R_SUCCESS) {
 		fprintf(stderr, "could not parse class name: %s\n", word);
 		return (STATUS_SYNTAX);
@@ -1278,8 +1291,7 @@ update_addordelete(char *cmdline, isc_boolean_t isdelete) {
  failure:
 	if (name != NULL)
 		dns_message_puttempname(updatemsg, &name);
-	if (rdata != NULL)
-		dns_message_puttemprdata(updatemsg, &rdata);
+	dns_message_puttemprdata(updatemsg, &rdata);
 	return (STATUS_SYNTAX);
 }
 
@@ -1313,7 +1325,7 @@ show_message(dns_message_t *msg) {
 
 	ddebug("show_message()");
 	bufsz = INITTEXT;
-	do { 
+	do {
 		if (bufsz > MAXTEXT) {
 			fprintf(stderr, "could not allocate large enough "
 				"buffer to display message\n");
@@ -1345,8 +1357,10 @@ get_next_command(void) {
 	char *word;
 
 	ddebug("get_next_command()");
-	if (interactive)
+	if (interactive) {
 		fprintf(stdout, "> ");
+		fflush(stdout);
+	}
 	isc_app_block();
 	cmdline = fgets(cmdlinebuf, MAXCMD, input);
 	isc_app_unblock();
@@ -1396,8 +1410,11 @@ user_interaction(void) {
 	isc_uint16_t result = STATUS_MORE;
 
 	ddebug("user_interaction()");
-	while ((result == STATUS_MORE) || (result == STATUS_SYNTAX))
+	while ((result == STATUS_MORE) || (result == STATUS_SYNTAX)) {
 		result = get_next_command();
+		if (!interactive && result == STATUS_SYNTAX)
+			fatal("syntax error");
+	}
 	if (result == STATUS_SEND)
 		return (ISC_TRUE);
 	return (ISC_FALSE);
@@ -1490,7 +1507,7 @@ update_completed(isc_task_t *task, isc_event_t *event) {
 			char buf[64];
 			isc_buffer_t b;
 			dns_rdataset_t *rds;
-			
+
 			isc_buffer_init(&b, buf, sizeof(buf) - 1);
 			result = dns_rcode_totext(answer->rcode, &b);
 			check_result(result, "dns_rcode_totext");
@@ -1506,7 +1523,7 @@ update_completed(isc_task_t *task, isc_event_t *event) {
 		int bufsz;
 
 		bufsz = INITTEXT;
-		do { 
+		do {
 			if (bufsz > MAXTEXT) {
 				fprintf(stderr, "could not allocate large "
 					"enough buffer to display message\n");
@@ -1605,7 +1622,7 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 	ddebug("recvsoa()");
 
 	requests--;
-	
+
 	REQUIRE(event->ev_type == DNS_EVENT_REQUESTDONE);
 	reqev = (dns_requestevent_t *)event;
 	request = reqev->request;
@@ -1643,8 +1660,9 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 		setzoneclass(dns_rdataclass_none);
 		return;
 	}
-	isc_mem_put(mctx, reqinfo, sizeof(nsu_requestinfo_t));
 
+	isc_mem_put(mctx, reqinfo, sizeof(nsu_requestinfo_t));
+	reqinfo = NULL;
 	isc_event_free(&event);
 	reqev = NULL;
 
@@ -1667,7 +1685,7 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 		result = dns_request_createvia3(requestmgr, soaquery,
 						localaddr, addr, 0, NULL,
 						FIND_TIMEOUT * 20,
-						FIND_TIMEOUT * 20, 3,
+						FIND_TIMEOUT, 3,
 						global_task, recvsoa, reqinfo,
 						&request);
 		check_result(result, "dns_request_createvia");
@@ -1703,12 +1721,25 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 	    rcvmsg->rcode != dns_rcode_nxdomain)
 		fatal("response to SOA query was unsuccessful");
 
+	if (userzone != NULL && rcvmsg->rcode == dns_rcode_nxdomain) {
+		char namebuf[DNS_NAME_FORMATSIZE];
+		dns_name_format(userzone, namebuf, sizeof(namebuf));
+		error("specified zone '%s' does not exist (NXDOMAIN)",
+		      namebuf);
+		dns_message_destroy(&rcvmsg);
+		dns_request_destroy(&request);
+		dns_message_destroy(&soaquery);
+		ddebug("Out of recvsoa");
+		done_update();
+		return;
+	}
+
  lookforsoa:
 	if (pass == 0)
 		section = DNS_SECTION_ANSWER;
 	else if (pass == 1)
 		section = DNS_SECTION_AUTHORITY;
-	else 
+	else
 		goto droplabel;
 
 	result = dns_message_firstname(rcvmsg, section);
@@ -1737,7 +1768,7 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 				break;
 			}
 		}
-				
+
 		result = dns_message_nextname(rcvmsg, section);
 	}
 
@@ -1802,7 +1833,7 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 	dns_message_destroy(&rcvmsg);
 	ddebug("Out of recvsoa");
 	return;
- 
+
  droplabel:
 	result = dns_message_firstname(soaquery, DNS_SECTION_QUESTION);
 	INSIST(result == ISC_R_SUCCESS);
@@ -1859,15 +1890,6 @@ start_update(void) {
 
 	if (answer != NULL)
 		dns_message_destroy(&answer);
-	result = dns_message_firstname(updatemsg, section);
-	if (result == ISC_R_NOMORE) {
-		section = DNS_SECTION_PREREQUISITE;
-		result = dns_message_firstname(updatemsg, section);
-	}
-	if (result != ISC_R_SUCCESS) {
-		done_update();
-		return;
-	}
 
 	if (userzone != NULL && userserver != NULL) {
 		send_update(userzone, userserver, localaddr);
@@ -1879,7 +1901,8 @@ start_update(void) {
 				    &soaquery);
 	check_result(result, "dns_message_create");
 
-	soaquery->flags |= DNS_MESSAGEFLAG_RD;
+	if (userserver == NULL)
+		soaquery->flags |= DNS_MESSAGEFLAG_RD;
 
 	result = dns_message_gettempname(soaquery, &name);
 	check_result(result, "dns_message_gettempname");
@@ -1889,10 +1912,24 @@ start_update(void) {
 
 	dns_rdataset_makequestion(rdataset, getzoneclass(), dns_rdatatype_soa);
 
-	firstname = NULL;
-	dns_message_currentname(updatemsg, section, &firstname);
-	dns_name_init(name, NULL);
-	dns_name_clone(firstname, name);
+	if (userzone != NULL) {
+		dns_name_init(name, NULL);
+		dns_name_clone(userzone, name);
+	} else {
+		result = dns_message_firstname(updatemsg, section);
+		if (result == ISC_R_NOMORE) {
+			section = DNS_SECTION_PREREQUISITE;
+			result = dns_message_firstname(updatemsg, section);
+		}
+		if (result != ISC_R_SUCCESS) {
+			done_update();
+			return;
+		}
+		firstname = NULL;
+		dns_message_currentname(updatemsg, section, &firstname);
+		dns_name_init(name, NULL);
+		dns_name_clone(firstname, name);
+	}
 
 	ISC_LIST_INIT(name->list);
 	ISC_LIST_APPEND(name->list, rdataset, link);

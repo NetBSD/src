@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib_p.h,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
+/*	$NetBSD: eventlib_p.h,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:23 ghen Exp $	*/
 
 /*
  * Copyright (c) 2005 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 /* eventlib_p.h - private interfaces for eventlib
  * vix 09sep95 [initial]
  *
- * Id: eventlib_p.h,v 1.3.2.1.4.3 2005/07/28 07:43:20 marka Exp
+ * Id: eventlib_p.h,v 1.3.2.1.4.4 2006/03/10 00:17:21 marka Exp
  */
 
 #ifndef _EVENTLIB_P_H
@@ -47,6 +47,8 @@
 #define	EV_MASK_ALL	(EV_READ | EV_WRITE | EV_EXCEPT)
 #define EV_ERR(e)		return (errno = (e), -1)
 #define OK(x)		if ((x) < 0) EV_ERR(errno); else (void)NULL
+#define OKFREE(x, y)	if ((x) < 0) { FREE((y)); EV_ERR(errno); } \
+			else (void)NULL
 
 #define	NEW(p)		if (((p) = memget(sizeof *(p))) != NULL) \
 				FILL(p); \
