@@ -1,7 +1,7 @@
-/*	$NetBSD: grammar.h,v 1.1.1.1.4.1 2007/02/10 19:21:04 tron Exp $	*/
+/*	$NetBSD: grammar.h,v 1.1.1.1.4.2 2008/07/24 22:18:13 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: grammar.h,v 1.3.50.4 2004/11/30 01:15:44 marka Exp */
+/* Id: grammar.h,v 1.3.50.6 2006/03/02 00:37:20 marka Exp */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -65,7 +65,7 @@ typedef struct cfg_rep cfg_rep_t;
 
 typedef isc_result_t (*cfg_parsefunc_t)(cfg_parser_t *, const cfg_type_t *type,
 					cfg_obj_t **);
-typedef void	     (*cfg_printfunc_t)(cfg_printer_t *, cfg_obj_t *);
+typedef void	     (*cfg_printfunc_t)(cfg_printer_t *, const cfg_obj_t *);
 typedef void	     (*cfg_docfunc_t)(cfg_printer_t *, const cfg_type_t *);
 typedef void	     (*cfg_freefunc_t)(cfg_parser_t *, cfg_obj_t *);
 
@@ -158,7 +158,7 @@ struct cfg_obj {
 		isc_sockaddr_t	sockaddr;
 		cfg_netprefix_t netprefix;
 	}               value;
-	char *		file;
+	const char *	file;
 	unsigned int    line;
 };
 
@@ -276,16 +276,16 @@ isc_result_t
 cfg_parse_uint32(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 void
-cfg_print_uint32(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_uint32(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 void
-cfg_print_uint64(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_uint64(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 isc_result_t
 cfg_parse_qstring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 void
-cfg_print_ustring(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_ustring(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 isc_result_t
 cfg_parse_astring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
@@ -294,7 +294,7 @@ isc_result_t
 cfg_parse_rawaddr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na);
 
 void
-cfg_print_rawaddr(cfg_printer_t *pctx, isc_netaddr_t *na);
+cfg_print_rawaddr(cfg_printer_t *pctx, const isc_netaddr_t *na);
 
 isc_boolean_t
 cfg_lookingat_netaddr(cfg_parser_t *pctx, unsigned int flags);
@@ -306,7 +306,7 @@ isc_result_t
 cfg_parse_sockaddr(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 void
-cfg_print_sockaddr(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_sockaddr(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 void
 cfg_doc_sockaddr(cfg_printer_t *pctx, const cfg_type_t *type);
@@ -325,7 +325,7 @@ isc_result_t
 cfg_parse_tuple(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 void
-cfg_print_tuple(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_tuple(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 void
 cfg_doc_tuple(cfg_printer_t *pctx, const cfg_type_t *type);
@@ -341,7 +341,7 @@ isc_result_t
 cfg_parse_bracketed_list(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 void
-cfg_print_bracketed_list(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_bracketed_list(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 void
 cfg_doc_bracketed_list(cfg_printer_t *pctx, const cfg_type_t *type);
@@ -350,7 +350,7 @@ isc_result_t
 cfg_parse_spacelist(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 void
-cfg_print_spacelist(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_spacelist(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 isc_result_t
 cfg_parse_enum(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
@@ -376,7 +376,7 @@ isc_result_t
 cfg_parse_addressed_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 void
-cfg_print_map(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_map(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 void
 cfg_doc_map(cfg_printer_t *pctx, const cfg_type_t *type);
@@ -385,7 +385,7 @@ isc_result_t
 cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 void
-cfg_print_mapbody(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_mapbody(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 void
 cfg_doc_mapbody(cfg_printer_t *pctx, const cfg_type_t *type);
@@ -394,7 +394,7 @@ isc_result_t
 cfg_parse_void(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 void
-cfg_print_void(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_void(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 void
 cfg_doc_void(cfg_printer_t *pctx, const cfg_type_t *type);
@@ -403,7 +403,7 @@ isc_result_t
 cfg_parse_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 void
-cfg_print_obj(cfg_printer_t *pctx, cfg_obj_t *obj);
+cfg_print_obj(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 void
 cfg_doc_obj(cfg_printer_t *pctx, const cfg_type_t *type);

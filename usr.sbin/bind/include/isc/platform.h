@@ -1,10 +1,10 @@
-/*	$NetBSD: platform.h,v 1.4 2004/11/07 02:54:55 christos Exp $	*/
+/*	$NetBSD: platform.h,v 1.4.4.1 2008/07/24 22:18:16 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.24.2.1.10.11 2004/03/08 09:04:52 marka Exp */
+/* Id: platform.h.in,v 1.24.2.1.10.13 2007/09/13 23:45:58 tbox Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -25,6 +25,11 @@
 /*****
  ***** Platform-dependent defines.
  *****/
+
+/*
+ * Define if the platform has <strings.h>.
+ */
+#define ISC_PLATFORM_HAVESTRINGSH 1
 
 /***
  *** Network.

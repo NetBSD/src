@@ -1,7 +1,7 @@
-/*	$NetBSD: lwconfig.c,v 1.1.1.1.4.1 2007/02/10 19:21:05 tron Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.1.1.1.4.2 2008/07/24 22:18:14 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwconfig.c,v 1.33.2.1.2.8 2005/06/08 02:35:21 marka Exp */
+/* Id: lwconfig.c,v 1.33.2.1.2.10 2006/10/03 23:50:50 marka Exp */
 
 /***
  *** Module for parsing resolv.conf files.
@@ -561,7 +561,7 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 
 	errno = 0;
 	if ((fp = fopen(filename, "r")) == NULL)
-		return (LWRES_R_FAILURE);
+		return (LWRES_R_NOTFOUND);
 
 	ret = LWRES_R_SUCCESS;
 	do {

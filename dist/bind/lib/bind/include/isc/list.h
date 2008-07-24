@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.1.1.1.4.1 2007/02/10 19:20:48 tron Exp $	*/
+/*	$NetBSD: list.h,v 1.1.1.1.4.2 2008/07/24 22:17:55 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -68,12 +68,16 @@
 		INSIST(LINKED(elt, link));\
 		if ((elt)->link.next != NULL) \
 			(elt)->link.next->link.prev = (elt)->link.prev; \
-		else \
+		else { \
+			INSIST((list).tail == (elt)); \
 			(list).tail = (elt)->link.prev; \
+		} \
 		if ((elt)->link.prev != NULL) \
 			(elt)->link.prev->link.next = (elt)->link.next; \
-		else \
+		else { \
+			INSIST((list).head == (elt)); \
 			(list).head = (elt)->link.next; \
+		} \
 		INIT_LINK_TYPE(elt, link, type); \
 	} while (0)
 #define UNLINK(list, elt, link) \

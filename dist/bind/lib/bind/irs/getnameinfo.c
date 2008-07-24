@@ -1,9 +1,19 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.2.4.1 2007/02/10 19:20:49 tron Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.1.1.2.4.2 2008/07/24 22:17:56 ghen Exp $	*/
 
 /*
  * Issues to be discussed:
  * - Thread safe-ness must be checked
  */
+
+#if ( defined(__linux__) || defined(__linux) || defined(LINUX) )
+#ifndef IF_NAMESIZE
+# ifdef IFNAMSIZ
+#  define IF_NAMESIZE  IFNAMSIZ
+# else
+#  define IF_NAMESIZE 16
+# endif
+#endif
+#endif
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

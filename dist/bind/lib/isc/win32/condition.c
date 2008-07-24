@@ -1,10 +1,10 @@
-/*	$NetBSD: condition.c,v 1.1.1.1.4.1 2007/02/10 19:21:03 tron Exp $	*/
+/*	$NetBSD: condition.c,v 1.1.1.1.4.2 2008/07/24 22:18:11 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,13 +17,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: condition.c,v 1.17.206.1 2004/03/06 08:15:06 marka Exp */
+/* Id: condition.c,v 1.17.206.6 2007/08/28 07:19:17 tbox Exp */
 
 #include <config.h>
 
 #include <isc/condition.h>
 #include <isc/assertions.h>
 #include <isc/util.h>
+#include <isc/thread.h>
 #include <isc/time.h>
 
 #define LSIGNAL		0
@@ -36,21 +37,90 @@ isc_condition_init(isc_condition_t *cond) {
 	REQUIRE(cond != NULL);
 
 	cond->waiters = 0;
+	/*
+	 * This handle is shared across all threads
+	 */
 	h = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (h == NULL) {
 		/* XXX */
 		return (ISC_R_UNEXPECTED);
 	}
 	cond->events[LSIGNAL] = h;
-	h = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (h == NULL) {
-		(void)CloseHandle(cond->events[LSIGNAL]);
-		/* XXX */
-		return (ISC_R_UNEXPECTED);
-	}
-	cond->events[LBROADCAST] = h;
+
+	/*
+	 * The threadlist will hold the actual events needed
+	 * for the wait condition
+	 */
+	ISC_LIST_INIT(cond->threadlist);
 
 	return (ISC_R_SUCCESS);
+}
+
+/*
+ * Add the thread to the threadlist along with the required events
+ */
+static isc_result_t
+register_thread(unsigned long thrd, isc_condition_t *gblcond,
+		isc_condition_thread_t **localcond)
+{
+	HANDLE hc;
+	isc_condition_thread_t *newthread;
+
+	REQUIRE(localcond != NULL && *localcond == NULL);
+
+	newthread = malloc(sizeof(isc_condition_thread_t));
+	if (newthread == NULL)
+		return (ISC_R_NOMEMORY);
+
+	/*
+	 * Create the thread-specific handle
+	 */
+	hc = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (hc == NULL) {
+		free(newthread);
+		return (ISC_R_UNEXPECTED);
+	}
+
+	/*
+	 * Add the thread ID and handles to list of threads for broadcast
+	 */
+	newthread->handle[LSIGNAL] = gblcond->events[LSIGNAL];
+	newthread->handle[LBROADCAST] = hc;
+	newthread->th = thrd;
+
+	/*
+	 * The thread is holding the manager lock so this is safe
+	 */
+	ISC_LIST_APPEND(gblcond->threadlist, newthread, link);
+	*localcond = newthread;
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+find_thread_condition(unsigned long thrd, isc_condition_t *cond,
+		      isc_condition_thread_t **threadcondp)
+{
+	isc_condition_thread_t *threadcond;
+
+	REQUIRE(threadcondp != NULL && *threadcondp == NULL);
+
+	/*
+	 * Look for the thread ID.
+	 */
+	for (threadcond = ISC_LIST_HEAD(cond->threadlist);
+	     threadcond != NULL;
+	     threadcond = ISC_LIST_NEXT(threadcond, link)) {
+
+		if (threadcond->th == thrd) {
+			*threadcondp = threadcond;
+			return (ISC_R_SUCCESS);
+		}
+	}
+
+	/*
+	 * Not found, so add it.
+	 */
+	return (register_thread(thrd, cond, threadcondp));
 }
 
 isc_result_t
@@ -62,8 +132,7 @@ isc_condition_signal(isc_condition_t *cond) {
 	 */
 	REQUIRE(cond != NULL);
 
-	if (cond->waiters > 0 &&
-	    !SetEvent(cond->events[LSIGNAL])) {
+	if (!SetEvent(cond->events[LSIGNAL])) {
 		/* XXX */
 		return (ISC_R_UNEXPECTED);
 	}
@@ -74,17 +143,28 @@ isc_condition_signal(isc_condition_t *cond) {
 isc_result_t
 isc_condition_broadcast(isc_condition_t *cond) {
 
+	isc_condition_thread_t *threadcond;
+	isc_boolean_t failed = ISC_FALSE;
+
 	/*
 	 * Unlike pthreads, the caller MUST hold the lock associated with
 	 * the condition variable when calling us.
 	 */
 	REQUIRE(cond != NULL);
 
-	if (cond->waiters > 0 &&
-	    !SetEvent(cond->events[LBROADCAST])) {
-		/* XXX */
-		return (ISC_R_UNEXPECTED);
+	/*
+	 * Notify every thread registered for this
+	 */
+	for (threadcond = ISC_LIST_HEAD(cond->threadlist);
+	     threadcond != NULL;
+	     threadcond = ISC_LIST_NEXT(threadcond, link)) {
+
+		if (!SetEvent(threadcond->handle[LBROADCAST]))
+			failed = ISC_TRUE;
 	}
+
+	if (failed)
+		return (ISC_R_UNEXPECTED);
 
 	return (ISC_R_SUCCESS);
 }
@@ -92,34 +172,61 @@ isc_condition_broadcast(isc_condition_t *cond) {
 isc_result_t
 isc_condition_destroy(isc_condition_t *cond) {
 
+	isc_condition_thread_t *next, *threadcond;
+
 	REQUIRE(cond != NULL);
+	REQUIRE(cond->waiters == 0);
 
 	(void)CloseHandle(cond->events[LSIGNAL]);
-	(void)CloseHandle(cond->events[LBROADCAST]);
+
+	/*
+	 * Delete the threadlist
+	 */
+	threadcond = ISC_LIST_HEAD(cond->threadlist);
+
+	while (threadcond != NULL) {
+		next = ISC_LIST_NEXT(threadcond, link);
+		DEQUEUE(cond->threadlist, threadcond, link);
+		(void) CloseHandle(threadcond->handle[LBROADCAST]);
+		free(threadcond);
+		threadcond = next;
+	}
 
 	return (ISC_R_SUCCESS);
 }
 
+/*
+ * This is always called when the mutex (lock) is held, but because
+ * we are waiting we need to release it and reacquire it as soon as the wait
+ * is over. This allows other threads to make use of the object guarded
+ * by the mutex but it should never try to delete it as long as the
+ * number of waiters > 0. Always reacquire the mutex regardless of the
+ * result of the wait. Note that EnterCriticalSection will wait to acquire
+ * the mutex.
+ */
 static isc_result_t
 wait(isc_condition_t *cond, isc_mutex_t *mutex, DWORD milliseconds) {
 	DWORD result;
+	isc_result_t tresult;
+	isc_condition_thread_t *threadcond = NULL;
+
+	/*
+	 * Get the thread events needed for the wait
+	 */
+	tresult = find_thread_condition(isc_thread_self(), cond, &threadcond);
+	if (tresult !=  ISC_R_SUCCESS)
+		return (tresult);
 
 	cond->waiters++;
 	LeaveCriticalSection(mutex);
-	result = WaitForMultipleObjects(2, cond->events, FALSE, milliseconds);
+	result = WaitForMultipleObjects(2, threadcond->handle, FALSE,
+					milliseconds);
+	EnterCriticalSection(mutex);
+	cond->waiters--;
 	if (result == WAIT_FAILED) {
 		/* XXX */
 		return (ISC_R_UNEXPECTED);
 	}
-	EnterCriticalSection(mutex);
-	cond->waiters--;
-	if (cond->waiters == 0 &&
-	    !ResetEvent(cond->events[LBROADCAST])) {
-		/* XXX */
-		LeaveCriticalSection(mutex);
-		return (ISC_R_UNEXPECTED);
-	}
-
 	if (result == WAIT_TIMEOUT)
 		return (ISC_R_TIMEDOUT);
 

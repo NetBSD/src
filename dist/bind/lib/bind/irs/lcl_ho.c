@@ -1,4 +1,4 @@
-/*	$NetBSD: lcl_ho.c,v 1.1.1.1.4.1 2007/02/10 19:20:49 tron Exp $	*/
+/*	$NetBSD: lcl_ho.c,v 1.1.1.1.4.2 2008/07/24 22:17:56 ghen Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993
@@ -54,7 +54,7 @@
 /* BIND Id: gethnamaddr.c,v 8.15 1996/05/22 04:56:30 vixie Exp $ */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: lcl_ho.c,v 1.1.206.2 2004/03/17 00:29:50 marka Exp";
+static const char rcsid[] = "Id: lcl_ho.c,v 1.1.206.3 2006/03/10 00:17:21 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports. */
@@ -543,7 +543,7 @@ ho_addrinfo(struct irs_ho *this, const char *name, const struct addrinfo *pai)
 		ai = hostent2addrinfo(hp, pai);
 		if (ai) {
 			cur->ai_next = ai;
-			while (cur && cur->ai_next)
+			while (cur->ai_next)
 				cur = cur->ai_next;
 		}
 	}

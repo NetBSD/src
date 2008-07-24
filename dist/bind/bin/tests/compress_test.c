@@ -1,10 +1,10 @@
-/*	$NetBSD: compress_test.c,v 1.1.1.1.4.1 2007/02/10 19:20:38 tron Exp $	*/
+/*	$NetBSD: compress_test.c,v 1.1.1.1.4.2 2008/07/24 22:17:47 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: compress_test.c,v 1.24.12.4 2004/03/08 04:04:25 marka Exp */
+/* Id: compress_test.c,v 1.24.12.10 2007/08/28 07:19:09 tbox Exp */
 
 #include <config.h>
 
@@ -41,11 +41,6 @@ unsigned char plain[] = "\003yyy\003foo\0\003bar\003yyy\003foo\0\003"
 /*
  * Result concatenate (plain1, plain2, plain2, plain3).
  */
-unsigned char bit1[] = "\101\010b";
-unsigned char bit2[] = "\101\014b\260";
-unsigned char bit3[] = "\101\020b\264";
-unsigned char bit[] = "\101\010b\0\101\014b\260\0\101\014b\260\0\101\020b\264";
-
 int raw = 0;
 int verbose = 0;
 
@@ -92,25 +87,6 @@ main(int argc, char *argv[]) {
 	     sizeof(plain));
 	test(DNS_COMPRESS_ALL, &name1, &name2, &name3, plain, sizeof(plain));
 
-	dns_name_init(&name1, NULL);
-	region.base = bit1;
-	region.length = sizeof(bit1);
-	dns_name_fromregion(&name1, &region);
-
-	dns_name_init(&name2, NULL);
-	region.base = bit2;
-	region.length = sizeof(bit2);
-	dns_name_fromregion(&name2, &region);
-
-	dns_name_init(&name3, NULL);
-	region.base = bit3;
-	region.length = sizeof(bit3);
-	dns_name_fromregion(&name3, &region);
-
-	test(DNS_COMPRESS_NONE, &name1, &name2, &name3, bit, sizeof(bit));
-	test(DNS_COMPRESS_GLOBAL14, &name1, &name2, &name3, bit, sizeof(bit));
-	test(DNS_COMPRESS_ALL, &name1, &name2, &name3, bit, sizeof(bit));
-
 	return (0);
 }
 
@@ -133,7 +109,7 @@ test(unsigned int allowed, dns_name_t *name1, dns_name_t *name2,
 		case DNS_COMPRESS_NONE: s = "DNS_COMPRESS_NONE"; break;
 		case DNS_COMPRESS_GLOBAL14: s = "DNS_COMPRESS_GLOBAL14"; break;
 		/* case DNS_COMPRESS_ALL: s = "DNS_COMPRESS_ALL"; break; */
-		default: s = "UNKOWN"; break;
+		default: s = "UNKNOWN"; break;
 		}
 		fprintf(stdout, "Allowed = %s\n", s);
 	}

@@ -1,10 +1,10 @@
-/*	$NetBSD: lwdgnba.c,v 1.1.1.1.4.1 2007/02/10 19:20:36 tron Exp $	*/
+/*	$NetBSD: lwdgnba.c,v 1.1.1.1.4.2 2008/07/24 22:17:46 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwdgnba.c,v 1.13.2.1.2.5 2004/03/08 04:04:19 marka Exp */
+/* Id: lwdgnba.c,v 1.13.2.1.2.10 2008/01/14 23:45:30 tbox Exp */
 
 #include <config.h>
 
@@ -219,8 +219,6 @@ ns_lwdclient_processgnba(ns_lwdclient_t *client, lwres_buffer_t *b) {
 	result = lwres_gnbarequest_parse(cm->lwctx,
 					 b, &client->pkt, &req);
 	if (result != LWRES_R_SUCCESS)
-		goto out;
-	if (req->addr.address == NULL)
 		goto out;
 
 	client->options = 0;

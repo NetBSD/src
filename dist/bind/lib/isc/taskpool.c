@@ -1,10 +1,10 @@
-/*	$NetBSD: taskpool.c,v 1.1.1.1.4.1 2007/02/10 19:20:59 tron Exp $	*/
+/*	$NetBSD: taskpool.c,v 1.1.1.1.4.2 2008/07/24 22:18:08 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: taskpool.c,v 1.10.12.3 2004/03/08 09:04:50 marka Exp */
+/* Id: taskpool.c,v 1.10.12.8 2007/08/28 07:19:15 tbox Exp */
 
 #include <config.h>
 
@@ -54,6 +54,10 @@ isc_taskpool_create(isc_taskmgr_t *tmgr, isc_mem_t *mctx,
 	pool->mctx = mctx;
 	pool->ntasks = ntasks;
 	pool->tasks = isc_mem_get(mctx, ntasks * sizeof(isc_task_t *));
+	if (pool->tasks == NULL) {
+		isc_mem_put(mctx, pool, sizeof(*pool));
+		return (ISC_R_NOMEMORY);
+	}
 	for (i = 0; i < ntasks; i++)
 		pool->tasks[i] = NULL;
 	for (i = 0; i < ntasks; i++) {
