@@ -1,10 +1,10 @@
-/*	$NetBSD: gen-unix.h,v 1.1.1.1.2.1 2006/07/13 22:02:18 tron Exp $	*/
+/*	$NetBSD: gen-unix.h,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:24 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: gen-unix.h,v 1.12.12.5 2005/06/09 23:54:29 marka Exp */
+/* Id: gen-unix.h,v 1.12.12.8 2007/08/28 07:19:13 tbox Exp */
 
 /*
  * This file is responsible for defining two operations that are not

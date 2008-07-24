@@ -1,10 +1,10 @@
-/*	$NetBSD: app.c,v 1.2.2.1 2006/07/13 22:02:27 tron Exp $	*/
+/*	$NetBSD: app.c,v 1.2.2.1.2.1 2008/07/24 22:24:37 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: app.c,v 1.43.2.3.8.5 2004/03/08 02:08:05 marka Exp */
+/* Id: app.c,v 1.43.2.3.8.8 2008/01/17 23:45:28 tbox Exp */
 
 #include <config.h>
 
@@ -59,11 +59,11 @@ static isc_boolean_t		running = ISC_FALSE;
 /*
  * We assume that 'want_shutdown' can be read and written atomically.
  */
-static isc_boolean_t		want_shutdown = ISC_FALSE;
+static volatile isc_boolean_t	want_shutdown = ISC_FALSE;
 /*
  * We assume that 'want_reload' can be read and written atomically.
  */
-static isc_boolean_t		want_reload = ISC_FALSE;
+static volatile isc_boolean_t	want_reload = ISC_FALSE;
 
 static isc_boolean_t		blocked  = ISC_FALSE;
 #ifdef ISC_PLATFORM_USETHREADS
@@ -87,13 +87,13 @@ static pthread_t		main_thread;
 #ifndef HAVE_SIGWAIT
 static void
 exit_action(int arg) {
-        UNUSED(arg);
+	UNUSED(arg);
 	want_shutdown = ISC_TRUE;
 }
 
 static void
 reload_action(int arg) {
-        UNUSED(arg);
+	UNUSED(arg);
 	want_reload = ISC_TRUE;
 }
 #endif
@@ -339,7 +339,7 @@ evloop(void) {
 			 * We call isc__timermgr_dispatch() only when
 			 * necessary, in order to reduce overhead.  If the
 			 * select() call indicates a timeout, we need the
-			 * dispatch.  Even if not, if we set the 0-timeout 
+			 * dispatch.  Even if not, if we set the 0-timeout
 			 * for the select() call, we need to check the timer
 			 * events.  In the 'readytasks' case, there may be no
 			 * timeout event actually, but there is no other way
@@ -423,7 +423,7 @@ isc__nothread_signal_hack(isc_condition_t *cp) {
 	signalled = ISC_TRUE;
 	return (ISC_R_SUCCESS);
 }
-	
+
 #endif /* ISC_PLATFORM_USETHREADS */
 
 isc_result_t
@@ -676,7 +676,7 @@ isc_app_unblock(void) {
 	REQUIRE(blockedthread == pthread_self());
 
 	RUNTIME_CHECK(sigemptyset(&sset) == 0 &&
-		      sigaddset(&sset, SIGINT) == 0 && 
+		      sigaddset(&sset, SIGINT) == 0 &&
 		      sigaddset(&sset, SIGTERM) == 0);
 	RUNTIME_CHECK(pthread_sigmask(SIG_BLOCK, &sset, NULL) == 0);
 #endif /* ISC_PLATFORM_USETHREADS */

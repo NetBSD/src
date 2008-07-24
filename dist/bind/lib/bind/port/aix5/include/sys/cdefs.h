@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.1.1.1.2.2 2006/07/13 22:02:16 tron Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.1.1.1.2.2.2.1 2008/07/24 22:24:23 ghen Exp $	*/
 
 /*
  * ++Copyright++ 1991, 1993
@@ -57,7 +57,7 @@
 
 /*
  *	@(#)cdefs.h	8.1 (Berkeley) 6/2/93
- *	Id: cdefs.h,v 1.1.4.2 2004/11/30 01:15:44 marka Exp
+ *	Id: cdefs.h,v 1.1.4.3 2006/12/07 04:00:08 marka Exp
  */
 
 #ifndef	_CDEFS_H_
@@ -107,10 +107,18 @@
 #define	__STRING(x)	"x"
 
 #ifndef __GNUC__
+#ifndef __const
 #define	__const				/* delete pseudo-ANSI C keywords */
+#endif
+#ifndef __inline
 #define	__inline
+#endif
+#ifndef __signed
 #define	__signed
+#endif
+#ifndef __volatile
 #define	__volatile
+#endif
 /*
  * In non-ANSI C environments, new programs will want ANSI-only C keywords
  * deleted from the program and old programs will want them left alone.

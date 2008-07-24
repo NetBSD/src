@@ -1,10 +1,10 @@
-/*	$NetBSD: zonetodb.c,v 1.1.1.1.2.1 2006/07/13 22:02:09 tron Exp $	*/
+/*	$NetBSD: zonetodb.c,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:20 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zonetodb.c,v 1.12.4.2.8.6 2005/09/06 02:12:40 marka Exp */
+/* Id: zonetodb.c,v 1.12.4.2.8.9 2007/08/28 07:19:11 tbox Exp */
 
 #include <stdlib.h>
 #include <string.h>

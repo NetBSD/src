@@ -1,10 +1,10 @@
-/*	$NetBSD: t_dst.c,v 1.1.1.2.2.1 2006/07/13 22:02:06 tron Exp $	*/
+/*	$NetBSD: t_dst.c,v 1.1.1.2.2.1.2.1 2008/07/24 22:24:17 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_dst.c,v 1.47.206.2 2004/06/11 00:30:52 marka Exp */
+/* Id: t_dst.c,v 1.47.206.6 2008/01/12 23:45:31 tbox Exp */
 
 #include <config.h>
 
@@ -379,7 +379,7 @@ t1(void) {
 		t_result(T_UNRESOLVED);
 		return;
 	}
-	result = isc_entropy_createfilesource(ectx, "randomfile");
+	isc_result = isc_entropy_createfilesource(ectx, "randomfile");
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_entropy_create failed %s\n",
 		       isc_result_totext(isc_result));
@@ -407,7 +407,13 @@ t1(void) {
 	name = dns_fixedname_name(&fname);
 	isc_buffer_init(&b, "test.", 5);
 	isc_buffer_add(&b, 5);
-	dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	isc_result = dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	if (isc_result != ISC_R_SUCCESS) {
+		t_info("dns_name_fromtext failed %s\n",
+		       isc_result_totext(isc_result));
+		t_result(T_UNRESOLVED);
+		return;
+	}
 	io(name, 23616, DST_ALG_DSA, DST_TYPE_PRIVATE|DST_TYPE_PUBLIC,
 			mctx, ISC_R_SUCCESS, &nfails, &nprobs);
 	t_info("testing use of stored keys [2]\n");
@@ -423,7 +429,13 @@ t1(void) {
 
 	isc_buffer_init(&b, "dh.", 3);
 	isc_buffer_add(&b, 3);
-	dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	isc_result = dns_name_fromtext(name, &b, NULL, ISC_FALSE, NULL);
+	if (isc_result != ISC_R_SUCCESS) {
+		t_info("dns_name_fromtext failed %s\n",
+		       isc_result_totext(isc_result));
+		t_result(T_UNRESOLVED);
+		return;
+	}
 
 	dh(name, 18602, name, 48957, mctx, ISC_R_SUCCESS, &nfails, &nprobs);
 
@@ -676,7 +688,14 @@ t2_sigchk(char *datapath, char *sigpath, char *keyname,
 	name = dns_fixedname_name(&fname);
 	isc_buffer_init(&b, keyname, strlen(keyname));
 	isc_buffer_add(&b, strlen(keyname));
-	dns_name_fromtext(name, &b, dns_rootname, ISC_FALSE, NULL);
+	isc_result = dns_name_fromtext(name, &b, dns_rootname, ISC_FALSE, NULL);
+	if (isc_result != ISC_R_SUCCESS) {
+		t_info("dns_name_fromtext failed %s\n",
+			isc_result_totext(isc_result));
+		(void) free(data);
+		++*nprobs;
+		return;
+	}
 	isc_result = dst_key_fromfile(name, id, alg, type, NULL, mctx, &key);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("dst_key_fromfile failed %s\n",
@@ -859,7 +878,7 @@ t2_vfy(char **av) {
 		       isc_result_totext(isc_result));
 		return(T_UNRESOLVED);
 	}
-	result = isc_entropy_createfilesource(ectx, "randomfile");
+	isc_result = isc_entropy_createfilesource(ectx, "randomfile");
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_entropy_create failed %s\n",
 		       isc_result_totext(isc_result));

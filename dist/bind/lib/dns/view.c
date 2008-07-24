@@ -1,10 +1,10 @@
-/*	$NetBSD: view.c,v 1.1.1.1.2.1 2006/07/13 22:02:19 tron Exp $	*/
+/*	$NetBSD: view.c,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:24 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.c,v 1.103.2.5.2.14 2004/03/10 02:55:58 marka Exp */
+/* Id: view.c,v 1.103.2.5.2.17 2007/08/28 07:19:14 tbox Exp */
 
 #include <config.h>
 
@@ -681,6 +681,7 @@ dns_view_find(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 	REQUIRE(view->frozen);
 	REQUIRE(type != dns_rdatatype_rrsig);
 	REQUIRE(rdataset != NULL);  /* XXXBEW - remove this */
+	REQUIRE(nodep == NULL || *nodep == NULL);
 
 	/*
 	 * Initialize.

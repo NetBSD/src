@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.c,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
+/*	$NetBSD: hex.c,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:23 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -47,8 +47,9 @@ isc_gethexstring(unsigned char *buf, size_t len, int count, FILE *fp,
 			goto formerr;
 		/* comment */
 		if (c == ';') {
-			while ((c = fgetc(fp)) != EOF && c != '\n')
-				/* empty */
+			do {
+				c = fgetc(fp);
+			} while (c != EOF && c != '\n');
 			if (c == '\n' && *multiline)
 				continue;
 			goto formerr;

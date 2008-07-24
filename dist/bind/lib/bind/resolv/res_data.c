@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.1.1.1.2.1 2006/07/13 22:02:17 tron Exp $	*/
+/*	$NetBSD: res_data.c,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:23 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: res_data.c,v 1.1.206.2 2004/03/16 12:34:18 marka Exp";
+static const char rcsid[] = "Id: res_data.c,v 1.1.206.3 2007/09/14 05:35:51 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -42,7 +42,6 @@ static const char rcsid[] = "Id: res_data.c,v 1.1.206.2 2004/03/16 12:34:18 mark
 #include <unistd.h>
 
 #include "port_after.h"
-#undef _res
 
 const char *_res_opcodes[] = {
 	"QUERY",
@@ -72,12 +71,17 @@ const char *_res_sectioncodes[] = {
 };
 #endif
 
+#undef _res
 #ifndef __BIND_NOSTATIC
 struct __res_state _res
 # if defined(__BIND_RES_TEXT)
 	= { RES_TIMEOUT, }	/* Motorola, et al. */
 # endif
         ;
+
+#if defined(DO_PTHREADS) || defined(__linux)
+#define _res (*__res_state())
+#endif
 
 /* Proto. */
 

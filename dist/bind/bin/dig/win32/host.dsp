@@ -50,7 +50,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /machine:I386
-# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../../lib/isc/win32/Release/libisc.lib ../../../lib/dns/win32/Release/libdns.lib ../../../lib/bind9/win32/Release/libbind9.lib ../../../lib/lwres/win32/Release/liblwres.lib /nologo /subsystem:console /machine:I386 /out:"../../../Build/Release/host.exe"
+# ADD LINK32 user32.lib advapi32.lib ws2_32.lib Release/dighost.lib ../../../lib/isc/win32/Release/libisc.lib ../../../lib/dns/win32/Release/libdns.lib ../../../lib/bind9/win32/Release/libbind9.lib ../../../lib/lwres/win32/Release/liblwres.lib /nologo /subsystem:console /machine:I386 /out:"../../../Build/Release/host.exe"
 
 !ELSEIF  "$(CFG)" == "host - Win32 Debug"
 
@@ -75,7 +75,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 user32.lib advapi32.lib ws2_32.lib ../../../lib/isc/win32/Debug/libisc.lib ../../../lib/dns/win32/Debug/libdns.lib ../../../lib/bind9/win32/Debug/libbind9.lib ../../../lib/lwres/win32/Debug/liblwres.lib /nologo /subsystem:console /debug /machine:I386 /out:"../../../Build/Debug/host.exe" /pdbtype:sept
+# ADD LINK32 user32.lib advapi32.lib ws2_32.lib Debug/dighost.lib ../../../lib/isc/win32/Debug/libisc.lib ../../../lib/dns/win32/Debug/libdns.lib ../../../lib/bind9/win32/Debug/libbind9.lib ../../../lib/lwres/win32/Debug/liblwres.lib /nologo /subsystem:console /debug /machine:I386 /out:"../../../Build/Debug/host.exe" /pdbtype:sept
 
 !ENDIF 
 
@@ -86,10 +86,6 @@ LINK32=link.exe
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
-# Begin Source File
-
-SOURCE=..\dighost.c
-# End Source File
 # Begin Source File
 
 SOURCE=..\host.c

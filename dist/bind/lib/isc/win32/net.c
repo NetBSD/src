@@ -1,10 +1,10 @@
-/*	$NetBSD: net.c,v 1.1.1.1.2.1 2006/07/13 22:02:27 tron Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:37 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: net.c,v 1.3.2.2.4.7 2004/04/29 01:31:23 marka Exp */
+/* Id: net.c,v 1.3.2.2.4.10 2007/08/28 07:19:17 tbox Exp */
 
 #include <config.h>
 
@@ -43,6 +43,8 @@ static isc_result_t	ipv4_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6only_result = ISC_R_NOTFOUND;
 static isc_result_t	ipv6pktinfo_result = ISC_R_NOTFOUND;
+
+void InitSockets(void);
 
 static isc_result_t
 try_proto(int domain) {
@@ -123,6 +125,7 @@ try_proto(int domain) {
 
 static void
 initialize_action(void) {
+	InitSockets();
 	ipv4_result = try_proto(PF_INET);
 #ifdef ISC_PLATFORM_HAVEIPV6
 #ifdef WANT_IPV6

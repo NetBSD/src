@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata_test.c,v 1.1.1.1.2.1 2006/07/13 22:02:06 tron Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:14 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdata_test.c,v 1.35.12.9 2005/03/17 03:58:28 marka Exp */
+/* Id: rdata_test.c,v 1.35.12.11 2006/02/26 23:49:48 marka Exp */
 
 #include <config.h>
 
@@ -306,7 +306,7 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		break;
 	}
 	if (result != ISC_R_SUCCESS)
-		fprintf(stdout, "viastruct: tostuct %d %d return %s\n",
+		fprintf(stdout, "viastruct: tostruct %d %d return %s\n",
 			rdata->type, rdata->rdclass,
 			dns_result_totext(result));
 	else
@@ -563,7 +563,7 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		break;
 	}
 	if (result != ISC_R_SUCCESS)
-		fprintf(stdout, "viastruct: tostuct %d %d return %s\n",
+		fprintf(stdout, "viastruct: tostruct %d %d return %s\n",
 			rdata->type, rdata->rdclass,
 			dns_result_totext(result));
 	else {
@@ -574,7 +574,7 @@ viastruct(dns_rdata_t *rdata, isc_mem_t *mctx,
 		result = dns_rdata_fromstruct(rdata2, rdc, rdt, sp, b);
 		if (result != ISC_R_SUCCESS)
 			fprintf(stdout,
-				"viastruct: fromstuct %d %d return %s\n",
+				"viastruct: fromstruct %d %d return %s\n",
 				rdata->type, rdata->rdclass,
 				dns_result_totext(result));
 		else if (rdata->length != rdata2->length ||

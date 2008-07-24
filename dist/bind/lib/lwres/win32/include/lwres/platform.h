@@ -1,10 +1,10 @@
-/*	$NetBSD: platform.h,v 1.1.1.1.2.1 2006/07/13 22:02:30 tron Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:43 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h,v 1.4.206.1 2004/03/06 08:15:46 marka Exp */
+/* Id: platform.h,v 1.4.206.4 2007/08/28 07:19:18 tbox Exp */
 
 #ifndef LWRES_PLATFORM_H
 #define LWRES_PLATFORM_H 1
@@ -93,5 +93,12 @@ do { \
  */
 #undef  close
 #define close closesocket
+
+/*
+ * Internal to liblwres.
+ */
+void InitSockets(void);
+
+void DestroySockets(void);
 
 #endif /* LWRES_PLATFORM_H */

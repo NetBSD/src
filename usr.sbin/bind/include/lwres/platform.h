@@ -1,10 +1,10 @@
-/*	$NetBSD: platform.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
+/*	$NetBSD: platform.h,v 1.2.2.1.2.1 2008/07/24 22:24:44 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.12.2.1.10.5 2005/06/08 02:08:32 marka Exp */
+/* Id: platform.h.in,v 1.12.2.1.10.8 2007/08/28 07:19:18 tbox Exp */
 
 #ifndef LWRES_PLATFORM_H
 #define LWRES_PLATFORM_H 1
@@ -98,7 +98,7 @@
 /*! \brief
  * Define if this system needs strtoul.
  */
-#undef ISC_PLATFORM_NEEDSTRTOUL
+#undef LWRES_PLATFORM_NEEDSTRTOUL
 
 #ifndef LWRES_PLATFORM_USEDECLSPEC
 #define LIBLWRES_EXTERNAL_DATA

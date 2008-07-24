@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_ho.c,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
+/*	$NetBSD: gen_ho.c,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:22 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: gen_ho.c,v 1.1.206.2 2004/03/17 01:49:39 marka Exp";
+static const char rcsid[] = "Id: gen_ho.c,v 1.1.206.3 2006/03/10 00:17:21 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports */
@@ -373,8 +373,6 @@ ho_addrinfo(struct irs_ho *this, const char *name, const struct addrinfo *pai)
 	}
 	if (softerror != 0 && pvt->res->res_h_errno == HOST_NOT_FOUND)
 		RES_SET_H_ERRNO(pvt->res, therrno);
-	if (rval)
-		freeaddrinfo(rval);
 	return (NULL);
 }
 

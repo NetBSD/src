@@ -1,10 +1,10 @@
-/*	$NetBSD: dig.h,v 1.1.1.2.2.1 2006/07/13 22:02:03 tron Exp $	*/
+/*	$NetBSD: dig.h,v 1.1.1.2.2.1.2.1 2008/07/24 22:24:12 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dig.h,v 1.71.2.6.2.11 2005/07/04 03:29:45 marka Exp */
+/* Id: dig.h,v 1.71.2.6.2.18 2007/08/28 07:19:07 tbox Exp */
 
 #ifndef DIG_H
 #define DIG_H
@@ -118,6 +118,8 @@ struct dig_lookup {
 		section_additional,
 		servfail_stops,
 		new_search,
+		need_search,
+		done_as_is,
 		besteffort,
 		dnssec;
 #ifdef DIG_SIGCHASE
@@ -148,7 +150,7 @@ isc_boolean_t	sigchase;
 	char onamespace[BUFSIZE];
 	isc_buffer_t namebuf;
 	isc_buffer_t onamebuf;
-	isc_buffer_t sendbuf;
+	isc_buffer_t renderbuf;
 	char *sendspace;
 	dns_name_t *name;
 	isc_timer_t *timer;
@@ -175,6 +177,8 @@ isc_boolean_t	sigchase;
 struct dig_query {
 	dig_lookup_t *lookup;
 	isc_boolean_t waiting_connect,
+		pending_free,
+		waiting_senddone,
 		first_pass,
 		first_soa_rcvd,
 		second_rr_rcvd,
@@ -200,6 +204,7 @@ struct dig_query {
 	ISC_LINK(dig_query_t) link;
 	isc_sockaddr_t sockaddr;
 	isc_time_t time_sent;
+	isc_buffer_t sendbuf;
 };
 
 struct dig_server {
@@ -279,6 +284,9 @@ check_result(isc_result_t result, const char *msg);
 
 void
 setup_lookup(dig_lookup_t *lookup);
+
+void
+destroy_lookup(dig_lookup_t *lookup);
 
 void
 do_lookup(dig_lookup_t *lookup);

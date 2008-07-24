@@ -1,7 +1,7 @@
-/*	$NetBSD: client.h,v 1.1.1.2.2.1 2006/07/13 22:02:05 tron Exp $	*/
+/*	$NetBSD: client.h,v 1.1.1.2.2.1.2.1 2008/07/24 22:24:13 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.h,v 1.60.2.2.10.10 2005/07/29 00:13:08 marka Exp */
+/* Id: client.h,v 1.60.2.2.10.12 2006/06/06 00:11:40 marka Exp */
 
 #ifndef NAMED_CLIENT_H
 #define NAMED_CLIENT_H 1
@@ -198,6 +198,12 @@ ns_client_next(ns_client_t *client, isc_result_t result);
 /*
  * Finish processing the current client request,
  * return no response to the client.
+ */
+
+void
+ns_client_qnamereplace(ns_client_t *client, dns_name_t *name);
+/*%
+ * Replace the qname.
  */
 
 isc_boolean_t

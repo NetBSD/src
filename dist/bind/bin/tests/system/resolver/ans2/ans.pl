@@ -1,9 +1,9 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ans.pl,v 1.6.206.1 2004/03/06 10:22:22 marka Exp
+# Id: ans.pl,v 1.6.206.3 2007/09/24 23:45:57 tbox Exp
 
 #
 # Ad hoc name server
@@ -29,9 +29,9 @@ use Net::DNS::Packet;
 my $sock = IO::Socket::INET->new(LocalAddr => "10.53.0.2",
    LocalPort => 5300, Proto => "udp") or die "$!";
 
-my $pidf = new IO::File "ans.pid", "w" or die "cannot write pid file: $!";
-print $pidf "$$\n";
-$pidf->close;
+my $pidf = new IO::File "ans.pid", "w" or die "cannot open pid file: $!";
+print $pidf "$$\n" or die "cannot write pid file: $!";
+$pidf->close or die "cannot close pid file: $!";
 sub rmpid { unlink "ans.pid"; exit 1; };
 
 $SIG{INT} = \&rmpid;

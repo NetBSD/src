@@ -1,4 +1,4 @@
-/*	$NetBSD: irpmarshall.c,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
+/*	$NetBSD: irpmarshall.c,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:22 ghen Exp $	*/
 
 /*
  * Copyright(c) 1989, 1993, 1995
@@ -51,7 +51,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: irpmarshall.c,v 1.3.206.3 2004/03/17 01:13:34 marka Exp";
+static const char rcsid[] = "Id: irpmarshall.c,v 1.3.206.4 2006/03/10 00:17:21 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #if 0
@@ -1022,7 +1022,7 @@ irp_unmarshall_ho(struct hostent *ho, char *buffer) {
 	int hoaddrtype;
 	int holength;
 	long t;
-	char *name = NULL;
+	char *name;
 	char **aliases = NULL;
 	char **hohaddrlist = NULL;
 	size_t hoaddrsize;
@@ -1145,6 +1145,7 @@ irp_unmarshall_ho(struct hostent *ho, char *buffer) {
 	errno = myerrno;
 
 	if (name != NULL) free(name);
+	free_array(hohaddrlist, 0);
 	free_array(aliases, 0);
 
 	return (-1);
@@ -1315,7 +1316,6 @@ irp_unmarshall_ng(const char **hostp, const char **userp, const char **domainp,
 
 	if (host != NULL) free(host);
 	if (user != NULL) free(user);
-	if (domain != NULL) free(domain);
 
 	return (-1);
 }

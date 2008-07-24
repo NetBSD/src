@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.c,v 1.1.1.1.2.1 2006/07/13 22:02:19 tron Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:24 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.c,v 1.58.2.2.2.10 2004/03/08 09:04:31 marka Exp */
+/* Id: rdataset.c,v 1.58.2.2.2.12 2006/03/02 00:37:20 marka Exp */
 
 #include <config.h>
 
@@ -282,9 +282,9 @@ towire_compare(const void *av, const void *bv) {
 }
 
 static isc_result_t
-towiresorted(dns_rdataset_t *rdataset, dns_name_t *owner_name,
+towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	     dns_compress_t *cctx, isc_buffer_t *target,
-	     dns_rdatasetorderfunc_t order, void *order_arg,
+	     dns_rdatasetorderfunc_t order, const void *order_arg,
 	     isc_boolean_t partial, unsigned int options,
 	     unsigned int *countp, void **state)
 {
@@ -530,11 +530,11 @@ towiresorted(dns_rdataset_t *rdataset, dns_name_t *owner_name,
 
 isc_result_t
 dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
-			  dns_name_t *owner_name,
+			  const dns_name_t *owner_name,
 			  dns_compress_t *cctx,
 			  isc_buffer_t *target,
 			  dns_rdatasetorderfunc_t order,
-			  void *order_arg,
+			  const void *order_arg,
 			  unsigned int options,
 			  unsigned int *countp)
 {
@@ -545,11 +545,11 @@ dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
 
 isc_result_t
 dns_rdataset_towirepartial(dns_rdataset_t *rdataset,
-			   dns_name_t *owner_name,
+			   const dns_name_t *owner_name,
 			   dns_compress_t *cctx,
 			   isc_buffer_t *target,
 			   dns_rdatasetorderfunc_t order,
-			   void *order_arg,
+			   const void *order_arg,
 			   unsigned int options,
 			   unsigned int *countp,
 			   void **state)

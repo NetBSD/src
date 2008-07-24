@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.1.1.1.2.1 2006/07/13 22:02:14 tron Exp $	*/
+/*	$NetBSD: netdb.h,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:22 ghen Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -88,7 +88,7 @@
 
 /*
  *      @(#)netdb.h	8.1 (Berkeley) 6/2/93
- *	Id: netdb.h,v 1.12.2.1.4.5 2004/11/30 01:15:42 marka Exp
+ *	Id: netdb.h,v 1.12.2.1.4.9 2006/10/02 01:20:30 marka Exp
  */
 
 #ifndef _NETDB_H_
@@ -177,7 +177,7 @@ struct	addrinfo {
 	int		ai_socktype;	/* SOCK_xxx */
 	int		ai_protocol;	/* 0 or IPPROTO_xxx for IPv4 and IPv6 */
 #if defined(sun) && defined(_SOCKLEN_T)
-#ifdef __sparc9
+#ifdef __sparcv9
 	int		_ai_pad;
 #endif
 	socklen_t	ai_addrlen;
@@ -293,7 +293,7 @@ struct hostent_data {
 
 struct  netent_data {
 	FILE	*net_fp;
-#ifdef __osf__
+#if defined(__osf__) || defined(_AIX)
 	char	line[_MAXLINELEN];
 #endif
 #ifdef __hpux
@@ -310,10 +310,21 @@ struct  netent_data {
 	char	*current;
 	int	currentlen;
 #endif
+#ifdef _AIX
+        int     _net_stayopen;
+        char    *current;
+        int     currentlen;
+        void    *_net_reserv1;          /* reserved for future use */
+        void    *_net_reserv2;          /* reserved for future use */
+#endif
 };
 
 struct	protoent_data {
 	FILE	*proto_fp;
+#ifdef _AIX
+	int     _proto_stayopen;
+	char	line[_MAXLINELEN];
+#endif
 #ifdef __osf__
 	char	line[1024];
 #endif
@@ -331,11 +342,17 @@ struct	protoent_data {
 	char	*current;
 	int	currentlen;
 #endif
+#ifdef _AIX
+        int     currentlen;
+        char    *current;
+        void    *_proto_reserv1;        /* reserved for future use */
+        void    *_proto_reserv2;        /* reserved for future use */
+#endif
 };
 
 struct	servent_data {
 	FILE	*serv_fp;
-#ifdef __osf__
+#if defined(__osf__) || defined(_AIX)
 	char	line[_MAXLINELEN];
 #endif
 #ifdef __hpux
@@ -351,6 +368,13 @@ struct	servent_data {
 	short	_flags;
 	char	*current;
 	int	currentlen;
+#endif
+#ifdef _AIX
+	int     _serv_stayopen;
+	char     *current;
+	int     currentlen;
+	void    *_serv_reserv1;         /* reserved for future use */
+	void    *_serv_reserv2;         /* reserved for future use */
 #endif
 };
 #endif
@@ -459,9 +483,19 @@ int		endservent_r __P((struct servent_data *));
 #else
 void		endservent_r __P((struct servent_data *));
 #endif
+#ifdef _AIX
+int		setnetgrent_r __P((const char *, void **));
+void		endnetgrent_r __P((void **));
+/*
+ * Note: AIX's netdb.h declares innetgr_r() as: 
+ *	int innetgr_r(char *, char *, char *, char *, struct innetgr_data *);
+ */
+int		innetgr_r __P((const char *, const char *, const char *,
+			       const char *));
+#endif
 #else
  /* defined(sun) || defined(bsdi) */
-#ifdef __GLIBC__
+#if defined(__GLIBC__) || defined(__FreeBSD__) && (__FreeBSD_version + 0 >= 601103)
 int gethostbyaddr_r __P((const char *, int, int, struct hostent *,
 		         char *, size_t, struct hostent **, int *));
 int gethostbyname_r __P((const char *, struct hostent *,
@@ -478,7 +512,7 @@ struct hostent	*gethostent_r __P((struct hostent *, char *, int, int *));
 void		sethostent_r __P((int));
 void		endhostent_r __P((void));
 
-#ifdef __GLIBC__
+#if defined(__GLIBC__) || defined(__FreeBSD__) && (__FreeBSD_version + 0 >= 601103)
 int getnetbyname_r __P((const char *, struct netent *,
 			char *, size_t, struct netent **, int*));
 int getnetbyaddr_r __P((unsigned long int, int, struct netent *,
@@ -494,7 +528,7 @@ struct netent	*getnetent_r __P((struct netent *, char *, int));
 void		setnetent_r __P((int));
 void		endnetent_r __P((void));
 
-#ifdef __GLIBC__
+#if defined(__GLIBC__) || defined(__FreeBSD__) && (__FreeBSD_version + 0 >= 601103)
 int getprotobyname_r __P((const char *, struct protoent *, char *,
 			  size_t, struct protoent **));
 int getprotobynumber_r __P((int, struct protoent *, char *, size_t,
@@ -510,7 +544,7 @@ struct protoent	*getprotoent_r __P((struct protoent *, char *, int));
 void		setprotoent_r __P((int));
 void		endprotoent_r __P((void));
 
-#ifdef __GLIBC__
+#if defined(__GLIBC__) || defined(__FreeBSD__) && (__FreeBSD_version + 0 >= 601103)
 int getservbyname_r __P((const char *name, const char *,
 			 struct servent *, char *, size_t, struct servent **));
 int getservbyport_r __P((int port, const char *,
@@ -528,9 +562,6 @@ void		endservent_r __P((void));
 
 #ifdef __GLIBC__
 int		getnetgrent_r __P((char **, char **, char **, char *, size_t));
-#endif
-#ifdef _AIX
-int		setnetgrent_r __P((char *, void **));
 #endif
 
 #endif
