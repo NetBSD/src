@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.148 2008/06/17 06:08:46 mlelstv Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.149 2008/07/24 08:14:49 sborrill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.148 2008/06/17 06:08:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.149 2008/07/24 08:14:49 sborrill Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2008,6 +2008,22 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5752 A2" },
 
+	{ BGE_CHIPID_BCM5755_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5755 A0" },
+
+	{ BGE_CHIPID_BCM5755_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5755 A1" },
+
+	{ BGE_CHIPID_BCM5755_A2,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5755 A2" },
+
+	{ BGE_CHIPID_BCM5755_C0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5755 C0" },
+
 	{ BGE_CHIPID_BCM5787_A0,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5754/5787 A0" },
@@ -2204,6 +2220,11 @@ static const struct bge_product {
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5721,
 	  "Broadcom BCM5721 Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5722,
+	  "Broadcom BCM5722 Gigabit Ethernet",
 	  },
 
 	{ PCI_VENDOR_BROADCOM,
