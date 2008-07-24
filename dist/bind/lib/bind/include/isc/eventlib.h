@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib.h,v 1.1.1.1.2.1 2006/07/13 22:02:14 tron Exp $	*/
+/*	$NetBSD: eventlib.h,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:22 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 /* eventlib.h - exported interfaces for eventlib
  * vix 09sep95 [initial]
  *
- * Id: eventlib.h,v 1.1.2.1.4.2 2005/07/28 07:43:18 marka Exp
+ * Id: eventlib.h,v 1.1.2.1.4.3 2008/01/23 02:08:48 marka Exp
  */
 
 #ifndef _EVENTLIB_H
@@ -30,6 +30,8 @@
 #include <sys/uio.h>
 #include <sys/time.h>
 #include <stdio.h>
+
+#include <isc/platform.h>
 
 #ifndef __P
 # define __EVENTLIB_P_DEFINED

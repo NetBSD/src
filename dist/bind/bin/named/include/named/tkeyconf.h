@@ -1,7 +1,7 @@
-/*	$NetBSD: tkeyconf.h,v 1.1.1.1.2.1 2006/07/13 22:02:05 tron Exp $	*/
+/*	$NetBSD: tkeyconf.h,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:13 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: tkeyconf.h,v 1.9.208.1 2004/03/06 10:21:26 marka Exp */
+/* Id: tkeyconf.h,v 1.9.208.3 2006/03/02 00:37:20 marka Exp */
 
 #ifndef NS_TKEYCONF_H
 #define NS_TKEYCONF_H 1
@@ -30,8 +30,8 @@
 ISC_LANG_BEGINDECLS
 
 isc_result_t
-ns_tkeyctx_fromconfig(cfg_obj_t *options, isc_mem_t *mctx, isc_entropy_t *ectx,
-		      dns_tkeyctx_t **tctxp);
+ns_tkeyctx_fromconfig(const cfg_obj_t *options, isc_mem_t *mctx,
+		      isc_entropy_t *ectx, dns_tkeyctx_t **tctxp);
 /*
  * 	Create a TKEY context and configure it, including the default DH key
  *	and default domain, according to 'options'.

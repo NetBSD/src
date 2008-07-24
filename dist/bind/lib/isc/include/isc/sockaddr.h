@@ -1,7 +1,7 @@
-/*	$NetBSD: sockaddr.h,v 1.1.1.1.2.1 2006/07/13 22:02:26 tron Exp $	*/
+/*	$NetBSD: sockaddr.h,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:35 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sockaddr.h,v 1.35.12.8 2005/07/29 00:13:10 marka Exp */
+/* Id: sockaddr.h,v 1.35.12.10 2006/03/02 00:37:20 marka Exp */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
@@ -143,7 +143,7 @@ isc_sockaddr_setport(isc_sockaddr_t *sockaddr, in_port_t port);
  */
 
 in_port_t
-isc_sockaddr_getport(isc_sockaddr_t *sockaddr);
+isc_sockaddr_getport(const isc_sockaddr_t *sockaddr);
 /*
  * Get the port stored in 'sockaddr'.
  */
@@ -170,25 +170,25 @@ isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size);
  */
 
 isc_boolean_t
-isc_sockaddr_ismulticast(isc_sockaddr_t *sa);
+isc_sockaddr_ismulticast(const isc_sockaddr_t *sa);
 /*
  * Returns ISC_TRUE if the address is a multicast address.
  */
 
 isc_boolean_t
-isc_sockaddr_isexperimental(isc_sockaddr_t *sa);
+isc_sockaddr_isexperimental(const isc_sockaddr_t *sa);
 /*
  * Returns ISC_TRUE if the address is a experimental (CLASS E) address.
  */
 
 isc_boolean_t
-isc_sockaddr_islinklocal(isc_sockaddr_t *sa);
+isc_sockaddr_islinklocal(const isc_sockaddr_t *sa);
 /*
  * Returns ISC_TRUE if the address is a link local addresss.
  */
 
 isc_boolean_t
-isc_sockaddr_issitelocal(isc_sockaddr_t *sa);
+isc_sockaddr_issitelocal(const isc_sockaddr_t *sa);
 /*
  * Returns ISC_TRUE if the address is a sitelocal address.
  */

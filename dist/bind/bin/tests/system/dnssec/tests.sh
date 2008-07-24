@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
-# Copyright (C) 2000-2002  Internet Software Consortium.
+# Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2000-2003  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.33.12.8 2005/09/06 02:12:40 marka Exp
+# Id: tests.sh,v 1.33.12.13 2007/08/28 07:19:09 tbox Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -428,7 +428,7 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I:checking privately secure wilcard to nxdomain works ($n)"
+echo "I:checking privately secure wildcard to nxdomain works ($n)"
 ret=0
 $DIG $DIGOPTS +noauth a.wild.private.secure.example. SOA @10.53.0.2 \
 	> dig.out.ns2.test$n || ret=1

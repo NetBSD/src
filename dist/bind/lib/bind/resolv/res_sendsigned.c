@@ -1,4 +1,4 @@
-/*	$NetBSD: res_sendsigned.c,v 1.1.1.1.2.1 2006/07/13 22:02:17 tron Exp $	*/
+/*	$NetBSD: res_sendsigned.c,v 1.1.1.1.2.1.2.1 2008/07/24 22:24:23 ghen Exp $	*/
 
 #include "port_before.h"
 #include "fd_setsize.h"
@@ -54,6 +54,7 @@ res_nsendsigned(res_state statp, const u_char *msg, int msglen,
 	bufsize = msglen + 1024;
 	newmsg = (u_char *) malloc(bufsize);
 	if (newmsg == NULL) {
+		free(nstatp);
 		errno = ENOMEM;
 		return (-1);
 	}
@@ -104,11 +105,11 @@ res_nsendsigned(res_state statp, const u_char *msg, int msglen,
 retry:
 
 	len = res_nsend(nstatp, newmsg, newmsglen, answer, anslen);
-	if (ret < 0) {
+	if (len < 0) {
 		free (nstatp);
 		free (newmsg);
 		dst_free_key(dstkey);
-		return (ret);
+		return (len);
 	}
 
 	ret = ns_verify(answer, &len, dstkey, sig, siglen,
