@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.25 2008/07/23 18:16:42 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.26 2008/07/24 04:39:25 matt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.25 2008/07/23 18:16:42 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.26 2008/07/24 04:39:25 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -156,25 +156,41 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 	return 0;
 }
 
-caddr_t
-_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
+static inline int
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
+	Elf_Addr *tp)
 {
-	const Elf_Rel *rel = (const Elf_Rel *)((caddr_t)obj->pltrel + reloff);
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
-	Elf_Addr new_value;
-	const Elf_Sym  *def;
+	Elf_Addr target;
+	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 
 	assert(ELF_R_TYPE(rel->r_info) == R_TYPE(JMP_SLOT));
 
 	def = _rtld_find_symdef(ELF_R_SYM(rel->r_info), obj, &defobj, true);
 	if (def == NULL)
-		_rtld_die();
-	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+		return -1;
+	target = (Elf_Addr)(defobj->relocbase + def->st_value);
 	rdbg(("bind now/fixup in %s --> old=%p new=%p",
-	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
-	if (*where != new_value)
-		*where = new_value;
+	    defobj->strtab + def->st_name, (void *)*where, 
+	    (void *)target));
+	if (*where != target)
+		*where = target;
+	if (tp)
+		*tp = target;
+	return 0;
+}
+
+caddr_t
+_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
+{
+	const Elf_Rel *rel = (const Elf_Rel *)((caddr_t)obj->pltrel + reloff);
+	Elf_Addr new_value;
+	int err;
+
+	err = _rtld_relocate_plt_object(obj, rel, &new_value);
+	if (err || new_value == 0)
+		_rtld_die();
 
 	return (caddr_t)new_value;
 }
@@ -183,25 +199,12 @@ int
 _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
+	int err = 0;
 	
 	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
-		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
-		Elf_Addr target;
-		const Elf_Sym *def;
-		const Obj_Entry *defobj;
-		
-		assert(ELF_R_TYPE(rel->r_info) == R_TYPE(JMP_SLOT));
-		
-		def = _rtld_find_symdef(ELF_R_SYM(rel->r_info), obj, &defobj,
-		    true);
-		if (def == NULL)
-			return -1;
-		target = (Elf_Addr)(defobj->relocbase + def->st_value);
-		rdbg(("bind now/fixup in %s --> old=%p new=%p",
-		    defobj->strtab + def->st_name, (void *)*where, 
-		    (void *)target));
-		if (*where != target)
-			*where = target;
+		err = _rtld_relocate_plt_object(obj, rel, NULL);
+		if (err)
+			break;
 	}
-	return 0;
+	return err;
 }
