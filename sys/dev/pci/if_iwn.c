@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.10 2008/05/10 12:56:28 degroote Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.11 2008/07/24 13:04:00 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.10 2008/05/10 12:56:28 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.11 2008/07/24 13:04:00 blymn Exp $");
 
 
 /*
@@ -144,7 +144,6 @@ static void		iwn_notif_intr(struct iwn_softc *);
 static int		iwn_intr(void *);
 static void		iwn_read_eeprom(struct iwn_softc *);
 static void		iwn_read_eeprom_channels(struct iwn_softc *, int);
-static void		iwn_print_power_group(struct iwn_softc *, int);
 static uint8_t		iwn_plcp_signal(int);
 static int		iwn_tx_data(struct iwn_softc *, struct mbuf *,
     struct ieee80211_node *, int);
@@ -182,6 +181,8 @@ static int		iwn_init(struct ifnet *);
 static void		iwn_stop(struct ifnet *, int);
 static void		iwn_fix_channel(struct ieee80211com *, struct mbuf *);
 static bool		iwn_resume(device_t PMF_FN_PROTO);
+static int		iwn_add_node(struct iwn_softc *sc,
+	struct ieee80211_node *ni, bool broadcast, bool async);
 
 
 
@@ -190,10 +191,14 @@ static bool		iwn_resume(device_t PMF_FN_PROTO);
 #ifdef IWN_DEBUG
 #define DPRINTF(x)	do { if (iwn_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (iwn_debug >= (n)) printf x; } while (0)
-int iwn_debug = 2;
+int iwn_debug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
+#endif
+
+#ifdef IWN_DEBUG
+static void		iwn_print_power_group(struct iwn_softc *, int);
 #endif
 
 CFATTACH_DECL_NEW(iwn, sizeof(struct iwn_softc), iwn_match, iwn_attach,
@@ -467,7 +472,6 @@ iwn_radiotap_attach(struct iwn_softc *sc)
  * Build a beacon frame that the firmware will broadcast periodically in
  * IBSS or HostAP modes.
  */
-#if 0
 static int
 iwn_setup_beacon(struct iwn_softc *sc, struct ieee80211_node *ni)
 {
@@ -538,7 +542,6 @@ iwn_setup_beacon(struct iwn_softc *sc, struct ieee80211_node *ni)
 
 	return 0;
 }
-#endif
 
 static int
 iwn_dma_contig_alloc(bus_dma_tag_t tag, struct iwn_dma_info *dma, void **kvap,
@@ -975,6 +978,9 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error;
 
 	callout_stop(&sc->calib_to);
+
+	DPRINTF(("iwn_newstate: nstate = %d, ic->ic_state = %d\n", nstate,
+		ic->ic_state));
 
 	switch (nstate) {
 
@@ -1414,6 +1420,7 @@ iwn_rx_intr(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		len = le16toh(stat->len);
 	}
 
+	DPRINTF(("rx packet len %d\n", len));
 	/* discard Rx frames with bad CRC early */
 	tail = (uint32_t *)(head + len);
 	if ((le32toh(*tail) & IWN_RX_NOERROR) != IWN_RX_NOERROR) {
@@ -1903,6 +1910,8 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	uint8_t type;
 	int i, error, pad, rate, hdrlen, noack = 0;
 
+	DPRINTFN(5, ("iwn_tx_data entry\n"));
+
 	desc = &ring->desc[ring->cur];
 	data = &ring->data[ring->cur];
 
@@ -1927,8 +1936,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	}
 
 	/* pickup a rate */
-	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-	    IEEE80211_FC0_TYPE_MGT) {
+	if (type == IEEE80211_FC0_TYPE_MGT) {
 		/* mgmt frames are sent at the lowest available bit-rate */
 		rate = ni->ni_rates.rs_rates[0];
 	} else {
@@ -1972,17 +1980,24 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	tx->id = IEEE80211_IS_MULTICAST(wh->i_addr1) ? IWN_ID_BROADCAST : IWN_ID_BSS;
 
+	DPRINTFN(5, ("addr1: %x:%x:%x:%x:%x:%x, id = 0x%x\n",
+		     wh->i_addr1[0], wh->i_addr1[1], wh->i_addr1[2],
+		     wh->i_addr1[3], wh->i_addr1[4], wh->i_addr1[5], tx->id));
+
 	if (type == IEEE80211_FC0_TYPE_MGT) {
 		uint8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
 		/* tell h/w to set timestamp in probe responses */
-		if (subtype == IEEE80211_FC0_SUBTYPE_PROBE_RESP)
+		if ((subtype == IEEE80211_FC0_SUBTYPE_PROBE_RESP) ||
+		    (subtype == IEEE80211_FC0_SUBTYPE_PROBE_REQ))
 			flags |= IWN_TX_INSERT_TSTAMP;
 
 		if (subtype == IEEE80211_FC0_SUBTYPE_ASSOC_REQ ||
-		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ)
+		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
+			flags &= ~IWN_TX_NEED_RTS;
+			flags |= IWN_TX_NEED_CTS;
 			tx->timeout = htole16(3);
-		else
+		} else
 			tx->timeout = htole16(2);
 	} else
 		tx->timeout = htole16(0);
@@ -1993,6 +2008,16 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 		pad = 4 - (hdrlen & 3);
 	} else
 		pad = 0;
+
+	if (type == IEEE80211_FC0_TYPE_CTL) {
+		uint8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+		/* tell h/w to set timestamp in probe responses */
+		if (subtype == 0x0080) /* linux says this is "back request" */
+			/* linux says (1 << 6) is IMM_BA_RSP_MASK */
+			flags |= (IWN_TX_NEED_ACK | (1 << 6));
+	}
+
 
 	tx->flags = htole32(flags);
 	tx->len = htole16(m0->m_pkthdr.len);
@@ -2099,6 +2124,8 @@ iwn_start(struct ifnet *ifp)
 	struct ether_header *eh;
 	struct mbuf *m0;
 	int ac;
+
+	DPRINTFN(5, ("iwn_start enter\n"));
 
 	/*
 	 * net80211 may still try to send management frames even if the
@@ -3074,11 +3101,49 @@ iwn_send_sensitivity(struct iwn_softc *sc)
 }
 
 static int
+iwn_add_node(struct iwn_softc *sc, struct ieee80211_node *ni, bool broadcast,
+    bool async)
+{
+	struct iwn_node_info node;
+	int error;
+
+	error = 0;
+
+	memset(&node, 0, sizeof node);
+	if (broadcast == true) {
+		IEEE80211_ADDR_COPY(node.macaddr, etherbroadcastaddr);
+		node.id = IWN_ID_BROADCAST;
+		DPRINTF(("adding broadcast node\n"));
+	} else {
+		IEEE80211_ADDR_COPY(node.macaddr, ni->ni_macaddr);
+		node.id = IWN_ID_BSS;
+		node.htflags = htole32(3 << IWN_AMDPU_SIZE_FACTOR_SHIFT |
+				       5 << IWN_AMDPU_DENSITY_SHIFT);
+		DPRINTF(("adding BSS node\n"));
+	}
+
+	error = iwn_cmd(sc, IWN_CMD_ADD_NODE, &node, sizeof node, async);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "could not add %s node\n",
+				 (broadcast == 1)? "broadcast" : "BSS");
+		return error;
+	}
+	DPRINTF(("setting MRR for node %d\n", node.id));
+	if ((error = iwn_setup_node_mrr(sc, node.id, async)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+				 "could not setup MRR for %s node\n",
+				 (broadcast == 1)? "broadcast" : "BSS");
+		return error;
+	}
+
+	return error;
+}
+
+static int
 iwn_auth(struct iwn_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
-	struct iwn_node_info node;
 	int error;
 
 	/* update adapter's configuration */
@@ -3121,20 +3186,23 @@ iwn_auth(struct iwn_softc *sc)
 	 * Reconfiguring clears the adapter's nodes table so we must
 	 * add the broadcast node again.
 	 */
-	memset(&node, 0, sizeof node);
-	IEEE80211_ADDR_COPY(node.macaddr, etherbroadcastaddr);
-	node.id = IWN_ID_BROADCAST;
-	DPRINTF(("adding broadcast node\n"));
-	error = iwn_cmd(sc, IWN_CMD_ADD_NODE, &node, sizeof node, 1);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "could not add broadcast node\n");
+	if ((error = iwn_add_node(sc, ni, true, true)) != 0)
+		return error;
+
+	/* add BSS node */
+	if ((error = iwn_add_node(sc, ni, false, true)) != 0)
+		return error;
+
+	if (ic->ic_opmode == IEEE80211_M_STA) {
+		/* fake a join to init the tx rate */
+		iwn_newassoc(ni, 1);
+	}
+
+	if ((error = iwn_init_sensitivity(sc)) != 0) {
+		aprint_error_dev(sc->sc_dev, "could not set sensitivity\n");
 		return error;
 	}
-	DPRINTF(("setting MRR for node %d\n", node.id));
-	if ((error = iwn_setup_node_mrr(sc, node.id, 1)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not setup MRR for broadcast node\n");
-		return error;
-	}
+
 
 	return 0;
 }
@@ -3147,7 +3215,6 @@ iwn_run(struct iwn_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
-	struct iwn_node_info node;
 	int error;
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
@@ -3174,7 +3241,8 @@ iwn_run(struct iwn_softc *sc)
 	error = iwn_cmd(sc, IWN_CMD_CONFIGURE, &sc->config,
 	    sizeof (struct iwn_config), 1);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "could not update configuration\n");
+		aprint_error_dev(sc->sc_dev,
+			"could not update configuration\n");
 		return error;
 	}
 
@@ -3185,22 +3253,7 @@ iwn_run(struct iwn_softc *sc)
 	}
 
 	/* add BSS node */
-	memset(&node, 0, sizeof node);
-	IEEE80211_ADDR_COPY(node.macaddr, ni->ni_macaddr);
-	node.id = IWN_ID_BSS;
-	node.htflags = htole32(3 << IWN_AMDPU_SIZE_FACTOR_SHIFT |
-	    5 << IWN_AMDPU_DENSITY_SHIFT);
-	DPRINTF(("adding BSS node\n"));
-	error = iwn_cmd(sc, IWN_CMD_ADD_NODE, &node, sizeof node, 1);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "could not add BSS node\n");
-		return error;
-	}
-	DPRINTF(("setting MRR for node %d\n", node.id));
-	if ((error = iwn_setup_node_mrr(sc, node.id, 1)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not setup MRR for node %d\n", node.id);
-		return error;
-	}
+	iwn_add_node(sc, ni, false, true);
 
 	if (ic->ic_opmode == IEEE80211_M_STA) {
 		/* fake a join to init the tx rate */
@@ -3216,6 +3269,20 @@ iwn_run(struct iwn_softc *sc)
 	sc->calib.state = IWN_CALIB_STATE_ASSOC;
 	sc->calib_cnt = 0;
 	callout_schedule(&sc->calib_to, hz / 2);
+
+	if (0 == 1) { /* XXX don't do the beacon - we get a firmware error
+			 XXX when we try.  Something is wrong with the
+			 XXX setup of the frame.  Just don't ever call
+			 XXX the function but reference it to keep gcc happy
+		      */
+		/* now we are associated set up the beacon frame */
+		if ((error = iwn_setup_beacon(sc, ni))) {
+			aprint_error_dev(sc->sc_dev,
+					 "could not setup beacon frame\n");
+			return error;
+		}
+	}
+
 
 	/* link LED always on while associated */
 	iwn_set_led(sc, IWN_LED_LINK, 0, 1);
@@ -3415,7 +3482,6 @@ iwn_config(struct iwn_softc *sc)
 	struct ifnet *ifp = ic->ic_ifp;
 	struct iwn_power power;
 	struct iwn_bluetooth bluetooth;
-	struct iwn_node_info node;
 	int error;
 
 	/* set power mode */
@@ -3492,20 +3558,8 @@ iwn_config(struct iwn_softc *sc)
 	}
 
 	/* add broadcast node */
-	memset(&node, 0, sizeof node);
-	IEEE80211_ADDR_COPY(node.macaddr, etherbroadcastaddr);
-	node.id = IWN_ID_BROADCAST;
-	DPRINTF(("adding broadcast node\n"));
-	error = iwn_cmd(sc, IWN_CMD_ADD_NODE, &node, sizeof node, 0);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "could not add broadcast node\n");
+	if ((error = iwn_add_node(sc, NULL, true, false)) != 0)
 		return error;
-	}
-	DPRINTF(("setting MRR for node %d\n", node.id));
-	if ((error = iwn_setup_node_mrr(sc, node.id, 0)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not setup MRR for node %d\n", node.id);
-		return error;
-	}
 
 	if ((error = iwn_set_critical_temp(sc)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not set critical temperature\n");
