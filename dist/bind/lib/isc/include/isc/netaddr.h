@@ -1,10 +1,10 @@
-/*	$NetBSD: netaddr.h,v 1.1.1.1.4.1 2007/02/10 19:21:01 tron Exp $	*/
+/*	$NetBSD: netaddr.h,v 1.1.1.1.4.2 2008/07/24 22:18:08 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: netaddr.h,v 1.18.12.9 2005/07/29 00:13:10 marka Exp */
+/* Id: netaddr.h,v 1.18.12.12 2007/08/28 07:19:15 tbox Exp */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1

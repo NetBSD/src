@@ -1,10 +1,10 @@
-/*	$NetBSD: interfacemgr.c,v 1.1.1.2.4.1 2007/02/10 19:20:36 tron Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.1.1.2.4.2 2008/07/24 22:17:46 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: interfacemgr.c,v 1.59.2.5.8.15 2004/08/10 04:56:23 jinmei Exp */
+/* Id: interfacemgr.c,v 1.59.2.5.8.21 2007/08/28 07:19:08 tbox Exp */
 
 #include <config.h>
 
@@ -184,6 +184,7 @@ ns_interface_create(ns_interfacemgr_t *mgr, isc_sockaddr_t *addr,
 	ifp->mgr = NULL;
 	ifp->generation = mgr->generation;
 	ifp->addr = *addr;
+	ifp->flags = 0;
 	strncpy(ifp->name, name, sizeof(ifp->name));
 	ifp->name[sizeof(ifp->name)-1] = '\0';
 	ifp->clientmgr = NULL;
@@ -719,9 +720,8 @@ do_scan(ns_interfacemgr_t *mgr, ns_listenlist_t *ext_listen,
 			 * See if the address matches the listen-on statement;
 			 * if not, ignore the interface.
 			 */
-			result = dns_acl_match(&listen_netaddr, NULL,
-					       le->acl, &mgr->aclenv,
-					       &match, NULL);
+			(void)dns_acl_match(&listen_netaddr, NULL, le->acl,
+					    &mgr->aclenv, &match, NULL);
 			if (match <= 0)
 				continue;
 
@@ -747,9 +747,9 @@ do_scan(ns_interfacemgr_t *mgr, ns_listenlist_t *ext_listen,
 				for (ele = ISC_LIST_HEAD(ext_listen->elts);
 				     ele != NULL;
 				     ele = ISC_LIST_NEXT(ele, link)) {
-					dns_acl_match(&listen_netaddr, NULL,
-						      ele->acl, NULL,
-						      &match, NULL);
+					(void)dns_acl_match(&listen_netaddr,
+							    NULL, ele->acl,
+							    NULL, &match, NULL);
 					if (match > 0 && ele->port == le->port)
 						break;
 					else

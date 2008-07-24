@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_sign.c,v 1.1.1.1.4.1 2007/02/10 19:20:50 tron Exp $	*/
+/*	$NetBSD: ns_sign.c,v 1.1.1.1.4.2 2008/07/24 22:17:56 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "Id: ns_sign.c,v 1.1.2.2.4.1 2004/03/09 08:33:45 marka Exp";
+static const char rcsid[] = "Id: ns_sign.c,v 1.1.2.2.4.2 2006/03/10 00:17:21 marka Exp";
 #endif
 
 /* Import. */
@@ -91,7 +91,7 @@ ns_sign2(u_char *msg, int *msglen, int msgsize, int error, void *k,
 {
 	HEADER *hp = (HEADER *)msg;
 	DST_KEY *key = (DST_KEY *)k;
-	u_char *cp = msg + *msglen, *eob = msg + msgsize;
+	u_char *cp, *eob;
 	u_char *lenp;
 	u_char *alg;
 	int n;
@@ -101,6 +101,9 @@ ns_sign2(u_char *msg, int *msglen, int msgsize, int error, void *k,
 	dst_init();
 	if (msg == NULL || msglen == NULL || sig == NULL || siglen == NULL)
 		return (-1);
+
+	cp = msg + *msglen;
+	eob = msg + msgsize;
 
 	/* Name. */
 	if (key != NULL && error != ns_r_badsig && error != ns_r_badkey) {

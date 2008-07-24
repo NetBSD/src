@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.c,v 1.1.1.1.4.1 2007/02/10 19:20:49 tron Exp $	*/
+/*	$NetBSD: heap.c,v 1.1.1.1.4.2 2008/07/24 22:17:56 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: heap.c,v 1.1.206.1 2004/03/09 08:33:43 marka Exp";
+static const char rcsid[] = "Id: heap.c,v 1.1.206.2 2006/03/10 00:17:21 marka Exp";
 #endif /* not lint */
 
 #include "port_before.h"
@@ -56,9 +56,13 @@ heap_new(heap_higher_priority_func higher_priority, heap_index_func index,
 	 int array_size_increment) {
 	heap_context ctx;
 
-	ctx = (heap_context)malloc(sizeof (struct heap_context));
-	if (ctx == NULL || higher_priority == NULL)
+	if (higher_priority == NULL)
 		return (NULL);
+
+	ctx = (heap_context)malloc(sizeof (struct heap_context));
+	if (ctx == NULL)
+		return (NULL);
+
 	ctx->array_size = 0;
 	if (array_size_increment == 0)
 		ctx->array_size_increment = ARRAY_SIZE_INCREMENT;

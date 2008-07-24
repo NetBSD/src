@@ -1,10 +1,10 @@
-/*	$NetBSD: cfg.h,v 1.1.1.1.4.1 2007/02/10 19:21:04 tron Exp $	*/
+/*	$NetBSD: cfg.h,v 1.1.1.1.4.2 2008/07/24 22:18:13 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cfg.h,v 1.30.12.4 2004/03/08 09:05:07 marka Exp */
+/* Id: cfg.h,v 1.30.12.9 2007/08/28 07:19:18 tbox Exp */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
@@ -76,7 +76,7 @@ typedef struct cfg_listelt cfg_listelt_t;
  * "directory".
  */
 typedef isc_result_t
-(*cfg_parsecallback_t)(const char *clausename, cfg_obj_t *obj, void *arg);
+(*cfg_parsecallback_t)(const char *clausename, const cfg_obj_t *obj, void *arg);
 
 /***
  *** Functions
@@ -145,20 +145,20 @@ cfg_parser_destroy(cfg_parser_t **pctxp);
  */
 
 isc_boolean_t
-cfg_obj_isvoid(cfg_obj_t *obj);
+cfg_obj_isvoid(const cfg_obj_t *obj);
 /*
  * Return true iff 'obj' is of void type (e.g., an optional 
  * value not specified).
  */
 
 isc_boolean_t
-cfg_obj_ismap(cfg_obj_t *obj);
+cfg_obj_ismap(const cfg_obj_t *obj);
 /*
  * Return true iff 'obj' is of a map type.
  */
 
 isc_result_t
-cfg_map_get(cfg_obj_t *mapobj, const char* name, cfg_obj_t **obj);
+cfg_map_get(const cfg_obj_t *mapobj, const char* name, const cfg_obj_t **obj);
 /*
  * Extract an element from a configuration object, which
  * must be of a map type.
@@ -173,8 +173,8 @@ cfg_map_get(cfg_obj_t *mapobj, const char* name, cfg_obj_t **obj);
  *      ISC_R_NOTFOUND                 - name not found in map
  */
 
-cfg_obj_t *
-cfg_map_getname(cfg_obj_t *mapobj);
+const cfg_obj_t *
+cfg_map_getname(const cfg_obj_t *mapobj);
 /*
  * Get the name of a named map object, like a server "key" clause.
  *
@@ -187,13 +187,13 @@ cfg_map_getname(cfg_obj_t *mapobj);
  */
 
 isc_boolean_t
-cfg_obj_istuple(cfg_obj_t *obj);
+cfg_obj_istuple(const cfg_obj_t *obj);
 /*
  * Return true iff 'obj' is of a map type.
  */
 
-cfg_obj_t *
-cfg_tuple_get(cfg_obj_t *tupleobj, const char *name);
+const cfg_obj_t *
+cfg_tuple_get(const cfg_obj_t *tupleobj, const char *name);
 /*
  * Extract an element from a configuration object, which
  * must be of a tuple type.
@@ -205,13 +205,13 @@ cfg_tuple_get(cfg_obj_t *tupleobj, const char *name);
  */
 
 isc_boolean_t
-cfg_obj_isuint32(cfg_obj_t *obj);
+cfg_obj_isuint32(const cfg_obj_t *obj);
 /*
  * Return true iff 'obj' is of integer type.
  */
 
 isc_uint32_t
-cfg_obj_asuint32(cfg_obj_t *obj);
+cfg_obj_asuint32(const cfg_obj_t *obj);
 /*
  * Returns the value of a configuration object of 32-bit integer type.
  *
@@ -223,13 +223,13 @@ cfg_obj_asuint32(cfg_obj_t *obj);
  */
 
 isc_boolean_t
-cfg_obj_isuint64(cfg_obj_t *obj);
+cfg_obj_isuint64(const cfg_obj_t *obj);
 /*
  * Return true iff 'obj' is of integer type.
  */
 
 isc_uint64_t
-cfg_obj_asuint64(cfg_obj_t *obj);
+cfg_obj_asuint64(const cfg_obj_t *obj);
 /*
  * Returns the value of a configuration object of 64-bit integer type.
  *
@@ -241,13 +241,13 @@ cfg_obj_asuint64(cfg_obj_t *obj);
  */
 
 isc_boolean_t
-cfg_obj_isstring(cfg_obj_t *obj);
+cfg_obj_isstring(const cfg_obj_t *obj);
 /*
  * Return true iff 'obj' is of string type.
  */
 
-char *
-cfg_obj_asstring(cfg_obj_t *obj);
+const char *
+cfg_obj_asstring(const cfg_obj_t *obj);
 /*
  * Returns the value of a configuration object of a string type
  * as a null-terminated string.
@@ -260,13 +260,13 @@ cfg_obj_asstring(cfg_obj_t *obj);
  */
 
 isc_boolean_t
-cfg_obj_isboolean(cfg_obj_t *obj);
+cfg_obj_isboolean(const cfg_obj_t *obj);
 /*
  * Return true iff 'obj' is of a boolean type.
  */
 
 isc_boolean_t
-cfg_obj_asboolean(cfg_obj_t *obj);
+cfg_obj_asboolean(const cfg_obj_t *obj);
 /*
  * Returns the value of a configuration object of a boolean type.
  *
@@ -278,13 +278,13 @@ cfg_obj_asboolean(cfg_obj_t *obj);
  */
 
 isc_boolean_t
-cfg_obj_issockaddr(cfg_obj_t *obj);
+cfg_obj_issockaddr(const cfg_obj_t *obj);
 /*
  * Return true iff 'obj' is a socket address.
  */
 
-isc_sockaddr_t *
-cfg_obj_assockaddr(cfg_obj_t *obj);
+const isc_sockaddr_t *
+cfg_obj_assockaddr(const cfg_obj_t *obj);
 /*
  * Returns the value of a configuration object representing a socket address.
  *
@@ -297,13 +297,13 @@ cfg_obj_assockaddr(cfg_obj_t *obj);
  */
 
 isc_boolean_t
-cfg_obj_isnetprefix(cfg_obj_t *obj);
+cfg_obj_isnetprefix(const cfg_obj_t *obj);
 /*
  * Return true iff 'obj' is a network prefix.
  */
 
 void
-cfg_obj_asnetprefix(cfg_obj_t *obj, isc_netaddr_t *netaddr,
+cfg_obj_asnetprefix(const cfg_obj_t *obj, isc_netaddr_t *netaddr,
 		    unsigned int *prefixlen);
 /*
  * Gets the value of a configuration object representing a network
@@ -316,13 +316,13 @@ cfg_obj_asnetprefix(cfg_obj_t *obj, isc_netaddr_t *netaddr,
  */
 
 isc_boolean_t
-cfg_obj_islist(cfg_obj_t *obj);
+cfg_obj_islist(const cfg_obj_t *obj);
 /*
  * Return true iff 'obj' is of list type.
  */
 
-cfg_listelt_t *
-cfg_list_first(cfg_obj_t *obj);
+const cfg_listelt_t *
+cfg_list_first(const cfg_obj_t *obj);
 /*
  * Returns the first list element in a configuration object of a list type.
  *
@@ -334,8 +334,8 @@ cfg_list_first(cfg_obj_t *obj);
  * 	or NULL if the list is empty or nonexistent.
  */
 
-cfg_listelt_t *
-cfg_list_next(cfg_listelt_t *elt);
+const cfg_listelt_t *
+cfg_list_next(const cfg_listelt_t *elt);
 /*
  * Returns the next element of a list of configuration objects.
  *
@@ -348,8 +348,8 @@ cfg_list_next(cfg_listelt_t *elt);
  * 	or NULL if there are no more elements.
  */
 
-cfg_obj_t *
-cfg_listelt_value(cfg_listelt_t *elt);
+const cfg_obj_t *
+cfg_listelt_value(const cfg_listelt_t *elt);
 /*
  * Returns the configuration object associated with cfg_listelt_t.
  *
@@ -362,7 +362,7 @@ cfg_listelt_value(cfg_listelt_t *elt);
  */
 
 void
-cfg_print(cfg_obj_t *obj,
+cfg_print(const cfg_obj_t *obj,
 	  void (*f)(void *closure, const char *text, int textlen),
 	  void *closure);
 /*
@@ -380,7 +380,7 @@ cfg_print_grammar(const cfg_type_t *type,
  */
 
 isc_boolean_t
-cfg_obj_istype(cfg_obj_t *obj, const cfg_type_t *type);
+cfg_obj_istype(const cfg_obj_t *obj, const cfg_type_t *type);
 /*
  * Return true iff 'obj' is of type 'type'. 
  */
@@ -391,7 +391,8 @@ void cfg_obj_destroy(cfg_parser_t *pctx, cfg_obj_t **obj);
  */
 
 void
-cfg_obj_log(cfg_obj_t *obj, isc_log_t *lctx, int level, const char *fmt, ...)
+cfg_obj_log(const cfg_obj_t *obj, isc_log_t *lctx, int level,
+            const char *fmt, ...)
 	ISC_FORMAT_PRINTF(4, 5);
 /*
  * Log a message concerning configuration object 'obj' to the logging
@@ -400,13 +401,13 @@ cfg_obj_log(cfg_obj_t *obj, isc_log_t *lctx, int level, const char *fmt, ...)
  */
 
 const char *
-cfg_obj_file(cfg_obj_t *obj);
+cfg_obj_file(const cfg_obj_t *obj);
 /*
  * Return the file that defined this object.
  */
 
 unsigned int
-cfg_obj_line(cfg_obj_t *obj);
+cfg_obj_line(const cfg_obj_t *obj);
 /*
  * Return the line in file where this object was defined.
  */

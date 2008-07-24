@@ -1,11 +1,11 @@
-/*	$NetBSD: symtab.c,v 1.1.1.1.4.1 2007/02/10 19:21:03 tron Exp $	*/
+/*	$NetBSD: symtab.c,v 1.1.1.1.4.2 2008/07/24 22:18:13 ghen Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (C) 2001  Internet Software Consortium.
+ * Portions Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2001, 2003  Internet Software Consortium.
  * Portions Copyright (C) 2001  Nominum, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -18,16 +18,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: symtab.c,v 1.3.12.3 2004/03/08 09:05:04 marka Exp */
+/* Id: symtab.c,v 1.3.12.7 2007/09/13 05:18:08 each Exp */
 
 #include <config.h>
 
 #include <ctype.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <isc/assertions.h>
 #include <isc/magic.h>
+#include <isc/string.h>
 
 #include <isccc/result.h>
 #include <isccc/symtab.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.1.1.1.4.1 2007/02/10 19:20:48 tron Exp $	*/
+/*	$NetBSD: dns.c,v 1.1.1.1.4.2 2008/07/24 22:17:56 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns.c,v 1.1.206.2 2004/03/17 00:29:47 marka Exp";
+static const char rcsid[] = "Id: dns.c,v 1.1.206.3 2006/03/10 00:17:21 marka Exp";
 #endif
 
 /*
@@ -116,7 +116,7 @@ dns_res_get(struct irs_acc *this) {
 		res = (struct __res_state *)malloc(sizeof *res);
 		if (res == NULL)
 			return (NULL);
-		memset(dns->res, 0, sizeof *dns->res);
+		memset(res, 0, sizeof *res);
 		dns_res_set(this, res, free);
 	}
 

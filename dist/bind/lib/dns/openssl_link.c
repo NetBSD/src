@@ -1,11 +1,11 @@
-/*	$NetBSD: openssl_link.c,v 1.1.1.2.2.2 2007/02/10 19:20:53 tron Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.1.1.2.2.3 2008/07/24 22:17:57 ghen Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -20,7 +20,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: openssl_link.c,v 1.1.4.1 2004/12/09 04:07:18 marka Exp
+ * Id: openssl_link.c,v 1.1.4.6 2007/08/28 07:19:13 tbox Exp
  */
 #ifdef OPENSSL
 
@@ -41,7 +41,7 @@
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
 
-#if defined(CRYPTO_LOCK_ENGINE) && (OPENSSL_VERSION_NUMBER < 0x00907000L)
+#if defined(CRYPTO_LOCK_ENGINE) && (OPENSSL_VERSION_NUMBER != 0x00907000L)
 #define USE_ENGINE 1
 #endif
 
@@ -162,7 +162,7 @@ dst__openssl_init() {
 		goto cleanup_rm;
 	}
 	ENGINE_set_RAND(e, rm);
-	RAND_set_rand_method(e);
+	RAND_set_rand_method(rm);
 #else
 	RAND_set_rand_method(rm);
 #endif
@@ -173,6 +173,7 @@ dst__openssl_init() {
 	mem_free(rm);
 #endif
  cleanup_mutexinit:
+	CRYPTO_set_locking_callback(NULL);
 	DESTROYMUTEXBLOCK(locks, nlocks);
  cleanup_mutexalloc:
 	mem_free(locks);
@@ -188,12 +189,13 @@ dst__openssl_destroy() {
 		e = NULL;
 	}
 #endif
+	if (rm != NULL)
+		mem_free(rm);
 	if (locks != NULL) {
+		CRYPTO_set_locking_callback(NULL);
 		DESTROYMUTEXBLOCK(locks, nlocks);
 		mem_free(locks);
 	}
-	if (rm != NULL)
-		mem_free(rm);
 }
 
 isc_result_t

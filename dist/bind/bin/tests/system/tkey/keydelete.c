@@ -1,7 +1,7 @@
-/*	$NetBSD: keydelete.c,v 1.1.1.2.4.1 2007/02/10 19:20:40 tron Exp $	*/
+/*	$NetBSD: keydelete.c,v 1.1.1.2.4.2 2008/07/24 22:17:52 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keydelete.c,v 1.4.206.3 2004/06/11 00:30:53 marka Exp */
+/* Id: keydelete.c,v 1.4.206.5 2006/01/04 23:50:20 marka Exp */
 
 #include <config.h>
 
@@ -120,7 +120,9 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 
 	isc_event_free(&event);
 
-	inet_pton(AF_INET, "10.53.0.1", &inaddr);
+	result = ISC_R_FAILURE;
+	if (inet_pton(AF_INET, "10.53.0.1", &inaddr) != 1)
+		CHECK("inet_pton", result);
 	isc_sockaddr_fromin(&address, &inaddr, PORT);
 
 	query = NULL;

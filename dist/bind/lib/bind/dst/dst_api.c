@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.1.4.1 2007/02/10 19:20:48 tron Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.1.4.2 2008/07/24 22:17:55 ghen Exp $	*/
 
 #ifndef LINT
-static const char rcsid[] = "Header: /proj/cvs/prod/bind9/lib/bind/dst/dst_api.c,v 1.4.2.6.8.3 2005/10/11 00:48:14 marka Exp";
+static const char rcsid[] = "Header: /proj/cvs/prod/bind9/lib/bind/dst/dst_api.c,v 1.4.2.6.8.6 2007/09/24 17:26:10 each Exp";
 #endif
 
 /*
@@ -172,6 +172,10 @@ dst_s_get_key_struct(const char *name, const int alg, const int flags,
 
 	memset(new_key, 0, sizeof(*new_key));
 	new_key->dk_key_name = strdup(name);
+	if (new_key->dk_key_name == NULL) {
+		free(new_key);
+		return (NULL);
+	}
 	new_key->dk_alg = alg;
 	new_key->dk_flags = flags;
 	new_key->dk_proto = protocol;
@@ -360,7 +364,7 @@ dst_read_key(const char *in_keyname, const u_int16_t in_id,
 					pubkey->dk_alg) == 0)
 		dg_key = dst_free_key(dg_key);
 
-	pubkey = dst_free_key(pubkey);
+	(void)dst_free_key(pubkey);
 	return (dg_key);
 }
 
@@ -436,6 +440,7 @@ dst_s_write_private_key(const DST_KEY *key)
 		if ((nn = fwrite(encoded_block, 1, len, fp)) != len) {
 			EREPORT(("dst_write_private_key(): Write failure on %s %d != %d errno=%d\n",
 				 file, len, nn, errno));
+			fclose(fp);
 			return (-5);
 		}
 		fclose(fp);
@@ -657,11 +662,13 @@ dst_dnskey_to_key(const char *in_name, const u_char *rdata, const int len)
 			 alg));
 		return (NULL);
 	}
-	if ((key_st = dst_s_get_key_struct(in_name, alg, 0, 0, 0)) == NULL)
-		return (NULL);
 
 	if (in_name == NULL)
 		return (NULL);
+
+	if ((key_st = dst_s_get_key_struct(in_name, alg, 0, 0, 0)) == NULL)
+		return (NULL);
+
 	key_st->dk_id = dst_s_dns_key_id(rdata, len);
 	key_st->dk_flags = dst_s_get_int16(rdata);
 	key_st->dk_proto = (u_int16_t) rdata[DST_KEY_PROT];
@@ -774,13 +781,11 @@ dst_buffer_to_key(const char *key_name,		/* name of the key */
 		return (NULL);
 	}
 
-	dkey = dst_s_get_key_struct(key_name, alg, flags, 
-					     protocol, -1);
+	dkey = dst_s_get_key_struct(key_name, alg, flags, protocol, -1);
 
-	if (dkey == NULL)
-		return (NULL);
-	if (dkey->dk_func == NULL || dkey->dk_func->from_dns_key == NULL)
-		return NULL;
+	if (dkey == NULL || dkey->dk_func == NULL ||
+	    dkey->dk_func->from_dns_key == NULL) 
+		return (dst_free_key(dkey));
 
 	if (dkey->dk_func->from_dns_key(dkey, key_buf, key_len) < 0) {
 		EREPORT(("dst_buffer_to_key(): dst_buffer_to_hmac failed\n"));
@@ -1015,7 +1020,6 @@ dst_free_key(DST_KEY *f_key)
 	else {
 		EREPORT(("dst_free_key(): Unknown key alg %d\n",
 			 f_key->dk_alg));
-		free(f_key->dk_KEY_struct);	/* SHOULD NOT happen */
 	}
 	if (f_key->dk_KEY_struct) {
 		free(f_key->dk_KEY_struct);

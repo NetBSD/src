@@ -1,10 +1,10 @@
-/*	$NetBSD: journalprint.c,v 1.1.1.1.4.1 2007/02/10 19:20:38 tron Exp $	*/
+/*	$NetBSD: journalprint.c,v 1.1.1.1.4.2 2008/07/24 22:17:48 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: journalprint.c,v 1.3.206.3 2005/03/17 03:58:28 marka Exp */
+/* Id: journalprint.c,v 1.3.206.8 2007/08/28 07:19:09 tbox Exp */
+
+#include <config.h>
 
 #include <isc/mem.h>
 #include <isc/util.h>
@@ -33,7 +35,7 @@ main(int argc, char **argv) {
 	isc_mem_t *mctx = NULL;
 
 	if (argc != 2) {
-		printf("usage: %s journal", argv[0]);
+		printf("usage: %s journal\n", argv[0]);
 		return(1);
 	}
 

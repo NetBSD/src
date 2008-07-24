@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.3.4.1 2007/02/10 19:20:36 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.3.4.2 2008/07/24 22:17:46 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: main.c,v 1.119.2.3.2.22 2005/04/29 01:04:47 marka Exp */
+/* Id: main.c,v 1.119.2.3.2.25 2006/11/10 18:51:06 marka Exp */
 
 #include <config.h>
 
@@ -475,7 +475,7 @@ create_managers(void) {
 	result = isc_taskmgr_create(ns_g_mctx, ns_g_cpus, 0, &ns_g_taskmgr);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "ns_taskmgr_create() failed: %s",
+				 "isc_taskmgr_create() failed: %s",
 				 isc_result_totext(result));
 		return (ISC_R_UNEXPECTED);
 	}
@@ -483,7 +483,7 @@ create_managers(void) {
 	result = isc_timermgr_create(ns_g_mctx, &ns_g_timermgr);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "ns_timermgr_create() failed: %s",
+				 "isc_timermgr_create() failed: %s",
 				 isc_result_totext(result));
 		return (ISC_R_UNEXPECTED);
 	}
@@ -858,7 +858,7 @@ main(int argc, char *argv[]) {
 		if (result == ISC_R_SUCCESS && instance != NULL) {
 			if (smf_disable_instance(instance, 0) != 0)
 				UNEXPECTED_ERROR(__FILE__, __LINE__,
-						 "smf_disable_instance() ",
+						 "smf_disable_instance() "
 						 "failed for %s : %s",
 						 instance,
 						 scf_strerror(scf_error()));

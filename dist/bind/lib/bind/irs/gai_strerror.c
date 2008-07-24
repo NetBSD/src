@@ -1,4 +1,4 @@
-/*	$NetBSD: gai_strerror.c,v 1.1.1.1.4.1 2007/02/10 19:20:49 tron Exp $	*/
+/*	$NetBSD: gai_strerror.c,v 1.1.1.1.4.2 2008/07/24 22:17:56 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -68,18 +68,28 @@ gai_strerror(int ecode) {
 
 #ifdef DO_PTHREADS
         if (!once) {
-                pthread_mutex_lock(&lock);
-                if (!once++)
-                        pthread_key_create(&key, free);
-                pthread_mutex_unlock(&lock);
+                if (pthread_mutex_lock(&lock) != 0)
+			goto unknown;
+                if (!once) {
+                        if (pthread_key_create(&key, free) != 0) {
+				(void)pthread_mutex_unlock(&lock);
+				goto unknown;
+			}
+			once = 1;
+		}
+                if (pthread_mutex_unlock(&lock) != 0)
+			goto unknown;
         }
 
 	buf = pthread_getspecific(key);
         if (buf == NULL) {
 		buf = malloc(EAI_BUFSIZE);
                 if (buf == NULL)
-                        return ("unknown error");
-                pthread_setspecific(key, buf);
+                        goto unknown;
+                if (pthread_setspecific(key, buf) != 0) {
+			free(buf);
+			goto unknown;
+		}
         }
 #endif
 	/* 
@@ -88,4 +98,9 @@ gai_strerror(int ecode) {
 	 */
 	sprintf(buf, "%s: %d", gai_errlist[gai_nerr - 1], ecode);
 	return (buf);
+
+#ifdef DO_PTHREADS
+ unknown:
+	return ("unknown error");
+#endif
 }
