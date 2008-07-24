@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.35 2008/07/16 03:15:34 snj Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.36 2008/07/24 22:34:37 ghen Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -622,4 +622,10 @@ dist/bind/win32utils/BuildOpenSSL.bat		patch
 
 	Update BIND to 9.4.2-P1 and turn off pthreads.
 	[adrianp, ticket #1168]	
+
+etc/named.conf					1.5
+
+	The default named.conf should not contain a query-source statement.
+	Comment it out and describe what it's for and why not to use it.
+	[dholland, ticket #1169]
 
