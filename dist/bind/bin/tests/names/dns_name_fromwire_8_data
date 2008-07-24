@@ -1,5 +1,5 @@
 #
-# test data for dns_name_fromwire_8
+# test data for dns_name_fromwire_9
 # format:
 #	<msgfile> <testname_offset> <downcase>
 #	<dc_method> <exp_name> <exp_result>
@@ -27,4 +27,4 @@
 #		ISC_R_UNEXPECTEDEND
 #		DNS_R_TOOMANYHOPS
 #
-wire_test8.data	383	1	DNS_COMPRESS_ALL	vix.com.	DNS_R_TOOMANYHOPS
+wire_test8.data	25	1	DNS_COMPRESS_ALL	vix.com.	ISC_R_NOSPACE

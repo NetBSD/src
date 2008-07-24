@@ -1,10 +1,10 @@
-/*	$NetBSD: syslog.c,v 1.1.1.1.2.1 2006/07/13 22:02:27 tron Exp $	*/
+/*	$NetBSD: syslog.c,v 1.1.1.1.2.2 2008/07/24 22:09:13 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,15 +17,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: syslog.c,v 1.1.12.3 2004/03/08 09:04:57 marka Exp */
+/* Id: syslog.c,v 1.1.12.7 2007/09/13 05:18:08 each Exp */
 
 #include <config.h>
 
 #include <stdlib.h>
-#include <string.h>
 #include <syslog.h>
 
 #include <isc/result.h>
+#include <isc/string.h>
 #include <isc/syslog.h>
 #include <isc/util.h>
 

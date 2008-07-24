@@ -1,10 +1,10 @@
-/*	$NetBSD: lwres_gnba.c,v 1.1.1.1.2.1 2006/07/13 22:02:29 tron Exp $	*/
+/*	$NetBSD: lwres_gnba.c,v 1.1.1.1.2.2 2008/07/24 22:09:17 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwres_gnba.c,v 1.20.2.2.8.4 2004/03/08 09:05:11 marka Exp */
+/* Id: lwres_gnba.c,v 1.20.2.2.8.8 2007/09/24 17:26:10 each Exp */
 
 #include <config.h>
 
@@ -46,7 +46,6 @@ lwres_gnbarequest_render(lwres_context_t *ctx, lwres_gnbarequest_t *req,
 	REQUIRE(req != NULL);
 	REQUIRE(req->addr.family != 0);
 	REQUIRE(req->addr.length != 0);
-	REQUIRE(req->addr.address != NULL);
 	REQUIRE(pkt != NULL);
 	REQUIRE(b != NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.c,v 1.1.1.2.2.1 2006/07/13 22:02:18 tron Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.1.1.2.2.2 2008/07/24 22:09:01 ghen Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -188,7 +188,7 @@ lookup_done(isc_task_t *task, isc_event_t *event) {
 	} else
 		byaddr->event->result = levent->result;
 	isc_event_free(&event);
-	isc_task_sendanddetach(&byaddr->task, (isc_event_t **)&byaddr->event);
+	isc_task_sendanddetach(&byaddr->task, (isc_event_t **)(void *)&byaddr->event);
 }
 
 static void

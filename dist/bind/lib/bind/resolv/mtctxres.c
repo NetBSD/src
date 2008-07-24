@@ -1,4 +1,4 @@
-/*	$NetBSD: mtctxres.c,v 1.1.1.1.2.2 2006/07/13 22:02:17 tron Exp $	*/
+/*	$NetBSD: mtctxres.c,v 1.1.1.1.2.3 2008/07/24 22:09:01 ghen Exp $	*/
 
 #include <port_before.h>
 #ifdef DO_PTHREADS
@@ -108,9 +108,10 @@ ___mtctxres(void) {
 	 */
 	if (!mt_key_initialized) {
 		static pthread_mutex_t keylock = PTHREAD_MUTEX_INITIALIZER;
-                pthread_mutex_lock(&keylock);
-		_mtctxres_init();
-                pthread_mutex_unlock(&keylock);
+                if (pthread_mutex_lock(&keylock) == 0) {
+			_mtctxres_init();
+			(void) pthread_mutex_unlock(&keylock);
+		}
 	}
 
 	/*

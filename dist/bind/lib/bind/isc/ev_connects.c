@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_connects.c,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
+/*	$NetBSD: ev_connects.c,v 1.1.1.1.2.2 2008/07/24 22:09:00 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_connects.c,v 1.4.206.2 2005/07/08 04:52:54 marka Exp";
+static const char rcsid[] = "Id: ev_connects.c,v 1.4.206.3 2006/03/10 00:17:21 marka Exp";
 #endif
 
 /* Import. */
@@ -71,7 +71,7 @@ evListen(evContext opaqueCtx, int fd, int maxconn,
 
 	OKNEW(new);
 	new->flags = EV_CONN_LISTEN;
-	OK(mode = fcntl(fd, F_GETFL, NULL));	/* side effect: validate fd. */
+	OKFREE(mode = fcntl(fd, F_GETFL, NULL), new);	/* side effect: validate fd. */
 	/*
 	 * Remember the nonblocking status.  We assume that either evSelectFD
 	 * has not been done to this fd, or that if it has then the caller
@@ -82,13 +82,13 @@ evListen(evContext opaqueCtx, int fd, int maxconn,
 	if ((mode & PORT_NONBLOCK) == 0) {
 #ifdef USE_FIONBIO_IOCTL
 		int on = 1;
-		OK(ioctl(fd, FIONBIO, (char *)&on));
+		OKFREE(ioctl(fd, FIONBIO, (char *)&on), new);
 #else
-		OK(fcntl(fd, F_SETFL, mode | PORT_NONBLOCK));
+		OKFREE(fcntl(fd, F_SETFL, mode | PORT_NONBLOCK), new);
 #endif
 		new->flags |= EV_CONN_BLOCK;
 	}
-	OK(listen(fd, maxconn));
+	OKFREE(listen(fd, maxconn), new);
 	if (evSelectFD(opaqueCtx, fd, EV_READ, listener, new, &new->file) < 0){
 		int save = errno;
 

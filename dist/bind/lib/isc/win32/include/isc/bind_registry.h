@@ -1,10 +1,10 @@
-/*	$NetBSD: bind_registry.h,v 1.1.1.1.2.1 2006/07/13 22:02:28 tron Exp $	*/
+/*	$NetBSD: bind_registry.h,v 1.1.1.1.2.2 2008/07/24 22:09:16 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: bind_registry.h,v 1.4.12.3 2004/03/08 09:05:02 marka Exp */
+/* Id: bind_registry.h,v 1.4.12.6 2007/08/28 07:19:17 tbox Exp */
 
 #ifndef ISC_BINDREGISTRY_H
 #define ISC_BINDREGISTRY_H

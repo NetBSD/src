@@ -1,10 +1,10 @@
-/*	$NetBSD: master.c,v 1.1.1.2.2.1 2006/07/13 22:02:18 tron Exp $	*/
+/*	$NetBSD: master.c,v 1.1.1.2.2.2 2008/07/24 22:09:01 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: master.c,v 1.122.2.8.2.14 2004/05/05 01:32:16 marka Exp */
+/* Id: master.c,v 1.122.2.8.2.25 2008/01/24 13:06:47 marka Exp */
 
 #include <config.h>
 
@@ -248,7 +248,8 @@ loadctx_destroy(dns_loadctx_t *lctx);
 
 #define MANYERRS(lctx, result) \
 		((result != ISC_R_SUCCESS) && \
-		((lctx)->options & DNS_MASTER_MANYERRORS) != 0)
+		 (result != ISC_R_IOERROR) && \
+		 ((lctx)->options & DNS_MASTER_MANYERRORS) != 0)
 
 #define SETRESULT(lctx, r) \
 		do { \
@@ -499,7 +500,7 @@ loadctx_create(isc_mem_t *mctx, unsigned int options, dns_name_t *top,
 
 	lctx->inc = NULL;
 	result = incctx_create(mctx, origin, &lctx->inc);
-	if (result != ISC_R_SUCCESS) 
+	if (result != ISC_R_SUCCESS)
 		goto cleanup_ctx;
 
 	if (lex != NULL) {
@@ -838,7 +839,7 @@ check_ns(dns_loadctx_t *lctx, isc_token_t *token, const char *source,
 		callback = lctx->callbacks->error;
 	else
 		callback = lctx->callbacks->warn;
-		
+
 	if (token->type == isc_tokentype_string) {
 		struct in_addr addr;
 		struct in6_addr addr6;
@@ -1119,6 +1120,7 @@ load(dns_loadctx_t *lctx) {
 					isc_mem_free(mctx, gtype);
 				if (rhs != NULL)
 					isc_mem_free(mctx, rhs);
+				range = lhs = gtype = rhs = NULL;
 				/* RANGE */
 				GETTOKEN(lctx->lex, 0, &token, ISC_FALSE);
 				range = isc_mem_strdup(mctx,
@@ -1139,7 +1141,7 @@ load(dns_loadctx_t *lctx) {
 				/* CLASS? */
 				GETTOKEN(lctx->lex, 0, &token, ISC_FALSE);
 				if (dns_rdataclass_fromtext(&rdclass,
-                                            &token.value.as_textregion)
+					    &token.value.as_textregion)
 						== ISC_R_SUCCESS) {
 					GETTOKEN(lctx->lex, 0, &token,
 						 ISC_FALSE);
@@ -1323,7 +1325,7 @@ load(dns_loadctx_t *lctx) {
 					target_save = target;
 					ictx->glue = new_name;
 					ictx->glue_in_use = new_in_use;
-					ictx->in_use[ictx->glue_in_use] = 
+					ictx->in_use[ictx->glue_in_use] =
 						ISC_TRUE;
 				} else {
 					result = commit(callbacks, lctx,
@@ -1369,7 +1371,7 @@ load(dns_loadctx_t *lctx) {
 		} else {
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
 					 "%s:%lu: isc_lex_gettoken() returned "
-					 "unexpeced token type (%d)",
+					 "unexpected token type (%d)",
 					 source, line, token.type);
 			result = ISC_R_UNEXPECTED;
 			if (MANYERRS(lctx, result)) {
@@ -1583,7 +1585,7 @@ load(dns_loadctx_t *lctx) {
 				dns_name_format(name, namebuf, sizeof(namebuf));
 				result = DNS_R_BADOWNERNAME;
 				desc = dns_result_totext(result);
-			        if ((lctx->options & DNS_MASTER_CHECKNAMESFAIL) != 0) {
+				if ((lctx->options & DNS_MASTER_CHECKNAMESFAIL) != 0) {
 					(*callbacks->error)(callbacks,
 							    "%s:%lu: %s: %s",
 							    source, line,
@@ -1633,9 +1635,9 @@ load(dns_loadctx_t *lctx) {
 			dns_name_format(ictx->current, namebuf,
 					sizeof(namebuf));
 			(*callbacks->error)(callbacks,
-				            "%s:%lu: SOA "
-			                    "record not at top of zone (%s)",
-				            source, line, namebuf);
+					    "%s:%lu: SOA "
+					    "record not at top of zone (%s)",
+					    source, line, namebuf);
 			result = DNS_R_NOTZONETOP;
 			if (MANYERRS(lctx, result)) {
 				SETRESULT(lctx, result);
@@ -1695,7 +1697,9 @@ load(dns_loadctx_t *lctx) {
 
 		if (type == dns_rdatatype_rrsig && lctx->warn_sigexpired) {
 			dns_rdata_rrsig_t sig;
-			(void)dns_rdata_tostruct(&rdata[rdcount], &sig, NULL);
+			result = dns_rdata_tostruct(&rdata[rdcount], &sig,
+						    NULL);
+			RUNTIME_CHECK(result == ISC_R_SUCCESS);
 			if (isc_serial_lt(sig.timeexpire, now)) {
 				(*callbacks->warn)(callbacks,
 						   "%s:%lu: "
@@ -1707,7 +1711,7 @@ load(dns_loadctx_t *lctx) {
 
 		if ((type == dns_rdatatype_sig || type == dns_rdatatype_nxt) &&
 		    lctx->warn_tcr && (lctx->options & DNS_MASTER_ZONE) != 0 &&
-                    (lctx->options & DNS_MASTER_SLAVE) == 0) {
+		    (lctx->options & DNS_MASTER_SLAVE) == 0) {
 			(*callbacks->warn)(callbacks, "%s:%lu: old style DNSSEC "
 					   " zone detected", source, line);
 			lctx->warn_tcr = ISC_FALSE;
@@ -1765,7 +1769,7 @@ load(dns_loadctx_t *lctx) {
 				ISC_LIST_INITANDPREPEND(glue_list, this, link);
 			else
 				ISC_LIST_INITANDPREPEND(current_list, this,
-						        link);
+							link);
 		} else if (this->ttl != lctx->ttl) {
 			(*callbacks->warn)(callbacks,
 					   "%s:%lu: "
@@ -1775,7 +1779,7 @@ load(dns_loadctx_t *lctx) {
 		}
 
 		ISC_LIST_APPEND(this->rdata, &rdata[rdcount], link);
-		if (ictx->glue != NULL) 
+		if (ictx->glue != NULL)
 			ictx->glue_line = line;
 		else
 			ictx->current_line = line;
@@ -1916,8 +1920,7 @@ dns_master_loadfile(const char *master_file, dns_name_t *top,
 	INSIST(result != DNS_R_CONTINUE);
 
  cleanup:
-	if (lctx != NULL)
-		dns_loadctx_detach(&lctx);
+	dns_loadctx_detach(&lctx);
 	return (result);
 }
 
@@ -1930,7 +1933,7 @@ dns_master_loadfileinc(const char *master_file, dns_name_t *top,
 {
 	dns_loadctx_t *lctx = NULL;
 	isc_result_t result;
-	
+
 	REQUIRE(task != NULL);
 	REQUIRE(done != NULL);
 
@@ -1950,8 +1953,7 @@ dns_master_loadfileinc(const char *master_file, dns_name_t *top,
 	}
 
  cleanup:
-	if (lctx != NULL)
-		dns_loadctx_detach(&lctx);
+	dns_loadctx_detach(&lctx);
 	return (result);
 }
 
@@ -2042,8 +2044,7 @@ dns_master_loadbuffer(isc_buffer_t *buffer, dns_name_t *top,
 	INSIST(result != DNS_R_CONTINUE);
 
  cleanup:
-	if (lctx != NULL)
-		dns_loadctx_detach(&lctx);
+	dns_loadctx_detach(&lctx);
 	return (result);
 }
 
@@ -2078,8 +2079,7 @@ dns_master_loadbufferinc(isc_buffer_t *buffer, dns_name_t *top,
 	}
 
  cleanup:
-	if (lctx != NULL)
-		dns_loadctx_detach(&lctx);
+	dns_loadctx_detach(&lctx);
 	return (result);
 }
 

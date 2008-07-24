@@ -1,7 +1,7 @@
-/*	$NetBSD: peer.h,v 1.1.1.1.2.1 2006/07/13 22:02:19 tron Exp $	*/
+/*	$NetBSD: peer.h,v 1.1.1.1.2.2 2008/07/24 22:09:07 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: peer.h,v 1.16.2.1.10.3 2004/03/06 08:13:58 marka Exp */
+/* Id: peer.h,v 1.16.2.1.10.5 2006/03/02 00:37:20 marka Exp */
 
 #ifndef DNS_PEER_H
 #define DNS_PEER_H 1
@@ -169,7 +169,8 @@ isc_result_t
 dns_peer_setkey(dns_peer_t *peer, dns_name_t **keyval);
 
 isc_result_t
-dns_peer_settransfersource(dns_peer_t *peer, isc_sockaddr_t *transfer_source);
+dns_peer_settransfersource(dns_peer_t *peer,
+			   const isc_sockaddr_t *transfer_source);
 
 isc_result_t
 dns_peer_gettransfersource(dns_peer_t *peer, isc_sockaddr_t *transfer_source);

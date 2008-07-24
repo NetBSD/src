@@ -1,8 +1,8 @@
 /*
- * Portions Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
- * Portions Copyright (C) 2001, 2003  Internet Software Consortium.
+ * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2001-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: BINDInstallDlg.cpp,v 1.6.2.6.2.12 2005/10/11 23:54:48 marka Exp */
+/* Id: BINDInstallDlg.cpp,v 1.6.2.6.2.24 2007/10/31 01:43:11 marka Exp */
 
 /*
  * Copyright (c) 1999-2000 by Nortel Networks Corporation
@@ -113,20 +113,22 @@ const FileData installFiles[] =
 	{"msvcrt.dll", FileData::WinSystem, FileData::Critical, TRUE},
 #  endif
 #endif
+#if _MSC_VER < 1400
 #if _MSC_VER >= 1310
 	{"mfc71.dll", FileData::WinSystem, FileData::Critical, TRUE},
 	{"msvcr71.dll", FileData::WinSystem, FileData::Critical, TRUE},
-#elif _MSC_VER > 1200
+#elif _MSC_VER > 1200 && _MSC_VER < 1310
 	{"mfc70.dll", FileData::WinSystem, FileData::Critical, TRUE},
 	{"msvcr70.dll", FileData::WinSystem, FileData::Critical, TRUE},
 #endif
-	{"bindevt.dll", FileData::WinSystem, FileData::Normal, FALSE},
-	{"libbind9.dll", FileData::WinSystem, FileData::Critical, FALSE},
-	{"libisc.dll", FileData::WinSystem, FileData::Critical, FALSE},
-	{"libisccfg.dll", FileData::WinSystem, FileData::Critical, FALSE},
-	{"libisccc.dll", FileData::WinSystem, FileData::Critical, FALSE},
-	{"libdns.dll", FileData::WinSystem, FileData::Critical, FALSE},
-	{"liblwres.dll", FileData::WinSystem, FileData::Critical, FALSE},
+#endif
+	{"bindevt.dll", FileData::BinDir, FileData::Normal, FALSE},
+	{"libbind9.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"libisc.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"libisccfg.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"libisccc.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"libdns.dll", FileData::BinDir, FileData::Critical, FALSE},
+	{"liblwres.dll", FileData::BinDir, FileData::Critical, FALSE},
 	{"libeay32.dll", FileData::BinDir, FileData::Critical, FALSE},
 	{"named.exe", FileData::BinDir, FileData::Critical, FALSE},
 	{"nsupdate.exe", FileData::BinDir, FileData::Normal, FALSE},
@@ -384,6 +386,9 @@ void CBINDInstallDlg::OnUninstall() {
  * User pressed the install button.  Make it go.
  */
 void CBINDInstallDlg::OnInstall() {
+#if _MSC_VER >= 1400
+	char Vcredist_x86[MAX_PATH];
+#endif
 	BOOL success = FALSE;
 	int oldlen;
 
@@ -416,25 +421,27 @@ void CBINDInstallDlg::OnInstall() {
 	}
 	
 	/*
-	 * Check that the Password is not null.
-	 */
-	if (m_accountPassword.GetLength() == 0) {
-		MsgBox(IDS_ERR_NULLPASSWORD);
-		return;
-	}
-
-	/*
 	 * Check the entered account name.
 	 */
 	if (ValidateServiceAccount() == FALSE)
 		return;
 
-
 	/*
 	 * For Registration we need to know if account was changed.
 	 */
-	if(m_accountName != m_currentAccount)
+	if (m_accountName != m_currentAccount)
 		m_accountUsed = FALSE;
+
+	if (m_accountUsed == FALSE && m_serviceExists == FALSE)
+	{
+	/*
+	 * Check that the Password is not null.
+	 */
+		if (m_accountPassword.GetLength() == 0) {
+			MsgBox(IDS_ERR_NULLPASSWORD);
+			return;
+		}
+	}
 
 	/* Directories */
 	m_etcDir = m_targetDir + "\\etc";
@@ -468,6 +475,23 @@ void CBINDInstallDlg::OnInstall() {
 
 	ProgramGroup(FALSE);
 
+#if _MSC_VER >= 1400
+	/*
+	 * Install Visual Studio libraries.  As per:
+	 * http://blogs.msdn.com/astebner/archive/2006/08/23/715755.aspx
+	 *
+	 * Vcredist_x86.exe /q:a /c:"msiexec /i vcredist.msi /qn /l*v %temp%\vcredist_x86.log"
+	 */
+	/*system(".\\Vcredist_x86.exe /q:a /c:\"msiexec /i vcredist.msi /qn /l*v %temp%\vcredist_x86.log\"");*/
+
+	/*
+	 * Enclose full path to Vcredist_x86.exe in quotes as
+	 * m_currentDir may contain spaces.
+	 */
+	sprintf(Vcredist_x86, "\"%s\\Vcredist_x86.exe\"",
+		(LPCTSTR) m_currentDir);
+	system(Vcredist_x86);
+#endif
 	try {
 		CreateDirs();
  		CopyFiles();
@@ -902,10 +926,9 @@ void CBINDInstallDlg::UnregisterService(BOOL uninstall) {
 void CBINDInstallDlg::RegisterMessages() {
 	HKEY hKey;
 	DWORD dwData;
-	char pszMsgDLL[MAX_PATH], buf[MAX_PATH];
+	char pszMsgDLL[MAX_PATH];
 
-	GetSystemDirectory(buf, MAX_PATH);
-	sprintf(pszMsgDLL, "%s\\%s", buf, "bindevt.dll");
+	sprintf(pszMsgDLL, "%s\\%s", (LPCTSTR)m_binDir, "bindevt.dll");
 
 	SetCurrent(IDS_REGISTER_MESSAGES);
 	/* Create a new key for named */

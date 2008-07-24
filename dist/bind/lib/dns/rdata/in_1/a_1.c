@@ -1,10 +1,10 @@
-/*	$NetBSD: a_1.c,v 1.1.1.1.2.1 2006/07/13 22:02:25 tron Exp $	*/
+/*	$NetBSD: a_1.c,v 1.1.1.1.2.2 2008/07/24 22:09:12 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: a_1.c,v 1.46.12.5 2004/03/08 09:04:43 marka Exp */
+/* Id: a_1.c,v 1.46.12.8 2007/08/28 07:19:15 tbox Exp */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: lwconfig.c,v 1.1.1.1 2004/05/17 23:45:11 christos Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.1.1.1.2.1 2008/07/24 22:09:19 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwconfig.c,v 1.1.222.3 2004/03/08 09:05:12 marka Exp */
+/* Id: lwconfig.c,v 1.1.222.9 2007/08/28 07:19:18 tbox Exp */
 
 /*
  * We do this so that we may incorporate everything in the main routines
@@ -69,10 +69,9 @@ get_win32_searchlist(lwres_context_t *ctx) {
 		if (RegQueryValueEx(hKey, "SearchList", NULL, NULL,
 			(LPBYTE)searchlist, &searchlen) != ERROR_SUCCESS)
 			keyFound = FALSE;
+		RegCloseKey(hKey);
 	}
 	
-	RegCloseKey(hKey);
-
 	confdata->searchnxt = 0;
 
 	idx = 0;
@@ -105,7 +104,8 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 
 	/* Use the resolver if there is one */
 	ret = generic_lwres_conf_parse(ctx, filename);
-	if (confdata->nsnext > 0)
+	if ((ret != LWRES_R_NOTFOUND && ret != LWRES_R_SUCCESS) ||
+		(ret == LWRES_R_SUCCESS && confdata->nsnext > 0))
 		return (ret);
 
 	/*
@@ -151,5 +151,5 @@ lwres_conf_parse(lwres_context_t *ctx, const char *filename) {
 	}
 
 	GlobalFree(FixedInfo);
-	return (ret);
+	return (LWRES_R_SUCCESS);
 }

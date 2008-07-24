@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_ho.c,v 1.1.1.2.2.1 2006/07/13 22:02:15 tron Exp $	*/
+/*	$NetBSD: dns_ho.c,v 1.1.1.2.2.2 2008/07/24 22:09:00 ghen Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993
@@ -54,7 +54,7 @@
 /* BIND Id: gethnamaddr.c,v 8.15 1996/05/22 04:56:30 vixie Exp $ */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns_ho.c,v 1.5.2.7.4.6 2005/10/11 00:48:14 marka Exp";
+static const char rcsid[] = "Id: dns_ho.c,v 1.5.2.7.4.9 2006/12/07 04:00:08 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports. */
@@ -220,8 +220,7 @@ ho_close(struct irs_ho *this) {
 	ho_minimize(this);
 	if (pvt->res && pvt->free_res)
 		(*pvt->free_res)(pvt->res);
-	if (pvt)
-		memput(pvt, sizeof *pvt);
+	memput(pvt, sizeof *pvt);
 	memput(this, sizeof *this);
 }
 
@@ -262,7 +261,7 @@ ho_byname2(struct irs_ho *this, const char *name, int af)
 		errno = ENOMEM;
 		goto cleanup;
 	}
-	memset(q, 0, sizeof(q));
+	memset(q, 0, sizeof(*q));
 
 	switch (af) {
 	case AF_INET:
@@ -354,8 +353,8 @@ ho_byaddr(struct irs_ho *this, const void *addr, int len, int af)
 		errno = ENOMEM;
 		goto cleanup;
 	}
-	memset(q, 0, sizeof(q));
-	memset(q2, 0, sizeof(q2));
+	memset(q, 0, sizeof(*q));
+	memset(q2, 0, sizeof(*q2));
 
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (!memcmp(uaddr, mapped, sizeof mapped) ||
@@ -580,8 +579,8 @@ ho_addrinfo(struct irs_ho *this, const char *name, const struct addrinfo *pai)
 		errno = ENOMEM;
 		goto cleanup;
 	}
-	memset(q, 0, sizeof(q2));
-	memset(q2, 0, sizeof(q2));
+	memset(q, 0, sizeof(*q2));
+	memset(q2, 0, sizeof(*q2));
 
 	switch (pai->ai_family) {
 	case AF_UNSPEC:
@@ -651,10 +650,9 @@ ho_addrinfo(struct irs_ho *this, const char *name, const struct addrinfo *pai)
 		if (ai) {
 			querystate = RESQRY_SUCCESS;
 			cur->ai_next = ai;
-			while (cur && cur->ai_next)
+			while (cur->ai_next)
 				cur = cur->ai_next;
-		}
-		else
+		} else
 			querystate = RESQRY_FAIL;
 	}
 
@@ -945,12 +943,12 @@ gethostans(struct irs_ho *this,
 			bp = (char *)(((u_long)bp + (sizeof(align) - 1)) &
 				      ~(sizeof(align) - 1));
 			/* Avoid overflows. */
-			if (bp + n >= &pvt->hostbuf[sizeof pvt->hostbuf]) {
+			if (bp + n > &pvt->hostbuf[sizeof(pvt->hostbuf) - 1]) {
 				had_error++;
 				continue;
 			}
 			if (ret_aip) { /* need addrinfo. keep it. */
-				while (cur && cur->ai_next)
+				while (cur->ai_next)
 					cur = cur->ai_next;
 			} else if (cur->ai_next) { /* need hostent */
 				struct addrinfo *aip = cur->ai_next;
@@ -1055,7 +1053,7 @@ add_hostent(struct pvt *pvt, char *bp, char **hap, struct addrinfo *ai)
 	bp = (char *)(((u_long)bp + (sizeof(align) - 1)) &
 		      ~(sizeof(align) - 1));
 	/* Avoid overflows. */
-	if (bp + addrlen >= &pvt->hostbuf[sizeof pvt->hostbuf])
+	if (bp + addrlen > &pvt->hostbuf[sizeof(pvt->hostbuf) - 1])
 		return(-1);
 	if (hap >= &pvt->h_addr_ptrs[MAXADDRS-1])
 		return(0); /* fail, but not treat it as an error. */

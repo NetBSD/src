@@ -1,7 +1,7 @@
-/*	$NetBSD: enumtype.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
+/*	$NetBSD: enumtype.h,v 1.2.2.2 2008/07/24 22:09:20 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004-2005 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -75,7 +75,7 @@ enum {
 	dns_rdatatype_unspec = 103,
 	dns_rdatatype_tkey = 249,
 	dns_rdatatype_tsig = 250,
-	dns_rdatatype_dlv = 65323,
+	dns_rdatatype_dlv = 32769,
 	dns_rdatatype_ixfr = 251,
 	dns_rdatatype_axfr = 252,
 	dns_rdatatype_mailb = 253,
