@@ -1181,7 +1181,7 @@ i_cpustates(int *states)
     int *colp;
     int color = 0;
 #ifdef ENABLE_COLOR
-    int *cidx = cpustate_cidx;
+    int *cidx;
 #endif
     int c, i;
 
@@ -1196,6 +1196,9 @@ i_cpustates(int *states)
 
     for (c = 0; c < (multi ? ncpu : 1); c++)
     {
+#ifdef ENABLE_COLOR
+    	cidx = cpustate_cidx;
+#endif
 
 	/* print tag */
 	display_write(0, y_cpustates + c, 0, 0, cpustates_tag(c));
@@ -1244,7 +1247,7 @@ u_cpustates(int *states)
     int *colp;
     int color = 0;
 #ifdef ENABLE_COLOR
-    int *cidx = cpustate_cidx;
+    int *cidx;
 #endif
     int c, i;
 
@@ -1261,6 +1264,9 @@ u_cpustates(int *states)
 
     for (c = 0; c < (multi ? ncpu : 1); c++)
     {
+#ifdef ENABLE_COLOR
+    	cidx = cpustate_cidx;
+#endif
 	colp = cpustate_columns;
 	/* we could be much more optimal about this */
 	for (names = cpustate_names; (thisname = *names++) != NULL;)
