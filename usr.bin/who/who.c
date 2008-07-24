@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.22 2008/07/21 14:19:28 lukem Exp $	*/
+/*	$NetBSD: who.c,v 1.23 2008/07/24 15:35:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.22 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: who.c,v 1.23 2008/07/24 15:35:41 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -206,6 +206,22 @@ main(int argc, char *argv[])
 	return 0;
 }
 
+static char *
+strrstr(const char *str, const char *pat)
+{
+	const char *estr;
+	size_t len;
+	if (*pat == '\0')
+		return __UNCONST(str);
+
+	len = strlen(pat);
+
+	for (estr = str + strlen(str); str < estr; estr--)
+		if (strncmp(estr, pat, len) == 0)
+			return __UNCONST(estr);
+	return NULL;
+}
+
 static void
 who_am_i(const char *fname, int show_labels)
 {
@@ -218,8 +234,9 @@ who_am_i(const char *fname, int show_labels)
 	/* search through the utmp and find an entry for this tty */
 	if ((p = ttyname(STDIN_FILENO)) != NULL) {
 
-		/* strip any directory component */
-		if ((t = strrchr(p, '/')) != NULL)
+		/* strip directory prefixes for ttys */
+		if ((t = strrstr(p, "/pts/")) != NULL ||
+		    (t = strrchr(p, '/')) != NULL)
 			p = t + 1;
 
 		(void)getutentries(fname, &ehead);
