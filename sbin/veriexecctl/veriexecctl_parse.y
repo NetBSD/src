@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.23 2007/10/01 17:01:55 xtraeme Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.24 2008/07/24 06:13:21 dholland Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -127,7 +127,7 @@ type		:	STRING {
 
 
 fingerprint	:	STRING {
-	char *fp;
+	u_char *fp;
 	size_t n;
 
 	fp = malloc(strlen($1) / 2);
@@ -200,7 +200,7 @@ eol		:	EOL
  * fails.
  */
 static size_t
-convert(u_char *fp, u_char *out)
+convert(char *fp, u_char *out)
 {
 	size_t i, count;
 	u_char value;
@@ -217,10 +217,10 @@ convert(u_char *fp, u_char *out)
 	count /= 2;
 
 #define cvt(cv) \
-	if (isdigit(cv)) \
+	if (isdigit((unsigned char) cv)) \
 		value += (cv) - '0'; \
-	else if (isxdigit(cv)) \
-		value += 10 + tolower(cv) - 'a'; \
+	else if (isxdigit((unsigned char) cv)) \
+		value += 10 + tolower((unsigned char) cv) - 'a'; \
 	else \
 		return -1
 
