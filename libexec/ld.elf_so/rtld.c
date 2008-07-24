@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.119 2008/07/23 18:16:42 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.120 2008/07/24 04:39:25 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.119 2008/07/23 18:16:42 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.120 2008/07/24 04:39:25 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -85,8 +85,13 @@ Obj_Entry      *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
-char           *_rtld_path = _PATH_RTLD;
-Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
+const char	_rtld_path[] = _PATH_RTLD;
+
+/* Initialize a fake symbol for resolving undefined weak references. */
+Elf_Sym		_rtld_sym_zero = {
+    .st_info	= ELF_ST_INFO(STB_GLOBAL, STT_NOTYPE),
+    .st_shndx	= SHN_ABS,
+};
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
 
 Search_Path    *_rtld_default_paths;
@@ -217,13 +222,21 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 {
 
 	/* Conjure up an Obj_Entry structure for the dynamic linker. */
-	_rtld_objself.path = _rtld_path;
-	_rtld_objself.pathlen = strlen(_rtld_path);
+	_rtld_objself.path = __UNCONST(_rtld_path);
+	_rtld_objself.pathlen = sizeof(_rtld_path)-1;
 	_rtld_objself.rtld = true;
 	_rtld_objself.mapbase = mapbase;
 	_rtld_objself.relocbase = relocbase;
 	_rtld_objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
 	_rtld_objself.strtab = "_rtld_sym_zero";
+
+	/*
+	 * Set value to -relocabase so that
+	 * _rtld_objself.relocbase + _rtld_smy_zero.st_value == 0
+	 * This allows unresolved references to weak symbols to be computed
+	 * to value a value of 0.
+	 */
+	_rtld_sym_zero.st_value = -(uintptr_t)relocbase;
 
 	_rtld_digest_dynamic(_rtld_path, &_rtld_objself);
 	assert(!_rtld_objself.needed);
@@ -486,10 +499,6 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	++_rtld_objmain->refcount;
 	_rtld_objmain->mainref = 1;
 	_rtld_objlist_push_tail(&_rtld_list_main, _rtld_objmain);
-
-	/* Initialize a fake symbol for resolving undefined weak references. */
-	_rtld_sym_zero.st_info = ELF_ST_INFO(STB_GLOBAL, STT_NOTYPE);
-	_rtld_sym_zero.st_shndx = SHN_ABS;
 
 	if (_rtld_trust) {
 		/*
