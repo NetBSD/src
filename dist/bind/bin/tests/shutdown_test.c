@@ -1,10 +1,10 @@
-/*	$NetBSD: shutdown_test.c,v 1.1.1.2.2.1 2006/07/13 22:02:06 tron Exp $	*/
+/*	$NetBSD: shutdown_test.c,v 1.1.1.2.2.2 2008/07/24 22:08:53 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: shutdown_test.c,v 1.18.12.5 2004/08/28 06:25:31 marka Exp */
+/* Id: shutdown_test.c,v 1.18.12.8 2007/08/28 07:19:09 tbox Exp */
 
 #include <config.h>
 

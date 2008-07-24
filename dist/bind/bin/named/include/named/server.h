@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.1.1.1.2.1 2006/07/13 22:02:05 tron Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.1.2.2 2008/07/24 22:08:48 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.h,v 1.58.2.1.10.11 2004/03/08 04:04:21 marka Exp */
+/* Id: server.h,v 1.58.2.1.10.13 2006/03/02 00:37:20 marka Exp */
 
 #ifndef NAMED_SERVER_H
 #define NAMED_SERVER_H 1
@@ -210,6 +210,6 @@ ns_server_dumprecursing(ns_server_t *server);
  * Maintain a list of dispatches that require reserved ports.
  */
 void
-ns_add_reserved_dispatch(ns_server_t *server, isc_sockaddr_t *addr);
+ns_add_reserved_dispatch(ns_server_t *server, const isc_sockaddr_t *addr);
 
 #endif /* NAMED_SERVER_H */

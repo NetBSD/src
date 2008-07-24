@@ -1,10 +1,10 @@
-/*	$NetBSD: request.c,v 1.1.1.1.2.1 2006/07/13 22:02:19 tron Exp $	*/
+/*	$NetBSD: request.c,v 1.1.1.1.2.2 2008/07/24 22:09:02 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: request.c,v 1.64.2.1.10.6 2004/03/08 09:04:31 marka Exp */
+/* Id: request.c,v 1.64.2.1.10.12 2007/08/28 07:19:13 tbox Exp */
 
 #include <config.h>
 
@@ -514,6 +514,7 @@ create_tcp_dispatch(dns_requestmgr_t *requestmgr, isc_sockaddr_t *srcaddr,
 				   isc_sockettype_tcp, &socket);
 	if (result != ISC_R_SUCCESS)
 		return (result);
+#ifndef BROKEN_TCP_BIND_BEFORE_CONNECT
 	if (srcaddr == NULL) {
 		isc_sockaddr_anyofpf(&bind_any,
 				     isc_sockaddr_pf(destaddr));
@@ -525,6 +526,7 @@ create_tcp_dispatch(dns_requestmgr_t *requestmgr, isc_sockaddr_t *srcaddr,
 	}
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
+#endif
 	attrs = 0;
 	attrs |= DNS_DISPATCHATTR_TCP;
 	attrs |= DNS_DISPATCHATTR_PRIVATE;
@@ -703,6 +705,7 @@ dns_request_createraw3(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
 		if (udptimeout == 0)
 			udptimeout = 1;
 	}
+	request->udpcount = udpretries;
 
 	/*
 	 * Create timer now.  We will set it below once.
@@ -900,6 +903,7 @@ dns_request_createvia3(dns_requestmgr_t *requestmgr, dns_message_t *message,
 		if (udptimeout == 0)
 			udptimeout = 1;
 	}
+	request->udpcount = udpretries;
 
 	/*
 	 * Create timer now.  We will set it below once.
@@ -1380,7 +1384,7 @@ req_sendevent(dns_request_t *request, isc_result_t result) {
 	task = request->event->ev_sender;
 	request->event->ev_sender = request;
 	request->event->result = result;
-	isc_task_sendanddetach(&task, (isc_event_t **)&request->event);
+	isc_task_sendanddetach(&task, (isc_event_t **)(void *)&request->event);
 }
 
 static void
@@ -1397,7 +1401,7 @@ req_destroy(dns_request_t *request) {
 	if (request->answer != NULL)
 		isc_buffer_free(&request->answer);
 	if (request->event != NULL)
-		isc_event_free((isc_event_t **)&request->event);
+		isc_event_free((isc_event_t **)(void *)&request->event);
 	if (request->dispentry != NULL)
 		dns_dispatch_removeresponse(&request->dispentry, NULL);
 	if (request->dispatch != NULL)

@@ -1,7 +1,7 @@
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
+/*	$NetBSD: rdatastruct.h,v 1.2.2.2 2008/07/24 22:09:20 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004-2005 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003 Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -23,8 +23,6 @@
  ***************   DO NOT EDIT!
  ***************
  ***************/
-
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -68,8 +66,6 @@ typedef struct dns_rdatacommon {
 		(_data)->common.rdclass = (_rdclass); \
 		ISC_LINK_INIT(&(_data)->common, link); \
 	} while (0)
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -98,8 +94,6 @@ typedef struct dns_rdata_in_a {
 } dns_rdata_in_a_t;
 
 #endif /* IN_1_A_1_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -128,8 +122,6 @@ typedef struct dns_rdata_hs_a {
 } dns_rdata_hs_a_t;
 
 #endif /* HS_4_A_1_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -160,8 +152,6 @@ typedef struct dns_rdata_ns {
 
 
 #endif /* GENERIC_NS_2_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -192,8 +182,6 @@ typedef struct dns_rdata_md {
 
 
 #endif /* GENERIC_MD_3_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -223,8 +211,6 @@ typedef struct dns_rdata_mf {
 } dns_rdata_mf_t;
 
 #endif /* GENERIC_MF_4_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -254,8 +240,6 @@ typedef struct dns_rdata_cname {
 } dns_rdata_cname_t;
 
 #endif /* GENERIC_CNAME_5_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -292,8 +276,6 @@ typedef struct dns_rdata_soa {
 
 
 #endif /* GENERIC_SOA_6_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -323,8 +305,6 @@ typedef struct dns_rdata_mb {
 } dns_rdata_mb_t;
 
 #endif /* GENERIC_MB_7_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -354,8 +334,6 @@ typedef struct dns_rdata_mg {
 } dns_rdata_mg_t;
 
 #endif /* GENERIC_MG_8_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -385,8 +363,6 @@ typedef struct dns_rdata_mr {
 } dns_rdata_mr_t;
 
 #endif /* GENERIC_MR_9_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -418,8 +394,6 @@ typedef struct dns_rdata_null {
 
 
 #endif /* GENERIC_NULL_10_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -452,8 +426,6 @@ typedef	struct dns_rdata_in_wks {
 } dns_rdata_in_wks_t;
 
 #endif /* IN_1_WKS_11_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -483,8 +455,6 @@ typedef struct dns_rdata_ptr {
 } dns_rdata_ptr_t;
 
 #endif /* GENERIC_PTR_12_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -517,8 +487,6 @@ typedef struct dns_rdata_hinfo {
 } dns_rdata_hinfo_t;
 
 #endif /* GENERIC_HINFO_13_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -549,8 +517,6 @@ typedef struct dns_rdata_minfo {
 } dns_rdata_minfo_t;
 
 #endif /* GENERIC_MINFO_14_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -581,8 +547,6 @@ typedef struct dns_rdata_mx {
 } dns_rdata_mx_t;
 
 #endif /* GENERIC_MX_15_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -634,8 +598,6 @@ isc_result_t
 dns_rdata_txt_current(dns_rdata_txt_t *, dns_rdata_txt_string_t *);
 
 #endif /* GENERIC_TXT_16_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -669,8 +631,6 @@ typedef struct dns_rdata_rp {
 
 
 #endif /* GENERIC_RP_17_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -704,8 +664,6 @@ typedef struct dns_rdata_afsdb {
 
 #endif /* GENERIC_AFSDB_18_H */
 
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -738,8 +696,6 @@ typedef struct dns_rdata_x25 {
 } dns_rdata_x25_t;
 
 #endif /* GENERIC_X25_19_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -774,8 +730,6 @@ typedef struct dns_rdata_isdn {
 } dns_rdata_isdn_t;
 
 #endif /* GENERIC_ISDN_20_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -808,8 +762,6 @@ typedef struct dns_rdata_rt {
 } dns_rdata_rt_t;
 
 #endif /* GENERIC_RT_21_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -842,8 +794,6 @@ typedef struct dns_rdata_in_nsap {
 } dns_rdata_in_nsap_t;
 
 #endif /* IN_1_NSAP_22_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -875,8 +825,6 @@ typedef struct dns_rdata_in_nsap_ptr {
 } dns_rdata_in_nsap_ptr_t;
 
 #endif /* IN_1_NSAP_PTR_23_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -918,8 +866,6 @@ typedef struct dns_rdata_sig_t {
 
 
 #endif /* GENERIC_SIG_24_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -956,8 +902,6 @@ typedef struct dns_rdata_key_t {
 
 
 #endif /* GENERIC_KEY_25_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -991,8 +935,6 @@ typedef struct dns_rdata_in_px {
 } dns_rdata_in_px_t;
 
 #endif /* IN_1_PX_26_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1029,8 +971,6 @@ typedef struct dns_rdata_gpos {
 } dns_rdata_gpos_t;
 
 #endif /* GENERIC_GPOS_27_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1061,8 +1001,6 @@ typedef struct dns_rdata_in_aaaa {
 } dns_rdata_in_aaaa_t;
 
 #endif /* IN_1_AAAA_28_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1105,13 +1043,11 @@ typedef struct dns_rdata_loc {
 } dns_rdata_loc_t;
 
 #endif /* GENERIC_LOC_29_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1999-2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -1127,7 +1063,7 @@ typedef struct dns_rdata_loc {
 #ifndef GENERIC_NXT_30_H
 #define GENERIC_NXT_30_H 1
 
-/* Id: nxt_30.h,v 1.18.12.3 2004/03/08 09:04:41 marka Exp */
+/* Id: nxt_30.h,v 1.18.12.6 2007/08/28 07:19:15 tbox Exp */
 
 /* RFC 2535 */
 
@@ -1140,8 +1076,6 @@ typedef struct dns_rdata_nxt {
 } dns_rdata_nxt_t;
 
 #endif /* GENERIC_NXT_30_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1178,8 +1112,6 @@ typedef struct dns_rdata_in_srv {
 } dns_rdata_in_srv_t;
 
 #endif /* IN_1_SRV_33_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1219,8 +1151,6 @@ typedef struct dns_rdata_in_naptr {
 } dns_rdata_in_naptr_t;
 
 #endif /* IN_1_NAPTR_35_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1253,8 +1183,6 @@ typedef struct dns_rdata_in_kx {
 } dns_rdata_in_kx_t;
 
 #endif /* IN_1_KX_36_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1289,8 +1217,6 @@ typedef struct dns_rdata_cert {
 } dns_rdata_cert_t;
 
 #endif /* GENERIC_CERT_37_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1324,8 +1250,6 @@ typedef struct dns_rdata_in_a6 {
 } dns_rdata_in_a6_t;
 
 #endif /* IN_1_A6_38_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1357,8 +1281,6 @@ typedef struct dns_rdata_dname {
 } dns_rdata_dname_t;
 
 #endif /* GENERIC_DNAME_39_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
@@ -1413,13 +1335,11 @@ isc_result_t
 dns_rdata_opt_current(dns_rdata_opt_t *, dns_rdata_opt_opcode_t *);
 
 #endif /* GENERIC_OPT_41_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -1435,7 +1355,7 @@ dns_rdata_opt_current(dns_rdata_opt_t *, dns_rdata_opt_opcode_t *);
 #ifndef IN_1_APL_42_H
 #define IN_1_APL_42_H 1
 
-/* Id: apl_42.h,v 1.1.202.3 2004/03/08 09:04:44 marka Exp */
+/* Id: apl_42.h,v 1.1.202.6 2007/08/28 07:19:15 tbox Exp */
 
 typedef struct dns_rdata_apl_ent {
 	isc_boolean_t	negative;
@@ -1470,8 +1390,6 @@ isc_result_t
 dns_rdata_apl_current(dns_rdata_in_apl_t *, dns_rdata_apl_ent_t *);
 
 #endif /* IN_1_APL_42_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
@@ -1506,8 +1424,6 @@ typedef struct dns_rdata_ds {
 } dns_rdata_ds_t;
 
 #endif /* GENERIC_DS_43_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
@@ -1542,8 +1458,6 @@ typedef struct dns_rdata_sshfp {
 } dns_rdata_sshfp_t;
 
 #endif /* GENERIC_SSHFP_44_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
@@ -1584,8 +1498,6 @@ typedef struct dns_rdata_rrsig {
 
 
 #endif /* GENERIC_DNSSIG_46_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
@@ -1619,8 +1531,6 @@ typedef struct dns_rdata_nsec {
 } dns_rdata_nsec_t;
 
 #endif /* GENERIC_NSEC_47_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
@@ -1657,8 +1567,6 @@ typedef struct dns_rdata_dnskey {
 
 
 #endif /* GENERIC_DNSKEY_48_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1689,8 +1597,6 @@ typedef struct dns_rdata_unspec_t {
 } dns_rdata_unspec_t;
 
 #endif /* GENERIC_UNSPEC_103_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
@@ -1731,8 +1637,6 @@ typedef struct dns_rdata_tkey {
 
 
 #endif /* GENERIC_TKEY_249_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -1772,10 +1676,8 @@ typedef struct dns_rdata_any_tsig {
 } dns_rdata_any_tsig_t;
 
 #endif /* ANY_255_TSIG_250_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1790,11 +1692,11 @@ typedef struct dns_rdata_any_tsig {
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dlv_65323.h,v 1.2.2.3 2004/03/15 01:02:55 marka Exp */
+/* Id: dlv_32769.h,v 1.2.4.2 2006/02/19 06:50:46 marka Exp */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
-#ifndef GENERIC_DLV_65323_H
-#define GENERIC_DLV_65323_H 1
+#ifndef GENERIC_DLV_32769_H
+#define GENERIC_DLV_32769_H 1
 
 typedef struct dns_rdata_dlv {
 	dns_rdatacommon_t	common;
@@ -1806,9 +1708,7 @@ typedef struct dns_rdata_dlv {
 	unsigned char		*digest;
 } dns_rdata_dlv_t;
 
-#endif /* GENERIC_DLV_65323_H */
-/*	$NetBSD: rdatastruct.h,v 1.2.2.1 2006/07/13 22:02:31 tron Exp $	*/
-
+#endif /* GENERIC_DLV_32769_H */
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.

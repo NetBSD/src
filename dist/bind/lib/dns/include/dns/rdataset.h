@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.h,v 1.1.1.1.2.1 2006/07/13 22:02:19 tron Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.1.1.1.2.2 2008/07/24 22:09:07 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataset.h,v 1.41.2.5.2.8 2005/03/17 03:58:31 marka Exp */
+/* Id: rdataset.h,v 1.41.2.5.2.10 2006/03/02 00:37:20 marka Exp */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -367,11 +367,11 @@ dns_rdataset_towire(dns_rdataset_t *rdataset,
 
 isc_result_t
 dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
-			  dns_name_t *owner_name,
+			  const dns_name_t *owner_name,
 			  dns_compress_t *cctx,
 			  isc_buffer_t *target,
 			  dns_rdatasetorderfunc_t order,
-			  void *order_arg,
+			  const void *order_arg,
 			  unsigned int options,
 			  unsigned int *countp);
 /*
@@ -386,11 +386,11 @@ dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
 
 isc_result_t
 dns_rdataset_towirepartial(dns_rdataset_t *rdataset,
-			   dns_name_t *owner_name,
+			   const dns_name_t *owner_name,
 			   dns_compress_t *cctx,
 			   isc_buffer_t *target,
 			   dns_rdatasetorderfunc_t order,
-			   void *order_arg,
+			   const void *order_arg,
 			   unsigned int options,
 			   unsigned int *countp,
 			   void **state);

@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.1.2.2 2006/07/13 22:02:18 tron Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.1.1.1.2.3 2008/07/24 22:09:01 ghen Exp $	*/
 
 /*
- * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
@@ -20,7 +20,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * Id: dst_api.c,v 1.1.4.1 2004/12/09 04:07:16 marka Exp
+ * Id: dst_api.c,v 1.1.4.3 2006/01/04 23:50:20 marka Exp
  */
 
 #include <config.h>
@@ -1029,8 +1029,10 @@ write_public_key(const dst_key_t *key, int type, const char *directory) {
 	}
 
 	ret = dns_name_print(key->key_name, fp);
-	if (ret != ISC_R_SUCCESS)
+	if (ret != ISC_R_SUCCESS) {
+		fclose(fp);
 		return (ret);
+	}
 
 	fprintf(fp, " ");
 

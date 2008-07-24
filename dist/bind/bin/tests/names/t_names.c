@@ -1,10 +1,10 @@
-/*	$NetBSD: t_names.c,v 1.1.1.1.2.1 2006/07/13 22:02:07 tron Exp $	*/
+/*	$NetBSD: t_names.c,v 1.1.1.1.2.2 2008/07/24 22:08:55 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: t_names.c,v 1.32.2.2.8.3 2004/03/08 21:06:23 marka Exp */
+/* Id: t_names.c,v 1.32.2.2.8.9 2008/01/17 23:45:27 tbox Exp */
 
 #include <config.h>
 
@@ -210,6 +210,7 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 		else if (('A' <= c) && (c <= 'Z'))
 			val = c - 'A'+ 10;
 		else {
+			(void)fclose(fp);
 			t_info("Bad format in datafile\n");
 			return (0);
 		}
@@ -223,6 +224,7 @@ getmsg(char *datafile_name, unsigned char *buf, int buflen, isc_buffer_t *pbuf)
 				/*
 				 * Buffer too small.
 				 */
+				(void)fclose(fp);
 				t_info("Buffer overflow error\n");
 				return (0);
 			}
@@ -568,8 +570,10 @@ t_dns_name_isabsolute(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 2) {
@@ -577,7 +581,7 @@ t_dns_name_isabsolute(void) {
 				 * label, bitpos, expected value.
 				 */
 				result = test_dns_name_isabsolute(Tokens[0],
-							        atoi(Tokens[1])
+								atoi(Tokens[1])
 								  == 0 ?
 								  ISC_FALSE :
 								  ISC_TRUE);
@@ -679,8 +683,10 @@ t_dns_name_hash(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 4) {
@@ -833,8 +839,10 @@ t_dns_name_fullcompare(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 6) {
@@ -951,8 +959,10 @@ t_dns_name_compare(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 3) {
@@ -1051,8 +1061,10 @@ t_dns_name_rdatacompare(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 3) {
@@ -1147,8 +1159,10 @@ t_dns_name_issubdomain(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 3) {
@@ -1228,8 +1242,10 @@ t_dns_name_countlabels(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 2) {
@@ -1338,8 +1354,10 @@ t_dns_name_getlabel(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 4) {
@@ -1348,7 +1366,7 @@ t_dns_name_getlabel(void) {
 				 */
 				result = test_dns_name_getlabel(Tokens[0],
 							      atoi(Tokens[1]),
-							           Tokens[2],
+								   Tokens[2],
 							      atoi(Tokens[3]));
 			} else {
 				t_info("bad format at line %d\n", line);
@@ -1466,8 +1484,10 @@ t_dns_name_getlabelsequence(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 5) {
@@ -1554,8 +1574,10 @@ t_dns_name_fromregion(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 1) {
@@ -1602,8 +1624,10 @@ t_dns_name_toregion(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 1) {
@@ -1737,8 +1761,10 @@ t_dns_name_fromtext(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 4) {
@@ -1871,8 +1897,10 @@ t_dns_name_totext(void) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 2) {
@@ -1935,10 +1963,6 @@ static const char *a48 =
 		"returns ISC_R_UNEXPECTEDEND";
 
 static const char *a49 =
-		"when there are too many compression pointers, "
-		"dns_name_fromwire() returns DNS_R_TOOMANYHOPS";
-
-static const char *a50 =
 		"when there is not enough space in target, "
 		"dns_name_fromwire(name, source, dcts, downcase, target) "
 		"returns ISC_R_NOSPACE";
@@ -2030,8 +2054,10 @@ t_dns_name_fromwire_x(const char *testfile, size_t buflen) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 6) {
@@ -2119,11 +2145,8 @@ t_dns_name_fromwire(void) {
 	t_assert("dns_name_fromwire", 7, T_REQUIRED, a48);
 	t_dns_name_fromwire_x("dns_name_fromwire_7_data", BUFLEN);
 
-	t_assert("dns_name_fromwire", 8, T_REQUIRED, a49);
-	t_dns_name_fromwire_x("dns_name_fromwire_8_data", BUFLEN);
-
-	t_assert("dns_name_fromwire", 9, T_REQUIRED, a50);
-	t_dns_name_fromwire_x("dns_name_fromwire_9_data", 2);
+	t_assert("dns_name_fromwire", 9, T_REQUIRED, a49);
+	t_dns_name_fromwire_x("dns_name_fromwire_8_data", 2);
 }
 
 
@@ -2223,8 +2246,10 @@ t_dns_name_towire_x(const char *testfile, size_t buflen) {
 			/*
 			 * Skip comment lines.
 			 */
-			if ((isspace((unsigned char)*p)) || (*p == '#'))
+			if ((isspace((unsigned char)*p)) || (*p == '#')) {
+				(void)free(p);
 				continue;
+			}
 
 			cnt = bustline(p, Tokens);
 			if (cnt == 5) {

@@ -1,10 +1,10 @@
-/*	$NetBSD: adb.c,v 1.1.1.2.2.2 2006/07/13 22:12:50 tron Exp $	*/
+/*	$NetBSD: adb.c,v 1.1.1.2.2.3 2008/07/24 22:09:01 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: adb.c,v 1.181.2.11.2.24 2005/10/14 05:19:00 marka Exp */
+/* Id: adb.c,v 1.181.2.11.2.34 2008/04/03 06:07:11 tbox Exp */
 
 /*
  * Implementation notes
@@ -2589,8 +2589,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 		}
 	}
 
-	if (bucket != DNS_ADB_INVALIDBUCKET)
-		UNLOCK(&adb->namelocks[bucket]);
+	UNLOCK(&adb->namelocks[bucket]);
 
 	return (result);
 }
@@ -2979,7 +2978,7 @@ dbfind_name(dns_adbname_t *adbname, isc_stdtime_t now, dns_rdatatype_t rdtype)
 		adbname->fetch6_err = FIND_ERR_UNEXPECTED;
 
 	result = dns_view_find(adb->view, &adbname->name, rdtype, now,
-			       NAME_GLUEOK(adbname),
+			       NAME_GLUEOK(adbname) ? DNS_DBFIND_GLUEOK : 0,
 			       ISC_TF(NAME_HINTOK(adbname)),
 			       NULL, NULL, fname, &rdataset, NULL);
 
@@ -3462,7 +3461,9 @@ dns_adb_findaddrinfo(dns_adb_t *adb, isc_sockaddr_t *sa,
 
 	port = isc_sockaddr_getport(sa);
 	addr = new_adbaddrinfo(adb, entry, port);
-	if (addr != NULL) {
+	if (addr == NULL) {
+		result = ISC_R_NOMEMORY;
+	} else {
 		inc_entry_refcnt(adb, entry, ISC_FALSE);
 		*addrp = addr;
 	}

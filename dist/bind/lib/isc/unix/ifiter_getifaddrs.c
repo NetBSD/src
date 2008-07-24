@@ -1,10 +1,10 @@
-/*	$NetBSD: ifiter_getifaddrs.c,v 1.1.1.1 2004/05/17 23:45:05 christos Exp $	*/
+/*	$NetBSD: ifiter_getifaddrs.c,v 1.1.1.1.2.1 2008/07/24 22:09:13 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ifiter_getifaddrs.c,v 1.2.68.3 2004/03/06 08:14:59 marka Exp */
+/* Id: ifiter_getifaddrs.c,v 1.2.68.6 2007/08/28 07:19:17 tbox Exp */
 
 /*
  * Obtain the list of network interfaces using the getifaddrs(3) library.
@@ -108,7 +108,9 @@ internal_current(isc_interfaceiter_t *iter) {
 
 	INSIST(ifa != NULL);
 	INSIST(ifa->ifa_name != NULL);
-	INSIST(ifa->ifa_addr != NULL);
+
+	if (ifa->ifa_addr == NULL)
+		return (ISC_R_IGNORE);
 
 	family = ifa->ifa_addr->sa_family;
 	if (family != AF_INET && family != AF_INET6)

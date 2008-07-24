@@ -1,10 +1,10 @@
-/*	$NetBSD: db.h,v 1.1.1.2.2.1 2006/07/13 22:02:19 tron Exp $	*/
+/*	$NetBSD: db.h,v 1.1.1.2.2.2 2008/07/24 22:09:07 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: db.h,v 1.67.12.8 2004/05/14 05:06:41 marka Exp */
+/* Id: db.h,v 1.67.12.11 2007/08/28 07:19:14 tbox Exp */
 
 #ifndef DNS_DB_H
 #define DNS_DB_H 1
@@ -854,7 +854,7 @@ dns_db_attachnode(dns_db_t *db, dns_dbnode_t *source, dns_dbnode_t **targetp);
  *
  *	'source' is a valid node.
  *
- *	'targetp' points to a NULL dns_node_t *.
+ *	'targetp' points to a NULL dns_dbnode_t *.
  *
  * Ensures:
  *

@@ -124,6 +124,13 @@ isc_hash_ctxdetach
 isc_hash_ctxinit
 isc_hash_destroy
 isc_hash_init
+isc_heap_create
+isc_heap_decreased
+isc_heap_delete
+isc_heap_destroy
+isc_heap_element
+isc_heap_increased
+isc_heap_insert
 isc_hex_decodestring
 isc_hex_tobuffer
 isc_hex_totext
@@ -158,7 +165,6 @@ isc_lex_openbuffer
 isc_lex_openfile
 isc_lex_openstream
 isc_lex_setcomments
-isc_lex_setcomments
 isc_lex_setspecials
 isc_lex_ungettoken
 isc_lfsr_generate
@@ -169,8 +175,6 @@ isc_lib_initmsgcat
 isc_log_categorybyname
 isc_log_closefilelogs
 isc_log_create
-isc_log_createchannel
-isc_log_createchannel
 isc_log_createchannel
 isc_log_destroy
 isc_log_getdebuglevel
@@ -193,7 +197,6 @@ isc_log_vwrite
 isc_log_vwrite1
 isc_log_wouldlog
 isc_log_write
-isc_log_write
 isc_log_write1
 isc_logconfig_create
 isc_logconfig_destroy
@@ -204,12 +207,9 @@ isc_md5_init
 isc_md5_invalidate
 isc_md5_update
 isc_mem_attach
-isc_mem_attach
 isc_mem_create
 isc_mem_createx
 isc_mem_destroy
-isc_mem_detach
-isc_mem_detach
 isc_mem_detach
 isc_mem_getquota
 isc_mem_inuse
@@ -236,18 +236,13 @@ isc_msgcat_open
 isc_mutexblock_destroy
 isc_mutexblock_init
 isc_net_aton
-isc_net_aton
 isc_net_disableipv4
 isc_net_disableipv6
-isc_net_ntop
 isc_net_ntop
 isc_net_probe_ipv6only
 isc_net_probe_ipv6pktinfo
 isc_net_probeipv4
-isc_net_probeipv4
 isc_net_probeipv6
-isc_net_probeipv6
-isc_net_pton
 isc_net_pton
 isc_netaddr_any
 isc_netaddr_any6
@@ -366,7 +361,6 @@ isc_stdtime_get
 isc_string_separate
 isc_string_strlcat
 isc_string_strlcpy
-isc_string_strlcpy
 isc_string_touint64
 isc_symtab_create
 isc_symtab_define
@@ -380,7 +374,6 @@ isc_task_create
 isc_task_destroy
 isc_task_detach
 isc_task_endexclusive
-isc_task_endexclusive
 isc_task_getcurrenttime
 isc_task_getname
 isc_task_gettag
@@ -389,7 +382,6 @@ isc_task_purge
 isc_task_purgeevent
 isc_task_purgerange
 isc_task_send
-isc_task_sendanddetach
 isc_task_sendanddetach
 isc_task_setname
 isc_task_shutdown
@@ -401,10 +393,7 @@ isc_taskpool_create
 isc_taskpool_destroy
 isc_taskpool_gettask
 isc_thread_create
-isc_thread_create
 isc_thread_join
-isc_thread_join
-isc_thread_setconcurrency
 isc_thread_setconcurrency
 isc_time_add
 isc_time_compare
@@ -413,8 +402,8 @@ isc_time_microdiff
 isc_time_nanoseconds
 isc_time_now
 isc_time_nowplusinterval
+isc_time_seconds
 isc_time_settoepoch
-isc_time_subtract
 isc_time_subtract
 isc_timer_attach
 isc_timer_create

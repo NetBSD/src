@@ -1,10 +1,10 @@
-/*	$NetBSD: timer.c,v 1.1.1.1.2.1 2006/07/13 22:02:26 tron Exp $	*/
+/*	$NetBSD: timer.c,v 1.1.1.1.2.2 2008/07/24 22:09:12 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 1998-2002  Internet Software Consortium.
+ * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timer.c,v 1.64.12.11 2005/10/27 00:27:29 marka Exp */
+/* Id: timer.c,v 1.64.12.17 2007/10/24 01:08:01 marka Exp */
 
 #include <config.h>
 
@@ -214,9 +214,10 @@ schedule(isc_timer_t *timer, isc_time_t *now, isc_boolean_t signal_ok) {
 		isc_time_t then;
 
 		isc_interval_set(&fifteen, 15, 0);
-		isc_time_add(&manager->due, &fifteen, &then);
+		result = isc_time_add(&manager->due, &fifteen, &then);
 
-		if (isc_time_compare(&then, now) < 0) {
+		if (result == ISC_R_SUCCESS &&
+		    isc_time_compare(&then, now) < 0) {
 			SIGNAL(&manager->wakeup);
 			signal_ok = ISC_FALSE;
 			isc_log_write(isc_lctx, ISC_LOGCATEGORY_GENERAL,
@@ -349,8 +350,10 @@ isc_timer_create(isc_timermgr_t *manager, isc_timertype_t type,
 
 	if (type == isc_timertype_once && !isc_interval_iszero(interval)) {
 		result = isc_time_add(&now, interval, &timer->idle);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
+			isc_mem_put(manager->mctx, timer, sizeof(*timer));
 			return (result);
+		}
 	} else
 		isc_time_settoepoch(&timer->idle);
 
@@ -581,6 +584,7 @@ dispatch(isc_timermgr_t *manager, isc_time_t *now) {
 	isc_eventtype_t type = 0;
 	isc_timer_t *timer;
 	isc_result_t result;
+	isc_boolean_t idle;
 
 	/*
 	 * The caller must be holding the manager lock.
@@ -612,23 +616,33 @@ dispatch(isc_timermgr_t *manager, isc_time_t *now) {
 				type = ISC_TIMEREVENT_LIFE;
 				post_event = ISC_TRUE;
 				need_schedule = ISC_FALSE;
-			} else if (!isc_time_isepoch(&timer->idle) &&
-				   isc_time_compare(now,
-						    &timer->idle) >= 0) {
-				type = ISC_TIMEREVENT_IDLE;
-				post_event = ISC_TRUE;
-				need_schedule = ISC_FALSE;
 			} else {
-				/*
-				 * Idle timer has been touched; reschedule.
-				 */
-				XTRACEID(isc_msgcat_get(isc_msgcat,
-							ISC_MSGSET_TIMER,
-							ISC_MSG_IDLERESCHED,
-							"idle reschedule"),
-					 timer);
-				post_event = ISC_FALSE;
-				need_schedule = ISC_TRUE;
+				idle = ISC_FALSE;
+
+				LOCK(&timer->lock);
+				if (!isc_time_isepoch(&timer->idle) &&
+				    isc_time_compare(now,
+						     &timer->idle) >= 0) {
+					idle = ISC_TRUE;
+				}
+				UNLOCK(&timer->lock);
+				if (idle) {
+					type = ISC_TIMEREVENT_IDLE;
+					post_event = ISC_TRUE;
+					need_schedule = ISC_FALSE;
+				} else {
+					/*
+					 * Idle timer has been touched;
+					 * reschedule.
+					 */
+					XTRACEID(isc_msgcat_get(isc_msgcat,
+								ISC_MSGSET_TIMER,
+								ISC_MSG_IDLERESCHED,
+								"idle reschedule"),
+						 timer);
+					post_event = ISC_FALSE;
+					need_schedule = ISC_TRUE;
+				}
 			}
 
 			if (post_event) {
