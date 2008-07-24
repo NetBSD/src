@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.50 2008/04/28 20:23:07 martin Exp $	*/
+/*	$NetBSD: atactl.c,v 1.51 2008/07/24 05:21:12 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.50 2008/04/28 20:23:07 martin Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.51 2008/07/24 05:21:12 dholland Exp $");
 #endif
 
 
@@ -806,7 +806,40 @@ is_smart(void)
 	}
 	return retval;
 }
-					
+
+/*
+ * extract_string: copy a block of bytes out of ataparams and make
+ * a proper string out of it, truncating trailing spaces and preserving
+ * strict typing. And also, not doing unaligned accesses.
+ */
+static void
+extract_string(char *buf, size_t bufmax,
+	       uint8_t *bytes, unsigned numbytes,
+	       int needswap)
+{
+	unsigned i;
+	size_t j;
+	unsigned char ch1, ch2;
+
+	for (i = 0, j = 0; i < numbytes; i += 2) {
+		ch1 = bytes[i];
+		ch2 = bytes[i+1];
+		if (needswap && j < bufmax-1) {
+			buf[j++] = ch2;
+		}
+		if (j < bufmax-1) {
+			buf[j++] = ch1;
+		}
+		if (!needswap && j < bufmax-1) {
+			buf[j++] = ch2;
+		}
+	}
+	while (j > 0 && buf[j-1] == ' ') {
+		j--;
+	}
+	buf[j] = '\0';
+}
+
 /*
  * DEVICE COMMANDS
  */
@@ -820,10 +853,10 @@ void
 device_identify(int argc, char *argv[])
 {
 	struct ataparams *inqbuf;
-#if BYTE_ORDER == LITTLE_ENDIAN
-	int i;
-	u_int16_t *p;
-#endif
+	char model[sizeof(inqbuf->atap_model)];
+	char revision[sizeof(inqbuf->atap_revision)];
+	char serial[sizeof(inqbuf->atap_serial)];
+	int needswap = 0;
 
 	/* No arguments. */
 	if (argc != 0)
@@ -843,48 +876,25 @@ device_identify(int argc, char *argv[])
 		  inqbuf->atap_model[1] == 'E') ||
 	       (inqbuf->atap_model[0] == 'F' &&
 		  inqbuf->atap_model[1] == 'X')))) {
-		for (i = 0 ; i < sizeof(inqbuf->atap_model); i += 2) {
-			p = (u_short *) (inqbuf->atap_model + i);
-			*p = ntohs(*p);
-		}
-		for (i = 0 ; i < sizeof(inqbuf->atap_serial); i += 2) {
-			p = (u_short *) (inqbuf->atap_serial + i);
-			*p = ntohs(*p);
-		}
-		for (i = 0 ; i < sizeof(inqbuf->atap_revision); i += 2) {
-			p = (u_short *) (inqbuf->atap_revision + i);
-			*p = ntohs(*p);
-		}
+		needswap = 1;
 	}
 #endif
 
 	/*
-	 * Strip blanks off of the info strings.  Yuck, I wish this was
-	 * cleaner.
+	 * Copy the info strings out, stripping off blanks.
 	 */
+	extract_string(model, sizeof(model),
+		inqbuf->atap_model, sizeof(inqbuf->atap_model),
+		needswap);
+	extract_string(revision, sizeof(revision),
+		inqbuf->atap_revision, sizeof(inqbuf->atap_revision),
+		needswap);
+	extract_string(serial, sizeof(serial),
+		inqbuf->atap_serial, sizeof(inqbuf->atap_serial),
+		needswap);
 
-	if (inqbuf->atap_model[sizeof(inqbuf->atap_model) - 1] == ' ') {
-		inqbuf->atap_model[sizeof(inqbuf->atap_model) - 1] = '\0';
-		while (inqbuf->atap_model[strlen(inqbuf->atap_model) - 1] == ' ')
-			inqbuf->atap_model[strlen(inqbuf->atap_model) - 1] = '\0';
-	}
-
-	if (inqbuf->atap_revision[sizeof(inqbuf->atap_revision) - 1] == ' ') {
-		inqbuf->atap_revision[sizeof(inqbuf->atap_revision) - 1] = '\0';
-		while (inqbuf->atap_revision[strlen(inqbuf->atap_revision) - 1] == ' ')
-			inqbuf->atap_revision[strlen(inqbuf->atap_revision) - 1] = '\0';
-	}
-
-	if (inqbuf->atap_serial[sizeof(inqbuf->atap_serial) - 1] == ' ') {
-		inqbuf->atap_serial[sizeof(inqbuf->atap_serial) - 1] = '\0';
-		while (inqbuf->atap_serial[strlen(inqbuf->atap_serial) - 1] == ' ')
-			inqbuf->atap_serial[strlen(inqbuf->atap_serial) - 1] = '\0';
-	}
-
-	printf("Model: %.*s, Rev: %.*s, Serial #: %.*s\n",
-	       (int) sizeof(inqbuf->atap_model), inqbuf->atap_model,
-	       (int) sizeof(inqbuf->atap_revision), inqbuf->atap_revision,
-	       (int) sizeof(inqbuf->atap_serial), inqbuf->atap_serial);
+	printf("Model: %s, Rev: %s, Serial #: %s\n",
+		model, revision, serial);
 
 	printf("Device type: %s, %s\n", inqbuf->atap_config & WDC_CFG_ATAPI ?
 	       "ATAPI" : "ATA", inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" :
