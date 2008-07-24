@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_ng.c,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
+/*	$NetBSD: irp_ng.c,v 1.1.1.1.2.2 2008/07/24 22:09:00 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irp_ng.c,v 1.1.206.1 2004/03/09 08:33:37 marka Exp";
+static const char rcsid[] = "Id: irp_ng.c,v 1.1.206.2 2006/12/07 04:52:50 marka Exp";
 #endif
 
 /* Imports */
@@ -241,13 +241,13 @@ ng_test(struct irs_ng *this, const char *name,
 	}
 
 	if (irs_irp_send_command(pvt->girpdata, "innetgr %s", body) == 0) {
-		memput(body, bodylen);
-
 		code = irs_irp_read_response(pvt->girpdata, text, sizeof text);
 		if (code == IRPD_GETNETGR_MATCHES) {
 			rval = 1;
 		}
 	}
+
+	memput(body, bodylen);
 
 	return (rval);
 }

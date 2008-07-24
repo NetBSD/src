@@ -1,5 +1,5 @@
-Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
-Copyright (C) 2000, 2001  Internet Software Consortium.
+Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
 This is a simple test environment for running bind9 system tests
@@ -51,4 +51,4 @@ The tests can be run individually like this:
 To run all the tests, just type "make test".
 
 
-Id: README,v 1.9.4.2.10.1 2004/03/08 04:04:32 marka Exp
+Id: README,v 1.9.4.2.10.3 2007/01/18 00:06:05 marka Exp

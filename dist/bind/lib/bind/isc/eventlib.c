@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib.c,v 1.1.1.1.2.1 2006/07/13 22:02:15 tron Exp $	*/
+/*	$NetBSD: eventlib.c,v 1.1.1.1.2.2 2008/07/24 22:09:00 ghen Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: eventlib.c,v 1.2.2.1.4.5 2005/07/28 07:43:20 marka Exp";
+static const char rcsid[] = "Id: eventlib.c,v 1.2.2.1.4.6 2006/03/10 00:17:21 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -786,13 +786,10 @@ pselect(int nfds, void *rfds, void *wfds, void *efds,
 		pnfds = 0;
 	}
 	n = poll(fds, pnfds, polltimeout);
-	/*
-	 * pselect() should return the total number of events on the file
-	 * desriptors, not just the count of fd:s with activity. Hence,
-	 * traverse the pollfds array and count the events.
-	 */
 	if (n > 0) {
 		int     i, e;
+
+		INSIST(ctx != NULL);
 		for (e = 0, i = ctx->firstfd; i <= ctx->fdMax; i++) {
 			if (ctx->pollfds[i].fd < 0)
 				continue;

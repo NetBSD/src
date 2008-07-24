@@ -1,10 +1,10 @@
-/*	$NetBSD: lwtest.c,v 1.1.1.1.2.1 2006/07/13 22:02:07 tron Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.1.1.1.2.2 2008/07/24 22:08:55 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000-2002  Internet Software Consortium.
+ * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,15 +17,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwtest.c,v 1.22.2.4.2.4 2004/03/08 04:04:37 marka Exp */
+/* Id: lwtest.c,v 1.22.2.4.2.10 2008/01/14 23:45:30 tbox Exp */
 
 #include <config.h>
 
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <isc/net.h>
+#include <isc/string.h>
 
 #include <lwres/lwres.h>
 #include <lwres/netdb.h>
@@ -352,6 +352,7 @@ test_getipnodebyname(const char *name, const char *address, int af,
 		if (hp->h_addrtype != af) {
 			printf("I:getipnodebyname(%s) returned wrong family\n",
 			       name);
+			freehostent(hp);
 			fails++;
 			return;
 		}
@@ -363,6 +364,7 @@ test_getipnodebyname(const char *name, const char *address, int af,
 					outbuf, sizeof(outbuf));
 			printf("I:getipnodebyname(%s) returned %s, "
 			       "expected %s\n", name, outbuf, address);
+			freehostent(hp);
 			fails++;
 			return;
 		}
@@ -429,20 +431,21 @@ test_getipnodebyaddr(const char *address, int af, const char *name) {
 		if (name == NULL && error_num == HOST_NOT_FOUND)
 			return;
 		else if (error_num != HOST_NOT_FOUND) {
-			printf("I:gethostbyaddr(%s) failed: %d\n",
+			printf("I:getipnodebyaddr(%s) failed: %d\n",
 			       address, error_num);
 			fails++;
 			return;
 		} else {
-			printf("I:gethostbyaddr(%s) returned not found\n",
+			printf("I:getipnodebyaddr(%s) returned not found\n",
 			       address);
 			fails++;
 			return;
 		}
 	} else {
 		if (strcmp(hp->h_name, name) != 0) {
-			printf("I:gethostbyname(%s) returned %s, "
+			printf("I:getipnodebyaddr(%s) returned %s, "
 			       "expected %s\n", address, hp->h_name, name);
+			freehostent(hp);
 			fails++;
 			return;
 		}
@@ -590,12 +593,12 @@ test_getnameinfo(const char *address, int af, const char *name) {
 		}
 	} else {
 		if (name == NULL) {
-			printf("I:getaddrinfo(%s) returned %s, "
+			printf("I:getnameinfo(%s) returned %s, "
 			       "expected NULL\n", address, host);
 			fails++;
 			return;
 		} else if (strcmp(host, name) != 0) {
-			printf("I:getaddrinfo(%s) returned %s, expected %s\n",
+			printf("I:getnameinfo(%s) returned %s, expected %s\n",
 			       address, host, name);
 			fails++;
 			return;

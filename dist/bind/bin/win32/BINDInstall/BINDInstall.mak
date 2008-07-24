@@ -30,6 +30,81 @@ MTL=midl.exe
 RSC=rc.exe
 
 !IF  "$(CFG)" == "BINDInstall - Win32 Release"
+_VC_MANIFEST_INC=0
+_VC_MANIFEST_BASENAME=__VC80
+!ELSE
+_VC_MANIFEST_INC=1
+_VC_MANIFEST_BASENAME=__VC80.Debug
+!ENDIF
+
+####################################################
+# Specifying name of temporary resource file used only in incremental builds:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+_VC_MANIFEST_AUTO_RES=$(_VC_MANIFEST_BASENAME).auto.res
+!else
+_VC_MANIFEST_AUTO_RES=
+!endif
+
+####################################################
+# _VC_MANIFEST_EMBED_EXE - command to embed manifest in EXE:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+#MT_SPECIAL_RETURN=1090650113
+#MT_SPECIAL_SWITCH=-notify_resource_update
+MT_SPECIAL_RETURN=0
+MT_SPECIAL_SWITCH=
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
+if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
+rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
+link $** /out:$@ $(LFLAGS)
+
+!else
+
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;1
+
+!endif
+
+####################################################
+# _VC_MANIFEST_EMBED_DLL - command to embed manifest in DLL:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+#MT_SPECIAL_RETURN=1090650113
+#MT_SPECIAL_SWITCH=-notify_resource_update
+MT_SPECIAL_RETURN=0
+MT_SPECIAL_SWITCH=
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -out:$(_VC_MANIFEST_BASENAME).auto.manifest $(MT_SPECIAL_SWITCH) & \
+if "%ERRORLEVEL%" == "$(MT_SPECIAL_RETURN)" \
+rc /r $(_VC_MANIFEST_BASENAME).auto.rc & \
+link $** /out:$@ $(LFLAGS)
+
+!else
+
+_VC_MANIFEST_EMBED_EXE= \
+if exist $@.manifest mt.exe -manifest $@.manifest -outputresource:$@;2
+
+!endif
+####################################################
+# _VC_MANIFEST_CLEAN - command to clean resources files generated temporarily:
+
+!if "$(_VC_MANIFEST_INC)" == "1"
+
+_VC_MANIFEST_CLEAN=-del $(_VC_MANIFEST_BASENAME).auto.res \
+    $(_VC_MANIFEST_BASENAME).auto.rc \
+    $(_VC_MANIFEST_BASENAME).auto.manifest
+
+!else
+
+_VC_MANIFEST_CLEAN=
+
+!endif
+
+!IF  "$(CFG)" == "BINDInstall - Win32 Release"
 
 OUTDIR=.\Release
 INTDIR=.\Release
@@ -49,13 +124,14 @@ CLEAN :
 	-@erase "$(INTDIR)\vc60.idb"
 	-@erase "$(INTDIR)\VersionInfo.obj"
 	-@erase "..\..\..\Build\Release\BINDInstall.exe"
+	-@$(_VC_MANIFEST_CLEAN)
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_AFXDLL" /Fp"$(INTDIR)\BINDInstall.pch" /Yu"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
+CPP_PROJ=/nologo /MT /W3 /GX /O2 /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Fp"$(INTDIR)\BINDInstall.pch" /Yu"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
-RSC_PROJ=/l 0x409 /fo"$(INTDIR)\BINDInstall.res" /d "NDEBUG" /d "_AFXDLL" 
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\BINDInstall.res" /d "NDEBUG"
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\BINDInstall.bsc" 
 BSC32_SBRS= \
@@ -76,6 +152,7 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
+    $(_VC_MANIFEST_EMBED_EXE)
 
 !ELSEIF  "$(CFG)" == "BINDInstall - Win32 Debug"
 
@@ -109,13 +186,14 @@ CLEAN :
 	-@erase "$(INTDIR)\VersionInfo.sbr"
 	-@erase "$(OUTDIR)\BINDInstall.bsc"
 	-@erase "..\..\..\Build\Debug\BINDInstall.exe"
+	-@$(_VC_MANIFEST_CLEAN)
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MDd /W3 /Gm /GX /Zi /Od /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_AFXDLL" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\BINDInstall.pch" /Yu"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
+CPP_PROJ=/nologo /MTd /W3 /Gm /GX /Zi /Od /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\BINDInstall.pch" /Yu"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
-RSC_PROJ=/l 0x409 /fo"$(INTDIR)\BINDInstall.res" /d "_DEBUG" /d "_AFXDLL" 
+RSC_PROJ=/l 0x409 /fo"$(INTDIR)\BINDInstall.res" /d "_DEBUG"
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\BINDInstall.bsc" 
 BSC32_SBRS= \
@@ -148,6 +226,7 @@ LINK32_OBJS= \
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
+    $(_VC_MANIFEST_EMBED_EXE)
 
 !ENDIF 
 
@@ -260,7 +339,7 @@ SOURCE=..\..\..\lib\isc\win32\ntgroups.c
 
 !IF  "$(CFG)" == "BINDInstall - Win32 Release"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /O2 /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_AFXDLL" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
+CPP_SWITCHES=/nologo /MT /W3 /GX /O2 /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
 
 "$(INTDIR)\ntgroups.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -270,7 +349,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /O2 /I "..\include" /I "..\..\..\include" /I ".
 
 !ELSEIF  "$(CFG)" == "BINDInstall - Win32 Debug"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /Zi /Od /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_AFXDLL" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
+CPP_SWITCHES=/nologo /MTd /W3 /Gm /GX /Zi /Od /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /FR"$(INTDIR)\\" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
 
 "$(INTDIR)\ntgroups.obj"	"$(INTDIR)\ntgroups.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -284,7 +363,7 @@ SOURCE=.\StdAfx.cpp
 
 !IF  "$(CFG)" == "BINDInstall - Win32 Release"
 
-CPP_SWITCHES=/nologo /MD /W3 /GX /O2 /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_AFXDLL" /Fp"$(INTDIR)\BINDInstall.pch" /Yc"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
+CPP_SWITCHES=/nologo /MT /W3 /GX /O2 /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Fp"$(INTDIR)\BINDInstall.pch" /Yc"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /c 
 
 "$(INTDIR)\StdAfx.obj"	"$(INTDIR)\BINDInstall.pch" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -294,7 +373,7 @@ CPP_SWITCHES=/nologo /MD /W3 /GX /O2 /I "..\include" /I "..\..\..\include" /I ".
 
 !ELSEIF  "$(CFG)" == "BINDInstall - Win32 Debug"
 
-CPP_SWITCHES=/nologo /MDd /W3 /Gm /GX /Zi /Od /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_AFXDLL" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\BINDInstall.pch" /Yc"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
+CPP_SWITCHES=/nologo /MTd /W3 /Gm /GX /Zi /Od /I "..\include" /I "..\..\..\include" /I "..\..\named\win32\include" /I "..\..\..\lib\isc\win32\include" /I "..\..\..\lib\isc\include" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /FR"$(INTDIR)\\" /Fp"$(INTDIR)\BINDInstall.pch" /Yc"stdafx.h" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /TP /GZ /c 
 
 "$(INTDIR)\StdAfx.obj"	"$(INTDIR)\StdAfx.sbr"	"$(INTDIR)\BINDInstall.pch" : $(SOURCE) "$(INTDIR)"
 	$(CPP) @<<
@@ -329,3 +408,21 @@ SOURCE=.\BINDInstall.rc
 
 !ENDIF 
 
+####################################################
+# Commands to generate initial empty manifest file and the RC file
+# that references it, and for generating the .res file:
+
+$(_VC_MANIFEST_BASENAME).auto.res : $(_VC_MANIFEST_BASENAME).auto.rc
+
+$(_VC_MANIFEST_BASENAME).auto.rc : $(_VC_MANIFEST_BASENAME).auto.manifest
+    type <<$@
+#include <winuser.h>
+1RT_MANIFEST"$(_VC_MANIFEST_BASENAME).auto.manifest"
+<< KEEP
+
+$(_VC_MANIFEST_BASENAME).auto.manifest :
+    type <<$@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<assembly xmlns='urn:schemas-microsoft-com:asm.v1' manifestVersion='1.0'>
+</assembly>
+<< KEEP

@@ -1,7 +1,7 @@
-/*	$NetBSD: portlist.c,v 1.1.1.1 2004/05/17 23:44:51 christos Exp $	*/
+/*	$NetBSD: portlist.c,v 1.1.1.1.2.1 2008/07/24 22:09:02 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: portlist.c,v 1.3.72.4 2004/03/16 05:50:21 marka Exp */
+/* Id: portlist.c,v 1.3.72.6 2006/08/25 05:25:50 marka Exp */
+
+#include <config.h>
 
 #include <stdlib.h>
 

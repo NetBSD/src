@@ -1,7 +1,7 @@
-/*	$NetBSD: symtab.h,v 1.1.1.1.2.1 2006/07/13 22:02:27 tron Exp $	*/
+/*	$NetBSD: symtab.h,v 1.1.1.1.2.2 2008/07/24 22:09:13 ghen Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: symtab.h,v 1.16.206.1 2004/03/06 08:14:49 marka Exp */
+/* Id: symtab.h,v 1.16.206.3 2006/03/02 00:37:20 marka Exp */
 
 #ifndef ISC_SYMTAB_H
 #define ISC_SYMTAB_H 1
@@ -90,6 +90,7 @@
 
 typedef union isc_symvalue {
 	void *				as_pointer;
+	const void *			as_cpointer;
 	int				as_integer;
 	unsigned int			as_uinteger;
 } isc_symvalue_t;
