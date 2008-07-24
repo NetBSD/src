@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.26 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.27 2008/07/24 04:39:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.26 2008/04/28 20:23:03 martin Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.27 2008/07/24 04:39:25 matt Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -592,7 +592,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	assert(ELF_R_SYM(rela->r_info) != 0);
 
 	err = _rtld_relocate_plt_object(obj, rela, &new_value); 
-	if (err)
+	if (err || new_value == 0)
 		_rtld_die();
 
 	return (caddr_t)new_value;
