@@ -1010,7 +1010,7 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 {
 	struct drm_i915_private *dev_priv;
 	unsigned long base, size;
-	int ret = 0, mmio_bar = IS_I9XX(dev) ? 0 : 1;
+	int ret = 0, num_pipes = 2, mmio_bar = IS_I9XX(dev) ? 0 : 1;
 
 	/* i915 has 4 more counters */
 	dev->counters += 4;
@@ -1041,12 +1041,57 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	intel_opregion_init(dev);
 #endif
 
+	I915_WRITE16(HWSTAM, 0xeffe);
+	I915_WRITE16(IMR, 0x0);
+	I915_WRITE16(IER, 0x0);
+
+	DRM_SPININIT(&dev_priv->swaps_lock, "swap");
+	INIT_LIST_HEAD(&dev_priv->vbl_swaps.head);
+	dev_priv->swaps_pending = 0;
+
+	DRM_SPININIT(&dev_priv->user_irq_lock, "userirq");
+	dev_priv->user_irq_refcount = 0;
+	dev_priv->irq_enable_reg = 0;
+
+	ret = drm_vblank_init(dev, num_pipes);
+	if (ret)
+		return ret;
+
+	dev_priv->vblank_pipe = DRM_I915_VBLANK_PIPE_A | DRM_I915_VBLANK_PIPE_B;
+	dev->max_vblank_count = 0xffffff; /* only 24 bits of frame count */
+
+	i915_enable_interrupt(dev);
+	DRM_INIT_WAITQUEUE(&dev_priv->irq_queue);
+
+	/*
+	 * Initialize the hardware status page IRQ location.
+	 */
+
+	I915_WRITE(INSTPM, (1 << 5) | (1 << 21));
+
 	return ret;
 }
 
 int i915_driver_unload(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
+	u32 temp;
+
+	if (dev_priv) {
+		dev_priv->vblank_pipe = 0;
+
+		dev_priv->irq_enabled = 0;
+		I915_WRITE(HWSTAM, 0xffffffff);
+		I915_WRITE(IMR, 0xffffffff);
+		I915_WRITE(IER, 0x0);
+
+		temp = I915_READ(PIPEASTAT);
+		I915_WRITE(PIPEASTAT, temp);
+		temp = I915_READ(PIPEBSTAT);
+		I915_WRITE(PIPEBSTAT, temp);
+		temp = I915_READ(IIR);
+		I915_WRITE(IIR, temp);
+	}
 
 	if (dev_priv->mmio_map)
 		drm_rmmap(dev, dev_priv->mmio_map);
