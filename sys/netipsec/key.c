@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.56 2008/07/01 20:18:45 mlelstv Exp $	*/
+/*	$NetBSD: key.c,v 1.57 2008/07/25 20:55:43 dsl Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.56 2008/07/01 20:18:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.57 2008/07/25 20:55:43 dsl Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -299,13 +299,13 @@ do {\
 } while (0)
 
 #define KEY_CHKSASTATE(head, sav, name) \
-do { \
+/* do */ { \
 	if ((head) != (sav)) {						\
 		ipseclog((LOG_DEBUG, "%s: state mismatched (TREE=%d SA=%d)\n", \
 			(name), (head), (sav)));			\
 		continue;						\
 	}								\
-} while (0)
+} /* while (0) */
 
 #define KEY_CHKSPDIR(head, sp, name) \
 do { \
