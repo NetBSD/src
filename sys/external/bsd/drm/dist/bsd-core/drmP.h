@@ -757,7 +757,7 @@ struct drm_ati_pcigart_info {
 #define DMA_BIT_MASK(n) (((n) == 64) ? ~0ULL : (1ULL<<(n)) - 1)
 #endif
 
-#define upper_32_bits(_val) (((u64)(_val)) >> 32)
+#define upper_32_bits(n) ((u32)(((n) >> 16) >> 16))
 
 struct drm_driver_info {
 	int	(*load)(struct drm_device *, unsigned long flags);
@@ -945,8 +945,7 @@ struct drm_device {
 						/* for wraparound handling */
 	int		  *vblank_enabled;	/* so we don't call enable more than */
 						/* once per disable */
-	u32 		  *vblank_premodeset;	/* for compensation of spurious wraparounds */
-	int		  *vblank_suspend;	/* Don't wait while crtc is likely disabled */
+	int 		  *vblank_inmodeset;	/* Display driver is setting mode */
 	struct callout	  vblank_disable_timer;
 	u32		  max_vblank_count;	/* size of vblank counter register */
 	int		  num_crtcs;
@@ -1100,7 +1099,6 @@ void	drm_handle_vblank(struct drm_device *dev, int crtc);
 u32	drm_vblank_count(struct drm_device *dev, int crtc);
 int	drm_vblank_get(struct drm_device *dev, int crtc);
 void	drm_vblank_put(struct drm_device *dev, int crtc);
-void	drm_update_vblank_count(struct drm_device *dev, int crtc);
 int	drm_vblank_wait(struct drm_device *dev, unsigned int *vbl_seq);
 int	drm_vblank_init(struct drm_device *dev, int num_crtcs);
 void	drm_vbl_send_signals(struct drm_device *dev, int crtc);
