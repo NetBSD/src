@@ -329,8 +329,8 @@ extern drm_device_t *drm_units[];
 #define DRM_MTRR_WC		MTRR_TYPE_WC
 #define jiffies			hardclock_ticks
 #ifdef __x86_64__
-#define DRM_NETBSD_ADDR2HANDLE(addr)	(addr   & 0x7fffffffffffffff)
-#define DRM_NETBSD_HANDLE2ADDR(handle)	(handle | 0x8000000000000000)
+#define DRM_NETBSD_ADDR2HANDLE(v)	((vaddr_t)(v) - vm_map_min(kernel_map))
+#define DRM_NETBSD_HANDLE2ADDR(u)	((vaddr_t)(u) + vm_map_min(kernel_map))
 #else
 #define DRM_NETBSD_ADDR2HANDLE(addr)	(addr)
 #define DRM_NETBSD_HANDLE2ADDR(handle)	(handle)
@@ -402,7 +402,6 @@ typedef u_int8_t u8;
 					"lock; addl $0,0(%%rsp)" : : : "memory");
 #endif
 
-#ifdef __FreeBSD__
 #define DRM_READ8(map, offset)						\
 	*(volatile u_int8_t *) (((unsigned long)(map)->handle) + (offset))
 #define DRM_READ16(map, offset)						\
@@ -416,31 +415,15 @@ typedef u_int8_t u8;
 #define DRM_WRITE32(map, offset, val)					\
 	*(volatile u_int32_t *)(((unsigned long)(map)->handle) + (offset)) = val
 
+#ifdef __FreeBSD__
 #define DRM_VERIFYAREA_READ( uaddr, size )		\
 	(!useracc(__DECONST(caddr_t, uaddr), size, VM_PROT_READ))
-
-#else /* __FreeBSD__ */
-
+#else
 typedef vaddr_t vm_offset_t;
-
-#define DRM_READ8(map, offset)		\
-	bus_space_read_1( (map)->bst, (map)->bsh, (offset))
-#define DRM_READ16(map, offset)		\
-	bus_space_read_2( (map)->bst, (map)->bsh, (offset))
-#define DRM_READ32(map, offset)		\
-	bus_space_read_4( (map)->bst, (map)->bsh, (offset))
-#define DRM_WRITE8(map, offset, val)	\
-	bus_space_write_1((map)->bst, (map)->bsh, (offset), (val))
-#define DRM_WRITE16(map, offset, val)	\
-	bus_space_write_2((map)->bst, (map)->bsh, (offset), (val))
-#define DRM_WRITE32(map, offset, val)	\
-	bus_space_write_4((map)->bst, (map)->bsh, (offset), (val))
-
 #define DRM_VERIFYAREA_READ( uaddr, size )		\
 	(!uvm_map_checkprot(&(curproc->p_vmspace->vm_map),              \
 		(vaddr_t)uaddr, (vaddr_t)uaddr+size, UVM_PROT_READ))
-
-#endif /* !__FreeBSD__ */
+#endif
 
 #define DRM_COPY_TO_USER(user, kern, size) \
 	copyout(kern, user, size)
@@ -599,16 +582,11 @@ typedef struct drm_freelist {
 typedef struct drm_dma_handle {
 	void *vaddr;
 	bus_addr_t busaddr;
-#if defined(__FreeBSD__)
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
-#elif defined(__NetBSD__)
-	bus_dma_tag_t dmat;
-	bus_dmamap_t map;
-#define DRM_PCI_DMAADDR(p)   ((p)->map->dm_segs[0].ds_addr)
+#if defined(__NetBSD__)
 	bus_dma_segment_t segs[1];
 	size_t size;
-	void *addr;
 #endif
 } drm_dma_handle_t;
 

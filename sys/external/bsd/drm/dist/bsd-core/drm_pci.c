@@ -107,39 +107,46 @@ drm_pci_alloc(struct drm_device *dev, size_t size,
 
 	return dmah;
 #elif defined(__NetBSD__)
-	if ((ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
+	dmah->tag = dev->pa.pa_dmat;
+
+	if ((ret = bus_dmamem_alloc(dmah->tag, size, align, maxaddr,
 	    dmah->segs, 1, &nsegs, BUS_DMA_NOWAIT)) != 0) {
 		printf("drm: Unable to allocate DMA, error %d\n", ret);
 		goto fail;
 	}
-	if ((ret = bus_dmamem_map(dev->pa.pa_dmat, dmah->segs, nsegs, size, 
-	     &dmah->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+	/* XXX is there a better way to deal with this? */
+	if (nsegs != 1) {
+		printf("drm: bad segment count from bus_dmamem_alloc\n");
+		goto free;
+	}
+	if ((ret = bus_dmamem_map(dmah->tag, dmah->segs, nsegs, size, 
+	     &dmah->vaddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("drm: Unable to map DMA, error %d\n", ret);
 	     	goto free;
 	}
-	if ((ret = bus_dmamap_create(dev->pa.pa_dmat, size, 1, size, 0,
-	     BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dmah->map)) != 0) {
+	if ((ret = bus_dmamap_create(dmah->tag, size, 1, size, maxaddr,
+	     BUS_DMA_NOWAIT, &dmah->map)) != 0) {
 		printf("drm: Unable to create DMA map, error %d\n", ret);
 		goto unmap;
 	}
-	if ((ret = bus_dmamap_load(dev->pa.pa_dmat, dmah->map, dmah->addr, size,
-	     NULL, BUS_DMA_NOWAIT)) != 0) {
+	if ((ret = bus_dmamap_load(dmah->tag, dmah->map, dmah->vaddr, 
+	     size, NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("drm: Unable to load DMA map, error %d\n", ret);
 		goto destroy;
 	}
-	dmah->busaddr = DRM_PCI_DMAADDR(dmah);
-	dmah->vaddr = dmah->addr;
+	dmah->busaddr = dmah->map->dm_segs[0].ds_addr;
 	dmah->size = size;
 
 	return dmah;
 
 destroy:
-	bus_dmamap_destroy(dev->pa.pa_dmat, dmah->map);
+	bus_dmamap_destroy(dmah->tag, dmah->map);
 unmap:
-	bus_dmamem_unmap(dev->pa.pa_dmat, dmah->addr, size);
+	bus_dmamem_unmap(dmah->tag, dmah->vaddr, size);
 free:
-	bus_dmamem_free(dev->pa.pa_dmat, dmah->segs, 1);
+	bus_dmamem_free(dmah->tag, dmah->segs, 1);
 fail:
+	dmah->tag = NULL;
 	free(dmah, M_DRM);
 	return NULL;
 	
@@ -161,10 +168,11 @@ drm_pci_free(struct drm_device *dev, drm_dma_handle_t *dmah)
 #elif defined(__NetBSD__)
 	if (dmah == NULL)
 		return;
-	bus_dmamap_unload(dev->pa.pa_dmat, dmah->map);
-	bus_dmamap_destroy(dev->pa.pa_dmat, dmah->map);
-	bus_dmamem_unmap(dev->pa.pa_dmat, dmah->addr, dmah->size);
-	bus_dmamem_free(dev->pa.pa_dmat, dmah->segs, 1);
+	bus_dmamap_unload(dmah->tag, dmah->map);
+	bus_dmamap_destroy(dmah->tag, dmah->map);
+	bus_dmamem_unmap(dmah->tag, dmah->vaddr, dmah->size);
+	bus_dmamem_free(dmah->tag, dmah->segs, 1);
+	dmah->tag = NULL;
 #endif
 
 	free(dmah, M_DRM);
