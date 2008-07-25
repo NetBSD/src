@@ -284,7 +284,7 @@ typedef void			irqreturn_t;
 #define IRQ_NONE		/* nothing */
 #elif defined(__NetBSD__)
 typedef int			irqreturn_t;
-#define IRQ_HANDLED		0
+#define IRQ_HANDLED		1
 #define IRQ_NONE		0
 #endif
 
