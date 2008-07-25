@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.22 2005/09/24 15:30:35 perry Exp $	*/
+/*	$NetBSD: func.c,v 1.23 2008/07/25 18:33:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.22 2005/09/24 15:30:35 perry Exp $");
+__RCSID("$NetBSD: func.c,v 1.23 2008/07/25 18:33:53 dsl Exp $");
 #endif
 
 #include <stdlib.h>
@@ -774,6 +774,8 @@ do2(tnode_t *tn)
 		} else {
 			cstk->c_infinite = tn->tn_val->v_ldbl != 0.0;
 		}
+		if (!cstk->c_infinite && cstk->c_cont)
+		    error(323);
 	}
 
 	expr(tn, 0, 1, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.36 2008/04/27 01:45:04 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.37 2008/07/25 18:33:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.36 2008/04/27 01:45:04 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.37 2008/07/25 18:33:53 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -382,6 +382,7 @@ const	char *msgs[] = {
 	"({ }) is a GCC extension",				      /* 320 */
 	"array initializer with designators is a C9X feature",	      /* 321 */
 	"zero sized array is a C99 extension",			      /* 322 */
+	"continue in 'do ... while (0)' loop",			      /* 323 */
 };
 
 /*
