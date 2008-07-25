@@ -440,7 +440,7 @@ void drm_vblank_put(struct drm_device *dev, int crtc)
 	/* Last user schedules interrupt disable */
 	atomic_subtract_acq_int(&dev->vblank_refcount[crtc], 1);
 	if (dev->vblank_refcount[crtc] == 0)
-	    callout_reset(&dev->vblank_disable_timer, 5 * DRM_HZ,
+	    callout_reset(&dev->vblank_disable_timer, jiffies + 5 * DRM_HZ,
 #ifdef __FreeBSD__
 		(timeout_t *)
 #endif
