@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.1.2.9 2008/07/01 00:05:56 matt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.1.2.10 2008/07/25 14:23:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.9 2008/07/01 00:05:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.10 2008/07/25 14:23:01 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -1845,7 +1845,7 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	wc->wc_tail = tail;
 	wc->wc_checksum = 0;
 	wc->wc_version = 1;
-	getnanotime(&ts);	/* XXX need higher resolution time here? */
+	getnanotime(&ts);
 	wc->wc_time = ts.tv_sec;;
 	wc->wc_timensec = ts.tv_nsec;
 
