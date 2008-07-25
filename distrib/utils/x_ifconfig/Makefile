@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2008/07/02 07:44:15 dyoung Exp $
+# $NetBSD: Makefile,v 1.28 2008/07/25 15:11:48 skrll Exp $
 # Build a smaller ifconfig (i.e. for boot media)
 
 .include <bsd.own.mk>
@@ -14,7 +14,6 @@ SRCS+= af_inet6.c
 .endif
 
 .include "../../../sbin/ifconfig/Makefile.inc"
-CPPFLAGS+=	-I${SRCDIR}
 
 .include <bsd.prog.mk>
 
