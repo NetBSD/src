@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.35 2008/07/25 17:40:24 christos Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.36 2008/07/25 18:36:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.35 2008/07/25 17:40:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.36 2008/07/25 18:36:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ again:
 					    MAXPATHLEN * 4, vp, curl, p);
 				}
 			}
-			pos += snprintf(buffer + pos, BUFFERSIZE - pos,
+			pos += snprintf(buffer + pos, bufsize - pos,
 			    "%0*lx-%0*lx %c%c%c%c %0*lx %02x:%02x %ld     %s\n",
 			    (int)sizeof(void *) * 2,(unsigned long)entry->start,
 			    (int)sizeof(void *) * 2,(unsigned long)entry->end,
@@ -182,7 +182,7 @@ again:
 			    (unsigned long)entry->offset,
 			    major(dev), minor(dev), fileid, path);
 		} else {
-			pos += snprintf(buffer + pos, BUFFERSIZE - pos,
+			pos += snprintf(buffer + pos, bufsize - pos,
 			    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d\n",
 			    entry->start, entry->end,
 			    (entry->protection & VM_PROT_READ) ? 'r' : '-',
