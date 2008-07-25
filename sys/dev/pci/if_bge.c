@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.149 2008/07/24 08:14:49 sborrill Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.150 2008/07/25 19:45:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.149 2008/07/24 08:14:49 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.150 2008/07/25 19:45:06 dsl Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3124,8 +3124,9 @@ bge_rxeof(struct bge_softc *sc)
 		 * If we received a packet with a vlan tag, pass it
 		 * to vlan_input() instead of ether_input().
 		 */
-		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG)
+		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
 			VLAN_INPUT_TAG(ifp, m, cur_rx->bge_vlan_tag, continue);
+		}
 
 		(*ifp->if_input)(ifp, m);
 	}
