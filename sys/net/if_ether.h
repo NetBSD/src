@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.52 2008/07/25 15:10:25 christos Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.53 2008/07/25 20:04:50 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -256,24 +256,31 @@ struct ether_multistep {
  */
 
 /* add VLAN tag to input/received packet */
-#define	VLAN_INPUT_TAG(ifp, m, vlanid, _errcase)	\
-	do {								\
-                struct m_tag *mtag =					\
-                    m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);\
-                if (mtag == NULL) {					\
-			ifp->if_ierrors++;				\
-                        printf("%s: unable to allocate VLAN tag\n",	\
-                            ifp->if_xname);				\
-                        m_freem(m);					\
-                        _errcase;					\
-                }							\
-                *(u_int *)(mtag + 1) = vlanid;				\
-                m_tag_prepend(m, mtag);					\
-	} while(0)
+static inline int vlan_input_tag(struct ifnet *, struct mbuf *, u_int);
+static inline int
+vlan_input_tag(struct ifnet *ifp, struct mbuf *m, u_int vlanid)
+{
+	struct m_tag *mtag;
+	mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);
+	if (mtag == NULL) {
+		ifp->if_ierrors++;
+		printf("%s: unable to allocate VLAN tag\n", ifp->if_xname);
+		m_freem(m);
+		return 1;
+	}
+	*(u_int *)(mtag + 1) = vlanid;
+	m_tag_prepend(m, mtag);
+	return 0;
+}
+
+#define VLAN_INPUT_TAG(ifp, m, vlanid, _errcase)		\
+    if (vlan_input_tag(ifp, m, vlanid) != 0) {	 		\
+	_errcase;						\
+    }
 
 /* extract VLAN tag from output/trasmit packet */
 #define VLAN_OUTPUT_TAG(ec, m0)			\
-	VLAN_ATTACHED(ec) ? m_tag_find((m0), PACKET_TAG_VLAN, NULL) : NULL
+	(VLAN_ATTACHED(ec) ? m_tag_find((m0), PACKET_TAG_VLAN, NULL) : NULL)
 
 /* extract VLAN ID value from a VLAN tag */
 #define VLAN_TAG_VALUE(mtag)	\
