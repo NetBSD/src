@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper.c,v 1.6 2004/12/30 05:05:01 christos Exp $	*/
+/*	$NetBSD: citrus_mapper.c,v 1.7 2008/07/25 14:05:25 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper.c,v 1.6 2004/12/30 05:05:01 christos Exp $");
+__RCSID("$NetBSD: citrus_mapper.c,v 1.7 2008/07/25 14:05:25 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -319,7 +319,7 @@ _citrus_mapper_open(struct _citrus_mapper_area *__restrict ma,
 {
 	int ret;
 	char linebuf[PATH_MAX];
-	const char *module, *variable;
+	const char *module, *variable = NULL;
 	struct _citrus_mapper *cm;
 	int hashval;
 
