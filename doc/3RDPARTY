@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.616 2008/07/23 12:57:40 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.617 2008/07/25 05:31:15 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1007,9 +1007,9 @@ Notes:
 	cp protocols /usr/src/etc/protocols
 
 Package:	mesa-drm
-Version:	git 5d27fd94afaaf434c3a92af0075420b550055bfb
+Version:	git 2580a065d81be645a14af1e91b8441f7e72fcbe4
 Current Vers:
-Maintainer:	mesa-git@
+Maintainer:	mesa-git@?
 Archive Site:	git://anongit.freedesktop.org/git/mesa/drm
 Home Page:
 Mailing List:
