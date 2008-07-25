@@ -1312,7 +1312,7 @@ do {									\
 	        OUT_RING(CP_PACKET0(RADEON_RB3D_ZCACHE_CTLSTAT, 0));	\
 	        OUT_RING(RADEON_RB3D_ZC_FLUSH | RADEON_RB3D_ZC_FREE);	\
 	} else {                                                        \
-	        OUT_RING(CP_PACKET0(R300_RB3D_DSTCACHE_CTLSTAT, 0));	\
+	        OUT_RING(CP_PACKET0(R300_ZB_ZCACHE_CTLSTAT, 0));	\
 	        OUT_RING(R300_ZC_FLUSH | R300_ZC_FREE);			\
         }                                                               \
 } while (0)
