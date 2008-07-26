@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.67 2008/07/22 21:39:08 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.68 2008/07/26 20:49:33 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.67 2008/07/22 21:39:08 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.68 2008/07/26 20:49:33 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1415,7 +1415,7 @@ again:
 /* --------------------------------------------------------------------- */
 
 static int
-udf_read_partition_spacetables(struct udf_mount *ump)
+udf_read_physical_partition_spacetables(struct udf_mount *ump)
 {
 	union dscrptr        *dscr;
 	/* struct udf_args *args = &ump->mount_args; */
@@ -1549,7 +1549,7 @@ udf_read_partition_spacetables(struct udf_mount *ump)
 
 /* TODO implement async writeout */
 int
-udf_write_partition_spacetables(struct udf_mount *ump, int waitfor)
+udf_write_physical_partition_spacetables(struct udf_mount *ump, int waitfor)
 {
 	union dscrptr        *dscr;
 	/* struct udf_args *args = &ump->mount_args; */
@@ -1676,7 +1676,7 @@ udf_process_vds(struct udf_mount *ump) {
 
 	/* read in and check unallocated and free space info if writing */
 	if ((ump->vfs_mountp->mnt_flag & MNT_RDONLY) == 0) {
-		error = udf_read_partition_spacetables(ump);
+		error = udf_read_physical_partition_spacetables(ump);
 		if (error)
 			return error;
 	}
@@ -3351,7 +3351,8 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 	}
 
 	if (ump->lvclose & UDF_WRITE_PART_BITMAPS) {
-		error = udf_write_partition_spacetables(ump, 1 /* waitfor */);
+		/* sync writeout partition spacetables */
+		error = udf_write_physical_partition_spacetables(ump, true);
 		if (error) {
 			printf( "udf_close_logvol: writeout of space tables "
 				"failed\n");
