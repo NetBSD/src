@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.21.4.4 2008/07/21 19:13:45 wrstuden Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.21.4.5 2008/07/26 19:51:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21.4.4 2008/07/21 19:13:45 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21.4.5 2008/07/26 19:51:12 wrstuden Exp $");
 
 #include <sys/param.h>
 
@@ -383,6 +383,23 @@ sys__sched_setaffinity(struct lwp *l,
 		mutex_exit(p->p_lock);
 		goto out;
 	}
+
+#ifdef KERN_SA
+	/*
+	 * Don't permit changing the affinity of an SA process. The only
+	 * thing that would make sense wold be to set the affinity of
+	 * a VP and all threads running on it. But we don't support that
+	 * now, so just don't permit it.
+	 *
+	 * Test is here so that caller gets auth errors before SA
+	 * errors.
+	 */
+	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
+		mutex_exit(p->p_lock);
+		error = EINVAL;
+		goto out;
+	}
+#endif
 
 	/* Find the LWP(s) */
 	lcnt = 0;
