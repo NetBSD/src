@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.21 2008/07/22 19:06:55 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.22 2008/07/26 20:49:33 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -313,7 +313,7 @@ struct udf_mount {
 	uint8_t			*vat_pages;		/* TODO */
 	struct udf_node		*vat_node;		/* system node       */
 
-	/* space bitmaps */
+	/* space bitmaps for physical partitions */
 	struct space_bitmap_desc*part_unalloc_dscr[UDF_PARTITIONS];
 	struct space_bitmap_desc*part_freed_dscr  [UDF_PARTITIONS];
 	struct udf_bitmap	 part_unalloc_bits[UDF_PARTITIONS];
