@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.11 2008/07/24 13:04:00 blymn Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.12 2008/07/26 15:10:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.11 2008/07/24 13:04:00 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.12 2008/07/26 15:10:34 christos Exp $");
 
 
 /*
@@ -2485,7 +2485,7 @@ iwn_setup_node_mrr(struct iwn_softc *sc, uint8_t id, int async)
 	mrr.ssmask = 2;
 	mrr.dsmask = 3;
 	mrr.ampdu_disable = 3;
-	mrr.ampdu_limit = 4000;
+	mrr.ampdu_limit = htole16(4000);
 
 	if (id == IWN_ID_BSS)
 		ridx = IWN_OFDM54;
