@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.14 2008/07/19 16:23:09 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.15 2008/07/26 20:33:36 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.14 2008/07/19 16:23:09 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.15 2008/07/26 20:33:36 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -955,9 +955,9 @@ udf_allocate_space(struct udf_mount *ump, int ismetadata, int alloc_type,
 			*freepos = udf_rw32(free_lbs - num_lb);
 		}
 		break;
-	case UDF_ALLOC_METABITMAP :
-	case UDF_ALLOC_METASEQUENTIAL :
-	case UDF_ALLOC_RELAXEDSEQUENTIAL :
+	case UDF_ALLOC_METABITMAP :		/* UDF 2.50, 2.60 BluRay-RE */
+	case UDF_ALLOC_METASEQUENTIAL :		/* UDF 2.60       BluRay-R  */
+	case UDF_ALLOC_RELAXEDSEQUENTIAL :	/* UDF 2.50/~meta BluRay-R  */
 		printf("ALERT: udf_allocate_space : allocation %d "
 				"not implemented yet!\n", alloc_type);
 		/* TODO implement, doesn't have to be contiguous */
