@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.402 2008/07/07 23:57:25 bjs Exp $
+.\"	$NetBSD: main,v 1.403 2008/07/26 23:17:09 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1932,6 +1932,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Justin Gibbs Ta Mt gibbs@NetBSD.org
 .It Ta Chris Gilbert Ta Mt chris@NetBSD.org
 .It Ta Eric Gillespie Ta Mt epg@NetBSD.org
+.It Ta Paul Goyette Ta Mt pgoyette@NetBSD.org
 .It Ta Michael Graff Ta Mt explorer@NetBSD.org
 .It Ta Brian C. Grayson Ta Mt bgrayson@NetBSD.org
 .It Ta Matthew Green Ta Mt mrg@NetBSD.org
