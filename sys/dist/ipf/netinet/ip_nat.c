@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.37 2008/07/24 09:37:58 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.38 2008/07/26 19:44:28 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -118,10 +118,10 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.37 2008/07/24 09:37:58 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.38 2008/07/26 19:44:28 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.37 2008/07/24 09:37:58 darrenr Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.38 2008/07/26 19:44:28 darrenr Exp $";
 #endif
 #endif
 
@@ -2052,11 +2052,13 @@ natinfo_t *ni;
 			 * Standard port translation.  Select next port.
 			 */
 			if (np->in_flags & IPN_SEQUENTIAL) {
-				port = htons(np->in_pnext);
+				port = np->in_pnext;
 			} else {
 				port = ipf_random() % (ntohs(np->in_pmax) -
 						       ntohs(np->in_pmin));
+				port += ntohs(np->in_pmin);
 			}
+			port = htons(port);
 			np->in_pnext++;
 
 			if (np->in_pnext > ntohs(np->in_pmax)) {
