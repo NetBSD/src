@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.h,v 1.1 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: udf_create.h,v 1.2 2008/07/26 20:20:56 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -95,19 +95,30 @@ struct udf_disclayout {
 	uint32_t first_lba, last_lba;
 	uint32_t sector_size;
 	uint32_t blockingnr, align_blockingnr, sparable_blockingnr;
+	uint32_t meta_blockingnr, meta_alignment;
 
-	uint32_t bitmap_dscr_size;
-	uint32_t unalloc_space, freed_space;
-
+	/* sparables */
 	uint32_t sparable_blocks;
 	uint32_t sparable_area, sparable_area_size;
 	uint32_t sparing_table_dscr_lbas;
 	uint32_t spt_1, spt_2;
-	
+
+	/* bitmaps */
+	uint32_t alloc_bitmap_dscr_size;
+	uint32_t unalloc_space, freed_space;
+
+	uint32_t meta_bitmap_dscr_size;
+	uint32_t meta_bitmap_space;
+
+	/* metadata partition */
+	uint32_t meta_file, meta_mirror, meta_bitmap;
+	uint32_t meta_part_start_lba, meta_part_size_lba;
+
+	/* main partition */
+	uint32_t part_start_lba, part_size_lba;
+
 	uint32_t fsd, rootdir, vat;
 
-	/* partition */
-	uint32_t part_start_lba, part_size_lbas;
 };
 
 
@@ -159,11 +170,17 @@ struct udf_create_context {
 	struct fileset_desc	*fileset_desc;		/* normally one      */
 
 	/* logical to physical translations */
-	int 			 vtop[UDF_PMAPS+1];	/* vpartnr trans    */
+	int 			 vtop[UDF_PMAPS+1];	/* vpartnr trans     */
 	int			 vtop_tp[UDF_PMAPS+1];	/* type of trans     */
+	int			 vtop_offset[UDF_PMAPS+1]; /* offset in lb   */
 
 	/* sparable */
 	struct udf_sparing_table*sparing_table;		/* replacements      */
+
+	/* meta data partition */
+	struct extfile_entry	*meta_file;
+	struct extfile_entry	*meta_mirror;
+	struct extfile_entry	*meta_bitmap;
 
 	/* lvint */
 	int	 num_files;
@@ -187,7 +204,8 @@ int udf_calculate_disc_layout(int format_flags, int min_udf,
 	uint32_t wrtrack_skew,
 	uint32_t first_lba, uint32_t last_lba,
 	uint32_t sector_size, uint32_t blockingnr,
-	uint32_t sparable_blocks);
+	uint32_t sparable_blocks,
+	float meta_fract);
 
 void udf_osta_charset(struct charspec *charspec);
 void udf_encode_osta_id(char *osta_id, uint16_t len, char *text);
@@ -212,7 +230,8 @@ int udf_create_primaryd(void);
 int udf_create_partitiond(int part_num, int part_accesstype);
 int udf_create_unalloc_spaced(void);
 int udf_create_sparing_tabled(void);
-int udf_create_space_bitmap(struct space_bitmap_desc **sbdp);
+int udf_create_space_bitmap(uint32_t dscr_size, uint32_t part_size_lba,
+	struct space_bitmap_desc **sbdp);
 int udf_create_logical_dscr(int format_flags);
 int udf_create_impvold(char *field1, char *field2, char *field3);
 int udf_create_fsd(void);
@@ -227,6 +246,7 @@ int udf_create_new_fe(struct file_entry **fep, int file_type,
 int udf_create_new_efe(struct extfile_entry **efep, int file_type,
 	struct long_ad *parent_icb);
 
+int udf_create_meta_files(void);
 int udf_create_new_rootdir(union dscrptr **dscr);
 int udf_create_new_VAT(union dscrptr **vat_dscr);
 
