@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.42 2008/06/25 11:46:11 ad Exp $	*/
+/*	$NetBSD: unistd.h,v 1.43 2008/07/26 19:37:58 heinz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -91,13 +91,13 @@
 #define	_POSIX_PRIORITY_SCHEDULING	200112L
 				/* threads */
 #define	_POSIX_THREADS		200112L
-				/* semaphores */
-#define	_POSIX_THREAD_SAFE_FUNCTIONS	200112L
 				/* _r functions */
-#define	_POSIX_THREAD_ATTR_STACKSIZE	200112L
+#define	_POSIX_THREAD_SAFE_FUNCTIONS	200112L
 				/* pthread_attr functions for stack size */
-#define	_POSIX_THREAD_ATTR_STACKADDR	200112L
+#define	_POSIX_THREAD_ATTR_STACKSIZE	200112L
 				/* pthread_attr functions for stack address */
+#define	_POSIX_THREAD_ATTR_STACKADDR	200112L
+				/* semaphores */
 #define	_POSIX_SEMAPHORES	0
 				/* barriers */
 #define	_POSIX_BARRIERS		200112L
