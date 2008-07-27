@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.68 2008/07/26 20:49:33 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.69 2008/07/27 11:38:23 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.68 2008/07/26 20:49:33 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.69 2008/07/27 11:38:23 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1674,13 +1674,6 @@ udf_process_vds(struct udf_mount *ump) {
 	if (ump->logvol_integrity == NULL)
 		return EINVAL;
 
-	/* read in and check unallocated and free space info if writing */
-	if ((ump->vfs_mountp->mnt_flag & MNT_RDONLY) == 0) {
-		error = udf_read_physical_partition_spacetables(ump);
-		if (error)
-			return error;
-	}
-
 	/* process derived structures */
 	n_pm   = udf_rw32(ump->logical_vol->n_pm);   /* num partmaps         */
 	lvint  = ump->logvol_integrity;
@@ -2967,7 +2960,14 @@ udf_read_vds_tables(struct udf_mount *ump)
 	int pmap_size;
 	int error;
 
-	/* Iterate again over the part mappings for locations   */
+	/* read in and check unallocated and free space info if writing */
+	if ((ump->vfs_mountp->mnt_flag & MNT_RDONLY) == 0) {
+		error = udf_read_physical_partition_spacetables(ump);
+		if (error)
+			return error;
+	}
+
+	/* Iterate (again) over the part mappings for locations   */
 	n_pm = udf_rw32(ump->logical_vol->n_pm);   /* num partmaps         */
 	mt_l = udf_rw32(ump->logical_vol->mt_l);   /* partmaps data length */
 	pmap_pos =  ump->logical_vol->maps;
