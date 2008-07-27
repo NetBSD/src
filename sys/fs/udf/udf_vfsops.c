@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.44 2008/07/26 20:52:04 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.45 2008/07/27 11:21:21 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.44 2008/07/26 20:52:04 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.45 2008/07/27 11:21:21 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -295,17 +295,18 @@ free_udf_mountinfo(struct mount *mp)
 		MPFREE(ump->implementation,   M_UDFVOLD);
 		MPFREE(ump->logvol_integrity, M_UDFVOLD);
 		for (i = 0; i < UDF_PARTITIONS; i++) {
-			MPFREE(ump->partitions[i], M_UDFVOLD);
+			MPFREE(ump->partitions[i],        M_UDFVOLD);
 			MPFREE(ump->part_unalloc_dscr[i], M_UDFVOLD);
-			MPFREE(ump->part_freed_dscr[i], M_UDFVOLD);
+			MPFREE(ump->part_freed_dscr[i],   M_UDFVOLD);
 		}
-		MPFREE(ump->fileset_desc,     M_UDFVOLD);
-		MPFREE(ump->sparing_table,    M_UDFVOLD);
-		MPFREE(ump->metadata_bitmap.bits, M_UDFVOLD);
+		MPFREE(ump->metadata_unalloc_dscr, M_UDFVOLD);
+
+		MPFREE(ump->fileset_desc,   M_UDFVOLD);
+		MPFREE(ump->sparing_table,  M_UDFVOLD);
 
 		MPFREE(ump->la_node_ad_cpy, M_UDFMNT);
-		MPFREE(ump->la_pmapping, M_TEMP);
-		MPFREE(ump->la_lmapping, M_TEMP);
+		MPFREE(ump->la_pmapping,    M_TEMP);
+		MPFREE(ump->la_lmapping,    M_TEMP);
 
 		mutex_destroy(&ump->ihash_lock);
 		mutex_destroy(&ump->get_node_lock);

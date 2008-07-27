@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.22 2008/07/26 20:49:33 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.23 2008/07/27 11:21:21 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -328,7 +328,8 @@ struct udf_mount {
 	struct udf_node 	*metadata_node;		/* system node       */
 	struct udf_node 	*metadatamirror_node;	/* system node       */
 	struct udf_node 	*metadatabitmap_node;	/* system node       */
-	struct udf_bitmap	 metadata_bitmap;	/* TODO : readin */
+	struct space_bitmap_desc*metadata_unalloc_dscr;	/* TODO : readin */
+	struct udf_bitmap	 metadata_unalloc_bits;	/* TODO : setup  */
 
 	/* hash table to lookup icb -> udf_node and sorted list for sync */
 	kmutex_t	ihash_lock;
