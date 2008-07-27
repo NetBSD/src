@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/05/26 20:17:00 joerg Exp $
+# $NetBSD: Makefile,v 1.1 2008/07/27 19:31:03 joerg Exp $
 #
 
 PROG=		dhcpcd
@@ -7,7 +7,7 @@ SRCS=		bpf.c client.c common.c configure.c dhcp.c dhcpcd.c \
 
 .include <bsd.own.mk>
 
-DIST=	${NETBSDSRCDIR}/dist/dhcpcd
+DIST=	${NETBSDSRCDIR}/external/bsd/dhcpcd/dist
 .PATH: ${DIST}
 
 CPPFLAGS+=	-I${DIST}
@@ -18,10 +18,10 @@ SCRIPTSDIR_dhcpcd-run-hooks=	/libexec
 CONFIGFILES=			dhcpcd.conf
 FILESDIR_dhcpcd.conf=		/etc
 
-HOOKS=		01-test 10-resolv.conf 14-lookup-hostname \
-		15-hostname 50-ntp.conf
+HOOKS=		01-test 10-mtu 20-resolv.conf 29-lookup-hostname \
+		30-hostname 50-ntp.conf
 
-FILES=			${HOOKS:C,^,${DIST}/hook.d/,}
+FILES=			${HOOKS:C,^,${DIST}/dhcpcd-hooks/,}
 FILESDIR=		/libexec/dhcpcd-hooks
 
 MAN=			dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
