@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.11 2008/05/10 19:00:07 skrll Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.12 2008/07/27 10:29:32 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -334,7 +334,7 @@ int	cd9660_write_boot(FILE *);
 int	cd9660_add_boot_disk(const char *);
 int	cd9660_eltorito_add_boot_option(const char *, const char *);
 int	cd9660_setup_boot(int);
-int	cd9660_setup_boot_volume_descritpor(volume_descriptor *);
+int	cd9660_setup_boot_volume_descriptor(volume_descriptor *);
 
 
 /*** Write Functions ***/
