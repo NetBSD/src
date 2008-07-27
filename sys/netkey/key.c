@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.162 2008/07/25 20:55:43 dsl Exp $	*/
+/*	$NetBSD: key.c,v 1.163 2008/07/27 20:12:47 dsl Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.162 2008/07/25 20:55:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.163 2008/07/27 20:12:47 dsl Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -261,7 +261,7 @@ do {\
 			(name), (head), (sav)));			\
 		continue;						\
 	}								\
-} /* while (/*CONSTCOND*/ 0) */
+} // while (/*CONSTCOND*/ 0)
 
 #define KEY_CHKSPDIR(head, sp, name) \
 do { \
