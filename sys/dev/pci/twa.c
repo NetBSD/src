@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.27 2008/06/25 06:22:01 gmcgarry Exp $ */
+/*	$NetBSD: twa.c,v 1.28 2008/07/27 13:10:11 joerg Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.27 2008/06/25 06:22:01 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.28 2008/07/27 13:10:11 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1129,7 +1129,7 @@ twa_drain_response_queue(struct twa_softc *sc)
 			return(1);
 		if (status_reg & TWA_STATUS_RESPONSE_QUEUE_EMPTY)
 			return(0); /* no more response queue entries */
-		rq.u.response_id = twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
+		rq.value = twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
 	}
 }
 
@@ -1351,7 +1351,7 @@ twa_done(struct twa_softc *sc)
 		if (status_reg & TWA_STATUS_RESPONSE_QUEUE_EMPTY)
 			break;
 		/* Response queue is not empty. */
-		rq.u.response_id = twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
+		rq.value = twa_inl(sc, TWA_RESPONSE_QUEUE_OFFSET);
 		tr = sc->sc_twa_request + rq.u.response_id;
 #ifdef		DIAGNOSTIC
 		twa_check_response_q(tr, 0);
