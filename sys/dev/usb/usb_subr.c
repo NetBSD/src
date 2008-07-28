@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.159 2008/06/22 21:31:51 jmcneill Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.160 2008/07/28 15:22:01 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.159 2008/06/22 21:31:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.160 2008/07/28 15:22:01 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -793,22 +793,17 @@ usbd_attach_roothub(device_t parent, usbd_device_handle dev)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status
-usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
-		      int port, int addr)
+static usbd_status
+usbd_attachwholedevice(device_t parent, usbd_device_handle dev, int port,
+	int usegeneric)
 {
 	struct usb_attach_arg uaa;
-	struct usbif_attach_arg uiaa;
 	usb_device_descriptor_t *dd = &dev->ddesc;
-	int found, i, confi, nifaces;
-	usbd_status err;
-	device_ptr_t dv;
-	usbd_interface_handle *ifaces;
+	device_t dv;
 	int dlocs[USBDEVIFCF_NLOCS];
-	int ilocs[USBIFIFCF_NLOCS];
 
 	uaa.device = dev;
-	uaa.usegeneric = 0;
+	uaa.usegeneric = usegeneric;
 	uaa.port = port;
 	uaa.vendor = UGETW(dd->idVendor);
 	uaa.product = UGETW(dd->idProduct);
@@ -825,35 +820,96 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	dlocs[USBDEVIFCF_CONFIGURATION] = -1;
 	dlocs[USBDEVIFCF_INTERFACE] = -1;
 
-	/* First try with device specific drivers. */
-	DPRINTF(("usbd_probe_and_attach: trying device specific drivers\n"));
 	dv = config_found_sm_loc(parent, "usbdevif", dlocs, &uaa, usbd_print,
-		config_stdsubmatch);
+				 config_stdsubmatch);
 	if (dv) {
 		dev->subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
 		if (dev->subdevs == NULL)
 			return (USBD_NOMEM);
 		dev->subdevs[0] = dv;
 		dev->subdevlen = 1;
-		return (USBD_NORMAL_COMPLETION);
+		dev->nifaces_claimed = 1; /* XXX */
 	}
+	return (USBD_NORMAL_COMPLETION);
+}
 
-	DPRINTF(("usbd_probe_and_attach: no device specific driver found\n"));
+static usbd_status
+usbd_attachinterfaces(device_t parent, usbd_device_handle dev, int port)
+{
+	struct usbif_attach_arg uiaa;
+	usb_device_descriptor_t *dd = &dev->ddesc;
+	int nifaces;
+	usbd_interface_handle *ifaces;
+	int i, j;
+	device_t dv;
+	int ilocs[USBIFIFCF_NLOCS];
+
+	nifaces = dev->cdesc->bNumInterface;
+	ifaces = malloc(nifaces * sizeof(*ifaces), M_USB, M_NOWAIT|M_ZERO);
+	if (!ifaces)
+		return (USBD_NOMEM);
+	for (i = 0; i < nifaces; i++)
+		if (!dev->subdevs[i])
+			ifaces[i] = &dev->ifaces[i];
 
 	uiaa.device = dev;
 	uiaa.port = port;
 	uiaa.vendor = UGETW(dd->idVendor);
 	uiaa.product = UGETW(dd->idProduct);
 	uiaa.release = UGETW(dd->bcdDevice);
-
+	uiaa.configno = dev->cdesc->bConfigurationValue;
+	uiaa.ifaces = ifaces;
+	uiaa.nifaces = nifaces;
 	ilocs[USBIFIFCF_PORT] = uiaa.port;
 	ilocs[USBIFIFCF_VENDOR] = uiaa.vendor;
 	ilocs[USBIFIFCF_PRODUCT] = uiaa.product;
 	ilocs[USBIFIFCF_RELEASE] = uiaa.release;
+	ilocs[USBIFIFCF_CONFIGURATION] = uiaa.configno;
+
+	for (i = 0; i < nifaces; i++) {
+		if (!ifaces[i])
+			continue; /* interface already claimed */
+		uiaa.iface = ifaces[i];
+		uiaa.class = ifaces[i]->idesc->bInterfaceClass;
+		uiaa.subclass = ifaces[i]->idesc->bInterfaceSubClass;
+		uiaa.proto = ifaces[i]->idesc->bInterfaceProtocol;
+		uiaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
+		ilocs[USBIFIFCF_INTERFACE] = uiaa.ifaceno;
+		dv = config_found_sm_loc(parent, "usbifif", ilocs, &uiaa,
+					 usbd_ifprint, config_stdsubmatch);
+		if (!dv)
+			continue;
+		ifaces[i] = 0; /* claim */
+		/* account for ifaces claimed by the driver behind our back */
+		for (j = 0; j < nifaces; j++) {
+			if (!ifaces[j] && !dev->subdevs[j]) {
+				dev->subdevs[j] = dv;
+				dev->nifaces_claimed++;
+			}
+		}
+	}
+
+	free(ifaces, M_USB);
+	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
+usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
+		      int port, int addr)
+{
+	usb_device_descriptor_t *dd = &dev->ddesc;
+	int confi, nifaces;
+	usbd_status err;
+
+	/* First try with device specific drivers. */
+	DPRINTF(("usbd_probe_and_attach: trying device specific drivers\n"));
+	err = usbd_attachwholedevice(parent, dev, port, 0);
+	if (dev->nifaces_claimed || err)
+		return (err);
+	DPRINTF(("usbd_probe_and_attach: no device specific driver found\n"));
 
 	DPRINTF(("usbd_probe_and_attach: looping over %d configurations\n",
 		 dd->bNumConfigurations));
-	/* Next try with interface drivers. */
 	for (confi = 0; confi < dd->bNumConfigurations; confi++) {
 		DPRINTFN(1,("usbd_probe_and_attach: trying config idx=%d\n",
 			    confi));
@@ -870,51 +926,21 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
  			return (err);
 		}
 		nifaces = dev->cdesc->bNumInterface;
-		uiaa.configno = dev->cdesc->bConfigurationValue;
-		ilocs[USBIFIFCF_CONFIGURATION] = uiaa.configno;
-
-		ifaces = malloc(nifaces * sizeof(*ifaces), M_USB, M_NOWAIT);
-		if (ifaces == NULL)
-			goto nomem;
-		for (i = 0; i < nifaces; i++)
-			ifaces[i] = &dev->ifaces[i];
-		uiaa.ifaces = ifaces;
-		uiaa.nifaces = nifaces;
-		dev->subdevs = malloc(nifaces * sizeof dv, M_USB,
+		dev->subdevs = malloc(nifaces * sizeof(device_t), M_USB,
 				      M_NOWAIT|M_ZERO);
-		if (dev->subdevs == NULL) {
-			free(ifaces, M_USB);
-nomem:
+		if (dev->subdevs == NULL)
 			return (USBD_NOMEM);
-		}
 		dev->subdevlen = nifaces;
 
-		found = 0;
-		for (i = 0; i < nifaces; i++) {
-			if (ifaces[i] == NULL)
-				continue; /* interface already claimed */
-			uiaa.iface = ifaces[i];
-			uiaa.class = ifaces[i]->idesc->bInterfaceClass;
-			uiaa.subclass = ifaces[i]->idesc->bInterfaceSubClass;
-			uiaa.proto = ifaces[i]->idesc->bInterfaceProtocol;
-			uiaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
-			ilocs[USBIFIFCF_INTERFACE] = uiaa.ifaceno;
-			dv = config_found_sm_loc(parent, "usbifif", ilocs, &uiaa,
-				usbd_ifprint, config_stdsubmatch);
-			if (dv != NULL) {
-				found++;
-				dev->subdevs[i] = dv;
-				ifaces[i] = 0; /* consumed */
-			}
+		err = usbd_attachinterfaces(parent, dev, port);
+
+		if (!dev->nifaces_claimed) {
+			free(dev->subdevs, M_USB);
+			dev->subdevs = 0;
+			dev->subdevlen = 0;
 		}
-		if (found != 0) {
-			free(ifaces, M_USB);
-			return (USBD_NORMAL_COMPLETION);
-		}
-		free(ifaces, M_USB);
-		free(dev->subdevs, M_USB);
-		dev->subdevs = 0;
-		dev->subdevlen = 0;
+		if (dev->nifaces_claimed || err)
+			return (err);
 	}
 	/* No interfaces were attached in any of the configurations. */
 
@@ -924,17 +950,7 @@ nomem:
 	DPRINTF(("usbd_probe_and_attach: no interface drivers found\n"));
 
 	/* Finally try the generic driver. */
-	uaa.usegeneric = 1;
-	dv = config_found_sm_loc(parent, "usbdevif", dlocs, &uaa, usbd_print,
-		config_stdsubmatch);
-	if (dv != NULL) {
-		dev->subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
-		if (dev->subdevs == 0)
-			return (USBD_NOMEM);
-		dev->subdevs[0] = dv;
-		dev->subdevlen = 1;
-		return (USBD_NORMAL_COMPLETION);
-	}
+	err = usbd_attachwholedevice(parent, dev, port, 1);
 
 	/*
 	 * The generic attach failed, but leave the device as it is.
@@ -1432,6 +1448,7 @@ usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
 			printf(" (addr %d) disconnected\n", dev->address);
 			config_detach(dev->subdevs[i], DETACH_FORCE);
 		}
+		KASSERT(!dev->nifaces_claimed);
 	}
 
 	usbd_add_dev_event(USB_EVENT_DEVICE_DETACH, dev);
