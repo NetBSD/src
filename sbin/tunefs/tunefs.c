@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.34.2.2 2008/07/28 12:40:06 simonb Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.34.2.3 2008/07/28 15:54:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.34.2.2 2008/07/28 12:40:06 simonb Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.34.2.3 2008/07/28 15:54:27 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -415,7 +415,8 @@ change_log_info(long long logfilesize)
 		sblock.fs_journal_flags &= ~UFS_WAPBL_FLAGS_CLEAR_LOG;
 		warnx("log file size set to %lld", logfilesize);
 	} else {
-		errx(1, "Can't change existing log size from %" PRIu64 " to %d",
+		errx(1,
+		    "Can't change existing log size from %" PRIu64 " to %lld",
 		     old_size, logfilesize);
 	} 
 }
