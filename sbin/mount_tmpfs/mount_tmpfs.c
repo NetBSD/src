@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.22 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.23 2008/07/28 12:42:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -32,14 +32,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.22 2008/04/28 20:23:09 martin Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.23 2008/07/28 12:42:12 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 
-#include <fs/tmpfs/tmpfs.h>
+#include <fs/tmpfs/tmpfs_args.h>
 
 #include <ctype.h>
 #include <err.h>

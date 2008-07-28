@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/12/14 17:37:22 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2008/07/28 12:42:12 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ MAN=		mount_tmpfs.8
 MOUNT=		${NETBSDSRCDIR}/sbin/mount
 .PATH:		${MOUNT}
 
-CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${MOUNT}
+CPPFLAGS+=	-I${MOUNT}
 DPADD+=		${LIBUTIL}
 LDADD+=		-lutil
 WARNS=		4
