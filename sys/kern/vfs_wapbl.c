@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.1.2.10 2008/07/25 14:23:01 simonb Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.1.2.11 2008/07/28 04:04:32 oster Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.10 2008/07/25 14:23:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.1.2.11 2008/07/28 04:04:32 oster Exp $");
 
 #include <sys/param.h>
 
@@ -775,6 +775,17 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 	krw_t op;
 
 	KDASSERT(wl);
+
+/*
+ *	XXX: The original code calls for the use of a RW_READER lock 
+ *	here, but it turns out there are performance issues with high 
+ *	metadata-rate workloads (e.g. multiple simultaneous tar
+ *	extractions).  For now, we force the lock to be RW_WRITER, 
+ *	since that currently has the best performance characteristics 
+ *	(even for a single tar-file extraction). 
+ *	
+ */
+#define WAPBL_DEBUG_SERIALIZE 1
 
 #ifdef WAPBL_DEBUG_SERIALIZE
 	op = RW_WRITER;
