@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.c,v 1.3 2007/11/06 12:26:12 pooka Exp $	*/
+/*	$NetBSD: tmpfs.c,v 1.4 2008/07/28 16:27:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 #include <sys/types.h>
 #include <sys/mount.h>
 
-#include <fs/tmpfs/tmpfs.h>
+#include <fs/tmpfs/tmpfs_args.h>
 
 #include <err.h>
 #include <puffs.h>
