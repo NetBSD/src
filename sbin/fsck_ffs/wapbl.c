@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.c,v 1.1.2.4 2008/06/12 08:39:21 martin Exp $	*/
+/*	$NetBSD: wapbl.c,v 1.1.2.5 2008/07/28 12:40:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005,2008 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.1.2.4 2008/06/12 08:39:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.1.2.5 2008/07/28 12:40:06 simonb Exp $");
 
+#include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/uio.h>
 
 #include <assert.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: wapbl.c,v 1.1.2.4 2008/06/12 08:39:21 martin Exp $")
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/ufs_wapbl.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
@@ -88,18 +89,53 @@ struct wapbl_replay *wapbl_replay;
 void
 replay_wapbl(void)
 {
+	uint64_t addr, count, blksize;
 	int error;
 
 	if (debug)
 		wapbl_debug_print = WAPBL_PRINT_ERROR | WAPBL_PRINT_REPLAY;
 	if (debug > 1)
 		wapbl_debug_print |= WAPBL_PRINT_IO;
-	error = wapbl_replay_start(&wapbl_replay,
-			0, 
-			fsbtodb(sblock, sblock->fs_size),
-					/* journal is after file system */
-			0 /* XXX */,
-			dev_bsize);
+
+	if (sblock->fs_journal_version != UFS_WAPBL_VERSION) {
+		pfatal("INVALID JOURNAL VERSION %d",
+		    sblock->fs_journal_version);
+		if (reply("CONTINUE") == 0) {
+			exit(FSCK_EXIT_CHECK_FAILED);
+		}
+		return;
+	}
+
+	switch (sblock->fs_journal_location) {
+	case UFS_WAPBL_JOURNALLOC_NONE:
+		pfatal("INVALID JOURNAL LOCATION 'NONE'");
+		if (reply("CONTINUE") == 0) {
+			exit(FSCK_EXIT_CHECK_FAILED);
+		}
+		return;
+
+	case UFS_WAPBL_JOURNALLOC_END_PARTITION:
+		addr = sblock->fs_journallocs[UFS_WAPBL_EPART_ADDR];
+		count = sblock->fs_journallocs[UFS_WAPBL_EPART_COUNT];
+		blksize = sblock->fs_journallocs[UFS_WAPBL_EPART_BLKSZ];
+		break;
+
+	case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
+		addr = sblock->fs_journallocs[UFS_WAPBL_INFS_ADDR];
+		count = sblock->fs_journallocs[UFS_WAPBL_INFS_COUNT];
+		blksize = sblock->fs_journallocs[UFS_WAPBL_INFS_BLKSZ];
+		break;
+
+	default:
+		pfatal("INVALID JOURNAL LOCATION %d",
+		    sblock->fs_journal_location);
+		if (reply("CONTINUE") == 0) {
+			exit(FSCK_EXIT_CHECK_FAILED);
+		}
+		return;
+	}
+
+	error = wapbl_replay_start(&wapbl_replay, 0, addr, count, blksize);
 	if (error) {
 		pfatal("UNABLE TO READ JOURNAL FOR REPLAY");
 		if (reply("CONTINUE") == 0) {
@@ -148,4 +184,19 @@ read_wapbl(char *buf, long size, daddr_t blk)
 	if (!wapbl_replay || !wapbl_replay_isopen(wapbl_replay))
 		return 0;
 	return wapbl_replay_read(wapbl_replay, buf, blk, size);
+}
+
+int
+is_journal_inode(ino_t ino)
+{
+	union dinode *dp;
+
+	dp = ginode(ino);
+	if ((iswap32(DIP(dp, flags)) & SF_LOG) != 0 &&
+	    sblock->fs_journal_version == UFS_WAPBL_VERSION &&
+	    sblock->fs_journal_location == UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM &&
+	    sblock->fs_journallocs[UFS_WAPBL_INFS_INO] == ino)
+		return 1;
+
+	return 0;
 }
