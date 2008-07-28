@@ -105,6 +105,44 @@ dm_target_linear_init(struct dm_dev *dmv, void **target_config, char *params)
 }
 
 /*
+ * Status routine is called to get params string, which is target
+ * specific. When dm_table_status_ioctl is called with flag
+ * DM_STATUS_TABLE_FLAG I have to sent params string back.
+ */
+char *
+dm_target_linear_status(void *target_config)
+{
+	struct target_linear_config *tlc;
+	char *params;
+	uint32_t i;
+	uint32_t count;
+	size_t prm_len;
+
+	
+	tlc = target_config;    
+	prm_len = 0;
+	count = 0;
+
+	/* count number of chars in offset */
+	for(i = tlc->offset; i != 0; i /= 10)
+		count++;
+	
+	printf("Linear target status function called\n");
+
+	/* length of name + count of chars + one space and null char */
+	prm_len = strlen(tlc->pdev->name) + count + 2;
+
+	if ((params = kmem_alloc(prm_len, KM_NOSLEEP)) == NULL)
+		return NULL;
+
+	printf("%s %"PRIu64, tlc->pdev->name, tlc->offset);
+	snprintf(params, prm_len,"%s %"PRIu64, tlc->pdev->name, tlc->offset);
+	
+	
+	return params;
+}
+
+/*
  * Do IO operation, called from dmstrategy routine.
  */
 int

@@ -59,6 +59,23 @@ dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *argv)
 	return 0;
 }
 
+/*
+ * Status routine is called to get params string, which is target
+ * specific. When dm_table_status_ioctl is called with flag
+ * DM_STATUS_TABLE_FLAG I have to sent params string back.
+ */
+char *
+dm_target_snapshot_status(void *target_config)
+{
+	struct target_snapshot_config *tlc;
+	
+	tlc = target_config;
+	
+	printf("Snapshot target status function called\n");
+
+	return 0;
+}
+
 /* Strategy routine called from dm_strategy. */
 int
 dm_target_snapshot_strategy(struct dm_table_entry *table_en, struct buf *bp)

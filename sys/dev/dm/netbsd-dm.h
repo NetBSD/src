@@ -208,10 +208,11 @@
 
 
 /* Status bits */
-#define DM_READONLY_FLAG	(1 << 0) /* In/Out */
+#define DM_READONLY_FLAG	(1 << 0) /* In/Out *//* to kernel/from kerne */
 #define DM_SUSPEND_FLAG		(1 << 1) /* In/Out */
 /* XXX. This flag is undocumented. */ 
 #define DM_EXISTS_FLAG          (1 << 2) /* In/Out */ 
+/* Minor number is persistent */
 #define DM_PERSISTENT_DEV_FLAG	(1 << 3) /* In */
 
 /*
