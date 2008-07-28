@@ -424,6 +424,12 @@ dmstrategy(struct buf *bp)
 		return;
 	} 
 
+	/* Read lock per device rwlock so device can't be changed. */
+	rw_enter(&dmv->dev_rwlock, RW_READER);
+	
+	/* Enter
+	rw_enter(&dmv->dev_rwlock, RW_READER);
+	
 	/* Select active table */
 	tbl = &dmv->tables[dmv->cur_active_table];
 
@@ -477,6 +483,8 @@ dmstrategy(struct buf *bp)
 
 	if (issued_len < buf_len)
 		nestiobuf_done(bp, buf_len - issued_len, EINVAL);
+
+	rw_exit(&dmv->dev_rwlock);
 	
 	return;
 }
