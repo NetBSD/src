@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.146.2.1 2008/06/18 16:33:18 simonb Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.146.2.2 2008/07/28 14:37:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.146.2.1 2008/06/18 16:33:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.146.2.2 2008/07/28 14:37:27 simonb Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2008,6 +2008,22 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5752 A2" },
 
+	{ BGE_CHIPID_BCM5755_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5755 A0" },
+
+	{ BGE_CHIPID_BCM5755_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5755 A1" },
+
+	{ BGE_CHIPID_BCM5755_A2,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5755 A2" },
+
+	{ BGE_CHIPID_BCM5755_C0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5755 C0" },
+
 	{ BGE_CHIPID_BCM5787_A0,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5754/5787 A0" },
@@ -2204,6 +2220,11 @@ static const struct bge_product {
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5721,
 	  "Broadcom BCM5721 Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5722,
+	  "Broadcom BCM5722 Gigabit Ethernet",
 	  },
 
 	{ PCI_VENDOR_BROADCOM,
@@ -3103,8 +3124,9 @@ bge_rxeof(struct bge_softc *sc)
 		 * If we received a packet with a vlan tag, pass it
 		 * to vlan_input() instead of ether_input().
 		 */
-		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG)
+		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
 			VLAN_INPUT_TAG(ifp, m, cur_rx->bge_vlan_tag, continue);
+		}
 
 		(*ifp->if_input)(ifp, m);
 	}

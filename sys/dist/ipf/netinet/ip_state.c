@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.32 2008/06/01 22:26:11 darrenr Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.32.2.1 2008/07/28 14:37:27 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -114,10 +114,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.32 2008/06/01 22:26:11 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.32.2.1 2008/07/28 14:37:27 simonb Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.32 2008/06/01 22:26:11 darrenr Exp $";
+static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.32.2.1 2008/07/28 14:37:27 simonb Exp $";
 #endif
 #endif
 
@@ -206,6 +206,9 @@ ipstate_t *ips_list = NULL;
 /* ------------------------------------------------------------------------ */
 int fr_stateinit()
 {
+#if defined(NEED_LOCAL_RAND) || !defined(_KERNEL)
+	struct timeval tv;
+#endif
 	int i;
 
 	KMALLOCS(ips_table, ipstate_t **, fr_statesize * sizeof(ipstate_t *));
@@ -216,20 +219,27 @@ int fr_stateinit()
 	KMALLOCS(ips_seed, u_long *, fr_statesize * sizeof(*ips_seed));
 	if (ips_seed == NULL)
 		return -2;
+#if defined(NEED_LOCAL_RAND) || !defined(_KERNEL)
+	tv.tv_sec = 0;
+	GETKTIME(&tv);
+#endif
 	for (i = 0; i < fr_statesize; i++) {
 		/*
 		 * XXX - ips_seed[X] should be a random number of sorts.
 		 */
-#if  (__FreeBSD_version >= 400000)
+#if !defined(NEED_LOCAL_RAND) && defined(_KERNEL)
 		ips_seed[i] = arc4random();
 #else
 		ips_seed[i] = ((u_long)ips_seed + i) * fr_statesize;
-		ips_seed[i] ^= 0xa5a55a5a;
+		ips_seed[i] += tv.tv_sec;
 		ips_seed[i] *= (u_long)ips_seed;
 		ips_seed[i] ^= 0x5a5aa5a5;
 		ips_seed[i] *= fr_statemax;
 #endif
 	}
+#if defined(NEED_LOCAL_RAND) && defined(_KERNEL)
+	ipf_rand_push(ips_seed, fr_statesize * sizeof(*ips_seed));
+#endif
 
 	/* fill icmp reply type table */
 	for (i = 0; i <= ICMP_MAXTYPE; i++)
@@ -3235,6 +3245,10 @@ int why;
 		is->is_rule->fr_statecnt--;
 		(void) fr_derefrule(&is->is_rule);
 	}
+
+#if defined(NEED_LOCAL_RAND) && defined(_KERNEL)
+	ipf_rand_push(is, sizeof(*is));
+#endif
 
 	MUTEX_DESTROY(&is->is_lock);
 	KFREE(is);

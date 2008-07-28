@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.43.4.1 2008/07/03 18:37:57 simonb Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.43.4.2 2008/07/28 14:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.43.4.1 2008/07/03 18:37:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.43.4.2 2008/07/28 14:37:26 simonb Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -1190,7 +1190,7 @@ mpbios_pci_attach_hook(struct device *parent, struct device *self,
 		mpb->mb_name = "pci";
 
 	if (mp_verbose)
-		printf("%s: added to list as bus %d\n", device_xname(parent),
+		printf("\n%s: added to list as bus %d\n", device_xname(parent),
 		    pba->pba_bus);
 
 	mpb->mb_configured = 1;
