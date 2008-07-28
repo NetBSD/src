@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.45 2008/07/27 11:21:21 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.46 2008/07/28 19:41:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.45 2008/07/27 11:21:21 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.46 2008/07/28 19:41:13 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -905,25 +905,37 @@ udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	/* get sync lock */
 	ump->syncing = 1;
 
+	/* pre-sync */
 	udf_do_sync(ump, cred, waitfor);
 
+	error = 0;
+#if 0
 	if (waitfor == MNT_WAIT) {
 		/* XXX lock for VAT en bitmaps? */
 		/* metadata nodes are written synchronous */
 		DPRINTF(CALL, ("udf_sync: syncing metadata\n"));
 		if (ump->lvclose & UDF_WRITE_VAT)
 			udf_writeout_vat(ump);
+
 		if (ump->lvclose & UDF_WRITE_PART_BITMAPS) {
+			/* writeout metadata spacetable if existing */
+			error = udf_write_metadata_partition_spacetable(ump,
+				waitfor);
+			if (error)
+				printf( "udf_sync: writeout of metadata space "
+					"bitmap failed\n");
+
+			/* writeout partition spacetables */
 			error = udf_write_physical_partition_spacetables(ump,
 					waitfor);
-			if (error) {
-				printf( "udf_close_logvol: writeout of space "
-					"tables failed\n");
-			}
+			if (error)
+				printf( "udf_sync: writeout of space tables "
+					"failed\n");
 			ump->lvclose &= ~UDF_WRITE_PART_BITMAPS;
 		}
-
 	}
+#endif
+
 	DPRINTF(CALL, ("end of udf_sync()\n"));
 	ump->syncing = 0;
 
