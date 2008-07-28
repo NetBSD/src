@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2008/07/20 16:14:22 pooka Exp $
+#	$NetBSD: Makefile,v 1.42 2008/07/28 13:56:59 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -37,6 +37,11 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 SRCS+=	__assert.c scanc.c skpc.c
 
 SRCS+=	rumpvnode_if.c rump_syscalls.c
+
+.if ${MACHINE_ARCH} == "vax"
+.PATH:	${NETBSDSRCDIR}/sys/lib/libkern/arch/vax
+SRCS+=	blkset.S
+.endif
 
 RUMPUSEROBJDIR != cd ${.CURDIR}/../rumpuser && ${PRINTOBJDIR}
 OBJS+=	${RUMPUSEROBJDIR}/rumpuser.o ${RUMPUSEROBJDIR}/rumpuser_pth.o
