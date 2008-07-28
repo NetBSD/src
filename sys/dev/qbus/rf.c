@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.20 2008/03/15 00:05:50 jkunz Exp $	*/
+/*	$NetBSD: rf.c,v 1.20.8.1 2008/07/28 14:37:27 simonb Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.20 2008/03/15 00:05:50 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.20.8.1 2008/07/28 14:37:27 simonb Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -654,7 +654,7 @@ rfc_intr(void *intarg)
 	int i;
 
 	rf_sc = device_private(rfc_sc->sc_childs[rfc_sc->sc_curchild]);
-	do {
+	for (;;) {
 		/*
 		 * First clean up from previous command...
 		 */
@@ -932,7 +932,8 @@ rfc_intr(void *intarg)
 				return;
 			continue;
 		}
-	} while ( 1 == 0 /* CONSTCOND */ );
+		break;
+	}
 	return;
 }
 

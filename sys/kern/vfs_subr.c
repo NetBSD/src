@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.350.2.3 2008/07/18 16:37:49 simonb Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.350.2.4 2008/07/28 14:37:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.350.2.3 2008/07/18 16:37:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.350.2.4 2008/07/28 14:37:36 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2062,9 +2062,9 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 			slen = strlen(bf);
 			if (left < slen + 1)
 				break;
-			/* +1 to copy out the trailing NUL byte */
 			v->vfs_refcount++;
 			mutex_exit(&vfs_list_lock);
+			/* +1 to copy out the trailing NUL byte */
 			error = copyout(bf, where, slen + 1);
 			mutex_enter(&vfs_list_lock);
 			v->vfs_refcount--;

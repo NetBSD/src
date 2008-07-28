@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.6.2.2 2008/07/18 16:37:48 simonb Exp $ */
+/* $NetBSD: udf_subr.h,v 1.6.2.3 2008/07/28 14:37:36 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -87,7 +87,7 @@ int udf_read_rootdirs(struct udf_mount *ump);
 int udf_open_logvol(struct udf_mount *ump);
 int udf_close_logvol(struct udf_mount *ump, int mntflags);
 int udf_writeout_vat(struct udf_mount *ump);
-int udf_write_partition_spacetables(struct udf_mount *ump, int waitfor);
+int udf_write_physical_partition_spacetables(struct udf_mount *ump, int waitfor);
 void udf_do_sync(struct udf_mount *ump, kauth_cred_t cred, int waitfor);
 
 /* translation services */

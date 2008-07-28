@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.160.4.1 2008/07/03 18:38:24 simonb Exp $	*/
+/*	$NetBSD: key.c,v 1.160.4.2 2008/07/28 14:37:36 simonb Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.160.4.1 2008/07/03 18:38:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.160.4.2 2008/07/28 14:37:36 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -255,13 +255,13 @@ do {\
 } while (/*CONSTCOND*/ 0)
 
 #define KEY_CHKSASTATE(head, sav, name) \
-do { \
+/* do */ { \
 	if ((head) != (sav)) {						\
 		ipseclog((LOG_DEBUG, "%s: state mismatched (TREE=%u SA=%u)\n", \
 			(name), (head), (sav)));			\
 		continue;						\
 	}								\
-} while (/*CONSTCOND*/ 0)
+} // while (/*CONSTCOND*/ 0)
 
 #define KEY_CHKSPDIR(head, sp, name) \
 do { \

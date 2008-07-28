@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.9.8.2 2008/07/18 16:37:57 simonb Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.9.8.3 2008/07/28 14:37:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -92,17 +92,7 @@ int		ukfs_lutimes(struct ukfs *, const char *,
 struct mount	*ukfs_getmp(struct ukfs *);
 struct vnode	*ukfs_getrvp(struct ukfs *);
 
-#define UKFS_UIOINIT(uio, iov, buf, bufsize, offset, rw)		\
-do {									\
-	iov.iov_base = buf;						\
-	iov.iov_len = bufsize;						\
-	uio.uio_iov = &(iov);						\
-	uio.uio_iovcnt = 1;						\
-	uio.uio_offset = offset;					\
-	uio.uio_resid = bufsize;					\
-	uio.uio_rw = rw;						\
-	uio.uio_vmspace = UIO_VMSPACE_SYS;				\
-} while (/*CONSTCOND*/0)
-
+/* Utilities */
+int		ukfs_util_builddirs(struct ukfs *, const char *, mode_t);
 
 #endif /* _SYS_RUMPFS_UKFS_H_ */

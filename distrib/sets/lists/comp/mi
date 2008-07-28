@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1157.2.5 2008/07/28 12:40:06 simonb Exp $
+#	$NetBSD: mi,v 1.1157.2.6 2008/07/28 14:30:37 simonb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -624,6 +624,7 @@
 ./usr/include/fs/hfsp/libhfsp.h			comp-obsolete		obsolete
 ./usr/include/fs/puffs/puffs_msgif.h		comp-c-include
 ./usr/include/fs/sysvbfs/bfs.h			comp-c-include
+./usr/include/fs/tmpfs/tmpfs_args.h		comp-c-include
 ./usr/include/fs/udf/ecma167-udf.h		comp-c-include
 ./usr/include/fs/udf/udf_mount.h		comp-c-include
 ./usr/include/fstab.h				comp-c-include
@@ -2725,7 +2726,7 @@
 ./usr/libdata/debug/usr/bin/nohup.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/nslookup.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/nsupdate.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/bin/nvi.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/nvi.debug		comp-util-debug		debug,nvi
 ./usr/libdata/debug/usr/bin/objcopy.debug	comp-util-debug		bfd,debug
 ./usr/libdata/debug/usr/bin/objdump.debug	comp-util-debug		bfd,debug
 ./usr/libdata/debug/usr/bin/openssl.debug	comp-crypto-debug	crypto,debug

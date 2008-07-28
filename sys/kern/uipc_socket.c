@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.167.2.1 2008/06/18 16:33:35 simonb Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.167.2.2 2008/07/28 14:37:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.167.2.1 2008/06/18 16:33:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.167.2.2 2008/07/28 14:37:36 simonb Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -645,23 +645,21 @@ soclose(struct socket *so)
 	solock(so);
 	if (so->so_options & SO_ACCEPTCONN) {
 		do {
-			if ((so2 = TAILQ_FIRST(&so->so_q0)) != 0) {
+			while ((so2 = TAILQ_FIRST(&so->so_q0)) != 0) {
 				KASSERT(solocked2(so, so2));
 				(void) soqremque(so2, 0);
 				/* soabort drops the lock. */
 				(void) soabort(so2);
 				solock(so);
-				continue;
 			}
-			if ((so2 = TAILQ_FIRST(&so->so_q)) != 0) {
+			while ((so2 = TAILQ_FIRST(&so->so_q)) != 0) {
 				KASSERT(solocked2(so, so2));
 				(void) soqremque(so2, 1);
 				/* soabort drops the lock. */
 				(void) soabort(so2);
 				solock(so);
-				continue;
 			}
-		} while (0);
+		} while (!TAILQ_EMPTY(&so->so_q0));
 	}
 	if (so->so_pcb == 0)
 		goto discard;

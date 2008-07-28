@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.40 2008/05/09 06:20:39 rumble Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.40.2.1 2008/07/28 14:37:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.40 2008/05/09 06:20:39 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.40.2.1 2008/07/28 14:37:36 simonb Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
@@ -403,7 +403,7 @@ bootpcheck(m, context)
 		goto warn;
 	}
 	p = &bootp->bp_vend[4];
-	limit = ((char*)bootp) + bpc->replylen;
+	limit = ((u_char*)bootp) + bpc->replylen;
 	while (p < limit) {
 		tag = *p++;
 		if (tag == TAG_END)
@@ -704,7 +704,7 @@ bootp_extract(bootp, replylen, nd)
 	overloaded = 0;
 
 	p = &bootp->bp_vend[4];
-	limit = ((char*)bootp) + replylen;
+	limit = ((u_char*)bootp) + replylen;
 	while (p < limit) {
 		tag = *p++;
 		if (tag == TAG_END)

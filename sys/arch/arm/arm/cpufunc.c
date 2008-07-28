@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.84.4.1 2008/07/18 16:37:26 simonb Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.84.4.2 2008/07/28 14:37:26 simonb Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.84.4.1 2008/07/18 16:37:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.84.4.2 2008/07/28 14:37:26 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2367,7 +2367,10 @@ void
 arm1136_setup(char *args)
 {
 	int cpuctrl, cpuctrl_wax;
+	uint32_t auxctrl, auxctrl_wax;
+	uint32_t tmp, tmp2;
 	uint32_t sbz=0;
+	uint32_t cpuid;
 
 #if defined(PROCESS_ID_IS_CURCPU)
 	/* set curcpu() */
@@ -2376,6 +2379,8 @@ arm1136_setup(char *args)
 	/* set curlwp() */
         __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0)); 
 #endif
+
+	cpuid = cpu_id();
 
 	cpuctrl =
 		CPU_CONTROL_MMU_ENABLE  |
@@ -2412,6 +2417,22 @@ arm1136_setup(char *args)
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 
+	auxctrl = 0;
+	auxctrl_wax = ~0;
+	/* This options enables the workaround for the 364296 ARM1136
+	 * r0pX errata (possible cache data corruption with
+	 * hit-under-miss enabled). It sets the undocumented bit 31 in
+	 * the auxiliary control register and the FI bit in the control
+	 * register, thus disabling hit-under-miss without putting the
+	 * processor into full low interrupt latency mode. ARM11MPCore
+	 * is not affected.
+	 */
+	if ((cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM1136JS) { /* ARM1136JSr0pX */
+		cpuctrl |= CPU_CONTROL_FI_ENABLE;
+		auxctrl = ARM11R0_AUXCTL_PFI;
+		auxctrl_wax = ~ARM11R0_AUXCTL_PFI;
+	}
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -2421,6 +2442,14 @@ arm1136_setup(char *args)
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(~cpuctrl_wax, cpuctrl);
+
+	__asm volatile ("mrc	p15, 0, %0, c1, c0, 1\n\t"
+			"bic	%1, %0, %2\n\t"
+			"eor	%1, %0, %3\n\t"
+			"teq	%0, %1\n\t"
+			"mcrne	p15, 0, %1, c1, c0, 1\n\t"
+			: "=r"(tmp), "=r"(tmp2) :
+			  "r"(~auxctrl_wax), "r"(auxctrl));
 
 	/* And again. */
 	cpu_idcache_wbinv_all();

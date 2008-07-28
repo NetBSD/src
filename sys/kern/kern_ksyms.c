@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35 2008/02/20 02:30:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35.14.1 2008/07/28 14:37:36 simonb Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -1251,11 +1251,13 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 			if ((sym = findsym(str, st)) == NULL) /* from userland */
 				continue;
 
+#ifdef notdef
 			/* Skip if bad binding */
 			if (ELF_ST_BIND(sym->st_info) != STB_GLOBAL) {
 				sym = NULL;
 				continue;
 			}
+#endif
 			break;
 		}
 		/*

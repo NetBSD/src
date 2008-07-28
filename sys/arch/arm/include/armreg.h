@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.38 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.38.4.1 2008/07/28 14:37:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -292,8 +292,17 @@
 #define CPU_CONTROL_V4COMPAT	0x00008000 /* L4: ARMv4 compat LDR R15 etc */
 #define CPU_CONTROL_UNAL_ENABLE	0x00040000 /* U: unaligned data access */
 #define CPU_CONTROL_XP_ENABLE	0x00080000 /* XP: extended page table */
+#define CPU_CONTROL_FI_ENABLE	0x00200000 /* FI: Low interrupt latency */
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
+
+/* ARM11r0 Auxillary Control Register (CP15 register 1, opcode2 1) */
+#define ARM11R0_AUXCTL_PFI	0x80000000 /* PFI: partial FI mode. */
+					   /* This is an undocumented flag
+					    * used to work around a cache bug
+					    * in r0 steppings. See errata
+					    * 364296.
+					    */
 
 /* XScale Auxillary Control Register (CP15 register 1, opcode2 1) */
 #define	XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.248.2.1 2008/07/03 18:38:11 simonb Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.248.2.2 2008/07/28 14:37:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.248.2.1 2008/07/03 18:38:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.248.2.2 2008/07/28 14:37:36 simonb Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -886,6 +886,7 @@ lwp_exit_switchaway(lwp_t *l)
 	/* Switch to the new LWP.. */
 	(void)cpu_switchto(NULL, newl, false);
 
+	for (;;) continue;	/* XXX: convince gcc about "noreturn" */
 	/* NOTREACHED */
 }
 

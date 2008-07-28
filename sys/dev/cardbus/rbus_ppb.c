@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.23.2.1 2008/07/18 16:37:32 simonb Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.23.2.2 2008/07/28 14:37:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.23.2.1 2008/07/18 16:37:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.23.2.2 2008/07/28 14:37:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.23.2.1 2008/07/18 16:37:32 simonb Exp
 #include <dev/pci/ppbreg.h>
 
 #include <dev/ic/i82365reg.h>
-#include <dev/ic/i82365var.h>
 
 #include <dev/pci/pccbbreg.h>
 #include <dev/pci/pccbbvar.h>
