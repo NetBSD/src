@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.264 2008/07/14 08:49:15 simonb Exp $
+#	$NetBSD: BRANCHES,v 1.265 2008/07/28 04:07:59 oster Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -617,6 +617,8 @@ Notes:		Still has a number of issues:
 		 - Log must currently live at end of partition.
 		 - No log locators.
 		 - Some heavy workload performance issues on SMP machines.
+		   Work around this issue by turning on WAPBL_DEBUG_SERIALIZE
+		   in rev 1.1.2.11 of vfs_wapbl.c.
 		 - Removing large files (sparse only?) takes a long time.
 		   Eg, a file created with
 		      dd if=/dev/zero of=foox bs=1 count=1 seek=11261748520550
