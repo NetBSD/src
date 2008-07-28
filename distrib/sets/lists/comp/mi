@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1157.2.4 2008/07/18 16:28:47 simonb Exp $
+#	$NetBSD: mi,v 1.1157.2.5 2008/07/28 12:40:06 simonb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2093,6 +2093,7 @@
 ./usr/include/ufs/ufs/quota.h			comp-c-include
 ./usr/include/ufs/ufs/ufs_bswap.h		comp-c-include
 ./usr/include/ufs/ufs/ufs_extern.h		comp-c-include
+./usr/include/ufs/ufs/ufs_wapbl.h		comp-c-include
 ./usr/include/ufs/ufs/ufsmount.h		comp-c-include
 ./usr/include/ulimit.h				comp-c-include
 ./usr/include/unctrl.h				comp-c-include

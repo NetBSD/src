@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.51 2008/01/09 16:15:23 ad Exp $	*/
+/*	$NetBSD: inode.h,v 1.51.14.1 2008/07/28 12:40:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -51,6 +51,9 @@
  */
 struct ffs_inode_ext {
 	daddr_t *ffs_snapblklist;	/* Collect expunged snapshot blocks. */
+	/* follow two fields are used by contiguous allocation code only. */
+	daddr_t ffs_first_data_blk;	/* first indirect block on disk. */
+	daddr_t ffs_first_indir_blk;	/* first data block on disk. */
 };
 
 struct ext2fs_inode_ext {
@@ -113,6 +116,8 @@ struct inode {
 		struct  lfs_inode_ext *lfs;
 	} inode_ext;
 #define	i_snapblklist		inode_ext.ffs.ffs_snapblklist
+#define	i_ffs_first_data_blk	inode_ext.ffs.ffs_first_data_blk
+#define	i_ffs_first_indir_blk	inode_ext.ffs.ffs_first_indir_blk
 #define	i_e2fs_last_lblk	inode_ext.e2fs.ext2fs_last_lblk
 #define	i_e2fs_last_blk		inode_ext.e2fs.ext2fs_last_blk
 	/*
@@ -219,7 +224,7 @@ struct inode {
 #define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
 #define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
 #define IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
-#define IN_PAGING       0x1000          /* LFS: file is on paging queue */
+#define IN_PAGING       0x1000		/* LFS: file is on paging queue */
 
 #if defined(_KERNEL)
 

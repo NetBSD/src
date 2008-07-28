@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.229.2.6 2008/07/03 18:38:24 simonb Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.229.2.7 2008/07/28 12:40:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.229.2.6 2008/07/03 18:38:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.229.2.7 2008/07/28 12:40:06 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -637,8 +637,9 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if (fs->fs_clean & FS_WASCLEAN)
 			fs->fs_time = time_second;
 		else {
-			printf("%s: file system not clean (fs_clean=%x); please fsck(8)\n",
-			    mp->mnt_stat.f_mntfromname, fs->fs_clean);
+			printf("%s: file system not clean (fs_clean=%#x); "
+			    "please fsck(8)\n", mp->mnt_stat.f_mntfromname,
+			    fs->fs_clean);
 			printf("%s: lost blocks %" PRId64 " files %d\n",
 			    mp->mnt_stat.f_mntfromname, fs->fs_pendingblocks,
 			    fs->fs_pendinginodes);
@@ -1294,6 +1295,12 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #ifdef WAPBL
 	if (!ronly) {
 		KDASSERT(fs->fs_ronly == 0);
+		/*
+		 * ffs_wapbl_start() needs mp->mnt_stat initialised if it
+		 * needs to create a new log file in-filesystem.
+		 */
+		ffs_statvfs(mp, &mp->mnt_stat);
+
 		error = ffs_wapbl_start(mp);
 		if (error) {
 			free(fs->fs_csp, M_UFSMNT);
@@ -1391,7 +1398,7 @@ ffs_oldfscompat_read(struct fs *fs, struct ufsmount *ump, daddr_t sblockloc)
 	fs->fs_csaddr = fs->fs_old_csaddr;
 	fs->fs_sblockloc = sblockloc;
 
-        fs->fs_flags = fs->fs_old_flags | (fs->fs_flags & FS_INTERNAL);
+	fs->fs_flags = fs->fs_old_flags | (fs->fs_flags & FS_INTERNAL);
 
 	if (fs->fs_old_postblformat == FS_42POSTBLFMT) {
 		fs->fs_old_nrpos = 8;
