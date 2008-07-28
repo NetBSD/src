@@ -67,37 +67,37 @@ static int dm_dbg_print_flags(int);
 static int
 dm_dbg_print_flags(int flags)
 {
-	aprint_verbose("dbg_print --- %d\n",flags);
+	aprint_normal("dbg_print --- %d\n",flags);
 	
 	if (flags & DM_READONLY_FLAG)
-		aprint_verbose("dbg_flags: DM_READONLY_FLAG set In/Out\n");
+		aprint_normal("dbg_flags: DM_READONLY_FLAG set In/Out\n");
 
 	if (flags & DM_SUSPEND_FLAG)
-		aprint_verbose("dbg_flags: DM_SUSPEND_FLAG set In/Out \n");
+		aprint_normal("dbg_flags: DM_SUSPEND_FLAG set In/Out \n");
 
 	if (flags & DM_PERSISTENT_DEV_FLAG)
-		aprint_verbose("dbg_flags: DM_PERSISTENT_DEV_FLAG set In\n");
+		aprint_normal("db_flags: DM_PERSISTENT_DEV_FLAG set In\n");
 
 	if (flags & DM_STATUS_TABLE_FLAG)
-		aprint_verbose("dbg_flags: DM_STATUS_TABLE_FLAG set In\n");
+		aprint_normal("dbg_flags: DM_STATUS_TABLE_FLAG set In\n");
 
 	if (flags & DM_ACTIVE_PRESENT_FLAG)
-		aprint_verbose("dbg_flags: DM_ACTIVE_PRESENT_FLAG set Out\n");
+		aprint_normal("dbg_flags: DM_ACTIVE_PRESENT_FLAG set Out\n");
 
 	if (flags & DM_INACTIVE_PRESENT_FLAG)
-		aprint_verbose("dbg_flags: DM_INACTIVE_PRESENT_FLAG set Out\n");
+		aprint_normal("dbg_flags: DM_INACTIVE_PRESENT_FLAG set Out\n");
 
 	if (flags & DM_BUFFER_FULL_FLAG)
-		aprint_verbose("dbg_flags: DM_BUFFER_FULL_FLAG set Out\n");
+		aprint_normal("dbg_flags: DM_BUFFER_FULL_FLAG set Out\n");
 
 	if (flags & DM_SKIP_BDGET_FLAG)
-		aprint_verbose("dbg_flags: DM_SKIP_BDGET_FLAG set In\n");
+		aprint_normal("dbg_flags: DM_SKIP_BDGET_FLAG set In\n");
 
 	if (flags & DM_SKIP_LOCKFS_FLAG)
-		aprint_verbose("dbg_flags: DM_SKIP_LOCKFS_FLAG set In\n");
+		aprint_normal("dbg_flags: DM_SKIP_LOCKFS_FLAG set In\n");
 
 	if (flags & DM_NOFLUSH_FLAG)
-		aprint_verbose("dbg_flags: DM_NOFLUSH_FLAG set In\n");
+		aprint_normal("dbg_flags: DM_NOFLUSH_FLAG set In\n");
 	
 	return 0;
 }
@@ -129,7 +129,8 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 	
 	int r;
 	uint32_t flags;
-	
+
+	flags = 0;
 	r = 0;
 
 	aprint_verbose("dm_list_versions_ioctl called\n");
@@ -216,8 +217,11 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	/* Test readonly flag change anything only if it is not set*/
 	if (flags & DM_READONLY_FLAG)
 		dm_dev_free(dmv);
-	else
+	else {
 		r = dm_dev_insert(dmv);
+		DM_ADD_FLAG(flags, DM_EXISTS_FLAG);
+	}
+	
 	
 	return r;
 }
@@ -249,7 +253,8 @@ dm_dev_list_ioctl(prop_dictionary_t dm_dict)
 	uint32_t flags;
 	
 	r = 0;
-
+	flags = 0;
+	
 	aprint_verbose("dm_dev_list called\n");
 
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
@@ -321,6 +326,7 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	const char *name, *uuid;
 	uint32_t flags;
 
+	flags = 0;
 	name = NULL;
 	uuid = NULL;
 	
@@ -366,12 +372,14 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 int
 dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 {
+	struct dm_table  *tbl;
 	struct dm_dev *dmv;
 	const char *name, *uuid;
 	uint32_t flags;
 		
 	name = NULL;
 	uuid = NULL;
+	flags = 0;
 	
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
@@ -387,6 +395,13 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
 	
 	prop_dictionary_set_uint64(dm_dict, DM_IOCTL_DEV, dmv->minor);
+
+	tbl = &dmv->tables[dmv->cur_active_table];
+
+	if (tbl != NULL)
+		DM_ADD_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
+	else
+		DM_REMOVE_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
 	
 	return 0;
 }
@@ -397,6 +412,31 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 int
 dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
 {
+	struct dm_dev *dmv;
+	const char *name, *uuid;
+	uint32_t flags;
+		
+	name = NULL;
+	uuid = NULL;
+	flags = 0;
+	
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
+	
+	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
+	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL)) {
+		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
+		return 0;
+	}
+
+	dmv->flags |= DM_SUSPEND_FLAG;
+	
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->ref_cnt);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
+	
+	prop_dictionary_set_uint64(dm_dict, DM_IOCTL_DEV, dmv->minor);
+
 	return 0;
 }
 
@@ -406,7 +446,30 @@ dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
 int
 dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 {
-//	DM_ADD_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
+		struct dm_dev *dmv;
+	const char *name, *uuid;
+	uint32_t flags;
+		
+	name = NULL;
+	uuid = NULL;
+	flags = 0;
+	
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
+	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
+	
+	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
+	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL)) {
+		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
+		return 0;
+	}
+
+	dmv->flags &= ~DM_SUSPEND_FLAG;
+	
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->ref_cnt);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
+	
+	prop_dictionary_set_uint64(dm_dict, DM_IOCTL_DEV, dmv->minor);
 
 	return 0;
 }
@@ -484,6 +547,7 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	name = NULL;
 	uuid = NULL;
 	dmv  = NULL;
+	flags = 0;
 	
 	i=0;
 
@@ -501,7 +565,7 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 		return ENOENT;
 	}
 	
-	aprint_verbose("Getting table deps for device: %s\n",name);
+	aprint_verbose("Getting table deps for device: %s\n", dmv->name);
 		
 	SLIST_FOREACH(dmp, &dmv->pdevs, next_pdev){
 
@@ -513,6 +577,10 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 
 		i++;
 	}
+
+	char *xml;
+	xml = prop_dictionary_externalize(dm_dict);
+	printf("%s\n",xml);
 	
 	return 0;
 }
@@ -523,7 +591,6 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
  * link them to device. For other targets mirror, strip, snapshot
  * etc. also add dependency devices to upcalls list.
  *
- * XXX. It would be usefull to refactorize this routine to be shorter ?
  */
 int
 dm_table_load_ioctl(prop_dictionary_t dm_dict)
@@ -540,12 +607,13 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	
 	const char *name, *uuid, *type;
 
-	uint32_t flags;
+	uint32_t flags, ret;
 
 	uint64_t dev;
 	
 	char *str;
 
+	ret = 0;
 	flags = 0;
 	name = NULL;
 	uuid = NULL;
@@ -628,18 +696,18 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			else
 				SLIST_INSERT_AFTER(last_table, table_en, next);
 
-			prop_dictionary_get_cstring(target_dict,
-			    DM_TABLE_PARAMS, (char **)&table_en->params);
-
 			/*
 			 * Params string is different for every target,
 			 * therfore I have to pass it to target init
 			 * routine and parse parameters there.
 			 */
 			if (target->init != NULL && strlen(str) != 0)
-				target->init(dmv, &table_en->target_config,
-				    str);
+			       ret = target->init(dmv, &table_en->target_config,
+				   str);
 
+			if (ret != 0)
+				return ret;
+			
 			last_table = table_en;
 			
 		} else {
@@ -654,7 +722,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 
 	prop_object_release(cmd_array);
 
-	DM_ADD_FLAG(flags, DM_INACTIVE_PRESENT_FLAG);
+	DM_ADD_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
 	
 	return 0;
 }
@@ -697,6 +765,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	uint64_t dev;
 	
 	const char *name, *uuid;
+	char *params;
 	int flags,i;
 	
 	dmv = NULL;
@@ -745,12 +814,21 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 
 		prop_dictionary_set_cstring(target_dict, DM_TABLE_TYPE,
 		    table_en->target->name);
-		prop_dictionary_set_cstring(target_dict, DM_TABLE_PARAMS,
-		    table_en->params);
 		
 		prop_dictionary_set_int32(target_dict, DM_TABLE_STAT,
 		    dmv->cur_active_table);
 
+		if ( flags |= DM_STATUS_TABLE_FLAG ) {
+			params = table_en->target->status
+			    (table_en->target_config);
+
+			if(params != NULL){
+				prop_dictionary_set_cstring(target_dict,
+				    DM_TABLE_PARAMS, params);
+				
+				kmem_free(params,strlen(params)+1);
+			}
+		}
 		prop_array_set(cmd_array, i, target_dict);
 
 		prop_object_release(target_dict);
