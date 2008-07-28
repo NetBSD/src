@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.265 2008/07/28 04:07:59 oster Exp $
+#	$NetBSD: BRANCHES,v 1.266 2008/07/28 12:11:17 simonb Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -608,7 +608,7 @@ Maintainer:	Simon Burge <simonb@NetBSD.org>
 Scope:		src/distrib/sets/lists/comp src/distrib/utils/sysinst
 		src/include
 		src/sbin/fsck_ffs src/sbin/fsdb src/sbin/mount_ffs
-		src/sys
+		src/sbin/tunefs src/usr.sbin/dumpfs src/sys
 Notes:		Still has a number of issues:
 		 - Can't log the root filesystem (or any FS if /dev isn't an
 		   ffs) or update existing mounts from non-logged to logged.
