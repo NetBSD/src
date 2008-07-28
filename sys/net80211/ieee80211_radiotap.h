@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.5 2005/01/22 20:12:05 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.18 2007/03/26 21:22:35 dyoung Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.19 2008/07/28 17:54:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -199,7 +199,7 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_TX_FLAGS = 15,
 	IEEE80211_RADIOTAP_RTS_RETRIES = 16,
 	IEEE80211_RADIOTAP_DATA_RETRIES = 17,
-	IEEE80211_RADIOTAP_EXT = 31,
+	IEEE80211_RADIOTAP_EXT = 31
 };
 
 #ifndef _KERNEL
