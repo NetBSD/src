@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.23 2008/07/27 11:21:21 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.24 2008/07/28 19:41:13 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -147,13 +147,13 @@ extern int udf_verbose;
 
 
 /* RW content hint for allocation and other purposes */
-#define UDF_C_PROCESSED	 0	/* not relevant */
-#define UDF_C_USERDATA	 1	/* all but userdata is metadata */
-//#define UDF_C_METADATA	 2	/* unspecified metadata */
-#define UDF_C_DSCR	 3	/* update sectornr and CRC */
-#define UDF_C_NODE	 4	/* file/dir node, update sectornr and CRC */
-#define UDF_C_EXTATTRS	 5	/* dunno what to do yet */
-#define UDF_C_FIDS	 6	/* update all contained fids */
+#define UDF_C_PROCESSED		 0	/* not relevant */
+#define UDF_C_USERDATA		 1	/* all but userdata is metadata */
+#define UDF_C_DSCR		 2	/* update sectornr and CRC */
+#define UDF_C_NODE		 3	/* file/dir node, update sectornr and CRC */
+#define UDF_C_FIDS		 4	/* update all contained fids */
+#define UDF_C_METADATA_SBM	 5	/* space bitmap, update sectornr and CRC */
+#define UDF_C_EXTATTRS		 6	/* dunno what to do yet */
 
 
 /* use unused b_freelistindex for our UDF_C_TYPE */
