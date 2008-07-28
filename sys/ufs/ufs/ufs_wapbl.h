@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.1.2.3 2008/07/03 16:40:26 simonb Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.1.2.4 2008/07/28 12:40:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -37,10 +37,48 @@
 #include "opt_wapbl.h"
 #endif
 
+/*
+ * Information for the journal location stored in the superblock.
+ * We store the journal version, some flags, the journal location
+ * type, and some location specific "locators" that identify where
+ * the log itself is located.
+ */
+
+/* fs->fs_journal_version */
 #define	UFS_WAPBL_VERSION			1
 
+/* fs->fs_journal_location */
+#define	UFS_WAPBL_JOURNALLOC_NONE		0
+
 #define	UFS_WAPBL_JOURNALLOC_END_PARTITION	1
+#define	 UFS_WAPBL_EPART_ADDR			  0 /* locator slots */
+#define	 UFS_WAPBL_EPART_COUNT			  1
+#define	 UFS_WAPBL_EPART_BLKSZ			  2
+#define	 UFS_WAPBL_EPART_UNUSED			  3
+
 #define	UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM	2
+#define	 UFS_WAPBL_INFS_ADDR			  0 /* locator slots */
+#define	 UFS_WAPBL_INFS_COUNT			  1
+#define	 UFS_WAPBL_INFS_BLKSZ			  2
+#define	 UFS_WAPBL_INFS_INO			  3
+
+/* fs->fs_journal_flags */
+#define	UFS_WAPBL_FLAGS_CREATE_LOG		0x1
+#define	UFS_WAPBL_FLAGS_CLEAR_LOG		0x2
+
+
+/*
+ * The journal size is limited to between 1MB and 64MB.
+ * The default journal size is the filesystem size divided by
+ * the scale factor - this is 1M of journal per 1GB of filesystem
+ * space.
+ *
+ * XXX: Is 64MB too limiting?  If user explicitly asks for more, allow it?
+ */
+#define	UFS_WAPBL_JOURNAL_SCALE			1024
+#define	UFS_WAPBL_MIN_JOURNAL_SIZE		(1024 * 1024)
+#define	UFS_WAPBL_MAX_JOURNAL_SIZE		(64 * 1024 * 1024)
+
 
 #if defined(WAPBL)
 
