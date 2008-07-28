@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.759 2008/07/27 19:31:02 joerg Exp $
+# $NetBSD: mi,v 1.760 2008/07/28 20:17:46 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -836,6 +836,7 @@
 ./usr/include/fs/puffs				base-c-usr
 ./usr/include/fs/smbfs				base-c-usr
 ./usr/include/fs/sysvbfs			base-c-usr
+./usr/include/fs/tmpfs				base-c-usr
 ./usr/include/fs/udf				base-c-usr
 ./usr/include/g++				base-cxx-usr
 ./usr/include/g++/backward			base-cxx-usr
