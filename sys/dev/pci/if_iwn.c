@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.12 2008/07/26 15:10:34 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.13 2008/07/28 15:28:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.12 2008/07/26 15:10:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.13 2008/07/28 15:28:27 christos Exp $");
 
 
 /*
@@ -1208,7 +1208,7 @@ iwn_load_firmware(struct iwn_softc *sc)
 	int error;
 
 	/* load firmware image from disk */
-	if ((error = firmware_open("if_iwn","iwlwifi-4965.ucode", &fw) != 0)) {
+	if ((error = firmware_open("if_iwn","iwlwifi-4965.ucode", &fw)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
 		goto fail1;
 	}
@@ -3810,7 +3810,7 @@ iwn_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		if (ic->ic_opmode != IEEE80211_ROAMING_MANUAL)
+		if (ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 	}
 	else
