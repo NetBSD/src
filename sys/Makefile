@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2008/07/28 13:56:59 pooka Exp $
+#	$NetBSD: Makefile,v 1.68 2008/07/28 14:09:55 pooka Exp $
 
 SUBDIR=	altq arch compat dev fs miscfs \
 	net net80211 netatalk netbt netipsec netinet netinet6 \
@@ -9,6 +9,7 @@ SUBDIR=	altq arch compat dev fs miscfs \
 SUBDIR+=	rump
 .endif
 
+# interrupt implementation depends on the kernel within the port
 .if (${MACHINE} != "evbppc")
 SUBDIR+=lkm modules
 .endif
