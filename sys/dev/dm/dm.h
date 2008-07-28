@@ -110,7 +110,9 @@ struct dm_dev {
 	int minor;
 	uint32_t flags;
 
-	kmutex_t dev_mtx;
+	kmutex_t dev_mtx; /* between ioctl routines lock */
+	krwlock_t dev_rwlock; /* dmstrategy -> ioctl routines lock */
+	
 	uint32_t event_nr;
 	uint32_t ref_cnt;
 
