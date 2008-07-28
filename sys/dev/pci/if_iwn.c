@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.13 2008/07/28 15:28:27 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.14 2008/07/28 17:01:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.13 2008/07/28 15:28:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.14 2008/07/28 17:01:16 christos Exp $");
 
 
 /*
@@ -600,10 +600,11 @@ static int
 iwn_alloc_shared(struct iwn_softc *sc)
 {
         int error;
+	void *p;
   	/* must be aligned on a 1KB boundary */
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &sc->shared_dma,
-	    (void **)&sc->shared, sizeof (struct iwn_shared),
-	    1024,BUS_DMA_NOWAIT);
+	    &p, sizeof (struct iwn_shared), 1024,BUS_DMA_NOWAIT);
+	sc->share = p;
 	if (error != 0)
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate shared area DMA memory\n");
@@ -731,17 +732,19 @@ iwn_alloc_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
         struct iwn_rx_data *data;
         struct iwn_rbuf *rbuf;
         int i, error;
+	void *p;
 
 	ring->cur = 0;
 
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma,
-	    (void **)&ring->desc, IWN_RX_RING_COUNT * sizeof (struct iwn_rx_desc),
+	    &p, IWN_RX_RING_COUNT * sizeof (struct iwn_rx_desc),
 	    IWN_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate rx ring DMA memory\n");
 		goto fail;
 	}
+	ring->desc = p;
 
 	/*
 	 * Setup Rx buffers.
@@ -818,6 +821,7 @@ iwn_alloc_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring, int count,
 {
 	struct iwn_tx_data *data;
 	int i, error;
+	void *p;
 
 	ring->qid = qid;
 	ring->count = count;
@@ -825,20 +829,21 @@ iwn_alloc_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring, int count,
 	ring->cur = 0;
 
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma,
-	    (void **)&ring->desc, count * sizeof (struct iwn_tx_desc),
+	    &p, count * sizeof (struct iwn_tx_desc),
 	    IWN_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev, "could not allocate tx ring DMA memory\n");
 		goto fail;
 	}
+	ring->desc = p;
 
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->cmd_dma,
-	    (void **)&ring->cmd, count * sizeof (struct iwn_tx_cmd), 4,
-	    BUS_DMA_NOWAIT);
+	    &p, count * sizeof (struct iwn_tx_cmd), 4, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev, "could not allocate tx cmd DMA memory\n");
 		goto fail;
 	}
+	ring->cmd = p;
 
 	ring->data = malloc(count * sizeof (struct iwn_tx_data), M_DEVBUF, M_NOWAIT);
 
