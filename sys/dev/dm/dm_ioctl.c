@@ -36,6 +36,7 @@
 #include <sys/kmem.h>
 #include <sys/lkm.h>
 #include <sys/namei.h>
+#include <sys/rwlock.h>
 #include <sys/vnode.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -149,6 +150,8 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 /*
  * Create in-kernel entry for device. Device attributes such as name, uuid are
  * taken from proplib dictionary.
+ *
+ * Locking: dev_mutex ??
  */
 int
 dm_dev_create_ioctl(prop_dictionary_t dm_dict)
@@ -204,16 +207,33 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	/* init device list of physical devices. */
 	SLIST_INIT(&dmv->pdevs);
-	/*
-	 * Locking strategy here is this: this is per device mutex lock
-	 * and it should be taken when we work with device. Almost all
-	 * ioctl callbacks for tables and devices must acquire this lock.
-     	 */
 
 	prop_dictionary_set_uint64(dm_dict, DM_IOCTL_DEV, dmv->minor);
+
 	
+	/*
+	 * Locking strategy here is this: this is per device rw lock
+	 * and it should be write locked when we work with device.
+	 * Almost all ioctl callbacks for tables and devices must
+	 * acquire this lock. This rw_lock is locked for reading in
+	 * dmstrategy routine and therefore device can't be changed
+	 * before all running IO operations are done. 
+	 *
+	 * XXX: I'm not sure what will happend when we start to use
+	 * upcall devices (mirror, snapshot targets), because then
+	 * dmstrategy routine of device X can wait for end of ioctl
+	 * call on other device.
+	 *
+	 * I keep old mutex here because it can be use to synchorize
+	 * between ioctl routines on sama device e.g. I do not want to
+	 * call dm_table_status_ioctl and dm_table_clear_ioctl on the same
+	 * device and in the same time.
+	 */
+
+	rw_init(&dmv->dev_rwlock);
+
 	mutex_init(&dmv->dev_mtx, MUTEX_DEFAULT, IPL_NONE);
-   
+	
 	/* Test readonly flag change anything only if it is not set*/
 	if (flags & DM_READONLY_FLAG)
 		dm_dev_free(dmv);
@@ -243,6 +263,8 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
  *   </dict>
  *  </array>
  * 
+ *
+ * Locking: dev_mutex, dev_rwlock ??
  */
 int
 dm_dev_list_ioctl(prop_dictionary_t dm_dict)
@@ -276,6 +298,8 @@ dm_dev_list_ioctl(prop_dictionary_t dm_dict)
  *  <array>
  *   <string>...</string>
  *  </array>
+ *
+ * Locking: dev_mutex, dev_rwlock ??
  */
 int
 dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
@@ -317,6 +341,8 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
  * Remove device from global list I have to remove active
  * and inactive tables first and decrement reference_counters
  * for used pdevs.
+ *
+ * Locking: dev_mutex, dev_rwlock
  */
 int
 dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
@@ -344,30 +370,36 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	}
 	
 	if (!(flags & DM_READONLY_FLAG)) {
-		if (dmv->ref_cnt == 0){
-			/* Destroy active table first.  */
-			dm_table_destroy(&dmv->tables[dmv->cur_active_table]);
-
-			/* Destroy unactive table if exits, too. */
-			if (!SLIST_EMPTY(&dmv->tables[1 - dmv->cur_active_table]))
-				dm_table_destroy(&dmv->tables[1 - dmv->cur_active_table]);
-			
-			/* Decrement reference counters for all pdevs from this
-			   device if they are unused close vnode and remove them
-			   from global pdev list, too. */
-			dm_pdev_decr(&dmv->pdevs);
-	
-			/* Test readonly flag change anything only if it is not set*/
-	
-			dm_dev_rem(name); /* XXX. try to use uuid, too */
-		}
+		/*
+		 * Write lock rw lock firs and then remove all stuff.
+		 */
+		rw_enter(&dmv->dev_rwlock, RW_WRITER);
 		
+		/* Destroy active table first.  */
+		dm_table_destroy(&dmv->tables[dmv->cur_active_table]);
+		
+		/* Destroy unactive table if exits, too. */
+		if (!SLIST_EMPTY(&dmv->tables[1 - dmv->cur_active_table]))
+			dm_table_destroy(&dmv->tables[1 - dmv->cur_active_table]);
+		
+		/* Decrement reference counters for all pdevs from this
+		   device if they are unused close vnode and remove them
+		   from global pdev list, too. */
+		dm_pdev_decr(&dmv->pdevs);
+		
+		/* Test readonly flag change anything only if it is not set*/
+		
+		dm_dev_rem(name); /* XXX. try to use uuid, too */
+
+		rw_exit(&dmv->dev_rwlock);
 	}
 	return 0;
 }
 
 /*
  * Return actual state of device to libdevmapper.
+ *
+ * Locking: dev_mutex ??
  */
 int
 dm_dev_status_ioctl(prop_dictionary_t dm_dict)
@@ -407,7 +439,10 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 }
 
 /*
- * Unsupported on NetBSD.
+ * Set only flag to suggest that device is suspended. This call is
+ * not supported in NetBSD.
+ *
+ * Locking: null
  */
 int
 dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
@@ -441,12 +476,15 @@ dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
 }
 
 /*
- * Unsupported on NetBSD.
+ * Simulate Linux behaviour better and switch tables here and not in
+ * dm_table_load_ioctl. 
+ *
+ * Locking: dev_mutex ??, dev_rwlock
  */
 int
 dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 {
-		struct dm_dev *dmv;
+	struct dm_dev *dmv;
 	const char *name, *uuid;
 	uint32_t flags;
 		
@@ -464,6 +502,8 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 		return 0;
 	}
 
+	rw_enter(&dmv->dev_rwlock, RW_WRITER);
+	
 	dmv->flags &= ~DM_SUSPEND_FLAG;
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->ref_cnt);
@@ -471,17 +511,25 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 	
 	prop_dictionary_set_uint64(dm_dict, DM_IOCTL_DEV, dmv->minor);
 
+	dmv->cur_active_table = 1 - dmv->cur_active_table;
+	
+	rw_exit(&dmv->dev_rwlock);
+	
 	return 0;
 }
 
 /*
  * Table management routines
- * lvm2tools doens't send name/uuid to kernel with table for lookup I have to use minor number.
+ * lvm2tools doens't send name/uuid to kernel with table
+ * for lookup I have to use minor number.
  */
 
 
 /*
- * Remove active table from device.
+ * Remove inactive table from device. Routines which work's with inactive tables
+ * doesn't need to held write rw_lock. They can synchronise themselves with mutex?.
+ *
+ * Locking: dev_mutex
  */
 int
 dm_table_clear_ioctl(prop_dictionary_t dm_dict)
@@ -527,6 +575,8 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
  *
  * XXX. This function is called from lvm2tools to get information
  *      about physical devices, too e.g. during vgcreate. 
+ *
+ * Locking: dev_mutex ??, dev_rwlock
  */
 int
 dm_table_deps_ioctl(prop_dictionary_t dm_dict)
@@ -564,9 +614,12 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
-	
+
 	aprint_verbose("Getting table deps for device: %s\n", dmv->name);
-		
+
+	/* XXX DO I really need to write lock it here */
+	rw_enter(&dmv->dev_rwlock, RW_WRITER);
+	
 	SLIST_FOREACH(dmp, &dmv->pdevs, next_pdev){
 
 		if ((error = VOP_GETATTR(dmp->pdev_vnode, &va, curlwp->l_cred))
@@ -578,6 +631,8 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 		i++;
 	}
 
+	rw_exit(&dmv->dev_rwlock);
+	
 	char *xml;
 	xml = prop_dictionary_externalize(dm_dict);
 	printf("%s\n",xml);
@@ -591,6 +646,10 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
  * link them to device. For other targets mirror, strip, snapshot
  * etc. also add dependency devices to upcalls list.
  *
+ * Load table to inactive slot table are switched in dm_device_resume_ioctl.
+ * This simulates Linux behaviour better there should not be any difference.
+ *
+ * Locking: dev_mtx
  */
 int
 dm_table_load_ioctl(prop_dictionary_t dm_dict)
@@ -717,8 +776,6 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			
 		prop_object_release(str);
 	}
-	
-	dmv->cur_active_table = 1 - dmv->cur_active_table;
 
 	prop_object_release(cmd_array);
 
@@ -750,6 +807,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
  *   </dict>
  * </array>
  *
+ * Locking: dev_mtx
  */
 int
 dm_table_status_ioctl(prop_dictionary_t dm_dict)
@@ -789,6 +847,11 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
+
+	/* I should use mutex here and not rwlock there can be IO operation
+	   during this ioctl on device. */
+
+	/*  mutex_enter(&dmv->dev_mtx); */
 	
 	aprint_verbose("Status of device tables: %s--%d\n",
 	    name, dmv->cur_active_table);
@@ -836,6 +899,8 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		i++;
 	}
 
+	mutex_exit(&dmv->dev_mtx);
+	
 	return 0;
 }
 
