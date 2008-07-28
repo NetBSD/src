@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.c,v 1.5 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: tmpfs.c,v 1.6 2008/07/28 18:05:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tmpfs.c,v 1.5 2008/04/28 20:24:12 martin Exp $");
+__RCSID("$NetBSD: tmpfs.c,v 1.6 2008/07/28 18:05:09 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: tmpfs.c,v 1.5 2008/04/28 20:24:12 martin Exp $");
 #include <sys/vnode.h>
 #include <sys/mount.h>
 
-#include <fs/tmpfs/tmpfs.h>
+#include <fs/tmpfs/tmpfs_args.h>
 
 #include <err.h>
 #include <kvm.h>
