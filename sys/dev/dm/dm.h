@@ -73,8 +73,6 @@ struct dm_table_entry {
 	uint64_t start;
 	uint64_t length;
 
-	char *params;
-	
 	struct dm_target *target;      /* Link to table target. */
 	void *target_config;           /* Target specific data. */
 	SLIST_ENTRY(dm_table_entry) next;
@@ -183,9 +181,18 @@ struct target_snapshot_config {
 /* constant dm_target structures for error, zero, linear, stripes etc. */
 struct dm_target {
 	char name[DM_MAX_TYPE_NAME];
-	
-	int (*init)(struct dm_dev *, void **, char *argv);
+	/* Initialize target_config area */
+	int (*init)(struct dm_dev *, void **, char *);
+
+	/* Destroy target_config area */
 	int (*destroy)(struct dm_table_entry *);
+	
+        /*
+	 * Status routine is called to get params string, which is target
+	 * specific. When dm_table_status_ioctl is called with flag
+	 * DM_STATUS_TABLE_FLAG I have to sent params string back.
+	 */
+	char * (*status)(void *);
 	int (*strategy)(struct dm_table_entry *, struct buf *);
 	int (*upcall)(struct dm_table_entry *, struct buf *);
 
@@ -250,12 +257,14 @@ int dm_target_error_upcall(struct dm_table_entry *, struct buf *);
 
 /* dm_target_linear.c */
 int dm_target_linear_init(struct dm_dev *, void**, char *);
+char * dm_target_linear_status(void *);
 int dm_target_linear_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_linear_destroy(struct dm_table_entry *);
 int dm_target_linear_upcall(struct dm_table_entry *, struct buf *);
 
 /* dm_target_snapshot.c */
 int dm_target_snapshot_init(struct dm_dev *, void**, char *);
+char * dm_target_snapshot_status(void *);
 int dm_target_snapshot_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_snapshot_destroy(struct dm_table_entry *);
 int dm_target_snapshot_upcall(struct dm_table_entry *, struct buf *);

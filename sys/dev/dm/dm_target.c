@@ -227,9 +227,10 @@ dm_target_init(void)
 	dmt->version[2] = 2;
 	strncpy(dmt->name, "linear", DM_MAX_TYPE_NAME);
 	dmt->init = &dm_target_linear_init;
+	dmt->status = &dm_target_linear_status;
 	dmt->strategy = &dm_target_linear_strategy;
 	dmt->destroy = &dm_target_linear_destroy;
-	dmt->upcall = NULL;
+	dmt->upcall = &dm_target_linear_upcall;
 	
 	r = dm_target_insert(dmt);
 
@@ -239,6 +240,7 @@ dm_target_init(void)
 	dmt1->version[2] = 0;
 	strncpy(dmt1->name, "zero", DM_MAX_TYPE_NAME);
 	dmt1->init = &dm_target_zero_init;
+	dmt1->status = NULL;
 	dmt1->strategy = &dm_target_zero_strategy;
 	dmt1->destroy = NULL; 
 	dmt1->upcall = NULL;
@@ -250,6 +252,7 @@ dm_target_init(void)
 	dmt2->version[2] = 0;
 	strncpy(dmt2->name, "error", DM_MAX_TYPE_NAME);
 	dmt2->init = &dm_target_error_init;
+	dmt2->status = NULL;
 	dmt2->strategy = &dm_target_error_strategy;
 	dmt2->destroy = NULL; 
 	dmt2->upcall = NULL;
@@ -261,6 +264,7 @@ dm_target_init(void)
 	dmt3->version[2] = 3;
 	strncpy(dmt3->name, "striped", DM_MAX_TYPE_NAME);
 	dmt3->init = &dm_target_linear_init;
+	dmt3->status = NULL;
 	dmt3->strategy = &dm_target_linear_strategy;
 	dmt3->destroy = &dm_target_linear_destroy;
 	dmt3->destroy = NULL; 
@@ -273,6 +277,7 @@ dm_target_init(void)
 	dmt4->version[2] = 3;
 	strncpy(dmt4->name, "mirror", DM_MAX_TYPE_NAME);
 	dmt4->init = NULL;
+	dmt4->status = NULL;
 	dmt4->strategy = NULL;
 	dmt4->destroy = NULL; 
 	dmt4->upcall = NULL;
@@ -284,6 +289,7 @@ dm_target_init(void)
 	dmt5->version[2] = 5;
 	strncpy(dmt5->name, "snapshot", DM_MAX_TYPE_NAME);
 	dmt5->init = &dm_target_snapshot_init;
+	dmt5->status = &dm_target_snapshot_status;
 	dmt5->strategy = &dm_target_snapshot_strategy;
 	dmt5->destroy = &dm_target_snapshot_destroy;
 	dmt5->upcall = &dm_target_snapshot_upcall;
@@ -295,6 +301,7 @@ dm_target_init(void)
 	dmt6->version[2] = 5;
 	strncpy(dmt6->name, "snapshot-origin", DM_MAX_TYPE_NAME);
 	dmt6->init = &dm_target_snapshot_init;
+	dmt6->status = &dm_target_snapshot_status;
 	dmt6->strategy = &dm_target_snapshot_strategy;
 	dmt6->destroy = &dm_target_snapshot_destroy;
 	dmt6->upcall = &dm_target_snapshot_upcall;

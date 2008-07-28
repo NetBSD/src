@@ -50,9 +50,6 @@ dm_table_destroy(struct dm_table *head)
 
 		SLIST_REMOVE(head, table_en, dm_table_entry, next);
 		
-		if (table_en->params)
-			kmem_free(table_en->params, strlen(table_en->params));
-		
 		kmem_free(table_en, sizeof(*table_en));
 	}
 
