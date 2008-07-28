@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.12.2.4 2008/07/22 05:44:02 simonb Exp $ */
+/* $NetBSD: udf.h,v 1.12.2.5 2008/07/28 14:37:35 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -116,6 +116,7 @@ extern int udf_verbose;
 #define UDF_ECCBUF_HASHSIZE	(1<<UDF_ECCBUF_HASHBITS)
 #define UDF_ECCBUF_HASHMASK	(UDF_ECCBUF_HASHSIZE -1)
 
+#define UDF_DIRHASH_DEFAULTMEM	(1024*1024)
 #define UDF_DIRHASH_HASHBITS	5
 #define UDF_DIRHASH_HASHSIZE	(1<<UDF_DIRHASH_HASHBITS)
 #define UDF_DIRHASH_HASHMASK	(UDF_DIRHASH_HASHSIZE -1)
@@ -312,7 +313,7 @@ struct udf_mount {
 	uint8_t			*vat_pages;		/* TODO */
 	struct udf_node		*vat_node;		/* system node       */
 
-	/* space bitmaps */
+	/* space bitmaps for physical partitions */
 	struct space_bitmap_desc*part_unalloc_dscr[UDF_PARTITIONS];
 	struct space_bitmap_desc*part_freed_dscr  [UDF_PARTITIONS];
 	struct udf_bitmap	 part_unalloc_bits[UDF_PARTITIONS];
@@ -327,7 +328,8 @@ struct udf_mount {
 	struct udf_node 	*metadata_node;		/* system node       */
 	struct udf_node 	*metadatamirror_node;	/* system node       */
 	struct udf_node 	*metadatabitmap_node;	/* system node       */
-	struct udf_bitmap	 metadata_bitmap;	/* TODO : readin */
+	struct space_bitmap_desc*metadata_unalloc_dscr;	/* TODO : readin */
+	struct udf_bitmap	 metadata_unalloc_bits;	/* TODO : setup  */
 
 	/* hash table to lookup icb -> udf_node and sorted list for sync */
 	kmutex_t	ihash_lock;
@@ -364,9 +366,24 @@ struct udf_dirhash_entry {
 
 
 struct udf_dirhash {
+	uint32_t		 flags;
+	uint32_t		 size;			/* in bytes */
+	uint32_t		 refcnt;
 	LIST_HEAD(, udf_dirhash_entry) entries[UDF_DIRHASH_HASHSIZE];
 	LIST_HEAD(, udf_dirhash_entry) free_entries;
+	TAILQ_ENTRY(udf_dirhash) next;
 };
+
+#define UDF_DIRH_PURGED		0x0001	/* dirhash has been purged */
+#define	UDF_DIRH_COMPLETE	0x0002	/* dirhash is complete */
+#define	UDF_DIRH_BROKEN		0x0004	/* dirhash is broken on readin */
+#define UDF_DIRH_FLAGBITS \
+	"\10\1DIRH_PURGED\2DIRH_COMPLETE\3DIRH_BROKEN"
+
+extern kmutex_t udf_dirhashmutex;
+extern uint32_t udf_maxdirhashsize;
+extern uint32_t udf_dirhashsize;
+extern TAILQ_HEAD(_udf_dirhash, udf_dirhash) udf_dirhash_queue;
 
 
 /*
@@ -427,14 +444,11 @@ struct udf_node {
 #define	IN_SYNCED		0x0200	/* node is being used by sync */
 #define	IN_CALLBACK_ULK		0x0400	/* node will be unlocked by callback */
 #define	IN_NODE_REBUILD		0x0800	/* node is rebuild */
-#define	IN_DIRHASH_COMPLETE	0x1000	/* dirhash is complete */
-#define	IN_DIRHASH_BROKEN	0x2000	/* dirhash is broken on readin */
 
 
 #define IN_FLAGBITS \
 	"\10\1IN_ACCESS\2IN_CHANGE\3IN_UPDATE\4IN_MODIFY\5IN_MODIFIED" \
 	"\6IN_ACCESSED\7IN_RENAME\10IN_DELETED\11IN_LOCKED\12IN_SYNCED" \
-	"\13IN_CALLBACK_ULK\14IN_NODE_REBUILD\15IN_DIRHASH_COMPLETE" \
-	"\16IN_DIRHASH_BROKEN"
+	"\13IN_CALLBACK_ULK\14IN_NODE_REBUILD"
 
 #endif /* !_FS_UDF_UDF_H_ */

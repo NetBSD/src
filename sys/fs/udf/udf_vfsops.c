@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.38.2.3 2008/07/22 05:44:03 simonb Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.38.2.4 2008/07/28 14:37:36 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.38.2.3 2008/07/22 05:44:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.38.2.4 2008/07/28 14:37:36 simonb Exp $");
 #endif /* not lint */
 
 
@@ -73,6 +73,12 @@ MODULE(MODULE_CLASS_VFS, udf, NULL);
 
 /* verbose levels of the udf filingsystem */
 int udf_verbose = UDF_DEBUGGING;
+
+/* maximum dirhash size of all UDF filesystems combined(!) */
+kmutex_t udf_dirhashmutex;
+uint32_t udf_maxdirhashsize = UDF_DIRHASH_DEFAULTMEM;
+uint32_t udf_dirhashsize    = 0;
+struct _udf_dirhash udf_dirhash_queue;
 
 /* malloc regions */
 MALLOC_JUSTDEFINE(M_UDFMNT,   "UDF mount",	"UDF mount structures");
@@ -136,7 +142,12 @@ void
 udf_init(void)
 {
 	size_t size;
+	uint32_t max_entries;
 
+	/* initialise dirhash queue */
+	TAILQ_INIT(&udf_dirhash_queue);
+
+	/* setup memory types */
 	malloc_type_attach(M_UDFMNT);
 	malloc_type_attach(M_UDFVOLD);
 	malloc_type_attach(M_UDFTEMP);
@@ -154,6 +165,11 @@ udf_init(void)
 	size = sizeof(struct udf_dirhash_entry);
 	pool_init(&udf_dirhash_entry_pool, size, 0, 0, 0,
 		"udf_dirhash_entry_pool", NULL, IPL_NONE);
+
+	mutex_init(&udf_dirhashmutex, MUTEX_DEFAULT, IPL_NONE);
+	max_entries = udf_maxdirhashsize / size;
+	pool_sethiwat(&udf_dirhash_entry_pool, max_entries);
+	udf_dirhashsize = 0;
 }
 
 
@@ -181,11 +197,14 @@ udf_done(void)
  * If running a DEBUG kernel, provide an easy way to set the debug flags when
  * running into a problem.
  */
-#define UDF_VERBOSE_SYSCTLOPT 1
+#define UDF_VERBOSE_SYSCTLOPT        1
+#define UDF_CURDIRHASHSIZE_SYSCTLOPT 2
+#define UDF_MAXDIRHASHSIZE_SYSCTLOPT 3
 
 static int
 udf_modcmd(modcmd_t cmd, void *arg)
 {
+	const struct sysctlnode *node;
 	int error;
 
 	switch (cmd) {
@@ -203,14 +222,26 @@ udf_modcmd(modcmd_t cmd, void *arg)
 			       CTLTYPE_NODE, "vfs", NULL,
 			       NULL, 0, NULL, 0,
 			       CTL_VFS, CTL_EOL);
-		sysctl_createv(&udf_sysctl_log, 0, NULL, NULL,
+		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
 			       CTLFLAG_PERMANENT,
 			       CTLTYPE_NODE, "udf",
 			       SYSCTL_DESCR("OSTA Universal File System"),
 			       NULL, 0, NULL, 0,
 			       CTL_VFS, 24, CTL_EOL);
+		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_INT, "curdirhashsize",
+			       SYSCTL_DESCR("Current memory to be used by dirhash"),
+			       NULL, 0, &udf_dirhashsize, 0,
+			       CTL_VFS, 24, UDF_CURDIRHASHSIZE_SYSCTLOPT, CTL_EOL);
+		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
+			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			       CTLTYPE_INT, "maxdirhashsize",
+			       SYSCTL_DESCR("Max memory to be used by dirhash"),
+			       NULL, 0, &udf_maxdirhashsize, 0,
+			       CTL_VFS, 24, UDF_MAXDIRHASHSIZE_SYSCTLOPT, CTL_EOL);
 #ifdef DEBUG
-		sysctl_createv(&udf_sysctl_log, 0, NULL, NULL,
+		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
 			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			       CTLTYPE_INT, "verbose",
 			       SYSCTL_DESCR("Bitmask for filesystem debugging"),
@@ -264,17 +295,18 @@ free_udf_mountinfo(struct mount *mp)
 		MPFREE(ump->implementation,   M_UDFVOLD);
 		MPFREE(ump->logvol_integrity, M_UDFVOLD);
 		for (i = 0; i < UDF_PARTITIONS; i++) {
-			MPFREE(ump->partitions[i], M_UDFVOLD);
+			MPFREE(ump->partitions[i],        M_UDFVOLD);
 			MPFREE(ump->part_unalloc_dscr[i], M_UDFVOLD);
-			MPFREE(ump->part_freed_dscr[i], M_UDFVOLD);
+			MPFREE(ump->part_freed_dscr[i],   M_UDFVOLD);
 		}
-		MPFREE(ump->fileset_desc,     M_UDFVOLD);
-		MPFREE(ump->sparing_table,    M_UDFVOLD);
-		MPFREE(ump->metadata_bitmap.bits, M_UDFVOLD);
+		MPFREE(ump->metadata_unalloc_dscr, M_UDFVOLD);
+
+		MPFREE(ump->fileset_desc,   M_UDFVOLD);
+		MPFREE(ump->sparing_table,  M_UDFVOLD);
 
 		MPFREE(ump->la_node_ad_cpy, M_UDFMNT);
-		MPFREE(ump->la_pmapping, M_TEMP);
-		MPFREE(ump->la_lmapping, M_TEMP);
+		MPFREE(ump->la_pmapping,    M_TEMP);
+		MPFREE(ump->la_lmapping,    M_TEMP);
 
 		mutex_destroy(&ump->ihash_lock);
 		mutex_destroy(&ump->get_node_lock);
@@ -882,7 +914,8 @@ udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		if (ump->lvclose & UDF_WRITE_VAT)
 			udf_writeout_vat(ump);
 		if (ump->lvclose & UDF_WRITE_PART_BITMAPS) {
-			error = udf_write_partition_spacetables(ump, waitfor);
+			error = udf_write_physical_partition_spacetables(ump,
+					waitfor);
 			if (error) {
 				printf( "udf_close_logvol: writeout of space "
 					"tables failed\n");

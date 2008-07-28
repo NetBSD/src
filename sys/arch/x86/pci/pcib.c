@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.4 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: pcib.c,v 1.4.4.1 2008/07/28 14:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.4 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.4.4.1 2008/07/28 14:37:26 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,11 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.4 2008/04/28 20:23:40 martin Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include "isa.h"
-
-struct pcib_softc {
-	pci_chipset_tag_t	sc_pc;
-	pcitag_t		sc_tag;
-};
+#include "pcibvar.h"
 
 int	pcibmatch(device_t, struct cfdata *, void *);
 void	pcibattach(device_t, device_t, void *);

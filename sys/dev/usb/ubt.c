@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.32.2.1 2008/07/18 16:37:44 simonb Exp $	*/
+/*	$NetBSD: ubt.c,v 1.32.2.2 2008/07/28 14:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.32.2.1 2008/07/18 16:37:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.32.2.2 2008/07/28 14:37:27 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -825,7 +825,6 @@ ubt_abortdealloc(struct ubt_softc *sc)
  *
  * Bluetooth Unit/USB callbacks
  *
- * All of this will be called at the IPL_ we specified above
  */
 static int
 ubt_enable(device_ptr_t self)
