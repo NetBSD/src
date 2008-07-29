@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1078 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1079 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -556,3 +556,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	share/mk: Set assembler warnings to be fatal if $WARNS>0.
 		[lukem 20080721]
 	dhcpcd: Import 4.0.0rc3. [joerg 20080727]
+	uvm_map: Switch from using <sys/tree.h> to <sys/rb.h>. [matt 20080728]
