@@ -1,0 +1,22 @@
+plan:
+	- build modular-xorg stuff with reach over
+
+	- everyone gets lib, share and bin
+
+	- initially, only xorg happy platforms get Xserver.  other older
+	  platforms with xsrc-based servers will build those.
+
+
+big items:
+
+libs		- done
+			-- many libs may not install manuals yet.
+			-- many libs should have pkg-config files generated/installed?
+			   this will apparently help with pkgsrc.
+tools		- done
+share		- done
+bin		- done
+			-- many apps don't install manuals yet
+			-- many apps need app-config generated/installed?
+			   this will apparently help with pkgsrc.
+Xserver 	- 
