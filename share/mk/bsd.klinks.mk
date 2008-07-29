@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.klinks.mk,v 1.1 2007/08/05 21:43:24 pooka Exp $
+#	$NetBSD: bsd.klinks.mk,v 1.2 2008/07/29 20:18:25 pooka Exp $
 #
 
 ##### Default values
@@ -21,7 +21,9 @@ CLEANFILES+=	sparc
 CLEANFILES+=	x86
 .elif ${MACHINE} == "amd64"
 CLEANFILES+=	x86
+.if !defined(RUMPKERNEL)
 CFLAGS+=	-mcmodel=kernel
+.endif
 .endif
 
 .if defined(XEN_BUILD) || ${MACHINE} == "xen"
