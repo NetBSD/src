@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.253 2008/05/22 14:13:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.254 2008/07/29 04:49:43 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -387,7 +387,11 @@ do-build: .PHONY .MAKE
 .endfor
 
 do-x11: .PHONY .MAKE
+.if ${MKXORG} != "no"
+	${MAKEDIRTARGET} external/mit/xorg build
+.else
 	${MAKEDIRTARGET} x11 build
+.endif
 
 do-obsolete: .PHONY .MAKE
 	${MAKEDIRTARGET} etc install-obsolete-lists
