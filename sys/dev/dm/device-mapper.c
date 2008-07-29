@@ -427,9 +427,6 @@ dmstrategy(struct buf *bp)
 	/* Read lock per device rwlock so device can't be changed. */
 	rw_enter(&dmv->dev_rwlock, RW_READER);
 	
-	/* Enter
-	rw_enter(&dmv->dev_rwlock, RW_READER);
-	
 	/* Select active table */
 	tbl = &dmv->tables[dmv->cur_active_table];
 
