@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.33 2008/07/20 16:18:13 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.34 2008/07/29 13:17:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,14 +49,15 @@
 #include <sys/buf.h>
 #include <sys/kmem.h>
 
+#include <machine/pmap.h>
+
+#include <rump/rumpuser.h>
+
 #include <uvm/uvm.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_readahead.h>
 
-#include <machine/pmap.h>
-
 #include "rump_private.h"
-#include "rumpuser.h"
 
 /* dumdidumdum */
 #define len2npages(off, len)						\

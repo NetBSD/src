@@ -1,10 +1,10 @@
-	$NetBSD: TODO,v 1.2 2008/07/16 15:54:24 pooka Exp $
+	$NetBSD: TODO,v 1.3 2008/07/29 13:17:41 pooka Exp $
 
 * fix the build structure to work better on non-NetBSD
 * figure out how to handle mount parameters in fs-independent
   fashion (requires kernel changes)
 * integrate build framework with config(1) to stop the need to
   maintain a separate build infrastructure
-* make libraries dynamic, dlopen them instead of linking if possible
+* dlopen libraries instead of linking where it makes sense
   + makes a difference for e.g. "fsconsole"
 * support nfs (requires using the network stack in userspace)

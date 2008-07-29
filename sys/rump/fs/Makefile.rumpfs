@@ -1,30 +1,10 @@
-#	$NetBSD: Makefile.rumpfs,v 1.8 2008/01/02 18:15:12 pooka Exp $
+#	$NetBSD: Makefile.rumpfs,v 1.9 2008/07/29 13:17:41 pooka Exp $
 #
 
-.include <bsd.own.mk>
-
 RUMPFSLIST=	cd9660fs efs ext2fs ffs hfs lfs msdosfs ntfs syspuffs tmpfs udf
-RUMPFSALL=	${RUMPFSLIST} p2k ukfs ufs
-
-RUMPFSLIBDIR?=	${NETBSDSRCDIR}/sys/rump/fs/lib
+RUMPFSALL=	${RUMPFSLIST} ufs
 
 .for var in ${RUMPFSALL}
 RUMPFSLIBS+=lib${var}
-.endfor
-
-# this is a hack: PRINTOBJDIR is really expensive, so do it only when necessary
-.ifndef RUMPFS_NOFSLIB
-RUMPFS_WANT+=${PROG} p2k ukfs
-.endif
-
-.for var in ${RUMPFS_WANT}
-.ifndef RUMPFSLIB${var:tu}OBJDIR
-RUMPFSLIB${var:tu}OBJDIR != cd ${RUMPFSLIBDIR}/lib${var} && ${PRINTOBJDIR}
-RUMPFSLD_${var:tu}:=-L${RUMPFSLIB${var:tu}OBJDIR} -Wl,--whole-archive \
-		      -l${var} -Wl,--no-whole-archive
-RUMPFSDP_${var:tu}:=${RUMPFSLIB${var:tu}OBJDIR}/lib${var}.a
-
-RUMPFSLD_ALL+=${RUMPFSLD_${var:tu}}
-RUMPFSDP_ALL+=${RUMPFSDP_${var:tu}}
-.endif
+RUMPFSLDADD+=-lrumpfs_${var}
 .endfor

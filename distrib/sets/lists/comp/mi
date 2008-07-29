@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1169 2008/07/28 12:42:12 pooka Exp $
+#	$NetBSD: mi,v 1.1170 2008/07/29 13:17:40 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1825,6 +1825,13 @@
 ./usr/include/rpcsvc/ypclnt.h			comp-c-include
 ./usr/include/rpcsvc/yppasswd.h			comp-c-include
 ./usr/include/rpcsvc/yppasswd.x			comp-c-include
+./usr/include/rump/p2k.h			comp-c-include		puffs
+./usr/include/rump/rump.h			comp-c-include
+./usr/include/rump/rump_syscalls.h		comp-c-include
+./usr/include/rump/rumpdefs.h			comp-c-include
+./usr/include/rump/rumpuser.h			comp-c-include
+./usr/include/rump/rumpvnode_if.h		comp-c-include
+./usr/include/rump/ukfs.h			comp-c-include
 ./usr/include/sa.h				comp-obsolete		obsolete
 ./usr/include/sched.h				comp-c-include
 ./usr/include/sdp.h				comp-c-include
@@ -2313,6 +2320,8 @@
 ./usr/lib/libobjc_p.a				comp-objc-proflib	profile
 ./usr/lib/libossaudio.a				comp-c-lib
 ./usr/lib/libossaudio_p.a			comp-c-proflib		profile
+./usr/lib/libp2k.a				comp-c-lib		puffs
+./usr/lib/libp2k_p.a				comp-c-proflib		puffs,profile
 ./usr/lib/libpam.a				comp-c-lib		pam
 ./usr/lib/libpcap.a				comp-c-lib
 ./usr/lib/libpcap_p.a				comp-c-proflib		profile
@@ -2341,6 +2350,34 @@
 ./usr/lib/librpcsvc_p.a				comp-c-proflib		profile
 ./usr/lib/librt.a				comp-c-lib
 ./usr/lib/librt_p.a				comp-c-proflib		profile
+./usr/lib/librump.a				comp-c-lib
+./usr/lib/librump_p.a				comp-c-proflib		profile
+./usr/lib/librumpfs_cd9660fs.a			comp-c-lib
+./usr/lib/librumpfs_cd9660fs_p.a		comp-c-proflib		profile
+./usr/lib/librumpfs_efs.a			comp-c-lib
+./usr/lib/librumpfs_efs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_ext2fs.a			comp-c-lib
+./usr/lib/librumpfs_ext2fs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_ffs.a			comp-c-lib
+./usr/lib/librumpfs_ffs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_hfs.a			comp-c-lib
+./usr/lib/librumpfs_hfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_lfs.a			comp-c-lib
+./usr/lib/librumpfs_lfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_msdosfs.a			comp-c-lib
+./usr/lib/librumpfs_msdosfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_ntfs.a			comp-c-lib
+./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_syspuffs.a			comp-c-lib
+./usr/lib/librumpfs_syspuffs_p.a		comp-c-proflib		profile
+./usr/lib/librumpfs_tmpfs.a			comp-c-lib
+./usr/lib/librumpfs_tmpfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_udf.a			comp-c-lib
+./usr/lib/librumpfs_udf_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_ufs.a			comp-c-lib
+./usr/lib/librumpfs_ufs_p.a			comp-c-proflib		profile
+./usr/lib/librumpuser.a				comp-c-lib
+./usr/lib/librumpuser_p.a			comp-c-proflib		profile
 ./usr/lib/libsdp.a				comp-c-lib
 ./usr/lib/libsdp_p.a				comp-c-proflib		profile
 ./usr/lib/libskey.a				comp-c-lib		skey
@@ -2367,6 +2404,8 @@
 ./usr/lib/libtermcap_p.a			comp-c-proflib		profile
 ./usr/lib/libtermlib.a				comp-c-lib
 ./usr/lib/libtermlib_p.a			comp-c-proflib		profile
+./usr/lib/libukfs.a				comp-c-lib
+./usr/lib/libukfs_p.a				comp-c-proflib		profile
 ./usr/lib/libusb.a				comp-obsolete		obsolete
 ./usr/lib/libusb_p.a				comp-obsolete		obsolete
 ./usr/lib/libusb_pic.a				comp-obsolete		obsolete
@@ -3180,6 +3219,17 @@
 ./usr/libdata/debug/usr/sbin/rpc.statd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/rpc.yppasswdd.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/rpcbind.debug	comp-rpcbind-debug	debug
+./usr/libdata/debug/usr/sbin/rump_cd9660.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_efs.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_ext2fs.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_ffs.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_hfs.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_lfs.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_msdos.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_ntfs.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_syspuffs.debug comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_tmpfs.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_udf.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rtadvd.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/rtsold.debug	comp-netutil-debug	inet6,debug
@@ -3278,6 +3328,7 @@
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lp2k.ln			comp-c-lintlib		lint,puffs
 ./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint,pam
 ./usr/libdata/lint/llib-lpcap.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpci.ln			comp-c-lintlib		lint
@@ -3292,6 +3343,7 @@
 ./usr/libdata/lint/llib-lrmt.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrpcsvc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrt.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lsdp.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lskey.ln		comp-c-lintlib		lint,skey
 ./usr/libdata/lint/llib-lsm.ln			comp-obsolete		obsolete
@@ -3301,6 +3353,7 @@
 ./usr/libdata/lint/llib-lstdc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ltelnet.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-ltermcap.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lukfs.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lusb.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lusbhid.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lutil.ln		comp-c-lintlib		lint
@@ -6533,6 +6586,7 @@
 ./usr/share/man/cat3/ossaudio.0			comp-c-catman		.cat
 ./usr/share/man/cat3/overlay.0			comp-c-catman		.cat
 ./usr/share/man/cat3/overwrite.0		comp-c-catman		.cat
+./usr/share/man/cat3/p2k.0			comp-c-catman		.cat,puffs
 ./usr/share/man/cat3/pair_content.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pam.0			comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_acct_mgmt.0			comp-c-catman		.cat,pam
@@ -6969,6 +7023,8 @@
 ./usr/share/man/cat3/rresvport.0		comp-c-catman		.cat
 ./usr/share/man/cat3/rresvport_af.0		comp-c-catman		.cat
 ./usr/share/man/cat3/rsa.0			comp-obsolete		obsolete
+./usr/share/man/cat3/rump.0			comp-c-catman		.cat
+./usr/share/man/cat3/rumpuser.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ruserok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/savetty.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scalb.0			comp-c-catman		.cat
@@ -7376,6 +7432,7 @@
 ./usr/share/man/cat3/tzsetwall.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ualarm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/uid_from_user.0		comp-c-catman		.cat
+./usr/share/man/cat3/ukfs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ulimit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/uname.0			comp-c-catman		.cat
 ./usr/share/man/cat3/unctrl.0			comp-c-catman		.cat
@@ -11893,6 +11950,7 @@
 ./usr/share/man/man3/ossaudio.3			comp-c-man		.man
 ./usr/share/man/man3/overlay.3			comp-c-man		.man
 ./usr/share/man/man3/overwrite.3		comp-c-man		.man
+./usr/share/man/man3/p2k.3			comp-c-man		.man,puffs
 ./usr/share/man/man3/pair_content.3		comp-c-man		.man
 ./usr/share/man/man3/pam.3			comp-c-man		.man,pam
 ./usr/share/man/man3/pam_acct_mgmt.3		comp-c-man		.man,pam
@@ -12329,6 +12387,8 @@
 ./usr/share/man/man3/rresvport.3		comp-c-man		.man
 ./usr/share/man/man3/rresvport_af.3		comp-c-man		.man
 ./usr/share/man/man3/rsa.3			comp-obsolete		obsolete
+./usr/share/man/man3/rump.3			comp-c-man		.man
+./usr/share/man/man3/rumpuser.3			comp-c-man		.man
 ./usr/share/man/man3/ruserok.3			comp-c-man		.man
 ./usr/share/man/man3/savetty.3			comp-c-man		.man
 ./usr/share/man/man3/scalb.3			comp-c-man		.man
@@ -12900,6 +12960,7 @@
 ./usr/share/man/man3/wunderend.3		comp-c-man		.man
 ./usr/share/man/man3/wunderscore.3		comp-c-man		.man
 ./usr/share/man/man3/wvline.3			comp-c-man		.man
+./usr/share/man/man3/ukfs.3			comp-c-man		.man
 ./usr/share/man/man3/xdr.3			comp-c-man		.man
 ./usr/share/man/man3/xdr_accepted_reply.3	comp-c-man		.man
 ./usr/share/man/man3/xdr_array.3		comp-c-man		.man

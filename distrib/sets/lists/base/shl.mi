@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.440 2008/06/30 19:04:00 matt Exp $
+# $NetBSD: shl.mi,v 1.441 2008/07/29 13:17:40 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -96,6 +96,7 @@
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
 ./usr/lib/libobjc.so.2.1			base-sys-shlib		gcc=4
 ./usr/lib/libossaudio.so.0.0			base-sys-shlib
+./usr/lib/libp2k.so.0.0				base-sys-shlib		puffs
 ./usr/lib/libpam.so.1.0				base-sys-shlib		pam
 ./usr/lib/libpcap.so.2.0			base-net-shlib
 ./usr/lib/libpci.so.1.0				base-sys-shlib
@@ -110,6 +111,20 @@
 ./usr/lib/libroken.so.13.0			base-krb5-shlib		kerberos
 ./usr/lib/librpcsvc.so.0.0			base-net-shlib
 ./usr/lib/librt.so.0.0				base-sys-shlib
+./usr/lib/librump.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_cd9660fs.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_efs.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_ext2fs.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_ffs.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_hfs.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_lfs.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_msdosfs.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_ntfs.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_syspuffs.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_tmpfs.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_udf.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_ufs.so.0.0			base-sys-shlib
+./usr/lib/librumpuser.so.0.0			base-sys-shlib
 ./usr/lib/libsdp.so.2.0				base-sys-shlib
 ./usr/lib/libskey.so.1.0			base-sys-shlib		skey
 ./usr/lib/libsl.so.3.0				base-krb5-shlib		kerberos
@@ -120,6 +135,7 @@
 ./usr/lib/libstdc++.so.6.0			base-sys-shlib		gcc=4
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
+./usr/lib/libukfs.so.0.0			base-sys-shlib
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib
 ./usr/lib/libutil.so.7.15			base-sys-shlib
 ./usr/lib/libwrap.so.0.2			base-net-shlib
