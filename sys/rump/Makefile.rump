@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.10 2008/07/29 13:17:41 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.11 2008/07/29 20:18:25 pooka Exp $
 #
 
 WARNS?=		4
@@ -11,6 +11,8 @@ CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include
 CPPFLAGS+=	-nostdinc -I${RUMPTOP}/..
 #CPPFLAGS+=	-DDEBUG
+
+RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 
 # If an options are changed, trigger a rebuild
 ${SRCS:S/.c/.o/g}: ${RUMPTOP}/Makefile.rump
