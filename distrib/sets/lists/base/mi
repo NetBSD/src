@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.761 2008/07/29 13:17:40 pooka Exp $
+# $NetBSD: mi,v 1.762 2008/07/29 14:59:26 he Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -279,7 +279,10 @@
 ./usr/X11R6/include				base-x11-root
 ./usr/X11R6/include/DPS				base-x11-root
 ./usr/X11R6/include/GL				base-x11-root
+./usr/X11R6/include/GL/internal			base-x11-root
 ./usr/X11R6/include/X11				base-x11-root
+./usr/X11R6/include/X11/dri			base-x11-root
+./usr/X11R6/include/X11/drm			base-x11-root
 ./usr/X11R6/include/X11/ICE			base-x11-root
 ./usr/X11R6/include/X11/PM			base-x11-root
 ./usr/X11R6/include/X11/SM			base-x11-root
@@ -287,6 +290,9 @@
 ./usr/X11R6/include/X11/Xcursor			base-x11-root
 ./usr/X11R6/include/X11/Xft			base-x11-root
 ./usr/X11R6/include/X11/Xmu			base-x11-root
+./usr/X11R6/include/X11/XprintAppUtil		base-x11-root
+./usr/X11R6/include/X11/XprintUtil		base-x11-root
+./usr/X11R6/include/X11/Xtrans			base-x11-root
 ./usr/X11R6/include/X11/bitmaps			base-x11-root
 ./usr/X11R6/include/X11/extensions		base-x11-root
 ./usr/X11R6/include/X11/fonts			base-x11-root
@@ -320,6 +326,7 @@
 ./usr/X11R6/lib/X11/fonts/util			base-x11-root
 ./usr/X11R6/lib/X11/locale			base-x11-root
 ./usr/X11R6/lib/X11/locale/C			base-x11-root
+./usr/X11R6/lib/X11/locale/am_ET.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/armscii-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/el_GR.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/en_US.UTF-8		base-x11-root
@@ -345,7 +352,9 @@
 ./usr/X11R6/lib/X11/locale/iso8859-9e		base-x11-root
 ./usr/X11R6/lib/X11/locale/ja			base-x11-root
 ./usr/X11R6/lib/X11/locale/ja.JIS		base-x11-root
+./usr/X11R6/lib/X11/locale/ja.S90		base-x11-root
 ./usr/X11R6/lib/X11/locale/ja.SJIS		base-x11-root
+./usr/X11R6/lib/X11/locale/ja.U90		base-x11-root
 ./usr/X11R6/lib/X11/locale/ja_JP.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/ko			base-x11-root
 ./usr/X11R6/lib/X11/locale/ko_KR.UTF-8		base-x11-root
@@ -359,6 +368,7 @@
 ./usr/X11R6/lib/X11/locale/microsoft-cp1256	base-x11-root
 ./usr/X11R6/lib/X11/locale/mulelao-1		base-x11-root
 ./usr/X11R6/lib/X11/locale/nokhchi-1		base-x11-root
+./usr/X11R6/lib/X11/locale/pt_BR.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/tatar-cyr		base-x11-root
 ./usr/X11R6/lib/X11/locale/th_TH		base-x11-root
 ./usr/X11R6/lib/X11/locale/th_TH.UTF-8		base-x11-root
@@ -367,7 +377,9 @@
 ./usr/X11R6/lib/X11/locale/vi_VN.viscii		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_CN		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_CN.UTF-8		base-x11-root
+./usr/X11R6/lib/X11/locale/zh_CN.gb18030	base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_CN.gbk		base-x11-root
+./usr/X11R6/lib/X11/locale/zh_HK.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_HK.big5		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_HK.big5hkscs	base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_TW		base-x11-root
@@ -405,6 +417,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/sony		base-x11-root
 ./usr/X11R6/lib/X11/xkb/symbols/sun		base-x11-root
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68		base-x11-root
+./usr/X11R6/lib/X11/xkb/torture			base-x11-root
 ./usr/X11R6/lib/X11/xkb/types			base-x11-root
 ./usr/X11R6/lib/modules				base-x11-root
 ./usr/X11R6/lib/modules/codeconv		base-obsolete		obsolete
