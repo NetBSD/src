@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.515 2008/07/23 00:45:39 dogcow Exp $
+#	$NetBSD: bsd.own.mk,v 1.516 2008/07/29 04:40:15 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -571,7 +571,7 @@ ${var}?=	yes
 	MKMANZ MKMODULAR MKOBJDIRS \
 	MKPCC MKPCCCMDS \
 	MKPUFFS MKSOFTFLOAT \
-	MKUNPRIVED MKUPDATE MKX11
+	MKUNPRIVED MKUPDATE MKX11 MKXORG
 ${var}?=no
 .endfor
 
@@ -703,8 +703,62 @@ X11LIBDIR?=		${X11ROOTDIR}/lib/X11
 X11MANDIR?=		${X11ROOTDIR}/man
 X11USRLIBDIR?=		${X11ROOTDIR}/lib
 
-X11DRI?=		no
-X11LOADABLE?=		yes
+#
+# New modular-xorg based builds
+#
+X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
+.for _lib in \
+	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
+	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xp Xpm XprintUtil \
+	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
+	fontenc xkbfile xkbui Xaw lbxutil Xfontcache XprintAppUtil
+X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
+.endfor
+
+.for _proto in \
+	xcmisc xext xf86bigfont bigreqs input kb x fonts fixes scrnsaver \
+	xinerama print render resource record video xf86dga xf86misc \
+	xf86vidmode composite damage trap gl randr fontcache xf86dri
+X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
+.endfor
+
+.for _dir in \
+	xtrans fontconfig expat freetype evieext mkfontscale bdftopcf \
+	xkbcomp xorg-cf-files imake xorg-server xbiff xkbdata \
+	xbitmaps appres xeyes xev xedit sessreg \
+	beforelight bitmap editres makedepend fonttosfnt fslsfonts \
+	fstobdf MesaDemos MesaLib ico iceauth lbxproxy listres lndir \
+	luit xproxymanagementprotocol mkfontdir oclock proxymngr rgb \
+	setxkbmap smproxy twm viewres x11perf xauth xcalc xclipboard \
+	xclock xcmsdb xconsole xcutsel xditview xdpyinfo xdriinfo xdm \
+	xfd xf86dga xfindproxy xfontsel xfwp xgamma xgc xhost xinit \
+	xkill xload xlogo xlsatoms xlsclients xlsfonts xmag xmessage \
+	xmh xmodmap xmore xman xprop xrandr xrdb xrefresh xset \
+	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
+	xwininfo xwud xprehashprinterlist xplsprinters xkbprint xkbevd \
+	xterm xwd xfs xfsinfo xphelloworld xtrap xkbutils xkbcomp \
+	font-adobe-100dpi font-adobe-75dpi font-adobe-utopia-100dpi \
+	font-adobe-utopia-75dpi font-adobe-utopia-type1 \
+	font-alias \
+	font-bh-100dpi font-bh-75dpi font-bh-lucidatypewriter-100dpi \
+	font-bh-lucidatypewriter-75dpi font-bh-ttf font-bh-type1 \
+	font-bitstream-100dpi font-bitstream-75dpi font-bitstream-type1 \
+	font-cursor-misc font-daewoo-misc font-dec-misc font-ibm-type1 \
+	font-isas-misc font-jis-misc font-misc-misc font-mutt-misc \
+	font-util ttf-bitstream-vera encodings
+X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
+.endfor
+
+# Default to no xorg builds for now.
+MKXORG?=			no
+MKXORG_WITH_XSRC_XSERVER?=	no
+
+.if ${MKXORG} != no
+X11DRI?=			yes
+.endif
+
+X11DRI?=			no
+X11LOADABLE?=			yes
 
 
 #
