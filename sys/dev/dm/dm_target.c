@@ -120,16 +120,13 @@ int
 dm_target_rem(char *dm_target_name)
 {
 	struct dm_target *dm_target;
-	int r;
-
-	r = ENOENT;
 	
 	if (dm_target_name == NULL)
-		goto out;
+		return ENOENT;
 		    
 	dm_target = dm_target_lookup_name(dm_target_name);
 	if (dm_target == NULL)
-		goto out;
+		return ENOENT;
 
 	mutex_enter(&dm_target_mutex);
 	
@@ -140,9 +137,7 @@ dm_target_rem(char *dm_target_name)
 	
 	(void)kmem_free(dm_target, sizeof(struct dm_target));
 
-	r = 0;
- out:
-	return r;
+	return 0;
 }
 
 /*
