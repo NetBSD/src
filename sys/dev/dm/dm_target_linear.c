@@ -55,7 +55,9 @@ static uint64_t atoi(const char *);
 /*
  * Allocate target specific config data, and link them to table.
  * This function is called only when, flags is not READONLY and
- * therefore we can add things to pdev list.
+ * therefore we can add things to pdev list. This function have to
+ * be called with held dev_mtx. This should not e a problem because
+ * this routine is called onyl from dm_table_load_ioctl.
  * @argv[0] is name,
  * @argv[1] is physical data offset.
  */
