@@ -301,7 +301,7 @@ int drm_irq_install(struct drm_device *dev)
 err:
 	DRM_LOCK();
 	dev->irq_enabled = 0;
-#ifdef ___FreeBSD__
+#ifdef __FreeBSD__
 	if (dev->irqrid != 0) {
 		bus_release_resource(dev->device, SYS_RES_IRQ, dev->irqrid,
 		    dev->irqr);
