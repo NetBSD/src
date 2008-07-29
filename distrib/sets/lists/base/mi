@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.760 2008/07/28 20:17:46 pooka Exp $
+# $NetBSD: mi,v 1.761 2008/07/29 13:17:40 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -894,6 +894,7 @@
 ./usr/include/readline				base-c-usr
 ./usr/include/rpc				base-c-usr
 ./usr/include/rpcsvc				base-c-usr
+./usr/include/rump				base-c-usr
 ./usr/include/security				base-c-usr
 ./usr/include/ss				base-obsolete		obsolete
 ./usr/include/ssp				base-c-usr
@@ -1305,6 +1306,17 @@
 ./usr/sbin/rtadvd				base-router-bin		use_inet6
 ./usr/sbin/rtquery				base-netutil-bin
 ./usr/sbin/rtsold				base-netutil-bin	inet6
+./usr/sbin/rump_cd9660				base-miscfs-bin		puffs
+./usr/sbin/rump_efs				base-miscfs-bin		puffs
+./usr/sbin/rump_ext2fs				base-miscfs-bin		puffs
+./usr/sbin/rump_ffs				base-miscfs-bin		puffs
+./usr/sbin/rump_hfs				base-miscfs-bin		puffs
+./usr/sbin/rump_lfs				base-miscfs-bin		puffs
+./usr/sbin/rump_msdos				base-miscfs-bin		puffs
+./usr/sbin/rump_ntfs				base-miscfs-bin		puffs
+./usr/sbin/rump_syspuffs			base-miscfs-bin		puffs
+./usr/sbin/rump_tmpfs				base-miscfs-bin		puffs
+./usr/sbin/rump_udf				base-miscfs-bin		puffs
 ./usr/sbin/rwhod				base-netutil-bin
 ./usr/sbin/sa					base-sysutil-bin
 ./usr/sbin/screenblank				base-sysutil-bin

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.12 2008/07/20 16:18:13 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.13 2008/07/29 13:17:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,6 @@
 #include <miscfs/genfs/genfs.h>
 
 #include "rump_private.h"
-#include "rumpuser.h"
 
 void
 genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)

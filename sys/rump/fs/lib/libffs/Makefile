@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2007/09/24 01:31:07 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2008/07/29 13:17:42 pooka Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:  ${.CURDIR}/../../../../ufs/ffs
 
-LIB=	ffs
-
-.PATH:  ${NETBSDSRCDIR}/sys/ufs/ffs
+LIB=	rumpfs_ffs
 
 SRCS=	ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_inode.c		\
 	ffs_softdep.stub.c ffs_subr.c ffs_tables.c ffs_vfsops.c		\

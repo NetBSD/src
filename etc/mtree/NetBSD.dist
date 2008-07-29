@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.375 2008/07/29 04:50:52 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.376 2008/07/29 13:17:40 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -315,6 +315,7 @@
 ./usr/include/readline
 ./usr/include/rpc
 ./usr/include/rpcsvc
+./usr/include/rump
 ./usr/include/security
 ./usr/include/sys
 ./usr/include/ssp

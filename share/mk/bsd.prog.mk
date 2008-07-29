@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.229 2008/05/28 11:23:26 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.230 2008/07/29 13:17:41 pooka Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -94,8 +94,12 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	form fl g2c gcc gnumalloc gssapi hdb heimntlm hx509 intl ipsec \
 	kadm5clnt kadm5srv kafs krb5 kvm l lber ldap ldap_r \
 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
-	puffs radius resolv rmt roken rpcsvc rt sdp skey sl ss ssh ssl termcap \
-	usbhid util wrap y z bind9 dns lwres isccfg isccc isc
+	puffs radius resolv rmt roken rpcsvc rt rump rumpuser sdp skey sl ss \
+	ssh ssl termcap usbhid util wrap y z bind9 dns lwres isccfg isccc isc \
+	\
+	rumpfs_cd9660fs rumpfs_efs rumpfs_ext2fs rumpfs_ffs rumpfs_hfs \
+	rumpfs_lfs rumpfs_msdosfs rumpfs_nfs rumpfs_ntfs rumpfs_syspuffs \
+	rumpfs_tmpfs rumpfs_udf rumpfs_ufs
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded

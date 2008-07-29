@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.9 2008/07/01 12:33:32 pooka Exp $	*/
+/*	$NetBSD: auth.c,v 1.10 2008/07/29 13:17:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -34,8 +34,7 @@
 #include <sys/kmem.h>
 #include <sys/proc.h>
 
-#include "rump.h"
-#include "rumpuser.h"
+#include <rump/rump.h>
 
 struct kauth_cred {
 	uid_t cr_uid;

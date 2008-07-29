@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.28 2008/07/01 12:33:32 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.29 2008/07/29 13:17:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,6 +30,11 @@
 #ifndef _SYS_RUMP_H_
 #define _SYS_RUMP_H_
 
+/*
+ * NOTE: do not #include anything from <sys> here.  Otherwise this
+ * has no chance of working on non-NetBSD platforms.
+ */
+
 struct mount;
 struct vnode;
 struct vattr;
@@ -45,8 +50,8 @@ typedef struct kauth_cred *kauth_cred_t;
 
 struct lwp;
 
-#include "rumpvnode_if.h"
-#include "rumpdefs.h"
+#include <rump/rumpvnode_if.h>
+#include <rump/rumpdefs.h>
 
 #ifndef curlwp
 #define curlwp rump_get_curlwp()

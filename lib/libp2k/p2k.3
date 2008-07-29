@@ -1,0 +1,75 @@
+.\"     $NetBSD: p2k.3,v 1.1 2008/07/29 13:17:40 pooka Exp $
+.\"
+.\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 28, 2008
+.Dt P2K 3
+.Os
+.Sh NAME
+.Nm p2k
+.Nd puffs to kernel vfs translation library
+.Sh LIBRARY
+p2k Library (libp2k, \-lp2k)
+.Sh SYNOPSIS
+.In rump/p2k.h
+.Ft int
+.Fo p2k_run_fs
+.Fa "const char *vfsname" "const char *devpath" "const char *mountpath"
+.Fa "int mntflags" "void *arg" "size_t alen" "uint32_t puffs_flags"
+.Fc
+.Sh DESCRIPTION
+The
+.Nm
+library translates the puffs protocol to the kernel vfs protocol and
+back again.
+It can therefore be used to mount and run kernel file system code as
+a userspace daemon.
+.Pp
+Calling the library interface function mounts the file system and,
+if succesful, starts handling requests.
+The parameters are handled by
+.Fn ukfs_mount
+(see
+.Xr ukfs 3 ) ,
+with the exception that
+.Fa mountpath
+and
+.Fa puffs_flags
+are handled by
+.Xr puffs 3 .
+.Sh SEE ALSO
+.Xr puffs 3 ,
+.Xr rump 3 ,
+.Xr ukfs 3 ,
+.Xr rump_cd9660 8 ,
+.Xr rump_efs 8 ,
+.Xr rump_ext2fs 8 ,
+.Xr rump_ffs 8 ,
+.Xr rump_hfs 8 ,
+.Xr rump_lfs 8 ,
+.Xr rump_msdos 8 ,
+.Xr rump_ntfs 8 ,
+.Xr rump_syspuffs 8 ,
+.Xr rump_tmpfs 8 ,
+.Xr rump_udf 8
