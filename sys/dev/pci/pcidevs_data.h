@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.943 2008/07/15 22:27:31 tonnerre Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.944 2008/07/29 21:13:48 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.943 2008/07/15 22:26:42 tonnerre Exp
+ *	NetBSD: pcidevs,v 1.944 2008/07/29 21:13:17 tron Exp
  */
 
 /*
@@ -10281,7 +10281,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800LE,
-	    "GeForce 6800LE",
+	    "GeForce 6800 LE",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800GT,
@@ -10654,6 +10654,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_LAN,
 	    "nForce Ethernet",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_7300LE,
+	    "GeForce 7300 LE",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCHB,
@@ -14260,4 +14264,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2965;
+const int pci_nproducts = 2966;
