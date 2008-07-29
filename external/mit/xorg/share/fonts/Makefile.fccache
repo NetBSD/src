@@ -1,0 +1,20 @@
+#	$NetBSD: Makefile.fccache,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+
+.ifndef _MAKEFILE_FCCACHE_
+_MAKEFILE_FCCACHE_=1
+
+.include <bsd.own.mk>
+
+.include "${NETBSDSRCDIR}/external/mit/xorg/tools/fc-cache/Makefile.fc-cache"
+
+afterinstall:
+	${_MKMSG_CREATE} ${DESTDIR}${X11FONTDIR}/fonts.cache-1
+	${FCCACHE} -fv ${DESTDIR}${X11FONTDIR}
+.if ${MKUNPRIVED} != "no"
+	cd ${DESTDIR} \
+	&& find ./${X11FONTDIR} -name fonts.cache-1 \
+	    | sed -e 's/$$/ type=file mode=0444 uname=${BINOWN} gname=${BINGRP}/' \
+	    | ${METALOG.add}
+.endif
+
+.endif # _MAKEFILE_FCCACHE_
