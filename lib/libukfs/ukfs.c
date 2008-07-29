@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.1 2008/07/29 13:17:41 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.2 2008/07/29 21:11:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -381,7 +381,7 @@ ukfs_readlink(struct ukfs *ukfs, const char *filename,
 	rv = rump_sys_readlink(filename, linkbuf, buflen, &myerr);
 	postcall(ukfs);
 	if (myerr) {
-		errno = rv;
+		errno = myerr;
 		return -1;
 	}
 	return rv;
