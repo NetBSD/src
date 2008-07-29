@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.105 2008/07/21 10:00:51 agc Exp $
+# $NetBSD: HACKS,v 1.106 2008/07/29 14:24:06 lukem Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -526,6 +526,18 @@ port	mips
 		Add -fno-reorder-blocks to CFLAGS to avoid duplicate
 		labels by duplicated __asm output from RAS_END()
 		macro.
+	kcah
+
+	hack	mips-mcount-assembler-warning
+	cdate	Tue Jul 29 14:16:52 UTC 2008
+	who	lukem
+	file	src/lib/libc/gmon/Makefile.inc : 1.8
+	descr
+		Workaround for PR port-mips/39192.
+		common/lib/libc/gmon/mcount.c generates a (fatal)
+		assembler warning on MIPS:
+			Warning: No .cprestore pseudo-op used in PIC code
+		Add COPTS.count.c+=-Wa,--no-warn to avoid -Wa,--fatal-warnings
 	kcah
 
 port	i386
