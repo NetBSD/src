@@ -35,6 +35,11 @@
 
 #include "dm.h"
 
+/*
+ * Destroy all table data. This function should be called with held
+ * dev_mtx.
+ */
+
 int
 dm_table_destroy(struct dm_table *head)
 {
