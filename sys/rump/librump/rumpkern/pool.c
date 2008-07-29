@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.7 2008/03/23 14:39:17 rmind Exp $	*/
+/*	$NetBSD: pool.c,v 1.8 2008/07/29 13:17:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 #include <sys/mount.h>
 #include <sys/pool.h>
 
-#include "rumpuser.h"
+#include <rump/rumpuser.h>
 
 struct pool_cache pnbuf_cache;
 struct pool pnbuf_pool;

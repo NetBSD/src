@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.149 2008/06/22 15:44:45 christos Exp $
+# $NetBSD: shl.elf,v 1.150 2008/07/29 13:17:40 pooka Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -178,6 +178,8 @@
 ./usr/lib/libobjc.so.2				base-sys-shlib		gcc
 ./usr/lib/libossaudio.so			base-sys-shlib
 ./usr/lib/libossaudio.so.0			base-sys-shlib
+./usr/lib/libp2k.so				base-sys-shlib		puffs
+./usr/lib/libp2k.so.0				base-sys-shlib		puffs
 ./usr/lib/libpam.so				base-sys-shlib		pam
 ./usr/lib/libpam.so.1				base-sys-shlib		pam
 ./usr/lib/libpcap.so				base-net-shlib
@@ -206,6 +208,34 @@
 ./usr/lib/librpcsvc.so.0			base-net-shlib
 ./usr/lib/librt.so				base-sys-shlib
 ./usr/lib/librt.so.0				base-sys-shlib
+./usr/lib/librump.so				base-sys-shlib
+./usr/lib/librump.so.0				base-sys-shlib
+./usr/lib/librumpfs_cd9660fs.so			base-sys-shlib
+./usr/lib/librumpfs_cd9660fs.so.0		base-sys-shlib
+./usr/lib/librumpfs_efs.so			base-sys-shlib
+./usr/lib/librumpfs_efs.so.0			base-sys-shlib
+./usr/lib/librumpfs_ext2fs.so			base-sys-shlib
+./usr/lib/librumpfs_ext2fs.so.0			base-sys-shlib
+./usr/lib/librumpfs_ffs.so			base-sys-shlib
+./usr/lib/librumpfs_ffs.so.0			base-sys-shlib
+./usr/lib/librumpfs_hfs.so			base-sys-shlib
+./usr/lib/librumpfs_hfs.so.0			base-sys-shlib
+./usr/lib/librumpfs_lfs.so			base-sys-shlib
+./usr/lib/librumpfs_lfs.so.0			base-sys-shlib
+./usr/lib/librumpfs_msdosfs.so			base-sys-shlib
+./usr/lib/librumpfs_msdosfs.so.0		base-sys-shlib
+./usr/lib/librumpfs_ntfs.so			base-sys-shlib
+./usr/lib/librumpfs_ntfs.so.0			base-sys-shlib
+./usr/lib/librumpfs_syspuffs.so			base-sys-shlib
+./usr/lib/librumpfs_syspuffs.so.0		base-sys-shlib
+./usr/lib/librumpfs_tmpfs.so			base-sys-shlib
+./usr/lib/librumpfs_tmpfs.so.0			base-sys-shlib
+./usr/lib/librumpfs_udf.so			base-sys-shlib
+./usr/lib/librumpfs_udf.so.0			base-sys-shlib
+./usr/lib/librumpfs_ufs.so			base-sys-shlib
+./usr/lib/librumpfs_ufs.so.0			base-sys-shlib
+./usr/lib/librumpuser.so			base-sys-shlib
+./usr/lib/librumpuser.so.0			base-sys-shlib
 ./usr/lib/libsdp.so				base-sys-shlib
 ./usr/lib/libsdp.so.2				base-sys-shlib
 ./usr/lib/libskey.so				base-sys-shlib		skey
@@ -225,6 +255,8 @@
 ./usr/lib/libtermcap.so.0			base-sys-shlib
 ./usr/lib/libtermlib.so				base-sys-shlib
 ./usr/lib/libtermlib.so.0			base-sys-shlib
+./usr/lib/libukfs.so				base-sys-shlib
+./usr/lib/libukfs.so.0				base-sys-shlib
 ./usr/lib/libusbhid.so				base-sys-shlib
 ./usr/lib/libusbhid.so.1			base-sys-shlib
 ./usr/lib/libutil.so				base-sys-shlib

@@ -1,0 +1,291 @@
+.\"     $NetBSD: ukfs.3,v 1.1 2008/07/29 13:17:41 pooka Exp $
+.\"
+.\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 28, 2008
+.Dt UKFS 3
+.Os
+.Sh NAME
+.Nm ukfs
+.Nd user kernel file system library interface
+.Sh LIBRARY
+ukfs Library (libukfs, \-lukfs)
+.Sh SYNOPSIS
+.In rump/ukfs.h
+.Sh DESCRIPTION
+The
+.Nm
+library provides direct access to file systems without having to
+specially mount a file system.
+Therefore, accessing a file system through
+.Nm
+requires no special kernel support apart from standard POSIX functionality.
+As
+.Nm
+is built upon
+.Xr rump 3 ,
+all kernel file systems which are supported by rump are available.
+It allows to write utilities for accessing file systems without having
+to duplicate file system internals knowledge already present in kernel
+file system drivers.
+.Pp
+.Nm
+provides a high-level pathname based interface for accessing file systems.
+If a lower level interface it desired,
+.Xr rump 3
+should be used directly.
+However, much like system calls, the interfaces of
+.Nm ,
+are self-contained and require no tracking and release of resources.
+The only exception is the file system handle
+.Ft struct ukfs .
+.Sh INITIALIZATION
+.Ft int
+.br
+.Fn ukfs_init
+.Pp
+.Ft struct ukfs *
+.br
+.Fo ukfs_mount
+.Fa "const char *vfsname" "const char *devpath" "const char *mounpath"
+.Fa "int mntflags" "void *arg" "size_t alen"
+.Fc 
+.Pp
+.Ft void
+.br
+.Fn ukfs_release "struct ukfs *ukfs" "int flags"
+.Pp
+.Fn ukfs_init
+intializes the library and must be called once per process using
+.Nm .
+.Pp
+.Fn ukfs_mount
+intializes a file system image.
+The handle resulting from the operation is passed to all other routines
+and identifies the instance of the mount analoguous to what a pathname
+specifies in a normally mounted file system.
+The parameters are the following:
+.Bl -tag -width XXX -offset indent
+.It vfsname
+Name of the file system to be used, e.g.
+.Dv MOUNT_FFS .
+.It devpath
+Path of file system image.
+It can be either a regular file, device or, if the file system does
+not support the concept of a device, an abitrary string, e.g. network
+address.
+.It mountpath
+Path where the file system is mounted to.
+This parameter is used only by the file system being mounted.
+Most of the time
+.Dv UKFS_DEFAULTMP
+is the correct path.
+.It mntflags
+Flags as passed to the
+.Xr mount 2
+system call, for example
+.Dv MNT_RDONLY .
+In addition to generic parameters, file system specific parameters such as
+.Dv MNT_SOFTDEP
+(ffs) may be passed here.
+.It arg
+File system private argument structure.
+This is passed directly to the file system.
+It must match what
+.Fa vfsname
+expects.
+.It alen
+Size of said structure.
+.El
+.Pp
+.Fn ukfs_release
+releases the resources associated with
+.Fa ukfs .
+If
+.Fa flags
+is
+.Dv UKFS_RELFLAG_NOUNMOUNT ,
+the file system is not unmounted.
+This is required if the file system has already been unmounted due
+to prior activity, otherwise 0 should be passed.
+.Sh OPERATION
+.Ft int
+.br
+.Fn ukfs_chdir "struct ukfs *ukfs" "const char *path"
+.Pp
+.Ft int
+.br
+.Fo ukfs_getdents
+.Fa "struct ukfs *ukfs" "const char *dirname" "off_t *off"
+.Fa "uint8_t *buf" "size_t bufsize"
+.Fc
+.Pp
+.Ft int
+.br
+.Fo ukfs_read
+.Fa "struct ukfs *ukfs" "const char *filename" "off_t off"
+.Fa "uint8_t *buf" "size_t bufsize"
+.Fc
+.Pp
+.Ft int
+.br
+.Fo ukfs_write
+.Fa "struct ukfs *ukfs" "const char *filename" "off_t off"
+.Fa "uint8_t *buf" "size_t bufsize"
+.Fc
+.Pp
+.Ft int
+.br
+.Fn ukfs_create "struct ukfs *ukfs" "const char *filename" "mode_t mode"
+.Pp
+.Ft int
+.br
+.Fn ukfs_mknod "struct ukfs *ukfs" "const char *path" "mode_t mode" "dev_t dev"
+.Pp
+.Ft int
+.br
+.Fn ukfs_mkfifo "struct ukfs *ukfs" "const char *path" "mode_t mode"
+.Pp
+.Ft int
+.br
+.Fn ukfs_mkdir "struct ukfs *ukfs" "const char *filename" "mode_t mode"
+.Pp
+.Ft int
+.br
+.Fn ukfs_remove "struct ukfs *ukfs" "const char *filename"
+.Pp
+.Ft int
+.br
+.Fn ukfs_rmdir "struct ukfs *ukfs" "const char *filename"
+.Pp
+.Ft int
+.br
+.Fn ukfs_link "struct ukfs *ukfs" "const char *filename" "const char *f_create"
+.Pp
+.Ft int
+.br
+.Fo ukfs_symlink
+.Fa "struct ukfs *ukfs" "const char *filename" "const char *linkname"
+.Fc
+.Pp
+.Ft int
+.br
+.Fo ukfs_readlink
+.Fa "struct ukfs *ukfs" "const char *filename" "char *linkbuf" "size_t buflen"
+.Fc
+.Pp
+.Ft int
+.br
+.Fn ukfs_rename "struct ukfs *ukfs" "const char *from" "const char *to"
+.Pp
+.Ft int
+.br
+.Fo ukfs_stat
+.Fa "struct ukfs *ukfs" "const char *filename" "struct stat *file_stat"
+.Fc
+.Pp
+.Ft int
+.br
+.Fo ukfs_lstat
+.Fa "struct ukfs *ukfs" "const char *filename" "struct stat *file_stat"
+.Fc
+.Pp
+.Ft int
+.br
+.Fn ukfs_chmod "struct ukfs *ukfs" "const char *filename" "mode_t mode"
+.Pp
+.Ft int
+.br
+.Fn ukfs_lchmod "struct ukfs *ukfs" "const char *filename" "mode_t mode"
+.Pp
+.Ft int
+.br
+.Fo ukfs_chown
+.Fa "struct ukfs *ukfs" "const char *filename" "uid_t uid" "gid_t gid"
+.Fc
+.Pp
+.Ft int
+.br
+.Fo ukfs_lchown
+.Fa "struct ukfs *ukfs" "const char *filename" "uid_t uid" "gid_t gid"
+.Fc
+.Pp
+.Ft int
+.br
+.Fn ukfs_chflags "struct ukfs *ukfs" "const char *filename" "u_long flags"
+.Pp
+.Ft int
+.br
+.Fn ukfs_lchflags "struct ukfs *ukfs" "const char *filename" "u_long flags"
+.Pp
+.Ft int
+.br
+.Fo ukfs_utimes
+.Fa "struct ukfs *ukfs" "const char *filename" "const struct timeval *tptr"
+.Fc
+.Pp
+.Ft int
+.br
+.Fo ukfs_lutimes
+.Fa "struct ukfs *ukfs" "const char *filename" "const struct timeval *tptr"
+.Fc
+.Pp
+The above routines operate like their system call counterparts and the
+system call manual pages without the ukfs_ prefix should be referred to
+for further information on the parameters.
+.Pp
+The only call which modifies
+.Fa ukfs
+state is
+.Fn ukfs_chdir .
+It works like
+.Xr chdir 2
+in the sense that it affects the interpretation of relative paths.
+If succesful, all relative pathnames will be resolved starting from the
+current directory.
+Currently the call affects all accesses to that particular
+.Fa ,
+but it might be later changed to be thread private.
+.Sh UTILITIES
+.Ft int
+.br
+.Fn ukfs_util_builddirs "struct ukfs *ukfs" "const char *pathname" "mode_t mode"
+.Pp
+Builds a directory hierarchy.
+Unlike mkdir, the
+.Fa pathname
+argument may contain multiple levels of hierarchy.
+It is not considered an error if any of the directories specified exist
+already.
+.Sh SEE ALSO
+.Xr rump 3
+.Sh HISTORY
+.Nm
+first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+.An Antti Kantee Aq pooka@cs.hut.fi
+.Sh NOTES
+.Nm
+should be considered experimental technology and may change without warning.
