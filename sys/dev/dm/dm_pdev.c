@@ -60,12 +60,12 @@ dm_pdev_lookup_name(const char *dm_pdev_name)
 	struct dm_pdev *dm_pdev;
 	int dlen; int slen;
 
-	slen = strlen(dm_pdev_name)+1;
+	slen = strlen(dm_pdev_name);
 
 	mutex_enter(&dm_pdev_mutex);
 
 	SLIST_FOREACH(dm_pdev, &dm_pdev_list, next_pdev) {
-		dlen = strlen(dm_pdev->name)+1;
+		dlen = strlen(dm_pdev->name);
 
 		if (slen != dlen)
 			continue;
@@ -93,8 +93,15 @@ dm_pdev_insert(const char *dev_name)
 
 	dmp = dm_pdev_lookup_name(dev_name);
 
+	
 	if (dmp != NULL) {
+
+		mutex_enter(&dm_pdev_mutex);
+		
 		dmp->ref_cnt++;
+
+		mutex_exit(&dm_pdev_mutex);
+		
 		return dmp;
 	}
 
@@ -111,7 +118,7 @@ dm_pdev_insert(const char *dev_name)
 	}
 	
 	dmp->ref_cnt = 1;
-
+	
 	mutex_enter(&dm_pdev_mutex);
 
 	SLIST_INSERT_HEAD(&dm_pdev_list, dmp, next_pdev);
@@ -196,6 +203,8 @@ dm_pdev_decr(struct dm_pdevs *head)
 	if (head == NULL)
 		return ENOENT;
 
+	mutex_enter(&dm_pdev_mutex);
+
 	SLIST_FOREACH(dmp, head, next_pdev) {
 
 		dmp->ref_cnt--;
@@ -207,12 +216,12 @@ dm_pdev_decr(struct dm_pdevs *head)
 		 * global list also.
 		 */
 		if (dmp->ref_cnt == 0) {
-			mutex_enter(&dm_pdev_mutex);
 			SLIST_REMOVE(&dm_pdev_list, dmp, dm_pdev, next_pdev); 
 			dm_pdev_destroy(dmp);
-			mutex_exit(&dm_pdev_mutex);
 		}
 	}
+
+	mutex_exit(&dm_pdev_mutex);
 
 	return 0;
 }
