@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.15 2008/07/28 17:02:45 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.16 2008/07/29 12:01:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.15 2008/07/28 17:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.16 2008/07/29 12:01:41 christos Exp $");
 
 
 /*
@@ -604,7 +604,7 @@ iwn_alloc_shared(struct iwn_softc *sc)
 	/* must be aligned on a 1KB boundary */
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &sc->shared_dma,
 	    &p, sizeof (struct iwn_shared), 1024,BUS_DMA_NOWAIT);
-	sc->share = p;
+	sc->shared = p;
 	if (error != 0)
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate shared area DMA memory\n");
