@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.254 2008/07/29 04:49:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.255 2008/07/29 13:17:40 pooka Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -88,6 +88,7 @@
 #   do-lib:          builds and installs prerequisites from lib.
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
 #   do-external-lib: builds and installs prerequisites from external/lib.
+#   do-sys-rump-fs-lib: builds and installs prerequisites from sys/rump/fs/lib
 #   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
 #   do-build:        builds and installs the entire system.
 #   do-x11:          builds and installs X11R6 from src/x11 if ${MKX11} != "no"
@@ -207,6 +208,7 @@ BUILDTARGETS+=	do-libgcc
 .endif
 BUILDTARGETS+=	do-lib-libc
 BUILDTARGETS+=	do-lib do-gnu-lib do-external-lib
+BUILDTARGETS+=	do-sys-rump-fs-lib
 BUILDTARGETS+=	do-ld.so
 BUILDTARGETS+=	do-build
 .if ${MKX11} != "no"
@@ -356,7 +358,7 @@ do-${targ}: .PHONY ${targ}
 	@true
 .endfor
 
-.for dir in tools tools/compat lib/csu gnu/lib/crtstuff${LIBGCC_EXT} gnu/lib/libgcc${LIBGCC_EXT} lib/libc lib/libdes lib gnu/lib external/lib
+.for dir in tools tools/compat lib/csu gnu/lib/crtstuff${LIBGCC_EXT} gnu/lib/libgcc${LIBGCC_EXT} lib/libc lib/libdes lib gnu/lib external/lib sys/rump/fs/lib
 do-${dir:S/\//-/g}: .PHONY .MAKE
 .for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
