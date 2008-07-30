@@ -20,3 +20,8 @@ bin		- done
 			-- many apps need app-config generated/installed?
 			   this will apparently help with pkgsrc.
 Xserver 	- 
+
+
+things to delete:
+- lbx is dead, kill it
+
