@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.1 2008/07/29 13:17:41 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.2 2008/07/30 14:57:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,9 +31,11 @@
 #ifndef _RUMP_UKFS_H_
 #define _RUMP_UKFS_H_
 
+#include <sys/types.h>
+
 #include <stdint.h>
 
-/* don't include <sys/header.h> for portability */
+/* don't include NetBSD <sys/header.h> for portability */
 struct vnode;
 struct componentname;
 struct stat;
