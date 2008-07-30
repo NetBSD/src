@@ -1,4 +1,4 @@
-/*	$NetBSD: strspn.c,v 1.15 2008/02/23 15:53:22 christos Exp $	*/
+/*	$NetBSD: strspn.c,v 1.16 2008/07/30 16:13:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strspn.c,v 1.15 2008/02/23 15:53:22 christos Exp $");
+__RCSID("$NetBSD: strspn.c,v 1.16 2008/07/30 16:13:59 joerg Exp $");
 
 #include <assert.h>
 #include <inttypes.h>
@@ -43,6 +43,16 @@ strspn(const char *s, const char *charset)
 
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(charset != NULL);
+
+	if (charset[0] == '\0')
+		return 0;
+	if (charset[1] == '\0') {
+		for (t = s; *t != '\0'; ++t) {
+			if (*t != *charset)
+				break;
+		}
+		return t - s;
+	}
 
 	(void)memset(set, 0, sizeof(set));
 
