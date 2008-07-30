@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.25 2006/03/18 09:09:41 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.26 2008/07/30 13:00:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.25 2006/03/18 09:09:41 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.26 2008/07/30 13:00:46 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -445,13 +445,12 @@ private const ttymodes_t ttymodes[] = {
 
 
 
-#define	tty_getty(el, td)	tcgetattr((el)->el_infd, (td))
-#define	tty_setty(el, td)	tcsetattr((el)->el_infd, TCSADRAIN, (td))
-
 #define	tty__gettabs(td)	((((td)->c_oflag & TAB3) == TAB3) ? 0 : 1)
 #define	tty__geteightbit(td)	(((td)->c_cflag & CSIZE) == CS8)
 #define	tty__cooked_mode(td)	((td)->c_lflag & ICANON)
 
+private int	tty_getty(EditLine *, struct termios *);
+private int	tty_setty(EditLine *, int, const struct termios *);
 private int	tty__getcharindex(int);
 private void	tty__getchar(struct termios *, unsigned char *);
 private void	tty__setchar(struct termios *, unsigned char *);
@@ -460,6 +459,29 @@ private int	tty_setup(EditLine *);
 
 #define	t_qu	t_ts
 
+/* tty_getty():
+ *	Wrapper for tcgetattr to handle EINTR
+ */
+private int
+tty_getty(EditLine *el, struct termios *t)
+{
+	int rv;
+	while ((rv = tcgetattr(el->el_infd, t)) == -1 && errno == EINTR)
+		continue;
+	return rv;
+}
+
+/* tty_setty():
+ *	Wrapper for tcsetattr to handle EINTR
+ */
+private int
+tty_setty(EditLine *el, int action, const struct termios *t)
+{
+	int rv;
+	while ((rv = tcsetattr(el->el_infd, action, t)) == -1 && errno == EINTR)
+		continue;
+	return rv;
+}
 
 /* tty_setup():
  *	Get the tty parameters and initialize the editing state
@@ -521,7 +543,7 @@ tty_setup(EditLine *el)
 					    el->el_tty.t_c[TS_IO][rst];
 		}
 		tty__setchar(&el->el_tty.t_ex, el->el_tty.t_c[EX_IO]);
-		if (tty_setty(el, &el->el_tty.t_ex) == -1) {
+		if (tty_setty(el, TCSADRAIN, &el->el_tty.t_ex) == -1) {
 #ifdef DEBUG_TTY
 			(void) fprintf(el->el_errfile,
 			    "tty_setup: tty_setty: %s\n",
@@ -1050,7 +1072,7 @@ tty_rawmode(EditLine *el)
 			}
 		}
 	}
-	if (tty_setty(el, &el->el_tty.t_ed) == -1) {
+	if (tty_setty(el, TCSADRAIN, &el->el_tty.t_ed) == -1) {
 #ifdef DEBUG_TTY
 		(void) fprintf(el->el_errfile, "tty_rawmode: tty_setty: %s\n",
 		    strerror(errno));
@@ -1075,7 +1097,7 @@ tty_cookedmode(EditLine *el)
 	if (el->el_flags & EDIT_DISABLED)
 		return (0);
 
-	if (tty_setty(el, &el->el_tty.t_ex) == -1) {
+	if (tty_setty(el, TCSADRAIN, &el->el_tty.t_ex) == -1) {
 #ifdef DEBUG_TTY
 		(void) fprintf(el->el_errfile,
 		    "tty_cookedmode: tty_setty: %s\n",
@@ -1111,7 +1133,7 @@ tty_quotemode(EditLine *el)
 	el->el_tty.t_qu.c_lflag &= ~el->el_tty.t_t[QU_IO][MD_LIN].t_clrmask;
 	el->el_tty.t_qu.c_lflag |= el->el_tty.t_t[QU_IO][MD_LIN].t_setmask;
 
-	if (tty_setty(el, &el->el_tty.t_qu) == -1) {
+	if (tty_setty(el, TCSADRAIN, &el->el_tty.t_qu) == -1) {
 #ifdef DEBUG_TTY
 		(void) fprintf(el->el_errfile, "QuoteModeOn: tty_setty: %s\n",
 		    strerror(errno));
@@ -1132,7 +1154,7 @@ tty_noquotemode(EditLine *el)
 
 	if (el->el_tty.t_mode != QU_IO)
 		return (0);
-	if (tty_setty(el, &el->el_tty.t_ed) == -1) {
+	if (tty_setty(el, TCSADRAIN, &el->el_tty.t_ed) == -1) {
 #ifdef DEBUG_TTY
 		(void) fprintf(el->el_errfile, "QuoteModeOff: tty_setty: %s\n",
 		    strerror(errno));
