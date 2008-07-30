@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.1 2008/07/29 13:17:40 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.2 2008/07/30 18:10:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,9 +41,6 @@
  * to tell the kernel to reclaim the vnode.  Only in reclaim do we
  * really nuke the last reference.
  */
-
-#define __VFSOPS_EXPOSE
-struct fid;
 
 #include <sys/mount.h>
 #include <sys/param.h>
