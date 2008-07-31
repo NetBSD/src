@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.3 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: print.c,v 1.4 2008/07/31 15:21:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print.c,v 1.3 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: print.c,v 1.4 2008/07/31 15:21:34 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -43,7 +43,6 @@ __RCSID("$NetBSD: print.c,v 1.3 2008/04/28 20:24:15 martin Exp $");
 #include "lint1.h"
 #include "externs1.h"
 
-#ifdef DEBUG
 static const char *str_op_t[] =
 {
 	"*noop*",
@@ -129,7 +128,7 @@ prtnode(char *buf, size_t bufsiz, const tnode_t *tn)
 			break;
 		default:
 			(void)snprintf(buf, bufsiz, v->v_ansiu ? "%llu" :
-			    "%lld", v->v_quad);
+			    "%lld", (unsigned long long)v->v_quad);
 			break;
 		}
 		break;
@@ -153,4 +152,3 @@ prtnode(char *buf, size_t bufsiz, const tnode_t *tn)
 	}
 	return buf;
 }
-#endif
