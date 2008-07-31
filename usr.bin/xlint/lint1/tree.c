@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.50 2008/05/03 16:28:56 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.51 2008/07/31 15:21:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.50 2008/05/03 16:28:56 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.51 2008/07/31 15:21:34 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: tree.c,v 1.50 2008/05/03 16:28:56 christos Exp $");
 
 #include "lint1.h"
 #include "cgram.h"
+#include "externs1.h"
 
 /* Various flags for each operator. */
 static	mod_t	modtab[NOPS];
@@ -1445,12 +1446,10 @@ chkeop2(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 			warning(130, mp->m_name);
 			break;
 		}
-#if 0
-	} else if (mp->m_comp && op != EQ && op != NE) {
+	} else if (Pflag && mp->m_comp && op != EQ && op != NE) {
 		if (eflag)
 			/* dubious comparisons of enums */
 			warning(243, mp->m_name);
-#endif
 	}
 }
 
@@ -1792,15 +1791,14 @@ ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 static void
 iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 {
-	char lbuf[64], rbuf[64];
+	char lbuf[64], rbuf[64], opbuf[16];
 	if (tn->tn_op == CON)
 		return;
 
 	if (op == CVT)
 		return;
 
-#if 0
-	if (psize(nt) > psize(ot) && isutyp(nt) != isutyp(ot)) {
+	if (Pflag && psize(nt) > psize(ot) && isutyp(nt) != isutyp(ot)) {
 		/* conversion to %s may sign-extend incorrectly (, arg #%d) */
 		if (aflag && pflag) {
 			if (op == FARG) {
@@ -1811,7 +1809,22 @@ iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 			}
 		}
 	}
-#endif
+
+	if (Pflag && psize(nt) > psize(ot)) {
+		switch (tn->tn_op) {
+		case PLUS:
+		case MINUS:
+		case MULT:
+		case SHL:
+			warning(324,
+			    tyname(rbuf, sizeof(rbuf), gettyp(ot)),
+			    tyname(lbuf, sizeof(lbuf), tp),
+			    prtnode(opbuf, sizeof(opbuf), tn));
+			break;
+		default:
+			break;
+		}
+	}
 
 	if (psize(nt) < psize(ot) &&
 	    (ot == LONG || ot == ULONG || ot == QUAD || ot == UQUAD ||
