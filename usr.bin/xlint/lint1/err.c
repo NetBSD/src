@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.37 2008/07/25 18:33:53 dsl Exp $	*/
+/*	$NetBSD: err.c,v 1.38 2008/07/31 15:21:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.37 2008/07/25 18:33:53 dsl Exp $");
+__RCSID("$NetBSD: err.c,v 1.38 2008/07/31 15:21:34 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -383,6 +383,7 @@ const	char *msgs[] = {
 	"array initializer with designators is a C9X feature",	      /* 321 */
 	"zero sized array is a C99 extension",			      /* 322 */
 	"continue in 'do ... while (0)' loop",			      /* 323 */
+	"suggest cast from '%s' to '%s' on op %s to avoid overflow",  /* 324 */
 };
 
 /*
