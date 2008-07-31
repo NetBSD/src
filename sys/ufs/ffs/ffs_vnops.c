@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.100 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.101 2008/07/31 23:49:50 oster Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.100 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.101 2008/07/31 23:49:50 oster Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -423,14 +423,19 @@ ffs_full_fsync(struct vnode *vp, int flags)
 	 */
 
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
+		int pflags = PGO_ALLPAGES | PGO_CLEANIT;
+
 		if ((flags & FSYNC_VFS) != 0 && vp->v_specmountpoint != NULL)
 			mp = vp->v_specmountpoint;
 		else
 			mp = vp->v_mount;
-		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
-		    ((flags & FSYNC_WAIT) ? PGO_SYNCIO : 0) |
-		    (fstrans_getstate(mp) == FSTRANS_SUSPENDING ?
-			PGO_FREE : 0));
+
+		if ((flags & FSYNC_WAIT))
+			pflags |= PGO_SYNCIO;
+		if (vp->v_type == VREG &&
+		    fstrans_getstate(mp) == FSTRANS_SUSPENDING)
+			pflags |= PGO_FREE;
+		error = VOP_PUTPAGES(vp, 0, 0, pflags);
 		if (error)
 			return error;
 	} else {
