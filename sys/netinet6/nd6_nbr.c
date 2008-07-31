@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.89 2008/07/31 18:01:36 matt Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.90 2008/07/31 18:24:07 matt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.89 2008/07/31 18:01:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.90 2008/07/31 18:24:07 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -150,16 +150,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		/*
 		 * Make sure the source address is from a neighbor's address.
 		 */
-		IFADDR_FOREACH(ifa, ifp) {
-			struct in6_ifaddr *ia = (struct in6_ifaddr *) ifa;
-			if (ia->ia_ifa.ifa_addr != NULL
-			    && ia->ia_ifa.ifa_addr->sa_family == AF_INET6
-			    && IN6_ARE_MASKED_ADDR_EQUAL(&saddr6,
-				  	&ia->ia_addr.sin6_addr,
-                                        &ia->ia_prefixmask.sin6_addr))
-				break;
-		}
-		if (ifa == NULL) {
+		if (in6ifa_ifplocaladdr(ifp, &saddr6) == NULL) {
 			nd6log((LOG_INFO, "nd6_ns_input: "
 			    "NS packet from non-neighbor\n"));
 			goto bad;
@@ -562,9 +553,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_neighbor_advert *nd_na;
-#if 0
 	struct in6_addr saddr6 = ip6->ip6_src;
-#endif
 	struct in6_addr daddr6 = ip6->ip6_dst;
 	struct in6_addr taddr6;
 	int flags;
@@ -651,6 +640,14 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		    "nd6_na_input: duplicate IP6 address %s\n",
 		    ip6_sprintf(&taddr6));
 		goto freeit;
+	}
+	/*
+	 * Make sure the source address is from a neighbor's address.
+	 */
+	if (in6ifa_ifplocaladdr(ifp, &saddr6) == NULL) {
+		nd6log((LOG_INFO, "nd6_ns_input: "
+		    "ND packet from non-neighbor\n"));
+		goto bad;
 	}
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {
