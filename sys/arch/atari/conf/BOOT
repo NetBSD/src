@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOT,v 1.75 2007/10/17 19:53:46 garbled Exp $
+# $NetBSD: BOOT,v 1.76 2008/07/31 07:48:37 simonb Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.67 2007/07/16 06:26:54 he Exp $
+#		NetBSD: GENERIC.in,v 1.73 2008/07/31 07:47:43 simonb Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -23,6 +23,7 @@ file-system MFS # Memory based filesystem
 file-system KERNFS # Kernel parameter filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
+options WAPBL # File system journaling support - Experimental
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
 options COMPAT_43 # 4.3 BSD compatible system calls (required)

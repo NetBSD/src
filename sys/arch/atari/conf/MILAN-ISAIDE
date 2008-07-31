@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.52 2007/10/17 19:53:47 garbled Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.53 2008/07/31 07:48:37 simonb Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.21 2006/09/03 13:51:24 bjh21 Exp $
-#		NetBSD: GENERIC.in,v 1.67 2007/07/16 06:26:54 he Exp $
+#		NetBSD: GENERIC.in,v 1.73 2008/07/31 07:47:43 simonb Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -18,7 +18,6 @@ options FPSP # 68040 Floatingpoint support
 options M060SP # MC68060 software support (Required for 060)
 options INET # IP + ICMP + TCP + UDP
 options INET6 # IPV6
-options ISO,TPIP # OSI
 options NETATALK # AppleTalk networking protocols
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
@@ -42,6 +41,7 @@ file-system PORTAL # portal file system
 file-system EXT2FS # second extended file system (linux)
 file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
+options WAPBL # File system journaling support - Experimental
 options QUOTA # Disk quotas for local disks
 options SOFTDEP # FFS soft updates support.
 options NFSSERVER # Network File System server side code
