@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2008/01/19 13:11:18 chris Exp $
+# $NetBSD: GENERIC,v 1.92 2008/07/31 07:41:02 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -78,6 +78,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options

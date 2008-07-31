@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.10 2008/05/30 20:10:01 tsutsui Exp $
+# $NetBSD: HDL_G,v 1.11 2008/07/31 07:41:00 simonb Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -53,6 +53,7 @@ file-system	UNION		# union file system
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 #options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
