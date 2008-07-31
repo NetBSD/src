@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.175 2008/07/31 14:15:00 joerg Exp $
+# $NetBSD: ALL,v 1.176 2008/07/31 23:56:00 cegger Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.175 $"
+#ident 		"ALL-$Revision: 1.176 $"
 
 maxusers	32		# estimated number of users
 
@@ -337,7 +337,6 @@ acpi0 		at mainbus0
 
 options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
-options 	VGA_POST		# in-kernel support for VGA POST
 
 # ACPI devices
 acpiacad* 	at acpi?		# ACPI AC Adapter
