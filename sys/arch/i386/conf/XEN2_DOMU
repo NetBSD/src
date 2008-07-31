@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.17 2008/05/26 13:21:08 ad Exp $
+# $NetBSD: XEN2_DOMU,v 1.18 2008/07/31 08:43:13 cegger Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -111,6 +111,7 @@ file-system 	TMPFS		# Efficient memory file-system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
