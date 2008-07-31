@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.42 2008/05/18 19:54:11 jmcneill Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.43 2008/07/31 14:05:05 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.42 2008/05/18 19:54:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.43 2008/07/31 14:05:05 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,12 +263,15 @@ vga_pci_rescan(struct device *self, const char *ifattr, const int *locators)
 static bool
 vga_pci_resume(device_t dv PMF_FN_ARGS)
 {
+#ifdef VGA_POST
+	extern int acpi_md_vbios_reset;
+#endif
 	struct vga_pci_softc *sc = device_private(dv);
 
 	vga_resume(&sc->sc_vga);
 
 #ifdef VGA_POST
-	if (sc->sc_posth != NULL)
+	if (sc->sc_posth != NULL && acpi_md_vbios_reset == 2)
 		vga_post_call(sc->sc_posth);
 #endif
 

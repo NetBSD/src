@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.67 2008/07/21 11:51:59 cegger Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.68 2008/07/31 14:05:05 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.67 2008/07/21 11:51:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.68 2008/07/31 14:05:05 joerg Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -749,6 +749,12 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		if (ptrp->Length == 0)
 			break;
 		dev = ACPI_HIWORD(ptrp->Address);
+
+		if (ptrp->Source[0] == 0 &&
+		    (ptrp->SourceIndex == 14 || ptrp->SourceIndex == 15)) {
+			printf("Skipping PCI routing entry for PCI IDE compat IRQ");
+			continue;
+		}
 
 		mpi = &mp_intrs[mpacpi_intr_index];
 		mpi->bus_pin = (dev << 2) | (ptrp->Pin & 3);
