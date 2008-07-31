@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.4 2008/05/30 20:10:02 tsutsui Exp $
+#	$NetBSD: PMPPC,v 1.5 2008/07/31 07:41:01 simonb Exp $
 #
 #	PMPPC
 #
@@ -81,6 +81,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

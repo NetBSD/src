@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.39 2008/05/30 20:10:01 tsutsui Exp $
+#	$NetBSD: IQ31244,v 1.40 2008/07/31 07:41:00 simonb Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -50,6 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
