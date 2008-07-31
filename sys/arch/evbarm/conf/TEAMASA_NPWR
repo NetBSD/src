@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.56 2008/06/27 21:10:38 he Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.57 2008/07/31 07:41:00 simonb Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -53,6 +53,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

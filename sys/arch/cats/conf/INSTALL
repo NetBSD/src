@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.66 2008/05/30 20:10:01 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.67 2008/07/31 07:41:00 simonb Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -54,6 +54,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	SOFTDEP		# FFS soft updates support
+options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

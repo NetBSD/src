@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.3 2008/05/30 20:10:01 tsutsui Exp $
+#	$NetBSD: IMX31LITE,v 1.4 2008/07/31 07:41:00 simonb Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -48,6 +48,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

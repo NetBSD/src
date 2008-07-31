@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.173 2008/05/26 00:25:32 christos Exp $
+# $NetBSD: ALL,v 1.174 2008/07/31 07:41:01 simonb Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.173 $"
+#ident 		"ALL-$Revision: 1.174 $"
 
 maxusers	32		# estimated number of users
 
@@ -187,6 +187,7 @@ file-system 	ADOSFS		# AmigaDOS file system
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

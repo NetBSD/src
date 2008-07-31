@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.37 2008/05/30 20:10:02 tsutsui Exp $
+# 	$NetBSD: LROUTER,v 1.38 2008/07/31 07:41:01 simonb Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -76,6 +76,7 @@ file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	QUOTA		# UFS quotas
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
