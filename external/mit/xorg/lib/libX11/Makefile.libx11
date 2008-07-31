@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libx11,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile.libx11,v 1.2 2008/07/31 01:35:04 mrg Exp $
 
 LIB=	X11
 .PATH:	${X11SRCDIR.${LIB}}/src
@@ -437,5 +437,7 @@ CPPFLAGS.lcFile.c=	$(LOCALE_DEFINES)
 
 #BUILDSYMLINKS=	transport.c x11trans.c \
 #		transport.c ximtrans.c
+
+COPTS.StBytes.c+=	-Wno-error
 
 .include "${NETBSDSRCDIR}/external/mit/xorg/tools/makekeys/Makefile.makekeys"
