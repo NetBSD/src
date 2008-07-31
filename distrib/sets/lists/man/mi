@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1081 2008/07/22 21:08:00 dyoung Exp $
+# $NetBSD: mi,v 1.1082 2008/07/31 08:28:17 simonb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1616,6 +1616,7 @@
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vnd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vr.0			man-sys-catman		.cat
+./usr/share/man/cat4/wapbl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wdc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wds.0			man-sys-catman		.cat
@@ -4189,6 +4190,7 @@
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
 ./usr/share/man/man4/vnd.4			man-sys-man		.man
 ./usr/share/man/man4/vr.4			man-sys-man		.man
+./usr/share/man/man4/wapbl.4			man-sys-man		.man
 ./usr/share/man/man4/wd.4			man-sys-man		.man
 ./usr/share/man/man4/wdc.4			man-sys-man		.man
 ./usr/share/man/man4/wds.4			man-sys-man		.man
