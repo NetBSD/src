@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.88 2008/05/22 22:25:05 dyoung Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.89 2008/07/31 18:01:36 matt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.88 2008/05/22 22:25:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.89 2008/07/31 18:01:36 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -146,7 +146,26 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			    "(wrong ip6 dst)\n"));
 			goto bad;
 		}
+	} else {
+		/*
+		 * Make sure the source address is from a neighbor's address.
+		 */
+		IFADDR_FOREACH(ifa, ifp) {
+			struct in6_ifaddr *ia = (struct in6_ifaddr *) ifa;
+			if (ia->ia_ifa.ifa_addr != NULL
+			    && ia->ia_ifa.ifa_addr->sa_family == AF_INET6
+			    && IN6_ARE_MASKED_ADDR_EQUAL(&saddr6,
+				  	&ia->ia_addr.sin6_addr,
+                                        &ia->ia_prefixmask.sin6_addr))
+				break;
+		}
+		if (ifa == NULL) {
+			nd6log((LOG_INFO, "nd6_ns_input: "
+			    "NS packet from non-neighbor\n"));
+			goto bad;
+		}
 	}
+
 
 	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
 		nd6log((LOG_INFO, "nd6_ns_input: bad NS target (multicast)\n"));
