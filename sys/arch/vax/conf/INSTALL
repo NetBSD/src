@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.49 2008/05/30 20:10:03 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.50 2008/07/31 07:41:07 simonb Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -68,6 +68,7 @@ file-system 	CD9660
 #options 	NFSSERVER
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
 
 #options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 #options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
