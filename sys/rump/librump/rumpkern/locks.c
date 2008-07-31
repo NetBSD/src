@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.16.2.1 2008/07/21 14:14:13 simonb Exp $	*/
+/*	$NetBSD: locks.c,v 1.16.2.2 2008/07/31 04:51:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,9 +59,9 @@
 #include <sys/rwlock.h>
 #include <sys/atomic.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
-#include "rumpuser.h"
+#include "rump_private.h"
 
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)

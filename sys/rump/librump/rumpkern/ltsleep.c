@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.6 2008/01/27 19:07:21 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.6.14.1 2008/07/31 04:51:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,8 +33,9 @@
 #include <sys/queue.h>
 #include <sys/simplelock.h>
 
+#include <rump/rumpuser.h>
+
 #include "rump_private.h"
-#include "rumpuser.h"
 
 struct ltsleeper {
 	wchan_t id;

@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.19.14.2 2008/07/21 14:14:13 simonb Exp $	*/
+/*	$NetBSD: specfs.c,v 1.19.14.3 2008/07/31 04:51:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,8 +40,9 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <rump/rumpuser.h>
+
 #include "rump_private.h"
-#include "rumpuser.h"
 
 /* We have special special ops */
 static int rump_specopen(void *);

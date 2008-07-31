@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.86 2008/05/26 18:00:33 drochner Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.86.2.1 2008/07/31 04:51:02 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -143,6 +143,7 @@ struct usbd_device {
 	struct usbd_hub	       *hub;           /* only if this is a hub */
 	int			subdevlen;     /* array length of following */
 	device_t	       *subdevs;       /* sub-devices */
+	int			nifaces_claimed; /* number of ifaces in use */
 };
 
 struct usbd_interface {

@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.12.2.5 2008/07/28 14:37:35 simonb Exp $ */
+/* $NetBSD: udf.h,v 1.12.2.6 2008/07/31 04:51:02 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -147,13 +147,13 @@ extern int udf_verbose;
 
 
 /* RW content hint for allocation and other purposes */
-#define UDF_C_PROCESSED	 0	/* not relevant */
-#define UDF_C_USERDATA	 1	/* all but userdata is metadata */
-//#define UDF_C_METADATA	 2	/* unspecified metadata */
-#define UDF_C_DSCR	 3	/* update sectornr and CRC */
-#define UDF_C_NODE	 4	/* file/dir node, update sectornr and CRC */
-#define UDF_C_EXTATTRS	 5	/* dunno what to do yet */
-#define UDF_C_FIDS	 6	/* update all contained fids */
+#define UDF_C_PROCESSED		 0	/* not relevant */
+#define UDF_C_USERDATA		 1	/* all but userdata is metadata */
+#define UDF_C_DSCR		 2	/* update sectornr and CRC */
+#define UDF_C_NODE		 3	/* file/dir node, update sectornr and CRC */
+#define UDF_C_FIDS		 4	/* update all contained fids */
+#define UDF_C_METADATA_SBM	 5	/* space bitmap, update sectornr and CRC */
+#define UDF_C_EXTATTRS		 6	/* dunno what to do yet */
 
 
 /* use unused b_freelistindex for our UDF_C_TYPE */
@@ -328,8 +328,8 @@ struct udf_mount {
 	struct udf_node 	*metadata_node;		/* system node       */
 	struct udf_node 	*metadatamirror_node;	/* system node       */
 	struct udf_node 	*metadatabitmap_node;	/* system node       */
-	struct space_bitmap_desc*metadata_unalloc_dscr;	/* TODO : readin */
-	struct udf_bitmap	 metadata_unalloc_bits;	/* TODO : setup  */
+	struct space_bitmap_desc*metadata_unalloc_dscr;
+	struct udf_bitmap	 metadata_unalloc_bits;
 
 	/* hash table to lookup icb -> udf_node and sorted list for sync */
 	kmutex_t	ihash_lock;

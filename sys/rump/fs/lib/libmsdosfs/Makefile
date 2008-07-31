@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2007/08/08 07:53:54 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.38.1 2008/07/31 04:51:04 simonb Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:  ${.CURDIR}/../../../../fs/msdosfs
 
-LIB=	msdosfs
-
-.PATH:  ${NETBSDSRCDIR}/sys/fs/msdosfs
+LIB=	rumpfs_msdosfs
 
 SRCS=	msdosfs_conv.c msdosfs_fat.c msdosfs_vfsops.c msdosfs_denode.c	\
 	msdosfs_lookup.c msdosfs_vnops.c

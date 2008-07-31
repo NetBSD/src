@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.154.2.1 2008/06/18 16:33:35 simonb Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.154.2.2 2008/07/31 04:51:03 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.154.2.1 2008/06/18 16:33:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.154.2.2 2008/07/31 04:51:03 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -2112,6 +2112,10 @@ void
 device_pmf_driver_deregister(device_t dev)
 {
 	pmf_private_t *pp = dev->dv_pmf_private;
+
+	/* XXX avoid crash in case we are not initialized */
+	if (!pp)
+		return;
 
 	dev->dv_driver_suspend = NULL;
 	dev->dv_driver_resume = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.287.4.2 2008/07/18 16:37:57 simonb Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.287.4.3 2008/07/31 04:51:03 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.287.4.2 2008/07/18 16:37:57 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.287.4.3 2008/07/31 04:51:03 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3894,6 +3894,7 @@ abort:
 	if (so != NULL) {
 		(void) soqremque(so, 1);
 		(void) soabort(so);
+		mutex_enter(softnet_lock);
 	}
 	s = splsoftnet();
 	syn_cache_put(sc);

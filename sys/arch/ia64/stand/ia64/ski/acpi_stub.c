@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_stub.c,v 1.3 2006/08/30 11:12:04 cherry Exp $	*/
+/*	$NetBSD: acpi_stub.c,v 1.3.66.1 2008/07/31 04:51:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 Marcel Moolenaar
@@ -32,20 +32,18 @@
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/boot/ia64/libski/acpi_stub.c,v 1.3 2003/12/09 08:35:17 marcel Exp $"); */
 
-#define _KERNEL /* XXX: Fix dist/acpica/acnetbsd.h for _STANDALONE */
 #include <sys/types.h>
 #include <sys/lock.h>
 #include <dist/acpica/acpi.h>
-#undef _KERNEL
 
 #define APIC_IO_SAPIC                   6
 #define APIC_LOCAL_SAPIC                7
 
-#pragma pack(1)
+#pragma pack(1) /* XXX: Standardify me */
 
 typedef struct  /* LOCAL SAPIC */
 {
-        APIC_HEADER     Header;
+        ACPI_SUBTABLE_HEADER     Header;
         UINT8           ProcessorId;            /* ACPI processor id */
         UINT8           LocalSapicId;           /* Processor local SAPIC id */
         UINT8           LocalSapicEid;          /* Processor local SAPIC eid */
@@ -56,27 +54,27 @@ typedef struct  /* LOCAL SAPIC */
 
 typedef struct  /* IO SAPIC */
 {
-        APIC_HEADER     Header;
-        UINT8           IoSapicId;              /* I/O SAPIC ID */
-        UINT8           Reserved;               /* reserved - must be zero */
-        UINT32          Vector;                 /* interrupt base */
-        UINT64          IoSapicAddress;         /* SAPIC's physical address */
+        ACPI_SUBTABLE_HEADER	Header;
+        UINT8			IoSapicId;      /* I/O SAPIC ID */
+        UINT8			Reserved;       /* reserved - must be zero */
+        UINT32			Vector;         /* interrupt base */
+        UINT64			IoSapicAddress; /* SAPIC's physical address */
 } IO_SAPIC;
 
 /*
  */
 
 struct {
-	MULTIPLE_APIC_TABLE	Header;
-	MADT_LOCAL_SAPIC	cpu0;
-	MADT_LOCAL_SAPIC	cpu1;
-	MADT_LOCAL_SAPIC	cpu2;
-	MADT_LOCAL_SAPIC	cpu3;
-	MADT_IO_SAPIC		sapic;
+	ACPI_TABLE_MADT		Header;
+	ACPI_MADT_LOCAL_SAPIC	cpu0;
+	ACPI_MADT_LOCAL_SAPIC	cpu1;
+	ACPI_MADT_LOCAL_SAPIC	cpu2;
+	ACPI_MADT_LOCAL_SAPIC	cpu3;
+	ACPI_MADT_IO_SAPIC	sapic;
 } apic = {
 	/* Header. */
 	{
-		APIC_SIG,			/* Signature. */
+		ACPI_SIG_MADT,			/* Signature. */
 		sizeof(apic),			/* Length of table. */
 		0,				/* ACPI minor revision. */
 		0,				/* XXX checksum. */
@@ -143,7 +141,7 @@ struct {
 	UINT64			apic_tbl;
 } xsdt = {
 	{
-		XSDT_SIG,		/* Signature. */
+		ACPI_SIG_XSDT,		/* Signature. */
 		sizeof(xsdt),		/* Length of table. */
 		0,			/* ACPI minor revision. */
 		0,			/* XXX checksum. */
@@ -156,8 +154,8 @@ struct {
 	0UL				/* XXX APIC table address. */
 };
 
-RSDP_DESCRIPTOR acpi_root = {
-	RSDP_SIG,
+ACPI_TABLE_RSDP acpi_root = {
+	ACPI_SIG_RSDP,
 	0,				/* XXX checksum. */
 	"FBSD",
 	2,				/* ACPI Rev 2.0. */
@@ -166,6 +164,8 @@ RSDP_DESCRIPTOR acpi_root = {
 	0UL,				/* XXX PA of XSDT. */
 	0,				/* XXX Extended checksum. */
 };
+
+#pragma pack() /* Reset Packing */
 
 static void
 cksum(void *addr, int sz, UINT8 *sum)
