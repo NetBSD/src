@@ -1,4 +1,4 @@
-.\"     $NetBSD: wapbl.4,v 1.2 2008/07/31 12:30:15 simonb Exp $
+.\"     $NetBSD: wapbl.4,v 1.3 2008/07/31 14:14:07 simonb Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,10 +46,10 @@ WAPBL currently maintains its journal in one of two locations:
 .Bl -tag -width indent
 .It - After the file system
 The journal is placed in the same partition as the file system, but
-between the filesystem and the end of the partition.
+between the file system and the end of the partition.
 .It - Within the file system
 The journal is allocated as a special contiguous file within the
-filesystem.
+file system.
 The journal file is not visible via normal file system access.
 .El
 .Pp
@@ -133,6 +133,7 @@ will be replayed when the file system is mounted.
 .Xr fsck 8
 can still be used to force a consistency check of the file system
 should that be desired.
+.Pp
 .Xr WAPBL 8
 has a number of debugging options.
 The option
@@ -158,12 +159,29 @@ of tar-files can cause degenerate performance.
 .Xr mount 8 ,
 .Xr umount 8
 .Sh CAVEATS
+An unreplayed
+.Nm
+journal (eg after a crash or power failure) may cause problems if the
+file system is then used with an older kernel or userland what isn't
+.Nm
+aware.
+.Pp
 .Xr fsync 2
 causes the journal to be committed to disk, resulting in
 non-negligible performance issues.
+This can have an impact on database software and other software
+that calls
+.Xr fsync 2
+often.
 .Pp
-There are also some pending issues with multiple simultaneous tar-file
-extractions resulting in degenerate file system behavior.
+File system snapshots
+.Xr ( fss 4 )
+currently do not work with
+.Nm .
+.Pp
+There are some pending issues with high metadata-rate workloads (like
+multiple simultaneous tar-file extractions) resulting in degenerate file
+system performance.
 The current work-around is to use
 .Bd -unfilled -offset indent
 options WAPBL_DEBUG_SERIALIZE
@@ -172,16 +190,22 @@ options WAPBL_DEBUG_SERIALIZE
 as mentioned above.
 .Pp
 In-file system log allocation should be done on a relatively quiet
-file system.  The error path for the log allocation could result in a
+file system.  The error path for log allocation failures could result
+in a
 .Dq dangling inode
-issue.
+issue, requiring an
+.Xr fsck 8
+to fix.
 .Pp
-If the file system is full then making a journal can fail.
+If the file system is full or close to full then making a journal can fail.
 .Sh HISTORY
 .Nm
-was originally written by Darrin B. Jewell while at Wasabi Systems
-Inc.
+was originally written by Darrin B. Jewell while at Wasabi Systems Inc.
 Wasabi Systems contributed the code to
 .Nx
-and it first appeared in
+and was integrated by Simon Burge, Antti Kantee, Andy Doran, and
+Greg Oster.
+.Pp
+.Nm
+first appeared in
 .Nx 5.0 .
