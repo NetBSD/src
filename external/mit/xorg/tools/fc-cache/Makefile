@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/07/31 01:37:58 mrg Exp $
 
 NOMAN=		1
 
@@ -99,7 +99,7 @@ HOST_CPPFLAGS=	-DFONTCONFIG_PATH='"${DESTDIR}/etc/X11/fonts"' \
 		-DHAVE_STDINT_H -DHAVE_RANDOM
 HOST_CPPFLAGS+=	-I${FONTCONFIG} -I${FREETYPE} \
 		-I${FREETYPE}/include -I${EXPAT}/lib \
-		-I${X11SRCDIR.fontconfig}/../include \
+		-I${FONTCONFIG}/../include \
 		-I${DESTDIR}${X11INCDIR} -I.
 
 FCARCH_DEPFILE=	fc-cache.c
