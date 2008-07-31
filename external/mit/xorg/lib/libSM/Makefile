@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/07/31 01:33:54 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,10 @@ CPPFLAGS.sm_manager.c=	$(CONN_DEFINES)
 CPPFLAGS.sm_genid.c=	$(CONN_DEFINES)
 
 LIBDPLIBS=ICE ${.CURDIR}/../libICE
+
+# XXXMRG
+COPTS.sm_client.c=	-Wno-error
+COPTS.sm_manager.c=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
