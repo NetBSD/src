@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2008/07/29 13:17:40 pooka Exp $
+#	$NetBSD: Makefile,v 1.71 2008/07/31 01:11:53 mrg Exp $
 
 SUBDIR=	altq arch compat dev fs miscfs \
 	net net80211 netatalk netbt netipsec netinet netinet6 \
@@ -13,5 +13,9 @@ SUBDIR+=lkm modules
 # Speedup stubs for some subtrees that don't need to run these rules
 includes-lkm:
 	@true
+
+.if make(obj)
+SUBDIR+= rump
+.endif
 
 .include <bsd.kinc.mk>
