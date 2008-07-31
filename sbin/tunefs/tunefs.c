@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.36 2008/07/31 15:50:29 simonb Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.37 2008/07/31 15:55:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.36 2008/07/31 15:50:29 simonb Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.37 2008/07/31 15:55:41 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -266,27 +266,23 @@ main(int argc, char *argv[])
 		change_log_info(logfilesize);
 
 	if (Nflag) {
-		fprintf(stdout, "tunefs: current settings of %s\n", special);
-		fprintf(stdout, "\tmaximum contiguous block count %d\n",
+		printf("tunefs: current settings of %s\n", special);
+		printf("\tmaximum contiguous block count %d\n",
 		    sblock.fs_maxcontig);
-		fprintf(stdout,
-		    "\tmaximum blocks per file in a cylinder group %d\n",
+		printf("\tmaximum blocks per file in a cylinder group %d\n",
 		    sblock.fs_maxbpg);
-		fprintf(stdout, "\tminimum percentage of free space %d%%\n",
+		printf("\tminimum percentage of free space %d%%\n",
 		    sblock.fs_minfree);
 #ifdef TUNEFS_SOFTDEP
-		fprintf(stdout, "\tsoft dependencies: %s\n",
+		printf("\tsoft dependencies: %s\n",
 		    (sblock.fs_flags & FS_DOSOFTDEP) ? "on" : "off");
 #endif
-		fprintf(stdout, "\toptimization preference: %s\n",
-		    chg[sblock.fs_optim]);
-		fprintf(stdout, "\taverage file size: %d\n",
-		    sblock.fs_avgfilesize);
-		fprintf(stdout,
-		    "\texpected number of files per directory: %d\n",
+		printf("\toptimization preference: %s\n", chg[sblock.fs_optim]);
+		printf("\taverage file size: %d\n", sblock.fs_avgfilesize);
+		printf("\texpected number of files per directory: %d\n",
 		    sblock.fs_avgfpdir);
 		show_log_info();
-		fprintf(stdout, "tunefs: no changes made\n");
+		printf("tunefs: no changes made\n");
 		exit(0);
 	}
 
@@ -336,24 +332,23 @@ show_log_info(void)
 	if (print) {
 		logsize = size * blksize;
 
-		fprintf(stdout, "\tjournal log file location: %s\n", loc);
-		fprintf(stdout, "\tjournal log file size: ");
+		printf("\tjournal log file location: %s\n", loc);
+		printf("\tjournal log file size: ");
 		if (logsize == 0)
-			fprintf(stdout, "0\n");
+			printf("0\n");
 		else {
 			char sizebuf[8];
 			humanize_number(sizebuf, 6, size * blksize, "B",
 			    HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
-			fprintf(stdout, "%s (%" PRId64 " bytes)", sizebuf,
-			    logsize);
+			printf("%s (%" PRId64 " bytes)", sizebuf, logsize);
 		}
-		fprintf(stdout, "\n");
-		fprintf(stdout, "\tjournal log flags:");
+		printf("\n");
+		printf("\tjournal log flags:");
 		if (sblock.fs_journal_flags & UFS_WAPBL_FLAGS_CREATE_LOG)
-			fprintf(stdout, " clear-log");
+			printf(" clear-log");
 		if (sblock.fs_journal_flags & UFS_WAPBL_FLAGS_CLEAR_LOG)
-			fprintf(stdout, " clear-log");
-		fprintf(stdout, "\n");
+			printf(" clear-log");
+		printf("\n");
 	}
 }
 
