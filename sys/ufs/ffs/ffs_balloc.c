@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.50 2008/06/03 09:47:49 hannken Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.51 2008/07/31 05:38:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.50 2008/06/03 09:47:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.51 2008/07/31 05:38:06 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -141,7 +141,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		if (osize < fs->fs_bsize && osize > 0) {
 			mutex_enter(&ump->um_lock);
 			error = ffs_realloccg(ip, nb,
-				    ffs_blkpref_ufs1(ip, lastlbn, nb,
+				    ffs_blkpref_ufs1(ip, lastlbn, nb, flags,
 					&ip->i_ffs1_db[0]),
 				    osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
@@ -222,9 +222,9 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				 */
 				mutex_enter(&ump->um_lock);
 				error = ffs_realloccg(ip, lbn,
-				    ffs_blkpref_ufs1(ip, lbn, (int)lbn,
-					&ip->i_ffs1_db[0]), osize, nsize, cred,
-					bpp, &newb);
+				    ffs_blkpref_ufs1(ip, lbn, (int)lbn, flags,
+					&ip->i_ffs1_db[0]),
+				    osize, nsize, cred, bpp, &newb);
 				if (error)
 					return (error);
 				if (DOINGSOFTDEP(vp))
@@ -245,9 +245,9 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				nsize = fs->fs_bsize;
 			mutex_enter(&ump->um_lock);
 			error = ffs_alloc(ip, lbn,
-			    ffs_blkpref_ufs1(ip, lbn, (int)lbn,
+			    ffs_blkpref_ufs1(ip, lbn, (int)lbn, flags,
 				&ip->i_ffs1_db[0]),
-				nsize, cred, &newb);
+			    nsize, flags, cred, &newb);
 			if (error)
 				return (error);
 			if (bpp != NULL) {
@@ -284,9 +284,9 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	allocblk = allociblk;
 	if (nb == 0) {
 		mutex_enter(&ump->um_lock);
-		pref = ffs_blkpref_ufs1(ip, lbn, 0, (int32_t *)0);
-		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
-		    &newb);
+		pref = ffs_blkpref_ufs1(ip, lbn, 0, flags | B_METAONLY, NULL);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize,
+		    flags | B_METAONLY, cred, &newb);
 		if (error)
 			goto fail;
 		nb = newb;
@@ -341,9 +341,10 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		}
 		mutex_enter(&ump->um_lock);
 		if (pref == 0)
-			pref = ffs_blkpref_ufs1(ip, lbn, 0, (int32_t *)0);
-		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
-		    &newb);
+			pref = ffs_blkpref_ufs1(ip, lbn, 0, flags | B_METAONLY,
+			    NULL);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize,
+		    flags | B_METAONLY, cred, &newb);
 		if (error) {
 			brelse(bp, 0);
 			goto fail;
@@ -404,8 +405,9 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			goto fail;
 		}
 		mutex_enter(&ump->um_lock);
-		pref = ffs_blkpref_ufs1(ip, lbn, indirs[num].in_off, &bap[0]);
-		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
+		pref = ffs_blkpref_ufs1(ip, lbn, indirs[num].in_off, flags,
+		    &bap[0]);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, flags, cred,
 		    &newb);
 		if (error) {
 			brelse(bp, 0);
@@ -619,7 +621,8 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				error = ffs_realloccg(ip, -1 - nb,
 				    dp->di_extb[nb],
 				    ffs_blkpref_ufs2(ip, lastlbn, (int)nb,
-				    &dp->di_extb[0]), osize,
+					flags, &dp->di_extb[0]),
+				    osize,
 				    (int)fs->fs_bsize, cred, &bp);
 				if (error)
 					return (error);
@@ -679,8 +682,9 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				mutex_enter(&ump->um_lock);
 				error = ffs_realloccg(ip, -1 - lbn,
 				    dp->di_extb[lbn],
-				    ffs_blkpref_ufs2(ip, lbn, (int)lbn,
-				    &dp->di_extb[0]), osize, nsize, cred, &bp);
+				    ffs_blkpref_ufs2(ip, lbn, (int)lbn, flags,
+				        &dp->di_extb[0]),
+				    osize, nsize, cred, &bp);
 				if (error)
 					return (error);
 				bp->b_xflags |= BX_ALTDATA;
@@ -696,8 +700,9 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				nsize = fs->fs_bsize;
 			mutex_enter(&ump->um_lock);
 			error = ffs_alloc(ip, lbn,
-			   ffs_blkpref_ufs2(ip, lbn, (int)lbn, &dp->di_extb[0]),
-			   nsize, cred, &newb);
+			   ffs_blkpref_ufs2(ip, lbn, (int)lbn, flags,
+			       &dp->di_extb[0]),
+			   nsize, flags, cred, &newb);
 			if (error)
 				return (error);
 			error = ffs_getblk(vp, -1 - lbn, fsbtodb(fs, newb),
@@ -728,7 +733,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		if (osize < fs->fs_bsize && osize > 0) {
 			mutex_enter(&ump->um_lock);
 			error = ffs_realloccg(ip, nb,
-				    ffs_blkpref_ufs2(ip, lastlbn, nb,
+				    ffs_blkpref_ufs2(ip, lastlbn, nb, flags,
 					&ip->i_ffs2_db[0]),
 				    osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
@@ -809,9 +814,9 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				 */
 				mutex_enter(&ump->um_lock);
 				error = ffs_realloccg(ip, lbn,
-				    ffs_blkpref_ufs2(ip, lbn, (int)lbn,
-					&ip->i_ffs2_db[0]), osize, nsize, cred,
-					bpp, &newb);
+				    ffs_blkpref_ufs2(ip, lbn, (int)lbn, flags,
+					&ip->i_ffs2_db[0]),
+				    osize, nsize, cred, bpp, &newb);
 				if (error)
 					return (error);
 				if (DOINGSOFTDEP(vp))
@@ -832,8 +837,9 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 				nsize = fs->fs_bsize;
 			mutex_enter(&ump->um_lock);
 			error = ffs_alloc(ip, lbn,
-			    ffs_blkpref_ufs2(ip, lbn, (int)lbn,
-				&ip->i_ffs2_db[0]), nsize, cred, &newb);
+			    ffs_blkpref_ufs2(ip, lbn, (int)lbn, flags,
+				&ip->i_ffs2_db[0]),
+			    nsize, flags, cred, &newb);
 			if (error)
 				return (error);
 			if (bpp != NULL) {
@@ -870,9 +876,9 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 	allocblk = allociblk;
 	if (nb == 0) {
 		mutex_enter(&ump->um_lock);
-		pref = ffs_blkpref_ufs2(ip, lbn, 0, (int64_t *)0);
-		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
-		    &newb);
+		pref = ffs_blkpref_ufs2(ip, lbn, 0, flags | B_METAONLY, NULL);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize,
+		    flags | B_METAONLY, cred, &newb);
 		if (error)
 			goto fail;
 		nb = newb;
@@ -927,9 +933,10 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 		}
 		mutex_enter(&ump->um_lock);
 		if (pref == 0)
-			pref = ffs_blkpref_ufs2(ip, lbn, 0, (int64_t *)0);
-		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
-		    &newb);
+			pref = ffs_blkpref_ufs2(ip, lbn, 0, flags | B_METAONLY,
+			    NULL);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize,
+		    flags | B_METAONLY, cred, &newb);
 		if (error) {
 			brelse(bp, 0);
 			goto fail;
@@ -990,8 +997,9 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			goto fail;
 		}
 		mutex_enter(&ump->um_lock);
-		pref = ffs_blkpref_ufs2(ip, lbn, indirs[num].in_off, &bap[0]);
-		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
+		pref = ffs_blkpref_ufs2(ip, lbn, indirs[num].in_off, flags,
+		    &bap[0]);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, flags, cred,
 		    &newb);
 		if (error) {
 			brelse(bp, 0);

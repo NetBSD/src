@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.8 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.9 2008/07/31 05:38:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.8 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.9 2008/07/31 05:38:05 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,8 +589,22 @@ loopdone:
 	 */
 
 	if (!error && sawhole && blockalloc) {
-		error = GOP_ALLOC(vp, startoffset, npages << PAGE_SHIFT, 0,
-		    cred);
+		/*
+		 * XXX: This assumes that we come here only via
+		 * the mmio path
+		 */
+		if (vp->v_mount->mnt_wapbl && write) {
+			error = WAPBL_BEGIN(vp->v_mount);
+		}
+
+		if (!error) {
+			error = GOP_ALLOC(vp, startoffset,
+			    npages << PAGE_SHIFT, 0, cred);
+			if (vp->v_mount->mnt_wapbl && write) {
+				WAPBL_END(vp->v_mount);
+			}
+		}
+
 		UVMHIST_LOG(ubchist, "gop_alloc off 0x%x/0x%x -> %d",
 		    startoffset, npages << PAGE_SHIFT, error,0);
 		if (!error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.75 2008/01/17 10:39:15 ad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.76 2008/07/31 05:38:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.75 2008/01/17 10:39:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.76 2008/07/31 05:38:06 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
+#include "opt_wapbl.h"
 #endif
 
 #include <sys/param.h>
@@ -52,12 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.75 2008/01/17 10:39:15 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/kauth.h>
+#include <sys/wapbl.h>
 #include <sys/fstrans.h>
 #include <sys/kmem.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufs_wapbl.h>
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
 #endif
@@ -84,6 +87,9 @@ ufs_inactive(void *v)
 	struct mount *transmp;
 	mode_t mode;
 	int error = 0;
+	int logged = 0;
+
+	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
 
 	transmp = vp->v_mount;
 	fstrans_start(transmp, FSTRANS_SHARED);
@@ -96,6 +102,10 @@ ufs_inactive(void *v)
 		softdep_releasefile(ip);
 
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+		error = UFS_WAPBL_BEGIN(vp->v_mount);
+		if (error)
+			goto out;
+		logged = 1;
 #ifdef QUOTA
 		(void)chkiq(ip, -1, NOCRED, 0);
 #endif
@@ -103,7 +113,35 @@ ufs_inactive(void *v)
 		ufs_extattr_vnode_inactive(vp, curlwp);
 #endif
 		if (ip->i_size != 0) {
-			error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
+			/*
+			 * When journaling, only truncate one indirect block
+			 * at a time
+			 */
+			if (vp->v_mount->mnt_wapbl) {
+				uint64_t incr = MNINDIR(ip->i_ump) <<
+				    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
+				uint64_t base = NDADDR <<
+				    vp->v_mount->mnt_fs_bshift;
+				while (!error && ip->i_size > base + incr) {
+					/*
+					 * round down to next full indirect
+					 * block boundary.
+					 */
+					uint64_t nsize = base +
+					    ((ip->i_size - base - 1) &
+					    ~(incr - 1));
+					error = UFS_TRUNCATE(vp, nsize, 0,
+					    NOCRED);
+					if (error)
+						break;
+					UFS_WAPBL_END(vp->v_mount);
+					error = UFS_WAPBL_BEGIN(vp->v_mount);
+					if (error)
+						goto out;
+				}
+			}
+			if (!error)
+				error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
 		/*
 		 * Setting the mode to zero needs to wait for the inode
@@ -125,8 +163,16 @@ ufs_inactive(void *v)
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
+		if (!logged++) {
+			int err;
+			err = UFS_WAPBL_BEGIN(vp->v_mount);
+			if (err)
+				goto out;
+		}
 		UFS_UPDATE(vp, NULL, NULL, 0);
 	}
+	if (logged)
+		UFS_WAPBL_END(vp->v_mount);
 out:
 	/*
 	 * If we are done with the inode, reclaim it
@@ -149,6 +195,10 @@ ufs_reclaim(struct vnode *vp)
 	if (prtactive && vp->v_usecount > 1)
 		vprint("ufs_reclaim: pushing active", vp);
 
+	if (!UFS_WAPBL_BEGIN(vp->v_mount)) {
+		UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
+		UFS_WAPBL_END(vp->v_mount);
+	}
 	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
 
 	/*

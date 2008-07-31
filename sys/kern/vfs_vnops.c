@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.158 2008/06/02 16:08:41 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.159 2008/07/31 05:38:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.158 2008/06/02 16:08:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.159 2008/07/31 05:38:05 simonb Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.158 2008/06/02 16:08:41 ad Exp $");
 #include <sys/fstrans.h>
 #include <sys/atomic.h>
 #include <sys/filedesc.h>
+#include <sys/wapbl.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -691,6 +692,11 @@ vn_lock(struct vnode *vp, int flags)
 	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY|
 	    LK_CANRECURSE))
 	    == 0);
+
+#ifdef DIAGNOSTIC
+	if (wapbl_vphaswapbl(vp))
+		WAPBL_JUNLOCK_ASSERT(wapbl_vptomp(vp));
+#endif
 
 	do {
 		/*
