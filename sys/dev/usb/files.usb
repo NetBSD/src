@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.84 2008/05/26 00:23:05 christos Exp $
+#	$NetBSD: files.usb,v 1.85 2008/07/31 22:01:15 drochner Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -237,8 +237,7 @@ file	dev/usb/uvscom.c		uvscom
 define	ubsa_common
 file	dev/usb/ubsa_common.c		ubsa_common
 device	ubsa: ucombus, ubsa_common
-#attach	ubsa at usbdevif
-attach	ubsa at usbifif
+attach	ubsa at usbdevif
 file	dev/usb/ubsa.c			ubsa
 
 # Huawei E220 3G/HSDPA modem (ubsa)
