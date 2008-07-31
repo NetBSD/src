@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.35 2008/07/31 05:38:04 simonb Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.36 2008/07/31 15:50:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.35 2008/07/31 05:38:04 simonb Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.36 2008/07/31 15:50:29 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,7 +306,7 @@ static void
 show_log_info(void)
 {
 	const char *loc;
-	uint64_t size, blksize;
+	uint64_t size, blksize, logsize;
 	int print;
 
 	switch (sblock.fs_journal_location) {
@@ -334,9 +334,20 @@ show_log_info(void)
 	}
 
 	if (print) {
+		logsize = size * blksize;
+
 		fprintf(stdout, "\tjournal log file location: %s\n", loc);
-		fprintf(stdout, "\tjournal log file size: %" PRIu64 "\n",
-		    size * blksize);
+		fprintf(stdout, "\tjournal log file size: ");
+		if (logsize == 0)
+			fprintf(stdout, "0\n");
+		else {
+			char sizebuf[8];
+			humanize_number(sizebuf, 6, size * blksize, "B",
+			    HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
+			fprintf(stdout, "%s (%" PRId64 " bytes)", sizebuf,
+			    logsize);
+		}
+		fprintf(stdout, "\n");
 		fprintf(stdout, "\tjournal log flags:");
 		if (sblock.fs_journal_flags & UFS_WAPBL_FLAGS_CREATE_LOG)
 			fprintf(stdout, " clear-log");
