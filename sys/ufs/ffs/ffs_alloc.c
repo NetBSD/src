@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.111 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.112 2008/07/31 09:35:09 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.111 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.112 2008/07/31 09:35:09 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1612,6 +1612,7 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode, int flags)
 	u_int8_t *inosused;
 	int error, start, len, loc, map, i;
 	int32_t initediblk;
+	daddr_t nalloc;
 	struct ufs2_dinode *dp2;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
@@ -1623,6 +1624,9 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode, int flags)
 	if (fs->fs_cs(fs, cg).cs_nifree == 0)
 		return (0);
 	mutex_exit(&ump->um_lock);
+	ibp = NULL;
+	initediblk = -1;
+retry:
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
 	if (error)
@@ -1630,6 +1634,37 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode, int flags)
 	cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, needswap) || cgp->cg_cs.cs_nifree == 0)
 		goto fail;
+
+	if (ibp != NULL &&
+	    initediblk != ufs_rw32(cgp->cg_initediblk, needswap)) {
+		/* Another thread allocated more inodes so we retry the test. */
+		brelse(ibp, BC_INVAL);
+		ibp = NULL;
+	}
+	/*
+	 * Check to see if we need to initialize more inodes.
+	 */
+	if (fs->fs_magic == FS_UFS2_MAGIC && ibp == NULL) {
+		initediblk = ufs_rw32(cgp->cg_initediblk, needswap);
+		nalloc = fs->fs_ipg - ufs_rw32(cgp->cg_cs.cs_nifree, needswap);
+		if (nalloc + INOPB(fs) > initediblk &&
+		    initediblk < ufs_rw32(cgp->cg_niblk, needswap)) {
+			/*
+			 * We have to release the cg buffer here to prevent
+			 * a deadlock when reading the inode block will
+			 * run a copy-on-write that might use this cg.
+			 */
+			brelse(bp, 0);
+			bp = NULL;
+			error = ffs_getblk(ip->i_devvp, fsbtodb(fs,
+			    ino_to_fsba(fs, cg * fs->fs_ipg + initediblk)),
+			    FFS_NOBLK, fs->fs_bsize, false, &ibp);
+			if (error)
+				goto fail;
+			goto retry;
+		}
+	}
+
 	cgp->cg_old_time = ufs_rw32(time_second, needswap);
 	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
 	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
@@ -1674,15 +1709,8 @@ gotit:
 	/*
 	 * Check to see if we need to initialize more inodes.
 	 */
-	initediblk = ufs_rw32(cgp->cg_initediblk, needswap);
-	ibp = NULL;
-	if (fs->fs_magic == FS_UFS2_MAGIC &&
-	    ipref + INOPB(fs) > initediblk &&
-	    initediblk < ufs_rw32(cgp->cg_niblk, needswap)) {
-		if (ffs_getblk(ip->i_devvp, fsbtodb(fs,
-		    ino_to_fsba(fs, cg * fs->fs_ipg + initediblk)),
-		    FFS_NOBLK, fs->fs_bsize, false, &ibp) != 0)
-			goto fail;
+	if (ibp != NULL) {
+		KASSERT(initediblk == ufs_rw32(cgp->cg_initediblk, needswap));
 		memset(ibp->b_data, 0, fs->fs_bsize);
 		dp2 = (struct ufs2_dinode *)(ibp->b_data);
 		for (i = 0; i < INOPB(fs); i++) {
@@ -1712,12 +1740,17 @@ gotit:
 	mutex_exit(&ump->um_lock);
 	if (DOINGSOFTDEP(ITOV(ip)))
 		softdep_setup_inomapdep(bp, ip, cg * fs->fs_ipg + ipref);
-	bdwrite(bp);
-	if (ibp != NULL)
+	if (ibp != NULL) {
+		bwrite(bp);
 		bawrite(ibp);
+	} else
+		bdwrite(bp);
 	return (cg * fs->fs_ipg + ipref);
  fail:
-	brelse(bp, 0);
+	if (bp != NULL)
+		brelse(bp, 0);
+	if (ibp != NULL)
+		brelse(ibp, BC_INVAL);
 	mutex_enter(&ump->um_lock);
 	return (0);
 }
