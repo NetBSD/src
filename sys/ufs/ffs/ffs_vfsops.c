@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.231 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.232 2008/07/31 15:37:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.231 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.232 2008/07/31 15:37:56 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1291,6 +1291,16 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			goto out;
 		}
 	}
+	/* Snapshots do not work yet with WAPBL. */
+	if (ronly == 0 && fs->fs_snapinum[0] != 0 && (mp->mnt_flag & MNT_LOG)) {
+		printf("%s fs has snapshots -- logging not supported yet\n",
+		    fs->fs_fsmnt);
+		error = EINVAL;
+		free(fs->fs_csp, M_UFSMNT);
+		goto out;
+	}
+	if (ronly == 0 && fs->fs_snapinum[0] != 0)
+		ffs_snapshot_mount(mp);
 
 #ifdef WAPBL
 	if (!ronly) {
@@ -1308,9 +1318,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		}
 	}
 #endif /* WAPBL */
-
-	if (ronly == 0 && fs->fs_snapinum[0] != 0)
-		ffs_snapshot_mount(mp);
 #ifdef UFS_EXTATTR
 	/*
 	 * Initialize file-backed extended attributes on UFS1 file

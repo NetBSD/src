@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.72 2008/07/30 10:09:30 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.73 2008/07/31 15:37:56 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.72 2008/07/30 10:09:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.73 2008/07/31 15:37:56 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -207,6 +207,9 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	ns = UFS_FSNEEDSWAP(fs);
 	si = VFSTOUFS(mp)->um_snapinfo;
 
+	/* Snapshots do not work yet with WAPBL. */
+	if ((mp->mnt_flag & MNT_LOG))
+		return EOPNOTSUPP;
 	/*
 	 * Need to serialize access to snapshot code per filesystem.
 	 */
