@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.114 2008/07/09 17:07:28 joerg Exp $	*/
+/*	$NetBSD: i82557.c,v 1.115 2008/07/31 12:28:28 ws Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.114 2008/07/09 17:07:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.115 2008/07/31 12:28:28 ws Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1108,10 +1108,10 @@ fxp_intr(void *arg)
 
 			if (sc->sc_txpending == 0) {
 				/*
-				 * If we want a re-init, do that now.
+				 * Tell them that they can re-init now.
 				 */
 				if (sc->sc_flags & FXPF_WANTINIT)
-					(void) fxp_init(ifp);
+					wakeup(sc);
 			}
 		}
 
@@ -2088,10 +2088,11 @@ fxp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * Multicast list has changed; set the
 			 * hardware filter accordingly.
 			 */
-			if (sc->sc_txpending) {
+			while (sc->sc_txpending) {
 				sc->sc_flags |= FXPF_WANTINIT;
-			} else
-				error = fxp_init(ifp);
+				tsleep(sc, PSOCK, "fxp_init", 0);
+			}
+			error = fxp_init(ifp);
 		}
 		break;
 	}
