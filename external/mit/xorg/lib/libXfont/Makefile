@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/07/31 01:37:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -58,6 +58,10 @@ LIBDPLIBS=\
 	ICE	${.CURDIR}/../libICE \
 	Xext	${.CURDIR}/../libXext \
 	X11	${.CURDIR}/../libX11/dynamic
+
+# XXX
+COPTS.ffcheck.c+=	-Wno-error
+COPTS.register.c+=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
