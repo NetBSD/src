@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1170 2008/07/29 13:17:40 pooka Exp $
+#	$NetBSD: mi,v 1.1171 2008/07/31 05:38:04 simonb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2069,6 +2069,7 @@
 ./usr/include/sys/vnode_if.h			comp-c-include
 ./usr/include/sys/vsio.h			comp-obsolete		obsolete
 ./usr/include/sys/wait.h			comp-c-include
+./usr/include/sys/wapbl.h			comp-c-include
 ./usr/include/sys/wdog.h			comp-c-include
 ./usr/include/sysexits.h			comp-c-include
 ./usr/include/syslog.h				comp-c-include
@@ -2100,6 +2101,7 @@
 ./usr/include/ufs/ufs/quota.h			comp-c-include
 ./usr/include/ufs/ufs/ufs_bswap.h		comp-c-include
 ./usr/include/ufs/ufs/ufs_extern.h		comp-c-include
+./usr/include/ufs/ufs/ufs_wapbl.h		comp-c-include
 ./usr/include/ufs/ufs/ufsmount.h		comp-c-include
 ./usr/include/ulimit.h				comp-c-include
 ./usr/include/unctrl.h				comp-c-include

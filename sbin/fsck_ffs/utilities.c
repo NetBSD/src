@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.55 2008/02/23 21:41:48 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.56 2008/07/31 05:38:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.55 2008/02/23 21:41:48 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.56 2008/07/31 05:38:04 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,6 +322,7 @@ ckfini(void)
 	if (debug)
 		printf("cache missed %ld of %ld (%d%%)\n", diskreads,
 		    totalreads, (int)(diskreads * 100 / totalreads));
+	cleanup_wapbl();
 	(void)close(fsreadfd);
 	(void)close(fswritefd);
 }
@@ -335,7 +336,8 @@ bread(int fd, char *buf, daddr_t blk, long size)
 
 	offset = blk;
 	offset *= dev_bsize;
-	if (pread(fd, buf, (int)size, offset) == size)
+	if ((pread(fd, buf, (int)size, offset) == size) &&
+	    read_wapbl(buf, size, blk) == 0)
 		return (0);
 	rwerror("READ", blk);
 	errs = 0;

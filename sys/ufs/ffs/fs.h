@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.49 2007/12/25 18:33:49 perry Exp $	*/
+/*	$NetBSD: fs.h,v 1.50 2008/07/31 05:38:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -327,7 +327,12 @@ struct fs {
 	int32_t	 fs_old_cpc;		/* cyl per cycle in postbl */
 /* this area is otherwise allocated unless fs_old_flags & FS_FLAGS_UPDATED */
 	int32_t	 fs_maxbsize;		/* maximum blocking factor permitted */
-	int64_t	 fs_sparecon64[17];	/* old rotation block list head */
+	uint8_t	 fs_journal_version;	/* journal format version */
+	uint8_t	 fs_journal_location;	/* journal location type */
+	uint8_t	 fs_journal_reserved[2];/* reserved for future use */
+	uint32_t fs_journal_flags;	/* journal flags */
+	uint64_t fs_journallocs[4];	/* location info for journal */
+	int64_t	 fs_sparecon64[12];	/* reserved for future use */
 	int64_t	 fs_sblockloc;		/* byte offset of standard superblock */
 	struct	csum_total fs_cstotal;	/* cylinder summary information */
 	int64_t  fs_time;		/* last time written */
@@ -406,13 +411,17 @@ struct fs {
 /*
  * File system flags
  */
-#define	FS_UNCLEAN	0x01	/* file system not clean at mount (unused) */
-#define	FS_DOSOFTDEP	0x02	/* file system using soft dependencies */
-#define FS_NEEDSFSCK	0x04	/* needs sync fsck (FreeBSD compat, unused) */
-#define FS_INDEXDIRS	0x08	/* kernel supports indexed directories */
-#define FS_ACLS		0x10	/* file system has ACLs enabled */
-#define FS_MULTILABEL	0x20	/* file system is MAC multi-label */
+#define	FS_UNCLEAN	0x001	/* file system not clean at mount (unused) */
+#define	FS_DOSOFTDEP	0x002	/* file system using soft dependencies */
+#define FS_NEEDSFSCK	0x004	/* needs sync fsck (FreeBSD compat, unused) */
+#define FS_INDEXDIRS	0x008	/* kernel supports indexed directories */
+#define FS_ACLS		0x010	/* file system has ACLs enabled */
+#define FS_MULTILABEL	0x020	/* file system is MAC multi-label */
 #define FS_FLAGS_UPDATED 0x80	/* flags have been moved to new location */
+#define FS_DOWAPBL	0x100	/* Write ahead physical block logging */
+
+/* File system flags that are ok for NetBSD if set in fs_flags */
+#define FS_KNOWN_FLAGS	(FS_DOSOFTDEP | FS_DOWAPBL)
 
 /*
  * File system internal flags, also in fs_flags.

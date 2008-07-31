@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.82 2008/02/23 21:41:48 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.83 2008/07/31 05:38:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.82 2008/02/23 21:41:48 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.83 2008/07/31 05:38:04 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,6 +159,25 @@ setup(const char *dev)
 		doskipclean = 0;
 		pwarn("USING ALTERNATE SUPERBLOCK AT %d\n", bflag);
 	}
+	if (sblock->fs_flags & FS_DOWAPBL) {
+		if (preen) {
+			if (!quiet)
+				pwarn("file system is journaled; not checking\n");
+			return (-1);
+		}
+		if (!quiet)
+			pwarn("** File system is journaled; replaying journal\n");
+		replay_wapbl();
+		doskipclean = 0;
+		sblock->fs_flags &= ~FS_DOWAPBL;
+		sbdirty();
+		/* Although we may have updated the superblock from the
+		 * journal, we are still going to do a full check, so we
+		 * don't bother to re-read the superblock from the journal.
+		 * XXX, instead we could re-read the superblock and then not
+		 * force doskipclean = 0 
+		 */
+	}
 	if (debug)
 		printf("clean = %d\n", sblock->fs_clean);
 	if (doswap)
@@ -218,6 +237,13 @@ setup(const char *dev)
 	/*
 	 * Check and potentially fix certain fields in the super block.
 	 */
+	if (sblock->fs_flags & ~(FS_KNOWN_FLAGS)) {
+		pfatal("UNKNOWN FLAGS=0x%08x IN SUPERBLOCK", sblock->fs_flags);
+		if (reply("CLEAR") == 1) {
+			sblock->fs_flags &= FS_KNOWN_FLAGS;
+			sbdirty();
+		}
+	}
 	if (sblock->fs_optim != FS_OPTTIME && sblock->fs_optim != FS_OPTSPACE) {
 		pfatal("UNDEFINED OPTIMIZATION IN SUPERBLOCK");
 		if (reply("SET TO DEFAULT") == 1) {
