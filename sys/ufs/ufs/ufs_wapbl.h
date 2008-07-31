@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.2 2008/07/31 05:38:07 simonb Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.3 2008/07/31 08:49:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #ifndef _UFS_UFS_UFS_WAPBL_H_
-#define _UFS_UFS_UFS_WAPBL_H_
+#define	_UFS_UFS_UFS_WAPBL_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_wapbl.h"
@@ -83,7 +83,7 @@
 #if defined(WAPBL)
 
 #if defined(WAPBL_DEBUG)
-#define WAPBL_DEBUG_INODES
+#define	WAPBL_DEBUG_INODES
 #endif
 
 int	wapbl_ufs_rename(void *v);
@@ -137,7 +137,7 @@ ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 #define	UFS_WAPBL_END(mp)	ufs_wapbl_end2(mp, 0, 0)
 #define	UFS_WAPBL_END1(mp, v1)	ufs_wapbl_end2(mp, v1, 0)
 
-#define UFS_WAPBL_UPDATE(vp, access, modify, flags)			\
+#define	UFS_WAPBL_UPDATE(vp, access, modify, flags)			\
 	if ((vp)->v_mount->mnt_wapbl) {					\
 		UFS_UPDATE(vp, access, modify, flags);			\
 	}
@@ -152,25 +152,25 @@ ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 #define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
 #endif
 
-#define UFS_WAPBL_REGISTER_INODE(mp, ino, mode)				\
+#define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)				\
 	if (mp->mnt_wapbl) wapbl_register_inode(mp->mnt_wapbl, ino, mode)
-#define UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)			\
+#define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)			\
 	if (mp->mnt_wapbl) wapbl_unregister_inode(mp->mnt_wapbl, ino, mode)
 
-#define UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)			\
+#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)			\
 	if (mp->mnt_wapbl) wapbl_register_deallocation(mp->mnt_wapbl, blk, len)
 
 #else /* ! WAPBL */
-#define UFS_WAPBL_BEGIN(mp) 0
-#define UFS_WAPBL_BEGIN1(mp, v1) 0
-#define UFS_WAPBL_END(mp)	do { } while (0)
-#define UFS_WAPBL_END1(mp, v1)
-#define UFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
-#define UFS_WAPBL_JLOCK_ASSERT(mp)
-#define UFS_WAPBL_JUNLOCK_ASSERT(mp)
-#define UFS_WAPBL_REGISTER_INODE(mp, ino, mode)
-#define UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)
-#define UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)
+#define	UFS_WAPBL_BEGIN(mp) 0
+#define	UFS_WAPBL_BEGIN1(mp, v1) 0
+#define	UFS_WAPBL_END(mp)	do { } while (0)
+#define	UFS_WAPBL_END1(mp, v1)
+#define	UFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
+#define	UFS_WAPBL_JLOCK_ASSERT(mp)
+#define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
+#define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)
+#define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)
+#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)
 #endif
 
 #endif /* !_UFS_UFS_UFS_WAPBL_H_ */
