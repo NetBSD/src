@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.1.8.3 2008/07/18 16:37:48 simonb Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.1.8.4 2008/07/31 04:51:02 simonb Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.1.8.3 2008/07/18 16:37:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.1.8.4 2008/07/31 04:51:02 simonb Exp $");
 #endif /* not lint */
 
 
@@ -184,13 +184,13 @@ udf_fixup_internal_extattr(uint8_t *blob, uint32_t lb_num)
 void
 udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 {
-	struct desc_tag *tag;
+	struct desc_tag *tag, *sbm_tag;
 	struct file_entry *fe;
 	struct extfile_entry *efe;
 	struct alloc_ext_entry *ext;
 	uint32_t lb_size, lb_num;
 	uint32_t rfid_pos, max_rfid_pos;
-	int icbflags, addr_type, has_fids, l_ea;
+	int icbflags, addr_type, file_type, has_fids, has_sbm, l_ea;
 
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
 	/* if its not a node we're done */
@@ -201,6 +201,7 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 	/* start of a descriptor */
 	l_ea     = 0;
 	has_fids = 0;
+	has_sbm  = 0;
 	max_rfid_pos = rfid_pos = lb_num = 0;	/* shut up gcc! */
 
 	tag = (struct desc_tag *) blob;
@@ -210,7 +211,9 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 		l_ea = udf_rw32(fe->l_ea);
 		icbflags  = udf_rw16(fe->icbtag.flags);
 		addr_type = (icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK);
+		file_type = fe->icbtag.file_type;
 		has_fids  = (addr_type == UDF_ICB_INTERN_ALLOC);
+		has_sbm   = (file_type == UDF_ICB_FILETYPE_META_BITMAP);
 		rfid_pos  = UDF_FENTRY_SIZE + l_ea;
 		max_rfid_pos = rfid_pos + udf_rw64(fe->inf_len);
 		lb_num = udf_rw32(fe->tag.tag_loc);
@@ -220,7 +223,9 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 		l_ea = udf_rw32(efe->l_ea);
 		icbflags  = udf_rw16(efe->icbtag.flags);
 		addr_type = (icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK);
+		file_type = efe->icbtag.file_type;
 		has_fids  = (addr_type == UDF_ICB_INTERN_ALLOC);
+		has_sbm   = (file_type == UDF_ICB_FILETYPE_META_BITMAP);
 		rfid_pos  = UDF_EXTFENTRY_SIZE + l_ea;
 		max_rfid_pos = rfid_pos + udf_rw64(efe->inf_len);
 		lb_num = udf_rw32(efe->tag.tag_loc);
@@ -243,10 +248,16 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 	if (l_ea)
 		udf_fixup_internal_extattr(blob, lb_num);
 
-	if (has_fids) {
+	if (has_fids)
 		udf_fixup_fid_block(blob, lb_size, rfid_pos,
 			max_rfid_pos, lb_num);
+
+	if (has_sbm) {
+		sbm_tag = (struct desc_tag *) (blob + rfid_pos);
+		sbm_tag->tag_loc = tag->tag_loc;
+		udf_validate_tag_and_crc_sums((uint8_t *) sbm_tag);
 	}
+
 	udf_validate_tag_and_crc_sums(blob);
 }
 

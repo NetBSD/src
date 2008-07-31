@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.38 2008/03/12 14:49:19 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.38.8.1 2008/07/31 04:51:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -45,8 +45,9 @@
 #include <miscfs/syncfs/syncfs.h>
 #include <miscfs/genfs/genfs.h>
 
+#include <rump/rumpuser.h>
+
 #include "rump_private.h"
-#include "rumpuser.h"
 
 static int rump_vop_lookup(void *);
 

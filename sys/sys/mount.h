@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.179.2.1 2008/06/10 14:51:23 simonb Exp $	*/
+/*	$NetBSD: mount.h,v 1.179.2.2 2008/07/31 04:51:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -185,7 +185,7 @@ struct mount {
 	{ "magiclinks", CTLTYPE_INT }, \
 }
 
-#if defined(_KERNEL) || defined(__VFSOPS_EXPOSE)
+#if defined(_KERNEL)
 #if __STDC__
 struct nameidata;
 #endif
@@ -250,7 +250,7 @@ int	VFS_SNAPSHOT(struct mount *, struct vnode *, struct timespec *);
 int	VFS_EXTATTRCTL(struct mount *, int, struct vnode *, int, const char *);
 int	VFS_SUSPENDCTL(struct mount *, int);
 
-#endif /* _KERNEL || __VFSOPS_EXPOSE */
+#endif /* _KERNEL */
 
 #ifdef _KERNEL
 #if __STDC__

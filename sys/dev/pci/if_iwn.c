@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.10.2.1 2008/07/28 14:37:27 simonb Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.10.2.2 2008/07/31 04:51:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.10.2.1 2008/07/28 14:37:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.10.2.2 2008/07/31 04:51:01 simonb Exp $");
 
 
 /*
@@ -91,7 +91,7 @@ static const struct ieee80211_rateset iwn_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
 
 
-#define EDCA_NUM_AC     4
+#define EDCA_NUM_AC	4
 static int		iwn_match(device_t , struct cfdata *, void *);
 static void		iwn_attach(device_t , device_t, void *);
 static int		iwn_detach(device_t, int);
@@ -123,7 +123,7 @@ static int		iwn_media_change(struct ifnet *);
 static int		iwn_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void		iwn_mem_lock(struct iwn_softc *);
 static void		iwn_mem_unlock(struct iwn_softc *);
-static uint32_t	iwn_mem_read(struct iwn_softc *, uint32_t);
+static uint32_t iwn_mem_read(struct iwn_softc *, uint32_t);
 static void		iwn_mem_write(struct iwn_softc *, uint32_t, uint32_t);
 static void		iwn_mem_write_region_4(struct iwn_softc *, uint32_t,
     const uint32_t *, int);
@@ -151,7 +151,7 @@ static void		iwn_start(struct ifnet *);
 static void		iwn_watchdog(struct ifnet *);
 static int		iwn_ioctl(struct ifnet *, u_long, void *);
 static int		iwn_cmd(struct iwn_softc *, int, const void *, int, int);
-static int              iwn_wme_update(struct ieee80211com *);
+static int		iwn_wme_update(struct ieee80211com *);
 static int		iwn_setup_node_mrr(struct iwn_softc *, uint8_t, int);
 static void		iwn_set_led(struct iwn_softc *, uint8_t, uint8_t, uint8_t);
 static int		iwn_set_critical_temp(struct iwn_softc *);
@@ -168,7 +168,7 @@ static void		iwn_compute_differential_gain(struct iwn_softc *,
 static void		iwn_tune_sensitivity(struct iwn_softc *,
     const struct iwn_rx_stats *);
 static int		iwn_send_sensitivity(struct iwn_softc *);
-/*static int              iwn_setup_beacon(struct iwn_softc *, struct ieee80211_node *);*/
+/*static int		  iwn_setup_beacon(struct iwn_softc *, struct ieee80211_node *);*/
 static int		iwn_auth(struct iwn_softc *);
 static int		iwn_run(struct iwn_softc *);
 static int		iwn_scan(struct iwn_softc *, uint16_t);
@@ -349,12 +349,12 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	/* set device capabilities */
 	ic->ic_caps =
 	    IEEE80211_C_IBSS |		/* IBSS mode support */
-	    IEEE80211_C_WPA  |          /* 802.11i */
+	    IEEE80211_C_WPA  |		/* 802.11i */
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_TXPMGT |	/* tx power management */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE|	/* short preamble supported */
-	    IEEE80211_C_WME;            /* 802.11e */
+	    IEEE80211_C_WME;		/* 802.11e */
 
 	/* read supported channels and MAC address from EEPROM */
 	iwn_read_eeprom(sc);
@@ -599,11 +599,12 @@ iwn_dma_contig_free(struct iwn_dma_info *dma)
 static int
 iwn_alloc_shared(struct iwn_softc *sc)
 {
-        int error;
-  	/* must be aligned on a 1KB boundary */
+	int error;
+	void *p;
+	/* must be aligned on a 1KB boundary */
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &sc->shared_dma,
-	    (void **)&sc->shared, sizeof (struct iwn_shared),
-	    1024,BUS_DMA_NOWAIT);
+	    &p, sizeof (struct iwn_shared), 1024,BUS_DMA_NOWAIT);
+	sc->shared = p;
 	if (error != 0)
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate shared area DMA memory\n");
@@ -728,20 +729,22 @@ iwn_free_rpool(struct iwn_softc *sc)
 static int
 iwn_alloc_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
 {
-        struct iwn_rx_data *data;
-        struct iwn_rbuf *rbuf;
-        int i, error;
+	struct iwn_rx_data *data;
+	struct iwn_rbuf *rbuf;
+	int i, error;
+	void *p;
 
 	ring->cur = 0;
 
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma,
-	    (void **)&ring->desc, IWN_RX_RING_COUNT * sizeof (struct iwn_rx_desc),
+	    &p, IWN_RX_RING_COUNT * sizeof (struct iwn_rx_desc),
 	    IWN_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate rx ring DMA memory\n");
 		goto fail;
 	}
+	ring->desc = p;
 
 	/*
 	 * Setup Rx buffers.
@@ -818,6 +821,7 @@ iwn_alloc_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring, int count,
 {
 	struct iwn_tx_data *data;
 	int i, error;
+	void *p;
 
 	ring->qid = qid;
 	ring->count = count;
@@ -825,20 +829,21 @@ iwn_alloc_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring, int count,
 	ring->cur = 0;
 
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma,
-	    (void **)&ring->desc, count * sizeof (struct iwn_tx_desc),
+	    &p, count * sizeof (struct iwn_tx_desc),
 	    IWN_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev, "could not allocate tx ring DMA memory\n");
 		goto fail;
 	}
+	ring->desc = p;
 
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->cmd_dma,
-	    (void **)&ring->cmd, count * sizeof (struct iwn_tx_cmd), 4,
-	    BUS_DMA_NOWAIT);
+	    &p, count * sizeof (struct iwn_tx_cmd), 4, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev, "could not allocate tx cmd DMA memory\n");
 		goto fail;
 	}
+	ring->cmd = p;
 
 	ring->data = malloc(count * sizeof (struct iwn_tx_data), M_DEVBUF, M_NOWAIT);
 
@@ -870,7 +875,7 @@ fail:	iwn_free_tx_ring(sc, ring);
 static void
 iwn_reset_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring)
 {
-        struct iwn_tx_data *data;
+	struct iwn_tx_data *data;
 	uint32_t tmp;
 	int i, ntries;
 
@@ -1116,7 +1121,7 @@ iwn_eeprom_unlock(struct iwn_softc *sc)
 }
 
 /*
- * Read `len' bytes from the EEPROM.  We access the EEPROM through the MAC
+ * Read `len' bytes from the EEPROM. We access the EEPROM through the MAC
  * instead of using the traditional bit-bang method.
  */
 static int
@@ -1208,7 +1213,7 @@ iwn_load_firmware(struct iwn_softc *sc)
 	int error;
 
 	/* load firmware image from disk */
-	if ((error = firmware_open("if_iwn","iwlwifi-4965.ucode", &fw) != 0)) {
+	if ((error = firmware_open("if_iwn","iwlwifi-4965.ucode", &fw)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
 		goto fail1;
 	}
@@ -1589,7 +1594,7 @@ iwn_rx_statistics(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 	}
 
 	if (desc->type != IWN_BEACON_STATISTICS)
-		return;	/* reply to a statistics request */
+		return; /* reply to a statistics request */
 
 	sc->noise = iwn_get_noise(&stats->rx.general);
 	DPRINTFN(3, ("noise=%d\n", sc->noise));
@@ -1656,7 +1661,7 @@ iwn_cmd_intr(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 	struct iwn_tx_data *data;
 
 	if ((desc->qid & 0xf) != 4)
-		return;	/* not a command ack */
+		return; /* not a command ack */
 
 	data = &ring->data[desc->idx];
 
@@ -1759,7 +1764,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 				/* turn the interface down */
 				ifp->if_flags &= ~IFF_UP;
 				iwn_stop(ifp, 1);
-				return;	/* no further processing */
+				return; /* no further processing */
 			}
 			break;
 		}
@@ -2090,7 +2095,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	paddr = ring->cmd_dma.paddr + ring->cur * sizeof (struct iwn_tx_cmd);
 	tx->loaddr = htole32(paddr + 4 +
 	    offsetof(struct iwn_cmd_data, ntries));
-	tx->hiaddr = 0;	/* limit to 32-bit physical addresses */
+	tx->hiaddr = 0; /* limit to 32-bit physical addresses */
 
 	/* first scatter/gather segment is used by the tx data command */
 	IWN_SET_DESC_NSEGS(desc, 1 + data->map->dm_nsegs);
@@ -2523,7 +2528,7 @@ iwn_wme_update(struct ieee80211com *ic)
 		wme.ac[ac].aifsn = wmep->wmep_aifsn;
 		wme.ac[ac].cwmin = IWN_EXP2(wmep->wmep_logcwmin);
 		wme.ac[ac].cwmax = IWN_EXP2(wmep->wmep_logcwmax);
-		wme.ac[ac].txop  = IWN_USEC(wmep->wmep_txopLimit);
+		wme.ac[ac].txop	 = IWN_USEC(wmep->wmep_txopLimit);
 
 		DPRINTF(("setting WME for queue %d aifsn=%d cwmin=%d cwmax=%d "
 			"txop=%d\n", ac, wme.ac[ac].aifsn, wme.ac[ac].cwmin,
@@ -2653,12 +2658,12 @@ iwn_set_txpower(struct iwn_softc *sc, struct ieee80211_channel *ch, int async)
 	cmd.chan = chan;
 
 	if (IEEE80211_IS_CHAN_5GHZ(ch)) {
-		maxpwr   = sc->maxpwr5GHz;
-		rf_gain  = iwn_rf_gain_5ghz;
+		maxpwr	 = sc->maxpwr5GHz;
+		rf_gain	 = iwn_rf_gain_5ghz;
 		dsp_gain = iwn_dsp_gain_5ghz;
 	} else {
-		maxpwr   = sc->maxpwr2GHz;
-		rf_gain  = iwn_rf_gain_2ghz;
+		maxpwr	 = sc->maxpwr2GHz;
+		rf_gain	 = iwn_rf_gain_2ghz;
 		dsp_gain = iwn_dsp_gain_2ghz;
 	}
 
@@ -2846,13 +2851,13 @@ iwn_init_sensitivity(struct iwn_softc *sc)
 	calib->state = IWN_CALIB_STATE_INIT;
 	calib->cck_state = IWN_CCK_STATE_HIFA;
 	/* initial values taken from the reference driver */
-	calib->corr_ofdm_x1     = 105;
+	calib->corr_ofdm_x1	= 105;
 	calib->corr_ofdm_mrc_x1 = 220;
-	calib->corr_ofdm_x4     =  90;
+	calib->corr_ofdm_x4	=  90;
 	calib->corr_ofdm_mrc_x4 = 170;
-	calib->corr_cck_x4      = 125;
-	calib->corr_cck_mrc_x4  = 200;
-	calib->energy_cck       = 100;
+	calib->corr_cck_x4	= 125;
+	calib->corr_cck_mrc_x4	= 200;
+	calib->energy_cck	= 100;
 
 	/* write initial sensitivity values */
 	if ((error = iwn_send_sensitivity(sc)) != 0)
@@ -2970,17 +2975,17 @@ iwn_tune_sensitivity(struct iwn_softc *sc, const struct iwn_rx_stats *stats)
 	if (fa > 50 * rxena) {
 		/* high false alarm count, decrease sensitivity */
 		DPRINTFN(2, ("OFDM high false alarm count: %u\n", fa));
-		inc_clip(calib->corr_ofdm_x1,     1, 140);
+		inc_clip(calib->corr_ofdm_x1,	  1, 140);
 		inc_clip(calib->corr_ofdm_mrc_x1, 1, 270);
-		inc_clip(calib->corr_ofdm_x4,     1, 120);
+		inc_clip(calib->corr_ofdm_x4,	  1, 120);
 		inc_clip(calib->corr_ofdm_mrc_x4, 1, 210);
 
 	} else if (fa < 5 * rxena) {
 		/* low false alarm count, increase sensitivity */
 		DPRINTFN(2, ("OFDM low false alarm count: %u\n", fa));
-		dec_clip(calib->corr_ofdm_x1,     1, 105);
+		dec_clip(calib->corr_ofdm_x1,	  1, 105);
 		dec_clip(calib->corr_ofdm_mrc_x1, 1, 220);
-		dec_clip(calib->corr_ofdm_x4,     1,  85);
+		dec_clip(calib->corr_ofdm_x4,	  1,  85);
 		dec_clip(calib->corr_ofdm_mrc_x4, 1, 170);
 	}
 
@@ -3050,8 +3055,8 @@ iwn_tune_sensitivity(struct iwn_softc *sc, const struct iwn_rx_stats *stats)
 		if (calib->cck_state != 0 &&
 		    ((calib->noise_ref - noise_ref) > 2 ||
 			calib->low_fa > 100)) {
-			inc_clip(calib->energy_cck,      2,  97);
-			dec_clip(calib->corr_cck_x4,     3, 125);
+			inc_clip(calib->energy_cck,	 2,  97);
+			dec_clip(calib->corr_cck_x4,	 3, 125);
 			dec_clip(calib->corr_cck_mrc_x4, 3, 200);
 		}
 	} else {
@@ -3086,14 +3091,14 @@ iwn_send_sensitivity(struct iwn_softc *sc)
 	cmd.corr_ofdm_mrc_x1 = le16toh(calib->corr_ofdm_mrc_x1);
 	cmd.corr_ofdm_x4     = le16toh(calib->corr_ofdm_x4);
 	cmd.corr_ofdm_mrc_x4 = le16toh(calib->corr_ofdm_mrc_x4);
-	cmd.energy_ofdm      = le16toh(100);
+	cmd.energy_ofdm	     = le16toh(100);
 	cmd.energy_ofdm_th   = le16toh(62);
 	/* CCK modulation */
-	cmd.corr_cck_x4      = le16toh(calib->corr_cck_x4);
+	cmd.corr_cck_x4	     = le16toh(calib->corr_cck_x4);
 	cmd.corr_cck_mrc_x4  = le16toh(calib->corr_cck_mrc_x4);
-	cmd.energy_cck       = le16toh(calib->energy_cck);
+	cmd.energy_cck	     = le16toh(calib->energy_cck);
 	/* Barker modulation: use default values */
-	cmd.corr_barker      = le16toh(190);
+	cmd.corr_barker	     = le16toh(190);
 	cmd.corr_barker_mrc  = le16toh(390);
 
 	DPRINTFN(2, ("setting sensitivity\n"));
@@ -3271,8 +3276,8 @@ iwn_run(struct iwn_softc *sc)
 	callout_schedule(&sc->calib_to, hz / 2);
 
 	if (0 == 1) { /* XXX don't do the beacon - we get a firmware error
-			 XXX when we try.  Something is wrong with the
-			 XXX setup of the frame.  Just don't ever call
+			 XXX when we try. Something is wrong with the
+			 XXX setup of the frame. Just don't ever call
 			 XXX the function but reference it to keep gcc happy
 		      */
 		/* now we are associated set up the beacon frame */
@@ -3291,7 +3296,7 @@ iwn_run(struct iwn_softc *sc)
 }
 
 /*
- * Send a scan request to the firmware.  Since this command is huge, we map it
+ * Send a scan request to the firmware. Since this command is huge, we map it
  * into a mbuf instead of using the pre-allocated set of commands.
  */
 static int
@@ -3373,7 +3378,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	memcpy(essid[0].data, ic->ic_des_essid, ic->ic_des_esslen);
 
 	/*
-	 * Build a probe request frame.  Most of the following code is a
+	 * Build a probe request frame.	 Most of the following code is a
 	 * copy & paste of what is done in net80211.
 	 */
 	wh = (struct ieee80211_frame *)&essid[4];
@@ -3419,7 +3424,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	tx->len = htole16(frm - (uint8_t *)wh);
 
 	chan = (struct iwn_scan_chan *)frm;
-	for (c  = &ic->ic_channels[1];
+	for (c	= &ic->ic_channels[1];
 	     c <= &ic->ic_channels[IEEE80211_CHAN_MAX]; c++) {
 		if ((c->ic_flags & flags) != flags)
 			continue;
@@ -3630,7 +3635,7 @@ iwn_stop_master(struct iwn_softc *sc)
 
 	tmp = IWN_READ(sc, IWN_GPIO_CTL);
 	if ((tmp & IWN_GPIO_PWR_STATUS) == IWN_GPIO_PWR_SLEEP)
-		return;	/* already asleep */
+		return; /* already asleep */
 
 	for (ntries = 0; ntries < 100; ntries++) {
 		if (IWN_READ(sc, IWN_RESET) & IWN_MASTER_DISABLED)
@@ -3810,7 +3815,7 @@ iwn_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		if (ic->ic_opmode != IEEE80211_ROAMING_MANUAL)
+		if (ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 	}
 	else

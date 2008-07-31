@@ -1,25 +1,29 @@
-	$NetBSD: README.dirs,v 1.3 2007/08/16 19:56:22 pooka Exp $
+	$NetBSD: README.dirs,v 1.3.36.1 2008/07/31 04:51:03 simonb Exp $
 
     Runnable Userspace Meta Programs
 
 Quick rundown of the current directory structure:
 
-/librump - kernel runtime emulation
+sys/rump/librump - kernel runtime emulation
   /rumpkern - portion compiled with -D_KERNEL, uses kernel headers
   /rumpuser - userspace namespace support for previous, *NO* -D_KERNEL
 	      provides e.g. malloc() and some syscalls
 
-/include
+sys/rump/include
   /machine - headers meant to be used for rump compilation when the MD
 	     ones cause too much trouble, e.g. curlwp which is different
 	     from arch to arch
 
-/fs - file system rumps
-  /lib - libraries used by fs rumps
-    /lib$fs  - kernel file system code compiled out of /sys with -D_KERNEL
-    /libp2k  - puffs-to-vfs adaption layer, userspace namespace
-    /libukfs - user kernel file system, a library to access file system
-	       images (or devices) directly in userspace without going
-	       through a system call and puffs
-  /bin - rumps themselves.  fsconsole uses ukfs directly.  the rest are
-	 file system specific rumps and use puffs
+sys/rump/fs - file system rumps
+  /lib/lib_$fs  - kernel file system code compiled out of /sys with -D_KERNEL
+
+
+Users:
+src/lib
+  /libp2k  - puffs-to-vfs adaption layer, userspace namespace
+  /libukfs - user kernel file system, a library to access file system
+	     images (or devices) directly in userspace without going
+	     through a system call and puffs
+
+src/usr.sbin/puffs
+  rump_$fs - userspace file system daemons using the kernel fs code
