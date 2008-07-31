@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.131 2008/05/15 21:05:54 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.132 2008/07/31 14:59:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.131 2008/05/15 21:05:54 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.132 2008/07/31 14:59:39 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.131 2008/05/15 21:05:54 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.132 2008/07/31 14:59:39 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2053,7 +2053,7 @@ VarQuote(char *str)
 
     Buffer  	  buf;
     /* This should cover most shells :-( */
-    static char meta[] = "\n \t'`\";&<>()|*?{}[]\\$!#^~";
+    static const char meta[] = "\n \t'`\";&<>()|*?{}[]\\$!#^~";
     const char	*newline;
 
     newline = Shell_GetNewline();
