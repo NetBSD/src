@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.23 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.24 2008/07/31 05:38:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -87,7 +87,6 @@ typedef struct fhandle	fhandle_t;
 #define	__MNT_UNUSED2	0x00200000
 #define	__MNT_UNUSED3	0x00800000
 #define	__MNT_UNUSED4	0x01000000
-#define	__MNT_UNUSED5	0x02000000
 
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
 #define	MNT_SYNCHRONOUS	0x00000002	/* file system written synchronously */
@@ -98,6 +97,7 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
 #define MNT_IGNORE	0x00100000	/* don't show entry in df */
+#define	MNT_LOG		0x02000000	/* Use logging */
 #define MNT_NOATIME	0x04000000	/* Never update access times in fs */
 #define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
 #define MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
@@ -116,7 +116,8 @@ typedef struct fhandle	fhandle_t;
 	{ MNT_NOATIME,		0,	"noatime" }, \
 	{ MNT_SYMPERM,		0,	"symperm" }, \
 	{ MNT_NODEVMTIME,	0,	"nodevmtime" }, \
-	{ MNT_SOFTDEP,		0,	"soft dependencies" },
+	{ MNT_SOFTDEP,		0,	"soft dependencies" }, \
+	{ MNT_LOG,		0,	"log" },
 
 /*
  * exported mount flags.
@@ -176,7 +177,8 @@ typedef struct fhandle	fhandle_t;
      MNT_EXPUBLIC | \
      MNT_LOCAL | \
      MNT_QUOTA | \
-     MNT_ROOTFS)
+     MNT_ROOTFS | \
+     MNT_LOG)
 
 /*
  * External filesystem control flags.
@@ -223,7 +225,7 @@ typedef struct fhandle	fhandle_t;
 	"\35MNT_EXPUBLIC" \
 	"\34MNT_EXNORESPORT" \
 	"\33MNT_NOATIME" \
-	"\32MNT_UNUSED" \
+	"\32MNT_LOG" \
 	"\31MNT_UNUSED" \
 	"\30MNT_UNUSED" \
 	"\27MNT_GETARGS" \
