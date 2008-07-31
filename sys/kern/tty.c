@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.224.2.1 2008/06/18 16:33:35 simonb Exp $	*/
+/*	$NetBSD: tty.c,v 1.224.2.2 2008/07/31 04:51:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.224.2.1 2008/06/18 16:33:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.224.2.2 2008/07/31 04:51:03 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2639,8 +2639,8 @@ ttymalloc(void)
 	cv_init(&tp->t_cancvf, "ttycanf");
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
-	cv_init(&tp->t_outcv, "ttycan");
-	cv_init(&tp->t_outcvf, "ttycanf");
+	cv_init(&tp->t_outcv, "ttyout");
+	cv_init(&tp->t_outcvf, "ttyoutf");
 	/* Set default line discipline. */
 	tp->t_linesw = ttyldisc_default();
 	selinit(&tp->t_rsel);

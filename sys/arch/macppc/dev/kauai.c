@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.24.2.1 2008/07/03 18:37:54 simonb Exp $	*/
+/*	$NetBSD: kauai.c,v 1.24.2.2 2008/07/31 04:51:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.24.2.1 2008/07/03 18:37:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.24.2.2 2008/07/31 04:51:01 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.24.2.1 2008/07/03 18:37:54 simonb Exp $"
 #define WDC_AUXREG_OFFSET	0x16
 #define WDC_AUXREG_NPORTS	1
 
-#define PIO_CONFIG_REG (0x200 >> 4)	/* PIO and DMA access timing */
-#define DMA_CONFIG_REG (0x210 >> 4)	/* UDMA access timing */
+#define PIO_CONFIG_REG	0x200	/* PIO and DMA access timing */
+#define DMA_CONFIG_REG	0x210	/* UDMA access timing */
 
 struct kauai_softc {
 	struct wdc_softc sc_wdcdev;

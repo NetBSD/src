@@ -1,9 +1,7 @@
-/*	$NetBSD: hfs.c,v 1.2 2007/08/14 15:56:16 pooka Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.2.2 2008/07/31 04:51:05 simonb Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,61 +25,15 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/mount.h>
+#ifndef _SYS_RUMP_VMPARAM_H_
+#define _SYS_RUMP_VMPARAM_H_
 
-#include <fs/hfs/hfs.h>
+#define PAGE_SHIFT		10
+#define PAGE_SIZE		(1 << PAGE_SHIFT)
+#define PAGE_MASK		(PAGE_SIZE - 1)
 
-#include <err.h>
-#include <puffs.h>
-#include <stdlib.h>
-#include <unistd.h>
+#define VM_PHYSSEG_MAX		1
+#define VM_NFREELIST		1
+#define VM_FREELIST_DEFAULT     0
 
-#include "p2k.h"
-
-static void
-usage(void)
-{
-
-	errx(1, "usage: %s [-o opts] dev mountpath", getprogname());
-}
-
-int
-main(int argc, char *argv[])
-{
-	struct hfs_args args;
-	mntoptparse_t mp;
-	int mntflags, pflags;
-	int rv, ch;
-
-	setprogname(argv[0]);
-
-	mntflags = pflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != -1) {
-		switch (ch) {
-		case 'o':
-			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
-			if (mp == NULL)
-				err(1, "getmntops");
-			freemntopts(mp);
-			break;
-		default:
-			usage();
-			/* NOTREACHED */
-		}
-	}
-	argc -= optind;
-	argv += optind;
-	if (argc != 2)
-		usage();
-
-	memset(&args, 0, sizeof(args));
-	args.fspec = argv[0];
-
-	rv = p2k_run_fs(MOUNT_HFS, argv[0], argv[1], mntflags, 
-		&args, sizeof(args), pflags);
-	if (rv)
-		err(1, "mount");
-
-	return 0;
-}
+#endif /* _SYS_RUMP_VMPARAM_H_ */

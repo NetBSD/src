@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.1.8.1 2008/07/18 16:37:48 simonb Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.1.8.2 2008/07/31 04:51:02 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.1.8.1 2008/07/18 16:37:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.1.8.2 2008/07/31 04:51:02 simonb Exp $");
 #endif /* not lint */
 
 
@@ -251,10 +251,12 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 	struct udf_mount *ump = args->ump;
 	struct buf *buf = args->nestbuf;
 	struct buf *nestbuf;
+	struct desc_tag *tag;
 	struct long_ad *node_ad_cpy;
 	uint64_t *lmapping, *pmapping, *lmappos, blknr, run_start;
 	uint32_t our_sectornr, sectornr;
 	uint32_t lb_size, buf_offset, rbuflen, bpos;
+	uint16_t vpart_num;
 	uint8_t *fidblk;
 	off_t rblk;
 	int sector_size = ump->discinfo.sector_size;
@@ -334,14 +336,12 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 	 * this queue. Note that a buffer can get multiple extents allocated.
 	 *
 	 * lmapping contains lb_num relative to base partition.
-	 * pmapping contains lb_num as used for disc adressing.
 	 */
 	lmapping    = ump->la_lmapping;
-	pmapping    = ump->la_pmapping;
 	node_ad_cpy = ump->la_node_ad_cpy;
 
-	/* write physical blocknr in buf and get its mappings */
-	udf_late_allocate_buf(ump, buf, lmapping, pmapping, node_ad_cpy);
+	/* logically allocate buf and map it in the file */
+	udf_late_allocate_buf(ump, buf, lmapping, node_ad_cpy, &vpart_num);
 
 	/* if we have FIDs, fixup using the new allocation table */
 	if (buf->b_udf_c_type == UDF_C_FIDS) {
@@ -358,10 +358,26 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 			buf_len -= len;
 		}
 	}
+	if (buf->b_udf_c_type == UDF_C_METADATA_SBM) {
+		if (buf->b_lblkno == 0) {
+			/* update the tag location inside */
+			tag = (struct desc_tag *) buf->b_data;
+			tag->tag_loc = udf_rw32(buf->b_blkno);
+			udf_validate_tag_and_crc_sums(buf->b_data);
+		}
+	}
 	udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
 
-	/* speed up : try to conglomerate as many writes in one go */
-	sectors = (buf->b_bcount + sector_size -1) / sector_size;
+	/*
+	 * Translate new mappings in lmapping to pmappings and try to
+	 * conglomerate extents to reduce the number of writes.
+	 *
+	 * pmapping to contain lb_nums as used for disc adressing.
+	 */
+	pmapping = ump->la_pmapping;
+	sectors  = (buf->b_bcount + sector_size -1) / sector_size;
+	udf_translate_vtop_list(ump, sectors, vpart_num, lmapping, pmapping);
+
 	for (sector = 0; sector < sectors; sector++) {
 		buf_offset = sector * sector_size;
 		DPRINTF(WRITE, ("\tprocessing rel sector %d\n", sector));

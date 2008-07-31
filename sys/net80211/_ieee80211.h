@@ -38,7 +38,7 @@ enum ieee80211_phytype {
 	IEEE80211_T_DS,			/* direct sequence spread spectrum */
 	IEEE80211_T_FH,			/* frequency hopping */
 	IEEE80211_T_OFDM,		/* frequency division multiplexing */
-	IEEE80211_T_TURBO,		/* high rate OFDM, aka turbo mode */
+	IEEE80211_T_TURBO		/* high rate OFDM, aka turbo mode */
 };
 #define	IEEE80211_T_CCK	IEEE80211_T_DS	/* more common nomenclature */
 
@@ -50,9 +50,9 @@ enum ieee80211_phymode {
 	IEEE80211_MODE_11G	= 3,	/* 2GHz, OFDM */
 	IEEE80211_MODE_FH	= 4,	/* 2GHz, GFSK */
 	IEEE80211_MODE_TURBO_A	= 5,	/* 5GHz, OFDM, 2x clock */
-	IEEE80211_MODE_TURBO_G	= 6,	/* 2GHz, OFDM, 2x clock */
+	IEEE80211_MODE_TURBO_G	= 6	/* 2GHz, OFDM, 2x clock */
 };
-#define	IEEE80211_MODE_MAX	(IEEE80211_MODE_TURBO_G+1)
+#define	IEEE80211_MODE_MAX	((int)IEEE80211_MODE_TURBO_G + 1)
 
 enum ieee80211_opmode {
 	IEEE80211_M_STA		= 1,	/* infrastructure station */
@@ -68,7 +68,7 @@ enum ieee80211_opmode {
 enum ieee80211_protmode {
 	IEEE80211_PROT_NONE	= 0,	/* no protection */
 	IEEE80211_PROT_CTSONLY	= 1,	/* CTS to self */
-	IEEE80211_PROT_RTSCTS	= 2,	/* RTS-CTS */
+	IEEE80211_PROT_RTSCTS	= 2	/* RTS-CTS */
 };
 
 /*
@@ -81,7 +81,7 @@ enum ieee80211_authmode {
 	IEEE80211_AUTH_8021X	= 3,		/* 802.1x */
 	IEEE80211_AUTH_AUTO	= 4,		/* auto-select/accept */
 	/* NB: these are used only for ioctls */
-	IEEE80211_AUTH_WPA	= 5,		/* WPA/RSN w/ 802.1x/PSK */
+	IEEE80211_AUTH_WPA	= 5		/* WPA/RSN w/ 802.1x/PSK */
 };
 
 /*
@@ -96,7 +96,7 @@ enum ieee80211_authmode {
 enum ieee80211_roamingmode {
 	IEEE80211_ROAMING_DEVICE= 0,	/* driver/hardware control */
 	IEEE80211_ROAMING_AUTO	= 1,	/* 802.11 layer control */
-	IEEE80211_ROAMING_MANUAL= 2,	/* application control */
+	IEEE80211_ROAMING_MANUAL= 2	/* application control */
 };
 
 /*

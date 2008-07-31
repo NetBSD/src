@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.26.2.1 2008/07/18 16:37:49 simonb Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.26.2.2 2008/07/31 04:51:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.26.2.1 2008/07/18 16:37:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.26.2.2 2008/07/31 04:51:02 simonb Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -498,7 +498,7 @@ rw_vector_exit(krwlock_t *rw)
 			/* Give the lock to the longest waiting writer. */
 			l = TS_FIRST(ts, TS_WRITER_Q);
 			new = (uintptr_t)l | RW_WRITE_LOCKED | RW_HAS_WAITERS;
-			if (wcnt != 0)
+			if (wcnt > 1)
 				new |= RW_WRITE_WANTED;
 			rw_swap(rw, owner, new);
 			turnstile_wakeup(ts, TS_WRITER_Q, 1, l);

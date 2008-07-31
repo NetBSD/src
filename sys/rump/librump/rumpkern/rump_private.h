@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.8 2008/01/24 22:41:08 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.8.14.1 2008/07/31 04:51:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 #include <uvm/uvm_object.h>
 #include <uvm/uvm_page.h>
 
-#include "rump.h"
+#include <rump/rump.h>
 
 #if 0
 #define DPRINTF(x) printf x

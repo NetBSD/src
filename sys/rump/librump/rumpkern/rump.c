@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.47.2.1 2008/06/10 14:51:23 simonb Exp $	*/
+/*	$NetBSD: rump.c,v 1.47.2.2 2008/07/31 04:51:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -44,8 +44,9 @@
 
 #include <miscfs/specfs/specdev.h>
 
+#include <rump/rumpuser.h>
+
 #include "rump_private.h"
-#include "rumpuser.h"
 
 struct proc proc0;
 struct cwdinfo rump_cwdi;

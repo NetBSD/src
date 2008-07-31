@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.100.2.1 2008/06/18 16:33:26 simonb Exp $	*/
+/*	$NetBSD: uhub.c,v 1.100.2.2 2008/07/31 04:51:02 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.100.2.1 2008/06/18 16:33:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.100.2.2 2008/07/31 04:51:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -645,11 +645,10 @@ uhub_childdet(device_t self, device_t child)
 		for (i = 0; i < dev->subdevlen; i++) {
 			if (dev->subdevs[i] == child) {
 				dev->subdevs[i] = NULL;
-				return;
+				dev->nifaces_claimed--;
 			}
 		}
 	}
-	KASSERT(false);
 }
 
 

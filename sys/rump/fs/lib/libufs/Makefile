@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.4.28.1 2008/06/10 14:51:22 simonb Exp $
+#	$NetBSD: Makefile,v 1.4.28.2 2008/07/31 04:51:04 simonb Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:  ${.CURDIR}/../../../../ufs/ufs
 
-LIB=	ufs
-
-.PATH:  ${NETBSDSRCDIR}/sys/ufs/ufs
+LIB=	rumpfs_ufs
 
 SRCS=	ufs_bmap.c ufs_dirhash.c ufs_ihash.c ufs_inode.c ufs_lookup.c	\
 	ufs_vfsops.c ufs_vnops.c ufs_wapbl.c

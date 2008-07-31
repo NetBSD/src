@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.49.2.4 2008/07/28 14:37:35 simonb Exp $ */
+/* $NetBSD: udf_subr.c,v 1.49.2.5 2008/07/31 04:51:02 simonb Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.49.2.4 2008/07/28 14:37:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.49.2.5 2008/07/31 04:51:02 simonb Exp $");
 #endif /* not lint */
 
 
@@ -721,7 +721,11 @@ udf_tagsize(union dscrptr *dscr, uint32_t lb_size)
 		break;
 	}
 
-	if ((size == 0) || (lb_size == 0)) return 0;
+	if ((size == 0) || (lb_size == 0))
+		return 0;
+
+	if (lb_size == 1)
+		return size;
 
 	/* round up in sectors */
 	num_lb = (size + lb_size -1) / lb_size;
@@ -1613,6 +1617,135 @@ udf_write_physical_partition_spacetables(struct udf_mount *ump, int waitfor)
 
 	return error_all;
 }
+
+
+static int
+udf_read_metadata_partition_spacetable(struct udf_mount *ump)
+{
+	struct udf_node	     *bitmap_node;
+	union dscrptr        *dscr;
+	struct udf_bitmap    *bitmap;
+	uint64_t inflen;
+	int error, dscr_type;
+
+	bitmap_node = ump->metadatabitmap_node;
+
+	/* only read in when metadata bitmap node is read in */
+	if (bitmap_node == NULL)
+		return 0;
+
+	if (bitmap_node->fe) {
+		inflen = udf_rw64(bitmap_node->fe->inf_len);
+	} else {
+		KASSERT(bitmap_node->efe);
+		inflen = udf_rw64(bitmap_node->efe->inf_len);
+	}
+
+	DPRINTF(VOLUMES, ("Reading metadata space bitmap for "
+		"%"PRIu64" bytes\n", inflen));
+
+	/* allocate space for bitmap */
+	dscr = malloc(inflen, M_UDFVOLD, M_CANFAIL | M_WAITOK);
+	if (!dscr)
+		return ENOMEM;
+
+	/* set vnode type to regular file or we can't read from it! */
+	bitmap_node->vnode->v_type = VREG;
+
+	/* read in complete metadata bitmap file */
+	error = vn_rdwr(UIO_READ, bitmap_node->vnode,
+			dscr,
+			inflen, 0,
+			UIO_SYSSPACE,
+			IO_SYNC | IO_NODELOCKED | IO_ALTSEMANTICS, FSCRED,
+			NULL, NULL);
+	if (error) {
+		DPRINTF(VOLUMES, ("Error reading metadata space bitmap\n"));
+		goto errorout;
+	}
+
+	/* analyse */
+	dscr_type = udf_rw16(dscr->tag.id);
+	if (dscr_type == TAGID_SPACE_BITMAP) {
+		DPRINTF(VOLUMES, ("Accepting metadata space bitmap\n"));
+		ump->metadata_unalloc_dscr = &dscr->sbd;
+
+		/* fill in bitmap bits */
+		bitmap = &ump->metadata_unalloc_bits;
+		bitmap->blob  = (uint8_t *) dscr;
+		bitmap->bits  = dscr->sbd.data;
+		bitmap->max_offset = udf_rw32(dscr->sbd.num_bits);
+		bitmap->pages = NULL;	/* TODO */
+		bitmap->data_pos     = 0;
+		bitmap->metadata_pos = 0;
+	} else {
+		DPRINTF(VOLUMES, ("No valid bitmap found!\n"));
+		goto errorout;
+	}
+
+	return 0;
+
+errorout:
+	free(dscr, M_UDFVOLD);
+	printf( "UDF mount: error reading unallocated "
+		"space bitmap for metadata partition\n");
+	return EROFS;
+}
+
+
+int
+udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor)
+{
+	struct udf_node	     *bitmap_node;
+	union dscrptr        *dscr;
+	uint64_t inflen, new_inflen;
+	int dummy, error;
+
+	bitmap_node = ump->metadatabitmap_node;
+
+	/* only write out when metadata bitmap node is known */
+	if (bitmap_node == NULL)
+		return 0;
+
+	if (bitmap_node->fe) {
+		inflen = udf_rw64(bitmap_node->fe->inf_len);
+	} else {
+		KASSERT(bitmap_node->efe);
+		inflen = udf_rw64(bitmap_node->efe->inf_len);
+	}
+
+	/* reduce length to zero */
+	dscr = (union dscrptr *) ump->metadata_unalloc_dscr;
+	new_inflen = udf_tagsize(dscr, 1);
+
+	DPRINTF(VOLUMES, ("Resize and write out metadata space bitmap from "
+		"%"PRIu64" to %"PRIu64" bytes\n", inflen, new_inflen));
+
+	error = udf_resize_node(bitmap_node, 0, &dummy);
+	if (error)
+		printf("Error resizing metadata space bitmap\n");
+
+	error = vn_rdwr(UIO_WRITE, bitmap_node->vnode,
+			dscr,
+			new_inflen, 0,
+			UIO_SYSSPACE,
+			IO_NODELOCKED | IO_ALTSEMANTICS, FSCRED,
+			NULL, NULL);
+
+	bitmap_node->i_flags |= IN_MODIFIED;
+	vflushbuf(bitmap_node->vnode, 1 /* sync */);
+	error = VOP_FSYNC(bitmap_node->vnode,
+			FSCRED, FSYNC_WAIT, 0, 0);
+
+	if (error)
+		printf( "Error writing out metadata partition unalloced "
+			"space bitmap!\n");
+
+	return error;
+}
+
+
+/* --------------------------------------------------------------------- */
 
 /*
  * Checks if ump's vds information is correct and complete
@@ -2939,7 +3072,8 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 		}
 	} else {
 		/* mounting read/write */
-/*		if (error) */
+		/* XXX DISABLED! metadata writing is not working yet XXX */
+/*		if (error)  */
 			error = EROFS;
 	}
 	DPRINTFIF(VOLUMES, error, ("udf mount: failed to read "
@@ -2959,13 +3093,6 @@ udf_read_vds_tables(struct udf_mount *ump)
 	uint8_t *pmap_pos;
 	int pmap_size;
 	int error;
-
-	/* read in and check unallocated and free space info if writing */
-	if ((ump->vfs_mountp->mnt_flag & MNT_RDONLY) == 0) {
-		error = udf_read_physical_partition_spacetables(ump);
-		if (error)
-			return error;
-	}
 
 	/* Iterate (again) over the part mappings for locations   */
 	n_pm = udf_rw32(ump->logical_vol->n_pm);   /* num partmaps         */
@@ -3001,6 +3128,17 @@ udf_read_vds_tables(struct udf_mount *ump)
 		}
 		pmap_size  = pmap_pos[1];
 		pmap_pos  += pmap_size;
+	}
+
+	/* read in and check unallocated and free space info if writing */
+	if ((ump->vfs_mountp->mnt_flag & MNT_RDONLY) == 0) {
+		error = udf_read_physical_partition_spacetables(ump);
+		if (error)
+			return error;
+
+		/* also read in metadata partion spacebitmap if defined */
+		error = udf_read_metadata_partition_spacetable(ump);
+			return error;
 	}
 
 	return 0;
@@ -3320,7 +3458,7 @@ int
 udf_close_logvol(struct udf_mount *ump, int mntflags)
 {
 	int logvol_integrity;
-	int error = 0;
+	int error = 0, error1 = 0, error2 = 0;
 	int n;
 
 	/* already/still closed? */
@@ -3351,13 +3489,21 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 	}
 
 	if (ump->lvclose & UDF_WRITE_PART_BITMAPS) {
+		/* sync writeout metadata spacetable if existing */
+		error1 = udf_write_metadata_partition_spacetable(ump, true);
+		if (error1)
+			printf( "udf_close_logvol: writeout of metadata space "
+				"bitmap failed\n");
+
 		/* sync writeout partition spacetables */
-		error = udf_write_physical_partition_spacetables(ump, true);
-		if (error) {
+		error2 = udf_write_physical_partition_spacetables(ump, true);
+		if (error2)
 			printf( "udf_close_logvol: writeout of space tables "
 				"failed\n");
-			return error;
-		}
+
+		if (error1 || error2)
+			return (error1 | error2);
+
 		ump->lvclose &= ~UDF_WRITE_PART_BITMAPS;
 	}
 
@@ -5419,7 +5565,7 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	struct vnode *nvp;
 	struct long_ad node_icb_loc;
 	uint64_t parent_unique_id;
-	uint64_t lmapping, pmapping;
+	uint64_t lmapping;
 	uint32_t lb_size, lb_num;
 	uint16_t vpart_num;
 	uid_t uid;
@@ -5444,7 +5590,7 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 
 	/* get disc allocation for one logical block */
 	error = udf_pre_allocate_space(ump, UDF_C_NODE, 1,
-			&vpart_num, &lmapping, &pmapping);
+			&vpart_num, &lmapping);
 	lb_num = lmapping;
 	if (error) {
 		vlockmgr(nvp->v_vnlock, LK_RELEASE);
@@ -6351,6 +6497,9 @@ udf_write_filebuf(struct udf_node *udf_node, struct buf *buf)
 
 	isdir  = (udf_node->vnode->v_type == VDIR);
 	what   = isdir ? UDF_C_FIDS : UDF_C_USERDATA;
+
+	if (udf_node == ump->metadatabitmap_node)
+		what = UDF_C_METADATA_SBM;
 
 	/* assure we have enough translation slots */
 	KASSERT(buf->b_bcount / lb_size <= UDF_MAX_MAPPINGS);
