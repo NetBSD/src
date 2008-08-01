@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.60 2008/07/06 14:07:44 cube Exp $	*/
+/*	$NetBSD: ld.c,v 1.61 2008/08/01 16:09:45 ws Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.60 2008/07/06 14:07:44 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.61 2008/08/01 16:09:45 ws Exp $");
 
 #include "rnd.h"
 
@@ -256,6 +256,7 @@ ldenddetach(struct ld_softc *sc)
 		if ((*sc->sc_flush)(sc) != 0)
 			aprint_error_dev(&sc->sc_dv, "unable to flush cache\n");
 #endif
+	mutex_destroy(&sc->sc_mutex);
 }
 
 /* ARGSUSED */
