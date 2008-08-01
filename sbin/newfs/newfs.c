@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.101 2008/07/20 01:20:23 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.102 2008/08/01 15:32:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.101 2008/07/20 01:20:23 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.102 2008/08/01 15:32:30 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -749,6 +749,9 @@ strsuftoi64(const char *desc, const char *arg, int64_t min, int64_t max, int *nu
 		if (num_suffix != NULL)
 			*num_suffix = 0;
 		break;
+	case 't': case 'T':
+		shift += 10;
+		/* FALLTHROUGH */
 	case 'g': case 'G':
 		shift += 10;
 		/* FALLTHROUGH */
