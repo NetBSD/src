@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.50 2008/08/01 14:47:28 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.51 2008/08/01 19:34:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,6 +41,7 @@
 #include <sys/vnode.h>
 #include <sys/vfs_syscalls.h>
 #include <sys/wapbl.h>
+#include <sys/sysctl.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -80,7 +81,8 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 }
 #endif /* RUMP_WITHOUT_THREADS */
 
-int rump_inited;
+static int rump_inited;
+static struct emul emul_rump;
 
 void
 rump_init()
@@ -114,6 +116,7 @@ rump_init()
 	p->p_pid = 0;
 	p->p_fd = &rump_filedesc0;
 	p->p_vmspace = &rump_vmspace;
+	p->p_emul = &emul_rump;
 	l->l_cred = rump_cred;
 	l->l_proc = p;
 	l->l_lid = 1;
@@ -134,6 +137,7 @@ rump_init()
 
 	fd_sys_init();
 	module_init();
+	sysctl_init();
 	vfsinit();
 	bufinit();
 	wapbl_init();
