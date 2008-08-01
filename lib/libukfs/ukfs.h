@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.4 2008/08/01 14:47:28 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.5 2008/08/01 14:50:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -44,6 +44,8 @@ struct ukfs;
 #define UKFS_DEFAULTMP "/"
 
 #define UKFS_RELFLAG_NOUNMOUNT	0x01
+
+__BEGIN_DECLS
 
 int		ukfs_init(void);
 struct ukfs	*ukfs_mount(const char *, const char *, const char *,
@@ -96,5 +98,7 @@ int		ukfs_modload_dir(const char *);
 
 /* Utilities */
 int		ukfs_util_builddirs(struct ukfs *, const char *, mode_t);
+
+__END_DECLS
 
 #endif /* _RUMP_UKFS_H_ */
