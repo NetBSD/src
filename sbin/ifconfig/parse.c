@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.10 2008/07/15 21:27:58 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.11 2008/08/01 18:05:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse.c,v 1.10 2008/07/15 21:27:58 dyoung Exp $");
+__RCSID("$NetBSD: parse.c,v 1.11 2008/08/01 18:05:56 dyoung Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -336,6 +336,8 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 	else
 		af = af0;
 
+	memset(&u, 0, sizeof(u));
+
 	switch (af) {
 	case AF_UNSPEC:
 	case AF_INET:
@@ -351,8 +353,6 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 			;
 		else if ((plen = strrchr(arg, '/')) != NULL)
 			*plen++ = '\0';
-
-		memset(&u, 0, sizeof(u));
 
 		memset(&hints, 0, sizeof(hints));
 
