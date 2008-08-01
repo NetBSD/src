@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.620 2008/07/31 20:22:06 perry Exp $
+#	$NetBSD: 3RDPARTY,v 1.621 2008/08/01 02:20:03 simonb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -360,7 +360,7 @@ Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	simonb, wiz
-License:	GPLv2
+License:	GPLv2 (2.5.1), GPLv3 (2.5.3)
 Notes:
 Use src/gnu/dist/grep/grep2netbsd for preparing the source tree
 for the import.
