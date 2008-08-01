@@ -1,7 +1,7 @@
-/*	$NetBSD: ukfs.c,v 1.2 2008/07/29 21:11:17 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.3 2008/08/01 14:47:28 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
  * Finnish Cultural Foundation.
@@ -39,9 +39,13 @@
 #define _FILE_OFFSET_BITS 64
 #endif
 
+#include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
 
 #include <assert.h>
+#include <dirent.h>
+#include <dlfcn.h>
 #include <err.h>
 #include <errno.h>
 #include <pthread.h>
@@ -493,6 +497,169 @@ ukfs_lutimes(struct ukfs *ukfs, const char *filename,
 	STDCALL(ukfs, rump_sys_lutimes(filename, tptr, &rv));
 }
 
+/*
+ * Dynamic module support
+ */
+
+/* load one library */
+
+/*
+ * XXX: the dlerror stuff isn't really threadsafe, but then again I
+ * can't protect against other threads calling dl*() outside of ukfs,
+ * so just live with it being flimsy
+ */
+#define UFSLIB "librumpfs_ufs.so"
+int
+ukfs_modload(const char *fname)
+{
+	void *handle, *thesym;
+	struct stat sb;
+	const char *p;
+	int error;
+
+	if (stat(fname, &sb) == -1)
+		return -1;
+
+	handle = dlopen(fname, RTLD_GLOBAL);
+	if (handle == NULL) {
+		if (strstr(dlerror(), "Undefined symbol"))
+			return 0;
+		warnx("dlopen %s failed: %s\n", fname, dlerror());
+		/* XXXerrno */
+		return -1;
+	}
+
+	/*
+	 * XXX: the ufs module is not loaded in the same fashion as the
+	 * others.  But we can't do dlclose() for it, since that would
+	 * lead to not being able to load ffs/ext2fs/lfs.  Hence hardcode
+	 * and kludge around the issue for now.  But this should really
+	 * be fixed by fixing sys/ufs/ufs to be a kernel module.
+	 */
+	if ((p = strrchr(fname, '/')) != NULL)
+		p++;
+	else
+		p = fname;
+	if (strcmp(p, UFSLIB) == 0)
+		return 1;
+
+	thesym = dlsym(handle, "__start_link_set_modules");
+	if (thesym) {
+		error = rump_vfs_load(thesym);
+		if (error)
+			goto errclose;
+		return 1;
+	}
+	error = EINVAL;
+
+ errclose:
+	dlclose(handle);
+	errno = error;
+	return -1;
+}
+
+struct loadfail {
+	char *pname;
+
+	LIST_ENTRY(loadfail) entries;
+};
+
+#define RUMPFSMOD_PREFIX "librumpfs_"
+#define RUMPFSMOD_SUFFIX ".so"
+
+int
+ukfs_modload_dir(const char *dir)
+{
+	char nbuf[MAXPATHLEN+1], *p;
+	struct dirent entry, *result;
+	DIR *libdir;
+	struct loadfail *lf, *nlf;
+	int error, nloaded = 0, redo;
+	LIST_HEAD(, loadfail) lfs;
+
+	libdir = opendir(dir);
+	if (libdir == NULL)
+		return -1;
+
+	LIST_INIT(&lfs);
+	for (;;) {
+		if ((error = readdir_r(libdir, &entry, &result)) != 0)
+			break;
+		if (!result)
+			break;
+		if (strncmp(result->d_name, RUMPFSMOD_PREFIX,
+		    strlen(RUMPFSMOD_PREFIX)) != 0)
+			continue;
+		if (((p = strstr(result->d_name, RUMPFSMOD_SUFFIX)) == NULL)
+		    || strlen(p) != strlen(RUMPFSMOD_SUFFIX))
+			continue;
+		strlcpy(nbuf, dir, sizeof(nbuf));
+		strlcat(nbuf, "/", sizeof(nbuf));
+		strlcat(nbuf, result->d_name, sizeof(nbuf));
+		switch (ukfs_modload(nbuf)) {
+		case 0:
+			lf = malloc(sizeof(*lf));
+			if (lf == NULL) {
+				error = ENOMEM;
+				break;
+			}
+			lf->pname = strdup(nbuf);
+			if (lf->pname == NULL) {
+				free(lf);
+				error = ENOMEM;
+				break;
+			}
+			LIST_INSERT_HEAD(&lfs, lf, entries);
+			break;
+		case 1:
+			nloaded++;
+			break;
+		default:
+			/* ignore errors */
+			break;
+		}
+	}
+	closedir(libdir);
+	if (error && nloaded != 0)
+		error = 0;
+
+	/*
+	 * El-cheapo dependency calculator.  Just try to load the
+	 * modules n times in a loop
+	 */
+	for (redo = 1; redo;) {
+		redo = 0;
+		nlf = LIST_FIRST(&lfs);
+		while ((lf = nlf) != NULL) {
+			nlf = LIST_NEXT(lf, entries);
+			if (ukfs_modload(lf->pname) == 1) {
+				nloaded++;
+				redo = 1;
+				LIST_REMOVE(lf, entries);
+				free(lf->pname);
+				free(lf);
+			}
+		}
+	}
+
+	while ((lf = LIST_FIRST(&lfs)) != NULL) {
+		LIST_REMOVE(lf, entries);
+		free(lf->pname);
+		free(lf);
+	}
+
+	if (error && nloaded == 0) {
+		errno = error;
+		return -1;
+	}
+
+	return nloaded;
+}
+
+
+/*
+ * Utilities
+ */
 int
 ukfs_util_builddirs(struct ukfs *ukfs, const char *pathname, mode_t mode)
 {

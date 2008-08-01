@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.49 2008/07/31 05:38:05 simonb Exp $	*/
+/*	$NetBSD: rump.c,v 1.50 2008/08/01 14:47:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -617,6 +617,16 @@ rump_vfs_syncwait(struct mount *mp)
 	n = buf_syncwait();
 	if (n)
 		printf("syncwait: unsynced buffers: %d\n", n);
+}
+
+int
+rump_vfs_load(struct modinfo **mi)
+{
+
+	if (!module_compatible((*mi)->mi_version, __NetBSD_Version__))
+		return EPROGMISMATCH;
+
+	return (*mi)->mi_modcmd(MODULE_CMD_INIT, NULL);
 }
 
 void

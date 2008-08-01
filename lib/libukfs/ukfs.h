@@ -1,7 +1,7 @@
-/*	$NetBSD: ukfs.h,v 1.3 2008/07/30 14:59:47 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.4 2008/08/01 14:47:28 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
  * Finnish Cultural Foundation.
@@ -89,6 +89,10 @@ int		ukfs_lutimes(struct ukfs *, const char *,
 
 struct mount	*ukfs_getmp(struct ukfs *);
 struct vnode	*ukfs_getrvp(struct ukfs *);
+
+/* dynamic loading of library modules */
+int		ukfs_modload(const char *);
+int		ukfs_modload_dir(const char *);
 
 /* Utilities */
 int		ukfs_util_builddirs(struct ukfs *, const char *, mode_t);

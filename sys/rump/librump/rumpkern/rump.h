@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.29 2008/07/29 13:17:47 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.30 2008/08/01 14:47:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,6 +49,7 @@ typedef struct kauth_cred *kauth_cred_t;
 #endif
 
 struct lwp;
+struct modinfo;
 
 #include <rump/rumpvnode_if.h>
 #include <rump/rumpdefs.h>
@@ -118,6 +119,7 @@ int	rump_vfs_sync(struct mount *, int, kauth_cred_t);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
 void	rump_vfs_syncwait(struct mount *);
+int	rump_vfs_load(struct modinfo **);
 
 void	rump_bioops_sync(void);
 

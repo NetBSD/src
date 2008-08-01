@@ -1,4 +1,4 @@
-.\"     $NetBSD: ukfs.3,v 1.1 2008/07/29 13:17:41 pooka Exp $
+.\"     $NetBSD: ukfs.3,v 1.2 2008/08/01 14:47:28 pooka Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 28, 2008
+.Dd August 1, 2008
 .Dt UKFS 3
 .Os
 .Sh NAME
@@ -59,11 +59,20 @@ However, much like system calls, the interfaces of
 .Nm ,
 are self-contained and require no tracking and release of resources.
 The only exception is the file system handle
-.Ft struct ukfs .
+.Ft struct ukfs
+which should be released after use.
 .Sh INITIALIZATION
 .Ft int
 .br
 .Fn ukfs_init
+.Pp
+.Ft int
+.br
+.Fn ukfs_modload "const char *fname"
+.Pp
+.Ft int
+.br
+.Fn ukfs_modload_dir "const char *dirname"
 .Pp
 .Ft struct ukfs *
 .br
@@ -79,6 +88,44 @@ The only exception is the file system handle
 .Fn ukfs_init
 intializes the library and must be called once per process using
 .Nm .
+.Pp
+.Fn ukfs_modload
+is used at runtime to dynamically load a library which contains a
+file system module.
+For this to succeed, the
+.Xr rump 3
+library and the module targetted must be compiled with compatible kernel
+versions and the application must be dynamically linked.
+Additionally, since this routine does not handle dependencies, all the
+dependencies of the library must be loaded beforehand.
+The routine returns \-1 for fatal error, 0 for dependency failure and 1
+for success.
+.Pp
+.Fn ukfs_modload_dir
+loads all
+.Xr rump 3
+file system modules in directory
+.Fa dirname .
+It looks for libraries which begin with
+.Pa librumpfs_
+and end in
+.Pa .so .
+The routine tries to handle dependencies by retrying to load libraries
+which failed due to dependencies.
+.Fn ukfs_modload_dir
+returns the number of vfs modules loaded or sets errno and
+returns \-1 in case of a fatal error in directory searching.
+In case a fatal error occurs after some modules have already been
+loaded, the number of loaded module is returned.
+Fatal errors in loading the modules themselves are ignored and
+.Fn ukfs_modload
+should be used directly if finegrained error reporting is desired.
+.Pp
+It should be noted that the above routines affect the whole process,
+not just a specific instance of
+.Nm .
+It is preferable to call them from only one thread, as the underlying
+dynamic library interfaces may not be threadsafe.
 .Pp
 .Fn ukfs_mount
 intializes a file system image.
