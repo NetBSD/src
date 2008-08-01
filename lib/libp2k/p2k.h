@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.h,v 1.1 2008/07/29 13:17:40 pooka Exp $	*/
+/*	$NetBSD: p2k.h,v 1.2 2008/08/01 14:50:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,11 @@
 
 #include <sys/types.h>
 
+__BEGIN_DECLS
+
 int p2k_run_fs(const char *, const char *, const char *, int,
 	       void *, size_t, uint32_t);
+
+__END_DECLS
 
 #endif /* _RUMP_P2K_H_ */
