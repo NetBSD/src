@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.10 2008/06/28 09:36:29 chris Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.11 2008/08/01 19:34:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -55,62 +55,6 @@ knote(struct klist *list, long hint)
 {
 
 	return;
-}
-
-/* not tonight, honey */
-int
-sysctl_createv(struct sysctllog **log, int cflags,
-	const struct sysctlnode **rnode, const struct sysctlnode **cnode,
-	int flags, int type, const char *namep, const char *desc,
-	sysctlfn func, u_quad_t qv, void *newp, size_t newlen, ...)
-{
-
-	return 0;
-}
-
-void
-sysctl_teardown(struct sysctllog **log)
-{
-
-}
-
-int
-sysctl_notavail(SYSCTLFN_ARGS)
-{
-
-	return EOPNOTSUPP;
-}
-
-int
-sysctl_lookup(SYSCTLFN_ARGS)
-{
-
-	return ENOSYS;
-}
-
-int
-sysctl_query(SYSCTLFN_ARGS)
-{
-
-	return ENOSYS;
-}
-
-void
-sysctl_lock(bool write)
-{
-
-}
-
-void
-sysctl_relock(void)
-{
-
-}
-
-void
-sysctl_unlock(void)
-{
-
 }
 
 struct cpu_info *

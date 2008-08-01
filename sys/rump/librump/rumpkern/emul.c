@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.44 2008/07/29 13:17:47 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.45 2008/08/01 19:34:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -183,6 +183,14 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	strlcpy(kaddr, uaddr, len);
 	if (done)
 		*done = strlen(kaddr)+1; /* includes termination */
+	return 0;
+}
+
+int
+kcopy(const void *src, void *dst, size_t len)
+{
+
+	memcpy(dst, src, len);
 	return 0;
 }
 
