@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.88 2008/01/14 16:07:00 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.89 2008/08/01 15:54:09 dillo Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.88 2008/01/14 16:07:00 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.89 2008/08/01 15:54:09 dillo Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -364,9 +364,10 @@ set_refuse_mount_name(char **argv, char *name, size_t size)
 
 
 /* this function exposes struct fuse to userland */
-struct fuse *
-fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
-	size_t size, char **mountpoint, int *multithreaded, int *fd)
+static struct fuse *
+fuse_setup_real(int argc, char **argv, const struct fuse_operations *ops,
+	size_t size, char **mountpoint, int *multithreaded, int *fd,
+        void *user_data)
 {
 	struct fuse_chan	*fc;
 	struct fuse_args	*args;
@@ -397,7 +398,7 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	}
 
 	fc = fuse_mount(*mountpoint = argv[i], args);
-	fuse = fuse_new(fc, args, ops, size, NULL);
+	fuse = fuse_new(fc, args, ops, size, user_data);
 
 	fuse_opt_free_args(args);
 	free(args);
@@ -413,6 +414,26 @@ fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
 	}
 
 	return fuse;
+}
+
+#ifdef fuse_setup
+#undef fuse_setup
+#endif
+
+struct fuse *
+fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
+	size_t size, char **mountpoint, int *multithreaded, int *fd)
+{
+    return fuse_setup_real(argc, argv, ops, size, mountpoint,
+	multithreaded, fd, NULL);
+}
+
+struct fuse *
+fuse_setup26(int argc, char **argv, const struct fuse_operations *ops,
+	size_t size, char **mountpoint, int *multithreaded, void *user_data)
+{
+    return fuse_setup_real(argc, argv, ops, size, mountpoint,
+	multithreaded, NULL, user_data);
 }
 
 #define FUSE_ERR_UNLINK(fuse, file) if (fuse->op.unlink) fuse->op.unlink(file)
