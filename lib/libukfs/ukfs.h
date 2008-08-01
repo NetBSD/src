@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.5 2008/08/01 14:50:28 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.6 2008/08/01 19:52:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -95,6 +95,7 @@ struct vnode	*ukfs_getrvp(struct ukfs *);
 /* dynamic loading of library modules */
 int		ukfs_modload(const char *);
 int		ukfs_modload_dir(const char *);
+ssize_t		ukfs_vfstypes(char *, size_t);
 
 /* Utilities */
 int		ukfs_util_builddirs(struct ukfs *, const char *, mode_t);
