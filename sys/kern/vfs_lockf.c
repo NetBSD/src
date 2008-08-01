@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.65 2008/05/28 13:35:32 ad Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.66 2008/08/01 07:11:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.65 2008/05/28 13:35:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.66 2008/08/01 07:11:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,10 +167,10 @@ lf_printlist(const char *tag, struct lockf *lock)
 			"unknown", lf->lf_start, lf->lf_end);
 		TAILQ_FOREACH(blk, &lf->lf_blkhd, lf_block) {
 			if (blk->lf_flags & F_POSIX)
-				printf("proc %d",
+				printf("; proc %d",
 				    ((struct proc *)blk->lf_id)->p_pid);
 			else
-				printf("file %p", (struct file *)blk->lf_id);
+				printf("; file %p", (struct file *)blk->lf_id);
 			printf(", %s, start %qx, end %qx",
 				blk->lf_type == F_RDLCK ? "shared" :
 				blk->lf_type == F_WRLCK ? "exclusive" :
