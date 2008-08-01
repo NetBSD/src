@@ -1,4 +1,4 @@
-.\"     $NetBSD: ukfs.3,v 1.2 2008/08/01 14:47:28 pooka Exp $
+.\"     $NetBSD: ukfs.3,v 1.3 2008/08/01 19:52:10 pooka Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -74,6 +74,10 @@ which should be released after use.
 .br
 .Fn ukfs_modload_dir "const char *dirname"
 .Pp
+.Ft ssize_t
+.br
+.Fn ukfs_vfstypes "char *buf, size_t buflen"
+.Pp
 .Ft struct ukfs *
 .br
 .Fo ukfs_mount
@@ -126,6 +130,20 @@ not just a specific instance of
 .Nm .
 It is preferable to call them from only one thread, as the underlying
 dynamic library interfaces may not be threadsafe.
+.Pp
+.Fn ukfs_vfstypes
+queries the available file system types and returns a nul-terminated
+list of types separated by spaces in
+.Fa buf .
+The format of the list is equivalent to the one returned by
+.Xr sysctl 3
+on the name
+.Pa vfs.generic.fstypes .
+The function returns the length of the string without the trailing nul
+or \-1 for error.
+Notably, the return value 0 means there are no file systems available.
+If there is not enough room in the caller's buffer for all file system
+types, as many as fit will be returned.
 .Pp
 .Fn ukfs_mount
 intializes a file system image.

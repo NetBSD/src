@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.3 2008/08/01 14:47:28 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.4 2008/08/01 19:52:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -42,6 +42,8 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
+#include <sys/mount.h>
 
 #include <assert.h>
 #include <dirent.h>
@@ -656,6 +658,47 @@ ukfs_modload_dir(const char *dir)
 	return nloaded;
 }
 
+/* XXX: this code uses definitions from NetBSD, needs rumpdefs */
+ssize_t
+ukfs_vfstypes(char *buf, size_t buflen)
+{
+	int mib[3];
+	struct sysctlnode q, ans[128];
+	size_t alen;
+	int error, i;
+
+	mib[0] = CTL_VFS;
+	mib[1] = VFS_GENERIC;
+	mib[2] = CTL_QUERY;
+	alen = sizeof(ans);
+
+	memset(&q, 0, sizeof(q));
+	q.sysctl_flags = SYSCTL_VERSION;
+
+	if (rump_sys___sysctl(mib, 3, ans, &alen, &q, sizeof(q), &error) == -1){
+		errno = error;
+		return -1;
+	}
+
+	for (i = 0; i < alen/sizeof(ans[0]); i++)
+		if (strcmp("fstypes", ans[i].sysctl_name) == 0)
+			break;
+	if (i == alen/sizeof(ans[0])) {
+		errno = ENXIO;
+		return -1;
+	}
+
+	mib[0] = CTL_VFS;
+	mib[1] = VFS_GENERIC;
+	mib[2] = ans[i].sysctl_num;
+
+	if (rump_sys___sysctl(mib, 3, buf, &buflen, NULL, 0, &error) == -1) {
+		errno = error;
+		return -1;
+	}
+
+	return buflen;
+}
 
 /*
  * Utilities
