@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.14 2008/07/15 21:27:58 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.15 2008/08/01 22:44:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.14 2008/07/15 21:27:58 dyoung Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.15 2008/08/01 22:44:17 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: af_atalk.c,v 1.14 2008/07/15 21:27:58 dyoung Exp $");
 #include <err.h>
 #include <errno.h>
 #include <string.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <util.h>
@@ -126,30 +127,53 @@ at_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 		, .defmask = {.buf = NULL, .buflen = 0}
 	};
 	struct netrange nr = {.nr_phase = 2};	/* AppleTalk net range */
-	prop_data_t d;
-	const struct paddr_prefix *addr;
-	struct sockaddr_at sat;
+	prop_data_t d, d0;
+	prop_dictionary_t ienv;
+	struct paddr_prefix *addr;
+	struct sockaddr_at *sat;
 
-	if ((d = (prop_data_t)prop_dictionary_get(env, "address")) == NULL)
+	if ((d0 = (prop_data_t)prop_dictionary_get(env, "address")) == NULL)
 		return;
 
-	addr = prop_data_data_nocopy(d);
+	addr = prop_data_data(d0);
 
-	memcpy(&sat, &addr->pfx_addr, MIN(sizeof(sat), addr->pfx_addr.sa_len));
+	sat = (struct sockaddr_at *)&addr->pfx_addr;
 
 	(void)prop_dictionary_get_uint8(env, "phase", &nr.nr_phase);
 	/* Default range of one */
-	nr.nr_firstnet = nr.nr_lastnet = sat.sat_addr.s_net;
+	nr.nr_firstnet = nr.nr_lastnet = sat->sat_addr.s_net;
 	setatrange_impl(env, oenv, &nr);
 
-	if (ntohs(nr.nr_firstnet) > ntohs(sat.sat_addr.s_net) ||
-	    ntohs(nr.nr_lastnet) < ntohs(sat.sat_addr.s_net))
+	if (ntohs(nr.nr_firstnet) > ntohs(sat->sat_addr.s_net) ||
+	    ntohs(nr.nr_lastnet) < ntohs(sat->sat_addr.s_net))
 		errx(EXIT_FAILURE, "AppleTalk address is not in range");
-	*((struct netrange *)&sat.sat_zero) = nr;
+	*((struct netrange *)&sat->sat_zero) = nr;
+
+	/* Copy the new address to a temporary input environment */
+
+	d = prop_data_create_data_nocopy(addr, paddr_prefix_size(addr));
+	ienv = prop_dictionary_copy_mutable(env);
+
+	if (d == NULL)
+		err(EXIT_FAILURE, "%s: prop_data_create_data", __func__);
+	if (ienv == NULL)
+		err(EXIT_FAILURE, "%s: prop_dictionary_copy_mutable", __func__);
+
+	if (!prop_dictionary_set(ienv, "address", (prop_object_t)d))
+		err(EXIT_FAILURE, "%s: prop_dictionary_set", __func__);
+
+	/* copy to output environment for good measure */
+	if (!prop_dictionary_set(oenv, "address", (prop_object_t)d))
+		err(EXIT_FAILURE, "%s: prop_dictionary_set", __func__);
+
+	prop_object_release((prop_object_t)d);
 
 	memset(&ifr, 0, sizeof(ifr));
 	memset(&ifra, 0, sizeof(ifra));
-	commit_address(env, oenv, &atparam);
+	commit_address(ienv, oenv, &atparam);
+
+	/* release temporary input environment */
+	prop_object_release((prop_object_t)ienv);
 }
 
 static void
