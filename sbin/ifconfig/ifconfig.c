@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.212 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.213 2008/08/01 22:29:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.212 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.213 2008/08/01 22:29:13 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1270,8 +1270,7 @@ setifprefixlen(prop_dictionary_t env, prop_dictionary_t oenv)
 	if (pfx == NULL)
 		err(EXIT_FAILURE, "prefixlen_to_mask");
 
-	d = prop_data_create_data(pfx,
-	    offsetof(struct paddr_prefix, pfx_addr) + pfx->pfx_addr.sa_len);
+	d = prop_data_create_data(pfx, paddr_prefix_size(pfx));
 	if (d == NULL)
 		err(EXIT_FAILURE, "%s: prop_data_create_data", __func__);
 

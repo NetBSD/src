@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.11 2008/08/01 18:05:56 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.12 2008/08/01 22:29:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse.c,v 1.11 2008/08/01 18:05:56 dyoung Exp $");
+__RCSID("$NetBSD: parse.c,v 1.12 2008/08/01 22:29:14 dyoung Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -470,8 +470,7 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 			return -1;
 		}
 
-		masklen = offsetof(struct paddr_prefix, pfx_addr) +
-		    mask->pfx_addr.sa_len;
+		masklen = paddr_prefix_size(mask);
 
 		d = prop_data_create_data(mask, masklen);
 		free(mask);

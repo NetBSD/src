@@ -3,6 +3,7 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <sys/queue.h>
 #include <prop/proplib.h>
 #include <sys/socket.h>
@@ -228,6 +229,12 @@ struct paddr_prefix {
 	int16_t		pfx_len;
 	struct sockaddr	pfx_addr;
 };
+
+static inline size_t
+paddr_prefix_size(const struct paddr_prefix *pfx)
+{
+	return offsetof(struct paddr_prefix, pfx_addr) + pfx->pfx_addr.sa_len;
+}
 
 struct paddr {
 	struct parser		pa_parser;
