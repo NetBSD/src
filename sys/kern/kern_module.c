@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.21 2008/05/31 20:14:38 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.22 2008/08/01 14:05:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.21 2008/05/31 20:14:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.22 2008/08/01 14:05:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ module_init_class(modclass_t class)
  *	major and minor versions are significant for official
  *	releases of the system.
  */
-static bool
+bool
 module_compatible(int v1, int v2)
 {
 
