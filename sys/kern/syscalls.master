@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.207 2008/07/16 15:42:54 pooka Exp $
+	$NetBSD: syscalls.master,v 1.208 2008/08/01 19:32:35 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -411,7 +411,7 @@
 200	STD 	 RUMP	{ int sys_truncate(const char *path, int pad, \
 			    off_t length); }
 201	STD 		{ int sys_ftruncate(int fd, int pad, off_t length); }
-202	STD 		{ int sys___sysctl(const int *name, u_int namelen, \
+202	STD	 RUMP 	{ int sys___sysctl(const int *name, u_int namelen, \
 			    void *old, size_t *oldlenp, const void *new, \
 			    size_t newlen); }
 203	STD 		{ int sys_mlock(const void *addr, size_t len); }
