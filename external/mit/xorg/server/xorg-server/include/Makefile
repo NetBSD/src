@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/02 20:39:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/02 21:18:49 mrg Exp $
 
 .include <bsd.own.mk>
 
 XORGSRC=	${X11SRCDIR.xorg-server}
 
 XORGINC_SUBDIR=	Xext afb cfb cfb dbe exa fb include mfb mi \
-		miext/damage miext/shadow randr render xkb
+		miext/damage miext/shadow randr render xkb record
 XF86_SUBDIR=	common ddc dixmods/extmod dri fbdevhw i2c int10 modes \
 		os-support os-support/bus parser rac ramdac shadowfb \
 		vbe vgahw xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp
@@ -39,7 +39,7 @@ INCS=	BT.h IBM.h TI.h XIstubs.h afb.h assyntax.h atKeynames.h bstore.h \
 	shadow.h shadowfb.h site.h swaprep.h swapreq.h tda8425.h tda9850.h \
 	tda9885.h uda1380.h validate.h vbe.h vbeModes.h vgaHW.h \
 	window.h windowstr.h xaa.h xaaWrapper.h xaalocal.h xaarop.h \
-	xkbDflts.h xkb.h \
+	xkbDflts.h xkb.h set.h \
 	xf1bpp.h xf4bpp.h xf86.h xf86Crtc.h xf86Cursor.h xf86DDC.h \
 	xf86Modes.h xf86Module.h xf86OSmouse.h \
 	xf86Opt.h xf86Optrec.h xf86Parser.h xf86Pci.h xf86PciInfo.h \
