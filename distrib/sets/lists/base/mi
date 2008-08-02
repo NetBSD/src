@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.762 2008/07/29 14:59:26 he Exp $
+# $NetBSD: mi,v 1.763 2008/08/02 04:39:41 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -305,6 +305,8 @@
 ./usr/X11R6/include/freetype2/freetype/config	base-x11-root
 ./usr/X11R6/include/freetype2/freetype/internal	base-x11-root
 ./usr/X11R6/include/freetype2/freetype/internal/services	base-x11-root
+./usr/X11R6/include/pixman-1			base-x11-root
+./usr/X11R6/include/xorg			base-x11-root
 ./usr/X11R6/lib					base-x11-root
 ./usr/X11R6/lib/X11				base-x11-root
 ./usr/X11R6/lib/X11/app-defaults		base-x11-root
