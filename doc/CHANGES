@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1081 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1082 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -562,3 +562,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	    after a panic in X with "call ddb_vgapost" [joerg 20080731]
 	wapbl(4): Add support for metadata journaling for FFS.  Contributed
 	    by Wasabi Systems, Inc. [simonb 20080731]
+	ehci(4): Add isochronous transfer support, contributed by
+	    Jeremy Morse as part of his Google Summer of Code 2008 project.
+	    [jmcneill 20080802]
