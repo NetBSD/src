@@ -58,6 +58,13 @@ dm_target_error_init(struct dm_dev *dmv, void **target_config, char *argv)
 	return 0;
 }
 
+/* Status routine called to get params string. */
+char *
+dm_target_error_status(void *target_config)
+{
+	return NULL;
+}	
+
 /* Strategy routine called from dm_strategy. */
 int
 dm_target_error_strategy(struct dm_table_entry *table_en, struct buf *bp)
@@ -77,6 +84,8 @@ dm_target_error_strategy(struct dm_table_entry *table_en, struct buf *bp)
 int
 dm_target_error_destroy(struct dm_table_entry *table_en)
 {
+	table_en->target_config = NULL;
+
 	return 0;
 }
 
