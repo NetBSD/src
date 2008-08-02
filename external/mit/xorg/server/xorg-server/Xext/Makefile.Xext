@@ -1,0 +1,11 @@
+#	$NetBSD: Makefile.Xext,v 1.1 2008/08/02 19:27:28 mrg Exp $
+
+.include <bsd.x11.mk>
+
+.PATH:		${X11SRCDIR.xorg-server}/Xext
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/pixman-1
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod
+
+.include <bsd.lib.mk>
