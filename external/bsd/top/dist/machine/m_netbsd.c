@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.4 2008/07/21 19:29:36 christos Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.5 2008/08/02 23:20:16 cube Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.4 2008/07/21 19:29:36 christos Exp $
+ * $Id: m_netbsd.c,v 1.5 2008/08/02 23:20:16 cube Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.4 2008/07/21 19:29:36 christos Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.5 2008/08/02 23:20:16 cube Exp $");
 #endif
 
 #include <sys/param.h>
@@ -772,7 +772,7 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 	char state[10];
 #endif
 	char wmesg[KI_WMESGLEN + 1];
-	static char fmt[128];		/* static area where result is built */
+	static char fmt[MAX_COLS];		/* static area where result is built */
 	char *pretty = "";
 
 	/* find and remember the next proc structure */
@@ -865,7 +865,7 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 	char state[10];
 #endif
 	char wmesg[KI_WMESGLEN + 1];
-	static char fmt[128];		/* static area where result is built */
+	static char fmt[MAX_COLS];		/* static area where result is built */
 	char *pretty = "";
 	char *comm;
 	int uid;
