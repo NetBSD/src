@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.50 2008/05/25 17:05:28 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.51 2008/08/02 19:46:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,10 +47,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.50 2008/05/25 17:05:28 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.51 2008/08/02 19:46:30 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
+#include <sys/lock.h>
 
 #include <errno.h>
 #include <limits.h>
@@ -111,15 +112,15 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 
 	switch (type) {
 	case PTHREAD_MUTEX_ERRORCHECK:
-		ptm->ptm_errorcheck = 1;
+		__cpu_simple_lock_set(&ptm->ptm_errorcheck);
 		ptm->ptm_owner = NULL;
 		break;
 	case PTHREAD_MUTEX_RECURSIVE:
-		ptm->ptm_errorcheck = 0;
+		__cpu_simple_lock_clear(&ptm->ptm_errorcheck);
 		ptm->ptm_owner = (void *)MUTEX_RECURSIVE_BIT;
 		break;
 	default:
-		ptm->ptm_errorcheck = 0;
+		__cpu_simple_lock_clear(&ptm->ptm_errorcheck);
 		ptm->ptm_owner = NULL;
 		break;
 	}
@@ -219,7 +220,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 			ptm->ptm_recursed++;
 			return 0;
 		}
-		if (ptm->ptm_errorcheck)
+		if (__SIMPLELOCK_LOCKED_P(&ptm->ptm_errorcheck))
 			return EDEADLK;
 	}
 
@@ -400,7 +401,7 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 	deferred = (int)((uintptr_t)owner & MUTEX_DEFERRED_BIT);
 	error = 0;
 
-	if (ptm->ptm_errorcheck) {
+	if (__SIMPLELOCK_LOCKED_P(&ptm->ptm_errorcheck)) {
 		if (!weown) {
 			error = EPERM;
 			new = owner;
