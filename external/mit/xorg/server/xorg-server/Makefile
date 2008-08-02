@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/02 13:27:28 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/02 15:25:50 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -63,7 +63,6 @@ SUBDIR+=	.WAIT Xserver
 .endif
 
 .PATH:	${X11SRCDIR.xorg-server}
-MAN=	Xserver.1
 
 .include <bsd.x11.mk>
 .include <bsd.man.mk>
