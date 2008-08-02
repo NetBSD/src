@@ -1,0 +1,22 @@
+#	$NetBSD: Makefile.xtrap,v 1.1 2008/08/02 21:19:21 mrg Exp $
+
+LIB=		xtrap
+
+.PATH:		${X11SRCDIR.xorg-server}/XTrap
+SRCS+=		xtrapddmi.c xtrapdi.c xtrapdiswp.c xtrapditbl.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
+		-I${XSERVERINCDIR} \
+		-I${DESTDIR}${X11INCDIR}/X11/extensions \
+		-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/Xext
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+
+# XXX
+COPTS.xtrapdi.c=	-Wno-error
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>
