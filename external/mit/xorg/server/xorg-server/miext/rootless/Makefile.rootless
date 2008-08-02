@@ -1,0 +1,20 @@
+#	$NetBSD: Makefile.rootless,v 1.1 2008/08/02 04:32:00 mrg Exp $
+
+LIB=	rootless
+
+.PATH:	${X11SRCDIR.xorg-server}/miext/${LIB}
+SRCS+=	rootlessCommon.c rootlessGC.c rootlessScreen.c \
+	rootlessValTree.c rootlessWindow.c
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support
+
+CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION} \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/miext/cw \
+		${X11FLAGS.DIX} ${X11INCS.DIX}
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>

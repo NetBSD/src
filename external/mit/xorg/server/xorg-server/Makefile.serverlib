@@ -1,0 +1,41 @@
+#	$NetBSD: Makefile.serverlib,v 1.1 2008/08/02 04:32:00 mrg Exp $
+
+NOLINT=         1
+NOPROFILE=      1
+
+# XXX for now?
+MKX11LOADABLE=no
+
+# if not mips use x11 dynamic loader (no need for pic libs)
+.if ${MACHINE_ARCH} != "mipseb" && ${MACHINE_ARCH} != "mipsel"
+NOPIC=		1
+.endif
+
+.include <bsd.own.mk>		# for NETBSDSRCDIR
+.include <bsd.endian.mk>
+
+.if ${TARGET_ENDIANNESS} == "1234"
+X_BYTE_ORDER=X_LITTLE_ENDIAN
+.elif ${TARGET_ENDIANNESS} == "4321"
+X_BYTE_ORDER=X_BIG_ENDIAN
+.else
+X_BYTE_ORDER=0
+.endif
+
+CPPFLAGS+=	${X11FLAGS.SERVER}
+#CPPFLAGS+=	${X11FLAGS.SERVER} -DX_BYTE_ORDER=${X_BYTE_ORDER} \
+#		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+
+.if !defined(XSERVERINCDIR)
+XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=XSERVERINCDIR
+.endif
+
+# Architectures that can't use the XFree86 loader (such as MIPS) can use
+# dlopen() to load modules.
+.if ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel"
+SHLIB_MAJOR=	0
+SHLIB_MINOR=	0
+MKPICLIB=	yes
+MKSTATICLIB=	no
+.endif
