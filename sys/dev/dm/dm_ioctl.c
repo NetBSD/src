@@ -829,7 +829,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	dmv = NULL;
 	uuid = NULL;
 	name = NULL;
-
+	params = NULL;
 	flags = 0;
 	rec_size = 0;
 	i=0;
@@ -860,8 +860,11 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 
 	if (tbl != NULL)
 		DM_ADD_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
-	else
+	else {
 		DM_REMOVE_FLAG(flags, DM_ACTIVE_PRESENT_FLAG);
+
+		return 0;
+	}
 	
 	SLIST_FOREACH(table_en,tbl,next)
 	{
@@ -881,7 +884,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		prop_dictionary_set_int32(target_dict, DM_TABLE_STAT,
 		    dmv->cur_active_table);
 
-		if ( flags |= DM_STATUS_TABLE_FLAG ) {
+		if (flags |= DM_STATUS_TABLE_FLAG) {
 			params = table_en->target->status
 			    (table_en->target_config);
 
@@ -899,7 +902,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		i++;
 	}
 
-	mutex_exit(&dmv->dev_mtx);
+	/*mutex_exit(&dmv->dev_mtx);*/
 	
 	return 0;
 }
