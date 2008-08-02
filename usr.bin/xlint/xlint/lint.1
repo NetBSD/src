@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.32 2008/07/31 15:24:09 christos Exp $
+.\" $NetBSD: lint.1,v 1.33 2008/08/02 12:05:48 apb Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 31, 2008
+.Dd August 2, 2008
 .Dt LINT 1
 .Os
 .Sh NAME
@@ -116,15 +116,18 @@ The list of errors
 .Nm
 produces are enumerated in
 .Xr lint 7 .
+.Pp
 .Nm
 runs the C preprocessor as its first phase, with the
-preprocessor symbol
-.Sy lint
+following preprocessor symbols
 defined to allow certain questionable code to be altered
-or skipped by
-.Nm .
-Therefore, this symbol should be thought of as a reserved
-word for all code that is to be checked by
+or skipped:
+.Sy __LINT__ ,
+.Sy lint ,
+.Sy __lint ,
+.Sy __lint__ .
+These symbols should therefore be thought of as reserved
+words for all code that is to be checked by
 .Nm .
 .Pp
 Among the possible problems that are currently noted are
