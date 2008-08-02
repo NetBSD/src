@@ -1,0 +1,22 @@
+#	$NetBSD: Makefile.xf86-driver,v 1.1 2008/08/02 06:32:02 mrg Exp $
+
+.include <bsd.own.mk>
+.include <bsd.x11.mk>
+
+LIB=	${DRIVER_NAME}
+
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/../include \
+		${X11FLAGS.DIX} ${X11INCS.DIX}
+
+.PATH:	${X11SRCDIR.${DRIVER}}/src
+.PATH:	${X11SRCDIR.${DRIVER}}/man
+
+MKLINT=	no
+
+# XXX want no _pic.a
+# XXX want a _JUST_ .so
+# XXX want a libtool .la?
+
+.include <bsd.lib.mk>
