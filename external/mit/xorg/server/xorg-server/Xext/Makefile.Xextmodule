@@ -1,0 +1,2 @@
+
+SRCS+=	bigreq.c mitmisc.c shape.c sync.c xcmisc.c

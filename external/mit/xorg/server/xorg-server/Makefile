@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/02 15:25:50 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2008/08/02 19:27:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -49,7 +49,7 @@ SUBDIR+=	damageext XTrap composite exa config hw
 .else
 ### this is the current working set
 SUBDIR=		doc include .WAIT
-SUBDIR+=	dix ${SUBDIR.fb} mi ${SUBDIR.miext} randr render 
+SUBDIR+=	dix ${SUBDIR.fb} mi Xext ${SUBDIR.miext} randr render 
 .endif
 
 .if 0
