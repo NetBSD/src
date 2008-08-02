@@ -1,0 +1,16 @@
+#	$NetBSD: Makefile.dbe,v 1.1 2008/08/02 20:41:29 mrg Exp $
+
+LIB=		dbe
+
+.PATH:		${X11SRCDIR.xorg-server}/${LIB}
+SRCS+=		dbe.c midbe.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
+		-I${XSERVERINCDIR} \
+		-I${DESTDIR}${X11INCDIR}/pixman-1
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>
