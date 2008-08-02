@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.376 2008/07/29 13:17:40 pooka Exp $
+#	$NetBSD: NetBSD.dist,v 1.377 2008/08/02 04:39:41 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -97,6 +97,8 @@
 ./usr/X11R6/include/freetype2/freetype/config
 ./usr/X11R6/include/freetype2/freetype/internal
 ./usr/X11R6/include/freetype2/freetype/internal/services
+./usr/X11R6/include/pixman-1
+./usr/X11R6/include/xorg
 ./usr/X11R6/lib
 ./usr/X11R6/lib/X11
 ./usr/X11R6/lib/X11/app-defaults
