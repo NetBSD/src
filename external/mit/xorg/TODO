@@ -13,6 +13,12 @@ libs		- done
 			-- many libs may not install manuals yet.
 			-- many libs should have pkg-config files generated/installed?
 			   this will apparently help with pkgsrc.
+			-- libGL has has glapi_x86.S commented out from the
+			   build because it spews when eating -traditional-cpp
+			   cheap whitespace hacks have been discussed or
+			   phone suggested we only pass -traditional-cpp to
+			   platforms where assemblers do things with '#'.
+
 tools		- done
 share		- done
 bin		- done

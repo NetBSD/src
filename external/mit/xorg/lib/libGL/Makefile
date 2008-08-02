@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/02 13:26:26 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -17,12 +17,13 @@ SRCS.glx=	glcontextmodes.c clientattrib.c compsize.c eval.c glxcmds.c \
 .PATH:		${X11SRCDIR.MesaLib}/src/mesa/glapi
 SRCS.glx+=	glapi.c glthread.c
 
-.if ${MACHINE} == "i386"
-.PATH:		${X11SRCDIR.MesaLib}/src/mesa/x86
-SRCS.glx+=	glapi_x86.S
-CPPFLAGS+=	-DUSE_X86_ASM -I${X11SRCDIR.MesaLib}/src/mesa/x86
-# -DUSE_X86_ASM $(MMX_DEFS) $(3DNOW_DEFS) $(SSE_DEFS)
-.endif
+# XXX see TODO
+#.if ${MACHINE} == "i386"
+#.PATH:		${X11SRCDIR.MesaLib}/src/mesa/x86
+#SRCS.glx+=	glapi_x86.S
+#CPPFLAGS+=	-DUSE_X86_ASM -I${X11SRCDIR.MesaLib}/src/mesa/x86
+## -DUSE_X86_ASM $(MMX_DEFS) $(3DNOW_DEFS) $(SSE_DEFS)
+#.endif
 
 
 .if ${X11DRI} != "no"
