@@ -1,4 +1,4 @@
-.\"     $NetBSD: wapbl.4,v 1.5 2008/08/01 07:53:39 simonb Exp $
+.\"     $NetBSD: wapbl.4,v 1.6 2008/08/02 14:29:12 simonb Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -171,6 +171,14 @@ An older
 that isn't
 .Nm
 aware will not be able to deal with an in-filesystem log.
+.Pp
+.Nm
+requires the super block to be in the UFS2 format.
+Older FFSv1 file systems will need to be updated to the newer super block
+layout with the
+.Fl c
+option to
+.Xr fsck_ffs 8 .
 .Pp
 .Xr fsync 2
 causes the journal to be committed to disk, resulting in
