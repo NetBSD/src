@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.175 2008/08/01 07:34:57 simonb Exp $
+$NetBSD: UPDATING,v 1.176 2008/08/02 14:30:37 simonb Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -21,7 +21,9 @@ Recent changes:
 	time isn't backwards compatible with pre-WAPBL aware kernels
 	and userland (fsck_ffs in particular).  Please make sure you
 	don't use a journaled filesystem with an older kernel/userland,
-	especially an uncleanly mounted journaled filesystem.
+	especially an uncleanly mounted journaled filesystem.  WAPBL
+	also requires the super block to be in the UFS2 format.  You
+	can use fsck_ffs -c 4 to update the superblock format.
 
 20080721:
 	Assembler warnings are now fatal if $WARNS>0 and $NOGCCERROR
