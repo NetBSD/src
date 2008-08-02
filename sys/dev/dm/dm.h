@@ -247,12 +247,14 @@ int dm_target_init(void);
 
 /* dm_target_zero.c */
 int dm_target_zero_init(struct dm_dev *, void**,  char *);
+char * dm_target_zero_status(void *);
 int dm_target_zero_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_zero_destroy(struct dm_table_entry *);
 int dm_target_zero_upcall(struct dm_table_entry *, struct buf *);
 
 /* dm_target_error.c */
 int dm_target_error_init(struct dm_dev *, void**, char *);
+char * dm_target_error_status(void *);
 int dm_target_error_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_error_destroy(struct dm_table_entry *);
 int dm_target_error_upcall(struct dm_table_entry *, struct buf *);
