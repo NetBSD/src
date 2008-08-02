@@ -210,8 +210,8 @@ dm_target_init(void)
 	mutex_init(&dm_target_mutex, MUTEX_DEFAULT, IPL_NONE);
 	
 	dmt = dm_target_alloc("linear");
-	dmt1 = dm_target_alloc("error");
-	dmt2 = dm_target_alloc("zero");
+	dmt1 = dm_target_alloc("zero");
+	dmt2 = dm_target_alloc("error");
 	dmt3 = dm_target_alloc("striped");
 	dmt4 = dm_target_alloc("mirror");
 	dmt5 = dm_target_alloc("snapshot");
@@ -235,10 +235,10 @@ dm_target_init(void)
 	dmt1->version[2] = 0;
 	strncpy(dmt1->name, "zero", DM_MAX_TYPE_NAME);
 	dmt1->init = &dm_target_zero_init;
-	dmt1->status = NULL;
+	dmt1->status = &dm_target_zero_status;
 	dmt1->strategy = &dm_target_zero_strategy;
-	dmt1->destroy = NULL; 
-	dmt1->upcall = NULL;
+	dmt1->destroy = &dm_target_zero_destroy; 
+	dmt1->upcall = &dm_target_zero_upcall;
 	
 	r = dm_target_insert(dmt1);
 
@@ -247,10 +247,10 @@ dm_target_init(void)
 	dmt2->version[2] = 0;
 	strncpy(dmt2->name, "error", DM_MAX_TYPE_NAME);
 	dmt2->init = &dm_target_error_init;
-	dmt2->status = NULL;
+	dmt2->status = &dm_target_error_status;
 	dmt2->strategy = &dm_target_error_strategy;
-	dmt2->destroy = NULL; 
-	dmt2->upcall = NULL;
+	dmt2->destroy = &dm_target_error_destroy; 
+	dmt2->upcall = &dm_target_error_upcall;
 	
 	r = dm_target_insert(dmt2);
 	
