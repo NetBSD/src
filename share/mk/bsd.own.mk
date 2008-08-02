@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.517 2008/08/02 04:35:41 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.518 2008/08/02 06:59:24 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -747,6 +747,18 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 	font-isas-misc font-jis-misc font-misc-misc font-mutt-misc \
 	font-util ttf-bitstream-vera encodings
 X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
+.endfor
+
+.for _i in \
+	keyboard mouse vmmouse void
+X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
+.endfor
+
+.for _v in \
+	apm ark ast ati chips cirrus cyrix glint i128 i740 imstt intel \
+	mga neomagic nsc nv radeonhd rendition s3 s3virge savage \
+	siliconmotion sis tdfx tga trident tseng vesa vga via vmware wsfb
+X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
 
 # Default to no xorg builds for now.
