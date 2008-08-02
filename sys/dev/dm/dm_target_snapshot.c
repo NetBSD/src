@@ -95,6 +95,8 @@ dm_target_snapshot_strategy(struct dm_table_entry *table_en, struct buf *bp)
 int
 dm_target_snapshot_destroy(struct dm_table_entry *table_en)
 {
+	table_en->target_config = NULL;
+
 	return 0;
 }
 

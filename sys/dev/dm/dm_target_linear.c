@@ -173,6 +173,8 @@ dm_target_linear_destroy(struct dm_table_entry *table_en)
 {
 
 	kmem_free(table_en->target_config, sizeof(struct target_linear_config));
+
+	table_en->target_config = NULL;
 	
 	return 0;
 }
