@@ -43,18 +43,21 @@
 int
 dm_table_destroy(struct dm_table *head)
 {
-
 	struct dm_table_entry *table_en;
 
+	while (!SLIST_EMPTY(head)) {           /* List Deletion. */
 
-	SLIST_FOREACH(table_en, head, next){
+		table_en = SLIST_FIRST(head);
 		
-		/* Remove target specific config data. */
-		if (table_en->target_config != NULL)
-			table_en->target->destroy(table_en); 
+		/*
+		 * Remove target specific config data. After successfull
+		 * call table_en->target_config must be set to NULL.
+		 */
+		table_en->target->destroy(table_en); 
 
-		SLIST_REMOVE(head, table_en, dm_table_entry, next);
 		
+		SLIST_REMOVE_HEAD(head, next);
+
 		kmem_free(table_en, sizeof(*table_en));
 	}
 
