@@ -1,0 +1,44 @@
+#	$NetBSD: Makefile.afb,v 1.1 2008/08/02 20:41:29 mrg Exp $
+
+LIB=	afb
+
+.PATH:	${X11SRCDIR.xorg-server}/${LIB}
+SRCS+=	afbbltC.c afbbltX.c afbbltCI.c afbbltO.c afbbltG.c \
+	afbtileC.c afbtileG.c afbseg.c \
+	afbgc.c afbwindow.c afbfont.c afbfillrct.c afbpntwin.c \
+	afbpixmap.c afbimage.c afbline.c afbbres.c afbhrzvert.c \
+	afbbresd.c afbpushpxl.c afbply1rct.c afbzerarc.c afbfillarc.c \
+	afbfillsp.c afbsetsp.c afbscrinit.c afbplygblt.c afbclip.c \
+	afbgetsp.c afbpolypnt.c afbbitblt.c afbcmap.c afbimggblt.c \
+	afbpntarea.c afbmisc.c afbbstore.c afbtegblt.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/${LIB} \
+		-I${X11SRCDIR.xorg-server}/cfb \
+		-I${X11SRCDIR.xorg-server}/mfb \
+		-I${X11SRCDIR.xorg-server}/include \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
+		-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${XSERVERINCDIR}
+
+BUILDSYMLINKS=	afbblt.c afbbltC.c \
+		afbblt.c afbbltCI.c \
+		afbblt.c afbbltG.c \
+		afbblt.c afbbltO.c \
+		afbblt.c afbbltX.c \
+		afbline.c afbseg.c \
+		afbtile.c afbtileC.c \
+		afbtile.c afbtileG.c
+
+CPPFLAGS.afbseg.c=	-DPOLYSEGMENT
+CPPFLAGS.afbbltC.c=	-DMROP=Mcopy
+CPPFLAGS.afbbltX.c=	-DMROP=Mxor
+CPPFLAGS.afbbltCI.c=	-DMROP=McopyInverted
+CPPFLAGS.afbbltO.c=	-DMROP=Mor
+CPPFLAGS.afbbltG.c=	-DMROP=0
+CPPFLAGS.afbtileC.c=	-DMROP=Mcopy
+CPPFLAGS.afbtileG.c=	-DMROP=0
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>
