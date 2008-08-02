@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.107 2008/08/02 04:37:25 mrg Exp $
+# $NetBSD: HACKS,v 1.108 2008/08/02 04:37:54 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -437,7 +437,7 @@ port	vax
 	hack	xorg warnings
 	cdat	30 July 2008
 	who	mrg
-	file	src/external/mit/xorg/lib/libSM/Makefile : 1.2
+	file	external/mit/xorg/lib/libSM/Makefile : 1.2
 		external/mit/xorg/lib/libX11/Makefile.libx11 : 1.2
 		external/mit/xorg/lib/libXext/Makefile : 1.2
 		external/mit/xorg/lib/libXfont/Makefile : 1.2
