@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.2 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.3 2008/08/02 02:23:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.2 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.3 2008/08/02 02:23:51 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -528,7 +528,7 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 		logend = dkw.dkw_size;
 	}
 
-	if ((logend - logstart) >= desired_logsize) {
+	if ((logend - logstart) * blksize >= desired_logsize) {
 		KDASSERT(blksize != 0);
 		DPRINTF("enough space, use end-of-partition log\n");
 
