@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.58 2008/07/29 04:40:15 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.59 2008/08/02 04:36:12 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -41,6 +41,23 @@ X11FLAGS.PERVASIVE_EXTENSION=	-DSHAPE -DXINPUT -DXKB -DLBX -DXAPPGROUP \
 				-DCOMPOSITE -DXEVIE
 X11FLAGS.EXTENSION=	${X11FLAGS.BASE_EXTENSION} \
 			${X11FLAGS.PERVASIVE_EXTENSION}
+
+X11FLAGS.DIX=		-DHAVE_DIX_CONFIG_H -D_BSD_SOURCE -DHAS_FCHOWN \
+			-DHAS_STICKY_DIR_BIT -D_POSIX_THREAD_SAFE_FUNCTIONS
+X11INCS.DIX=		-I${X11INCSDIR}/freetype2  \
+			-I${X11INCSDIR}/pixman-1 \
+			-I$(X11SRCDIR.xorg-server)/include \
+			-I$(X11SRCDIR.xorg-server)/Xext \
+			-I$(X11SRCDIR.xorg-server)/composite \
+			-I$(X11SRCDIR.xorg-server)/damageext \
+			-I$(X11SRCDIR.xorg-server)/xfixes \
+			-I$(X11SRCDIR.xorg-server)/Xi \
+			-I$(X11SRCDIR.xorg-server)/mi \
+			-I$(X11SRCDIR.xorg-server)/miext/shadow \
+			-I$(X11SRCDIR.xorg-server)/miext/damage \
+			-I$(X11SRCDIR.xorg-server)/render \
+			-I$(X11SRCDIR.xorg-server)/randr \
+			-I$(X11SRCDIR.xorg-server)/fb
 .else
 X11FLAGS.EXTENSION=	-DMITMISC -DXTEST -DXTRAP -DXSYNC -DXCMISC -DXRECORD \
 			-DMITSHM -DBIGREQS -DXF86MISC -DDBE -DDPMSExtension \
@@ -111,7 +128,7 @@ XORG_RELEASE=		'"Release 6.8.1"'
 __XKBDEFRULES__=	'"xorg"'
 
 # XXX oh yeah, fix me later
-XORG_VERSION_CURRENT="(((6) * 10000000) + ((8) * 100000) + ((1) * 1000) + 0)"
+XORG_VERSION_CURRENT="(((1) * 10000000) + ((4) * 100000) + ((2) * 1000) + 0)"
 .endif
 
 # Extract X11VERSION
