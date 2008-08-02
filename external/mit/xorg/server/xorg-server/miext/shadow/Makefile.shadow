@@ -1,0 +1,23 @@
+#	$NetBSD: Makefile.shadow,v 1.1 2008/08/02 04:32:00 mrg Exp $
+
+LIB=	shadow
+
+.PATH:	${X11SRCDIR.xorg-server}/miext/${LIB}
+SRCS+=	shadow.c shalloc.c shpacked.c shplanar8.c shplanar.c \
+	shrot16pack_180.c shrot16pack_270.c shrot16pack_270YX.c \
+	shrot16pack_90.c shrot16pack_90YX.c shrot16pack.c shrot32pack_180.c \
+	shrot32pack_270.c shrot32pack_90.c shrot32pack.c shrot8pack_180.c \
+	shrot8pack_270.c shrot8pack_90.c shrot8pack.c shrotate.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support
+
+CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION} \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/miext/cw \
+		${X11FLAGS.DIX} ${X11INCS.DIX}
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>
