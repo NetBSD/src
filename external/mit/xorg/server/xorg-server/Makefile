@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/08/02 21:19:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2008/08/02 21:44:14 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -40,31 +40,10 @@ SUBDIR.iplan=iplan2p4 iplan2p8
 SUBDIR.iplan=
 .endif
 
-.if 0
-### this is the desired version ###
 SUBDIR=		doc include .WAIT
 SUBDIR+=	dix ${SUBDIR.fb} mi Xext ${SUBDIR.miext} os randr render 
 SUBDIR+=	Xi xkb dbe mfb ${SUBDIR.afb} {SUBDIR.cfb} record xfixes
-SUBDIR+=	damageext XTrap composite exa config hw
-.else
-### this is the current working set
-SUBDIR=		doc include .WAIT
-SUBDIR+=	dix ${SUBDIR.fb} mi Xext ${SUBDIR.miext} os randr render 
-# XXX need to test afb yet
-SUBDIR+=	Xi xkb dbe mfb ${SUBDIR.afb} {SUBDIR.cfb} record xfixes
-SUBDIR+=	damageext XTrap
-#SUBDIR+=	damageext XTrap composite exa config hw
-.endif
-
-.if 0
-### this is the old version
-SUBDIR=		include
-SUBDIR+=	.WAIT dix os mi printer Xext xkb xinput GL lbx dbe record
-SUBDIR+=	mfb randr render xtrap composite damage xfixes
-SUBDIR+=	${SUBDIR.cfb} ${SUBDIR.fb} ${SUBDIR.iplan} hw
-SUBDIR+=	${SUBDIR.xfont} ${SUBDIR.afb} ${SUBDIR.miext}
-SUBDIR+=	.WAIT Xserver
-.endif
+SUBDIR+=	damageext XTrap composite exa config # hw
 
 .PATH:	${X11SRCDIR.xorg-server}
 
