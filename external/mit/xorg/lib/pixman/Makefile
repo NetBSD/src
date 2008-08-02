@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 04:28:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/02 11:38:05 rtr Exp $
+
+NOLINT=	1	# defined
 
 .include <bsd.own.mk>
 
