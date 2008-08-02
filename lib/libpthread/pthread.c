@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.104 2008/06/28 10:36:12 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.105 2008/08/02 16:02:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.104 2008/06/28 10:36:12 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.105 2008/08/02 16:02:26 matt Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1115,7 +1115,8 @@ pthread__unpark(pthread_queue_t *queue, pthread_t self,
 		pthread_mutex_t *interlock)
 {
 	pthread_t target;
-	u_int max, nwaiters;
+	u_int max;
+	size_t nwaiters;
 
 	max = pthread__unpark_max;
 	nwaiters = self->pt_nwaiters;
@@ -1138,7 +1139,8 @@ pthread__unpark_all(pthread_queue_t *queue, pthread_t self,
 		    pthread_mutex_t *interlock)
 {
 	pthread_t target;
-	u_int max, nwaiters;
+	u_int max;
+	size_t nwaiters;
 
 	max = pthread__unpark_max;
 	nwaiters = self->pt_nwaiters;
@@ -1306,7 +1308,8 @@ pthread__hashlock(volatile const void *p)
 int
 pthread__checkpri(int pri)
 {
-	static int havepri, min, max;
+	static int havepri;
+	static long min, max;
 
 	if (!havepri) {
 		min = sysconf(_SC_SCHED_PRI_MIN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.51 2008/07/18 16:17:11 pooka Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.52 2008/08/02 16:02:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.51 2008/07/18 16:17:11 pooka Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.52 2008/08/02 16:02:26 matt Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -263,7 +263,8 @@ pthread__cond_wake_all(pthread_cond_t *cond)
 {
 	pthread_t self, signaled;
 	pthread_mutex_t *mutex;
-	u_int max, nwaiters;
+	u_int max;
+	size_t nwaiters;
 
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
