@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2008/08/02 20:41:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2008/08/02 21:19:21 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ SUBDIR.miext=
 .endif
 
 .if ${XSERVER_HAS_CFB} != "no"
-SUBDIR.cfb=cfb cfb16 cfb24 cfb32
+SUBDIR.cfb=cfb cfb32
 .else
 SUBDIR.cfb=
 .endif
@@ -50,8 +50,9 @@ SUBDIR+=	damageext XTrap composite exa config hw
 ### this is the current working set
 SUBDIR=		doc include .WAIT
 SUBDIR+=	dix ${SUBDIR.fb} mi Xext ${SUBDIR.miext} os randr render 
-SUBDIR+=	Xi xkb dbe mfb 
-#SUBDIR+=	${SUBDIR.afb} {SUBDIR.cfb} record xfixes
+# XXX need to test afb yet
+SUBDIR+=	Xi xkb dbe mfb ${SUBDIR.afb} {SUBDIR.cfb} record xfixes
+SUBDIR+=	damageext XTrap
 #SUBDIR+=	damageext XTrap composite exa config hw
 .endif
 
