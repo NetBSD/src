@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.2 2008/08/03 03:55:37 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.1 2008/08/03 22:09:56 mrg Exp $
 
 # XXX old list
 .if 0
@@ -23,6 +23,7 @@
 	config \
 	fb \
 	xfixes \
+	Xext \
 	Xext/Xextbuiltin \
 	dbe \
 	XTrap \
@@ -39,6 +40,7 @@
 	os \
 	dix \
 	config \
+	GL/glx \
 	hw/xnest
 
 .if !defined(LIBDIR.${_SL})
@@ -53,6 +55,11 @@ LDADD.XORG_CORE=	${LDADD.dix} ${LDADD.config}
 DPADD.XORG_CORE=	${DPADD.dix} ${DPADD.config}
 
 LIBCWRAPPER=	${LIBDIR.os}/libc_wrapper.o
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
+		-I${X11SRCDIR.xorg-server}/Xext \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/../include
 
 LDADD+=		-lm
 DPADD+=		${LIBM}
