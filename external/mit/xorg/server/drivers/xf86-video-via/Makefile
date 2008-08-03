@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:01 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-via
+DRIVER=		xf86-video-via
 DRIVER_NAME=	via_drv
 
 SRCS=		via_3d.c via_accel.c via_bandwidth.c via_cursor.c
