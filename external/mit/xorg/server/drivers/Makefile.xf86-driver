@@ -1,9 +1,32 @@
-#	$NetBSD: Makefile.xf86-driver,v 1.1 2008/08/02 06:32:02 mrg Exp $
+#	$NetBSD: Makefile.xf86-driver,v 1.2 2008/08/03 06:02:29 rtr Exp $
 
 .include <bsd.own.mk>
 .include <bsd.x11.mk>
 
 LIB=	${DRIVER_NAME}
+
+PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
+				match($$1, "[0-9]+\.[0-9]+\.[0-9]+");	\
+				version = substr($$1, RSTART, RLENGTH);	\
+			} END { print version }'			\
+			${X11SRCDIR.${DRIVER}}/configure
+
+PACKAGE_VERSION!=	${PRINT_PACKAGE_VERSION}
+
+PRINT_PACKAGE_MAJOR=	echo ${PACKAGE_VERSION} | awk -F. '{	\
+				major = $$1;			\
+			} END { print major }'
+PACKAGE_MAJOR!=		${PRINT_PACKAGE_MAJOR}
+
+PRINT_PACKAGE_MINOR=	echo ${PACKAGE_VERSION} | awk -F. '{	\
+				minor = $$2;			\
+			} END { print minor }'
+PACKAGE_MINOR!=		${PRINT_PACKAGE_MINOR}
+
+PRINT_PACKAGE_PATCH=	echo ${PACKAGE_VERSION} | awk -F. '{	\
+				patch = $$3;			\
+			} END { print patch }'
+PACKAGE_PATCH!=		${PRINT_PACKAGE_PATCH}
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
