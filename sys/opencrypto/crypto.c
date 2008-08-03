@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.28 2008/04/28 20:24:10 martin Exp $ */
+/*	$NetBSD: crypto.c,v 1.29 2008/08/03 10:18:12 degroote Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.28 2008/04/28 20:24:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.29 2008/08/03 10:18:12 degroote Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -965,6 +965,7 @@ crypto_freereq(struct cryptop *crp)
 		crp->crp_desc = crd->crd_next;
 		pool_put(&cryptodesc_pool, crd);
 	}
+	cv_destroy(&crp->crp_cv);
 	pool_put(&cryptop_pool, crp);
 }
 
