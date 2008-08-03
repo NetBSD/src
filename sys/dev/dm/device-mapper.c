@@ -43,9 +43,7 @@
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
-#ifdef __LKM__
-#include <sys/lkm.h>
-#endif
+#include <sys/module.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -79,20 +77,8 @@ const struct bdevsw dm_bdevsw = {
 
 const struct cdevsw dm_cdevsw = {
 	dmopen, dmclose, dmread, dmwrite, dmioctl,
-		nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
-
-#ifdef __LKM__
-
-/* lkm module init routine */
-int dm_lkmentry(struct lkm_table *, int, int);
-
-/* lkm module handle routine */
-static int dm_handle(struct lkm_table *, int);
-
-MOD_DEV("dm", "dm", &dm_bdevsw, -1, &dm_cdevsw, -1);
-
-#endif
 
 /* Info about all devices */
 struct dm_softc *dm_sc;
@@ -124,6 +110,42 @@ struct cmd_function cmd_fn[] = {
 		{"table",   dm_table_status_ioctl},
 		{NULL, NULL}	
 };
+
+
+MODULE(MODULE_CLASS_MISC, dm, NULL);
+
+/* New module handle routine */
+static int
+dm_modcmd(modcmd_t cmd, void *arg)
+{
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		dmattach();
+		break;
+
+	case MODULE_CMD_FINI:
+		dmdestroy();
+		break;
+
+	case MODULE_CMD_STAT:
+		printf("DM module stat called\n");
+		return ENOTTY;
+
+	default:
+		return ENOTTY;
+	}
+
+	return 0;
+#else
+
+	if (cmd == MODULE_CMD_INIT)
+		return 0;
+	
+	return ENOTTY;
+#endif /* _MODULE */
+}
+
 
 /* attach routine */
 int
@@ -158,47 +180,6 @@ dmdestroy(void)
 
 	return 0;
 }
-
-#ifdef __LKM__
-
-/* lkm entry for ld */
-int
-dm_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
-{
-	DISPATCH(lkmtp, cmd, ver, dm_handle, dm_handle, dm_handle);
-}
-
-/* handle function for all load/stat/unload actions */
-static int
-dm_handle(struct lkm_table *lkmtp, int cmd)
-{
-
-	int r;
-
-	r=0;
-  
-	switch(cmd) {
-
-	case  LKM_E_LOAD:
-		aprint_error("Loading dm driver.\n");
-		dmattach();
-		break;
-
-	case  LKM_E_UNLOAD:
-		aprint_error("Unloading dm driver.\n");
-		dmdestroy();
-		break;
-		
-	case LKM_E_STAT:
-		aprint_error("Opened dm devices: \n");
-		break;
-	}	  
-
-	return r;
-}
-
-#endif
-
 
 static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
