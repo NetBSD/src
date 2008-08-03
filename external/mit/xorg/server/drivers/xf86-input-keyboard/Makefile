@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 06:32:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 06:11:05 rtr Exp $
 
 DRIVER=		xf86-input-keyboard
 DRIVER_NAME=	keyboard_drv
 
 SRCS=		kbd.c bsd_KbdMap.c bsd_kbd.c at_scancode.c
-MAN=		keyboard.4
 
-# XXX kbd.c doesn't yet build
+CPPFLAGS.kbd.c=	-D__XKBDEFRULES__=${__XKBDEFRULES__}
+CPPFLAGS.kbd.c+=-DPACKAGE_VERSION_MAJOR=${PACKAGE_MAJOR}
+CPPFLAGS.kbd.c+=-DPACKAGE_VERSION_MINOR=${PACKAGE_MINOR}
+CPPFLAGS.kbd.c+=-DPACKAGE_VERSION_PATCHLEVEL=${PACKAGE_PATCH}
 
 .include "../Makefile.xf86-driver"
