@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2008/03/22 08:37:26 mlelstv Exp $
+# $NetBSD: Makefile,v 1.23 2008/08/03 07:16:58 veego Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -98,16 +98,17 @@ COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
 .endif
 
-${gen_files} hdb_asn1.h: hdb_asn1_files
-
-${SRCS:.c=.o}: hdb_err.h hdb_asn1.h
+${gen_files} hdb_asn1.hx: hdb_asn1_files
 
 CLEANFILES=	${gen_files} ${BUILT_SOURCES} \
-		hdb_asn1.h hdb_asn1_files hdb_err.h
+		hdb_asn1.h hdb_asn1.hx hdb_asn1_files hdb_err.h
 
 .include <bsd.lib.mk>
 
-.SUFFIXES: .x
+.SUFFIXES: .hx .x
+
+.hx.h:
+	@cmp -s $< $@ 2> /dev/null || cp $< $@
 
 .x.c:
 	@cmp -s $< $@ 2> /dev/null || cp $< $@
