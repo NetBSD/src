@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 04:32:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 03:17:16 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -14,6 +14,7 @@ SRCS=		atom.c colormap.c cursor.c devices.c dispatch.c dixfonts.c \
 		tables.c window.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/pixman-1
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg
 CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION}
 CPPFLAGS+=	${X11FLAGS.DIX} ${X11INCS.DIX}
 

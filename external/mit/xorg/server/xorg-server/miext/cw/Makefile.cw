@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cw,v 1.1 2008/08/02 04:32:00 mrg Exp $
+#	$NetBSD: Makefile.cw,v 1.2 2008/08/03 03:17:16 mrg Exp $
 
 LIB=	cw
 
@@ -10,6 +10,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support
 
 CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION} \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${DESTDIR}${X11INCDIR}/xorg \
 		${X11FLAGS.DIX} ${X11INCS.DIX}
 
 .include <bsd.x11.mk>
