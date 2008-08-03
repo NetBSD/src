@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 03:37:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 22:07:08 mrg Exp $
+
+.include <bsd.own.mk>
+
+PROG=	Xnest
 
 .include "../../Makefile.serverlib"
 .include "../../Makefile.servermod"
-
-LIB=		xnest
 
 .PATH:		${X11SRCDIR.xorg-server}/hw/xnest
 .PATH:		${X11SRCDIR.xorg-server}/Xext
@@ -34,9 +36,85 @@ CPPFLAGS+=	${X11FLAGS.OS_DEFINES} \
 		-DNO_HW_ONLY_EXTS -UXFree86LOADER -UMITSHM \
 		-D__XKBDEFRULES__='"xorg"'
 
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xnest \
+		-DHAVE_XNEST_CONFIG_H \
+		-UGLXEXT
+
 CPPFLAGS.Events.c=	-Wno-error
 CPPFLAGS.Screen.c=	-Wno-error
 CPPFLAGS.miinitext.c=	-UDPMSExtension
 
+.include "../../Makefile.Xserver"
+
+LDADD+= \
+	${LDADD.XORG_CORE} \
+	${LDADD.mi} \
+	${LDADD.config} \
+	-lXfont \
+	-lXau \
+	-lfontenc \
+	-lpixman-1 \
+	-lXdmcp \
+	${LDADD.fb} \
+	${LDADD.xfixes} \
+	${LDADD.Xext} \
+	${LDADD.dbe} \
+	${LDADD.XTrap} \
+	${LDADD.record} \
+	${LDADD.render} \
+	${LDADD.randr} \
+	${LDADD.damageext} \
+	${LDADD.miext/damage} \
+	${LDADD.miext/shadow} \
+	${LDADD.Xi} \
+	${LDADD.xkb} \
+	${LDADD.composite} \
+	${LDADD.dix/xpstubs} \
+	${LDADD.os} \
+	-lXext \
+	-lX11 \
+	-lXau \
+	-lfreetype
+
+DPADD+= \
+	${DPADD.XORG_CORE} \
+	${DPADD.mi} \
+	${DPADD.config} \
+	${LIBXFONT} \
+	${LIBXAU} \
+	${LIBFONTENC} \
+	${LIBPIXMAN-1} \
+	${LIBXDMCP} \
+	${DPADD.fb} \
+	${DPADD.xfixes} \
+	${DPADD.Xext} \
+	${DPADD.dbe} \
+	${DPADD.XTrap} \
+	${DPADD.record} \
+	${DPADD.render} \
+	${DPADD.randr} \
+	${DPADD.damageext} \
+	${DPADD.miext/damage} \
+	${DPADD.miext/shadow} \
+	${DPADD.Xi} \
+	${DPADD.xkb} \
+	${DPADD.composite} \
+	${DPADD.dix/xpstubs} \
+	${DPADD.os} \
+	${LIBXEXT} \
+	${LIBX11} \
+	${LIBXAU} \
+	${LIBFREETYPE}
+
+.if ${MACHINE_ARCH} == "i386"
+LDADD+=	-li386
+DPADD+=	${LIBI386}
+.endif
+
+.if ${MACHINE_ARCH} == "x86_64"
+LDADD+=	-lx86_64
+DPADD+=	${LIBX86_64}
+.endif
+
 .include <bsd.x11.mk>
-.include <bsd.lib.mk>
+.include <bsd.prog.mk>
