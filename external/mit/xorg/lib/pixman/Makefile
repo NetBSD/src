@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/03 06:40:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/03 10:56:28 rtr Exp $
 
 NOLINT=	1	# defined
 
@@ -22,6 +22,7 @@ SRCS=	pixman-access.c pixman-region16.c pixman-access-accessors.c \
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=	pixman-mmx.c
 SRCS+=	pixman-sse.c
+MKDEPFLAGS+=		-msse -mmmx -fvisibility=hidden
 COPTS.pixman-mmx.c=	-msse -mmmx -fvisibility=hidden
 COPTS.pixman-sse.c=	-msse -mmmx -fvisibility=hidden
 .endif
