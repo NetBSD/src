@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/03 03:17:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/03 22:09:12 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -26,13 +26,14 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/Xi \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
-		${X11FLAGS.DIX}
+		${X11FLAGS.DIX} \
+		-DHAVE_XNEST_CONFIG_H
 
-CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION}
 CPPFLAGS.miscrinit.c=	${X11FLAGS.EXTENSION}
 
 .if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64" || ${MACHINE} == "mac68k"
 SRCS+=  miinitext.c
+CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION}
 CPPFLAGS.miinitext.c+=   -UXF86MISC -UXINPUT -UXF86VIDMODE -UXFreeXDGA
 CPPFLAGS.miscrinit.c+=   -UXF86MISC -UXINPUT -UXF86VIDMODE -UXFreeXDGA
 .endif
