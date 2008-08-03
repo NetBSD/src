@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:20:59 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-glint
+DRIVER=		xf86-video-glint
 DRIVER_NAME=	glint_drv
 
 SRCS=		glint_dga.c glint_driver.c glint_shadow.c IBMramdac.c

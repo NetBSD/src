@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:20:59 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:03 rtr Exp $
 
-DRIVER=		xf86-input-ast
+DRIVER=		xf86-video-ast
 DRIVER_NAME=	ast_drv
 
 SRCS=		ast_2dtool.c ast_accelt.c ast_cursor.c ast_driver.c

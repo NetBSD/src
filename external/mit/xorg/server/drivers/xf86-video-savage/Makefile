@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-savage
+DRIVER=		xf86-video-savage
 DRIVER_NAME=	savage_drv
 
 SRCS=		savage_accel.c savage_xaa.c savage_exa.c

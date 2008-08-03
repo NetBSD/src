@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:01 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-tga
+DRIVER=		xf86-video-tga
 DRIVER_NAME=	tga_drv
 
 SRCS=		BT463ramdac.c BTramdac.c IBM561ramdac.c ICS1562.c
