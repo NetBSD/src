@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/03 08:10:31 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,6 @@ LDADD+= \
 	${LDADD.mi} \
 	${LDADD.config} \
 	-lXfont \
-	-lfreetype \
 	-lXau \
 	-lfontenc \
 	-lpixman-1 \
@@ -34,19 +33,42 @@ LDADD+= \
 	${LDADD.xkb} \
 	${LDADD.composite} \
 	${LDADD.dix/xpstubs} \
-	${LDADD.os}
+	${LDADD.os} \
+	-lXext \
+	-lX11 \
+	-lXau \
+	-lfreetype
 
-.if 0
-DPADD+=	${DPADD.dix} ${DPADD.os} ${LIBXAU} ${LIBXDMCP} ${DPADD.hw/xnest} \
-	${DPADD.Xext/exts} ${DPADD.xkb} ${DPADD.xinput} ${DPADD.lbx} \
-	${LIBLBXUTIL} ${DPADD.randr} ${DPADD.render} ${DPADD.dix/xpstubs} \
-	${DPADD.mi} ${DPADD.Xext/exts} ${DPADD.xkb} ${DPADD.xinput} \
-	${DPADD.lbx} ${LIBLBXUTIL} ${DPADD.randr} ${DPADD.render} \
-	${DPADD.hw/xnest} ${DPADD.Xext/ext} ${DPADD.dbe} ${DPADD.record} \
-	${DPADD.GL/glx} ${DPADD.GL/GLcore} ${DPADD.xtrap} ${LIBCWRAPPER} \
-	${LIBXFONT} ${LIBFREETYPE} ${DPADD.dix/xpstubs} \
-	${LIBXEXT} ${LIBX11} ${LIBZ} ${LIBM}
-.endif
+LDADD+= \
+	${DPADD.hw/xnest} \
+	${DPADD.XORG_CORE} \
+	${DPADD.mi} \
+	${DPADD.config} \
+	${LIBXFONT} \
+	${LIBXAU} \
+	${LIBFONTENC} \
+	${LIBPIXMAN-1} \
+	${LIBXDMCP} \
+	${DPADD.fb} \
+	${DPADD.xfixes} \
+	${DPADD.Xext/Xextbuiltin} \
+	${DPADD.dbe} \
+	${DPADD.XTrap} \
+	${DPADD.record} \
+	${DPADD.render} \
+	${DPADD.randr} \
+	${DPADD.damageext} \
+	${DPADD.miext/damage} \
+	${DPADD.miext/shadow} \
+	${DPADD.Xi} \
+	${DPADD.xkb} \
+	${DPADD.composite} \
+	${DPADD.dix/xpstubs} \
+	${DPADD.os} \
+	${LIBXEXT} \
+	${LIBX11} \
+	${LIBXAU} \
+	${LIBFREETYPE}
 
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
