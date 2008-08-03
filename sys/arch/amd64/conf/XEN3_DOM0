@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.21 2008/07/31 08:43:13 cegger Exp $
+# $NetBSD: XEN3_DOM0,v 1.22 2008/08/03 19:20:48 joerg Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -32,12 +32,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
