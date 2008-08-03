@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 19:27:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 11:56:27 rtr Exp $
+
+LIBISPRIVATE=	yes
 
 .include "../../Makefile.serverlib"
 .include "../Makefile.Xextmodule"
