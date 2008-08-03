@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xext,v 1.2 2008/08/03 03:14:48 mrg Exp $
+#	$NetBSD: Makefile.Xext,v 1.3 2008/08/03 08:09:33 mrg Exp $
 
 .include <bsd.x11.mk>
 
@@ -12,6 +12,7 @@ CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
 
 SRCS+=		EVI.c appgroup.c cup.c dpms.c panoramiX.c panoramiXSwap.c \
 		panoramiXprocs.c sampleEVI.c saver.c security.c shm.c \
+		fontcache.c \
 		xace.c xevie.c xf86bigfont.c xres.c xvdisp.c xvmain.c xvmc.c
 
 COPTS.xres.c=	-Wno-error
