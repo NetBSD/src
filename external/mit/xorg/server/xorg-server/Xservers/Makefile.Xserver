@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.1 2008/08/03 03:37:05 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.2 2008/08/03 03:55:37 mrg Exp $
 
 # XXX old list
 .if 0
@@ -53,3 +53,6 @@ LDADD.XORG_CORE=	${LDADD.dix} ${LDADD.config}
 DPADD.XORG_CORE=	${DPADD.dix} ${DPADD.config}
 
 LIBCWRAPPER=	${LIBDIR.os}/libc_wrapper.o
+
+LDADD+=		-lm
+DPADD+=		${LIBM}
