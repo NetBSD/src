@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.16 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.17 2008/08/03 16:09:20 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ int	opt_i;			/* Initialize volume header */
 int	opt_r;			/* Read a file from volume header */
 int	opt_w;			/* Write a file to volume header */
 int	opt_d;			/* Delete a file from volume header */
+int	opt_m;			/* Move (rename) a file in the volume header */
 int	opt_p;			/* Modify a partition */
 int	opt_q;			/* quiet mode */
 int	opt_f;			/* Don't ask, just do what you're told */
@@ -105,6 +106,7 @@ void	init_volhdr(void);
 void	read_file(void);
 void	write_file(void);
 void	delete_file(void);
+void	move_file(void);
 void	modify_partition(void);
 void	write_volhdr(void);
 int	allocate_space(int);
@@ -114,10 +116,12 @@ void	usage(void);
 int
 main(int argc, char *argv[])
 {
+#define RESET_OPTS()	opt_i = opt_m = opt_r = opt_w = opt_d = opt_p = 0
+
 	int ch;
-	while ((ch = getopt(argc, argv, "irwpdqfh:")) != -1) {
+	while ((ch = getopt(argc, argv, "qfih:rwdmp?")) != -1) {
 		switch (ch) {
-		/* -i, -r, -w, -d and -p override each other */
+		/* -i, -r, -w, -d, -m and -p override each other */
 		/* -q implies -f */
 		case 'q':
 			++opt_q;
@@ -127,27 +131,31 @@ main(int argc, char *argv[])
 			++opt_f;
 			break;
 		case 'i':
+			RESET_OPTS();
 			++opt_i;
-			opt_r = opt_w = opt_d = opt_p = 0;
 			break;
 		case 'h':
 			volhdr_size = atoi(optarg);
 			break;
 		case 'r':
+			RESET_OPTS();
 			++opt_r;
-			opt_i = opt_w = opt_d = opt_p = 0;
 			break;
 		case 'w':
+			RESET_OPTS();
 			++opt_w;
-			opt_i = opt_r = opt_d = opt_p = 0;
 			break;
 		case 'd':
+			RESET_OPTS();
 			++opt_d;
-			opt_i = opt_r = opt_w = opt_p = 0;
+			break;
+		case 'm':
+			RESET_OPTS();
+			++opt_m;
 			break;
 		case 'p':
+			RESET_OPTS();
 			++opt_p;
-			opt_i = opt_r = opt_w = opt_d = 0;
 			partno = atoi(argv[0]);
 			partfirst = atoi(argv[1]);
 			partblocks = atoi(argv[2]);
@@ -161,7 +169,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (opt_r || opt_w) {
+	if (opt_m || opt_r || opt_w) {
 		if (argc != 3)
 			usage();
 		vfilename = argv[0];
@@ -190,7 +198,8 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 	
-	fd = open(argv[0], (opt_i | opt_w | opt_d | opt_p) ? O_RDWR : O_RDONLY);
+	fd = open(argv[0],
+	    (opt_i | opt_m | opt_w | opt_d | opt_p) ? O_RDWR : O_RDONLY);
 	if (fd < 0) {
 #if HAVE_NBTOOL_CONFIG_H
 		perror("File open");
@@ -257,6 +266,10 @@ main(int argc, char *argv[])
 		delete_file();
 		exit(0);
 	}
+	if (opt_m) {
+		move_file();
+		exit(0);
+	}
 	if (opt_p) {
 		modify_partition();
 		exit(0);
@@ -290,7 +303,7 @@ display_vol(void)
 	printf("bootfile: %s\n", volhdr->bootfile);
 	/* volhdr->devparams[0..47] */
 	printf("\nVolume header files:\n");
-	for (i = 0; i < 15; ++i)
+	for (i = 0; i < SGI_BOOT_BLOCK_MAXVOLDIRS; ++i)
 		if (volhdr->voldir[i].name[0])
 			printf("%-8s offset %4d blocks, length %8d bytes "
 			    "(%d blocks)\n",
@@ -375,13 +388,13 @@ read_file(void)
 
 	if (!opt_q)
 		printf("Reading file %s\n", vfilename);
-	for (i = 0; i < 15; ++i) {
+	for (i = 0; i < SGI_BOOT_BLOCK_MAXVOLDIRS; ++i) {
 		if (strncmp(vfilename, volhdr->voldir[i].name,
 			    strlen(volhdr->voldir[i].name)) == 0)
 			break;
 	}
-	if (i >= 15) {
-		printf("file %s not found\n", vfilename);
+	if (i >= SGI_BOOT_BLOCK_MAXVOLDIRS) {
+		printf("File '%s' not found\n", vfilename);
 		exit(1);
 	}
 	/* XXX assumes volume header starts at 0? */
@@ -422,7 +435,7 @@ write_file(void)
 	if (!opt_q)
 		printf("File %s has %lld bytes\n", ufilename, st.st_size);
 	slot = -1;
-	for (i = 0; i < 15; ++i) {
+	for (i = 0; i < SGI_BOOT_BLOCK_MAXVOLDIRS; ++i) {
 		if (volhdr->voldir[i].name[0] == '\0' && slot < 0)
 			slot = i;
 		if (strcmp(vfilename, volhdr->voldir[i].name) == 0) {
@@ -462,7 +475,7 @@ write_file(void)
 		printf("Warning: '%s' is too long for volume header, ",
 		       vfilename);
 		namelen = sizeof(volhdr->voldir[slot].name);
-		printf("truncating to '%-8s'\n", vfilename);
+		printf("truncating to '%.8s'\n", vfilename);
 	}
 
 	/* Populate it w/ NULs */
@@ -499,13 +512,13 @@ delete_file(void)
 {
 	int i;
 
-	for (i = 0; i < 15; ++i) {
+	for (i = 0; i < SGI_BOOT_BLOCK_MAXVOLDIRS; ++i) {
 		if (strcmp(vfilename, volhdr->voldir[i].name) == 0) {
 			break;
 		}
 	}
-	if (i >= 15) {
-		printf("File %s not found\n", vfilename);
+	if (i >= SGI_BOOT_BLOCK_MAXVOLDIRS) {
+		printf("File '%s' not found\n", vfilename);
 		exit(1);
 	}
 
@@ -516,12 +529,62 @@ delete_file(void)
 }
 
 void
+move_file(void)
+{
+	char dstfile[sizeof(volhdr->voldir[0].name) + 1];
+	size_t namelen;
+	int i, slot = -1;
+
+	/*
+	 * Make sure the name in the volume header is max. 8 chars,
+	 * NOT including NUL.
+	 */
+	namelen = strlen(ufilename);
+	if (namelen > sizeof(volhdr->voldir[0].name)) {
+		printf("Warning: '%s' is too long for volume header, ",
+		       ufilename);
+		namelen = sizeof(volhdr->voldir[0].name);
+		printf("truncating to '%.8s'\n", ufilename);
+	}
+	memset(dstfile, 0, sizeof(dstfile));
+	memcpy(dstfile, ufilename, namelen);
+
+	for (i = 0; i < SGI_BOOT_BLOCK_MAXVOLDIRS; i++) {
+		if (strcmp(vfilename, volhdr->voldir[i].name) == 0) {
+			if (slot != -1) {
+				printf("Error: Cannot move '%s' to '%s' - "
+				    "duplicate source files exist!\n",
+				    vfilename, dstfile);
+				exit(1);
+			}
+			slot = i;
+		}
+		if (strcmp(dstfile, volhdr->voldir[i].name) == 0) {
+			printf("Error: Cannot move '%s' to '%s' - "
+			    "destination file already exists!\n",
+			    vfilename, dstfile);
+			exit(1);
+		}
+	}
+	if (slot == -1) {
+		printf("File '%s' not found\n", vfilename);
+		exit(1);
+	}
+
+	/* `dstfile' is already padded with NULs */ 
+	memcpy(volhdr->voldir[slot].name, dstfile,
+	    sizeof(volhdr->voldir[slot].name));
+	
+	write_volhdr();
+}
+
+void
 modify_partition(void)
 {
 	if (!opt_q)
 		printf("Modify partition %d start %d length %d\n", 
 			partno, partfirst, partblocks);
-	if (partno < 0 || partno > 15) {
+	if (partno < 0 || partno >= SGI_BOOT_BLOCK_MAXPARTITIONS) {
 		printf("Invalid partition number: %d\n", partno);
 		exit(1);
 	}
@@ -565,7 +628,7 @@ allocate_space(int size)
 	blocks = (size + 511) / 512;
 	first = 2;
 	n = 0;
-	while (n < 15) {
+	while (n < SGI_BOOT_BLOCK_MAXVOLDIRS) {
 		if (volhdr->voldir[n].name[0]) {
 			if (first < (be32toh(volhdr->voldir[n].block) +
 			  (be32toh(volhdr->voldir[n].bytes) + 511) / 512) &&
