@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2008/08/02 21:44:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2008/08/03 01:13:44 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -42,7 +42,7 @@ SUBDIR.iplan=
 
 SUBDIR=		doc include .WAIT
 SUBDIR+=	dix ${SUBDIR.fb} mi Xext ${SUBDIR.miext} os randr render 
-SUBDIR+=	Xi xkb dbe mfb ${SUBDIR.afb} {SUBDIR.cfb} record xfixes
+SUBDIR+=	Xi xkb dbe mfb ${SUBDIR.afb} ${SUBDIR.cfb} record xfixes
 SUBDIR+=	damageext XTrap composite exa config # hw
 
 .PATH:	${X11SRCDIR.xorg-server}
