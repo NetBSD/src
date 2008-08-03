@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/04/13 21:25:14 mlelstv Exp $
+# $NetBSD: Makefile,v 1.3 2008/08/03 07:16:58 veego Exp $
 
 USE_FORT?= yes	# cryptographic software
 
@@ -146,22 +146,23 @@ COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
 .endif
 
-${gen_files_ocsp} ocsp_asn1.h: ocsp_asn1_files
-${gen_files_pkcs10} pkcs10_asn1.h: pkcs10_asn1_files
-${gen_files_crmf} crmf_asn1.h: crmf_asn1_files
-
-${SRCS}: ocsp_asn1.h pkcs10_asn1.h crmf_asn1.h hx509_err.h
+${gen_files_ocsp} ocsp_asn1.hx: ocsp_asn1_files
+${gen_files_pkcs10} pkcs10_asn1.hx: pkcs10_asn1_files
+${gen_files_crmf} crmf_asn1.hx: crmf_asn1_files
 
 CLEANFILES=	${gen_files_ocsp} ${gen_files_pkcs10} ${gen_files_crmf} \
 		${BUILT_SOURCES} \
-		ocsp_asn1_files ocsp_asn1.h \
-		pkcs10_asn1_files pkcs10_asn1.h \
-		crmf_asn1_files crmf_asn1.h \
+		ocsp_asn1_files ocsp_asn1.h ocsp_asn1.hx \
+		pkcs10_asn1_files pkcs10_asn1.h pkcs10_asn1.hx \
+		crmf_asn1_files crmf_asn1.h crmf_asn1.hx \
 		hx509_err.h
 
 .include <bsd.lib.mk>
 
-.SUFFIXES: .x
+.SUFFIXES: .hx .x
+
+.hx.h:
+	@cmp -s $< $@ 2> /dev/null || cp $< $@
 
 .x.c:
 	@cmp -s $< $@ 2> /dev/null || cp $< $@

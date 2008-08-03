@@ -34,7 +34,7 @@
 #include "gen_locl.h"
 
 __RCSID("$Heimdal: gen.c 22429 2008-01-13 10:25:50Z lha $"
-        "$NetBSD: gen.c,v 1.9 2008/03/22 08:37:04 mlelstv Exp $");
+        "$NetBSD: gen.c,v 1.10 2008/08/03 07:16:58 veego Exp $");
 
 FILE *headerfile, *codefile, *logfile;
 
@@ -84,7 +84,7 @@ init_generate (const char *filename, const char *base)
 	if (headerbase == NULL)
 	    errx(1, "strdup");
     }
-    asprintf(&header, "%s.h", headerbase);
+    asprintf(&header, "%s.hx", headerbase);
     if (header == NULL)
 	errx(1, "malloc");
     headerfile = fopen (header, "w");
