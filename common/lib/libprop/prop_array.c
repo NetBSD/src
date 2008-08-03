@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.18 2008/05/24 14:32:48 yamt Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.19 2008/08/03 04:00:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -53,18 +53,22 @@ _PROP_POOL_INIT(_prop_array_pool, sizeof(struct _prop_array), "proparay")
 _PROP_MALLOC_DEFINE(M_PROP_ARRAY, "prop array",
 		    "property array container object")
 
-static int		_prop_array_free(prop_stack_t, prop_object_t *);
-static void		_prop_array_emergency_free(prop_object_t);
+static _prop_object_free_rv_t
+		_prop_array_free(prop_stack_t, prop_object_t *);
+static void	_prop_array_emergency_free(prop_object_t);
 static bool	_prop_array_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_array_equals(prop_object_t, prop_object_t,
+static _prop_object_equals_rv_t
+		_prop_array_equals(prop_object_t, prop_object_t,
 				   void **, void **,
 				   prop_object_t *, prop_object_t *);
 static void	_prop_array_equals_finish(prop_object_t, prop_object_t);
-static prop_object_iterator_t _prop_array_iterator_locked(prop_array_t);
-static prop_object_t _prop_array_iterator_next_object_locked(void *);
-static void _prop_array_iterator_reset_locked(void *);
+static prop_object_iterator_t
+		_prop_array_iterator_locked(prop_array_t);
+static prop_object_t
+		_prop_array_iterator_next_object_locked(void *);
+static void	_prop_array_iterator_reset_locked(void *);
 
 static const struct _prop_object_type _prop_object_type_array = {
 	.pot_type		=	PROP_TYPE_ARRAY,
@@ -87,7 +91,7 @@ struct _prop_array_iterator {
 
 #define	EXPAND_STEP		16
 
-static int
+static _prop_object_free_rv_t
 _prop_array_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_array_t pa = *obj;
@@ -195,7 +199,7 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 }
 
 /* ARGSUSED */
-static bool
+static _prop_object_equals_rv_t
 _prop_array_equals(prop_object_t v1, prop_object_t v2,
     void **stored_pointer1, void **stored_pointer2,
     prop_object_t *next_obj1, prop_object_t *next_obj2)
@@ -203,7 +207,7 @@ _prop_array_equals(prop_object_t v1, prop_object_t v2,
 	prop_array_t array1 = v1;
 	prop_array_t array2 = v2;
 	uintptr_t idx;
-	bool rv = _PROP_OBJECT_EQUALS_FALSE;
+	_prop_object_equals_rv_t rv = _PROP_OBJECT_EQUALS_FALSE;
 
 	if (array1 == array2)
 		return (_PROP_OBJECT_EQUALS_TRUE);
@@ -225,7 +229,7 @@ _prop_array_equals(prop_object_t v1, prop_object_t v2,
 	if (array1->pa_count != array2->pa_count)
 		goto out;
 	if (idx == array1->pa_count) {
-		rv = true;
+		rv = _PROP_OBJECT_EQUALS_TRUE;
 		goto out;
 	}
 	_PROP_ASSERT(idx < array1->pa_count);

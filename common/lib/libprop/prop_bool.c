@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.15 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.16 2008/08/03 04:00:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -43,11 +43,13 @@ static struct _prop_bool _prop_bool_false;
 _PROP_MUTEX_DECL_STATIC(_prop_bool_initialized_mutex)
 static bool	_prop_bool_initialized;
 
-static int		_prop_bool_free(prop_stack_t, prop_object_t *);
+static _prop_object_free_rv_t
+		_prop_bool_free(prop_stack_t, prop_object_t *);
 static bool	_prop_bool_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_bool_equals(prop_object_t, prop_object_t,
+static _prop_object_equals_rv_t
+		_prop_bool_equals(prop_object_t, prop_object_t,
 				  void **, void **,
 				  prop_object_t *, prop_object_t *);
 
@@ -62,7 +64,7 @@ static const struct _prop_object_type _prop_object_type_bool = {
 	((x) != NULL && (x)->pb_obj.po_type == &_prop_object_type_bool)
 
 /* ARGSUSED */
-static int
+static _prop_object_free_rv_t
 _prop_bool_free(prop_stack_t stack, prop_object_t *obj)
 {
 	/*
@@ -85,7 +87,7 @@ _prop_bool_externalize(struct _prop_object_externalize_context *ctx,
 }
 
 /* ARGSUSED */
-static bool
+static _prop_object_equals_rv_t
 _prop_bool_equals(prop_object_t v1, prop_object_t v2,
     void **stored_pointer1, void **stored_pointer2,
     prop_object_t *next_obj1, prop_object_t *next_obj2)
