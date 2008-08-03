@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.damage,v 1.1 2008/08/02 04:32:00 mrg Exp $
+#	$NetBSD: Makefile.damage,v 1.2 2008/08/03 03:17:16 mrg Exp $
 
 LIB=	damage
 .PATH:	${X11SRCDIR.xorg-server}/miext/${LIB}
@@ -9,6 +9,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support
 
 CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION} \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${X11SRCDIR.xorg-server}/miext/cw \
 		${X11FLAGS.DIX} ${X11INCS.DIX}
 

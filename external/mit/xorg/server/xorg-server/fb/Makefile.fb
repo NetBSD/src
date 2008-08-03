@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.fb,v 1.1 2008/08/02 04:32:00 mrg Exp $
+#	$NetBSD: Makefile.fb,v 1.2 2008/08/03 03:17:16 mrg Exp $
 
 LIB=		fb
 
@@ -16,7 +16,8 @@ CPPFLAGS+=	${X11FLAGS.DIX} ${X11INCS.DIX}
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
-		-I${DESTDIR}${X11INCDIR}/pixman-1
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${DESTDIR}${X11INCDIR}/xorg
 
 CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT} \
 		-DHAVE_DIX_CONFIG_H
