@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 03:37:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:08 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,10 +8,13 @@ PROG=	Xnest
 
 .include "../Makefile.Xserver"
 
-LDADD+=	${LDADD.XORG_CORE} \
+LDADD+= \
+	${LDADD.hw/xnest} \
+	${LDADD.XORG_CORE} \
 	${LDADD.mi} \
 	${LDADD.config} \
 	-lXfont \
+	-lfreetype \
 	-lXau \
 	-lfontenc \
 	-lpixman-1 \
@@ -31,8 +34,7 @@ LDADD+=	${LDADD.XORG_CORE} \
 	${LDADD.xkb} \
 	${LDADD.composite} \
 	${LDADD.dix/xpstubs} \
-	${LDADD.os} \
-	${LDADD.hw/xnest} \
+	${LDADD.os}
 
 .if 0
 DPADD+=	${DPADD.dix} ${DPADD.os} ${LIBXAU} ${LIBXDMCP} ${DPADD.hw/xnest} \
