@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:20:59 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-intel
+DRIVER=		xf86-video-intel
 DRIVER_NAME=	intel_drv
 
 SRCS=		i810_accel.c i810_cursor.c i810_dga.c i810_driver.c

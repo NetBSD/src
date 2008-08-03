@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-sis
+DRIVER=		xf86-video-sis
 DRIVER_NAME=	sis_drv
 
 SRCS=		init301.c init.c initextx.c  sis300_accel.c

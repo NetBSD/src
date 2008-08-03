@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:20:59 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:03 rtr Exp $
 
-DRIVER=		xf86-input-chips
+DRIVER=		xf86-video-chips
 DRIVER_NAME=	chips_drv
 
 SRCS=		ct_accel.c ct_bank.c ct_cursor.c ct_ddc.c ct_dga.c
