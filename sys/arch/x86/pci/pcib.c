@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.5 2008/07/20 16:50:29 martin Exp $	*/
+/*	$NetBSD: pcib.c,v 1.6 2008/08/03 19:32:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.5 2008/07/20 16:50:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.6 2008/08/03 19:32:03 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,11 +162,13 @@ pcibmatch(device_t parent, struct cfdata *match, void *aux)
 	case PCI_VENDOR_CYRIX:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_CYRIX_CX5530_PCIB:
+#if !defined(XEN)
 			{
 				extern int clock_broken_latch;
 
 				clock_broken_latch = 0;
 			}
+#endif
 			return(1);
 		}
 		break;
