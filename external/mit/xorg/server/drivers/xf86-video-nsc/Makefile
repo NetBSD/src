@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/03 09:24:14 rtr Exp $
 
 DRIVER=		xf86-video-nsc
 DRIVER_NAME=	nsc_drv
@@ -9,5 +9,8 @@ SRCS+=		nsc_gx1_shadow.c nsc_gx1_video.c nsc_gx2_accel.c
 SRCS+=		nsc_gx2_cursor.c nsc_gx2_dga.c nsc_gx2_driver.c
 SRCS+=		nsc_gx2_shadow.c nsc_gx2_video.c panel.c
 MAN=		nsc.4
+
+CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src/gfx
+CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src/panel
 
 .include "../Makefile.xf86-driver"
