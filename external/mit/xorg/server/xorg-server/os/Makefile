@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/03 07:31:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/03 08:09:52 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -23,6 +23,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 
 CPPFLAGS+=	${X11FLAGS.DIX} \
 		${X11FLAGS.CONNECTION} \
+		${X11FLAGS.EXTENSION} \
 		-DHASXDMAUTH \
 		${X11FLAGS.OS_DEFINES} \
 		-DUSE_RGB_TXT \
