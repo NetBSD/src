@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.26 2008/05/24 14:24:04 yamt Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.27 2008/08/03 04:00:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -47,32 +47,32 @@ struct _prop_object_externalize_context {
 	unsigned int	poec_depth;		/* nesting depth */
 };
 
-bool	_prop_object_externalize_start_tag(
+bool		_prop_object_externalize_start_tag(
 				struct _prop_object_externalize_context *,
 				const char *);
-bool	_prop_object_externalize_end_tag(
+bool		_prop_object_externalize_end_tag(
 				struct _prop_object_externalize_context *,
 				const char *);
-bool	_prop_object_externalize_empty_tag(
+bool		_prop_object_externalize_empty_tag(
 				struct _prop_object_externalize_context *,
 				const char *);
-bool	_prop_object_externalize_append_cstring(
+bool		_prop_object_externalize_append_cstring(
 				struct _prop_object_externalize_context *,
 				const char *);
-bool	_prop_object_externalize_append_encoded_cstring(
+bool		_prop_object_externalize_append_encoded_cstring(
 				struct _prop_object_externalize_context *,
 				const char *);
-bool	_prop_object_externalize_append_char(
+bool		_prop_object_externalize_append_char(
 				struct _prop_object_externalize_context *,
 				unsigned char);
-bool	_prop_object_externalize_header(
+bool		_prop_object_externalize_header(
 				struct _prop_object_externalize_context *);
-bool	_prop_object_externalize_footer(
+bool		_prop_object_externalize_footer(
 				struct _prop_object_externalize_context *);
 
 struct _prop_object_externalize_context *
-		_prop_object_externalize_context_alloc(void);
-void		_prop_object_externalize_context_free(
+	_prop_object_externalize_context_alloc(void);
+void	_prop_object_externalize_context_free(
 				struct _prop_object_externalize_context *);
 
 typedef enum {
@@ -98,17 +98,17 @@ struct _prop_object_internalize_context {
 	_prop_tag_type_t poic_tag_type;
 };
 
-enum {
+typedef enum {
 	_PROP_OBJECT_FREE_DONE,
 	_PROP_OBJECT_FREE_RECURSE,
 	_PROP_OBJECT_FREE_FAILED
-};
+} _prop_object_free_rv_t;
 
-enum {
+typedef enum {
 	_PROP_OBJECT_EQUALS_FALSE,
 	_PROP_OBJECT_EQUALS_TRUE,
 	_PROP_OBJECT_EQUALS_RECURSE
-};
+} _prop_object_equals_rv_t;
 
 #define	_PROP_EOF(c)		((c) == '\0')
 #define	_PROP_ISSPACE(c)	\
@@ -130,14 +130,14 @@ enum {
 				       (ctx)->poic_tagattrval_len,\
 				       (a), strlen(a))
 
-bool	_prop_object_internalize_find_tag(
+bool		_prop_object_internalize_find_tag(
 				struct _prop_object_internalize_context *,
 				const char *, _prop_tag_type_t);
-bool	_prop_object_internalize_match(const char *, size_t,
+bool		_prop_object_internalize_match(const char *, size_t,
 					       const char *, size_t);
 prop_object_t	_prop_object_internalize_by_tag(
 				struct _prop_object_internalize_context *);
-bool	_prop_object_internalize_decode_string(
+bool		_prop_object_internalize_decode_string(
 				struct _prop_object_internalize_context *,
 				char *, size_t, size_t *, const char **);
 prop_object_t	_prop_generic_internalize(const char *, const char *);
@@ -148,7 +148,7 @@ void		_prop_object_internalize_context_free(
 				struct _prop_object_internalize_context *);
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
-bool	_prop_object_externalize_write_file(const char *,
+bool		_prop_object_externalize_write_file(const char *,
 						    const char *, size_t);
 
 struct _prop_object_internalize_mapped_file {
@@ -162,30 +162,33 @@ void		_prop_object_internalize_unmap_file(
 				struct _prop_object_internalize_mapped_file *);
 #endif /* !_KERNEL && !_STANDALONE */
 
-typedef bool (*prop_object_internalizer_t)(prop_stack_t, prop_object_t *, 
-    struct _prop_object_internalize_context *);
-typedef bool (*prop_object_internalizer_continue_t)(prop_stack_t, prop_object_t *, 
-    struct _prop_object_internalize_context *, void *, prop_object_t);
+typedef bool (*prop_object_internalizer_t)(prop_stack_t, prop_object_t *,
+				struct _prop_object_internalize_context *);
+typedef bool (*prop_object_internalizer_continue_t)(prop_stack_t,
+				prop_object_t *,
+				struct _prop_object_internalize_context *,
+				void *, prop_object_t);
 
 	/* These are here because they're required by shared code. */
-bool	_prop_array_internalize(prop_stack_t, prop_object_t *,
-    struct _prop_object_internalize_context *);
-bool	_prop_bool_internalize(prop_stack_t, prop_object_t *,
-    struct _prop_object_internalize_context *);
-bool	_prop_data_internalize(prop_stack_t, prop_object_t *,
-    struct _prop_object_internalize_context *);
-bool	_prop_dictionary_internalize(prop_stack_t, prop_object_t *,
-    struct _prop_object_internalize_context *);
-bool	_prop_number_internalize(prop_stack_t, prop_object_t *,
-    struct _prop_object_internalize_context *);
-bool	_prop_string_internalize(prop_stack_t, prop_object_t *,
-    struct _prop_object_internalize_context *);
+bool		_prop_array_internalize(prop_stack_t, prop_object_t *,
+				struct _prop_object_internalize_context *);
+bool		_prop_bool_internalize(prop_stack_t, prop_object_t *,
+				struct _prop_object_internalize_context *);
+bool		_prop_data_internalize(prop_stack_t, prop_object_t *,
+				struct _prop_object_internalize_context *);
+bool		_prop_dictionary_internalize(prop_stack_t, prop_object_t *,
+				struct _prop_object_internalize_context *);
+bool		_prop_number_internalize(prop_stack_t, prop_object_t *,
+				struct _prop_object_internalize_context *);
+bool		_prop_string_internalize(prop_stack_t, prop_object_t *,
+				struct _prop_object_internalize_context *);
 
 struct _prop_object_type {
 	/* type indicator */
 	uint32_t	pot_type;
 	/* func to free object */
-	int		(*pot_free)(prop_stack_t, prop_object_t *);
+	_prop_object_free_rv_t
+			(*pot_free)(prop_stack_t, prop_object_t *);
 	/*
 	 * func to free the child returned by pot_free with stack == NULL.
 	 *
@@ -197,7 +200,8 @@ struct _prop_object_type {
 	bool	(*pot_extern)(struct _prop_object_externalize_context *,
 			      void *);
 	/* func to test quality */
-	bool	(*pot_equals)(prop_object_t, prop_object_t,
+	_prop_object_equals_rv_t
+		(*pot_equals)(prop_object_t, prop_object_t,
 			      void **, void **,
 			      prop_object_t *, prop_object_t *);
 	/*
@@ -214,9 +218,9 @@ struct _prop_object {
 	uint32_t	po_refcnt;		/* reference count */
 };
 
-void	_prop_object_init(struct _prop_object *,
-			  const struct _prop_object_type *);
-void	_prop_object_fini(struct _prop_object *);
+void		_prop_object_init(struct _prop_object *,
+				  const struct _prop_object_type *);
+void		_prop_object_fini(struct _prop_object *);
 
 struct _prop_object_iterator {
 	prop_object_t	(*pi_next_object)(void *);
@@ -238,15 +242,15 @@ struct _prop_object_iterator {
 #include <sys/simplelock.h>
 #include <sys/rwlock.h>
 
-#define	_PROP_ASSERT(x)		KASSERT(x)
+#define	_PROP_ASSERT(x)			KASSERT(x)
 
-#define	_PROP_MALLOC(s, t)	malloc((s), (t), M_WAITOK)
-#define	_PROP_CALLOC(s, t)	malloc((s), (t), M_WAITOK | M_ZERO)
-#define	_PROP_REALLOC(v, s, t)	realloc((v), (s), (t), M_WAITOK)
-#define	_PROP_FREE(v, t)	free((v), (t))
+#define	_PROP_MALLOC(s, t)		malloc((s), (t), M_WAITOK)
+#define	_PROP_CALLOC(s, t)		malloc((s), (t), M_WAITOK | M_ZERO)
+#define	_PROP_REALLOC(v, s, t)		realloc((v), (s), (t), M_WAITOK)
+#define	_PROP_FREE(v, t)		free((v), (t))
 
-#define	_PROP_POOL_GET(p)	pool_get(&(p), PR_WAITOK)
-#define	_PROP_POOL_PUT(p, v)	pool_put(&(p), (v))
+#define	_PROP_POOL_GET(p)		pool_get(&(p), PR_WAITOK)
+#define	_PROP_POOL_PUT(p, v)		pool_put(&(p), (v))
 
 #define	_PROP_POOL_INIT(p, s, d)					\
 		POOL_INIT(p, s, 0, 0, 0, d, &pool_allocator_nointr, IPL_NONE);
@@ -256,15 +260,15 @@ struct _prop_object_iterator {
 
 #define	_PROP_MUTEX_DECL_STATIC(x)					\
 		static struct simplelock x = SIMPLELOCK_INITIALIZER;
-#define	_PROP_MUTEX_LOCK(x)	simple_lock(&(x))
-#define	_PROP_MUTEX_UNLOCK(x)	simple_unlock(&(x))
+#define	_PROP_MUTEX_LOCK(x)		simple_lock(&(x))
+#define	_PROP_MUTEX_UNLOCK(x)		simple_unlock(&(x))
 
-#define	_PROP_RWLOCK_DECL(x)	krwlock_t x ;
-#define	_PROP_RWLOCK_INIT(x)	rw_init(&(x))
-#define	_PROP_RWLOCK_RDLOCK(x)	rw_enter(&(x), RW_READER)
-#define	_PROP_RWLOCK_WRLOCK(x)	rw_enter(&(x), RW_WRITER)
-#define	_PROP_RWLOCK_UNLOCK(x)	rw_exit(&(x))
-#define	_PROP_RWLOCK_DESTROY(x)	rw_destroy(&(x))
+#define	_PROP_RWLOCK_DECL(x)		krwlock_t x ;
+#define	_PROP_RWLOCK_INIT(x)		rw_init(&(x))
+#define	_PROP_RWLOCK_RDLOCK(x)		rw_enter(&(x), RW_READER)
+#define	_PROP_RWLOCK_WRLOCK(x)		rw_enter(&(x), RW_WRITER)
+#define	_PROP_RWLOCK_UNLOCK(x)		rw_exit(&(x))
+#define	_PROP_RWLOCK_DESTROY(x)		rw_destroy(&(x))
 
 #elif defined(_STANDALONE)
 
@@ -277,15 +281,15 @@ struct _prop_object_iterator {
 void *		_prop_standalone_calloc(size_t);
 void *		_prop_standalone_realloc(void *, size_t);
 
-#define	_PROP_ASSERT(x)		/* nothing */
+#define	_PROP_ASSERT(x)			/* nothing */
 
-#define	_PROP_MALLOC(s, t)	alloc((s))
-#define	_PROP_CALLOC(s, t)	_prop_standalone_calloc((s))
-#define	_PROP_REALLOC(v, s, t)	_prop_standalone_realloc((v), (s))
-#define	_PROP_FREE(v, t)	dealloc((v), 0)		/* XXX */
+#define	_PROP_MALLOC(s, t)		alloc((s))
+#define	_PROP_CALLOC(s, t)		_prop_standalone_calloc((s))
+#define	_PROP_REALLOC(v, s, t)		_prop_standalone_realloc((v), (s))
+#define	_PROP_FREE(v, t)		dealloc((v), 0)		/* XXX */
 
-#define	_PROP_POOL_GET(p)	alloc((p))
-#define	_PROP_POOL_PUT(p, v)	dealloc((v), (p))
+#define	_PROP_POOL_GET(p)		alloc((p))
+#define	_PROP_POOL_PUT(p, v)		dealloc((v), (p))
 
 #define	_PROP_POOL_INIT(p, s, d)	static const size_t p = s;
 
@@ -295,12 +299,12 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_MUTEX_LOCK(x)		/* nothing */
 #define	_PROP_MUTEX_UNLOCK(x)		/* nothing */
 
-#define	_PROP_RWLOCK_DECL(x)	/* nothing */
-#define	_PROP_RWLOCK_INIT(x)	/* nothing */
-#define	_PROP_RWLOCK_RDLOCK(x)	/* nothing */
-#define	_PROP_RWLOCK_WRLOCK(x)	/* nothing */
-#define	_PROP_RWLOCK_UNLOCK(x)	/* nothing */
-#define	_PROP_RWLOCK_DESTROY(x)	/* nothing */
+#define	_PROP_RWLOCK_DECL(x)		/* nothing */
+#define	_PROP_RWLOCK_INIT(x)		/* nothing */
+#define	_PROP_RWLOCK_RDLOCK(x)		/* nothing */
+#define	_PROP_RWLOCK_WRLOCK(x)		/* nothing */
+#define	_PROP_RWLOCK_UNLOCK(x)		/* nothing */
+#define	_PROP_RWLOCK_DESTROY(x)		/* nothing */
 
 #else
 
@@ -314,15 +318,15 @@ void *		_prop_standalone_realloc(void *, size_t);
 #include <stdlib.h>
 #include <stddef.h>
 
-#define	_PROP_ASSERT(x)		/*LINTED*/assert(x)
+#define	_PROP_ASSERT(x)			/*LINTED*/assert(x)
 
-#define	_PROP_MALLOC(s, t)	malloc((s))
-#define	_PROP_CALLOC(s, t)	calloc(1, (s))
-#define	_PROP_REALLOC(v, s, t)	realloc((v), (s))
-#define	_PROP_FREE(v, t)	free((v))
+#define	_PROP_MALLOC(s, t)		malloc((s))
+#define	_PROP_CALLOC(s, t)		calloc(1, (s))
+#define	_PROP_REALLOC(v, s, t)		realloc((v), (s))
+#define	_PROP_FREE(v, t)		free((v))
 
-#define	_PROP_POOL_GET(p)	malloc((p))
-#define	_PROP_POOL_PUT(p, v)	free((v))
+#define	_PROP_POOL_GET(p)		malloc((p))
+#define	_PROP_POOL_PUT(p, v)		free((v))
 
 #define	_PROP_POOL_INIT(p, s, d)	static const size_t p = s;
 
@@ -338,12 +342,12 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_MUTEX_LOCK(x)		mutex_lock(&(x))
 #define	_PROP_MUTEX_UNLOCK(x)		mutex_unlock(&(x))
 
-#define	_PROP_RWLOCK_DECL(x)	rwlock_t x ;
-#define	_PROP_RWLOCK_INIT(x)	rwlock_init(&(x), NULL)
-#define	_PROP_RWLOCK_RDLOCK(x)	rwlock_rdlock(&(x))
-#define	_PROP_RWLOCK_WRLOCK(x)	rwlock_wrlock(&(x))
-#define	_PROP_RWLOCK_UNLOCK(x)	rwlock_unlock(&(x))
-#define	_PROP_RWLOCK_DESTROY(x)	rwlock_destroy(&(x))
+#define	_PROP_RWLOCK_DECL(x)		rwlock_t x ;
+#define	_PROP_RWLOCK_INIT(x)		rwlock_init(&(x), NULL)
+#define	_PROP_RWLOCK_RDLOCK(x)		rwlock_rdlock(&(x))
+#define	_PROP_RWLOCK_WRLOCK(x)		rwlock_wrlock(&(x))
+#define	_PROP_RWLOCK_UNLOCK(x)		rwlock_unlock(&(x))
+#define	_PROP_RWLOCK_DESTROY(x)		rwlock_destroy(&(x))
 #elif defined(HAVE_NBTOOL_CONFIG_H)
 /*
  * None of NetBSD's build tools are multi-threaded.
@@ -352,12 +356,12 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_MUTEX_LOCK(x)		/* nothing */
 #define	_PROP_MUTEX_UNLOCK(x)		/* nothing */
 
-#define	_PROP_RWLOCK_DECL(x)	/* nothing */
-#define	_PROP_RWLOCK_INIT(x)	/* nothing */
-#define	_PROP_RWLOCK_RDLOCK(x)	/* nothing */
-#define	_PROP_RWLOCK_WRLOCK(x)	/* nothing */
-#define	_PROP_RWLOCK_UNLOCK(x)	/* nothing */
-#define	_PROP_RWLOCK_DESTROY(x)	/* nothing */
+#define	_PROP_RWLOCK_DECL(x)		/* nothing */
+#define	_PROP_RWLOCK_INIT(x)		/* nothing */
+#define	_PROP_RWLOCK_RDLOCK(x)		/* nothing */
+#define	_PROP_RWLOCK_WRLOCK(x)		/* nothing */
+#define	_PROP_RWLOCK_UNLOCK(x)		/* nothing */
+#define	_PROP_RWLOCK_DESTROY(x)		/* nothing */
 #else
 /*
  * Use pthread mutexes everywhere else.
@@ -365,15 +369,15 @@ void *		_prop_standalone_realloc(void *, size_t);
 #include <pthread.h>
 #define	_PROP_MUTEX_DECL_STATIC(x)					\
 		static pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
-#define	_PROP_MUTEX_LOCK(x)	pthread_mutex_lock(&(x))
-#define	_PROP_MUTEX_UNLOCK(x)	pthread_mutex_unlock(&(x))
+#define	_PROP_MUTEX_LOCK(x)		pthread_mutex_lock(&(x))
+#define	_PROP_MUTEX_UNLOCK(x)		pthread_mutex_unlock(&(x))
 
-#define	_PROP_RWLOCK_DECL(x)	pthread_rwlock_t x ;
-#define	_PROP_RWLOCK_INIT(x)	pthread_rwlock_init(&(x), NULL)
-#define	_PROP_RWLOCK_RDLOCK(x)	pthread_rwlock_rdlock(&(x))
-#define	_PROP_RWLOCK_WRLOCK(x)	pthread_rwlock_wrlock(&(x))
-#define	_PROP_RWLOCK_UNLOCK(x)	pthread_rwlock_unlock(&(x))
-#define	_PROP_RWLOCK_DESTROY(x)	pthread_rwlock_destroy(&(x))
+#define	_PROP_RWLOCK_DECL(x)		pthread_rwlock_t x ;
+#define	_PROP_RWLOCK_INIT(x)		pthread_rwlock_init(&(x), NULL)
+#define	_PROP_RWLOCK_RDLOCK(x)		pthread_rwlock_rdlock(&(x))
+#define	_PROP_RWLOCK_WRLOCK(x)		pthread_rwlock_wrlock(&(x))
+#define	_PROP_RWLOCK_UNLOCK(x)		pthread_rwlock_unlock(&(x))
+#define	_PROP_RWLOCK_DESTROY(x)		pthread_rwlock_destroy(&(x))
 #endif
 
 #endif /* _KERNEL */
@@ -383,9 +387,9 @@ void *		_prop_standalone_realloc(void *, size_t);
  */
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-#define	_PROP_ARG_UNUSED	__unused
+#define	_PROP_ARG_UNUSED		__unused
 #else
-#define	_PROP_ARG_UNUSED	/* delete */
+#define	_PROP_ARG_UNUSED		/* delete */
 #endif /* __NetBSD__ */
 
 #endif /* _PROPLIB_PROP_OBJECT_IMPL_H_ */
