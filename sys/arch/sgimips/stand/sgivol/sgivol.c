@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.17 2008/08/03 16:09:20 rumble Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.18 2008/08/03 17:42:34 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ void	modify_partition(void);
 void	write_volhdr(void);
 int	allocate_space(int);
 void	checksum_vol(void);
+int	names_match(int, const char *);
 void	usage(void);
 
 int
@@ -281,6 +282,29 @@ main(int argc, char *argv[])
 	return 0;
 }
 
+/*
+ * Compare the name in `slot' of voldir to `b'. Be careful, as the
+ * name in voldir need not be nul-terminated and `b' may be longer
+ * than the maximum (in which case it will never match).
+ *
+ * Returns non-0 if names are equal.
+ */
+int
+names_match(int slot, const char *b)
+{
+	int cmp;
+
+	if (slot < 0 || slot >= SGI_BOOT_BLOCK_MAXVOLDIRS) {
+		printf("Internal error: bad slot in %s()\n", __func__);
+		exit(1);
+	}
+
+	cmp = strncmp(volhdr->voldir[slot].name, b,
+	    sizeof(volhdr->voldir[slot].name));
+
+	return (cmp == 0 && strlen(b) <= sizeof(volhdr->voldir[slot].name));
+}
+
 void
 display_vol(void)
 {
@@ -438,7 +462,7 @@ write_file(void)
 	for (i = 0; i < SGI_BOOT_BLOCK_MAXVOLDIRS; ++i) {
 		if (volhdr->voldir[i].name[0] == '\0' && slot < 0)
 			slot = i;
-		if (strcmp(vfilename, volhdr->voldir[i].name) == 0) {
+		if (names_match(i, vfilename)) {
 			slot = i;
 			break;
 		}
@@ -513,7 +537,7 @@ delete_file(void)
 	int i;
 
 	for (i = 0; i < SGI_BOOT_BLOCK_MAXVOLDIRS; ++i) {
-		if (strcmp(vfilename, volhdr->voldir[i].name) == 0) {
+		if (names_match(i, vfilename)) {
 			break;
 		}
 	}
@@ -550,7 +574,7 @@ move_file(void)
 	memcpy(dstfile, ufilename, namelen);
 
 	for (i = 0; i < SGI_BOOT_BLOCK_MAXVOLDIRS; i++) {
-		if (strcmp(vfilename, volhdr->voldir[i].name) == 0) {
+		if (names_match(i, vfilename)) {
 			if (slot != -1) {
 				printf("Error: Cannot move '%s' to '%s' - "
 				    "duplicate source files exist!\n",
@@ -559,7 +583,7 @@ move_file(void)
 			}
 			slot = i;
 		}
-		if (strcmp(dstfile, volhdr->voldir[i].name) == 0) {
+		if (names_match(i, dstfile)) {
 			printf("Error: Cannot move '%s' to '%s' - "
 			    "destination file already exists!\n",
 			    vfilename, dstfile);
@@ -680,6 +704,7 @@ usage(void)
 	       "	sgivol [-qf] -r vhfilename diskfilename device\n"
 	       "	sgivol [-qf] -w vhfilename diskfilename device\n"
 	       "	sgivol [-qf] -d vhfilename device\n"
+	       "	sgivol [-qf] -m vhfilename vhfilename device\n"
 	       "	sgivol [-qf] -p partno partfirst partblocks "
 	       "parttype device\n"
 	       );
