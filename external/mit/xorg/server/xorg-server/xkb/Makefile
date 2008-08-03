@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 20:41:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 03:55:17 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -10,7 +10,8 @@ LIB=		xkb
 .PATH:		${X11SRCDIR.xkbfile}/src
 DDXSRCS=	ddxBeep.c ddxCtrls.c ddxFakeBtn.c ddxFakeMtn.c \
 		ddxInit.c ddxKeyClick.c ddxLEDs.c ddxLoad.c \
-		ddxList.c ddxDevBtn.c
+		ddxList.c ddxDevBtn.c \
+		ddxKillSrv.c ddxVT.c ddxPrivate.c
 DIXSRCS=	xkb.c xkbUtils.c xkbEvents.c xkbAccessX.c xkbSwap.c \
 		xkbLEDs.c xkbInit.c xkbActions.c xkbPrKeyEv.c
 XKBFILESRCS=	maprules.c xkmread.c xkbtext.c xkbfmisc.c xkberrs.c \
@@ -44,12 +45,10 @@ COPTS.xkb.c=		-Wno-error	# XXX gcc 3.3
 COPTS.xkbUtils.c=	-Wno-error	# XXX gcc 3.3
 
 # XXX?
-.for _S _T in	ddxKillSrv.c xf86KillSrv.c \
-		ddxVT.c xf86VT.c \
-		ddxPrivate.c xf86Private.c
-BUILDSYMLINKS+=		${_S} ${_T}
-BUILDOBJS+=		${_T:R}.o
-CPPFLAGS.${_T}=		-DXF86DDXACTIONS
+.for _S in	ddxKillSrv.c \
+		ddxVT.c \
+		ddxPrivate.c
+CPPFLAGS.${_S}=		-DXF86DDXACTIONS
 .endfor
 
 CLEANFILES+=		${BUILDOBJS}
