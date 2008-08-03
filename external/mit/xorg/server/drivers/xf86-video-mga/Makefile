@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/03 09:24:14 rtr Exp $
 
 DRIVER=		xf86-video-mga
 DRIVER_NAME=	mga_drv
@@ -8,5 +8,11 @@ SRCS+=		mga_dga.c mga_dh.c mga_driver.c mga_esc.c mga_g450pll.c
 SRCS+=		mga_halmod.c mga_hwcurs.c mga_merge.c mga_shadow.c
 SRCS+=		mga_vga.c mga_video.c
 MAN=		mga.4
+
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
+
+CPPFLAGS.mga_driver.c=	-Wno-error	# XXX fix me please
 
 .include "../Makefile.xf86-driver"
