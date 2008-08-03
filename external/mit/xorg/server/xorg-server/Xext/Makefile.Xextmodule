@@ -1,2 +1,9 @@
+#	$NetBSD: Makefile.Xextmodule,v 1.2 2008/08/03 22:06:30 mrg Exp $
 
-SRCS+=	bigreq.c mitmisc.c shape.c sync.c xcmisc.c
+SRCS+=	bigreq.c mitmisc.c sync.c xcmisc.c
+.if ${LIB} == "Xext"
+BUILDSYMLINKS=       shape.c Xext-shape.c
+SRCS+=	Xext-shape.c
+.else
+SRCS+=	shape.c
+.endif
