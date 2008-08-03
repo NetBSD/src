@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 03:37:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 12:30:18 rtr Exp $
 
 .include "../Makefile.common"
 
-SUBDIR= xnest
+SUBDIR= xnest xfree86
 
 .if 0
 .if ${XSERVER_X68K} != "no"
@@ -52,10 +52,10 @@ SUBDIR+=netbsd/newsmips
 .if ${XSERVER_XSUN} != "no"
 SUBDIR+=sun
 .endif
-.endif
 
 .if ${XSERVER_XVFB} != "no"
 SUBDIR+=vfb
+.endif
 .endif
 
 .include <bsd.subdir.mk>
