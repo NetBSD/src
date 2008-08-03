@@ -1,6 +1,19 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/03 06:30:09 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/03 09:24:14 rtr Exp $
 
-SUBDIR=	xf86-input-keyboard xf86-input-void
-SUBDIR+=xf86-input-mouse xf86-input-vmmouse
+SUBDIR=		xf86-input-keyboard xf86-input-void
+SUBDIR+=	xf86-input-mouse xf86-input-vmmouse
+
+SUBDIR+=	xf86-video-apm xf86-video-ark xf86-video-ast
+SUBDIR+=	xf86-video-ati xf86-video-chips xf86-video-cirrus
+SUBDIR+=	xf86-video-cyrix xf86-video-glint xf86-video-i128
+SUBDIR+=	xf86-video-i740 xf86-video-imstt #xf86-video-intel
+SUBDIR+=	xf86-video-mga xf86-video-neomagic xf86-video-nsc
+#SUBDIR+=	xf86-video-nv xf86-video-radeonhd xf86-video-rendition
+SUBDIR+=	xf86-video-s3 xf86-video-s3virge xf86-video-savage
+#SUBDIR+=	xf86-video-siliconmotion xf86-video-sis xf86-video-tdfx
+SUBDIR+=	xf86-video-siliconmotion xf86-video-tdfx
+SUBDIR+=	xf86-video-tga xf86-video-trident xf86-video-tseng
+SUBDIR+=	xf86-video-vesa xf86-video-vga xf86-video-via
+SUBDIR+=	xf86-video-vmware #xf86-video-wsfb
 
 .include <bsd.subdir.mk>

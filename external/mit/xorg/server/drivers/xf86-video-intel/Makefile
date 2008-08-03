@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/03 09:24:14 rtr Exp $
 
 DRIVER=		xf86-video-intel
 DRIVER_NAME=	intel_drv
@@ -13,5 +13,13 @@ SRCS+=		i830_modes.c i830_video.c i830_sdvo.c i830_tv.c
 SRCS+=		i915_3d.c i915_video.c i965_video.c i830_exa.c
 SRCS+=		i830_xaa.c i830_render.c i915_render.c i965_render.c
 MAN=		intel.4
+
+CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/X11
+CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/X11/dri
+CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/X11/drm
+
+CPPFLAGS.i810_driver.c+=-DPACKAGE_VERSION_MAJOR=${PACKAGE_MAJOR}
+CPPFLAGS.i810_driver.c+=-DPACKAGE_VERSION_MINOR=${PACKAGE_MINOR}
+CPPFLAGS.i810_driver.c+=-DPACKAGE_VERSION_PATCHLEVEL=${PACKAGE_PATCH}
 
 .include "../Makefile.xf86-driver"
