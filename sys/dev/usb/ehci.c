@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.140 2008/08/02 22:57:36 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.141 2008/08/03 07:05:22 cegger Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.140 2008/08/02 22:57:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.141 2008/08/03 07:05:22 cegger Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -231,9 +231,9 @@ Static void		ehci_dump_sqh(ehci_soft_qh_t *);
 #if notyet
 Static void		ehci_dump_sitd(struct ehci_soft_itd *itd);
 Static void		ehci_dump_itd(struct ehci_soft_itd *);
-Static void		ehci_dump_exfer(struct ehci_xfer *);
 #endif
 #ifdef DIAGNOSTIC
+Static void		ehci_dump_exfer(struct ehci_xfer *);
 #endif
 #endif
 
