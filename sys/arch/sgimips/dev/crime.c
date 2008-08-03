@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.29 2008/05/26 15:59:30 tsutsui Exp $	*/
+/*	$NetBSD: crime.c,v 1.30 2008/08/03 00:20:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.29 2008/05/26 15:59:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.30 2008/08/03 00:20:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,8 +101,8 @@ crime_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	u_int64_t crm_id;
-	u_int64_t baseline;
-	u_int32_t cps;
+	u_int64_t baseline, endline;
+	u_int32_t startctr, endctr, cps;
 
 	crm_iot = SGIMIPS_BUS_SPACE_CRIME;
 
@@ -145,19 +145,25 @@ crime_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_8(crm_iot, crm_ioh, CRIME_WATCHDOG, 0);
 	bus_space_write_8(crm_iot, crm_ioh, CRIME_CONTROL, 0);
 
-	baseline = bus_space_read_8(crm_iot, crm_ioh, CRIME_TIME) & CRIME_TIME_MASK;
-	cps = mips3_cp0_count_read();
+#define CRIME_TIMER_FREQ	66666666	/* crime clock is 66.7MHz */
 
-	while (((bus_space_read_8(crm_iot, crm_ioh, CRIME_TIME) & CRIME_TIME_MASK)
-		- baseline) < 50 * 1000000 / 15)
-		continue;
-	cps = mips3_cp0_count_read() - cps;
-	cps = cps / 5;
+	baseline = bus_space_read_8(crm_iot, crm_ioh, CRIME_TIME)
+	    & CRIME_TIME_MASK;
+	startctr = mips3_cp0_count_read();
 
-	/* Counter on R4k/R4400/R4600/R5k counts at half the CPU frequency */
-	curcpu()->ci_cpu_freq = cps * 2 * hz;
-	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
-	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
+	/* read both cp0 and crime counters for 100ms */
+	do {
+		endline = bus_space_read_8(crm_iot, crm_ioh, CRIME_TIME)
+		    & CRIME_TIME_MASK;
+		endctr = mips3_cp0_count_read();
+	} while (endline - baseline < (CRIME_TIMER_FREQ / 10));
+
+	cps = (endctr - startctr) * 10;
+	curcpu()->ci_cpu_freq = cps;
+	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
+		curcpu()->ci_cpu_freq *= 2;
+	curcpu()->ci_cycles_per_hz = (cps + (hz / 2)) / hz;
+	curcpu()->ci_divisor_delay = (cps + (1000000 / 2)) / 1000000;
 
 	/* Turn on memory error and crime error interrupts.
 	   All others turned on as devices are registered. */
