@@ -1,2 +1,3 @@
+#	$NetBSD: Makefile.Xextbuiltin,v 1.2 2008/08/03 22:06:30 mrg Exp $
 
 SRCS+=	shape.c sleepuntil.c xtest.c	
