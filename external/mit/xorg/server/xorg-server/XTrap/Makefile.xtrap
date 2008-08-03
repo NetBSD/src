@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.xtrap,v 1.1 2008/08/02 21:19:21 mrg Exp $
+#	$NetBSD: Makefile.xtrap,v 1.2 2008/08/03 03:16:41 mrg Exp $
 
-LIB=		xtrap
+LIB=		XTrap
 
 .PATH:		${X11SRCDIR.xorg-server}/XTrap
 SRCS+=		xtrapddmi.c xtrapdi.c xtrapdiswp.c xtrapditbl.c
