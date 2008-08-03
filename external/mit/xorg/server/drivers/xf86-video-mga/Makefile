@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-mga
+DRIVER=		xf86-video-mga
 DRIVER_NAME=	mga_drv
 
 SRCS=		clientlx.c mga_arc.c mga_bios.c mga_dac3026.c mga_dacG.c

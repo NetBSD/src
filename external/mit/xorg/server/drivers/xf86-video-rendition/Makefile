@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-rendition
+DRIVER=		xf86-video-rendition
 DRIVER_NAME=	rendition_drv
 
 SRCS=		accelX.c hwcursor.c rendition.c rendition_shadow.c

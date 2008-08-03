@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-siliconmotion
+DRIVER=		xf86-video-siliconmotion
 DRIVER_NAME=	siliconmotion_drv
 
 SRCS=		smi_accel.c smi_xaa.c smi_exa.c smi_dac.c smi_dga.c

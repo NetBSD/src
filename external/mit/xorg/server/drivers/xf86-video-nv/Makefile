@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-nv
+DRIVER=		xf86-video-nv
 DRIVER_NAME=	nv_drv
 
 SRCS=		nv_cursor.c nv_dac.c nv_dga.c nv_driver.c nv_hw.c

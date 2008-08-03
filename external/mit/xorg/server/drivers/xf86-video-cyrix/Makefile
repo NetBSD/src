@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:20:59 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:03 rtr Exp $
 
-DRIVER=		xf86-input-cyrix
+DRIVER=		xf86-video-cyrix
 DRIVER_NAME=	cyrix_drv
 
 SRCS=		cyrix_accel.c cyrix_bank.c cyrix_driver.c

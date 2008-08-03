@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-nsc
+DRIVER=		xf86-video-nsc
 DRIVER_NAME=	nsc_drv
 
 SRCS=		durango.c nsc_driver.c nsc_galstub.c nsc_gx1_accel.c

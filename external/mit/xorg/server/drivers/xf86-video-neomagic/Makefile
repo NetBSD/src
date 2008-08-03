@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-neomagic
+DRIVER=		xf86-video-neomagic
 DRIVER_NAME=	neomagic_drv
 
 SRCS=		neo_2070.c neo_2090.c neo_2097.c neo_2200.c neo_bank.c

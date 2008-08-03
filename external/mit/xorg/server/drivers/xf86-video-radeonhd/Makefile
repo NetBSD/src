@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 07:21:00 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:32:04 rtr Exp $
 
-DRIVER=		xf86-input-radeonhd
+DRIVER=		xf86-video-radeonhd
 DRIVER_NAME=	radeonhd_drv
 
 SRCS=		rhd_atombios.c rhd_i2c.c rhd_crtc.c rhd_connector.c
