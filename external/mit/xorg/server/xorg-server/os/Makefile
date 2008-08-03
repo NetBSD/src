@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 19:53:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/03 07:31:25 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -8,8 +8,8 @@ LIB=	os
 .PATH:	${X11SRCDIR.xorg-server}/os
 SRCS=	WaitFor.c access.c auth.c connection.c io.c mitauth.c \
 	oscolor.c oscolor.h osdep.h osinit.c utils.c xdmauth.c \
-	xstrans.c xprintf.c log.c xdmcp.c
-#	rpcauth.c secauth.c
+	xstrans.c xprintf.c log.c xdmcp.c \
+	rpcauth.c secauth.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${XSERVERINCDIR} \
