@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xext,v 1.1 2008/08/02 19:27:28 mrg Exp $
+#	$NetBSD: Makefile.Xext,v 1.2 2008/08/03 03:14:48 mrg Exp $
 
 .include <bsd.x11.mk>
 
@@ -6,6 +6,14 @@
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/pixman-1
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod
+CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
+
+SRCS+=		EVI.c appgroup.c cup.c dpms.c panoramiX.c panoramiXSwap.c \
+		panoramiXprocs.c sampleEVI.c saver.c security.c shm.c \
+		xace.c xevie.c xf86bigfont.c xres.c xvdisp.c xvmain.c xvmc.c
+
+COPTS.xres.c=	-Wno-error
 
 .include <bsd.lib.mk>
