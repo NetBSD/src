@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.169 2008/07/25 22:45:58 dsl Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.170 2008/08/04 03:55:47 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,8 +63,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.169 2008/07/25 22:45:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.170 2008/08/04 03:55:47 tls Exp $");
 
+#include "opt_inet.h"
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
 #include "opt_mbuftrace.h"
@@ -624,6 +625,11 @@ sofree(struct socket *so)
 	KASSERT(!cv_has_waiters(&so->so_snd.sb_cv));
 	sorflush(so);
 	refs = so->so_aborting;	/* XXX */
+#ifdef INET
+	/* remove acccept filter if one is present. */
+	if (so->so_accf != NULL)
+		do_setopt_accept_filter(so, NULL);
+#endif
 	sounlock(so);
 	if (refs == 0)		/* XXX */
 		soput(so);
@@ -1572,12 +1578,24 @@ sorflush(struct socket *so)
 static int
 sosetopt1(struct socket *so, int level, int optname, struct mbuf *m)
 {
+#ifdef INET
+	int error, optval, val;
+#else
 	int optval, val;
+#endif
 	struct linger	*l;
 	struct sockbuf	*sb;
 	struct timeval *tv;
 
 	switch (optname) {
+
+#ifdef INET
+	case SO_ACCEPTFILTER:
+		error = do_setopt_accept_filter(so, m);
+		if (error)
+			return error;
+		break;
+#endif
 
 	case SO_LINGER:
 		if (m == NULL || m->m_len != sizeof(struct linger))
@@ -1725,6 +1743,12 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		m->m_len = sizeof(int);
 
 		switch (optname) {
+
+#ifdef INET
+		case SO_ACCEPTFILTER:
+			error = do_getopt_accept_filter(so, m);
+			break;
+#endif
 
 		case SO_LINGER:
 			m->m_len = sizeof(struct linger);
