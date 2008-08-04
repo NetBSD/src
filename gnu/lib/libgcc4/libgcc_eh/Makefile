@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/11/09 04:07:11 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/04 04:55:55 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -19,8 +19,6 @@ COPTS.unwind-dw2.c = -Wno-stack-protector
 
 
 .include <bsd.lib.mk>
-
-.include "../Makefile.unwind_h"
 
 .else
 .include <bsd.prog.mk> # do nothing
