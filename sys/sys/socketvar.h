@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.111 2008/06/18 09:06:28 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.112 2008/08/04 03:55:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#ifdef ACCEPT_FILTER_MOD
+#include <sys/lkm.h>
+#endif
 
 #if !defined(_KERNEL) || defined(LKM)
 struct uio;
@@ -167,6 +170,11 @@ struct socket {
 	struct uidinfo	*so_uidinfo;	/* who opened the socket */
 	gid_t		so_egid;	/* creator effective gid */
 	pid_t		so_cpid;	/* creator pid */
+	struct so_accf {
+		struct accept_filter	*so_accept_filter;
+		void	*so_accept_filter_arg;	/* saved filter args */
+		char	*so_accept_filter_str;	/* saved user args */
+	} *so_accf;
 };
 
 #define	SB_EMPTY_FIXUP(sb)						\
@@ -199,6 +207,17 @@ do {									\
 #define	SS_ISAPIPE 		0x1000	/* socket is implementing a pipe */
 
 #ifdef _KERNEL
+
+struct accept_filter {
+	char	accf_name[16];
+	void	(*accf_callback)
+		(struct socket *so, void *arg, int waitflag);
+	void *	(*accf_create)
+		(struct socket *so, char *arg);
+	void	(*accf_destroy)
+		(struct socket *so);
+	SLIST_ENTRY(accept_filter) accf_next;
+};
 
 extern u_long		sb_max;
 extern int		somaxkva;
@@ -489,6 +508,22 @@ void	soloanfree(struct mbuf *, void *, size_t, void *);
 #define SB_PRIO_ONESHOT_OVERFLOW 1
 #define SB_PRIO_OVERDRAFT	2
 #define SB_PRIO_BESTEFFORT	3
+
+/*
+ * Accept filter functions (duh).
+ */
+int	do_getopt_accept_filter(struct socket *, struct mbuf *);
+int	do_setopt_accept_filter(struct socket *, struct mbuf *);
+int	accept_filt_add(struct accept_filter *);
+int	accept_filt_del(char *);
+struct	accept_filter *accept_filt_get(char *);
+#ifdef ACCEPT_FILTER_MOD
+#ifdef SYSCTL_DECL
+SYSCTL_DECL(_net_inet_accf);
+#endif
+void	accept_filter_init(void);
+int	accept_filt_generic_mod_event(struct lkm_table *lkmtp, int event, void *data);
+#endif
 
 #endif /* _KERNEL */
 
