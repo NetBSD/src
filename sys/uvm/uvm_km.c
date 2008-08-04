@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.100 2008/07/16 00:11:27 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.101 2008/08/04 13:37:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -103,7 +103,7 @@
  * object is equal to the size of kernel virtual address space (i.e. the
  * value "VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS").
  *
- * note that just because a kernel object spans the entire kernel virutal
+ * note that just because a kernel object spans the entire kernel virtual
  * address space doesn't mean that it has to be mapped into the entire space.
  * large chunks of a kernel object's space go unused either because
  * that area of kernel VM is unmapped, or there is some other type of
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.100 2008/07/16 00:11:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101 2008/08/04 13:37:33 pooka Exp $");
 
 #include "opt_uvmhist.h"
 
