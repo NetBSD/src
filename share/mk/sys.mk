@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.97 2008/05/06 22:19:11 uwe Exp $
+#	$NetBSD: sys.mk,v 1.98 2008/08/04 16:02:25 joerg Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -51,7 +51,13 @@ LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 CXX?=		c++
 CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-std=gnu99}
 
-COMPILE.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
+__ALLSRC1=	${empty(DESTDIR):?${.ALLSRC}:${.ALLSRC:S|^${DESTDIR}|^destdir|}}
+__ALLSRC2=	${empty(MAKEOBJDIR):?${__ALLSRC1}:${__ALLSRC1:S|^${MAKEOBJDIR}|^obj|}}
+__ALLSRC3=	${empty(NETBSDSRCDIR):?${__ALLSRC2}:${__ALLSRC2:S|^${NETBSDSRCDIR}|^src|}}
+
+_CXXSEED?=	${BUILDSEED:D-frandom-seed=${BUILDSEED:Q}/${__ALLSRC3:O:Q}/${.TARGET:Q}}
+
+COMPILE.cc?=	${CXX} ${_CXXSEED} ${CXXFLAGS} ${CPPFLAGS} -c
 LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 OBJC?=		${CC}
