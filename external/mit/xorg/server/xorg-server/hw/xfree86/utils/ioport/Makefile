@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/04 01:03:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/04 04:33:00 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,15 +18,15 @@ CPPFLAGS+=	-DHAVE_XORG_CONFIG_H \
 LDADD=	-L${XF86OSOBJDIR} -lxorgos \
 	-L${DUMMYOBJDIR} -ldummy -lm
 
+DPADD=	${LIBXORGOS} ${LIBDUMMY} ${LIBM}
+
 .if ${MACHINE} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
-.else
+.elif ${MACHINE_ARCH} == "x86_64"
 LDADD+=	-lx86_64
 DPADD+=	${LIBX86_64}
 .endif
-
-DPADD=	${LIBXORGOS} ${LIBDUMMY} ${LIBM}
 
 LINKS=  ${X11BINDIR}/ioport ${X11BINDIR}/inb \
 	${X11BINDIR}/ioport ${X11BINDIR}/inw \
