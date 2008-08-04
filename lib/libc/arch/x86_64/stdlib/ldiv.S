@@ -1,4 +1,4 @@
-/*	$NetBSD: ldiv.S,v 1.1 2001/06/19 00:25:04 fvdl Exp $	*/
+/*	$NetBSD: ldiv.S,v 1.2 2008/08/04 20:26:38 matt Exp $	*/
 
 /*
  * Written by gcc 3.0.
@@ -8,10 +8,18 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: ldiv.S,v 1.1 2001/06/19 00:25:04 fvdl Exp $")
+	RCSID("$NetBSD: ldiv.S,v 1.2 2008/08/04 20:26:38 matt Exp $")
 #endif
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(ldiv, _ldiv)
+#endif
+
+#ifdef WEAK_ALIAS
+ENTRY(_ldiv)
+#else
 ENTRY(ldiv)
+#endif
 	movq    %rdi, %rax
 	cqto
 	idivq   %rsi
