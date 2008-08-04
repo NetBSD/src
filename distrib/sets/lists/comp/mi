@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1171 2008/07/31 05:38:04 simonb Exp $
+#	$NetBSD: mi,v 1.1172 2008/08/04 21:33:01 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5491,6 +5491,8 @@
 ./usr/share/man/cat3/if_nametoindex.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ilogb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ilogbf.0			comp-c-catman		.cat
+./usr/share/man/cat3/imaxabs.0			comp-c-catman		.cat
+./usr/share/man/cat3/imaxdiv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inchnstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/inchstr.0			comp-c-catman		.cat
@@ -10855,6 +10857,8 @@
 ./usr/share/man/man3/if_nametoindex.3		comp-c-man		.man
 ./usr/share/man/man3/ilogb.3			comp-c-man		.man
 ./usr/share/man/man3/ilogbf.3			comp-c-man		.man
+./usr/share/man/man3/imaxabs.3			comp-c-man		.man
+./usr/share/man/man3/imaxdiv.3			comp-c-man		.man
 ./usr/share/man/man3/inch.3			comp-c-man		.man
 ./usr/share/man/man3/inchnstr.3			comp-c-man		.man
 ./usr/share/man/man3/inchstr.3			comp-c-man		.man
