@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/03/09 04:40:38 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/04 04:53:22 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -48,6 +48,16 @@ tconfig.h:
 	TARGET_CPU_DEFAULT="" \
 	${HOST_SH} $(GNUHOSTDIST)/gcc/mkconfig.sh tconfig.h
 
+# these aren't necessary but are #include'd
+FAKEHEADERS=options.h insn-flags.h insn-constants.h
+${FAKEHEADERS}:
+	${_MKTARGET_CREATE}
+	touch ${.TARGET}
+DPSRCS+=	${FAKEHEADERS}
+CLEANFILES+=	${FAKEHEADERS}
+
+${OBJS}: ${DPSRCS}
+
 .include <bsd.prog.mk>
 
 # Override the default .c -> .o rule.
@@ -55,14 +65,6 @@ tconfig.h:
 	${_MKTARGET_COMPILE}
 	${CC} ${CPPFLAGS} ${GCFLAGS} ${CPUFLAGS} -c ${.IMPSRC} -o ${.TARGET}.o
 	mv ${.TARGET}.o ${.TARGET}
-
-# these aren't necessary but are #include'd
-FAKEHEADERS=options.h insn-flags.h insn-constants.h
-${FAKEHEADERS}:
-	${_MKTARGET_CREATE}
-	touch ${.TARGET}
-tm.h ${SRCS}: ${FAKEHEADERS}
-CLEANFILES+=	${FAKEHEADERS}
 
 .else
 
