@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.216 2008/07/29 04:40:14 mrg Exp $
+#	$NetBSD: bsd.README,v 1.217 2008/08/04 16:02:25 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1266,6 +1266,13 @@ AS		Assembler.  [as]
 
 AFLAGS		Options to ${CC} when compiling or linking .s or .S
 		assembly source files.  []
+
+BUILDSEED	GCC uses random numbers when compiling C++ code.
+		If this option is present, seed the random number
+		generator based on the value, source file names and
+		the output file name to make builds more deterministic.
+		Additional information is available in the GCC
+		documentation of -frandom-seed.
 
 CC		C compiler.  [cc]
 
