@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.5 2008/08/02 15:31:14 simonb Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.6 2008/08/04 15:02:16 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -23,11 +23,11 @@ SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
 
 # sys/kern
 SRCS+=	clock_subr.c kern_descrip.c kern_module.c kern_stub.c		\
-	kern_sysctl.c param.c subr_bufq.c subr_hash.c subr_kobj.c	\
-	subr_prf2.c subr_specificdata.c subr_time.c subr_workqueue.c	\
-	sys_descrip.c sys_generic.c vfs_bio.c vfs_cache.c vfs_getcwd.c	\
-	vfs_hooks.c vfs_init.c vfs_lookup.c vfs_subr.c vfs_syscalls.c	\
-	vfs_vnops.c vfs_wapbl.c vnode_if.c
+	kern_sysctl.c param.c subr_bufq.c subr_callback.c subr_hash.c	\
+	subr_kobj.c subr_prf2.c subr_specificdata.c subr_time.c		\
+	subr_workqueue.c sys_descrip.c sys_generic.c vfs_bio.c		\
+	vfs_cache.c vfs_getcwd.c vfs_hooks.c vfs_init.c vfs_lookup.c	\
+	vfs_subr.c vfs_syscalls.c vfs_vnops.c vfs_wapbl.c vnode_if.c
 
 # sys/miscfs
 SRCS+=	genfs_vfsops.c genfs_vnops.c sync_subr.c
@@ -40,6 +40,10 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 SRCS+=	__assert.c scanc.c skpc.c
 
 SRCS+=	rumpvnode_if.c rump_syscalls.c
+
+# uncomment these lines if you want to use the real kmem code
+#CPPFLAGS+=	-DRUMP_USE_REAL_KMEM
+#SRCS+=		subr_kmem.c subr_once.c subr_vmem.c
 
 .if ${MACHINE_ARCH} == "vax"
 .PATH:	${RUMPTOP}/../lib/libkern/arch/vax

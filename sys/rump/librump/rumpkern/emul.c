@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.45 2008/08/01 19:34:51 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.46 2008/08/04 15:02:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,7 +63,6 @@ struct lwp lwp0;
 struct vnode *rootvp;
 struct device *root_device;
 dev_t rootdev;
-struct vm_map *kernel_map;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
@@ -432,6 +431,20 @@ callout_reset(callout_t *c, int ticks, void (*func)(void *), void *arg)
 
 bool
 callout_stop(callout_t *c)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+callout_schedule(callout_t *c, int ticks)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+callout_setfunc(callout_t *c, void (*func)(void *), void *arg)
 {
 
 	panic("%s: not implemented", __func__);
