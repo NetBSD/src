@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.3 2008/08/02 02:23:51 simonb Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.4 2008/08/04 15:55:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.3 2008/08/02 02:23:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.4 2008/08/04 15:55:11 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -74,6 +74,7 @@ do {									\
 } while (/* CONSTCOND */0)
 #endif
 
+static int ffs_superblock_layout(struct fs *);
 static int wapbl_log_position(struct mount *, struct fs *, struct vnode *,
     daddr_t *, size_t *, size_t *, uint64_t *);
 static int wapbl_create_infs_log(struct mount *, struct fs *, struct vnode *,
@@ -82,6 +83,24 @@ static void wapbl_find_log_start(struct mount *, struct vnode *, off_t,
     daddr_t *, daddr_t *, size_t *);
 static int wapbl_remove_log(struct mount *);
 static int wapbl_allocate_log_file(struct mount *, struct vnode *);
+
+/*
+ * Return the super block layout format - UFS1 or UFS2.
+ * WAPBL only works with UFS2 layout (which is still available
+ * with FFSv1).
+ *
+ * XXX Should this be in ufs/ffs/fs.h?  Same style of check is
+ * also used in ffs_alloc.c in a few places.
+ */
+static int
+ffs_superblock_layout(struct fs *fs)
+{
+	if ((fs->fs_magic == FS_UFS1_MAGIC) &&
+	    ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0))
+		return 1;
+	else
+		return 2;
+}
 
 /*
  * This function is invoked after a log is replayed to
@@ -203,6 +222,10 @@ wapbl_remove_log(struct mount *mp)
 	ino_t log_ino;
 	int error;
 
+	/* If super block layout is too old to support WAPBL, return */
+	if (ffs_superblock_layout(fs) < 2)
+		return 0;
+
 	/* If all the log locators are 0, just clean up */
 	if (fs->fs_journallocs[0] == 0 &&
 	    fs->fs_journallocs[1] == 0 &&
@@ -301,6 +324,15 @@ ffs_wapbl_start(struct mount *mp)
 
 		if (mp->mnt_flag & MNT_LOG) {
 			KDASSERT(fs->fs_ronly == 0);
+
+			/* WAPBL needs UFS2 format super block */
+			if (ffs_superblock_layout(fs) < 2) {
+				printf("%s fs superblock in old format, "
+				   "not journaling\n",
+				   VFSTOUFS(mp)->um_fs->fs_fsmnt);
+				mp->mnt_flag &= ~MNT_LOG;
+				return EINVAL;
+			}
 
 			error = wapbl_log_position(mp, fs, devvp, &off,
 			    &count, &blksize, &extradata);
@@ -427,6 +459,13 @@ ffs_wapbl_replay_start(struct mount *mp, struct fs *fs, struct vnode *devvp)
 	size_t count;
 	size_t blksize;
 	uint64_t extradata;
+
+	/*
+	 * WAPBL needs UFS2 format super block, if we got here with a
+	 * UFS1 format super block something is amiss...
+	 */
+	if (ffs_superblock_layout(fs) < 2)
+		return EINVAL;
 
 	error = wapbl_log_position(mp, fs, devvp, &off, &count, &blksize,
 	    &extradata);
