@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.191 2008/07/02 20:05:16 rmind Exp $
+#	$NetBSD: Makefile.inc,v 1.192 2008/08/04 00:53:51 lukem Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -48,7 +48,7 @@ SRCS+=__${glue:.c=.S} ${glue}
 # Build the C glue file
 SRCS+= ${glue}
 # and an asm entry for __<syscall>
-ASM_GLUE+= __${glue:.c=.S}
+ASM_GLUE+= tmp_${glue:.c=.S}
 .  endif
 . endif
 .endfor
@@ -121,7 +121,7 @@ ASM_MD=	_lwp_getprivate.S mremap.S
 
 .for f in ${ASM_MD}
 . if !exists(${f})
-   ASM+=	${f}
+   ASM+=	tmp_${f}
 . else
    SRCS+=	${f}
 . endif
@@ -152,11 +152,11 @@ _LINTASM=	${ASM:Nsa_*.S} ${WEAKASM:Nsa_*.S}
 
 ${ASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
-	printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' >${.TARGET}
+	printf '#include "SYS.h"\nRSYSCALL(${.PREFIX:S/tmp_//})\n' >${.TARGET}
 
 ${ASM_GLUE}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
-	printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/__//})\n' >${.TARGET}
+	printf '#include "SYS.h"\nPSEUDO(${.PREFIX:S/tmp_/__/},${.PREFIX:S/tmp_//})\n' >${.TARGET}
 
 ${WEAKASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
