@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.6 2008/08/03 19:32:03 joerg Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7 2008/08/04 06:01:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.6 2008/08/03 19:32:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7 2008/08/04 06:01:18 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.6 2008/08/03 19:32:03 joerg Exp $");
 #include "isa.h"
 #include "pcibvar.h"
 
-int	pcibmatch(device_t, struct cfdata *, void *);
+int	pcibmatch(device_t, cfdata_t, void *);
 void	pcibattach(device_t, device_t, void *);
 int	pcibdetach(device_t, int);
 void	pcibchilddet(device_t, device_t);
@@ -60,7 +60,7 @@ CFATTACH_DECL2_NEW(pcib, sizeof(struct pcib_softc),
 void	pcib_callback(device_t);
 
 int
-pcibmatch(device_t parent, struct cfdata *match, void *aux)
+pcibmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
