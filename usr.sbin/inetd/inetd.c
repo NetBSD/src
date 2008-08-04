@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.106 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: inetd.c,v 1.107 2008/08/04 03:55:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.106 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.107 2008/08/04 03:55:48 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,8 @@ __RCSID("$NetBSD: inetd.c,v 1.106 2008/07/21 13:36:58 lukem Exp $");
  *
  *	service name			must be in /etc/services or must
  *					name a tcpmux service
- *	socket type			stream/dgram/raw/rdm/seqpacket
+ *	socket type[:accf[,arg]]	stream/dgram/raw/rdm/seqpacket,
+					only stream can name an accept filter
  *	protocol			must be in /etc/protocols
  *	wait/nowait[:max]		single-threaded/multi-threaded, max #
  *	user[:group]			user/group to run daemon as
@@ -310,6 +311,7 @@ struct	servtab {
 #ifdef IPSEC
 	char	*se_policy;		/* IPsec poilcy string */
 #endif
+	struct accept_filter_arg se_accf; /* accept filter for stream service */
 	int	se_fd;			/* open descriptor */
 	int	se_type;		/* type */
 	union {
@@ -1126,6 +1128,13 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	if (sep->se_socktype == SOCK_STREAM)
 		listen(sep->se_fd, 10);
 
+	/* Set the accept filter, if specified. To be done after listen.*/
+	if (sep->se_accf.af_name[0] != 0 && setsockopt(sep->se_fd, SOL_SOCKET,
+	    SO_ACCEPTFILTER, (char *)&sep->se_accf,
+	    sizeof(sep->se_accf)) < 0)
+		syslog(LOG_ERR, "setsockopt(SO_ACCEPTFILTER %s): %m",
+		    sep->se_accf.af_name);
+
 	ev = allocchange();
 	EV_SET(ev, sep->se_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
 	    (intptr_t)sep);
@@ -1391,8 +1400,36 @@ more:
 	}
 
 	arg = sskip(&cp);
-	if (strcmp(arg, "stream") == 0)
+	if (strncmp(arg, "stream", sizeof("stream") - 1) == 0) {
+		char *accf, *accf_arg;
+
 		sep->se_socktype = SOCK_STREAM;
+
+		/* one and only one accept filter */
+		accf = index(arg, ':');	
+		if (accf) {
+	    		if (accf != rindex(arg, ':') ||	/* more than one */
+	    		    *(accf + 1) == '\0') {	/* nothing beyond */
+				sep->se_socktype = -1;
+			} else {
+				accf++;			/* skip delimiter */
+				strncpy(sep->se_accf.af_name, accf,
+					sizeof(sep->se_accf.af_name));
+				accf_arg = index(accf, ',');
+				if (accf_arg) {	/* zero or one arg, no more */
+					if ((rindex(accf, ',') != accf_arg)) {
+						sep->se_socktype = -1;
+					} else {
+						accf_arg++;
+						strncpy(sep->se_accf.af_arg,
+							accf_arg,
+							sizeof(sep->se_accf.af_arg));
+					}
+				}
+			}
+		}
+	}
+		
 	else if (strcmp(arg, "dgram") == 0)
 		sep->se_socktype = SOCK_DGRAM;
 	else if (strcmp(arg, "rdm") == 0)
