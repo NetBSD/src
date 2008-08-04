@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.97 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.98 2008/08/04 06:47:52 matt Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.97 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.98 2008/08/04 06:47:52 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -499,9 +499,6 @@ in6_pcbdetach(struct in6pcb *in6p)
 	ipsec6_delete_pcbpolicy(in6p);
 #endif /* IPSEC */
 	so->so_pcb = 0;
-	/* sofree drops the socket's lock */
-	sofree(so);
-	mutex_enter(softnet_lock);
 	if (in6p->in6p_options)
 		m_freem(in6p->in6p_options);
 	if (in6p->in6p_outputopts != NULL) {
@@ -517,6 +514,8 @@ in6_pcbdetach(struct in6pcb *in6p)
 	    inph_queue);
 	pool_put(&in6pcb_pool, in6p);
 	splx(s);
+	sofree(so);				/* drops the socket's lock */
+	mutex_enter(softnet_lock);		/* reacquire it */
 }
 
 void
