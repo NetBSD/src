@@ -25,7 +25,17 @@ bin		- done
 			-- many apps don't install manuals yet
 			-- many apps need app-config generated/installed?
 			   this will apparently help with pkgsrc.
-Xserver 	- 
+Xserver 
+	drivers:
+		- all mostly done.
+		- need to figure out which ones should be built for which
+		  platforms?
+	xorg-server:
+		- most things besides 'hw' are done:
+			GL XTrap Xext Xi afb cfb cfb32 composite config damageext dbe dix doc exa fb include mfb mi miext os randr record render xfixes xkb
+		- hw/xnest is done
+		- some of hw/xfree86 is done:
+			ddc dummy os-support scanpci utils
 
 
 things to delete:
