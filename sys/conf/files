@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.911 2008/07/31 05:38:04 simonb Exp $
+#	$NetBSD: files,v 1.912 2008/08/04 03:55:47 tls Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1220,6 +1220,12 @@ defpseudo clockctl
 defpseudo irix_kmem
 defpseudo irix_usema
 
+#
+# Accept filters.  XXX should use another registration/initialization method.
+#
+defpseudo accf_data
+defpseudo accf_http
+
 # ISDN userland pseudo devices
 #
 defpseudo isdntrc:	isdndev, tty
@@ -1458,6 +1464,7 @@ file	kern/tty_pty.c			pty 			needs-flag
 file	kern/tty_ptm.c			pty
 file	kern/tty_subr.c
 file	kern/tty_tty.c
+file	kern/uipc_accf.c		inet
 file	kern/uipc_domain.c
 file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
@@ -1535,6 +1542,8 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
+file	netinet/accf_data.c		inet & accf_data
+file	netinet/accf_http.c		inet & accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
