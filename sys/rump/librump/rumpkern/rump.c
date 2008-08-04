@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.51 2008/08/01 19:34:51 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.52 2008/08/04 15:02:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -106,6 +106,12 @@ rump_init()
 		desiredvnodes = 1<<16;
 	}
 
+	rumpvm_init();
+	rump_sleepers_init();
+#ifdef RUMP_USE_REAL_KMEM
+	kmem_init();
+#endif
+
 	cache_cpu_init(&rump_cpu);
 	rw_init(&rump_cwdi.cwdi_lock);
 	l = &lwp0;
@@ -124,7 +130,6 @@ rump_init()
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 
 	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
-	rumpvm_init();
 
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
@@ -132,7 +137,6 @@ rump_init()
 	syncdelay = 0;
 	dovfsusermount = 1;
 
-	rump_sleepers_init();
 	rumpuser_thrinit();
 
 	fd_sys_init();
