@@ -1,20 +1,19 @@
-/*	$NetBSD: llabs.S,v 1.4 2008/08/04 21:29:28 matt Exp $	*/
+/*	$NetBSD: imaxdiv.c,v 1.1 2008/08/04 21:29:27 matt Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  Aimax rights reserved.
  *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+ * This code is derived from software contributed to Berkeley by
+ * Chris Torek.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * modification, are permitted provided that the foimaxowing conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the foimaxowing disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
+ *    notice, this list of conditions and the foimaxowing disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -31,37 +30,37 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * from: Header: abs.s,v 1.1 91/07/06 18:01:57 torek Exp
  */
 
-#include <machine/asm.h>
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-	.asciz "from: @(#)abs.s	8.1 (Berkeley) 6/4/93"
+static char sccsid[] = "from: @(#)ldiv.c	8.1 (Berkeley) 6/4/93";
 #else
-	RCSID("$NetBSD: llabs.S,v 1.4 2008/08/04 21:29:28 matt Exp $")
+__RCSID("$NetBSD: imaxdiv.c,v 1.1 2008/08/04 21:29:27 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(llabs, _llabs)
-WEAK_ALIAS(imaxabs, _llabs)
+#include "namespace.h"
+#include <inttypes.h>		/* imaxdiv_t */
+
+#ifdef __weak_alias
+__weak_alias(imaxdiv, _imaxdiv)
 #endif
 
-/* llabs - long long int absolute value */
-/* imaxabs - intmax_t absolute value */
+/* LONGLONG */
+imaxdiv_t
+imaxdiv(intmax_t num, intmax_t denom)
+{
+	imaxdiv_t r;
 
+	/* see div.c for comments */
 
-#ifdef WEAK_ALIAS
-ENTRY(_llabs)
-#else
-ENTRY(llabs)
-#endif
-	tst	%o0
-	bge	1f
-	 nop
-	subcc	%g0, %o1, %o1
-	subx	%g0, %o0, %o0
-1:	retl
-	 nop
+	r.quot = num / denom;
+	r.rem = num % denom;
+	if (num >= 0 && r.rem < 0) {
+		r.quot++;
+		r.rem -= denom;
+	}
+	return (r);
+}
