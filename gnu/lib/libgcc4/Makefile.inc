@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2008/08/04 04:55:55 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2008/08/04 06:59:47 lukem Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -59,14 +59,9 @@ CLEANFILES+=	${LIB1ASMFUNCS}
 CPICFLAGS:=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 _TRADITIONAL_CPP=
-fpgnulib.c:	${DIST}/gcc/config/m68k/fpgnulib.c
-	${_MKTARGET_CREATE}
-	cp ${DIST}/gcc/config/m68k/fpgnulib.c fpgnulib.c
-xfgnulib.c:	${DIST}/gcc/config/m68k/fpgnulib.c
-	${_MKTARGET_CREATE}
-	echo '#define EXTFLOAT' > xfgnulib.c
-	cat ${DIST}/gcc/config/m68k/fpgnulib.c >> xfgnulib.c
-CLEANFILES+=	fpgnulib.c xfgnulib.c
+BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c fpgnulib.c
+BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c xfgnulib.c
+CPPFLAGS.xfgnulib.c+=-DEXTFLOAT=1
 .endif
 
 .if ${MACHINE_ARCH} == "powerpc" || \
