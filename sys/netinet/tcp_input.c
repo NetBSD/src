@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.290 2008/07/28 18:41:07 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.291 2008/08/04 04:08:47 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.290 2008/07/28 18:41:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.291 2008/08/04 04:08:47 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2639,13 +2639,14 @@ dodata:							/* XXX */
 				m_adj(m, hdroptlen);
 				sbappendstream(&(so)->so_rcv, m);
 			}
+			TCP_REASS_UNLOCK(tp);
 			sorwakeup(so);
 		} else {
 			m_adj(m, hdroptlen);
 			tiflags = tcp_reass(tp, th, m, &tlen);
 			tp->t_flags |= TF_ACKNOW;
+			TCP_REASS_UNLOCK(tp);
 		}
-		TCP_REASS_UNLOCK(tp);
 
 		/*
 		 * Note the amount of data that peer has sent into
