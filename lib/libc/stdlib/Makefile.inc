@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.68 2007/11/28 21:55:14 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.69 2008/08/04 21:29:27 matt Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -8,7 +8,7 @@ SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
 	bsearch.c drand48.c exit.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \
-	hcreate.c heapsort.c insque.c jrand48.c l64a.c lldiv.c \
+	hcreate.c heapsort.c imaxdiv.c insque.c jrand48.c l64a.c lldiv.c \
 	lcong48.c lrand48.c lsearch.c merge.c mrand48.c \
 	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c pty.c \
 	radixsort.c rand.c rand_r.c random.c remque.c \
@@ -25,18 +25,25 @@ SRCS+=	malloc.c
 
 # machine-dependent stdlib sources
 # m-d Makefile.inc must include sources for:
-#       abs() div() labs() ldiv() llabs()
+#       abs() div() labs() ldiv() llabs() imaxabs() imaxdiv()
 
 .include "${ARCHDIR}/stdlib/Makefile.inc"
 
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
-	bsearch.3 div.3 exit.3 getenv.3 getopt.3 getopt_long.3 getsubopt.3 \
-	grantpt.3 hcreate.3 insque.3 labs.3 ldiv.3 llabs.3 lldiv.3 lsearch.3 \
+	bsearch.3 \
+	div.3 \
+	exit.3 \
+	getenv.3 getopt.3 getopt_long.3 getsubopt.3 grantpt.3 \
+	hcreate.3 \
+	imaxabs.3 imaxdiv.3 insque.3 \
+	labs.3 ldiv.3 llabs.3 lldiv.3 lsearch.3 \
 	malloc.3 memory.3 \
-	posix_memalign.3 posix_openpt.3 ptsname.3 qabs.3 \
-	qdiv.3 qsort.3 radixsort.3 rand48.3 rand.3 random.3 \
-	strsuftoll.3 strtod.3 strtol.3 strtoul.3 system.3 tsearch.3 unlockpt.3 \
-	strfmon.3
+	posix_memalign.3 posix_openpt.3 ptsname.3 \
+	qabs.3 qdiv.3 qsort.3 \
+	radixsort.3 rand48.3 rand.3 random.3 \
+	strfmon.3 strsuftoll.3 strtod.3 strtol.3 strtoul.3 system.3 \
+	tsearch.3 \
+	unlockpt.3
 
 MLINKS+=a64l.3 l64a.3
 MLINKS+=a64l.3 l64a_r.3
