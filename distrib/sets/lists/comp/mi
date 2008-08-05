@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1172 2008/08/04 21:33:01 matt Exp $
+#	$NetBSD: mi,v 1.1173 2008/08/05 14:42:03 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2354,8 +2354,8 @@
 ./usr/lib/librt_p.a				comp-c-proflib		profile
 ./usr/lib/librump.a				comp-c-lib
 ./usr/lib/librump_p.a				comp-c-proflib		profile
-./usr/lib/librumpfs_cd9660fs.a			comp-c-lib
-./usr/lib/librumpfs_cd9660fs_p.a		comp-c-proflib		profile
+./usr/lib/librumpfs_cd9660.a			comp-c-lib
+./usr/lib/librumpfs_cd9660_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_efs.a			comp-c-lib
 ./usr/lib/librumpfs_efs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_ext2fs.a			comp-c-lib
@@ -2366,8 +2366,8 @@
 ./usr/lib/librumpfs_hfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_lfs.a			comp-c-lib
 ./usr/lib/librumpfs_lfs_p.a			comp-c-proflib		profile
-./usr/lib/librumpfs_msdosfs.a			comp-c-lib
-./usr/lib/librumpfs_msdosfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_msdos.a			comp-c-lib
+./usr/lib/librumpfs_msdos_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_ntfs.a			comp-c-lib
 ./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_syspuffs.a			comp-c-lib
