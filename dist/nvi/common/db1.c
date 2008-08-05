@@ -292,6 +292,8 @@ db1_db_cursor(DB *db, DB_TXN *txn, DBC **cursorp, u_int32_t flags) {
 		return -1;
 
 	cursor->db = db;
+	cursor->pos_key.data = &cursor->pos;
+	cursor->pos_key.size = sizeof cursor->pos;
 	cursor->c_close = db1_dbc_close;
 	cursor->c_get = db1_dbc_get;
 	cursor->c_put = db1_dbc_put;
@@ -317,18 +319,21 @@ db1_dbc_get(DBC *cursor, DBT *key, DBT *data, u_int32_t flags) {
 	case DB_SET:
 		ret = db_v1->seq(db_v1, (DBT_v1 *) key, (DBT_v1 *) data,
 			R_CURSOR);
+		cursor->pos = * (db_recno_t *) key->data;
 		break;
 	case DB_FIRST:
 		ret = db_v1->seq(db_v1, (DBT_v1 *) key, (DBT_v1 *) data,
 			R_FIRST);
 		if (ret == 1)
 			ret = DB_NOTFOUND;
+		cursor->pos = * (db_recno_t *) key->data;
 		break;
 	case DB_LAST:
 		ret = db_v1->seq(db_v1, (DBT_v1 *) key, (DBT_v1 *) data,
 			R_LAST);
 		if (ret == 1)
 			ret = DB_NOTFOUND;
+		cursor->pos = * (db_recno_t *) key->data;
 		break;
 	default:
 		abort();
@@ -346,10 +351,7 @@ db1_dbc_put(DBC *cursor, DBT *key, DBT *data, u_int32_t flags) {
 
 	assert((flags & ~(DB_BEFORE | DB_AFTER)) == 0);
 
-	if (db_v1->seq(db_v1, (DBT_v1 *) key, (DBT_v1 *) &data1, R_CURSOR) != 0)
-		return -1;
-
-	ret = db_v1->put(db_v1, (DBT_v1 *) key, (DBT_v1 *) data,
+	ret = db_v1->put(db_v1, &cursor->pos_key, (DBT_v1 *) data,
 		flags == DB_BEFORE? R_IBEFORE : R_IAFTER);
 
 	return ret == -1? errno : ret;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.2 2008/05/20 17:53:18 aymeric Exp $ */
+/*	$NetBSD: db.h,v 1.3 2008/08/05 15:49:18 aymeric Exp $ */
 
 #include <db.h>
 
@@ -136,6 +136,8 @@ struct __db_new {
 
 struct __dbc_new {
 	DB *db;
+	db_recno_t pos;
+	DBT_v1 pos_key;
 	int (*c_close)(DBC *);
 	int (*c_get)(DBC *, DBT *, DBT *, u_int32_t);
 	int (*c_put)(DBC *, DBT *, DBT *, u_int32_t);
