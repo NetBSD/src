@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2008/08/03 01:13:44 rtr Exp $
+#	$NetBSD: Makefile,v 1.11 2008/08/05 05:24:47 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -43,7 +43,22 @@ SUBDIR.iplan=
 SUBDIR=		doc include .WAIT
 SUBDIR+=	dix ${SUBDIR.fb} mi Xext ${SUBDIR.miext} os randr render 
 SUBDIR+=	Xi xkb dbe mfb ${SUBDIR.afb} ${SUBDIR.cfb} record xfixes
-SUBDIR+=	damageext XTrap composite exa config # hw
+SUBDIR+=	damageext XTrap composite exa config hw
+
+# XXX stuff installed by modular-xorg-server we need to deal with:
+#libint10
+#libpcidata
+#libshadow
+#libshadowfb
+#libvbe
+#libvgahw
+#libxaa
+
+#bin/X
+#bin/Xorg
+#bin/Xvfb
+#bin/xorgcfg
+#bin/xorgconfig
 
 .PATH:	${X11SRCDIR.xorg-server}
 
