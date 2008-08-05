@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/04 04:34:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/05 04:49:42 mrg Exp $
+
+# XXX this one is installed in modular-xorg-server
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
