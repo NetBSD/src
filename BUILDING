@@ -130,6 +130,14 @@ CONFIGURATION
                  configuration file in order to set additional build parame-
                  ters, such as compiler flags.
 
+     BUILDSEED   GCC uses random numbers when compiling C++ code.  This vari-
+                 able seeds the gcc random number generator using the -fran-
+                 dom-seed flag with this value.  By default, it is set to
+                 NetBSD-(majorversion).  Using a fixed value causes C++ bina-
+                 ries to be the same when built from the same sources.  Addi-
+                 tional information is available in the GCC documentation of
+                 -frandom-seed.
+
      DESTDIR     Directory to contain the built NetBSD system.  If set, spe-
                  cial options are passed to the compilation tools to prevent
                  their default use of the host system's /usr/include,
@@ -751,6 +759,9 @@ BUILDING
      -r        Remove the contents of DESTDIR and TOOLDIR before building
                (provides a clean starting point).  This will skip deleting
                DESTDIR if building on a native system to the root directory.
+
+     -S seed   Change the value of BUILDSEED to seed.  This should rarely be
+               necessary.
 
      -T tools  Set the value of TOOLDIR to tools.  If a relative path is spec-
                ified, it will be converted to an absolute path before being
