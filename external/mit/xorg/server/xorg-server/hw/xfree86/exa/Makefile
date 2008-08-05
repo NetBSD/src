@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/04 11:41:50 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/05 04:52:19 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -6,7 +6,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules
 .include "../../../Makefile.servermod"
 
 LIB=	exa
-#MAN=	exa.xx
+MAN=	exa.4
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/exa
 SRCS=	examodule.c
@@ -22,6 +22,10 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/pixman-1
 
 CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+
+# XXX
+exa.4: exa.man.pre
+	cp ${.ALLSRC} ${.TARGET}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
