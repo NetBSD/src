@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.60 2008/08/05 19:43:33 perry Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.61 2008/08/05 22:40:33 apb Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd March 18, 2008
+.Dd August 5, 2008
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -220,14 +220,23 @@ Directory to use as the
 for the current directory.
 The value is subjected to variable expansion by
 .Xr make 1 .
+Typical usage is to set this variable to a value involving the use of
+.Sq ${.CURDIR:S...}
+or
+.Sq ${.CURDIR:C...} ,
+to derive the value of
+.Sy .OBJDIR
+from the value of
+.Sy .CURDIR .
 Used only if
 .Sy MAKEOBJDIRPREFIX
 is not defined.
 .Sy MAKEOBJDIR
-can only be provided in the environment or via the
+can be provided only in the environment or via the
 .Fl O
 flag of
-.Nm build.sh .
+.Nm build.sh ;
+it cannot usefully be set inside a Makefile.
 .
 .It Sy MAKEOBJDIRPREFIX
 Top level directory of the object directory tree.
@@ -239,10 +248,11 @@ is used as the
 for the current directory.
 The current directory may be read only.
 .Sy MAKEOBJDIRPREFIX
-can only be provided in the environment or via the
+can be provided only in the environment or via the
 .Fl M
 flag of
-.Nm build.sh .
+.Nm build.sh ;
+it cannot usefully be set inside a Makefile.
 .
 .El
 .
@@ -1341,10 +1351,22 @@ Set
 .Sy MAKEOBJDIRPREFIX
 to
 .Ar obj .
+For instance, if the source directory is
+.Pa /usr/src ,
+a setting of
+.Dq Fl M Pa /usr/obj
+will place build-time files under
+.Pa /usr/obj/usr/src/bin ,
+.Pa /usr/obj/usr/src/lib ,
+.Pa /usr/obj/usr/src/usr.bin ,
+and so forth.
 If a relative path is specified, it will be converted to an
 absolute path before being used.
 Unsets
 .Sy MAKEOBJDIR .
+See
+.Dq Fl O obj
+for more information.
 .
 .It Fl m Ar mach
 Set the value of
@@ -1408,18 +1430,36 @@ Create an appropriate transform macro for
 .Sy MAKEOBJDIR
 that will place the built object files under
 .Ar obj .
+For instance, a setting of
+.Dq Fl O Pa /usr/obj
+will place build-time files under
+.Pa /usr/obj/bin ,
+.Pa /usr/obj/lib ,
+.Pa /usr/obj/usr.bin ,
+and so forth.
 If a relative path is specified, it will be converted to an
 absolute path before being used.
-For instance, a setting of
-.Sy /usr/obj
-will place build-time files under
-.Sy /usr/obj/bin ,
-.Sy /usr/obj/lib ,
-.Sy /usr/obj/usr.bin ,
-and so forth.
 Unsets
 .Sy MAKEOBJDIRPREFIX .
-.
+.Pp
+In normal use, exactly one of the
+.Fl M
+or
+.Fl O
+options should be specified.
+If the source directory is
+.Pa /usr/src
+and neither
+.Fl M
+nor
+.Fl O
+is specified, then a default object directory will be chosen
+according to rules in
+.Aq bsd.obj.mk ;
+this default is usually either
+.Pa /usr/obj
+or
+.Pa /usr/obj. Ns Sy MACHINE .
 .It Fl o
 Set the value of
 .Sy MKOBJDIRS
