@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.18 2008/07/20 01:20:22 lukem Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.19 2008/08/05 20:57:45 pooka Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -93,7 +93,8 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #include <filecorefs/filecore_mount.h>
 
 #include <mntopts.h>
-#include <fattr.h>
+
+#include "mountprog.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,

@@ -1,9 +1,7 @@
-/*	$NetBSD: rump_tmpfs.c,v 1.2 2008/08/05 20:57:46 pooka Exp $	*/
+/*	$NetBSD: pathadj.c,v 1.1 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2008 The NetBSD Foundation.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,36 +25,22 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/mount.h>
-
-#include <fs/tmpfs/tmpfs_args.h>
+#include <sys/param.h>
 
 #include <err.h>
-#include <puffs.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 
-#include <rump/p2k.h>
+#include "mountprog.h"
 
-#include "mount_tmpfs.h"
-
-int
-main(int argc, char *argv[])
+void
+pathadj(const char *input, char *adjusted)
 {
-	struct tmpfs_args args;
-	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
-	int mntflags;
-	int rv;
 
-	setprogname(argv[0]);
-
-	mount_tmpfs_parseargs(argc, argv, &args, &mntflags,
-	    canon_dev, canon_dir);
-	rv = p2k_run_fs(MOUNT_TMPFS, canon_dev, canon_dir, mntflags,
-		&args, sizeof(args), PUFFS_KFLAG_NOCACHE_PAGE);
-	if (rv)
-		err(1, "mount");
-
-	return 0;
+	if (realpath(input, adjusted) == NULL)
+		err(1, "realpath %s", input);
+	if (strncmp(input, adjusted, MAXPATHLEN)) {
+		warnx("\"%s\" is a non-resolved or relative path.", input);
+		warnx("using \"%s\" instead.", adjusted);
+	}
 }

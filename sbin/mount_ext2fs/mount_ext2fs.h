@@ -1,9 +1,7 @@
-/*	$NetBSD: rump_tmpfs.c,v 1.2 2008/08/05 20:57:46 pooka Exp $	*/
+/*	$NetBSD: mount_ext2fs.h,v 1.1 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by Google Summer of Code.
+ * Copyright (c) 2008 The NetBSD Foundation.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,36 +25,13 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/mount.h>
+#ifndef _SBIN_MOUNT_EXT2FS_MOUNT_EXT2FS_H_
+#define _SBIN_MOUNT_EXT2FS_MOUNT_EXT2FS_H_
 
-#include <fs/tmpfs/tmpfs_args.h>
+#include <ufs/ufs/ufsmount.h>
 
-#include <err.h>
-#include <puffs.h>
-#include <stdlib.h>
-#include <unistd.h>
+int	mount_ext2fs(int, char **);
+void	mount_ext2fs_parseargs(int, char **, struct ufs_args *, int *,
+			       char *, char *);
 
-#include <rump/p2k.h>
-
-#include "mount_tmpfs.h"
-
-int
-main(int argc, char *argv[])
-{
-	struct tmpfs_args args;
-	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
-	int mntflags;
-	int rv;
-
-	setprogname(argv[0]);
-
-	mount_tmpfs_parseargs(argc, argv, &args, &mntflags,
-	    canon_dev, canon_dir);
-	rv = p2k_run_fs(MOUNT_TMPFS, canon_dev, canon_dir, mntflags,
-		&args, sizeof(args), PUFFS_KFLAG_NOCACHE_PAGE);
-	if (rv)
-		err(1, "mount");
-
-	return 0;
-}
+#endif /* _SBIN_MOUNT_EXT2FS_MOUNT_EXT2FS_H_ */

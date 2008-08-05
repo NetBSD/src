@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.45 2008/07/29 16:05:05 pooka Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.46 2008/08/05 20:57:45 pooka Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.45 2008/07/29 16:05:05 pooka Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.46 2008/08/05 20:57:45 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,8 +54,8 @@ __RCSID("$NetBSD: mount_msdos.c,v 1.45 2008/07/29 16:05:05 pooka Exp $");
 #include <util.h>
 
 #include <mntopts.h>
-#include <fattr.h>
 
+#include "mountprog.h"
 #include "mount_msdos.h"
 
 static const struct mntopt mopts[] = {
@@ -155,19 +155,8 @@ mount_msdos_parseargs(int argc, char **argv,
 	dev = argv[optind];
 	dir = argv[optind + 1];
 
-	if (realpath(dev, canon_dev) == NULL)        /* Check device path */
-		err(1, "realpath %s", dev);
-	if (strncmp(dev, canon_dev, MAXPATHLEN)) {
-		warnx("\"%s\" is a non-resolved or relative path.", dev);
-		warnx("using \"%s\" instead.", canon_dev);
-	}
-
-	if (realpath(dir, canon_dir) == NULL)        /* Check mounton path */
-		err(1, "realpath %s", dir);
-	if (strncmp(dir, canon_dir, MAXPATHLEN)) {
-		warnx("\"%s\" is a non-resolved or relative path.", dir);
-		warnx("using \"%s\" instead.", canon_dir);
-	}
+	pathadj(dev, canon_dev);
+	pathadj(dir, canon_dir);
 
 	args->fspec = dev;
 	if (!set_gid || !set_uid || !set_mask) {
