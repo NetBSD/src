@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/05 04:50:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2008/08/05 05:25:49 mrg Exp $
 
-SUBDIR=		common ddc doc dummy i2c os-support scanpci 
+SUBDIR=		common ddc doc dummy i2c os-support rac ramdac scanpci 
 SUBDIR+=	.WAIT utils
 
 .include <bsd.subdir.mk>
