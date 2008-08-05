@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.192 2008/08/04 00:53:51 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.193 2008/08/05 01:54:47 lukem Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -176,6 +176,7 @@ LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	${_MKTARGET_CREATE}
 	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
+	    -e "s/^tmp_//" \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${_LINTASM}
 
 LintSysNoerr.c: ${.CURDIR}/sys/makelintstub \
