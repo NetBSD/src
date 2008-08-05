@@ -1,5 +1,5 @@
 #!/bin/sh -
-# $NetBSD: makelintstub,v 1.22 2008/08/05 01:54:47 lukem Exp $
+# $NetBSD: makelintstub,v 1.23 2008/08/05 02:08:13 lukem Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou
 # All rights reserved.
@@ -37,10 +37,7 @@ usage()
 {
 
 cat << _EOF 1>&2
-Usage: $PROG [-n|-p] [-e sedcmd] [-o filename] [-s syscall.h] object ...
-	-e sedcmd	sed(1) command to translate filename to syscall name.
-			The ".S" suffix is always removed.
-			Multiple sed commands may be supplied.
+Usage: $PROG [-n|-p] [-o filename] [-s syscall.h] object ...
 	-n		Create SYSCALL_NOERROR.
 	-p		Create PSEUDO_NOERROR.
 			(also removes leading "_" on syscall name).
@@ -192,7 +189,6 @@ trailer()
 pflag=false
 nflag=false
 oarg=""
-fnsedcmd=""
 syscallhdr=/usr/include/sys/syscall.h
 syscalldump=/tmp/makelintstub.$$
 PROG="$(basename "$0")"
@@ -201,10 +197,9 @@ if [ -z "${CPP}" ]; then
 	usage
 fi
 
-while getopts e:no:ps: i
+while getopts no:ps: i
 do
 	case "$i" in
-	e)	fnsedcmd="$fnsedcmd -e $OPTARG";;
 	n)	nflag=true;;
 	o)	oarg=$OPTARG;;
 	p)	pflag=true;;
@@ -233,9 +228,6 @@ echo "#include \"$syscallhdr\"" | ${CPP} -D_LIBC -C > $syscalldump
 
 for syscall; do
 	fnname=${syscall%.S}
-	if [ -n "$fnsedcmd" ]; then
-		fnname=$(echo "$fnname" | sed $fnsedcmd)
-	fi
 	if $pflag; then
 		scname=${fnname#_}
 	else
