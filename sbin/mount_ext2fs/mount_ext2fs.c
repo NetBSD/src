@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ext2fs.c,v 1.20 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: mount_ext2fs.c,v 1.21 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ext2fs.c,v 1.20 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: mount_ext2fs.c,v 1.21 2008/08/05 20:57:45 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,10 @@ __RCSID("$NetBSD: mount_ext2fs.c,v 1.20 2008/07/20 01:20:22 lukem Exp $");
 
 #include <mntopts.h>
 
+#include "mountprog.h"
+#include "mount_ext2fs.h"
+
 static void	ext2fs_usage(void);
-int	mount_ext2fs(int argc, char **argv);
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -76,25 +78,27 @@ static const struct mntopt mopts[] = {
 int
 main(int argc, char *argv[])
 {
+
+	setprogname(argv[0]);
 	return mount_ext2fs(argc, argv);
 }
 #endif
 
-int
-mount_ext2fs(int argc, char *argv[])
+void
+mount_ext2fs_parseargs(int argc, char *argv[],
+	struct ufs_args *args, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	struct ufs_args args;		/* XXX ffs_args */
-	int ch, mntflags;
-	char fs_name[MAXPATHLEN], canon_dev[MAXPATHLEN];
-	const char *errcause;
+	int ch;
 	mntoptparse_t mp;
 
-	mntflags = 0;
+	memset(args, 0, sizeof(*args));
+	*mntflags = 0;
 	optind = optreset = 1;		/* Reset for parse of new argv. */
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, mntflags, 0);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
@@ -109,20 +113,22 @@ mount_ext2fs(int argc, char *argv[])
 	if (argc != 2)
 		ext2fs_usage();
 
-	if (realpath(argv[0], canon_dev) == NULL)     /* Check device path */
-		err(1, "realpath %s", argv[0]);
-	if (strncmp(argv[0], canon_dev, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[0]);
-		warnx("using \"%s\" instead.", canon_dev);
-	}
-	args.fspec = canon_dev;
+	pathadj(argv[0], canon_dev);
+	args->fspec = canon_dev;
 
-	if (realpath(argv[1], fs_name) == NULL)       /* Check mounton path */
-		err(1, "realpath %s", argv[1]);
-	if (strncmp(argv[1], fs_name, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[1]);
-		warnx("using \"%s\" instead.", fs_name);
-	}
+	pathadj(argv[1], canon_dir);
+}
+
+int
+mount_ext2fs(int argc, char *argv[])
+{
+	struct ufs_args args;		/* XXX ffs_args */
+	char fs_name[MAXPATHLEN], canon_dev[MAXPATHLEN];
+	const char *errcause;
+	int mntflags;
+
+	mount_ext2fs_parseargs(argc, argv, &args, &mntflags,
+	    canon_dev, fs_name);
 
 	if (mount(MOUNT_EXT2FS, fs_name, mntflags, &args, sizeof args) == -1) {
 		switch (errno) {
@@ -149,6 +155,6 @@ static void
 ext2fs_usage(void)
 {
 	(void)fprintf(stderr,
-		"usage: mount_ext2fs [-o options] special node\n");
+		"usage: %s [-o options] special node\n", getprogname());
 	exit(1);
 }

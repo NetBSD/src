@@ -1,4 +1,4 @@
-/* $NetBSD: mount_udf.c,v 1.11 2007/12/15 19:44:46 perry Exp $ */
+/* $NetBSD: mount_udf.c,v 1.12 2008/08/05 20:57:45 pooka Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_udf.c,v 1.11 2007/12/15 19:44:46 perry Exp $");
+__RCSID("$NetBSD: mount_udf.c,v 1.12 2008/08/05 20:57:45 pooka Exp $");
 #endif /* not lint */
 
 
@@ -60,8 +60,9 @@ __RCSID("$NetBSD: mount_udf.c,v 1.11 2007/12/15 19:44:46 perry Exp $");
 /* mount specific options */
 #include <fs/udf/udf_mount.h>
 #include <mntopts.h>
-#include <fattr.h>
 
+#include "mountprog.h"
+#include "mount_udf.h"
 
 /* options to pass on to the `mount' call */
 static const struct mntopt mopts[] = {
@@ -75,7 +76,6 @@ static const struct mntopt mopts[] = {
 
 
 /* prototypes */
-int		mount_udf(int argc, char **argv);
 static void	usage(void) __dead;
 
 
@@ -90,37 +90,35 @@ usage(void)
 }
 
 
-/* copied from mount_msdos; is it necessary still? */
 #ifndef MOUNT_NOMAIN
 int
 main(int argc, char **argv)
 {
+
+	setprogname(argv[0]);
 	return mount_udf(argc, argv);
 }
 #endif
 
 
 /* main routine */
-int
-mount_udf(int argc, char **argv)
+void
+mount_udf_parseargs(int argc, char **argv,
+	struct udf_args *args, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	struct udf_args args;
 	struct tm *tm;
 	time_t	 now;
 	uid_t	 anon_uid, nobody_uid;
 	gid_t	 anon_gid, nobody_gid;
-	char	*dev, *dir;
-	int	 ch, mntflags, set_gmtoff;
+	int	 ch, set_gmtoff;
 	uint32_t sector_size;
 	mntoptparse_t mp;
 
-	/* set program name for error messages */
-	setprogname(argv[0]);
-
 	/* initialise */
-	(void)memset(&args, 0, sizeof(args));
+	(void)memset(args, 0, sizeof(*args));
 
-	set_gmtoff = mntflags = 0;
+	set_gmtoff = *mntflags = 0;
 	sector_size = 0;
 
 	/* get nobody */
@@ -135,7 +133,7 @@ mount_udf(int argc, char **argv)
 		switch (ch) {
 #ifdef notyet
 		case 'c' :
-			args.udfmflags |= UDFMNT_CLOSESESSION;
+			args->udfmflags |= UDFMNT_CLOSESESSION;
 			break;
 #endif
 		case 'g' :
@@ -148,16 +146,16 @@ mount_udf(int argc, char **argv)
 			break;
 		case 'o' :
 			/* process generic mount options */
-			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, mntflags, 0);
 			if (mp == NULL)
 				err(EXIT_FAILURE, "getmntopts");
 			freemntopts(mp);
 			break;
 		case 's' :
-			args.sessionnr = a_num(optarg, "session number");
+			args->sessionnr = a_num(optarg, "session number");
 			break;
 		case 't' :
-			args.gmtoff = a_num(optarg, "gmtoff");
+			args->gmtoff = a_num(optarg, "gmtoff");
 			set_gmtoff  = 1;
 			break;
 		default  :
@@ -173,24 +171,34 @@ mount_udf(int argc, char **argv)
 		/* use user's time zone as default */
 		(void)time(&now);
 		tm = localtime(&now);
-		args.gmtoff = tm->tm_gmtoff;
+		args->gmtoff = tm->tm_gmtoff;
 	}
 
 	/* get device and directory specifier */
-	dev = argv[optind];
-	dir = argv[optind + 1];
+	pathadj(argv[optind], canon_dev);
+	pathadj(argv[optind+1], canon_dir);
 
-	args.version = UDFMNT_VERSION;
-	args.fspec = dev;
-	args.anon_uid    = anon_uid;
-	args.anon_gid    = anon_gid;
-	args.nobody_uid  = nobody_uid;
-	args.nobody_gid  = nobody_gid;
-	args.sector_size = sector_size;		/* invalid */
+	args->version = UDFMNT_VERSION;
+	args->fspec = canon_dev;
+	args->anon_uid    = anon_uid;
+	args->anon_gid    = anon_gid;
+	args->nobody_uid  = nobody_uid;
+	args->nobody_gid  = nobody_gid;
+	args->sector_size = sector_size;		/* invalid */
+}
+
+int
+mount_udf(int argc, char *argv[])
+{
+	struct udf_args args;
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	int mntflags;
+
+	mount_udf_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
 
 	/* mount it! :) */
-	if (mount(MOUNT_UDF, dir, mntflags, &args, sizeof args) == -1)
-		err(EXIT_FAILURE, "Cannot mount %s on %s", dev, dir);
+	if (mount(MOUNT_UDF, canon_dir, mntflags, &args, sizeof args) == -1)
+		err(EXIT_FAILURE, "Cannot mount %s on %s", canon_dev,canon_dir);
 
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];

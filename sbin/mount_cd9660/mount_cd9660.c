@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.27 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.28 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.27 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.28 2008/08/05 20:57:45 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,9 @@ __RCSID("$NetBSD: mount_cd9660.c,v 1.27 2008/07/20 01:20:22 lukem Exp $");
 
 #include <mntopts.h>
 
+#include "mountprog.h"
+#include "mount_cd9660.h"
+
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_UPDATE,
@@ -78,26 +81,29 @@ static const struct mntopt mopts[] = {
 	MOPT_NULL,
 };
 
-int	mount_cd9660(int argc, char **argv);
 static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int
 main(int argc, char **argv)
 {
+
+	setprogname(argv[0]);
 	return mount_cd9660(argc, argv);
 }
 #endif
 
-int
-mount_cd9660(int argc, char **argv)
+void
+mount_cd9660_parseargs(int argc, char **argv,
+	struct iso_args *args, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	struct iso_args args;
-	int ch, mntflags, opts;
+	int ch, opts;
 	mntoptparse_t mp;
-	char *dev, *dir, canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	char *dev, *dir;
 
-	mntflags = opts = 0;
+	*mntflags = opts = 0;
+	memset(args, 0, sizeof(*args));
 	while ((ch = getopt(argc, argv, "egijo:r")) != -1)
 		switch (ch) {
 		case 'e':
@@ -116,7 +122,7 @@ mount_cd9660(int argc, char **argv)
 			opts |= ISOFSMNT_NOJOLIET;
 			break;
 		case 'o':
-			mp = getmntopts(optarg, mopts, &mntflags, &opts);
+			mp = getmntopts(optarg, mopts, mntflags, &opts);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
@@ -139,37 +145,36 @@ mount_cd9660(int argc, char **argv)
 	dev = argv[0];
 	dir = argv[1];
 
-	if (realpath(dev, canon_dev) == NULL)        /* Check device path */
-		err(1, "realpath %s", dev);
-	if (strncmp(dev, canon_dev, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", dev);
-		dev = canon_dev;
-		warnx("using \"%s\" instead.", dev);
-	}
-
-	if (realpath(dir, canon_dir) == NULL)        /* Check mounton path */
-		err(1, "realpath %s", dir);
-	if (strncmp(dir, canon_dir, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", dir);
-		dir = canon_dir;
-		warnx("using \"%s\" instead.", dir);
-	}
+	pathadj(dev, canon_dev);
+	pathadj(dir, canon_dir);
 
 #define DEFAULT_ROOTUID	-2
 	/*
 	 * ISO 9660 filesystems are not writable.
 	 */
-	mntflags |= MNT_RDONLY;
-	args.fspec = dev;
-	args.flags = opts;
+	*mntflags |= MNT_RDONLY;
+	args->fspec = dev;
+	args->flags = opts;
+}
 
-	if (mount(MOUNT_CD9660, dir, mntflags, &args, sizeof args) == -1)
-		err(1, "%s on %s", dev, dir);
+int
+mount_cd9660(int argc, char **argv)
+{
+	struct iso_args args;
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	int mntflags;
+
+	mount_cd9660_parseargs(argc, argv, &args, &mntflags,
+	    canon_dev, canon_dir);
+
+	if (mount(MOUNT_CD9660, canon_dir, mntflags, &args, sizeof args) == -1)
+		err(1, "%s on %s", canon_dev, canon_dir);
 	if (mntflags & MNT_GETARGS) {
 		char buf[2048];
 		(void)snprintb(buf, sizeof(buf), ISOFSMNT_BITS, args.flags);
 		printf("%s\n", buf);
 	}
+
 	exit(0);
 }
 
@@ -177,6 +182,6 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"usage: mount_cd9660 [-o options] special node\n");
+		"usage: %s [-o options] special node\n", getprogname());
 	exit(1);
 }

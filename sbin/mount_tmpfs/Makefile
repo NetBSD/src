@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2008/07/28 12:42:12 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/05 20:57:45 pooka Exp $
 
 .include <bsd.own.mk>
 
 PROG=		mount_tmpfs
-SRCS=		mount_tmpfs.c fattr.c
+SRCS=		mount_tmpfs.c fattr.c pathadj.c
 MAN=		mount_tmpfs.8
 
 MOUNT=		${NETBSDSRCDIR}/sbin/mount

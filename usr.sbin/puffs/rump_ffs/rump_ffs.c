@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_ffs.c,v 1.1 2008/07/29 13:17:47 pooka Exp $	*/
+/*	$NetBSD: rump_ffs.c,v 1.2 2008/08/05 20:57:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -39,66 +39,21 @@
 
 #include <rump/p2k.h>
 
-/* XXX: figure out a proper way to share code/integrate with mount_ffs */
-static const struct mntopt ffsmopts[] = {
-	MOPT_STDOPTS,
-	MOPT_ASYNC,
-	MOPT_SYNC,
-	MOPT_UPDATE,
-	MOPT_RELOAD,
-	MOPT_NOATIME,
-	MOPT_NODEVMTIME,
-	MOPT_FORCE,
-	MOPT_SOFTDEP,
-	MOPT_GETARGS,
-	MOPT_NULL,
-};
-
-static void
-usage(void)
-{
-
-	errx(1, "usage: %s [-o opts] dev mountpath", getprogname());
-}
+#include "mount_ffs.h"
 
 int
 main(int argc, char *argv[])
 {
 	struct ufs_args args;
-	mntoptparse_t mp;
-	int mntflags, pflags;
-	int rv, ch;
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	int mntflags;
+	int rv;
 
 	setprogname(argv[0]);
-	getmnt_silent = 1;
 
-	mntflags = pflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != -1) {
-		switch (ch) {
-		case 'o':
-			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
-			if (mp == NULL) {
-				mp = getmntopts(optarg, ffsmopts, &mntflags, 0);
-				if (mp == NULL)
-					err(1, "getmntops");
-			}
-			freemntopts(mp);
-			break;
-		default:
-			usage();
-			/* NOTREACHED */
-		}
-	}
-	argc -= optind;
-	argv += optind;
-	if (argc != 2)
-		usage();
-
-	memset(&args, 0, sizeof(args));
-	args.fspec = argv[0];
-
-	rv = p2k_run_fs(MOUNT_FFS, argv[0], argv[1], mntflags,
-	    &args, sizeof(args), pflags);
+	mount_ffs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
+	rv = p2k_run_fs(MOUNT_FFS, canon_dev, canon_dir, mntflags,
+	    &args, sizeof(args), 0);
 	if (rv)
 		err(1, "mount");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.32 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.33 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.32 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.33 2008/08/05 20:57:45 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,8 @@ __RCSID("$NetBSD: mount_lfs.c,v 1.32 2008/07/20 01:20:22 lukem Exp $");
 
 #include <mntopts.h>
 #include "pathnames.h"
+#include "mountprog.h"
+#include "mount_lfs.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -69,38 +71,40 @@ static const struct mntopt mopts[] = {
 	MOPT_NULL,
 };
 
-int		mount_lfs(int, char *[]);
-static void	invoke_cleaner(char *);
 static void	usage(void);
+
+#ifdef WANT_CLEANER
+static void	invoke_cleaner(char *);
 static void	kill_daemon(char *);
 static void	kill_cleaner(char *);
+#endif /* WANT_CLEANER */
 
-static int short_rds, cleaner_debug, cleaner_bytes, fs_idle;
+static int short_rds, cleaner_debug, cleaner_bytes, fs_idle, noclean;
 static const char *nsegs;
 
 #ifndef MOUNT_NOMAIN
 int
 main(int argc, char **argv)
 {
+
+	setprogname(argv[0]);
 	return mount_lfs(argc, argv);
 }
 #endif
 
-int
-mount_lfs(int argc, char *argv[])
+void
+mount_lfs_parseargs(int argc, char *argv[],
+	struct ufs_args *args, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	struct ufs_args args;
-	int ch, mntflags, noclean, mntsize, oldflags, i;
-	char fs_name[MAXPATHLEN], canon_dev[MAXPATHLEN];
+	int ch;
 	char *options;
 	mntoptparse_t mp;
 
-	const char *errcause;
-	struct statvfs *mntbuf;
-
+	memset(args, 0, sizeof(*args));
 	options = NULL;
 	nsegs = "4";
-	mntflags = noclean = 0;
+	*mntflags = noclean = 0;
 	cleaner_bytes = 1;
 	while ((ch = getopt(argc, argv, "bdiN:no:s")) != -1)
 		switch (ch) {
@@ -120,7 +124,7 @@ mount_lfs(int argc, char *argv[])
 			nsegs = optarg;
 			break;
 		case 'o':
-			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, mntflags, 0);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
@@ -138,20 +142,23 @@ mount_lfs(int argc, char *argv[])
 	if (argc != 2)
 		usage();
 
-	if (realpath(argv[0], canon_dev) == NULL)     /* Check device path */
-		err(1, "realpath %s", argv[0]);
-	if (strncmp(argv[0], canon_dev, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[0]);
-		warnx("using \"%s\" instead.", canon_dev);
-	}
-	args.fspec = canon_dev;
+	pathadj(argv[0], canon_dev);
+	args->fspec = canon_dev;
 
-	if (realpath(argv[1], fs_name) == NULL)      /* Check mounton path */
-		err(1, "realpath %s", argv[1]);
-	if (strncmp(argv[1], fs_name, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[1]);
-		warnx("using \"%s\" instead.", fs_name);
-	}
+	pathadj(argv[1], canon_dir);
+}
+
+int
+mount_lfs(int argc, char *argv[])
+{
+	struct ufs_args args;
+	int mntflags;
+	int mntsize, oldflags, i;
+	char fs_name[MAXPATHLEN], canon_dev[MAXPATHLEN];
+	struct statvfs *mntbuf;
+	const char *errcause;
+
+	mount_lfs_parseargs(argc, argv, &args, &mntflags, canon_dev, fs_name);
 
 	/*
 	 * Record the previous status of this filesystem (if any) before
@@ -189,6 +196,7 @@ mount_lfs(int argc, char *argv[])
 		errx(1, "%s on %s: %s", args.fspec, fs_name, errcause);
 	}
 
+#ifdef WANT_CLEANER
 	/* Not mounting fresh or upgrading to r/w; don't start the cleaner */
 	if (!(oldflags & MNT_RDONLY) || (mntflags & MNT_RDONLY)
 	    || (mntflags & MNT_GETARGS))
@@ -200,10 +208,12 @@ mount_lfs(int argc, char *argv[])
 	/* Downgrade to r/o; kill the cleaner */
 	if ((mntflags & MNT_RDONLY) && !(oldflags & MNT_RDONLY))
 		kill_cleaner(fs_name);
+#endif /* WANT_CLEANER */
 
 	exit(0);
 }
 
+#ifdef WANT_CLEANER
 static void
 kill_daemon(char *pidname)
 {
@@ -274,6 +284,7 @@ invoke_cleaner(char *name)
 	execv(args[0], __UNCONST(args));
 	err(1, "exec %s", _PATH_LFS_CLEANERD);
 }
+#endif /* WANT_CLEANER */
 
 static void
 usage(void)
