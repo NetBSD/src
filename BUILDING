@@ -108,17 +108,21 @@ CONFIGURATION
 
      MAKEOBJDIR        Directory to use as the .OBJDIR for the current direc-
                        tory.  The value is subjected to variable expansion by
-                       make(1).  Used only if MAKEOBJDIRPREFIX is not defined.
-                       MAKEOBJDIR can only be provided in the environment or
-                       via the -O flag of build.sh.
+                       make(1).  Typical usage is to set this variable to a
+                       value involving the use of `${.CURDIR:S...}' or
+                       `${.CURDIR:C...}', to derive the value of .OBJDIR from
+                       the value of .CURDIR.  Used only if MAKEOBJDIRPREFIX is
+                       not defined.  MAKEOBJDIR can be provided only in the
+                       environment or via the -O flag of build.sh; it cannot
+                       usefully be set inside a Makefile.
 
      MAKEOBJDIRPREFIX  Top level directory of the object directory tree.  If
                        specified, must be an absolute path.  If this is
                        defined, ${MAKEOBJDIRPREFIX}/${.CURDIR} is used as the
                        .OBJDIR for the current directory.  The current direc-
-                       tory may be read only.  MAKEOBJDIRPREFIX can only be
-                       provided in the environment or via the -M flag of
-                       build.sh.
+                       tory may be read only.  MAKEOBJDIRPREFIX can be pro-
+                       vided only in the environment or via the -M flag of
+                       build.sh; it cannot usefully be set inside a Makefile.
 
    "make" variables
      Several variables control the behavior of NetBSD builds.  Unless other-
@@ -704,9 +708,13 @@ BUILDING
                failures with -j, please save complete build logs so the fail-
                ures can be analyzed.
 
-     -M obj    Set MAKEOBJDIRPREFIX to obj.  If a relative path is specified,
-               it will be converted to an absolute path before being used.
-               Unsets MAKEOBJDIR.
+     -M obj    Set MAKEOBJDIRPREFIX to obj.  For instance, if the source
+               directory is /usr/src, a setting of ``-M /usr/obj'' will place
+               build-time files under /usr/obj/usr/src/bin,
+               /usr/obj/usr/src/lib, /usr/obj/usr/src/usr.bin, and so forth.
+               If a relative path is specified, it will be converted to an
+               absolute path before being used.  Unsets MAKEOBJDIR.  See ``-O
+               -obj'' for more information.
 
      -m mach   Set the value of MACHINE to mach, except in some special cases
                listed below.  This will also override any value of
@@ -742,11 +750,17 @@ BUILDING
                -n''.
 
      -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
-               place the built object files under obj.  If a relative path is
-               specified, it will be converted to an absolute path before
-               being used.  For instance, a setting of /usr/obj will place
-               build-time files under /usr/obj/bin, /usr/obj/lib,
-               /usr/obj/usr.bin, and so forth.  Unsets MAKEOBJDIRPREFIX.
+               place the built object files under obj.  For instance, a set-
+               ting of ``-O /usr/obj'' will place build-time files under
+               /usr/obj/bin, /usr/obj/lib, /usr/obj/usr.bin, and so forth.  If
+               a relative path is specified, it will be converted to an abso-
+               lute path before being used.  Unsets MAKEOBJDIRPREFIX.
+
+               In normal use, exactly one of the -M or -O options should be
+               specified.  If the source directory is /usr/src and neither -M
+               nor -O is specified, then a default object directory will be
+               chosen according to rules in <bsd.obj.mk>; this default is usu-
+               ally either /usr/obj or /usr/obj.MACHINE.
 
      -o        Set the value of MKOBJDIRS to ``no''.  Otherwise, it will be
                automatically set to ``yes''.  This default is opposite to the
@@ -852,4 +866,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                          March 18, 2008                          NetBSD
+NetBSD                          August 5, 2008                          NetBSD
