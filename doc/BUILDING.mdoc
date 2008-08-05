@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.59 2008/04/30 13:10:49 martin Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.60 2008/08/05 19:43:33 perry Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -288,6 +288,16 @@ object directory names, and can be consulted in the
 .Xr make 1
 configuration file in order to set additional build parameters,
 such as compiler flags.
+.
+.It Sy BUILDSEED
+GCC uses random numbers when compiling C++ code.
+This variable seeds the gcc random number generator using
+the -frandom-seed flag with this value.
+By default, it is set to NetBSD-(majorversion).
+Using a fixed value causes C++ binaries to be the same when
+built from the same sources.
+Additional information is available in the GCC
+documentation of -frandom-seed.
 .
 .It Sy DESTDIR
 Directory to contain the built
@@ -1437,6 +1447,13 @@ before building (provides a clean starting point).
 This will skip deleting
 .Sy DESTDIR
 if building on a native system to the root directory.
+.
+.It Fl S Ar seed
+Change the value of
+.Sy BUILDSEED
+to
+.Ar seed .
+This should rarely be necessary.
 .
 .It Fl T Ar tools
 Set the value of
