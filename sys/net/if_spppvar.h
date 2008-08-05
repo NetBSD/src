@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.13 2008/08/04 12:03:14 christos Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.14 2008/08/05 23:56:31 degroote Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -71,12 +71,8 @@ struct sauth {
 #define	IDX_IPCP	1		/* idx into state table */
 #define	IDX_PAP		2		/* idx into state table */
 #define	IDX_CHAP	3		/* idx into state table */
-#ifdef	INET6
 #define	IDX_IPV6CP 	4		/* idx into state table */
 #define	IDX_COUNT	5		/* bump this when adding cp's! */
-#else
-#define	IDX_COUNT 	4		/* bump this when adding cp's! */
-#endif
 
 struct sppp {
 	/* NB: pp_if _must_ be first */
