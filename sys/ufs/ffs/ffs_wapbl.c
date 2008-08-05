@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.4 2008/08/04 15:55:11 simonb Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.5 2008/08/05 13:39:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.4 2008/08/04 15:55:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.5 2008/08/05 13:39:29 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -341,7 +341,7 @@ ffs_wapbl_start(struct mount *mp)
 
 			/* XXX any other consistancy checks here? */
 			if (blksize != DEV_BSIZE) {
-				printf("%s: bad blocksize %zd\n", __func__,
+				printf("%s: bad blocksize %zu\n", __func__,
 				    blksize);
 				return EINVAL;
 			}
@@ -523,8 +523,8 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 			*startp = fs->fs_journallocs[UFS_WAPBL_EPART_ADDR];
 			*countp = fs->fs_journallocs[UFS_WAPBL_EPART_COUNT];
 			*blksizep = fs->fs_journallocs[UFS_WAPBL_EPART_BLKSZ];
-			DPRINTF(" start = %" PRId64 ", size = %zd, "
-			    "blksize = %zd\n", *startp, *countp, *blksizep);
+			DPRINTF(" start = %" PRId64 ", size = %zu, "
+			    "blksize = %zu\n", *startp, *countp, *blksizep);
 			return 0;
 
 		case UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM:
@@ -532,8 +532,8 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 			*startp = fs->fs_journallocs[UFS_WAPBL_INFS_ADDR];
 			*countp = fs->fs_journallocs[UFS_WAPBL_INFS_COUNT];
 			*blksizep = fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ];
-			DPRINTF(" start = %" PRId64 ", size = %zd, "
-			    "blksize = %zd\n", *startp, *countp, *blksizep);
+			DPRINTF(" start = %" PRId64 ", size = %zu, "
+			    "blksize = %zu\n", *startp, *countp, *blksizep);
 			return 0;
 
 		default:
