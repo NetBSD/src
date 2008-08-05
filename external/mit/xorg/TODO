@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.7 2008/08/05 05:25:57 mrg Exp $
+$NetBSD: TODO,v 1.8 2008/08/05 05:58:52 mrg Exp $
 
 plan:
 	- build modular-xorg stuff with reach over
@@ -40,7 +40,7 @@ Xserver
 			ddc dummy os-support scanpci utils
 		- vfb not done
 		- xfree86 not done:
-			dixmods dri fbdevhw int10 loader modes shadowfb vbe vgahw x86emu xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp
+			dixmods modes shadowfb vbe vgahw x86emu xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp
 		- xgl
 
 
