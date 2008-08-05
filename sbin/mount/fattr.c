@@ -1,4 +1,4 @@
-/* $NetBSD: fattr.c,v 1.8 2008/04/28 20:23:09 martin Exp $ */
+/* $NetBSD: fattr.c,v 1.9 2008/08/05 20:57:45 pooka Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fattr.c,v 1.8 2008/04/28 20:23:09 martin Exp $");
+__RCSID("$NetBSD: fattr.c,v 1.9 2008/08/05 20:57:45 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: fattr.c,v 1.8 2008/04/28 20:23:09 martin Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "fattr.h"
+#include "mountprog.h"
 
 int
 a_num(const char *s, const char *id_type)

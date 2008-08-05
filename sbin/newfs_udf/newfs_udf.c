@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.4 2008/07/26 20:20:56 reinoud Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.5 2008/08/05 20:57:45 pooka Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -47,7 +47,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <util.h>
-#include <fattr.h>
 #include <time.h>
 #include <assert.h>
 #include <err.h>
@@ -63,6 +62,8 @@
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
+
+#include "mountprog.h"
 #include "udf_create.h"
 
 /* general settings */

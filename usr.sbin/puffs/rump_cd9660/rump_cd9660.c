@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_cd9660.c,v 1.1 2008/07/29 13:17:47 pooka Exp $	*/
+/*	$NetBSD: rump_cd9660.c,v 1.2 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -38,20 +38,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mount_cd9660.h"
+
 int
 main(int argc, char *argv[])
 {
 	struct iso_args args;
-	int rv;
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	int rv, mntflags;
 
 	setprogname(argv[0]);
-	if (argc != 3)
-		errx(1, "usage: %s dev mountpath", getprogname());
 
-	memset(&args, 0, sizeof(args));
-	args.fspec = argv[1];
-
-	rv = p2k_run_fs(MOUNT_CD9660, argv[1], argv[2], MNT_RDONLY,
+	mount_cd9660_parseargs(argc, argv, &args, &mntflags,
+	    canon_dev, canon_dir);
+	rv = p2k_run_fs(MOUNT_CD9660, canon_dev, canon_dir, MNT_RDONLY,
 	    &args, sizeof(args), 0);
 	if (rv)
 		err(1, "mount");

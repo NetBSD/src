@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2008/07/29 13:17:47 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2008/08/05 20:57:45 pooka Exp $
 
 USE_FORT?= yes	# network client
 
@@ -7,9 +7,21 @@ USE_FORT?= yes	# network client
 .endif
 
 .ifdef(ISRUMP)
+.ifdef(MOUNTNAME)
+LDADD+=		-lrumpfs_${MOUNTNAME}
+PROG=		rump_${MOUNTNAME}
+MOUNTDIR=	${.CURDIR}/../../../sbin
+MOUNT=		${MOUNTDIR}/mount
+CPPFLAGS+=	-I${MOUNTDIR}/mount_${MOUNTNAME} -I${MOUNT} -DMOUNT_NOMAIN
+SRCS+=		mount_${MOUNTNAME}.c rump_${MOUNTNAME}.c pathadj.c fattr.c
+.PATH:		${MOUNT} ${MOUNTDIR}/mount_${MOUNTNAME}
+.endif # MOUNTNAME
+
 LDADD+=		-lp2k -lukfs -lrump -lrumpuser -lpuffs -lutil -lpthread
+
 DPADD+=		${LIBP2K} ${LIBUKFS} ${LIBRUMP} ${LIBRUMPUSER} ${LIBPUFFS}
 DPADD+=		${LIBUTIL} ${LIBPTHREAD}
+
 LDFLAGS+=	-Wl,--wrap=malloc
 NOMAN=		# temporary
-.endif
+.endif # ISRUMP
