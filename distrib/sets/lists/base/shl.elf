@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.150 2008/07/29 13:17:40 pooka Exp $
+# $NetBSD: shl.elf,v 1.151 2008/08/05 14:42:03 pooka Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -210,8 +210,8 @@
 ./usr/lib/librt.so.0				base-sys-shlib
 ./usr/lib/librump.so				base-sys-shlib
 ./usr/lib/librump.so.0				base-sys-shlib
-./usr/lib/librumpfs_cd9660fs.so			base-sys-shlib
-./usr/lib/librumpfs_cd9660fs.so.0		base-sys-shlib
+./usr/lib/librumpfs_cd9660.so			base-sys-shlib
+./usr/lib/librumpfs_cd9660.so.0			base-sys-shlib
 ./usr/lib/librumpfs_efs.so			base-sys-shlib
 ./usr/lib/librumpfs_efs.so.0			base-sys-shlib
 ./usr/lib/librumpfs_ext2fs.so			base-sys-shlib
@@ -222,8 +222,8 @@
 ./usr/lib/librumpfs_hfs.so.0			base-sys-shlib
 ./usr/lib/librumpfs_lfs.so			base-sys-shlib
 ./usr/lib/librumpfs_lfs.so.0			base-sys-shlib
-./usr/lib/librumpfs_msdosfs.so			base-sys-shlib
-./usr/lib/librumpfs_msdosfs.so.0		base-sys-shlib
+./usr/lib/librumpfs_msdos.so			base-sys-shlib
+./usr/lib/librumpfs_msdos.so.0			base-sys-shlib
 ./usr/lib/librumpfs_ntfs.so			base-sys-shlib
 ./usr/lib/librumpfs_ntfs.so.0			base-sys-shlib
 ./usr/lib/librumpfs_syspuffs.so			base-sys-shlib
