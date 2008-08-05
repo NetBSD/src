@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.189 2008/06/27 21:38:36 dyoung Exp $
+#	$NetBSD: build.sh,v 1.190 2008/08/05 19:43:33 perry Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -240,6 +240,10 @@ initdefaults()
 	# Find the version of NetBSD
 	#
 	DISTRIBVER="$(${HOST_SH} ${TOP}/sys/conf/osrelease.sh)"
+
+	# Set the BUILDSEED to NetBSD-"N"
+	#
+	setmakeenv BUILDSEED "NetBSD-$(${HOST_SH} ${TOP}/sys/conf/osrelease.sh -m)"
 
 	# Set various environment variables to known defaults,
 	# to minimize (cross-)build problems observed "in the field".
@@ -509,9 +513,10 @@ usage()
 	fi
 	cat <<_usage_
 
-Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras] [-D dest]
-		[-j njob] [-M obj] [-m mach] [-N noisy] [-O obj] [-R release]
-		[-T tools] [-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
+Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
+		[-D dest] [-j njob] [-M obj] [-m mach] [-N noisy]
+		[-O obj] [-R release] [-S seed] [-T tools]
+		[-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
 		operation [...]
 
  Build operations (all imply "obj" and "tools"):
@@ -562,6 +567,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras] [-D dest]
     -o          Set MKOBJDIRS=no; do not create objdirs at start of build.
     -R release  Set RELEASEDIR to release.  [Default: releasedir]
     -r          Remove contents of TOOLDIR and DESTDIR before building.
+    -S seed     Set BUILDSEED to seed.  [Default: NetBSD-majorversion]
     -T tools    Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
                 the environment, ${toolprefix}make will be (re)built unconditionally.
     -U          Set MKUNPRIVED=yes; build without requiring root privileges,
@@ -581,7 +587,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:bC:D:dEhi:j:k:M:m:N:nO:oR:rT:tUuV:w:xX:Z:'
+	opts='a:B:bC:D:dEhi:j:k:M:m:N:nO:oR:rS:T:tUuV:w:xX:Z:'
 	opt_a=no
 
 	if type getopts >/dev/null 2>&1; then
@@ -705,6 +711,11 @@ parseoptions()
 		-r)
 			do_removedirs=true
 			do_rebuildmake=true
+			;;
+
+		-S)
+			eval ${optargcmd}
+			setmakeenv BUILDSEED "${OPTARG}"
 			;;
 
 		-T)
@@ -1141,7 +1152,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.189 2008/06/27 21:38:36 dyoung Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.190 2008/08/05 19:43:33 perry Exp $
 # with these arguments: ${_args}
 #
 
