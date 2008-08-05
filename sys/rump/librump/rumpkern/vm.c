@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.35 2008/08/04 15:02:16 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.36 2008/08/05 13:06:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -507,7 +507,10 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 		KASSERT(pg->flags & PG_BUSY);
 		if (pg->flags & PG_WANTED)
 			wakeup(pg);
-		pg->flags &= ~(PG_WANTED|PG_BUSY);
+		if (pg->flags & PG_RELEASED)
+			uvm_pagefree(pg);
+		else
+			pg->flags &= ~(PG_WANTED|PG_BUSY);
 	}
 }
 
