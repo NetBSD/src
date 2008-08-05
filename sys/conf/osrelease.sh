@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.114 2008/08/04 19:30:09 perry Exp $
+#	$NetBSD: osrelease.sh,v 1.115 2008/08/05 08:26:05 apb Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # We use the number specified in <sys/param.h>
 
 AWK=${AWK:-awk}
-SED=${SED:-sed}
+SED=${TOOL_SED:-sed}
 PARAMH="`dirname $0`"/../sys/param.h
 release=`$AWK '/^#define[ 	]*__NetBSD_Version__/ { print $6 }' $PARAMH`
 
