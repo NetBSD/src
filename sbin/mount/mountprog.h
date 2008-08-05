@@ -1,7 +1,7 @@
-/* $NetBSD: fattr.h,v 1.5 2008/04/28 20:23:09 martin Exp $ */
+/*	$NetBSD: mountprog.h,v 1.1 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-int a_num(const char *, const char *);
-gid_t a_gid(const char *);
-uid_t a_uid(const char *);
-mode_t a_mask(const char *);
+int		a_num(const char *, const char *);
+gid_t		a_gid(const char *);
+uid_t		a_uid(const char *);
+mode_t		a_mask(const char *);
+
+int		checkvfsname(const char *, const char **);
+const char **	makevfslist(const char *);
+
+void		pathadj(const char *, char *);

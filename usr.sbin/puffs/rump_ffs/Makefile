@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2008/07/29 13:17:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/05 20:57:46 pooka Exp $
 #
 
-PROG=		rump_ffs
+MOUNTNAME=	ffs
 
 LDADD+=		-lrumpfs_ffs -lrumpfs_ufs
 DPADD+=		${LIBRUMPFS_FFS} ${LIBRUMPFS_UFS}

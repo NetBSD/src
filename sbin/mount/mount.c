@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.85 2008/07/20 01:20:22 lukem Exp $	*/
+/*	$NetBSD: mount.c,v 1.86 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.85 2008/07/20 01:20:22 lukem Exp $");
+__RCSID("$NetBSD: mount.c,v 1.86 2008/08/05 20:57:45 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: mount.c,v 1.85 2008/07/20 01:20:22 lukem Exp $");
 #include <sys/ioctl.h>
 
 #include "pathnames.h"
-#include "vfslist.h"
+#include "mountprog.h"
 
 static int	debug, verbose;
 
