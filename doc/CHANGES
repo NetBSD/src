@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1084 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1085 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -557,6 +557,14 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[lukem 20080721]
 	dhcpcd: Import 4.0.0rc3. [joerg 20080727]
 	uvm_map: Switch from using <sys/tree.h> to <sys/rb.h>. [matt 20080728]
+	rump(3): Install rump library and file system modules
+		into /usr/lib [pooka 20080729]
+	ukfs(3): Install ukfs library for standalone file system access
+		[pooka 20080729]
+	p2k(3): Install puffs to kernel vfs adaption library on puffs-enabled
+		base systems [pooka 20080729]
+	rump_fs: Install rump versions of kernel file system servers with a
+		puffs-enabled base system [pooka 20080729]
 	x86: VGA_POST in GENERIC can replace vbetool after resume
 		(machdep.acpi_vbios_reset=2) and allows basic diagnostic
 		after a panic in X with "call ddb_vgapost" [joerg 20080731]
