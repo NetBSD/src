@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.190 2008/08/05 19:43:33 perry Exp $
+#	$NetBSD: build.sh,v 1.191 2008/08/05 22:35:32 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -993,13 +993,40 @@ validatemakeparams()
 	MKUPDATE=$(getmakevar MKUPDATE)
 
 	if [ "${MKOBJDIRS}" != "no" ]; then
-		# If setting -M or -O to the root of an obj dir, make sure
-		# the base directory is made before continuing as <bsd.own.mk>
-		# will need this to pick up _SRC_TOP_OBJ_
+		# Try to create the top level object directory before
+		# running "make obj", otherwise <bsd.own.mk> will not
+		# set the correct value for _SRC_TOP_OBJ_.
 		#
+		# If either -M or -O was specified, then we have the
+		# directory name already.
+		#
+		# If neither -M nor -O was specified, then try to get
+		# the directory name from bsd.obj.mk's __usrobjdir
+		# variable, which is set using complex rules.  This
+		# works only if TOP = /usr/src.
+		#
+		top_obj_dir=""
 		if [ ! -z "${makeobjdir}" ]; then
-			${runcmd} mkdir -p "${makeobjdir}"
+			top_obj_dir="${makeobjdir}"
+		else
+			if [ "$TOP" = "/usr/src" ]; then
+				top_obj_dir="$(getmakevar __usrobjdir)"
+			# else __usrobjdir is not actually used
+			fi
+
 		fi
+		case "$top_obj_dir" in
+		*/*)
+			${runcmd} mkdir -p "${top_obj_dir}" \
+			|| bomb "Can't create object" \
+				"directory ${top_obj_dir}"
+			;;
+		*)
+			# we probably failed to set it above
+			bomb "Please use the -O or -M option" \
+				"to set the object directory"
+			;;
+		esac
 
 		# make obj in tools to ensure that the objdir for the top-level
 		# of the source tree and for "tools" is available, in case the
@@ -1152,7 +1179,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.190 2008/08/05 19:43:33 perry Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.191 2008/08/05 22:35:32 apb Exp $
 # with these arguments: ${_args}
 #
 
