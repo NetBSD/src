@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.43 2008/07/26 19:37:58 heinz Exp $	*/
+/*	$NetBSD: unistd.h,v 1.44 2008/08/06 17:17:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -109,6 +109,10 @@
 #define	_POSIX_READER_WRITER_LOCKS	200112L
 				/* XPG4.2 shared memory */
 #define	_XOPEN_SHM		0
+				/* shell */
+#define	_POSIX_SHELL		1
+				/* regular expressions */
+#define	_POSIX_REGEXP		1
 
 /* access function */
 #define	F_OK		0	/* test for existence of file */
@@ -227,6 +231,23 @@
 #define	_SC_THREAD_PROCESS_SHARED	66
 #define	_SC_THREAD_SAFE_FUNCTIONS	67
 #define	_SC_TTY_NAME_MAX		68
+#define	_SC_HOST_NAME_MAX		69
+#define	_SC_PASS_MAX			70
+#define	_SC_REGEXP			71
+#define	_SC_SHELL			72
+#define	_SC_SYMLOOP_MAX			73
+
+/* Actually, they are not supported or implemented yet */
+#define	_SC_V6_ILP32_OFF32		74
+#define	_SC_V6_ILP32_OFFBIG		75
+#define	_SC_V6_LP64_OFF64		76
+#define	_SC_V6_LPBIG_OFFBIG		77
+#define	_SC_2_PBS			80
+#define	_SC_2_PBS_ACCOUNTING		81
+#define	_SC_2_PBS_CHECKPOINT		82
+#define	_SC_2_PBS_LOCATE		83
+#define	_SC_2_PBS_MESSAGE		84
+#define	_SC_2_PBS_TRACK			85
 
 #ifdef _NETBSD_SOURCE
 /* Commonly provided sysconf() extensions */
