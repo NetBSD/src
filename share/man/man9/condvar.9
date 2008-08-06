@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.12 2008/06/04 11:24:36 ad Exp $
+.\"	$NetBSD: condvar.9,v 1.13 2008/08/06 07:08:31 skrll Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -131,7 +131,7 @@ A small window exists between testing for availability of a resource and
 waiting for the resource with
 .Fn cv_wait ,
 in which the resource may become available again.
-The interlock is used to guarentee that the resource will not be signalled
+The interlock is used to guarantee that the resource will not be signalled
 as available until the calling LWP has begun to wait for it.
 .Pp
 Non-interruptable waits have the potential to deadlock the system, and so must
@@ -141,7 +141,7 @@ be kept short (typically, under one second).
 As per
 .Fn cv_wait ,
 but causes the current LWP to wait interruptably.
-If the LWP recieves a signal, or is interrupted by another condition such
+If the LWP receives a signal, or is interrupted by another condition such
 as its containing process exiting, the wait is ended early and an error
 code returned.
 .Pp
