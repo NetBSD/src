@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.39 2008/07/22 07:07:23 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.40 2008/08/06 19:06:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -61,6 +61,7 @@
 
 #define I32_bit (1 << 7)	/* IRQ disable */
 #define F32_bit (1 << 6)	/* FIQ disable */
+#define	IF32_bits (3 << 6)	/* IRQ/FIQ disable */
 
 #define PSR_T_bit (1 << 5)	/* Thumb state */
 #define PSR_J_bit (1 << 24)	/* Java mode */
