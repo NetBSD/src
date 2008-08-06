@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.70 2008/07/28 19:41:13 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.71 2008/08/06 13:41:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.70 2008/07/28 19:41:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.71 2008/08/06 13:41:12 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -424,7 +424,8 @@ udf_check_track_metadata_overlap(struct udf_mount *ump,
 	track_end   = track_start + trackinfo->track_size;
 
 	/* get our base partition extent */
-	part = ump->partitions[ump->metadata_part];
+	KASSERT(ump->node_part == ump->fids_part);
+	part = ump->partitions[ump->node_part];
 	phys_part_start = udf_rw32(part->start_loc);
 	phys_part_end   = phys_part_start + udf_rw32(part->part_len);
 
@@ -495,7 +496,7 @@ udf_search_writing_tracks(struct udf_mount *ump)
 	struct part_desc *part;
 	uint32_t tracknr, start_track, num_tracks;
 	uint32_t track_start, track_end, part_start, part_end;
-	int error;
+	int node_alloc, error;
 
 	/*
 	 * in the CD/(HD)DVD/BD recordable device model a few tracks within
@@ -546,8 +547,9 @@ udf_search_writing_tracks(struct udf_mount *ump)
 		}
 
 		/* check for overlap on metadata partition */
-		if ((ump->meta_alloc == UDF_ALLOC_METASEQUENTIAL) ||
-		    (ump->meta_alloc == UDF_ALLOC_METABITMAP)) {
+		node_alloc = ump->vtop_alloc[ump->node_part];
+		if ((node_alloc == UDF_ALLOC_METASEQUENTIAL) ||
+		    (node_alloc == UDF_ALLOC_METABITMAP)) {
 			udf_check_track_metadata_overlap(ump, &trackinfo);
 		} else {
 			ump->metadata_track = trackinfo;
@@ -1721,7 +1723,7 @@ udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor)
 	DPRINTF(VOLUMES, ("Resize and write out metadata space bitmap from "
 		"%"PRIu64" to %"PRIu64" bytes\n", inflen, new_inflen));
 
-	error = udf_resize_node(bitmap_node, 0, &dummy);
+	error = udf_resize_node(bitmap_node, new_inflen, &dummy);
 	if (error)
 		printf("Error resizing metadata space bitmap\n");
 
@@ -1734,6 +1736,7 @@ udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor)
 
 	bitmap_node->i_flags |= IN_MODIFIED;
 	vflushbuf(bitmap_node->vnode, 1 /* sync */);
+
 	error = VOP_FSYNC(bitmap_node->vnode,
 			FSCRED, FSYNC_WAIT, 0, 0);
 
@@ -1764,7 +1767,7 @@ udf_process_vds(struct udf_mount *ump) {
 	const char *check_name;
 	char bits[128];
 	int pmap_stype, pmap_size;
-	int pmap_type, log_part, phys_part, raw_phys_part;
+	int pmap_type, log_part, phys_part, raw_phys_part, maps_on;
 	int n_phys, n_virt, n_spar, n_meta;
 	int len, error;
 
@@ -1830,7 +1833,8 @@ udf_process_vds(struct udf_mount *ump) {
 		return EINVAL;
 	}
 
-	ump->data_part = ump->metadata_part = 0;
+	/* count types and set partition numbers */
+	ump->data_part = ump->node_part = ump->fids_part = 0;
 	n_phys = n_virt = n_spar = n_meta = 0;
 	for (log_part = 0; log_part < n_pm; log_part++) {
 		mapping = (union udf_pmap *) pmap_pos;
@@ -1842,8 +1846,9 @@ udf_process_vds(struct udf_mount *ump) {
 			raw_phys_part = udf_rw16(mapping->pm1.part_num);
 			pmap_type = UDF_VTOP_TYPE_PHYS;
 			n_phys++;
-			ump->data_part     = log_part;
-			ump->metadata_part = log_part;
+			ump->data_part = log_part;
+			ump->node_part = log_part;
+			ump->fids_part = log_part;
 			break;
 		case 2: /* virtual/sparable/meta mapping */
 			map_name  = mapping->pm2.part_id.id;
@@ -1856,22 +1861,24 @@ udf_process_vds(struct udf_mount *ump) {
 			if (strncmp(map_name, check_name, len) == 0) {
 				pmap_type = UDF_VTOP_TYPE_VIRT;
 				n_virt++;
-				ump->metadata_part = log_part;
+				ump->node_part = log_part;
 				break;
 			}
 			check_name = "*UDF Sparable Partition";
 			if (strncmp(map_name, check_name, len) == 0) {
 				pmap_type = UDF_VTOP_TYPE_SPARABLE;
 				n_spar++;
-				ump->data_part     = log_part;
-				ump->metadata_part = log_part;
+				ump->data_part = log_part;
+				ump->node_part = log_part;
+				ump->fids_part = log_part;
 				break;
 			}
 			check_name = "*UDF Metadata Partition";
 			if (strncmp(map_name, check_name, len) == 0) {
 				pmap_type = UDF_VTOP_TYPE_META;
 				n_meta++;
-				ump->metadata_part = log_part;
+				ump->node_part = log_part;
+				ump->fids_part = log_part;
 				break;
 			}
 			break;
@@ -1919,37 +1926,33 @@ udf_process_vds(struct udf_mount *ump) {
 	if (n_spar + n_phys == 0)
 		return EINVAL;
 
-	/* determine allocation scheme's based on disc format */
-	/* VAT's can only be on a sequential media */
-	ump->data_alloc = UDF_ALLOC_SPACEMAP;
-	if (n_virt)
-		ump->data_alloc = UDF_ALLOC_SEQUENTIAL;
-
-	ump->meta_alloc = UDF_ALLOC_SPACEMAP;
-	if (n_virt)
-		ump->meta_alloc = UDF_ALLOC_VAT;
-	if (n_meta)
-		ump->meta_alloc = UDF_ALLOC_METABITMAP;
-
-	/* special cases for pseudo-overwrite */
-	if (ump->discinfo.mmc_cur & MMC_CAP_PSEUDOOVERWRITE) {
-		ump->data_alloc = UDF_ALLOC_SEQUENTIAL;
-		if (n_meta) {
-			ump->meta_alloc = UDF_ALLOC_METASEQUENTIAL;
-		} else {
-			ump->meta_alloc = UDF_ALLOC_RELAXEDSEQUENTIAL;
+	/* select allocation type for each logical partition */
+	for (log_part = 0; log_part < n_pm; log_part++) {
+		maps_on = ump->vtop[log_part];
+		switch (ump->vtop_tp[log_part]) {
+		case UDF_VTOP_TYPE_PHYS :
+			assert(maps_on == log_part);
+			ump->vtop_alloc[log_part] = UDF_ALLOC_SPACEMAP;
+			break;
+		case UDF_VTOP_TYPE_VIRT :
+			ump->vtop_alloc[log_part] = UDF_ALLOC_VAT;
+			ump->vtop_alloc[maps_on]  = UDF_ALLOC_SEQUENTIAL;
+			break;
+		case UDF_VTOP_TYPE_SPARABLE :
+			assert(maps_on == log_part);
+			ump->vtop_alloc[log_part] = UDF_ALLOC_SPACEMAP;
+			break;
+		case UDF_VTOP_TYPE_META :
+			ump->vtop_alloc[log_part] = UDF_ALLOC_METABITMAP;
+			if (ump->discinfo.mmc_cur & MMC_CAP_PSEUDOOVERWRITE) {
+				/* special case for UDF 2.60 */
+				ump->vtop_alloc[log_part] = UDF_ALLOC_METASEQUENTIAL;
+				ump->vtop_alloc[maps_on]  = UDF_ALLOC_SEQUENTIAL;
+			}
+			break;
+		default:
+			panic("bad alloction type in udf's ump->vtop\n");
 		}
-	}
-
-	/* determine default allocation descriptors to use */
-	ump->data_allocdscr = UDF_ICB_SHORT_ALLOC;
-	ump->meta_allocdscr = UDF_ICB_SHORT_ALLOC;
-	if (n_pm > 1) {
-		ump->data_allocdscr = UDF_ICB_LONG_ALLOC;
-		ump->meta_allocdscr = UDF_ICB_LONG_ALLOC;
-		/* metadata partitions are forced to have short */
-		if (n_meta)
-			ump->meta_allocdscr = UDF_ICB_SHORT_ALLOC;
 	}
 
 	/* determine logical volume open/closure actions */
@@ -1992,10 +1995,12 @@ udf_process_vds(struct udf_mount *ump) {
 		ump->strategy = &udf_strat_rmw;
 
 	/* print results */
-	DPRINTF(VOLUMES, ("\tdata alloc scheme %d, meta alloc scheme %d\n",
-	    ump->data_alloc, ump->meta_alloc));
-	DPRINTF(VOLUMES, ("\tdata partition %d, metadata partition %d\n",
-	    ump->data_part, ump->metadata_part));
+	DPRINTF(VOLUMES, ("\tdata partition    %d\n", ump->data_part));
+	DPRINTF(VOLUMES, ("\t\talloc scheme %d\n", ump->vtop_alloc[ump->data_part]));
+	DPRINTF(VOLUMES, ("\tnode partition    %d\n", ump->node_part));
+	DPRINTF(VOLUMES, ("\t\talloc scheme %d\n", ump->vtop_alloc[ump->node_part]));
+	DPRINTF(VOLUMES, ("\tfids partition    %d\n", ump->fids_part));
+	DPRINTF(VOLUMES, ("\t\talloc scheme %d\n", ump->vtop_alloc[ump->fids_part]));
 
 	bitmask_snprintf(ump->lvopen,  UDFLOGVOL_BITS, bits, sizeof(bits));
 	DPRINTF(VOLUMES, ("\tactions on logvol open  %s\n", bits));
@@ -3073,7 +3078,7 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 	} else {
 		/* mounting read/write */
 		/* XXX DISABLED! metadata writing is not working yet XXX */
-/*		if (error)  */
+		if (error)
 			error = EROFS;
 	}
 	DPRINTFIF(VOLUMES, error, ("udf mount: failed to read "
@@ -3471,11 +3476,10 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 	if (ump->lvclose & UDF_WRITE_VAT) {
 		DPRINTF(VOLUMES, ("lvclose & UDF_WRITE_VAT\n"));
 
-		/* preprocess the VAT node; its modified on every writeout */
-		DPRINTF(VOLUMES, ("writeout vat_node\n"));
-		udf_update_vat_descriptor(ump->vat_node->ump);
-
 		/* write out the VAT node */
+		DPRINTF(VOLUMES, ("writeout vat_node\n"));
+		udf_writeout_vat(ump);
+
 		vflushbuf(ump->vat_node->vnode, 1 /* sync */);
 		for (n = 0; n < 16; n++) {
 			ump->vat_node->i_flags |= IN_MODIFIED;
@@ -5421,7 +5425,6 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 
 /* --------------------------------------------------------------------- */
 
-
 int
 udf_writeout_node(struct udf_node *udf_node, int waitfor)
 {
@@ -5453,7 +5456,7 @@ udf_writeout_node(struct udf_node *udf_node, int waitfor)
 
 	/* if we were rebuild, write out the allocation extents */
 	if (udf_node->i_flags & IN_NODE_REBUILD) {
-		/* mark outstanding node dscriptors and issue them */
+		/* mark outstanding node descriptors and issue them */
 		udf_node->outstanding_nodedscr += udf_node->num_extensions;
 		for (extnr = 0; extnr < udf_node->num_extensions; extnr++) {
 			loc = &udf_node->ext_loc[extnr];
@@ -5467,9 +5470,11 @@ udf_writeout_node(struct udf_node *udf_node, int waitfor)
 	}
 
 	if (udf_node->fe) {
+		KASSERT(udf_node->efe == NULL);
 		dscr = (union dscrptr *) udf_node->fe;
 	} else {
 		KASSERT(udf_node->efe);
+		KASSERT(udf_node->fe == NULL);
 		dscr = (union dscrptr *) udf_node->efe;
 	}
 	KASSERT(dscr);
@@ -5589,8 +5594,9 @@ udf_create_node_raw(struct vnode *dvp, struct vnode **vpp, int udf_file_type,
 	}
 
 	/* get disc allocation for one logical block */
+	vpart_num = ump->node_part;
 	error = udf_pre_allocate_space(ump, UDF_C_NODE, 1,
-			&vpart_num, &lmapping);
+			vpart_num, &lmapping);
 	lb_num = lmapping;
 	if (error) {
 		vlockmgr(nvp->v_vnlock, LK_RELEASE);
@@ -5953,6 +5959,7 @@ int
 udf_update(struct vnode *vp, struct timespec *acc,
 	struct timespec *mod, struct timespec *birth, int updflags)
 {
+	union dscrptr *dscrptr;
 	struct udf_node  *udf_node = VTOI(vp);
 	struct udf_mount *ump = udf_node->ump;
 	struct regid     *impl_id;
@@ -5973,12 +5980,19 @@ udf_update(struct vnode *vp, struct timespec *acc,
 
 	/* set our implementation id */
 	if (udf_node->fe) {
+		dscrptr = (union dscrptr *) udf_node->fe;
 		impl_id = &udf_node->fe->imp_id;
 	} else {
+		dscrptr = (union dscrptr *) udf_node->efe;
 		impl_id = &udf_node->efe->imp_id;
 	}
+
+	/* set our ID */
 	udf_set_regid(impl_id, IMPL_NAME);
 	udf_add_impl_regid(ump, impl_id);
+
+	/* update our crc! on RMW we are not allowed to change a thing */
+	udf_validate_tag_and_crc_sums(dscrptr);
 
 	/* if called when mounted readonly, never write back */
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
