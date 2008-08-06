@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.13 2008/06/18 06:47:25 mgrooms Exp $	*/
+/*	$NetBSD: privsep.c,v 1.14 2008/08/06 19:14:28 tteras Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -67,9 +67,11 @@
 #include "remoteconf.h"
 #include "admin.h"
 #include "sockmisc.h"
+#include "session.h"
 #include "privsep.h"
 
 static int privsep_sock[2] = { -1, -1 };
+static pid_t child_pid;
 
 static int privsep_recv(int, struct privsep_com_msg **, size_t *);
 static int privsep_send(int, struct privsep_com_msg *, size_t);
@@ -136,6 +138,34 @@ privsep_recv(sock, bufp, lenp)
 	*bufp = NULL;
 	*lenp = 0;
 
+	/* Handle unprivileged process termination */
+	if (child_pid) {
+		fd_set fdmask;
+		int rv, nfds;
+
+		FD_ZERO(&fdmask);
+		FD_SET(sock, &fdmask);
+
+		nfds = sock;
+		nfds++;
+
+		while(1) {
+			/* Use select here as it can be interrupted by a signal */
+			rv = select(nfds, &fdmask, (fd_set *)0, (fd_set *)0, (struct timeval *)0);
+
+			/* There is something ready to receive */
+			if (rv > 0)
+				break;
+
+			/* Error condition or SIGCHLD was received */
+			if (rv < 0 || get_sigreq(SIGCHLD))
+				return -1;
+
+			/* Ignore different signals */
+			continue;
+		}
+	}
+
 	/* Get the header */
 	while ((len = recvfrom(sock, (char *)&com, 
 	    sizeof(com), MSG_PEEK, NULL, NULL)) == -1) {
@@ -198,7 +228,6 @@ int
 privsep_init(void)
 {
 	int i;
-	pid_t child_pid;
 
 	/* If running as root, we don't use the privsep code path */
 	if (lcconf->uid == 0)
@@ -300,21 +329,13 @@ privsep_init(void)
 	plog(LLV_INFO, LOCATION, NULL, 
 	    "racoon privileged process running with PID %d\n", getpid());
 
+	plog(LLV_INFO, LOCATION, NULL,
+	    "racoon unprivileged process running with PID %d\n", child_pid);
+
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 	setproctitle("[priv]");
 #endif
 	
-	/* 
-	 * Don't catch any signal 
-	 * This duplicate session:signals[], which is static...
-	 */
-	signal(SIGHUP, SIG_DFL);
-	signal(SIGINT, SIG_DFL);
-	signal(SIGTERM, SIG_DFL);
-	signal(SIGUSR1, SIG_DFL);
-	signal(SIGUSR2, SIG_DFL);
-	signal(SIGCHLD, SIG_DFL);
-
 	while (1) {
 		size_t len;
 		struct privsep_com_msg *combuf;
@@ -364,7 +385,7 @@ privsep_init(void)
 		/* 
 		 * XXX Improvement: instead of returning the key, 
 		 * stuff eay_get_pkcs1privkey and eay_get_x509sign
-		 * together and sign the hash in the privilegied 
+		 * together and sign the hash in the privileged 
 		 * instance? 
 		 * pro: the key remains inaccessible to unpriv
 		 * con: a compromised unpriv racoon can still sign anything
@@ -877,7 +898,8 @@ privsep_init(void)
 	}
 
 out:
-	plog(LLV_INFO, LOCATION, NULL, "privsep exit\n");
+	plog(LLV_INFO, LOCATION, NULL, 
+	    "racoon privileged process %d terminated\n", getpid());
 	_exit(0);
 }
 
