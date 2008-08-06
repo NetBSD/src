@@ -1,10 +1,13 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.1 2008/08/06 20:15:30 pooka Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.2 2008/08/06 20:18:19 pooka Exp $
 #
 
 IFS=' '
 MANTMPL=".\\\"	\$NetBSD\$"'
+.\"
+.\"	WARNING: GENERATED FILE, DO NOT EDIT
+.\"	INSTEAD, EDIT makerumpmanpages.sh AND REGEN
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
