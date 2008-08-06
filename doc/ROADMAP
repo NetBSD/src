@@ -1,4 +1,16 @@
-#	$NetBSD: ROADMAP,v 1.23 2008/08/04 15:37:05 simonb Exp $
+#	$NetBSD: ROADMAP,v 1.24 2008/08/06 19:52:43 perry Exp $
+
+*** THIS FILE IS OBSOLETE ***
+
+Although many of the projects in this file are still current and
+valid, roadmap information is now stored in the src/doc/roadmaps
+directory.
+
+This file is temporarily retained to allow the information in it to be
+transitioned.
+
+------------------------------------------------------------
+
 
 A high-level roadmap for NetBSD
 
