@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2008/08/06 04:15:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2008/08/06 05:10:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -48,10 +48,6 @@ SUBDIR+=	damageext XTrap composite exa config hw
 # XXX stuff installed by modular-xorg-server we need to deal with:
 #libpcidata
 #libshadow
-#libshadowfb
-#libvbe
-#libvgahw
-#libxaa
 
 #bin/X
 #bin/Xorg
