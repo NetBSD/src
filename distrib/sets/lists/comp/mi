@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1173 2008/08/05 14:42:03 pooka Exp $
+#	$NetBSD: mi,v 1.1174 2008/08/06 15:08:08 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8577,6 +8577,13 @@
 ./usr/share/man/cat9/simple_unlock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sleep.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/snprintf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/sockopt.0			comp-sys-catman		.cat
+./usr/share/man/cat9/sockopt_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sockopt_destroy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sockopt_get.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sockopt_getint.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sockopt_set.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sockopt_setint.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/softint.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/softint_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/softint_establish.0	comp-sys-catman		.cat
@@ -13938,6 +13945,13 @@
 ./usr/share/man/man9/simple_unlock.9		comp-sys-man		.man
 ./usr/share/man/man9/sleep.9			comp-obsolete		obsolete
 ./usr/share/man/man9/snprintf.9			comp-sys-man		.man
+./usr/share/man/man9/sockopt.9			comp-sys-man		.man
+./usr/share/man/man9/sockopt_init.9		comp-sys-man		.man
+./usr/share/man/man9/sockopt_destroy.9		comp-sys-man		.man
+./usr/share/man/man9/sockopt_get.9		comp-sys-man		.man
+./usr/share/man/man9/sockopt_getint.9		comp-sys-man		.man
+./usr/share/man/man9/sockopt_set.9		comp-sys-man		.man
+./usr/share/man/man9/sockopt_setint.9		comp-sys-man		.man
 ./usr/share/man/man9/softint.9			comp-sys-man		.man
 ./usr/share/man/man9/softint_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/softint_establish.9	comp-sys-man		.man
