@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.194 2008/08/05 02:06:53 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.195 2008/08/06 16:22:48 matt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -173,7 +173,7 @@ ${PSEUDONOERR}: ${ASMDEPS}
 	printf 'STRONG_ALIAS(${.PREFIX:S/e/E/},${.PREFIX})\n' >>${.TARGET}
 
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
-    ${DESTDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h ${_LINTASM}
 	${_MKTARGET_CREATE}
 	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${_LINTASM:S/tmp_//}
