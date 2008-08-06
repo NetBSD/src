@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.35 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.36 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -90,7 +90,7 @@ struct	udpiphdr {
 extern	struct	inpcbtable udbtable;
 
 void	 *udp_ctlinput(int, const struct sockaddr *, void *);
-int	 udp_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	 udp_ctloutput(int, struct socket *, struct sockopt *);
 void	 udp_init(void);
 void	 udp_input(struct mbuf *, ...);
 int	 udp_output(struct mbuf *, ...);

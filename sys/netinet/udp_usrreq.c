@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.172 2008/05/04 07:22:14 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.173 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.172 2008/05/04 07:22:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.173 2008/08/06 15:01:23 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1000,14 +1000,13 @@ udp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 }
 
 int
-udp_ctloutput(int op, struct socket *so, int level, int optname,
-    struct mbuf **mp)
+udp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int s;
 	int error = 0;
-	struct mbuf *m;
 	struct inpcb *inp;
 	int family;
+	int optval;
 
 	family = so->so_proto->pr_domain->dom_family;
 
@@ -1015,16 +1014,16 @@ udp_ctloutput(int op, struct socket *so, int level, int optname,
 	switch (family) {
 #ifdef INET
 	case PF_INET:
-		if (level != IPPROTO_UDP) {
-			error = ip_ctloutput(op, so, level, optname, mp);
+		if (sopt->sopt_level != IPPROTO_UDP) {
+			error = ip_ctloutput(op, so, sopt);
 			goto end;
 		}
 		break;
 #endif
 #ifdef INET6
 	case PF_INET6:
-		if (level != IPPROTO_UDP) {
-			error = ip6_ctloutput(op, so, level, optname, mp);
+		if (sopt->sopt_level != IPPROTO_UDP) {
+			error = ip6_ctloutput(op, so, sopt);
 			goto end;
 		}
 		break;
@@ -1037,17 +1036,15 @@ udp_ctloutput(int op, struct socket *so, int level, int optname,
 
 	switch (op) {
 	case PRCO_SETOPT:
-		m = *mp;
 		inp = sotoinpcb(so);
 
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case UDP_ENCAP:
-			if (m == NULL || m->m_len != sizeof(int)) {
-				error = EINVAL;
+			error = sockopt_getint(sopt, &optval);
+			if (error)
 				break;
-			}
 
-			switch(*mtod(m, int *)) {
+			switch(optval) {
 #ifdef IPSEC_NAT_T
 			case 0:
 				inp->inp_flags &= ~INP_ESPINUDP_ALL;
@@ -1072,9 +1069,6 @@ udp_ctloutput(int op, struct socket *so, int level, int optname,
 		default:
 			error = ENOPROTOOPT;
 			break;
-		}
-		if (m != NULL) {
-			m_free(m);
 		}
 		break;
 
