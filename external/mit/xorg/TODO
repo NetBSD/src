@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.9 2008/08/05 06:02:45 mrg Exp $
+$NetBSD: TODO,v 1.10 2008/08/06 04:17:07 mrg Exp $
 
 plan:
 	- build modular-xorg stuff with reach over
@@ -7,6 +7,12 @@ plan:
 
 	- initially, only xorg happy platforms get Xserver.  other older
 	  platforms with xsrc-based servers will build those.
+
+
+things to handle:
+	- figure out a saner way to handle .man.pre files.
+
+	- many package.pc files need to be generated / installed for pkgsrc to be useful.
 
 
 big items:
@@ -33,15 +39,15 @@ Xserver
 		- need to figure out which ones should be built for which
 		  platforms?
 	xorg-server:
-		- most things besides 'hw' are done:
+		- most/all things besides 'hw' are done:
 			GL XTrap Xext Xi afb cfb cfb32 composite config damageext dbe dix doc exa fb include mfb mi miext os randr record render xfixes xkb
 		- hw/xnest is done
+		- hw/vfb is done
 		- some of hw/xfree86 is done:
-			common ddc doc dri dummy i2c int10 loader os-support rac ramdac scanpci utils
-		- vfb not done
-		- xfree86 not done:
+			common ddc doc dri dummy exa i2c int10 loader os-support rac ramdac scanpci utils
+		- hw/xfree86 not done:
 			dixmods modes shadowfb vbe vgahw x86emu xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp
-		- xgl
+		- hw/xgl
 
 
 things to delete:
