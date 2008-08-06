@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.41 2008/07/20 02:06:37 uwe Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.42 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.41 2008/07/20 02:06:37 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.42 2008/08/06 15:01:24 plunky Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
@@ -498,13 +498,11 @@ bootpc_call(nd, lwp)
 	 * interface (why?) and then fails because broadcast
 	 * is not supported on that interface...
 	 */
-	{	int32_t *opt;
-		m = m_get(M_WAIT, MT_SOOPTS);
-		opt = mtod(m, int32_t *);
-		m->m_len = sizeof(*opt);
-		*opt = 1;
-		error = sosetopt(so, SOL_SOCKET, SO_DONTROUTE, m);
-		m = NULL;	/* was consumed */
+	{	int32_t opt;
+
+		opt = 1;
+		error = so_setsockopt(NULL, so, SOL_SOCKET, SO_DONTROUTE, &opt,
+		    sizeof(opt));
 	}
 	if (error) {
 		DPRINTF(("bootpc_call: SO_DONTROUTE failed %d\n", error));
@@ -524,13 +522,11 @@ bootpc_call(nd, lwp)
 	 * The "helper-address" feature of some popular router vendor seems
 	 * to do simple IP forwarding and drops packets with (ip_ttl == 1).
 	 */
-	{	u_char *opt;
-		m = m_get(M_WAIT, MT_SOOPTS);
-		opt = mtod(m, u_char *);
-		m->m_len = sizeof(*opt);
-		*opt = 7;
-		error = sosetopt(so, IPPROTO_IP, IP_MULTICAST_TTL, m);
-		m = NULL;	/* was consumed */
+	{	u_char opt;
+
+		opt = 7;
+		error = so_setsockopt(NULL, so, IPPROTO_IP, IP_MULTICAST_TTL,
+		    &opt, sizeof(opt));
 	}
 	if (error) {
 		DPRINTF(("bootpc_call: IP_MULTICAST_TTL failed %d\n", error));

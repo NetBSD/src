@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.10 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.11 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.10 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.11 2008/08/06 15:01:24 plunky Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -251,11 +251,9 @@ release:
  * get/set socket options
  */
 int
-sco_ctloutput(int req, struct socket *so, int level,
-		int optname, struct mbuf **opt)
+sco_ctloutput(int req, struct socket *so, struct sockopt *sopt)
 {
 	struct sco_pcb *pcb = (struct sco_pcb *)so->so_pcb;
-	struct mbuf *m;
 	int err = 0;
 
 	DPRINTFN(2, "req %s\n", prcorequests[req]);
@@ -263,26 +261,16 @@ sco_ctloutput(int req, struct socket *so, int level,
 	if (pcb == NULL)
 		return EINVAL;
 
-	if (level != BTPROTO_SCO)
+	if (sopt->sopt_level != BTPROTO_SCO)
 		return ENOPROTOOPT;
 
 	switch(req) {
 	case PRCO_GETOPT:
-		m = m_get(M_WAIT, MT_SOOPTS);
-		m->m_len = sco_getopt(pcb, optname, mtod(m, uint8_t *));
-		if (m->m_len == 0) {
-			m_freem(m);
-			m = NULL;
-			err = ENOPROTOOPT;
-		}
-		*opt = m;
+		err = sco_getopt(pcb, sopt);
 		break;
 
 	case PRCO_SETOPT:
-		m = *opt;
-		KASSERT(m != NULL);
-		err = sco_setopt(pcb, optname, mtod(m, uint8_t *));
-		m_freem(m);
+		err = sco_setopt(pcb, sopt);
 		break;
 
 	default:
