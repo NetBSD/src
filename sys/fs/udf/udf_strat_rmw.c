@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.6 2008/07/28 19:41:13 reinoud Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.7 2008/08/06 13:41:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.6 2008/07/28 19:41:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.7 2008/08/06 13:41:12 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -925,7 +925,7 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 		if (buf->b_lblkno == 0) {
 			/* update the tag location inside */
 			tag = (struct desc_tag *) buf->b_data;
-			tag->tag_loc = udf_rw32(buf->b_blkno);
+			tag->tag_loc = udf_rw32(*lmapping);
 			udf_validate_tag_and_crc_sums(buf->b_data);
 		}
 	}
