@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.87 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.88 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -200,14 +200,15 @@ extern int ip_hashsize;
 extern struct pool inmulti_pool;
 extern struct pool ipqent_pool;
 struct	 inpcb;
+struct   sockopt;
 
-int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	 ip_ctloutput(int, struct socket *, struct sockopt *);
 int	 ip_dooptions(struct mbuf *);
 void	 ip_drain(void);
 void	 ip_forward(struct mbuf *, int);
 void	 ip_freef(struct ipq *);
 void	 ip_freemoptions(struct ip_moptions *);
-int	 ip_getmoptions(int, struct ip_moptions *, struct mbuf **);
+int	 ip_getmoptions(struct ip_moptions *, struct sockopt *);
 void	 ip_init(void);
 int	 ip_optcopy(struct ip *, struct ip *);
 u_int	 ip_optlen(struct inpcb *);
@@ -220,7 +221,7 @@ struct in_ifaddr *
 	 ip_rtaddr(struct in_addr);
 void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 	   struct mbuf *);
-int	 ip_setmoptions(int, struct ip_moptions **, struct mbuf *);
+int	 ip_setmoptions(struct ip_moptions **, struct sockopt *);
 void	 ip_slowtimo(void);
 struct mbuf *
 	 ip_srcroute(void);
@@ -228,7 +229,7 @@ int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	 ip_statinc(u_int);
 void	 ipintr(void);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);
-int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	 rip_ctloutput(int, struct socket *, struct sockopt *);
 void	 rip_init(void);
 void	 rip_input(struct mbuf *, ...);
 int	 rip_output(struct mbuf *, ...);

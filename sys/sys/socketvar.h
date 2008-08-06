@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.112 2008/08/04 03:55:48 tls Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.113 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -219,6 +219,14 @@ struct accept_filter {
 	SLIST_ENTRY(accept_filter) accf_next;
 };
 
+struct sockopt {
+	int		sopt_level;		/* option level */
+	int		sopt_name;		/* option name */
+	size_t		sopt_size;		/* data length */
+	void *		sopt_data;		/* data pointer */
+	uint8_t		sopt_buf[sizeof(int)];	/* internal storage */
+};
+
 extern u_long		sb_max;
 extern int		somaxkva;
 extern int		sock_loan_thresh;
@@ -231,7 +239,6 @@ struct msghdr;
 struct stat;
 struct knote;
 
-struct	mbuf *m_intopt(struct socket *, int);
 struct	mbuf *getsombuf(struct socket *, int);
 
 /*
@@ -280,7 +287,7 @@ int	socreate(int, struct socket **, int, int, struct lwp *,
 int	fsocreate(int, struct socket **, int, int, struct lwp *, int *);
 int	sodisconnect(struct socket *);
 void	sofree(struct socket *);
-int	sogetopt(struct socket *, int, int, struct mbuf **);
+int	sogetopt(struct socket *, struct sockopt *);
 void	sohasoutofband(struct socket *);
 void	soisconnected(struct socket *);
 void	soisconnecting(struct socket *);
@@ -297,7 +304,8 @@ int	soreserve(struct socket *, u_long, u_long);
 void	sorflush(struct socket *);
 int	sosend(struct socket *, struct mbuf *, struct uio *,
 	    struct mbuf *, struct mbuf *, int, struct lwp *);
-int	sosetopt(struct socket *, int, int, struct mbuf *);
+int	sosetopt(struct socket *, struct sockopt *);
+int	so_setsockopt(struct lwp *, struct socket *, int, int, const void *, size_t);
 int	soshutdown(struct socket *, int);
 void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
@@ -312,6 +320,15 @@ int	sowait(struct socket *, int);
 void	solockretry(struct socket *, kmutex_t *);
 void	sosetlock(struct socket *);
 void	solockreset(struct socket *, kmutex_t *);
+
+void	sockopt_init(struct sockopt *, int, int, size_t);
+void	sockopt_destroy(struct sockopt *);
+int	sockopt_set(struct sockopt *, const void *, size_t);
+int	sockopt_setint(struct sockopt *, int);
+int	sockopt_get(const struct sockopt *, void *, size_t);
+int	sockopt_getint(const struct sockopt *, int *);
+int	sockopt_setmbuf(struct sockopt *, struct mbuf *);
+struct mbuf *sockopt_getmbuf(const struct sockopt *);
 
 int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
@@ -512,8 +529,8 @@ void	soloanfree(struct mbuf *, void *, size_t, void *);
 /*
  * Accept filter functions (duh).
  */
-int	do_getopt_accept_filter(struct socket *, struct mbuf *);
-int	do_setopt_accept_filter(struct socket *, struct mbuf *);
+int	do_getopt_accept_filter(struct socket *, struct sockopt *);
+int	do_setopt_accept_filter(struct socket *, const struct sockopt *);
 int	accept_filt_add(struct accept_filter *);
 int	accept_filt_del(char *);
 struct	accept_filter *accept_filt_get(char *);

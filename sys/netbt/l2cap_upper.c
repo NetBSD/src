@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.8 2007/04/29 20:23:36 msaitoh Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.9 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.8 2007/04/29 20:23:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.9 2008/08/06 15:01:24 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -407,7 +407,7 @@ l2cap_send(struct l2cap_channel *chan, struct mbuf *m)
 }
 
 /*
- * l2cap_setopt(l2cap_channel, opt, addr)
+ * l2cap_setopt(l2cap_channel, sopt)
  *
  *	Apply configuration options to channel. This corresponds to
  *	"Configure Channel Request" in the L2CAP specification.
@@ -420,14 +420,17 @@ l2cap_send(struct l2cap_channel *chan, struct mbuf *m)
  *	will be made when the change is complete.
  */
 int
-l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
+l2cap_setopt(struct l2cap_channel *chan, const struct sockopt *sopt)
 {
 	int mode, err = 0;
 	uint16_t mtu;
 
-	switch (opt) {
+	switch (sopt->sopt_name) {
 	case SO_L2CAP_IMTU:	/* set Incoming MTU */
-		mtu = *(uint16_t *)addr;
+		err = sockopt_get(sopt, &mtu, sizeof(mtu));
+		if (err)
+			break;
+
 		if (mtu < L2CAP_MTU_MINIMUM)
 			err = EINVAL;
 		else if (chan->lc_state == L2CAP_CLOSED)
@@ -438,7 +441,10 @@ l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
 		break;
 
 	case SO_L2CAP_LM:	/* set link mode */
-		mode = *(int *)addr;
+		err = sockopt_getint(sopt, &mode);
+		if (err)
+			break;
+
 		mode &= (L2CAP_LM_SECURE | L2CAP_LM_ENCRYPT | L2CAP_LM_AUTH);
 
 		if (mode & L2CAP_LM_SECURE)
@@ -465,42 +471,36 @@ l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
 }
 
 /*
- * l2cap_getopt(l2cap_channel, opt, addr)
+ * l2cap_getopt(l2cap_channel, sopt)
  *
  *	Return configuration parameters.
  */
 int
-l2cap_getopt(struct l2cap_channel *chan, int opt, void *addr)
+l2cap_getopt(struct l2cap_channel *chan, struct sockopt *sopt)
 {
 
-	switch (opt) {
+	switch (sopt->sopt_name) {
 	case SO_L2CAP_IMTU:	/* get Incoming MTU */
-		*(uint16_t *)addr = chan->lc_imtu;
-		return sizeof(uint16_t);
+		return sockopt_set(sopt, &chan->lc_imtu, sizeof(uint16_t));
 
 	case SO_L2CAP_OMTU:	/* get Outgoing MTU */
-		*(uint16_t *)addr = chan->lc_omtu;
-		return sizeof(uint16_t);
+		return sockopt_set(sopt, &chan->lc_omtu, sizeof(uint16_t));
 
 	case SO_L2CAP_IQOS:	/* get Incoming QoS flow spec */
-		memcpy(addr, &chan->lc_iqos, sizeof(l2cap_qos_t));
-		return sizeof(l2cap_qos_t);
+		return sockopt_set(sopt, &chan->lc_iqos, sizeof(l2cap_qos_t));
 
 	case SO_L2CAP_OQOS:	/* get Outgoing QoS flow spec */
-		memcpy(addr, &chan->lc_oqos, sizeof(l2cap_qos_t));
-		return sizeof(l2cap_qos_t);
+		return sockopt_set(sopt, &chan->lc_oqos, sizeof(l2cap_qos_t));
 
 	case SO_L2CAP_FLUSH:	/* get Flush Timeout */
-		*(uint16_t *)addr = chan->lc_flush;
-		return sizeof(uint16_t);
+		return sockopt_set(sopt, &chan->lc_flush, sizeof(uint16_t));
 
 	case SO_L2CAP_LM:	/* get link mode */
-		*(int *)addr = chan->lc_mode;
-		return sizeof(int);
+		return sockopt_setint(sopt, chan->lc_mode);
 
 	default:
 		break;
 	}
 
-	return 0;
+	return ENOPROTOOPT;
 }

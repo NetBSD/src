@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.1 2008/08/04 03:55:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.2 2008/08/06 15:01:23 plunky Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -221,11 +221,11 @@ accept_filt_generic_mod_event(struct lkm_table *lkmtp, int event, void *data)
 }
 
 int
-do_getopt_accept_filter(struct socket *so, struct mbuf *m)
+do_getopt_accept_filter(struct socket *so, struct sockopt *sopt)
 {
+	struct accept_filter_arg afa;
 	int error;
 
-	error = 0;
 	SOCK_LOCK(so);
 	if ((so->so_options & SO_ACCEPTCONN) == 0) {
 		error = EINVAL;
@@ -235,27 +235,29 @@ do_getopt_accept_filter(struct socket *so, struct mbuf *m)
 		error = EINVAL;
 		goto out;
 	}
-	m->m_len = sizeof(struct accept_filter_arg);
-	strcpy(mtod(m, struct accept_filter_arg *)->af_name, so->so_accf->so_accept_filter->accf_name);
+
+	memset(&afa, 0, sizeof(afa));
+	strcpy(afa.af_name, so->so_accf->so_accept_filter->accf_name);
 	if (so->so_accf->so_accept_filter_str != NULL)
-		strcpy(mtod(m, struct accept_filter_arg *)->af_arg, so->so_accf->so_accept_filter_str);
+		strcpy(afa.af_arg, so->so_accf->so_accept_filter_str);
+	error = sockopt_set(sopt, &afa, sizeof(afa));
 out:
 	SOCK_UNLOCK(so);
 	return (error);
 }
 
 int
-do_setopt_accept_filter(struct socket *so, struct mbuf *m)
+do_setopt_accept_filter(struct socket *so, const struct sockopt *sopt)
 {
-	struct accept_filter_arg *afap;
+	struct accept_filter_arg afa;
 	struct accept_filter *afp;
 	struct so_accf *newaf;
-	int error = 0;
+	int error;
 
 	/*
 	 * Handle the simple delete case first.
 	 */
-	if (m == NULL || mtod(m, struct accept_filter_arg *) == NULL) {
+	if (sopt == NULL || sopt->sopt_size == 0) {
 		SOCK_LOCK(so);
 		if ((so->so_options & SO_ACCEPTCONN) == 0) {
 			SOCK_UNLOCK(so);
@@ -281,13 +283,13 @@ do_setopt_accept_filter(struct socket *so, struct mbuf *m)
 	 * Pre-allocate any memory we may need later to avoid blocking at
 	 * untimely moments.  This does not optimize for invalid arguments.
 	 */
-	if (m->m_len != sizeof(struct accept_filter_arg)) {
-		return (EINVAL);
+	error = sockopt_get(sopt, &afa, sizeof(afa));
+	if (error) {
+		return (error);
 	}
-	afap = mtod(m, struct accept_filter_arg *);
-	afap->af_name[sizeof(afap->af_name)-1] = '\0';
-	afap->af_arg[sizeof(afap->af_arg)-1] = '\0';
-	afp = accept_filt_get(afap->af_name);
+	afa.af_name[sizeof(afa.af_name)-1] = '\0';
+	afa.af_arg[sizeof(afa.af_arg)-1] = '\0';
+	afp = accept_filt_get(afa.af_name);
 	if (afp == NULL) {
 		return (ENOENT);
 	}
@@ -299,11 +301,11 @@ do_setopt_accept_filter(struct socket *so, struct mbuf *m)
 	 */
 	MALLOC(newaf, struct so_accf *, sizeof(*newaf), M_ACCF, M_WAITOK |
 	    M_ZERO);
-	if (afp->accf_create != NULL && afap->af_name[0] != '\0') {
-		int len = strlen(afap->af_name) + 1;
+	if (afp->accf_create != NULL && afa.af_name[0] != '\0') {
+		int len = strlen(afa.af_name) + 1;
 		MALLOC(newaf->so_accept_filter_str, char *, len, M_ACCF,
 		    M_WAITOK);
-		strcpy(newaf->so_accept_filter_str, afap->af_name);
+		strcpy(newaf->so_accept_filter_str, afa.af_name);
 	}
 
 	/*
@@ -324,7 +326,7 @@ do_setopt_accept_filter(struct socket *so, struct mbuf *m)
 	 */
 	if (afp->accf_create != NULL) {
 		newaf->so_accept_filter_arg =
-		    afp->accf_create(so, afap->af_arg);
+		    afp->accf_create(so, afa.af_arg);
 		if (newaf->so_accept_filter_arg == NULL) {
 			error = EINVAL;
 			goto out;

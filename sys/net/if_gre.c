@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.137 2008/06/24 11:18:14 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.138 2008/08/06 15:01:23 plunky Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.137 2008/06/24 11:18:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.138 2008/08/06 15:01:23 plunky Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -482,6 +482,7 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 	struct sockaddr *sa;
 	struct socket *so;
 	sa_family_t af;
+	int val;
 
 	GRE_DPRINTF(sc, "enter\n");
 
@@ -519,20 +520,22 @@ gre_socreate(struct gre_softc *sc, const struct gre_soparm *sp, int *fdout)
 	}
 	sounlock(so);
 
-	/* XXX convert to a (new) SOL_SOCKET call */
-	*mtod(m, int *) = ip_gre_ttl;
-	m->m_len = sizeof(int);
-	pr = so->so_proto;
-	KASSERT(pr != NULL);
-	rc = sosetopt(so, IPPROTO_IP, IP_TTL, m);
 	m = NULL;
-	if (rc != 0) {
-		GRE_DPRINTF(sc, "sosetopt ttl failed\n");
-		rc = 0;
-	}
-	rc = sosetopt(so, SOL_SOCKET, SO_NOHEADER, m_intopt(so, 1));
-	if (rc != 0) {
-		GRE_DPRINTF(sc, "sosetopt SO_NOHEADER failed\n");
+
+	/* XXX convert to a (new) SOL_SOCKET call */
+  	pr = so->so_proto;
+  	KASSERT(pr != NULL);
+ 	rc = so_setsockopt(curlwp, so, IPPROTO_IP, IP_TTL,
+	    &ip_gre_ttl, sizeof(ip_gre_ttl));
+  	if (rc != 0) {
+ 		GRE_DPRINTF(sc, "so_setsockopt ttl failed\n");
+  		rc = 0;
+  	}
+ 	val = 1;
+ 	rc = so_setsockopt(curlwp, so, SOL_SOCKET, SO_NOHEADER,
+	    &val, sizeof(val));
+  	if (rc != 0) {
+ 		GRE_DPRINTF(sc, "so_setsockopt SO_NOHEADER failed\n");
 		rc = 0;
 	}
 out:

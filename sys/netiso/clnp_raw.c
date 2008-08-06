@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.29 2008/04/28 13:24:38 ad Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.30 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.29 2008/04/28 13:24:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.30 2008/08/06 15:01:23 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -185,13 +185,12 @@ rclnp_output(struct mbuf *m0, ...)
  * FUNCTION:		rclnp_ctloutput
  *
  * PURPOSE:			Raw clnp socket option processing
- *					All options are stored inside an mbuf.
+ *				All options are stored inside a sockopt.
  *
  * RETURNS:			success - 0
  *					failure - unix error code
  *
- * SIDE EFFECTS:	If the options mbuf does not exist, it the mbuf passed
- *					is used.
+ * SIDE EFFECTS:
  *
  * NOTES:
  */
@@ -199,9 +198,7 @@ int
 rclnp_ctloutput(
 	int             op,	/* type of operation */
 	struct socket  *so,	/* ptr to socket */
-	int             level,	/* level of option */
-	int             optname,/* name of option */
-	struct mbuf   **m)	/* ptr to ptr to option data */
+	struct sockopt *sopt)	/* socket options */
 {
 	int             error = 0;
 	struct rawisopcb *rp = sotorawisopcb(so);	/* raw cb ptr */
@@ -209,48 +206,49 @@ rclnp_ctloutput(
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CTLOUTPUT]) {
 		printf("rclnp_ctloutput: op = x%x, level = x%x, name = x%x\n",
-		    op, level, optname);
-		if (*m != NULL) {
-			printf("rclnp_ctloutput: %d bytes of mbuf data\n", (*m)->m_len);
-			dump_buf(mtod((*m), void *), (*m)->m_len);
-		}
+		    op, sopt->sopt_level, sopt->sopt_name);
+		printf("rclnp_ctloutput: %d bytes of data\n", sopt->sopt_size);
+		dump_buf(sopt->sopt_data, sopt->sopt_size);
 	}
 #endif
 
 #ifdef SOL_NETWORK
-	if (level != SOL_NETWORK)
-		error = EINVAL;
-	else
-		switch (op) {
-#else
+	if (sopt->sopt_level != SOL_NETWORK)
+		return (EINVAL);
+#endif
+
 	switch (op) {
-#endif				/* SOL_NETWORK */
 	case PRCO_SETOPT:
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case CLNPOPT_FLAGS:{
-				u_short         usr_flags;
-				/*
-				 * Insure that the data passed has exactly
-				 * one short in it
-				 */
-				if ((*m == NULL) || ((*m)->m_len != sizeof(short))) {
-					error = EINVAL;
-					break;
-				}
-				/*
-				 *	Don't allow invalid flags to be set
-				 */
-				usr_flags = (*mtod((*m), short *));
+			u_short flags;
 
-				if ((usr_flags & (CLNP_VFLAGS)) != usr_flags) {
-					error = EINVAL;
-				} else
-					rp->risop_flags |= usr_flags;
+			error = sockopt_get(sopt, &flags, sizeof(flags));
+			if (error)
+				break;
 
-			} break;
+			/*
+			 *	Don't allow invalid flags to be set
+			 */
+			if ((flags & (CLNP_VFLAGS)) != flags)
+				error = EINVAL;
+			else
+				rp->risop_flags |= flags;
 
-		case CLNPOPT_OPTS:
-			error = clnp_set_opts(&rp->risop_isop.isop_options, m);
+			break;
+			}
+
+		case CLNPOPT_OPTS: {
+			struct mbuf *m;
+
+			m = sockopt_getmbuf(sopt);
+			if (m == NULL) {
+				error = ENOBUFS;
+				break;
+			}
+
+			error = clnp_set_opts(&rp->risop_isop.isop_options, &m);
+			m_freem(m);
 			if (error)
 				break;
 			rp->risop_isop.isop_optindex = m_get(M_WAIT, MT_SOOPTS);
@@ -260,13 +258,14 @@ rclnp_ctloutput(
 					  mtod(rp->risop_isop.isop_optindex,
 					       struct clnp_optidx *));
 			break;
+			}
 		}
 		break;
 
 	case PRCO_GETOPT:
 #ifdef notdef
 		/* commented out to keep hi C quiet */
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		default:
 			error = EINVAL;
 			break;
@@ -276,11 +275,6 @@ rclnp_ctloutput(
 	default:
 		error = EINVAL;
 		break;
-	}
-	if (op == PRCO_SETOPT) {
-		/* note: m_freem does not barf is *m is NULL */
-		m_freem(*m);
-		*m = NULL;
 	}
 	return error;
 }
