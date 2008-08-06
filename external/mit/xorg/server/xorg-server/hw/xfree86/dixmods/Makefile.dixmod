@@ -1,0 +1,29 @@
+#	$NetBSD: Makefile.dixmod,v 1.1 2008/08/06 07:16:40 mrg Exp $
+
+.include <bsd.own.mk>
+
+# XXX ? why?
+MKPROFILE=	no
+MKPIC=	no
+MKLINT=	no
+
+.include "../../../../Makefile.serverlib"
+.include "../../../../Makefile.servermod"
+
+.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/afb \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/mfb \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/cfb \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/dbe \
+		-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${XSERVERINCDIR}
+
+CPPFLAGS+=	${X11FLAGS.DIX} \
+		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+
+.include <bsd.x11.mk>
+.include <bsd.lib.mk>

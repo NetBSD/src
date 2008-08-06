@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.12 2008/08/06 06:14:33 mrg Exp $
+$NetBSD: TODO,v 1.13 2008/08/06 07:16:39 mrg Exp $
 
 plan:
 	- build modular-xorg stuff with reach over
@@ -43,11 +43,11 @@ Xserver
 			GL XTrap Xext Xi afb cfb cfb32 composite config damageext dbe dix doc exa fb include mfb mi miext os randr record render xfixes xkb
 		- hw/xnest is done
 		- hw/vfb is done
-		- some of hw/xfree86 is done:
-			common ddc doc dri dummy exa i2c int10 loader modes os-support rac ramdac scanpci shadowfb utils vbe vgahw xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp
-		- hw/xfree86 not done:
-			dixmods x86emu
-		- hw/xgl
+		- most of hw/xfree86 is done:
+			common ddc dixmods doc dri dummy exa i2c int10 loader modes os-support rac ramdac scanpci shadowfb utils vbe vgahw xaa x86emu xf1bpp xf4bpp xf8_16bpp xf8_32bpp
+		- need to make hw/xfree86 link Xorg
+		- hw/xgl is not done
+		- xorgcfg and xorgconfig are not done
 
 
 things to delete:
