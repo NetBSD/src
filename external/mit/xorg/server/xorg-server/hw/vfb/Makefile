@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/06 04:14:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/06 07:37:38 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,6 @@ SRCS=		InitInput.c InitOutput.c dpmsstubs.c miinitext.c stubs.c
 SRCS+=		fbcmap_mi.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xorg-server}/fb \
 		-I${X11SRCDIR.xorg-server}/mfb \
 		-I${X11SRCDIR.xorg-server}/mi \
