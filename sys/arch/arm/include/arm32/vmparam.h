@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.22 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.23 2008/08/06 19:13:45 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -109,7 +109,7 @@ extern vaddr_t virtual_end;
  */
 #define	__HAVE_VM_PAGE_MD
 struct vm_page_md {
-	struct pv_entry *pvh_list;		/* pv_entry list */
+	SLIST_HEAD(,pv_entry) pvh_list;		/* pv_entry list */
 	struct simplelock pvh_slock;		/* lock on this head */
 	int pvh_attrs;				/* page attributes */
 	u_int uro_mappings;
@@ -137,7 +137,7 @@ struct vm_page_md {
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
-	(pg)->mdpage.pvh_list = NULL;					\
+	SLIST_INIT(&(pg)->mdpage.pvh_list);				\
 	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
 	VM_MDPAGE_PVH_ATTRS_INIT(pg);					\
 	(pg)->mdpage.uro_mappings = 0;					\
