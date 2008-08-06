@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.58 2008/05/02 18:11:05 martin Exp $
+#	$NetBSD: genassym.cf,v 1.59 2008/08/06 16:12:59 martin Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -117,11 +117,7 @@ define	PAGE_SIZE	PAGE_SIZE
 
 # Important offsets into the lwp and proc structs & associated constants
 define	L_ADDR			offsetof(struct lwp, l_addr)
-define	L_STAT			offsetof(struct lwp, l_stat)
-define	L_WCHAN			offsetof(struct lwp, l_wchan)
-define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_TF			offsetof(struct lwp, l_md.md_tf)
 define	L_FPSTATE		offsetof(struct lwp, l_md.md_fpstate)
 
