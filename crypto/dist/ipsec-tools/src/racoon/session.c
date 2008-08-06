@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.14 2008/07/23 17:36:00 mgrooms Exp $	*/
+/*	$NetBSD: session.c,v 1.15 2008/08/06 19:14:28 tteras Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -250,7 +250,8 @@ close_session()
 	close_sockets();
 	backupsa_clean();
 
-	plog(LLV_INFO, LOCATION, NULL, "racoon shutdown\n");
+	plog(LLV_INFO, LOCATION, NULL, "racoon process %d shutdown\n", getpid());
+
 	exit(0);
 }
 
@@ -413,6 +414,14 @@ static void reload_conf(){
 
 	save_sainfotree_flush();
 	save_rmconf_flush();
+}
+
+int get_sigreq(int sig)
+{
+	if (sig <= NSIG)
+		return sigreq[sig];
+
+	return 0;
 }
 
 static void
