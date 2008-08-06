@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.1 2008/08/03 22:09:56 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.2 2008/08/06 07:37:19 mrg Exp $
 
 # XXX old list
 .if 0
@@ -41,7 +41,46 @@
 	dix \
 	config \
 	GL/glx \
-	hw/xnest
+	hw/xnest \
+	hw/xfree86/common \
+	hw/xfree86/ddc \
+	hw/xfree86/dixmods/afb \
+	hw/xfree86/dixmods/cfb \
+	hw/xfree86/dixmods/cfb32 \
+	hw/xfree86/dixmods/dbe \
+	hw/xfree86/dixmods/extmod \
+	hw/xfree86/dixmods/fb \
+	hw/xfree86/dixmods/freetype \
+	hw/xfree86/dixmods/mfb \
+	hw/xfree86/dixmods/record \
+	hw/xfree86/dixmods/shadow \
+	hw/xfree86/dixmods/type1 \
+	hw/xfree86/dixmods/wfb \
+	hw/xfree86/dixmods/xorgxkb \
+	hw/xfree86/dixmods/xtrap \
+	hw/xfree86/doc \
+	hw/xfree86/dri \
+	hw/xfree86/dummy \
+	hw/xfree86/exa \
+	hw/xfree86/i2c \
+	hw/xfree86/int10 \
+	hw/xfree86/loader \
+	hw/xfree86/modes \
+	hw/xfree86/os-support \
+	hw/xfree86/parser \
+	hw/xfree86/rac \
+	hw/xfree86/ramdac \
+	hw/xfree86/scanpci \
+	hw/xfree86/shadowfb \
+	hw/xfree86/utils \
+	hw/xfree86/vbe \
+	hw/xfree86/vgahw \
+	hw/xfree86/x86emu \
+	hw/xfree86/xaa \
+	hw/xfree86/xf1bpp \
+	hw/xfree86/xf4bpp \
+	hw/xfree86/xf8_16bpp \
+	hw/xfree86/xf8_32bpp
 
 .if !defined(LIBDIR.${_SL})
 LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/xorg-server/${_SL} && ${PRINTOBJDIR}
