@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1082 2008/07/31 08:28:17 simonb Exp $
+# $NetBSD: mi,v 1.1083 2008/08/06 20:14:08 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2428,6 +2428,16 @@
 ./usr/share/man/cat8/rtquery.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rtsol.0			man-netutil-catman	inet6,.cat
 ./usr/share/man/cat8/rtsold.0			man-netutil-catman	inet6,.cat
+./usr/share/man/cat8/rump_cd9660.0		man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_efs.0			man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_ext2fs.0		man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_ffs.0			man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_hfs.0			man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_lfs.0			man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_msdos.0		man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_ntfs.0		man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_tmpfs.0		man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_udf.0			man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rusersd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rwalld.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/rwhod.0			man-netutil-catman	.cat
@@ -5000,6 +5010,16 @@
 ./usr/share/man/man8/rstatd.8			man-netutil-man		.man
 ./usr/share/man/man8/rtadvd.8			man-router-man		use_inet6,.man
 ./usr/share/man/man8/rtquery.8			man-netutil-man		.man
+./usr/share/man/man8/rump_cd9660.8		man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_efs.8			man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_ext2fs.8		man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_ffs.8			man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_hfs.8			man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_lfs.8			man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_msdos.8		man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_ntfs.8		man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_tmpfs.8		man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_udf.8			man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rtsol.8			man-netutil-man		inet6,.man
 ./usr/share/man/man8/rtsold.8			man-netutil-man		inet6,.man
 ./usr/share/man/man8/rusersd.8			man-netutil-man		.man
