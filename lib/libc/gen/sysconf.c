@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.32 2008/06/25 11:46:12 ad Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.33 2008/08/06 17:17:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.32 2008/06/25 11:46:12 ad Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.33 2008/08/06 17:17:04 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: sysconf.c,v 1.32 2008/06/25 11:46:12 ad Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <paths.h>
+#include <pwd.h>
 
 #ifdef __weak_alias
 __weak_alias(sysconf,__sysconf)
@@ -336,13 +337,23 @@ sysconf(int name)
 	case _SC_GETPW_R_SIZE_MAX:
 		return _GETPW_R_SIZE_MAX;
 
+/* Unsorted */
+	case _SC_HOST_NAME_MAX:
+		return MAXHOSTNAMELEN;
+	case _SC_PASS_MAX:
+		return _PASSWORD_LEN;
+	case _SC_REGEXP:
+		return _POSIX_REGEXP;
+	case _SC_SHELL:
+		return _POSIX_SHELL;
+	case _SC_SYMLOOP_MAX:
+		return MAXSYMLINKS;
+
 yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 			return (-1);
 		if (value == 0)
 			return (-1);
 		return (value);
-		/*NOTREACHED*/
-		break;
 
 /* Extensions */
 	case _SC_NPROCESSORS_CONF:
