@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.h,v 1.3 2008/03/19 23:13:21 plunky Exp $	*/
+/*	$NetBSD: sdp.h,v 1.4 2008/08/06 14:21:33 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -57,7 +57,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: sdp.h,v 1.3 2008/03/19 23:13:21 plunky Exp $
+ * $Id: sdp.h,v 1.4 2008/08/06 14:21:33 plunky Exp $
  * $FreeBSD: src/lib/libsdp/sdp.h,v 1.5 2005/05/27 19:11:33 emax Exp $
  */
 
@@ -608,6 +608,7 @@ struct sdp_gn_profile
 	uint16_t	psm;
 	uint16_t	security_description;
 	uint16_t	reserved2;
+	uint32_t	reserved3;
 };
 typedef struct sdp_gn_profile		sdp_gn_profile_t;
 typedef struct sdp_gn_profile *		sdp_gn_profile_p;
@@ -619,6 +620,7 @@ struct sdp_panu_profile
 	uint16_t	psm;
 	uint16_t	security_description;
 	uint16_t	reserved2;
+	uint32_t	reserved3;
 };
 typedef struct sdp_panu_profile		sdp_panu_profile_t;
 typedef struct sdp_panu_profile *	sdp_panu_profile_p;
