@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.97 2008/07/03 14:07:09 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.98 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.97 2008/07/03 14:07:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.98 2008/08/06 15:01:23 plunky Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -315,14 +315,11 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 		struct socket *so;
 
 		if (fd_getsock(*retval, &so) == 0) {
-			struct mbuf *m;
-
-			m = m_get(M_WAIT, MT_SOOPTS);
-			m->m_len = sizeof(int);
-			*mtod(m, int *) = 0;
+			int val = 0;
 
 			/* ignore error */
-			(void) sosetopt(so, IPPROTO_IPV6, IPV6_V6ONLY, m);
+			(void)so_setsockopt(l, so, IPPROTO_IPV6, IPV6_V6ONLY,
+			    &val, sizeof(val));
 
 			fd_putfile(*retval);
 		}

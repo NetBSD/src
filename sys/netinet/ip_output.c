@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.196 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.197 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.196 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.197 2008/08/06 15:01:23 plunky Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -152,7 +152,6 @@ static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
 static void ip_mloopback(struct ifnet *, struct mbuf *,
     const struct sockaddr_in *);
-static int ip_getoptval(struct mbuf *, u_int8_t *, u_int);
 
 #ifdef PFIL_HOOKS
 extern struct pfil_head inet_pfil_hook;			/* XXX */
@@ -1195,36 +1194,40 @@ ip_optcopy(struct ip *ip, struct ip *jp)
  * IP socket option processing.
  */
 int
-ip_ctloutput(int op, struct socket *so, int level, int optname,
-    struct mbuf **mp)
+ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	struct inpcb *inp = sotoinpcb(so);
-	struct mbuf *m = *mp;
 	int optval = 0;
 	int error = 0;
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	struct lwp *l = curlwp;	/*XXX*/
 #endif
 
-	if (level != IPPROTO_IP) {
-		if (op == PRCO_SETOPT && *mp)
-			(void) m_free(*mp);
-		if (level == SOL_SOCKET && optname == SO_NOHEADER)
+	if (sopt->sopt_level != IPPROTO_IP) {
+		if (sopt->sopt_level == SOL_SOCKET && sopt->sopt_name == SO_NOHEADER)
 			return 0;
 		return ENOPROTOOPT;
 	}
 
 	switch (op) {
-
 	case PRCO_SETOPT:
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case IP_OPTIONS:
 #ifdef notyet
 		case IP_RETOPTS:
-			return (ip_pcbopts(optname, &inp->inp_options, m));
-#else
-			return (ip_pcbopts(&inp->inp_options, m));
 #endif
+		    {
+			struct mbuf *m;
+
+			m = sockopt_getmbuf(sopt);
+			if (m == NULL) {
+				error = ENOBUFS;
+				break;
+			}
+
+			error = ip_pcbopts(&inp->inp_options, m);
+			break;
+		    }
 
 		case IP_TOS:
 		case IP_TTL:
@@ -1232,43 +1235,41 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
 		case IP_RECVIF:
-			if (m == NULL || m->m_len != sizeof(int))
-				error = EINVAL;
-			else {
-				optval = *mtod(m, int *);
-				switch (optname) {
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
 
-				case IP_TOS:
-					inp->inp_ip.ip_tos = optval;
-					break;
+			switch (sopt->sopt_name) {
+			case IP_TOS:
+				inp->inp_ip.ip_tos = optval;
+				break;
 
-				case IP_TTL:
-					inp->inp_ip.ip_ttl = optval;
-					break;
+			case IP_TTL:
+				inp->inp_ip.ip_ttl = optval;
+				break;
 #define	OPTSET(bit) \
 	if (optval) \
 		inp->inp_flags |= bit; \
 	else \
 		inp->inp_flags &= ~bit;
 
-				case IP_RECVOPTS:
-					OPTSET(INP_RECVOPTS);
-					break;
+			case IP_RECVOPTS:
+				OPTSET(INP_RECVOPTS);
+				break;
 
-				case IP_RECVRETOPTS:
-					OPTSET(INP_RECVRETOPTS);
-					break;
+			case IP_RECVRETOPTS:
+				OPTSET(INP_RECVRETOPTS);
+				break;
 
-				case IP_RECVDSTADDR:
-					OPTSET(INP_RECVDSTADDR);
-					break;
+			case IP_RECVDSTADDR:
+				OPTSET(INP_RECVDSTADDR);
+				break;
 
-				case IP_RECVIF:
-					OPTSET(INP_RECVIF);
-					break;
-				}
+			case IP_RECVIF:
+				OPTSET(INP_RECVIF);
+				break;
 			}
-			break;
+		break;
 #undef OPTSET
 
 		case IP_MULTICAST_IF:
@@ -1276,38 +1277,35 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 		case IP_MULTICAST_LOOP:
 		case IP_ADD_MEMBERSHIP:
 		case IP_DROP_MEMBERSHIP:
-			error = ip_setmoptions(optname, &inp->inp_moptions, m);
+			error = ip_setmoptions(&inp->inp_moptions, sopt);
 			break;
 
 		case IP_PORTRANGE:
-			if (m == 0 || m->m_len != sizeof(int))
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+
+			/* INP_LOCK(inp); */
+			switch (optval) {
+			case IP_PORTRANGE_DEFAULT:
+			case IP_PORTRANGE_HIGH:
+				inp->inp_flags &= ~(INP_LOWPORT);
+				break;
+
+			case IP_PORTRANGE_LOW:
+				inp->inp_flags |= INP_LOWPORT;
+				break;
+
+			default:
 				error = EINVAL;
-			else {
-				optval = *mtod(m, int *);
-
-				switch (optval) {
-
-				case IP_PORTRANGE_DEFAULT:
-				case IP_PORTRANGE_HIGH:
-					inp->inp_flags &= ~(INP_LOWPORT);
-					break;
-
-				case IP_PORTRANGE_LOW:
-					inp->inp_flags |= INP_LOWPORT;
-					break;
-
-				default:
-					error = EINVAL;
-					break;
-				}
+				break;
 			}
+			/* INP_UNLOCK(inp); */
 			break;
 
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		case IP_IPSEC_POLICY:
-		{
-			void *req = NULL;
-			size_t len = 0;
+		    {
 			int priv = 0;
 
 #ifdef __NetBSD__
@@ -1319,11 +1317,9 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 #else
 			priv = (in6p->in6p_socket->so_state & SS_PRIV);
 #endif
-			if (m) {
-				req = mtod(m, void *);
-				len = m->m_len;
-			}
-			error = ipsec4_set_policy(inp, optname, req, len, priv);
+
+			error = ipsec4_set_policy(inp, sopt->sopt_name,
+			    sopt->sopt_data, sopt->sopt_size, priv);
 			break;
 		    }
 #endif /*IPSEC*/
@@ -1332,22 +1328,18 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		if (m)
-			(void)m_free(m);
 		break;
 
 	case PRCO_GETOPT:
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case IP_OPTIONS:
 		case IP_RETOPTS:
-			*mp = m = m_get(M_WAIT, MT_SOOPTS);
-			MCLAIM(m, so->so_mowner);
 			if (inp->inp_options) {
-				m->m_len = inp->inp_options->m_len;
-				bcopy(mtod(inp->inp_options, void *),
-				    mtod(m, void *), (unsigned)m->m_len);
-			} else
-				m->m_len = 0;
+				struct mbuf *m;
+
+				m = m_copym(inp->inp_options, 0, M_COPYALL, M_WAIT);
+				error = sockopt_setmbuf(sopt, m);
+			}
 			break;
 
 		case IP_TOS:
@@ -1357,11 +1349,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 		case IP_RECVDSTADDR:
 		case IP_RECVIF:
 		case IP_ERRORMTU:
-			*mp = m = m_get(M_WAIT, MT_SOOPTS);
-			MCLAIM(m, so->so_mowner);
-			m->m_len = sizeof(int);
-			switch (optname) {
-
+			switch (sopt->sopt_name) {
 			case IP_TOS:
 				optval = inp->inp_ip.ip_tos;
 				break;
@@ -1392,21 +1380,19 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 				optval = OPTBIT(INP_RECVIF);
 				break;
 			}
-			*mtod(m, int *) = optval;
+			error = sockopt_setint(sopt, optval);
 			break;
 
 #if 0	/* defined(IPSEC) || defined(FAST_IPSEC) */
-		/* XXX: code broken */
 		case IP_IPSEC_POLICY:
 		{
-			void *req = NULL;
-			size_t len = 0;
+			struct mbuf *m = NULL;
 
-			if (m) {
-				req = mtod(m, void *);
-				len = m->m_len;
-			}
-			error = ipsec4_get_policy(inp, req, len, mp);
+			/* XXX this will return EINVAL as sopt is empty */
+			error = ipsec4_get_policy(inp, sopt->sopt_data,
+			    sopt->sopt_size, &m);
+			if (error == 0)
+				error = sockopt_setmbuf(sopt, m);
 			break;
 		}
 #endif /*IPSEC*/
@@ -1416,22 +1402,17 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 		case IP_MULTICAST_LOOP:
 		case IP_ADD_MEMBERSHIP:
 		case IP_DROP_MEMBERSHIP:
-			error = ip_getmoptions(optname, inp->inp_moptions, mp);
-			if (*mp)
-				MCLAIM(*mp, so->so_mowner);
+			error = ip_getmoptions(inp->inp_moptions, sopt);
 			break;
 
 		case IP_PORTRANGE:
-			*mp = m = m_get(M_WAIT, MT_SOOPTS);
-			MCLAIM(m, so->so_mowner);
-			m->m_len = sizeof(int);
-
 			if (inp->inp_flags & INP_LOWPORT)
 				optval = IP_PORTRANGE_LOW;
 			else
 				optval = IP_PORTRANGE_DEFAULT;
 
-			*mtod(m, int *) = optval;
+			error = sockopt_setint(sopt, optval);
+
 			break;
 
 		default:
@@ -1449,11 +1430,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
  * with destination address if source routed.
  */
 int
-#ifdef notyet
-ip_pcbopts(int optname, struct mbuf **pcbopt, struct mbuf *m)
-#else
 ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
-#endif
 {
 	int cnt, optlen;
 	u_char *cp;
@@ -1582,23 +1559,31 @@ ip_multicast_if(struct in_addr *a, int *ifindexp)
 }
 
 static int
-ip_getoptval(struct mbuf *m, u_int8_t *val, u_int maxval)
+ip_getoptval(struct sockopt *sopt, u_int8_t *val, u_int maxval)
 {
 	u_int tval;
+	u_char cval;
+	int error;
 
-	if (m == NULL)
+	if (sopt == NULL)
 		return EINVAL;
 
-	switch (m->m_len) {
+	switch (sopt->sopt_size) {
 	case sizeof(u_char):
-		tval = *(mtod(m, u_char *));
+		error = sockopt_get(sopt, &cval, sizeof(u_char));
+		tval = cval;
 		break;
+
 	case sizeof(u_int):
-		tval = *(mtod(m, u_int *));
+		error = sockopt_get(sopt, &tval, sizeof(u_int));
 		break;
+
 	default:
-		return EINVAL;
+		error = EINVAL;
 	}
+
+	if (error)
+		return error;
 
 	if (tval > maxval)
 		return EINVAL;
@@ -1611,12 +1596,12 @@ ip_getoptval(struct mbuf *m, u_int8_t *val, u_int maxval)
  * Set the IP multicast options in response to user setsockopt().
  */
 int
-ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
+ip_setmoptions(struct ip_moptions **imop, struct sockopt *sopt)
 {
 	int error = 0;
 	int i;
 	struct in_addr addr;
-	struct ip_mreq *mreq;
+	struct ip_mreq lmreq, *mreq;
 	struct ifnet *ifp;
 	struct ip_moptions *imo = *imop;
 	int ifindex;
@@ -1639,17 +1624,15 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		imo->imo_num_memberships = 0;
 	}
 
-	switch (optname) {
-
+	switch (sopt->sopt_name) {
 	case IP_MULTICAST_IF:
 		/*
 		 * Select the interface for outgoing multicast packets.
 		 */
-		if (m == NULL || m->m_len != sizeof(struct in_addr)) {
-			error = EINVAL;
+		error = sockopt_get(sopt, &addr, sizeof(addr));
+		if (error)
 			break;
-		}
-		addr = *(mtod(m, struct in_addr *));
+
 		/*
 		 * INADDR_ANY is used to remove a previous selection.
 		 * When no interface is selected, a default one is
@@ -1680,7 +1663,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		/*
 		 * Set the IP time-to-live for outgoing multicast packets.
 		 */
-		error = ip_getoptval(m, &imo->imo_multicast_ttl, MAXTTL);
+		error = ip_getoptval(sopt, &imo->imo_multicast_ttl, MAXTTL);
 		break;
 
 	case IP_MULTICAST_LOOP:
@@ -1688,7 +1671,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * Set the loopback flag for outgoing multicast packets.
 		 * Must be zero or one.
 		 */
-		error = ip_getoptval(m, &imo->imo_multicast_loop, 1);
+		error = ip_getoptval(sopt, &imo->imo_multicast_loop, 1);
 		break;
 
 	case IP_ADD_MEMBERSHIP:
@@ -1696,11 +1679,12 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * Add a multicast group membership.
 		 * Group must be a valid IP multicast address.
 		 */
-		if (m == NULL || m->m_len != sizeof(struct ip_mreq)) {
-			error = EINVAL;
+		error = sockopt_get(sopt, &lmreq, sizeof(lmreq));
+		if (error)
 			break;
-		}
-		mreq = mtod(m, struct ip_mreq *);
+
+		mreq = &lmreq;
+
 		if (!IN_MULTICAST(mreq->imr_multiaddr.s_addr)) {
 			error = EINVAL;
 			break;
@@ -1770,11 +1754,12 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * Drop a multicast group membership.
 		 * Group must be a valid IP multicast address.
 		 */
-		if (m == NULL || m->m_len != sizeof(struct ip_mreq)) {
-			error = EINVAL;
+		error = sockopt_get(sopt, &lmreq, sizeof(lmreq));
+		if (error)
 			break;
-		}
-		mreq = mtod(m, struct ip_mreq *);
+
+		mreq = &lmreq;
+
 		if (!IN_MULTICAST(mreq->imr_multiaddr.s_addr)) {
 			error = EINVAL;
 			break;
@@ -1842,48 +1827,48 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
  * Return the IP multicast options in response to user getsockopt().
  */
 int
-ip_getmoptions(int optname, struct ip_moptions *imo, struct mbuf **mp)
+ip_getmoptions(struct ip_moptions *imo, struct sockopt *sopt)
 {
-	u_char *ttl;
-	u_char *loop;
-	struct in_addr *addr;
+	struct in_addr addr;
 	struct in_ifaddr *ia;
+	int error;
+	uint8_t optval;
 
-	*mp = m_get(M_WAIT, MT_SOOPTS);
+	error = 0;
 
-	switch (optname) {
-
+	switch (sopt->sopt_name) {
 	case IP_MULTICAST_IF:
-		addr = mtod(*mp, struct in_addr *);
-		(*mp)->m_len = sizeof(struct in_addr);
 		if (imo == NULL || imo->imo_multicast_ifp == NULL)
-			*addr = zeroin_addr;
+			addr = zeroin_addr;
 		else if (imo->imo_multicast_addr.s_addr) {
 			/* return the value user has set */
-			*addr = imo->imo_multicast_addr;
+			addr = imo->imo_multicast_addr;
 		} else {
 			IFP_TO_IA(imo->imo_multicast_ifp, ia);
-			*addr = ia ? ia->ia_addr.sin_addr : zeroin_addr;
+			addr = ia ? ia->ia_addr.sin_addr : zeroin_addr;
 		}
-		return (0);
+		error = sockopt_set(sopt, &addr, sizeof(addr));
+		break;
 
 	case IP_MULTICAST_TTL:
-		ttl = mtod(*mp, u_char *);
-		(*mp)->m_len = 1;
-		*ttl = imo ? imo->imo_multicast_ttl
-			   : IP_DEFAULT_MULTICAST_TTL;
-		return (0);
+		optval = imo ? imo->imo_multicast_ttl
+			     : IP_DEFAULT_MULTICAST_TTL;
+
+		error = sockopt_set(sopt, &optval, sizeof(optval));
+		break;
 
 	case IP_MULTICAST_LOOP:
-		loop = mtod(*mp, u_char *);
-		(*mp)->m_len = 1;
-		*loop = imo ? imo->imo_multicast_loop
-			    : IP_DEFAULT_MULTICAST_LOOP;
-		return (0);
+		optval = imo ? imo->imo_multicast_loop
+			     : IP_DEFAULT_MULTICAST_LOOP;
+
+		error = sockopt_set(sopt, &optval, sizeof(optval));
+		break;
 
 	default:
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
 	}
+
+	return (error);
 }
 
 /*

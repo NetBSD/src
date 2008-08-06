@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.73 2008/05/22 00:57:09 dyoung Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.74 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.73 2008/05/22 00:57:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.74 2008/08/06 15:01:23 plunky Exp $");
 
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
@@ -335,29 +335,24 @@ int
 nfs_boot_setrecvtimo(so)
 	struct socket *so;
 {
-	struct mbuf *m;
-	struct timeval *tv;
+	struct timeval tv;
 
-	m = m_get(M_WAIT, MT_SOOPTS);
-	tv = mtod(m, struct timeval *);
-	m->m_len = sizeof(*tv);
-	tv->tv_sec = 1;
-	tv->tv_usec = 0;
-	return (sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m));
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+
+	return (so_setsockopt(NULL, so, SOL_SOCKET, SO_RCVTIMEO, &tv,
+	    sizeof(tv)));
 }
 
 int
 nfs_boot_enbroadcast(so)
 	struct socket *so;
 {
-	struct mbuf *m;
-	int32_t *on;
+	int32_t on;
 
-	m = m_get(M_WAIT, MT_SOOPTS);
-	on = mtod(m, int32_t *);
-	m->m_len = sizeof(*on);
-	*on = 1;
-	return (sosetopt(so, SOL_SOCKET, SO_BROADCAST, m));
+	on = 1;
+	return (so_setsockopt(NULL, so, SOL_SOCKET, SO_BROADCAST, &on,
+	    sizeof(on)));
 }
 
 int

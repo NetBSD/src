@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.148 2008/05/07 11:28:37 bouyer Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.149 2008/08/06 15:01:23 plunky Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.148 2008/05/07 11:28:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.149 2008/08/06 15:01:23 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2570,37 +2570,26 @@ fail:
  * ICMPv6 socket option processing.
  */
 int
-icmp6_ctloutput(int op, struct socket *so, int level, 
-	int optname, struct mbuf **mp)
+icmp6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int error = 0;
-	int optlen;
 	struct in6pcb *in6p = sotoin6pcb(so);
-	struct mbuf *m = *mp;
 
-	optlen = m ? m->m_len : 0;
-
-	if (level != IPPROTO_ICMPV6)
-		return rip6_ctloutput(op, so, level, optname, mp);
+	if (sopt->sopt_level != IPPROTO_ICMPV6)
+		return rip6_ctloutput(op, so, sopt);
 
 	switch (op) {
 	case PRCO_SETOPT:
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case ICMP6_FILTER:
 		    {
-			struct icmp6_filter *p;
+			struct icmp6_filter fil;
 
-			if (optlen != sizeof(*p)) {
-				error = EMSGSIZE;
+			error = sockopt_get(sopt, &fil, sizeof(fil));
+			if (error)
 				break;
-			}
-			p = mtod(m, struct icmp6_filter *);
-			if (!p || !in6p->in6p_icmp6filt) {
-				error = EINVAL;
-				break;
-			}
-			bcopy(p, in6p->in6p_icmp6filt,
-				sizeof(struct icmp6_filter));
+			memcpy(in6p->in6p_icmp6filt, &fil,
+			    sizeof(struct icmp6_filter));
 			error = 0;
 			break;
 		    }
@@ -2609,26 +2598,18 @@ icmp6_ctloutput(int op, struct socket *so, int level,
 			error = ENOPROTOOPT;
 			break;
 		}
-		if (m)
-			(void)m_freem(m);
 		break;
 
 	case PRCO_GETOPT:
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case ICMP6_FILTER:
 		    {
-			struct icmp6_filter *p;
-
-			if (!in6p->in6p_icmp6filt) {
+			if (in6p->in6p_icmp6filt == NULL) {
 				error = EINVAL;
 				break;
 			}
-			*mp = m = m_get(M_WAIT, MT_SOOPTS);
-			m->m_len = sizeof(struct icmp6_filter);
-			p = mtod(m, struct icmp6_filter *);
-			bcopy(in6p->in6p_icmp6filt, p,
-				sizeof(struct icmp6_filter));
-			error = 0;
+			error = sockopt_set(sopt, in6p->in6p_icmp6filt,
+			    sizeof(struct icmp6_filter));
 			break;
 		    }
 
