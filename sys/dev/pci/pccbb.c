@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.178 2008/07/03 13:37:34 drochner Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.179 2008/08/06 15:50:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.178 2008/07/03 13:37:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.179 2008/08/06 15:50:46 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -362,6 +362,8 @@ const struct yenta_chipinfo {
 	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6933),
 	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972),
+	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7223),
 	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
 
 	/* sentinel, or Generic chip */
