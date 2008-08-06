@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/07/29 13:17:48 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/06 20:14:09 pooka Exp $
 #
 
 PROG=		rump_syspuffs
@@ -8,5 +8,6 @@ DPADD+=		${LIBRUMPFS_SYSPUFFS}
 
 ISRUMP=		# indubitably
 CPPFLAGS+=	-I${.CURDIR}/../../../sys/rump/fs/lib/libsyspuffs
+NOMAN=
 
 .include <bsd.prog.mk>
