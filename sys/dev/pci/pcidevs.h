@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.945 2008/07/29 21:13:48 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.946 2008/08/06 15:17:05 dyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.944 2008/07/29 21:13:17 tron Exp
+ *	NetBSD: pcidevs,v 1.945 2008/08/06 15:14:21 dyoung Exp
  */
 
 /*
@@ -1859,6 +1859,7 @@
 #define	PCI_PRODUCT_O2MICRO_OZ6972	0x6972		/* OZ6912/OZ6972 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_O2MICRO_7120	0x7120		/* Integrated MMC/SD Controller */
 #define	PCI_PRODUCT_O2MICRO_7130	0x7130		/* Integrated MS/xD/SM Controller */
+#define	PCI_PRODUCT_O2MICRO_7223	0x7223		/* OZ711E0 PCI-CardBus Bridge */
 
 /* Evans & Sutherland products */
 #define	PCI_PRODUCT_ES_FREEDOM	0x0001		/* Freedom PCI-GBus Interface */

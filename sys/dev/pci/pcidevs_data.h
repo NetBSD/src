@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.944 2008/07/29 21:13:48 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.945 2008/08/06 15:17:05 dyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.944 2008/07/29 21:13:17 tron Exp
+ *	NetBSD: pcidevs,v 1.945 2008/08/06 15:14:21 dyoung Exp
  */
 
 /*
@@ -6474,6 +6474,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7130,
 	    "Integrated MS/xD/SM Controller",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7223,
+	    "OZ711E0 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
@@ -14264,4 +14268,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2966;
+const int pci_nproducts = 2967;
