@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.265 2008/08/06 15:08:08 plunky Exp $
+#       $NetBSD: Makefile,v 1.266 2008/08/06 19:19:15 drochner Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -542,7 +542,7 @@ MLINKS+=sockopt.9 sockopt_init.9 \
 	sockopt.9 sockopt_get.9 \
 	sockopt.9 sockopt_getint.9 \
 	sockopt.9 sockopt_set.9 \
-	sockopt.9 sockopt_setint.9 \
+	sockopt.9 sockopt_setint.9
 MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
 	softintr.9 softintr_schedule.9 softintr.9 softint.9 \
 	softintr.9 softint_establish.9 softintr.9 softint_disestablish.9 \
