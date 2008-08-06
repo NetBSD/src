@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.112 2008/07/31 09:35:09 hannken Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.113 2008/08/06 12:54:26 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.112 2008/07/31 09:35:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.113 2008/08/06 12:54:26 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1892,11 +1892,11 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	int i, error, cg, blk, frags, bbase;
 	u_int8_t *blksfree;
 	dev_t dev;
+	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	cg = dtog(fs, bno);
-	if (devvp->v_type != VBLK) {
-		/* devvp is a snapshot */
+	if (devvp_is_snapshot) {
 		dev = VTOI(devvp)->i_devvp->v_rdev;
 		ump = VFSTOUFS(devvp->v_mount);
 		cgblkno = fragstoblks(fs, cgtod(fs, cg));
@@ -1942,8 +1942,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	if (size == fs->fs_bsize) {
 		fragno = fragstoblks(fs, cgbno);
 		if (!ffs_isfreeblock(fs, blksfree, fragno)) {
-			if (devvp->v_type != VBLK) {
-				/* devvp is a snapshot */
+			if (devvp_is_snapshot) {
 				mutex_exit(&ump->um_lock);
 				brelse(bp, 0);
 				return;
@@ -2108,15 +2107,17 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	daddr_t cgbno;
 	u_int8_t *inosused;
 	dev_t dev;
+	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
 
-	UFS_WAPBL_JLOCK_ASSERT(devvp->v_specinfo->si_mountpoint);
+	if (!devvp_is_snapshot) {
+		UFS_WAPBL_JLOCK_ASSERT(devvp->v_specinfo->si_mountpoint);
+	}
 
 	cg = ino_to_cg(fs, ino);
-	if (devvp->v_type != VBLK) {
-		/* devvp is a snapshot */
+	if (devvp_is_snapshot) {
 		dev = VTOI(devvp)->i_devvp->v_rdev;
 		ump = VFSTOUFS(devvp->v_mount);
 		cgbno = fragstoblks(fs, cgtod(fs, cg));
@@ -2153,8 +2154,9 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 			panic("ifree: freeing free inode");
 	}
 	clrbit(inosused, ino);
-	UFS_WAPBL_UNREGISTER_INODE(devvp->v_specmountpoint,
-	    ino + cg * fs->fs_ipg, mode);
+	if (!devvp_is_snapshot)
+		UFS_WAPBL_UNREGISTER_INODE(devvp->v_specmountpoint,
+		    ino + cg * fs->fs_ipg, mode);
 	if (ino < ufs_rw32(cgp->cg_irotor, needswap))
 		cgp->cg_irotor = ufs_rw32(ino, needswap);
 	ufs_add32(cgp->cg_cs.cs_nifree, 1, needswap);
@@ -2184,12 +2186,12 @@ ffs_checkfreefile(struct fs *fs, struct vnode *devvp, ino_t ino)
 	daddr_t cgbno;
 	int ret, cg;
 	u_int8_t *inosused;
+	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
 
 	cg = ino_to_cg(fs, ino);
-	if (devvp->v_type != VBLK) {
-		/* devvp is a snapshot */
+	if (devvp_is_snapshot)
 		cgbno = fragstoblks(fs, cgtod(fs, cg));
-	} else
+	else
 		cgbno = fsbtodb(fs, cgtod(fs, cg));
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		return 1;
