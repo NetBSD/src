@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.83 2008/07/10 15:04:42 nakayama Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.84 2008/08/06 15:36:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.83 2008/07/10 15:04:42 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.84 2008/08/06 15:36:20 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.83 2008/07/10 15:04:42 nakaya
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/select.h>
+#include <sys/socketvar.h>
 #include <sys/ucontext.h>
 #include <sys/ioctl.h>
 #include <sys/kmem.h>
