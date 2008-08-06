@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.46 2008/07/28 19:41:13 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.47 2008/08/06 13:41:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.46 2008/07/28 19:41:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.47 2008/08/06 13:41:12 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -886,11 +886,42 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp)
  * i.e. explicit syncing by the user?
  */
 
+static int
+udf_sync_writeout_system_files(struct udf_mount *ump, int clearflags)
+{
+	int error;
+
+	/* XXX lock for VAT en bitmaps? */
+	/* metadata nodes are written synchronous */
+	DPRINTF(CALL, ("udf_sync: syncing metadata\n"));
+	if (ump->lvclose & UDF_WRITE_VAT)
+		udf_writeout_vat(ump);
+
+	error = 0;
+	if (ump->lvclose & UDF_WRITE_PART_BITMAPS) {
+		/* writeout metadata spacetable if existing */
+		error = udf_write_metadata_partition_spacetable(ump, MNT_WAIT);
+		if (error)
+			printf( "udf_writeout_system_files : "
+				" writeout of metadata space bitmap failed\n");
+
+		/* writeout partition spacetables */
+		error = udf_write_physical_partition_spacetables(ump, MNT_WAIT);
+		if (error)
+			printf( "udf_writeout_system_files : "
+				"writeout of space tables failed\n");
+		if (!error && clearflags)
+			ump->lvclose &= ~UDF_WRITE_PART_BITMAPS;
+	}
+
+	return error;
+}
+
+
 int
 udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
 	struct udf_mount *ump = VFSTOUDF(mp);
-	int error;
 
 	DPRINTF(CALL, ("udf_sync called\n"));
 	/* if called when mounted readonly, just ignore */
@@ -908,33 +939,8 @@ udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	/* pre-sync */
 	udf_do_sync(ump, cred, waitfor);
 
-	error = 0;
-#if 0
-	if (waitfor == MNT_WAIT) {
-		/* XXX lock for VAT en bitmaps? */
-		/* metadata nodes are written synchronous */
-		DPRINTF(CALL, ("udf_sync: syncing metadata\n"));
-		if (ump->lvclose & UDF_WRITE_VAT)
-			udf_writeout_vat(ump);
-
-		if (ump->lvclose & UDF_WRITE_PART_BITMAPS) {
-			/* writeout metadata spacetable if existing */
-			error = udf_write_metadata_partition_spacetable(ump,
-				waitfor);
-			if (error)
-				printf( "udf_sync: writeout of metadata space "
-					"bitmap failed\n");
-
-			/* writeout partition spacetables */
-			error = udf_write_physical_partition_spacetables(ump,
-					waitfor);
-			if (error)
-				printf( "udf_sync: writeout of space tables "
-					"failed\n");
-			ump->lvclose &= ~UDF_WRITE_PART_BITMAPS;
-		}
-	}
-#endif
+	if (waitfor == MNT_WAIT)
+		udf_sync_writeout_system_files(ump, true);
 
 	DPRINTF(CALL, ("end of udf_sync()\n"));
 	ump->syncing = 0;

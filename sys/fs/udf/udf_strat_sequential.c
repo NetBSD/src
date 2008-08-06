@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.3 2008/07/28 19:41:13 reinoud Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.4 2008/08/06 13:41:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.3 2008/07/28 19:41:13 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.4 2008/08/06 13:41:12 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -288,10 +288,6 @@ udf_queuebuf_seq(struct udf_strat_args *args)
 		queue = UDF_SHED_SEQWRITING;
 		if (what == UDF_C_DSCR)
 			queue = UDF_SHED_WRITING;
-		if (what == UDF_C_NODE) {
-			if (ump->meta_alloc != UDF_ALLOC_VAT)
-				queue = UDF_SHED_WRITING;
-		}
 #if 0
 		if (queue == UDF_SHED_SEQWRITING) {
 			/* TODO do add sector to uncommitted space */
@@ -325,9 +321,8 @@ udf_VAT_mapping_update(struct udf_mount *ump, struct buf *buf, uint32_t lb_map)
 	int error;
 
 	/* only interested when we're using a VAT */
-	if (ump->meta_alloc != UDF_ALLOC_VAT)
-		return;
 	KASSERT(ump->vat_node);
+	KASSERT(ump->vtop_alloc[ump->node_part] == UDF_ALLOC_VAT);
 
 	/* only nodes are recorded in the VAT */
 	/* NOTE: and the fileset descriptor (FIXME ?) */
@@ -475,6 +470,9 @@ udf_issue_buf(struct udf_mount *ump, int queue, struct buf *buf)
 			buf_len -= len;
 		}
 	}
+
+	/* NOTE we can't have metadata space bitmap descriptors here */
+
 	udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
 	VOP_STRATEGY(ump->devvp, buf);
 }

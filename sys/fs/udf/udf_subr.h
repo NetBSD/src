@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.11 2008/07/28 19:41:13 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.12 2008/08/06 13:41:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -107,7 +107,7 @@ int udf_vat_write(struct udf_node *vat_node, uint8_t *blob, int size, uint32_t o
 /* disc allocation */
 void udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf, uint64_t *lmapping, struct long_ad *node_ad_cpy, uint16_t *vpart_num);
 void udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num, uint16_t vpart_num, uint32_t num_lb);
-int udf_pre_allocate_space(struct udf_mount *ump, int udf_c_type, int num_lb, uint16_t *alloc_partp, uint64_t *lmapping);
+int udf_pre_allocate_space(struct udf_mount *ump, int udf_c_type, uint32_t num_lb, uint16_t vpartnr, uint64_t *lmapping);
 int udf_grow_node(struct udf_node *node, uint64_t new_size);
 int udf_shrink_node(struct udf_node *node, uint64_t new_size);
 

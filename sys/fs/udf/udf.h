@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.25 2008/07/29 10:08:16 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.26 2008/08/06 13:41:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -147,6 +147,7 @@ extern int udf_verbose;
 
 
 /* RW content hint for allocation and other purposes */
+#define UDF_C_INVALID		 0	/* not relevant */
 #define UDF_C_PROCESSED		 0	/* not relevant */
 #define UDF_C_USERDATA		 1	/* all but userdata is metadata */
 #define UDF_C_DSCR		 2	/* update sectornr and CRC */
@@ -154,7 +155,6 @@ extern int udf_verbose;
 #define UDF_C_FIDS		 4	/* update all contained fids */
 #define UDF_C_METADATA_SBM	 5	/* space bitmap, update sectornr and CRC */
 #define UDF_C_EXTATTRS		 6	/* dunno what to do yet */
-
 
 /* use unused b_freelistindex for our UDF_C_TYPE */
 #define b_udf_c_type	b_freelistindex
@@ -172,6 +172,7 @@ extern int udf_verbose;
 
 
 /* allocation strategies */
+#define UDF_ALLOC_INVALID            0
 #define UDF_ALLOC_SEQUENTIAL         1  /* linear on NWA                 */
 #define UDF_ALLOC_VAT                2  /* VAT handling                  */
 #define UDF_ALLOC_SPACEMAP           3  /* spacemaps                     */
@@ -283,19 +284,17 @@ struct udf_mount {
 	int			 lvopen;		/* logvol actions    */
 	int			 lvclose;		/* logvol actions    */
 
-	/* disc allocation / writing method */
-	int			 lvreadwrite;		/* error handling    */
-	int			 data_alloc;		/* all userdata      */
-	int			 data_allocdscr;
-	int			 meta_alloc;		/* all metadata      */
-	int			 meta_allocdscr;
-	int			 data_part;
-	int			 metadata_part;
-	kmutex_t		 allocate_mutex;
-
 	/* logical to physical translations */
 	int 			 vtop[UDF_PMAPS+1];	/* vpartnr trans     */
 	int			 vtop_tp[UDF_PMAPS+1];	/* type of trans     */
+
+	/* disc allocation / writing method */
+	kmutex_t		 allocate_mutex;
+	int			 lvreadwrite;		/* error handling    */
+	int			 vtop_alloc[UDF_PMAPS+1]; /* alloc scheme    */
+	int			 data_part;
+	int			 node_part;
+	int			 fids_part;
 
 	/* sequential track info */
 	struct mmc_trackinfo	 data_track;
