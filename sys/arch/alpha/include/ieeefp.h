@@ -1,4 +1,4 @@
-/* $NetBSD: ieeefp.h,v 1.6 2008/08/05 16:47:41 matt Exp $ */
+/* $NetBSD: ieeefp.h,v 1.7 2008/08/06 03:54:50 matt Exp $ */
 
 /* 
  * Written by J.T. Conklin, Apr 28, 1995
@@ -20,7 +20,7 @@ typedef int fexcept_t;
 #define	FE_OVERFLOW	0x04	/* overflow exception */
 #define	FE_UNDERFLOW	0x08	/* underflow exception */
 #define	FE_INEXACT	0x10	/* imprecise (loss of precision; "inexact") */
-#define	FP_IOVERFLOW	0x20    /* integer overflow */
+#define	FE_IOVERFLOW	0x20    /* integer overflow */
 
 #define	FE_ALL_EXCEPT	0x3f
 
