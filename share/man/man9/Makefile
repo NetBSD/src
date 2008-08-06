@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.264 2008/05/06 11:32:46 yamt Exp $
+#       $NetBSD: Makefile,v 1.265 2008/08/06 15:08:08 plunky Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -46,7 +46,8 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	sched_4bsd.9 scsipi.9 \
 	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 secmodel_securelevel.9 \
 	setjmp.9 shutdownhook_establish.9 \
-	signal.9 softintr.9 spl.9 splraiseipl.9 store.9 suspendsched.9 \
+	signal.9 sockopt.9 softintr.9 spl.9 splraiseipl.9 \
+	store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 tc.9 tcp_congctl.9 timecounter.9 time_second.9 \
 	todr.9 uiomove.9 ucom.9 userret.9 \
 	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 vme.9 \
@@ -536,6 +537,12 @@ MLINKS+=signal.9 siginit.9 \
 	signal.9 sendsig.9 \
 	signal.9 sigcode.9 \
 	signal.9 sigtramp.9
+MLINKS+=sockopt.9 sockopt_init.9 \
+	sockopt.9 sockopt_destroy.9 \
+	sockopt.9 sockopt_get.9 \
+	sockopt.9 sockopt_getint.9 \
+	sockopt.9 sockopt_set.9 \
+	sockopt.9 sockopt_setint.9 \
 MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
 	softintr.9 softintr_schedule.9 softintr.9 softint.9 \
 	softintr.9 softint_establish.9 softintr.9 softint_disestablish.9 \
