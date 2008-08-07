@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.50 2008/07/31 05:38:07 simonb Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.51 2008/08/07 22:26:14 oster Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.50 2008/07/31 05:38:07 simonb Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.51 2008/08/07 22:26:14 oster Exp $");
 #endif
 #endif /* not lint */
 
@@ -384,7 +384,7 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 	    fs->fs_journal_flags);
 	printf("wapbl loc0 %" PRIu64 "\tloc1 %" PRIu64,
 	    fs->fs_journallocs[0], fs->fs_journallocs[1]);
-	printf("\tloc1 %" PRIu64 "\tloc2 %" PRIu64 "\n",
+	printf("\tloc2 %" PRIu64 "\tloc3 %" PRIu64 "\n",
 	    fs->fs_journallocs[2], fs->fs_journallocs[3]);
 	printf("flags\t");
 	if (fs->fs_flags == 0)
