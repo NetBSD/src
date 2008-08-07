@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.36 2008/08/05 13:06:35 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.37 2008/08/07 21:02:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -588,7 +588,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 			start = (uint8_t *)pgs[i]->uanon + chunkoff;
 
 			memset(start, 0, chunklen);
-			pgs[i]->flags &= PG_CLEAN;
+			pgs[i]->flags &= ~PG_CLEAN;
 
 			off += chunklen;
 			len -= chunklen;
