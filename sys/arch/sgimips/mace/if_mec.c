@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.20 2008/05/14 13:29:28 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.21 2008/08/07 15:05:02 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.20 2008/05/14 13:29:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.21 2008/08/07 15:05:02 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -125,6 +125,7 @@ uint32_t mec_debug = 0;
 #define MEC_NTXDESC		64
 #define MEC_NTXDESC_MASK	(MEC_NTXDESC - 1)
 #define MEC_NEXTTX(x)		(((x) + 1) & MEC_NTXDESC_MASK)
+#define MEC_NTXDESC_RSVD	4
 
 /*
  * software state for TX
@@ -342,7 +343,7 @@ static void	mec_setfilter(struct mec_softc *);
 static int	mec_intr(void *arg);
 static void	mec_stop(struct ifnet *, int);
 static void	mec_rxintr(struct mec_softc *);
-static void	mec_txintr(struct mec_softc *);
+static void	mec_txintr(struct mec_softc *, uint32_t);
 static void	mec_shutdown(void *);
 
 CFATTACH_DECL_NEW(mec, sizeof(struct mec_softc),
@@ -836,7 +837,8 @@ mec_start(struct ifnet *ifp)
 			break;
 		m = NULL;
 
-		if (sc->sc_txpending == MEC_NTXDESC) {
+		if (sc->sc_txpending == MEC_NTXDESC - 1) {
+			/* preserve the last entry to avoid wraparound */
 			break;
 		}
 
@@ -1223,7 +1225,7 @@ mec_intr(void *arg)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint32_t statreg, statack, dmac;
+	uint32_t statreg, statack, txptr;
 	int handled, sent;
 
 	DPRINTF(MEC_DEBUG_INTR, ("mec_intr: called\n"));
@@ -1249,18 +1251,15 @@ mec_intr(void *arg)
 			mec_rxintr(sc);
 		}
 
-		dmac = bus_space_read_8(st, sh, MEC_DMA_CONTROL);
-		DPRINTF(MEC_DEBUG_INTR,
-		    ("mec_intr: DMA_CONT = 0x%08x\n", dmac));
-
 		if (statack &
 		    (MEC_INT_TX_EMPTY |
 		     MEC_INT_TX_PACKET_SENT |
 		     MEC_INT_TX_ABORT)) {
-			mec_txintr(sc);
+			txptr = (statreg & MEC_INT_TX_RING_BUFFER_ALIAS)
+			    >> MEC_INT_TX_RING_BUFFER_SHIFT;
+			mec_txintr(sc, txptr);
 			sent = 1;
-			if ((statack & MEC_INT_TX_EMPTY) != 0 &&
-			    (dmac & MEC_DMA_TX_INT_ENABLE) != 0) {
+			if ((statack & MEC_INT_TX_EMPTY) != 0) {
 				/*
 				 * disable TX interrupt to stop
 				 * TX empty interrupt
@@ -1282,7 +1281,7 @@ mec_intr(void *arg)
 		}
 	}
 
-	if (sent) {
+	if (sent && IFQ_IS_EMPTY(&ifp->if_snd)) {
 		/* try to get more packets going */
 		mec_start(ifp);
 	}
@@ -1417,7 +1416,7 @@ mec_rxintr(struct mec_softc *sc)
 }
 
 static void
-mec_txintr(struct mec_softc *sc)
+mec_txintr(struct mec_softc *sc, uint32_t txptr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mec_txdesc *txd;
@@ -1427,11 +1426,9 @@ mec_txintr(struct mec_softc *sc)
 	int i;
 	u_int col;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
-
 	DPRINTF(MEC_DEBUG_TXINTR, ("mec_txintr: called\n"));
 
-	for (i = sc->sc_txdirty; sc->sc_txpending != 0;
+	for (i = sc->sc_txdirty; i != txptr && sc->sc_txpending != 0;
 	    i = MEC_NEXTTX(i), sc->sc_txpending--) {
 		txd = &sc->sc_txdesc[i];
 
@@ -1478,6 +1475,8 @@ mec_txintr(struct mec_softc *sc)
 	/* cancel the watchdog timer if there are no pending TX packets */
 	if (sc->sc_txpending == 0)
 		ifp->if_timer = 0;
+	if (sc->sc_txpending < MEC_NTXDESC - MEC_NTXDESC_RSVD)
+		ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 static void
