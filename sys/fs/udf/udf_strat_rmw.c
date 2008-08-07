@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.7 2008/08/06 13:41:12 reinoud Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.8 2008/08/07 15:54:12 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.7 2008/08/06 13:41:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.8 2008/08/07 15:54:12 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1001,11 +1001,9 @@ udf_shedule_read_callback(struct buf *buf)
 		dst = (uint8_t *) eccline->blob + i * sector_size;
 		if (eccline->present & bit)
 			continue;
-		if (error) {
+		eccline->present |= bit;
+		if (error)
 			eccline->error |= bit;
-		} else {
-			eccline->present |= bit;
-		}
 		if (eccline->bufs[i]) {
 			dst = (uint8_t *) eccline->bufs[i]->b_data +
 				eccline->bufs_bpos[i];
