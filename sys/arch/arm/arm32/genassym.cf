@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39 2008/04/27 18:58:44 matt Exp $
+#	$NetBSD: genassym.cf,v 1.40 2008/08/07 03:58:15 matt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -67,6 +67,10 @@ endif
 
 ifdef __HAVE_FAST_SOFTINTS
 define	__HAVE_FAST_SOFTINTS	1
+endif
+
+ifdef __HAVE_UNNESTED_INTRS
+define	__HAVE_UNNESTED_INTRS	1
 endif
 
 define	KERNEL_BASE		KERNEL_BASE
@@ -153,6 +157,9 @@ define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
 if defined(EXEC_AOUT)
 define	CI_CTRL			offsetof(struct cpu_info, ci_ctrl)
+endif
+ifdef __HAVE_FAST_SOFTINTS
+define	CI_SOFTINTS		offsetof(struct cpu_info, ci_softints)
 endif
 
 # Constants required for in_cksum() and friends.
