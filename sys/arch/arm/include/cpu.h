@@ -318,7 +318,7 @@ void	dosoftints(void);
 static inline void
 cpu_dosoftints(void)
 {
-	if (curcpu()->ci_softints && curcpu()->ci_cpl < IPL_SOFTCLOCK)
+	if (curcpu()->ci_softints >> curcpu()->ci_cpl > 0)
 		dosoftints();
 }
 #endif
