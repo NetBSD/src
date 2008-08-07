@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.30 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.31 2008/08/07 06:20:14 cegger Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -20,6 +20,10 @@
 
 #include <sys/queue.h>
 #include <sys/callout.h>
+
+#ifdef _KERNEL
+struct sockopt; /* from <sys/socketvar.h> */
+#endif
 
 /*
  * Multicast Routing set/getsockopt commands.
