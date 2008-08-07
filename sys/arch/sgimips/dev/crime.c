@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.31 2008/08/07 14:36:49 tsutsui Exp $	*/
+/*	$NetBSD: crime.c,v 1.32 2008/08/07 14:44:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.31 2008/08/07 14:36:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.32 2008/08/07 14:44:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -142,8 +142,7 @@ crime_attach(struct device *parent, struct device *self, void *aux)
 	/* reset CRIME CPU & memory error registers */
 	crime_bus_reset();
 
-	bus_space_write_8(crm_iot, crm_ioh, CRIME_WATCHDOG, 0);
-	bus_space_write_8(crm_iot, crm_ioh, CRIME_CONTROL, 0);
+	crime_watchdog_disable();
 
 #define CRIME_TIMER_FREQ	66666666	/* crime clock is 66.7MHz */
 
