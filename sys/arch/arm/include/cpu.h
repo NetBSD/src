@@ -318,7 +318,8 @@ void	dosoftints(void);
 static inline void
 cpu_dosoftints(void)
 {
-	if (curcpu()->ci_softints >> curcpu()->ci_cpl > 0)
+	struct cpu_info * const ci = curcpu();
+	if (ci->ci_intr_depth == 0 && (ci->ci_softints >> ci->ci_cpl) > 0)
 		dosoftints();
 }
 #endif
