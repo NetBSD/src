@@ -1,4 +1,4 @@
-	$NetBSD: TODO,v 1.3 2008/07/29 13:17:41 pooka Exp $
+	$NetBSD: TODO,v 1.4 2008/08/07 11:15:20 pooka Exp $
 
 * fix the build structure to work better on non-NetBSD
 * figure out how to handle mount parameters in fs-independent
@@ -8,3 +8,6 @@
 * dlopen libraries instead of linking where it makes sense
   + makes a difference for e.g. "fsconsole"
 * support nfs (requires using the network stack in userspace)
+* find a better solution for rumpdefs.h, the sed "solution"
+  doesn't really scale nicely
+* add support to vnode_if.sh to produce rumpvnode_if instead of sed'ing
