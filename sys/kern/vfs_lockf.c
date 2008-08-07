@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.66 2008/08/01 07:11:24 skrll Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.67 2008/08/07 07:42:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.66 2008/08/01 07:11:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.67 2008/08/07 07:42:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,6 +383,8 @@ lf_split(struct lockf *lock1, struct lockf *lock2, struct lockf **sparelock)
 	splitlock = *sparelock;
 	*sparelock = NULL;
 	memcpy(splitlock, lock1, sizeof(*splitlock));
+	cv_init(&splitlock->lf_cv, lockstr);
+
 	splitlock->lf_start = lock2->lf_end + 1;
 	TAILQ_INIT(&splitlock->lf_blkhd);
 	lock1->lf_end = lock2->lf_start - 1;
