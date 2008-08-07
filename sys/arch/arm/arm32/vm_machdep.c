@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44 2008/07/07 12:18:45 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45 2008/08/07 04:16:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.44 2008/07/07 12:18:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 2008/08/07 04:16:26 matt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -119,7 +119,7 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = (struct pcb *)&l2->l_addr->u_pcb;
+	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
 
