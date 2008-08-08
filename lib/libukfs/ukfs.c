@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.4 2008/08/01 19:52:10 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.5 2008/08/08 14:16:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -97,6 +97,8 @@ nextpid(struct ukfs *ukfs)
 	pid_t npid;
 
 	pthread_spin_lock(&ukfs->ukfs_spin);
+	if (ukfs->ukfs_nextpid == 0)
+		ukfs->ukfs_nextpid++;
 	npid = ukfs->ukfs_nextpid++;
 	pthread_spin_unlock(&ukfs->ukfs_spin);
 
