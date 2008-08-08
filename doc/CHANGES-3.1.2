@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.25 2008/07/24 22:26:27 ghen Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.26 2008/08/08 15:07:35 jdc Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -974,4 +974,9 @@ usr.sbin/bind/include/lwres/platform.h		patch
 
 	Update BIND to 9.3.5-P1 to fix CVE-2008-1447 and turn off pthreads.
 	[adrianp, ticket #1948]
+
+sys/net/if_pppoe.c				1.88
+	Apply patch from Yasuoka Masahiko in PR kern/39321: fix length check
+	when parsing pppoe discovery phase packets.
+	[martin, ticket #1953]
 
