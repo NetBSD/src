@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.21 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: crib.c,v 1.22 2008/08/08 16:10:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.21 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: crib.c,v 1.22 2008/08/08 16:10:47 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,8 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-	initscr();
+	if (!initscr())
+		errx(0, "couldn't initialize screen");
 	(void)signal(SIGINT, receive_intr);
 	cbreak();
 	noecho();

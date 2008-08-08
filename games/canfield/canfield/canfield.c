@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.24 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: canfield.c,v 1.25 2008/08/08 16:10:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.24 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.25 2008/08/08 16:10:47 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -1774,7 +1774,10 @@ main(void)
 	signal(SIGINT, askquit);
 	signal(SIGHUP, cleanup);
 	signal(SIGTERM, cleanup);
-	initscr();
+	if (!initscr()) {
+		fprintf(stderr, "couldn't initialize screen\n");
+		exit (0);
+	}
 	raw();
 	noecho();
 	initall();

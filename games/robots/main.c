@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2008/08/08 16:10:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2008/08/08 16:10:47 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,8 @@ main(ac, av)
 		sleep(2);
 	}
 
-	initscr();
+	if (!initscr())
+		errx(0, "couldn't initialize screen");
 	signal(SIGINT, quit);
 	cbreak();
 	noecho();

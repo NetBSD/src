@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.14 2007/12/15 19:44:38 perry Exp $	*/
+/*	$NetBSD: graphics.c,v 1.15 2008/08/08 16:10:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.14 2007/12/15 19:44:38 perry Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.15 2008/08/08 16:10:47 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,8 @@ init_gr(void)
 {
 	static char	buffer[BUFSIZ];
 
-	(void)initscr();
+	if (!initscr())
+		errx(0, "couldn't initialize screen");
 	setbuf(stdout, buffer);
 	input = newwin(INPUT_LINES, COLS - PLANE_COLS, LINES - INPUT_LINES, 0);
 	credit = newwin(INPUT_LINES, PLANE_COLS, LINES - INPUT_LINES, 

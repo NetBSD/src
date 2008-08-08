@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.27 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: worm.c,v 1.28 2008/08/08 16:10:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.27 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: worm.c,v 1.28 2008/08/08 16:10:47 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,8 @@ main(argc, argv)
 	signal(SIGALRM, wake);
 	signal(SIGINT, leave);
 	signal(SIGQUIT, leave);
-	initscr();
+	if (!initscr())
+		errx(0, "couldn't initialize screen");
 	cbreak();
 	noecho();
 #ifdef KEY_LEFT

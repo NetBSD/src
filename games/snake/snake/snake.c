@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.24 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: snake.c,v 1.25 2008/08/08 16:10:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.24 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: snake.c,v 1.25 2008/08/08 16:10:47 drochner Exp $");
 #endif
 #endif				/* not lint */
 
@@ -191,7 +191,8 @@ main(argc, argv)
 	srandom((int) tv);
 
 	penalty = loot = 0;
-	initscr();
+	if (!initscr())
+		errx(0, "couldn't initialize screen");;
 	cbreak();
 	noecho();
 #ifdef KEY_LEFT
