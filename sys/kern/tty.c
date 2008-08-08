@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.226 2008/07/31 01:46:40 uebayasi Exp $	*/
+/*	$NetBSD: tty.c,v 1.227 2008/08/08 07:18:03 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.226 2008/07/31 01:46:40 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.227 2008/08/08 07:18:03 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1914,12 +1914,10 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	u_char		*cp;
 	struct proc	*p;
 	int		cc, ce, i, hiwat, error;
-	size_t		cnt;
 	u_char		obuf[OBUFSIZ];
 
 	cp = NULL;
 	hiwat = tp->t_hiwat;
-	cnt = uio->uio_resid;
 	error = 0;
 	cc = 0;
  loop:
