@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.52 2008/08/04 15:02:16 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.53 2008/08/08 14:40:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -652,19 +652,23 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	struct proc *p;
 
 	l = kmem_zalloc(sizeof(struct lwp), KM_SLEEP);
-	p = kmem_zalloc(sizeof(struct proc), KM_SLEEP);
-	p->p_cwdi = cwdinit();
+	if (pid != 0) {
+		p = kmem_zalloc(sizeof(struct proc), KM_SLEEP);
+		p->p_cwdi = cwdinit();
 
-	p->p_stats = &rump_stats;
-	p->p_limit = &rump_limits;
-        p->p_pid = pid;
-	p->p_vmspace = &rump_vmspace;
+		p->p_stats = &rump_stats;
+		p->p_limit = &rump_limits;
+		p->p_pid = pid;
+		p->p_vmspace = &rump_vmspace;
+		p->p_fd = fd_init(NULL);
+	} else {
+		p = &proc0;
+	}
+
 	l->l_cred = rump_cred;
 	l->l_proc = p;
-        l->l_lid = lid;
-
-	p->p_fd = fd_init(NULL);
-        l->l_fd = p->p_fd;
+	l->l_lid = lid;
+	l->l_fd = p->p_fd;
 
 	if (set)
 		rumpuser_set_curlwp(l);
@@ -678,9 +682,11 @@ rump_clear_curlwp()
 	struct lwp *l;
 
 	l = rumpuser_get_curlwp();
-	fd_free();
-	cwdfree(l->l_proc->p_cwdi);
-	kmem_free(l->l_proc, sizeof(*l->l_proc));
+	if (l->l_proc->p_pid != 0) {
+		fd_free();
+		cwdfree(l->l_proc->p_cwdi);
+		kmem_free(l->l_proc, sizeof(*l->l_proc));
+	}
 	kmem_free(l, sizeof(*l));
 	rumpuser_set_curlwp(NULL);
 }
