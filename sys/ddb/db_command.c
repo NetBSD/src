@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.117 2008/07/10 12:42:24 blymn Exp $	*/
+/*	$NetBSD: db_command.c,v 1.118 2008/08/08 17:09:28 skrll Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,11 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.117 2008/07/10 12:42:24 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.118 2008/08/08 17:09:28 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_inet.h"
+#include "opt_uvmhist.h"
 #include "opt_ddbparam.h"
 
 #include <sys/param.h>
@@ -207,6 +208,9 @@ static void	db_stack_trace_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_sync_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_whatis_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_uvmexp_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+#ifdef UVMHIST
+static void	db_uvmhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+#endif
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
@@ -260,6 +264,11 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("uvmexp",	db_uvmexp_print_cmd, 0,
 	    "Print a selection of UVM counters and statistics.",
 	    NULL,NULL) },
+#ifdef UVMHIST
+	{ DDB_ADD_CMD("uvmhist", db_uvmhist_print_cmd, 0,
+	    "Print the UVM history logs.",
+	    NULL,NULL) },
+#endif
 	{ DDB_ADD_CMD("vnode",	db_vnode_print_cmd,	0,
 	    "Print the vnode at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("watches",	db_listwatch_cmd, 	0,
@@ -841,7 +850,7 @@ db_command(const struct db_command **last_cmdp)
 
 		}
 
-                /* check compatibility flag */
+		/* check compatibility flag */
 		if (command && command->flag & CS_COMPAT){
 			t = db_read_token();
 			if (t != tIDENT) {
@@ -1206,6 +1215,17 @@ db_uvmexp_print_cmd(db_expr_t addr, bool have_addr,
 
 	uvmexp_print(db_printf);
 }
+
+#ifdef UVMHIST
+/*ARGSUSED*/
+static void
+db_uvmhist_print_cmd(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+
+	uvmhist_print(db_printf);
+}
+#endif
 
 /*ARGSUSED*/
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.43 2008/05/25 16:02:08 chs Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.44 2008/08/08 17:09:28 skrll Exp $	*/
 
 /*
  *
@@ -146,7 +146,7 @@ extern int uvmhist_print_enabled;
 #define UVMHIST_PRINTNOW(E) \
 do { \
 		if (uvmhist_print_enabled) { \
-			uvmhist_print(E); \
+			uvmhist_entry_print(E); \
 			DELAY(100000); \
 		} \
 } while (/*CONSTCOND*/ 0)
@@ -191,10 +191,10 @@ do { \
 	static const char *const _uvmhist_name = FNAME; \
 	int _uvmhist_call;
 
-static __inline void uvmhist_print(struct uvm_history_ent *);
+static __inline void uvmhist_entry_print(struct uvm_history_ent *);
 
 static __inline void
-uvmhist_print(e)
+uvmhist_entry_print(e)
 	struct uvm_history_ent *e;
 {
 	printf("%06ld.%06ld ", e->tv.tv_sec, e->tv.tv_usec);
