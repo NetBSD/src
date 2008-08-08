@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_udf.8,v 1.7 2008/05/15 07:03:17 reinoud Exp $
+.\" $NetBSD: mount_udf.8,v 1.8 2008/08/08 18:22:01 reinoud Exp $
 .\"
 .\" Copyright (c) 2006, 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd May 14, 2008
+.Dd Aug 8, 2008
 .Dt MOUNT_UDF 8
 .Os
 .Sh NAME
@@ -107,14 +107,13 @@ DVDs) between different operating systems.
 Its also more and more common on other media like Compact
 Flash (CF) cards.
 .Pp
-Currently only read access is supported for all media types that
-CD/DVD type drives can recognise including DVD-RAM and BluRay
-drives.
-Write access is planned and in preparation.
+Read and write access is supported for all media types that CD/DVD type drives
+can recognise including DVD-RAM. BluRay support is preliminary; read-only
+access should work fine but write support is experimental.
 .Pp
 Implemented and tested media types are CD-ROM, CD-R, CD-RW, CD-MRW,
-DVD-ROM, DVD*R, DVD*RW, DVD+MRW but the same code can also read
-DVD-RAM, HD-DVD and BluRay discs.
+DVD-ROM, DVD*R, DVD*RW, DVD+MRW, DVD-RAM but the same code can also read
+HD-DVD and BluRay discs.
 Discs created and written by UDFclient, Nero's InCD, and Roxio's
 DirectCD/Drag2Disc can be read without problems.
 Both open and closed media are supported so
@@ -134,5 +133,12 @@ when creating the
 .Xr vnd 4
 device or the disc sector size will be used.
 .Sh BUGS
-Due to lack of test media, versions 2.50 and 2.60 are prepared but
-not implemented and tested yet.
+Write support for UDF version 2.50 is not completely mature and UDF version
+2.01 should be used if possible; this is also the default format.
+.Pp
+Disk space accounting is not upto par and care should be taken not to write
+too much on a disk.
+.Pp
+Due to lack of test media and recording devices, BluRay support and in
+particular BluRay-R is still preliminary as of writing.
+
