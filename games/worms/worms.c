@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.18 2008/07/20 01:03:22 lukem Exp $	*/
+/*	$NetBSD: worms.c,v 1.19 2008/08/08 16:10:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.18 2008/07/20 01:03:22 lukem Exp $");
+__RCSID("$NetBSD: worms.c,v 1.19 2008/08/08 16:10:47 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,8 @@ main(argc, argv)
 	if (!(worm = malloc((size_t)number *
 	    sizeof(struct worm))) || !(mp = malloc((size_t)1024)))
 		nomem();
-	initscr();
+	if (!initscr())
+		errx(0, "couldn't initialize screen");
 	curs_set(0);
 	CO = COLS;
 	LI = LINES;

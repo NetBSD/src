@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2006/05/13 22:29:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2008/08/08 16:10:47 drochner Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -995,7 +995,10 @@ playinit()
 	signal(SIGPIPE, ill_sig);
 #endif
 
-	initscr();		/* turn on curses */
+	if (!initscr()) {	/* turn on curses */
+		fprintf(stderr, "couldn't initialize screen\n");
+		exit (0);
+	}
 	noecho();		/* do not echo input */
 	cbreak();		/* do not process erase, kill */
 	clear();
