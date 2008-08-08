@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.1 2008/07/29 13:17:48 pooka Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.2 2008/08/08 16:59:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
+#include <sys/syslimits.h>
 
 #include <assert.h>
 #include <err.h>
@@ -48,7 +49,7 @@ static void
 usage(void)
 {
 
-	errx(1, "usage: %s file_server [fs opts] dev mountpath", getprogname());
+	errx(1, "usage: %s file_server fs_opts", getprogname());
 }
 
 int
@@ -56,11 +57,12 @@ main(int argc, char *argv[])
 {
 	struct puffs_kargs kargs;
 	extern char **environ;
-	char *mntpath, *fromname;
+	char *mntpath, *fromname, *shcmd;
 	size_t len;
 	char comfd[16];
+	char *newargv[4];
 	int sv[2];
-	int mntflags, pflags, rv;
+	int mntflags, pflags, rv, i;
 
 #if 1
 	extern int puffsdebug;
@@ -83,8 +85,17 @@ main(int argc, char *argv[])
 
 	switch (fork()) {
 	case 0:
-		argv++;
-		if (execve(argv[0], argv, environ) == -1)
+		shcmd = malloc(ARG_MAX);
+		*shcmd = 0;
+		for (i = 1; i < argc; i++) {
+			strcat(shcmd, argv[i]);
+			strcat(shcmd, " ");
+		}
+		newargv[0] = _PATH_BSHELL;
+		newargv[1] = "-c";
+		newargv[2] = shcmd;
+		newargv[3] = '\0';
+		if (execve(_PATH_BSHELL, newargv, environ) == -1)
 			err(1, "execvp");
 		/*NOTREACHED*/
 	case -1:
@@ -114,7 +125,7 @@ main(int argc, char *argv[])
 		err(1, "mntflags");
 	if (read(sv[1], &kargs, sizeof(kargs)) != sizeof(kargs))
 		err(1, "puffs_args");
-	if (read(sv[1], &pflags, sizeof(kargs)) != sizeof(pflags))
+	if (read(sv[1], &pflags, sizeof(pflags)) != sizeof(pflags))
 		err(1, "pflags");
 
 	/* XXX: some adjustments */
