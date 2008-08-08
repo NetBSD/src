@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.166 2008/07/09 02:43:53 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.167 2008/08/08 16:58:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.166 2008/07/09 02:43:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.167 2008/08/08 16:58:01 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -864,7 +864,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	if (__predict_true(!cold))
 		mutex_exit(&pool_head_lock);
 
-		/* Insert this into the list of pools using this allocator. */
+	/* Insert this into the list of pools using this allocator. */
 	if (__predict_true(!cold))
 		mutex_enter(&palloc->pa_lock);
 	TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
