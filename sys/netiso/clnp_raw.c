@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.30 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.31 2008/08/08 06:26:58 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.30 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.31 2008/08/08 06:26:58 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -207,7 +207,7 @@ rclnp_ctloutput(
 	if (argo_debug[D_CTLOUTPUT]) {
 		printf("rclnp_ctloutput: op = x%x, level = x%x, name = x%x\n",
 		    op, sopt->sopt_level, sopt->sopt_name);
-		printf("rclnp_ctloutput: %d bytes of data\n", sopt->sopt_size);
+		printf("rclnp_ctloutput: %zd bytes of data\n", sopt->sopt_size);
 		dump_buf(sopt->sopt_data, sopt->sopt_size);
 	}
 #endif
