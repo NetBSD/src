@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.26 2008/01/28 03:23:29 dholland Exp $	*/
+/*	$NetBSD: hunt.c,v 1.27 2008/08/08 16:10:47 drochner Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.26 2008/01/28 03:23:29 dholland Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.27 2008/08/08 16:10:47 drochner Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -259,7 +259,8 @@ main(ac, av)
 	if (!isatty(0) || (term = getenv("TERM")) == NULL)
 		errx(1, "no terminal type");
 # ifdef USE_CURSES
-	initscr();
+	if (!initscr())
+		errx(0, "couldn't initialize screen");
 	(void) noecho();
 	(void) cbreak();
 # else /* !USE_CURSES */
