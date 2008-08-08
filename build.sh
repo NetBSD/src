@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.191 2008/08/05 22:35:32 apb Exp $
+#	$NetBSD: build.sh,v 1.192 2008/08/08 07:30:42 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1022,9 +1022,11 @@ validatemakeparams()
 				"directory ${top_obj_dir}"
 			;;
 		*)
-			# we probably failed to set it above
-			bomb "Please use the -O or -M option" \
-				"to set the object directory"
+			# We don't know what the top level object
+			# directory should be, so we can't create it.
+			# A nonexistant directory might cause an error
+			# when we "make obj" later, but we ignore it for
+			# now.
 			;;
 		esac
 
@@ -1179,7 +1181,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.191 2008/08/05 22:35:32 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.192 2008/08/08 07:30:42 apb Exp $
 # with these arguments: ${_args}
 #
 
