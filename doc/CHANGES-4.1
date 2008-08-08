@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.66 2008/07/24 22:33:55 ghen Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.67 2008/08/08 14:42:07 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1452,4 +1452,9 @@ etc/named.conf					1.5
 	The default named.conf should not contain a query-source statement.
 	Comment it out and describe what it's for and why not to use it.
 	[dholland, ticket #1169]
+
+sys/net/if_pppoe.c				1.88
+        Apply patch from Yasuoka Masahiko in PR kern/39321: fix length check
+        when parsing pppoe discovery phase packets.
+	[martin, ticket #1179]
 
