@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.147 2008/07/11 07:09:18 skrll Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.148 2008/08/08 14:41:50 skrll Exp $	*/
 
 /*
  *
@@ -525,7 +525,6 @@ struct uvm_coredump_state {
 /*
  * the various kernel maps, owned by MD code
  */
-extern struct vm_map *exec_map;
 extern struct vm_map *kernel_map;
 extern struct vm_map *kmem_map;
 extern struct vm_map *mb_map;
