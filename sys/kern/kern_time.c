@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.150 2008/07/15 16:18:08 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.151 2008/08/08 16:44:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.150 2008/07/15 16:18:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.151 2008/08/08 16:44:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1006,9 +1006,9 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 		timerclear(&itvp->it_value);
 		timerclear(&itvp->it_interval);
 	} else {
-		TIMEVAL_TO_TIMESPEC(&itvp->it_value, &its.it_value);
-		TIMEVAL_TO_TIMESPEC(&itvp->it_interval, &its.it_interval);
 		timer_gettime(pt, &its);
+		TIMESPEC_TO_TIMEVAL(&itvp->it_value, &its.it_value);
+		TIMESPEC_TO_TIMEVAL(&itvp->it_interval, &its.it_interval);
 	}
 	mutex_spin_exit(&timer_lock);	
 
