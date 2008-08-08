@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.30 2008/08/01 14:47:28 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.31 2008/08/08 13:57:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,8 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_RUMP_H_
-#define _SYS_RUMP_H_
+#ifndef _RUMP_RUMP_H_
+#define _RUMP_RUMP_H_
 
 /*
  * NOTE: do not #include anything from <sys> here.  Otherwise this
@@ -133,4 +133,4 @@ struct vnode 	*rump_cdir_get(void);
 int	rump_splfoo(void);
 void	rump_splx(int);
 
-#endif /* _SYS_RUMP_H_ */
+#endif /* _RUMP_RUMP_H_ */
