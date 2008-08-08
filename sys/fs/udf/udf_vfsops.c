@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.47 2008/08/06 13:41:12 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.48 2008/08/08 18:25:56 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.47 2008/08/06 13:41:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.48 2008/08/08 18:25:56 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -412,15 +412,6 @@ udf_mount(struct mount *mp, const char *path,
 		vrele(devvp);
 		return ENXIO; 
 	}
-
-#ifndef UDF_READWRITE
-	/* force read-only for now */
-	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
-		printf( "Enable kernel/module option UDF_READWRITE for "
-			"writing, downgrading access to read-only\n");
-		mp->mnt_flag |= MNT_RDONLY;
-	}
-#endif
 
 	/*
 	 * If mount by non-root, then verify that user has necessary
