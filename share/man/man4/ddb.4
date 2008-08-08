@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.115 2008/07/10 12:43:03 blymn Exp $
+.\"	$NetBSD: ddb.4,v 1.116 2008/08/08 17:14:09 skrll Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd May 23, 2008
+.Dd August 8, 2008
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -803,6 +803,11 @@ queue, the queue index will be prefixed with a
 .It Ic show uvmexp
 Print a selection of UVM counters and statistics.
 .It Xo
+.Ic uvmhost
+Dumps the UVM histories.
+This command is available only if a kernel is compiled with
+.Cd options UVMHIST .
+.It Xo
 .Ic show vnode Ns Op Cm /f
 .Ar address
 .Xc
@@ -1161,8 +1166,6 @@ Use the
 and
 .Dq f
 modifiers to get reversed and full information, respectively.
-.It Ic uvmdump
-Dumps the UVM histories.
 .It Ic watch
 Set or clear a physical or virtual hardware watchpoint.
 Pass the address to be watched, or
