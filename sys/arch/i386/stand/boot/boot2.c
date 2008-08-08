@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.32 2008/07/15 21:29:37 perry Exp $	*/
+/*	$NetBSD: boot2.c,v 1.33 2008/08/08 07:48:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -465,7 +465,7 @@ doboottypemenu(void)
 		
 	printf("\n");
 	/* Display menu */
-	for (choice = 0; bootconf.desc[choice]; choice++)
+	for (choice = 0; choice < bootconf.nummenu; choice++)
 		printf("    %d. %s\n", choice+1, bootconf.desc[choice]);
 
 	choice = -1;
