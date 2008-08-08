@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.21 2008/07/20 19:03:04 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.22 2008/08/08 13:57:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,8 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_RUMPUSER_H_
-#define _SYS_RUMPUSER_H_
+#ifndef _RUMP_RUMPUSER_H_
+#define _RUMP_RUMPUSER_H_
 
 struct stat;
 
@@ -140,4 +140,4 @@ void rumpuser_set_ipl(int);
 int  rumpuser_whatis_ipl(void);
 void rumpuser_clear_ipl(int);
 
-#endif /* _SYS_RUMPUSER_H_ */
+#endif /* _RUMP_RUMPUSER_H_ */
