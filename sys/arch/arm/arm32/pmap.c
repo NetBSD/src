@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.183 2008/08/06 19:13:45 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.184 2008/08/08 06:21:09 dogcow Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183 2008/08/06 19:13:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184 2008/08/08 06:21:09 dogcow Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -1674,7 +1674,7 @@ static void
 pmap_vac_me_user(struct vm_page *pg, pmap_t pm, vaddr_t va)
 {
 	pmap_t kpmap = pmap_kernel();
-	struct pv_entry *pv, *npv;
+	struct pv_entry *pv, *npv = NULL;
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep, pte;
 	u_int entries = 0;
