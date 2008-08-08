@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.15 2008/07/21 10:40:37 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.16 2008/08/08 13:02:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.15 2008/07/21 10:40:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.16 2008/08/08 13:02:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,7 +512,7 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	    pi->pi_pid));
 
 	error = fd_clone(fp, fd, FREAD|FWRITE, &putter_fileops, pi);
-	KASSERT(error = EMOVEFD);
+	KASSERT(error == EMOVEFD);
 	return error;
 
  bad2:
