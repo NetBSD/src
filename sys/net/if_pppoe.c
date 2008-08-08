@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.76.2.1 2007/09/11 09:19:17 xtraeme Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.76.2.2 2008/08/08 14:41:07 jdc Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.76.2.1 2007/09/11 09:19:17 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.76.2.2 2008/08/08 14:41:07 jdc Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -490,7 +490,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		pt = (struct pppoetag *)(mtod(n, caddr_t) + noff);
 		tag = ntohs(pt->tag);
 		len = ntohs(pt->len);
-		if (off + len > m->m_pkthdr.len) {
+		if (off + len + sizeof(*pt) > m->m_pkthdr.len) {
 			printf("pppoe: tag 0x%x len 0x%x is too long\n",
 			    tag, len);
 			goto done;
@@ -581,7 +581,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				free(error, M_TEMP);
 			} else
 				printf("%s: %s\n", devname, err_msg);
-			if (errortag)
+			if (errortag || m == NULL)
 				goto done;
 		}
 		off += sizeof(*pt) + len;
