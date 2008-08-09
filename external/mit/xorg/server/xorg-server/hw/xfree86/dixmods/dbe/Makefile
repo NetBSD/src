@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/09 07:22:21 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/09 09:08:25 rtr Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
 
@@ -7,8 +7,12 @@ XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
 
 LIB=	dbe
 
-SRCS=	dbemodule.c
+.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods
+SRCS=	${SRCS.dbe} dbemodule.c
 
-CPPFLAGS+=	-DDBE
+# XXX should we be installing xorg-config.h?
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${X11SRCDIR.xorg-server}/../include
+CPPFLAGS+=	-DHAVE_XORG_CONFIG_H
 
-.include "../Makefile.dixmod"
+.include "../../../../dbe/Makefile.dbe"
