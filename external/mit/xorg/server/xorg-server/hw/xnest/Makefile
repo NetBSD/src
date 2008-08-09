@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/04 04:32:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/09 06:50:17 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -46,16 +46,10 @@ CPPFLAGS.miinitext.c=	-UDPMSExtension
 
 .include "../../Makefile.Xserver"
 
-LDADD+= \
-	${LDADD.XORG_CORE} \
+LDADD+=	${LDADD.dix} \
+	${LDADD.fb} \
 	${LDADD.mi} \
 	${LDADD.config} \
-	-lXfont \
-	-lXau \
-	-lfontenc \
-	-lpixman-1 \
-	-lXdmcp \
-	${LDADD.fb} \
 	${LDADD.xfixes} \
 	${LDADD.Xext} \
 	${LDADD.dbe} \
@@ -65,27 +59,21 @@ LDADD+= \
 	${LDADD.randr} \
 	${LDADD.damageext} \
 	${LDADD.miext/damage} \
+	${LDADD.cw/cw} \
 	${LDADD.miext/shadow} \
 	${LDADD.Xi} \
 	${LDADD.xkb} \
 	${LDADD.composite} \
 	${LDADD.dix/xpstubs} \
 	${LDADD.os} \
-	-lXext \
-	-lX11 \
-	-lXau \
-	-lfreetype
+	-lXfont -lXext -lfontenc \
+	-lpixman-1 -lX11 -lXau \
+	-lXdmcp -lfreetype -lm
 
-DPADD+= \
-	${DPADD.XORG_CORE} \
+DPADD+=	${LDADD.dix} \
+	${DPADD.fb} \
 	${DPADD.mi} \
 	${DPADD.config} \
-	${LIBXFONT} \
-	${LIBXAU} \
-	${LIBFONTENC} \
-	${LIBPIXMAN-1} \
-	${LIBXDMCP} \
-	${DPADD.fb} \
 	${DPADD.xfixes} \
 	${DPADD.Xext} \
 	${DPADD.dbe} \
@@ -95,16 +83,16 @@ DPADD+= \
 	${DPADD.randr} \
 	${DPADD.damageext} \
 	${DPADD.miext/damage} \
+	${DPADD.cw/cw} \
 	${DPADD.miext/shadow} \
 	${DPADD.Xi} \
 	${DPADD.xkb} \
 	${DPADD.composite} \
 	${DPADD.dix/xpstubs} \
 	${DPADD.os} \
-	${LIBXEXT} \
-	${LIBX11} \
-	${LIBXAU} \
-	${LIBFREETYPE}
+	${LIBXFONT} ${LIBXEXT} ${LIBFONTENC} \
+	${LIBPIXMAN-1} ${LIBX11} ${LIBXAU} \
+	${LIBXDMCP} ${LIBFREETYPE} ${LIBM}
 
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
