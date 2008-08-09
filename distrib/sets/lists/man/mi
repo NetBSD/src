@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1083 2008/08/06 20:14:08 pooka Exp $
+# $NetBSD: mi,v 1.1084 2008/08/09 11:07:26 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2436,6 +2436,7 @@
 ./usr/share/man/cat8/rump_lfs.0			man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rump_msdos.0		man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rump_ntfs.0		man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_syspuffs.0		man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rump_tmpfs.0		man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rump_udf.0			man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rusersd.0			man-netutil-catman	.cat
@@ -5018,6 +5019,7 @@
 ./usr/share/man/man8/rump_lfs.8			man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_msdos.8		man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_ntfs.8		man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_syspuffs.8		man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_tmpfs.8		man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_udf.8			man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rtsol.8			man-netutil-man		inet6,.man
