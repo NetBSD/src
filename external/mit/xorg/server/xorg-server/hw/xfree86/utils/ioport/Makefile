@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/04 04:33:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/09 03:26:39 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ CPPFLAGS+=	-DHAVE_XORG_CONFIG_H \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/dummylib
 
 
-LDADD=	-L${XF86OSOBJDIR} -lxorgos \
+LDADD=	-L${XORGOSOBJDIR} -lxorgos \
 	-L${DUMMYOBJDIR} -ldummy -lm
 
 DPADD=	${LIBXORGOS} ${LIBDUMMY} ${LIBM}
