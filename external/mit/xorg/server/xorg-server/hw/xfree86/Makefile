@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2008/08/09 04:38:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2008/08/09 09:07:40 rtr Exp $
 
 SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
 		xf86modes \
@@ -34,6 +34,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} ${X11FLAGS.DIX} \
 		${X11FLAGS.EXTENSION}
+
+LDFLAGS+=	-rdynamic
 
 LDADD+=	${LDADD.dix}
 LDADD+=	${LDADD.hw/xfree86/init}
