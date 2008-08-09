@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 2008/08/07 06:37:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2008/08/09 01:25:25 rtr Exp $
 
-SUBDIR=		common ddc dixmods doc dri dummy i2c int10 loader modes \
-		os-support rac ramdac scanpci shadowfb vbe vgahw \
-		x86emu xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp
+SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
+		xf86modes \
+		xorgos rac ramdac scanpci pcidata shadowfb vbe vgahw \
+		x86emu xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp xf86config
 
 SUBDIR+=	.WAIT utils
 
@@ -11,6 +12,7 @@ SUBDIR+=	.WAIT utils
 .include "../../Makefile.Xserver"
 
 PROG=		Xorg
+BINMODE=	4711
 
 .PATH:		${X11SRCDIR.xorg-server}/hw/xfree86
 SRCS=		xorg.c
@@ -33,44 +35,38 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} ${X11FLAGS.DIX} \
 		${X11FLAGS.EXTENSION}
 
-LDADD+=	${LDADD.dix} \
-	${LDADD.fb} \
-	${LDADD.mi} \
-	${LDADD.xfixes} \
-	${LDADD.Xext} \
-	${LDADD.config} \
-	${LDADD.dbe} \
-	${LDADD.XTrap} \
-	${LDADD.record} \
-	${LDADD.render} \
-	${LDADD.randr} \
-	${LDADD.damageext} \
-	${LDADD.miext/damage} \
-	${LDADD.miext/shadow} \
-	${LDADD.Xi} \
-	${LDADD.xkb} \
-	${LDADD.composite} \
-	${LDADD.os} \
-	${LDADD.dix/xpstubs} \
-	${LDADD.hw/xfree86/fb} \
-	${LDADD.hw/xfree86/init} \
-	${LDADD.hw/xfree86/loader} \
-	${LDADD.hw/xfree86/rac} \
-	${LDADD.hw/xfree86/xf86config} \
-	${LDADD.hw/xfree86/dixmods} \
-	${LDADD.hw/xfree86/xf86modes} \
-	${LDADD.hw/xfree86/ramdac} \
-	${LDADD.hw/xfree86/ddc} \
-	${LDADD.hw/xfree86/i2c} \
-	-lXfont \
-	-lfreetype \
-	-lXau \
-	-lfontenc \
-	${LIBCWRAPPER} \
-	-lpixman-1 \
-	-lXdmcp \
-	-lz \
-	-lm
+LDADD+=	${LDADD.dix}
+LDADD+=	${LDADD.hw/xfree86/init}
+LDADD+=	${LDADD.config}
+LDADD+=	${LDADD.hw/xfree86/loader}
+LDADD+=	${LDADD.hw/xfree86/common}
+LDADD+=	${LDADD.hw/xfree86/xorgos}
+#LDADD+=	${LDADD.osandcommon}
+LDADD+=	${LDADD.hw/xfree86/rac}
+LDADD+=	${LDADD.hw/xfree86/xf86config}
+LDADD+=	${LDADD.hw/xfree86/dixmods}
+LDADD+=	${LDADD.hw/xfree86/xf86modes}
+LDADD+=	${LDADD.hw/xfree86/ramdac}
+LDADD+=	${LDADD.hw/xfree86/ddc}
+LDADD+=	${LDADD.hw/xfree86/i2c}
+LDADD+=	${LDADD.composite}
+LDADD+=	${LDADD.mi}
+LDADD+=	${LDADD.xfixes}
+LDADD+=	${LDADD.Xext/Xextbuiltin}
+LDADD+=	${LDADD.render}
+LDADD+=	${LDADD.randr}
+LDADD+=	${LDADD.damageext}
+LDADD+=	${LDADD.miext/damage}
+LDADD+=	${LDADD.miext/cw}
+LDADD+=	${LDADD.miext/shadow}
+LDADD+=	${LDADD.Xi}
+LDADD+=	${LDADD.xkb}
+LDADD+=	${LDADD.dix/xpstubs}
+LDADD+=	${LDADD.os}
+LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp -li386 -lm
+#LDADD+=	${LDADD.dixmods/xorgxkb}
+LDADD+=	-lm
+
 
 DPADD+=	${DPADD.dix} \
 	${DPADD.fb} \
