@@ -1,0 +1,110 @@
+#	$NetBSD: Makefile,v 1.1 2008/08/09 01:16:39 rtr Exp $
+
+.include "../../../Makefile.serverlib"
+.include "../../../Makefile.servermod"
+
+LIB=	xorgos
+
+.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support
+.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bsd
+.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared
+SRCS.bsd=	\
+		bsd_VTsw.c bsd_bell.c bsd_init.c bsd_mouse.c \
+		kmod_noop.c libc_wrapper.c lnx_agp.c \
+		posix_tty.c sigio.c stdPci.c stdResource.c vidmem.c
+
+.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/linux
+.if ${MACHINE} == "amd64"
+SRCS.bsd+=	pm_noop.c
+.endif
+.if ${MACHINE} == "i386"
+SRCS.bsd+=	bsd_apm.c
+.endif
+.if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
+SRCS.bsd+=	i386_video.c stdResource.c lnx_agp.c
+.for _FN in ${SRCS.bsd}
+.if ${MACHINE} == "i386"
+CPPFLAGS.${_FN}+=	-DPCCONS_SUPPORT -DHAS_APERTURE_DRV \
+			-DUSE_I386_IOPL
+.endif
+CPPFLAGS.${_FN}+=	-DPCVT_SUPPORT -DWSCONS_SUPPORT \
+			-DUSESTDRES -DHAVE_SYSV_IPC \
+			-DHAS_MTRR_BUILTIN -DUSE_I386_IOPL 
+.endfor
+.endif
+
+.if ${MACHINE} == "macppc"
+SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c lnx_agp.c ioperm_noop.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+.endfor
+.endif
+
+.if ${MACHINE} == "sgimips"
+SRCS.bsd+=	mips_video.c bsdResource.c pm_noop.c lnx_agp.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+.endfor
+.endif
+
+.if ${MACHINE} == "cats"
+SRCS.bsd+=      arm_video.c bsdResource.c pm_noop.c agp_noop.c ioperm_noop.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+.endfor
+.endif
+
+.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus
+SRCS.bus=	Pci.c
+
+.if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
+SRCS.bus+=	ix86Pci.c
+.endif
+
+.if ${MACHINE} == "macppc" || ${MACHINE} == "cats" || ${MACHINE} == "sgimips"
+SRCS.bus+=	netbsdPci.c
+.endif
+
+.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/misc
+SRCS.misc=	xf86_Util.c Delay.c
+
+# XXX .S not built from automake either
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+#SRCS.misc+=	BUSmemcpy.S IODelay.S SlowBcopy.S
+SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
+CPPFLAGS.BUSmemcpy.S=	-DUSE_GAS
+CPPFLAGS.IODelay.S=	-DUSE_GAS
+CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
+.endif
+
+.if 	${MACHINE} == "amd64" || ${MACHINE} == "macppc" || \
+	${MACHINE} == "cats" || ${MACHINE} == "sgimips"
+SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
+.endif
+
+# XXX namespace collision so avoid it, only has to be done for non-i386.
+BUILDSYMLINKS=	BUSmemcpy.c CBUSmemcpy.c \
+		IODelay.c CIODelay.c \
+		SlowBcopy.c CSlowBcopy.c
+
+SRCS=	${SRCS.bsd} ${SRCS.bus} ${SRCS.misc} xorgos.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bsd \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/misc \
+		-I${X11SRCDIR.xorg-server}/include \
+		-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/X11/extensions \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/mi \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared \
+		-I${X11SRCDIR.xc}/extras/drm/shared \
+		-I${XSERVERINCDIR}
+.if ${X11DRI} != "no"
+CPPFLAGS+=	${X11FLAGS.DRI}
+.endif
+
+.include <bsd.x11.mk>
+.include <bsd.lib.mk>
