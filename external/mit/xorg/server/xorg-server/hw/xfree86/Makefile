@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2008/08/09 01:25:25 rtr Exp $
+#	$NetBSD: Makefile,v 1.13 2008/08/09 04:38:32 mrg Exp $
 
 SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
 		xf86modes \
@@ -63,8 +63,17 @@ LDADD+=	${LDADD.Xi}
 LDADD+=	${LDADD.xkb}
 LDADD+=	${LDADD.dix/xpstubs}
 LDADD+=	${LDADD.os}
-LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp -li386 -lm
+LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp
 #LDADD+=	${LDADD.dixmods/xorgxkb}
+
+.if ${MACHINE} == "i386"
+LDADD+=	-li386
+DPADD+=	${LIBI386}
+.elif ${MACHINE_ARCH} == "x86_64"
+LDADD+=	-lx86_64
+DPADD+=	${LIBX86_64}
+.endif
+
 LDADD+=	-lm
 
 
