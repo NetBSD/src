@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/05 04:50:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/09 01:23:43 rtr Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -24,6 +24,8 @@ SRCS=	xf86Configure.c xf86Bus.c xf86Config.c \
 	xf86VidMode.c xf86fbman.c xf86cmap.c \
 	xf86Helper.c xf86PM.c \
 	xf86Mode.c xf86Build.h xorgHelper.c xf86Versions.c \
+	xf86DefModeSet.c ${SRCS.xv} \
+	${SRCS.xiso} ${SRCS.randr} ${SRCS.bus} ${SRCS.xkb}
 
 .if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 SRCS.bus+=	xf86sbusBus.c
@@ -40,6 +42,12 @@ xf86Build.h: .PHONY
 # library to be rebuilt each time
 #
 xf86Init.c xf86Init.o: xf86Build.h
+
+xf86DefModeSet.c:
+	cat \
+	${X11SRCDIR.xorg-server}/hw/xfree86/common/vesamodes \
+	${X11SRCDIR.xorg-server}/hw/xfree86/common/extramodes | \
+	awk -f ${.CURDIR}/modeline2c.awk > ${.TARGET}
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
@@ -117,6 +125,7 @@ CPPFLAGS.xf86AutoConfig.c=	-DPROJECTROOT='"${X11ROOTDIR}"' \
 COPTS.xf86AutoConfig.c=		-Wno-error
 COPTS.xf86Config.c=		-Wno-error
 COPTS.xf86Cursor.c=		-Wno-error
+COPTS.xf86RandR.c=		-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
