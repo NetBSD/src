@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/05 05:25:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.1 2008/08/09 01:15:19 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
 
-LIB=	xf86parser	
+LIB=	xf86config
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/parser
 SRCS=	DRI.c Device.c Extensions.c Files.c Flags.c Input.c Layout.c \
