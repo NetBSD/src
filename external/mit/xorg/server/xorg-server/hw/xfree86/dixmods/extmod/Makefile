@@ -1,8 +1,11 @@
-# $NetBSD: Makefile,v 1.1 2008/08/06 07:16:40 mrg Exp $
+# $NetBSD: Makefile,v 1.2 2008/08/09 01:24:16 rtr Exp $
+
+XMODULEDIR=     ${X11USRLIBDIR}/modules
 
 .include "../../../../Makefile.serverlib"
 .include "../../../../Makefile.servermod"
 
+#SHLIB_MAJOR=	0
 LIB=	extmod
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod
