@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/04 01:03:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/09 01:18:20 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -68,8 +68,10 @@ SRCS.bus+=	netbsdPci.c
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/misc
 SRCS.misc=	xf86_Util.c Delay.c
 
+# XXX these seem to not have all symbols we need right now
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-SRCS.misc+=	BUSmemcpy.S IODelay.S SlowBcopy.S
+#SRCS.misc+=	BUSmemcpy.S IODelay.S SlowBcopy.S
+SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 CPPFLAGS.BUSmemcpy.S=	-DUSE_GAS
 CPPFLAGS.IODelay.S=	-DUSE_GAS
 CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
