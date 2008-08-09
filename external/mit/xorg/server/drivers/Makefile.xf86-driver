@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.xf86-driver,v 1.3 2008/08/03 14:46:01 rtr Exp $
+#	$NetBSD: Makefile.xf86-driver,v 1.4 2008/08/09 11:18:05 rtr Exp $
+
+NOSHLIB_VERSION=1	# defined
 
 .include <bsd.own.mk>
 .include <bsd.x11.mk>
@@ -46,5 +48,32 @@ MKLINT=	no
 # XXX want no _pic.a
 # XXX want a _JUST_ .so
 # XXX want a libtool .la?
+
+XMODULEDIR?=	${X11USRLIBDIR}/modules/drivers
+
+libinstall:: moduleinstall
+
+.if !target(moduleinstall)
+_MODULE:=	${DESTDIR}${XMODULEDIR}/${DRIVER_NAME}.so
+
+.if ${MKUPDATE} == "no"
+${_MODULE}!	lib${DRIVER_NAME}.so			# install rule
+.if !defined(BUILD) && !make(all) && !make(${DRIVER_NAME}.so)
+${_MODULE}!	.MADE					# no build at install
+.endif
+.else
+${_MODULE}:	lib${DRIVER_NAME}.so			# install rule
+.if !defined(BUILD) && !make(all) && !make(${DRIVER_NAME}.so)
+${_MODULE}:	.MADE					# no build at install
+.endif
+.endif
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
+
+moduleinstall::	${_MODULE}
+.PHONY:		moduleinstall
+.PRECIOUS:	${_MODULE}                              # keep if install fails
+
+.endif  # !target(moduleinstall)
 
 .include <bsd.lib.mk>
