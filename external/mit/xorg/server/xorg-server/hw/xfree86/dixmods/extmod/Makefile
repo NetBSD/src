@@ -1,11 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2008/08/09 02:46:41 mrg Exp $
+# $NetBSD: Makefile,v 1.4 2008/08/09 05:40:34 rtr Exp $
 
-XMODULEDIR=     ${X11USRLIBDIR}/modules
+XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
 
 .include "../../../../Makefile.serverlib"
 .include "../../../../Makefile.servermod"
 
-#SHLIB_MAJOR=	0
 LIB=	extmod
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod
@@ -33,6 +32,12 @@ CPPFLAGS+=	${X11FLAGS.DIX} \
 
 # XXX
 CPPFLAGS.xf86RandR12.c=	-Wno-error
+
+XEXTMODULEOBJDIR!=  cd ${NETBSDSRCDIR}/external/mit/xorg/server/xorg-server/Xext/Xextmodule && ${PRINTOBJDIR}
+LIBXEXTMODULE=	${XEXTMODULEOBJDIR}/libXextmodule.a
+
+LDADD=  -L${XEXTMODULEOBJDIR} -lXextmodule
+DPADD=  ${LIBXEXTMODULE}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
