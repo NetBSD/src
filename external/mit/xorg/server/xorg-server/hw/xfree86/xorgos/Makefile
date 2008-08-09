@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/09 01:16:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/09 05:20:52 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -34,7 +34,7 @@ CPPFLAGS.${_FN}+=	-DPCVT_SUPPORT -DWSCONS_SUPPORT \
 .endif
 
 .if ${MACHINE} == "macppc"
-SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c lnx_agp.c ioperm_noop.c
+SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -47,12 +47,14 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
-.if ${MACHINE} == "cats"
-SRCS.bsd+=      arm_video.c bsdResource.c pm_noop.c agp_noop.c ioperm_noop.c
+.if ${MACHINE} == "cats" || ${MACHINE} == "shark"
+SRCS.bsd+=      arm_video.c bsdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
+
+# some platforms will probably need ioperm_noop.c
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus
 SRCS.bus=	Pci.c
