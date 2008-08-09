@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/08/09 01:24:16 rtr Exp $
+# $NetBSD: Makefile,v 1.3 2008/08/09 02:46:41 mrg Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules
 
@@ -25,9 +25,11 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
-		-I${XSERVERINCDIR}
+		-I${XSERVERINCDIR} \
+		-I${X11SRCDIR.xorg-server}/../include
 
-CPPFLAGS+=	${X11FLAGS.DIX}
+CPPFLAGS+=	${X11FLAGS.DIX} \
+		-DHAVE_XORG_CONFIG_H
 
 # XXX
 CPPFLAGS.xf86RandR12.c=	-Wno-error
