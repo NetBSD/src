@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.68 2008/05/25 20:03:05 christos Exp $ */
+/* $NetBSD: envstat.c,v 1.69 2008/08/09 04:49:23 christos Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.68 2008/05/25 20:03:05 christos Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.69 2008/08/09 04:49:23 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -315,7 +315,7 @@ send_dictionary(FILE *cf, int fd)
 }
 
 static sensor_stats_t
-find_stats_sensor(const char *desc, bool alloc)
+find_stats_sensor(const char *desc)
 {
 	sensor_stats_t stats;
 
@@ -327,18 +327,14 @@ find_stats_sensor(const char *desc, bool alloc)
 		if (strcmp(stats->desc, desc) == 0)
 			return stats;
 
-	if (alloc) {
-		/* 
-		 * don't bother with return value, the caller will check
-		 * if it's NULL or not.
-		 */
-		stats = calloc(1, sizeof(*stats));
-		(void)strlcpy(stats->desc, desc, sizeof(stats->desc));
-		SIMPLEQ_INSERT_TAIL(&sensor_stats_list, stats, entries);
-		return stats;
-	} else
+	stats = calloc(1, sizeof(*stats));
+	if (stats == NULL)
 		return NULL;
 
+	(void)strlcpy(stats->desc, desc, sizeof(stats->desc));
+	SIMPLEQ_INSERT_TAIL(&sensor_stats_list, stats, entries);
+
+	return stats;
 }
 
 static int
@@ -591,12 +587,18 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 
 		/* Collect statistics if flag enabled */
 		if (statistics) {
+			/* ignore sensors not relevant for statistics */
+			if ((strcmp(sensor->type, "Indicator") == 0) ||
+			    (strcmp(sensor->type, "Battery charge") == 0) ||
+			    (strcmp(sensor->type, "Drive") == 0))
+				continue;
+
 			/* ignore invalid data */
-			if (!sensor->cur_value)
+			if (sensor->invalid || !sensor->cur_value)
 				continue;
 
 			/* find or allocate a new statistics sensor */
-			stats = find_stats_sensor(sensor->desc, true);
+			stats = find_stats_sensor(sensor->desc);
 			if (stats == NULL) {
 				free(sensor);
 				prop_object_iterator_release(iter);
@@ -751,6 +753,15 @@ print_sensors(void)
 			tmpstr = sensor->dvname;
 		}
 
+		/* find out the statistics sensor */
+		if (statistics) {
+			stats = find_stats_sensor(sensor->desc);
+			if (stats == NULL) {
+				/* No statistics for this sensor */
+				continue;
+			}
+		}
+
 		/* print sensor description */
 		(void)printf("%s%*.*s", mydevname ? "" : "  ", (int)maxlen,
 		    (int)maxlen, sensor->desc);
@@ -759,15 +770,6 @@ print_sensors(void)
 		if (sensor->invalid) {
 			(void)printf(": %10s\n", invalid);
 			continue;
-		}
-
-		/* find out the statistics sensor */
-		if (statistics) {
-			stats = find_stats_sensor(sensor->desc, false);
-			if (stats == NULL) {
-				/* No statistics for this sensor */
-				continue;
-			}
 		}
 
 		/*
