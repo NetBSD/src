@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/03 22:06:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/09 05:26:41 rtr Exp $
 
 LIBISPRIVATE=	yes
 LIB=		Xext
@@ -8,6 +8,8 @@ LIB=		Xext
 .include "Makefile.Xextbuiltin"
 .include "Makefile.Xextmodule"
 .include "Makefile.Xext"
+
+SRCS=	${SRCS.Xext} ${SRCS.Xextbuiltin} ${SRCS.Xextmodule}
 
 SUBDIR=	Xextbuiltin Xextmodule
 
