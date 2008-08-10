@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.135 2008/01/19 06:52:14 sjg Exp $
+.\"	$NetBSD: make.1,v 1.136 2008/08/10 19:47:29 cube Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd November 19, 2006
+.Dd August 10, 2008
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -499,9 +499,10 @@ The list of all sources for this target; also known as
 .It Va .ARCHIVE
 The name of the archive file.
 .It Va .IMPSRC
-The name/path of the source from which the target is to be transformed
-(the ``implied'' source); also known as
+In suffix-transformation rules, the name/path of the source from which the
+target is to be transformed (the ``implied'' source); also known as
 .Ql Va \&\*[Lt] .
+It is not defined in explicit rules.
 .It Va .MEMBER
 The name of the archive member.
 .It Va .OODATE
@@ -1692,6 +1693,14 @@ command in the file.
 Each source specifies a suffix to
 .Nm .
 If no sources are specified, any previously specified suffixes are deleted.
+It allows the creation of suffix-transformation rules.
+.Pp
+Example:
+.Bd -literal
+\&.SUFFIXES: .o
+\&.c.o:
+	cc -o ${.TARGET} -c ${.IMPSRC}
+.Ed
 .El
 .Sh ENVIRONMENT
 .Nm
