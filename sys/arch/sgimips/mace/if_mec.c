@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.21 2008/08/07 15:05:02 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.22 2008/08/10 16:12:57 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.21 2008/08/07 15:05:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.22 2008/08/10 16:12:57 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -432,7 +432,7 @@ mec_attach(device_t parent, device_t self, void *aux)
 	/* create TX buffer DMA maps */
 	for (i = 0; i < MEC_NTXDESC; i++) {
 		if ((err = bus_dmamap_create(sc->sc_dmat,
-		    MCLBYTES, 1, MCLBYTES, 0, 0,
+		    MCLBYTES, 1, MCLBYTES, PAGE_SIZE, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error(": unable to create tx DMA map %d,"
 			    " error = %d\n", i, err);
