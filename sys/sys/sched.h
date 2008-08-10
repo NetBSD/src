@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.63 2008/07/02 19:44:10 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.64 2008/08/10 10:19:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -89,8 +89,9 @@ struct sched_param {
 #define	SCHED_FIFO	1
 #define	SCHED_RR	2
 
-__BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
+
 /*
  * Interface of CPU-sets.
  */
