@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.282 2008/08/10 09:25:04 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.283 2008/08/10 10:42:01 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -501,8 +501,10 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
+.if defined(SHLIB_MAJOR) && ${SHLIB_FULLVERSION} != ${SHLIB_MAJOR}
 	${HOST_LN} -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}.tmp
 	mv -f lib${LIB}.so.${SHLIB_MAJOR}.tmp lib${LIB}.so.${SHLIB_MAJOR}
+.endif
 	${HOST_LN} -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.tmp
 	mv -f lib${LIB}.so.tmp lib${LIB}.so
 .endif
