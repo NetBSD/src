@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1174 2008/08/06 15:08:08 plunky Exp $
+#	$NetBSD: mi,v 1.1175 2008/08/10 14:55:13 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -13196,6 +13196,13 @@
 ./usr/share/man/man9/aprint_verbose.9		comp-sys-man		.man
 ./usr/share/man/man9/aprint_verbose_dev.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_verbose_ifnet.9	comp-sys-man		.man
+./usr/share/man/man9/accept_filter.9		comp-sys-man		.man
+./usr/share/man/man9/accept_filt_add.9		comp-sys-man		.man
+./usr/share/man/man9/accept_filt_del.9		comp-sys-man		.man
+./usr/share/man/man9/accept_filt_generic_mod_event.9	comp-sys-man	.man
+./usr/share/man/man9/accept_filt_get.9		comp-sys-man		.man
+./usr/share/man/man9/accf_data.9		comp-sys-man		.man
+./usr/share/man/man9/accf_http.9		comp-sys-man		.man
 ./usr/share/man/man9/arc4random.9		comp-sys-man		.man
 ./usr/share/man/man9/arp.9			comp-sys-man		.man
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man		.man

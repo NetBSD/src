@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.47 2008/05/02 18:11:06 martin Exp $
+.\"	$NetBSD: inetd.8,v 1.48 2008/08/10 14:55:13 tls Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,7 +115,7 @@ The fields of the configuration file are as follows:
 .Pp
 .Bd -unfilled -offset indent -compact
 [addr:]service-name
-socket-type
+socket-type[:accept_filter]
 protocol[,sndbuf=size][,rcvbuf=size]
 wait/nowait[:max]
 user[:group]
@@ -195,6 +195,14 @@ or
 .Dq seqpacket ,
 depending on whether the socket is a stream, datagram, raw,
 reliably delivered message, or sequenced packet socket.
+.Pp
+Optionally, an
+.Xr accept_filter 9
+can be specified by appending a colon to the socket-type, followed by
+the name of the desired accept filter.  In this case
+.Nm
+will not see new connections for the specified service until the accept
+filter decides they are ready to be handled.
 .Pp
 The
 .Em protocol
