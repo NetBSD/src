@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2008/07/31 07:41:02 simonb Exp $
+# $NetBSD: GENERIC,v 1.76 2008/08/10 15:31:21 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -127,6 +127,11 @@ config netbsd		root on ? type ?
 options 	NFS_BOOT_DHCP		# Diskless client w/ dhcp
 options 	NFS_BOOT_BOOTP		# Diskless client w/ bootp
 options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	sl
 pseudo-device	ppp 

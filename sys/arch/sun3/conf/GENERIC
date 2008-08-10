@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.144 2008/07/31 07:41:07 simonb Exp $
+# $NetBSD: GENERIC,v 1.145 2008/08/10 15:31:22 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.144 $"
+#ident		"GENERIC-$Revision: 1.145 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -252,6 +252,11 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 #ch* at scsibus? target ? lun ?		# SCSI changer devices
 #ss* at scsibus? target ? lun ?		# SCSI scanners
 uk* at scsibus? target ? lun ?		# unknown SCSI devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # Memory-disk drivers
 pseudo-device	md		1

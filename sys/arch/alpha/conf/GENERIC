@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.324 2008/07/31 07:40:59 simonb Exp $
+# $NetBSD: GENERIC,v 1.325 2008/08/10 15:31:20 tls Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.324 $"
+ident		"GENERIC-$Revision: 1.325 $"
 
 maxusers 32
 
@@ -675,6 +675,11 @@ wskbd*		at	lkkbd? console ?
 wsmouse*	at	vsms?
 wskbd*		at	pckbd?
 wsmouse*	at	pms?
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device 	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation

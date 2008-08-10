@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.103 2008/07/31 07:41:03 simonb Exp $
+# $NetBSD: GENERIC,v 1.104 2008/08/10 15:31:21 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.103 $"
+#ident 		"GENERIC-$Revision: 1.104 $"
 
 maxusers	16
 
@@ -195,6 +195,11 @@ sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tapes
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals

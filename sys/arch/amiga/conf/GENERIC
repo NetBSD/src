@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.253 2008/07/31 07:45:39 simonb Exp $
+# $NetBSD: GENERIC,v 1.254 2008/08/10 15:31:20 tls Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.253 $"
+#ident 		"GENERIC-$Revision: 1.254 $"
 
 
 maxusers	8
@@ -459,6 +459,11 @@ cd*	at scsibus? target ? lun ?	# scsi cds
 ch*	at scsibus? target ? lun ?	# scsi autochangers
 ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop			# loopback network interface
 pseudo-device	sl			# SLIP network interfaces
