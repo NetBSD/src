@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.25 2008/08/10 18:43:55 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.26 2008/08/10 18:49:47 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.25 2008/08/10 18:43:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.26 2008/08/10 18:49:47 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1264,6 +1264,8 @@ mec_intr(void *arg)
 		     MEC_INT_RX_DMA_UNDERFLOW)) {
 			printf("%s: mec_intr: interrupt status = 0x%08x\n",
 			    device_xname(sc->sc_dev), statreg);
+			mec_init(ifp);
+			break;
 		}
 	}
 
