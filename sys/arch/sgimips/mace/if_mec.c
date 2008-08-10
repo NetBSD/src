@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.24 2008/08/10 16:21:28 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.25 2008/08/10 18:43:55 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.24 2008/08/10 16:21:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.25 2008/08/10 18:43:55 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1046,6 +1046,9 @@ mec_start(struct ifnet *ifp)
 		MEC_TXDESCSYNC(sc, nexttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
+		/* start TX */
+		bus_space_write_8(st, sh, MEC_TX_RING_PTR, MEC_NEXTTX(nexttx));
+
 		/* advance the TX pointer. */
 		sc->sc_txpending++;
 		sc->sc_txlast = nexttx;
@@ -1057,18 +1060,6 @@ mec_start(struct ifnet *ifp)
 	}
 
 	if (sc->sc_txpending != opending) {
-		/*
-		 * Cause a TX interrupt to happen on the last packet
-		 * we enqueued.
-		 */
-		sc->sc_txdesc[sc->sc_txlast].txd_cmd |= MEC_TXCMD_TXINT;
-		MEC_TXCMDSYNC(sc, sc->sc_txlast,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-
-		/* start TX */
-		bus_space_write_8(st, sh, MEC_TX_RING_PTR,
-		    MEC_NEXTTX(sc->sc_txlast));
-
 		/*
 		 * If the transmitter was idle,
 		 * reset the txdirty pointer and re-enable TX interrupt.
