@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.27 2008/04/16 18:41:48 cegger Exp $	*/
+/*	$NetBSD: xencons.c,v 1.28 2008/08/10 13:33:44 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.27 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.28 2008/08/10 13:33:44 cegger Exp $");
 
 #include "opt_xen.h"
 
@@ -515,7 +515,7 @@ xencons_rx(ctrl_msg_t *msg, unsigned long id)
 				/*
 				 * we overflowed the circular buffer
 				 * advance the read pointer, meaning
-				 * we loose one char at the beggining
+				 * we loose one char at the beginning
 				 * of the buf
 				 */
 				sc->buf_read++;
@@ -570,7 +570,7 @@ xencons_intr(void *p)
 }
 
 void
-xenconscn_attach()
+xenconscn_attach(void)
 {
 
 	cn_tab = &xencons;
@@ -699,7 +699,7 @@ xenconscn_putc(dev_t dev, int c)
 			ctrl_if_console_poll();
 		}
 #endif /* !XEN3 */
-	splx(s);
+		splx(s);
 	}
 }
 
