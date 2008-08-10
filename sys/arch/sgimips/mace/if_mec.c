@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.23 2008/08/10 16:18:43 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.24 2008/08/10 16:21:28 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.23 2008/08/10 16:18:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.24 2008/08/10 16:21:28 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -830,17 +830,12 @@ mec_start(struct ifnet *ifp)
 	DPRINTF(MEC_DEBUG_START,
 	    ("mec_start: opending = %d, firsttx = %d\n", opending, firsttx));
 
-	for (;;) {
+	while (sc->sc_txpending < MEC_NTXDESC - 1) {
 		/* Grab a packet off the queue. */
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 		m = NULL;
-
-		if (sc->sc_txpending == MEC_NTXDESC - 1) {
-			/* preserve the last entry to avoid wraparound */
-			break;
-		}
 
 		/*
 		 * Get the next available transmit descriptor.
