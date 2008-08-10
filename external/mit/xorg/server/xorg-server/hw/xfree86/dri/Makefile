@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2008/08/05 05:58:52 mrg Exp $
+# $NetBSD: Makefile,v 1.2 2008/08/10 06:21:36 rtr Exp $
 
-#XMODULEDIR=	${X11USRLIBDIR}/modules
+XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -30,6 +30,8 @@ CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT} \
 		${X11FLAGS.DIX}
 
 CPPFLAGS.dri.c=	-Wno-error
+
+LIBDPLIBS=	drm ${.CURDIR}/../../../../../lib/libdrm
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
