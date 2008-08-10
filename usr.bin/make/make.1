@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.136 2008/08/10 19:47:29 cube Exp $
+.\"	$NetBSD: make.1,v 1.137 2008/08/10 23:25:50 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -153,7 +153,7 @@ Print the input graph before exiting on error.
 Print debugging information about running multiple shells.
 .It Ar l
 Print commands in Makefiles regardless of whether or not they are prefixed by
-.Ql @ 
+.Ql @
 or other "quiet" flags.
 Also known as "loud" behavior.
 .It Ar m
@@ -345,7 +345,9 @@ line are compressed into a single space.
 .Sh FILE DEPENDENCY SPECIFICATIONS
 Dependency lines consist of one or more targets, an operator, and zero
 or more sources.
-This creates a relationship where the targets ``depend'' on the sources
+This creates a relationship where the targets
+.Dq depend
+on the sources
 and are usually created from them.
 The exact relationship between the target and the source is determined
 by the operator that separates them.
@@ -500,7 +502,9 @@ The list of all sources for this target; also known as
 The name of the archive file.
 .It Va .IMPSRC
 In suffix-transformation rules, the name/path of the source from which the
-target is to be transformed (the ``implied'' source); also known as
+target is to be transformed (the
+.Dq implied
+source); also known as
 .Ql Va \&\*[Lt] .
 It is not defined in explicit rules.
 .It Va .MEMBER
@@ -595,22 +599,22 @@ The list of makefiles read by
 which is useful for tracking dependencies.
 Each makefile is recorded only once, regardless of the number of times read.
 .It Va .MAKE.PID
-The process-id of 
+The process-id of
 .Nm .
 .It Va .MAKE.PPID
-The parent process-id of 
+The parent process-id of
 .Nm .
 .It Va .MAKE.JOB.PREFIX
-If 
+If
 .Nm
 is run with
 .Ar j
-then output for each target is prefixed with a token 
+then output for each target is prefixed with a token
 .Ql --- target ---
 the first part of which can be controlled via
 .Va .MAKE.JOB.PREFIX .
 .br
-For example: 
+For example:
 .Li .MAKE.JOB.PREFIX=${.newline}---${.MAKE:T}[${.MAKE.PID}]
 would produce tokens like
 .Ql ---make[1234] target ---
@@ -695,7 +699,7 @@ may be used.
 .Pp
 .Ql Va .OBJDIR
 may be modified in the makefile as a global variable.
-In all cases, 
+In all cases,
 .Nm
 will
 .Xr chdir 2
@@ -755,7 +759,9 @@ executes.
 .El
 .Ss Variable modifiers
 Variable expansion may be modified to select or modify each word of the
-variable (where a ``word'' is white-space delimited sequence of characters).
+variable (where a
+.Dq word
+is white-space delimited sequence of characters).
 The general format of a variable expansion is as follows:
 .Pp
 .Dl ${variable[:modifier[:...]]}
@@ -1370,18 +1376,23 @@ of a string comparison.
 When
 .Nm
 is evaluating one of these conditional expression, and it encounters
-a word it doesn't recognize, either the ``make'' or ``defined''
+a word it doesn't recognize, either the
+.Dq make
+or
+.Dq defined
 expression is applied to it, depending on the form of the conditional.
 If the form is
 .Ql Ic .ifdef
 or
 .Ql Ic .ifndef ,
-the ``defined'' expression
-is applied.
+the
+.Dq defined
+expression is applied.
 Similarly, if the form is
 .Ql Ic .ifmake
 or
-.Ql Ic .ifnmake , the ``make''
+.Ql Ic .ifnmake , the
+.Dq make
 expression is applied.
 .Pp
 If the conditional evaluates to true the parsing of the makefile continues
