@@ -1,7 +1,15 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/06 07:16:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/10 06:43:29 rtr Exp $
+
+XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
+
+.include "../../../../Makefile.serverlib"
+.include "../../../../Makefile.servermod"
 
 LIB=	record
 
-SRCS=	recordmod.c
+.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods
+SRCS=	${SRCS.record} recordmod.c
 
-.include "../Makefile.dixmod"
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common
+
+.include "../../../../record/Makefile.record"
