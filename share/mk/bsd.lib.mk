@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.283 2008/08/10 10:42:01 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.284 2008/08/10 11:06:43 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -501,7 +501,8 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
-.if defined(SHLIB_MAJOR) && ${SHLIB_FULLVERSION} != ${SHLIB_MAJOR}
+.if defined(SHLIB_FULLVERSION) && defined(SHLIB_MAJOR) && \
+    "${SHLIB_FULLVERSION}" != "${SHLIB_MAJOR}"
 	${HOST_LN} -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}.tmp
 	mv -f lib${LIB}.so.${SHLIB_MAJOR}.tmp lib${LIB}.so.${SHLIB_MAJOR}
 .endif
@@ -646,17 +647,20 @@ ${_LIB_SO_TGT}.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
 	/sbin/ldconfig -m ${_LIBSODIR} ${LIBDIR}
 .endif
 .if ${OBJECT_FMT} == "ELF"
+.if defined(SHLIB_FULLVERSION) && defined(SHLIB_MAJOR) && \
+    "${SHLIB_FULLVERSION}" != "${SHLIB_MAJOR}"
 	${INSTALL_SYMLINK} \
-		lib${LIB}.so.${SHLIB_FULLVERSION} \
+		${_LIB_PREFIX}${LIB}.so.${SHLIB_FULLVERSION} \
 		${_LIB_SO_TGT}.${SHLIB_MAJOR}
 .if ${_LIBSODIR} != ${LIBDIR}
 	${INSTALL_SYMLINK} -l r \
 		${_LIB_SO_TGT}.${SHLIB_FULLVERSION} \
 		${_LIB_SO_TGTLIBDIR}.${SHLIB_MAJOR}
 .endif
+.endif
 .if ${MKLINKLIB} != "no"
 	${INSTALL_SYMLINK} \
-		lib${LIB}.so.${SHLIB_FULLVERSION} \
+		${_LIB_PREFIX}${LIB}.so.${SHLIB_FULLVERSION} \
 		${_LIB_SO_TGT}
 .if ${_LIBSODIR} != ${LIBDIR}
 	${INSTALL_SYMLINK} -l r \
