@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2008/07/31 07:41:02 simonb Exp $
+# $NetBSD: GENERIC,v 1.94 2008/08/10 15:31:21 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93 $"
+#ident 		"GENERIC-$Revision: 1.94 $"
 
 maxusers	8
 
@@ -216,6 +216,11 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?		# SCSI changer devices
 ss*	at scsibus? target ? lun ?		# SCSI scanners
 uk*	at scsibus? target ? lun ?		# unknown SCSI devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # Misc.
 pseudo-device	loop			# loopback interface; required

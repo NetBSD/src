@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.101 2008/07/31 07:41:07 simonb Exp $
+# $NetBSD: GENERIC,v 1.102 2008/08/10 15:31:22 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101 $"
+#ident 		"GENERIC-$Revision: 1.102 $"
 
 maxusers	64
 
@@ -415,6 +415,11 @@ ld*	at mlx? unit ?
 fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
 #fdc0	at ebus?				# fdthree, EXPERIMENTAL
 fd*	at fdc0 	 			# the drive itself
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
