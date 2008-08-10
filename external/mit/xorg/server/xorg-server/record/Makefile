@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 21:19:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/10 06:42:39 rtr Exp $
+
+LIBISPRIVATE=	yes
 
 .include "../Makefile.serverlib"
 
-.if ${MKX11LOADABLE} != "no"
-XMODULEDIR=	${X11ROOTDIR}/lib/modules/extensions
-SRCS=		recordmod.c
-.endif
+LIB=	record
+SRCS=	${SRCS.record}
 
-.include "../Makefile.servermod"
 .include "Makefile.record"
