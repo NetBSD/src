@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xf86-driver,v 1.6 2008/08/10 09:38:22 rtr Exp $
+#	$NetBSD: Makefile.xf86-driver,v 1.7 2008/08/10 10:26:10 rtr Exp $
 
 LIBISMODULE=	yes
 
@@ -8,7 +8,7 @@ LIBISMODULE=	yes
 LIB=	${DRIVER_NAME}
 
 PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
-				match($$1, "[0-9]+\.[0-9]+\.[0-9]+");	\
+				match($$1, "[0-9]+\\.[0-9]+\\.[0-9]+");	\
 				version = substr($$1, RSTART, RLENGTH);	\
 			} END { print version }'			\
 			${X11SRCDIR.${DRIVER}}/configure
