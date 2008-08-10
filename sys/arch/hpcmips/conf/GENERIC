@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.202 2008/07/31 07:41:01 simonb Exp $
+# $NetBSD: GENERIC,v 1.203 2008/08/10 15:31:21 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.202 $"
+#ident 		"GENERIC-$Revision: 1.203 $"
 
 maxusers	16
 
@@ -647,6 +647,11 @@ ugen*	at uhub? port ?
 audio*	at uaudio?
 
 # Pseudo-Devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp			# serial-line IP ports

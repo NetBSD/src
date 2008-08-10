@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.204 2008/07/31 07:41:07 simonb Exp $
+# $NetBSD: GENERIC,v 1.205 2008/08/10 15:31:22 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.204 $"
+#ident 		"GENERIC-$Revision: 1.205 $"
 
 maxusers	32
 
@@ -462,6 +462,11 @@ fd*	at fdc0					# the drive itself
 
 ## PCMCIA wavelan card
 #wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.

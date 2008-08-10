@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111 2008/07/31 07:41:00 simonb Exp $
+# $NetBSD: GENERIC,v 1.112 2008/08/10 15:31:20 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.111 $"
+#ident 		"GENERIC-$Revision: 1.112 $"
 
 maxusers	32
 
@@ -310,6 +310,11 @@ pseudo-device	tun			# network tunneling over tty
 #pseudo-device	pflog			# PF log if
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

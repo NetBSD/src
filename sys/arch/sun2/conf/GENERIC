@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69 2008/07/31 07:41:07 simonb Exp $
+# $NetBSD: GENERIC,v 1.70 2008/08/10 15:31:22 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -229,6 +229,11 @@ xyc0	at vme0 addr 0xee40 irq 2 vect 0x48
 #xyc1	at mbio0 addr 0xee48 ipl 2
 xyc1	at vme0 addr 0xee48 irq 2 vect 0x49
 xy*	at xyc? drive ?
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 ## Memory-disk device.
 pseudo-device	md		2

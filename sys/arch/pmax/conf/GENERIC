@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157 2008/07/31 07:41:03 simonb Exp $
+# $NetBSD: GENERIC,v 1.158 2008/08/10 15:31:21 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.157 $"
+#ident		"GENERIC-$Revision: 1.158 $"
 
 maxusers	64
 
@@ -272,6 +272,11 @@ uk*	at scsibus? target ? lun ?	# unknown SCSI
 #########################################################################
 # Pseudo-devices							#
 #########################################################################
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop		 1	# network loopback
 pseudo-device	sl		 	# serial-line IP ports

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.87 2008/07/31 07:40:59 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.88 2008/08/10 15:31:20 tls Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.87 $"
+#ident		"GENERIC-$Revision: 1.88 $"
 
 # estimated number of users
 maxusers	32
@@ -344,6 +344,11 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # Veriexec
 #

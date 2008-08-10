@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.265 2008/07/31 07:41:02 simonb Exp $
+# $NetBSD: GENERIC,v 1.266 2008/08/10 15:31:21 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.265 $"
+#ident 		"GENERIC-$Revision: 1.266 $"
 
 maxusers	32
 
@@ -558,6 +558,11 @@ audio*	at audiobus?
 # MIDI support
 midi*	at eap?			# 137[01] MIDI port
 #midi*	at mpu?			# MPU 401
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 #pseudo-device 	crypto			# /dev/crypto device
 					# (disabled, requires generic softints)

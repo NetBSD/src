@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69 2008/05/30 20:10:02 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.70 2008/08/10 15:31:21 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -157,6 +157,11 @@ sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tapes
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals

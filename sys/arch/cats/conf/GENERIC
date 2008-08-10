@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2008/07/31 07:41:00 simonb Exp $
+# $NetBSD: GENERIC,v 1.123 2008/08/10 15:31:20 tls Exp $
 #
 # GENERIC machine description file
 # 
@@ -573,6 +573,11 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

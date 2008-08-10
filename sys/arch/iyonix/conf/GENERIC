@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.49 2008/07/31 07:41:02 simonb Exp $
+#	$NetBSD: GENERIC,v 1.50 2008/08/10 15:31:21 tls Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.49 $"
+#ident 		"GENERIC-$Revision: 1.50 $"
 
 maxusers	32		# estimated number of users
 
@@ -809,6 +809,11 @@ pseudo-device	loop			# network loopback
 #pseudo-device	pflog			# PF log if
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

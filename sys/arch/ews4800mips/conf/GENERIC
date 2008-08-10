@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.24 2008/07/31 07:41:01 simonb Exp $
+# $NetBSD: GENERIC,v 1.25 2008/08/10 15:31:20 tls Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.24 $"
+#ident		"GENERIC-$Revision: 1.25 $"
 
 maxusers	16
 
@@ -266,6 +266,11 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
