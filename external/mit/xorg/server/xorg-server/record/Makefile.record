@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile.record,v 1.1 2008/08/02 21:19:21 mrg Exp $
+#	$NetBSD: Makefile.record,v 1.2 2008/08/10 06:42:39 rtr Exp $
 
-LIB=		record
-
-.PATH:		${X11SRCDIR.xorg-server}/${LIB}
-SRCS+=		record.c set.c
+.PATH:		${X11SRCDIR.xorg-server}/record
+SRCS.record=	record.c set.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
