@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.23 2008/08/03 19:23:47 joerg Exp $
+# $NetBSD: XEN3_DOM0,v 1.24 2008/08/10 08:53:29 cegger Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -706,6 +706,11 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 cinclude "arch/amd64/conf/GENERIC.local"
 
 # Pseudo-Devices
+
+#
+# accept filters
+pseudo-device	accf_data	# "dataready" accept filter
+pseudo-device	accf_http	# "httpready" accept filter
 
 pseudo-device 	crypto		# /dev/crypto device
 pseudo-device	swcrypto	# software crypto implementation

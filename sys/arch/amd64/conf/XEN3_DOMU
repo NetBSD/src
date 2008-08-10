@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.12 2008/08/03 19:23:47 joerg Exp $
+# $NetBSD: XEN3_DOMU,v 1.13 2008/08/10 08:53:29 cegger Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -161,6 +161,11 @@ xencons*	at hypervisor?		# Xen virtual console
 cinclude "arch/amd64/conf/GENERIC.local"
 
 # Pseudo-Devices
+
+#
+# accept filters
+pseudo-device	accf_data	# "dataready" accept filter
+pseudo-device	accf_http	# "httpready" accept filter
 
 pseudo-device 	crypto		# /dev/crypto device
 pseudo-device	swcrypto	# software crypto implementation
