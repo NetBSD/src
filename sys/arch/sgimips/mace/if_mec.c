@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.26 2008/08/10 18:49:47 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.27 2008/08/10 18:56:16 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.26 2008/08/10 18:49:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.27 2008/08/10 18:56:16 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1432,13 +1432,6 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 			break;
 		}
 
-		if ((txstat & MEC_TXSTAT_SUCCESS) == 0) {
-			printf("%s: TX error: txstat = 0x%016llx\n",
-			    device_xname(sc->sc_dev), txstat);
-			ifp->if_oerrors++;
-			continue;
-		}
-
 		txs = &sc->sc_txsoft[i];
 		if ((txs->txs_flags & MEC_TXS_TXDPTR1) != 0) {
 			dmamap = txs->txs_dmamap;
@@ -1451,7 +1444,13 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 
 		col = (txstat & MEC_TXSTAT_COLCNT) >> MEC_TXSTAT_COLCNT_SHIFT;
 		ifp->if_collisions += col;
-		ifp->if_opackets++;
+
+		if ((txstat & MEC_TXSTAT_SUCCESS) == 0) {
+			printf("%s: TX error: txstat = 0x%016llx\n",
+			    device_xname(sc->sc_dev), txstat);
+			ifp->if_oerrors++;
+		} else
+			ifp->if_opackets++;
 	}
 
 	/* update the dirty TX buffer pointer */
