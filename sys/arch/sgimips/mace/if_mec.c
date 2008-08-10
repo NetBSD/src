@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.22 2008/08/10 16:12:57 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.23 2008/08/10 16:18:43 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.22 2008/08/10 16:12:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.23 2008/08/10 16:18:43 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1056,7 +1056,7 @@ mec_start(struct ifnet *ifp)
 		sc->sc_txlast = nexttx;
 	}
 
-	if (sc->sc_txpending == MEC_NTXDESC) {
+	if (sc->sc_txpending == MEC_NTXDESC - 1) {
 		/* No more slots; notify upper layer. */
 		ifp->if_flags |= IFF_OACTIVE;
 	}
