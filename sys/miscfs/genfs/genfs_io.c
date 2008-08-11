@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.9 2008/07/31 05:38:05 simonb Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.10 2008/08/11 02:51:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.9 2008/07/31 05:38:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.10 2008/08/11 02:51:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ genfs_getpages(void *v)
 	daddr_t lbn, blkno;
 	int i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
 	int fs_bshift, fs_bsize, dev_bshift;
-	int flags = ap->a_flags;
+	const int flags = ap->a_flags;
 	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
 	vaddr_t kva;
 	struct buf *bp, *mbp;
@@ -122,12 +122,12 @@ genfs_getpages(void *v)
 	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_PAGES];
 	int pgs_size;
 	kauth_cred_t cred = curlwp->l_cred;		/* XXXUBC curlwp */
-	bool async = (flags & PGO_SYNCIO) == 0;
-	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
+	const bool async = (flags & PGO_SYNCIO) == 0;
+	const bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	bool sawhole = false;
 	bool has_trans = false;
-	bool overwrite = (flags & PGO_OVERWRITE) != 0;
-	bool blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
+	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
+	const bool blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
 	voff_t origvsize;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
