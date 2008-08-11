@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.61 2008/08/05 22:40:33 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.62 2008/08/11 08:22:40 apb Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd August 5, 2008
+.Dd August 11, 2008
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -754,8 +754,6 @@ Run up to
 subjobs in parallel.
 Makefiles should use .WAIT or have explicit dependencies 
 as necessary to enforce build ordering.
-If you see build failures with -j, please save complete build logs 
-so the failures can be analyzed.
 .
 .It Fl m Ar dir
 Specify the default directory for searching for system Makefile
@@ -1341,10 +1339,19 @@ Run up to
 subjobs in parallel;
 passed through to 
 .Xr make 1 .
-Makefiles should use .WAIT or have explicit dependancies 
-as necessary to enforce build ordering.
-If you see build failures with -j, please save complete build logs 
+If you see failures for reasons other than running out of memory
+while using
+.Sy build.sh
+with
+.Fl j ,
+please save complete build logs 
 so the failures can be analyzed.
+.Pp
+To achieve the fastest builds,
+.Fl j
+values between (1 + the number of CPUs) and (2 * the number of CPUs)
+are recommended.
+Use lower values on machines with limited memory or I/O bandwidth.
 .
 .It Fl M Ar obj
 Set
