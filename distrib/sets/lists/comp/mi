@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1175 2008/08/10 14:55:13 tls Exp $
+#	$NetBSD: mi,v 1.1176 2008/08/11 01:14:19 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7809,7 +7809,14 @@
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VREF.0			comp-sys-catman		.cat
+./usr/share/man/cat9/accept_filter.0		comp-sys-catman		.cat
+./usr/share/man/cat9/accept_filt_add.0		comp-sys-catman		.cat
+./usr/share/man/cat9/accept_filt_del.0		comp-sys-catman		.cat
+./usr/share/man/cat9/accept_filt_generic_mod_event.0	comp-sys-catman	.cat
+./usr/share/man/cat9/accept_filt_get.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/access.0			comp-obsolete		obsolete
+./usr/share/man/cat9/accf_data.0		comp-sys-catman		.cat
+./usr/share/man/cat9/accf_http.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/allocbuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/altq.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/aprint_debug.0		comp-sys-catman		.cat
