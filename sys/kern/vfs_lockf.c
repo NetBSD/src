@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.67 2008/08/07 07:42:06 skrll Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.68 2008/08/11 02:44:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.67 2008/08/07 07:42:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.68 2008/08/11 02:44:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,13 +576,6 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 				waitblock = wlwp->l_wchan;
 				lwp_unlock(wlwp);
 				mutex_exit(p->p_lock);
-				if (waitblock == NULL) {
-					/*
-					 * this lwp just got up but
-					 * not returned from ltsleep yet.
-					 */
-					break;
-				}
 				/* Get the owner of the blocking lock */
 				waitblock = waitblock->lf_next;
 				if ((waitblock->lf_flags & F_POSIX) == 0)
