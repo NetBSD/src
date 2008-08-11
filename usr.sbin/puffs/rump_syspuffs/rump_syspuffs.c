@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.2 2008/08/08 16:59:02 pooka Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.3 2008/08/11 13:32:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -52,17 +52,23 @@ usage(void)
 	errx(1, "usage: %s file_server fs_opts", getprogname());
 }
 
+static void
+trapchild(int sig)
+{
+
+	/* XXX: yaya, not reentrant */
+	errx(1, "child died");
+}
+
 int
 main(int argc, char *argv[])
 {
 	struct puffs_kargs kargs;
-	extern char **environ;
-	char *mntpath, *fromname, *shcmd;
+	char *mntpath, *fromname;
 	size_t len;
 	char comfd[16];
-	char *newargv[4];
 	int sv[2];
-	int mntflags, pflags, rv, i;
+	int mntflags, pflags, rv;
 
 #if 1
 	extern int puffsdebug;
@@ -79,30 +85,23 @@ main(int argc, char *argv[])
 	/* Create sucketpair for communication with the real file server */
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) == -1)
 		err(1, "socketpair");
-	snprintf(comfd, sizeof(sv[0]), "%d", sv[0]);
-	if (setenv("PUFFS_COMFD", comfd, 1) == -1)
-		err(1, "setenv");
+
+	signal(SIGCHLD, trapchild);
 
 	switch (fork()) {
 	case 0:
-		shcmd = malloc(ARG_MAX);
-		*shcmd = 0;
-		for (i = 1; i < argc; i++) {
-			strcat(shcmd, argv[i]);
-			strcat(shcmd, " ");
-		}
-		newargv[0] = _PATH_BSHELL;
-		newargv[1] = "-c";
-		newargv[2] = shcmd;
-		newargv[3] = '\0';
-		if (execve(_PATH_BSHELL, newargv, environ) == -1)
+		snprintf(comfd, sizeof(sv[0]), "%d", sv[0]);
+		if (setenv("PUFFS_COMFD", comfd, 1) == -1)
+			err(1, "setenv");
+
+		argv++;
+		if (execvp(argv[0], argv) == -1)
 			err(1, "execvp");
 		/*NOTREACHED*/
 	case -1:
 		err(1, "fork");
 		/*NOTREACHED*/
 	default:
-		unsetenv("PUFFS_COMFD");
 		break;
 	}
 
@@ -127,6 +126,8 @@ main(int argc, char *argv[])
 		err(1, "puffs_args");
 	if (read(sv[1], &pflags, sizeof(pflags)) != sizeof(pflags))
 		err(1, "pflags");
+
+	signal(SIGCHLD, SIG_DFL);
 
 	/* XXX: some adjustments */
 	pflags |= PUFFS_KFLAG_NOCACHE;
