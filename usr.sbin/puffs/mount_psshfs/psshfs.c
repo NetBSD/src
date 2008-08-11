@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.47 2007/12/14 10:56:22 jmmv Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.48 2008/08/11 16:23:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.47 2007/12/14 10:56:22 jmmv Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.48 2008/08/11 16:23:58 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -249,6 +249,7 @@ main(int argc, char *argv[])
 
 	if (puffs_mainloop(pu) == -1)
 		err(1, "mainloop");
+	puffs_exit(pu, 1);
 
 	return 0;
 }
