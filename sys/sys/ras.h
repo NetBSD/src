@@ -1,4 +1,4 @@
-/*	$NetBSD: ras.h,v 1.13 2008/05/10 08:11:32 skrll Exp $	*/
+/*	$NetBSD: ras.h,v 1.14 2008/08/11 21:51:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004, 2007 The NetBSD Foundation, Inc.
@@ -96,16 +96,20 @@ __END_DECLS
 
 #else /* __ASSEMBLER__ */
 
+#ifndef	_ASM_LS_CHAR
+#define	_ASM_LS_CHAR	;
+#endif
+
 /*
  * RAS_START_ASM and RAS_END_ASM are for use within assembly code.
  * This is the prefered method of coding a RAS.
  */
 #define	RAS_START_ASM(name)						\
-	.globl _C_LABEL(__CONCAT(name,_ras_start));			\
+	.globl _C_LABEL(__CONCAT(name,_ras_start))	 _ASM_LS_CHAR	\
 	_C_LABEL(__CONCAT(name,_ras_start)):
 
 #define	RAS_END_ASM(name)						\
-	.globl _C_LABEL(__CONCAT(name,_ras_end));			\
+	.globl _C_LABEL(__CONCAT(name,_ras_end)) 	_ASM_LS_CHAR	\
 	_C_LABEL(__CONCAT(name,_ras_end)):
 
 /*
@@ -115,13 +119,13 @@ __END_DECLS
  * or shared library) can reference it directly.
  */
 #define	RAS_START_ASM_HIDDEN(name)					\
-	.globl _C_LABEL(__CONCAT(name,_ras_start));			\
-	.hidden _C_LABEL(__CONCAT(name,_ras_start));			\
+	.globl _C_LABEL(__CONCAT(name,_ras_start)) 	_ASM_LS_CHAR	\
+	.hidden _C_LABEL(__CONCAT(name,_ras_start)) 	_ASM_LS_CHAR	\
 	_C_LABEL(__CONCAT(name,_ras_start)):
 
 #define	RAS_END_ASM_HIDDEN(name)					\
-	.globl _C_LABEL(__CONCAT(name,_ras_end));			\
-	.hidden _C_LABEL(__CONCAT(name,_ras_end));			\
+	.globl _C_LABEL(__CONCAT(name,_ras_end)) 	_ASM_LS_CHAR	\
+	.hidden _C_LABEL(__CONCAT(name,_ras_end)) 	_ASM_LS_CHAR	\
 	_C_LABEL(__CONCAT(name,_ras_end)):
 #endif /* __ASSEMBLER__ */
 
