@@ -413,9 +413,7 @@ BUILDING
 
      -j njob    Run up to njob make(1) subjobs in parallel.  Makefiles should
                 use .WAIT or have explicit dependencies as necessary to
-                enforce build ordering.  If you see build failures with -j,
-                please save complete build logs so the failures can be ana-
-                lyzed.
+                enforce build ordering.
 
      -m dir     Specify the default directory for searching for system Make-
                 file segments, mainly the <bsd.*.mk> files.  When building any
@@ -703,10 +701,13 @@ BUILDING
      -h        Print a help message.
 
      -j njob   Run up to njob make(1) subjobs in parallel; passed through to
-               make(1).  Makefiles should use .WAIT or have explicit dependan-
-               cies as necessary to enforce build ordering.  If you see build
-               failures with -j, please save complete build logs so the fail-
-               ures can be analyzed.
+               make(1).  If you see failures for reasons other than running
+               out of memory while using build.sh with -j, please save com-
+               plete build logs so the failures can be analyzed.
+
+               To achieve the fastest builds, -j values between (1 + the num-
+               ber of CPUs) and (2 * the number of CPUs) are recommended.  Use
+               lower values on machines with limited memory or I/O bandwidth.
 
      -M obj    Set MAKEOBJDIRPREFIX to obj.  For instance, if the source
                directory is /usr/src, a setting of ``-M /usr/obj'' will place
@@ -866,4 +867,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                          August 5, 2008                          NetBSD
+NetBSD                          August 11, 2008                         NetBSD
