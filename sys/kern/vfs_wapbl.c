@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.2 2008/07/31 05:38:05 simonb Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.3 2008/08/11 02:45:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.2 2008/07/31 05:38:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3 2008/08/11 02:45:27 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -108,7 +108,7 @@ struct wapbl {
 	int wl_fs_dev_bshift;	/* r:	logarithm of device block size of
 					filesystem device */
 
-	unsigned wl_lock_count;	/* a:	Count of transactions in progress */
+	unsigned wl_lock_count;	/* m:	Count of transactions in progress */
 
 	size_t wl_circ_size; 	/* r:	Number of bytes in buffer of log */
 	size_t wl_circ_off;	/* r:	Number of bytes reserved at start */
