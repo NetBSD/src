@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.3 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.4 2008/08/11 21:45:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,6 @@
 
 #include <machine/asm.h>
 #include <machine/mcontext.h>
-#include <sys/cdefs.h>
 #include "assym.h"
 
 /*
