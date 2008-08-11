@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.168 2008/08/11 02:46:40 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.169 2008/08/11 02:48:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.168 2008/08/11 02:46:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.169 2008/08/11 02:48:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -180,7 +180,7 @@ TAILQ_HEAD(,pool_cache) pool_cache_head =
     TAILQ_HEAD_INITIALIZER(pool_cache_head);
 
 int pool_cache_disable;		/* global disable for caching */
-static pcg_t pcg_dummy;		/* zero sized: always empty, yet always full */
+static const pcg_t pcg_dummy;	/* zero sized: always empty, yet always full */
 
 static bool	pool_cache_put_slow(pool_cache_cpu_t *, int,
 				    void *);
@@ -2210,8 +2210,8 @@ pool_cache_cpu_init1(struct cpu_info *ci, pool_cache_t pc)
 	cc->cc_cpuindex = index;
 	cc->cc_hits = 0;
 	cc->cc_misses = 0;
-	cc->cc_current = &pcg_dummy;
-	cc->cc_previous = &pcg_dummy;
+	cc->cc_current = __UNCONST(&pcg_dummy);
+	cc->cc_previous = __UNCONST(&pcg_dummy);
 
 	pc->pc_cpus[index] = cc;
 }
@@ -2666,9 +2666,9 @@ pool_cache_xcall(pool_cache_t pc)
 	mutex_enter(&pc->pc_lock);
 	cc = pc->pc_cpus[curcpu()->ci_index];
 	cur = cc->cc_current;
-	cc->cc_current = &pcg_dummy;
+	cc->cc_current = __UNCONST(&pcg_dummy);
 	prev = cc->cc_previous;
-	cc->cc_previous = &pcg_dummy;
+	cc->cc_previous = __UNCONST(&pcg_dummy);
 	if (cur != &pcg_dummy) {
 		if (cur->pcg_avail == cur->pcg_size) {
 			list = &pc->pc_fullgroups;
