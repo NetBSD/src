@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.40 2008/08/11 15:59:01 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.41 2008/08/11 16:23:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -245,6 +245,7 @@ void	puffs__cc_setcaller(struct puffs_cc *, pid_t, lwpid_t);
 void	puffs__goto(struct puffs_cc *);
 int	puffs__cc_savemain(struct puffs_usermount *);
 int	puffs__cc_restoremain(struct puffs_usermount *);
+void	puffs__cc_exit(struct puffs_usermount *);
 
 int	puffs__fsframe_read(struct puffs_usermount *, struct puffs_framebuf *,
 			    int, int *);
