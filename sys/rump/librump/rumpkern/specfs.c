@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.24 2008/07/29 13:17:47 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.25 2008/08/12 10:04:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -251,10 +251,7 @@ rump_specstrategy(void *v)
 	 * avoid unnecessary scheduling with the I/O thread.
 	 */
 	async = bp->b_flags & B_ASYNC;
-	if (async) {
-#ifdef RUMP_WITHOUT_THREADS
-		goto syncfallback;
-#else
+	if (async && rump_threads) {
 		struct rumpuser_aio *rua;
 
 		rua = kmem_alloc(sizeof(struct rumpuser_aio), KM_SLEEP);
@@ -287,7 +284,6 @@ rump_specstrategy(void *v)
 		rua_head = (rua_head+1) % (N_AIOS-1);
 		rumpuser_cv_signal(&rua_cv);
 		rumpuser_mutex_exit(&rua_mtx);
-#endif /* !RUMP_WITHOUT_THREADS */
 	} else {
  syncfallback:
 		if (bp->b_flags & B_READ) {
