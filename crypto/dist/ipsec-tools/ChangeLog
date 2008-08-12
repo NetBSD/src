@@ -1,3 +1,8 @@
+2008-08-12  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Krzysztof Oledzki <olel@ans.pl>:
+	* src/racoon/isakmp.c: Remove ph1handler if we received an invalid
+	  first exchange from initiator.
+
 ---------------------------------------------
 
 	0.7.1 released
