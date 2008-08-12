@@ -1,4 +1,4 @@
-/*	$NetBSD: icfs.c,v 1.9 2007/11/30 19:02:37 pooka Exp $	*/
+/*	$NetBSD: icfs.c,v 1.10 2008/08/12 15:14:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-s] [-o mntopts] icfs mountpath",
+	errx(1, "usage: %s [-sp] [-o mntopts] icfs mountpath",
 	    getprogname());
 }
 
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 	struct stat sb;
 	mntoptparse_t mp;
 	int mntflags, pflags;
-	int detach;
+	int detach, dpres;
 	int ch;
 
 	setprogname(argv[0]);
@@ -158,15 +158,18 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
-	pflags = mntflags = 0;
+	pflags = mntflags = dpres = 0;
 	detach = 1;
-	while ((ch = getopt(argc, argv, "o:s")) != -1) {
+	while ((ch = getopt(argc, argv, "o:sp")) != -1) {
 		switch (ch) {
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
+			break;
+		case 'p':
+			dpres = 1;
 			break;
 		case 's':
 			detach = 0;
@@ -192,7 +195,8 @@ main(int argc, char *argv[])
 	PUFFSOP_INIT(pops);
 	puffs_null_setops(pops);
 
-	PUFFSOP_SET(pops, ic, node, readdir);
+	if (dpres == 0)
+		PUFFSOP_SET(pops, ic, node, readdir);
 
 	if ((pu = puffs_init(pops, argv[0], "ic", NULL, pflags)) == NULL)
 		err(1, "mount");
