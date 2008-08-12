@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.166 2008/08/10 15:31:22 tls Exp $
+# $NetBSD: GENERIC,v 1.167 2008/08/12 17:54:47 hans Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.166 $"
+#ident 		"GENERIC-$Revision: 1.167 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -207,7 +207,7 @@ asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 asc0		at vsbus0 csr 0x26000080 # VS4000/90 and 4000/10x SCSI-ctlr
 smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
-lcspx0		at vsbus0 csr 0x38000000 # Low Cost SPX on VS4000/90.
+spx0		at vsbus0 csr 0x38000000 # Low Cost SPX on VS4000/90.
 #lcg0		at vsbus0 csr 0x21801000 # VS4000/60 (or VLC) graphics
 tc0		at vsbus0 csr 0x36000000 # VS4000/60 or 90 TC adapter
 tcds*		at tc0 slot ? offset ?	 # TC dual SCSI controller
@@ -280,12 +280,12 @@ ss*		at scsibus? target? lun?
 uk*		at scsibus? target? lun?
 
 # VAXstation graphics support
-wsdisplay0	at smg0
-wsdisplay0	at lcspx0
-#wsdisplay0	at lcg0
-#wsdisplay0	at clr0
-#wsdisplay0	at qd0
-#wsdisplay0	at qv0
+wsdisplay*	at smg0
+wsdisplay*	at spx0
+#wsdisplay*	at lcg0
+#wsdisplay*	at clr0
+#wsdisplay*	at qd0
+#wsdisplay*	at qv0
 lkkbd0		at dz0 line 0
 wskbd*		at lkkbd? console ?
 lkms0		at dz0 line 1
