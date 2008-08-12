@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.53 2008/08/08 14:40:07 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.54 2008/08/12 10:04:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,6 +63,12 @@ kmutex_t rump_giantlock;
 
 sigset_t sigcantmask;
 
+#ifdef RUMP_WITHOUT_THREADS
+int rump_threads = 0;
+#else
+int rump_threads = 1;
+#endif
+
 struct fakeblk {
 	char path[MAXPATHLEN];
 	LIST_ENTRY(fakeblk) entries;
@@ -70,7 +76,6 @@ struct fakeblk {
 
 static LIST_HEAD(, fakeblk) fakeblks = LIST_HEAD_INITIALIZER(fakeblks);
 
-#ifndef RUMP_WITHOUT_THREADS
 static void
 rump_aiodone_worker(struct work *wk, void *dummy)
 {
@@ -79,7 +84,6 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 	KASSERT(&bp->b_work == wk);
 	bp->b_iodone(bp);
 }
-#endif /* RUMP_WITHOUT_THREADS */
 
 static int rump_inited;
 static struct emul emul_rump;
@@ -104,6 +108,9 @@ rump_init()
 		desiredvnodes = strtoul(buf, NULL, 10);
 	} else {
 		desiredvnodes = 1<<16;
+	}
+	if (rumpuser_getenv("RUMP_THREADS", buf, sizeof(buf), &error) == 0) {
+		rump_threads = *buf != '0';
 	}
 
 	rumpvm_init();
@@ -150,12 +157,12 @@ rump_init()
 
 	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
 
-#ifndef RUMP_WITHOUT_THREADS
 	/* aieeeedondest */
-	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    rump_aiodone_worker, NULL, 0, 0, 0))
-		panic("aiodoned");
-#endif /* RUMP_WITHOUT_THREADS */
+	if (rump_threads) {
+		if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
+		    rump_aiodone_worker, NULL, 0, 0, 0))
+			panic("aiodoned");
+	}
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);

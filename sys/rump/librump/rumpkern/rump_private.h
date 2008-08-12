@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.9 2008/07/29 13:17:47 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.10 2008/08/12 10:04:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -67,6 +67,8 @@ struct rump_specpriv {
 };
 
 #define RUMP_UBC_MAGIC_WINDOW (void *)0x37
+
+extern int rump_threads;
 
 void abort(void) __dead;
 
