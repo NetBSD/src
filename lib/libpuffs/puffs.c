@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.91 2008/08/11 16:23:37 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.92 2008/08/12 19:44:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.91 2008/08/11 16:23:37 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.92 2008/08/12 19:44:39 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -122,7 +122,7 @@ finalpush(struct puffs_usermount *pu)
 /*ARGSUSED*/
 static void
 puffs_defaulterror(struct puffs_usermount *pu, uint8_t type,
-	int error, const char *str, void *cookie)
+	int error, const char *str, puffs_cookie_t cookie)
 {
 
 	fprintf(stderr, "abort: type %d, error %d, cookie %p (%s)\n",
@@ -458,7 +458,7 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 
 int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
-	void *cookie)
+	puffs_cookie_t cookie)
 {
 	char rp[MAXPATHLEN];
 	ssize_t n;
