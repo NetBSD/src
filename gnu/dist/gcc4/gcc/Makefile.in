@@ -2974,11 +2974,13 @@ build/gengtype-yacc.o : gengtype-yacc.c gengtype.h $(BCONFIG_H) $(SYSTEM_H) \
   coretypes.h $(GTM_H)
 
 gengtype-lex.c : gengtype-lex.l
+gengtype-lex.l :
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_gengtype-lex.c:
 	-$(FLEX) $(FLEXFLAGS) -o$@ $<
 
 gengtype-yacc.c gengtype-yacc.h: gengtype-yacc.y
+gengtype-yacc.y:
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_gengtype-yacc.c:
 	-$(BISON) $(BISONFLAGS) -d -o gengtype-yacc.c $<
