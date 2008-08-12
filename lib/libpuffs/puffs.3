@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.40 2008/05/25 19:38:14 wiz Exp $
+.\"	$NetBSD: puffs.3,v 1.41 2008/08/12 19:44:39 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .Ft int
 .Fo puffs_mount
 .Fa "struct puffs_usermount *pu" "const char *dir" "int mntflags"
-.Fa "void *root_cookie"
+.Fa "puffs_cookie_t root_cookie"
 .Fc
 .Ft int
 .Fn puffs_getselectable "struct puffs_usermount *pu"

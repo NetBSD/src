@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.31 2008/03/20 15:28:03 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.32 2008/08/12 19:44:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.31 2008/03/20 15:28:03 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.32 2008/08/12 19:44:39 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -134,7 +134,7 @@ dispatch(struct puffs_cc *pcc)
 	struct puffs_ops *pops = &pu->pu_ops;
 	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	void *auxbuf; /* help with typecasting */
-	void *opcookie;
+	puffs_cookie_t opcookie;
 	int error = 0, buildpath;
 
 	/* XXX: smaller hammer, please */
