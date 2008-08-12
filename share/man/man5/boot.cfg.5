@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.7 2008/05/03 20:19:02 sborrill Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.8 2008/08/12 18:02:39 sborrill Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -120,7 +120,15 @@ Used to load kernel modules, which will be passed on to the kernel for
 initialization during early boot.
 The argument is the complete path and file name of the module to be loaded.
 May be used as many times as needed.
-.El
+.It Sy format
+Changes how the menu options are displayed.
+Should be set to one of 'a' for automatic, 'l' for letters and 'n' for
+numbers.
+If set to automatic (the default), menu options will be displayed numerically
+unless there are more than 9 options and the timeout is greater than zero.
+If there are more than 9 options with a timeout greater than zero and
+the format is set to number, only the first 9 options will be available.
+
 .Sh EXAMPLES
 Here is an example
 .Nm
