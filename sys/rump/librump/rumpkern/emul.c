@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.46 2008/08/04 15:02:16 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.47 2008/08/12 10:04:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -377,19 +377,19 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct lwp *l;
 	int rv;
 
-#ifdef RUMP_WITHOUT_THREADS
-	/* fake them */
-	if (strcmp(fmt, "vrele") == 0) {
-		printf("rump warning: threads not enabled, not starting "
-		   "vrele thread\n");
-		return 0;
-	} else if (strcmp(fmt, "cachegc") == 0) {
-		printf("rump warning: threads not enabled, not starting "
-		   "namecache g/c thread\n");
-		return 0;
-	} else
-		panic("threads not available, undef RUMP_WITHOUT_THREADS");
-#endif
+	if (!rump_threads) {
+		/* fake them */
+		if (strcmp(fmt, "vrele") == 0) {
+			printf("rump warning: threads not enabled, not starting"
+			   " vrele thread\n");
+			return 0;
+		} else if (strcmp(fmt, "cachegc") == 0) {
+			printf("rump warning: threads not enabled, not starting"
+			   " namecache g/c thread\n");
+			return 0;
+		} else
+			panic("threads not available, setenv RUMP_THREADS 1");
+	}
 
 	KASSERT(fmt != NULL);
 	if (ci != NULL)
