@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.27 2008/08/10 18:56:16 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.28 2008/08/12 19:45:22 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.27 2008/08/10 18:56:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.28 2008/08/12 19:45:22 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1269,7 +1269,7 @@ mec_intr(void *arg)
 		}
 	}
 
-	if (sent && IFQ_IS_EMPTY(&ifp->if_snd)) {
+	if (sent && !IFQ_IS_EMPTY(&ifp->if_snd)) {
 		/* try to get more packets going */
 		mec_start(ifp);
 	}
