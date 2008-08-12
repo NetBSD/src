@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.15 2007/11/30 19:02:39 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.16 2008/08/12 19:51:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.15 2007/11/30 19:02:39 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.16 2008/08/12 19:51:55 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -139,7 +139,7 @@ psshfs_fs_unmount(struct puffs_usermount *pu, int flags)
 }
 
 int
-psshfs_fs_nodetofh(struct puffs_usermount *pu, void *cookie,
+psshfs_fs_nodetofh(struct puffs_usermount *pu, puffs_cookie_t cookie,
 	void *fid, size_t *fidsize)
 {
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
