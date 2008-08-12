@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1086 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1087 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -576,3 +576,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	build.sh: Add support for using BUILDSEED to yield
 		reproduceable c++ builds [perry 20080805]
 	sockopt(9): New kernel API for passing socket options [plunky 20080806]
+	vax: Add accelerated driver for SPX graphics found in some VAXstations.
+		Contributed by Blaz Antonic. [hans 20080812]
