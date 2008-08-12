@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.101 2008/07/31 23:49:50 oster Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.102 2008/08/12 10:14:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.101 2008/07/31 23:49:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.102 2008/08/12 10:14:37 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -860,9 +860,7 @@ ffs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
-	struct vnlock *lkp;
 	int flags = ap->a_flags;
-	int result;
 
 	if ((flags & LK_INTERLOCK) != 0) {
 		mutex_exit(&vp->v_interlock);
@@ -878,19 +876,7 @@ ffs_lock(void *v)
 		return 0;
 	}
 
-	for (;;) {
-		lkp = vp->v_vnlock;
-		result = vlockmgr(lkp, flags);
-		if (lkp == vp->v_vnlock || result != 0)
-			return result;
-		/*
-		 * Apparent success, except that the vnode mutated between
-		 * snapshot file vnode and regular file vnode while this
-		 * thread slept.  The lock currently held is not the right
-		 * lock.  Release it, and try to get the new lock.
-		 */
-		(void) vlockmgr(lkp, LK_RELEASE);
-	}
+	return (vlockmgr(vp->v_vnlock, flags));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.167 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.168 2008/08/12 10:14:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.167 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.168 2008/08/12 10:14:38 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -321,8 +321,11 @@ ufs_access(void *v)
 		}
 	}
 
+	/* If it is a snapshot, nobody gets access to it. */
+	if ((ip->i_flags & SF_SNAPSHOT))
+		return (EPERM);
 	/* If immutable bit set, nobody gets to write it. */
-	if ((mode & VWRITE) && (ip->i_flags & (IMMUTABLE | SF_SNAPSHOT)))
+	if ((mode & VWRITE) && (ip->i_flags & IMMUTABLE))
 		return (EPERM);
 
 	return (vaccess(vp->v_type, ip->i_mode & ALLPERMS,

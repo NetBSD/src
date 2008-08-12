@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.89 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.90 2008/08/12 10:14:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.89 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.90 2008/08/12 10:14:38 hannken Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -104,6 +104,11 @@ READ(void *v)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
+
+#ifndef LFS_READWRITE
+	if ((ip->i_flags & SF_SNAPSHOT))
+		return ffs_snapshot_read(vp, uio, ioflag);
+#endif /* !LFS_READWRITE */
 
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 

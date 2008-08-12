@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.49 2008/07/08 14:57:03 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.50 2008/08/12 10:14:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.49 2008/07/08 14:57:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.50 2008/08/12 10:14:37 hannken Exp $");
 
 #include "fss.h"
 
@@ -552,17 +552,12 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Check for file system internal snapshot.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
 	if (nd.ni_vp->v_type == VREG && nd.ni_vp->v_mount == sc->sc_mount) {
-		vrele(nd.ni_vp);
 		sc->sc_flags |= FSS_PERSISTENT;
-
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
-		if ((error = vn_open(&nd, FREAD, 0)) != 0)
-			return error;
 		sc->sc_bs_vp = nd.ni_vp;
 
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
@@ -586,7 +581,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 
 		return error;
 	}
-	vrele(nd.ni_vp);
+	vput(nd.ni_vp);
 
 	/*
 	 * Get the block device it is mounted on.
