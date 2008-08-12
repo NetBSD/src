@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.67 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.68 2008/08/12 10:14:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -150,6 +150,7 @@ int	ffs_snapshot(struct mount *, struct vnode *, struct timespec *);
 void	ffs_snapshot_mount(struct mount *);
 void	ffs_snapshot_unmount(struct mount *);
 void	ffs_snapgone(struct inode *);
+int	ffs_snapshot_read(struct vnode *, struct uio *, int);
 
 /*
  * Soft dependency function prototypes.
