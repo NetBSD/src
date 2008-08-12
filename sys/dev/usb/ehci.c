@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.141 2008/08/03 07:05:22 cegger Exp $ */
+/*	$NetBSD: ehci.c,v 1.142 2008/08/12 16:35:06 drochner Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.141 2008/08/03 07:05:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.142 2008/08/12 16:35:06 drochner Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1695,7 +1695,7 @@ ehci_open(usbd_pipe_handle pipe)
 		break;
 	case UE_ISOCHRONOUS:
 		pipe->methods = &ehci_device_isoc_methods;
-		if (ed->bInterval == 0 || ed->bInterval >= 16) {
+		if (ed->bInterval == 0 || ed->bInterval > 16) {
 			printf("ehci: opening pipe with invalid bInterval\n");
 			err = USBD_INVAL;
 			goto bad;
@@ -3806,7 +3806,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	struct ehci_xfer *exfer;
 	ehci_soft_itd_t *itd, *prev, *start, *stop;
 	usb_dma_t *dma_buf;
-	int i, j, k, frames, uframes;
+	int i, j, k, frames, uframes, ufrperframe;
 	int s, trans_count, offs, total_length;
 	int frindex;
 
@@ -3867,18 +3867,16 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		/* Spec page 271 says intervals > 16 are invalid */
 		DPRINTF(("ehci_device_isoc_start: bInvertal %d invalid\n", i));
 		return USBD_INVAL;
-	} else if (i >= 4) {
-		frames = xfer->nframes;
-		uframes = 8;
-	} else {
-		frames = xfer->nframes + 0x7; /* 7 added for rounding up */
-		uframes = 0;
-		switch (i) {
-			case 1: frames /= 8; uframes = 1; break;
-			case 2: frames /= 4; uframes = 2; break;
-			case 3: frames /= 2; uframes = 4; break;
-		}
 	}
+
+	switch (i) {
+		case 1: ufrperframe = 8;
+		case 2: ufrperframe = 4;
+		case 3: ufrperframe = 2;
+		default: ufrperframe = 1;
+	}
+	frames = (xfer->nframes + (ufrperframe - 1)) / ufrperframe;
+	uframes = 8 / ufrperframe;
 
 	if (frames == 0) {
 		DPRINTF(("ehci_device_isoc_start: frames == 0\n"));
