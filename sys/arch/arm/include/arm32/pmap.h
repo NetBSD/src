@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.87 2008/07/21 07:33:54 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.88 2008/08/13 06:05:54 matt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -238,6 +238,9 @@ extern pv_addr_t kernel_l1pt;
 #define	PVF_KENTRY	0x0100		/* page entered via pmap_kenter_pa */
 #define	PVF_KMPAGE	0x0200		/* page is used for kmem */
 #define	PVF_DIRTY	0x0400		/* page may have dirty cache lines */
+#define	PVF_KMOD	0x0800		/* unmanaged page is modified  */
+#define	PVF_KWRITE	(PVF_KENTRY|PVF_WRITE)
+#define	PVF_DMOD	(PVF_MOD|PVF_KMOD|PVF_KMPAGE)
 #define	PVF_NC		(PVF_UNC|PVF_KNC)
 
 /*
