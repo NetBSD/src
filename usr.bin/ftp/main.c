@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.111 2008/07/21 23:11:16 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.112 2008/08/13 04:59:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.111 2008/07/21 23:11:16 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.112 2008/08/13 04:59:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,11 @@ main(int volatile argc, char **volatile argv)
 	upload_path = NULL;
 	isupload = 0;
 	reply_callback = NULL;
+#ifdef INET6
 	family = AF_UNSPEC;
+#else
+	family = AF_INET;	/* force AF_INET if no INET6 support */
+#endif
 
 	netrc[0] = '\0';
 	cp = getenv("NETRC");

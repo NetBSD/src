@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.76 2008/05/10 01:14:57 skd Exp $	*/
+/*	$NetBSD: version.h,v 1.77 2008/08/13 04:59:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
@@ -34,5 +34,5 @@
 #endif
 
 #ifndef FTP_VERSION
-#define	FTP_VERSION	"20080509"
+#define	FTP_VERSION	"20080813"
 #endif
