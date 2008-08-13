@@ -606,7 +606,7 @@
 /* #undef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTSLEN */
 
 /* Define to 1 if `msg_control' is member of `struct msghdr'. */
-/* #undef HAVE_STRUCT_MSGHDR_MSG_CONTROL */
+#define HAVE_STRUCT_MSGHDR_MSG_CONTROL 1
 
 /* Define to 1 if `pw_gecos' is member of `struct passwd'. */
 #define HAVE_STRUCT_PASSWD_PW_GECOS 1
@@ -836,7 +836,7 @@
 #define LDAP_SYSLOG 1
 
 /* Version */
-#define LDAP_VENDOR_VERSION 20409
+#define LDAP_VENDOR_VERSION 20411
 
 /* Major */
 #define LDAP_VENDOR_VERSION_MAJOR 2
@@ -845,7 +845,7 @@
 #define LDAP_VENDOR_VERSION_MINOR 4
 
 /* Patch */
-#define LDAP_VENDOR_VERSION_PATCH 9
+#define LDAP_VENDOR_VERSION_PATCH 11
 
 /* define if memcmp is not 8-bit clean or is otherwise broken */
 /* #undef NEED_MEMCMP_REPLACEMENT */
@@ -860,7 +860,7 @@
 #define OPENLDAP_PACKAGE "OpenLDAP"
 
 /* Version */
-#define OPENLDAP_VERSION "2.4.9"
+#define OPENLDAP_VERSION "2.4.11"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
