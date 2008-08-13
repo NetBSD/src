@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2008/05/22 13:57:47 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2008/08/13 04:43:26 lukem Exp $
 
 .include "../openldap.mk"
 
@@ -13,7 +13,7 @@ SRCS=	${PROG}.c common.c
 SRCS+=	version.c
 CLEANFILES+= version.c
 
-version.c:
+version.c: ../openldap.mk
 	${_MKTARGET_CREATE}
 	${LDAP_MKVERSION} -s ${PROG} > ${.TARGET}
 
