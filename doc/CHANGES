@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1087 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1088 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -578,3 +578,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	sockopt(9): New kernel API for passing socket options [plunky 20080806]
 	vax: Add accelerated driver for SPX graphics found in some VAXstations.
 		Contributed by Blaz Antonic. [hans 20080812]
+	openldap: Import 2.4.11. [lukem 20080813]
