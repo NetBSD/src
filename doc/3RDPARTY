@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.624 2008/08/12 04:24:48 simonb Exp $
+#	$NetBSD: 3RDPARTY,v 1.625 2008/08/13 04:48:02 lukem Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -609,7 +609,7 @@ be to get multibyte characters support. For now this means waiting for
 additions in our libcurses.
 
 Package:	OpenLDAP
-Version:	2.4.9
+Version:	2.4.11
 Current Vers:	2.4.11
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
