@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.284 2008/08/10 11:06:43 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.285 2008/08/13 16:36:15 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -55,7 +55,7 @@ DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so
 .endif									# }
 
 ##### Build and install rules
-MKDEP_SUFFIXES?=	.o .po .so .ln
+MKDEP_SUFFIXES?=	.o .po .so .go .ln
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
 
