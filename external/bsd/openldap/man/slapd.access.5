@@ -1,6 +1,7 @@
-.TH SLAPD.ACCESS 5 "2008/05/07" "OpenLDAP 2.4.9"
+.TH SLAPD.ACCESS 5 "2008/07/16" "OpenLDAP 2.4.11"
 .\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.70.2.10 2008/07/09 00:48:35 quanah Exp $
 .SH NAME
 slapd.access \- access configuration for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -709,8 +710,8 @@ field will have.
 Its component are defined as
 .LP
 .nf
-	<level> ::= none|disclose|auth|compare|search|read|write|manage
-	<priv> ::= {=|+|-}{m|w|r|s|c|x|d|0}+
+	<level> ::= none|disclose|auth|compare|search|read|{write|add|delete}|manage
+	<priv> ::= {=|+|-}{0|d|x|c|s|r|{w|a|z}|m}+
 .fi
 .LP
 The modifier
@@ -740,11 +741,22 @@ The possible levels are
 .BR compare ,
 .BR search ,
 .BR read ,
+.BR write ,
 and
-.BR write .
+.BR manage .
 Each access level implies all the preceding ones, thus 
 .B manage
-grants all access including administrative access,
+grants all access including administrative access.
+The 
+.BR write
+access is actually the combination of
+.BR add
+and
+.BR delete ,
+which respectively restrict the write privilege to add or delete
+the specified
+.BR <what> .
+
 .LP
 The
 .B none 
@@ -781,6 +793,10 @@ The privileges are
 for manage,
 .B w
 for write,
+.B a
+for add,
+.B z
+for delete,
 .B r
 for read,
 .B s 
@@ -794,6 +810,10 @@ for disclose.
 More than one of the above privileges can be added in one statement.
 .B 0
 indicates no privileges and is used only by itself (e.g., +0).
+Note that
+.B +az
+is equivalent to
+.BR +w .
 .LP
 If no access is given, it defaults to 
 .BR +0 .
@@ -878,15 +898,17 @@ the BDB and HDB backends.   Requirements for other backends may
 The
 .B add
 operation requires
-.B write (=w)
+.B add (=a)
 privileges on the pseudo-attribute 
 .B entry
 of the entry being added, and 
-.B write (=w)
+.B add (=a)
 privileges on the pseudo-attribute
 .B children
 of the entry's parent.
-When adding the suffix entry of a database, write access to
+When adding the suffix entry of a database,
+.B add
+access to
 .B children
 of the empty DN ("") is required.
 
@@ -909,11 +931,11 @@ privileges on the attribute that is being compared.
 The
 .B delete
 operation requires
-.B write (=w)
+.B delete (=z)
 privileges on the pseudo-attribute
 .B entry 
 of the entry being deleted, and
-.B write (=w)
+.B delete (=d)
 privileges on the
 .B children
 pseudo-attribute of the entry's parent.
@@ -924,6 +946,18 @@ The
 operation requires 
 .B write (=w)
 privileges on the attributes being modified.
+In detail, 
+.B add (=a)
+is required to add new values,
+.B delete (=z)
+is required to delete existing values,
+and both
+.B delete
+and
+.BR "add (=az)" ,
+or
+.BR "write (=w)" ,
+are required to replace existing values.
 
 .LP
 The
@@ -933,13 +967,17 @@ operation requires
 privileges on the pseudo-attribute
 .B entry
 of the entry whose relative DN is being modified,
-.B write (=w)
+.B delete (=z)
 privileges on the pseudo-attribute
 .B children
-of the old and new entry's parents, and
-.B write (=w)
+of the old entry's parents,
+.B add (=a)
+privileges on the pseudo-attribute
+.B children
+of the new entry's parents, and
+.B add (=a)
 privileges on the attributes that are present in the new relative DN.
-.B Write (=w)
+.B Delete (=z)
 privileges are also required on the attributes that are present 
 in the old relative DN if 
 .B deleteoldrdn
