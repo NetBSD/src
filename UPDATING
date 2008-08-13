@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.176 2008/08/02 14:30:37 simonb Exp $
+$NetBSD: UPDATING,v 1.177 2008/08/13 16:37:56 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20080813:
+	MKDEBUG build was broken because the .depend files did not know
+	about .go files. You need to remove all .depend files and rebuild.
 
 20080731:
 	WAPBL (metadata journaling support) has been added, but at this
