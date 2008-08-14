@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.29 2008/08/14 03:43:50 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.30 2008/08/14 03:48:43 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.29 2008/08/14 03:43:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.30 2008/08/14 03:48:43 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -935,6 +935,7 @@ mec_start(struct ifnet *ifp)
 					printf("%s: unable to load TX buffer, "
 					    "error = %d\n",
 					    device_xname(sc->sc_dev), error);
+					m_freem(m);
 					break;
 				}
 			}
