@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.157 2008/07/28 14:22:14 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.158 2008/08/14 21:51:08 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.157 2008/07/28 14:22:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.158 2008/08/14 21:51:08 matt Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1298,7 +1298,12 @@ config_devdealloc(device_t dev)
 	if (dev->dv_locators)
 		free(dev->dv_locators, M_DEVBUF);
 
-	if ((dev->dv_flags & DVF_PRIV_ALLOC) != 0 && dev->dv_private != NULL)
+	/*
+	 * Only free dv_private if we allocated it.  If ca_devsize was 0,
+	 * we didn't allocate it so don't free it either.
+	 */
+	if ((dev->dv_flags & DVF_PRIV_ALLOC) != 0
+	    && dev->dv_cfattach->ca_devsize > 0)
 		free(dev->dv_private, M_DEVBUF);
 
 	free(dev, M_DEVBUF);
