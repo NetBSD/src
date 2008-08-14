@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.44 2008/08/06 17:17:03 matt Exp $	*/
+/*	$NetBSD: unistd.h,v 1.45 2008/08/14 16:19:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -156,6 +156,8 @@
 #define	_PC_VDISABLE		 9
 #define	_PC_SYNC_IO		10
 #define	_PC_FILESIZEBITS	11
+#define	_PC_SYMLINK_MAX		12
+#define	_PC_2_SYMLINKS		13
 
 /* configurable system variables; use as argument to sysconf(3) */
 /*

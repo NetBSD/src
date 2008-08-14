@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.168 2008/08/12 10:14:38 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.169 2008/08/14 16:19:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.168 2008/08/12 10:14:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169 2008/08/14 16:19:25 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2152,6 +2152,12 @@ ufs_pathconf(void *v)
 		return (0);
 	case _PC_FILESIZEBITS:
 		*ap->a_retval = 42;
+		return (0);
+	case _PC_SYMLINK_MAX:
+		*ap->a_retval = MAXPATHLEN;
+		return (0);
+	case _PC_2_SYMLINKS:
+		*ap->a_retval = 1;
 		return (0);
 	default:
 		return (EINVAL);
