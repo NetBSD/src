@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.10 2008/08/11 02:51:01 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.11 2008/08/14 00:47:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.10 2008/08/11 02:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.11 2008/08/14 00:47:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,14 +593,14 @@ loopdone:
 		 * XXX: This assumes that we come here only via
 		 * the mmio path
 		 */
-		if (vp->v_mount->mnt_wapbl && write) {
+		if (vp->v_mount->mnt_wapbl) {
 			error = WAPBL_BEGIN(vp->v_mount);
 		}
 
 		if (!error) {
 			error = GOP_ALLOC(vp, startoffset,
 			    npages << PAGE_SHIFT, 0, cred);
-			if (vp->v_mount->mnt_wapbl && write) {
+			if (vp->v_mount->mnt_wapbl) {
 				WAPBL_END(vp->v_mount);
 			}
 		}
