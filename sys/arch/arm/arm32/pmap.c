@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.185 2008/08/13 06:05:54 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.186 2008/08/14 14:54:32 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -202,6 +202,7 @@
 #include <sys/pool.h>
 #include <sys/cdefs.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
  
 #include <uvm/uvm.h>
 
@@ -211,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.185 2008/08/13 06:05:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.186 2008/08/14 14:54:32 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -441,7 +442,7 @@ static pt_entry_t *csrc_pte, *cdst_pte;
 static vaddr_t csrcp, cdstp;
 vaddr_t memhook;			/* used by mem.c */
 extern void *msgbufaddr;
-
+int pmap_kmpages;
 /*
  * Flag to indicate if pmap_init() has done its thing
  */
@@ -3259,6 +3260,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep, opte;
+#ifdef PMAP_CACHE_VIVT
+	struct vm_page *pg = (prot & PMAP_KMPAGE) ? PHYS_TO_VM_PAGE(pa) : NULL;
+#endif
 #ifdef PMAP_CACHE_VIPT
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 	struct vm_page *opg;
@@ -3304,16 +3308,16 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	    pte_l2_s_cache_mode;
 	PTE_SYNC(ptep);
 
-#ifdef PMAP_CACHE_VIPT
 	if (pg) {
 		if (prot & PMAP_KMPAGE) {
-			KASSERT(pv == NULL);
-			KASSERT((va & PVF_COLORED) == 0);
 			simple_lock(&pg->mdpage.pvh_slock);
 			KASSERT(pg->mdpage.urw_mappings == 0);
 			KASSERT(pg->mdpage.uro_mappings == 0);
 			KASSERT(pg->mdpage.krw_mappings == 0);
 			KASSERT(pg->mdpage.kro_mappings == 0);
+#ifdef PMAP_CACHE_VIPT
+			KASSERT(pv == NULL);
+			KASSERT((va & PVF_COLORED) == 0);
 			KASSERT((pg->mdpage.pvh_attrs & PVF_NC) == 0);
 			/* if there is a color conflict, evict from cache. */
 			if (pmap_is_page_colored_p(pg)
@@ -3325,7 +3329,13 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 			pg->mdpage.pvh_attrs |= PVF_KMPAGE
 			    | PVF_COLORED | PVF_DIRTY
 			    | (va & arm_cache_prefer_mask);
+#endif
+#ifdef PMAP_CACHE_VIVT
+			pg->mdpage.pvh_attrs |= PVF_KMPAGE;
+#endif
+			pmap_kmpages++;
 			simple_unlock(&pg->mdpage.pvh_slock);
+#ifdef PMAP_CACHE_VIPT
 		} else {
 			if (pv == NULL) {
 				pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
@@ -3341,12 +3351,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 			simple_lock(&pg->mdpage.pvh_slock);
 			pmap_vac_me_harder(pg, pmap_kernel(), va);
 			simple_unlock(&pg->mdpage.pvh_slock);
+#endif
 		}
+#ifdef PMAP_CACHE_VIPT
 	} else {
 		if (pv != NULL)
 			pool_put(&pmap_pv_pool, pv);
-	}
 #endif
+	}
 }
 
 void
@@ -3356,9 +3368,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	pt_entry_t *ptep, *sptep, opte;
 	vaddr_t next_bucket, eva;
 	u_int mappings;
-#ifdef PMAP_CACHE_VIPT
 	struct vm_page *opg;
-#endif
 
 	PMAPCOUNT(kenter_unmappings);
 
@@ -3380,7 +3390,6 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 		while (va < next_bucket) {
 			opte = *ptep;
-#ifdef PMAP_CACHE_VIPT
 			opg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
 			if (opg) {
 				if (opg->mdpage.pvh_attrs & PVF_KMPAGE) {
@@ -3389,15 +3398,19 @@ pmap_kremove(vaddr_t va, vsize_t len)
 					KASSERT(opg->mdpage.uro_mappings == 0);
 					KASSERT(opg->mdpage.krw_mappings == 0);
 					KASSERT(opg->mdpage.kro_mappings == 0);
-					opg->mdpage.pvh_attrs &=
-					    ~(PVF_KMPAGE|PVF_WRITE);
+					opg->mdpage.pvh_attrs &= ~PVF_KMPAGE;
+#ifdef PMAP_CACHE_VIPT
+					opg->mdpage.pvh_attrs &= ~PVF_WRITE;
+#endif
+					pmap_kmpages--;
 					simple_unlock(&opg->mdpage.pvh_slock);
+#ifdef PMAP_CACHE_VIPT
 				} else {
 					pool_put(&pmap_pv_pool,
 					    pmap_kremove_pg(opg, va));
+#endif
 				}
 			}
-#endif
 			if (l2pte_valid(opte)) {
 #ifdef PMAP_CACHE_VIVT
 				cpu_dcache_wbinv_range(va, PAGE_SIZE);
@@ -6449,3 +6462,19 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	return pv.pv_va;
 }
 #endif /* PMAP_STEAL_MEMORY */
+
+SYSCTL_SETUP(sysctl_machdep_pmap_setup, "sysctl machdep.kmpages setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "machdep", NULL,
+			NULL, 0, NULL, 0,
+			CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_INT, "kmpages",
+			SYSCTL_DESCR("count of pages allocated to kernel memory allocators"),
+			NULL, 0, &pmap_kmpages, 0,
+			CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+}
