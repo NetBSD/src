@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.5 2008/08/08 14:16:24 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.6 2008/08/14 15:22:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -244,7 +244,7 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 		goto out;
 		
 	uio = rump_uio_setup(buf, bufsize, *off, RUMPUIO_READ);
-	rv = RUMP_VOP_READDIR(vp, uio, NULL, &eofflag, NULL, NULL);
+	rv = RUMP_VOP_READDIR(vp, uio, RUMPCRED_SUSER, &eofflag, NULL, NULL);
 	VUL(vp);
 	*off = rump_uio_getoff(uio);
 	resid = rump_uio_free(uio);
