@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.12 2008/07/20 17:18:21 martin Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.13 2008/08/14 01:20:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.12 2008/07/20 17:18:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.13 2008/08/14 01:20:30 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -337,21 +337,29 @@ tcotimer_configure(device_t self)
 	uint32_t ioreg;
 	unsigned int period;
 
+	/* Explicitly stop the TCO timer. */
+	tcotimer_stop(sc);
+
+	/*
+	 * Enable TCO timeout SMI only if the hardware reset does not
+	 * work. We don't know what the SMBIOS does.
+	 */
+	ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
+	ioreg &= ~LPCIB_SMI_EN_TCO_EN;
+
 	/* 
 	 * Clear the No Reboot (NR) bit. If this fails, enabling the TCO_EN bit
 	 * in the SMI_EN register is the last chance.
 	 */
 	if (tcotimer_disable_noreboot(self)) {
-		ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
 		ioreg |= LPCIB_SMI_EN_TCO_EN;
+	}
+	if ((ioreg & LPCIB_SMI_EN_GBL_SMI_EN) != 0) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN, ioreg);
 	}
 
 	/* Reset the watchdog status registers. */
 	tcotimer_status_reset(sc);
-
-	/* Explicitly stop the TCO timer. */
-	tcotimer_stop(sc);
 
 	/* 
 	 * Register the driver with the sysmon watchdog framework.
