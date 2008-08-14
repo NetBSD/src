@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.28 2008/08/12 19:45:22 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.29 2008/08/14 03:43:50 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.28 2008/08/12 19:45:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.29 2008/08/14 03:43:50 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -126,6 +126,7 @@ uint32_t mec_debug = 0;
 #define MEC_NTXDESC_MASK	(MEC_NTXDESC - 1)
 #define MEC_NEXTTX(x)		(((x) + 1) & MEC_NTXDESC_MASK)
 #define MEC_NTXDESC_RSVD	4
+#define MEC_NTXDESC_INTR	8
 
 /*
  * software state for TX
@@ -1009,11 +1010,16 @@ mec_start(struct ifnet *ifp)
 		/*
 		 * setup the transmit descriptor.
 		 */
-
-		/* TXINT bit will be set later on the last packet */
 		txd->txd_cmd = (len - 1);
-		/* but also set TXINT bit on a half of TXDESC */
-		if (sc->sc_txpending == (MEC_NTXDESC / 2))
+
+		/*
+		 * Set MEC_TXCMD_TXINT every MEC_NTXDESC_INTR packets
+		 * if more than half txdescs have been queued
+		 * because TX_EMPTY interrupts will rarely happen
+		 * if TX queue is so stacked.
+		 */
+		if (sc->sc_txpending > (MEC_NTXDESC / 2) &&
+		    (nexttx & (MEC_NTXDESC_INTR - 1)) == 0)
 			txd->txd_cmd |= MEC_TXCMD_TXINT;
 
 		if (txs->txs_flags & MEC_TXS_TXDBUF)
