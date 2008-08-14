@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.6 2008/08/14 15:22:41 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.7 2008/08/14 15:24:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -196,7 +196,7 @@ ukfs_release(struct ukfs *fs, int flags)
 
 	if ((flags & UKFS_RELFLAG_NOUNMOUNT) == 0) {
 		rump_vp_rele(fs->ukfs_cdir);
-		rv = rump_vfs_sync(fs->ukfs_mp, 1, NULL);
+		rv = rump_vfs_sync(fs->ukfs_mp, 1, RUMPCRED_SUSER);
 		rump_vp_recycle_nokidding(ukfs_getrvp(fs));
 		rv |= rump_vfs_unmount(fs->ukfs_mp, 0);
 		assert(rv == 0);
