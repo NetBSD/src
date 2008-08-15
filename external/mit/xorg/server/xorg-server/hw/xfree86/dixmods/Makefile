@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/06 07:16:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/15 15:55:05 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -13,8 +13,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${DESTDIR}${X11INCDIR}/xorg \
-		-I${XSERVERINCDIR}
+		-I${DESTDIR}${X11INCDIR}/xorg
 
 CPPFLAGS+=	-DXFree86LOADER
 

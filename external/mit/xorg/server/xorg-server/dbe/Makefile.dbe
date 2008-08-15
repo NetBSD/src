@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile.dbe,v 1.2 2008/08/09 09:08:25 rtr Exp $
+#	$NetBSD: Makefile.dbe,v 1.3 2008/08/15 15:55:05 rtr Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/dbe
 SRCS.dbe=	dbe.c midbe.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
-		-I${XSERVERINCDIR} \
 		-I${DESTDIR}${X11INCDIR}/pixman-1
 
 CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}

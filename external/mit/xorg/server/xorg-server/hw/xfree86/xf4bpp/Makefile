@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2008/08/06 06:14:33 mrg Exp $
+# $NetBSD: Makefile,v 1.2 2008/08/15 15:55:06 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -59,8 +59,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${DESTDIR}${X11INCDIR}/xorg \
-		-I${XSERVERINCDIR}
+		-I${DESTDIR}${X11INCDIR}/xorg
 
 CPPFLAGS+=	-DXF86VGA16 -DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 

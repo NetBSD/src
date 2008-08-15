@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/03 08:09:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/15 15:55:06 rtr Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -12,7 +12,6 @@ SRCS=	WaitFor.c access.c auth.c connection.c io.c mitauth.c \
 	rpcauth.c secauth.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
-		-I${XSERVERINCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
