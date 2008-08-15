@@ -1,4 +1,4 @@
-.\" $NetBSD: mixerctl.1,v 1.21 2008/04/30 13:11:01 martin Exp $
+.\" $NetBSD: mixerctl.1,v 1.22 2008/08/15 17:41:29 apb Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 23, 2004
+.Dd Augist 15, 2008
 .Dt MIXERCTL 1
 .Os
 .Sh NAME
@@ -132,6 +132,10 @@ mixer control.
 For numeric controls, these operators increase or decrease, respectively,
 the value by an amount (the delta) suitable to make
 the control assume the next possible value.
+For binary controls, these operators toggle between
+.Li on
+and
+.Li off .
 .Pp
 The operators += and -= change the value of a mixer control by the
 indicated number of steps.
