@@ -1,3 +1,56 @@
+	--- 9.5.0-P2 released ---
+
+2406.   [bug]           Some operating systems have FD_SETSIZE set to a
+			low value by default, which can cause resource
+			exhaustion when many simultaneous connections are
+			open.  Linux in particular makes it difficult to
+			increase this value.  To use more sockets with
+			select(), set ISC_SOCKET_FDSETSIZE.  Example:
+			STD_CDEFINES="-DISC_SOCKET_FDSETSIZE=4096" ./configure
+			(This should not be necessary in most cases, and
+			never for an authoritative-only server.) [RT #18328]
+
+2405.   [cleanup]       The default value for dnssec-validation was changed to
+			"yes" in 9.5.0-P1 and all subsequent releases; this
+			was inadvertently omitted from CHANGES at the time.
+
+2404.	[port]		hpux: files unlimited support.
+
+2403.	[bug]		TSIG context leak. [RT #18341]
+
+2402.	[port]		Support Solaris 2.11 and over. [RT #18362]
+
+2401.	[bug]		Expect to get E[MN]FILE errno internal_accept()
+			(from accept() or fcntl() system calls). [RT #18358]
+
+2399.	[bug]		Abort timeout queries to reduce the number of open
+			UDP sockets. [RT #18367]
+
+2398.	[bug]           Improve file descriptor management.  New,
+			temporary, named.conf option reserved-sockets,
+			default 512. [RT #18344]
+
+2397.	[bug]		gssapi_functions had too many elements. [RT #18355]
+
+2396.	[bug]		Don't set SO_REUSEADDR for randomized ports.
+			[RT #18336]
+
+2395.	[port]		Avoid warning and no effect from "files unlimited"
+			on Linux when running as root. [RT #18335]
+
+2394.	[bug]		Default configuration options set the limit for
+			open files to 'unlimited' as described in the
+			documentation. [RT #18331]
+
+2393.   [bug]           nested acls containing keys could trigger an
+			assertion in acl.c. [RT #18166]
+
+2392.	[bug]		remove 'grep -q' from acl test script, some platforms
+			don't support it. [RT #18253]
+
+2387.	[bug]		Silence compiler warnings in lib/isc/radix.c.
+			[RT #18147] [RT #18258]
+
 	--- 9.5.0-P1 released ---
 
 2375.   [security]      Fully randomize UDP query ports to improve
@@ -13,20 +66,20 @@
 2371.   [doc]           add +nsid option to dig man page. [RT #18039]
 
 2370.   [bug]           "rndc freeze" could trigger an assertion in named
-                        when called on a nonexistent zone. [RT #18050]
+			when called on a nonexistent zone. [RT #18050]
 
 	--- 9.5.0rc1 released ---
 
 2368.   [port]          Linux: use libcap for capability management if
-                        possible. [RT# 18026]
+			possible. [RT# 18026]
 
 2367.   [bug]           Improve counting of dns_resstatscounter_retry
-                        [RT #18030]
+			[RT #18030]
 
 2366.	[bug]		Adb shutdown race. [RT #18021]
 
 2365.   [bug]           Fix a bug that caused dns_acl_isany() to return
-                        spurious results. [RT #18000]
+			spurious results. [RT #18000]
 
 2364.	[bug]		named could trigger a assertion when serving a
 			malformed signed zone. [RT #17828]
@@ -35,8 +88,8 @@
 			[RT #17513]
 
 2362.   [cleanup]       Make "rrset-order fixed" a compile-time option.
-                        settable by "./configure --enable-fixed-rrset".
-                        Disabled by default. [RT #17977]
+			settable by "./configure --enable-fixed-rrset".
+			Disabled by default. [RT #17977]
 
 2361.	[bug]		"recursion" statistics counter could be counted
 			multiple times for a single query.  [RT #17990]
@@ -161,7 +214,7 @@
 			[RT #17513]
 
 2315.   [bug]           Used incorrect address family for mapped IPv4
-                        addresses in acl.c. [RT #17519]
+			addresses in acl.c. [RT #17519]
 
 2314.	[bug]		Uninitialized memory use on error path in
 			bin/named/lwdnoop.c.  [RT #17476]
@@ -173,13 +226,13 @@
 			[RT #17458]
 
 2311.   [bug]           IPv6 addresses could match IPv4 ACL entries and
-                        vice versa. [RT #17462]
+			vice versa. [RT #17462]
 
 2310.	[bug]		dig, host, nslookup: flush stdout before emitting
 			debug/fatal messages.  [RT #17501]
 
 2309.   [cleanup]       Fix Coverity warnings in lib/dns/acl.c and iptable.c.
-                        [RT #17455]
+			[RT #17455]
 
 2308.	[cleanup]	Silence Coverity warning in bin/named/controlconf.c.
 			[RT #17495]
@@ -294,8 +347,8 @@
 	--- 9.5.0b1 released ---
 
 2267.   [bug]           Radix tree node_num value could be set incorrectly,
-                        causing positive ACL matches to look like negative
-                        ones.  [RT #17311]
+			causing positive ACL matches to look like negative
+			ones.  [RT #17311]
 
 2266.	[bug]		client.c:get_clientmctx() returned the same mctx
 			once the pool of mctx's was filled. [RT #17218]
@@ -314,7 +367,7 @@
 2261.   [bug]           Fix memory leak with "any" and "none" ACLs [RT #17272]
 
 2260.	[bug]		Reported wrong clients-per-query when increasing the
-                        value. [RT #17236]
+			value. [RT #17236]
 
 2259.	[placeholder]
 
@@ -349,7 +402,7 @@
 			statistics file to be written. [RT #17113]
 			
 2249.   [bug]           Only set Authentic Data bit if client requested
-                        DNSSEC, per RFC 3655 [RT #17175]
+			DNSSEC, per RFC 3655 [RT #17175]
 
 2248.   [cleanup]       Fix several errors reported by Coverity. [RT #17160]
 
@@ -395,8 +448,8 @@
 2234.   [port]          Correct some compiler warnings on SCO OSr5 [RT #17134]
   
 2233.   [func]          Add support for O(1) ACL processing, based on
-                        radix tree code originally written by Kevin
-                        Brintnall. [RT #16288]
+			radix tree code originally written by Kevin
+			Brintnall. [RT #16288]
 
 2232.	[bug]		dns_adb_findaddrinfo() could fail and return
 			ISC_R_SUCCESS. [RT #17137]

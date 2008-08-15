@@ -1,4 +1,4 @@
-# Id: version,v 1.39.18.5 2008/05/27 22:46:39 each Exp
+# Id: version,v 1.39.18.5.2.1 2008/07/29 05:03:07 each Exp
 # 
 # This file must follow /bin/sh rules.  It is imported directly via
 # configure.
@@ -7,4 +7,4 @@ MAJORVER=9
 MINORVER=5
 PATCHVER=0
 RELEASETYPE=-P
-RELEASEVER=1
+RELEASEVER=2
