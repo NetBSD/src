@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.266 2008/08/10 15:31:21 tls Exp $
+# $NetBSD: GENERIC,v 1.267 2008/08/15 14:41:26 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.266 $"
+#ident 		"GENERIC-$Revision: 1.267 $"
 
 maxusers	32
 
@@ -367,9 +367,11 @@ nvram*	at obio?			# nvram
 #ams*	at adb?				# ADB mouse
 #abtn*	at adb?
 
-cuda*	at obio?			# Apple CUDA
-pmu*	at obio?			# Apple CUDA
-nadb*	at adb_bus?				# new ADB Bus abstraction
+# the new, improved, experimental ADB subsystem
+
+cuda*	at obio?			# CUDA, for Old World PowerMacs
+pmu*	at obio?			# PMU, *Books and newer PowerMacs
+nadb*	at adb_bus?			# ADB bus enumerator, at cuda or pmu
 adbkbd* at nadb?			# ADB keyboard
 adbms*	at nadb?			# ADB mice and touchpads
 adbbt*	at nadb?			# button device found on *Books
@@ -377,23 +379,11 @@ adbbt*	at nadb?			# button device found on *Books
 wskbd*		at wskbddev? console ?
 wsmouse*	at wsmousedev?
 
-# the new, improved, experimental ADB subsystem
-
-#cuda*	at obio?		# CUDA, for Old World PowerMacs
-#pmu*	at obio?		# PMU, *Books and newer PowerMacs
 #battery* at pmu?		# legacy battery, for ohare-based PowerBooks
 
-#iic0	at cuda0		# CUDA's IIC bus
-#sgsmix0 at iic0	addr 0x8a	# additional mixer found in beige G3
+iic0	at cuda0		# CUDA's IIC bus
+sgsmix0 at iic0 addr 0x8a	# additional mixer found in beige G3
 				# use with awacs
-
-#nadb*	at adb_bus?		# ADB bus enumerator, at cuda or pmu
-
-#adbkbd* at nadb?		# ADB keyboard
-#adbms*	at nadb?		# ADB mouse or trackpad
-
-wsmouse* at wsmousedev?
-wskbd*	at wskbddev?
 
 zsc*	at obio?
 zstty*	at zsc? channel ?
