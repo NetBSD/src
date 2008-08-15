@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.4 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.5 2008/08/15 14:51:26 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: message.c,v 1.237.110.5 2008/04/03 10:50:01 marka Exp */
+/* Id: message.c,v 1.237.110.5.4.1 2008/07/28 08:36:27 marka Exp */
 
 /*! \file */
 
@@ -623,6 +623,9 @@ msgreset(dns_message_t *msg, isc_boolean_t everything) {
 		dns_tsigkey_detach(&msg->tsigkey);
 		msg->tsigkey = NULL;
 	}
+
+	if (msg->tsigctx != NULL)
+		dst_context_destroy(&msg->tsigctx);
 
 	if (msg->query.base != NULL) {
 		if (msg->free_query != 0)

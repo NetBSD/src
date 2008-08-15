@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.7 2008/06/21 18:59:25 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.8 2008/08/15 14:51:27 he Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: app.c,v 1.54.128.3 2008/01/17 23:46:37 tbox Exp */
+/* Id: app.c,v 1.54.128.3.12.1 2008/07/29 04:47:09 each Exp */
 
 /*! \file */
 
@@ -305,7 +305,7 @@ evloop(void) {
 		int n;
 		isc_time_t when, now;
 		struct timeval tv, *tvp;
-		fd_set readfds, writefds;
+		fd_set *readfds, *writefds;
 		int maxfd;
 		isc_boolean_t readytasks;
 		isc_boolean_t call_timer_dispatch = ISC_FALSE;
@@ -334,7 +334,7 @@ evloop(void) {
 		}
 
 		isc__socketmgr_getfdsets(&readfds, &writefds, &maxfd);
-		n = select(maxfd, &readfds, &writefds, NULL, tvp);
+		n = select(maxfd, readfds, writefds, NULL, tvp);
 
 		if (n == 0 || call_timer_dispatch) {
 			/*
@@ -354,7 +354,7 @@ evloop(void) {
 			isc__timermgr_dispatch();
 		}
 		if (n > 0)
-			(void)isc__socketmgr_dispatch(&readfds, &writefds,
+			(void)isc__socketmgr_dispatch(readfds, writefds,
 						      maxfd);
 		(void)isc__taskmgr_dispatch();
 
