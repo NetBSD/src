@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.1.1.7 2008/06/21 18:35:26 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.1.1.8 2008/08/15 14:39:43 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dighost.c,v 1.304.12.5 2008/04/03 02:12:21 marka Exp */
+/* Id: dighost.c,v 1.304.12.5.4.2 2008/07/23 22:51:52 marka Exp */
 
 /*! \file
  *  \note
@@ -2238,14 +2238,15 @@ send_tcp_connect(dig_query_t *query) {
 	sockcount++;
 	debug("sockcount=%d", sockcount);
 	if (specified_source)
-		result = isc_socket_bind(query->sock, &bind_address);
+		result = isc_socket_bind(query->sock, &bind_address,
+					 ISC_SOCKET_REUSEADDRESS);
 	else {
 		if ((isc_sockaddr_pf(&query->sockaddr) == AF_INET) &&
 		    have_ipv4)
 			isc_sockaddr_any(&bind_any);
 		else
 			isc_sockaddr_any6(&bind_any);
-		result = isc_socket_bind(query->sock, &bind_any);
+		result = isc_socket_bind(query->sock, &bind_any, 0);
 	}
 	check_result(result, "isc_socket_bind");
 	bringup_timer(query, TCP_TIMEOUT);
@@ -2292,11 +2293,12 @@ send_udp(dig_query_t *query) {
 		sockcount++;
 		debug("sockcount=%d", sockcount);
 		if (specified_source) {
-			result = isc_socket_bind(query->sock, &bind_address);
+			result = isc_socket_bind(query->sock, &bind_address,
+						 ISC_SOCKET_REUSEADDRESS);
 		} else {
 			isc_sockaddr_anyofpf(&bind_any,
 					isc_sockaddr_pf(&query->sockaddr));
-			result = isc_socket_bind(query->sock, &bind_any);
+			result = isc_socket_bind(query->sock, &bind_any, 0);
 		}
 		check_result(result, "isc_socket_bind");
 

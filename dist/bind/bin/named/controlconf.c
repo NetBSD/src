@@ -1,4 +1,4 @@
-/*	$NetBSD: controlconf.c,v 1.1.1.5 2008/06/21 18:35:00 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.1.1.6 2008/08/15 14:39:46 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: controlconf.c,v 1.55.64.2 2008/01/17 23:46:35 tbox Exp */
+/* Id: controlconf.c,v 1.55.64.2.12.2 2008/07/23 22:51:52 marka Exp */
 
 /*! \file */
 
@@ -1151,8 +1151,8 @@ add_listener(ns_controls_t *cp, controllistener_t **listenerp,
 		isc_socket_setname(listener->sock, "control", NULL);
 
 	if (result == ISC_R_SUCCESS)
-		result = isc_socket_bind(listener->sock,
-					 &listener->address);
+		result = isc_socket_bind(listener->sock, &listener->address,
+					 ISC_SOCKET_REUSEADDRESS);
 
 	if (result == ISC_R_SUCCESS && type == isc_sockettype_unix) {
 		listener->perm = cfg_obj_asuint32(cfg_tuple_get(control,

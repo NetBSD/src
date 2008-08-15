@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.1.1.1 2008/06/21 18:35:14 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.1.1.2 2008/08/15 14:39:51 he Exp $	*/
 
 /*
  * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: statschannel.c,v 1.2.2.9 2008/04/09 22:53:06 tbox Exp */
+/* Id: statschannel.c,v 1.2.2.9.4.2 2008/07/23 22:51:52 marka Exp */
 
 /*! \file */
 
@@ -609,7 +609,7 @@ add_listener(ns_server_t *server, ns_statschannel_t **listenerp,
 	isc_socket_ipv6only(sock, ISC_TRUE);
 #endif
 
-	result = isc_socket_bind(sock, addr);
+	result = isc_socket_bind(sock, addr, ISC_SOCKET_REUSEADDRESS);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: request.c,v 1.1.1.5 2008/06/21 18:32:25 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.1.1.6 2008/08/15 14:41:54 he Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: request.c,v 1.79 2007/06/19 23:47:16 tbox Exp */
+/* Id: request.c,v 1.79.228.2 2008/07/23 07:32:56 tbox Exp */
 
 /*! \file */
 
@@ -520,11 +520,11 @@ create_tcp_dispatch(dns_requestmgr_t *requestmgr, isc_sockaddr_t *srcaddr,
 	if (srcaddr == NULL) {
 		isc_sockaddr_anyofpf(&bind_any,
 				     isc_sockaddr_pf(destaddr));
-		result = isc_socket_bind(socket, &bind_any);
+		result = isc_socket_bind(socket, &bind_any, 0);
 	} else {
 		src = *srcaddr;
 		isc_sockaddr_setport(&src, 0);
-		result = isc_socket_bind(socket, &src);
+		result = isc_socket_bind(socket, &src, 0);
 	}
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
@@ -687,7 +687,7 @@ dns_request_createraw3(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
 	REQUIRE(action != NULL);
 	REQUIRE(requestp != NULL && *requestp == NULL);
 	REQUIRE(timeout > 0);
-	if (srcaddr != NULL) 
+	if (srcaddr != NULL)
 		REQUIRE(isc_sockaddr_pf(srcaddr) == isc_sockaddr_pf(destaddr));
 
 	mctx = requestmgr->mctx;
@@ -735,7 +735,7 @@ dns_request_createraw3(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
 		result = DNS_R_FORMERR;
 		goto cleanup;
 	}
-		
+
 	if ((options & DNS_REQUESTOPT_TCP) != 0 || r.length > 512)
 		tcp = ISC_TRUE;
 
@@ -859,7 +859,7 @@ dns_request_createvia2(dns_requestmgr_t *requestmgr, dns_message_t *message,
 				       udpretries, task, action, arg,
 				       requestp));
 }
-					
+
 isc_result_t
 dns_request_createvia3(dns_requestmgr_t *requestmgr, dns_message_t *message,
 		       isc_sockaddr_t *srcaddr, isc_sockaddr_t *destaddr,
@@ -885,7 +885,7 @@ dns_request_createvia3(dns_requestmgr_t *requestmgr, dns_message_t *message,
 	REQUIRE(action != NULL);
 	REQUIRE(requestp != NULL && *requestp == NULL);
 	REQUIRE(timeout > 0);
-	if (srcaddr != NULL) 
+	if (srcaddr != NULL)
 		REQUIRE(isc_sockaddr_pf(srcaddr) == isc_sockaddr_pf(destaddr));
 
 	mctx = requestmgr->mctx;
@@ -1139,7 +1139,7 @@ do_cancel(isc_task_t *task, isc_event_t *event) {
 	if (!DNS_REQUEST_CANCELED(request))
 		req_cancel(request);
 	send_if_done(request, ISC_R_CANCELED);
-	UNLOCK(&request->requestmgr->locks[request->hash]);	
+	UNLOCK(&request->requestmgr->locks[request->hash]);
 }
 
 void
