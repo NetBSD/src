@@ -34,6 +34,7 @@ isc__mem_putanddetach
 isc__mem_strdup
 isc__mempool_get
 isc__mempool_put
+isc__socketmgr_setreserved
 isc__strerror
 isc_app_block
 isc_app_finish
@@ -337,6 +338,7 @@ isc_ratelimiter_setpertic
 isc_ratelimiter_shutdown
 isc_refcount_init
 isc_region_compare
+isc_resource_curlimit
 isc_resource_getlimit
 isc_resource_setlimit
 isc_result_register

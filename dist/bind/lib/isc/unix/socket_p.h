@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_p.h,v 1.1.1.5 2008/06/21 18:31:30 christos Exp $	*/
+/*	$NetBSD: socket_p.h,v 1.1.1.6 2008/08/15 14:42:13 he Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket_p.h,v 1.11 2007/06/19 23:47:18 tbox Exp */
+/* Id: socket_p.h,v 1.11.228.1 2008/07/29 04:47:09 each Exp */
 
 #ifndef ISC_SOCKET_P_H
 #define ISC_SOCKET_P_H
@@ -29,7 +29,7 @@
 #endif
 
 void
-isc__socketmgr_getfdsets(fd_set *readset, fd_set *writeset, int *maxfd);
+isc__socketmgr_getfdsets(fd_set **readset, fd_set **writeset, int *maxfd);
 
 isc_result_t
 isc__socketmgr_dispatch(fd_set *readset, fd_set *writeset, int maxfd);

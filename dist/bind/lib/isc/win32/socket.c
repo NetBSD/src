@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.8 2008/07/10 14:19:44 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.9 2008/08/15 14:42:15 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.52.94.2 2008/03/27 23:46:28 tbox Exp */
+/* Id: socket.c,v 1.52.94.2.4.5 2008/07/24 10:24:06 fdupont Exp */
 
 /* This code has been rewritten to take advantage of Windows Sockets
  * I/O Completion Ports and Events. I/O Completion Ports is ONLY
@@ -2226,7 +2226,16 @@ internal_accept(isc_socket_t *sock, int accept_errno) {
 		    (void *)&addrlen);
 	if (fd == INVALID_SOCKET) {
 		accept_errno = WSAGetLastError();
-		if (SOFT_ERROR(accept_errno) || accept_errno == WSAECONNRESET) {
+		if (accept_errno == WSAEMFILE) {
+			isc_log_iwrite(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+				       ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
+				       isc_msgcat, ISC_MSGSET_SOCKET,
+				       ISC_MSG_TOOMANYFDS,
+				       "%s: too many open file descriptors",
+				       "accept");
+			goto soft_error;
+		} else if (SOFT_ERROR(accept_errno) ||
+			   accept_errno == WSAECONNRESET) {
 			goto soft_error;
 		} else {
 			isc__strerror(accept_errno, strbuf, sizeof(strbuf));
@@ -3287,7 +3296,8 @@ isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
 }
 
 isc_result_t
-isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr) {
+isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr,
+		unsigned int options) {
 	int bind_errno;
 	char strbuf[ISC_STRERRORSIZE];
 	int on = 1;
@@ -3303,7 +3313,8 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr) {
 	/*
 	 * Only set SO_REUSEADDR when we want a specific port.
 	 */
-	if (isc_sockaddr_getport(sockaddr) != (in_port_t)0 &&
+	if ((options & ISC_SOCKET_REUSEADDRESS) != 0 &&
+	    isc_sockaddr_getport(sockaddr) != (in_port_t)0 &&
 	    setsockopt(sock->fd, SOL_SOCKET, SO_REUSEADDR, (void *)&on,
 		       sizeof(on)) < 0) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -3877,4 +3888,10 @@ isc_socket_getname(isc_socket_t *socket) {
 void *
 isc_socket_gettag(isc_socket_t *socket) {
 	return (socket->tag);
+}
+
+void
+isc__socketmgr_setreserved(isc_socketmgr_t *manager, isc_uint32_t reserved) {
+	UNUSED(manager);
+	UNUSED(reserved);
 }
