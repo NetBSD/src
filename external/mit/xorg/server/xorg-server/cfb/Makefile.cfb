@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cfb,v 1.1 2008/08/02 21:19:21 mrg Exp $
+#	$NetBSD: Makefile.cfb,v 1.2 2008/08/15 15:55:05 rtr Exp $
 
 .if ${PIXELSIZE} == 8
 LIB=		cfb
@@ -74,7 +74,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/cfb \
 		-I${X11SRCDIR.xorg-server}/mfb \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/include \
-		-I${XSERVERINCDIR} \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/Xext

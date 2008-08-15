@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/08/10 06:21:36 rtr Exp $
+# $NetBSD: Makefile,v 1.3 2008/08/15 15:55:06 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 
@@ -22,8 +22,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${DESTDIR}${X11INCDIR}/X11/dri \
 		-I${DESTDIR}${X11INCDIR}/X11/drm \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${DESTDIR}${X11INCDIR}/xorg \
-		-I${XSERVERINCDIR}
+		-I${DESTDIR}${X11INCDIR}/xorg
 
 CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT} \
 		-DXF86DRI \

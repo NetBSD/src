@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xtrap,v 1.2 2008/08/03 03:16:41 mrg Exp $
+#	$NetBSD: Makefile.xtrap,v 1.3 2008/08/15 15:55:05 rtr Exp $
 
 LIB=		XTrap
 
@@ -6,7 +6,6 @@ LIB=		XTrap
 SRCS+=		xtrapddmi.c xtrapdi.c xtrapdiswp.c xtrapditbl.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
-		-I${XSERVERINCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \

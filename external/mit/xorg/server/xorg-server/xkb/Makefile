@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/03 03:55:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/15 15:55:07 rtr Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -21,7 +21,6 @@ X11SRCS=	XKBMisc.c XKBAlloc.c XKBGAlloc.c XKBMAlloc.c
 SRCS=		${DDXSRCS} ${DIXSRCS} ${XKBFILESRCS} ${X11SRCS}
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
-		-I${XSERVERINCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \

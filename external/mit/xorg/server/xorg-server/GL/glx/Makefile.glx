@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.1 2008/08/03 22:11:10 mrg Exp $
+#	$NetBSD: Makefile.glx,v 1.2 2008/08/15 15:55:05 rtr Exp $
 
 LIB=		glx
 
@@ -20,7 +20,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/GL/glx \
 		-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
 		-I${X11SRCDIR.MesaLib}/src/mesa/main \
 		-I${X11SRCDIR.MesaLib}/src/glx/x11 \
-		-I${XSERVERINCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \

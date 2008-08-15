@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/06 07:37:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/15 15:55:05 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xorg-server}/mfb \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/include \
-		-I${XSERVERINCDIR} \
 		-I${X11SRCDIR.xorg-server}/os \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \

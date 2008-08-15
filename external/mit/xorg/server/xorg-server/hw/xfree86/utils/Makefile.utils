@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.utils,v 1.4 2008/08/09 03:26:39 rtr Exp $
+#	$NetBSD: Makefile.utils,v 1.5 2008/08/15 15:55:06 rtr Exp $
 
 .include <bsd.own.mk>
 
-#XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 #SCANPCIINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/hw/xfree86/bin/xf86cfg && ${PRINTOBJDIR}
 #XF86OBJDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/hw/xfree86/xf86config && ${PRINTOBJDIR}
 #XLOADEROBJDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/hw/xfree86/xloader && ${PRINTOBJDIR}

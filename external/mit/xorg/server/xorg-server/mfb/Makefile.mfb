@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mfb,v 1.1 2008/08/02 20:41:29 mrg Exp $
+#	$NetBSD: Makefile.mfb,v 1.2 2008/08/15 15:55:06 rtr Exp $
 
 LIB=		mfb
 .PATH:		${X11SRCDIR.xorg-server}/mfb
@@ -20,7 +20,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/mfb \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
-		-I${XSERVERINCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/../include

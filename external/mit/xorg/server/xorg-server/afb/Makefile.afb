@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.afb,v 1.2 2008/08/02 21:30:42 mrg Exp $
+#	$NetBSD: Makefile.afb,v 1.3 2008/08/15 15:55:05 rtr Exp $
 
 LIB=	afb
 
@@ -19,8 +19,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/${LIB} \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
 		-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${XSERVERINCDIR}
+		-I${DESTDIR}${X11INCDIR}/pixman-1
 
 # XXX some path so that "../../mfb/mfbblt.c" works
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86
