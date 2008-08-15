@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.serverlib,v 1.2 2008/08/15 10:31:12 rtr Exp $
+#	$NetBSD: Makefile.serverlib,v 1.3 2008/08/15 15:55:05 rtr Exp $
 
 NOLINT=         1
 NOPROFILE=      1
@@ -20,11 +20,6 @@ X_BYTE_ORDER=0
 CPPFLAGS+=	${X11FLAGS.SERVER}
 #CPPFLAGS+=	${X11FLAGS.SERVER} -DX_BYTE_ORDER=${X_BYTE_ORDER} \
 #		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
-
-.if !defined(XSERVERINCDIR)
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
-.MAKEOVERRIDES+=XSERVERINCDIR
-.endif
 
 # Architectures that can't use the XFree86 loader (such as MIPS) can use
 # dlopen() to load modules.
