@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_link.c,v 1.1.1.3 2008/06/21 18:32:23 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.1.1.4 2008/08/15 14:41:47 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: gssapi_link.c,v 1.7.128.3 2008/04/03 06:08:26 tbox Exp
+ * Id: gssapi_link.c,v 1.7.128.3.4.1 2008/07/23 10:35:04 marka Exp
  */
 
 #include <config.h>
@@ -293,8 +293,7 @@ static dst_func_t gssapi_functions = {
 	NULL, /*%< fromdns */
 	NULL, /*%< tofile */
 	NULL, /*%< parse */
-	NULL, /*%< cleanup */
-	NULL
+	NULL /*%< cleanup */
 };
 
 isc_result_t

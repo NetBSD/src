@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.h,v 1.1.1.5 2008/06/21 18:31:19 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.1.1.6 2008/08/15 14:42:11 he Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.h,v 1.72 2007/06/18 23:47:44 tbox Exp */
+/* Id: socket.h,v 1.72.226.6 2008/07/23 23:48:45 tbox Exp */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -79,6 +79,12 @@ ISC_LANG_BEGINDECLS
  * system in use must support at least this number (plus one on some.)
  */
 #define ISC_SOCKET_MAXSCATTERGATHER	8
+
+/*%
+ * In isc_socket_bind() set socket option SO_REUSEADDR prior to calling
+ * bind() if a non zero port is specified (AF_INET and AF_INET6).
+ */
+#define ISC_SOCKET_REUSEADDRESS		0x01U
 
 /***
  *** Types
@@ -363,7 +369,8 @@ isc_socket_detach(isc_socket_t **socketp);
  */
 
 isc_result_t
-isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *addressp);
+isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *addressp,
+		unsigned int options);
 /*%<
  * Bind 'socket' to '*addressp'.
  *
@@ -782,7 +789,7 @@ isc_socket_cleanunix(isc_sockaddr_t *addr, isc_boolean_t active);
 
 isc_result_t
 isc_socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
-                    isc_uint32_t owner, isc_uint32_t group);
+		    isc_uint32_t owner, isc_uint32_t group);
 /*%<
  * Set ownership and file permissions on the UNIX domain socket.
  *
@@ -813,6 +820,12 @@ const char *isc_socket_getname(isc_socket_t *socket);
 void *isc_socket_gettag(isc_socket_t *socket);
 /*%<
  * Get the tag associated with a socket, if any.
+ */
+
+void
+isc__socketmgr_setreserved(isc_socketmgr_t *mgr, isc_uint32_t);
+/*%<
+ * Temporary.  For use by named only.
  */
 
 #ifdef HAVE_LIBXML2
