@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.7 2008/07/10 14:17:19 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.8 2008/08/15 14:39:47 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.82.38.5 2008/05/28 21:00:24 each Exp */
+/* Id: config.c,v 1.82.38.5.2.2 2008/07/23 11:46:01 marka Exp */
 
 /*! \file */
 
@@ -54,7 +54,7 @@ options {\n\
 #ifndef WIN32
 "	coresize default;\n\
 	datasize default;\n\
-	files default;\n\
+	files unlimited;\n\
 	stacksize default;\n"
 #endif
 "	deallocate-on-exit true;\n\
@@ -102,6 +102,7 @@ options {\n\
 	edns-udp-size 4096;\n\
 	max-udp-size 4096;\n\
 	request-nsid false;\n\
+	reserved-sockets 512;\n\
 \n\
 	/* view */\n\
 	allow-notify {none;};\n\
