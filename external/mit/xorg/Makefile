@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/15 10:27:20 rtr Exp $
 
 # Top level Makefile to cross build xorg inside the NetBSD tree.
 
 .include <bsd.own.mk>
 
-SUBDIR=		tools .WAIT include .WAIT lib .WAIT bin share
-#SUBDIR+=	server
+SUBDIR=		tools .WAIT include .WAIT lib .WAIT bin share server
 
 .if ${MKUPDATE} == "no" && !defined(NOCLEANDIR)
 BUILDTARGETS+=  cleandir
