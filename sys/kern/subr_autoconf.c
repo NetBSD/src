@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.159 2008/08/15 03:08:26 matt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.160 2008/08/15 03:14:20 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.159 2008/08/15 03:08:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.160 2008/08/15 03:14:20 matt Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -2415,8 +2415,11 @@ device_active(device_t dev, devactive_t type)
 	if (dev->dv_activity_count == 0)
 		return false;
 
-	for (i = 0; i < dev->dv_activity_count; ++i)
+	for (i = 0; i < dev->dv_activity_count; ++i) {
+		if (dev->dv_activity_handlers[i] == NULL)
+			break;
 		(*dev->dv_activity_handlers[i])(dev, type);
+	}
 
 	return true;
 }
