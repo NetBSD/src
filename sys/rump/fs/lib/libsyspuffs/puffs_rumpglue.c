@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.4 2008/07/29 13:17:43 pooka Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.5 2008/08/15 15:02:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.4 2008/07/29 13:17:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.5 2008/08/15 15:02:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.4 2008/07/29 13:17:43 pooka Exp
 #include <sys/kthread.h>
 #include <sys/mount.h>
 
+#include <dev/putter/putter.h>
 #include <dev/putter/putter_sys.h>
 
 #include <rump/rump.h>
@@ -90,7 +91,7 @@ readthread(void *arg)
 			if (error == ENOENT && inited == 0)
 				goto retry;
 			if (error == ENXIO)
-				kthread_exit(0);
+				break;
 			panic("fileread failed: %d", error);
 		}
 		inited = 1;
@@ -104,6 +105,8 @@ readthread(void *arg)
 			rv -= n;
 		}
 	}
+
+	kthread_exit(0);
 }
 
 /* Read requests from comfd and proxy them to /dev/puffs */
@@ -112,28 +115,49 @@ writethread(void *arg)
 {
 	struct ptargs *pap = arg;
 	struct file *fp;
+	struct putter_hdr *phdr;
 	register_t rv;
 	char *buf;
-	off_t off;
+	uint64_t roff, toread;
+	off_t woff;
 	int error;
 
 	buf = kmem_alloc(BUFSIZE, KM_SLEEP);
+	phdr = (struct putter_hdr *)buf;
 
 	for (;;) {
 		ssize_t n;
 
-		n = rumpuser_read(pap->comfd, buf, BUFSIZE, &error);
-		if (n <= 0)
-			panic("rumpuser_read %zd %d", n, error);
+		/*
+		 * Need to write everything to the "kernel" in one chunk,
+		 * so make sure we have it here.
+		 */
+		roff = 0;
+		toread = sizeof(struct putter_hdr);
+		do {
+			n = rumpuser_read(pap->comfd, buf+roff, toread, &error);
+			if (n <= 0) {
+				if (n == 0)
+					break;
+				panic("rumpuser_read %zd %d", n, error);
+			}
+			roff += n;
+			if (roff >= sizeof(struct putter_hdr))
+				toread = phdr->pth_framelen - roff;
+			else
+				toread = roff - sizeof(struct putter_hdr);
+		} while (toread);
 
-		off = 0;
+		rv = woff = 0;
 		fp = fd_getfile(pap->fpfd);
-		error = dofilewrite(pap->fpfd, fp, buf, n,
-		    &off, 0, &rv);
+		error = dofilewrite(pap->fpfd, fp, buf, phdr->pth_framelen,
+		    &woff, 0, &rv);
 		if (error == ENXIO)
-			kthread_exit(0);
-		KASSERT(rv == n);
+			break;
+		KASSERT(rv == phdr->pth_framelen);
 	}
+
+	kthread_exit(0);
 }
 
 int
