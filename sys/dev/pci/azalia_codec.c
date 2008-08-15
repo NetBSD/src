@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.68 2008/08/14 23:43:27 jmcneill Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.69 2008/08/15 11:22:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.68 2008/08/14 23:43:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.69 2008/08/15 11:22:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -639,7 +639,14 @@ generic_mixer_init(codec_t *this)
 				d->mixer_class = AZ_CLASS_OUTPUT;
 			m->target = MI_TARGET_CONNLIST;
 			for (j = 0, k = 0; j < w->nconnections && k < 32; j++) {
+				uint8_t conn;
+
 				if (!VALID_WIDGET_NID(w->connections[j], this))
+					continue;
+				/* skip unconnected pins */
+				PIN_STATUS(&this->w[w->connections[j]],
+				    conn);
+				if (conn == 1)
 					continue;
 				GMIDPRINTF(("%s: selector %d=%s\n", __func__, j,
 				    this->w[w->connections[j]].name));
