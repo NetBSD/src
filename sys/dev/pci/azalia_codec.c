@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.69 2008/08/15 11:22:59 jmcneill Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.70 2008/08/15 13:47:25 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.69 2008/08/15 11:22:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.70 2008/08/15 13:47:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -3559,57 +3559,11 @@ ad1984_init_dacgroup(codec_t *this)
 static int
 ad1984_mixer_init(codec_t *this)
 {
-	mixer_ctrl_t mc;
-	mixer_item_t *m, *mdac = NULL;
-	mixer_devinfo_t *d;
-	int err, i;
+	int err;
 
-	err = generic_mixer_init(this);
+	err = generic_mixer_autoinit(this);
 	if (err)
 		return err;
-
-	/* Clear mixer indexes, to make generic_mixer_fix_indexes happy */
-	for (i = 0; i < this->nmixers; i++) {
-		d = &this->mixers[i].devinfo;
-		d->index = d->prev = d->next = 0;
-	}
-
-	/* We're looking for inputs.dac, which we know is nid 0x04 */
-	for (i = 0; i < this->nmixers; i++)
-		if (this->mixers[i].nid == 0x04) {
-			mdac = &this->mixers[i];
-			break;
-		}
-	if (mdac) {
-		/*
-		 * AD1984 doesn't have a master mixer, so create a fake
-		 * outputs.master that mirrors inputs.dac
-		 */
-		err = generic_mixer_ensure_capacity(this, this->nmixers + 1);
-		if (err)
-			return err;
-
-		m = &this->mixers[this->nmixers];
-		d = &m->devinfo;
-		memcpy(m, mdac, sizeof(*m));
-		d->mixer_class = AZ_CLASS_OUTPUT;
-		snprintf(d->label.name, sizeof(d->label.name), AudioNmaster);
-		this->nmixers++;
-	}
-
-	/* Recreate mixer indexes and defaults after making a mess of things */
-	generic_mixer_fix_indexes(this);
-	generic_mixer_default(this);
-
-	mc.dev = -1;
-	mc.type = AUDIO_MIXER_ENUM;
-	if (this->subid == AD1984_THINKPAD) {
-		mc.un.ord = 1;
-		generic_mixer_set(this, 0x12, MI_TARGET_EAPD, &mc);
-	}
-	mc.un.ord = 1; /* dac */
-	generic_mixer_set(this, 0x22, MI_TARGET_CONNLIST, &mc); /* hpsel */
-	generic_mixer_set(this, 0x0e, MI_TARGET_CONNLIST, &mc); /* monosel */
 
 	if (this->subid == AD1984_DELL_OPTIPLEX_755) {
 		/* setup a unsolicited event for the headphones and speaker */
@@ -3628,9 +3582,6 @@ static int
 ad1984_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
 	switch (nid) {
-	case 0x04:
-		strlcpy(w->name, AudioNdac, sizeof(w->name));
-		break;
 	case 0x07:
 		strlcpy(w->name, "hp", sizeof(w->name));
 		break;
@@ -3655,30 +3606,6 @@ ad1984_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 	case 0x10:
 		strlcpy(w->name, "beep", sizeof(w->name));
 		break;
-	case 0x11:
-		strlcpy(w->name, AudioNheadphone, sizeof(w->name));
-		break;
-	case 0x12:
-		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
-		break;
-	case 0x13:
-		strlcpy(w->name, AudioNmono, sizeof(w->name));
-		break;
-	case 0x14:
-		strlcpy(w->name, AudioNmicrophone, sizeof(w->name));
-		break;
-	case 0x15:
-		strlcpy(w->name, AudioNline, sizeof(w->name));
-		break;
-	case 0x16:
-		strlcpy(w->name, AudioNaux, sizeof(w->name));
-		break;
-	case 0x1a:
-		strlcpy(w->name, "beep", sizeof(w->name));
-		break;
-	case 0x1c:
-		strlcpy(w->name, "dock", sizeof(w->name));
-		break;
 	case 0x1e:
 		strlcpy(w->name, AudioNmono, sizeof(w->name));
 		break;
@@ -3694,7 +3621,10 @@ ad1984_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 	case 0x25:
 		strlcpy(w->name, "dock.pre", sizeof(w->name));
 		break;
+	default:
+		return generic_mixer_init_widget(this, w, nid);
 	}
+
 	return 0;
 }
 
