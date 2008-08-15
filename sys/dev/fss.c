@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.50 2008/08/12 10:14:37 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.51 2008/08/15 10:31:24 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.50 2008/08/12 10:14:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.51 2008/08/15 10:31:24 hannken Exp $");
 
 #include "fss.h"
 
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.50 2008/08/12 10:14:37 hannken Exp $");
 #include <miscfs/specfs/specdev.h>
 
 #include <dev/fssvar.h>
+
+#include <uvm/uvm.h>
 
 #include <machine/stdarg.h>
 
@@ -498,12 +500,21 @@ fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 		return 0;
 	}
 
-	FSS_UNLOCK(sc, s);
-
 	FSS_STAT_INC(sc, cow_calls);
 
 	cl = FSS_BTOCL(sc, dbtob(bp->b_blkno));
 	ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
+
+	if (curlwp == uvm.pagedaemon_lwp) {
+		for (c = cl; c <= ch; c++)
+			if (isclr(sc->sc_copied, c)) {
+				FSS_UNLOCK(sc, s);
+
+				return ENOMEM;
+			}
+	}
+
+	FSS_UNLOCK(sc, s);
 
 	for (c = cl; c <= ch; c++)
 		fss_read_cluster(sc, c);
