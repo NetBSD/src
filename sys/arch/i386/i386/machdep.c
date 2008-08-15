@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.638 2008/08/05 17:09:17 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.639 2008/08/15 03:14:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.638 2008/08/05 17:09:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.639 2008/08/15 03:14:54 simonb Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -912,7 +912,8 @@ haltsys:
 		 * and users have reported disk corruption.
 		 */
 		delay(500000);
-		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS), APM_SYS_OFF);
+		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS),
+		    APM_SYS_OFF);
 		delay(500000);
 		apm_set_powstate(NULL, APM_DEV_ALLDEVS, APM_SYS_OFF);
 		printf("WARNING: APM powerdown failed!\n");
