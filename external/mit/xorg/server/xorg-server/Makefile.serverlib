@@ -1,15 +1,10 @@
-#	$NetBSD: Makefile.serverlib,v 1.1 2008/08/02 04:32:00 mrg Exp $
+#	$NetBSD: Makefile.serverlib,v 1.2 2008/08/15 10:31:12 rtr Exp $
 
 NOLINT=         1
 NOPROFILE=      1
 
 # XXX for now?
 MKX11LOADABLE=no
-
-# if not mips use x11 dynamic loader (no need for pic libs)
-.if ${MACHINE_ARCH} != "mipseb" && ${MACHINE_ARCH} != "mipsel"
-NOPIC=		1
-.endif
 
 .include <bsd.own.mk>		# for NETBSDSRCDIR
 .include <bsd.endian.mk>
