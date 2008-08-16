@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.167 2008/07/22 21:07:58 dyoung Exp $
+#	$NetBSD: Makefile,v 1.168 2008/08/16 23:59:45 gmcgarry Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
-SUBDIR= apply apropos asa at atf-compile atf-config atf-report atf-run \
-	atf-version audio awk \
+SUBDIR= apply apropos asa at audio awk \
 	banner basename biff bthset btkey btpin \
 	bzip2 bzip2recover cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp col colcrt colrm \
@@ -30,6 +29,10 @@ SUBDIR= apply apropos asa at atf-compile atf-config atf-report atf-run \
 	uudecode uuencode uuidgen vacation vgrind vi vis vmstat vndcompress w \
 	wall wc what whatis whereis who whois window \
 	write xargs xinstall xlint xstr yacc yes
+
+.if (${MKATF} != "no")
+SUBDIR+= atf-compile atf-config atf-report atf-run atf-version
+.endif
 
 .if (${MKHESIOD} != "no")
 SUBDIR+= hesinfo
