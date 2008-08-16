@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.193 2008/08/15 22:22:15 lukem Exp $
+#	$NetBSD: build.sh,v 1.194 2008/08/16 00:10:04 lukem Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -236,6 +236,19 @@ initdefaults()
 	# Set source directories
 	#
 	setmakeenv NETBSDSRCDIR "${TOP}"
+
+	# Determine top-level obj directory.
+	# Defaults to the top-level source directory.
+	# If $MAKEOBJDIRPREFIX is set in the environment, use it.
+	# We can't check $MAKEOBJDIR since that may be a make(1)
+	# expression that we can't evaluate at this time.
+	#
+	TOP_objdir="${TOP}"
+	if [ -n "${MAKEOBJDIRPREFIX}" ]; then
+		TOP_objdir="${MAKEOBJDIRPREFIX}${TOP}"
+	elif [ -n "${MAKEOBJDIR}" ]; then
+		warning "Can't parse \$(MAKEOBJDIR) \"$MAKEOBJDIR\" to determine top objdir"
+	fi
 
 	# Find the version of NetBSD
 	#
@@ -664,7 +677,7 @@ parseoptions()
 
 		-M)
 			eval ${optargcmd}; resolvepath
-			makeobjdir="${OPTARG}"
+			TOP_objdir="${OPTARG}${TOP}"
 			unsetmakeenv MAKEOBJDIR
 			setmakeenv MAKEOBJDIRPREFIX "${OPTARG}"
 			;;
@@ -694,7 +707,7 @@ parseoptions()
 
 		-O)
 			eval ${optargcmd}; resolvepath
-			makeobjdir="${OPTARG}"
+			TOP_objdir="${OPTARG}"
 			unsetmakeenv MAKEOBJDIRPREFIX
 			setmakeenv MAKEOBJDIR "\${.CURDIR:C,^$TOP,$OPTARG,}"
 			;;
@@ -900,15 +913,13 @@ try_set_TOOLDIR()
 	[ -n "${TOOLDIR}" ] && return
 
 	# Set guess_TOOLDIR, in the same way that <bsd.own.mk> would set
-	# TOOLDIR if /etc/mk.conf sisn't interfere.
-	local topobjdir="${TOP}"
-	[ -n "${makeobjdir}" ] && topobjdir="${topobjdir}/${makeobjdir}"
+	# TOOLDIR if /etc/mk.conf isn't interfering.
 	local host_ostype="${uname_s}-$(
 		echo "${uname_r}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
-		)$(
+		)-$(
 		echo "${uname_p}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
 		)"
-	local guess_TOOLDIR="${topobjdir}/tooldir.${host_ostype}"
+	local guess_TOOLDIR="${TOP_objdir}/tooldir.${host_ostype}"
 
 	# Look for a suitable ${toolprefix}make, nbmake, bmake, or make.
 	guess_make="${guess_TOOLDIR}/bin/${toolprefix}make"
@@ -921,7 +932,7 @@ try_set_TOOLDIR()
 	# Use ${guess_make} with nobomb_getmakevar
 	if [ -x "${guess_make}" ]; then
 		TOOLDIR=$(make="${guess_make}" nobomb_getmakevar TOOLDIR)
-		[ -n "${TOOLDIR}" ] || unset TOOLDIR
+		[ $? -eq 0 -a -n "${TOOLDIR}" ] || unset TOOLDIR
 	fi
 }
 
@@ -1005,10 +1016,8 @@ validatemakeparams()
 		# variable, which is set using complex rules.  This
 		# works only if TOP = /usr/src.
 		#
-		top_obj_dir=""
-		if [ ! -z "${makeobjdir}" ]; then
-			top_obj_dir="${makeobjdir}"
-		else
+		top_obj_dir="${TOP_objdir}"
+		if [ -z "${top_obj_dir}" ]; then
 			if [ "$TOP" = "/usr/src" ]; then
 				top_obj_dir="$(getmakevar __usrobjdir)"
 			# else __usrobjdir is not actually used
@@ -1181,7 +1190,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.193 2008/08/15 22:22:15 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.194 2008/08/16 00:10:04 lukem Exp $
 # with these arguments: ${_args}
 #
 
