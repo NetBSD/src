@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.67 2008/08/16 07:37:14 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.68 2008/08/16 10:19:21 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.67 2008/08/16 07:37:14 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.68 2008/08/16 10:19:21 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.67 2008/08/16 07:37:14 dan Exp $");
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
@@ -103,10 +104,11 @@ typedef struct _rnd_sample_t {
 
 /*
  * The event queue.  Fields are altered at an interrupt level.
- * All accesses must be protected at splvm().
+ * All accesses must be protected with the mutex.
  */
 volatile int			rnd_timeout_pending;
 SIMPLEQ_HEAD(, _rnd_sample_t)	rnd_samples;
+kmutex_t			rnd_mtx;
 
 /*
  * our select/poll queue
@@ -120,7 +122,7 @@ struct selinfo rnd_selq;
 volatile u_int32_t rnd_status;
 
 /*
- * Memory pool; accessed only at splvm().
+ * Memory pool for sample buffers; accessed only at splvm().
  */
 POOL_INIT(rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample", NULL,
     IPL_VM);
@@ -129,7 +131,7 @@ POOL_INIT(rnd_mempool, sizeof(rnd_sample_t), 0, 0, 0, "rndsample", NULL,
  * Our random pool.  This is defined here rather than using the general
  * purpose one defined in rndpool.c.
  *
- * Samples are collected and queued at splvm() into a separate queue
+ * Samples are collected and queued into a separate mutex-protected queue
  * (rnd_samples, see above), and processed in a timeout routine; therefore,
  * all other accesses to the random pool must be at splsoftclock() as well.
  */
@@ -303,6 +305,8 @@ rnd_init(void)
 
 	if (rnd_ready)
 		return;
+
+	mutex_init(&rnd_mtx, MUTEX_DEFAULT, IPL_VM);
 
 	callout_init(&rnd_callout, 0);
 
@@ -855,9 +859,8 @@ rnd_detach_source(rndsource_element_t *rs)
 {
 	rnd_sample_t *sample;
 	rndsource_t *source;
-	int s;
 
-	s = splvm();
+	mutex_enter(&rnd_mtx);
 
 	LIST_REMOVE(rs, list);
 
@@ -880,7 +883,7 @@ rnd_detach_source(rndsource_element_t *rs)
 		sample = SIMPLEQ_NEXT(sample, next);
 	}
 
-	splx(s);
+	mutex_exit(&rnd_mtx);
 #ifdef RND_VERBOSE
 	printf("rnd: %s detached as an entropy source\n", rs->data.name);
 #endif
@@ -896,7 +899,7 @@ rnd_add_uint32(rndsource_element_t *rs, u_int32_t val)
 	rndsource_t *rst;
 	rnd_sample_t *state;
 	u_int32_t ts;
-	int s;
+
 
 	rst = &rs->data;
 
@@ -942,7 +945,7 @@ rnd_add_uint32(rndsource_element_t *rs, u_int32_t val)
 	/*
 	 * State arrays are full.  Queue this chunk on the processing queue.
 	 */
-	s = splvm();
+	mutex_enter(&rnd_mtx);
 	SIMPLEQ_INSERT_HEAD(&rnd_samples, state, next);
 	rst->state = NULL;
 
@@ -953,7 +956,7 @@ rnd_add_uint32(rndsource_element_t *rs, u_int32_t val)
 		rnd_timeout_pending = 1;
 		callout_reset(&rnd_callout, 1, rnd_timeout, NULL);
 	}
-	splx(s);
+	mutex_exit(&rnd_mtx);
 
 	/*
 	 * To get here we have to have queued the state up, and therefore
@@ -996,18 +999,17 @@ rnd_timeout(void *arg)
 	rnd_sample_t *sample;
 	rndsource_t *source;
 	u_int32_t entropy;
-	int s;
 
 	/*
-	 * Sample queue is protected at splvm(); go there briefly to dequeue.
+	 * Sample queue is protected by rnd_mtx, take it briefly to dequeue.
 	 */
-	s = splvm();
+	mutex_enter(&rnd_mtx);
 	rnd_timeout_pending = 0;
 
 	sample = SIMPLEQ_FIRST(&rnd_samples);
 	while (sample != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&rnd_samples, next);
-		splx(s);
+		mutex_exit(&rnd_mtx);
 
 		source = sample->source;
 
@@ -1033,11 +1035,11 @@ rnd_timeout(void *arg)
 
 		rnd_sample_free(sample);
 
-		/* Go back to splvm to dequeue the next one.. */
-		s = splvm();
+		/* Get mtx back to dequeue the next one.. */
+		mutex_enter(&rnd_mtx);
 		sample = SIMPLEQ_FIRST(&rnd_samples);
 	}
-	splx(s);
+	mutex_exit(&rnd_mtx);
 
 	/*
 	 * Wake up any potential readers waiting.
