@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.70 2008/08/16 12:33:18 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.71 2008/08/16 13:07:30 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.70 2008/08/16 12:33:18 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.71 2008/08/16 13:07:30 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -302,7 +302,7 @@ rnd_init(void)
 
 	mutex_init(&rnd_mtx, MUTEX_DEFAULT, IPL_VM);
 
-	callout_init(&rnd_callout, 0);
+	callout_init(&rnd_callout, CALLOUT_MPSAFE);
 
 	/*
 	 * take a counter early, hoping that there's some variance in
