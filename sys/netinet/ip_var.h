@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.88 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.89 2008/08/16 21:51:44 plunky Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -221,7 +221,7 @@ struct in_ifaddr *
 	 ip_rtaddr(struct in_addr);
 void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 	   struct mbuf *);
-int	 ip_setmoptions(struct ip_moptions **, struct sockopt *);
+int	 ip_setmoptions(struct ip_moptions **, const struct sockopt *);
 void	 ip_slowtimo(void);
 struct mbuf *
 	 ip_srcroute(void);
