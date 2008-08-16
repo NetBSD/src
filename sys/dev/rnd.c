@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.66 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: rnd.c,v 1.67 2008/08/16 07:37:14 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.66 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.67 2008/08/16 07:37:14 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -759,11 +759,8 @@ static rnd_sample_t *
 rnd_sample_allocate(rndsource_t *source)
 {
 	rnd_sample_t *c;
-	int s;
 
-	s = splvm();
 	c = pool_get(&rnd_mempool, PR_WAITOK);
-	splx(s);
 	if (c == NULL)
 		return (NULL);
 
@@ -781,11 +778,8 @@ static rnd_sample_t *
 rnd_sample_allocate_isr(rndsource_t *source)
 {
 	rnd_sample_t *c;
-	int s;
 
-	s = splvm();
 	c = pool_get(&rnd_mempool, 0);
-	splx(s);
 	if (c == NULL)
 		return (NULL);
 
@@ -799,12 +793,8 @@ rnd_sample_allocate_isr(rndsource_t *source)
 static void
 rnd_sample_free(rnd_sample_t *c)
 {
-	int s;
-
 	memset(c, 0, sizeof(rnd_sample_t));
-	s = splvm();
 	pool_put(&rnd_mempool, c);
-	splx(s);
 }
 
 /*
