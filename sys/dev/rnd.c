@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.69 2008/08/16 12:23:34 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.70 2008/08/16 12:33:18 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.69 2008/08/16 12:23:34 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.70 2008/08/16 12:33:18 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -71,13 +71,6 @@ int	rnd_debug = 0;
  */
 #if 0
 #define	RND_VERBOSE
-#endif
-
-/*
- * Use the extraction time as a somewhat-random source
- */
-#ifndef RND_USE_EXTRACT_TIME
-#define	RND_USE_EXTRACT_TIME 1
 #endif
 
 /*
