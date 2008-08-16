@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.142 2008/08/12 16:35:06 drochner Exp $ */
+/*	$NetBSD: ehci.c,v 1.143 2008/08/16 15:41:37 drochner Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.142 2008/08/12 16:35:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.143 2008/08/16 15:41:37 drochner Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3870,10 +3870,18 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	}
 
 	switch (i) {
-		case 1: ufrperframe = 8;
-		case 2: ufrperframe = 4;
-		case 3: ufrperframe = 2;
-		default: ufrperframe = 1;
+	case 1:
+		ufrperframe = 8;
+		break;
+	case 2:
+		ufrperframe = 4;
+		break;
+	case 3:
+		ufrperframe = 2;
+		break;
+	default:
+		ufrperframe = 1;
+		break;
 	}
 	frames = (xfer->nframes + (ufrperframe - 1)) / ufrperframe;
 	uframes = 8 / ufrperframe;
