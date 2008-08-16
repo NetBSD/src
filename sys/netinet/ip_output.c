@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.197 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.198 2008/08/16 21:51:43 plunky Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.197 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.198 2008/08/16 21:51:43 plunky Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1559,7 +1559,7 @@ ip_multicast_if(struct in_addr *a, int *ifindexp)
 }
 
 static int
-ip_getoptval(struct sockopt *sopt, u_int8_t *val, u_int maxval)
+ip_getoptval(const struct sockopt *sopt, u_int8_t *val, u_int maxval)
 {
 	u_int tval;
 	u_char cval;
@@ -1596,7 +1596,7 @@ ip_getoptval(struct sockopt *sopt, u_int8_t *val, u_int maxval)
  * Set the IP multicast options in response to user setsockopt().
  */
 int
-ip_setmoptions(struct ip_moptions **imop, struct sockopt *sopt)
+ip_setmoptions(struct ip_moptions **imop, const struct sockopt *sopt)
 {
 	int error = 0;
 	int i;
