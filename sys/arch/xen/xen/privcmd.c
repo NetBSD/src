@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.25 2008/02/17 16:21:19 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.26 2008/08/16 08:02:20 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.25 2008/02/17 16:21:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.26 2008/08/16 08:02:20 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -335,8 +335,10 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			continue;
 		if (pps[i] == PGO_DONTCARE)
 			continue;
+#ifndef XEN3
 		if (pobj->maddr[maddr_i] == 0)
 			continue; /* this has already been flagged as error */
+#endif
 		error = pmap_enter_ma(ufi->orig_map->pmap, vaddr,
 		    pobj->maddr[maddr_i], 0, ufi->entry->protection,
 		    PMAP_CANFAIL | ufi->entry->protection,
