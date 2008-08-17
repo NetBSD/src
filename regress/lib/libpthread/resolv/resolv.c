@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.c,v 1.7 2008/04/28 20:23:05 martin Exp $	*/
+/*	$NetBSD: resolv.c,v 1.8 2008/08/17 00:19:52 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resolv.c,v 1.7 2008/04/28 20:23:05 martin Exp $");
+__RCSID("$NetBSD: resolv.c,v 1.8 2008/08/17 00:19:52 gmcgarry Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -120,7 +120,7 @@ resolvloop(void *p)
 {
 	int *nhosts = (int *)p;
 	if (*nhosts == 0)
-		return;
+		return NULL;
 	do
 		resolvone(*nhosts);
 	while (--(*nhosts));
