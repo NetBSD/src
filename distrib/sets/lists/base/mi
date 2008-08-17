@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.763 2008/08/02 04:39:41 mrg Exp $
+# $NetBSD: mi,v 1.764 2008/08/17 13:26:36 plunky Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1098,6 +1098,7 @@
 ./usr/sbin/btcontrol				base-obsolete		obsolete
 ./usr/sbin/btdevctl				base-sysutil-bin
 ./usr/sbin/bthcid				base-sysutil-bin
+./usr/sbin/btpand				base-sysutil-bin
 ./usr/sbin/btuartd				base-obsolete		obsolete
 ./usr/sbin/catman				base-man-bin
 ./usr/sbin/chat					base-ppp-bin
