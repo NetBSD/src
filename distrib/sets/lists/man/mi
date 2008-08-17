@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1084 2008/08/09 11:07:26 pooka Exp $
+# $NetBSD: mi,v 1.1085 2008/08/17 13:26:36 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1933,6 +1933,7 @@
 ./usr/share/man/cat8/btcontrol.0		man-obsolete		obsolete
 ./usr/share/man/cat8/btdevctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bthcid.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/btpand.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/btuartd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/catman.0			man-man-catman		.cat
 ./usr/share/man/cat8/cats/MAKEDEV.0		man-obsolete		obsolete
@@ -4517,6 +4518,7 @@
 ./usr/share/man/man8/btcontrol.8		man-obsolete		obsolete
 ./usr/share/man/man8/btdevctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/bthcid.8			man-sysutil-man		.man
+./usr/share/man/man8/btpand.8			man-sysutil-man		.man
 ./usr/share/man/man8/btuartd.8			man-obsolete		obsolete
 ./usr/share/man/man8/catman.8			man-man-man		.man
 ./usr/share/man/man8/cats/MAKEDEV.8		man-obsolete		obsolete

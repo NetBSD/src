@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1176 2008/08/11 01:14:19 joerg Exp $
+#	$NetBSD: mi,v 1.1177 2008/08/17 13:26:36 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3052,6 +3052,7 @@
 ./usr/libdata/debug/usr/sbin/btcontrol.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/btdevctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/bthcid.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/btpand.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/btuartd.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/catman.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		debug
