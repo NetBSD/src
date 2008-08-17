@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2008/08/04 06:59:47 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2008/08/17 07:47:48 lukem Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -54,6 +54,10 @@ CLEANFILES+=	${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} cs-tconfig.h \
 CLEANFILES+=	${LIB1ASMFUNCS}
 .endif
 
+.for file in ${G_LIB2ADD:M${GNUHOSTDIST}*}
+BUILDSYMLINKS+=	${file} ${file:T:S/.asm$/.S/}
+.endfor
+
 # XXX
 .if ${MACHINE_ARCH} == "m68000"
 CPICFLAGS:=
@@ -88,10 +92,6 @@ ${LIB1ASMFUNCS}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define L${.PREFIX}\n#include <${G_LIB1ASMSRC}>\n' >${.TARGET}
 .endif
-
-.for asmfile in ${G_LIB2ADD:M*.asm}
-BUILDSYMLINKS+=	${asmfile} ${asmfile:T:S/.asm/.S/}
-.endfor
 
 ${LIB2_EH:.c=.o}:
 	${_MKTARGET_COMPILE}
