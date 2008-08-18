@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.89 2008/08/18 20:43:50 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.90 2008/08/18 21:43:49 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.89 2008/08/18 20:43:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.90 2008/08/18 21:43:49 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -115,6 +115,8 @@ struct pppoetag {
 
 #define	PPPOE_DISC_TIMEOUT	(hz*5)	/* base for quick timeout calculation */
 #define	PPPOE_SLOW_RETRY	(hz*60)	/* persistent retry interval */
+#define	PPPOE_RECON_FAST	(hz*15)	/* first retry after auth failure */
+#define	PPPOE_RECON_SLOW	(hz*45)	/* after more auht failures */
 #define PPPOE_DISC_MAXPADI	4	/* retry PADI four times (quickly) */
 #define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
 
@@ -1066,6 +1068,10 @@ pppoe_timeout(void *arg)
 #endif
 
 	switch (sc->sc_state) {
+	case PPPOE_STATE_INITIAL:
+		/* delayed connect from pppoe_tls() */
+		pppoe_connect(sc);
+		break;
 	case PPPOE_STATE_PADI_SENT:
 		/*
 		 * We have two basic ways of retrying:
@@ -1383,9 +1389,27 @@ static void
 pppoe_tls(struct sppp *sp)
 {
 	struct pppoe_softc *sc = (void *)sp;
+	int wtime;
+
 	if (sc->sc_state != PPPOE_STATE_INITIAL)
 		return;
-	pppoe_connect(sc);
+
+	if (sc->sc_sppp.pp_phase == SPPP_PHASE_ESTABLISH &&
+	    sc->sc_sppp.pp_auth_failures > 0) {
+		/*
+		 * Delay trying to reconnect a bit more - the peer
+		 * might have failed to contact it's radius server.
+		 */
+		if (sc->sc_sppp.pp_auth_failures == 1) {
+			wtime = PPPOE_RECON_FAST;
+		} else {
+			wtime = PPPOE_RECON_SLOW
+			    * sc->sc_sppp.pp_auth_failures;
+		}
+	} else {
+		wtime = hz / 10;
+	}
+	callout_reset(&sc->sc_timeout, wtime, pppoe_timeout, sc);
 }
 
 static void
