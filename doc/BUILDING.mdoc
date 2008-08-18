@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.62 2008/08/11 08:22:40 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.63 2008/08/18 05:27:05 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd August 11, 2008
+.Dd August 18, 2008
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -1028,7 +1028,7 @@ utility, which is not part of
 but which can be installed from
 .Pa pkgsrc/sysutils/cdrtools .
 .
-.It iso-image-source
+.It Sy iso-image-source
 Create a
 .Nx
 installation CD-ROM image in the
@@ -1160,6 +1160,10 @@ Create the
 wrapper.
 This operation is automatically performed for any of the other
 operations.
+.
+.It Sy cleandir
+Perform
+.Dq make cleandir .
 .
 .It Sy obj
 Perform
@@ -1698,7 +1702,3 @@ as
 and re-worked to
 .Sy TOOLCHAIN_MISSING
 after that.
-.
-.Sh BUGS
-.
-A few platforms are not yet using this build system.
