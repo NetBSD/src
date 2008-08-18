@@ -622,6 +622,8 @@ BUILDING
      makewrapper   Create the nbmake-MACHINE wrapper.  This operation is auto-
                    matically performed for any of the other operations.
 
+     cleandir      Perform ``make cleandir''.
+
      obj           Perform ``make obj''.
 
      tools         Build and install the host tools from src/tools.  This com-
@@ -864,7 +866,4 @@ HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
      USE_NEW_TOOLCHAIN, and re-worked to TOOLCHAIN_MISSING after that.
 
-BUGS
-     A few platforms are not yet using this build system.
-
-NetBSD                          August 11, 2008                         NetBSD
+NetBSD                          August 18, 2008                         NetBSD
