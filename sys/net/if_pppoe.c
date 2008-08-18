@@ -1,7 +1,7 @@
-/* $NetBSD: if_pppoe.c,v 1.88 2008/08/08 14:31:00 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.89 2008/08/18 20:43:50 martin Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.88 2008/08/08 14:31:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.89 2008/08/18 20:43:50 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -661,8 +661,12 @@ breakbreak:;
 				free(sc->sc_ac_cookie, M_DEVBUF);
 			sc->sc_ac_cookie = malloc(ac_cookie_len, M_DEVBUF,
 			    M_DONTWAIT);
-			if (sc->sc_ac_cookie == NULL)
+			if (sc->sc_ac_cookie == NULL) {
+				printf("%s: FATAL: could not allocate memory "
+				    "for AC cookie\n",
+				    sc->sc_sppp.pp_if.if_xname);
 				goto done;
+			}
 			sc->sc_ac_cookie_len = ac_cookie_len;
 			memcpy(sc->sc_ac_cookie, ac_cookie, ac_cookie_len);
 		}
