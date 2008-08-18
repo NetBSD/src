@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.26 2008/08/16 08:02:20 cegger Exp $ */
+/* $NetBSD: privcmd.c,v 1.27 2008/08/18 23:09:37 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.26 2008/08/16 08:02:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.27 2008/08/18 23:09:37 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -55,6 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.26 2008/08/16 08:02:20 cegger Exp $");
 #include <xen/xenio.h>
 
 #define	PRIVCMD_MODE	(S_IRUSR)
+
+/* Magic value is used to mark invalid pages.
+ * This must be a value within the page-offset.
+ * Page-aligned values including 0x0 are used by the guest.
+ */ 
+#define INVALID_PAGE	0xfff
 
 struct privcmd_object {
 	struct uvm_object uobj;
@@ -251,7 +257,7 @@ privcmd_ioctl(void *v)
 			    pmb->dom)) {
 				mfn |= 0xF0000000;
 				copyout(&mfn, &pmb->arr[i], sizeof(mfn));
-				maddr[i] = 0;
+				maddr[i] = INVALID_PAGE;
 			} else {
 				pmap_remove(pmap_kernel(), trymap,
 				    trymap + PAGE_SIZE);
@@ -335,10 +341,8 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			continue;
 		if (pps[i] == PGO_DONTCARE)
 			continue;
-#ifndef XEN3
-		if (pobj->maddr[maddr_i] == 0)
+		if (pobj->maddr[maddr_i] == INVALID_PAGE)
 			continue; /* this has already been flagged as error */
-#endif
 		error = pmap_enter_ma(ufi->orig_map->pmap, vaddr,
 		    pobj->maddr[maddr_i], 0, ufi->entry->protection,
 		    PMAP_CANFAIL | ufi->entry->protection,
