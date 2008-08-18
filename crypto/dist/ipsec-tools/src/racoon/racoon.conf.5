@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.32.2.2 2007/08/28 11:14:47 liamjfoy Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.32.2.2.2.1 2008/08/18 20:33:33 jdc Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -1197,8 +1197,11 @@ Default is
 A list of IPv4 addresses for DNS servers, separated by commas, or on multiple
 .Ic dns4
 lines.
-.It Ic nbns4 Ar addresses ;
-A list of IPv4 address for WINS servers.
+.It Ic wins4 Ar addresses ;
+A list of IPv4 address for WINS servers. The keyword
+.It nbns4
+can also be used as an alias for
+.It wins4 .
 .It Ic split_network (include | local_lan) Ar network/mask, ...
 The network configuration to send, in cidr notation (e.g. 192.168.1.0/24).
 If
