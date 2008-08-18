@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcrm.c,v 1.14 2008/06/01 10:25:29 wiz Exp $	*/
+/*	$NetBSD: ipcrm.c,v 1.15 2008/08/18 02:12:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 		target_key = 0;
 		result = 0;
 
-		if (strcmp(optarg, "all") == 0) {
+		if (optarg != NULL && strcmp(optarg, "all") == 0) {
 			switch (c) {
 			case 'm':
 			case 'M':
