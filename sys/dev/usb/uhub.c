@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.102 2008/07/28 15:22:01 drochner Exp $	*/
+/*	$NetBSD: uhub.c,v 1.103 2008/08/18 18:03:21 kent Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.102 2008/07/28 15:22:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.103 2008/08/18 18:03:21 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,14 +95,15 @@ Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
 
 int uhub_match(device_t, cfdata_t, void *);
 void uhub_attach(device_t, device_t, void *);
+int uhub_rescan(device_t, const char *, const int *);
 void uhub_childdet(device_t, device_t);
 int uhub_detach(device_t, int);
 int uhub_activate(device_t, enum devact);
 extern struct cfdriver uhub_cd;
 CFATTACH_DECL2_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
-    uhub_attach, uhub_detach, uhub_activate, NULL, uhub_childdet);
+    uhub_attach, uhub_detach, uhub_activate, uhub_rescan, uhub_childdet);
 CFATTACH_DECL2_NEW(uroothub, sizeof(struct uhub_softc), uhub_match,
-    uhub_attach, uhub_detach, uhub_activate, NULL, uhub_childdet);
+    uhub_attach, uhub_detach, uhub_activate, uhub_rescan, uhub_childdet);
 
 USB_MATCH(uhub)
 {
@@ -620,6 +621,24 @@ USB_DETACH(uhub)
 		free(sc->sc_statusbuf, M_USBDEV);
 
 	return (0);
+}
+
+int
+uhub_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct uhub_softc *sc = device_private(self);
+	struct usbd_hub *hub = sc->sc_hub->hub;
+	usbd_device_handle dev;
+	int port, err;
+
+	for (port = 0; port < hub->hubdesc.bNbrPorts; port++) {
+		dev = hub->ports[port].device;
+		if (dev == NULL)
+			continue;
+		err = usbd_reattach_device(USBDEV(sc->sc_dev), dev,
+					   port, locators);
+	}
+	return 0;
 }
 
 /* Called when a device has been detached from it */
