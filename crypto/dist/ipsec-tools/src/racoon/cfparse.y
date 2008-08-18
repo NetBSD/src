@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.17.2.2 2007/08/28 11:14:43 liamjfoy Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.17.2.3 2008/08/18 20:31:30 jdc Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -984,6 +984,7 @@ splitnet
 #ifdef ENABLE_HYBRID
 			struct isakmp_cfg_config *icc = &isakmp_cfg_config;
 			struct unity_network network;
+			memset(&network,0,sizeof(network));
 
 			if (inet_pton(AF_INET, $1->v, &network.addr4) != 1)
 				yyerror("bad IPv4 SPLIT address.");
@@ -2411,7 +2412,11 @@ expand_isakmpspec(prop_no, trns_no, types,
 			}
 			memcpy(new->gssid->v, gssid, new->gssid->l);
 			racoon_free(gssid);
+#ifdef ENABLE_HYBRID
+		} else if (rmconf->xauth == NULL) {
+#else
 		} else {
+#endif
 			/*
 			 * Allocate the default ID so that it gets put
 			 * into a GSS ID attribute during the Phase 1
@@ -2518,11 +2523,6 @@ cfreparse()
 	flushrmconf();
 	flushsainfo();
 	clean_tmpalgtype();
-	yycf_init_buffer();
-
-	if (yycf_switch_buffer(lcconf->racoon_conf) != 0)
-		return -1;
-
 	return(cfparse());
 }
 
