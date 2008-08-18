@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.502 2008/07/08 08:47:32 uebayasi Exp $
+$NetBSD: usbdevs,v 1.503 2008/08/18 11:48:23 cegger Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -804,6 +804,7 @@ product CCYU EASYDISK		0x2136	EasyDisk Portable Device
 product CHERRY MY3000KBD	0x0001	My3000 keyboard
 product CHERRY MY3000HUB	0x0003	My3000 hub
 product CHERRY CYBOARD		0x0004	CyBoard Keyboard
+product CHERRY MY6000KBD	0x0011	My6000 keyboard
 
 /* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse
