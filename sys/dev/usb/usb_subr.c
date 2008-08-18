@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.161 2008/08/12 16:30:42 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.162 2008/08/18 18:03:21 kent Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.161 2008/08/12 16:30:42 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.162 2008/08/18 18:03:21 kent Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -834,15 +834,16 @@ usbd_attachwholedevice(device_t parent, usbd_device_handle dev, int port,
 }
 
 static usbd_status
-usbd_attachinterfaces(device_t parent, usbd_device_handle dev, int port)
+usbd_attachinterfaces(device_t parent, usbd_device_handle dev,
+		      int port, const int *locators)
 {
 	struct usbif_attach_arg uiaa;
+	int ilocs[USBIFIFCF_NLOCS];
 	usb_device_descriptor_t *dd = &dev->ddesc;
 	int nifaces;
 	usbd_interface_handle *ifaces;
-	int i, j;
+	int i, j, loc;
 	device_t dv;
-	int ilocs[USBIFIFCF_NLOCS];
 
 	nifaces = dev->cdesc->bNumInterface;
 	ifaces = malloc(nifaces * sizeof(*ifaces), M_USB, M_NOWAIT|M_ZERO);
@@ -875,6 +876,15 @@ usbd_attachinterfaces(device_t parent, usbd_device_handle dev, int port)
 		uiaa.proto = ifaces[i]->idesc->bInterfaceProtocol;
 		uiaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
 		ilocs[USBIFIFCF_INTERFACE] = uiaa.ifaceno;
+		if (locators != NULL) {
+			loc = locators[USBIFIFCF_CONFIGURATION];
+			if (loc != USBIFIFCF_CONFIGURATION_DEFAULT &&
+			    loc != uiaa.configno)
+				continue;
+			loc = locators[USBIFIFCF_INTERFACE];
+			if (loc != USBIFIFCF_INTERFACE && loc != uiaa.ifaceno)
+				continue;
+		}
 		dv = config_found_sm_loc(parent, "usbifif", ilocs, &uiaa,
 					 usbd_ifprint, config_stdsubmatch);
 		if (!dv)
@@ -923,7 +933,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 			printf("%s: port %d, set config at addr %d failed\n",
 			       USBDEVPTRNAME(parent), port, addr);
 #endif
- 			return (err);
+			return (err);
 		}
 		nifaces = dev->cdesc->bNumInterface;
 		dev->subdevs = malloc(nifaces * sizeof(device_t), M_USB,
@@ -932,7 +942,7 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 			return (USBD_NOMEM);
 		dev->subdevlen = nifaces;
 
-		err = usbd_attachinterfaces(parent, dev, port);
+		err = usbd_attachinterfaces(parent, dev, port, NULL);
 
 		if (!dev->nifaces_claimed) {
 			free(dev->subdevs, M_USB);
@@ -958,9 +968,54 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 	 * fully operational and not harming anyone.
 	 */
 	DPRINTF(("usbd_probe_and_attach: generic attach failed\n"));
- 	return (USBD_NORMAL_COMPLETION);
+	return (USBD_NORMAL_COMPLETION);
 }
 
+/**
+ * Called from uhub_rescan().  usbd_new_device() for the target dev must be
+ * called before calling this.
+ */
+usbd_status
+usbd_reattach_device(device_ptr_t parent, usbd_device_handle dev,
+		     int port, const int *locators)
+{
+	int i, loc;
+
+	if (locators != NULL) {
+		loc = locators[USBIFIFCF_PORT];
+		if (loc != USBIFIFCF_PORT_DEFAULT && loc != port)
+			return USBD_NORMAL_COMPLETION;
+		loc = locators[USBIFIFCF_VENDOR];
+		if (loc != USBIFIFCF_VENDOR_DEFAULT &&
+		    loc != UGETW(dev->ddesc.idVendor))
+			return USBD_NORMAL_COMPLETION;
+		loc = locators[USBIFIFCF_PRODUCT];
+		if (loc != USBIFIFCF_PRODUCT_DEFAULT &&
+		    loc != UGETW(dev->ddesc.idProduct))
+			return USBD_NORMAL_COMPLETION;
+		loc = locators[USBIFIFCF_RELEASE];
+		if (loc != USBIFIFCF_RELEASE_DEFAULT &&
+		    loc != UGETW(dev->ddesc.bcdDevice))
+			return USBD_NORMAL_COMPLETION;
+	}
+	if (dev->subdevlen == 0) {
+		/* XXX: check USBIFIFCF_CONFIGURATION and
+		 * USBIFIFCF_INTERFACE too */
+		return usbd_probe_and_attach(parent, dev, port, dev->address);
+	} else if (dev->subdevlen != dev->cdesc->bNumInterface) {
+		/* device-specific or generic driver is already attached. */
+		return USBD_NORMAL_COMPLETION;
+	}
+	/* Does the device have unconfigured interfaces? */
+	for (i = 0; i < dev->subdevlen; i++) {
+		if (dev->subdevs[i] == NULL) {
+			break;
+		}
+	}
+	if (i >= dev->subdevlen)
+		return USBD_NORMAL_COMPLETION;
+	return usbd_attachinterfaces(parent, dev, port, locators);
+}
 
 /*
  * Called when a new device has been put in the powered state,
