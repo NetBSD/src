@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.195 2008/08/18 05:26:05 lukem Exp $
+#	$NetBSD: build.sh,v 1.196 2008/08/18 06:40:09 lukem Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1192,7 +1192,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.195 2008/08/18 05:26:05 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.196 2008/08/18 06:40:09 lukem Exp $
 # with these arguments: ${_args}
 #
 
@@ -1326,7 +1326,11 @@ releasekernel()
 		[ -f "${builtkern}" ] || continue
 		releasekern="${kernelreldir}/${kern}-${kernelconfname}.gz"
 		statusmsg "Kernel copy:      ${releasekern}"
-		${runcmd} gzip -c -9 < "${builtkern}" > "${releasekern}"
+		if [ "${runcmd}" = "echo" ]; then
+			echo "gzip -c -9 < ${builtkern} > ${releasekern}"
+		else
+			gzip -c -9 < "${builtkern}" > "${releasekern}"
+		fi
 	done
 }
 
