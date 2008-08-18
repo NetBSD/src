@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.194 2008/08/16 00:10:04 lukem Exp $
+#	$NetBSD: build.sh,v 1.195 2008/08/18 05:26:05 lukem Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -212,6 +212,7 @@ initdefaults()
 	do_rebuildmake=false
 	do_removedirs=false
 	do_tools=false
+	do_cleandir=false
 	do_obj=false
 	do_build=false
 	do_distribution=false
@@ -527,10 +528,10 @@ usage()
 	cat <<_usage_
 
 Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
-		[-D dest] [-j njob] [-M obj] [-m mach] [-N noisy]
-		[-O obj] [-R release] [-S seed] [-T tools]
-		[-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
-		operation [...]
+                [-D dest] [-j njob] [-M obj] [-m mach] [-N noisy]
+                [-O obj] [-R release] [-S seed] [-T tools]
+                [-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
+                operation [...]
 
  Build operations (all imply "obj" and "tools"):
     build               Run "make build".
@@ -541,18 +542,19 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
     help                Show this message and exit.
     makewrapper         Create ${toolprefix}make-\${MACHINE} wrapper and ${toolprefix}make.
                         Always performed.
+    cleandir            Run "make cleandir".  [Default unless -u is used]
     obj                 Run "make obj".  [Default unless -o is used]
     tools               Build and install tools.
     install=idir        Run "make installworld" to \`idir' to install all sets
-			except \`etc'.  Useful after "distribution" or "release"
+                        except \`etc'.  Useful after "distribution" or "release"
     kernel=conf         Build kernel with config file \`conf'
     releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
     sets                Create binary sets in
-			RELEASEDIR/RELEASEMACHINEDIR/binary/sets.
-			DESTDIR should be populated beforehand.
+                        RELEASEDIR/RELEASEMACHINEDIR/binary/sets.
+                        DESTDIR should be populated beforehand.
     sourcesets          Create source sets in RELEASEDIR/source/sets.
     syspkgs             Create syspkgs in
-			RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.
+                        RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.
     iso-image           Create CD-ROM image in RELEASEDIR/iso.
     iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
     params              Display various make(1) parameters.
@@ -569,11 +571,11 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
     -M obj      Set obj root directory to obj; sets MAKEOBJDIRPREFIX.
                 Unsets MAKEOBJDIR.
     -m mach     Set MACHINE to mach; not required if NetBSD native.
-    -N noisy	Set the noisyness (MAKEVERBOSE) level of the build:
-		    0	Quiet
-		    1	Operations are described, commands are suppressed
-		    2	Full output
-		[Default: 2]
+    -N noisy    Set the noisyness (MAKEVERBOSE) level of the build:
+                    0   Quiet
+                    1   Operations are described, commands are suppressed
+                    2   Full output
+                [Default: 2]
     -n          Show commands that would be executed, but do not execute them.
     -O obj      Set obj root directory to obj; sets a MAKEOBJDIR pattern.
                 Unsets MAKEOBJDIRPREFIX.
@@ -584,9 +586,9 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
     -T tools    Set TOOLDIR to tools.  If unset, and TOOLDIR is not set in
                 the environment, ${toolprefix}make will be (re)built unconditionally.
     -U          Set MKUNPRIVED=yes; build without requiring root privileges,
-    		install from an UNPRIVED build with proper file permissions.
+                install from an UNPRIVED build with proper file permissions.
     -u          Set MKUPDATE=yes; do not run "make cleandir" first.
-		Without this, everything is rebuilt, including the tools.
+                Without this, everything is rebuilt, including the tools.
     -V v=[val]  Set variable \`v' to \`val'.
     -w wrapper  Create ${toolprefix}make script as wrapper.
                 [Default: \${TOOLDIR}/bin/${toolprefix}make-\${MACHINE}]
@@ -806,7 +808,7 @@ parseoptions()
 			usage
 			;;
 
-		makewrapper|obj|tools|build|distribution|release|sets|sourcesets|syspkgs|params)
+		makewrapper|cleandir|obj|tools|build|distribution|release|sets|sourcesets|syspkgs|params)
 			;;
 
 		iso-image)
@@ -1190,7 +1192,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.194 2008/08/16 00:10:04 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.195 2008/08/18 05:26:05 lukem Exp $
 # with these arguments: ${_args}
 #
 
@@ -1379,7 +1381,7 @@ main()
 			statusmsg "Built sets to ${setdir}"
 			;;
 
-		obj|build|distribution|release|sourcesets|syspkgs|params)
+		cleandir|obj|build|distribution|release|sourcesets|syspkgs|params)
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
