@@ -1,4 +1,4 @@
-/*	$NetBSD: eaytest.c,v 1.7.2.1 2007/08/28 11:14:43 liamjfoy Exp $	*/
+/*	$NetBSD: eaytest.c,v 1.7.2.1.2.1 2008/08/18 20:33:33 jdc Exp $	*/
 
 /* Id: eaytest.c,v 1.22 2005/06/19 18:02:54 manubsd Exp */
 
@@ -65,7 +65,7 @@
 
 #include "package_version.h"
 
-#define PVDUMP(var) hexdump((var)->v, (var)->l)
+#define PVDUMP(var) racoon_hexdump((var)->v, (var)->l)
 
 /*#define CERTTEST_BROKEN */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.22.2.2 2007/08/28 11:14:44 liamjfoy Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.22.2.2.2.1 2008/08/18 20:33:33 jdc Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -1062,10 +1062,10 @@ cmp_aproppair_i(a, b)
 			return -1;
 		}
 
-		if (p->prop->proto_id != r->prop->proto_id) {
+		if (p->prop->spi_size != r->prop->spi_size) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid spi size: %d.\n",
-				p->prop->proto_id);
+				p->prop->spi_size);
 			return -1;
 		}
 
@@ -3655,24 +3655,9 @@ ipsecdoi_checkid1(iph1)
 			 * always permit if port is equal to PORT_ISAKMP
 			 */
 			if (ntohs(id_b->port) != PORT_ISAKMP) {
-
 				u_int16_t port;
 
-				switch (iph1->remote->sa_family) {
-				case AF_INET:
-					port = ((struct sockaddr_in *)iph1->remote)->sin_port;
-					break;
-#ifdef INET6
-				case AF_INET6:
-					port = ((struct sockaddr_in6 *)iph1->remote)->sin6_port;
-					break;
-#endif
-				default:
-					plog(LLV_ERROR, LOCATION, NULL,
-						"invalid family: %d\n",
-						iph1->remote->sa_family);
-					return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
-				}
+				port = extract_port(iph1->remote);
 				if (ntohs(id_b->port) != port) {
 					plog(LLV_WARNING, LOCATION, NULL,
 						"port %d expected, but %d\n",

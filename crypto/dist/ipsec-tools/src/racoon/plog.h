@@ -1,4 +1,4 @@
-/*	$NetBSD: plog.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: plog.h,v 1.4.12.1 2008/08/18 20:33:33 jdc Exp $	*/
 
 /* Id: plog.h,v 1.7 2006/06/20 09:57:31 vanhu Exp */
 
@@ -64,7 +64,12 @@ extern int f_foreground;
 extern int print_location;
 
 struct sockaddr;
-extern void plog __P((int, const char *, struct sockaddr *, const char *, ...))
+#define plog(pri, ...) \
+	do { \
+		if ((pri) <= loglevel) \
+			_plog((pri), __VA_ARGS__); \
+	} while (0)
+extern void _plog __P((int, const char *, struct sockaddr *, const char *, ...))
 	__attribute__ ((__format__ (__printf__, 4, 5)));
 extern void plogv __P((int, const char *, struct sockaddr *,
 	const char *, va_list));

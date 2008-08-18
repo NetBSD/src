@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.10.2.2 2007/08/28 11:14:43 liamjfoy Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.10.2.2.2.1 2008/08/18 20:33:33 jdc Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -237,6 +237,7 @@ hexstring	0x{hexdigit}+
 <S_CFG>network4		{ YYD; return(CFG_NET4); }
 <S_CFG>netmask4		{ YYD; return(CFG_MASK4); }
 <S_CFG>dns4		{ YYD; return(CFG_DNS4); }
+<S_CFG>nbns4		{ YYD; return(CFG_NBNS4); }
 <S_CFG>wins4		{ YYD; return(CFG_NBNS4); }
 <S_CFG>default_domain	{ YYD; return(CFG_DEFAULT_DOMAIN); }
 <S_CFG>auth_source	{ YYD; return(CFG_AUTH_SOURCE); }
