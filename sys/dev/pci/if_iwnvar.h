@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnvar.h,v 1.3 2008/02/09 19:14:53 skrll Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.4 2008/08/18 21:19:22 cube Exp $	*/
 /*	OpenBSD: if_iwnvar.h,v 1.2 2007/11/19 19:34:25 damien Exp	*/
 
 /*-
@@ -100,6 +100,7 @@ struct iwn_rx_ring {
 	struct iwn_rx_data	data[IWN_RX_RING_COUNT];
 	struct iwn_rbuf		rbuf[IWN_RBUF_COUNT];
 	SLIST_HEAD(, iwn_rbuf)	freelist;
+	kmutex_t		freelist_mtx;
 	int			nb_free_entries;
 	int			cur;
 };
