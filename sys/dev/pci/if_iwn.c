@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.16 2008/07/29 12:01:41 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.17 2008/08/18 21:19:22 cube Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.16 2008/07/29 12:01:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.17 2008/08/18 21:19:22 cube Exp $");
 
 
 /*
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.16 2008/07/29 12:01:41 christos Exp $")
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/callout.h>
@@ -661,11 +662,14 @@ iwn_alloc_rbuf(struct iwn_softc *sc)
 {
 	struct iwn_rbuf *rbuf;
 
+	mutex_enter(&sc->rxq.freelist_mtx);
 	rbuf = SLIST_FIRST(&sc->rxq.freelist);
-	if (rbuf == NULL)
-		return NULL;
-	SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
-	sc->rxq.nb_free_entries --;
+	if (rbuf != NULL) {
+		SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
+		sc->rxq.nb_free_entries --;
+	}
+	mutex_exit(&sc->rxq.freelist_mtx);
+
 	return rbuf;
 }
 
@@ -680,8 +684,9 @@ iwn_free_rbuf(struct mbuf* m, void *buf,  size_t size, void *arg)
 	struct iwn_softc *sc = rbuf->sc;
 
 	/* put the buffer back in the free list */
+	mutex_enter(&sc->rxq.freelist_mtx);
 	SLIST_INSERT_HEAD(&sc->rxq.freelist, rbuf, next);
-
+	mutex_exit(&sc->rxq.freelist_mtx);
 	sc->rxq.nb_free_entries ++;
 
 	if (__predict_true(m != NULL))
@@ -695,6 +700,8 @@ iwn_alloc_rpool(struct iwn_softc *sc)
 	struct iwn_rx_ring *ring = &sc->rxq;
 	struct iwn_rbuf *rbuf;
 	int i, error;
+
+	mutex_init(&ring->freelist_mtx, MUTEX_DEFAULT, IPL_NET);
 
 	/* allocate a big chunk of DMA'able memory.. */
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->buf_dma, NULL,
@@ -1448,7 +1455,11 @@ iwn_rx_intr(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	m->m_data = head;
 	m->m_pkthdr.len = m->m_len = len;
 
-	if ((rbuf = SLIST_FIRST(&sc->rxq.freelist)) != NULL) {
+	/*
+	 * See comment in if_wpi.c:wpi_rx_intr() about locking
+	 * nb_free_entries here.  In short:  it's not required.
+	 */
+	if (sc->rxq.nb_free_entries >= 0) {
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
 			ic->ic_stats.is_rx_nobuf++;
@@ -1456,11 +1467,12 @@ iwn_rx_intr(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 			return;
 		}
 
+		rbuf = iwn_alloc_rbuf(sc);
+
 		/* attach Rx buffer to mbuf */
 		MEXTADD(mnew, rbuf->vaddr, IWN_RBUF_SIZE, 0, iwn_free_rbuf,
 		    rbuf);
 		mnew->m_flags |= M_EXT_RW;
-		SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
 
 		data->m = mnew;
 
