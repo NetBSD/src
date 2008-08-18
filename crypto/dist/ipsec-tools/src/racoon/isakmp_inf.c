@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.13.2.2 2007/08/28 11:14:45 liamjfoy Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.13.2.3 2008/08/18 20:31:30 jdc Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -169,7 +169,7 @@ isakmp_info_recv(iph1, msg0)
 	if (msg->l < sizeof(*isakmp) + sizeof(*gen)) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 			"ignore information because the "
-			"message is way too short\n");
+			"message is way too short - %zu byte(s).\n", msg->l);
 		goto end;
 	}
 
@@ -196,7 +196,7 @@ isakmp_info_recv(iph1, msg0)
 		if (msg->l < sizeof(*isakmp) + ntohs(gen->len) + sizeof(*nd)) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 				"ignore information because the "
-				"message is too short\n");
+				"message is too short - %zu byte(s).\n", msg->l);
 			goto end;
 		}
 
@@ -641,7 +641,7 @@ isakmp_info_send_d2(iph2)
 	 * don't send delete information if there is no phase 1 handler.
 	 * It's nonsensical to negotiate phase 1 to send the information.
 	 */
-	iph1 = getph1byaddr(iph2->src, iph2->dst); 
+	iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 	if (iph1 == NULL){
 		plog(LLV_DEBUG2, LOCATION, NULL,
 			 "No ph1 handler found, could not send DELETE_SA\n");
@@ -730,10 +730,8 @@ isakmp_info_send_nx(isakmp, remote, local, type, data)
 	iph1->flags = 0;
 	iph1->msgid = 0;	/* XXX */
 #ifdef ENABLE_HYBRID
-	if ((iph1->mode_cfg = isakmp_cfg_mkstate()) == NULL) {
-		error = -1;
+	if ((iph1->mode_cfg = isakmp_cfg_mkstate()) == NULL)
 		goto end;
-	}
 #endif
 #ifdef ENABLE_FRAG
 	iph1->frag = 0;
@@ -741,10 +739,8 @@ isakmp_info_send_nx(isakmp, remote, local, type, data)
 #endif
 
 	/* copy remote address */
-	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0) {
-		error = -1;
+	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0)
 		goto end;
-	}
 
 	tlen = sizeof(*n) + spisiz;
 	if (data)
@@ -753,7 +749,6 @@ isakmp_info_send_nx(isakmp, remote, local, type, data)
 	if (payload == NULL) { 
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get buffer to send.\n");
-		error = -1;
 		goto end;
 	}
 
@@ -921,27 +916,15 @@ isakmp_info_send_common(iph1, payload, np, flags)
 		delph2(iph2);
 		goto end;
 	}
-	switch (iph1->remote->sa_family) {
-	case AF_INET:
 #if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-		((struct sockaddr_in *)iph2->dst)->sin_port = 0;
-		((struct sockaddr_in *)iph2->src)->sin_port = 0;
-#endif
-		break;
-#ifdef INET6
-	case AF_INET6:
-#if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-		((struct sockaddr_in6 *)iph2->dst)->sin6_port = 0;
-		((struct sockaddr_in6 *)iph2->src)->sin6_port = 0;
-#endif
-		break;
-#endif
-	default:
+	if (set_port(iph2->dst, 0) == NULL ||
+	    set_port(iph2->src, 0) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid family: %d\n", iph1->remote->sa_family);
+		     "invalid family: %d\n", iph1->remote->sa_family);
 		delph2(iph2);
 		goto end;
 	}
+#endif
 	iph2->ph1 = iph1;
 	iph2->side = INITIATOR;
 	iph2->status = PHASE2ST_START;
@@ -1160,6 +1143,10 @@ purge_ipsec_spi(dst0, proto, spi, n)
 	u_int64_t created;
 	size_t i;
 	caddr_t mhp[SADB_EXT_MAX + 1];
+#ifdef ENABLE_NATT
+	struct sadb_x_nat_t_type *natt_type;
+	struct sadb_x_nat_t_port *natt_port;
+#endif
 
 	plog(LLV_DEBUG2, LOCATION, NULL,
 		 "purge_ipsec_spi:\n");
@@ -1212,10 +1199,22 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			msg = next;
 			continue;
 		}
+#ifdef ENABLE_NATT
+		natt_type = (void *)mhp[SADB_X_EXT_NAT_T_TYPE];
+		if (natt_type && natt_type->sadb_x_nat_t_type_type) {
+			/* NAT-T is enabled for this SADB entry; copy
+			 * the ports from NAT-T extensions */
+			natt_port = (void *)mhp[SADB_X_EXT_NAT_T_SPORT];
+			if (extract_port(src) == 0 && natt_port != NULL)
+				set_port(src, ntohs(natt_port->sadb_x_nat_t_port_port));
+
+			natt_port = (void *)mhp[SADB_X_EXT_NAT_T_DPORT];
+			if (extract_port(dst) == 0 && natt_port != NULL)
+				set_port(dst, ntohs(natt_port->sadb_x_nat_t_port_port));
+		}
+#endif
 		plog(LLV_DEBUG2, LOCATION, NULL, "src: %s\n", saddr2str(src));
 		plog(LLV_DEBUG2, LOCATION, NULL, "dst: %s\n", saddr2str(dst));
-
-
 
 		/* XXX n^2 algorithm, inefficient */
 
@@ -1614,11 +1613,16 @@ isakmp_info_send_r_u(arg)
 
 	plog(LLV_DEBUG, LOCATION, iph1->remote, "DPD monitoring....\n");
 
+	iph1->dpd_r_u=NULL;
+
 	if (iph1->dpd_fails >= iph1->rmconf->dpd_maxfails) {
+
+		plog(LLV_INFO, LOCATION, iph1->remote,
+			"DPD: remote (ISAKMP-SA spi=%s) seems to be dead.\n",
+			isakmp_pindex(&iph1->index, 0));
+
 		EVT_PUSH(iph1->local, iph1->remote, EVTT_DPD_TIMEOUT, NULL);
 		purge_remote(iph1);
-		plog(LLV_DEBUG, LOCATION, iph1->remote,
-			 "DPD: remote seems to be dead\n");
 
 		/* Do not reschedule here: phase1 is deleted,
 		 * DPD will be reactivated when a new ph1 will be negociated

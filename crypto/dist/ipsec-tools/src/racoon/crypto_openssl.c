@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.11.2.1 2007/05/13 10:14:04 jdc Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.11.2.2 2008/08/18 20:31:30 jdc Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -89,6 +89,7 @@
 #include "crypto/sha2/sha2.h"
 #endif
 #endif
+#include "plog.h"
 
 /* 0.9.7 stuff? */
 #if OPENSSL_VERSION_NUMBER < 0x0090700fL
@@ -675,7 +676,7 @@ eay_get_x509subjectaltname(cert, altname, type, pos)
 		{
 			plog(LLV_ERROR, LOCATION, NULL,
 				 "data is not terminated by NUL.");
-			hexdump(gen->d.ia5->data, gen->d.ia5->length + 1);
+			racoon_hexdump(gen->d.ia5->data, gen->d.ia5->length + 1);
 			goto end;
 		}
 		
@@ -1293,15 +1294,15 @@ eay_idea_encrypt(data, key, iv)
 	vchar_t *res;
 	IDEA_KEY_SCHEDULE ks;
 
-	idea_set_encrypt_key(key->v, &ks);
+	idea_set_encrypt_key((unsigned char *)key->v, &ks);
 
 	/* allocate buffer for result */
 	if ((res = vmalloc(data->l)) == NULL)
 		return NULL;
 
 	/* decryption data */
-	idea_cbc_encrypt(data->v, res->v, data->l,
-			&ks, iv->v, IDEA_ENCRYPT);
+	idea_cbc_encrypt((unsigned char *)data->v, (unsigned char *)res->v, data->l,
+			&ks, (unsigned char *)iv->v, IDEA_ENCRYPT);
 
 	return res;
 }
@@ -1313,7 +1314,7 @@ eay_idea_decrypt(data, key, iv)
 	vchar_t *res;
 	IDEA_KEY_SCHEDULE ks, dks;
 
-	idea_set_encrypt_key(key->v, &ks);
+	idea_set_encrypt_key((unsigned char *)key->v, &ks);
 	idea_set_decrypt_key(&ks, &dks);
 
 	/* allocate buffer for result */
@@ -1321,8 +1322,8 @@ eay_idea_decrypt(data, key, iv)
 		return NULL;
 
 	/* decryption data */
-	idea_cbc_encrypt(data->v, res->v, data->l,
-			&dks, iv->v, IDEA_DECRYPT);
+	idea_cbc_encrypt((unsigned char *)data->v, (unsigned char *)res->v, data->l,
+			&dks, (unsigned char *)iv->v, IDEA_DECRYPT);
 
 	return res;
 }
@@ -1391,15 +1392,15 @@ eay_rc5_encrypt(data, key, iv)
 	RC5_32_KEY ks;
 
 	/* in RFC 2451, there is information about the number of round. */
-	RC5_32_set_key(&ks, key->l, key->v, 16);
+	RC5_32_set_key(&ks, key->l, (unsigned char *)key->v, 16);
 
 	/* allocate buffer for result */
 	if ((res = vmalloc(data->l)) == NULL)
 		return NULL;
 
 	/* decryption data */
-	RC5_32_cbc_encrypt(data->v, res->v, data->l,
-		&ks, iv->v, RC5_ENCRYPT);
+	RC5_32_cbc_encrypt((unsigned char *)data->v, (unsigned char *)res->v, data->l,
+		&ks, (unsigned char *)iv->v, RC5_ENCRYPT);
 
 	return res;
 }
@@ -1412,15 +1413,15 @@ eay_rc5_decrypt(data, key, iv)
 	RC5_32_KEY ks;
 
 	/* in RFC 2451, there is information about the number of round. */
-	RC5_32_set_key(&ks, key->l, key->v, 16);
+	RC5_32_set_key(&ks, key->l, (unsigned char *)key->v, 16);
 
 	/* allocate buffer for result */
 	if ((res = vmalloc(data->l)) == NULL)
 		return NULL;
 
 	/* decryption data */
-	RC5_32_cbc_encrypt(data->v, res->v, data->l,
-		&ks, iv->v, RC5_DECRYPT);
+	RC5_32_cbc_encrypt((unsigned char *)data->v, (unsigned char *)res->v, data->l,
+		&ks, (unsigned char *)iv->v, RC5_DECRYPT);
 
 	return res;
 }
