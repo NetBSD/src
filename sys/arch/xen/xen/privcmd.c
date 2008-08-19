@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.27 2008/08/18 23:09:37 cegger Exp $ */
+/* $NetBSD: privcmd.c,v 1.28 2008/08/19 15:14:43 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.27 2008/08/18 23:09:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.28 2008/08/19 15:14:43 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -76,6 +76,185 @@ static void privpgop_detach(struct uvm_object *);
 static int privpgop_fault(struct uvm_faultinfo *, vaddr_t , struct vm_page **,
 			 int, int, vm_prot_t, int);
 static int privcmd_map_obj(struct vm_map *, vaddr_t, paddr_t *, int, int);
+
+
+static int
+privcmd_xen2bsd_errno(int error)
+{
+	/*
+	 * Xen uses System V error codes.
+	 * In order to keep bloat as minimal as possible,
+	 * only convert what really impact us.
+	 */
+
+	switch(-error) {
+	case 1:
+		return EPERM;
+	case 2:
+		return ENOENT;
+	case 3:
+		return ESRCH;
+	case 4:
+		return EINTR;
+	case 5:
+		return EIO;
+	case 6:
+		return ENXIO;
+	case 7:
+		return E2BIG;
+	case 8:
+		return ENOEXEC;
+	case 9:
+		return EBADF;
+	case 10:
+		return ECHILD;
+	case 11:
+		return EAGAIN;
+	case 12:
+		return ENOMEM;
+	case 13:
+		return EACCES;
+	case 14:
+		return EFAULT;
+	case 15:
+		return ENOTBLK;
+	case 16:
+		return EBUSY;
+	case 17:
+		return EEXIST;
+	case 18:
+		return EXDEV;
+	case 19:
+		return ENODEV;
+	case 20:
+		return ENOTDIR;
+	case 21:
+		return EISDIR;
+	case 22:
+		return EINVAL;
+	case 23:
+		return ENFILE;
+	case 24:
+		return EMFILE;
+	case 25:
+		return ENOTTY;
+	case 26:
+		return ETXTBSY;
+	case 27:
+		return EFBIG;
+	case 28:
+		return ENOSPC;
+	case 29:
+		return ESPIPE;
+	case 30:
+		return EROFS;
+	case 31:
+		return EMLINK;
+	case 32:
+		return EPIPE;
+	case 33:
+		return EDOM;
+	case 34:
+		return ERANGE;
+	case 35:
+		return EDEADLK;
+	case 36:
+		return ENAMETOOLONG;
+	case 37:
+		return ENOLCK;
+	case 38:
+		return ENOSYS;
+	case 39:
+		return ENOTEMPTY;
+	case 40:
+		return ELOOP;
+	case 42:
+		return ENOMSG;
+	case 43:
+		return EIDRM;
+	case 60:
+		return ENOSTR;
+	case 61:
+		return ENODATA;
+	case 62:
+		return ETIME;
+	case 63:
+		return ENOSR;
+	case 66:
+		return EREMOTE;
+	case 74:
+		return EBADMSG;
+	case 75:
+		return EOVERFLOW;
+	case 84:
+		return EILSEQ;
+	case 87:
+		return EUSERS;
+	case 88:
+		return ENOTSOCK;
+	case 89:
+		return EDESTADDRREQ;
+	case 90:
+		return EMSGSIZE;
+	case 91:
+		return EPROTOTYPE;
+	case 92:
+		return ENOPROTOOPT;
+	case 93:
+		return EPROTONOSUPPORT;
+	case 94:
+		return ESOCKTNOSUPPORT;
+	case 95:
+		return EOPNOTSUPP;
+	case 96:
+		return EPFNOSUPPORT;
+	case 97:
+		return EAFNOSUPPORT;
+	case 98:
+		return EADDRINUSE;
+	case 99:
+		return EADDRNOTAVAIL;
+	case 100:
+		return ENETDOWN;
+	case 101:
+		return ENETUNREACH;
+	case 102:
+		return ENETRESET;
+	case 103:
+		return ECONNABORTED;
+	case 104:
+		return ECONNRESET;
+	case 105:
+		return ENOBUFS;
+	case 106:
+		return EISCONN;
+	case 107:
+		return ENOTCONN;
+	case 108:
+		return ESHUTDOWN;
+	case 109:
+		return ETOOMANYREFS;
+	case 110:
+		return ETIMEDOUT;
+	case 111:
+		return ECONNREFUSED;
+	case 112:
+		return EHOSTDOWN;
+	case 113:
+		return EHOSTUNREACH;
+	case 114:
+		return EALREADY;
+	case 115:
+		return EINPROGRESS;
+	case 116:
+		return ESTALE;
+	case 122:
+		return EDQUOT;
+	default:
+		printf("unknown xen error code %d\n", -error);
+		return -error;
+	}
+}
 
 static int
 privcmd_ioctl(void *v)
@@ -150,11 +329,11 @@ privcmd_ioctl(void *v)
 				error = 0;
 			} else {
 				/* error occured, return the errno */
-				error = -error;
+				error = privcmd_xen2bsd_errno(error);
 				hc->retval = 0;
 			}
 		} else {
-			error = -error;
+			error = privcmd_xen2bsd_errno(error);
 		}
 		break;
 	}
