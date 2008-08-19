@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.1.2.8 2008/08/19 16:32:20 haad Exp $      */
+/*        $NetBSD: device-mapper.c,v 1.1.2.9 2008/08/19 23:38:25 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -193,6 +193,12 @@ dmdestroy(void)
 
 	(void)kmem_free(dm_sc, sizeof(struct dm_softc));
 
+	dm_dev_destroy();
+
+	dm_pdev_destroy();
+	
+	dm_target_destroy();
+	
 	return 0;
 }
 
