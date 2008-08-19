@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.1.2.7 2008/08/19 13:30:36 haad Exp $      */
+/*        $NetBSD: device-mapper.c,v 1.1.2.8 2008/08/19 16:32:20 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -120,14 +120,20 @@ MODULE(MODULE_CLASS_MISC, dm, NULL);
 static int
 dm_modcmd(modcmd_t cmd, void *arg)
 {
+	int bmajor = -1, cmajor = -1;
+
+	printf("DM_modCMD called \n");
 #ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		dmattach();
+		return devsw_attach("dm", &dm_bdevsw, &bmajor,
+		    &dm_cdevsw, &cmajor);
 		break;
 
 	case MODULE_CMD_FINI:
 		dmdestroy();
+		return devsw_detach(&dm_bdevsw, &dm_cdevsw);
 		break;
 
 	case MODULE_CMD_STAT:
@@ -141,8 +147,15 @@ dm_modcmd(modcmd_t cmd, void *arg)
 	return 0;
 #else
 
-	if (cmd == MODULE_CMD_INIT)
+	if (cmd == MODULE_CMD_INIT){
+		dmattach();
 		return 0;
+	}
+
+	if (cmd == MODULE_CMD_FINI){
+		dmdestroy();
+		return 0;
+	}
 	
 	return ENOTTY;
 #endif /* _MODULE */
