@@ -1,3 +1,5 @@
+/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.5 2008/08/19 13:30:36 haad Exp $      */
+
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
