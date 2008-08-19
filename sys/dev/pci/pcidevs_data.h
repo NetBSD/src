@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.945 2008/08/06 15:17:05 dyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.946 2008/08/19 09:44:14 matthias Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.945 2008/08/06 15:14:21 dyoung Exp
+ *	NetBSD: pcidevs,v 1.946 2008/08/19 09:41:40 matthias Exp
  */
 
 /*
@@ -8860,6 +8860,14 @@ static const struct pci_product pci_products[] = {
 	    "82801I (C) LAN Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_HB,
+	    "82946GZ Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_IG,
+	    "82946GZ Integrated Graphics Device",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_HB,
 	    "82965Q Host Bridge",
 	},
@@ -14268,4 +14276,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2967;
+const int pci_nproducts = 2969;
