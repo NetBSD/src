@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.1.2.8 2008/08/19 13:30:36 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.1.2.9 2008/08/19 23:31:52 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -139,6 +139,34 @@ dm_target_rem(char *dm_target_name)
 	
 	(void)kmem_free(dm_target, sizeof(struct dm_target));
 
+	return 0;
+}
+
+/*
+ * Destroy all targets and remove them from queue.
+ * This routine is called from dm_detach, before module
+ * is unloaded.
+ */
+
+int
+dm_target_destroy(void)
+{
+	struct dm_target *dm_target;
+
+	mutex_enter(&dm_target_mutex);
+
+	while (TAILQ_FIRST(&dm_target_list) != NULL){
+
+		dm_target = TAILQ_FIRST(&dm_target_list);
+		
+		TAILQ_REMOVE(&dm_target_list, TAILQ_FIRST(&dm_target_list),
+		dm_target_next);
+		
+		(void)kmem_free(dm_target, sizeof(struct dm_target));
+	}
+
+	mutex_exit(&dm_target_mutex);
+	
 	return 0;
 }
 
