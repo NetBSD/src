@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.52 2008/05/02 18:11:05 martin Exp $
+.\"     $NetBSD: raidctl.8,v 1.53 2008/08/19 17:38:46 oster Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd August 6, 2007
+.Dd August 19, 2008
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -1120,7 +1120,7 @@ START array
 1 4 0
 
 START drives
-/dev/sd6e
+absent
 /dev/sd2e
 /dev/sd3e
 /dev/sd4e
@@ -1133,9 +1133,7 @@ START queue
 fifo 100
 .Ed
 .Pp
-(where
-.Pa /dev/sd6e
-has no physical device) can be used with
+can be used with
 .Bd -literal -offset indent
 raidctl -C recover_raid0.conf raid0
 .Ed
