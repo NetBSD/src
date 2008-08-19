@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.54 2008/06/09 06:49:54 freza Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.55 2008/08/19 09:59:54 matthias Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.54 2008/06/09 06:49:54 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.55 2008/08/19 09:59:54 matthias Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ static struct agp_methods agp_i810_methods = {
 	agp_i810_unbind_memory,
 };
 
-/* XXXthorpej -- duplicated code (see arch/i386/pci/pchb.c) */
+/* XXXthorpej -- duplicated code (see arch/x86/pci/pchb.c) */
 static int
 agp_i810_vgamatch(struct pci_attach_args *pa)
 {
@@ -166,6 +166,7 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82Q35_IGD_1:
 	case PCI_PRODUCT_INTEL_82Q33_IGD:
 	case PCI_PRODUCT_INTEL_82Q33_IGD_1:
+	case PCI_PRODUCT_INTEL_82946GZ_IGD:
 		return (1);
 	}
 
@@ -255,6 +256,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82965PM_IGD_1:
 	case PCI_PRODUCT_INTEL_82965G_IGD:
 	case PCI_PRODUCT_INTEL_82965G_IGD_1:
+	case PCI_PRODUCT_INTEL_82946GZ_IGD:
 		isc->chiptype = CHIP_I965;
 		break;
 	case PCI_PRODUCT_INTEL_82Q35_IGD:
