@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.1.2.8 2008/08/19 13:30:36 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.1.2.9 2008/08/19 23:46:59 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -168,12 +168,17 @@ dm_target_linear_strategy(struct dm_table_entry *table_en, struct buf *bp)
 }
 
 /*
- * Destroy target specific data.
+ * Destroy target specific data. Decrement table pdevs.
  */
 int
 dm_target_linear_destroy(struct dm_table_entry *table_en)
 {
+	struct target_linear_config *tlc;
 
+	tlc = table_en->target_config;
+
+	dm_pdev_decr(tlc->pdev);
+	
 	kmem_free(table_en->target_config, sizeof(struct target_linear_config));
 
 	table_en->target_config = NULL;
