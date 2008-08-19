@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.1.2.4 2008/08/19 13:30:36 haad Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.1.2.5 2008/08/19 23:42:11 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include "dm.h"
 
 static struct dm_pdev *dm_pdev_alloc(const char *);
+static int dm_pdev_rem(struct dm_pdev *);
 
 /*
  * XXX. I should use rwlock here.
@@ -134,7 +135,7 @@ dm_pdev_insert(const char *dev_name)
  * Initialize pdev subsystem.
  */
 int
-dm_pdev_init()
+dm_pdev_init(void)
 {
 	
 	SLIST_INIT(&dm_pdev_list); /* initialize global pdev list */
@@ -166,12 +167,11 @@ dm_pdev_alloc(const char *name)
 }
 
 /*
- * Destroy allocated dm_pdev.
+ * Destroy allocated dm_pdev. This routine is called with held pdev mutex.
  */
-int
-dm_pdev_destroy(struct dm_pdev *dmp)
+static int
+dm_pdev_rem(struct dm_pdev *dmp)
 {
-
 	if (dmp == NULL)
 		return ENOENT;
 
@@ -179,10 +179,35 @@ dm_pdev_destroy(struct dm_pdev *dmp)
 		VOP_CLOSE(dmp->pdev_vnode, FREAD|FWRITE, FSCRED);
 		vput(dmp->pdev_vnode);
 	}
-	kmem_free(dmp,sizeof(*dmp));
+
+	kmem_free(dmp, sizeof(*dmp));
 
 	dmp = NULL;
 	
+	return 0;
+}
+
+/*
+ * Destroy all existing pdev's in device-mapper.
+ */
+int
+dm_pdev_destroy(void)
+{
+	struct dm_pdev *dm_pdev;
+	
+	mutex_enter(&dm_pdev_mutex);
+
+	while (!SLIST_EMPTY(&dm_pdev_list)) {           /* List Deletion. */
+		
+		dm_pdev = SLIST_FIRST(&dm_pdev_list);
+		
+		SLIST_REMOVE_HEAD(&dm_pdev_list, next_pdev);
+
+		dm_pdev_rem(dm_pdev);
+	}
+	
+	mutex_exit(&dm_pdev_mutex);
+
 	return 0;
 }
 
@@ -199,32 +224,26 @@ dm_pdev_destroy(struct dm_pdev *dmp)
  * locked elsewhere.
  */
 int
-dm_pdev_decr(struct dm_pdevs *head)
+dm_pdev_decr(struct dm_pdev *dmp)
 {
-	struct dm_pdev *dmp;
-	if (head == NULL)
+	if (dmp == NULL)
 		return ENOENT;
 
 	mutex_enter(&dm_pdev_mutex);
-
-	SLIST_FOREACH(dmp, head, next_pdev) {
-
-		dmp->ref_cnt--;
-
-		SLIST_REMOVE(head, dmp, dm_pdev, next_pdev);
+	
+	dmp->ref_cnt--;
+	
+	/*
+	 * If this was last reference remove dmp from
+	 * global list also.
+	 */
+	if (dmp->ref_cnt == 0) {
+		SLIST_REMOVE(&dm_pdev_list, dmp, dm_pdev, next_pdev); 
 		
-		/*
-		 * If this was last reference remove dmp from
-		 * global list also.
-		 */
-		if (dmp->ref_cnt == 0) {
-			SLIST_REMOVE(&dm_pdev_list, dmp, dm_pdev, next_pdev); 
-			dm_pdev_destroy(dmp);
-		}
+		dm_pdev_rem(dmp);
 	}
 
 	mutex_exit(&dm_pdev_mutex);
 
 	return 0;
 }
-
