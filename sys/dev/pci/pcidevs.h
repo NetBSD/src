@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.947 2008/08/19 09:44:14 matthias Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.948 2008/08/19 10:02:42 matthias Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.946 2008/08/19 09:41:40 matthias Exp
+ *	NetBSD: pcidevs,v 1.947 2008/08/19 10:02:18 matthias Exp
  */
 
 /*
@@ -2507,7 +2507,7 @@
 #define	PCI_PRODUCT_INTEL_82801I_EXP_6	0x294a		/* 82801I PCI Express Port #6 */
 #define	PCI_PRODUCT_INTEL_82801I_IGP_C	0x294c		/* 82801I (C) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82946GZ_HB	0x2970		/* 82946GZ Host Bridge */
-#define	PCI_PRODUCT_INTEL_82946GZ_IG	0x2972		/* 82946GZ Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82946GZ_IGD	0x2972		/* 82946GZ Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82965Q_HB	0x2990		/* 82965Q Host Bridge */
 #define	PCI_PRODUCT_INTEL_82965Q_EXP	0x2991		/* 82965Q PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82965Q_IGD	0x2992		/* 82965Q Integrated Graphics Device */

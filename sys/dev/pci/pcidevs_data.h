@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.946 2008/08/19 09:44:14 matthias Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.947 2008/08/19 10:02:42 matthias Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.946 2008/08/19 09:41:40 matthias Exp
+ *	NetBSD: pcidevs,v 1.947 2008/08/19 10:02:18 matthias Exp
  */
 
 /*
@@ -8864,7 +8864,7 @@ static const struct pci_product pci_products[] = {
 	    "82946GZ Host Bridge",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_IG,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_IGD,
 	    "82946GZ Integrated Graphics Device",
 	},
 	{
