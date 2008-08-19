@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.1.2.8 2008/08/19 13:30:36 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.9 2008/08/19 23:36:18 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -239,6 +239,7 @@ int dm_table_status_ioctl(prop_dictionary_t);
 
 
 /* dm_target.c */
+int dm_target_destroy(void);
 int dm_target_insert(struct dm_target *);
 prop_array_t dm_target_prop_list(void);
 struct dm_target* dm_target_lookup_name(const char *);
@@ -280,6 +281,7 @@ int dm_table_destroy(struct dm_table *);
 
 /* dm_dev.c */
 struct dm_dev* dm_dev_alloc(void);
+int dm_dev_destroy(void);
 prop_array_t dm_dev_prop_list(void);
 int dm_dev_free(struct dm_dev *);
 int dm_dev_init(void);
@@ -290,8 +292,8 @@ struct dm_dev* dm_dev_lookup_minor(int);
 int dm_dev_rem(const char *);
 
 /* dm_pdev.c */
-int dm_pdev_decr(struct dm_pdevs *);
-int dm_pdev_destroy(struct dm_pdev *);
+int dm_pdev_decr(struct dm_pdev *);
+int dm_pdev_destroy(void);
 int dm_pdev_init(void);
 struct dm_pdev* dm_pdev_insert(const char *);
 struct dm_pdev* dm_pdev_lookup_name(const char *);
