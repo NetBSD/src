@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.8 2008/08/19 13:30:36 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.9 2008/08/19 23:46:59 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -350,7 +350,7 @@ int
 dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 {
 	struct dm_dev *dmv;
-
+	struct dm_pdev *dmp;
 	const char *name, *uuid;
 	uint32_t flags;
 
@@ -387,7 +387,9 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 		/* Decrement reference counters for all pdevs from this
 		   device if they are unused close vnode and remove them
 		   from global pdev list, too. */
-		dm_pdev_decr(&dmv->pdevs);
+		
+		SLIST_FOREACH(dmp, &dmv->pdevs, next_pdev)
+			dm_pdev_decr(dmp);
 		
 		/* Test readonly flag change anything only if it is not set*/
 		
@@ -395,6 +397,7 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 
 		rw_exit(&dmv->dev_rwlock);
 	}
+
 	return 0;
 }
 
@@ -657,7 +660,6 @@ int
 dm_table_load_ioctl(prop_dictionary_t dm_dict)
 {
 	struct dm_dev *dmv;
-	struct dm_pdev *dmp;
 	struct dm_table_entry *table_en, *last_table;
 	struct dm_table  *tbl;
 	struct dm_target *target;
@@ -679,7 +681,6 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	name = NULL;
 	uuid = NULL;
 	dmv = NULL;
-	dmp = NULL;
 	last_table = NULL;
 
 	char *xml;
@@ -771,10 +772,8 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			
 			last_table = table_en;
 			
-		} else {
+		} else 
 			kmem_free(table_en, sizeof(struct dm_table_entry));
-			dm_pdev_destroy(dmp);
-		}
 			
 		prop_object_release(str);
 	}
