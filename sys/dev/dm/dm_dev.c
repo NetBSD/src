@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.4 2008/08/19 13:30:36 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.5 2008/08/19 23:31:52 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -196,6 +196,40 @@ dm_dev_rem(const char *dm_dev_name)
 	r = 0;
  out:
 	return r;
+}
+
+/*
+ * Destroy all devices created in device-mapper. Remove all tables
+ * free all allocated memmory. 
+ */
+
+int
+dm_dev_destroy(void)
+{
+	struct dm_dev *dm_dev;
+
+	mutex_enter(&dm_dev_mutex);
+
+	while (TAILQ_FIRST(&dm_dev_list) != NULL){
+
+		dm_dev = TAILQ_FIRST(&dm_dev_list);
+		
+		TAILQ_REMOVE(&dm_dev_list, TAILQ_FIRST(&dm_dev_list),
+		next_devlist);
+
+		/* Destroy active table first.  */
+		dm_table_destroy(&dm_dev->tables[dm_dev->cur_active_table]);
+
+		/* Destroy unactive table if exits, too. */
+		if (!SLIST_EMPTY(&dm_dev->tables[1 - dm_dev->cur_active_table]))
+			dm_table_destroy(&dm_dev->tables[1 - dm_dev->cur_active_table]);
+		
+		(void)kmem_free(dm_dev, sizeof(struct dm_dev));
+	}
+	
+	mutex_exit(&dm_dev_mutex);
+	
+	return 0;
 }
 
 /*
