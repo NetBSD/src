@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.1.2.9 2008/08/19 23:36:18 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.10 2008/08/20 00:45:47 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -120,13 +120,14 @@ struct dm_dev {
 
 	uint32_t dev_type;
 
-#define DM_ZERO_DEV      (1 << 0)
-#define DM_ERROR_DEV     (1 << 1)	
-#define DM_LINEAR_DEV    (1 << 2)
-#define DM_MIRROR_DEV    (1 << 3)
-#define DM_STRIPE_DEV    (1 << 4)
-#define DM_SNAPSHOT_DEV  (1 << 5)
-#define DM_SPARE_DEV     (1 << 6)
+#define DM_ZERO_DEV            (1 << 0)
+#define DM_ERROR_DEV           (1 << 1)	
+#define DM_LINEAR_DEV          (1 << 2)
+#define DM_MIRROR_DEV          (1 << 3)
+#define DM_STRIPE_DEV          (1 << 4)
+#define DM_SNAPSHOT_DEV        (1 << 5)
+#define DM_SNAPSHOT_ORIG_DEV   (1 << 6)
+#define DM_SPARE_DEV           (1 << 7)
 	
 	struct dm_pdevs pdevs;
 
@@ -177,9 +178,11 @@ struct target_snapshot_config {
 	struct dm_dev *orig;
 
 	/* modified blocks bitmaps administration etc*/
-	struct dm_pdev *log_pdev;
+	struct dm_pdev *cow_pdev;
 	uint64_t log_regionsize;
 	/* list of sector renames to the log device */
+	uint64_t chunk_size;
+	uint32_t persistent_dev;
 };
 
 /* constant dm_target structures for error, zero, linear, stripes etc. */
@@ -269,12 +272,22 @@ int dm_target_linear_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_linear_destroy(struct dm_table_entry *);
 int dm_target_linear_upcall(struct dm_table_entry *, struct buf *);
 
+/* Generic function used to convert char to string */
+uint64_t atoi(const char *); 
+
 /* dm_target_snapshot.c */
 int dm_target_snapshot_init(struct dm_dev *, void**, char *);
 char * dm_target_snapshot_status(void *);
 int dm_target_snapshot_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_snapshot_destroy(struct dm_table_entry *);
 int dm_target_snapshot_upcall(struct dm_table_entry *, struct buf *);
+
+/* dm snapshot origin driver */
+int dm_target_snapshot_orig_init(struct dm_dev *, void**, char *);
+char * dm_target_snapshot_orig_status(void *);
+int dm_target_snapshot_orig_strategy(struct dm_table_entry *, struct buf *);
+int dm_target_snapshot_orig_destroy(struct dm_table_entry *);
+int dm_target_snapshot_orig_upcall(struct dm_table_entry *, struct buf *);
 
 /* dm_table.c  */
 int dm_table_destroy(struct dm_table *);
