@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.70 2008/08/20 19:57:27 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.71 2008/08/20 20:20:25 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1570,4 +1570,12 @@ sys/net/if_spppsubr.c				1.111
 	PR kern/39280: Uninitialized callout stopped in if_spppsubr layer
 	in kernels without options INET6.
 	[martin, ticket #1185]
+
+sys/compat/linux32/common/linux32_ioctl.c	1.10 via patch
+sys/compat/ossaudio/ossaudiovar.h		1.14
+
+	Add ossaudio support for COMPAT_LINUX32, with help from mrg. With this
+	change, audio now works on amd64 with native firefox, nspluginwrapper,
+	and the 32-bit linux flash binaries.
+	[jmcneill, ticket #1051]
 
