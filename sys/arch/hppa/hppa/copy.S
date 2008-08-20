@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.4 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: copy.S,v 1.4.24.1 2008/08/20 18:59:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -162,8 +162,11 @@ EXIT(_copy_on_fault)
 
 /*
  * int spstrcpy (pa_space_t ssp, const void *src, pa_space_t dsp, void *dst,
- *		 size_t size, size_t *rsize)
- * do a space to space strncpy, return actual copy size in the rsize;
+ *     size_t size, size_t *rsize)
+ *
+ * Do a space to space size bounded string copy and return actual copy size in
+ * rsize. If the copy ran out of space before '\0' is seen return ENAMETOOLONG 
+ * 
  */
 LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
@@ -174,28 +177,29 @@ LEAF_ENTRY(spstrcpy)
 	ldo	R%_copy_on_fault(%t2), %t2
 	stw	%t2, PCB_ONFAULT+U_PCB(%r31)
 
-	ldw	HPPA_FRAME_ARG(4)(%sp), %ret1
+	ldw	HPPA_FRAME_ARG(4)(%sp), %ret1		/* size */
 	mfsp	%sr2, %ret0	/* XXX need this? */
 	mtsp	%arg0, %sr1
 	mtsp	%arg2, %sr2
-	add	%ret1, %arg1, %ret1
-	copy	%arg1, %arg0
+	copy	%arg1, %arg0	/* save src */
 
 $spstrcpy_loop:
+	comb,=,n %r0, %ret1, $spstrcpy_exit
 	ldbs,ma	1(%sr1, %arg1), %t1
-	comb,=	%ret1, %arg1, $spstrcpy_exit
 	stbs,ma	%t1, 1(%sr2, %arg3)
-	comb,<>,n %r0, %t1, $spstrcpy_loop
+	comb,<>	%r0, %t1, $spstrcpy_loop
+	ldo	-1(%ret1), %ret1
 
 $spstrcpy_exit:
 	/* reset fault handler */
 	stw	%r0, PCB_ONFAULT+U_PCB(%r31)
-	copy	%r0, %ret0
-	mtsp	%ret0, %sr2	/* XXX need this? */
+	mtsp	%r0, %sr2	/* XXX need this? */
 	sub	%arg1, %arg0, %arg1
-	ldw	HPPA_FRAME_ARG(5)(%sp), %arg0
-	comb,=,n %r0, %arg0, 0
+	ldw	HPPA_FRAME_ARG(5)(%sp), %arg0		/* rsize */
+	comiclr,= 0, %arg0, %r0
 	stw	%arg1, 0(%arg0)
+	comiclr,= 0, %t1, %ret0
+	ldi	ENAMETOOLONG,%ret0
 	bv,n	0(%rp)
 EXIT(spstrcpy)
 
