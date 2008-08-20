@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.120 2008/08/20 18:35:20 matt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.121 2008/08/20 22:58:42 simonb Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.120 2008/08/20 18:35:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.121 2008/08/20 22:58:42 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1595,21 +1595,21 @@ ip6_delaux(struct mbuf *m)
 static int
 sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
 {  
-        int error;
+	int error;
   
-        error = sysctl_lookup(SYSCTLFN_CALL(rnode));
-        if (error || newp == NULL)
-                return (error);
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	if (error || newp == NULL)
+		return (error);
  
-        mutex_enter(softnet_lock);
+	mutex_enter(softnet_lock);
 	KERNEL_LOCK_ONE(1, NULL);
 
-        ip6flow_reap(0);
+	ip6flow_reap(0);
 
 	KERNEL_UNLOCK_ONE(NULL);
-        mutex_exit(softnet_lock);
+	mutex_exit(softnet_lock);
  
-        return (0);
+	return (0);
 }
 
 static int
@@ -1639,7 +1639,7 @@ sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
 	} else {
 		/*
 		 * EINVAL if not a power of 2
-	         */
+		 */
 		error = EINVAL;
 	}	
 
