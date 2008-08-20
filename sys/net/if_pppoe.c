@@ -1,7 +1,7 @@
-/* $NetBSD: if_pppoe.c,v 1.76.2.2 2008/08/08 14:41:07 jdc Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.76.2.3 2008/08/20 20:52:30 bouyer Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.76.2.2 2008/08/08 14:41:07 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.76.2.3 2008/08/20 20:52:30 bouyer Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -82,7 +82,7 @@ struct pppoetag {
 	u_int16_t len;
 } __attribute__((__packed__));
 
-#define PPPOE_HEADERLEN	sizeof(struct pppoehdr)
+#define	PPPOE_HEADERLEN	sizeof(struct pppoehdr)
 #define	PPPOE_OVERHEAD	(PPPOE_HEADERLEN + 2)
 #define	PPPOE_VERTYPE	0x11	/* VER=1, TYPE = 1 */
 
@@ -97,7 +97,7 @@ struct pppoetag {
 #define	PPPOE_TAG_ACSYS_ERR	0x0202		/* AC system error */
 #define	PPPOE_TAG_GENERIC_ERR	0x0203		/* gerneric error */
 
-#define PPPOE_CODE_PADI		0x09		/* Active Discovery Initiation */
+#define	PPPOE_CODE_PADI		0x09		/* Active Discovery Initiation */
 #define	PPPOE_CODE_PADO		0x07		/* Active Discovery Offer */
 #define	PPPOE_CODE_PADR		0x19		/* Active Discovery Request */
 #define	PPPOE_CODE_PADS		0x65		/* Active Discovery Session confirmation */
@@ -112,7 +112,7 @@ struct pppoetag {
 		*(PTR)++ = (VAL) % 256
 
 /* Add a complete PPPoE header to the buffer pointed to by PTR */
-#define PPPOE_ADD_HEADER(PTR, CODE, SESS, LEN)	\
+#define	PPPOE_ADD_HEADER(PTR, CODE, SESS, LEN)	\
 		*(PTR)++ = PPPOE_VERTYPE;	\
 		*(PTR)++ = (CODE);		\
 		PPPOE_ADD_16(PTR, SESS);	\
@@ -120,12 +120,14 @@ struct pppoetag {
 
 #define	PPPOE_DISC_TIMEOUT	(hz*5)	/* base for quick timeout calculation */
 #define	PPPOE_SLOW_RETRY	(hz*60)	/* persistent retry interval */
-#define PPPOE_DISC_MAXPADI	4	/* retry PADI four times (quickly) */
+#define	PPPOE_RECON_FAST	(hz*15)	/* first retry after auth failure */
+#define	PPPOE_RECON_IMMEDIATE	(hz/10)	/* "no delay" reconnect */
+#define	PPPOE_DISC_MAXPADI	4	/* retry PADI four times (quickly) */
 #define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
 
 #ifdef PPPOE_SERVER
 /* from if_spppsubr.c */
-#define IFF_PASSIVE	IFF_LINK0	/* wait passively for connection */
+#define	IFF_PASSIVE	IFF_LINK0	/* wait passively for connection */
 #endif
 
 struct pppoe_softc {
@@ -682,8 +684,12 @@ breakbreak:;
 				free(sc->sc_ac_cookie, M_DEVBUF);
 			sc->sc_ac_cookie = malloc(ac_cookie_len, M_DEVBUF,
 			    M_DONTWAIT);
-			if (sc->sc_ac_cookie == NULL)
+			if (sc->sc_ac_cookie == NULL) {
+				printf("%s: FATAL: could not allocate memory "
+				    "for AC cookie\n",
+				    sc->sc_sppp.pp_if.if_xname);
 				goto done;
+			}
 			sc->sc_ac_cookie_len = ac_cookie_len;
 			memcpy(sc->sc_ac_cookie, ac_cookie, ac_cookie_len);
 		}
@@ -1089,6 +1095,10 @@ pppoe_timeout(void *arg)
 #endif
 
 	switch (sc->sc_state) {
+	case PPPOE_STATE_INITIAL:
+		/* delayed connect from pppoe_tls() */
+		pppoe_connect(sc);
+		break;
 	case PPPOE_STATE_PADI_SENT:
 		/*
 		 * We have two basic ways of retrying:
@@ -1406,9 +1416,24 @@ static void
 pppoe_tls(struct sppp *sp)
 {
 	struct pppoe_softc *sc = (void *)sp;
+	int wtime;
+
 	if (sc->sc_state != PPPOE_STATE_INITIAL)
 		return;
-	pppoe_connect(sc);
+
+	if (sc->sc_sppp.pp_phase == SPPP_PHASE_ESTABLISH &&
+	    sc->sc_sppp.pp_auth_failures > 0) {
+		/*
+		 * Delay trying to reconnect a bit more - the peer
+		 * might have failed to contact it's radius server.
+		 */
+		wtime = PPPOE_RECON_FAST * sc->sc_sppp.pp_auth_failures;
+		if (wtime > PPPOE_SLOW_RETRY)
+			wtime = PPPOE_SLOW_RETRY;
+	} else {
+		wtime = PPPOE_RECON_IMMEDIATE;
+	}
+	callout_reset(&sc->sc_timeout, wtime, pppoe_timeout, sc);
 }
 
 static void
