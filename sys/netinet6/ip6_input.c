@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.119 2008/05/04 07:22:15 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.120 2008/08/20 18:35:20 matt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.119 2008/05/04 07:22:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.120 2008/08/20 18:35:20 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1595,15 +1595,19 @@ ip6_delaux(struct mbuf *m)
 static int
 sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
 {  
-        int s;
+        int error;
   
-        s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-        if (s || newp == NULL)
-                return (s);
+        error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+        if (error || newp == NULL)
+                return (error);
  
-        s = splsoftnet();
+        mutex_enter(softnet_lock);
+	KERNEL_LOCK_ONE(1, NULL);
+
         ip6flow_reap(0);
-        splx(s);
+
+	KERNEL_UNLOCK_ONE(NULL);
+        mutex_exit(softnet_lock);
  
         return (0);
 }
@@ -1625,16 +1629,21 @@ sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
 		/*
 		 * Can only fail due to malloc()
 		 */
-		if (ip6flow_invalidate_all(tmp))
-			return ENOMEM;
+		mutex_enter(softnet_lock);
+		KERNEL_LOCK_ONE(1, NULL);
+
+		error = ip6flow_invalidate_all(tmp);
+
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
 	} else {
 		/*
 		 * EINVAL if not a power of 2
 	         */
-		return EINVAL;
+		error = EINVAL;
 	}	
 
-	return (0);
+	return error;
 }
 #endif /* GATEWAY */
 
@@ -1642,7 +1651,7 @@ sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
  * System control for IP6
  */
 
-u_char	inet6ctlerrmap[PRC_NCMDS] = {
+const u_char inet6ctlerrmap[PRC_NCMDS] = {
 	0,		0,		0,		0,
 	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
 	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,

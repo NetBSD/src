@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.272 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.273 2008/08/20 18:35:20 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.272 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.273 2008/08/20 18:35:20 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2143,8 +2143,12 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 	if (tmp < 0)
 		return (EINVAL);
 
+	mutex_enter(softnet_lock);
+
 	ip_mtudisc_timeout = tmp;
 	rt_timer_queue_change(ip_mtudisc_timeout_q, ip_mtudisc_timeout);
+
+	mutex_exit(softnet_lock);
 
 	return (0);
 }
@@ -2156,15 +2160,19 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 static int
 sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 {
-	int s;
+	int error;
 
-	s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (s || newp == NULL)
-		return (s);
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	if (error || newp == NULL)
+		return (error);
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	ipflow_prune();
-	splx(s);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 
 	return (0);
 }
@@ -2186,16 +2194,22 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 		/*
 		 * Can only fail due to malloc()
 		 */
-		if (ipflow_invalidate_all(tmp))
-			return ENOMEM;
+		mutex_enter(softnet_lock);
+		KERNEL_LOCK(1, NULL);
+
+		error = ipflow_invalidate_all(tmp);
+
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
+
 	} else {
 		/*
 		 * EINVAL if not a power of 2
 	         */
-		return EINVAL;
+		error = EINVAL;
 	}	
 
-	return (0);
+	return error;
 }
 #endif /* GATEWAY */
 

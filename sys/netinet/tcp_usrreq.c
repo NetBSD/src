@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.147 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.148 2008/08/20 18:35:20 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.147 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.148 2008/08/20 18:35:20 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1272,7 +1272,7 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 	struct sockaddr_in6 *si6[2];
 #endif /* INET6 */
 	struct sockaddr_storage sa[2];
-	int error, pf, dodrop, s;
+	int error, pf, dodrop;
 
 	dodrop = name[-1] == TCPCTL_DROP;
 	if (dodrop) {
@@ -1302,10 +1302,10 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		laddr.s_addr = (uint32_t)name[2];
 		lport = (u_int)name[3];
 		
-		s = splsoftnet();
+		mutex_enter(softnet_lock);
 		error = inet4_ident_core(raddr, rport, laddr, lport,
 		    oldp, oldlenp, l, dodrop);
-		splx(s);
+		mutex_exit(softnet_lock);
 		return error;
 #else /* INET */
 		return EINVAL;
@@ -1342,11 +1342,11 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 			if (error)
 				return error;
 
-			s = splsoftnet();
+			mutex_enter(softnet_lock);
 			error = inet6_ident_core(&si6[0]->sin6_addr,
 			    si6[0]->sin6_port, &si6[1]->sin6_addr,
 			    si6[1]->sin6_port, oldp, oldlenp, l, dodrop);
-			splx(s);
+			mutex_exit(softnet_lock);
 			return error;
 		}
 
@@ -1366,11 +1366,11 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		    si4[0]->sin_len != sizeof(*si4[1]))
 			return EINVAL;
 	
-		s = splsoftnet();
+		mutex_enter(softnet_lock);
 		error = inet4_ident_core(si4[0]->sin_addr, si4[0]->sin_port,
 		    si4[1]->sin_addr, si4[1]->sin_port,
 		    oldp, oldlenp, l, dodrop);
-		splx(s);
+		mutex_exit(softnet_lock);
 		return error;
 #endif /* INET */
 	default:
@@ -1438,6 +1438,8 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	pf = oname[1];
 	proto = oname[2];
 	pf2 = (oldp != NULL) ? pf : 0;
+
+	mutex_enter(softnet_lock);
 
 	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
 #ifdef INET
@@ -1566,6 +1568,8 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	if (oldp == NULL)
 		*oldlenp += PCB_SLOP * sizeof(struct kinfo_pcb);
 
+	mutex_exit(softnet_lock);
+
 	return (error);
 }
 
@@ -1573,7 +1577,7 @@ static int
 sysctl_tcp_congctl(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
-	int error, r;
+	int error;
 	char newname[TCPCC_MAXLEN];
 
 	strlcpy(newname, tcp_congctl_global_name, sizeof(newname) - 1);
@@ -1589,9 +1593,10 @@ sysctl_tcp_congctl(SYSCTLFN_ARGS)
 	    strncmp(newname, tcp_congctl_global_name, sizeof(newname)) == 0)
 		return error;
 
-	if ((r = tcp_congctl_select(NULL, newname)))
-		return r;
-	
+	mutex_enter(softnet_lock);
+	error = tcp_congctl_select(NULL, newname);
+	mutex_exit(softnet_lock);
+
 	return error;
 }
 
@@ -1610,8 +1615,12 @@ sysctl_tcp_keep(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
+	mutex_enter(softnet_lock);
+
 	*(u_int *)rnode->sysctl_data = tmp;
 	tcp_tcpcb_template();	/* update the template */
+
+	mutex_exit(softnet_lock);
 	return 0;
 }
 

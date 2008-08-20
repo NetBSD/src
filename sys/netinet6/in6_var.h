@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.59 2008/07/31 18:24:07 matt Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.60 2008/08/20 18:35:20 matt Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -480,8 +480,8 @@ do {								\
 } while (/*CONSTCOND*/ 0)
 
 extern struct ifqueue ip6intrq;		/* IP6 packet input queue */
-extern struct in6_addr zeroin6_addr;
-extern u_char inet6ctlerrmap[];
+extern const struct in6_addr zeroin6_addr;
+extern const u_char inet6ctlerrmap[];
 extern unsigned long in6_maxmtu;
 
 /*
