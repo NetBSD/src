@@ -1,4 +1,4 @@
-/* $NetBSD: strtoull.c,v 1.2 2008/08/20 12:42:26 joerg Exp $ */
+/* $NetBSD: strtoull.c,v 1.3 2008/08/20 19:58:34 oster Exp $ */
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -28,18 +28,22 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoull.c,v 1.2 2008/08/20 12:42:26 joerg Exp $");
+__RCSID("$NetBSD: strtoull.c,v 1.3 2008/08/20 19:58:34 oster Exp $");
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if defined(_KERNEL)
+#include <sys/param.h>
+#include <lib/libkern/libkern.h>
+#elif defined(_STANDALONE)
+#include <sys/param.h>
+#include <lib/libkern/libkern.h>
+#include <lib/libsa/stand.h>
+#else
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
-#else
-#include <sys/param.h>
-#include <lib/libkern/libkern.h>
 #endif
 
 #define	_FUNCNAME	strtoull
