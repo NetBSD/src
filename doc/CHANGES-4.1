@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.71 2008/08/20 20:20:25 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.72 2008/08/20 20:38:49 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1578,4 +1578,19 @@ sys/compat/ossaudio/ossaudiovar.h		1.14
 	change, audio now works on amd64 with native firefox, nspluginwrapper,
 	and the 32-bit linux flash binaries.
 	[jmcneill, ticket #1051]
+
+lib/libsdp/sdp.h				1.3, 1.4
+usr.sbin/sdpd/Makefile				1.4 via patch
+usr.sbin/sdpd/gn.c				1.1
+usr.sbin/sdpd/nap.c				1.1
+usr.sbin/sdpd/panu.c				1.1
+usr.sbin/sdpd/profile.c				1.5
+usr.sbin/sdpd/profile.h				1.3
+
+	add the knowledge to create service records for "Personal Area
+	Networking" profiles
+		NAP     Network Access Point
+		GN      Group Network
+		PANU    Personal Area Networking User
+	[plunky, ticket #1184]
 
