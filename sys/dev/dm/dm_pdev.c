@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.1.2.5 2008/08/19 23:42:11 haad Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.1.2.6 2008/08/20 16:04:01 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -117,6 +117,8 @@ dm_pdev_insert(const char *dev_name)
 		aprint_normal("dk_lookup on device: %s failed with error %d!\n",
 		    dev_name, error);
 
+		kmem_free(dmp, sizeof(struct dm_pdev));
+		
 		return NULL;
 	}
 	
@@ -172,16 +174,17 @@ dm_pdev_alloc(const char *name)
 static int
 dm_pdev_rem(struct dm_pdev *dmp)
 {
+	int err;
+	
 	if (dmp == NULL)
 		return ENOENT;
-
 	if (dmp->pdev_vnode != NULL) {
-		VOP_CLOSE(dmp->pdev_vnode, FREAD|FWRITE, FSCRED);
-		vput(dmp->pdev_vnode);
+		err = vn_close(dmp->pdev_vnode, FREAD | FWRITE, FSCRED);
+		if (err != 0)
+			return err;
 	}
-
+	
 	kmem_free(dmp, sizeof(*dmp));
-
 	dmp = NULL;
 	
 	return 0;
@@ -232,14 +235,13 @@ dm_pdev_decr(struct dm_pdev *dmp)
 	mutex_enter(&dm_pdev_mutex);
 	
 	dmp->ref_cnt--;
-	
+
 	/*
 	 * If this was last reference remove dmp from
 	 * global list also.
 	 */
 	if (dmp->ref_cnt == 0) {
 		SLIST_REMOVE(&dm_pdev_list, dmp, dm_pdev, next_pdev); 
-		
 		dm_pdev_rem(dmp);
 	}
 
