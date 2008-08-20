@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidvar.h,v 1.5 2007/03/27 00:10:20 garbled Exp $	*/
+/*	$NetBSD: ata_raidvar.h,v 1.6 2008/08/20 15:00:34 tacha Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -51,7 +51,8 @@
 #define	ATA_RAID_TYPE_PROMISE	0
 #define	ATA_RAID_TYPE_ADAPTEC	1
 #define	ATA_RAID_TYPE_VIA	2
-#define	ATA_RAID_TYPE_MAX	2
+#define	ATA_RAID_TYPE_NVIDIA	3
+#define	ATA_RAID_TYPE_MAX	3
 
 /*
  * Max # of disks supported by a single array.  This is limited by
@@ -129,5 +130,8 @@ int	ata_raid_read_config_adaptec(struct wd_softc *);
 
 /* VIA V-RAID support */
 int	ata_raid_read_config_via(struct wd_softc *);
+
+/* nVidia MediaShield support */
+int	ata_raid_read_config_nvidia(struct wd_softc *);
 
 #endif /* _DEV_ATA_ATA_RAIDVAR_H_ */

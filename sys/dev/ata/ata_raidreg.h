@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidreg.h,v 1.5 2007/12/25 18:33:36 perry Exp $	*/
+/*	$NetBSD: ata_raidreg.h,v 1.6 2008/08/20 15:00:34 tacha Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -200,6 +200,59 @@ struct via_raid_conf {
 	uint32_t		disks[8];
 	uint8_t			checksum;
 	uint8_t			pad_0[461];
+} __packed;
+
+/* nVidia MediaShield Metadata */
+/* taken from FreeBSD ata-raid.h 1.47 */
+#define NVIDIA_LBA(wd) ((wd)->sc_capacity - 2)
+
+struct nvidia_raid_conf {
+    u_int8_t            nvidia_id[8];
+#define NV_MAGIC                "NVIDIA  "
+
+    u_int32_t           config_size;
+    u_int32_t           checksum;
+    u_int16_t           version;
+    u_int8_t            disk_number;
+    u_int8_t            dummy_0;
+    u_int32_t           total_sectors;
+    u_int32_t           sector_size;
+    u_int8_t            serial[16];
+    u_int8_t            revision[4];
+    u_int32_t           dummy_1;
+
+    u_int32_t           magic_0;
+#define NV_MAGIC0               0x00640044
+
+    u_int64_t           magic_1;
+    u_int64_t           magic_2;
+    u_int8_t            flags;
+    u_int8_t            array_width;
+    u_int8_t            total_disks;
+    u_int8_t            dummy_2;
+    u_int16_t           type;
+#define NV_T_RAID0              0x00000080
+#define NV_T_RAID1              0x00000081
+#define NV_T_RAID3              0x00000083
+#define NV_T_RAID5              0x00000085
+#define NV_T_RAID01             0x00008180
+#define NV_T_SPAN               0x000000ff
+
+    u_int16_t           dummy_3;
+    u_int32_t           stripe_sectors;
+    u_int32_t           stripe_bytes;
+    u_int32_t           stripe_shift;
+    u_int32_t           stripe_mask;
+    u_int32_t           stripe_sizesectors;
+    u_int32_t           stripe_sizebytes;
+    u_int32_t           rebuild_lba;
+    u_int32_t           dummy_4;
+    u_int32_t           dummy_5;
+    u_int32_t           status;
+#define NV_S_BOOTABLE           0x00000001
+#define NV_S_DEGRADED           0x00000002
+
+    u_int32_t           filler[98];
 } __packed;
 
 #endif /* _DEV_PCI_PCIIDE_PROMISE_RAID_H_ */
