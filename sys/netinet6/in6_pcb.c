@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.98 2008/08/04 06:47:52 matt Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.99 2008/08/20 18:35:20 matt Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.98 2008/08/04 06:47:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.99 2008/08/20 18:35:20 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.98 2008/08/04 06:47:52 matt Exp $");
 #include <netipsec/key.h>
 #endif /* FAST_IPSEC */
 
-struct in6_addr zeroin6_addr;
+const struct in6_addr zeroin6_addr;
 
 #define	IN6PCBHASH_PORT(table, lport) \
 	&(table)->inpt_porthashtbl[ntohs(lport) & (table)->inpt_porthash]
