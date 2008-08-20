@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.1.2.9 2008/08/19 23:31:52 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.1.2.10 2008/08/20 00:45:47 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -325,11 +325,11 @@ dm_target_init(void)
 	dmt6->version[1] = 0;
 	dmt6->version[2] = 5;
 	strncpy(dmt6->name, "snapshot-origin", DM_MAX_TYPE_NAME);
-	dmt6->init = &dm_target_snapshot_init;
-	dmt6->status = &dm_target_snapshot_status;
-	dmt6->strategy = &dm_target_snapshot_strategy;
-	dmt6->destroy = &dm_target_snapshot_destroy;
-	dmt6->upcall = &dm_target_snapshot_upcall;
+	dmt6->init = &dm_target_snapshot_orig_init;
+	dmt6->status = &dm_target_snapshot_orig_status;
+	dmt6->strategy = &dm_target_snapshot_orig_strategy;
+	dmt6->destroy = &dm_target_snapshot_orig_destroy;
+	dmt6->upcall = &dm_target_snapshot_orig_upcall;
 
 	r = dm_target_insert(dmt6);
 	
