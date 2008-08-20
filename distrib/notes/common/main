@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.403 2008/07/26 23:17:09 pgoyette Exp $
+.\"	$NetBSD: main,v 1.404 2008/08/20 21:14:38 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1030,6 +1030,19 @@ The evbsh5 port has been removed from NetBSD due to lack of interest, compounded
 .\" END from htdocs/releases/formal-5/NetBSD-5.0.xml#major-changes }
 .pso ../printwhatis
 .\} \" \n[FOR_RELEASE]
+.
+.Ss "Features to be removed in a later release"
+The following features are to be removed in the future from
+.Nx
+: 
+.(bullet
+Support for Xen 2.0.x. The Xen-3 and hypervisor interface is diverging
+from Xen-2 as development is ongoing, increasing the maintenance cost
+for NetBSD. It is expected that the netbsd-5 branch will get support for
+PCI pass-though to domUs before the Xen-2 support is removed from HEAD.
+.bullet)
+It should be considered as deprecated. Users are expected to not rely
+on it any more beyond this major release.
 .
 .Ss "The Future of NetBSD"
 .Pp
