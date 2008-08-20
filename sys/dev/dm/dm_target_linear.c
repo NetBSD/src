@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.1.2.10 2008/08/20 00:45:47 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.1.2.11 2008/08/20 16:08:06 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ dm_target_linear_init(struct dm_dev *dmv, void **target_config, char *params)
 	struct dm_pdev *dmp;
 
 	char **ap, *argv[3];
-
+	
 	/*
 	 * Parse a string, containing tokens delimited by white space,
 	 * into an argument vector
@@ -173,8 +173,20 @@ dm_target_linear_destroy(struct dm_table_entry *table_en)
 {
 	struct target_linear_config *tlc;
 
+	/*
+	 * Destroy function is called for evry target even if it
+	 * doesn't have target_config.
+	 */
+	
+	if (table_en->target_config == NULL)
+		return 0;
+	
 	tlc = table_en->target_config;
 
+	/* Remove pdev from device pdev list. */
+	SLIST_REMOVE(&table_en->dm_dev->pdevs, tlc->pdev, dm_pdev, next_pdev);
+
+	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tlc->pdev);
 	
 	kmem_free(table_en->target_config, sizeof(struct target_linear_config));
