@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.29 2008/06/17 14:53:10 reinoud Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.30 2008/08/20 15:00:34 tacha Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.29 2008/06/17 14:53:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.30 2008/08/20 15:00:34 tacha Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -115,6 +115,7 @@ ata_raid_type_name(u_int type)
 		"Promise",
 		"Adaptec",
 		"VIA V-RAID",
+		"nVidia",
 	};
 
 	if (type < sizeof(ata_raid_type_names) / sizeof(ata_raid_type_names[0]))
@@ -243,6 +244,8 @@ ata_raid_check_component(device_t self)
 	if (ata_raid_read_config_promise(sc) == 0)
 		return;
 	if (ata_raid_read_config_via(sc) == 0)
+		return;
+	if (ata_raid_read_config_nvidia(sc) == 0)
 		return;
 }
 
