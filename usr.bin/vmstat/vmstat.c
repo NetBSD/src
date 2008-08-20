@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.161 2008/07/21 14:19:27 lukem Exp $ */
+/* $NetBSD: vmstat.c,v 1.162 2008/08/20 18:51:49 he Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.161 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.162 2008/08/20 18:51:49 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -784,6 +784,27 @@ dosum(void)
 {
 	struct nchstats nchstats;
 	u_long nchtotal;
+	int mib[2];
+	struct uvmexp_sysctl uvmexp2;
+	size_t ssize;
+	int active_kernel;
+
+	/*
+	 * The "active" and "inactive" variables
+	 * are now estimated by the kernel and sadly
+	 * can not easily be dug out of a crash dump.
+	 */
+	ssize = sizeof(uvmexp2);
+	memset(&uvmexp2, 0, ssize);
+	active_kernel = (memf == NULL);
+	if (active_kernel) {
+		/* only on active kernel */
+		mib[0] = CTL_VM;
+		mib[1] = VM_UVMEXP2;
+		if (sysctl(mib, 2, &uvmexp2, &ssize, NULL, 0) < 0)
+			fprintf(stderr, "%s: sysctl vm.uvmexp2 failed: %s",
+				getprogname(), strerror(errno));
+	}
 
 	kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
 
@@ -794,6 +815,10 @@ dosum(void)
 
 	(void)printf("%9u pages managed\n", uvmexp.npages);
 	(void)printf("%9u pages free\n", uvmexp.free);
+	if (active_kernel) {
+		(void)printf("%9" PRIu64 " pages active\n", uvmexp2.active);
+		(void)printf("%9" PRIu64 " pages inactive\n", uvmexp2.inactive);
+	}
 	(void)printf("%9u pages paging\n", uvmexp.paging);
 	(void)printf("%9u pages wired\n", uvmexp.wired);
 	(void)printf("%9u zero pages\n", uvmexp.zeropages);
