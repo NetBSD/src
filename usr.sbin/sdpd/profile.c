@@ -1,8 +1,9 @@
-/*	$NetBSD: profile.c,v 1.3.2.1 2007/11/25 09:01:13 xtraeme Exp $	*/
+/*	$NetBSD: profile.c,v 1.3.2.2 2008/08/20 20:38:14 bouyer Exp $	*/
 
 /*
  * profile.c
  *
+ * Copyright (c) 2008 Iain Hibbert
  * Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>
  * All rights reserved.
  *
@@ -27,15 +28,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: profile.c,v 1.3.2.1 2007/11/25 09:01:13 xtraeme Exp $
+ * $Id: profile.c,v 1.3.2.2 2008/08/20 20:38:14 bouyer Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/profile.c,v 1.2 2004/07/28 07:15:44 kan Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: profile.c,v 1.3.2.1 2007/11/25 09:01:13 xtraeme Exp $");
+__RCSID("$NetBSD: profile.c,v 1.3.2.2 2008/08/20 20:38:14 bouyer Exp $");
 
 #include <sys/queue.h>
 #include <sys/utsname.h>
+#include <net/ethertypes.h>
 #include <bluetooth.h>
 #include <sdp.h>
 #include <string.h>
@@ -51,24 +53,30 @@ profile_get_descriptor(uint16_t uuid)
 {
 	extern	profile_t	dun_profile_descriptor;
 	extern	profile_t	ftrn_profile_descriptor;
+	extern	profile_t	gn_profile_descriptor;
 	extern  profile_t	hf_profile_descriptor;
 	extern  profile_t	hset_profile_descriptor;
 	extern	profile_t	irmc_profile_descriptor;
 	extern	profile_t	irmc_command_profile_descriptor;
 	extern	profile_t	lan_profile_descriptor;
+	extern	profile_t	nap_profile_descriptor;
 	extern	profile_t	opush_profile_descriptor;
+	extern	profile_t	panu_profile_descriptor;
 	extern	profile_t	sp_profile_descriptor;
 
 	static const profile_p	profiles[] = {
 		&dun_profile_descriptor,
 		&ftrn_profile_descriptor,
+		&gn_profile_descriptor,
 		&hf_profile_descriptor,
 		&hset_profile_descriptor,
 		&irmc_profile_descriptor,
 		&irmc_command_profile_descriptor,
 		&lan_profile_descriptor,
+		&nap_profile_descriptor,
 		&opush_profile_descriptor,
-		&sp_profile_descriptor
+		&panu_profile_descriptor,
+		&sp_profile_descriptor,
 	};
 
 	int32_t			i;
@@ -377,6 +385,65 @@ common_profile_server_channel_valid(uint8_t const *data, uint32_t datalen)
 		return (0);
 
 	return (1);
+}
+
+/*
+ * seq8 len8			- 2 bytes
+ *	seq8 len8		- 2 bytes
+ *		uuid16 value16	- 3 bytes	(L2CAP)
+ *		uint16 value16	- 3 bytes	(PSM)
+ *	seq8 len8		- 2 bytes
+ *		uuid16 value16	- 3 bytes	(BNEP)
+ *		uint16 value16	- 3 bytes	(v1.0)
+ *		seq8 len8	- 2 bytes
+ *			uint16 value16 - 3 bytes	(IPv4)
+ *			uint16 value16 - 3 bytes	(ARP)
+ *			uint16 value16 - 3 bytes	(IPv6)
+ */
+
+int32_t
+bnep_profile_create_protocol_descriptor_list(
+		uint8_t *buf, uint8_t const * const eob,
+		uint8_t const *data, uint32_t datalen)
+{
+	/* supported protocol types */
+	const uint16_t ptype[] = {
+		ETHERTYPE_IP,
+		ETHERTYPE_ARP,
+#ifdef INET6
+		ETHERTYPE_IPV6,
+#endif
+	};
+	const int psize = __arraycount(ptype) * 3;
+	int i;
+
+	if (datalen != 2 || (18 + psize) > 255 || (buf + 20 + psize) > eob)
+		return (-1);
+
+	SDP_PUT8(SDP_DATA_SEQ8, buf);
+	SDP_PUT8(18 + psize, buf);
+
+	SDP_PUT8(SDP_DATA_SEQ8, buf);
+	SDP_PUT8(6, buf);
+	SDP_PUT8(SDP_DATA_UUID16, buf);
+	SDP_PUT16(SDP_UUID_PROTOCOL_L2CAP, buf);
+	SDP_PUT8(SDP_DATA_UINT16, buf);
+	SDP_PUT16(*(uint16_t *)data, buf);
+
+	SDP_PUT8(SDP_DATA_SEQ8, buf);
+	SDP_PUT8(8 + psize, buf);
+	SDP_PUT8(SDP_DATA_UUID16, buf);
+	SDP_PUT16(SDP_UUID_PROTOCOL_BNEP, buf);
+	SDP_PUT8(SDP_DATA_UINT16, buf);
+	SDP_PUT16(0x0100, buf);
+	SDP_PUT8(SDP_DATA_SEQ8, buf);
+	SDP_PUT8(psize, buf);
+	for (i = 0 ; i < __arraycount(ptype) ; i ++) {
+		SDP_PUT8(SDP_DATA_UINT16, buf);
+		SDP_PUT16(ptype[i], buf);
+	}
+
+	return (20 + psize);
 }
 
 /*

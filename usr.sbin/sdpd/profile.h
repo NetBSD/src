@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.1.4.1 2007/11/25 09:01:13 xtraeme Exp $	*/
+/*	$NetBSD: profile.h,v 1.1.4.2 2008/08/20 20:38:14 bouyer Exp $	*/
 
 /*
  * profile.h
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: profile.h,v 1.1.4.1 2007/11/25 09:01:13 xtraeme Exp $
+ * $Id: profile.h,v 1.1.4.2 2008/08/20 20:38:14 bouyer Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/profile.h,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
@@ -85,6 +85,7 @@ profile_attr_create_t	common_profile_create_string8;
 profile_attr_create_t	rfcomm_profile_create_protocol_descriptor_list;
 profile_attr_create_t	obex_profile_create_protocol_descriptor_list;
 profile_attr_create_t	obex_profile_create_supported_formats_list;
+profile_attr_create_t	bnep_profile_create_protocol_descriptor_list;
 
 profile_data_valid_t	common_profile_server_channel_valid;
 profile_data_valid_t	obex_profile_data_valid;
