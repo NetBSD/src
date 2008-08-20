@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.1.2.9 2008/08/19 23:46:59 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.1.2.10 2008/08/20 00:45:47 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -51,8 +51,6 @@
 #include <machine/int_fmtio.h>
 
 #include "dm.h"
-
-static uint64_t atoi(const char *);
 
 /*
  * Allocate target specific config data, and link them to table.
@@ -201,7 +199,7 @@ dm_target_linear_upcall(struct dm_table_entry *table_en, struct buf *bp)
 /*
  * Transform char s to uint64_t offset number.
  */
-static uint64_t
+uint64_t
 atoi(const char *s)
 {
 	uint64_t n;
