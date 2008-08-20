@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.57 2005/03/04 22:40:32 nathanw Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.57.2.1 2008/08/20 18:31:50 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -533,7 +533,7 @@ _C_LABEL(tlbdsmiss):
 	mfsrin	%r1,%r3			/* get the segment register */
 	mfsrr1	%r3
 	rlwinm	%r3,%r3,18,31,31	/* get PR-bit */
-	rlwnm.	%r2,%r2,%r3,1,1		/* get the key */
+	rlwnm.	%r1,%r1,%r3,1,1		/* get the key */
 	bne-	9b			/* protection violation */
 8:	/* found, set reference/change bits */
 	ldreg	%r1,4(%r2)		/* reload tlb entry */
