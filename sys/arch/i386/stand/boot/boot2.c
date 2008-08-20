@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.34 2008/08/12 17:56:05 sborrill Exp $	*/
+/*	$NetBSD: boot2.c,v 1.35 2008/08/20 11:34:32 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -559,10 +559,11 @@ doboottypemenu(void)
 			printf("\nChoose an option; RETURN for default; "
 			       "SPACE to stop countdown.\n");
 			if (bootconf.menuformat == MENUFORMAT_LETTER)
-				printf("Option %d will be chosen in ",
-				    bootconf.def + 1);
 				printf("Option %c will be chosen in ",
 				    bootconf.def + 'A');
+			else
+				printf("Option %d will be chosen in ",
+				    bootconf.def + 1);
 			input[0] = awaitkey(bootconf.timeout, 1);
 			input[1] = '\0';
 			choice = getchoicefrominput(input, bootconf.def);
