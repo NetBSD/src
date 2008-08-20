@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.38 2008/08/18 20:33:52 jdc Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.39 2008/08/20 18:58:14 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -665,6 +665,13 @@ src/crypto/dist/ipsec-tools/src/racoon/racoonctl.c	1.7.6.1
 src/crypto/dist/ipsec-tools/src/racoon/remoteconf.c	1.9.4.2
 src/crypto/dist/ipsec-tools/src/setkey/Makefile.am	1.1.1.2.8.1
 src/lib/libipsec/package_version.h			1.18.2.2 via patch
+
 	Upgrade ipsec-tools to release 0.7.1.
 	[manu, ticket #1183]
+
+sys/arch/hppa/hppa/copy.S			1.8
+
+	Fix potential kernel / userland memory corruption in copy{in,out}str
+	on hppa.
+	[skrll, ticket #1180]
 
