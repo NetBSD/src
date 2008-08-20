@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.26 2008/08/08 15:07:35 jdc Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.27 2008/08/20 18:38:02 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -979,4 +979,10 @@ sys/net/if_pppoe.c				1.88
 	Apply patch from Yasuoka Masahiko in PR kern/39321: fix length check
 	when parsing pppoe discovery phase packets.
 	[martin, ticket #1953]
+
+sys/arch/hppa/hppa/copy.S			1.8
+
+	Fix potential kernel / userland memory corruption in copy{in,out}str
+	on hppa.
+	[skrll, ticket #1954]
 
