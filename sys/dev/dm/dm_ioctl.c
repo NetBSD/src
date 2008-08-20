@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.9 2008/08/19 23:46:59 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.10 2008/08/20 16:01:37 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -376,10 +376,10 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 		 * Write lock rw lock firs and then remove all stuff.
 		 */
 		rw_enter(&dmv->dev_rwlock, RW_WRITER);
-		
+
 		/* Destroy active table first.  */
 		dm_table_destroy(&dmv->tables[dmv->cur_active_table]);
-		
+
 		/* Destroy unactive table if exits, too. */
 		if (!SLIST_EMPTY(&dmv->tables[1 - dmv->cur_active_table]))
 			dm_table_destroy(&dmv->tables[1 - dmv->cur_active_table]);
@@ -387,9 +387,15 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 		/* Decrement reference counters for all pdevs from this
 		   device if they are unused close vnode and remove them
 		   from global pdev list, too. */
-		
-		SLIST_FOREACH(dmp, &dmv->pdevs, next_pdev)
+
+		while (!SLIST_EMPTY(&dmv->pdevs)) {  
+
+			dmp = SLIST_FIRST(&dmv->pdevs);
+			
+			SLIST_REMOVE_HEAD(&dmv->pdevs, next_pdev);
+
 			dm_pdev_decr(dmp);
+		}
 		
 		/* Test readonly flag change anything only if it is not set*/
 		
@@ -737,8 +743,9 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		prop_dictionary_get_uint64(target_dict, DM_TABLE_LENGTH,
 		    &table_en->length);
 
-		table_en->target=target;
-		table_en->dm_dev=dmv;
+		table_en->target = target;
+		table_en->dm_dev = dmv;
+		table_en->target_config = NULL;
 		
 		/*
 		 * There is a parameter string after dm_target_spec
@@ -767,9 +774,12 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			       ret = target->init(dmv, &table_en->target_config,
 				   str);
 
-			if (ret != 0)
+			if (ret != 0) {
+				dm_table_destroy(tbl);
+
 				return ret;
-			
+			}
+				
 			last_table = table_en;
 			
 		} else 
