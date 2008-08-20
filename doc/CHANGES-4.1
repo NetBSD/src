@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.69 2008/08/20 19:00:02 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.70 2008/08/20 19:57:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1498,4 +1498,76 @@ sys/arch/hppa/hppa/copy.S			1.8
 	Fix potential kernel / userland memory corruption in copy{in,out}str
 	on hppa.
 	[skrll, ticket #1180]
+
+sys/dev/pci/if_lii.c				1.5
+
+	Fix multicast (multicast hash table were calculated incorrectly).
+	[sborrill, ticket #1164]
+
+gnu/dist/binutils/bfd/elflink.c			1.8
+
+	Set the size of undefined symbols to 0
+	[matt, ticket #1167]
+
+usr.sbin/postinstall/postinstall		1.65
+
+	Make sure to update root.cache too.
+	[matt, ticket #1170]
+
+sys/dev/pci/if_bge.c				1.149
+sys/dev/pci/if_bgereg.h				1.47
+
+	Add support for Broadcom 5722 and identify 5755 ASICs.
+	[sborrill, ticket #1172]
+
+sys/arch/x86/include/mtrr.h			1.4
+sys/arch/x86/x86/mtrr_i686.c			1.18
+
+	Workaround for PR#38480: early panic on some Xeon CPUs (and maybe
+	others).
+	[sborrill, ticket #1173]
+
+sys/arch/powerpc/powerpc/trap_subr.S		1.65
+
+	Fix bug where SRR1 (%r2) was being accidently misused and modifed
+	in place of segreg (%r1).
+	> From Konrad Karpowicz <konradk at pacomp dot pl>.
+	[matt, ticket #1174]
+
+sys/netbt/l2cap_lower.c				1.8
+
+	drop L2CAP packets that exceed the negotiated MTU
+	[plunky, ticket #1176]
+
+gnu/dist/grep/src/search.c			1.3
+
+	fix grep's -w
+	[perry, ticket #1177]
+
+sys/arch/macppc/dev/ofb.c			1.61
+
+	fix typo, now wsfb on ofb should work properly
+	[macallan, ticket #1178]
+
+sys/arch/mips/mips/mips_machdep.c		1.202
+
+	Add CPU_MIPS_DOUBLE_COUNT to R10K family CPUs and
+	also remove (unused?) MIPS_NOT_SUPP flag from them.
+
+	Problem on R10k O2 is reported by martin@ on port-sgimips.
+	[tsutsui, ticket #1181]
+
+lib/libsdp/search.c				1.2
+
+	Fix problem with handling SDP contination state, from FreeBSD
+
+	(specifically, this manifested itself when reading a long HID
+	descriptor from a Microsoft Mouse.)
+	[plunky, ticket #1182]
+
+sys/net/if_spppsubr.c				1.111
+
+	PR kern/39280: Uninitialized callout stopped in if_spppsubr layer
+	in kernels without options INET6.
+	[martin, ticket #1185]
 
