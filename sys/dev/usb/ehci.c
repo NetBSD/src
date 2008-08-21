@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.143 2008/08/16 15:41:37 drochner Exp $ */
+/*	$NetBSD: ehci.c,v 1.144 2008/08/21 12:25:03 drochner Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.143 2008/08/16 15:41:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.144 2008/08/21 12:25:03 drochner Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -423,7 +423,7 @@ ehci_init(ehci_softc_t *sc)
 	EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
 
 	sc->sc_softitds = malloc(sc->sc_flsize * sizeof(ehci_soft_itd_t *),
-					M_USB, M_WAITOK | M_ZERO);
+					M_USB, M_NOWAIT | M_ZERO);
 	if (sc->sc_softitds == NULL)
 		return ENOMEM;
 	LIST_INIT(&sc->sc_freeitds);
