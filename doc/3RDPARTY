@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.627 2008/08/18 08:47:39 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.628 2008/08/21 07:57:32 jnemeth Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -191,10 +191,10 @@ Mailing List:	bug-cvs@gnu.org
 Responsible:	christos, wiz
 License:	GPLv1, LGPLv2
 Notes:
-Use src/gnu/dist/cvs/cvs2netbsd for preparing the source tree
+Use src/gnu/dist/xcvs/cvs2netbsd for preparing the source tree
 for the import.
-Do not forget to update gnu/usr.bin/cvs/include/config.h to match
-gnu/dist/cvs/config.h.in.
+Do not forget to update gnu/usr.bin/xcvs/include/config.h to match
+gnu/dist/xcvs/config.h.in.
 If you want to upgrade to 1.12.XX, please talk to christos first.
 I have merged all the changes already.
 
