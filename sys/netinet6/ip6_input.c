@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.121 2008/08/20 22:58:42 simonb Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.122 2008/08/21 15:34:10 matt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.121 2008/08/20 22:58:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.122 2008/08/21 15:34:10 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1602,7 +1602,7 @@ sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
 		return (error);
  
 	mutex_enter(softnet_lock);
-	KERNEL_LOCK_ONE(1, NULL);
+	KERNEL_LOCK(1, NULL);
 
 	ip6flow_reap(0);
 
@@ -1630,7 +1630,7 @@ sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
 		 * Can only fail due to malloc()
 		 */
 		mutex_enter(softnet_lock);
-		KERNEL_LOCK_ONE(1, NULL);
+		KERNEL_LOCK(1, NULL);
 
 		error = ip6flow_invalidate_all(tmp);
 
