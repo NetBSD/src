@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.904 2008/08/04 03:55:47 tls Exp $
+# $NetBSD: GENERIC,v 1.905 2008/08/21 18:06:18 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.904 $"
+#ident 		"GENERIC-$Revision: 1.905 $"
 
 maxusers	64		# estimated number of users
 
@@ -327,7 +327,7 @@ config		netbsd	root on ? type ?
 # Basic Bus Support
 
 #IPMI support
-#ipmi0		at mainbus?
+ipmi0		at mainbus?
 
 # Advanced Configuration and Power Interface
 

@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.46 2008/08/04 03:55:47 tls Exp $
+# $NetBSD: XEN2_DOM0,v 1.47 2008/08/21 18:06:18 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -190,7 +190,7 @@ mainbus0 at root
 cpu* at mainbus?
 
 # IPMI support
-#ipmi0		at mainbus?
+ipmi0		at mainbus?
 
 hypervisor*	at mainbus?		# Xen hypervisor
 
