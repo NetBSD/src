@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.24 2008/08/10 08:53:29 cegger Exp $
+# $NetBSD: XEN3_DOM0,v 1.25 2008/08/21 18:06:18 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -181,7 +181,7 @@ mainbus0 at root
 cpu* at mainbus?
 
 # IPMI support
-#ipmi0          at mainbus?
+ipmi0		at mainbus?
 
 hypervisor*	at mainbus?		# Xen hypervisor
 
