@@ -1,4 +1,4 @@
-/* $NetBSD: strtoll.c,v 1.4 2008/08/20 19:58:33 oster Exp $ */
+/* $NetBSD: strtoll.c,v 1.5 2008/08/22 01:48:03 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -27,8 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoll.c,v 1.4 2008/08/20 19:58:33 oster Exp $");
+__RCSID("$NetBSD: strtoll.c,v 1.5 2008/08/22 01:48:03 dogcow Exp $");
 
 #if defined(_KERNEL)
 #include <sys/param.h>
@@ -53,6 +57,6 @@ __RCSID("$NetBSD: strtoll.c,v 1.4 2008/08/20 19:58:33 oster Exp $");
 
 #include "_strtol.h"
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
+#if !defined(_KERNEL) && !defined(_STANDALONE) && !defined(HAVE_NBTOOL_CONFIG_H)
 __strong_alias(_strtoll, strtoll)
 #endif
