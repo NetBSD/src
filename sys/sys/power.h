@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.11 2007/12/22 18:35:13 jmcneill Exp $	*/
+/*	$NetBSD: power.h,v 1.12 2008/08/22 11:27:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@ struct pswitch_state {
  * envsys(4) events:
  *
  * envsys events are sent by the sysmon envsys framework when
- * a critical condition happens in a sensor.
+ * a warning or critical condition happens in a sensor.
  *
  * We define the folowing types of envsys events:
  *
@@ -160,8 +160,12 @@ struct pswitch_state {
  *
  * 	PENVSYS_EVENT_USER_CRITMIN	User critical min limit.
  *
+ *	PENVSYS_EVENT_USER_WARNMAX	User warning max limit.
+ *
+ *	PENVSYS_EVENT_USER_WARNMIN	User warning min limit.
+ *
  * The folowing event apply to all sensors, when the state is
- * valid or the critical limit is not valid anymore:
+ * valid or the warning or critical limit is not valid anymore:
  *
  * 	PENVSYS_EVENT_NORMAL		Normal state in the sensor.
  */
@@ -173,18 +177,23 @@ struct pswitch_state {
 #define PENVSYS_EVENT_WARNOVER 		130
 #define PENVSYS_EVENT_WARNUNDER 	140
 #define PENVSYS_EVENT_USER_CRITMAX 	150
+#define PENVSYS_EVENT_USER_WARNMAX  	155
 #define PENVSYS_EVENT_USER_CRITMIN  	160
+#define PENVSYS_EVENT_USER_WARNMIN  	165
 
 /*
  * The following events apply for battery sensors:
  *
- * 	PENVSYS_EVENT_BATT_USERCAP	User capacity.
+ * 	PENVSYS_EVENT_BATT_USERCAP	User critical capacity.
+ *
+ *	PENVSYS_EVENT_BATT_USERWARN	User warning capacity.
  *
  * 	PENVSYS_EVENT_LOW_POWER		AC Adapter is OFF and all batteries
  * 					are discharged.
  */
 
 #define PENVSYS_EVENT_BATT_USERCAP 	170
+#define PENVSYS_EVENT_BATT_USERWARN 	175
 #define PENVSYS_EVENT_LOW_POWER 	180
 
 /*
@@ -195,6 +204,13 @@ struct pswitch_state {
  */
 #define PENVSYS_EVENT_STATE_CHANGED 	190
 
+/*
+ * The following events are used internally to associate multiple
+ * external states with a single event monitor
+ */
+#define PENVSYS_EVENT_HW_LIMITS		200
+#define PENVSYS_EVENT_USER_LIMITS	210
+#define PENVSYS_EVENT_BATT_USER_LIMITS	220
 
 /*
  * This structure defines the properties of an envsys event.
