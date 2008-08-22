@@ -64,19 +64,30 @@
 #define FLAT_USER_DS    FLAT_RING3_DS
 #define FLAT_USER_SS    FLAT_RING3_SS
 
-/*
- * Virtual addresses beyond this are not modifiable by guest OSes. The 
- * machine->physical mapping table starts at this address, read-only.
- */
-#ifdef CONFIG_X86_PAE
-#define __HYPERVISOR_VIRT_START 0xF5800000
-#define __MACH2PHYS_VIRT_START  0xF5800000
-#define __MACH2PHYS_VIRT_END    0xF6800000
-#else
-#define __HYPERVISOR_VIRT_START 0xFC000000
-#define __MACH2PHYS_VIRT_START  0xFC000000
-#define __MACH2PHYS_VIRT_END    0xFC400000
-#endif
+#define __HYPERVISOR_VIRT_START_PAE    0xF5800000
+#define __MACH2PHYS_VIRT_START_PAE     0xF5800000
+#define __MACH2PHYS_VIRT_END_PAE       0xF6800000
+#define HYPERVISOR_VIRT_START_PAE      \
+    mk_unsigned_long(__HYPERVISOR_VIRT_START_PAE)
+#define MACH2PHYS_VIRT_START_PAE       \
+    mk_unsigned_long(__MACH2PHYS_VIRT_START_PAE)
+#define MACH2PHYS_VIRT_END_PAE         \
+    mk_unsigned_long(__MACH2PHYS_VIRT_END_PAE)
+
+/* Non-PAE bounds are obsolete. */
+#define __HYPERVISOR_VIRT_START_NONPAE 0xFC000000
+#define __MACH2PHYS_VIRT_START_NONPAE  0xFC000000
+#define __MACH2PHYS_VIRT_END_NONPAE    0xFC400000
+#define HYPERVISOR_VIRT_START_NONPAE   \
+    mk_unsigned_long(__HYPERVISOR_VIRT_START_NONPAE)
+#define MACH2PHYS_VIRT_START_NONPAE    \
+    mk_unsigned_long(__MACH2PHYS_VIRT_START_NONPAE)
+#define MACH2PHYS_VIRT_END_NONPAE      \
+    mk_unsigned_long(__MACH2PHYS_VIRT_END_NONPAE)
+
+#define __HYPERVISOR_VIRT_START __HYPERVISOR_VIRT_START_PAE
+#define __MACH2PHYS_VIRT_START  __MACH2PHYS_VIRT_START_PAE
+#define __MACH2PHYS_VIRT_END    __MACH2PHYS_VIRT_END_PAE
 
 #ifndef HYPERVISOR_VIRT_START
 #define HYPERVISOR_VIRT_START mk_unsigned_long(__HYPERVISOR_VIRT_START)
@@ -91,8 +102,8 @@
 
 /* 32-/64-bit invariability for control interfaces (domctl/sysctl). */
 #if defined(__XEN__) || defined(__XEN_TOOLS__)
-#undef __DEFINE_XEN_GUEST_HANDLE
-#define __DEFINE_XEN_GUEST_HANDLE(name, type)                   \
+#undef ___DEFINE_XEN_GUEST_HANDLE
+#define ___DEFINE_XEN_GUEST_HANDLE(name, type)                  \
     typedef struct { type *p; }                                 \
         __guest_handle_ ## name;                                \
     typedef struct { union { type *p; uint64_aligned_t q; }; }  \
@@ -103,7 +114,8 @@
          (hnd).p = val;                                     \
     } while ( 0 )
 #define uint64_aligned_t uint64_t __attribute__((aligned(8)))
-#define XEN_GUEST_HANDLE_64(name) __guest_handle_64_ ## name
+#define __XEN_GUEST_HANDLE_64(name) __guest_handle_64_ ## name
+#define XEN_GUEST_HANDLE_64(name) __XEN_GUEST_HANDLE_64(name)
 #endif
 
 #ifndef __ASSEMBLY__
