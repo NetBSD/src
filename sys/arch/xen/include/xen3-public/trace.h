@@ -1,4 +1,4 @@
-/* $NetBSD: trace.h,v 1.6 2008/05/04 19:56:28 cegger Exp $ */
+/* $NetBSD: trace.h,v 1.7 2008/08/22 14:14:04 cegger Exp $ */
 /******************************************************************************
  * include/public/trace.h
  * 
@@ -88,21 +88,25 @@
 #define TRC_PV_PTWR_EMULATION        (TRC_PV + 11)
 #define TRC_PV_PTWR_EMULATION_PAE    (TRC_PV + 12)
   /* Indicates that addresses in trace record are 64 bits */
-#define TRC_PV_64_FLAG               (0x100) 
+#define TRC_64_FLAG               (0x100) 
 
 /* trace events per subclass */
 #define TRC_HVM_VMENTRY         (TRC_HVM_ENTRYEXIT + 0x01)
 #define TRC_HVM_VMEXIT          (TRC_HVM_ENTRYEXIT + 0x02)
-#define TRC_HVM_VMEXIT64        (TRC_HVM_ENTRYEXIT + 0x03)
+#define TRC_HVM_VMEXIT64        (TRC_HVM_ENTRYEXIT + TRC_64_FLAG + 0x02)
 #define TRC_HVM_PF_XEN          (TRC_HVM_HANDLER + 0x01)
+#define TRC_HVM_PF_XEN64        (TRC_HVM_HANDLER + TRC_64_FLAG + 0x01)
 #define TRC_HVM_PF_INJECT       (TRC_HVM_HANDLER + 0x02)
+#define TRC_HVM_PF_INJECT64     (TRC_HVM_HANDLER + TRC_64_FLAG + 0x02)
 #define TRC_HVM_INJ_EXC         (TRC_HVM_HANDLER + 0x03)
 #define TRC_HVM_INJ_VIRQ        (TRC_HVM_HANDLER + 0x04)
 #define TRC_HVM_REINJ_VIRQ      (TRC_HVM_HANDLER + 0x05)
 #define TRC_HVM_IO_READ         (TRC_HVM_HANDLER + 0x06)
 #define TRC_HVM_IO_WRITE        (TRC_HVM_HANDLER + 0x07)
 #define TRC_HVM_CR_READ         (TRC_HVM_HANDLER + 0x08)
+#define TRC_HVM_CR_READ64       (TRC_HVM_HANDLER + TRC_64_FLAG + 0x08)
 #define TRC_HVM_CR_WRITE        (TRC_HVM_HANDLER + 0x09)
+#define TRC_HVM_CR_WRITE64      (TRC_HVM_HANDLER + TRC_64_FLAG + 0x09)
 #define TRC_HVM_DR_READ         (TRC_HVM_HANDLER + 0x0A)
 #define TRC_HVM_DR_WRITE        (TRC_HVM_HANDLER + 0x0B)
 #define TRC_HVM_MSR_READ        (TRC_HVM_HANDLER + 0x0C)
@@ -114,12 +118,13 @@
 #define TRC_HVM_VMMCALL         (TRC_HVM_HANDLER + 0x12)
 #define TRC_HVM_HLT             (TRC_HVM_HANDLER + 0x13)
 #define TRC_HVM_INVLPG          (TRC_HVM_HANDLER + 0x14)
+#define TRC_HVM_INVLPG64        (TRC_HVM_HANDLER + TRC_64_FLAG + 0x14)
 #define TRC_HVM_MCE             (TRC_HVM_HANDLER + 0x15)
 #define TRC_HVM_IO_ASSIST       (TRC_HVM_HANDLER + 0x16)
 #define TRC_HVM_MMIO_ASSIST     (TRC_HVM_HANDLER + 0x17)
 #define TRC_HVM_CLTS            (TRC_HVM_HANDLER + 0x18)
 #define TRC_HVM_LMSW            (TRC_HVM_HANDLER + 0x19)
-#define TRC_HVM_PF_XEN64        (TRC_HVM_HANDLER + 0x20)
+#define TRC_HVM_LMSW64          (TRC_HVM_HANDLER + TRC_64_FLAG + 0x19)
 
 /* This structure represents a single trace buffer record. */
 struct t_rec {

@@ -1,4 +1,4 @@
-/* $NetBSD: sysctl.h,v 1.3 2008/05/04 19:56:28 cegger Exp $ */
+/* $NetBSD: sysctl.h,v 1.4 2008/08/22 14:14:04 cegger Exp $ */
 /******************************************************************************
  * sysctl.h
  * 
@@ -85,6 +85,12 @@ DEFINE_XEN_GUEST_HANDLE(xen_sysctl_tbuf_op_t);
  * Get physical information about the host machine
  */
 #define XEN_SYSCTL_physinfo          3
+ /* (x86) The platform supports HVM guests. */
+#define _XEN_SYSCTL_PHYSCAP_hvm          0
+#define XEN_SYSCTL_PHYSCAP_hvm           (1u<<_XEN_SYSCTL_PHYSCAP_hvm)
+ /* (x86) The platform supports HVM-guest direct access to I/O devices. */
+#define _XEN_SYSCTL_PHYSCAP_hvm_directio 1
+#define XEN_SYSCTL_PHYSCAP_hvm_directio  (1u<<_XEN_SYSCTL_PHYSCAP_hvm_directio)
 struct xen_sysctl_physinfo {
     /* IN variables. */
     uint32_t threads_per_core;
@@ -97,7 +103,6 @@ struct xen_sysctl_physinfo {
     uint64_aligned_t scrub_pages;
     uint32_t hw_cap[8];
 
-    /* IN/OUT variables. */
     /*
      * IN: maximum addressable entry in the caller-provided cpu_to_node array.
      * OUT: largest cpu identifier in the system.
@@ -113,6 +118,9 @@ struct xen_sysctl_physinfo {
      * elements of the array will not be written by the sysctl.
      */
     XEN_GUEST_HANDLE_64(uint32) cpu_to_node;
+
+    /* XEN_SYSCTL_PHYSCAP_??? */
+    uint32_t capabilities;
 };
 typedef struct xen_sysctl_physinfo xen_sysctl_physinfo_t;
 DEFINE_XEN_GUEST_HANDLE(xen_sysctl_physinfo_t);
@@ -206,7 +214,56 @@ struct xen_sysctl_availheap {
 };
 typedef struct xen_sysctl_availheap xen_sysctl_availheap_t;
 DEFINE_XEN_GUEST_HANDLE(xen_sysctl_availheap_t);
- 
+
+#define XEN_SYSCTL_get_pmstat        10
+struct pm_px_val {
+    uint64_aligned_t freq;        /* Px core frequency */
+    uint64_aligned_t residency;   /* Px residency time */
+    uint64_aligned_t count;       /* Px transition count */
+};
+typedef struct pm_px_val pm_px_val_t;
+DEFINE_XEN_GUEST_HANDLE(pm_px_val_t);
+
+struct pm_px_stat {
+    uint8_t total;        /* total Px states */
+    uint8_t usable;       /* usable Px states */
+    uint8_t last;         /* last Px state */
+    uint8_t cur;          /* current Px state */
+    XEN_GUEST_HANDLE_64(uint64) trans_pt;   /* Px transition table */
+    XEN_GUEST_HANDLE_64(pm_px_val_t) pt;
+};
+typedef struct pm_px_stat pm_px_stat_t;
+DEFINE_XEN_GUEST_HANDLE(pm_px_stat_t);
+
+struct pm_cx_stat {
+    uint32_t nr;    /* entry nr in triggers & residencies, including C0 */
+    uint32_t last;  /* last Cx state */
+    uint64_aligned_t idle_time;                 /* idle time from boot */
+    XEN_GUEST_HANDLE_64(uint64) triggers;    /* Cx trigger counts */
+    XEN_GUEST_HANDLE_64(uint64) residencies; /* Cx residencies */
+};
+
+struct xen_sysctl_get_pmstat {
+#define PMSTAT_CATEGORY_MASK 0xf0
+#define PMSTAT_PX            0x10
+#define PMSTAT_CX            0x20
+#define PMSTAT_get_max_px    (PMSTAT_PX | 0x1)
+#define PMSTAT_get_pxstat    (PMSTAT_PX | 0x2)
+#define PMSTAT_reset_pxstat  (PMSTAT_PX | 0x3)
+#define PMSTAT_get_max_cx    (PMSTAT_CX | 0x1)
+#define PMSTAT_get_cxstat    (PMSTAT_CX | 0x2)
+#define PMSTAT_reset_cxstat  (PMSTAT_CX | 0x3)
+    uint32_t type;
+    uint32_t cpuid;
+    union {
+        struct pm_px_stat getpx;
+        struct pm_cx_stat getcx;
+        /* other struct for tx, etc */
+    } u;
+};
+typedef struct xen_sysctl_get_pmstat xen_sysctl_get_pmstat_t;
+DEFINE_XEN_GUEST_HANDLE(xen_sysctl_get_pmstat_t);
+
 struct xen_sysctl {
     uint32_t cmd;
     uint32_t interface_version; /* XEN_SYSCTL_INTERFACE_VERSION */
@@ -220,6 +277,7 @@ struct xen_sysctl {
         struct xen_sysctl_debug_keys        debug_keys;
         struct xen_sysctl_getcpuinfo        getcpuinfo;
         struct xen_sysctl_availheap         availheap;
+        struct xen_sysctl_get_pmstat        get_pmstat;
         uint8_t                             pad[128];
     } u;
 };
