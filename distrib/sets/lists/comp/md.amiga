@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.55 2007/02/09 22:22:32 ad Exp $
+# $NetBSD: md.amiga,v 1.56 2008/08/22 13:42:19 lukem Exp $
 ./usr/include/amiga				comp-c-include
 ./usr/include/amiga/_G_config.h			comp-obsolete		obsolete
 ./usr/include/amiga/ansi.h			comp-c-include
@@ -56,3 +56,8 @@
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/c++rt0.o				comp-obsolete		obsolete
 ./usr/lib/scrt0.o				comp-obsolete		obsolete
+./usr/libdata/debug/sbin/binpatch.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/grfconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/iteconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/loadkmap.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/videomode.debug	comp-sysutil-debug	debug

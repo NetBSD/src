@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.29 2008/01/19 13:15:46 chris Exp $
+# $NetBSD: ad.arm,v 1.30 2008/08/22 13:42:19 lukem Exp $
 ./usr/include/arm				comp-c-include
 ./usr/include/arm/ansi.h			comp-c-include
 ./usr/include/arm/aout_machdep.h		comp-c-include
@@ -88,6 +88,7 @@
 ./usr/lib/libpmc.a				comp-c-lib
 ./usr/lib/libpmc_p.a				comp-c-proflib		profile
 ./usr/lib/libpmc_pic.a				comp-c-piclib
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug
 ./usr/libdata/lint/llib-larm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-larm32.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib		lint
