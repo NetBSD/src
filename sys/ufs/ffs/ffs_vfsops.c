@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.233 2008/08/15 17:32:32 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.234 2008/08/22 10:48:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.233 2008/08/15 17:32:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.234 2008/08/22 10:48:22 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -160,7 +160,7 @@ struct vfsops ffs_vfsops = {
 static const struct genfs_ops ffs_genfsops = {
 	.gop_size = ffs_gop_size,
 	.gop_alloc = ufs_gop_alloc,
-	.gop_write = genfs_gop_write,
+	.gop_write = ffs_gop_write,
 	.gop_markupdate = ufs_gop_markupdate,
 };
 
@@ -1290,14 +1290,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			free(fs->fs_csp, M_UFSMNT);
 			goto out;
 		}
-	}
-	/* Snapshots do not work yet with WAPBL. */
-	if (ronly == 0 && fs->fs_snapinum[0] != 0 && (mp->mnt_flag & MNT_LOG)) {
-		printf("%s fs has snapshots -- logging not supported yet\n",
-		    fs->fs_fsmnt);
-		error = EINVAL;
-		free(fs->fs_csp, M_UFSMNT);
-		goto out;
 	}
 	if (ronly == 0 && fs->fs_snapinum[0] != 0)
 		ffs_snapshot_mount(mp);
