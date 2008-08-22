@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.46 2008/05/22 01:06:40 dyoung Exp $	*/
+/*	$NetBSD: mld6.c,v 1.47 2008/08/22 17:11:39 adrianp Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.46 2008/05/22 01:06:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.47 2008/08/22 17:11:39 adrianp Exp $");
 
 #include "opt_inet.h"
 
@@ -262,7 +262,7 @@ mld_timerresid(struct in6_multi *in6m)
 	}
 
 	/* return the remaining time in milliseconds */
-	return (((u_long)(diff.tv_sec * 1000000 + diff.tv_usec)) / 1000);
+	return diff.tv_sec * 1000 + diff.tv_usec / 1000;
 }
 
 static void
@@ -330,7 +330,7 @@ mld_input(struct mbuf *m, int off)
 	struct in6_multi *in6m = NULL;
 	struct in6_addr mld_addr, all_in6;
 	struct in6_ifaddr *ia;
-	int timer = 0;		/* timer value in the MLD query header */
+	u_long timer = 0;	/* timer value in the MLD query header */
 
 	IP6_EXTHDR_GET(mldh, struct mld_hdr *, m, off, sizeof(*mldh));
 	if (mldh == NULL) {
@@ -441,9 +441,9 @@ mld_input(struct mbuf *m, int off)
 				mld_sendpkt(in6m, MLD_LISTENER_REPORT, NULL);
 				in6m->in6m_state = MLD_IREPORTEDLAST;
 			} else if (in6m->in6m_timer == IN6M_TIMER_UNDEF ||
-			    mld_timerresid(in6m) > (u_long)timer) {
-				in6m->in6m_timer = arc4random() %
-				    (int)(((long)timer * hz) / 1000);
+			    mld_timerresid(in6m) > timer) {
+				in6m->in6m_timer =
+				   1 + (arc4random() % timer) * hz / 1000;
 				mld_starttimer(in6m);
 			}
 		}
