@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.25 2007/02/09 22:49:47 ad Exp $
+# $NetBSD: md.hpcmips,v 1.26 2008/08/22 13:42:19 lukem Exp $
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/hpcmips				comp-c-include
 ./usr/include/hpcmips/_G_config.h		comp-obsolete		obsolete
@@ -62,3 +62,6 @@
 ./usr/include/hpcmips/vmparam.h			comp-c-include
 ./usr/include/hpcmips/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug
