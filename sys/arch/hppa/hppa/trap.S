@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.25 2008/08/22 06:49:26 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.26 2008/08/22 19:32:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -119,7 +119,6 @@ emergency_stack_end:
 /*
  * Kernel Gateway Page (must be at known address)
  *	System Call Gate
- *	Signal Return Gate
  *
  * GATEway instructions have to be at a fixed known locations
  * because their addresses are hard coded in routines such as
