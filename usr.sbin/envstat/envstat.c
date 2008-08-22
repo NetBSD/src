@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.69 2008/08/09 04:49:23 christos Exp $ */
+/* $NetBSD: envstat.c,v 1.70 2008/08/22 11:27:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.69 2008/08/09 04:49:23 christos Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.70 2008/08/22 11:27:50 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: envstat.c,v 1.69 2008/08/09 04:49:23 christos Exp $");
 #define ENVSYS_IFLAG 	0x00000010	/* skip invalid sensors */
 #define ENVSYS_SFLAG	0x00000020	/* remove all properties set */
 #define ENVSYS_TFLAG	0x00000040	/* make statistics */
+#define ENVSYS_WFLAG	0x00000080	/* print warn{min,max} values */
 
 /* Sensors */
 typedef struct envsys_sensor {
@@ -66,6 +67,9 @@ typedef struct envsys_sensor {
 	int32_t critcap_value;
 	int32_t	critmin_value;
 	int32_t	critmax_value;
+	int32_t warncap_value;
+	int32_t	warnmin_value;
+	int32_t	warnmax_value;
 	char	desc[ENVSYS_DESCLEN];
 	char	type[ENVSYS_DESCLEN];
 	char	drvstate[ENVSYS_DESCLEN];
@@ -121,7 +125,7 @@ int main(int argc, char **argv)
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "c:Dd:fIi:lrSs:Tw:x")) != -1) {
+	while ((c = getopt(argc, argv, "c:Dd:fIi:lrSs:Tw:Wx")) != -1) {
 		switch (c) {
 		case 'c':	/* configuration file */
 			configfile = strdup(optarg);
@@ -167,6 +171,9 @@ int main(int argc, char **argv)
 		case 'T':	/* make statistics */
 			flags |= ENVSYS_TFLAG;
 			break;
+		case 'W':	/* print warn{max,min} vs crit{max,min} */
+			flags |= ENVSYS_WFLAG;
+			break;
 		case 'w':	/* width value for the lines */
 			width = (unsigned int)strtoul(optarg, &endptr, 10);
 			if (*endptr != '\0')
@@ -193,6 +200,9 @@ int main(int argc, char **argv)
 		if (!interval)
 			errx(EXIT_FAILURE,
 		    	    "-T cannot be used without an interval (-i)");
+		if (flags & ENVSYS_WFLAG)
+			errx(EXIT_FAILURE,
+			    "-T cannot be used with -W");
 		else
 			statistics = true;
 	}
@@ -572,6 +582,21 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 		if (obj1)
 			sensor->critcap_value = prop_number_integer_value(obj1);
 
+		/* get warning max value if available */
+		obj1 = prop_dictionary_get(obj, "warning-max");
+		if (obj1)
+			sensor->warnmax_value = prop_number_integer_value(obj1);
+
+		/* get warning min value if available */
+		obj1 = prop_dictionary_get(obj, "warning-min");
+		if (obj1)
+			sensor->warnmin_value = prop_number_integer_value(obj1);
+
+		/* get warning capacity value if available */
+		obj1 = prop_dictionary_get(obj, "warning-capacity");
+		if (obj1)
+			sensor->warncap_value = prop_number_integer_value(obj1);
+
 		/* print sensor names if -l was given */
 		if (flags & ENVSYS_LFLAG) {
 			if (width)
@@ -718,6 +743,10 @@ print_sensors(void)
 		b = "Max";
 		c = "Min";
 		d = "Avg";
+	} else if (flags & ENVSYS_WFLAG) {
+		b = "WarnMax";
+		c = "WarnMin";
+		d = "WarnCap";
 	} else {
 		b = "CritMax";
 		c = "CritMin";
@@ -810,6 +839,25 @@ do {								\
 				CONVERTTEMP(temp, stats->avg, degrees);
 				(void)printf("%8.3f ", temp);
 				ilen = 8;
+			} else if (flags & ENVSYS_WFLAG) {
+				if (sensor->warnmax_value) {
+					CONVERTTEMP(temp,
+					    sensor->warnmax_value, degrees);
+					(void)printf( "%8.3f ", temp);
+					ilen = 24 + 2;
+				}
+
+				if (sensor->warnmin_value) {
+					CONVERTTEMP(temp,
+					    sensor->warnmin_value, degrees);
+					if (sensor->warnmax_value)
+						ilen = 8;
+					else
+						ilen = 16 + 1;
+
+					(void)printf("%*.3f ", (int)ilen, temp);
+					ilen = 16 + 1;
+				}
 			} else {
 				if (sensor->critmax_value) {
 					CONVERTTEMP(temp,
@@ -844,6 +892,22 @@ do {								\
 				(void)printf("%8u %8u %8u ",
 				    stats->max, stats->min, stats->avg);
 				ilen = 8;
+			} else if (flags & ENVSYS_WFLAG) {
+				if (sensor->warnmax_value) {
+					(void)printf("%8u ",
+					    sensor->warnmax_value);
+					ilen = 24 + 2;
+				}
+
+				if (sensor->warnmin_value) {
+					if (sensor->warnmax_value)
+						ilen = 8;
+					else
+						ilen = 16 + 1;
+					(void)printf("%*u ", (int)ilen,
+					    sensor->warnmin_value);
+					ilen = 16 + 1;
+				}
 			} else {
 				if (sensor->critmax_value) {
 					(void)printf("%8u ",
@@ -900,28 +964,54 @@ do {								\
 			    sensor->cur_value / 1000000.0);
 
 			if (!statistics) {
-				if (sensor->critmax_value) {
-					(void)printf("%8.3f ",
-					    sensor->critmax_value / 1000000.0);
-					ilen = 24 + 2;
-				}
+				if (flags & ENVSYS_WFLAG) {
+					if (sensor->warnmax_value) {
+						(void)printf("%8.3f ",
+						    sensor->warnmax_value / 1000000.0);
+						ilen = 24 + 2;
+					}
 
-				if (sensor->critmin_value) {
-					if (sensor->critmax_value)
-						ilen = 8;
-					else
+					if (sensor->warnmin_value) {
+						if (sensor->warnmax_value)
+							ilen = 8;
+						else
+							ilen = 16 + 1;
+						(void)printf("%*.3f ", (int)ilen,
+						    sensor->warnmin_value / 1000000.0);
 						ilen = 16 + 1;
-					(void)printf("%*.3f ", (int)ilen,
-					    sensor->critmin_value / 1000000.0);
-					ilen = 16 + 1;
-				}
+					}
+					if (sensor->warncap_value) {
+						ilen = 24 + 2;
+						(void)printf("%*.2f%% ", (int)ilen,
+						    (sensor->critcap_value * 100.0) /
+						    sensor->max_value);
+						ilen = 8;
+					}
+				} else {
+					if (sensor->critmax_value) {
+						(void)printf("%8.3f ",
+						    sensor->critmax_value / 1000000.0);
+						ilen = 24 + 2;
+					}
 
-				if (sensor->critcap_value) {
-					ilen = 24 + 2;
-					(void)printf("%*.2f%% ", (int)ilen,
-					    (sensor->critcap_value * 100.0) /
-					    sensor->max_value);
-					ilen = 8;
+					if (sensor->critmin_value) {
+						if (sensor->critmax_value)
+							ilen = 8;
+						else
+							ilen = 16 + 1;
+						(void)printf("%*.3f ", (int)ilen,
+						    sensor->critmin_value / 1000000.0);
+						ilen = 16 + 1;
+
+					}
+
+					if (sensor->critcap_value) {
+						ilen = 24 + 2;
+						(void)printf("%*.2f%% ", (int)ilen,
+						    (sensor->critcap_value * 100.0) /
+						    sensor->max_value);
+						ilen = 8;
+					}
 				}
 			}
 
