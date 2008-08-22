@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.196 2008/08/18 06:40:09 lukem Exp $
+#	$NetBSD: build.sh,v 1.197 2008/08/22 23:41:24 lukem Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -602,7 +602,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:bC:D:dEhi:j:k:M:m:N:nO:oR:rS:T:tUuV:w:xX:Z:'
+	opts='a:B:C:D:Ehj:M:m:N:nO:oR:rS:T:UuV:w:xX:Z:'
 	opt_a=no
 
 	if type getopts >/dev/null 2>&1; then
@@ -642,10 +642,6 @@ parseoptions()
 			BUILDID=${OPTARG}
 			;;
 
-		-b)
-			usage "'-b' has been replaced by 'makewrapper'"
-			;;
-
 		-C)
 			eval ${optargcmd}; resolvepaths
 			iso_dir=${OPTARG}
@@ -656,25 +652,13 @@ parseoptions()
 			setmakeenv DESTDIR "${OPTARG}"
 			;;
 
-		-d)
-			usage "'-d' has been replaced by 'distribution'"
-			;;
-
 		-E)
 			do_expertmode=true
-			;;
-
-		-i)
-			usage "'-i idir' has been replaced by 'install=idir'"
 			;;
 
 		-j)
 			eval ${optargcmd}
 			parallel="-j ${OPTARG}"
-			;;
-
-		-k)
-			usage "'-k conf' has been replaced by 'kernel=conf'"
 			;;
 
 		-M)
@@ -737,10 +721,6 @@ parseoptions()
 			eval ${optargcmd}; resolvepath
 			TOOLDIR="${OPTARG}"
 			export TOOLDIR
-			;;
-
-		-t)
-			usage "'-t' has been replaced by 'tools'"
 			;;
 
 		-U)
@@ -1192,7 +1172,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.196 2008/08/18 06:40:09 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.197 2008/08/22 23:41:24 lukem Exp $
 # with these arguments: ${_args}
 #
 
