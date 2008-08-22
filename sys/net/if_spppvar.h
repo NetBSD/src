@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.14 2008/08/05 23:56:31 degroote Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.15 2008/08/22 12:13:18 martin Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -26,6 +26,7 @@
  * From: Id: if_sppp.h,v 1.7 1998/12/01 20:20:19 hm Exp
  */
 
+#define IDX_LCP 0		/* idx into state table */
 
 struct slcp {
 	u_long	opts;		/* LCP options to send (bitfield) */
@@ -40,6 +41,9 @@ struct slcp {
 	int	max_configure;
 	int	max_failure;
 };
+
+#define IDX_IPCP 1		/* idx into state table */
+#define IDX_IPV6CP 2		/* idx into state table */
 
 struct sipcp {
 	u_long	opts;		/* IPCP options to send (bitfield) */
@@ -67,12 +71,10 @@ struct sauth {
 	char	challenge[16];		/* random challenge [don't change size! it's really hardcoded!] */
 };
 
-#define	IDX_LCP		0		/* idx into state table */
-#define	IDX_IPCP	1		/* idx into state table */
-#define	IDX_PAP		2		/* idx into state table */
-#define	IDX_CHAP	3		/* idx into state table */
-#define	IDX_IPV6CP 	4		/* idx into state table */
-#define	IDX_COUNT	5		/* bump this when adding cp's! */
+#define IDX_PAP		3
+#define IDX_CHAP	4
+
+#define IDX_COUNT (IDX_CHAP + 1) /* bump this when adding cp's! */
 
 struct sppp {
 	/* NB: pp_if _must_ be first */
