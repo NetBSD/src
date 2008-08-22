@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.55 2008/06/11 17:40:06 drochner Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.56 2008/08/22 11:27:50 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.55 2008/06/11 17:40:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.56 2008/08/22 11:27:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.55 2008/06/11 17:40:06 dr
 #include <sys/callout.h>
 
 /* #define ENVSYS_DEBUG */
+
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_envsysvar.h>
 
@@ -86,6 +87,8 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	prop_object_t obj;
 	bool critvalup = false;
 	int error = 0;
+	int real_crittype;
+	int32_t o_critval;
 
 	KASSERT(sdict != NULL || edata != NULL || sme != NULL);
 	/*
@@ -95,6 +98,24 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	if (see == NULL)
 		return ENOMEM;
 
+	/*
+	 * Map user-types to kernel types
+	 */
+	switch (crittype) {
+	case PENVSYS_EVENT_USER_CRITMAX:
+	case PENVSYS_EVENT_USER_CRITMIN:
+	case PENVSYS_EVENT_USER_WARNMAX:
+	case PENVSYS_EVENT_USER_WARNMIN:
+		real_crittype = PENVSYS_EVENT_USER_LIMITS;
+		break;
+	case PENVSYS_EVENT_BATT_USERCAP:
+	case PENVSYS_EVENT_BATT_USERWARN:
+		real_crittype = PENVSYS_EVENT_BATT_USER_LIMITS;
+		break;
+	default:
+		real_crittype = crittype;
+	}
+
 	/* 
 	 * check if the event is already on the list and return
 	 * EEXIST if value provided hasn't been changed.
@@ -102,8 +123,25 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	mutex_enter(&sme->sme_mtx);
 	LIST_FOREACH(osee, &sme->sme_events_list, see_list) {
 		if (strcmp(edata->desc, osee->see_pes.pes_sensname) == 0)
-			if (crittype == osee->see_type) {
-				if (osee->see_critval == critval) {
+			if (real_crittype == osee->see_type) {
+				switch (crittype) {
+				case PENVSYS_EVENT_USER_CRITMAX:
+				case PENVSYS_EVENT_BATT_USERCAP:
+					o_critval = osee->see_critmax;
+					break;
+				case PENVSYS_EVENT_USER_WARNMAX:
+				case PENVSYS_EVENT_BATT_USERWARN:
+					o_critval = osee->see_warnmax;
+					break;
+				case PENVSYS_EVENT_USER_WARNMIN:
+					o_critval = osee->see_warnmin;
+					break;
+				case PENVSYS_EVENT_USER_CRITMIN:
+				default:
+					o_critval = osee->see_critmin;
+					break;
+				}
+				if (o_critval == critval) {
 					DPRINTF(("%s: dev=%s sensor=%s type=%d "
 				    	    "(already exists)\n", __func__,
 				    	    osee->see_pes.pes_dvname,
@@ -128,7 +166,23 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			 * provided is not the same than we have
 			 * currently, update the critical value.
 			 */
-			osee->see_critval = critval;
+			switch (crittype) {
+			case PENVSYS_EVENT_USER_CRITMAX:
+			case PENVSYS_EVENT_BATT_USERCAP:
+				osee->see_critmax = critval;
+				break;
+			case PENVSYS_EVENT_USER_WARNMAX:
+			case PENVSYS_EVENT_BATT_USERWARN:
+				osee->see_warnmax = critval;
+				break;
+			case PENVSYS_EVENT_USER_WARNMIN:
+				osee->see_warnmin = critval;
+				break;
+			case PENVSYS_EVENT_USER_CRITMIN:
+			default:
+				osee->see_critmin = critval;
+				break;
+			}
 			DPRINTF(("%s: (%s) event [sensor=%s type=%d] "
 			    "(critval updated)\n", __func__, sme->sme_name,
 			    edata->desc, osee->see_type));
@@ -138,11 +192,61 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	}
 
 	/*
+	 * New limit defined for existing event
+	 */
+	if (osee != NULL) {
+		osee->see_edata = edata;
+		switch (crittype) {
+		case PENVSYS_EVENT_USER_CRITMAX:
+		case PENVSYS_EVENT_BATT_USERCAP:
+			osee->see_critmax = critval;
+			break;
+		case PENVSYS_EVENT_USER_WARNMAX:
+		case PENVSYS_EVENT_BATT_USERWARN:
+			osee->see_warnmax = critval;
+			break;
+		case PENVSYS_EVENT_USER_WARNMIN:
+			osee->see_warnmin = critval;
+			break;
+		case PENVSYS_EVENT_USER_CRITMIN:
+		default:
+			osee->see_critmin = critval;
+			break;
+		}
+		if (objkey && critval) {
+			error = sme_sensor_upint32(sdict, objkey, critval);
+			if (error)
+				goto out;
+		}
+		DPRINTF(("%s: (%s) new limit added to existing event, type %d "
+		    "critmin=%" PRIu32 " warnmin=%" PRIu32 " warnmax=%"
+		    PRIu32 " critmax=%d\n", __func__, osee->see_sme->sme_name,
+		    osee->see_type, osee->see_critmin, osee->see_warnmin,
+		    osee->see_warnmax, osee->see_critmax));
+		goto out;
+	}
+	/*
 	 * New event requested.
 	 */
 	see->see_edata = edata;
-	see->see_critval = critval;
-	see->see_type = crittype;
+	switch (crittype) {
+	case PENVSYS_EVENT_USER_CRITMAX:
+	case PENVSYS_EVENT_BATT_USERCAP:
+		see->see_critmax = critval;
+		break;
+	case PENVSYS_EVENT_USER_WARNMAX:
+	case PENVSYS_EVENT_BATT_USERWARN:
+		see->see_warnmax = critval;
+		break;
+	case PENVSYS_EVENT_USER_WARNMIN:
+		see->see_warnmin = critval;
+		break;
+	case PENVSYS_EVENT_USER_CRITMIN:
+	default:
+		see->see_critmin = critval;
+		break;
+	}
+	see->see_type = real_crittype;
 	see->see_sme = sme;
 	(void)strlcpy(see->see_pes.pes_dvname, sme->sme_name,
 	    sizeof(see->see_pes.pes_dvname));
@@ -157,9 +261,11 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			goto out;
 	}
 	DPRINTF(("%s: (%s) event registered (sensor=%s snum=%d type=%d "
-	    "critval=%" PRIu32 ")\n", __func__,
+	    "critmin=%" PRIu32 " warnmin=%" PRIu32 " warnmax=%" PRIu32
+	    " crixmax=%" PRIu32 ")\n", __func__,
 	    see->see_sme->sme_name, see->see_pes.pes_sensname,
-	    see->see_edata->sensor, see->see_type, see->see_critval));
+	    see->see_edata->sensor, see->see_type, see->see_critmin,
+	    see->see_warnmin, see->see_warnmax, see->see_critmax));
 	/*
 	 * Initialize the events framework if it wasn't initialized before.
 	 */
@@ -187,7 +293,7 @@ sme_event_unregister_all(struct sysmon_envsys *sme)
 
 	mutex_enter(&sme->sme_mtx);
 	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
-		while (see->see_flags & SME_EVENT_WORKING)
+		while (see->see_flags & SEE_EVENT_WORKING)
 			cv_wait(&sme->sme_condvar, &sme->sme_mtx);
 
 		if (strcmp(see->see_pes.pes_dvname, sme->sme_name) == 0)
@@ -249,7 +355,7 @@ sme_event_unregister(struct sysmon_envsys *sme, const char *sensor, int type)
 	 * Wait for the event to finish its work, remove from the list
 	 * and release resouces.
 	 */
-	while (see->see_flags & SME_EVENT_WORKING)
+	while (see->see_flags & SEE_EVENT_WORKING)
 		cv_wait(&sme->sme_condvar, &sme->sme_mtx);
 
 	DPRINTF(("%s: removed dev=%s sensor=%s type=%d\n",
@@ -313,21 +419,10 @@ do {									\
 		     PENVSYS_EVENT_CRITICAL,
 		     "critical");
 
-	SEE_REGEVENT(ENVSYS_FMONCRITUNDER,
-		     PENVSYS_EVENT_CRITUNDER,
-		     "critunder");
-
-	SEE_REGEVENT(ENVSYS_FMONCRITOVER,
-		     PENVSYS_EVENT_CRITOVER,
-		     "critover");
-
-	SEE_REGEVENT(ENVSYS_FMONWARNUNDER,
-		     PENVSYS_EVENT_WARNUNDER,
-		     "warnunder");
-
-	SEE_REGEVENT(ENVSYS_FMONWARNOVER,
-		     PENVSYS_EVENT_WARNOVER,
-		     "warnover");
+	SEE_REGEVENT(ENVSYS_FMONCRITUNDER | ENVSYS_FMONCRITOVER |
+		     ENVSYS_FMONWARNUNDER | ENVSYS_FMONWARNOVER,
+		     PENVSYS_EVENT_HW_LIMITS,
+		     "hw-range-limits");
 
 	SEE_REGEVENT(ENVSYS_FMONSTCHANGED,
 		     PENVSYS_EVENT_STATE_CHANGED,
@@ -412,7 +507,7 @@ sme_events_check(void *arg)
 	mutex_enter(&sme->sme_callout_mtx);
 	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
 		workqueue_enqueue(sme->sme_wq, &see->see_wk, NULL);
-		see->see_flags &= ~SME_EVENT_REFRESHED;
+		see->see_edata->flags |= ENVSYS_FNEED_REFRESH;
 	}
 	if (sme->sme_events_timeout)
 		timo = sme->sme_events_timeout * hz;
@@ -443,89 +538,73 @@ sme_events_worker(struct work *wk, void *arg)
 	KASSERT(sme != NULL || edata != NULL);
 
 	mutex_enter(&sme->sme_mtx);
-	if ((see->see_flags & SME_EVENT_WORKING) == 0)
-		see->see_flags |= SME_EVENT_WORKING;
+	if ((see->see_flags & SEE_EVENT_WORKING) == 0)
+		see->see_flags |= SEE_EVENT_WORKING;
 	/* 
-	 * refresh the sensor that was marked with a critical event
-	 * only if it wasn't refreshed before or if the driver doesn't
-	 * use its own method for refreshing.
+	 * sme_events_check marks the first event for the device to
+	 * mak us refresh it here.  Don't refresh if the driver uses
+	 * its own method for refreshing.
 	 */
 	if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
-		if ((see->see_flags & SME_EVENT_REFRESHED) == 0) {
+		if ((see->see_edata->flags & ENVSYS_FNEED_REFRESH) != 0) {
 			/* refresh sensor in device */
 			(*sme->sme_refresh)(sme, edata);
-			see->see_flags |= SME_EVENT_REFRESHED;
+			see->see_edata->flags &= ~ENVSYS_FNEED_REFRESH;
 		}
 	}
 
-	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d state=%d units=%d "
+	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d type=%d state=%d units=%d "
 	    "value_cur=%d\n", __func__, sme->sme_name, edata->desc,
-	    edata->sensor, edata->state, edata->units, edata->value_cur));
+	    edata->sensor, see->see_type, edata->state, edata->units,
+	    edata->value_cur));
 
 	/* skip the event if current sensor is in invalid state */
 	if (edata->state == ENVSYS_SINVALID)
 		goto out;
 
-#define SME_SEND_NORMALEVENT()						\
-do {									\
-	see->see_evsent = false;					\
-	sysmon_penvsys_event(&see->see_pes, PENVSYS_EVENT_NORMAL);	\
-} while (/* CONSTCOND */ 0)
-
-#define SME_SEND_EVENT(type)						\
-do {									\
-	see->see_evsent = true;						\
-	sysmon_penvsys_event(&see->see_pes, (type));			\
-} while (/* CONSTCOND */ 0)
-
-
 	switch (see->see_type) {
 	/*
-	 * if state is the same than the one that matches sse[i].state,
-	 * send the event...
+	 * For user range limits, calculate a new state first
+	 * State based on user limits will override any hardware
+	 * detected state.
+	 */
+	case PENVSYS_EVENT_USER_LIMITS:
+	case PENVSYS_EVENT_BATT_USER_LIMITS:
+#define __EXCEEDED_LIMIT(lim, rel) ((lim) && edata->value_cur rel (lim))
+		if __EXCEEDED_LIMIT(see->see_critmin, <)
+			edata->state = ENVSYS_SCRITUNDER;
+		else if __EXCEEDED_LIMIT(see->see_warnmin, <)
+			edata->state = ENVSYS_SWARNUNDER;
+		else if __EXCEEDED_LIMIT(see->see_warnmax, >)
+			edata->state = ENVSYS_SWARNOVER;
+		else if __EXCEEDED_LIMIT(see->see_critmax, >)
+			edata->state = ENVSYS_SCRITOVER;
+		/* FALLTHROUGH */
+#undef __EXCEED_LIMIT
+	/*
+	 * For hardware and user range limits, send event if state has changed
 	 */
 	case PENVSYS_EVENT_CRITICAL:
-	case PENVSYS_EVENT_CRITUNDER:
-	case PENVSYS_EVENT_CRITOVER:
-	case PENVSYS_EVENT_WARNUNDER:
-	case PENVSYS_EVENT_WARNOVER:
-		for (i = 0; sse[i].state != -1; i++)
-			if (sse[i].event == see->see_type)
+	case PENVSYS_EVENT_HW_LIMITS:
+		if (edata->state != see->see_evsent) {
+			for (i = 0; sse[i].state != -1; i++)
+				if (sse[i].state == edata->state)
+					break;
+
+			if (sse[i].state == -1)
 				break;
 
-		if (sse[i].state == -1)
-			break;
+			if (edata->state == ENVSYS_SVALID)
+				sysmon_penvsys_event(&see->see_pes,
+						     PENVSYS_EVENT_NORMAL);
+			else
+				sysmon_penvsys_event(&see->see_pes,
+						     sse[i].event);
 
-		if (see->see_evsent && edata->state == ENVSYS_SVALID)
-			SME_SEND_NORMALEVENT();
-
-		if (!see->see_evsent && edata->state == sse[i].state)
-			SME_SEND_EVENT(see->see_type);
-
+			see->see_evsent = edata->state;
+		}
 		break;
-	/*
-	 * if value_cur is lower than the limit, send the event...
-	 */
-	case PENVSYS_EVENT_BATT_USERCAP:
-	case PENVSYS_EVENT_USER_CRITMIN:
-		if (see->see_evsent && edata->value_cur > see->see_critval)
-			SME_SEND_NORMALEVENT();
 
-		if (!see->see_evsent && edata->value_cur < see->see_critval)
-			SME_SEND_EVENT(see->see_type);
-
-		break;
-	/*
-	 * if value_cur is higher than the limit, send the event...
-	 */
-	case PENVSYS_EVENT_USER_CRITMAX:
-		if (see->see_evsent && edata->value_cur < see->see_critval)
-			SME_SEND_NORMALEVENT();
-
-		if (!see->see_evsent && edata->value_cur > see->see_critval)
-			SME_SEND_EVENT(see->see_type);
-
-		break;
 	/*
 	 * if value_cur is not normal (battery) or online (drive),
 	 * send the event...
@@ -568,8 +647,11 @@ do {									\
 		/* 
 		 * state is ok again... send a normal event.
 		 */
-		if (see->see_evsent && edata->value_cur == state)
-			SME_SEND_NORMALEVENT();
+		if (see->see_evsent && edata->value_cur == state) {
+			sysmon_penvsys_event(&see->see_pes,
+					     PENVSYS_EVENT_NORMAL);
+			see->see_evsent = false;
+		}
 
 		/*
 		 * state has been changed... send event.
@@ -605,10 +687,12 @@ do {									\
 			sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
 		}
 		break;
+	default:
+		panic("%s: invalid event type %d", __func__, see->see_type);
 	}
 
 out:
-	see->see_flags &= ~SME_EVENT_WORKING;
+	see->see_flags &= ~SEE_EVENT_WORKING;
 	cv_broadcast(&sme->sme_condvar);
 	mutex_exit(&sme->sme_mtx);
 }
