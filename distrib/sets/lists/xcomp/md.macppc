@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.5 2004/01/11 15:12:46 lukem Exp $
+# $NetBSD: md.macppc,v 1.6 2008/08/22 13:38:45 lukem Exp $
 ./usr/X11R6/include/X11/extensions/xf86dga.h
 ./usr/X11R6/include/X11/extensions/xf86dga1.h
 ./usr/X11R6/include/X11/extensions/xf86dga1str.h
@@ -52,3 +52,14 @@
 ./usr/X11R6/man/man3/XF86VidModeSwitchToMode.3	-unknown-		.man
 ./usr/X11R6/man/man3/XF86VidModeValidateModeLine.3	-unknown-		.man
 ./usr/X11R6/man/man4/fpit.4			-unknown-		.man
+./usr/libdata/debug/usr/X11R6/bin/XFree86.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/Xmacppc.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/gtf.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/kbd_mode.debug	-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/mmapr.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/mmapw.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/pcitweak.debug	-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/scanpci.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/xf86cfg.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/xf86config.debug	-unknown-	debug
