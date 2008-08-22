@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.948 2008/08/19 10:02:42 matthias Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.949 2008/08/22 16:55:50 tnn Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.947 2008/08/19 10:02:18 matthias Exp
+ *	NetBSD: pcidevs,v 1.948 2008/08/22 16:54:17 tnn Exp
  */
 
 /*
@@ -2423,6 +2423,8 @@
 #define	PCI_PRODUCT_INTEL_82945GM_HB	0x27a0		/* 82945GM/PM/GMS Host Bridge */
 #define	PCI_PRODUCT_INTEL_82945GM_IGD	0x27a2		/* 82945GM/PM/GMS Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82945GM_IGD_1	0x27a6		/* 82945GM/PM/GMS Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82945GME_HB	0x27ac		/* 82945GME Host Bridge */
+#define	PCI_PRODUCT_INTEL_82945GME_IGD	0x27ae		/* 82945GME Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82801G_LPC	0x27b8		/* 82801GB/GR LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801GBM_LPC	0x27b9		/* 82801GBM LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801GHM_LPC	0x27bd		/* 82801GHM LPC Interface Bridge */
