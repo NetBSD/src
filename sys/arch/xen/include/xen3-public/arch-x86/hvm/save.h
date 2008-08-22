@@ -271,8 +271,7 @@ struct hvm_hw_lapic {
 DECLARE_HVM_SAVE_TYPE(LAPIC, 5, struct hvm_hw_lapic);
 
 struct hvm_hw_lapic_regs {
-    /* A 4k page of register state */
-    uint8_t  data[0x400];
+    uint8_t data[1024];
 };
 
 DECLARE_HVM_SAVE_TYPE(LAPIC_REGS, 6, struct hvm_hw_lapic_regs);
