@@ -1,4 +1,4 @@
-/* $NetBSD: ring.h,v 1.10 2008/08/22 14:14:04 cegger Exp $ */
+/* $NetBSD: ring.h,v 1.11 2008/08/22 15:28:11 cegger Exp $ */
 /******************************************************************************
  * ring.h
  * 
@@ -31,14 +31,18 @@
 #include "../xen-compat.h"
 
 #if __XEN_INTERFACE_VERSION__ < 0x00030208
+#if defined(__Linux__)
 #define xen_mb()  mb()
 #define xen_rmb() rmb()
 #define xen_wmb() wmb()
 #endif
+#endif
 
+#if defined(__NetBSD__)
 #define xen_mb()  x86_mfence()
 #define xen_rmb() x86_lfence()
 #define xen_wmb() x86_sfence()
+#endif
 
 typedef unsigned int RING_IDX;
 
