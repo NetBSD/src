@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.24 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: trap.S,v 1.25 2008/08/22 06:49:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -644,7 +644,7 @@ os_hpmc:
 	STRAP(itlb,T_ITLBMISSNA,ITLBPRE)/* 16. ITLB non-access miss fault */
 	STRAP(dtlb,T_DTLBMISSNA,DTLBPRE)/* 17. DTLB non-access miss fault */
 	ATRAP(dprot,T_DPROT)		/* 18. data protection trap
-					      unalligned data reference trap */
+					       unaligned data reference trap */
 	ATRAP(dbrk,T_DBREAK)		/* 19. data break trap */
 	STRAP(tlbd,T_TLB_DIRTY,DTLBPRE)	/* 20. TLB dirty bit trap */
 	ATRAP(pgref,T_PAGEREF)		/* 21. page reference trap */
