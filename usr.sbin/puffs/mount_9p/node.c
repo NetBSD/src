@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.19 2007/11/30 19:02:39 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.20 2008/08/22 17:44:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.19 2007/11/30 19:02:39 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.20 2008/08/22 17:44:14 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -45,7 +45,7 @@ nodecmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 	struct vattr *vap = &pn->pn_va;
 	struct qid9p *qid = arg;
 
-	if (vap->va_fileid == qid->qidpath)
+	if (vap->va_fileid == qid->qidpath && vap->va_gen == qid->qidvers)
 		return pn;
 
 	return NULL;
@@ -86,6 +86,7 @@ puffs9p_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo 
 	const struct puffs_cn *pcn)
 {
 	AUTOVAR(pu);
+	struct vattr va;
 	struct puffs_node *pn, *pn_dir = opc;
 	struct p9pnode *p9n_dir = pn_dir->pn_data;
 	p9ptag_t tfid = NEXTFID(p9p);
@@ -112,20 +113,33 @@ puffs9p_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo 
 	if ((rv = proto_getqid(pb, &newqid)))
 		goto out;
 
+	/* we get the parent vers in walk(?)  compensate */
+	p9pbuf_recycleout(pb);
+	tag = NEXTTAG(p9p);
+	p9pbuf_put_1(pb, P9PROTO_T_STAT);
+	p9pbuf_put_2(pb, tag);
+	p9pbuf_put_4(pb, tfid);
+	GETRESPONSE(pb);
+	if ((rv = proto_expect_stat(pb, &va)) != 0) {
+		proto_cc_clunkfid(pu, tfid, 0);
+		rv = ENOENT;
+		goto out;
+	}
+	if (newqid.qidpath != va.va_fileid) {
+		proto_cc_clunkfid(pu, tfid, 0);
+		rv = EPROTO;
+		goto out;
+	}
+	newqid.qidvers = va.va_gen;
+
 	pn = puffs_pn_nodewalk(pu, nodecmp, &newqid);
 	if (pn == NULL)
 		pn = newp9pnode_qid(pu, &newqid, tfid);
 	else
 		proto_cc_clunkfid(pu, tfid, 0);
+	/* assert pn */
+	memcpy(&pn->pn_va, &va, sizeof(va));
 
-	rv = do_getattr(pu, pn, &pn->pn_va);
-	if (rv) {
-		/* XXX */
-		free(pn->pn_data);
-		puffs_pn_put(pn);
-		goto out;
-	}
-		
 	puffs_newinfo_setcookie(pni, pn);
 	puffs_newinfo_setvtype(pni, pn->pn_va.va_type);
 	puffs_newinfo_setsize(pni, pn->pn_va.va_size);
@@ -307,7 +321,7 @@ puffs9p_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	size_t nread;
 
 	nread = 0;
-	while (*resid > 0) {
+	while (*resid > 0 && offset+nread < pn->pn_va.va_size) {
 		p9pbuf_put_1(pb, P9PROTO_T_READ);
 		p9pbuf_put_2(pb, tag);
 		p9pbuf_put_4(pb, p9n->fid_read);
@@ -322,6 +336,9 @@ puffs9p_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 
 		p9pbuf_get_4(pb, &count);
 		if ((rv = p9pbuf_read_data(pb, buf + nread, count)))
+			break;
+
+		if (count == 0)
 			break;
 
 		*resid -= count;
