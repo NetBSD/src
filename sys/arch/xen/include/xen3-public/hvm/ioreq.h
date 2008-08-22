@@ -1,4 +1,4 @@
-/* $NetBSD: ioreq.h,v 1.3 2008/05/04 19:56:29 cegger Exp $ */
+/* $NetBSD: ioreq.h,v 1.4 2008/08/22 14:14:04 cegger Exp $ */
 /*
  * ioreq.h: I/O request definitions for device models
  * Copyright (c) 2004, Intel Corporation.
@@ -35,14 +35,8 @@
 
 #define IOREQ_TYPE_PIO          0 /* pio */
 #define IOREQ_TYPE_COPY         1 /* mmio ops */
-#define IOREQ_TYPE_AND          2
-#define IOREQ_TYPE_OR           3
-#define IOREQ_TYPE_XOR          4
-#define IOREQ_TYPE_XCHG         5
-#define IOREQ_TYPE_ADD          6
 #define IOREQ_TYPE_TIMEOFFSET   7
 #define IOREQ_TYPE_INVALIDATE   8 /* mapcache */
-#define IOREQ_TYPE_SUB          9
 
 /*
  * VMExit dispatcher should cooperate with instruction decoder to
@@ -115,11 +109,11 @@ struct buffered_piopage {
 };
 #endif /* defined(__ia64__) */
 
-#if defined(__i386__) || defined(__x86_64__)
 #define ACPI_PM1A_EVT_BLK_ADDRESS           0x0000000000001f40
 #define ACPI_PM1A_CNT_BLK_ADDRESS           (ACPI_PM1A_EVT_BLK_ADDRESS + 0x04)
 #define ACPI_PM_TMR_BLK_ADDRESS             (ACPI_PM1A_EVT_BLK_ADDRESS + 0x08)
-#endif /* defined(__i386__) || defined(__x86_64__) */
+#define ACPI_GPE0_BLK_ADDRESS               (ACPI_PM_TMR_BLK_ADDRESS + 0x20)
+#define ACPI_GPE0_BLK_LEN                   0x08
 
 #endif /* _IOREQ_H_ */
 
