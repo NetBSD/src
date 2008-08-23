@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.31 2008/08/23 15:09:10 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.32 2008/08/23 15:50:12 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.31 2008/08/23 15:09:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.32 2008/08/23 15:50:12 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -608,6 +608,10 @@ mec_attach(device_t parent, device_t self, void *aux)
 	ifp->if_mtu = ETHERMTU;
 	IFQ_SET_READY(&ifp->if_snd);
 
+	/* We can support 802.1Q VLAN-sized frames. */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
+
+	/* attach the interface */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
