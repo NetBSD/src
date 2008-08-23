@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.73 2008/08/20 20:52:59 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.74 2008/08/23 17:02:53 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1598,4 +1598,9 @@ sys/net/if_pppoe.c				1.89 - 1.92
 
 	pppoe improvements on memory allocation failures and on reconnect.
 	[martin, ticket #1186]
+
+sys/netinet6/mld6.c				1.47
+
+	Fix from matt@ for malformed ICMPv6 MLD query (CVE-2008-2464).
+	[adrianp, ticket #1187]
 
