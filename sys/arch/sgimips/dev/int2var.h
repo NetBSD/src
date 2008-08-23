@@ -1,4 +1,4 @@
-/*	$NetBSD: int2var.h,v 1.2 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: int2var.h,v 1.3 2008/08/23 17:25:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -30,7 +30,7 @@
 #if !defined(_ARCH_SGIMIPS_DEV_INT2VAR_H_)
 #define	_ARCH_SGIMIPS_DEV_INT2VAR_H_
 
-void int2_wait_fifo(u_int32_t);
+void int2_wait_fifo(uint32_t);
 
 #endif /* _ARCH_SGIMIPS_DEV_INT2VAR_H_ */
 
