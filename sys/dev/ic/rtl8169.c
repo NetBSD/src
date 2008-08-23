@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.104 2008/05/06 11:45:00 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.105 2008/08/23 14:27:45 tnn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.104 2008/05/06 11:45:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.105 2008/08/23 14:27:45 tnn Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -607,6 +607,10 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8168C:
 			sc->sc_rev = 24;
 			break;
+		case RTK_HWREV_8102E:
+		case RTK_HWREV_8102EL:
+			sc->sc_rev = 25;
+			break;
 		case RTK_HWREV_8100E:
 		case RTK_HWREV_8100E_SPIN2:
 			/* XXX not in the Realtek driver */
@@ -627,7 +631,7 @@ re_attach(struct rtk_softc *sc)
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8139;
 	}
 
-	if (sc->sc_rev == 24) {
+	if (sc->sc_rev == 24 || sc->sc_rev == 25) {
 		/*
 		 * Get station address from ID registers.
 		 */
@@ -1855,6 +1859,15 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch (command) {
 	case SIOCSIFMTU:
+		/*
+		 * According to FreeBSD, 8102E/8102EL use a different DMA
+		 * descriptor format. Disable jumbo frames for those parts.
+		 */
+		if (sc->sc_rev == 25 && ifr->ifr_mtu > ETHERMTU) {
+			error = EINVAL;
+			break;
+		}
+
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
 		else if ((error = ifioctl_common(ifp, command, data)) ==
