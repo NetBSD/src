@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.h,v 1.4 2007/06/24 16:55:12 kardel Exp $	*/
+/*	$NetBSD: recvbuff.h,v 1.5 2008/08/23 09:10:31 kardel Exp $	*/
 
 #if !defined __recvbuff_h
 #define __recvbuff_h
@@ -96,7 +96,8 @@ extern	void	freerecvbuf P((struct recvbuf *));
  *  The buffer is removed from the free list. Make sure
  *  you put it back with freerecvbuf() or 
  */
-extern	struct recvbuf *get_free_recv_buffer P((void));
+extern	struct recvbuf *get_free_recv_buffer P((void)); /* signal safe - no malloc */
+extern	struct recvbuf *get_free_recv_buffer_alloc P((void)); /* signal unsafe - may malloc */
 
 /*   Add a buffer to the full list
  */
