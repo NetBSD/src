@@ -1,17 +1,23 @@
-/*	$NetBSD: refclock_parse.c,v 1.9 2007/08/18 09:56:13 kardel Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.10 2008/08/23 09:10:31 kardel Exp $	*/
 
 /*
- * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.78 2006/12/22 20:08:27 kardel RELEASE_20061222_A
+ * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.80 2007/08/11 12:06:29 kardel Exp
  *
- * refclock_parse.c,v 4.78 2006/12/22 20:08:27 kardel RELEASE_20061222_A
+ * refclock_parse.c,v 4.80 2007/08/11 12:06:29 kardel Exp
  *
  * generic reference clock driver for several DCF/GPS/MSF/... receivers
  *
- * optionally make use of a STREAMS module for input processing where
- * available and configured. Currently the STREAMS module
- * is only available for Suns running SunOS 4.x and SunOS5.x
+ * PPS notes:
+ *   On systems that support PPSAPI (RFC2783) PPSAPI is the
+ *   preferred interface.
  *
- * Copyright (c) 1995-2006 by Frank Kardel <kardel <AT> ntp.org>
+ *   Optionally make use of a STREAMS module for input processing where
+ *   available and configured. This STREAMS module reduces the time
+ *   stamp latency for serial and PPS events.
+ *   Currently the STREAMS module is only available for Suns running
+ *   SunOS 4.x and SunOS5.x.
+ *
+ * Copyright (c) 1995-2007 by Frank Kardel <kardel <AT> ntp.org>
  * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universität Erlangen-Nürnberg, Germany
  *
  * Redistribution and use in source and binary forms, with or without
@@ -184,7 +190,7 @@
 #include "ieee754io.h"
 #include "recvbuff.h"
 
-static char rcsid[] = "refclock_parse.c,v 4.78 2006/12/22 20:08:27 kardel RELEASE_20061222_A";
+static char rcsid[] = "refclock_parse.c,v 4.80 2007/08/11 12:06:29 kardel Exp";
 
 /**===========================================================================
  ** external interface to ntp mechanism
@@ -5740,6 +5746,12 @@ int refclock_parse_bs;
  * History:
  *
  * refclock_parse.c,v
+ * Revision 4.80  2007/08/11 12:06:29  kardel
+ * update comments wrt/ to PPS
+ *
+ * Revision 4.79  2007/08/11 11:52:23  kardel
+ * - terminate io bindings before io_closeclock() will close our file descriptor
+ *
  * Revision 4.78  2006/12/22 20:08:27  kardel
  * Bug 746 (RFE): add configuration for Expert mouseCLOCK USB v2.0 as mode 19
  *

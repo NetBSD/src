@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.7 2008/02/20 18:16:09 matt Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.8 2008/08/23 09:10:31 kardel Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -1347,7 +1347,7 @@ do_conf(
 		    && temp_cp.hmode != MODE_BROADCAST)
 		    fl = 1;
 		if (temp_cp.flags & ~(CONF_FLAG_AUTHENABLE | CONF_FLAG_PREFER
-				  | CONF_FLAG_BURST | CONF_FLAG_IBURST | CONF_FLAG_SKEY | CONF_FLAG_DYNAMIC))
+				  | CONF_FLAG_BURST | CONF_FLAG_IBURST | CONF_FLAG_SKEY))
 		    fl = 1;
 		cp = (struct conf_peer *)
 		    ((char *)cp + INFO_ITEMSIZE(inpkt->mbz_itemsize));
@@ -1380,8 +1380,6 @@ do_conf(
 		    fl |= FLAG_IBURST;
 		if (temp_cp.flags & CONF_FLAG_SKEY)
 			fl |= FLAG_SKEY;
-		if (temp_cp.flags & CONF_FLAG_DYNAMIC)
-			fl |= FLAG_DYNAMIC;
 		
 		if (client_v6_capable && temp_cp.v6_flag != 0) {
 			peeraddr.ss_family = AF_INET6;

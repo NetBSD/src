@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.9 2007/01/06 19:45:22 kardel Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.10 2008/08/23 09:10:31 kardel Exp $	*/
 
 /*
  * ntp_config.c - read and apply configuration information
@@ -38,7 +38,10 @@
 
 #ifdef SYS_WINNT
 # include <io.h>
-HANDLE ResolverThreadHandle = NULL;
+static HANDLE ResolverThreadHandle = NULL;
+HANDLE ResolverEventHandle;
+#else
+int resolver_pipe_fd[2];  /* used to let the resolver process alert the parent process */
 #endif /* SYS_WINNT */
 
 /*
@@ -408,7 +411,7 @@ static	int matchkey P((char *, struct keyword *, int));
 enum gnn_type {
 	t_UNK,		/* Unknown */
 	t_REF,		/* Refclock */
-	t_MSK,		/* Network Mask */
+	t_MSK		/* Network Mask */
 	};
 static	int getnetnum P((const char *, struct sockaddr_storage *, int,
 			 enum gnn_type));
@@ -812,8 +815,10 @@ getconfig(
 				    peerflags |= FLAG_IBURST;
 				    break;
 
-			        case CONF_MOD_DYNAMIC:
-				    peerflags |= FLAG_DYNAMIC;
+				case CONF_MOD_DYNAMIC:
+				    msyslog(LOG_WARNING, 
+				        "Warning: the \"dynamic\" keyword has been obsoleted"
+				        " and will be removed in the next release\n");
 				    break;
 
 #ifdef OPENSSL
@@ -2434,7 +2439,22 @@ do_resolve_internal(void)
 	(void) signal_no_reset(SIGCHLD, catchchild);
 
 #ifndef SYS_VXWORKS
+	/* the parent process will write to the pipe
+	 * in order to wake up to child process
+	 * which may be waiting in a select() call
+	 * on the read fd */
+	if (pipe(resolver_pipe_fd) < 0) {
+		msyslog(LOG_ERR,
+			"unable to open resolver pipe");
+		exit(1);
+	}
+
 	i = fork();
+	/* Shouldn't the code below be re-ordered?
+	 * I.e. first check if the fork() returned an error, then
+	 * check whether we're parent or child.
+	 *     Martin Burnicki
+	 */
 	if (i == 0) {
 		/*
 		 * this used to close everything
@@ -2469,6 +2489,9 @@ do_resolve_internal(void)
 		 * THUS:
 		 */
 
+		/* This is the child process who will read the pipe,
+		 * so we close the write fd */
+		close(resolver_pipe_fd[1]);
 		closelog();
 		kill_asyncio(0);
 
@@ -2517,6 +2540,11 @@ do_resolve_internal(void)
 		(void) signal_no_reset(SIGCHLD, SIG_DFL);
 		abort_resolve();
 	}
+	else {
+		/* This is the parent process who will write to the pipe,
+		 * so we close the read fd */
+		close(resolver_pipe_fd[0]);
+	}
 #else /* SYS_WINNT */
 	{
 		/* NT's equivalent of fork() is _spawn(), but the start point
@@ -2525,6 +2553,11 @@ do_resolve_internal(void)
 		 */
 		DWORD dwThreadId;
 		fflush(stdout);
+		ResolverEventHandle = CreateEvent(NULL, FALSE, FALSE, NULL);
+		if (ResolverEventHandle == NULL) {
+			msyslog(LOG_ERR, "Unable to create resolver event object, can't start ntp_intres");
+			abort_resolve();
+		}
 		ResolverThreadHandle = CreateThread(
 			NULL,				 /* no security attributes	*/
 			0,				 /* use default stack size	*/
@@ -2534,6 +2567,8 @@ do_resolve_internal(void)
 			&dwThreadId);			 /* returns the thread identifier */
 		if (ResolverThreadHandle == NULL) {
 			msyslog(LOG_ERR, "CreateThread() failed, can't start ntp_intres");
+			CloseHandle(ResolverEventHandle);
+			ResolverEventHandle = NULL;
 			abort_resolve();
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.12 2007/06/24 16:55:14 kardel Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.13 2008/08/23 09:10:31 kardel Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -1087,7 +1087,18 @@ getgroup:
 			rbuf = get_full_recv_buffer();
 			while (rbuf != NULL)
 			{
+				if (alarm_flag)
+				{
+					was_alarmed = 1;
+					alarm_flag = 0;
+				}
 				UNBLOCK_IO_AND_ALARM();
+
+				if (was_alarmed)
+				{	/* avoid timer starvation during lengthy I/O handling */
+					timer();
+					was_alarmed = 0;
+				}
 
 				/*
 				 * Call the data procedure to handle each received
