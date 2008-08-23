@@ -433,8 +433,9 @@ int dm_task_get_info(struct dm_task *dmt, struct dm_info *info)
 
 /* Unsupported on NetBSD */
 uint32_t dm_task_get_read_ahead(const struct dm_task *dmt, uint32_t *read_ahead)
-{              
-	return 0;
+{
+	*read_ahead = DM_READ_AHEAD_NONE;
+	return 1;
 }
 
 const char *dm_task_get_name(const struct dm_task *dmt)
@@ -477,7 +478,7 @@ int dm_task_set_ro(struct dm_task *dmt)
 int dm_task_set_read_ahead(struct dm_task *dmt, uint32_t read_ahead,
 			   uint32_t read_ahead_flags)
 {
-	return 0;
+	return 1;
 }
 
 int dm_task_suppress_identical_reload(struct dm_task *dmt)
@@ -584,8 +585,7 @@ struct target *create_target(uint64_t start, uint64_t len, const char *type,
 }
 
 /* Parse given dm task structure to proplib dictionary.  */
-static int _flatten(struct dm_task *dmt, unsigned repeat_count,
-    prop_dictionary_t dm_dict)
+static int _flatten(struct dm_task *dmt, prop_dictionary_t dm_dict)
 {
 	prop_array_t cmd_array;
 	prop_dictionary_t target_spec;
@@ -796,6 +796,8 @@ static int _create_and_load_v4(struct dm_task *dmt)
 	struct dm_task *task;
 	int r;
 
+	printf("create and load called \n");
+	
 	/* Use new task struct to create the device */
 	if (!(task = dm_task_create(DM_DEVICE_CREATE))) {
 		log_error("Failed to create device-mapper task struct");
@@ -944,8 +946,7 @@ no_match:
  * proplib dictionary. This way I keep number of changes in NetBSD version of
  * libdevmapper as small as posible.
  */
-static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
-				     unsigned repeat_count)
+static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command)
 {
 	struct dm_ioctl *dmi;
 	prop_dictionary_t dm_dict_in, dm_dict_out;
@@ -953,8 +954,6 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 	uint32_t flags;
 
 	dm_dict_in = NULL;
-	
-	prop_dictionary_get_uint32(dm_dict_in,DM_IOCTL_FLAGS,&flags);
 	
 	dm_dict_in = prop_dictionary_create(); /* Dictionary send to kernel */
 	dm_dict_out = prop_dictionary_create(); /* Dictionary received from kernel */
@@ -964,8 +963,10 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 	    _cmd_data_v4[dmt->type].name);
 
 	/* Parse dmi from libdevmapper to dictionary */
-	_flatten(dmt, repeat_count, dm_dict_in);
-	
+	_flatten(dmt, dm_dict_in);
+
+	prop_dictionary_get_uint32(dm_dict_in,DM_IOCTL_FLAGS,&flags);
+		
 	if (dmt->type == DM_DEVICE_TABLE)
 		flags |= DM_STATUS_TABLE_FLAG;
 
@@ -979,7 +980,7 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 	
 	prop_dictionary_externalize_to_file(dm_dict_in,"/tmp/test_in");
 	
-	printf("Ioctl type  %s\n",_cmd_data_v4[dmt->type].name);
+	printf("Ioctl type  %s --- flags %d\n",_cmd_data_v4[dmt->type].name,flags);
 
 	/* Send dictionary to kernel and wait for reply. */
 	if (prop_dictionary_sendrecv_ioctl(dm_dict_in,_control_fd,
@@ -1006,7 +1007,7 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
 	}
 
 	prop_dictionary_externalize_to_file(dm_dict_out,"/tmp/test_out");
-	
+
 	/* Parse kernel dictionary to dmi structure and return it to libdevmapper. */
 	dmi = nbsd_dm_dict_to_dmi(dm_dict_out,_cmd_data_v4[dmt->type].cmd);
 out:	
@@ -1048,25 +1049,8 @@ int dm_task_run(struct dm_task *dmt)
 	if (!_open_control())
 		return 0;
 
-repeat_ioctl:
-	if (!(dmi = _do_dm_ioctl(dmt, command, _ioctl_buffer_double_factor)))
+	if (!(dmi = _do_dm_ioctl(dmt, command)))
 		return 0;
-
-	if (dmi->flags & DM_BUFFER_FULL_FLAG) {
-		switch (dmt->type) {
-		case DM_DEVICE_LIST_VERSIONS:
-		case DM_DEVICE_LIST:
-		case DM_DEVICE_DEPS:
-		case DM_DEVICE_STATUS:
-		case DM_DEVICE_TABLE:
-		case DM_DEVICE_WAITEVENT:
-			_ioctl_buffer_double_factor++;
-			dm_free(dmi);
-			goto repeat_ioctl;
-		default:
-			log_error("WARNING: libdevmapper buffer too small for data");
-		}
-	}
 
 	switch (dmt->type) {
 	case DM_DEVICE_CREATE:
