@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.85 2008/06/19 18:47:16 spz Exp $
+$NetBSD: acronyms.comp,v 1.86 2008/08/23 13:06:51 tnn Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -119,6 +119,7 @@ FAT	file allocation table
 FBRAM	frame buffer random access memory
 FCS	frame check sequence
 FDDI	fiber distributed data interface
+FFI	foreign function interface
 FFS	fast file system
 FHSS	frequency hop spread spectrum
 FIR	fast infrared
