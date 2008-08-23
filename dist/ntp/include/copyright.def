@@ -1,8 +1,8 @@
 /* -*- Mode: Text -*- */
 
 copyright = {
-    date  = "1970-2006";
-    owner = "ntp.org";
+    date  = "1970-2008";
+    owner = "David L. Mills and/or others";
     eaddr = "http://bugs.ntp.isc.org, bugs@ntp.org";
     type  = note;
     text  = "see html/copyright.html";

@@ -19,7 +19,7 @@ EXTRA_DIST=	nl_in.c nl.pl layout.std	\
 BUILT_SOURCES+=	ntpdc-opts.c ntpdc-opts.h ntpdc.1 ntpdc-opts.texi	\
 		ntpdc-opts.menu
 man_MANS=	ntpdc.1
-run_ag=         cd $(srcdir) && autogen -L ../include
+run_ag=         cd $(srcdir) && autogen -L ../include --writable
 std_def_list=	$(top_srcdir)/include/debug-opt.def		\
 		$(top_srcdir)/include/autogen-version.def 	\
 		$(top_srcdir)/include/copyright.def 		\
