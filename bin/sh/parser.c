@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.68 2008/04/25 17:32:31 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.69 2008/08/23 10:05:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.68 2008/04/25 17:32:31 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.69 2008/08/23 10:05:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1170,7 +1170,7 @@ checkend: {
 
 				p = line;
 				for (q = eofmark + 1 ; *q && *p == *q ; p++, q++);
-				if (*p == '\n' && *q == '\0') {
+				if ((*p == '\0' || *p == '\n') && *q == '\0') {
 					c = PEOF;
 					plinno++;
 					needprompt = doprompt;
