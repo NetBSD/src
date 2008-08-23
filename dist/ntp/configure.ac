@@ -60,7 +60,11 @@ case "$host" in
     LIBS="$LIBS -lcurses"
     ;;
  *-*-solaris*)
-    CPPFLAGS="$CPPFLAGS -D_XOPEN_SOURCE=500 -D__EXTENSIONS__"
+    # see "man standards".
+    # -D_XOPEN_SOURCE=500 is probably OK for c89 and before
+    # -D_XOPEN_SOURCE=600 seems OK for c99
+    #CPPFLAGS="$CPPFLAGS -D_XOPEN_SOURCE=500 -D__EXTENSIONS__"
+    CPPFLAGS="$CPPFLAGS -D__EXTENSIONS__"
     libxnet=-lxnet
     ;;
 esac

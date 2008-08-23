@@ -1,3 +1,1231 @@
+ChangeSet@1.1541, 2008-08-17 05:30:47-04:00, stenn@whimsy.udel.edu +26 -0
+  NTP_4_2_4P5
+  TAG: NTP_4_2_4P5
+
+  ChangeLog@1.44, 2008-08-17 05:30:27-04:00, stenn@whimsy.udel.edu +3 -0
+    NTP_4_2_4P5
+
+  ntpd/ntpd-opts.c@1.74, 2008-08-17 05:30:28-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  ntpd/ntpd-opts.h@1.74, 2008-08-17 05:30:28-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5
+
+  ntpd/ntpd-opts.texi@1.73, 2008-08-17 05:30:29-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5
+
+  ntpd/ntpd.1@1.72, 2008-08-17 05:30:30-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  ntpd/ntpdsim-opts.c@1.74, 2008-08-17 05:30:30-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  ntpd/ntpdsim-opts.h@1.74, 2008-08-17 05:30:31-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5
+
+  ntpd/ntpdsim-opts.texi@1.72, 2008-08-17 05:30:32-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5
+
+  ntpd/ntpdsim.1@1.72, 2008-08-17 05:30:33-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  ntpdc/ntpdc-opts.c@1.74, 2008-08-17 05:30:33-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  ntpdc/ntpdc-opts.h@1.74, 2008-08-17 05:30:34-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5
+
+  ntpdc/ntpdc-opts.texi@1.72, 2008-08-17 05:30:34-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5
+
+  ntpdc/ntpdc.1@1.72, 2008-08-17 05:30:35-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  ntpq/ntpq-opts.c@1.76, 2008-08-17 05:30:35-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  ntpq/ntpq-opts.h@1.76, 2008-08-17 05:30:36-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5
+
+  ntpq/ntpq-opts.texi@1.73, 2008-08-17 05:30:36-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5
+
+  ntpq/ntpq.1@1.72, 2008-08-17 05:30:37-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  packageinfo.sh@1.101, 2008-08-17 05:30:37-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  sntp/sntp-opts.c@1.72, 2008-08-17 05:30:38-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  sntp/sntp-opts.h@1.72, 2008-08-17 05:30:39-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5
+
+  sntp/sntp-opts.texi@1.69, 2008-08-17 05:30:39-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5
+
+  sntp/sntp.1@1.72, 2008-08-17 05:30:40-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  util/ntp-keygen-opts.c@1.73, 2008-08-17 05:30:40-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+  util/ntp-keygen-opts.h@1.73, 2008-08-17 05:30:41-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5
+
+  util/ntp-keygen-opts.texi@1.71, 2008-08-17 05:30:42-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5
+
+  util/ntp-keygen.1@1.71, 2008-08-17 05:30:42-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5
+
+ChangeSet@1.1540, 2008-08-17 05:29:47-04:00, stenn@whimsy.udel.edu +1 -0
+  typo
+
+  scripts/addChangeLogTag@1.2, 2008-08-17 05:29:37-04:00, stenn@whimsy.udel.edu +1 -1
+    typo
+
+ChangeSet@1.1539, 2008-08-17 03:28:53-04:00, stenn@whimsy.udel.edu +5 -0
+  4.2.4p5 prep
+
+  .point-changed-filelist@1.2, 2008-08-17 03:27:42-04:00, stenn@whimsy.udel.edu +1 -0
+    4.2.4p5 prep
+
+  NEWS@1.99, 2008-08-17 03:27:42-04:00, stenn@whimsy.udel.edu +17 -0
+    4.2.4p5 prep
+
+  packageinfo.sh@1.100, 2008-08-17 03:27:43-04:00, stenn@whimsy.udel.edu +1 -1
+    4.2.4p5 prep
+
+  scripts/addChangeLogTag@1.1, 2008-08-17 03:27:55-04:00, stenn@whimsy.udel.edu +27 -0
+    BitKeeper file /deacon/backroom/ntp-stable/scripts/addChangeLogTag
+
+  scripts/addChangeLogTag@1.0, 2008-08-17 03:27:55-04:00, stenn@whimsy.udel.edu +0 -0
+
+  scripts/genChangeLogTag@1.1, 2008-08-17 03:27:55-04:00, stenn@whimsy.udel.edu +6 -0
+    BitKeeper file /deacon/backroom/ntp-stable/scripts/genChangeLogTag
+
+  scripts/genChangeLogTag@1.0, 2008-08-17 03:27:55-04:00, stenn@whimsy.udel.edu +0 -0
+
+ChangeSet@1.1538, 2008-08-16 22:42:08-04:00, stenn@whimsy.udel.edu +2 -0
+  [BUG 1051] Month off by one in leap second message written to clockstats
+
+  ChangeLog@1.43, 2008-08-16 22:41:50-04:00, stenn@whimsy.udel.edu +2 -0
+    [BUG 1051] Month off by one in leap second message written to clockstats
+
+  ntpd/refclock_oncore.c@1.63, 2008-08-16 22:41:50-04:00, stenn@whimsy.udel.edu +1 -1
+    [BUG 1051] Month off by one in leap second message written to clockstats
+
+ChangeSet@1.1537, 2008-08-10 07:44:31-04:00, stenn@whimsy.udel.edu +25 -0
+  NTP_4_2_4P5_RC2
+  TAG: NTP_4_2_4P5_RC2
+
+  ntpd/ntpd-opts.c@1.73, 2008-08-10 07:44:09-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC2
+
+  ntpd/ntpd-opts.h@1.73, 2008-08-10 07:44:09-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5_RC2
+
+  ntpd/ntpd-opts.texi@1.72, 2008-08-10 07:44:10-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5_RC2
+
+  ntpd/ntpd.1@1.71, 2008-08-10 07:44:10-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC2
+
+  ntpd/ntpdsim-opts.c@1.73, 2008-08-10 07:44:11-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC2
+
+  ntpd/ntpdsim-opts.h@1.73, 2008-08-10 07:44:12-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5_RC2
+
+  ntpd/ntpdsim-opts.texi@1.71, 2008-08-10 07:44:12-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5_RC2
+
+  ntpd/ntpdsim.1@1.71, 2008-08-10 07:44:13-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC2
+
+  ntpdc/ntpdc-opts.c@1.73, 2008-08-10 07:44:14-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC2
+
+  ntpdc/ntpdc-opts.h@1.73, 2008-08-10 07:44:15-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5_RC2
+
+  ntpdc/ntpdc-opts.texi@1.71, 2008-08-10 07:44:16-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5_RC2
+
+  ntpdc/ntpdc.1@1.71, 2008-08-10 07:44:17-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC2
+
+  ntpq/ntpq-opts.c@1.75, 2008-08-10 07:44:17-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC2
+
+  ntpq/ntpq-opts.h@1.75, 2008-08-10 07:44:18-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5_RC2
+
+  ntpq/ntpq-opts.texi@1.72, 2008-08-10 07:44:19-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5_RC2
+
+  ntpq/ntpq.1@1.71, 2008-08-10 07:44:20-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC2
+
+  packageinfo.sh@1.99, 2008-08-10 07:44:20-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5_RC2
+
+  sntp/sntp-opts.c@1.71, 2008-08-10 07:44:22-04:00, stenn@whimsy.udel.edu +4 -5
+    NTP_4_2_4P5_RC2
+
+  sntp/sntp-opts.h@1.71, 2008-08-10 07:44:23-04:00, stenn@whimsy.udel.edu +5 -6
+    NTP_4_2_4P5_RC2
+
+  sntp/sntp-opts.texi@1.68, 2008-08-10 07:44:23-04:00, stenn@whimsy.udel.edu +2 -3
+    NTP_4_2_4P5_RC2
+
+  sntp/sntp.1@1.71, 2008-08-10 07:44:24-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5_RC2
+
+  util/ntp-keygen-opts.c@1.72, 2008-08-10 07:44:25-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC2
+
+  util/ntp-keygen-opts.h@1.72, 2008-08-10 07:44:25-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5_RC2
+
+  util/ntp-keygen-opts.texi@1.70, 2008-08-10 07:44:27-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5_RC2
+
+  util/ntp-keygen.1@1.70, 2008-08-10 07:44:27-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC2
+
+ChangeSet@1.1531.3.1, 2008-08-10 02:22:22-04:00, stenn@whimsy.udel.edu +1 -0
+  triggert needs to handle rooted RESYNC paths now
+
+  BitKeeper/triggers/triggert@1.5, 2008-08-10 02:22:11-04:00, stenn@whimsy.udel.edu +3 -2
+    triggert needs to handle rooted RESYNC paths now
+
+ChangeSet@1.1534, 2008-08-09 20:05:06-04:00, stenn@whimsy.udel.edu +2 -0
+  AutoGen'd files must be writable
+
+  sntp/Makefile.am@1.23, 2008-08-09 20:04:56-04:00, stenn@whimsy.udel.edu +2 -2
+    AutoGen'd files must be writable
+
+  sntp/sntp-opts.menu@1.3, 2008-08-09 20:04:10-04:00, stenn@whimsy.udel.edu +0 -0
+    Change mode to -rw-rw-r--
+
+ChangeSet@1.1531.2.1, 2008-08-07 20:44:31+02:00, burnicki@pogo.udel.edu +3 -0
+  [Bug 450] Windows only: Under original Windows NT we must not discard the
+  wildcard socket to workaround a bug in NT's getsockname().
+
+  ChangeLog@1.39.2.1, 2008-08-07 20:44:30+02:00, burnicki@pogo.udel.edu +2 -0
+    [Bug 450] Windows only: Under original Windows NT we must not discard the
+    wildcard socket to workaround a bug in NT's getsockname().
+
+  ntpd/ntp_peer.c@1.99.1.1, 2008-08-07 20:44:30+02:00, burnicki@pogo.udel.edu +10 -2
+    [Bug 450] Windows only: Under original Windows NT we must not discard the
+    wildcard socket to workaround a bug in NT's getsockname().
+
+  ports/winnt/ntpd/ntservice.c@1.11, 2008-08-07 20:44:30+02:00, burnicki@pogo.udel.edu +8 -1
+    [Bug 450] Windows only: Under original Windows NT we must not discard the
+    wildcard socket to workaround a bug in NT's getsockname().
+
+ChangeSet@1.1531.1.2, 2008-08-05 09:56:08+02:00, burnicki@pogo.udel.edu +1 -0
+  Removed Windows-specific debug code which has been added in ntp-dev and fails to compile in ntp-stable.
+
+  ports/winnt/ntpd/ntp_iocompletionport.c@1.26, 2008-08-05 09:56:08+02:00, burnicki@pogo.udel.edu +0 -8
+    Removed Windows-specific debug code which has been added in ntp-dev and fails to compile in ntp-stable.
+
+ChangeSet@1.1531.1.1, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +10 -0
+  [Bug 841] Obsolete the "dynamic" keyword and make deferred binding 
+  to local interfaces the default.
+  Emit a warning if that keyword is used for configuration.
+
+  ChangeLog@1.39.1.1, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +3 -0
+    [Bug 841] Obsolete the "dynamic" keyword and make deferred binding
+    to local interfaces the default.
+    Emit a warning if that keyword is used for configuration.
+
+  html/confopt.html@1.36, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +0 -2
+    Bug 841: Obsolete the "dynamic" keyword.
+
+  html/ntpdc.html@1.27, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +2 -3
+    Bug 841: Obsolete the "dynamic" keyword.
+
+  include/ntp.h@1.129, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +0 -1
+    Bug 841: Obsolete the "dynamic" keyword.
+
+  include/ntp_request.h@1.31, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +0 -1
+    Bug 841: Obsolete the "dynamic" keyword.
+
+  ntpd/ntp_config.c@1.144, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +4 -2
+    [Bug 841] Obsolete the "dynamic" keyword and make deferred binding
+    to local interfaces the default.
+    Emit a warning if that keyword is used for configuration.
+
+  ntpd/ntp_intres.c@1.52, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +1 -3
+    Bug 841: Obsolete the "dynamic" keyword.
+
+  ntpd/ntp_peer.c@1.100, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +5 -25
+    [Bug 841] Obsolete the "dynamic" keyword and make deferred binding
+    to local interfaces the default.
+
+  ntpd/ntp_request.c@1.66, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +1 -3
+    Bug 841: Obsolete the "dynamic" keyword.
+
+  ntpdc/ntpdc_ops.c@1.50, 2008-08-05 09:50:23+02:00, burnicki@pogo.udel.edu +3 -3
+    [Bug 841] Obsolete the "dynamic" keyword and make deferred binding
+    to local interfaces the default.
+
+ChangeSet@1.1532, 2008-07-22 11:41:26+02:00, burnicki@pogo.udel.edu +2 -0
+  [Bug 1038] Built-in getpass() function also prompts for password if not built with DEBUG.
+
+  ChangeLog@1.40, 2008-07-22 11:41:25+02:00, burnicki@pogo.udel.edu +1 -0
+    [Bug 1038] Built-in getpass() function also prompts for password if not built with DEBUG.
+
+  libntp/machines.c@1.19, 2008-07-22 11:41:25+02:00, burnicki@pogo.udel.edu +2 -2
+    [Bug 1038] Built-in getpass() function also prompts for password if not built with DEBUG.
+
+ChangeSet@1.1531, 2008-05-20 03:51:01-04:00, stenn@whimsy.udel.edu +25 -0
+  NTP_4_2_4P5_RC1
+  TAG: NTP_4_2_4P5_RC1
+
+  ntpd/ntpd-opts.c@1.72, 2008-05-20 03:50:37-04:00, stenn@whimsy.udel.edu +6 -7
+    NTP_4_2_4P5_RC1
+
+  ntpd/ntpd-opts.h@1.72, 2008-05-20 03:50:37-04:00, stenn@whimsy.udel.edu +6 -7
+    NTP_4_2_4P5_RC1
+
+  ntpd/ntpd-opts.texi@1.71, 2008-05-20 03:50:38-04:00, stenn@whimsy.udel.edu +8 -11
+    NTP_4_2_4P5_RC1
+
+  ntpd/ntpd.1@1.70, 2008-05-20 03:50:39-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P5_RC1
+
+  ntpd/ntpdsim-opts.c@1.72, 2008-05-20 03:50:40-04:00, stenn@whimsy.udel.edu +6 -7
+    NTP_4_2_4P5_RC1
+
+  ntpd/ntpdsim-opts.h@1.72, 2008-05-20 03:50:41-04:00, stenn@whimsy.udel.edu +6 -7
+    NTP_4_2_4P5_RC1
+
+  ntpd/ntpdsim-opts.texi@1.70, 2008-05-20 03:50:42-04:00, stenn@whimsy.udel.edu +3 -4
+    NTP_4_2_4P5_RC1
+
+  ntpd/ntpdsim.1@1.70, 2008-05-20 03:50:43-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P5_RC1
+
+  ntpdc/ntpdc-opts.c@1.72, 2008-05-20 03:50:44-04:00, stenn@whimsy.udel.edu +6 -7
+    NTP_4_2_4P5_RC1
+
+  ntpdc/ntpdc-opts.h@1.72, 2008-05-20 03:50:44-04:00, stenn@whimsy.udel.edu +6 -7
+    NTP_4_2_4P5_RC1
+
+  ntpdc/ntpdc-opts.texi@1.70, 2008-05-20 03:50:45-04:00, stenn@whimsy.udel.edu +5 -6
+    NTP_4_2_4P5_RC1
+
+  ntpdc/ntpdc.1@1.70, 2008-05-20 03:50:46-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5_RC1
+
+  ntpq/ntpq-opts.c@1.74, 2008-05-20 03:50:47-04:00, stenn@whimsy.udel.edu +6 -7
+    NTP_4_2_4P5_RC1
+
+  ntpq/ntpq-opts.h@1.74, 2008-05-20 03:50:47-04:00, stenn@whimsy.udel.edu +6 -7
+    NTP_4_2_4P5_RC1
+
+  ntpq/ntpq-opts.texi@1.71, 2008-05-20 03:50:48-04:00, stenn@whimsy.udel.edu +5 -6
+    NTP_4_2_4P5_RC1
+
+  ntpq/ntpq.1@1.70, 2008-05-20 03:50:49-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5_RC1
+
+  packageinfo.sh@1.98, 2008-05-20 03:50:50-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC1
+
+  sntp/sntp-opts.c@1.70, 2008-05-20 03:50:51-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC1
+
+  sntp/sntp-opts.h@1.70, 2008-05-20 03:50:52-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5_RC1
+
+  sntp/sntp-opts.texi@1.67, 2008-05-20 03:50:52-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P5_RC1
+
+  sntp/sntp.1@1.70, 2008-05-20 03:50:53-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P5_RC1
+
+  util/ntp-keygen-opts.c@1.71, 2008-05-20 03:50:54-04:00, stenn@whimsy.udel.edu +6 -7
+    NTP_4_2_4P5_RC1
+
+  util/ntp-keygen-opts.h@1.71, 2008-05-20 03:50:54-04:00, stenn@whimsy.udel.edu +6 -7
+    NTP_4_2_4P5_RC1
+
+  util/ntp-keygen-opts.texi@1.69, 2008-05-20 03:50:55-04:00, stenn@whimsy.udel.edu +7 -9
+    NTP_4_2_4P5_RC1
+
+  util/ntp-keygen.1@1.69, 2008-05-20 03:50:56-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P5_RC1
+
+ChangeSet@1.1530, 2008-05-18 05:14:37-04:00, stenn@whimsy.udel.edu +1 -0
+  Start the 4.2.4p5 release candidate cycle
+
+  packageinfo.sh@1.97, 2008-05-18 05:14:27-04:00, stenn@whimsy.udel.edu +1 -1
+    Start the 4.2.4p5 release candidate cycle
+
+ChangeSet@1.1529, 2008-04-11 18:41:57-04:00, stenn@whimsy.udel.edu +1 -0
+  Solaris _XOPEN_SOURCE updates
+
+  configure.ac@1.401, 2008-04-11 18:41:47-04:00, stenn@whimsy.udel.edu +5 -1
+    Solaris _XOPEN_SOURCE updates
+
+ChangeSet@1.1524.1.3, 2008-04-10 02:09:52-04:00, stenn@pogo.udel.edu +1 -0
+  Changelog cleanup
+
+  ChangeLog@1.37.1.2, 2008-04-10 02:08:57-04:00, stenn@pogo.udel.edu +2 -1
+
+ChangeSet@1.1524.1.2, 2008-04-08 12:20:22+02:00, burnicki@pogo.udel.edu +1 -0
+  Always sleep a little before calling doconfigure() to make sure the network is completely up.
+
+  ntpd/ntp_intres.c@1.51, 2008-04-08 12:20:21+02:00, burnicki@pogo.udel.edu +5 -6
+    Always sleep a little before calling doconfigure() to make sure the network is completely up.
+
+ChangeSet@1.1524.1.1, 2008-04-03 10:19:03-04:00, burnicki@pogo.udel.edu +5 -0
+  [Bug 987] Wake up the resolver thread/process when a new interface has become available.
+
+  ChangeLog@1.37.1.1, 2008-04-03 10:18:59-04:00, burnicki@pogo.udel.edu +1 -0
+    [Bug 987] Wake up the resolver thread/process when a new interface has become available.
+
+  include/ntpd.h@1.98, 2008-04-03 10:18:59-04:00, burnicki@pogo.udel.edu +5 -0
+    Added vars used to wake up the resolver process/thread.
+
+  ntpd/ntp_config.c@1.143, 2008-04-03 10:18:59-04:00, burnicki@pogo.udel.edu +34 -1
+    Initialize synchronization variables when the resolver process/thread is started.
+
+  ntpd/ntp_intres.c@1.50, 2008-04-03 10:18:59-04:00, burnicki@pogo.udel.edu +64 -65
+    Enable the resolver to be woken up when a new interface has become available.
+
+  ntpd/ntp_io.c@1.256, 2008-04-03 10:19:00-04:00, burnicki@pogo.udel.edu +25 -5
+    Wake up the resolver thread/process when a new interface has become available.
+
+ChangeSet@1.1527, 2008-03-24 22:12:42-04:00, mayer@pogo.udel.edu +1 -0
+  bugs 993 a d 959
+
+  ChangeLog@1.38, 2008-03-24 22:12:26-04:00, mayer@pogo.udel.edu +2 -0
+    bugs 993 a d 959
+
+ChangeSet@1.1526, 2008-03-24 21:41:55-04:00, mayer@pogo.udel.edu +1 -0
+  [Bug 959] Refclock on Windows not properly releasing recvbuffs
+
+  ports/winnt/ntpd/ntp_iocompletionport.c@1.25, 2008-03-24 21:41:37-04:00, mayer@pogo.udel.edu +25 -13
+    [Bug 959] Refclock on Windows not properly releasing recvbuffs
+
+ChangeSet@1.1525, 2008-03-24 21:40:32-04:00, mayer@pogo.udel.edu +1 -0
+  [Bug 993] Windows: Fix memory leak when fetching system messages
+
+  ports/winnt/libisc/isc_strerror.c@1.5, 2008-03-24 21:40:07-04:00, mayer@pogo.udel.edu +78 -18
+    [Bug 993] Windows: Fix memory leak when fetching system messages
+
+ChangeSet@1.1520.3.5, 2008-03-22 02:12:10-05:00, stenn@whimsy.udel.edu +2 -0
+  [Bug 977] Fix mismatching #ifdefs for builds without IPv6
+
+  ChangeLog@1.35.3.4, 2008-03-22 02:11:57-05:00, stenn@whimsy.udel.edu +1 -0
+    [Bug 977] Fix mismatching #ifdefs for builds without IPv6
+
+  libisc/net.c@1.9, 2008-03-22 02:11:58-05:00, stenn@whimsy.udel.edu +1 -1
+    [Bug 977] Fix mismatching #ifdefs for builds without IPv6
+
+ChangeSet@1.1520.3.4, 2008-03-22 02:02:36-05:00, stenn@whimsy.udel.edu +3 -0
+  Update the copyright year
+
+  ChangeLog@1.35.3.3, 2008-03-22 02:02:24-05:00, stenn@whimsy.udel.edu +8 -6
+    Update the copyright year
+
+  html/copyright.html@1.37, 2008-03-22 02:02:25-05:00, stenn@whimsy.udel.edu +1 -1
+    Update the copyright year
+
+  include/copyright.def@1.6, 2008-03-22 02:02:25-05:00, stenn@whimsy.udel.edu +1 -1
+    Update the copyright year
+
+ChangeSet@1.1520.3.3, 2008-03-22 01:58:52-05:00, stenn@whimsy.udel.edu +5 -0
+  Make autogen-generated files writable
+
+  ntpd/Makefile.am@1.54, 2008-03-22 01:57:08-05:00, stenn@whimsy.udel.edu +1 -1
+    Make autogen-generated files writable
+
+  ntpdc/Makefile.am@1.35, 2008-03-22 01:57:09-05:00, stenn@whimsy.udel.edu +1 -1
+    Make autogen-generated files writable
+
+  ntpq/Makefile.am@1.27, 2008-03-22 01:57:10-05:00, stenn@whimsy.udel.edu +1 -1
+    Make autogen-generated files writable
+
+  sntp/Makefile.am@1.22, 2008-03-22 01:57:11-05:00, stenn@whimsy.udel.edu +1 -1
+    Make autogen-generated files writable
+
+  util/Makefile.am@1.36, 2008-03-22 01:57:11-05:00, stenn@whimsy.udel.edu +1 -1
+    Make autogen-generated files writable
+
+ChangeSet@1.1520.4.1, 2008-03-16 09:15:13-04:00, burnicki@pogo.udel.edu +2 -0
+  [Bug 957] Windows only: Let command line parameters from the Windows SCM GUI override the standard parameters from the ImagePath registry key.
+
+  ChangeLog@1.35.4.1, 2008-03-16 09:15:10-04:00, burnicki@pogo.udel.edu +3 -0
+    [Bug 957] Let command line parameters from the Windows SCM GUI override the standard parameters from the ImagePath registry key.
+
+  ports/winnt/ntpd/ntservice.c@1.10, 2008-03-16 09:15:11-04:00, burnicki@pogo.udel.edu +11 -2
+    [Bug 957] Let command line parameters from the Windows SCM GUI override the standard parameters from the ImagePath registry key.
+
+ChangeSet@1.1520.3.1, 2008-03-03 11:50:50+01:00, martin@pc-martin.py.meinberg.de +2 -0
+  [Bug 532] nptdate timeout is too long if several servers are supplied
+  [Bug 698] timeBeginPeriod is called without timeEndPeriod in some NTP tools
+  [Bug 857] ntpdate debug mode adjusts system clock when it shouldn't
+  [Bug 908] ntpdate crashes sometimes
+  [Bug 982] ntpdate(and ntptimeset) buffer overrun if HAVE_POLL_H isn't set (dup of 908)
+  [Bug 997] ntpdate buffer too small and unsafe
+  Under Windows check whether NTP port in use under same conditions as under other OSs.
+  Fixed some typos and indents (tabs/spaces).
+
+  ChangeLog@1.35.3.1, 2008-03-03 11:50:49+01:00, martin@pc-martin.py.meinberg.de +10 -0
+    [Bug 532] nptdate timeout is too long if several servers are supplied
+    [Bug 698] timeBeginPeriod is called without timeEndPeriod in some NTP tools
+    [Bug 857] ntpdate debug mode adjusts system clock when it shouldn't
+    [Bug 908] ntpdate crashes sometimes
+    [Bug 982] ntpdate(and ntptimeset) buffer overrun if HAVE_POLL_H isn't set (dup of 908)
+    [Bug 997] ntpdate buffer too small and unsafe
+    Under Windows check whether NTP port in use under same conditions as under other OSs.
+    Fixed some typos and indents (tabs/spaces).
+
+  ntpdate/ntpdate.c@1.62, 2008-03-03 11:50:49+01:00, martin@pc-martin.py.meinberg.de +101 -82
+    [Bug 532] nptdate timeout is too long if several servers are supplied
+    [Bug 698] timeBeginPeriod is called without timeEndPeriod in some NTP tools
+    [Bug 857] ntpdate debug mode adjusts system clock when it shouldn't
+    [Bug 908] ntpdate crashes sometimes
+    [Bug 982] ntpdate(and ntptimeset) buffer overrun if HAVE_POLL_H isn't set (dup of 908)
+    [Bug 997] ntpdate buffer too small and unsafe
+    Under Windows check whether NTP port in use under same conditions as under other OSs.
+    Fixed some typos and indents (tabs/spaces).
+
+ChangeSet@1.1520.2.7, 2008-02-20 12:13:24+01:00, martin@pc-martin4. +2 -0
+  [Bug 909] Define int32_t for Windows (backport from ntp-dev)
+
+  ChangeLog@1.35.2.3, 2008-02-20 12:13:24+01:00, martin@pc-martin4. +1 -0
+    [Bug 909] Define int32_t for Windows (backport from ntp-dev)
+
+  ports/winnt/include/config.h@1.47, 2008-02-20 12:13:24+01:00, martin@pc-martin4. +2 -0
+    [Bug 909] Define int32_t for Windows (backport from ntp-dev)
+
+ChangeSet@1.1520.2.6, 2008-02-19 11:08:55-05:00, burnicki@pogo.udel.edu +1 -0
+  Fixed indentation.
+
+  ntpd/ntp_io.c@1.255, 2008-02-19 11:08:52-05:00, burnicki@pogo.udel.edu +1 -1
+    Fixed indentation.
+
+ChangeSet@1.1520.2.5, 2008-02-18 09:30:34-05:00, burnicki@pogo.udel.edu +1 -0
+  Use new get_free_recv_buffer_alloc().
+
+  ports/winnt/ntpd/ntp_iocompletionport.c@1.24, 2008-02-18 09:30:31-05:00, burnicki@pogo.udel.edu +4 -4
+    Use new get_free_recv_buffer_alloc().
+
+ChangeSet@1.1520.2.4, 2008-02-17 17:48:29+00:00, kardel@pogo.udel.edu +1 -0
+  recvbuff.c:
+    Bug 1000: add some pico optimizations
+
+  libntp/recvbuff.c@1.29, 2008-02-17 17:42:21+00:00, kardel@pogo.udel.edu +5 -8
+    Bug 1000: add some pico optimizations
+
+ChangeSet@1.1520.2.3, 2008-02-17 08:38:07+00:00, kardel@pogo.udel.edu +2 -0
+  ntpd.c:
+    Bug 1000: avoid timer() starvation during high load conditions
+  ChangeLog:
+    Bug 1000: additionally fix timer() starvation during high load
+
+  ChangeLog@1.35.2.2, 2008-02-17 08:37:20+00:00, kardel@pogo.udel.edu +1 -0
+    Bug 1000: additionally fix timer() starvation during high load
+
+  ntpd/ntpd.c@1.85, 2008-02-17 08:34:13+00:00, kardel@pogo.udel.edu +11 -0
+    Bug 1000: avoid timer() starvation during high load conditions
+
+ChangeSet@1.1520.2.2, 2008-02-17 08:10:59+00:00, kardel@pogo.udel.edu +1 -0
+  recvbuff.c:
+    Bug 1000: replenish when having expeirenced empty free lists
+
+  libntp/recvbuff.c@1.28, 2008-02-17 08:09:37+00:00, kardel@pogo.udel.edu +1 -1
+    Bug 1000: replenish when having expeirenced empty free lists
+
+ChangeSet@1.1520.2.1, 2008-02-17 07:31:29+00:00, kardel@pogo.udel.edu +4 -0
+  recvbuff.c, recvbuff.h, ntp_io.c, ChangeLog:
+    Bug 1000: Potentially insufficient number of receive buffers at startup
+
+  ChangeLog@1.35.2.1, 2008-02-17 07:29:23+00:00, kardel@pogo.udel.edu +3 -0
+    Bug 1000: Potentially insufficient number of receive buffers at startup
+
+  include/recvbuff.h@1.13, 2008-02-17 07:30:35+00:00, kardel@pogo.udel.edu +2 -1
+    Bug 1000: Potentially insufficient number of receive buffers at startup
+
+  libntp/recvbuff.c@1.27, 2008-02-17 07:30:09+00:00, kardel@pogo.udel.edu +30 -11
+    Bug 1000: Potentially insufficient number of receive buffers at startup
+
+  ntpd/ntp_io.c@1.254, 2008-02-17 07:30:50+00:00, kardel@pogo.udel.edu +6 -2
+    Bug 1000: Potentially insufficient number of receive buffers at startup
+
+ChangeSet@1.1520.1.1, 2008-01-26 06:43:33+00:00, kardel@pogo.udel.edu +3 -0
+  ntpdbase-opts.def, ChangeLog, cmd_args.c:
+    remove minimum interface update interval restriction
+
+  ChangeLog@1.35.1.1, 2008-01-26 06:42:11+00:00, kardel@pogo.udel.edu +2 -0
+    remove minimum interface update interval restriction
+
+  ntpd/cmd_args.c@1.48, 2008-01-26 06:42:47+00:00, kardel@pogo.udel.edu +2 -2
+    remove minimum interface update interval restriction
+
+  ntpd/ntpdbase-opts.def@1.11, 2008-01-26 06:43:10+00:00, kardel@pogo.udel.edu +1 -1
+    remove minimum interface update interval restriction
+
+ChangeSet@1.1523, 2007-11-01 03:52:00-04:00, clemens@pogo.udel.edu +1 -0
+  *          Negative-sawtooth not applied correctly for oncore 12 channel
+             receiver. Fixed.
+  *          Startup code for original LinuxPPS removed.  LinuxPPS now
+             conforms to the PPSAPI.
+
+  ChangeLog@1.36, 2007-11-01 03:51:58-04:00, clemens@pogo.udel.edu +4 -0
+    *          Negative-sawtooth not applied correctly for oncore 12 channel
+               receiver. Fixed.
+    *          Startup code for original LinuxPPS removed.  LinuxPPS now
+               conforms to the PPSAPI.
+
+ChangeSet@1.1522, 2007-11-01 03:29:24-04:00, clemens@pogo.udel.edu +1 -0
+  The original version of LinuxPPS did not comply with the PPSAPI and required
+  some changes to the startup code in refclock_oncore.c .  The current version
+  complies, and these changes can be removed.
+
+  ntpd/refclock_oncore.c@1.62, 2007-11-01 03:29:21-04:00, clemens@pogo.udel.edu +1 -56
+    The original version of LinuxPPS did not comply with the PPSAPI and required
+    some changes to the startup code in refclock_oncore.c .  The current version
+    complies, and these changes can be removed.
+
+ChangeSet@1.1521, 2007-11-01 02:16:36-04:00, clemens@pogo.udel.edu +1 -0
+  The oncore hardware provides a 'negative saw-tooth' the offset of the PPS signal
+  which is on the zero crossing of its internal clock, from its true value.  the
+  refclock_oncore.c driver applies this difference to correct the time of the
+  provided timestamp.  This value was being applied correctly for the 6 and 8 channel
+  receivers, but not for the 12 channel.  This has been corrected.
+
+  ntpd/refclock_oncore.c@1.61, 2007-11-01 02:16:33-04:00, clemens@pogo.udel.edu +2 -2
+    The oncore hardware provides a 'negative saw-tooth' the offset of the PPS signal
+    which is on the zero crossing of its internal clock, from its true value.  the
+    refclock_oncore.c driver applies this difference to correct the time of the
+    provided timestamp.  This value was being applied correctly for the 6 and 8 channel
+    receivers, but not for the 12 channel.  This has been corrected.
+
+ChangeSet@1.1520, 2007-09-10 20:40:19-04:00, stenn@whimsy.udel.edu +25 -0
+  NTP_4_2_4P4
+  TAG: NTP_4_2_4P4
+
+  ntpd/ntpd-opts.c@1.71, 2007-09-10 20:39:55-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  ntpd/ntpd-opts.h@1.71, 2007-09-10 20:39:56-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4
+
+  ntpd/ntpd-opts.texi@1.70, 2007-09-10 20:39:57-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4
+
+  ntpd/ntpd.1@1.69, 2007-09-10 20:39:57-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  ntpd/ntpdsim-opts.c@1.71, 2007-09-10 20:39:58-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  ntpd/ntpdsim-opts.h@1.71, 2007-09-10 20:39:58-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4
+
+  ntpd/ntpdsim-opts.texi@1.69, 2007-09-10 20:40:00-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4
+
+  ntpd/ntpdsim.1@1.69, 2007-09-10 20:40:00-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  ntpdc/ntpdc-opts.c@1.71, 2007-09-10 20:40:01-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  ntpdc/ntpdc-opts.h@1.71, 2007-09-10 20:40:02-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4
+
+  ntpdc/ntpdc-opts.texi@1.69, 2007-09-10 20:40:03-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4
+
+  ntpdc/ntpdc.1@1.69, 2007-09-10 20:40:03-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  ntpq/ntpq-opts.c@1.73, 2007-09-10 20:40:04-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  ntpq/ntpq-opts.h@1.73, 2007-09-10 20:40:05-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4
+
+  ntpq/ntpq-opts.texi@1.70, 2007-09-10 20:40:06-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4
+
+  ntpq/ntpq.1@1.69, 2007-09-10 20:40:06-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  packageinfo.sh@1.96, 2007-09-10 20:40:07-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  sntp/sntp-opts.c@1.69, 2007-09-10 20:40:08-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  sntp/sntp-opts.h@1.69, 2007-09-10 20:40:08-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4
+
+  sntp/sntp-opts.texi@1.66, 2007-09-10 20:40:09-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4
+
+  sntp/sntp.1@1.69, 2007-09-10 20:40:10-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  util/ntp-keygen-opts.c@1.70, 2007-09-10 20:40:11-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+  util/ntp-keygen-opts.h@1.70, 2007-09-10 20:40:12-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4
+
+  util/ntp-keygen-opts.texi@1.68, 2007-09-10 20:40:13-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4
+
+  util/ntp-keygen.1@1.68, 2007-09-10 20:40:14-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4
+
+ChangeSet@1.1519, 2007-09-10 16:56:09-04:00, stenn@whimsy.udel.edu +3 -0
+  Release 4.2.4p4
+
+  ChangeLog@1.35, 2007-09-10 16:55:51-04:00, stenn@whimsy.udel.edu +3 -0
+    Release 4.2.4p4
+
+  NEWS@1.98, 2007-09-10 16:55:54-04:00, stenn@whimsy.udel.edu +11 -0
+    Release 4.2.4p4
+
+  packageinfo.sh@1.95, 2007-09-10 16:55:58-04:00, stenn@whimsy.udel.edu +1 -1
+    Release 4.2.4p4
+
+ChangeSet@1.1518, 2007-09-10 01:57:20-04:00, stenn@whimsy.udel.edu +3 -0
+  [Bug 902] Fix problems with the -6 flag
+
+  ChangeLog@1.34, 2007-09-10 01:57:02-04:00, stenn@whimsy.udel.edu +1 -0
+    [Bug 902] Fix problems with the -6 flag
+
+  libopts/save.c@1.2, 2007-09-10 01:57:02-04:00, stenn@whimsy.udel.edu +11 -2
+    [Bug 902] Fix problems with the -6 flag
+
+  sntp/libopts/save.c@1.2, 2007-09-10 01:57:03-04:00, stenn@whimsy.udel.edu +11 -2
+    [Bug 902] Fix problems with the -6 flag
+
+ChangeSet@1.1517, 2007-08-28 15:34:55-04:00, stenn@whimsy.udel.edu +25 -0
+  NTP_4_2_4P4_RC2
+  TAG: NTP_4_2_4P4_RC2
+
+  ntpd/ntpd-opts.c@1.70, 2007-08-28 15:34:28-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P4_RC2
+
+  ntpd/ntpd-opts.h@1.70, 2007-08-28 15:34:29-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P4_RC2
+
+  ntpd/ntpd-opts.texi@1.69, 2007-08-28 15:34:31-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC2
+
+  ntpd/ntpd.1@1.68, 2007-08-28 15:34:32-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC2
+
+  ntpd/ntpdsim-opts.c@1.70, 2007-08-28 15:34:32-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P4_RC2
+
+  ntpd/ntpdsim-opts.h@1.70, 2007-08-28 15:34:33-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P4_RC2
+
+  ntpd/ntpdsim-opts.texi@1.68, 2007-08-28 15:34:34-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4_RC2
+
+  ntpd/ntpdsim.1@1.68, 2007-08-28 15:34:34-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC2
+
+  ntpdc/ntpdc-opts.c@1.70, 2007-08-28 15:34:35-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P4_RC2
+
+  ntpdc/ntpdc-opts.h@1.70, 2007-08-28 15:34:36-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P4_RC2
+
+  ntpdc/ntpdc-opts.texi@1.68, 2007-08-28 15:34:37-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC2
+
+  ntpdc/ntpdc.1@1.68, 2007-08-28 15:34:38-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC2
+
+  ntpq/ntpq-opts.c@1.72, 2007-08-28 15:34:38-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P4_RC2
+
+  ntpq/ntpq-opts.h@1.72, 2007-08-28 15:34:39-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P4_RC2
+
+  ntpq/ntpq-opts.texi@1.69, 2007-08-28 15:34:40-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC2
+
+  ntpq/ntpq.1@1.68, 2007-08-28 15:34:41-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC2
+
+  packageinfo.sh@1.94, 2007-08-28 15:34:41-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4_RC2
+
+  sntp/sntp-opts.c@1.68, 2007-08-28 15:34:42-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC2
+
+  sntp/sntp-opts.h@1.68, 2007-08-28 15:34:43-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC2
+
+  sntp/sntp-opts.texi@1.65, 2007-08-28 15:34:44-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4_RC2
+
+  sntp/sntp.1@1.68, 2007-08-28 15:34:45-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC2
+
+  util/ntp-keygen-opts.c@1.69, 2007-08-28 15:34:45-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P4_RC2
+
+  util/ntp-keygen-opts.h@1.69, 2007-08-28 15:34:46-04:00, stenn@whimsy.udel.edu +4 -4
+    NTP_4_2_4P4_RC2
+
+  util/ntp-keygen-opts.texi@1.67, 2007-08-28 15:34:48-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC2
+
+  util/ntp-keygen.1@1.67, 2007-08-28 15:34:48-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC2
+
+ChangeSet@1.1516, 2007-08-27 22:38:57-04:00, stenn@whimsy.udel.edu +2 -0
+  Updated include/copyright.def (owner and year)
+
+  ChangeLog@1.33, 2007-08-27 22:38:46-04:00, stenn@whimsy.udel.edu +1 -0
+    Updated include/copyright.def (owner and year)
+
+  include/copyright.def@1.5, 2007-08-27 22:38:47-04:00, stenn@whimsy.udel.edu +2 -2
+    Updated include/copyright.def (owner and year)
+
+ChangeSet@1.1515, 2007-08-19 05:26:13-04:00, dunlop@pogo.udel.edu +2 -0
+  ntpdc_ops.c, ChangeLog:
+    [BUG 881] Corrected display of pll offset on 64bit systems.
+    [BUG 886] Corrected sign extension of il->compliance on 64 bit systems
+    [BUG 878] Avoid ntpdc use of refid value as unterminated string.
+
+  ChangeLog@1.32, 2007-08-19 05:20:42-04:00, dunlop@pogo.udel.edu +1 -0
+    [Bug 878] Avoid ntpdc use of refid value as unterminated string.
+
+  ChangeLog@1.31, 2007-08-19 05:13:18-04:00, dunlop@pogo.udel.edu +1 -0
+    [Bug 881] Corrected display of pll offset on 64bit systems.
+
+  ChangeLog@1.30, 2007-08-19 05:01:14-04:00, dunlop@pogo.udel.edu +1 -0
+    [BUG 886] Corrected sign extension of il->compliance on 64 bit systems
+
+  ntpdc/ntpdc_ops.c@1.49, 2007-08-19 05:20:34-04:00, dunlop@pogo.udel.edu +1 -3
+    [Bug 878] Avoid ntpdc use of refid value as unterminated string.
+
+  ntpdc/ntpdc_ops.c@1.48, 2007-08-19 05:12:52-04:00, dunlop@pogo.udel.edu +1 -1
+    [Bug 881] Corrected display of pll offset on 64bit systems.
+
+  ntpdc/ntpdc_ops.c@1.47, 2007-08-19 04:59:48-04:00, dunlop@pogo.udel.edu +2 -2
+    [BUG 886] Corrected sign extension of il->compliance on 64 bit systems
+
+ChangeSet@1.1514, 2007-08-18 17:11:19-04:00, stenn@whimsy.udel.edu +25 -0
+  NTP_4_2_4P4_RC1
+  TAG: NTP_4_2_4P4_RC1
+
+  ntpd/ntpd-opts.c@1.69, 2007-08-18 17:10:51-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  ntpd/ntpd-opts.h@1.69, 2007-08-18 17:10:52-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC1
+
+  ntpd/ntpd-opts.texi@1.68, 2007-08-18 17:10:53-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  ntpd/ntpd.1@1.67, 2007-08-18 17:10:53-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  ntpd/ntpdsim-opts.c@1.69, 2007-08-18 17:10:54-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  ntpd/ntpdsim-opts.h@1.69, 2007-08-18 17:10:54-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC1
+
+  ntpd/ntpdsim-opts.texi@1.67, 2007-08-18 17:10:56-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4_RC1
+
+  ntpd/ntpdsim.1@1.67, 2007-08-18 17:10:56-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  ntpdc/ntpdc-opts.c@1.69, 2007-08-18 17:10:57-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  ntpdc/ntpdc-opts.h@1.69, 2007-08-18 17:10:57-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC1
+
+  ntpdc/ntpdc-opts.texi@1.67, 2007-08-18 17:10:58-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  ntpdc/ntpdc.1@1.67, 2007-08-18 17:10:59-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  ntpq/ntpq-opts.c@1.71, 2007-08-18 17:10:59-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  ntpq/ntpq-opts.h@1.71, 2007-08-18 17:11:01-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC1
+
+  ntpq/ntpq-opts.texi@1.68, 2007-08-18 17:11:02-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  ntpq/ntpq.1@1.67, 2007-08-18 17:11:03-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  packageinfo.sh@1.93, 2007-08-18 17:11:03-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  sntp/sntp-opts.c@1.67, 2007-08-18 17:11:04-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  sntp/sntp-opts.h@1.67, 2007-08-18 17:11:05-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC1
+
+  sntp/sntp-opts.texi@1.64, 2007-08-18 17:11:07-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P4_RC1
+
+  sntp/sntp.1@1.67, 2007-08-18 17:11:08-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  util/ntp-keygen-opts.c@1.68, 2007-08-18 17:11:08-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  util/ntp-keygen-opts.h@1.68, 2007-08-18 17:11:10-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P4_RC1
+
+  util/ntp-keygen-opts.texi@1.66, 2007-08-18 17:11:11-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+  util/ntp-keygen.1@1.66, 2007-08-18 17:11:11-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P4_RC1
+
+ChangeSet@1.1513, 2007-08-18 16:16:22-04:00, stenn@whimsy.udel.edu +1 -0
+  4.2.4p4-RC
+
+  packageinfo.sh@1.92, 2007-08-18 16:16:06-04:00, stenn@whimsy.udel.edu +1 -1
+    4.2.4p4-RC
+
+ChangeSet@1.1512, 2007-08-18 12:59:45+00:00, kardel@pogo.udel.edu +2 -0
+  ntp_restrict.c:
+    Bug 885: clarify to allow tools to pick up
+    invariants easier.
+    Use NULL instead of 0 with pointers.
+  ChangeLog:
+    document ntp_restrict.c change
+
+  ChangeLog@1.29, 2007-08-18 12:59:05+00:00, kardel@pogo.udel.edu +1 -0
+    document ntp_restrict.c change
+
+  ntpd/ntp_restrict.c@1.23, 2007-08-18 12:56:40+00:00, kardel@pogo.udel.edu +21 -21
+    Bug 885: clarify to allow tools to pick up
+    invariants easier.
+    Use NULL instead of 0 with pointers.
+
+ChangeSet@1.1511, 2007-08-18 12:53:35+00:00, kardel@pogo.udel.edu +2 -0
+  recvbuff.c:
+    Bug 889: avoid malloc() interrupted by SIGIO risk
+  ChangeLog:
+    document Bug 889
+
+  ChangeLog@1.28, 2007-08-18 12:52:19+00:00, kardel@pogo.udel.edu +1 -0
+    document Bug 889
+
+  libntp/recvbuff.c@1.26, 2007-08-18 12:49:27+00:00, kardel@pogo.udel.edu +28 -21
+    Bug 889: avoid malloc() interrupted by SIGIO risk
+
+ChangeSet@1.1510, 2007-08-18 09:51:41+00:00, kardel@pogo.udel.edu +1 -0
+  cmd_args.c:
+    Bug 885: fix comparison
+
+  ntpd/cmd_args.c@1.47, 2007-08-18 09:50:28+00:00, kardel@pogo.udel.edu +1 -1
+    Bug 885: fix comparison
+
+ChangeSet@1.1502.1.1, 2007-08-17 05:28:07-04:00, stenn@pogo.udel.edu +1 -0
+  Use autoconf-2.59 and automake-1.9 for building 4.2.4
+
+  bootstrap@1.19, 2007-08-17 05:27:51-04:00, stenn@pogo.udel.edu +18 -2
+    Use autoconf-2.59 and automake-1.9 for building 4.2.4
+
+ChangeSet@1.1508, 2007-08-11 17:32:22+00:00, kardel@pogo.udel.edu +1 -0
+  ChangeLog:
+    document refclock_parse.c fix
+
+  ChangeLog@1.27, 2007-08-11 17:31:30+00:00, kardel@pogo.udel.edu +1 -0
+    document refclock_parse.c fix
+
+ChangeSet@1.1507, 2007-08-11 17:30:42+00:00, kardel@pogo.udel.edu +4 -0
+  ChangeLog:
+    document Bug 885
+  ntp_io.c:
+    Bug 885: use emalloc() to get a message at the end of the memory
+  cmd_args.c:
+    Bug 885: unsigned types cannot be less than 0
+    	 default_ai_family is a short
+  ntp_config.c:
+    Bug 885: lose trailing , from enum list
+
+  ChangeLog@1.26, 2007-08-11 17:30:24+00:00, kardel@pogo.udel.edu +4 -0
+    document Bug 885
+
+  ntpd/cmd_args.c@1.46, 2007-08-11 17:19:51+00:00, kardel@pogo.udel.edu +2 -2
+    Bug 885: unsigned types cannot be less than 0
+    	 default_ai_family is a short
+
+  ntpd/ntp_config.c@1.142, 2007-08-11 17:20:52+00:00, kardel@pogo.udel.edu +1 -1
+    Bug 885: lose trailing , from enum list
+
+  ntpd/ntp_io.c@1.253, 2007-08-11 17:21:17+00:00, kardel@pogo.udel.edu +1 -1
+    Bug 885: use emalloc() to get a message at the end of the memory
+
+ChangeSet@1.1506, 2007-08-11 17:19:45+00:00, kardel@pogo.udel.edu +1 -0
+  refclock_parse.c:
+    remove io binding before io_closeclock() closes the file descriptor
+
+  ntpd/refclock_parse.c@1.48, 2007-08-11 17:17:16+00:00, kardel@pogo.udel.edu +25 -10
+    remove io binding before io_closeclock() closes the file descriptor
+
+ChangeSet@1.1505, 2007-08-09 20:30:55+00:00, kardel@pogo.udel.edu +1 -0
+  ChangeLog:
+    [Bug 882] allow loopback interfaces to share addresses with other interfaces.
+    [Bug 884] don't access recv buffers after having them passed to the free list.
+
+  ChangeLog@1.25, 2007-08-09 20:30:26+00:00, kardel@pogo.udel.edu +3 -0
+    [Bug 882] allow loopback interfaces to share addresses with other interfaces.
+    [Bug 884] don't access recv buffers after having them passed to the free list.
+
+ChangeSet@1.1504, 2007-08-09 19:05:17+00:00, kardel@pogo.udel.edu +1 -0
+  ntp_io.c:
+    Bug 884: no access to recv buffers after they are returned to free pool
+
+  ntpd/ntp_io.c@1.252, 2007-08-09 19:01:30+00:00, kardel@pogo.udel.edu +9 -7
+    Bug 884: no access to recv buffers after they are returned to free pool
+
+ChangeSet@1.1503, 2007-08-07 18:14:16+00:00, kardel@pogo.udel.edu +1 -0
+  ntp_io.c:
+    Bug 882: loopback interfaces may share IP addresses with other interfaces
+    	 thus allow addresses also found on loopback interfaces to be used
+    	 as local address.
+
+  ntpd/ntp_io.c@1.251, 2007-08-07 18:09:50+00:00, kardel@pogo.udel.edu +1 -1
+    Bug 882: loopback interfaces may share IP addresses with other interfaces
+    	 thus allow addresses also found on loopback interfaces to be used
+    	 as local address.
+
+ChangeSet@1.1502, 2007-06-29 15:46:00-04:00, stenn@deacon.udel.edu +25 -0
+  NTP_4_2_4P3
+  TAG: NTP_4_2_4P3
+
+  ntpd/ntpd-opts.c@1.68, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  ntpd/ntpd-opts.h@1.68, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +3 -3
+    NTP_4_2_4P3
+
+  ntpd/ntpd-opts.texi@1.67, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  ntpd/ntpd.1@1.66, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  ntpd/ntpdsim-opts.c@1.68, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  ntpd/ntpdsim-opts.h@1.68, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +3 -3
+    NTP_4_2_4P3
+
+  ntpd/ntpdsim-opts.texi@1.66, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +1 -1
+    NTP_4_2_4P3
+
+  ntpd/ntpdsim.1@1.66, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  ntpdc/ntpdc-opts.c@1.68, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  ntpdc/ntpdc-opts.h@1.68, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +3 -3
+    NTP_4_2_4P3
+
+  ntpdc/ntpdc-opts.texi@1.66, 2007-06-29 15:45:58-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  ntpdc/ntpdc.1@1.66, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  ntpq/ntpq-opts.c@1.70, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  ntpq/ntpq-opts.h@1.70, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +3 -3
+    NTP_4_2_4P3
+
+  ntpq/ntpq-opts.texi@1.67, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  ntpq/ntpq.1@1.66, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  packageinfo.sh@1.91, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  sntp/sntp-opts.c@1.66, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  sntp/sntp-opts.h@1.66, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +3 -3
+    NTP_4_2_4P3
+
+  sntp/sntp-opts.texi@1.63, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +1 -1
+    NTP_4_2_4P3
+
+  sntp/sntp.1@1.66, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  util/ntp-keygen-opts.c@1.67, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  util/ntp-keygen-opts.h@1.67, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +3 -3
+    NTP_4_2_4P3
+
+  util/ntp-keygen-opts.texi@1.65, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+  util/ntp-keygen.1@1.65, 2007-06-29 15:45:59-04:00, stenn@deacon.udel.edu +2 -2
+    NTP_4_2_4P3
+
+ChangeSet@1.1501, 2007-06-29 15:31:21-04:00, stenn@deacon.udel.edu +3 -0
+  Release 4.2.4p3
+
+  ChangeLog@1.24, 2007-06-29 15:30:58-04:00, stenn@deacon.udel.edu +1 -1
+    Release 4.2.4p3
+
+  NEWS@1.97, 2007-06-29 15:30:58-04:00, stenn@deacon.udel.edu +1 -1
+    Release 4.2.4p3
+
+  packageinfo.sh@1.90, 2007-06-29 15:30:58-04:00, stenn@deacon.udel.edu +1 -1
+    Release 4.2.4p3
+
+ChangeSet@1.1500, 2007-06-29 19:03:39+00:00, stenn@ntp1.isc.org +2 -0
+  Cosmetic reformatting
+
+  ChangeLog@1.23, 2007-06-29 19:03:32+00:00, stenn@ntp1.isc.org +70 -16
+    Cosmetic reformatting
+
+  NEWS@1.96, 2007-06-29 19:03:32+00:00, stenn@ntp1.isc.org +4 -0
+    Cosmetic reformatting
+
+ChangeSet@1.1499, 2007-06-27 07:46:44-04:00, stenn@whimsy.udel.edu +25 -0
+  NTP_4_2_4P3_RC1
+  TAG: NTP_4_2_4P3_RC1
+
+  ntpd/ntpd-opts.c@1.67, 2007-06-27 07:46:22-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  ntpd/ntpd-opts.h@1.67, 2007-06-27 07:46:23-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P3_RC1
+
+  ntpd/ntpd-opts.texi@1.66, 2007-06-27 07:46:24-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  ntpd/ntpd.1@1.65, 2007-06-27 07:46:24-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  ntpd/ntpdsim-opts.c@1.67, 2007-06-27 07:46:25-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  ntpd/ntpdsim-opts.h@1.67, 2007-06-27 07:46:26-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P3_RC1
+
+  ntpd/ntpdsim-opts.texi@1.65, 2007-06-27 07:46:27-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P3_RC1
+
+  ntpd/ntpdsim.1@1.65, 2007-06-27 07:46:28-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  ntpdc/ntpdc-opts.c@1.67, 2007-06-27 07:46:29-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  ntpdc/ntpdc-opts.h@1.67, 2007-06-27 07:46:29-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P3_RC1
+
+  ntpdc/ntpdc-opts.texi@1.65, 2007-06-27 07:46:30-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  ntpdc/ntpdc.1@1.65, 2007-06-27 07:46:31-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  ntpq/ntpq-opts.c@1.69, 2007-06-27 07:46:31-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  ntpq/ntpq-opts.h@1.69, 2007-06-27 07:46:32-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P3_RC1
+
+  ntpq/ntpq-opts.texi@1.66, 2007-06-27 07:46:33-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  ntpq/ntpq.1@1.65, 2007-06-27 07:46:34-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  packageinfo.sh@1.89, 2007-06-27 07:46:34-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  sntp/sntp-opts.c@1.65, 2007-06-27 07:46:35-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  sntp/sntp-opts.h@1.65, 2007-06-27 07:46:36-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P3_RC1
+
+  sntp/sntp-opts.texi@1.62, 2007-06-27 07:46:36-04:00, stenn@whimsy.udel.edu +1 -1
+    NTP_4_2_4P3_RC1
+
+  sntp/sntp.1@1.65, 2007-06-27 07:46:37-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  util/ntp-keygen-opts.c@1.66, 2007-06-27 07:46:38-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  util/ntp-keygen-opts.h@1.66, 2007-06-27 07:46:39-04:00, stenn@whimsy.udel.edu +3 -3
+    NTP_4_2_4P3_RC1
+
+  util/ntp-keygen-opts.texi@1.64, 2007-06-27 07:46:40-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+  util/ntp-keygen.1@1.64, 2007-06-27 07:46:40-04:00, stenn@whimsy.udel.edu +2 -2
+    NTP_4_2_4P3_RC1
+
+ChangeSet@1.1498, 2007-06-27 01:42:30-04:00, stenn@whimsy.udel.edu +3 -0
+  First RC for 4.2.4p3
+
+  ChangeLog@1.22, 2007-06-27 01:41:43-04:00, stenn@whimsy.udel.edu +2 -1
+    First RC for 4.2.4p3
+
+  NEWS@1.95, 2007-06-27 01:41:46-04:00, stenn@whimsy.udel.edu +8 -0
+    First RC for 4.2.4p3
+
+  packageinfo.sh@1.88, 2007-06-27 01:41:59-04:00, stenn@whimsy.udel.edu +1 -1
+    First RC for 4.2.4p3
+
+ChangeSet@1.1497, 2007-06-23 08:47:07-04:00, mayer@pogo.udel.edu +1 -0
+  Added Bug #863
+
+  ChangeLog@1.21, 2007-06-23 08:46:51-04:00, mayer@pogo.udel.edu +2 -0
+    Added Bug #863
+
+ChangeSet@1.1492.1.1, 2007-06-23 08:42:58-04:00, mayer@pogo.udel.edu +3 -0
+  Bug #863 Unable to stop ntpd because the handle index changed
+
+  ports/winnt/include/ntp_iocompletionport.h@1.13, 2007-06-23 08:42:41-04:00, mayer@pogo.udel.edu +3 -0
+    Bug #863 Unable to stop ntpd because the handle index changed
+
+  ports/winnt/ntpd/ntp_iocompletionport.c@1.23, 2007-06-23 08:42:41-04:00, mayer@pogo.udel.edu +15 -1
+    Bug #863 Unable to stop ntpd because the handle index changed
+
+  ports/winnt/ntpd/ntservice.c@1.9, 2007-06-23 08:42:41-04:00, mayer@pogo.udel.edu +9 -5
+    Bug #863 Unable to stop ntpd because the handle index changed
+
 ChangeSet@1.1495, 2007-06-20 07:45:57-04:00, stenn@whimsy.udel.edu +25 -0
   NTP_4_2_4P2
   TAG: NTP_4_2_4P2

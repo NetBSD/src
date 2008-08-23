@@ -34,7 +34,7 @@ ETAGS_ARGS = Makefile.am
 ###							Y2Kfixes
 check_PROGRAMS = @MAKE_CHECK_Y2K@
 EXTRA_PROGRAMS = check_y2k ntpdsim
-run_ag = cd $(srcdir) && autogen -L ../include
+run_ag = cd $(srcdir) && autogen -L ../include --writable
 std_def_list=	$(top_srcdir)/include/debug-opt.def		\
 		$(top_srcdir)/include/autogen-version.def 	\
 		$(top_srcdir)/include/copyright.def 		\

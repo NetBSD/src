@@ -312,7 +312,7 @@ flag = {
 	Give the time in seconds between two scans for new or dropped interfaces.
 	For systems with routing socket support the scans will be performed shortly after the interface change
 	has been detected by the system.
-	Use 0 to disable scanning. 60 seconds is the minimum time between scans.
+	Use 0 to disable scanning.
 	_EndOfDoc_;
 };
 
