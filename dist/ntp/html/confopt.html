@@ -63,8 +63,6 @@
 			<dd>This option is used only with broadcast server and manycast client modes. It specifies the time-to-live <i><tt>ttl</tt></i> to use on broadcast server and multicast server and the maximum <i><tt>ttl</tt></i> for the expanding ring search with manycast client packets. Selection of the proper value, which defaults to 127, is something of a black art and should be coordinated with the network administrator.
 			<dt><tt>version <i>version</i></tt>
 			<dd>Specifies the version number to be used for outgoing NTP packets. Versions 1-4 are the choices, with version 4 the default. This option is valid only with the <tt>server,</tt> <tt>peer</tt> and <tt>broadcast</tt> commands.
-			<dt><tt>dynamic</tt>
-			<dd>Allows a server/peer to be configured even if it is not reachable at configuration time. It is assumed that at some point in the future the network environment changes so that this server/peer can be reached. This option is useful to configure servers/peers on mobile systems with intermittent network access (e.g. wlan clients).
 		</dl>
 		<h4 id="aux">Auxilliary Commands</h4>
 		<dl>

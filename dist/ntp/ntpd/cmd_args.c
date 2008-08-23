@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd_args.c,v 1.5 2007/08/18 09:56:14 kardel Exp $	*/
+/*	$NetBSD: cmd_args.c,v 1.6 2008/08/23 09:10:31 kardel Exp $	*/
 
 /*
  * cmd_args.c = command-line argument processing
@@ -187,11 +187,11 @@ getCmdOpts(
 	if (HAVE_OPT( UPDATEINTERVAL )) {
 		long val = OPT_VALUE_UPDATEINTERVAL;
 			  
-		if ((val >= 60) || (val == 0))
+		if (val >= 0)
 			interface_interval = val;
 		else {
 			msyslog(LOG_ERR,
-				"command line interface update interval %ld must be 0 or longer than 60 seconds",
+				"command line interface update interval %ld must be greater or equal to 0",
 				      val);
 			errflg++;
 		}
