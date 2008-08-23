@@ -85,6 +85,7 @@
 #define DM_IOCTL_DEV          "dev"
 #define DM_IOCTL_NAME         "name"
 #define DM_IOCTL_UUID         "uuid"
+#define DM_IOCTL_TARGET_COUNT "target_count"
 #define DM_IOCTL_EVENT        "event_nr"
 #define DM_IOCTL_FLAGS        "flags"
 #define DM_IOCTL_CMD_DATA     "cmd_data"

@@ -140,6 +140,7 @@ nbsd_dm_dict_to_dmi(prop_dictionary_t dm_dict,const int cmd)
 	prop_dictionary_get_int32(dm_dict,DM_IOCTL_OPEN,&dmi->open_count);
 	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_EVENT,&dmi->event_nr);
 	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&dmi->flags);
+	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_TARGET_COUNT,&dmi->target_count);
 
 	if (prop_dictionary_get_uint32(dm_dict,DM_IOCTL_DEV,&minor))
 		dmi->dev = MKDEV(major,minor);
@@ -162,7 +163,6 @@ nbsd_dm_dict_to_dmi(prop_dictionary_t dm_dict,const int cmd)
 	/* dmi parsing values, size of dmi block and offset to data. */
 	dmi->data_size  = DMI_SIZE;
 	dmi->data_start = sizeof(struct dm_ioctl);
-	dmi->target_count = 0;
 	
 	/* Get kernel version from dm_dict. */
 	ver = prop_dictionary_get(dm_dict,DM_IOCTL_VERSION);
@@ -349,13 +349,17 @@ dm_table_status(prop_dictionary_t dm_dict,struct dm_ioctl *dmi)
 	prop_object_iterator_t iter;
 
 	char *type,*params,*params_start;
-	
+
+	bool prm;
 	size_t j,plen,rec_size,next;
 
 	j = 0;
 	next = 0;
+	params = NULL;
 	odmts = NULL;
 	rec_size = 0;
+	plen = -1;
+	prm = false;
 	
 	dmts = (struct dm_target_spec *)((uint8_t *)dmi + dmi->data_start);	
 		
@@ -370,16 +374,16 @@ dm_table_status(prop_dictionary_t dm_dict,struct dm_ioctl *dmi)
 			prop_dictionary_get_cstring_nocopy(target_dict,
 			    DM_TABLE_TYPE,(const char **)&type);
 
-			prop_dictionary_get_cstring_nocopy(target_dict,
+			prm = prop_dictionary_get_cstring_nocopy(target_dict,
 			    DM_TABLE_PARAMS,(const char **)&params);
 
 			prop_dictionary_get_uint64(target_dict,DM_TABLE_START,&dmts->sector_start);
 			prop_dictionary_get_uint64(target_dict,DM_TABLE_LENGTH,&dmts->length);
 			prop_dictionary_get_int32(target_dict,DM_TABLE_STAT,&dmts->status);
-			
-			plen = strlen(params) + 1;
-			plen = 0;
-			
+
+			if (prm)
+				plen = strlen(params) + 1;
+
 			rec_size = sizeof(struct dm_target_spec) + plen;
 
 			/*
@@ -394,14 +398,15 @@ dm_table_status(prop_dictionary_t dm_dict,struct dm_ioctl *dmi)
 
 			dmts->next = next;
 			
-			strlcpy(dmts->target_type,type,DM_MAX_TYPE_NAME);
+			strlcpy(dmts->target_type, type, DM_MAX_TYPE_NAME);
 
-			params_start =(char *)dmts + sizeof(struct dm_target_spec);
+			params_start = (char *)dmts + sizeof(struct dm_target_spec);
 
-/*			if (params)
-				strcpy(params_start,params);
-				else*/
-				params_start = '\0';
+			if (prm) 
+				strlcpy(params_start, params, plen);
+			else
+				params_start = "\0";
+
 			
 			odmts = dmts;
 			
