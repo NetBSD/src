@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.39 2008/08/20 18:58:14 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.40 2008/08/23 17:03:52 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -674,4 +674,9 @@ sys/arch/hppa/hppa/copy.S			1.8
 	Fix potential kernel / userland memory corruption in copy{in,out}str
 	on hppa.
 	[skrll, ticket #1180]
+
+sys/netinet6/mld6.c				1.47
+
+	Fix from matt@ for malformed ICMPv6 MLD query (CVE-2008-2464).
+	[adrianp, ticket #1187]
 
