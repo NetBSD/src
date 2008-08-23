@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.1.1.5 2007/01/06 16:05:45 kardel Exp $	*/
+/*	$NetBSD: ntp.h,v 1.1.1.6 2008/08/23 07:38:31 kardel Exp $	*/
 
 /*
  * ntp.h - NTP definitions for the masses
@@ -435,7 +435,6 @@ struct peer {
 #define FLAG_FIXPOLL	0x1000	/* stick at minpoll */
 #define FLAG_TRUE	0x2000	/* select truechimer */
 #define	FLAG_PREEMPT	0x4000	/* preemptable association */
-#define	FLAG_DYNAMIC	0x8000	/* dynamic addresses - allow configuration even if no interface is found */
 
 /*
  * Definitions for the clear() routine.  We use memset() to clear

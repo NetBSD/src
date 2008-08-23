@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.1.1.6 2007/06/24 15:50:30 kardel Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.1.1.7 2008/08/23 07:38:54 kardel Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -86,6 +86,7 @@ struct timeval timeout = {60,0};
 				on Windows NT timers. */
 #pragma comment(lib, "winmm")
 isc_boolean_t ntp_port_inuse(int af, u_short port);
+UINT wTimerRes;
 #endif /* SYS_WINNT */
 
 /*
@@ -106,11 +107,11 @@ static timer_t ntpdate_timerid;
  * Compatibility stuff for Version 2
  */
 #define NTP_MAXSKW	0x28f	/* 0.01 sec in fp format */
-#define NTP_MINDIST 0x51f	/* 0.02 sec in fp format */
+#define NTP_MINDIST	0x51f	/* 0.02 sec in fp format */
 #define PEER_MAXDISP	(64*FP_SECOND)	/* maximum dispersion (fp 64) */
 #define NTP_INFIN	15	/* max stratum, infinity a la Bellman-Ford */
 #define NTP_MAXWGT	(8*FP_SECOND)	/* maximum select weight 8 seconds */
-#define NTP_MAXLIST 5	/* maximum select list size */
+#define NTP_MAXLIST	5	/* maximum select list size */
 #define PEER_SHIFT	8	/* 8 suitable for crystal time base */
 
 /*
@@ -128,8 +129,8 @@ volatile int debug = 0;
  */
 
 int ai_fam_templ;
-int nbsock;
-SOCKET fd[MAX_AF];	/* support up to 2 sockets */
+int nbsock;             /* the number of sockets used */
+SOCKET fd[MAX_AF];
 int fd_family[MAX_AF];	/* to remember the socket family */
 #ifdef HAVE_POLL_H
 struct pollfd fdmask[MAX_AF];
@@ -156,7 +157,7 @@ volatile int alarm_flag = 0;
 int simple_query = 0;
 
 /*
- * Unpriviledged port flag.
+ * Unprivileged port flag.
  */
 int unpriv_port = 0;
 
@@ -212,7 +213,7 @@ int verbose = 0;
 int always_step = 0;
 int never_step = 0;
 
-int 	ntpdatemain P((int, char **));
+int ntpdatemain P((int, char **));
 
 static	void	transmit	P((struct server *));
 static	void	receive 	P((struct recvbuf *));
@@ -222,7 +223,7 @@ static	struct server *clock_select P((void));
 static	int clock_adjust	P((void));
 static	void	addserver	P((char *));
 static	struct server *findserver P((struct sockaddr_storage *));
-		void	timer		P((void));
+void	timer	P((void));
 static	void	init_alarm	P((void));
 #ifndef SYS_WINNT
 static	RETSIGTYPE alarming P((int));
@@ -239,7 +240,7 @@ static	void	printserver P((struct server *, FILE *));
 #ifdef SYS_WINNT
 int 	on = 1;
 WORD	wVersionRequested;
-WSADATA wsaData;
+WSADATA	wsaData;
 HANDLE	TimerThreadHandle = NULL;
 #endif /* SYS_WINNT */
 
@@ -271,7 +272,7 @@ void clear_globals()
   simple_query = 0;
 
   /*
-   * Unpriviledged port flag.
+   * Unprivileged port flag.
    */
   unpriv_port = 0;
 
@@ -465,7 +466,7 @@ ntpdatemain (
 #ifdef HAVE_SETVBUF
 		static char buf[BUFSIZ];
 #ifdef SYS_WINNT
-		/* Win32 does not implement line bufferibg */
+		/* Win32 does not implement line buffering */
 		setvbuf(stdout, NULL, _IONBF, BUFSIZ);
 #else
 		setvbuf(stdout, buf, _IOLBF, BUFSIZ);
@@ -542,10 +543,8 @@ ntpdatemain (
 		}
 		authtrust(sys_authkey, 1);
 		if (!authistrusted(sys_authkey)) {
-			char buf[10];
-
-			(void) sprintf(buf, "%lu", (unsigned long)sys_authkey);
-			msyslog(LOG_ERR, "authentication key %s unknown", buf);
+			msyslog(LOG_ERR, "authentication key %lu unknown",
+				(unsigned long) sys_authkey);
 			exit(1);
 		}
 	}
@@ -1286,7 +1285,7 @@ clock_adjust(void)
 	}
 
 	if (dostep) {
-		if (simple_query || l_step_systime(&server->offset)) {
+		if (simple_query || debug || l_step_systime(&server->offset)){
 			msyslog(LOG_NOTICE, "step time server %s offset %s sec",
 				stoa(&server->srcadr),
 				lfptoa(&server->offset, 6));
@@ -1373,6 +1372,15 @@ addserver(
 
 	error = getaddrinfo(serv, service, &hints, &addrResult);
 	if (error != 0) {
+		/* Conduct more refined error analysis */
+		if (error == EAI_FAIL || error == EAI_AGAIN){
+			/* Name server is unusable. Exit after failing on the
+			   first server, in order to shorten the timeout caused
+			   by waiting for resolution of several servers */
+			fprintf(stderr, "Name server cannot be used, exiting");
+			msyslog(LOG_ERR, "name server cannot be used, reason: %s\n", gai_strerror(error));
+			exit(1);
+		}
 		fprintf(stderr, "Error : %s\n", gai_strerror(error));
 		msyslog(LOG_ERR, "can't find host %s\n", serv);
 		return;
@@ -1529,6 +1537,16 @@ alarming(UINT uTimerID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
 #endif /* SYS_WINNT */
 
 
+#ifdef SYS_WINNT
+static void
+callTimeEndPeriod(void)
+{
+	timeEndPeriod( wTimerRes );
+	wTimerRes = 0;
+}
+#endif /* SYS_WINNT */
+
+
 /*
  * init_alarm - set up the timer interrupt
  */
@@ -1543,7 +1561,7 @@ init_alarm(void)
 # endif
 #else
 	TIMECAPS tc;
-	UINT wTimerRes, wTimerID;
+	UINT wTimerID;
 # endif /* SYS_WINNT */
 #if defined SYS_CYGWIN32 || defined SYS_WINNT
 	HANDLE hToken;
@@ -1595,7 +1613,7 @@ init_alarm(void)
 # endif
 #if defined SYS_CYGWIN32
 	/*
-	 * Get previleges needed for fiddling with the clock
+	 * Get privileges needed for fiddling with the clock
 	 */
 
 	/* get the current process token handle */
@@ -1617,7 +1635,7 @@ init_alarm(void)
 	_tzset();
 
 	/*
-	 * Get previleges needed for fiddling with the clock
+	 * Get privileges needed for fiddling with the clock
 	 */
 
 	/* get the current process token handle */
@@ -1650,6 +1668,7 @@ init_alarm(void)
 	wTimerRes = min(max(tc.wPeriodMin, TARGET_RESOLUTION), tc.wPeriodMax);
 	/* establish the minimum timer resolution that we'll use */
 	timeBeginPeriod(wTimerRes);
+	atexit(callTimeEndPeriod);
 
 	/* start the timer event */
 	wTimerID = timeSetEvent(
@@ -1692,6 +1711,7 @@ init_io(void)
 	struct addrinfo hints;
 	char service[5];
 	int optval = 1;
+	int check_ntp_port_in_use = !debug && !simple_query && !unpriv_port;
 
 	/*
 	 * Init buffer free list and stat counters
@@ -1719,7 +1739,7 @@ init_io(void)
 	}
 
 #ifdef SYS_WINNT
-	if (ntp_port_inuse(AF_INET, NTP_PORT) ){
+	if (check_ntp_port_in_use && ntp_port_inuse(AF_INET, NTP_PORT)){
 		netsyslog(LOG_ERR, "the NTP socket is in use, exiting: %m");
 		exit(1);
 	}
@@ -1733,8 +1753,8 @@ init_io(void)
 	 */
 	for(nbsock = 0; (nbsock < MAX_AF) && res ; res = res->ai_next) {
 	/* create a datagram (UDP) socket */
-	   fd[nbsock] = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	   if (fd[nbsock] == SOCKET_ERROR) {
+		fd[nbsock] = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (fd[nbsock] == SOCKET_ERROR) {
 #ifndef SYS_WINNT
 		if (errno == EPROTONOSUPPORT || errno == EAFNOSUPPORT ||
 		    errno == EPFNOSUPPORT)
@@ -1747,95 +1767,94 @@ init_io(void)
 		netsyslog(LOG_ERR, "socket() failed: %m");
 		exit(1);
 		/*NOTREACHED*/
-	   }
-	   /* set socket to reuse address */
-	   if (setsockopt(fd[nbsock], SOL_SOCKET, SO_REUSEADDR, (void*) &optval, sizeof(optval)) < 0) {
-		   netsyslog(LOG_ERR, "setsockopt() SO_REUSEADDR failed: %m");
-		   exit(1);
-		   /*NOTREACHED*/
-	   }
+		}
+		/* set socket to reuse address */
+		if (setsockopt(fd[nbsock], SOL_SOCKET, SO_REUSEADDR, (void*) &optval, sizeof(optval)) < 0) {
+				netsyslog(LOG_ERR, "setsockopt() SO_REUSEADDR failed: %m");
+				exit(1);
+				/*NOTREACHED*/
+		}
 #ifdef IPV6_V6ONLY
-	   /* Restricts AF_INET6 socket to IPv6 communications (see RFC 2553bis-03) */
-	   if (res->ai_family == AF_INET6)
-		if (setsockopt(fd[nbsock], IPPROTO_IPV6, IPV6_V6ONLY, (void*) &optval, sizeof(optval)) < 0) {
-			   netsyslog(LOG_ERR, "setsockopt() IPV6_V6ONLY failed: %m");
-			   exit(1);
-			   /*NOTREACHED*/
+		/* Restricts AF_INET6 socket to IPv6 communications (see RFC 2553bis-03) */
+		if (res->ai_family == AF_INET6)
+			if (setsockopt(fd[nbsock], IPPROTO_IPV6, IPV6_V6ONLY, (void*) &optval, sizeof(optval)) < 0) {
+				   netsyslog(LOG_ERR, "setsockopt() IPV6_V6ONLY failed: %m");
+					exit(1);
+					/*NOTREACHED*/
 		}
 #endif
 
-	   /* Remember the socket family in fd_family structure */
-	   fd_family[nbsock] = res->ai_family;
+		/* Remember the socket family in fd_family structure */
+		fd_family[nbsock] = res->ai_family;
 
-	/*
-	 * bind the socket to the NTP port
-	 */
-	if (!debug && !simple_query && !unpriv_port) {
-		if (bind(fd[nbsock], res->ai_addr, SOCKLEN(res->ai_addr)) < 0) {
+		/*
+		 * bind the socket to the NTP port
+		 */
+		if (check_ntp_port_in_use) {
+			if (bind(fd[nbsock], res->ai_addr, SOCKLEN(res->ai_addr)) < 0) {
 #ifndef SYS_WINNT
-			if (errno == EADDRINUSE)
+				if (errno == EADDRINUSE)
 #else
 				if (WSAGetLastError() == WSAEADDRINUSE)
 #endif /* SYS_WINNT */
-				netsyslog(LOG_ERR,
-					"the NTP socket is in use, exiting");
+					netsyslog(LOG_ERR, "the NTP socket is in use, exiting");
 				else
-				netsyslog(LOG_ERR, "bind() fails: %m");
-			exit(1);
+					netsyslog(LOG_ERR, "bind() fails: %m");
+				exit(1);
+			}
 		}
-	}
 
 #ifdef HAVE_POLL_H
-	    fdmask[nbsock].fd = fd[nbsock];
-	    fdmask[nbsock].events = POLLIN;
+		fdmask[nbsock].fd = fd[nbsock];
+		fdmask[nbsock].events = POLLIN;
 #else
-	    FD_SET(fd[nbsock], &fdmask);
-	    if (maxfd < fd[nbsock]+1) {
-		maxfd = fd[nbsock]+1;
-	    }
+		FD_SET(fd[nbsock], &fdmask);
+		if (maxfd < fd[nbsock]+1) {
+			maxfd = fd[nbsock]+1;
+		}
 #endif
 
-	/*
-	 * set non-blocking,
-	 */
+		/*
+		 * set non-blocking,
+		 */
 #ifndef SYS_WINNT
 # ifdef SYS_VXWORKS
-  {
-	int on = TRUE;
+		{
+		int on = TRUE;
 
-	if (ioctl(fd[nbsock],FIONBIO, &on) == ERROR) {
-	  netsyslog(LOG_ERR, "ioctl(FIONBIO) fails: %m");
-	  exit(1);
-	}
-  }
+		if (ioctl(fd[nbsock],FIONBIO, &on) == ERROR) {
+		  netsyslog(LOG_ERR, "ioctl(FIONBIO) fails: %m");
+			exit(1);
+		}
+		}
 # else /* not SYS_VXWORKS */
 #  if defined(O_NONBLOCK)
-	   if (fcntl(fd[nbsock], F_SETFL, O_NONBLOCK) < 0) {
-		netsyslog(LOG_ERR, "fcntl(FNDELAY|FASYNC) fails: %m");
-		exit(1);
-		/*NOTREACHED*/
-	}
+		if (fcntl(fd[nbsock], F_SETFL, O_NONBLOCK) < 0) {
+			netsyslog(LOG_ERR, "fcntl(FNDELAY|FASYNC) fails: %m");
+			exit(1);
+			/*NOTREACHED*/
+		}
 #  else /* not O_NONBLOCK */
 #	if defined(FNDELAY)
-	   if (fcntl(fd[nbsock], F_SETFL, FNDELAY) < 0) {
-		netsyslog(LOG_ERR, "fcntl(FNDELAY|FASYNC) fails: %m");
-		exit(1);
-		/*NOTREACHED*/
-	}
+		if (fcntl(fd[nbsock], F_SETFL, FNDELAY) < 0) {
+			netsyslog(LOG_ERR, "fcntl(FNDELAY|FASYNC) fails: %m");
+			exit(1);
+			/*NOTREACHED*/
+		}
 #	else /* FNDELAY */
 #	 include "Bletch: Need non blocking I/O"
 #	endif /* FNDELAY */
 #  endif /* not O_NONBLOCK */
 # endif /* SYS_VXWORKS */
 #else /* SYS_WINNT */
-	if (ioctlsocket(fd[nbsock], FIONBIO, (u_long *) &on) == SOCKET_ERROR) {
-		netsyslog(LOG_ERR, "ioctlsocket(FIONBIO) fails: %m");
-		exit(1);
-	}
+		if (ioctlsocket(fd[nbsock], FIONBIO, (u_long *) &on) == SOCKET_ERROR) {
+			netsyslog(LOG_ERR, "ioctlsocket(FIONBIO) fails: %m");
+			exit(1);
+		}
 #endif /* SYS_WINNT */
-	nbsock++;
-    }
-    freeaddrinfo(ressave);
+		nbsock++;
+	}
+	freeaddrinfo(ressave);
 }
 
 /*
@@ -1896,7 +1915,7 @@ input_handler(void)
 	struct timeval tvzero;
 	int fromlen;
 	l_fp ts;
-	SOCKET i;
+	int i;
 #ifdef HAVE_POLL_H
 	struct pollfd fds[MAX_AF];
 #else
@@ -1932,7 +1951,7 @@ input_handler(void)
 		 * Determine which socket received data
 		 */
 
-		for(i=0; i < maxfd; i++) {
+		for(i=0; i < nbsock; i++) {
 			if(FD_ISSET(fd[i], &fds)) {
 				 fdc = fd[i];
 				 break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.1.1.6 2007/06/24 15:49:43 kardel Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.1.1.7 2008/08/23 07:38:43 kardel Exp $	*/
 
 /*
  * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -144,7 +144,6 @@ char *req_file;		/* name of the file with configuration info */
 /* end stuff to be filled in */
 
 
-static	RETSIGTYPE bong		P((int));
 static	void	checkparent	P((void));
 static	void	removeentry	P((struct conf_entry *));
 static	void	addentry	P((char *, int, int, int, int, u_int,
@@ -185,9 +184,11 @@ static void	resolver_exit P((int));
 static void resolver_exit (int code)
 {
 #ifdef SYS_WINNT
-	ExitThread (code);	/* Just to kill the thread not the process */
+	CloseHandle(ResolverEventHandle);
+	ResolverEventHandle = NULL;
+	ExitThread(code);	/* Just to kill the thread not the process */
 #else
-	exit (code);		/* fill the forked process */
+	exit(code);		/* kill the forked process */
 #endif
 }
 
@@ -217,11 +218,13 @@ void
 ntp_intres(void)
 {
 	FILE *in;
-#ifdef HAVE_SIGSUSPEND
-	sigset_t set;
-
-	sigemptyset(&set);
-#endif /* HAVE_SIGSUSPEND */
+	struct timeval tv;
+	fd_set fdset;
+#ifdef SYS_WINNT
+	DWORD rc;
+#else
+	int rc;
+#endif
 
 #ifdef DEBUG
 	if (debug > 1) {
@@ -257,93 +260,82 @@ ntp_intres(void)
 		(void) unlink(req_file);
 
 	/*
-	 * Sleep a little to make sure the server is completely up
+	 * Set up the timers to do first shot immediately.
 	 */
-
-	sleep(SLEEPTIME);
-
-	/*
-	 * Make a first cut at resolving the bunch
-	 */
-	doconfigure(1);
-	if (confentries == NULL) {
-		resolver_exit(0);
-	}
-	
-	/*
-	 * Here we've got some problem children.  Set up the timer
-	 * and wait for it.
-	 */
-	resolve_value = resolve_timer = MINRESOLVE;
+	resolve_timer = 0;
+	resolve_value = MINRESOLVE;
 	config_timer = CONFIG_TIME;
-#ifndef SYS_WINNT
-	(void) signal_no_reset(SIGALRM, bong);
-	alarm(ALARM_TIME);
-#endif /* SYS_WINNT */
 
 	for (;;) {
-		if (confentries == NULL)
-		    resolver_exit(0);
-
 		checkparent();
 
 		if (resolve_timer == 0) {
-			if (resolve_value < MAXRESOLVE)
-			    resolve_value <<= 1;
+			/*
+			 * Sleep a little to make sure the network is completely up
+			 */
+			sleep(SLEEPTIME);
+			doconfigure(1);
+
+			/* prepare retry, in case there's more work to do */
 			resolve_timer = resolve_value;
 #ifdef DEBUG
 			if (debug > 2)
 				msyslog(LOG_INFO, "resolve_timer: 0->%d", resolve_timer);
 #endif
+			if (resolve_value < MAXRESOLVE)
+				resolve_value <<= 1;
+
 			config_timer = CONFIG_TIME;
-			doconfigure(1);
-			continue;
-		} else if (config_timer == 0) {
+		} else if (config_timer == 0) {  /* MB: in which case would this be required ? */
+			doconfigure(0);
+			/* MB: should we check now if we could exit, similar to the code above? */
 			config_timer = CONFIG_TIME;
 #ifdef DEBUG
 			if (debug > 2)
 				msyslog(LOG_INFO, "config_timer: 0->%d", config_timer);
 #endif
-			doconfigure(0);
-			continue; 
 		}
-#ifndef SYS_WINNT
-		/*
-		 * There is a race in here.  Is okay, though, since
-		 * all it does is delay things by 30 seconds.
-		 */
-# ifdef HAVE_SIGSUSPEND
-		sigsuspend(&set);
-# else
-		sigpause(0);
-# endif /* HAVE_SIGSUSPEND */
-#else
+
+		if (confentries == NULL)
+			resolver_exit(0);   /* done */
+
+#ifdef SYS_WINNT
+		rc = WaitForSingleObject(ResolverEventHandle, 1000 * ALARM_TIME);  /* in milliseconds */
+
+		if ( rc == WAIT_OBJECT_0 ) { /* signaled by the main thread */
+			resolve_timer = 0;         /* retry resolving immediately */
+			continue;
+		}
+
+		if ( rc != WAIT_TIMEOUT ) /* not timeout: error */
+			resolver_exit(1);
+
+#else  /* not SYS_WINNT */
+		tv.tv_sec = ALARM_TIME;
+		tv.tv_usec = 0;
+		FD_ZERO(&fdset);
+		FD_SET(resolver_pipe_fd[0], &fdset);
+		rc = select(resolver_pipe_fd[0] + 1, &fdset, (fd_set *)0, (fd_set *)0, &tv);
+
+		if (rc > 0) {  /* parent process has written to the pipe */
+			read(resolver_pipe_fd[0], (char *)&rc, sizeof(rc));  /* make pipe empty */
+			resolve_timer = 0;   /* retry resolving immediately */
+			continue;
+		}
+
+		if ( rc < 0 )  /* select() returned error */
+			resolver_exit(1);
+#endif
+
+		/* normal timeout, keep on waiting */
 		if (config_timer > 0)
-		    config_timer--;
+			config_timer--;
 		if (resolve_timer > 0)
-		    resolve_timer--;
-		sleep(ALARM_TIME);
-#endif /* SYS_WINNT */
+			resolve_timer--;
 	}
 }
 
 
-#ifndef SYS_WINNT
-/*
- * bong - service and reschedule an alarm() interrupt
- */
-static RETSIGTYPE
-bong(
-	int sig
-	)
-{
-	if (config_timer > 0)
-	    config_timer--;
-	if (resolve_timer > 0)
-	    resolve_timer--;
-	alarm(ALARM_TIME);
-}
-#endif /* SYS_WINNT */
 
 /*
  * checkparent - see if our parent process is still running
@@ -1061,7 +1053,7 @@ readconf(
 		}
 
 		if ((intval[TOK_FLAGS] & ~(FLAG_AUTHENABLE | FLAG_PREFER |
-		    FLAG_NOSELECT | FLAG_BURST | FLAG_IBURST | FLAG_SKEY | FLAG_DYNAMIC))
+		    FLAG_NOSELECT | FLAG_BURST | FLAG_IBURST | FLAG_SKEY))
 		    != 0) {
 			msyslog(LOG_ERR, "invalid flags (%ld) in file %s",
 				intval[TOK_FLAGS], name);
@@ -1081,8 +1073,6 @@ readconf(
 		    flags |= CONF_FLAG_IBURST;
 		if (intval[TOK_FLAGS] & FLAG_SKEY)
 		    flags |= CONF_FLAG_SKEY;
-		if (intval[TOK_FLAGS] & FLAG_DYNAMIC)
-		    flags |= CONF_FLAG_DYNAMIC;
 
 		/*
 		 * This is as good as we can check it.  Add it in.
@@ -1105,6 +1095,12 @@ doconfigure(
 {
 	register struct conf_entry *ce;
 	register struct conf_entry *ceremove;
+
+#ifdef DEBUG
+		if (debug > 1)
+			msyslog(LOG_INFO, "Running doconfigure %s DNS",
+			    dores ? "with" : "without" );
+#endif
 
 	ce = confentries;
 	while (ce != NULL) {

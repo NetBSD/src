@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.c,v 1.1.1.5 2007/06/24 15:49:17 kardel Exp $	*/
+/*	$NetBSD: recvbuff.c,v 1.1.1.6 2008/08/23 07:38:37 kardel Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -21,7 +21,8 @@ static u_long volatile full_recvbufs;	/* number of recvbufs on fulllist */
 static u_long volatile free_recvbufs;	/* number of recvbufs on freelist */
 static u_long volatile total_recvbufs;	/* total recvbufs currently in use */
 static u_long volatile lowater_adds;	/* number of times we have added memory */
-
+static u_long volatile buffer_shortfall;/* number of missed free receive buffers
+                                           between replenishments */
 
 static ISC_LIST(recvbuf_t)	full_recv_list;	/* Currently used recv buffers */
 static ISC_LIST(recvbuf_t)	free_recv_list;	/* Currently unused buffers */
@@ -76,19 +77,18 @@ initialise_buffer(recvbuf_t *buff)
 #endif
 }
 
-static int
+static void
 create_buffers(int nbufs)
 {
 	register recvbuf_t *bufp;
-	int i;
+	int i, abuf;
 
-	bufp = (recvbuf_t *) emalloc(nbufs*sizeof(recvbuf_t));
-	/*
-	 * If no memory available, Bail
-	 */
-	if (bufp == NULL)
-		return (0);
-	for (i = 0; i < nbufs; i++)
+	abuf = nbufs + buffer_shortfall;
+	buffer_shortfall = 0;
+
+	bufp = (recvbuf_t *) emalloc(abuf*sizeof(recvbuf_t));
+
+	for (i = 0; i < abuf; i++)
 	{
 		memset((char *) bufp, 0, sizeof(recvbuf_t));
 		ISC_LIST_APPEND(free_recv_list, bufp, link);
@@ -97,7 +97,6 @@ create_buffers(int nbufs)
 		total_recvbufs++;
 	}
 	lowater_adds++;
-	return (nbufs);
 }
 
 void
@@ -164,38 +163,62 @@ get_free_recv_buffer(void)
 	recvbuf_t * buffer = NULL;
 	LOCK();
 	buffer = ISC_LIST_HEAD(free_recv_list);
-	if (buffer == NULL)
+	if (buffer != NULL)
 	{
-		/*
-		 * See if more are available
-		 */
-		if (create_buffers(RECV_INC) <= 0)
-		{
-			msyslog(LOG_ERR, "No more memory for recvufs");
-			UNLOCK();
-			return (NULL);
-		}
-		buffer = ISC_LIST_HEAD(free_recv_list);
-		if (buffer == NULL)
-		{
-			msyslog(LOG_ERR, "Failed to obtain more memory for recvbufs");
-			UNLOCK();
-			return (NULL);
-		}
+		ISC_LIST_DEQUEUE(free_recv_list, buffer, link);
+		free_recvbufs--;
+		initialise_buffer(buffer);
+		(buffer->used)++;
 	}
-	ISC_LIST_DEQUEUE(free_recv_list, buffer, link);
-	free_recvbufs--;
-	initialise_buffer(buffer);
-	(buffer->used)++;
+	else
+	{
+		buffer_shortfall++;
+	}
 	UNLOCK();
 	return (buffer);
 }
+
+#ifdef HAVE_IO_COMPLETION_PORT
+recvbuf_t *
+get_free_recv_buffer_alloc(void)
+{
+	recvbuf_t * buffer = get_free_recv_buffer();
+	if (buffer == NULL)
+	{
+		create_buffers(RECV_INC);
+		buffer = get_free_recv_buffer();
+	}
+	return (buffer);
+}
+#endif
 
 recvbuf_t *
 get_full_recv_buffer(void)
 {
 	recvbuf_t *rbuf;
 	LOCK();
+	
+#ifdef HAVE_SIGNALED_IO
+	/*
+	 * make sure there are free buffers when we
+	 * wander off to do lengthy paket processing with
+	 * any buffer we grab from the full list.
+	 * 
+	 * fixes malloc() interrupted by SIGIO risk
+	 * (Bug 889)
+	 */
+	rbuf = ISC_LIST_HEAD(free_recv_list);
+	if (rbuf == NULL || buffer_shortfall > 0) {
+		/*
+		 * try to get us some more buffers
+		 */
+		create_buffers(RECV_INC);
+	}
+#endif
+
+	/*
+	 * try to grab a full buffer
+	 */
 	rbuf = ISC_LIST_HEAD(full_recv_list);
 	if (rbuf != NULL)
 	{

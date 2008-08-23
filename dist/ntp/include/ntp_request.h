@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.h,v 1.1.1.5 2007/01/06 16:05:47 kardel Exp $	*/
+/*	$NetBSD: ntp_request.h,v 1.1.1.6 2008/08/23 07:38:32 kardel Exp $	*/
 
 /*
  * ntp_request.h - definitions for the ntpd remote query facility
@@ -602,7 +602,6 @@ struct conf_peer {
 #define CONF_FLAG_IBURST	0x08
 #define CONF_FLAG_NOSELECT	0x10
 #define CONF_FLAG_SKEY		0x20
-#define CONF_FLAG_DYNAMIC	0x40
 
 /*
  * Structure for passing peer deletion information.  Currently

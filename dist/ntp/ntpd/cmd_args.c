@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd_args.c,v 1.1.1.3 2007/01/06 16:07:03 kardel Exp $	*/
+/*	$NetBSD: cmd_args.c,v 1.1.1.4 2008/08/23 07:38:51 kardel Exp $	*/
 
 /*
  * cmd_args.c = command-line argument processing
@@ -25,7 +25,7 @@
  */
 extern char const *progname;
 extern const char *specific_interface;
-extern int default_ai_family;
+extern short default_ai_family;
 
 #ifdef HAVE_NETINFO
 extern int	check_netinfo;
@@ -128,7 +128,7 @@ getCmdOpts(
 			const char* p = *pp++;
 
 			tkey = (int)atol(p);
-			if (tkey <= 0 || tkey > NTP_MAXKEY) {
+			if (tkey == 0 || tkey > NTP_MAXKEY) {
 				msyslog(LOG_ERR,
 				    "command line trusted key %s is invalid",
 				    p);
@@ -187,11 +187,11 @@ getCmdOpts(
 	if (HAVE_OPT( UPDATEINTERVAL )) {
 		long val = OPT_VALUE_UPDATEINTERVAL;
 			  
-		if ((val >= 60) || (val == 0))
+		if (val >= 0)
 			interface_interval = val;
 		else {
 			msyslog(LOG_ERR,
-				"command line interface update interval %ld must be 0 or longer than 60 seconds",
+				"command line interface update interval %ld must be greater or equal to 0",
 				      val);
 			errflg++;
 		}

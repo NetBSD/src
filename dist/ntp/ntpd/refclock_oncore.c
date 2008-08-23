@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.1.1.4 2007/01/06 16:06:56 kardel Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.1.1.5 2008/08/23 07:38:49 kardel Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -537,10 +537,6 @@ oncore_start(
 	char device1[STRING_LEN], device2[STRING_LEN], Msg[160];
 	const char *cp;
 	struct stat stat1, stat2;
-#ifdef PPS_HAVE_FINDSOURCE
-	int ret;
-	char id[STRING_LEN];
-#endif
 
 	/* create instance structure for this unit */
 
@@ -591,57 +587,6 @@ oncore_start(
 	(void)sprintf(device1, DEVICE1, unit);
 	(void)sprintf(device2, DEVICE2, unit);
 
-#ifdef PPS_HAVE_FINDSOURCE
-	/* Try to find the PPS source (by using "index = -1"
-	 * we ask just for a generic source)
-	 */
-
-	num = fd2 = -1;
-	if ((num=time_pps_findsource(num, device2, STRING_LEN, id, STRING_LEN)) < 0) {
-		sprintf(Msg, "No available PPS source in the system");
-		record_clock_stats(&(instance->peer->srcadr), Msg);
-		exit(1);
-	}
-
-	sprintf(Msg, "Found PPS source #%d \"%s\" on \"%s\"", num, id, device2);
-	record_clock_stats(&(instance->peer->srcadr), Msg);
-
-	/* there are two cases here:
-	 *     either there is a device name in device2 and we must open it,
-	 *  or there is not, and and it is not a device, and there is nothing
-	 *     to open.
-	 *  in either case we must use refclock_open to get fd1 opened raw.
-	 */
-
-	if (strlen(device2)) {
-		if (stat(device1, &stat1)) {
-			sprintf(Msg, "Can't stat fd1 (%s)\n", device1);
-			record_clock_stats(&(instance->peer->srcadr), Msg);
-			exit(1);
-		}
-
-		if (stat(device2, &stat2)) {
-			sprintf(Msg, "Can't stat fd2 (%s)\n", device2);
-			record_clock_stats(&(instance->peer->srcadr), Msg);
-			exit(1);
-		}
-
-		if ((stat1.st_dev != stat2.st_dev) || (stat1.st_ino != stat2.st_ino)) {
-			if ((ret=open(device2, O_RDWR)) < 0) {	/* different devices here */
-				sprintf(Msg, "Can't open fd2 (%s)\n", device2);
-				record_clock_stats(&(instance->peer->srcadr), Msg);
-				exit(1);
-			}
-		}
-	}
-
-	if ((fd1=refclock_open(device1, SPEED, LDISC_RAW)) < 0) {
-		sprintf(Msg, "Can't open fd1 (%s)\n", device1);
-		record_clock_stats(&(instance->peer->srcadr), Msg);
-		exit(1);
-	}
-
-#else
 	/* OPEN DEVICES */
 	/* opening different devices for fd1 and fd2 presents no problems */
 	/* opening the SAME device twice, seems to be OS dependent.
@@ -681,7 +626,7 @@ oncore_start(
 		}
 	}
 	num = fd2;
-#endif
+
 	/* open ppsapi soure */
 
 	if (time_pps_create(num, &instance->pps_h) < 0) {
@@ -2424,14 +2369,14 @@ oncore_msg_BnEnHn(
 			return;
 
 		dt1 = instance->saw_tooth + instance->offset;	 /* dt this time step */
-		instance->saw_tooth = (s_char) instance->BEHn[10]; /* update for next time Hn[10] */
+		instance->saw_tooth = (s_char) instance->BEHn[14]; /* update for next time Hn[14] */
 		dt2 = instance->saw_tooth + instance->offset;	 /* dt next time step */
 	} else {
 		if (instance->BEHn[21]) /* bad TRAIM */
 			return;
 
 		dt1 = instance->saw_tooth + instance->offset;	 /* dt this time step */
-		instance->saw_tooth = (s_char) instance->BEHn[25]; /* update for next time */
+		instance->saw_tooth = (s_char) instance->BEHn[25]; /* update for next time Bn[25], En[25] */
 		dt2 = instance->saw_tooth + instance->offset;	 /* dt next time step */
 	}
 
@@ -2973,7 +2918,7 @@ oncore_msg_Gj(
 	if (dt) {
 		sprintf(Msg, "ONCORE[%d]: Leap second (%d) scheduled for %d%s%d at %d:%d:%d",
 			instance->unit,
-			dt, buf[9], Month[buf[8]], 256*buf[6]+buf[7],
+			dt, buf[9], Month[buf[8]-1], 256*buf[6]+buf[7],
 			buf[15], buf[16], buf[17]);
 		record_clock_stats(&(instance->peer->srcadr), Msg);
 	}

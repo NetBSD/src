@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.1.1.4 2007/01/06 16:07:20 kardel Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.1.1.5 2008/08/23 07:38:35 kardel Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by xntpdc
@@ -121,10 +121,10 @@ struct xcmd opcmds[] = {
 	  { "", "", "", "" },
 	  "display event timer subsystem statistics" },
 	{ "addpeer",	addpeer,	{ NTP_ADD, OPT|NTP_STR, OPT|NTP_STR, OPT|NTP_STR },
-	  { "addr", "keyid", "version", "minpoll#|prefer|burst|iburst|dynamic|'minpoll N'|'maxpoll N'|'keyid N'|'version N' ..." },
+	  { "addr", "keyid", "version", "minpoll#|prefer|burst|iburst|'minpoll N'|'maxpoll N'|'keyid N'|'version N' ..." },
 	  "configure a new peer association" },
 	{ "addserver",	addserver,	{ NTP_ADD, OPT|NTP_STR, OPT|NTP_STR, OPT|NTP_STR },
-	  { "addr", "keyid", "version", "minpoll#|prefer|burst|iburst|dynamic|'minpoll N'|'maxpoll N'|'keyid N'|'version N' ..." },
+	  { "addr", "keyid", "version", "minpoll#|prefer|burst|iburst|'minpoll N'|'maxpoll N'|'keyid N'|'version N' ..." },
 	  "configure a new server" },
 	{ "addrefclock",addrefclock,	{ NTP_ADD, OPT|NTP_UINT, OPT|NTP_STR, OPT|NTP_STR },
 	  { "addr", "mode", "minpoll|prefer", "minpoll|prefer" },
@@ -888,7 +888,7 @@ again:
 			       "offset %s, frequency %s, time_const %ld, watchdog %ld\n",
 			       lfptoa(&tempts, 6),
 			       lfptoa(&temp2ts, 3),
-			       (u_long)ntohl((u_long)il->compliance),
+			       (long)(int32_t)ntohl((u_long)il->compliance),
 			       (u_long)ntohl((u_long)il->watchdog_timer));
 	} else {
 		NTOHL_FP(&il->last_offset, &tempts);
@@ -898,7 +898,7 @@ again:
 		(void) fprintf(fp, "frequency:            %s ppm\n",
 			       lfptoa(&tempts, 3));
 		(void) fprintf(fp, "poll adjust:          %ld\n",
-			       (u_long)ntohl(il->compliance));
+			       (long)(int32_t)ntohl(il->compliance));
 		(void) fprintf(fp, "watchdog timer:       %ld s\n",
 			       (u_long)ntohl(il->watchdog_timer));
 	}
@@ -1335,7 +1335,7 @@ again:
 		else if (STREQ(pcmd->argval[items].string, "burst"))
 		    flags |= CONF_FLAG_BURST;
 		else if (STREQ(pcmd->argval[items].string, "dynamic"))
-                    flags |= CONF_FLAG_DYNAMIC;
+		    (void) fprintf(fp, "Warning: the \"dynamic\" keyword has been obsoleted and will be removed in the next release\n"); 
 		else if (STREQ(pcmd->argval[items].string, "iburst"))
 		    flags |= CONF_FLAG_IBURST;
 		else if (!refc && STREQ(pcmd->argval[items].string, "keyid"))
@@ -2702,7 +2702,6 @@ clockstat(
 	int res;
 	l_fp ts;
 	struct clktype *clk;
-	u_long ltemp;
 
 	for (qitems = 0; qitems < min(pcmd->nargs, 8); qitems++)
 	    clist[qitems] = GET_INADDR(pcmd->argval[qitems].netnum);
@@ -2760,9 +2759,8 @@ again:
 			       lfptoa(&ts, 6));
 		(void) fprintf(fp, "stratum:              %ld\n",
 			       (u_long)ntohl(cl->fudgeval1));
-		ltemp = ntohl(cl->fudgeval2);
 		(void) fprintf(fp, "reference ID:         %s\n",
-			       (char *)&ltemp);
+			       refid_string(ntohl(cl->fudgeval2), 0));
 		(void) fprintf(fp, "fudge flags:          0x%x\n",
 			       cl->flags);
 
@@ -2994,7 +2992,7 @@ again:
 		tscale = 1e-9;
 #endif
 	(void)fprintf(fp, "pll offset:           %g s\n",
-	    (long)ntohl(ik->offset) * tscale);
+	    (int32_t)ntohl(ik->offset) * tscale);
 	(void)fprintf(fp, "pll frequency:        %s ppm\n",
 	    fptoa((s_fp)ntohl(ik->freq), 3));
 	(void)fprintf(fp, "maximum error:        %g s\n",
