@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.948 2008/08/22 16:55:50 tnn Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.949 2008/08/23 16:55:50 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.948 2008/08/22 16:54:17 tnn Exp
+ *	NetBSD: pcidevs,v 1.949 2008/08/23 16:54:56 tsutsui Exp
  */
 
 /*
@@ -11772,6 +11772,10 @@ static const struct pci_product pci_products[] = {
 	    "8029 Ethernet",
 	},
 	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139D,
+	    "8139D 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8100,
 	    "8100 10/100 Ethernet",
 	},
@@ -11786,10 +11790,6 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138,
 	    "8138 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139B,
-	    "8139B 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
