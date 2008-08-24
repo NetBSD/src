@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.14 2007/10/17 19:57:04 garbled Exp $ */
+/* $NetBSD: haltwo.c,v 1.15 2008/08/24 13:03:39 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.14 2007/10/17 19:57:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.15 2008/08/24 13:03:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ static int haltwo_trigger_output(void *, void *, void *, int, void (*)(void *),
 	void *, const audio_params_t *);
 static int haltwo_trigger_input(void *, void *, void *, int, void (*)(void *),
 	void *, const audio_params_t *);
+static void haltwo_shutdown(void *);
 
 static const struct audio_hw_if haltwo_hw_if = {
 	NULL, /* open */
@@ -356,6 +357,11 @@ haltwo_attach(struct device *parent, struct device *self, void *aux)
 	haltwo_write(sc, vol, HAL2_REG_VOL_RIGHT, sc->sc_vol_right);
 
 	audio_attach_mi(&haltwo_hw_if, sc, &sc->sc_dev);
+
+	sc->sc_sdhook = shutdownhook_establish(haltwo_shutdown, sc);
+	if (sc->sc_sdhook == NULL)
+		aprint_error_dev(self,
+		    "WARNING: unable to establish shutdown hook\n");
 }
 
 static int
@@ -806,4 +812,14 @@ haltwo_trigger_input(void *v, void *start, void *end, int blksize,
 #endif
 
 	return ENXIO;
+}
+
+void
+haltwo_shutdown(void *arg)
+{
+	struct haltwo_softc *sc = arg;
+
+	haltwo_write(sc, ctl, HAL2_REG_CTL_ISR, 0);
+	haltwo_write(sc, ctl, HAL2_REG_CTL_ISR,
+	    HAL2_ISR_GLOBAL_RESET_N | HAL2_ISR_CODEC_RESET_N);
 }
