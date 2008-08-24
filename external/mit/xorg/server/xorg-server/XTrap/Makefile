@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 21:19:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/24 13:25:03 rtr Exp $
+
+LIBISPRIVATE=	yes
 
 .include "../Makefile.serverlib"
 
-.if ${MKX11LOADABLE} != "no"
-XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
-SRCS=		xf86XTrapModule.c
-CPPFLAGS+=	-DEXTMODULE
-.endif
+LIB=	XTrap
+SRCS=	${SRCS.XTrap}
 
-.include "../Makefile.servermod"
 .include "Makefile.xtrap"
