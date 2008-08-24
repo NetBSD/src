@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/15 15:55:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/24 13:47:05 rtr Exp $
 
 # XXX this one is installed in modular-xorg-server
 
@@ -28,8 +28,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/loader \
 		-I${X11SRCDIR.xorg-server}/rac \
 		-I.
-
-CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

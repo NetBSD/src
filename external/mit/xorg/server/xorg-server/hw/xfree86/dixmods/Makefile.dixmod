@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.dixmod,v 1.3 2008/08/15 15:55:05 rtr Exp $
+#	$NetBSD: Makefile.dixmod,v 1.4 2008/08/24 13:47:05 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -18,8 +18,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg
 
-CPPFLAGS+=	${X11FLAGS.DIX} \
-		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+CPPFLAGS+=	${X11FLAGS.DIX}
 
 .include <bsd.x11.mk>
 LIBDIR=${XMODULEDIR}
