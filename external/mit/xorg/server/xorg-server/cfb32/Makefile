@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 21:19:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/24 13:24:12 rtr Exp $
+
+LIBISPRIVATE=	yes
+PIXELSIZE=	32
 
 .include "../Makefile.serverlib"
 
-PIXELSIZE=	32
+LIB=	cfb32
+SRCS=	${SRCS.cfb}
 
-.if ${MKX11LOADABLE} != "no"
-XMODULEDIR=	${X11USRLIBDIR}/modules
-SRCS=		cfbmodule32.c
-.endif
-
-.include "../Makefile.servermod"
 .include "../cfb/Makefile.cfb"
