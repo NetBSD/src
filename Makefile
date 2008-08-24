@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.255 2008/07/29 13:17:40 pooka Exp $
+#	$NetBSD: Makefile,v 1.256 2008/08/24 05:56:20 gmcgarry Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -84,6 +84,8 @@
 #   do-libgcc:       builds and installs prerequisites from
 #                    gnu/lib/crtstuff${LIBGCC_EXT} (if necessary) and
 #                    gnu/lib/libgcc${LIBGCC_EXT}.
+#   do-libpcc:       builds and install prerequisites from
+#                    external/bsd/pcc/crtstuff and external/bsd/pcc/libpcc.
 #   do-lib-libc:     builds and installs prerequisites from lib/libc.
 #   do-lib:          builds and installs prerequisites from lib.
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
@@ -179,10 +181,12 @@ postinstall-fix-obsolete: .NOTMAIN .PHONY
 #
 # Targets (in order!) called by "make build".
 #
+.if defined(HAVE_GCC)
 .if ${HAVE_GCC} == "3"
 LIBGCC_EXT=3
 .else
 LIBGCC_EXT=4
+.endif
 .endif
 
 BUILDTARGETS+=	check-tools
@@ -205,6 +209,9 @@ BUILDTARGETS+=	do-tools-compat
 BUILDTARGETS+=	do-lib-csu
 .if ${MKGCC} != "no"
 BUILDTARGETS+=	do-libgcc
+.endif
+.if ${MKPCC} != "no"
+BUILDTARGET+=	do-libpcc
 .endif
 BUILDTARGETS+=	do-lib-libc
 BUILDTARGETS+=	do-lib do-gnu-lib do-external-lib
@@ -358,7 +365,15 @@ do-${targ}: .PHONY ${targ}
 	@true
 .endfor
 
-.for dir in tools tools/compat lib/csu gnu/lib/crtstuff${LIBGCC_EXT} gnu/lib/libgcc${LIBGCC_EXT} lib/libc lib/libdes lib gnu/lib external/lib sys/rump/fs/lib
+.if defined(HAVE_GCC)
+BUILD_CC_LIB= gnu/lib/crtstuff${LIBGCC_EXT}
+BUILD_CC_LIB+= gnu/lib/libgcc${LIBGCC_EXT}
+.elif defined(HAVE_PCC)
+BUILD_CC_LIB+= external/bsd/pcc/crtstuff
+BUILD_CC_LIB+= external/bsd/pcc/libpcc
+.endif
+
+.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib/libdes lib gnu/lib external/lib sys/rump/fs/lib
 do-${dir:S/\//-/g}: .PHONY .MAKE
 .for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
@@ -366,11 +381,21 @@ do-${dir:S/\//-/g}: .PHONY .MAKE
 .endfor
 
 do-libgcc: .PHONY .MAKE
+.if defined(HAVE_GCC)
 .if ${MKGCC} != "no"
 .if (${HAVE_GCC} == "3" || ${HAVE_GCC} == "4")
 	${MAKEDIRTARGET} . do-gnu-lib-crtstuff${LIBGCC_EXT}
 .endif
 	${MAKEDIRTARGET} . do-gnu-lib-libgcc${LIBGCC_EXT}
+.endif
+.endif
+
+do-libpcc: .PHONY .MAKE
+.if defined(HAVE_PCC)
+.if ${MKPCC} != "no"
+	${MAKEDIRTARGET} . do-pcc-lib-crtstuff
+	${MAKEDIRTARGET} . do-pcc-lib-libpcc
+.endif
 .endif
 
 do-ld.so: .PHONY .MAKE
