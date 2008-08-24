@@ -1,20 +1,18 @@
-#	$NetBSD: Makefile.mfb,v 1.2 2008/08/15 15:55:06 rtr Exp $
+#	$NetBSD: Makefile.mfb,v 1.3 2008/08/24 13:30:20 rtr Exp $
 
-LIB=		mfb
 .PATH:		${X11SRCDIR.xorg-server}/mfb
+SRCS.mfb=	mfbseg.c mfbpgbwht.c mfbpgbblak.c mfbpgbinv.c mfbigbwht.c \
+		mfbigbblak.c mfbpawhite.c mfbpablack.c mfbpainv.c \
+		mfbtewhite.c mfbteblack.c mfbbltC.c mfbbltX.c mfbbltCI.c \
+		mfbbltO.c mfbbltG.c mfbtileC.c mfbtileG.c mfbplywhite.c \
+		mfbplyblack.c mfbplyinv.c mfbgc.c mfbwindow.c mfbfont.c \
+		mfbfillrct.c mfbpntwin.c maskbits.c mfbpixmap.c \
+		mfbimage.c mfbline.c mfbbres.c mfbhrzvert.c mfbbresd.c \
+		mfbpushpxl.c mfbzerarc.c mfbfillarc.c mfbfillsp.c \
+		mfbsetsp.c mfbscrinit.c mfbscrclse.c mfbclip.c mfbbitblt.c \
+		mfbgetsp.c mfbpolypnt.c mfbcmap.c mfbmisc.c mfbbstore.c
 
-SRCS=	mfbseg.c mfbpgbwht.c mfbpgbblak.c mfbpgbinv.c mfbigbwht.c \
-	mfbigbblak.c mfbpawhite.c mfbpablack.c mfbpainv.c mfbtewhite.c \
-	mfbteblack.c mfbbltC.c mfbbltX.c mfbbltCI.c mfbbltO.c mfbbltG.c \
-	mfbtileC.c mfbtileG.c mfbplywhite.c mfbplyblack.c mfbplyinv.c
-
-SRCS+=	mfbgc.c mfbwindow.c mfbfont.c \
-	mfbfillrct.c mfbpntwin.c maskbits.c mfbpixmap.c \
-	mfbimage.c mfbline.c mfbbres.c mfbhrzvert.c mfbbresd.c \
-	mfbpushpxl.c mfbzerarc.c mfbfillarc.c \
-	mfbfillsp.c mfbsetsp.c mfbscrinit.c mfbscrclse.c mfbclip.c \
-	mfbbitblt.c mfbgetsp.c mfbpolypnt.c \
-	mfbcmap.c mfbmisc.c mfbbstore.c
+CPPFLAGS+=	${X11FLAGS.DIX}
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/mfb \
 		-I${X11SRCDIR.xorg-server}/mi \
@@ -27,8 +25,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/mfb \
 # XXX some path so that "../../mfb/mfbblt.c" works
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86
 
-CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT} \
-		${X11FLAGS.DIX}
 
 # XXX
 COPTS.mfbclip.c+=	-Wno-error
