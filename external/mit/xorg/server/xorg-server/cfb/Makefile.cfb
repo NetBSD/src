@@ -1,13 +1,7 @@
-#	$NetBSD: Makefile.cfb,v 1.2 2008/08/15 15:55:05 rtr Exp $
-
-.if ${PIXELSIZE} == 8
-LIB=		cfb
-.else
-LIB=		cfb${PIXELSIZE}
-.endif
+#	$NetBSD: Makefile.cfb,v 1.3 2008/08/24 13:23:33 rtr Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/cfb
-SRCS+=		cfbseg.c cfbfillarcC.c cfbfillarcG.c cfbzerarcC.c \
+SRCS.cfb+=	cfbseg.c cfbfillarcC.c cfbfillarcG.c cfbzerarcC.c \
 		cfbzerarcX.c cfbzerarcG.c cfbbltC.c cfbbltX.c \
 		cfbbltO.c cfbbltG.c cfbsolidC.c cfbsolidX.c \
 		cfbsolidG.c cfbtileoddC.c cfbtileoddG.c cfbtile32C.c \
@@ -15,7 +9,7 @@ SRCS+=		cfbseg.c cfbfillarcC.c cfbfillarcG.c cfbzerarcC.c \
 		cfb8lineG.c cfb8segCS.c cfb8segC.c cfb8segX.c \
 		cfb8setG.c cfbply1rctC.c cfbply1rctG.c
 
-SRCS+=		cfbgc.c cfbrrop.c cfbwindow.c cfbpntwin.c \
+SRCS.cfb+=	cfbgc.c cfbrrop.c cfbwindow.c cfbpntwin.c \
 		cfbmskbits.c cfbpixmap.c cfbbitblt.c cfbfillsp.c \
 		cfbsetsp.c cfbscrinit.c cfballpriv.c cfbgetsp.c \
 		cfbfillrct.c cfbigblt8.c cfbglblt8.c cfbtegblt.c \
@@ -58,7 +52,7 @@ BUILDSYMLINKS=	cfbline.c cfbseg.c \
 		
 
 .if ${PIXELSIZE} == 8							# {
-SRCS+=		cfb8bit.c cfbteblt8.c cfbglrop8.c cfbpush8.c cfbrctstp8.c
+SRCS.cfb+=	cfb8bit.c cfbteblt8.c cfbglrop8.c cfbpush8.c cfbrctstp8.c
 .if 0
 BUILDSYMLINKS+=	cfbglblt8.c cfbglrop8.c
 .endif
@@ -81,8 +75,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/cfb \
 # XXX some path so that "../../mfb/mfbblt.c" works
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86
 
-CPPFLAGS+=	-DPSZ=${PIXELSIZE} -DXFREE86 \
-		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+CPPFLAGS+=	-DPSZ=${PIXELSIZE} -DXFREE86
 
 
 .if ${MACHINE} == "sparc64"
