@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/15 15:55:05 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/24 13:47:05 rtr Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -82,8 +82,7 @@ CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
 		-DXFree86LOADER -DWSCONS_SUPPORT -D__XKBDEFRULES__='"xorg"' \
 		-D__XSERVERNAME__='"Xorg"' -D__XCONFIGFILE__='"xorg.conf"' \
 		-D__VENDORDWEBSUPPORT__='"http://wiki.X.Org"' \
-		-DXVENDORNAME='"The X.Org Foundation"' \
-		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+		-DXVENDORNAME='"The X.Org Foundation"'
 
 .if ${MACHINE} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT

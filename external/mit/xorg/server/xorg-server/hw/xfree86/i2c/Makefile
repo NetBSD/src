@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/15 15:55:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/24 13:47:05 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -20,8 +20,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
 		-I${X11SRCDIR.xorg-server}/include
 
-CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT} \
-		${X11FLAGS.DIX}
+CPPFLAGS+=	${X11FLAGS.DIX}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
