@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.10 2008/05/31 19:58:35 dyoung Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.11 2008/08/24 06:27:00 gmcgarry Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -16,7 +16,7 @@ CPPFLAGS+=	-isystem ${S}/../common/include
 CPPFLAGS+=	-D_KERNEL -D_LKM -D_MODULE
 
 # XXX until the kernel is fixed again...
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
 .endif
 
