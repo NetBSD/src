@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.86 2008/08/23 13:06:51 tnn Exp $
+$NetBSD: acronyms.comp,v 1.87 2008/08/24 23:13:07 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -34,6 +34,7 @@ BAR	base address register
 BEDO	burst extended data output
 BER	basic encoding rules
 BER	bit error rate
+BFD	binary formats descriptor
 BFKL	big fscking kernel lock
 BGP	border gateway protocol
 BIOS	basic input/output system
@@ -121,6 +122,7 @@ FCS	frame check sequence
 FDDI	fiber distributed data interface
 FFI	foreign function interface
 FFS	fast file system
+FFS	find first set
 FHSS	frequency hop spread spectrum
 FIR	fast infrared
 FLOPS	floating [point] operations per second
@@ -232,6 +234,7 @@ OCL	object constraint language
 OCR	optical character recognition
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
+OOB	out of band
 OS	operating system
 OSF	open software foundation
 OSI	open systems interconnection
