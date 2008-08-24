@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.28 2008/08/19 15:14:43 cegger Exp $ */
+/* $NetBSD: privcmd.c,v 1.29 2008/08/24 20:35:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.28 2008/08/19 15:14:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.29 2008/08/24 20:35:43 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -88,6 +88,8 @@ privcmd_xen2bsd_errno(int error)
 	 */
 
 	switch(-error) {
+	case 0:
+		return 0;
 	case 1:
 		return EPERM;
 	case 2:
