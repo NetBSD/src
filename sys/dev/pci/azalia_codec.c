@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.70 2008/08/15 13:47:25 jmcneill Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.71 2008/08/24 16:12:03 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.70 2008/08/15 13:47:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.71 2008/08/24 16:12:03 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1315,12 +1315,11 @@ generic_mixer_widget_name(const codec_t *this, widget_t *w)
 static int
 generic_mixer_create_virtual(codec_t *this)
 {
-	mixer_item_t *mdac = NULL, *madc = NULL, *mmaster = NULL;
 	mixer_item_t *m;
 	mixer_devinfo_t *d;
 	convgroup_t *cgdac = &this->dacs.groups[0];
 	convgroup_t *cgadc = &this->adcs.groups[0];
-	int i, err;
+	int i, err, mdac, madc, mmaster;
 
 	/* Clear mixer indexes, to make generic_mixer_fix_index happy */
 	for (i = 0; i < this->nmixers; i++) {
@@ -1328,28 +1327,27 @@ generic_mixer_create_virtual(codec_t *this)
 		d->index = d->prev = d->next = 0;
 	}
 
+	mdac = madc = mmaster = -1;
 	for (i = 0; i < this->nmixers; i++) {
 		if (this->mixers[i].devinfo.type != AUDIO_MIXER_VALUE)
 			continue;
-		if (mdac == NULL && this->dacs.ngroups > 0 &&
-		    cgdac->nconv > 0) {
+		if (mdac < 0 && this->dacs.ngroups > 0 && cgdac->nconv > 0) {
 			if (this->mixers[i].nid == cgdac->conv[0])
-				mdac = mmaster = &this->mixers[i];
+				mdac = mmaster = i;
 		}
-		if (madc == NULL && this->adcs.ngroups > 0 &&
-		    cgadc->nconv > 0) {
+		if (madc < 0 && this->adcs.ngroups > 0 && cgadc->nconv > 0) {
 			if (this->mixers[i].nid == cgadc->conv[0])
-				madc = &this->mixers[i];
+				madc = i;
 		}
 	}
 
-	if (mdac) {
+	if (mdac >= 0) {
 		err = generic_mixer_ensure_capacity(this, this->nmixers + 1);
 		if (err)
 			return err;
 		m = &this->mixers[this->nmixers];
 		d = &m->devinfo;
-		memcpy(m, mmaster, sizeof(*m));
+		memcpy(m, &this->mixers[mmaster], sizeof(*m));
 		d->mixer_class = AZ_CLASS_OUTPUT;
 		snprintf(d->label.name, sizeof(d->label.name), AudioNmaster);
 		this->nmixers++;
@@ -1359,19 +1357,19 @@ generic_mixer_create_virtual(codec_t *this)
 			return err;
 		m = &this->mixers[this->nmixers];
 		d = &m->devinfo;
-		memcpy(m, mdac, sizeof(*m));
+		memcpy(m, &this->mixers[mdac], sizeof(*m));
 		d->mixer_class = AZ_CLASS_INPUT;
 		snprintf(d->label.name, sizeof(d->label.name), AudioNdac);
 		this->nmixers++;
 	}
 
-	if (madc) {
+	if (madc >= 0) {
 		err = generic_mixer_ensure_capacity(this, this->nmixers + 1);
 		if (err)
 			return err;
 		m = &this->mixers[this->nmixers];
 		d = &m->devinfo;
-		memcpy(m, madc, sizeof(*m));
+		memcpy(m, &this->mixers[madc], sizeof(*m));
 		d->mixer_class = AZ_CLASS_RECORD;
 		snprintf(d->label.name, sizeof(d->label.name), AudioNvolume);
 		this->nmixers++;
