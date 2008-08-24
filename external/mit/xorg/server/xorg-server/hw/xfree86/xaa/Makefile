@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/08/15 15:55:06 rtr Exp $
+# $NetBSD: Makefile,v 1.3 2008/08/24 13:47:05 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -44,8 +44,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 # XXX to find files lokoing for "../../../../hw/something"
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod \
 
-CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT} \
-		${X11FLAGS.DIX}
+CPPFLAGS+=	${X11FLAGS.DIX}
 
 .if 0
 CPPFLAGS.lsb_fixed_xaaBitmap.c=		-DLSBFIRST -DFIXEDBASE

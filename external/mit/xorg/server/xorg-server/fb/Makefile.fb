@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.fb,v 1.3 2008/08/09 11:14:52 rtr Exp $
+#	$NetBSD: Makefile.fb,v 1.4 2008/08/24 13:47:05 rtr Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/fb
 SRCS.fb=	fb24_32.c fballpriv.c fbarc.c fbbits.c fbblt.c \
@@ -17,8 +17,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg
 
-CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT} \
-		-DHAVE_DIX_CONFIG_H
+CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
 
 # XXX
 COPTS.fbpict.c=		-Wno-error
