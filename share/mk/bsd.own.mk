@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.518 2008/08/02 06:59:24 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.519 2008/08/24 06:27:00 gmcgarry Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -41,16 +41,20 @@ NEED_OWN_INSTALL_TARGET?=	yes
 TOOLCHAIN_MISSING?=	no
 
 # default to GCC4
-HAVE_GCC?=	4
+.if !defined(HAVE_GCC) && !defined(HAVE_PCC)
+HAVE_GCC=	4
+.endif
 
 # default to GDB6
 HAVE_GDB?=	6
 
 CPPFLAG_ISYSTEM=	-isystem
+.if defined(HAVE_GCC)
 .if ${HAVE_GCC} == 3
 CPPFLAG_ISYSTEMXX=	-isystem-cxx
 .else	# GCC 4
 CPPFLAG_ISYSTEMXX=	-cxx-isystem
+.endif
 .endif
 
 .if empty(.MAKEFLAGS:M-V*)
@@ -175,13 +179,22 @@ SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
 STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
 .endif									#  }
 
-.if ${USETOOLS_GCC:Uyes} == "yes"					#  {
+.if defined(HAVE_GCC) && ${USETOOLS_GCC:Uyes} == "yes"			#  {
 CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
 CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
 FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
 OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 .endif									#  }
+
+.if defined(HAVE_PCC) && ${USETOOLS_PCC:Uyes} == "yes"
+CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-pcc
+CPP=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-cpp
+CXX=		false
+FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-f77
+OBJC=		false
+.endif
+
 .endif	# EXTERNAL_TOOLCHAIN						# }
 
 HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
@@ -412,7 +425,7 @@ NOPIC=		# defined
 MKISCSI=	no
 # XXX GCC 4 outputs mcount() calling sequences that try to load values
 # from over 64KB away and this fails to assemble.
-.if ${HAVE_GCC} == 4
+.if defined(HAVE_GCC) && (${HAVE_GCC} == 4)
 NOPROFILE=	# defined
 .endif
 .endif
@@ -557,7 +570,8 @@ MK${var}:=	yes
 	MKMAN \
 	MKNLS MKNVI \
 	MKOBJ \
-	MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
+	MKPAM \
+	MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
 	MKSHARE MKSKEY MKSTATICLIB \
 	MKYP
 ${var}?=	yes
