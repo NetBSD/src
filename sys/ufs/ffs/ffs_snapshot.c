@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.76 2008/08/24 09:51:47 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.77 2008/08/24 15:33:37 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.76 2008/08/24 09:51:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.77 2008/08/24 15:33:37 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -751,6 +751,8 @@ out:
 		FREE(fs->fs_active, M_DEVBUF);
 		fs->fs_active = 0;
 	}
+	if (logvp)
+		vput(logvp);
 	mp->mnt_flag = flag;
 	if (error) {
 		if (!UFS_WAPBL_BEGIN(mp)) {
