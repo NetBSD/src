@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/08/15 15:55:06 rtr Exp $
+# $NetBSD: Makefile,v 1.3 2008/08/24 13:47:05 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -20,8 +20,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/ddc \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/int10
-
-CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 # XXX
 COPTS.vbe.c=	-Wno-error

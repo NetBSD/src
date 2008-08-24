@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/15 15:55:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/24 13:47:05 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -34,7 +34,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} -DDLOPEN_SUPPORT -DHAS_SHM \
 		-DIN_LOADER \
-		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT} \
 		${x11FLAGS.DIX}
 
 .if ${MACHINE_ARCH} == "x86_64"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.record,v 1.2 2008/08/10 06:42:39 rtr Exp $
+#	$NetBSD: Makefile.record,v 1.3 2008/08/24 13:47:05 rtr Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/record
 SRCS.record=	record.c set.c
@@ -8,7 +8,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/Xext
 
-CPPFLAGS+=	-DNDEBUG -DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+CPPFLAGS+=	-DNDEBUG
 
 # XXX
 COPTS.record.c=	-Wno-error
