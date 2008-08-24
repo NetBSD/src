@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.24 2008/05/25 15:19:22 chris Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.25 2008/08/24 20:27:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -150,10 +150,9 @@
 #define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
 
-#define CPUID_EXT_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN" \
-				    "\24MPC\25NOX\26B21\27MMXX\30MMX"
-#define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34RDTSCP\35HTT" \
-				    "\36LONG\0373DNOW2\0403DNOW"
+#define CPUID_EXT_FLAGS	"\177\20b\13SYSCALL/SYSRET\0b\24NOX\0b\26MXX\0b" \
+			    "\31FFXSR\0b\32P1GB\0b\33RDTSCP\0b\35LONG\0" \
+			    "b\0363DNOW2\0b\0373DNOW\0\0"
 
 /*
  * Centaur Extended Feature flags
