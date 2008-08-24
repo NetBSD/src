@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 20:41:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/24 13:30:20 rtr Exp $
+
+LIBISPRIVATE=	yes
 
 .include "../Makefile.serverlib"
 
-.if ${MKX11LOADABLE} != "no"
-XMODULEDIR=	${X11USRLIBDIR}/modules
-.endif
+LIB=	mfb
+SRCS=	${SRCS.mfb}
 
-.include "../Makefile.servermod"
 .include "Makefile.mfb"
