@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 04:32:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/24 13:37:33 rtr Exp $
+
+LIBISPRIVATE=   yes
 
 .include "../../Makefile.serverlib"
 
-.if ${MKX11LOADABLE} != "no"
-XMODULEDIR=	${X11USRLIBDIR}/modules
-SRCS=		shmodule.c
-.endif
+LIB=    shadow
+SRCS=   ${SRCS.shadow}
 
-.include "../../Makefile.servermod"
 .include "Makefile.shadow"
