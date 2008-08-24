@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.182 2008/03/05 21:37:55 plunky Exp $
+$NetBSD: acronyms,v 1.183 2008/08/24 23:12:10 dholland Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -28,6 +28,7 @@ BBT	be back tomorrow
 BCNU	be seeing you
 BCNUL8R	be seeing you later
 BFD	big fucking deal
+BFH	big fucking hammer
 BIAB	back in a bit
 BIAF	back in a few
 BIALW	back in a little while
@@ -67,6 +68,7 @@ ETLA	extended three letter acronym
 EWAG	experienced wild-ass guess
 FAQ	frequently asked question
 FCFS	first come first served
+FFS	for fuck's sake
 FIGJAM	fuck I'm good, just ask me
 FIIK	fuck[ed] if I know
 FIIR	fuck[ed] if I remember
@@ -173,6 +175,7 @@ NVM	never mind
 OIC	oh, I see
 OMG	oh, my god
 OMW	on my way
+OOB	out of bounds
 OT	off topic
 OTL	out to lunch
 OTOH	on the other hand
@@ -188,6 +191,7 @@ PKSP	pound keys and spew profanity
 PNG	persona non grata
 PNP	plug and pray
 POC	point of contact
+POC	proof of concept
 POLA	principle of least astonishment
 POLS	principle of least surprise
 POS	piece of shit
