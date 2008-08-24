@@ -1,18 +1,15 @@
-#	$NetBSD: Makefile.cw,v 1.2 2008/08/03 03:17:16 mrg Exp $
+#	$NetBSD: Makefile.cw,v 1.3 2008/08/24 13:40:13 rtr Exp $
 
-LIB=	cw
-
-.PATH:	${X11SRCDIR.xorg-server}/miext/${LIB}
-SRCS+=	cw.c cw_ops.c cw_render.c
-
-
-CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support
+.PATH:          ${X11SRCDIR.xorg-server}/miext/cw
+SRCS.cw=	cw.c cw_ops.c cw_render.c
 
 CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION} \
-		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${DESTDIR}${X11INCDIR}/xorg \
 		${X11FLAGS.DIX} ${X11INCS.DIX}
 
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${DESTDIR}${X11INCDIR}/xorg
+
 .include <bsd.x11.mk>
-LIBDIR=	${XMODULEDIR}
+LIBDIR= ${XMODULEDIR}
 .include <bsd.lib.mk>

@@ -1,18 +1,15 @@
-#	$NetBSD: Makefile.damage,v 1.2 2008/08/03 03:17:16 mrg Exp $
+#	$NetBSD: Makefile.damage,v 1.3 2008/08/24 13:40:13 rtr Exp $
 
-LIB=	damage
-.PATH:	${X11SRCDIR.xorg-server}/miext/${LIB}
-
-SRCS+=	damage.c
-
-CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support
+.PATH:          ${X11SRCDIR.xorg-server}/miext/damage
+SRCS.damage=	damage.c
 
 CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION} \
-		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${DESTDIR}${X11INCDIR}/xorg \
-		-I${X11SRCDIR.xorg-server}/miext/cw \
 		${X11FLAGS.DIX} ${X11INCS.DIX}
 
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${X11SRCDIR.xorg-server}/miext/cw
+
 .include <bsd.x11.mk>
-LIBDIR=	${XMODULEDIR}
+LIBDIR= ${XMODULEDIR}
 .include <bsd.lib.mk>
