@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.51 2008/07/24 05:21:12 dholland Exp $	*/
+/*	$NetBSD: atactl.c,v 1.52 2008/08/25 00:45:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.51 2008/07/24 05:21:12 dholland Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.52 2008/08/25 00:45:56 dholland Exp $");
 #endif
 
 
@@ -265,7 +265,10 @@ static const struct {
 	{  10,		"Spin retry count", NULL },
 	{  11,		"Calibration retry count", NULL },
 	{  12,		"Device power cycle count", NULL },
-	{ 191,		"Gsense error rate", NULL },
+	{  13,		"Soft read error rate", NULL },
+	{ 189,          "High Fly Writes", NULL },
+	{ 190,          "Airflow Temperature",		device_smart_temp },
+	{ 191,		"G-sense error rate", NULL },
 	{ 192,		"Power-off retract count", NULL },
 	{ 193,		"Load cycle count", NULL },
 	{ 194,		"Temperature",			device_smart_temp},
