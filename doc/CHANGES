@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1092 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1093 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -583,3 +583,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		daemon [plunky 20080817]
 	ataraid(4): Add support for nVidia MediaShield from FreeBSD. [tacha 20080820]
 	ntp: Import 4.2.4p5. [kardel 20080823]
+	bge(4): Add support for BCM5906(M) chips contributed by Karl Uwe Lockhoff. [cegger 20080825]
