@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.17 2008/04/28 20:23:09 martin Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.18 2008/08/25 00:14:46 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -173,8 +173,10 @@ main(int argc, char **argv)
 		(*getval)(fd);
 		for (i = 0; i < field_tab_len; i++)
 			if (field_tab[i].flags & FLG_NOAUTO)
-				warnx("Use explicit arg to view %s.",
-				    field_tab[i].name);
+				warnx("\"%s\" not shown with -a; use \"%s %s\""
+				    " to view.",
+				    field_tab[i].name,
+				    getprogname(), field_tab[i].name);
 			else if (field_tab[i].flags & FLG_GET &&
 				 !(field_tab[i].flags & FLG_DISABLED))
 				pr_field(field_tab + i, sep);
