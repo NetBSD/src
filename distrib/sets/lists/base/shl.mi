@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.443 2008/08/05 14:42:03 pooka Exp $
+# $NetBSD: shl.mi,v 1.444 2008/08/25 07:58:37 lukem Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -13,20 +13,20 @@
 #
 # Note:	libtermcap and libtermlib are hardlinked and share the same version.
 #
-./lib/libc.so.12.163				base-sys-shlib
-./lib/libcrypt.so.0.2				base-sys-shlib
-./lib/libcrypto.so.4.1				base-crypto-shlib	crypto
-./lib/libedit.so.2.11				base-sys-shlib
-./lib/libevent.so.2.0				base-sys-shlib
-./lib/libipsec.so.2.2				base-net-shlib
-./lib/libkvm.so.5.3				base-sys-shlib
-./lib/libm.so.0.6				base-sys-shlib
-./lib/libprop.so.0.6				base-sys-shlib
-./lib/libradius.so.2.0				base-sys-shlib
-./lib/libtermcap.so.0.6				base-sys-shlib
-./lib/libtermlib.so.0.6				base-sys-shlib
-./lib/libutil.so.7.15				base-sys-shlib
-./lib/libz.so.1.0				base-sys-shlib
+./lib/libc.so.12.163				base-sys-shlib		dynamicroot
+./lib/libcrypt.so.0.2				base-sys-shlib		dynamicroot
+./lib/libcrypto.so.4.1				base-crypto-shlib	crypto,dynamicroot
+./lib/libedit.so.2.11				base-sys-shlib		dynamicroot
+./lib/libevent.so.2.0				base-sys-shlib		dynamicroot
+./lib/libipsec.so.2.2				base-net-shlib		dynamicroot
+./lib/libkvm.so.5.3				base-sys-shlib		dynamicroot
+./lib/libm.so.0.6				base-sys-shlib		dynamicroot
+./lib/libprop.so.0.6				base-sys-shlib		dynamicroot
+./lib/libradius.so.2.0				base-sys-shlib		dynamicroot
+./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
+./lib/libtermlib.so.0.6				base-sys-shlib		dynamicroot
+./lib/libutil.so.7.15				base-sys-shlib		dynamicroot
+./lib/libz.so.1.0				base-sys-shlib		dynamicroot
 ./usr/lib/i18n/libBIG5.so.4.4			base-i18n-shlib
 ./usr/lib/i18n/libDECHanyu.so.4.4		base-i18n-shlib
 ./usr/lib/i18n/libEUC.so.4.4			base-i18n-shlib

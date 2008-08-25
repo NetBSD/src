@@ -1,6 +1,6 @@
-# $NetBSD: md.sparc,v 1.73 2007/05/25 18:28:53 macallan Exp $
-./lib/libsparc_v8.so.0				base-sys-shlib
-./lib/libsparc_v8.so.0.0			base-sys-shlib
+# $NetBSD: md.sparc,v 1.74 2008/08/25 07:58:37 lukem Exp $
+./lib/libsparc_v8.so.0				base-sys-shlib		dynamicroot
+./lib/libsparc_v8.so.0.0			base-sys-shlib		dynamicroot
 ./sbin/edlabel					base-sysutil-root
 ./sbin/ldconfig					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
