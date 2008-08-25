@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.230 2008/07/29 13:17:41 pooka Exp $
+#	$NetBSD: bsd.prog.mk,v 1.231 2008/08/25 08:03:14 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -161,13 +161,15 @@ _PROGLDOPTS+=	-Wl,-dynamic-linker=${_SHLINKER}
 .endif
 .endif
 .if ${SHLIBDIR} != "/usr/lib"
-_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib \
+_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR} \
 		-R${SHLIBDIR} \
 		-L${DESTDIR}${SHLIBDIR}
 .elif ${SHLIBINSTALLDIR} != "/usr/lib"
-_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
+_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 		-L${DESTDIR}${SHLIBINSTALLDIR}
 .endif
+_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}/usr/lib \
+		-L${DESTDIR}/usr/lib
 
 __proginstall: .USE
 	${_MKTARGET_INSTALL}
@@ -189,13 +191,18 @@ __progdebuginstall: .USE
 _APPEND_MANS=yes
 _APPEND_SRCS=yes
 
+_CCLINKFLAGS=
+.if defined(DESTDIR)
+_CCLINKFLAGS+=	-B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/
+.endif
+
 .if defined(PROG_CXX)
 PROG=		${PROG_CXX}
-_CCLINK=	${CXX} # XXX Some Makefiles rely on this being public.
+_CCLINK=	${CXX} ${_CCLINKFLAGS}
 .endif
 
 .if defined(PROG)
-_CCLINK?=	${CC} # XXX Some Makefiles rely on this being public.
+_CCLINK?=	${CC} ${_CCLINKFLAGS}
 .  if defined(MAN)
 MAN.${PROG}=	${MAN}
 _APPEND_MANS=	no
@@ -229,13 +236,13 @@ PROGS=		${PROG}
 # Definitions specific to C programs.
 .for _P in ${PROGS}
 SRCS.${_P}?=	${_P}.c
-_CCLINK.${_P}=	${CC}
+_CCLINK.${_P}=	${CC} ${_CCLINKFLAGS}
 .endfor
 
 # Definitions specific to C++ programs.
 .for _P in ${PROGS_CXX}
 SRCS.${_P}?=	${_P}.cc
-_CCLINK.${_P}=	${CXX}
+_CCLINK.${_P}=	${CXX} ${_CCLINKFLAGS}
 .endfor
 
 # Language-independent definitions.
@@ -292,15 +299,10 @@ ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${_P})
 	${_MKTARGET_LINK}
-.if defined(DESTDIR)
-	${_CCLINK.${_P}} -Wl,-nostdlib \
+	${_CCLINK.${_P}} \
+	    ${DESTDIR:D-Wl,-nostdlib -L${_GCC_LIBGCCDIR}} \
 	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} ${_PROGLDOPTS} \
-	    -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/  \
-	    ${OBJS.${_P}} ${_LDADD.${_P}} \
-	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib
-.else
-	${_CCLINK.${_P}} ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS.${_P}} ${_LDADD.${_P}}
-.endif	# defined(DESTDIR)
+	    ${OBJS.${_P}} ${_LDADD.${_P}}
 .if defined(PAXCTL_FLAGS.${_P})
 	${PAXCTL} ${PAXCTL_FLAGS.${_P}} ${.TARGET}
 .endif
