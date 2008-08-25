@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.77 2008/08/24 15:33:37 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.78 2008/08/25 13:34:53 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,11 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.77 2008/08/24 15:33:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.78 2008/08/25 13:34:53 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
-#include "opt_wapbl.h"
 #endif
 
 #include <sys/param.h>
@@ -719,6 +718,8 @@ done:
 			fs->fs_snapinum[snaploc] = 0;
 	}
 out:
+	if (!error)
+		error = VOP_FSYNC(vp, KERNCRED, FSYNC_WAIT, 0, 0);
 	/*
 	 * Invalidate and free all pages on the snapshot vnode.
 	 * We will read and write through the buffercache.
@@ -728,10 +729,6 @@ out:
 		error = VOP_PUTPAGES(vp, 0, 0,
 		    PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 	}
-#ifdef WAPBL
-	if (!error && mp->mnt_wapbl)
-		error = wapbl_flush(mp->mnt_wapbl, 1);
-#endif
 	if (suspended) {
 		vfs_resume(vp->v_mount);
 #ifdef DEBUG
@@ -745,6 +742,21 @@ out:
 		}
 #endif
 	}
+	/*
+	 * Invalidate short ( < fs_bsize ) buffers.  We will always read
+	 * full size buffers later.
+	 */
+	mutex_enter(&bufcache_lock);
+	KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
+	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		KASSERT((bp->b_cflags & BC_BUSY) == 0);
+		if (bp->b_bcount < fs->fs_bsize) {
+			bp->b_cflags |= BC_BUSY;
+			brelsel(bp, BC_INVAL | BC_VFLUSH);
+		}
+	}
+	mutex_exit(&bufcache_lock);
 	if (sbbuf)
 		free(sbbuf, M_UFSMNT);
 	if (fs->fs_active != 0) {
