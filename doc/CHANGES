@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1093 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1094 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -135,7 +135,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		connection timeout. [christos 20070620].
 	newgrp(1): Add POSIX (IEEE Std 1003.1, 2004 / Open Group Base
 		Specifications Issue 6) User Portability Utility to change
-		effective group ID. [ginsbach 20060621]
+		effective group ID. [ginsbach 20070621]
 	gcc(1): Updated to version 4.1.3-20070620.  [mrg 20070621]
 	ntp: Updated to version 4.2.4p2. [kardel 20070624]
 	tcpdrop(8): Ported by anon ymous (from FreeBSD/OpenBSD).
@@ -478,7 +478,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		on traffic between two network interfaces. [tsutsui 20080318]
 	bzip2(1): Upgrade to 1.0.5. [christos 20080318]
 	libcurses: Add termattrs() and term_attrs(). [jdc 20080321]
-	kerberos: Upgrade to Heimdal-1.1. [mlelstv 20080322]
+	kerberos(8): Upgrade to Heimdal-1.1. [mlelstv 20080322]
 	cobalt: Add kernel support for optional Z85C30 serial on Qube 2700.
 		[tsutsui 20080327]
 	lii(4): Added a driver for the Atheros L2 Fast-Ethernet controller,
@@ -497,11 +497,11 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		driver. [skrll 20080405]
 	openssh: Import 5.0. [christos 20080406]
 	ofppc: Support for SMP added. [garbled 20080408]
-	opencrypto: Improve performance to 84,000 short modular math ops/sec
-		    by adding asynchronous operation and batched submit/
-		    retrieve of requests/results.  Rewrite manual page to
-		    make it easier to write new code to the API.  Donated
-		    by Coyote Point Systems, Inc. [tls 20080410]
+	opencrypto(9): Improve performance to 84,000 short modular math ops/sec
+		by adding asynchronous operation and batched submit/
+		retrieve of requests/results.  Rewrite manual page to
+		make it easier to write new code to the API.  Donated
+		by Coyote Point Systems, Inc. [tls 20080410]
 	acpi(4): Updated ACPI-CA to 20080321. [jmcneill 20080412]
 	libcurses: Add getwin() and putwin(). [jdc 20080414]
 	shark: Support for X on rev. 4 sharks is back [macallan 20080419]
@@ -522,7 +522,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		the ATF 0.5 just imported.  [jmmv 20080501]
 	hpqlb(4): Hotkey driver for HP notebooks. [cegger 20080501]
 	drm(4): Added amd64 support. [jmcneill 20080504]
-	openssl: Imported 20080509 current snapshot. [christos 20080509]
+	openssl(1): Imported 20080509 current snapshot. [christos 20080509]
 	getent(1): Added support for "netgroup" database. [tron 20080514]
 	fs/udf: Added write support for the UDF file system. [reinoud 20080514]
 	event(3): Updated libevent to 1.4.4-stable. [peter 20080516]
@@ -544,19 +544,20 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		(SiI3124, SiI3132, and SiI3531) [jnemeth 20080523]
 	kernel: Device attach and detach notifications are now exposed
 		via /dev/drvctl [jmcneill 20080525]
-	awk: Import 20070501 [christos 20080525]
+	awk(1): Import 20070501 [christos 20080525]
 	uberry(4): A driver to allow RIM BlackBerries to charge from the USB
 		port [christos 20080525]
 	pf(4): Updated to OpenBSD 4.2 PF [yamt,peter,christos,joerg 20080618]
 	bind: Import 9.5.0 [christos 20080621]
 	psrset(8): Utility to control processor sets [ad 20080622]
-	postfix: Import 2.5.2 [christos 20080622]
+	postfix(1): Import 2.5.2 [christos 20080622]
 	ssh-hpn: Apply 5.0p1 13 v3 [christos 20080622]
 	top(1): Import top 3.8beta1 [christos 20080715]
 	share/mk: Set assembler warnings to be fatal if $WARNS>0.
 		[lukem 20080721]
-	dhcpcd: Import 4.0.0rc3. [joerg 20080727]
-	uvm_map: Switch from using <sys/tree.h> to <sys/rb.h>. [matt 20080728]
+	dhcpcd(8): Import 4.0.0rc3. [joerg 20080727]
+	uvm_map(9): Switch from using <sys/tree.h> to <sys/rb.h>.
+		[matt 20080728]
 	rump(3): Install rump library and file system modules
 		into /usr/lib [pooka 20080729]
 	ukfs(3): Install ukfs library for standalone file system access
@@ -581,6 +582,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	openldap: Import 2.4.11. [lukem 20080813]
 	btpand(8): a Bluetooth Personal Area Networking profile
 		daemon [plunky 20080817]
-	ataraid(4): Add support for nVidia MediaShield from FreeBSD. [tacha 20080820]
+	ataraid(4): Add support for nVidia MediaShield from FreeBSD.
+		[tacha 20080820]
 	ntp: Import 4.2.4p5. [kardel 20080823]
-	bge(4): Add support for BCM5906(M) chips contributed by Karl Uwe Lockhoff. [cegger 20080825]
+	bge(4): Add support for BCM5906(M) chips contributed by
+		Karl Uwe Lockhoff. [cegger 20080825]
