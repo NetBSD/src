@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.3 2008/01/23 19:46:45 bouyer Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.4 2008/08/25 09:21:45 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -187,6 +187,19 @@ HYPERVISOR_get_debugreg(int reg)
 }
 
 #ifdef XEN3
+static __inline int
+HYPERVISOR_machine_check(struct xen_mc *mc)
+{
+     int ret;
+     unsigned long ign1;
+  
+     mc->interface_version = XEN_MCA_INTERFACE_VERSION;
+     _hypercall(__HYPERVISOR_mca, _harg("1" (mc)),
+	  _harg("=a" (ret), "=b" (ign1)));
+  
+     return ret;
+}
+
 static __inline int
 HYPERVISOR_mmu_update(mmu_update_t *req, int count, int *success_count,
     domid_t domid)
