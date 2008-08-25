@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuencode.5,v 1.10 2008/08/23 16:32:50 wiz Exp $
+.\"	$NetBSD: uuencode.5,v 1.11 2008/08/25 09:36:24 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,7 +71,7 @@ character.
 In the case where all six bits to be encoded are zero,
 the
 .Tn ASCII
-single quote character \` (octal 140) is emitted instead of what
+backquote character \` (octal 140) is emitted instead of what
 would normally be a space.
 .Pp
 The body of an encoded file consists of one or more lines,
@@ -113,7 +113,7 @@ exhausted.
 The end of the body is signaled by an encoded line with a byte count
 of zero (the
 .Tn ASCII
-single quote character \`).
+backquote character \`).
 .Pp
 Obviously, not every input file will be a multiple of three bytes in size.
 In these cases,
