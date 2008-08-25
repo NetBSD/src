@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.222 2008/08/21 18:06:17 bouyer Exp $
+# $NetBSD: GENERIC,v 1.223 2008/08/25 15:27:47 cegger Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.222 $"
+#ident 		"GENERIC-$Revision: 1.223 $"
 
 maxusers	64		# estimated number of users
 
@@ -895,6 +895,7 @@ sbp*	at ieee1394if? euihi ? euilo ?
 # Audio Devices
 
 # PCI audio devices
+auacer* at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel/AMD/nVidia AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
