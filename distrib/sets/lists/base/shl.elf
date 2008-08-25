@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.151 2008/08/05 14:42:03 pooka Exp $
+# $NetBSD: shl.elf,v 1.152 2008/08/25 07:58:37 lukem Exp $
 #
 # Note:	Do not mark "old" major and major.minor shared libraries as
 #	"obsolete"; just remove the entry, as third-party applications
@@ -10,35 +10,35 @@
 #
 # Note:	libtermcap and libtermlib are hardlinked and share the same version.
 #
-./lib/libc.so					base-sys-shlib
-./lib/libc.so.12				base-sys-shlib
-./lib/libcrypt.so				base-sys-shlib
-./lib/libcrypt.so.0				base-sys-shlib
-./lib/libcrypto.so				base-crypto-shlib	crypto
-./lib/libcrypto.so.4				base-crypto-shlib	crypto
-./lib/libedit.so				base-sys-shlib
-./lib/libedit.so.2				base-sys-shlib
-./lib/libevent.so				base-sys-shlib
-./lib/libevent.so.2				base-sys-shlib
-./lib/libipsec.so				base-net-shlib
-./lib/libipsec.so.2				base-net-shlib
-./lib/libkvm.so					base-sys-shlib
-./lib/libkvm.so.5				base-sys-shlib
-./lib/libm.so					base-sys-shlib
-./lib/libm.so.0					base-sys-shlib
-./lib/libprop.so				base-sys-shlib
-./lib/libprop.so.0				base-sys-shlib
-./lib/libradius.so				base-sys-shlib
-./lib/libradius.so.2				base-sys-shlib
-./lib/libtermcap.so				base-sys-shlib
-./lib/libtermcap.so.0				base-sys-shlib
-./lib/libtermlib.so				base-sys-shlib
-./lib/libtermlib.so.0				base-sys-shlib
-./lib/libutil.so				base-sys-shlib
-./lib/libutil.so.7				base-sys-shlib
-./lib/libz.so					base-sys-shlib
-./lib/libz.so.1					base-sys-shlib
-./libexec/ld.elf_so				base-sys-shlib
+./lib/libc.so					base-sys-shlib		dynamicroot
+./lib/libc.so.12				base-sys-shlib		dynamicroot
+./lib/libcrypt.so				base-sys-shlib		dynamicroot
+./lib/libcrypt.so.0				base-sys-shlib		dynamicroot
+./lib/libcrypto.so				base-crypto-shlib	crypto,dynamicroot
+./lib/libcrypto.so.4				base-crypto-shlib	crypto,dynamicroot
+./lib/libedit.so				base-sys-shlib		dynamicroot
+./lib/libedit.so.2				base-sys-shlib		dynamicroot
+./lib/libevent.so				base-sys-shlib		dynamicroot
+./lib/libevent.so.2				base-sys-shlib		dynamicroot
+./lib/libipsec.so				base-net-shlib		dynamicroot
+./lib/libipsec.so.2				base-net-shlib		dynamicroot
+./lib/libkvm.so					base-sys-shlib		dynamicroot
+./lib/libkvm.so.5				base-sys-shlib		dynamicroot
+./lib/libm.so					base-sys-shlib		dynamicroot
+./lib/libm.so.0					base-sys-shlib		dynamicroot
+./lib/libprop.so				base-sys-shlib		dynamicroot
+./lib/libprop.so.0				base-sys-shlib		dynamicroot
+./lib/libradius.so				base-sys-shlib		dynamicroot
+./lib/libradius.so.2				base-sys-shlib		dynamicroot
+./lib/libtermcap.so				base-sys-shlib		dynamicroot
+./lib/libtermcap.so.0				base-sys-shlib		dynamicroot
+./lib/libtermlib.so				base-sys-shlib		dynamicroot
+./lib/libtermlib.so.0				base-sys-shlib		dynamicroot
+./lib/libutil.so				base-sys-shlib		dynamicroot
+./lib/libutil.so.7				base-sys-shlib		dynamicroot
+./lib/libz.so					base-sys-shlib		dynamicroot
+./lib/libz.so.1					base-sys-shlib		dynamicroot
+./libexec/ld.elf_so				base-sys-shlib		dynamicroot
 ./usr/lib/i18n/libBIG5.so			base-i18n-shlib
 ./usr/lib/i18n/libBIG5.so.4			base-i18n-shlib
 ./usr/lib/i18n/libDECHanyu.so			base-i18n-shlib
