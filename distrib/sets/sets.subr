@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.66 2008/07/22 21:07:59 dyoung Exp $
+#	$NetBSD: sets.subr,v 1.67 2008/08/25 07:27:27 lukem Exp $
 #
 
 #
@@ -33,19 +33,20 @@ MKVARS="\
 	MKCRYPTO_MDC2	\
 	MKCRYPTO_RC5	\
 	MKCVS		\
-	MKGCC		\
-	MKGCCCMDS	\
 	MKDEBUG		\
 	MKDOC		\
+	MKDYNAMICROOT	\
+	MKGCC		\
+	MKGCCCMDS	\
 	MKGDB		\
 	MKHESIOD	\
+	MKINET6		\
 	MKINFO		\
 	MKIPFILTER	\
-	MKINET6		\
 	MKISCSI		\
 	MKKERBEROS	\
-	MKLINT		\
 	MKLDAP		\
+	MKLINT		\
 	MKMAN		\
 	MKMANPAGES	\
 	MKMANZ		\
@@ -230,7 +231,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.66 2008/07/22 21:07:59 dyoung Exp $
+# 	# $NetBSD: sets.subr,v 1.67 2008/08/25 07:27:27 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -259,29 +260,34 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	cvs			${MKCVS} != no
 #	debug			${MKDEBUG} != no
 #	doc			${MKDOC} != no
+#	dynamicroot		${MKDYNAMICROOT} != no
 #	gcc			${MKGCC} != no
 #	gcccmds			${MKGCCCMDS} != no
 #	gdb			${MKGDB} != no
 #	hesiod			${MKHESIOD} != no
+#	inet6			${MKINET6} != no
 #	info			${MKINFO} != no
 #	ipfilter		${MKIPFILTER} != no
-#	inet6			${MKINET6} != no
 #	iscsi			${MKISCSI} != no
 #	kerberos		${MKKERBEROS} != no
+#	ldap			${MKLDAP} != no
 #	lint			${MKLINT} != no
 #	man			${MKMAN} != no
+#	manpages		${MKMANPAGES} != no
 #	manz			${MKMANZ} != no
 #	modular			${MKMODULAR} != no
 #	nls			${MKNLS} != no
 #	nvi			${MKNVI} != no
 #	pam			${MKPAM} != no
 #	pf			${MKPF} != no
+#	pic			${MKPIC} != no
 #	postfix			${MKPOSTFIX} != no
 #	profile			${MKPROFILE} != no
 #	puffs			${MKPUFFS} != no
 #	sendmail		${MKSENDMAIL} != no
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
+#	x11			${MKX11} != no
 #	yp			${MKYP} != no
 #
 #	gcc=<n>			<n> = value of ${HAVE_GCC}
