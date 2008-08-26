@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.42 2007/10/17 19:57:30 garbled Exp $ */
+/*	$NetBSD: param.h,v 1.43 2008/08/26 11:37:56 rjs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,13 +67,15 @@
 #include "opt_sparc_arch.h"
 #endif
 
+#ifdef __arch64__
 #define	_MACHINE	sparc64
 #define	MACHINE		"sparc64"
-#ifdef __arch64__
 #define	_MACHINE_ARCH	sparc64
 #define	MACHINE_ARCH	"sparc64"
 #define	MID_MACHINE	MID_SPARC64
 #else
+#define	_MACHINE	sparc
+#define	MACHINE		"sparc"
 #define	_MACHINE_ARCH	sparc
 #define	MACHINE_ARCH	"sparc"
 #define	MID_MACHINE	MID_SPARC
