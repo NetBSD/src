@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.55 2008/08/26 07:26:08 lukem Exp $
+.\" $NetBSD: doc2html,v 1.56 2008/08/26 09:14:03 lukem Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1159,6 +1159,11 @@ AT&T UNIX\\$*
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``\\*(Px.1'')
 .		\}
+.		if "\\$1"-iso9945-1-90" \{\
+.			ds std-tmp1 \&ISO/IEC 9945-1:1990
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
 .		if "\\$1"-p1003.1b-93" \{\
 .			ds std-tmp1 \&IEEE Std 1003.1b-1993
 .			as std-tmp1 " \"exactly one space
@@ -1175,6 +1180,11 @@ AT&T UNIX\\$*
 .			as std-tmp1 (``\\*(Px.1'')
 .		\}
 .		if "\\$1"-p1003.1-96" \{\
+.			ds std-tmp1 \&ISO/IEC 9945-1:1996
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-iso9945-1-96" \{\
 .			ds std-tmp1 \&ISO/IEC 9945-1:1996
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``\\*(Px.1'')
@@ -1207,6 +1217,11 @@ AT&T UNIX\\$*
 .		\}
 .		if "\\$1"-p1003.2a-92" \{\
 .			ds std-tmp1 \&IEEE Std 1003.2a-1992
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(Px.2'')
+.		\}
+.		if "\\$1"-iso9945-2-93" \{\
+.			ds std-tmp1 \&ISO/IEC 9945-2:1993
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``\\*(Px.2'')
 .		\}
