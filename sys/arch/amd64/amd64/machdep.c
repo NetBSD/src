@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2008/08/05 17:09:17 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 2008/08/26 08:43:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2008/08/05 17:09:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2008/08/26 08:43:00 cegger Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1716,8 +1716,21 @@ init_x86_64(paddr_t first_avail)
 		    GSEL(GCODE_SEL, SEL_KPL));
 #else /* XEN */
 		xen_idt[xen_idt_idx].vector = x;
-		xen_idt[xen_idt_idx].flags =
-		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL;
+
+		switch (x) {
+		case 2:  /* NMI */
+		case 18: /* MCA */
+			TI_SET_IF(&(xen_idt[xen_idt_idx]), 2);
+			break;
+		case 3:
+		case 4:
+			xen_idt[xen_idt_idx].flags = SEL_UPL;
+			break;
+		default:
+			xen_idt[xen_idt_idx].flags = SEL_KPL;
+			break;
+		}
+
 		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 		xen_idt[xen_idt_idx].address =
 		    (unsigned long)IDTVEC(exceptions)[x];

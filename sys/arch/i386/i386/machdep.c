@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.639 2008/08/15 03:14:54 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.640 2008/08/26 08:43:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.639 2008/08/15 03:14:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.640 2008/08/26 08:43:00 cegger Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1855,8 +1855,21 @@ init386(paddr_t first_avail)
 	for (x = 0; x < 32; x++) {
 		KASSERT(xen_idt_idx < MAX_XEN_IDT);
 		xen_idt[xen_idt_idx].vector = x;
-		xen_idt[xen_idt_idx].flags =
-			(x == 3 || x == 4) ? SEL_UPL : SEL_XEN;
+
+		switch (x) {
+		case 2:  /* NMI */
+		case 18: /* MCA */
+			TI_SET_IF(&(xen_idt[xen_idt_idx]), 2);
+			break;
+		case 3:
+		case 4:
+			xen_idt[xen_idt_idx].flags = SEL_UPL;
+			break;
+		default:
+			xen_idt[xen_idt_idx].flags = SEL_XEN;
+			break;
+		}
+
 		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 		xen_idt[xen_idt_idx].address =
 			(uint32_t)IDTVEC(exceptions)[x];
