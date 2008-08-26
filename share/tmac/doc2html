@@ -1,6 +1,6 @@
-.\" $NetBSD: doc2html,v 1.54 2008/08/26 07:07:23 lukem Exp $
+.\" $NetBSD: doc2html,v 1.55 2008/08/26 07:26:08 lukem Exp $
 .\"
-.\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -453,6 +453,11 @@ TODO:
 .			ds list-end   </ol>
 .			ds list-tag-prefix <p>
 .			ds list-pp-prefix <li>
+.			shift
+.			continue
+.		\}
+.		if '\\$1'-nested' \{\
+.			\" this should suffice
 .			shift
 .			continue
 .		\}
