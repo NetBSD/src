@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_debug.c,v 1.13 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: bt_debug.c,v 1.14 2008/08/26 21:18:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_debug.c	8.5 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_debug.c,v 1.13 2007/02/03 23:46:09 christos Exp $");
+__RCSID("$NetBSD: bt_debug.c,v 1.14 2008/08/26 21:18:38 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,7 @@ __bt_dump(DB *dbp)
 	(void)fprintf(stderr, "%s: pgsz %d",
 	    F_ISSET(t, B_INMEM) ? "memory" : "disk", t->bt_psize);
 	if (F_ISSET(t, R_RECNO))
-		(void)fprintf(stderr, " keys %lu", (u_long) t->bt_nrecs);
+		(void)fprintf(stderr, " keys %lu", (unsigned long) t->bt_nrecs);
 #undef X
 #define	X(flag, name) \
 	if (F_ISSET(t, flag)) { \
@@ -110,12 +110,12 @@ __bt_dmpage(PAGE *h)
 	const char *sep;
 
 	m = (BTMETA *)(void *)h;
-	(void)fprintf(stderr, "magic %lx\n", (u_long) m->magic);
-	(void)fprintf(stderr, "version %lu\n", (u_long) m->version);
-	(void)fprintf(stderr, "psize %lu\n", (u_long) m->psize);
-	(void)fprintf(stderr, "free %lu\n", (u_long) m->free);
-	(void)fprintf(stderr, "nrecs %lu\n", (u_long) m->nrecs);
-	(void)fprintf(stderr, "flags %lu", (u_long) m->flags);
+	(void)fprintf(stderr, "magic %lx\n", (unsigned long) m->magic);
+	(void)fprintf(stderr, "version %lu\n", (unsigned long) m->version);
+	(void)fprintf(stderr, "psize %lu\n", (unsigned long) m->psize);
+	(void)fprintf(stderr, "free %lu\n", (unsigned long) m->free);
+	(void)fprintf(stderr, "nrecs %lu\n", (unsigned long) m->nrecs);
+	(void)fprintf(stderr, "flags %lu", (unsigned long) m->flags);
 #undef X
 #define	X(flag, name) \
 	if (m->flags & flag) { \
@@ -212,15 +212,15 @@ __bt_dpage(PAGE *h)
 			if (bl->flags & P_BIGKEY)
 				(void)fprintf(stderr,
 				    "big key page %lu size %u/",
-				    (u_long) *(pgno_t *)(void *)bl->bytes,
-				    *(u_int32_t *)(void *)(bl->bytes + sizeof(pgno_t)));
+				    (unsigned long) *(pgno_t *)(void *)bl->bytes,
+				    *(uint32_t *)(void *)(bl->bytes + sizeof(pgno_t)));
 			else if (bl->ksize)
 				(void)fprintf(stderr, "%s/", bl->bytes);
 			if (bl->flags & P_BIGDATA)
 				(void)fprintf(stderr,
 				    "big data page %lu size %u",
-				    (u_long) *(pgno_t *)(void *)(bl->bytes + bl->ksize),
-				    *(u_int32_t *)(void *)(bl->bytes + bl->ksize +
+				    (unsigned long) *(pgno_t *)(void *)(bl->bytes + bl->ksize),
+				    *(uint32_t *)(void *)(bl->bytes + bl->ksize +
 				    sizeof(pgno_t)));
 			else if (bl->dsize)
 				(void)fprintf(stderr, "%.*s",
@@ -231,8 +231,8 @@ __bt_dpage(PAGE *h)
 			if (rl->flags & P_BIGDATA)
 				(void)fprintf(stderr,
 				    "big data page %lu size %u",
-				    (u_long) *(pgno_t *)(void *)rl->bytes,
-				    *(u_int32_t *)(void *)(rl->bytes + sizeof(pgno_t)));
+				    (unsigned long) *(pgno_t *)(void *)rl->bytes,
+				    *(uint32_t *)(void *)(rl->bytes + sizeof(pgno_t)));
 			else if (rl->dsize)
 				(void)fprintf(stderr,
 				    "%.*s", (int)rl->dsize, rl->bytes);
@@ -253,12 +253,12 @@ __bt_dpage(PAGE *h)
 void
 __bt_stat(DB *dbp)
 {
-	extern u_long bt_cache_hit, bt_cache_miss, bt_pfxsaved, bt_rootsplit;
-	extern u_long bt_sortsplit, bt_split;
+	extern unsigned long bt_cache_hit, bt_cache_miss, bt_pfxsaved, bt_rootsplit;
+	extern unsigned long bt_sortsplit, bt_split;
 	BTREE *t;
 	PAGE *h;
 	pgno_t i, pcont, pinternal, pleaf;
-	u_long ifree, lfree, nkeys;
+	unsigned long ifree, lfree, nkeys;
 	int levels;
 
 	t = dbp->internal;
