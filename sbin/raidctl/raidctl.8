@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.53 2008/08/19 17:38:46 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.54 2008/08/26 21:06:55 oster Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -253,6 +253,8 @@ The output indicates the amount of progress
 achieved in each of these areas.
 .It Fl u Ar dev
 Unconfigure the RAIDframe device.
+This does not remove any component labels or change any configuration
+settings (e.g. auto-configuration settings) for the RAID set.
 .It Fl v
 Be more verbose.
 For operations such as reconstructions, parity
