@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.26 2008/08/24 22:04:21 pgoyette Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.27 2008/08/26 13:43:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -146,13 +146,14 @@
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
 #define CPUID_NOX	0x00100000	/* No Execute Page Protection */
 #define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
+#define CPUID_FFXSR	0x02000000	/* FXSAVE/FXSTOR Extensions */
+#define CPUID_P1GB	0x04000000	/* 1GB Large Page Support */
 #define CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
 #define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
 
-#define CPUID_EXT_FLAGS	"\177\20b\13SCALL/RET\0b\24NOX\0b\26MXX\0b" \
-			    "\31FFXSR\0b\32P1GB\0b\33RDTSCP\0b\35LONG\0" \
-			    "b\0363DNOW2\0b\0373DNOW\0\0"
+#define CPUID_EXT_FLAGS	"\20\14SCALL/RET\24MPC\25NOX\27MXX\32FFXSR\33P1GB" \
+			    "\34RDTSCP\36LONG\0373DNOW2\0403DNOW"
 
 /*
  * Centaur Extended Feature flags
