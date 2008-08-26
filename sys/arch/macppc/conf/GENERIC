@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.269 2008/08/26 16:24:45 macallan Exp $
+# $NetBSD: GENERIC,v 1.270 2008/08/26 16:27:07 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.269 $"
+#ident 		"GENERIC-$Revision: 1.270 $"
 
 maxusers	32
 
@@ -379,7 +379,8 @@ adbbt*	at nadb?			# button device found on *Books
 wskbd*		at wskbddev? console ?
 wsmouse*	at wsmousedev?
 
-#battery* at pmu?		# legacy battery, for ohare-based PowerBooks
+battery* at pmu?		# legacy battery, for ohare-based PowerBooks
+smartbat* at pmu?		# Smart battery, sound in newer *Books
 
 iic0	at cuda0		# CUDA's IIC bus
 sgsmix0 at iic0 addr 0x8a	# additional mixer found in beige G3
