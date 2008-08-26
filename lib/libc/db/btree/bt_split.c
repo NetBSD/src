@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_split.c,v 1.14 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: bt_split.c,v 1.15 2008/08/26 21:18:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_split.c	8.9 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: bt_split.c,v 1.14 2007/02/03 23:46:09 christos Exp $");
+__RCSID("$NetBSD: bt_split.c,v 1.15 2008/08/26 21:18:38 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +62,7 @@ static int	 bt_rroot(BTREE *, PAGE *, PAGE *, PAGE *);
 static recno_t	 rec_total(PAGE *);
 
 #ifdef STATISTICS
-u_long	bt_rootsplit, bt_split, bt_sortsplit, bt_pfxsaved;
+unsigned long	bt_rootsplit, bt_split, bt_sortsplit, bt_pfxsaved;
 #endif
 
 /*
@@ -82,7 +82,7 @@ u_long	bt_rootsplit, bt_split, bt_sortsplit, bt_pfxsaved;
  */
 int
 __bt_split(BTREE *t, PAGE *sp, const DBT *key, const DBT *data, int flags,
-    size_t ilen, u_int32_t argskip)
+    size_t ilen, uint32_t argskip)
 {
 	BINTERNAL *bi = NULL;	/* pacify gcc */
 	BLEAF *bl = NULL, *tbl;	/* pacify gcc */
@@ -90,8 +90,8 @@ __bt_split(BTREE *t, PAGE *sp, const DBT *key, const DBT *data, int flags,
 	EPGNO *parent;
 	PAGE *h, *l, *r, *lchild, *rchild;
 	indx_t nxtindex;
-	u_int16_t skip;
-	u_int32_t n, nbytes, nksize = 0; /* pacify gcc */
+	uint16_t skip;
+	uint32_t n, nbytes, nksize = 0; /* pacify gcc */
 	int parentsplit;
 	char *dest;
 
@@ -195,8 +195,8 @@ __bt_split(BTREE *t, PAGE *sp, const DBT *key, const DBT *data, int flags,
 				b.size = bl->ksize;
 				b.data = bl->bytes;
 				temp = t->bt_pfx(&a, &b);
-				_DBFIT(temp, u_int32_t);
-				nksize = (u_int32_t)temp;
+				_DBFIT(temp, uint32_t);
+				nksize = (uint32_t)temp;
 				n = NBINTERNAL(nksize);
 				if (n < nbytes) {
 #ifdef STATISTICS
@@ -491,12 +491,12 @@ static int
 bt_rroot(BTREE *t, PAGE *h, PAGE *l, PAGE *r)
 {
 	char *dest;
-	u_int32_t sz;
+	uint32_t sz;
 	size_t temp;
 
 	temp = t->bt_psize - NRINTERNAL;
-	_DBFIT(temp, u_int32_t);
-	sz = (u_int32_t)temp;
+	_DBFIT(temp, uint32_t);
+	sz = (uint32_t)temp;
 
 	/* Insert the left and right keys, set the header information. */
 	_DBFIT(sz, indx_t);
@@ -537,7 +537,7 @@ bt_broot(BTREE *t, PAGE *h, PAGE *l, PAGE *r)
 {
 	BINTERNAL *bi = NULL;	/* pacify gcc */
 	BLEAF *bl;
-	u_int32_t nbytes;
+	uint32_t nbytes;
 	char *dest;
 
 	/*
@@ -617,7 +617,7 @@ bt_psplit(BTREE *t, PAGE *h, PAGE *l, PAGE *r, indx_t *pskip, size_t ilen)
 	PAGE *rval;
 	void *src = NULL;	/* pacify gcc */
 	indx_t full, half, nxt, off, skip, top, used;
-	u_int32_t nbytes;
+	uint32_t nbytes;
 	size_t temp;
 	int bigkeycnt, isbigkey;
 
@@ -636,8 +636,8 @@ bt_psplit(BTREE *t, PAGE *h, PAGE *l, PAGE *r, indx_t *pskip, size_t ilen)
 	used = 0;
 	for (nxt = off = 0, top = NEXTINDEX(h); nxt < top; ++off) {
 		if (skip == off) {
-			_DBFIT(ilen, u_int32_t);
-			nbytes = (u_int32_t)ilen;
+			_DBFIT(ilen, uint32_t);
+			nbytes = (uint32_t)ilen;
 			isbigkey = 0;		/* XXX: not really known. */
 		} else
 			switch (h->flags & P_TYPE) {

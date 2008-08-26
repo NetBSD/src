@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_delete.c,v 1.14 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: rec_delete.c,v 1.15 2008/08/26 21:18:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_delete.c	8.7 (Berkeley) 7/14/94";
 #else
-__RCSID("$NetBSD: rec_delete.c,v 1.14 2007/02/03 23:46:09 christos Exp $");
+__RCSID("$NetBSD: rec_delete.c,v 1.15 2008/08/26 21:18:38 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -131,7 +131,7 @@ rec_rdelete(BTREE *t, recno_t nrec)
 
 	/* Delete the record. */
 	h = e->page;
-	status = __rec_dleaf(t, h, (u_int32_t)e->index);
+	status = __rec_dleaf(t, h, (uint32_t)e->index);
 	if (status != RET_SUCCESS) {
 		mpool_put(t->bt_mp, h, 0);
 		return (status);
@@ -151,11 +151,11 @@ rec_rdelete(BTREE *t, recno_t nrec)
  *	RET_SUCCESS, RET_ERROR.
  */
 int
-__rec_dleaf(BTREE *t, PAGE *h, u_int32_t idx)
+__rec_dleaf(BTREE *t, PAGE *h, uint32_t idx)
 {
 	RLEAF *rl;
 	indx_t *ip, cnt, offset;
-	u_int32_t nbytes;
+	uint32_t nbytes;
 	char *from;
 	void *to;
 	size_t temp;
@@ -185,13 +185,13 @@ __rec_dleaf(BTREE *t, PAGE *h, u_int32_t idx)
 
 	offset = h->linp[idx];
 	temp = &h->linp[idx] - (ip = &h->linp[0]);
-	_DBFIT(temp, u_int16_t);
-	for (cnt = (u_int16_t)temp;  cnt--; ++ip)
+	_DBFIT(temp, uint16_t);
+	for (cnt = (uint16_t)temp;  cnt--; ++ip)
 		if (ip[0] < offset)
 			ip[0] += nbytes;
 	temp = &h->linp[NEXTINDEX(h)] - ip;
-	_DBFIT(temp, u_int16_t);
-	for (cnt = (u_int16_t)temp;  --cnt; ++ip)
+	_DBFIT(temp, uint16_t);
+	for (cnt = (uint16_t)temp;  --cnt; ++ip)
 		ip[0] = ip[1] < offset ? ip[1] + nbytes : ip[1];
 	h->lower -= sizeof(indx_t);
 	--t->bt_nrecs;

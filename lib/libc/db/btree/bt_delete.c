@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_delete.c,v 1.13 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: bt_delete.c,v 1.14 2008/08/26 21:18:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_delete.c	8.13 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: bt_delete.c,v 1.13 2007/02/03 23:46:09 christos Exp $");
+__RCSID("$NetBSD: bt_delete.c,v 1.14 2008/08/26 21:18:38 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -379,7 +379,7 @@ __bt_pdelete(BTREE *t, PAGE *h)
 	PAGE *pg;
 	EPGNO *parent;
 	indx_t cnt, idx, *ip, offset;
-	u_int32_t nksize;
+	uint32_t nksize;
 	char *from;
 
 	/*
@@ -472,7 +472,7 @@ __bt_dleaf(BTREE *t, const DBT *key, PAGE *h, u_int idx)
 {
 	BLEAF *bl;
 	indx_t cnt, *ip, offset;
-	u_int32_t nbytes;
+	uint32_t nbytes;
 	void *to;
 	char *from;
 
