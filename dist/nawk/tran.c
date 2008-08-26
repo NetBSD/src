@@ -407,7 +407,6 @@ char *tostring(const char *s)	/* make a copy of string s */
 	p = strdup(s);
 	if (p == NULL)
 		FATAL("out of space in tostring on %s", s);
-	strcpy(p, s);
 	return(p);
 }
 
