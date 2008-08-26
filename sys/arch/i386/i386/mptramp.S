@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.17 2008/06/27 00:41:39 gmcgarry Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.18 2008/08/26 13:07:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.17 2008/06/27 00:41:39 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.18 2008/08/26 13:07:48 drochner Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -111,15 +111,9 @@ __KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.17 2008/06/27 00:41:39 gmcgarry Exp $"
 #define HALTT(x,y) /**/
 #endif
 
-        .globl  _C_LABEL(cpu),_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
-	.globl  _C_LABEL(cpuid_level)
-	.globl  _C_LABEL(idle_loop)
-
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
-	.global _C_LABEL(cpu_hatch)
 	.global _C_LABEL(mp_pdirpa)
-	.global _C_LABEL(gdt), _C_LABEL(local_apic)
 
 	.text
 	.align 4,0x0
