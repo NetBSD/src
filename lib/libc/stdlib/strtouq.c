@@ -1,4 +1,4 @@
-/* $NetBSD: strtouq.c,v 1.19 2008/08/20 12:42:26 joerg Exp $ */
+/* $NetBSD: strtouq.c,v 1.20 2008/08/26 12:21:24 drochner Exp $ */
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtouq.c,v 1.19 2008/08/20 12:42:26 joerg Exp $");
+__RCSID("$NetBSD: strtouq.c,v 1.20 2008/08/26 12:21:24 drochner Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -38,6 +38,6 @@ __RCSID("$NetBSD: strtouq.c,v 1.19 2008/08/20 12:42:26 joerg Exp $");
 
 #define	_FUNCNAME	strtouq
 #define	__UINT		u_quad_t
-#define	__UINT_MAX	QUAD_MAX
+#define	__UINT_MAX	UQUAD_MAX
 
 #include "_strtoul.h"
