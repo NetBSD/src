@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.93 2008/08/26 16:14:45 macallan Exp $
+#	$NetBSD: files.macppc,v 1.94 2008/08/26 16:17:14 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -119,7 +119,7 @@ file arch/macppc/dev/uni-n.c			uni_n
 include "dev/usb/files.usb"
 include "dev/bluetooth/files.bluetooth"
 
-device ibmcpc: pcibus
+device ibmcpc: pcibus, pic_openpic, ipi_openpic
 attach ibmcpc at mainbus
 file arch/macppc/pci/u3.c			ibmcpc
 
@@ -295,4 +295,5 @@ define deq {}
 device deq
 attach deq at ki2c
 file arch/macppc/dev/deq.c				deq
+
 
