@@ -40,7 +40,10 @@ char	*fields;
 int	fieldssize = RECSIZE;
 
 Cell	**fldtab;	/* pointers to Cells */
-char	inputFS[10] = " ";
+
+static char	static_inputFS[16] = " ";
+static size_t	len_inputFS = sizeof(static_inputFS) - 1;
+static char	*inputFS = static_inputFS;
 
 #define	MAXFLD	2
 int	nfields	= MAXFLD;	/* last allocated slot for $i */
@@ -184,10 +187,17 @@ int readrec(uschar **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf
 	int sep, c;
 	uschar *rr, *buf = *pbuf;
 	int bufsize = *pbufsize;
+	size_t len;
 
-	if (strlen(*FS) >= sizeof(inputFS))
-		FATAL("field separator %.10s... is too long", *FS);
-	strcpy(inputFS, *FS);	/* for subsequent field splitting */
+	if ((len = strlen(*FS)) <= len_inputFS) {
+		strcpy(inputFS, *FS);	/* for subsequent field splitting */
+	} else {
+		inputFS = malloc(len + 1);
+		if (inputFS == NULL)
+			FATAL("field separator %.10s... is too long", *FS);
+		len_inputFS = len;
+		memcpy(inputFS, *FS, len + 1);
+	}
 	if ((sep = **RS) == 0) {
 		sep = '\n';
 		while ((c=getc(inf)) == '\n' && c != EOF)	/* skip leading \n's */
@@ -274,7 +284,7 @@ void fldbld(void)	/* create fields from current record */
 	}
 	fr = fields;
 	i = 0;	/* number of fields accumulated here */
-	if (strlen(inputFS) > 1) {	/* it's a regular expression */
+	if (inputFS[0] && inputFS[1]) {	/* it's a regular expression */
 		i = refldbld(r, inputFS);
 	} else if ((sep = *inputFS) == ' ') {	/* default whitespace */
 		for (i = 0; ; ) {
