@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2008/08/26 21:18:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
 
 int	 __rec_close(DB *);
 int	 __rec_delete(const DB *, const DBT *, u_int);
-int	 __rec_dleaf(BTREE *, PAGE *, u_int32_t);
+int	 __rec_dleaf(BTREE *, PAGE *, uint32_t);
 int	 __rec_fd(const DB *);
 int	 __rec_fmap(BTREE *, recno_t);
 int	 __rec_fout(BTREE *);
