@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.92 2008/02/20 21:43:34 drochner Exp $
+#	$NetBSD: files.macppc,v 1.93 2008/08/26 16:14:45 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -81,6 +81,10 @@ file arch/macppc/macppc/mainbus.c		mainbus
 device cpu: sysmon_envsys
 attach cpu at mainbus
 file arch/macppc/macppc/cpu.c
+
+device memory: iic
+attach memory at mainbus
+file arch/macppc/macppc/memory.c		memory
 
 # ISA stuff
 # we don't need it but some of the shared code needs isa.h
@@ -237,7 +241,7 @@ file arch/macppc/dev/if_wi_obio.c		wi_obio
 
 device awacs: audiobus, auconv, mulaw, aurateconv
 attach awacs at obio
-file arch/macppc/dev/awacs.c			awacs
+file arch/macppc/dev/awacs.c			awacs needs-flag
 defflag	opt_awacs.h	AWACS_DEBUG
 
 device macgpio {}
