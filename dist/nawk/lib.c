@@ -192,6 +192,8 @@ int readrec(uschar **pbuf, int *pbufsize, FILE *inf)	/* read one record into buf
 	if ((len = strlen(*FS)) <= len_inputFS) {
 		strcpy(inputFS, *FS);	/* for subsequent field splitting */
 	} else {
+		if (inputFS != static_inputFS)
+			free(inputFS);
 		inputFS = malloc(len + 1);
 		if (inputFS == NULL)
 			FATAL("field separator %.10s... is too long", *FS);
