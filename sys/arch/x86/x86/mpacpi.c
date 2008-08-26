@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.68 2008/07/31 14:05:05 joerg Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.69 2008/08/26 12:04:18 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.68 2008/07/31 14:05:05 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.69 2008/08/26 12:04:18 cegger Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -1151,7 +1151,7 @@ mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 	mpb->mb_pci_chipset_tag = pba->pba_pc;
 
 	if (mp_verbose)
-		printf("\n%s: added to list as bus %d\n", device_xname(parent),
+		printf("\n%s: added to list as bus %d", device_xname(parent),
 		    pba->pba_bus);
 
 
