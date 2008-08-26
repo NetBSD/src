@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.268 2008/08/26 16:20:17 macallan Exp $
+# $NetBSD: GENERIC,v 1.269 2008/08/26 16:24:45 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.268 $"
+#ident 		"GENERIC-$Revision: 1.269 $"
 
 maxusers	32
 
@@ -213,12 +213,6 @@ uni_n*	at mainbus?
 memory*	at mainbus?
 spdmem*	at memory? addr ?
 
-# interrupt controller support
-options PIC_OHARE
-options PIC_HEATHROW
-#options PIC_GRANDCENTRAL
-options PIC_OPENPIC
-
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
 pci*	at uninorth? bus ?
@@ -284,6 +278,10 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 # O'Hare based machine that uses external cache like the PowerBook 3400c
 #options 	OFB_ENABLE_CACHE	# Speed up console in ofb
 #options 	OFB_FAKE_VGA_FB		# Allow X to mmap VGA regs
+# 
+# ofb is considered obsolete and machine-independent genfb should be used
+# instead.
+
 chipsfb*	at pci?	function ?	# C&T 65550
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
 
