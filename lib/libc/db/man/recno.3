@@ -1,4 +1,4 @@
-.\"	$NetBSD: recno.3,v 1.9 2003/08/07 16:42:43 agc Exp $
+.\"	$NetBSD: recno.3,v 1.10 2008/08/26 21:18:38 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,7 @@ typedef struct {
 	u_int psize;
 	int lorder;
 	size_t reclen;
-	u_char bval;
+	uint8_t bval;
 	char *bfname;
 } RECNOINFO;
 .Ed
