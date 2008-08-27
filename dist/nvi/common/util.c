@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.2 2008/05/18 14:29:52 aymeric Exp $ */
+/*	$NetBSD: util.c,v 1.2 2008/08/27 10:18:41 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -165,7 +165,7 @@ enum nresult
 nget_uslong(SCR *sp, u_long *valp, const CHAR_T *p, CHAR_T **endp, int base)
 {
 	errno = 0;
-	*valp = STRTOUL(p, endp, base);
+	*valp = STRTOUL(p, (RCHAR_T **)endp, base);
 	if (errno == 0)
 		return (NUM_OK);
 	if (errno == ERANGE && *valp == ULONG_MAX)
@@ -183,7 +183,7 @@ enum nresult
 nget_slong(SCR *sp, long int *valp, const CHAR_T *p, CHAR_T **endp, int base)
 {
 	errno = 0;
-	*valp = STRTOL(p, endp, base);
+	*valp = STRTOL(p, (RCHAR_T **)endp, base);
 	if (errno == 0)
 		return (NUM_OK);
 	if (errno == ERANGE) {

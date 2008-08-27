@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.1.1.2 2008/05/18 14:29:46 aymeric Exp $ */
+/*	$NetBSD: key.c,v 1.2 2008/08/27 10:18:41 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -104,7 +104,7 @@ static int nkeylist =
 int
 v_key_init(SCR *sp)
 {
-	CHAR_T ch;
+	int ch;
 	GS *gp;
 	KEYLIST *kp;
 	int cnt;
