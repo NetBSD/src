@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1177 2008/08/17 13:26:36 plunky Exp $
+#	$NetBSD: mi,v 1.1178 2008/08/27 04:43:53 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3082,8 +3082,8 @@
 ./usr/libdata/debug/usr/sbin/fsinfo.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/fssconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ftp-proxy.debug	comp-pf-debug		pf,debug
-./usr/libdata/debug/usr/sbin/fwctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/fusermount.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/fwctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/getencstat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/gpioctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/gspa.debug		comp-util-debug		debug
@@ -3222,6 +3222,9 @@
 ./usr/libdata/debug/usr/sbin/rpc.statd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/rpc.yppasswdd.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/rpcbind.debug	comp-rpcbind-debug	debug
+./usr/libdata/debug/usr/sbin/rtadvd.debug	comp-router-debug	use_inet6,debug
+./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/rtsold.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/rump_cd9660.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_efs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_ext2fs.debug	comp-sysutil-debug	debug,puffs
@@ -3233,9 +3236,6 @@
 ./usr/libdata/debug/usr/sbin/rump_syspuffs.debug comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_tmpfs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_udf.debug	comp-sysutil-debug	debug,puffs
-./usr/libdata/debug/usr/sbin/rtadvd.debug	comp-router-debug	use_inet6,debug
-./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/rtsold.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/rwhod.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sa.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/schedctl.debug	comp-sysutil-debug	debug
@@ -7810,11 +7810,11 @@
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VREF.0			comp-sys-catman		.cat
-./usr/share/man/cat9/accept_filter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_add.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_del.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accept_filt_generic_mod_event.0	comp-sys-catman	.cat
 ./usr/share/man/cat9/accept_filt_get.0		comp-sys-catman		.cat
+./usr/share/man/cat9/accept_filter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/access.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/accf_data.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/accf_http.0		comp-sys-catman		.cat
@@ -8586,10 +8586,10 @@
 ./usr/share/man/cat9/sleep.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/snprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/sockopt.0			comp-sys-catman		.cat
-./usr/share/man/cat9/sockopt_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sockopt_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sockopt_get.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sockopt_getint.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sockopt_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sockopt_set.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sockopt_setint.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/softint.0			comp-sys-catman		.cat
@@ -12813,6 +12813,7 @@
 ./usr/share/man/man3/tzsetwall.3		comp-c-man		.man
 ./usr/share/man/man3/ualarm.3			comp-c-man		.man
 ./usr/share/man/man3/uid_from_user.3		comp-c-man		.man
+./usr/share/man/man3/ukfs.3			comp-c-man		.man
 ./usr/share/man/man3/ulimit.3			comp-c-man		.man
 ./usr/share/man/man3/uname.3			comp-c-man		.man
 ./usr/share/man/man3/unctrl.3			comp-c-man		.man
@@ -12981,7 +12982,6 @@
 ./usr/share/man/man3/wunderend.3		comp-c-man		.man
 ./usr/share/man/man3/wunderscore.3		comp-c-man		.man
 ./usr/share/man/man3/wvline.3			comp-c-man		.man
-./usr/share/man/man3/ukfs.3			comp-c-man		.man
 ./usr/share/man/man3/xdr.3			comp-c-man		.man
 ./usr/share/man/man3/xdr_accepted_reply.3	comp-c-man		.man
 ./usr/share/man/man3/xdr_array.3		comp-c-man		.man
@@ -13185,7 +13185,14 @@
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man		.man
 ./usr/share/man/man9/VREF.9			comp-sys-man		.man
+./usr/share/man/man9/accept_filt_add.9		comp-sys-man		.man
+./usr/share/man/man9/accept_filt_del.9		comp-sys-man		.man
+./usr/share/man/man9/accept_filt_generic_mod_event.9	comp-sys-man	.man
+./usr/share/man/man9/accept_filt_get.9		comp-sys-man		.man
+./usr/share/man/man9/accept_filter.9		comp-sys-man		.man
 ./usr/share/man/man9/access.9			comp-obsolete		obsolete
+./usr/share/man/man9/accf_data.9		comp-sys-man		.man
+./usr/share/man/man9/accf_http.9		comp-sys-man		.man
 ./usr/share/man/man9/allocbuf.9			comp-sys-man		.man
 ./usr/share/man/man9/altq.9			comp-sys-man		.man
 ./usr/share/man/man9/aprint_debug.9		comp-sys-man		.man
@@ -13204,13 +13211,6 @@
 ./usr/share/man/man9/aprint_verbose.9		comp-sys-man		.man
 ./usr/share/man/man9/aprint_verbose_dev.9	comp-sys-man		.man
 ./usr/share/man/man9/aprint_verbose_ifnet.9	comp-sys-man		.man
-./usr/share/man/man9/accept_filter.9		comp-sys-man		.man
-./usr/share/man/man9/accept_filt_add.9		comp-sys-man		.man
-./usr/share/man/man9/accept_filt_del.9		comp-sys-man		.man
-./usr/share/man/man9/accept_filt_generic_mod_event.9	comp-sys-man	.man
-./usr/share/man/man9/accept_filt_get.9		comp-sys-man		.man
-./usr/share/man/man9/accf_data.9		comp-sys-man		.man
-./usr/share/man/man9/accf_http.9		comp-sys-man		.man
 ./usr/share/man/man9/arc4random.9		comp-sys-man		.man
 ./usr/share/man/man9/arp.9			comp-sys-man		.man
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man		.man
@@ -13961,10 +13961,10 @@
 ./usr/share/man/man9/sleep.9			comp-obsolete		obsolete
 ./usr/share/man/man9/snprintf.9			comp-sys-man		.man
 ./usr/share/man/man9/sockopt.9			comp-sys-man		.man
-./usr/share/man/man9/sockopt_init.9		comp-sys-man		.man
 ./usr/share/man/man9/sockopt_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/sockopt_get.9		comp-sys-man		.man
 ./usr/share/man/man9/sockopt_getint.9		comp-sys-man		.man
+./usr/share/man/man9/sockopt_init.9		comp-sys-man		.man
 ./usr/share/man/man9/sockopt_set.9		comp-sys-man		.man
 ./usr/share/man/man9/sockopt_setint.9		comp-sys-man		.man
 ./usr/share/man/man9/softint.9			comp-sys-man		.man

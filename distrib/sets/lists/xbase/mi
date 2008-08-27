@@ -1,13 +1,8 @@
-# $NetBSD: mi,v 1.57 2008/05/21 17:09:29 ghen Exp $
+# $NetBSD: mi,v 1.58 2008/08/27 04:43:54 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/mtree/set.xbase				xbase-sys-root
-./var/db/obsolete/xbase				xbase-sys-root
-./var/db/obsolete/xetc				xbase-sys-root
-./var/db/obsolete/xcomp				xbase-sys-root
-./var/db/obsolete/xfont				xbase-sys-root
-./var/db/obsolete/xserver			xbase-sys-root
 ./usr/X11R6/bin/Xmark
 ./usr/X11R6/bin/appres
 ./usr/X11R6/bin/atobm
@@ -1060,3 +1055,8 @@
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-default.ad
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-green.ad
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-motif.ad
+./var/db/obsolete/xbase				xbase-sys-root
+./var/db/obsolete/xcomp				xbase-sys-root
+./var/db/obsolete/xetc				xbase-sys-root
+./var/db/obsolete/xfont				xbase-sys-root
+./var/db/obsolete/xserver			xbase-sys-root

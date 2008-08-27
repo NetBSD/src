@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.29 2008/07/17 16:24:05 oster Exp $
+# $NetBSD: mi,v 1.30 2008/08/27 04:43:54 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -317,11 +317,11 @@
 ./usr/share/groff_font/devlj4/SYMBOL		text-groff-font		share
 ./usr/share/groff_font/devlj4/TB		text-groff-font		share
 ./usr/share/groff_font/devlj4/TBI		text-groff-font		share
+./usr/share/groff_font/devlj4/TI		text-groff-font		share
 ./usr/share/groff_font/devlj4/TNRB		text-groff-font		share
 ./usr/share/groff_font/devlj4/TNRBI		text-groff-font		share
 ./usr/share/groff_font/devlj4/TNRI		text-groff-font		share
 ./usr/share/groff_font/devlj4/TNRR		text-groff-font		share
-./usr/share/groff_font/devlj4/TI		text-groff-font		share
 ./usr/share/groff_font/devlj4/TR		text-groff-font		share
 ./usr/share/groff_font/devlj4/UB		text-groff-font		share
 ./usr/share/groff_font/devlj4/UBI		text-groff-font		share
@@ -453,8 +453,8 @@
 ./usr/share/man/cat7/groff_mdoc.0		text-groff-catman	.cat
 ./usr/share/man/cat7/groff_me.0			text-groff-catman	.cat
 ./usr/share/man/cat7/groff_mm.0			text-groff-catman	.cat
-./usr/share/man/cat7/groff_mom.0		text-obsolete	obsolete
 ./usr/share/man/cat7/groff_mmse.0		text-groff-catman	.cat
+./usr/share/man/cat7/groff_mom.0		text-obsolete	obsolete
 ./usr/share/man/cat7/groff_ms.0			text-groff-catman	.cat
 ./usr/share/man/cat7/groff_msafer.0		text-obsolete	obsolete
 ./usr/share/man/cat7/groff_trace.0		text-groff-catman	.cat
@@ -508,8 +508,8 @@
 ./usr/share/man/man7/groff_mdoc.7		text-groff-man		.man
 ./usr/share/man/man7/groff_me.7			text-groff-man		.man
 ./usr/share/man/man7/groff_mm.7			text-groff-man		.man
-./usr/share/man/man7/groff_mom.7		text-obsolete	obsolete
 ./usr/share/man/man7/groff_mmse.7		text-groff-man		.man
+./usr/share/man/man7/groff_mom.7		text-obsolete	obsolete
 ./usr/share/man/man7/groff_ms.7			text-groff-man		.man
 ./usr/share/man/man7/groff_msafer.7		text-obsolete		obsolete
 ./usr/share/man/man7/groff_trace.7		text-groff-man		.man
