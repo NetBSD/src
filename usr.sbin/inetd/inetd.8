@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.48 2008/08/10 14:55:13 tls Exp $
+.\"	$NetBSD: inetd.8,v 1.49 2008/08/27 19:55:20 elric Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,8 @@ should be run at boot time by
 .Pa /etc/rc
 (see
 .Xr rc 8 ) .
-It then listens for connections on certain internet sockets.
+It then opens sockets according to its configuration and listens
+for connections.
 When a connection is found on one of its sockets, it decides what
 service the socket corresponds to, and invokes a program to service
 the request.
@@ -125,12 +126,25 @@ server program arguments
 .Pp
 To specify an
 .Em Sun-RPC
-based service, the entry would contain these fields.
+based service, the entry would contain these fields:
 .Pp
 .Bd -unfilled -offset indent -compact
 service-name/version
 socket-type
 rpc/protocol[,sndbuf=size][,rcvbuf=size]
+wait/nowait[:max]
+user[:group]
+server-program
+server program arguments
+.Ed
+.Pp
+To specify a UNIX-domain (local) socket, the entry would contain
+these fields:
+.Pp
+.Bd -unfilled -offset indent -compact
+path
+socket-type
+unix[,sndbuf=size][,rcvbuf=size]
 wait/nowait[:max]
 user[:group]
 server-program
@@ -207,7 +221,9 @@ filter decides they are ready to be handled.
 The
 .Em protocol
 must be a valid protocol as given in
-.Pa /etc/protocols .
+.Pa /etc/protocols
+or the string
+.Dq unix .
 Examples might be
 .Dq tcp
 and
