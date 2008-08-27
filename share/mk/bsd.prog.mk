@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.231 2008/08/25 08:03:14 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.232 2008/08/27 01:15:22 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -300,9 +300,11 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${D
 .if !commands(${_P})
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
-	    ${DESTDIR:D-Wl,-nostdlib -L${_GCC_LIBGCCDIR}} \
-	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} ${_PROGLDOPTS} \
-	    ${OBJS.${_P}} ${_LDADD.${_P}}
+	    ${DESTDIR:D-Wl,-nostdlib} \
+	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
+	    ${OBJS.${_P}} ${_LDADD.${_P}} \
+	    ${DESTDIR:D-L${_GCC_LIBGCCDIR}} \
+	    ${_PROGLDOPTS}
 .if defined(PAXCTL_FLAGS.${_P})
 	${PAXCTL} ${PAXCTL_FLAGS.${_P}} ${.TARGET}
 .endif
