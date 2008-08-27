@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.950 2008/08/23 16:55:50 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.951 2008/08/27 05:37:00 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.949 2008/08/23 16:54:56 tsutsui Exp
+ *	NetBSD: pcidevs,v 1.950 2008/08/27 05:35:38 christos Exp
  */
 
 /*
@@ -3773,6 +3773,7 @@
 #define	PCI_PRODUCT_TI_PCI1530	0xac57		/* PCI1530 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1515	0xac58		/* PCI1515 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI2040	0xac60		/* PCI2040 PCI-DSP Bridge */
+#define	PCI_PRODUCT_TI_PCI7420YENTA	0xac8e		/* PCI7420 PCI-Cardbus Bridge w/ IEEE 1394 Host controller */
 
 /* Titan Electronics products */
 #define	PCI_PRODUCT_TITAN_PCI800L	0x8080		/* PCI-800L */

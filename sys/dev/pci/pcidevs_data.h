@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.949 2008/08/23 16:55:50 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.950 2008/08/27 05:37:00 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.949 2008/08/23 16:54:56 tsutsui Exp
+ *	NetBSD: pcidevs,v 1.950 2008/08/27 05:35:38 christos Exp
  */
 
 /*
@@ -13092,6 +13092,10 @@ static const struct pci_product pci_products[] = {
 	    "PCI2040 PCI-DSP Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7420YENTA,
+	    "PCI7420 PCI-Cardbus Bridge w/ IEEE 1394 Host controller",
+	},
+	{
 	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800L,
 	    "PCI-800L",
 	},
@@ -14284,4 +14288,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2971;
+const int pci_nproducts = 2972;
