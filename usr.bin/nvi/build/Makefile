@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/27 05:42:54 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/27 10:17:49 christos Exp $
 
 .include <bsd.own.mk>
+
+USE_WIDECHAR?=yes
 
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
 WARNS=0
@@ -35,8 +37,10 @@ SRCS=	api.c cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	vs_smap.c vs_split.c
 
 # For wide char support
+.if ${USE_WIDECHAR} == "yes"
 SRCS+=	regcomp.c regerror.c regexec.c regfree.c
-CPPFLAGS+=-I${DIST}/regex -D__REGEX_PRIVATE
+CPPFLAGS+=-I${DIST}/regex -D__REGEX_PRIVATE -DUSE_WIDECHAR
+.endif
 
 LINKS=	${BINDIR}/nvi ${BINDIR}/nex ${BINDIR}/nvi ${BINDIR}/nview
 MLINKS=	nvi.1 nex.1 nvi.1 nview.1
