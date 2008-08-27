@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.218 2008/08/10 09:25:04 lukem Exp $
+#	$NetBSD: bsd.README,v 1.219 2008/08/27 00:16:09 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -137,7 +137,8 @@ MKDEBUG		If "no", don't build and install separate debugging symbols
 		into /usr/libdata/debug.
 		Default: no
 
-MKDEBUGLIB	Build debugging libraries.
+MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
+		with -DDEBUG.
 		Default: no
 
 MKDOC		If "no", don't build or install the documentation.
