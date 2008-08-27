@@ -117,7 +117,7 @@
 /* #undef USE_SLANG_CURSES */
 
 /* Define when using wide characters */
-#define USE_WIDECHAR 1
+/* #undef USE_WIDECHAR */
 
 /* Define if you have <ncurses.h> */
 /* #undef HAVE_NCURSES_H */
