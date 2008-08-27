@@ -33,7 +33,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.2 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.3 2008/08/27 11:03:10 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.2 2008/04/27 18:58:45 matt Exp $");
 #include <machine/bus.h>
 #include <dev/sysmon/sysmonvar.h>
 
-#include <arm/omap/omap2430obiovar.h>
+#include <arm/omap/omap2_obiovar.h>
 
 #include <arm/omap/omap_wdtvar.h>
 #include <arm/omap/omap_wdtreg.h>

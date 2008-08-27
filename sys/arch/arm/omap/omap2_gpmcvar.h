@@ -1,5 +1,4 @@
-/*	$NetBSD: omap2430obioreg.h,v 1.2 2008/04/27 18:58:45 matt Exp $	*/
-
+/*	$NetBSD: omap2_gpmcvar.h,v 1.1 2008/08/27 11:03:10 matt Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -28,15 +27,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef _OMAP2430OBIOREG_H
-#define _OMAP2430OBIOREG_H
 
-#include <arm/omap/omap2430reg.h>
+#ifndef _OMAP2430GPMCVAR_H
+#define _OMAP2430GPMCVAR_H
 
-#define	OMAP2430_OBIO_0_BASE	OMAP2430_L4_CORE_BASE
-#define	OMAP2430_OBIO_0_SIZE	OMAP2430_L4_CORE_SIZE
+struct gpmc_attach_args {
+	bus_space_tag_t	gpmc_iot;
+	bus_addr_t	gpmc_addr;
+	bus_size_t	gpmc_size;
+	int		gpmc_intr;
+	bus_dma_tag_t	gpmc_dmac;
+	unsigned int	gpmc_mult;
+};
 
-#define	OMAP2430_OBIO_1_BASE	OMAP2430_L4_WAKEUP_BASE
-#define	OMAP2430_OBIO_1_SIZE	OMAP2430_L4_WAKEUP_SIZE
-
-#endif	/* _OMAP2430OBIOREG_H */
+#endif /* _OMAP2430GPMCVAR_H */

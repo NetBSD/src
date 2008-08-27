@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.3 2008/05/02 23:46:12 martin Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.4 2008/08/27 11:03:10 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.3 2008/05/02 23:46:12 martin Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.4 2008/08/27 11:03:10 matt Exp $ */
 
 
 /*
@@ -102,7 +102,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.3 2008/05/02 23:46:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.4 2008/08/27 11:03:10 matt Exp $");
 
 #include "locators.h"
 
@@ -119,8 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.3 2008/05/02 23:46:12 martin Exp $"
 #include <arm/mainbus/mainbus.h>
 #include <arm/omap/omap_var.h>
 
-#include <arm/omap/omap2430gpmcreg.h>
-#include <arm/omap/omap2430gpmcvar.h>
+#include <arm/omap/omap2_gpmcreg.h>
+#include <arm/omap/omap2_gpmcvar.h>
 
 typedef struct {
 	boolean_t	cs_valid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430gpmcreg.h,v 1.2 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: omap2_gpmcreg.h,v 1.1 2008/08/27 11:03:10 matt Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.

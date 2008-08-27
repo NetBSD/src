@@ -1,4 +1,5 @@
-/* $NetBSD: omap2430mputmrvar.h,v 1.2 2008/04/27 18:58:45 matt Exp $ */
+/*	$NetBSD: omap2_obioreg.h,v 1.1 2008/08/27 11:03:10 matt Exp $	*/
+
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -27,43 +28,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/*
- * derived from omapmputmrvar.h
- */
+#ifndef _ARM_OMAP_OMAP2_OBIOREG_H_
+#define _ARM_OMAP_OMAP2_OBIOREG_H_
 
-#ifndef _OMAP2430GPTMRVAR_H
-#define _OMAP2430GPTMRVAR_H
+#include <arm/omap/omap2_reg.h>
 
+#if defined(OMAP_2430) || defined(OMAP_2420)
+#define	OMAP2_OBIO_0_BASE	OMAP2430_L4_CORE_BASE
+#define	OMAP2_OBIO_0_SIZE	OMAP2430_L4_CORE_SIZE
 
-#ifndef STATHZ
-# define STATHZ	64
+#define	OMAP2_OBIO_1_BASE	OMAP2430_L4_WAKEUP_BASE
+#define	OMAP2_OBIO_1_SIZE	OMAP2430_L4_WAKEUP_SIZE
 #endif
 
-typedef struct timer_factors {
-	uint32_t ptv;
-	uint32_t reload;
-	uint32_t counts_per_usec;
-} timer_factors;
+#if defined(OMAP_3530)
+#define	OMAP2_OBIO_0_BASE	OMAP3530_L4_CORE_BASE
+#define	OMAP2_OBIO_0_SIZE	OMAP3530_L4_CORE_SIZE
 
-struct omap2430mputmr_softc {
-	struct device		sc_dev;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	int			sc_intr;
-};
+#define	OMAP2_OBIO_1_BASE	OMAP3530_L4_WAKEUP_BASE
+#define	OMAP2_OBIO_1_SIZE	OMAP3530_L4_WAKEUP_SIZE
 
+#define	OMAP2_OBIO_2_BASE	OMAP3530_L4_PERPIHERAL_BASE
+#define	OMAP2_OBIO_2_SIZE	OMAP3530_L4_PERPIHERAL_SIZE
 
+#define	OMAP2_OBIO_3_BASE	OMAP3530_L4_EMULATION_BASE
+#define	OMAP2_OBIO_3_SIZE	OMAP3530_L4_EMULATION_SIZE
+#endif
 
-extern uint32_t counts_per_usec, counts_per_hz;
-extern uint32_t hardref;
-extern struct timeval hardtime;
-extern struct omap2430mputmr_softc *clock_sc;
-extern struct omap2430mputmr_softc *stat_sc;
-extern struct omap2430mputmr_softc *ref_sc;
-
-extern void calc_timer_factors(int, struct timer_factors *);
-extern int	clockintr(void *);
-extern int	statintr(void *);
-extern void	rtcinit(void);
-
-#endif	/* _OMAP2430GPTMRVAR_H */
+#endif	/* _ARM_OMAP_OMAP2_OBIOREG_H_ */

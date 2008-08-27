@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.4 2008/07/03 06:17:24 matt Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.5 2008/08/27 11:03:10 matt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.4 2008/07/03 06:17:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.5 2008/08/27 11:03:10 matt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.4 2008/07/03 06:17:24 matt Exp $");
 #include <machine/atomic.h>
 #include <machine/bus.h>
 
-#include <arm/omap/omap2430reg.h>
-#include <arm/omap/omap2430obiovar.h>
+#include <arm/omap/omap2_reg.h>
+#include <arm/omap/omap2_obiovar.h>
 #include <arm/pic/picvar.h>
 
 #if NGPIO > 0
@@ -323,23 +323,33 @@ gpio_match(device_t parent, cfdata_t cfdata, void *aux)
 	struct obio_attach_args *oa = aux;
 
 #ifdef OMAP_2420
-	if (oa->obio_addr != GPIO1_BASE_2420
-	    && oa->obio_addr != GPIO2_BASE_2420
-	    && oa->obio_addr != GPIO3_BASE_2420
-	    && oa->obio_addr != GPIO4_BASE_2420)
-		return 0;
+	if (oa->obio_addr == GPIO1_BASE_2420
+	    || oa->obio_addr == GPIO2_BASE_2420
+	    || oa->obio_addr == GPIO3_BASE_2420
+	    || oa->obio_addr == GPIO4_BASE_2420)
+		return 1;
 #endif
 
 #ifdef OMAP_2430
-	if (oa->obio_addr != GPIO1_BASE_2430
-	    && oa->obio_addr != GPIO2_BASE_2430
-	    && oa->obio_addr != GPIO3_BASE_2430
-	    && oa->obio_addr != GPIO4_BASE_2430
-	    && oa->obio_addr != GPIO5_BASE_2430)
-		return 0;
+	if (oa->obio_addr == GPIO1_BASE_2430
+	    || oa->obio_addr == GPIO2_BASE_2430
+	    || oa->obio_addr == GPIO3_BASE_2430
+	    || oa->obio_addr == GPIO4_BASE_2430
+	    || oa->obio_addr == GPIO5_BASE_2430)
+		return 1;
 #endif
 
-	return 1;
+#ifdef OMAP_3530
+	if (oa->obio_addr == GPIO1_BASE_3530
+	    || oa->obio_addr == GPIO2_BASE_3530
+	    || oa->obio_addr == GPIO3_BASE_3530
+	    || oa->obio_addr == GPIO4_BASE_3530
+	    || oa->obio_addr == GPIO5_BASE_3530
+	    || oa->obio_addr == GPIO6_BASE_3530)
+		return 1;
+#endif
+
+	return 0;
 }
 
 void

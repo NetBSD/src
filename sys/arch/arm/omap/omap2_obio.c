@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.3 2008/05/02 23:46:12 martin Exp $	*/
+/*	$Id: omap2_obio.c,v 1.4 2008/08/27 11:03:10 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.3 2008/05/02 23:46:12 martin Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.4 2008/08/27 11:03:10 matt Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.3 2008/05/02 23:46:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.4 2008/08/27 11:03:10 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -121,8 +121,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.3 2008/05/02 23:46:12 martin Exp $"
 #include <arm/mainbus/mainbus.h>
 #include <arm/omap/omap_var.h>
 
-#include <arm/omap/omap2430obioreg.h>
-#include <arm/omap/omap2430obiovar.h>
+#include <arm/omap/omap2_obioreg.h>
+#include <arm/omap/omap2_obiovar.h>
 
 typedef struct {
 	boolean_t	cs_valid;
@@ -152,25 +152,39 @@ static void	obio_attach_critical(struct obio_softc *);
 CFATTACH_DECL(obio, sizeof(struct obio_softc),
 	obio_match, obio_attach, NULL, NULL);
 
-static uint8_t obio_attached[NOBIO];
+static uint8_t obio_attached;
 
 static int
 obio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *mb = aux;
 
+#ifdef OMAP2_OBIO_0_BASE
+	if (mb->mb_iobase == OMAP2_OBIO_0_BASE
+	    && mb->mb_iosize == OMAP2_OBIO_0_SIZE
+	    && (obio_attached & 1) == 0)
+		return 1;
+#endif
 
-#if defined(OMAP2)
-	if ((mb->mb_iobase == OMAP2430_OBIO_0_BASE)
-	&&  (mb->mb_iosize == OMAP2430_OBIO_0_SIZE)
-	&&  (obio_attached[0] == 0))
+#ifdef OMAP2_OBIO_1_BASE
+	if (mb->mb_iobase == OMAP2_OBIO_1_BASE
+	    && mb->mb_iosize == OMAP2_OBIO_1_SIZE
+	    && (obio_attached & 2) == 0)
 		return 1;
-	if ((mb->mb_iobase == OMAP2430_OBIO_1_BASE)
-	&&  (mb->mb_iosize == OMAP2430_OBIO_1_SIZE)
-	&&  (obio_attached[1] == 0))
+#endif
+
+#ifdef OMAP2_OBIO_2_BASE
+	if (mb->mb_iobase == OMAP2_OBIO_2_BASE
+	    && mb->mb_iosize == OMAP2_OBIO_2_SIZE
+	    && (obio_attached & 4) == 0)
 		return 1;
-#else
-# error unknown OMAP implementation
+#endif
+
+#ifdef OMAP2_OBIO_3_BASE
+	if (mb->mb_iobase == OMAP2_OBIO_3_BASE
+	    && mb->mb_iosize == OMAP2_OBIO_3_SIZE
+	    && (obio_attached & 8) == 0)
+		return 1;
 #endif
 
 	return 0;
@@ -193,11 +207,21 @@ obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_base = mb->mb_iobase;
 	sc->sc_size = mb->mb_iosize;
 
-#if defined(OMAP2)
-	if (mb->mb_iobase == OMAP2430_OBIO_0_BASE)
-		obio_attached[0] = 1;
-	if (mb->mb_iobase == OMAP2430_OBIO_1_BASE)
-		obio_attached[1] = 1;
+#ifdef OMAP2_OBIO_0_BASE
+	if (mb->mb_iobase == OMAP2_OBIO_0_BASE)
+		obio_attached |= 1;
+#endif
+#ifdef OMAP2_OBIO_1_BASE
+	else if (mb->mb_iobase == OMAP2_OBIO_1_BASE)
+		obio_attached |= 2;
+#endif
+#ifdef OMAP2_OBIO_2_BASE
+	else if (mb->mb_iobase == OMAP2_OBIO_2_BASE)
+		obio_attached |= 4;
+#endif
+#ifdef OMAP2_OBIO_3_BASE
+	else if (mb->mb_iobase == OMAP2_OBIO_3_BASE)
+		obio_attached |= 8;
 #endif
 
 	/*
