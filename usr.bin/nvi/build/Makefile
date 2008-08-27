@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2008/07/20 20:06:46 veego Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/27 05:42:54 christos Exp $
 
 .include <bsd.own.mk>
 
-CPPFLAGS+=-I${DIST}/regex -I${DIST}/include -I${.CURDIR} -I. -DGTAGS
-CPPFLAGS+=-D__REGEX_PRIVATE
+CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
 WARNS=0
-DBG=-g
+#DBG=-g
 
 #CWARNFLAGS+=-Wno-parentheses -Wno-unused -Wno-missing-prototypes
 #.if ${HAVE_GCC} == 4
@@ -35,7 +34,9 @@ SRCS=	api.c cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	v_z.c v_zexit.c vi.c vs_line.c vs_msg.c vs_refresh.c vs_relative.c \
 	vs_smap.c vs_split.c
 
+# For wide char support
 SRCS+=	regcomp.c regerror.c regexec.c regfree.c
+CPPFLAGS+=-I${DIST}/regex -D__REGEX_PRIVATE
 
 LINKS=	${BINDIR}/nvi ${BINDIR}/nex ${BINDIR}/nvi ${BINDIR}/nview
 MLINKS=	nvi.1 nex.1 nvi.1 nview.1
