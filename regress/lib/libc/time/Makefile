@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1998/01/21 05:46:30 mycroft Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/27 08:50:04 christos Exp $
 
-SUBDIR+=strptime
+SUBDIR+=mktime strptime
 
 .include <bsd.subdir.mk>
