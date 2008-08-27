@@ -1,4 +1,4 @@
-# $NetBSD: md.shark,v 1.7 2006/12/21 01:45:32 macallan Exp $
+# $NetBSD: md.shark,v 1.8 2008/08/27 04:43:54 lukem Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xvfb
@@ -66,8 +66,8 @@
 ./usr/X11R6/lib/X11/doc/VideoBoard98
 ./usr/X11R6/lib/X11/etc/xmodmap.std
 ./usr/X11R6/lib/libxf86config.a
-./usr/X11R6/lib/modules/drivers/wsfb_drv.o
 ./usr/X11R6/lib/modules/drivers/chips_drv.o
+./usr/X11R6/lib/modules/drivers/wsfb_drv.o
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
 ./usr/X11R6/lib/modules/extensions/libextmod.a
