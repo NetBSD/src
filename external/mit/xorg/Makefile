@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/15 10:27:20 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/08/27 23:47:40 rtr Exp $
 
 # Top level Makefile to cross build xorg inside the NetBSD tree.
 
@@ -52,10 +52,15 @@ afterinstall: .PHONY
 .endif
 
 
-DISTRIBTARGETS=	Xserver/Xext/ext \
-		bin/lbxproxy bin/proxymngr bin/rstart bin/twm \
-		bin/xdm/config bin/xfs bin/xinit bin/xsm \
-		lib/fontconfig/etc
+DISTRIBTARGETS=	\
+	bin/lbxproxy \
+	bin/proxymngr \
+	bin/twm \
+	bin/xdm/config \
+	bin/xfs \
+	bin/xinit \
+	bin/xsm \
+	lib/fontconfig/etc
 
 distribution: check_X11SRCDIR
 .for tgt in ${DISTRIBTARGETS}
