@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.520 2008/08/26 23:47:14 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.521 2008/08/27 02:28:34 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -491,11 +491,11 @@ MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsd
 .endif
 
 TARGETS+=	all clean cleandir depend dependall includes \
-		install lint obj regress tags html installhtml cleanhtml
+		install lint obj regress tags html
 PHONY_NOTMAIN =	all clean cleandir depend dependall distclean includes \
 		install lint obj regress tags beforedepend afterdepend \
 		beforeinstall afterinstall realinstall realdepend realall \
-		html installhtml cleanhtml subdir-all subdir-install subdir-depend
+		html subdir-all subdir-install subdir-depend
 .PHONY:		${PHONY_NOTMAIN}
 .NOTMAIN:	${PHONY_NOTMAIN}
 
