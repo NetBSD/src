@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.40 2008/08/06 19:06:40 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.41 2008/08/27 11:04:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -313,7 +313,8 @@
 #define	XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
 #define	XSCALE_AUXCTL_MD_MASK	0x00000030
 
-/* Cache type register definitions */
+/* Cache type register definitions 0 */
+#define	CPU_CT_FORMAT(x)	(((x) >> 29) & 0x7)	/* reg format */
 #define	CPU_CT_ISIZE(x)		((x) & 0xfff)		/* I$ info */
 #define	CPU_CT_DSIZE(x)		(((x) >> 12) & 0xfff)	/* D$ info */
 #define	CPU_CT_S		(1U << 24)		/* split cache */
@@ -324,12 +325,33 @@
 #define	CPU_CT_CTYPE_WB2	2	/* w/b, clean w/ cp15,7 */
 #define	CPU_CT_CTYPE_WB6	6	/* w/b, cp15,7, lockdown fmt A */
 #define	CPU_CT_CTYPE_WB7	7	/* w/b, cp15,7, lockdown fmt B */
+#define	CPU_CT_CTYPE_WB14	14	/* w/b, cp15,7, lockdown fmt C */
 
 #define	CPU_CT_xSIZE_LEN(x)	((x) & 0x3)		/* line size */
 #define	CPU_CT_xSIZE_M		(1U << 2)		/* multiplier */
 #define	CPU_CT_xSIZE_ASSOC(x)	(((x) >> 3) & 0x7)	/* associativity */
 #define	CPU_CT_xSIZE_SIZE(x)	(((x) >> 6) & 0x7)	/* size */
 #define	CPU_CT_xSIZE_P		(1U << 11)		/* need to page-color */
+
+/* format 4 definitions */
+#define	CPU_CT4_ILINE(x)	((x) & 0xf)		/* I$ line size */
+#define	CPU_CT4_DLINE(x)	(((x) >> 16) & 0xf)	/* D$ line size */
+#define	CPU_CT4_L1IPOLICY(x)	(((x) >> 14) & 0x3)	/* I$ policy */
+#define	CPU_CT4_L1_VIPT		2			/* VIPT */
+
+/* Cache size identifaction register definitions 1, Rd, c0, c0, 0 */
+#define	CPU_CSID_CTYPE_WT	0x80000000	/* write-through avail */ 
+#define	CPU_CSID_CTYPE_WB	0x40000000	/* write-back avail */ 
+#define	CPU_CSID_CTYPE_RA	0x20000000	/* read-allocation avail */ 
+#define	CPU_CSID_CTYPE_WA	0x10000000	/* write-allocation avail */ 
+#define	CPU_CSID_NUMSETS(x)	(((x) >> 12) & 0xffff)
+#define	CPU_CSID_ASSOC(x)	(((x) >> 3) & 0x1ff)
+#define	CPU_CSID_LEN(x)		((x) & 0x03)
+
+/* Cache size selection register definitions 2, Rd, c0, c0, 0 */
+#define	CPU_CSSR_L2		0x00000002
+#define	CPU_CSSR_L1		0x00000000
+#define	CPU_CSSR_InD		0x00000001
 
 /* Fault status register definitions */
 
