@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1085 2008/08/17 13:26:36 plunky Exp $
+# $NetBSD: mi,v 1.1086 2008/08/27 04:43:53 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2452,6 +2452,7 @@
 ./usr/share/man/cat8/scache.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/scan_ffs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scan_lfs.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/schedctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/scsictl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sdpd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/security.0			man-sys-catman		.cat
@@ -2468,7 +2469,6 @@
 ./usr/share/man/cat8/sgimips/sgivol.0		man-sys-catman		.cat
 ./usr/share/man/cat8/shark/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/shark/makedev.0		man-obsolete		obsolete
-./usr/share/man/cat8/schedctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/showmount.0		man-nfsclient-catman	.cat
 ./usr/share/man/cat8/showq.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/shutdown.0			man-sysutil-catman	.cat
@@ -3693,8 +3693,8 @@
 ./usr/share/man/man4/lc.4			man-sys-man		.man
 ./usr/share/man/man4/ld.4			man-sys-man		.man
 ./usr/share/man/man4/le.4			man-sys-man		.man
-./usr/share/man/man4/lkm.4			man-sys-man		.man
 ./usr/share/man/man4/lii.4			man-sys-man		.man
+./usr/share/man/man4/lkm.4			man-sys-man		.man
 ./usr/share/man/man4/lm.4			man-sys-man		.man
 ./usr/share/man/man4/lmc.4			man-sys-man		.man
 ./usr/share/man/man4/lmtemp.4			man-sys-man		.man
@@ -5013,6 +5013,8 @@
 ./usr/share/man/man8/rstatd.8			man-netutil-man		.man
 ./usr/share/man/man8/rtadvd.8			man-router-man		use_inet6,.man
 ./usr/share/man/man8/rtquery.8			man-netutil-man		.man
+./usr/share/man/man8/rtsol.8			man-netutil-man		inet6,.man
+./usr/share/man/man8/rtsold.8			man-netutil-man		inet6,.man
 ./usr/share/man/man8/rump_cd9660.8		man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_efs.8			man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_ext2fs.8		man-sysutil-man		puffs,.man
@@ -5024,8 +5026,6 @@
 ./usr/share/man/man8/rump_syspuffs.8		man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_tmpfs.8		man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_udf.8			man-sysutil-man		puffs,.man
-./usr/share/man/man8/rtsol.8			man-netutil-man		inet6,.man
-./usr/share/man/man8/rtsold.8			man-netutil-man		inet6,.man
 ./usr/share/man/man8/rusersd.8			man-netutil-man		.man
 ./usr/share/man/man8/rwalld.8			man-netutil-man		.man
 ./usr/share/man/man8/rwhod.8			man-netutil-man		.man
@@ -5038,6 +5038,7 @@
 ./usr/share/man/man8/scache.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/scan_ffs.8			man-sysutil-man		.man
 ./usr/share/man/man8/scan_lfs.8			man-sysutil-man		.man
+./usr/share/man/man8/schedctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/scsictl.8			man-sysutil-man		.man
 ./usr/share/man/man8/sdpd.8			man-sysutil-man		.man
 ./usr/share/man/man8/security.8			man-sys-man		.man
@@ -5054,7 +5055,6 @@
 ./usr/share/man/man8/sgimips/sgivol.8		man-sys-man		.man
 ./usr/share/man/man8/shark/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/shark/makedev.8		man-obsolete		obsolete
-./usr/share/man/man8/schedctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/showmount.8		man-nfsclient-man	.man
 ./usr/share/man/man8/showq.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/shutdown.8			man-sysutil-man		.man
