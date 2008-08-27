@@ -79,12 +79,8 @@ namespace std
 #undef fputwc
 #undef fputws
 #undef fwide
-#if _GLIBCXX_HAVE_FWPRINTF
-# undef fwprintf
-#endif
-#if _GLIBCXX_HAVE_FWSCANF
-# undef fwscanf
-#endif
+#undef fwprintf
+#undef fwscanf
 #undef getwc
 #undef getwchar
 #undef mbrlen
@@ -93,16 +89,10 @@ namespace std
 #undef mbsrtowcs
 #undef putwc
 #undef putwchar
-#if _GLIBCXX_HAVE_SWPRINTF
-# undef swprintf
-#endif
-#if _GLIBCXX_HAVE_SWSCANF
-# undef swscanf
-#endif
+#undef swprintf
+#undef swscanf
 #undef ungetwc
-#if _GLIBCXX_HAVE_VFWPRINTF
-# undef vfwprintf
-#endif
+#undef vfwprintf
 #if _GLIBCXX_HAVE_VFWSCANF
 # undef vfwscanf
 #endif
@@ -110,9 +100,7 @@ namespace std
 #if _GLIBCXX_HAVE_VSWSCANF
 # undef vswscanf
 #endif
-#if _GLIBCXX_HAVE_VWPRINTF
-# undef vwprintf
-#endif
+#undef vwprintf
 #if _GLIBCXX_HAVE_VWSCANF
 # undef vwscanf
 #endif
@@ -147,12 +135,8 @@ namespace std
 #undef wmemcpy
 #undef wmemmove
 #undef wmemset
-#if _GLIBCXX_HAVE_WPRINTF
-# undef wprintf
-#endif
-#if _GLIBCXX_HAVE_WSCANF
-# undef wscanf
-#endif
+#undef wprintf
+#undef wscanf
 
 #if _GLIBCXX_USE_WCHAR_T
 namespace std
@@ -165,12 +149,8 @@ namespace std
   using ::fputwc;
   using ::fputws;
   using ::fwide;
-#if _GLIBCXX_HAVE_FWPRINTF
   using ::fwprintf;
-#endif
-#if _GLIBCXX_HAVE_FWSCANF
   using ::fwscanf;
-#endif
   using ::getwc;
   using ::getwchar;
   using ::mbrlen;
@@ -179,28 +159,18 @@ namespace std
   using ::mbsrtowcs;
   using ::putwc;
   using ::putwchar;
-#if _GLIBCXX_HAVE_SWPRINTF
   using ::swprintf;
-#endif
-#if _GLIBCXX_HAVE_SWSCANF
   using ::swscanf;
-#endif
   using ::ungetwc;
-#if _GLIBCXX_HAVE_VFWPRINTF
   using ::vfwprintf;
-#endif
 #if _GLIBCXX_HAVE_VFWSCANF
   using ::vfwscanf;
 #endif
-#if _GLIBCXX_HAVE_VSWPRINTF
   using ::vswprintf;
-#endif
 #if _GLIBCXX_HAVE_VSWSCANF
   using ::vswscanf;
 #endif
-#if _GLIBCXX_HAVE_VWPRINTF
   using ::vwprintf;
-#endif
 #if _GLIBCXX_HAVE_VWSCANF
   using ::vwscanf;
 #endif
@@ -230,12 +200,8 @@ namespace std
   using ::wmemcpy;
   using ::wmemmove;
   using ::wmemset;
-#if _GLIBCXX_HAVE_WPRINTF
   using ::wprintf;
-#endif
-#if _GLIBCXX_HAVE_WSCANF
   using ::wscanf;
-#endif
 
   using ::wcschr;
 
