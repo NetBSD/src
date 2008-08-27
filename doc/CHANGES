@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1095 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1096 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -488,13 +488,22 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	asus(4): Added a driver for ASUS ACPI hotkeys as found in the EeePC.
 		[jmcneill 20080331]
 	zaurus: Add sysinst support. [chris 20080401]
+	isv(4): Add support for the IDEC Supervision/16 image capture board
+		for ISA. dyoung 20080402]
+	puc(4): Support for Digi International 4 and 8 port boards,
+		from OpenBSD. [riz 20080403]
 	finsio(4): Added a driver for the Fintek Super I/O chips, supporting
 		the Hardware Monitor device. Adapted from OpenBSD.
 		[xtraeme 20080403]
+	compat_linux32: Add msync(2) syscall. [njoly 20080404]
+	sparc: Add support booting from UFS2 partition. [tsutsui 20080405]
 	hp700: Add support for the SCSI NCR 53C720 SCSI controller found in
 		early HP 9000s for the attachment of an Fast-Wide (16-bit)
 		SCSI-2 bus, utilizing HVD signalling via the siop(4)
 		driver. [skrll 20080405]
+	sun2: Provide RAS based atomic_cas_32() function by reusing old
+		_lock_cas() implementation for m68010. Now sun2 kernel
+		compiles and even works on mutiuser. [tsutsui 20080405]
 	openssh: Import 5.0. [christos 20080406]
 	ofppc: Support for SMP added. [garbled 20080408]
 	opencrypto(9): Improve performance to 84,000 short modular math ops/sec
@@ -502,27 +511,62 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		retrieve of requests/results.  Rewrite manual page to
 		make it easier to write new code to the API.  Donated
 		by Coyote Point Systems, Inc. [tls 20080410]
+	kernel: Make IP, TCP, UDP, and ICMP statistics per-CPU.
+		The stats are collated when the user requests them via sysctl.
+		[thorpej 20080412]
 	acpi(4): Updated ACPI-CA to 20080321. [jmcneill 20080412]
+	landisk: Add sysinst support. [skrll 20080414]
 	libcurses: Add getwin() and putwin(). [jdc 20080414]
+	kernel: Make IP6, ICMP6, UDP6, RAW6, PIM6, CARP, ARP, and IGMP
+		statistics per-CPU.  [thorpej 20080415]
+	compat_linux32: Add sys_clock{getres,gettime,settime} syscalls.
+		[njoly 20080417]
 	shark: Support for X on rev. 4 sharks is back [macallan 20080419]
+	agp(4): Add missing AGP support for ALI M1689 chipset. [njoly 20080419]
+	nfe(4): Fix problem on receiving jumbo frames. [cube 20080420]
+	libc, kernel: Add posix_madvise(2). [rmind 20080422]
+	gcc(1): Fix compilation of native sh3 gcc on 64-bit build machines.
+		[uwe 20080422]
 	amdtemp(4): AMD CPU Temperature driver. Adapted from OpenBSD.
 		[cegger 20080423]
 	netiso: Remove obsolete TPCONS support. [plunky 20080423]
+	kernel: Merge the socket locking patch, which makes socket layer and
+		unix protocols MP safe and allows protocol processing
+		interrupts to safely block on locks. [ad 20080424]
+	compat_linux(8): Add IPC_64 support for semctl IPC_STAT/IPC_SET.
+		[njoly 20080424]
+	lint(1): Add preliminary _Complex support. [christos 20080425]
 	arm: merge armv6 kernel support from matt-armv6 branch.
 		[matt 20080427]
+	kernel: Add MI code to support in-kernel preemption. [ad 20080428]
 	prep: Support for floppy controller/drive. [garbled 20080428]
+	amd64, i386: Add support for kernel preeemption to i386 and amd64.
+		[ad 20080428]
 	gpio(4): Extend with open/close to handle request/release the
 		ppbus(4) on open/close. From Hans Rosenfeld. [cegger 20080429]
 	ppbus(4): Extend to attach on gpiobus. From Hans Rosenfeld.
 		[cegger 20080429]
 	prep: Bootable ISO now built automatically. [garbled 20080430]
+	i386: Make MULTIPROCESSOR mandatory. [ad 20080430]
+	i386: Build INSTALL kernel from GENERIC, and update boot menu to allow
+		disabling ACPI and/or SMP. [ad 20080430]
 	atf(7): Import 0.5.  [jmmv 20080501]
 	tests: Convert the tests in the tests/ hierarchy that were written in
 		C++ to C, making use of the libatf-c library that comes with
 		the ATF 0.5 just imported.  [jmmv 20080501]
 	hpqlb(4): Hotkey driver for HP notebooks. [cegger 20080501]
+	i386: Put the GENERIC kernel onto i386 installation CDs and load
+		a kernel module from the boot loader to provide the miniroot.
+		[ad 20080502]
 	drm(4): Added amd64 support. [jmcneill 20080504]
+	landisk: Fix MD bus_dmamap_load(9) so that NFS write works with re(4).
+		[uwe 20080506]
+	twa(4): Add support for 3ware 9650 and 9690 based on patches
+		contributed by Wasabi Systems. [joerg 20080508]
 	openssl(1): Imported 20080509 current snapshot. [christos 20080509]
+	ftp(1): Add epsv6 and epsv to disable extended passive mode for ipv6
+		or both ipv4 and ip v6 respectively. [skd 20080510]
+	libarchive: Import libarchive-2.5.3b. [joerg 20080511]
 	getent(1): Added support for "netgroup" database. [tron 20080514]
 	fs/udf: Added write support for the UDF file system. [reinoud 20080514]
 	event(3): Updated libevent to 1.4.4-stable. [peter 20080516]
@@ -534,6 +578,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	acpidalb(4): Direct Application Launch Buttons. [cegger 20080518]
 	wscons(4): Add support for the Colemak keyboard layout. [ghen 20080520]
 	ipf(8): Updated to version 4.1.29. [darrenr 20080520]
+	compat_linux32: Add compat linux32 IPC syscall support,
+		for shared memory and and semaphores. [njoly 20080520]
 	openldap: Import 2.4.9. [lukem 20080522]
 	postfix(1): Enable LDAP support for tables (see ldap_table(5))
 		[lukem 20080522]
@@ -542,19 +588,44 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Nubus parallel printer card. [hauke 20080522]
 	siisata(4): A driver for Silicon Image SteelVine SATA-II controllers
 		(SiI3124, SiI3132, and SiI3531) [jnemeth 20080523]
+	dhcpcd(8): Import dhcpcd 4.0.0-beta5. [joerg 20080524]
 	kernel: Device attach and detach notifications are now exposed
 		via /dev/drvctl [jmcneill 20080525]
 	awk(1): Import 20070501 [christos 20080525]
+	amd64, i386: Add detection of errata for AMD Family 10h steppings
+		A and 2. [chris 20080525]
+	amd64, i386: Check for erratum 261 on AMD Family 10h Stepping 3
+		processors. [chris 20080525]
+	libarchive: Import libarchive-2.5.4b. [joerg 20080525]
+	ciss(4): Add bio(4) support, heavily from OpenBSD. [mhitch 20080525]
 	uberry(4): A driver to allow RIM BlackBerries to charge from the USB
 		port [christos 20080525]
+	openssl(1): Enable Camellia. [christos 20080526]
+	cobalt: Make bootloader print boot banner and a loading kernel name
+		onto LCD. [tsutsui 20080528]
+	bebox: Support genfb(4) console. [kiyohara 20080530]
+	libprop: Add prop_array_util(3) functions. [haad 20080603]
+	openssl(1): Fix two Denial of Service vulnerabilities in OpenSSL.
+		Fixes CVE-2008-1672. [tonnerre 20080605]
+	sh3: Support single-stepping in ddb(4). [uwe 20080606]
 	pf(4): Updated to OpenBSD 4.2 PF [yamt,peter,christos,joerg 20080618]
+	sk(4), msk(4): Fix lock panic on receiving jumbo packets.
+		[cube 20080620]
 	bind: Import 9.5.0 [christos 20080621]
 	psrset(8): Utility to control processor sets [ad 20080622]
 	postfix(1): Import 2.5.2 [christos 20080622]
 	ssh-hpn: Apply 5.0p1 13 v3 [christos 20080622]
+	libc: Add getlogin_r(3). [ad 20080625]
+	usb(4): Add appropriate bus_dmamap_sync(9) calls to uhci(4), ohci(4)
+		and ehci(4) to avoid CPU from reordering loads and stores
+		against DMA descriptors. This fixes "host controller process
+		error/host controller halted" errors. [bouyer 20080628]
+	arm: Add AT91 support. [matt 20080703]
+	bind: Import 9.5.0-P1. [christos 20080710]
 	top(1): Import top 3.8beta1 [christos 20080715]
 	share/mk: Set assembler warnings to be fatal if $WARNS>0.
 		[lukem 20080721]
+	compat_linux32: Add linux32_getifconf. [njoly 20080723]
 	dhcpcd(8): Import 4.0.0rc3. [joerg 20080727]
 	uvm_map(9): Switch from using <sys/tree.h> to <sys/rb.h>.
 		[matt 20080728]
@@ -571,19 +642,37 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		after a panic in X with "call ddb_vgapost" [joerg 20080731]
 	wapbl(4): Add support for metadata journaling for FFS.  Contributed
 		by Wasabi Systems, Inc. [simonb 20080731]
+	newfs(8): Handle 't' suffix for terabytes for number arguments.
+		[simonb 20080801]
 	ehci(4): Add isochronous transfer support, contributed by
 		Jeremy Morse as part of his Google Summer of Code 2008 project.
 		[jmcneill 20080802]
+	ip(4): Add accept filters, ported from FreeBSD by Coyote Point Systems.
+		[tls 20080804]
+	libc: Add C99 functions imaxabs(3) and imaxdiv(3). [matt 20080804]
 	build.sh: Add support for using BUILDSEED to yield
 		reproduceable c++ builds [perry 20080805]
 	sockopt(9): New kernel API for passing socket options [plunky 20080806]
 	vax: Add accelerated driver for SPX graphics found in some VAXstations.
 		Contributed by Blaz Antonic. [hans 20080812]
 	openldap: Import 2.4.11. [lukem 20080813]
+	bind: Import 9.5.0-P2. [he 20080815]
+	wm(4): Fix a bug on receiving a jumbo frame which leads to a panic
+		in sbcompress(). Contributed by Wasabi Systems.
+		[simonb 20080815]
 	btpand(8): a Bluetooth Personal Area Networking profile
 		daemon [plunky 20080817]
+	agp(4): Add AGP support for Intel 946GZ. [matthias 20080819]
 	ataraid(4): Add support for nVidia MediaShield from FreeBSD.
 		[tacha 20080820]
+	fss(4): Add snapshot support for logging ffs file systems.
+		[hannken 20080822]
+	agp(4): Add AGP support for Intel 945GME chipset,
+		found on Acer Aspire One. [tnn 20080822]
 	ntp: Import 4.2.4p5. [kardel 20080823]
+	re(4): Add support for the Realtek 8102E/8102EL PCIe 10/100 Ethernet
+		devices. From FreeBSD. [tnn 20080823]
+	sgimips: Misc bug fixes and improvements to mec(4) Ethernet on O2.
+		[tsutsui 20080823]
 	bge(4): Add support for BCM5906(M) chips contributed by
 		Karl Uwe Lockhoff. [cegger 20080825]
