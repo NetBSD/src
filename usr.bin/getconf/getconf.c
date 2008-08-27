@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.33 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: getconf.c,v 1.34 2008/08/27 08:56:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.33 2008/04/28 20:24:13 martin Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.34 2008/08/27 08:56:49 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -100,7 +100,7 @@ static const struct conf_variable conf_table[] =
   { "RE_DUP_MAX",		SYSCONF,	_SC_RE_DUP_MAX		},
 
   /* Optional Facility Configuration Values */
-  { "POSIX2_C_BIND",		SYSCONF,	_SC_2_C_BIND		},
+  { "_POSIX2_C_BIND",		SYSCONF,	_SC_2_C_BIND		},
   { "POSIX2_C_DEV",		SYSCONF,	_SC_2_C_DEV		},
   { "POSIX2_CHAR_TERM",		SYSCONF,	_SC_2_CHAR_TERM		},
   { "POSIX2_FORT_DEV",		SYSCONF,	_SC_2_FORT_DEV		},

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.29 2006/02/24 19:33:09 drochner Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.30 2008/08/27 08:56:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.29 2006/02/24 19:33:09 drochner Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.30 2008/08/27 08:56:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -176,7 +176,7 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		_INT("posix2_version", USER_POSIX2_VERSION, _POSIX2_VERSION,
 		     "The version of POSIX 1003.2 with which the system "
 		     "attempts to comply"),
-#ifdef POSIX2_C_BIND
+#ifdef _POSIX2_C_BIND
 		_INT("posix2_c_bind", USER_POSIX2_C_BIND, 1,
 		     "Whether the system's C-language development facilities "
 		     "support the C-Language Bindings Option"),
