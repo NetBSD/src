@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.38 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.39 2008/08/27 05:33:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.38 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.39 2008/08/27 05:33:47 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -111,10 +111,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.38 2008/04/28 20:23:48 martin Exp $
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
-static int	ep_eisa_match(struct device *, struct cfdata *, void *);
-static void	ep_eisa_attach(struct device *, struct device *, void *);
+static int	ep_eisa_match(device_t , cfdata_t , void *);
+static void	ep_eisa_attach(device_t , device_t , void *);
 
-CFATTACH_DECL(ep_eisa, sizeof(struct ep_softc),
+CFATTACH_DECL_NEW(ep_eisa, sizeof(struct ep_softc),
     ep_eisa_match, ep_eisa_attach, NULL, NULL);
 
 /* XXX move these somewhere else */
@@ -186,8 +186,7 @@ ep_eisa_lookup(const struct eisa_attach_args *ea)
 }
 
 static int
-ep_eisa_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ep_eisa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 
@@ -199,7 +198,7 @@ ep_eisa_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-ep_eisa_attach(struct device *parent, struct device *self, void *aux)
+ep_eisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ep_softc *sc = device_private(self);
 	struct eisa_attach_args *ea = aux;
@@ -223,6 +222,7 @@ ep_eisa_attach(struct device *parent, struct device *self, void *aux)
 		panic("ep_eisa_attach: can't map i/o space");
 	}
 
+	sc->sc_dev = self;
 	sc->sc_ioh = ioh;
 	sc->sc_iot = iot;
 
@@ -255,7 +255,7 @@ ep_eisa_attach(struct device *parent, struct device *self, void *aux)
 	sc->ep_flags = eep->eep_flags;
 
 	if (eisa_intr_map(ec, irq, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt (%u)\n",
+		aprint_error_dev(sc->sc_dev, "couldn't map interrupt (%u)\n",
 		    irq);
 		return;
 	}
@@ -263,14 +263,14 @@ ep_eisa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_EDGE, IPL_NET,
 	    epintr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev),
+		printf("%s: interrupting at %s\n", device_xname(sc->sc_dev),
 		    intrstr);
 
 	epconfig(sc, eep->eep_chipset, NULL);
