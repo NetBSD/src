@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.10 2008/01/03 20:48:05 jdc Exp $
+# $NetBSD: mi,v 1.11 2008/08/27 05:08:33 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -409,10 +409,6 @@
 ./usr/X11R6/include/freetype2/freetype/internal/psglobal.h	xcomp-obsolete obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/pshints.h
 ./usr/X11R6/include/freetype2/freetype/internal/psnames.h	xcomp-obsolete obsolete
-./usr/X11R6/include/freetype2/freetype/internal/sfnt.h
-./usr/X11R6/include/freetype2/freetype/internal/t1types.h
-./usr/X11R6/include/freetype2/freetype/internal/t42types.h	xcomp-obsolete obsolete
-./usr/X11R6/include/freetype2/freetype/internal/tttypes.h
 ./usr/X11R6/include/freetype2/freetype/internal/services
 ./usr/X11R6/include/freetype2/freetype/internal/services/svbdf.h
 ./usr/X11R6/include/freetype2/freetype/internal/services/svgldict.h
@@ -425,6 +421,10 @@
 ./usr/X11R6/include/freetype2/freetype/internal/services/svttcmap.h
 ./usr/X11R6/include/freetype2/freetype/internal/services/svwinfnt.h
 ./usr/X11R6/include/freetype2/freetype/internal/services/svxf86nm.h
+./usr/X11R6/include/freetype2/freetype/internal/sfnt.h
+./usr/X11R6/include/freetype2/freetype/internal/t1types.h
+./usr/X11R6/include/freetype2/freetype/internal/t42types.h	xcomp-obsolete obsolete
+./usr/X11R6/include/freetype2/freetype/internal/tttypes.h
 ./usr/X11R6/include/freetype2/freetype/t1tables.h
 ./usr/X11R6/include/freetype2/freetype/ttnameid.h
 ./usr/X11R6/include/freetype2/freetype/tttables.h
@@ -568,9 +568,9 @@
 ./usr/X11R6/lib/libXtst.a
 ./usr/X11R6/lib/libXv.a
 ./usr/X11R6/lib/libXvMC.a
+./usr/X11R6/lib/libdmx.a
 ./usr/X11R6/lib/libdps.a
 ./usr/X11R6/lib/libdpstk.a
-./usr/X11R6/lib/libdmx.a
 ./usr/X11R6/lib/libexpat.a
 ./usr/X11R6/lib/libfntstubs.a
 ./usr/X11R6/lib/libfontconfig.a
@@ -606,6 +606,25 @@
 ./usr/X11R6/man/cat3/ClientWhitePointOfCCC.0
 ./usr/X11R6/man/cat3/ConnectionNumber.0
 ./usr/X11R6/man/cat3/DBE.0
+./usr/X11R6/man/cat3/DMX.0
+./usr/X11R6/man/cat3/DMXAddBackendInput.0
+./usr/X11R6/man/cat3/DMXAddConsoleInput.0
+./usr/X11R6/man/cat3/DMXAddInput.0
+./usr/X11R6/man/cat3/DMXAddScreen.0
+./usr/X11R6/man/cat3/DMXChangeDesktopAttributes.0
+./usr/X11R6/man/cat3/DMXChangeScreensAttributes.0
+./usr/X11R6/man/cat3/DMXForceWindowCreation.0
+./usr/X11R6/man/cat3/DMXGetDesktopAttributes.0
+./usr/X11R6/man/cat3/DMXGetInputAttributes.0
+./usr/X11R6/man/cat3/DMXGetInputCount.0
+./usr/X11R6/man/cat3/DMXGetScreenAttributes.0
+./usr/X11R6/man/cat3/DMXGetScreenCount.0
+./usr/X11R6/man/cat3/DMXGetWindowAttributes.0
+./usr/X11R6/man/cat3/DMXQueryExtension.0
+./usr/X11R6/man/cat3/DMXQueryVersion.0
+./usr/X11R6/man/cat3/DMXRemoveInput.0
+./usr/X11R6/man/cat3/DMXRemoveScreen.0
+./usr/X11R6/man/cat3/DMXSync.0
 ./usr/X11R6/man/cat3/DefaultColormap.0
 ./usr/X11R6/man/cat3/DefaultColormapOfScreen.0
 ./usr/X11R6/man/cat3/DefaultDepth.0
@@ -626,25 +645,6 @@
 ./usr/X11R6/man/cat3/DisplayString.0
 ./usr/X11R6/man/cat3/DisplayWidth.0
 ./usr/X11R6/man/cat3/DisplayWidthMM.0
-./usr/X11R6/man/cat3/DMX.0
-./usr/X11R6/man/cat3/DMXAddBackendInput.0
-./usr/X11R6/man/cat3/DMXAddConsoleInput.0
-./usr/X11R6/man/cat3/DMXAddInput.0
-./usr/X11R6/man/cat3/DMXAddScreen.0
-./usr/X11R6/man/cat3/DMXChangeDesktopAttributes.0
-./usr/X11R6/man/cat3/DMXChangeScreensAttributes.0
-./usr/X11R6/man/cat3/DMXForceWindowCreation.0
-./usr/X11R6/man/cat3/DMXGetDesktopAttributes.0
-./usr/X11R6/man/cat3/DMXGetInputAttributes.0
-./usr/X11R6/man/cat3/DMXGetInputCount.0
-./usr/X11R6/man/cat3/DMXGetScreenAttributes.0
-./usr/X11R6/man/cat3/DMXGetScreenCount.0
-./usr/X11R6/man/cat3/DMXGetWindowAttributes.0
-./usr/X11R6/man/cat3/DMXQueryExtension.0
-./usr/X11R6/man/cat3/DMXQueryVersion.0
-./usr/X11R6/man/cat3/DMXRemoveInput.0
-./usr/X11R6/man/cat3/DMXRemoveScreen.0
-./usr/X11R6/man/cat3/DMXSync.0
 ./usr/X11R6/man/cat3/DoesBackingStore.0
 ./usr/X11R6/man/cat3/DoesSaveUnders.0
 ./usr/X11R6/man/cat3/EventMaskOfScreen.0

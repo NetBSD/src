@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.4 2008/01/03 20:48:07 jdc Exp $
+# $NetBSD: mi,v 1.5 2008/08/27 05:08:33 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -16,11 +16,11 @@
 ./usr/X11R6/bin/res
 ./usr/X11R6/bin/vdltodmx
 ./usr/X11R6/bin/xbell
+./usr/X11R6/bin/xdmx
+./usr/X11R6/bin/xdmxconfig
 ./usr/X11R6/bin/xinput
 ./usr/X11R6/bin/xled
 ./usr/X11R6/bin/xtest
-./usr/X11R6/bin/xdmx
-./usr/X11R6/bin/xdmxconfig
 ./usr/X11R6/lib/X11/xserver
 ./usr/X11R6/lib/X11/xserver/SecurityPolicy
 ./usr/X11R6/man/cat1/Xdmx.0

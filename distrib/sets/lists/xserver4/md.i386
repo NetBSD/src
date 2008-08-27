@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.7 2005/03/18 20:45:43 tron Exp $
+# $NetBSD: md.i386,v 1.8 2008/08/27 05:08:33 lukem Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -56,8 +56,8 @@
 ./usr/X11R6/lib/modules/codeconv/libBIG5.a	xserver-obsolete obsolete
 ./usr/X11R6/lib/modules/codeconv/libBIG5HKSCS.a	xserver-obsolete obsolete
 ./usr/X11R6/lib/modules/codeconv/libDOSENCODING.a	xserver-obsolete obsolete
-./usr/X11R6/lib/modules/codeconv/libGB2312.a	xserver-obsolete obsolete
 ./usr/X11R6/lib/modules/codeconv/libGB18030.a	xserver-obsolete obsolete
+./usr/X11R6/lib/modules/codeconv/libGB2312.a	xserver-obsolete obsolete
 ./usr/X11R6/lib/modules/codeconv/libGBK.a	xserver-obsolete obsolete
 ./usr/X11R6/lib/modules/codeconv/libGEORGIAN.a	xserver-obsolete obsolete
 ./usr/X11R6/lib/modules/codeconv/libISO8859_1.a	xserver-obsolete obsolete
@@ -109,7 +109,6 @@
 ./usr/X11R6/lib/modules/drivers/radeon_drv.o
 ./usr/X11R6/lib/modules/drivers/rendition_drv.o
 ./usr/X11R6/lib/modules/drivers/riva128.o
-./usr/X11R6/lib/modules/drivers/via_drv.o
 ./usr/X11R6/lib/modules/drivers/s3_drv.o
 ./usr/X11R6/lib/modules/drivers/s3virge_drv.o
 ./usr/X11R6/lib/modules/drivers/savage_drv.o
@@ -121,6 +120,7 @@
 ./usr/X11R6/lib/modules/drivers/tseng_drv.o
 ./usr/X11R6/lib/modules/drivers/vesa_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o
+./usr/X11R6/lib/modules/drivers/via_drv.o
 ./usr/X11R6/lib/modules/drivers/vmware_drv.o
 ./usr/X11R6/lib/modules/extensions
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
@@ -187,8 +187,8 @@
 ./usr/X11R6/lib/modules/v20002d.uc
 ./usr/X11R6/man/cat1/Xnest.0
 ./usr/X11R6/man/cat1/Xvfb.0
-./usr/X11R6/man/cat1/xf86cfg.0
 ./usr/X11R6/man/cat1/getconfig.0
+./usr/X11R6/man/cat1/xf86cfg.0
 ./usr/X11R6/man/cat4
 ./usr/X11R6/man/cat4/apm.0
 ./usr/X11R6/man/cat4/chips.0
