@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_mputmr.c,v 1.3 2008/07/03 06:19:18 matt Exp $	*/
+/*	$NetBSD: omap2_mputmr.c,v 1.1 2008/08/27 11:03:10 matt Exp $	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.3 2008/07/03 06:19:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.1 2008/08/27 11:03:10 matt Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -96,14 +96,14 @@ __KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.3 2008/07/03 06:19:18 matt Exp
 #include <machine/intr.h>
 
 #include <arm/omap/omap_gptmrreg.h>
-#include <arm/omap/omap2430mputmrvar.h>
+#include <arm/omap/omap2_mputmrvar.h>
 
 #ifndef ARM11_PMC
 uint32_t counts_per_usec, counts_per_hz;
 #endif
-struct omap2430mputmr_softc *clock_sc;
-struct omap2430mputmr_softc *stat_sc;
-struct omap2430mputmr_softc *ref_sc;
+struct mputmr_softc *clock_sc;
+struct mputmr_softc *stat_sc;
+struct mputmr_softc *ref_sc;
 static uint32_t mpu_get_timecount(struct timecounter *);
 
 static struct timecounter mpu_timecounter = {
@@ -116,37 +116,37 @@ static struct timecounter mpu_timecounter = {
 };
 
 static inline void
-_timer_intr_dis(struct omap2430mputmr_softc *sc)
+_timer_intr_dis(struct mputmr_softc *sc)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TIER, 0);
 }
 
 static inline void
-_timer_intr_enb(struct omap2430mputmr_softc *sc)
+_timer_intr_enb(struct mputmr_softc *sc)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TIER, TIER_OVF_IT_ENA);
 }
 
 static inline uint32_t
-_timer_intr_sts(struct omap2430mputmr_softc *sc)
+_timer_intr_sts(struct mputmr_softc *sc)
 {
 	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, TISR);
 }
 
 static inline void
-_timer_intr_ack(struct omap2430mputmr_softc *sc)
+_timer_intr_ack(struct mputmr_softc *sc)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TISR, TIER_OVF_IT_ENA);
 }
 
 static inline uint32_t
-_timer_read(struct omap2430mputmr_softc *sc)
+_timer_read(struct mputmr_softc *sc)
 {
 	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, TCRR);
 }
 
 static inline void
-_timer_stop(struct omap2430mputmr_softc *sc)
+_timer_stop(struct mputmr_softc *sc)
 {
 	uint32_t r;
 
@@ -156,14 +156,14 @@ _timer_stop(struct omap2430mputmr_softc *sc)
 }
 
 static inline void
-_timer_reload(struct omap2430mputmr_softc *sc, uint32_t val)
+_timer_reload(struct mputmr_softc *sc, uint32_t val)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TLDR, val);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, TCRR, val);
 }
 
 static inline void
-_timer_start(struct omap2430mputmr_softc *sc, timer_factors *tfp)
+_timer_start(struct mputmr_softc *sc, timer_factors *tfp)
 {
 	uint32_t r=0;
 
@@ -199,7 +199,7 @@ statintr(void *frame)
 }
 
 static void
-setclockrate(struct omap2430mputmr_softc *sc, int schz)
+setclockrate(struct mputmr_softc *sc, int schz)
 {
 	timer_factors tf;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: omap2430reg.h,v 1.2 2008/04/27 18:58:45 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.1 2008/08/27 11:03:10 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _OMAP2430REG_H
-#define _OMAP2430REG_H
+#ifndef _ARM_OMAP_OMAP2_REG_H_
+#define _ARM_OMAP_OMAP2_REG_H_
 
 /*
  * Header for misc. omap2430 registers
@@ -39,9 +39,23 @@
 /*
  * L4 Interconnect WAKEUP address space
  */
-#define OMAP2430_L4_WAKEUP_BASE			0x49000000
-#define OMAP2430_L4_WAKEUP_SIZE			(8 << 20)	/* 8 MB */
+#define OMAP2430_L4_CORE_BASE		0x48000000
+#define OMAP2430_L4_CORE_SIZE		(16 << 20)	/* 16 MB */
 
+#define OMAP2430_L4_WAKEUP_BASE		0x49000000
+#define OMAP2430_L4_WAKEUP_SIZE		(8 << 20)	/* 8 MB */
+
+#define OMAP3530_L4_CORE_BASE		0x48000000
+#define OMAP3530_L4_CORE_SIZE		0x01000000	/* 16 MB */
+
+#define	OMAP3530_L4_WAKEUP_BASE		0x48300000
+#define	OMAP3530_L4_WAKEUP_SIZE		0x00040000	/* 256KB */
+
+#define	OMAP3530_L4_PERIPHERAL_BASE	0x49000000
+#define	OMAP3530_L4_PERIPHERAL_SIZE	0x00100000	/* 1MB */
+
+#define	OMAP3530_L4_EMULATION_BASE	0x54000000
+#define	OMAP3530_L4_EMULATION_SIZE	0x00800000	/* 8MB */
 
 /*
  * Clock Management registers base, offsets, and size
@@ -51,6 +65,9 @@
 #endif
 #ifdef OMAP_2420
 #define	OMAP2_CM_BASE			0x48008000
+#endif
+#ifdef OMAP_3530
+#define	OMAP2_CM_BASE			0x48004000
 #endif
 
 #define	OMAP2_CM_CLKSEL_MPU		0x140
@@ -216,33 +233,33 @@
 /*
  * L3 Interconnect Target Agent Common Registers
  */
-#define OMAP2430_TA_GPMC	0x68002400
-#define OMAP2430_TA_L4_CORE	0x68006800
+#define OMAP2_TA_GPMC		0x68002400
+#define OMAP2_TA_L4_CORE	0x68006800
 
 /*
  * L3 Interconnect Target Agent Common Register offsets
  */
-#define OMAP2430_TA_COMPONENT		0x0
-#define OMAP2430_TA_CORE		0x18
-#define OMAP2430_TA_AGENT_CONTROL	0x20
-#define OMAP2430_TA_AGENT_STATUS	0x28
-#define OMAP2430_TA_ERROR_LOG		0x58
-#define OMAP2430_TA_ERROR_LOG_ADDR	0x60
+#define OMAP2_TA_COMPONENT		0x00
+#define OMAP2_TA_CORE			0x18
+#define OMAP2_TA_AGENT_CONTROL		0x20
+#define OMAP2_TA_AGENT_STATUS		0x28
+#define OMAP2_TA_ERROR_LOG		0x58
+#define OMAP2_TA_ERROR_LOG_ADDR		0x60
 
 /*
- * OMAP2430_TA_COMPONENT bits
+ * OMAP2_TA_COMPONENT bits
  */
 #define	TA_COMPONENT_REV(r)		((r) & __BITS(15,0))
 #define	TA_COMPONENT_CODE(r)		(((r) >> 16) & __BITS(15,0))
 
 /*
- * OMAP2430_TA_CORE bits
+ * OMAP2_TA_CORE bits
  */
 #define	TA_AGENT_CORE_REV(r)		((r) & __BITS(15,0))
 #define	TA_AGENT_CORE_CODE(r)		(((r) >> 16) & __BITS(15,0))
 
 /*
- * OMAP2430_TA_AGENT_CONTROL bits
+ * OMAP2_TA_AGENT_CONTROL bits
  */
 #define TA_AGENT_CONTROL_CORE_RESET		__BIT(0)
 #define TA_AGENT_CONTROL_CORE_REJECT		__BIT(4)
@@ -257,7 +274,7 @@
 #define TA_AGENT_CONTROL_CORE_REQ_TIMEOUT_REP	__BIT(25)
 
 /*
- * OMAP2430_TA_AGENT_STATUS bits
+ * OMAP2_TA_AGENT_STATUS bits
  */
 #define TA_AGENT_STATUS_CORE_RESET	__BIT(0)
 #define TA_AGENT_STATUS_RESVa		__BITS(3,1)
@@ -274,7 +291,7 @@
 #define TA_AGENT_STATUS_RESVd		__BITS(31,25)
 
 /*
- * OMAP2430_TA_ERROR_LOG bits
+ * OMAP2_TA_ERROR_LOG bits
  */
 #define TA_ERROR_LOG_CMD		__BITS(2,0)
 #define TA_ERROR_LOG_RESa		__BITS(7,3)
@@ -287,9 +304,6 @@
 /*
  * L4 Interconnect CORE address space
  */
-#define OMAP2430_L4_CORE_BASE			0x48000000
-#define OMAP2430_L4_CORE_SIZE			(16 << 20)	/* 16 MB */
-
 #define OMAP2430_L4_S3220_2430_WATCHDOGOCP24	0x48027000
 #define OMAP2430_L4_S3220_2430_DMTIMER_DMC2	0x4802B000
 #define OMAP2430_L4_S3220_2430_AP		0x48040000
@@ -344,21 +358,22 @@
 /*
  * L3 Interconnect Sideband Interconnect register base
  */
-#define OMAP2430_SI_BASE	0x68000400
+#define OMAP2_SI_BASE				0x68000400
 
 /*
  * L3 Interconnect Sideband Interconnect register offsets
  */
-#define OMAP2430_SI_CONTOL			0x20
-#define OMAP2430_SI_FLAG_STATUS_0		0x110	/* APE_app */
-#define OMAP2430_SI_FLAG_STATUS_1		0x130	/* APE_dbg */
-#define OMAP2430_SI_FLAG_STATUS_2		0x150	/* MODEM_app */
-#define OMAP2430_SI_FLAG_STATUS_3		0x170	/* MODEM_dbg */
+#define OMAP2_SI_CONTOL				0x0020
+#define OMAP2_SI_FLAG_STATUS_0			0x0110	/* APE_app */
+#define OMAP2_SI_FLAG_STATUS_1			0x0130	/* APE_dbg */
+#define OMAP2_SI_FLAG_STATUS_2			0x0150	/* MODEM_app */
+#define OMAP2_SI_FLAG_STATUS_3			0x0170	/* MODEM_dbg */
 
 /*
  * Interrupts
  */
-#define	INTC_BASE		0x480FE000	
+#define	INTC_BASE		0x480FE000
+#define	INTC_BASE_3530		0x48200000
 #define	INTC_REVISISON		0x0000
 #define	INTC_SYSCONFIG		0x0010
 #define	INTC_SYSSTATUS		0x0014
@@ -426,6 +441,13 @@
 #define	GPIO3_BASE_2420			0x4801c000
 #define	GPIO4_BASE_2420			0x4801e000
 
+#define	GPIO1_BASE_3530			0x48310000
+#define	GPIO2_BASE_3530			0x49050000
+#define	GPIO3_BASE_3530			0x49052000
+#define	GPIO4_BASE_3530			0x49054000
+#define	GPIO5_BASE_3530			0x49056000
+#define	GPIO6_BASE_3530			0x49058000
+
 #define	GPIO_IRQSTATUS1			0x018
 #define	GPIO_IRQENABLE1			0x01c
 #define	GPIO_WAKEUPENABLE		0x020
@@ -450,4 +472,4 @@
 #define GPIO_CLEARDATAOUT		0x090
 #define GPIO_SETDATAOUT			0x094
 
-#endif	/* _OMAP2430H */
+#endif	/* _ARM_OMAP_OMAP2_REG_H_ */
