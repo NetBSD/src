@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.56 2008/08/26 09:14:03 lukem Exp $
+.\" $NetBSD: doc2html,v 1.57 2008/08/27 02:31:00 lukem Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1123,11 +1123,6 @@ AT&T UNIX\\$*
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``ISO C90'')
 .		\}
-.		if "\\$1"-isoC-amd2" \{\
-.			ds std-tmp1 \&ISO/IEC 9899/AMD2:1990
-.			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``ISO C90'')
-.		\}
 .		if "\\$1"-isoC-tcor1" \{\
 .			ds std-tmp1 \&ISO/IEC 9899/TCOR1:1990
 .			as std-tmp1 " \"exactly one space
@@ -1287,11 +1282,11 @@ AT&T UNIX\\$*
 .		if "\\$1"-ieee754" \{\
 .			ds std-tmp1 \&IEEE Std 754-1985
 .		\}
-.\"		if "\\$1"-ieee1275" \{\
-.\"			ds std-tmp1 \&IEEE Std 1275-1994
-.\"			as std-tmp1 " \"exactly one space
-.\"			as std-tmp1 (``Open Firmware'')
-.\"		\}
+.		if "\\$1"-ieee1275-94" \{\
+.			ds std-tmp1 \&IEEE Std 1275-1994
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``Open Firmware'')
+.		\}
 .		if "\\$1"-iso8802-3" \{\
 .			ds std-tmp1 \&ISO/IEC 8802-3:1989
 .		\}
