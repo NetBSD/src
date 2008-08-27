@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.232 2008/08/27 01:15:22 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.233 2008/08/27 08:22:20 rtr Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -145,7 +145,7 @@ LIBSUPCXX=	${DESTDIR}/usr/lib/libsupc++.a
 	Xi Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt \
 	XTrap Xtst Xv Xxf86dga Xxf86misc Xxf86vm
 .ifndef LIB${_lib:tu}
-LIB${_lib:tu}=	${DESTDIR}/usr/X11R6/lib/lib${_lib}.a
+LIB${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
 .endfor
