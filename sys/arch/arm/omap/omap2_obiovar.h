@@ -1,4 +1,5 @@
-/*	$NetBSD: omap2430gpmcvar.h,v 1.2 2008/04/27 18:58:45 matt Exp $	*/
+/* $NetBSD: omap2_obiovar.h,v 1.1 2008/08/27 11:03:10 matt Exp $ */
+
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -27,17 +28,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#ifndef _ARM_OMAP_OMAP2_OBIOVAR_H_
+#define _ARM_OMAP_OMAP2_OBIOVAR_H_
 
-#ifndef _OMAP2430GPMCVAR_H
-#define _OMAP2430GPMCVAR_H
-
-struct gpmc_attach_args {
-	bus_space_tag_t	gpmc_iot;
-	bus_addr_t	gpmc_addr;
-	bus_size_t	gpmc_size;
-	int		gpmc_intr;
-	bus_dma_tag_t	gpmc_dmac;
-	unsigned int	gpmc_mult;
+struct obio_attach_args {
+	bus_space_tag_t	obio_iot;
+	bus_addr_t	obio_addr;
+	bus_size_t	obio_size;
+	int		obio_intr;
+	bus_dma_tag_t	obio_dmat;
+	unsigned int	obio_mult;
+	unsigned int	obio_intrbase;
 };
 
-#endif /* _OMAP2430GPMCVAR_H */
+#endif /* _ARM_OMAP_OMAP2_OBIOVAR_H_ */
