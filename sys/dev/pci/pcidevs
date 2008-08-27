@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.949 2008/08/23 16:54:56 tsutsui Exp $
+$NetBSD: pcidevs,v 1.950 2008/08/27 05:35:38 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3766,6 +3766,7 @@ product TI	PCI1510		0xac56	PCI1510 PCI-CardBus Bridge
 product TI	PCI1530		0xac57	PCI1530 PCI-CardBus Bridge
 product TI	PCI1515		0xac58	PCI1515 PCI-CardBus Bridge
 product TI	PCI2040		0xac60	PCI2040 PCI-DSP Bridge
+product TI	PCI7420YENTA	0xac8e	PCI7420 PCI-Cardbus Bridge w/ IEEE 1394 Host controller
 
 /* Titan Electronics products */
 product TITAN PCI800L		0x8080	PCI-800L
