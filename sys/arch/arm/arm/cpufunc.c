@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.86 2008/07/22 07:07:23 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.87 2008/08/27 11:07:49 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -6,6 +6,7 @@
  * arm8 support code Copyright (c) 1997 Causality Limited
  * arm9 support code Copyright (C) 2001 ARM Ltd
  * arm11 support code Copyright (c) 2007 Microsoft
+ * cortexa8 support code Copyright (c) 2008 3am Software Foundry
  * Copyright (c) 1997 Mark Brinicombe.
  * Copyright (c) 1997 Causality Limited
  * All rights reserved.
@@ -47,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.86 2008/07/22 07:07:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.87 2008/08/27 11:07:49 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1061,6 +1062,34 @@ get_cachetype_cp15()
 	if (ctype == cpu_id())
 		goto out;
 
+#if (ARM_MMU_V6) > 0
+	if (CPU_CT_FORMAT(ctype) == 4) { 
+		u_int csid1, csid2;
+		isize = 1U << (CPU_CT4_ILINE(ctype) + 2);
+		dsize = 1U << (CPU_CT4_DLINE(ctype) + 2);
+
+		__asm volatile("mcr p15, 1, %0, c0, c0, 2"
+		    :: "r" (CPU_CSSR_L1));	/* select L1 cache values */
+		__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r" (csid1));
+		arm_pdcache_ways = CPU_CSID_ASSOC(csid1) + 1;
+		arm_pdcache_line_size = dsize << CPU_CSID_LEN(csid1);
+		arm_pdcache_size = arm_pdcache_line_size * arm_pdcache_ways;
+		arm_pdcache_size *= CPU_CSID_NUMSETS(csid1);
+		arm_cache_prefer_mask = PAGE_SIZE;
+
+		arm_dcache_align = arm_pdcache_line_size;
+
+		__asm volatile("mcr p15, 1, %0, c0, c0, 2"
+		    :: "r" (CPU_CSSR_L2));	/* select L2 cache values */
+		__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r" (csid2));
+		arm_dcache_l2_assoc = CPU_CSID_ASSOC(csid2) + 1;
+		arm_dcache_l2_linesize = dsize << CPU_CSID_LEN(csid2);
+		arm_dcache_l2_nsets = CPU_CSID_NUMSETS(csid2) + 1;
+		arm_pcache_type = CPU_CT_CTYPE_WB14;
+		goto out;
+	}
+#endif /* ARM_MMU_V6 > 0 */
+
 	if ((ctype & CPU_CT_S) == 0)
 		arm_pcache_unified = 1;
 
@@ -1325,7 +1354,9 @@ set_cpufuncs()
 #if defined(CPU_ARM11)
 	if (cputype == CPU_ID_ARM1136JS ||
 	    cputype == CPU_ID_ARM1136JSR1 ||
-	    cputype == CPU_ID_ARM1176JS) {
+	    cputype == CPU_ID_ARM1176JS ||
+	    cputype == CPU_ID_CORTEXA8R1 ||
+	    cputype == CPU_ID_CORTEXA8R2) {
 		cpufuncs = arm11_cpufuncs;
 #if defined(CPU_ARM1136)
 		if (cputype != CPU_ID_ARM1176JS) {
