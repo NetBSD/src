@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.46 2008/08/27 08:56:49 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.47 2008/08/27 08:58:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,8 @@
 #include <sys/featuretest.h>
 
 /* compile-time symbolic constants */
-#define	_POSIX_JOB_CONTROL	/* implementation supports job control */
+#define	_POSIX_JOB_CONTROL	1
+				/* implementation supports job control */
 
 /*
  * According to POSIX 1003.1:
@@ -54,7 +55,8 @@
  * extra privileges.
  */
 #ifdef	_NOT_AVAILABLE
-#define	_POSIX_SAVED_IDS	/* saved set-user-ID and set-group-ID */
+#define	_POSIX_SAVED_IDS	1
+				/* saved set-user-ID and set-group-ID */
 #endif
 
 #define	_POSIX_VERSION		199009L
