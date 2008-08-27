@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.159 2008/07/31 05:38:05 simonb Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.160 2008/08/27 06:28:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.159 2008/07/31 05:38:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.160 2008/08/27 06:28:09 christos Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -491,9 +491,17 @@ vn_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	count = uio->uio_resid;
 	error = VOP_WRITE(vp, uio, ioflag, cred);
 	if (flags & FOF_UPDATE_OFFSET) {
-		if (ioflag & IO_APPEND)
-			*offset = uio->uio_offset;
-		else
+		if (ioflag & IO_APPEND) {
+			/*
+			 * SUSv3 describes behaviour for count = 0 as following:
+			 * "Before any action ... is taken, and if nbyte is zero
+			 * and the file is a regular file, the write() function
+			 * ... in the absence of errors ... shall return zero
+			 * and have no other results."
+			 */ 
+			if (count)
+				*offset = uio->uio_offset;
+		} else
 			*offset += count - uio->uio_resid;
 	}
 	VOP_UNLOCK(vp, 0);
