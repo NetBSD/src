@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.45 2008/08/14 16:19:25 matt Exp $	*/
+/*	$NetBSD: unistd.h,v 1.46 2008/08/27 08:56:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -113,6 +113,8 @@
 #define	_POSIX_SHELL		1
 				/* regular expressions */
 #define	_POSIX_REGEXP		1
+				/* C binding */
+#define	_POSIX2_C_BIND		200112L
 
 /* access function */
 #define	F_OK		0	/* test for existence of file */
