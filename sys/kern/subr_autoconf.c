@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.160 2008/08/15 03:14:20 matt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.161 2008/08/27 05:40:25 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.160 2008/08/15 03:14:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.161 2008/08/27 05:40:25 christos Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1468,10 +1468,11 @@ config_detach(device_t dev, int flags)
 	int rv = 0;
 
 #ifdef DIAGNOSTIC
-	if (dev->dv_cfdata != NULL &&
-	    dev->dv_cfdata->cf_fstate != FSTATE_FOUND &&
-	    dev->dv_cfdata->cf_fstate != FSTATE_STAR)
-		panic("config_detach: bad device fstate");
+	cf = dev->dv_cfdata;
+	if (cf != NULL && cf->cf_fstate != FSTATE_FOUND &&
+	    cf->cf_fstate != FSTATE_STAR)
+		panic("config_detach: %s: bad device fstate %d",
+		    device_xname(dev), cf ? cf->cf_fstate : -1);
 #endif
 	cd = dev->dv_cfdriver;
 	KASSERT(cd != NULL);
