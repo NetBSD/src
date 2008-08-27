@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/27 23:47:08 rtr Exp $
 
 .include <bsd.own.mk>
 
-CPPSCRIPTS=	Xresources Xservers.ws xdm-config 
+CPPSCRIPTS=	Xresources Xservers.ws Xsession xdm-config 
 
 CPPSCRIPTFLAGS_Xresources=	-DXPM -DBITMAPDIR=${X11INCDIR}/X11/pixmaps \
 				-DXDM_PIXMAP=xorg.xpm \
