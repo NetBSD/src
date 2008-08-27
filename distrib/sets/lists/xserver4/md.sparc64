@@ -1,10 +1,10 @@
-# $NetBSD: md.sparc64,v 1.4 2005/03/19 15:26:23 martin Exp $
+# $NetBSD: md.sparc64,v 1.5 2008/08/27 05:08:33 lukem Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
+./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xsun
 ./usr/X11R6/bin/Xsun24
 ./usr/X11R6/bin/XsunMono
-./usr/X11R6/bin/Xnest
 ./usr/X11R6/bin/Xvfb
 ./usr/X11R6/bin/getconfig
 ./usr/X11R6/bin/getconfig.pl
@@ -13,7 +13,6 @@
 ./usr/X11R6/lib/X11/XF86Config.98
 ./usr/X11R6/lib/X11/XF86Config.eg
 ./usr/X11R6/lib/X11/app-defaults/XF86Cfg
-./usr/X11R6/lib/X11/rgb.db	xserver-obsolete obsolete
 ./usr/X11R6/lib/X11/doc/BUILD
 ./usr/X11R6/lib/X11/doc/BugReport
 ./usr/X11R6/lib/X11/doc/DESIGN
@@ -48,14 +47,15 @@
 ./usr/X11R6/lib/X11/getconfig
 ./usr/X11R6/lib/X11/getconfig/cfg.sample
 ./usr/X11R6/lib/X11/getconfig/xfree86.cfg
+./usr/X11R6/lib/X11/rgb.db	xserver-obsolete obsolete
 ./usr/X11R6/lib/libxf86config.a
-./usr/X11R6/man/cat1/pcitweak.0
+./usr/X11R6/man/cat1/Xnest.0
 ./usr/X11R6/man/cat1/Xsun.0
 ./usr/X11R6/man/cat1/Xsun24.0
 ./usr/X11R6/man/cat1/XsunMono.0
-./usr/X11R6/man/cat1/Xnest.0
 ./usr/X11R6/man/cat1/Xvfb.0
 ./usr/X11R6/man/cat1/getconfig.0
+./usr/X11R6/man/cat1/pcitweak.0
 ./usr/X11R6/man/cat1/xf86cfg.0
 ./usr/X11R6/man/cat4
 ./usr/X11R6/man/cat4/citron.0
