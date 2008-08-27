@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.21 2006/10/07 22:16:19 elad Exp $	*/
+/*	$NetBSD: system.c,v 1.22 2008/08/27 06:45:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.21 2006/10/07 22:16:19 elad Exp $");
+__RCSID("$NetBSD: system.c,v 1.22 2008/08/27 06:45:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,8 +64,15 @@ system(command)
 	const char *argp[] = {"sh", "-c", NULL, NULL};
 	argp[2] = command;
 
-	if (command == NULL)		/* just checking... */
-		return(1);
+	/*
+	 * ISO/IEC 9899:1999 in 7.20.4.6 describes this special case.
+	 * We need to check availability of a command interpreter.
+	 */
+	if (command == NULL) {
+		if (access(_PATH_BSHELL, X_OK) == 0)
+			return 1;
+		return 0;
+	}
 
 	sa.sa_handler = SIG_IGN;
 	sigemptyset(&sa.sa_mask);
