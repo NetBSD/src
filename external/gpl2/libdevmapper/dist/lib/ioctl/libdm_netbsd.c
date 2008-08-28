@@ -130,33 +130,34 @@ nbsd_dm_dict_to_dmi(prop_dictionary_t dm_dict,const int cmd)
 	uuid = NULL;
 	minor = 0;
 	
-	nbsd_get_dm_major(&major,DM_BLOCK_MAJOR);
+	nbsd_get_dm_major(&major, DM_BLOCK_MAJOR);
 	
 	if (!(dmi = dm_malloc(DMI_SIZE)))
 		return NULL;
 
 	memset(dmi,0,DMI_SIZE);
 	
-	prop_dictionary_get_int32(dm_dict,DM_IOCTL_OPEN,&dmi->open_count);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_EVENT,&dmi->event_nr);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&dmi->flags);
-	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_TARGET_COUNT,&dmi->target_count);
+	prop_dictionary_get_int32(dm_dict, DM_IOCTL_OPEN, &dmi->open_count);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_EVENT, &dmi->event_nr);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &dmi->flags);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_TARGET_COUNT, 
+		&dmi->target_count);
 
-	if (prop_dictionary_get_uint32(dm_dict,DM_IOCTL_DEV,&minor))
-		dmi->dev = MKDEV(major,minor);
+	if (prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor))
+		dmi->dev = MKDEV(major, minor);
 	else
 		dmi->dev = 0;
 	
 	/* Copy name and uuid to dm_ioctl. */
-	if (prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_NAME,
+	if (prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME,
 		(const char **)&name)){
-		strlcpy(dmi->name,name,DM_NAME_LEN);
+		strlcpy(dmi->name, name, DM_NAME_LEN);
 	} else
 		dmi->name[0] = '\0';
 	
-	if (prop_dictionary_get_cstring_nocopy(dm_dict,DM_IOCTL_UUID,
+	if (prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID,
 		(const char **)&uuid)){
-		strlcpy(dmi->uuid,uuid,DM_UUID_LEN);
+		strlcpy(dmi->uuid, uuid, DM_UUID_LEN);
 	}  else
 		dmi->uuid[0] = '\0';
 
@@ -191,9 +192,6 @@ nbsd_dm_dict_to_dmi(prop_dictionary_t dm_dict,const int cmd)
 		break;	
 
 	case DM_TABLE_DEPS:
-		if (name == NULL && uuid == NULL)
-			prop_dictionary_get_uint64(dm_dict,DM_IOCTL_DEV,&dmi->dev);
-
 		r = dm_dev_deps(dm_dict,dmi);
 		if (r >= 0)
 			dmi->target_count = r;
@@ -277,6 +275,9 @@ dm_list_versions(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
 	return j;
 }
 
+/*
+ * List all available dm devices in system. 
+ */	
 static int
 dm_list_devices(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
 {
@@ -339,6 +340,10 @@ dm_list_devices(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
 	return j;
 }
 
+/*
+ * Print status of each table, target arguments, start sector, 
+ * size and target name.
+ */
 static int
 dm_table_status(prop_dictionary_t dm_dict,struct dm_ioctl *dmi)
 {
@@ -423,38 +428,73 @@ dm_table_status(prop_dictionary_t dm_dict,struct dm_ioctl *dmi)
 	return j;
 }
 
+/*
+ * Print dm device dependiences, get minor/major number for 
+ * devices. From kernel I will receive major:minor number of 
+ * block device used with target. I have to translate it to 
+ * raw device numbers and use them, because all other parts of lvm2tools 
+ * uses raw devices internaly.
+ */
 static int
 dm_dev_deps(prop_dictionary_t dm_dict, struct dm_ioctl *dmi)
 {
 	struct dm_target_deps *dmtd;
+	struct kinfo_drivers *kd;
 	
 	prop_array_t targets;
 	prop_object_iterator_t iter;
 	
-	size_t j;
+	uint32_t major;
+	
+	size_t val_len, i, j;
 
+	uint64_t dev_tmp;
+
+	dev_tmp = 0;
 	j = 0;
+	i = 0;
+	
+	if (sysctlbyname("kern.drivers",NULL,&val_len,NULL,0) < 0) {
+		printf("sysctlbyname failed");
+		return 0;
+	}
+
+	if ((kd = malloc (val_len)) == NULL){
+		printf("malloc kd info error\n");
+		return 0;
+	}
+
+	if (sysctlbyname("kern.drivers", kd, &val_len, NULL, 0) < 0) {
+		printf("sysctlbyname failed kd");
+		return 0;
+	}
 	
 	dmtd = (struct dm_target_deps *)((uint8_t *)dmi + dmi->data_start);
 
-	if ((targets = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA))){
+	if ((targets = prop_dictionary_get(dm_dict, DM_IOCTL_CMD_DATA))){
 
 		iter = prop_array_iterator(targets);
 		if (!iter)
-			err(EXIT_FAILURE,"dm_target_deps %s",__func__);
+			err(EXIT_FAILURE,"dm_target_deps %s", __func__);
 
 		while((prop_object_iterator_next(iter)) != NULL){
 
-			prop_array_get_uint64(targets,j,&dmtd->dev[j]);
-
+			prop_array_get_uint64(targets, j, &dev_tmp);
+			
+			for (i = 0, val_len /= sizeof(*kd); i < val_len; i++){
+				if (kd[i].d_bmajor == MAJOR(dev_tmp)) {
+					major = kd[i].d_cmajor;
+					break;
+				}
+			}
+			
+			dmtd->dev[j] = MKDEV(major,MINOR(dev_tmp));
+			
 			j++;
 		}
-
-		if (j == 0)
-			dmtd->count = 1;
-		else
-			dmtd->count = j;
 	}	
+	
+	dmtd->count = j;
 	
 	return j;
 }

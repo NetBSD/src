@@ -82,7 +82,7 @@
 #define DM_IOCTL_COMMAND      "command"
 #define DM_IOCTL_VERSION      "version"
 #define DM_IOCTL_OPEN         "open_count"
-#define DM_IOCTL_DEV          "dev"
+#define DM_IOCTL_MINOR        "minor"
 #define DM_IOCTL_NAME         "name"
 #define DM_IOCTL_UUID         "uuid"
 #define DM_IOCTL_TARGET_COUNT "target_count"

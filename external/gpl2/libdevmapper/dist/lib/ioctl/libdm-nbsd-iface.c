@@ -354,7 +354,7 @@ int dm_format_dev(char *buf, int bufsize, uint32_t dev_major,
 		  uint32_t dev_minor)
 {
 	int r;
-	uint32_t major;
+	uint32_t major, dm_major;
 	char *name;
 	mode_t mode;
 	dev_t dev;
@@ -362,10 +362,14 @@ int dm_format_dev(char *buf, int bufsize, uint32_t dev_major,
 	struct kinfo_drivers *kd;
 	
 	mode = 0;
+	
+	nbsd_get_dm_major(&dm_major, DM_BLOCK_MAJOR);
+
+	log_error("format_dev %d--%d %d", dev_major, dev_minor, bufsize);
 
 	if (bufsize < 8)
 		return 0;
-
+	
 	if (sysctlbyname("kern.drivers",NULL,&val_len,NULL,0) < 0) {
 		printf("sysctlbyname failed");
 		return 0;
@@ -387,7 +391,7 @@ int dm_format_dev(char *buf, int bufsize, uint32_t dev_major,
 			break;
 		}
 	}
-
+	
 	dev = MKDEV(major,dev_minor);
 
 	mode |= S_IFBLK;
@@ -427,7 +431,7 @@ int dm_task_get_info(struct dm_task *dmt, struct dm_info *info)
 	
 	nbsd_get_dm_major(&info->major, DM_BLOCK_MAJOR); /* get netbsd dm device major number */
 	info->minor = MINOR(dmt->dmi.v4->dev);
-
+	
 	return 1;
 }
 
@@ -669,20 +673,19 @@ static int _flatten(struct dm_task *dmt, prop_dictionary_t dm_dict)
 
 	nbsd_dmi_add_version((*version), dm_dict);
 	    
-	if (dmt->minor >= 0) {
-		major = dmt->major;
+	nbsd_get_dm_major(&major, DM_BLOCK_MAJOR);
+	/* 
+	 * Only devices with major which is equal to netbsd dm major 
+	 * dm devices in NetBSD can't have more majors then one assigned to dm.
+	 */
+	if (dmt->major != major && dmt->major != -1)
+		return -1;
 		
-		if (major <= 0) {
-			nbsd_get_dm_major(&major, DM_BLOCK_MAJOR);
-			log_error("Setting major/minor %d / %d numbers for persistent device.\n",
-			    major,dmt->minor);
-
-			dmt->major = major;
-		}
+	if (dmt->minor >= 0) {
+	
 		flags |= DM_PERSISTENT_DEV_FLAG;
 		
-		prop_dictionary_set_uint64(dm_dict,DM_IOCTL_DEV,
-		    MKDEV(major, dmt->minor));
+		prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmt->minor);
 		
 	}
 
@@ -710,7 +713,7 @@ static int _flatten(struct dm_task *dmt, prop_dictionary_t dm_dict)
 	prop_dictionary_set(dm_dict,DM_IOCTL_CMD_DATA,cmd_array);
 	
 	if (dmt->newname)
-		prop_array_set_cstring(cmd_array,0,dmt->newname);
+		prop_array_set_cstring(cmd_array, 0, dmt->newname);
 	
 	return 0;
 }
@@ -959,13 +962,14 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command)
 	dm_dict_out = prop_dictionary_create(); /* Dictionary received from kernel */
 
 	/* Set command name to dictionary */
-	prop_dictionary_set_cstring(dm_dict_in,DM_IOCTL_COMMAND,
+	prop_dictionary_set_cstring(dm_dict_in, DM_IOCTL_COMMAND,
 	    _cmd_data_v4[dmt->type].name);
 
 	/* Parse dmi from libdevmapper to dictionary */
-	_flatten(dmt, dm_dict_in);
+	if (_flatten(dmt, dm_dict_in) < 0)
+		goto bad;
 
-	prop_dictionary_get_uint32(dm_dict_in,DM_IOCTL_FLAGS,&flags);
+	prop_dictionary_get_uint32(dm_dict_in, DM_IOCTL_FLAGS, &flags);
 		
 	if (dmt->type == DM_DEVICE_TABLE)
 		flags |= DM_STATUS_TABLE_FLAG;
@@ -980,8 +984,9 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command)
 	
 	prop_dictionary_externalize_to_file(dm_dict_in,"/tmp/test_in");
 	
-	printf("Ioctl type  %s --- flags %d\n",_cmd_data_v4[dmt->type].name,flags);
-
+	log_very_verbose("Ioctl type  %s --- flags %d",_cmd_data_v4[dmt->type].name,flags);
+	//printf("name %s, major %d minor %d\n uuid %s\n", 
+        //dm_task_get_name(dmt), dmt->minor, dmt->major, dm_task_get_uuid(dmt));
 	/* Send dictionary to kernel and wait for reply. */
 	if (prop_dictionary_sendrecv_ioctl(dm_dict_in,_control_fd,
 		NETBSD_DM_IOCTL,&dm_dict_out) != 0) {
@@ -996,14 +1001,17 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command)
 			 * for nonexisting device after info, deps, mknodes call.
 			 * It returns dmi sent to kernel with DM_EXISTS_FLAG = 0;
 			 */
-
+			
 			dmi = nbsd_dm_dict_to_dmi(dm_dict_in,_cmd_data_v4[dmt->type].cmd);
 
 			dmi->flags &= ~DM_EXISTS_FLAG; 
 
 			goto out;
-		} else
-			return NULL;
+		} else {
+			log_error("ioctl %s call failed with errno %d\n", 
+					  _cmd_data_v4[dmt->type].name, errno);
+			goto bad;
+		}
 	}
 
 	prop_dictionary_externalize_to_file(dm_dict_out,"/tmp/test_out");
@@ -1012,6 +1020,11 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command)
 	dmi = nbsd_dm_dict_to_dmi(dm_dict_out,_cmd_data_v4[dmt->type].cmd);
 out:	
 	return dmi;
+bad:
+	prop_object_release(dm_dict_in);
+	prop_object_release(dm_dict_out);
+	
+	return NULL;
 }
 
 /* Create new edvice nodes in mapper/ dir. */
