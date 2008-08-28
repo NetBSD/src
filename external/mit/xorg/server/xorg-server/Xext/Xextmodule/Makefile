@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2008/08/09 06:48:17 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2008/08/28 07:33:22 mrg Exp $
 
 LIBISPRIVATE=	yes
 LIB=		Xextmodule
+
+COPTS+=	${CPICFLAGS}
 
 .include "../../Makefile.serverlib"
 .include "../Makefile.Xextmodule"
