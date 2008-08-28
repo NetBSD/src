@@ -1,6 +1,16 @@
-#	$NetBSD: bsd.x11.mk,v 1.60 2008/08/28 07:18:19 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.61 2008/08/28 23:32:51 lukem Exp $
 
 .include <bsd.init.mk>
+
+.if make(depend) || make(all) || make(dependall)
+.if (${MKX11} != "no" && ${MKXORG} != "no")
+.BEGIN:
+	@echo
+	@echo "ERROR: \$$MKX11 and \$$MKXORG are mutually exclusive."
+	@echo
+	@false
+.endif
+.endif
 
 BINDIR=			${X11BINDIR}
 LIBDIR=			${X11USRLIBDIR}
