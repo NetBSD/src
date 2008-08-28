@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.59 2008/08/02 04:36:12 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.60 2008/08/28 07:18:19 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -124,7 +124,7 @@ X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 .if ${MKXORG} != "no"
 XVENDORNAMESHORT=	'"X.Org"'
 XVENDORNAME=		'"The X.Org Foundation"'
-XORG_RELEASE=		'"Release 6.8.1"'
+XORG_RELEASE=		'"Release 1.4.2"'
 __XKBDEFRULES__=	'"xorg"'
 
 # XXX oh yeah, fix me later
