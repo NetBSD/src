@@ -296,6 +296,15 @@ CONFIGURATION
      MKX11       Can be set to ``yes'' or ``no''.  Indicates whether X11R6 is
                  built from X11SRCDIR.
 
+                 Mutually exclusive to MKXORG != no.
+
+                 Default: ``no''
+
+     MKXORG      Can be set to ``yes'' or ``no''.  Indicates whether X11R7
+                 (modular Xorg) is built from X11SRCDIR.
+
+                 Mutually exclusive to MKX11 != no.
+
                  Default: ``no''
 
      TOOLDIR     Directory to hold the host tools, once built.  If specified,

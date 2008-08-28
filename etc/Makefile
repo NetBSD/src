@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.357 2008/07/27 19:31:03 joerg Exp $
+#	$NetBSD: Makefile,v 1.358 2008/08/28 07:21:49 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -158,7 +158,9 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 	${MAKEDIRTARGET} ${NETBSDSRCDIR} install _DISTRIB=
 .endif	# !INSTALL_DONE
 	${MAKEDIRTARGET} . install-etc-files
-.if ${MKX11} != "no"
+.if ${MKXORG} != "no"
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/mit/xorg distribution
+.elif ${MKX11} != "no"
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/x11 distribution
 .endif
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets makesetfiles
@@ -187,7 +189,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		MKMAN MKMANZ MKNLS MKNVI MKOBJ MKOBJDIRS \
 		MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
 		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
-		MKUNPRIVED MKUPDATE MKX11 MKYP \
+		MKUNPRIVED MKUPDATE MKX11 MKXORG MKYP \
 		NBUILDJOBS NETBSDSRCDIR \
 		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
 		OBJMACHINE \
@@ -354,13 +356,13 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 OBSOLETE.files=		base comp etc games man misc tests text
-.if ${MKX11} != "no"
+.if ${MKX11} != "no" || ${MKXORG} != "no"
 OBSOLETE.files+=	xbase xcomp xetc xfont xserver
 .endif
 
 install-obsolete-lists: .PHONY .MAKE
 	mkdir -p ${OBSOLETE.dir}
-.if ${MKX11} != "no"
+.if ${MKX11} != "no" || ${MKXORG} != "no"
 	(cd ${NETBSDSRCDIR}/distrib/sets && \
 	    MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -b -t ${OBSOLETE.dir})
 .else
