@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.55 2008/08/26 21:08:08 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.56 2008/08/28 21:24:30 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -732,7 +732,7 @@ the existing data mirrored, and normal operation resumed.
 .Pp
 The size of the resulting RAID set will depend on the number of data
 components in the set.
-Space is automatically reserved for the component labels, and 
+Space is automatically reserved for the component labels, and
 the actual amount of space used
 for data on a component will be rounded down to the largest possible
 multiple of the sectors per stripe unit (sectPerSU) value.
