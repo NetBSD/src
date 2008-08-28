@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.504 2008/08/22 03:22:25 matt Exp $
+$NetBSD: usbdevs,v 1.505 2008/08/28 21:41:19 jmcneill Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -672,8 +672,10 @@ product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE MIGHTYMOUSE	0x0304	Mighty Mouse
 product APPLE EXT_KBD_HUB	0x1003	Hub in Apple Extended USB Keyboard
 product APPLE SPEAKERS		0x1101	Speakers
+product APPLE IPHONE		0x1290	iPhone
+product APPLE IPOD_TOUCH	0x1291	iPod Touch
+product APPLE IPHONE_3G		0x1292	iPhone 3G
 product APPLE ETHERNET		0x1402	Apple USB to Ethernet
-
 
 /* ArkMicroChips products */
 product ARKMICROCHIPS USBSERIAL 0x0232	USB-UART Controller
