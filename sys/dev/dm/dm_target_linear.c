@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.1.2.11 2008/08/20 16:08:06 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.1.2.12 2008/08/28 22:03:39 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -79,12 +79,15 @@ dm_target_linear_init(struct dm_dev *dmv, void **target_config, char *params)
 			ap++;
 	}
 
-	/* Insert dmp to list */
+	/* Insert dmp to global pdev list */
 	if ((dmp = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
 	
-	/* Add dmp to device pdev list */
-	SLIST_INSERT_HEAD(&dmv->pdevs, dmp, next_pdev);
+	/* Lookup for pdev entry in device pdev list and insert */
+	if ((dm_pdev_lookup_name_list(dmp->name, &dmv->pdevs)) == NULL)
+		SLIST_INSERT_HEAD(&dmv->pdevs, dmp, next_pdev); 
+		
+	dmp->list_ref_cnt++;	
 	
 	printf("Linear target init function called %s--%s!!\n",
 	    argv[0], argv[1]);
@@ -174,7 +177,7 @@ dm_target_linear_destroy(struct dm_table_entry *table_en)
 	struct target_linear_config *tlc;
 
 	/*
-	 * Destroy function is called for evry target even if it
+	 * Destroy function is called for every target even if it
 	 * doesn't have target_config.
 	 */
 	
@@ -182,10 +185,14 @@ dm_target_linear_destroy(struct dm_table_entry *table_en)
 		return 0;
 	
 	tlc = table_en->target_config;
-
-	/* Remove pdev from device pdev list. */
-	SLIST_REMOVE(&table_en->dm_dev->pdevs, tlc->pdev, dm_pdev, next_pdev);
-
+	
+	/* Decrement device list reference counter */
+	tlc->pdev->list_ref_cnt--;
+	
+	/* If there is no other table which reference this pdev remove it. */
+	if (tlc->pdev->list_ref_cnt == 0)
+		SLIST_REMOVE(&table_en->dm_dev->pdevs, tlc->pdev, dm_pdev, next_pdev);
+			
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tlc->pdev);
 	
