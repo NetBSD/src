@@ -467,15 +467,15 @@ static struct dm_tree_node *_add_dev(struct dm_tree *dtree,
 	struct dm_tree_node *node = NULL;
 	uint32_t i;
 	int new = 0;
-
+	
 	/* Already in tree? */
 	if (!(node = _find_dm_tree_node(dtree, major, minor))) {
 		if (!_deps(&dmt, dtree->mem, major, minor, &name, &uuid, &info, &deps))
 			return_NULL;
-
 		if (!(node = _create_dm_tree_node(dtree, name, uuid,
 						  &info, NULL)))
 			goto_out;
+
 		new = 1;
 	}
 
@@ -675,6 +675,7 @@ int dm_tree_node_num_children(struct dm_tree_node *node, uint32_t inverted)
  */
 static int _uuid_prefix_matches(const char *uuid, const char *uuid_prefix, size_t uuid_prefix_len)
 {
+
 	if (!uuid_prefix)
 		return 1;
 
@@ -983,12 +984,12 @@ int dm_tree_deactivate_children(struct dm_tree_node *dnode,
 			stack;
 			continue;
 		}
-
+	
 		if (!(name = dm_tree_node_get_name(child))) {
 			stack;
 			continue;
 		}
-
+	
 		if (!(uuid = dm_tree_node_get_uuid(child))) {
 			stack;
 			continue;
@@ -997,12 +998,13 @@ int dm_tree_deactivate_children(struct dm_tree_node *dnode,
 		/* Ignore if it doesn't belong to this VG */
 		if (!_uuid_prefix_matches(uuid, uuid_prefix, uuid_prefix_len))
 			continue;
-
+		
 		/* Refresh open_count */
 		if (!_info_by_dev(dinfo->major, dinfo->minor, 1, &info) ||
 		    !info.exists || info.open_count)
 			continue;
-
+		
+		
 		if (!_deactivate_node(name, info.major, info.minor)) {
 			log_error("Unable to deactivate %s (%" PRIu32
 				  ":%" PRIu32 ")", name, info.major,
@@ -1184,7 +1186,8 @@ static int _create_node(struct dm_tree_node *dnode)
 	int r = 0;
 	struct dm_task *dmt;
 
-	log_verbose("Creating %s", dnode->name);
+	log_verbose("Creating %s--%d---%d",
+				dnode->name,dnode->props.major,dnode->props.minor);
 
 	if (!(dmt = dm_task_create(DM_DEVICE_CREATE))) {
 		log_error("Create dm_task creation failed for %s", dnode->name);
@@ -1234,7 +1237,6 @@ static int _build_dev_string(char *devbuf, size_t bufsize, struct dm_tree_node *
                           node->name, node->uuid, node->info.major, node->info.minor);
                 return 0;
 	}
-
 	return 1;
 }
 
@@ -1272,7 +1274,7 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
         int r;
 	char originbuf[15], cowbuf[15], logbuf[15];
 	const char *logtype;
-
+	
 	switch(seg->type) {
 	case SEG_ERROR:
 	case SEG_ZERO:
@@ -1363,26 +1365,44 @@ static int _emit_segment_line(struct dm_task *dmt, struct load_segment *seg, uin
 
 		break;
 	case SEG_SNAPSHOT:
+#ifdef linux
 		if (!_build_dev_string(originbuf, sizeof(originbuf), seg->origin))
 			return_0;
 		if (!_build_dev_string(cowbuf, sizeof(cowbuf), seg->cow))
 			return_0;
 		if ((pos = _dm_snprintf(params, paramsize, "%s %s %c %d",
-                                        originbuf, cowbuf,
+			    originbuf, cowbuf,
+			    seg->persistent ? 'P' : 'N',
+			    seg->chunk_size)) < 0) {
+			stack;  /* Out of space */
+			return -1;
+		}
+#else		
+		if ((pos = _dm_snprintf(params, paramsize, "/dev/mapper/%s /dev/mapper/%s %c %d",
+                                        seg->origin->name, seg->cow->name,
 					seg->persistent ? 'P' : 'N',
                                         seg->chunk_size)) < 0) {
                         stack;	/* Out of space */
                         return -1;
                 }
+#endif		
 		break;
 	case SEG_SNAPSHOT_ORIGIN:
+#ifdef linux
 		if (!_build_dev_string(originbuf, sizeof(originbuf), seg->origin))
 			return_0;
 		if ((pos = _dm_snprintf(params, paramsize, "%s",
-                                        originbuf)) < 0) {
+			    originbuf)) < 0) {
+			stack;  /* Out of space */
+			return -1;
+		}
+#else			
+		if ((pos = _dm_snprintf(params, paramsize, "/dev/mapper/%s",
+				seg->origin->name)) < 0) {
                         stack;	/* Out of space */
                         return -1;
                 }
+#endif		
 		break;
 	case SEG_STRIPED:
 		if ((pos = _dm_snprintf(params, paramsize, "%u %u ",
@@ -1515,8 +1535,12 @@ int dm_tree_preload_children(struct dm_tree_node *dnode,
 
 	/* Preload children first */
 	while ((child = dm_tree_next_child(&handle, dnode, 0))) {
+
 		/* Skip existing non-device-mapper devices */
 		if (!child->info.exists && child->info.major)
+			continue;
+
+		if (child->info.major != 169 && child->info.major != 0)
 			continue;
 
 		/* Ignore if it doesn't belong to this VG */
@@ -1527,6 +1551,7 @@ int dm_tree_preload_children(struct dm_tree_node *dnode,
 		if (dm_tree_node_num_children(child, 0))
 			dm_tree_preload_children(child, uuid_prefix, uuid_prefix_len);
 
+		
 		/* FIXME Cope if name exists with no uuid? */
 		if (!child->info.exists) {
 			if (!_create_node(child)) {
@@ -1605,7 +1630,7 @@ static struct load_segment *_add_segment(struct dm_tree_node *dnode, unsigned ty
 		log_error("dtree node segment allocation failed");
 		return NULL;
 	}
-
+	
 	seg->type = type;
 	seg->size = size;
 	seg->area_count = 0;
@@ -1834,6 +1859,7 @@ int dm_tree_node_add_target_area(struct dm_tree_node *node,
 		/* FIXME Check correct macro use */
 		if (!(dev_node = _add_dev(node->dtree, node, MAJOR(info.st_rdev), MINOR(info.st_rdev))))
 			return_0;
+			
 	}
 
 	if (!node->props.segment_count) {
