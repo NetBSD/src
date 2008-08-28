@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/24 13:47:05 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2008/08/28 08:36:03 mrg Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -16,8 +16,9 @@ SRCS.xkb=	xf86XKB.c
 SRCS.xiso=	xf86Xinput.c xisb.c
 SRCS.randr=	xf86RandR.c
 
+#	no xf86cvt.c - it is libxf86modes
 SRCS=	xf86Configure.c xf86Bus.c xf86Config.c \
-	xf86Cursor.c xf86cvt.c xf86DGA.c xf86DPMS.c \
+	xf86Cursor.c xf86DGA.c xf86DPMS.c \
 	xf86DoProbe.c xf86DoScanPci.c xf86Events.c \
 	xf86Globals.c xf86AutoConfig.c \
 	xf86MiscExt.c xf86Option.c \
