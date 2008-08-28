@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.5 2008/08/19 23:31:52 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.6 2008/08/28 21:59:19 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -123,18 +123,28 @@ struct dm_dev*
 dm_dev_lookup_uuid(const char *dm_dev_uuid)
 {
 	struct dm_dev *dm_dev;
-
+	size_t len;
+	
+	len = 0;
+	
 	if (dm_dev_uuid == NULL)
 		return NULL;
 
+	len = strlen(dm_dev_uuid);
+	
 	mutex_enter(&dm_dev_mutex);
 	
-	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist)
+	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
+			
+		if (strlen(dm_dev->uuid) != len)
+				continue;
+	
 	    if (strncmp(dm_dev_uuid, dm_dev->uuid, strlen(dm_dev->uuid)) == 0){
 		    mutex_exit(&dm_dev_mutex);
 		    return dm_dev;
 	    }
-	mutex_exit(&dm_dev_mutex);
+	}
+		mutex_exit(&dm_dev_mutex);
 	
 	return NULL;
 }
@@ -151,10 +161,10 @@ dm_dev_insert(struct dm_dev *dev)
 	dmt = NULL;
 	r = 0;
 
-	/* XXX dev->name can be NULL if uuid is used */
-	dmt = dm_dev_lookup_name(dev->name);
+	if (((dmt = dm_dev_lookup_uuid(dev->uuid)) == NULL) &&
+	    ((dmt = dm_dev_lookup_name(dev->name)) == NULL) &&
+	    ((dmt = dm_dev_lookup_minor(dev->minor)) == NULL)){
 
-	if (dmt == NULL) {
 		mutex_enter(&dm_dev_mutex);
 		TAILQ_INSERT_TAIL(&dm_dev_list, dev, next_devlist);
 		mutex_exit(&dm_dev_mutex);
@@ -166,36 +176,18 @@ dm_dev_insert(struct dm_dev *dev)
 
 
 /* 
- * Remove device selected with name. 
+ * Remove device selected with dm_dev from global list of devices. 
  */
 int
-dm_dev_rem(const char *dm_dev_name)
-{
-	struct dm_dev *dm_dev;
-	int r;
-
-	r = ENOENT;
-	
-	if(dm_dev_name == NULL)
-		goto out;
-		    
-	if((dm_dev = dm_dev_lookup_name(dm_dev_name)) == NULL)
-	    dm_dev = dm_dev_lookup_uuid(dm_dev_name);
-
-	if (dm_dev == NULL)
-		goto out;
-	
+dm_dev_rem(struct dm_dev *dm_dev)
+{	
 	mutex_enter(&dm_dev_mutex);
 	
 	TAILQ_REMOVE(&dm_dev_list, dm_dev, next_devlist);
 	
 	mutex_exit(&dm_dev_mutex);
 
-	dm_dev_free(dm_dev);
-
-	r = 0;
- out:
-	return r;
+	return 0;
 }
 
 /*
@@ -254,8 +246,9 @@ dm_dev_free(struct dm_dev *dmv)
 {
 	if (dmv != NULL){
 		if (dmv->dm_dklabel != NULL)
-			(void)kmem_free(dmv->dm_dklabel,sizeof(struct disklabel));
-		(void)kmem_free(dmv,sizeof(struct dm_dev));
+			(void)kmem_free(dmv->dm_dklabel, sizeof(struct disklabel));
+
+		(void)kmem_free(dmv, sizeof(struct dm_dev));
 	}
 	
 	return 0;
