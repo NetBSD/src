@@ -1,4 +1,4 @@
-/*        $NetBSD: netbsd-dm.h,v 1.1.2.4 2008/08/19 13:30:36 haad Exp $      */
+/*        $NetBSD: netbsd-dm.h,v 1.1.2.5 2008/08/28 22:06:34 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -187,9 +187,10 @@
 #define DM_IOCTL_COMMAND      "command"
 #define DM_IOCTL_VERSION      "version"
 #define DM_IOCTL_OPEN         "open_count"
-#define DM_IOCTL_DEV          "dev"
+#define DM_IOCTL_MINOR        "minor"
 #define DM_IOCTL_NAME         "name"
 #define DM_IOCTL_UUID         "uuid"
+#define DM_IOCTL_TARGET_COUNT "target_count"
 #define DM_IOCTL_EVENT        "event_nr"
 #define DM_IOCTL_FLAGS        "flags"
 #define DM_IOCTL_CMD_DATA     "cmd_data"
@@ -210,7 +211,8 @@
 
 
 /* Status bits */
-#define DM_READONLY_FLAG	(1 << 0) /* In/Out *//* to kernel/from kerne */
+/* IO mode of device */
+#define DM_READONLY_FLAG	(1 << 0) /* In/Out *//* to kernel/from kernel */
 #define DM_SUSPEND_FLAG		(1 << 1) /* In/Out */
 /* XXX. This flag is undocumented. */ 
 #define DM_EXISTS_FLAG          (1 << 2) /* In/Out */ 
