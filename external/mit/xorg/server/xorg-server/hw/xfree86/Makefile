@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2008/08/15 15:55:05 rtr Exp $
+#	$NetBSD: Makefile,v 1.16 2008/08/28 08:37:01 mrg Exp $
 
 SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
 		xf86modes \
@@ -36,6 +36,7 @@ CPPFLAGS+=	${X11FLAGS.OS_DEFINES} ${X11FLAGS.DIX} \
 
 LDFLAGS+=	-rdynamic
 
+LDADD+=	-Wl,--whole-archive
 LDADD+=	${LDADD.dix}
 LDADD+=	${LDADD.hw/xfree86/init}
 LDADD+=	${LDADD.config}
@@ -58,14 +59,16 @@ LDADD+=	${LDADD.render}
 LDADD+=	${LDADD.randr}
 LDADD+=	${LDADD.damageext}
 LDADD+=	${LDADD.miext/damage}
-LDADD+=	${LDADD.miext/cw}
 LDADD+=	${LDADD.miext/shadow}
+LDADD+=	${LDADD.miext/cw}
 LDADD+=	${LDADD.Xi}
 LDADD+=	${LDADD.xkb}
 LDADD+=	${LDADD.dix/xpstubs}
 LDADD+=	${LDADD.os}
+LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
 LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp
 #LDADD+=	${LDADD.dixmods/xorgxkb}
+LDADD+=	-Wl,--no-whole-archive
 
 .if ${MACHINE} == "i386"
 LDADD+=	-li386
@@ -76,7 +79,6 @@ DPADD+=	${LIBX86_64}
 .endif
 
 LDADD+=	-lm
-
 
 DPADD+=	${DPADD.dix} \
 	${DPADD.fb} \
@@ -92,10 +94,12 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.damageext} \
 	${DPADD.miext/damage} \
 	${DPADD.miext/shadow} \
+	${DPADD.miext/cw} \
 	${DPADD.Xi} \
 	${DPADD.xkb} \
 	${DPADD.composite} \
 	${DPADD.os} \
+	${DPADD.hw/xfree86/dixmods/fb} \
 	${DPADD.dix/xpstubs} \
 	${DPADD.hw/xfree86/fb} \
 	${DPADD.hw/xfree86/init} \
