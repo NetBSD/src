@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.59 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.60 2008/08/28 21:43:11 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.59 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.60 2008/08/28 21:43:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,14 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY800,	    ANY,   { UQ_BROKEN_BIDIR }},
 
  { USB_VENDOR_HP, USB_PRODUCT_HP_1220C,		    ANY,   { UQ_BROKEN_BIDIR }},
+
+ /* HID and audio are both invalid on iPhone/iPod Touch */
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE,
+	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPOD_TOUCH,
+	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_3G,
+	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
 
  { USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_CDMA_MSM,
 	ANY, { UQ_ASSUME_CM_OVER_DATA }},
