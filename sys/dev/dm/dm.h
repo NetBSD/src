@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.1.2.10 2008/08/20 00:45:47 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.11 2008/08/28 21:53:42 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -93,7 +93,9 @@ struct dm_pdev {
 	char name[MAX_DEV_NAME];
 
 	struct vnode *pdev_vnode;
+	
 	int ref_cnt;
+	int list_ref_cnt; /* device list reference counter */
 
 	SLIST_ENTRY(dm_pdev) next_pdev;
 };
@@ -105,6 +107,7 @@ SLIST_HEAD(dm_pdevs, dm_pdev) dm_pdev_list;
  * It points to SLIST of device tables and mirrored, snapshoted etc. devices.
  */
 TAILQ_HEAD(dm_dev_head, dm_dev) dm_devs;
+				
 struct dm_dev {
 	char name[DM_NAME_LEN];
 	char uuid[DM_UUID_LEN];
@@ -136,13 +139,12 @@ struct dm_dev {
 	struct dm_table tables[2];
 
 	struct dm_dev_head upcalls;
-
 	
 	struct disklabel *dm_dklabel;
 
 	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
 
-        TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
+	TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
 };
 
 
@@ -194,7 +196,7 @@ struct dm_target {
 	/* Destroy target_config area */
 	int (*destroy)(struct dm_table_entry *);
 	
-        /*
+	/*
 	 * Status routine is called to get params string, which is target
 	 * specific. When dm_table_status_ioctl is called with flag
 	 * DM_STATUS_TABLE_FLAG I have to sent params string back.
@@ -295,14 +297,14 @@ int dm_table_destroy(struct dm_table *);
 /* dm_dev.c */
 struct dm_dev* dm_dev_alloc(void);
 int dm_dev_destroy(void);
-prop_array_t dm_dev_prop_list(void);
 int dm_dev_free(struct dm_dev *);
 int dm_dev_init(void);
 int dm_dev_insert(struct dm_dev *);
 struct dm_dev* dm_dev_lookup_name(const char *);
 struct dm_dev* dm_dev_lookup_uuid(const char *);
 struct dm_dev* dm_dev_lookup_minor(int);
-int dm_dev_rem(const char *);
+prop_array_t dm_dev_prop_list(void);
+int dm_dev_rem(struct dm_dev *);
 
 /* dm_pdev.c */
 int dm_pdev_decr(struct dm_pdev *);
@@ -310,6 +312,7 @@ int dm_pdev_destroy(void);
 int dm_pdev_init(void);
 struct dm_pdev* dm_pdev_insert(const char *);
 struct dm_pdev* dm_pdev_lookup_name(const char *);
+struct dm_pdev* dm_pdev_lookup_name_list(const char *, struct dm_pdevs *);
 
 #endif /*_KERNEL*/
 
