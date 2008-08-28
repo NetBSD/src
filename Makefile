@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.256 2008/08/24 05:56:20 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.257 2008/08/28 07:21:49 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -93,7 +93,9 @@
 #   do-sys-rump-fs-lib: builds and installs prerequisites from sys/rump/fs/lib
 #   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
 #   do-build:        builds and installs the entire system.
-#   do-x11:          builds and installs X11R6 from src/x11 if ${MKX11} != "no"
+#   do-x11:          builds and installs X11; either
+#                    X11R7 from src/external/mit/xorg if ${MKORG} != "no"
+#                    or X11R6 from src/x11 if ${MKX11} != "no"
 #   do-obsolete:     installs the obsolete sets (for the postinstall-* targets).
 #
 
@@ -218,7 +220,7 @@ BUILDTARGETS+=	do-lib do-gnu-lib do-external-lib
 BUILDTARGETS+=	do-sys-rump-fs-lib
 BUILDTARGETS+=	do-ld.so
 BUILDTARGETS+=	do-build
-.if ${MKX11} != "no"
+.if ${MKX11} != "no" || ${MKXORG} != "no"
 BUILDTARGETS+=	do-x11
 .endif
 BUILDTARGETS+=	do-obsolete
@@ -416,8 +418,11 @@ do-build: .PHONY .MAKE
 do-x11: .PHONY .MAKE
 .if ${MKXORG} != "no"
 	${MAKEDIRTARGET} external/mit/xorg build
-.else
+.elif ${MKX11} != "no"
 	${MAKEDIRTARGET} x11 build
+.else
+	@echo "Neither MKX11 or MKXORG is enabled"
+	@false
 .endif
 
 do-obsolete: .PHONY .MAKE
