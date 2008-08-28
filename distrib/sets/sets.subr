@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.68 2008/08/28 07:17:13 lukem Exp $
+#	$NetBSD: sets.subr,v 1.69 2008/08/28 07:22:41 lukem Exp $
 #
 
 #
@@ -35,6 +35,7 @@ MKVARS="\
 	MKCRYPTO_RC5	\
 	MKCVS		\
 	MKDEBUG		\
+	MKDEBUGLIB	\
 	MKDOC		\
 	MKDYNAMICROOT	\
 	MKGCC		\
@@ -234,7 +235,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.68 2008/08/28 07:17:13 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.69 2008/08/28 07:22:41 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -262,6 +263,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	crypto_rc5		${MKCRYPTO_RC5} != no
 #	cvs			${MKCVS} != no
 #	debug			${MKDEBUG} != no
+#	debuglib		${MKDEBUGLIB} != no
 #	doc			${MKDOC} != no
 #	dynamicroot		${MKDYNAMICROOT} != no
 #	gcc			${MKGCC} != no
