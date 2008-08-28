@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.34 2008/07/14 01:27:15 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.35 2008/08/28 06:18:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.34 2008/07/14 01:27:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.35 2008/08/28 06:18:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,29 +273,14 @@ cpu_xc_offline(struct cpu_info *ci)
 	 * be handled by sched_takecpu().
 	 */
 	mutex_enter(proc_lock);
-	spc_dlock(ci, mci);
 	LIST_FOREACH(l, &alllwp, l_list) {
-		/*
-		 * Since runqueues are locked - LWPs cannot be enqueued (and
-		 * cannot change the state), thus is safe to perform the
-		 * checks without locking each LWP.
-		 */
-		if (l->l_cpu != ci || (l->l_pflag & LP_BOUND) != 0 ||
-		    l->l_stat != LSRUN)
-			continue;
-		/* At this point, we are sure about the state of LWP */
-		KASSERT(lwp_locked(l, spc->spc_mutex));
-		if ((l->l_flag & LW_INMEM) != 0) {
-			sched_dequeue(l);
-			l->l_cpu = mci;
-			lwp_setlock(l, mspc->spc_mutex);
-			sched_enqueue(l, false);
+		lwp_lock(l);
+		if ((l->l_pflag & LP_BOUND) == 0 && l->l_cpu == ci) {
+			lwp_migrate(l, mci);
 		} else {
-			l->l_cpu = mci;
-			lwp_setlock(l, mspc->spc_mutex);
+			lwp_unlock(l);
 		}
 	}
-	spc_dunlock(ci, mci);
 	mutex_exit(proc_lock);
 
 #ifdef __HAVE_MD_CPU_OFFLINE
