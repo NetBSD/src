@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1178 2008/08/27 04:43:53 lukem Exp $
+#	$NetBSD: mi,v 1.1179 2008/08/28 23:49:33 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2170,61 +2170,99 @@
 ./usr/lib/crt0.o				comp-c-lib
 ./usr/lib/gcrt0.o				comp-c-lib
 ./usr/lib/i18n/libBIG5.a			comp-i18n-lib
+./usr/lib/i18n/libBIG5_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libDECHanyu.a			comp-i18n-lib
+./usr/lib/i18n/libDECHanyu_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libEUC.a				comp-i18n-lib
 ./usr/lib/i18n/libEUCTW.a			comp-i18n-lib
+./usr/lib/i18n/libEUCTW_g.a		-unknown-	debuglib
+./usr/lib/i18n/libEUC_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libGBK2K.a			comp-i18n-lib
+./usr/lib/i18n/libGBK2K_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libHZ.a				comp-i18n-lib
+./usr/lib/i18n/libHZ_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libISO2022.a			comp-i18n-lib
+./usr/lib/i18n/libISO2022_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libJOHAB.a			comp-i18n-lib
+./usr/lib/i18n/libJOHAB_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libMSKanji.a			comp-i18n-lib
+./usr/lib/i18n/libMSKanji_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libUES.a				comp-i18n-lib
+./usr/lib/i18n/libUES_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libUTF1632.a			comp-i18n-lib
+./usr/lib/i18n/libUTF1632_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libUTF7.a			comp-i18n-lib
+./usr/lib/i18n/libUTF7_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libUTF8.a			comp-i18n-lib
+./usr/lib/i18n/libUTF8_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libVIQR.a			comp-i18n-lib
+./usr/lib/i18n/libVIQR_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libZW.a				comp-i18n-lib
+./usr/lib/i18n/libZW_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libiconv_none.a			comp-i18n-lib
+./usr/lib/i18n/libiconv_none_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libiconv_std.a			comp-i18n-lib
+./usr/lib/i18n/libiconv_std_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libmapper_646.a			comp-i18n-lib
+./usr/lib/i18n/libmapper_646_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libmapper_none.a			comp-i18n-lib
+./usr/lib/i18n/libmapper_none_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libmapper_parallel.a		comp-i18n-lib
+./usr/lib/i18n/libmapper_parallel_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libmapper_serial.a		comp-i18n-lib
+./usr/lib/i18n/libmapper_serial_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libmapper_std.a			comp-i18n-lib
+./usr/lib/i18n/libmapper_std_g.a		-unknown-	debuglib
 ./usr/lib/i18n/libmapper_zone.a			comp-i18n-lib
+./usr/lib/i18n/libmapper_zone_g.a		-unknown-	debuglib
 ./usr/lib/libamu.a				comp-obsolete		obsolete
+./usr/lib/libamu_g.a		-unknown-	debuglib
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libamu_pic.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib
+./usr/lib/libarchive_g.a		-unknown-	debuglib
 ./usr/lib/libarchive_p.a			comp-c-proflib		profile
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
+./usr/lib/libasn1_g.a		-unknown-	debuglib
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/libatf-c++.a				comp-atf-lib
+./usr/lib/libatf-c++_g.a		-unknown-	debuglib
 ./usr/lib/libatf-c++_p.a			comp-atf-lib		profile
 ./usr/lib/libatf-c.a				comp-atf-lib
+./usr/lib/libatf-c_g.a		-unknown-	debuglib
 ./usr/lib/libatf-c_p.a				comp-atf-lib		profile
 ./usr/lib/libatf.a				comp-obsolete		obsolete
 ./usr/lib/libatf_p.a				comp-obsolete		obsolete
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
+./usr/lib/libbfd_g.a		-unknown-	debuglib
 ./usr/lib/libbind9.a				comp-bind-lib
+./usr/lib/libbind9_g.a		-unknown-	debuglib
 ./usr/lib/libbind9_p.a				comp-bind-proflib	profile
 ./usr/lib/libbluetooth.a			comp-c-lib
+./usr/lib/libbluetooth_g.a		-unknown-	debuglib
 ./usr/lib/libbluetooth_p.a			comp-c-proflib		profile
 ./usr/lib/libbsdmalloc.a			comp-c-lib
+./usr/lib/libbsdmalloc_g.a		-unknown-	debuglib
 ./usr/lib/libbsdmalloc_p.a			comp-c-proflib		profile
 ./usr/lib/libbz2.a				comp-c-lib
+./usr/lib/libbz2_g.a		-unknown-	debuglib
 ./usr/lib/libbz2_p.a				comp-c-proflib		profile
 ./usr/lib/libc.a				comp-c-lib
+./usr/lib/libc_g.a		-unknown-	debuglib
 ./usr/lib/libc_p.a				comp-c-proflib		profile
 ./usr/lib/libcdk.a				comp-obsolete		obsolete
 ./usr/lib/libcdk_p.a				comp-obsolete		obsolete
 ./usr/lib/libcom_err.a				comp-krb5-lib		kerberos
+./usr/lib/libcom_err_g.a		-unknown-	debuglib
 ./usr/lib/libcom_err_p.a			comp-krb5-proflib	kerberos,profile
 ./usr/lib/libcompat.a				comp-c-lib
+./usr/lib/libcompat_g.a		-unknown-	debuglib
 ./usr/lib/libcompat_p.a				comp-c-proflib		profile
 ./usr/lib/libcrypt.a				comp-c-lib
+./usr/lib/libcrypt_g.a		-unknown-	debuglib
 ./usr/lib/libcrypt_p.a				comp-c-proflib		profile
 ./usr/lib/libcrypto.a				comp-c-lib		crypto
+./usr/lib/libcrypto_g.a		-unknown-	debuglib
 ./usr/lib/libcrypto_idea.a			comp-c-lib		crypto_idea
 ./usr/lib/libcrypto_idea_p.a			comp-c-proflib		crypto_idea,profile
 ./usr/lib/libcrypto_mdc2.a			comp-c-lib		crypto_mdc2
@@ -2233,18 +2271,24 @@
 ./usr/lib/libcrypto_rc5.a			comp-c-lib		crypto_rc5
 ./usr/lib/libcrypto_rc5_p.a			comp-c-proflib		crypto_rc5,profile
 ./usr/lib/libcurses.a				comp-c-lib
+./usr/lib/libcurses_g.a		-unknown-	debuglib
 ./usr/lib/libcurses_p.a				comp-c-proflib		profile
 ./usr/lib/libdes.a				comp-c-lib		crypto
+./usr/lib/libdes_g.a		-unknown-	debuglib
 ./usr/lib/libdes_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libdns.a				comp-bind-lib
+./usr/lib/libdns_g.a		-unknown-	debuglib
 ./usr/lib/libdns_p.a				comp-bind-proflib	profile
 ./usr/lib/libedit.a				comp-c-lib
+./usr/lib/libedit_g.a		-unknown-	debuglib
 ./usr/lib/libedit_p.a				comp-c-proflib		profile
 ./usr/lib/libevent.a				comp-c-lib
+./usr/lib/libevent_g.a		-unknown-	debuglib
 ./usr/lib/libevent_p.a				comp-c-proflib		profile
 ./usr/lib/libfl.a				comp-c-lib
 ./usr/lib/libfl_p.a				comp-c-proflib		profile
 ./usr/lib/libform.a				comp-c-lib
+./usr/lib/libform_g.a		-unknown-	debuglib
 ./usr/lib/libform_p.a				comp-c-proflib		profile
 ./usr/lib/libfrtbegin.a				comp-c-lib		gcc=3
 ./usr/lib/libfrtbegin.a				comp-obsolete		gcc=4,obsolete
@@ -2256,168 +2300,245 @@
 ./usr/lib/libg2c_p.a				comp-fortran-proflib	gcc=3,profile
 ./usr/lib/libg2c_p.a				comp-obsolete		gcc=4,obsolete
 ./usr/lib/libgcc.a				comp-c-lib
+./usr/lib/libgcc_eh_g.a		-unknown-	debuglib
+./usr/lib/libgcc_g.a		-unknown-	debuglib
 ./usr/lib/libgcc_p.a				comp-c-proflib		profile
 ./usr/lib/libgcc_s.a				comp-obsolete		obsolete
+./usr/lib/libgcc_s_g.a		-unknown-	debuglib
 ./usr/lib/libgnumalloc.a			comp-c-lib
+./usr/lib/libgnumalloc_g.a		-unknown-	debuglib
 ./usr/lib/libgnumalloc_p.a			comp-c-proflib		profile
 ./usr/lib/libgssapi.a				comp-krb5-lib		kerberos
+./usr/lib/libgssapi_g.a		-unknown-	debuglib
 ./usr/lib/libgssapi_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/libhdb.a				comp-c-lib		kerberos
+./usr/lib/libhdb_g.a		-unknown-	debuglib
 ./usr/lib/libhdb_p.a				comp-c-proflib		kerberos,profile
 ./usr/lib/libheimntlm.a				comp-krb5-lib		kerberos
+./usr/lib/libheimntlm_g.a		-unknown-	debuglib
 ./usr/lib/libheimntlm_p.a			comp-krb5-proflib	kerberos,profile
 ./usr/lib/libhx509.a				comp-krb5-lib		kerberos
+./usr/lib/libhx509_g.a		-unknown-	debuglib
 ./usr/lib/libhx509_p.a				comp-krb5-proflib	kerberos,profile
+./usr/lib/libi386_g.a		-unknown-	debuglib
+./usr/lib/libiberty_g.a		-unknown-	debuglib
 ./usr/lib/libintl.a				comp-c-lib
+./usr/lib/libintl_g.a		-unknown-	debuglib
 ./usr/lib/libintl_p.a				comp-c-proflib		profile
 ./usr/lib/libipsec.a				comp-c-lib
+./usr/lib/libipsec_g.a		-unknown-	debuglib
 ./usr/lib/libipsec_p.a				comp-c-proflib		profile
 ./usr/lib/libisc.a				comp-bind-lib
+./usr/lib/libisc_g.a		-unknown-	debuglib
 ./usr/lib/libisc_p.a				comp-bind-lib		profile
 ./usr/lib/libisccc.a				comp-bind-lib
+./usr/lib/libisccc_g.a		-unknown-	debuglib
 ./usr/lib/libisccc_p.a				comp-bind-profilb	profile
 ./usr/lib/libisccfg.a				comp-bind-lib
+./usr/lib/libisccfg_g.a		-unknown-	debuglib
 ./usr/lib/libisccfg_p.a				comp-bind-profilb	profile
 ./usr/lib/libiscsi.a				comp-iscsi-lib		iscsi
+./usr/lib/libiscsi_g.a		-unknown-	debuglib
 ./usr/lib/libiscsi_p.a				comp-iscsi-proflib	profile,iscsi
 ./usr/lib/libkadm.a				comp-obsolete		obsolete
 ./usr/lib/libkadm5clnt.a			comp-krb5-lib		kerberos
+./usr/lib/libkadm5clnt_g.a		-unknown-	debuglib
 ./usr/lib/libkadm5clnt_p.a			comp-krb5-proflib	kerberos,profile
 ./usr/lib/libkadm5srv.a				comp-krb5-lib		kerberos
+./usr/lib/libkadm5srv_g.a		-unknown-	debuglib
 ./usr/lib/libkadm5srv_p.a			comp-krb5-proflib	kerberos,profile
 ./usr/lib/libkadm_p.a				comp-obsolete		obsolete
 ./usr/lib/libkafs.a				comp-krb5-lib		kerberos
+./usr/lib/libkafs_g.a		-unknown-	debuglib
 ./usr/lib/libkafs_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/libkdb.a				comp-obsolete		obsolete
 ./usr/lib/libkdb_p.a				comp-obsolete		obsolete
 ./usr/lib/libkrb.a				comp-obsolete		obsolete
 ./usr/lib/libkrb5.a				comp-krb5-lib		kerberos
+./usr/lib/libkrb5_g.a		-unknown-	debuglib
 ./usr/lib/libkrb5_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/libkrb_p.a				comp-obsolete		obsolete
 ./usr/lib/libkstream.a				comp-obsolete		obsolete
 ./usr/lib/libkstream_p.a			comp-obsolete		obsolete
 ./usr/lib/libkvm.a				comp-c-lib
+./usr/lib/libkvm_g.a		-unknown-	debuglib
 ./usr/lib/libkvm_p.a				comp-c-proflib		profile
 ./usr/lib/libl.a				comp-c-lib
+./usr/lib/libl_g.a		-unknown-	debuglib
 ./usr/lib/libl_p.a				comp-c-proflib		profile
 ./usr/lib/liblber.a				comp-ldap-lib		ldap
+./usr/lib/liblber_g.a		-unknown-	debuglib
 ./usr/lib/liblber_p.a				comp-ldap-proflib	ldap,profile
 ./usr/lib/libldap.a				comp-ldap-lib		ldap
+./usr/lib/libldap_g.a		-unknown-	debuglib
 ./usr/lib/libldap_p.a				comp-ldap-proflib	ldap,profile
 ./usr/lib/libldap_r.a				comp-ldap-lib		ldap
+./usr/lib/libldap_r_g.a		-unknown-	debuglib
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	ldap,profile
 ./usr/lib/liblwres.a				comp-bind-lib
+./usr/lib/liblwres_g.a		-unknown-	debuglib
 ./usr/lib/liblwres_p.a				comp-bind-profilb	profile
 ./usr/lib/libm.a				comp-c-lib
+./usr/lib/libm387_g.a		-unknown-	debuglib
+./usr/lib/libm_g.a		-unknown-	debuglib
 ./usr/lib/libm_p.a				comp-c-proflib		profile
 ./usr/lib/libmagic.a				comp-c-lib
+./usr/lib/libmagic_g.a		-unknown-	debuglib
 ./usr/lib/libmagic_p.a				comp-c-proflib		profile
 ./usr/lib/libmenu.a				comp-c-lib
+./usr/lib/libmenu_g.a		-unknown-	debuglib
 ./usr/lib/libmenu_p.a				comp-c-proflib		profile
 ./usr/lib/libmilter.a				comp-obsolete		obsolete
 ./usr/lib/libntp.a				comp-obsolete		obsolete
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libntp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libobjc.a				comp-objc-lib
+./usr/lib/libobjc_g.a		-unknown-	debuglib
 ./usr/lib/libobjc_p.a				comp-objc-proflib	profile
+./usr/lib/libopcodes_g.a		-unknown-	debuglib
 ./usr/lib/libossaudio.a				comp-c-lib
+./usr/lib/libossaudio_g.a		-unknown-	debuglib
 ./usr/lib/libossaudio_p.a			comp-c-proflib		profile
 ./usr/lib/libp2k.a				comp-c-lib		puffs
 ./usr/lib/libp2k_p.a				comp-c-proflib		puffs,profile
 ./usr/lib/libpam.a				comp-c-lib		pam
+./usr/lib/libpam_g.a		-unknown-	debuglib
 ./usr/lib/libpcap.a				comp-c-lib
+./usr/lib/libpcap_g.a		-unknown-	debuglib
 ./usr/lib/libpcap_p.a				comp-c-proflib		profile
 ./usr/lib/libpci.a				comp-c-lib
+./usr/lib/libpci_g.a		-unknown-	debuglib
 ./usr/lib/libpci_p.a				comp-c-proflib		profile
+./usr/lib/libpmc_g.a		-unknown-	debuglib
 ./usr/lib/libposix.a				comp-c-lib
+./usr/lib/libposix_g.a		-unknown-	debuglib
 ./usr/lib/libposix_p.a				comp-c-proflib		profile
 ./usr/lib/libprop.a				comp-c-lib
+./usr/lib/libprop_g.a		-unknown-	debuglib
 ./usr/lib/libprop_p.a				comp-c-proflib		profile
 ./usr/lib/libpthread.a				comp-c-lib
 ./usr/lib/libpthread_dbg.a			comp-c-lib
+./usr/lib/libpthread_dbg_g.a		-unknown-	debuglib
 ./usr/lib/libpthread_dbg_p.a			comp-c-proflib		profile
+./usr/lib/libpthread_g.a		-unknown-	debuglib
 ./usr/lib/libpthread_p.a			comp-c-proflib		profile
 ./usr/lib/libpuffs.a				comp-c-lib
+./usr/lib/libpuffs_g.a		-unknown-	debuglib
 ./usr/lib/libpuffs_p.a				comp-c-proflib		profile
 ./usr/lib/libradius.a				comp-c-lib
+./usr/lib/libradius_g.a		-unknown-	debuglib
 ./usr/lib/libradius_p.a				comp-c-proflib		profile
 ./usr/lib/librefuse.a				comp-c-lib		puffs
 ./usr/lib/librefuse_p.a				comp-c-proflib		puffs,profile
 ./usr/lib/libresolv.a				comp-c-lib
+./usr/lib/libresolv_g.a		-unknown-	debuglib
 ./usr/lib/libresolv_p.a				comp-c-proflib		profile
 ./usr/lib/librmt.a				comp-c-lib
+./usr/lib/librmt_g.a		-unknown-	debuglib
 ./usr/lib/libroken.a				comp-krb5-lib		kerberos
+./usr/lib/libroken_g.a		-unknown-	debuglib
 ./usr/lib/libroken_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/librpcsvc.a				comp-c-lib
+./usr/lib/librpcsvc_g.a		-unknown-	debuglib
 ./usr/lib/librpcsvc_p.a				comp-c-proflib		profile
 ./usr/lib/librt.a				comp-c-lib
+./usr/lib/librt_g.a		-unknown-	debuglib
 ./usr/lib/librt_p.a				comp-c-proflib		profile
 ./usr/lib/librump.a				comp-c-lib
+./usr/lib/librump_g.a		-unknown-	debuglib
 ./usr/lib/librump_p.a				comp-c-proflib		profile
 ./usr/lib/librumpfs_cd9660.a			comp-c-lib
+./usr/lib/librumpfs_cd9660_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_cd9660_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_efs.a			comp-c-lib
+./usr/lib/librumpfs_efs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_efs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_ext2fs.a			comp-c-lib
+./usr/lib/librumpfs_ext2fs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_ext2fs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_ffs.a			comp-c-lib
+./usr/lib/librumpfs_ffs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_ffs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_hfs.a			comp-c-lib
+./usr/lib/librumpfs_hfs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_hfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_lfs.a			comp-c-lib
+./usr/lib/librumpfs_lfs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_lfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_msdos.a			comp-c-lib
+./usr/lib/librumpfs_msdos_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_msdos_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_ntfs.a			comp-c-lib
+./usr/lib/librumpfs_ntfs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_syspuffs.a			comp-c-lib
+./usr/lib/librumpfs_syspuffs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_syspuffs_p.a		comp-c-proflib		profile
 ./usr/lib/librumpfs_tmpfs.a			comp-c-lib
+./usr/lib/librumpfs_tmpfs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_tmpfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_udf.a			comp-c-lib
+./usr/lib/librumpfs_udf_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_udf_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_ufs.a			comp-c-lib
+./usr/lib/librumpfs_ufs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_ufs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpuser.a				comp-c-lib
+./usr/lib/librumpuser_g.a		-unknown-	debuglib
 ./usr/lib/librumpuser_p.a			comp-c-proflib		profile
 ./usr/lib/libsdp.a				comp-c-lib
+./usr/lib/libsdp_g.a		-unknown-	debuglib
 ./usr/lib/libsdp_p.a				comp-c-proflib		profile
 ./usr/lib/libskey.a				comp-c-lib		skey
+./usr/lib/libskey_g.a		-unknown-	debuglib
 ./usr/lib/libskey_p.a				comp-c-proflib		skey,profile
 ./usr/lib/libsl.a				comp-krb5-lib		kerberos
+./usr/lib/libsl_g.a		-unknown-	debuglib
 ./usr/lib/libsl_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/libsm.a				comp-obsolete		obsolete
 ./usr/lib/libss.a				comp-krb5-lib		kerberos
+./usr/lib/libss_g.a		-unknown-	debuglib
 ./usr/lib/libss_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/libssh.a				comp-c-lib		crypto
+./usr/lib/libssh_g.a		-unknown-	debuglib
 ./usr/lib/libssh_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libssl.a				comp-c-lib		crypto
+./usr/lib/libssl_g.a		-unknown-	debuglib
 ./usr/lib/libssl_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libssp.a				comp-obsolete		obsolete
 ./usr/lib/libssp_p.a				comp-obsolete		obsolete
 ./usr/lib/libstdc++.a				comp-cxx-lib
+./usr/lib/libstdc++_g.a		-unknown-	debuglib
 ./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile
 ./usr/lib/libsupc++.a				comp-cxx-lib
+./usr/lib/libsupc++_g.a		-unknown-	debuglib
 ./usr/lib/libtelnet.a				comp-obsolete		obsolete
 ./usr/lib/libtelnet.so				comp-obsolete		obsolete
 ./usr/lib/libtelnet_p.a				comp-obsolete		obsolete
 ./usr/lib/libtelnet_pic.a			comp-obsolete		obsolete
 ./usr/lib/libtermcap.a				comp-c-lib
+./usr/lib/libtermcap_g.a		-unknown-	debuglib
 ./usr/lib/libtermcap_p.a			comp-c-proflib		profile
 ./usr/lib/libtermlib.a				comp-c-lib
 ./usr/lib/libtermlib_p.a			comp-c-proflib		profile
 ./usr/lib/libukfs.a				comp-c-lib
+./usr/lib/libukfs_g.a		-unknown-	debuglib
 ./usr/lib/libukfs_p.a				comp-c-proflib		profile
 ./usr/lib/libusb.a				comp-obsolete		obsolete
 ./usr/lib/libusb_p.a				comp-obsolete		obsolete
 ./usr/lib/libusb_pic.a				comp-obsolete		obsolete
 ./usr/lib/libusbhid.a				comp-c-lib
+./usr/lib/libusbhid_g.a		-unknown-	debuglib
 ./usr/lib/libusbhid_p.a				comp-c-proflib		profile
 ./usr/lib/libutil.a				comp-c-lib
+./usr/lib/libutil_g.a		-unknown-	debuglib
 ./usr/lib/libutil_p.a				comp-c-proflib		profile
+./usr/lib/libvers_g.a		-unknown-	debuglib
 ./usr/lib/libwrap.a				comp-c-lib
+./usr/lib/libwrap_g.a		-unknown-	debuglib
 ./usr/lib/libwrap_p.a				comp-c-proflib		profile
 ./usr/lib/liby.a				comp-c-lib
+./usr/lib/liby_g.a		-unknown-	debuglib
 ./usr/lib/liby_p.a				comp-c-proflib		profile
 ./usr/lib/libz.a				comp-c-lib
 ./usr/lib/libz_p.a				comp-c-proflib		profile
@@ -3294,6 +3415,44 @@
 ./usr/libdata/debug/usr/sbin/ypxfr.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/zdump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/zic.debug		comp-sysutil-debug	debug
+./usr/libdata/lint/llib-lFS.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lGLw.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lICE.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lSM.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lX11.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXTrap.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXau.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXaw7.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXaw8.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXcomposite.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXcursor.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXdamage.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXdmcp.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXevie.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXext.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXfixes.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXfont.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXfontcache.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXft.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXi.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXinerama.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXmu.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXmuu.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXp.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXpm.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXprintAppUtil.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXprintUtil.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXrandr.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXrender.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXres.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXss.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXt.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXtst.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXv.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXvMC.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXxf86dga.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXxf86misc.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXxf86vm.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbind9.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
@@ -3309,8 +3468,13 @@
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-ldns.ln			comp-bind-lintlib	lint
+./usr/libdata/lint/llib-ldrm.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lexpat.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lfontconfig.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lfontenc.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lform.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lfreetype.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lgnumalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		lint
@@ -3322,13 +3486,16 @@
 ./usr/libdata/lint/llib-lkvm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-llber.ln		comp-ldap-lintlib	lint,ldap
+./usr/libdata/lint/llib-llbxutil.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lldap.ln		comp-ldap-lintlib	lint,ldap
 ./usr/libdata/lint/llib-lldap_r.ln		comp-ldap-lintlib	lint,ldap
+./usr/libdata/lint/llib-llisp.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-llwres.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
+./usr/libdata/lint/llib-lmp.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lp2k.ln			comp-c-lintlib		lint,puffs
@@ -3341,6 +3508,7 @@
 ./usr/libdata/lint/llib-lpthread_dbg.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpuffs.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lradius.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lre.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lrefuse.ln		comp-c-lintlib		lint,puffs
 ./usr/libdata/lint/llib-lresolv.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrmt.ln			comp-c-lintlib		lint
@@ -3361,6 +3529,10 @@
 ./usr/libdata/lint/llib-lusbhid.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lutil.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lwrap.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lxkbfile.ln		-unknown-	lint,x11
+./usr/libdata/lint/llib-lxkbfile.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lxkbui.ln		-unknown-	lint,x11
+./usr/libdata/lint/llib-lxkbui.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ly.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lz.ln			comp-c-lintlib		lint
 ./usr/libexec/cc1				comp-c-bin		gcccmds
@@ -14306,5 +14478,5 @@
 ./usr/share/mk/bsd.subdir.mk			comp-util-share		share
 ./usr/share/mk/bsd.sys.mk			comp-util-share		share
 ./usr/share/mk/bsd.test.mk			comp-util-share		share
-./usr/share/mk/bsd.x11.mk			comp-util-share		share
-./var/db/libc.tags				comp-c-root
+./usr/share/mk/bsd.x11.mk                      comp-util-share         share
+./var/db/libc.tags                             comp-c-root
