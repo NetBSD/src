@@ -1,42 +1,55 @@
-# $NetBSD: mi,v 1.19 2008/01/03 20:48:07 jdc Exp $
+# $NetBSD: mi,v 1.20 2008/08/28 23:42:31 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
-./etc/mtree/set.xserver				xserver-sys-root
-./usr/X11R6/bin/Xdmx
-./usr/X11R6/bin/Xnest
-./usr/X11R6/bin/Xprt
-./usr/X11R6/bin/dmx
-./usr/X11R6/bin/dmxaddinput
-./usr/X11R6/bin/dmxaddscreen
-./usr/X11R6/bin/dmxreconfig
-./usr/X11R6/bin/dmxresize
-./usr/X11R6/bin/dmxrminput
-./usr/X11R6/bin/dmxrmscreen
-./usr/X11R6/bin/dmxtodmx
-./usr/X11R6/bin/dmxwininfo
-./usr/X11R6/bin/evi
-./usr/X11R6/bin/res
-./usr/X11R6/bin/vdltodmx
-./usr/X11R6/bin/xbell
+./etc/mtree/set.xserver				xserver-sys-root	x11
+./usr/X11R6/bin/Xdmx				-unknown-	x11
+./usr/X11R6/bin/Xnest				-unknown-	x11
+./usr/X11R6/bin/Xprt				-unknown-	x11
+./usr/X11R6/bin/dmx				-unknown-	x11
+./usr/X11R6/bin/dmxaddinput			-unknown-	x11
+./usr/X11R6/bin/dmxaddscreen			-unknown-	x11
+./usr/X11R6/bin/dmxreconfig			-unknown-	x11
+./usr/X11R6/bin/dmxresize			-unknown-	x11
+./usr/X11R6/bin/dmxrminput			-unknown-	x11
+./usr/X11R6/bin/dmxrmscreen			-unknown-	x11
+./usr/X11R6/bin/dmxtodmx			-unknown-	x11
+./usr/X11R6/bin/dmxwininfo			-unknown-	x11
+./usr/X11R6/bin/evi				-unknown-	x11
+./usr/X11R6/bin/res				-unknown-	x11
+./usr/X11R6/bin/vdltodmx			-unknown-	x11
+./usr/X11R6/bin/xbell				-unknown-	x11
 ./usr/X11R6/bin/xdmx				 xserver-obsolete	obsolete
-./usr/X11R6/bin/xdmxconfig
-./usr/X11R6/bin/xinput
-./usr/X11R6/bin/xled
-./usr/X11R6/bin/xtest
-./usr/X11R6/bin/xvidtune
-./usr/X11R6/lib/X11/app-defaults/Xvidtune
-./usr/X11R6/man/cat1/Xdmx.0			-unknown-		.cat
-./usr/X11R6/man/cat1/Xnest.0			-unknown-		.cat
-./usr/X11R6/man/cat1/Xserver.0			-unknown-		.cat
-./usr/X11R6/man/cat1/dmxtodmx.0			-unknown-		.cat
-./usr/X11R6/man/cat1/vdltodmx.0			-unknown-		.cat
-./usr/X11R6/man/cat1/xdmxconfig.0		-unknown-		.cat
-./usr/X11R6/man/cat1/xvidtune.0			-unknown-		.cat
-./usr/X11R6/man/man1/Xdmx.1			-unknown-		.man
-./usr/X11R6/man/man1/Xnest.1			-unknown-		.man
-./usr/X11R6/man/man1/Xserver.1			-unknown-		.man
-./usr/X11R6/man/man1/dmxtodmx.1			-unknown-		.man
-./usr/X11R6/man/man1/vdltodmx.1			-unknown-		.man
-./usr/X11R6/man/man1/xdmxconfig.1		-unknown-		.man
-./usr/X11R6/man/man1/xvidtune.1			-unknown-		.man
+./usr/X11R6/bin/xdmxconfig			-unknown-	x11
+./usr/X11R6/bin/xinput				-unknown-	x11
+./usr/X11R6/bin/xled				-unknown-	x11
+./usr/X11R6/bin/xtest				-unknown-	x11
+./usr/X11R6/bin/xvidtune			-unknown-	x11
+./usr/X11R6/lib/X11/app-defaults/Xvidtune	-unknown-	x11
+./usr/X11R6/man/cat1/Xdmx.0			-unknown-	.cat,x11
+./usr/X11R6/man/cat1/Xnest.0			-unknown-	.cat,x11
+./usr/X11R6/man/cat1/Xserver.0			-unknown-	.cat,x11
+./usr/X11R6/man/cat1/dmxtodmx.0			-unknown-	.cat,x11
+./usr/X11R6/man/cat1/vdltodmx.0			-unknown-	.cat,x11
+./usr/X11R6/man/cat1/xdmxconfig.0		-unknown-	.cat,x11
+./usr/X11R6/man/cat1/xvidtune.0			-unknown-	.cat,x11
+./usr/X11R6/man/man1/Xdmx.1			-unknown-	.man,x11
+./usr/X11R6/man/man1/Xnest.1			-unknown-	.man,x11
+./usr/X11R6/man/man1/Xserver.1			-unknown-	.man,x11
+./usr/X11R6/man/man1/dmxtodmx.1			-unknown-	.man,x11
+./usr/X11R6/man/man1/vdltodmx.1			-unknown-	.man,x11
+./usr/X11R6/man/man1/xdmxconfig.1		-unknown-	.man,x11
+./usr/X11R6/man/man1/xvidtune.1			-unknown-	.man,x11
+./usr/X11R6/man/man5/XF86Config.5		-unknown-	.man,x11
+./usr/X11R7/man/cat1/Xmark.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/Xnest.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/Xorg.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/Xserver.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/Xvfb.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat5/xorg.conf.0		-unknown-	.cat,xorg
+./usr/X11R7/man/man1/Xmark.1			-unknown-	.man,xorg
+./usr/X11R7/man/man1/Xnest.1  			-unknown-	.man,xorg
+./usr/X11R7/man/man1/Xorg.1			-unknown-	.man,xorg
+./usr/X11R7/man/man1/Xserver.1			-unknown-	.man,xorg
+./usr/X11R7/man/man1/Xvfb.1			-unknown-	.man,xorg
+./usr/X11R7/man/man5/xorg.conf.5		-unknown-	.man,xorg
