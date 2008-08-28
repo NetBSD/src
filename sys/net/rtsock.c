@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.109 2008/06/15 20:36:55 cube Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.110 2008/08/28 18:43:58 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.109 2008/06/15 20:36:55 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.110 2008/08/28 18:43:58 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -714,7 +714,7 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, int error)
 	memset(&rtm, 0, sizeof(rtm));
 	rtm.rtm_flags = RTF_DONE | flags;
 	rtm.rtm_errno = error;
-	m = rt_msg1(type, rtinfo, (void *)&rtm, sizeof(rtm));
+	m = rt_msg1(type, rtinfo, &rtm, sizeof(rtm));
 	if (m == NULL)
 		return;
 	mtod(m, struct rt_msghdr *)->rtm_addrs = rtinfo->rti_addrs;
@@ -743,7 +743,7 @@ rt_ifmsg(struct ifnet *ifp)
 	ifm.ifm_flags = ifp->if_flags;
 	ifm.ifm_data = ifp->if_data;
 	ifm.ifm_addrs = 0;
-	m = rt_msg1(RTM_IFINFO, &info, (void *)&ifm, sizeof(ifm));
+	m = rt_msg1(RTM_IFINFO, &info, &ifm, sizeof(ifm));
 	if (m == NULL)
 		return;
 	route_enqueue(m, 0);
@@ -771,7 +771,7 @@ rt_ifmsg(struct ifnet *ifp)
 	oifm.ifm_data.ifi_noproto = ifp->if_data.ifi_noproto;
 	oifm.ifm_data.ifi_lastchange = ifp->if_data.ifi_lastchange;
 	oifm.ifm_addrs = 0;
-	m = rt_msg1(RTM_OIFINFO, &info, (void *)&oifm, sizeof(oifm));
+	m = rt_msg1(RTM_OIFINFO, &info, &oifm, sizeof(oifm));
 	if (m == NULL)
 		return;
 	route_enqueue(m, 0);
@@ -812,7 +812,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			ifam.ifam_index = ifp->if_index;
 			ifam.ifam_metric = ifa->ifa_metric;
 			ifam.ifam_flags = ifa->ifa_flags;
-			m = rt_msg1(ncmd, &info, (void *)&ifam, sizeof(ifam));
+			m = rt_msg1(ncmd, &info, &ifam, sizeof(ifam));
 			if (m == NULL)
 				continue;
 			mtod(m, struct ifa_msghdr *)->ifam_addrs =
@@ -831,7 +831,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			rtm.rtm_index = ifp->if_index;
 			rtm.rtm_flags |= rt->rt_flags;
 			rtm.rtm_errno = error;
-			m = rt_msg1(cmd, &info, (void *)&rtm, sizeof(rtm));
+			m = rt_msg1(cmd, &info, &rtm, sizeof(rtm));
 			if (m == NULL)
 				continue;
 			mtod(m, struct rt_msghdr *)->rtm_addrs = info.rti_addrs;
