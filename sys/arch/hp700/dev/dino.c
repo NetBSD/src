@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.5 2007/03/04 05:59:51 christos Exp $ */
+/*	$NetBSD: dino.c,v 1.6 2008/08/28 08:25:46 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.5 2007/03/04 05:59:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.6 2008/08/28 08:25:46 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1556,10 +1556,7 @@ const struct hppa_pci_chipset_tag dino_pc = {
 };
 
 int
-dinomatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+dinomatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -1581,10 +1578,7 @@ dinomatch(parent, cfdata, aux)
 }
 
 void
-dinoattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+dinoattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dino_softc *sc = (struct dino_softc *)self;
 	struct confargs *ca = (struct confargs *)aux;
