@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.2 2006/02/28 19:30:45 kleink Exp $
+# $NetBSD: Makefile,v 1.3 2008/08/28 16:40:05 christos Exp $
 
-SUBDIR+= printf scanf
+SUBDIR+= printf scanf sscanf
 
 .include <bsd.subdir.mk>
