@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.144 2008/08/21 12:25:03 drochner Exp $ */
+/*	$NetBSD: ehci.c,v 1.145 2008/08/28 23:08:00 drochner Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.144 2008/08/21 12:25:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.145 2008/08/28 23:08:00 drochner Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3937,6 +3937,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 
 			if (trans_count >= xfer->nframes) { /*Set IOC*/
 				itd->itd.itd_ctl[j] |= htole32(EHCI_ITD_IOC);
+				break;
 			}
 		}	
 
