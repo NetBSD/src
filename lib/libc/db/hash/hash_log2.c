@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_log2.c,v 1.11 2008/08/26 21:18:38 joerg Exp $	*/
+/*	$NetBSD: hash_log2.c,v 1.12 2008/08/28 11:00:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_log2.c	8.2 (Berkeley) 5/31/94";
 #else
-__RCSID("$NetBSD: hash_log2.c,v 1.11 2008/08/26 21:18:38 joerg Exp $");
+__RCSID("$NetBSD: hash_log2.c,v 1.12 2008/08/28 11:00:43 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,8 +57,12 @@ __log2(uint32_t num)
 {
 	uint32_t i, limit;
 
-	limit = 1;
-	for (i = 0; limit < num; limit = limit << 1, i++)
+	if (num == 0)
+		return 0;
+	--num;
+
+	limit = 0;
+	for (i = 0; limit < num; limit = limit * 2 + 1, i++)
 		continue;
 	return (i);
 }
