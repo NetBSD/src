@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2006/10/26 01:33:08 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2008/08/28 07:20:20 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2004  Mark Nudelman
@@ -122,18 +122,17 @@ main(argc, argv)
 	init_line();
 	init_cmdhist();
 	init_option();
-	s = lgetenv("LESS");
-	if (s != NULL)
-		scan_option(save(s));
 
 	if (more_mode) {
 		scan_option("-E");
 		scan_option("-m");
 		scan_option("-G");
 		scan_option("-f");
-		scan_option(lgetenv("MORE"));
-	} else
-		scan_option(lgetenv("LESS"));
+		s = lgetenv("MORE");
+	} else 
+		s = lgetenv("LESS");
+	if (s != NULL)
+		scan_option(save(s));
 
 #define	isoptstring(s)	(((s)[0] == '-' || (s)[0] == '+') && (s)[1] != '\0')
 	while (argc > 0 && (isoptstring(*argv) || isoptpending()))
