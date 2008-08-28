@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.521 2008/08/27 02:28:34 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.522 2008/08/28 07:53:34 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -704,12 +704,16 @@ ${var}?= yes
 #.endfor
 
 #
-# Where X11R6 sources are and where it is installed to.
+# Where X11 sources are and where it is installed to.
 #
 X11SRCDIR?=		/usr/xsrc
 X11SRCDIR.xc?=		${X11SRCDIR}/xfree/xc
 X11SRCDIR.local?=	${X11SRCDIR}/local
+.if ${MKXORG} != "no"
+X11ROOTDIR?=		/usr/X11R7
+.else
 X11ROOTDIR?=		/usr/X11R6
+.endif
 X11BINDIR?=		${X11ROOTDIR}/bin
 X11ETCDIR?=		/etc/X11
 X11FONTDIR?=		${X11ROOTDIR}/lib/X11/fonts
@@ -776,8 +780,7 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
 
-# Default to no xorg builds for now.
-MKXORG?=			no
+# Default to no old Xserver builds for now
 MKXORG_WITH_XSRC_XSERVER?=	no
 
 .if ${MKXORG} != no
