@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.67 2008/08/25 07:27:27 lukem Exp $
+#	$NetBSD: sets.subr,v 1.68 2008/08/28 07:17:13 lukem Exp $
 #
 
 #
@@ -10,8 +10,9 @@
 #	lkm			if != "no", enable LKM sets
 #	shlib			shared library format (a.out, elf, or "")
 #	stlib			static library format (a.out, elf)
-#	x11_version		version of XFree86. one of:
-#				   ""	cross built from src/x11
+#	x11_version		version of XFree86 / X.org. one of:
+#				   ""	cross built from src/x11 or
+#					src/external/mit/xorg
 #				   3	XFree86 3.x from xsrc/xc
 #				   4	XFree86 4.x from xsrc/xfree/xc
 #
@@ -40,6 +41,7 @@ MKVARS="\
 	MKGCCCMDS	\
 	MKGDB		\
 	MKHESIOD	\
+	MKHTML		\
 	MKINET6		\
 	MKINFO		\
 	MKIPFILTER	\
@@ -63,6 +65,7 @@ MKVARS="\
 	MKSHARE		\
 	MKSKEY		\
 	MKX11		\
+	MKXORG		\
 	MKYP		\
 	USE_INET6	\
 	USE_KERBEROS	\
@@ -177,7 +180,7 @@ all:
 		${MKVARS}
 	@echo "export \$i=\${\$i}"
 .endfor
-.if (\${MKX11:Uno} != "no")
+.if (\${MKX11:Uno} != "no" || \${MKXORG:Uno} != "no")
 	@echo x11_version=""
 .else
 	@echo x11_version=4
@@ -231,7 +234,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.67 2008/08/25 07:27:27 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.68 2008/08/28 07:17:13 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -265,6 +268,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	gcccmds			${MKGCCCMDS} != no
 #	gdb			${MKGDB} != no
 #	hesiod			${MKHESIOD} != no
+#	html			${MKHTML} != no
 #	inet6			${MKINET6} != no
 #	info			${MKINFO} != no
 #	ipfilter		${MKIPFILTER} != no
@@ -288,6 +292,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
 #	x11			${MKX11} != no
+#	xorg			${MKXORG} != no
 #	yp			${MKYP} != no
 #
 #	gcc=<n>			<n> = value of ${HAVE_GCC}
