@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.233 2008/08/27 08:22:20 rtr Exp $
+#	$NetBSD: bsd.prog.mk,v 1.234 2008/08/28 07:17:06 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -84,7 +84,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 #
 #	E.g.
 #		LIBC?=${DESTDIR}/usr/lib/libc.a
-#		LIBX11?=${DESTDIR}/usr/X11R6/lib/libX11.a
+#		LIBX11?=${DESTDIR}/usr/X11R7/lib/libX11.a
 #	etc..
 
 .for _lib in \
