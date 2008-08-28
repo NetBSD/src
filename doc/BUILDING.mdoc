@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.63 2008/08/18 05:27:05 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.64 2008/08/28 07:21:49 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -538,6 +538,18 @@ This also has implications on full builds (see next subsection).
 .YorN
 Indicates whether X11R6 is built from
 .Sy X11SRCDIR .
+.Pp
+Mutually exclusive to 
+.Sy MKXORG != no .
+.DFLTn
+.
+.It Sy MKXORG
+.YorN
+Indicates whether X11R7 (modular Xorg) is built from
+.Sy X11SRCDIR .
+.Pp
+Mutually exclusive to 
+.Sy MKX11 != no .
 .DFLTn
 .
 .It Sy TOOLDIR

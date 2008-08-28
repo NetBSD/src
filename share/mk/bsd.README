@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.219 2008/08/27 00:16:09 lukem Exp $
+#	$NetBSD: bsd.README,v 1.220 2008/08/28 07:21:49 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -322,14 +322,15 @@ MKUPDATE 	If not "no", 'make install' only installs targets that are
 		Default: no
 
 MKX11		If not "no", 'make build' also descends into src/x11
-		to cross build X11R6 and automatically enables creation
+		to cross-build X11R6 and automatically enables creation
 		of X sets.
+		Mutually exclusive to MKXORG!=no
 		Default: no
 
 MKXORG		If not "no", 'make build' also descends into
-		src/external/mit/xorg to cross build modular Xorg and
-		automatically enables creation of X sets.  Overrides
-		MKX11.
+		src/external/mit/xorg to cross-build X11R7 (modular Xorg)
+		and automatically enables creation of X sets.
+		Mutually exclusive to MKX11!=no
 		Default: no
 
 MKYP		If "no", disables building of YP (NIS)
