@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.106 2008/07/25 00:48:59 uwe Exp $	*/
+/*	$NetBSD: lwp.h,v 1.107 2008/08/28 06:21:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -401,17 +401,6 @@ spc_dlock(struct cpu_info *ci1, struct cpu_info *ci2)
 		mutex_spin_enter(spc2->spc_mutex);
 		mutex_spin_enter(spc1->spc_mutex);
 	}
-}
-
-static inline void
-spc_dunlock(struct cpu_info *ci1, struct cpu_info *ci2)
-{
-	struct schedstate_percpu *spc1 = &ci1->ci_schedstate;
-	struct schedstate_percpu *spc2 = &ci2->ci_schedstate;
-
-	KASSERT(ci1 != ci2);
-	mutex_spin_exit(spc1->spc_mutex);
-	mutex_spin_exit(spc2->spc_mutex);
 }
 
 /*
