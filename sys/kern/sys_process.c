@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.141 2008/07/02 19:49:58 rmind Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.142 2008/08/28 06:23:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.141 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.142 2008/08/28 06:23:42 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -960,6 +960,6 @@ process_stoptrace(void)
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	(void)issignal(l);
 	mutex_exit(p->p_lock);
-	KERNEL_LOCK(l->l_biglocks - 1, l);
+	KERNEL_LOCK(l->l_biglocks, l);
 }
 #endif	/* KTRACE || PTRACE */
