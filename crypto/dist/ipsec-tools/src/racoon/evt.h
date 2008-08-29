@@ -1,4 +1,4 @@
-/*	$NetBSD: evt.h,v 1.5 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: evt.h,v 1.6 2008/08/29 00:31:00 gmcgarry Exp $	*/
 
 /* Id: evt.h,v 1.5 2006/01/19 10:24:09 fredsen Exp */
 
@@ -117,7 +117,7 @@ struct evt_listener {
 	int fd;
 };
 LIST_HEAD(evt_listener_list, evt_listener);
-#define EVT_LISTENER_LIST(x) struct evt_listener_list x;
+#define EVT_LISTENER_LIST(x) struct evt_listener_list x
 
 void evt_generic __P((int type, vchar_t *optdata));
 void evt_phase1 __P((const struct ph1handle *ph1, int type, vchar_t *optdata));
