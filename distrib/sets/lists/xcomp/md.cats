@@ -1,49 +1,49 @@
-# $NetBSD: md.cats,v 1.2 2008/08/29 01:06:34 mrg Exp $
+# $NetBSD: md.cats,v 1.3 2008/08/29 02:28:16 mrg Exp $
 ./usr/X11R6/include/xf86Optrec.h		-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h		-unknown-	x11
-./usr/X11R6/man/cat3/XF86VidMode.0		-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeDeleteModeLine.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeGetAllModeLines.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeGetDotClocks.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeGetGamma.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeGetGammaRamp.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeGetGammaRampSize.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeGetModeLine.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeGetMonitor.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeGetPermissions.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeGetViewPort.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeLockModeSwitch.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeModModeLine.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeQueryExtension.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeQueryVersion.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeSetClientVersion.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeSetGamma.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeSetGammaRamp.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeSetViewPort.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeSwitchMode.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeSwitchToMode.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat3/XF86VidModeValidateModeLine.0	-unknown-		.cat	x11
-./usr/X11R6/man/cat4/fpit.0			-unknown-		.cat	x11
-./usr/X11R6/man/man3/XF86VidMode.3		-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeDeleteModeLine.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeGetAllModeLines.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeGetDotClocks.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeGetGamma.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeGetGammaRamp.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeGetGammaRampSize.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeGetModeLine.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeGetMonitor.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeGetPermissions.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeGetViewPort.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeLockModeSwitch.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeModModeLine.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeQueryExtension.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeQueryVersion.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeSetClientVersion.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeSetGamma.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeSetGammaRamp.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeSetViewPort.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeSwitchMode.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeSwitchToMode.3	-unknown-		.man	x11
-./usr/X11R6/man/man3/XF86VidModeValidateModeLine.3	-unknown-		.man	x11
-./usr/X11R6/man/man4/fpit.4			-unknown-		.man	x11
+./usr/X11R6/man/cat3/XF86VidMode.0		-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeDeleteModeLine.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeGetAllModeLines.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeGetDotClocks.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeGetGamma.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeGetGammaRamp.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeGetGammaRampSize.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeGetModeLine.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeGetMonitor.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeGetPermissions.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeGetViewPort.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeLockModeSwitch.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeModModeLine.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeQueryExtension.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeQueryVersion.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeSetClientVersion.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeSetGamma.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeSetGammaRamp.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeSetViewPort.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeSwitchMode.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeSwitchToMode.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat3/XF86VidModeValidateModeLine.0	-unknown-		.cat,x11
+./usr/X11R6/man/cat4/fpit.0			-unknown-		.cat,x11
+./usr/X11R6/man/man3/XF86VidMode.3		-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeDeleteModeLine.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeGetAllModeLines.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeGetDotClocks.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeGetGamma.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeGetGammaRamp.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeGetGammaRampSize.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeGetModeLine.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeGetMonitor.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeGetPermissions.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeGetViewPort.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeLockModeSwitch.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeModModeLine.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeQueryExtension.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeQueryVersion.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeSetClientVersion.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeSetGamma.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeSetGammaRamp.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeSetViewPort.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeSwitchMode.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeSwitchToMode.3	-unknown-		.man,x11
+./usr/X11R6/man/man3/XF86VidModeValidateModeLine.3	-unknown-		.man,x11
+./usr/X11R6/man/man4/fpit.4			-unknown-		.man,x11
