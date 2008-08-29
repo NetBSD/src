@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.378 2008/08/28 09:01:23 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.379 2008/08/29 04:51:57 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -226,6 +226,11 @@
 ./usr/X11R6/man/cat4
 ./usr/X11R6/man/cat5
 ./usr/X11R6/man/cat7
+./usr/X11R6/man/html1
+./usr/X11R6/man/html3
+./usr/X11R6/man/html4
+./usr/X11R6/man/html5
+./usr/X11R6/man/html7
 ./usr/X11R6/man/man1
 ./usr/X11R6/man/man3
 ./usr/X11R6/man/man4
@@ -393,6 +398,11 @@
 ./usr/X11R7/man/cat4
 ./usr/X11R7/man/cat5
 ./usr/X11R7/man/cat7
+./usr/X11R7/man/html1
+./usr/X11R7/man/html3
+./usr/X11R7/man/html4
+./usr/X11R7/man/html5
+./usr/X11R7/man/html7
 ./usr/X11R7/man/man1
 ./usr/X11R7/man/man3
 ./usr/X11R7/man/man4
