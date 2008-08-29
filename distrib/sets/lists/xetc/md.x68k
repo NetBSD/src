@@ -1,2 +1,2 @@
-# $NetBSD: md.x68k,v 1.1 2004/06/13 11:52:57 lukem Exp $
-./etc/X11/X68kConfig
+# $NetBSD: md.x68k,v 1.2 2008/08/29 01:06:34 mrg Exp $
+./etc/X11/X68kConfig		-unknown-	x11
