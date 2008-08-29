@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.5 2008/08/28 23:39:01 rtr Exp $
+#	$NetBSD: shl.mi,v 1.6 2008/08/29 02:55:51 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -47,3 +47,55 @@
 ./usr/X11R6/lib/libpsres_pic.a		-unknown-	x11
 ./usr/X11R6/lib/libxkbfile_pic.a	-unknown-	x11
 ./usr/X11R6/lib/libxkbui_pic.a		-unknown-	x11
+./usr/X11R7/lib/libFS_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libGLU_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libGL_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libGLw_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libICE_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libSM_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libX11_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXTrap_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXau_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXaw7_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXaw8_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXcomposite_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libXcursor_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libXdamage_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libXdmcp_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXevie_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXext_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXfixes_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXfont_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXfontcache_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libXft_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXi_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXinerama_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libXmu_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXmuu_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXp_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXpm_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXprintAppUtil_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libXprintUtil_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libXrandr_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXrender_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libXres_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXss_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXt_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXtst_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXvMC_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXv_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libXxf86dga_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libXxf86misc_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libXxf86vm_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libdrm_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libexpat_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libfontconfig_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libfontenc_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libfreetype_pic.a	-unknown-	xorg
+./usr/X11R7/lib/liblbxutil_pic.a	-unknown-	xorg
+./usr/X11R7/lib/liblisp_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libmp_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libpixman-1_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libre_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libxkbfile_pic.a	-unknown-	xorg
+./usr/X11R7/lib/libxkbui_pic.a		-unknown-	xorg
