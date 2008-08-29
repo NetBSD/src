@@ -1,5 +1,6 @@
-# $NetBSD: md.newsmips,v 1.3 2008/08/29 02:21:48 mrg Exp $
+# $NetBSD: md.newsmips,v 1.4 2008/08/29 06:08:48 lukem Exp $
 ./usr/X11R6/bin/X	-unknown-	x11
 ./usr/X11R6/bin/Xnewsmips	-unknown-	x11
 ./usr/X11R6/man/cat1/Xnewsmips.0		-unknown-		.cat,x11
+./usr/X11R6/man/html1/Xnewsmips.html		-unknown-		html,x11
 ./usr/X11R6/man/man1/Xnewsmips.1		-unknown-		.man,x11
