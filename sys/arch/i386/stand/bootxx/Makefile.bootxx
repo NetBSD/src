@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.31 2008/03/15 18:00:32 dsl Exp $
+# $NetBSD: Makefile.bootxx,v 1.32 2008/08/29 00:02:23 gmcgarry Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -50,6 +50,7 @@ DBG=
 
 CPPFLAGS+= -DNO_LBA_CHECK
 
+.if defined(HAVE_GCC)
 .if ${MACHINE} == "amd64"
 LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
@@ -62,6 +63,7 @@ CPPFLAGS+= -DEPIA_HACK
 CPUFLAGS=  -mcpu=i386
 .else
 CPUFLAGS=  -march=i386 -mtune=i386
+.endif
 .endif
 .endif
 
