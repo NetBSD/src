@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 12:30:18 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/08/29 07:46:19 rtr Exp $
+
+LIBISPRIVATE=yes
 
 .include "../../../Makefile.serverlib"
 
@@ -16,6 +18,4 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c
 
 .include <bsd.x11.mk>
-#XXX and what shall we do about these
-LIBDIR= ${XMODULEDIR}
 .include <bsd.lib.mk>
