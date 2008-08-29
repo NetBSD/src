@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.7 2008/08/05 19:29:54 reinoud Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.8 2008/08/29 15:04:18 reinoud Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.7 2008/08/05 19:29:54 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.8 2008/08/29 15:04:18 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -61,10 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.7 2008/08/05 19:29:54 reinoud Ex
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
-
-#if defined(_KERNEL_OPT)
-#include "opt_udf.h"
-#endif
 
 #include "udf.h"
 #include "udf_subr.h"
