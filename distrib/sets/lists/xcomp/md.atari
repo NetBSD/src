@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.7 2008/08/29 02:28:16 mrg Exp $
+# $NetBSD: md.atari,v 1.8 2008/08/29 06:08:40 lukem Exp $
 ./usr/X11R6/man/cat3/XF86VidMode.0		-unknown-		.cat,x11
 ./usr/X11R6/man/cat3/XF86VidModeDeleteModeLine.0	-unknown-		.cat,x11
 ./usr/X11R6/man/cat3/XF86VidModeGetAllModeLines.0	-unknown-		.cat,x11
@@ -21,6 +21,28 @@
 ./usr/X11R6/man/cat3/XF86VidModeSwitchMode.0	-unknown-		.cat,x11
 ./usr/X11R6/man/cat3/XF86VidModeSwitchToMode.0	-unknown-		.cat,x11
 ./usr/X11R6/man/cat3/XF86VidModeValidateModeLine.0	-unknown-		.cat,x11
+./usr/X11R6/man/html3/XF86VidMode.html		-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeDeleteModeLine.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeGetAllModeLines.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeGetDotClocks.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeGetGamma.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeGetGammaRamp.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeGetGammaRampSize.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeGetModeLine.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeGetMonitor.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeGetPermissions.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeGetViewPort.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeLockModeSwitch.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeModModeLine.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeQueryExtension.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeQueryVersion.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeSetClientVersion.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeSetGamma.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeSetGammaRamp.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeSetViewPort.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeSwitchMode.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeSwitchToMode.html	-unknown-		html,x11
+./usr/X11R6/man/html3/XF86VidModeValidateModeLine.html	-unknown-		html,x11
 ./usr/X11R6/man/man3/XF86VidMode.3		-unknown-		.man,x11
 ./usr/X11R6/man/man3/XF86VidModeDeleteModeLine.3	-unknown-		.man,x11
 ./usr/X11R6/man/man3/XF86VidModeGetAllModeLines.3	-unknown-		.man,x11
