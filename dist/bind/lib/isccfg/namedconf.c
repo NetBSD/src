@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.2.2.1.2.1 2008/07/24 22:24:40 ghen Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.2.2.1.2.2 2008/08/29 20:35:24 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2006, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.21.44.36 2008/01/24 23:45:28 tbox Exp */
+/* Id: namedconf.c,v 1.21.44.36.2.1 2008/07/23 12:03:53 marka Exp */
 
 #include <config.h>
 
@@ -603,6 +603,7 @@ options_clauses[] = {
 	{ "recursing-file", &cfg_type_qstring, 0 },
 	{ "random-device", &cfg_type_qstring, 0 },
 	{ "recursive-clients", &cfg_type_uint32, 0 },
+	{ "reserved-sockets", &cfg_type_uint32, 0 },
 	{ "serial-queries", &cfg_type_uint32, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "serial-query-rate", &cfg_type_uint32, 0 },
 	{ "server-id", &cfg_type_serverid, 0 },
