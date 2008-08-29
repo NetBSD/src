@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2008/07/31 05:38:04 simonb Exp $
+#	$NetBSD: Makefile,v 1.37 2008/08/29 00:02:23 gmcgarry Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -26,7 +26,7 @@ CPPFLAGS+=-DWAPBL_DEBUG_PRINT=0
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.ffs_appleufs.c+=	-Wno-pointer-sign
 .endif
 

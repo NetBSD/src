@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/05/11 23:16:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2008/08/29 00:02:23 gmcgarry Exp $
 
 PROG=	dkctl
 MAN=	dkctl.8
@@ -8,6 +8,6 @@ DPADD+=	${LIBUTIL}
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.dkctl.c+=	-Wno-pointer-sign
 .endif

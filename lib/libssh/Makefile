@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2008/07/12 12:29:42 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.16 2008/08/29 00:02:22 gmcgarry Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ LIBDPLIBS+=	crypto	${.CURDIR}/../libcrypto \
 		crypt	${.CURDIR}/../libcrypt \
 		z	${.CURDIR}/../libz
 
-.if ${HAVE_GCC} == 4 || defined(HAVE_PCC)
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 .for f in dns channels hostfile
 COPTS.${f}.c+=	-Wno-pointer-sign
 .endfor

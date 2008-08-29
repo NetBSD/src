@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2007/05/28 12:06:32 tls Exp $
+#	$NetBSD: Makefile,v 1.42 2008/08/29 00:02:24 gmcgarry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -75,7 +75,7 @@ LDADD+= -ldes -lcom_err -lroken
 DPADD+=	${LIBDES} ${LIBCOM_ERR} ${LIBROKEN}
 .endif
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 .for f in commands telnet terminal utilities
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor

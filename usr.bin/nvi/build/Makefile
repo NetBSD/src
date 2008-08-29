@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/27 10:17:49 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2008/08/29 00:02:24 gmcgarry Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ WARNS=0
 #DBG=-g
 
 #CWARNFLAGS+=-Wno-parentheses -Wno-unused -Wno-missing-prototypes
-#.if ${HAVE_GCC} == 4
+#.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 #CWARNFLAGS+=-Wno-pointer-sign
 #COPTS+=-fno-strict-aliasing
 #.endif

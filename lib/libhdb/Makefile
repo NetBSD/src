@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2008/08/03 07:16:58 veego Exp $
+# $NetBSD: Makefile,v 1.24 2008/08/29 00:02:22 gmcgarry Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -92,7 +92,7 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=-DHAVE_IPV6
 .endif
 
-.if ${HAVE_GCC} == 4
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 .for f in mkey
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor

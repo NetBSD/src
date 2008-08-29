@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2007/05/28 12:06:25 tls Exp $
+#	$NetBSD: Makefile,v 1.26 2008/08/29 00:02:24 gmcgarry Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,6 @@ MAN=	crontab.1 crontab.5
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.misc.c+=	-Wno-pointer-sign
 .endif

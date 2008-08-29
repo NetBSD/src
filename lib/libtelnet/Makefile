@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.30 2008/07/12 12:29:42 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.31 2008/08/29 00:02:22 gmcgarry Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -30,7 +30,7 @@ SRCS+=	sra.c pk.c
 CPPFLAGS+= -DSRA
 .endif
 
-.if ${HAVE_GCC} == 4 || defined(HAVE_PCC)
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 .for f in auth enc_des kerberos5 pk
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
