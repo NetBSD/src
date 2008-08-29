@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.25 2008/06/29 11:54:56 he Exp $
+# $NetBSD: lkm.mi,v 1.26 2008/08/29 14:20:26 reinoud Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -13,6 +13,8 @@
 ./@MODULEDIR@/coda/coda.kmod			base-kernel-modules
 ./@MODULEDIR@/coda5				base-kernel-modules
 ./@MODULEDIR@/coda5/coda5.kmod			base-kernel-modules
+./@MODULEDIR@/dirhash				base-kernel-modules
+./@MODULEDIR@/dirhash/dirhash.kmod		base-kernel-modules
 ./@MODULEDIR@/efs				base-kernel-modules
 ./@MODULEDIR@/efs/efs.kmod			base-kernel-modules
 ./@MODULEDIR@/ext2fs				base-kernel-modules
