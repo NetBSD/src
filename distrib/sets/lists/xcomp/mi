@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.36 2008/08/29 00:21:36 rtr Exp $
+# $NetBSD: mi,v 1.37 2008/08/29 02:08:00 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4967,6 +4967,7 @@
 ./usr/X11R7/lib/libxkbui_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libxkbui_p.a		-unknown-	xorg
 ./usr/X11R7/lib/libxkbui_pic.a		-unknown-	xorg
+./usr/X11R7/man/cat1/mergelib.0			-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/FontCacheChangeCacheSettings.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FontCacheGetCacheSettings.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FontCacheGetCacheStatistics.0		-unknown-	.cat,xorg
