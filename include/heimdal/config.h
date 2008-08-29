@@ -5,9 +5,11 @@
 #include "nbtool_config.h"
 #else
 
+#if 0
 #ifndef __RCSID
 #define __RCSID(msg) \
 static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
+#endif
 #endif
 
 /* Maximum values on all known systems */
