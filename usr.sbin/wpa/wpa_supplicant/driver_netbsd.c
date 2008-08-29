@@ -1,4 +1,4 @@
-/*	$NetBSD: driver_netbsd.c,v 1.7 2008/08/29 00:53:15 gmcgarry Exp $	*/
+/*	$NetBSD: driver_netbsd.c,v 1.8 2008/08/29 12:58:19 jmcneill Exp $	*/
 
 /*
  * WPA Supplicant - driver interaction with BSD net80211 layer
@@ -697,8 +697,8 @@ wpa_driver_bsd_get_scan_results(void *priv,
 		wsr->ssid_len = sr->isr_ssid_len;
 		wsr->freq = sr->isr_freq;
 		wsr->noise = sr->isr_noise;
-		wsr->qual = sr->isr_rssi;
-		wsr->level = 0;		/* XXX? */
+		wsr->qual = 0;
+		wsr->level = sr->isr_rssi;
 		wsr->caps = sr->isr_capinfo;
 		wsr->maxrate = getmaxrate(sr->isr_rates, sr->isr_nrates);
 		vp = (u_int8_t *)(sr+1);
