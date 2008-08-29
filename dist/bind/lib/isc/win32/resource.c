@@ -1,7 +1,7 @@
-/*	$NetBSD: resource.c,v 1.1.1.1.2.2 2008/07/24 22:09:16 ghen Exp $	*/
+/*	$NetBSD: resource.c,v 1.1.1.1.2.3 2008/08/29 20:36:39 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resource.c,v 1.2.12.6 2007/08/28 07:19:17 tbox Exp */
+/* Id: resource.c,v 1.2.12.6.4.2 2008/07/23 23:47:49 tbox Exp */
 
 #include <config.h>
 
@@ -60,6 +60,16 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 
 isc_result_t
 isc_resource_getlimit(isc_resource_t resource, isc_resourcevalue_t *value) {
+
+	if (resource != isc_resource_openfiles)
+		return (ISC_R_NOTIMPLEMENTED);
+
+	*value = WIN32_MAX_OPEN_FILES;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_resource_curlimit(isc_resource_t resource, isc_resourcevalue_t *value) {
 
 	if (resource != isc_resource_openfiles)
 		return (ISC_R_NOTIMPLEMENTED);
