@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.30 2008/08/20 18:36:55 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.31 2008/08/29 20:39:26 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -1077,4 +1077,52 @@ sys/arch/hppa/hppa/copy.S			1.8
 	Fix potential kernel / userland memory corruption in copy{in,out}str
 	on hppa.
 	[skrll, ticket #1954]
+
+dist/bind/CHANGES				patch
+dist/bind/bin/dig/dighost.c			patch
+dist/bind/bin/named/client.c			patch
+dist/bind/bin/named/config.c			patch
+dist/bind/bin/named/controlconf.c		patch
+dist/bind/bin/named/interfacemgr.c		patch
+dist/bind/bin/named/lwresd.c			patch
+dist/bind/bin/named/named.conf.docbook		patch
+dist/bind/bin/named/server.c			patch
+dist/bind/bin/tests/sig0_test.c			patch
+dist/bind/bin/tests/sock_test.c			patch
+dist/bind/bin/tests/system/ifconfig.sh		patch
+dist/bind/configure				patch
+dist/bind/configure.in				patch
+dist/bind/doc/arm/Bv9ARM-book.xml		patch
+dist/bind/lib/bind/configure			patch
+dist/bind/lib/bind/configure.in			patch
+dist/bind/lib/dns/api				patch
+dist/bind/lib/dns/dispatch.c			patch
+dist/bind/lib/dns/include/dns/dispatch.h	patch
+dist/bind/lib/dns/message.c			patch
+dist/bind/lib/dns/request.c			patch
+dist/bind/lib/dns/resolver.c			patch
+dist/bind/lib/dns/xfrin.c			patch
+dist/bind/lib/isc/api				patch
+dist/bind/lib/isc/include/isc/resource.h	patch
+dist/bind/lib/isc/include/isc/socket.h		patch
+dist/bind/lib/isc/include/isc/timer.h		patch
+dist/bind/lib/isc/timer.c			patch
+dist/bind/lib/isc/unix/app.c			patch
+dist/bind/lib/isc/unix/resource.c		patch
+dist/bind/lib/isc/unix/socket.c			patch
+dist/bind/lib/isc/unix/socket_p.h		patch
+dist/bind/lib/isc/win32/libisc.def		patch
+dist/bind/lib/isc/win32/resource.c		patch
+dist/bind/lib/isc/win32/socket.c		patch
+dist/bind/lib/isccfg/api			patch
+dist/bind/lib/isccfg/namedconf.c		patch
+dist/bind/version				patch
+
+	Update BIND to 9.3.5-P2 (performance and bug fixes)
+	[he, ticket #1955]
+
+sys/netinet/if_arp.c				1.141
+
+	Missing "\n" in log(9) messages.
+	[uebayasi, ticket #1956]
 
