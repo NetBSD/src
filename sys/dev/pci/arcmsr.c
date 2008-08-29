@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.9.4.2 2008/01/11 17:03:16 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.9.4.3 2008/08/29 21:24:19 bouyer Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.9.4.2 2008/01/11 17:03:16 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.9.4.3 2008/08/29 21:24:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.9.4.2 2008/01/11 17:03:16 xtraeme Exp $
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
+#include <dev/sysmon/sysmonvar.h>
 #include <dev/pci/arcmsrvar.h>
 
 /* #define ARC_DEBUG */
@@ -92,12 +93,15 @@ static int 	arc_bioctl(struct device *, u_long, caddr_t);
 static int 	arc_bio_inq(struct arc_softc *, struct bioc_inq *);
 static int 	arc_bio_vol(struct arc_softc *, struct bioc_vol *);
 static int	arc_bio_disk_volume(struct arc_softc *, struct bioc_disk *);
+static int	arc_bio_disk_novol(struct arc_softc *, struct bioc_disk *);
 static void	arc_bio_disk_filldata(struct arc_softc *, struct bioc_disk *,
 				      struct arc_fw_diskinfo *, int);
 static int 	arc_bio_alarm(struct arc_softc *, struct bioc_alarm *);
 static int 	arc_bio_alarm_state(struct arc_softc *, struct bioc_alarm *);
 static int 	arc_bio_getvol(struct arc_softc *, int,
 			       struct arc_fw_volinfo *);
+static int	arc_bio_setstate(struct arc_softc *, struct bioc_setstate *);
+static int 	arc_bio_volops(struct arc_softc *, struct bioc_volops *);
 static int	arc_fw_parse_status_code(struct arc_softc *, uint8_t *);
 #endif
 
@@ -198,7 +202,6 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	if (bio_register(self, arc_bioctl) != 0)
 		panic("%s: bioctl registration failed\n", device_xname(self));
 #endif
-
         return;
 
 unmap_pci:
@@ -637,9 +640,6 @@ arc_query_firmware(struct arc_softc *sc)
 	    device_xname(&sc->sc_dev), htole32(fwinfo.sata_ports),
 	    htole32(fwinfo.sdram_size), string);
 
-	/* save the number of max disks for future use */
-	sc->sc_maxdisks = htole32(fwinfo.sata_ports);
-
 	if (htole32(fwinfo.request_len) != ARC_MAX_IOCMDLEN) {
 		aprint_error("%s: unexpected request frame size (%d != %d)\n",
 		    device_xname(&sc->sc_dev),
@@ -672,8 +672,20 @@ arc_bioctl(struct device *self, u_long cmd, caddr_t addr)
 		error = arc_bio_disk_volume(sc, (struct bioc_disk *)addr);
 		break;
 
+	case BIOCDISK_NOVOL:
+		error = arc_bio_disk_novol(sc, (struct bioc_disk *)addr);
+		break;
+
 	case BIOCALARM:
 		error = arc_bio_alarm(sc, (struct bioc_alarm *)addr);
+		break;
+
+	case BIOCSETSTATE:
+		error = arc_bio_setstate(sc, (struct bioc_setstate *)addr);
+		break;
+
+	case BIOCVOLOPS:
+		error = arc_bio_volops(sc, (struct bioc_volops *)addr);
 		break;
 
 	default:
@@ -787,7 +799,7 @@ arc_bio_alarm_state(struct arc_softc *sc, struct bioc_alarm *ba)
 	uint8_t			request;
 	int			error = 0;
 
-	sysinfo = kmem_zalloc(sizeof(struct arc_fw_sysinfo), KM_SLEEP);
+	sysinfo = kmem_zalloc(sizeof(*sysinfo), KM_SLEEP);
 
 	request = ARC_FW_SYSINFO;
 	error = arc_msgbuf(sc, &request, sizeof(request),
@@ -804,27 +816,373 @@ out:
 }
 
 static int
+arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
+{
+	/* to create a raid set */
+	struct req_craidset {
+		uint8_t		cmdcode;
+		uint32_t	devmask;
+		uint8_t 	raidset_name[16];
+	} __packed;
+
+	/* to create a volume set */
+	struct req_cvolset {
+		uint8_t 	cmdcode;
+		uint8_t 	raidset;
+		uint8_t 	volset_name[16];
+		uint64_t	capacity;
+		uint8_t 	raidlevel;
+		uint8_t 	stripe;
+		uint8_t 	scsi_chan;
+		uint8_t 	scsi_target;
+		uint8_t 	scsi_lun;
+		uint8_t 	tagqueue;
+		uint8_t 	cache;
+		uint8_t 	speed;
+		uint8_t 	quick_init;
+	} __packed;
+
+	struct scsibus_softc	*scsibus_sc = NULL;
+	struct req_craidset	req_craidset;
+	struct req_cvolset 	req_cvolset;
+	uint8_t 		request[2];
+	uint8_t 		reply[1];
+	int 			error = 0;
+
+	switch (bc->bc_opcode) {
+	case BIOC_VCREATE_VOLUME:
+	    {
+		/*
+		 * Zero out the structs so that we use some defaults
+		 * in raid and volume sets.
+		 */
+		memset(&req_craidset, 0, sizeof(req_craidset));
+		memset(&req_cvolset, 0, sizeof(req_cvolset));
+
+		/*
+		 * Firstly we have to create the raid set and
+		 * use the default name for all them.
+		 */
+		req_craidset.cmdcode = ARC_FW_CREATE_RAIDSET;
+		req_craidset.devmask = bc->bc_devmask;
+		error = arc_msgbuf(sc, &req_craidset, sizeof(req_craidset),
+		    reply, sizeof(reply));
+		if (error != 0)
+			return error;
+
+		error = arc_fw_parse_status_code(sc, &reply[0]);
+		if (error) {
+			printf("%s: create raidset%d failed\n",
+			    device_xname(&sc->sc_dev), bc->bc_volid);
+			return error;
+		}
+
+		/*
+		 * At this point the raid set was created, so it's
+		 * time to create the volume set.
+		 */
+		req_cvolset.cmdcode = ARC_FW_CREATE_VOLUME;
+		req_cvolset.raidset = bc->bc_volid;
+		req_cvolset.capacity = bc->bc_size * ARC_BLOCKSIZE;
+
+		/*
+		 * Set the RAID level.
+		 */
+		switch (bc->bc_level) {
+		case 0:
+		case 1:
+			req_cvolset.raidlevel = bc->bc_level;
+			break;
+		case BIOC_SVOL_RAID10:
+			req_cvolset.raidlevel = 1;
+			break;
+		case 3:
+			req_cvolset.raidlevel = ARC_FW_VOL_RAIDLEVEL_3;
+			break;
+		case 5:
+			req_cvolset.raidlevel = ARC_FW_VOL_RAIDLEVEL_5;
+			break;
+		case 6:
+			req_cvolset.raidlevel = ARC_FW_VOL_RAIDLEVEL_6;
+			break;
+		default:
+			return EOPNOTSUPP;
+		}
+
+		/*
+		 * Set the stripe size.
+		 */
+		switch (bc->bc_stripe) {
+		case 4:
+			req_cvolset.stripe = 0;
+			break;
+		case 8:
+			req_cvolset.stripe = 1;
+			break;
+		case 16:
+			req_cvolset.stripe = 2;
+			break;
+		case 32:
+			req_cvolset.stripe = 3;
+			break;
+		case 64:
+			req_cvolset.stripe = 4;
+			break;
+		case 128:
+			req_cvolset.stripe = 5;
+			break;
+		default:
+			req_cvolset.stripe = 4; /* by default 64K */
+			break;
+		}
+
+		req_cvolset.scsi_chan = bc->bc_channel;
+		req_cvolset.scsi_target = bc->bc_target;
+		req_cvolset.scsi_lun = bc->bc_lun;
+		req_cvolset.tagqueue = 1; /* always enabled */
+		req_cvolset.cache = 1; /* always enabled */
+		req_cvolset.speed = 4; /* always max speed */
+
+		/* RAID 1 and 1+0 levels need foreground initialization */
+		if (bc->bc_level == 1 || bc->bc_level == BIOC_SVOL_RAID10)
+			req_cvolset.quick_init = 1; /* foreground init */
+
+		error = arc_msgbuf(sc, &req_cvolset, sizeof(req_cvolset),
+		    reply, sizeof(reply));
+		if (error != 0)
+			return error;
+
+		error = arc_fw_parse_status_code(sc, &reply[0]);
+		if (error) {
+			printf("%s: create volumeset%d failed\n",
+			    device_xname(&sc->sc_dev), bc->bc_volid);
+			return error;
+		}
+
+		/*
+		 * If we are creating a RAID 1 or RAID 1+0 volume,
+		 * the volume will be created immediately but it won't
+		 * be available until the initialization is done... so
+		 * don't bother attaching the sd(4) device.
+		 */
+		if (bc->bc_level == 1 || bc->bc_level == BIOC_SVOL_RAID10)
+			break;
+
+		/*
+		 * Do a rescan on the bus to attach the device associated
+		 * with the new volume.
+		 */
+		scsibus_sc = (struct scsibus_softc *)sc->sc_scsibus_dv;
+		(void)scsi_probe_bus(scsibus_sc, bc->bc_target, bc->bc_lun);
+
+		break;
+	    }
+	case BIOC_VREMOVE_VOLUME:
+	    {
+		/*
+		 * Remove the volume set specified in bc_volid.
+		 */
+		request[0] = ARC_FW_DELETE_VOLUME;
+		request[1] = bc->bc_volid;
+		error = arc_msgbuf(sc, request, sizeof(request),
+		    reply, sizeof(reply));
+		if (error != 0)
+			return error;
+
+		error = arc_fw_parse_status_code(sc, &reply[0]);
+		if (error) {
+			printf("%s: delete volumeset%d failed\n",
+			    device_xname(&sc->sc_dev), bc->bc_volid);
+			return error;
+		}
+
+		/*
+		 * Detach the sd(4) device associated with the volume,
+		 * but if there's an error don't make it a priority.
+		 */
+		error = scsipi_target_detach(&sc->sc_chan, bc->bc_target,
+					     bc->bc_lun, 0);
+		if (error)
+			printf("%s: couldn't detach sd device for volume %d "
+			    "at %u:%u.%u (error=%d)\n",
+			    device_xname(&sc->sc_dev), bc->bc_volid,
+			    bc->bc_channel, bc->bc_target, bc->bc_lun, error);
+
+		/*
+		 * and remove the raid set specified in bc_volid,
+		 * we only care about volumes.
+		 */
+		request[0] = ARC_FW_DELETE_RAIDSET;
+		request[1] = bc->bc_volid;
+		error = arc_msgbuf(sc, request, sizeof(request),
+		    reply, sizeof(reply));
+		if (error != 0)
+			return error;
+
+		error = arc_fw_parse_status_code(sc, &reply[0]);
+		if (error) {
+			printf("%s: delete raidset%d failed\n",
+			    device_xname(&sc->sc_dev), bc->bc_volid);
+			return error;
+		}
+
+		break;
+	    }
+	default:
+		return EOPNOTSUPP;
+	}
+
+	return error;
+}
+
+static int
+arc_bio_setstate(struct arc_softc *sc, struct bioc_setstate *bs)
+{
+	/* for a hotspare disk */
+	struct request_hs {
+		uint8_t		cmdcode;
+		uint32_t	devmask;
+	} __packed;
+
+	/* for a pass-through disk */
+	struct request_pt {
+		uint8_t 	cmdcode;
+		uint8_t		devid;
+		uint8_t		scsi_chan;
+		uint8_t 	scsi_id;
+		uint8_t 	scsi_lun;
+		uint8_t 	tagged_queue;
+		uint8_t 	cache_mode;
+		uint8_t 	max_speed;
+	} __packed;
+
+	struct scsibus_softc	*scsibus_sc = NULL;
+	struct request_hs	req_hs; /* to add/remove hotspare */
+	struct request_pt	req_pt;	/* to add a pass-through */
+	uint8_t			req_gen[2];
+	uint8_t			reply[1];
+	int			error = 0;
+
+	switch (bs->bs_status) {
+	case BIOC_SSHOTSPARE:
+	    {
+		req_hs.cmdcode = ARC_FW_CREATE_HOTSPARE;
+		req_hs.devmask = (1 << bs->bs_target);
+		goto hotspare;
+	    }
+	case BIOC_SSDELHOTSPARE:
+	    {
+		req_hs.cmdcode = ARC_FW_DELETE_HOTSPARE;
+		req_hs.devmask = (1 << bs->bs_target);
+		goto hotspare;
+	    }
+	case BIOC_SSPASSTHRU:
+	    {
+		req_pt.cmdcode = ARC_FW_CREATE_PASSTHRU;
+		req_pt.devid = bs->bs_other_id; /* this wants device# */
+		req_pt.scsi_chan = bs->bs_channel;
+		req_pt.scsi_id = bs->bs_target;
+		req_pt.scsi_lun = bs->bs_lun;
+		req_pt.tagged_queue = 1; /* always enabled */
+		req_pt.cache_mode = 1; /* always enabled */
+		req_pt.max_speed = 4; /* always max speed */
+
+		error = arc_msgbuf(sc, &req_pt, sizeof(req_pt),
+		    reply, sizeof(reply));
+		if (error != 0)
+			return error;
+
+		/*
+		 * Do a rescan on the bus to attach the new device
+		 * associated with the pass-through disk.
+		 */
+		scsibus_sc = (struct scsibus_softc *)sc->sc_scsibus_dv;
+		(void)scsi_probe_bus(scsibus_sc, bs->bs_target, bs->bs_lun);
+
+		goto out;
+	    }
+	case BIOC_SSDELPASSTHRU:
+	    {
+		req_gen[0] = ARC_FW_DELETE_PASSTHRU;
+		req_gen[1] = bs->bs_target;
+		error = arc_msgbuf(sc, &req_gen, sizeof(req_gen),
+		    reply, sizeof(reply));
+		if (error != 0)
+			return error;
+
+		/*
+		 * Detach the sd device associated with this pass-through disk.
+		 */
+		error = scsipi_target_detach(&sc->sc_chan, bs->bs_target,
+					     bs->bs_lun, 0);
+		if (error)
+			printf("%s: couldn't detach sd device for the "
+			    "pass-through disk at %u:%u.%u (error=%d)\n",
+			    device_xname(&sc->sc_dev),
+			    bs->bs_channel, bs->bs_target, bs->bs_lun, error);
+
+		goto out;
+	    }
+	case BIOC_SSCHECKSTART_VOL:
+	    {
+		req_gen[0] = ARC_FW_START_CHECKVOL;
+		req_gen[1] = bs->bs_volid;
+		error = arc_msgbuf(sc, &req_gen, sizeof(req_gen),
+		    reply, sizeof(reply));
+		if (error != 0)
+			return error;
+
+		goto out;
+	    }
+	case BIOC_SSCHECKSTOP_VOL:
+	    {
+		uint8_t req = ARC_FW_STOP_CHECKVOL;
+		error = arc_msgbuf(sc, &req, 1, reply, sizeof(reply));
+		if (error != 0)
+			return error;
+		
+		goto out;
+	    }
+	default:
+		return EOPNOTSUPP;
+	}
+
+hotspare:
+	error = arc_msgbuf(sc, &req_hs, sizeof(req_hs),
+	    reply, sizeof(reply));
+	if (error != 0)
+		return error;
+
+out:
+	return arc_fw_parse_status_code(sc, &reply[0]);
+}
+
+static int
 arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 {
 	uint8_t			request[2];
 	struct arc_fw_sysinfo	*sysinfo;
 	struct arc_fw_raidinfo	*raidinfo;
-	int			maxraidset, nvols = 0, i;
+	int			nvols = 0, i;
 	int			error = 0;
 
-	sysinfo = kmem_zalloc(sizeof(struct arc_fw_sysinfo), KM_SLEEP);
-	raidinfo = kmem_zalloc(sizeof(struct arc_fw_raidinfo), KM_SLEEP);
+	sysinfo = kmem_zalloc(sizeof(*sysinfo), KM_SLEEP);
+	raidinfo = kmem_zalloc(sizeof(*raidinfo), KM_SLEEP);
 
-	request[0] = ARC_FW_SYSINFO;
-	error = arc_msgbuf(sc, request, 1, sysinfo,
-	    sizeof(struct arc_fw_sysinfo));
-	if (error != 0)
-		goto out;
+	if (!sc->sc_maxraidset || !sc->sc_maxvolset || !sc->sc_cchans) {
+		sysinfo = kmem_zalloc(sizeof(*sysinfo), KM_SLEEP);
+		request[0] = ARC_FW_SYSINFO;
+		error = arc_msgbuf(sc, request, 1, sysinfo, sizeof(*sysinfo));
+		if (error != 0)
+			goto out;
 
-	maxraidset = sysinfo->max_raid_set;
+		sc->sc_maxraidset = sysinfo->max_raid_set;
+		sc->sc_maxvolset = sysinfo->max_volume_set;
+		sc->sc_cchans = sysinfo->ide_channels;
+	}
 
 	request[0] = ARC_FW_RAIDINFO;
-	for (i = 0; i < maxraidset; i++) {
+	for (i = 0; i < sc->sc_maxraidset; i++) {
 		request[1] = i;
 		error = arc_msgbuf(sc, request, sizeof(request), raidinfo,
 		    sizeof(struct arc_fw_raidinfo));
@@ -837,11 +1195,12 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 
 	strlcpy(bi->bi_dev, device_xname(&sc->sc_dev), sizeof(bi->bi_dev));
 	bi->bi_novol = nvols;
-	bi->bi_nodisk = sc->sc_maxdisks;
+	bi->bi_nodisk = sc->sc_cchans;
 
 out:
+	if (sysinfo)
+		kmem_free(sysinfo, sizeof(*sysinfo));
 	kmem_free(raidinfo, sizeof(*raidinfo));
-	kmem_free(sysinfo, sizeof(*sysinfo));
 	return error;
 }
 
@@ -849,25 +1208,14 @@ static int
 arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 {
 	uint8_t			request[2];
-	struct arc_fw_sysinfo	*sysinfo;
 	int			error = 0;
-	int			maxvols, nvols = 0, i;
-
-	sysinfo = kmem_zalloc(sizeof(struct arc_fw_sysinfo), KM_SLEEP);
-
-	request[0] = ARC_FW_SYSINFO;
-	error = arc_msgbuf(sc, request, 1, sysinfo,
-	    sizeof(struct arc_fw_sysinfo));
-	if (error != 0)
-		goto out;
-
-	maxvols = sysinfo->max_volume_set;
+	int			nvols = 0, i;
 
 	request[0] = ARC_FW_VOLINFO;
-	for (i = 0; i < maxvols; i++) {
+	for (i = 0; i < sc->sc_maxvolset; i++) {
 		request[1] = i;
 		error = arc_msgbuf(sc, request, sizeof(request), volinfo,
-		    sizeof(struct arc_fw_volinfo));
+		    sizeof(*volinfo));
 		if (error != 0)
 			goto out;
 
@@ -887,7 +1235,6 @@ arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 	}
 
 out:
-	kmem_free(sysinfo, sizeof(*sysinfo));
 	return error;
 }
 
@@ -899,7 +1246,7 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	uint32_t		status;
 	int			error = 0;
 
-	volinfo = kmem_zalloc(sizeof(struct arc_fw_volinfo), KM_SLEEP);
+	volinfo = kmem_zalloc(sizeof(*volinfo), KM_SLEEP);
 
 	error = arc_bio_getvol(sc, bv->bv_volid, volinfo);
 	if (error != 0)
@@ -920,10 +1267,21 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 		bv->bv_status = BIOC_SVOFFLINE;
 	} else if (status & ARC_FW_VOL_STATUS_INITTING) {
 		bv->bv_status = BIOC_SVBUILDING;
-		bv->bv_percent = htole32(volinfo->progress) / 10;
+		bv->bv_percent = htole32(volinfo->progress);
 	} else if (status & ARC_FW_VOL_STATUS_REBUILDING) {
 		bv->bv_status = BIOC_SVREBUILD;
-		bv->bv_percent = htole32(volinfo->progress) / 10;
+		bv->bv_percent = htole32(volinfo->progress);
+	} else if (status & ARC_FW_VOL_STATUS_MIGRATING) {
+		bv->bv_status = BIOC_SVMIGRATING;
+		bv->bv_percent = htole32(volinfo->progress);
+	} else if (status & ARC_FW_VOL_STATUS_CHECKING) {
+		bv->bv_status = BIOC_SVCHECKING;
+		bv->bv_percent = htole32(volinfo->progress);
+	} else if (status & ARC_FW_VOL_STATUS_NEED_INIT) {
+		bv->bv_status = BIOC_SVOFFLINE;
+	} else {
+		printf("%s: volume %d status 0x%x\n",
+		    device_xname(&sc->sc_dev), bv->bv_volid, status);
 	}
 
 	blocks = (uint64_t)htole32(volinfo->capacity2) << 32;
@@ -935,7 +1293,10 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 		bv->bv_level = 0;
 		break;
 	case ARC_FW_VOL_RAIDLEVEL_1:
-		bv->bv_level = 1;
+		if (volinfo->member_disks > 2)
+			bv->bv_level = BIOC_SVOL_RAID10;
+		else
+			bv->bv_level = 1;
 		break;
 	case ARC_FW_VOL_RAIDLEVEL_3:
 		bv->bv_level = 3;
@@ -946,18 +1307,56 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	case ARC_FW_VOL_RAIDLEVEL_6:
 		bv->bv_level = 6;
 		break;
+	case ARC_FW_VOL_RAIDLEVEL_PASSTHRU:
+		bv->bv_level = BIOC_SVOL_PASSTHRU;
+		break;
 	default:
 		bv->bv_level = -1;
 		break;
 	}
 
 	bv->bv_nodisk = volinfo->member_disks;
+	bv->bv_stripe_size = volinfo->stripe_size / 2;
 	snprintf(bv->bv_dev, sizeof(bv->bv_dev), "sd%d", bv->bv_volid);
 	scsipi_strvis(bv->bv_vendor, sizeof(bv->bv_vendor), volinfo->set_name,
 	    sizeof(volinfo->set_name));
 
 out:
 	kmem_free(volinfo, sizeof(*volinfo));
+	return error;
+}
+
+static int
+arc_bio_disk_novol(struct arc_softc *sc, struct bioc_disk *bd)
+{
+	struct arc_fw_diskinfo	*diskinfo;
+	uint8_t			request[2];
+	int			error = 0;
+
+	diskinfo = kmem_zalloc(sizeof(*diskinfo), KM_SLEEP);
+
+	if (bd->bd_diskid >= sc->sc_cchans) {
+		error = ENODEV;
+		goto out;
+	}
+
+	request[0] = ARC_FW_DISKINFO;
+	request[1] = bd->bd_diskid;
+	error = arc_msgbuf(sc, request, sizeof(request),
+	    diskinfo, sizeof(struct arc_fw_diskinfo));
+	if (error != 0)
+		goto out;
+
+	/* skip disks with no capacity */
+	if (htole32(diskinfo->capacity) == 0 &&
+	    htole32(diskinfo->capacity2) == 0)
+		goto out;
+
+	bd->bd_disknovol = true;
+	arc_bio_disk_filldata(sc, bd, diskinfo, bd->bd_diskid);
+
+out:
+	kmem_free(diskinfo, sizeof(*diskinfo));
 	return error;
 }
 
@@ -970,7 +1369,11 @@ arc_bio_disk_filldata(struct arc_softc *sc, struct bioc_disk *bd,
 	char			serial[41];
 	char			rev[17];
 
-	switch (htole32(diskinfo->device_state)) {
+	switch (diskinfo->device_state) {
+	case ARC_FW_DISK_PASSTHRU:
+		bd->bd_status = BIOC_SDPASSTHRU;
+		break;
+	case ARC_FW_DISK_INITIALIZED:
 	case ARC_FW_DISK_RAIDMEMBER:
 		bd->bd_status = BIOC_SDONLINE;
 		break;
@@ -980,9 +1383,17 @@ arc_bio_disk_filldata(struct arc_softc *sc, struct bioc_disk *bd,
 	case ARC_FW_DISK_UNUSED:
 		bd->bd_status = BIOC_SDUNUSED;
 		break;
+	case 0:
+		/* disk has been disconnected */
+		bd->bd_status = BIOC_SDOFFLINE;
+		bd->bd_channel = 1;
+		bd->bd_target = 0;
+		bd->bd_lun = 0;
+		strlcpy(bd->bd_vendor, "disk missing", sizeof(bd->bd_vendor));
+		break;
 	default:
 		printf("%s: unknown disk device_state: 0x%x\n", __func__,
-		    htole32(diskinfo->device_state));
+		    diskinfo->device_state);
 		bd->bd_status = BIOC_SDINVALID;
 		return;
 	}
@@ -1017,10 +1428,10 @@ arc_bio_disk_filldata(struct arc_softc *sc, struct bioc_disk *bd,
 static int
 arc_bio_disk_volume(struct arc_softc *sc, struct bioc_disk *bd)
 {
-	uint8_t			request[2];
 	struct arc_fw_raidinfo	*raidinfo;
 	struct arc_fw_volinfo	*volinfo;
 	struct arc_fw_diskinfo	*diskinfo;
+	uint8_t			request[2];
 	int			error = 0;
 
 	volinfo = kmem_zalloc(sizeof(struct arc_fw_volinfo), KM_SLEEP);
@@ -1039,8 +1450,22 @@ arc_bio_disk_volume(struct arc_softc *sc, struct bioc_disk *bd)
 	if (error != 0)
 		goto out;
 
-	if (bd->bd_diskid > raidinfo->member_devices) {
+	if (bd->bd_diskid >= sc->sc_cchans ||
+	    bd->bd_diskid >= raidinfo->member_devices) {
 		error = ENODEV;
+		goto out;
+	}
+
+	if (raidinfo->device_array[bd->bd_diskid] == 0xff) {
+		/*
+		 * The disk has been disconnected, mark it offline
+		 * and put it on another bus.
+		 */
+		bd->bd_channel = 1;
+		bd->bd_target = 0;
+		bd->bd_lun = 0;
+		bd->bd_status = BIOC_SDOFFLINE;
+		strlcpy(bd->bd_vendor, "disk missing", sizeof(bd->bd_vendor));
 		goto out;
 	}
 
@@ -1259,6 +1684,7 @@ arc_wait(struct arc_softc *sc)
 		arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
 	splx(s);
 }
+
 
 uint32_t
 arc_read(struct arc_softc *sc, bus_size_t r)

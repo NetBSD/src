@@ -1,4 +1,4 @@
-/* $NetBSD: strtonum.h,v 1.1.2.2 2007/05/08 10:45:03 pavel Exp $ */
+/* $NetBSD: strtonum.h,v 1.1.2.3 2008/08/29 21:24:18 bouyer Exp $ */
 
 long long strtonum(const char *, long long, long long, const char **);
 
