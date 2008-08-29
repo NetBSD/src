@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.20 2008/08/28 23:42:31 rtr Exp $
+# $NetBSD: mi,v 1.21 2008/08/29 02:08:00 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -46,10 +46,12 @@
 ./usr/X11R7/man/cat1/Xorg.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xserver.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xvfb.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat5/SecurityPolicy.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat5/xorg.conf.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/man1/Xmark.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xnest.1  			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xorg.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xserver.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xvfb.1			-unknown-	.man,xorg
+./usr/X11R7/man/man5/SecurityPolicy.5		-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5		-unknown-	.man,xorg

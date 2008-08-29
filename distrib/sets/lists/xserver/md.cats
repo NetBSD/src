@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.16 2008/08/29 01:06:34 mrg Exp $
+# $NetBSD: md.cats,v 1.17 2008/08/29 02:08:00 rtr Exp $
 ./usr/X11R6/bin/X	-unknown-	x11
 ./usr/X11R6/bin/XFree86	-unknown-	x11
 ./usr/X11R6/bin/gtf	-unknown-	x11
@@ -289,3 +289,6 @@
 ./usr/X11R6/man/man4/wacom.4			-unknown-		.man	x11
 ./usr/X11R6/man/man4/wsfb.4			-unknown-		.man	x11
 ./usr/X11R6/man/man5/XF86Config.5		-unknown-		.man	x11
+./usr/X11R7/lib/X11/doc/README.DRI	-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.fonts	-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess	-unknown-	xorg
