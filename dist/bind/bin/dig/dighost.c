@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.1.1.2.4.2 2008/07/24 22:17:45 ghen Exp $	*/
+/*	$NetBSD: dighost.c,v 1.1.1.2.4.3 2008/08/29 20:34:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dighost.c,v 1.221.2.19.2.46 2008/01/17 23:45:26 tbox Exp */
+/* Id: dighost.c,v 1.221.2.19.2.46.4.2 2008/07/23 23:16:25 marka Exp */
 
 /*
  * Notice to programmers:  Do not use this code as an example of how to
@@ -2049,14 +2049,15 @@ send_tcp_connect(dig_query_t *query) {
 	sockcount++;
 	debug("sockcount=%d", sockcount);
 	if (specified_source)
-		result = isc_socket_bind(query->sock, &bind_address);
+		result = isc_socket_bind(query->sock, &bind_address,
+					 ISC_SOCKET_REUSEADDRESS);
 	else {
 		if ((isc_sockaddr_pf(&query->sockaddr) == AF_INET) &&
 		    have_ipv4)
 			isc_sockaddr_any(&bind_any);
 		else
 			isc_sockaddr_any6(&bind_any);
-		result = isc_socket_bind(query->sock, &bind_any);
+		result = isc_socket_bind(query->sock, &bind_any, 0);
 	}
 	check_result(result, "isc_socket_bind");
 	bringup_timer(query, TCP_TIMEOUT);
@@ -2103,11 +2104,12 @@ send_udp(dig_query_t *query) {
 		sockcount++;
 		debug("sockcount=%d", sockcount);
 		if (specified_source) {
-			result = isc_socket_bind(query->sock, &bind_address);
+			result = isc_socket_bind(query->sock, &bind_address,
+						 ISC_SOCKET_REUSEADDRESS);
 		} else {
 			isc_sockaddr_anyofpf(&bind_any,
 					isc_sockaddr_pf(&query->sockaddr));
-			result = isc_socket_bind(query->sock, &bind_any);
+			result = isc_socket_bind(query->sock, &bind_any, 0);
 		}
 		check_result(result, "isc_socket_bind");
 
