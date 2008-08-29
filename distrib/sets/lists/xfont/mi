@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.26 2008/08/28 23:40:11 rtr Exp $
+# $NetBSD: mi,v 1.27 2008/08/29 01:56:16 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4534,7 +4534,7 @@
 ./usr/X11R7/lib/X11/fonts/100dpi/UTBI__18.bdf		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/100dpi/UTBI__24-ISO8859-1.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/100dpi/UTBI__24-ISO8859-10.pcf.gz		xfont	share,xorg
-./usr/X11R7/lib/X11/fonts/100dpi/UTBI__24-ISO8859-13.pcf.gz		xfont	share,xorg
+./usr/X11R7/lib/X11/fonts/100dpi/UTBI__24-ISO8859-13.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/100dpi/UTBI__24-ISO8859-14.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/100dpi/UTBI__24-ISO8859-15.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/100dpi/UTBI__24-ISO8859-2.pcf.gz		xfont	share,xorg
@@ -5240,7 +5240,7 @@
 ./usr/X11R7/lib/X11/fonts/100dpi/luBIS14-ISO8859-4.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/100dpi/luBIS14-ISO8859-9.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/100dpi/luBIS14.bdf		xfont	share,xorg
-./usr/X11R7/lib/X11/fonts/100dpi/luBIS18-ISO8859-1.pcf.gz		xfont	share,xorg
+./usr/X11R7/lib/X11/fonts/100dpi/luBIS18-ISO8859-1.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/100dpi/luBIS18-ISO8859-10.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/100dpi/luBIS18-ISO8859-13.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/100dpi/luBIS18-ISO8859-14.pcf.gz		xfont	share,xorg
@@ -7459,7 +7459,7 @@
 ./usr/X11R7/lib/X11/fonts/75dpi/lubBI10-ISO8859-15.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/75dpi/lubBI10-ISO8859-2.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/75dpi/lubBI10-ISO8859-3.pcf.gz		xfont	share,xorg
-./usr/X11R7/lib/X11/fonts/75dpi/lubBI10-ISO8859-4.pcf.gz		xfont	share,xorg
+./usr/X11R7/lib/X11/fonts/75dpi/lubBI10-ISO8859-4.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/75dpi/lubBI10-ISO8859-9.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/75dpi/lubBI10.bdf		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/75dpi/lubBI12-ISO8859-1.pcf.gz		xfont	share,xorg
@@ -8414,7 +8414,7 @@
 ./usr/X11R7/lib/X11/fonts/encodings/viscii1.1-1.enc.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/10x20-ISO8859-1.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/10x20-ISO8859-10.pcf.gz		xfont	share,xorg
-./usr/X11R7/lib/X11/fonts/misc/10x20-ISO8859-11.pcf.gz		xfont	share,xorg
+./usr/X11R7/lib/X11/fonts/misc/10x20-ISO8859-11.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/10x20-ISO8859-13.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/10x20-ISO8859-14.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/10x20-ISO8859-15.pcf.gz		xfont	share,xorg
@@ -8643,7 +8643,7 @@
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-1.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-10.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-13.pcf.gz		xfont	share,xorg
-./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-14.pcf.gz		xfont	share,xorg
+./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-14.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-15.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-16.pcf.gz		xfont	share,xorg
 ./usr/X11R7/lib/X11/fonts/misc/8x13-ISO8859-2.pcf.gz		xfont	share,xorg
