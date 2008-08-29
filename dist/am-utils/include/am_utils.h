@@ -1,4 +1,4 @@
-/*	$NetBSD: am_utils.h,v 1.14 2006/02/05 16:28:56 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.15 2008/08/29 00:34:04 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -473,8 +473,10 @@ extern void dplog(const char *fmt, ...)
 
 #define		amuDebug(x)	(0)
 
-#ifdef __GNUC__
+#if defined(__GNUC__)
 #define		dlog(fmt...)
+#elif defined(__PCC__)
+#define		dlog(...)
 #else  /* not __GNUC__ */
 /* this define means that we CCP leaves code behind the (list,of,args)  */
 #define		dlog
