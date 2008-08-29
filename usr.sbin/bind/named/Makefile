@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2008/06/21 18:59:36 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2008/08/29 00:02:24 gmcgarry Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ LINKS=	${BINDIR}/named ${BINDIR}/lwresd
 DIST=${IDIST}/bin/named
 CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include
 
-.if ${HAVE_GCC} == 4
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 .for f in client
 COPTS.${f}.c+=  -fno-strict-aliasing
 .endfor

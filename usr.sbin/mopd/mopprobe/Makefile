@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 2006/05/12 01:54:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2008/08/29 00:02:25 gmcgarry Exp $
 
 PROG=	mopprobe
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
-COPTS+=	-Wno-pointer-sign
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+COPTS.mopprobe.c+=	-Wno-pointer-sign
 .endif

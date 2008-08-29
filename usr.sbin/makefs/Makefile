@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2006/12/16 12:59:17 bouyer Exp $
+#	$NetBSD: Makefile,v 1.22 2008/08/29 00:02:25 gmcgarry Exp $
 #
 
 .include <bsd.own.mk>
@@ -35,7 +35,7 @@ LDADD+= -lutil
 WARNS?=	3
 
 .if !defined(HOSTPROGNAME)
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 .for f in cd9660_debug cd9660_write
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor

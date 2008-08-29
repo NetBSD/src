@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2006/07/01 05:54:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2008/08/29 00:02:21 gmcgarry Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -48,7 +48,7 @@ const.h: const.c
 SUBDIR+=USD.doc
 .endif
 
-.if ${HAVE_GCC} == 4 && ${MACHINE_ARCH} == "vax"
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 4 && ${MACHINE_ARCH} == "vax"
 COPTS.parse.c+=	-O0
 .endif
 

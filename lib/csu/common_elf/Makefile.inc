@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 2008/07/21 15:34:58 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2008/08/29 00:02:22 gmcgarry Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ CPPFLAGS+=	-DDWARF2_EH
 CPPFLAGS+=	-DJCR
 CPPFLAGS+=	-DDSO_HANDLE
 
-.if ${HAVE_GCC} > 3
+.if defined(HAVE_GCC) && ${HAVE_GCC} > 3
 CFLAGS+=	-fno-unit-at-a-time
 .endif
 

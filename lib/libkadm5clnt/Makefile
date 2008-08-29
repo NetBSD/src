@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2008/03/22 08:37:26 mlelstv Exp $
+# $NetBSD: Makefile,v 1.25 2008/08/29 00:02:22 gmcgarry Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -89,7 +89,7 @@ CLEANFILES=	kadm5_err.h kadm5_err.c
 	fi
 .endif
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.marshall.c+=	-Wno-pointer-sign
 .endif
 

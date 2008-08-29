@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2008/08/10 08:06:23 simonb Exp $
+#	$NetBSD: Makefile,v 1.35 2008/08/29 00:02:23 gmcgarry Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
@@ -33,7 +33,7 @@ MLINKS+=dump.8 rdump.8
 
 .PATH:  ${NETBSDSRCDIR}/sys/ufs/ffs
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.ffs_inode.c+=	-Wno-pointer-sign
 .endif
 
