@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: openpam.h,v 1.10 2008/01/31 20:07:46 christos Exp $
+ * $Id: openpam.h,v 1.11 2008/08/29 00:35:25 gmcgarry Exp $
  */
 
 #ifndef SECURITY_OPENPAM_H_INCLUDED
@@ -320,7 +320,7 @@ struct pam_module {
 #define DATA_SET(a, b) __link_set_add_data(a, b)
 #endif
 
-#if defined(__GNUC__) && !defined(NO_STATIC_MODULES)
+#if (defined(__GNUC__) || defined(__PCC__)) && !defined(NO_STATIC_MODULES)
 /* gcc, static linking */
 # include <sys/cdefs.h>
 # ifdef __FreeBSD__
