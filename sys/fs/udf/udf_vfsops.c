@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.48 2008/08/08 18:25:56 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.49 2008/08/29 13:55:45 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.48 2008/08/08 18:25:56 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.49 2008/08/29 13:55:45 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -310,8 +310,10 @@ free_udf_mountinfo(struct mount *mp)
 
 		mutex_destroy(&ump->ihash_lock);
 		mutex_destroy(&ump->get_node_lock);
-
+		mutex_destroy(&ump->logvol_mutex);
 		mutex_destroy(&ump->allocate_mutex);
+		cv_destroy(&ump->dirtynodes_cv);
+
 		MPFREE(ump->vat_table, M_UDFVOLD);
 
 		free(ump, M_UDFMNT);
