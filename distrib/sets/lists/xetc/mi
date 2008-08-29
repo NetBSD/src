@@ -1,10 +1,13 @@
-# $NetBSD: mi,v 1.6 2008/08/28 23:46:42 rtr Exp $
+# $NetBSD: mi,v 1.7 2008/08/29 00:20:55 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/X11/fs/config		-unknown-	x11
+./etc/X11/fs/config		-unknown-	xorg
 ./etc/X11/lbxproxy/AtomControl		-unknown-	x11
+./etc/X11/lbxproxy/AtomControl		-unknown-	xorg
 ./etc/X11/proxymngr/pmconfig		-unknown-	x11
+./etc/X11/proxymngr/pmconfig		-unknown-	xorg
 ./etc/X11/rstart/commands/@List		-unknown-	x11
 ./etc/X11/rstart/commands/ListContexts		-unknown-	x11
 ./etc/X11/rstart/commands/ListGenericCommands		-unknown-	x11
@@ -20,6 +23,7 @@
 ./etc/X11/rstart/contexts/x11		-unknown-	x11
 ./etc/X11/rstart/contexts/x11r6		-unknown-	x11
 ./etc/X11/twm/system.twmrc		-unknown-	x11
+./etc/X11/twm/system.twmrc		-unknown-	xorg
 ./etc/X11/xdm/GiveConsole		-unknown-	x11
 ./etc/X11/xdm/GiveConsole		-unknown-	xorg
 ./etc/X11/xdm/TakeConsole		-unknown-	x11
@@ -45,8 +49,12 @@
 ./etc/X11/xdm/xorg-bw.xpm		-unknown-	xorg
 ./etc/X11/xdm/xorg.xpm		-unknown-	xorg
 ./etc/X11/xinit/xinitrc		-unknown-	x11
+./etc/X11/xinit/xinitrc		-unknown-	xorg
 ./etc/X11/xserver/SecurityPolicy		-unknown-	x11
 ./etc/X11/xsm/system.xsm		-unknown-	x11
+./etc/X11/xsm/system.xsm		-unknown-	xorg
 ./etc/fonts/fonts.conf		-unknown-	x11
+./etc/fonts/fonts.conf		-unknown-	xorg
 ./etc/fonts/fonts.dtd		-unknown-	x11
+./etc/fonts/fonts.dtd		-unknown-	xorg
 ./etc/mtree/set.xetc					xetc-sys-root	x11
