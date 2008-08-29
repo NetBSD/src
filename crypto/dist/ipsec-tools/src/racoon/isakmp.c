@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.38 2008/08/12 12:45:55 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.39 2008/08/29 00:31:37 gmcgarry Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -137,7 +137,7 @@ extern caddr_t val2str(const char *, size_t);
 static int (*ph1exchange[][2][PHASE1ST_MAX])
 	__P((struct ph1handle *, vchar_t *)) = {
  /* error */
- { {}, {}, },
+ { { 0 }, { 0 }, },
  /* Identity Protection exchange */
  {
   { nostate1, ident_i1send, nostate1, ident_i2recv, ident_i2send,
@@ -164,7 +164,7 @@ static int (*ph1exchange[][2][PHASE1ST_MAX])
 static int (*ph2exchange[][2][PHASE2ST_MAX])
 	__P((struct ph2handle *, vchar_t *)) = {
  /* error */
- { {}, {}, },
+ { { 0 }, { 0 }, },
  /* Quick mode for IKE */
  {
   { nostate2, nostate2, quick_i1prep, nostate2, quick_i1send,
