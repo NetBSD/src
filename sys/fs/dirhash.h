@@ -1,4 +1,4 @@
-/* $NetBSD: dirhash.h,v 1.1 2008/08/29 14:20:26 reinoud Exp $ */
+/* $NetBSD: dirhash.h,v 1.2 2008/08/29 14:54:54 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: dirhash.h,v 1.1 2008/08/29 14:20:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dirhash.h,v 1.2 2008/08/29 14:54:54 reinoud Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,10 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: dirhash.h,v 1.1 2008/08/29 14:20:26 reinoud Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <dev/clock_subr.h>
-
-#if defined(_KERNEL_OPT)
-#include "opt_udf.h"
-#endif
 
 
 #ifndef DIRHASH_SIZE
