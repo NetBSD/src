@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strtok.3	8.2 (Berkeley) 2/3/94
-.\"	$NetBSD: strtok.3,v 1.22 2006/10/16 08:48:45 wiz Exp $
+.\"	$NetBSD: strtok.3,v 1.23 2008/08/29 05:48:40 dholland Exp $
 .\"
 .Dd August 11, 2002
 .Dt STRTOK 3
@@ -88,7 +88,7 @@ which points to a user-provided pointer which is used by
 to store state which needs to be kept between calls to scan the same string;
 unlike
 .Fn strtok ,
-it is not necessary to delineate tokenizing to a single string at a time
+it is not necessary to limit tokenizing to a single string at a time
 when using
 .Fn strtok_r .
 .Sh EXAMPLES
