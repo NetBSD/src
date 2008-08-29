@@ -1,10 +1,10 @@
 #	$OpenBSD: Makefile,v 1.8 2006/11/26 11:31:08 deraadt Exp $
 
 PROG=	bioctl
-SRCS=   bioctl.c strtonum.c
+SRCS=   bioctl.c strtonum.c dehumanize_number.c
 MAN=	bioctl.8
 
-DPADD=  ${LIBUTIL}
-LDADD=  -lutil
+WARNS=	4
+CPPFLAGS+=-I/usr/src/sys
 
 .include <bsd.prog.mk>
