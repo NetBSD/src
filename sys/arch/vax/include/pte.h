@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.21 2005/12/24 22:45:40 perry Exp $	  */
+/*	$NetBSD: pte.h,v 1.22 2008/08/29 18:25:02 matt Exp $	  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -76,21 +76,15 @@ extern pt_entry_t *Sysmap;
  */
 #endif
 
-#ifdef __ELF__
-#define VAX_SYSMAP	"Sysmap"
-#else
-#define VAX_SYSMAP	"_Sysmap"
-#endif
-
 #ifdef __GNUC__
 #define kvtopte(va) ({ \
 	struct pte *r; \
-	__asm("extzv $9,$21,%1,%0;moval *" VAX_SYSMAP "[%0],%0" : "=r"(r) : "g"(va)); \
+	__asm("extzv $9,$21,%1,%0;moval *Sysmap[%0],%0" : "=r"(r) : "g"(va)); \
 	r; \
 })
 #define kvtophys(va) ({ \
 	paddr_t r; \
-	__asm("extzv $9,$21,%1,%0;ashl $9,*" VAX_SYSMAP "[%0],%0;insv %1,$0,$9,%0" \
+	__asm("extzv $9,$21,%1,%0;ashl $9,*Sysmap[%0],%0;insv %1,$0,$9,%0" \
 	    : "=&r"(r) : "g"(va) : "cc"); \
 	r; \
 })
