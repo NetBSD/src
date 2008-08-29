@@ -32384,7 +32384,7 @@ case "$host" in
 	*-solaris2.9)
 		hack_shutup_in6addr_init_macros=yes
 		;;
-	*-solaris2.10)
+	*-solaris2.1[0-9])
 		hack_shutup_in6addr_init_macros=yes
 		;;
 esac

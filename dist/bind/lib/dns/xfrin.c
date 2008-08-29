@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrin.c,v 1.1.1.3.4.2 2008/07/16 01:56:48 snj Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.1.1.3.4.3 2008/08/29 20:58:20 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrin.c,v 1.135.18.16 2007/10/31 01:59:47 marka Exp */
+/* Id: xfrin.c,v 1.135.18.16.10.3 2008/07/23 23:16:43 marka Exp */
 
 /*! \file */
 
@@ -864,7 +864,8 @@ xfrin_start(dns_xfrin_ctx_t *xfr) {
 				isc_sockettype_tcp,
 				&xfr->socket));
 #ifndef BROKEN_TCP_BIND_BEFORE_CONNECT
-	CHECK(isc_socket_bind(xfr->socket, &xfr->sourceaddr));
+	CHECK(isc_socket_bind(xfr->socket, &xfr->sourceaddr,
+			      ISC_SOCKET_REUSEADDRESS));
 #endif
 	CHECK(isc_socket_connect(xfr->socket, &xfr->masteraddr, xfr->task,
 				 xfrin_connect_done, xfr));
