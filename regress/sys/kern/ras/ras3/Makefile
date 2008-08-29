@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/09/02 21:27:41 martin Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/29 00:02:23 gmcgarry Exp $
 
 NOMAN=	#defined
 PROG=	ras3
@@ -13,6 +13,6 @@ regress:
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 CFLAGS+=	-fno-reorder-blocks
 .endif
