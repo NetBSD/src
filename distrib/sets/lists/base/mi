@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.765 2008/08/28 09:01:23 mrg Exp $
+# $NetBSD: mi,v 1.766 2008/08/29 05:34:07 lukem Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -435,6 +435,11 @@
 ./usr/X11R6/man/cat4				base-x11-root
 ./usr/X11R6/man/cat5				base-x11-root
 ./usr/X11R6/man/cat7				base-x11-root
+./usr/X11R6/man/html1				base-x11-root
+./usr/X11R6/man/html3				base-x11-root
+./usr/X11R6/man/html4				base-x11-root
+./usr/X11R6/man/html5				base-x11-root
+./usr/X11R6/man/html7				base-x11-root
 ./usr/X11R6/man/man1				base-x11-root
 ./usr/X11R6/man/man3				base-x11-root
 ./usr/X11R6/man/man4				base-x11-root
@@ -604,6 +609,11 @@
 ./usr/X11R7/man/cat4				base-x11-root
 ./usr/X11R7/man/cat5				base-x11-root
 ./usr/X11R7/man/cat7				base-x11-root
+./usr/X11R7/man/html1				base-x11-root
+./usr/X11R7/man/html3				base-x11-root
+./usr/X11R7/man/html4				base-x11-root
+./usr/X11R7/man/html5				base-x11-root
+./usr/X11R7/man/html7				base-x11-root
 ./usr/X11R7/man/man1				base-x11-root
 ./usr/X11R7/man/man3				base-x11-root
 ./usr/X11R7/man/man4				base-x11-root
