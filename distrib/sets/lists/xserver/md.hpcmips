@@ -1,5 +1,5 @@
-# $NetBSD: md.hpcmips,v 1.11 2008/08/29 01:06:34 mrg Exp $
+# $NetBSD: md.hpcmips,v 1.12 2008/08/29 02:21:48 mrg Exp $
 ./usr/X11R6/bin/X	-unknown-	x11
 ./usr/X11R6/bin/Xhpc	-unknown-	x11
-./usr/X11R6/man/cat1/Xhpc.0			-unknown-		.cat	x11
-./usr/X11R6/man/man1/Xhpc.1			-unknown-		.man	x11
+./usr/X11R6/man/cat1/Xhpc.0			-unknown-		.cat,x11
+./usr/X11R6/man/man1/Xhpc.1			-unknown-		.man,x11
