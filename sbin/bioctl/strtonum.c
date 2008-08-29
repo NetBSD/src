@@ -1,4 +1,4 @@
-/*	$NetBSD: strtonum.c,v 1.1.2.2 2007/05/08 10:45:02 pavel Exp $ */
+/*	$NetBSD: strtonum.c,v 1.1.2.3 2008/08/29 21:24:18 bouyer Exp $ */
 /*	$OpenBSD: strtonum.c,v 1.6 2004/08/03 19:38:01 millert Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: strtonum.c,v 1.1.2.2 2007/05/08 10:45:02 pavel Exp $");
+__RCSID("$NetBSD: strtonum.c,v 1.1.2.3 2008/08/29 21:24:18 bouyer Exp $");
 #endif
 
 #include <errno.h>
