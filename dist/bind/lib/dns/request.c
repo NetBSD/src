@@ -1,10 +1,10 @@
-/*	$NetBSD: request.c,v 1.1.1.3.4.1 2007/05/17 00:40:44 jdc Exp $	*/
+/*	$NetBSD: request.c,v 1.1.1.3.4.2 2008/08/29 20:58:20 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: request.c,v 1.72.18.5 2006/08/21 00:40:53 marka Exp */
+/* Id: request.c,v 1.72.18.5.42.2 2008/07/23 07:28:56 tbox Exp */
 
 /*! \file */
 
@@ -520,11 +520,11 @@ create_tcp_dispatch(dns_requestmgr_t *requestmgr, isc_sockaddr_t *srcaddr,
 	if (srcaddr == NULL) {
 		isc_sockaddr_anyofpf(&bind_any,
 				     isc_sockaddr_pf(destaddr));
-		result = isc_socket_bind(socket, &bind_any);
+		result = isc_socket_bind(socket, &bind_any, 0);
 	} else {
 		src = *srcaddr;
 		isc_sockaddr_setport(&src, 0);
-		result = isc_socket_bind(socket, &src);
+		result = isc_socket_bind(socket, &src, 0);
 	}
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;

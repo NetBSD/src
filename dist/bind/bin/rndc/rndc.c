@@ -1,10 +1,10 @@
-/*	$NetBSD: rndc.c,v 1.1.1.4.4.1 2007/05/17 00:35:27 jdc Exp $	*/
+/*	$NetBSD: rndc.c,v 1.1.1.4.4.2 2008/08/29 20:58:17 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc.c,v 1.96.18.17 2006/08/04 03:03:41 marka Exp */
+/* Id: rndc.c,v 1.96.18.17.42.3 2008/07/23 23:16:43 marka Exp */
 
 /*! \file */
 
@@ -402,10 +402,10 @@ rndc_startconnect(isc_sockaddr_t *addr, isc_task_t *task) {
 	DO("create socket", isc_socket_create(socketmgr, pf, type, &sock));
 	switch (isc_sockaddr_pf(addr)) {
 	case AF_INET:
-		DO("bind socket", isc_socket_bind(sock, &local4));
+		DO("bind socket", isc_socket_bind(sock, &local4, 0));
 		break;
 	case AF_INET6:
-		DO("bind socket", isc_socket_bind(sock, &local6));
+		DO("bind socket", isc_socket_bind(sock, &local6, 0));
 		break;
 	default:
 		break;
