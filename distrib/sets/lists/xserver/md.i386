@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.36 2008/08/28 23:42:31 rtr Exp $
+# $NetBSD: md.i386,v 1.37 2008/08/29 02:08:00 rtr Exp $
 ./usr/X11R6/bin/X		-unknown-	x11
 ./usr/X11R6/bin/XFree86		-unknown-	x11
 ./usr/X11R6/bin/Xvfb		-unknown-	x11
@@ -320,6 +320,9 @@
 ./usr/X11R7/bin/Xnest			-unknown-	xorg
 ./usr/X11R7/bin/Xorg			-unknown-	xorg
 ./usr/X11R7/bin/Xvfb			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.DRI		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.fonts		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg
