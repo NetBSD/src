@@ -1,4 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.3 2004/03/28 09:25:49 jmc Exp $
-./usr/X11R6/bin/Xvfb
-./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
-./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
+# $NetBSD: md.mvme68k,v 1.4 2008/08/29 01:06:34 mrg Exp $
+./usr/X11R6/bin/Xvfb	-unknown-	x11
+./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat	x11
+./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man	x11
