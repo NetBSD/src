@@ -1,4 +1,4 @@
-# $NetBSD: md.hp300,v 1.4 2008/08/29 01:06:34 mrg Exp $
+# $NetBSD: md.hp300,v 1.5 2008/08/29 02:21:48 mrg Exp $
 ./usr/X11R6/bin/Xvfb	-unknown-	x11
-./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat	x11
-./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man	x11
+./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat,x11
+./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man,x11
