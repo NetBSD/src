@@ -105,7 +105,7 @@ char *tgetstr(const char *, char **);
 #include "screen.h"
 #include "boolean.h"
 
-#define putcap(str)     (void)((str) != NULL ? tputs(str, 1, putstdout) : 0)
+#define putcap(str)     ((str) != NULL ? (void)tputs(str, 1, putstdout) : (void)0)
 
 extern char *myname;
 
