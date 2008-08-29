@@ -1,4 +1,4 @@
-/*	$NetBSD: driver_netbsd.c,v 1.6 2008/06/15 18:33:32 christos Exp $	*/
+/*	$NetBSD: driver_netbsd.c,v 1.7 2008/08/29 00:53:15 gmcgarry Exp $	*/
 
 /*
  * WPA Supplicant - driver interaction with BSD net80211 layer
@@ -24,13 +24,6 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
-#include "common.h"
-#include "driver.h"
-#include "eloop.h"
-#include "ieee802_11_defs.h"
-#include "l2_packet.h"
-#include "wpa.h"
-
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -38,6 +31,15 @@
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_crypto.h>
 #include <net80211/ieee80211_ioctl.h>
+
+#undef WPA_OUI_TYPE		/* defined in sys headers and local header */
+
+#include "common.h"
+#include "driver.h"
+#include "eloop.h"
+#include "ieee802_11_defs.h"
+#include "l2_packet.h"
+#include "wpa.h"
 
 struct wpa_driver_bsd_data {
 	int	sock;			/* open socket for 802.11 ioctls */
