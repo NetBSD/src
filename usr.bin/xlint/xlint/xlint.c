@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.39 2008/07/31 15:25:18 christos Exp $ */
+/* $NetBSD: xlint.c,v 1.40 2008/08/29 00:44:48 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.39 2008/07/31 15:25:18 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.40 2008/08/29 00:44:48 gmcgarry Exp $");
 #endif
 
 #include <sys/param.h>
@@ -350,6 +350,7 @@ main(int argc, char *argv[])
 	appcstrg(&cflags, "-D__extension__(x)=/*NOSTRICT*/0");
 #else
 	appcstrg(&cflags, "-U__GNUC__");
+	appcstrg(&cflags, "-U__PCC__");
 #endif
 #if 0
 	appcstrg(&cflags, "-Wp,-$");
