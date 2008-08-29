@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.h,v 1.6 2008/06/18 07:12:04 mgrooms Exp $	*/
+/*	$NetBSD: admin.h,v 1.7 2008/08/29 00:30:15 gmcgarry Exp $	*/
 
 /* Id: admin.h,v 1.11 2005/06/19 22:37:47 manubsd Exp */
 
@@ -47,11 +47,13 @@ struct admin_com {
 	u_int16_t ac_len;	/* total packet length including data */
 	u_int16_t ac_cmd;
 	union {
-		int16_t ac_errno;
-		uint16_t ac_version;
-	};
+		int16_t ac_un_errno;
+		uint16_t ac_un_version;
+	} u;
 	u_int16_t ac_proto;
 };
+#define ac_errno u.ac_un_errno
+#define ac_version u.ac_un_version
 
 /*
  * Version field in request is valid.
