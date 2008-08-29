@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.59 2008/08/28 23:32:47 rtr Exp $
+# $NetBSD: mi,v 1.60 2008/08/29 02:08:00 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1147,6 +1147,7 @@
 ./usr/X11R7/bin/xhost		-unknown-	xorg
 ./usr/X11R7/bin/xinit		-unknown-	xorg
 ./usr/X11R7/bin/xkbbell		-unknown-	xorg
+./usr/X11R7/bin/xkbcomp			-unknown-	xorg
 ./usr/X11R7/bin/xkbcomp		-unknown-	xorg
 ./usr/X11R7/bin/xkbevd		-unknown-	xorg
 ./usr/X11R7/bin/xkbprint		-unknown-	xorg
@@ -1193,6 +1194,9 @@
 ./usr/X11R7/bin/xwd		-unknown-	xorg
 ./usr/X11R7/bin/xwininfo		-unknown-	xorg
 ./usr/X11R7/bin/xwud		-unknown-	xorg
+./usr/X11R7/lib/X11/XErrorDB			-unknown-	xorg
+./usr/X11R7/lib/X11/XKeysymDB			-unknown-	xorg
+./usr/X11R7/lib/X11/Xcms.txt			-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Beforelight		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Bitmap		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Bitmap-color		-unknown-	xorg
@@ -1266,7 +1270,7 @@
 ./usr/X11R7/lib/X11/locale/iso8859-10/XI18N_OBJS		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/iso8859-10/XLC_LOCALE		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/iso8859-11/Compose		-unknown-	xorg
-./usr/X11R7/lib/X11/locale/iso8859-11/XI18N_OBJS		-unknown-	xorg
+./usr/X11R7/lib/X11/locale/iso8859-11/XI18N_OBJS		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/iso8859-11/XLC_LOCALE		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/iso8859-13/Compose		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/iso8859-13/XI18N_OBJS		-unknown-	xorg
@@ -1404,6 +1408,8 @@
 ./usr/X11R7/lib/X11/locale/zh_TW.big5/XLC_LOCALE		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/zh_TW/Compose		-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/zh_TW/XI18N_OBJS		-unknown-	xorg
+./usr/X11R7/lib/X11/locale/zh_TW/XLC_LOCALE	-unknown-		share,xorg
+./usr/X11R7/lib/X11/rgb.txt			-unknown-	xorg
 ./usr/X11R7/lib/X11/xedit/lisp/indent.lsp		-unknown-	xorg
 ./usr/X11R7/lib/X11/xedit/lisp/lisp.lsp		-unknown-	xorg
 ./usr/X11R7/lib/X11/xedit/lisp/progmodes/c.lsp		-unknown-	xorg
@@ -1784,6 +1790,9 @@
 ./usr/X11R7/lib/X11/xkb/types/mousekeys		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/types/numpad		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/types/pc		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/xkbcomp		-unknown-	xorg
+./usr/X11R7/lib/X11/xman.help		-unknown-	xorg
+./usr/X11R7/libexec/chooser		-unknown-	xorg
 ./usr/X11R7/man/cat1/appres.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/atobm.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/bdftopcf.0		-unknown-	.cat,xorg
@@ -1902,6 +1911,7 @@
 ./usr/X11R7/man/cat1/xvinfo.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xwd.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xwininfo.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xwud.0			-unknown-		.cat,xorg
 ./usr/X11R7/man/man1/appres.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/atobm.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/bdftopcf.1		-unknown-	.man,xorg
@@ -2022,8 +2032,19 @@
 ./usr/X11R7/man/man1/xwd.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xwininfo.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xwud.1		-unknown-	.man,xorg
+./usr/X11R7/man/whatis.db			-unknown-		man,xorg
+./usr/X11R7/share/examples/ssh-askpass/SshAskpass-1337.ad	-unknown-	xorg
+./usr/X11R7/share/examples/ssh-askpass/SshAskpass-NeXTish.ad	-unknown-	xorg
+./usr/X11R7/share/examples/ssh-askpass/SshAskpass-default.ad	-unknown-	xorg
+./usr/X11R7/share/examples/ssh-askpass/SshAskpass-green.ad	-unknown-	xorg
+./usr/X11R7/share/examples/ssh-askpass/SshAskpass-motif.ad	-unknown-	xorg
 ./var/db/obsolete/xbase				xbase-sys-root	x11
+./var/db/obsolete/xbase				xbase-sys-root	xorg
 ./var/db/obsolete/xcomp				xbase-sys-root	x11
+./var/db/obsolete/xcomp				xbase-sys-root	xorg
 ./var/db/obsolete/xetc				xbase-sys-root	x11
+./var/db/obsolete/xetc				xbase-sys-root	xorg
 ./var/db/obsolete/xfont				xbase-sys-root	x11
+./var/db/obsolete/xfont				xbase-sys-root	xorg
 ./var/db/obsolete/xserver			xbase-sys-root	x11
+./var/db/obsolete/xserver			xbase-sys-root	xorg
