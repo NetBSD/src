@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1100 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1101 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -680,3 +680,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[lukem 20080828]
 	hostapd(8), wpa_supplicant(8): Upgrade to 0.6.4 [christos 20080830]
 	postfix(1): Import 2.5.4 [christos 20080830]
+	fsck_ffs(8): add -x/-X options which allows to run fsck_ffs -n on
+		a snapshot of a live filesystem. [bouyer 20080830]
+	daily.conf(5): add a run_fsck_flags configuration variable 
+		to pass extra options to the daily fsck -n.
+		[bouyer 20080830]
