@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.154 2008/08/10 15:31:20 tls Exp $
+# $NetBSD: GENERIC,v 1.155 2008/08/30 03:14:44 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.154 $"
+#ident		"GENERIC-$Revision: 1.155 $"
 
 maxusers	32		# estimated number of users
 
@@ -38,6 +38,9 @@ options 	PLATFORM_NEC_R96	# NEC Express RISCserver, RISCserver 2200
 options 	PLATFORM_NEC_RAX94		# NEC RISCstation 2200 PCI
 options 	PLATFORM_NEC_RD94		# NEC RISCstation 2250
 options 	PLATFORM_SNI_RM200PCI
+
+# CPU related options
+makeoptions	CPUFLAGS="-march=mips3 -mabi=32"
 
 # Standard system options
 
