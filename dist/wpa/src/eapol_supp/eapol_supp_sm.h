@@ -1,6 +1,6 @@
 /*
  * EAPOL supplicant state machines
- * Copyright (c) 2004-2005, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -199,10 +199,19 @@ struct eapol_ctx {
 	 */
 	const char *pkcs11_module_path;
 #endif /* EAP_TLS_OPENSSL */
+
+	/**
+	 * eap_param_needed - Notify that EAP parameter is needed
+	 * @ctx: Callback context (ctx)
+	 * @field: Field name (e.g., "IDENTITY")
+	 * @txt: User readable text describing the required parameter
+	 */
+	void (*eap_param_needed)(void *ctx, const char *field,
+				 const char *txt);
 };
 
 
-struct wpa_ssid;
+struct eap_peer_config;
 
 #ifdef IEEE8021X_EAPOL
 struct eapol_sm *eapol_sm_init(struct eapol_ctx *ctx);
@@ -220,7 +229,8 @@ void eapol_sm_notify_portEnabled(struct eapol_sm *sm, Boolean enabled);
 void eapol_sm_notify_portValid(struct eapol_sm *sm, Boolean valid);
 void eapol_sm_notify_eap_success(struct eapol_sm *sm, Boolean success);
 void eapol_sm_notify_eap_fail(struct eapol_sm *sm, Boolean fail);
-void eapol_sm_notify_config(struct eapol_sm *sm, struct wpa_ssid *config,
+void eapol_sm_notify_config(struct eapol_sm *sm,
+			    struct eap_peer_config *config,
 			    const struct eapol_config *conf);
 int eapol_sm_get_key(struct eapol_sm *sm, u8 *key, size_t len);
 void eapol_sm_notify_logoff(struct eapol_sm *sm, Boolean logoff);
@@ -284,7 +294,7 @@ static inline void eapol_sm_notify_eap_fail(struct eapol_sm *sm, Boolean fail)
 {
 }
 static inline void eapol_sm_notify_config(struct eapol_sm *sm,
-					  struct wpa_ssid *config,
+					  struct eap_peer_config *config,
 					  struct eapol_config *conf)
 {
 }
