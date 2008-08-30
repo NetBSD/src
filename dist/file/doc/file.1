@@ -1,5 +1,3 @@
-.\"	$NetBSD: file.1,v 1.16 2008/08/30 11:39:01 christos Exp $
-.\"
 .\" $File: file.man,v 1.73 2008/02/19 17:58:00 rrt Exp $
 .Dd February 19, 2008
 .Dt FILE 1
@@ -99,9 +97,9 @@ Any file with some invariant identifier at a small fixed
 offset into the file can usually be described in this way.
 The information identifying these files is read from the compiled
 magic file
-.Pa /usr/local/share/file/magic.mgc ,
+.Pa /usr/tools/share/file/magic.mgc ,
 or the files in the directory
-.Pa /usr/local/share/file/magic
+.Pa /usr/tools/share/file/magic
 if the compiled file does not exist. In addition, if
 .Pa $HOME/.magic.mgc
 or
@@ -310,10 +308,10 @@ the output. This does not affect the separator which is still printed.
 Print a help message and exit.
 .El
 .Sh FILES
-.Bl -tag -width /usr/local/share/file/magic.mgc -compact
-.It Pa /usr/local/share/file/magic.mgc
+.Bl -tag -width /usr/tools/share/file/magic.mgc -compact
+.It Pa /usr/tools/share/file/magic.mgc
 Default compiled list of magic.
-.It Pa /usr/local/share/file/magic
+.It Pa /usr/tools/share/file/magic
 Directory containing default magic files.
 .El
 .Sh ENVIRONMENT
@@ -408,17 +406,14 @@ If your old
 command uses a magic file,
 keep the old magic file around for comparison purposes
 (rename it to 
-.Pa /usr/local/share/file/magic.orig ).
+.Pa /usr/tools/share/file/magic.orig ).
 .Sh EXAMPLES
 .Bd -literal -offset indent 
-$ file file.c obj/file /dev/wd0a
+$ file file.c file /dev/{wd0a,hda}
 file.c:   C program text
-obj/file: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV),
-          for NetBSD 4.99.12, dynamically linked (uses shared libs),
-	  not stripped
+file:     ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV),
+          dynamically linked (uses shared libs), stripped
 /dev/wd0a: block special (0/0)
-<<<<<<< file.1
-=======
 /dev/hda: block special (3/0)
 
 $ file -s /dev/wd0{b,d}
@@ -443,27 +438,7 @@ file.c:      text/x-c
 file:        application/x-executable
 /dev/hda:    application/x-not-regular-file
 /dev/wd0a:   application/x-not-regular-file
->>>>>>> 1.1.1.14
 
-# file -s /dev/rwd0[abe]
-/dev/rwd0a: x86 boot sector, BSD disklabel
-/dev/rwd0b: data
-.fi
-.na
-/dev/rwd0e:
-Unix Fast File system (little-endian),
-last mounted on /usr,
-last written at Mon Feb 10 13:22:40 2003,
-clean flag 2,
-number of blocks 28754208,
-number of data blocks 27812712,
-number of cylinder groups 3566,
-block size 8192,
-fragment size 1024,
-minimum percentage of free blocks 5,
-rotational delay 0ms,
-disk rotational speed 60rps,
-TIME optimization
 .Ed
 .Sh HISTORY
 There has been a 

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.8 2007/06/07 11:32:47 pooka Exp $	*/
+/*	$NetBSD: print.c,v 1.9 2008/08/30 12:16:52 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -44,9 +44,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: print.c,v 1.59 2007/03/05 02:41:29 christos Exp $")
+FILE_RCSID("@(#)$File: print.c,v 1.63 2008/02/17 19:28:54 rrt Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.8 2007/06/07 11:32:47 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.9 2008/08/30 12:16:52 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -95,8 +95,8 @@ file_mdump(struct magic *m)
 			if (m->str_flags & REGEX_OFFSET_START) 
 				(void) fputc(CHAR_REGEX_OFFSET_START, stderr);
 		}
-		if (m->str_count)
-			(void) fprintf(stderr, "/%u", m->str_count);
+		if (m->str_range)
+			(void) fprintf(stderr, "/%u", m->str_range);
 	}
 	else {
 		if ((m->mask_op & FILE_OPS_MASK) < SZOF(optyp))
@@ -163,6 +163,16 @@ file_mdump(struct magic *m)
 			(void)fprintf(stderr, "%s,",
 			    file_fmttime((uint32_t)m->value.q, 0));
 			break;
+		case FILE_FLOAT:
+		case FILE_BEFLOAT:
+		case FILE_LEFLOAT:
+			(void) fprintf(stderr, "%G", m->value.f);
+			break;
+		case FILE_DOUBLE:
+		case FILE_BEDOUBLE:
+		case FILE_LEDOUBLE:
+			(void) fprintf(stderr, "%G", m->value.d);
+			break;
 		case FILE_DEFAULT:
 			/* XXX - do anything here? */
 			break;
@@ -180,13 +190,15 @@ protected void
 file_magwarn(struct magic_set *ms, const char *f, ...)
 {
 	va_list va;
-	va_start(va, f);
 
 	/* cuz we use stdout for most, stderr here */
 	(void) fflush(stdout); 
 
-	(void) fprintf(stderr, "%s, %lu: Warning ", ms->file,
-	    (unsigned long)ms->line);
+	if (ms->file)
+		(void) fprintf(stderr, "%s, %lu: ", ms->file,
+		    (unsigned long)ms->line);
+	(void) fprintf(stderr, "Warning: ");
+	va_start(va, f);
 	(void) vfprintf(stderr, f, va);
 	va_end(va);
 	(void) fputc('\n', stderr);
@@ -195,7 +207,7 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 protected const char *
 file_fmttime(uint32_t v, int local)
 {
-	char *pp, *rt;
+	char *pp;
 	time_t t = (time_t)v;
 	struct tm *tm;
 
@@ -225,7 +237,6 @@ file_fmttime(uint32_t v, int local)
 		pp = asctime(tm);
 	}
 
-	if ((rt = strchr(pp, '\n')) != NULL)
-		*rt = '\0';
+	pp[strcspn(pp, "\n")] = '\0';
 	return pp;
 }
