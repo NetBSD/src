@@ -92,6 +92,8 @@ void NetworkConfig::paramsFromScanResults(QTreeWidgetItem *sel)
 	authChanged(auth);
 	encrSelect->setCurrentIndex(encr);
 
+	wepEnabled(auth == AUTH_NONE && encr == 1);
+
 	getEapCapa();
 }
 
@@ -134,10 +136,26 @@ void NetworkConfig::addNetwork()
 
 	if (auth == AUTH_WPA_PSK || auth == AUTH_WPA2_PSK) {
 		if (psklen < 8 || psklen > 64) {
-			QMessageBox::warning(this, "wpa_gui",
+			QMessageBox::warning(this, "WPA Pre-Shared Key Error",
 					     "WPA-PSK requires a passphrase "
 					     "of 8 to 63 characters\n"
 					     "or 64 hex digit PSK");
+			pskEdit->setFocus();
+			return;
+		}
+	}
+
+	if (idstrEdit->isEnabled() && !idstrEdit->text().isEmpty()) {
+		QRegExp rx("^(\\w|-)+$");
+		if (rx.indexIn(idstrEdit->text()) < 0) {
+			QMessageBox::warning(this, "Network ID Error",
+					     "Network ID String contains "
+					     "non-word characters.\n"
+					     "It must be a simple string, "
+					     "without spaces, containing\n"
+					     "only characters in this range: "
+					     "[A-Za-z0-9_-]\n");
+			idstrEdit->setFocus();
 			return;
 		}
 	}
@@ -162,11 +180,6 @@ void NetworkConfig::addNetwork()
 
 	setNetworkParam(id, "ssid", ssidEdit->text().toAscii().constData(),
 			true);
-
-	if (idstrEdit->isEnabled())
-		setNetworkParam(id, "id_str",
-				idstrEdit->text().toAscii().constData(),
-				true);
 
 	const char *key_mgmt = NULL, *proto = NULL, *pairwise = NULL;
 	switch (auth) {
@@ -248,6 +261,18 @@ void NetworkConfig::addNetwork()
 		setNetworkParam(id, "wep_tx_keyidx", "2", false);
 	else if (wep3Radio->isEnabled() && wep3Radio->isChecked())
 		setNetworkParam(id, "wep_tx_keyidx", "3", false);
+
+	if (idstrEdit->isEnabled())
+		setNetworkParam(id, "id_str",
+				idstrEdit->text().toAscii().constData(),
+				true);
+
+	if (prioritySpinBox->isEnabled()) {
+		QString prio;
+		prio = prio.setNum(prioritySpinBox->value());
+		setNetworkParam(id, "priority", prio.toAscii().constData(),
+				false);
+	}
 
 	snprintf(cmd, sizeof(cmd), "ENABLE_NETWORK %d", id);
 	reply_len = sizeof(reply);
@@ -368,17 +393,6 @@ void NetworkConfig::paramsFromConfig(int network_id)
 		ssidEdit->setText(reply + 1);
 	}
 
-	snprintf(cmd, sizeof(cmd), "GET_NETWORK %d id_str", network_id);
-	reply_len = sizeof(reply) - 1;
-	if (wpagui->ctrlRequest(cmd, reply, &reply_len) >= 0 &&
-	    reply_len >= 2 && reply[0] == '"') {
-		reply[reply_len] = '\0';
-		pos = strchr(reply + 1, '"');
-		if (pos)
-			*pos = '\0';
-		idstrEdit->setText(reply + 1);
-	}
-
 	snprintf(cmd, sizeof(cmd), "GET_NETWORK %d proto", network_id);
 	reply_len = sizeof(reply) - 1;
 	int wpa = 0;
@@ -409,7 +423,7 @@ void NetworkConfig::paramsFromConfig(int network_id)
 	reply_len = sizeof(reply) - 1;
 	if (wpagui->ctrlRequest(cmd, reply, &reply_len) >= 0) {
 		reply[reply_len] = '\0';
-		if (strstr(reply, "CCMP"))
+		if (strstr(reply, "CCMP") && auth != AUTH_NONE)
 			encr = 1;
 		else if (strstr(reply, "TKIP"))
 			encr = 0;
@@ -536,6 +550,25 @@ void NetworkConfig::paramsFromConfig(int network_id)
 			wep3Radio->setChecked(true);
 			break;
 		}
+	}
+
+	snprintf(cmd, sizeof(cmd), "GET_NETWORK %d id_str", network_id);
+	reply_len = sizeof(reply) - 1;
+	if (wpagui->ctrlRequest(cmd, reply, &reply_len) >= 0 &&
+	    reply_len >= 2 && reply[0] == '"') {
+		reply[reply_len] = '\0';
+		pos = strchr(reply + 1, '"');
+		if (pos)
+			*pos = '\0';
+		idstrEdit->setText(reply + 1);
+	}
+
+	snprintf(cmd, sizeof(cmd), "GET_NETWORK %d priority", network_id);
+	reply_len = sizeof(reply) - 1;
+	if (wpagui->ctrlRequest(cmd, reply, &reply_len) >= 0 && reply_len >= 1)
+	{
+		reply[reply_len] = '\0';
+		prioritySpinBox->setValue(atoi(reply));
 	}
 
 	authSelect->setCurrentIndex(auth);

@@ -452,6 +452,13 @@ int radius_client_send(struct radius_client_data *radius,
 	}
 
 	if (msg_type == RADIUS_ACCT || msg_type == RADIUS_ACCT_INTERIM) {
+		if (conf->acct_server == NULL) {
+			hostapd_logger(radius->ctx, NULL,
+				       HOSTAPD_MODULE_RADIUS,
+				       HOSTAPD_LEVEL_INFO,
+				       "No accounting server configured");
+			return -1;
+		}
 		shared_secret = conf->acct_server->shared_secret;
 		shared_secret_len = conf->acct_server->shared_secret_len;
 		radius_msg_finish_acct(msg, shared_secret, shared_secret_len);
@@ -459,6 +466,13 @@ int radius_client_send(struct radius_client_data *radius,
 		s = radius->acct_sock;
 		conf->acct_server->requests++;
 	} else {
+		if (conf->auth_server == NULL) {
+			hostapd_logger(radius->ctx, NULL,
+				       HOSTAPD_MODULE_RADIUS,
+				       HOSTAPD_LEVEL_INFO,
+				       "No authentication server configured");
+			return -1;
+		}
 		shared_secret = conf->auth_server->shared_secret;
 		shared_secret_len = conf->auth_server->shared_secret_len;
 		radius_msg_finish(msg, shared_secret, shared_secret_len);
@@ -724,15 +738,16 @@ radius_change_server(struct radius_client_data *radius,
 		     struct hostapd_radius_server *oserv,
 		     int sock, int sock6, int auth)
 {
-	struct sockaddr_in serv;
+	struct sockaddr_in serv, claddr;
 #ifdef CONFIG_IPV6
-	struct sockaddr_in6 serv6;
+	struct sockaddr_in6 serv6, claddr6;
 #endif /* CONFIG_IPV6 */
-	struct sockaddr *addr;
-	socklen_t addrlen;
+	struct sockaddr *addr, *cl_addr;
+	socklen_t addrlen, claddrlen;
 	char abuf[50];
 	int sel_sock;
 	struct radius_msg_list *entry;
+	struct hostapd_radius_servers *conf = radius->conf;
 
 	hostapd_logger(radius->ctx, NULL, HOSTAPD_MODULE_RADIUS,
 		       HOSTAPD_LEVEL_INFO,
@@ -802,10 +817,64 @@ radius_change_server(struct radius_client_data *radius,
 		return -1;
 	}
 
+	if (conf->force_client_addr) {
+		switch (conf->client_addr.af) {
+		case AF_INET:
+			os_memset(&claddr, 0, sizeof(claddr));
+			claddr.sin_family = AF_INET;
+			claddr.sin_addr.s_addr = conf->client_addr.u.v4.s_addr;
+			claddr.sin_port = htons(0);
+			cl_addr = (struct sockaddr *) &claddr;
+			claddrlen = sizeof(claddr);
+			break;
+#ifdef CONFIG_IPV6
+		case AF_INET6:
+			os_memset(&claddr6, 0, sizeof(claddr6));
+			claddr6.sin6_family = AF_INET6;
+			os_memcpy(&claddr6.sin6_addr, &conf->client_addr.u.v6,
+				  sizeof(struct in6_addr));
+			claddr6.sin6_port = htons(0);
+			cl_addr = (struct sockaddr *) &claddr6;
+			claddrlen = sizeof(claddr6);
+			break;
+#endif /* CONFIG_IPV6 */
+		default:
+			return -1;
+		}
+
+		if (bind(sel_sock, cl_addr, claddrlen) < 0) {
+			perror("bind[radius]");
+			return -1;
+		}
+	}
+
 	if (connect(sel_sock, addr, addrlen) < 0) {
 		perror("connect[radius]");
 		return -1;
 	}
+
+#ifndef CONFIG_NATIVE_WINDOWS
+	switch (nserv->addr.af) {
+	case AF_INET:
+		claddrlen = sizeof(claddr);
+		getsockname(sel_sock, (struct sockaddr *) &claddr, &claddrlen);
+		wpa_printf(MSG_DEBUG, "RADIUS local address: %s:%u",
+			   inet_ntoa(claddr.sin_addr), ntohs(claddr.sin_port));
+		break;
+#ifdef CONFIG_IPV6
+	case AF_INET6: {
+		claddrlen = sizeof(claddr6);
+		getsockname(sel_sock, (struct sockaddr *) &claddr6,
+			    &claddrlen);
+		wpa_printf(MSG_DEBUG, "RADIUS local address: %s:%u",
+			   inet_ntop(AF_INET6, &claddr6.sin6_addr,
+				     abuf, sizeof(abuf)),
+			   ntohs(claddr6.sin6_port));
+		break;
+	}
+#endif /* CONFIG_IPV6 */
+	}
+#endif /* CONFIG_NATIVE_WINDOWS */
 
 	if (auth)
 		radius->auth_sock = sel_sock;

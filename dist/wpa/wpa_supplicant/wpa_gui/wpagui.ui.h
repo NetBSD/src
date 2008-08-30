@@ -16,6 +16,7 @@
 #include <unistd.h>
 #endif
 
+#include <stdlib.h>
 
 void WpaGui::init()
 {
@@ -466,7 +467,7 @@ void WpaGui::helpContents()
 void WpaGui::helpAbout()
 {
     QMessageBox::about(this, "wpa_gui for wpa_supplicant",
-		       "Copyright (c) 2003-2005,\n"
+		       "Copyright (c) 2003-2008,\n"
 		       "Jouni Malinen <j@w1.fi>\n"
 		       "and contributors.\n"
 		       "\n"

@@ -22,6 +22,8 @@
 #include "eap_peer/eap_methods.h"
 #include "dbus_dict_helpers.h"
 #include "ieee802_11_defs.h"
+#include "wpas_glue.h"
+#include "eapol_supp/eapol_supp_sm.h"
 
 
 /**
@@ -379,15 +381,8 @@ DBusMessage * wpas_dbus_bssid_properties(DBusMessage *message,
 					 struct wpa_scan_res *res)
 {
 	DBusMessage *reply = NULL;
-	char *bssid_data;
 	DBusMessageIter iter, iter_dict;
 	const u8 *ie;
-	size_t len;
-
-	/* dbus needs the address of a pointer to the actual value
-	 * for array types, not the address of the value itself.
-	 */
-	bssid_data = (char *) &res->bssid;
 
 	/* Dump the properties into a dbus message */
 	reply = dbus_message_new_method_return(message);
@@ -397,47 +392,31 @@ DBusMessage * wpas_dbus_bssid_properties(DBusMessage *message,
 		goto error;
 
 	if (!wpa_dbus_dict_append_byte_array(&iter_dict, "bssid",
-					     bssid_data, ETH_ALEN))
+					     (const char *) res->bssid,
+					     ETH_ALEN))
 		goto error;
 
 	ie = wpa_scan_get_ie(res, WLAN_EID_SSID);
 	if (ie) {
-		const char *ssid_data;
-		len = ie[1];
-		ie += 2;
-		ssid_data = (const char *) &ie;
 		if (!wpa_dbus_dict_append_byte_array(&iter_dict, "ssid",
-						     ssid_data, len))
+						     (const char *) (ie + 2),
+						     ie[1]))
 		goto error;
 	}
 
 	ie = wpa_scan_get_vendor_ie(res, WPA_IE_VENDOR_TYPE);
 	if (ie) {
-		const char *wpa_ie_data;
-		len = 2 + ie[1];
-		wpa_ie_data = (const char *) &ie;
 		if (!wpa_dbus_dict_append_byte_array(&iter_dict, "wpaie",
-						     wpa_ie_data, len))
+						     (const char *) ie,
+						     ie[1] + 2))
 			goto error;
 	}
 
 	ie = wpa_scan_get_ie(res, WLAN_EID_RSN);
 	if (ie) {
-		const char *rsn_ie_data;
-		len = 2 + ie[1];
-		rsn_ie_data = (const char *) &ie;
 		if (!wpa_dbus_dict_append_byte_array(&iter_dict, "rsnie",
-						     rsn_ie_data, len))
-			goto error;
-	}
-
-	ie = wpa_scan_get_vendor_ie(res, WPS_IE_VENDOR_TYPE);
-	if (ie) {
-		const char *wps_ie_data;
-		len = 2 + ie[1];
-		wps_ie_data = (const char *) &ie;
-		if (!wpa_dbus_dict_append_byte_array(&iter_dict, "wpsie",
-						     wps_ie_data, len))
+						     (const char *) ie,
+						     ie[1] + 2))
 			goto error;
 	}
 
@@ -456,7 +435,7 @@ DBusMessage * wpas_dbus_bssid_properties(DBusMessage *message,
 	if (!wpa_dbus_dict_append_int32(&iter_dict, "level", res->level))
 		goto error;
 	if (!wpa_dbus_dict_append_int32(&iter_dict, "maxrate",
-					wpa_scan_get_max_rate(res)))
+					wpa_scan_get_max_rate(res) * 500000))
 		goto error;
 
 	if (!wpa_dbus_dict_close_write(&iter, &iter_dict))
@@ -1202,6 +1181,76 @@ out:
 
 
 /**
+ * wpas_dbus_iface_set_smartcard_modules - Set smartcard related module paths
+ * @message: Pointer to incoming dbus message
+ * @wpa_s: wpa_supplicant structure for a network interface
+ * Returns: A dbus message containing a UINT32 indicating success (1) or
+ *          failure (0)
+ *
+ * Handler function for "setSmartcardModules" method call.
+ */
+DBusMessage * wpas_dbus_iface_set_smartcard_modules(
+	DBusMessage *message, struct wpa_supplicant *wpa_s)
+{
+	DBusMessageIter iter, iter_dict;
+	char *opensc_engine_path = NULL;
+	char *pkcs11_engine_path = NULL;
+	char *pkcs11_module_path = NULL;
+	struct wpa_dbus_dict_entry entry;
+
+	if (!dbus_message_iter_init(message, &iter))
+		goto error;
+
+	if (!wpa_dbus_dict_open_read(&iter, &iter_dict))
+		goto error;
+
+	while (wpa_dbus_dict_has_dict_entry(&iter_dict)) {
+		if (!wpa_dbus_dict_get_entry(&iter_dict, &entry))
+			goto error;
+		if (!strcmp(entry.key, "opensc_engine_path") &&
+		    (entry.type == DBUS_TYPE_STRING)) {
+			opensc_engine_path = os_strdup(entry.str_value);
+			if (opensc_engine_path == NULL)
+				goto error;
+		} else if (!strcmp(entry.key, "pkcs11_engine_path") &&
+			   (entry.type == DBUS_TYPE_STRING)) {
+			pkcs11_engine_path = os_strdup(entry.str_value);
+			if (pkcs11_engine_path == NULL)
+				goto error;
+		} else if (!strcmp(entry.key, "pkcs11_module_path") &&
+				 (entry.type == DBUS_TYPE_STRING)) {
+			pkcs11_module_path = os_strdup(entry.str_value);
+			if (pkcs11_module_path == NULL)
+				goto error;
+		} else {
+			wpa_dbus_dict_entry_clear(&entry);
+			goto error;
+		}
+		wpa_dbus_dict_entry_clear(&entry);
+	}
+
+#ifdef EAP_TLS_OPENSSL
+	os_free(wpa_s->conf->opensc_engine_path);
+	wpa_s->conf->opensc_engine_path = opensc_engine_path;
+	os_free(wpa_s->conf->pkcs11_engine_path);
+	wpa_s->conf->pkcs11_engine_path = pkcs11_engine_path;
+	os_free(wpa_s->conf->pkcs11_module_path);
+	wpa_s->conf->pkcs11_module_path = pkcs11_module_path;
+#endif /* EAP_TLS_OPENSSL */
+
+	eapol_sm_deinit(wpa_s->eapol);
+	wpa_supplicant_init_eapol(wpa_s);
+
+	return wpas_dbus_new_success_reply(message);
+
+error:
+	os_free(opensc_engine_path);
+	os_free(pkcs11_engine_path);
+	os_free(pkcs11_module_path);
+	return wpas_dbus_new_invalid_opts_error(message, NULL);
+}
+
+/**
  * wpas_dbus_iface_get_state - Get interface state
  * @message: Pointer to incoming dbus message
  * @wpa_s: wpa_supplicant structure for a network interface
@@ -1224,4 +1273,130 @@ DBusMessage * wpas_dbus_iface_get_state(DBusMessage *message,
 	}
 
 	return reply;
+}
+
+
+/**
+ * wpas_dbus_iface_set_blobs - Store named binary blobs (ie, for certificates)
+ * @message: Pointer to incoming dbus message
+ * @global: %wpa_supplicant global data structure
+ * Returns: A dbus message containing a UINT32 indicating success (1) or
+ *          failure (0)
+ *
+ * Asks wpa_supplicant to internally store a one or more binary blobs.
+ */
+DBusMessage * wpas_dbus_iface_set_blobs(DBusMessage *message,
+					struct wpa_supplicant *wpa_s)
+{
+	DBusMessage *reply = NULL;
+	struct wpa_dbus_dict_entry entry = { .type = DBUS_TYPE_STRING };
+	DBusMessageIter	iter, iter_dict;
+
+	dbus_message_iter_init(message, &iter);
+
+	if (!wpa_dbus_dict_open_read(&iter, &iter_dict))
+		return wpas_dbus_new_invalid_opts_error(message, NULL);
+
+	while (wpa_dbus_dict_has_dict_entry(&iter_dict)) {
+		struct wpa_config_blob *blob;
+
+		if (!wpa_dbus_dict_get_entry(&iter_dict, &entry)) {
+			reply = wpas_dbus_new_invalid_opts_error(message,
+								 NULL);
+			break;
+		}
+
+		if (entry.type != DBUS_TYPE_ARRAY ||
+		    entry.array_type != DBUS_TYPE_BYTE) {
+			reply = wpas_dbus_new_invalid_opts_error(
+				message, "Byte array expected.");
+			break;
+		}
+
+		if ((entry.array_len <= 0) || (entry.array_len > 65536) ||
+		    !strlen(entry.key)) {
+			reply = wpas_dbus_new_invalid_opts_error(
+				message, "Invalid array size.");
+			break;
+		}
+
+		blob = os_zalloc(sizeof(*blob));
+		if (blob == NULL) {
+			reply = dbus_message_new_error(
+				message, WPAS_ERROR_ADD_ERROR,
+				"Not enough memory to add blob.");
+			break;
+		}
+		blob->data = os_zalloc(entry.array_len);
+		if (blob->data == NULL) {
+			reply = dbus_message_new_error(
+				message, WPAS_ERROR_ADD_ERROR,
+				"Not enough memory to add blob data.");
+			os_free(blob);
+			break;
+		}
+
+		blob->name = os_strdup(entry.key);
+		blob->len = entry.array_len;
+		os_memcpy(blob->data, (u8 *) entry.bytearray_value,
+				entry.array_len);
+		if (blob->name == NULL || blob->data == NULL) {
+			wpa_config_free_blob(blob);
+			reply = dbus_message_new_error(
+				message, WPAS_ERROR_ADD_ERROR,
+				"Error adding blob.");
+			break;
+		}
+
+		/* Success */
+		wpa_config_remove_blob(wpa_s->conf, blob->name);
+		wpa_config_set_blob(wpa_s->conf, blob);
+		wpa_dbus_dict_entry_clear(&entry);
+	}
+	wpa_dbus_dict_entry_clear(&entry);
+
+	return reply ? reply : wpas_dbus_new_success_reply(message);
+}
+
+
+/**
+ * wpas_dbus_iface_remove_blob - Remove named binary blobs
+ * @message: Pointer to incoming dbus message
+ * @global: %wpa_supplicant global data structure
+ * Returns: A dbus message containing a UINT32 indicating success (1) or
+ *          failure (0)
+ *
+ * Asks wpa_supplicant to remove one or more previously stored binary blobs.
+ */
+DBusMessage * wpas_dbus_iface_remove_blobs(DBusMessage *message,
+					  struct wpa_supplicant *wpa_s)
+{
+	DBusMessageIter iter, array;
+	char *err_msg = NULL;
+
+	dbus_message_iter_init(message, &iter);
+
+	if ((dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_ARRAY) ||
+	    (dbus_message_iter_get_element_type (&iter) != DBUS_TYPE_STRING))
+		return wpas_dbus_new_invalid_opts_error(message, NULL);
+
+	dbus_message_iter_recurse(&iter, &array);
+	while (dbus_message_iter_get_arg_type(&array) == DBUS_TYPE_STRING) {
+		const char *name;
+
+		dbus_message_iter_get_basic(&array, &name);
+		if (!strlen(name))
+			err_msg = "Invalid blob name.";
+
+		if (wpa_config_remove_blob(wpa_s->conf, name) != 0)
+			err_msg = "Error removing blob.";
+		dbus_message_iter_next(&array);
+	}
+
+	if (err_msg) {
+		return dbus_message_new_error(message, WPAS_ERROR_REMOVE_ERROR,
+					      err_msg);
+	}
+
+	return wpas_dbus_new_success_reply(message);
 }

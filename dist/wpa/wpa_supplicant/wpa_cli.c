@@ -1,6 +1,6 @@
 /*
  * WPA Supplicant - command line interface for wpa_supplicant daemon
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -31,7 +31,7 @@
 
 static const char *wpa_cli_version =
 "wpa_cli v" VERSION_STR "\n"
-"Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi> and contributors";
+"Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi> and contributors";
 
 
 static const char *wpa_cli_license =
@@ -126,6 +126,7 @@ static const char *commands_help =
 "disconnected\n"
 "  scan = request new BSS scan\n"
 "  scan_results = get latest scan results\n"
+"  bss <<idx> | <bssid>> = get detailed scan result info\n"
 "  get_capability <eap/pairwise/group/key_mgmt/proto/auth_alg> = "
 "get capabilies\n"
 "  ap_scan <value> = set ap_scan parameter\n"
@@ -894,6 +895,26 @@ static int wpa_cli_cmd_scan_results(struct wpa_ctrl *ctrl, int argc,
 }
 
 
+static int wpa_cli_cmd_bss(struct wpa_ctrl *ctrl, int argc, char *argv[])
+{
+	char cmd[64];
+	int res;
+
+	if (argc != 1) {
+		printf("Invalid BSS command: need one argument (index or "
+		       "BSSID)\n");
+		return -1;
+	}
+
+	res = os_snprintf(cmd, sizeof(cmd), "BSS %s", argv[0]);
+	if (res < 0 || (size_t) res >= sizeof(cmd))
+		return -1;
+	cmd[sizeof(cmd) - 1] = '\0';
+
+	return wpa_ctrl_command(ctrl, cmd);
+}
+
+
 static int wpa_cli_cmd_get_capability(struct wpa_ctrl *ctrl, int argc,
 				      char *argv[])
 {
@@ -1061,6 +1082,7 @@ static struct wpa_cli_cmd wpa_cli_commands[] = {
 	{ "reconnect", wpa_cli_cmd_reconnect },
 	{ "scan", wpa_cli_cmd_scan },
 	{ "scan_results", wpa_cli_cmd_scan_results },
+	{ "bss", wpa_cli_cmd_bss },
 	{ "get_capability", wpa_cli_cmd_get_capability },
 	{ "reconfigure", wpa_cli_cmd_reconfigure },
 	{ "terminate", wpa_cli_cmd_terminate },

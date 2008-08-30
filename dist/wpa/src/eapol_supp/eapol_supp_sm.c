@@ -1,6 +1,6 @@
 /*
  * EAPOL supplicant state machines
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -126,7 +126,7 @@ struct eapol_sm {
 	/* Miscellaneous variables (not defined in IEEE 802.1X-2004) */
 	Boolean changed;
 	struct eap_sm *eap;
-	struct wpa_ssid *config;
+	struct eap_peer_config *config;
 	Boolean initial_req;
 	u8 *last_rx_key;
 	size_t last_rx_key_len;
@@ -670,7 +670,7 @@ static void eapol_sm_processKey(struct eapol_sm *sm)
 		   hdr->version, hdr->type, be_to_host16(hdr->length),
 		   key->type, rx_key_length, key->key_index);
 
-	eapol_sm_notify_lower_layer_success(sm);
+	eapol_sm_notify_lower_layer_success(sm, 1);
 	sign_key_len = IEEE8021X_SIGN_KEY_LEN;
 	encr_key_len = IEEE8021X_ENCR_KEY_LEN;
 	res = eapol_sm_get_key(sm, (u8 *) &keydata, sizeof(keydata));
@@ -1325,7 +1325,7 @@ void eapol_sm_notify_eap_fail(struct eapol_sm *sm, Boolean fail)
 /**
  * eapol_sm_notify_config - Notification of EAPOL configuration change
  * @sm: Pointer to EAPOL state machine allocated with eapol_sm_init()
- * @config: Pointer to current network configuration
+ * @config: Pointer to current network EAP configuration
  * @conf: Pointer to EAPOL configuration data
  *
  * Notify EAPOL state machine that configuration has changed. config will be
@@ -1334,7 +1334,8 @@ void eapol_sm_notify_eap_fail(struct eapol_sm *sm, Boolean fail)
  * data. If conf is %NULL, this part of the configuration change will be
  * skipped.
  */
-void eapol_sm_notify_config(struct eapol_sm *sm, struct wpa_ssid *config,
+void eapol_sm_notify_config(struct eapol_sm *sm,
+			    struct eap_peer_config *config,
 			    const struct eapol_config *conf)
 {
 	if (sm == NULL)
@@ -1372,14 +1373,24 @@ int eapol_sm_get_key(struct eapol_sm *sm, u8 *key, size_t len)
 	const u8 *eap_key;
 	size_t eap_len;
 
-	if (sm == NULL || !eap_key_available(sm->eap))
+	if (sm == NULL || !eap_key_available(sm->eap)) {
+		wpa_printf(MSG_DEBUG, "EAPOL: EAP key not available");
 		return -1;
+	}
 	eap_key = eap_get_eapKeyData(sm->eap, &eap_len);
-	if (eap_key == NULL)
+	if (eap_key == NULL) {
+		wpa_printf(MSG_DEBUG, "EAPOL: Failed to get eapKeyData");
 		return -1;
-	if (len > eap_len)
+	}
+	if (len > eap_len) {
+		wpa_printf(MSG_DEBUG, "EAPOL: Requested key length (%lu) not "
+			   "available (len=%lu)",
+			   (unsigned long) len, (unsigned long) eap_len);
 		return eap_len;
+	}
 	os_memcpy(key, eap_key, len);
+	wpa_printf(MSG_DEBUG, "EAPOL: Successfully fetched key (len=%lu)",
+		   (unsigned long) len);
 	return 0;
 }
 
@@ -1549,17 +1560,20 @@ void eapol_sm_request_reauth(struct eapol_sm *sm)
 /**
  * eapol_sm_notify_lower_layer_success - Notification of lower layer success
  * @sm: Pointer to EAPOL state machine allocated with eapol_sm_init()
+ * @in_eapol_sm: Whether the caller is already running inside EAPOL state
+ * machine loop (eapol_sm_step())
  *
  * Notify EAPOL (and EAP) state machines that a lower layer has detected a
  * successful authentication. This is used to recover from dropped EAP-Success
  * messages.
  */
-void eapol_sm_notify_lower_layer_success(struct eapol_sm *sm)
+void eapol_sm_notify_lower_layer_success(struct eapol_sm *sm, int in_eapol_sm)
 {
 	if (sm == NULL)
 		return;
 	eap_notify_lower_layer_success(sm->eap);
-	eapol_sm_step(sm);
+	if (!in_eapol_sm)
+		eapol_sm_step(sm);
 }
 
 
@@ -1574,7 +1588,7 @@ void eapol_sm_invalidate_cached_session(struct eapol_sm *sm)
 }
 
 
-static struct wpa_ssid * eapol_sm_get_config(void *ctx)
+static struct eap_peer_config * eapol_sm_get_config(void *ctx)
 {
 	struct eapol_sm *sm = ctx;
 	return sm ? sm->config : NULL;
@@ -1726,6 +1740,20 @@ static void eapol_sm_notify_pending(void *ctx)
 }
 
 
+#if defined(CONFIG_CTRL_IFACE) || !defined(CONFIG_NO_STDOUT_DEBUG)
+static void eapol_sm_eap_param_needed(void *ctx, const char *field,
+				      const char *txt)
+{
+	struct eapol_sm *sm = ctx;
+	wpa_printf(MSG_DEBUG, "EAPOL: EAP parameter needed");
+	if (sm->ctx->eap_param_needed)
+		sm->ctx->eap_param_needed(sm->ctx->ctx, field, txt);
+}
+#else /* CONFIG_CTRL_IFACE || !CONFIG_NO_STDOUT_DEBUG */
+#define eapol_sm_eap_param_needed NULL
+#endif /* CONFIG_CTRL_IFACE || !CONFIG_NO_STDOUT_DEBUG */
+
+
 static struct eapol_callbacks eapol_cb =
 {
 	eapol_sm_get_config,
@@ -1736,7 +1764,8 @@ static struct eapol_callbacks eapol_cb =
 	eapol_sm_get_eapReqData,
 	eapol_sm_set_config_blob,
 	eapol_sm_get_config_blob,
-	eapol_sm_notify_pending
+	eapol_sm_notify_pending,
+	eapol_sm_eap_param_needed
 };
 
 

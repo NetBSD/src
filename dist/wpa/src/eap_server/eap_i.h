@@ -150,12 +150,13 @@ struct eap_sm {
 	void *eap_method_priv;
 	u8 *identity;
 	size_t identity_len;
+	/* Whether Phase 2 method should validate identity match */
+	int require_identity_match;
 	int lastId; /* Identifier used in the last EAP-Packet */
 	struct eap_user *user;
 	int user_eap_method_index;
 	int init_phase2;
 	void *ssl_ctx;
-	enum { TLV_REQ_NONE, TLV_REQ_SUCCESS, TLV_REQ_FAILURE } tlv_request;
 	void *eap_sim_db_priv;
 	Boolean backend_auth;
 	Boolean update_user;
@@ -172,6 +173,7 @@ struct eap_sm {
 	u8 *pac_opaque_encr_key;
 	char *eap_fast_a_id;
 	int eap_sim_aka_result_ind;
+	int tnc;
 };
 
 int eap_user_get(struct eap_sm *sm, const u8 *identity, size_t identity_len,
