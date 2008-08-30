@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1102 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1103 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -25,7 +25,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	evbppc: Add support for Xilinx Virtex II-Pro/4-FX. [freza 20061202]
 	mac68k: Add support for four more Nubus video cards, including the
 		VillageTronic MacPicasso 340. [hauke 20061206]
-	ixp425: Add support for NPE Ethernet. [scw 20061210]
+	arm: Add support for NPE Ethernet on IXP425. [scw 20061210]
 	nfs: Remove NQNFS support from kernel. [yamt 20061227]
 	mount_psshfs(8): Add puffs sshfs. [pooka 20061229]
 	zaurus: Add support for Sharp C3x00 PDA. [ober 20070105]
@@ -42,7 +42,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		optical drive should use for reading data,
 		contributed by Kimura Fuyuki. [bouyer 20070122]
 	i386, amd64: Add cmos(4), driver for x86 CMOS RAM. [dyoung 20070206]
-	newlock2: Merge the newlock2 branch. Introduces a number of new
+	kernel: Merge the newlock2 branch. Introduces a number of new
 		kernel synchronization primitives, improves scalability
 		on MP systems, and replaces the existing SA threads model
 		with a 1:1 threading model. [ad 20070209]
@@ -108,7 +108,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		policy flags ('if-bound', 'group-bound', 'floating').
 		Extend pf.conf(5) syntax to express the translation-state
 		policies. [dyoung 20070510]
-	idlelwp: yamt-idlelwp branch was merged.
+	kernel: yamt-idlelwp branch was merged.
 		1. separate context switching and thread scheduling.
 		2. implement idle lwp.
 		3. clean up related MD/MI interfaces.
@@ -379,9 +379,13 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	hp700: Kernels are now compiled with -O2. [skrll 20071230]
 	compat_hpux: Removed. [ad 20071231]
 	systrace(1): Removed. [ad 20071231]
+	arm: Add support for kernel crashdump to arm32. [chris 20080101]
 	tprof: Add tprof, a simple performance monitor based profiler,
 		inspired from linux oprofile.  it's still very experimental.
 		[yamt 20080102]
+	kernel: Merge the vmlocking2 branch, which makes VM system,
+		trap handling and file system framework MP safe, and
+		also replaces simple_lock(9) with mutex(9). [ad 20080102]
 	bioctl(8): Rewritten to handle new features like creating/removing
 		hot-spare, pass-through disks and RAID volumes, start/stop
 		consistency checks in volumes and others. [xtraeme 20080102]
@@ -391,7 +395,23 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		disks (even if they are marked as hot-spare, pass-through
 		or unused). [xtraeme 20080102]
 	ofppc: Support intallation and RAID bootable root. [mrg 20080102]
+	mpt(4): Fix perfomance problems for old revisions of the Symbios
+		53c1030. Patch supplied by Patrick Welche in PR kern/30531.
+		[tron 20080103]
+	pmax: Add timecounter(9) and generic todr(9) support. [joerg 20080103]
+	msdosfs: Add large read / readahead support by Paul Ripke
+		(introduce run-length detection to msdosfs_bmap(),
+		from FreeBSD).  [christos 20080105]
 	gem(4): Add support for Sun SX fibre cards.  [jdc 20080105]
+	amiga: Add timecounter(9) support and coutner-based delay(9) from i386.
+		[mhitch 20080106]
+	mvme68k: Add timecounter(9) support. [tsutsui 20080107]
+	vax: Add timecounter(9) support. [joerg 20080107]
+	evbppc: Add timecounter(9) support. [joerg 20080108]
+	sbmips: Add timecounter(9) support. [simonb 20080108]
+	atari: Convert atari to generic todr(9) and timecounter(9).
+		[joerg 20080108]
+	xen: Switch xen to generic todr(9). [joerg 20080108]
 	kernel: All platforms have been converted to use generic todr(9).
 		[gdamore,joerg 20080108]
 	ulpt(4): Implement non-blocking read. [gdt 20080108]
@@ -399,6 +419,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Device with support for Timecounter, Watchdog Timer and
 		GPIO. Adapted from OpenBSD by Yojiro UO. [xtraeme 20080109]
 	pc532: Port deleted. [simonb 20080109]
+	algor: Fix delay(9) issue and now P5064 kernel works on gxemul.
+		[tsutsui 20080109]
 	ofppc: Fix ofwboot to work on an IBM CHRP-based RS/6000.
 		[garbled 20080109]
 	i386: Add sparse kernel core dumps (minidumps) for this platform
@@ -408,9 +430,13 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Devon O'Dell, contributed to NetBSD by Coyote Point Systems.
 		[tls 20080110]
 	hppa: Added gdb(1) support. [skrll 20080110]
+	wm(4): Add Inter PRO/1000 PT Quad Port Server Adapter. [ragge 20080111]
 	auvia(4): Make this work on big endian machines. [tsutsui 20080114]
 	kernel: Implementation of processor-sets and affinity. [rmind 20080115]
 	libpthread: POSIX real-time extensions. [rmind 20080115]
+	savecore(8): Use the raw device to read crashdumps. [ad 20080115]
+	compat_linux(8): Cleanup and fix uid16 functions. [njoly 20080115]
+	i386: Remove options MATH_EMULATE. [ad 20080116]
 	schedctl(8): A new program to control scheduling of processes and
 		threads. [rmind 20080115]
 	kernel: Added a new framework for kernel modules, enabled through the
@@ -419,10 +445,20 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	modules: Added new versions of modload(8), modstat(8) and modunload(8)
 		that use modctl(2).  Not built by default.  [ad 20080116]
 	bktr(4): Added amd64 support. [jmcneill 20080116]
+	amd64, i386: Fix clock accounting problem in i8254_get_timeout()
+		so that auich(4) sample rate is detected correctly.
+		[chuck 20080116]
 	ofppc: Add support for the IBM 7044-270. [garbled 20080117]
+	make(1): Implement -dl (aka LOUD) to override '@' at the start of
+		script lines. [sjg 20080119]
+	amd64, i386: Add mbr(8) variants that directly access a serial port.
+		[dsl 20080119]
 	fdisk(8): Fix possible division by zero errors. [tsutsui 20080120]
+	evbarm: Convert to evbarm to timecounter(9). [joerg 20080120]
 	kernel: All platforms have been converted to use timecounter(9).
 		[joerg 20080120]
+	elansc(4): Attach two new devices elanpex(4) and elanpar(4) to
+		the AMD Elan SC520 System Controller. [dyoung 20080121]
 	usb(4): Add uhmodem(4) driver for Huawei E220 wireless modem.
 		[ichiro 20080121]
 	compat_linux32: Add ossaudio(3) support. [jmcneill 20080121]
@@ -432,32 +468,57 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		improve system startup time. [jmcneill 20080124]
 	kernel: The interface for IP checksumming was changed to reduce
 		duplication and more general use. [joerg 20080125]
-	hostapd(8), wpa_supplicant(8): Upgrade to 0.6.2 [christos 20080126]
+	acorn32: Add support to support code for Kinetic card. [chris 20080126]
 	nfe(4): Wakeup some newer chips from powerdown mode.
 		From FreeBSD/Linux driver via OpenBSD. [tsutsui 20080126]
 	sgimips: Enable bootinfo passed from bootloader so that now kernel
 		symbol table and ksyms(4) are usable. [tsutsui 20080126]
 	hpcmips: Fix silent hangup problem on TX3922 machines.
 		From Risto Sainio. [tsutsui 20080126]
+	hostapd(8), wpa_supplicant(8): Upgrade to 0.6.2 [christos 20080126]
 	openpam(3): upgrade to 20071221 [christos 20080126]
+	sysinst: Fix MD set tweaking so that the appropriate (or specified)
+		kernel is installed properly.  This should fix IP3x
+		installation issues on sgimips. [rumble 20080128]
+	ukbd(4): Add support for function keys F16 to F19 as present on
+		e.g. the new Apple aluminum keyboard. [tron 20080129]
 	azalia(4): Analog Devices AD1984 codec support has been improved
 		to support headphones and 4 channel playback, and now
 		exposes an outputs.master mixer control that mirrors the
 		inputs.dac mixer control to make libossaudio happy.
 		[jmcneill 20080130]
+	kernel: Add Mersenne Twister PRNG implementation. [matt 20080131]
+	sgimips: Enable fireware devices in GENERIC. [sekiya 20080202]
 	arc: Add sysinst support. [tsutsui 20080202]
 	cobalt: Add sysinst support. [tsutsui 20080202]
+	compat_linux32: Fix the linux32 emulations of fcntl() locking.
+		[dsl 20080202]
+	compat_linux32: Implement pread(2) and pwrite(2). [dsl 20080202]
 	gcc(1): Updated to version 4.1.3-20080202.  [mrg 20080202]
+	hp700: Add bootinfo support. [skrll 20080203]
+	acorn32: Fix-up boot32 to work on A7000+. [chris 20080203]
 	atf(7): Import 0.4.  [jmmv 20080204]
-	sgimips: Add hardware acceleration for crmfb [macallan 20080205]
+	sgimips: Add hardware acceleration for crmfb. [macallan 20080205]
 	modules: Added the MKMODULAR option to the build system to easily
 		enable the build of the new kernel modules framework.
 		[jmmv 20080209]
 	iwn(4): Added a driver for the Intel Pro/Wireless Lan 4965AGN          
 		Mini-PCI Adapter, ported from OpenBSD. [ober 20080209]
+	pcc(1): Import PCC 0.9.9-080210. [ragge 20080210]
+	uhmodem(4): Add suport for NTT DoCoMo A2502 3G/HSDPA modem.
+		[ichiro 20080211]
+	libc: Enable atomic_ops(3) in userspace. [ad 20080210]
 	ofppc: Add support for the 7046-B50. [garbled 20080213]
+	unionfs: Import FreeBSD's updated unionfs, still work in progress.
+		[ad 20080218]
+	udav(4): Add support for Shantou ADM8515. [drochner 20080219]
+	brgphy(4): Add BCM5708C support. [markd 20080220]
+	compat_linux32: Add mlock(2) and munlock(2) syscalls. [njoly 20080220]
 	powerpc: Add tuned assembler from IBM for memcpy(3), memmove(3) and
 		memcmp(3).  [garbled 20080221]
+	libc: Replace O(nm) versions of strspn(3), strcspn(3) and strpbrk(3)
+		with O(n+m) implementations based on the suggestions I made
+		for DragonFly's libc ages ago. [joerg 20080222]
 	puc(4): Add support for I-O DATA RSA-PCI 2 port serial board.
 		[tsutsui 20080222]
 	monop(6): Save and restore format changed; compatibility with old
@@ -465,24 +526,44 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[dholland 20080223]
 	mfi(4): Added support for LSI SAS1078 and Dell PERC 6, from OpenBSD.
 		[xtraeme 20080225]
+	libarchive: Import libarchive-2.4.13. [joerg 20080226]
 	cobalt: Add netboot support for 21041 on Qube 2700. [tsutsui 20080301]
+	httpd(8): Import bozohttpd-20080303. [mrg 20080303]
 	share/mk: Set linker warnings to be fatal if $WARNS>0.  [lukem 20080303]
 	cobalt: Print startup and shutdown messages on LCD panel.
 		[tsutsui 20080304]
+	libprop: Implement prop_dictionary_make_immutable(3). [cube 20080305]
+	amd64, i386: Allow to get a DDB session on a VGA console if the system
+		crashed while X11 was running. [drochner 20080312]
+	cac(4): Initial bio(4) support; only volume status is handled.
+		[mhitch 20080314]
 	sparc64: SMP support now works on some models. [nakayama 20080314]
+	arm: Add VFP support. [rearnsha 20080315]
 	cobalt: Add bootloader support for optional Z85C30 serial on Qube 2700.
 		[tsutsui 20080316]
 	re(4): Make hardware vlan(4) tag insertion/extraction work properly.
 		[tsutsui 20080318]
+	bzip2(1): Upgrade to 1.0.5. [christos 20080318]
 	cobalt: Fix a botched spl(9) bug which could cause network freeze
 		on traffic between two network interfaces. [tsutsui 20080318]
-	bzip2(1): Upgrade to 1.0.5. [christos 20080318]
+	iconv(1): Allow SUSv3 syntax. [tnozaki 20080320]
 	libcurses: Add termattrs() and term_attrs(). [jdc 20080321]
 	kerberos(8): Upgrade to Heimdal-1.1. [mlelstv 20080322]
+	kernel: Merge yamt-lazymbuf branch. This changes the way to share
+		mbuf external storage so that it can work without kernel_lock.
+		[yamt 20080324]
+	piixpm(4): Add support for SMBus controllers for ATI SB600, SB700,
+		SB800. [jmcneill 20080326]
+	uhmodem(4): Add support for E620 on Vodafone. [ichiro 20080327]
+	siop(4): Add support for the non-PCI NCR 53c720/770 in big-endian mode.
+		From OpenBSD. [skrll 20080327]
 	cobalt: Add kernel support for optional Z85C30 serial on Qube 2700.
 		[tsutsui 20080327]
 	lii(4): Added a driver for the Atheros L2 Fast-Ethernet controller,
 		notably found on Asus's EeePC. [cube 20080328]
+	libarchive: Import libarchive-2.5.0b. [joerg 20080330]
+	hp700: Add support for NCR 53C720 found on various machines and
+		attachments. From OpenBSD. [skrll 20080330]
 	azalia(4): Added support for the Realtek ALC662-GR codec as found
 		in the EeePC. [jmcneill 20080331]
 	asus(4): Added a driver for ASUS ACPI hotkeys as found in the EeePC.
