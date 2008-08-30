@@ -1,0 +1,35 @@
+#	$NetBSD: Makefile,v 1.1 2008/08/30 06:36:33 mrg Exp $
+
+.include <bsd.own.mk>
+
+PROG=	xorgconfig
+
+.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/utils/xorgconfig
+
+SRCS=	xorgconfig.c cards.c
+
+LDADD=	-lxkbfile -lXext -lX11
+DPADD=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
+
+CPPFLAGS+=	-DCARD_DATABASE_FILE='"${X11USRLIBDIR}/X11/Cards"' \
+		-DXKB_RULES_DIR=\"${X11USRLIBDIR}/X11/xkb/rules\" \
+		-DXVERSION="${XVERSION}" \
+		-DWSCONS_SUPPORT -D__XKBDEFRULES__='"xorg"' \
+		-D__XCONFIGFILE__='"xorg.conf"' \
+		-D__XSERVERNAME__='"Xorg"' \
+		-D__XKBDEFRULES__='"xorg"' \
+		-DXVENDORNAME='"The X.Org Foundation"' \
+		-DFILEMANSUFFIX=\"5\" \
+		-DXVERSIONSTRING=\"1.4.2\"
+
+.if ${MACHINE} == "i386"
+CPPFLAGS+=	-DPCVT_SUPPORT
+.endif
+
+# XXX
+xorgconfig.1: xorgconfig.man.pre
+	cp ${.ALLSRC} ${.TARGET}
+
+.include <bsd.x11.mk>
+XVERSION!=	${PRINTX11VERSION}
+.include <bsd.prog.mk>
