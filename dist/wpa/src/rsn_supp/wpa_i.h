@@ -52,7 +52,14 @@ struct wpa_sm {
 	void *scard_ctx; /* context for smartcard callbacks */
 	int fast_reauth; /* whether EAP fast re-authentication is enabled */
 
-	struct wpa_ssid *cur_ssid;
+	void *network_ctx;
+	int peerkey_enabled;
+	int allowed_pairwise_cipher; /* bitfield of WPA_CIPHER_* */
+	int proactive_key_caching;
+	int eap_workaround;
+	void *eap_conf_ctx;
+	u8 ssid[32];
+	size_t ssid_len;
 
 	u8 own_addr[ETH_ALEN];
 	const char *ifname;
@@ -135,10 +142,10 @@ static inline int wpa_sm_set_key(struct wpa_sm *sm, wpa_alg alg,
 				seq, seq_len, key, key_len);
 }
 
-static inline struct wpa_ssid * wpa_sm_get_ssid(struct wpa_sm *sm)
+static inline void * wpa_sm_get_network_ctx(struct wpa_sm *sm)
 {
-	WPA_ASSERT(sm->ctx->get_ssid);
-	return sm->ctx->get_ssid(sm->ctx->ctx);
+	WPA_ASSERT(sm->ctx->get_network_ctx);
+	return sm->ctx->get_network_ctx(sm->ctx->ctx);
 }
 
 static inline int wpa_sm_get_bssid(struct wpa_sm *sm, u8 *bssid)
