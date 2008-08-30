@@ -74,13 +74,14 @@ static char * wpa_config_parse_string(const char *value, size_t *len)
 		if (hlen & 1)
 			return NULL;
 		tlen = hlen / 2;
-		str = os_malloc(tlen);
+		str = os_malloc(tlen + 1);
 		if (str == NULL)
 			return NULL;
 		if (hexstr2bin(value, str, tlen)) {
 			os_free(str);
 			return NULL;
 		}
+		str[tlen] = '\0';
 		*len = tlen;
 		return (char *) str;
 	}
@@ -944,7 +945,7 @@ static int wpa_config_parse_eap(const struct parse_data *data,
 
 	wpa_hexdump(MSG_MSGDUMP, "eap methods",
 		    (u8 *) methods, num_methods * sizeof(*methods));
-	ssid->eap_methods = methods;
+	ssid->eap.eap_methods = methods;
 	return errors ? -1 : 0;
 }
 
@@ -954,7 +955,7 @@ static char * wpa_config_write_eap(const struct parse_data *data,
 {
 	int i, ret;
 	char *buf, *pos, *end;
-	const struct eap_method_type *eap_methods = ssid->eap_methods;
+	const struct eap_method_type *eap_methods = ssid->eap.eap_methods;
 	const char *name;
 
 	if (eap_methods == NULL)
@@ -1003,10 +1004,10 @@ static int wpa_config_parse_password(const struct parse_data *data,
 		wpa_hexdump_ascii(MSG_MSGDUMP, data->name,
 				  (u8 *) tmp, res_len);
 
-		os_free(ssid->password);
-		ssid->password = (u8 *) tmp;
-		ssid->password_len = res_len;
-		ssid->flags &= ~WPA_CONFIG_FLAGS_PASSWORD_NTHASH;
+		os_free(ssid->eap.password);
+		ssid->eap.password = (u8 *) tmp;
+		ssid->eap.password_len = res_len;
+		ssid->eap.flags &= ~EAP_CONFIG_FLAGS_PASSWORD_NTHASH;
 
 		return 0;
 	}
@@ -1031,10 +1032,10 @@ static int wpa_config_parse_password(const struct parse_data *data,
 
 	wpa_hexdump_key(MSG_MSGDUMP, data->name, hash, 16);
 
-	os_free(ssid->password);
-	ssid->password = hash;
-	ssid->password_len = 16;
-	ssid->flags |= WPA_CONFIG_FLAGS_PASSWORD_NTHASH;
+	os_free(ssid->eap.password);
+	ssid->eap.password = hash;
+	ssid->eap.password_len = 16;
+	ssid->eap.flags |= EAP_CONFIG_FLAGS_PASSWORD_NTHASH;
 
 	return 0;
 }
@@ -1045,12 +1046,12 @@ static char * wpa_config_write_password(const struct parse_data *data,
 {
 	char *buf;
 
-	if (ssid->password == NULL)
+	if (ssid->eap.password == NULL)
 		return NULL;
 
-	if (!(ssid->flags & WPA_CONFIG_FLAGS_PASSWORD_NTHASH)) {
+	if (!(ssid->eap.flags & EAP_CONFIG_FLAGS_PASSWORD_NTHASH)) {
 		return wpa_config_write_string(
-			ssid->password, ssid->password_len);
+			ssid->eap.password, ssid->eap.password_len);
 	}
 
 	buf = os_malloc(5 + 32 + 1);
@@ -1058,7 +1059,7 @@ static char * wpa_config_write_password(const struct parse_data *data,
 		return NULL;
 
 	os_memcpy(buf, "hash:", 5);
-	wpa_snprintf_hex(buf + 5, 32 + 1, ssid->password, 16);
+	wpa_snprintf_hex(buf + 5, 32 + 1, ssid->eap.password, 16);
 
 	return buf;
 }
@@ -1182,17 +1183,23 @@ static char * wpa_config_write_wep_key3(const struct parse_data *data,
 /* STR: Define a string variable for an ASCII string; f = field name */
 #ifdef NO_CONFIG_WRITE
 #define _STR(f) #f, wpa_config_parse_str, OFFSET(f)
+#define _STRe(f) #f, wpa_config_parse_str, OFFSET(eap.f)
 #else /* NO_CONFIG_WRITE */
 #define _STR(f) #f, wpa_config_parse_str, wpa_config_write_str, OFFSET(f)
+#define _STRe(f) #f, wpa_config_parse_str, wpa_config_write_str, OFFSET(eap.f)
 #endif /* NO_CONFIG_WRITE */
 #define STR(f) _STR(f), NULL, NULL, NULL, 0
+#define STRe(f) _STRe(f), NULL, NULL, NULL, 0
 #define STR_KEY(f) _STR(f), NULL, NULL, NULL, 1
+#define STR_KEYe(f) _STRe(f), NULL, NULL, NULL, 1
 
 /* STR_LEN: Define a string variable with a separate variable for storing the
  * data length. Unlike STR(), this can be used to store arbitrary binary data
  * (i.e., even nul termination character). */
 #define _STR_LEN(f) _STR(f), OFFSET(f ## _len)
+#define _STR_LENe(f) _STRe(f), OFFSET(eap.f ## _len)
 #define STR_LEN(f) _STR_LEN(f), NULL, NULL, 0
+#define STR_LENe(f) _STR_LENe(f), NULL, NULL, 0
 #define STR_LEN_KEY(f) _STR_LEN(f), NULL, NULL, 1
 
 /* STR_RANGE: Like STR_LEN(), but with minimum and maximum allowed length
@@ -1203,13 +1210,17 @@ static char * wpa_config_write_wep_key3(const struct parse_data *data,
 
 #ifdef NO_CONFIG_WRITE
 #define _INT(f) #f, wpa_config_parse_int, OFFSET(f), (void *) 0
+#define _INTe(f) #f, wpa_config_parse_int, OFFSET(eap.f), (void *) 0
 #else /* NO_CONFIG_WRITE */
 #define _INT(f) #f, wpa_config_parse_int, wpa_config_write_int, \
 	OFFSET(f), (void *) 0
+#define _INTe(f) #f, wpa_config_parse_int, wpa_config_write_int, \
+	OFFSET(eap.f), (void *) 0
 #endif /* NO_CONFIG_WRITE */
 
 /* INT: Define an integer variable */
 #define INT(f) _INT(f), NULL, NULL, 0
+#define INTe(f) _INTe(f), NULL, NULL, 0
 
 /* INT_RANGE: Define an integer variable with allowed value range */
 #define INT_RANGE(f, min, max) _INT(f), (void *) (min), (void *) (max), 0
@@ -1260,34 +1271,37 @@ static const struct parse_data ssid_fields[] = {
 	{ FUNC(auth_alg) },
 #ifdef IEEE8021X_EAPOL
 	{ FUNC(eap) },
-	{ STR_LEN(identity) },
-	{ STR_LEN(anonymous_identity) },
-	{ STR_RANGE_KEY(eappsk, EAP_PSK_LEN_MIN, EAP_PSK_LEN_MAX) },
-	{ STR_LEN(nai) },
+	{ STR_LENe(identity) },
+	{ STR_LENe(anonymous_identity) },
 	{ FUNC(password) },
-	{ STR(ca_cert) },
-	{ STR(ca_path) },
-	{ STR(client_cert) },
-	{ STR(private_key) },
-	{ STR_KEY(private_key_passwd) },
-	{ STR(dh_file) },
-	{ STR(subject_match) },
-	{ STR(altsubject_match) },
-	{ STR(ca_cert2) },
-	{ STR(ca_path2) },
-	{ STR(client_cert2) },
-	{ STR(private_key2) },
-	{ STR_KEY(private_key2_passwd) },
-	{ STR(dh_file2) },
-	{ STR(subject_match2) },
-	{ STR(altsubject_match2) },
-	{ STR(phase1) },
-	{ STR(phase2) },
-	{ STR(pcsc) },
-	{ STR_KEY(pin) },
-	{ STR(engine_id) },
-	{ STR(key_id) },
-	{ INT(engine) },
+	{ STRe(ca_cert) },
+	{ STRe(ca_path) },
+	{ STRe(client_cert) },
+	{ STRe(private_key) },
+	{ STR_KEYe(private_key_passwd) },
+	{ STRe(dh_file) },
+	{ STRe(subject_match) },
+	{ STRe(altsubject_match) },
+	{ STRe(ca_cert2) },
+	{ STRe(ca_path2) },
+	{ STRe(client_cert2) },
+	{ STRe(private_key2) },
+	{ STR_KEYe(private_key2_passwd) },
+	{ STRe(dh_file2) },
+	{ STRe(subject_match2) },
+	{ STRe(altsubject_match2) },
+	{ STRe(phase1) },
+	{ STRe(phase2) },
+	{ STRe(pcsc) },
+	{ STR_KEYe(pin) },
+	{ STRe(engine_id) },
+	{ STRe(key_id) },
+	{ STRe(cert_id) },
+	{ STRe(ca_cert_id) },
+	{ STRe(key2_id) },
+	{ STRe(cert2_id) },
+	{ STRe(ca_cert2_id) },
+	{ INTe(engine) },
 	{ INT(eapol_flags) },
 #endif /* IEEE8021X_EAPOL */
 	{ FUNC_KEY(wep_key0) },
@@ -1298,8 +1312,8 @@ static const struct parse_data ssid_fields[] = {
 	{ INT(priority) },
 #ifdef IEEE8021X_EAPOL
 	{ INT(eap_workaround) },
-	{ STR(pac_file) },
-	{ INT(fragment_size) },
+	{ STRe(pac_file) },
+	{ INTe(fragment_size) },
 #endif /* IEEE8021X_EAPOL */
 	{ INT_RANGE(mode, 0, 1) },
 	{ INT_RANGE(proactive_key_caching, 0, 1) },
@@ -1415,6 +1429,48 @@ static int wpa_config_update_prio_list(struct wpa_config *config)
 }
 
 
+#ifdef IEEE8021X_EAPOL
+static void eap_peer_config_free(struct eap_peer_config *eap)
+{
+	os_free(eap->eap_methods);
+	os_free(eap->identity);
+	os_free(eap->anonymous_identity);
+	os_free(eap->password);
+	os_free(eap->ca_cert);
+	os_free(eap->ca_path);
+	os_free(eap->client_cert);
+	os_free(eap->private_key);
+	os_free(eap->private_key_passwd);
+	os_free(eap->dh_file);
+	os_free(eap->subject_match);
+	os_free(eap->altsubject_match);
+	os_free(eap->ca_cert2);
+	os_free(eap->ca_path2);
+	os_free(eap->client_cert2);
+	os_free(eap->private_key2);
+	os_free(eap->private_key2_passwd);
+	os_free(eap->dh_file2);
+	os_free(eap->subject_match2);
+	os_free(eap->altsubject_match2);
+	os_free(eap->phase1);
+	os_free(eap->phase2);
+	os_free(eap->pcsc);
+	os_free(eap->pin);
+	os_free(eap->engine_id);
+	os_free(eap->key_id);
+	os_free(eap->cert_id);
+	os_free(eap->ca_cert_id);
+	os_free(eap->key2_id);
+	os_free(eap->cert2_id);
+	os_free(eap->ca_cert2_id);
+	os_free(eap->otp);
+	os_free(eap->pending_req_otp);
+	os_free(eap->pac_file);
+	os_free(eap->new_password);
+}
+#endif /* IEEE8021X_EAPOL */
+
+
 /**
  * wpa_config_free_ssid - Free network/ssid configuration data
  * @ssid: Configuration data for the network
@@ -1427,38 +1483,7 @@ void wpa_config_free_ssid(struct wpa_ssid *ssid)
 	os_free(ssid->ssid);
 	os_free(ssid->passphrase);
 #ifdef IEEE8021X_EAPOL
-	os_free(ssid->eap_methods);
-	os_free(ssid->identity);
-	os_free(ssid->anonymous_identity);
-	os_free(ssid->eappsk);
-	os_free(ssid->nai);
-	os_free(ssid->password);
-	os_free(ssid->ca_cert);
-	os_free(ssid->ca_path);
-	os_free(ssid->client_cert);
-	os_free(ssid->private_key);
-	os_free(ssid->private_key_passwd);
-	os_free(ssid->dh_file);
-	os_free(ssid->subject_match);
-	os_free(ssid->altsubject_match);
-	os_free(ssid->ca_cert2);
-	os_free(ssid->ca_path2);
-	os_free(ssid->client_cert2);
-	os_free(ssid->private_key2);
-	os_free(ssid->private_key2_passwd);
-	os_free(ssid->dh_file2);
-	os_free(ssid->subject_match2);
-	os_free(ssid->altsubject_match2);
-	os_free(ssid->phase1);
-	os_free(ssid->phase2);
-	os_free(ssid->pcsc);
-	os_free(ssid->pin);
-	os_free(ssid->engine_id);
-	os_free(ssid->key_id);
-	os_free(ssid->otp);
-	os_free(ssid->pending_req_otp);
-	os_free(ssid->pac_file);
-	os_free(ssid->new_password);
+	eap_peer_config_free(&ssid->eap);
 #endif /* IEEE8021X_EAPOL */
 	os_free(ssid->id_str);
 	os_free(ssid);
@@ -1609,7 +1634,7 @@ void wpa_config_set_network_defaults(struct wpa_ssid *ssid)
 #ifdef IEEE8021X_EAPOL
 	ssid->eapol_flags = DEFAULT_EAPOL_FLAGS;
 	ssid->eap_workaround = DEFAULT_EAP_WORKAROUND;
-	ssid->fragment_size = DEFAULT_FRAGMENT_SIZE;
+	ssid->eap.fragment_size = DEFAULT_FRAGMENT_SIZE;
 #endif /* IEEE8021X_EAPOL */
 }
 

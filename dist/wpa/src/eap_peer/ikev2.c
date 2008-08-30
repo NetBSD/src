@@ -429,8 +429,8 @@ static int ikev2_process_kei(struct ikev2_responder_data *data,
 	 */
 	if (kei_len - 4 != data->dh->prime_len) {
 		wpa_printf(MSG_INFO, "IKEV2: Invalid DH public value length "
-			   "%d (expected %d)",
-			   kei_len - 4, data->dh->prime_len);
+			   "%ld (expected %ld)",
+			   (long) (kei_len - 4), (long) data->dh->prime_len);
 		return -1;
 	}
 
@@ -456,7 +456,8 @@ static int ikev2_process_ni(struct ikev2_responder_data *data,
 	}
 
 	if (ni_len < IKEV2_NONCE_MIN_LEN || ni_len > IKEV2_NONCE_MAX_LEN) {
-		wpa_printf(MSG_INFO, "IKEV2: Invalid Ni length %d", ni_len);
+		wpa_printf(MSG_INFO, "IKEV2: Invalid Ni length %ld",
+		           (long) ni_len);
 		return -1;
 	}
 

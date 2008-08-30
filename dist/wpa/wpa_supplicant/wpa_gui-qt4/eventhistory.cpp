@@ -13,6 +13,7 @@
  */
 
 #include <QHeaderView>
+#include <QScrollBar>
 
 #include "eventhistory.h"
 
@@ -115,6 +116,15 @@ void EventHistory::addEvents(WpaMsgList msgs)
 
 void EventHistory::addEvent(WpaMsg msg)
 {
+	bool scroll = true;
+
+	if (eventListView->verticalScrollBar()->value() <
+	    eventListView->verticalScrollBar()->maximum())
+	    	scroll = false;
+
 	elm->addEvent(msg.getTimestamp().toString("yyyy-MM-dd hh:mm:ss.zzz"),
 		      msg.getMsg());
+
+	if (scroll)
+		eventListView->scrollToBottom();
 }

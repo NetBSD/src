@@ -20,7 +20,6 @@
 #include "eap_common/eap_sim_common.h"
 #include "sha1.h"
 #include "crypto.h"
-#include "config_ssid.h"
 
 
 struct eap_aka_data {
@@ -87,7 +86,7 @@ static void eap_aka_state(struct eap_aka_data *data, int state)
 static void * eap_aka_init(struct eap_sm *sm)
 {
 	struct eap_aka_data *data;
-	struct wpa_ssid *config = eap_get_config(sm);
+	const char *phase1 = eap_get_config_phase1(sm);
 
 	data = os_zalloc(sizeof(*data));
 	if (data == NULL)
@@ -96,8 +95,7 @@ static void * eap_aka_init(struct eap_sm *sm)
 	eap_aka_state(data, CONTINUE);
 	data->prev_id = -1;
 
-	data->result_ind = config && config->phase1 &&
-			    os_strstr(config->phase1, "result_ind=1") != NULL;
+	data->result_ind = phase1 && os_strstr(phase1, "result_ind=1") != NULL;
 
 	return data;
 }

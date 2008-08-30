@@ -39,7 +39,7 @@ static void usage(void)
 	int i;
 	printf("%s\n\n%s\n"
 	       "usage:\n"
-	       "  wpa_supplicant [-BddhKLqqtuvwW] [-P<pid file>] "
+	       "  wpa_supplicant [-BddhKLqqtuvW] [-P<pid file>] "
 	       "[-g<global ctrl>] \\\n"
 	       "        -i<ifname> -c<config file> [-C<ctrl>] [-D<driver>] "
 	       "[-p<driver_param>] \\\n"
@@ -81,7 +81,6 @@ static void usage(void)
 	       "  -u = enable DBus control interface\n"
 #endif /* CONFIG_CTRL_IFACE_DBUS */
 	       "  -v = show version\n"
-	       "  -w = wait for interface to be added, if needed\n"
 	       "  -W = wait for a control interface monitor before starting\n"
 	       "  -N = start describing new interface\n");
 
@@ -147,7 +146,7 @@ int main(int argc, char *argv[])
 	wpa_supplicant_fd_workaround();
 
 	for (;;) {
-		c = getopt(argc, argv, "b:Bc:C:D:df:g:hi:KLNp:P:qtuvwW");
+		c = getopt(argc, argv, "b:Bc:C:D:df:g:hi:KLNp:P:qtuvW");
 		if (c < 0)
 			break;
 		switch (c) {
@@ -220,9 +219,6 @@ int main(int argc, char *argv[])
 			printf("%s\n", wpa_supplicant_version);
 			exitcode = 0;
 			goto out;
-		case 'w':
-			params.wait_for_interface++;
-			break;
 		case 'W':
 			params.wait_for_monitor++;
 			break;

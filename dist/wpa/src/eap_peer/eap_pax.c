@@ -1,6 +1,6 @@
 /*
  * EAP peer method: EAP-PAX (RFC 4746)
- * Copyright (c) 2005-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2005-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,7 +16,6 @@
 
 #include "common.h"
 #include "eap_peer/eap_i.h"
-#include "config_ssid.h"
 #include "eap_common/eap_pax_common.h"
 #include "sha1.h"
 #include "crypto.h"
@@ -54,19 +53,20 @@ static void eap_pax_deinit(struct eap_sm *sm, void *priv);
 
 static void * eap_pax_init(struct eap_sm *sm)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
 	struct eap_pax_data *data;
+	const u8 *identity, *password;
+	size_t identity_len, password_len;
 
-	if (config == NULL || !config->nai ||
-	    (!config->eappsk && !config->password)) {
-		wpa_printf(MSG_INFO, "EAP-PAX: CID (nai) or key "
-			   "(eappsk/password) not configured");
+	identity = eap_get_config_identity(sm, &identity_len);
+	password = eap_get_config_password(sm, &password_len);
+	if (!identity || !password) {
+		wpa_printf(MSG_INFO, "EAP-PAX: CID (nai) or key (password) "
+			   "not configured");
 		return NULL;
 	}
 
-	if (config->eappsk && config->eappsk_len != EAP_PAX_AK_LEN) {
-		wpa_printf(MSG_INFO, "EAP-PAX: incorrect key length (eappsk); "
-			   "expected %d", EAP_PAX_AK_LEN);
+	if (password_len != EAP_PAX_AK_LEN) {
+		wpa_printf(MSG_INFO, "EAP-PAX: Invalid PSK length");
 		return NULL;
 	}
 
@@ -75,25 +75,15 @@ static void * eap_pax_init(struct eap_sm *sm)
 		return NULL;
 	data->state = PAX_INIT;
 
-	data->cid = os_malloc(config->nai_len);
+	data->cid = os_malloc(identity_len);
 	if (data->cid == NULL) {
 		eap_pax_deinit(sm, data);
 		return NULL;
 	}
-	os_memcpy(data->cid, config->nai, config->nai_len);
-	data->cid_len = config->nai_len;
+	os_memcpy(data->cid, identity, identity_len);
+	data->cid_len = identity_len;
 
-	if (config->eappsk) {
-		os_memcpy(data->ak, config->eappsk, EAP_PAX_AK_LEN);
-	} else {
-		u8 hash[SHA1_MAC_LEN];
-		const unsigned char *addr[1];
-		size_t len[1];
-		addr[0] = config->password;
-		len[0] = config->password_len;
-		sha1_vector(1, addr, len, hash);
-		os_memcpy(data->ak, hash, EAP_PAX_AK_LEN);
-	}
+	os_memcpy(data->ak, password, EAP_PAX_AK_LEN);
 
 	return data;
 }

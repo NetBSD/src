@@ -327,7 +327,8 @@ int ikev2_parse_payloads(struct ikev2_payloads *payloads,
 			   next_payload);
 		if (end - pos < (int) sizeof(*phdr)) {
 			wpa_printf(MSG_INFO, "IKEV2:   Too short message for "
-				   "payload header (left=%d)", end - pos);
+				   "payload header (left=%ld)",
+				   (long) (end - pos));
 		}
 		phdr = (const struct ikev2_payload_hdr *) pos;
 		plen = WPA_GET_BE16(phdr->payload_length);

@@ -118,7 +118,7 @@ endif
 
 ifdef CONFIG_DRIVER_NL80211
 CFLAGS += -DCONFIG_DRIVER_NL80211
-OBJS += driver_nl80211.o
+OBJS += driver_nl80211.o radiotap.o
 LIBS += -lnl
 endif
 
@@ -165,8 +165,8 @@ endif
 ifdef CONFIG_EAP_PEAP
 CFLAGS += -DEAP_PEAP
 OBJS += ../src/eap_server/eap_peap.o
+OBJS += ../src/eap_common/eap_peap_common.o
 TLS_FUNCS=y
-CONFIG_EAP_TLV=y
 CONFIG_EAP_MSCHAPV2=y
 endif
 
@@ -238,22 +238,12 @@ CFLAGS += -DEAP_VENDOR_TEST
 OBJS += ../src/eap_server/eap_vendor_test.o
 endif
 
-ifdef CONFIG_EAP_TLV
-CFLAGS += -DEAP_TLV
-OBJS += ../src/eap_server/eap_tlv.o
-endif
-
 ifdef CONFIG_EAP_FAST
 CFLAGS += -DEAP_FAST
 OBJS += ../src/eap_server/eap_fast.o
+OBJS += ../src/eap_common/eap_fast_common.o
 TLS_FUNCS=y
 NEED_T_PRF=y
-endif
-
-ifdef CONFIG_EAP_WSC
-CFLAGS += -DEAP_WSC
-OBJS += ../src/eap_server/eap_wsc.o ../src/eap_common/eap_wsc_common.o
-OBJS += ../src/wps/wps.o
 endif
 
 ifdef CONFIG_EAP_IKEV2
@@ -261,6 +251,13 @@ CFLAGS += -DEAP_IKEV2
 OBJS += ../src/eap_server/eap_ikev2.o ../src/eap_server/ikev2.o
 OBJS += ../src/eap_common/eap_ikev2_common.o ../src/eap_common/ikev2_common.o
 NEED_DH_GROUPS=y
+endif
+
+ifdef CONFIG_EAP_TNC
+CFLAGS += -DEAP_TNC
+OBJS += ../src/eap_server/eap_tnc.o
+OBJS += ../src/eap_server/tncs.o
+NEED_BASE64=y
 endif
 
 # Basic EAP functionality is needed for EAPOL
@@ -450,6 +447,10 @@ endif
 
 ifdef CONFIG_IPV6
 CFLAGS += -DCONFIG_IPV6
+endif
+
+ifdef CONFIG_DRIVER_RADIUS_ACL
+CFLAGS += -DCONFIG_DRIVER_RADIUS_ACL
 endif
 
 ifdef CONFIG_FULL_DYNAMIC_VLAN

@@ -16,7 +16,6 @@
 
 #include "common.h"
 #include "wpa.h"
-#include "config_ssid.h"
 #include "wpa_i.h"
 #include "wpa_ie.h"
 #include "aes_wrap.h"
@@ -28,14 +27,9 @@ int wpa_derive_ptk_ft(struct wpa_sm *sm, const unsigned char *src_addr,
 		      const struct wpa_eapol_key *key,
 		      struct wpa_ptk *ptk)
 {
-	struct wpa_ssid *ssid = sm->cur_ssid;
 	u8 pmk_r1_name[WPA_PMK_NAME_LEN];
 	u8 ptk_name[WPA_PMK_NAME_LEN];
 	const u8 *anonce = key->key_nonce;
-	if (ssid == NULL) {
-		wpa_printf(MSG_DEBUG, "FT: No SSID known for key derivation");
-		return -1;
-	}
 
 	if (sm->xxkey_len == 0) {
 		wpa_printf(MSG_DEBUG, "FT: XXKey not available for key "
@@ -43,8 +37,8 @@ int wpa_derive_ptk_ft(struct wpa_sm *sm, const unsigned char *src_addr,
 		return -1;
 	}
 
-	wpa_derive_pmk_r0(sm->xxkey, sm->xxkey_len, ssid->ssid,
-			  ssid->ssid_len, sm->mobility_domain,
+	wpa_derive_pmk_r0(sm->xxkey, sm->xxkey_len, sm->ssid,
+			  sm->ssid_len, sm->mobility_domain,
 			  sm->r0kh_id, sm->r0kh_id_len, sm->own_addr,
 			  sm->pmk_r0, sm->pmk_r0_name);
 	wpa_hexdump_key(MSG_DEBUG, "FT: PMK-R0", sm->pmk_r0, PMK_LEN);
@@ -127,7 +121,7 @@ static u8 * wpa_ft_gen_req_ies(struct wpa_sm *sm, size_t *len,
 			       const u8 *kck, const u8 *target_ap)
 {
 	size_t buf_len;
-	u8 *buf, *pos, *ftie_len;
+	u8 *buf, *pos, *ftie_len, *ftie_pos;
 	struct rsn_mdie *mdie;
 	struct rsn_ftie *ftie;
 	struct rsn_ie_hdr *rsnie;
@@ -232,6 +226,7 @@ static u8 * wpa_ft_gen_req_ies(struct wpa_sm *sm, size_t *len,
 	mdie->ft_capab = 0; /* FIX: copy from the target AP's MDIE */
 
 	/* FTIE[SNonce, R0KH-ID] */
+	ftie_pos = pos;
 	*pos++ = WLAN_EID_FAST_BSS_TRANSITION;
 	ftie_len = pos++;
 	ftie = (struct rsn_ftie *) pos;
@@ -248,21 +243,20 @@ static u8 * wpa_ft_gen_req_ies(struct wpa_sm *sm, size_t *len,
 
 	if (kck) {
 		/*
-		 * IEEE 802.11r/D5.0, 11A.7.4
+		 * IEEE 802.11r/D9.0, 11A.8.4
 		 * MIC shall be calculated over:
-		 * STA MAC address
+		 * non-AP STA MAC address
 		 * Target AP MAC address
 		 * Transaction seq number (5 for ReassocReq, 3 otherwise)
 		 * RSN IE
 		 * MDIE
 		 * FTIE (with MIC field set to 0)
-		 * RIC (if present)
+		 * RIC-Request (if present)
 		 */
 		ftie->mic_control[1] = 3; /* Information element count */
-		if (wpa_ft_mic(kck, sm->pairwise_cipher == WPA_CIPHER_CCMP,
-			       sm->own_addr, target_ap, 5,
+		if (wpa_ft_mic(kck, sm->own_addr, target_ap, 5,
 			       ((u8 *) mdie) - 2, 2 + sizeof(*mdie),
-			       ((u8 *) ftie) - 2, 2 + *ftie_len,
+			       ftie_pos, 2 + *ftie_len,
 			       (u8 *) rsnie, 2 + rsnie->len, NULL, 0,
 			       ftie->mic) < 0) {
 			wpa_printf(MSG_INFO, "FT: Failed to calculate MIC");
@@ -542,7 +536,7 @@ int wpa_ft_process_response(struct wpa_sm *sm, const u8 *ies, size_t ies_len,
 	wpa_hexdump(MSG_DEBUG, "FT: PMKR1Name",
 		    sm->pmk_r1_name, WPA_PMK_NAME_LEN);
 
-	bssid = ft_action ? sm->target_ap : sm->bssid;
+	bssid = target_ap;
 	wpa_pmk_r1_to_ptk(sm->pmk_r1, sm->snonce, ftie->anonce, sm->own_addr,
 			  bssid, sm->pmk_r1_name,
 			  (u8 *) &sm->ptk, sizeof(sm->ptk), ptk_name);
@@ -588,7 +582,7 @@ int wpa_ft_is_completed(struct wpa_sm *sm)
 
 
 int wpa_ft_validate_reassoc_resp(struct wpa_sm *sm, const u8 *ies,
-				 size_t ies_len)
+				 size_t ies_len, const u8 *src_addr)
 {
 	struct wpa_ft_ies parse;
 	struct rsn_mdie *mdie;
@@ -671,8 +665,7 @@ int wpa_ft_validate_reassoc_resp(struct wpa_sm *sm, const u8 *ies,
 		return -1;
 	}
 
-	if (wpa_ft_mic(sm->ptk.kck, sm->pairwise_cipher == WPA_CIPHER_CCMP,
-		       sm->own_addr, sm->bssid, 6,
+	if (wpa_ft_mic(sm->ptk.kck, sm->own_addr, src_addr, 6,
 		       parse.mdie - 2, parse.mdie_len + 2,
 		       parse.ftie - 2, parse.ftie_len + 2,
 		       parse.rsn - 2, parse.rsn_len + 2, NULL, 0,

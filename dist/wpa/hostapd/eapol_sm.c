@@ -1,6 +1,6 @@
 /*
  * hostapd / IEEE 802.1X-2004 Authenticator - EAPOL state machine
- * Copyright (c) 2002-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -115,6 +115,13 @@ static void eapol_auth_tx_req(struct eapol_state_machine *sm)
 				  EAPOL_LOGGER_DEBUG,
 				  "TxReq called, but there is no EAP request "
 				  "from authentication server");
+		return;
+	}
+
+	if (sm->flags & EAPOL_SM_WAIT_START) {
+		wpa_printf(MSG_DEBUG, "EAPOL: Drop EAPOL TX to " MACSTR
+			   " while waiting for EAPOL-Start",
+			   MAC2STR(sm->addr));
 		return;
 	}
 
@@ -799,6 +806,7 @@ eapol_auth_alloc(struct eapol_authenticator *eapol, const u8 *addr,
 	eap_conf.pac_opaque_encr_key = eapol->conf.pac_opaque_encr_key;
 	eap_conf.eap_fast_a_id = eapol->conf.eap_fast_a_id;
 	eap_conf.eap_sim_aka_result_ind = eapol->conf.eap_sim_aka_result_ind;
+	eap_conf.tnc = eapol->conf.tnc;
 	sm->eap = eap_server_sm_init(sm, &eapol_cb, &eap_conf);
 	if (sm->eap == NULL) {
 		eapol_auth_free(sm);
@@ -893,6 +901,11 @@ restart:
 		/* TODO: find a better location for this */
 		if (sm->eap_if->aaaEapResp) {
 			sm->eap_if->aaaEapResp = FALSE;
+			if (sm->eap_if->aaaEapRespData == NULL) {
+				wpa_printf(MSG_DEBUG, "EAPOL: aaaEapResp set, "
+					   "but no aaaEapRespData available");
+				return;
+			}
 			sm->eapol->cb.aaa_send(
 				sm->hapd, sm->sta,
 				wpabuf_head(sm->eap_if->aaaEapRespData),
@@ -1224,6 +1237,8 @@ static int eapol_auth_conf_clone(struct eapol_auth_config *dst,
 		dst->eap_fast_a_id = os_strdup(src->eap_fast_a_id);
 	else
 		dst->eap_fast_a_id = NULL;
+	dst->eap_sim_aka_result_ind = src->eap_sim_aka_result_ind;
+	dst->tnc = src->tnc;
 	return 0;
 }
 

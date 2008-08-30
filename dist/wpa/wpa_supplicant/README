@@ -1,7 +1,7 @@
 WPA Supplicant
 ==============
 
-Copyright (c) 2003-2007, Jouni Malinen <j@w1.fi> and contributors
+Copyright (c) 2003-2008, Jouni Malinen <j@w1.fi> and contributors
 All Rights Reserved.
 
 This program is dual-licensed under both the GPL version 2 and BSD
@@ -530,10 +530,9 @@ drivers:
 
 In most common cases, wpa_supplicant is started with
 
-wpa_supplicant -Bw -c/etc/wpa_supplicant.conf -iwlan0
+wpa_supplicant -B -c/etc/wpa_supplicant.conf -iwlan0
 
-This makes the process fork into background and wait for the wlan0
-interface if it is not available at startup time.
+This makes the process fork into background.
 
 The easiest way to debug problems, and to get debug log for bug
 reports, is to start wpa_supplicant on foreground with debugging
@@ -907,10 +906,6 @@ pcmcia-cs/cardmgr scripts (when using PC Cards). WPA handshake must be
 completed before data frames can be exchanged, so wpa_supplicant
 should be started before DHCP client.
 
-Command line option '-w' can be used if wpa_supplicant is started
-before the wireless LAN interface is present (e.g., before inserting
-the PC Card) or is not yet up.
-
 For example, following small changes to pcmcia-cs scripts can be used
 to enable WPA support:
 
@@ -921,7 +916,7 @@ Add the following block to the end of 'start' action handler in
 /etc/pcmcia/wireless:
 
     if [ "$WPA" = "y" -a -x /usr/local/bin/wpa_supplicant ]; then
-	/usr/local/bin/wpa_supplicant -Bw -c/etc/wpa_supplicant.conf \
+	/usr/local/bin/wpa_supplicant -B -c/etc/wpa_supplicant.conf \
 		-i$DEVICE
     fi
 
@@ -933,9 +928,7 @@ to be separated from other actions) in /etc/pcmcia/wireless:
     fi
 
 This will make cardmgr start wpa_supplicant when the card is plugged
-in. wpa_supplicant will wait until the interface is set up--either
-when a static IP address is configured or when DHCP client is
-started--and will then negotiate keys with the AP.
+in.
 
 
 

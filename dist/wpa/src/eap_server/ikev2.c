@@ -408,8 +408,8 @@ static int ikev2_process_ker(struct ikev2_initiator_data *data,
 	 */
 	if (ker_len - 4 != data->dh->prime_len) {
 		wpa_printf(MSG_INFO, "IKEV2: Invalid DH public value length "
-			   "%d (expected %d)",
-			   ker_len - 4, data->dh->prime_len);
+			   "%ld (expected %ld)",
+			   (long) (ker_len - 4), (long) data->dh->prime_len);
 		return -1;
 	}
 
@@ -434,7 +434,8 @@ static int ikev2_process_nr(struct ikev2_initiator_data *data,
 	}
 
 	if (nr_len < IKEV2_NONCE_MIN_LEN || nr_len > IKEV2_NONCE_MAX_LEN) {
-		wpa_printf(MSG_INFO, "IKEV2: Invalid Nr length %d", nr_len);
+		wpa_printf(MSG_INFO, "IKEV2: Invalid Nr length %ld",
+			   (long) nr_len);
 		return -1;
 	}
 
@@ -1137,7 +1138,7 @@ static struct wpabuf * ikev2_build_sa_auth(struct ikev2_initiator_data *data)
 	if (secret == NULL) {
 		wpa_printf(MSG_INFO, "IKEV2: Could not get shared secret - "
 			   "use fake value");
-		/* draft-tschofenig-eap-ikev2-15.txt, Sect. 7:
+		/* RFC 5106, Sect. 7:
 		 * Use a random key to fake AUTH generation in order to prevent
 		 * probing of user identities.
 		 */

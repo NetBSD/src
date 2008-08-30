@@ -1,6 +1,6 @@
 /*
  * EAP peer method: EAP-SIM (RFC 4186)
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,7 +16,7 @@
 
 #include "common.h"
 #include "eap_peer/eap_i.h"
-#include "config_ssid.h"
+#include "eap_config.h"
 #include "pcsc_funcs.h"
 #include "eap_common/eap_sim_common.h"
 
@@ -86,7 +86,7 @@ static void eap_sim_state(struct eap_sim_data *data, int state)
 static void * eap_sim_init(struct eap_sm *sm)
 {
 	struct eap_sim_data *data;
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 
 	data = os_zalloc(sizeof(*data));
 	if (data == NULL)
@@ -311,14 +311,16 @@ static struct wpabuf * eap_sim_response_start(struct eap_sm *sm,
 	wpa_printf(MSG_DEBUG, "Generating EAP-SIM Start (id=%d)", id);
 	msg = eap_sim_msg_init(EAP_CODE_RESPONSE, id,
 			       EAP_TYPE_SIM, EAP_SIM_SUBTYPE_START);
-	wpa_hexdump(MSG_DEBUG, "   AT_NONCE_MT",
-		    data->nonce_mt, EAP_SIM_NONCE_MT_LEN);
-	eap_sim_msg_add(msg, EAP_SIM_AT_NONCE_MT, 0,
-			data->nonce_mt, EAP_SIM_NONCE_MT_LEN);
-	wpa_printf(MSG_DEBUG, "   AT_SELECTED_VERSION %d",
-		   data->selected_version);
-	eap_sim_msg_add(msg, EAP_SIM_AT_SELECTED_VERSION,
-			data->selected_version, NULL, 0);
+	if (!data->reauth) {
+		wpa_hexdump(MSG_DEBUG, "   AT_NONCE_MT",
+			    data->nonce_mt, EAP_SIM_NONCE_MT_LEN);
+		eap_sim_msg_add(msg, EAP_SIM_AT_NONCE_MT, 0,
+				data->nonce_mt, EAP_SIM_NONCE_MT_LEN);
+		wpa_printf(MSG_DEBUG, "   AT_SELECTED_VERSION %d",
+			   data->selected_version);
+		eap_sim_msg_add(msg, EAP_SIM_AT_SELECTED_VERSION,
+				data->selected_version, NULL, 0);
+	}
 
 	if (identity) {
 		wpa_hexdump_ascii(MSG_DEBUG, "   AT_IDENTITY",
