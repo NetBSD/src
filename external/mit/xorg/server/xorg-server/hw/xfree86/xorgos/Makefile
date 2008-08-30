@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/15 15:55:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2008/08/30 01:06:35 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -11,7 +11,7 @@ LIB=	xorgos
 SRCS.bsd=	\
 		bsd_VTsw.c bsd_bell.c bsd_init.c bsd_mouse.c \
 		kmod_noop.c libc_wrapper.c lnx_agp.c \
-		posix_tty.c sigio.c stdPci.c stdResource.c vidmem.c
+		posix_tty.c sigio.c stdPci.c vidmem.c
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/linux
 .if ${MACHINE} == "amd64"
