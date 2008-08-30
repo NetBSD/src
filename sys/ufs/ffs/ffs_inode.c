@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.98 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.99 2008/08/30 08:25:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.98 2008/07/31 05:38:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.99 2008/08/30 08:25:53 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -277,7 +277,8 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 				mutex_enter(&ovp->v_interlock);
 				VOP_PUTPAGES(ovp,
 				    trunc_page(osize & fs->fs_bmask),
-				    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
+				    round_page(eob), PGO_CLEANIT | PGO_SYNCIO |
+				    PGO_JOURNALLOCKED);
 			}
 		}
 		uvm_vnp_setwritesize(ovp, length);
@@ -327,7 +328,7 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			mutex_enter(&ovp->v_interlock);
 			error = VOP_PUTPAGES(ovp, round_page(length),
 			    round_page(eoz),
-			    PGO_CLEANIT | PGO_DEACTIVATE |
+			    PGO_CLEANIT | PGO_DEACTIVATE | PGO_JOURNALLOCKED |
 			    ((ioflag & IO_SYNC) ? PGO_SYNCIO : 0));
 			if (error)
 				return error;
