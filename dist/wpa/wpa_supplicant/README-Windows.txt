@@ -1,7 +1,7 @@
 wpa_supplicant for Windows
 ==========================
 
-Copyright (c) 2003-2007, Jouni Malinen <j@w1.fi> and
+Copyright (c) 2003-2008, Jouni Malinen <j@w1.fi> and
 contributors
 All Rights Reserved.
 

@@ -41,7 +41,6 @@ protected slots:
 
 private:
 	WpaGui *wpagui;
-	QTimer *timer;
 };
 
 #endif /* SCANRESULTS_H */

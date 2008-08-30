@@ -16,7 +16,6 @@
 
 #include "common.h"
 #include "wpa.h"
-#include "config_ssid.h"
 #include "pmksa_cache.h"
 #include "ieee802_11_defs.h"
 #include "wpa_i.h"

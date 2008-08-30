@@ -15,8 +15,7 @@
 #include "includes.h"
 
 #include "common.h"
-#include "config_blob.h"
-#include "config_ssid.h"
+#include "eap_config.h"
 #include "eap_i.h"
 #include "eap_fast_pac.h"
 
