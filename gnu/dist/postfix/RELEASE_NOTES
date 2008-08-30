@@ -11,8 +11,16 @@ instead, a new snapshot is released.
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
-Incompatibility with Postfix 2.3 and earlier
---------------------------------------------
+Incompatibility with Postfix 2.5.3
+==================================
+
+When a mailbox file is not owned by its recipient, the local and
+virtual delivery agents now log a warning and defer delivery.
+Specify "strict_mailbox_ownership = no" to ignore such ownership
+discrepancies.
+
+Postfix 2.5.0 Release Notes
+===========================
 
 If you upgrade from Postfix 2.3 or earlier, read RELEASE_NOTES-2.4
 before proceeding.
