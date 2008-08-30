@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.83 2008/07/31 05:38:04 simonb Exp $	*/
+/*	$NetBSD: setup.c,v 1.84 2008/08/30 10:46:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.83 2008/07/31 05:38:04 simonb Exp $");
+__RCSID("$NetBSD: setup.c,v 1.84 2008/08/30 10:46:16 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ int16_t sblkpostbl[256];
  * is already clean (preen mode only).
  */
 int
-setup(const char *dev)
+setup(const char *dev, const char *origdev)
 {
 	long cg, size, asked, i, j;
 	long bmapsize;
@@ -91,6 +91,7 @@ setup(const char *dev)
 	int doskipclean;
 	u_int64_t maxfilesize;
 	struct csum *ccsp;
+	int fd;
 
 	havesb = 0;
 	fswritefd = -1;
@@ -128,7 +129,20 @@ setup(const char *dev)
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL ||
 		sblock == NULL || altsblock == NULL)
 		errexit("Cannot allocate space for superblock");
-	if (!forceimage && getdiskinfo(dev, fsreadfd, NULL, &geo, &dkw) != -1)
+	if (strcmp(dev, origdev) && !forceimage) {
+		/*
+		 * dev isn't the original fs (for example it's a snapshot)
+		 * do getdiskinfo on the original device
+		 */
+		 fd = open(origdev, O_RDONLY);
+		 if (fd < 0) {
+			warn("Can't open %s", origdev);
+			return (0);
+		}
+	} else {
+		fd = fsreadfd;
+	}
+	if (!forceimage && getdiskinfo(origdev, fd, NULL, &geo, &dkw) != -1)
 		dev_bsize = secsize = geo.dg_secsize;
 	else
 		dev_bsize = secsize = DEV_BSIZE;

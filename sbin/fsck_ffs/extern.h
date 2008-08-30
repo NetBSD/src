@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.23 2008/07/31 05:38:04 simonb Exp $	*/
+/*	$NetBSD: extern.h,v 1.24 2008/08/30 10:46:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -79,7 +79,7 @@ void		pinode(ino_t);
 void		propagate(ino_t);
 int		reply(const char *);
 void		setinodebuf(ino_t);
-int		setup(const char *);
+int		setup(const char *, const char *);
 void		voidquit(int);
 
 void		replay_wapbl(void);
