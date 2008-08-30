@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.208 2008/07/31 05:38:05 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.209 2008/08/30 08:55:53 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.208 2008/07/31 05:38:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.209 2008/08/30 08:55:53 reinoud Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1364,6 +1364,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		mutex_enter(&bufcache_lock);
 	}
 
+	KASSERT(mutex_owned(&bufcache_lock));
 	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE].bq_queue)) != NULL ||
 	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU].bq_queue)) != NULL) {
 	    	KASSERT(!ISSET(bp->b_cflags, BC_BUSY) || ISSET(bp->b_cflags, BC_VFLUSH));
