@@ -1,6 +1,6 @@
 /*
  * WPA Supplicant - Scanning
- * Copyright (c) 2003-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2003-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -19,6 +19,7 @@
 #include "config.h"
 #include "wpa_supplicant_i.h"
 #include "mlme.h"
+#include "uuid.h"
 
 
 static void wpa_supplicant_gen_assoc_event(struct wpa_supplicant *wpa_s)
@@ -45,8 +46,10 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 	struct wpa_supplicant *wpa_s = eloop_ctx;
 	struct wpa_ssid *ssid;
 	int enabled, scan_req = 0, ret;
+	const u8 *extra_ie = NULL;
+	size_t extra_ie_len = 0;
 
-	if (wpa_s->disconnected)
+	if (wpa_s->disconnected && !wpa_s->scan_req)
 		return;
 
 	enabled = 0;
@@ -142,12 +145,15 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
 	}
 
 	if (wpa_s->use_client_mlme) {
+		ieee80211_sta_set_probe_req_ie(wpa_s, extra_ie, extra_ie_len);
 		ret = ieee80211_sta_req_scan(wpa_s, ssid ? ssid->ssid : NULL,
 					     ssid ? ssid->ssid_len : 0);
 	} else {
+		wpa_drv_set_probe_req_ie(wpa_s, extra_ie, extra_ie_len);
 		ret = wpa_drv_scan(wpa_s, ssid ? ssid->ssid : NULL,
 				   ssid ? ssid->ssid_len : 0);
 	}
+
 	if (ret) {
 		wpa_printf(MSG_WARNING, "Failed to initiate AP scan.");
 		wpa_supplicant_req_scan(wpa_s, 10, 0);
@@ -166,6 +172,28 @@ static void wpa_supplicant_scan(void *eloop_ctx, void *timeout_ctx)
  */
 void wpa_supplicant_req_scan(struct wpa_supplicant *wpa_s, int sec, int usec)
 {
+	/* If there's at least one network that should be specifically scanned
+	 * then don't cancel the scan and reschedule.  Some drivers do
+	 * background scanning which generates frequent scan results, and that
+	 * causes the specific SSID scan to get continually pushed back and
+	 * never happen, which causes hidden APs to never get probe-scanned.
+	 */
+	if (eloop_is_timeout_registered(wpa_supplicant_scan, wpa_s, NULL) &&
+	    wpa_s->conf->ap_scan == 1) {
+		struct wpa_ssid *ssid = wpa_s->conf->ssid;
+
+		while (ssid) {
+			if (!ssid->disabled && ssid->scan_ssid)
+				break;
+			ssid = ssid->next;
+		}
+		if (ssid) {
+			wpa_msg(wpa_s, MSG_DEBUG, "Not rescheduling scan to "
+			        "ensure that specific SSID scans occur");
+			return;
+		}
+	}
+
 	wpa_msg(wpa_s, MSG_DEBUG, "Setting scan request: %d sec %d usec",
 		sec, usec);
 	eloop_cancel_timeout(wpa_supplicant_scan, wpa_s, NULL);

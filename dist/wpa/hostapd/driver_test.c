@@ -1,6 +1,6 @@
 /*
  * hostapd / Driver interface for development testing
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -675,36 +675,46 @@ static void test_driver_receive_unix(int sock, void *eloop_ctx, void *sock_ctx)
 }
 
 
+static struct test_driver_bss *
+test_driver_get_bss(struct test_driver_data *drv, const char *ifname)
+{
+	struct test_driver_bss *bss;
+
+	for (bss = drv->bss; bss; bss = bss->next) {
+		if (strcmp(bss->ifname, ifname) == 0)
+			return bss;
+	}
+	return NULL;
+}
+
+
 static int test_driver_set_generic_elem(const char *ifname, void *priv,
 					const u8 *elem, size_t elem_len)
 {
 	struct test_driver_data *drv = priv;
 	struct test_driver_bss *bss;
 
-	for (bss = drv->bss; bss; bss = bss->next) {
-		if (strcmp(bss->ifname, ifname) != 0)
-			continue;
+	bss = test_driver_get_bss(drv, ifname);
+	if (bss == NULL)
+		return -1;
 
-		free(bss->ie);
+	free(bss->ie);
 
-		if (elem == NULL) {
-			bss->ie = NULL;
-			bss->ielen = 0;
-			return 0;
-		}
-
-		bss->ie = malloc(elem_len);
-		if (bss->ie) {
-			memcpy(bss->ie, elem, elem_len);
-			bss->ielen = elem_len;
-			return 0;
-		} else {
-			bss->ielen = 0;
-			return -1;
-		}
+	if (elem == NULL) {
+		bss->ie = NULL;
+		bss->ielen = 0;
+		return 0;
 	}
 
-	return -1;
+	bss->ie = malloc(elem_len);
+	if (bss->ie == NULL) {
+		bss->ielen = 0;
+		return -1;
+	}
+
+	memcpy(bss->ie, elem, elem_len);
+	bss->ielen = elem_len;
+	return 0;
 }
 
 
@@ -983,15 +993,17 @@ static int test_driver_set_sta_vlan(void *priv, const u8 *addr,
 
 static int test_driver_sta_add(const char *ifname, void *priv, const u8 *addr,
 			       u16 aid, u16 capability, u8 *supp_rates,
-			       size_t supp_rates_len, int flags)
+			       size_t supp_rates_len, int flags,
+			       u16 listen_interval)
 {
 	struct test_driver_data *drv = priv;
 	struct test_client_socket *cli;
 	struct test_driver_bss *bss;
 
 	wpa_printf(MSG_DEBUG, "%s(ifname=%s addr=" MACSTR " aid=%d "
-		   "capability=0x%x flags=0x%x",
-		   __func__, ifname, MAC2STR(addr), aid, capability, flags);
+		   "capability=0x%x flags=0x%x listen_interval=%d)",
+		   __func__, ifname, MAC2STR(addr), aid, capability, flags,
+		   listen_interval);
 	wpa_hexdump(MSG_DEBUG, "test_driver_sta_add - supp_rates",
 		    supp_rates, supp_rates_len);
 

@@ -242,6 +242,7 @@ struct hostapd_bss_config {
 	u8 *pac_opaque_encr_key;
 	char *eap_fast_a_id;
 	int eap_sim_aka_result_ind;
+	int tnc;
 
 	char *radius_server_clients;
 	int radius_server_auth_port;
@@ -262,6 +263,15 @@ struct hostapd_bss_config {
 	struct hostapd_vlan *vlan, *vlan_tail;
 
 	macaddr bssid;
+
+	/*
+	 * Maximum listen interval that STAs can use when associating with this
+	 * BSS. If a STA tries to use larger value, the association will be
+	 * denied with status code 51.
+	 */
+	u16 max_listen_interval;
+
+	int okc; /* Opportunistic Key Caching */
 };
 
 

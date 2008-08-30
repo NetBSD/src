@@ -1,6 +1,6 @@
 /*
  * EAP peer method: EAP-TLS (RFC 2716)
- * Copyright (c) 2004-2006, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -17,7 +17,7 @@
 #include "common.h"
 #include "eap_i.h"
 #include "eap_tls_common.h"
-#include "config_ssid.h"
+#include "eap_config.h"
 #include "tls.h"
 
 
@@ -33,7 +33,7 @@ struct eap_tls_data {
 static void * eap_tls_init(struct eap_sm *sm)
 {
 	struct eap_tls_data *data;
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	if (config == NULL ||
 	    ((sm->init_phase2 ? config->private_key2 : config->private_key)
 	    == NULL && config->engine == 0)) {
@@ -89,7 +89,7 @@ static struct wpabuf * eap_tls_failure(struct eap_sm *sm,
 	ret->decision = DECISION_FAIL;
 
 	if (res == -1) {
-		struct wpa_ssid *config = eap_get_config(sm);
+		struct eap_peer_config *config = eap_get_config(sm);
 		if (config) {
 			/*
 			 * The TLS handshake failed. So better forget the old

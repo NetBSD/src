@@ -23,7 +23,6 @@
 #include "eloop.h"
 #include "sha1.h"
 #include "ieee802_11_defs.h"
-#include "mlme.h"
 
 
 struct wpa_driver_test_data {
@@ -456,7 +455,7 @@ static void wpa_driver_test_mlme(struct wpa_driver_test_data *drv,
 {
 	struct ieee80211_rx_status rx_status;
 	os_memset(&rx_status, 0, sizeof(rx_status));
-	ieee80211_sta_rx(drv->ctx, data, data_len, &rx_status);
+	wpa_supplicant_sta_rx(drv->ctx, data, data_len, &rx_status);
 }
 
 
@@ -796,7 +795,7 @@ wpa_driver_test_get_hw_feature_data(void *priv, u16 *num_modes, u16 *flags)
 	modes[0].channels = os_zalloc(sizeof(struct wpa_channel_data));
 	modes[0].rates = os_zalloc(sizeof(struct wpa_rate_data));
 	if (modes[0].channels == NULL || modes[0].rates == NULL) {
-		ieee80211_sta_free_hw_features(modes, *num_modes);
+		wpa_supplicant_sta_free_hw_features(modes, *num_modes);
 		return NULL;
 	}
 	modes[0].channels[0].chan = 1;
@@ -982,5 +981,6 @@ const struct wpa_driver_ops wpa_driver_test_ops = {
 #endif /* CONFIG_CLIENT_MLME */
 	NULL /* update_ft_ies */,
 	NULL /* send_ft_action */,
-	wpa_driver_test_get_scan_results2
+	wpa_driver_test_get_scan_results2,
+	NULL /* set_probe_req_ie */
 };

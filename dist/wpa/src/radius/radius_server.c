@@ -1,6 +1,6 @@
 /*
  * hostapd / RADIUS authentication server
- * Copyright (c) 2005-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2005-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -87,6 +87,7 @@ struct radius_server_data {
 	u8 *pac_opaque_encr_key;
 	char *eap_fast_a_id;
 	int eap_sim_aka_result_ind;
+	int tnc;
 	int ipv6;
 	struct os_time start_time;
 	struct radius_server_counters counters;
@@ -311,6 +312,7 @@ radius_server_get_new_session(struct radius_server_data *data,
 	eap_conf.pac_opaque_encr_key = data->pac_opaque_encr_key;
 	eap_conf.eap_fast_a_id = data->eap_fast_a_id;
 	eap_conf.eap_sim_aka_result_ind = data->eap_sim_aka_result_ind;
+	eap_conf.tnc = data->tnc;
 	sess->eap = eap_server_sm_init(sess, &radius_server_eapol_cb,
 				       &eap_conf);
 	if (sess->eap == NULL) {
@@ -386,6 +388,13 @@ radius_server_encapsulate_eap(struct radius_server_data *data,
 		}
 	}
 
+	if (radius_msg_copy_attr(msg, request, RADIUS_ATTR_PROXY_STATE) < 0) {
+		RADIUS_DEBUG("Failed to copy Proxy-State attribute(s)");
+		radius_msg_free(msg);
+		os_free(msg);
+		return NULL;
+	}
+
 	if (radius_msg_finish_srv(msg, (u8 *) client->shared_secret,
 				  client->shared_secret_len,
 				  request->hdr->authenticator) < 0) {
@@ -424,6 +433,12 @@ static int radius_server_reject(struct radius_server_data *data,
 		RADIUS_DEBUG("Failed to add EAP-Message attribute");
 	}
 
+	if (radius_msg_copy_attr(msg, request, RADIUS_ATTR_PROXY_STATE) < 0) {
+		RADIUS_DEBUG("Failed to copy Proxy-State attribute(s)");
+		radius_msg_free(msg);
+		os_free(msg);
+		return -1;
+	}
 
 	if (radius_msg_finish_srv(msg, (u8 *) client->shared_secret,
 				  client->shared_secret_len,
@@ -1003,6 +1018,7 @@ radius_server_init(struct radius_server_conf *conf)
 		data->eap_fast_a_id = os_strdup(conf->eap_fast_a_id);
 	data->get_eap_user = conf->get_eap_user;
 	data->eap_sim_aka_result_ind = conf->eap_sim_aka_result_ind;
+	data->tnc = conf->tnc;
 
 	data->clients = radius_server_read_clients(conf->client_file,
 						   conf->ipv6);

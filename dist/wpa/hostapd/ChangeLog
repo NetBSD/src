@@ -1,5 +1,40 @@
 ChangeLog for hostapd
 
+2008-08-10 - v0.6.4
+	* added peer identity into EAP-FAST PAC-Opaque and skip Phase 2
+	  Identity Request if identity is already known
+	* added support for EAP Sequences in EAP-FAST Phase 2
+	* added support for EAP-TNC (Trusted Network Connect)
+	  (this version implements the EAP-TNC method and EAP-TTLS/EAP-FAST
+	  changes needed to run two methods in sequence (IF-T) and the IF-IMV
+	  and IF-TNCCS interfaces from TNCS)
+	* added support for optional cryptobinding with PEAPv0
+	* added fragmentation support for EAP-TNC
+	* added support for fragmenting EAP-TTLS/PEAP/FAST Phase 2 (tunneled)
+	  data
+	* added support for opportunistic key caching (OKC)
+
+2008-02-22 - v0.6.3
+	* fixed Reassociation Response callback processing when using internal
+	  MLME (driver_{hostap,nl80211,test}.c)
+	* updated FT support to use the latest draft, IEEE 802.11r/D9.0
+	* copy optional Proxy-State attributes into RADIUS response when acting
+	  as a RADIUS authentication server
+	* fixed EAPOL state machine to handle a case in which no response is
+	  received from the RADIUS authentication server; previous version
+	  could have triggered a crash in some cases after a timeout
+	* fixed EAP-SIM/AKA realm processing to allow decorated usernames to
+	  be used
+	* added a workaround for EAP-SIM/AKA peers that include incorrect null
+	  termination in the username
+	* fixed EAP-SIM/AKA protected result indication to include AT_COUNTER
+	  attribute in notification messages only when using fast
+	  reauthentication
+	* fixed EAP-SIM Start response processing for fast reauthentication
+	  case
+	* added support for pending EAP processing in EAP-{PEAP,TTLS,FAST}
+	  phase 2 to allow EAP-SIM and EAP-AKA to be used as the Phase 2 method
+
 2008-01-01 - v0.6.2
 	* fixed EAP-SIM and EAP-AKA message parser to validate attribute
 	  lengths properly to avoid potential crash caused by invalid messages
