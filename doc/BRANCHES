@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.267 2008/07/28 13:20:45 simonb Exp $
+#	$NetBSD: BRANCHES,v 1.268 2008/08/30 18:33:47 tsutsui Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -397,18 +397,6 @@ Maintainer:	Matt Thomas <matt@NetBSD.org>
 Scope:		kernel & userland
 Notes:	
 
-Branch:		matt-armv6
-Description:	Rototill the arm code to support features present in the
-		v6 of the ARM Architecture.  Additionally, clean up things
-		along the way to use common practices.
-Status:		Active
-Start Date:	2007-08-27
-End Date:
-Base Tag:	matt-armv6-base
-Maintainer:	Matt Thomas <matt@NetBSD.org>
-Scope:		kernel & userland
-Notes:	
-
 Branch:		mjf-devfs2
 Description:	device file system supporting dynamic device nodes
 Status:		Active
@@ -597,28 +585,6 @@ Maintainer:	Reinoud Zandijk <reinoud@NetBSD.org>
 Scope:		src/sys and src/common
 Notes:		Used as experiment sandbox and if successful hopefully one day
 		to be integrated.
-
-Branch:		simonb-wapbl
-Description:	Wasabi's journaling filesystem support
-Status:		Active
-Start Date:	Tue Jun 10 2008
-End Date:
-Base Tag:	simonb-wapbl-base
-Maintainer:	Simon Burge <simonb@NetBSD.org>
-Scope:		src/distrib/sets/lists/comp src/distrib/utils/sysinst
-		src/include
-		src/sbin/fsck_ffs src/sbin/fsdb src/sbin/mount_ffs
-		src/sbin/tunefs src/usr.sbin/dumpfs src/sys
-Notes:		Still has a number of issues:
-		 - Some heavy workload performance issues on SMP machines.
-		   Work around this issue by turning on WAPBL_DEBUG_SERIALIZE
-		   in rev 1.1.2.11 of vfs_wapbl.c.
-		 - Removing large files (sparse only?) takes a long time.
-		   Eg, a file created with
-		      dd if=/dev/zero of=foox bs=1 count=1 seek=11261748520550
-		   takes 0:00.00 to remove on my test box without logging and
-		   0:22.25 to remove with logging.  No disk IO during this...
-		 - sysinst should use in-fs logs now, not end-of-partition logs.
 
 Branch:		thorpej-atomic
 Description:	Implementation of an atomic memory operations API modeled
@@ -899,6 +865,18 @@ Base Tag:	marc-pcmcia-base, marc-pcmcia-bp
 Maintainer:	Marc Horowitz <marc@NetBSD.org>
 Scope:		kernel
 Notes:
+
+Branch:		matt-armv6
+Description:	Rototill the arm code to support features present in the
+		v6 of the ARM Architecture.  Additionally, clean up things
+		along the way to use common practices.
+Status:		Terminated; merged to -current
+Start Date:	2007-08-27
+End Date:	2008-04-27
+Base Tag:	matt-armv6-base
+Maintainer:	Matt Thomas <matt@NetBSD.org>
+Scope:		kernel & userland
+Notes:	
 
 Branch:		minoura_x68k_bus_h
 Description:	bus_space(9) and bus_dma(9) implementation for x68k
@@ -1231,6 +1209,28 @@ Scope:		sys, sbin/savecore, usr.bin/vmstat, usr.sbin/ntp
 Notes:		early (partial conversion) commit to -current
 		ok'ed by core@ on 20060605 for testing and further
 		simplified conversion
+
+Branch:		simonb-wapbl
+Description:	Wasabi's journaling filesystem support
+Status:		Terminated; merged to -current
+Start Date:	Tue Jun 10 2008
+End Date:	Thu Jul 31 2008
+Base Tag:	simonb-wapbl-base
+Maintainer:	Simon Burge <simonb@NetBSD.org>
+Scope:		src/distrib/sets/lists/comp src/distrib/utils/sysinst
+		src/include
+		src/sbin/fsck_ffs src/sbin/fsdb src/sbin/mount_ffs
+		src/sbin/tunefs src/usr.sbin/dumpfs src/sys
+Notes:		Still has a number of issues:
+		 - Some heavy workload performance issues on SMP machines.
+		   Work around this issue by turning on WAPBL_DEBUG_SERIALIZE
+		   in rev 1.1.2.11 of vfs_wapbl.c.
+		 - Removing large files (sparse only?) takes a long time.
+		   Eg, a file created with
+		      dd if=/dev/zero of=foox bs=1 count=1 seek=11261748520550
+		   takes 0:00.00 to remove on my test box without logging and
+		   0:22.25 to remove with logging.  No disk IO during this...
+		 - sysinst should use in-fs logs now, not end-of-partition logs.
 
 Branch:		vmlocking
 Description:	Make VM and file system framework MP safe
