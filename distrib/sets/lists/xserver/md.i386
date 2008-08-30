@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.38 2008/08/29 06:08:48 lukem Exp $
+# $NetBSD: md.i386,v 1.39 2008/08/30 06:29:03 rtr Exp $
 ./usr/X11R6/bin/X		-unknown-	x11
 ./usr/X11R6/bin/XFree86		-unknown-	x11
 ./usr/X11R6/bin/Xvfb		-unknown-	x11
@@ -444,11 +444,6 @@
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so.10		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libXTrap.a		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libXTrap.so		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libXTrap.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libXTrap_g.a		-unknown-	debuglib,xorg
-./usr/X11R7/lib/modules/extensions/libXTrap_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libcfb.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libcfb.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libcfb.so.0		-unknown-	xorg
@@ -489,6 +484,11 @@
 ./usr/X11R7/lib/modules/extensions/libshadow.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libshadow_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libshadow_pic.a		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libxtrap.a		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libxtrap.so		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libxtrap.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libxtrap_g.a		-unknown-	debuglib,xorg
+./usr/X11R7/lib/modules/extensions/libxtrap_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/fonts/libfreetype.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/fonts/libfreetype.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/fonts/libfreetype.so.0		-unknown-	xorg
