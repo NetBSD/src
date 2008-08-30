@@ -1,6 +1,6 @@
 /*
  * WPA Supplicant - Driver event processing
- * Copyright (c) 2003-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2003-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -30,6 +30,7 @@
 #include "ctrl_iface_dbus.h"
 #include "ieee802_11_defs.h"
 #include "blacklist.h"
+#include "wpas_glue.h"
 
 
 static int wpa_supplicant_select_config(struct wpa_supplicant *wpa_s)
@@ -39,6 +40,8 @@ static int wpa_supplicant_select_config(struct wpa_supplicant *wpa_s)
 	if (wpa_s->conf->ap_scan == 1 && wpa_s->current_ssid)
 		return 0;
 
+	wpa_printf(MSG_DEBUG, "Select network based on association "
+		   "information");
 	ssid = wpa_supplicant_get_ssid(wpa_s);
 	if (ssid == NULL) {
 		wpa_printf(MSG_INFO, "No network configuration found for the "
@@ -68,7 +71,7 @@ static int wpa_supplicant_select_config(struct wpa_supplicant *wpa_s)
 	if (wpa_s->current_ssid && wpa_s->current_ssid != ssid)
 		eapol_sm_invalidate_cached_session(wpa_s->eapol);
 	wpa_s->current_ssid = ssid;
-	wpa_sm_set_config(wpa_s->wpa, wpa_s->current_ssid);
+	wpa_supplicant_rsn_supp_set_config(wpa_s, wpa_s->current_ssid);
 	wpa_supplicant_initiate_eapol(wpa_s);
 
 	return 0;
@@ -99,6 +102,7 @@ void wpa_supplicant_mark_disassoc(struct wpa_supplicant *wpa_s)
 	if (wpa_s->key_mgmt == WPA_KEY_MGMT_PSK ||
 	    wpa_s->key_mgmt == WPA_KEY_MGMT_FT_PSK)
 		eapol_sm_notify_eap_success(wpa_s->eapol, FALSE);
+	wpa_s->ap_ies_from_associnfo = 0;
 }
 
 
@@ -183,14 +187,14 @@ int wpa_supplicant_scard_init(struct wpa_supplicant *wpa_s,
 #ifdef IEEE8021X_EAPOL
 	int aka = 0, sim = 0, type;
 
-	if (ssid->pcsc == NULL || wpa_s->scard != NULL)
+	if (ssid->eap.pcsc == NULL || wpa_s->scard != NULL)
 		return 0;
 
-	if (ssid->eap_methods == NULL) {
+	if (ssid->eap.eap_methods == NULL) {
 		sim = 1;
 		aka = 1;
 	} else {
-		struct eap_method_type *eap = ssid->eap_methods;
+		struct eap_method_type *eap = ssid->eap.eap_methods;
 		while (eap->vendor != EAP_VENDOR_IETF ||
 		       eap->method != EAP_TYPE_NONE) {
 			if (eap->vendor == EAP_VENDOR_IETF) {
@@ -547,6 +551,8 @@ static void wpa_supplicant_event_scan_results(struct wpa_supplicant *wpa_s)
 		goto req_scan;
 	}
 
+	wpa_msg(wpa_s, MSG_INFO, WPA_EVENT_SCAN_RESULTS);
+
 	wpa_supplicant_dbus_notify_scan_results(wpa_s);
 
 	if (wpa_s->conf->ap_scan == 2 || wpa_s->disconnected)
@@ -690,6 +696,8 @@ static void wpa_supplicant_event_associnfo(struct wpa_supplicant *wpa_s,
 		wpa_sm_set_ap_wpa_ie(wpa_s->wpa, NULL, 0);
 	if (!rsn_found && data->assoc_info.beacon_ies)
 		wpa_sm_set_ap_rsn_ie(wpa_s->wpa, NULL, 0);
+	if (wpa_found || rsn_found)
+		wpa_s->ap_ies_from_associnfo = 1;
 }
 
 
@@ -800,7 +808,7 @@ static void wpa_supplicant_event_disassoc(struct wpa_supplicant *wpa_s)
 	if (wpa_s->wpa_state >= WPA_ASSOCIATED)
 		wpa_supplicant_req_scan(wpa_s, 0, 100000);
 	bssid = wpa_s->bssid;
-	if (os_memcmp(bssid, "\x00\x00\x00\x00\x00\x00", ETH_ALEN) == 0)
+	if (is_zero_ether_addr(bssid))
 		bssid = wpa_s->pending_bssid;
 	wpa_blacklist_add(wpa_s, bssid);
 	wpa_sm_notify_disassoc(wpa_s->wpa);
@@ -865,7 +873,7 @@ wpa_supplicant_event_interface_status(struct wpa_supplicant *wpa_s,
 			break;
 		wpa_s->interface_removed = 0;
 		wpa_printf(MSG_DEBUG, "Configured interface was added.");
-		if (wpa_supplicant_driver_init(wpa_s, 1) < 0) {
+		if (wpa_supplicant_driver_init(wpa_s) < 0) {
 			wpa_printf(MSG_INFO, "Failed to initialize the driver "
 				   "after interface was added.");
 		}
