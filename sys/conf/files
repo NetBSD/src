@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.913 2008/08/29 14:20:25 reinoud Exp $
+#	$NetBSD: files,v 1.914 2008/08/30 10:49:27 reinoud Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1271,7 +1271,6 @@ file	dev/pud/pud_dev.c		pud
 # File systems
 #
 include "coda/files.coda"
-include "fs/files.fs"
 include "fs/adosfs/files.adosfs"
 include "fs/cd9660/files.cd9660"
 include "fs/efs/files.efs"
