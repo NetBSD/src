@@ -1,5 +1,3 @@
-/*	$NetBSD: scache_clnt.c,v 1.1.1.3 2006/12/21 02:32:30 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	scache_clnt 3

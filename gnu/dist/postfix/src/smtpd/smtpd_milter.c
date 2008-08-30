@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd_milter.c,v 1.1.1.4 2008/06/22 14:03:40 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd_milter 3

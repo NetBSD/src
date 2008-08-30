@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_peer.c,v 1.1.1.4 2007/05/19 16:28:30 heas Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_peer 3

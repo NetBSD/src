@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.6 2008/06/22 14:03:41 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd_sasl_proto 3

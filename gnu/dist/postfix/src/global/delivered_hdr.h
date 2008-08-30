@@ -1,5 +1,3 @@
-/*	$NetBSD: delivered_hdr.h,v 1.1.1.1 2008/06/22 14:02:18 christos Exp $	*/
-
 #ifndef _DELIVERED_HDR_H_INCLUDED_
 #define _DELIVERED_HDR_H_INCLUDED_
 

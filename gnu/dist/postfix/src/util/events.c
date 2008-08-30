@@ -1,5 +1,3 @@
-/*	$NetBSD: events.c,v 1.1.1.8 2008/06/22 14:03:58 christos Exp $	*/
-
 /*++
 /* NAME
 /*	events 3

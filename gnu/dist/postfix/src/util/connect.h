@@ -1,5 +1,3 @@
-/*	$NetBSD: connect.h,v 1.1.1.3 2008/06/22 14:03:51 christos Exp $	*/
-
 #ifndef _CONNECT_H_INCLUDED_
 #define _CONNECT_H_INCLUDED_
 

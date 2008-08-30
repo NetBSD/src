@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_proxy.h,v 1.1.1.3 2008/06/22 14:02:22 christos Exp $	*/
-
 #ifndef _DICT_PROXY_H_INCLUDED_
 #define _DICT_PROXY_H_INCLUDED_
 

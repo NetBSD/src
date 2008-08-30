@@ -1,5 +1,3 @@
-/*	$NetBSD: verify.c,v 1.1.1.7 2008/06/22 14:04:15 christos Exp $	*/
-
 /*++
 /* NAME
 /*	verify 8

@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_error.c,v 1.1.1.3 2008/06/22 14:02:26 christos Exp $	*/
-
 /*++
 /* NAME
 /*	mail_error 3

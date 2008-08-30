@@ -1,5 +1,3 @@
-/*	$NetBSD: qmqp_proto.h,v 1.1.1.2 2004/05/31 00:24:34 heas Exp $	*/
-
 /*++
 /* NAME
 /*	qmqpd 3h

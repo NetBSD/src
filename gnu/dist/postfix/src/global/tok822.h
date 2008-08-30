@@ -1,5 +1,3 @@
-/*	$NetBSD: tok822.h,v 1.1.1.6 2006/07/19 01:17:29 rpaulo Exp $	*/
-
 #ifndef _TOK822_H_INCLUDED_
 #define _TOK822_H_INCLUDED_
 

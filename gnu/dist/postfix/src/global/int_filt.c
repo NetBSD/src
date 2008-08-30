@@ -1,5 +1,3 @@
-/*	$NetBSD: int_filt.c,v 1.1.1.2 2008/06/22 14:02:23 christos Exp $	*/
-
 /*++
 /* NAME
 /*	int_filt 3

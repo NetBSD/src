@@ -1,5 +1,3 @@
-/*	$NetBSD: local_expand.c,v 1.1.1.4 2006/07/19 01:17:30 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	local_expand 3

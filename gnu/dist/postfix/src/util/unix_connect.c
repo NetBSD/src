@@ -1,5 +1,3 @@
-/*	$NetBSD: unix_connect.c,v 1.1.1.5 2008/06/22 14:04:10 christos Exp $	*/
-
 /*++
 /* NAME
 /*	unix_connect 3

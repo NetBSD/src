@@ -1,5 +1,3 @@
-/*	$NetBSD: split_addr.h,v 1.1.1.2 2004/05/31 00:24:35 heas Exp $	*/
-
 #ifndef _SPLIT_ADDR_H_INCLUDED_
 #define _SPLIT_ADDR_H_INCLUDED_
 

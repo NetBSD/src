@@ -1,5 +1,3 @@
-/*	$NetBSD: rec_streamlf.c,v 1.1.1.3 2004/05/31 00:24:34 heas Exp $	*/
-
 /*++
 /* NAME
 /*	rec_streamlf 3

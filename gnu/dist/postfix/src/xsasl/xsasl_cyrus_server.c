@@ -1,5 +1,3 @@
-/*	$NetBSD: xsasl_cyrus_server.c,v 1.1.1.2 2008/06/22 14:04:18 christos Exp $	*/
-
 /*++
 /* NAME
 /*	xsasl_cyrus_server 3

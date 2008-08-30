@@ -1,5 +1,3 @@
-/*	$NetBSD: qmqp-sink.c,v 1.1.1.6 2007/05/19 16:28:40 heas Exp $	*/
-
 /*++
 /* NAME
 /*	qmqp-sink 1

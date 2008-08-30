@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_transport.c,v 1.1.1.5 2008/06/22 14:02:55 christos Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_transport 3

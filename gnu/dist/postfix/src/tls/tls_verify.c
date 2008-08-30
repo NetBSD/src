@@ -1,5 +1,3 @@
-/*	$NetBSD: tls_verify.c,v 1.1.1.3 2008/06/22 14:03:18 christos Exp $	*/
-
 /*++
 /* NAME
 /*	tls_verify 3

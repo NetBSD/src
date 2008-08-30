@@ -1,5 +1,3 @@
-/*	$NetBSD: verify_clnt.c,v 1.1.1.5 2006/12/21 02:32:36 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	verify_clnt 3

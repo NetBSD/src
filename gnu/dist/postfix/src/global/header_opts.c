@@ -1,5 +1,3 @@
-/*	$NetBSD: header_opts.c,v 1.1.1.5 2008/06/22 14:02:23 christos Exp $	*/
-
 /*++
 /* NAME
 /*	header_opts 3
