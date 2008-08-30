@@ -11517,3 +11517,9 @@ configuration parameter.  See there for details. </p>
 
 <p> This feature is available in Postfix 2.5 and later. </p>
 
+%PARAM strict_mailbox_ownership yes
+
+<p> Defer delivery when a mailbox file is not owned by its recipient.
+The default setting is not backwards compatible.  </p>
+
+<p> This feature is available in Postfix 2.5.3 and later. </p>

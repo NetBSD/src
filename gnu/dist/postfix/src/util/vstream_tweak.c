@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream_tweak.c,v 1.3 2008/07/16 16:51:14 christos Exp $	*/
+/*	$NetBSD: vstream_tweak.c,v 1.4 2008/08/30 10:54:27 christos Exp $	*/
 
 /*++
 /* NAME
@@ -117,7 +117,7 @@ int     vstream_tweak_tcp(VSTREAM *fp)
      */
 #ifdef VSTREAM_CTL_BUFSIZE
     if (mss > 0) {
-	if (mss < __MAXINT__(int) /2)
+	if (mss < INT_MAX / 2)
 	    mss *= 2;
 	vstream_control(fp,
 			VSTREAM_CTL_BUFSIZE, (ssize_t) mss,
