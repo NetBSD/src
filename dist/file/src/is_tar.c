@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.5 2007/03/04 15:22:10 pooka Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.6 2008/08/30 12:16:52 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -48,9 +48,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: is_tar.c,v 1.27 2007/01/12 17:38:28 christos Exp $")
+FILE_RCSID("@(#)$File: is_tar.c,v 1.31 2008/02/04 20:51:17 christos Exp $")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.5 2007/03/04 15:22:10 pooka Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.6 2008/08/30 12:16:52 christos Exp $");
 #endif
 #endif
 
@@ -59,6 +59,12 @@ __RCSID("$NetBSD: is_tar.c,v 1.5 2007/03/04 15:22:10 pooka Exp $");
 private int is_tar(const unsigned char *, size_t);
 private int from_oct(int, const char *);	/* Decode octal number */
 
+static const char tartype[][32] = {
+	"tar archive",
+	"POSIX tar archive",
+	"POSIX tar archive (GNU)",
+};
+
 protected int
 file_is_tar(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 {
@@ -66,33 +72,27 @@ file_is_tar(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 	 * Do the tar test first, because if the first file in the tar
 	 * archive starts with a dot, we can confuse it with an nroff file.
 	 */
-	switch (is_tar(buf, nbytes)) {
-	case 1:
-	        if (file_printf(ms, (ms->flags & MAGIC_MIME) ?
-		    "application/x-tar" : "tar archive") == -1)
-			return -1;
-		return 1;
-	case 2:
-		if (file_printf(ms, (ms->flags & MAGIC_MIME) ?
-		    "application/x-tar, POSIX" : "POSIX tar archive") == -1)
-			return -1;
-		return 1;
-	case 3:
-		if (file_printf(ms, (ms->flags & MAGIC_MIME) ?
-		    "application/x-tar, POSIX (GNU)" :
-		    "POSIX tar archive (GNU)") == -1)
-			return -1;
-		return 1;
-	default:
+	int tar = is_tar(buf, nbytes);
+	int mime = ms->flags & MAGIC_MIME;
+
+	if (tar < 1 || tar > 3)
 		return 0;
-	}
+
+	if (mime == MAGIC_MIME_ENCODING)
+		return 0;
+
+	if (file_printf(ms, mime ? "application/x-tar" :
+	    tartype[tar - 1]) == -1)
+		return -1;
+	return 1;
 }
 
 /*
  * Return 
  *	0 if the checksum is bad (i.e., probably not a tar archive), 
  *	1 for old UNIX tar file,
- *	2 for Unix Std (POSIX) tar file.
+ *	2 for Unix Std (POSIX) tar file,
+ *	3 for GNU tar file.
  */
 private int
 is_tar(const unsigned char *buf, size_t nbytes)
