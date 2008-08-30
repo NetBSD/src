@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.66 2008/02/18 15:02:20 joerg Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.67 2008/08/30 13:23:55 martin Exp $
 
 #=========================================================================
 #
@@ -96,7 +96,7 @@ locore.o: ${SPARC64}/sparc64/locore.s assym.h
 ## (5) link settings
 ##
 TEXTADDR?=	01000000
-LINKFORMAT=	-n -T ${SPARC64}/conf/${KERN_LDSCRIPT}
+LINKFORMAT=	-T ${SPARC64}/conf/${KERN_LDSCRIPT}
 .if ${LP64} == "yes"
 KERN_LDSCRIPT?= kern.ldscript
 .else
