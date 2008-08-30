@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.7 2008/08/29 00:20:55 rtr Exp $
+# $NetBSD: mi,v 1.8 2008/08/30 06:30:28 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -58,3 +58,4 @@
 ./etc/fonts/fonts.dtd		-unknown-	x11
 ./etc/fonts/fonts.dtd		-unknown-	xorg
 ./etc/mtree/set.xetc					xetc-sys-root	x11
+./etc/mtree/set.xetc					xetc-sys-root	xorg
