@@ -1,5 +1,3 @@
-/*	$NetBSD: apptype.c,v 1.1.1.7 2007/03/04 14:54:52 pooka Exp $	*/
-
 /*
  * Adapted from: apptype.c, Written by Eberhard Mattes and put into the
  * public domain
@@ -34,11 +32,7 @@
 
 
 #ifndef	lint
-#if 0
 FILE_RCSID("@(#)$File: apptype.c,v 1.7 2007/01/12 17:38:27 christos Exp $")
-#else
-__RCSID("$NetBSD: apptype.c,v 1.1.1.7 2007/03/04 14:54:52 pooka Exp $");
-#endif
 #endif /* lint */
 
 #ifdef __EMX__
