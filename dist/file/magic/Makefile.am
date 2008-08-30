@@ -1,7 +1,7 @@
 #
 # $File: Makefile.am,v 1.43 2008/08/08 08:24:06 christos Exp $
 #
-MAGIC_FRAGMENT_BASE = Magdir
+MAGIC_FRAGMENT_BASE = magdir
 MAGIC_FRAGMENT_DIR = $(top_srcdir)/magic/$(MAGIC_FRAGMENT_BASE)
 
 pkgdata_DATA = magic.mgc

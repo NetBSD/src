@@ -1,4 +1,3 @@
-.\"	$NetBSD: libmagic.3,v 1.9 2008/08/30 11:39:01 christos Exp $
 .\" $File: libmagic.man,v 1.18 2008/02/28 22:24:46 rrt Exp $
 .\"
 .\" Copyright (c) Christos Zoulas 2003.
@@ -200,7 +199,7 @@ or NULL for the default database file
 before any magic queries can performed.
 .Pp
 The default database file is named by the MAGIC environment variable.  If
-that variable is not set, the default database file name is /usr/local/share/file/magic.
+that variable is not set, the default database file name is /usr/tools/share/file/magic.
 .Pp
 .Fn magic_load
 adds
@@ -238,14 +237,14 @@ when
 .Dv MAGIC_PRESERVE_ATIME
 is set.
 .Sh FILES
-.Bl -tag -width /usr/local/share/file/magic.mime.mgc -compact
-.It Pa /usr/local/share/file/magic.mime
+.Bl -tag -width /usr/tools/share/file/magic.mime.mgc -compact
+.It Pa /usr/tools/share/file/magic.mime
 The non-compiled default magic mime database.
-.It Pa /usr/local/share/file/magic.mime.mgc
+.It Pa /usr/tools/share/file/magic.mime.mgc
 The compiled default magic mime database.
-.It Pa /usr/local/share/file/magic
+.It Pa /usr/tools/share/file/magic
 The non-compiled default magic database.
-.It Pa /usr/local/share/file/magic.mgc
+.It Pa /usr/tools/share/file/magic.mgc
 The compiled default magic database.
 .El
 .Sh SEE ALSO
