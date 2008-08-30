@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2008/08/29 07:46:19 rtr Exp $
+#	$NetBSD: Makefile,v 1.19 2008/08/30 07:17:02 mrg Exp $
 
 SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
 		xf86modes \
@@ -114,6 +114,8 @@ DPADD+=	${DPADD.dix} \
 	${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
 	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM}
+
+SYMLINKS=	${X11BINDIR}/Xorg ${X11BINDIR}/X
 
 # XXX
 #Xorg.1: Xorg.man.pre
