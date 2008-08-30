@@ -1,5 +1,3 @@
-/*	$NetBSD: rcpt_buf.h,v 1.1.1.1 2006/07/19 01:17:28 rpaulo Exp $	*/
-
 #ifndef _RCPT_BUF_H_INCLUDED_
 #define _RCPT_BUF_H_INCLUDED_
 

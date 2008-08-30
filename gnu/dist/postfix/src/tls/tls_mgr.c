@@ -1,5 +1,3 @@
-/*	$NetBSD: tls_mgr.c,v 1.1.1.2 2006/07/19 01:17:39 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	tls_mgr 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd_chat.c,v 1.1.1.8 2008/06/22 14:03:36 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd_chat 3

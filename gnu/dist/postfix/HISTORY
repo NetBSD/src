@@ -14377,3 +14377,56 @@ Apologies for any names omitted.
 	not updated when the smtpd_client_port_logging configuration
 	parameter was added. Code by Victor Duchovni. Files:
 	smtpd/smtpd.c, smtpd/smtpd_peer.c.
+
+20080509
+
+	Bugfix: null-terminate CN comment string after sanitization.
+	File: smtpd/smtpd.c.
+
+20080603
+
+	Workaround: avoid "bad address pattern" errors with non-address
+	patterns in namadr_list_match() calls. File: util/match_ops.c.
+
+20080620
+
+	Bugfix (introduced 20080207): "cleanup -v" panic because
+	the new "SMTP reply" request flag did not have a printable
+	name. File: global/cleanup_strflags.c.
+
+	Cleanup: using "Before-queue content filter", RFC3848
+	information was not added to the headers. Carlos Velasco.
+	File smtpd/smtpd.c.
+
+20080717
+
+	Cleanup: a poorly-implemented integer overflow check for
+	TCP MSS calculation had the unexpected effect that people
+	broke Postfix on LP64 systems while attempting to silence
+	a compiler warning.  File: util/vstream_tweak.c.
+
+20080725
+
+	Paranoia: defer delivery when a mailbox file is not owned
+	by the recipient. Requested by Sebastian Krahmer, SuSE.
+	Specify "strict_mailbox_ownership=no" to ignore ownership
+	discrepancies.  Files: local/mailbox.c, virtual/mailbox.c.
+
+20080804
+
+	Bugfix: dangling pointer in vstring_sprintf_prepend().
+	File: util/vstring.c.
+
+20080814
+
+	Security: some systems have changed their link() semantics,
+	and will hardlink a symlink, contrary to POSIX and XPG4.
+	Sebastian Krahmer, SuSE. File: util/safe_open.c.
+
+	The solution introduces the following incompatible change:
+	when the target of mail delivery is a symlink, the parent
+	directory of that symlink must now be writable by root only
+	(in addition to the already existing requirement that the
+	symlink itself is owned by root).  This change will break
+	legitimate configurations that deliver mail to a symbolic
+	link in a directory with less restrictive permissions.

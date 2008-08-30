@@ -1,5 +1,3 @@
-/*	$NetBSD: flush.c,v 1.1.1.11 2008/06/22 14:02:13 christos Exp $	*/
-
 /*++
 /* NAME
 /*	flush 8

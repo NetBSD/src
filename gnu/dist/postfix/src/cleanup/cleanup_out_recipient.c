@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_out_recipient.c,v 1.1.1.8 2007/08/02 08:05:05 heas Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_out_recipient 3

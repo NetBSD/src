@@ -1,5 +1,3 @@
-/*	$NetBSD: dup2_pass_on_exec.c,v 1.1.1.3 2006/07/19 01:17:51 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	dup2_pass_on_exec 1

@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_conf_long.c,v 1.1.1.2 2008/06/22 14:02:25 christos Exp $	*/
-
 /*++
 /* NAME
 /*	mail_conf_long 3

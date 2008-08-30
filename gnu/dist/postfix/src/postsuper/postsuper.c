@@ -1,5 +1,3 @@
-/*	$NetBSD: postsuper.c,v 1.1.1.13 2008/06/22 14:03:05 christos Exp $	*/
-
 /*++
 /* NAME
 /*	postsuper 1

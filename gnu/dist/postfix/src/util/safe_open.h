@@ -1,5 +1,3 @@
-/*	$NetBSD: safe_open.h,v 1.1.1.3 2006/07/19 01:17:55 rpaulo Exp $	*/
-
 #ifndef _SAFE_OPEN_H_INCLUDED_
 #define _SAFE_OPEN_H_INCLUDED_
 

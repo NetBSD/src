@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_pathname.c,v 1.1.1.2 2004/05/31 00:24:32 heas Exp $	*/
-
 /*++
 /* NAME
 /*	mail_pathname 3

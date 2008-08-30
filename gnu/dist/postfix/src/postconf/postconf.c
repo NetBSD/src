@@ -1,5 +1,3 @@
-/*	$NetBSD: postconf.c,v 1.1.1.12 2008/06/22 14:03:02 christos Exp $	*/
-
 /*++
 /* NAME
 /*	postconf 1

@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd_check.h,v 1.1.1.7 2006/07/19 01:17:47 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd_check 3h

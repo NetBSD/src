@@ -1,5 +1,3 @@
-/*	$NetBSD: dsb_scan.c,v 1.1.1.2 2008/06/22 14:02:22 christos Exp $	*/
-
 /*++
 /* NAME
 /*	dsb_scan

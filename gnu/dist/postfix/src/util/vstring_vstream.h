@@ -1,5 +1,3 @@
-/*	$NetBSD: vstring_vstream.h,v 1.1.1.4 2006/07/19 01:17:57 rpaulo Exp $	*/
-
 #ifndef _VSTRING_VSTREAM_H_INCLUDED_
 #define _VSTRING_VSTREAM_H_INCLUDED_
 

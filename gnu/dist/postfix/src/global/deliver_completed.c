@@ -1,5 +1,3 @@
-/*	$NetBSD: deliver_completed.c,v 1.1.1.3 2006/07/19 01:17:21 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	deliver_completed 3

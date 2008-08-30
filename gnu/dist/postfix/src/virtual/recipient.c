@@ -1,5 +1,3 @@
-/*	$NetBSD: recipient.c,v 1.1.1.3 2006/07/19 01:17:57 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	recipient 3

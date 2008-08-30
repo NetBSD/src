@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_scan_dir.h,v 1.1.1.2 2004/05/31 00:24:32 heas Exp $	*/
-
 #ifndef _MAIL_SCAN_DIR_H_INCLUDED_
 #define _MAIL_SCAN_DIR_H_INCLUDED_
 

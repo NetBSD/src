@@ -1,5 +1,3 @@
-/*	$NetBSD: fold_addr.h,v 1.1.1.1 2008/06/22 14:02:23 christos Exp $	*/
-
 #ifndef _FOLD_ADDR_H_INCLUDED_
 #define _FOLD_ADDR_H_INCLUDED_
 

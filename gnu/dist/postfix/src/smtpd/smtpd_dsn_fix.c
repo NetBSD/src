@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd_dsn_fix.c,v 1.1.1.1 2006/07/19 01:17:47 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd_dsn_fix 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: command.c,v 1.1.1.8 2008/06/22 14:02:44 christos Exp $	*/
-
 /*++
 /* NAME
 /*	command 3
