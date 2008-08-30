@@ -284,6 +284,40 @@ bssid / frequency / signal level / flags / ssid
 (note: fields are separated with tabs)
 
 
+\subsection ctrl_iface_BSS BSS
+
+Get detailed per-BSS scan results. \c BSS command can be used to
+iterate through scan results one BSS at a time and to fetch all
+information from the found BSSes. This provides access to the same
+data that is available through \c SCAN_RESULTS but in a way that
+avoids problems with large number of scan results not fitting in the
+ctrl_iface messages.
+
+There are two options for selecting the BSS with the \c BSS command:
+"BSS <idx>" requests information for the BSS identified by the index
+(0 .. size-1) in the scan results table and "BSS <BSSID>" requests
+information for the given BSS (based on BSSID in 00:01:02:03:04:05
+format).
+
+BSS information is presented in following format. Please note that new
+fields may be added to this field=value data, so the ctrl_iface user
+should be prepared to ignore values it does not understand.
+
+\verbatim
+bssid=00:09:5b:95:e0:4e
+freq=2412
+beacon_int=0
+capabilities=0x0011
+qual=51
+noise=161
+level=212
+tsf=0000000000000000
+ie=000b6a6b6d2070726976617465010180dd180050f20101000050f20401000050f20401000050f2020000
+ssid=jkm private
+\endverbatim
+
+
+
 \subsection ctrl_iface_SELECT_NETWORK SELECT_NETWORK <network id>
 
 Select a network (disable others). Network id can be received from the
@@ -293,13 +327,15 @@ Select a network (disable others). Network id can be received from the
 \subsection ctrl_iface_ENABLE_NETWORK ENABLE_NETWORK <network id>
 
 Enable a network. Network id can be received from the
-\c LIST_NETWORKS command output.
+\c LIST_NETWORKS command output. Special network id \c all can be
+used to enable all network.
 
 
 \subsection ctrl_iface_DISABLE_NETWORK DISABLE_NETWORK <network id>
 
 Disable a network. Network id can be received from the
-\c LIST_NETWORKS command output.
+\c LIST_NETWORKS command output. Special network id \c all can be
+used to disable all network.
 
 
 \subsection ctrl_iface_ADD_NETWORK ADD_NETWORK
@@ -313,7 +349,8 @@ returns the network id of the new network or FAIL on failure.
 \subsection ctrl_iface_REMOVE_NETWORK REMOVE_NETWORK <network id>
 
 Remove a network. Network id can be received from the
-\c LIST_NETWORKS command output.
+\c LIST_NETWORKS command output. Special network id \c all can be
+used to remove all network.
 
 
 \subsection ctrl_iface_SET_NETWORK SET_NETWORK <network id> <variable> <value>

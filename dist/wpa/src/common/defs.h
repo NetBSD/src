@@ -55,7 +55,8 @@ typedef enum { CIPHER_NONE, CIPHER_WEP40, CIPHER_TKIP, CIPHER_CCMP,
 	       CIPHER_WEP104 } wpa_cipher;
 typedef enum { KEY_MGMT_802_1X, KEY_MGMT_PSK, KEY_MGMT_NONE,
 	       KEY_MGMT_802_1X_NO_WPA, KEY_MGMT_WPA_NONE,
-	       KEY_MGMT_FT_802_1X, KEY_MGMT_FT_PSK } wpa_key_mgmt;
+	       KEY_MGMT_FT_802_1X, KEY_MGMT_FT_PSK
+} wpa_key_mgmt;
 
 /**
  * enum wpa_states - wpa_supplicant state

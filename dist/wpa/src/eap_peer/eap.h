@@ -20,7 +20,6 @@
 #include "eap_peer/eap_methods.h"
 
 struct eap_sm;
-struct wpa_ssid;
 struct wpa_config_blob;
 struct wpabuf;
 
@@ -139,7 +138,7 @@ struct eapol_callbacks {
 	 * get_config - Get pointer to the current network configuration
 	 * @ctx: eapol_ctx from eap_peer_sm_init() call
 	 */
-	struct wpa_ssid * (*get_config)(void *ctx);
+	struct eap_peer_config * (*get_config)(void *ctx);
 
 	/**
 	 * get_bool - Get a boolean EAPOL state variable
@@ -213,6 +212,15 @@ struct eapol_callbacks {
 	 * request to EAP state machine.
 	 */
 	void (*notify_pending)(void *ctx);
+
+	/**
+	 * eap_param_needed - Notify that EAP parameter is needed
+	 * @ctx: eapol_ctx from eap_peer_sm_init() call
+	 * @field: Field name (e.g., "IDENTITY")
+	 * @txt: User readable text describing the required parameter
+	 */
+	void (*eap_param_needed)(void *ctx, const char *field,
+				 const char *txt);
 };
 
 /**
@@ -237,6 +245,12 @@ struct eap_config {
 	 * Usually, path to opensc-pkcs11.so.
 	 */
 	const char *pkcs11_module_path;
+	/**
+	 * mac_addr - MAC address of the peer
+	 *
+	 * This can be left %NULL if not available.
+	 */
+	const u8 *mac_addr;
 };
 
 struct eap_sm * eap_peer_sm_init(void *eapol_ctx,
@@ -256,7 +270,7 @@ void eap_sm_request_otp(struct eap_sm *sm, const char *msg, size_t msg_len);
 void eap_sm_request_passphrase(struct eap_sm *sm);
 void eap_sm_notify_ctrl_attached(struct eap_sm *sm);
 u32 eap_get_phase2_type(const char *name, int *vendor);
-struct eap_method_type * eap_get_phase2_types(struct wpa_ssid *config,
+struct eap_method_type * eap_get_phase2_types(struct eap_peer_config *config,
 					      size_t *count);
 void eap_set_fast_reauth(struct eap_sm *sm, int enabled);
 void eap_set_workaround(struct eap_sm *sm, unsigned int workaround);

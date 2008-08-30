@@ -1,6 +1,6 @@
 /*
  * EAP peer method: EAP-PSK (RFC 4764)
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -19,7 +19,6 @@
 
 #include "common.h"
 #include "eap_peer/eap_i.h"
-#include "config_ssid.h"
 #include "aes_wrap.h"
 #include "eap_common/eap_psk_common.h"
 
@@ -37,18 +36,21 @@ struct eap_psk_data {
 
 static void * eap_psk_init(struct eap_sm *sm)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
 	struct eap_psk_data *data;
+	const u8 *identity, *password;
+	size_t identity_len, password_len;
 
-	if (config == NULL || !config->eappsk) {
-		wpa_printf(MSG_INFO, "EAP-PSK: pre-shared key not configured");
+	password = eap_get_config_password(sm, &password_len);
+	if (!password || password_len != 16) {
+		wpa_printf(MSG_INFO, "EAP-PSK: 16-octet pre-shared key not "
+			   "configured");
 		return NULL;
 	}
 
 	data = os_zalloc(sizeof(*data));
 	if (data == NULL)
 		return NULL;
-	if (eap_psk_key_setup(config->eappsk, data->ak, data->kdk)) {
+	if (eap_psk_key_setup(password, data->ak, data->kdk)) {
 		os_free(data);
 		return NULL;
 	}
@@ -56,11 +58,12 @@ static void * eap_psk_init(struct eap_sm *sm)
 	wpa_hexdump_key(MSG_DEBUG, "EAP-PSK: KDK", data->kdk, EAP_PSK_KDK_LEN);
 	data->state = PSK_INIT;
 
-	if (config->nai) {
-		data->id_p = os_malloc(config->nai_len);
+	identity = eap_get_config_identity(sm, &identity_len);
+	if (identity) {
+		data->id_p = os_malloc(identity_len);
 		if (data->id_p)
-			os_memcpy(data->id_p, config->nai, config->nai_len);
-		data->id_p_len = config->nai_len;
+			os_memcpy(data->id_p, identity, identity_len);
+		data->id_p_len = identity_len;
 	}
 	if (data->id_p == NULL) {
 		wpa_printf(MSG_INFO, "EAP-PSK: could not get own identity");

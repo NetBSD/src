@@ -254,19 +254,19 @@ int eap_server_register_methods(void)
 	}
 #endif /* EAP_FAST */
 
-#ifdef EAP_WSC
-	if (ret == 0) {
-		int eap_server_wsc_register(void);
-		ret = eap_server_wsc_register();
-	}
-#endif /* EAP_WSC */
-
 #ifdef EAP_IKEV2
 	if (ret == 0) {
 		int eap_server_ikev2_register(void);
 		ret = eap_server_ikev2_register();
 	}
 #endif /* EAP_IKEV2 */
+
+#ifdef EAP_TNC
+	if (ret == 0) {
+		int eap_server_tnc_register(void);
+		ret = eap_server_tnc_register();
+	}
+#endif /* EAP_TNC */
 
 	return ret;
 }
