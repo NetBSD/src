@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.505 2008/08/28 21:41:19 jmcneill Exp $
+$NetBSD: usbdevs,v 1.506 2008/08/30 03:27:48 matt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1411,6 +1411,8 @@ product LINKSYS4 USB1000	0x0039	USB1000
 /* Logitec products */
 product LOGITEC LDR_H443SU2	0x0033	DVD Multi-plus unit LDR-H443SU2
 product LOGITEC LDR_H443U2	0x00b3	DVD Multi-plus unit LDR-H443U2
+product LOGITEC LAN_GTJU2	0x0102	LAN-GTJ/U2
+product LOGITEC LANTX		0x0105	LAN-TX
 
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
@@ -1478,6 +1480,7 @@ product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
 product MELCO KG54YB		0x005e	WLI-U2-KG54-YB WLAN
 product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
 product MELCO KG54AI		0x0067	WLI-U2-KG54-AI WLAN
+product MELCO LUAU2GT		0x006e	LUA-U2-GT Ethernet
 product MELCO NINWIFI		0x008b	Nintendo Wi-Fi
 product MELCO SG54HP		0x00d8	WLI-U2-SG54HP
 product MELCO G54HP		0x00d9	WLI-U2-G54HP
@@ -2060,6 +2063,7 @@ product SITECOM LN029		0x182d	LN029
 product SITECOM CN104		0x2068	CN104 serial
 
 /* Sitecom Europe products */
+product SITECOMEU LN028		0x061c	LN-028
 product SITECOMEU WL113		0x9071	WL-113
 product SITECOMEU ZD1211B	0x9075	ZD1211B
 product SITECOMEU WL172		0x90ac	WL-172
