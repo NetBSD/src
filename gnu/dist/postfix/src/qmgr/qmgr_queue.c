@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_queue.c,v 1.1.1.7 2008/06/22 14:03:12 christos Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_queue 3

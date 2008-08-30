@@ -1,5 +1,3 @@
-/*	$NetBSD: flush_clnt.h,v 1.1.1.5 2007/05/19 16:28:12 heas Exp $	*/
-
 #ifndef _FLUSH_CLNT_H_INCLUDED_
 #define _FLUSH_CLNT_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: valid_mailhost_addr.h,v 1.1.1.1 2005/08/18 21:07:15 rpaulo Exp $	*/
-
 #ifndef _VALID_MAILHOST_ADDR_H_INCLUDED_
 #define _VALID_MAILHOST_ADDR_H_INCLUDED_
 

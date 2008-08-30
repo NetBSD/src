@@ -1,5 +1,3 @@
-/*	$NetBSD: sane_connect.c,v 1.1.1.4 2008/06/22 14:04:08 christos Exp $	*/
-
 /*++
 /* NAME
 /*	sane_connect 3

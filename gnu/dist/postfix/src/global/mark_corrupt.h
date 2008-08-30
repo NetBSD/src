@@ -1,5 +1,3 @@
-/*	$NetBSD: mark_corrupt.h,v 1.1.1.2 2004/05/31 00:24:32 heas Exp $	*/
-
 #ifndef _MARK_CORRUPT_H_INCLUDED_
 #define _MARK_CORRUPT_H_INCLUDED_
 

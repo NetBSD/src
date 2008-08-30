@@ -1,5 +1,3 @@
-/*	$NetBSD: abounce.h,v 1.1.1.5 2006/07/19 01:17:21 rpaulo Exp $	*/
-
 #ifndef _ABOUNCE_H_INCLUDED_
 #define _ABOUNCE_H_INCLUDED_
 

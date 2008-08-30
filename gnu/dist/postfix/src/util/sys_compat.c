@@ -1,5 +1,3 @@
-/*	$NetBSD: sys_compat.c,v 1.1.1.3 2005/08/18 21:10:41 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	sys_compat 3

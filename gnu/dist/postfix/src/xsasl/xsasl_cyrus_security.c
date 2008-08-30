@@ -1,5 +1,3 @@
-/*	$NetBSD: xsasl_cyrus_security.c,v 1.1.1.2 2008/06/22 14:04:17 christos Exp $	*/
-
 /*++
 /* NAME
 /*	xsasl_cyrus_security 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: is_header.c,v 1.1.1.5 2006/07/19 01:17:24 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	is_header 3

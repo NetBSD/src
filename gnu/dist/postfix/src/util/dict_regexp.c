@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_regexp.c,v 1.1.1.11 2008/06/22 14:03:54 christos Exp $	*/
-
 /*++
 /* NAME
 /*	dict_regexp 3

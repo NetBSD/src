@@ -1,5 +1,3 @@
-/*	$NetBSD: clnt_stream.c,v 1.1.1.3 2004/05/31 00:24:29 heas Exp $	*/
-
 /*++
 /* NAME
 /*	clnt_stream 3

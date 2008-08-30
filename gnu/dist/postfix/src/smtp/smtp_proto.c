@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_proto.c,v 1.1.1.16 2008/06/22 14:03:26 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtp_proto 3

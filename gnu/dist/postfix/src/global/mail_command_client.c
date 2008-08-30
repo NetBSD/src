@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_command_client.c,v 1.1.1.3 2006/07/19 01:17:21 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mail_command_client 3

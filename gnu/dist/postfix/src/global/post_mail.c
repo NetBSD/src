@@ -1,5 +1,3 @@
-/*	$NetBSD: post_mail.c,v 1.1.1.7 2007/05/19 16:28:16 heas Exp $	*/
-
 /*++
 /* NAME
 /*	post_mail 3

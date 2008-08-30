@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_trigger.c,v 1.1.1.4 2006/07/19 01:17:26 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mail_trigger 3

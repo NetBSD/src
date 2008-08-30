@@ -1,5 +1,3 @@
-/*	$NetBSD: stream_trigger.c,v 1.1.1.4 2006/07/19 01:17:55 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	stream_trigger 3

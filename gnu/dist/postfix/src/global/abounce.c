@@ -1,5 +1,3 @@
-/*	$NetBSD: abounce.c,v 1.1.1.7 2008/06/22 14:02:14 christos Exp $	*/
-
 /*++
 /* NAME
 /*	abounce 3

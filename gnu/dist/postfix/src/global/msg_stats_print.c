@@ -1,5 +1,3 @@
-/*	$NetBSD: msg_stats_print.c,v 1.1.1.2 2008/06/22 14:02:32 christos Exp $	*/
-
 /*++
 /* NAME
 /*	msg_stats_print

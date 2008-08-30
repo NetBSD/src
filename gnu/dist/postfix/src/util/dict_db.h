@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_db.h,v 1.1.1.3 2004/05/31 00:24:57 heas Exp $	*/
-
 #ifndef _DICT_DB_H_INCLUDED_
 #define _DICT_DB_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: spawn.c,v 1.1.1.10 2008/06/22 14:03:44 christos Exp $	*/
-
 /*++
 /* NAME
 /*	spawn 8

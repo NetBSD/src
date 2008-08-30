@@ -1,5 +1,3 @@
-/*	$NetBSD: pickup.c,v 1.1.1.15 2008/06/22 14:03:00 christos Exp $	*/
-
 /*++
 /* NAME
 /*	pickup 8

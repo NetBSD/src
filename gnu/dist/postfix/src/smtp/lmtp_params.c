@@ -1,5 +1,3 @@
-/*	$NetBSD: lmtp_params.c,v 1.1.1.4 2008/06/22 14:03:22 christos Exp $	*/
-
     static const CONFIG_STR_TABLE lmtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
 	VAR_BESTMX_TRANSP, DEF_BESTMX_TRANSP, &var_bestmx_transp, 0, 0,

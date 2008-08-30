@@ -1,5 +1,3 @@
-/*	$NetBSD: milter_macros.c,v 1.1.1.1 2008/06/22 14:02:50 christos Exp $	*/
-
 /*++
 /* NAME
 /*	milter_macros

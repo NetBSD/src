@@ -1,5 +1,3 @@
-/*	$NetBSD: flush_clnt.c,v 1.1.1.7 2007/05/19 16:28:12 heas Exp $	*/
-
 /*++
 /* NAME
 /*	flush_clnt 3

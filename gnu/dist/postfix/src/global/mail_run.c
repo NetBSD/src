@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_run.c,v 1.1.1.4 2006/07/19 01:17:25 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mail_run 3

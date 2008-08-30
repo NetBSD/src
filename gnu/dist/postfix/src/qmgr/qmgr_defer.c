@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_defer.c,v 1.1.1.7 2008/06/22 14:03:07 christos Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_defer

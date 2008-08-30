@@ -1,5 +1,3 @@
-/*	$NetBSD: attr_clnt.c,v 1.1.1.4 2006/07/19 01:17:50 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	attr_clnt 3

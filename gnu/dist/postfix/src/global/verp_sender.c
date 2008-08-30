@@ -1,5 +1,3 @@
-/*	$NetBSD: verp_sender.c,v 1.1.1.3 2006/07/19 01:17:29 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	verp_sender 3
