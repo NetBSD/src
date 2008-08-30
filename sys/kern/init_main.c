@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.362 2008/08/30 08:55:53 reinoud Exp $	*/
+/*	$NetBSD: init_main.c,v 1.363 2008/08/30 09:20:13 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.362 2008/08/30 08:55:53 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.363 2008/08/30 09:20:13 reinoud Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -376,7 +376,7 @@ main(void)
 	 */
 	evcnt_init();		/* initialize event counters */
 #if NRND > 0
-	rnd_init();		/* initialize RND */
+	rnd_init();		/* initialize random number generator */
 #endif
 
 	/* Initialize process and pgrp structures. */
