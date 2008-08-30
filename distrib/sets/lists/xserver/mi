@@ -1,8 +1,9 @@
-# $NetBSD: mi,v 1.22 2008/08/29 06:08:48 lukem Exp $
+# $NetBSD: mi,v 1.23 2008/08/30 06:30:28 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/mtree/set.xserver				xserver-sys-root	x11
+./etc/mtree/set.xserver				xserver-sys-root	xorg
 ./usr/X11R6/bin/Xdmx				-unknown-	x11
 ./usr/X11R6/bin/Xnest				-unknown-	x11
 ./usr/X11R6/bin/Xprt				-unknown-	x11
