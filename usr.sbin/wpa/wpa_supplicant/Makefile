@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2008/02/16 07:23:37 matt Exp $
+# $NetBSD: Makefile,v 1.8 2008/08/30 07:33:58 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -8,7 +8,7 @@ SRCS=	base64.c blacklist.c common.c config.c config_file.c ctrl_iface.c \
 	eapol_supp_sm.c eloop.c events.c l2_packet_freebsd.c main.c md5.c \
 	os_unix.c pmksa_cache.c preauth.c rc4.c scan.c scan_helpers.c sha1.c \
 	wpa.c wpa_common.c wpa_debug.c wpa_ie.c wpa_supplicant.c wpabuf.c \
-	wpas_glue.c
+	wpas_glue.c mschapv2.c
 
 MAN=	wpa_supplicant.8 wpa_supplicant.conf.5
 
@@ -37,7 +37,7 @@ CPPFLAGS+=-DEAP_TLS -DEAP_PEAP -DEAP_MSCHAPv2 -DEAP_LEAP -DEAP_PSK \
 	-DEAP_TLV -DEAP_TLS_FUNCS
 SRCS+=	aes_wrap.c chap.c crypto_openssl.c eap_leap.c eap_mschapv2.c \
 	eap_peap.c eap_psk.c eap_psk_common.c eap_tls.c eap_tls_common.c \
-	eap_tlv.c ms_funcs.c tls_openssl.c
+	ms_funcs.c tls_openssl.c eap_peap_common.c
 
 CPPFLAGS+=-DEAP_TTLS -DEAP_MD5
 SRCS+=	eap_ttls.c eap_md5.c
