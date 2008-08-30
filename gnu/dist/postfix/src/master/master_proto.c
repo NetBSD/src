@@ -1,5 +1,3 @@
-/*	$NetBSD: master_proto.c,v 1.1.1.4 2006/07/19 01:17:31 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	master_proto 3

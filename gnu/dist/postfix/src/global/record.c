@@ -1,5 +1,3 @@
-/*	$NetBSD: record.c,v 1.1.1.8 2007/05/19 16:28:17 heas Exp $	*/
-
 /*++
 /* NAME
 /*	record 3

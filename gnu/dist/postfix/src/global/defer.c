@@ -1,5 +1,3 @@
-/*	$NetBSD: defer.c,v 1.1.1.8 2008/06/22 14:02:17 christos Exp $	*/
-
 /*++
 /* NAME
 /*	defer 3

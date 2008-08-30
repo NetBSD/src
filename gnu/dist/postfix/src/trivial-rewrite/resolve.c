@@ -1,5 +1,3 @@
-/*	$NetBSD: resolve.c,v 1.1.1.12 2008/06/22 14:03:45 christos Exp $	*/
-
 /*++
 /* NAME
 /*	resolve 3

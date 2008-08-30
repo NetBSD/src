@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_conf_bool.c,v 1.1.1.4 2008/06/22 14:02:23 christos Exp $	*/
-
 /*++
 /* NAME
 /*	mail_conf_bool 3

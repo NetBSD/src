@@ -1,5 +1,3 @@
-/*	$NetBSD: milter.c,v 1.1.1.5 2008/06/22 14:02:50 christos Exp $	*/
-
 /*++
 /* NAME
 /*	milter 3

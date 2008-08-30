@@ -1,5 +1,3 @@
-/*	$NetBSD: deliver_request.h,v 1.1.1.8 2008/06/22 14:02:18 christos Exp $	*/
-
 #ifndef _DELIVER_REQUEST_H_INCLUDED_
 #define _DELIVER_REQUEST_H_INCLUDED_
 

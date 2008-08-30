@@ -1,5 +1,3 @@
-/*	$NetBSD: mbox_conf.c,v 1.1.1.4 2008/06/22 14:02:31 christos Exp $	*/
-
 /*++
 /* NAME
 /*	mbox_conf 3

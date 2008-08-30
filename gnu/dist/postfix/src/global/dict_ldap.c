@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_ldap.c,v 1.1.1.6 2008/06/22 14:02:19 christos Exp $	*/
-
 /*++
 /* NAME
 /*	dict_ldap 3

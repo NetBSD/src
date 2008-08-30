@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_server.h,v 1.1.1.6 2005/08/18 21:07:35 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mail_server 3h

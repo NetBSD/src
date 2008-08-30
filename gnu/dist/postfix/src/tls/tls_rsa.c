@@ -1,5 +1,3 @@
-/*	$NetBSD: tls_rsa.c,v 1.1.1.1 2005/08/18 21:11:07 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	tls_rsa

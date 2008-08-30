@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_proto.h,v 1.1.1.10 2008/06/22 14:02:30 christos Exp $	*/
-
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
 

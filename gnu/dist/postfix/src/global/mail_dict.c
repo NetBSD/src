@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_dict.c,v 1.1.1.4 2008/06/22 14:02:24 christos Exp $	*/
-
 /*++
 /* NAME
 /*	mail_dict 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_strflags.c,v 1.1.1.3 2006/07/19 01:17:21 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_strflags 3
@@ -54,6 +52,7 @@ static struct cleanup_flag_map cleanup_flag_map[] = {
     CLEANUP_FLAG_BCC_OK, "enable_automatic_bcc",
     CLEANUP_FLAG_MAP_OK, "enable_address_mapping",
     CLEANUP_FLAG_MILTER, "enable_milters",
+    CLEANUP_FLAG_SMTP_REPLY, "enable_smtp_reply",
 };
 
 /* cleanup_strflags - map flags code to printable string */

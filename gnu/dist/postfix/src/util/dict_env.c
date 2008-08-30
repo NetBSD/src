@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_env.c,v 1.1.1.4 2007/05/19 16:28:44 heas Exp $	*/
-
 /*++
 /* NAME
 /*	dict_env 3

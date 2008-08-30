@@ -1,5 +1,3 @@
-/*	$NetBSD: proxymap.c,v 1.1.1.9 2008/06/22 14:03:05 christos Exp $	*/
-
 /*++
 /* NAME
 /*	proxymap 8

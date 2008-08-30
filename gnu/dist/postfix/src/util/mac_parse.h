@@ -1,5 +1,3 @@
-/*	$NetBSD: mac_parse.h,v 1.1.1.4 2005/08/18 21:10:29 rpaulo Exp $	*/
-
 #ifndef _MAC_PARSE_H_INCLUDED_
 #define _MAC_PARSE_H_INCLUDED_
 

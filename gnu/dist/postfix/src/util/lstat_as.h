@@ -1,5 +1,3 @@
-/*	$NetBSD: lstat_as.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
-
 #ifndef _LSTAT_AS_H_INCLUDED_
 #define _LSTAT_AS_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: name_mask.h,v 1.1.1.5 2008/06/22 14:04:06 christos Exp $	*/
-
 #ifndef _NAME_MASK_H_INCLUDED_
 #define _NAME_MASK_H_INCLUDED_
 

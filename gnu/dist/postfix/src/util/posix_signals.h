@@ -1,5 +1,3 @@
-/*	$NetBSD: posix_signals.h,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
-
 #ifndef _POSIX_SIGNALS_H_INCLUDED_
 #define _POSIX_SIGNALS_H_INCLUDED_
 /*++

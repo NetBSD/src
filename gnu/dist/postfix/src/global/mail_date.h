@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_date.h,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
-
 #ifndef _MAIL_DATE_H_INCLUDED_
 #define _MAIL_DATE_H_INCLUDED_
 

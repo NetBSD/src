@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_stream.c,v 1.1.1.10 2008/06/22 14:02:31 christos Exp $	*/
-
 /*++
 /* NAME
 /*	mail_stream 3

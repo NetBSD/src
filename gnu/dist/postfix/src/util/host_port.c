@@ -1,5 +1,3 @@
-/*	$NetBSD: host_port.c,v 1.1.1.4 2005/08/18 21:10:20 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	host_port 3

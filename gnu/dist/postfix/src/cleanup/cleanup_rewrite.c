@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_rewrite.c,v 1.1.1.3 2005/08/18 21:05:56 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_rewrite 3

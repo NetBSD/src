@@ -1,5 +1,3 @@
-/*	$NetBSD: ext_prop.h,v 1.1.1.4 2005/08/18 21:06:18 rpaulo Exp $	*/
-
 #ifndef _EXT_PROP_INCLUDED_
 #define _EXT_PROP_INCLUDED_
 

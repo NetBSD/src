@@ -1,5 +1,3 @@
-/*	$NetBSD: off_cvt.c,v 1.1.1.4 2006/07/19 01:17:27 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	off_cvt 3

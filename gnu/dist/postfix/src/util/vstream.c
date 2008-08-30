@@ -1,5 +1,3 @@
-/*	$NetBSD: vstream.c,v 1.1.1.10 2008/06/22 14:04:14 christos Exp $	*/
-
 /*++
 /* NAME
 /*	vstream 3

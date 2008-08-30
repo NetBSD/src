@@ -1,5 +1,3 @@
-/*	$NetBSD: mkmap_cdb.c,v 1.1.1.1 2005/08/18 21:07:12 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mkmap_cdb 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: tok822_resolve.c,v 1.1.1.3 2006/07/19 01:17:29 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	tok822_resolve 3

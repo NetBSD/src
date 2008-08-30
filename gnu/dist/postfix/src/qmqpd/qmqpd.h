@@ -1,5 +1,3 @@
-/*	$NetBSD: qmqpd.h,v 1.1.1.6 2008/06/22 14:03:18 christos Exp $	*/
-
 /*++
 /* NAME
 /*	qmqpd 3h

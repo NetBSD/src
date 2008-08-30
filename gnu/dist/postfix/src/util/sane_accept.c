@@ -1,5 +1,3 @@
-/*	$NetBSD: sane_accept.c,v 1.1.1.8 2008/06/22 14:04:08 christos Exp $	*/
-
 /*++
 /* NAME
 /*	sane_accept 3

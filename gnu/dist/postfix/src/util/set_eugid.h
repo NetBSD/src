@@ -1,5 +1,3 @@
-/*	$NetBSD: set_eugid.h,v 1.1.1.3 2008/06/22 14:04:09 christos Exp $	*/
-
 #ifndef _SET_EUGID_H_INCLUDED_
 #define _SET_EUGID_H_INCLUDED_
 

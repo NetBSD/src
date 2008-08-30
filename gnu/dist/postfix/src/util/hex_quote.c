@@ -1,5 +1,3 @@
-/*	$NetBSD: hex_quote.c,v 1.1.1.5 2006/07/19 01:17:53 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	hex_quote 3

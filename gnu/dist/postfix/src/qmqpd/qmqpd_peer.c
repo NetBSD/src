@@ -1,5 +1,3 @@
-/*	$NetBSD: qmqpd_peer.c,v 1.1.1.7 2008/06/22 14:03:18 christos Exp $	*/
-
 /*++
 /* NAME
 /*	qmqpd_peer 3

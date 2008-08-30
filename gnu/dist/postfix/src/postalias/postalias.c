@@ -1,5 +1,3 @@
-/*	$NetBSD: postalias.c,v 1.1.1.12 2008/06/22 14:03:01 christos Exp $	*/
-
 /*++
 /* NAME
 /*	postalias 1

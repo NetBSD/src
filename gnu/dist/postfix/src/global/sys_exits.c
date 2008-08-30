@@ -1,5 +1,3 @@
-/*	$NetBSD: sys_exits.c,v 1.1.1.4 2008/06/22 14:02:41 christos Exp $	*/
-
 /*++
 /* NAME
 /*	sys_exits 3

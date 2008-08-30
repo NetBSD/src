@@ -1,5 +1,3 @@
-/*	$NetBSD: get_hostname.c,v 1.1.1.3 2007/08/02 08:05:36 heas Exp $	*/
-
 /*++
 /* NAME
 /*	get_hostname 3

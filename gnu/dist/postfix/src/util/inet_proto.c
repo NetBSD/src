@@ -1,5 +1,3 @@
-/*	$NetBSD: inet_proto.c,v 1.1.1.3 2008/06/22 14:04:02 christos Exp $	*/
-
 /*++
 /* NAME
 /*	inet_proto 3

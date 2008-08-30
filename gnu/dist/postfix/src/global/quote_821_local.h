@@ -1,5 +1,3 @@
-/*	$NetBSD: quote_821_local.h,v 1.1.1.4 2006/07/19 01:17:27 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	quote_821_local 3h

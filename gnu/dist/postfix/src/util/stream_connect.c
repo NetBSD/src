@@ -1,5 +1,3 @@
-/*	$NetBSD: stream_connect.c,v 1.1.1.4 2007/05/19 16:28:48 heas Exp $	*/
-
 /*++
 /* NAME
 /*	stream_connect 3

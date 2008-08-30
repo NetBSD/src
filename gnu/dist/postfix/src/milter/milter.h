@@ -1,5 +1,3 @@
-/*	$NetBSD: milter.h,v 1.1.1.4 2008/06/22 14:02:50 christos Exp $	*/
-
 #ifndef _MILTER_H_INCLUDED_
 #define _MILTER_H_INCLUDED_
 

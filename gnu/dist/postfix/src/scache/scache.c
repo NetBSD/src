@@ -1,5 +1,3 @@
-/*	$NetBSD: scache.c,v 1.1.1.5 2008/06/22 14:03:19 christos Exp $	*/
-
 /*++
 /* NAME
 /*	scache 8

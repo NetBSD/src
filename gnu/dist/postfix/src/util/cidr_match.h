@@ -1,5 +1,3 @@
-/*	$NetBSD: cidr_match.h,v 1.1.1.1 2005/08/18 21:10:53 rpaulo Exp $	*/
-
 #ifndef _CIDR_MATCH_H_INCLUDED_
 #define _CIDR_MATCH_H_INCLUDED_
 

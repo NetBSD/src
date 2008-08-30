@@ -1,5 +1,3 @@
-/*	$NetBSD: base64_code.h,v 1.1.1.3 2006/07/19 01:17:50 rpaulo Exp $	*/
-
 #ifndef _BASE64_CODE_H_INCLUDED_
 #define _BASE64_CODE_H_INCLUDED_
 

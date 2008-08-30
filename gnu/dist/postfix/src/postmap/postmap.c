@@ -1,5 +1,3 @@
-/*	$NetBSD: postmap.c,v 1.1.1.12 2008/06/22 14:03:04 christos Exp $	*/
-
 /*++
 /* NAME
 /*	postmap 1

@@ -1,5 +1,3 @@
-/*	$NetBSD: unknown.c,v 1.1.1.6 2007/08/02 08:05:16 heas Exp $	*/
-
 /*++
 /* NAME
 /*	unknown 3

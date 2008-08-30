@@ -1,5 +1,3 @@
-/*	$NetBSD: mailbox.c,v 1.1.1.5 2006/07/19 01:17:57 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mailbox 3
@@ -127,6 +125,12 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
 	    msg_warn("recipient %s: destination %s is not a regular file",
 		     state.msg_attr.rcpt.address, usr_attr.mailbox);
 	    dsb_simple(why, "5.3.5", "mail system configuration error");
+	} else if (var_strict_mbox_owner && st.st_uid != usr_attr.uid) {
+	    vstream_fclose(mp->fp);
+	    dsb_simple(why, "4.2.0",
+	      "destination %s is not owned by recipient", usr_attr.mailbox);
+	    msg_warn("specify \"%s = no\" to ignore mailbox ownership mismatch",
+		     VAR_STRICT_MBOX_OWNER);
 	} else {
 	    end = vstream_fseek(mp->fp, (off_t) 0, SEEK_END);
 	    mail_copy_status = mail_copy(COPY_ATTR(state.msg_attr), mp->fp,

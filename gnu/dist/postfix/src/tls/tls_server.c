@@ -1,5 +1,3 @@
-/*	$NetBSD: tls_server.c,v 1.1.1.5 2008/06/22 14:03:17 christos Exp $	*/
-
 /*++
 /* NAME
 /*	tls_server 3

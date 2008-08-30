@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_feedback.c,v 1.1.1.1 2008/06/22 14:03:08 christos Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_feedback 3

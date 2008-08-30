@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_open.c,v 1.1.1.9 2008/06/22 14:03:53 christos Exp $	*/
-
 /*++
 /* NAME
 /*	dict_open 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: tls_client.c,v 1.1.1.5 2008/06/22 14:03:15 christos Exp $	*/
-
 /*++
 /* NAME
 /*	tls_client

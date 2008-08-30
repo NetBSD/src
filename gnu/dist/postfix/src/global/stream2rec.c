@@ -1,5 +1,3 @@
-/*	$NetBSD: stream2rec.c,v 1.1.1.4 2006/07/19 01:17:29 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	stream2rec 1

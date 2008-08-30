@@ -1,5 +1,3 @@
-/*	$NetBSD: match_parent_style.h,v 1.1.1.2 2004/05/31 00:24:32 heas Exp $	*/
-
 #ifndef _MATCH_PARENT_STYLE_H_INCLUDED_
 #define _MATCH_PARENT_STYLE_H_INCLUDED_
 

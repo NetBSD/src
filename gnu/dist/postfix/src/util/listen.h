@@ -1,5 +1,3 @@
-/*	$NetBSD: listen.h,v 1.1.1.4 2008/06/22 14:04:02 christos Exp $	*/
-
 #ifndef _LISTEN_H_INCLUDED_
 #define _LISTEN_H_INCLUDED_
 

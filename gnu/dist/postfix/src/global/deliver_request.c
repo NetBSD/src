@@ -1,5 +1,3 @@
-/*	$NetBSD: deliver_request.c,v 1.1.1.8 2008/06/22 14:02:18 christos Exp $	*/
-
 /*++
 /* NAME
 /*	deliver_request 3

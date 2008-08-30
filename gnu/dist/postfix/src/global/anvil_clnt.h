@@ -1,5 +1,3 @@
-/*	$NetBSD: anvil_clnt.h,v 1.1.1.2 2006/07/19 01:17:21 rpaulo Exp $	*/
-
 #ifndef _ANVIL_CLNT_H_INCLUDED_
 #define _ANVIL_CLNT_H_INCLUDED_
 

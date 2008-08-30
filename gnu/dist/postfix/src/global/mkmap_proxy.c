@@ -1,5 +1,3 @@
-/*	$NetBSD: mkmap_proxy.c,v 1.1.1.1 2008/06/22 14:02:37 christos Exp $	*/
-
 /*++
 /* NAME
 /*	mkmap_proxy 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_cdb.c,v 1.1.1.4 2008/06/22 14:03:51 christos Exp $	*/
-
 /*++
 /* NAME
 /*	dict_cdb 3

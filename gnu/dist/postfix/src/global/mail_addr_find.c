@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_addr_find.c,v 1.1.1.6 2006/07/19 01:17:24 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mail_addr_find 3

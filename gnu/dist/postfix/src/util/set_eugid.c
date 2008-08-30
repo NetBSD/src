@@ -1,5 +1,3 @@
-/*	$NetBSD: set_eugid.c,v 1.1.1.3 2008/06/22 14:04:09 christos Exp $	*/
-
 /*++
 /* NAME
 /*	set_eugid 3

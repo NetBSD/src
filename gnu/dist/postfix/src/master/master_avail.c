@@ -1,5 +1,3 @@
-/*	$NetBSD: master_avail.c,v 1.1.1.4 2008/06/22 14:02:46 christos Exp $	*/
-
 /*++
 /* NAME
 /*	master_avail 3

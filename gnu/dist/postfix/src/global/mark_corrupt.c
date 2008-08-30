@@ -1,5 +1,3 @@
-/*	$NetBSD: mark_corrupt.c,v 1.1.1.4 2006/07/19 01:17:26 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mark_corrupt 3

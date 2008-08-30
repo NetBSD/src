@@ -1,5 +1,3 @@
-/*	$NetBSD: sane_time.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
-
 /*++
 /* NAME
 /*	sane_time 3

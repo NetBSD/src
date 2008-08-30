@@ -1,5 +1,3 @@
-/*	$NetBSD: netstring.c,v 1.1.1.4 2006/07/19 01:17:54 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	netstring 3

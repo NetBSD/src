@@ -1,5 +1,3 @@
-/*	$NetBSD: delivered_hdr.c,v 1.1.1.1 2008/06/22 14:02:18 christos Exp $	*/
-
 /*++
 /* NAME
 /*	delivered_hdr 3

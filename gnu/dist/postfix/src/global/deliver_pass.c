@@ -1,5 +1,3 @@
-/*	$NetBSD: deliver_pass.c,v 1.1.1.9 2008/06/22 14:02:17 christos Exp $	*/
-
 /*++
 /* NAME
 /*	deliver_pass 3

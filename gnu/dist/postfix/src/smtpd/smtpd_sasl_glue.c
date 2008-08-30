@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd_sasl_glue.c,v 1.1.1.9 2008/06/22 14:03:41 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd_sasl_glue 3

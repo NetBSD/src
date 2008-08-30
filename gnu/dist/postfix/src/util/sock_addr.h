@@ -1,5 +1,3 @@
-/*	$NetBSD: sock_addr.h,v 1.1.1.2 2006/11/07 02:59:30 rpaulo Exp $	*/
-
 #ifndef _SOCK_ADDR_EQ_H_INCLUDED_
 #define _SOCK_ADDR_EQ_H_INCLUDED_
 

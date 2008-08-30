@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_strerror.c,v 1.1.1.5 2008/06/22 14:02:13 christos Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_strerror 3

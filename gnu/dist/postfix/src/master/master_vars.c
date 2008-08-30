@@ -1,5 +1,3 @@
-/*	$NetBSD: master_vars.c,v 1.1.1.5 2008/06/22 14:02:49 christos Exp $	*/
-
 /*++
 /* NAME
 /*	master_vars 3

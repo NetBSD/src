@@ -1,5 +1,3 @@
-/*	$NetBSD: showq.c,v 1.1.1.12 2008/06/22 14:03:21 christos Exp $	*/
-
 /*++
 /* NAME
 /*	showq 8

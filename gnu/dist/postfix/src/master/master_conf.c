@@ -1,5 +1,3 @@
-/*	$NetBSD: master_conf.c,v 1.1.1.5 2008/06/22 14:02:47 christos Exp $	*/
-
 /*++
 /* NAME
 /*	master_conf 3

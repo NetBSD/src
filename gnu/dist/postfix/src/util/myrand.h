@@ -1,5 +1,3 @@
-/*	$NetBSD: myrand.h,v 1.1.1.3 2004/05/31 00:25:00 heas Exp $	*/
-
 #ifndef _MYRAND_H_INCLUDED_
 #define _MYRAND_H_INCLUDED_
 

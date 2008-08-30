@@ -1,5 +1,3 @@
-/*	$NetBSD: msg_syslog.c,v 1.1.1.6 2006/07/19 01:17:54 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	msg_syslog 3

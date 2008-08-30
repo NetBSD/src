@@ -1,5 +1,3 @@
-/*	$NetBSD: stream_test.c,v 1.1.1.3 2006/07/19 01:17:55 rpaulo Exp $	*/
-
 #include "sys_defs.h"
 #include <sys/stat.h>
 #include <unistd.h>

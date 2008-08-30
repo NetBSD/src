@@ -1,5 +1,3 @@
-/*	$NetBSD: scan_dir.h,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
-
 #ifndef _SCAN_DIR_H_INCLUDED_
 #define _SCAN_DIR_H_INCLUDED_
 

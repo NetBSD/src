@@ -1,5 +1,3 @@
-/*	$NetBSD: rewrite_clnt.c,v 1.1.1.11 2008/06/22 14:02:40 christos Exp $	*/
-
 /*++
 /* NAME
 /*	rewrite_clnt 3

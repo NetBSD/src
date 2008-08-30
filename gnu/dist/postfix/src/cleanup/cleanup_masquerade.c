@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_masquerade.c,v 1.1.1.6 2006/07/19 01:17:18 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_masquerade 3

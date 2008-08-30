@@ -1,5 +1,3 @@
-/*	$NetBSD: trivial-rewrite.h,v 1.1.1.5 2006/07/19 01:17:49 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	trivial-rewrite 3h

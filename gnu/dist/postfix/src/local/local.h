@@ -1,5 +1,3 @@
-/*	$NetBSD: local.h,v 1.1.1.8 2008/06/22 14:02:45 christos Exp $	*/
-
 /*++
 /* NAME
 /*	local 3h

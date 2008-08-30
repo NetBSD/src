@@ -1,5 +1,3 @@
-/*	$NetBSD: postfix.c,v 1.1.1.10 2008/06/22 14:03:03 christos Exp $	*/
-
 /*++
 /* NAME
 /*	postfix 1

@@ -1,5 +1,3 @@
-/*	$NetBSD: mbox_open.c,v 1.1.1.4 2007/05/19 16:28:14 heas Exp $	*/
-
 /*++
 /* NAME
 /*	mbox_open 3

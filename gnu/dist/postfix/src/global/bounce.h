@@ -1,5 +1,3 @@
-/*	$NetBSD: bounce.h,v 1.1.1.6 2006/07/19 01:17:21 rpaulo Exp $	*/
-
 #ifndef _BOUNCE_H_INCLUDED_
 #define _BOUNCE_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: rec_type.h,v 1.1.1.10 2007/05/19 16:28:17 heas Exp $	*/
-
 #ifndef _REC_TYPE_H_INCLUDED_
 #define _REC_TYPE_H_INCLUDED_
 

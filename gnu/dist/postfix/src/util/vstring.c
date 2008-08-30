@@ -1,5 +1,3 @@
-/*	$NetBSD: vstring.c,v 1.1.1.6 2006/07/19 01:17:57 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	vstring 3
@@ -626,6 +624,7 @@ VSTRING *vstring_sprintf_prepend(VSTRING *vp, const char *format,...)
     result_len = VSTRING_LEN(vp);
 
     /* Construct: old|new|old|free */
+    VSTRING_SPACE(vp, old_len);
     vstring_memcat(vp, vstring_str(vp), old_len);
 
     /* Construct: new|old|free */

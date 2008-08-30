@@ -1,5 +1,3 @@
-/*	$NetBSD: get_domainname.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
-
 #ifndef _GET_DOMAINNAME_H_INCLUDED_
 #define _GET_DOMAINNAME_H_INCLUDED_
 

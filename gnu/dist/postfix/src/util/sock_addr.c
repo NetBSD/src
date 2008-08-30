@@ -1,5 +1,3 @@
-/*	$NetBSD: sock_addr.c,v 1.1.1.2 2006/11/07 02:59:30 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	sock_addr 3

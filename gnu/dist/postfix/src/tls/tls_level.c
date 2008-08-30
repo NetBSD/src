@@ -1,5 +1,3 @@
-/*	$NetBSD: tls_level.c,v 1.1.1.2 2008/06/22 14:03:16 christos Exp $	*/
-
 /*++
 /* NAME
 /*	tls_level 3

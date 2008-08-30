@@ -1,5 +1,3 @@
-/*	$NetBSD: upass_connect.c,v 1.1.1.1 2008/06/22 14:04:11 christos Exp $	*/
-
 /*++
 /* NAME
 /*	upass_connect 3

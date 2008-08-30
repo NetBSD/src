@@ -1,5 +1,3 @@
-/*	$NetBSD: mime_state.h,v 1.1.1.4 2008/06/22 14:02:33 christos Exp $	*/
-
 #ifndef _MIME_STATE_H_INCLUDED_
 #define _MIME_STATE_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: name_code.c,v 1.1.1.4 2008/06/22 14:04:06 christos Exp $	*/
-
 /*++
 /* NAME
 /*	name_code 3

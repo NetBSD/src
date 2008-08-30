@@ -1,5 +1,3 @@
-/*	$NetBSD: recipient_list.h,v 1.1.1.6 2007/05/19 16:28:17 heas Exp $	*/
-
 #ifndef _RECIPIENT_LIST_H_INCLUDED_
 #define _RECIPIENT_LIST_H_INCLUDED_
 

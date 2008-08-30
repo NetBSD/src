@@ -1,5 +1,3 @@
-/*	$NetBSD: hex_code.c,v 1.1.1.2 2006/07/19 01:17:53 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	hex_code 3

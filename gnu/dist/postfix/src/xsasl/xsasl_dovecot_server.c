@@ -1,5 +1,3 @@
-/*	$NetBSD: xsasl_dovecot_server.c,v 1.1.1.2 2008/06/22 14:04:18 christos Exp $	*/
-
 /*++
 /* NAME
 /*	xsasl_dovecot_server 3
