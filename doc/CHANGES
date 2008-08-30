@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1099 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1100 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -679,3 +679,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	grep(1): Issue a warning if -r is used without supplying an argument.
 		[lukem 20080828]
 	hostapd(8), wpa_supplicant(8): Upgrade to 0.6.4 [christos 20080830]
+	postfix(1): Import 2.5.4 [christos 20080830]
