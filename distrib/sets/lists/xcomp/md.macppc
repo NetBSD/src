@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.9 2008/08/29 06:08:40 lukem Exp $
+# $NetBSD: md.macppc,v 1.10 2008/08/30 09:34:58 mrg Exp $
 ./usr/X11R6/include/X11/extensions/xf86dga.h	-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86dga1.h	-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86dga1str.h	-unknown-	x11
@@ -79,10 +79,8 @@
 ./usr/X11R7/include/X11/extensions/xf86dga1.h	-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/xf86dga1str.h	-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/xf86dgastr.h	-unknown-	xorg
-./usr/X11R7/include/xf86Optrec.h	-unknown-	xorg
-./usr/X11R7/include/xf86Parser.h	-unknown-	xorg
 ./usr/X11R7/lib/libXxf86dga.a	-unknown-	xorg
-./usr/X11R7/man/cat3/XF86VidMode.0		-unknown-		.cat,xorg
+./usr/X11R7/man/cat3/XF86VM.0		-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeDeleteModeLine.0	-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeGetAllModeLines.0	-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeGetDotClocks.0	-unknown-		.cat,xorg
@@ -104,8 +102,7 @@
 ./usr/X11R7/man/cat3/XF86VidModeSwitchMode.0	-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeSwitchToMode.0	-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeValidateModeLine.0	-unknown-		.cat,xorg
-./usr/X11R7/man/cat4/fpit.0			-unknown-		.cat,xorg
-./usr/X11R7/man/man3/XF86VidMode.3		-unknown-		.man,xorg
+./usr/X11R7/man/man3/XF86VM.3		-unknown-		.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeDeleteModeLine.3	-unknown-		.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeGetAllModeLines.3	-unknown-		.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeGetDotClocks.3	-unknown-		.man,xorg
@@ -127,7 +124,6 @@
 ./usr/X11R7/man/man3/XF86VidModeSwitchMode.3	-unknown-		.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeSwitchToMode.3	-unknown-		.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeValidateModeLine.3	-unknown-		.man,xorg
-./usr/X11R7/man/man4/fpit.4			-unknown-		.man,xorg
 ./usr/libdata/debug/usr/X11R6/bin/XFree86.debug		-unknown-	.debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/Xmacppc.debug		-unknown-	.debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	.debug,x11
