@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2008/07/21 14:19:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2008/08/30 02:57:42 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -668,7 +668,7 @@ find_declared_option(const char *name)
 	if ((option = ht_lookup(defopttab, name)) != NULL ||
 	    (option = ht_lookup(defparamtab, name)) != NULL ||
 	    (option = ht_lookup(defflagtab, name)) != NULL ||
-	    (option = ht_lookup(fsopttab, name)) != NULL) {
+	    (option = ht_lookup(deffstab, name)) != NULL) {
 		return (option);
 	}
 
