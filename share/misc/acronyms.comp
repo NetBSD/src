@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.87 2008/08/24 23:13:07 dholland Exp $
+$NetBSD: acronyms.comp,v 1.88 2008/08/30 10:04:29 tsutsui Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -274,6 +274,7 @@ PPP	point-to-point protocol
 PPPOA	point-to-point protocol over ATM
 PPPOE	point-to-point protocol over ethernet
 PRML	partial response, maximum likelihood
+PRNG	pseudo random number generator
 PROM	programmable read only memory
 PSK	pre-shared key
 PSTN	public switched telephone network
@@ -293,6 +294,7 @@ RIR	regional internet registry
 RISC	reduced instruction set computing
 RLE	run length encoding
 RLL	run length limited
+RNG	random number generator
 ROM	read only memory
 RPC	remote procedure call
 RPM	revolutions per minute
@@ -345,6 +347,7 @@ TLD	top level domain
 TLS	transport layer security
 TMDS	transition minimized differential signaling
 TR	token ring
+TRNG	true random number generator
 TTL	time to live
 TTY	teletype
 TZ	time zone
