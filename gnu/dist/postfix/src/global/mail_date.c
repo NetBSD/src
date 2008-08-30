@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_date.c,v 1.1.1.5 2006/08/27 00:39:46 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mail_date 3

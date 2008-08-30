@@ -1,5 +1,3 @@
-/*	$NetBSD: wildcard_inet_addr.c,v 1.1.1.1 2005/08/18 21:07:16 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	wildcard_inet_addr 3

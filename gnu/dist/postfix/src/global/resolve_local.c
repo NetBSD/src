@@ -1,5 +1,3 @@
-/*	$NetBSD: resolve_local.c,v 1.1.1.7 2006/07/19 01:17:28 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	resolve_local 3

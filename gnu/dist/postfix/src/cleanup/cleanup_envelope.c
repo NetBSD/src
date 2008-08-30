@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_envelope.c,v 1.1.1.11 2008/06/22 14:02:07 christos Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_envelope 3

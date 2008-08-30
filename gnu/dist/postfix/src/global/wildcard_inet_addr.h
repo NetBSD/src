@@ -1,5 +1,3 @@
-/*	$NetBSD: wildcard_inet_addr.h,v 1.1.1.1 2005/08/18 21:07:16 rpaulo Exp $	*/
-
 #ifndef _WILDCARD_INET_ADDR_H_INCLUDED_
 #define _WILDCARD_INET_ADDR_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: dir_forest.c,v 1.1.1.4 2006/07/19 01:17:52 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	dir_forest 3

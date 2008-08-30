@@ -1,5 +1,3 @@
-/*	$NetBSD: header_body_checks.h,v 1.1.1.1 2008/06/22 14:02:23 christos Exp $	*/
-
 #ifndef _HBC_H_INCLUDED_
 #define _HBC_H_INCLUDED_
 

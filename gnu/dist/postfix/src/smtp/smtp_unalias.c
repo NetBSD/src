@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_unalias.c,v 1.1.1.4 2006/07/19 01:17:44 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	smtp_unalias 3

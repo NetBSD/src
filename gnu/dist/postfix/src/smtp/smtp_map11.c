@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_map11.c,v 1.1.1.2 2006/07/19 01:17:43 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	smtp_map11 3

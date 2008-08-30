@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_params.h,v 1.1.1.16 2008/06/22 14:02:27 christos Exp $	*/
-
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
 
@@ -2933,6 +2931,13 @@ extern int var_dest_rate_delay;
 #define VAR_STRESS		"stress"
 #define DEF_STRESS		""
 extern char *var_stress;
+
+ /*
+  * Mailbox ownership.
+  */
+#define VAR_STRICT_MBOX_OWNER	"strict_mailbox_ownership"
+#define DEF_STRICT_MBOX_OWNER	1
+extern bool var_strict_mbox_owner;
 
 /* LICENSE
 /* .ad

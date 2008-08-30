@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd_check.c,v 1.1.1.18 2008/06/22 14:03:39 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd_check 3

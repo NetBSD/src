@@ -1,5 +1,3 @@
-/*	$NetBSD: tls_bio_ops.c,v 1.1.1.2 2008/06/22 14:03:12 christos Exp $	*/
-
 /*++
 /* NAME
 /*	tls_bio_ops 3

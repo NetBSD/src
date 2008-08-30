@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup.h,v 1.1.1.12 2008/06/22 14:02:05 christos Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup 3h

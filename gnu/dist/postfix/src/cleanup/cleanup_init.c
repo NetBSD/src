@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_init.c,v 1.1.1.9 2008/06/22 14:02:08 christos Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_init 3

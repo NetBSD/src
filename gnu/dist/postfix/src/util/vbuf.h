@@ -1,5 +1,3 @@
-/*	$NetBSD: vbuf.h,v 1.1.1.4 2007/05/19 16:28:49 heas Exp $	*/
-
 #ifndef _VBUF_H_INCLUDED_
 #define _VBUF_H_INCLUDED_
 

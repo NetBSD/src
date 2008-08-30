@@ -1,5 +1,3 @@
-/*	$NetBSD: master.c,v 1.1.1.10 2008/06/22 14:02:47 christos Exp $	*/
-
 /*++
 /* NAME
 /*	master 8

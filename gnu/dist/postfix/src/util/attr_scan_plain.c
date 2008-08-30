@@ -1,5 +1,3 @@
-/*	$NetBSD: attr_scan_plain.c,v 1.1.1.6 2008/06/22 14:03:49 christos Exp $	*/
-
 /*++
 /* NAME
 /*	attr_scan_plain 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_state.c,v 1.1.1.12 2008/06/22 14:02:11 christos Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_state 3

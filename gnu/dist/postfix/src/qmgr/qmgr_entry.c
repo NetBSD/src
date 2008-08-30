@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_entry.c,v 1.1.1.8 2008/06/22 14:03:08 christos Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_entry 3

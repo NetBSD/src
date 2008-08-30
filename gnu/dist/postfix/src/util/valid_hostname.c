@@ -1,5 +1,3 @@
-/*	$NetBSD: valid_hostname.c,v 1.1.1.6 2006/07/19 01:17:56 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	valid_hostname 3

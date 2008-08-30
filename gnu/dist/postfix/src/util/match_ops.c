@@ -1,5 +1,3 @@
-/*	$NetBSD: match_ops.c,v 1.1.1.7 2006/07/19 01:17:54 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	match_ops 3
@@ -236,12 +234,20 @@ int     match_hostaddr(int unused_flags, const char *addr, const char *pattern)
      * Postfix; if not, then Postfix has no business dealing with IPv4
      * addresses anyway.
      * 
-     * - Don't bother if the pattern is a bare IPv4 address. That form would
-     * have been matched with the strcasecmp() call above.
+     * - Don't bother unless the pattern is either an IPv6 address or net/mask.
      * 
-     * - Don't bother if the pattern isn't an address or address/mask.
+     * We can safely skip IPv4 address patterns because their form is
+     * unambiguous and they did not match in the strcasecmp() calls above.
+     * 
+     * XXX We MUST skip (parent) domain names, which may appear in NAMADR_LIST
+     * input, to avoid triggering false cidr_match_parse() errors.
+     * 
+     * The last two conditions below are for backwards compatibility with
+     * earlier Postfix versions: don't abort with fatal errors on junk that
+     * was silently ignored (principle of least astonishment).
      */
     if (!strchr(addr, ':') != !strchr(pattern, ':')
+	|| pattern[strcspn(pattern, ":/")] == 0
 	|| pattern[strspn(pattern, V4_ADDR_STRING_CHARS)] == 0
 	|| pattern[strspn(pattern, V6_ADDR_STRING_CHARS "[]/")] != 0)
 	return (0);

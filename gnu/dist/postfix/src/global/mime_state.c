@@ -1,5 +1,3 @@
-/*	$NetBSD: mime_state.c,v 1.1.1.7 2008/06/22 14:02:33 christos Exp $	*/
-
 /*++
 /* NAME
 /*	mime_state 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: inet_addr_host.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
-
 #ifndef INET_ADDR_HOST_H_INCLUDED_
 #define INET_ADDR_HOST_H_INCLUDED_
 

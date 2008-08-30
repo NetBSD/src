@@ -1,5 +1,3 @@
-.\"	$NetBSD: postconf.5,v 1.1.1.15 2008/06/22 14:01:09 christos Exp $
-.\"
 .TH POSTCONF 5 
 .SH NAME
 postconf
@@ -7773,6 +7771,11 @@ This feature should not be enabled on a general purpose mail server,
 because it is likely to reject legitimate email.
 .PP
 This feature is available in Postfix 2.0 and later.
+.SH strict_mailbox_ownership (default: yes)
+Defer delivery when a mailbox file is not owned by its recipient.
+The default setting is not backwards compatible.
+.PP
+This feature is available in Postfix 2.5.3 and later.
 .SH strict_mime_encoding_domain (default: no)
 Reject mail with invalid Content-Transfer-Encoding: information
 for the message/* or multipart/* MIME content types.  This blocks

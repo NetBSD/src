@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp.c,v 1.1.1.15 2008/06/22 14:03:23 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtp 8

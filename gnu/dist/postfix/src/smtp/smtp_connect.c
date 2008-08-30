@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_connect.c,v 1.1.1.17 2008/06/22 14:03:22 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtp_connect 3

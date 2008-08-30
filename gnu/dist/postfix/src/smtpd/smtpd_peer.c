@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd_peer.c,v 1.1.1.10 2008/06/22 14:03:41 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd_peer 3

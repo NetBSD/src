@@ -1,5 +1,3 @@
-/*	$NetBSD: inet_addr_host.c,v 1.1.1.4 2006/07/19 01:17:53 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	inet_addr_host 3

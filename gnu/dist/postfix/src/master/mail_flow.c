@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_flow.c,v 1.1.1.4 2006/07/19 01:17:31 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mail_flow 3

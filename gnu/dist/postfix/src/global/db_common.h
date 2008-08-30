@@ -1,5 +1,3 @@
-/*	$NetBSD: db_common.h,v 1.1.1.2 2006/07/19 01:17:22 rpaulo Exp $	*/
-
 #ifndef _DB_COMMON_H_INCLUDED_
 #define _DB_COMMON_H_INCLUDED_
 

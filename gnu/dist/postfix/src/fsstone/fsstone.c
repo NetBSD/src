@@ -1,5 +1,3 @@
-/*	$NetBSD: fsstone.c,v 1.1.1.3 2007/05/19 16:28:08 heas Exp $	*/
-
 /*++
 /* NAME
 /*	fsstone 1

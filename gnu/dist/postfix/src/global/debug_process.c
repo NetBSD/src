@@ -1,5 +1,3 @@
-/*	$NetBSD: debug_process.c,v 1.1.1.3 2005/08/18 21:06:09 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	debug_process 3

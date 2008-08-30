@@ -1,5 +1,3 @@
-/*	$NetBSD: unix_trigger.c,v 1.1.1.4 2006/07/19 01:17:56 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	unix_trigger 3

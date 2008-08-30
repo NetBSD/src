@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_enable.c,v 1.1.1.3 2008/06/22 14:02:56 christos Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_enable

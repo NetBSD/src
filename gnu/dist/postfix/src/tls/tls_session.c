@@ -1,5 +1,3 @@
-/*	$NetBSD: tls_session.c,v 1.1.1.3 2008/06/22 14:03:17 christos Exp $	*/
-
 /*++
 /* NAME
 /*	tls_session

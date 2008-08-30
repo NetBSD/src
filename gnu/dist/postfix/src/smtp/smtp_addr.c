@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_addr.c,v 1.1.1.11 2008/06/22 14:03:24 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtp_addr 3

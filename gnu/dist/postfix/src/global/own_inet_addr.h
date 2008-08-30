@@ -1,5 +1,3 @@
-/*	$NetBSD: own_inet_addr.h,v 1.1.1.4 2005/08/18 21:06:55 rpaulo Exp $	*/
-
 #ifndef _OWN_INET_ADDR_H_INCLUDED_
 #define _OWN_INET_ADDR_H_INCLUDED_
 

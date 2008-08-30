@@ -1,5 +1,3 @@
-/*	$NetBSD: inet_addr_local.c,v 1.1.1.5 2008/06/22 14:04:02 christos Exp $	*/
-
 /*++
 /* NAME
 /*	inet_addr_local 3

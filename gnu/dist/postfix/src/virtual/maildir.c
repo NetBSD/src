@@ -1,5 +1,3 @@
-/*	$NetBSD: maildir.c,v 1.1.1.8 2006/07/19 01:17:57 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	maildir 3

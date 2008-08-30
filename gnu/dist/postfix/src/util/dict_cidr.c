@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_cidr.c,v 1.1.1.4 2006/11/07 02:59:11 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	dict_cidr 3

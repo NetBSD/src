@@ -1,5 +1,3 @@
-/*	$NetBSD: sendmail.c,v 1.1.1.16 2008/06/22 14:03:21 christos Exp $	*/
-
 /*++
 /* NAME
 /*	sendmail 1

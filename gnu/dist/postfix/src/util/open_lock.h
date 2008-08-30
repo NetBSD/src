@@ -1,5 +1,3 @@
-/*	$NetBSD: open_lock.h,v 1.1.1.3 2006/07/19 01:17:54 rpaulo Exp $	*/
-
 #ifndef _OPEN_LOCK_H_INCLUDED_
 #define _OPEN_LOCK_H_INCLUDED_
 

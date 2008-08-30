@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_flow.h,v 1.1.1.3 2006/07/19 01:17:31 rpaulo Exp $	*/
-
 #ifndef _MAIL_FLOW_H_INCLUDED_
 #define _MAIL_FLOW_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: own_inet_addr.c,v 1.1.1.6 2006/07/19 01:17:27 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	own_inet_addr 3

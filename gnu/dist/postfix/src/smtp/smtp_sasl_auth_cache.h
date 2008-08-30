@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_sasl_auth_cache.h,v 1.1.1.1 2008/06/22 14:03:28 christos Exp $	*/
-
 #ifndef _SMTP_SASL_AUTH_CACHE_H_INCLUDED_
 #define _SMTP_SASL_AUTH_CACHE_H_INCLUDED_
 

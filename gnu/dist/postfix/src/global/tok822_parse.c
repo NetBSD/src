@@ -1,5 +1,3 @@
-/*	$NetBSD: tok822_parse.c,v 1.1.1.9 2006/07/19 01:17:29 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	tok822_parse 3

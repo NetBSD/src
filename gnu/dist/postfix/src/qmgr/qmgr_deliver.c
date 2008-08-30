@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_deliver.c,v 1.1.1.12 2008/06/22 14:03:07 christos Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_deliver 3

@@ -1,5 +1,3 @@
-#	$NetBSD: master.cf,v 1.1.1.15 2008/06/22 13:59:59 christos Exp $
-#
 #
 # Postfix master process configuration file.  For details on the format
 # of the file, see the master(5) manual page (command: "man 5 master").

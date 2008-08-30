@@ -1,5 +1,3 @@
-/*	$NetBSD: inet_connect.c,v 1.1.1.4 2005/08/18 21:10:26 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	inet_connect 3

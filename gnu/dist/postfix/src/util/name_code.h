@@ -1,5 +1,3 @@
-/*	$NetBSD: name_code.h,v 1.1.1.3 2008/06/22 14:04:06 christos Exp $	*/
-
 #ifndef _NAME_CODE_H_INCLUDED_
 #define _NAME_CODE_H_INCLUDED_
 

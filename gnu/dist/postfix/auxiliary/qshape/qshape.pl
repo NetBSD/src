@@ -13,13 +13,14 @@
 #	\fBqshape\fR [\fB-s\fR] [\fB-p\fR] [\fB-m \fImin_subdomains\fR]
 #		[\fB-b \fIbucket_count\fR] [\fB-t \fIbucket_time\fR]
 #		[\fB-l\fR] [\fB-w \fIterminal_width\fR]
+#		[\fB-N \fIbatch_msg_count\fR] [\fB-n \fIbatch_top_domains\fR]
 #		[\fB-c \fIconfig_directory\fR] [\fIqueue_name\fR ...]
 # DESCRIPTION
 #	The \fBqshape\fR program helps the administrator understand the
 #	Postfix queue message distribution in time and by sender domain
 #	or recipient domain. The program needs read access to the queue
 #	directories and queue files, so it must run as the superuser or
-#	the \fBmail_owner\fR specified in \fImain.cf\fR (typically
+#	the \fBmail_owner\fR specified in \fBmain.cf\fR (typically
 #	\fBpostfix\fR).
 #
 #	Options:
@@ -63,6 +64,15 @@
 #	parent domain rows are shown as '.+' followed by the last 16 bytes
 #	of the domain name. If this is still too narrow to show the domain
 #	name and all the counters, the terminal_width limit is violated.
+# .IP "\fB-N \fIbatch_msg_count\fR"
+#	When the output device is a terminal, intermediate results are
+#	shown each "batch_msg_count" messages. This produces usable results
+#	in a reasonable time even when the deferred queue is large. The
+#	default is to show intermediate results every 1000 messages.
+# .IP "\fB-n \fIbatch_top_domains\fR"
+#	When reporting intermediate or final results to a termainal, report
+#	only the top "batch_top_domains" domains. The default limit is 20
+#	domains.
 # .IP "\fB-c \fIconfig_directory\fR"
 #	The \fBmain.cf\fR configuration file is in the named directory
 #	instead of the default configuration directory.
@@ -73,8 +83,8 @@
 #	the incoming and active queues. To display a different set of
 #	queues, just list their directory names on the command line.
 #	Absolute paths are used as is, other paths are taken relative
-#	to the \fImain.cf\fR \fBqueue_directory\fR parameter setting.
-#	While \fImain.cf\fR supports the use of \fI$variable\fR expansion
+#	to the \fBmain.cf\fR \fBqueue_directory\fR parameter setting.
+#	While \fBmain.cf\fR supports the use of \fI$variable\fR expansion
 #	in the definition of the \fBqueue_directory\fR parameter, the
 #	\fBqshape\fR program does not. If you must use variable expansions
 #	in the \fBqueue_directory\fR setting, you must specify an explicit
@@ -104,6 +114,9 @@ use IO::File;
 use File::Find;
 use Getopt::Std;
 
+my $cls;		# Clear screen escape sequence
+my $batch_msg_count;	# Interim result frequency
+my $batch_top_domains;	# Interim result count
 my %opts;		# Command line switches
 my %q;			# domain counts for queues and buckets
 my %sub;		# subdomain counts for parent domains
@@ -120,6 +133,7 @@ do {
     	warn "$0: $_[0]" unless exists($opts{"h"});
 	die "Usage: $0 [ -s ] [ -p ] [ -m <min_subdomains> ] [ -l ]\n".
 	    "\t[ -b <bucket_count> ] [ -t <bucket_time> ] [ -w <terminal_width> ]\n".
+	    "\t[ -N <batch_msg_count> ] [ -n <batch_top_domains> ]\n".
 	    "\t[ -c <config_directory> ] [ <queue_name> ... ]\n".
 	"The 's' option shows sender domain counts.\n".
 	"The 'p' option shows address counts by for parent domains.\n".
@@ -142,7 +156,7 @@ do {
 	"not supported. If necessary, use explicit absolute paths for all queues.\n";
     };
 
-    getopts("lhc:psw:b:t:m:", \%opts);
+    getopts("lhc:psw:b:t:m:n:N:", \%opts);
     warn "Help message" if (exists $opts{"h"});
 
     @qlist = @ARGV if (@ARGV > 0);
@@ -168,6 +182,16 @@ $width = $opts{"w"} if (exists $opts{"w"} && $opts{"w"} > 80);
 $bnum = $opts{"b"} if (exists $opts{"b"} && $opts{"b"} > 0);
 $tick = $opts{"t"} if (exists $opts{"t"} && $opts{"t"} > 0);
 $minsub = $opts{"m"} if (exists $opts{"m"} && $opts{"m"} > 0);
+
+if ( -t STDOUT ) {
+    $batch_msg_count = 1000 unless defined($batch_msg_count = $opts{"N"});
+    $batch_top_domains = 20 unless defined ($batch_top_domains = $opts{"n"});
+    $cls = `clear`;
+} else {
+    $batch_msg_count = 0;
+    $batch_top_domains = 0;
+    $cls = "";
+}
 
 sub rec_get {
     my ($h) = @_;
@@ -204,7 +228,7 @@ sub qenv {
 	$dlen = $1 if ($d =~ /^\s*(\d+)\s+\d+\s+\d+/);
 	($r, $l, $d) = rec_get($h);
 	return unless (defined $r && $r eq "T");
-	$t = $d;
+	($t) = split(/\s+/, $d);
     } elsif ($r eq "S" || $r eq "F") {
 	# For embryonic queue files in the "maildrop" directory the first
 	# record is either a REC_TYPE_FULL (F) followed by REC_TYPE_FROM
@@ -223,15 +247,22 @@ sub qenv {
 	return undef;
     }
     while (my ($r, $l, $d) = rec_get($h)) {
+	if ($r eq "p" && $d > 0) {
+	    seek($h, $d, 0) or return (); # follow pointer
+	}
 	if ($r eq "R") { push(@r, $d); }
 	elsif ($r eq "S") { $s = $d; }
 	elsif ($r eq "M") {
 	    last unless (defined($s));
 	    if (defined($dlen)) {
-		seek($h, $dlen, 1);
+		seek($h, $dlen, 1) or return (); # skip content
 		($r, $l, $d) = rec_get($h);
 	    } else {
-		1 while ((($r, $l, $d) = rec_get($h)) && ($r =~ /^[NL]$/));
+		while ((($r, $l, $d) = rec_get($h)) && ($r =~ /^[NLp]$/)) {
+		    if ($r eq "p" && $d > 0) {
+			seek($h, $d, 0) or return (); # follow pointer
+		    }
+		}
 	    }
 	    return unless (defined($r) && $r eq "X");
 	}
@@ -256,6 +287,7 @@ sub bucket {
 
 # Collate by age of message in the selected queues.
 #
+my $msgs;
 sub wanted {
     if (my ($t, $s, @r) = qenv($_)) {
 	my $b = bucket($t, $now);
@@ -274,26 +306,15 @@ sub wanted {
 		$new = ! $old;
 	    } while ($opts{"p"} && $a =~ s/^(?:\.)?[^.]+\.(.*\.)/.$1/);
 	}
+    	if ($batch_msg_count > 0 && ++$msgs % $batch_msg_count == 0) {
+	    results();
+	}
     }
 }
-find(\&wanted, @qlist);
 
 my @heads;
-my $fmt = "";
-my $dw = $width;
-
-for (my $i = 0, my $t = 0; $i <= $bnum; ) {
-    $q{"TOTAL"}->[$i] ||= 0;
-    my $l = length($q{"TOTAL"}->[$i]);
-    my $h = ($i == 0) ? "T" : $t;
-    $l = length($h) if (length($h) >= $l);
-    $l = ($l > 2) ? $l + 1 : 3;
-    push(@heads, $h);
-    $fmt .= sprintf "%%%ds", $l;
-    $dw -= $l;
-    if (++$i < $bnum) { $t += ($t && !$opts{"l"}) ? $t : $tick; } else { $t = "$t+"; }
-}
-$dw = $dwidth if ($dw < $dwidth);
+my $fmt;
+my $dw;
 
 sub pdomain {
     my ($d, @count) = @_;
@@ -311,18 +332,45 @@ sub pdomain {
     printf "$fmt\n", @count;
 }
 
-# Print headings
-#
-pdomain("", @heads);
+sub results {
+    @heads = ();
+    $dw = $width;
+    $fmt = "";
+    for (my $i = 0, my $t = 0; $i <= $bnum; ) {
+	$q{"TOTAL"}->[$i] ||= 0;
+	my $l = length($q{"TOTAL"}->[$i]);
+	my $h = ($i == 0) ? "T" : $t;
+	$l = length($h) if (length($h) >= $l);
+	$l = ($l > 2) ? $l + 1 : 3;
+	push(@heads, $h);
+	$fmt .= sprintf "%%%ds", $l;
+	$dw -= $l;
+	if (++$i < $bnum) { $t += ($t && !$opts{"l"}) ? $t : $tick; } else { $t = "$t+"; }
+    }
+    $dw = $dwidth if ($dw < $dwidth);
 
-# Show per-domain totals
-#
-foreach my $d (sort { $q{$b}->[0] <=> $q{$a}->[0] ||
-		       length($a) <=> length($b) } keys %q) {
+    print $cls if ($batch_msg_count > 0);
 
-    # Skip parent domains with < $minsub subdomains.
+    # Print headings
     #
-    next if ($d =~ /^\./ && $sub{$d} < $minsub);
+    pdomain("", @heads);
 
-    pdomain($d, @{$q{$d}});
+    my $n = 0;
+
+    # Show per-domain totals
+    #
+    foreach my $d (sort { $q{$b}->[0] <=> $q{$a}->[0] ||
+			   length($a) <=> length($b) } keys %q) {
+
+	# Skip parent domains with < $minsub subdomains.
+	#
+	next if ($d =~ /^\./ && $sub{$d} < $minsub);
+
+	last if ($batch_top_domains > 0 && ++$n > $batch_top_domains);
+
+	pdomain($d, @{$q{$d}});
+    }
 }
+
+find(\&wanted, @qlist);
+results();

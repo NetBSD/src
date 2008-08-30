@@ -1,5 +1,3 @@
-/*	$NetBSD: master_listen.c,v 1.1.1.7 2008/06/22 14:02:48 christos Exp $	*/
-
 /*++
 /* NAME
 /*	master_listen 3

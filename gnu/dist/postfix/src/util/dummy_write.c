@@ -1,5 +1,3 @@
-/*	$NetBSD: dummy_write.c,v 1.1.1.3 2008/06/22 14:03:57 christos Exp $	*/
-
 /*++
 /* NAME
 /*	dummy_write 3

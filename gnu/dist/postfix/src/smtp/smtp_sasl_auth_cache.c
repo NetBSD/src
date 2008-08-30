@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_sasl_auth_cache.c,v 1.1.1.1 2008/06/22 14:03:28 christos Exp $	*/
-
 /*++
 /* NAME
 /*	smtp_sasl_auth_cache 3
