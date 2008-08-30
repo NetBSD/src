@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.522 2008/08/28 07:53:34 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.523 2008/08/30 09:13:35 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -756,6 +756,7 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
 	xwininfo xwud xprehashprinterlist xplsprinters xkbprint xkbevd \
 	xterm xwd xfs xfsinfo xphelloworld xtrap xkbutils xkbcomp \
+	xkeyboard-config \
 	font-adobe-100dpi font-adobe-75dpi font-adobe-utopia-100dpi \
 	font-adobe-utopia-75dpi font-adobe-utopia-type1 \
 	font-alias \
