@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.7 2008/08/29 06:08:40 lukem Exp $
+# $NetBSD: md.amd64,v 1.8 2008/08/30 07:15:50 mrg Exp $
 ./usr/X11R6/include/xf86Optrec.h		-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h		-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0		-unknown-		.cat,x11
@@ -70,9 +70,6 @@
 ./usr/X11R6/man/man3/XF86VidModeSwitchToMode.3	-unknown-		.man,x11
 ./usr/X11R6/man/man3/XF86VidModeValidateModeLine.3	-unknown-		.man,x11
 ./usr/X11R6/man/man4/fpit.4			-unknown-		.man,x11
-./usr/X11R7/include/xf86Optrec.h		-unknown-	xorg
-./usr/X11R7/include/xf86Parser.h		-unknown-	xorg
-./usr/X11R7/man/cat3/XF86VidMode.0		-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeDeleteModeLine.0	-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeGetAllModeLines.0	-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeGetDotClocks.0	-unknown-		.cat,xorg
@@ -94,8 +91,6 @@
 ./usr/X11R7/man/cat3/XF86VidModeSwitchMode.0	-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeSwitchToMode.0	-unknown-		.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeValidateModeLine.0	-unknown-		.cat,xorg
-./usr/X11R7/man/cat4/fpit.0			-unknown-		.cat,xorg
-./usr/X11R7/man/html3/XF86VidMode.html		-unknown-		html,xorg
 ./usr/X11R7/man/html3/XF86VidModeDeleteModeLine.html	-unknown-		html,xorg
 ./usr/X11R7/man/html3/XF86VidModeGetAllModeLines.html	-unknown-		html,xorg
 ./usr/X11R7/man/html3/XF86VidModeGetDotClocks.html	-unknown-		html,xorg
@@ -117,8 +112,6 @@
 ./usr/X11R7/man/html3/XF86VidModeSwitchMode.html	-unknown-		html,xorg
 ./usr/X11R7/man/html3/XF86VidModeSwitchToMode.html	-unknown-		html,xorg
 ./usr/X11R7/man/html3/XF86VidModeValidateModeLine.html	-unknown-		html,xorg
-./usr/X11R7/man/html4/fpit.html			-unknown-		html,xorg
-./usr/X11R7/man/man3/XF86VidMode.3		-unknown-		.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeDeleteModeLine.3	-unknown-		.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeGetAllModeLines.3	-unknown-		.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeGetDotClocks.3	-unknown-		.man,xorg
@@ -140,14 +133,11 @@
 ./usr/X11R7/man/man3/XF86VidModeSwitchMode.3	-unknown-		.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeSwitchToMode.3	-unknown-		.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeValidateModeLine.3	-unknown-		.man,xorg
-./usr/X11R7/man/man4/fpit.4			-unknown-		.man,xorg
 ./usr/libdata/debug/usr/X11R7/bin/XFree86.debug		-unknown-	.debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		-unknown-	.debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	.debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/ioport.debug		-unknown-	.debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/kbd_mode.debug	-unknown-	.debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/mmapr.debug		-unknown-	.debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/mmapw.debug		-unknown-	.debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	.debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	.debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xf86cfg.debug		-unknown-	.debug,xorg
