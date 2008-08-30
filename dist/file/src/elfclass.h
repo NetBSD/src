@@ -1,7 +1,6 @@
 /*
- * Copyright (c) Ian F. Darwin 1986-1995.
- * Software written by Ian F. Darwin and others;
- * maintained 1995-present by Christos Zoulas and others.
+ * Copyright (c) Christos Zoulas 2008.
+ * All Rights Reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,49 +24,46 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/*
- * Header file for public domain tar (tape archive) program.
- *
- * @(#)tar.h 1.20 86/10/29	Public Domain.
- *
- * Created 25 August 1985 by John Gilmore, ihnp4!hoptoad!gnu.
- *
- * $File: tar.h,v 1.12 2008/02/07 00:58:52 christos Exp $ # checkin only
- */
+	if (nbytes <= sizeof(elfhdr))
+		return 0;
 
-/*
- * Header block on tape.
- *
- * I'm going to use traditional DP naming conventions here.
- * A "block" is a big chunk of stuff that we do I/O on.
- * A "record" is a piece of info that we care about.
- * Typically many "record"s fit into a "block".
- */
-#define	RECORDSIZE	512
-#define	NAMSIZ	100
-#define	TUNMLEN	32
-#define	TGNMLEN	32
+	u.l = 1;
+	(void)memcpy(&elfhdr, buf, sizeof elfhdr);
+	swap = (u.c[sizeof(int32_t) - 1] + 1) != elfhdr.e_ident[EI_DATA];
 
-union record {
-	char		charptr[RECORDSIZE];
-	struct header {
-		char	name[NAMSIZ];
-		char	mode[8];
-		char	uid[8];
-		char	gid[8];
-		char	size[12];
-		char	mtime[12];
-		char	chksum[8];
-		char	linkflag;
-		char	linkname[NAMSIZ];
-		char	magic[8];
-		char	uname[TUNMLEN];
-		char	gname[TGNMLEN];
-		char	devmajor[8];
-		char	devminor[8];
-	} header;
-};
+	type = elf_getu16(swap, elfhdr.e_type);
+	switch (type) {
+#ifdef ELFCORE
+	case ET_CORE:
+		if (dophn_core(ms, clazz, swap, fd,
+		    (off_t)elf_getu(swap, elfhdr.e_phoff),
+		    elf_getu16(swap, elfhdr.e_phnum), 
+		    (size_t)elf_getu16(swap, elfhdr.e_phentsize),
+		    fsize, &flags) == -1)
+			return -1;
+		break;
+#endif
+	case ET_EXEC:
+	case ET_DYN:
+		if (dophn_exec(ms, clazz, swap, fd,
+		    (off_t)elf_getu(swap, elfhdr.e_phoff),
+		    elf_getu16(swap, elfhdr.e_phnum), 
+		    (size_t)elf_getu16(swap, elfhdr.e_phentsize),
+		    fsize, &flags, elf_getu16(swap, elfhdr.e_shnum))
+		    == -1)
+			return -1;
+		/*FALLTHROUGH*/
+	case ET_REL:
+		if (doshn(ms, clazz, swap, fd,
+		    (off_t)elf_getu(swap, elfhdr.e_shoff),
+		    elf_getu16(swap, elfhdr.e_shnum),
+		    (size_t)elf_getu16(swap, elfhdr.e_shentsize),
+		    &flags,
+		    elf_getu16(swap, elfhdr.e_machine)) == -1)
+			return -1;
+		break;
 
-/* The magic field is filled with this if uname and gname are valid. */
-#define	TMAGIC		"ustar"		/* 5 chars and a null */
-#define	GNUTMAGIC	"ustar  "	/* 7 chars and a null */
+	default:
+		break;
+	}
+	return 1;

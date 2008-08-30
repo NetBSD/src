@@ -1,5 +1,3 @@
-/*	$NetBSD: compress.c,v 1.1.1.11 2007/06/07 11:24:35 pooka Exp $	*/
-
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -51,23 +49,20 @@
 #if defined(HAVE_SYS_TIME_H)
 #include <sys/time.h>
 #endif
-#ifdef HAVE_LIBZ
+#if defined(HAVE_ZLIB_H) && defined(HAVE_LIBZ)
+#define BUILTIN_DECOMPRESS
 #include <zlib.h>
 #endif
 
 
 #ifndef lint
-#if 0
-FILE_RCSID("@(#)$File: compress.c,v 1.51 2007/03/05 02:41:29 christos Exp $")
-#else
-__RCSID("$NetBSD: compress.c,v 1.1.1.11 2007/06/07 11:24:35 pooka Exp $");
-#endif
+FILE_RCSID("@(#)$File: compress.c,v 1.57 2008/07/16 18:00:57 christos Exp $")
 #endif
 
-private struct {
-	const char *magic;
+private const struct {
+	const char magic[8];
 	size_t maglen;
-	const char *const argv[3];
+	const char *argv[3];
 	int silent;
 } compr[] = {
 	{ "\037\235", 2, { "gzip", "-cdq", NULL }, 1 },		/* compressed */
@@ -92,7 +87,7 @@ private size_t ncompr = sizeof(compr) / sizeof(compr[0]);
 private ssize_t swrite(int, const void *, size_t);
 private size_t uncompressbuf(struct magic_set *, int, size_t,
     const unsigned char *, unsigned char **, size_t);
-#ifdef HAVE_LIBZ
+#ifdef BUILTIN_DECOMPRESS
 private size_t uncompressgzipped(struct magic_set *, const unsigned char *,
     unsigned char **, size_t);
 #endif
@@ -104,6 +99,7 @@ file_zmagic(struct magic_set *ms, int fd, const char *name,
 	unsigned char *newbuf = NULL;
 	size_t i, nsz;
 	int rv = 0;
+	int mime = ms->flags & MAGIC_MIME;
 
 	if ((ms->flags & MAGIC_COMPRESS) == 0)
 		return 0;
@@ -118,11 +114,18 @@ file_zmagic(struct magic_set *ms, int fd, const char *name,
 			rv = -1;
 			if (file_buffer(ms, -1, name, newbuf, nsz) == -1)
 				goto error;
-			if (file_printf(ms, " (") == -1)
+
+			if (mime == MAGIC_MIME || mime == 0) {
+				if (file_printf(ms, mime ?
+				    " compressed-encoding=" : " (") == -1)
+					goto error;
+			}
+
+			if ((mime == 0 || mime & MAGIC_MIME_ENCODING) &&
+			    file_buffer(ms, -1, NULL, buf, nbytes) == -1)
 				goto error;
-			if (file_buffer(ms, -1, NULL, buf, nbytes) == -1)
-				goto error;
-			if (file_printf(ms, ")") == -1)
+
+			if (!mime && file_printf(ms, ")") == -1)
 				goto error;
 			rv = 1;
 			break;
@@ -291,7 +294,7 @@ file_pipe2file(struct magic_set *ms, int fd, const void *startbuf,
 	return fd;
 }
 
-#ifdef HAVE_LIBZ
+#ifdef BUILTIN_DECOMPRESS
 
 #define FHCRC		(1 << 1)
 #define FEXTRA		(1 << 2)
@@ -327,7 +330,7 @@ uncompressgzipped(struct magic_set *ms, const unsigned char *old,
 
 	if (data_start >= n)
 		return 0;
-	if ((*newch = (unsigned char *)malloc(HOWMANY + 1)) == NULL) {
+	if ((*newch = CAST(unsigned char *, malloc(HOWMANY + 1))) == NULL) {
 		return 0;
 	}
 	
@@ -370,7 +373,8 @@ uncompressbuf(struct magic_set *ms, int fd, size_t method,
 	int fdin[2], fdout[2];
 	int r;
 
-#ifdef HAVE_LIBZ
+#ifdef BUILTIN_DECOMPRESS
+        /* FIXME: This doesn't cope with bzip2 */
 	if (method == 2)
 		return uncompressgzipped(ms, old, newch, n);
 #endif

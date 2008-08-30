@@ -1,5 +1,3 @@
-/*	$NetBSD: names.h,v 1.1.1.8 2007/06/07 11:24:36 pooka Exp $	*/
-
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -34,7 +32,7 @@
  * appear at fixed offsets into the file. Don't make HOWMANY
  * too high unless you have a very fast CPU.
  *
- * $File: names.h,v 1.27 2007/05/08 16:47:03 christos Exp $
+ * $File: names.h,v 1.32 2008/02/11 00:19:29 rrt Exp $
  */
 
 /*
@@ -45,27 +43,25 @@
 /* these types are used to index the table 'types': keep em in sync! */
 #define	L_C	0		/* first and foremost on UNIX */
 #define	L_CC	1		/* Bjarne's postincrement */
-#define	L_FORT	2		/* the oldest one */
-#define	L_MAKE	3		/* Makefiles */
-#define	L_PLI	4		/* PL/1 */
-#define	L_MACH	5		/* some kinda assembler */
-#define	L_ENG	6		/* English */
-#define	L_PAS	7		/* Pascal */
-#define	L_MAIL	8		/* Electronic mail */
-#define	L_NEWS	9		/* Usenet Netnews */
-#define	L_JAVA	10		/* Java code */
-#define	L_HTML	11		/* HTML */
-#define	L_BCPL	12		/* BCPL */
-#define	L_M4	13		/* M4 */
-#define	L_PO	14		/* PO */
+#define	L_MAKE	2		/* Makefiles */
+#define	L_PLI	3		/* PL/1 */
+#define	L_MACH	4		/* some kinda assembler */
+#define	L_ENG	5		/* English */
+#define	L_PAS	6		/* Pascal */
+#define	L_MAIL	7		/* Electronic mail */
+#define	L_NEWS	8		/* Usenet Netnews */
+#define	L_JAVA	9		/* Java code */
+#define	L_HTML	10		/* HTML */
+#define	L_BCPL	11		/* BCPL */
+#define	L_M4	12		/* M4 */
+#define	L_PO	13		/* PO */
 
 static const struct {
-	const char *human;
-	const char *mime;
+	char human[48];
+	char mime[16];
 } types[] = {
 	{ "C program",					"text/x-c", },
 	{ "C++ program",				"text/x-c++" },
-	{ "FORTRAN program",				"text/x-fortran" },
 	{ "make commands",				"text/x-makefile" },
 	{ "PL/1 program",				"text/x-pl1" },
 	{ "assembler program",				"text/x-asm" },
@@ -78,8 +74,7 @@ static const struct {
 	{ "BCPL program",				"text/x-bcpl" },
 	{ "M4 macro language pre-processor",		"text/x-m4" },
 	{ "PO (gettext message catalogue)",             "text/x-po" },
-	{ "cannot happen error on names.h/types",	"error/x-error" },
-	{ 0, 0}
+	{ "cannot happen error on names.h/types",	"error/x-error" }
 };
 
 /*
@@ -118,8 +113,8 @@ static const struct {
  * as Java, as it comes after "the" and "The".  Perhaps we need a fancier
  * heuristic to identify Java?
  */
-static struct names {
-	const char *name;
+static const struct names {
+	char name[14];
 	short type;
 } names[] = {
 	/* These must be sorted by eye for optimal hit rate */
@@ -149,18 +144,6 @@ static struct names {
 	{"LDFLAGS",	L_MAKE},
 	{"all:",	L_MAKE},
 	{".PRECIOUS",	L_MAKE},
-/* Too many files of text have these words in them.  Find another way
- * to recognize Fortrash.
- */
-#ifdef	NOTDEF
-	{"subroutine",	L_FORT},
-	{"function",	L_FORT},
-	{"block",	L_FORT},
-	{"common",	L_FORT},
-	{"dimension",	L_FORT},
-	{"integer",	L_FORT},
-	{"data",	L_FORT},
-#endif	/*NOTDEF*/
 	{".ascii",	L_MACH},
 	{".asciiz",	L_MACH},
 	{".byte",	L_MACH},
@@ -185,6 +168,6 @@ static struct names {
 	{"<BODY",	L_HTML},
 	{"<html",	L_HTML},
 	{"<HTML",	L_HTML},
-	{NULL,		0}
+	{"<!--",	L_HTML},
 };
-#define NNAMES ((sizeof(names)/sizeof(struct names)) - 1)
+#define NNAMES (sizeof(names)/sizeof(struct names))
