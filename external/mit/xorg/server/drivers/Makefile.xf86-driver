@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xf86-driver,v 1.8 2008/08/10 11:28:42 rtr Exp $
+#	$NetBSD: Makefile.xf86-driver,v 1.9 2008/08/31 08:46:51 christos Exp $
 
 LIBISMODULE=	yes
 SHLIB_MAJOR=	${PACKAGE_MAJOR}
@@ -17,20 +17,9 @@ PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
 
 PACKAGE_VERSION!=	${PRINT_PACKAGE_VERSION}
 
-PRINT_PACKAGE_MAJOR=	echo ${PACKAGE_VERSION} | awk -F. '{	\
-				major = $$1;			\
-			} END { print major }'
-PACKAGE_MAJOR!=		${PRINT_PACKAGE_MAJOR}
-
-PRINT_PACKAGE_MINOR=	echo ${PACKAGE_VERSION} | awk -F. '{	\
-				minor = $$2;			\
-			} END { print minor }'
-PACKAGE_MINOR!=		${PRINT_PACKAGE_MINOR}
-
-PRINT_PACKAGE_PATCH=	echo ${PACKAGE_VERSION} | awk -F. '{	\
-				patch = $$3;			\
-			} END { print patch }'
-PACKAGE_PATCH!=		${PRINT_PACKAGE_PATCH}
+PACKAGE_MAJOR=		${PACKAGE_VERSION:R:R}
+PACKAGE_MINOR=		${PACKAGE_VERSION:R:E}
+PACKAGE_PATCH=		${PACKAGE_VERSION:E}
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
