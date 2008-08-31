@@ -1,8 +1,8 @@
-/*	$NetBSD: veriexecctl.c,v 1.32 2008/08/31 23:35:04 dholland Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.33 2008/08/31 23:37:45 dholland Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
- * Copyright 2005 Brett Lymn <blymn@netbsd.org> 
+ * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
  * All rights reserved.
  *
@@ -144,7 +144,7 @@ print_query(prop_dictionary_t qp, char *file)
 	 v = dict_getd(qp, "fp");
 	for (i = 0; i < prop_data_size(prop_dictionary_get(qp, "fp")); i++)
 		printf("%02x", v[i] & 0xff);
-	printf("\n");	
+	printf("\n");
 }
 
 static char *
