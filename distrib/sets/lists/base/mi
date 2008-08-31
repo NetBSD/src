@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.769 2008/08/31 12:07:46 christos Exp $
+# $NetBSD: mi,v 1.770 2008/08/31 12:55:44 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3280,6 +3280,7 @@
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
 ./usr/share/nvi					base-util-share
 ./usr/share/nvi/catalog				base-util-share
+./usr/share/nvi/catalog/dutch			base-util-share		share
 ./usr/share/nvi/catalog/english			base-util-share		share
 ./usr/share/nvi/catalog/french			base-util-share		share
 ./usr/share/nvi/catalog/german			base-util-share		share
