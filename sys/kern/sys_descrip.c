@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.5 2008/07/02 16:45:20 matt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.6 2008/08/31 20:55:55 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.5 2008/07/02 16:45:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.6 2008/08/31 20:55:55 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 	fd_putfile(old);
 	*retval = new;
 
-	return 0;
+	return error;
 }
 
 /*
