@@ -745,8 +745,10 @@
 /* Define to 1 if you have the `thr_yield' function. */
 /* #undef HAVE_THR_YIELD */
 
+#if 0	/* Define this in the Makefile */
 /* define if you have TLS */
 #define HAVE_TLS 1
+#endif
 
 /* Define to 1 if you have the <unicode/utypes.h> header file. */
 /* #undef HAVE_UNICODE_UTYPES_H */
