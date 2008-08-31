@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.15 2008/08/30 17:49:43 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.16 2008/08/31 07:53:33 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -43,7 +43,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readelf.c,v 1.76 2008/07/16 18:00:57 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.15 2008/08/30 17:49:43 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.16 2008/08/31 07:53:33 christos Exp $");
 #endif
 #endif
 
@@ -913,7 +913,7 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 			for (;;) {
 				Elf32_Cap cap32;
 				Elf64_Cap cap64;
-				char cbuf[MAX(sizeof cap32, sizeof cap64)];
+				char cbuf[/*CONSTCOND*/MAX(sizeof cap32, sizeof cap64)];
 				if ((coff += xcap_sizeof) >= (size_t)xsh_size)
 					break;
 				if (read(fd, cbuf, (size_t)xcap_sizeof) !=
