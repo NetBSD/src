@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.79 2008/08/31 10:45:19 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.80 2008/08/31 16:52:50 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1694,4 +1694,49 @@ src/gnu/lib/libgcc4/arch/m68k.mk                regen (via patch)
 	    friendly.
 	Rerun mknative for m68k after config.gcc and configure changes.
 	[martin, ticket #1188]
+
+sys/arch/xen/include/xenbus.h			1.8 (via patch)
+sys/arch/xen/xen/xbd_xenbus.c			1.24 (via patch)
+sys/arch/xen/xen/xbdback_xenbus.c		1.15 (via patch)
+sys/arch/xen/xenbus/xenbus_xs.c			1.14 (via patch)
+
+	Add swedge support to xbd backed, and make the virtual block device
+	handle sizes larger than 4TB. Tested by Jukka Marin.  PR#37370.
+	[bouyer, ticket #1149]
+
+usr.sbin/ypserv/ypserv/ypserv.8			1.19
+usr.sbin/ypserv/ypserv/ypserv.c			1.22
+
+	Disable hostname lookup for ypserv(8) libwrap access control,
+	as they can cause performance problems while ypserv is blocked
+	waiting for the DNS to respond.  Patch from Doug Needham,
+	initially discussed here:
+          http://mail-index.netbsd.org/tech-userlevel/2006/11/01/0014.html
+	[chuck, ticket #1150]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.30
+	xbd_map_align() can be called from interrupt context (though
+	xbd_handler()->dk_iodone()->dk_start()->xbd_start()), so don't try
+	to sleep in uvm_km_alloc().
+	[bouyer, ticket #1163]
+
+sys/arch/x86/x86/bus_dma.c			1.45
+	port-i386/38935: Add appropriate x86_lfence or x86_mfence calls to
+	bus_dmamap_sync(), depending on the BUS_DMASYNC flag. This makes sure
+	that the kernel reads data from main memory in the intended order.
+	[bouyer, ticket #1165]
+
+sys/dev/usb/ehci.c				1.138 (via patch)
+sys/dev/usb/ehcivar.h				1.31 (via patch)
+sys/dev/usb/ohci.c				1.195 (via patch)
+sys/dev/usb/ohcivar.h				1.45 (via patch)
+sys/dev/usb/uhcivar.h				1.45 (via patch)
+sys/dev/usb/uhci.c				1.223 (via patch)
+sys/dev/usb/usb_mem.c				1.37 (via patch)
+sys/dev/usb/usb_mem.h				1.27 (via patch)
+	Add appropriate bus_dmamap_sync() calls to uhci(4), ohci(4) and
+	ehci(4).  This adds explicit barriers between DMA descriptors
+	reads/writes, fixing race conditions on DMA descriptors access
+	with the controller.
+	[bouyer, ticket #1166]
 
