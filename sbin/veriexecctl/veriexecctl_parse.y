@@ -1,9 +1,9 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.24 2008/07/24 06:13:21 dholland Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.25 2008/08/31 23:37:45 dholland Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
- * Copyright 2005 Brett Lymn <blymn@netbsd.org> 
+ * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
  * All rights reserved.
  *
@@ -194,7 +194,7 @@ eol		:	EOL
 %%
 
 /*
- * Takes the hexadecimal string pointed to by "fp" and converts it to a 
+ * Takes the hexadecimal string pointed to by "fp" and converts it to a
  * "count" byte binary number which is stored in the array pointed to
  * by "out".  Returns the number of bytes converted or -1 if the conversion
  * fails.
@@ -213,7 +213,7 @@ convert(char *fp, u_char *out)
 	 */
 	if ((count % 2) != 0)
 		return -1;
-	
+
 	count /= 2;
 
 #define cvt(cv) \
