@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.26 2008/08/30 07:15:51 mrg Exp $
+# $NetBSD: md.amd64,v 1.27 2008/08/31 09:06:40 mrg Exp $
 ./usr/X11R6/bin/X	-unknown-	x11
 ./usr/X11R6/bin/XFree86	-unknown-	x11
 ./usr/X11R6/bin/Xvfb	-unknown-	x11
@@ -541,9 +541,7 @@
 ./usr/X11R7/man/cat1/gtf.0			-unknown-		.cat,xorg
 ./usr/X11R7/man/cat1/pcitweak.0			-unknown-		.cat,xorg
 ./usr/X11R7/man/cat1/scanpci.0			-unknown-		.cat,xorg
-./usr/X11R7/man/cat1/xorgconfig.0			-unknown		.cat,xorg
 ./usr/X11R7/man/cat1/xorgconfig.0		-unknown-		.cat,xorg
-./usr/X11R7/man/cat3/XF86VM.0		-unknown-	xorg
 ./usr/X11R7/man/cat4/apm.0			-unknown-		.cat,xorg
 ./usr/X11R7/man/cat4/ati.0			-unknown-		.cat,xorg
 ./usr/X11R7/man/cat4/chips.0			-unknown-		.cat,xorg
@@ -608,7 +606,6 @@
 ./usr/X11R7/man/man1/scanpci.1			-unknown-		.man,xorg
 ./usr/X11R7/man/man1/xorgconfig.1			-unknown		.man,xorg
 ./usr/X11R7/man/man1/xorgconfig.1		-unknown-		.man,xorg
-./usr/X11R7/man/man3/XF86VM.3		-unknown-	xorg
 ./usr/X11R7/man/man4/apm.4			-unknown-		.man,xorg
 ./usr/X11R7/man/man4/ati.4			-unknown-		.man,xorg
 ./usr/X11R7/man/man4/chips.4			-unknown-		.man,xorg
