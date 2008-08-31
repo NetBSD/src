@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.6 2008/08/31 05:17:31 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ WARNS=0
 
 LDADD+=	-lcurses
 DPADD+=	${LIBCURSES}
-PROG=	nvi
+PROG=	vi
 SRCS=	api.c cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	conv.c cut.c db.c db1.c delete.c ex.c ex_abbrev.c ex_append.c \
 	ex_args.c ex_argv.c ex_at.c ex_bang.c ex_cd.c ex_cmd.c ex_cscope.c \
@@ -42,8 +42,8 @@ SRCS+=	regcomp.c regerror.c regexec.c regfree.c
 CPPFLAGS+=-I${DIST}/regex -D__REGEX_PRIVATE -DUSE_WIDECHAR
 .endif
 
-LINKS=	${BINDIR}/nvi ${BINDIR}/nex ${BINDIR}/nvi ${BINDIR}/nview
-MLINKS=	nvi.1 nex.1 nvi.1 nview.1
+LINKS=	${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
+MLINKS=	vi.1 ex.1 vi.1 view.1
 
 DPSRCS+=options_def.h
 CLEANFILES+=options_def.h
@@ -59,6 +59,6 @@ options_def.h: options.awk options.c
 .PATH: ${DIST}/common
 .PATH: ${DIST}/regex
 
-BUILDSYMLINKS=	${DIST}/docs/vi.man/vi.1 nvi.1
+BUILDSYMLINKS=	${DIST}/docs/vi.man/vi.1 vi.1
 
 .include <bsd.prog.mk>
