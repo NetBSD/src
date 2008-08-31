@@ -1,4 +1,4 @@
-#	$NetBSD: openldap.mk,v 1.2 2008/08/13 04:42:47 lukem Exp $
+#	$NetBSD: openldap.mk,v 1.3 2008/08/31 10:29:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,3 +25,7 @@ LDAPLIB.${_LIB}=	${LDAPOBJDIR.${_LIB}}/lib${_LIB}.a
 .endfor
 
 LDAP_MKVERSION=	${HOST_SH} ${LDAP_DISTDIR}/build/mkversion -v "${LDAP_VERSION}"
+
+.if ${MKCRYPTO} != "no"
+CPPFLAGS+=	-DHAVE_TLS
+.endif
