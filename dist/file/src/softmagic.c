@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.10 2008/08/30 12:16:52 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.11 2008/08/31 04:51:20 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -43,7 +43,7 @@
 #if 0
 FILE_RCSID("@(#)$File: softmagic.c,v 1.120 2008/07/28 17:25:21 christos Exp $")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.10 2008/08/30 12:16:52 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.11 2008/08/31 04:51:20 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -850,7 +850,7 @@ mcopy(struct magic_set *ms, union VALUETYPE *p, int type, int indir,
 			
 			/* check for pointer overflow */
 			if (src < s) {
-				file_magerror(ms, "invalid offset %zu in mcopy()",
+				file_magerror(ms, "invalid offset %u in mcopy()",
 				    offset);
 				return -1;
 			}
