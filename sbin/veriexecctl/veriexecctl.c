@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.31 2008/02/15 15:33:56 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.32 2008/08/31 23:35:04 dholland Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -233,7 +233,7 @@ main(int argc, char **argv)
 	/*
 	 * Handle the different commands we can do.
 	 */
-	if (argc <= 2 && strcasecmp(argv[0], "load") == 0) {
+	if ((argc == 1 || argc == 2) && strcasecmp(argv[0], "load") == 0) {
 		extern FILE *yyin;
 		const char *file;
 		int lfd;
