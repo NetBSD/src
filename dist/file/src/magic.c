@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.19 2008/08/30 12:16:52 christos Exp $	*/
+/*	$NetBSD: magic.c,v 1.20 2008/08/31 07:53:33 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -66,9 +66,13 @@
 
 #include "patchlevel.h"
 
+#if 0
 #ifndef	lint
 FILE_RCSID("@(#)$File: magic.c,v 1.54 2008/07/25 23:30:32 rrt Exp $")
 #endif	/* lint */
+#else
+__RCSID("$NetBSD: magic.c,v 1.20 2008/08/31 07:53:33 christos Exp $");
+#endif
 
 #ifndef PIPE_BUF
 /* Get the PIPE_BUF from pathconf */
@@ -76,7 +80,7 @@ FILE_RCSID("@(#)$File: magic.c,v 1.54 2008/07/25 23:30:32 rrt Exp $")
 #define PIPE_BUF pathconf(".", _PC_PIPE_BUF)
 #else
 <<<<<<< magic.c
-__RCSID("$NetBSD: magic.c,v 1.19 2008/08/30 12:16:52 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.20 2008/08/31 07:53:33 christos Exp $");
 =======
 #define PIPE_BUF 512
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.16 2008/08/30 12:16:52 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.17 2008/08/31 07:53:33 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -411,22 +411,19 @@ int asprintf(char **ptr, const char *format_string, ...);
 #define O_BINARY	0
 #endif
 
-#ifndef __cplusplus
-#ifdef __GNUC__
-#ifndef __NetBSD__
+#ifndef __RCSID
+# ifndef __cplusplus
+#  ifdef __GNUC__
 static const char *rcsid(const char *) __attribute__((__used__));
-#endif
-#endif
-#define FILE_RCSID(id) \
+#  endif
+#  define FILE_RCSID(id) \
 static const char *rcsid(const char *p) { \
 	return rcsid(p = id); \
 }
-#else
-#define FILE_RCSID(id)
-#endif
-
-#ifndef __RCSID
-#define __RCSID FILE_RCSID
+# else
+#  define FILE_RCSID(id)
+# endif
+# define __RCSID FILE_RCSID
 #endif
 
 #endif /* __file_h__ */

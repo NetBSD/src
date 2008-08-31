@@ -1,3 +1,5 @@
+/*	$NetBSD: apptype.c,v 1.2 2008/08/31 07:53:33 christos Exp $	*/
+
 /*
  * Adapted from: apptype.c, Written by Eberhard Mattes and put into the
  * public domain
@@ -24,16 +26,20 @@
  * 
  */
 
-#include "file.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "file.h"
 
+#if 0
 #ifndef	lint
 FILE_RCSID("@(#)$File: apptype.c,v 1.7 2007/01/12 17:38:27 christos Exp $")
 #endif /* lint */
+#else
+__RCSID("$NetBSD: apptype.c,v 1.2 2008/08/31 07:53:33 christos Exp $");
+#endif
 
 #ifdef __EMX__
 #include <io.h>
