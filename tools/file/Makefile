@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2005/05/08 01:47:33 chs Exp $
+#	$NetBSD: Makefile,v 1.5 2008/08/31 00:31:22 lukem Exp $
 #
 
 GNUHOSTDIST=	${.CURDIR}/../../dist/file
@@ -8,7 +8,8 @@ CONFIGURE_ENV+=	CC=${HOST_CC:Q} \
 		CPPFLAGS=${HOST_CPPFLAGS:Q} \
 		CXX=${HOST_CXX:Q}
 
-CONFIGURE_ARGS=	--program-prefix=${_TOOL_PREFIX} --disable-shared
+CONFIGURE_ARGS=	--program-prefix=${_TOOL_PREFIX} --disable-shared \
+		--disable-warnings
 
 .NOTPARALLEL:
 
