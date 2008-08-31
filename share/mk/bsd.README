@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.222 2008/08/31 01:21:41 lukem Exp $
+#	$NetBSD: bsd.README,v 1.223 2008/08/31 05:40:15 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -233,10 +233,6 @@ MKMODULAR	If "no", don't build the versions of modload(8), modstat(8)
 
 MKNLS		If "no", don't build or install the NLS files and locale
 		definition files.
-		Default: yes
-
-MKNVI		If "no", don't build or install the experimental new version
-		of nvi (/usr/bin/nvi et cetera).
 		Default: yes
 
 MKOBJ		If "no", don't enable the rule which creates objdirs,

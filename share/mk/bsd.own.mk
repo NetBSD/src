@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.524 2008/08/31 01:21:41 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.525 2008/08/31 05:40:15 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -568,7 +568,7 @@ MK${var}:=	yes
 	MKKERBEROS \
 	MKLDAP MKLINKLIB MKLINT \
 	MKMAN \
-	MKNLS MKNVI \
+	MKNLS \
 	MKOBJ \
 	MKPAM \
 	MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
