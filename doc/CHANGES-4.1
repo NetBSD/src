@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.78 2008/08/29 21:24:52 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.79 2008/08/31 10:45:19 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1668,4 +1668,30 @@ sbin/bioctl/strtonum.h			patch
 		disks (even if they are marked as hot-spare, pass-through
 		or unused).
 	[christos, ticket #1175]
+
+gnu/dist/gcc4/gcc/config.gcc			1.18
+gnu/dist/gcc4/gcc/configure.ac			1.9 via patch
+gnu/dist/gcc4/gcc/configure			regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68000/auto-host.h    regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68000/configargs.h   regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68000/defs.mk        regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68000/tm.h           regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68k/auto-host.h      regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68k/configargs.h     regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68k/defs.mk          regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68k/tm.h             regen (via patch)
+src/gnu/lib/crtstuff4/arch/m68000.mk            regen (via patch)
+src/gnu/lib/crtstuff4/arch/m68k.mk              regen (via patch)
+src/gnu/lib/libgcc4/arch/m68000.mk              regen (via patch)
+src/gnu/lib/libgcc4/arch/m68k.mk                regen (via patch)
+
+	config.gcc: Do not completely overwrite tm_defines in m68k specific
+	    target selection, it may have been set globaly before for
+	    NETBSD_ENABLE_PTHREADS.  This caused wrong (old, pre NetBSD 2.0)
+	    builtin specs for m68k.  Fixes PR toolchain/38931.
+	configure.ac:
+	    make the AC_CACHE_CHECK(__stack_chk_fail, [ ... ]) cross-compile
+	    friendly.
+	Rerun mknative for m68k after config.gcc and configure changes.
+	[martin, ticket #1188]
 
