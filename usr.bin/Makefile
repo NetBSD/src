@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.168 2008/08/16 23:59:45 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.169 2008/08/31 05:17:31 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -17,7 +17,7 @@ SUBDIR= apply apropos asa at audio awk \
 	lex locale locate lock logger login logname look lorder m4 \
 	machine mail make man menuc mesg midiplay mixerctl mkcsmapper \
 	mkdep mkesdb mkfifo mklocale mkstr mktemp moduli msgc msgs \
-	netgroup netstat newgrp newsyslog nfsstat nice nl nohup \
+	netgroup netstat newgrp newsyslog nfsstat nice nl nohup nvi \
 	pagesize passwd paste patch pathchk pkill pmap pmc pr \
 	printenv printf progress pwhash qsubst quota radioctl rdist \
 	renice rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh rup \
@@ -26,7 +26,7 @@ SUBDIR= apply apropos asa at audio awk \
 	tail talk tcopy tee telnet tftp time tip tn3270 touch tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
 	uniq units unvis usbhidaction usbhidctl users utoppya \
-	uudecode uuencode uuidgen vacation vgrind vi vis vmstat vndcompress w \
+	uudecode uuencode uuidgen vacation vgrind vis vmstat vndcompress w \
 	wall wc what whatis whereis who whois window \
 	write xargs xinstall xlint xstr yacc yes
 
@@ -45,10 +45,6 @@ SUBDIR+= hxtool verify_krb5_conf gss krb5-config
 
 .if (!(${MKMODULAR} != "no"))
 SUBDIR+= modstat
-.endif
-
-.if (${MKNVI} != "no")
-SUBDIR+= nvi
 .endif
 
 .if (${MKSKEY} != "no")
