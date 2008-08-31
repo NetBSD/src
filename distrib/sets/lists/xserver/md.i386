@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.39 2008/08/30 06:29:03 rtr Exp $
+# $NetBSD: md.i386,v 1.40 2008/08/31 09:07:25 mrg Exp $
 ./usr/X11R6/bin/X		-unknown-	x11
 ./usr/X11R6/bin/XFree86		-unknown-	x11
 ./usr/X11R6/bin/Xvfb		-unknown-	x11
@@ -374,9 +374,11 @@
 ./usr/X11R6/man/man4/void.4			-unknown-		.man,x11
 ./usr/X11R6/man/man4/wacom.4			-unknown-		.man,x11
 ./usr/X11R6/man/man4/wsfb.4			-unknown-		.man,x11
+./usr/X11R7/bin/X	-unknown-	xorg
 ./usr/X11R7/bin/Xnest			-unknown-	xorg
 ./usr/X11R7/bin/Xorg			-unknown-	xorg
 ./usr/X11R7/bin/Xvfb			-unknown-	xorg
+./usr/X11R7/bin/xorgconfig	-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.DRI		-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.fonts		-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
@@ -416,6 +418,8 @@
 ./usr/X11R7/lib/modules/drivers/neomagic_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/nsc_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/nsc_drv.so.2		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/nv_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/nv_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/s3_drv.so		-unknown-	xorg
@@ -564,6 +568,7 @@
 ./usr/X11R7/lib/modules/libxf8_32bpp.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		-unknown-	xorg
+./usr/X11R7/man/cat1/xorgconfig.0		-unknown-		.cat,xorg
 ./usr/X11R7/man/cat4/apm.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/ati.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/chips.0		-unknown-	.cat,xorg
@@ -578,6 +583,7 @@
 ./usr/X11R7/man/cat4/mousedrv.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/neomagic.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/nsc.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/nv.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeon.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/s3virge.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/savage.0		-unknown-	.cat,xorg
@@ -585,6 +591,7 @@
 ./usr/X11R7/man/cat4/tdfx.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/trident.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/tseng.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/vesa.0			-unknown-		.cat,xorg
 ./usr/X11R7/man/cat4/vga.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/via.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vmware.0		-unknown-	.cat,xorg
@@ -603,6 +610,7 @@
 ./usr/X11R7/man/html4/mousedrv.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/neomagic.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/nsc.html		-unknown-	html,xorg
+./usr/X11R7/man/html4/nv.html			-unknown-		html,xorg
 ./usr/X11R7/man/html4/radeon.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/s3virge.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/savage.html		-unknown-	html,xorg
@@ -610,10 +618,12 @@
 ./usr/X11R7/man/html4/tdfx.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/trident.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/tseng.html		-unknown-	html,xorg
+./usr/X11R7/man/html4/vesa.html			-unknown-		html,xorg
 ./usr/X11R7/man/html4/vga.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/via.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/vmware.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html		-unknown-	html,xorg
+./usr/X11R7/man/man1/xorgconfig.1			-unknown		.man,xorg
 ./usr/X11R7/man/man4/apm.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/ati.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/chips.4		-unknown-	.man,xorg
@@ -628,6 +638,7 @@
 ./usr/X11R7/man/man4/mousedrv.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/neomagic.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/nsc.4		-unknown-	.man,xorg
+./usr/X11R7/man/man4/nv.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeon.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/s3virge.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/savage.4		-unknown-	.man,xorg
@@ -635,6 +646,7 @@
 ./usr/X11R7/man/man4/tdfx.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/trident.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/tseng.4		-unknown-	.man,xorg
+./usr/X11R7/man/man4/vesa.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vga.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/via.4		-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vmware.4		-unknown-	.man,xorg
