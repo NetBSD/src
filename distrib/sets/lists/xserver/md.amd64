@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.27 2008/08/31 09:06:40 mrg Exp $
+# $NetBSD: md.amd64,v 1.28 2008/08/31 21:47:55 mrg Exp $
 ./usr/X11R6/bin/X	-unknown-	x11
 ./usr/X11R6/bin/XFree86	-unknown-	x11
 ./usr/X11R6/bin/Xvfb	-unknown-	x11
@@ -599,7 +599,12 @@
 ./usr/X11R7/man/html4/vesa.html			-unknown-		html,xorg
 ./usr/X11R7/man/html4/vga.html			-unknown-		html,xorg
 ./usr/X11R7/man/html4/void.html			-unknown-		html,xorg
-./usr/X11R7/man/html5/XF86Config.html		-unknown-		html,xorg
+./usr/X11R7/man/html4/i740.html			-unknown-		html,xorg
+./usr/X11R7/man/html4/mousedrv.html		-unknown-		html,xorg
+./usr/X11R7/man/html4/neomagic.html		-unknown-		html,xorg
+./usr/X11R7/man/html4/via.html			-unknown-		html,xorg
+./usr/X11R7/man/html4/vmmouse.html		-unknown-		html,xorg
+./usr/X11R7/man/html4/vmware.html		-unknown-		html,xorg
 ./usr/X11R7/man/man1/Xvfb.1			-unknown-		.man,xorg
 ./usr/X11R7/man/man1/gtf.1			-unknown-		.man,xorg
 ./usr/X11R7/man/man1/pcitweak.1			-unknown-		.man,xorg
