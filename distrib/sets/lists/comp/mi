@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1180 2008/08/29 06:08:39 lukem Exp $
+#	$NetBSD: mi,v 1.1181 2008/08/31 05:27:22 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2886,7 +2886,7 @@
 ./usr/libdata/debug/usr/bin/nohup.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/nslookup.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/nsupdate.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/bin/nvi.debug		comp-util-debug		debug,nvi
+./usr/libdata/debug/usr/bin/nvi.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/objcopy.debug	comp-util-debug		bfd,debug
 ./usr/libdata/debug/usr/bin/objdump.debug	comp-util-debug		bfd,debug
 ./usr/libdata/debug/usr/bin/openssl.debug	comp-crypto-debug	crypto,debug

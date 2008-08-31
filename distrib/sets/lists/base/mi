@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.767 2008/08/30 12:25:41 christos Exp $
+# $NetBSD: mi,v 1.768 2008/08/31 05:27:22 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -811,15 +811,15 @@
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
-./usr/bin/nex					base-util-bin		nvi
+./usr/bin/nex					base-obsolete		obsolete
 ./usr/bin/nfsstat				base-nfsclient-bin
 ./usr/bin/nice					base-util-bin
 ./usr/bin/nl					base-util-bin
 ./usr/bin/nohup					base-util-bin
 ./usr/bin/nslookup				base-netutil-bin
 ./usr/bin/nsupdate				base-netutil-bin
-./usr/bin/nvi					base-util-bin		nvi
-./usr/bin/nview					base-util-bin		nvi
+./usr/bin/nvi					base-obsolete		obsolete
+./usr/bin/nview					base-obsolete		obsolete
 ./usr/bin/od					base-util-bin
 ./usr/bin/openssl				base-crypto-bin		crypto
 ./usr/bin/page					base-util-bin
@@ -3280,13 +3280,12 @@
 ./usr/share/nls/sv/libc.cat			base-locale-sv		nls
 ./usr/share/nvi					base-util-share
 ./usr/share/nvi/catalog				base-util-share
-./usr/share/nvi/catalog/dutch			base-util-share		nvi,share
-./usr/share/nvi/catalog/english			base-util-share		nvi,share
-./usr/share/nvi/catalog/french			base-util-share		nvi,share
-./usr/share/nvi/catalog/german			base-util-share		nvi,share
-./usr/share/nvi/catalog/ru_RU.KOI8-R		base-util-share		nvi,share
-./usr/share/nvi/catalog/spanish			base-util-share		nvi,share
-./usr/share/nvi/catalog/swedish			base-util-share		nvi,share
+./usr/share/nvi/catalog/english			base-util-share		share
+./usr/share/nvi/catalog/french			base-util-share		share
+./usr/share/nvi/catalog/german			base-util-share		share
+./usr/share/nvi/catalog/ru_RU.KOI8-R		base-util-share		share
+./usr/share/nvi/catalog/spanish			base-util-share		share
+./usr/share/nvi/catalog/swedish			base-util-share		share
 ./usr/share/sushi				base-obsolete	obsolete
 ./usr/share/sushi/help				base-obsolete	obsolete
 ./usr/share/sushi/index				base-obsolete	obsolete
