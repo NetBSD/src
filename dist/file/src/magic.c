@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.20 2008/08/31 07:53:33 christos Exp $	*/
+/*	$NetBSD: magic.c,v 1.21 2008/08/31 07:54:07 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -71,7 +71,7 @@
 FILE_RCSID("@(#)$File: magic.c,v 1.54 2008/07/25 23:30:32 rrt Exp $")
 #endif	/* lint */
 #else
-__RCSID("$NetBSD: magic.c,v 1.20 2008/08/31 07:53:33 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.21 2008/08/31 07:54:07 christos Exp $");
 #endif
 
 #ifndef PIPE_BUF
@@ -79,12 +79,8 @@ __RCSID("$NetBSD: magic.c,v 1.20 2008/08/31 07:53:33 christos Exp $");
 #ifdef _PC_PIPE_BUF
 #define PIPE_BUF pathconf(".", _PC_PIPE_BUF)
 #else
-<<<<<<< magic.c
-__RCSID("$NetBSD: magic.c,v 1.20 2008/08/31 07:53:33 christos Exp $");
-=======
 #define PIPE_BUF 512
 #endif
->>>>>>> 1.1.1.14
 #endif
 
 #ifdef __EMX__
