@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.14.10.3 2007/01/18 12:57:26 tron Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.14.10.4 2008/08/31 14:47:38 jdc Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.14.10.3 2007/01/18 12:57:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.14.10.4 2008/08/31 14:47:38 jdc Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -105,8 +105,9 @@ struct xbd_xenbus_softc {
 #define BLKIF_STATE_SUSPENDED    2
 	int sc_shutdown;
 
-	u_long sc_sectors; /* number of sectors for this device */
+	uint64_t sc_sectors; /* number of sectors for this device */
 	u_long sc_secsize; /* sector size */
+	uint64_t sc_xbdsize; /* size of disk in DEV_BSIZE */
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
 };
@@ -401,9 +402,9 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		sc->sc_shutdown = 0;
 		hypervisor_enable_event(sc->sc_evtchn);
 
-		sc->sc_dksc.sc_size =
-		    (uint64_t)sc->sc_sectors * (uint64_t)sc->sc_secsize /
-		    DEV_BSIZE;
+		sc->sc_xbdsize =
+		    sc->sc_sectors * (uint64_t)sc->sc_secsize / DEV_BSIZE;
+		sc->sc_dksc.sc_size = sc->sc_xbdsize;
 		pdg = &sc->sc_dksc.sc_geom;
 		pdg->pdg_secsize = DEV_BSIZE;
 		pdg->pdg_ntracks = 1;
@@ -418,11 +419,10 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 
 		/* try to read the disklabel */
 		dk_getdisklabel(sc->sc_di, &sc->sc_dksc, 0 /* XXX ? */);
-		format_bytes(buf, sizeof(buf), (uint64_t)sc->sc_dksc.sc_size *
-		    pdg->pdg_secsize);
-		printf("%s: %s, %d bytes/sect x %llu sectors\n",
+		format_bytes(buf, sizeof(buf), sc->sc_sectors * sc->sc_secsize);
+		printf("%s: %s, %d bytes/sect x %" PRIu64 " sectors\n",
 		    sc->sc_dev.dv_xname, buf, (int)pdg->pdg_secsize,
-		    (unsigned long long)sc->sc_dksc.sc_size);
+		    sc->sc_xbdsize);
 		/* Discover wedges on this disk. */
 		dkwedge_discover(&sc->sc_dksc.sc_dkdev);
 
@@ -438,17 +438,20 @@ static void
 xbd_connect(struct xbd_xenbus_softc *sc)
 {
 	int err;
+	unsigned long long sectors;
 
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_path, "virtual-device", &sc->sc_handle, 10);
 	if (err)
 		panic("%s: can't read number from %s/virtual-device\n", 
 		    sc->sc_dev.dv_xname, sc->sc_xbusd->xbusd_otherend);
-	err = xenbus_read_ul(NULL,
-	    sc->sc_xbusd->xbusd_otherend, "sectors", &sc->sc_sectors, 10);
+	err = xenbus_read_ull(NULL,
+	    sc->sc_xbusd->xbusd_otherend, "sectors", &sectors, 10);
 	if (err)
 		panic("%s: can't read number from %s/sectors\n", 
 		    sc->sc_dev.dv_xname, sc->sc_xbusd->xbusd_otherend);
+	sc->sc_sectors = sectors;
+
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "info", &sc->sc_info, 10);
 	if (err)
@@ -686,13 +689,13 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 		goto err;
 	}
 
-	if (bp->b_rawblkno < 0 || bp->b_rawblkno > sc->sc_dksc.sc_size) {
+	if (bp->b_rawblkno < 0 || bp->b_rawblkno > sc->sc_xbdsize) {
 		/* invalid block number */
 		bp->b_error = EINVAL;
 		goto err;
 	}
 
-	if (bp->b_rawblkno == sc->sc_dksc.sc_size) {
+	if (bp->b_rawblkno == sc->sc_xbdsize) {
 		/* at end of disk; return short read */
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
@@ -734,8 +737,8 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 
 	va = (vaddr_t)xbdreq->req_data & ~PAGE_MASK;
 	off = (vaddr_t)xbdreq->req_data & PAGE_MASK;
-	if (bp->b_rawblkno + bp->b_bcount / DEV_BSIZE >= sc->sc_dksc.sc_size) {
-		bcount = (sc->sc_dksc.sc_size - bp->b_rawblkno) * DEV_BSIZE;
+	if (bp->b_rawblkno + bp->b_bcount / DEV_BSIZE >= sc->sc_xbdsize) {
+		bcount = (sc->sc_xbdsize - bp->b_rawblkno) * DEV_BSIZE;
 		bp->b_resid = bp->b_bcount - bcount;
 	} else {
 		bcount = bp->b_bcount;
