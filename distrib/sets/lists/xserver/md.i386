@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.40 2008/08/31 09:07:25 mrg Exp $
+# $NetBSD: md.i386,v 1.41 2008/08/31 10:43:04 mrg Exp $
 ./usr/X11R6/bin/X		-unknown-	x11
 ./usr/X11R6/bin/XFree86		-unknown-	x11
 ./usr/X11R6/bin/Xvfb		-unknown-	x11
@@ -596,6 +596,7 @@
 ./usr/X11R7/man/cat4/via.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vmware.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0		-unknown-	.cat,xorg
+./usr/X11R7/man/html1/xorgconfig.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/apm.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/ati.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/chips.html		-unknown-	html,xorg
