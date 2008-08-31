@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768 2008/08/31 05:27:22 christos Exp $
+# $NetBSD: mi,v 1.769 2008/08/31 12:07:46 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3622,16 +3622,16 @@
 ./usr/share/tmac				base-groff-share
 ./usr/share/tmac/mdoc				base-groff-share
 ./usr/share/tmac/mm				base-groff-share
-./usr/share/vi					base-util-share
-./usr/share/vi/catalog				base-util-share
-./usr/share/vi/catalog/dutch			base-util-share		share
-./usr/share/vi/catalog/english			base-util-share		share
-./usr/share/vi/catalog/french			base-util-share		share
-./usr/share/vi/catalog/german			base-util-share		share
-./usr/share/vi/catalog/ru_RU.KOI8-R		base-util-share		share
+./usr/share/vi					base-obsolete		obsolete
+./usr/share/vi/catalog				base-obsolete		obsolete
+./usr/share/vi/catalog/dutch			base-obsolete		obsolete
+./usr/share/vi/catalog/english			base-obsolete		obsolete
+./usr/share/vi/catalog/french			base-obsolete		obsolete
+./usr/share/vi/catalog/german			base-obsolete		obsolete
+./usr/share/vi/catalog/ru_RU.KOI8-R		base-obsolete		obsolete
 ./usr/share/vi/catalog/ru_SU.KOI8-R		base-obsolete		obsolete
-./usr/share/vi/catalog/spanish			base-util-share		share
-./usr/share/vi/catalog/swedish			base-util-share		share
+./usr/share/vi/catalog/spanish			base-obsolete		obsolete
+./usr/share/vi/catalog/swedish			base-obsolete		obsolete
 ./usr/share/wscons				base-util-share
 ./usr/share/wscons/fonts			base-util-share
 ./usr/share/wscons/fonts/donna.816		base-util-share		share
