@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.20 2008/08/29 18:25:01 matt Exp $ */
+/*	$NetBSD: asm.h,v 1.21 2008/08/31 23:23:42 mrg Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -69,7 +69,6 @@
 #ifdef GPROF
 # define _PROF_PROLOGUE	\
 	.data; 1:; .long 0; .text; moval 1b,%r0; jsb _ASM_LABEL(__mcount)
-# endif
 #else
 # define _PROF_PROLOGUE
 #endif
