@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/30 01:06:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2008/08/31 09:58:47 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -10,7 +10,7 @@ LIB=	xorgos
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/shared
 SRCS.bsd=	\
 		bsd_VTsw.c bsd_bell.c bsd_init.c bsd_mouse.c \
-		kmod_noop.c libc_wrapper.c lnx_agp.c \
+		kmod_noop.c libc_wrapper.c \
 		posix_tty.c sigio.c stdPci.c vidmem.c
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/linux
@@ -52,6 +52,7 @@ SRCS.bsd+=      arm_video.c bsdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
+CPPFLAGS.arm_video.c=	-Wno-error
 .endif
 
 # some platforms will probably need ioperm_noop.c
@@ -63,7 +64,8 @@ SRCS.bus=	Pci.c
 SRCS.bus+=	ix86Pci.c
 .endif
 
-.if ${MACHINE} == "macppc" || ${MACHINE} == "cats" || ${MACHINE} == "sgimips"
+.if ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
+    ${MACHINE} == "sgimips" || ${MACHINE} == "shark"
 SRCS.bus+=	netbsdPci.c
 .endif
 
@@ -79,10 +81,13 @@ CPPFLAGS.IODelay.S=	-DUSE_GAS
 CPPFLAGS.SlowBcopy.S=	-DUSE_GAS
 .endif
 
-.if 	${MACHINE} == "amd64" || ${MACHINE} == "macppc" || \
-	${MACHINE} == "cats" || ${MACHINE} == "sgimips"
-SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
+.if     ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
+	${MACHINE} == "sgimips" || ${MACHINE} == "sparc64" || \
+	${MACHINE} == "sparc" || ${MACHINE} == "netwinder" || \
+	${MACHINE} == "shark" || ${MACHINE} == "ofppc"
+SRCS.misc+=     CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
+
 
 # XXX namespace collision so avoid it, only has to be done for non-i386.
 BUILDSYMLINKS=	BUSmemcpy.c CBUSmemcpy.c \
