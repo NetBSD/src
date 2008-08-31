@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.523 2008/08/30 09:13:35 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.524 2008/08/31 01:21:41 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -339,7 +339,7 @@ MANDIR?=	/usr/share/man
 MANGRP?=	wheel
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
-MANINSTALL?=	maninstall catinstall
+MANINSTALL?=	catinstall htmlinstall maninstall
 
 INFODIR?=	/usr/share/info
 INFOGRP?=	wheel
@@ -563,7 +563,7 @@ MK${var}:=	yes
 	MKCATPAGES MKCRYPTO MKCOMPLEX MKCVS \
 	MKDOC \
 	MKGCC MKGCCCMDS MKGDB \
-	MKHESIOD \
+	MKHESIOD MKHTML \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
 	MKKERBEROS \
 	MKLDAP MKLINKLIB MKLINT \
@@ -582,7 +582,6 @@ ${var}?=	yes
 #
 .for var in \
 	MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG MKDEBUGLIB \
-	MKHTML \
 	MKMANZ MKMODULAR MKOBJDIRS \
 	MKPCC MKPCCCMDS \
 	MKPUFFS MKSOFTFLOAT \

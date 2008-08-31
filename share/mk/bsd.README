@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.221 2008/08/28 07:53:53 mrg Exp $
+#	$NetBSD: bsd.README,v 1.222 2008/08/31 01:21:41 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -170,8 +170,8 @@ MKHOSTOBJ	If not "no", for programs intended to be run on the compile
 		directory created by "make obj".
 		Default: no
 
-MKHTML		If "no", don't build or install the html man pages.
-		Default: no
+MKHTML		If "no", don't build or install the HTML man pages.
+		Default: yes
 
 MKIEEEFP	If "no", don't add code for IEEE754/IEC60559 conformance.
 		Has no effect on most platforms.
@@ -451,8 +451,9 @@ MANOWN		Manual owner.  [root]
 
 MANMODE		Manual mode.  [${NONBINMODE}]
 
-MANINSTALL	Manual installation type: maninstall, catinstall, or both
-		[maninstall catinstall]
+MANINSTALL	Manual installation type.  Space separated list:
+			catinstall, htmlinstall, maninstall
+		[catinstall maninstall htmlinstall]
 
 LDSTATIC	Control program linking; if set blank, link everything
 		dynamically.  If set to "-static", link everything statically.
@@ -887,12 +888,14 @@ CONFIGSYMLINKS	Similar semantics to SYMLINKS, except that the symbolic links
 The include file <bsd.man.mk> handles installing manual pages and their
 links.
 
-It has a two targets:
+It has a three targets:
 
-	maninstall:
-		Install the manual page sources and their links.
 	catinstall:
 		Install the preformatted manual pages and their links.
+	htmlinstall:
+		Install the HTML manual pages and their links.
+	maninstall:
+		Install the manual page sources and their links.
 
 It sets/uses the following variables:
 
