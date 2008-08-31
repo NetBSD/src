@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2008/08/30 07:17:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2008/08/31 19:59:43 christos Exp $
 
 SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
 		xf86modes \
@@ -40,8 +40,10 @@ LDADD+=	-Wl,--whole-archive
 LDADD+=	${LDADD.dix}
 LDADD+=	${LDADD.hw/xfree86/init}
 LDADD+=	${LDADD.config}
+LDADD+=	${LDADD.exa}
 LDADD+=	${LDADD.hw/xfree86/loader}
 LDADD+=	${LDADD.hw/xfree86/common}
+LDADD+=	${LDADD.hw/xfree86/exa}
 LDADD+=	${LDADD.hw/xfree86/xorgos}
 #LDADD+=	${LDADD.osandcommon}
 LDADD+=	${LDADD.hw/xfree86/rac}

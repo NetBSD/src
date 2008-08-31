@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.4 2008/08/28 07:32:49 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.5 2008/08/31 19:59:43 christos Exp $
 
 # XXX old list
 .if 0
@@ -26,6 +26,7 @@
 	Xext \
 	Xext/Xextbuiltin \
 	dbe \
+	exa \
 	XTrap \
 	record \
 	render \
