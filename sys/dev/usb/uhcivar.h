@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.40 2005/12/27 04:06:45 chs Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.40.24.1 2008/08/31 16:48:29 jdc Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -94,6 +94,8 @@ struct uhci_soft_td {
 	uhci_td_t td;			/* The real TD, must be first */
 	uhci_soft_td_qh_t link; 	/* soft version of the td_link field */
 	uhci_physaddr_t physaddr;	/* TD's physical address. */
+	usb_dma_t dma;			/* TD's DMA infos */
+	int offs;			/* TD's offset in usb_dma_t */
 };
 /*
  * Make the size such that it is a multiple of UHCI_TD_ALIGN.  This way
@@ -113,6 +115,8 @@ struct uhci_soft_qh {
 	uhci_soft_td_t *elink;		/* soft version of qh_elink */
 	uhci_physaddr_t physaddr;	/* QH's physical address. */
 	int pos;			/* Timeslot position */
+	usb_dma_t dma;			/* QH's DMA infos */
+	int offs;			/* QH's offset in usb_dma_t */
 };
 /* See comment about UHCI_STD_SIZE. */
 #define UHCI_SQH_SIZE ((sizeof (struct uhci_soft_qh) + UHCI_QH_ALIGN - 1) / UHCI_QH_ALIGN * UHCI_QH_ALIGN)
