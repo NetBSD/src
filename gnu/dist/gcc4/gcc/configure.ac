@@ -3090,11 +3090,11 @@ if test x$with_sysroot = x && test x$host = x$target \
 fi
 
 # Test for stack protector support in target C library.
-case "$target" in
-  *-*-linux*)
-    AC_CACHE_CHECK(__stack_chk_fail in target GNU C library,
-      gcc_cv_libc_provides_ssp,
-      [gcc_cv_libc_provides_ssp=no
+AC_CACHE_CHECK(__stack_chk_fail in target C library,
+  gcc_cv_libc_provides_ssp,
+  [case "$target" in
+    *-*-linux*)
+      gcc_cv_libc_provides_ssp=no
       if test x$host != x$target || test "x$TARGET_SYSTEM_ROOT" != x; then
 	if test "x$with_sysroot" = x; then
 	  glibc_header_dir="${exec_prefix}/${target_noncanonical}/sys-include"
@@ -3120,18 +3120,12 @@ case "$target" in
 	     $glibc_header_dir/features.h > /dev/null; then
 	  gcc_cv_libc_provides_ssp=yes
 	fi
-      fi]) ;;
-  *-*-netbsd*)
-    AC_CACHE_CHECK(__stack_chk_guard in C library,
-      gcc_cv_libc_provides_ssp,
-      [if $gcc_cv_nm $($CC -print-file-name=libc.a) | \
-	grep 'B __stack_chk_guard' > /dev/null; then
-	gcc_cv_libc_provides_ssp=yes
-      else
-	gcc_cv_libc_provides_ssp=no
-      fi]) ;;
-  *) gcc_cv_libc_provides_ssp=no ;;
-esac
+      fi ;;
+    *-*-netbsd*)
+      AC_CHECK_FUNCS(__stack_chk_guard,[gcc_cv_libc_provides_ssp=yes],
+        [gcc_cv_libc_provides_ssp=no]) ;;
+    *) gcc_cv_libc_provides_ssp=no ;;
+  esac])
 if test x$gcc_cv_libc_provides_ssp = xyes; then
   AC_DEFINE(TARGET_LIBC_PROVIDES_SSP, 1,
 	    [Define if your target C library provides stack protector support])
