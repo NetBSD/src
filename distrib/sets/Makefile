@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2008/08/28 07:21:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.61 2008/08/31 00:19:33 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -57,9 +57,6 @@ print_object_fmt: .PHONY
 
 print_toolchain_missing: .PHONY
 	@echo "${TOOLCHAIN_MISSING}"
-
-print_x11_version: .PHONY
-	${HOST_SH} -c '. ${.CURDIR}/sets.subr; echo $$x11_version'
 
 # This target has debugging value only, really.
 makeflist: .PHONY .PRECIOUS check_DESTDIR
