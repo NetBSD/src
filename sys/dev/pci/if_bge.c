@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.151 2008/08/25 08:15:05 cegger Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.152 2008/08/31 19:57:03 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.151 2008/08/25 08:15:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.152 2008/08/31 19:57:03 tron Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -4318,13 +4318,6 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 		sc->bge_if_flags = ifp->if_flags;
 		error = 0;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if (ifp->if_flags & IFF_RUNNING) {
-			bge_setmulti(sc);
-			error = 0;
-		}
-		break;
 	case SIOCSIFMEDIA:
 		/* XXX Flow control is not supported for 1000BASE-SX */
 		if (sc->bge_tbi) {
@@ -4357,10 +4350,15 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 		}
 		break;
 	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-			error = 0;
-		}
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (command != SIOCADDMULTI && command != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING)
+			bge_setmulti(sc);
 		break;
 	}
 
