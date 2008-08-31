@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.61 2008/08/29 06:08:40 lukem Exp $
+# $NetBSD: mi,v 1.62 2008/08/31 10:49:37 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1197,10 +1197,6 @@
 ./usr/X11R7/bin/iceauth		-unknown-	xorg
 ./usr/X11R7/bin/ico		-unknown-	xorg
 ./usr/X11R7/bin/imake		-unknown-	xorg
-./usr/X11R7/bin/inb		-unknown-	xorg
-./usr/X11R7/bin/inl		-unknown-	xorg
-./usr/X11R7/bin/inw		-unknown-	xorg
-./usr/X11R7/bin/ioport		-unknown-	xorg
 ./usr/X11R7/bin/lbxproxy		-unknown-	xorg
 ./usr/X11R7/bin/listres		-unknown-	xorg
 ./usr/X11R7/bin/luit		-unknown-	xorg
@@ -1213,16 +1209,11 @@
 ./usr/X11R7/bin/mkfontscale		-unknown-	xorg
 ./usr/X11R7/bin/mkhtmlindex		-unknown-	xorg
 ./usr/X11R7/bin/oclock		-unknown-	xorg
-./usr/X11R7/bin/outb		-unknown-	xorg
-./usr/X11R7/bin/outl		-unknown-	xorg
-./usr/X11R7/bin/outw		-unknown-	xorg
-./usr/X11R7/bin/pcitweak		-unknown-	xorg
 ./usr/X11R7/bin/perfboth		-unknown-	xorg
 ./usr/X11R7/bin/perfratio		-unknown-	xorg
 ./usr/X11R7/bin/proxymngr		-unknown-	xorg
 ./usr/X11R7/bin/resize		-unknown-	xorg
 ./usr/X11R7/bin/revpath		-unknown-	xorg
-./usr/X11R7/bin/scanpci		-unknown-	xorg
 ./usr/X11R7/bin/sessreg		-unknown-	xorg
 ./usr/X11R7/bin/setxkbmap		-unknown-	xorg
 ./usr/X11R7/bin/showrgb		-unknown-	xorg
@@ -1941,11 +1932,9 @@
 ./usr/X11R7/man/cat1/mkfontscale.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/mkhtmlindex.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/oclock.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/pcitweak.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/proxymngr.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/resize.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/revpath.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/scanpci.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/sessreg.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/setxkbmap.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/showrgb.0		-unknown-	.cat,xorg
@@ -2060,11 +2049,9 @@
 ./usr/X11R7/man/html1/mkfontscale.html		-unknown-	html,xorg
 ./usr/X11R7/man/html1/mkhtmlindex.html		-unknown-	html,xorg
 ./usr/X11R7/man/html1/oclock.html		-unknown-	html,xorg
-./usr/X11R7/man/html1/pcitweak.html		-unknown-	html,xorg
 ./usr/X11R7/man/html1/proxymngr.html		-unknown-	html,xorg
 ./usr/X11R7/man/html1/resize.html		-unknown-	html,xorg
 ./usr/X11R7/man/html1/revpath.html		-unknown-	html,xorg
-./usr/X11R7/man/html1/scanpci.html		-unknown-	html,xorg
 ./usr/X11R7/man/html1/sessreg.html		-unknown-	html,xorg
 ./usr/X11R7/man/html1/setxkbmap.html		-unknown-	html,xorg
 ./usr/X11R7/man/html1/showrgb.html		-unknown-	html,xorg
@@ -2180,11 +2167,9 @@
 ./usr/X11R7/man/man1/mkfontscale.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/mkhtmlindex.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/oclock.1		-unknown-	.man,xorg
-./usr/X11R7/man/man1/pcitweak.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/proxymngr.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/resize.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/revpath.1		-unknown-	.man,xorg
-./usr/X11R7/man/man1/scanpci.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/sessreg.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/setxkbmap.1		-unknown-	.man,xorg
 ./usr/X11R7/man/man1/showrgb.1		-unknown-	.man,xorg
