@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.18 2008/08/30 12:16:52 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.19 2008/08/31 07:53:33 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -55,7 +55,7 @@
 #if 0
 FILE_RCSID("@(#)$File: apprentice.c,v 1.140 2008/07/20 04:02:15 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.18 2008/08/30 12:16:52 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.19 2008/08/31 07:53:33 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -596,7 +596,8 @@ set_test_type(struct magic *mstart, struct magic *m)
 	case FILE_REGEX:
 	case FILE_SEARCH:
 		/* binary test if pattern is not text */
-		if (file_looks_utf8(m->value.us, m->vallen, NULL, NULL) <= 0)
+		if (file_looks_utf8(m->value.us, (size_t)m->vallen, NULL,
+		    NULL) <= 0)
 			mstart->flag |= BINTEST;
 		break;
 	case FILE_DEFAULT:
