@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.23 2008/08/30 06:30:28 rtr Exp $
+# $NetBSD: mi,v 1.24 2008/09/01 08:08:36 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -48,7 +48,6 @@
 ./usr/X11R6/man/man1/vdltodmx.1			-unknown-	.man,x11
 ./usr/X11R6/man/man1/xdmxconfig.1		-unknown-	.man,x11
 ./usr/X11R6/man/man1/xvidtune.1			-unknown-	.man,x11
-./usr/X11R6/man/man5/XF86Config.5		-unknown-	.man,x11
 ./usr/X11R7/man/cat1/Xmark.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xnest.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/Xorg.0			-unknown-	.cat,xorg
