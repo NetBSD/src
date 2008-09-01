@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.62 2008/08/31 10:49:37 rtr Exp $
+# $NetBSD: mi,v 1.63 2008/09/01 10:37:19 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -37,6 +37,7 @@
 ./usr/X11R6/bin/proxymngr			-unknown-	x11
 ./usr/X11R6/bin/resize			-unknown-	x11
 ./usr/X11R6/bin/revpath			-unknown-	x11
+./usr/X11R6/bin/rgb			-unknown-	x11
 ./usr/X11R6/bin/rman			-unknown-	x11
 ./usr/X11R6/bin/rstart			-unknown-	x11
 ./usr/X11R6/bin/rstartd			-unknown-	x11
@@ -411,6 +412,7 @@
 ./usr/X11R6/lib/X11/locale/zh_TW/Compose	-unknown-		share,x11
 ./usr/X11R6/lib/X11/locale/zh_TW/XI18N_OBJS	-unknown-		share,x11
 ./usr/X11R6/lib/X11/locale/zh_TW/XLC_LOCALE	-unknown-		share,x11
+./usr/X11R6/lib/X11/rgb.db		-unknown-	x11
 ./usr/X11R6/lib/X11/rgb.txt			-unknown-	x11
 ./usr/X11R6/lib/X11/x11perfcomp/fillblnk	-unknown-	x11
 ./usr/X11R6/lib/X11/x11perfcomp/perfboth	-unknown-	x11
