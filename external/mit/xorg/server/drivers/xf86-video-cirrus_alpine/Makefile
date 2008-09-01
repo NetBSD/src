@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 12:56:44 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/01 05:34:02 mrg Exp $
+
+# XXX move this under ../xf86-video-cirrus
 
 DRIVER=		xf86-video-cirrus
 DRIVER_NAME=	cirrus_alpine_drv
