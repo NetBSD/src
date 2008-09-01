@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.161 2008/08/27 05:40:25 christos Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.162 2008/09/01 19:44:05 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.161 2008/08/27 05:40:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.162 2008/09/01 19:44:05 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1243,6 +1243,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		dev = kmem_zalloc(sizeof(*dev), kmflags);
 	} else {
 		dev = dev_private;
+		printf("%s is not split\n", cd->cd_name);
 	}
 	if (dev == NULL)
 		panic("config_devalloc: memory allocation for device_t failed");
@@ -1287,6 +1288,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 static void
 config_devdealloc(device_t dev)
 {
+	int priv = (dev->dv_flags & DVF_PRIV_ALLOC);
 
 	KASSERT(dev->dv_properties != NULL);
 	prop_object_release(dev->dv_properties);
@@ -1299,15 +1301,10 @@ config_devdealloc(device_t dev)
 		kmem_free(dev->dv_locators, amount);
 	}
 
-	/*
-	 * Only free dv_private if we allocated it.  If ca_devsize was 0,
-	 * we didn't allocate it so don't free it either.
-	 */
-	if ((dev->dv_flags & DVF_PRIV_ALLOC) != 0
-	    && dev->dv_cfattach->ca_devsize > 0)
+	if (dev->dv_cfattach->ca_devsize > 0)
 		kmem_free(dev->dv_private, dev->dv_cfattach->ca_devsize);
-
-	kmem_free(dev, sizeof(*dev));
+	if (priv)
+		kmem_free(dev, sizeof(*dev));
 }
 
 /*
