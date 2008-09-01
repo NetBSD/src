@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2007/12/31 15:34:26 ad Exp $
+#	$NetBSD: Makefile,v 1.9 2008/09/01 10:37:19 rtr Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap \
 	ccmakedep cleanlinks cxpm dpsexec dpsinfo editres \
@@ -6,7 +6,7 @@ SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap \
 	glxgears glxinfo iceauth ico imake lbxproxy listres lndir \
 	luit makedepend makeg makepsres makestrs mergelib \
 	mkcfm mkdirhier mkfontdir mkfontscale mkhtmlindex \
-	oclock proxymngr pswrap revpath rgb rman rstart \
+	oclock proxymngr pswrap revpath rgb showrgb rman rstart \
 	scripts setxkbmap showfont smproxy ssh-askpass sxpm \
 	texteroids twm ucs2any viewres \
 	x11perf xauth xbiff xcalc xclipboard xclock xcmsdb \
