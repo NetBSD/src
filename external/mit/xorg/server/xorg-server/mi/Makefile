@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/03 22:09:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2008/09/01 10:20:20 rtr Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -18,12 +18,13 @@ SRCS=		miarc.c mibank.c mibitblt.c mibstore.c \
 
 # XXX the order is important since there are headers with the same
 #     name but differ depending on location
-CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/../include \
 		-I${X11SRCDIR.xorg-server}/render \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/miext/damage \
 		-I${X11SRCDIR.xorg-server}/Xi \
+		-I${X11SRCDIR.xorg-server}/hw/xnest \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		${X11FLAGS.DIX} \
