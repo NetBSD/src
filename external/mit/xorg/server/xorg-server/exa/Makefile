@@ -1,22 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 21:44:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/01 10:18:03 rtr Exp $
+
+LIBISPRIVATE=	yes
 
 .include "../Makefile.serverlib"
-.include "../Makefile.servermod"
 
-LIB=		exa
-.PATH:		${X11SRCDIR.xorg-server}/exa
+LIB=	exa
+SRCS=	${SRCS.exa}
 
-SRCS=		exa.c exa_accel.c exa_migration.c exa_offscreen.c \
-		exa_render.c exa_unaccel.c 
-
-CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
-		-I${X11SRCDIR.xorg-server}/Xext \
-		-I${X11SRCDIR.xorg-server}/fb \
-		-I${X11SRCDIR.xorg-server}/miext/cw \
-		-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${DESTDIR}${X11INCDIR}/xorg \
-		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${X11SRCDIR.xorg-server}/../include
-
-.include <bsd.x11.mk>
-.include <bsd.lib.mk>
+.include "Makefile.exa"
