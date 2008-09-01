@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.205 2008/06/08 18:18:34 tsutsui Exp $ */
+/*	$NetBSD: st.c,v 1.206 2008/09/01 22:00:30 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.205 2008/06/08 18:18:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.206 2008/09/01 22:00:30 dholland Exp $");
 
 #include "opt_scsi.h"
 
@@ -1071,7 +1071,7 @@ ststrategy(struct buf *bp)
 	SC_DEBUG(st->sc_periph, SCSIPI_DB1,
 	    ("ststrategy %d bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
 	/*
-	 * If it's a null transfer, return immediatly
+	 * If it's a null transfer, return immediately
 	 */
 	if (bp->b_bcount == 0)
 		goto done;
