@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.5 2008/08/31 19:59:43 christos Exp $
+#	$NetBSD: Makefile.Xserver,v 1.6 2008/09/01 10:15:08 rtr Exp $
 
 # XXX old list
 .if 0
@@ -26,7 +26,6 @@
 	Xext \
 	Xext/Xextbuiltin \
 	dbe \
-	exa \
 	XTrap \
 	record \
 	render \
@@ -64,7 +63,6 @@
 	hw/xfree86/doc \
 	hw/xfree86/dri \
 	hw/xfree86/dummy \
-	hw/xfree86/exa \
 	hw/xfree86/i2c \
 	hw/xfree86/init \
 	hw/xfree86/int10 \
