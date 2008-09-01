@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1105 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1106 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -18,6 +18,9 @@
 #
 # This is very important for the www scripts, otherwise it won't be able to
 # parse the file and the HTML output will be mangled.
+#
+# See htutils/changes/changes2html script for more details.
+#
 # ----------------------------------------------------------------------------
 
 
@@ -240,6 +243,10 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	kernel: A new SCHED_M2 scheduler, improves the performance on
 		MP systems, supports real-time and time-sharing classes,
 		ready for the CPU affinity. [rmind 20071009]
+	umidi(4): Add quirks to support Roland UA25, UA4FX and SonicCell.
+		[xtraeme 20071014]
+	kse(4): Add multicast filter support. [nisimura 20071014]
+	httpd(8): Import bozohttpd-20060517. [tls 20071016]
 	powerpc, prep, pmppc, evbppc, macppc, ibmnws, bebox, sandpoint, ofppc:
 		Merge ppcoea-renovation branch. [garbled 20071017]
 	prep: Convert to generic powerpc PCI framework. [garbled 20071017]
@@ -284,14 +291,30 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	powerpc: New generic powerpc SMP support framework. [garbled 20071017]
 	macppc: Convert to generic powerpc SMP framework. [macallan 20071017]
 	prep: Convert to generic powerpc IPI/SMP framework. [garbled 20071017]
+	amd64, i386: Merge amd64 and i386 pmap. Also always use
+		large pages if available. [yamt 20071018]
+	amd64: Add lkm(4) support for compat_linux(8) and exec_linux_elf.
+		[njoly 20071019]
+	rccide: Add support for the ServerWorks HT-1000 IDE Controller.
+		From OpenBSD. [xtraeme 20071024]
+	svwsata(4): Add support for another ServerWorks HT-1000 SATA
+		Controller. From OpenBSD. [xtraeme 20071024]
 	ofppc: New ofwpci configuration methods, add rtas device.
 		[garbled 20071025]
+	compat_linux32: Add missing chown's syscalls family members.
+		This makes chown(1)/chgrp(1) works under compat linux32.
+		[njoly 20071027]
+	pcc(1): Import pcc-071127. [ragge 20071127]
 	shark: Removed pccons(4), obsoleted by wscons(4). [jmmv 20071028]
 	coretemp(4): Driver for Intel Core's on-die thermal sensor,
 		available on Core or newer CPUs. Ported from FreeBSD.
 		[xtraeme 20071029]
 	i386, amd64: Added support for Intel 82G965 chipset. [jnemeth 20071030]
+	kernel: Support for dynamic changing of SysV message queues and
+		semaphores limits. [rmind 20071104]
 	ofppc: Stop using ofbus driver, rewrite console code [garbled 20071104]
+	r128fb(4): New accelerated console driver for ATI Rage 128 graphics
+		controllers. [macallan 20071107]
 	ofppc, macppc: Convert to shared ofw_autoconf. [garbled 20071107]
 	nsclpcsio(4): Added support for the VLM logical device. This provides
 		14 voltage sensors in addition to the previous 3 temperature
@@ -304,8 +327,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[pooka 20071110]
 	pad(4): Added the pseudo-audio device driver, for feeding back raw
 		PCM data to userland. [jmcneill 20071111]
-	r128fb(4): New accelerated console driver for ATI Rage 128 graphics
-		controllers. [macallan 20071111]
+	hp700: Fix kernel profiling on HPPA. [skrll 20071112]
 	atf(7): Initial import of the Automated Testing Framework, version 0.3.
 		Provides a framework to easily define and run test cases for
 		the NetBSD operating system.  Work until 0.1 sponsored by
@@ -320,9 +342,19 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	tests: Converted the regress/games tree to use ATF and migrated it
 		to tests/games. [jmmv 20071112]
 	ahcisata(4): Add support for ATAPI devices. [bouyer 20071112]
+	nfsmb(4): Support more recent nVidia chips. [xtraeme 20071114]
+	viaide(4): Add support for nVidia MCP73/77 IDE controllers.
+		[xtraeme 20071114]
+	nfe(4): Add support for nVidia MCP67/73 Ethernet controllers.
+		[xtraeme 20071114]
+	i386: Remove I486_CPU, I586_CPU, I686_CPU options. [ad 20071114]
+	i386: Remove pccons(4). [ad 20071114]
+	i386: Remove support for 80386 level CPUs. PR port-i386/36163.
+		[ad 20071115]
 	newfs_ext2fs(8): Add a native newfs_ext2fs(8) command.
 		Closes PR bin/16175. [tsutsui 20071117]
-	i386, amd64: Add support for /boot.cfg to configure the bootloader.
+	libc: Enable posix_memalign(3). [ad 20071119]
+	i386, amd64: Add support for boot.cfg(5) to configure the bootloader.
 		This includes optionally displaying menus, altering banner
 		text and changing options such as timeouts and console device
 		which previously required use of installboot.
@@ -334,27 +366,55 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	i386: Create a boot.cfg on the install CD to allow the end-user to
 		select either the standard or non-ACPI kernel easily.
 		[sborrill 20071123]
+	agp(4): Add AGP support for Intel Q35/G33/Q33. [markd 20071124]
+	rum(4): Add support for COREGA CG-WLUSB2GL and ABOCOM WUG2700.
+		[kiyohara 20071125]
+	kernel: Add various atomic ops. Mostly pulled from
+		thorpej-atomic branch.  [ad 20071128]
+	cobalt: Add support for booting from UFS2 partition to bootloader.
+		[tsutsui 20071201]
 	libsa: Add ext2fs support. [tsutsui 20071201]
+	cobalt: Add support for booting from ext2fs partition to bootloader.
+		[tsutsui 20071201]
 	bcsp(4): Add support for BlueCore Serial Protocol. [kiyohara 20071202]
+	arc: Add support for booting from UFS2 partition to bootloader.
+		[tsutsui 20071202]
 	toolchain: Install the linker scripts on amd64, which allows to
 		link x86 32bits objects using the native ld(1).
 		[bouyer 20071202]
+	kernel: Change interrupt handling:
+		- Reduce available SPL levels for hardware devices to
+		NONE, VM, SCHED, HIGH.
+		- Acquire kernel_lock only for interrupts at IPL_VM.
+		- Implement threaded soft interrupts.
+		[ad 20071203]
+	nfsmb(4): Make nfsmb(4) work on newer MCPs, including MCP55.
+		[xtraeme 20071204]
 	arcmsr(4): Areca Technology Corporation SATA RAID controller driver,
 		ported from OpenBSD. [xtraeme 20071204]
+	symlink(7): Implement a new magic string for magic symlinks, @ruid,
+		which exapnds to the real user id of the process and
+		use this magic string for per-user tmp. [mjf 20071204]
 	fxp(4): Fix some TX timeout and RX pool corruption problems.
 		Mostly from OpenBSD. [tsutsui 20071208]
+	kernel: Added a new power management framework, see pmf(9) for details.
+		[jmcneill,joerg 20071209]
+	acpi(4): Updated ACPI-CA to 20070320. [jmcneill 20071209]
 	ofppc: Convert to shared powerpc major numbers. [garbled 20071210]
 	ofppc: Added support for the bplan/Genesi Pegasos II. [garbled 20071210]
 	sandpoint: Convert to shared powerpc major numbers. [nisimura 20071211]
+	queue(3): Add TAILQ_CONCAT() and STAILQ_CONCAT(), from FreeBSD.
+		[elad 20071211]
 	macppc: Convert to shared powerpc major numbers. [macallan 20071211]
-	acpi(4): Updated ACPI-CA to 20070320. [jmcneill 20071211]
-	kernel: Added a new power management framework, see pmf(9) for details.
-		[jmcneill,joerg 20071211]
-	ifconfig(8): Add 'list scan' to ifconfig, which list access point in
-		the neighbourhood. [adegroot 20071216]
+	ddb(4): Add a "whatis" command, inspired from Solaris. [yamt 20071213]
+	libc: Add dehumanize_number(3). [christos 20071214]
+	sgimips: Add support for booting from UFS2 to bootloader.
+		[tsutsui 20071215]
 	MAKEDEV(8): Use pax(1) in preference to mknod(8) to create device
 		nodes more efficiently; use mount_tmpfs(8) in preference to
 		mount_mfs(8) when creating a memory file system. [apb 20071215]
+	ifconfig(8): Add 'list scan' to ifconfig, which list access point in
+		the neighbourhood. [adegroot 20071216]
 	nfe(4): Handle a quirk of newer MCP6x chips on reading MAC address.
 		[tsutsui 20071217]
 	rs6000: New port of NetBSD to the MCA based IBM RS/6000 7006-41T.
@@ -365,15 +425,24 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	sparc64: Add support for Sun PGX32 / TechSource Raptor GFX 8P to
 		genfb ( mostly workarounds for firmware bugs ), also build
 		XFree86's glint driver for accelerated X. [macallan 20071219]
+	amd64: Remove GENERIC.MP and enable SMP by default. [ad 20071220]
 	newsyslog(8): newsyslog.conf flag 'J' will bzip2 logfiles.
 		[dogcow 20071221]
 	thinkpad(4): Add driver for IBM/Lenovo Thinkpad hotkeys and
 		brightness controls. [jmcneill 20071221]
+	fdisk(8): Report the first active partition. [apb 20071223]
+	compat_linux32: Add getpgid(2) syscall. [njoly 20071224]
+	compat_linux32: Add old_uname() syscall. [njoly 20071224]
+	i386: Make SMP the default and remove GENERIC.MP. [ad 20071225]
+	i386: Add initial version of calling VGA POST from vga_resume.
+		[joerg 20071225]
+	compat_linux32: Add readdir() syscall. [njoly 20071226]
 	kernel: Address Space Layout Randomization support in the kernel and
 		dynamic linker, see security(8). [elad,christos 20071226]
 	msdosfs: Significantly improved writing speed (up to 16x faster).
 		[reinoud 20071228]
 	itesio(4): Added support for the Watchdog Timer. [xtraeme 20071229]
+	makphy(4): Recognize Marvell 88E1116 Gigabit PHY. [wiz 20071229]
 	usermode: Add port of the NetBSD kernel to userspace.
 		[jmcneill 20071229]
 	hp700: Kernels are now compiled with -O2. [skrll 20071230]
