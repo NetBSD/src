@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.4 2008/09/02 08:00:24 christos Exp $	*/
+/*	$NetBSD: session.c,v 1.5 2008/09/02 08:41:51 christos Exp $	*/
 
 /* session.c -- user windowing interface to Info.
    Id: session.c,v 1.16 2004/12/14 00:15:36 karl Exp
@@ -964,11 +964,7 @@ forward_move_node_structure (WINDOW *window, int behaviour)
                      same as the first menu item found in this node. */
                   window_message_in_echo_area
                     ((char *) _("Moving Up %d time(s), then Next."),
-<<<<<<< session.c
                      (void *)((intptr_t)up_counter), NULL);
-=======
-                     (void *) (long) up_counter, NULL);
->>>>>>> 1.1.1.7
 
                   info_handle_pointer ("Next", window);
                   return;
@@ -1965,7 +1961,7 @@ DECLARE_INFO_COMMAND (info_menu_digit, _("Select this menu item"))
 
   /* Special case.  Item "0" is the last item in this menu. */
   if (item == 0)
-    for (i = 0; (entry = menu[i]) && menu[i + 1]; i++);
+    for (i = 0; menu[i] && menu[i + 1]; i++);
   else
     {
       for (i = 0; menu[i]; i++)
@@ -1981,11 +1977,7 @@ DECLARE_INFO_COMMAND (info_menu_digit, _("Select this menu item"))
     }
   else
     info_error ((char *) _("There aren't %d items in this menu."),
-<<<<<<< session.c
         (void *)((intptr_t)item), NULL);
-=======
-                (void *) (long) item, NULL);
->>>>>>> 1.1.1.7
 
   info_free_references (menu);
   return;
