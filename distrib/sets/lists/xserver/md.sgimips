@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.18 2008/08/29 06:08:48 lukem Exp $	x11
+# $NetBSD: md.sgimips,v 1.19 2008/09/02 01:47:33 lukem Exp $	x11
 ./usr/X11R6/bin/X	-unknown-	x11
 ./usr/X11R6/bin/XFree86	-unknown-	x11
 ./usr/X11R6/bin/Xprt	-unknown-	x11
@@ -395,7 +395,7 @@
 ./usr/X11R6/man/man4/mouse.4			-unknown-		.man,x11
 ./usr/X11R6/man/man4/newport.4			-unknown-		.man,x11
 ./usr/X11R6/man/man4/void.4			-unknown-		.man,x11
-./usr/X11R6/man/man4/wsfb.4			-unknown-		.cat,x11
+./usr/X11R6/man/man4/wsfb.4			-unknown-		.man,x11
 ./usr/X11R6/man/man5/XF86Config.5		-unknown-		.man,x11
 ./usr/X11R7/lib/X11/doc/README.DRI	-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.fonts	-unknown-	xorg
