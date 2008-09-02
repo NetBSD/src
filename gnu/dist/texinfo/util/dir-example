@@ -10,7 +10,7 @@ rms suggested that we follow the categories of the Free Software
 If you have dir entries for Texinfo manuals you'd like to be added here,
   please send them to karl@gnu.org.
 
-Id: dir-example,v 1.12 2004/04/08 22:54:19 karl Exp
+Id: dir-example,v 1.51 2004/12/18 02:11:43 karl Exp
 
 File: dir,	Node: Top,	This is the top of the INFO tree.
 
@@ -27,7 +27,7 @@ Not all of the topics shown below may be available on this system.
 * Menu:
 
 Basics
-* Bash: (bash).                 Bourne-Again SHell.
+* Bash: (bash).                 The GNU Bourne-Again SHell.
 * BC: (bc).                     Arbitrary precision calculator language.
 * Common options: (coreutils)Common options.      Common options.
 * Coreutils: (coreutils).       Core GNU (file, text, shell) utilities.
@@ -39,7 +39,7 @@ Basics
 * Time: (time).                 Measuring program resource usage.
 
 Text creation and manipulation
-* Diff: (diff).                 Comparing and merging programs.
+* Diffutils: (diff).            Comparing and merging files.
 * Ed: (ed).                     Line editor.
 * Gawk: (gawk).                 A text scanning and processing language.
 * grep: (grep).                 Print lines matching a pattern.
@@ -49,6 +49,7 @@ Text creation and manipulation
 
 Texinfo documentation system
 * Info: (info).                 Documentation browsing system.
+* Texi2HTML: (texi2html).  Texinfo to HTML Converter.
 * Texinfo: (texinfo).           The GNU documentation format.
 * info standalone: (info-stnd).                 Standalone Info reader.
 * infokey: (info-stnd)Invoking infokey.         Compile Info customizations.
@@ -88,7 +89,7 @@ Software development
 * As: (as).                     Assembler.
 * Autoconf: (autoconf).         Create source code configuration scripts.
 * Binutils: (binutils).         ar/copy/objdump/nm/size/strip/ranlib.
-* automake: (automake).		Making Makefile.in's.
+* automake: (automake).         Making Makefile.in's.
 * bison: (bison).               GNU parser generator (Yacc replacement).
 * Cpp: (cpp).		        The GNU C preprocessor.
 * Cpplib: (cppinternals).       Cpplib internals.
@@ -100,8 +101,10 @@ Software development
 * g77: (g77).                   GNU Fortran 77 compiler.
 * Gasp: (gasp).                 GNU Assembler preprocessor.
 * gcc: (gcc).                   The GNU Compiler Collection.
+* gccinstall: (gccinstall).     Installing the GNU Compiler Collection.
 * gccint: (gccint).             Internals of the GNU Compiler Collection.
 * Gnats: (gnats).               Cygnus bug tracking system.
+* Gnulib: (gnulib).             Source files to share among distributions.
 * Gperf: (gperf).               Perfect hash function generator.
 * Gprof: (gprof).               Profiler.
 * Guile Reference: (guile).     The Guile reference manual.
@@ -159,6 +162,7 @@ Emacs
 Typesetting
 * Font utilities: (fontu).      Programs for font manipulation.
 * Groff: (groff).               The GNU troff document formatting system.
+* GV: (gv).                     The GNU PostScript and PDF viewer.
 
 GNU Gettext Utilities
 * ISO3166: (gettext)Country Codes.             ISO 3166 country codes.
@@ -209,7 +213,7 @@ C++ libraries
 
 GNU organization
 * Maintain: (maintain).         GNU maintainer guidelines.
-* Standards: (standards).        GNU coding standards.
+* Standards: (standards).       GNU coding standards.
 * Tasks: (tasks).               GNU task list.
 
 GNU music project
@@ -227,6 +231,7 @@ GNU music project
 TeX
 * Afm2tfm: (dvips)Invoking afm2tfm.  Making Type 1 fonts available to TeX.
 * Dvips: (dvips).               DVI-to-PostScript translator.
+* DVI-to-PNG: (dvipng).         DVI to Portable Network Graphics (PNG).
 * Eplain: (eplain).             Expanding on plain TeX.
 * Kpathsearch: (kpathsea).      File lookup along search paths.
 * LaTeX: (latex).               LaTeX.
@@ -285,7 +290,7 @@ Individual utilities
 * chown: (coreutils)chown invocation.           Change file owners/groups.
 * chroot: (coreutils)chroot invocation.         Specify the root directory.
 * cksum: (coreutils)cksum invocation.           Print POSIX CRC checksum.
-* cmp: (diff)Invoking cmp.                      Character-by-character diff.
+* cmp: (diff)Invoking cmp.                      Compare 2 files byte by byte.
 * comm: (coreutils)comm invocation.             Compare sorted files by line.
 * comsatd: (mailutils)comsatd.                  Comsat daemon.
 * config.status: (autoconf)config.status Invocation. Recreating configurations.
@@ -296,13 +301,15 @@ Individual utilities
 * date: (coreutils)date invocation.             Print/set system date and time.
 * dd: (coreutils)dd invocation.                 Copy and convert a file.
 * df: (coreutils)df invocation.                 Report filesystem disk usage.
-* diff3: (diff)Invoking diff3.                  Three-way diff.
+* diff: (diff)Invoking diff.                    Compare 2 files line by line.
+* diff3: (diff)Invoking diff3.                  Compare 3 files line by line.
 * dir: (coreutils)dir invocation.               List directories briefly.
 * dircolors: (coreutils)dircolors invocation.   Color setup for ls.
 * dirname: (coreutils)dirname invocation.       Strip non-directory suffix.
 * dmp: (web2c)Dmp invocation.                   Troff->MPX (MetaPost pictures).
 * du: (coreutils)du invocation.                 Report on disk usage.
 * dvicopy: (web2c)DVIcopy invocation.           Virtual font expansion
+* dvipng: (dvipng)Invoking dvipng.              A DVI-to-PNG translator.
 * dvitomp: (web2c)DVItoMP invocation.           DVI to MPX (MetaPost pictures).
 * dvitype: (web2c)DVItype invocation.           DVI to human-readable text.
 * echo: (coreutils)echo invocation.             Print a line of text.
@@ -385,7 +392,7 @@ Individual utilities
 * objdump: (binutils)objdump.                   Display info from object files.
 * od: (coreutils)od invocation.                 Dump files in octal, etc.
 * paste: (coreutils)paste invocation.           Merge lines of files.
-* patch: (diff)Invoking patch.                  Automatically applying diffs.
+* patch: (diff)Invoking patch.                  Apply a patch to a file.
 * patgen: (web2c)Patgen invocation.             Creating hyphenation patterns.
 * pathchk: (coreutils)pathchk invocation.       Check file name portability.
 * pid: (id-utils)pid invocation.                Looking up filenames.
@@ -409,7 +416,7 @@ Individual utilities
 * readmsg: (mailutils)readmsg.                  Extract messages from a folder.
 * rm: (coreutils)rm invocation.                 Remove files.
 * rmdir: (coreutils)rmdir invocation.           Remove empty directories.
-* sdiff: (diff)Invoking sdiff.                  Interactively merge files.
+* sdiff: (diff)Invoking sdiff.                  Merge 2 files side-by-side.
 * send-pr: (gnats)Invoking send-pr.             Submitting bugs.
 * seq: (coreutils)seq invocation.               Print numeric sequences
 * shar: (sharutils)shar invocation.             Create shell archive.

@@ -1,7 +1,7 @@
-/*	$NetBSD: node.h,v 1.1.1.3 2004/07/12 23:26:48 wiz Exp $	*/
+/*	$NetBSD: node.h,v 1.1.1.4 2008/09/02 07:50:47 christos Exp $	*/
 
 /* node.h -- declarations for Node.
-   Id: node.h,v 1.4 2004/02/28 10:42:50 dirt Exp
+   Id: node.h,v 1.2 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 1996, 1997, 1998, 1999, 2002 Free Software Foundation, Inc.
 

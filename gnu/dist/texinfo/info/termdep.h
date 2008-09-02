@@ -1,7 +1,7 @@
-/*	$NetBSD: termdep.h,v 1.1.1.4 2004/07/12 23:26:53 wiz Exp $	*/
+/*	$NetBSD: termdep.h,v 1.1.1.5 2008/09/02 07:50:08 christos Exp $	*/
 
 /* termdep.h -- system things that terminal.c depends on.
-   Id: termdep.h,v 1.1.1.1 2003/12/06 01:33:07 karl Exp
+   Id: termdep.h,v 1.2 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1993, 1996, 1997, 1998, 2001, 2002 Free Software
    Foundation, Inc.

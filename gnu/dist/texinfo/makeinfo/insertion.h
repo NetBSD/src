@@ -1,7 +1,7 @@
-/*	$NetBSD: insertion.h,v 1.1.1.3 2004/07/12 23:26:50 wiz Exp $	*/
+/*	$NetBSD: insertion.h,v 1.1.1.4 2008/09/02 07:50:34 christos Exp $	*/
 
 /* insertion.h -- declarations for insertion.c.
-   Id: insertion.h,v 1.2 2004/02/13 22:01:38 dirt Exp
+   Id: insertion.h,v 1.10 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 1998, 1999, 2001, 2002, 2003 Free Software Foundation, Inc.
 

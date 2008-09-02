@@ -1,7 +1,7 @@
-/*	$NetBSD: session.h,v 1.1.1.4 2004/07/12 23:26:53 wiz Exp $	*/
+/*	$NetBSD: session.h,v 1.1.1.5 2008/09/02 07:50:07 christos Exp $	*/
 
 /* session.h -- Functions found in session.c.
-   Id: session.h,v 1.3 2004/03/14 00:57:30 karl Exp
+   Id: session.h,v 1.3 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1993, 1998, 1999, 2001, 2002, 2004 Free Software
    Foundation, Inc.

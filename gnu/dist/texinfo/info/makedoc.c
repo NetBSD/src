@@ -1,7 +1,7 @@
-/*	$NetBSD: makedoc.c,v 1.1.1.5 2004/07/12 23:26:52 wiz Exp $	*/
+/*	$NetBSD: makedoc.c,v 1.1.1.6 2008/09/02 07:50:15 christos Exp $	*/
 
 /* makedoc.c -- make doc.c and funs.h from input files.
-   Id: makedoc.c,v 1.4 2004/04/06 22:58:25 karl Exp
+   Id: makedoc.c,v 1.4 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.

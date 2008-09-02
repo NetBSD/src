@@ -1,7 +1,7 @@
-/*	$NetBSD: infokey.h,v 1.1.1.2 2004/07/12 23:26:52 wiz Exp $	*/
+/*	$NetBSD: infokey.h,v 1.1.1.3 2008/09/02 07:50:15 christos Exp $	*/
 
 /* infokey.h -- Custom keystroke definition support.
-   Id: infokey.h,v 1.1.1.1 2003/12/06 01:32:48 karl Exp
+   Id: infokey.h,v 1.2 2004/04/11 17:56:45 karl Exp
 
    Copyright (C) 1999, 2002 Free Software Foundation, Inc.
 

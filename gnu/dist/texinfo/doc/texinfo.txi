@@ -1,5 +1,5 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c Id: texinfo.txi,v 1.52 2004/04/09 21:30:07 karl Exp
+@c Id: texinfo.txi,v 1.128 2004/12/29 15:06:41 karl Exp
 @c Ordinarily, Texinfo files have the extension .texi.  But texinfo.texi
 @c clashes with texinfo.tex on 8.3 filesystems, so we use texinfo.txi.
 
@@ -59,6 +59,7 @@ Software Foundation raise funds for GNU development.''
 * Texinfo: (texinfo).           The GNU documentation format.
 * install-info: (texinfo)Invoking install-info. Update info/dir entries.
 * texi2dvi: (texinfo)Format with texi2dvi.      Print Texinfo documents.
+* texi2pdf: (texinfo)PDF Output.                PDF output for Texinfo.
 * texindex: (texinfo)Format with tex/texindex.  Sort Texinfo index files.
 * makeinfo: (texinfo)Invoking makeinfo.         Translate Texinfo source.
 @end direntry
@@ -345,6 +346,7 @@ Indicating Definitions, Commands, etc.
 * option::                      Indicating option names.
 * dfn::                         Specifying definitions.
 * cite::                        Referring to books not in the  Info system.
+* abbr::                        Indicating abbreviations.
 * acronym::                     Indicating acronyms.
 * indicateurl::                 Indicating a World Wide Web reference.
 * email::                       Indicating an electronic mail address.
@@ -438,6 +440,7 @@ Special Insertions
 * Dots Bullets::                How to insert dots and bullets.
 * TeX and copyright::           How to insert the @TeX{} logo
                                  and the copyright symbol.
+* euro::                        How to insert the Euro currency symbol.
 * pounds::                      How to insert the pounds currency symbol.
 * minus::                       How to insert a minus sign.
 * math::                        How to format a mathematical expression.
@@ -856,7 +859,7 @@ files.  @xref{Creating and Installing Info Files}.
 @cindex Plain text output
 (Generated via @command{makeinfo --no-headers}.)  This is almost the
 same as Info output, except the navigational control characters are
-omitted.
+omitted.  Also, standard output is used by default.
 
 @item HTML
 @cindex HTML output
@@ -895,12 +898,14 @@ For more information on @TeX{} in general, please see the book
 @cindex PDF output
 @cindex Beebe, Nelson
 @pindex pdftex
-(Generated via @command{texi2dvi --pdf}.)  This format, based on
-PostScript, was developed by Adobe Systems for document interchange.
-It is intended to be platform-independent and easily viewable, among
-other design goals; for a discussion, see
-@uref{http://tug.org/tugboat/Articles/tb22-3/tb72beebeI.pdf}.  Texinfo
-uses the @command{pdftex} program, a variant of @TeX{}, to output pdf;
+(Generated via @command{texi2dvi --pdf} or @command{texi2pdf}.)  This
+was developed by Adobe Systems for portable document interchange,
+based on their previous PostScript language.  It can represent the exact
+appearance of a document, including fonts, and supporting arbitrary
+scaling.  It is intended to be platform-independent and easily
+viewable, among other design goals; for a discussion, see
+@uref{http://tug.org/TUGboat/Articles/tb22-3/tb72beebeI.pdf}.  Texinfo
+uses the @command{pdftex} program, a variant of @TeX{}, to output PDF;
 see @uref{http://tug.org/applications/pdftex}.  @xref{PDF Output}.
 
 @item XML
@@ -1273,13 +1278,13 @@ Unicode.
 @cindex En dash, producing
 Use three hyphens in a row, @samp{---}, to produce a long dash---like
 this (called an @dfn{em dash}), used for punctuation in sentences.
-Use two hyphens, @samp{--}, to produce a medium dash--like this
-(called an @dfn{en dash}), used to separate numeric ranges.  Use a
-single hyphen, @samp{-}, to produce a standard hyphen used in compound
-words.  For display on the screen, Info reduces three hyphens to two
-and two hyphens to one (not transitively!).  Of course, any number of
-hyphens in the source remain as they are in literal contexts, such as
-@code{@@code} and @code{@@example}.
+Use two hyphens, @samp{--}, to produce a medium dash (called an
+@dfn{en dash}), used primarily for numeric ranges, as in ``June
+25--26''.  Use a single hyphen, @samp{-}, to produce a standard hyphen
+used in compound words.  For display on the screen, Info reduces three
+hyphens to two and two hyphens to one (not transitively!).  Of course,
+any number of hyphens in the source remain as they are in literal
+contexts, such as @code{@@code} and @code{@@example}.
 
 @item
 @cindex Tabs; don't use!
@@ -3464,9 +3469,11 @@ Cover art by @dots{}
 @cindex Titlepage end starts headings
 @cindex End titlepage starts headings
 
-The @code{@@end titlepage} command must be written on a line by itself.
-It not only marks the end of the title and copyright pages, but also
-causes @TeX{} to start generating page headings and page numbers.
+Like all @code{@@end} commands (@pxref{Quotations and Examples}), the @code{@@end titlepage} command
+must be written at the beginning of a line by itself, with only one
+space between the @code{@@end} and the @code{titlepage}.  It not only
+marks the end of the title and copyright pages, but also causes @TeX{}
+to start generating page headings and page numbers.
 
 To repeat what is said elsewhere,  Texinfo has two standard page heading
 formats, one for documents which are printed on one side of each sheet of paper
@@ -4008,7 +4015,8 @@ beginning of a line followed by either @samp{asis} or a number:
 @@exampleindent @var{indent}
 @end example
 
-The indentation is according to the value of @var{indent}:
+@code{@@exampleindent} is ignored for HTML output.  Otherwise, the
+indentation is according to the value of @var{indent}:
 
 @table @asis
 @item @code{asis}
@@ -4023,8 +4031,9 @@ Indent environments by @var{n} space characters in Info output, by
 
 @end table
 
-The default value of @var{indent} is 5.  @code{@@exampleindent} is
-ignored for HTML output.
+The default value of @var{indent} is 5 spaces in Info, and 0.4@dmn{in}
+in @TeX{}, which is somewhat less.  (The reduction is to help @TeX{}
+fit more characters onto physical lines.)
 
 It is best to write the @code{@@exampleindent} command before the
 end-of-header line at the beginning of a Texinfo file, so the region
@@ -6293,16 +6302,13 @@ Sea surges are described in Section 6.7 [Hurricanes], page 72.
 Sea surges are described in *Note Hurricanes::.
 @end example
 
-@quotation Caution
-You should write a period or comma immediately after an @code{@@ref}
-command with two or more arguments.  Otherwise, Info will generate a
-(grammatically incorrect) period, just so the cross-reference doesn't
-fail completely.
-@end quotation
+As a general rule, you should write a period or comma immediately
+after an @code{@@ref} command with two or more arguments.
 
-As a general rule, you should write a period or comma after every
-@code{@@ref} command.  This works best in both the printed and the
-Info output.
+If there is no such following punctuation, @command{makeinfo} will
+generate a (grammatically incorrect) period in the Info output;
+otherwise, the cross-reference would fail completely, due to the
+current syntax of Info format.
 
 
 @node pxref
@@ -6313,9 +6319,9 @@ Info output.
 
 The parenthetical reference command, @code{@@pxref}, is nearly the
 same as @code{@@xref}, but you use it @emph{only} inside parentheses
-and you do @emph{not} type a comma or period after the command's
-closing brace.  The command differs from @code{@@xref} in two
-ways:@refill
+and you do @emph{not} type a comma or period (or anything else) after
+the command's closing brace.  The command differs from @code{@@xref}
+in two ways:
 
 @enumerate
 @item
@@ -6330,8 +6336,9 @@ closing colon or period.@refill
 Because one type of formatting automatically inserts closing
 punctuation and the other does not, you should use @code{@@pxref}
 @emph{only} inside parentheses as part of another sentence.  Also, you
-yourself should not insert punctuation after the reference, as you do
-with @code{@@xref}.@refill
+yourself should not insert punctuation after the reference (or any
+other text), as you do with @code{@@xref}.  In the Info
+output, such text would follow a period, which is grammatically wrong.
 
 @code{@@pxref} is designed so that the output looks right and works
 right between parentheses both in printed output and in an Info file.
@@ -6411,10 +6418,12 @@ location breaks up the flow of reading.
 @cindex References using @code{@@inforef}
 @findex inforef
 
-@code{@@inforef} is used for cross references to Info files for which
-there are no printed manuals.  Even in a printed manual,
-@code{@@inforef} generates a reference directing the user to look in
-an Info file.@refill
+@code{@@inforef} is used for making cross references to Info
+documents---even from a printed manual.  This might be because you
+want to refer to conditional @code{@@ifinfo} text
+(@pxref{Conditionals}), or because printed output is not available
+(perhaps because there is no Texinfo source), among other
+possibilities.
 
 The command takes either two or three arguments, in the following
 order:@refill
@@ -6444,7 +6453,7 @@ The template is:
 
 @need 800
 @noindent
-Thus,
+For example,
 
 @example
 @group
@@ -6455,7 +6464,7 @@ for more information.
 
 @need 800
 @noindent
-produces
+produces (in Info):
 
 @example
 @group
@@ -6466,41 +6475,18 @@ for more information.
 
 @need 800
 @noindent
-and
+and (in the printed output):
 
 @quotation
 See Info file @file{info}, node @samp{Advanced}, for more information.
 @end quotation
 
-@need 800
-@noindent
-Similarly,
-
-@example
-@group
-@@inforef@{Advanced, , info@}, for more information.
-@end group
-@end example
-
-@need 800
-@noindent
-produces
-
-@example
-*Note (info)Advanced::, for more information.
-@end example
-
-@need 800
-@noindent
-and
-
-@quotation
-See Info file @file{info}, node @samp{Advanced}, for more information.
-@end quotation
+(This particular example is not realistic, since the Info manual is
+written in Texinfo, so all formats are available.)
 
 The converse of @code{@@inforef} is @code{@@cite}, which is used to
 refer to printed works for which no Info form exists.  @xref{cite, ,
-@code{@@cite}}.@refill
+@code{@@cite}}.
 
 
 @node uref
@@ -6656,17 +6642,18 @@ not something else that should not be changed.@refill
 * code::                        Indicating program code.
 * kbd::                         Showing keyboard input.
 * key::                         Specifying keys.
-* samp::                        A literal sequence of characters.
-* verb::                        A verbatim sequence of characters.
+* samp::                        Indicating a literal sequence of characters.
+* verb::                        Indicating a verbatim sequence of characters.
 * var::                         Indicating metasyntactic variables.
 * env::                         Indicating environment variables.
 * file::                        Indicating file names.
 * command::                     Indicating command names.
 * option::                      Indicating option names.
 * dfn::                         Specifying definitions.
-* cite::                        Referring to books not in the  Info system.
+* cite::                        Referring to books not in the Info system.
+* abbr::                        Indicating abbreviations.
 * acronym::                     Indicating acronyms.
-* indicateurl::                 Indicating a World Wide Web reference.
+* indicateurl::                 Indicating an example URL.
 * email::                       Indicating an electronic mail address.
 @end menu
 
@@ -6686,46 +6673,68 @@ The commands serve a variety of purposes:@refill
 
 @table @code
 @item @@code@{@var{sample-code}@}
-Indicate text that is a literal example of a piece of a program.@refill
+Indicate text that is a literal example of a piece of a program.
+@xref{code,,@code{@@code}}.
 
 @item @@kbd@{@var{keyboard-characters}@}
-Indicate keyboard input.@refill
+Indicate keyboard input.
+@xref{kbd,,@code{@@kbd}}.
 
 @item @@key@{@var{key-name}@}
-Indicate the conventional name for a key on a keyboard.@refill
+Indicate the conventional name for a key on a keyboard.
+@xref{key,,@code{@@key}}.
 
 @item @@samp@{@var{text}@}
-Indicate text that is a literal example of a sequence of characters.@refill
+Indicate text that is a literal example of a sequence of characters.
+@xref{samp,,@code{@@samp}}.
+
+@item @@verb@{@var{text}@}
+Write a verbatim sequence of characters.
+@xref{verb,,@code{@@verb}}.
 
 @item @@var@{@var{metasyntactic-variable}@}
-Indicate a metasyntactic variable.@refill
+Indicate a metasyntactic variable.
+@xref{var,,@code{@@var}}.
 
 @item @@env@{@var{environment-variable}@}
-Indicate an environment variable.@refill
+Indicate an environment variable.
+@xref{env,,@code{@@kenv}}.
 
 @item @@file@{@var{file-name}@}
-Indicate the name of a file.@refill
+Indicate the name of a file.
+@xref{file,,@code{@@file}}.
 
 @item @@command@{@var{command-name}@}
-Indicate the name of a command.@refill
+Indicate the name of a command.
+@xref{command,,@code{@@command}}.
 
 @item @@option@{@var{option}@}
-Indicate a command-line option.@refill
+Indicate a command-line option.
+@xref{option,,@code{@@option}}.
 
 @item @@dfn@{@var{term}@}
-Indicate the introductory or defining use of a term.@refill
+Indicate the introductory or defining use of a term.
+@xref{dfn,,@code{@@dfn}}.
 
 @item @@cite@{@var{reference}@}
-Indicate the name of a book.@refill
+Indicate the name of a book.
+@xref{cite,,@code{@@cite}}.
+
+@item @@abbr@{@var{abbreviation}@}
+Indicate an abbreviation.
 
 @item @@acronym@{@var{acronym}@}
-Indicate an acronym.@refill
+Indicate an acronym.
+@xref{acronym,,@code{@@acronym}}.
 
 @item @@indicateurl@{@var{uniform-resource-locator}@}
-Indicate a uniform resource locator for the World Wide Web.
+Indicate an example (that is, nonfunctional) uniform resource locator.
+@xref{indicateurl,,@code{@@indicateurl}}.  (Use @code{@@url}
+(@pxref{uref,,@code{@@url}}) for live url's.)
 
 @item @@email@{@var{email-address}[, @var{displayed-text}]@}
 Indicate an electronic mail address.
+@xref{email,,@code{@@email}}.
 
 @ignore
 @item @@ctrl@{@var{ctrl-char}@}
@@ -7080,7 +7089,10 @@ normal Texinfo text, where the three characters @code{@@@{@}} are
 special.  With @code{@@verb}, nothing is special except the delimiter
 character you choose.
 
-It is not reliable to use @code{@@verb} inside other Texinfo constructs.
+It is not reliable to use @code{@@verb} inside other Texinfo
+constructs.  In particular, it does not work to use @code{@@verb} in
+anything related to cross-referencing, such as section titles or
+figure captions.
 
 
 @node var
@@ -7351,32 +7363,76 @@ identify that control character: an uparrow followed by the character
 @end ignore
 
 
+@node abbr
+@subsection @code{@@abbr}@{@var{abbreviation}[, @var{meaning}]@}
+@findex abbr
+
+@cindex Abbreviations, tagging
+You can use the @code{@@abbr} command for general abbreviations.  The
+abbreviation is given as the single argument in braces, as in
+@samp{@@abbr@{Comput.@}}.  As a matter of style, or for particular
+abbreviations, you may prefer to omit periods, as in
+@samp{@@abbr@{Mr@} Stallman}.
+
+@code{@@abbr} accepts an optional second argument, intended to be used
+for the meaning of the abbreviation.
+
+If the abbreviation ends with a lowercase letter and a period, and is
+not at the end of a sentence, and has no second argument, remember to
+use the @code{@@.} command (@pxref{Not Ending a
+Sentence}) to get the correct spacing.  However, you do not have to
+use @code{@@.} within the abbreviation itself; Texinfo automatically
+assumes periods within the abbreivation do not end a sentence.
+
+@cindex <abbr> tag
+In @TeX{} and in the Info output, the first argument is printed as-is;
+if the second argument is present, it is printed in parentheses after
+the abbreviation.  In HTML and XML, the @code{<abbr>} tag is
+used; in Docbook, the @code{<abbrev>} tag is used.  For instance:
+
+@example
+@@abbr@{Comput. J., Computer Journal@}
+@end example
+
+@noindent produces:
+
+@display
+@abbr{Comput. J., Computer Journal}
+@end display
+
+For abbreviations consisting of all capital letters, you may prefer to
+use the @code{@@acronym} command instead.  See the next section for
+more on the usage of these two commands.
+
+
 @node acronym
 @subsection @code{@@acronym}@{@var{acronym}[, @var{meaning}]@}
 @findex acronym
 
 @cindex NASA, as acronym
-@cindex F.B.I., as acronym
-@cindex Abbreviations, tagging
 @cindex Acronyms, tagging
 Use the @code{@@acronym} command for abbreviations written in all
 capital letters, such as `@acronym{NASA}'.  The abbreviation is given as
 the single argument in braces, as in @samp{@@acronym@{NASA@}}.  As
-a matter of style, or for particular abbreviations, you may prefer to
-use periods, as in @samp{@@acronym@{F.B.I.@}}.
+a matter of style, or for particular acronyms, you may prefer to
+use periods, as in @samp{@@acronym@{N.A.S.A.@}}.
 
-If the acronym is at the end of a sentence, remember to use the
-special @code{@@.} and similar commands (@pxref{Ending a Sentence}).
+@code{@@acronym} accepts an optional second argument, intended to be
+used for the meaning of the acronym.
+
+If the acronym is at the end of a sentence, and if there is no second
+argument, remember to use the @code{@@.} or similar command
+(@pxref{Ending a Sentence}) to get the correct spacing.
 
 @cindex <acronym> tag
 In @TeX{}, the acronym is printed in slightly smaller font.  In the
-Info output, the argument is printed as-is.  In HTML, Docbook, and
-XML, the @code{<acronym>} tag is used.
+Info output, the argument is printed as-is.  In either format, if the
+second argument is present, it is printed in parentheses after the
+acronym.  In HTML, Docbook, and XML, the @code{<acronym>} tag is
+used.  
 
-@code{@@acronym} accepts an optional second argument, intended to be
-used for the meaning of the acronym.  If present, it is printed in
-parentheses after the acronym.  For instance (since GNU is a recursive
-acronym, we use @code{@@acronym} recursively):
+For instance (since GNU is a recursive acronym, we use
+@code{@@acronym} recursively):
 
 @example
 @@acronym@{GNU, @@acronym@{GNU@}'s Not Unix@}
@@ -7391,6 +7447,38 @@ acronym, we use @code{@@acronym} recursively):
 In some circumstances, it is conventional to print family names in all
 capitals.  Don't use @code{@@acronym} for this, since a name is not an
 acronym.  Use @code{@@sc} instead (@pxref{Smallcaps}).
+
+@code{@@abbr} and @code{@@acronym} are closely related commands: they
+both signal to the reader that a shortened form is being used, and
+possibly give a meaning.  When choosing whether to use these two
+commands, please bear the following in mind.
+
+@itemize @minus
+@item
+In standard English usage, acronyms are a subset of abbreviations:
+they include pronounceable words like `@acronym{NATO}', `radar', and
+`snafu', and some sources also include syllable acronyms like
+`Usenet', hybrids like `@acronym{SIGGRAPH}', and unpronounceable
+initialisms like `@acronym{FBI}'.
+
+@item
+In Texinfo, an acronym (but not an abbreviation) should consist only
+of capital letters and periods, no lowercase.
+
+@item
+In @TeX{}, an acronym (but not an abbreviation) is printed in a
+slightly smaller font.
+
+@item
+Some browsers place a dotted bottom border under abbreviations but not
+acronyms.
+
+@item
+It's not essential to use these commands for all abbreviations.  Text
+is perfectly readable without them, and for common abbreviations like
+`etc.@:', we consider them to be overkill.
+
+@end itemize
 
 
 @node indicateurl
@@ -7534,7 +7622,7 @@ Richard @sc{Stallman} founded @acronym{GNU}.
 @end display
 
 As shown here, we recommend using @code{@@acronym} for actual
-abbreviations (@pxref{acronym}), and reserving @code{@@sc} for special
+acronyms (@pxref{acronym}), and reserving @code{@@sc} for special
 cases where you want small caps.  The output is not the same
 (@code{@@acronym} prints in a smaller text font, not the small caps
 font), but more importantly it describes the actual text more
@@ -7560,36 +7648,53 @@ We recommend using regular mixed case wherever possible.
 @node Fonts
 @subsection Fonts for Printing, Not Info
 @cindex Fonts for printing, not Info
-@findex i @r{(italic font)}
-@findex b @r{(bold font)}
-@findex t @r{(typewriter font)}
-@findex r @r{(roman font)}
 
-Texinfo provides four font commands that specify font changes in the
-printed manual and (where possible) in the HTML output, but have no
-effect in the Info file.  All four commands apply to an argument that
-follows, surrounded by braces.
+Texinfo provides a number of font commands that specify font changes
+in the printed manual and (where possible) in the HTML output, but
+have no effect in the Info file.  All the commands apply to an
+argument that follows, surrounded by braces.
 
 @table @code
-@item @@i
-@cindex Italic font
-selects an @i{italic} font;
-
 @item @@b
+@findex b @r{(bold font)}
 @cindex Bold font
 selects @b{bold} face;
 
+@item @@i
+@findex i @r{(italic font)}
+@cindex Italic font
+selects an @i{italic} font;
+
+@item @@r
+@findex r @r{(roman font)}
+@cindex Roman font
+@cindex Default font
+selects a @r{roman} font, which is the usual font in which text is
+printed.  It may or may not be seriffed.
+
+@item @@sansserif
+@findex sansserif @r{(sans serif font)}
+@cindex Sans serif font
+selects a @sansserif{sans serif} font;
+
+@item @@slanted
+@findex slanted @r{(slanted font)}
+@cindex Slanted font
+@cindex Oblique font
+rselects a @slanted{slanted} font;
+
 @item @@t
+@findex t @r{(typewriter font)}
 @cindex Monospace font
 @cindex Fixed-width font
 @cindex Typewriter font
 selects the @t{fixed-width}, typewriter-style font used by @code{@@code};
 
-@item @@r
-@cindex Roman font
-selects a @r{roman} font, which is the usual font in which text is printed.
-
 @end table
+
+(The commands with longer names were invented much later than the
+others, when it did not seem desirable to use very short names for
+such an infrequently needed feature.)
 
 @cindex <lineannotation> Docbook tag
 Only the @code{@@r} command has much use: in example-like
@@ -7615,9 +7720,9 @@ produces
 (+ 2 2)    ; @r{Add two plus two.}
 @end lisp
 
-In general, you should avoid using the other three font commands.  If
-you need to use one, it probably indicates a gap in the Texinfo
-language.
+In general, you should avoid using the other font commands.  Some of
+them are only useful when documenting functionality with specific font
+effects, such as in \TeX\ and related packages.
 
 
 @node Quotations and Examples
@@ -7625,16 +7730,17 @@ language.
 
 Quotations and examples are blocks of text consisting of one or more
 whole paragraphs that are set off from the bulk of the text and
-treated differently.  They are usually indented.@refill
+treated differently.  They are usually indented in the output.
 
+@findex end
 In Texinfo, you always begin a quotation or example by writing an
 @@-command at the beginning of a line by itself, and end it by writing
 an @code{@@end} command that is also at the beginning of a line by
 itself.  For instance, you begin an example by writing @code{@@example}
 by itself at the beginning of a line and end the example by writing
 @code{@@end example} on a line by itself, at the beginning of that
-line.
-@findex end
+line, and with only one space between the @code{@@end} and the
+@code{example}.
 
 @menu
 * Block Enclosing Commands::    Different constructs for different purposes.
@@ -7732,10 +7838,8 @@ the margins are closer to the center of the page, so the whole of the
 quotation is indented;
 
 @item
-the first lines of paragraphs are indented no more than other lines;
+and the first lines of paragraphs are indented no more than other lines.
 
-@item
-in the printed output, interparagraph spacing is reduced.
 @end itemize
 
 @quotation
@@ -8024,13 +8128,13 @@ consistently within a chapter.
 @cindex Display formatting
 @findex display
 
-The @code{@@display} command begins a kind of example.  It is like the
-@code{@@example} command
-except that, in
-a printed manual, @code{@@display} does not select the fixed-width
-font.  In fact, it does not specify the font at all, so that the text
-appears in the same font it would have appeared in without the
-@code{@@display} command.@refill
+The @code{@@display} command begins a kind of example, where each line
+of input produces a line of output, and the output is indented.  It is
+thus like the @code{@@example} command except that, in a printed
+manual, @code{@@display} does not select the fixed-width font.  In
+fact, it does not specify the font at all, so that the text appears in
+the same font it would have appeared in without the @code{@@display}
+command.
 
 @display
 This is an example of text written between an @code{@@display} command
@@ -8042,6 +8146,11 @@ indents the text, but does not fill it.
 Texinfo also provides a command @code{@@smalldisplay}, which is like
 @code{@@display} but uses a smaller font in @code{@@smallbook} format.
 @xref{small}.
+
+The @code{@@table} command (@pxref{table}) does not work inside
+@code{@@display}.  Since @code{@@display} is line-oriented, it doesn't
+make sense to use them together.  If you want to indent a table, try
+@code{@@quotation} (@pxref{quotation}).
 
 
 @node format
@@ -9071,7 +9180,19 @@ The @code{@@shortcaption} command likewise may be used only within
 @code{@@float}, and takes a single argument in braces.  The short
 caption text is used instead of the caption text in a list of floats
 (see the next section).  Thus, you can write a long caption for the
-main document, and a short title to appear in the list of floats.
+main document, and a short title to appear in the list of floats.  For
+example:
+
+@example
+@@float
+... as above ...
+@@shortcaption@{Text for list of floats.@}
+@@end float
+@end example
+
+The text for @code{@@caption} and @code{@@shortcaption} may not
+contain comments (@code{@@c}), verbatim text (@code{@@verb}),
+environments such as @code{@@example}, or other complex constructs.
 
 
 @node listoffloats
@@ -9175,6 +9296,13 @@ will cause @code{makeinfo} to look for @file{foo.xpm} before any others.
 
 The @var{width} and @var{height} arguments are described in the next
 section.
+
+For @TeX{} output, if an image is the first thing in a paragraph, for
+example if you want two images side-by-side, you must precede it with
+@code{@@noindent} (@pxref{noindent,,@code{@@noindent}}).  Otherwise it
+will be displayed on a line by itself.  If you want it centered, 
+use @code{@@center} (@pxref{titlefont center sp,,@code{@@titlefont
+@@center @@sp}}).
 
 @cindex Alt attribute for images
 @cindex Images, alternate text for
@@ -9855,6 +9983,7 @@ These are:
 * Dots Bullets::                How to insert dots and bullets.
 * TeX and copyright::           How to insert the @TeX{} logo
                                  and the copyright symbol.
+* euro::                        How to insert the Euro currency symbol.
 * pounds::                      How to insert the pounds currency symbol.
 * minus::                       How to insert a minus sign.
 * math::                        How to format a mathematical expression.
@@ -10389,14 +10518,38 @@ registered symbol, `@registeredsymbol{}'.  Where possible, this is an
 @samp{R} inside a circle; in Info, this is @samp{(R)}.
 
 
+@node euro
+@section @code{@@euro}@{@} (@euro{}): Euro currency symbol
+@findex euro
+
+Use the @code{@@euro@{@}} command to generate `@euro{}'.  Where
+possible, this is the symbol for the Euro currency, invented as part
+of the European economic unification relatively recently.  In plain
+Info, it is the word @samp{Euro }.  (The space is included in the text
+transliteration since typically there would be no space after the
+symbol, so it would be inappropriate to have a space in the source document.)
+
+Texinfo cannot magically synthesize support for the Euro symbol where
+the underlying system (fonts, software, whatever) does not support
+it.  Therefore, in many cases it is preferable to use the word
+``Euro''.  (In banking circles, the abbreviation for the Euro is EUR.)
+
+@cindex ISO 8859-15
+@cindex Latin 9
+In order to get the Euro symbol in encoded Info output, for example,
+it is necessary to specify @code{@@documentencoding ISO-8859-15}.
+(@xref{documentencoding,,@code{@@documentencoding}}.)  The Euro symbol
+is in ISO 8859-15 (aka Latin@tie{}9), and is @emph{not} in the more
+widely-used and supported ISO 8859-1 (Latin@tie{}1).
+
+
 @node pounds
 @section @code{@@pounds}@{@} (@pounds{}): Pounds Sterling
 @findex pounds
 
-Use the @code{@@pounds@{@}} command to generate `@pounds{}'.  In a
-printed manual, this is the symbol for the currency pounds sterling.
-In Info, it is a @samp{#}.  Other currency symbols are unfortunately not
-available.
+Use the @code{@@pounds@{@}} command to generate `@pounds{}'.  Where
+possible, this is the symbol for the currency pounds sterling.  In
+Info, it is a @samp{#}.
 
 
 @node minus
@@ -13196,18 +13349,23 @@ The @code{@@documentencoding} command declares the input document
 encoding.  Write it on a line by itself, with a valid encoding
 specification following.
 
-At present, Texinfo supports only three encodings:
+At present, Texinfo supports only these encodings:
 
 @table @code
 @item US-ASCII
 This has no particular effect, but it's included for completeness.
+
 @itemx ISO-8859-1
+@itemx ISO-8859-15
 @item ISO-8859-2
-These specify the standard encodings for Western European and
-Eastern European languages, respectively.  A full description of the
-encodings is beyond our scope here;
-@uref{http://czyborra.com/charsets/iso8859.html} is one of many useful
-references.
+These specify the standard encodings for Western European (the first
+two) and Eastern European languages (the third), respectively.  ISO
+8859-15 replaces some little-used characters from 8859-1 (e.g.,
+precomposed fractions) with more commonly needed ones, such as the
+Euro symbol.
+
+A full description of the encodings is beyond our scope here;
+one useful reference is @uref{http://czyborra.com/charsets/iso8859.html}.
 @end table
 
 Specifying an encoding @var{enc} has the following effects:
@@ -13215,11 +13373,11 @@ Specifying an encoding @var{enc} has the following effects:
 @opindex --enable-encoding
 @cindex Local Variables: section, for encoding
 @cindex Info output, and encoding
-In Info output, if the option @option{--enable-encoding} is also given
+In Info output, if the option @option{--enable-encoding} is given
 to @command{makeinfo}, a so-called `Local Variables' section
 (@pxref{File Variables,,,emacs,The GNU Emacs Manual}) is output
 including @var{enc}.  This allows Info readers to set the encoding
-appropriately:
+appropriately.
 
 @example
 Local Variables:
@@ -13233,7 +13391,7 @@ End:
 In HTML output, a @samp{<meta>} tag is output, in the @samp{<head>}
 section of the HTML, that specifies @var{enc}.  Web servers and
 browsers cooperate to use this information so the correct encoding is
-used to display the page.
+used to display the page, if supported by the system.
 
 @example
 <meta http-equiv="Content-Type" content="text/html;
@@ -13470,9 +13628,10 @@ Twice: a,b & a,b.
 
 
 @node Macro Details
-@section Macro Details
+@section Macro Details and Caveats
 @cindex Macro details
 @cindex Details of macro usage
+@cindex Caveats for macro usage
 
 Due to unavoidable limitations, certain macro-related constructs cause
 problems with @TeX{}.  If you get macro-related errors when producing
@@ -13487,7 +13646,7 @@ As mentioned earlier, macro names must consist entirely of letters.
 @item
 It is not advisable to redefine any @TeX{} primitive, plain, or
 Texinfo command name as a macro. Unfortunately this is a very large
-set of names, and the possible resulting errors are completely random.
+set of names, and the possible resulting errors are unpredictable.
 
 @item
 All macros are expanded inside at least one @TeX{} group.  This means
@@ -13495,18 +13654,61 @@ that @code{@@set} and other such commands have no effect inside a
 macro.
 
 @item
-Macros containing a command which must be on a line by itself, such as a
-conditional, cannot be invoked in the middle of a line.
-
-@item
 Commas in macro arguments, even if escaped by a backslash, don't
 always work.
 
 @item
-It is best to avoid comments inside macro definitions.
+Macro arguments cannot cross lines.
 
 @item
-Macro arguments cannot cross lines.
+It is (usually) best to avoid comments inside macro definitions, but
+see the next item.
+
+@item
+Macros containing a command which must be on a line by itself, such as
+a conditional, cannot be invoked in the middle of a line.  In general,
+the interaction of newlines in the macro definitions and invocations
+depends on the precise commands and context.  You may be able to work
+around some problems with judicious use of @code{@@c}.  Suppose you
+define a macro that is always intended to be used on a line by itself:
+
+@example
+@@macro linemac
+@@cindex whatever
+@@c
+@@end macro
+...
+foo
+@@linemac
+bar
+@end example
+
+Without the @code{@@c}, there will be an unwanted blank line between
+the @samp{@@cindex whatever} and the @samp{bar} (one newline comes
+from the macro definition, one from after the invocation), causing a
+paragraph break.
+
+On the other hand, you wouldn't want the @code{@@c} if the macro was
+sometimes invoked in the middle of a line (the text after the
+invocation would be treated as a comment).
+
+@item
+In general, you can't arbitrarily substitute a macro call for Texinfo
+command arguments, even when the text is the same.  It might work with
+some commands, it fails with others.  Best not to do it at all.  For
+instance, this fails:
+
+@example
+@@macro offmacro
+off
+@@end macro
+@@headings @@offmacro
+@end example
+
+@noindent
+You would expect this to be equivalent to @code{@@headings off}, but
+for @TeX{}nical reasons, it fails with a mysterious error message
+(@code{Paragraph ended before @@headings was complete}).
 
 @item
 Macros cannot define macros in the natural way.  To do this, you must
@@ -13757,13 +13959,12 @@ any device (see the following sections).
 
 @pindex texindex
 The @code{tex} formatting command itself does not sort the indices; it
-writes an output file of unsorted index data.  (The @code{texi2dvi}
-command automatically generates indices; @pxref{Format with texi2dvi,,
-Format with @code{texi2dvi}}.)  To generate a printed index after
-running the @code{tex} command, you first need a sorted index to work
-from.  The @code{texindex} command sorts indices.  (The source file
-@file{texindex.c} comes as part of the standard Texinfo distribution,
-among other places.)@refill
+writes an output file of unsorted index data.  To generate a printed
+index after running the @command{tex} command, you first need a sorted
+index to work from.  The @command{texindex} command sorts indices.
+(The source file @file{texindex.c} comes as part of the standard
+Texinfo distribution, among other places.)  (@command{texi2dvi} runs
+@command{tex} and @command{texindex} as necessary.)
 
 @cindex Names of index files
 @cindex Index file names
@@ -13901,9 +14102,20 @@ formats, such as @code{@@smallbook} (@pxref{smallbook}),
 (You can also do this on a site-wide basis with @file{texinfo.cnf};
 @pxref{Preparing for TeX,,Preparing for @TeX{}}).
 
+With the @option{--pdf} option, @command{texi2dvi} produces PDF output
+instead of DVI (@pxref{PDF Output}), by running @command{pdftex}
+instead of @command{tex}.  Alternatively, the command
+@command{texi2pdf} is an abbreviation for running @samp{texi2dvi --pdf}.
+
 @cindex @LaTeX{}, processing with @command{texi2dvi}
 @command{texi2dvi} can also be used to process @LaTeX{} files; simply
 run @samp{texi2dvi filename.ext}.
+
+@command{texi2dvi} will use @command{etex} (or @command{pdfetex}) if
+they are available; these extended versions of @TeX{} are not
+required, and the DVI (or PDF) output is identical, but they simplify
+the @TeX{} programming in some cases, and provide additional tracing
+information when debugging @file{texinfo.tex}.
 
 For a list of other options, run @samp{texi2dvi --help}.
 
@@ -14569,24 +14781,42 @@ magnifications.  Be prepared to experiment.
 @cindex PDF output
 
 @pindex pdftex
-You can generate a PDF output file from Texinfo source by using the
-@command{pdftex} program to process your file instead of plain
-@command{tex}.  That is, run @samp{pdftex foo.texi} instead of @samp{tex
-foo.texi}, or give the @samp{--pdf} option to @command{texi2dvi}.
+The simplest way to generate PDF output from Texinfo source is to run
+the convenience script @command{texi2pdf}; this simply executes the
+@command{texi2dvi} script with the @option{--pdf} option
+(@pxref{Format with texi2dvi}).  If for some reason you want to
+process by hand, simply run the @command{pdftex} program instead of
+plain @command{tex}.  That is, run @samp{pdftex foo.texi} instead of
+@samp{tex foo.texi}.
 
 @dfn{PDF} stands for `Portable Document Format'. It was invented by
 Adobe Systems some years ago for document interchange, based on their
-PostScript language.  A @uref{http://www.foolabs.com/xpdf/, PDF
-reader} for the X window system is freely available, as is the
-@uref{http://partners.adobe.com/asn/developer/technotes/, definition
-of the file format}.  At present, there are no @samp{@@ifpdf} or
-@samp{@@pdf} commands as with the other output formats.
+PostScript language.  Related links:
 
-Despite the `portable' in the name, PDF files are nowhere near as
-portable in practice as the plain ASCII formats (Info, HTML) that
-Texinfo supports (DVI portability is arguable).  They also tend to be
-much larger.  Nevertheless, a PDF file does preserve an actual printed
-document on a screen as faithfully as possible, so it has its place.
+@itemize
+@item
+GNU GV, a @uref{http://www.foolabs.com/xpdf/, Ghostscript-based PDF
+reader}.  (It can also preview PostScript documents.)
+
+@item
+A freely available standalone @uref{http://www.foolabs.com/xpdf/,
+PDF reader} for the X window system.
+
+@item
+@uref{http://partners.adobe.com/asn/acrobat/sdk/public/docs/, PDF definition}.
+
+@end itemize
+
+At present, Texinfo does not provide
+@samp{@@ifpdf} or @samp{@@pdf} commands as for the other output
+formats, since PDF documents contain many internal links that would be
+hard or impossible to get right at the Texinfo source level.
+
+PDF files require special software to be displayed, unlike the plain
+ASCII formats (Info, HTML) that Texinfo supports.  They also tend to
+be much larger than the DVI files output by @TeX{} by default.
+Nevertheless, a PDF file does define an actual typeset document in a
+self-contained file, so it has its place.
 
 
 @node Obtaining TeX
@@ -14850,8 +15080,7 @@ MS-DOS/MS-Windows).
 For the specified format, process @samp{@@if@var{format}} and
 @samp{@@@var{format}} commands even if not generating the given output
 format.  For instance, if @option{--iftex} is specified, then
-@samp{@@iftex} and @samp{@@tex} blocks will be read.  This can be useful
-when postprocessing the output.
+@samp{@@iftex} and @samp{@@tex} blocks will be read.  
 
 @item --macro-expand=@var{file}
 @itemx -E @var{file}
@@ -14863,17 +15092,19 @@ file.  Normally, the results of macro expansion are used internally by
 @command{texi2dvi}.
 
 @item --no-headers
+@item --plaintext
 @opindex --no-headers
+@opindex --plaintext
 @cindex Plain text output
 @cindex ASCII text output
 @cindex Generating plain text files
 @cindex @file{INSTALL} file, generating
 @cindex Node separators, omitting
 @cindex Menus, omitting
-For Info output, do not include menus or node separator lines in the
-output, and implicitly @option{--enable-encoding} (see above).  This
-results in a simple plain text file that you can (for example) send in
-email without complications, or include in a distribution (as in an
+Do not include menus or node separator lines in the output, and
+implicitly @option{--enable-encoding} (see above).  This results in a
+simple plain text file that you can (for example) send in email
+without complications, or include in a distribution (as in an
 @file{INSTALL} file).
 
 @cindex Navigation links, omitting
@@ -14898,9 +15129,21 @@ output by default---can be overridden with @option{-o}.
 @itemx --no-ifxml
 @opindex --no-ifxml
 Do not process @samp{@@if@var{format}} and @samp{@@@var{format}}
-commands even if generating the given format.  For instance, if
-@option{--no-ifhtml} is specified, then @samp{@@ifhtml} and
-@samp{@@html} blocks will not be read.
+commands, and do process @samp{@@ifnot@var{format}}, even if
+generating the given format.  For instance, if @option{--no-ifhtml} is
+specified, then @samp{@@ifhtml} and @samp{@@html} blocks will not be
+read, and @samp{@@ifnothtml} blocks will be.
+
+@item --no-number-footnotes
+@opindex --no-number-footnotes
+Suppress automatic footnote numbering.  By default, @code{makeinfo}
+numbers each footnote sequentially in a single node, resetting the
+current footnote number to 1 at the start of each node.
+
+@item --no-number-sections
+@opindex --no-number-sections
+Do not output chapter, section, and appendix numbers.
+You need to specify this if your manual is not hierarchically-structured.
 
 @item --no-split
 @opindex --no-split
@@ -14916,28 +15159,21 @@ For HTML output, each file contains one node (@pxref{Generating HTML}).
 @opindex --no-pointer-validate
 @opindex --no-validate
 @cindex Pointer validation, suppressing
-Suppress the pointer-validation phase of @code{makeinfo}.  This can also
-be done with the @code{@@novalidate} command (@pxref{Use TeX,,Use
-@TeX{}}).  Normally, after a Texinfo file is processed, some consistency
-checks are made to ensure that cross references can be resolved, etc.
-@xref{Pointer Validation}.
+Suppress the pointer-validation phase of @code{makeinfo}---a dangerous
+thing to do.  This can also be done with the @code{@@novalidate}
+command (@pxref{Use TeX,,Use @TeX{}}).  Normally, after a Texinfo file
+is processed, some consistency checks are made to ensure that cross
+references can be resolved, etc.  @xref{Pointer Validation}.
 
 @item --no-warn
 @opindex --no-warn
-Suppress warning messages (but @emph{not} error messages).  You might
-want this if the file you are creating has examples of Texinfo cross
-references within it, and the nodes that are referenced do not actually
-exist.
+Suppress warning messages (but @emph{not} error messages).
 
 @item --number-sections
 @opindex --number-sections
 Output chapter, section, and appendix numbers as in printed manuals.
-
-@item --no-number-footnotes
-@opindex --no-number-footnotes
-Suppress automatic footnote numbering.  By default, @code{makeinfo}
-numbers each footnote sequentially in a single node, resetting the
-current footnote number to 1 at the start of each node.
+This is the default.  It works only with hierarchically-structured
+manuals.
 
 @item --output=@var{file}
 @itemx -o @var{file}
@@ -15070,7 +15306,8 @@ cross-reference.@refill
 @cindex @@-commands in @@node, limited support
 Some Texinfo documents might fail during the validation phase because
 they use commands like @code{@@value} and @code{@@definfoenclose} in
-node definitions and cross-references inconsistently.  Consider the
+node definitions and cross-references inconsistently.  (Your best bet
+is to avoid using @@-commands in node names.)  Consider the
 following example:
 
 @example
@@ -16079,6 +16316,11 @@ the directory is @file{./} (or just the empty string), and the file is
 
 @end itemize
 
+One exception: the algorithm for node name expansion prefixes the
+string @samp{g_t} when the node name begins with a non-letter.  This
+kludge (due to XHTML rules) is not necessary for filenames, and is
+therefore omitted.
+
 Any directory part in the filename argument of the source
 cross-reference command is ignored.  Thus, @code{@@xref@{,,,../foo@}}
 and @code{@@xref@{,,,foo@}} both use @samp{foo} as the manual name.
@@ -16108,10 +16350,11 @@ in.  @xref{HTML Xref Mismatch}.
 
 As mentioned in the previous section, the key part of the HTML
 cross-reference algorithm is the conversion of node names in the
-Texinfo source into strings suitable for HTML identifiers and
+Texinfo source into strings suitable for XHTML identifiers and
 filenames.  The restrictions are similar for each: plain ASCII
 letters, numbers, and the @samp{-} and @samp{_} characters are all
-that can be used.
+that can be used.  (Although HTML anchors can contain most characters,
+XHTML is more restrictive.)
 
 Cross-references in Texinfo can actually refer either to nodes or
 anchors (@pxref{anchor}), but anchors are treated identically to nodes
@@ -16124,6 +16367,7 @@ simplicity.
 A special exception: the Top node (@pxref{The Top Node}) is always
 mapped to the file @file{index.html}, to match web server software.
 However, the HTML @emph{target} is @samp{Top}.  Thus (in the split case):
+
 @example
 @@xref@{Top, Introduction,, emacs, The GNU Emacs Manual@}.
 @result{} <a href="emacs/index.html#Top">
@@ -16131,8 +16375,12 @@ However, the HTML @emph{target} is @samp{Top}.  Thus (in the split case):
 
 @enumerate
 @item
-The standard ASCII letters (a-z and A-z), and numbers (0-9) are not
-modified.  All other characters are changed as specified below.
+The standard ASCII letters (a-z and A-Z) are not modified.  All other
+characters are changed as specified below.
+
+@item
+The standard ASCII numbers (0-9) are not modified except when a number
+is the first character of the node name.  In that case, see below.
 
 @item
 Multiple consecutive space, tab and newline characters are transformed
@@ -16151,6 +16399,13 @@ converted into a @samp{-} character.
 Other ASCII 7-bit characters are transformed into @samp{_00@var{xx}},
 where @var{xx} is the ASCII character code in (lowercase) hexadecimal.
 This includes @samp{_}, which is mapped to @samp{_005f}.
+
+@item
+If the node name does not begin with a letter, the literal string
+@samp{g_t} is prefixed to the result.  (Due to the rules above, that
+string can never occur otherwise; it is an arbitrary choice, standing
+for ``GNU Texinfo''.)  This is necessary because XHTML requires that
+identifiers begin with a letter.
 
 @end enumerate
 
@@ -16204,7 +16459,7 @@ the text of the argument is recursively transformed:
 @example
 @@asis @@b @@cite @@code @@command @@dfn @@dmn @@dotless
 @@emph @@env @@file @@indicateurl @@kbd @@key
-@@samp @@sc @@strong @@t @@var @@w
+@@samp @@sc @@slanted @@strong @@t @@var @@w
 @end example
 
 @noindent For @code{@@sc}, any letters are capitalized.
@@ -16240,6 +16495,7 @@ according to the other rules.
 @item @code{@@enddots}          @tab @samp{...}
 @item @code{@@equiv}            @tab U+2261
 @item @code{@@error}            @tab @samp{error-->}
+@item @code{@@euro}             @tab U+20AC
 @item @code{@@exclamdown}       @tab U+00A1
 @item @code{@@expansion}        @tab U+2192
 @item @code{@@minus}            @tab U+2212
@@ -16254,8 +16510,8 @@ according to the other rules.
 @item @code{@@tie}              @tab (space)
 @end multitable
 
-An @code{@@acronym} command is replaced by the first argument,
-followed by the second argument in parentheses, if present.
+An @code{@@acronym} or @code{@@abbr} command is replaced by the first
+argument, followed by the second argument in parentheses, if present.
 @xref{acronym}.
 
 An @code{@@email} command is replaced by the @var{text} argument if
@@ -16276,10 +16532,11 @@ Any other command is an error, and the result is unspecified.
 @cindex 8-bit characters, in HTML cross-references
 @cindex Expansion of 8-bit characters in HTML cross-references
 
-Characters other than plain 7-bit ASCII are transformed into the
-corresponding Unicode code point(s), in Normalization Form C, which
+Usually, characters other than plain 7-bit ASCII are transformed into
+the corresponding Unicode code point(s) in Normalization Form C, which
 uses precomposed characters where available.  (This is the
-normalization form recommended by the W3C and other bodies.)
+normalization form recommended by the W3C and other bodies.)  This
+holds when that code point is 0xffff or less, as it almost always is.
 
 These will then be further transformed by the rules above into the
 string @samp{_@var{xxxx}}, where @var{xxxx} is the code point in hex.
@@ -16291,10 +16548,18 @@ For example, combining this rule and the previous section:
 @result{} A-TeX-B_0306-_2605_002e_002e_002e
 @end example
 
-Notice: 1)@tie{}@code{@@enddots} expands to three periods which in turn expands
-to three @samp{_002e}'s; 2)@tie{}@code{@@u@{B@}} is a `B' with a breve
-accent, which does not exist as a pre-accented Unicode character,
-therefore expands to @samp{B_0306} (B with combining breve).
+Notice: 1)@tie{}@code{@@enddots} expands to three periods which in
+turn expands to three @samp{_002e}'s; 2)@tie{}@code{@@u@{B@}} is a `B'
+with a breve accent, which does not exist as a pre-accented Unicode
+character, therefore expands to @samp{B_0306} (B with combining
+breve).
+
+When the Unicode code point is above 0xffff, the transformation is
+@samp{__@var{xxxxxx}}, that is, two leading underscores followed by
+six hex digits.  Since Unicode has declared that their highest code
+point is 0x10ffff, this is sufficient.  (We felt it was better to
+define this extra escape than to always use six hex digits, since the
+first two would nearly always be zeros.)
 
 For the definition of Unicode Normalization Form C, see Unicode report
 UAX#15, @uref{http://www.unicode.org/reports/tr15/}.  Many related
@@ -16477,9 +16742,13 @@ Generate a tilde accent over the next character, as in @~N.
 Generate the uppercase and lowercase Scandinavian A-ring letters,
 respectively: @AA{}, @aa{}.  @xref{Inserting Accents}.
 
-@item @@acronym@{@var{abbrev}@}
-Tag @var{abbrev} as an acronym, that is, an abbreviation written in all
-capital letters, such as `NASA'.  @xref{acronym,, @code{acronym}}.
+@item @@abbr@{@var{abbreviation}@}
+Tag @var{abbreviation} as an abbreviation, such as `Comput.'.
+@xref{abbr,, @code{abbr}}.
+
+@item @@acronym@{@var{acronym}@}
+Tag @var{acronym} as an acronym, such as `NASA'.
+@xref{acronym,, @code{acronym}}.
 
 @item @@AE@{@}
 @itemx @@ae@{@}
@@ -16858,6 +17127,10 @@ Optionally, start list with @var{number-or-letter}.  Pair with
 @item @@equiv@{@}
 Indicate to the reader the exact equivalence of two forms with a
 glyph: @samp{@equiv{}}.  @xref{Equivalence}.@refill
+
+@item @@euro@{@}
+Generate the Euro currency sign.
+@xref{euro,,@code{@@euro@{@}}}.
 
 @item @@error@{@}
 Indicate to the reader with a glyph that the following text is
@@ -17250,6 +17523,10 @@ Highlight @var{text} that is a literal example of a sequence of
 characters.  Used for single characters, for statements, and often for
 entire shell commands.  @xref{samp, , @code{@@samp}}.@refill
 
+@item @@sansserif@{@var{text}@}
+Print @var{text} in a @sansserif{sans serif} font if possible.  No
+effect in Info.  @xref{Fonts}.
+
 @item @@sc@{@var{text}@}
 Set @var{text} in a printed output in @sc{the small caps font} and
 set text in the Info file in uppercase letters.
@@ -17303,6 +17580,10 @@ Contents}.@refill
 
 @item @@shorttitlepage @var{title}
 Generate a minimal title page.  @xref{titlepage,,@code{@@titlepage}}.
+
+@item @@slanted@{@var{text}@}
+Print @var{text} in a @slanted{slanted} font if possible.  No effect
+in Info.  @xref{Fonts}.
 
 @item @@smallbook
 Cause @TeX{} to produce a printed manual in a 7 by 9.25 inch format
@@ -18170,7 +18451,7 @@ The @samp{$Id:} comment is for the CVS (@pxref{Top,, Overview, cvs,
 Concurrent Versions System}) or RCS (see rcsintro(1)) version control
 systems, which expand it into a string such as:
 @example
-Id: texinfo.txi,v 1.52 2004/04/09 21:30:07 karl Exp
+Id: texinfo.txi,v 1.128 2004/12/29 15:06:41 karl Exp
 @end example
 (This is useful in all sources that use version control, not just manuals.)
 You may wish to include the @samp{$Id:} comment in the @code{@@copying}
@@ -18236,7 +18517,7 @@ Here is the sample document:
 
 @verbatim
 \input texinfo   @c -*-texinfo-*-
-@comment Id: texinfo.txi,v 1.52 2004/04/09 21:30:07 karl Exp
+@comment Id: texinfo.txi,v 1.128 2004/12/29 15:06:41 karl Exp
 @comment %**start of header
 @setfilename sample.info
 @include version.texi
@@ -18756,7 +19037,6 @@ A single-sided page looks like this:
  | Start of text ...     |
  | ...                   |
  |                       |
-
 @end group
 @end example
 
@@ -18788,7 +19068,6 @@ Two pages, side by side as in an open book, look like this:@refill
  | Start of text ...     |   | More  text ...        |
  | ...                   |   | ...                   |
  |                       |   |                       |
-
 @end group
 @end example
 

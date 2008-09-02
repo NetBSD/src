@@ -1,7 +1,7 @@
-/*	$NetBSD: infodoc.c,v 1.1.1.5 2004/07/12 23:26:55 wiz Exp $	*/
+/*	$NetBSD: infodoc.c,v 1.1.1.6 2008/09/02 07:49:44 christos Exp $	*/
 
 /* infodoc.c -- functions which build documentation nodes.
-   Id: infodoc.c,v 1.3 2004/03/14 00:57:29 karl Exp
+   Id: infodoc.c,v 1.8 2004/04/11 17:56:45 karl Exp
 
    Copyright (C) 1993, 1997, 1998, 1999, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.

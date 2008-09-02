@@ -1,9 +1,10 @@
-/*	$NetBSD: lang.c,v 1.1.1.4 2004/07/12 23:26:50 wiz Exp $	*/
+/*	$NetBSD: lang.c,v 1.1.1.5 2008/09/02 07:50:36 christos Exp $	*/
 
 /* lang.c -- language-dependent support.
-   Id: lang.c,v 1.10 2004/03/06 14:12:22 dirt Exp
+   Id: lang.c,v 1.14 2004/11/22 23:57:33 karl Exp
 
-   Copyright (C) 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -74,6 +75,126 @@ static iso_map_type iso8859_1_map [] = {
   { "frac14", 0xBC, 0x00BC },
   { "frac12", 0xBD, 0x00BD },
   { "frac34", 0xBE, 0x00BE },
+  { "iquest", 0xBF, 0x00BF },
+  { "Agrave", 0xC0, 0x00C0 },
+  { "Aacute", 0xC1, 0x00C1 },
+  { "Acirc",  0xC2, 0x00C2 },
+  { "Atilde", 0xC3, 0x00C3 },
+  { "Auml",   0xC4, 0x00C4 },
+  { "Aring",  0xC5, 0x00C5 },
+  { "AElig",  0xC6, 0x00C6 },
+  { "Ccedil", 0xC7, 0x00C7 },
+  { "Ccedil", 0xC7, 0x00C7 },
+  { "Egrave", 0xC8, 0x00C8 },
+  { "Eacute", 0xC9, 0x00C9 },
+  { "Ecirc",  0xCA, 0x00CA },
+  { "Euml",   0xCB, 0x00CB },
+  { "Igrave", 0xCC, 0x00CC },
+  { "Iacute", 0xCD, 0x00CD },
+  { "Icirc",  0xCE, 0x00CE },
+  { "Iuml",   0xCF, 0x00CF },
+  { "ETH",    0xD0, 0x00D0 },
+  { "Ntilde", 0xD1, 0x00D1 },
+  { "Ograve", 0xD2, 0x00D2 },
+  { "Oacute", 0xD3, 0x00D3 },
+  { "Ocirc",  0xD4, 0x00D4 },
+  { "Otilde", 0xD5, 0x00D5 },
+  { "Ouml",   0xD6, 0x00D6 },
+  { "times",  0xD7, 0x00D7 },
+  { "Oslash", 0xD8, 0x00D8 },
+  { "Ugrave", 0xD9, 0x00D9 },
+  { "Uacute", 0xDA, 0x00DA },
+  { "Ucirc",  0xDB, 0x00DB },
+  { "Uuml",   0xDC, 0x00DC },
+  { "Yacute", 0xDD, 0x00DD },
+  { "THORN",  0xDE, 0x00DE },
+  { "szlig",  0xDF, 0x00DF },
+  { "agrave", 0xE0, 0x00E0 },
+  { "aacute", 0xE1, 0x00E1 },
+  { "acirc",  0xE2, 0x00E2 },
+  { "atilde", 0xE3, 0x00E3 },
+  { "auml",   0xE4, 0x00E4 },
+  { "aring",  0xE5, 0x00E5 },
+  { "aelig",  0xE6, 0x00E6 },
+  { "ccedil", 0xE7, 0x00E7 },
+  { "egrave", 0xE8, 0x00E8 },
+  { "eacute", 0xE9, 0x00E9 },
+  { "ecirc",  0xEA, 0x00EA },
+  { "euml",   0xEB, 0x00EB },
+  { "igrave", 0xEC, 0x00EC },
+  { "iacute", 0xED, 0x00ED },
+  { "icirc",  0xEE, 0x00EE },
+  { "iuml",   0xEF, 0x00EF },
+  { "eth",    0xF0, 0x00F0 },
+  { "ntilde", 0xF1, 0x00F1 },
+  { "ograve", 0xF2, 0x00F2 },
+  { "oacute", 0xF3, 0x00F3 },
+  { "ocirc",  0xF4, 0x00F4 },
+  { "otilde", 0xF5, 0x00F5 },
+  { "ouml",   0xF6, 0x00F6 },
+  { "divide", 0xF7, 0x00F7 },
+  { "oslash", 0xF8, 0x00F8 },
+  { "ugrave", 0xF9, 0x00F9 },
+  { "uacute", 0xFA, 0x00FA },
+  { "ucirc",  0xFB, 0x00FB },
+  { "uuml",   0xFC, 0x00FC },
+  { "yacute", 0xFD, 0x00FD },
+  { "thorn",  0xFE, 0x00FE },
+  { "yuml",   0xFF, 0x00FF },
+  { NULL, 0, 0 }
+};
+
+
+/* ISO 8859-15, also known as Latin 9, differs from Latin 1 in only a
+   few positions.  http://www.cs.tut.fi/~jkorpela/latin9.html has a good
+   explanation and listing, summarized here.  The names are abbreviated
+   from the official Unicode names, to fit in a decent line length.
+
+  code position
+  dec	oct   hex   latin1 latin1 name	      latin9 latin9 name
+
+  164  0244  0xA4   U+00A4 currency symbol    U+20AC euro sign
+  166  0246  0xA6   U+00A6 broken bar	      U+0160 S with caron
+  168  0250  0xA8   U+00A8 diaeresis	      U+0161 s with caron
+  180  0264  0xB4   U+00B4 acute accent	      U+017D Z with caron
+  184  0270  0xB8   U+00B8 cedilla	      U+017E z with caron
+  188  0274  0xBC   U+00BC fraction 1/4	      U+0152 ligature OE
+  189  0275  0xBD   U+00BD fraction 1/2	      U+0153 ligature oe
+  190  0276  0xBE   U+00BE fraction 3/4	      U+0178 Y with diaeresis
+*/
+
+static iso_map_type iso8859_15_map [] = {
+  { "nbsp",   0xA0, 0x00A0 },
+  { "iexcl",  0xA1, 0x00A1 },
+  { "cent",   0xA2, 0x00A2 },
+  { "pound",  0xA3, 0x00A3 },
+  { "euro",   0xA4, 0x20AC },
+  { "yen",    0xA5, 0x00A5 },
+  { "Scaron", 0xA6, 0x0160 },
+  { "sect",   0xA7, 0x00A7 },
+  { "scaron", 0xA8, 0x0161 },
+  { "copy",   0xA9, 0x00A9 },
+  { "ordf",   0xAA, 0x00AA },
+  { "laquo",  0xAB, 0x00AB },
+  { "not",    0xAC, 0x00AC },
+  { "shy",    0xAD, 0x00AD },
+  { "reg",    0xAE, 0x00AE },
+  { "hibar",  0xAF, 0x00AF },
+  { "deg",    0xB0, 0x00B0 },
+  { "plusmn", 0xB1, 0x00B1 },
+  { "sup2",   0xB2, 0x00B2 },
+  { "sup3",   0xB3, 0x00B3 },
+  { "Zcaron", 0xB4, 0x017D },
+  { "micro",  0xB5, 0x00B5 },
+  { "para",   0xB6, 0x00B6 },
+  { "middot", 0xB7, 0x00B7 },
+  { "zcaron", 0xB8, 0x017E },
+  { "sup1",   0xB9, 0x00B9 },
+  { "ordm",   0xBA, 0x00BA },
+  { "raquo",  0xBB, 0x00BB },
+  { "OElig",  0xBC, 0x0152 },
+  { "oelig",  0xBD, 0x0153 },
+  { "Yuml",   0xBE, 0x0178 },
   { "iquest", 0xBF, 0x00BF },
   { "Agrave", 0xC0, 0x00C0 },
   { "Aacute", 0xC1, 0x00C1 },
@@ -282,7 +403,7 @@ encoding_type encoding_table[] = {
   { ISO_8859_12, "iso-8859-12", NULL },
   { ISO_8859_13, "iso-8859-13", NULL },
   { ISO_8859_14, "iso-8859-14", NULL },
-  { ISO_8859_15, "iso-8859-15", NULL },
+  { ISO_8859_15, "iso-8859-15", (iso_map_type *) iso8859_15_map },
   { last_encoding_code, NULL, NULL }
 };
 
@@ -572,7 +693,7 @@ current_document_encoding (void)
 }
 
 
-/* If html or xml output, add HTML_STR to the output.  If not html and
+/* If html or xml output, add &HTML_STR; to the output.  If not html and
    the user requested encoded output, add the real 8-bit character
    corresponding to HTML_STR from the translation tables.  Otherwise,
    add INFO_STR.  */
@@ -847,6 +968,10 @@ cm_special_char (int arg)
         add_encoded_char ("iexcl", "!");
       else if (strcmp (command, "questiondown") == 0)
         add_encoded_char ("iquest", "?");
+      else if (strcmp (command, "euro") == 0)
+        /* http://www.cs.tut.fi/~jkorpela/html/euro.html suggests that
+           &euro; degrades best in old browsers.  */
+        add_encoded_char ("euro", "Euro ");
       else if (strcmp (command, "pounds") == 0)
         add_encoded_char ("pound" , "#");
       else if (strcmp (command, "ordf") == 0)

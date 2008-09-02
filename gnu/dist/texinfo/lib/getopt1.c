@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt1.c,v 1.1.1.5 2004/07/12 23:26:57 wiz Exp $	*/
+/*	$NetBSD: getopt1.c,v 1.1.1.6 2008/09/02 07:49:29 christos Exp $	*/
 
 /* getopt_long and getopt_long_only entry points for GNU getopt.
    Copyright (C) 1987,88,89,90,91,92,93,94,96,97,98,2004
@@ -31,25 +31,6 @@
 #include "getopt_int.h"
 
 #include <stdio.h>
-
-/* Comment out all this code if we are using the GNU C Library, and are not
-   actually compiling the library itself.  This code is part of the GNU C
-   Library, but also included in many other GNU distributions.  Compiling
-   and linking in this code is a waste when using the GNU C library
-   (especially if it is a shared library).  Rather than having every GNU
-   program understand `configure --with-gnu-libc' and omit the object files,
-   it is simpler to just do this in the source for each such file.  */
-
-#define GETOPT_INTERFACE_VERSION 2
-#if !defined _LIBC && defined __GLIBC__ && __GLIBC__ >= 2
-#include <gnu-versions.h>
-#if _GNU_GETOPT_INTERFACE_VERSION == GETOPT_INTERFACE_VERSION
-#define ELIDE_CODE
-#endif
-#endif
-
-#ifndef ELIDE_CODE
-
 
 /* This needs to come after some library #include
    to get __GNU_LIBRARY__ defined.  */
@@ -98,7 +79,6 @@ _getopt_long_only_r (int argc, char *const *argv, const char *options,
 			     1, d);
 }
 
-#endif	/* Not ELIDE_CODE.  */
 
 #ifdef TEST
 

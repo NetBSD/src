@@ -1,7 +1,7 @@
-/*	$NetBSD: defun.c,v 1.1.1.4 2004/07/12 23:26:51 wiz Exp $	*/
+/*	$NetBSD: defun.c,v 1.1.1.5 2008/09/02 07:50:24 christos Exp $	*/
 
 /* defun.c -- @defun and friends.
-   Id: defun.c,v 1.11 2004/03/01 14:24:00 dirt Exp
+   Id: defun.c,v 1.11 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.

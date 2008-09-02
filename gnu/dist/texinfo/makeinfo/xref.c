@@ -1,7 +1,7 @@
-/*	$NetBSD: xref.c,v 1.1.1.1 2004/07/12 23:26:48 wiz Exp $	*/
+/*	$NetBSD: xref.c,v 1.1.1.2 2008/09/02 07:50:51 christos Exp $	*/
 
 /* xref.c -- cross references for Texinfo.
-   Id: xref.c,v 1.12 2004/03/18 22:54:48 karl Exp
+   Id: xref.c,v 1.4 2004/12/21 17:28:35 karl Exp
 
    Copyright (C) 2004 Free Software Foundation, Inc.
 
@@ -51,7 +51,7 @@ add_xref_punctuation (void)
         add_char ('.');
       else if (next_char != ',' && next_char != '.')
         /* period and comma terminate xrefs, and nothing else.  Instead
-           of generating an Info references that can't be followed,
+           of generating an Info reference that can't be followed,
            though, just insert a period.  Not pretty, but functional.  */
         add_char ('.');
     }
@@ -144,7 +144,7 @@ cm_xref (int arg)
                   xml_insert_element_with_attribute (XREFNODENAME, START,
                                                      "linkend=\"%s\"", arg1_id);
                   free (arg1_id);
-                  execute_string (*arg3 ? arg3 : arg2);
+                  execute_string ("%s", *arg3 ? arg3 : arg2);
                   xml_insert_element (XREFNODENAME, END);
                 }
               else
@@ -174,30 +174,30 @@ cm_xref (int arg)
 
           xml_insert_element (XREF, START);
           xml_insert_element (XREFNODENAME, START);
-          execute_string (arg1);
+          execute_string ("%s", arg1);
           xml_insert_element (XREFNODENAME, END);
           if (*arg2)
             {
               xml_insert_element (XREFINFONAME, START);
-              execute_string (arg2);
+              execute_string ("%s", arg2);
               xml_insert_element (XREFINFONAME, END);
             }
           if (*arg3)
             {
               xml_insert_element (XREFPRINTEDDESC, START);
-              execute_string (arg3);
+              execute_string ("%s", arg3);
               xml_insert_element (XREFPRINTEDDESC, END);
             }
           if (*arg4)
             {
               xml_insert_element (XREFINFOFILE, START);
-              execute_string (arg4);
+              execute_string ("%s", arg4);
               xml_insert_element (XREFINFOFILE, END);
             }
           if (*arg5)
             {
               xml_insert_element (XREFPRINTEDNAME, START);
-              execute_string (arg5);
+              execute_string ("%s", arg5);
               xml_insert_element (XREFPRINTEDNAME, END);
             }
           xml_insert_element (XREF, END);
@@ -273,7 +273,7 @@ cm_xref (int arg)
                   add_anchor_name (tem, 1);
                   free (tem);
                   add_word ("\">");
-                  execute_string ("%s (%s)",ref_name, *arg5 ? arg5 : file_arg);
+                  execute_string ("%s",ref_name);
                   add_word ("</a>");
                 }
               else
@@ -437,16 +437,16 @@ cm_inforef (int arg)
         {
           xml_insert_element (INFOREF, START);
           xml_insert_element (INFOREFNODENAME, START);
-          execute_string (node);
+          execute_string ("%s", node);
           xml_insert_element (INFOREFNODENAME, END);
           if (*pname)
             {
               xml_insert_element (INFOREFREFNAME, START);
-              execute_string (pname);
+              execute_string ("%s", pname);
               xml_insert_element (INFOREFREFNAME, END);
             }
           xml_insert_element (INFOREFINFONAME, START);
-          execute_string (file);
+          execute_string ("%s", file);
           xml_insert_element (INFOREFINFONAME, END);
 
           xml_insert_element (INFOREF, END);
@@ -499,29 +499,29 @@ cm_uref (int arg)
           xml_insert_element_with_attribute (UREF, START, "url=\"%s\"",
               text_expansion (url));
           if (*replacement)
-            execute_string (replacement);
+            execute_string ("%s", replacement);
           else if (*desc)
-            execute_string (desc);
+            execute_string ("%s", desc);
           else
-            execute_string (url);
+            execute_string ("%s", url);
           xml_insert_element (UREF, END);
         }
       else if (xml)
         {
           xml_insert_element (UREF, START);
           xml_insert_element (UREFURL, START);
-          execute_string (url);
+          execute_string ("%s", url);
           xml_insert_element (UREFURL, END);
           if (*desc)
             {
               xml_insert_element (UREFDESC, START);
-              execute_string (desc);
+              execute_string ("%s", desc);
               xml_insert_element (UREFDESC, END);
             }
           if (*replacement)
             {
               xml_insert_element (UREFREPLACEMENT, START);
-              execute_string (replacement);
+              execute_string ("%s", replacement);
               xml_insert_element (UREFREPLACEMENT, END);
             }
           xml_insert_element (UREF, END);
@@ -578,19 +578,19 @@ cm_email (int arg)
         {
           xml_insert_element_with_attribute (EMAIL, START, "url=\"mailto:%s\"", addr);
           if (*name)
-              execute_string (name);
+              execute_string ("%s", name);
           xml_insert_element (EMAIL, END);
         }
       else if (xml)
         {
           xml_insert_element (EMAIL, START);
           xml_insert_element (EMAILADDRESS, START);
-          execute_string (addr);
+          execute_string ("%s", addr);
           xml_insert_element (EMAILADDRESS, END);
           if (*name)
             {
               xml_insert_element (EMAILNAME, START);
-              execute_string (name);
+              execute_string ("%s", name);
               xml_insert_element (EMAILNAME, END);
             }
           xml_insert_element (EMAIL, END);

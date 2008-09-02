@@ -1,7 +1,7 @@
-/*	$NetBSD: signals.c,v 1.1.1.5 2004/07/12 23:26:53 wiz Exp $	*/
+/*	$NetBSD: signals.c,v 1.1.1.6 2008/09/02 07:50:08 christos Exp $	*/
 
 /* signals.c -- install and maintain signal handlers.
-   Id: signals.c,v 1.4 2004/03/27 16:19:09 karl Exp
+   Id: signals.c,v 1.7 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1993, 1994, 1995, 1998, 2002, 2003, 2004 Free Software
    Foundation, Inc.
