@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.206 2008/09/01 22:00:30 dholland Exp $ */
+/*	$NetBSD: st.c,v 1.207 2008/09/02 08:58:07 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.206 2008/09/01 22:00:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.207 2008/09/02 08:58:07 dholland Exp $");
 
 #include "opt_scsi.h"
 
@@ -1074,12 +1074,12 @@ ststrategy(struct buf *bp)
 	 * If it's a null transfer, return immediately
 	 */
 	if (bp->b_bcount == 0)
-		goto done;
+		goto abort;
 
 	/* If offset is negative, error */
 	if (bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
-		goto done;
+		goto abort;
 	}
 
 	/*
@@ -1090,7 +1090,7 @@ ststrategy(struct buf *bp)
 			aprint_error_dev(&st->sc_dev, "bad request, must be multiple of %d\n",
 			    st->blksize);
 			bp->b_error = EIO;
-			goto done;
+			goto abort;
 		}
 	}
 	/*
@@ -1101,7 +1101,7 @@ ststrategy(struct buf *bp)
 		aprint_error_dev(&st->sc_dev, "bad request, must be between %d and %d\n",
 		    st->blkmin, st->blkmax);
 		bp->b_error = EIO;
-		goto done;
+		goto abort;
 	}
 	s = splbio();
 
@@ -1121,9 +1121,10 @@ ststrategy(struct buf *bp)
 
 	splx(s);
 	return;
-done:
+abort:
 	/*
-	 * Correctly set the buf to indicate a completed xfer
+	 * Reset the residue because we didn't do anything,
+	 * and send the buffer back as done.
 	 */
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
