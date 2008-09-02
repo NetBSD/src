@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.41 2008/09/02 02:23:11 lukem Exp $
+# $NetBSD: mi,v 1.42 2008/09/02 11:05:20 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6226,6 +6226,7 @@
 ./usr/libdata/debug/usr/X11R6/bin/res.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/resize.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/revpath.debug		-unknown-	debug,x11
+./usr/libdata/debug/usr/X11R6/bin/rgb.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/rman.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/sessreg.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/setxkbmap.debug	-unknown-	debug,x11
