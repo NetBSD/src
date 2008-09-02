@@ -1,7 +1,7 @@
-/*	$NetBSD: info.c,v 1.10 2004/07/12 23:41:53 wiz Exp $	*/
+/*	$NetBSD: info.c,v 1.11 2008/09/02 08:00:24 christos Exp $	*/
 
 /* info.c -- Display nodes of Info files in multiple windows.
-   Id: info.c,v 1.7 2004/03/13 15:52:46 dirt Exp
+   Id: info.c,v 1.11 2004/04/11 17:56:45 karl Exp
 
    Copyright (C) 1993, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
    2004 Free Software Foundation, Inc.

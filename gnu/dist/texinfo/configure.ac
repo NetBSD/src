@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-# Id: configure.ac,v 1.12 2004/04/07 20:18:21 karl Exp
+# Id: configure.ac,v 1.50 2004/12/22 13:29:44 karl Exp
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -11,7 +11,7 @@
 #
 AC_PREREQ(2.59)# Minimum Autoconf version required.
 #
-AC_INIT([GNU Texinfo], [4.7])
+AC_INIT([GNU Texinfo], [4.8])
 AC_CONFIG_HEADERS(config.h:config.in)# Keep filename to 8.3 for MS-DOS.
 AC_CONFIG_SRCDIR([makeinfo/makeinfo.c])
 AM_INIT_AUTOMAKE([dist-bzip2])
@@ -79,6 +79,42 @@ gl_STRCASE
 # term library.
 AC_CANONICAL_BUILD
 
+# We need to run some of our own binaries, most notably makedoc, but as
+# long as we have this process, we also use our own makeinfo and
+# install-info.
+# 
+# This means that if we are cross compiling, we have to configure the
+# package twice: once with the native compiler (this is done in a
+# subdirectory $native_tools), and once with the cross compiler.
+# The former is invoked automatically here, with --host=$build.
+# $native_tools is also added to SUBDIRS in the main Makefile.am,
+# so that make compiles the native tools first.
+#
+if test "$cross_compiling" = no; then
+  native_tools=
+else
+  native_tools=tools
+  test -d "$native_tools" || mkdir "$native_tools"
+  confdir=`(cd "$srcdir";pwd)`
+  # Make sure the secondary configure won't fail with
+  # "error: source directory already configured".
+  rm -f config.status
+  AC_MSG_NOTICE([[Doing configure of native tools (${build}).]])
+  cd "$native_tools" || exit 1
+  # Run secondary configure in alternate environment or
+  # it gets the wrong CC etc.  env -i gives this build host configure
+  # a clean environment.
+  env -i CC="${BUILD_CC}" AR="${BUILD_AR}" RANLIB="${BUILD_RANLIB}" \
+      PATH="${PATH}" \
+      tools_only=1 \
+    ${confdir}/configure --build=${build} --host=${build} \
+                         --disable-rpath --disable-nls
+  cd .. || exit 1
+  AC_MSG_NOTICE([[Continuing with main configure (${host}).]])
+fi
+AC_SUBST(native_tools)
+AM_CONDITIONAL(TOOLS_ONLY, [[test "x$tools_only" = x1]])
+
 # Some GNU/Linux systems (e.g., SuSE 4.3, 1996) don't have curses, but
 # rather ncurses.  So we check for it.
 TERMLIBS=
@@ -144,15 +180,29 @@ if test "x$termlib" = xncurses; then
 fi
 
 # gnulib.
-UTILS_FUNC_MKSTEMP
+gl_FUNC_MKSTEMP
 
 # For teTeX and TeX Live.
 AC_CANONICAL_HOST
 AC_ARG_ENABLE(multiplatform,
-  [  --enable-multiplatform  put executables in bin/PLATFORM])
+  [  --enable-multiplatform      put executables in bin/PLATFORM])
+# if enable_multiplatform is set in the environment, use that.
 test "x$enable_multiplatform" = xyes \
 && test "x$bindir" = 'x${exec_prefix}/bin' \
 && bindir="$bindir/$host"
+
+# Taken from the example in
+# http://www.gnu.org/software/automake/manual/html_node/Conditionals.html.
+AC_ARG_ENABLE(install-warnings,
+  [  --disable-install-warnings  omit make install warnings about TeX files],
+  [case "${enableval}" in
+     yes) install_warnings=true ;;
+      no) install_warnings=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-install-warnings) ;;
+   esac],
+   [install_warnings=true])
+AM_CONDITIONAL(INSTALL_WARNINGS,
+   test x"$install_warnings" = xtrue || test x"$install_warnings" = xyes)
 
 # i18n support.  To update to a new version of gettext, run:
 # gettextize -f -c --intl
