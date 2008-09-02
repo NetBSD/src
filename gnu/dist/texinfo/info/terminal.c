@@ -1,7 +1,7 @@
-/*	$NetBSD: terminal.c,v 1.9 2004/07/12 23:41:53 wiz Exp $	*/
+/*	$NetBSD: terminal.c,v 1.10 2008/09/02 08:00:24 christos Exp $	*/
 
 /* terminal.c -- how to handle the physical terminal for Info.
-   Id: terminal.c,v 1.4 2004/03/27 15:35:55 karl Exp
+   Id: terminal.c,v 1.3 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993, 1996, 1997, 1998,
    1999, 2001, 2002, 2004 Free Software Foundation, Inc.
