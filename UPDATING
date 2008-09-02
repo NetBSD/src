@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.177 2008/08/13 16:37:56 christos Exp $
+$NetBSD: UPDATING,v 1.178 2008/09/02 07:34:15 lukem Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,15 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+
+20080827:
+	If you built and installed a libc from sources between
+	2008/08/20 and 2008/08/26 you got a broken strtouq(3)
+	which results in false errors reported by lint(1).
+	Since this breaks the libc build itself, manual help is
+	needed -- lint must be disabled temporarily, e.g:
+	  $ (cd lib/libc && make MKLINT=no dependall install)
 
 20080813:
 	MKDEBUG build was broken because the .depend files did not know
