@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2004/07/12 23:45:26 wiz Exp $
+#	$NetBSD: Makefile,v 1.3 2008/09/02 08:38:36 christos Exp $
 
 PROG=		infokey
-SRCS=		infokey.c key.c
+SRCS=		infokey.c
 
 CPPFLAGS+=	-I${IDIST}/info
 
