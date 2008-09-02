@@ -1,7 +1,7 @@
-/*	$NetBSD: multi.h,v 1.1.1.1 2004/07/12 23:26:49 wiz Exp $	*/
+/*	$NetBSD: multi.h,v 1.1.1.2 2008/09/02 07:50:44 christos Exp $	*/
 
 /* multi.h -- declarations for multi.c.
-   Id: multi.h,v 1.1 2004/02/13 21:30:41 dirt Exp
+   Id: multi.h,v 1.1 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 2004 Free Software Foundation, Inc.
 

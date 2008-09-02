@@ -1,7 +1,7 @@
-/*	$NetBSD: index.c,v 1.1.1.5 2004/07/12 23:26:50 wiz Exp $	*/
+/*	$NetBSD: index.c,v 1.1.1.6 2008/09/02 07:50:31 christos Exp $	*/
 
 /* index.c -- indexing for Texinfo.
-   Id: index.c,v 1.22 2004/03/25 00:24:07 karl Exp
+   Id: index.c,v 1.17 2004/11/30 02:03:23 karl Exp
 
    Copyright (C) 1998, 1999, 2002, 2003, 2004 Free Software Foundation,
    Inc.
@@ -182,8 +182,8 @@ index_add_arg (char *name)
         flush_output ();
 
       new->next = the_indices[which];
-      new->entry_text = index_entry;
       new->entry = NULL;
+      new->entry_text = index_entry;
       /* Since footnotes are handled at the very end of the document,
          node name in the non-split HTML outputs always show the last
          node.  We artificially make it ``Footnotes''.  */
@@ -199,6 +199,11 @@ index_add_arg (char *name)
           else
             new->section_name = "";
         }
+      else
+        {
+          new->section = NULL;
+          new->section_name = NULL;
+        }
       new->code = tem->code;
       new->defining_line = line_number - 1;
       new->output_line = no_headers ? output_line_number : node_line_number;
@@ -206,9 +211,6 @@ index_add_arg (char *name)
          something that goes away, for example, inside a macro.
          (see the findexerr test).  */
       new->defining_file = xstrdup (input_filename);
-      the_indices[which] = new;
-
-      new->entry_number = index_counter;
 
       if (html && splitting)
         {
@@ -217,6 +219,11 @@ index_add_arg (char *name)
           else
             new->output_file = xstrdup ("");
         }
+      else
+        new->output_file = NULL;        
+
+      new->entry_number = index_counter;
+      the_indices[which] = new;
 
 #if 0
       /* The index breaks if there are colons in the entry.
@@ -242,7 +249,7 @@ index_add_arg (char *name)
             removed_empty_elt = 2;
 
           add_word ("<a name=\"index-");
-          add_escaped_anchor_name (index_entry);
+          add_escaped_anchor_name (index_entry, 0);
           add_word_args ("-%d\"></a>", index_counter);
 
           if (removed_empty_elt == 1)
@@ -818,33 +825,28 @@ cm_printindex (void)
             }
 
           if (html)
-            /* fixme: html: we should use specific index anchors pointing
-           to the actual location of the indexed position (but then we
-           have to find something to wrap the anchor around). */
             {
-              /* In the HTML case, the expanded index entry is not
-                 good for us, since it was expanded for non-HTML mode
-                 inside sort_index.  So we need to HTML-escape and
-                 expand the original entry text here.  */
-              char *escaped_entry = xstrdup (index->entry_text);
-              char *expanded_entry;
+              /* For HTML, we need to expand and HTML-escape the
+                 original entry text, at the same time.  Consider
+                 @cindex J@"urgen.  We want J&uuml;urgen.  We can't
+                 expand and then escape since we'll end up with
+                 J&amp;uuml;rgen.  We can't escape and then expand
+                 because then `expansion' will see J@&quot;urgen, and
+                 @&quot;urgen is not a command.  */
+              char *html_entry =
+                maybe_escaped_expansion (index->entry_text, index->code, 1);
 
-              /* expansion() doesn't HTML-escape the argument, so need
-                 to do it separately.  */
-              escaped_entry = escape_string (escaped_entry);
-              expanded_entry = expansion (escaped_entry, index->code);
               add_html_block_elt_args ("\n<li><a href=\"%s#index-",
-                  (splitting ? index->output_file : ""), index_name);
-              add_escaped_anchor_name (index->entry_text);
+                  (splitting && index->output_file) ? index->output_file : "");
+              add_escaped_anchor_name (index->entry_text, 0);
               add_word_args ("-%d\">%s</a>: ", index->entry_number,
-                  expanded_entry);
-              free (escaped_entry);
-              free (expanded_entry);
+                  html_entry);
+              free (html_entry);
 
               add_word ("<a href=\"");
               if (index->node && *index->node)
                 {
-                  /* Make sure any non-macros in the node name are expanded.  */
+                  /* Ensure any non-macros in the node name are expanded.  */
                   char *expanded_index;
 
                   in_fixed_width_font++;

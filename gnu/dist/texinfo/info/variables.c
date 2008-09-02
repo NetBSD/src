@@ -1,7 +1,7 @@
-/*	$NetBSD: variables.c,v 1.1.1.4 2004/07/12 23:26:53 wiz Exp $	*/
+/*	$NetBSD: variables.c,v 1.1.1.5 2008/09/02 07:50:10 christos Exp $	*/
 
 /* variables.c -- how to manipulate user visible variables in Info.
-   Id: variables.c,v 1.3 2004/03/14 00:57:30 karl Exp
+   Id: variables.c,v 1.3 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1993, 1997, 2001, 2002, 2004 Free Software Foundation, Inc.
 

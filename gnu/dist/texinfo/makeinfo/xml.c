@@ -1,9 +1,9 @@
-/*	$NetBSD: xml.c,v 1.1.1.4 2004/07/12 23:26:48 wiz Exp $	*/
+/*	$NetBSD: xml.c,v 1.1.1.5 2008/09/02 07:50:51 christos Exp $	*/
 
 /* xml.c -- xml output.
-   Id: xml.c,v 1.37 2004/03/01 15:45:18 dirt Exp
+   Id: xml.c,v 1.52 2004/12/19 17:02:23 karl Exp
 
-   Copyright (C) 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@ element texinfoml_element_list [] = {
   { "setfilename",         0, 0, 0 },
   { "titlefont",           0, 0, 0 },
   { "settitle",            0, 0, 0 },
+  { "documentdescription", 1, 0, 0 },
 
   { "node",                1, 0, 0 },
   { "nodenext",            0, 0, 0 },
@@ -93,6 +94,10 @@ element texinfoml_element_list [] = {
   { "acronymword",         0, 1, 0 },
   { "acronymdesc",         0, 1, 0 },
 
+  { "abbrev",              0, 1, 0 },
+  { "abbrevword",          0, 1, 0 },
+  { "abbrevdesc",          0, 1, 0 },
+
   { "tt",                  0, 1, 0 },
   { "code",                0, 1, 0 },
   { "command",             0, 1, 0 },
@@ -113,6 +118,8 @@ element texinfoml_element_list [] = {
   { "i",                   0, 1, 0 },
   { "b",                   0, 1, 0 },
   { "r",                   0, 1, 0 },
+  { "slanted",             0, 1, 0 },
+  { "sansserif",           0, 1, 0 },
 
   { "exdent",              0, 0, 0 },
 
@@ -254,6 +261,7 @@ element docbook_element_list [] = {
   { "",                    0, 0, 0 }, /* SETFILENAME */
   { "",                    0, 0, 0 }, /* TITLEINFO */
   { "title",               0, 0, 0 }, /* SETTITLE */
+  { "",                    1, 0, 0 }, /* DOCUMENTDESCRIPTION (?) */
 
   { "",                    1, 0, 0 }, /* NODE */
   { "",                    0, 0, 0 }, /* NODENEXT */
@@ -298,6 +306,10 @@ element docbook_element_list [] = {
   { "acronym",             0, 1, 0 },
   { "",                    0, 1, 0 }, /* ACRONYMWORD */
   { "",                    0, 1, 0 }, /* ACRONYMDESC */
+
+  { "abbrev",              0, 1, 0 },
+  { "",                    0, 1, 0 }, /* ABBREVWORD */
+  { "",                    0, 1, 0 }, /* ABBREVDESC */
 
   { "literal",             0, 1, 0 }, /* TT */
   { "literal",             0, 1, 0 }, /* CODE */
@@ -609,7 +621,7 @@ xml_begin_document (char *output_filename)
     print_warnings = save_print_warnings;
   }
 
-  insert_string ("?>");
+  insert_string ("?>\n");
 
   if (docbook)
     {
@@ -1598,9 +1610,36 @@ xml_insert_text_file (char *name_arg)
   free (fullname);
 }
 
+/* If NAME.EXT is accessible or FORCE is nonzero, insert a docbook
+   imagedata element for FMT.  Return 1 if inserted something, 0 else.  */
+
+static int
+try_docbook_image (const char *name, const char *ext, const char *fmt,
+                   int force)
+{
+  int used = 0;
+  char *fullname = xmalloc (strlen (name) + 1 + strlen (ext) + 1);
+  sprintf (fullname, "%s.%s", name, ext);
+
+  if (force || access (fullname, R_OK) == 0)
+   {
+     xml_insert_element (IMAGEOBJECT, START);
+     xml_insert_element_with_attribute (IMAGEDATA, START,
+       "fileref=\"%s\" format=\"%s\"", fullname, fmt);
+     xml_insert_element (IMAGEDATA, END);
+     xml_insert_element (IMAGEOBJECT, END);
+     used = 1;
+   }
+ 
+ free (fullname);
+ return used;
+}
+
+
 void
 xml_insert_docbook_image (char *name_arg)
 {
+  int found = 0;
   int elt = xml_in_para ? INLINEIMAGE : MEDIAOBJECT;
 
   if (is_in_insertion_of_type (floatenv))
@@ -1612,20 +1651,27 @@ xml_insert_docbook_image (char *name_arg)
 
   xml_insert_element (elt, START);
 
-  xml_insert_element (IMAGEOBJECT, START);
-  xml_insert_element_with_attribute (IMAGEDATA,
-      START, "fileref=\"%s.eps\" format=\"EPS\"", name_arg);
-  xml_insert_element (IMAGEDATA, END);
-  xml_insert_element (IMAGEOBJECT, END);
+  /* A selected few from http://docbook.org/tdg/en/html/imagedata.html.  */
+  if (try_docbook_image (name_arg, "eps", "EPS", 0))
+    found++;
+  if (try_docbook_image (name_arg, "gif", "GIF", 0))
+    found++;
+  if (try_docbook_image (name_arg, "jpg", "JPG", 0))
+    found++;
+  if (try_docbook_image (name_arg, "jpeg", "JPEG", 0))
+    found++;
+  if (try_docbook_image (name_arg, "pdf", "PDF", 0))
+    found++;
+  if (try_docbook_image (name_arg, "png", "PNG", 0))
+    found++;
+  if (try_docbook_image (name_arg, "svg", "SVG", 0))
+    found++;
 
-  xml_insert_element (IMAGEOBJECT, START);
-  xml_insert_element_with_attribute (IMAGEDATA,
-      START, "fileref=\"%s.jpg\" format=\"JPG\"", name_arg);
-  xml_insert_element (IMAGEDATA, END);
-  xml_insert_element (IMAGEOBJECT, END);
-
+  /* If no luck so far, just assume we'll eventually have a jpg.  */
+  if (!found)
+    try_docbook_image (name_arg, "jpg", "JPG", 1);
+ 
   xml_insert_text_file (name_arg);
-
   xml_insert_element (elt, END);
 
   xml_no_para--;
@@ -1693,14 +1739,14 @@ xml_insert_indexterm (char *indexterm, char *index)
       in_indexterm = 1;
       xml_insert_element (PRIMARY, START);
       if (primary)
-        execute_string (primary);
+        execute_string ("%s", primary);
       else
-        execute_string (indexterm);
+        execute_string ("%s", indexterm);
       xml_insert_element (PRIMARY, END);
       if (primary)
         {
           xml_insert_element (SECONDARY, START);
-          execute_string (secondary);
+          execute_string ("%s", secondary);
           xml_insert_element (SECONDARY, END);
         }
       xml_insert_element (INDEXTERM, END);
@@ -1864,7 +1910,7 @@ xml_insert_indexentry (char *entry, char *node)
         {
           xml_insert_element (SECONDARYIE, END);
           xml_insert_element (SECONDARYIE, START);
-          execute_string (secondary);
+          execute_string ("%s", secondary);
         }
       else
         {
@@ -1872,10 +1918,10 @@ xml_insert_indexentry (char *entry, char *node)
           xml_insert_element (INDEXENTRY, START);
           in_indexentry = 1;
           xml_insert_element (PRIMARYIE, START);
-          execute_string (primary);
+          execute_string ("%s", primary);
           xml_insert_element (PRIMARYIE, END);
           xml_insert_element (SECONDARYIE, START);
-          execute_string (secondary);
+          execute_string ("%s", secondary);
           in_secondary = 1;
         }
     }
@@ -1885,7 +1931,7 @@ xml_insert_indexentry (char *entry, char *node)
       xml_insert_element (INDEXENTRY, START);
       in_indexentry = 1;
       xml_insert_element (PRIMARYIE, START);
-      execute_string (entry);
+      execute_string ("%s", entry);
     }
   add_word (", ");
 

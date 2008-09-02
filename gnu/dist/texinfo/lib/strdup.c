@@ -1,4 +1,4 @@
-/*	$NetBSD: strdup.c,v 1.1.1.4 2004/07/12 23:26:57 wiz Exp $	*/
+/*	$NetBSD: strdup.c,v 1.1.1.5 2008/09/02 07:49:28 christos Exp $	*/
 
 /* Copyright (C) 1991, 1996, 1997, 1998, 2002, 2003, 2004 Free Software
    Foundation, Inc.
@@ -25,7 +25,7 @@
 
 #ifndef _LIBC
 /* Get specification.  */
-#include "strdup.h"
+# include "strdup.h"
 #endif
 
 #include <stdlib.h>
