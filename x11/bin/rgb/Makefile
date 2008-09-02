@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/09/01 10:37:19 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2008/09/02 01:39:19 lukem Exp $
 
 NOMAN=	1
 
@@ -15,10 +15,11 @@ CPPFLAGS+=-I${X11SRCDIR.xc}/programs/Xserver/include
 FILES=	rgb.txt rgb.db
 FILESDIR=${X11LIBDIR}
 
-CLEANFILES+=rgb.db
+CLEANFILES+=rgb.db rgb.dir rgb.pag
 realall: rgb.db
 
 rgb.db: ${RGBSRCDIR}/rgb.txt
+	${_MKTARGET_CREATE}
 	${RGB} rgb < ${RGBSRCDIR}/rgb.txt
 
 
