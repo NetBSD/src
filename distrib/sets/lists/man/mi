@@ -1,9 +1,9 @@
-# $NetBSD: mi,v 1.1088 2008/08/31 05:27:22 christos Exp $
+# $NetBSD: mi,v 1.1089 2008/09/02 09:30:25 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 # will be reinstated after texinfo update to 4.8
-#./usr/share/info/groff.info			man-groff-info		info
+./usr/share/info/groff.info			man-groff-info		info
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -39,6 +39,7 @@
 ./usr/share/info/tar.info			man-obsolete		obsolete
 ./usr/share/info/texinfo.info			man-texinfo-info	info
 ./usr/share/info/uucp.info			man-obsolete		obsolete
+./usr/share/info/vi.info			man-sys-info		info
 ./usr/share/man/cat1/Mail.0			man-mail-catman		.cat
 ./usr/share/man/cat1/[.0			man-util-catman		.cat
 ./usr/share/man/cat1/alias.0			man-util-catman		.cat
