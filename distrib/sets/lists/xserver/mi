@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.25 2008/09/02 02:14:08 lukem Exp $
+# $NetBSD: mi,v 1.26 2008/09/02 21:51:10 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -20,7 +20,7 @@
 ./usr/X11R6/bin/res					-unknown-	x11
 ./usr/X11R6/bin/vdltodmx				-unknown-	x11
 ./usr/X11R6/bin/xbell					-unknown-	x11
-./usr/X11R6/bin/xdmx					-unknown-	obsolete
+./usr/X11R6/bin/xdmx					-obsolete-	obsolete
 ./usr/X11R6/bin/xdmxconfig				-unknown-	x11
 ./usr/X11R6/bin/xinput					-unknown-	x11
 ./usr/X11R6/bin/xled					-unknown-	x11
