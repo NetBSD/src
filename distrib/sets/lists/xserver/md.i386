@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.44 2008/09/02 01:48:52 lukem Exp $
+# $NetBSD: md.i386,v 1.45 2008/09/02 01:56:35 lukem Exp $
 ./usr/X11R6/bin/X		-unknown-	x11
 ./usr/X11R6/bin/XFree86		-unknown-	x11
 ./usr/X11R6/bin/Xvfb		-unknown-	x11
@@ -400,10 +400,10 @@
 ./usr/X11R7/lib/modules/drivers/ast_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/ch7017_drv.so		-unknown-	.man,xorg
-./usr/X11R7/lib/modules/drivers/ch7017_drv.so.2		-unknown-	.man,xorg
-./usr/X11R7/lib/modules/drivers/ch7xxx_drv.so		-unknown-	.man,xorg
-./usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2		-unknown-	.man,xorg
+./usr/X11R7/lib/modules/drivers/ch7017_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ch7017_drv.so.2		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ch7xxx_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so		-unknown-	xorg
@@ -422,10 +422,10 @@
 ./usr/X11R7/lib/modules/drivers/i740_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/imstt_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/intel_drv.so		-unknown-	.man,xorg
-./usr/X11R7/lib/modules/drivers/intel_drv.so.2		-unknown-	.man,xorg
-./usr/X11R7/lib/modules/drivers/ivch_drv.so		-unknown-	.man,xorg
-./usr/X11R7/lib/modules/drivers/ivch_drv.so.2		-unknown-	.man,xorg
+./usr/X11R7/lib/modules/drivers/intel_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/intel_drv.so.2		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ivch_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ivch_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mga_drv.so		-unknown-	xorg
@@ -446,16 +446,16 @@
 ./usr/X11R7/lib/modules/drivers/s3virge_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/savage_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/savage_drv.so.2		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/sil164_drv.so		-unknown-	.man,xorg
-./usr/X11R7/lib/modules/drivers/sil164_drv.so.2		-unknown-	.man,xorg
+./usr/X11R7/lib/modules/drivers/sil164_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/sil164_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/siliconmotion_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/siliconmotion_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/sis_drv.so	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/sis_drv.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tdfx_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tdfx_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/tfp410_drv.so		-unknown-	.man,xorg
-./usr/X11R7/lib/modules/drivers/tfp410_drv.so.2		-unknown-	.man,xorg
+./usr/X11R7/lib/modules/drivers/tfp410_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/tfp410_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tga_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tga_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/trident_drv.so		-unknown-	xorg
@@ -604,7 +604,7 @@
 ./usr/X11R7/man/cat4/i128.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/i740.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/imstt.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/intel.0		-unknown-	.man,xorg
+./usr/X11R7/man/cat4/intel.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/kbd.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mga.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0		-unknown-	.cat,xorg
@@ -636,7 +636,7 @@
 ./usr/X11R7/man/html4/i128.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/i740.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/imstt.html		-unknown-	html,xorg
-./usr/X11R7/man/html4/intel.html		-unknown-	.man,xorg
+./usr/X11R7/man/html4/intel.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/kbd.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/mga.html		-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html		-unknown-	html,xorg
