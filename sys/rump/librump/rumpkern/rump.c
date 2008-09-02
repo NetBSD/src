@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.54 2008/08/12 10:04:57 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.55 2008/09/02 19:38:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -761,3 +761,13 @@ rump_biodone(void *arg, size_t count, int error)
 	biodone(bp);
 	rump_intr_exit();
 }
+
+int _syspuffs_stub(int, int *);
+int
+_syspuffs_stub(int fd, int *newfd)
+{
+
+	return ENODEV;
+}
+
+__weak_alias(syspuffs_glueinit,_syspuffs_stub);

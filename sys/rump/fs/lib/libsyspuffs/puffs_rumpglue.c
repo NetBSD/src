@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.5 2008/08/15 15:02:28 pooka Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.6 2008/09/02 19:38:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.5 2008/08/15 15:02:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.6 2008/09/02 19:38:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.5 2008/08/15 15:02:28 pooka Exp
 
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
-
-#include "puffs_rumpglue.h"
 
 void putterattach(void); /* XXX: from autoconf */
 dev_type_open(puttercdopen);
@@ -118,8 +116,8 @@ writethread(void *arg)
 	struct putter_hdr *phdr;
 	register_t rv;
 	char *buf;
-	uint64_t roff, toread;
-	off_t woff;
+	off_t off;
+	size_t toread;
 	int error;
 
 	buf = kmem_alloc(BUFSIZE, KM_SLEEP);
@@ -132,26 +130,27 @@ writethread(void *arg)
 		 * Need to write everything to the "kernel" in one chunk,
 		 * so make sure we have it here.
 		 */
-		roff = 0;
+		off = 0;
 		toread = sizeof(struct putter_hdr);
 		do {
-			n = rumpuser_read(pap->comfd, buf+roff, toread, &error);
+			n = rumpuser_read(pap->comfd, buf+off, toread, &error);
 			if (n <= 0) {
 				if (n == 0)
 					break;
 				panic("rumpuser_read %zd %d", n, error);
 			}
-			roff += n;
-			if (roff >= sizeof(struct putter_hdr))
-				toread = phdr->pth_framelen - roff;
+			off += n;
+			if (off >= sizeof(struct putter_hdr))
+				toread = phdr->pth_framelen - off;
 			else
-				toread = roff - sizeof(struct putter_hdr);
+				toread = off - sizeof(struct putter_hdr);
 		} while (toread);
 
-		rv = woff = 0;
+		off = 0;
+		rv = 0;
 		fp = fd_getfile(pap->fpfd);
 		error = dofilewrite(pap->fpfd, fp, buf, phdr->pth_framelen,
-		    &woff, 0, &rv);
+		    &off, 0, &rv);
 		if (error == ENXIO)
 			break;
 		KASSERT(rv == phdr->pth_framelen);
@@ -161,7 +160,7 @@ writethread(void *arg)
 }
 
 int
-puffs_rumpglue_init(int fd, int *newfd)
+syspuffs_glueinit(int fd, int *newfd)
 {
 	struct ptargs *pap;
 	int rv;
