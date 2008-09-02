@@ -1,7 +1,7 @@
-/*	$NetBSD: search.c,v 1.1.1.4 2004/07/12 23:26:54 wiz Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.5 2008/09/02 07:49:51 christos Exp $	*/
 
 /* search.c -- searching large bodies of text.
-   Id: search.c,v 1.3 2004/03/14 00:57:30 karl Exp
+   Id: search.c,v 1.3 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1993, 1997, 1998, 2002, 2004 Free Software Foundation, Inc.
 

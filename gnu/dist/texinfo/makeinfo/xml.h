@@ -1,9 +1,9 @@
-/*	$NetBSD: xml.h,v 1.1.1.2 2004/07/12 23:26:48 wiz Exp $	*/
+/*	$NetBSD: xml.h,v 1.1.1.3 2008/09/02 07:50:51 christos Exp $	*/
 
 /* xml.h -- xml output declarations.
-   Id: xml.h,v 1.13 2004/02/27 03:29:47 dirt Exp
+   Id: xml.h,v 1.24 2004/11/26 00:48:35 karl Exp
 
-   Copyright (C) 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Written by Philippe Martin <feloy@free.fr>.  */
+   Originally written by Philippe Martin <feloy@free.fr>.  */
 
 #ifndef XML_H
 #define XML_H
@@ -51,24 +51,25 @@ extern int xml_keep_space;
 
 enum xml_element
 {
-  TEXINFO=0, SETFILENAME, TITLEFONT, SETTITLE, 
+  TEXINFO=0, SETFILENAME, TITLEFONT, SETTITLE, DOCUMENTDESCRIPTION,
   /* Node */
-  NODE /* 4 */, NODENEXT, NODEPREV, NODEUP,
+  NODE, NODENEXT, NODEPREV, NODEUP,
   /* Structuring */
-  CHAPTER /* 8 */, SECTION, SUBSECTION, SUBSUBSECTION,
-  TOP /* 12 */, UNNUMBERED, UNNUMBEREDSEC, UNNUMBEREDSUBSEC,
+  CHAPTER, SECTION, SUBSECTION, SUBSUBSECTION,
+  TOP, UNNUMBERED, UNNUMBEREDSEC, UNNUMBEREDSUBSEC,
     UNNUMBEREDSUBSUBSEC,  
-  APPENDIX /* 17 */, APPENDIXSEC, APPENDIXSUBSEC, APPENDIXSUBSUBSEC, 
-  MAJORHEADING /* 21 */, CHAPHEADING, HEADING, SUBHEADING, SUBSUBHEADING,
+  APPENDIX, APPENDIXSEC, APPENDIXSUBSEC, APPENDIXSUBSUBSEC, 
+  MAJORHEADING, CHAPHEADING, HEADING, SUBHEADING, SUBSUBHEADING,
   /* Titlepage */
-  TITLEPAGE /* 26 */, AUTHOR, BOOKTITLE, BOOKSUBTITLE,
+  TITLEPAGE, AUTHOR, BOOKTITLE, BOOKSUBTITLE,
   /* Menu */
-  MENU /* 30 */, DETAILMENU, MENUENTRY, MENUTITLE, MENUCOMMENT, MENUNODE,
+  MENU, DETAILMENU, MENUENTRY, MENUTITLE, MENUCOMMENT, MENUNODE,
   NODENAME,
   /* -- */
-  ACRONYM/* 37 */, ACRONYMWORD, ACRONYMDESC,
+  ACRONYM, ACRONYMWORD, ACRONYMDESC,
+  ABBREV, ABBREVWORD, ABBREVDESC,
   TT, CODE, COMMAND_TAG, ENV, FILE_TAG, OPTION, SAMP, KBD, URL, KEY,
-  VAR, SC, DFN, EMPH, STRONG, CITE, NOTFIXEDWIDTH, I, B, R,
+  VAR, SC, DFN, EMPH, STRONG, CITE, NOTFIXEDWIDTH, I, B, R, SLANTED, SANSSERIF,
   EXDENT,
   TITLE, 
   IFINFO, 

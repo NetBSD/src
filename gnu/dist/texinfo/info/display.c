@@ -1,7 +1,7 @@
-/*	$NetBSD: display.c,v 1.1.1.4 2004/07/12 23:26:56 wiz Exp $	*/
+/*	$NetBSD: display.c,v 1.1.1.5 2008/09/02 07:49:34 christos Exp $	*/
 
 /* display.c -- How to display Info windows.
-   Id: display.c,v 1.4 2004/03/27 15:34:40 karl Exp
+   Id: display.c,v 1.7 2004/04/11 17:56:45 karl Exp
 
    Copyright (C) 1993, 1997, 2003, 2004 Free Software Foundation, Inc.
 

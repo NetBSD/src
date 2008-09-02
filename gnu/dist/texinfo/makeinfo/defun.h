@@ -1,7 +1,7 @@
-/*	$NetBSD: defun.h,v 1.1.1.3 2004/07/12 23:26:51 wiz Exp $	*/
+/*	$NetBSD: defun.h,v 1.1.1.4 2008/09/02 07:50:26 christos Exp $	*/
 
 /* defun.h -- declaration for defuns.
-   Id: defun.h,v 1.2 2004/02/13 22:01:38 dirt Exp
+   Id: defun.h,v 1.2 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 1999 Free Software Foundation, Inc.
 
