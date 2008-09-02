@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: texinfo 3.12\n"
 "Report-Msgid-Bugs-To: bug-texinfo@gnu.org\n"
-"POT-Creation-Date: 2004-04-09 14:31-0700\n"
+"POT-Creation-Date: 2004-12-21 16:20-0800\n"
 "PO-Revision-Date: 1998-04-16 22:35+02:00\n"
 "Last-Translator: Ivo Timmermans <zarq@iname.com>\n"
 "Language-Team: Dutch <nl@li.org>\n"
@@ -130,15 +130,15 @@ msgstr "Een voltooiïng:\n"
 msgid "%d completions:\n"
 msgstr "%d voltooiïngen:\n"
 
-#: info/echo-area.c:1084
+#: info/echo-area.c:1085
 msgid "Insert completion"
 msgstr "Voeg voltooiïng in"
 
-#: info/echo-area.c:1219
+#: info/echo-area.c:1220
 msgid "Building completions..."
 msgstr "Voltooiïngen aan het bouwen..."
 
-#: info/echo-area.c:1339
+#: info/echo-area.c:1340
 msgid "Scroll the completions window"
 msgstr "Verschuif het voltooiïngsvenster"
 
@@ -244,7 +244,7 @@ msgstr ""
 msgid "Try --help for more information.\n"
 msgstr "Probeer --help voor meer informatie."
 
-#: info/info.c:295 makeinfo/makeinfo.c:739 util/install-info.c:1266
+#: info/info.c:295 makeinfo/makeinfo.c:766 util/install-info.c:1266
 #: util/texindex.c:343
 #, fuzzy, c-format
 msgid ""
@@ -334,7 +334,7 @@ msgstr ""
 "Meld fouten in het programma aan bug-texinfo@gnu.org;\n"
 "meld onjuistheden in de vertaling aan nl@li.org."
 
-#: info/info.c:635 info/infokey.c:918 makeinfo/makeinfo.c:462
+#: info/info.c:635 info/infokey.c:918 makeinfo/makeinfo.c:465
 #: util/install-info.c:466 util/texindex.c:292
 msgid ""
 "\n"
@@ -1099,7 +1099,7 @@ msgstr "Ga naar het einde van de regel"
 msgid "Move to the start of the line"
 msgstr "Ga naar het begin van de regel"
 
-#: info/session.c:860 makeinfo/node.c:1380
+#: info/session.c:860 makeinfo/node.c:1424
 #, fuzzy
 msgid "Next"
 msgstr "Volgende"
@@ -1704,174 +1704,174 @@ msgstr "-%s%s-Info: (%s)%s, %d regels --%s--"
 msgid " Subfile: %s"
 msgstr "Sub-bestand: %s"
 
-#: lib/getopt.c:570 lib/getopt.c:589
+#: lib/getopt.c:551 lib/getopt.c:570
 #, c-format
 msgid "%s: option `%s' is ambiguous\n"
 msgstr "%s: optie `%s' is dubbelzinnig\n"
 
-#: lib/getopt.c:622 lib/getopt.c:626
+#: lib/getopt.c:603 lib/getopt.c:607
 #, c-format
 msgid "%s: option `--%s' doesn't allow an argument\n"
 msgstr "%s: optie `--%s' staat geen argumenten toe\n"
 
-#: lib/getopt.c:635 lib/getopt.c:640
+#: lib/getopt.c:616 lib/getopt.c:621
 #, c-format
 msgid "%s: option `%c%s' doesn't allow an argument\n"
 msgstr "%s: optie `%c%s' staat geen argumenten toe\n"
 
-#: lib/getopt.c:686 lib/getopt.c:708 lib/getopt.c:1039 lib/getopt.c:1061
+#: lib/getopt.c:667 lib/getopt.c:689 lib/getopt.c:1020 lib/getopt.c:1042
 #, c-format
 msgid "%s: option `%s' requires an argument\n"
 msgstr "%s: optie `%s' vereist een argument\n"
 
-#: lib/getopt.c:746 lib/getopt.c:749
+#: lib/getopt.c:727 lib/getopt.c:730
 #, c-format
 msgid "%s: unrecognized option `--%s'\n"
 msgstr "%s: onbekende optie `--%s'\n"
 
-#: lib/getopt.c:757 lib/getopt.c:760
+#: lib/getopt.c:738 lib/getopt.c:741
 #, c-format
 msgid "%s: unrecognized option `%c%s'\n"
 msgstr "%s: onbekende optie `%c%s'\n"
 
 # Dit is de POSIX versie van de volgende melding
-#: lib/getopt.c:815 lib/getopt.c:818
+#: lib/getopt.c:796 lib/getopt.c:799
 #, c-format
 msgid "%s: illegal option -- %c\n"
 msgstr "%s: ongeldige optie -- %c\n"
 
 # Dezelfde tekst als hiervoor
-#: lib/getopt.c:824 lib/getopt.c:827
+#: lib/getopt.c:805 lib/getopt.c:808
 #, c-format
 msgid "%s: invalid option -- %c\n"
 msgstr "%s: ongeldige optie -- %c\n"
 
-#: lib/getopt.c:882 lib/getopt.c:901 lib/getopt.c:1114 lib/getopt.c:1135
+#: lib/getopt.c:863 lib/getopt.c:882 lib/getopt.c:1095 lib/getopt.c:1116
 #, c-format
 msgid "%s: option requires an argument -- %c\n"
 msgstr "%s: optie vereist een argument -- %c\n"
 
-#: lib/getopt.c:954 lib/getopt.c:973
+#: lib/getopt.c:935 lib/getopt.c:954
 #, c-format
 msgid "%s: option `-W %s' is ambiguous\n"
 msgstr "%s: optie `-W %s' is dubbelzinnig\n"
 
-#: lib/getopt.c:997 lib/getopt.c:1018
+#: lib/getopt.c:978 lib/getopt.c:999
 #, c-format
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr "%s: optie `-W %s' staat geen argumenten toe\n"
 
-#: makeinfo/cmds.c:516 makeinfo/cmds.c:538
+#: makeinfo/cmds.c:520 makeinfo/cmds.c:542
 #, fuzzy, c-format
 msgid "arguments to @%s ignored"
 msgstr "Verkeerd argument voor %c%s"
 
-#: makeinfo/cmds.c:581
+#: makeinfo/cmds.c:585
 msgid "January"
 msgstr "Januari"
 
-#: makeinfo/cmds.c:581
+#: makeinfo/cmds.c:585
 msgid "February"
 msgstr "Februari"
 
-#: makeinfo/cmds.c:581
+#: makeinfo/cmds.c:585
 msgid "March"
 msgstr "Maart"
 
-#: makeinfo/cmds.c:581
+#: makeinfo/cmds.c:585
 msgid "April"
 msgstr "April"
 
-#: makeinfo/cmds.c:581
+#: makeinfo/cmds.c:585
 msgid "May"
 msgstr "Mei"
 
-#: makeinfo/cmds.c:582
+#: makeinfo/cmds.c:586
 msgid "June"
 msgstr "Juni"
 
-#: makeinfo/cmds.c:582
+#: makeinfo/cmds.c:586
 msgid "July"
 msgstr "Juli"
 
-#: makeinfo/cmds.c:582
+#: makeinfo/cmds.c:586
 msgid "August"
 msgstr "Augustus"
 
-#: makeinfo/cmds.c:582
+#: makeinfo/cmds.c:586
 msgid "September"
 msgstr "September"
 
-#: makeinfo/cmds.c:582
+#: makeinfo/cmds.c:586
 msgid "October"
 msgstr "Oktober"
 
-#: makeinfo/cmds.c:583
+#: makeinfo/cmds.c:587
 msgid "November"
 msgstr "November"
 
-#: makeinfo/cmds.c:583
+#: makeinfo/cmds.c:587
 msgid "December"
 msgstr "December"
 
-#: makeinfo/cmds.c:904
+#: makeinfo/cmds.c:936
 #, c-format
 msgid "unlikely character %c in @var"
 msgstr ""
 
-#: makeinfo/cmds.c:947
+#: makeinfo/cmds.c:979
 msgid "@sc argument all uppercase, thus no effect"
 msgstr ""
 
-#: makeinfo/cmds.c:1002
+#: makeinfo/cmds.c:1034
 #, fuzzy, c-format
 msgid "`{' expected, but saw `%c'"
 msgstr "`%cend' verwachtte `%s', maar heb `%s' gezien"
 
-#: makeinfo/cmds.c:1042
+#: makeinfo/cmds.c:1074
 msgid "end of file inside verb block"
 msgstr ""
 
-#: makeinfo/cmds.c:1050
+#: makeinfo/cmds.c:1082
 #, fuzzy, c-format
 msgid "`}' expected, but saw `%c'"
 msgstr "`%cend' verwachtte `%s', maar heb `%s' gezien"
 
-#: makeinfo/cmds.c:1078
+#: makeinfo/cmds.c:1112
 msgid ""
-"@strong{Note:} produces a spurious cross-reference in Info; reword to avoid "
-"that"
+"@strong{Note...} produces a spurious cross-reference in Info; reword to "
+"avoid that"
 msgstr ""
 
-#: makeinfo/cmds.c:1238
+#: makeinfo/cmds.c:1305
 #, c-format
 msgid "%c%s is obsolete"
 msgstr "%c%s is verouderd"
 
-#: makeinfo/cmds.c:1347
+#: makeinfo/cmds.c:1414
 #, fuzzy, c-format
 msgid "@sp requires a positive numeric argument, not `%s'"
 msgstr "%csp vereist een postief numeriek argument"
 
-#: makeinfo/cmds.c:1696 makeinfo/cmds.c:1752 makeinfo/footnote.c:82
+#: makeinfo/cmds.c:1763 makeinfo/cmds.c:1819 makeinfo/footnote.c:82
 #, c-format
 msgid "Bad argument to %c%s"
 msgstr "Verkeerd argument voor %c%s"
 
-#: makeinfo/cmds.c:1706 makeinfo/makeinfo.c:4078
+#: makeinfo/cmds.c:1773 makeinfo/makeinfo.c:4142
 msgid "asis"
 msgstr "asis"
 
-#: makeinfo/cmds.c:1708 makeinfo/cmds.c:1738 makeinfo/makeinfo.c:4080
+#: makeinfo/cmds.c:1775 makeinfo/cmds.c:1805 makeinfo/makeinfo.c:4144
 msgid "none"
 msgstr "geen"
 
-#: makeinfo/cmds.c:1722
+#: makeinfo/cmds.c:1789
 #, fuzzy, c-format
 msgid "Bad argument to @%s"
 msgstr "Verkeerd argument voor %c%s"
 
-#: makeinfo/cmds.c:1736
+#: makeinfo/cmds.c:1803
 msgid "insert"
 msgstr ""
 
@@ -1909,12 +1909,12 @@ msgid "Method"
 msgstr "Methode"
 
 #: makeinfo/defun.c:500 makeinfo/defun.c:505 makeinfo/defun.c:545
-#: makeinfo/defun.c:644 makeinfo/xml.c:2183
+#: makeinfo/defun.c:644 makeinfo/xml.c:2229
 msgid "of"
 msgstr ""
 
 #: makeinfo/defun.c:509 makeinfo/defun.c:513 makeinfo/defun.c:517
-#: makeinfo/defun.c:551 makeinfo/defun.c:650 makeinfo/xml.c:2188
+#: makeinfo/defun.c:551 makeinfo/defun.c:650 makeinfo/xml.c:2234
 #, fuzzy
 msgid "on"
 msgstr "geen"
@@ -1925,22 +1925,22 @@ msgstr "geen"
 msgid "Must be in `@%s' environment to use `@%s'"
 msgstr "Moet in een `%s' `insertion' zitten om `%s'x te gebruiken"
 
-#: makeinfo/files.c:430
+#: makeinfo/files.c:435
 #, c-format
 msgid "%s: getwd: %s, %s\n"
 msgstr "%s: getwd: %s, %s\n"
 
-#: makeinfo/files.c:633
+#: makeinfo/files.c:638
 #, c-format
 msgid "`%s' omitted before output filename"
 msgstr ""
 
-#: makeinfo/files.c:641
+#: makeinfo/files.c:646
 #, c-format
 msgid "`%s' omitted since writing to stdout"
 msgstr ""
 
-#: makeinfo/files.c:689
+#: makeinfo/files.c:694
 msgid "Output buffer not empty."
 msgstr ""
 
@@ -1984,11 +1984,11 @@ msgstr ""
 msgid "Untitled"
 msgstr ""
 
-#: makeinfo/html.c:418
+#: makeinfo/html.c:422
 msgid "[unexpected] no html tag to pop"
 msgstr ""
 
-#: makeinfo/html.c:722
+#: makeinfo/html.c:752
 #, fuzzy, c-format
 msgid "[unexpected] invalid node name: `%s'"
 msgstr "%s: onbekende optie `--%s'\n"
@@ -1998,45 +1998,45 @@ msgstr "%s: onbekende optie `--%s'\n"
 msgid "Unknown index `%s'"
 msgstr "Onbekende index `%s'"
 
-#: makeinfo/index.c:227
+#: makeinfo/index.c:234
 #, c-format
 msgid "Info cannot handle `:' in index entry `%s'"
 msgstr ""
 
-#: makeinfo/index.c:405
+#: makeinfo/index.c:412
 #, c-format
 msgid "Index `%s' already exists"
 msgstr "Index `%s' bestaat al"
 
-#: makeinfo/index.c:448
+#: makeinfo/index.c:455
 #, c-format
 msgid "Unknown index `%s' and/or `%s' in @synindex"
 msgstr "Onbekende index `%s' en/of `%s' in @synindex"
 
-#: makeinfo/index.c:654
+#: makeinfo/index.c:661
 msgid "(line )"
 msgstr ""
 
-#: makeinfo/index.c:662
+#: makeinfo/index.c:669
 #, c-format
 msgid "(line %*d)"
 msgstr ""
 
-#: makeinfo/index.c:743
+#: makeinfo/index.c:750
 #, c-format
 msgid "Unknown index `%s' in @printindex"
 msgstr "Onbekende index `%s' in @printindex"
 
-#: makeinfo/index.c:812
+#: makeinfo/index.c:819
 #, c-format
 msgid "Entry for index `%s' outside of any node"
 msgstr ""
 
-#: makeinfo/index.c:815 makeinfo/index.c:856
+#: makeinfo/index.c:822 makeinfo/index.c:858
 msgid "(outside of any node)"
 msgstr ""
 
-#: makeinfo/index.c:917 makeinfo/index.c:923
+#: makeinfo/index.c:919 makeinfo/index.c:925
 msgid "See "
 msgstr ""
 
@@ -2074,106 +2074,106 @@ msgstr ""
 msgid "`@end' expected `%s', but saw `%s'"
 msgstr "`%cend' verwachtte `%s', maar heb `%s' gezien"
 
-#: makeinfo/insertion.c:1332
+#: makeinfo/insertion.c:1337
 #, c-format
 msgid "No matching `%cend %s'"
 msgstr "Geen overeenkomende `%cend %s'"
 
-#: makeinfo/insertion.c:1580
+#: makeinfo/insertion.c:1592
 #, c-format
 msgid "%s requires letter or digit"
 msgstr "%s vereist een letter of cijfer"
 
-#: makeinfo/insertion.c:1675
+#: makeinfo/insertion.c:1687
 msgid "end of file inside verbatim block"
 msgstr ""
 
-#: makeinfo/insertion.c:1901
+#: makeinfo/insertion.c:1913
 #, fuzzy, c-format
 msgid "@%s not meaningful outside `@float' environment"
 msgstr "%citemx is zinloos in een `%s' blok"
 
-#: makeinfo/insertion.c:1937
+#: makeinfo/insertion.c:1949
 #, fuzzy
 msgid "@menu seen before first @node, creating `Top' node"
 msgstr "%cmenu gezien voor de eerste pagina"
 
-#: makeinfo/insertion.c:1938
+#: makeinfo/insertion.c:1950
 msgid ""
 "perhaps your @top node should be wrapped in @ifnottex rather than @ifinfo?"
 msgstr ""
 
-#: makeinfo/insertion.c:1950
+#: makeinfo/insertion.c:1962
 #, fuzzy
 msgid "@detailmenu seen before first node, creating `Top' node"
 msgstr "%cmenu gezien voor de eerste pagina"
 
-#: makeinfo/insertion.c:2006
+#: makeinfo/insertion.c:2018
 #, c-format
 msgid "@%s not meaningful outside `@titlepage' and `@quotation' environments"
 msgstr ""
 
-#: makeinfo/insertion.c:2020
+#: makeinfo/insertion.c:2032
 #, fuzzy, c-format
 msgid "@%s not meaningful outside `@titlepage' environment"
 msgstr "%citemx is zinloos in een `%s' blok"
 
-#: makeinfo/insertion.c:2051
+#: makeinfo/insertion.c:2063
 #, c-format
 msgid "Unmatched `%c%s'"
 msgstr "Niet overeenkomende `%c%s'"
 
-#: makeinfo/insertion.c:2056
+#: makeinfo/insertion.c:2068
 #, c-format
 msgid "`%c%s' needs something after it"
 msgstr "`%c%s' verwacht er iets na"
 
-#: makeinfo/insertion.c:2062
+#: makeinfo/insertion.c:2074
 #, fuzzy, c-format
 msgid "Bad argument `%s' to `@%s', using `%s'"
 msgstr "Verkeerd argument voor `%s', `%s', gebruik `%s'"
 
-#: makeinfo/insertion.c:2159
+#: makeinfo/insertion.c:2171
 #, fuzzy, c-format
 msgid "@%s not meaningful inside `@%s' block"
 msgstr "%citemx is zinloos in een `%s' blok"
 
-#: makeinfo/insertion.c:2168
+#: makeinfo/insertion.c:2180
 #, fuzzy, c-format
 msgid "@itemx not meaningful inside `%s' block"
 msgstr "%citemx is zinloos in een `%s' blok"
 
-#: makeinfo/insertion.c:2344
+#: makeinfo/insertion.c:2356
 #, c-format
 msgid "%c%s found outside of an insertion block"
 msgstr "%c%s buiten een invoeg-blok gevonden"
 
-#: makeinfo/lang.c:459
+#: makeinfo/lang.c:580
 #, c-format
 msgid "%s is not a valid ISO 639 language code"
 msgstr ""
 
-#: makeinfo/lang.c:534
+#: makeinfo/lang.c:655
 #, fuzzy, c-format
 msgid "unrecognized encoding name `%s'"
 msgstr "%s: onbekende optie `--%s'\n"
 
-#: makeinfo/lang.c:542
+#: makeinfo/lang.c:663
 #, c-format
 msgid "sorry, encoding `%s' not supported"
 msgstr ""
 
-#: makeinfo/lang.c:594
+#: makeinfo/lang.c:715
 #, c-format
 msgid "invalid encoded character `%s'"
 msgstr ""
 
-#: makeinfo/lang.c:884
+#: makeinfo/lang.c:1009
 #, c-format
 msgid "%c%s expects `i' or `j' as argument, not `%c'"
 msgstr "%c%s verwacht `i' of `j' als argument, niet `%c'"
 
-#: makeinfo/lang.c:888
+#: makeinfo/lang.c:1013
 #, c-format
 msgid "%c%s expects a single character `i' or `j' as argument"
 msgstr "%c%s verwacht één enkele `i' of `j' als argument"
@@ -2219,33 +2219,33 @@ msgstr ""
 msgid "Too many errors!  Gave up.\n"
 msgstr "Te veel fouten!  Ik heb het maar opgegeven.\n"
 
-#: makeinfo/makeinfo.c:301
+#: makeinfo/makeinfo.c:302
 #, c-format
 msgid "%s:%d: warning: "
 msgstr "%s:%d: waarschuwing: "
 
-#: makeinfo/makeinfo.c:320 makeinfo/makeinfo.c:2216
+#: makeinfo/makeinfo.c:321 makeinfo/makeinfo.c:2260
 #, c-format
 msgid "Misplaced %c"
 msgstr "Verkeerd geplaatste %c"
 
-#: makeinfo/makeinfo.c:339
+#: makeinfo/makeinfo.c:340
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Probeer `%s --help' voor meer informatie.\n"
 
-#: makeinfo/makeinfo.c:342
+#: makeinfo/makeinfo.c:343
 #, fuzzy, c-format
 msgid "Usage: %s [OPTION]... TEXINFO-FILE...\n"
 msgstr "Aanroep: %s [OPTIE]... BESTAND...\n"
 
-#: makeinfo/makeinfo.c:345
+#: makeinfo/makeinfo.c:346
 msgid ""
 "Translate Texinfo source documentation to various other formats, by default\n"
 "Info files suitable for reading online with Emacs or standalone GNU Info.\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:349
+#: makeinfo/makeinfo.c:350
 #, c-format
 msgid ""
 "General options:\n"
@@ -2260,7 +2260,7 @@ msgid ""
 "      --version               display version information and exit.\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:363
+#: makeinfo/makeinfo.c:364
 #, no-wrap
 msgid ""
 "Output format selection (default is to produce Info):\n"
@@ -2270,7 +2270,7 @@ msgid ""
 "      --plaintext           output plain text rather than Info.\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:371
+#: makeinfo/makeinfo.c:372
 msgid ""
 "General output options:\n"
 "  -E, --macro-expand FILE   output macro-expanded source to FILE.\n"
@@ -2286,7 +2286,7 @@ msgid ""
 "  -o, --output=FILE         output to FILE (directory if split HTML),\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:385
+#: makeinfo/makeinfo.c:386
 #, c-format
 msgid ""
 "Options for Info and plain text:\n"
@@ -2305,14 +2305,14 @@ msgid ""
 "      --split-size=NUM        split Info files at size NUM (default %d).\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:402
+#: makeinfo/makeinfo.c:403
 msgid ""
 "Options for HTML:\n"
 "      --css-include=FILE        include FILE in HTML <style> output;\n"
 "                                  read stdin if FILE is -.\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:408
+#: makeinfo/makeinfo.c:409
 #, c-format
 msgid ""
 "Options for XML and Docbook:\n"
@@ -2322,7 +2322,7 @@ msgid ""
 "dropped.\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:415
+#: makeinfo/makeinfo.c:416
 msgid ""
 "Input file options:\n"
 "      --commands-in-node-names  allow @ commands in node names.\n"
@@ -2332,7 +2332,7 @@ msgid ""
 "  -U VAR                        undefine the variable VAR, as with @clear.\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:424
+#: makeinfo/makeinfo.c:425
 msgid ""
 "Conditional processing in input:\n"
 "  --ifdocbook       process @ifdocbook and @docbook even if\n"
@@ -2348,9 +2348,11 @@ msgid ""
 "  --no-ifplaintext  do not process @ifplaintext text.\n"
 "  --no-iftex        do not process @iftex and @tex text.\n"
 "  --no-ifxml        do not process @ifxml and @xml text.\n"
+"\n"
+"  Also, for the --no-ifFORMAT options, do process @ifnotFORMAT text.\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:441
+#: makeinfo/makeinfo.c:444
 msgid ""
 "  The defaults for the @if... conditionals depend on the output format:\n"
 "  if generating HTML, --ifhtml is on and the others are off;\n"
@@ -2359,7 +2361,7 @@ msgid ""
 "  if generating XML, --ifxml is on and the others are off.\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:449
+#: makeinfo/makeinfo.c:452
 msgid ""
 "Examples:\n"
 "  makeinfo foo.texi                     write Info to foo's @setfilename\n"
@@ -2374,69 +2376,69 @@ msgid ""
 "  makeinfo --no-split foo.texi          write one Info file however big\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:585
+#: makeinfo/makeinfo.c:603
 #, c-format
 msgid "%s: Ignoring unrecognized TEXINFO_OUTPUT_FORMAT value `%s'.\n"
 msgstr ""
 
-#: makeinfo/makeinfo.c:620 makeinfo/makeinfo.c:646 makeinfo/makeinfo.c:665
-#: makeinfo/makeinfo.c:695 makeinfo/makeinfo.c:716
+#: makeinfo/makeinfo.c:647 makeinfo/makeinfo.c:673 makeinfo/makeinfo.c:692
+#: makeinfo/makeinfo.c:722 makeinfo/makeinfo.c:743
 #, c-format
 msgid "%s: %s arg must be numeric, not `%s'.\n"
 msgstr "%s: %s argument moet numeriek zijn, niet `%s'.\n"
 
 # Vanaf hier
-#: makeinfo/makeinfo.c:633
+#: makeinfo/makeinfo.c:660
 #, fuzzy, c-format
 msgid "%s: could not open macro expansion output `%s'"
 msgstr "Kon uitvoer `%s' voor makro-uitbreiding niet openen"
 
 # Vanaf hier
-#: makeinfo/makeinfo.c:638
+#: makeinfo/makeinfo.c:665
 #, fuzzy, c-format
 msgid "%s: ignoring second macro expansion output `%s'.\n"
 msgstr "Kon uitvoer `%s' voor makro-uitbreiding niet openen"
 
-#: makeinfo/makeinfo.c:680
+#: makeinfo/makeinfo.c:707
 #, c-format
 msgid "%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'.\n"
 msgstr ""
 "%s: argument voor --paragraph-indent moet numeriek, `none' of `asis' zijn, "
 "niet `%s'.\n"
 
-#: makeinfo/makeinfo.c:705
+#: makeinfo/makeinfo.c:732
 #, c-format
 msgid "%s: --footnote-style arg must be `separate' or `end', not `%s'.\n"
 msgstr ""
 "%s: argument voor --footnote-style moet `separate' of `end' zijn, niet `%"
 "s'.\n"
 
-#: makeinfo/makeinfo.c:779
+#: makeinfo/makeinfo.c:806
 #, c-format
 msgid "%s: missing file argument.\n"
 msgstr "%s: ontbrekend bestandsargument\n"
 
-#: makeinfo/makeinfo.c:968 makeinfo/makeinfo.c:3937
+#: makeinfo/makeinfo.c:997 makeinfo/makeinfo.c:3991
 #, c-format
 msgid "Multiline command %c%s used improperly"
 msgstr ""
 
-#: makeinfo/makeinfo.c:972
+#: makeinfo/makeinfo.c:1000
 #, c-format
 msgid "Expected `%s'"
 msgstr "Verwachtte `%s'"
 
-#: makeinfo/makeinfo.c:1454
+#: makeinfo/makeinfo.c:1479
 #, c-format
 msgid "Can't create directory `%s': %s"
 msgstr ""
 
-#: makeinfo/makeinfo.c:1500
+#: makeinfo/makeinfo.c:1525
 #, c-format
 msgid "No `%s' found in `%s'"
 msgstr "Geen `%s' gevonden in `%s'"
 
-#: makeinfo/makeinfo.c:1580
+#: makeinfo/makeinfo.c:1605
 #, c-format
 msgid "%s: Skipping macro expansion to stdout as Info output is going there.\n"
 msgstr ""
@@ -2444,17 +2446,17 @@ msgstr ""
 "uitvoer\n"
 "van Info gaat daar al heen.\n"
 
-#: makeinfo/makeinfo.c:1613
+#: makeinfo/makeinfo.c:1638
 #, c-format
 msgid "Making %s file `%s' from `%s'.\n"
 msgstr "Bezig met het maken van een %s-bestand `%s' van `%s'.\n"
 
-#: makeinfo/makeinfo.c:1648
+#: makeinfo/makeinfo.c:1673
 #, fuzzy, c-format
 msgid "This is %s, produced by makeinfo version %s from %s.\n"
 msgstr "Dit is Info bestand %s, gemaakt door Makeinfo versie %d.%d"
 
-#: makeinfo/makeinfo.c:1671
+#: makeinfo/makeinfo.c:1709
 #, c-format
 msgid ""
 "%s: Removing macro output file `%s' due to errors; use --force to preserve.\n"
@@ -2462,81 +2464,81 @@ msgstr ""
 "%s: makro uitvoer bestand `%s' weggehaald wegens fouten; gebruik --force om "
 "te bewaren.\n"
 
-#: makeinfo/makeinfo.c:1735
+#: makeinfo/makeinfo.c:1773
 #, c-format
 msgid "%s: Removing output file `%s' due to errors; use --force to preserve.\n"
 msgstr ""
 "%s: uitvoer bestand `%s' weggehaald wegens fouten; gebruik --force om te "
 "bewaren.\n"
 
-#: makeinfo/makeinfo.c:1996
+#: makeinfo/makeinfo.c:2034
 #, c-format
 msgid "Unknown command `%s'"
 msgstr "Onbekend commando `%s'"
 
-#: makeinfo/makeinfo.c:2018
+#: makeinfo/makeinfo.c:2056
 #, fuzzy, c-format
 msgid "Use braces to give a command as an argument to @%s"
 msgstr "commandoregel-argument `%s' te veel"
 
-#: makeinfo/makeinfo.c:2270
+#: makeinfo/makeinfo.c:2314
 #, fuzzy, c-format
 msgid "%c%s expected braces"
 msgstr "%c%s verwachtte `{...}'"
 
-#: makeinfo/makeinfo.c:2283
+#: makeinfo/makeinfo.c:2327
 msgid "Unmatched }"
 msgstr "Niet-overeenkomende }"
 
-#: makeinfo/makeinfo.c:2331
+#: makeinfo/makeinfo.c:2375
 msgid "NO_NAME!"
 msgstr "GEEN_NAAM!"
 
-#: makeinfo/makeinfo.c:2352
+#: makeinfo/makeinfo.c:2396
 #, c-format
 msgid "%c%s missing close brace"
 msgstr "%c%s ontbrekende afsluitende accolade"
 
-#: makeinfo/makeinfo.c:3262
+#: makeinfo/makeinfo.c:3309
 #, fuzzy, c-format
 msgid "@image file `%s' (for HTML) not readable: %s"
 msgstr "@image bestand `%s' onleesbaar: %s"
 
-#: makeinfo/makeinfo.c:3268
+#: makeinfo/makeinfo.c:3315
 #, fuzzy, c-format
 msgid "No such file `%s'"
 msgstr "Geen `%s' gevonden in `%s'"
 
-#: makeinfo/makeinfo.c:3400
+#: makeinfo/makeinfo.c:3447
 #, fuzzy, c-format
 msgid "@image file `%s' (for text) unreadable: %s"
 msgstr "@image bestand `%s' onleesbaar: %s"
 
-#: makeinfo/makeinfo.c:3409
+#: makeinfo/makeinfo.c:3456
 msgid "@image missing filename argument"
 msgstr "ontbrekend bestandsnaam argument voor @image"
 
-#: makeinfo/makeinfo.c:3621
+#: makeinfo/makeinfo.c:3675
 #, c-format
 msgid "undefined flag: %s"
 msgstr ""
 
-#: makeinfo/makeinfo.c:3622
+#: makeinfo/makeinfo.c:3676
 #, fuzzy, c-format
 msgid "{No value for `%s'}"
 msgstr "{Geen waarde voor \"%s\"}"
 
-#: makeinfo/makeinfo.c:3674
+#: makeinfo/makeinfo.c:3728
 #, c-format
 msgid "%c%s requires a name"
 msgstr "%c%s vereist een naam"
 
-#: makeinfo/makeinfo.c:3780
+#: makeinfo/makeinfo.c:3834
 #, c-format
 msgid "Reached eof before matching @end %s"
 msgstr "Kwam bestandseinde tegen voor een overeenkomende @end %s"
 
-#: makeinfo/makeinfo.c:4018
+#: makeinfo/makeinfo.c:4082
 #, c-format
 msgid "`%.40s...' is too long for expansion; not expanded"
 msgstr ""
@@ -2580,138 +2582,138 @@ msgstr "* kolom #%d: uitvoer = %s\n"
 msgid "Node `%s' previously defined at line %d"
 msgstr "makro `%s' al eerder gedefinieerd"
 
-#: makeinfo/node.c:601
+#: makeinfo/node.c:648
 #, c-format
 msgid "Formatting node %s...\n"
 msgstr "Pagina %s wordt geformatteerd...\n"
 
-#: makeinfo/node.c:669
+#: makeinfo/node.c:716
 #, fuzzy, c-format
 msgid "Node `%s' requires a sectioning command (e.g., %c%s)"
 msgstr "Pagina `%s' vereist een sectiecommando (bijv. %c%s)"
 
-#: makeinfo/node.c:832
+#: makeinfo/node.c:879
 #, c-format
 msgid "No node name specified for `%c%s' command"
 msgstr ""
 
-#: makeinfo/node.c:873 makeinfo/node.c:1107
+#: makeinfo/node.c:920 makeinfo/node.c:1151
 #, c-format
 msgid "Anchor `%s' and node `%s' map to the same file name"
 msgstr ""
 
-#: makeinfo/node.c:876
+#: makeinfo/node.c:923
 msgid "This @anchor command ignored; references to it will not work"
 msgstr ""
 
-#: makeinfo/node.c:878 makeinfo/node.c:1110
+#: makeinfo/node.c:925 makeinfo/node.c:1154
 msgid "Rename this anchor or use the `--no-split' option"
 msgstr ""
 
-#: makeinfo/node.c:908
+#: makeinfo/node.c:955
 #, c-format
 msgid "Unexpected string at end of split-HTML file `%s'"
 msgstr ""
 
-#: makeinfo/node.c:947
+#: makeinfo/node.c:991
 #, fuzzy
 msgid "Next:"
 msgstr "Volgende"
 
-#: makeinfo/node.c:963
+#: makeinfo/node.c:1007
 #, fuzzy
 msgid "Previous:"
 msgstr "Vorige"
 
-#: makeinfo/node.c:977
+#: makeinfo/node.c:1021
 #, fuzzy
 msgid "Up:"
 msgstr "Omhoog"
 
-#: makeinfo/node.c:1104
+#: makeinfo/node.c:1148
 #, c-format
 msgid "Anchors `%s' and `%s' map to the same file name"
 msgstr ""
 
-#: makeinfo/node.c:1109
+#: makeinfo/node.c:1153
 msgid "@anchor command ignored; references to it will not work"
 msgstr ""
 
-#: makeinfo/node.c:1303
+#: makeinfo/node.c:1347
 #, fuzzy, c-format
 msgid "%s reference to nonexistent node `%s' (perhaps incorrect sectioning?)"
 msgstr "%s verwijst naar niet-bestaande pagina `%s'"
 
-#: makeinfo/node.c:1319
+#: makeinfo/node.c:1363
 #, fuzzy
 msgid "Menu"
 msgstr "* Menu:\n"
 
-#: makeinfo/node.c:1321
+#: makeinfo/node.c:1365
 msgid "Cross"
 msgstr ""
 
 # Deze zes meldingen:
 # next, prev en up niet vertalen, dit is wat er in de broncode staat.
 # Het is duidelijker indien onvertaald.
-#: makeinfo/node.c:1403
+#: makeinfo/node.c:1447
 #, fuzzy, c-format
 msgid "Next field of node `%s' not pointed to (perhaps incorrect sectioning?)"
 msgstr "Het `next'-veld van pagina `%s' wijst niet terug op"
 
-#: makeinfo/node.c:1406
+#: makeinfo/node.c:1450
 #, fuzzy, c-format
 msgid "This node (%s) has the bad Prev"
 msgstr "Deze node (`%s') is degene met het foute `next'-veld"
 
-#: makeinfo/node.c:1418
+#: makeinfo/node.c:1462
 #, fuzzy
 msgid "Prev"
 msgstr "Vorige"
 
-#: makeinfo/node.c:1461
+#: makeinfo/node.c:1505
 #, fuzzy, c-format
 msgid "Prev field of node `%s' not pointed to"
 msgstr "Het `prev'-veld van node (`%s') wijst niet terug op"
 
-#: makeinfo/node.c:1465
+#: makeinfo/node.c:1509
 #, fuzzy, c-format
 msgid "This node (%s) has the bad Next"
 msgstr "Deze node (`%s') is degene met het foute `next'-veld"
 
-#: makeinfo/node.c:1477
+#: makeinfo/node.c:1521
 #, c-format
 msgid "`%s' has no Up field (perhaps incorrect sectioning?)"
 msgstr ""
 
-#: makeinfo/node.c:1480
+#: makeinfo/node.c:1524
 #, fuzzy
 msgid "Up"
 msgstr "Omhoog"
 
-#: makeinfo/node.c:1546
+#: makeinfo/node.c:1590
 #, c-format
 msgid "Node `%s' lacks menu item for `%s' despite being its Up target"
 msgstr ""
 
 # Eigenlijk zouden hier de %s en de %d omgedraaid moeten worden:
 # `Er wordt %d keer naar %s verwezen'
-#: makeinfo/node.c:1575
+#: makeinfo/node.c:1619
 #, c-format
 msgid "node `%s' has been referenced %d times"
 msgstr "er wordt naar pagina `%s' %d keer verwezen"
 
-#: makeinfo/node.c:1589
+#: makeinfo/node.c:1633
 #, c-format
 msgid "unreferenced node `%s'"
 msgstr "naar pagina `%s' wordt niet verwezen"
 
-#: makeinfo/node.c:1679
+#: makeinfo/node.c:1723
 #, c-format
 msgid "Removing %s\n"
 msgstr ""
 
-#: makeinfo/node.c:1683
+#: makeinfo/node.c:1727
 #, fuzzy, c-format
 msgid "Can't remove file `%s': %s"
 msgstr "Kan uitvoerbestand \"%s\" niet vinden."
@@ -2759,12 +2761,12 @@ msgstr ""
 msgid "Short Contents"
 msgstr ""
 
-#: makeinfo/xml.c:1593
+#: makeinfo/xml.c:1605
 #, c-format
 msgid "@image file `%s' unreadable: %s"
 msgstr "@image bestand `%s' onleesbaar: %s"
 
-#: makeinfo/xml.c:2051
+#: makeinfo/xml.c:2097
 msgid ""
 "@headitem as the last item of @multitable produces invalid Docbook documents"
 msgstr ""

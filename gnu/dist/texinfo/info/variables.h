@@ -1,7 +1,7 @@
-/*	$NetBSD: variables.h,v 1.1.1.3 2004/07/12 23:26:53 wiz Exp $	*/
+/*	$NetBSD: variables.h,v 1.1.1.4 2008/09/02 07:50:10 christos Exp $	*/
 
 /* variables.h -- Description of user visible variables in Info.
-   Id: variables.h,v 1.3 2004/03/14 00:57:30 karl Exp
+   Id: variables.h,v 1.3 2004/04/11 17:56:46 karl Exp
 
    This file is part of GNU Info, a program for reading online documentation
    stored in Info format.

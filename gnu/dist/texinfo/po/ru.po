@@ -1,13 +1,13 @@
 # Переводы сообщений для GNU Texinfo.
 # Copyright (C) 1999 Free Software Foundation, Inc.
-# Oleg S. Tihonov <ost@tatnipi.ru>, 1999, 2001, 2002, 2003
+# Oleg S. Tihonov <ost@tatnipi.ru>, 1999, 2001, 2002, 2003, 2004
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: texinfo 4.5.91\n"
+"Project-Id-Version: texinfo 4.7.92\n"
 "Report-Msgid-Bugs-To: bug-texinfo@gnu.org\n"
-"POT-Creation-Date: 2004-04-09 14:31-0700\n"
-"PO-Revision-Date: 2003-05-19 10:08+0400\n"
+"POT-Creation-Date: 2004-12-21 16:20-0800\n"
+"PO-Revision-Date: 2004-12-16 08:19+0300\n"
 "Last-Translator: Oleg S. Tihonov <ost@tatnipi.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -123,15 +123,15 @@ msgstr "Единственное завершение:\n"
 msgid "%d completions:\n"
 msgstr "Завершений: %d :\n"
 
-#: info/echo-area.c:1084
+#: info/echo-area.c:1085
 msgid "Insert completion"
 msgstr "Вставить завершение"
 
-#: info/echo-area.c:1219
+#: info/echo-area.c:1220
 msgid "Building completions..."
 msgstr "Составление завершений..."
 
-#: info/echo-area.c:1339
+#: info/echo-area.c:1340
 msgid "Scroll the completions window"
 msgstr "Прокрутить окно завершений"
 
@@ -179,9 +179,9 @@ msgid "No index entries."
 msgstr "Не найден алфавитный указатель."
 
 #: info/indices.c:375
-#, fuzzy, c-format
+#, c-format
 msgid "No %sindex entries containing `%s'."
-msgstr "В алфавитном указателе %sне найдено пунктов, содержащих \"%s\"."
+msgstr "В алфавитном указателе %s не найдено пунктов, содержащих `%s'."
 
 #: info/indices.c:376
 msgid "more "
@@ -192,21 +192,20 @@ msgid "CAN'T SEE THIS"
 msgstr "Это невидимый текст!"
 
 #: info/indices.c:422
-#, fuzzy, c-format
+#, c-format
 msgid "Found `%s' in %s. (`\\[next-index-match]' tries to find next.)"
 msgstr ""
-"Найдена \"%s\" в %s. (`\\[next-index-match]' запускает повторный поиск.)"
+"Найдена `%s' в %s. (`\\[next-index-match]' находит следующее совпадение.)"
 
 #: info/indices.c:541
-#, fuzzy, c-format
+#, c-format
 msgid "Scanning indices of `%s'..."
-msgstr "Поиск в алфавитном указателе файла \"%s\"..."
+msgstr "Поиск в алфавитном указателе файла `%s'..."
 
 #: info/indices.c:596
-#, fuzzy, c-format
+#, c-format
 msgid "No available info files have `%s' in their indices."
-msgstr ""
-"Ни один из info-файлов не содержит \"%s\" в своих алфавитных указателях."
+msgstr "Ни один из info-файлов не содержит `%s' в алфавитных указателях."
 
 #: info/indices.c:622
 msgid "Grovel all known info file's indices for a string and build a menu"
@@ -219,28 +218,27 @@ msgid "Index apropos: "
 msgstr "Ключевое слово для поиска: "
 
 #: info/indices.c:654
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "* Menu: Nodes whose indices contain `%s':\n"
 msgstr ""
 "\n"
-"* Menu: Ноды, чьи алфавитные указатели содержат \"%s\":\n"
+"* Menu: Ноды, чьи алфавитные указатели содержат `%s':\n"
 
 #: info/info.c:275 info/infokey.c:899
 #, c-format
 msgid "Try --help for more information.\n"
 msgstr "Попробуйте --help для получения более подробного описания.\n"
 
-#: info/info.c:295 makeinfo/makeinfo.c:739 util/install-info.c:1266
+#: info/info.c:295 makeinfo/makeinfo.c:766 util/install-info.c:1266
 #: util/texindex.c:343
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "There is NO warranty.  You may redistribute this software\n"
 "under the terms of the GNU General Public License.\n"
 "For more information about these matters, see the files named COPYING.\n"
 msgstr ""
-"Copyright (C) %s Free Software Foundation, Inc.\n"
 "Мы НЕ предоставляем гарантий.  Вы можете распространять эти программы, при\n"
 "соблюдении условий Универсальной Общественной Лицензии GNU.\n"
 "Для получения подробной информации о возможности распространения смотрите\n"
@@ -258,7 +256,7 @@ msgstr ""
 "речи.\n"
 
 #: info/info.c:597
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Usage: %s [OPTION]... [MENU-ITEM...]\n"
 "\n"
@@ -305,15 +303,17 @@ msgstr ""
 "                          всех руководств.\n"
 "  -d, --directory=КАТАЛОГ добавить КАТАЛОГ к INFOPATH.\n"
 "      --dribble=ФАЙЛ      записать вводимые пользователем знаки в ФАЙЛ.\n"
-"  -f, --file=ФАЙЛ         просмотреть заданный ФАЙЛ.\n"
+"  -f, --file=ФАЙЛ         показать заданный ФАЙЛ.\n"
 "  -h, --help              показать эту справку и выйти.\n"
 "      --index-search=СТРОКА    перейти к ноде, на которую ссылается "
 "заданное\n"
 "                          СТРОКОЙ вхождение именного указателя.\n"
 "  -n, --node=НОДА         начать просмотр с заданной НОДЫ.\n"
 "  -o, --output=ФАЙЛ       записать выбранные ноды в ФАЙЛ.\n"
-"  -R, --raw-escapes       не удалять escape-последовательности из страниц "
-"man.\n"
+"  -R, --raw-escapes       выводить escape-последовательности ANSI (по "
+"умолчанию).\n"
+"      --no-raw-escapes    выводить escape-последовательности как буквальный "
+"текст.\n"
 "      --restore=ФАЙЛ      прочитать последовательность нажатых клавиш из "
 "ФАЙЛА.\n"
 "  -O, --show-options, --usage перейти к ноде, описывающей ключи командной "
@@ -336,7 +336,7 @@ msgstr ""
 "  info --show-options emacs  начать с ноды, описывающей ключи emacs\n"
 "  info -f ./foo.info         показать файл ./foo.info, не искать dir\n"
 
-#: info/info.c:635 info/infokey.c:918 makeinfo/makeinfo.c:462
+#: info/info.c:635 info/infokey.c:918 makeinfo/makeinfo.c:465
 #: util/install-info.c:466 util/texindex.c:292
 msgid ""
 "\n"
@@ -1039,9 +1039,9 @@ msgid "Cannot execute an `echo-area' command here."
 msgstr "Здесь нельзя выполнить команду эхо-области."
 
 #: info/m-x.c:154
-#, fuzzy, c-format
+#, c-format
 msgid "Undefined command: %s"
-msgstr "неопределенный флаг: %s"
+msgstr "Неопределенная команда: %s"
 
 #: info/m-x.c:160
 msgid "Set the height of the displayed window"
@@ -1128,7 +1128,7 @@ msgstr "Сместиться в конец строки"
 msgid "Move to the start of the line"
 msgstr "Сместиться в начало строки"
 
-#: info/session.c:860 makeinfo/node.c:1380
+#: info/session.c:860 makeinfo/node.c:1424
 msgid "Next"
 msgstr "Следующая"
 
@@ -1595,9 +1595,9 @@ msgid "\"%s\" is invalid"
 msgstr "\"%s\" неверная команда"
 
 #: info/session.c:4495
-#, fuzzy, c-format
+#, c-format
 msgid "`%s' is invalid"
-msgstr "\"%s\" неверная команда"
+msgstr "`%s' неверно"
 
 #: info/session.c:4709
 msgid "Add this digit to the current numeric argument"
@@ -1703,173 +1703,175 @@ msgstr "-%s%s-Info: (%s)%s, строк: %d --%s--"
 msgid " Subfile: %s"
 msgstr " Файл: %s"
 
-#: lib/getopt.c:570 lib/getopt.c:589
+#: lib/getopt.c:551 lib/getopt.c:570
 #, c-format
 msgid "%s: option `%s' is ambiguous\n"
 msgstr "%s: неоднозначный ключ `%s'\n"
 
-#: lib/getopt.c:622 lib/getopt.c:626
+#: lib/getopt.c:603 lib/getopt.c:607
 #, c-format
 msgid "%s: option `--%s' doesn't allow an argument\n"
 msgstr "%s: ключ `--%s' должен использоваться без аргумента\n"
 
-#: lib/getopt.c:635 lib/getopt.c:640
+#: lib/getopt.c:616 lib/getopt.c:621
 #, c-format
 msgid "%s: option `%c%s' doesn't allow an argument\n"
 msgstr "%s: ключ `%c%s' должен использоваться без аргумента\n"
 
-#: lib/getopt.c:686 lib/getopt.c:708 lib/getopt.c:1039 lib/getopt.c:1061
+#: lib/getopt.c:667 lib/getopt.c:689 lib/getopt.c:1020 lib/getopt.c:1042
 #, c-format
 msgid "%s: option `%s' requires an argument\n"
 msgstr "%s: ключ `%s' должен использоваться c аргументом\n"
 
-#: lib/getopt.c:746 lib/getopt.c:749
+#: lib/getopt.c:727 lib/getopt.c:730
 #, c-format
 msgid "%s: unrecognized option `--%s'\n"
 msgstr "%s: неизвестный ключ `--%s'\n"
 
-#: lib/getopt.c:757 lib/getopt.c:760
+#: lib/getopt.c:738 lib/getopt.c:741
 #, c-format
 msgid "%s: unrecognized option `%c%s'\n"
 msgstr "%s: неизвестный ключ `%c%s'\n"
 
-#: lib/getopt.c:815 lib/getopt.c:818
+#: lib/getopt.c:796 lib/getopt.c:799
 #, c-format
 msgid "%s: illegal option -- %c\n"
 msgstr "%s: недопустимый ключ -- %c\n"
 
-#: lib/getopt.c:824 lib/getopt.c:827
+#: lib/getopt.c:805 lib/getopt.c:808
 #, c-format
 msgid "%s: invalid option -- %c\n"
 msgstr "%s: неверный ключ -- %c\n"
 
-#: lib/getopt.c:882 lib/getopt.c:901 lib/getopt.c:1114 lib/getopt.c:1135
+#: lib/getopt.c:863 lib/getopt.c:882 lib/getopt.c:1095 lib/getopt.c:1116
 #, c-format
 msgid "%s: option requires an argument -- %c\n"
 msgstr "%s: ключ %c должен бы использоваться c аргументом\n"
 
-#: lib/getopt.c:954 lib/getopt.c:973
+#: lib/getopt.c:935 lib/getopt.c:954
 #, c-format
 msgid "%s: option `-W %s' is ambiguous\n"
 msgstr "%s: неоднозначный ключ `-W %s'\n"
 
-#: lib/getopt.c:997 lib/getopt.c:1018
+#: lib/getopt.c:978 lib/getopt.c:999
 #, c-format
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr "%s: ключ `-W %s' должен использоваться без аргумента\n"
 
-#: makeinfo/cmds.c:516 makeinfo/cmds.c:538
-#, fuzzy, c-format
+#: makeinfo/cmds.c:520 makeinfo/cmds.c:542
+#, c-format
 msgid "arguments to @%s ignored"
-msgstr "Плохой аргумент для %c%s"
+msgstr "аргументы для @%s игнорированы"
 
-#: makeinfo/cmds.c:581
+#: makeinfo/cmds.c:585
 msgid "January"
 msgstr "января"
 
-#: makeinfo/cmds.c:581
+#: makeinfo/cmds.c:585
 msgid "February"
 msgstr "февраля"
 
-#: makeinfo/cmds.c:581
+#: makeinfo/cmds.c:585
 msgid "March"
 msgstr "марта"
 
-#: makeinfo/cmds.c:581
+#: makeinfo/cmds.c:585
 msgid "April"
 msgstr "апреля"
 
-#: makeinfo/cmds.c:581
+#: makeinfo/cmds.c:585
 msgid "May"
 msgstr "мая"
 
-#: makeinfo/cmds.c:582
+#: makeinfo/cmds.c:586
 msgid "June"
 msgstr "июня"
 
-#: makeinfo/cmds.c:582
+#: makeinfo/cmds.c:586
 msgid "July"
 msgstr "июля"
 
-#: makeinfo/cmds.c:582
+#: makeinfo/cmds.c:586
 msgid "August"
 msgstr "августа"
 
-#: makeinfo/cmds.c:582
+#: makeinfo/cmds.c:586
 msgid "September"
 msgstr "сентября"
 
-#: makeinfo/cmds.c:582
+#: makeinfo/cmds.c:586
 msgid "October"
 msgstr "октября"
 
-#: makeinfo/cmds.c:583
+#: makeinfo/cmds.c:587
 msgid "November"
 msgstr "ноября"
 
-#: makeinfo/cmds.c:583
+#: makeinfo/cmds.c:587
 msgid "December"
 msgstr "декабря"
 
-#: makeinfo/cmds.c:904
+#: makeinfo/cmds.c:936
 #, c-format
 msgid "unlikely character %c in @var"
 msgstr "маловероятный знак %c в @var"
 
-#: makeinfo/cmds.c:947
+#: makeinfo/cmds.c:979
 msgid "@sc argument all uppercase, thus no effect"
 msgstr "весь аргумент @sc набран заглавными буквами, результата не будет"
 
-#: makeinfo/cmds.c:1002
+#: makeinfo/cmds.c:1034
 #, c-format
 msgid "`{' expected, but saw `%c'"
 msgstr "ожидалось `{', встречено `%c'"
 
-#: makeinfo/cmds.c:1042
+#: makeinfo/cmds.c:1074
 msgid "end of file inside verb block"
 msgstr "конец файла встречен внутри неоконченного блока"
 
-#: makeinfo/cmds.c:1050
+#: makeinfo/cmds.c:1082
 #, c-format
 msgid "`}' expected, but saw `%c'"
 msgstr "ожидалось `}', встречено `%c'"
 
-#: makeinfo/cmds.c:1078
+#: makeinfo/cmds.c:1112
 msgid ""
-"@strong{Note:} produces a spurious cross-reference in Info; reword to avoid "
-"that"
+"@strong{Note...} produces a spurious cross-reference in Info; reword to "
+"avoid that"
 msgstr ""
+"@strong{Note...} создает в Info ложную перекрестную ссылку; перефразируйте "
+"текст, чтобы избежать этого"
 
-#: makeinfo/cmds.c:1238
+#: makeinfo/cmds.c:1305
 #, c-format
 msgid "%c%s is obsolete"
 msgstr "Команда %c%s устарела и не используется"
 
-#: makeinfo/cmds.c:1347
+#: makeinfo/cmds.c:1414
 #, c-format
 msgid "@sp requires a positive numeric argument, not `%s'"
 msgstr "команде @sp нужно указать положительный числовой аргумент, а не `%s'"
 
-#: makeinfo/cmds.c:1696 makeinfo/cmds.c:1752 makeinfo/footnote.c:82
+#: makeinfo/cmds.c:1763 makeinfo/cmds.c:1819 makeinfo/footnote.c:82
 #, c-format
 msgid "Bad argument to %c%s"
 msgstr "Плохой аргумент для %c%s"
 
-#: makeinfo/cmds.c:1706 makeinfo/makeinfo.c:4078
+#: makeinfo/cmds.c:1773 makeinfo/makeinfo.c:4142
 msgid "asis"
 msgstr "asis"
 
-#: makeinfo/cmds.c:1708 makeinfo/cmds.c:1738 makeinfo/makeinfo.c:4080
+#: makeinfo/cmds.c:1775 makeinfo/cmds.c:1805 makeinfo/makeinfo.c:4144
 msgid "none"
 msgstr "none"
 
-#: makeinfo/cmds.c:1722
-#, fuzzy, c-format
+#: makeinfo/cmds.c:1789
+#, c-format
 msgid "Bad argument to @%s"
-msgstr "Плохой аргумент для %c%s"
+msgstr "Плохой аргумент для @%s"
 
 # ???
-#: makeinfo/cmds.c:1736
+#: makeinfo/cmds.c:1803
 msgid "insert"
 msgstr "insert"
 
@@ -1906,38 +1908,38 @@ msgid "Method"
 msgstr "Метод"
 
 #: makeinfo/defun.c:500 makeinfo/defun.c:505 makeinfo/defun.c:545
-#: makeinfo/defun.c:644 makeinfo/xml.c:2183
+#: makeinfo/defun.c:644 makeinfo/xml.c:2229
 msgid "of"
 msgstr "из"
 
 #: makeinfo/defun.c:509 makeinfo/defun.c:513 makeinfo/defun.c:517
-#: makeinfo/defun.c:551 makeinfo/defun.c:650 makeinfo/xml.c:2188
+#: makeinfo/defun.c:551 makeinfo/defun.c:650 makeinfo/xml.c:2234
 msgid "on"
 msgstr "над"
 
 #: makeinfo/defun.c:711
-#, fuzzy, c-format
+#, c-format
 msgid "Must be in `@%s' environment to use `@%s'"
-msgstr "Must be in `@%s' environment to use `@%s'"
+msgstr "Нужно быть в блоке `@%s', чтобы использовать `@%s'"
 
-#: makeinfo/files.c:430
+#: makeinfo/files.c:435
 #, c-format
 msgid "%s: getwd: %s, %s\n"
 msgstr "%s: getwd: %s, %s\n"
 
-#: makeinfo/files.c:633
+#: makeinfo/files.c:638
 #, c-format
 msgid "`%s' omitted before output filename"
-msgstr ""
+msgstr "перед именем выходного файла опущено `%s'"
 
-#: makeinfo/files.c:641
+#: makeinfo/files.c:646
 #, c-format
 msgid "`%s' omitted since writing to stdout"
-msgstr ""
+msgstr "`%s' опущено, поскольку печать идет на стандартный вывод"
 
-#: makeinfo/files.c:689
+#: makeinfo/files.c:694
 msgid "Output buffer not empty."
-msgstr ""
+msgstr "Выходной буфер не пуст."
 
 #: makeinfo/footnote.c:150
 #, c-format
@@ -1975,12 +1977,12 @@ msgstr "%s:%d: css-файл обрывается в комментарии"
 msgid "Untitled"
 msgstr "Без заголовка"
 
-#: makeinfo/html.c:418
+#: makeinfo/html.c:422
 msgid "[unexpected] no html tag to pop"
 msgstr ""
 "[непредвиденная ситуация] в стеке html-тегов нет элемента для выталкивания"
 
-#: makeinfo/html.c:722
+#: makeinfo/html.c:752
 #, c-format
 msgid "[unexpected] invalid node name: `%s'"
 msgstr "[непредвиденная ситуация] неверное имя ноды: `%s'"
@@ -1990,46 +1992,46 @@ msgstr "[непредвиденная ситуация] неверное имя ноды: `%s'"
 msgid "Unknown index `%s'"
 msgstr "Именной указатель `%s' неизвестен"
 
-#: makeinfo/index.c:227
+#: makeinfo/index.c:234
 #, c-format
 msgid "Info cannot handle `:' in index entry `%s'"
 msgstr ""
 "Info не может обработать знак `:' во вхождении алфавитного указателя `%s'"
 
-#: makeinfo/index.c:405
+#: makeinfo/index.c:412
 #, c-format
 msgid "Index `%s' already exists"
 msgstr "Именной указатель `%s' уже существует"
 
-#: makeinfo/index.c:448
+#: makeinfo/index.c:455
 #, c-format
 msgid "Unknown index `%s' and/or `%s' in @synindex"
 msgstr "Неизвестен именной указатель `%s' и/или `%s' в @synindex"
 
-#: makeinfo/index.c:654
+#: makeinfo/index.c:661
 msgid "(line )"
-msgstr ""
+msgstr "(строка )"
 
-#: makeinfo/index.c:662
+#: makeinfo/index.c:669
 #, c-format
 msgid "(line %*d)"
-msgstr ""
+msgstr "(строка %*d)"
 
-#: makeinfo/index.c:743
+#: makeinfo/index.c:750
 #, c-format
 msgid "Unknown index `%s' in @printindex"
 msgstr "Неизвестен именной указатель `%s' в @printindex"
 
-#: makeinfo/index.c:812
+#: makeinfo/index.c:819
 #, c-format
 msgid "Entry for index `%s' outside of any node"
 msgstr "Вхождение для именного указателя `%s' вне ноды"
 
-#: makeinfo/index.c:815 makeinfo/index.c:856
+#: makeinfo/index.c:822 makeinfo/index.c:858
 msgid "(outside of any node)"
 msgstr "(вне какой-либо ноды)"
 
-#: makeinfo/index.c:917 makeinfo/index.c:923
+#: makeinfo/index.c:919 makeinfo/index.c:925
 msgid "See "
 msgstr "Смотрите "
 
@@ -2058,112 +2060,112 @@ msgstr "%s должна использоваться c аргументом: форматом для %citem"
 #: makeinfo/insertion.c:719
 #, c-format
 msgid "%cfloat environments cannot be nested"
-msgstr ""
+msgstr "блоки %cfloat нельзя вкладывать друг в друга"
 
 #: makeinfo/insertion.c:973
 #, c-format
 msgid "`@end' expected `%s', but saw `%s'"
 msgstr "ожидалось `@end' с `%s', встречено `%s'"
 
-#: makeinfo/insertion.c:1332
+#: makeinfo/insertion.c:1337
 #, c-format
 msgid "No matching `%cend %s'"
 msgstr "Нет парной `%cend %s'"
 
-#: makeinfo/insertion.c:1580
+#: makeinfo/insertion.c:1592
 #, c-format
 msgid "%s requires letter or digit"
 msgstr "%s требует буквы или цифры"
 
-#: makeinfo/insertion.c:1675
+#: makeinfo/insertion.c:1687
 msgid "end of file inside verbatim block"
 msgstr "конец файла встречен внутри неоконченного блока"
 
-#: makeinfo/insertion.c:1901
-#, fuzzy, c-format
+#: makeinfo/insertion.c:1913
+#, c-format
 msgid "@%s not meaningful outside `@float' environment"
-msgstr "@%s не имеет смысла внутри блока `@%s'"
+msgstr "@%s не имеет смысла вне блока `@float'"
 
-#: makeinfo/insertion.c:1937
+#: makeinfo/insertion.c:1949
 msgid "@menu seen before first @node, creating `Top' node"
 msgstr "@menu встречено перед первой @node, будет создана нода `Top'"
 
-#: makeinfo/insertion.c:1938
+#: makeinfo/insertion.c:1950
 msgid ""
 "perhaps your @top node should be wrapped in @ifnottex rather than @ifinfo?"
 msgstr ""
 "вероятно, ваша нода @top должна быть в блоке @ifnottex, а не в @ifinfo?"
 
-#: makeinfo/insertion.c:1950
+#: makeinfo/insertion.c:1962
 msgid "@detailmenu seen before first node, creating `Top' node"
 msgstr "@detailmenu встречено перед первой @node, будет создана нода `Top'"
 
-#: makeinfo/insertion.c:2006
+#: makeinfo/insertion.c:2018
 #, c-format
 msgid "@%s not meaningful outside `@titlepage' and `@quotation' environments"
-msgstr ""
+msgstr "@%s не имеет смысла вне блока `@titlepage' или `@quotation'"
 
-#: makeinfo/insertion.c:2020
-#, fuzzy, c-format
+#: makeinfo/insertion.c:2032
+#, c-format
 msgid "@%s not meaningful outside `@titlepage' environment"
-msgstr "@%s не имеет смысла внутри блока `@%s'"
+msgstr "@%s не имеет смысла вне блока `@titlepage'"
 
-#: makeinfo/insertion.c:2051
+#: makeinfo/insertion.c:2063
 #, c-format
 msgid "Unmatched `%c%s'"
 msgstr "Непарная `%c%s'"
 
-#: makeinfo/insertion.c:2056
+#: makeinfo/insertion.c:2068
 #, c-format
 msgid "`%c%s' needs something after it"
 msgstr "После `%c%s' должно что-то идти"
 
-#: makeinfo/insertion.c:2062
-#, fuzzy, c-format
+#: makeinfo/insertion.c:2074
+#, c-format
 msgid "Bad argument `%s' to `@%s', using `%s'"
-msgstr "Плохой аргумент `%s', `%s', будет использован `%s'"
+msgstr "Плохой аргумент `%s' для `@%s', будет использован `%s'"
 
-#: makeinfo/insertion.c:2159
+#: makeinfo/insertion.c:2171
 #, c-format
 msgid "@%s not meaningful inside `@%s' block"
 msgstr "@%s не имеет смысла внутри блока `@%s'"
 
-#: makeinfo/insertion.c:2168
+#: makeinfo/insertion.c:2180
 #, c-format
 msgid "@itemx not meaningful inside `%s' block"
 msgstr "@itemx не имеет смысла внутри блока `%s'"
 
-#: makeinfo/insertion.c:2344
+#: makeinfo/insertion.c:2356
 #, c-format
 msgid "%c%s found outside of an insertion block"
 msgstr "%c%s встречена вне блока вставки"
 
-#: makeinfo/lang.c:459
+#: makeinfo/lang.c:580
 #, c-format
 msgid "%s is not a valid ISO 639 language code"
 msgstr "%s не является верным кодом языка из ISO 639"
 
-#: makeinfo/lang.c:534
+#: makeinfo/lang.c:655
 #, c-format
 msgid "unrecognized encoding name `%s'"
 msgstr "имя кодировки `%s' не распознано"
 
-#: makeinfo/lang.c:542
+#: makeinfo/lang.c:663
 #, c-format
 msgid "sorry, encoding `%s' not supported"
 msgstr "извините, кодировка `%s' не поддерживается"
 
-#: makeinfo/lang.c:594
+#: makeinfo/lang.c:715
 #, c-format
 msgid "invalid encoded character `%s'"
 msgstr "неправильно закодированный знак `%s'"
 
-#: makeinfo/lang.c:884
+#: makeinfo/lang.c:1009
 #, c-format
 msgid "%c%s expects `i' or `j' as argument, not `%c'"
 msgstr "%c%s ожидает в качестве аргумента `i' или `j', а не `%c'"
 
-#: makeinfo/lang.c:888
+#: makeinfo/lang.c:1013
 #, c-format
 msgid "%c%s expects a single character `i' or `j' as argument"
 msgstr "%c%s ожидает в качестве аргумента один символ `i' или `j'"
@@ -2179,9 +2181,9 @@ msgid "here is the previous definition of `%s'"
 msgstr "место предыдущего определения `%s'"
 
 #: makeinfo/macro.c:355
-#, fuzzy, c-format
+#, c-format
 msgid "\\ in macro expansion followed by `%s' instead of parameter name"
-msgstr "после \\ в раскрытии макро стоит `%s', а не \\ или имя параметра"
+msgstr "после \\ в раскрытии макро стоит `%s', а не имя параметра"
 
 #: makeinfo/macro.c:401
 #, c-format
@@ -2207,27 +2209,27 @@ msgstr "непарные @end %s и @%s"
 msgid "Too many errors!  Gave up.\n"
 msgstr "Слишком много ошибок! Остановка.\n"
 
-#: makeinfo/makeinfo.c:301
+#: makeinfo/makeinfo.c:302
 #, c-format
 msgid "%s:%d: warning: "
 msgstr "%s:%d: предупреждение: "
 
-#: makeinfo/makeinfo.c:320 makeinfo/makeinfo.c:2216
+#: makeinfo/makeinfo.c:321 makeinfo/makeinfo.c:2260
 #, c-format
 msgid "Misplaced %c"
 msgstr "Здесь не должно быть %c"
 
-#: makeinfo/makeinfo.c:339
+#: makeinfo/makeinfo.c:340
 #, c-format
 msgid "Try `%s --help' for more information.\n"
 msgstr "Попробуйте `%s --help' для получения более подробного описания.\n"
 
-#: makeinfo/makeinfo.c:342
+#: makeinfo/makeinfo.c:343
 #, c-format
 msgid "Usage: %s [OPTION]... TEXINFO-FILE...\n"
 msgstr "Использование: %s [КЛЮЧ]... TEXINFO-ФАЙЛ...\n"
 
-#: makeinfo/makeinfo.c:345
+#: makeinfo/makeinfo.c:346
 msgid ""
 "Translate Texinfo source documentation to various other formats, by default\n"
 "Info files suitable for reading online with Emacs or standalone GNU Info.\n"
@@ -2236,7 +2238,7 @@ msgstr ""
 "умолчанию в Info-файлы, которые можно читать с помощью Emacs или\n"
 "отдельной программы GNU Info.\n"
 
-#: makeinfo/makeinfo.c:349
+#: makeinfo/makeinfo.c:350
 #, c-format
 msgid ""
 "General options:\n"
@@ -2264,8 +2266,8 @@ msgstr ""
 "  -v, --verbose                 пояснять действия.\n"
 "      --version                 показать информацию о версии и выйти.\n"
 
-#: makeinfo/makeinfo.c:363
-#, fuzzy, no-wrap
+#: makeinfo/makeinfo.c:364
+#, no-wrap
 msgid ""
 "Output format selection (default is to produce Info):\n"
 "      --docbook             output Docbook XML rather than Info.\n"
@@ -2277,8 +2279,9 @@ msgstr ""
 "      --docbook             выводить в формате DocBook XML, а не Info.\n"
 "      --html                выводить в формате HTML, а не Info.\n"
 "      --xml                 выводить в формате Texinfo XML, а не в Info.\n"
+"      --plaintext           выводить простой текст, а не Info.\n"
 
-#: makeinfo/makeinfo.c:371
+#: makeinfo/makeinfo.c:372
 msgid ""
 "General output options:\n"
 "  -E, --macro-expand FILE   output macro-expanded source to FILE.\n"
@@ -2309,7 +2312,7 @@ msgstr ""
 " -o, --output=ФАЙЛ         выводить в указанный ФАЙЛ (каталог для HTML с \n"
 "                           разбиением).\n"
 
-#: makeinfo/makeinfo.c:385
+#: makeinfo/makeinfo.c:386
 #, c-format
 msgid ""
 "Options for Info and plain text:\n"
@@ -2347,7 +2350,7 @@ msgstr ""
 "      --split-size=РАЗМЕР     разбивать на файлы заданного РАЗМЕРА (по\n"
 "                                умолчанию %d).\n"
 
-#: makeinfo/makeinfo.c:402
+#: makeinfo/makeinfo.c:403
 msgid ""
 "Options for HTML:\n"
 "      --css-include=FILE        include FILE in HTML <style> output;\n"
@@ -2358,8 +2361,8 @@ msgstr ""
 "                                читать стандартный ввод, если ФАЙЛ задан как "
 "-.\n"
 
-#: makeinfo/makeinfo.c:408
-#, fuzzy, c-format
+#: makeinfo/makeinfo.c:409
+#, c-format
 msgid ""
 "Options for XML and Docbook:\n"
 "      --output-indent=VAL       indent XML elements by VAL spaces (default %"
@@ -2367,12 +2370,14 @@ msgid ""
 "                                  If VAL is 0, ignorable whitespace is "
 "dropped.\n"
 msgstr ""
-"Ключи для HTML:\n"
-"      --css-include=ФАЙЛ        включить ФАЙЛ в тег <style> в выводе HTML;\n"
-"                                читать стандартный ввод, если ФАЙЛ задан как "
-"-.\n"
+"Ключи для XML и Docbook:\n"
+"      --output-indent=ЧИСЛО     делать для XML-элементов отступы на "
+"заданное \n"
+"                                  ЧИСЛО пробелов (по умолчанию %d).\n"
+"                                Если ЧИСЛО равно нулю, незначащие пробелы "
+"опускаются.\n"
 
-#: makeinfo/makeinfo.c:415
+#: makeinfo/makeinfo.c:416
 msgid ""
 "Input file options:\n"
 "      --commands-in-node-names  allow @ commands in node names.\n"
@@ -2393,8 +2398,7 @@ msgstr ""
 " -U ПЕРЕМЕННАЯ           сделать ПЕРЕМЕННУЮ неопределенной, аналогично\n"
 "                           использованию @clear.\n"
 
-#: makeinfo/makeinfo.c:424
-#, fuzzy
+#: makeinfo/makeinfo.c:425
 msgid ""
 "Conditional processing in input:\n"
 "  --ifdocbook       process @ifdocbook and @docbook even if\n"
@@ -2410,6 +2414,8 @@ msgid ""
 "  --no-ifplaintext  do not process @ifplaintext text.\n"
 "  --no-iftex        do not process @iftex and @tex text.\n"
 "  --no-ifxml        do not process @ifxml and @xml text.\n"
+"\n"
+"  Also, for the --no-ifFORMAT options, do process @ifnotFORMAT text.\n"
 msgstr ""
 "Условная обработка исходного текста:\n"
 "  --ifhtml          обрабатывать текст внутри блоков @ifhtml и @html,\n"
@@ -2426,8 +2432,10 @@ msgstr ""
 "  --no-ifplaintext  не обрабатывать текст внутри блоков @ifplaintext.\n"
 "  --no-iftex        не обрабатывать текст внутри блоков @iftex и @tex.\n"
 "  --no-ifxml        не обрабатывать текст внутри блоков @ifxml и @xml.\n"
+"\n"
+"  Кроме того, для ключей --no-ifФОРМАТ, обрабатывать блоки @ifnotФОРМАТ.\n"
 
-#: makeinfo/makeinfo.c:441
+#: makeinfo/makeinfo.c:444
 msgid ""
 "  The defaults for the @if... conditionals depend on the output format:\n"
 "  if generating HTML, --ifhtml is on and the others are off;\n"
@@ -2441,7 +2449,7 @@ msgstr ""
 "  при выводе простого текста включен --ifplaintext, остальные выключены;\n"
 "  при выводе XML включен --ifxml, остальные выключены.\n"
 
-#: makeinfo/makeinfo.c:449
+#: makeinfo/makeinfo.c:452
 msgid ""
 "Examples:\n"
 "  makeinfo foo.texi                     write Info to foo's @setfilename\n"
@@ -2469,83 +2477,83 @@ msgstr ""
 "разделами\n"
 "  makeinfo --no-split foo.texi         записать один большой Info-файл\n"
 
-#: makeinfo/makeinfo.c:585
+#: makeinfo/makeinfo.c:603
 #, c-format
 msgid "%s: Ignoring unrecognized TEXINFO_OUTPUT_FORMAT value `%s'.\n"
-msgstr ""
+msgstr "%s: неизвестное значение TEXINFO_OUTPUT_FORMAT `%s' игнорировано.\n"
 
-#: makeinfo/makeinfo.c:620 makeinfo/makeinfo.c:646 makeinfo/makeinfo.c:665
-#: makeinfo/makeinfo.c:695 makeinfo/makeinfo.c:716
+#: makeinfo/makeinfo.c:647 makeinfo/makeinfo.c:673 makeinfo/makeinfo.c:692
+#: makeinfo/makeinfo.c:722 makeinfo/makeinfo.c:743
 #, c-format
 msgid "%s: %s arg must be numeric, not `%s'.\n"
 msgstr "%s: %s аргумент должен быть числовым, не `%s'.\n"
 
-#: makeinfo/makeinfo.c:633
-#, fuzzy, c-format
+#: makeinfo/makeinfo.c:660
+#, c-format
 msgid "%s: could not open macro expansion output `%s'"
-msgstr "Невозможно открыть выходной файл макрорасширения `%s'"
+msgstr "%s: невозможно открыть выходной файл макрорасширения `%s'"
 
-#: makeinfo/makeinfo.c:638
-#, fuzzy, c-format
+#: makeinfo/makeinfo.c:665
+#, c-format
 msgid "%s: ignoring second macro expansion output `%s'.\n"
-msgstr "Невозможно открыть выходной файл макрорасширения `%s'"
+msgstr "%s: второй выходной файл макрорасширения `%s' игнорирован.\n"
 
-#: makeinfo/makeinfo.c:680
+#: makeinfo/makeinfo.c:707
 #, c-format
 msgid "%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'.\n"
 msgstr ""
 "%s: аргумент --paragraph-indent должен быть числовым, или\n"
 "`none', или `asis'; не `%s'.\n"
 
-#: makeinfo/makeinfo.c:705
+#: makeinfo/makeinfo.c:732
 #, c-format
 msgid "%s: --footnote-style arg must be `separate' or `end', not `%s'.\n"
 msgstr ""
 "%s: аргумент --footnote-style должен быть `separate' или `end'; а не `%s'.\n"
 
-#: makeinfo/makeinfo.c:779
+#: makeinfo/makeinfo.c:806
 #, c-format
 msgid "%s: missing file argument.\n"
 msgstr "%s: пропущен аргумент, задающий файл.\n"
 
-#: makeinfo/makeinfo.c:968 makeinfo/makeinfo.c:3937
+#: makeinfo/makeinfo.c:997 makeinfo/makeinfo.c:3991
 #, c-format
 msgid "Multiline command %c%s used improperly"
-msgstr ""
+msgstr "Неправильно использована многострочная команда %c%s"
 
-#: makeinfo/makeinfo.c:972
+#: makeinfo/makeinfo.c:1000
 #, c-format
 msgid "Expected `%s'"
 msgstr "Ожидается `%s'"
 
-#: makeinfo/makeinfo.c:1454
+#: makeinfo/makeinfo.c:1479
 #, c-format
 msgid "Can't create directory `%s': %s"
 msgstr "Невозможно создать каталог `%s': %s"
 
-#: makeinfo/makeinfo.c:1500
+#: makeinfo/makeinfo.c:1525
 #, c-format
 msgid "No `%s' found in `%s'"
 msgstr "`%s' не найден в `%s'"
 
-#: makeinfo/makeinfo.c:1580
+#: makeinfo/makeinfo.c:1605
 #, c-format
 msgid "%s: Skipping macro expansion to stdout as Info output is going there.\n"
 msgstr ""
 "%s: Раскрытие макросов в стандартный вывод не производится,\n"
 "так как туда направлен вывод в формате Info.\n"
 
-#: makeinfo/makeinfo.c:1613
+#: makeinfo/makeinfo.c:1638
 #, c-format
 msgid "Making %s file `%s' from `%s'.\n"
 msgstr "Создание %s-файла `%s' из `%s'.\n"
 
-#: makeinfo/makeinfo.c:1648
+#: makeinfo/makeinfo.c:1673
 #, c-format
 msgid "This is %s, produced by makeinfo version %s from %s.\n"
 msgstr "Это %s, созданный makeinfo версии %s из %s.\n"
 
-#: makeinfo/makeinfo.c:1671
+#: makeinfo/makeinfo.c:1709
 #, c-format
 msgid ""
 "%s: Removing macro output file `%s' due to errors; use --force to preserve.\n"
@@ -2553,82 +2561,82 @@ msgstr ""
 "%s: Удаление выходного файла макрорасширений `%s' -- были ошибки;\n"
 "используйте --force, чтобы принудительно сохранить результаты.\n"
 
-#: makeinfo/makeinfo.c:1735
+#: makeinfo/makeinfo.c:1773
 #, c-format
 msgid "%s: Removing output file `%s' due to errors; use --force to preserve.\n"
 msgstr ""
 "%s: Удаление выходного файла `%s' -- были ошибки;\n"
 "используйте --force, чтобы принудительно сохранить результаты.\n"
 
-#: makeinfo/makeinfo.c:1996
+#: makeinfo/makeinfo.c:2034
 #, c-format
 msgid "Unknown command `%s'"
 msgstr "Неизвестная команда `%s'"
 
-#: makeinfo/makeinfo.c:2018
+#: makeinfo/makeinfo.c:2056
 #, c-format
 msgid "Use braces to give a command as an argument to @%s"
 msgstr ""
 "Используйте фигурные скобки, чтобы передать @%s команду в качестве аргумента"
 
-#: makeinfo/makeinfo.c:2270
+#: makeinfo/makeinfo.c:2314
 #, c-format
 msgid "%c%s expected braces"
 msgstr "%c%s подразумевает фигурные скобки"
 
-#: makeinfo/makeinfo.c:2283
+#: makeinfo/makeinfo.c:2327
 msgid "Unmatched }"
 msgstr "Непарная }"
 
-#: makeinfo/makeinfo.c:2331
+#: makeinfo/makeinfo.c:2375
 msgid "NO_NAME!"
 msgstr "БЕЗ_ИМЕНИ!"
 
-#: makeinfo/makeinfo.c:2352
+#: makeinfo/makeinfo.c:2396
 #, c-format
 msgid "%c%s missing close brace"
 msgstr "%c%s пропущена закрывающая скобка"
 
-#: makeinfo/makeinfo.c:3262
+#: makeinfo/makeinfo.c:3309
 #, c-format
 msgid "@image file `%s' (for HTML) not readable: %s"
 msgstr "Невозможно прочитать файл `%s' в команде @image (для HTML): %s"
 
-#: makeinfo/makeinfo.c:3268
+#: makeinfo/makeinfo.c:3315
 #, c-format
 msgid "No such file `%s'"
 msgstr "Файл `%s' не существует"
 
-#: makeinfo/makeinfo.c:3400
+#: makeinfo/makeinfo.c:3447
 #, c-format
 msgid "@image file `%s' (for text) unreadable: %s"
 msgstr "Невозможно прочитать файл `%s' в команде @image (для текста): %s"
 
-#: makeinfo/makeinfo.c:3409
+#: makeinfo/makeinfo.c:3456
 msgid "@image missing filename argument"
 msgstr "после @image пропущен аргумент задающий файл "
 
-#: makeinfo/makeinfo.c:3621
+#: makeinfo/makeinfo.c:3675
 #, c-format
 msgid "undefined flag: %s"
 msgstr "неопределенный флаг: %s"
 
-#: makeinfo/makeinfo.c:3622
+#: makeinfo/makeinfo.c:3676
 #, c-format
 msgid "{No value for `%s'}"
 msgstr "{Значение `%s' не задано}"
 
-#: makeinfo/makeinfo.c:3674
+#: makeinfo/makeinfo.c:3728
 #, c-format
 msgid "%c%s requires a name"
 msgstr "команде %c%s нужно указать имя"
 
-#: makeinfo/makeinfo.c:3780
+#: makeinfo/makeinfo.c:3834
 #, c-format
 msgid "Reached eof before matching @end %s"
 msgstr "Конец файла раньше соответствующей команды @end %s"
 
-#: makeinfo/makeinfo.c:4018
+#: makeinfo/makeinfo.c:4082
 #, c-format
 msgid "`%.40s...' is too long for expansion; not expanded"
 msgstr "`%.40s...' слишком велико; невозможно раскрыть"
@@ -2671,146 +2679,146 @@ msgstr "* колонка %d: вывод = %s\n"
 msgid "Node `%s' previously defined at line %d"
 msgstr "Нода `%s' была ранее определена в строке %d"
 
-#: makeinfo/node.c:601
+#: makeinfo/node.c:648
 #, c-format
 msgid "Formatting node %s...\n"
 msgstr "Форматирование ноды %s...\n"
 
-#: makeinfo/node.c:669
+#: makeinfo/node.c:716
 #, c-format
 msgid "Node `%s' requires a sectioning command (e.g., %c%s)"
 msgstr "Для ноды `%s' требуется команда описания структуры глав (напр. %c%s)"
 
-#: makeinfo/node.c:832
+#: makeinfo/node.c:879
 #, c-format
 msgid "No node name specified for `%c%s' command"
 msgstr "Для команды `%c%s' не задано имя ноды"
 
-#: makeinfo/node.c:873 makeinfo/node.c:1107
+#: makeinfo/node.c:920 makeinfo/node.c:1151
 #, c-format
 msgid "Anchor `%s' and node `%s' map to the same file name"
 msgstr "Маркер `%s' и нода `%s' ссылаются на одно и то же имя файла"
 
-#: makeinfo/node.c:876
+#: makeinfo/node.c:923
 msgid "This @anchor command ignored; references to it will not work"
 msgstr "Данная команда @anchor игнорируется; ссылки на нее не будут работать"
 
-#: makeinfo/node.c:878 makeinfo/node.c:1110
+#: makeinfo/node.c:925 makeinfo/node.c:1154
 msgid "Rename this anchor or use the `--no-split' option"
 msgstr "Переименуйте этот маркер или используйте ключ `--no-split'"
 
-#: makeinfo/node.c:908
+#: makeinfo/node.c:955
 #, c-format
 msgid "Unexpected string at end of split-HTML file `%s'"
 msgstr "Неожиданная строка в конце разбитого HTML-файла `%s'"
 
-#: makeinfo/node.c:947
+#: makeinfo/node.c:991
 msgid "Next:"
 msgstr "Следующая:"
 
-#: makeinfo/node.c:963
+#: makeinfo/node.c:1007
 msgid "Previous:"
 msgstr "Предыдущая:"
 
-#: makeinfo/node.c:977
+#: makeinfo/node.c:1021
 msgid "Up:"
 msgstr "Вверх:"
 
-#: makeinfo/node.c:1104
+#: makeinfo/node.c:1148
 #, c-format
 msgid "Anchors `%s' and `%s' map to the same file name"
 msgstr "Маркеры `%s' и `%s' ссылаются на одно и то же имя файла"
 
-#: makeinfo/node.c:1109
+#: makeinfo/node.c:1153
 msgid "@anchor command ignored; references to it will not work"
 msgstr "Команда @anchor игнорируется; ссылки на нее не будут работать"
 
 #  здесь %s может быть `cross' или `menu'
-#: makeinfo/node.c:1303
+#: makeinfo/node.c:1347
 #, c-format
 msgid "%s reference to nonexistent node `%s' (perhaps incorrect sectioning?)"
 msgstr ""
 "%s на несуществующую ноду `%s' (возможно, неправильно описана структура "
 "глав?)"
 
-#: makeinfo/node.c:1319
+#: makeinfo/node.c:1363
 msgid "Menu"
 msgstr "Ссылка из меню"
 
-#: makeinfo/node.c:1321
+#: makeinfo/node.c:1365
 msgid "Cross"
 msgstr "Перекрестная ссылка"
 
-#: makeinfo/node.c:1403
+#: makeinfo/node.c:1447
 #, c-format
 msgid "Next field of node `%s' not pointed to (perhaps incorrect sectioning?)"
 msgstr ""
 "На поле Next ноды `%s' нет ссылок (возможно, неправильно описана структура "
 "глав?)"
 
-#: makeinfo/node.c:1406
+#: makeinfo/node.c:1450
 #, c-format
 msgid "This node (%s) has the bad Prev"
 msgstr "В этой ноде (%s) неправильный указатель Prev"
 
-#: makeinfo/node.c:1418
+#: makeinfo/node.c:1462
 msgid "Prev"
 msgstr "Предыдущая"
 
-#: makeinfo/node.c:1461
+#: makeinfo/node.c:1505
 #, c-format
 msgid "Prev field of node `%s' not pointed to"
 msgstr "На поле Prev ноды `%s' нет ссылок"
 
-#: makeinfo/node.c:1465
+#: makeinfo/node.c:1509
 #, c-format
 msgid "This node (%s) has the bad Next"
 msgstr "В этой ноде (%s) неправильный указатель Next"
 
-#: makeinfo/node.c:1477
+#: makeinfo/node.c:1521
 #, c-format
 msgid "`%s' has no Up field (perhaps incorrect sectioning?)"
 msgstr ""
 "В ноде `%s' нет поля Up (возможно, неправильно описана структура глав?)"
 
-#: makeinfo/node.c:1480
+#: makeinfo/node.c:1524
 msgid "Up"
 msgstr "Вверх"
 
-#: makeinfo/node.c:1546
+#: makeinfo/node.c:1590
 #, c-format
 msgid "Node `%s' lacks menu item for `%s' despite being its Up target"
 msgstr "Нода `%s' не имеет пункта меню для `%s', хотя на нее ссылается поле Up"
 
-#: makeinfo/node.c:1575
+#: makeinfo/node.c:1619
 #, c-format
 msgid "node `%s' has been referenced %d times"
 msgstr "на ноду `%s' появилось %d ссылок"
 
-#: makeinfo/node.c:1589
+#: makeinfo/node.c:1633
 #, c-format
 msgid "unreferenced node `%s'"
 msgstr "на ноду `%s' нет ссылок"
 
-#: makeinfo/node.c:1679
+#: makeinfo/node.c:1723
 #, c-format
 msgid "Removing %s\n"
-msgstr ""
+msgstr "Удаление %s\n"
 
-#: makeinfo/node.c:1683
-#, fuzzy, c-format
+#: makeinfo/node.c:1727
+#, c-format
 msgid "Can't remove file `%s': %s"
-msgstr "Невозможно создать каталог `%s': %s"
+msgstr "Невозможно удалить файл `%s': %s"
 
 #: makeinfo/sectioning.c:122
-#, fuzzy, c-format
+#, c-format
 msgid "Appendix %c"
-msgstr "Приложение %c "
+msgstr "Приложение %c"
 
 #: makeinfo/sectioning.c:467
-#, fuzzy, c-format
+#, c-format
 msgid "Internal error (search_sectioning) `%s'!"
-msgstr "Внутренняя ошибка (search_sectioning) \"%s\"!"
+msgstr "Внутренняя ошибка (search_sectioning) `%s'!"
 
 #: makeinfo/sectioning.c:562
 #, c-format
@@ -2845,15 +2853,17 @@ msgstr "Содержание"
 msgid "Short Contents"
 msgstr "Краткое содержание"
 
-#: makeinfo/xml.c:1593
+#: makeinfo/xml.c:1605
 #, c-format
 msgid "@image file `%s' unreadable: %s"
 msgstr "невозможно прочитать @image файл `%s': %s"
 
-#: makeinfo/xml.c:2051
+#: makeinfo/xml.c:2097
 msgid ""
 "@headitem as the last item of @multitable produces invalid Docbook documents"
 msgstr ""
+"использование @headitem в качестве последнего элемента @multitable выдает "
+"некорректные документы Docbook"
 
 #: util/install-info.c:154
 #, c-format
@@ -2998,7 +3008,7 @@ msgstr "END-INFO-DIR-ENTRY без соответствующего START-INFO-DIR-ENTRY"
 #: util/install-info.c:1191 util/install-info.c:1201
 #, c-format
 msgid "%s: already have dir file: %s\n"
-msgstr ""
+msgstr "%s: уже существует файл dir: %s\n"
 
 #: util/install-info.c:1236
 #, c-format
@@ -3103,48 +3113,3 @@ msgstr "В %s нет номера страницы"
 #, c-format
 msgid "entry %s follows an entry with a secondary name"
 msgstr "за вхождением %s следует вхождение с вторичным именем"
-
-#~ msgid "%s: Specify the Info directory only once.\n"
-#~ msgstr "%s: Можно задать только один каталог Info.\n"
-
-#~ msgid "\"\" is invalid"
-#~ msgstr "\"\" неверная команда"
-
-#~ msgid "%s is an invalid ISO code, using %c"
-#~ msgstr "%s не является верным кодом ISO, используется %c"
-
-#~ msgid "Cannot specify more than one macro expansion output"
-#~ msgstr "Можно задать только один выходной файл макрорасширения"
-
-#~ msgid "File exists, but is not a directory"
-#~ msgstr "Файл существует, но не является каталогом"
-
-#~ msgid "First argument to cross-reference may not be empty"
-#~ msgstr "Первый аргумент перекрестной ссылки не может быть пустым"
-
-#~ msgid "see "
-#~ msgstr "смотрите "
-
-#~ msgid "`.' or `,' must follow cross reference, not %c"
-#~ msgstr "после ссылки должны следовать `.' или `,', встречено %c"
-
-#~ msgid "First argument to @inforef may not be empty"
-#~ msgstr "Первый аргумент @inforef не может быть пустым"
-
-#~ msgid "Node:"
-#~ msgstr "Следующая:"
-
-#~ msgid "%s: TOC should be here, but it was not found"
-#~ msgstr "%s: здесь должно быть содеражание, но оно не найдено"
-
-#~ msgid "virtual memory exhausted"
-#~ msgstr "виртуальная память исчерпана"
-
-#~ msgid "No `%s.png' or `.jpg', and no extension supplied"
-#~ msgstr "Не найден файл `%s.png' или `.jpg', а расширение не задано"
-
-#~ msgid "%s; for file `%s'.\n"
-#~ msgstr "%s; для файла `%s'.\n"
-
-#~ msgid "`%s' has no Up field"
-#~ msgstr "В ноде `%s' нет поля Up"
