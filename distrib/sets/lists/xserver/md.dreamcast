@@ -1,10 +1,10 @@
-#	$NetBSD: md.dreamcast,v 1.7 2008/08/29 06:08:48 lukem Exp $
-./usr/X11R6/bin/X	-unknown-	x11
-./usr/X11R6/bin/Xdreamcast	-unknown-	x11
-./usr/X11R6/bin/Xvfb	-unknown-	x11
-./usr/X11R6/man/cat1/Xdreamcast.0	-unknown-	x11,.cat
-./usr/X11R6/man/cat1/Xvfb.0	-unknown-	x11,.cat
-./usr/X11R6/man/html1/Xdreamcast.html	-unknown-	x11,html
-./usr/X11R6/man/html1/Xvfb.html	-unknown-	x11,html
-./usr/X11R6/man/man1/Xdreamcast.1	-unknown-	x11,.man
-./usr/X11R6/man/man1/Xvfb.1	-unknown-	x11,.man
+#	$NetBSD: md.dreamcast,v 1.8 2008/09/02 02:17:48 lukem Exp $
+./usr/X11R6/bin/X					-unknown-	x11
+./usr/X11R6/bin/Xdreamcast				-unknown-	x11
+./usr/X11R6/bin/Xvfb					-unknown-	x11
+./usr/X11R6/man/cat1/Xdreamcast.0			-unknown-	x11,.cat
+./usr/X11R6/man/cat1/Xvfb.0				-unknown-	x11,.cat
+./usr/X11R6/man/html1/Xdreamcast.html			-unknown-	x11,html
+./usr/X11R6/man/html1/Xvfb.html				-unknown-	x11,html
+./usr/X11R6/man/man1/Xdreamcast.1			-unknown-	x11,.man
+./usr/X11R6/man/man1/Xvfb.1				-unknown-	x11,.man
