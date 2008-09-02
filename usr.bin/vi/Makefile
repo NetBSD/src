@@ -1,23 +1,22 @@
-#	$NetBSD: Makefile,v 1.13 2008/08/31 12:09:48 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2008/09/02 09:26:55 christos Exp $
 
 .include <bsd.own.mk>
 
 MKOLDVI?=no
-.if ${MKSHARE} != "no"
 .if ${MKOLDVI} != "no"
-SUBDIR+= catalog
-.endif
-SUBDIR+= recover
+
+.if ${MKSHARE} != "no"
+SUBDIR+= catalog recover
 .endif
 
-.if ${MKOLDVI} != "no"
 SUBDIR+= build
-.endif
 
 .if make(install)
 SUBDIR+= docs/USD.doc/edit docs/USD.doc/exref docs/USD.doc/vi.ref
 SUBDIR+= docs/USD.doc/vitut
 SUBDIR+= recover
+.endif
+
 .endif
 
 .include <bsd.subdir.mk>
