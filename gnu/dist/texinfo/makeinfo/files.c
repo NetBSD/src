@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.8 2008/09/02 08:00:24 christos Exp $	*/
+/*	$NetBSD: files.c,v 1.9 2008/09/02 08:41:51 christos Exp $	*/
 
 /* files.c -- file-related functions for makeinfo.
    Id: files.c,v 1.5 2004/07/27 00:06:31 karl Exp
@@ -200,16 +200,9 @@ find_and_load (char *filename, int use_path)
 
   result = fullpath = NULL;
 
-<<<<<<< files.c
-  if (use_path)
-    fullpath = get_file_info_in_path (filename, include_files_path, &fileinfo);
-  else
-    fullpath = get_file_info_in_path (filename, NULL, &fileinfo);
-=======
   fullpath
     = get_file_info_in_path (filename, use_path ? include_files_path : NULL, 
                              &fileinfo);
->>>>>>> 1.1.1.5
 
   if (!fullpath)
     goto error_exit;
