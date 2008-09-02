@@ -1,7 +1,7 @@
-/*	$NetBSD: install-info.c,v 1.1.1.6 2004/07/12 23:26:47 wiz Exp $	*/
+/*	$NetBSD: install-info.c,v 1.1.1.7 2008/09/02 07:50:56 christos Exp $	*/
 
 /* install-info -- create Info directory entry(ies) for an Info file.
-   Id: install-info.c,v 1.8 2004/03/29 12:44:23 karl Exp
+   Id: install-info.c,v 1.12 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.

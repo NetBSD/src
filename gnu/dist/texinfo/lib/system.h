@@ -1,7 +1,7 @@
-/*	$NetBSD: system.h,v 1.1.1.5 2004/07/12 23:26:56 wiz Exp $	*/
+/*	$NetBSD: system.h,v 1.1.1.6 2008/09/02 07:49:31 christos Exp $	*/
 
 /* system.h: system-dependent declarations; include this first.
-   Id: system.h,v 1.7 2004/03/26 18:22:16 karl Exp
+   Id: system.h,v 1.12 2004/04/26 13:56:57 karl Exp
 
    Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
@@ -276,6 +276,8 @@ extern void xexit (int);
 
 /* For convenience.  */
 #define STREQ(s1,s2) (strcmp (s1, s2) == 0)
+#define STRCASEEQ(s1,s2) (strcasecmp (s1, s2) == 0)
+#define STRNCASEEQ(s1,s2,n) (strncasecmp (s1, s2, n) == 0)
 
 /* We don't need anything fancy.  If we did need something fancy, gnulib
    has it.  */

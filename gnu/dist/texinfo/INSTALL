@@ -1,4 +1,4 @@
-Id: INSTALL,v 1.3 2004/04/09 17:43:53 karl Exp
+Id: INSTALL,v 1.5 2004/11/19 13:08:47 karl Exp
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -15,6 +15,12 @@ Installation notes specific to Texinfo:
   after the normal make install:
     make TEXMF=/your/texmf install-tex
   texinfo.tex is installed in ${TEXMF}/tex/texinfo/texinfo.tex, etc.
+
+* On the other hand, if you're maintaining a TeX distribution, you don't
+  want your users to see the installation warnings, because you already
+  have the files installed.  (And you're keeping them up to date, right?)
+  In this case, run configure --disable-install-warnings, or set
+  enable_install_warnings=no in the environment.
 
 * On MacOSX, if configure fails with the error:
 	ac_cv_build='config.sub: invalid option -apple-darwin7.2.0

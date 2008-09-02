@@ -1,7 +1,7 @@
-/*	$NetBSD: index.h,v 1.1.1.3 2004/07/12 23:26:50 wiz Exp $	*/
+/*	$NetBSD: index.h,v 1.1.1.4 2008/09/02 07:50:31 christos Exp $	*/
 
 /* index.h -- declarations for index.c.
-   Id: index.h,v 1.6 2004/02/28 10:42:50 dirt Exp
+   Id: index.h,v 1.2 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 1998, 99 Free Software Foundation, Inc.
 

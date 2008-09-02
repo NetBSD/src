@@ -1,7 +1,7 @@
-/*	$NetBSD: session.c,v 1.1.1.6 2004/07/12 23:26:54 wiz Exp $	*/
+/*	$NetBSD: session.c,v 1.1.1.7 2008/09/02 07:50:07 christos Exp $	*/
 
 /* session.c -- user windowing interface to Info.
-   Id: session.c,v 1.11 2004/04/06 22:58:25 karl Exp
+   Id: session.c,v 1.16 2004/12/14 00:15:36 karl Exp
 
    Copyright (C) 1993, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
@@ -964,7 +964,7 @@ forward_move_node_structure (WINDOW *window, int behaviour)
                      same as the first menu item found in this node. */
                   window_message_in_echo_area
                     ((char *) _("Moving Up %d time(s), then Next."),
-                     (void *) up_counter, NULL);
+                     (void *) (long) up_counter, NULL);
 
                   info_handle_pointer ("Next", window);
                   return;
@@ -1946,7 +1946,7 @@ DECLARE_INFO_COMMAND (info_last_menu_item,
 DECLARE_INFO_COMMAND (info_menu_digit, _("Select this menu item"))
 {
   register int i, item;
-  register REFERENCE *entry = NULL, **menu;
+  register REFERENCE **menu;
 
   menu = info_menu_of_node (window->node);
 
@@ -1964,7 +1964,7 @@ DECLARE_INFO_COMMAND (info_menu_digit, _("Select this menu item"))
     for (i = 0; menu[i + 1]; i++);
   else
     {
-      for (i = 0; (entry = menu[i]); i++)
+      for (i = 0; menu[i]; i++)
         if (i == item - 1)
           break;
     }
@@ -1972,12 +1972,12 @@ DECLARE_INFO_COMMAND (info_menu_digit, _("Select this menu item"))
   if (menu[i])
     {
       info_select_reference (window, menu[i]);
-      if (entry->line_number > 0)
-        info_next_line (window, entry->line_number - 1, key);
+      if (menu[i]->line_number > 0)
+        info_next_line (window, menu[i]->line_number - 1, key);
     }
   else
     info_error ((char *) _("There aren't %d items in this menu."),
-        (void *) item, NULL);
+                (void *) (long) item, NULL);
 
   info_free_references (menu);
   return;

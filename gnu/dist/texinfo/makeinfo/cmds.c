@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.1.1.5 2004/07/12 23:26:51 wiz Exp $	*/
+/*	$NetBSD: cmds.c,v 1.1.1.6 2008/09/02 07:50:24 christos Exp $	*/
 
 /* cmds.c -- Texinfo commands.
-   Id: cmds.c,v 1.47 2004/04/07 20:17:38 karl Exp
+   Id: cmds.c,v 1.55 2004/12/14 00:15:36 karl Exp
 
    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
@@ -84,6 +84,7 @@ COMMAND command_table[] = {
   { "OE", cm_special_char, BRACE_ARGS },
   { "TeX", cm_TeX, BRACE_ARGS },
   { "aa", cm_special_char, BRACE_ARGS },
+  { "abbr", cm_abbr, BRACE_ARGS },
   { "acronym", cm_acronym, BRACE_ARGS },
   { "ae", cm_special_char, BRACE_ARGS },
   { "afivepaper", cm_ignore_line, NO_BRACE_ARGS },
@@ -184,6 +185,7 @@ COMMAND command_table[] = {
   { "env", cm_code, BRACE_ARGS },
   { "equiv", cm_equiv, BRACE_ARGS },
   { "error", cm_error, BRACE_ARGS },
+  { "euro", cm_special_char, BRACE_ARGS },
   { "evenfooting", cm_ignore_line, NO_BRACE_ARGS },
   { "evenheading", cm_ignore_line, NO_BRACE_ARGS },
   { "everyfooting", cm_ignore_line, NO_BRACE_ARGS },
@@ -282,6 +284,7 @@ COMMAND command_table[] = {
   { "ringaccent", cm_accent, MAYBE_BRACE_ARGS },
   { "rmacro", cm_rmacro, NO_BRACE_ARGS },
   { "samp", cm_code, BRACE_ARGS },
+  { "sansserif", cm_sansserif, BRACE_ARGS },
   { "sc", cm_sc, BRACE_ARGS },
   { "section", cm_section, NO_BRACE_ARGS },
   { "set", cm_set, NO_BRACE_ARGS },
@@ -294,6 +297,7 @@ COMMAND command_table[] = {
   { "shortcaption", cm_caption, BRACE_ARGS },
   { "shortcontents", cm_contents, NO_BRACE_ARGS },
   { "shorttitlepage", cm_ignore_line, NO_BRACE_ARGS },
+  { "slanted", cm_slanted, BRACE_ARGS },
   { "smallbook", cm_ignore_line, NO_BRACE_ARGS },
   { "smalldisplay", cm_smalldisplay, NO_BRACE_ARGS },
   { "smallexample", cm_smallexample, NO_BRACE_ARGS },
@@ -648,37 +652,39 @@ cm_comment (void)
     cm_ignore_line ();
 }
 
+
+
 /* We keep acronyms with two arguments around, to be able to refer to them
    later with only one argument.  */
 static ACRONYM_DESC *acronyms_stack = NULL;
 
-void
-cm_acronym (int arg)
+static void
+cm_acronym_or_abbr (int arg, int is_abbr)
 {
-  char *acronym, *description;
+  char *aa, *description;
   unsigned len;
 
   /* We do everything at START.  */
   if (arg == END)
     return;
 
-  get_until_in_braces (",", &acronym);
+  get_until_in_braces (",", &aa);
   if (input_text[input_text_offset] == ',')
     input_text_offset++;
   get_until_in_braces ("}", &description);
 
-  canon_white (acronym);
+  canon_white (aa);
   canon_white (description);
 
   /* If not enclosed in braces, strip after comma to be compatible
      with texinfo.tex.  */
-  if (description[0] != '{' && index (description, ',') != NULL)
+  if (description[0] != '{' && strchr (description, ',') != NULL)
     {
       int i = 0;
       while (description[i] != ',')
         i++;
       /* For now, just terminate the string at comma.  */
-      description[i] = '\0';
+      description[i] = 0;
     }
 
   /* Get description out of braces.  */
@@ -687,14 +693,14 @@ cm_acronym (int arg)
 
   len = strlen (description);
   if (len && description[len-1] == '}')
-    description[len-1] = '\0';
+    description[len-1] = 0;
 
   /* Save new description.  */
   if (strlen (description) > 0)
     {
       ACRONYM_DESC *new = xmalloc (sizeof (ACRONYM_DESC));
 
-      new->acronym = xstrdup (acronym);
+      new->acronym = xstrdup (aa);
       new->description = xstrdup (description);
       new->next = acronyms_stack;
       acronyms_stack = new;
@@ -702,7 +708,7 @@ cm_acronym (int arg)
 
   if (html)
     {
-      add_word ("<acronym");
+      add_word (is_abbr ? "<abbr" : "<acronym");
 
       if (strlen (description) > 0)
         add_word_args (" title=\"%s\"", text_expansion (description));
@@ -715,9 +721,11 @@ cm_acronym (int arg)
 
           while (temp)
             {
-              if (STREQ (acronym, temp->acronym) && strlen (temp->description) > 0)
+              if (STREQ (aa, temp->acronym)
+                  && strlen (temp->description) > 0)
                 {
-                  add_word_args (" title=\"%s\"", text_expansion (temp->description));
+                  add_word_args (" title=\"%s\"",
+                                 text_expansion (temp->description));
                   break;
                 }
               temp = temp->next;
@@ -725,39 +733,51 @@ cm_acronym (int arg)
         }
 
       add_char ('>');
-      execute_string ("%s", acronym);
-      add_word ("</acronym>");
+      execute_string ("%s", aa);
+      add_word (is_abbr ? "</abbr>" : "</acronym>");
     }
   else if (docbook)
     {
-      xml_insert_element (ACRONYM, START);
-      execute_string ("%s", acronym);
-      xml_insert_element (ACRONYM, END);
+      xml_insert_element (is_abbr ? ABBREV : ACRONYM, START);
+      execute_string ("%s", aa);
+      xml_insert_element (is_abbr ? ABBREV : ACRONYM, END);
     }
   else if (xml)
     {
-      xml_insert_element (ACRONYM, START);
+      xml_insert_element (is_abbr ? ABBREV : ACRONYM, START);
 
-      xml_insert_element (ACRONYMWORD, START);
-      execute_string ("%s", acronym);
-      xml_insert_element (ACRONYMWORD, END);
+      xml_insert_element (is_abbr ? ABBREVWORD : ACRONYMWORD, START);
+      execute_string ("%s", aa);
+      xml_insert_element (is_abbr ? ABBREVWORD : ACRONYMWORD, END);
 
       if (strlen (description) > 0)
         {
-          xml_insert_element (ACRONYMDESC, START);
+          xml_insert_element (is_abbr ? ABBREVDESC : ACRONYMDESC, START);
           execute_string ("%s", description);
-          xml_insert_element (ACRONYMDESC, END);
+          xml_insert_element (is_abbr ? ABBREVDESC : ACRONYMDESC, END);
         }
 
-      xml_insert_element (ACRONYM, END);
+      xml_insert_element (is_abbr ? ABBREV : ACRONYM, END);
     }
   else
-    execute_string ("%s", acronym);
+    execute_string ("%s", aa);
 
   /* Put description into parenthesis after the acronym for all outputs
      except XML.  */
   if (strlen (description) > 0 && (!xml || docbook))
     add_word_args (" (%s)", description);
+}
+
+void
+cm_acronym (int arg)
+{
+  cm_acronym_or_abbr (arg, 0);
+}
+
+void
+cm_abbr (int arg)
+{
+  cm_acronym_or_abbr (arg, 1);
 }
 
 void
@@ -808,7 +828,19 @@ cm_code (int arg)
       if (STREQ (command, "code"))
         insert_html_tag (arg, "code");
       else
-        insert_html_tag_with_attribute (arg, "span", "class=\"%s\"", command);
+        { /* Use <samp> tag in general to get typewriter.  */
+          if (arg == START)
+            { /* If @samp specifically, add quotes a la TeX output.  */
+              if (STREQ (command, "samp")) add_char ('`');
+              add_word ("<samp>");
+            }
+          insert_html_tag_with_attribute (arg, "span", "class=\"%s\"",command);
+          if (arg == END)
+            {
+              add_word ("</samp>");
+              if (STREQ (command, "samp")) add_char ('\'');
+            }
+        }
     }
   else
     {
@@ -1074,11 +1106,15 @@ cm_strong (int arg, int start_pos, int end_pos)
   if (!xml && !html && !docbook && !no_headers
       && arg == END
       && end_pos - start_pos >= 6
-      && strncmp ((char *) output_paragraph + start_pos, "*Note:*", 6) == 0)
-    /* Translators: "Note:" is literal here and should not be
-       translated.  @strong{Nota}, say, does not cause the problem.  */
-    warning (_("@strong{Note:} produces a spurious cross-reference in Info; reword to avoid that"));
-
+      && (STRNCASEEQ ((char *) output_paragraph + start_pos, "*Note:", 6)
+          || STRNCASEEQ ((char *) output_paragraph + start_pos, "*Note ", 6)))
+    {
+      /* Translators: "Note:" is literal here and should not be
+         translated.  @strong{Nota}, say, does not cause the problem.  */
+      warning (_("@strong{Note...} produces a spurious cross-reference in Info; reword to avoid that"));
+      /* Adjust the output to avoid writing the bad xref.  */
+      output_paragraph[start_pos + 5] = '_';
+    }
 }
 
 void
@@ -1123,6 +1159,22 @@ cm_i (int arg)
 }
 
 void
+cm_slanted (int arg)
+{
+  /* Make use of <lineannotation> of Docbook, if we are
+     inside an @example or similar.  */
+  extern int printing_index;
+  if (docbook && !filling_enabled && !printing_index)
+    xml_insert_element (LINEANNOTATION, arg);
+  else if (xml)
+    xml_insert_element (SLANTED, arg);
+  else if (html)
+    insert_html_tag (arg, "i");
+  else
+    not_fixed_width (arg);
+}
+
+void
 cm_b (int arg)
 {
   /* See cm_i comments.  */
@@ -1150,6 +1202,21 @@ cm_r (int arg)
     xml_insert_element (R, arg);
   else if (html)
     insert_html_tag_with_attribute (arg, "span", "class=\"roman\"");
+  else
+    not_fixed_width (arg);
+}
+
+void
+cm_sansserif (int arg)
+{
+  /* See cm_i comments.  */
+  extern int printing_index;
+  if (docbook && !filling_enabled && !printing_index)
+    xml_insert_element (LINEANNOTATION, arg);
+  else if (xml)
+    xml_insert_element (SANSSERIF, arg);
+  else if (html)
+    insert_html_tag_with_attribute (arg, "span", "class=\"sansserif\"");
   else
     not_fixed_width (arg);
 }
@@ -1427,17 +1494,17 @@ cm_center (void)
 {
   if (xml)
     {
-      unsigned char *line;
+      char *line;
       xml_insert_element (CENTER, START);
-      get_rest_of_line (0, (char **)&line);
-      execute_string ("%s", (char *)line);
+      get_rest_of_line (0, &line);
+      execute_string ("%s", line);
       free (line);
       xml_insert_element (CENTER, END);
     }
   else
     {
       int i, start, length;
-      unsigned char *line;
+      char *line;
       int save_indented_fill = indented_fill;
       int save_filling_enabled = filling_enabled;
       int fudge_factor = 1;
@@ -1450,8 +1517,8 @@ cm_center (void)
         add_html_block_elt ("<div align=\"center\">");
 
       inhibit_output_flushing ();
-      get_rest_of_line (0, (char **)&line);
-      execute_string ("%s", (char *)line);
+      get_rest_of_line (0, &line);
+      execute_string ("%s", line);
       free (line);
       uninhibit_output_flushing ();
       if (html)
@@ -1634,7 +1701,7 @@ handle_include (int verbatim_include)
       fflush (stdout);
     }
 
-  if (!find_and_load (filename))
+  if (!find_and_load (filename, 1))
     {
       popfile ();
       line_number--;
