@@ -1,4 +1,4 @@
-# $NetBSD: md.shark,v 1.13 2008/08/31 10:49:37 rtr Exp $
+# $NetBSD: md.shark,v 1.14 2008/09/02 01:48:52 lukem Exp $
 ./usr/X11R6/bin/X		-unknown-	x11
 ./usr/X11R6/bin/XFree86		-unknown-	x11
 ./usr/X11R6/bin/Xvfb		-unknown-	x11
@@ -359,6 +359,7 @@
 ./usr/X11R6/man/man4/void.4			-unknown-		.man,x11
 ./usr/X11R6/man/man4/wacom.4			-unknown-		.man,x11
 ./usr/X11R6/man/man4/wsfb.4			-unknown-		.man,x11
+./usr/X11R6/man/man5/XF86Config.5		-unknown-		.man,x11
 ./usr/X11R7/bin/X	-unknown-	xorg
 ./usr/X11R7/bin/Xnest			-unknown-	xorg
 ./usr/X11R7/bin/Xorg			-unknown-	xorg
