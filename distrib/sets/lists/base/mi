@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.770 2008/08/31 12:55:44 christos Exp $
+# $NetBSD: mi,v 1.771 2008/09/02 02:21:27 lukem Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -470,7 +470,6 @@
 ./usr/X11R7/include/X11/bitmaps			base-x11-root
 ./usr/X11R7/include/X11/extensions		base-x11-root
 ./usr/X11R7/include/X11/fonts			base-x11-root
-./usr/X11R7/include/X11/fonts/codeconv		base-obsolete		obsolete
 ./usr/X11R7/include/X11/pixmaps			base-x11-root
 ./usr/X11R7/include/fontconfig			base-x11-root
 ./usr/X11R7/include/freetype2			base-x11-root
@@ -596,7 +595,6 @@
 ./usr/X11R7/lib/X11/xkb/torture			base-x11-root
 ./usr/X11R7/lib/X11/xkb/types			base-x11-root
 ./usr/X11R7/lib/modules				base-x11-root
-./usr/X11R7/lib/modules/codeconv		base-obsolete		obsolete
 ./usr/X11R7/lib/modules/drivers			base-x11-root
 ./usr/X11R7/lib/modules/extensions		base-x11-root
 ./usr/X11R7/lib/modules/fonts			base-x11-root
