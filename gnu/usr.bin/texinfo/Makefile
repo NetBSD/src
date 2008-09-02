@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.20 2004/07/18 16:34:45 tron Exp $
+#	$NetBSD: Makefile,v 1.21 2008/09/02 08:38:35 christos Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=		common .WAIT info infokey install-info makeinfo texi2dvi texindex
+SUBDIR=		makedoc .WAIT common .WAIT info infokey install-info makeinfo \
+		texi2dvi texindex
 
 .if ${MKSHARE} != "no"
 FILESDIR=	/usr/share/misc
