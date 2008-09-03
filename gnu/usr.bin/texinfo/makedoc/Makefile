@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/02 14:46:53 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2008/09/03 09:55:23 dogcow Exp $
 
 NOMAN=
 MAKEDOC=
@@ -10,9 +10,6 @@ HOSTPROG=	makedoc
 .PATH: ${IDIST}/info
 HOST_CPPFLAGS+= -I${IDIST}/info -I${IDIST}/lib -I${.CURDIR}/../common
 HOST_CPPFLAGS+= -Dxstrdup=strdup -Dxmalloc=malloc -Dxfree=free
-HOST_CPPFLAGS+= -Dxexit=exit -Dxrealloc=realloc
-
-LDADD+=-lintl
-DPADD+=${LIBINTL}
+HOST_CPPFLAGS+= -Dxexit=exit -Dxrealloc=realloc -DHOSTTOOL
 
 .include <bsd.hostprog.mk>
