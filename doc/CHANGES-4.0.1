@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.42 2008/08/29 21:08:30 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.43 2008/09/03 17:39:20 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -729,4 +729,12 @@ sys/netinet/if_arp.c				1.141
 
 	Missing "\n" in log(9) messages.
 	[uebayasi, ticket #1191]
+
+sys/arch/cobalt/cobalt/machdep.c		1.93 via patch
+
+	Fix botched spl(9) bug I introduced back in 3.99.18 (rev 1.64):
+	Don't enable unhandled interrupts before all interrupts are processed.
+	Should fix "long download, network frozen" problems reported on
+	port-cobalt by several people.
+	[tsutsui, ticket #1104]
 
