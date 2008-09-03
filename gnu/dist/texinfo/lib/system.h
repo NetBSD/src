@@ -1,4 +1,4 @@
-/*	$NetBSD: system.h,v 1.8 2008/09/02 08:00:24 christos Exp $	*/
+/*	$NetBSD: system.h,v 1.9 2008/09/03 09:55:23 dogcow Exp $	*/
 
 /* system.h: system-dependent declarations; include this first.
    Id: system.h,v 1.12 2004/04/26 13:56:57 karl Exp
@@ -56,7 +56,11 @@ extern char *substring (const char *, const char *);
 #include "gettext.h"
 #undef const
 
+#ifndef HOSTTOOL
 #define _(String) gettext (String)
+#else
+#define _(String) (String)
+#endif
 #define N_(String) (String)
 
 #ifdef STDC_HEADERS
@@ -269,10 +273,12 @@ extern int strcoll ();
 /* Some systems don't declare this function in pwd.h. */
 struct passwd *getpwnam (const char *name);
 
+#ifndef HOSTTOOL
 /* Our library routines not included in any system library.  */
 extern void *xmalloc (size_t), *xrealloc (void *, size_t);
 extern char *xstrdup (const char *);
 extern void xexit (int);
+#endif
 
 /* For convenience.  */
 #define STREQ(s1,s2) (strcmp (s1, s2) == 0)
