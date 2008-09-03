@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.406 2008/09/03 17:21:20 tsutsui Exp $
+.\"	$NetBSD: main,v 1.407 2008/09/03 20:34:23 rjs Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2132,6 +2132,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.org
 .It Ta SUNAGAWA Keiki Ta Mt kei@NetBSD.org
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.org
+.lt Ta Robert Swindells Ta Mt rjs@NetBSD.org
 .It Ta Shin Takemura Ta Mt takemura@NetBSD.org
 .It Ta TAMURA Kent Ta Mt kent@NetBSD.org
 .It Ta Shin'ichiro TAYA Ta Mt taya@NetBSD.org
