@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.1.2.7 2008/08/28 21:53:42 haad Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.1.2.8 2008/09/03 22:50:17 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -33,12 +33,8 @@
 #include <sys/param.h>
 
 #include <sys/disk.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/ioccom.h>
+#include <sys/fcntl.h>
 #include <sys/kmem.h>
-#include <sys/queue.h>
-
 #include <sys/namei.h>
 #include <sys/vnode.h>
 
@@ -48,11 +44,6 @@
 
 static struct dm_pdev *dm_pdev_alloc(const char *);
 static int dm_pdev_rem(struct dm_pdev *);
-
-/*
- * XXX. I should use rwlock here.
- */
-kmutex_t dm_pdev_mutex;
 
 /*
  * Find used pdev with name == dm_pdev_name.
@@ -65,20 +56,15 @@ dm_pdev_lookup_name(const char *dm_pdev_name)
 
 	slen = strlen(dm_pdev_name);
 
-	mutex_enter(&dm_pdev_mutex);
-
 	SLIST_FOREACH(dm_pdev, &dm_pdev_list, next_pdev) {
 		dlen = strlen(dm_pdev->name);
 
 		if (slen != dlen)
 			continue;
 		
-		if (strncmp(dm_pdev_name, dm_pdev->name, slen) == 0){
-			mutex_exit(&dm_pdev_mutex);
+		if (strncmp(dm_pdev_name, dm_pdev->name, slen) == 0)
 			return dm_pdev;
-		}
 	}
-	mutex_exit(&dm_pdev_mutex);
 
 	return NULL;
 }
@@ -122,13 +108,8 @@ dm_pdev_insert(const char *dev_name)
 	dmp = dm_pdev_lookup_name(dev_name);
 	
 	if (dmp != NULL) {
-
-		mutex_enter(&dm_pdev_mutex);
-		
 		dmp->ref_cnt++;
 
-		mutex_exit(&dm_pdev_mutex);
-		
 		return dmp;
 	}
 
@@ -147,12 +128,8 @@ dm_pdev_insert(const char *dev_name)
 	}
 	
 	dmp->ref_cnt = 1;
-	
-	mutex_enter(&dm_pdev_mutex);
 
 	SLIST_INSERT_HEAD(&dm_pdev_list, dmp, next_pdev);
-	
-	mutex_exit(&dm_pdev_mutex);
 
 	return dmp;
 }
@@ -165,8 +142,6 @@ dm_pdev_init(void)
 {
 	
 	SLIST_INIT(&dm_pdev_list); /* initialize global pdev list */
-	
-	mutex_init(&dm_pdev_mutex,MUTEX_DEFAULT,IPL_NONE);
 
 	return 0;
 }
@@ -194,7 +169,7 @@ dm_pdev_alloc(const char *name)
 }
 
 /*
- * Destroy allocated dm_pdev. This routine is called with held pdev mutex.
+ * Destroy allocated dm_pdev.
  */
 static int
 dm_pdev_rem(struct dm_pdev *dmp)
@@ -222,8 +197,6 @@ int
 dm_pdev_destroy(void)
 {
 	struct dm_pdev *dm_pdev;
-	
-	mutex_enter(&dm_pdev_mutex);
 
 	while (!SLIST_EMPTY(&dm_pdev_list)) {           /* List Deletion. */
 		
@@ -233,8 +206,6 @@ dm_pdev_destroy(void)
 
 		dm_pdev_rem(dm_pdev);
 	}
-	
-	mutex_exit(&dm_pdev_mutex);
 
 	return 0;
 }
@@ -248,16 +219,13 @@ dm_pdev_destroy(void)
  */
 
 /*
- * I'm guarding only global list with mutex, device should be
- * locked elsewhere.
+ * Decrement pdev reference counter if 0 remove it.
  */
 int
 dm_pdev_decr(struct dm_pdev *dmp)
 {
 	if (dmp == NULL)
 		return ENOENT;
-
-	mutex_enter(&dm_pdev_mutex);
 	
 	dmp->ref_cnt--;
 
@@ -269,8 +237,6 @@ dm_pdev_decr(struct dm_pdev *dmp)
 		SLIST_REMOVE(&dm_pdev_list, dmp, dm_pdev, next_pdev); 
 		dm_pdev_rem(dmp);
 	}
-
-	mutex_exit(&dm_pdev_mutex);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.11 2008/08/28 22:06:34 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.12 2008/09/03 22:50:17 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -32,16 +32,9 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/ioccom.h>
+#include <sys/atomic.h>
 #include <sys/kmem.h>
-#include <sys/lkm.h>
-#include <sys/namei.h>
-#include <sys/rwlock.h>
 #include <sys/vnode.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #include <machine/int_fmtio.h>
 
@@ -136,8 +129,6 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 	flags = 0;
 	r = 0;
 
-	aprint_verbose("dm_list_versions_ioctl called\n");
-
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	
 	dm_dbg_print_flags(flags);
@@ -153,7 +144,6 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
  * Create in-kernel entry for device. Device attributes such as name, uuid are
  * taken from proplib dictionary.
  *
- * Locking: dev_mutex ??
  */
 int
 dm_dev_create_ioctl(prop_dictionary_t dm_dict)
@@ -226,16 +216,10 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	 * dmstrategy routine of device X can wait for end of ioctl
 	 * call on other device.
 	 *
-	 * I keep old mutex here because it can be use to synchorize
-	 * between ioctl routines on sama device e.g. I do not want to
-	 * call dm_table_status_ioctl and dm_table_clear_ioctl on the same
-	 * device and in the same time.
 	 */
 
 	rw_init(&dmv->dev_rwlock);
 
-	mutex_init(&dmv->dev_mtx, MUTEX_DEFAULT, IPL_NONE);
-	
 	/* Test readonly flag change anything only if it is not set*/
 	r = dm_dev_insert(dmv);
 	
@@ -345,7 +329,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
  * and inactive tables first and decrement reference_counters
  * for used pdevs.
  *
- * Locking: dev_mutex, dev_rwlock
+ * Locking: dev_rwlock
  */
 int
 dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
@@ -373,14 +357,17 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
-	printf("dm_dev_remove called\n");
+	
 	/*
 	 * Write lock rw lock firs and then remove all stuff.
 	 */
 	rw_enter(&dmv->dev_rwlock, RW_WRITER);
+
+	atomic_or_32(&dmv->dev_type, DM_DELETING_DEV);
+	
 	/*
  	 * Remove device from global list so no new IO can 
-     * be started on it. Do it as first task after rw_enter.
+	 * be started on it. Do it as first task after rw_enter.
 	 */
 	(void)dm_dev_rem(dmv);
 	
@@ -406,8 +393,6 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	
 	rw_exit(&dmv->dev_rwlock);
 		
-	mutex_destroy(&dmv->dev_mtx);
-	
 	rw_destroy(&dmv->dev_rwlock);
 	
 	/* Destroy device */
@@ -555,30 +540,24 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 		return ENOENT;
 	}
 	
-	/* Resume only already suspended device */
-	if (dmv->flags & DM_SUSPEND_FLAG) {
-
-		rw_enter(&dmv->dev_rwlock, RW_WRITER);
+	rw_enter(&dmv->dev_rwlock, RW_WRITER);
 	
-		dmv->flags &= ~(DM_SUSPEND_FLAG | DM_INACTIVE_PRESENT_FLAG);
-		dmv->flags |= DM_ACTIVE_PRESENT_FLAG;	
+	dmv->flags &= ~(DM_SUSPEND_FLAG | DM_INACTIVE_PRESENT_FLAG);
+	dmv->flags |= DM_ACTIVE_PRESENT_FLAG;	
 	
-		prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->ref_cnt);
-		prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
-		prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->ref_cnt);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 	
-		DM_ADD_FLAG(flags, DM_EXISTS_FLAG);	
+	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);	
 	
-		dmv->cur_active_table = 1 - dmv->cur_active_table;
+	dmv->cur_active_table = 1 - dmv->cur_active_table;
 	
-		rw_exit(&dmv->dev_rwlock);
+	rw_exit(&dmv->dev_rwlock);
 	
-		/* Destroy inctive table after resume. */
-		dm_table_destroy(&dmv->tables[1 - dmv->cur_active_table]);
+	/* Destroy inctive table after resume. */
+	dm_table_destroy(&dmv->tables[1 - dmv->cur_active_table]);
 	
- 	} else 
-		return ENOENT;
-
 	return 0;
 }
 
@@ -709,7 +688,6 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
  * Load table to inactive slot table are switched in dm_device_resume_ioctl.
  * This simulates Linux behaviour better there should not be any difference.
  *
- * Locking: dev_mtx
  */
 int
 dm_table_load_ioctl(prop_dictionary_t dm_dict)
@@ -863,7 +841,6 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
  *   </dict>
  * </array>
  *
- * Locking: dev_mtx
  */
 int
 dm_table_status_ioctl(prop_dictionary_t dm_dict)
@@ -908,8 +885,6 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	/* I should use mutex here and not rwlock there can be IO operation
 	   during this ioctl on device. */
 
-	/*  mutex_enter(&dmv->dev_mtx); */
-	
 	aprint_normal("Status of device tables: %s--%d\n",
 	    name, dmv->cur_active_table);
 	
@@ -968,8 +943,6 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		i++;
 	}
 
-	/*mutex_exit(&dmv->dev_mtx);*/
-	
 	return 0;
 }
 
