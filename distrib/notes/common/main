@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.405 2008/09/03 16:30:32 tsutsui Exp $
+.\"	$NetBSD: main,v 1.406 2008/09/03 17:21:20 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1807,8 +1807,8 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta IWAMOTO Toshihiro              Ta Mt               toshii Ta Sy hpcarm
 .It Ta Darrin Jewell                  Ta Mt                  dbj Ta Sy next68k
 .It Ta S\(/oren J\(/orvang            Ta Mt                soren Ta Sy sgimips
-.It Ta Takayoshi Kochi                Ta Mt                kochi Ta Sy ia64
 .It Ta Wayne Knowles                  Ta Mt                  wdk Ta Sy mipsco
+.It Ta Takayoshi Kochi                Ta Mt                kochi Ta Sy ia64
 .It Ta Paul Kranenburg                Ta Mt                   pk Ta Sy sparc
 .It Ta Michael Lorenz                 Ta Mt             macallan Ta Sy macppc
 .It Ta Anders Magnusson               Ta Mt                ragge Ta Sy vax
@@ -1904,6 +1904,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Bill Coldwell Ta Mt billc@NetBSD.org
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta Ben Collver Ta Mt ben@NetBSD.org
+.It Ta Marcus Comstedt Ta Mt marcus@NetBSD.org
 .It Ta Jeremy Cooper Ta Mt jeremy@NetBSD.org
 .It Ta Chuck Cranor Ta Mt chuck@NetBSD.org
 .It Ta Alistair Crooks Ta Mt agc@NetBSD.org
@@ -1924,6 +1925,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Matthias Drochner Ta Mt drochner@NetBSD.org
 .It Ta Jun Ebihara Ta Mt jun@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
+.It Ta Jaime A Fournier Ta Mt ober@NetBSD.org
 .It Ta Stoned Elipot Ta Mt seb@NetBSD.org
 .It Ta Michael van Elst Ta Mt mlelstv@NetBSD.org
 .It Ta Enami Tsugutomo Ta Mt enami@NetBSD.org
@@ -2031,6 +2033,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Paul Mackerras Ta Mt paulus@NetBSD.org
 .It Ta MAEKAWA Masahide Ta Mt gehenna@NetBSD.org
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.org
+.It Ta Cherry G. Mathew Ta Mt cherry@NetBSD.org
 .It Ta David Maxwell Ta Mt david@NetBSD.org
 .It Ta Gregory McGarry Ta Mt gmcgarry@NetBSD.org
 .It Ta Dan McMahill Ta Mt dmcmahill@NetBSD.org
@@ -2063,6 +2066,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Greg Oster Ta Mt oster@NetBSD.org
 .It Ta Rui Paulo Ta Mt rpaulo@NetBSD.org
 .It Ta Jonathan Perkin Ta Mt sketch@NetBSD.org
+.It Ta Andrey Petrov Ta Mt petrov@NetBSD.org
 .It Ta Herb Peyerl Ta Mt hpeyerl@NetBSD.org
 .It Ta Matthias Pfaller Ta Mt matthias@NetBSD.org
 .It Ta Chris Pinnock Ta Mt cjep@NetBSD.org
