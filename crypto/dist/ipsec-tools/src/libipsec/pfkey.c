@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.15 2007/10/15 16:05:01 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.16 2008/09/03 09:57:28 tteras Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -2112,6 +2112,12 @@ pfkey_check(mhp)
 			break;
 		/*FALLTHROUGH*/
 	default:
+#ifdef __linux__
+		/* Linux kernel seems to be buggy and return
+		 * uninitialized satype for spd flush message */
+		if (msg->sadb_msg_type == SADB_X_SPDFLUSH)
+			break;
+#endif
 		__ipsec_errcode = EIPSEC_INVAL_SATYPE;
 		return -1;
 	}
