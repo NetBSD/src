@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.88 2008/08/30 10:04:29 tsutsui Exp $
+$NetBSD: acronyms.comp,v 1.89 2008/09/03 06:45:50 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -127,6 +127,7 @@ FHSS	frequency hop spread spectrum
 FIR	fast infrared
 FLOPS	floating [point] operations per second
 FM	frequency modulation
+FOSS	free / open source software
 FPM	fast page mode
 FQDN	fully qualified domain name
 FTP	file transfer protocol
@@ -236,10 +237,12 @@ OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
 OOB	out of band
 OS	operating system
+OSD	open source definition
 OSF	open software foundation
 OSI	open systems interconnection
 OSI	open-source initiative
 OSPF	open shortest path first
+OSS	open source software
 OTP	one time password
 PA	physical address
 PAE	physical address extension
